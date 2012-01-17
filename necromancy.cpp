@@ -292,8 +292,8 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(spellData->how == CAST) {
 		if(!(player->getClass() == CLERIC && player->getDeity() == ARAMON) &&
-			!player->isCt()
-		) {
+			!player->isCt())
+		{
 			player->print("Only Clerics of %s may cast that spell.\n", gConfig->getDeity(ARAMON)->getName().c_str());
 			return(0);
 		}
@@ -303,8 +303,8 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(!player->isCt() &&
 		(spellData->how == CAST || spellData->how == SKILL) &&
-		player->getAdjustedAlignment() > REDDISH
-	) {
+		player->getAdjustedAlignment() > REDDISH)
+	{
 		player->print("You are not evil enough to do that!\n");
 		shocked = mrand(5,10);
 
@@ -418,7 +418,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 	target->addToRoom(player->getRoom());
 	gServer->addActive(target);
 
-	addFollower(player, target, FALSE);
+	player->addPet(target);
 
 	petTalkDesc(target, player);
 	target->setFlag(M_PET);

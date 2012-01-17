@@ -56,32 +56,18 @@ int cmdFollow(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(toFollow == player && !player->following) {
-		player->print("You can't follow yourself.\n");
+	if(toFollow == player && !player->getGroup(false)) {
+		player->print("You can't group with yourself.\n");
 		return(0);
 	}
 
-
-
-	/*	if(player->flagIsSet(P_MISTED)) {
-	player->print("You cannot follow someone while misted.\n");
-	return(0);
-	} */
-
 	if(toFollow->flagIsSet(P_NO_FOLLOW) && !player->isCt() && toFollow != player) {
-		player->print("%M does not welcome followers.\n", toFollow);
+		player->print("%M does not welcome group members.\n", toFollow);
 		return(0);
 	}
 
 	if(toFollow->isRefusing(player->name)) {
-		player->print("%M doesn't allow you to follow %s right now.\n",
-		      toFollow, toFollow->himHer());
-		return(0);
-	}
-
-	if(toFollow->following && toFollow != player) {
-		player->print("You must follow %s to group with %s right now.\n",
-		      toFollow->following->name, toFollow->name);
+		player->print("%M doesn't allow you to group with %s right now.\n", toFollow, toFollow->himHer());
 		return(0);
 	}
 
@@ -90,45 +76,77 @@ int cmdFollow(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(toFollow->following == player) {
-		player->print("You can't. %s's following you.\n",
-		      toFollow->upHeShe());
-		return(0);
-	}
 	if(toFollow->flagIsSet(P_MISTED) && !player->isCt()) {
-		player->print("How can you follow a mist?\n");
-		return(0);
+        player->print("How can you group with a mist?\n");
+        return(0);
+    }
+
+
+	Group* toJoin = toFollow->getGroup();
+	if(toJoin) {
+        // Check if in same group
+        if(toJoin == player->getGroup()) {
+            player->print("You can't. %s is in the same group as you!.\n", toFollow->upHeShe());
+            return(0);
+        }
+        if(toJoin->getGroupType() != GROUP_PUBLIC) {
+            player->print("%s's group is invite only.\n", toFollow->getName());
+            return(0);
+        }
 	}
-
-
 
 	if(player->flagIsSet(P_NO_FOLLOW)) {
-		player->print("You welcome followers again.\n");
+		player->print("You welcome group members again.\n");
 		player->clearFlag(P_NO_FOLLOW);
 	}
-	if(player->following)
-		doStopFollowing(player, TRUE);
+	if(player->getGroup(false))
+	    player->removeFromGroup(true);
 
 	if(player == toFollow)
 		return(0);
 
-	addFollower(toFollow, player, TRUE);
+	if(toJoin)
+	    player->addToGroup(toJoin);
+	else
+	    toFollow->createGroup(player);
+
 
 	return(0);
 
 }
+//********************************************************************************
+//* AddToGroup
+//********************************************************************************
+// Adds the creature to the group, and announces if requested
+void Creature::addToGroup(Group* toJoin, bool announce) {
+    // TODO: check if we have a group already
+    if(announce)
+        toJoin->sendToAll(bstring(getName()) + " has joined your group.\n");
+    toJoin->add(this);
+}
+//********************************************************************************
+//* CreateGroup
+//********************************************************************************
+// Creates a new group with the creature as the leader, and crt as a member
+void Creature::createGroup(Creature* crt) {
+    this->print("You have formed a group.\n");
+    group = new Group(this);
+    group->add(this);
+    groupStatus = GROUP_LEADER;
 
+    crt->addToGroup(group);
+}
 //*********************************************************************
 //						numFollowers
 //*********************************************************************
 
 int Creature::numFollowers() {
 	int num=0;
-	ctag *cp = first_fol;
-	while(cp) {
-		num += 1 + cp->crt->numFollowers();
-		cp = cp->next_tag;
-	}
+//	ctag *cp = first_fol;
+//	while(cp) {
+//		num += 1 + cp->crt->numFollowers();
+//		cp = cp->next_tag;
+//	}
 	return(num);
 }
 
@@ -138,93 +156,127 @@ int Creature::numFollowers() {
 // This function will make follower follow pCreature, pCreature must be a player
 // follower must NOT be following anyone else
 
-int addFollower(Creature * pCreature, Creature *follower, int notify) {
-	ctag	*pp=0, *cp=0, *last=0, *cpnext=0;
-	Player* creature = pCreature->getPlayer(), *pFollower = follower->getPlayer();
+//
+//int addFollower(Creature * pCreature, Creature *follower, int notify) {
+//	ctag	*pp=0, *cp=0, *last=0, *cpnext=0;
+//	Player* creature = pCreature->getPlayer(), *pFollower = follower->getPlayer();
+//
+//	ASSERTLOG( creature );
+//	ASSERTLOG( follower->following == NULL );
+//
+//	follower->following = creature;
+//
+//	pp = new ctag;
+//	if(!pp)
+//		merror("follow", FATAL);
+//
+//	pp->crt = follower;
+//	pp->next_tag = 0;
+//
+//	// creature = leader
+//	// add 2: 1 for leader, 1 for new follower
+//	int numFollowers = creature->numFollowers() + 2;
+//	// Statistic for largest group
+//	// call statistics.group(#) on everyone in the group
+//	//creature->statistics.group(numFollowers);
+//	//if(pFollower)
+//	//    pFollower->statistics.group(numFollowers);
+//
+//
+//	if(!creature->first_fol) {
+//		creature->first_fol = pp;
+//	} else {
+//		// Add monsters to the start of the follow list, players to the end
+//		if(!pFollower) {
+//			pp->next_tag = creature->first_fol;
+//			creature->first_fol = pp;
+//
+//			// skip over the creature we just added
+//			cp = pp->next_tag;
+//			while(cp) {
+//				if(cp->crt->isPlayer())
+//					cp->crt->getPlayer()->statistics.group(numFollowers);
+//				cp = cp->next_tag;
+//			}
+//		} else {
+//			cp = creature->first_fol;
+//			while(cp) {
+//				if(cp->crt->isPlayer())
+//					cp->crt->getPlayer()->statistics.group(numFollowers);
+//				last = cp;
+//				cp = cp->next_tag;
+//			}
+//			last->next_tag = pp;
+//		}
+//	}
+//
+//	if(pFollower) {
+//		pFollower->unmist();
+//
+//
+//		pFollower->print("You start following %s.\n", creature->name);
+//
+//		if(!isDm(creature) && isStaff(creature))
+//			log_immort(true, creature, "%s follows %s in room %s.\n", pFollower->name, creature->name,
+//				pFollower->getRoom()->fullName().c_str());
+//		else if(!isDm(pFollower))
+//			log_immort(true, pFollower, "%s follows %s in room %s.\n", pFollower->name, creature->name,
+//				pFollower->getRoom()->fullName().c_str());
+//
+//
+//		if(!pFollower->flagIsSet(P_DM_INVIS) && !pFollower->flagIsSet(P_INCOGNITO) && !creature->isGagging(follower->name)) {
+//			creature->print("%M starts following you.\n", pFollower);
+//			broadcast(pFollower->getSock(), creature->getSock(), pFollower->getRoom(),
+//				"%M follows %N.", pFollower, creature);
+//		}
+//		cp 	= pFollower->first_fol;
+//		while(cp) {
+//			cpnext = cp->next_tag; // No Guarantee cp will still be valid if we call
+//								   // doStopFollowing
+//			if(cp->crt->isPlayer()) {
+//				if(!cp->crt->flagIsSet(P_DM_INVIS) && !cp->crt->flagIsSet(P_INCOGNITO))
+//					follower->print("%s must also follow %s now to follow you.\n", cp->crt->name, creature->name);
+//				cp->crt->print("You must follow %s now to follow %s.\n", creature->name, follower->name);
+//				cp->crt->print("You stop following %s.\n", follower->name);
+//				doStopFollowing(cp->crt, FALSE);
+//			}
+//			cp = cpnext;
+//		}
+//	}
+//	return(0);
+//}
+//********************************************************************
+//                      remFromGroup
+//********************************************************************
+// if player is in a group, they will be removed from it.
 
-	ASSERTLOG( creature );
-	ASSERTLOG( follower->following == NULL );
-
-	follower->following = creature;
-
-	pp = new ctag;
-	if(!pp)
-		merror("follow", FATAL);
-
-	pp->crt = follower;
-	pp->next_tag = 0;
-
-	// creature = leader
-	// add 2: 1 for leader, 1 for new follower
-	int numFollowers = creature->numFollowers() + 2;
-
-	creature->statistics.group(numFollowers);
-	if(pFollower)
-		pFollower->statistics.group(numFollowers);
-
-	if(!creature->first_fol) {
-		creature->first_fol = pp;
-	} else {
-		// Add monsters to the start of the follow list, players to the end
-		if(!pFollower) {
-			pp->next_tag = creature->first_fol;
-			creature->first_fol = pp;
-
-			// skip over the creature we just added
-			cp = pp->next_tag;
-			while(cp) {
-				if(cp->crt->isPlayer())
-					cp->crt->getPlayer()->statistics.group(numFollowers);
-				cp = cp->next_tag;
-			}
-		} else {
-			cp = creature->first_fol;
-			while(cp) {
-				if(cp->crt->isPlayer())
-					cp->crt->getPlayer()->statistics.group(numFollowers);
-				last = cp;
-				cp = cp->next_tag;
-			}
-			last->next_tag = pp;
-		}
-	}
-
-	if(pFollower) {
-		pFollower->unmist();
-
-
-		pFollower->print("You start following %s.\n", creature->name);
-
-		if(!isDm(creature) && isStaff(creature))
-			log_immort(true, creature, "%s follows %s in room %s.\n", pFollower->name, creature->name,
-				pFollower->getRoom()->fullName().c_str());
-		else if(!isDm(pFollower))
-			log_immort(true, pFollower, "%s follows %s in room %s.\n", pFollower->name, creature->name,
-				pFollower->getRoom()->fullName().c_str());
-
-
-		if(!pFollower->flagIsSet(P_DM_INVIS) && !pFollower->flagIsSet(P_INCOGNITO) && !creature->isGagging(follower->name)) {
-			creature->print("%M starts following you.\n", pFollower);
-			broadcast(pFollower->getSock(), creature->getSock(), pFollower->getRoom(),
-				"%M follows %N.", pFollower, creature);
-		}
-		cp 	= pFollower->first_fol;
-		while(cp) {
-			cpnext = cp->next_tag; // No Guarantee cp will still be valid if we call
-								   // doStopFollowing
-			if(cp->crt->isPlayer()) {
-				if(!cp->crt->flagIsSet(P_DM_INVIS) && !cp->crt->flagIsSet(P_INCOGNITO))
-					follower->print("%s must also follow %s now to follow you.\n", cp->crt->name, creature->name);
-				cp->crt->print("You must follow %s now to follow %s.\n", creature->name, follower->name);
-				cp->crt->print("You stop following %s.\n", follower->name);
-				doStopFollowing(cp->crt, FALSE);
-			}
-			cp = cpnext;
-		}
-	}
-	return(0);
-}
-
+//void remFromGroup(Creature* player) {
+//  ctag    *cp=0, *prev=0;
+//  Creature *leader=0;
+//
+//  if(!player->following)
+//          return;
+//
+//  leader = player->following;
+//
+//  cp = leader->first_fol;
+//  if(cp->crt == player) {
+//          leader->first_fol = cp->next_tag;
+//          delete cp;
+//  } else {
+//          while(cp) {
+//                  if(cp->crt == player) {
+//                          prev->next_tag = cp->next_tag;
+//                          delete cp;
+//                          break;
+//                  }
+//                  prev = cp;
+//                  cp = cp->next_tag;
+//          }
+//
+//  }
+//  player->following = 0;
+//}
 //*********************************************************************
 //						doStopFollowing
 //*********************************************************************
@@ -232,73 +284,99 @@ int addFollower(Creature * pCreature, Creature *follower, int notify) {
 // following, and if notify is TRUE, notify that person if they can
 // can see the person
 
-int doStopFollowing(Creature *target, int notify) {
-	ctag		*cp, *prev;
-	Creature * following; // The person they are following
-	Player* pTarget = target->getPlayer(), *pFollowing=0;
+//int doStopFollowing(Creature *target, int notify) {
+//	ctag		*cp, *prev;
+//	Creature * following; // The person they are following
+//	Player* pTarget = target->getPlayer(), *pFollowing=0;
+//
+//	if(target->following == NULL)
+//		return(0);
+//
+//	following = target->following;
+//	cp = following->first_fol;
+//
+//	if(cp->crt == target) {
+//		// They are the first person following them, so get rid of them
+//		following->first_fol = cp->next_tag;
+//		delete cp;
+//	} else {
+//		while(cp) {
+//			// Go through and find them
+//			if(cp->crt == target) {
+//				prev->next_tag = cp->next_tag;
+//				delete cp;
+//				break;
+//			}
+//			prev = cp;
+//			cp = cp->next_tag;
+//		}
+//	}
+//	target->following = 0;
+//
+//	if(pTarget && notify == TRUE) {
+//		pTarget->print("You stop following %s.\n", following->name);
+//		pFollowing = following->getPlayer();
+//
+//		if(!pTarget->flagIsSet(P_DM_INVIS) && !pTarget->flagIsSet(P_INCOGNITO) && pFollowing && !pFollowing->isGagging(pTarget->name))
+//			pFollowing->print("%M stops following you.\n", pTarget);
+//	}
+//	return(1);
+//}
 
-	if(target->following == NULL)
-		return(0);
+bool Creature::removeFromGroup(bool announce) {
+    if(group) {
+        if(!pFlagIsSet(P_DM_INVIS) && !pFlagIsSet(P_INCOGNITO)) {
+            if(groupStatus == GROUP_INVITED) {
 
-	following = target->following;
-	cp = following->first_fol;
+            } else {
+                group->sendToAll(getCrtStr(NULL, CAP) + " leaves the group.\n");
+            }
+        }
+        if(groupStatus == GROUP_INVITED) {
+            if(!pFlagIsSet(P_DM_INVIS) && !pFlagIsSet(P_INCOGNITO))
+                group->sendToAll(getCrtStr(NULL, CAP) + " rejects the invitation to join your group.\n");
+            // They're not in the group, so no group cleanup needed
+            group = null;
+        } else {
+            if(!pFlagIsSet(P_DM_INVIS) && !pFlagIsSet(P_INCOGNITO))
+                group->sendToAll(getCrtStr(NULL, CAP) + " leaves the group.\n", this);
+            group->remove(this);
+            group = null;
+        }
+        groupStatus = GROUP_NO_STATUS;
+        return(true);
+    }
 
-	if(cp->crt == target) {
-		// They are the first person following them, so get rid of them
-		following->first_fol = cp->next_tag;
-		delete cp;
-	} else {
-		while(cp) {
-			// Go through and find them
-			if(cp->crt == target) {
-				prev->next_tag = cp->next_tag;
-				delete cp;
-				break;
-			}
-			prev = cp;
-			cp = cp->next_tag;
-		}
-	}
-	target->following = 0;
-
-	if(pTarget && notify == TRUE) {
-		pTarget->print("You stop following %s.\n", following->name);
-		pFollowing = following->getPlayer();
-
-		if(!pTarget->flagIsSet(P_DM_INVIS) && !pTarget->flagIsSet(P_INCOGNITO) && pFollowing && !pFollowing->isGagging(pTarget->name))
-			pFollowing->print("%M stops following you.\n", pTarget);
-	}
-	return(1);
+    return(false);
 }
-
 //*********************************************************************
 //						doLose
 //*********************************************************************
 // Causes pFollower to stop following pCreature
 
-int doLose(Creature* crt, Creature* follower, int notify) {
-	ASSERTLOG( crt != NULL );
-	ASSERTLOG( follower != NULL );
-	Player* pCreature = crt->getPlayer();
-	Player *pFollower = follower->getPlayer();
-
-	doStopFollowing(follower, FALSE);
-
-	if(pCreature && pFollower && notify == TRUE) {
-		pCreature->print("You lose %s.\n", pFollower->himHer());
-
-		if(pFollower->isWatching(pCreature->name))
-			pFollower->delWatching(pCreature->name);
-		if(pCreature->isWatching(pFollower->name))
-			pCreature->delWatching(pFollower->name);
-
-		if(!pCreature->flagIsSet(P_DM_INVIS) && !pFollower->flagIsSet(P_INCOGNITO)) {
-			pFollower->print("%M loses you.\n", pCreature);
-			broadcast(pCreature->getSock(), pFollower->getSock(), pCreature->getRoom(), "%M loses %N.", pCreature, pFollower);
-		}
-	}
-	return(1);
-}
+//int doLose(Creature* crt, Creature* follower, int notify) {
+//	ASSERTLOG( crt != NULL );
+//	ASSERTLOG( follower != NULL );
+//	Player* pCreature = crt->getPlayer();
+//	Player *pFollower = follower->getPlayer();
+//
+//	doStopFollowing(follower, FALSE);
+//
+//	if(pCreature && pFollower && notify == TRUE) {
+//		pCreature->print("You lose %s.\n", pFollower->himHer());
+//
+//		if(pFollower->isWatching(pCreature->name))
+//			pFollower->delWatching(pCreature->name);
+//		if(pCreature->isWatching(pFollower->name))
+//			pCreature->delWatching(pFollower->name);
+//
+//		if(!pCreature->flagIsSet(P_DM_INVIS) && !pFollower->flagIsSet(P_INCOGNITO)) {
+//			pFollower->print("%M loses you.\n", pCreature);
+//			broadcast(pCreature->getSock(), pFollower->getSock(), pCreature->getRoom(), "%M loses %N.", pCreature, pFollower);
+//		}
+//	}
+//	return(1);
+//}
 
 //*********************************************************************
 //						cmdLose
@@ -318,16 +396,23 @@ int cmdLose(Player* player, cmd* cmnd) {
 
 	if(cmnd->num == 1) {
 
-		if(player->following == 0) {
-			player->print("You're not following anyone.\n");
+		if(!player->getGroup(false)) {
+			player->print("You're not in a group.\n");
 			return(0);
 		}
-		doStopFollowing(player, 1);
+		player->removeFromGroup(true);
 		return(0);
 	}
 
 	player->unhide();
 
+	Group* group = player->getGroup(true);
+	if(player != group->getLeader()) {
+	    player->print("You are not the group leader.\n");
+	    return(0);
+	}
+
+	// Loop through group members and remove that person, do not allow them to remove pets
 	lowercize(cmnd->str[1], 1);
 	//target = findCreature(player, player->first_fol, cmnd);
 	ctag* cp = player->first_fol;
@@ -497,38 +582,7 @@ int cmdGroup(Player* player, cmd* cmnd) {
 }
 
 
-//********************************************************************
-//						remFromGroup
-//********************************************************************
-// if player is in a group, they will be removed from it.
 
-void remFromGroup(Creature* player) {
-	ctag	*cp=0, *prev=0;
-	Creature *leader=0;
-
-	if(!player->following)
-			return;
-
-	leader = player->following;
-
-	cp = leader->first_fol;
-	if(cp->crt == player) {
-			leader->first_fol = cp->next_tag;
-			delete cp;
-	} else {
-			while(cp) {
-					if(cp->crt == player) {
-							prev->next_tag = cp->next_tag;
-							delete cp;
-							break;
-					}
-					prev = cp;
-					cp = cp->next_tag;
-			}
-
-	}
-	player->following = 0;
-}
 
 //********************************************************************
 //						doFollow
@@ -569,25 +623,6 @@ void Player::doPetFollow() {
 		alias_crt->deleteFromRoom();
 		alias_crt->addToRoom(getRoom());
 	}
-}
-
-//*********************************************************************
-//						isGroupLeader
-//*********************************************************************
-// Are we a group leader against the given monster
-
-bool Creature::isGroupLeader(Monster* target) {
-	if(isMonster())
-		return(false);
-	ctag *cp = first_fol;
-	Creature *crt;
-	while(cp) {
-		crt = cp->crt;
-		if(crt && crt->getsGroupExperience(target))
-			return(true);
-		cp = cp->next_tag;
-	}
-	return(false);
 }
 
 //*********************************************************************

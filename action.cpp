@@ -76,34 +76,66 @@ int actionFail(Creature* player, bstring action, bstring second = "m");
 //*********************************************************************
 
 int orderPet(Player* player, cmd* cmnd) {
-	Monster *pet = player->getPet();
 	int x=0;
+	bool allPets = true;
 
-	if(!pet) {
+	if(!player->hasPet()) {
 		player->print("You don't have a pet to command.\n");
 		return(0);
 	}
-	if(!player->inSameRoom(pet)) {
-		player->print("%M can't hear you.\n", pet);
-		return(0);
-	}
+
 	if(cmnd->num < 2) {
-		player->print("Tell %N to do what?\n", pet);
-		return(0);
+        player->print("Order your pet to do what?\n");
+        return(0);
+    }
+
+
+	if(cmnd->num >= 3 && strlen(cmnd->str[1]) >= 3) {
+	    // You need to type at least 3 characters to indicate what pet you want, otherwise we assume it's just a command
+
+	    //cmnd->str[0] = pet
+	    //cmnd->str[1] = <pet>
+	    //cmnd->str[2] = <action>
+
+        // See if they're trying to order a specific pet
+
+        Creature* pet = player->findPet(cmnd->str[1], cmnd->val[1]);
+        if(pet) {
+            allPets = false;
+            for(; x<cmnd->num-2; x++)
+                strcpy(cmnd->str[x], cmnd->str[x+2]);
+            cmnd->num--;
+            strcpy(cmnd->str[cmnd->num], "");
+
+            // chop the "pet <pet> " off
+            strcpy(cmnd->fullstr, getFullstrText(cmnd->fullstr, 2).c_str());
+            cmnd->myCommand = 0;
+
+            cmdProcess(player, cmnd, pet);
+
+        }
 	}
 
-	// the player is done with their cmnd, let the pet use it
-	cmnd->myCommand = 0;
-	
-	for(; x<cmnd->num-1; x++)
-		strcpy(cmnd->str[x], cmnd->str[x+1]);
-	cmnd->num--;
-	strcpy(cmnd->str[cmnd->num], "");
+	if(allPets) {
+	    // the player is done with their cmnd, let the pet use it
+        for(; x<cmnd->num-1; x++)
+            strcpy(cmnd->str[x], cmnd->str[x+1]);
+        cmnd->num--;
+        strcpy(cmnd->str[cmnd->num], "");
 
-	// chop the "pet " off
-	strcpy(cmnd->fullstr, getFullstrText(cmnd->fullstr, 1).c_str());
+        // chop the "pet " off
+        strcpy(cmnd->fullstr, getFullstrText(cmnd->fullstr, 1).c_str());
 
-	cmdProcess(player, cmnd, true);
+	    for(Creature* pet : player->pets) {
+            if(!player->inSameRoom(pet)) {
+                player->print("%M can't hear you.\n", pet);
+                continue;
+            }
+            cmnd->myCommand = 0;
+
+            cmdProcess(player, cmnd, pet);
+	    }
+	}
 	return(0);
 }
 
@@ -828,7 +860,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 				OUT4("You curtly dismiss %N.\n", "%M dismisses you curtly.\n",
 					"%M curtly dismisses %N .");
 			} else {
-				if(target->isPet() && target->following == creature) {
+				if(target->isPet() && target->getMaster() == creature) {
 					sock->print("You dismiss %N.\n", target);
 					broadcast(sock, room, "%M dismisses %N.", creature, target);
 
@@ -836,7 +868,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 						broadcast(NULL, room, "%M wanders away.", target);
 					else
 						broadcast(NULL, target->getRoom(), "%M fades away.", target);
-					target->die(target->following);
+					target->die(target->getMaster());
 					gServer->delActive(monster);
 				}
 			}

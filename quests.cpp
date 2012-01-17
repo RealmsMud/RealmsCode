@@ -790,8 +790,8 @@ int cmdQuestStatus(Player* player, cmd* cmnd) {
 	return(1);
 }
 bool Object::isQuestValid() const {
-	return((type == CONTAINER && shotscur == 0) ||
-	 (type != CONTAINER && (shotscur != 0 || shotsmax == 0)) );
+	return((type == CONTAINER && shotsCur == 0) ||
+	 (type != CONTAINER && (shotsCur != 0 || shotsMax == 0)) );
 
 }
 // Count how many of a given item this player has that are non-broken

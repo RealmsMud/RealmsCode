@@ -946,7 +946,7 @@ CatRef AreaRoom::getUnique(Creature *creature, bool skipDec) {
 
 	if(	!player ||
 		!player->ready[HELD-1] ||
-		player->ready[HELD-1]->getShotscur() < 1 ||
+		player->ready[HELD-1]->getShotsCur() < 1 ||
 		!player->ready[HELD-1]->compass ||
 		*player->ready[HELD-1]->compass != *&mapmarker
 	)
@@ -954,7 +954,7 @@ CatRef AreaRoom::getUnique(Creature *creature, bool skipDec) {
 
 	// no need to decrement twice if their pet is going through
 	if(!skipDec && decCompass && !pet) {
-		player->ready[HELD-1]->decShotscur();
+		player->ready[HELD-1]->decShotsCur();
 		player->breakObject(player->ready[HELD-1], HELD);
 	}
 	return(unique);
