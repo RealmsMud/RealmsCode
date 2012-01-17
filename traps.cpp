@@ -909,7 +909,7 @@ bool resistLose(Object* object) {
 	// containers with lots of items are more resistant,
 	// since it would suck to lose a lot of items
 	if(object->getType() == CONTAINER)
-		r += object->getShotscur() * 5;
+		r += object->getShotsCur() * 5;
 
 	return(mrand(1,100) < r);
 }

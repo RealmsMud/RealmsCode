@@ -350,7 +350,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 				get_spell_name(object->getMagicpower()-1));
 		} else if(object->getType() == KEY) {
 			player->printColor("%O is a %s %s.\n", object,
-			      (object->getShotscur() < 1 ? "broken" : (object->getShotscur() > 2 ? "sturdy" : "weak")),
+			      (object->getShotsCur() < 1 ? "broken" : (object->getShotsCur() > 2 ? "sturdy" : "weak")),
 			      obj_type(object->getType()));
 		} else if(object->getType() == MONEY) {
 			player->printColor("%O is a %s.\n", object, obj_type(object->getType()));
@@ -372,19 +372,19 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 		player->print("It is worth %s", output.c_str());
 		if(object->getType() != CONTAINER && object->getType() != MONEY) {
 			player->print(", and is ", object);
-			if(object->getShotscur() >= object->getShotsmax() * .99)
+			if(object->getShotsCur() >= object->getShotsMax() * .99)
 				player->print("brand new");
-			else if(object->getShotscur() >= object->getShotsmax() * .90)
+			else if(object->getShotsCur() >= object->getShotsMax() * .90)
 				player->print("almost brand new");
-			else if(object->getShotscur() >= object->getShotsmax() * .75)
+			else if(object->getShotsCur() >= object->getShotsMax() * .75)
 				player->print("in good condition");
-			else if(object->getShotscur() >= object->getShotsmax() * .50)
+			else if(object->getShotsCur() >= object->getShotsMax() * .50)
 				player->print("almost half used up");
-			else if(object->getShotscur() >= object->getShotsmax() * .25)
+			else if(object->getShotsCur() >= object->getShotsMax() * .25)
 				player->print("in fair condition");
-			else if(object->getShotscur() >= object->getShotsmax() * .10)
+			else if(object->getShotsCur() >= object->getShotsMax() * .10)
 				player->print("in poor condition");
-			else if(object->getShotscur() == 0)
+			else if(object->getShotsCur() == 0)
 				player->print("broken or used up");
 			else
 				player->print("close to breaking");

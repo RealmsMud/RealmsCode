@@ -136,7 +136,7 @@ bool Monster::addEnemy(Creature* target, bool print) {
           return(false);
     }
     if(target->isPet()) {
-        addEnemy(target->following);
+        addEnemy(target->getMaster());
     }
 
     threatTable->adjustThreat(target, 0);
@@ -636,7 +636,7 @@ int Monster::mobWield() {
 		if(op->obj->getWearflag() == WIELD) {
 			if(	(op->obj->damage.getNumber() + op->obj->damage.getSides() + op->obj->damage.getPlus()) <
 					(damage.getNumber() + damage.getSides() + damage.getPlus())/2 ||
-				(op->obj->getShotscur() < 1)
+				(op->obj->getShotsCur() < 1)
 			) {
 				op = op->next_tag;
 				continue;
@@ -750,58 +750,26 @@ void Creature::attackDelay(long delay) {
 //*********************************************************************
 
 Creature *enm_in_group(Creature *target) {
-	Creature *leader=0, *enemy=0;
-	ctag	*cp=0;
-	int		group_count=0, chosen=0, num=0;
+	Creature *enemy=0;
+	int		chosen=0;
 
 
 	if(!target || mrand(1,100) <= 50)
 		return(target);
 
-	if(target->following && !target->following->pFlagIsSet(P_DM_INVIS))
-		leader = target->following;
-	else
-		leader = target;
+	Group* group = target->getGroup();
 
-	cp = leader->first_fol;
-	while(cp) {
-		if(	(cp->crt->pFlagIsSet(P_DM_INVIS)) ||
-			!cp->crt->inSameRoom(target)
-		) {
-			cp = cp->next_tag;
-			continue;
-		}
+	if(!group)
+	    return(target);
 
-		group_count++;
+	chosen = mrand(1, group->getSize());
 
-		cp = cp->next_tag;
-	}
+	enemy = group->getMember(chosen);
+	if(!enemy || !enemy->inSameRoom(target))
+	    enemy = target;
 
-	if(group_count <= 1)
-		return(leader);
-	else
-		chosen = mrand(1,group_count);
-
-	cp = leader->first_fol;
-	while(cp) {
-		if(	(cp->crt->pFlagIsSet(P_DM_INVIS)) ||
-			!cp->crt->inSameRoom(target)
-		) {
-			cp = cp->next_tag;
-			continue;
-		}
-		num++;
-		if(num == chosen) {
-			enemy = cp->crt;
-			break;
-		}
-
-		cp = cp->next_tag;
-	}
-
-	if(!enemy)
-		enemy = target;
 	return(enemy);
+
 }
 
 //*********************************************************************
@@ -851,11 +819,12 @@ int Monster::cleanMobForSaving() {
 //	// If the creature is possessed, clean that up
 	if(flagIsSet(M_DM_FOLLOW)) {
 		clearFlag(M_DM_FOLLOW);
-		if(following != NULL) {
-			following->clearFlag(P_ALIASING);
-			following->getPlayer()->setAlias(0);
-			following->print("%1M's soul was saved.\n", this);
-			doStopFollowing(this, FALSE);
+		Player* master;
+		if(getMaster() != NULL && (master = getMaster()->getPlayer()) != NULL) {
+		    master->clearFlag(P_ALIASING);
+		    master->getPlayer()->setAlias(0);
+		    master->print("%1M's soul was saved.\n", this);
+			removeFromGroup(false);
 		}
 	}
 
@@ -1099,7 +1068,7 @@ int Player::displayCreature(Creature* target) const {
 		oStr << consider(mTarget);
 
 		// pet code
-		if(mTarget->isPet() && mTarget->following == this) {
+		if(mTarget->isPet() && mTarget->getMaster() == this) {
 			str = listObjects(this, mTarget->first_obj, true);
 			oStr << mTarget->upHeShe() << " ";
 			if(str == "")

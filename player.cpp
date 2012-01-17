@@ -991,8 +991,8 @@ void Player::update() {
 	item = getLight();
 	if(item && item != MAXWEAR+1) {
 		if(ready[item-1]->getType() == LIGHTSOURCE) {
-			ready[item-1]->decShotscur();
-			if(ready[item-1]->getShotscur() < 1) {
+			ready[item-1]->decShotsCur();
+			if(ready[item-1]->getShotsCur() < 1) {
 				print("Your %s died out.\n", ready[item-1]->name);
 				broadcast(getSock(), room, "%M's %s died out.", this, ready[item-1]->name);
 			}
@@ -1568,7 +1568,7 @@ int Player::getLight() const {
 			continue;
 		if (ready[i]->flagIsSet(O_LIGHT_SOURCE)) {
 			if ((ready[i]->getType() == LIGHTSOURCE &&
-				ready[i]->getShotscur() > 0) ||
+				ready[i]->getShotsCur() > 0) ||
 				ready[i]->getType() != LIGHTSOURCE) {
 				light = 1;
 				break;
@@ -2396,7 +2396,7 @@ bool Player::breakObject(Object* object, int loc) {
 	if(!object)
 		return(false);
 
-	if(object->getShotscur() < 1) {
+	if(object->getShotsCur() < 1) {
 		printColor("Your %s is broken.\n", object->name);
 		broadcast(getSock(), getRoom(), "%M broke %s %s.", this, hisHer(), object->name);
 

@@ -842,7 +842,7 @@ int cmdEnvenom(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(weapon->getShotscur() < 1) {
+	if(weapon->getShotsCur() < 1) {
 		player->print("You cannot envenom a broken weapon.\n");
 		return(0);
 	}
@@ -864,7 +864,7 @@ int cmdEnvenom(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(object->getShotscur() < 1) {
+	if(object->getShotsCur() < 1) {
 		player->printColor("%O is all used up.\n", object);
 		return(0);
 	}
@@ -875,7 +875,7 @@ int cmdEnvenom(Player* player, cmd* cmnd) {
 
 
 	// TODO: make poison more powerful with better envenom skill
-	object->decShotscur();
+	object->decShotsCur();
 	weapon->setFlag(O_ENVENOMED);
 	if(object->getEffect() != "")
 		weapon->setEffect(object->getEffect());
@@ -1407,9 +1407,10 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 
 		if(	weapon && weapon->getMagicpower() &&
 			weapon->flagIsSet(O_WEAPON_CASTS) &&
-			mrand(1,100) <= 50
-		)
-			n += player->castWeapon(target, weapon, meKilled);
+			mrand(1,100) <= 50 && weapon->getChargesCur() > 0)
+		{
+		    n += player->castWeapon(target, weapon, meKilled);
+		}
 
 		if(	weapon &&
 			(	(weapon->flagIsSet(O_ENVENOMED) && player->getClass() == ASSASSIN && level >=7) ||
@@ -1469,7 +1470,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 		}
 
 		if(weapon)
-			weapon->decShotscur();
+			weapon->decShotsCur();
 		Creature::simultaneousDeath(player, target, false, false);
 
 		// only monsters flee, and not when their attacker was killed

@@ -240,7 +240,6 @@ int count_bag_inv(Creature* creature) {
 
 void free_crt(Creature* creature, bool remove) {
 	otag	*op=0, *tempo=0;
-	ctag	*cp=0, *tempc=0;
 	ttag	*tp=0, *tempt=0;
 	int	i;
 	for(i=0; i<MAXWEAR; i++) {
@@ -256,13 +255,9 @@ void free_crt(Creature* creature, bool remove) {
 		op = tempo;
 	}
 
-	cp = creature->first_fol;
-	while(cp) {
-		tempc = cp->next_tag;
-		if(cp->crt)
-			free_crt(cp->crt);
-		delete cp;
-		cp = tempc;
+	for(Monster* mons : creature->pets) {
+	    if(mons)
+	        free_crt(mons);
 	}
 
 	tp = creature->first_tlk;

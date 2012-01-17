@@ -90,6 +90,7 @@ int Player::computeAttackPower() {
 			break;
 		default:
 			attackPower = strength.getCur();
+			break;
 	}
 
 	// Check equipment here for higher attack power
@@ -724,7 +725,7 @@ bool Creature::canParry(Creature* attacker) {
 	if(t < i) {
 		return(false);
 	}
-	if(ready[WIELD-1]->getShotscur() < 1) // weapon must not be broken
+	if(ready[WIELD-1]->getShotsCur() < 1) // weapon must not be broken
 		return(false);
 
 	return(true);
@@ -1613,10 +1614,10 @@ int Creature::parry(Creature* target) {
 		}
 		if(weapon) {
 			if(!mrand(0, 3))
-				weapon->decShotscur();
+				weapon->decShotsCur();
 
 			// die check moved right before return.
-			if(weapon->getShotscur() <= 0) {
+			if(weapon->getShotsCur() <= 0) {
 				printColor("%O just broke.\n", weapon);
 				broadcast(getSock(), target->getSock(), getRoom(), "%M's just broke %P.", this, weapon);
 				unequip(WIELD);
