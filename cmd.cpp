@@ -1350,7 +1350,7 @@ int allowedWhilePetrified(bstring str) {
 // This function takes the command structure of the person at the socket
 // in the first parameter and interprets the person's command.
 
-int cmdProcess(Creature *user, cmd* cmnd, Creature* pet) {
+int cmdProcess(Creature *user, cmd* cmnd, bool pet) {
 	Player	*player=0;
 	int		fd = user->fd;
 
@@ -1358,7 +1358,7 @@ int cmdProcess(Creature *user, cmd* cmnd, Creature* pet) {
 		if(!pet) {
 			player = user->getPlayer();
 		} else
-			user = pet;
+			user = user->getPlayer()->getPet();
 	}
 
 	if(player && player->afterProf) {

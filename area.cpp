@@ -744,33 +744,33 @@ CatRef Area::getUnique(const MapMarker *mapmarker) const {
 //						move
 //*********************************************************************
 
-//void Area::move(ctag *fp, AreaRoom* room) {
-//	Creature* target=0;
-//	Player*	player=0;
-//	Monster*  monster=0;
-//	ctag	*cp = fp;
-//
-//	while(cp) {
-//		target = cp->crt;
-//		cp = cp->next_tag;
-//		player = target->getPlayer();
-//		monster = target->getMonster();
-//		if(player) {
-//			if(room) {
-//				player->addToRoom(room);
-//			} else {
-//				player->deleteFromRoom();
-//			}
-//		} else {
-//			if(room) {
-//				monster->addToRoom(room);
-//			} else {
-//				monster->deleteFromRoom();
-//			}
-//		}
-//		move(target->first_fol, room);
-//	}
-//}
+void Area::move(ctag *fp, AreaRoom* room) {
+	Creature* target=0;
+	Player*	player=0;
+	Monster*  monster=0;
+	ctag	*cp = fp;
+
+	while(cp) {
+		target = cp->crt;
+		cp = cp->next_tag;
+		player = target->getPlayer();
+		monster = target->getMonster();
+		if(player) {
+			if(room) {
+				player->addToRoom(room);
+			} else {
+				player->deleteFromRoom();
+			}
+		} else {
+			if(room) {
+				monster->addToRoom(room);
+			} else {
+				monster->deleteFromRoom();
+			}
+		}
+		move(target->first_fol, room);
+	}
+}
 
 
 // this function does not check rules for moving
@@ -873,7 +873,7 @@ AreaRoom *Area::loadRoom(const Creature* creature, const MapMarker* mapmarker, b
 	if(creature) {
 		// impassable terrain
 		if(!canPass(creature, mapmarker, true)) {
-			if(!(creature->isPet() && creature->getConstMaster()->isStaff())) {
+			if(!(creature->isPet() && creature->following->isStaff())) {
 				if(p) creature->checkStaff("You can't go there!\n");
 				if(!creature->isStaff()) return(0);
 			}

@@ -126,8 +126,8 @@ bool doFish(Player* player) {
 	// did they break the fishing pole?
 	if(pole) {
 		if(!mrand(0, 3))
-			pole->decShotsCur();
-		if(pole->getShotsCur() < 1) {
+			pole->decShotscur();
+		if(pole->getShotscur() < 1) {
 			player->breakObject(pole, HELD);
 			return(false);
 		}

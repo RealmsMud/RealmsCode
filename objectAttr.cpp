@@ -102,50 +102,25 @@ void Object::setNumAttacks(short n) { numAttacks = n; }
 //						setShotsmax
 //*********************************************************************
 
-void Object::setShotsMax(short s) { shotsMax = s; }
+void Object::setShotsmax(short s) { shotsmax = s; }
 
 //*********************************************************************
 //						setShotscur
 //*********************************************************************
 
-void Object::setShotsCur(short s) { shotsCur = s; }
+void Object::setShotscur(short s) { shotscur = s; }
 
 //*********************************************************************
 //						decShotscur
 //*********************************************************************
 
-void Object::decShotsCur(short s) { shotsCur -= s; }
+void Object::decShotscur(short s) { shotscur -= s; }
 
 //*********************************************************************
 //						incShotscur
 //*********************************************************************
 
-void Object::incShotsCur(short s) { shotsCur += s; }
-
-//*********************************************************************
-//                      setChargesMax
-//*********************************************************************
-
-void Object::setChargesMax(short s) { chargesMax = s; }
-
-//*********************************************************************
-//                      setChargesCur
-//*********************************************************************
-
-void Object::setChargesCur(short s) { chargesCur = s; }
-
-//*********************************************************************
-//                      decChargesCur
-//*********************************************************************
-
-void Object::decChargesCur(short s) { chargesCur -= s; }
-
-//*********************************************************************
-//                      incChargesCur
-//*********************************************************************
-
-void Object::incChargesCur(short s) { chargesCur += s; }
-
+void Object::incShotscur(short s) { shotscur += s; }
 
 //*********************************************************************
 //						setMagicpower
@@ -347,5 +322,5 @@ bool Object::isLightArmor() const {
 //*********************************************************************
 
 bool Object::isBroken() const {
-	return(shotsCur == 0 && shotsMax >= 0 && (type == ARMOR || type == KEY || type == WEAPON));
+	return(shotscur == 0 && shotsmax >= 0 && (type == ARMOR || type == KEY || type == WEAPON));
 }

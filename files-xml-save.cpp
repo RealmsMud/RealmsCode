@@ -630,7 +630,7 @@ void Player::saveXml(xmlNodePtr curNode) const {
 	xml::saveNonZeroNum(curNode, "Wimpy", wimpy);
 
 	childNode = xml::newStringChild(curNode, "Pets");
-	savePets(childNode);
+	savePetsXml(childNode, first_fol);
 
 	if(birthday) {
 		childNode = xml::newStringChild(curNode, "Birthday");
@@ -813,12 +813,10 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
 	xml::saveNonNullString(rootNode, "Plural", plural);
 	xml::saveNonZeroNum(rootNode, "ShopValue", shopValue);
 	xml::saveNonZeroNum(rootNode, "Adjustment", adjustment);
-	xml::saveNonZeroNum(rootNode, "ShotsMax", shotsMax);
-	xml::saveNonZeroNum(rootNode, "ChargesMax", chargesMax);
+	xml::saveNonZeroNum(rootNode, "ShotsMax", shotsmax);
 	// NOTE: This is saved even if zero so that it loads broken items
 	// properly.
-	xml::newNumChild(rootNode, "ShotsCur", shotsCur);
-	xml::newNumChild(rootNode, "ChargesCur", chargesCur);
+	xml::newNumChild(rootNode, "ShotsCur", shotscur);
 	xml::saveNonZeroNum(rootNode, "Armor", armor);
 	xml::saveNonZeroNum(rootNode, "NumAttacks", numAttacks);
 	xml::saveNonZeroNum(rootNode, "Delay", delay);
@@ -1172,17 +1170,19 @@ int saveCreaturesXml(xmlNodePtr parentNode, ctag* cp, int permOnly) {
 }
 
 //*********************************************************************
-//						savePets
+//						savePetsXml
 //*********************************************************************
 
-void Creature::savePets(xmlNodePtr parentNode) const {
+int savePetsXml(xmlNodePtr parentNode, ctag* cp) {
 	xmlNodePtr curNode;
-
-	for(Creature* pet : pets) {
-	    curNode = xml::newStringChild(parentNode, "Creature");
-	    pet->saveToXml(curNode, ALLITEMS, LS_FULL);
+	while(cp) {
+		if(cp->crt && cp->crt->isPet()) {
+			curNode = xml::newStringChild(parentNode, "Creature");
+			cp->crt->saveToXml(curNode, ALLITEMS, LS_FULL);
+		}
+		cp = cp->next_tag;
 	}
-	return;
+	return(0);
 }
 
 //*********************************************************************

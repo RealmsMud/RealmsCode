@@ -117,7 +117,7 @@ Object::Object() {
 	memset(key, 0, sizeof(key));
 	memset(use_output, 0, sizeof(use_output));
 	memset(use_attack, 0, sizeof(use_attack));
-	weight = type = adjustment = shotsMax = shotsCur = armor =
+	weight = type = adjustment = shotsmax = shotscur = armor =
 		wearflag = magicpower = level = requiredSkill = clan =
 		special = delay = quality = effectStrength = effectDuration = 0;
 	memset(flags, 0, sizeof(flags));
@@ -220,8 +220,8 @@ void Object::doCopy(const Object& o) {
 	weight = o.weight;
 	type = o.type;
 	adjustment = o.adjustment;
-	shotsMax = o.shotsMax;
-	shotsCur = o.shotsCur;
+	shotsmax = o.shotsmax;
+	shotscur = o.shotscur;
 	damage = o.damage;
 	armor = o.armor;
 	wearflag = o.wearflag;
@@ -340,8 +340,8 @@ bool Object::operator==(const Object& o) const {
 		weight != o.weight ||
 		type != o.type ||
 		adjustment != o.adjustment ||
-		shotsMax != o.shotsMax ||
-		shotsCur != o.shotsCur ||
+		shotsmax != o.shotsmax ||
+		shotscur != o.shotscur ||
 		damage != o.damage ||
 		armor != o.armor ||
 		wearflag != o.wearflag ||
@@ -993,6 +993,12 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 	std::ostringstream objStr;
 	bstring toReturn = "";
 	char ch;
+//	int mobNum=0;
+//
+
+//
+//	str = xstr[xnum];
+//	xnum = (xnum + 1)%5;
 
 	if(!this)
 		return("(NULL OBJ)");

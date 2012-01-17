@@ -267,10 +267,10 @@ int cmdBrew(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(mortar->getShotsCur() < 1) {
+	if(mortar->getShotscur() < 1) {
 		player->print("You don't have enough herbs in there to brew anything.\n");
 		return(0);
-	} else if(mortar->getShotsCur() < 2 && skillLevel < 300) {
+	} else if(mortar->getShotscur() < 2 && skillLevel < 300) {
 		player->print("You need at least two herbs to brew something.");
 		return(0);
 	}
@@ -280,7 +280,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 	// Skill level can be 1-100
 	otag* op = 0;
 	std::map<bstring, AlchemyEffect> effects;
-	if(mortar->getShotsCur() >= 2) {
+	if(mortar->getShotscur() >= 2) {
 		std::map<bstring, int> effectCount;
 		int visibleEffects = Alchemy::getVisibleEffects(skillLevel);
 
@@ -326,7 +326,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 	}  // end if
 	// We'll be using just one herb, so it'll be the first effect
 	// To get here, we have to have 100 skill
-	else if(mortar->getShotsCur() == 1) {
+	else if(mortar->getShotscur() == 1) {
 		AlchemyEffect &ae = mortar->first_obj->obj->alchemyEffects[1];
 		effects[ae.getEffect()] = ae;
 		player->printColor("Brewing a single effect potion: ^Y%s^x\n", ae.getEffect().c_str());

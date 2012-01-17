@@ -255,7 +255,7 @@ void Creature::poison(Creature *enemy, unsigned int damagePerPulse, unsigned int
 			}
 
 			if(enemy->isPet())
-				setPoisonedBy(enemy->getMaster()->name);
+				setPoisonedBy(enemy->following->name);
 			else if(enemy->isMonster() && !enemy->flagIsSet(M_NO_PREFIX))
 				setPoisonedBy((bstring)"a " + enemy->name);
 			else if(this == enemy)
@@ -268,7 +268,7 @@ void Creature::poison(Creature *enemy, unsigned int damagePerPulse, unsigned int
 			if(enemy->isPlayer())
 				setPoisonedBy(enemy->name);
 			else if(enemy->isPet())
-				setPoisonedBy(enemy->getMaster()->name);
+				setPoisonedBy(enemy->following->name);
 			else if(enemy->isMonster() && !enemy->flagIsSet(M_NO_PREFIX))
 				setPoisonedBy((bstring)"a " + enemy->name);
 			else

@@ -471,10 +471,10 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 			loadSavingThrows(curNode, saves);
 		}
 		else if(NODE_NAME(curNode, "Inventory")) {
-			readObjects(curNode);
+			readObjectsXml(curNode, this, CRT);
 		}
 		else if(NODE_NAME(curNode, "Pets")) {
-			readCreatures(curNode);
+			readCreaturesXml(curNode, this, CRT);
 		}
 		else if(NODE_NAME(curNode, "AreaRoom")) gConfig->areaInit(this, curNode);
 		else if(NODE_NAME(curNode, "Size")) setSize(whatSize(xml::toNum<int>(curNode)));
@@ -979,10 +979,8 @@ int Object::readFromXml(xmlNodePtr rootNode) {
 		else if(NODE_NAME(curNode, "Type")) xml::copyToNum(type, curNode);
 		else if(NODE_NAME(curNode, "SubType")) xml::copyToBString(subType, curNode);
 		else if(NODE_NAME(curNode, "Adjustment")) xml::copyToNum(adjustment, curNode);
-		else if(NODE_NAME(curNode, "ShotsMax")) xml::copyToNum(shotsMax, curNode);
-		else if(NODE_NAME(curNode, "ShotsCur")) xml::copyToNum(shotsCur, curNode);
-		else if(NODE_NAME(curNode, "ChargesMax")) xml::copyToNum(chargesMax, curNode);
-		else if(NODE_NAME(curNode, "ChargesCur")) xml::copyToNum(chargesCur, curNode);
+		else if(NODE_NAME(curNode, "ShotsMax")) xml::copyToNum(shotsmax, curNode);
+		else if(NODE_NAME(curNode, "ShotsCur")) xml::copyToNum(shotscur, curNode);
 		else if(NODE_NAME(curNode, "Armor")) xml::copyToNum(armor, curNode);
 		else if(NODE_NAME(curNode, "WearFlag")) xml::copyToNum(wearflag, curNode);
 		else if(NODE_NAME(curNode, "MagicPower")) xml::copyToNum(magicpower, curNode);
@@ -1024,7 +1022,7 @@ int Object::readFromXml(xmlNodePtr rootNode) {
 			loadLastTimes(curNode, lasttime);
 		}
 		else if(NODE_NAME(curNode, "SubItems")) {
-			readObjects(curNode);
+			readObjectsXml(curNode, this, OBJ);
 		}
 		else if(NODE_NAME(curNode, "Compass")) {
 			if(!compass)
@@ -1072,12 +1070,6 @@ int Object::readFromXml(xmlNodePtr rootNode) {
 		curNode = curNode->next;
 	}
 
-	if(version < "2.46j") {
-	    // Version 2.46j added charges for casting weapons, versions before that
-	    // used shots.  Initialize charges as 1/3rd of shots
-	    chargesMax = shotsMax / 3;
-	    chargesCur = shotsCur /3;
-	}
 	// make sure uniqueness stays intact
 	setFlag(O_UNIQUE);
 	if(!gConfig->getUnique(this))
@@ -1137,10 +1129,10 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode) {
 			loadLastTimes(curNode, lasttime);
 		}
 		else if(NODE_NAME(curNode, "Objects")) {
-			readObjects(curNode);
+			readObjectsXml(curNode, this, ROOM);
 		}
 		else if(NODE_NAME(curNode, "Creatures")) {
-			readCreatures(curNode);
+			readCreaturesXml(curNode, this, ROOM);
 		}
 		else if(NODE_NAME(curNode, "Exits")) {
 			readExitsXml(curNode);
@@ -1224,22 +1216,15 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room) {
 }
 
 //*********************************************************************
-//						readObjects
+//						readObjectsXml
 //*********************************************************************
-// Reads in objects and objrefs and adds them to the parent
+// Reads in objects and objrefs and adds them to parent of given type
 
-void MudObject::readObjects(xmlNodePtr curNode) {
+void readObjectsXml(xmlNodePtr curNode, void* parent, int type) {
 	xmlNodePtr childNode = curNode->children;
 	Object* object=0, *object2=0;
 	CatRef	cr;
 	int		i=0,quantity=0;
-
-	Creature* cParent = getCreature();
-//  Monster* mParent = parent->getMonster();
-//  Player* pParent = parent->getPlayer();
-    UniqueRoom* rParent = getUniqueRoom();
-    Object* oParent = getObject();
-
 
 	while(childNode) {
 		object = 0;
@@ -1282,12 +1267,12 @@ void MudObject::readObjects(xmlNodePtr curNode) {
 					*object2 = *object;
 				}
 				// Add it to the appropriate parent
-				if(oParent) {
-					oParent->addObj(object2);
-				} else if(cParent) {
-					cParent->addObj(object2);
-				} else if(rParent) {
-					object2->addToRoom(rParent);
+				if(type == OBJ) {
+					((Object*)parent)->addObj(object2);
+				} else if(type == PLY || type == CRT) {
+					((Creature *)parent)->addObj(object2);
+				} else if(type == ROOM) {
+					object2->addToRoom((UniqueRoom*)parent);
 				}
 			}
 		}
@@ -1296,20 +1281,14 @@ void MudObject::readObjects(xmlNodePtr curNode) {
 }
 
 //*********************************************************************
-//						readCreatures
+//						readCreaturesXml
 //*********************************************************************
-// Reads in creatures and crts refs and adds them to the parent
+// Reads in creatures and crts refs and adds them to parent of given type
 
-void MudObject::readCreatures(xmlNodePtr curNode) {
+void readCreaturesXml(xmlNodePtr curNode, void* parent, int type) {
 	xmlNodePtr childNode = curNode->children;
 	Monster *mob=0;
 	CatRef	cr;
-
-	Creature* cParent = getCreature();
-//	Monster* mParent = parent->getMonster();
-//	Player* pParent = parent->getPlayer();
-	UniqueRoom* rParent = getUniqueRoom();
-	Object* oParent = getObject();
 
 	while(childNode) {
 		mob = NULL;
@@ -1333,13 +1312,13 @@ void MudObject::readCreatures(xmlNodePtr curNode) {
 		}
 		if(mob != NULL) {
 			// Add it to the appropriate parent
-			if(cParent) {
-			    // If we have a creature parent, we must be a pet
-			    cParent->addPet(mob);
-			} else if(rParent) {
-				mob->addToRoom(rParent, 0);
-			} else if(oParent) {
-				// TODO: Not currently implemented
+			if(type == PLY || type == CRT) {
+				addFollower((Creature *) parent, mob, FALSE);
+				//add_crt_crt(crt, (Creature *)parent);
+			} else if(type == ROOM) {
+				mob->addToRoom((UniqueRoom*)parent, 0);
+			} else if(type == OBJ) {
+				// Umm, not implemented? Lets put this big ass goblin in my ivory coffer...yah....
 			}
 		}
 		childNode = childNode->next;

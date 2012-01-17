@@ -334,6 +334,11 @@ int dmSurname(Player* player, cmd* cmnd) {
 
 int dmGroup(Player* player, cmd* cmnd) {
 	Creature *target=0;
+	ctag	*cp=0;
+	char	str[2048];
+
+
+	str[0] = 0;
 
 	if(cmnd->num < 2) {
 		player->print("Show who's group?\n");
@@ -352,29 +357,26 @@ int dmGroup(Player* player, cmd* cmnd) {
 		return(PROMPT);
 	}
 
-	std::ostringstream oStr;
+	player->print("%M is following: %s\n", target, (target->following) ?
+			target->following->name : "no one");
 
-	Group* group = target->getGroup(false);
-	if(group) {
-	    if(target->getGroupStatus() == GROUP_INVITED) {
-	        oStr << "Invited to join " << group->getName() << " (" << group->getLeader()->getName() << ")." << std::endl;
-	    } else {
-	        switch(target->getGroupStatus()) {
-	            case GROUP_MEMBER:
-	                oStr << "Member of ";
-	                break;
-	            case GROUP_LEADER:
-	                oStr << "Leader of ";
-	                break;
-	            default:
-	                oStr << "Unknown in ";
-	                break;
-	        }
-	        oStr << group;
-        }
-	} else {
-	    player->print("%M is not a member of a group.\n", target);
+	cp = target->first_fol;
+	player->print("%M group: ", target);
+	if(!cp) {
+		player->print("None.\n");
+		return(0);
 	}
+
+	while(cp) {
+		strcat(str, cp->crt->name);
+		strcat(str, ", ");
+		cp = cp->next_tag;
+	}
+
+
+	str[strlen(str)-2] = 0;
+	player->print("%s.\n", str);
+
 	return(0);
 }
 
@@ -974,8 +976,8 @@ int dmPut(Player* player, cmd* cmnd) {
 		}
 
 
-		if((container->getShotsCur() + 1) > container->getShotsMax()) {
-			player->printColor("You will exceed the maximum allowed items for %P(%d).\n", container->name, container->getShotsMax());
+		if((container->getShotscur() + 1) > container->getShotsmax()) {
+			player->printColor("You will exceed the maximum allowed items for %P(%d).\n", container->name, container->getShotsmax());
 			player->print("Aborted.\n");
 			if(!online)
 				free_crt(target);
@@ -983,7 +985,7 @@ int dmPut(Player* player, cmd* cmnd) {
 		}
 
 		player->delObj(object, false, false, true, true, true);
-		container->incShotsCur();
+		container->incShotscur();
 		container->addObj(object);
 		Limited::addOwner(target, object);
 
@@ -2079,15 +2081,15 @@ int dmRepair(Player* player, cmd* cmnd) {
 
 		if(check) {
 			player->print("%s: [%d/%d](%2f)\n", creature->ready[a]->name,
-			      creature->ready[a]->getShotsCur(), creature->ready[a]->getShotsMax(),
-			      ((float)creature->ready[a]->getShotsCur()/(float)creature->ready[a]->getShotsMax()));
+			      creature->ready[a]->getShotscur(), creature->ready[a]->getShotsmax(),
+			      ((float)creature->ready[a]->getShotscur()/(float)creature->ready[a]->getShotsmax()));
 			continue;
 		}
-		if(creature->ready[a]->getShotsCur() < creature->ready[a]->getShotsMax()) {
-			creature->ready[a]->setShotsCur(creature->ready[a]->getShotsMax());
+		if(creature->ready[a]->getShotscur() < creature->ready[a]->getShotsmax()) {
+			creature->ready[a]->setShotscur(creature->ready[a]->getShotsmax());
 
 			player->print("%s's %s repaired to full shots (%d/%d).\n", creature->name, creature->ready[a]->name,
-			      creature->ready[a]->getShotsCur(), creature->ready[a]->getShotsMax());
+			      creature->ready[a]->getShotscur(), creature->ready[a]->getShotsmax());
 			count++;
 
 		}

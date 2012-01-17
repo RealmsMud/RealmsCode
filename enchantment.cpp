@@ -332,7 +332,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		// Pets are immune.
 		if(target->isPet()) {
-			player->print("%M's %s is too loyal to be magically scared.\n", target->getMaster(), target->name);
+			player->print("%M's %s is too loyal to be magically scared.\n", target->following, target->name);
 			return(0);
 		}
 
@@ -839,8 +839,8 @@ int splEnchant(Creature* player, cmd* cmnd, SpellData* spellData) {
 	object->setAdjustment(MAX(adj, object->getAdjustment()));
 
 	if(object->getType() == WEAPON) {
-		object->setShotsMax(object->getShotsMax() + adj * 10);
-		object->incShotsCur(adj * 10);
+		object->setShotsmax(object->getShotsmax() + adj * 10);
+		object->incShotscur(adj * 10);
 	}
 	object->value.set(500 * adj, GOLD);
 

@@ -284,6 +284,11 @@ int talk_crt_act(char *str, ttag *tlk);
 // gods.cpp
 //int checkGodKill(Player *killer, Player *victim);
 
+// groups.cpp
+int addFollower(Creature * pCreature, Creature *pFollower, int notify);
+int doStopFollowing(Creature *pCreature, int notify);
+int doLose(Creature * pCreature, Creature * pFollower, int notify);
+
 // global.cpp
 
 // guilds.cpp
@@ -512,6 +517,7 @@ CatRef getEtherealTravelRoom();
 void etherealTravel(Player* player);
 int cmdSurname(Player* player, cmd* cmnd);
 void doSurname(Socket* sock, char *str);
+void remFromGroup(Creature* player);
 int cmdVisible(Player* player, cmd* cmnd);
 int cmdDice(Creature* player, cmd* cmnd);
 int cmdChooseAlignment(Player* player, cmd* cmnd);

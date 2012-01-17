@@ -23,8 +23,6 @@
 class Recipe {
 public:
 	Recipe();
-	friend std::ostream& operator<<(std::ostream& out, Recipe& recipe);
-	friend std::ostream& operator<<(std::ostream& out, Recipe* recipe);
 	void	save(xmlNodePtr rootNode) const;
 	void	load(xmlNodePtr curNode);
 	void	saveList(xmlNodePtr curNode, bstring name, const std::list<CatRef>* list) const;
@@ -34,7 +32,7 @@ public:
 	bool	check(std::list<CatRef>* list, const std::list<CatRef>* require, int numIngredients) const;
 	bool	isSkilled(const Player* player, Size recipeSize) const;
 	bstring listIngredients(const std::list<CatRef>* list) const;
-	bstring display();
+	void 	display(const Player* player);
 	bool	canUseEquipment(const Player* player, bstring skill) const;
 	bool	canBeEdittedBy(const Player* player) const;
 

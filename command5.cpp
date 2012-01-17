@@ -914,6 +914,7 @@ void showAbility(Player* player, const char *skill, const char *display, int lt,
 
 int cmdTime(Player* player, cmd* cmnd) {
 	long	t = time(0), u=0, tmp=0, i=0;
+	ctag	*cp=0;
 	const CatRefInfo* cri = gConfig->getCatRefInfo(player->getRoom(), 1);
 	bstring world = "";
 
@@ -1019,18 +1020,20 @@ int cmdTime(Player* player, cmd* cmnd) {
 
 		// All those confusing defines, i'll make up my own code
 		i = 0;
-		for(Monster* pet : player->pets) {
-			if(pet->isMonster() && pet->isPet()) {
+		cp = player->first_fol;
+		while(cp) {
+			if(cp->crt->isMonster() && cp->crt->isPet()) {
 				i = 1;
-				if(pet->isUndead())
+				if(cp->crt->isUndead())
 					player->print("Time left before creature following you leaves/fades: %s\n",
-						timestr(pet->lasttime[LT_ANIMATE].ltime+pet->lasttime[LT_ANIMATE].interval-t));
+						timestr(cp->crt->lasttime[LT_ANIMATE].ltime+cp->crt->lasttime[LT_ANIMATE].interval-t));
 				else
 					player->print("Time left before creature following you leaves/fades: %s\n",
-						timestr(pet->lasttime[LT_INVOKE].ltime+pet->lasttime[LT_INVOKE].interval-t));
+						timestr(cp->crt->lasttime[LT_INVOKE].ltime+cp->crt->lasttime[LT_INVOKE].interval-t));
 
 				//TIMEUNTIL("hire",LT_INVOKE,player->lasttime[LT_INVOKE].interval);
 			}
+			cp = cp->next_tag;
 		}
 
 		// only show how long until next if they don't have a pet already

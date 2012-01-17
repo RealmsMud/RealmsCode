@@ -150,13 +150,10 @@ bstring Object::statObj(int statFlags) {
 	}
 
 	
-	objStr << "Shots: " << shotsCur << "/" <<  shotsMax << " ";
-	if(chargesMax != 0)
-	    objStr << " Charges: " << chargesCur << "/" << chargesMax;
-	objStr << "\n";
+	objStr << "Shots: " << shotscur << "/" <<  shotsmax<< "\n";
 
 	if(type == LIGHTSOURCE)
-		objStr << "^WThis light source will last for approximately " << (MAX(1, shotsCur) * 20 - 10) << " seconds.^x\n";
+		objStr << "^WThis light source will last for approximately " << (MAX(1, shotscur) * 20 - 10) << " seconds.^x\n";
 
 	if(compass)
 		objStr << "Compass: ^y" << compass->str() << "^x\n";
@@ -382,6 +379,9 @@ bstring Object::statObj(int statFlags) {
 
 
 int stat_obj(Player* player, Object* object) {
+//	char	temp[100], flagstr[2048], tempstr[32],adj[6];
+//	int		flagcount=0, loop=0, maxflags=0;
+
 	if(!player->canBuildObjects())
 		return(cmdNoAuth(player));
 
@@ -933,7 +933,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 
 			object->in_bag[num-1].id = cmnd->val[3];
 
-			object->setShotsMax(MAX(num, object->getShotsMax()));
+			object->setShotsmax(MAX(num, object->getShotsmax()));
 			player->print("Loadable container object %s set to item number %s.\n",
 				object->info.str().c_str(), object->in_bag[num-1].str().c_str());
 			log_immort(2, player, "%s set container %s(%s) to load object %s.\n",
@@ -1024,8 +1024,8 @@ int dmSetObj(Player* player, cmd* cmnd) {
 		} else if(flags[1] == 'm') {
 			num = MAX(0, MIN(num,5000));
 			
-			object->setShotsMax(num);
-			result = object->getShotsMax();
+			object->setShotsmax(num);
+			result = object->getShotsmax();
 			setType = "Max Shots";
 		} else if(flags[1] == 'p') {
 			num=MAX(0, MIN(num, MAX_SP));
@@ -1070,8 +1070,8 @@ int dmSetObj(Player* player, cmd* cmnd) {
 		} else if(flags[1] == 'c' || !flags[1]) {
 			num=MAX(0, MIN(num, 5000));
 
-			object->setShotsCur(num);
-			result = object->getShotsCur();
+			object->setShotscur(num);
+			result = object->getShotscur();
 			setType = "Current Shots";
 		} else {
 			return(setWhich(player, "size, shots, sm (shots max), special, strength, subtype, shopvalue, skill"));

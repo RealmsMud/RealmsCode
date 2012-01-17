@@ -69,7 +69,7 @@ int cmdAttack(Creature* creature, cmd* cmnd) {
     Monster* pet = creature->getMonster();
     if(pet) {
         if(cmnd->num < 2) {
-            pet->getMaster()->print("%M stops attacking.\n", pet);
+            creature->following->print("%M stops attacking.\n", pet);
             pet->clearEnemyList();
             return(0);
         }
@@ -85,25 +85,27 @@ int cmdAttack(Creature* creature, cmd* cmnd) {
 
 	// pet attack
 	if(!pPlayer) {
+		Monster* pet = creature->getMonster();
 		if(pet) {
-			pet->smashInvis();
-			pet->getMaster()->smashInvis();
+			creature->smashInvis();
+			creature->following->smashInvis();
 
             if(pet->isEnemy(victim)) {
-                pet->getMaster()->print("%M will stop attacking %N.\n", pet, victim);
+                creature->following->print("%M will stop attacking %N.\n", pet, victim);
                 pet->clearEnemy(victim);
             } else {
-                creature->getMaster()->print("%M attacks %N.\n", pet, victim);
-                broadcast(creature->getMaster()->getSock(), pet->getRoom(), "%M tells %N to attack %N.",
-                    pet->getMaster(), pet, victim);
+                creature->following->print("%M attacks %N.\n", pet, victim);
+                broadcast(creature->following->getSock(), pet->getRoom(), "%M tells %N to attack %N.",
+                    pet->following, pet, victim);
                 pet->addEnemy(victim);
 
+                creature->smashInvis();
                 if(!pVictim) {
                     // monster will attack the owner if their pet attacks
-                    ((Monster*)victim)->addEnemy(pet->getMaster());
+                    ((Monster*)victim)->addEnemy(pet->following);
                     // Activates lag protection.
-                    if(pet->getMaster()->flagIsSet(P_LAG_PROTECTION_SET))
-                        pet->getMaster()->setFlag(P_LAG_PROTECTION_ACTIVE);
+                    if(pet->following->flagIsSet(P_LAG_PROTECTION_SET))
+                        pet->following->setFlag(P_LAG_PROTECTION_ACTIVE);
                 }
 			}
 		}
@@ -121,6 +123,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
 	Creature *check=0;
 	Player	*pCheck=0, *pThis = getPlayer();
 	bool	holy_war=false;
+	ctag	*cp=0;
 	bstring verb = stealing ? "steal from" : "attack";
 
 	ASSERTLOG( target );
@@ -128,11 +131,11 @@ bool Creature::canAttack(Creature* target, bool stealing) {
 	// monsters don't use this function, but pets have to obey their masters
 	if(!pThis) {
 		if(isPet()) {
-			if(target == getMaster()) {
-				getMaster()->print("Pets cannot %s their masters.\n", verb.c_str());
+			if(target == following) {
+				following->print("Pets cannot %s their masters.\n", verb.c_str());
 				return(false);
 			}
-			return(getMaster()->canAttack(target));
+			return(following->canAttack(target));
 		} else
 			return(true);
 	}
@@ -147,7 +150,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
 
 	// if they're trying to kill the pet, we should check the player
 	// for PK-ability
-	check = target->isPet() ? target->getMaster() : target;
+	check = target->isPet() ? target->following : target;
 	pCheck = check->getPlayer();
 
 
@@ -320,19 +323,23 @@ bool Creature::canAttack(Creature* target, bool stealing) {
 
 
 	if(!stealing && pThis && target->isPlayer()) {
-	    for(Monster* pet : target->pets) {
-            if(pet && pet->isPet() &&
-                pet->getMaster() == target &&
-                this != target->getMaster())
-            {
-                if(!pet->isEnemy(this)) {
-                    pet->addEnemy(this);
+		cp = target->first_fol;
+		Monster* pet = 0;
+		while(cp) {
+			pet = cp->crt->getMonster();
+			if(pet && pet->isPet() &&
+				pet->following == target &&
+				this != target->following)
+			{
+				if(!pet->isEnemy(this)) {
+					pet->addEnemy(this);
 
-                    broadcast(target->getSock(), getRoom(), "%M stands loyally before its master!", pet);
-                }
-                break;
-            }
-	    }
+					broadcast(target->getSock(), getRoom(), "%M stands loyally before its master!", cp->crt);
+				}
+				break;
+			}
+			cp = cp->next_tag;
+		}
 	}
 
 	return(true);
@@ -665,7 +672,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 
 				meKilled = doReflectionDamage(attackDamage, victim);
 
-				if(!meKilled && weapon && weapon->getMagicpower() && weapon->flagIsSet(O_WEAPON_CASTS) && weapon->getChargesCur() > 0)
+				if(!meKilled && weapon && weapon->getMagicpower() && weapon->flagIsSet(O_WEAPON_CASTS))
 					wcdmg += castWeapon(victim, weapon, wasKilled);
 
 				broadcastGroup(false, victim, "^M%M^x %s ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n", this, atk,
@@ -674,7 +681,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 				statistics.attackDamage(attackDamage.get()+drain, Statistics::damageWith(this, weapon));
 
 				if(weapon && !mrand(0, 3))
-					weapon->decShotsCur();
+					weapon->decShotscur();
 
 
 				checkWeapon(this, &weapon, false, &loc, &attacks, &wielding, multiWeapon);
@@ -845,13 +852,8 @@ int Creature::castWeapon(Creature* target, Object *weapon, bool &meKilled) {
 		return(0);
 
 	splno = weapon->getMagicpower() - 1;
-	// Do we have sufficient charges to cast?
-	if(weapon->getChargesCur() <= 0)
-	    return(0);
-
 	if(splno < 0)
-	    return(0);
-
+		return(0);
 	fn = get_spell_function(splno);
 	spellname = get_spell_name(splno);
 	for(c = 0; ospell[c].splno != get_spell_num(splno); c++)
@@ -867,10 +869,10 @@ int Creature::castWeapon(Creature* target, Object *weapon, bool &meKilled) {
 			if( (target->flagIsSet(M_NO_LEVEL_FOUR) && slvl <= 4) ||
 				(target->flagIsSet(M_NO_LEVEL_THREE) && slvl <= 3) ||
 				(target->flagIsSet(M_NO_LEVEL_TWO) && slvl <= 2) ||
-				(target->flagIsSet(M_NO_LEVEL_ONE) && slvl <= 1))
-			{
+				(target->flagIsSet(M_NO_LEVEL_ONE) && slvl <= 1)
+			) {
 				printColor("^yYour %s's %s spell fails!\n", weapon->name, spellname);
-				weapon->decShotsCur();
+				weapon->decShotscur();
 				return(0);
 			}
 		}
@@ -893,7 +895,7 @@ int Creature::castWeapon(Creature* target, Object *weapon, bool &meKilled) {
 
 		meKilled = doReflectionDamage(attackDamage, target);
 
-		weapon->decChargesCur();
+		weapon->decShotscur();
 	}
 	return(attackDamage.get());
 }

@@ -1591,7 +1591,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(object->getShotsCur() < 1) {
+	if(object->getShotscur() < 1) {
 		player->printColor("%O is broken.\n", object);
 		return(0);
 	}
@@ -1613,7 +1613,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 
 	exit->clearFlag(X_LOCKED);
 	exit->ltime.ltime = time(0);
-	object->decShotsCur();
+	object->decShotscur();
 
 	if(object->use_output[0])
 		player->print("%s\n", object->use_output);
@@ -1623,7 +1623,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 
 	Hooks::run(player, "unlockExit", exit, "unlockByCreature");
 
-	if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
+	if(object->getShotscur() < 1 && Unique::isUnique(object)) {
 		player->delObj(object, true);
 		delete object;
 	}
@@ -1697,7 +1697,7 @@ int cmdLock(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(object->getShotsCur() < 1) {
+	if(object->getShotscur() < 1) {
 		player->printColor("%O is broken.\n", object);
 		return(0);
 	}
@@ -1723,7 +1723,7 @@ int cmdLock(Player* player, cmd* cmnd) {
 
 	Hooks::run(player, "lockExit", exit, "lockByCreature");
 
-	if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
+	if(object->getShotscur() < 1 && Unique::isUnique(object)) {
 		player->delObj(object, true);
 		delete object;
 	}

@@ -1086,7 +1086,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 
 		if(player->getClass() == LICH) {
 			player->print("Liches don't bleed. Stop wasting your time and regenerate!\n");
-			object->decShotsCur();
+			object->decShotscur();
 			return(0);
 		}
 
@@ -1095,7 +1095,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		if(object->getShotsCur() < 1) {
+		if(object->getShotscur() < 1) {
 			player->print("You can't bandage yourself with that. It's used up.\n");
 			return(0);
 		}
@@ -1111,7 +1111,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		object->decShotsCur();
+		object->decShotscur();
 
 		heal = object->damage.roll();
 
@@ -1119,7 +1119,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 		player->print("You regain %d hit points.\n", heal);
 
 
-		if(object->getShotsCur() < 1)
+		if(object->getShotscur() < 1)
 			player->printColor("Your %s %s all used up.\n", object->name,
 			      (object->flagIsSet(O_SOME_PREFIX) ? "are":"is"));
 
@@ -1157,7 +1157,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		if(object->getShotsCur() < 1) {
+		if(object->getShotscur() < 1) {
 			player->print("You can't bandage %N with that. It's used up.\n", creature);
 			return(0);
 		}
@@ -1170,7 +1170,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 
 		if(creature->getClass() == LICH) {
 			player->print("The aura of death around %N causes bandaging to fail.\n",creature);
-			object->decShotsCur();
+			object->decShotscur();
 			return(0);
 		}
 
@@ -1197,7 +1197,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 		}
 
 
-		object->decShotsCur();
+		object->decShotscur();
 
 		heal = object->damage.roll();
 
@@ -1206,7 +1206,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 		player->print("%M regains %d hit points.\n", creature, heal);
 
 
-		if(object->getShotsCur() < 1)
+		if(object->getShotscur() < 1)
 			player->printColor("Your %s %s all used up.\n", object->name,
 			      (object->flagIsSet(O_SOME_PREFIX) ? "are":"is"));
 

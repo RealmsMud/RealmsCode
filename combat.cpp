@@ -50,8 +50,7 @@ int Monster::updateCombat() {
 	Creature* target=0;
 	Player*	pTarget=0;
 	Monster* mTarget=0;
-	//ctag*	cp=0, *amp=0;
-	ctag   *amp=0;
+	ctag*	cp=0, *amp=0;
 	char	atk[30];
 	int		n=1, rtn=0, yellchance=0, num=0, breathe=0;
 	int		x=0;
@@ -73,10 +72,10 @@ int Monster::updateCombat() {
 	mTarget = target->getMonster();
 
 	// If we're fighting a pet, see if we'll ignore the pet and attack a player instead
-	if(target->isPet() && target->getMaster()) {
-		if(target->inSameRoom(target->getMaster())) {
+	if(target->isPet() && target->following) {
+		if(target->inSameRoom(target->following)) {
 			if(mrand(1,100) < 20 || target->intelligence.getCur() >= 150 || target->flagIsSet(M_KILL_MASTER_NOT_PET)) {
-				target = target->getMaster();
+				target = target->following;
 				addEnemy(target);
 			}
 		}
@@ -85,7 +84,7 @@ int Monster::updateCombat() {
 	// No fighting in a safe room!
 	if(	pTarget &&
 		isPet() &&
-		!getMaster()->isCt() &&
+		!following->isCt() &&
 		getRoom()->isPkSafe()
 	)
 		return(0);
@@ -202,14 +201,17 @@ int Monster::updateCombat() {
 
 // Don't jump to your aid if it is itself...lol
 	if(pTarget) {
-	    for(Monster* pet : pTarget->pets) {
-			if(	pet->isPet() && pet->getMaster() == pTarget &&
-				!pet->isEnemy(this) && pet != this)
+		cp = pTarget->first_fol;
+		while(cp) {
+			if(	cp->crt->isPet() && cp->crt->following == pTarget &&
+				!cp->crt->getMonster()->isEnemy(this) && cp->crt != this)
 			{
+				Monster* pet = cp->crt->getMonster();
 				pet->addEnemy(findFirstEnemyCrt(this, pet));
 				pTarget->print("%M jumps to your aid!!\n", pet);
 				break;
 			}
+			cp = cp->next_tag;
 		}
 	}
 
@@ -264,7 +266,7 @@ int Monster::updateCombat() {
 			!casted &&
 			(target->flagIsSet(M_ONLY_HARMED_BY_MAGIC) || immunePet))
 		{
-			getMaster()->print("%M's attack has no effect on %N.\n", this, target);
+			following->print("%M's attack has no effect on %N.\n", this, target);
 			return(0);
 		}
 	}
@@ -282,7 +284,7 @@ int Monster::updateCombat() {
 		}
 	} else {
 		// We are a pet, and we're attacking.  Smash invis of our owner.
-		getMaster()->smashInvis();
+		following->smashInvis();
 	}
 
 
@@ -328,7 +330,7 @@ int Monster::updateCombat() {
 		}
 
 		if(ready[WIELD - 1]) {
-			if(ready[WIELD - 1]->getMagicpower() && ready[WIELD - 1]->flagIsSet(O_WEAPON_CASTS) && ready[WIELD - 1]->getChargesCur() > 0)
+			if(ready[WIELD - 1]->getMagicpower() && ready[WIELD - 1]->flagIsSet(O_WEAPON_CASTS))
 				attackDamage.add(castWeapon(target, ready[WIELD - 1], wasKilled));
 		}
 
@@ -339,10 +341,10 @@ int Monster::updateCombat() {
 			target->pSetFlag(P_LAG_PROTECTION_ACTIVE); // lagprotect auto-activated on being hit.
 
 		if(target->isPet())
-			target->getMaster()->printColor("%M hit ^M%N^x for %s%d^x damage.\n", this, target, target->getMaster()->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+			target->following->printColor("%M hit ^M%N^x for %s%d^x damage.\n", this, target, target->following->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
 
 		if(isPet()) {
-			getMaster()->printColor("%M hit %N for %s%d^x damage.\n", this, target, getMaster()->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+			following->printColor("%M hit %N for %s%d^x damage.\n", this, target, following->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
 
 			castDelay(PET_CAST_DELAY);
 
@@ -452,7 +454,7 @@ int Monster::updateCombat() {
 		if(monstervmonster) {
 			broadcast(target->getSock(), target->getSock(), room, "%M misses %N.", this, target);
 		} else if(isPet()) {
-			getMaster()->printColor("^c%M misses %N.\n", this, target);
+			following->printColor("^c%M misses %N.\n", this, target);
 		}
 
 		if(mTarget)
@@ -644,8 +646,8 @@ int Monster::summonMobs(Creature *victim) {
 		monster->addToRoom(victim->getRoom());
 		monster->addEnemy(victim);
 
-		if(victim->getMaster() && victim->isMonster())
-			monster->addEnemy(victim->getMaster());
+		if(victim->following && victim->isMonster())
+			monster->addEnemy(victim->following);
 
 		broadcast(getSock(), victim->getRoom(), "%M runs to the aid of %N!", monster, this);
 
@@ -1050,7 +1052,7 @@ void Player::damageArmor(int dmg) {
 	// Make armor skill worth something, the higher the skill, the lower the chance it'll take damage
 	if(mrand(1,100) > avoidChance) {
 		printColor("Your ^W%s^x just got a little more scratched.\n", armor->name);
-		armor->decShotsCur();
+		armor->decShotscur();
 		if(armorType != "shield")
 			checkImprove(armorType, true);
 	}
@@ -1066,7 +1068,7 @@ void Player::checkArmor(int wear) {
 	if(!ready[wear-1])
 		return;
 
-	if(ready[wear-1]->getShotsCur() < 1) {
+	if(ready[wear-1]->getShotscur() < 1) {
 		printColor("Your %s fell apart.\n", ready[wear-1]->name);
 		if(ready[wear-1]->flagIsSet(O_CURSED)) {
 			logn("log.curseabuse", "%s's %s fell apart. Room: %s\n",
@@ -1087,7 +1089,7 @@ void Player::checkArmor(int wear) {
 Creature *findFirstEnemyCrt(Creature *crt, Creature *pet) {
 	ctag	*cp=0;
 
-	if(!pet->getMaster())
+	if(!pet->following)
 		return(crt);
 
 	cp = pet->getRoom()->first_mon;
@@ -1097,7 +1099,7 @@ Creature *findFirstEnemyCrt(Creature *crt, Creature *pet) {
 			continue;
 		}
 
-		if(cp->crt->getMonster()->isEnemy(pet->getMaster()) && !strcmp(cp->crt->name, crt->name)) {
+		if(cp->crt->getMonster()->isEnemy(pet->following) && !strcmp(cp->crt->name, crt->name)) {
 			return(cp->crt);
 		}
 
@@ -1232,7 +1234,7 @@ bool Monster::tryToPoison(Creature* target, SpecialAttack* attack) {
 			duration = (mrand(2,3)*60) - 12*bonus((int)target->constitution.getCur());
 		}
 
-		target->poison(isPet() ? getMaster() : this, poison_dmg ? poison_dmg : level, duration);
+		target->poison(isPet() ? following : this, poison_dmg ? poison_dmg : level, duration);
 		return(true);
 	} else if(attack) {
 		target->print("You avoided being poisoned!\n");
@@ -1281,8 +1283,7 @@ bool Monster::tryToStone(Creature* target, SpecialAttack* attack) {
 		broadcast(target->getSock(), getRoom(), "%M turned %N to stone!", this, pTarget);
 		target->printColor("^D%M turned you to stone!^x\n", this);
 		pTarget->clearAsEnemy();
-		pTarget->removeFromGroup();
-		//remFromGroup(pTarget);
+		remFromGroup(pTarget);
 		return(true);
 	}
 
@@ -1320,7 +1321,7 @@ bool Monster::tryToDisease(Creature* target, SpecialAttack* attack) {
 		broadcastGroup(false, target, "%M infects %N.\n", this, target, 1);
 		broadcast(getSock(), target->getSock(), getRoom(), "%M infected %N.", this, target);
 		if(isPet())
-			getMaster()->printColor("^D%M infects %N.\n", this, target);
+			following->printColor("^D%M infects %N.\n", this, target);
 		else
 			target->disease(this, target->hp.getMax()/20);
 		return(true);
@@ -1350,7 +1351,7 @@ bool Monster::tryToBlind(Creature* target, SpecialAttack* attack) {
 		target->printColor("^y%M blinds your eyes.\n",this);
 		broadcastGroup(false, target, "%M blinds %N.\n", this, target);
 		if(isPet()) {
-			getMaster()->printColor("^y%M blinds %N.\n", this, target);
+			following->printColor("^y%M blinds %N.\n", this, target);
 		}
 		target->addEffect("blindness", 180 - (target->constitution.getCur()/10), 1, this, true, this);
 		return(true);

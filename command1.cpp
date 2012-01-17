@@ -64,7 +64,7 @@ int cmdNoAuth(Player* player) {
 int getFailFd(Creature *user) {
 	if(!user)
 		return(-1);
-	return(user->isPet() ? user->getMaster()->fd : user->fd);
+	return(user->isPet() ? user->following->fd : user->fd);
 }
 
 

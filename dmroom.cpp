@@ -211,7 +211,7 @@ bstring opposite_exit_name(const bstring& name) {
 // monsters.
 
 int dmPurge(Player* player, cmd* cmnd) {
-	ctag	*cp=0, *ctemp=0, *pet=0;
+	ctag	*cp=0, *fol=0, *ctemp=0, *pet=0;
 	otag	*op=0, *otemp=0;
 	BaseRoom* room = player->getRoom();
 
@@ -242,13 +242,27 @@ int dmPurge(Player* player, cmd* cmnd) {
 		}
 
 		if(cp->crt->flagIsSet(M_DM_FOLLOW)) {
-		    Player* master = cp->crt->getPlayerMaster();
-			if(master) {
+			if(cp->crt->following) {
+				Player* master = cp->crt->following->getPlayer();
 				master->clearFlag(P_ALIASING);
 
 				master->setAlias(0);
 				master->print("%1M's soul was purged.\n", cp->crt);
-				master->delPet(cp->crt->getMonster());
+				fol = master->first_fol;
+				if(fol->crt == cp->crt) {
+					master->first_fol = fol->next_tag;
+					delete fol;
+				} else {
+					while(fol) {
+						if(fol->crt == cp->crt) {
+							//folprev = fol->next_tag;
+							delete fol;
+							break;
+						}
+						//folprev = fol;
+						fol = fol->next_tag;
+					}
+				}
 			}
 		}
 		free_crt(cp->crt);

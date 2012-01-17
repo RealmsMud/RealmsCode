@@ -31,8 +31,22 @@ void Player::increaseFocus(FocusAction action, int amt, Creature* target) {
     if(cClass != FIGHTER || cClass2 || !flagIsSet(P_PTESTER))
         return;
 
-    // FactorIn/out = Average Rage Required per Ability / Number of hits to generate that amount
+//    enum FocusAction {
+//        FOCUS_DAMAGE_IN,
+//        FOCUS_DAMAGE_OUT,
+//        FOCUS_BLOCK,
+//        FOCUS_PARRY,
+//        FOCUS_CIRCLE,
+//        FOCUS_BASH,
+//        FOCUS_SPECIAL,
+//
+//        LAST_FOCUS
+//    };
+
+    // FactorIn = Average Rage Required per Ability / Number of hits for ability
+
     double factorIn = 5.0;
+
     double factorOut = 8.0;
     double a = 0.0;
     double c = 0.0;
@@ -41,16 +55,11 @@ void Player::increaseFocus(FocusAction action, int amt, Creature* target) {
     double mod = 1.0;
 
     if(target) {
-        // Focus earned on damage out is reduced by a scaling factor if the player
-        // is higher level than the target
         levelDiff = tMAX(getLevel() - target->getLevel(), 0);
         lF = 1.0/tMAX(levelDiff/5.0,1.0);
     }
     switch(action) {
         case FOCUS_DAMAGE_IN:
-            // Approximation of average damage for monsters at a given level
-            // based on the player's level and maximum hitpoints
-
             a = (-0.195130133 + (getLevel()*-0.128540388) + (hp.getMax() * 0.189543088) );
             c = factorIn / a;
             focusIncrease = amt * c;
@@ -58,14 +67,14 @@ void Player::increaseFocus(FocusAction action, int amt, Creature* target) {
         case FOCUS_BASH:
         case FOCUS_RIPOSTE:
             mod = 0.5;
-            // no break - Fall through to focus damage out calculation with a different mod amount
+            // Fall through to focus_damage_out calculation
         case FOCUS_DAMAGE_OUT:
-            // Approximation of average damage for monsters at a given level
-            // based on the player's level and maximum hitpoints
             a = (-0.195130133 + (getLevel()*-0.128540388) + (hp.getMax() * 0.189543088) );
             c = factorOut / a;
+            std::cout << "a: " << a << " c: " << c << " factor: " << factorOut << " lF: " << lF << std::endl;
 
             focusIncrease = amt * c * lF * mod;
+
             break;
         case FOCUS_DODGE:
         case FOCUS_BLOCK:
@@ -78,12 +87,11 @@ void Player::increaseFocus(FocusAction action, int amt, Creature* target) {
             break;
     }
 
-    focusIncrease = MAX(0, focusIncrease);
-    if(focusIncrease) {
-        printColor("^rYour battle focus increases. (%d)\n", focusIncrease);
+    focusIncrease = MAX(1, focusIncrease);
 
-        focus.increase(focusIncrease);
-    }
+    printColor("^rYour battle focus increases. (%d)\n", focusIncrease);
+
+    focus.increase(focusIncrease);
 }
 
 // Slowly tick focus down

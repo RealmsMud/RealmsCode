@@ -292,7 +292,7 @@ bool EffectInfo::remove(bool show) {
 		// the object will be broken and unequipped
 		Object* object = myApplier->getObject();
 		if(object && object->flagIsSet(O_WORN)) {
-			object->setShotsCur(0);
+			object->setShotscur(0);
 			myParent->getPlayer()->breakObject(object, object->getWearflag());
 		}
 	}
@@ -1030,7 +1030,7 @@ bool Exit::doEffectDamage(Creature* target) {
 	Creature *owner = target;
 
 	if(target->isPet())
-		owner = target->getMaster();
+		owner = target->following;
 
 	if(	exitEffectDamage(
 			getEffect("wall-of-fire"),

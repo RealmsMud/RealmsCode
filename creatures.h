@@ -21,48 +21,47 @@
 
 #include "damage.h"
 #include "threat.h"
-#include "group.h"
 
 enum mType {
-    INVALID        = -1,
-    PLAYER          = 0,
-    MONSTER         = 1,
+	INVALID =		-1,
+	PLAYER =		0,
+	MONSTER =		1,
 
-    NPC             = 2,
-    HUMANOID        = 2,
+	NPC =			2,
+	HUMANOID =		2,
 
-    GOBLINOID       = 3,
-    MONSTROUSHUM    = 4,
-    GIANTKIN        = 5,
-    ANIMAL          = 6,
-    DIREANIMAL      = 7,
-    INSECT          = 8,
-    INSECTOID       = 9,
-    ARACHNID        = 10,
-    REPTILE         = 11,
-    DINOSAUR        = 12,
-    AUTOMATON       = 13,
-    AVIAN           = 14,
-    FISH            = 15,
-    PLANT           = 16,
-    DEMON           = 17,
-    DEVIL           = 18,
-    DRAGON          = 19,
-    BEAST           = 20,
-    MAGICALBEAST    = 21,
-    GOLEM           = 22,
-    ETHEREAL        = 23,
-    ASTRAL          = 24,
-    GASEOUS         = 25,
-    ENERGY          = 26,
-    FAERIE          = 27,
-    DEVA            = 28,
-    ELEMENTAL       = 29,
-    PUDDING         = 30,
-    SLIME           = 31,
-    UNDEAD          = 32,
+	GOBLINOID =		3,
+	MONSTROUSHUM =		4,
+	GIANTKIN =		5,
+	ANIMAL =		6,
+	DIREANIMAL =		7,
+	INSECT =		8,
+	INSECTOID =		9,
+	ARACHNID =		10,
+	REPTILE =		11,
+	DINOSAUR =		12,
+	AUTOMATON =		13,
+	AVIAN =			14,
+	FISH =			15,
+	PLANT =			16,
+	DEMON =			17,
+	DEVIL =			18,
+	DRAGON =		19,
+	BEAST =			20,
+	MAGICALBEAST =		21,
+	GOLEM =			22,
+	ETHEREAL =		23,
+	ASTRAL =		24,
+	GASEOUS =		25,
+	ENERGY =		26,
+	FAERIE =		27,
+	DEVA =			28,
+	ELEMENTAL =		29,
+	PUDDING =		30,
+	SLIME =			31,
+	UNDEAD =		32,
 
-    MAX_MOB_TYPES
+	MAX_MOB_TYPES
 };
 
 #include "monType.h"
@@ -116,8 +115,11 @@ class SpellData;
 #define NUM_ENEMY_MOB			4
 
 #define DEL_ROOM_DESTROYED		1
-#define DEL_PORTAL_DESTROYED	2
-#define NUM_RESCUE			    2
+#define DEL_PORTAL_DESTROYED		2
+#define NUM_RESCUE			2
+
+//#include <string>
+//#include <list>
 
 class SkillGain;
 class SpecialAttack;
@@ -186,7 +188,7 @@ public:
 	static const int EDUCATION_UNIVERSITY = 5;
 };
 
-typedef std::list<Monster*> PetList;
+
 
 //*********************************************************************
 //						Creature
@@ -226,10 +228,6 @@ protected:
 	DeathType deathtype;
 	bstring poisonedBy;		// displayed to player, if this is a player, they get credit for pkill
 
-	Group* group;
-	GroupStatus groupStatus;
-
-
 public:
 // Constructors, Deconstructors, etc
 	Creature();
@@ -241,7 +239,7 @@ public:
 //	Monster* getMonster();
 //	Player* getPlayer();
 //
-
+	Player* getMaster();
 
 	virtual Socket* getSock() const;
 	Location getLocation();
@@ -250,21 +248,13 @@ public:
 
 //	const Monster* getConstMonster() const;
 //	const Player* getConstPlayer() const;
-
-	Creature* getMaster();
-	const Creature* getConstMaster() const;
-
-	Player* getPlayerMaster();
-	const Player* getConstPlayerMaster() const;
-
-
+	const Player* getConstMaster() const;
 	bool isPlayer() const;
 	bool isMonster() const;
 	bool checkMp(int reqMp);
 	void subMp(int reqMp);
 
 	Creature* myTarget;
-    PetList pets;
 	std::list<Creature*> targetingThis;
 
 	MagicType getCastingType() const;
@@ -310,8 +300,8 @@ public:
 #define 				NUMHITS quests[0]
 	short questnum; // Quest fulfillment number (M)
 	struct Object *ready[MAXWEAR];// Worn/readied items
-//	struct Creature *following; // creature being followed
-//	ctag *first_fol; // List of followers
+	struct Creature *following; // creature being followed
+	ctag *first_fol; // List of followers
 	otag *first_obj; // List of inventory
 	//etag *first_enm; // List of enemies
 	ttag *first_tlk; // List of talk responses
@@ -356,29 +346,9 @@ public:
 	Location previousRoom; // last room they were in
 	void setPreviousRoom();
 
-// Groups & Pets
-
-    void setGroup(Group* newGroup);
-    void setGroupStatus(GroupStatus newStatus);
-
-    Group* getGroup(bool inGroup = true);
-    GroupStatus getGroupStatus();
-
-    void addToGroup(Group* toJoin, bool announce = true);
-    void createGroup(Creature* crt);
-    bool removeFromGroup(bool announce = true);
-
-
-	void addPet(Monster* newPet, bool setPetFlag = true);
-	void delPet(Monster* toDel);
-	bool hasPet() const;
-
-	Monster* findPet(Monster* toFind);
-	Monster* findPet(bstring pName, int pNum);
 
 // XML: loading and saving
 	int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bool saveID = true) const;
-    void savePets(xmlNodePtr curNode) const;
 	void saveSkills(xmlNodePtr rootNode) const;
 	void saveFactions(xmlNodePtr rootNode) const;
 	void saveAttacks(xmlNodePtr rootNode) const;
@@ -711,6 +681,7 @@ protected:
 public:
 
 	int doResistMagic(int dmg, const Creature* enemy=0);
+	bool isGroupLeader(Monster* target);
 	virtual void pulseTick(long t) = 0;
 
 	// New songs
@@ -763,8 +734,6 @@ protected:
 	int weaponSkill;
 	int defenseSkill;
 
-	Creature* myMaster;
-
 public:
 // Data
 	char last_mod[25]; // last staff member to modify creature.
@@ -805,8 +774,6 @@ public:
 
 	ThreatTable* threatTable;
 
-    void setMaster(Creature* pMaster);
-    Creature* getMaster() const;
 
 	Player* whoToAggro() const;
 	bool willAggro(const Player *player) const;

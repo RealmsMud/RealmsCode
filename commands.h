@@ -331,7 +331,7 @@ int cmdPledge(Player* player, cmd* cmnd);
 int cmdRescind(Player* player, cmd* cmnd);
 
 // cmd.c
-int cmdProcess(Creature *user, cmd* cmnd, Creature* pet=NULL);
+int cmdProcess(Creature *user, cmd* cmnd, bool pet=false);
 
 // specials.c
 int dmSpecials(Player* player, cmd* cmnd);

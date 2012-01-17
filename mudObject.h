@@ -101,8 +101,6 @@ public:
 
 	bool equals(MudObject* other);
 
-	void readCreatures(xmlNodePtr curNode);
-	void readObjects(xmlNodePtr curNode);
 
 // Delayed Actions
 protected:

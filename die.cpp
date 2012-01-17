@@ -50,7 +50,7 @@ void hardcoreDeath(Player* player) {
 	player->hooks.execute("preHardcoreDeath");
 
 	for(int i=0; i<MAXWEAR; i++) {
-		if(player->ready[i] && (!(player->ready[i]->flagIsSet(O_CURSED) && player->ready[i]->getShotsCur() > 0))) {
+		if(player->ready[i] && (!(player->ready[i]->flagIsSet(O_CURSED) && player->ready[i]->getShotscur() > 0))) {
 			player->ready[i]->clearFlag(O_WORN);
 			player->doRemove(i);
 		}
@@ -134,11 +134,11 @@ void Monster::dropCorpse(Creature *killer) {
 	otag		*op=0;
 	Object		*object=0;
 	Player*		player=0;
-	Player*		pMaster = isPet() ? getPlayerMaster() : 0;
+	Player*		pMaster = isPet() ? following->getPlayer() : 0;
 	bool		destroy = room->isDropDestroy();
 
 	if(killer)
-		player = killer->getPlayerMaster();
+		player = killer->getMaster();
 
 	killDarkmetal();
 	killUniques();
@@ -351,8 +351,8 @@ void Player::dieToMonster(Monster *killer) {
 void Player::dieToPet(Monster *killer) {
 	Player	*master=0;
 
-	if(killer->getMaster())
-		master = killer->getMaster()->getPlayer();
+	if(killer->following)
+		master = killer->following->getPlayer();
 	else {
 		broadcast(::isCt, "^y*** Pet %s has no master and is trying to kill a player. Room %s",
 			killer->name, killer->room.str().c_str());
@@ -387,9 +387,9 @@ void Monster::dieToPet(Monster *killer, bool &freeTarget) {
 	Player*	pKiller=0;
 	logDeath(killer);
 
-	if(killer->getMaster()) {
+	if(killer->following) {
 		petKiller = killer;
-		pKiller = killer->getMaster()->getPlayer();
+		pKiller = killer->following->getPlayer();
 	} else {
 		broadcast(::isCt, "^y*** Pet %s has no master and is trying to kill a mob. Room %s",
 			killer->name, killer->room.str().c_str());
@@ -426,7 +426,7 @@ void Monster::dieToMonster(Monster *killer, bool &freeTarget) {
 
 void Monster::dieToPlayer(Player *killer, bool &freeTarget) {
 	logDeath(killer);
-	if(getMaster() != killer) {
+	if(following != killer) {
 		killer->print("You killed %N.\n", this);
 		broadcast(killer->getSock(), killer->getRoom(), "%M killed %N.", killer, this);
 	}
@@ -804,9 +804,9 @@ int Player::clanKill(Player *killer) {
 void Creature::checkDoctorKill(Creature *victim) {
 	if(!strcmp(victim->name, "doctor")) {
 		if(	(isPlayer() && !isStaff()) ||
-			(isMonster() && isPet() && !getMaster()->isStaff()))
-		{
-			Creature* target = isPlayer() ? this : getMaster();
+			(isMonster() && isPet() && !following->isStaff())
+		) {
+			Creature* target = isPlayer() ? this : following;
 
 			target->setFlag(P_DOCTOR_KILLER);
 			if(!target->flagIsSet(P_DOCTOR_KILLER))
@@ -987,14 +987,14 @@ void Player::dropBodyPart(Player *killer) {
 			!killer->isPet() &&
 			!killer->isDm() &&
 			(killer->getLevel() > level + 5) &&
-			!flagIsSet(P_OUTLAW))
-		|| (
-			killer->isPet() &&
-			!killer->getMaster()->isDm() &&
-			(killer->getMaster()->getLevel() > level + 5) &&
 			!flagIsSet(P_OUTLAW)
-		) )
-	{
+		) || (
+			killer->isPet() &&
+			!killer->following->isDm() &&
+			(killer->following->getLevel() > level + 5) &&
+			!flagIsSet(P_OUTLAW)
+		)
+	) {
 		nopart = true;
 	}
 
@@ -1085,7 +1085,7 @@ void Player::logDeath(Creature *killer) {
 	strcpy(killerName, "");
 
 	if(killer->isPet())
-		sprintf(killerName, "%s's %s.", killer->getMaster()->getName(), killer->name);
+		sprintf(killerName, "%s's %s.", killer->following->name, killer->name);
 	else
 		strcpy(killerName, killer->name);
 
@@ -1214,13 +1214,12 @@ bool hearMobDeath(Socket* sock) {
 //********************************************************************
 
 void Monster::logDeath(Creature *killer) {
-	int			logType=0;
+	int			solo=0, logType=0;
+	ctag		*fp=0;
 	Creature *leader=0, *pet=0;
 	BaseRoom* room = killer->getRoom();
 	char		file[80], killerString[1024];
 	char		logStr[2096];
-
-	bool        solo = true;
 
 
 	strcpy(file, "");
@@ -1253,19 +1252,37 @@ void Monster::logDeath(Creature *killer) {
 	//			killer is following
 
 	if(killer->isPlayer() || killer->isPet()) {
+		solo = 1;
+
 		// we have the leader of the pet
 		if(killer->isPet())
-			leader = killer->getMaster();
+			leader = killer->following;
 		else
 			leader = killer;
 
-		// see if they are in a group
-		if(leader->getGroup())
-			solo = false;
+		// see if they have a leader or followers
+		if(leader->following)
+			solo = 0;
+
+		// we always need to check for a pet
+		fp = leader->first_fol;
+		while(fp) {
+
+			if(fp->crt != leader) {
+				if(fp->crt->isPet() && fp->crt->following == leader)
+					pet = fp->crt;
+				if(!(fp->crt->isPet() && fp->crt->following == leader))
+					solo = 0;
+			}
+			fp = fp->next_tag;
+		}
 	}
 
 	if(killer->isPet() || pet) {
-		sprintf(killerString, "%s and %s %s", leader->name, leader->hisHer(), pet->name);
+		sprintf(killerString, "%s and %s %s",
+			leader->name,
+			leader->hisHer(),
+			pet->name);
 	} else {
 		sprintf(killerString, "%s", killer->name);
 	}
@@ -1279,30 +1296,28 @@ void Monster::logDeath(Creature *killer) {
 			name, level, killerString, killer->getLevel(), room->fullName().c_str(), experience);
 		break;
 	case 2: // Mob is a perm
-        {
-            Group* group = leader->getGroup();
 
-            // if the killer was a pet, leader is pointing to the pet's leader
-            // make it point to the leader of the pet's leader
-            if(group)
-                leader = group->getLeader();
+		// if the killer was a pet, leader is pointing to the pet's leader
+		// make it point to the leader of the pet's leader
+		if(leader->following)
+			leader = leader->following;
 
-            if(!solo)
-                sprintf(logStr, "%s(L%d) was killed by %s(L%d) in %s(L%d)'s group in room %s.",
-                     name, level, killerString, killer->getLevel(),
-                     leader->name, leader->getLevel(), room->fullName().c_str());
-            else
-                sprintf(logStr, "%s(L%d) was killed by %s(L%d) in room %s [SOLO].",
-                     name, level, killerString, killer->getLevel(), room->fullName().c_str());
+		if(!solo)
+			sprintf(logStr, "%s(L%d) was killed by %s(L%d) in %s(L%d)'s group in room %s.",
+			     name, level, killerString, killer->getLevel(),
+			     leader->name, leader->getLevel(), room->fullName().c_str());
+		else
+			sprintf(logStr, "%s(L%d) was killed by %s(L%d) in room %s [SOLO].",
+			     name, level, killerString, killer->getLevel(), room->fullName().c_str());
 
 
-            if(!killer->isStaff() && flagIsSet(M_NO_PREFIX)) {
-                if(!solo)
-                    broadcast(wantsPermDeaths, "^m### Sadly, %s was killed by %s and %s followers.", name, leader->name, leader->hisHer());
-                else
-                    broadcast(wantsPermDeaths, "^m### Sadly, %s was killed by %s.", name, killerString);
-            }
-        }
+		if(!killer->isStaff() && flagIsSet(M_NO_PREFIX)) {
+			if(!solo)
+				broadcast(wantsPermDeaths, "^m### Sadly, %s was killed by %s and %s followers.", name, leader->name, leader->hisHer());
+			else
+				broadcast(wantsPermDeaths, "^m### Sadly, %s was killed by %s.", name, killerString);
+		}
+
 		break;
 	case 3: // bugged player
 	case 4: // all player's kills logged
@@ -1334,7 +1349,7 @@ void Player::loseExperience(Monster *killer) {
 	if(killer->flagIsSet(M_DM_FOLLOW))
 		return;
 
-	if(killer->flagIsSet(M_NO_EXP_LOSS) || (killer->isPet() && killer->getMaster()->isStaff()))
+	if(killer->flagIsSet(M_NO_EXP_LOSS) || (killer->isPet() && killer->following->isStaff()))
 		return;
 
 	if(level >= 7)
@@ -1387,7 +1402,8 @@ void Player::loseExperience(Monster *killer) {
 void Monster::distributeExperience(Creature *killer) {
 	long	expGain = 0;
 
-	Player*	player=0;
+	Monster* pet=0;
+	Player*	player=0, *follower=0;
 	Player* leader=0;
 
 	if(isPet())
@@ -1397,18 +1413,16 @@ void Monster::distributeExperience(Creature *killer) {
 		diePermCrt();
 
 	if(killer) {
-        Group* group = NULL;
 		if(killer->isPet())
-			player = killer->getMaster()->getPlayer();
+			player = killer->following->getPlayer();
 		else
 			player = killer->getPlayer();
 
 		if(player) {
-		    group = player->getGroup();
-		    if(group) {
-		        if(group->getLeader()->pFlagIsSet(P_XP_DIVIDE))
-		            leader = group->getLeader()->getPlayer();
-		    }
+			if(player->isGroupLeader(this) && player->flagIsSet(P_XP_DIVIDE))
+				leader = player;
+			else if(player->following && player->following->flagIsSet(P_XP_DIVIDE) && player->inSameRoom(player->following))
+				leader = player->following->getPlayer();
 		}
 
 		std::map<Player*, int> expList;
@@ -1417,35 +1431,44 @@ void Monster::distributeExperience(Creature *killer) {
 			// Split exp evenly amounsgt the group
 			int numGroupMembers=0, totalGroupLevel=0, totalGroupDamage=0;
 			long n = 0;
+			Creature* crt=0;
+			ctag* cp = leader->first_fol;
 
 			// Calculate how many people are in the group, see how much damage they have done
 			// and remove them from the enemy list
-//			if(	isEnemy(leader) &&
-//				inSameRoom(leader) &&
-//				leader->getsGroupExperience(this))
-//			{
-//				numGroupMembers++;
-//				totalGroupLevel += leader->getLevel();
-//				n = clearEnemy(leader);
-//				totalGroupDamage += n;
-//				expList[leader] = n;
-//			}
-			Player* groupMember;
-			for(Creature* crt : group->members )
+			if(	isEnemy(leader) &&
+				inSameRoom(leader) &&
+				leader->getsGroupExperience(this))
 			{
+				numGroupMembers++;
+				totalGroupLevel += leader->getLevel();
+				n = clearEnemy(leader);
+				totalGroupDamage += n;
+				expList[leader] = n;
+			}
+			while(cp) {
+				crt = cp->crt;
+				cp = cp->next_tag;
 				if(isEnemy(crt) && inSameRoom(crt)) {
 					if(crt->getsGroupExperience(this)) {
 						// Group member
-					    groupMember = crt->getPlayer();
+						follower = crt->getPlayer();
 						numGroupMembers++;
-						totalGroupLevel += groupMember->getLevel();
-						n = clearEnemy(groupMember);
+						totalGroupLevel += follower->getLevel();
+						n = clearEnemy(follower);
 						totalGroupDamage += n;
-						expList[groupMember] += n;
-					} else if(crt->isPet() && crt->getMaster()->getsGroupExperience(this)) {
+						expList[follower] = n;
+						pet = follower->getPet();
+						if(pet) {
+							n = clearEnemy(pet);
+							totalGroupDamage += n;
+							expList[pet->following->getPlayer()] += n;
+						}
+					} else if(crt->isPet()) {
+						// Leader's pet
 						n = clearEnemy(crt);
 						totalGroupDamage += n;
-						expList[crt->getPlayerMaster()] += n;
+						expList[crt->following->getPlayer()] += n;
 					}
 				}
 			}
@@ -1464,6 +1487,7 @@ void Monster::distributeExperience(Creature *killer) {
 
 				if(ply) {
 					expGain = (long)(((float)ply->getLevel()/(float)totalGroupLevel) * adjustedExp);
+
 //					ply->printColor("You contributed ^m%d^x effort.  Average effort was ^m%d^x.\n", effort, averageEffort);
 					// Adjust based on reduced effort
 					if(effort < (averageEffort/2)) {
@@ -1485,17 +1509,13 @@ void Monster::distributeExperience(Creature *killer) {
 	    if(!crt) continue;
 
 		if(crt->isPet())
-		    expList[crt->getPlayerMaster()] += clearEnemy(crt);
+		    expList[crt->following->getPlayer()] += clearEnemy(crt);
 		else if(crt->isPlayer())
 		    expList[crt->getPlayer()] += clearEnemy(crt);
 	}
 
 	for(std::pair<Player*, int> p : expList) {
         Player* ply = p.first;
-        if(!ply) {
-            std::cout << "Distribute Experience: NULL Player found" << std::endl;
-            continue;
-        }
         int effort = p.second;
 
         expGain = (experience * effort) / MAX(hp.getMax(), 1);
@@ -1519,7 +1539,7 @@ void Monster::distributeExperience(Creature *killer) {
 void Creature::adjustExperience(Monster* victim, int& expAmount, int& holidayExp) {
 	Player* player;
 	if(isPet())
-		player = getMaster()->getPlayer();
+		player = following->getPlayer();
 	else
 		player = getPlayer();
 
@@ -1596,12 +1616,12 @@ void Player::gainExperience(Monster* victim, Creature* killer, int expAmount, bo
 		this == killer ||
 		!killer || !(notlocal &&
 					!(killer->isPlayer() && killer->flagIsSet(P_DM_INVIS)) &&
-					!(killer->isPet() && killer->getMaster()->flagIsSet(P_DM_INVIS))))
-	{
+					!(killer->isPet() && killer->following->flagIsSet(P_DM_INVIS)))
+	) {
 		printColor("You %s ^y%d^x %sexperience for the death of %N.\n", af ? "lose" : "gain", expAmount, groupExp ? "group " : "", victim);
 	} else {
 		if(killer->isPet())
-			print("%M's %s %s you %d experience for the death of %N.\n", killer->getMaster(), killer->name, af ? "cost" : "gained", expAmount, victim);
+			print("%M's %s %s you %d experience for the death of %N.\n", killer->following, killer->name, af ? "cost" : "gained", expAmount, victim);
 		else
 			print("%M %s you %d experience for the death of %N.\n", killer, af ? "cost" : "gained", expAmount, victim);
 	}
@@ -1617,8 +1637,13 @@ void Player::gainExperience(Monster* victim, Creature* killer, int expAmount, bo
 	if(victim->flagIsSet(M_WILL_BE_LOGGED))
 		logn("log.mdeath", "%s was killed by %s, for %d experience.\n", victim->name, name, expAmount);
 
-	for(Monster* pet : pets) {
-	    pet->clearEnemy(victim);
+	ctag* fp = first_fol;
+	while(fp) {
+		if(fp->crt->isPet()) {
+			fp->crt->getMonster()->clearEnemy(victim);
+			break;
+		}
+		fp = fp->next_tag;
 	}
 }
 
@@ -1627,7 +1652,7 @@ void Player::gainExperience(Monster* victim, Creature* killer, int expAmount, bo
 //********************************************************************
 
 void Monster::gainExperience(Monster* victim, Creature* killer, int expAmount, bool groupExp) {
-	Creature* master = getMaster();
+	Creature* master = following;
 	if(!master || !isPet())
 		return;
 	bool af = gConfig->isAprilFools();
@@ -2196,20 +2221,20 @@ void Creature::clearAsPetEnemy() {
 //********************************************************************
 
 void Monster::cleanFollow(Creature *killer) {
-	if(isMonster() && getMaster()) {
-		Player* player = getMaster()->getPlayer();
+	if(isMonster() && following) {
+		Player* player = following->getPlayer();
 
 		// This should fix the bug with having a dm's pet killed while possessing a mob
 		if(flagIsSet(M_DM_FOLLOW)) {
 			player->setAlias(0);
 			player->clearFlag(P_ALIASING);
 		}
-		if(getMaster() != killer) {
+		if(following != killer) {
 			player->printColor("^r%M's body has been destroyed.\n", this);
 			if(killer)
 				broadcast(killer->getSock(), getRoom(), "%M was killed by %N.", this, killer);
 		}
-		this->removeFromGroup(false);
+		doStopFollowing(this, FALSE);
 	}
 }
 
