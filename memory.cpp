@@ -1,0 +1,163 @@
+/*
+ * memory.cpp
+ *	 Memory added by Charles Marchant for Mordor 3.x
+ *   ____            _               
+ *  |  _ \ ___  __ _| |_ __ ___  ___ 
+ *  | |_) / _ \/ _` | | '_ ` _ \/ __|
+ *  |  _ <  __/ (_| | | | | | | \__ \
+ *  |_| \_\___|\__,_|_|_| |_| |_|___/
+ *
+ * Permission to use, modify and distribute is granted via the
+ *  Creative Commons - Attribution - Non Commercial - Share Alike 3.0 License
+ *    http://creativecommons.org/licenses/by-nc-sa/3.0/
+ *  
+ * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
+ *
+ */
+#include "mud.h"
+
+//*********************************************************************
+//						sizeInfo
+//*********************************************************************
+
+bstring sizeInfo(long size) {
+	int i=0;
+	for(; size > 1024 && i < 4; i++)
+		size /= 1024;
+
+	switch(i) {
+	case 0:
+		return((bstring)size + " bytes");
+	case 1:
+		return((bstring)size + "kb");
+	case 2:
+		return((bstring)size + "mb");
+	case 3:
+		return((bstring)size + "gb");
+	default:
+		return((bstring)size + "tb");
+	}
+}
+
+//*********************************************************************
+//						showMemory
+//*********************************************************************
+
+void Config::showMemory(Socket* sock) {
+	char buf[80];
+	int  crts    = 0;
+	int  rooms   = 0;
+	int  objects = 0;
+	int  talks   = 0;
+	int  actions  = 0;
+	int  badtalk  = 0;
+	long crt_mem    = 0L;
+	long rom_mem    = 0L;
+	long obj_mem    = 0L;
+	long talk_mem   = 0L;
+	long act_mem    = 0L;
+	//  long total_mem  = 0L;
+	long bt_mem     = 0L;
+	long total=0;
+	ctag	*cp;
+	otag	*op;
+	ttag	*tlk;
+	UniqueRoom*	r=0;
+
+	std::map<bstring, rsparse>::iterator it;
+
+	for(it = roomQueue.begin(); it != roomQueue.end() ; it++) {
+		r = (*it).second.rom;
+		if(!r)
+			continue;
+		rooms++;
+		rom_mem += sizeof(UniqueRoom);
+		for(cp = r->first_mon; cp; cp = cp->next_tag) {
+			if(cp->crt) {
+				crts++;
+				crt_mem += sizeof(Creature);
+				// add object counting on crts
+				// and object wear on crts
+
+				if(cp->crt->first_tlk) {
+					tlk = cp->crt->first_tlk;
+					if(cp->crt->flagIsSet(M_TALKS)) {
+						for(; tlk; tlk = tlk->next_tag) {
+							talks++;
+							talk_mem += sizeof(ttag);
+							if(tlk->key)
+								talk_mem += strlen(tlk->key);
+							if(tlk->response)
+								talk_mem += strlen(tlk->response);
+							if(tlk->action)
+								talk_mem += strlen(tlk->action);
+							if(tlk->target)
+								talk_mem += strlen(tlk->target);
+						}
+					} else if(cp->crt->flagIsSet(M_LOGIC_MONSTER)) {
+						for(; tlk; tlk = tlk->next_tag) {
+							actions++;
+							act_mem += sizeof(ttag);
+							if(tlk->response)
+								act_mem += strlen(tlk->response);
+							if(tlk->action)
+								act_mem += strlen(tlk->action);
+							if(tlk->target)
+								act_mem += strlen(tlk->target);
+						}
+					} else {
+						sprintf(buf, "%s has a talk and should not.", cp->crt->name);
+						loge(buf);
+						for(; tlk; tlk = tlk->next_tag) {
+							badtalk++;
+							bt_mem += sizeof(ttag);
+							if(tlk->key)
+								bt_mem += strlen(tlk->key);
+							if(tlk->response)
+								bt_mem += strlen(tlk->response);
+							if(tlk->action)
+								bt_mem += strlen(tlk->action);
+							if(tlk->target)
+								bt_mem += strlen(tlk->target);
+						}
+					}
+				}
+			}
+		}
+		for(op = r->first_obj; op; op = op->next_tag) {
+			if(op->obj) {
+				objects++;
+				obj_mem += sizeof(Object);
+				// and contents counting
+			}
+		}
+	}
+
+	total = bt_mem + rom_mem + obj_mem + crt_mem + act_mem + talk_mem;
+
+	sock->print("Memory Status:\n");
+	sock->print("Total Rooms  :   %-5d", rooms);
+	sock->print("  %ld -> Total memory\n", rom_mem);
+	sock->print("Total Objects:   %-5d", objects);
+	sock->print("  %ld -> Total memory\n", obj_mem);
+	sock->print("Total Creatures: %-5d", crts);
+	sock->print("  %ld -> Total memory\n", crt_mem);
+	sock->print("Total Actions:   %-5d", actions);
+	sock->print("  %ld -> Total memory\n", act_mem);
+	sock->print("Total Bad Talks: %-5d", badtalk);
+	sock->print("  %ld -> Total memory\n", bt_mem);
+	sock->print("Total Talks:     %-5d", talks);
+	sock->print("  %ld -> Total memory\n", talk_mem);
+	sock->print("Total Memory:    %ld  (%s)\n\n", total, sizeInfo(total).c_str());
+}
+
+//*********************************************************************
+//						dmMemory
+//*********************************************************************
+
+int dmMemory(Player* player, cmd* cmnd) {
+	gConfig->showMemory(player->getSock());
+	return(0);
+}

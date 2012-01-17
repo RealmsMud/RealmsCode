@@ -1,0 +1,675 @@
+/*
+ * statistics.cpp
+ *	 Player statistics
+ *   ____            _
+ *  |  _ \ ___  __ _| |_ __ ___  ___
+ *  | |_) / _ \/ _` | | '_ ` _ \/ __|
+ *  |  _ <  __/ (_| | | | | | | \__ \
+ *  |_| \_\___|\__,_|_|_| |_| |_|___/
+ *
+ * Permission to use, modify and distribute is granted via the
+ *  Creative Commons - Attribution - Non Commercial - Share Alike 3.0 License
+ *    http://creativecommons.org/licenses/by-nc-sa/3.0/
+ *
+ * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
+ *
+ */
+#include "mud.h"
+#include "commands.h"
+
+//*********************************************************************
+//						StringStatistic
+//*********************************************************************
+
+StringStatistic::StringStatistic() {
+	reset();
+}
+
+//*********************************************************************
+//						save
+//*********************************************************************
+
+void StringStatistic::save(xmlNodePtr rootNode, bstring nodeName) const {
+	if(!value && name == "")
+		return;
+	xmlNodePtr curNode = xml::newStringChild(rootNode, nodeName);
+
+	xml::saveNonZeroNum(curNode, "Value", value);
+	xml::saveNonNullString(curNode, "Name", name);
+}
+
+//*********************************************************************
+//						load
+//*********************************************************************
+
+void StringStatistic::load(xmlNodePtr curNode) {
+	xmlNodePtr childNode = curNode->children;
+
+	while(childNode) {
+		if(NODE_NAME(childNode, "Value")) xml::copyToNum(value, childNode);
+		else if(NODE_NAME(childNode, "Name")) xml::copyToBString(name, childNode);
+		childNode = childNode->next;
+	}
+}
+
+//*********************************************************************
+//						update
+//*********************************************************************
+
+void StringStatistic::update(unsigned long num, bstring with) {
+	if(num > value) {
+		value = num;
+		name = stripColor(with);
+	}
+}
+
+//*********************************************************************
+//						reset
+//*********************************************************************
+
+void StringStatistic::reset() {
+	value = 0;
+	name = "";
+}
+
+//*********************************************************************
+//						Statistics
+//*********************************************************************
+
+Statistics::Statistics() {
+	track = true;
+	numPkWon = numPkIn = 0;
+	reset();
+}
+
+//*********************************************************************
+//						reset
+//*********************************************************************
+
+void Statistics::reset() {
+	numSwings = numHits = numMisses = numFumbles = numDodges =
+		numCriticals = numTimesHit = numTimesMissed = numTimesFled =
+		numCasts = numOffensiveCasts = numHealingCasts = numKills =
+		numDeaths = numThefts = numAttemptedThefts = numSaves =
+		numAttemptedSaves = numRecalls = numLagouts = numWandsUsed =
+		numPotionsDrank = numItemsCrafted = numFishCaught = numCombosOpened =
+		mostGroup = numPkIn = numPkWon = numTransmutes = 0;
+	mostMonster.reset();
+	mostAttackDamage.reset();
+	mostMagicDamage.reset();
+	long t = time(0);
+	start = ctime(&t);
+	start = start.trim();
+}
+
+//*********************************************************************
+//						display
+//*********************************************************************
+
+void Statistics::display(const Player* viewer, bool death) {
+	bstring padding;
+	std::ostringstream oStr;
+	// set left aligned
+	oStr.setf(std::ios::left, std::ios::adjustfield);
+	oStr.imbue(std::locale(""));
+
+	if(death) {
+		// if death = true, player will always be the owner
+		oStr << "^WGeneral player statistics:^x\n"
+			 << "  Level:            ^C" << parent->getLevel() << "^x\n"
+			 << "  Total Experience: ^C" << parent->getExperience() << "^x\n"
+			 << "  Time Played:      ^C" << parent->getTimePlayed() << "^x\n"
+			 << "\n";
+	}
+
+	oStr << "Tracking statistics since: ^C" << start << "\n";
+	if(	numSwings ||
+		numDodges ||
+		numTimesHit ||
+		numTimesMissed ||
+		numDeaths ||
+		numKills ||
+		numPkIn
+	)
+		oStr << "^WCombat^x\n";
+	if(numSwings) {
+		oStr << "  Swings:       ^C" << numSwings << "^x\n";
+		if(numHits)
+			oStr << "  Hits:         ^C" << numHits << " (" << (numHits * 100 / numSwings) << "%)^x\n";
+		if(numMisses)
+			oStr << "  Misses:       ^C" << numMisses << " (" << (numMisses * 100 / numSwings) << "%)^x\n";
+		if(numFumbles)
+			oStr << "  Fumbles:      ^C" << numFumbles << " (" << (numFumbles * 100 / numSwings) << "%)^x\n";
+		if(numCriticals)
+			oStr << "  Criticals:    ^C" << numCriticals << " (" << (numCriticals * 100 / numSwings) << "%)^x\n";
+	}
+	if(numDodges)
+		oStr << "  Dodges:       ^C" << numDodges << "^x\n";
+	if(numTimesHit)
+		oStr << "  Times Hit:    ^C" << numTimesHit << "^x\n";
+	if(numTimesMissed)
+		oStr << "  Times Missed: ^C" << numTimesMissed << "^x\n";
+	// Don't want to see this info after all
+	//if(numTimesFled)
+	//	oStr << "  Times Fled:   ^C" << numTimesFled << "^x\n";
+	if(numDeaths)
+		oStr << "  Deaths:       ^C" << numDeaths << "^x\n";
+	if(numKills)
+		oStr << "  Kills:        ^C" << numKills << "^x\n";
+	if(numPkIn)
+		oStr << "  Player kills: ^C" << numPkWon << "/" << numPkIn << " (" << (numPkWon * 100 / numPkIn) << "%)^x\n";
+
+
+	padding = (numTransmutes > 0 ? "     " : "");
+
+	if(	numCasts ||
+		numOffensiveCasts ||
+		numHealingCasts ||
+		numWandsUsed ||
+		numPotionsDrank ||
+		numTransmutes
+	)
+		oStr << "\n^WMagic^x\n";
+	if(numHealingCasts)
+		oStr << "  Spells cast: ^C" << padding << numCasts << "^x\n";
+	if(numCasts) {
+		if(numOffensiveCasts)
+			oStr << "     Offensive Spells: ^C" << numOffensiveCasts << " (" << (numOffensiveCasts * 100 / numCasts) << "%)^x\n";
+		if(numHealingCasts)
+			oStr << "     Healing Spells:   ^C" << numHealingCasts << " (" << (numHealingCasts * 100 / numCasts) << "%)^x\n";
+	}
+	if(numWandsUsed)
+		oStr << "  Wands used:       ^C" << padding << numWandsUsed << "^x\n";
+	if(numTransmutes)
+		oStr << "  Wands transmuted: ^C" << padding << numTransmutes << "^x\n";
+	if(numPotionsDrank)
+		oStr << "  Potions used:     ^C" << padding << numPotionsDrank << "^x\n";
+
+
+	if(	mostGroup ||
+		mostMonster.value ||
+		mostAttackDamage.value ||
+		mostMagicDamage.value
+	)
+		oStr << "\n^WMost / Largest^x\n";
+	if(mostGroup)
+		oStr << "  Largest group:             ^C" << mostGroup << "^x\n";
+	if(mostMonster.value)
+		oStr << "  Toughest monster killed:   ^C" << mostMonster.name << "^x\n";
+	if(mostAttackDamage.value)
+		oStr << "  Most damage in one attack: ^C" << mostAttackDamage.value << " with " << mostAttackDamage.name << "^x\n";
+	if(mostMagicDamage.value)
+		oStr << "  Most damage in one spell:  ^C" << mostMagicDamage.value << " with " << mostMagicDamage.name << "^x\n";
+
+
+	int rooms = parent->numDiscoveredRooms();
+	int numRecipes = parent->recipes.size();
+	if(	(numThefts && numAttemptedThefts) ||
+		(numSaves && numAttemptedSaves) ||
+		numRecalls ||
+		numLagouts ||
+		numFishCaught ||
+		numItemsCrafted ||
+		numRecipes ||
+		numCombosOpened ||
+		rooms
+	)
+		oStr << "\n^WOther^x\n";
+	if(numThefts && numAttemptedThefts)
+		oStr << "  Items stolen:                ^C" << numThefts << "/" << numAttemptedThefts << " (" << (numThefts * 100 / numAttemptedThefts) << "%)^x\n";
+	if(numSaves && numAttemptedSaves)
+		oStr << "  Saving throws made:          ^C" << numSaves << "/" << numAttemptedSaves << " (" << (numSaves * 100 / numAttemptedSaves) << "%)^x\n";
+	if(numRecalls)
+		oStr << "  Hazies/word-of-recalls used: ^C" << numRecalls << "^x\n";
+	if(numLagouts)
+		oStr << "  Lagouts:                     ^C" << numLagouts << "^x\n";
+	if(numFishCaught)
+		oStr << "  Fish caught:                 ^C" << numFishCaught << "^x\n";
+	if(numItemsCrafted)
+		oStr << "  Items crafted:               ^C" << numItemsCrafted << "^x\n";
+	if(numRecipes)
+		oStr << "  Recipes known:               ^C" << numRecipes << "^x\n";
+	if(numCombosOpened)
+		oStr << "  Combinations opened:         ^C" << numCombosOpened << "^x\n";
+	if(rooms)
+		oStr << "  Special rooms discovered:    ^C" << rooms << "^x\n";
+
+	viewer->printColor("%s\n", oStr.str().c_str());
+}
+
+//*********************************************************************
+//						calcToughness
+//*********************************************************************
+
+unsigned long Statistics::calcToughness(const Creature* target) {
+	unsigned long t = 0;
+
+	if(target->isMonster()) {
+
+		const Monster* monster = target->getConstMonster();
+		t += target->hp.getMax();
+		t += target->getAttackPower();
+		t += target->getWeaponSkill();
+		t += target->getDefenseSkill();
+		// level is weighted
+		t += target->getLevel() * 2;
+		// only a percentage of their mana counts
+		t += (target->mp.getMax() * monster->getCastChance() / 100);
+
+	} else {
+
+		t = target->getLevel() * 10;
+
+	}
+
+	return(t);
+}
+
+//*********************************************************************
+//						damageWith
+//*********************************************************************
+
+bstring Statistics::damageWith(const Player* player, const Object* weapon) {
+	if(weapon)
+		return(weapon->getObjStr(NULL, INV | MAG, 1));
+	return((bstring)"your " + player->getUnarmedWeaponSkill() + "s");
+}
+
+//*********************************************************************
+//						pkDemographics
+//*********************************************************************
+
+unsigned long Statistics::pkDemographics() const {
+	if(numPkIn == numPkWon)
+		return(0);
+	return(pkRank());
+}
+
+//*********************************************************************
+//						getTime
+//*********************************************************************
+
+bstring Statistics::getTime() {
+	return(start);
+}
+
+//*********************************************************************
+//						save
+//*********************************************************************
+
+void Statistics::save(xmlNodePtr rootNode, bstring nodeName) const {
+	xmlNodePtr curNode = xml::newStringChild(rootNode, nodeName);
+
+	xml::newNumChild(curNode, "Track", track);
+	xml::saveNonNullString(curNode, "Start", start);
+
+	xml::saveNonZeroNum(curNode, "NumSwings", numSwings);
+	xml::saveNonZeroNum(curNode, "NumHits", numHits);
+	xml::saveNonZeroNum(curNode, "NumMisses", numMisses);
+	xml::saveNonZeroNum(curNode, "NumFumbles", numFumbles);
+	xml::saveNonZeroNum(curNode, "NumDodges", numDodges);
+	xml::saveNonZeroNum(curNode, "NumCriticals", numCriticals);
+	xml::saveNonZeroNum(curNode, "NumTimesHit", numTimesHit);
+	xml::saveNonZeroNum(curNode, "NumTimesMissed", numTimesMissed);
+	xml::saveNonZeroNum(curNode, "NumTimesFled", numTimesFled);
+	xml::saveNonZeroNum(curNode, "NumPkIn", numPkIn);
+	xml::saveNonZeroNum(curNode, "NumPkWon", numPkWon);
+	xml::saveNonZeroNum(curNode, "NumCasts", numCasts);
+	xml::saveNonZeroNum(curNode, "NumOffensiveCasts", numOffensiveCasts);
+	xml::saveNonZeroNum(curNode, "NumHealingCasts", numHealingCasts);
+	xml::saveNonZeroNum(curNode, "NumKills", numKills);
+	xml::saveNonZeroNum(curNode, "NumDeaths", numDeaths);
+	xml::saveNonZeroNum(curNode, "NumThefts", numThefts);
+	xml::saveNonZeroNum(curNode, "NumAttemptedThefts", numAttemptedThefts);
+	xml::saveNonZeroNum(curNode, "NumSaves", numSaves);
+	xml::saveNonZeroNum(curNode, "NumAttemptedSaves", numAttemptedSaves);
+	xml::saveNonZeroNum(curNode, "NumRecalls", numRecalls);
+	xml::saveNonZeroNum(curNode, "NumLagouts", numLagouts);
+	xml::saveNonZeroNum(curNode, "NumWandsUsed", numWandsUsed);
+	xml::saveNonZeroNum(curNode, "NumTransmutes", numTransmutes);
+	xml::saveNonZeroNum(curNode, "NumPotionsDrank", numPotionsDrank);
+	xml::saveNonZeroNum(curNode, "NumFishCaught", numFishCaught);
+	xml::saveNonZeroNum(curNode, "NumItemsCrafted", numItemsCrafted);
+	xml::saveNonZeroNum(curNode, "NumCombosOpened", numCombosOpened);
+	xml::saveNonZeroNum(curNode, "MostGroup", mostGroup);
+	mostMonster.save(curNode, "MostMonster");
+	mostAttackDamage.save(curNode, "MostAttackDamage");
+	mostMagicDamage.save(curNode, "MostMagicDamage");
+}
+
+//*********************************************************************
+//						load
+//*********************************************************************
+
+void Statistics::load(xmlNodePtr curNode) {
+	xmlNodePtr childNode = curNode->children;
+
+	while(childNode) {
+			 if(NODE_NAME(childNode, "Track")) xml::copyToBool(track, childNode);
+		else if(NODE_NAME(childNode, "Start")) xml::copyToBString(start, childNode);
+		else if(NODE_NAME(childNode, "NumSwings")) xml::copyToNum(numSwings, childNode);
+		else if(NODE_NAME(childNode, "NumHits")) xml::copyToNum(numHits, childNode);
+		else if(NODE_NAME(childNode, "NumMisses")) xml::copyToNum(numMisses, childNode);
+		else if(NODE_NAME(childNode, "NumFumbles")) xml::copyToNum(numFumbles, childNode);
+		else if(NODE_NAME(childNode, "NumDodges")) xml::copyToNum(numDodges, childNode);
+		else if(NODE_NAME(childNode, "NumCriticals")) xml::copyToNum(numCriticals, childNode);
+		else if(NODE_NAME(childNode, "NumTimesHit")) xml::copyToNum(numTimesHit, childNode);
+		else if(NODE_NAME(childNode, "NumTimesMissed")) xml::copyToNum(numTimesMissed, childNode);
+		else if(NODE_NAME(childNode, "NumTimesFled")) xml::copyToNum(numTimesFled, childNode);
+		else if(NODE_NAME(childNode, "NumPkIn")) xml::copyToNum(numPkIn, childNode);
+		else if(NODE_NAME(childNode, "NumPkWon")) xml::copyToNum(numPkWon, childNode);
+		else if(NODE_NAME(childNode, "NumCasts")) xml::copyToNum(numCasts, childNode);
+		else if(NODE_NAME(childNode, "NumOffensiveCasts")) xml::copyToNum(numOffensiveCasts, childNode);
+		else if(NODE_NAME(childNode, "NumHealingCasts")) xml::copyToNum(numHealingCasts, childNode);
+		else if(NODE_NAME(childNode, "NumKills")) xml::copyToNum(numKills, childNode);
+		else if(NODE_NAME(childNode, "NumDeaths")) xml::copyToNum(numDeaths, childNode);
+		else if(NODE_NAME(childNode, "NumThefts")) xml::copyToNum(numThefts, childNode);
+		else if(NODE_NAME(childNode, "NumAttemptedThefts")) xml::copyToNum(numAttemptedThefts, childNode);
+		else if(NODE_NAME(childNode, "NumSaves")) xml::copyToNum(numSaves, childNode);
+		else if(NODE_NAME(childNode, "NumAttemptedSaves")) xml::copyToNum(numAttemptedSaves, childNode);
+		else if(NODE_NAME(childNode, "NumRecalls")) xml::copyToNum(numRecalls, childNode);
+		else if(NODE_NAME(childNode, "NumLagouts")) xml::copyToNum(numLagouts, childNode);
+		else if(NODE_NAME(childNode, "NumWandsUsed")) xml::copyToNum(numWandsUsed, childNode);
+		else if(NODE_NAME(childNode, "NumTransmutes")) xml::copyToNum(numTransmutes, childNode);
+		else if(NODE_NAME(childNode, "NumPotionsDrank")) xml::copyToNum(numPotionsDrank, childNode);
+		else if(NODE_NAME(childNode, "NumFishCaught")) xml::copyToNum(numFishCaught, childNode);
+		else if(NODE_NAME(childNode, "NumItemsCrafted")) xml::copyToNum(numItemsCrafted, childNode);
+		else if(NODE_NAME(childNode, "NumCombosOpened")) xml::copyToNum(numCombosOpened, childNode);
+		else if(NODE_NAME(childNode, "MostGroup")) xml::copyToNum(mostGroup, childNode);
+		else if(NODE_NAME(childNode, "MostMonster")) mostMonster.load(childNode);
+		else if(NODE_NAME(childNode, "MostAttackDamage")) mostAttackDamage.load(childNode);
+		else if(NODE_NAME(childNode, "MostMagicDamage")) mostMagicDamage.load(childNode);
+		childNode = childNode->next;
+	}
+}
+
+//*********************************************************************
+//						swing
+//*********************************************************************
+
+void Statistics::swing() { if(track) numSwings++; }
+
+//*********************************************************************
+//						hit
+//*********************************************************************
+
+void Statistics::hit() { if(track) numHits++; }
+
+//*********************************************************************
+//						miss
+//*********************************************************************
+
+void Statistics::miss() { if(track) numMisses++; }
+
+//*********************************************************************
+//						fumble
+//*********************************************************************
+
+void Statistics::fumble() { if(track) numFumbles++; }
+
+//*********************************************************************
+//						dodge
+//*********************************************************************
+
+void Statistics::dodge() { if(track) numDodges++; }
+
+//*********************************************************************
+//						critical
+//*********************************************************************
+
+void Statistics::critical() { if(track) numCriticals++; }
+
+//*********************************************************************
+//						wasHit
+//*********************************************************************
+
+void Statistics::wasHit() { if(track) numTimesHit++; }
+
+//*********************************************************************
+//						wasMissed
+//*********************************************************************
+
+void Statistics::wasMissed() { if(track) numTimesMissed++; }
+
+//*********************************************************************
+//						flee
+//*********************************************************************
+
+void Statistics::flee() { if(track) numTimesFled++; }
+
+//*********************************************************************
+//						winPk
+//*********************************************************************
+// because these two stats are older, they're always tracked
+
+void Statistics::winPk() { numPkIn++; numPkWon++; }
+
+//*********************************************************************
+//						losePk
+//*********************************************************************
+
+void Statistics::losePk() { numPkIn++; }
+
+//*********************************************************************
+//						cast
+//*********************************************************************
+
+void Statistics::cast() { if(track) numCasts++; }
+
+//*********************************************************************
+//						offensiveCast
+//*********************************************************************
+
+void Statistics::offensiveCast() { if(track) numOffensiveCasts++; }
+
+//*********************************************************************
+//						healingCast
+//*********************************************************************
+
+void Statistics::healingCast() { if(track) numHealingCasts++; }
+
+//*********************************************************************
+//						kill
+//*********************************************************************
+
+void Statistics::kill() { if(track) numKills++; }
+
+//*********************************************************************
+//						die
+//*********************************************************************
+
+void Statistics::die() { if(track) numDeaths++; }
+
+//*********************************************************************
+//						steal
+//*********************************************************************
+
+void Statistics::steal() { if(track) numThefts++; }
+
+//*********************************************************************
+//						attemptSteal
+//*********************************************************************
+
+void Statistics::attemptSteal() { if(track) numAttemptedThefts++; }
+
+//*********************************************************************
+//						save
+//*********************************************************************
+
+void Statistics::save() { if(track) numSaves++; }
+
+//*********************************************************************
+//						attemptSave
+//*********************************************************************
+
+void Statistics::attemptSave() { if(track) numAttemptedSaves++; }
+
+//*********************************************************************
+//						recall
+//*********************************************************************
+
+void Statistics::recall() { if(track) numRecalls++; }
+
+//*********************************************************************
+//						lagout
+//*********************************************************************
+
+void Statistics::lagout() { if(track) numLagouts++; }
+
+//*********************************************************************
+//						wand
+//*********************************************************************
+
+void Statistics::wand() { if(track) numWandsUsed++; }
+
+//*********************************************************************
+//						transmute
+//*********************************************************************
+
+void Statistics::transmute() { if(track) numTransmutes++; }
+
+//*********************************************************************
+//						potion
+//*********************************************************************
+
+void Statistics::potion() { if(track) numPotionsDrank++; }
+
+//*********************************************************************
+//						fish
+//*********************************************************************
+
+void Statistics::fish() { if(track) numFishCaught++; }
+
+//*********************************************************************
+//						craft
+//*********************************************************************
+
+void Statistics::craft() { if(track) numItemsCrafted++; }
+
+//*********************************************************************
+//						combo
+//*********************************************************************
+
+void Statistics::combo() { if(track) numCombosOpened++; }
+
+//*********************************************************************
+//						group
+//*********************************************************************
+
+void Statistics::group(unsigned long num) { if(track) mostGroup = MAX(num, mostGroup); }
+
+//*********************************************************************
+//						monster
+//*********************************************************************
+
+void Statistics::monster(const Monster* monster) {
+	if(!track || monster->isPet())
+		return;
+	mostMonster.update(calcToughness(monster), monster->name);
+}
+
+//*********************************************************************
+//						attackDamage
+//*********************************************************************
+
+void Statistics::attackDamage(unsigned long num, bstring with) {
+	if(track) mostAttackDamage.update(num, with);
+}
+
+//*********************************************************************
+//						magicDamage
+//*********************************************************************
+
+void Statistics::magicDamage(unsigned long num, bstring with) {
+	if(track) mostMagicDamage.update(num, with);
+}
+
+//*********************************************************************
+//						setParent
+//*********************************************************************
+
+void Statistics::setParent(Player* player) { parent = player; }
+
+//*********************************************************************
+//						pkRank
+//*********************************************************************
+// This function returns the rank of the player based on how many
+// pkills they has been in, and how many they have won
+
+unsigned long Statistics::pkRank() const {
+	if(!numPkWon || !numPkIn)
+		return(0);
+	return(numPkWon * 100 / numPkIn);
+}
+
+//*********************************************************************
+//						getPkin
+//*********************************************************************
+
+unsigned long Statistics::getPkin() const { return(numPkIn); }
+
+//*********************************************************************
+//						getPkwon
+//*********************************************************************
+
+unsigned long Statistics::getPkwon() const { return(numPkWon); }
+
+//*********************************************************************
+//						setPkin
+//*********************************************************************
+// remove when all players are up to 2.42i
+
+void Statistics::setPkin(unsigned long p) { numPkIn = p; }
+
+//*********************************************************************
+//						setPkwon
+//*********************************************************************
+
+void Statistics::setPkwon(unsigned long p) { numPkWon = p; }
+
+//*********************************************************************
+//						cmdStatistics
+//*********************************************************************
+
+int cmdStatistics(Player* player, cmd* cmnd) {
+	Player* target = player;
+	bool online=true;
+
+	if(!strcmp(cmnd->str[1], "reset")) {
+		player->statistics.reset();
+		player->print("Your statistics have been reset.\n");
+		player->print("Note that player kill statistics are always tracked and cannot be reset.\n");
+		return(0);
+	}
+
+	if(player->isDm() && cmnd->num > 1) {
+		cmnd->str[1][0] = up(cmnd->str[1][0]);
+		target = gServer->findPlayer(cmnd->str[1]);
+		if(!target) {
+			loadPlayer(cmnd->str[1], &target);
+			online = false;
+			// If the player is offline, init() won't be run and the statistics object won't
+			// get its parent set. Do so now.
+			if(target)
+				target->statistics.setParent(target);
+		}
+		if(!target) {
+			player->print("That player does not exist.\n");
+			return(0);
+		}
+		player->printColor("^W%s's Statistics\n", target->name);
+	}
+
+	target->statistics.display(player);
+
+	if(target == player) {
+		player->printColor("You may type ^Wstats reset^x to reset your statistic counts to zero.\n");
+		player->print("You may use the set, clear, and toggle commands to control tracking of statistics.\n");
+	}
+
+	if(!online)
+		free_crt(target);
+	return(0);
+}
