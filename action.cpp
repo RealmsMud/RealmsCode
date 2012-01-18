@@ -163,7 +163,6 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 	BaseRoom* room = creature->getRoom();
 	ctag	*cp=0;
 	Player	*player=0, *pTarget=0;
-	Monster	*monster=0;
 	Creature* target=0;
 	Object	*object=0;
 	Exit	*exit=0;
@@ -176,7 +175,6 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
 	// some actions are creature-only; we will need this variable to use them
 	player = creature->getPlayer();
-	monster = creature->getMonster();
 
 	Socket* sock = NULL;
 	if(player)
@@ -194,8 +192,9 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 			player->unhide();
 
 		// if they have a pet, they use orderPet instead
-		if(str == "pet" && player->getPet())
+		if(str == "pet" && player->hasPet()) {
 			return(orderPet(player, cmnd));
+		}
 	}
 
 
@@ -206,7 +205,8 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 		if( (!target || target == creature) &&
 			str != "point" &&
 			str != "show" &&
-			str != "mark"
+			str != "mark" &&
+			str != "dismiss"
 		) {
 			creature->print("That is not here.\n");
 			return(player ? 0 : 1);
@@ -268,8 +268,8 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 			} else {
 				OUT_HIMHER("You stab yourself in the eye. OUCH!\n", "%M stabs %sself in the eye.");
 				if(	mrand(1,100) <= 50 &&
-					!creature->isEffected("blindness")
-				) {
+					!creature->isEffected("blindness"))
+				{
 					creature->addEffect("blindness", creature->strength.getCur(), 1, player, true, player);
 				}
 			}
@@ -279,8 +279,8 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 		if(	player &&
 			(	!player->ready[WIELD-1] ||
 				!(player->ready[WIELD-1]->getWeaponCategory() == "slashing" || player->ready[WIELD-1]->getWeaponCategory() == "chopping")
-			)
-		) {
+			) )
+		{
 			creature->print("You must be wielding a slashing or chopping weapon in order to cut yourself.\n");
 		} else {
 
@@ -856,25 +856,20 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 	} else if(str == "dismiss") {
 
 		if(target) {
-			if(pTarget || !player) {
+			if(target->isPet() && target->getMaster() == creature) {
+				player->dismissPet(target->getMonster());
+			} else {
 				OUT4("You curtly dismiss %N.\n", "%M dismisses you curtly.\n",
 					"%M curtly dismisses %N .");
-			} else {
-				if(target->isPet() && target->getMaster() == creature) {
-					sock->print("You dismiss %N.\n", target);
-					broadcast(sock, room, "%M dismisses %N.", creature, target);
-
-					if(target->isUndead())
-						broadcast(NULL, room, "%M wanders away.", target);
-					else
-						broadcast(NULL, target->getRoom(), "%M fades away.", target);
-					target->die(target->getMaster());
-					gServer->delActive(monster);
-				}
 			}
 		} else {
-			sock->print("Dismiss who?\n");
-			return(0);
+			if(player->hasPet() && !strcmp(cmnd->str[1], "all")) {
+				player->dismissAll();
+				return(0);
+			} else {
+				sock->print("Dismiss who?\n");
+				return(0);
+			}
 		}
 
 	} else if(str == "sit") {

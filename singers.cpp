@@ -526,7 +526,7 @@ int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) 
 		lastname[0] = 0;
 		while(cp) {
 			// skip caster's pet
-			if(cp->crt->isPet() && cp->crt->following == player) {
+			if(cp->crt->isPet() && cp->crt->getMaster() == player) {
 				cp = cp->next_tag;
 				continue;
 			}
@@ -1057,64 +1057,13 @@ int songSafety(Player* player, cmd* cmnd) {
 	broadcast(player->getSock(), player->getRoom(), "%M sings a song of safety.", player);
 
 	// handle everyone following singer
-	cp = player->first_fol;
-	while(cp) {
-		follower = cp->crt->getPlayer();
-		cp = cp->next_tag;
-
-		if(!follower)
-			continue;
-		if(!player->inSameRoom(follower))
-			continue;
-		if(follower->isStaff())
-			continue;
-
-		if(!player->isStaff() && follower->checkDimensionalAnchor()) {
-			player->printColor("^y%M's dimensional-anchor causes your song to go off-key!^w\n", follower);
-			follower->printColor("^yYour dimensional-anchor protects you from %N's song of safety!^w\n", player);
-			continue;
-		}
-
-		newRoom = follower->getRecallRoom().loadRoom(follower);
-		if(!newRoom)
-			continue;
-		broadcast(follower->getSock(), follower->getRoom(), "%M disappears.", follower);
-		follower->deleteFromRoom();
-		follower->addToRoom(newRoom);
-		follower->doPetFollow();
-	}
-	// if singer is following someone else
-	if(player->following) {
-		follower = player->following->getPlayer();
-
-		if(follower && player->inSameRoom(follower)) {
-			if(!player->isStaff() && follower->checkDimensionalAnchor()) {
-				player->printColor("^y%M's dimensional-anchor causes your song to go off-key!^w\n", follower);
-				follower->printColor("^yYour dimensional-anchor protects you from %N's song of safety!^w\n", player);
-			} else if(!follower->isStaff()) {
-				newRoom = follower->getRecallRoom().loadRoom(follower);
-				if(newRoom) {
-					broadcast(follower->getSock(), follower->getRoom(), "%M disappears.", follower);
-					follower->deleteFromRoom();
-					follower->addToRoom(newRoom);
-					follower->doPetFollow();
-				}
-			}
-		}
-
-		cp = player->following->first_fol;
-		while(cp) {
-			follower = cp->crt->getPlayer();
-			cp = cp->next_tag;
-
-			if(!follower)
-				continue;
-			if(follower == player)
-				continue;
-			if(!player->inSameRoom(follower))
-				continue;
-			if(follower->isStaff())
-				continue;
+	Group* group = player->getGroup();
+	if(group) {
+		for(Creature* crt : group->members) {
+			follower = crt->getPlayer();
+			if(!follower) continue;
+			if(!player->inSameRoom(follower)) continue;
+			if(follower->isStaff()) continue;
 
 			if(!player->isStaff() && follower->checkDimensionalAnchor()) {
 				player->printColor("^y%M's dimensional-anchor causes your song to go off-key!^w\n", follower);

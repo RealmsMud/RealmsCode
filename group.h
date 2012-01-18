@@ -49,9 +49,10 @@ public:
     Group(Creature* pLeader);
     ~Group();
 
-    bool add(Creature* newMember, bool isLeader = false);
+    bool add(Creature* newMember);
     bool remove(Creature* toRemove);
     void removeAll();
+    bool disband();
 
     bool setLeader(Creature* newLeader);
     void setName(bstring newName);
@@ -61,10 +62,13 @@ public:
 
     Creature* getLeader();
     int getSize(bool countDmInvis = false);
+    int getNumInSameRoom(Creature* target);
     Creature* getMember(int num, bool countDmInvis = false);
+    Creature* getMember(bstring name, int num, Creature* searcher = NULL, bool includePets = false);
     GroupType getGroupType();
     bstring& getName();
     bstring& getDescription();
+    bstring getGroupList(Creature* viewer);
 
     void sendToAll(bstring msg, Creature* ignore = NULL, bool ignorePets = true);
 

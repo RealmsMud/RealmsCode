@@ -132,7 +132,7 @@ bool Monster::addEnemy(Creature* target, bool print) {
       if(target->isEffected("petrification") || target->isUnconscious())
           return(0);
       // pets should not attack master
-      if(isPet() && this == target->getPlayer()->getPet())
+      if(isPet() && getMaster() == target)
           return(false);
     }
     if(target->isPet()) {
@@ -1515,15 +1515,13 @@ int Creature::flee(bool magicTerror) {
 
 		if(exit->doEffectDamage(this))
 			return(2);
-
-		mThis = pThis->getPet();
-		if(mThis && inSameRoom(mThis))
-			broadcast(getSock(), oldRoom, "%M flees to the %s^x with its master.",
-				mThis, exit->name);
-		mThis = 0;
-
 		pThis->deleteFromRoom();
 		pThis->addToRoom(newRoom);
+
+		for(Monster* pet : pThis->pets) {
+			if(pet && inSameRoom(pThis))
+				broadcast(getSock(), oldRoom, "%M flees to the %s^x with its master.", mThis, exit->name);
+		}
 	}
 	exit->checkReLock(this, false);
 

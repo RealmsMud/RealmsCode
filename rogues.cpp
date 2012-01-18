@@ -113,8 +113,8 @@ int cmdBribe(Player* player, cmd* cmnd) {
 
 	if(creature->isPet()) {
 		player->print("%M is too loyal to %s for you to bribe %s.\n", creature,
-			creature->following->name, creature->himHer());
-		creature->following->print("%M tried to bribe %N.\n", player, creature);
+			creature->getMaster()->getName(), creature->himHer());
+		creature->getMaster()->print("%M tried to bribe %N.\n", player, creature);
 		return(0);
 	}
 
@@ -1199,7 +1199,7 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 int cmdBackstab(Player* player, cmd* cmnd) {
 	Player	*pTarget=0;
 	Creature* target=0;
-	int		 m=0, n=0;
+	int		 n=0;
 	int		disembowel=0, dur=0, dmg=0;
 	float	stabMod=0.0, cap=0.0;
 	Damage damage;
@@ -1373,8 +1373,6 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 		}
 		damage.includeBonus();
 		n = damage.get();
-
-		m = tMIN((int)target->hp.getCur(), damage.get());
 
 		if(result == ATTACK_BLOCK) {
 			player->printColor("^C%M partially blocked your attack!\n", target);

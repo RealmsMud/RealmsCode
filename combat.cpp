@@ -203,8 +203,8 @@ int Monster::updateCombat() {
 // Don't jump to your aid if it is itself...lol
 	if(pTarget) {
 	    for(Monster* pet : pTarget->pets) {
-			if(	pet->isPet() && pet->getMaster() == pTarget &&
-				!pet->isEnemy(this) && pet != this)
+			if(	pet->isPet() && getMaster() != pTarget && pet->getMaster() == pTarget &&
+				!pet->isEnemy(this) && pet != this )
 			{
 				pet->addEnemy(findFirstEnemyCrt(this, pet));
 				pTarget->print("%M jumps to your aid!!\n", pet);

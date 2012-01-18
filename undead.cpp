@@ -27,7 +27,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 	Creature* target=0;
 	Player	*pTarget=0;
 	long	i=0, t=0;
-	int		chance=0, m=0, dmgnum=0;
+	int		chance=0, dmgnum=0;
 	Damage damage;
 
 
@@ -124,7 +124,6 @@ int cmdBite(Player* player, cmd* cmnd) {
 
 	dmgnum = damage.get();
 
-	m = MIN(target->hp.getCur(), damage.get());
 	damage.set(MIN(damage.get(), target->hp.getCur() + 1));
 	if(damage.get() < 1)
 		damage.set(1);
@@ -166,9 +165,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdMist(Player* player, cmd* cmnd) {
-	ctag	*cp=0;
 	long	i=0, t=0;
-	int		has_group=0;
 	t = time(0);
 	i = player->getLTAttack() > LT(player, LT_SPELL) ? player->getLTAttack() : LT(player, LT_SPELL);
 
@@ -209,22 +206,8 @@ int cmdMist(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	cp = player->first_fol;
-	while(cp) {
-		if(cp->crt && !cp->crt->flagIsSet(P_DM_INVIS)) {
-			has_group = 1;
-			break;
-		}
-		cp = cp->next_tag;
-	}
-
-
-	if(player->following) {
-		player->print("You can't do that while following someone.\n");
-		return(0);
-	}
-	if(has_group) {
-		player->print("You can't do that when someone is following you.\n");
+	if(player->getGroup()) {
+		player->print("You can't do that while in a group.\n");
 		return(0);
 	}
 	if(player->flagIsSet(P_MISTED)) {
@@ -572,15 +555,15 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 			player->setFlag(P_LAG_PROTECTION_ACTIVE);
 
 		if(target->isPet()) {
-			if(!player->flagIsSet(P_CHAOTIC) && !player->isCt() && !target->following->flagIsSet(P_OUTLAW)) {
+			if(!player->flagIsSet(P_CHAOTIC) && !player->isCt() && !target->getPlayerMaster()->flagIsSet(P_OUTLAW)) {
 				player->print("Sorry, you're lawful.\n");
 				return(0);
 			}
-			if(!target->following->flagIsSet(P_CHAOTIC) && !player->isCt() && !target->following->flagIsSet(P_OUTLAW)) {
+			if(!target->getPlayerMaster()->flagIsSet(P_CHAOTIC) && !player->isCt() && !target->getPlayerMaster()->flagIsSet(P_OUTLAW)) {
 				player->print("Sorry, that creature is lawful.\n");
 				return(0);
 			}
-			if(player->getRoom()->isPkSafe() && !target->following->flagIsSet(P_OUTLAW)) {
+			if(player->getRoom()->isPkSafe() && !target->getPlayerMaster()->flagIsSet(P_OUTLAW)) {
 				player->print("No killing allowed in this room.\n");
 				return(0);
 			}

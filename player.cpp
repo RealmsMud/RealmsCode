@@ -43,7 +43,7 @@ void Creature::fixLts() {
 	long tdiff=0, t = time(0);
 	int i=0;
 	if(isPet())  {
-		tdiff = t - following->lasttime[LT_AGE].ltime;
+		tdiff = t - getMaster()->lasttime[LT_AGE].ltime;
 	}
 	else
 		tdiff = t - lasttime[LT_AGE].ltime;
@@ -354,12 +354,8 @@ void Player::init() {
 		addToRoom(uRoom);
 
 
-
-	// pet code
-	cp = first_fol;
-	while(cp) {
-		Monster* pet = cp->crt->getMonster();
-		pet->following = this;
+	for(Monster* pet : pets) {
+		pet->setMaster(this);
 		pet->fixLts();
 
 		pet->updateAttackTimer();
@@ -505,8 +501,6 @@ void Player::init() {
 // is called.
 
 void Player::uninit() {
-	Creature* target=0;
-	ctag	*cp=0, *prev=0;
 	int		i=0;
 	long	t=0;
 	char	str[50];
@@ -518,63 +512,17 @@ void Player::uninit() {
 	courageous();
 	clearMaybeDueling();
 
-	cp = first_fol;
-	while(cp) {
-		// pet code
-		if(cp->crt->isPet()) {
-			Monster* pet = cp->crt->getMonster();
+	for(Monster* pet : pets) {
+		if(pet->isPet()) {
 			gServer->delActive(pet);
 			pet->deleteFromRoom();
 			free_crt(pet);
-			cp->crt = 0;
-			cp = cp->next_tag;
-			continue;
+		} else {
+			pet->setMaster(NULL);
 		}
-		cp->crt->following = 0;
-		if(cp->crt->isPlayer() && !gServer->isRebooting())
-			cp->crt->print("You stop following %s.\n", name);
-		prev = cp->next_tag;
-		cp->crt = NULL;
-		cp = prev;
 	}
-	while(first_fol && first_fol->crt == NULL) {
-		prev = first_fol;
-		first_fol = first_fol->next_tag;
-		delete prev;
-	}
-	cp = first_fol;
-	while(cp) {
-		if(cp->next_tag == NULL)
-			break;
-		if(cp->next_tag->crt == NULL) {
-			prev = cp->next_tag;
-			cp->next_tag = cp->next_tag->next_tag;
-			delete prev;
-			continue;
-		}
-		cp = cp->next_tag;
-	}
-	if(following) {
-		target = following;
-		cp = target->first_fol;
-		if(cp->crt == this) {
-			target->first_fol = cp->next_tag;
-			delete cp;
-		} else
-			while(cp) {
-				if(cp->crt == this) {
-					prev->next_tag = cp->next_tag;
-					delete cp;
-					break;
-				}
-				prev = cp;
-				cp = cp->next_tag;
-			}
-		following = 0;
-
-		if(!isStaff() && !gServer->isRebooting())
-			target->print("%s stops following you.\n", name);
-	}
+	pets.clear();
+	removeFromGroup(!gServer->isRebooting());
 
 	for(i=0; i<MAXWEAR; i++) {
 		if(ready[i]) {
@@ -1101,7 +1049,7 @@ void Creature::finishDelObj(Object* object, bool breakUnique, bool removeUnique,
 	if(darkmetal)
 		killDarkmetal();
 	if(breakUnique || removeUnique) {
-		Player* player = getMaster();
+		Player* player = getPlayerMaster();
 		if(player) {
 			if(breakUnique)
 				Limited::remove(player, object);

@@ -1424,7 +1424,7 @@ int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun,
 	} else {
 
 		if(!strcmp(noun, "watch")) {
-			if(	!in_group(player, target->name) &&
+			if(	!player->inSameGroup(target) &&
 				!player->isCt() &&
 				!(player->isWatcher() && target->getLevel() <= 4)
 			) {

@@ -316,7 +316,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
 			if(!saved) {
 				pVictim->addEffect("petrification", 0, 0, 0, true, this);
 				pVictim->clearAsEnemy(); // clears player from all mob's enemy lists in the room.
-				remFromGroup(pVictim);
+				pVictim->removeFromGroup(false);
 			}
 		}
 	}
@@ -436,8 +436,8 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
 			// Damage is experience, not hp
 			victim->addExperience(attackDamage.get() * -1);
 		} else {
-			if(isPet() && following)
-				following->printColor("%M %s %N for %s%d^x damage.\n", this, attack->verb.c_str(), victim, following->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+			if(isPet() && getMaster())
+				getMaster()->printColor("%M %s %N for %s%d^x damage.\n", this, attack->verb.c_str(), victim, getMaster()->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
 
 			broadcastGroup(false, victim, "^M%M^x %s ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n", this, attack->verb.c_str(),
 				victim, attackDamage.get(), victim->heShe(), victim->getStatusStr(attackDamage.get()));

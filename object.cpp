@@ -809,7 +809,7 @@ void Creature::killDarkmetal() {
 	Player	*pTarget = getPlayer();
 	otag	*op=0;
 	Object	*object=0;
-	int		i=0, pfd=0;
+	int		i=0;
 	bool	found=false;
 
 	if(!getRoom()->isSunlight())
@@ -818,13 +818,8 @@ void Creature::killDarkmetal() {
 	if(pTarget) {
 		if( pTarget->getSock() == NULL ||
 			pTarget->isStaff() ||
-			!pTarget->flagIsSet(P_DARKMETAL)
-		)
+			!pTarget->flagIsSet(P_DARKMETAL))
 			return;
-		pfd = fd;
-	} else {
-		if(following)
-			pfd = following->fd;
 	}
 
 	// kill anything not in a bag
@@ -835,7 +830,7 @@ void Creature::killDarkmetal() {
 		if(object && object->flagIsSet(O_DARKMETAL)) {
 			if(pTarget)
 				printColor("^yYour %s was destroyed by the sunlight!\n", object->name);
-			else if(pfd)
+			else if(isPet())
 				printColor("^y%M's %s was destroyed by the sunlight!\n", this, object->name);
 			delObj(object, true, false, false, false);
 			delete object;

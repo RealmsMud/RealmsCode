@@ -1335,6 +1335,7 @@ void MudObject::readCreatures(xmlNodePtr curNode) {
 			// Add it to the appropriate parent
 			if(cParent) {
 			    // If we have a creature parent, we must be a pet
+				std::cout << "found a pet, something didn't work though" << std::endl;
 			    cParent->addPet(mob);
 			} else if(rParent) {
 				mob->addToRoom(rParent, 0);

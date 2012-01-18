@@ -156,9 +156,9 @@ void login(Socket* sock, char *str) {
 			gServer->cleanUp();
 
 			player = sock->getPlayer();
-			if(player->first_fol && player->first_fol->crt) {
-			    delete player->first_fol->crt;
-			    player->first_fol->crt = NULL;
+			if(player->hasPet()) {
+				for(Monster* pet : player->pets)
+					delete pet;
 			}
 
 			delete player;

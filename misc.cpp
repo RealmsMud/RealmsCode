@@ -1049,34 +1049,26 @@ void Player::bug(const char *fmt, ...) const {
 //						autosplit
 //*********************************************************************
 
-int autosplit(Creature* player, long amount) {
+int Player::autosplit(long amount) {
 	ctag	*cp=0;
 	int		remain=0, split=0, party=0;
-	Creature *leader=0;
 
-	if(player->isStaff())
+	if(isStaff())
 		return(0);
-	if(!player->ableToDoCommand())
+	if(ableToDoCommand())
 		return(0);
 
 	if(amount <= 5)
 		return(0);
 
-	if(player->following)
-		leader = player->following;  // Find the leader.
-	else
-		leader = player;
+	Group* group = getGroup();
+	if(!group)
+		return(0);
 
-	cp = leader->first_fol;
-
-	party = 1; // The leader.
-	// Staff members are not included in the split
-	while(cp) {
-		if(cp->crt->isPlayer() && !cp->crt->isStaff()) // Count up how many in group.
-			party += 1;
-		cp = cp->next_tag;
+	for(Creature* crt : group->members) {
+		if(crt->isPlayer() && !crt->isStaff())
+			party++;
 	}
-
 	// If group is 1, return with no split.
 	if(party < 2)
 		return(0);
@@ -1087,63 +1079,20 @@ int autosplit(Creature* player, long amount) {
 	remain = amount % party;	// Find remaining odd coins.
 	split = ((amount - remain) / party);  // Determine split minus the remaining odd coins.
 
-
-
-	if(leader == player) {	// Player picking up gets the odd coins.
-		leader->print("You received %d gold as your split.\n", split+remain);
-		leader->coins.add(split+remain, GOLD);
-	} else {
-		leader->print("You received %d gold as your split from %N.\n", split, player);
-		leader->coins.add(split, GOLD);
-		leader->print("You now have %d gold coins.\n", leader->coins[GOLD]);
-	}
-
-	cp = leader->first_fol;
-	while(cp) {
-		if(!cp->crt->isPet() && cp->crt != player && !cp->crt->isStaff()) {
-			cp->crt->print("You received %d gold as your split from %N.\n", split, player);
-			cp->crt->coins.add(split, GOLD);
-			cp->crt->print("You now have %d gold coins.\n", cp->crt->coins[GOLD]);
+	for(Creature* crt : group->members) {
+		if(crt->isPlayer() && !crt->isStaff()) {
+			if(crt == this) {
+				crt->print("You received %d gold as your split.\n", split+remain);
+				crt->coins.add(split+remain, GOLD);
+			} else {
+				cp->crt->print("You received %d gold as your split from %N.\n", split, this);
+				cp->crt->coins.add(split, GOLD);
+				cp->crt->print("You now have %d gold coins.\n", cp->crt->coins[GOLD]);
+			}
 		}
 
-		if(cp->crt == player) {
-			cp->crt->print("You received %d gold as your split.\n", split+remain);
-			cp->crt->coins.add(split+remain, GOLD);
-		}
-
-		cp = cp->next_tag;
 	}
-
 	return(1);
-}
-
-//*********************************************************************
-//						in_group
-//*********************************************************************
-
-int in_group(Creature* player, char *name) {
-	ctag		*cp=0;
-	Creature	*leader=0, *creature=0;
-
-	if(player->following)
-		leader = player->following;
-	else
-		leader = player;
-	cp = leader->first_fol;
-
-	while(cp) {
-		creature = cp->crt;
-		if(creature->isPet()) {
-			cp=cp->next_tag;
-			continue;
-		}
-		if(!strcmp(name, creature->name) && (player != creature) ) {
-			return(1);
-		}
-		cp = cp->next_tag;
-	}
-
-	return(0);
 }
 
 //*********************************************************************
@@ -1239,31 +1188,6 @@ int	numEnemyMonInRoom(Creature* player) {
 	while(cp) {
 		if(cp->crt->getMonster()->isEnemy(player))
 			count++;
-		cp = cp->next_tag;
-	}
-
-	return(count);
-}
-
-//*********************************************************************
-//						numInGroup
-//*********************************************************************
-
-int numInGroup(Creature* player) {
-	int		count=0;
-	ctag	*cp=0;
-	Creature *leader=0;
-
-	if(player->following)
-		leader = player->following;
-	else
-		leader = player;
-
-	cp = leader->first_fol;
-	while(cp) {
-		if(player->inSameRoom(cp->crt))
-			count++;
-
 		cp = cp->next_tag;
 	}
 

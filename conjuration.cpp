@@ -133,10 +133,8 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	if(player->getPlayer()->getPet()) {
-		player->print("Only one conjuration at a time!\n");
+	if(player->hasPet() && !player->checkStaff("Only one conjuration at a time!\n"))
 		return(0);
-	}
 
 	if(spellData->object) {
 		level = spellData->object->getQuality()/10;

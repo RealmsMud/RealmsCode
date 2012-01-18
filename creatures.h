@@ -363,12 +363,16 @@ public:
 
     Group* getGroup(bool inGroup = true);
     GroupStatus getGroupStatus();
+    Creature* getGroupLeader();
 
     void addToGroup(Group* toJoin, bool announce = true);
     void createGroup(Creature* crt);
     bool removeFromGroup(bool announce = true);
 
+    bool inSameGroup(Creature* target);
 
+    void dismissPet(Monster* toDismiss);
+    void dismissAll();
 	void addPet(Monster* newPet, bool setPetFlag = true);
 	void delPet(Monster* toDel);
 	bool hasPet() const;
@@ -1061,7 +1065,6 @@ public:
 	void clearEnemyPlayer();
 	void getPkilled(Player *killer, bool dueling, bool reset=true);
 	void die(DeathType dt);
-	Monster* getPet() const;
 	bool dropWeapons();
 	int checkPoison(Creature* target, Object* weapon);
 	int attackCreature(Creature *victim, AttackType attackType = ATTACK_NORMAL);
@@ -1302,6 +1305,7 @@ public:
 	int getAdjustedAlignment() const;
 	void hasNewMudmail() const;
 	bool checkConfusion();
+	int autosplit(long amt);
 
 	void courageous();
 	void init();

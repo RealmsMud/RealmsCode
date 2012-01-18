@@ -956,7 +956,7 @@ void Server::updateActive(long t) {
 			else
 				broadcast(NULL, room, "%1M fades away.", monster);
 
-			monster->die(monster->following);
+			monster->die(monster->getMaster());
 			gServer->delActive(monster);
 			cp = first_active;
 			continue;

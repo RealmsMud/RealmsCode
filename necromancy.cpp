@@ -318,14 +318,8 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	cp = player->first_fol;
-	while(cp) {
-		if(cp->crt->isMonster() && cp->crt->isPet()) {
-			player->print("Only one target may follow you at a time!\n");
-			return(0);
-		}
-		cp = cp->next_tag;
-	}
+	if(player->hasPet() && !player->checkStaff("You may only animate one undead creature at a time!\n"))
+		return(0);
 
 	/*
 	if(spellData->how == SKILL) {

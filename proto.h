@@ -453,14 +453,11 @@ bool isdm(bstring name);
 //int smashInvis(Creature* creature);
 bool parse_name(char *name);
 int dmIson(void);
-int autosplit(Creature* player, long amt);
-int in_group(Creature* player, char *name);
 long exp_split(Creature* creature, long amount);
 int strPrefix(const char *haystack, const char *needle);
 int strSuffix(const char *haystack, const char *needle);
 int pkillPercent(int pkillsWon, int pkillsIn);
 int	numEnemyMonInRoom(Creature* player);
-int numInGroup(Creature* player);
 int	getLastDigit(int n, int digits);
 
 char *stripLineFeeds(char *str);

@@ -31,7 +31,7 @@ bool healCombatCheck(Creature* healer, Creature* target, bool print=true) {
 
 	if(!mTarget)
 		return(true);
-	if(mTarget->isPet() && mTarget->following == healer)
+	if(mTarget->isPet() && mTarget->getMaster() == healer)
 		return(true);
 	if(!mTarget->getMonster()->nearEnemy())
 		return(true);
@@ -39,13 +39,8 @@ bool healCombatCheck(Creature* healer, Creature* target, bool print=true) {
 		return(true);
 
 	// if healer is in group with pet, they can heal
-	ctag* cp = (healer->following ? healer->following : healer)->first_fol;
-	while(cp) {
-		if(cp->crt == healer)
-			return(true);
-		cp = cp->next_tag;
-	}
-
+	if(healer->getGroup() == mTarget->getGroup())
+		return(true);
 	if(print)
 		healer->print("Not while %N is in combat with someone.\n", target);
 	return(false);
@@ -88,7 +83,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 		level /= 2;
 
 	if(target)
-		vigPet = target->isPet() && target->following == healer;
+		vigPet = target->isPet() && target->getMaster() == healer;
 
 	switch(spell) {
 	case S_VIGOR:

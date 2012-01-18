@@ -209,19 +209,9 @@ bool Creature::pulseSong(long t) {
 		if(targetType.equals("self",false) || targetType.equals("group", false)) {
 			addEffect(playing->getEffect(), -2, -2, this)->setDuration(playing->getDuration());
 		}
-		if(targetType.equals("group", false) && (following != NULL || first_fol != NULL)) {
-			ctag* cp = 0;
-			Creature* crt = 0;
-			if(following) {
-				following->addEffect(playing->getEffect(), -2, -2, this)->setDuration(playing->getDuration());
-				cp = following->first_fol;
-			}
-			else
-				cp = first_fol;
-
-			while(cp) {
-				crt = cp->crt;
-				cp = cp->next_tag;
+		if(targetType.equals("group", false) && (getGroup() != NULL)) {
+			Group* group = getGroup();
+			for(Creature* crt : group->members) {
 				if(inSameRoom(crt))
 					crt->addEffect(playing->getEffect(), -2, -2, this)->setDuration(playing->getDuration());
 			}

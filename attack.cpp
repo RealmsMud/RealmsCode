@@ -139,7 +139,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
 
 	clearFlag(P_AFK);
 
-	if(	target == pThis->getPet() &&
+	if(	target->isPet() && target->getMaster() == this &&
 		!checkStaff("You cannot %s your pet.\n", verb.c_str()) )
 		return(false);
 

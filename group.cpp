@@ -17,9 +17,13 @@
  *
  */
 
-
+// Mud includes
 #include "mud.h"
 #include "group.h"
+
+// C++ Includes
+#include <iomanip>
+
 
 Group::Group(Creature* pLeader) {
     //if(pLeader.inGroup())
@@ -28,7 +32,7 @@ Group::Group(Creature* pLeader) {
     //pLeader->setGroup(this);
     leader = pLeader;
     groupType = GROUP_DEFAULT;
-    name = bstring(leader->getName()) + "'s group.";
+    name = bstring(leader->getName()) + "'s group";
     description = "A group, lead by " + bstring(leader->getName());
     // Register us in the server's list of groups
     // gServer->registerGroup(this);
@@ -53,16 +57,77 @@ std::ostream& operator<<(std::ostream& out, const Group& group) {
     return(out);
 }
 
+bstring Group::getGroupList(Creature* viewer) {
+	int i = 0;
+	std::ostringstream oStr;
+
+	oStr << getName() << ":" << std::endl;
+
+	for(Creature* target : members) {
+		bool isPet = target->isPet();
+		if(!viewer->pFlagIsSet(P_NO_EXTRA_COLOR) && viewer->isEffected("know-aura"))
+			oStr << target->alignColor();
+		oStr << ++i << ") ";
+		if(isPet)
+			oStr << target->getMaster()->getName() << "'s " << target->getName();
+		else
+			oStr << target->getName();
+
+		if(target == leader) {
+			oStr << " (Leader)";
+		} else if(target->getGroupStatus() == GROUP_INVITED) {
+			oStr << " (invited).\n";
+			continue;
+		}
+		if(	viewer->isCt() ||
+				(isPet && !target->getMaster()->flagIsSet(P_NO_SHOW_STATS)) ||
+				(!isPet && !target->pFlagIsSet(P_NO_SHOW_STATS)) ||
+				(isPet && target->getMaster() == viewer) ||
+				(!isPet && target == viewer))
+		{
+			oStr << " - " << (target->hp.getCur() < target->hp.getMax() && !viewer->pFlagIsSet(P_NO_EXTRA_COLOR) ? "^R" : "")
+				 << std::setw(3) << target->hp.getCur() << "^x/" << std::setw(3) << target->hp.getMax()
+				 << " Hp - " << std::setw(3) << target->mp.getCur() << "/" << std::setw(3)
+				 << target->mp.getMax() << " Mp";
+
+			if(!isPet) {
+				if(target->isEffected("blindness"))
+					oStr << ", Blind";
+				if(target->isEffected("drunkenness"))
+					oStr << ", Drunk";
+				if(target->isEffected("confusion"))
+					oStr << ", Confused";
+				if(target->isDiseased())
+					oStr << ", Diseased";
+				if(target->isEffected("petrification"))
+					oStr << ", Petrified";
+				if(target->isPoisoned())
+					oStr << ", Poisoned";
+				if(target->isEffected("silence"))
+					oStr << ", Silenced";
+				if(target->flagIsSet(P_SLEEPING))
+					oStr << ", Sleeping";
+				else if(target->flagIsSet(P_UNCONSCIOUS))
+					oStr << ", Unconscious";
+				if(target->isEffected("wounded"))
+					oStr << ", Wounded";
+			}
+
+			oStr << ".";
+		}
+		oStr << "\n";
+	}
+	return(oStr.str());
+}
 
 
-bool Group::add(Creature* newMember, bool isLeader) {
-//    if(newMember.inGroup())
-//        return(false);
+bool Group::add(Creature* newMember) {
+	// No adding someone twice
+    if(inGroup(newMember))
+        return(false);
+
     newMember->setGroup(this);
-    if(isLeader)
-        newMember->setGroupStatus(GROUP_LEADER);
-    else
-        newMember->setGroupStatus(GROUP_MEMBER);
+    newMember->setGroupStatus(GROUP_MEMBER);
 
     members.push_back(newMember);
     for(Monster* mons : newMember->pets) {
@@ -93,29 +158,35 @@ bool Group::remove(Creature* toRemove) {
         }
 
         // See if the group should be disbanded
-        if(members.size() == 1) {
-            sendToAll("Your group has been disbanded.\n");
-            removeAll();
-            delete this;
-            return(true);
-        }
+        if(members.size() == 1)
+        	return(disband());
 
         // We've already checked for a disband, now check for a leadership change
         if(toRemove == leader) {
-            // Find the first non monster and promote them
-            for(Creature* crt : members) {
-                if(crt->isMonster()) continue;
-                leader = crt;
-                crt->setGroupStatus(GROUP_LEADER);
-                crt->print("You are now the group leader.\n");
-                sendToAll(bstring(crt->getName()) + " is now the group leader.\n", crt);
-                break;
-            }
+        	leader = this->getMember(1, false);
+
+        	// Something's wrong here
+        	if(!leader)
+        		return(disband());
+
+        	leader->setGroupStatus(GROUP_LEADER);
+            leader->print("You are now the group leader.\n");
+            sendToAll(bstring(leader->getName()) + " is now the group leader.\n", leader);
         }
 
 
     }
     return(false);
+}
+//********************************************************************************
+//* disband
+//********************************************************************************
+// Removes all players from a group and deletes it
+bool Group::disband() {
+    sendToAll("Your group has been disbanded.\n");
+    removeAll();
+    delete this;
+    return(true);
 }
 
 //********************************************************************************
@@ -135,27 +206,59 @@ void Group::removeAll() {
 // Parameters: countDmInvis - Should we count DM invis players or not?
 // Returns: The number of players in the group
 int Group::getSize(bool countDmInvis) {
-    if(countDmInvis)
-        return(members.size());
-    else {
-        int count=0;
-        for(Creature* crt : members) {
-            if(!crt->pFlagIsSet(P_DM_INVIS) && crt->isPlayer())
-                count++;
-        }
-        return(count);
-    }
+	int count=0;
+	for(Creature* crt : members) {
+		if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer())
+			count++;
+	}
+	return(count);
 
 }
+
+int Group::getNumInSameRoom(Creature* target) {
+	int count=0;
+	for(Creature* crt : members) {
+		if(crt != target && target->inSameRoom(crt))
+			count++;
+	}
+	return(count);
+}
+//********************************************************************************
+//* getMember
+//********************************************************************************
+// Parameters: countDmInvis - Should we count DM invis players or not?
+// Returns: The chosen players in the group
+
 Creature* Group::getMember(int num, bool countDmInvis) {
     int count=0;
     for(Creature* crt : members) {
-        if(!crt->pFlagIsSet(P_DM_INVIS) && crt->isPlayer())
+        if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer())
             count++;
         if(count == num)
             return(crt);
     }
     return(NULL);
+}
+//********************************************************************************
+//* getMember
+//********************************************************************************
+// Parameters: 	name 		- Name (possibly partial) of the match we're looking for
+//			   	num			- Number in the list for a match
+//				Searcher	- The creature doing the search (allows nulls)
+//				includePets - Include pets in the search
+// Returns: A pointer to the creature, if found
+Creature* Group::getMember(bstring name, int num, Creature* searcher, bool includePets) {
+	int match = 0;
+	for(Creature* crt : members) {
+		if(!crt->isPlayer() && !includePets) continue;
+		if(!searcher || !searcher->canSee(crt)) continue;
+		if(keyTxtEqual(crt, name.c_str())) {
+			if(++match == num) {
+				return(crt);
+			}
+		}
+	}
+	return(NULL);
 }
 
 GroupType Group::getGroupType() {
@@ -188,36 +291,6 @@ void Group::sendToAll(bstring msg, Creature* ignore, bool ignorePets) {
     }
 }
 
-//********************************************************************************
-//* GetGroup
-//********************************************************************************
-// Parameter: bool inGroup - true - only return the group if they're at least a member
-//                           false - return the group if they're an invitee as well
-Group* Creature::getGroup(bool inGroup) {
-    if(inGroup && groupStatus < GROUP_MEMBER)
-        return(NULL);
-
-    return(group);
-}
-//********************************************************************************
-//* SetGroup
-//********************************************************************************
-void Creature::setGroup(Group* newGroup) {
-    // Remove from existing group (Shouldn't happen)
-    if(group) {
-        std::cout << "Setting group for " << getName() << " but they already have a group." << std::endl;
-//        group->remove(this);
-    }
-
-    group = newGroup;
-}
-void Creature::setGroupStatus(GroupStatus newStatus) {
-    groupStatus = newStatus;
-}
-
-GroupStatus Creature::getGroupStatus() {
-    return(groupStatus);
-}
 
 
 void Group::setName(bstring newName) {
@@ -236,3 +309,43 @@ bstring& Group::getDescription() {
     return(description);
 }
 
+//********************************************************************************
+//* GetGroup
+//********************************************************************************
+// Parameter: bool inGroup - true - only return the group if they're at least a member
+//                           false - return the group if they're an invitee as well
+Group* Creature::getGroup(bool inGroup) {
+    if(inGroup && groupStatus < GROUP_MEMBER)
+        return(NULL);
+
+    return(group);
+}
+//********************************************************************************
+//* SetGroup
+//********************************************************************************
+void Creature::setGroup(Group* newGroup) {
+    // Remove from existing group (Shouldn't happen)
+    if(group && newGroup != NULL) {
+        std::cout << "Setting group for " << getName() << " but they already have a group." << std::endl;
+    }
+
+    group = newGroup;
+}
+void Creature::setGroupStatus(GroupStatus newStatus) {
+    groupStatus = newStatus;
+}
+
+GroupStatus Creature::getGroupStatus() {
+    return(groupStatus);
+}
+
+bool Creature::inSameGroup(Creature* target) {
+	if(!target) return(false);
+	return(getGroup() == target->getGroup());
+}
+
+Creature* Creature::getGroupLeader() {
+	group = getGroup();
+	if(!group) return(NULL);
+	return(group->getLeader());
+}

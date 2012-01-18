@@ -955,7 +955,7 @@ int doGetObject(Object* object, Creature* creature, bool doLimited, bool noSplit
 
 		if(player->flagIsSet(P_GOLD_SPLIT) && !noSplit) {
 			gServer->logGold(GOLD_IN, player, object->value, object, "GetObject-Split");
-			if(!autosplit(player, object->value[GOLD])) {
+			if(!player->autosplit(object->value[GOLD])) {
 				player->coins.add(object->value);
 			}
 		} else {
@@ -1243,7 +1243,7 @@ void get_all_rom(Creature* creature, char *item) {
 			if(	cp->crt != player &&
 				player->canSee(cp->crt) &&
 				!cp->crt->flagIsSet(P_HIDDEN) &&
-				!in_group(player, cp->crt->name) &&
+				!player->inSameGroup(cp->crt) &&
 				!cp->crt->isStaff()
 			) {
 				player->print("You cannot do that when someone else is in the room.\n");
@@ -1320,7 +1320,7 @@ void get_all_rom(Creature* creature, char *item) {
 					strcat(str, ", ");
 				}
 //				if(player->flagIsSet(P_GOLD_SPLIT)) {
-//					if(!autosplit(player, object->value[2]))
+//					if(!player->autosplit(object->value[2]))
 //						player->coins[GOLD] += object->value[2];
 //				} else
 //					player->coins[GOLD] += object->value[2];
@@ -1400,7 +1400,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 	Object	*object=0, *container=0;
 	otag	*cop=0;
 	int		 n=0, match=0, ground=0;
-	Creature *pet=0;
+	Monster *pet=0;
 	Property* p=0;
 
 	// we're being sent either a player or a pet
@@ -1612,7 +1612,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 			// check for pets
 			pet = room->findMonster(player, cmnd, 2);
 			if(pet) {
-				if(pet != player->getPet()) {
+				if(!player->findPet(pet)) {
 					player->print("%M is not your pet!\n", pet);
 					return(0);
 				}

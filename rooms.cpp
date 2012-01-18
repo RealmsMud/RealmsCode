@@ -942,7 +942,7 @@ CatRef AreaRoom::getUnique(Creature *creature, bool skipDec) {
 		return(cr);
 
 	bool pet = creature->isPet();
-	Player*	player = creature->getMaster();
+	Player*	player = creature->getPlayerMaster();
 
 	if(	!player ||
 		!player->ready[HELD-1] ||
@@ -1016,7 +1016,7 @@ Creature* BaseRoom::findCreaturePython(Creature* searcher, const bstring& name, 
 
 	bstring newName = name;
 	newName.trim();
-	int sLoc = newName.ReverseFind(" ");
+	unsigned int sLoc = newName.ReverseFind(" ");
 	if(sLoc != bstring::npos) {
 		num = newName.right(newName.length() - sLoc).toInt();
 		if(num != 0) {

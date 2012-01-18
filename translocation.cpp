@@ -1187,7 +1187,6 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Player	*pPlayer=0, *target=0, *follower=0;
 	BaseRoom *oldRoom=0;
 	UniqueRoom	*troom=0;
-	ctag	*cp=0;
 	int		chance=0;
 	long	t = time(0);
 
@@ -1285,8 +1284,8 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(	target->isEffected("resist-magic") ||
 			target->isEffected("camouflage") ||
-			(target->flagIsSet(P_MISTED) && pPlayer->getLevel() <= target->getLevel())
-		) {
+			(target->flagIsSet(P_MISTED) && pPlayer->getLevel() <= target->getLevel()))
+		{
 
 			chance = (50 + (((int)pPlayer->getLevel() - (int)target->getLevel())*10)
 					+ (bonus((int) pPlayer->intelligence.getCur()) - bonus((int) target->intelligence.getCur())));
@@ -1305,17 +1304,16 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 
-
+	Group* group = player->getGroup();
 	// Check for trying to grouptrack with linkdead people following them - abuse
 	if(groupTrack) {
-		cp = pPlayer->first_fol;
-		while(cp) {
-			if(cp->crt->pFlagIsSet(P_LINKDEAD) && pPlayer->inSameRoom(cp->crt)) {
-				pPlayer->print("%M's partial link with reality prevents you from tracking.\n", cp->crt);
-				return(0);
+		if(pPlayer->getGroupStatus() == GROUP_LEADER && group) {
+			for(Creature* crt : group->members) {
+				if(crt->pFlagIsSet(P_LINKDEAD) && pPlayer->inSameRoom(crt)) {
+					pPlayer->print("%M's partial link with reality prevents you from tracking.\n", crt);
+					return(0);
+				}
 			}
-
-			cp = cp->next_tag;
 		}
 	}
 
@@ -1338,30 +1336,30 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 	pPlayer->doPetFollow();
 
 	if(groupTrack) {
-		cp = pPlayer->first_fol;
-		while(cp) {
-			follower = cp->crt->getPlayer();
-			cp = cp->next_tag;
+		if(pPlayer->getGroupStatus() == GROUP_LEADER && group) {
+			for(Creature* crt : group->members) {
+				follower = crt->getPlayer();
 
-			if(!follower || follower->getRoom() != oldRoom)
-				continue;
-			if(troom && !follower->canEnter(troom))
-				continue;
+				if(!follower || follower->getRoom() != oldRoom)
+					continue;
+				if(troom && !follower->canEnter(troom))
+					continue;
 
-			follower->deleteFromRoom();
-			follower->addToSameRoom(target);
-			follower->doPetFollow();
+				follower->deleteFromRoom();
+				follower->addToSameRoom(target);
+				follower->doPetFollow();
 
-			if(!follower->flagIsSet(P_DM_INVIS)) {
-				broadcast(pPlayer->getSock(), follower->getSock(), oldRoom, "%N follows %N.", follower, pPlayer);
+				if(!follower->flagIsSet(P_DM_INVIS)) {
+					broadcast(pPlayer->getSock(), follower->getSock(), oldRoom, "%N follows %N.", follower, pPlayer);
 
-				follower->printColor("^gYou are temporarily disoriented.\n");
+					follower->printColor("^gYou are temporarily disoriented.\n");
 
-				follower->updateAttackTimer(true, 20);
-				follower->lasttime[LT_SPELL].ltime = t;
-				follower->lasttime[LT_SPELL].interval = 2L;
-				follower->lasttime[LT_HIDE].ltime = t;
-				follower->lasttime[LT_HIDE].interval = 2L;
+					follower->updateAttackTimer(true, 20);
+					follower->lasttime[LT_SPELL].ltime = t;
+					follower->lasttime[LT_SPELL].interval = 2L;
+					follower->lasttime[LT_HIDE].ltime = t;
+					follower->lasttime[LT_HIDE].interval = 2L;
+				}
 			}
 		}
 	}

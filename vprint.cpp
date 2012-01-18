@@ -36,7 +36,7 @@ void Creature::print(const char *fmt,...) const {
 	Socket* printTo = getSock();
 
 	if(isPet())
-		printTo = following->getSock();
+		printTo = getConstMaster()->getSock();
 
 	if(!this || !printTo)
 		return;
@@ -55,7 +55,7 @@ void Creature::printColor(const char *fmt,...) const {
 	Socket* printTo = getSock();
 
 	if(isPet())
-		printTo = following->getSock();
+		printTo = getConstMaster()->getSock();
 
 	if(!this || !printTo)
 		return;

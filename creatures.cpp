@@ -1159,7 +1159,9 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 	if(!this)
 		return("(ERROR: NULL CRT)");
 
-	flags |= viewer->displayFlags();
+	if(viewer)
+		flags |= viewer->displayFlags();
+
 	const Player* pThis = getConstPlayer();
 	// Player
 	if(isPlayer()) {

@@ -84,7 +84,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
 	int		(*fn)(SpellFn);
 	int		c=0, match=0, n=0, num=0, lvl=0, reqMp=0;
 	ctag	*cp=0;
-	Player* player = creature->getMaster();
+	Player* player = creature->getPlayerMaster();
 	bool	offensive=false, self = (!player || player == creature);
 	Creature* listen = (player ? player : creature);
 	SpellData data;

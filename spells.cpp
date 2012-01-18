@@ -394,7 +394,7 @@ int cmdSpells(Creature* player, cmd* cmnd) {
 	bool	notSelf=false;
 
 	if(player->isPet()) {
-		viewer = player->following->getPlayer();
+		viewer = player->getPlayerMaster();
 		notSelf = true;
 	} else {
 		viewer = player->getPlayer();

@@ -1504,10 +1504,10 @@ void Lore::reset(Player* player, Creature* creature) {
 		}
 
 	}
-
-	creature = player->getPet();
-	if(creature)
-		reset(player, creature);
+	for(Monster* pet : player->pets) {
+		if(pet->isPet())
+			reset(player, pet);
+	}
 }
 
 

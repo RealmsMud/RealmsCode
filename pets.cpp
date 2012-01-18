@@ -27,6 +27,8 @@ void Creature::addPet(Monster* newPet, bool setPetFlag) {
         newPet->setFlag(M_PET);
     newPet->setMaster(this);
     pets.push_back(newPet);
+    if(getGroup())
+    	getGroup()->add(newPet);
 }
 void Creature::delPet(Monster* toDel) {
     PetList::iterator it = std::find(pets.begin(), pets.end(), toDel);
@@ -98,3 +100,26 @@ bool Creature::isPet() const {
     return(flagIsSet(M_PET) && getConstMonster()->getMaster());
 }
 
+void Creature::dismissPet(Monster* pet) {
+	if(pet->getMaster() != this)
+		return;
+
+	print("You dismiss %N.\n", pet);
+	broadcast(getSock(), getRoom(), "%M dismisses %N.", this, pet);
+
+	if(pet->isUndead())
+		broadcast(NULL, getRoom(), "%M wanders away.", pet);
+	else
+		broadcast(NULL, getRoom(), "%M fades away.", pet);
+	pet->die(this);
+	gServer->delActive(pet);
+
+}
+void Creature::dismissAll() {
+	// We use this instead of for() because dismissPet will remove it from the list and invalidate the iterators
+	PetList::iterator it;
+	for(it = pets.begin() ; it != pets.end() ; ) {
+		Monster* pet = (*it++);
+		dismissPet(pet);
+	}
+}

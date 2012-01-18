@@ -1264,8 +1264,13 @@ void Monster::logDeath(Creature *killer) {
 			solo = false;
 	}
 
-	if(killer->isPet() || pet) {
-		sprintf(killerString, "%s and %s %s", leader->name, leader->hisHer(), pet->name);
+	if(killer->isPet() || leader->hasPet()) {
+		if(leader->pets.size() == 1) {
+			pet = leader->pets.front();
+			sprintf(killerString, "%s and %s %s", leader->name, leader->hisHer(), pet->name);
+		} else {
+			sprintf(killerString, "%s and %s pets", leader->name, leader->hisHer());
+		}
 	} else {
 		sprintf(killerString, "%s", killer->name);
 	}
@@ -2209,7 +2214,8 @@ void Monster::cleanFollow(Creature *killer) {
 			if(killer)
 				broadcast(killer->getSock(), getRoom(), "%M was killed by %N.", this, killer);
 		}
-		this->removeFromGroup(false);
+		removeFromGroup(false);
+		player->delPet(this);
 	}
 }
 

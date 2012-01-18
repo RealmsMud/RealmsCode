@@ -395,19 +395,15 @@ void broadcastGroupMember(bool dropLoot, Creature* player, const Player* listen,
 }
 
 void broadcastGroup(bool dropLoot, Creature* player, const char *fmt,...) {
-	const Player *leader = (player->following ? player->following : player)->getConstPlayer();
-	if(!leader)
+	Group* group = player->getGroup();
+	if(!group)
 		return;
-	ctag	*cp = leader->first_fol;
-
 	va_list ap;
 	va_start(ap, fmt);
 
-	broadcastGroupMember(dropLoot, player, leader, fmt, ap);
-
-	while(cp) {
-		broadcastGroupMember(dropLoot, player, cp->crt->getConstPlayer(), fmt, ap);
-		cp = cp->next_tag;
+//	broadcastGroupMember(dropLoot, player, leader, fmt, ap);
+	for(Creature* crt : group->members) {
+		broadcastGroupMember(dropLoot, player, crt->getConstPlayer(), fmt, ap);
 	}
 }
 

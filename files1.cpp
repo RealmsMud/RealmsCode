@@ -256,9 +256,13 @@ void free_crt(Creature* creature, bool remove) {
 	}
 
 	for(Monster* mons : creature->pets) {
-	    if(mons)
+	    if(mons->isPet()) {
 	        free_crt(mons);
+	    } else {
+	    	mons->setMaster(NULL);
+	    }
 	}
+	creature->pets.clear();
 
 	tp = creature->first_tlk;
 	creature->first_tlk = 0;

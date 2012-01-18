@@ -700,10 +700,11 @@ bool Creature::canParry(Creature* attacker) {
 //	 try a parry, so parry returns 0 without going off. -TC
 
 	// +3% fail for every monster mad at this besides the one he's currently hitting
-	combatPercent = 3*(MAX(0,numEnemyMonInRoom(this)-1));
+	combatPercent = 3*(tMAX(0,numEnemyMonInRoom(this)-1));
 	// Group members are assumed to fight together to help one another.
 	// -2% fail for every member in the this's group besides themself in the same room
-	combatPercent -= 2*(MAX(0,numInGroup(this)-1));
+	if(getGroup())
+		combatPercent -= 2*(tMAX(0,getGroup()->getNumInSameRoom(this)));
 
 	combatPercent = MAX(0,combatPercent);
 
