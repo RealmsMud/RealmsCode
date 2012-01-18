@@ -221,11 +221,12 @@ Creature* ThreatTable::getTarget(bool sameRoom) {
 
     ThreatSet::reverse_iterator it;
     for(it = threatSet.rbegin() ; it != threatSet.rend() ; ) {
-        crt = gServer->lookupCrtId((*it++)->getUid());
-        if(!crt && crt->getId().at(0) == 'M') {
+	    bstring uId = (*it++)->getUid();
+        crt = gServer->lookupCrtId(uId);
+        if(!crt && uId.at(0) == 'M') {
         	// If we're a monster and the server hasn't heard of them, they're either a pet
         	// who has logged off, or a dead monster, either way remove them.
-        	removeThreat(crt->getId());
+        	removeThreat(uId);
         	continue;
         }
         // If we're looking for someone who isn't in the same room, we don't care if we can see them
