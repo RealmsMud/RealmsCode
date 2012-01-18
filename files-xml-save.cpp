@@ -1178,7 +1178,7 @@ int saveCreaturesXml(xmlNodePtr parentNode, ctag* cp, int permOnly) {
 void Creature::savePets(xmlNodePtr parentNode) const {
 	xmlNodePtr curNode;
 
-	for(Creature* pet : pets) {
+	for(const Monster* pet : pets) {
 		// Only save pets, not creatures just following
 		if(!pet->isPet()) continue;
 	    curNode = xml::newStringChild(parentNode, "Creature");

@@ -39,7 +39,7 @@ enum GroupType {
     GROUP_MAX_TYPE
 };
 
-typedef std::list<Creature*> GroupList;
+typedef std::list<Creature*> CreatureList;
 
 class Group {
 public:
@@ -74,7 +74,7 @@ public:
 
 
 public:
-    GroupList members;
+    CreatureList members;
 
 private:
     Creature* leader;

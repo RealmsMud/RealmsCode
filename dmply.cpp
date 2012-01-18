@@ -336,7 +336,7 @@ int dmGroup(Player* player, cmd* cmnd) {
 	Creature *target=0;
 
 	if(cmnd->num < 2) {
-		player->print("Show who's group?\n");
+	    player->printColor("Active Groups: \n%s", gServer->getGroupList().c_str());
 		return(PROMPT);
 	}
 

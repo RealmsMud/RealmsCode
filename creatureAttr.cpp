@@ -1275,6 +1275,11 @@ void Creature::CopyCommon(const Creature& cr) {
 		specials.push_back(attack);
 	}
 
+	for(Monster* pet : cr.pets) {
+	    pets.push_back(pet);
+	}
+
+
 	attackPower = cr.attackPower;
 	previousRoom = cr.previousRoom;
 }

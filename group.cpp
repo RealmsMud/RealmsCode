@@ -28,96 +28,19 @@
 Group::Group(Creature* pLeader) {
     //if(pLeader.inGroup())
     //  throw new bstring("Error: Leader already in another group\n");
-    members.push_back(pLeader);
-    //pLeader->setGroup(this);
+    add(pLeader);
     leader = pLeader;
     groupType = GROUP_DEFAULT;
     name = bstring(leader->getName()) + "'s group";
     description = "A group, lead by " + bstring(leader->getName());
     // Register us in the server's list of groups
-    // gServer->registerGroup(this);
+    gServer->registerGroup(this);
 }
+
 Group::~Group() {
     // Unregister us from the server's list of groups
-    // gServer->unRegisterGroup(this);
-}
-std::ostream& operator<<(std::ostream& out, const Group* group) {
-    if(group)
-        out << (*group);
-    return(out);
-}
-std::ostream& operator<<(std::ostream& out, const Group& group) {
-    int i = 0;
-    for(Creature* crt : group.members) {
-        out << ++i << ") " << crt->getName();
-        if(crt->getGroupStatus() == GROUP_LEADER)
-            out << " (Leader)";
-        out << std::endl;
-    }
-    return(out);
-}
 
-bstring Group::getGroupList(Creature* viewer) {
-	int i = 0;
-	std::ostringstream oStr;
-
-	oStr << getName() << ":" << std::endl;
-
-	for(Creature* target : members) {
-		bool isPet = target->isPet();
-		if(!viewer->pFlagIsSet(P_NO_EXTRA_COLOR) && viewer->isEffected("know-aura"))
-			oStr << target->alignColor();
-		oStr << ++i << ") ";
-		if(isPet)
-			oStr << target->getMaster()->getName() << "'s " << target->getName();
-		else
-			oStr << target->getName();
-
-		if(target == leader) {
-			oStr << " (Leader)";
-		} else if(target->getGroupStatus() == GROUP_INVITED) {
-			oStr << " (invited).\n";
-			continue;
-		}
-		if(	viewer->isCt() ||
-				(isPet && !target->getMaster()->flagIsSet(P_NO_SHOW_STATS)) ||
-				(!isPet && !target->pFlagIsSet(P_NO_SHOW_STATS)) ||
-				(isPet && target->getMaster() == viewer) ||
-				(!isPet && target == viewer))
-		{
-			oStr << " - " << (target->hp.getCur() < target->hp.getMax() && !viewer->pFlagIsSet(P_NO_EXTRA_COLOR) ? "^R" : "")
-				 << std::setw(3) << target->hp.getCur() << "^x/" << std::setw(3) << target->hp.getMax()
-				 << " Hp - " << std::setw(3) << target->mp.getCur() << "/" << std::setw(3)
-				 << target->mp.getMax() << " Mp";
-
-			if(!isPet) {
-				if(target->isEffected("blindness"))
-					oStr << ", Blind";
-				if(target->isEffected("drunkenness"))
-					oStr << ", Drunk";
-				if(target->isEffected("confusion"))
-					oStr << ", Confused";
-				if(target->isDiseased())
-					oStr << ", Diseased";
-				if(target->isEffected("petrification"))
-					oStr << ", Petrified";
-				if(target->isPoisoned())
-					oStr << ", Poisoned";
-				if(target->isEffected("silence"))
-					oStr << ", Silenced";
-				if(target->flagIsSet(P_SLEEPING))
-					oStr << ", Sleeping";
-				else if(target->flagIsSet(P_UNCONSCIOUS))
-					oStr << ", Unconscious";
-				if(target->isEffected("wounded"))
-					oStr << ", Wounded";
-			}
-
-			oStr << ".";
-		}
-		oStr << "\n";
-	}
-	return(oStr.str());
+    gServer->unRegisterGroup(this);
 }
 
 
@@ -144,7 +67,7 @@ bool Group::add(Creature* newMember) {
 // Returns: true  - The group was deleted and is no longer valid
 //          false - The group still exists
 bool Group::remove(Creature* toRemove) {
-    GroupList::iterator it = std::find(members.begin(), members.end(), toRemove);
+    CreatureList::iterator it = std::find(members.begin(), members.end(), toRemove);
     if(it != members.end()) {
         toRemove->setGroup(NULL);
         toRemove->setGroupStatus(GROUP_NO_STATUS);
@@ -291,8 +214,6 @@ void Group::sendToAll(bstring msg, Creature* ignore, bool ignorePets) {
     }
 }
 
-
-
 void Group::setName(bstring newName) {
     // Test validity of name here
     name = newName;
@@ -309,6 +230,84 @@ bstring& Group::getDescription() {
     return(description);
 }
 
+std::ostream& operator<<(std::ostream& out, const Group* group) {
+    if(group)
+        out << (*group);
+    return(out);
+}
+std::ostream& operator<<(std::ostream& out, const Group& group) {
+    int i = 0;
+    for(Creature* crt : group.members) {
+        out << "\t" << ++i << ") " << crt->getName();
+        if(crt->getGroupStatus() == GROUP_LEADER)
+            out << " (Leader)";
+        out << std::endl;
+    }
+    return(out);
+}
+
+bstring Group::getGroupList(Creature* viewer) {
+    int i = 0;
+    std::ostringstream oStr;
+
+    oStr << getName() << ":" << std::endl;
+
+    for(Creature* target : members) {
+        bool isPet = target->isPet();
+        if(!viewer->pFlagIsSet(P_NO_EXTRA_COLOR) && viewer->isEffected("know-aura"))
+            oStr << target->alignColor();
+        oStr << ++i << ") ";
+        if(isPet)
+            oStr << target->getMaster()->getName() << "'s " << target->getName();
+        else
+            oStr << target->getName();
+
+        if(target == leader) {
+            oStr << " (Leader)";
+        } else if(target->getGroupStatus() == GROUP_INVITED) {
+            oStr << " (invited).\n";
+            continue;
+        }
+        if( viewer->isCt() ||
+                (isPet && !target->getMaster()->flagIsSet(P_NO_SHOW_STATS)) ||
+                (!isPet && !target->pFlagIsSet(P_NO_SHOW_STATS)) ||
+                (isPet && target->getMaster() == viewer) ||
+                (!isPet && target == viewer))
+        {
+            oStr << " - " << (target->hp.getCur() < target->hp.getMax() && !viewer->pFlagIsSet(P_NO_EXTRA_COLOR) ? "^R" : "")
+                 << std::setw(3) << target->hp.getCur() << "^x/" << std::setw(3) << target->hp.getMax()
+                 << " Hp - " << std::setw(3) << target->mp.getCur() << "/" << std::setw(3)
+                 << target->mp.getMax() << " Mp";
+
+            if(!isPet) {
+                if(target->isEffected("blindness"))
+                    oStr << ", Blind";
+                if(target->isEffected("drunkenness"))
+                    oStr << ", Drunk";
+                if(target->isEffected("confusion"))
+                    oStr << ", Confused";
+                if(target->isDiseased())
+                    oStr << ", Diseased";
+                if(target->isEffected("petrification"))
+                    oStr << ", Petrified";
+                if(target->isPoisoned())
+                    oStr << ", Poisoned";
+                if(target->isEffected("silence"))
+                    oStr << ", Silenced";
+                if(target->flagIsSet(P_SLEEPING))
+                    oStr << ", Sleeping";
+                else if(target->flagIsSet(P_UNCONSCIOUS))
+                    oStr << ", Unconscious";
+                if(target->isEffected("wounded"))
+                    oStr << ", Wounded";
+            }
+
+            oStr << ".";
+        }
+        oStr << "\n";
+    }
+    return(oStr.str());
+}
 //********************************************************************************
 //* GetGroup
 //********************************************************************************
@@ -348,4 +347,25 @@ Creature* Creature::getGroupLeader() {
 	group = getGroup();
 	if(!group) return(NULL);
 	return(group->getLeader());
+}
+
+
+bool Server::registerGroup(Group* toRegister) {
+    std::cout << "Registering " << toRegister->getName() << std::endl;
+    groups.push_back(toRegister);
+}
+
+bool Server::unRegisterGroup(Group* toUnRegister) {
+    std::cout << "Unregistering " << toUnRegister->getName() << std::endl;
+    groups.remove(toUnRegister);
+}
+
+bstring Server::getGroupList() {
+    std::ostringstream oStr;
+    int i=1;
+    int j = 1;
+    for(Group* group : groups) {
+        oStr << i++ << ") " << group->getName() << std::endl << group;
+    }
+    return(oStr.str());
 }

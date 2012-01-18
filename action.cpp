@@ -85,7 +85,7 @@ int orderPet(Player* player, cmd* cmnd) {
 	}
 
 	if(cmnd->num < 2) {
-        player->print("Order your pet to do what?\n");
+	    player->displayPets();
         return(0);
     }
 

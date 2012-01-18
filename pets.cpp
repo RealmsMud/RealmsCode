@@ -17,7 +17,10 @@
  *
  */
 
+
 #include "mud.h"
+
+#include <iomanip>
 
 void Creature::addPet(Monster* newPet, bool setPetFlag) {
     if(newPet->getMaster())
@@ -122,4 +125,19 @@ void Creature::dismissAll() {
 		Monster* pet = (*it++);
 		dismissPet(pet);
 	}
+}
+void Creature::displayPets() {
+    std::ostringstream oStr;
+    oStr << "Your pet" << (pets.size() > 1 ? "s" : "") << ":" << std::endl;
+    for(Monster* pet : pets) {
+
+        oStr << pet->getName();
+
+        oStr << " - " << (pet->hp.getCur() < pet->hp.getMax() && !pFlagIsSet(P_NO_EXTRA_COLOR) ? "^R" : "")
+             << std::setw(3) << pet->hp.getCur() << "^x/" << std::setw(3) << pet->hp.getMax()
+             << " Hp - " << std::setw(3) << pet->mp.getCur() << "/" << std::setw(3)
+             << pet->mp.getMax() << " Mp";
+        oStr << std::endl;
+    }
+    printColor("%s", oStr.str().c_str());
 }

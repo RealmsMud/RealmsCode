@@ -373,6 +373,7 @@ public:
 
     void dismissPet(Monster* toDismiss);
     void dismissAll();
+    void displayPets();
 	void addPet(Monster* newPet, bool setPetFlag = true);
 	void delPet(Monster* toDel);
 	bool hasPet() const;

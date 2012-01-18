@@ -33,6 +33,7 @@ namespace odbc {
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
 
 class Player;
+class Group;
 class PythonHandler;
 class WebInterface;
 class Socket;
@@ -70,7 +71,9 @@ enum GoldLog {
 #include "asynch.h"
 
 typedef std::map<bstring, MudObject*,idComp> IdMap;
-
+typedef std::list<Group*> GroupList;
+typedef std::list<Socket*> SocketList;
+typedef std::map<bstring, Player*> PlayerMap;
 class Server
 {
 
@@ -132,8 +135,8 @@ public:
 
 	// Temp public
 public:
-	std::map<bstring, Player*> players; // Map of all players
-	std::list<Socket*> sockets; // List of all connected sockets
+	PlayerMap players; // Map of all players
+	SocketList sockets; // List of all connected sockets
 	void handlePythonError();
 	
 // ******************
@@ -159,6 +162,9 @@ private:
 
 	// List of Ids
 	IdMap registeredIds;
+
+	// List of groups
+	GroupList groups;
 
 	// Maximum Ids
 	long maxPlayerId;
@@ -252,6 +258,9 @@ public:
 
 	void logGold(GoldLog dir, Player* player, Money amt, MudObject* target, bstring logType);
 
+    bool registerGroup(Group* toRegister);
+    bool unRegisterGroup(Group* toUnRegister);
+    bstring getGroupList();
 
 	bool registerMudObject(MudObject* toRegister);
 	bool unRegisterMudObject(MudObject* toUnRegister);
