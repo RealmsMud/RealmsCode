@@ -759,6 +759,11 @@ bool canEnchant(Player* player, SpellData* spellData) {
 			player->print("Only mages may enchant objects.\n");
 			return(false);
 		}
+		if(spellData->how == CAST && player->getClass() == MAGE && player->getSecondClass()) {
+			player->print("Only pure mages may enchant objects.\n");
+			return(false);
+		}
+		
 		if(spellData->level < 16 && !player->isCt()) {
 			player->print("You are not experienced enough to cast that spell yet.\n");
 			return(false);
@@ -868,7 +873,7 @@ int cmdEnchant(Player* player, cmd* cmnd) {
 	if(!player->ableToDoCommand())
 		return(0);
 
-	if(!player->knowsSkill("enchant")) {
+	if(!player->knowsSkill("enchant") || player->getSecondClass()) {
 		player->print("You lack the training to enchant objects.\n");
 		return(0);
 	}
