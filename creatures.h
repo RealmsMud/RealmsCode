@@ -1025,7 +1025,6 @@ public:
 	void updatePkill(Player *killer);
 	void logDeath(Creature *killer);
 	void resetPlayer(Creature *killer);
-	void clearEnemyPlayer();
 	void getPkilled(Player *killer, bool dueling, bool reset=true);
 	void die(DeathType dt);
 	Monster* getPet() const;

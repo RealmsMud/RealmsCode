@@ -1175,7 +1175,6 @@ void Server::pulseCreatureEffects(long t) {
 	Monster	*monster=0;
 	const Socket *sock=0;
 	Player* player=0;
-	ctag	*cp = first_active;
 	std::list<Socket*>::const_iterator it;
 
 	for(it = sockets.begin(); it != sockets.end() ; ) {
@@ -1188,10 +1187,10 @@ void Server::pulseCreatureEffects(long t) {
 			player->pulseEffects(t);
 	}
 
-	while(cp) {
-		monster = cp->crt->getMonster();
-		cp = cp->next_tag;
-
+	MonsterList::iterator mIt = activeList.begin();
+	while(mIt != activeList.end()) {
+		// Increment the iterator in case this monster dies during the update and is removed from the active list
+		monster = (*mIt++);
 		monster->pulseEffects(t);
 	}
 }

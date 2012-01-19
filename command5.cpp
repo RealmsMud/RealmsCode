@@ -551,7 +551,7 @@ void deletePlayer(Player* player) {
  	bstring name = player->name;
 
  	gConfig->deleteUniques(player);
-	player->clearEnemyPlayer();
+ 	gServer->clearAsEnemy(player);
 
 	// remove minions before backup, since this affects other players as well
 	player->clearMinions();

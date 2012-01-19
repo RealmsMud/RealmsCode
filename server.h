@@ -70,6 +70,7 @@ enum GoldLog {
 #include "asynch.h"
 
 typedef std::map<bstring, MudObject*,idComp> IdMap;
+typedef std::list<Monster*> MonsterList;
 
 class Server
 {
@@ -172,7 +173,8 @@ private:
 	WebInterface* webInterface;
 
 	// Game Updates
-	ctag *first_active; // The active list
+	MonsterList activeList; // The new active list
+	//ctag *first_active; // The active list
 
 	long lastDnsPrune;
 	long lastUserUpdate;
@@ -217,6 +219,9 @@ private:
 	void updateRandom(long t);
 	void updateActive(long t);
 
+	// TODO: Get rid of this and switch all old "logic" creatures over to python scripts
+	void updateAction(long t);
+
 	// DNS
 	void addCache(bstring ip, bstring hostName, time_t t = -1);
 	void saveDnsCache();
@@ -249,6 +254,9 @@ public:
 
 
 public:
+
+    void clearAsEnemy(Player* player);
+    bstring showActiveList();
 
 	void logGold(GoldLog dir, Player* player, Money amt, MudObject* target, bstring logType);
 
@@ -334,7 +342,6 @@ public:
 	void recreateFifos();
 
 	// Active list functions
-	const ctag* getFirstActive();
 	void addActive(Monster* monster);
 	void delActive(Monster* monster);
 	bool isActive(Monster* monster);
