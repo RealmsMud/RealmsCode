@@ -282,7 +282,6 @@ int cmdGroup(Player* player, cmd* cmnd) {
     }
     //*player << group->getGroupList(player);
     player->printColor("%s\n", group->getGroupList(player).c_str());
-    //player->printColor("%s\n", oStr.str().c_str());
 	return(0);
 }
 

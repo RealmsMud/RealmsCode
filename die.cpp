@@ -475,7 +475,7 @@ void Monster::finishMobDeath(Creature *killer) {
 
 
 //********************************************************************
-//						dieToPlay
+//						dieToPlayer
 //********************************************************************
 // Parameters:	<killer> The creature attacking
 // Handles players killing players
