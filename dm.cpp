@@ -1257,15 +1257,15 @@ int dmQuestList(Player* player, cmd* cmnd) {
 	}
 
 	player->print("Quest Table:\n\n");
-	player->print("| # |        Name        |    Exp    |\n");
-	player->print("|---|--------------------|-----------|\n");
+	player->print("| # |             Name             |    Exp    |\n");
+	player->print("|---|------------------------------|-----------|\n");
 	for(; i < numQuests; i++) {
 		if(gConfig->questTable[i]->num-1 == i) {
-			player->print("|%3d|%-20s|%11d|\n",i+1,
+			player->print("|%3d|%-30s|%11d|\n",i+1,
 			      get_quest_name(i), gConfig->questTable[i]->exp);
 		}
 	}
-	player->print("|---|--------------------|-----------|\n");
+	player->print("|---|------------------------------|-----------|\n");
 
 	player->print("New Quests:\n");
 	for(std::pair<int, QuestInfo*> p : gConfig->quests) {

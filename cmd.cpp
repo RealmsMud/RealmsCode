@@ -38,6 +38,7 @@
 
 
 int dmTest(Player* player, cmd* cmnd) {
+    *player << player << " " << player << "\n";
 	return(0);
 }
 

@@ -39,23 +39,27 @@ Group::Group(Creature* pLeader) {
 
 Group::~Group() {
     // Unregister us from the server's list of groups
-
+    removeAll();
     gServer->unRegisterGroup(this);
 }
 
 
 bool Group::add(Creature* newMember) {
-	// No adding someone twice
-    if(inGroup(newMember))
-        return(false);
-
-    newMember->setGroup(this);
-    newMember->setGroupStatus(GROUP_MEMBER);
-
-    members.push_back(newMember);
-    for(Monster* mons : newMember->pets) {
-        add(mons);
+    Group* oldGroup = newMember->getGroup(false);
+    if(oldGroup && oldGroup != this) {
+        oldGroup->remove(newMember);
+        oldGroup = NULL;
     }
+
+    // No adding someone twice
+    if(!oldGroup) {
+        newMember->setGroup(this);
+        members.push_back(newMember);
+        for(Monster* mons : newMember->pets) {
+            add(mons);
+        }
+    }
+    newMember->setGroupStatus(GROUP_MEMBER);
     return(true);
 }
 //********************************************************************************
@@ -121,6 +125,21 @@ void Group::removeAll() {
         crt->setGroup(NULL);
         crt->setGroupStatus(GROUP_NO_STATUS);
     }
+    members.clear();
+}
+
+//********************************************************************************
+//* size
+//********************************************************************************
+// Returns the absolute size of the group
+int Group::size() {
+    int count=0;
+    for(Creature* crt : members) {
+        if(crt->getGroupStatus() >= GROUP_MEMBER)
+            count++;
+    }
+    return(count);
+
 }
 
 //********************************************************************************
@@ -131,7 +150,7 @@ void Group::removeAll() {
 int Group::getSize(bool countDmInvis) {
 	int count=0;
 	for(Creature* crt : members) {
-		if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer())
+		if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer() && crt->getGroupStatus() > GROUP_MEMBER)
 			count++;
 	}
 	return(count);
@@ -155,7 +174,7 @@ int Group::getNumInSameRoom(Creature* target) {
 Creature* Group::getMember(int num, bool countDmInvis) {
     int count=0;
     for(Creature* crt : members) {
-        if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer())
+        if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer() && crt->getGroupStatus() > GROUP_MEMBER)
             count++;
         if(count == num)
             return(crt);
@@ -174,6 +193,7 @@ Creature* Group::getMember(bstring name, int num, Creature* searcher, bool inclu
 	int match = 0;
 	for(Creature* crt : members) {
 		if(!crt->isPlayer() && !includePets) continue;
+		if(crt->getGroupStatus() < GROUP_MEMBER) continue;
 		if(!searcher || !searcher->canSee(crt)) continue;
 		if(keyTxtEqual(crt, name.c_str())) {
 			if(++match == num) {
@@ -208,7 +228,7 @@ bool Group::inGroup(Creature* target) {
 
 void Group::sendToAll(bstring msg, Creature* ignore, bool ignorePets) {
     for(Creature* crt : members) {
-        if((!ignorePets || !crt->isPet()) && crt != ignore) {
+        if((!ignorePets || !crt->isPet()) && crt != ignore && crt->getGroupStatus() >= GROUP_MEMBER ) {
             crt->print("%s", msg.c_str());
         }
     }
@@ -241,6 +261,8 @@ std::ostream& operator<<(std::ostream& out, const Group& group) {
         out << "\t" << ++i << ") " << crt->getName();
         if(crt->getGroupStatus() == GROUP_LEADER)
             out << " (Leader)";
+        else if(crt->getGroupStatus() == GROUP_INVITED)
+            out << " (Invited)";
         out << std::endl;
     }
     return(out);
@@ -254,7 +276,7 @@ bstring Group::getGroupList(Creature* viewer) {
 
     for(Creature* target : members) {
         bool isPet = target->isPet();
-        if(!viewer->pFlagIsSet(P_NO_EXTRA_COLOR) && viewer->isEffected("know-aura"))
+        if(!viewer->pFlagIsSet(P_NO_EXTRA_COLOR) && viewer->isEffected("know-aura") && target->getGroupStatus() != GROUP_INVITED)
             oStr << target->alignColor();
         oStr << ++i << ") ";
         if(isPet)
@@ -265,7 +287,7 @@ bstring Group::getGroupList(Creature* viewer) {
         if(target == leader) {
             oStr << " (Leader)";
         } else if(target->getGroupStatus() == GROUP_INVITED) {
-            oStr << " (invited).\n";
+            oStr << " (Invited).\n";
             continue;
         }
         if( viewer->isCt() ||
@@ -353,17 +375,18 @@ Creature* Creature::getGroupLeader() {
 bool Server::registerGroup(Group* toRegister) {
     std::cout << "Registering " << toRegister->getName() << std::endl;
     groups.push_back(toRegister);
+    return(true);
 }
 
 bool Server::unRegisterGroup(Group* toUnRegister) {
     std::cout << "Unregistering " << toUnRegister->getName() << std::endl;
     groups.remove(toUnRegister);
+    return(true);
 }
 
 bstring Server::getGroupList() {
     std::ostringstream oStr;
     int i=1;
-    int j = 1;
     for(Group* group : groups) {
         oStr << i++ << ") " << group->getName() << std::endl << group;
     }

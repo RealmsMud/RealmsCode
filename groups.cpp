@@ -19,6 +19,7 @@
 
 // Mud includes
 #include "mud.h"
+#include "move.h"
 
 // C++ Includes
 #include <sstream>
@@ -86,10 +87,10 @@ int cmdFollow(Player* player, cmd* cmnd) {
     }
 
 
-	Group* toJoin = toFollow->getGroup();
-	if(toJoin) {
+	Group* toJoin = toFollow->getGroup(false);
+	if(toJoin && player->getGroupStatus() != GROUP_INVITED) {
         // Check if in same group
-        if(toJoin == player->getGroup()) {
+        if(toJoin == player->getGroup() ) {
             player->print("You can't. %s is in the same group as you!.\n", toFollow->upHeShe());
             return(0);
         }
@@ -103,7 +104,7 @@ int cmdFollow(Player* player, cmd* cmnd) {
 		player->print("You welcome group members again.\n");
 		player->clearFlag(P_NO_FOLLOW);
 	}
-	if(player->getGroup(false))
+	if((toJoin && player->getGroupStatus() != GROUP_INVITED) || player == toFollow)
 	    player->removeFromGroup(true);
 
 	if(player == toFollow)
@@ -123,12 +124,11 @@ int cmdFollow(Player* player, cmd* cmnd) {
 //********************************************************************************
 // Adds the creature to the group, and announces if requested
 void Creature::addToGroup(Group* toJoin, bool announce) {
-    // TODO: check if we have a group already
+    toJoin->add(this);
     if(announce) {
     	print("You join %s.\n", toJoin->getName().c_str());
-        toJoin->sendToAll(bstring(getName()) + " has joined your group.\n");
+        toJoin->sendToAll(bstring(getName()) + " has joined your group.\n", this);
     }
-    toJoin->add(this);
 }
 //********************************************************************************
 //* CreateGroup
@@ -236,6 +236,15 @@ int cmdLose(Player* player, cmd* cmnd) {
 }
 
 
+int printGroupSyntax(Player* player) {
+    player->printColor("Syntax: guild ^e<^xinvite^e>^x ^e<^cplayer name^e>\n");
+    player->printColor("              ^e<^xkick^e>^x ^e<^cplayer name^e>\n");
+    player->printColor("              ^e<^xaccept^e>\n");
+    player->printColor("              ^e<^xreject^e>\n");
+    player->printColor("              ^e<^xpromote^e>^x ^e<^cplayer name^e>^x\n");
+    player->printColor("              ^e<^xleave^e>\n");
+    return(0);
+}
 
 //*********************************************************************
 //						cmdGroup
@@ -244,25 +253,108 @@ int cmdLose(Player* player, cmd* cmnd) {
 // who are following you.
 
 int cmdGroup(Player* player, cmd* cmnd) {
-	std::ostringstream oStr;
-
 	player->clearFlag(P_AFK);
 
 	if(!player->ableToDoCommand())
 		return(0);
 
 
-	Group* group = player->getGroup(true);
-	if(!group)
-		oStr << "You are not in a group.\n";
-	else {
-		oStr << group->getGroupList(player);
+	if(cmnd->num >= 2) {
+	    int len = strlen(cmnd->str[1]);
+
+	    if(!strncmp(cmnd->str[1], "invite", len))       return(Group::invite(player, cmnd));
+	    else if(!strncmp(cmnd->str[1], "accept", len) || !strncmp(cmnd->str[1], "join", len))  return(Group::join(player, cmnd));
+	    else if(!strncmp(cmnd->str[1], "leave", len))   return(Group::leave(player, cmnd));
+	    else if(!strncmp(cmnd->str[1], "disband", len)) return(Group::disband(player, cmnd));
+	    else if(!strncmp(cmnd->str[1], "kick", len))    return(Group::kick(player, cmnd));
+	    else if(!strncmp(cmnd->str[1], "promote", len)) return(Group::promote(player, cmnd));
+	    else return(printGroupSyntax(player));
 	}
-	player->printColor("%s\n", oStr.str().c_str());
+
+	Group* group = player->getGroup(false);
+    if(!group) {
+        *player << "You are not in a group.\n";
+        return(0);
+    }
+    if(player->getGroupStatus() == GROUP_INVITED) {
+        *player << "You have been invited to join \"" << group->getName() << "\".\n";
+        return(0);
+    }
+    //*player << group->getGroupList(player);
+    player->printColor("%s\n", group->getGroupList(player).c_str());
+    //player->printColor("%s\n", oStr.str().c_str());
 	return(0);
 }
 
+int Group::invite(Player* player, cmd* cmnd) {
+    Player* target = 0;
 
+    if(cmnd->num < 3) {
+        player->print("Invite who into your guild?\n");
+        return(0);
+    }
+
+    lowercize(cmnd->str[2], 1);
+    target = gServer->findPlayer(cmnd->str[2]);
+
+    if(!target || !player->canSee(target) || target == player) {
+        player->print("%s is not on.\n", cmnd->str[2]);
+        return(0);
+    }
+
+    if(Move::tooFarAway(player, target, "invite to a group"))
+        return(0);
+
+    if(target->getGroup(false)) {
+        if(target->getGroupStatus() == GROUP_INVITED)
+            *player << target << " is already considering joining another group.\n";
+        else
+            *player << target << " is already in another group.\n";
+        return(0);
+    }
+
+
+    Group* group = player->getGroup(false);
+
+    if(!group) {
+        group = new Group(player);
+        player->setGroupStatus(GROUP_LEADER);
+    }
+
+    group->add(target);
+    target->setGroup(group);
+    target->setGroupStatus(GROUP_INVITED);
+
+    *player << "You invite " << target << " to join your group.\n";
+    *target << player << " invites you to join \"" << group->getName() << "\".\n";
+
+    return(0);
+}
+
+int Group::join(Player* player, cmd *cmnd) {
+
+    return(0);
+}
+int Group::reject(Player* player, cmd* cmnd) {
+
+    return(0);
+}
+int Group::disband(Player* player, cmd* cmnd) {
+
+    return(0);
+}
+int Group::promote(Player* player, cmd* cmnd) {
+
+    return(0);
+}
+int Group::kick(Player* player, cmd* cmnd) {
+
+    return(0);
+}
+int Group::leave(Player* player, cmd* cmnd) {
+
+    return(0);
+}
 //********************************************************************
 //						doFollow
 //********************************************************************

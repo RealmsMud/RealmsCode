@@ -22,6 +22,7 @@
 #include "damage.h"
 #include "threat.h"
 #include "group.h"
+#include "creatureStreams.h"
 
 enum mType {
     INVALID        = -1,
@@ -193,6 +194,23 @@ typedef std::list<Monster*> PetList;
 //*********************************************************************
 
 class Creature: public MudObject {
+public:
+    // Stream operators
+    Creature& operator<< (MudObject* obj);
+    Creature& operator<< (MudObject& obj);
+    Creature& operator<< (const bstring& str);
+
+    void setManipFlags(int flags);
+    int getManipFlags();
+
+    void setManipNum(int num);
+    int getManipNum();
+    //Creature& operator<< (creatureManip& manip)
+
+protected:
+    int manipFlags;
+    int manipNum;
+
 protected:
 	void CopyCommon(const Creature& cr);
 	void crtDestroy();

@@ -573,21 +573,26 @@ int communicate(Creature* creature, cmd* cmnd) {
 	    // Group Tell is being handled slightly differently as it now uses a std::list instead of ctags
 	    // Adapt the other communication methods to use this once they've been moved to a std::list as well
 
-//		cp = creature->first_fol;
-//		if(cp)
-//			target = cp->crt;
-//
-//		if(	(!creature->following && !creature->first_fol) ||
-//			(target && target->isPlayer() && target->flagIsSet(P_DM_INVIS) && !target->flagIsSet(P_INCOGNITO)))
-//		{
-//			creature->print("You are not in a group.\n");
-//			return(0);
-//		}
-//
-//		target = (creature->following ? creature->following : creature);
-//		cp = target->first_fol;
-//
-//		commTarget(creature, target->getPlayer(), chan->type, chan->ooc, lang, text, speak, ooc_str, false);
+	    Group* group = creature->getGroup();
+	    if(group) {
+	        for(Creature* crt : group->members) {
+	            pTarget = cp->crt->getPlayer();
+	            if(!pTarget) continue;
+	            // GT prints to the player!
+	            if(pTarget == creature && chan->type != COM_GT)
+	                continue;
+
+	            if(pTarget->isGagging(creature->isPet() ? creature->getMaster()->name : creature->name))
+	                continue;
+
+	            if(pTarget->getGroupStatus() < GROUP_MEMBER) continue;
+
+	            commTarget(creature, pTarget, chan->type, chan->ooc, lang, text, speak, ooc_str, false);
+	        }
+	    } else {
+	        creature->print("You are not in a group.\n");
+	        return(0);
+	    }
 
 	} else {
 		cp = creature->getRoom()->first_ply;

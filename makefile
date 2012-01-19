@@ -9,9 +9,9 @@ CFLAGS += -I/usr/include/python2.6
 
 LIBS = -laspell -lxml2 -lz -lc -L./ -L/usr/lib/python2.5/config -lpython2.6 -lboost_python $(COMPILER_LIBS)
 
-GENERAL_SOURCE := mudObject.cpp pythonHandler.cpp abjuration.cpp access.cpp action.cpp afflictions.cpp
+GENERAL_SOURCE := cmd.cpp creatureStreams.cpp mudObject.cpp pythonHandler.cpp abjuration.cpp access.cpp action.cpp afflictions.cpp
 GENERAL_SOURCE += alchemy.cpp alignment.cpp anchor.cpp area.cpp attack.cpp asynch.cpp timer.cpp bank.cpp
-GENERAL_SOURCE += bans.cpp builder.cpp calendar.cpp carry.cpp catRef.cpp catRefInfo.cpp clans.cpp cmd.cpp color.cpp
+GENERAL_SOURCE += bans.cpp builder.cpp calendar.cpp carry.cpp catRef.cpp catRefInfo.cpp clans.cpp color.cpp
 GENERAL_SOURCE += combat.cpp combatSystem.cpp command1.cpp command2.cpp command4.cpp command5.cpp
 GENERAL_SOURCE += commerce.cpp communication.cpp config.cpp conjuration.cpp craft.cpp creature.cpp creature2.cpp
 GENERAL_SOURCE += creatures.cpp creatureAttr.cpp damage.cpp data.cpp delayedAction.cpp demographics.cpp deityData.cpp

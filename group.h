@@ -45,6 +45,15 @@ class Group {
 public:
     friend std::ostream& operator<<(std::ostream& out, const Group* group);
     friend std::ostream& operator<<(std::ostream& out, const Group& group);
+
+    static int invite(Player* player, cmd* cmnd);
+    static int join(Player* player, cmd *cmnd);
+    static int reject(Player* player, cmd* cmnd);
+    static int disband(Player* player, cmd* cmnd);
+    static int promote(Player* player, cmd* cmnd);
+    static int kick(Player* player, cmd* cmnd);
+    static int leave(Player* player, cmd* cmnd);
+
 public:
     Group(Creature* pLeader);
     ~Group();
@@ -61,6 +70,7 @@ public:
     bool inGroup(Creature* target);
 
     Creature* getLeader();
+    int size();
     int getSize(bool countDmInvis = false);
     int getNumInSameRoom(Creature* target);
     Creature* getMember(int num, bool countDmInvis = false);
