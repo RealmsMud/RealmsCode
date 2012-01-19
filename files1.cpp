@@ -283,8 +283,10 @@ void free_crt(Creature* creature, bool remove) {
 	
 	gServer->removeDelayedActions(creature);
 	
-	if(creature->isMonster())
-		gServer->delActive(creature->getMonster());
+	if(creature->isMonster()) {
+		if(gServer->isActive(creature->getMonster()))
+			gServer->delActive(creature->getMonster());
+	}
 	else if(remove)
 		gServer->clearPlayer(creature->getPlayer());
 	delete creature;

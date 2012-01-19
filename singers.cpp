@@ -823,7 +823,7 @@ int songMPHeal(Player* player, cmd* cmnd) {
 		if(cp->crt->hasMp()) {
 			if(cp->crt != player)
 				cp->crt->print("%M's song mentally revitalizes you.\n", player);
-			addmp(cp->crt, heal);
+			cp->crt->mp.increase(heal);
 		}
 		cp = cp->next_tag;
 	}
@@ -831,7 +831,7 @@ int songMPHeal(Player* player, cmd* cmnd) {
 	while(cp) {
 		if(cp->crt->hasMp() && cp->crt->isPet()) {
 			cp->crt->print("%M's song mentally revitalizes you.\n", player);
-			addmp(cp->crt, heal);
+			cp->crt->mp.increase(heal);
 		}
 		cp = cp->next_tag;
 	}
@@ -863,7 +863,7 @@ int songRestore(Player* player, cmd* cmnd) {
 			if(cp->crt != player)
 				cp->crt->print("%M's song restores your spirits.\n", player);
 			player->doHeal(cp->crt, heal);
-			addmp(cp->crt, heal/2);
+			cp->crt->mp.increase(heal/2);
 		}
 		cp = cp->next_tag;
 	}
@@ -872,7 +872,7 @@ int songRestore(Player* player, cmd* cmnd) {
 		if(cp->crt->getClass() != LICH && cp->crt->isPet()) {
 			cp->crt->print("%M's song restores your spirits.\n", player);
 			player->doHeal(cp->crt, heal);
-			addmp(cp->crt, heal/2);
+			cp->crt->mp.increase(heal/2);
 		}
 		cp = cp->next_tag;
 	}
@@ -1045,7 +1045,6 @@ int songRecall(Player* player, cmd* cmnd) {
 
 int songSafety(Player* player, cmd* cmnd) {
 	Player	*follower=0;
-	ctag	*cp=0;
 	BaseRoom *newRoom=0;
 
 

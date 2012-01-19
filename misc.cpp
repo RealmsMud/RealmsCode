@@ -77,24 +77,6 @@ bool nameEqual(bstring obj, bstring str) {
 
 
 //*********************************************************************
-//						addhp
-//*********************************************************************
-// adds hp to the given player
-
-void addhp(struct Creature* player, int addhp) {
-	player->hp.increase(addhp);
-}
-//*********************************************************************
-//						addmp
-//*********************************************************************
-// adds mp to the given player
-
-void addmp(struct Creature* player, int addmp) {
-	player->mp.increase(addmp);
-}
-
-
-//*********************************************************************
 //						lowercize
 //*********************************************************************
 // This function takes the string passed in as the first parameter and

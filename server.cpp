@@ -94,7 +94,6 @@ Server::Server() {
 	Deadchildren = 0;
 	pulse = 0;
 	webInterface = 0;
-	first_active = 0;
 	lastDnsPrune = lastUserUpdate = lastRoomPulseUpdate = lastRandomUpdate = lastActiveUpdate = 0;
 	maxPlayerId = maxObjectId = maxMonsterId = 0;
 	loadDnsCache();
@@ -786,7 +785,7 @@ void Server::updateActive(long t) {
 	Creature *target=0;
 	Monster	*monster=0;
 	BaseRoom* room=0;
-	ctag	*cp = 0, *imp=0, *ap=0;
+	ctag	*imp=0, *ap=0;
 
 	long	tt = gConfig->currentHour();
 	int		timetowander=0, immort=0;
@@ -794,12 +793,15 @@ void Server::updateActive(long t) {
 
 	lastActiveUpdate = t;
 
-	if(!(cp = first_active))
+	if(activeList.empty())
 		return;
+//	if(!(cp = first_active))
+//		return;
 
-	while(cp) {
-		ASSERTLOG( cp->crt );
-		monster = cp->crt->getMonster();
+	MonsterList::iterator it = activeList.begin();
+	while(it != activeList.end()) {
+		// Increment the iterator in case this monster dies during the update and is removed from the active list
+		monster = (*it++);
 
 		// Better be a monster to be on the active list
 		ASSERTLOG(monster);
@@ -810,7 +812,7 @@ void Server::updateActive(long t) {
 			monster->deleteFromRoom();
 			gServer->delActive(monster);
 			free_crt(monster);
-			cp = first_active;
+//			cp = first_active;
 			continue;
 		}
 
@@ -822,8 +824,8 @@ void Server::updateActive(long t) {
 			monster->daily[DL_BROAD].cur = 20;
 
 		if(	(monster->flagIsSet(M_NIGHT_ONLY) && isDay()) ||
-			(monster->flagIsSet(M_DAY_ONLY) && !isDay())
-		) {
+			(monster->flagIsSet(M_DAY_ONLY) && !isDay()))
+		{
 
 			imp = room->first_ply;
 			while(imp) {
@@ -839,7 +841,7 @@ void Server::updateActive(long t) {
 				monster->deleteFromRoom();
 				gServer->delActive(monster);
 				free_crt(monster);
-				cp = first_active;
+//				cp = first_active;
 				continue;
 			}
 
@@ -858,13 +860,13 @@ void Server::updateActive(long t) {
 			!monster->flagIsSet(M_AGGRESSIVE))
 		{
 			gServer->delActive(monster);
-			cp = first_active;
+	//		cp = first_active;
 			continue;
 		}
 
 		// Lets see if we'll attack any other monsters in this room
 		if(monster->checkEnemyMobs()) {
-			cp = cp->next_tag;
+//			cp = cp->next_tag;
 			continue;
 		}
 
@@ -908,18 +910,16 @@ void Server::updateActive(long t) {
 		if(monster->isPoisoned() && !monster->immuneToPoison()) {
 			if(	monster->spellIsKnown(S_CURE_POISON) &&
 				monster->mp.getCur() >=6 &&
-				(mrand(1,100) < (30+monster->intelligence.getCur()/10))
-			) {
+				(mrand(1,100) < (30+monster->intelligence.getCur()/10)))
+			{
 				broadcast(NULL, monster->getRoom(), "%M casts a curepoison spell on %sself.", monster, monster->himHer());
 				monster->mp.decrease(6);
 				monster->curePoison();
-				cp = cp->next_tag;
 				continue;
 			}
 		}
 
 		if(!monster->checkAttackTimer(false)) {
-			cp = cp->next_tag;
 			continue;
 		}
 
@@ -929,7 +929,7 @@ void Server::updateActive(long t) {
 
 
 		if(monster->doHarmfulAuras()) {
-			cp = first_active;
+//			cp = first_active;
 			continue;
 		}
 
@@ -938,7 +938,6 @@ void Server::updateActive(long t) {
 			monster->beneficialCaster();
 
 		if(monster->petCaster()) {
-			cp = cp->next_tag;
 			continue;
 		}
 
@@ -958,7 +957,7 @@ void Server::updateActive(long t) {
 
 			monster->die(monster->getMaster());
 			gServer->delActive(monster);
-			cp = first_active;
+//			cp = first_active;
 			continue;
 		}
 
@@ -980,13 +979,12 @@ void Server::updateActive(long t) {
 		// See if we can wander around or away
 		int mobileResult = monster->checkWander(t);
 		if(mobileResult == 1) {
-			cp = cp->next_tag;
 			continue;
 		} if(mobileResult == 2) {
 			monster->deleteFromRoom();
 			gServer->delActive(monster);
 			free_crt(monster);
-			cp = first_active;
+//			cp = first_active;
 			continue;
 		}
 
@@ -1007,13 +1005,13 @@ void Server::updateActive(long t) {
 			monster->canSpeak() &&
 			monster->mobDeathScream()
 		) {
-			cp = first_active;
+//			cp = first_active;
 			continue;
 		}
 
 		// Update combat here
 		if(	monster->hasEnemy() && !timetowander && monster->updateCombat()) {
-			cp = first_active;
+//			cp = first_active;
 			continue;
 		}
 
@@ -1043,7 +1041,6 @@ void Server::updateActive(long t) {
 				target->setFlag(P_LAG_PROTECTION_ACTIVE);
 
 		}
-		cp = cp->next_tag;
 	}
 }
 
@@ -1062,7 +1059,6 @@ void Server::updateActive(long t) {
 // to the monster is passed in the first parameter.
 
 void Server::addActive(Monster* monster) {
-	ctag    *ct;
 
 	if(!monster) {
 		loga("add_active: tried to activate a NULL crt!\n");
@@ -1082,21 +1078,7 @@ void Server::addActive(Monster* monster) {
 
 	monster->validateId();
 
-	ct = 0;
-	ct = new ctag;
-	if(!ct)
-		merror("add_active", FATAL);
-
-	ct->crt = monster;
-	ct->next_tag = 0;
-
-	if(!first_active)
-		first_active = ct;
-	else {
-		ct->next_tag = first_active;
-		first_active = ct;
-	}
-
+	activeList.push_back(monster);
 }
 
 //*********************************************************************
@@ -1109,31 +1091,21 @@ void Server::delActive(Monster* monster) {
 	if(!this)
 		return;
 
-	ctag    *cp, *prev;
-
-	if(!(cp = first_active))
-		return;
-
-	if(!(isActive(monster)))
-		return;
-
-	if(cp->crt == monster) {
-		first_active = cp->next_tag;
-		delete cp;
+	if(activeList.empty()) {
+		std::cerr << "Attempting to delete '" << monster->getName() << "' from active list with an empty active list." << std::endl;
+		broadcast(isStaff, "^yAttempting to delete %s from active list with an empty active list.", monster->name);
 		return;
 	}
 
-	prev = cp;
-	cp = cp->next_tag;
-	while(cp) {
-		if(cp->crt == monster) {
-			prev->next_tag = cp->next_tag;
-			delete cp;
-			return;
-		}
-		prev = cp;
-		cp = cp->next_tag;
+	MonsterList::iterator it = std::find(activeList.begin(), activeList.end(), monster);
+	if(it == activeList.end()) {
+		std::cerr << "Attempting to delete '" << monster->getName() << "' from active list but could not find them on the list." << std::endl;
+		broadcast(isStaff, "^yAttempting to delete %s from active list but could not find them on the list.", monster->name);
+		return;
 	}
+
+
+	activeList.erase(it);
 }
 
 
@@ -1144,26 +1116,17 @@ void Server::delActive(Monster* monster) {
 // active list.
 
 bool Server::isActive(Monster* monster) {
-	ctag	*cp=0;
-
-	if(!(cp = first_active))
+	if(activeList.empty())
 		return(false);
 
-	while(cp) {
-		if(cp->crt == monster) {
-			return(true);
-		}
-		cp = cp->next_tag;
-	}
+	MonsterList::iterator it = std::find(activeList.begin(), activeList.end(), monster);
+	if(it == activeList.end())
+		return(false);
+
+	if(*it == monster)
+		return(true);
+
 	return(false);
-}
-
-//********************************************************************
-//						getFirstActive
-//********************************************************************
-
-const ctag* Server::getFirstActive() {
-	return(first_active);
 }
 
 // End - Active List Manipulation

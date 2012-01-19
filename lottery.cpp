@@ -70,7 +70,7 @@ void Config::setLotteryRunTime() {
 	// Sets the run time to the sunday of the next week
 
 	timeToRun = new tm;
-	memset(timeToRun, 0, sizeof(timeToRun));
+	memset(timeToRun, 0, sizeof(*timeToRun));
 	i = time(0);
 	curTime = localtime(&i);
 	timeToRun->tm_hour = 20;

@@ -272,7 +272,6 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Monster *target=0;
 	int		title=0, mp=0, shocked=0, level=0, skLevel=0;
 	int		crt_num=0, buff=0, interval=0;
-	ctag	*cp=0;
 	time_t	t, i;
 
 

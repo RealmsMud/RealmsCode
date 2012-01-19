@@ -99,7 +99,8 @@ void Server::updateGame() {
 	if(t - last_weather_update >= 60)
 		gServer->updateWeather(t);
 	if(t - last_action_update >= Action_update_interval)
-		update_action(t);
+		gServer->updateAction(t);
+//		update_action(t);
 	if(last_dust_output && last_dust_output < t)
 		update_dust_oldPrint(t);
 	if(t > gConfig->getLotteryRunTime())
@@ -258,17 +259,18 @@ void Server::weather(WeatherString w) {
 		}
 	}
 
-	ctag* cp = first_active;
-	while(cp) {
-		Monster* monster = cp->crt->getMonster();
-		cp = cp->next_tag;
+
+	MonsterList::iterator it = activeList.begin();
+	while(it != activeList.end()) {
+		// Increment the iterator in case this monster dies during the update and is removed from the active list
+		Monster* monster = (*it++);
 
 		if(!monster)
 			continue;
 
 		if(	(w == WEATHER_SUNRISE || w == WEATHER_SUNSET) &&
-			monster->isEffected("vampirism")
-		) {
+			monster->isEffected("vampirism"))
+		{
 			// if sunrise/sunset, vampires always see it
 		} else {
 			if(!monster->getRoom()->isOutdoors())
@@ -564,11 +566,10 @@ void Server::updateWeather(long t) {
 //*********************************************************************
 // update function for logic scripts
 
-void update_action(long t) {
-	Creature* creature=0, *victim=0;
+void Server::updateAction(long t) {
+	Creature* victim=0;
 	Object	*object=0;
 	BaseRoom* room=0;
-	const ctag	*cp=0;
 	ctag	*vcp=0;
 	ttag	*act=0, *tact=0;
 	int		i=0, on_cmd=0, thresh=0;
@@ -579,15 +580,18 @@ void update_action(long t) {
 
 
 	last_action_update = t;
-	for(cp = gServer->getFirstActive();cp;cp = cp->next_tag) {
-		creature = cp->crt;
-		if(creature) {
-			room = creature->getRoom();
-			if(room && creature->flagIsSet(M_LOGIC_MONSTER)) {
-				if(!cp->crt->first_tlk)
-					loadCreature_actions(cp->crt);
+
+	Monster	*monster=0;
+	MonsterList::iterator it = activeList.begin();
+	while(it != activeList.end()) {
+		monster = (*it++);
+		if(monster) {
+			room = monster->getRoom();
+			if(room && monster->flagIsSet(M_LOGIC_MONSTER)) {
+				if(!monster->first_tlk)
+					loadCreature_actions(monster);
 				else {
-					act = cp->crt->first_tlk;
+					act = monster->first_tlk;
 					on_cmd = act->on_cmd;
 					on_cmd--;
 					i = 0;
@@ -601,17 +605,17 @@ void update_action(long t) {
 					if(act->test_for) {
 						switch(act->test_for) {
 						case 'P': // test for player
-							victim = room->findPlayer(creature, act->response, 1);
+							victim = room->findPlayer(monster, act->response, 1);
 							if(victim) {
-								if(creature->first_tlk->target)
-									delete[] creature->first_tlk->target;
-								creature->first_tlk->target = new char[strlen(act->response)+1];
-								strcpy(creature->first_tlk->target, act->response);
+								if(monster->first_tlk->target)
+									delete[] monster->first_tlk->target;
+								monster->first_tlk->target = new char[strlen(act->response)+1];
+								strcpy(monster->first_tlk->target, act->response);
 								act->success = 1;
 							} else {
-								if(creature->first_tlk->target)
-									free(creature->first_tlk->target);
-								creature->first_tlk->target = 0;
+								if(monster->first_tlk->target)
+									free(monster->first_tlk->target);
+								monster->first_tlk->target = 0;
 								act->success = 0;
 							}
 							break;
@@ -620,61 +624,61 @@ void update_action(long t) {
 							for(vcp = room->first_ply; vcp; vcp = vcp->next_tag) {
 								if(act->test_for == 'C')
 									if(vcp->crt->getClass() == act->arg1) {
-										if(creature->first_tlk->target)
-											delete[] creature->first_tlk->target;
-										creature->first_tlk->target = new char[strlen(vcp->crt->name)+1];
-										strcpy(creature->first_tlk->target, vcp->crt->name);
+										if(monster->first_tlk->target)
+											delete[] monster->first_tlk->target;
+										monster->first_tlk->target = new char[strlen(vcp->crt->name)+1];
+										strcpy(monster->first_tlk->target, vcp->crt->name);
 										act->success = 1;
 										break;
 									}
 								if(act->test_for == 'R')
 									if(vcp->crt->getRace() == act->arg1) {
-										if(creature->first_tlk->target)
-											delete creature->first_tlk->target;
-										creature->first_tlk->target = new char[strlen(vcp->crt->name)+1];
-										strcpy(creature->first_tlk->target, vcp->crt->name);
+										if(monster->first_tlk->target)
+											delete monster->first_tlk->target;
+										monster->first_tlk->target = new char[strlen(vcp->crt->name)+1];
+										strcpy(monster->first_tlk->target, vcp->crt->name);
 										act->success = 1;
 										break;
 									}
 							}
 							if(!vcp) {
-								if(creature->first_tlk->target)
-									delete creature->first_tlk->target;
-								creature->first_tlk->target = 0;
+								if(monster->first_tlk->target)
+									delete monster->first_tlk->target;
+								monster->first_tlk->target = 0;
 								act->success = 0;
 							}
 							break;
 						case 'O': // test for object in room
-							object = findObject(creature, room->first_obj, act->response, 1);
+							object = findObject(monster, room->first_obj, act->response, 1);
 
 							if(object) {
-								if(creature->first_tlk->target)
-									delete creature->first_tlk->target;
-								creature->first_tlk->target = new char[strlen(act->response)+1];
-								strcpy(creature->first_tlk->target, act->response);
+								if(monster->first_tlk->target)
+									delete monster->first_tlk->target;
+								monster->first_tlk->target = new char[strlen(act->response)+1];
+								strcpy(monster->first_tlk->target, act->response);
 								act->success = 1;
 								// loge(victim->name);
 							} else {
-								if(creature->first_tlk->target)
-									free(creature->first_tlk->target);
-								creature->first_tlk->target = 0;
+								if(monster->first_tlk->target)
+									free(monster->first_tlk->target);
+								monster->first_tlk->target = 0;
 								act->success = 0;
 							}
 							break;
 						case 'o': // test for object on players
 							break;
 						case 'M': // test for monster
-							victim = room->findMonster(creature, act->response, 1);
+							victim = room->findMonster(monster, act->response, 1);
 							if(victim) {
-								if(creature->first_tlk->target)
-									delete creature->first_tlk->target;
-								creature->first_tlk->target = new char[strlen(act->response)+1];
-								strcpy(creature->first_tlk->target, act->response);
+								if(monster->first_tlk->target)
+									delete monster->first_tlk->target;
+								monster->first_tlk->target = new char[strlen(act->response)+1];
+								strcpy(monster->first_tlk->target, act->response);
 								act->success = 1;
 							} else {
-								if(creature->first_tlk->target)
-									free(creature->first_tlk->target);
-								creature->first_tlk->target = 0;
+								if(monster->first_tlk->target)
+									free(monster->first_tlk->target);
+								monster->first_tlk->target = 0;
 								act->success = 0;
 							}
 							break;
@@ -683,7 +687,7 @@ void update_action(long t) {
 					}
 					if(act->if_cmd) {
 						// test to see if command was successful
-						for(tact = creature->first_tlk; tact; tact = tact->next_tag) {
+						for(tact = monster->first_tlk; tact; tact = tact->next_tag) {
 							if(tact->type == act->if_cmd)
 								break;
 						}
@@ -720,20 +724,20 @@ void update_action(long t) {
 						switch(act->do_act) {
 						case 'E': // broadcast response to room
 							if(thresh <= num)
-								broadcast(NULL, cp->crt->getRoom(), "%s", resp);
+								broadcast(NULL, monster->getRoom(), "%s", resp);
 
 							break;
 						case 'S': // say to room
 							if(thresh <= num)
-								broadcast(NULL, cp->crt->getRoom(), "%M says, \"%s\"", creature, resp);
+								broadcast(NULL, monster->getRoom(), "%M says, \"%s\"", monster, resp);
 							break;
 						case 'T':	// Mob Trash-talk
 							if(mrand(1,100) <= 10) {
 
-								if(countTotalEnemies(creature) > 0 && !creature->getMonster()->nearEnemy()) {
-									if(creature->daily[DL_BROAD].cur > 0) {
-										broadcast("### %M broadcasted, \"%s\"", creature, resp);
-										subtractMobBroadcast(creature, 0);
+								if(countTotalEnemies(monster) > 0 && !monster->getMonster()->nearEnemy()) {
+									if(monster->daily[DL_BROAD].cur > 0) {
+										broadcast("### %M broadcasted, \"%s\"", monster, resp);
+										subtractMobBroadcast(monster, 0);
 									}
 								}
 							}
@@ -741,23 +745,23 @@ void update_action(long t) {
 						case 'B':	// Mob general random broadcasts
 							if(mrand(1,100) <= 10) {
 
-								if(countTotalEnemies(creature) < 1 && thresh <= num) {
-									if(creature->daily[DL_BROAD].cur > 0) {
-										broadcast("### %M broadcasted, \"%s\"", creature, resp);
-										subtractMobBroadcast(creature, 0);
+								if(countTotalEnemies(monster) < 1 && thresh <= num) {
+									if(monster->daily[DL_BROAD].cur > 0) {
+										broadcast("### %M broadcasted, \"%s\"", monster, resp);
+										subtractMobBroadcast(monster, 0);
 									}
 								}
 							}
 							break;
 						case 'A': // attack monster in target string
-							if(creature->first_tlk->target && !creature->getMonster()->hasEnemy()) {
-								victim = room->findMonster(creature, creature->first_tlk->target, 1);
+							if(monster->first_tlk->target && !monster->getMonster()->hasEnemy()) {
+								victim = room->findMonster(monster, monster->first_tlk->target, 1);
 								if(!victim)
 									return;
-								victim->getMonster()->monsterCombat((Monster*)creature);
-								if(creature->first_tlk->target)
-									free(creature->first_tlk->target);
-								creature->first_tlk->target = 0;
+								victim->getMonster()->monsterCombat((Monster*)monster);
+								if(monster->first_tlk->target)
+									free(monster->first_tlk->target);
+								monster->first_tlk->target = 0;
 							}
 							break;
 						case 'a': // attack player target
@@ -801,9 +805,9 @@ void update_action(long t) {
 					// unconditional jump
 					if(act->goto_cmd) {
 						act->success = 1;
-						cp->crt->first_tlk->on_cmd = act->goto_cmd;
+						monster->first_tlk->on_cmd = act->goto_cmd;
 					} else
-						cp->crt->first_tlk->on_cmd = on_cmd;
+						monster->first_tlk->on_cmd = on_cmd;
 				}
 			}
 		}
@@ -972,37 +976,17 @@ int countTotalEnemies(Creature *monster) {
 // This function removes a player's name from every single monster
 // on the active list when the player dies, suicides, or is dusted.
 
-void Player::clearEnemyPlayer() {
-	const ctag		*cp=0;
-	Creature* creature=0;
+void Server::clearAsEnemy(Player* player) {
 
-	if(!(cp = gServer->getFirstActive()))
-		return;
-	while(cp) {
+	Monster	*monster=0;
+	MonsterList::iterator it = activeList.begin();
+	while(it != activeList.end()) {
+		// Increment the iterator in case this monster dies during the update and is removed from the active list
+		monster = (*it++);
 
-		if(!cp) {
-			merror("cp in active", NONFATAL);
-			break;
-		}
-		if(!(cp->crt)) {
-			merror("cp in active", NONFATAL);
-			break;
-		}
+		if(!(monster->parent_rom && monster->parent_rom->info.id) && !monster->area_room) continue;
 
-		creature = cp->crt;
-
-		if(!creature) {
-			merror("creature in active", NONFATAL);
-			break;
-		}
-
-		if(!(creature->parent_rom && creature->parent_rom->info.id) && !creature->area_room)
-			break;
-
-		creature->getMonster()->clearEnemy(this);
-
-		cp = cp->next_tag;
-
+		monster->clearEnemy(player);
 	}
 
 	return;
@@ -1105,32 +1089,33 @@ void update_ships() {
 //*********************************************************************
 //							list_act
 //*********************************************************************
+bstring Server::showActiveList() {
+	Monster* monster;
+	MonsterList::iterator it = activeList.begin();
+	std::ostringstream oStr;
+	oStr << "### Active monster list ###\n";
+	oStr << "Monster    -    Room Number\n";
 
-int list_act(Player* player, cmd* cmnd) {
-	const ctag *cp = gServer->getFirstActive();
-
-	player->print("### Active monster list ###\n");
-	player->print("Monster    -    Room Number\n");
-
-	while(cp) {
-		if(	(!cp->crt->parent_rom || !cp->crt->parent_rom->info.id) &&
-			!cp->crt->area_room
-		) {
-			if(!cp->crt->name)
-				player->print("Bad Mob - Room %s.\n", cp->crt->getRoom()->fullName().c_str());
+	while(it != activeList.end()) {
+		monster = (*it++);
+		if((!monster->parent_rom || !monster->parent_rom->info.id) && !monster->area_room ) {
+			if(monster->getName())
+				oStr << "Bad Mob " << monster->getName() << ".\n";
 			else
-				player->print("Bad Mob - %s - Room %s.\n", cp->crt->name, cp->crt->getRoom()->fullName().c_str());
-			cp = cp->next_tag;
+				oStr << "Bad Mob\n";
 			continue;
 		}
-		if(!cp->crt->name) {
-			player->print("Bad Mob - Room %d.\n", cp->crt->getRoom()->fullName().c_str());
-			cp = cp->next_tag;
+		if(!monster->getName()) {
+			oStr << "Bad Mb - Room " << monster->getRoom()->fullName() << "\n";
 			continue;
 		}
-		player->print("%s - %s.\n", cp->crt->name, cp->crt->getRoom()->fullName().c_str());
-		cp = cp->next_tag;
+		oStr << monster->getName() << " - " << monster->getRoom()->fullName() << "\n";
 	}
+	return(oStr.str());
+
+}
+int list_act(Player* player, cmd* cmnd) {
+	player->print("%s", gServer->showActiveList().c_str());
 	gServer->processOutput();
 	return(0);
 }

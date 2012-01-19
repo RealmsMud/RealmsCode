@@ -250,7 +250,7 @@ bool Creature::knowsSkill(const bstring& skillName) const {
 // Returns the requested skill if it can be found on the creature
 
 CrtSkill* Creature::getSkill(const bstring& skillName) const {
-	if(skillName == "")	return(false);
+	if(skillName == "")	return(null);
 
 	std::map<bstring, CrtSkill*>::const_iterator csIt;
 	if( (csIt = skills.find(skillName)) == skills.end())

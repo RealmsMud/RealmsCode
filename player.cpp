@@ -2276,9 +2276,9 @@ int Player::getSneakChance() const {
 	switch(cClass) {
 	case THIEF:
 		if(cClass2 == MAGE)
-			MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
 		else
-			chance = MIN(90, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(90, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
 
 		break;
 	case ASSASSIN:
@@ -2286,40 +2286,41 @@ int Player::getSneakChance() const {
 		break;
 	case CLERIC:
 		if(cClass2 == ASSASSIN)
-			chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
 		else if(deity == KAMIRA || deity == ARACHNUS)
-			chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) piety.getCur()));
+			chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) piety.getCur()));
 
 		break;
 	case FIGHTER:
 		if(cClass2 == THIEF)
-			chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
 
 		break;
 	case MAGE:
 		if(cClass2 == THIEF || cClass2 == ASSASSIN)
-			chance = MIN(90, 5 + 8 * MAX(1,sLvl-3) + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(90, 5 + 8 * MAX(1,sLvl-3) + 3 * bonus((int) dexterity.getCur()));
 
 		break;
 	case DRUID:
 		if(getRoom()->isForest())
-			chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
 
 		break;
 	case RANGER:
 		if(getRoom()->isForest())
-			chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
 		else
-			chance = MIN(83, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(83, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
+		break;
 	case ROGUE:
-		chance = MIN(85, 5 + 7 * sLvl + 3 * bonus((int) dexterity.getCur()));
+		chance = tMIN(85, 5 + 7 * sLvl + 3 * bonus((int) dexterity.getCur()));
 		break;
 	default:
 		break;
 	}
 
 	if(isBlind())
-		chance = MIN(20, chance);
+		chance = tMIN(20, chance);
 
 	if(isEffected("camouflage")) {
 		if(getRoom()->isOutdoors())

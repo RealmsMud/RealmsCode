@@ -430,7 +430,7 @@ EffectInfo* MudObject::addEffect(const bstring& effect, long duration, int stren
 
 EffectInfo* Effects::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
 	if(!gConfig->getEffect(effect))
-		return(false);
+		return(null);
 	EffectInfo* newEffect = new EffectInfo(effect, time(0), duration, strength, pParent, owner);
 
 	newEffect->compute(applier);
@@ -1175,7 +1175,6 @@ void Server::pulseCreatureEffects(long t) {
 	Monster	*monster=0;
 	const Socket *sock=0;
 	Player* player=0;
-	ctag	*cp = first_active;
 	std::list<Socket*>::const_iterator it;
 
 	for(it = sockets.begin(); it != sockets.end() ; ) {
@@ -1188,10 +1187,10 @@ void Server::pulseCreatureEffects(long t) {
 			player->pulseEffects(t);
 	}
 
-	while(cp) {
-		monster = cp->crt->getMonster();
-		cp = cp->next_tag;
-
+	MonsterList::iterator mIt = activeList.begin();
+	while(mIt != activeList.end()) {
+		// Increment the iterator in case this monster dies during the update and is removed from the active list
+		monster = (*mIt++);
 		monster->pulseEffects(t);
 	}
 }
