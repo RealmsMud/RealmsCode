@@ -19,8 +19,8 @@
 
 #include "mud.h"
 
-Creature& Creature::operator<< ( MudObject& mo) {
-    Player* player = getPlayer();
+Streamable& Streamable::operator<< ( MudObject& mo) {
+	Player* player = dynamic_cast<Player*>(this);
     if(player && player->getSock()) {
         Socket* sock = player->getSock();
 
@@ -30,21 +30,21 @@ Creature& Creature::operator<< ( MudObject& mo) {
         int mFlags = player->displayFlags() & player->getManipFlags();
         int mNum = player->getManipNum();
         if(creature) {
-            sock->bprint(creature->getCrtStr(this, mFlags, mNum));
+            sock->bprint(creature->getCrtStr(player, mFlags, mNum));
         } else if(object) {
-            sock->bprint(object->getObjStr(this, mFlags, mNum));
+            sock->bprint(object->getObjStr(player, mFlags, mNum));
         }
 
     }
     return(*this);
 }
 
-Creature& Creature::operator<< ( MudObject* mo) {
+Streamable& Streamable::operator<< ( MudObject* mo) {
     return(*this << *mo);
 }
 
-Creature& Creature::operator<< (const bstring& str) {
-    const Player* player = getConstPlayer();
+Streamable& Streamable::operator<< (const bstring& str) {
+    const Player* player = dynamic_cast<Player*>(this);
     if(player && player->getSock()) {
         Socket* sock = player->getSock();
         sock->bprint(str);
@@ -53,23 +53,23 @@ Creature& Creature::operator<< (const bstring& str) {
 }
 
 
-void Creature::setManipFlags(int flags) {
+void Streamable::setManipFlags(int flags) {
     manipFlags &= flags;
 }
 
 // Returns the manipFlags and resets them
-int Creature::getManipFlags() {
+int Streamable::getManipFlags() {
     int toReturn = manipFlags;
     manipFlags = 0;
     return (toReturn);
 }
 
-void Creature::setManipNum(int num) {
+void Streamable::setManipNum(int num) {
     manipNum = num;
 }
 
 // Returns the manipNum and resets them
-int Creature::getManipNum() {
+int Streamable::getManipNum() {
     int toReturn = manipNum;
     manipNum = 0;
     return(toReturn);

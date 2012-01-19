@@ -504,7 +504,7 @@ int pCommunicate(Player* player, cmd* cmnd) {
 int communicate(Creature* creature, cmd* cmnd) {
 	const Player* player=0;
 	bstring text = "", name = "";
-	Creature *owner=0, *target=0;
+	Creature *owner=0;
 	Player*	pTarget=0;
 	AreaRoom* aRoom=0;
 	UniqueRoom	*new_rom=0;
@@ -576,7 +576,7 @@ int communicate(Creature* creature, cmd* cmnd) {
 	    Group* group = creature->getGroup();
 	    if(group) {
 	        for(Creature* crt : group->members) {
-	            pTarget = cp->crt->getPlayer();
+	            pTarget = crt->getPlayer();
 	            if(!pTarget) continue;
 	            // GT prints to the player!
 	            if(pTarget == creature && chan->type != COM_GT)

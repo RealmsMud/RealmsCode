@@ -424,8 +424,8 @@ int Monster::updateCombat() {
 			int ff;
 			ff = 40 + (1- (pTarget->hp.getCur()/pTarget->hp.getMax()))*40 +
 				::bonus((int)pTarget->constitution.getCur())*3 +
-				(pTarget->getClass() == PALADIN ||
-						 pTarget->getClass() == DEATHKNIGHT) ? -10 : 0;
+				((pTarget->getClass() == PALADIN ||
+						 pTarget->getClass() == DEATHKNIGHT) ? -10 : 0);
 			if(ff < mrand(1,100)) {
 				pTarget->flee();
 				return(1);

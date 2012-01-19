@@ -947,7 +947,7 @@ void Player::update() {
 		}
 	}
 
-	if(isStaff() && flagIsSet(P_AUTO_INVIS) && !flagIsSet(P_DM_INVIS) && (t - getSock()->ltime) > 6000) {
+	if(isStaff() && flagIsSet(P_AUTO_INVIS) && !flagIsSet(P_DM_INVIS) && getSock() && (t - getSock()->ltime) > 6000) {
 		printColor("^g*** Automatically enabling DM invisibility ***\n");
 		setFlag(P_DM_INVIS);
 	}

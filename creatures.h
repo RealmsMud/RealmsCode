@@ -193,23 +193,7 @@ typedef std::list<Monster*> PetList;
 //						Creature
 //*********************************************************************
 
-class Creature: public MudObject {
-public:
-    // Stream operators
-    Creature& operator<< (MudObject* obj);
-    Creature& operator<< (MudObject& obj);
-    Creature& operator<< (const bstring& str);
-
-    void setManipFlags(int flags);
-    int getManipFlags();
-
-    void setManipNum(int num);
-    int getManipNum();
-    //Creature& operator<< (creatureManip& manip)
-
-protected:
-    int manipFlags;
-    int manipNum;
+class Creature: public MudObject, public Streamable {
 
 protected:
 	void CopyCommon(const Creature& cr);
@@ -327,7 +311,7 @@ public:
 	CatRef room;
 #define 				NUMHITS quests[0]
 	short questnum; // Quest fulfillment number (M)
-	struct Object *ready[MAXWEAR];// Worn/readied items
+	Object *ready[MAXWEAR];// Worn/readied items
 //	struct Creature *following; // creature being followed
 //	ctag *first_fol; // List of followers
 	otag *first_obj; // List of inventory
@@ -1270,7 +1254,7 @@ public:
 	void learnRecipe(Recipe* recipe);
 	bool knowsRecipe(int id) const;
 	bool knowsRecipe(Recipe* recipe) const;
-	Recipe* findRecipe(cmd* cmnd, bstring skill, bool* searchRecipes=false, Size recipeSize=NO_SIZE, int numIngredients=1) const;
+	Recipe* findRecipe(cmd* cmnd, bstring skill, bool* searchRecipes, Size recipeSize=NO_SIZE, int numIngredients=1) const;
 
 // Stats & Ticking
 	long tickInterval(const Stat stat, bool fastTick, bool deathSickness, bool vampAndDay, const bstring& effectName);

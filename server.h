@@ -178,6 +178,7 @@ private:
 	WebInterface* webInterface;
 
 	// Game Updates
+	CreatureList activeList; // The new active list
 	ctag *first_active; // The active list
 
 	long lastDnsPrune;

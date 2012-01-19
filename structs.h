@@ -118,7 +118,7 @@ typedef struct obj_tag {
 public:
 	obj_tag() { next_tag = 0; obj = 0; };
 	struct obj_tag 	*next_tag;
-	struct Object	*obj;
+	Object	*obj;
 } otag;
 
 
@@ -273,7 +273,7 @@ class cmdReturn;
 
 class Command;
 
-typedef struct cmd {
+class cmd {
 public:
 	cmd() {
 	    ret = num = 0;
@@ -289,7 +289,7 @@ public:
 
 	int			ret;
 	Command	*myCommand;
-} cmd;
+};
 
 
 #include "delayedAction.h"

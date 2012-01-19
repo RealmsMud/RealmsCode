@@ -21,5 +21,24 @@
 #ifndef CREATURE_STREAMS_H
 #define CREATURE_STREAMS_H
 
+class Streamable {
+public:
+	virtual ~Streamable() {};
+    // Stream operators
+	Streamable& operator<< (MudObject* obj);
+	Streamable& operator<< (MudObject& obj);
+	Streamable& operator<< (const bstring& str);
+
+    void setManipFlags(int flags);
+    int getManipFlags();
+
+    void setManipNum(int num);
+    int getManipNum();
+    //Creature& operator<< (creatureManip& manip)
+
+protected:
+    int manipFlags;
+    int manipNum;
+};
 
 #endif

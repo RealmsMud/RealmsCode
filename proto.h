@@ -140,7 +140,7 @@ int cmdPrepare(Player* player, cmd* cmnd);
 int cmdFlee(Player* player, cmd* cmnd);
 int cmdPrepareForTraps(Player* player, cmd* cmnd);
 int checkWinFilename(Socket* sock, const char *str);
-bool Pueblo::is(bstring txt);
+//bool Pueblo::is(bstring txt);
 // die.cp
 //int checkDie(Creature *victim, Creature *killer);
 //int checkDieRobJail(Creature *victim, Monster *killer);
@@ -423,10 +423,8 @@ bstring progressBar(int barLength, float percentFull, bstring text = "", char pr
 bool nameIsAllowed(char *str, Socket* sock);
 bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int val, void** target, int* targetType);
 int bonus(int num);
-void addhp(struct Creature* player, int addhp);
 int crtWisdom(Creature* creature);
 int crtAwareness(Creature* creature);
-void addmp(struct Creature* player, int addmp);
 void new_merror(const char *str, char errtype, const char *file, const int line );
 void lowercize(char *str, int flag);
 int low(char ch);
