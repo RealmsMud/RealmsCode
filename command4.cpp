@@ -258,7 +258,7 @@ int cmdDaily(Player* player, cmd* cmnd) {
 	if( target->isCt() || ((target->getClass() == RANGER || target->getClass() == DRUID) && target->spellIsKnown(S_TRACK))  ) {
 		player->print("Tracks:         %d of %d remaining.\n", target->daily[DL_TRACK].cur,target->daily[DL_TRACK].max);
 	}
-	if( target->isCt() || ((target->getClass() == LICH || target->getClass() == MAGE) && target->getLevel() >= 10) ) {
+	if( target->isCt() || ((target->getClass() == LICH || (target->getClass() == MAGE && !target->getSecondClass())) && target->getLevel() >= 10) ) {
 		player->print("Enchants:       %d of %d remaining.\n", target->daily[DL_ENCHA].cur, target->daily[DL_ENCHA].max);
 	}
 	if( target->isCt() || (target->getClass() == MAGE && target->getLevel() >= 10)) {
