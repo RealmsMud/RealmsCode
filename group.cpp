@@ -85,7 +85,7 @@ bool Group::remove(Creature* toRemove) {
         }
 
         // See if the group should be disbanded
-        if(members.size() == 1)
+        if(this->getSize(false, false) == 1)
         	return(disband());
 
         // We've already checked for a disband, now check for a leadership change
@@ -93,8 +93,10 @@ bool Group::remove(Creature* toRemove) {
         	leader = this->getMember(1, false);
 
         	// Something's wrong here
-        	if(!leader)
+        	if(!leader) {
+        		std::cout << "Couldn't find a replacement leader.\n";
         		return(disband());
+        	}
 
         	leader->setGroupStatus(GROUP_LEADER);
             leader->print("You are now the group leader.\n");
@@ -147,10 +149,10 @@ int Group::size() {
 //********************************************************************************
 // Parameters: countDmInvis - Should we count DM invis players or not?
 // Returns: The number of players in the group
-int Group::getSize(bool countDmInvis) {
+int Group::getSize(bool countDmInvis, bool membersOnly) {
 	int count=0;
 	for(Creature* crt : members) {
-		if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer() && crt->getGroupStatus() > GROUP_MEMBER)
+		if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer() && (crt->getGroupStatus() >= GROUP_MEMBER || ! membersOnly))
 			count++;
 	}
 	return(count);
@@ -174,7 +176,7 @@ int Group::getNumInSameRoom(Creature* target) {
 Creature* Group::getMember(int num, bool countDmInvis) {
     int count=0;
     for(Creature* crt : members) {
-        if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer() && crt->getGroupStatus() > GROUP_MEMBER)
+        if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer() && crt->getGroupStatus() >= GROUP_MEMBER)
             count++;
         if(count == num)
             return(crt);
@@ -207,11 +209,16 @@ Creature* Group::getMember(bstring name, int num, Creature* searcher, bool inclu
 GroupType Group::getGroupType() {
     return(groupType);
 }
+void Group::setGroupType(GroupType newType) {
+	groupType = newType;
+}
 bool Group::setLeader(Creature* newLeader) {
     //if(newLeader->getGroup() != this)
     //  return(false);
-
+	leader->setGroupStatus(GROUP_MEMBER);
+	newLeader->setGroupStatus(GROUP_LEADER);
     leader = newLeader;
+
     return(true);
 }
 
@@ -272,7 +279,7 @@ bstring Group::getGroupList(Creature* viewer) {
     int i = 0;
     std::ostringstream oStr;
 
-    oStr << getName() << ":" << std::endl;
+    oStr << getName() << " " << getGroupTypeStr() << ":\n";
 
     for(Creature* target : members) {
         bool isPet = target->isPet();
@@ -384,11 +391,26 @@ bool Server::unRegisterGroup(Group* toUnRegister) {
     return(true);
 }
 
+bstring Group::getGroupTypeStr() {
+switch(getGroupType()) {
+		case GROUP_PUBLIC:
+		default:
+			return("(Public)");
+			break;
+		case GROUP_INVITE_ONLY:
+			return("(Invite Only)");
+			break;
+		case GROUP_PRIVATE:
+			return("(Private)");
+			break;
+	}
+	return("**Unknown**");
+}
 bstring Server::getGroupList() {
     std::ostringstream oStr;
     int i=1;
     for(Group* group : groups) {
-        oStr << i++ << ") " << group->getName() << std::endl << group;
+        oStr << i++ << ") " << group->getName() << " " << group->getGroupTypeStr() <<  std::endl << group;
     }
     return(oStr.str());
 }

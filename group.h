@@ -53,6 +53,8 @@ public:
     static int promote(Player* player, cmd* cmnd);
     static int kick(Player* player, cmd* cmnd);
     static int leave(Player* player, cmd* cmnd);
+    static int rename(Player* player, cmd* cmnd);
+    static int type(Player* player, cmd* cmnd);
 
 public:
     Group(Creature* pLeader);
@@ -71,11 +73,13 @@ public:
 
     Creature* getLeader();
     int size();
-    int getSize(bool countDmInvis = false);
+    int getSize(bool countDmInvis = false, bool membersOnly = true);
     int getNumInSameRoom(Creature* target);
     Creature* getMember(int num, bool countDmInvis = false);
     Creature* getMember(bstring name, int num, Creature* searcher = NULL, bool includePets = false);
     GroupType getGroupType();
+    bstring getGroupTypeStr();
+    void setGroupType(GroupType newType);
     bstring& getName();
     bstring& getDescription();
     bstring getGroupList(Creature* viewer);

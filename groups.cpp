@@ -20,6 +20,7 @@
 // Mud includes
 #include "mud.h"
 #include "move.h"
+#include "commands.h"
 
 // C++ Includes
 #include <sstream>
@@ -43,13 +44,13 @@ int cmdFollow(Player* player, cmd* cmnd) {
 		return(0);
 
 	if(cmnd->num < 2) {
-		player->print("Follow who?\n");
+		*player << "Follow whom?\n";
 		return(0);
 	}
 
 
 	if(player->flagIsSet(P_SITTING)) {
-		player->print("You need to stand first.\n");
+		*player << "You need to stand first.\n";
 		return(0);
 	}
 
@@ -57,17 +58,17 @@ int cmdFollow(Player* player, cmd* cmnd) {
 	lowercize(cmnd->str[1], 1);
 	toFollow = player->getRoom()->findPlayer(player, cmnd);
 	if(!toFollow) {
-		player->print("No one here by that name.\n");
+		*player << "No one here by that name.\n";
 		return(0);
 	}
 
 	if(toFollow == player && !player->getGroup(false)) {
-		player->print("You can't group with yourself.\n");
+		*player << "You can't group with yourself.\n";
 		return(0);
 	}
 
 	if(toFollow->flagIsSet(P_NO_FOLLOW) && !player->isCt() && toFollow != player) {
-		player->print("%M does not welcome group members.\n", toFollow);
+		*player << toFollow << " does not welcome group members.\n";
 		return(0);
 	}
 
@@ -77,7 +78,7 @@ int cmdFollow(Player* player, cmd* cmnd) {
 	}
 
 	if(toFollow->isGagging(player->name)) {
-		player->print("You start following %s.\n", toFollow->name);
+		*player << "You start following " << toFollow->getName() << ".\n";
 		return(0);
 	}
 
@@ -126,7 +127,7 @@ int cmdFollow(Player* player, cmd* cmnd) {
 void Creature::addToGroup(Group* toJoin, bool announce) {
     toJoin->add(this);
     if(announce) {
-    	print("You join %s.\n", toJoin->getName().c_str());
+    	*this << "You join \"" << toJoin->getName() << "\".\n";
         toJoin->sendToAll(bstring(getName()) + " has joined your group.\n", this);
     }
 }
@@ -165,9 +166,11 @@ int Creature::numFollowers() {
 bool Creature::removeFromGroup(bool announce) {
     if(group) {
         if(groupStatus == GROUP_INVITED) {
-            if(!pFlagIsSet(P_DM_INVIS) && !pFlagIsSet(P_INCOGNITO) && announce)
-                group->sendToAll(getCrtStr(NULL, CAP) + " rejects the invitation to join your group.\n");
-            print("You reject the invitation to join %s.\n", group->getName().c_str());
+        	if(announce) {
+        		if(!pFlagIsSet(P_DM_INVIS) && !pFlagIsSet(P_INCOGNITO))
+        			group->sendToAll(getCrtStr(NULL, CAP) + " rejects the invitation to join your group.\n");
+            	*this << "You reject the invitation to join \"" << group->getName() << "\".\n";
+        	}
             group->remove(this);
             group = null;
         } else {
@@ -175,9 +178,9 @@ bool Creature::removeFromGroup(bool announce) {
         		if(!pFlagIsSet(P_DM_INVIS) && !pFlagIsSet(P_INCOGNITO))
         			group->sendToAll(getCrtStr(NULL, CAP) + " leaves the group.\n", this);
         		if(group->getLeader() == this)
-        			print("You leave your group.\n");
+        			*this << "You leave your group.\n";
         		else
-        			print("You leave %s.\n", group->getName().c_str());
+        			*this << "You leave \"" << group->getName() << "\".\n";
         	}
             group->remove(this);
             group = null;
@@ -206,7 +209,7 @@ int cmdLose(Player* player, cmd* cmnd) {
 	if(cmnd->num == 1) {
 
 		if(!player->getGroup(false)) {
-			player->print("You're not in a group.\n");
+			*player << "You're not in a group.\n";
 			return(0);
 		}
 		player->removeFromGroup(true);
@@ -217,7 +220,7 @@ int cmdLose(Player* player, cmd* cmnd) {
 
 	Group* group = player->getGroup(true);
 	if(player != group->getLeader()) {
-	    player->print("You are not the group leader.\n");
+	    *player << "You are not the group leader.\n";
 	    return(0);
 	}
 
@@ -225,7 +228,7 @@ int cmdLose(Player* player, cmd* cmnd) {
 	target = group->getMember(cmnd->str[1], cmnd->val[1], player, false);
 
 	if(!target) {
-		player->print("That person is not following you.\n");
+		*player << "That person is not following you.\n";
 		return(0);
 	}
 
@@ -237,12 +240,22 @@ int cmdLose(Player* player, cmd* cmnd) {
 
 
 int printGroupSyntax(Player* player) {
-    player->printColor("Syntax: guild ^e<^xinvite^e>^x ^e<^cplayer name^e>\n");
-    player->printColor("              ^e<^xkick^e>^x ^e<^cplayer name^e>\n");
-    player->printColor("              ^e<^xaccept^e>\n");
-    player->printColor("              ^e<^xreject^e>\n");
-    player->printColor("              ^e<^xpromote^e>^x ^e<^cplayer name^e>^x\n");
-    player->printColor("              ^e<^xleave^e>\n");
+    player->printColor("Syntax: group ^e<^xleave^e>\n");
+    if(player->getGroupStatus() == GROUP_INVITED) {
+    	player->printColor("              ^e<^xreject^e>\n");
+    	player->printColor("              ^e<^xaccept^e>\n");
+    }
+    if(player->getGroupStatus() == GROUP_LEADER) {
+        player->printColor("              ^e<^xpromote^e>^x ^e<^cplayer name^e>^x\n");
+		player->printColor("              ^e<^xkick^e>^x ^e<^cplayer name^e>\n");
+		player->printColor("              ^e<^xname^e>^x ^e<^cgroup name^e>\n");
+		player->printColor("              ^e<^xdisband^e>^x\n");
+    }
+    if(player->getGroupStatus() == GROUP_LEADER
+    		|| (player->getGroupStatus() == GROUP_MEMBER && player->getGroup(true) && player->getGroup(true)->getGroupType() < GROUP_PRIVATE) )
+    {
+		player->printColor("              ^e<^xinvite^e>^x ^e<^cplayer name^e>\n");
+    }
     return(0);
 }
 
@@ -268,6 +281,8 @@ int cmdGroup(Player* player, cmd* cmnd) {
 	    else if(!strncmp(cmnd->str[1], "disband", len)) return(Group::disband(player, cmnd));
 	    else if(!strncmp(cmnd->str[1], "kick", len))    return(Group::kick(player, cmnd));
 	    else if(!strncmp(cmnd->str[1], "promote", len)) return(Group::promote(player, cmnd));
+	    else if(!strncmp(cmnd->str[1], "name", len)) 	return(Group::rename(player, cmnd));
+	    else if(!strncmp(cmnd->str[1], "type", len)) 	return(Group::type(player, cmnd));
 	    else return(printGroupSyntax(player));
 	}
 
@@ -289,7 +304,7 @@ int Group::invite(Player* player, cmd* cmnd) {
     Player* target = 0;
 
     if(cmnd->num < 3) {
-        player->print("Invite who into your guild?\n");
+        *player << "Invite who into your group?\n";
         return(0);
     }
 
@@ -297,7 +312,7 @@ int Group::invite(Player* player, cmd* cmnd) {
     target = gServer->findPlayer(cmnd->str[2]);
 
     if(!target || !player->canSee(target) || target == player) {
-        player->print("%s is not on.\n", cmnd->str[2]);
+        *player << cmnd->str[2] << " is not on.\n";
         return(0);
     }
 
@@ -314,6 +329,16 @@ int Group::invite(Player* player, cmd* cmnd) {
 
 
     Group* group = player->getGroup(false);
+    if(group) {
+    	if(group->getGroupType() == GROUP_PRIVATE && player->getGroupStatus() != GROUP_LEADER) {
+    		*player << "You are not the group leader of \"" << group->getName() << "\".\n";
+    		return(0);
+    	}
+    	if(player->getGroupStatus() < GROUP_MEMBER) {
+    		*player << "Reject your current group invitation before you try to start a group!\n";
+    		return(0);
+    	}
+    }
 
     if(!group) {
         group = new Group(player);
@@ -321,7 +346,6 @@ int Group::invite(Player* player, cmd* cmnd) {
     }
 
     group->add(target);
-    target->setGroup(group);
     target->setGroupStatus(GROUP_INVITED);
 
     *player << "You invite " << target << " to join your group.\n";
@@ -330,28 +354,221 @@ int Group::invite(Player* player, cmd* cmnd) {
     return(0);
 }
 
-int Group::join(Player* player, cmd *cmnd) {
-
+// Accept an invitation and join a group
+int Group::join(Player* player, cmd *cmnd)  {
+	if(player->getGroupStatus() != GROUP_INVITED) {
+		*player << "You have not been invited to join any groups.\n";
+		return(0);
+	}
+	Group* toJoin = player->getGroup(false);
+	if(!toJoin) {
+		// Shouldn't happen
+		*player << "You have not been invited to join any groups.\n";
+		return(0);
+	}
+	player->addToGroup(toJoin, true);
     return(0);
 }
 int Group::reject(Player* player, cmd* cmnd) {
-
+	if(player->getGroupStatus() != GROUP_INVITED) {
+		*player << "You have not been invited to join any groups.\n";
+		return(0);
+	}
+	Group* toReject = player->getGroup(false);
+	if(!toReject) {
+		// Shouldn't happen
+		*player << "You have not been invited to join any groups.\n";
+		return(0);
+	}
+	player->removeFromGroup(true);
     return(0);
 }
 int Group::disband(Player* player, cmd* cmnd) {
+	Group* toDisband = player->getGroup(true);
+	if(!toDisband) {
+		*player << "You are not in a group.\n";
+		return(0);
+	}
+	if(player->getGroupStatus() != GROUP_LEADER) {
+		*player << "You are not the group leader of \"" << toDisband->getName() << "\".\n";
+		return(0);
+	}
+	*player << "You disband \"" << toDisband->getName() << "\".\n";
+	toDisband->sendToAll(bstring(player->getName()) + " disbands the group.\n", player);
+	toDisband->disband();
 
     return(0);
 }
 int Group::promote(Player* player, cmd* cmnd) {
+	Group* group = player->getGroup(true);
+	if(!group) {
+		*player << "You are not in a group.\n";
+		return(0);
+	}
+	if(player->getGroupStatus() != GROUP_LEADER) {
+		*player << "You are not the group leader of \"" << group->getName() << "\".\n";
+		return(0);
+	}
+
+    Player* target = 0;
+
+    if(cmnd->num < 3) {
+        *player << "Who would you like to promote to leader?\n";
+        return(0);
+    }
+
+    lowercize(cmnd->str[2], 1);
+    target = gServer->findPlayer(cmnd->str[2]);
+
+    if(!target || !player->canSee(target) || target == player) {
+
+        *player << cmnd->str[2] << " is not on.\n";
+        return(0);
+    }
+
+    if(target->getGroup(true) != group) {
+    	*player << target->getName() << " is not in your group!\n";
+    	return(0);
+    }
+    group->setLeader(target);
+
+    *player << "You promote " << target->getName() << " to group leader\nYou are now a member of \"" << group->getName() << "\".\n";
+	group->sendToAll(bstring(player->getName()) + " promotes " + target->getName() + " to group leader.\n", player);
+
+	*target << "You are now the group leader of \"" << group->getName() << "\".\n";
+
 
     return(0);
 }
 int Group::kick(Player* player, cmd* cmnd) {
+	Group* group = player->getGroup(true);
+	if(!group) {
+		*player << "You are not in a group.\n";
+		return(0);
+	}
+	if(group->getGroupType() == GROUP_PRIVATE && player->getGroupStatus() != GROUP_LEADER) {
+		*player << "You are not the group leader of \"" << group->getName() << "\".\n";
+		return(0);
+	}
 
+    Player* target = 0;
+
+    if(cmnd->num < 3) {
+        *player << "Who would you like to kick from your group?\n";
+        return(0);
+    }
+
+    lowercize(cmnd->str[2], 1);
+    target = gServer->findPlayer(cmnd->str[2]);
+
+    if(!target || !player->canSee(target) || target == player) {
+
+        *player << cmnd->str[2] << " is not on.\n";
+        return(0);
+    }
+
+    // We can also remove invitations from people by "kicking" them
+    if(target->getGroup(false) != group) {
+    	*player << target->getName() << " is not in your group!\n";
+    	return(0);
+    }
+    if(target->getGroupStatus() == GROUP_INVITED) {
+    	*player << "You rescind the group invitation from " << target->getName() << ".\n";
+    	group->sendToAll(bstring(player->getName()) + " rescinds the invitation for " + target->getName() + " to join the group.\n", player);
+    	*target << player << " rescinds your invitation to join \"" << group->getName() << "\".\n";
+    	target->removeFromGroup(false);
+    }
+    else {
+    	if(player->getGroupStatus() != GROUP_LEADER) {
+    		*player << "You can't kick people out of the group!\n";
+    		return(0);
+    	} else {
+			*player << "You kick " << target->getName() << " out of your group.\n";
+			group->sendToAll(bstring(player->getName()) + " kicks " + target->getName() + " out of the group.\n", player);
+			target->removeFromGroup(true);
+    	}
+    }
     return(0);
 }
 int Group::leave(Player* player, cmd* cmnd) {
+	if(!player->getGroup(false)) {
+		*player << "You're not in a group.\n";
+		return(0);
+	}
+	player->removeFromGroup(true);
 
+    return(0);
+}
+int Group::rename(Player* player, cmd* cmnd) {
+	Group* group = player->getGroup(true);
+	if(!group) {
+		*player << "You are not in a group.\n";
+		return(0);
+	}
+	if(player->getGroupStatus() != GROUP_LEADER) {
+		*player << "You are not the group leader of \"" << group->getName() << "\".\n";
+		return(0);
+	}
+
+	if(cmnd->num < 3) {
+		*player << "What would you like to name your group?\n";
+		return(0);
+	}
+
+	bstring newName = getFullstrText(cmnd->fullstr, 2);
+	if(newName.empty()) {
+		*player << "What would you like to name your group?\n";
+		return(0);
+	}
+	group->setName(newName);
+	*player << "You rename your group to \"" << newName << "\".\n";
+	group->sendToAll(bstring(player->getName()) + " renames the group to \"" + newName + "\".\n", player);
+
+    return(0);
+}
+int Group::type(Player* player, cmd* cmnd) {
+	Group* group = player->getGroup(true);
+	if(!group) {
+		*player << "You are not in a group.\n";
+		return(0);
+	}
+	if(player->getGroupStatus() != GROUP_LEADER) {
+		*player << "You are not the group leader of \"" << group->getName() << "\".\n";
+		return(0);
+	}
+
+	if(cmnd->num < 3) {
+		*player << "What would you like to switch your group to? (Public, Private, Invite Only)?\n";
+		return(0);
+	}
+
+	bstring newName = getFullstrText(cmnd->fullstr, 2);
+	if(newName.empty()) {
+		*player << "What would you like to switch your group type to? (Public, Private, Invite Only)?\n";
+		return(0);
+	}
+	int len = newName.length();
+	const char *str = newName.c_str();
+	if(len >= 2) {
+		if(!strncmp(str, "public", len)) {
+			group->setGroupType(GROUP_PUBLIC);
+			*player << "You change the group type to Public.\n";
+			group->sendToAll(bstring(player->getName()) + " changes the group to Public.\n", player);
+			return(0);
+		} else if(!strncmp(str, "private", len)) {
+			group->setGroupType(GROUP_PRIVATE);
+			*player << "You change the group type to Private.\n";
+			group->sendToAll(bstring(player->getName()) + " changes the group to Private.\n", player);
+			return(0);
+		}
+	}
+	if(!strncmp(str, "invite only", len) || !strncmp(str, "inviteonly", len)) {
+		group->setGroupType(GROUP_INVITE_ONLY);
+		*player << "You change the group type to Invite Only.\n";
+		group->sendToAll(bstring(player->getName()) + " changes the group to Invite Only.\n", player);
+		return(0);
+	}
+	*player << "What would you like to switch your group type to? (Public, Private, Invite Only)?\n";
     return(0);
 }
 //********************************************************************
