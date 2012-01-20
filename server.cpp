@@ -812,7 +812,7 @@ void Server::updateActive(long t) {
 			monster->deleteFromRoom();
 			gServer->delActive(monster);
 			free_crt(monster);
-//			cp = first_active;
+			it = activeList.begin();
 			continue;
 		}
 
@@ -841,7 +841,7 @@ void Server::updateActive(long t) {
 				monster->deleteFromRoom();
 				gServer->delActive(monster);
 				free_crt(monster);
-//				cp = first_active;
+				it = activeList.begin();
 				continue;
 			}
 
@@ -860,7 +860,7 @@ void Server::updateActive(long t) {
 			!monster->flagIsSet(M_AGGRESSIVE))
 		{
 			gServer->delActive(monster);
-	//		cp = first_active;
+			it = activeList.begin();
 			continue;
 		}
 
@@ -929,7 +929,7 @@ void Server::updateActive(long t) {
 
 
 		if(monster->doHarmfulAuras()) {
-//			cp = first_active;
+		    it = activeList.begin();
 			continue;
 		}
 
@@ -956,8 +956,7 @@ void Server::updateActive(long t) {
 				broadcast(NULL, room, "%1M fades away.", monster);
 
 			monster->die(monster->following);
-			gServer->delActive(monster);
-//			cp = first_active;
+			it = activeList.begin();
 			continue;
 		}
 
@@ -984,7 +983,7 @@ void Server::updateActive(long t) {
 			monster->deleteFromRoom();
 			gServer->delActive(monster);
 			free_crt(monster);
-//			cp = first_active;
+			it = activeList.begin();
 			continue;
 		}
 
@@ -1005,14 +1004,14 @@ void Server::updateActive(long t) {
 			monster->canSpeak() &&
 			monster->mobDeathScream()
 		) {
-//			cp = first_active;
+    		it = activeList.begin();
 			continue;
 		}
 
 		// Update combat here
 		if(	monster->hasEnemy() && !timetowander && monster->updateCombat()) {
-//			cp = first_active;
-			continue;
+    		it = activeList.begin();
+    		continue;
 		}
 
 		if(	!monster->flagIsSet(M_AGGRESSIVE) &&
@@ -1105,7 +1104,7 @@ void Server::delActive(Monster* monster) {
 	}
 
 
-	activeList.erase(it);
+	activeList.remove(monster);
 }
 
 
