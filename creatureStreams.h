@@ -21,6 +21,12 @@
 #ifndef CREATURE_STREAMS_H
 #define CREATURE_STREAMS_H
 
+enum StreamOption {
+    STREAM_CAP,
+
+    STREAM_NO_OPT
+};
+
 class Streamable {
 public:
 	virtual ~Streamable() {};
@@ -28,6 +34,7 @@ public:
 	Streamable& operator<< (MudObject* obj);
 	Streamable& operator<< (MudObject& obj);
 	Streamable& operator<< (const bstring& str);
+	Streamable& operator<< (StreamOption opt);
 
     void setManipFlags(int flags);
     int getManipFlags();
@@ -39,6 +46,9 @@ public:
 protected:
     int manipFlags;
     int manipNum;
+
+
+    void doPrint(const bstring& toPrint);
 };
 
 #endif

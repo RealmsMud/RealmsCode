@@ -1314,7 +1314,8 @@ void get_all_rom(Creature* creature, char *item) {
 				}
 			}
 			if(object->getType() == MONEY) {
-				str2 = object->getObjStr(NULL, 0, 1).c_str();
+				bstring strtmp = object->getObjStr(NULL, 0, 1);
+				str2 = strtmp.c_str();
 				if(strlen(str2)+strlen(str) < 2040) {
 					strcat(str, str2);
 					strcat(str, ", ");

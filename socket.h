@@ -166,6 +166,7 @@ public:
 	void vprint(const char *fmt, va_list ap, bool parseColor = false);
 
 	void bprint(bstring toPrint);
+	void bprintColor(bstring toPrint);
 	void println(bstring toPrint = "");
 //	void printPrompt(bstring toPrint);
 	void print(const char* format, ...);

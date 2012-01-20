@@ -84,7 +84,7 @@ public:
     bstring& getDescription();
     bstring getGroupList(Creature* viewer);
 
-    void sendToAll(bstring msg, Creature* ignore = NULL, bool ignorePets = true);
+    void sendToAll(bstring msg, Creature* ignore = NULL, bool sendToInvited = false);
 
 
 public:

@@ -19,20 +19,25 @@
 
 #include "mud.h"
 
+Streamable& Streamable::operator<< (StreamOption opt) {
+    if(opt == STREAM_CAP) {
+        setManipFlags(CAP);
+    }
+    return(*this);
+}
+
 Streamable& Streamable::operator<< ( MudObject& mo) {
 	Player* player = dynamic_cast<Player*>(this);
     if(player && player->getSock()) {
-        Socket* sock = player->getSock();
-
         const Creature* creature = mo.getCreature();
         const Object* object = mo.getObject();
 
         int mFlags = player->displayFlags() & player->getManipFlags();
         int mNum = player->getManipNum();
         if(creature) {
-            sock->bprint(creature->getCrtStr(player, mFlags, mNum));
+            doPrint(creature->getCrtStr(player, mFlags, mNum));
         } else if(object) {
-            sock->bprint(object->getObjStr(player, mFlags, mNum));
+            doPrint(object->getObjStr(player, mFlags, mNum));
         }
 
     }
@@ -46,8 +51,7 @@ Streamable& Streamable::operator<< ( MudObject* mo) {
 Streamable& Streamable::operator<< (const bstring& str) {
     const Player* player = dynamic_cast<Player*>(this);
     if(player && player->getSock()) {
-        Socket* sock = player->getSock();
-        sock->bprint(str);
+        doPrint(str);
     }
     return(*this);
 }
@@ -75,3 +79,15 @@ int Streamable::getManipNum() {
     return(toReturn);
 }
 
+void Streamable::doPrint(const bstring& toPrint) {
+    const Player* player = dynamic_cast<Player*>(this);
+    if(player) {
+        Socket* sock = player->getSock();
+        if(sock) {
+            // if noColorManip
+            sock->bprint(toPrint);
+            // else if ColorManip
+            // sock->bprintColor(toPrint);
+        }
+    }
+}

@@ -1205,6 +1205,22 @@ void Socket::bprint(bstring toPrint) {
 }
 
 //********************************************************************
+//                      bprint
+//********************************************************************
+// Append a string to the socket's output queue...in color!
+
+void Socket::bprintColor(bstring toPrint) {
+
+    bstring coloredStr;
+    const char *colored;
+    if(myPlayer && myPlayer->flagIsSet(P_ANSI_COLOR))
+        coloredStr = colorize(toPrint.c_str(), 1, myPlayer);
+    else
+        coloredStr = colorize(toPrint.c_str(), 0, myPlayer);
+
+    bprint(coloredStr);
+}
+//********************************************************************
 //						println
 //********************************************************************
 // Append a string to the socket's output queue with a \n

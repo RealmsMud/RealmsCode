@@ -1171,6 +1171,9 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 	Group* group = creature->getGroup();
 	if(group && creature->getGroupStatus() == GROUP_LEADER) {
 		for(Creature* follower : group->members) {
+		    if(follower->getGroupStatus() < GROUP_MEMBER)
+		        continue;
+
 			if(oldRoom == follower->getRoom())
 				Move::start(follower, cmnd, 0, 0, followers, numPeople, roomPurged);
 			if(roomPurged)

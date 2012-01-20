@@ -1485,8 +1485,13 @@ void Monster::distributeExperience(Creature *killer) {
 	// Now handle everyone else on the list
 	std::map<Player*, int> expList;
 
-	for(ThreatEntry* threat : threatTable->threatSet) {
-	    Creature* crt = gServer->lookupCrtId(threat->getUid());
+	ThreatSet::iterator tIt = threatTable->threatSet.begin();
+	ThreatEntry* threat = 0;
+	Creature* crt = 0;
+	while(tIt != threatTable->threatSet.end()) {
+	// Iterate it because we will be invaliding this iterator
+		threat = (*tIt++);
+	    crt = gServer->lookupCrtId(threat->getUid());
 	    if(!crt) continue;
 
 		if(crt->isPet())

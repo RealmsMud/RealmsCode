@@ -85,7 +85,7 @@ bool Group::remove(Creature* toRemove) {
         }
 
         // See if the group should be disbanded
-        if(this->getSize(false, false) == 1)
+        if(this->getSize(false, false) <= 1)
         	return(disband());
 
         // We've already checked for a disband, now check for a leadership change
@@ -233,9 +233,9 @@ bool Group::inGroup(Creature* target) {
         return(true);
 }
 
-void Group::sendToAll(bstring msg, Creature* ignore, bool ignorePets) {
+void Group::sendToAll(bstring msg, Creature* ignore, bool sendToInvited) {
     for(Creature* crt : members) {
-        if((!ignorePets || !crt->isPet()) && crt != ignore && crt->getGroupStatus() >= GROUP_MEMBER ) {
+        if(!crt->isPet() && crt != ignore && (sendToInvited || crt->getGroupStatus() >= GROUP_MEMBER )) {
             crt->print("%s", msg.c_str());
         }
     }

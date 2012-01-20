@@ -92,7 +92,7 @@ int cmdFollow(Player* player, cmd* cmnd) {
 	if(toJoin && player->getGroupStatus() != GROUP_INVITED) {
         // Check if in same group
         if(toJoin == player->getGroup() ) {
-            player->print("You can't. %s is in the same group as you!.\n", toFollow->upHeShe());
+            player->print("You can't. %s is in the same group as you!\n", toFollow->upHeShe());
             return(0);
         }
         if(toJoin->getGroupType() != GROUP_PUBLIC) {
@@ -219,6 +219,11 @@ int cmdLose(Player* player, cmd* cmnd) {
 	player->unhide();
 
 	Group* group = player->getGroup(true);
+
+	if(!group) {
+	    *player << "You are not in a group.\n";
+	    return(0);
+	}
 	if(player != group->getLeader()) {
 	    *player << "You are not the group leader.\n";
 	    return(0);
@@ -276,8 +281,8 @@ int cmdGroup(Player* player, cmd* cmnd) {
 	    int len = strlen(cmnd->str[1]);
 
 	    if(!strncmp(cmnd->str[1], "invite", len))       return(Group::invite(player, cmnd));
-	    else if(!strncmp(cmnd->str[1], "accept", len) || !strncmp(cmnd->str[1], "join", len))  return(Group::join(player, cmnd));
-	    else if(!strncmp(cmnd->str[1], "leave", len))   return(Group::leave(player, cmnd));
+	    else if(!strncmp(cmnd->str[1], "accept", len) || !strncmp(cmnd->str[1], "join", len))   return(Group::join(player, cmnd));
+	    else if(!strncmp(cmnd->str[1], "leave", len) || !strcmp(cmnd->str[1], "reject"))        return(Group::leave(player, cmnd));
 	    else if(!strncmp(cmnd->str[1], "disband", len)) return(Group::disband(player, cmnd));
 	    else if(!strncmp(cmnd->str[1], "kick", len))    return(Group::kick(player, cmnd));
 	    else if(!strncmp(cmnd->str[1], "promote", len)) return(Group::promote(player, cmnd));
@@ -292,7 +297,7 @@ int cmdGroup(Player* player, cmd* cmnd) {
         return(0);
     }
     if(player->getGroupStatus() == GROUP_INVITED) {
-        *player << "You have been invited to join \"" << group->getName() << "\".\n";
+        *player << "You have been invited to join \"" << group->getNamgre() << "\".\nTo accept, type <group accept>; To reject type <group reject>.\n";
         return(0);
     }
     //*player << group->getGroupList(player);
@@ -320,8 +325,12 @@ int Group::invite(Player* player, cmd* cmnd) {
         return(0);
 
     if(target->getGroup(false)) {
-        if(target->getGroupStatus() == GROUP_INVITED)
-            *player << target << " is already considering joining another group.\n";
+        if(target->getGroupStatus() == GROUP_INVITED) {
+            if(target->getGroup(false) == player->getGroup(false))
+                *player << target << " is already considering joining your group.\n";
+            else
+                *player << target << " is already considering joining another group.\n";
+        }
         else
             *player << target << " is already in another group.\n";
         return(0);
@@ -494,6 +503,10 @@ int Group::leave(Player* player, cmd* cmnd) {
 	if(!player->getGroup(false)) {
 		*player << "You're not in a group.\n";
 		return(0);
+	}
+	if(!strncmp(cmnd->str[1], "reject", strlen(cmnd->str[1])) && player->getGroupStatus() != GROUP_INVITED) {
+	    *player << "You have no group invitations to reject.\n";
+	    return(0);
 	}
 	player->removeFromGroup(true);
 

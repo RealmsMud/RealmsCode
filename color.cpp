@@ -511,7 +511,7 @@ bstring colorize(const char* txt, int option, Player* player) {
 	const char* point;
 	char last = '0';
 	std::ostringstream coloredStr;
-
+	bool mxp = (player && player->flagIsSet(P_MXP_ENABLED));
 	if(option) {
 		for(point = txt; *point; point++) {
 			if(*point == '^') {
@@ -519,7 +519,7 @@ bstring colorize(const char* txt, int option, Player* player) {
 				// If we're trying to send out the same color as before
 				// no point wasting the extra space
 				if(*point != last || last == '^') {
-					if(player && player->flagIsSet(P_MXP_ENABLED))
+					if(mxp)
 						coloredStr << getMXPColor(*point, player);
 					else
 						coloredStr << colorCodeToColor(*point);
@@ -530,7 +530,7 @@ bstring colorize(const char* txt, int option, Player* player) {
 			coloredStr << *point;
 		}
 		// Now set the color back to normal
-		if(player && player->flagIsSet(P_MXP_ENABLED))
+		if(mxp)
 			coloredStr << getMXPColor('x', player);
 		else
 			coloredStr << colorCodeToColor('x');
