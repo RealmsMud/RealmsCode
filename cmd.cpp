@@ -38,7 +38,7 @@
 
 
 int dmTest(Player* player, cmd* cmnd) {
-    *player << player << " " << player << "\n";
+    *player << player << " " << setf(CAP) << player << "\n";
 	return(0);
 }
 

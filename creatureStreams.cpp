@@ -19,11 +19,22 @@
 
 #include "mud.h"
 
-Streamable& Streamable::operator<< (StreamOption opt) {
-    if(opt == STREAM_CAP) {
-        setManipFlags(CAP);
-    }
-    return(*this);
+
+template<class T> Streamable& operator<<(Streamable& s, const CrtManip<T>& m)
+{  return (*m._action)(s, m._value);
+}
+
+static Streamable& do_setf(Streamable& s, int n)
+{
+	s.setManipFlags(n);
+	return s;
+}
+
+
+CrtManip<int> setf(int n)
+{
+	std::cout << "setf!" << std::endl;
+	return CrtManip<int>(do_setf, n);
 }
 
 Streamable& Streamable::operator<< ( MudObject& mo) {

@@ -297,7 +297,7 @@ int cmdGroup(Player* player, cmd* cmnd) {
         return(0);
     }
     if(player->getGroupStatus() == GROUP_INVITED) {
-        *player << "You have been invited to join \"" << group->getNamgre() << "\".\nTo accept, type <group accept>; To reject type <group reject>.\n";
+        *player << "You have been invited to join \"" << group->getName() << "\".\nTo accept, type <group accept>; To reject type <group reject>.\n";
         return(0);
     }
     //*player << group->getGroupList(player);
