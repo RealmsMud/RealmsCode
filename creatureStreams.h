@@ -44,18 +44,15 @@ protected:
     void doPrint(const bstring& toPrint);
 };
 
-template<class T> class CrtManip
+class CrtManip
 {
 public:
-	CrtManip(Streamable& (*a)(Streamable&, T), T v);
-
+	friend Streamable& operator << (Streamable&, const CrtManip&);
 private:
-	Streamable& (*_action)(Streamable&, T);
-	T _value;
+	int _value;
 };
 
-friend Streamable& operator << (Streamable&, const CrtManip<T>&);
-CrtManip<int> setf(int n);
+CrtManip setf(int n);
 
 
 #endif

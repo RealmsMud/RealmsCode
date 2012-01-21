@@ -19,22 +19,19 @@
 
 #include "mud.h"
 
+//std::ostream& operator<<(std::ostream& out, const Group* group) {
+//    if(group)
+//        out << (*group);
+//    return(out);
+//}
 
-template<class T> Streamable& operator<<(Streamable& s, const CrtManip<T>& m)
-{  return (*m._action)(s, m._value);
+
+Streamable& operator<<(Streamable& s, const CrtManip& m) {
+	return s.setManipFlags(m._value);
 }
 
-static Streamable& do_setf(Streamable& s, int n)
-{
-	s.setManipFlags(n);
-	return s;
-}
-
-
-CrtManip<int> setf(int n)
-{
-	std::cout << "setf!" << std::endl;
-	return CrtManip<int>(do_setf, n);
+CrtManip setf(int n) {
+	return { n };
 }
 
 Streamable& Streamable::operator<< ( MudObject& mo) {
