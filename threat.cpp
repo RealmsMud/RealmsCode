@@ -227,6 +227,7 @@ Creature* ThreatTable::getTarget(bool sameRoom) {
         	// If we're a monster and the server hasn't heard of them, they're either a pet
         	// who has logged off, or a dead monster, either way remove them.
         	removeThreat(uId);
+        	it = threatSet.rbegin();
         	continue;
         }
         // If we're looking for someone who isn't in the same room, we don't care if we can see them
