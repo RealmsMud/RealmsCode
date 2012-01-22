@@ -1134,6 +1134,9 @@ int Creature::doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, Dam
 		mTarget->lasttime[LT_AGGRO_ACTION].ltime = time(0);
 		mTarget->adjustThreat(this, m);
 	}
+	if(mThis) {
+	    mThis->adjustContribution(target, dmg/2)
+	}
 
 	if(this != target) {
 		// If we're a player and a fighter, give them some focus

@@ -254,6 +254,9 @@ int printGroupSyntax(Player* player) {
         player->printColor("              ^e<^xpromote^e>^x ^e<^cplayer name^e>^x\n");
 		player->printColor("              ^e<^xkick^e>^x ^e<^cplayer name^e>\n");
 		player->printColor("              ^e<^xname^e>^x ^e<^cgroup name^e>\n");
+		player->printColor("              ^e<^xtype^e>^x ^e<^cpublic/private/invite only^e>\n");
+		player->printColor("              ^e<^xset^e>^x ^e<^csplit/xpsplit^e>\n");
+		player->printColor("              ^e<^xclear^e>^x ^e<^csplit/xpsplit^e>\n");
 		player->printColor("              ^e<^xdisband^e>^x\n");
     }
     if(player->getGroupStatus() == GROUP_LEADER
@@ -280,14 +283,16 @@ int cmdGroup(Player* player, cmd* cmnd) {
 	if(cmnd->num >= 2) {
 	    int len = strlen(cmnd->str[1]);
 
-	    if(!strncmp(cmnd->str[1], "invite", len))       return(Group::invite(player, cmnd));
-	    else if(!strncmp(cmnd->str[1], "accept", len) || !strncmp(cmnd->str[1], "join", len))   return(Group::join(player, cmnd));
-	    else if(!strncmp(cmnd->str[1], "leave", len) || !strcmp(cmnd->str[1], "reject"))        return(Group::leave(player, cmnd));
-	    else if(!strncmp(cmnd->str[1], "disband", len)) return(Group::disband(player, cmnd));
-	    else if(!strncmp(cmnd->str[1], "kick", len))    return(Group::kick(player, cmnd));
-	    else if(!strncmp(cmnd->str[1], "promote", len)) return(Group::promote(player, cmnd));
-	    else if(!strncmp(cmnd->str[1], "name", len)) 	return(Group::rename(player, cmnd));
-	    else if(!strncmp(cmnd->str[1], "type", len)) 	return(Group::type(player, cmnd));
+	    if(!strncasecmp(cmnd->str[1], "invite", len))       return(Group::invite(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "accept", len) || !strncasecmp(cmnd->str[1], "join", len))     return(Group::join(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "leave", len)  || !strncasecmp(cmnd->str[1], "reject",len))    return(Group::leave(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "disband", len)) return(Group::disband(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "kick", len))    return(Group::kick(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "promote", len)) return(Group::promote(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "name", len)) 	return(Group::rename(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "type", len)) 	return(Group::type(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "set", len))     return(Group::set(player, cmnd, true));
+	    else if(!strncasecmp(cmnd->str[1], "clear", len))   return(Group::set(player, cmnd, false));
 	    else return(printGroupSyntax(player));
 	}
 
@@ -300,8 +305,11 @@ int cmdGroup(Player* player, cmd* cmnd) {
         *player << "You have been invited to join \"" << group->getName() << "\".\nTo accept, type <group accept>; To reject type <group reject>.\n";
         return(0);
     }
-    //*player << group->getGroupList(player);
-    player->printColor("%s\n", group->getGroupList(player).c_str());
+    *player << group->getName() << " " << group->getGroupTypeStr() << ":\n";
+    *player << ColorOn << group->getFlagsDisplay() << "\n" << ColorOff;
+
+    *player << ColorOn << group->getGroupList(player) << ColorOff;
+
 	return(0);
 }
 
@@ -541,6 +549,7 @@ int Group::rename(Player* player, cmd* cmnd) {
 }
 int Group::type(Player* player, cmd* cmnd) {
 	Group* group = player->getGroup(true);
+	const char *errorMsg = "What would you like to switch your group to? (Public, Private, Invite Only)?\n";
 	if(!group) {
 		*player << "You are not in a group.\n";
 		return(0);
@@ -551,37 +560,90 @@ int Group::type(Player* player, cmd* cmnd) {
 	}
 
 	if(cmnd->num < 3) {
-		*player << "What would you like to switch your group to? (Public, Private, Invite Only)?\n";
+		*player << errorMsg;
 		return(0);
 	}
 
 	bstring newName = getFullstrText(cmnd->fullstr, 2);
 	if(newName.empty()) {
-		*player << "What would you like to switch your group type to? (Public, Private, Invite Only)?\n";
+	    *player << errorMsg;
 		return(0);
 	}
 	int len = newName.length();
 	const char *str = newName.c_str();
 	if(len >= 2) {
-		if(!strncmp(str, "public", len)) {
+		if(!strncasecmp(str, "public", len)) {
 			group->setGroupType(GROUP_PUBLIC);
 			*player << "You change the group type to Public.\n";
 			group->sendToAll(bstring(player->getName()) + " changes the group to Public.\n", player);
 			return(0);
-		} else if(!strncmp(str, "private", len)) {
+		} else if(!strncasecmp(str, "private", len)) {
 			group->setGroupType(GROUP_PRIVATE);
 			*player << "You change the group type to Private.\n";
 			group->sendToAll(bstring(player->getName()) + " changes the group to Private.\n", player);
 			return(0);
 		}
 	}
-	if(!strncmp(str, "invite only", len) || !strncmp(str, "inviteonly", len)) {
+	if(!strncasecmp(str, "invite only", len) || !strncmp(str, "inviteonly", len)) {
 		group->setGroupType(GROUP_INVITE_ONLY);
 		*player << "You change the group type to Invite Only.\n";
 		group->sendToAll(bstring(player->getName()) + " changes the group to Invite Only.\n", player);
 		return(0);
 	}
-	*player << "What would you like to switch your group type to? (Public, Private, Invite Only)?\n";
+	*player << errorMsg;
+    return(0);
+}
+
+int Group::set(Player* player, cmd* cmnd, bool set) {
+    Group* group = player->getGroup(true);
+    const char* errorMsg;
+    if(set)
+        errorMsg = "What group flag would you like to set? (Currently available: Split, XpSplit).\n";
+    else
+        errorMsg = "What group flag would you like to clear? (Currently available: Split, XpSplit).\n";
+
+    if(!group) {
+        *player << "You are not in a group.\n";
+        return(0);
+    }
+    if(player->getGroupStatus() != GROUP_LEADER) {
+        *player << "You are not the group leader of \"" << group->getName() << "\".\n";
+        return(0);
+    }
+
+    if(cmnd->num < 3) {
+        *player << errorMsg;
+        return(0);
+    }
+
+    bstring newName = getFullstrText(cmnd->fullstr, 2);
+    if(newName.empty()) {
+        *player << errorMsg;
+        return(0);
+    }
+    int len = newName.length();
+    const char *str = newName.c_str();
+    if(!strncasecmp(str, "split", len)) {
+        if(set) {
+            group->setFlag(GROUP_SPLIT_GOLD);
+            group->sendToAll("Gold will now be split with the group.\n");
+        } else {
+            group->clearFlag(GROUP_SPLIT_GOLD);
+            group->sendToAll("Gold will no longer be split with the group.\n");
+        }
+        return(0);
+    } else if(!strncasecmp(str, "xpsplit", len)) {
+        if(set) {
+            group->setFlag(GROUP_SPLIT_EXPERIENCE);
+            group->sendToAll("Group experience split enabled.\n");
+        } else {
+            group->clearFlag(GROUP_SPLIT_EXPERIENCE);
+            group->sendToAll("Group experience split disabled.\n");
+        }
+        return(0);
+    }
+
+    *player << errorMsg;
     return(0);
 }
 //********************************************************************

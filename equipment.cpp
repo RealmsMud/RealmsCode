@@ -951,9 +951,9 @@ int doGetObject(Object* object, Creature* creature, bool doLimited, bool noSplit
 		fulfillQuest(player, object);
 
 	if(object->getType() == MONEY) {
+	    Group* group = player->getGroup(true);
 
-
-		if(player->flagIsSet(P_GOLD_SPLIT) && !noSplit) {
+		if(group && group->flagIsSet(GROUP_SPLIT_GOLD) && !noSplit) {
 			gServer->logGold(GOLD_IN, player, object->value, object, "GetObject-Split");
 			if(!player->autosplit(object->value[GOLD])) {
 				player->coins.add(object->value);

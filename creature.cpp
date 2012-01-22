@@ -150,6 +150,9 @@ bool Monster::hasEnemy() const {
     return(threatTable->hasEnemy());
 }
 
+long Monster::adjustContribution(Creature* target, long modAmt) {
+    return(threatTable->adjustThreat(target, modAmt, 0));
+}
 long Monster::adjustThreat(Creature* target, long modAmt, double threatFactor) {
     return(threatTable->adjustThreat(target, modAmt, threatFactor));
 }

@@ -38,7 +38,13 @@ enum GroupType {
 
     GROUP_MAX_TYPE
 };
+enum GroupFlags {
+    GROUP_NO_FLAG = -1,
+    GROUP_SPLIT_EXPERIENCE = 0,
+    GROUP_SPLIT_GOLD,
 
+    GROUP_MAX_FLAG
+};
 typedef std::list<Creature*> CreatureList;
 
 class Group {
@@ -46,6 +52,7 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const Group* group);
     friend std::ostream& operator<<(std::ostream& out, const Group& group);
 
+    // Group commands
     static int invite(Player* player, cmd* cmnd);
     static int join(Player* player, cmd *cmnd);
     static int reject(Player* player, cmd* cmnd);
@@ -55,22 +62,30 @@ public:
     static int leave(Player* player, cmd* cmnd);
     static int rename(Player* player, cmd* cmnd);
     static int type(Player* player, cmd* cmnd);
+    static int set(Player* player, cmd* cmnd, bool set);
 
 public:
     Group(Creature* pLeader);
     ~Group();
 
+    // Add or remove players from a group
     bool add(Creature* newMember, bool addPets = true);
     bool remove(Creature* toRemove);
     void removeAll();
     bool disband();
 
+    // Set information about a group
     bool setLeader(Creature* newLeader);
     void setName(bstring newName);
     void setDescription(bstring newDescription);
+    void setGroupType(GroupType newType);
+    void setFlag(int flag);
+    void clearFlag(int flag);
 
+
+    // Various info about a group
+    bool flagIsSet(int flag);
     bool inGroup(Creature* target);
-
     Creature* getLeader();
     int size();
     int getSize(bool countDmInvis = false, bool membersOnly = true);
@@ -79,10 +94,11 @@ public:
     Creature* getMember(bstring name, int num, Creature* searcher = NULL, bool includePets = false);
     GroupType getGroupType();
     bstring getGroupTypeStr();
-    void setGroupType(GroupType newType);
+    bstring getFlagsDisplay();
     bstring& getName();
     bstring& getDescription();
     bstring getGroupList(Creature* viewer);
+
 
     void sendToAll(bstring msg, Creature* ignore = NULL, bool sendToInvited = false);
 
@@ -94,6 +110,8 @@ private:
     Creature* leader;
     bstring name;
     bstring description;
+
+    int flags;
 
     GroupType groupType;
 };

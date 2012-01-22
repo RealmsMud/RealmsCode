@@ -1393,7 +1393,6 @@ void Monster::distributeExperience(Creature *killer) {
 	long	expGain = 0;
 
 	Player*	player=0;
-	Player* leader=0;
 
 	if(isPet())
 		return;
@@ -1410,31 +1409,18 @@ void Monster::distributeExperience(Creature *killer) {
 
 		if(player) {
 		    group = player->getGroup();
-		    if(group) {
-		        if(group->getLeader()->pFlagIsSet(P_XP_DIVIDE))
-		            leader = group->getLeader()->getPlayer();
-		    }
 		}
 
 		std::map<Player*, int> expList;
-		// If we have a leader, means we've got group exp set, so lets distribute it
-		if(leader) {
-			// Split exp evenly amounsgt the group
+		// See if the group has experience split turned on
+		if(group && group->flagIsSet(GROUP_SPLIT_EXPERIENCE)) {
+			// Split exp evenly amongst the group
 			int numGroupMembers=0, totalGroupLevel=0, totalGroupDamage=0;
 			long n = 0;
 
 			// Calculate how many people are in the group, see how much damage they have done
 			// and remove them from the enemy list
-//			if(	isEnemy(leader) &&
-//				inSameRoom(leader) &&
-//				leader->getsGroupExperience(this))
-//			{
-//				numGroupMembers++;
-//				totalGroupLevel += leader->getLevel();
-//				n = clearEnemy(leader);
-//				totalGroupDamage += n;
-//				expList[leader] = n;
-//			}
+
 			Player* groupMember;
 			for(Creature* crt : group->members )
 			{
@@ -1461,7 +1447,7 @@ void Monster::distributeExperience(Creature *killer) {
 			// since we split it evenly, in this case pets do NOT give their master
 			// any extra experience.
 
-			int averageEffort = totalGroupDamage / expList.size();
+			int averageEffort = totalGroupDamage / tMAX<int>(expList.size(), 1);
 			std::cout << "GROUP EXP: TGD:" << totalGroupDamage << " Num:" << expList.size() << " AVG EFF:" << averageEffort << std::endl;
 			for(std::pair<Player*, int> p : expList) {
 				Player* ply = p.first;

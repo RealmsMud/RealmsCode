@@ -544,7 +544,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 		saved = target->chkSave(DEA, player, bns);
 
 		if(saved) {
-			target->hp.setCur( target->hp.getCur() / 2 );
+		    player->doDamage(target, target->hp.getCur()/2);
 			target->print("Negative energy rips through your body.\n");
 			target->stun(mrand(10,15));
 			player->print("%M avoided disintegration.\n", target);

@@ -804,6 +804,7 @@ public:
     bool hasEnemy() const;
 
     long adjustThreat(Creature* target, long modAmt, double threatFactor = 1.0);
+    long adjustContribution(Creature* target, long modAmt);
     void clearEnemyList();
 
 
