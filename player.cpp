@@ -341,7 +341,7 @@ void Player::init() {
 
 	// broadcast
 	if(!gServer->isRebooting()) {
-		defineColors();
+		setSockColors();
 		broadcast_login(this, 1);
 	}
 
@@ -511,6 +511,7 @@ void Player::uninit() {
 
 	courageous();
 	clearMaybeDueling();
+    removeFromGroup(!gServer->isRebooting());
 
 	for(Monster* pet : pets) {
 		if(pet->isPet()) {
@@ -522,7 +523,6 @@ void Player::uninit() {
 		}
 	}
 	pets.clear();
-	removeFromGroup(!gServer->isRebooting());
 
 	for(i=0; i<MAXWEAR; i++) {
 		if(ready[i]) {
@@ -1583,7 +1583,6 @@ void Player::sendPrompt() {
 		toPrint += ga_str;
 	}
 
-	toPrint = colorize((char*)toPrint.c_str(), flagIsSet(P_ANSI_COLOR));
 	mySock->write(toPrint);
 }
 

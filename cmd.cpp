@@ -38,7 +38,12 @@
 
 
 int dmTest(Player* player, cmd* cmnd) {
-    *player << player << " " << setf(CAP) << player << "\n";
+    *player << ColorOn << "^rhi" << ColorOff << "\n";
+    *player << player << " " << player << "\n";
+    int i = 0;
+    for(Monster* pet : player->pets ){
+        *player << bstring(++i) << ") " << pet << " " << setf(CAP) << setn(10) << pet << "\n";
+    }
 	return(0);
 }
 

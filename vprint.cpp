@@ -66,12 +66,12 @@ void Creature::printColor(const char *fmt,...) const {
 	if(isPet()) {
 		printTo->print("Pet> ");
 	}
-	printTo->vprint(fmt, ap, true);
+	printTo->vprint(fmt, ap);
 	va_end(ap);
 }
-void Player::vprint(const char *fmt, va_list ap, bool parseColor) const {
+void Player::vprint(const char *fmt, va_list ap) const {
 	if(this && mySock)
-		mySock->vprint(fmt, ap, parseColor);
+		mySock->vprint(fmt, ap);
 }
 
 
@@ -81,7 +81,7 @@ void Player::vprint(const char *fmt, va_list ap, bool parseColor) const {
 
 static int VPRINT_flags = 0;
 
-void Socket::vprint(const char *fmt, va_list ap, bool parseColor) {
+void Socket::vprint(const char *fmt, va_list ap) {
 	char	*msg;
 	va_list	aq;
 
@@ -105,30 +105,14 @@ void Socket::vprint(const char *fmt, va_list ap, bool parseColor) {
 	}
 	bstring toPrint;
 
-	if(parseColor) {
-		bstring coloredStr;
-		const char *colored;
-		if(myPlayer && myPlayer->flagIsSet(P_ANSI_COLOR))
-			coloredStr = colorize(msg, 1, myPlayer);
-		else
-			coloredStr = colorize(msg, 0, myPlayer);
-		colored = coloredStr.c_str();
-		if(!myPlayer || (myPlayer && myPlayer->getWrap() == -1))
-			toPrint = delimit( colored, getTermCols() - 4);
-		else if(myPlayer && myPlayer->getWrap() > 0)
-			toPrint = delimit( colored, myPlayer->getWrap());
-		else
-			toPrint = colored;
-		bprint(toPrint);
-	} else {
-		if(!myPlayer || (myPlayer && myPlayer->getWrap() == -1))
-			toPrint = delimit( msg, getTermCols() - 4);
-		else if(myPlayer && myPlayer->getWrap() > 0)
-			toPrint = delimit( msg, myPlayer->getWrap());
-		else
-			toPrint = msg;
-		bprint(toPrint);
-	}
+    if(!myPlayer || (myPlayer && myPlayer->getWrap() == -1))
+        toPrint = delimit( msg, getTermCols() - 4);
+    else if(myPlayer && myPlayer->getWrap() > 0)
+        toPrint = delimit( msg, myPlayer->getWrap());
+    else
+        toPrint = msg;
+    bprint(toPrint + "^x");
+
 	free(msg);
 }
 
@@ -218,7 +202,7 @@ char *obj_str(const Object *obj, int num, int flag );
 
 // vprint, only used on cygwin
 //
-void Socket::vprint(const char *fmt, va_list ap, bool parseColor) {
+void Socket::vprint(const char *fmt, va_list ap) {
 	char	msg[8192];
 	char	*fmt2;
 	int		i = 0, j = 0, k;
@@ -326,20 +310,9 @@ void Socket::vprint(const char *fmt, va_list ap, bool parseColor) {
 
 
 	bstring toPrint;
-	if(parseColor) {
-		bstring coloredStr;
-		const char *colored;
-		if(myPlayer && myPlayer->flagIsSet(P_ANSI_COLOR))
-			coloredStr = colorize(msg, 1, myPlayer);
-		else
-			coloredStr = colorize(msg, 0, myPlayer);
-		colored = coloredStr.c_str();
-		toPrint = delimit( colored, getTermCols() - 4);
-		bprint(toPrint);
-	} else {
-		toPrint = delimit( msg, getTermCols() - 4);
-		bprint(toPrint);
-	}
+
+    toPrint = delimit( msg, getTermCols() - 4);
+    bprint(toPrint);
 }
 
 

@@ -1358,7 +1358,7 @@ void BaseRoom::doPrint(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, c
 		if(target->flagIsSet(P_UNCONSCIOUS))
 			continue;
 
-		target->vprint(target->customColorize(fmt).c_str(), ap, true);
+		target->vprint(target->customColorize(fmt).c_str(), ap);
 
 	}
 }

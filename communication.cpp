@@ -454,8 +454,8 @@ void commTarget(Creature* player, Player* target, int type, bool ooc, char lang,
 	} else if( ooc ||
 		target->languageIsKnown(LUNKNOWN+lang) ||
 		target->isStaff() ||
-		target->isEffected("comprehend-languages")
-	) {
+		target->isEffected("comprehend-languages"))
+	{
 
 		if(type == COM_GT)
 			out << target->customColorize("*CC:GROUP*").c_str() << "### ";
@@ -487,8 +487,8 @@ void commTarget(Creature* player, Player* target, int type, bool ooc, char lang,
 		out << " " << speak << " something in " << get_language_adj(lang) << ".\n";
 		target->bug("%s %s something in %s.\n", player->name, speak.c_str(), get_language_adj(lang));
 	}
-
-	target->printColor("%s", out.str().c_str());
+	*target << ColorOn << out.str() << ColorOff;
+//	target->printColor("%s", out.str().c_str());
 }
 
 //*********************************************************************
@@ -961,18 +961,34 @@ int channel(Player* player, cmd* cmnd) {
 			// must satisfy all the basic canHear rules to hear this channel
 			if(	(	(!chan->canHear || chan->canHear(sock)) &&
 					(!chan->flag || ply->flagIsSet(chan->flag)) &&
-					(!chan->not_flag || !ply->flagIsSet(chan->not_flag))
-				) && ( // they must also satisfy any special conditions here
+					(!chan->not_flag || !ply->flagIsSet(chan->not_flag)) )
+				&& ( // they must also satisfy any special conditions here
 					(chan->type != COM_CLASS || ply->getClass() == check) &&
 					(chan->type != COM_RACE || ply->getDisplayRace() == check) &&
-					(chan->type != COM_CLAN || (ply->getDeity() ? ply->getDeityClan() : ply->getClan()) == check)
-			) ) {
+					(chan->type != COM_CLAN || (ply->getDeity() ? ply->getDeityClan() : ply->getClan()) == check) ) )
+			{
 				if(extra != "")
-					ply->printColor("%s%s", ply->customColorize(chan->color).c_str(), extra.c_str());
+				    *ply << ColorOn << ply->customColorize(chan->color) << extra << ColorOff;
 
-				ply->printColor(ply->customColorize(chan->color + chan->displayFmt).c_str(), player, text.c_str());
-				ply->print("\n");
+				bstring toPrint = chan->displayFmt;
+				toPrint.Replace("*IC-NAME*", player->getCrtStr(ply, ply->displayFlags() | CAP).c_str());
+				toPrint.Replace("*OOC-NAME*", player->getName());
 
+				if(ply->isStaff() || (player->current_language && ply->isEffected("comprehend-languages"))
+				        || ply->languageIsKnown(player->current_language))
+				{
+				    // Listern speaks this language
+				    toPrint.Replace("*TEXT*", text.c_str());
+				} else {
+				    // Listern doesn't speak this language
+				    toPrint.Replace("*TEXT*", "<something incomprehensible>");
+				}
+
+
+				if(player->current_language != LCOMMON)
+				    toPrint += bstring(" in ") + get_language_adj(player->current_language) + ".";
+
+				*ply << ColorOn << ply->customColorize(chan->color) << toPrint << "\n" << ColorOff;
 			}
 
 
@@ -991,16 +1007,6 @@ int channel(Player* player, cmd* cmnd) {
 	//oldPrint(fd, "You are using the '%s' channel!\n", chanStr.c_str());
 
 //	} else {
-//		for(a=0;a<Tablesize;a++) {
-//			if(!Ply[a].ply)
-//				continue;
-//
-//			if(is_gag_ply(player->name, Ply[a].ply))
-//				continue;
-//
-//			if(Ply[a].ply->flagIsSet(P_NO_BROADCASTS))
-//				continue;
-//
 //			if(Ply[a].ply->isStaff() || (Ply[a].ply->isEffected("comprehend-languages") && player->current_language)) {
 //				if(Ply[a].ply->flagIsSet(P_LANGUAGE_COLORS) && player->current_language != LCOMMON)
 //					ANSI(Ply[a].ply->fd, get_lang_color(player->current_language));
@@ -1026,14 +1032,6 @@ int channel(Player* player, cmd* cmnd) {
 //
 //				}
 //			}
-//
-//			ANSI(Ply[a].ply->fd, getMainTextColor());
-//
-//		}// end for
-//	}
-//
-//	player->bug("%s broadcasted, \"%s\" in %s.\n",
-//	       player->name, &cmnd->fullstr[i+1], get_language_adj(player->current_language));
 
 	return(0);
 }

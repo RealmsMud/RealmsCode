@@ -40,7 +40,6 @@ int reloadCalendar(Player* player);
 // color.cpp
 bstring stripColor(bstring color);
 bstring escapeColor(bstring color);
-bstring colorize(const char* txt, int option, Player* player=0);
 
 // combat.cpp
 int check_for_yell(Monster *monster, Creature *target);

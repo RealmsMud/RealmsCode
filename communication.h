@@ -53,15 +53,15 @@ typedef struct commInfo {
 commInfo commList[] = 
 {
 	// name		type	  skip	ooc
-	{ "tell",	COM_TELL,	2,	0 },
-	{ "send",	COM_TELL,	2,	0 },
+	{ "tell",	COM_TELL,	2,	false },
+	{ "send",	COM_TELL,	2,	false },
 		
 	{ "otell",	COM_TELL,	2,	true },
 	{ "osend",	COM_TELL,	2,	true },
 
-	{ "reply",	COM_REPLY,	1,	0 },
-	{ "sign",	COM_SIGN,	2,	0 },
-	{ "whisper",COM_WHISPER,2,	0 },
+	{ "reply",	COM_REPLY,	1,	false },
+	{ "sign",	COM_SIGN,	2,	false },
+	{ "whisper",COM_WHISPER,2,	false },
 
 	{ NULL, 0, 0, 0 }	
 };
@@ -110,6 +110,7 @@ sayInfo sayList[] =
 
 typedef struct channelInfo {
 	const char	*channelName;		// Name of the channel
+	bool    useLanguage;            // Should this channel use languages?
 	bstring color;
 	const char	*displayFmt;		// Display string for the channel
 	int		minLevel;				// Minimum level to use this channel
@@ -127,35 +128,35 @@ typedef struct channelInfo {
 
 channelInfo channelList[] = 
 {
-//     Name       	Color			Format 										MIN	MAX eaves	canSee		canUse				canHear		flag	not flag				type
-	{ "broadcast",	"*CC:BROADCAST*",	"### %M broadcasted, \"%s\"",			2, 	-1,	false,	0,			canCommunicate,		0,			0,		P_NO_BROADCASTS,		0 },
-	{ "broad",		"*CC:BROADCAST*",	"### %M broadcasted, \"%s\"",			2,  -1,	false,	0,			canCommunicate,		0,			0,		P_NO_BROADCASTS,		0 },
-	{ "bro",		"*CC:BROADCAST*",	"### %M broadcasted, \"%s\"",			2,  -1,	false,	0,			canCommunicate,		0,			0,		P_NO_BROADCASTS,		0 },
-	{ "bemote",		"*CC:BROADCAST*",	"*** %M %s.",							2, 	-1,	false,	0,			canCommunicate,		0,			0,		P_NO_BROADCASTS,		0 },
-	{ "broademote",	"*CC:BROADCAST*",	"*** %M %s.",							2, 	-1,	false,	0,			canCommunicate,		0,			0,		P_NO_BROADCASTS,		0 },
+//     Name       	OOC     Color			    Format 									            MIN	MAX eaves	canSee		canUse				canHear		flag	not flag				type
+	{ "broadcast",	true,  "*CC:BROADCAST*",	"### *IC-NAME* broadcasted, \"*TEXT*\"",			2, 	-1,	false,	0,			canCommunicate,		0,			0,		P_NO_BROADCASTS,		0 },
+	{ "broad",		true,  "*CC:BROADCAST*",	"### *IC-NAME* broadcasted, \"*TEXT*\"",			2,  -1,	false,	0,			canCommunicate,		0,			0,		P_NO_BROADCASTS,		0 },
+	{ "bro",		true,  "*CC:BROADCAST*",	"### *IC-NAME* broadcasted, \"*TEXT*\"",			2,  -1,	false,	0,			canCommunicate,		0,			0,		P_NO_BROADCASTS,		0 },
+	{ "bemote",		true,  "*CC:BROADCAST*",	"*** *IC-NAME* *TEXT*.",							2, 	-1,	false,	0,			canCommunicate,		0,			0,		P_NO_BROADCASTS,		0 },
+	{ "broademote",	true,  "*CC:BROADCAST*",	"*** *IC-NAME* *TEXT*.",							2, 	-1,	false,	0,			canCommunicate,		0,			0,		P_NO_BROADCASTS,		0 },
 
-	{ "gossip",		"*CC:GOSSIP*",		"(Gossip) %M sent, \"%s\"",				2,	-1,	false,	0,			canCommunicate,		0,			0,		P_IGNORE_GOSSIP,		0 },
-	{ "ptest",		"*CC:PTEST*",		"[P-Test] %M sent, \"%s\"",				-1,	-1,	false,	isPtester,	0,					isPtester,	0,		0,						0 },
-	{ "newbie",		"*CC:NEWBIE*",		"[Newbie]: *** %R just sent, \"%s\"",	1,	 4,	false,	0,			canCommunicate,		0,			0,		P_IGNORE_NEWBIE_SEND,	0 },
+	{ "gossip",		true,  "*CC:GOSSIP*",		"(Gossip) *IC-NAME* sent, \"*TEXT*\"",				2,	-1,	false,	0,			canCommunicate,		0,			0,		P_IGNORE_GOSSIP,		0 },
+	{ "ptest",		false,   "*CC:PTEST*",		"[P-Test] *IC-NAME* sent, \"*TEXT*\"",			    -1,	-1,	false,	isPtester,	0,					isPtester,	0,		0,						0 },
+	{ "newbie",		false,   "*CC:NEWBIE*",		"[Newbie]: *** *OOC-NAME* just sent, \"*TEXT*\"",	1,	 4,	false,	0,			canCommunicate,		0,			0,		P_IGNORE_NEWBIE_SEND,	0 },
 
-	{ "dm",			"*CC:DM*",			"(DM) %R sent, \"%s\"",					-1,	-1,	false,	isDm,		0,					isDm,		0,		0,						0 },
-	{ "admin",		"*CC:ADMIN*",		"(Admin) %R sent, \"%s\"",				-1,	-1,	false,	isAdm,		0,					isAdm,		0,		0,						0 },
-	{ "*s",			"*CC:SEND*",		"=> %R sent, \"%s\"",					-1,	-1,	false,	isCt,		0,					isCt,		0,		0,						0 },
-	{ "*send",		"*CC:SEND*",		"=> %R sent, \"%s\"",					-1,	-1,	false,	isCt,		0,					isCt,		0,		0,						0 },
-	{ "*msg",		"*CC:MESSAGE*",		"-> %R sent, \"%s\"",					-1,	-1,	false,	isStaff,	0,					isStaff,	0,		P_NO_MSG,				0 },
-	{ "*wts",		"*CC:WATCHER*",		"-> %R sent, \"%s\"",					-1,	-1,	false,	isWatcher,	0,					isWatcher,	0,		P_NO_WTS,				0 },
+	{ "dm",			false,   "*CC:DM*",			"(DM) *OOC-NAME* sent, \"*TEXT*\"",					-1,	-1,	false,	isDm,		0,					isDm,		0,		0,						0 },
+	{ "admin",		false,   "*CC:ADMIN*",		"(Admin) *OOC-NAME* sent, \"*TEXT*\"",				-1,	-1,	false,	isAdm,		0,					isAdm,		0,		0,						0 },
+	{ "*s",			false,   "*CC:SEND*",		"=> *OOC-NAME* sent, \"*TEXT*\"",					-1,	-1,	false,	isCt,		0,					isCt,		0,		0,						0 },
+	{ "*send",		false,   "*CC:SEND*",		"=> *OOC-NAME* sent, \"*TEXT*\"",					-1,	-1,	false,	isCt,		0,					isCt,		0,		0,						0 },
+	{ "*msg",		false,   "*CC:MESSAGE*",	"-> *OOC-NAME* sent, \"*TEXT*\"",					-1,	-1,	false,	isStaff,	0,					isStaff,	0,		P_NO_MSG,				0 },
+	{ "*wts",		false,   "*CC:WATCHER*",	"-> *OOC-NAME* sent, \"*TEXT*\"",					-1,	-1,	false,	isWatcher,	0,					isWatcher,	0,		P_NO_WTS,				0 },
 
-	{ "cls",		"*CC:CLASS*",		"### %R sent, \"%s\".",					-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_CLASS_SEND,	COM_CLASS },
-	{ "classsend",	"*CC:CLASS*",		"### %R sent, \"%s\".",					-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_CLASS_SEND,	COM_CLASS },
-	{ "clem",		"*CC:CLASS*",		"### %R %s.",							-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_CLASS_SEND,	COM_CLASS },
-	{ "classemote",	"*CC:CLASS*",		"### %R %s.",							-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_CLASS_SEND,	COM_CLASS },
+	{ "cls",		true,   "*CC:CLASS*",		"### *OOC-NAME* sent, \"*TEXT*\".",					-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_CLASS_SEND,	COM_CLASS },
+	{ "classsend",	true,   "*CC:CLASS*",		"### *OOC-NAME* sent, \"*TEXT*\".",					-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_CLASS_SEND,	COM_CLASS },
+	{ "clem",		false,  "*CC:CLASS*",		"### *OOC-NAME* *TEXT*.",							-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_CLASS_SEND,	COM_CLASS },
+	{ "classemote",	false,  "*CC:CLASS*",		"### *OOC-NAME* *TEXT*.",							-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_CLASS_SEND,	COM_CLASS },
 
-	{ "racesend",	"*CC:RACE*",		"### %R sent, \"%s\".",					-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_RACE_SEND,		COM_RACE },
-	{ "raemote",	"*CC:RACE*",		"### %R %s.",							-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_RACE_SEND,		COM_RACE },
+	{ "racesend",	true,   "*CC:RACE*",		"### *OOC-NAME* sent, \"*TEXT*\".",					-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_RACE_SEND,		COM_RACE },
+	{ "raemote",	false,  "*CC:RACE*",		"### *OOC-NAME* *TEXT*.",							-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_RACE_SEND,		COM_RACE },
 
-	{ "clansend",	"*CC:CLAN*",		"### %R sent, \"%s\".",					-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_CLAN,			COM_CLAN },
+	{ "clansend",	true,   "*CC:CLAN*",		"### *OOC-NAME* sent, \"*TEXT*\".",					-1, -1, true,	0,			canCommunicate, 	0,			0,		P_IGNORE_CLAN,			COM_CLAN },
 
-	{ NULL,			"",					NULL,									0,	0,	false,	0,			0,					0,			0,		0,						0 }
+	{ NULL,			false,  "",					NULL,								            	0,	0,	false,	0,			0,					0,			0,		0,						0 }
 };
 
 

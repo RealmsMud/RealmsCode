@@ -2120,7 +2120,7 @@ void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, 
     bstring source = "";
 
 	if(target) {
-	    targetStr = colorize(target->getName(), false, player);
+	    targetStr = stripColor(target->getName());
 	    Object* oTarget = target->getObject();
 	    if(oTarget) {
 	        targetStr += "(" + oTarget->info.str() + ")";

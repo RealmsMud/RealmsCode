@@ -19,20 +19,36 @@
 
 #include "mud.h"
 
-//std::ostream& operator<<(std::ostream& out, const Group* group) {
-//    if(group)
-//        out << (*group);
-//    return(out);
-//}
-
-
-Streamable& operator<<(Streamable& s, const CrtManip& m) {
-	return s.setManipFlags(m._value);
+Streamable& Streamable::operator << ( Streamable& (*op)(Streamable&)) {
+    // call the function passed as parameter with this stream as the argument
+    return (*op)(*this);
 }
 
-CrtManip setf(int n) {
-	return { n };
+Streamable& operator<<(Streamable& out, setf flags) {
+    return flags(out);
 }
+
+Streamable& setf::operator()(Streamable& out) const {
+    out.setManipFlags(value);
+    return(out);
+}
+
+Streamable& operator<<(Streamable& out, setn num) {
+    return num(out);
+}
+
+Streamable& setn::operator()(Streamable& out) const {
+    out.setManipNum(value);
+    return(out);
+}
+
+
+void Streamable::initStreamable() {
+    manipFlags = 0;
+    manipNum = 0;
+    streamColor = false;
+}
+
 
 Streamable& Streamable::operator<< ( MudObject& mo) {
 	Player* player = dynamic_cast<Player*>(this);
@@ -40,7 +56,7 @@ Streamable& Streamable::operator<< ( MudObject& mo) {
         const Creature* creature = mo.getCreature();
         const Object* object = mo.getObject();
 
-        int mFlags = player->displayFlags() & player->getManipFlags();
+        int mFlags = player->displayFlags() | player->getManipFlags();
         int mNum = player->getManipNum();
         if(creature) {
             doPrint(creature->getCrtStr(player, mFlags, mNum));
@@ -63,21 +79,29 @@ Streamable& Streamable::operator<< (const bstring& str) {
     }
     return(*this);
 }
-
+void Streamable::setColorOn() {
+    streamColor = true;
+}
+void Streamable::setColorOff() {
+    streamColor = false;
+}
 
 void Streamable::setManipFlags(int flags) {
-    manipFlags &= flags;
+    manipFlags |= flags;
+    std::cout << "setManipFlags" << std::endl;
 }
 
 // Returns the manipFlags and resets them
 int Streamable::getManipFlags() {
     int toReturn = manipFlags;
     manipFlags = 0;
+
     return (toReturn);
 }
 
 void Streamable::setManipNum(int num) {
     manipNum = num;
+
 }
 
 // Returns the manipNum and resets them
@@ -92,10 +116,10 @@ void Streamable::doPrint(const bstring& toPrint) {
     if(player) {
         Socket* sock = player->getSock();
         if(sock) {
-            // if noColorManip
-            sock->bprint(toPrint);
-            // else if ColorManip
-            // sock->bprintColor(toPrint);
+            if(streamColor)
+                sock->bprintColor(toPrint);
+            else
+                sock->bprintNoColor(toPrint);
         }
     }
 }

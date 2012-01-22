@@ -24,35 +24,59 @@
 class Streamable {
 public:
 	virtual ~Streamable() {};
+	void initStreamable();
     // Stream operators
 	Streamable& operator<< (MudObject* obj);
 	Streamable& operator<< (MudObject& obj);
 	Streamable& operator<< (const bstring& str);
 
-    void setManipFlags(int flags);
-    int getManipFlags();
+	// This is to allow simple function based manipulators (like ColorOn, ColorOff)
+	Streamable& operator <<( Streamable& (*op)(Streamable&));
 
+    void setManipFlags(int flags);
     void setManipNum(int num);
+    void setColorOn();
+    void setColorOff();
+
+    int getManipFlags();
     int getManipNum();
     //Creature& operator<< (creatureManip& manip)
 
 protected:
     int manipFlags;
     int manipNum;
-
+    bool streamColor;
 
     void doPrint(const bstring& toPrint);
 };
 
-class CrtManip
-{
+inline Streamable& ColorOn(Streamable& out) {
+    out.setColorOn();
+    return out;
+}
+
+inline Streamable& ColorOff(Streamable& out) {
+    out << "^x";
+    out.setColorOff();
+    return out;
+}
+
+class setf {
 public:
-	friend Streamable& operator << (Streamable&, const CrtManip&);
-private:
-	int _value;
+    setf(int flags) : value(flags) {}
+    Streamable& operator()(Streamable &) const;
+    int value;
 };
 
-CrtManip setf(int n);
+class setn {
+public:
+    setn(int flags) : value(flags) {}
+    Streamable& operator()(Streamable &) const;
+    int value;
+};
+
+Streamable& operator<<(Streamable& out, setf flags);
+Streamable& operator<<(Streamable& out, setn num);
 
 
 #endif

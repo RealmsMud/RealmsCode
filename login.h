@@ -106,8 +106,7 @@ typedef enum {
 } connectedStates;
 
 typedef enum {
-	COLOR_UNDECIDED,
-    NO_COLOR,
+    NO_COLOR = 0,
     ANSI_COLOR,
     MXP_COLOR
 } colorTypes;

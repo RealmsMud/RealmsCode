@@ -77,6 +77,17 @@ namespace telnet {
 	#define UNICODE_FEMALE		9792
 	#define UNICODE_NEUTER		9791
 
+    #define MXP_BEG             "\x03"
+    #define CH_MXP_BEG          '\x03'
+    #define MXP_END             "\x04"
+    #define CH_MXP_END          '\x04'
+    #define MXP_AMP             "\x06"
+    #define CH_MXP_AMP          '\x06'
+
+    #define MXP_SECURE_OPEN "\033[1z"
+    #define MXP_LOCK_CLOSE "\033[7z"
+
+
 	extern unsigned const char will_msdp[];		// Mud Server Data Protocol support
 	extern unsigned const char wont_msdp[];		// Stop MSDP support
 
@@ -128,18 +139,19 @@ class Socket {
 		bstring type;
 	};
 	struct SockOptions {
-		bool		dumb; // Dumb client, don't do telnet negotiations
-		int			mccp;
-		bool		mxp;
-		bool		mudletWorkaround;
-		bool		msdp;
-		bool 		atcp;
-		bool		eor;
-		bool		msp;
-		bool		compressing;
-		bool		naws;
-		bool		charset;
-		bool		UTF8;
+		bool		    dumb; // Dumb client, don't do telnet negotiations
+		int             color;
+		int			    mccp;
+		bool		    mxp;
+		unsigned char   lastColor;
+		bool		    msdp;
+		bool 		    atcp;
+		bool		    eor;
+		bool		    msp;
+		bool		    compressing;
+		bool		    naws;
+		bool		    charset;
+		bool		    UTF8;
 	};
 public:
 	// Static Methods
@@ -163,15 +175,18 @@ public:
 	int write(bstring toWrite, bool pSpy = true);
 	void askFor(const char *str);
 
-	void vprint(const char *fmt, va_list ap, bool parseColor = false);
+	void vprint(const char *fmt, va_list ap);
 
 	void bprint(bstring toPrint);
 	void bprintColor(bstring toPrint);
+	void bprintNoColor(bstring toPrint);
 	void println(bstring toPrint = "");
 //	void printPrompt(bstring toPrint);
 	void print(const char* format, ...);
 	void printColor(const char* format, ...);
+
 	bstring parseForOutput(bstring& outBuf);
+	bstring getColorCode(const unsigned char ch);
 
 	int processInput(void);
 	int processOneCommand(void);
@@ -215,7 +230,6 @@ public:
 	long getIdle() const;
 	int getMccp() const;
 	bool getMxp() const;
-	bool getMudletWorkaround() const;
 	bool getMsdp() const;
 	bool getAtcp() const;
 	bool canForce() const;
@@ -227,8 +241,11 @@ public:
 	bool getUtf8() const;
 
 	bstring getTermType() const;
+	int getColorOpt() const;
 	int getTermCols() const;
 	int getTermRows() const;
+
+    void setColorOpt(int opt);
 
 	Player* getPlayer() const;
 	void setPlayer(Player* ply);
@@ -241,6 +258,9 @@ public:
 	void setSpying(Socket *sock);
 	void removeSpy(Socket *sock);
 	void addSpy(Socket *sock);
+
+	// MXP Support
+	void defineMXP();
 
 	// MSDP Support Functions
 	void msdpSendPair(bstring variable, bstring value);
@@ -323,7 +343,6 @@ protected:
 	std::map<bstring, ReportedMsdpVariable*> msdpReporting;
 // TEMP
 public:
-	char		color;
 	long		ltime;
 	char		intrpt;
 

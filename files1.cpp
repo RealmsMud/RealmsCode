@@ -254,7 +254,9 @@ void free_crt(Creature* creature, bool remove) {
 		delete op;
 		op = tempo;
 	}
-
+	if(creature->getGroup(false)) {
+	    creature->getGroup(false)->remove(creature);
+	}
 	for(Monster* mons : creature->pets) {
 	    if(mons->isPet()) {
 	        free_crt(mons);

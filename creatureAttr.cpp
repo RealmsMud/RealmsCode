@@ -982,8 +982,7 @@ bool Creature::isMonster() const {
 // Resets all common structure elements of creature
 void Creature::crtReset() {
     // Reset Stream related
-    manipFlags = 0;
-    manipNum = 0;
+    initStreamable();
 
     // Reset other related
 	moReset();

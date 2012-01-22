@@ -44,7 +44,7 @@ Group::~Group() {
 }
 
 
-bool Group::add(Creature* newMember) {
+bool Group::add(Creature* newMember, bool addPets) {
     Group* oldGroup = newMember->getGroup(false);
     if(oldGroup && oldGroup != this) {
         oldGroup->remove(newMember);
@@ -55,6 +55,8 @@ bool Group::add(Creature* newMember) {
     if(!oldGroup) {
         newMember->setGroup(this);
         members.push_back(newMember);
+    }
+    if(addPets) {
         for(Monster* mons : newMember->pets) {
             add(mons);
         }

@@ -442,7 +442,7 @@ public:
 	void bPrint(bstring toPrint) const;
 	void print(const char *fmt, ...) const;
 	void printColor(const char *fmt, ...) const;
-	virtual void vprint(const char *fmt, va_list ap, bool parseColor = false) const {};
+	virtual void vprint(const char *fmt, va_list ap) const {};
 
 // Combat & Death
 	bool checkDie(Creature *killer); // *
@@ -1281,10 +1281,8 @@ public:
 	int displayCreature(Creature* target) const;
 	void sendPrompt();
 	void defineColors();
-	void defineMXP();
-//	void print(const char *fmt, ...) const;
-//	void printColor(const char *fmt, ...) const;
-	void vprint(const char *fmt, va_list ap, bool parseColor = false) const;
+	void setSockColors();
+	void vprint(const char *fmt, va_list ap) const;
 	void escapeText();
 	bstring getClassString() const;
 	void score(const Player* viewer) const;

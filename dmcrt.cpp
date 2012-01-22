@@ -1254,8 +1254,9 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 			player->print("%M's flag #%d(%s) on.\n", target, num, (mTarget ? get_mflag(num-1):get_pflag(num-1)));
 			i=1;
 
-			if(pTarget && num == P_MXP_ENABLED+1)
-				pTarget->defineMXP();
+			if(pTarget && num == P_MXP_ENABLED+1) {
+				pTarget->getSock()->defineMXP();
+			}
 		}
 
 		if(pTarget && (num == P_BUILDER_MOBS+1 || num == P_BUILDER_OBJS+1))

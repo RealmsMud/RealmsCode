@@ -354,7 +354,7 @@ int Group::invite(Player* player, cmd* cmnd) {
         player->setGroupStatus(GROUP_LEADER);
     }
 
-    group->add(target);
+    group->add(target, false);
     target->setGroupStatus(GROUP_INVITED);
 
     *player << "You invite " << target << " to join your group.\n";

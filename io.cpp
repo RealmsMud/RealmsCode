@@ -101,7 +101,7 @@ void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, 
 		if(player && ply->isGagging(player->name) && !player->isCt())
 			continue;
 
-		ply->vprint(ply->customColorize(fmt).c_str(), ap, true);
+		ply->vprint(ply->customColorize(fmt).c_str(), ap);
 		ply->print("\n");
 	}
 }
@@ -125,7 +125,7 @@ void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, BaseRoo
 		if(target->flagIsSet(P_UNCONSCIOUS))
 			continue;
 
-		target->vprint(target->customColorize(fmt).c_str(), ap, true);
+		target->vprint(target->customColorize(fmt).c_str(), ap);
 		target->print("\n");
 
 	}
@@ -391,7 +391,7 @@ void broadcastGroupMember(bool dropLoot, Creature* player, const Player* listen,
 			return;
 	}
 
-	listen->vprint(listen->customColorize(fmt).c_str(), ap, true);
+	listen->vprint(listen->customColorize(fmt).c_str(), ap);
 }
 
 void broadcastGroup(bool dropLoot, Creature* player, const char *fmt,...) {
@@ -482,7 +482,7 @@ void broadcastGuild(int guildNum, int showName, const char *fmt,...) {
 		if(!target->isConnected())
 			continue;
 		if(target->getGuild() == guildNum && target->getGuildRank() >= GUILD_PEON && !target->flagIsSet(P_NO_BROADCASTS)) {
-			target->vprint(target->customColorize(fmt2).c_str(), ap, true);
+			target->vprint(target->customColorize(fmt2).c_str(), ap);
 		}
 	}
 	va_end(ap);

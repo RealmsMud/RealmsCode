@@ -60,7 +60,7 @@ public:
     Group(Creature* pLeader);
     ~Group();
 
-    bool add(Creature* newMember);
+    bool add(Creature* newMember, bool addPets = true);
     bool remove(Creature* toRemove);
     void removeAll();
     bool disband();

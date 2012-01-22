@@ -162,8 +162,9 @@ void Socket::reset() {
 	opts.msdp = false;
 	opts.atcp = false;
 	opts.charset = false;
-	opts.mudletWorkaround = false;
 	opts.UTF8 = false;
+    opts.color = NO_COLOR;
+    opts.lastColor = '\0';
 
 	opts.compressing = false;
 	inPlayerList = false;
@@ -179,7 +180,6 @@ void Socket::reset() {
 	term.cols = 82;
 	term.rows = 40;
 
-	color = COLOR_UNDECIDED;
 	ltime = time(0);
 	intrpt = 0;
 
@@ -370,53 +370,45 @@ void Socket::resolveIp(const sockaddr_in &addr, bstring& ip) {
 			<< ((i >> 8) & 0xff) << "." << (i & 0xff);
 	ip = tmp.str();
 }
+
 bstring Socket::parseForOutput(bstring& outBuf) {
 	int i = 0, n = outBuf.size();
 	std::ostringstream oStr;
-	int gtCount = -1;
-	int ltCount = 0;
+	bool inTag = false, inEntity = false;
+	unsigned char ch = 0;
 	while(i < n) {
-		if((unsigned char)outBuf[i] == '\n')
-			oStr << '\r';
-		else if((unsigned char)outBuf[i] == '<' && getMudletWorkaround() == true) {
-			if(outBuf[i+1] == ' ') {
-				// No legitimate tag has a space after it, if it does it's a stray
-				oStr << "&lt;";
-				i++;
-				continue;
-			}
-			else {
-				if(gtCount == -1) {
-					gtCount = 0;
-					int j = i;
-					// Get a count of '>'
-					while(j < n) {
-						if(outBuf[j++] == '>')
-							gtCount++;
-					}
-				}
-				if(gtCount == 0) {
-					// We have no more '>'s out there, it's a stray
-					oStr << "&lt;";
-					i++;
-					continue;
-				} else {
-					ltCount++;
-				}
-			}
-		} else if ((unsigned char)outBuf[i] == '>' && getMudletWorkaround() == true) {
-			if(ltCount > 0) {
-				// We have an earlier '<', this closes it
-				ltCount--;
-				gtCount--;
-			} else {
-				// No earlier '<', this is a stray
-				oStr << "&gt;";
-				i++;
-				continue;
-			}
-		}
-		oStr << outBuf[i++];
+	    ch = outBuf[i++];
+	    if(inTag) {
+	        if(ch == CH_MXP_END) {
+	            inTag = false;
+	            if(opts.mxp)
+	                oStr << ">" << MXP_LOCK_CLOSE;
+	        } else if(opts.mxp)
+	            oStr << ch;
+
+            continue;
+	    } else if(inEntity) {
+	        if(opts.mxp)
+	            oStr << ch;
+	        if(ch == ';')
+	            inEntity = false;
+	        continue;
+	    } else {
+	        if(ch == CH_MXP_BEG) {
+	            inTag = true;
+	            if(opts.mxp)
+	                oStr << MXP_SECURE_OPEN << "<";
+	            continue;
+	        } else {
+                if(ch == '^') {
+                    ch = outBuf[i++];
+                    oStr << getColorCode(ch);
+                } else {
+                    oStr << ch;
+                }
+                continue;
+	        }
+	    }
 	}
 	return(oStr.str());
 
@@ -718,9 +710,8 @@ std		::cout << "NAWS: BUG - Broken Client: Non-doubled IAC\n";
 			if(tmpBuf[i] == SE) {
 				std::cout << "Found term type: " << term.type << std::endl;
 				if(term.type == "Mudlet 2.0.1") {
-					opts.mudletWorkaround = true;
-				} else {
-					opts.mudletWorkaround = false;
+					// Mudlet doesn't seem to like MXP color, so turn it off
+//					opts.color = ANSI_COLOR;
 				}
 			}
 			else if(tmpBuf[i] == IAC) {
@@ -831,7 +822,7 @@ bool Socket::negotiate(unsigned char ch) {
 	case TELOPT_TTYPE:
 		// If we've gotten this far, we're fairly confident they support ANSI color
 		// so enable that
-		color = ANSI_COLOR;
+		opts.color = ANSI_COLOR;
 
 		if (tState == NEG_WILL) {
 			// Continue and query the rest of the options, including term type
@@ -848,10 +839,12 @@ bool Socket::negotiate(unsigned char ch) {
 	case TELOPT_MXP:
 		if (tState == NEG_WILL || tState == NEG_DO) {
 			write(telnet::start_mxp);
+			// Start off in MXP LOCKED CLOSED
+			write(MXP_LOCK_CLOSE);
 			//TODO: send elements we're using for mxp
 			opts.mxp = true;
 			// Assume if they have MXP enabled, they want mxp colors
-			color = MXP_COLOR;
+			opts.color = MXP_COLOR;
 			std::cout << "Enabled MXP" << std::endl;
 		} else if (tState == NEG_WONT || tState == NEG_DONT) {
 			opts.mxp = false;
@@ -1205,20 +1198,29 @@ void Socket::bprint(bstring toPrint) {
 }
 
 //********************************************************************
-//                      bprint
+//                      bprintColor
 //********************************************************************
 // Append a string to the socket's output queue...in color!
 
 void Socket::bprintColor(bstring toPrint) {
+    if(!toPrint.empty()) {
+        // Append the string to the output buffer, we'll parse color there
+        output += toPrint;
+    }
+}
 
-    bstring coloredStr;
-    const char *colored;
-    if(myPlayer && myPlayer->flagIsSet(P_ANSI_COLOR))
-        coloredStr = colorize(toPrint.c_str(), 1, myPlayer);
-    else
-        coloredStr = colorize(toPrint.c_str(), 0, myPlayer);
+//********************************************************************
+//                      bprintColor
+//********************************************************************
+// Append a string to the socket's output queue...without color!
 
-    bprint(coloredStr);
+void Socket::bprintNoColor(bstring toPrint) {
+    if(!toPrint.empty()) {
+        // Double any color codes to prevent them from being parsed later
+        toPrint.Replace("^", "^^");
+        output += toPrint;
+    }
+
 }
 //********************************************************************
 //						println
@@ -1239,7 +1241,8 @@ void Socket::print(const char* fmt, ...) {
 		return;
 	va_list ap;
 	va_start(ap, fmt);
-	vprint(fmt, ap);
+	bstring newFmt = stripColor(fmt);
+	vprint( newFmt.c_str(), ap);
 	va_end(ap);
 }
 
@@ -1252,7 +1255,7 @@ void Socket::printColor(const char* fmt, ...) {
 		return;
 	va_list ap;
 	va_start(ap, fmt);
-	vprint(fmt, ap, true);
+	vprint(fmt, ap);
 	va_end(ap);
 }
 
@@ -1281,9 +1284,8 @@ int Socket::write(bstring toWrite, bool pSpy) {
 	int n = 0;
 	int total = 0;
 
+	// Parse any color, unicode, etc here
 	bstring toOutput = parseForOutput(toWrite);
-
-//	toWrite.Replace("\n", "\r\n");
 
 	total = toOutput.length();
 	UnCompressedBytes += total;
@@ -1454,7 +1456,7 @@ bool Socket::saveTelopts(xmlNodePtr rootNode) {
 	xml::newBoolChild(rootNode, "MXP", getMxp());
 	xml::newBoolChild(rootNode, "DumbClient", isDumbClient());
 	xml::newStringChild(rootNode, "Term", getTermType());
-	xml::newBoolChild(rootNode, "MudletWorkaround", getMudletWorkaround());
+	xml::newNumChild(rootNode, "Color", getColorOpt());
 	xml::newNumChild(rootNode, "TermCols", getTermCols());
 	xml::newNumChild(rootNode, "TermRows", getTermRows());
 	xml::newBoolChild(rootNode, "EOR", getEor());
@@ -1475,7 +1477,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
 			}
 		}
 		else if (NODE_NAME(curNode, "MXP")) xml::copyToBool(opts.mxp, curNode);
-		else if (NODE_NAME(curNode, "MudletWorkaround")) xml::copyToBool(opts.mudletWorkaround, curNode);
+		else if (NODE_NAME(curNode, "Color")) xml::copyToNum(opts.color, curNode);
 		else if (NODE_NAME(curNode, "MSDP"))  xml::copyToBool(opts.msdp, curNode);
 		else if (NODE_NAME(curNode, "ATCP")) {
 			xml::copyToBool(opts.atcp, curNode);
@@ -1616,9 +1618,6 @@ int Socket::getFd(void) const {
 bool Socket::getMxp(void) const {
 	return (opts.mxp);
 }
-bool Socket::getMudletWorkaround(void) const {
-	return (opts.mudletWorkaround);
-}
 int Socket::getMccp(void) const {
 	return (opts.mccp);
 }
@@ -1661,6 +1660,12 @@ const bstring& Socket::getHostname(void) const {
 }
 bstring Socket::getTermType() const {
 	return (term.type);
+}
+int Socket::getColorOpt() const {
+    return(opts.color);
+}
+void Socket::setColorOpt(int opt) {
+    opts.color = opt;
 }
 int Socket::getTermCols() const {
 	return (term.cols);
