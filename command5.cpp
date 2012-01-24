@@ -697,22 +697,23 @@ void Player::changeStats() {
 //********************************************************************
 // This function allows a player to change their stats
 
-void changingStats(Socket* sock, char *str) {
+void changingStats(Socket* sock, bstring str) {
 	sock->getPlayer()->changingStats(str);
 }
-void Player::changingStats(char *str) {
+void Player::changingStats(bstring str) {
 	int		a, n, i, k, l, sum=0;
 	int		vnum[5];
 	vstat	nstat, sendStat;
 
 	switch(getSock()->getState()) {
 	case CON_CHANGING_STATS:
-		n = strlen(str);
+		n = str.length();
 		l = 0;
 		k = 0;
 		for(i=0; i<=n; i++) {
 			if(str[i]==' ' || str[i]==0) {
 				str[i] = 0;
+				//bstring tmp = str.substr(l);
 				vnum[k++] = atoi(&str[l]);
 				l = i+1;
 			}

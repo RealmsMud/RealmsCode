@@ -33,7 +33,7 @@
 /*
  * Generic get function, copy for future use
  *
-bool Create::get(Socket* sock, char* str, int mode) {
+bool Create::get(Socket* sock, bstring str, int mode) {
 	if(mode == Create::doPrint) {
 
 	} else if(mode == Create::doWork) {
@@ -73,7 +73,7 @@ int cmdReconnect(Player* player, cmd* cmnd) {
 // they log in. It asks for the player's name and password, and performs
 // the according function calls.
 
-void login(Socket* sock, char *str) {
+void login(Socket* sock, bstring str) {
 	char	tempstr[20];
 	Player	*player=0;
 
@@ -82,13 +82,15 @@ void login(Socket* sock, char *str) {
 		return;
 	}
 
+    unsigned const char echo_off[] = {255, 251, 1, 0};
+    unsigned const char echo_on[] = {255, 252, 1, 0};
 
 	switch(sock->getState()) {
 	case LOGIN_DNS_LOOKUP:
 		sock->print("Still performing DNS lookup, please be patient!\n");
 		return;
 	case LOGIN_GET_LOCKOUT_PASSWORD:
-		if(strcmp(sock->tempstr[0], str)) {
+		if(!str.equals(sock->tempstr[0])) {
 			sock->disconnect();
 			return;
 		}
@@ -101,7 +103,7 @@ void login(Socket* sock, char *str) {
 		// End LOGIN_GET_LOCKOUT_PASSWORD
 	case LOGIN_GET_NAME:
 		lowercize(str, 1);
-		if(strlen(str) >= 25)
+		if(str.length() >= 25)
 			str[25]=0;
 
 		if(!nameIsAllowed(str, sock)) {
@@ -110,15 +112,17 @@ void login(Socket* sock, char *str) {
 		}
 
 		if(!loadPlayer(str, &player)) {
-			strcpy(sock->tempstr[0], str);
-			sock->print("\n%s? Did I get that right? ", str);
+		    strcpy(sock->tempstr[0], str.c_str());
+			sock->print("\n%s? Did I get that right? ", str.c_str());
 			sock->setState(LOGIN_CHECK_CREATE_NEW);
 			return;
 		} else {
 			player->fd = -1;
 			//gServer->addPlayer(player);
 			sock->setPlayer(player);
-			sock->print("%c%c%c", 255, 251, 1);
+
+			sock->print("%s", echo_off);
+			//sock->print("%c%c%c", 255, 251, 1);
 			sock->askFor("Please enter password: ");//, 255, 251, 1);
 			sock->setState(LOGIN_GET_PASSWORD);
 			return;
@@ -141,11 +145,11 @@ void login(Socket* sock, char *str) {
 
 		if(!sock->getPlayer()->isPassword(str)) {
 			sock->write("\255\252\1\n\rIncorrect.\n\r");
-			logn("log.incorrect", "Invalid password(%s) for %s from %s\n", str, sock->getPlayer()->name, sock->getHostname().c_str());
+			logn("log.incorrect", "Invalid password(%s) for %s from %s\n", str.c_str(), sock->getPlayer()->name, sock->getHostname().c_str());
 			sock->disconnect();
 			return;
 		} else {
-			sock->print("%c%c%c\n\r", 255, 252, 1);
+		    sock->print("%s", echo_on);
 			strcpy(tempstr, sock->getPlayer()->name);
 
 			gServer->checkDuplicateName(sock, true);
@@ -194,15 +198,6 @@ void login(Socket* sock, char *str) {
 			player->init();
 
 			gServer->addPlayer(player);
-//			// mIRC wants ANSI, but ANSI doesn't want mIRC
-//			if(sock->color == 1) {
-//				player->clearFlag(P_MIRC);
-//				player->setFlag(P_ANSI_COLOR);
-//			} else if(sock->color == 2) {
-//				player->setFlag(P_ANSI_COLOR);
-//				player->setFlag(P_MIRC);
-//			}
-
 			sock->setState(CON_PLAYING);
 
 			if(player->flagIsSet(P_HARDCORE)) {
@@ -320,7 +315,7 @@ void setPlyDeity(Socket* sock, int deity) {
 //*********************************************************************
 // This function allows a new player to create their character.
 
-void createPlayer(Socket* sock, char *str) {
+void createPlayer(Socket* sock, bstring str) {
 	switch(sock->getState()) {
 	case CREATE_NEW:
 		{
@@ -351,7 +346,7 @@ void createPlayer(Socket* sock, char *str) {
 			goto no_pass;
 		// End CREATE_NEW
 	case CREATE_GET_DM_PASSWORD:
-		if(strcmp(gConfig->getDmPass().c_str(), str)) {
+	    if(str != gConfig->getDmPass()) {
 			sock->disconnect();
 			return;
 		}
@@ -611,7 +606,7 @@ void Create::addStartingWeapon(Player* player, bstring weapon) {
 //						getSex
 //*********************************************************************
 
-bool Create::getSex(Socket* sock, char* str, int mode) {
+bool Create::getSex(Socket* sock, bstring str, int mode) {
 	const RaceData* rdata = gConfig->getRace(sock->getPlayer()->getRace());
 	if(!rdata->isGendered()) {
 		sock->getPlayer()->setSex(SEX_NONE);
@@ -647,7 +642,7 @@ bool Create::getSex(Socket* sock, char* str, int mode) {
 
 #define FBUF	800
 
-bool Create::getRace(Socket* sock, char* str, int mode) {
+bool Create::getRace(Socket* sock, bstring str, int mode) {
 	std::map<int, RaceData*> choices;
 	std::map<int, RaceData*>::iterator it;
 	int k=0;
@@ -748,7 +743,7 @@ bool Create::getRace(Socket* sock, char* str, int mode) {
 //						getSubRace
 //*********************************************************************
 
-bool Create::getSubRace(Socket* sock, char* str, int mode) {
+bool Create::getSubRace(Socket* sock, bstring str, int mode) {
 	std::map<int, RaceData*> choices;
 	std::map<int, RaceData*>::iterator it;
 	int k=0;
@@ -833,7 +828,7 @@ void Create::finishRace(Socket* sock) {
 //						getClass
 //*********************************************************************
 
-bool Create::getClass(Socket* sock, char* str, int mode) {
+bool Create::getClass(Socket* sock, bstring str, int mode) {
 	int		l=0, k=0;
 	if(mode == Create::doPrint) {
 
@@ -890,7 +885,7 @@ bool Create::getClass(Socket* sock, char* str, int mode) {
 				sock->printColor("Your chosen class: ^W%s\n", get_class_string(sock->getPlayer()->getClass()));
 		}
 		if(!sock->getPlayer()->getClass()) {
-			sock->printColor("Invalid selection: ^W%s\n", str);
+			sock->printColor("Invalid selection: ^W%s\n", str.c_str());
 			sock->askFor("Choose one: ");
 
 			sock->setState(CREATE_GET_CLASS);
@@ -905,7 +900,7 @@ bool Create::getClass(Socket* sock, char* str, int mode) {
 //						getDeity
 //*********************************************************************
 
-bool Create::getDeity(Socket* sock, char* str, int mode) {
+bool Create::getDeity(Socket* sock, bstring str, int mode) {
 	int		l=0, k=0;
 	const RaceData* race = gConfig->getRace(sock->getPlayer()->getRace());
 	if(mode == Create::doPrint) {
@@ -943,7 +938,7 @@ bool Create::getDeity(Socket* sock, char* str, int mode) {
 		if(sock->getPlayer()->getDeity())
 			sock->printColor("Your chosen deity: ^W%s\n", gConfig->getDeity(sock->getPlayer()->getDeity())->getName().c_str());
 		else {
-			sock->printColor("Invalid selection: ^W%s\n", str);
+			sock->printColor("Invalid selection: ^W%s\n", str.c_str());
 			sock->askFor("Choose one: ");
 
 			sock->setState(CREATE_GET_DEITY);
@@ -959,9 +954,9 @@ bool Create::getDeity(Socket* sock, char* str, int mode) {
 //*********************************************************************
 
 // from startlocs.cpp
-bool startingChoices(Player* player, char* str, char* location, bool choose);
+bool startingChoices(Player* player, bstring str, char* location, bool choose);
 
-bool Create::getLocation(Socket* sock, char* str, int mode) {
+bool Create::getLocation(Socket* sock, bstring str, int mode) {
 	char location[256];
 	if(mode == Create::doPrint) {
 
@@ -1000,7 +995,7 @@ bool Create::getLocation(Socket* sock, char* str, int mode) {
 //						startCustom
 //*********************************************************************
 
-bool Create::startCustom(Socket* sock, char* str, int mode) {
+bool Create::startCustom(Socket* sock, bstring str, int mode) {
 	// still in progress! bypass for now
 	return(getProf(sock, str, mode));
 
@@ -1028,7 +1023,7 @@ bool Create::startCustom(Socket* sock, char* str, int mode) {
 //						getStats
 //*********************************************************************
 
-bool Create::getStats(Socket* sock, char* str, int mode) {
+bool Create::getStats(Socket* sock, bstring str, int mode) {
 	if(mode == Create::doPrint) {
 
 		sock->print("\nYou have 56 points to distribute among your 5 stats. Please enter your 5");
@@ -1042,7 +1037,7 @@ bool Create::getStats(Socket* sock, char* str, int mode) {
 
 	} else if(mode == Create::doWork) {
 
-		int		i=0, l=0, k=0, sum=0, num[5], n = strlen(str);
+		int		i=0, l=0, k=0, sum=0, num[5], n = str.length();
 
 		for(i=0; i<=n; i++) {
 			if(str[i]==' ' || str[i]==0) {
@@ -1118,7 +1113,7 @@ void Create::finishStats(Socket* sock) {
 //						getBonusStat
 //*********************************************************************
 
-bool Create::getBonusStat(Socket* sock, char* str, int mode) {
+bool Create::getBonusStat(Socket* sock, bstring str, int mode) {
 	if(mode == Create::doPrint) {
 
 		sock->print("\nRaise which stat?\n[A] Strength, [B] Dexterity, [C] Constitution, [D] Intelligence, or [E] Piety.\n : ");
@@ -1156,7 +1151,7 @@ bool Create::getBonusStat(Socket* sock, char* str, int mode) {
 //						getPenaltyStat
 //*********************************************************************
 
-bool Create::getPenaltyStat(Socket* sock, char* str, int mode) {
+bool Create::getPenaltyStat(Socket* sock, bstring str, int mode) {
 	if(mode == Create::doPrint) {
 
 		sock->printColor("\nChoose your stat to lower:\n[^WA^x] Strength, [^WB^x] Dexterity, [^WC^x] Constitution, [^WD^x] Intelligence, or [^WE^x] Piety.\n : ");
@@ -1321,7 +1316,7 @@ int cmdWeapons(Player* player, cmd* cmnd) {
 //						convertNewWeaponSkills
 //*********************************************************************
 
-void convertNewWeaponSkills(Socket* sock, char *str) {
+void convertNewWeaponSkills(Socket* sock, bstring str) {
 	if(!isalpha(str[0])) {
 		sock->setState(CON_PLAYING);
 		return;
@@ -1351,7 +1346,7 @@ void convertNewWeaponSkills(Socket* sock, char *str) {
 //						getProf
 //*********************************************************************
 
-bool Create::getProf(Socket* sock, char* str, int mode) {
+bool Create::getProf(Socket* sock, bstring str, int mode) {
 
 	if(mode == Create::doPrint) {
 		if(gConfig->classes[get_class_string(sock->getPlayer()->getClass())]->numProfs() > 1) {
@@ -1382,7 +1377,7 @@ bool Create::getProf(Socket* sock, char* str, int mode) {
 //						getSecondProf
 //*********************************************************************
 
-bool Create::getSecondProf(Socket* sock, char* str, int mode) {
+bool Create::getSecondProf(Socket* sock, bstring str, int mode) {
 	if(mode == Create::doPrint) {
 
 		Create::handleWeapon(sock, mode, str[0]);
@@ -1410,7 +1405,7 @@ bool Create::getSecondProf(Socket* sock, char* str, int mode) {
 //						getPassword
 //*********************************************************************
 
-bool Create::getPassword(Socket* sock, char* str, int mode) {
+bool Create::getPassword(Socket* sock, bstring str, int mode) {
 	if(mode == Create::doPrint) {
 
 		sock->print("\nYou must now choose a password. Remember that it\n");
@@ -1445,7 +1440,7 @@ bool Create::getPassword(Socket* sock, char* str, int mode) {
 //						done
 //*********************************************************************
 
-void Create::done(Socket* sock, char* str, int mode) {
+void Create::done(Socket* sock, bstring str, int mode) {
 
 	if(mode == Create::doPrint) {
 
@@ -1666,7 +1661,7 @@ CustomCrt::CustomCrt() {
 //						getCommunity
 //*********************************************************************
 
-bool Create::getCommunity(Socket* sock, char* str, int mode) {
+bool Create::getCommunity(Socket* sock, bstring str, int mode) {
 	if(mode == Create::doPrint) {
 
 		sock->print("\nYour Community\n\n");
@@ -1693,7 +1688,7 @@ bool Create::getCommunity(Socket* sock, char* str, int mode) {
 			sock->getPlayer()->custom.community = str[0]-'a'+1;
 			break;
 		default:
-			sock->printColor("Invalid selection: ^W%s\n", str);
+			sock->printColor("Invalid selection: ^W%s\n", str.c_str());
 			sock->askFor("Choose one: ");
 
 			sock->setState(CUSTOM_COMMUNITY);
@@ -1751,7 +1746,7 @@ void Create::doFamily(Player* player, int mode) {
 //						getFamily
 //*********************************************************************
 
-bool Create::getFamily(Socket* sock, char* str, int mode) {
+bool Create::getFamily(Socket* sock, bstring str, int mode) {
 	if(mode == Create::doPrint) {
 
 		sock->print("\nYour Family\n\n");
@@ -1774,7 +1769,7 @@ bool Create::getFamily(Socket* sock, char* str, int mode) {
 			doFamily(sock->getPlayer(), str[0]-'a'+1);
 			break;
 		default:
-			sock->printColor("Invalid selection: ^W%s\n", str);
+			sock->printColor("Invalid selection: ^W%s\n", str.c_str());
 			sock->askFor("Choose one: ");
 
 			sock->setState(CUSTOM_FAMILY);
@@ -1789,7 +1784,7 @@ bool Create::getFamily(Socket* sock, char* str, int mode) {
 //						getSocial
 //*********************************************************************
 
-bool Create::getSocial(Socket* sock, char* str, int mode) {
+bool Create::getSocial(Socket* sock, bstring str, int mode) {
 	CustomCrt *custom = &sock->getPlayer()->custom;
 
 	if(mode == Create::doPrint) {
@@ -1842,7 +1837,7 @@ bool Create::getSocial(Socket* sock, char* str, int mode) {
 			custom->social = str[0]-'a'+1;
 			break;
 		default:
-			sock->printColor("Invalid selection: ^W%s\n", str);
+			sock->printColor("Invalid selection: ^W%s\n", str.c_str());
 			sock->askFor("Choose one: ");
 
 			sock->setState(CUSTOM_SOCIAL);
@@ -1857,7 +1852,7 @@ bool Create::getSocial(Socket* sock, char* str, int mode) {
 //						getEducation
 //*********************************************************************
 
-bool Create::getEducation(Socket* sock, char* str, int mode) {
+bool Create::getEducation(Socket* sock, bstring str, int mode) {
 	CustomCrt *custom = &sock->getPlayer()->custom;
 
 	if(mode == Create::doPrint) {
@@ -1896,7 +1891,7 @@ bool Create::getEducation(Socket* sock, char* str, int mode) {
 			custom->education = str[0]-'a'+1;
 			break;
 		default:
-			sock->printColor("Invalid selection: ^W%s\n", str);
+			sock->printColor("Invalid selection: ^W%s\n", str.c_str());
 			sock->askFor("Choose one: ");
 
 			sock->setState(CUSTOM_EDUCATION);
@@ -1926,7 +1921,7 @@ int Create::calcHeight(int race, int mode) {
 //						getHeight
 //*********************************************************************
 
-bool Create::getHeight(Socket* sock, char* str, int mode) {
+bool Create::getHeight(Socket* sock, bstring str, int mode) {
 	if(mode == Create::doPrint) {
 
 		sock->print("\nYour Height\n\n");
@@ -1947,7 +1942,7 @@ bool Create::getHeight(Socket* sock, char* str, int mode) {
 			sock->getPlayer()->custom.height = Create::calcHeight(sock->getPlayer()->getRace(), str[0]-'a'+1);
 			break;
 		default:
-			sock->printColor("Invalid selection: ^W%s\n", str);
+			sock->printColor("Invalid selection: ^W%s\n", str.c_str());
 			sock->askFor("Choose one: ");
 
 			sock->setState(CUSTOM_HEIGHT);
@@ -1977,7 +1972,7 @@ int Create::calcWeight(int race, int mode) {
 //						getWeight
 //*********************************************************************
 
-bool Create::getWeight(Socket* sock, char* str, int mode) {
+bool Create::getWeight(Socket* sock, bstring str, int mode) {
 	if(mode == Create::doPrint) {
 
 		sock->print("\nYour Weight\n\n");
@@ -1998,7 +1993,7 @@ bool Create::getWeight(Socket* sock, char* str, int mode) {
 			sock->getPlayer()->custom.weight = Create::calcWeight(sock->getPlayer()->getRace(), str[0]-'a'+1);
 			break;
 		default:
-			sock->printColor("Invalid selection: ^W%s\n", str);
+			sock->printColor("Invalid selection: ^W%s\n", str.c_str());
 			sock->askFor("Choose one: ");
 
 			sock->setState(CUSTOM_WEIGHT);
@@ -2017,8 +2012,8 @@ bool Create::getWeight(Socket* sock, char* str, int mode) {
 //	str:  The name we're testing
 //	sock: The socket to print error messages to
 
-bool nameIsAllowed(char *str, Socket* sock) {
-	int i=0, nonalpha=0, len = strlen(str);
+bool nameIsAllowed(bstring str, Socket* sock) {
+	int i=0, nonalpha=0, len = str.length();
 
 	if(!isalpha(str[0]))
 		return(false);
@@ -2035,7 +2030,7 @@ bool nameIsAllowed(char *str, Socket* sock) {
 		return(false);
 	}
 
-	for(i=0; i< (int)strlen(str); i++)
+	for(i=0; i< len; i++)
 		if(!isalpha(str[i]))
 			nonalpha++;
 

@@ -131,10 +131,14 @@ int print_objcrt(FILE *stream, const struct printf_info *info, const void *const
 	// M = Capital Monster N = small monster
 	else if(info->spec == 'M' || info->spec == 'N') {
 		const Creature *crt = *((const Creature **) (args[0]));
-		if(info->spec == 'M')
-			len = asprintf(&buffer, "%s", crt_str(crt, info->width, VPRINT_flags | CAP));
-		else
-			len = asprintf(&buffer, "%s", crt_str(crt, info->width, VPRINT_flags));
+		if(info->spec == 'M') {
+		    bstring tmp = crt->getCrtStr(NULL, VPRINT_flags | CAP, info->width);
+			len = asprintf(&buffer, "%s", tmp.c_str());
+		}
+		else {
+		    bstring tmp = crt->getCrtStr(NULL, VPRINT_flags, info->width);
+			len = asprintf(&buffer, "%s", tmp.c_str());
+		}
 		if(len == -1)
 			return(-1);
 	}
@@ -147,10 +151,14 @@ int print_objcrt(FILE *stream, const struct printf_info *info, const void *const
 	// O = Capital Object P = small object
 	else if(info->spec == 'O' || info->spec == 'P') {
 		const Object *obj = *((const Object **) (args[0]));
-		if(info->spec == 'O')
-			len = asprintf(&buffer, "%s", obj->getObjStr(NULL, VPRINT_flags | CAP, info->width).c_str());
-		else
-			len = asprintf(&buffer, "%s", obj->getObjStr(NULL, VPRINT_flags, info->width).c_str());
+		if(info->spec == 'O') {
+		    bstring tmp = obj->getObjStr(NULL, VPRINT_flags | CAP, info->width);
+			len = asprintf(&buffer, "%s", tmp.c_str());
+		}
+		else {
+		    bstring tmp = obj->getObjStr(NULL, VPRINT_flags, info->width);
+			len = asprintf(&buffer, "%s", tmp.c_str());
+		}
 
 		if(len == -1)
 			return(-1);

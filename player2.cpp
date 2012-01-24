@@ -332,7 +332,7 @@ int cmdDice(Creature* player, cmd* cmnd) {
 	strcpy(diceOutput, "");
 	strcpy(add ,"");
 
-	strLen = strlen(cmnd->fullstr);
+	strLen = cmnd->fullstr.length();
 
 	// This kills all leading whitespace
 	while(i<strLen && isspace(cmnd->fullstr[i]))

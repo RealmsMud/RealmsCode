@@ -1504,8 +1504,9 @@ int dmSize(Player* player, cmd* cmnd) {
 		player->print("Syntax: *size <object> <size>\n");
 		return(0);
 	}
-
-	sprintf(cmnd->fullstr, "*set o %s %d size %s", cmnd->str[1], (int)cmnd->val[1], cmnd->str[2]);
+	std::ostringstream oStr;
+	oStr << "*set o " << cmnd->str[1] << " " << cmnd->val[1] << " size " << cmnd->str[2];
+	cmnd->fullstr = oStr.str();
 	parse(cmnd->fullstr, cmnd);
 
 	return(dmSetObj(player, cmnd));

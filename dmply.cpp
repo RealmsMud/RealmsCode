@@ -42,7 +42,7 @@ bstring dmLastCommand(const Player* player) {
 int dmForce(Player* player, cmd* cmnd) {
 	Player	*target=0;
 	int		index=0;
-	unsigned int i=0;
+	bstring::size_type i=0;
 	char	str[IBUFSIZE+1];
 
 	if(cmnd->num < 2) {
@@ -66,22 +66,22 @@ int dmForce(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	for(i=0; i<strlen(cmnd->fullstr); i++)
+	for(i=0; i<cmnd->fullstr.length(); i++)
 		if(cmnd->fullstr[i] == ' ') {
 			index = i+1;
 			break;
 		}
-	for(i=index; i<strlen(cmnd->fullstr); i++)
+	for(i=index; i<cmnd->fullstr.length(); i++)
 		if(cmnd->fullstr[i] != ' ') {
 			index = i+1;
 			break;
 		}
-	for(i=index; i<strlen(cmnd->fullstr); i++)
+	for(i=index; i<cmnd->fullstr.length(); i++)
 		if(cmnd->fullstr[i] == ' ') {
 			index = i+1;
 			break;
 		}
-	for(i=index; i<strlen(cmnd->fullstr); i++)
+	for(i=index; i<cmnd->fullstr.length(); i++)
 		if(cmnd->fullstr[i] != ' ') {
 			index = i;
 			break;
@@ -2345,7 +2345,7 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	strLen = strlen(cmnd->fullstr);
+	strLen = cmnd->fullstr.length();
 
 	// This kills all leading whitespace
 	while(i<strLen && isspace(cmnd->fullstr[i]))

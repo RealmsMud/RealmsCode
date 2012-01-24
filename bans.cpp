@@ -165,7 +165,7 @@ int dmBan(Player* player, cmd* cmnd) {
 	strcpy(log3,"");
 	strcpy(log4,"");
 
-	strLen = strlen(cmnd->fullstr);
+	strLen = cmnd->fullstr.length();
 	// This kills all leading whitespace
 	while(i<strLen && isspace(cmnd->fullstr[i]))
 		i++;
@@ -380,12 +380,12 @@ int dmUnban(Player* player, cmd* cmnd) {
 	int toDel = 0, i;
 
 	// Kill any trailing white space in the fullstr
-	i = strlen(cmnd->fullstr);
+	i = cmnd->fullstr.length();
 	while(isspace(cmnd->fullstr[i-1]))
 		i--;
 	cmnd->fullstr[i] = '\0';
 	// We need a number with the command!
-	if(!strncasecmp(cmnd->fullstr, "*unban", i))
+	if(!strncasecmp(cmnd->fullstr.c_str(), "*unban", i))
 		toDel = -1;
 	else
 		toDel = cmnd->val[0];

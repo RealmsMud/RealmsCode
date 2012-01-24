@@ -137,12 +137,16 @@ class Socket {
 		int rows;
 		int cols;
 		bstring type;
+		bstring lastType;
+		bstring version;
 	};
 	struct SockOptions {
 		bool		    dumb; // Dumb client, don't do telnet negotiations
 		int             color;
+		bool            xterm256;
 		int			    mccp;
 		bool		    mxp;
+		bool            mxpClientSecure;
 		unsigned char   lastColor;
 		bool		    msdp;
 		bool 		    atcp;
@@ -230,6 +234,7 @@ public:
 	long getIdle() const;
 	int getMccp() const;
 	bool getMxp() const;
+	bool getMxpClientSecure() const;
 	bool getMsdp() const;
 	bool getAtcp() const;
 	bool canForce() const;
@@ -260,7 +265,8 @@ public:
 	void addSpy(Socket *sock);
 
 	// MXP Support
-	void defineMXP();
+	void clearMxpClientSecure();
+	void defineMxp();
 
 	// MSDP Support Functions
 	void msdpSendPair(bstring variable, bstring value);
@@ -273,6 +279,8 @@ protected:
 	//bool subNegotiate(unsigned char ch);
 	bool handleNaws(int& colRow, unsigned char& chr, bool high);
 	int processCompressed(void); // Mccp
+
+	bool parseMXPSecure();
 
 	// MSDP Support Functions
 	bool parseMsdp();
@@ -331,7 +339,7 @@ protected:
 	char		*out_compress_buf;
 	z_stream    *out_compress;
 
-	void		(*fn)(Socket*, char*);
+	void		(*fn)(Socket*, bstring);
 
 	char		fnparam;
 

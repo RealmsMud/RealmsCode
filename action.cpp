@@ -108,7 +108,7 @@ int orderPet(Player* player, cmd* cmnd) {
             strcpy(cmnd->str[cmnd->num], "");
 
             // chop the "pet <pet> " off
-            strcpy(cmnd->fullstr, getFullstrText(cmnd->fullstr, 2).c_str());
+            cmnd->fullstr = getFullstrText(cmnd->fullstr, 2);
             cmnd->myCommand = 0;
 
             cmdProcess(player, cmnd, pet);
@@ -124,7 +124,7 @@ int orderPet(Player* player, cmd* cmnd) {
         strcpy(cmnd->str[cmnd->num], "");
 
         // chop the "pet " off
-        strcpy(cmnd->fullstr, getFullstrText(cmnd->fullstr, 1).c_str());
+        cmnd->fullstr = getFullstrText(cmnd->fullstr, 1);
 
 	    for(Creature* pet : player->pets) {
             if(!player->inSameRoom(pet)) {

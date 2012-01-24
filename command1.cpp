@@ -75,9 +75,8 @@ int getFailFd(Creature *user) {
 // appropriate function, depending on what service is requested by the
 // player.
 
-void command(Socket* sock, char* str) {
+void command(Socket* sock, bstring str) {
 	cmd cmnd;
-	bool needFree = false;
 	int	n;
 	Player* ply = sock->getPlayer();
 
@@ -93,25 +92,21 @@ void command(Socket* sock, char* str) {
 
 	if(ply->getClass() == CARETAKER && !dmIson() )
 		log_immort(false, ply, "%s-%d (%s): %s\n", ply->name, sock->getFd(),
-			ply->getRoom()->fullName().c_str(), str);
+			ply->getRoom()->fullName().c_str(), str.c_str());
 
-	if(!strcmp(str, "!")) {
-		str = strdup(ply->getLastCommand().c_str());
-		needFree = true;
-		//strncpy(str, ply->lastcommand, 79);
-	}
+	if(str == "!")
+		str = ply->getLastCommand();
+
 	if(str[0])
 		ply->setLastCommand(str);
 
 
-	strncpy(cmnd.fullstr, str, 255);
+	cmnd.fullstr = str;
 
 	stripBadChars(str); // removes '.' and '/'
 	lowercize(str, 0);
 	parse(str, &cmnd);
 
-	if(needFree)
-		free(str);
 
 	n = 0;
 	if(cmnd.num)
@@ -138,12 +133,13 @@ void command(Socket* sock, char* str) {
 // resulting words are stored in a command structure pointed to by the
 // second argument.
 
-void parse(char *str, cmd *cmnd) {
+void parse(const bstring str, cmd *cmnd) {
 	int		i=0, j=0, l=0, n=0;
-	char	token[MAX_TOKEN_SIZE];
+	//char	token[MAX_TOKEN_SIZE];
+	bstring token;
 	int		isquote=0;
 
-	j = strlen(str);
+	j = str.length();
 
 	for(i=0; i<=j; i++) {
 
@@ -165,36 +161,35 @@ void parse(char *str, cmd *cmnd) {
 			while(str[i] != '\0' && str[i] != '\"')
 				i++;
 
-			// terminate the token
-			if(str[i] == '\"')
-				str[i] = '\0';
+//			// terminate the token
+//			if(str[i] == '\"')
+//				str[i] = '\0';
 		} else {
 			while(str[i] != '\0' && str[i] != ' ')
 				i++;
 
 			// terminate the token
-			str[i] = '\0';
+//			str[i] = '\0';
 		}
 
 		// don't overflow the buffers
-		strncpy(token, &str[l], MAX_TOKEN_SIZE);
-		token[MAX_TOKEN_SIZE - 1] = 0;
+		token = str.substr(l, i-l);
 
-		/* whas there any thing here? */
-		if(!strlen(token)) {
+		/* was there any thing here? */
+		if(token.empty()) {
 			isquote = 0;
 			continue;
 		}
 
 		if(isquote) {
-			strncpy(cmnd->str[n], token, MAX_TOKEN_SIZE);
+			strncpy(cmnd->str[n], token.c_str(), MAX_TOKEN_SIZE);
 			cmnd->str[n][MAX_TOKEN_SIZE - 1] = '\0';
 			cmnd->val[n] = 1L;
 			isquote = 0;
 		} else {
 			// Copy into command structure
 			if(n == 0) {
-				strncpy(cmnd->str[n], token, MAX_TOKEN_SIZE);
+				strncpy(cmnd->str[n], token.c_str(), MAX_TOKEN_SIZE);
 				cmnd->str[n][MAX_TOKEN_SIZE - 1] = '\0';
 				// set the value to 1 in case there is non following
 				cmnd->val[n] = 1L;
@@ -203,9 +198,9 @@ void parse(char *str, cmd *cmnd) {
 			else if(isdigit((int)token[0]) || (token[0] == '-' &&
 					isdigit((int)token[1]))) {
 				// this is a value for the previous command
-				cmnd->val[MAX(0, n - 1)] = atol(token);
+				cmnd->val[MAX(0, n - 1)] = atol(token.c_str());
 			} else {
-				strncpy(cmnd->str[n], token, MAX_TOKEN_SIZE);
+				strncpy(cmnd->str[n], token.c_str(), MAX_TOKEN_SIZE);
 				cmnd->str[n][MAX_TOKEN_SIZE - 1] = '\0';
 				// set the value to 1 in case there is non following
 				cmnd->val[n] = 1L;
@@ -219,215 +214,6 @@ void parse(char *str, cmd *cmnd) {
 
 	// set the number of tokens in the command struct
 	cmnd->num = n;
-}
-//void parse(char	*str, cmd* cmnd) {
-//	int	i, j, l, n, o, art;
-//	char	tempstr[25];
-//	int		isquote;
-//
-//	l = n = 0;
-//	j = strlen(str);
-//	isquote = 0;
-//
-//	for(i=0; i<=j; i++) {
-//
-//		// look for first non space
-//		// apparently # is treated like a space
-//		if(str[i] == ' ')//  || str[i] == '#' )
-//			continue;
-//
-//		// ok we at first non space
-//		if( str[i] == '\"' ) {
-//			isquote = 1;
-//			// skip quote char
-//			i++;
-//		}
-//
-//		// save this position as the begining of a token
-//		l = i;
-//
-//		// now find the end of the token
-//		if( isquote ) {
-//			while( str[i] != '\0' && str[i] != '\"' ) {
-//				i++;
-//			}
-//
-//			// terminate the token
-//			if( str[i] == '\"' ) {
-//				str[i] = '\0';
-//			}
-//		} else {
-//			while( str[i] != '\0' && str[i] != ' ' && str[i] != '#') {
-//				i++;
-//			}
-//
-//			// terminate the token
-//			str[i] = '\0';
-//		}
-//
-//		strncpy(tempstr, &str[l], 24);
-//		tempstr[24] = 0;
-//
-//		// whas there any thing here?
-//		if(!strlen(tempstr)) {
-//			isquote = 0;
-//			continue;
-//		}
-//
-//		if( isquote ) {
-//			strncpy(cmnd->str[n], tempstr, 20);
-//			cmnd->str[n][21] = '\0';
-//			cmnd->val[n] = 1L;
-//			isquote = 0;
-//			n++;
-//		} else {
-//			// Copy into command structure
-//			if(n == 0) {
-//				strncpy(cmnd->str[n], tempstr, 20);
-//				cmnd->str[n][21] = '\0';
-//				// set the value to 1 in case there is non following
-//				cmnd->val[n] = 1L;
-//				n++;
-//			} else if(isdigit(tempstr[0]) || (tempstr[0] == '-' &&
-//				isdigit(tempstr[1]))) {
-//				// this is a value for the previous command
-//				cmnd->val[MAX(0, n - 1)] = atol(tempstr);
-//			} else {
-//				strncpy(cmnd->str[n], tempstr, 20);
-//				cmnd->str[n][21] = '\0';
-//				// set the value to 1 in case there is non following
-//				cmnd->val[n] = 1L;
-//				n++;
-//			}
-//		}
-//
-//		if(n >= COMMANDMAX) {
-//			break;
-//		}
-//	}
-//
-//	// set the number of tokens in the command struct
-//	cmnd->num = n;
-//
-//	return;
-//}
-//
-
-
-#if 0
-
-//*********************************************************************
-//						parse
-//*********************************************************************
-// This function takes the string in the first parameter and breaks it
-// up into its component words, stripping out useless words. The
-// resulting words are stored in a command structure pointed to by the
-// second argument.
-
-void parse(char	*str, cmd* cmnd) {
-	int	i, j, l, m, n;
-	//int o, art;
-	char	tempstr[25];
-	l = m = n = 0;
-	j = strlen(str);
-
-	for(i=0; i<=j; i++) {
-		//		if(str[i] == ' ' || str[i] == '#' || str[i] == 0) {
-		if(str[i] == ' ' || str[i] == 0) {
-			str[i] = 0;	// tokenize
-
-			// Strip extra white-space
-			//			while((str[i+1] == ' ' || str[i] == '#') && i < j+1)
-			while(i < j && (str[i+1] == ' '))
-				str[++i] = 0;
-
-			strncpy(tempstr, &str[l], 24);
-			tempstr[24] = 0;
-			l = i+1;
-			if(!strlen(tempstr))
-				continue;
-
-			// Copy into command structure
-			if(n == m) {
-				strncpy(cmnd->str[n++], tempstr, 20);
-				cmnd->val[m] = 1L;
-			} else if(isdigit(tempstr[0]) || (tempstr[0] == '-' &&
-											  isdigit(tempstr[1]))) {
-				cmnd->val[m++] = atol(tempstr);
-			} else {
-				strncpy(cmnd->str[n++], tempstr, 20);
-				cmnd->val[m++] = 1L;
-			}
-
-		}
-		if(m >= COMMANDMAX) {
-			n = 5;
-			break;
-		}
-	}
-
-	if(n > m)
-		cmnd->val[m++] = 1L;
-	cmnd->num = n;
-
-}
-
-
-#endif
-
-
-//*********************************************************************
-//						checkdouble
-//*********************************************************************
-
-void checkdouble(int fd, int i) {
-//	ASSERTLOG(fd);
-//	ASSERTLOG(i);
-//
-//	if(strstr(sock->getHostname().c_str(), "localhost"))
-//		return;
-//	if(!ply->name[0] || ply->name[0] == ' ' || ply->name[0] == '\0'
-//		|| ply->name[0] == 0)
-//		return;
-//	if(!Ply[i].ply->name[0] || Ply[i].ply->name[0] == ' ' || Ply[i].ply->name[0] == '\0'
-//		|| Ply[i].ply->name[0] == 0)
-//		return;
-//	if(!Ply[i].ply || !ply)
-//		return;
-//	if(Ply[i].ply->flagIsSet(P_ON_PROXY) || ply->flagIsSet(P_ON_PROXY))
-//		return;
-//	if(Ply[i].ply->isWatcher() || ply->isWatcher())
-//		return;
-//	if(ply->isCt() || Ply[i].ply->isCt())
-//		return;
-//	if(Ply[i].ply->flagIsSet(P_LINKDEAD) || ply->flagIsSet(P_LINKDEAD))
-//		return;
-//
-//	{
-//		Ply[i].ply->print("The watcher just arrived.\nThe watcher says, \"Don't double log or I'm going to jail you.\"\nThe watcher just wandered away.\n");
-//		ply->print("The watcher just arrived.\nThe watcher says, \"Don't double log or I'm going to jail you.\"\nThe watcher just wandered away.\n");
-//		logn("log.double", "%s and %s were doublelogging (%s).\n", ply->name, Ply[i].ply->name, Ply[i].sock->getHostname().c_str());
-//		if(
-//			ply->getClass() != CARETAKER &&
-//			Ply[i].ply->getClass() != CARETAKER &&
-//			ply->getClass() != BUILDER &&
-//			Ply[i].ply->getClass() != BUILDER
-//		) {
-//			broadcast(isWatcher, "^C%s%s and %s%s were double logging (%s) - (%s/%s).\n", ply->name,
-//				(ply->flagIsSet(P_ON_PROXY) ? "(Proxy)":""), Ply[i].ply->name,
-//				(Ply[i].ply->flagIsSet(P_ON_PROXY) ? "(proxy)":""), Ply[i].sock->getHostname().c_str(),
-//				ply->getRoom()->fullName().c_str(), Ply[i].ply->getRoom()->fullName().c_str());
-//		} else {
-//			broadcast(isCt, "^y%s%s and %s%s were double logging (%s) - (%s/%s).\n", ply->name,
-//				(ply->flagIsSet(P_ON_PROXY) ? "(Proxy)":""), Ply[i].ply->name,
-//				(Ply[i].ply->flagIsSet(P_ON_PROXY) ? "(proxy)":""), Ply[i].sock->getHostname().c_str(),
-//				ply->getRoom()->fullName().c_str(), Ply[i].ply->getRoom()->fullName().c_str());
-//		}
-//
-//		if(gConfig->checkDouble)
-//			disconnect(i);
-//
-//	}
 }
 
 enum HandleObject {

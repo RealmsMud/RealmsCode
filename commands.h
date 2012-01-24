@@ -63,9 +63,8 @@ int cmdThrow(Creature* creature, cmd* cmnd);
 // command1.c
 int cmdNoExist(Player* player, cmd* cmnd);
 int cmdNoAuth(Player* player);
-void command(Socket* sock, char *str);
-void parse(char *str, cmd* cmnd);
-void checkdouble(int fd, int i);
+void command(Socket* sock, bstring str);
+void parse(bstring str, cmd* cmnd);
 
 int cmdPush(Player* player, cmd* cmnd);
 int cmdPull(Player* player, cmd* cmnd);
@@ -98,7 +97,7 @@ int cmdPrefs(Player* player, cmd* cmnd);
 int cmdTelOpts(Player* player, cmd* cmnd);
 int cmdQuit(Player* player, cmd* cmnd);
 int cmdChangeStats(Player* player, cmd* cmnd);
-void changingStats(Socket* sock, char *str );
+void changingStats(Socket* sock, bstring str );
 
 
 // command7.c
@@ -346,5 +345,6 @@ int cmdQuests(Player* player, cmd* cmnd);
 // web.cpp
 int dmFifo(Player* player, cmd* cmnd);
 int cmdForum(Player* player, cmd* cmnd);
+
 
 #endif /*COMMANDS_H_*/

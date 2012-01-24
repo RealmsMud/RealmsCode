@@ -1235,7 +1235,7 @@ public:
 	Location getBound();
 	void bind(const StartLoc* location);
 	void dmPoof(BaseRoom* room, BaseRoom *newRoom);
-	void doFollow();
+	void doFollow(BaseRoom* oldRoom);
 	void doPetFollow();
 	void doRecall(int roomNum = -1);
 	void addToSameRoom(Creature* target);
@@ -1263,7 +1263,7 @@ public:
 	int getMpTickBonus() const;
 	void calcStats(vstat sendStat, vstat *toStat);
 	void changeStats();
-	void changingStats(char *str);
+	void changingStats(bstring str);
 	void decreaseFocus();
 	void increaseFocus(FocusAction action, int amt = 0, Creature* target = NULL);
 	void clearFocus();

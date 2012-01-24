@@ -603,7 +603,7 @@ Exit *Move::getExit(Creature* player, cmd* cmnd) {
 			xp = xp->next_tag;
 		}
 	} else {
-		if(strlen(cmnd->fullstr) < 3)
+		if(cmnd->fullstr.length() < 3)
 			return(0);
 
 		exit = findExit(player, Move::formatFindExit(cmnd), cmnd->val[cmnd->num-1], room->first_ext);
@@ -931,110 +931,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, UniqueRoom **uRoom, Are
 
 	return(true);
 }
-/*
-bool Move::getRoom(Creature* creature, Exit* exit, Room **uRoom, AreaRoom **aRoom, bool justLooking, MapMarker* tMapmarker) {
-	Player* player = creature->getPlayer();
-	BaseRoom* room=0;
-	bool teleporting=false, recycle=true;
-	CatRef	cr;
 
-	// if we're teleporting, we won't get an exit,
-	// we'll only have the teleport mapmarker
-	if(tMapmarker)
-		teleporting = true;
-	else if(exit && exit->target.mapmarker.getArea())
-		tMapmarker = &exit->target.mapmarker;
-
-	(*uRoom)=0;
-	(*aRoom)=0;
-
-	// special exits to take us special places
-	if(exit) {
-		if(exit->flagIsSet(X_TO_BOUND_ROOM) || exit->flagIsSet(X_TO_PREVIOUS)) {
-			if(!player)
-				cr = creature->room;
-			else {
-				Location l = player->previousRoom;
-				if(exit->flagIsSet(X_TO_BOUND_ROOM))
-					l = player->getBound();
-
-				if(l.room.id)
-					cr = l.room;
-				else if(l.mapmarker.getArea())
-					tMapmarker = &l.mapmarker;
-			}
-		}
-	}
-
-	// use the exit to figure out what kind of room we're getting
-	if(tMapmarker) {
-		Area *area = gConfig->getArea(tMapmarker->getArea());
-		if(!area) {
-			if(!teleporting && creature)
-				creature->printColor("Off the map in that direction. ^e(gr)\n");
-			return(false);
-		}
-		// if we're in a unique room, don't activate any unique-room triggers on
-		// the overland unless we're teleporting
-		if(teleporting || !creature || !creature->parent_rom)
-			cr = area->getUnique(tMapmarker);
-		if(!cr.id) {
-			// don't recycle if we are teleporting or leaving
-			// a unique room
-			if(	teleporting ||
-				(creature && creature->area_room && creature->area_room->unique.id)
-			)
-				recycle=false;
-			// if we're only looking, don't use the function that will create a new room
-			// if one doesnt already exit
-			if(justLooking)
-				(*aRoom) = area->getRoom(tMapmarker);
-			else
-				(*aRoom) = area->loadRoom(creature, tMapmarker, recycle);
-			if(!*aRoom)
-				return(false);
-			// getUnique gets called again later, so skip the decrement process here
-			// or the compass will use 2 shots
-			if(teleporting || !creature || !creature->parent_rom)
-				cr = (*aRoom)->getUnique(creature, true);
-		}
-	}
-
-	if(cr.id) {
-	} else if(!tMapmarker) {
-		Player* player = 0;
-		if(creature)
-			player = creature->getPlayer();
-		(*uRoom) = Move::getUniqueRoom(creature, player, exit, 0);
-		if(!*uRoom)
-			return(false);
-		(*aRoom)=0;
-	}
-
-
-	room = (*aRoom);
-	if(!room)
-		room = (*uRoom);
-
-	if(!justLooking && creature) {
-		if( creature->isPlayer() &&
-			creature->flagIsSet(P_MISTED) &&
-			!creature->isStaff() &&
-			(room->flagIsSet(R_DISPERSE_MIST) || room->flagIsSet(R_ETHEREAL_PLANE) || room->isUnderwater())
-		) {
-			if(room->isUnderwater())
-				creature->print("Water currents disperse your mist.\n");
-			else {
-				creature->print("Swirling vapors disperse your mist.\n");
-				creature->stun(mrand(5,8));
-			}
-			creature->unmist();
-		}
-	}
-
-	return(true);
-}
-*/
 
 //*********************************************************************
 //						start
@@ -1169,9 +1066,9 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 
 
 	Group* group = creature->getGroup();
-	if(group && creature->getGroupStatus() == GROUP_LEADER) {
+	if(group && creature->getGroupStatus() == GROUP_LEADER && !creature->pFlagIsSet(P_DM_INVIS)) {
 		for(Creature* follower : group->members) {
-		    if(follower->getGroupStatus() < GROUP_MEMBER)
+		    if(follower == creature || follower->getGroupStatus() < GROUP_MEMBER)
 		        continue;
 
 			if(oldRoom == follower->getRoom())
@@ -1180,13 +1077,14 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 				oldRoom = NULL;
 		}
 	}
-	for(Monster* pet : creature->pets) {
-		if(oldRoom == pet->getRoom())
-			Move::start(pet, cmnd, 0, 0, followers, numPeople, roomPurged);
-		if(roomPurged)
-			oldRoom = NULL;
+	if(!group) {
+        for(Monster* pet : creature->pets) {
+            if(oldRoom == pet->getRoom())
+                Move::start(pet, cmnd, 0, 0, followers, numPeople, roomPurged);
+            if(roomPurged)
+                oldRoom = NULL;
+        }
 	}
-
 	if(player && !sneaking && !roomPurged && oldRoom)
 		Move::checkFollowed(player, exit, oldRoom, followers);
 

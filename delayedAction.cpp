@@ -251,13 +251,13 @@ void doDelayedAction(const DelayedAction* action) {
 //						delayedAction
 //*********************************************************************
 
+void stripBadChars(bstring str);
 void Creature::delayedAction(bstring action, int delay, MudObject* target) {
 	cmd cmnd;
 
-	sprintf(cmnd.fullstr, "%s", action.c_str());
+	cmnd.fullstr = action;
 	if(target) {
-		strcat(cmnd.fullstr, " ");
-		strcat(cmnd.fullstr, target->getName());
+	    cmnd.fullstr += bstring(" ") + target->getName();
 	}
 
 	stripBadChars(cmnd.fullstr); // removes '.' and '/'

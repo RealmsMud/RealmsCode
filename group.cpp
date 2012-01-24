@@ -249,7 +249,7 @@ bool Group::inGroup(Creature* target) {
 void Group::sendToAll(bstring msg, Creature* ignore, bool sendToInvited) {
     for(Creature* crt : members) {
         if(!crt->isPet() && crt != ignore && (sendToInvited || crt->getGroupStatus() >= GROUP_MEMBER )) {
-            crt->print("%s", msg.c_str());
+            *crt << msg;
         }
     }
 }
@@ -467,14 +467,15 @@ bstring Group::getGroupList(Creature* viewer) {
         if(!viewer->isStaff() && (target->pFlagIsSet(P_DM_INVIS) || (target->pFlagIsSet(P_INCOGNITO) && !viewer->inSameRoom(target))))
             continue;
         bool isPet = target->isPet();
+        oStr << ++i << ") ";
         if(!viewer->pFlagIsSet(P_NO_EXTRA_COLOR) && viewer->isEffected("know-aura") && target->getGroupStatus() != GROUP_INVITED)
             oStr << target->alignColor();
-        oStr << ++i << ") ";
+
         if(isPet)
             oStr << target->getMaster()->getName() << "'s " << target->getName();
         else
             oStr << target->getName();
-
+        oStr << "^x";
         if(target == leader) {
             oStr << " (Leader)";
         } else if(target->getGroupStatus() == GROUP_INVITED) {

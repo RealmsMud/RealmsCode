@@ -204,7 +204,7 @@ void Monster::dropCorpse(Creature *killer) {
 		}
 
 		if(player && str != "") {
-			carry = crt_str(this, 0, CAP | INV);
+		    carry = getCrtStr(player, CAP | INV, 0);
 			carry += " was carrying: ";
 			carry += str;
 			carry += ".\n";

@@ -120,7 +120,7 @@ public:
 	static bool goodExit(const Player* player, const BaseRoom* room, const char *type, bstring xname);
 	static bool isInside(const Player* player, const UniqueRoom* room, Property** p);
 	static bool requireInside(const Player* player, const UniqueRoom* room, Property** p, PropType propType = PROP_NONE);
-	static void descEdit(Socket* sock, char *str);
+	static void descEdit(Socket* sock, bstring str);
 	static void guildRoomSetup(UniqueRoom *room, const Guild* guild, bool outside);
 	static void houseRoomSetup(UniqueRoom *room, const Player* player, bool outside);
 	static void roomSetup(UniqueRoom *room, PropType propType, const Player* player, const Guild* guild, bool outside=false);

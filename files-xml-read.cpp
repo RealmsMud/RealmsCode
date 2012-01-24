@@ -38,6 +38,7 @@
 #include "quests.h"
 #include "unique.h"
 #include "alchemy.h"
+#include "mxp.h"
 
 extern int objRefSaveFlags[];
 
@@ -50,23 +51,23 @@ extern int objRefSaveFlags[];
 // Attempt to load the player named 'name' into the address given
 // return 0 on success, -1 on failure
 
-bool loadPlayer(const char* name, Player** player, LoadType loadType) {
+bool loadPlayer(const bstring name, Player** player, LoadType loadType) {
 	xmlDocPtr	xmlDoc;
 	xmlNodePtr	rootNode;
 	char		filename[256];
 	bstring		pass = "", loadName = "";
 
 	if(!checkWinFilename(NULL, name)) {
-		printf("Failed lookup on player %s due to checkWinFilename.\n", name);
+		printf("Failed lookup on player %s due to checkWinFilename.\n", name.c_str());
 		return(false);
 	}
 
 	if(loadType == LS_BACKUP)
-		sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, name);
+		sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, name.c_str());
 	else if(loadType == LS_CONVERT)
-		sprintf(filename, "%s/convert/%s.xml", Path::Player, name);
+		sprintf(filename, "%s/convert/%s.xml", Path::Player, name.c_str());
 	else // LS_NORMAL
-		sprintf(filename, "%s/%s.xml", Path::Player, name);
+		sprintf(filename, "%s/%s.xml", Path::Player, name.c_str());
 
 	//printf("Attempting to load player %s from file %s.\n", name, filename);
 
@@ -76,7 +77,7 @@ bool loadPlayer(const char* name, Player** player, LoadType loadType) {
 	rootNode = xmlDocGetRootElement(xmlDoc);
 	loadName = xml::getProp(rootNode, "Name");
 	if(loadName != name) {
-		printf("Error loading %s, found %s instead!\n", name, loadName.c_str());
+		printf("Error loading %s, found %s instead!\n", name.c_str(), loadName.c_str());
 		xmlFreeDoc(xmlDoc);
 		xmlCleanupParser();
 		return(false);
@@ -1430,6 +1431,77 @@ AlchemyInfo::AlchemyInfo(xmlNodePtr rootNode) {
 
 		rootNode = rootNode->next;
 	}
+}
+//*********************************************************************
+//                      loadMxpElements
+//*********************************************************************
+
+bool Config::loadMxpElements() {
+    xmlDocPtr   xmlDoc;
+
+    xmlNodePtr  curNode;
+    char        filename[80];
+
+    // build an XML tree from a the file
+    sprintf(filename, "%s/mxp.xml", Path::Code);
+
+    xmlDoc = xml::loadFile(filename, "Mxp");
+    if(xmlDoc == NULL)
+        return(false);
+
+    curNode = xmlDocGetRootElement(xmlDoc);
+
+    curNode = curNode->children;
+    while(curNode && xmlIsBlankNode(curNode)) {
+        curNode = curNode->next;
+    }
+    if(curNode == 0) {
+        xmlFreeDoc(xmlDoc);
+        xmlCleanupParser();
+        return(false);
+    }
+
+    clearAlchemy();
+    while(curNode != NULL) {
+        if(NODE_NAME(curNode, "MxpElement")) {
+            MxpElement* mxpElement = new MxpElement(curNode);
+            if(mxpElement) {
+                mxpElements.insert(std::pair<bstring, MxpElement*>(mxpElement->getName(), mxpElement));
+                if(mxpElement->isColor()) {
+                    mxpColors.insert(std::pair<bstring, bstring>(mxpElement->getColor(), mxpElement->getName()));
+                    std::cout << "Inserted color " << mxpElement->getColor() << " - " << mxpElement->getName() << std::endl;
+                }
+            }
+        }
+        curNode = curNode->next;
+    }
+    xmlFreeDoc(xmlDoc);
+    xmlCleanupParser();
+    return(true);
+}
+//bstring name;
+//MxpType mxpType;
+//bstring command;
+//bstring hint;
+//bool prompt;
+//bstring attributes;
+//bstring expire;
+MxpElement::MxpElement(xmlNodePtr rootNode) {
+    rootNode = rootNode->children;
+    prompt = false;
+    while(rootNode != NULL)
+    {
+        if(NODE_NAME(rootNode, "Name")) xml::copyToBString(name, rootNode);
+        else if(NODE_NAME(rootNode, "Command")) xml::copyToBString(command, rootNode);
+        else if(NODE_NAME(rootNode, "Hint")) xml::copyToBString(hint, rootNode);
+        else if(NODE_NAME(rootNode, "Type")) xml::copyToBString(mxpType, rootNode);
+        else if(NODE_NAME(rootNode, "Prompt")) xml::copyToBool(prompt, rootNode);
+        else if(NODE_NAME(rootNode, "Attributes")) xml::copyToBString(attributes, rootNode);
+        else if(NODE_NAME(rootNode, "Expire")) xml::copyToBString(expire, rootNode);
+        else if(NODE_NAME(rootNode, "Color")) xml::copyToBString(color, rootNode);
+
+        rootNode = rootNode->next;
+    }
 }
 
 //*********************************************************************

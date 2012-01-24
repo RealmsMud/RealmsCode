@@ -1133,13 +1133,13 @@ bool Monster::doTalkAction(Player* target, bstring action) {
 			::cmd cm;
 
 			bstring actionCmd = *it++;
-			strncpy(cm.fullstr, actionCmd.c_str(), 100);
+			cm.fullstr = actionCmd;
+			//strncpy(cm.fullstr, actionCmd.c_str(), 100);
 
 			if(it != tok.end()) {
 				bstring actTarget = *it++;
 				if(actTarget.equals("player", false)) {
-					strcat(cm.fullstr, " ");
-					strcat(cm.fullstr, target->name);
+					cm.fullstr += bstring(" ") + target->getName();
 				}
 			}
 
@@ -1156,7 +1156,7 @@ bool Monster::doTalkAction(Player* target, bstring action) {
 			::cmd cm;
 
 			action.Replace("PLAYER", target->name);
-			strncpy(cm.fullstr, action.c_str(), 100);
+			cm.fullstr = action;
 
 			stripBadChars(cm.fullstr); // removes '.' and '/'
 			lowercize(cm.fullstr, 0);

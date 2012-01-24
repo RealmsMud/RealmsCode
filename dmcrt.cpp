@@ -1255,7 +1255,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 			i=1;
 
 			if(pTarget && num == P_MXP_ENABLED+1) {
-				pTarget->getSock()->defineMXP();
+				pTarget->getSock()->defineMxp();
 			}
 		}
 

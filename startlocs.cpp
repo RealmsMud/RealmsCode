@@ -56,7 +56,7 @@ void initialBind(Player* player, bstring str) {
 // choose = true	return true if they made a valid selection
 //					return false if they made an invalid selection
 
-bool startingChoices(Player* player, char* str, char* location, bool choose) {
+bool startingChoices(Player* player, bstring str, char* location, bool choose) {
 
 	// if only one start location is defined, our choices are easy!
 	if(gConfig->start.size() == 1) {

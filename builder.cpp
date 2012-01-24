@@ -62,8 +62,8 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
 
 	if(	!target->parent_rom ||
 		!target->parent_rom->info.isArea("test") ||
-		target->parent_rom->info.id != 1
-	) {
+		target->parent_rom->info.id != 1)
+	{
 		UniqueRoom* uRoom=0;
 		CatRef cr;
 		cr.setArea("test");
@@ -73,12 +73,12 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
 			player->print("Error: could not load Builder Waiting Room (%s)\n", cr.str().c_str());
 			return(0);
 		}
-
+		BaseRoom* oldRoom = target->getRoom();
 		target->dmPoof(target->getRoom(), uRoom);
 
 		target->deleteFromRoom();
 		target->addToRoom(uRoom);
-		target->doFollow();
+		target->doFollow(oldRoom);
 	}
 
 

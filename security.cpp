@@ -52,13 +52,13 @@ const char *passCriteria =
     "4) Must contain no leading or trailing spaces.\n";
 
 
-bool isValidPassword(Socket* sock, char *pass) {
+bool isValidPassword(Socket* sock, bstring pass) {
 	int			len=0, alpha=0, i=0, digits=0, special=0;
 
 	if(!sock)
 		return(false);
 
-	len = strlen(pass);
+	len = pass.length();
 
 	if(pass[0] == ' ') {
 		sock->print("No leading spaces allowed.\n\n");
@@ -141,7 +141,7 @@ int cmdPassword(Player* player, cmd* cmnd) {
 // wrong password  or an invalid password (too short or long),
 // the password will not be changed and the procedure is aborted.
 
-void changePassword(Socket* sock, char *str ) {
+void changePassword(Socket* sock, bstring str) {
 	Player* player = sock->getPlayer();
 	gServer->processOutput();
 
@@ -171,7 +171,8 @@ void changePassword(Socket* sock, char *str ) {
 			player->getSock()->setState(CON_PLAYING);
 			return;
 		} else {
-			strcpy(sock->tempstr[1], str);
+			strncpy(sock->tempstr[1], str.c_str(), 255);
+			sock->tempstr[1][255] = '\0';
 			sock->print("%c%c%c\n\r", 255, 251, 1);
 			sock->print("Re-enter password: ");
 			gServer->processOutput();
@@ -182,7 +183,7 @@ void changePassword(Socket* sock, char *str ) {
 		break;
 	case CON_CHANGE_PASSWORD_FINISH:
 		sock->print("%c%c%c\n\r", 255, 252, 1);
-		if(!strcmp(sock->tempstr[1],str)) {
+		if(str.equals(sock->tempstr[1])) {
 
 			if(!player->isCt())
 				logn("log.passwd", "(%s)\n   %s changed %s password. Old: %s New: %s\n", player->getSock()->getHostname().c_str(),

@@ -205,7 +205,7 @@ bool loadRoom(int index, UniqueRoom **pRoom);
 bool loadRoom(const CatRef cr, UniqueRoom **pRoom);
 bool loadRoomFromFile(const CatRef cr, UniqueRoom **pRoom, bstring filename="");
 
-bool loadPlayer(const char* name, Player** player, LoadType loadType=LS_NORMAL);
+bool loadPlayer(const bstring name, Player** player, LoadType loadType=LS_NORMAL);
 
 void loadCarryArray(xmlNodePtr curNode, Carry array[], const char* name, int maxProp);
 void loadCatRefArray(xmlNodePtr curNode, std::map<int, CatRef>& array, const char* name, int maxProp);

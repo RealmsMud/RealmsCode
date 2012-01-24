@@ -544,16 +544,16 @@ int check_flood(int fd) {
 //						checkWinFilename
 //*********************************************************************
 
-int checkWinFilename(Socket* sock, const char *str) {
+int checkWinFilename(Socket* sock, const bstring str) {
 	// only do this if we're on windows
 	#ifdef __CYGWIN__
-	if(	!strcasecmp(str, "aux") ||
-		!strcasecmp(str, "prn") ||
-		!strcasecmp(str, "nul") ||
-		!strcasecmp(str, "con") ||
-		!strcasecmp(str, "com1") ||
-		!strcasecmp(str, "com2")
-	) {
+	if(	str.equals("aux") ||
+	        str.equals("prn") ||
+	        str.equals("nul") ||
+	        str.equals("con") ||
+	        str.equals("com1") ||
+	        str.equals("com2"))
+	{
 		if(sock) sock->print("\"%s\" could not be read.\n", str);
 		return(0);
 	}

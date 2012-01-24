@@ -242,7 +242,7 @@ bool Config::initCommands() {
 // *************************************************************************************
 // Staff Commands
 
-	staffCommands["play"] = new PlyCommand("play", 			100,	cmdPlay,			isCt,		"Play a song.");
+	staffCommands["play"] = new PlyCommand("play", 			        100,	cmdPlay,			isCt,	"Play a song.");
 	staffCommands["*cache"] = new PlyCommand("*cache",				100,	dmCache,			isDm,	"Show DNS cache.");
 	staffCommands["*test"] = new PlyCommand("*test",				100,	dmTest,				isDm,	"");
 	staffCommands["pcast"] = new PlyCommand("pcast",				100,	pcast,				isDm,	"");

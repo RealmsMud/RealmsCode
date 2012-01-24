@@ -519,7 +519,7 @@ int dmTeleport(Player* player, cmd* cmnd) {
 
 		player->deleteFromRoom();
 		player->addToSameRoom(creature);
-		player->doFollow();
+		player->doFollow(old_room);
 		return(0);
 
 	} else {
@@ -566,7 +566,7 @@ int dmTeleport(Player* player, cmd* cmnd) {
 
 	player->deleteFromRoom();
 	player->addToRoom(room);
-	player->doFollow();
+	player->doFollow(old_room);
 
 	return(0);
 }
@@ -1556,7 +1556,7 @@ int dmBroadecho(Player* player, cmd* cmnd) {
 	if(!player->flagIsSet(P_CT_CAN_DM_BROAD) && !player->isDm())
 		return(cmdNoAuth(player));
 
-	len = strlen(cmnd->fullstr);
+	len = cmnd->fullstr.length();
 	for(i=0; i<len && i < 256; i++) {
 		if(cmnd->fullstr[i] == ' ' && cmnd->fullstr[i+1] != ' ')
 			found++;
@@ -2158,8 +2158,8 @@ int dmLog(Player* player, cmd* cmnd) {
 
 
 	if( cmnd->num >= 3 ) {
-		clean_str(cmnd->fullstr, 2);
-		strcpy(player->getSock()->tempstr[3], cmnd->fullstr);
+	    cmnd->fullstr = getFullstrText(cmnd->fullstr, 2);
+		strcpy(player->getSock()->tempstr[3], cmnd->fullstr.c_str());
 	} else
 		strcpy(player->getSock()->tempstr[3], "\0");
 

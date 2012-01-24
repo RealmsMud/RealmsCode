@@ -873,15 +873,15 @@ int Player::displayCreature(Creature* target) const {
 	bool space=false;
 
 	if(mTarget) {
-		oStr << "You see " << crt_str(mTarget, 1, flags) << ".\n";
+		oStr << "You see " << mTarget->getCrtStr(this, flags, 1) << ".\n";
 		if(mTarget->getDescription() != "")
 			oStr << mTarget->getDescription() << "\n";
 		else
-			oStr << "There is nothing special about " << crt_str(mTarget, 0, flags) << ".\n";
+			oStr << "There is nothing special about " << mTarget->getCrtStr(this, flags, 0) << ".\n";
 
 		if(mTarget->getMobTrade()) {
 			rank = mTarget->getSkillLevel()/10;
-			oStr << "^y" << crt_str(mTarget, 0, flags | CAP) << " is a " << get_trade_string(mTarget->getMobTrade())
+			oStr << "^y" << mTarget->getCrtStr(this, flags | CAP, 0) << " is a " << get_trade_string(mTarget->getMobTrade())
 				 << ". " << mTarget->upHisHer() << " skill level: " << get_skill_string(rank) << ".^x\n";
 		}
 	} else if(pTarget) {
@@ -951,13 +951,13 @@ int Player::displayCreature(Creature* target) const {
 
 
 	if((cClass == CLERIC && deity == JAKAR && level >=7) || isCt())
-		oStr << "^y" << crt_str(target, 0, flags | CAP) << " is carrying "
+		oStr << "^y" << target->getCrtStr(this, flags | CAP, 0 ) << " is carrying "
 			 << target->coins[GOLD] << " gold coin"
 			 << (target->coins[GOLD] != 1 ? "s" : "") << ".^x\n";
 
 	if(isEffected("know-aura") || cClass==PALADIN) {
 		space = true;
-		oStr << crt_str(target, 0, flags | CAP) << " ";
+		oStr << target->getCrtStr(this, flags | CAP, 0) << " ";
 
 		align = target->getAdjustedAlignment();
 

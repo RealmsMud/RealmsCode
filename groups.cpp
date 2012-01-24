@@ -117,6 +117,7 @@ int cmdFollow(Player* player, cmd* cmnd) {
 	    toFollow->createGroup(player);
 
 
+
 	return(0);
 
 }
@@ -129,7 +130,9 @@ void Creature::addToGroup(Group* toJoin, bool announce) {
     if(announce) {
     	*this << "You join \"" << toJoin->getName() << "\".\n";
         toJoin->sendToAll(bstring(getName()) + " has joined your group.\n", this);
+        broadcast(getSock(), getRoom(), "%M joins the group \"%s\".", this, toJoin->getName().c_str());
     }
+
 }
 //********************************************************************************
 //* CreateGroup
@@ -325,7 +328,7 @@ int Group::invite(Player* player, cmd* cmnd) {
     target = gServer->findPlayer(cmnd->str[2]);
 
     if(!target || !player->canSee(target) || target == player) {
-        *player << cmnd->str[2] << " is not on.\n";
+        *player << "That player is not logged on.\n";
         return(0);
     }
 
@@ -439,7 +442,7 @@ int Group::promote(Player* player, cmd* cmnd) {
 
     if(!target || !player->canSee(target) || target == player) {
 
-        *player << cmnd->str[2] << " is not on.\n";
+        *player << "That player is not logged on.\n";
         return(0);
     }
 
@@ -480,7 +483,7 @@ int Group::kick(Player* player, cmd* cmnd) {
 
     if(!target || !player->canSee(target) || target == player) {
 
-        *player << cmnd->str[2] << " is not on.\n";
+        *player << "That player is not logged on.\n";
         return(0);
     }
 
@@ -543,7 +546,7 @@ int Group::rename(Player* player, cmd* cmnd) {
 	}
 	group->setName(newName);
 	*player << "You rename your group to \"" << newName << "\".\n";
-	group->sendToAll(bstring(player->getName()) + " renames the group to \"" + newName + "\".\n", player);
+	group->sendToAll(bstring(player->getName()) + " renames the group to \"" + newName + "\".\n", player, true);
 
     return(0);
 }
@@ -650,11 +653,11 @@ int Group::set(Player* player, cmd* cmnd, bool set) {
 //						doFollow
 //********************************************************************
 
-void Player::doFollow() {
+void Player::doFollow(BaseRoom* oldRoom) {
 	Group* group = getGroup(true);
 	if(getGroupStatus() == GROUP_LEADER && group) {
 		for(Creature* crt : group->members) {
-			if(crt->getRoom() != getRoom()) {
+			if(crt->getRoom() == oldRoom) {
 				Player* pFollow = crt->getPlayer();
 				Monster* mFollow = crt->getMonster();
 				if(pFollow) {

@@ -277,13 +277,13 @@ class cmd {
 public:
 	cmd() {
 	    ret = num = 0;
-	    memset(fullstr, 0, sizeof(fullstr));
 	    memset(str, 0, sizeof(str));
 	    memset(val, 0, sizeof(val));
 	    myCommand=0;
 	};
 	int			num;
-	char		fullstr[256];
+	bstring     fullstr;
+	//char		fullstr[256];
 	char		str[COMMANDMAX][MAX_TOKEN_SIZE];
 	long		val[COMMANDMAX];
 

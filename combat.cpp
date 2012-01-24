@@ -1135,7 +1135,7 @@ int Creature::doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, Dam
 		mTarget->adjustThreat(this, m);
 	}
 	if(mThis) {
-	    mThis->adjustContribution(target, dmg/2)
+	    mThis->adjustContribution(target, dmg/2);
 	}
 
 	if(this != target) {

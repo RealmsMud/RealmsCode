@@ -366,7 +366,7 @@ void Player::defineColors() {
 		setFlag(P_MXP_ENABLED);
         clearFlag(P_MIRC);
         clearFlag(P_NEWLINE_AFTER_PROMPT);
-		mySock->defineMXP();
+		mySock->defineMxp();
 	} else if(mySock->getColorOpt() == NO_COLOR) {
 		clearFlag(P_ANSI_COLOR);
 		clearFlag(P_MXP_ENABLED);
@@ -432,58 +432,19 @@ void ANSI(Socket* sock, int color) {
 }
 
 //***********************************************************************
-//                      defineMXP
-//***********************************************************************
-// TODO: Put this in a lookup table
-void Socket::defineMXP() {
-    if(!this || !getMxp())
-        return;
-    bprint(MXP_SECURE_OPEN);
-    bprint(MXP_BEG "!ELEMENT c1 '<COLOR #FFD700>'" MXP_END);    // gold
-    bprint(MXP_BEG "!ELEMENT c2 '<COLOR #009CFF>'" MXP_END);    // cerulean
-    bprint(MXP_BEG "!ELEMENT c3 '<COLOR #FF5ADE>'" MXP_END);    // pink
-    bprint(MXP_BEG "!ELEMENT c4 '<COLOR #82E6FF>'" MXP_END);    // sky blue
-    bprint(MXP_BEG "!ELEMENT c5 '<COLOR #484848>'" MXP_END);    // dark grey
-    bprint(MXP_BEG "!ELEMENT c6 '<COLOR #95601A>'" MXP_END);    // brown
-    bprint(MXP_LOCK_CLOSE);
-}
-
-//***********************************************************************
 //						getMXPColor
 //***********************************************************************
 
 
 // This function is being called during parseForOutput so we must use the actual mxp tags
 // We're also assuming we get a valid mxp color tag here
-bstring getMxpColorTag(const unsigned char ch, bool open) {
+bstring getMxpColorTag(bstring str, bool open) {
     std::ostringstream oStr;
     oStr << MXP_SECURE_OPEN << "<";
     if(!open)
         oStr << "/";
 
-    switch(ch) {
-    case 'l':
-        oStr << "c1";
-        break;
-    case 'e':
-        oStr << "c2";
-        break;
-    case 'p':
-        oStr << "c3";
-        break;
-    case 's':
-        oStr << "c4";
-        break;
-    case 'E':
-        oStr << "c5";
-        break;
-    case 'o':
-        oStr << "c6";
-        break;
-    default:
-        oStr << "c0";
-        break;
-    }
+    oStr << gConfig->getMxpColorTag(str);
 
     oStr << ">" << MXP_LOCK_CLOSE;
     return(oStr.str());
@@ -524,14 +485,14 @@ bstring Socket::getColorCode(const unsigned char ch) {
             if(opts.color == MXP_COLOR) {
                 // Check if we need to close a mxp color
                 if(isMxpColor(opts.lastColor)) {
-                    oStr << getMxpColorTag(opts.lastColor, false);
+                    oStr << getMxpColorTag(bstring(1,opts.lastColor), false);
                 }
                 // Now check if the new color is mxp, if it is we're done here
                 // and can return now, otherwise continue on and check for an ANSI
                 // color
                 if(isMxpColor(ch)) {
                     opts.lastColor = ch;
-                    oStr << getMxpColorTag(ch, true);
+                    oStr << getMxpColorTag(bstring(1,ch), true);
                     return(oStr.str());
                 }
             }

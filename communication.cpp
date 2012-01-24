@@ -760,6 +760,9 @@ int communicate(Creature* creature, cmd* cmnd) {
 	return(0);
 }
 
+bstring mxpTag(bstring str) {
+    return( bstring(MXP_BEG) + str + bstring(MXP_END));
+}
 //*********************************************************************
 //						channel
 //**********************************************************************
@@ -971,8 +974,16 @@ int channel(Player* player, cmd* cmnd) {
 				    *ply << ColorOn << ply->customColorize(chan->color) << extra << ColorOff;
 
 				bstring toPrint = chan->displayFmt;
-				toPrint.Replace("*IC-NAME*", player->getCrtStr(ply, ply->displayFlags() | CAP).c_str());
-				toPrint.Replace("*OOC-NAME*", player->getName());
+				bstring icName = player->getCrtStr(ply, ply->displayFlags() | CAP);
+				bstring oocName = player->getName();
+
+				if(ply->canSee(player)) {
+				    icName = mxpTag(bstring("player ") + player->getName()) + icName + mxpTag("/player");
+				    oocName = mxpTag(bstring("player ") + player->getName()) + oocName + mxpTag("/player");
+				}
+
+				toPrint.Replace("*IC-NAME*", icName.c_str());
+				toPrint.Replace("*OOC-NAME*", oocName.c_str());
 
 				if(ply->isStaff() || (player->current_language && ply->isEffected("comprehend-languages"))
 				        || ply->languageIsKnown(player->current_language))
@@ -1001,37 +1012,6 @@ int channel(Player* player, cmd* cmnd) {
 			}
 		}
 	}
-
-
-// TODO: Maybe put languages back in
-	//oldPrint(fd, "You are using the '%s' channel!\n", chanStr.c_str());
-
-//	} else {
-//			if(Ply[a].ply->isStaff() || (Ply[a].ply->isEffected("comprehend-languages") && player->current_language)) {
-//				if(Ply[a].ply->flagIsSet(P_LANGUAGE_COLORS) && player->current_language != LCOMMON)
-//					ANSI(Ply[a].ply->fd, get_lang_color(player->current_language));
-//
-//				if(player->current_language == LCOMMON)
-//					oldPrint(Ply[a].ply->fd, "### %M broadcasted, \"%s\"\n", player, &cmnd->fullstr[i+1]);
-//				else
-//					oldPrint(Ply[a].ply->fd, "### %M broadcasted, \"%s\" in %s.\n",
-//					      player, &cmnd->fullstr[i+1], get_language_adj(player->current_language));
-//
-//
-//			} else {
-//				if(!Ply[a].ply->languageIsKnown(LUNKNOWN+player->current_language)) {
-//					oldPrint(Ply[a].ply->fd, "### %M broadcasted something in %s.\n", player, get_language_adj(player->current_language));
-//				} else {
-//					if(Ply[a].ply->flagIsSet(P_LANGUAGE_COLORS) && player->current_language != LCOMMON )
-//						ANSI(Ply[a].ply->fd, get_lang_color(player->current_language));
-//					if(player->current_language == LCOMMON)
-//						oldPrint(Ply[a].ply->fd, "### %M broadcasted, \"%s\"\n", player, &cmnd->fullstr[i+1]);
-//					else
-//						oldPrint(Ply[a].ply->fd, "### %M broadcasted, \"%s\" in %s.\n",
-//						     player, &cmnd->fullstr[i+1], get_language_adj(player->current_language));
-//
-//				}
-//			}
 
 	return(0);
 }

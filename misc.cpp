@@ -83,14 +83,24 @@ bool nameEqual(bstring obj, bstring str) {
 // converts it to lowercase. If the flag in the second parameter has
 // its first bit set, then the first letter is capitalized.
 
-void lowercize(char	*str, int flag ) {
+void lowercize(bstring& str, int flag ) {
 	int 	i, n;
 
-	n = (str) ? strlen(str) : 0;
+	n = str.length();
 	for(i=0; i<n; i++)
 		str[i] = (str[i] >= 'A' && str[i] <= 'Z') ? str[i]+32:str[i];
 	if(flag & 1)
 		str[0] = (str[0] >= 'a' && str[0] <= 'z') ? str[0]-32:str[0];
+}
+
+void lowercize(char *str, int flag ) {
+    int     i, n;
+
+    n = str ? strlen(str) : 0 ;
+    for(i=0; i<n; i++)
+        str[i] = (str[i] >= 'A' && str[i] <= 'Z') ? str[i]+32:str[i];
+    if(flag & 1)
+        str[0] = (str[0] >= 'a' && str[0] <= 'z') ? str[0]-32:str[0];
 }
 
 //*********************************************************************
@@ -141,11 +151,11 @@ void zero( void	*ptr, int size ) {
 
 // Temporary (but static) data for the next several functions
 
-static char	xstr[5][80];
-static int	xnum=0;
 
 
 #ifdef __CYGWIN__
+static char xstr[5][80];
+static int  xnum=0;
 
 char *obj_str(const Object *obj, int num, int flag ) {
     char *str;
@@ -158,7 +168,6 @@ char *obj_str(const Object *obj, int num, int flag ) {
     return(str);
 }
 
-#endif
 
 //*********************************************************************
 //						crt_str
@@ -297,6 +306,7 @@ char *crt_str(const Creature *crt, int num, int flag ) {
 		return(str);
 	}
 }
+#endif
 
 //*********************************************************************
 //						delimit
@@ -358,7 +368,7 @@ bstring delimit(const char *str, int wrap) {
 
 #define FBUF	800
 
-void viewFileReal(Socket* sock, char *str ) {
+void viewFileReal(Socket* sock, bstring str ) {
 	char	buf[FBUF+1];
 	int	i, l, n, ff, line;
 	long	offset;
@@ -367,8 +377,9 @@ void viewFileReal(Socket* sock, char *str ) {
 	switch(sock->getParam()) {
 	case 1:
 		offset = 0L;
-		strcpy(sock->tempstr[1], str);
-		ff = open(str, O_RDONLY, 0);
+		strncpy(sock->tempstr[1], str.c_str(),255);
+		sock->tempstr[1][255] = 0;
+		ff = open(str.c_str(), O_RDONLY, 0);
 		if(ff < 0) {
 			sock->print("File could not be opened.\n");
 			if(sock->getPlayer())
@@ -481,7 +492,7 @@ void viewFileReal(Socket* sock, char *str ) {
 	}
 }
 // Wrapper function for viewFile_real that will set the correct connected state
-void viewFile(Socket* sock, char *str) {
+void viewFile(Socket* sock, bstring str) {
 	if(sock->getState() != CON_VIEWING_FILE)
 		sock->setState(CON_VIEWING_FILE);
 
@@ -498,7 +509,7 @@ void viewFile(Socket* sock, char *str) {
 
 #define FBUF	800
 
-void viewLoginFile(Socket* sock, char *str, bool showError) {
+void viewLoginFile(Socket* sock, bstring str, bool showError) {
 	char	buf[FBUF + 1];
 	int		i=0, l=0, n=0, ff=0, line=0;
 	long	offset=0;
@@ -507,12 +518,12 @@ void viewLoginFile(Socket* sock, char *str, bool showError) {
 	buf[FBUF] = 0;
 	{
 		offset = 0L;
-		strcpy(sock->tempstr[1], str);
-		ff = open(str, O_RDONLY, 0);
+		strcpy(sock->tempstr[1], str.c_str());
+		ff = open(str.c_str(), O_RDONLY, 0);
 		if(ff < 0) {
 			if(showError) {
 				sock->print("File could not be opened.\n");
-				broadcast(isCt, "^yCan't open file: %s.\n", str); // nothing to put into (%m)?
+				broadcast(isCt, "^yCan't open file: %s.\n", str.c_str()); // nothing to put into (%m)?
 			}
 			return;
 		}
@@ -551,7 +562,7 @@ void viewLoginFile(Socket* sock, char *str, bool showError) {
 // displays a file, line by line starting with the last
 // similar to unix 'tac' command
 
-void viewFileReverseReal(Socket* sock, char *str) {
+void viewFileReverseReal(Socket* sock, bstring str) {
 	off_t oldpos;
 	off_t newpos;
 	off_t temppos;
@@ -570,8 +581,8 @@ void viewFileReverseReal(Socket* sock, char *str) {
 	switch(sock->getParam()) {
 	case 1:
 
-		strcpy(sock->tempstr[1], str);
-		if((ff = fopen(str, "r")) == NULL) {
+		strcpy(sock->tempstr[1], str.c_str());
+		if((ff = fopen(str.c_str(), "r")) == NULL) {
 			sock->print("error opening file\n");
 			sock->restoreState();
 			return;
@@ -682,7 +693,7 @@ nomatch:
 }
 
 // Wrapper for viewFileReverse_real that properly sets the connected state
-void viewFileReverse(Socket* sock, char *str) {
+void viewFileReverse(Socket* sock, bstring str) {
 	if(sock->getState() != CON_VIEWING_FILE_REVERSE)
 		sock->setState(CON_VIEWING_FILE_REVERSE);
 	viewFileReverseReal(sock, str);
@@ -804,56 +815,6 @@ bool is_num(char *str ) {
 	return(true);
 }
 
-void clean_str(char *str, int strip_count ) {
-	char	str_buf[2048];
-	char	*pnew;
-	char	*porg;
-	int		nPlusCount;
-	int		ndx;
-
-	pnew = str_buf;
-	porg = str;
-	nPlusCount = 0;
-
-	// strip strip_count words from the beginning
-	for( ndx = 0; ndx < strip_count; ndx++ ) {
-		/* strip leading space */
-		while( *porg != '\0' && *porg == ' ')
-			porg++;
-
-		/* skip word */
-		while( *porg != '\0' && *porg != ' ')
-			porg++;
-	}
-
-	// strip spaces after last stripped word
-	while( *porg != '\0' && *porg == ' ')
-		porg++;
-
-	// copy the rest of the string in to the clean buffer
-	// removing offensive chars
-	while( *porg != '\0' ) {
-		switch( *porg ) {
-		case '+':
-			nPlusCount++;
-			if( nPlusCount < 3 ) {
-				*(pnew++) = *porg;
-			}
-			break;
-		default:
-			nPlusCount = 0;
-			*(pnew++) = *porg;
-			break;
-		}
-		porg++;
-	}
-
-	*pnew = '\0';
-
-	// now copy it back into the original buffer
-	strcpy(str, str_buf );
-}
-
 //*********************************************************************
 //						isdm
 //*********************************************************************
@@ -885,11 +846,11 @@ int Creature::smashInvis() {
 //*********************************************************************
 // Determine if a given name is acceptable
 
-bool parse_name(char *name) {
+bool parse_name(bstring name) {
 	FILE	*fp=0;
-	int		i = strlen(name)-1;
+	int		i = name.length() - 1;
 	char	str[80], path[80], forbid[20];
-	strcpy(str, name);
+	strcpy(str, name.c_str());
 
 	if(isTitle(str) || isClass(str))
 		return(false);
@@ -1032,12 +993,11 @@ void Player::bug(const char *fmt, ...) const {
 //*********************************************************************
 
 int Player::autosplit(long amount) {
-	ctag	*cp=0;
 	int		remain=0, split=0, party=0;
 
 	if(isStaff())
 		return(0);
-	if(ableToDoCommand())
+	if(!ableToDoCommand())
 		return(0);
 
 	if(amount <= 5)
@@ -1048,7 +1008,7 @@ int Player::autosplit(long amount) {
 		return(0);
 
 	for(Creature* crt : group->members) {
-		if(crt->isPlayer() && !crt->isStaff())
+		if(crt->isPlayer() && !crt->isStaff() && crt->inSameRoom(this))
 			party++;
 	}
 	// If group is 1, return with no split.
@@ -1062,14 +1022,14 @@ int Player::autosplit(long amount) {
 	split = ((amount - remain) / party);  // Determine split minus the remaining odd coins.
 
 	for(Creature* crt : group->members) {
-		if(crt->isPlayer() && !crt->isStaff()) {
+		if(crt->isPlayer() && !crt->isStaff() && crt->inSameRoom(this)) {
 			if(crt == this) {
 				crt->print("You received %d gold as your split.\n", split+remain);
 				crt->coins.add(split+remain, GOLD);
 			} else {
-				cp->crt->print("You received %d gold as your split from %N.\n", split, this);
-				cp->crt->coins.add(split, GOLD);
-				cp->crt->print("You now have %d gold coins.\n", cp->crt->coins[GOLD]);
+				crt->print("You received %d gold as your split from %N.\n", split, this);
+				crt->coins.add(split, GOLD);
+				crt->print("You now have %d gold coins.\n", crt->coins[GOLD]);
 			}
 		}
 
@@ -1203,21 +1163,26 @@ char *stripLineFeeds(char *str) {
 
 void stripBadChars(char *str) {
 	int n=0, i=0;
-	//	char *name=0;
-	//	str = str;
 
 	n = (str) ? strlen(str) : 0;
-	//	n = strlen(str);
 
 	for(i = 0; i < n; i++) {
 		if(str[i] == '/') {
 			str[i] = ' ';
 		}
-		/*if(str[i] == '.')
-		{
-		  str[i] = ' ';
-		} */
 	}
+}
+
+void stripBadChars(bstring str) {
+    int n=0, i=0;
+
+    n = str.length();
+
+    for(i = 0; i < n; i++) {
+        if(str[i] == '/') {
+            str[i] = ' ';
+        }
+    }
 }
 
 //*********************************************************************

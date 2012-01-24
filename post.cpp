@@ -57,7 +57,7 @@ bool canPost(Player* player) {
 //*********************************************************************
 // format text for writing to file
 
-bstring postText(char* str) {
+bstring postText(bstring str) {
 	bstring outstr = "";
 
 	if(Pueblo::is(str))
@@ -225,7 +225,7 @@ void sendMail(const bstring& target, const bstring& message) {
 // This function is called when a player is editing a message to send
 // to another player.
 
-void postedit(Socket* sock, char *str) {
+void postedit(Socket* sock, bstring str) {
 	char	outcstr[158], datestr[40], filename[80], postfile[80];
 	long	t=0;
 	int		ff=0;
@@ -463,7 +463,7 @@ int notepad(Player* player, cmd* cmnd) {
 //						noteedit
 //*********************************************************************
 
-void noteedit(Socket* sock, char *str) {
+void noteedit(Socket* sock, bstring str) {
 	char	tmpstr[40];
 	int		ff=0;
 	bstring outstr = "";
@@ -545,7 +545,7 @@ int cmdEditHistory(Player* player, cmd* cmnd) {
 //						histedit
 //*********************************************************************
 
-void histedit(Socket* sock, char *str) {
+void histedit(Socket* sock, bstring str) {
 	bstring outstr = "";
 	int		ff=0;
 

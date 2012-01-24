@@ -1008,7 +1008,7 @@ void displayRoom(const Player* player, const BaseRoom* room, const UniqueRoom* u
 			else
 				oStr << "You see ";
 
-			oStr << crt_str(creature, m, flags);
+			oStr << creature->getCrtStr(player, flags, m);
 
 			if(staff) {
 				if(creature->flagIsSet(M_HIDDEN))

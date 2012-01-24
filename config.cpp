@@ -99,6 +99,7 @@ void Config::cleanUp() {
 	clearAlchemy();
 	clearCommands();
 	clearMsdpVariables();
+	clearMxpElements();
 	clearEffects();
 	clearSongs();
 	inUse = false;
@@ -243,6 +244,7 @@ bool Config::load() {
 	printf("Loading Factions...%s.\n", loadFactions() ? "done" : "*** FAILED ***");
 	printf("Loading Alchemy...%s.\n", loadAlchemy() ? "done" : "*** FAILED ***");
 	printf("Loading MSDP Variables...%s.\n", loadMsdpVariables() ? "done" : "*** FAILED ***");
+	printf("Loading MXP Elements...%s.\n", loadMxpElements() ? "done" : "*** FAILED ***");
 	printf("Loading Limited Items...%s.\n", loadLimited() ? "done" : "*** FAILED ***");
 	printf("Loading Double Log Info...%s.\n", loadDoubleLog() ? "done" : "*** FAILED ***");
 
