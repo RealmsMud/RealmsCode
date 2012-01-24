@@ -115,7 +115,6 @@ void Creature::dismissPet(Monster* pet) {
 	else
 		broadcast(NULL, getRoom(), "%M fades away.", pet);
 	pet->die(this);
-	gServer->delActive(pet);
 
 }
 void Creature::dismissAll() {
