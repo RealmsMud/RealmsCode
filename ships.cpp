@@ -1062,7 +1062,7 @@ void Config::saveShips() const {
 	for(it = ships.begin() ; it != ships.end() ; it++)
 		(*it)->save(rootNode);
 
-	sprintf(filename, "%s/ships.xml", Path::PlayerData);
+	sprintf(filename, "%s/ships.xml", Path::Game);
 	xml::saveFile(filename, xmlDoc);
 	xmlFreeDoc(xmlDoc);
 }

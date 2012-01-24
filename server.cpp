@@ -1488,7 +1488,7 @@ void Config::resetShipsFile() {
 	// copying ships.midnight.xml to ships.xml
 	char	sfile1[80], sfile2[80], command[255];
 	sprintf(sfile1, "%s/ships.midnight.xml", Path::Game);
-	sprintf(sfile2, "%s/ships.xml", Path::PlayerData);
+	sprintf(sfile2, "%s/ships.xml", Path::Game);
 
 	sprintf(command, "cp %s %s", sfile1, sfile2);
 	system(command);
