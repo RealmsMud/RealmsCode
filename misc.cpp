@@ -340,6 +340,8 @@ bstring delimit(const char *str, int wrap) {
 			len = 0;
 			lastspace = -1;
 		}
+		if(work[i] == '^')
+		    x+=2;
 		if(work[i] == '\033')
 			x+=7;
 
