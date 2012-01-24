@@ -101,13 +101,11 @@ void Player::finishAddPlayer(BaseRoom* room) {
 		stand();
 
 
-	cp = first_fol;
-	while(cp) {
-		if(cp->crt->isPet()) {
-		    if(cp->crt->getMonster())
-		        cp->crt->getMonster()->clearEnemyList();
+	// Clear the enemy list of pets when leaving the room
+	for(Monster* pet : pets) {
+		if(pet->isPet()) {
+	        pet->clearEnemyList();
 		}
-		cp = cp->next_tag;
 	}
 
 
@@ -210,10 +208,10 @@ void Player::addToRoom(UniqueRoom* uRoom) {
 	// Builders cannot leave their areas unless escorted by a DM.
 	// Any other time they leave their areas it will be logged.
 	if(	cClass==BUILDER &&
-		(	!following ||
-			(following && !following->isDm()) ) &&
-		checkRangeRestrict(uRoom->info)
-	) {
+		(	!getGroupLeader() ||
+			(getGroupLeader() && getGroupLeader()->isDm()) ) &&
+		checkRangeRestrict(uRoom->info))
+	{
 		// only log if another builder is not in the room
 		cp = uRoom->first_ply;
 		while(cp) {
@@ -1010,7 +1008,7 @@ void displayRoom(const Player* player, const BaseRoom* room, const UniqueRoom* u
 			else
 				oStr << "You see ";
 
-			oStr << crt_str(creature, m, flags);
+			oStr << creature->getCrtStr(player, flags, m);
 
 			if(staff) {
 				if(creature->flagIsSet(M_HIDDEN))

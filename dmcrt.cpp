@@ -1254,8 +1254,9 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 			player->print("%M's flag #%d(%s) on.\n", target, num, (mTarget ? get_mflag(num-1):get_pflag(num-1)));
 			i=1;
 
-			if(pTarget && num == P_MXP_ENABLED+1)
-				pTarget->defineMXP();
+			if(pTarget && num == P_MXP_ENABLED+1) {
+				pTarget->getSock()->defineMxp();
+			}
 		}
 
 		if(pTarget && (num == P_BUILDER_MOBS+1 || num == P_BUILDER_OBJS+1))
@@ -2351,13 +2352,11 @@ int dmAlias(Player* player, cmd* cmnd) {
 		player->print("You release %1N's body.\n", monster);
 
 		log_immort(false,player, "%s no longer possesses %s.\n", player->name, monster->name);
-
-		doStopFollowing(monster, FALSE);
+		monster->removeFromGroup(false);
 		player->setAlias(0);
 		return(0);
 	}
-
-	addFollower(player, monster, FALSE);
+	player->addPet(monster, false);
 	player->setAlias(monster);
 	player->setFlag(P_ALIASING);
 	monster->setFlag(M_DM_FOLLOW);
@@ -2395,7 +2394,7 @@ int dmAlias(Player* player, cmd* cmnd) {
 // custom monsters (made with the dmCrtName function).
 
 int dmFollow(Player* player, cmd* cmnd) {
-	Creature* creature=0;
+	Monster* creature=0;
 
 	if(cmnd->num < 2) {
 		player->print("syntax: *cfollow <creature>\n");
@@ -2412,13 +2411,13 @@ int dmFollow(Player* player, cmd* cmnd) {
 		player->print("Perms can't follow.\n");
 		return(0);
 	}
-	if(creature->following == player) {
+	if(creature->getMaster() == player) {
 		player->print("%s stops following you.\n", creature->name);
-		doStopFollowing(creature, FALSE);
+		// TODO: fixme?
+		player->delPet(creature);
 		return(0);
 	}
-
-	addFollower(player, creature, FALSE);
+	player->addPet(creature, false);
 	player->print("%s starts following you.\n", creature->name);
 	return(0);
 }
@@ -2564,7 +2563,6 @@ void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
 	char	file[80];
 	int		i=0, x=0;
 	otag	*op=0;
-	ctag	*fol=0;
 
 	if(!player->canBuildMonsters()) {
 		cmdNoAuth(player);
@@ -2641,16 +2639,14 @@ void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
 
 	// clean up possesed before save
 	if(target->flagIsSet(M_DM_FOLLOW)) { // clear relevant follow lists
-		if(target->following) {
-			target->following->clearFlag(P_ALIASING);
-			Player* master = target->following->getPlayer();
+		if(target->getMaster()) {
+		    Player* master = target->getMaster()->getPlayer();
+
+		    master->clearFlag(P_ALIASING);
+
 			master->setAlias(0);
 			master->print("%1M's soul was saved.\n", target);
-			fol = master->first_fol;
-			if(fol->crt == target) {
-				master->first_fol = fol->next_tag;
-				delete fol;
-			}
+			master->delPet(target);
 		}
 		target->clearFlag(M_DM_FOLLOW);
 
@@ -2720,11 +2716,9 @@ int dmAddMob(Player* player, cmd* cmnd) {
 	new_mob->damage.setSides(4);
 	new_mob->damage.setPlus(1);
 	new_mob->first_obj = 0;
-	new_mob->first_fol = 0;
 	new_mob->first_tlk = 0;
 	new_mob->parent_rom = 0;
 	new_mob->area_room = 0;
-	new_mob->following = 0;
 	for(n=0; n<20; n++)
 		new_mob->ready[n] = 0;
 	new_mob->setFlag(M_SAVE_FULL);

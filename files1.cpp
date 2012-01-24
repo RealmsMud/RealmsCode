@@ -240,7 +240,6 @@ int count_bag_inv(Creature* creature) {
 
 void free_crt(Creature* creature, bool remove) {
 	otag	*op=0, *tempo=0;
-	ctag	*cp=0, *tempc=0;
 	ttag	*tp=0, *tempt=0;
 	int	i;
 	for(i=0; i<MAXWEAR; i++) {
@@ -255,15 +254,17 @@ void free_crt(Creature* creature, bool remove) {
 		delete op;
 		op = tempo;
 	}
-
-	cp = creature->first_fol;
-	while(cp) {
-		tempc = cp->next_tag;
-		if(cp->crt)
-			free_crt(cp->crt);
-		delete cp;
-		cp = tempc;
+	if(creature->getGroup(false)) {
+	    creature->getGroup(false)->remove(creature);
 	}
+	for(Monster* mons : creature->pets) {
+	    if(mons->isPet()) {
+	        free_crt(mons);
+	    } else {
+	    	mons->setMaster(NULL);
+	    }
+	}
+	creature->pets.clear();
 
 	tp = creature->first_tlk;
 	creature->first_tlk = 0;

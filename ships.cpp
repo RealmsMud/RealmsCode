@@ -328,8 +328,8 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
 
 				found = 1;
 
-				sprintf(output, "%s just arrived.\n", crt_str(raider, 1, 0 | CAP));
-				ply->print(output);
+
+				ply->bPrint(raider->getCrtStr(NULL, CAP, 1) + " just arrived\n");
 				ply->sendPrompt();
 
 				// you can't see me!
@@ -340,8 +340,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
 				if(found && ply->flagIsSet(P_HIDDEN)) {
 					found = 0;
 
-					sprintf(output, "%s searches the room.\n", crt_str(raider, 0, 0 | CAP | NONUM));
-					ply->print(output);
+					ply->bPrint(raider->getCrtStr(NULL, CAP | NONUM, 0) + " searches the room.\n");
 
 					if(mrand(1,100) <= SHIP_SEARCH_CHANCE) {
 						found = 1;
@@ -354,8 +353,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
 				}
 
 				if(!found) {
-					sprintf(output, "%s wanders away.\n", crt_str(raider, 0, 0 | CAP | NONUM));
-					ply->print(output);
+				    ply->bPrint(raider->getCrtStr(NULL, CAP|NONUM, 0) + " wanders away.\n");
 					ply->sendPrompt();
 					continue;
 				}
@@ -369,16 +367,15 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
 
 
 					if(stop->raid->getDumpTalk() != "") {
-						sprintf(output, "%s says to you, \"%s\".\n",
-							crt_str(raider, 0, 0 | CAP | NONUM), stop->raid->getDumpTalk().c_str());
-						ply->print(output);
+					    ply->bPrint(raider->getCrtStr(NULL, CAP|NONUM, 0) + " says to you, \"" + stop->raid->getDumpTalk() + "\".\n");
 					}
 					if(stop->raid->getDumpAction() != "") {
 						if(stop->raid->getDumpTalk() != "")
 							ply->sendPrompt();
-						sprintf(output, stop->raid->getDumpAction().c_str(), crt_str(raider, 0, 0 | CAP | NONUM));
-						strcat(output, "\n");
-						ply->print(output);
+						bstring tmp = stop->raid->getDumpAction();
+						bstring tmp2 = raider->getCrtStr(NULL, CAP|NONUM, 0);
+						tmp.Replace("*ACTOR*", tmp2.c_str());
+						ply->bPrint(tmp + "\n");
 					}
 					ply->deleteFromRoom();
 					ply->addToRoom(newRoom);
@@ -389,16 +386,15 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
 				) {
 
 					if(stop->raid->getPrisonTalk() != "") {
-						sprintf(output, "%s says to you, \"%s\".\n",
-							crt_str(raider, 0, 0 | CAP | NONUM), stop->raid->getPrisonTalk().c_str());
-						ply->print(output);
+					    ply->bPrint(raider->getCrtStr(NULL, CAP|NONUM, 0) + "says to you \"" + stop->raid->getPrisonTalk() + "\".\n");
 					}
 					if(stop->raid->getPrisonAction() != "") {
 						if(stop->raid->getPrisonTalk() != "")
 							ply->sendPrompt();
-						sprintf(output, stop->raid->getPrisonAction().c_str(), crt_str(raider, 0, 0 | CAP | NONUM));
-						strcat(output, "\n");
-						ply->print(output);
+                        bstring tmp = stop->raid->getPrisonAction();
+                        bstring tmp2 = raider->getCrtStr(NULL, CAP|NONUM, 0);
+                        tmp.Replace("*ACTOR*", tmp2.c_str());
+                        ply->bPrint(tmp + "\n");
 					}
 					ply->deleteFromRoom();
 					ply->addToRoom(newRoom);
@@ -1084,7 +1080,7 @@ bool Config::loadShips() {
 	Ship	*ship=0;
 	std::list<Ship*>::iterator it;
 
-	sprintf(filename, "%s/ships.xml", Path::PlayerData);
+	sprintf(filename, "%s/ships.xml", Path::Game);
 
 	if(!file_exists(filename))
 		return(false);

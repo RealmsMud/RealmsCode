@@ -454,8 +454,8 @@ void commTarget(Creature* player, Player* target, int type, bool ooc, char lang,
 	} else if( ooc ||
 		target->languageIsKnown(LUNKNOWN+lang) ||
 		target->isStaff() ||
-		target->isEffected("comprehend-languages")
-	) {
+		target->isEffected("comprehend-languages"))
+	{
 
 		if(type == COM_GT)
 			out << target->customColorize("*CC:GROUP*").c_str() << "### ";
@@ -487,8 +487,8 @@ void commTarget(Creature* player, Player* target, int type, bool ooc, char lang,
 		out << " " << speak << " something in " << get_language_adj(lang) << ".\n";
 		target->bug("%s %s something in %s.\n", player->name, speak.c_str(), get_language_adj(lang));
 	}
-
-	target->printColor("%s", out.str().c_str());
+	*target << ColorOn << out.str() << ColorOff;
+//	target->printColor("%s", out.str().c_str());
 }
 
 //*********************************************************************
@@ -504,7 +504,7 @@ int pCommunicate(Player* player, cmd* cmnd) {
 int communicate(Creature* creature, cmd* cmnd) {
 	const Player* player=0;
 	bstring text = "", name = "";
-	Creature *owner=0, *target=0;
+	Creature *owner=0;
 	Player*	pTarget=0;
 	AreaRoom* aRoom=0;
 	UniqueRoom	*new_rom=0;
@@ -514,7 +514,7 @@ int communicate(Creature* creature, cmd* cmnd) {
 	xtag	*xp=0;
 
 	if(creature->isPet())
-		owner = creature->following;
+		owner = creature->getMaster();
 	else
 		owner = creature;
 	player = owner->getConstPlayer();
@@ -569,177 +569,178 @@ int communicate(Creature* creature, cmd* cmnd) {
 		strcpy(speak, get_language_verb(lang));
 
 
-	// GT uses their leader's pointer to find the people we're talking
-	// to while everything else uses the room pointer
 	if(chan->type == COM_GT) {
+	    // Group Tell is being handled slightly differently as it now uses a std::list instead of ctags
+	    // Adapt the other communication methods to use this once they've been moved to a std::list as well
 
-		cp = creature->first_fol;
-		if(cp)
-			target = cp->crt;
+	    Group* group = creature->getGroup();
+	    if(group) {
+	        for(Creature* crt : group->members) {
+	            pTarget = crt->getPlayer();
+	            if(!pTarget) continue;
+	            // GT prints to the player!
+	            if(pTarget == creature && chan->type != COM_GT)
+	                continue;
 
-		if(	(!creature->following && !creature->first_fol) ||
-			(target && target->isPlayer() && target->flagIsSet(P_DM_INVIS) && !target->flagIsSet(P_INCOGNITO))
-		) {
-			creature->print("You are not in a group.\n");
-			return(0);
-		}
+	            if(pTarget->isGagging(creature->isPet() ? creature->getMaster()->name : creature->name))
+	                continue;
 
-		target = (creature->following ? creature->following : creature);
-		cp = target->first_fol;
+	            if(pTarget->getGroupStatus() < GROUP_MEMBER) continue;
 
-		commTarget(creature, target->getPlayer(), chan->type, chan->ooc, lang, text, speak, ooc_str, false);
+	            commTarget(creature, pTarget, chan->type, chan->ooc, lang, text, speak, ooc_str, false);
+	        }
+	    } else {
+	        creature->print("You are not in a group.\n");
+	        return(0);
+	    }
 
 	} else {
 		cp = creature->getRoom()->first_ply;
 		creature->unhide();
+
+        if(chan->type == COM_EMOTE) {
+
+            creature->printColor("You emote: %s.\n", text.c_str());
+            player->bug("%s emoted: %s.\n", creature->name, text.c_str());
+
+        } else {
+            char intro[2046];
+            if(chan->ooc || lang == LCOMMON)
+                sprintf(intro, "You %s,", speak);
+            else
+                sprintf(intro, "You %s in %s,", speak, get_language_adj(lang));
+
+            if(!chan->ooc && creature->flagIsSet(P_LANGUAGE_COLORS))
+                ANSI(creature->getSock(), get_lang_color(lang));
+            creature->printColor("%s \"%s%s\"^x.\n", intro, ooc_str, text.c_str());
+            player->bug("%s %s in %s, \"%s%s.\"\n", creature->name, com_text[chan->type],
+                get_language_adj(lang), ooc_str, text.c_str());
+
+        }
+
+
+        while(cp) {
+            pTarget = cp->crt->getPlayer();
+            cp = cp->next_tag;
+
+            if(!pTarget)
+                continue;
+
+            if(chan->shout)
+                pTarget->wake("Loud noises disturb your sleep.", true);
+
+            // GT prints to the player!
+            if(pTarget == creature && chan->type != COM_GT)
+                continue;
+
+            if(pTarget->isGagging(creature->isPet() ? creature->getMaster()->name : creature->name))
+                continue;
+
+            commTarget(creature, pTarget, chan->type, chan->ooc, lang, text, speak, ooc_str, false);
+        }
+
+        if(chan->shout) {
+            // Because of multiple exits leading to the same room, we will keep
+            // track of who has heard us shout
+            std::list<Socket*> listeners;
+            std::list<Socket*>::iterator it;
+            bool	heard = false;
+
+            // This allows a player to yell something that will be heard
+            // not only in their room, but also in all rooms adjacent to them. In
+            // the adjacent rooms, however, people will not know who yelled.
+            xp = creature->getRoom()->first_ext;
+            while(xp) {
+                aRoom = 0;
+                new_rom = 0;
+                i=0;
+                cp=0;
+
+                // don't shout through closed doors
+                if(!xp->ext->flagIsSet(X_CLOSED))
+                    Move::getRoom(0, xp->ext, &new_rom, &aRoom, true);
+
+                xp = xp->next_tag;
+
+                // the same-room checks aren't run in getRoom because
+                // we don't send a creature.
+                if(aRoom) {
+                    if(creature->area_room && aRoom == creature->area_room)
+                        continue;
+                    cp = aRoom->first_ply;
+                } else if(new_rom) {
+                    if(creature->parent_rom && new_rom == creature->parent_rom)
+                        continue;
+                    cp = new_rom->first_ply;
+                } else
+                    continue;
+
+                while(cp) {
+                    pTarget = cp->crt->getPlayer();
+                    cp = cp->next_tag;
+
+                    if(!pTarget)
+                        continue;
+
+                    pTarget->wake("Loud noises disturb your sleep.", true);
+                    if(pTarget->isGagging(creature->name))
+                        continue;
+
+                    // have they already heard us yell?
+                    heard = false;
+
+                    for(it = listeners.begin() ; it != listeners.end() ; it++) {
+                        if((*it) == pTarget->getSock()) {
+                            heard = true;
+                            break;
+                        }
+                    }
+
+                    if(!heard) {
+                        listeners.push_back(pTarget->getSock());
+                        commTarget(creature, pTarget, chan->type, chan->ooc, lang, text, speak, ooc_str, true);
+                    }
+                }
+            }
+            listeners.clear();
+        }
+
+        if(chan->passphrase) {
+            xp = creature->getRoom()->first_ext;
+            while(xp) {
+                // got the phrase right?
+                if(xp->ext->getPassPhrase() != "" && xp->ext->getPassPhrase() == text) {
+                    // right language?
+                    if(!xp->ext->getPassLanguage() || lang == xp->ext->getPassLanguage()) {
+                        // even needs to be open?
+                        if(xp->ext->flagIsSet(X_LOCKED)) {
+                            broadcast(NULL, creature->getRoom(), "The %s opens!", xp->ext->name);
+                            xp->ext->clearFlag(X_LOCKED);
+                            xp->ext->clearFlag(X_CLOSED);
+
+                            if(xp->ext->getOpen() != "") {
+                                if(xp->ext->flagIsSet(X_ONOPEN_PLAYER)) {
+                                    creature->print("%s.\n", xp->ext->getOpen().c_str());
+                                } else {
+                                    broadcast(0, creature->getRoom(), xp->ext->getOpen().c_str());
+                                }
+                            }
+
+                        }
+                    }
+                }
+                xp = xp->next_tag;
+            }
+        }
+
 	}
-
-	// GT prints to the leader above
-	if(chan->type != COM_GT) {
-		if(chan->type == COM_EMOTE) {
-
-			creature->printColor("You emote: %s.\n", text.c_str());
-			player->bug("%s emoted: %s.\n", creature->name, text.c_str());
-
-		} else {
-			char intro[2046];
-			if(chan->ooc || lang == LCOMMON)
-				sprintf(intro, "You %s,", speak);
-			else
-				sprintf(intro, "You %s in %s,", speak, get_language_adj(lang));
-
-			if(!chan->ooc && creature->flagIsSet(P_LANGUAGE_COLORS))
-				ANSI(creature->getSock(), get_lang_color(lang));
-			creature->printColor("%s \"%s%s\"^x.\n", intro, ooc_str, text.c_str());
-			player->bug("%s %s in %s, \"%s%s.\"\n", creature->name, com_text[chan->type],
-				get_language_adj(lang), ooc_str, text.c_str());
-
-		}
-	}
-
-
-	while(cp) {
-		pTarget = cp->crt->getPlayer();
-		cp = cp->next_tag;
-
-		if(!pTarget)
-			continue;
-
-		if(chan->shout)
-			pTarget->wake("Loud noises disturb your sleep.", true);
-
-		// GT prints to the player!
-		if(pTarget == creature && chan->type != COM_GT)
-			continue;
-
-		if(pTarget->isGagging(creature->isPet() ? creature->following->name : creature->name))
-			continue;
-
-		commTarget(creature, pTarget, chan->type, chan->ooc, lang, text, speak, ooc_str, false);
-	}
-
-	if(chan->shout) {
-		// Because of multiple exits leading to the same room, we will keep
-		// track of who has heard us shout
-		std::list<Socket*> listeners;
-		std::list<Socket*>::iterator it;
-		bool	heard = false;
-
-		// This allows a player to yell something that will be heard
-		// not only in their room, but also in all rooms adjacent to them. In
-		// the adjacent rooms, however, people will not know who yelled.
-		xp = creature->getRoom()->first_ext;
-		while(xp) {
-			aRoom = 0;
-			new_rom = 0;
-			i=0;
-			cp=0;
-
-			// don't shout through closed doors
-			if(!xp->ext->flagIsSet(X_CLOSED))
-				Move::getRoom(0, xp->ext, &new_rom, &aRoom, true);
-
-			xp = xp->next_tag;
-
-			// the same-room checks aren't run in getRoom because
-			// we don't send a creature.
-			if(aRoom) {
-				if(creature->area_room && aRoom == creature->area_room)
-					continue;
-				cp = aRoom->first_ply;
-			} else if(new_rom) {
-				if(creature->parent_rom && new_rom == creature->parent_rom)
-					continue;
-				cp = new_rom->first_ply;
-			} else
-				continue;
-
-			while(cp) {
-				pTarget = cp->crt->getPlayer();
-				cp = cp->next_tag;
-
-				if(!pTarget)
-					continue;
-
-				pTarget->wake("Loud noises disturb your sleep.", true);
-				if(pTarget->isGagging(creature->name))
-					continue;
-
-				// have they already heard us yell?
-				heard = false;
-
-				for(it = listeners.begin() ; it != listeners.end() ; it++) {
-					if((*it) == pTarget->getSock()) {
-						heard = true;
-						break;
-					}
-				}
-
-				if(!heard) {
-					listeners.push_back(pTarget->getSock());
-					commTarget(creature, pTarget, chan->type, chan->ooc, lang, text, speak, ooc_str, true);
-				}
-			}
-		}
-		listeners.clear();
-	}
-
-	if(chan->passphrase) {
-		xp = creature->getRoom()->first_ext;
-		while(xp) {
-			// got the phrase right?
-			if(xp->ext->getPassPhrase() != "" && xp->ext->getPassPhrase() == text) {
-				// right language?
-				if(!xp->ext->getPassLanguage() || lang == xp->ext->getPassLanguage()) {
-					// even needs to be open?
-					if(xp->ext->flagIsSet(X_LOCKED)) {
-						broadcast(NULL, creature->getRoom(), "The %s opens!", xp->ext->name);
-						xp->ext->clearFlag(X_LOCKED);
-						xp->ext->clearFlag(X_CLOSED);
-
-						if(xp->ext->getOpen() != "") {
-							if(xp->ext->flagIsSet(X_ONOPEN_PLAYER)) {
-								creature->print("%s.\n", xp->ext->getOpen().c_str());
-							} else {
-								broadcast(0, creature->getRoom(), xp->ext->getOpen().c_str());
-							}
-						}
-
-					}
-				}
-			}
-			xp = xp->next_tag;
-		}
-	}
-
-
 	// DMs still broadcast to eaves on GT
 	if(creature->isDm() && chan->type != COM_GT)
 		return(0);
 
 
 	if(creature->isPet()) {
-		name = creature->following->name;
+		name = creature->getMaster()->name;
 		name += "'s ";
 		name += creature->name;
 	} else
@@ -759,6 +760,9 @@ int communicate(Creature* creature, cmd* cmnd) {
 	return(0);
 }
 
+bstring mxpTag(bstring str) {
+    return( bstring(MXP_BEG) + str + bstring(MXP_END));
+}
 //*********************************************************************
 //						channel
 //**********************************************************************
@@ -960,18 +964,42 @@ int channel(Player* player, cmd* cmnd) {
 			// must satisfy all the basic canHear rules to hear this channel
 			if(	(	(!chan->canHear || chan->canHear(sock)) &&
 					(!chan->flag || ply->flagIsSet(chan->flag)) &&
-					(!chan->not_flag || !ply->flagIsSet(chan->not_flag))
-				) && ( // they must also satisfy any special conditions here
+					(!chan->not_flag || !ply->flagIsSet(chan->not_flag)) )
+				&& ( // they must also satisfy any special conditions here
 					(chan->type != COM_CLASS || ply->getClass() == check) &&
 					(chan->type != COM_RACE || ply->getDisplayRace() == check) &&
-					(chan->type != COM_CLAN || (ply->getDeity() ? ply->getDeityClan() : ply->getClan()) == check)
-			) ) {
+					(chan->type != COM_CLAN || (ply->getDeity() ? ply->getDeityClan() : ply->getClan()) == check) ) )
+			{
 				if(extra != "")
-					ply->printColor("%s%s", ply->customColorize(chan->color).c_str(), extra.c_str());
+				    *ply << ColorOn << ply->customColorize(chan->color) << extra << ColorOff;
 
-				ply->printColor(ply->customColorize(chan->color + chan->displayFmt).c_str(), player, text.c_str());
-				ply->print("\n");
+				bstring toPrint = chan->displayFmt;
+				bstring icName = player->getCrtStr(ply, ply->displayFlags() | CAP);
+				bstring oocName = player->getName();
 
+				if(ply->canSee(player)) {
+				    icName = mxpTag(bstring("player ") + player->getName()) + icName + mxpTag("/player");
+				    oocName = mxpTag(bstring("player ") + player->getName()) + oocName + mxpTag("/player");
+				}
+
+				toPrint.Replace("*IC-NAME*", icName.c_str());
+				toPrint.Replace("*OOC-NAME*", oocName.c_str());
+
+				if(ply->isStaff() || (player->current_language && ply->isEffected("comprehend-languages"))
+				        || ply->languageIsKnown(player->current_language))
+				{
+				    // Listern speaks this language
+				    toPrint.Replace("*TEXT*", text.c_str());
+				} else {
+				    // Listern doesn't speak this language
+				    toPrint.Replace("*TEXT*", "<something incomprehensible>");
+				}
+
+
+				if(player->current_language != LCOMMON)
+				    toPrint += bstring(" in ") + get_language_adj(player->current_language) + ".";
+
+				*ply << ColorOn << ply->customColorize(chan->color) << toPrint << "\n" << ColorOff;
 			}
 
 
@@ -984,55 +1012,6 @@ int channel(Player* player, cmd* cmnd) {
 			}
 		}
 	}
-
-
-// TODO: Maybe put languages back in
-	//oldPrint(fd, "You are using the '%s' channel!\n", chanStr.c_str());
-
-//	} else {
-//		for(a=0;a<Tablesize;a++) {
-//			if(!Ply[a].ply)
-//				continue;
-//
-//			if(is_gag_ply(player->name, Ply[a].ply))
-//				continue;
-//
-//			if(Ply[a].ply->flagIsSet(P_NO_BROADCASTS))
-//				continue;
-//
-//			if(Ply[a].ply->isStaff() || (Ply[a].ply->isEffected("comprehend-languages") && player->current_language)) {
-//				if(Ply[a].ply->flagIsSet(P_LANGUAGE_COLORS) && player->current_language != LCOMMON)
-//					ANSI(Ply[a].ply->fd, get_lang_color(player->current_language));
-//
-//				if(player->current_language == LCOMMON)
-//					oldPrint(Ply[a].ply->fd, "### %M broadcasted, \"%s\"\n", player, &cmnd->fullstr[i+1]);
-//				else
-//					oldPrint(Ply[a].ply->fd, "### %M broadcasted, \"%s\" in %s.\n",
-//					      player, &cmnd->fullstr[i+1], get_language_adj(player->current_language));
-//
-//
-//			} else {
-//				if(!Ply[a].ply->languageIsKnown(LUNKNOWN+player->current_language)) {
-//					oldPrint(Ply[a].ply->fd, "### %M broadcasted something in %s.\n", player, get_language_adj(player->current_language));
-//				} else {
-//					if(Ply[a].ply->flagIsSet(P_LANGUAGE_COLORS) && player->current_language != LCOMMON )
-//						ANSI(Ply[a].ply->fd, get_lang_color(player->current_language));
-//					if(player->current_language == LCOMMON)
-//						oldPrint(Ply[a].ply->fd, "### %M broadcasted, \"%s\"\n", player, &cmnd->fullstr[i+1]);
-//					else
-//						oldPrint(Ply[a].ply->fd, "### %M broadcasted, \"%s\" in %s.\n",
-//						     player, &cmnd->fullstr[i+1], get_language_adj(player->current_language));
-//
-//				}
-//			}
-//
-//			ANSI(Ply[a].ply->fd, getMainTextColor());
-//
-//		}// end for
-//	}
-//
-//	player->bug("%s broadcasted, \"%s\" in %s.\n",
-//	       player->name, &cmnd->fullstr[i+1], get_language_adj(player->current_language));
 
 	return(0);
 }
@@ -1428,7 +1407,7 @@ int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun,
 	} else {
 
 		if(!strcmp(noun, "watch")) {
-			if(	!in_group(player, target->name) &&
+			if(	!player->inSameGroup(target) &&
 				!player->isCt() &&
 				!(player->isWatcher() && target->getLevel() <= 4)
 			) {

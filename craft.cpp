@@ -204,11 +204,11 @@ bool Recipe::isValid() const {
 bool Recipe::goodObject(const Player* player, const Object* object, const CatRef* cr) {
 	return(	(!cr || *&object->info == *cr) &&
 			player->canSee(object) &&
-			(	(	object->getShotscur() > 0 &&
-					object->getShotscur() == object->getShotsmax()
+			(	(	object->getShotsCur() > 0 &&
+					object->getShotsCur() == object->getShotsMax()
 				) || (
 					object->getType() == CONTAINER &&
-					object->getShotscur() == 0
+					object->getShotsCur() == 0
 			) )
 	);
 }
@@ -351,13 +351,24 @@ bstring Recipe::listIngredients(const std::list<CatRef>* list) const {
 //**********************************************************************
 //						display
 //**********************************************************************
+std::ostream& operator<<(std::ostream& out, Recipe& recipe) {
+    out << recipe.display();
+    return(out);
+}
 
-void Recipe::display(const Player* player) {
+std::ostream& operator<<(std::ostream& out, Recipe* recipe) {
+    if(recipe)
+        out << *recipe;
+
+    return(out);
+}
+
+bstring Recipe::display() {
 	std::ostringstream oStr;
 
 	if(!isValid()) {
-		player->print("Sorry, that recipe is faulty.\n");
-		return;
+		oStr << "Sorry, that recipe is faulty.\n";
+		return oStr.str();
 	}
 
 	oStr.setf(std::ios::left, std::ios::adjustfield);
@@ -403,7 +414,7 @@ void Recipe::display(const Player* player) {
 	oStr << "   |   ___________________________________|_\n"
 		 << "    \\_/____________________________________/\n";
 
-	player->printColor("%s\n", oStr.str().c_str());
+	return(oStr.str());
 }
 
 
@@ -618,7 +629,8 @@ int cmdRecipes(Player* player, cmd* cmnd) {
 			bool ignore=false;
 			recipe = player->findRecipe(cmnd, "", &ignore);
 			if(recipe)
-				recipe->display(player);
+				oStr << recipe;
+			player->printColor("%s\n", oStr.str().c_str());
 			return(0);
 		}
 	}
@@ -932,7 +944,7 @@ int dmRecipes(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		recipe->display(player);
+		oStr << recipe;
 
 
 		oStr << "Recipe: ^c" << recipe->getId() << "^w"

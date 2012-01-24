@@ -272,7 +272,6 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Monster *target=0;
 	int		title=0, mp=0, shocked=0, level=0, skLevel=0;
 	int		crt_num=0, buff=0, interval=0;
-	ctag	*cp=0;
 	time_t	t, i;
 
 
@@ -292,8 +291,8 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(spellData->how == CAST) {
 		if(!(player->getClass() == CLERIC && player->getDeity() == ARAMON) &&
-			!player->isCt()
-		) {
+			!player->isCt())
+		{
 			player->print("Only Clerics of %s may cast that spell.\n", gConfig->getDeity(ARAMON)->getName().c_str());
 			return(0);
 		}
@@ -303,8 +302,8 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(!player->isCt() &&
 		(spellData->how == CAST || spellData->how == SKILL) &&
-		player->getAdjustedAlignment() > REDDISH
-	) {
+		player->getAdjustedAlignment() > REDDISH)
+	{
 		player->print("You are not evil enough to do that!\n");
 		shocked = mrand(5,10);
 
@@ -318,14 +317,8 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	cp = player->first_fol;
-	while(cp) {
-		if(cp->crt->isMonster() && cp->crt->isPet()) {
-			player->print("Only one target may follow you at a time!\n");
-			return(0);
-		}
-		cp = cp->next_tag;
-	}
+	if(player->hasPet() && !player->checkStaff("You may only animate one undead creature at a time!\n"))
+		return(0);
 
 	/*
 	if(spellData->how == SKILL) {
@@ -418,7 +411,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 	target->addToRoom(player->getRoom());
 	gServer->addActive(target);
 
-	addFollower(player, target, FALSE);
+	player->addPet(target);
 
 	petTalkDesc(target, player);
 	target->setFlag(M_PET);

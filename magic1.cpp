@@ -84,7 +84,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
 	int		(*fn)(SpellFn);
 	int		c=0, match=0, n=0, num=0, lvl=0, reqMp=0;
 	ctag	*cp=0;
-	Player* player = creature->getMaster();
+	Player* player = creature->getPlayerMaster();
 	bool	offensive=false, self = (!player || player == creature);
 	Creature* listen = (player ? player : creature);
 	SpellData data;
@@ -1023,8 +1023,8 @@ int endConsume(Object* object, Player* player, bool forceDelete=false) {
 	}
 
 	if(!forceDelete)
-		object->decShotscur();
-	if(forceDelete || object->getShotscur() < 1) {
+		object->decShotsCur();
+	if(forceDelete || object->getShotsCur() < 1) {
 		if(object->flagIsSet(O_EATABLE))
 			player->printColor("You ate all of %P.\n", object);
 		else
@@ -1075,7 +1075,7 @@ int consume(Player* player, Object* object, cmd* cmnd) {
 	}
 
 	// they are eating a non-potion object
-	if(	object->getShotscur() < 1 ||
+	if(	object->getShotsCur() < 1 ||
 		(object->getMagicpower() - 1 < 0) ||
 		object->getType() != POTION
 	) {
@@ -1252,7 +1252,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 	if(object->doRestrict(player, true))
 		return(0);
 
-	if(object->getShotscur() < 1) {
+	if(object->getShotsCur() < 1) {
 		player->print("It's used up.\n");
 		return(0);
 	}
@@ -1302,8 +1302,8 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 
 	if(spell_fail(player, WAND)) {
 		if(!object->flagIsSet(O_CAN_USE_FROM_FLOOR))
-			object->decShotscur();
-		if(object->getShotscur() < 1 && Unique::isUnique(object)) {
+			object->decShotsCur();
+		if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
 			player->delObj(object, true);
 			delete object;
 		}
@@ -1339,9 +1339,9 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 			player->printColor("%s\n", object->use_output);
 
 		if(!object->flagIsSet(O_CAN_USE_FROM_FLOOR))
-			object->decShotscur();
+			object->decShotsCur();
 
-		if(object->getShotscur() < 1 && Unique::isUnique(object)) {
+		if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
 			player->delObj(object, true);
 			delete object;
 		}
@@ -1638,7 +1638,7 @@ int cmdTransmute(Player* player, cmd* cmnd) {
 	}
 	object = player->ready[HELD-1];
 
-	if(object->getShotscur()) {
+	if(object->getShotsCur()) {
 		player->printColor("That %P still has magic in it.\n", object);
 		return(0);
 	}
@@ -1653,7 +1653,7 @@ int cmdTransmute(Player* player, cmd* cmnd) {
 	}
 
 	// TODO: SKILLS: throw in a skill level check
-	cost = (unsigned)(1000 * object->getShotsmax());
+	cost = (unsigned)(1000 * object->getShotsMax());
 	if(object->flagIsSet(O_NO_FIX))
 		cost *= 2;
 	if(player->coins[GOLD] < cost || cost < 1) {
@@ -1687,7 +1687,7 @@ int cmdTransmute(Player* player, cmd* cmnd) {
 	}
 
 	// success!
-	object->setShotscur(object->getShotsmax());
+	object->setShotsCur(object->getShotsMax());
 	player->printColor("You successfully recharge the %s.\n", object->name);
 	player->checkImprove("transmute", true);
 	player->statistics.transmute();

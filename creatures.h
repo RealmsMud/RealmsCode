@@ -21,47 +21,49 @@
 
 #include "damage.h"
 #include "threat.h"
+#include "group.h"
+#include "creatureStreams.h"
 
 enum mType {
-	INVALID =		-1,
-	PLAYER =		0,
-	MONSTER =		1,
+    INVALID        = -1,
+    PLAYER          = 0,
+    MONSTER         = 1,
 
-	NPC =			2,
-	HUMANOID =		2,
+    NPC             = 2,
+    HUMANOID        = 2,
 
-	GOBLINOID =		3,
-	MONSTROUSHUM =		4,
-	GIANTKIN =		5,
-	ANIMAL =		6,
-	DIREANIMAL =		7,
-	INSECT =		8,
-	INSECTOID =		9,
-	ARACHNID =		10,
-	REPTILE =		11,
-	DINOSAUR =		12,
-	AUTOMATON =		13,
-	AVIAN =			14,
-	FISH =			15,
-	PLANT =			16,
-	DEMON =			17,
-	DEVIL =			18,
-	DRAGON =		19,
-	BEAST =			20,
-	MAGICALBEAST =		21,
-	GOLEM =			22,
-	ETHEREAL =		23,
-	ASTRAL =		24,
-	GASEOUS =		25,
-	ENERGY =		26,
-	FAERIE =		27,
-	DEVA =			28,
-	ELEMENTAL =		29,
-	PUDDING =		30,
-	SLIME =			31,
-	UNDEAD =		32,
+    GOBLINOID       = 3,
+    MONSTROUSHUM    = 4,
+    GIANTKIN        = 5,
+    ANIMAL          = 6,
+    DIREANIMAL      = 7,
+    INSECT          = 8,
+    INSECTOID       = 9,
+    ARACHNID        = 10,
+    REPTILE         = 11,
+    DINOSAUR        = 12,
+    AUTOMATON       = 13,
+    AVIAN           = 14,
+    FISH            = 15,
+    PLANT           = 16,
+    DEMON           = 17,
+    DEVIL           = 18,
+    DRAGON          = 19,
+    BEAST           = 20,
+    MAGICALBEAST    = 21,
+    GOLEM           = 22,
+    ETHEREAL        = 23,
+    ASTRAL          = 24,
+    GASEOUS         = 25,
+    ENERGY          = 26,
+    FAERIE          = 27,
+    DEVA            = 28,
+    ELEMENTAL       = 29,
+    PUDDING         = 30,
+    SLIME           = 31,
+    UNDEAD          = 32,
 
-	MAX_MOB_TYPES
+    MAX_MOB_TYPES
 };
 
 #include "monType.h"
@@ -115,11 +117,8 @@ class SpellData;
 #define NUM_ENEMY_MOB			4
 
 #define DEL_ROOM_DESTROYED		1
-#define DEL_PORTAL_DESTROYED		2
-#define NUM_RESCUE			2
-
-//#include <string>
-//#include <list>
+#define DEL_PORTAL_DESTROYED	2
+#define NUM_RESCUE			    2
 
 class SkillGain;
 class SpecialAttack;
@@ -188,13 +187,14 @@ public:
 	static const int EDUCATION_UNIVERSITY = 5;
 };
 
-
+typedef std::list<Monster*> PetList;
 
 //*********************************************************************
 //						Creature
 //*********************************************************************
 
-class Creature: public MudObject {
+class Creature: public MudObject, public Streamable {
+
 protected:
 	void CopyCommon(const Creature& cr);
 	void crtDestroy();
@@ -228,6 +228,10 @@ protected:
 	DeathType deathtype;
 	bstring poisonedBy;		// displayed to player, if this is a player, they get credit for pkill
 
+	Group* group;
+	GroupStatus groupStatus;
+
+
 public:
 // Constructors, Deconstructors, etc
 	Creature();
@@ -239,7 +243,7 @@ public:
 //	Monster* getMonster();
 //	Player* getPlayer();
 //
-	Player* getMaster();
+
 
 	virtual Socket* getSock() const;
 	Location getLocation();
@@ -248,13 +252,21 @@ public:
 
 //	const Monster* getConstMonster() const;
 //	const Player* getConstPlayer() const;
-	const Player* getConstMaster() const;
+
+	Creature* getMaster();
+	const Creature* getConstMaster() const;
+
+	Player* getPlayerMaster();
+	const Player* getConstPlayerMaster() const;
+
+
 	bool isPlayer() const;
 	bool isMonster() const;
 	bool checkMp(int reqMp);
 	void subMp(int reqMp);
 
 	Creature* myTarget;
+    PetList pets;
 	std::list<Creature*> targetingThis;
 
 	MagicType getCastingType() const;
@@ -299,9 +311,9 @@ public:
 	CatRef room;
 #define 				NUMHITS quests[0]
 	short questnum; // Quest fulfillment number (M)
-	struct Object *ready[MAXWEAR];// Worn/readied items
-	struct Creature *following; // creature being followed
-	ctag *first_fol; // List of followers
+	Object *ready[MAXWEAR];// Worn/readied items
+//	struct Creature *following; // creature being followed
+//	ctag *first_fol; // List of followers
 	otag *first_obj; // List of inventory
 	//etag *first_enm; // List of enemies
 	ttag *first_tlk; // List of talk responses
@@ -346,9 +358,34 @@ public:
 	Location previousRoom; // last room they were in
 	void setPreviousRoom();
 
+// Groups & Pets
+
+    void setGroup(Group* newGroup);
+    void setGroupStatus(GroupStatus newStatus);
+
+    Group* getGroup(bool inGroup = true);
+    GroupStatus getGroupStatus();
+    Creature* getGroupLeader();
+
+    void addToGroup(Group* toJoin, bool announce = true);
+    void createGroup(Creature* crt);
+    bool removeFromGroup(bool announce = true);
+
+    bool inSameGroup(Creature* target);
+
+    void dismissPet(Monster* toDismiss);
+    void dismissAll();
+    void displayPets();
+	void addPet(Monster* newPet, bool setPetFlag = true);
+	void delPet(Monster* toDel);
+	bool hasPet() const;
+
+	Monster* findPet(Monster* toFind);
+	Monster* findPet(bstring pName, int pNum);
 
 // XML: loading and saving
 	int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bool saveID = true) const;
+    void savePets(xmlNodePtr curNode) const;
 	void saveSkills(xmlNodePtr rootNode) const;
 	void saveFactions(xmlNodePtr rootNode) const;
 	void saveAttacks(xmlNodePtr rootNode) const;
@@ -405,7 +442,7 @@ public:
 	void bPrint(bstring toPrint) const;
 	void print(const char *fmt, ...) const;
 	void printColor(const char *fmt, ...) const;
-	virtual void vprint(const char *fmt, va_list ap, bool parseColor = false) const {};
+	virtual void vprint(const char *fmt, va_list ap) const {};
 
 // Combat & Death
 	bool checkDie(Creature *killer); // *
@@ -681,7 +718,6 @@ protected:
 public:
 
 	int doResistMagic(int dmg, const Creature* enemy=0);
-	bool isGroupLeader(Monster* target);
 	virtual void pulseTick(long t) = 0;
 
 	// New songs
@@ -734,6 +770,8 @@ protected:
 	int weaponSkill;
 	int defenseSkill;
 
+	Creature* myMaster;
+
 public:
 // Data
 	char last_mod[25]; // last staff member to modify creature.
@@ -766,6 +804,7 @@ public:
     bool hasEnemy() const;
 
     long adjustThreat(Creature* target, long modAmt, double threatFactor = 1.0);
+    long adjustContribution(Creature* target, long modAmt);
     void clearEnemyList();
 
 
@@ -774,6 +813,8 @@ public:
 
 	ThreatTable* threatTable;
 
+    void setMaster(Creature* pMaster);
+    Creature* getMaster() const;
 
 	Player* whoToAggro() const;
 	bool willAggro(const Player *player) const;
@@ -1027,7 +1068,6 @@ public:
 	void resetPlayer(Creature *killer);
 	void getPkilled(Player *killer, bool dueling, bool reset=true);
 	void die(DeathType dt);
-	Monster* getPet() const;
 	bool dropWeapons();
 	int checkPoison(Creature* target, Object* weapon);
 	int attackCreature(Creature *victim, AttackType attackType = ATTACK_NORMAL);
@@ -1195,7 +1235,7 @@ public:
 	Location getBound();
 	void bind(const StartLoc* location);
 	void dmPoof(BaseRoom* room, BaseRoom *newRoom);
-	void doFollow();
+	void doFollow(BaseRoom* oldRoom);
 	void doPetFollow();
 	void doRecall(int roomNum = -1);
 	void addToSameRoom(Creature* target);
@@ -1214,7 +1254,7 @@ public:
 	void learnRecipe(Recipe* recipe);
 	bool knowsRecipe(int id) const;
 	bool knowsRecipe(Recipe* recipe) const;
-	Recipe* findRecipe(cmd* cmnd, bstring skill, bool* searchRecipes=false, Size recipeSize=NO_SIZE, int numIngredients=1) const;
+	Recipe* findRecipe(cmd* cmnd, bstring skill, bool* searchRecipes, Size recipeSize=NO_SIZE, int numIngredients=1) const;
 
 // Stats & Ticking
 	long tickInterval(const Stat stat, bool fastTick, bool deathSickness, bool vampAndDay, const bstring& effectName);
@@ -1223,7 +1263,7 @@ public:
 	int getMpTickBonus() const;
 	void calcStats(vstat sendStat, vstat *toStat);
 	void changeStats();
-	void changingStats(char *str);
+	void changingStats(bstring str);
 	void decreaseFocus();
 	void increaseFocus(FocusAction action, int amt = 0, Creature* target = NULL);
 	void clearFocus();
@@ -1242,10 +1282,8 @@ public:
 	int displayCreature(Creature* target) const;
 	void sendPrompt();
 	void defineColors();
-	void defineMXP();
-//	void print(const char *fmt, ...) const;
-//	void printColor(const char *fmt, ...) const;
-	void vprint(const char *fmt, va_list ap, bool parseColor = false) const;
+	void setSockColors();
+	void vprint(const char *fmt, va_list ap) const;
 	void escapeText();
 	bstring getClassString() const;
 	void score(const Player* viewer) const;
@@ -1268,6 +1306,7 @@ public:
 	int getAdjustedAlignment() const;
 	void hasNewMudmail() const;
 	bool checkConfusion();
+	int autosplit(long amt);
 
 	void courageous();
 	void init();

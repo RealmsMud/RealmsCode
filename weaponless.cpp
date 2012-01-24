@@ -510,26 +510,20 @@ int cmdMaul(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int Player::packBonus() {
-	Creature *leader = following ? following : this;
-	ctag	*cp=0;
 	int		bns=0;
 
-	cp = leader->first_fol;
-	while(cp) {
+	Group* group = getGroup();
+	for(Creature* crt : group->members) {
 		// pack isn't pure
-		if(!cp->crt->isEffected("lycanthropy") || cp->crt->isMonster())
+		if(!crt->isEffected("lycanthropy") || crt->isMonster())
 			return(0);
 
-		if(!cp->crt->inSameRoom(leader)) {
-			cp = cp->next_tag;
-			continue;
-		}
+		if(!crt->inSameRoom(this)) continue;
 
 		// bonus for all within 3 levels.
-		if(cp->crt->isEffected("lycanthropy") && (abs((int)leader->getLevel() - (int)cp->crt->getLevel()) < 4))
+		if(crt->isEffected("lycanthropy") && (abs((int)getLevel() - (int)getLevel()) < 4))
 			bns += mrand(1,2);
 
-		cp = cp->next_tag;
 	}
 
 	return(MIN(10, bns));

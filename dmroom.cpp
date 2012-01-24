@@ -211,7 +211,7 @@ bstring opposite_exit_name(const bstring& name) {
 // monsters.
 
 int dmPurge(Player* player, cmd* cmnd) {
-	ctag	*cp=0, *fol=0, *ctemp=0, *pet=0;
+	ctag	*cp=0, *ctemp=0, *pet=0;
 	otag	*op=0, *otemp=0;
 	BaseRoom* room = player->getRoom();
 
@@ -242,27 +242,13 @@ int dmPurge(Player* player, cmd* cmnd) {
 		}
 
 		if(cp->crt->flagIsSet(M_DM_FOLLOW)) {
-			if(cp->crt->following) {
-				Player* master = cp->crt->following->getPlayer();
+		    Player* master = cp->crt->getPlayerMaster();
+			if(master) {
 				master->clearFlag(P_ALIASING);
 
 				master->setAlias(0);
 				master->print("%1M's soul was purged.\n", cp->crt);
-				fol = master->first_fol;
-				if(fol->crt == cp->crt) {
-					master->first_fol = fol->next_tag;
-					delete fol;
-				} else {
-					while(fol) {
-						if(fol->crt == cp->crt) {
-							//folprev = fol->next_tag;
-							delete fol;
-							break;
-						}
-						//folprev = fol;
-						fol = fol->next_tag;
-					}
-				}
+				master->delPet(cp->crt->getMonster());
 			}
 		}
 		free_crt(cp->crt);
@@ -1981,7 +1967,7 @@ int room_track(Creature* player) {
 int dmReplace(Player* player, cmd* cmnd) {
 	UniqueRoom	*room = player->parent_rom;
 	int		n=0, skip=0, skPos=0;
-	int unsigned i=0, pos=0;
+	bstring::size_type i=0, pos=0;
 	char	delim = ' ';
 	bool	sdesc=false, ldesc=false;
 	bstring search = "", temp = "";
@@ -2035,12 +2021,13 @@ int dmReplace(Player* player, cmd* cmnd) {
 	}
 
 	// fullstr is now our search text and replace text seperated by a space
-	strcpy(cmnd->fullstr, &cmnd->fullstr[i+1]);
+	cmnd->fullstr = cmnd->fullstr.substr(i+1);
+	//strcpy(cmnd->fullstr, &cmnd->fullstr[i+1]);
 
 
 	// we search until we find the deliminator we're looking for
 	pos=0;
-	i = strlen(cmnd->fullstr);
+	i = cmnd->fullstr.length();
 	while(pos < i) {
 		if(cmnd->fullstr[pos] == delim)
 			break;
@@ -2072,13 +2059,14 @@ int dmReplace(Player* player, cmd* cmnd) {
 	}
 
 	// fullstr now has our replace text
-	strcpy(cmnd->fullstr, &cmnd->fullstr[pos+1]);
+	//strcpy(cmnd->fullstr, &cmnd->fullstr[pos+1]);
+	cmnd->fullstr = cmnd->fullstr.substr(pos+1);
 	if(delim != ' ') {
-		if(cmnd->fullstr[strlen(cmnd->fullstr)-1] != delim) {
+		if(cmnd->fullstr[cmnd->fullstr.length()-1] != delim) {
 			player->print("Deliminators do not match up.\n");
 			return(0);
 		}
-		cmnd->fullstr[strlen(cmnd->fullstr)-1] = 0;
+		cmnd->fullstr[cmnd->fullstr.length()-1] = 0;
 	}
 
 
@@ -2205,7 +2193,8 @@ int dmDelete(Player* player, cmd* cmnd) {
 			i = strlen(cmnd->str[0]) + strlen(cmnd->str[1]) + 1;
 
 			// fullstr is now our phrase
-			strcpy(cmnd->fullstr, &cmnd->fullstr[i+1]);
+			cmnd->fullstr = cmnd->fullstr.substr(i+1);
+			//strcpy(cmnd->fullstr, &cmnd->fullstr[i+1]);
 
 
 			// we will use i to help us reuse code
@@ -2243,7 +2232,7 @@ int dmDelete(Player* player, cmd* cmnd) {
 			if(after) {
 
 				if(!phrase)
-					pos += strlen(cmnd->fullstr);
+					pos += cmnd->fullstr.length();
 
 				// if it's in the short desc, and they wanted to delete
 				// from both short and long, then delete all of long
@@ -2259,9 +2248,9 @@ int dmDelete(Player* player, cmd* cmnd) {
 			} else {
 
 				if(!i)
-					room->setShortDescription(room->getShortDescription().substr(0, pos) + room->getShortDescription().substr(pos + strlen(cmnd->fullstr), room->getShortDescription().length()));
+					room->setShortDescription(room->getShortDescription().substr(0, pos) + room->getShortDescription().substr(pos + cmnd->fullstr.length(), room->getShortDescription().length()));
 				else
-					room->setLongDescription(room->getLongDescription().substr(0, pos) + room->getLongDescription().substr(pos + strlen(cmnd->fullstr), room->getLongDescription().length()));
+					room->setLongDescription(room->getLongDescription().substr(0, pos) + room->getLongDescription().substr(pos + cmnd->fullstr.length(), room->getLongDescription().length()));
 
 			}
 
@@ -2337,9 +2326,10 @@ int dmDescription(Player* player, cmd* cmnd, bool append) {
 	if(sdesc || !newline)
 		i += strlen(cmnd->str[1]) + 1;
 
-	strcpy(cmnd->fullstr, &cmnd->fullstr[i+1]);
+	cmnd->fullstr = cmnd->fullstr.substr(i+1);
+//	strcpy(cmnd->fullstr, &cmnd->fullstr[i+1]);
 
-	if(strstr(cmnd->fullstr, "  "))
+	if(cmnd->fullstr.find("  ") != cmnd->fullstr.npos)
 		player->printColor("Do not use double spaces in room descriptions! Use ^W*wrap^x to fix this.\n");
 
 	if(sdesc) {
@@ -2351,7 +2341,7 @@ int dmDescription(Player* player, cmd* cmnd, bool append) {
 			room->appendShortDescription(cmnd->fullstr);
 		} else {
 			if(newline)
-				strcat(cmnd->fullstr, "\n");
+			    cmnd->fullstr += "\n";
 			room->setShortDescription(cmnd->fullstr + room->getShortDescription());
 		}
 
@@ -2365,7 +2355,7 @@ int dmDescription(Player* player, cmd* cmnd, bool append) {
 			room->appendLongDescription(cmnd->fullstr);
 		} else {
 			if(newline)
-				strcat(cmnd->fullstr, "\n");
+			    cmnd->fullstr += "\n";
 			room->setLongDescription(cmnd->fullstr + room->getLongDescription());
 		}
 

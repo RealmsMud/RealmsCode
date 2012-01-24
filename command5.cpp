@@ -697,22 +697,23 @@ void Player::changeStats() {
 //********************************************************************
 // This function allows a player to change their stats
 
-void changingStats(Socket* sock, char *str) {
+void changingStats(Socket* sock, bstring str) {
 	sock->getPlayer()->changingStats(str);
 }
-void Player::changingStats(char *str) {
+void Player::changingStats(bstring str) {
 	int		a, n, i, k, l, sum=0;
 	int		vnum[5];
 	vstat	nstat, sendStat;
 
 	switch(getSock()->getState()) {
 	case CON_CHANGING_STATS:
-		n = strlen(str);
+		n = str.length();
 		l = 0;
 		k = 0;
 		for(i=0; i<=n; i++) {
 			if(str[i]==' ' || str[i]==0) {
 				str[i] = 0;
+				//bstring tmp = str.substr(l);
 				vnum[k++] = atoi(&str[l]);
 				l = i+1;
 			}
@@ -914,7 +915,6 @@ void showAbility(Player* player, const char *skill, const char *display, int lt,
 
 int cmdTime(Player* player, cmd* cmnd) {
 	long	t = time(0), u=0, tmp=0, i=0;
-	ctag	*cp=0;
 	const CatRefInfo* cri = gConfig->getCatRefInfo(player->getRoom(), 1);
 	bstring world = "";
 
@@ -1020,20 +1020,18 @@ int cmdTime(Player* player, cmd* cmnd) {
 
 		// All those confusing defines, i'll make up my own code
 		i = 0;
-		cp = player->first_fol;
-		while(cp) {
-			if(cp->crt->isMonster() && cp->crt->isPet()) {
+		for(Monster* pet : player->pets) {
+			if(pet->isMonster() && pet->isPet()) {
 				i = 1;
-				if(cp->crt->isUndead())
+				if(pet->isUndead())
 					player->print("Time left before creature following you leaves/fades: %s\n",
-						timestr(cp->crt->lasttime[LT_ANIMATE].ltime+cp->crt->lasttime[LT_ANIMATE].interval-t));
+						timestr(pet->lasttime[LT_ANIMATE].ltime+pet->lasttime[LT_ANIMATE].interval-t));
 				else
 					player->print("Time left before creature following you leaves/fades: %s\n",
-						timestr(cp->crt->lasttime[LT_INVOKE].ltime+cp->crt->lasttime[LT_INVOKE].interval-t));
+						timestr(pet->lasttime[LT_INVOKE].ltime+pet->lasttime[LT_INVOKE].interval-t));
 
 				//TIMEUNTIL("hire",LT_INVOKE,player->lasttime[LT_INVOKE].interval);
 			}
-			cp = cp->next_tag;
 		}
 
 		// only show how long until next if they don't have a pet already

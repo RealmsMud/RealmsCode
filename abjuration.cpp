@@ -689,8 +689,6 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char* spell, int numDispel) {
 	Creature* target=0;
-	Monster* pet=0;
-	ctag	*cp=0;
 	int		chance=0;
 
 	if(spellData->how == CAST &&
@@ -783,8 +781,8 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 
 
 		if(	player->isCt() ||
-			(mrand(1,100) <= chance && !target->chkSave(SPL, player, 0))
-		) {
+			(mrand(1,100) <= chance && !target->chkSave(SPL, player, 0)))
+		{
 			player->print("You cast a %s spell on %N.\n", spell, target);
 
 			logCast(player, target, spell);
@@ -796,24 +794,16 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 
 			target->doDispelMagic(numDispel);
 
-			cp = target->first_fol;
-			while(cp) {
-				if(cp->crt->isPet() != PLAYER && cp->crt->following == target) {
-					pet = cp->crt->getMonster();
-					break;
-				}
-				cp = cp->next_tag;
+			for(Monster* pet : target->pets) {
+			    if(pet) {
+	                if(player->isCt() || !pet->chkSave(SPL, player, 0)) {
+	                    player->print("Your spell bansished %N's %s!\n", target, pet->name);
+	                    target->print("%M's spell banished your %s!\n%M fades away.\n", player, pet->name, pet);
+	                    gServer->delActive(pet);
+	                    pet->die(pet->getMaster());
+	                }
+			    }
 			}
-
-			if(pet) {
-				if(player->isCt() || !pet->chkSave(SPL, player, 0)) {
-					player->print("Your spell bansished %N's %s!\n", target, pet->name);
-					target->print("%M's spell banished your %s!\n%M fades away.\n", player, pet->name, pet);
-					gServer->delActive(pet);
-					pet->die(pet->following);
-				}
-			}
-
 		} else {
 			player->printColor("^yYour spell fails against %N.\n", target);
 			target->print("%M tried to cast a dispel-magic spell on you.\n", player);

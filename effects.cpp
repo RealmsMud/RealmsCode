@@ -292,7 +292,7 @@ bool EffectInfo::remove(bool show) {
 		// the object will be broken and unequipped
 		Object* object = myApplier->getObject();
 		if(object && object->flagIsSet(O_WORN)) {
-			object->setShotscur(0);
+			object->setShotsCur(0);
 			myParent->getPlayer()->breakObject(object, object->getWearflag());
 		}
 	}
@@ -430,7 +430,7 @@ EffectInfo* MudObject::addEffect(const bstring& effect, long duration, int stren
 
 EffectInfo* Effects::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
 	if(!gConfig->getEffect(effect))
-		return(false);
+		return(null);
 	EffectInfo* newEffect = new EffectInfo(effect, time(0), duration, strength, pParent, owner);
 
 	newEffect->compute(applier);
@@ -1030,7 +1030,7 @@ bool Exit::doEffectDamage(Creature* target) {
 	Creature *owner = target;
 
 	if(target->isPet())
-		owner = target->following;
+		owner = target->getMaster();
 
 	if(	exitEffectDamage(
 			getEffect("wall-of-fire"),

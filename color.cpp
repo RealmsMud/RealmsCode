@@ -101,8 +101,8 @@ char nameToColorCode(bstring name) {
 //						getColor
 //***********************************************************************
 
-const char* colorCodeToColor(const char type) {
-	switch(type) {
+const char* getAnsiColorCode(const unsigned char ch) {
+	switch(ch) {
 	case 'd':	return(C_BLACK);
 	case 'b':	return(C_BLUE);
 	case 'E':
@@ -156,8 +156,8 @@ bstring Config::getCustomColor(CustomColor i, bool caret) const {
 //**********************************************************************
 
 const bstring Monster::customColorize(bstring text, bool caret) const {
-	if(following && following->isPlayer())
-		text = following->getConstPlayer()->customColorize(text, caret);
+	if(getMaster() && getMaster()->isPlayer())
+		text = getMaster()->getConstPlayer()->customColorize(text, caret);
 	return(text);
 }
 const bstring Player::customColorize(bstring text, bool caret) const {
@@ -215,7 +215,7 @@ const char* colorSection(bool staff, const char* color, char colorChar = 0) {
 
 int cmdColors(Player* player, cmd* cmnd) {
 	bool staff = player->isStaff();
-	player->defineMXP();
+//	player->defineMXP();
 
 	if(!strcmp(cmnd->str[1], "reset")) {
 		player->print("Custom colors have been reset to defaults.\n");
@@ -351,44 +351,48 @@ int cmdColors(Player* player, cmd* cmnd) {
 //***********************************************************************
 //						defineColors
 //***********************************************************************
-// setup what color they want - called on new character and login of
-// existing character
+// Set color flags according to negotiated telnet options on character
+// creation.  Character flags override these settings after creation
 
 void Player::defineColors() {
-	if(mySock->color == ANSI_COLOR) {
+	if(mySock->getColorOpt() == ANSI_COLOR) {
 		setFlag(P_ANSI_COLOR);
 		clearFlag(P_MXP_ENABLED);
 		clearFlag(P_MIRC);
 		clearFlag(P_NEWLINE_AFTER_PROMPT);
 	}
-	else if(mySock->color == MXP_COLOR) {
+	else if(mySock->getColorOpt() == MXP_COLOR) {
 		setFlag(P_ANSI_COLOR);
 		setFlag(P_MXP_ENABLED);
-		defineMXP();
-	} else if(mySock->color == NO_COLOR) {
+        clearFlag(P_MIRC);
+        clearFlag(P_NEWLINE_AFTER_PROMPT);
+		mySock->defineMxp();
+	} else if(mySock->getColorOpt() == NO_COLOR) {
 		clearFlag(P_ANSI_COLOR);
 		clearFlag(P_MXP_ENABLED);
 		clearFlag(P_MIRC);
 		clearFlag(P_NEWLINE_AFTER_PROMPT);
 	}
 }
-
 //***********************************************************************
-//						defineMXP
+//                      setSocketColors
 //***********************************************************************
+// Set color options on the socket according to player flags (which can
+// overide what we've negotiated)
+void Player::setSockColors() {
+    if(flagIsSet(P_ANSI_COLOR)) {
+        mySock->setColorOpt(ANSI_COLOR);
+    }
 
-void Player::defineMXP() {
-	if(!flagIsSet(P_MXP_ENABLED) || !mySock->getMxp())
-		return;
-	print("%c[1z", 27);
-	print("<!ELEMENT c1 '<COLOR #FFD700>'>");	// gold
-	print("<!ELEMENT c2 '<COLOR #009CFF>'>");	// cerulean
-	print("<!ELEMENT c3 '<COLOR #FF5ADE>'>");	// pink
-	print("<!ELEMENT c4 '<COLOR #82E6FF>'>");	// sky blue
-	print("<!ELEMENT c5 '<COLOR #484848>'>");	// dark grey
-	print("<!ELEMENT c6 '<COLOR #95601A>'>");	// brown
-	printColor("%c[3z^x", 27);
+    if(flagIsSet(P_MXP_ENABLED)) {
+        if(mySock->getMxp()) {
+            // If we have the MXP flag set and we have mxp enabled, then change
+            // our color to mxp, otherwise stay with ANSI
+            mySock->setColorOpt(MXP_COLOR);
+        }
+    }
 }
+
 
 //***********************************************************************
 //						ANSI
@@ -431,51 +435,73 @@ void ANSI(Socket* sock, int color) {
 //						getMXPColor
 //***********************************************************************
 
-const char* getMXPColor(const char type, Player* player) {
-	// max length from getColor is 9, ending active MXP is 4,
-	// so 15 storage will be enough
-	static char r[15];
-	r[0] = 0;
 
-	// mxp specific color tags
-	switch(type) {
-	case 'l':
-	case 'e':
-	case 'p':
-	case 's':
-	case 'E':
-	case 'o':
-		// start mxp
-		sprintf(r, "%c[4z", 27);
-		player->setFlag(P_MXP_ACTIVE);
+// This function is being called during parseForOutput so we must use the actual mxp tags
+// We're also assuming we get a valid mxp color tag here
+bstring getMxpColorTag(bstring str, bool open) {
+    std::ostringstream oStr;
+    oStr << MXP_SECURE_OPEN << "<";
+    if(!open)
+        oStr << "/";
 
-		// grab the color
-		switch(type) {
-		case 'l':	strcat(r, "<c1>");	break;
-		case 'e':	strcat(r, "<c2>");	break;
-		case 'p':	strcat(r, "<c3>");	break;
-		case 's':	strcat(r, "<c4>");	break;
-		case 'E':	strcat(r, "<c5>");	break;
-		case 'o':	strcat(r, "<c6>");	break;
-		default:	break;
-		}
-		return(r);
-	default:
-		break;
-	}
+    oStr << gConfig->getMxpColorTag(str);
 
-	// don't deactivate color for carets!
-	if(type == '^')
-		return("^");
+    oStr << ">" << MXP_LOCK_CLOSE;
+    return(oStr.str());
+}
 
-	if(player->flagIsSet(P_MXP_ACTIVE)) {
-		// end mxp
-		sprintf(r, "%c[3z", 27);
-		player->clearFlag(P_MXP_ACTIVE);
-	}
+// TODO: Put this in a lookup table
+bool isMxpColor(const unsigned char ch) {
+    switch(ch) {
+        case 'l':
+        case 'e':
+        case 'p':
+        case 's':
+        case 'E':
+        case 'o':
+            return(true);
+    }
+    return(false);
+}
+//***********************************************************************
+//                      getMXPColor
+//***********************************************************************
+// Get the color code we need to print
+// Currently handles MXP & ANSI Color
+// TODO: Handle xterm256 color
 
-	strcat(r, colorCodeToColor(type));
-	return(r);
+bstring Socket::getColorCode(const unsigned char ch) {
+    std::ostringstream oStr;
+    if(!opts.color) {
+        // Color is not active, only replace a caret
+        if(ch == '^')
+            oStr << "^";
+        return(oStr.str());
+    } else {
+        // Color is active, do replacement
+
+        // Only return a color if the last color is not equal to the current color
+        if(opts.lastColor != ch || opts.lastColor == '^') {
+            if(opts.color == MXP_COLOR) {
+                // Check if we need to close a mxp color
+                if(isMxpColor(opts.lastColor)) {
+                    oStr << getMxpColorTag(bstring(1,opts.lastColor), false);
+                }
+                // Now check if the new color is mxp, if it is we're done here
+                // and can return now, otherwise continue on and check for an ANSI
+                // color
+                if(isMxpColor(ch)) {
+                    opts.lastColor = ch;
+                    oStr << getMxpColorTag(bstring(1,ch), true);
+                    return(oStr.str());
+                }
+            }
+            // Now Handle ANSI
+            opts.lastColor = ch;
+            oStr << getAnsiColorCode(ch);
+        }
+        return(oStr.str());
+    }
 }
 
 //***********************************************************************
@@ -503,48 +529,4 @@ bstring escapeColor(bstring color) {
 	return(color);
 }
 
-//***********************************************************************
-//						colorize
-//***********************************************************************
-
-bstring colorize(const char* txt, int option, Player* player) {
-	const char* point;
-	char last = '0';
-	std::ostringstream coloredStr;
-
-	if(option) {
-		for(point = txt; *point; point++) {
-			if(*point == '^') {
-				point++;
-				// If we're trying to send out the same color as before
-				// no point wasting the extra space
-				if(*point != last || last == '^') {
-					if(player && player->flagIsSet(P_MXP_ENABLED))
-						coloredStr << getMXPColor(*point, player);
-					else
-						coloredStr << colorCodeToColor(*point);
-				}
-				last = *point;
-				continue;
-			}
-			coloredStr << *point;
-		}
-		// Now set the color back to normal
-		if(player && player->flagIsSet(P_MXP_ENABLED))
-			coloredStr << getMXPColor('x', player);
-		else
-			coloredStr << colorCodeToColor('x');
-	} else {
-		for(point=txt; *point; point++ ) {
-			if(*point == '^') {
-				point++;
-				if(*point == '^')
-					coloredStr << "^";
-				continue;
-			}
-			coloredStr << *point;
-		}
-	}
-	return(coloredStr.str());
-}
 

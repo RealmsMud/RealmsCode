@@ -274,28 +274,6 @@ bool Player::checkConfusion() {
 }
 
 //********************************************************************
-//						getPet
-//********************************************************************
-
-Monster* Player::getPet() const {
-	Monster* pet=0;
-	ctag* fp=0;
-
-	fp = first_fol;
-	if(!fp)
-		return(0);
-	while(fp) {
-		if(fp->crt->isPet())
-			pet = fp->crt->getMonster();
-		if(pet && pet->following == this)
-			return(pet);
-		fp = fp->next_tag;
-	}
-
-	return(0);
-}
-
-//********************************************************************
 //						getEtherealTravelRoom
 //********************************************************************
 
@@ -354,7 +332,7 @@ int cmdDice(Creature* player, cmd* cmnd) {
 	strcpy(diceOutput, "");
 	strcpy(add ,"");
 
-	strLen = strlen(cmnd->fullstr);
+	strLen = cmnd->fullstr.length();
 
 	// This kills all leading whitespace
 	while(i<strLen && isspace(cmnd->fullstr[i]))

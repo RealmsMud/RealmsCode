@@ -19,8 +19,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-typedef std::pair<bstring, bstring> accountDouble;
-
 class Lore;
 class Unique;
 class PlayerClass;
@@ -36,6 +34,12 @@ class Calendar;
 class Fishing;
 class Effect;
 class MsdpVariable;
+class MxpElement;
+
+typedef std::pair<bstring, bstring> accountDouble;
+typedef std::map<bstring, MxpElement*> MxpElementMap;
+typedef std::map<bstring, bstring> BstringMap;
+
 
 class LottoTicket {
 public:
@@ -79,6 +83,12 @@ public:
 	void resetMinutes();
 	void resetShipsFile();
 	int expectedShipUpdates() const;
+
+
+// Mxp Elements
+	bool loadMxpElements();
+	void clearMxpElements();
+    bstring& getMxpColorTag(bstring str);
 
 // Commands
 	bool initCommands();
@@ -459,6 +469,8 @@ private:
 	// Quests
 public:
 	std::map<int, QuestInfo*> quests;
+	MxpElementMap mxpElements;
+	BstringMap mxpColors;
 	QuestInfo* getQuest(int questNum);
 
 public:

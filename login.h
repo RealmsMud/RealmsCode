@@ -106,8 +106,7 @@ typedef enum {
 } connectedStates;
 
 typedef enum {
-	COLOR_UNDECIDED,
-    NO_COLOR,
+    NO_COLOR = 0,
     ANSI_COLOR,
     MXP_COLOR
 } colorTypes;
@@ -132,31 +131,31 @@ namespace Create {
 	void addStartingWeapon(Player* player, bstring weapon);
 
 	// work functions
-	bool getSex(Socket* sock, char* str, int mode);
-	bool getRace(Socket* sock, char* str, int mode);
-	bool getSubRace(Socket* sock, char* str, int mode);
+	bool getSex(Socket* sock, bstring str, int mode);
+	bool getRace(Socket* sock, bstring str, int mode);
+	bool getSubRace(Socket* sock, bstring str, int mode);
 	void finishRace(Socket* sock);
-	bool getClass(Socket* sock, char* str, int mode);
-	bool getDeity(Socket* sock, char* str, int mode);
-	bool getLocation(Socket* sock, char* str, int mode);
-	bool getStats(Socket* sock, char* str, int mode);
+	bool getClass(Socket* sock, bstring str, int mode);
+	bool getDeity(Socket* sock, bstring str, int mode);
+	bool getLocation(Socket* sock, bstring str, int mode);
+	bool getStats(Socket* sock, bstring str, int mode);
 	void finishStats(Socket* sock);
-	bool getBonusStat(Socket* sock, char* str, int mode);
-	bool getPenaltyStat(Socket* sock, char* str, int mode);
+	bool getBonusStat(Socket* sock, bstring str, int mode);
+	bool getPenaltyStat(Socket* sock, bstring str, int mode);
 	bool handleWeapon(Socket* sock, int mode, char ch);
-	bool getProf(Socket* sock, char* str, int mode);
-	bool getSecondProf(Socket* sock, char* str, int mode);
-	bool getPassword(Socket* sock, char* str, int mode);
-	void done(Socket* sock, char* str, int mode);
+	bool getProf(Socket* sock, bstring str, int mode);
+	bool getSecondProf(Socket* sock, bstring str, int mode);
+	bool getPassword(Socket* sock, bstring str, int mode);
+	void done(Socket* sock, bstring str, int mode);
 
 	// character customization functions
-	bool startCustom(Socket* sock, char* str, int mode);
-	bool getCommunity(Socket* sock, char* str, int mode);
-	bool getFamily(Socket* sock, char* str, int mode);
-	bool getSocial(Socket* sock, char* str, int mode);
-	bool getEducation(Socket* sock, char* str, int mode);
-	bool getHeight(Socket* sock, char* str, int mode);
-	bool getWeight(Socket* sock, char* str, int mode);
+	bool startCustom(Socket* sock, bstring str, int mode);
+	bool getCommunity(Socket* sock, bstring str, int mode);
+	bool getFamily(Socket* sock, bstring str, int mode);
+	bool getSocial(Socket* sock, bstring str, int mode);
+	bool getEducation(Socket* sock, bstring str, int mode);
+	bool getHeight(Socket* sock, bstring str, int mode);
+	bool getWeight(Socket* sock, bstring str, int mode);
 
 	void doFamily(Player* player, int mode);
 	int calcHeight(int race, int mode);

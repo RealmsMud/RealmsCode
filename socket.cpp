@@ -70,6 +70,12 @@ enum telnetNegotiation {
 	NEG_SB_CHARSET_LOOK_FOR_IAC,
 	NEG_SB_CHARSET_END,
 
+	NEG_MXP_SECURE,
+	NEG_MXP_SECURE_TWO,
+	NEG_MXP_SECURE_THREE,
+	NEG_MXP_SECURE_FINISH,
+	NEG_MXP_SECURE_CONSUME,
+
 	NEG_UNUSED
 };
 
@@ -162,8 +168,11 @@ void Socket::reset() {
 	opts.msdp = false;
 	opts.atcp = false;
 	opts.charset = false;
-	opts.mudletWorkaround = false;
 	opts.UTF8 = false;
+	opts.mxpClientSecure = false;
+    opts.color = NO_COLOR;
+    opts.xterm256 = false;
+    opts.lastColor = '\0';
 
 	opts.compressing = false;
 	inPlayerList = false;
@@ -179,7 +188,6 @@ void Socket::reset() {
 	term.cols = 82;
 	term.rows = 40;
 
-	color = COLOR_UNDECIDED;
 	ltime = time(0);
 	intrpt = 0;
 
@@ -370,53 +378,45 @@ void Socket::resolveIp(const sockaddr_in &addr, bstring& ip) {
 			<< ((i >> 8) & 0xff) << "." << (i & 0xff);
 	ip = tmp.str();
 }
+
 bstring Socket::parseForOutput(bstring& outBuf) {
 	int i = 0, n = outBuf.size();
 	std::ostringstream oStr;
-	int gtCount = -1;
-	int ltCount = 0;
+	bool inTag = false, inEntity = false;
+	unsigned char ch = 0;
 	while(i < n) {
-		if((unsigned char)outBuf[i] == '\n')
-			oStr << '\r';
-		else if((unsigned char)outBuf[i] == '<' && getMudletWorkaround() == true) {
-			if(outBuf[i+1] == ' ') {
-				// No legitimate tag has a space after it, if it does it's a stray
-				oStr << "&lt;";
-				i++;
-				continue;
-			}
-			else {
-				if(gtCount == -1) {
-					gtCount = 0;
-					int j = i;
-					// Get a count of '>'
-					while(j < n) {
-						if(outBuf[j++] == '>')
-							gtCount++;
-					}
-				}
-				if(gtCount == 0) {
-					// We have no more '>'s out there, it's a stray
-					oStr << "&lt;";
-					i++;
-					continue;
-				} else {
-					ltCount++;
-				}
-			}
-		} else if ((unsigned char)outBuf[i] == '>' && getMudletWorkaround() == true) {
-			if(ltCount > 0) {
-				// We have an earlier '<', this closes it
-				ltCount--;
-				gtCount--;
-			} else {
-				// No earlier '<', this is a stray
-				oStr << "&gt;";
-				i++;
-				continue;
-			}
-		}
-		oStr << outBuf[i++];
+	    ch = outBuf[i++];
+	    if(inTag) {
+	        if(ch == CH_MXP_END) {
+	            inTag = false;
+	            if(opts.mxp)
+	                oStr << ">" << MXP_LOCK_CLOSE;
+	        } else if(opts.mxp)
+	            oStr << ch;
+
+            continue;
+	    } else if(inEntity) {
+	        if(opts.mxp)
+	            oStr << ch;
+	        if(ch == ';')
+	            inEntity = false;
+	        continue;
+	    } else {
+	        if(ch == CH_MXP_BEG) {
+	            inTag = true;
+	            if(opts.mxp)
+	                oStr << MXP_SECURE_OPEN << "<";
+	            continue;
+	        } else {
+                if(ch == '^') {
+                    ch = outBuf[i++];
+                    oStr << getColorCode(ch);
+                } else {
+                    oStr << ch;
+                }
+                continue;
+	        }
+	    }
 	}
 	return(oStr.str());
 
@@ -541,264 +541,304 @@ int Socket::processInput() {
 // For debugging
 //		std::cout << "DEBUG:" << (unsigned int)tmpBuf[i] << "'" << (unsigned char)tmpBuf[i] << "'" << "\n";
 
-		// Try to handle zMud, cMud & tintin++ which don't seem to double the IAC for NAWS
-		// during my limited testing -JM
-		if (oneIAC && tState > NEG_START_NAWS
-				&& tState < NEG_END_NAWS && tmpBuf[i] != IAC) {
-		// Broken Client
-std		::cout << "NAWS: BUG - Broken Client: Non-doubled IAC\n";
-		i--;
-	}
-	if(watchBrokenClient) {
-		// If we just finished NAWS with a 255 height...keep an eye out for the next
-		// character to be a stray SE
-		if(tState == NEG_NONE && (unsigned char)tmpBuf[i] == SE) {
-			std::cout << "NAWS: BUG - Stray SE\n";
-			// Set the tState to NEG_IAC as it should have been, and carry gracefully on
-			tState = NEG_IAC;
-		}
-		// It should only be the next character, so if we don't find it...don't keep looking for it
-		watchBrokenClient = false;
-	}
+        // Try to handle zMud, cMud & tintin++ which don't seem to double the IAC for NAWS
+        // during my limited testing -JM
+        if (oneIAC && tState > NEG_START_NAWS && tState < NEG_END_NAWS && tmpBuf[i] != IAC) {
+            // Broken Client
+            std::cout << "NAWS: BUG - Broken Client: Non-doubled IAC\n";
+            i--;
+        }
+        if (watchBrokenClient) {
+            // If we just finished NAWS with a 255 height...keep an eye out for the next
+            // character to be a stray SE
+            if (tState == NEG_NONE && (unsigned char) tmpBuf[i] == SE) {
+                std::cout << "NAWS: BUG - Stray SE\n";
+                // Set the tState to NEG_IAC as it should have been, and carry gracefully on
+                tState = NEG_IAC;
+            }
+            // It should only be the next character, so if we don't find it...don't keep looking for it
+            watchBrokenClient = false;
+        }
 
-	switch(tState) {
-		case NEG_NONE:
-			// Expecting an IAC here
-			if((unsigned char)tmpBuf[i] == IAC) {
-				tState = NEG_IAC;
-				continue;
-			} else {
-				tmp += tmpBuf[i];
-				break;
-			}
-			break;
-		case NEG_IAC:
-			switch((unsigned char)tmpBuf[i]) {
-				case NOP:
-				case IP:
-				case GA: tState = NEG_NONE; break;
-				case WILL: tState = NEG_WILL; break;
-				case WONT: tState = NEG_WONT; break;
-				case DO: tState = NEG_DO; break;
-				case DONT: tState = NEG_DONT; break;
-				case SE: tState = NEG_NONE; break;
-				case SB: tState = NEG_SB; break;
-				case IAC:
-				// Doubled IAC, send along to parser
-				tmp += tmpBuf[i];
-				tState = NEG_NONE;
-				break;
-			default:
-				tState = NEG_NONE;
-				break;
-			}
-		break;
-		// Handle Do and Will
-		case NEG_DO:
-		case NEG_WILL:
-		case NEG_DONT:
-		case NEG_WONT:
-			negotiate((unsigned char)tmpBuf[i]);
-			break;
-		case NEG_SB:
-			switch((unsigned char)tmpBuf[i]) {
-				case NAWS:
-					tState = NEG_SB_NAWS_COL_HIGH;
-					break;
-				case TTYPE:
-					tState = NEG_SB_TTYPE;
-					break;
-				case CHARSET:
-					if(getCharset())
-					tState = NEG_SB_CHARSET;
-					else
-					tState = NEG_NONE;
-					break;
-				case MSDP:
-					tState = NEG_SB_MSDP;
-					break;
-				case ATCP:
-					tState = NEG_SB_ATCP;
-					break;
-				default:
-					std::cout << "Unknown Sub Negotiation" << std::endl;
-					tState = NEG_NONE;
-					break;
-			}
-			break;
-		case NEG_SB_MSDP:
-			cmdInBuf.push_back(tmpBuf[i]);
-			if(tmpBuf[i] == IAC) {
-				tState = NEG_SB_MSDP_END;
-				break;
-			}
-			break;
-		case NEG_SB_MSDP_END:
-			if(tmpBuf[i] == SE) {
-				// We should have a full ATCP command now, let's parse it now
-				parseMsdp();
-				tState = NEG_NONE;
-				break;
-			} else {
-				// Not an SE: The last input was an IAC, so push the new input
-				// onto the inbuf and keep going
-				cmdInBuf.push_back(tmpBuf[i]);
-				tState = NEG_SB_MSDP;
-				break;
-			}
-			break;
-		case NEG_SB_ATCP:
-			if(tmpBuf[i] == IAC) {
-				tState = NEG_SB_ATCP_END;
-				break;
-			}
-			cmdInBuf.push_back(tmpBuf[i]);
-			break;
-		case NEG_SB_ATCP_END:
-			if(tmpBuf[i] == SE) {
-				// We should have a full ATCP command now, let's parse it now
-				parseAtcp();
-				tState = NEG_NONE;
-				break;
-			} else {
-				// Not an SE: The last input was an IAC, so push the new input
-				// onto the inbuf and keep going
-				cmdInBuf.push_back(tmpBuf[i]);
-				tState = NEG_SB_ATCP;
-				break;
-			}
-			break;
-		case NEG_SB_CHARSET:
-			// We've only asked for UTF-8, so assume if they respond it's for that
-			// and just eat the rest of the input
-			//
-			// Any other sub-negotiations (such as TTABLE-*) are not handled
-			if(tmpBuf[i] == ACCEPTED) {
-				std::cout << "Enabled UTF8" << std::endl;
-				opts.UTF8 = true;
-				tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
-			} else if(tmpBuf[i] == REJECTED) {
-				opts.UTF8 = false;
-				tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
-			} else {
-				tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
-			}
-			break;
-		case NEG_SB_CHARSET_LOOK_FOR_IAC:
-			// Do nothing while we wait for an IAC
-			if(tmpBuf[i] == IAC)
-			tState = NEG_SB_CHARSET_END;
-			break;
-			case NEG_SB_CHARSET_END:
-			if(tmpBuf[i] == IAC) {
-				// Double IAC, part of the data
-				tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
-				break;
-			} else if(tmpBuf[i] == SE) {
-				// Found what we were looking for
-			} else {
-				std::cout << "NEG_SB_CHARSET_END Error: Expected SE, got '" << (int)tmpBuf[i] << "'" << std::endl;
-			}
-			tState = NEG_NONE;
-			break;
-		case NEG_SB_TTYPE:
-			// Grab the terminal type
-			if(tmpBuf[i] == TELQUAL_IS) {
-				term.type.erase();
-				term.type = "";
-			} else if(tmpBuf[i] == IAC) {
-				// Expect a SE next
-				tState = NEG_SB_TTYPE_END;
-				break;
-			} else {
-				term.type += tmpBuf[i];
-			}
-			break;
-		case NEG_SB_TTYPE_END:
-			if(tmpBuf[i] == SE) {
-				std::cout << "Found term type: " << term.type << std::endl;
-				if(term.type == "Mudlet 2.0.1") {
-					opts.mudletWorkaround = true;
-				} else {
-					opts.mudletWorkaround = false;
-				}
-			}
-			else if(tmpBuf[i] == IAC) {
-				// I doubt this will happen
-				std::cout << "NEG_SB_TTYPE: Found double IAC" << std::endl;
-				term.type += tmpBuf[i];
-				tState = NEG_SB_TTYPE;
-				break;
-			}
-			else {
-				std::cout << "NEG_SB_TTYPE_END Error: Expected SE, got '" << (int)tmpBuf[i] << "'" << std::endl;
-			}
+        switch (tState) {
+            case NEG_NONE:
+                // Expecting an IAC here
+                if ((unsigned char) tmpBuf[i] == IAC) {
+                    tState = NEG_IAC;
+                    break;
+                } else if((unsigned char)tmpBuf[i] == '\033') {
+                    tState = NEG_MXP_SECURE;
+                    break;
+                } else {
+                    tmp += tmpBuf[i];
+                    break;
+                }
+                break;
+            case NEG_MXP_SECURE:
+                if(tmpBuf[i] == '[') {
+                    tState = NEG_MXP_SECURE_TWO;
+                    break;
+                } else {
+                    tmp += "\033" + tmpBuf[i];
+                }
+                tState = NEG_NONE;
+                break;
+            case NEG_MXP_SECURE_TWO:
+                if(tmpBuf[i] == '1') {
+                    tState = NEG_MXP_SECURE_FINISH;
+                    break;
+                } else {
+                    tmp += "\033[" + tmpBuf[i];
+                }
+                tState = NEG_NONE;
+                break;
+            case NEG_MXP_SECURE_FINISH:
+                if(tmpBuf[i] == 'z') {
+                    opts.mxpClientSecure = true;
+                    tState = NEG_MXP_SECURE_CONSUME;
+                    std::cout << "Client secure MXP mode enabled" << std::endl;
+                    break;
+                } else {
+                    tmp += "\033[1" + tmpBuf[i];
+                }
+                tState = NEG_NONE;
+                break;
+            case NEG_MXP_SECURE_CONSUME:
+                if(tmpBuf[i] == '\n') {
+                    tState = NEG_NONE;
+                    parseMXPSecure();
+                } else {
+                    cmdInBuf.push_back(tmpBuf[i]);
+                }
+                break;
+            case NEG_IAC:
+                switch ((unsigned char) tmpBuf[i]) {
+                    case NOP:
+                    case IP:
+                    case GA:
+                        tState = NEG_NONE;
+                        break;
+                    case WILL:
+                        tState = NEG_WILL;
+                        break;
+                    case WONT:
+                        tState = NEG_WONT;
+                        break;
+                    case DO:
+                        tState = NEG_DO;
+                        break;
+                    case DONT:
+                        tState = NEG_DONT;
+                        break;
+                    case SE:
+                        tState = NEG_NONE;
+                        break;
+                    case SB:
+                        tState = NEG_SB;
+                        break;
+                    case IAC:
+                        // Doubled IAC, send along to parser
+                        tmp += tmpBuf[i];
+                        tState = NEG_NONE;
+                        break;
+                    default:
+                        tState = NEG_NONE;
+                        break;
+                }
+                break;
+                // Handle Do and Will
+            case NEG_DO:
+            case NEG_WILL:
+            case NEG_DONT:
+            case NEG_WONT:
+                negotiate((unsigned char) tmpBuf[i]);
+                break;
+            case NEG_SB:
+                switch ((unsigned char) tmpBuf[i]) {
+                    case NAWS:
+                        tState = NEG_SB_NAWS_COL_HIGH;
+                        break;
+                    case TTYPE:
+                        tState = NEG_SB_TTYPE;
+                        break;
+                    case CHARSET:
+                        if (getCharset())
+                            tState = NEG_SB_CHARSET;
+                        else
+                            tState = NEG_NONE;
+                        break;
+                    case MSDP:
+                        tState = NEG_SB_MSDP;
+                        break;
+                    case ATCP:
+                        tState = NEG_SB_ATCP;
+                        break;
+                    default:
+                        std::cout << "Unknown Sub Negotiation" << std::endl;
+                        tState = NEG_NONE;
+                        break;
+                }
+                break;
+            case NEG_SB_MSDP:
+                cmdInBuf.push_back(tmpBuf[i]);
+                if (tmpBuf[i] == IAC) {
+                    tState = NEG_SB_MSDP_END;
+                    break;
+                }
+                break;
+            case NEG_SB_MSDP_END:
+                if (tmpBuf[i] == SE) {
+                    // We should have a full ATCP command now, let's parse it now
+                    parseMsdp();
+                    tState = NEG_NONE;
+                    break;
+                } else {
+                    // Not an SE: The last input was an IAC, so push the new input
+                    // onto the inbuf and keep going
+                    cmdInBuf.push_back(tmpBuf[i]);
+                    tState = NEG_SB_MSDP;
+                    break;
+                }
+                break;
+            case NEG_SB_ATCP:
+                if (tmpBuf[i] == IAC) {
+                    tState = NEG_SB_ATCP_END;
+                    break;
+                }
+                cmdInBuf.push_back(tmpBuf[i]);
+                break;
+            case NEG_SB_ATCP_END:
+                if (tmpBuf[i] == SE) {
+                    // We should have a full ATCP command now, let's parse it now
+                    parseAtcp();
+                    tState = NEG_NONE;
+                    break;
+                } else {
+                    // Not an SE: The last input was an IAC, so push the new input
+                    // onto the inbuf and keep going
+                    cmdInBuf.push_back(tmpBuf[i]);
+                    tState = NEG_SB_ATCP;
+                    break;
+                }
+                break;
+            case NEG_SB_CHARSET:
+                // We've only asked for UTF-8, so assume if they respond it's for that
+                // and just eat the rest of the input
+                //
+                // Any other sub-negotiations (such as TTABLE-*) are not handled
+                if (tmpBuf[i] == ACCEPTED) {
+                    std::cout << "Enabled UTF8" << std::endl;
+                    opts.UTF8 = true;
+                    tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
+                } else if (tmpBuf[i] == REJECTED) {
+                    opts.UTF8 = false;
+                    tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
+                } else {
+                    tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
+                }
+                break;
+            case NEG_SB_CHARSET_LOOK_FOR_IAC:
+                // Do nothing while we wait for an IAC
+                if (tmpBuf[i] == IAC)
+                    tState = NEG_SB_CHARSET_END;
+                break;
+            case NEG_SB_CHARSET_END:
+                if (tmpBuf[i] == IAC) {
+                    // Double IAC, part of the data
+                    tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
+                    break;
+                } else if (tmpBuf[i] == SE) {
+                    // Found what we were looking for
+                } else {
+                    std::cout << "NEG_SB_CHARSET_END Error: Expected SE, got '" << (int) tmpBuf[i]
+                            << "'" << std::endl;
+                }
+                tState = NEG_NONE;
+                break;
+            case NEG_SB_TTYPE:
+                // Grab the terminal type
+                if (tmpBuf[i] == TELQUAL_IS) {
+                    term.type.erase();
+                    term.type = "";
+                } else if (tmpBuf[i] == IAC) {
+                    // Expect a SE next
+                    tState = NEG_SB_TTYPE_END;
+                    break;
+                } else {
+                    term.type += tmpBuf[i];
+                }
+                break;
+            case NEG_SB_TTYPE_END:
+                if (tmpBuf[i] == SE) {
+                    std::cout << "Found term type: " << term.type << std::endl;
+                    if (term.type == "Mudlet 2.0.1") {
+                    // Mudlet doesn't seem to like MXP color, so turn it off
+//					opts.color = ANSI_COLOR;
+                    }
+                } else if (tmpBuf[i] == IAC) {
+                    // I doubt this will happen
+                    std::cout << "NEG_SB_TTYPE: Found double IAC" << std::endl;
+                    term.type += tmpBuf[i];
+                    tState = NEG_SB_TTYPE;
+                    break;
+                } else {
+                    std::cout << "NEG_SB_TTYPE_END Error: Expected SE, got '" << (int) tmpBuf[i]
+                            << "'" << std::endl;
+                }
 
-			tState = NEG_NONE;
-			break;
-		case NEG_SB_NAWS_COL_HIGH:
-			if(handleNaws(term.cols, tmpBuf[i], true))
-			tState = NEG_SB_NAWS_COL_LOW;
-			break;
-		case NEG_SB_NAWS_COL_LOW:
-			if(handleNaws(term.cols, tmpBuf[i], false))
-			tState = NEG_SB_NAWS_ROW_HIGH;
-			break;
-		case NEG_SB_NAWS_ROW_HIGH:
-			if(handleNaws(term.rows, tmpBuf[i], true))
-			tState = NEG_SB_NAWS_ROW_LOW;
-			break;
-		case NEG_SB_NAWS_ROW_LOW:
-			if(handleNaws(term.rows, tmpBuf[i], false)) {
-				std::cout << "New term size: " << term.cols << " x " << term.rows << std::endl;
-				// Some clients (tintin++, cmud, possibly zmud) don't seem to double an IAC(255) when it's
-				// sent as data, if this happens in the cols...we should be able to gracefully catch it
-				// but if it happens in the rows...it'll eat the IAC from IAC SE and cause problems,
-				// so we set the state machine to keep an eye out for a stray SE if the rows were set to 255
-				if(term.rows == 255)
-				watchBrokenClient = true;
-				tState = NEG_NONE;
-			}
-			break;
-		default:
-			std::cout << "Unhandled state" << std::endl;
-			tState = NEG_NONE;
-			break;
-		}
-	}
+                tState = NEG_NONE;
+                break;
+            case NEG_SB_NAWS_COL_HIGH:
+                if (handleNaws(term.cols, tmpBuf[i], true))
+                    tState = NEG_SB_NAWS_COL_LOW;
+                break;
+            case NEG_SB_NAWS_COL_LOW:
+                if (handleNaws(term.cols, tmpBuf[i], false))
+                    tState = NEG_SB_NAWS_ROW_HIGH;
+                break;
+            case NEG_SB_NAWS_ROW_HIGH:
+                if (handleNaws(term.rows, tmpBuf[i], true))
+                    tState = NEG_SB_NAWS_ROW_LOW;
+                break;
+            case NEG_SB_NAWS_ROW_LOW:
+                if (handleNaws(term.rows, tmpBuf[i], false)) {
+                    std::cout << "New term size: " << term.cols << " x " << term.rows << std::endl;
+                    // Some clients (tintin++, cmud, possibly zmud) don't seem to double an IAC(255) when it's
+                    // sent as data, if this happens in the cols...we should be able to gracefully catch it
+                    // but if it happens in the rows...it'll eat the IAC from IAC SE and cause problems,
+                    // so we set the state machine to keep an eye out for a stray SE if the rows were set to 255
+                    if (term.rows == 255)
+                        watchBrokenClient = true;
+                    tState = NEG_NONE;
+                }
+                break;
+            default:
+                std::cout << "Unhandled state" << std::endl;
+                tState = NEG_NONE;
+                break;
+        }
+    }
 
-		// Handles the screwy windows telnet, and its not that hard for
-		// other clients that send \n\r too
-	tmp.Replace("\r", "\n");
-	inBuf += tmp;
+    // Handles the screwy windows telnet, and its not that hard for
+    // other clients that send \n\r too
+    tmp.Replace("\r", "\n");
+    inBuf += tmp;
 
-	// handle backspaces
-	n = inBuf.getLength();
+    // handle backspaces
+    n = inBuf.getLength();
 
-	for (i = n - tmp.getLength(); i < (unsigned) n; i++) {
-		if (inBuf.getAt(i) == '\b' || inBuf.getAt(i) == 127) {
-//			std::cout << "Buffer before BS:";
-//			for(xx = 0 ; xx < inBuf.length() ; xx++) {
-//				std::cout << (unsigned int)inBuf[xx] << " ";
-//			}
-//			std::cout << std::endl;
-
-			if (n < 2) {
-				inBuf = "";
-				n = 0;
-			} else {
-				inBuf.Delete(i - 1, 2);
-				n -= 2;
-				i--;
-			}
-//			std::cout << "Buffer after BS: '" << inBuf << "'" << std::endl;
-//			for(xx = 0 ; xx < inBuf.length() ; xx++) {
-//	                     std::cout << (unsigned int)inBuf[xx] << " ";
-//			}
-//			std::cout << std::endl;
-
-		}
-	}
+    for (i = n - tmp.getLength(); i < (unsigned) n; i++) {
+        if (inBuf.getAt(i) == '\b' || inBuf.getAt(i) == 127) {
+            if (n < 2) {
+                inBuf = "";
+                n = 0;
+            } else {
+                inBuf.Delete(i - 1, 2);
+                n -= 2;
+                i--;
+            }
+        }
+    }
 
 	bstring::size_type idx = 0;
 	while ((idx = inBuf.find("\n", 0)) != bstring::npos) {
@@ -808,6 +848,13 @@ std		::cout << "NAWS: BUG - Broken Client: Non-doubled IAC\n";
 			idx += 1; // Consume the extra \n if applicable
 
 		inBuf.erase(0, idx);
+		if(opts.mxpClientSecure) {
+		    if(inBuf.left(8).equals("<version", false)) {
+
+		    } else if(inBuf.left(9).equals("<supports", false)) {
+
+		    }
+		}
 		input.push(tmpr);
 	}
 	ltime = time(0);
@@ -831,7 +878,7 @@ bool Socket::negotiate(unsigned char ch) {
 	case TELOPT_TTYPE:
 		// If we've gotten this far, we're fairly confident they support ANSI color
 		// so enable that
-		color = ANSI_COLOR;
+		opts.color = ANSI_COLOR;
 
 		if (tState == NEG_WILL) {
 			// Continue and query the rest of the options, including term type
@@ -848,11 +895,14 @@ bool Socket::negotiate(unsigned char ch) {
 	case TELOPT_MXP:
 		if (tState == NEG_WILL || tState == NEG_DO) {
 			write(telnet::start_mxp);
+			// Start off in MXP LOCKED CLOSED
+			write(MXP_LOCK_CLOSE);
 			//TODO: send elements we're using for mxp
 			opts.mxp = true;
 			// Assume if they have MXP enabled, they want mxp colors
-			color = MXP_COLOR;
+			opts.color = MXP_COLOR;
 			std::cout << "Enabled MXP" << std::endl;
+			defineMxp();
 		} else if (tState == NEG_WONT || tState == NEG_DONT) {
 			opts.mxp = false;
 			std::cout << "Disabled MXP" << std::endl;
@@ -1002,9 +1052,7 @@ int Socket::processOneCommand(void) {
 		}
 	}
 
-	char* tmp = strdup(cmd.c_str());
-	((void(*)(Socket*, char*)) (fn))(this, tmp);
-	free(tmp);
+	((void(*)(Socket*, bstring)) (fn))(this, cmd);
 
 	return (1);
 }
@@ -1027,8 +1075,8 @@ int restoreState(Socket* sock) {
 //						pauseScreen
 //*********************************************************************
 
-void pauseScreen(Socket* sock, char *str) {
-	if (!strcmp(str, "quit"))
+void pauseScreen(Socket* sock, bstring str) {
+    if(str.equals("quit"))
 		sock->disconnect();
 	else
 		sock->reconnect();
@@ -1060,7 +1108,7 @@ void Socket::reconnect(bool pauseScreen) {
 //*********************************************************************
 // Sets a fd's state and changes the interpreter to the appropriate function
 
-void convertNewWeaponSkills(Socket* sock, char *str);
+void convertNewWeaponSkills(Socket* sock, bstring str);
 
 void Socket::setState(int pState, int pFnParam) {
 	// Only store the last state if we're changing states, used mainly in the viewing file states
@@ -1109,6 +1157,62 @@ void Socket::setState(int pState, int pFnParam) {
 int setState(Socket* sock, int state, int pFnParam) {
 	sock->setState(state, pFnParam);
 	return (0);
+}
+
+bstring getMxpTag( bstring tag, bstring text ) {
+    bstring::size_type n = text.find(tag);
+    if(n == bstring::npos)
+        return("");
+
+    std::ostringstream oStr;
+    // Add the legnth of the tag
+    n += tag.length();
+    if( n < text.length()) {
+        // If our first char is a quote, advance
+        if(text[n] == '\"')
+            n++;
+        while(n < text.length()) {
+            char ch = text[n++];
+            if(ch == '.' || isdigit(ch) || isalpha(ch) ) {
+                oStr << ch;
+           } else {
+               return(oStr.str());
+           }
+        }
+    }
+    return("");
+}
+char caster_from_unsigned( unsigned char ch )
+{
+  return static_cast< char >( ch );
+}
+
+bool Socket::parseMXPSecure() {
+    if(getMxp()) {
+        bstring toParse(reinterpret_cast<char*>(&cmdInBuf[0]), cmdInBuf.size());
+        //bstring toParse(cmdInBuf.begin(), cmdInBuf.end());
+        //bstring toParse;
+        //toParse.reserve(cmdInBuf.size());
+        //std::transform( cmdInBuf.begin(), cmdInBuf.end(), back_inserter( toParse ), caster_from_unsigned );
+        //toParse.assign(&cmdInBuf[0], cmdInBuf.size());
+        std::cout << toParse << std::endl;
+        bstring version = getMxpTag("VERSION=", toParse);
+        if(!version.empty())
+            term.version = version;
+        if(term.type.equals("mushclient", false)) {
+            if(version >= "4.02")
+                opts.xterm256 = true;
+        } else if (term.type.equals("cmud", false)) {
+            if(version >=  "3.04")
+                opts.xterm256 = true;
+        } else if (term.type.equals("atlantis", false)) {
+            // Any version of atlantis with MXP supports xterm256
+            opts.xterm256 = true;
+        }
+    }
+    clearMxpClientSecure();
+    cmdInBuf.clear();
+    return(true);
 }
 
 bool Socket::parseMsdp() {
@@ -1205,6 +1309,31 @@ void Socket::bprint(bstring toPrint) {
 }
 
 //********************************************************************
+//                      bprintColor
+//********************************************************************
+// Append a string to the socket's output queue...in color!
+
+void Socket::bprintColor(bstring toPrint) {
+    if(!toPrint.empty()) {
+        // Append the string to the output buffer, we'll parse color there
+        output += toPrint;
+    }
+}
+
+//********************************************************************
+//                      bprintColor
+//********************************************************************
+// Append a string to the socket's output queue...without color!
+
+void Socket::bprintNoColor(bstring toPrint) {
+    if(!toPrint.empty()) {
+        // Double any color codes to prevent them from being parsed later
+        toPrint.Replace("^", "^^");
+        output += toPrint;
+    }
+
+}
+//********************************************************************
 //						println
 //********************************************************************
 // Append a string to the socket's output queue with a \n
@@ -1223,7 +1352,8 @@ void Socket::print(const char* fmt, ...) {
 		return;
 	va_list ap;
 	va_start(ap, fmt);
-	vprint(fmt, ap);
+	bstring newFmt = stripColor(fmt);
+	vprint( newFmt.c_str(), ap);
 	va_end(ap);
 }
 
@@ -1236,7 +1366,7 @@ void Socket::printColor(const char* fmt, ...) {
 		return;
 	va_list ap;
 	va_start(ap, fmt);
-	vprint(fmt, ap, true);
+	vprint(fmt, ap);
 	va_end(ap);
 }
 
@@ -1265,9 +1395,8 @@ int Socket::write(bstring toWrite, bool pSpy) {
 	int n = 0;
 	int total = 0;
 
+	// Parse any color, unicode, etc here
 	bstring toOutput = parseForOutput(toWrite);
-
-//	toWrite.Replace("\n", "\r\n");
 
 	total = toOutput.length();
 	UnCompressedBytes += total;
@@ -1438,7 +1567,7 @@ bool Socket::saveTelopts(xmlNodePtr rootNode) {
 	xml::newBoolChild(rootNode, "MXP", getMxp());
 	xml::newBoolChild(rootNode, "DumbClient", isDumbClient());
 	xml::newStringChild(rootNode, "Term", getTermType());
-	xml::newBoolChild(rootNode, "MudletWorkaround", getMudletWorkaround());
+	xml::newNumChild(rootNode, "Color", getColorOpt());
 	xml::newNumChild(rootNode, "TermCols", getTermCols());
 	xml::newNumChild(rootNode, "TermRows", getTermRows());
 	xml::newBoolChild(rootNode, "EOR", getEor());
@@ -1459,7 +1588,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
 			}
 		}
 		else if (NODE_NAME(curNode, "MXP")) xml::copyToBool(opts.mxp, curNode);
-		else if (NODE_NAME(curNode, "MudletWorkaround")) xml::copyToBool(opts.mudletWorkaround, curNode);
+		else if (NODE_NAME(curNode, "Color")) xml::copyToNum(opts.color, curNode);
 		else if (NODE_NAME(curNode, "MSDP"))  xml::copyToBool(opts.msdp, curNode);
 		else if (NODE_NAME(curNode, "ATCP")) {
 			xml::copyToBool(opts.atcp, curNode);
@@ -1575,7 +1704,7 @@ bool Socket::hasCommand(void) const {
 // True if the socket is playing (ie: fn is command and fnparam is 1)
 
 bool Socket::canForce(void) const {
-	return (fn == (void(*)(Socket*, char *)) ::command && fnparam == 1);
+	return (fn == (void(*)(Socket*, bstring)) ::command && fnparam == 1);
 }
 
 //********************************************************************
@@ -1600,8 +1729,11 @@ int Socket::getFd(void) const {
 bool Socket::getMxp(void) const {
 	return (opts.mxp);
 }
-bool Socket::getMudletWorkaround(void) const {
-	return (opts.mudletWorkaround);
+bool Socket::getMxpClientSecure() const {
+    return(opts.mxpClientSecure);
+}
+void Socket::clearMxpClientSecure() {
+    opts.mxpClientSecure = false;
 }
 int Socket::getMccp(void) const {
 	return (opts.mccp);
@@ -1645,6 +1777,12 @@ const bstring& Socket::getHostname(void) const {
 }
 bstring Socket::getTermType() const {
 	return (term.type);
+}
+int Socket::getColorOpt() const {
+    return(opts.color);
+}
+void Socket::setColorOpt(int opt) {
+    opts.color = opt;
 }
 int Socket::getTermCols() const {
 	return (term.cols);

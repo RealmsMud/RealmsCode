@@ -133,10 +133,8 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	if(player->getPlayer()->getPet()) {
-		player->print("Only one conjuration at a time!\n");
+	if(player->hasPet() && !player->checkStaff("Only one conjuration at a time!\n"))
 		return(0);
-	}
 
 	if(spellData->object) {
 		level = spellData->object->getQuality()/10;
@@ -388,10 +386,8 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 	target->damage.setSides(conjureStats[buff][level].sdice);
 	target->damage.setPlus(conjureStats[buff][level].pdice);
 	target->first_obj = 0;
-	target->first_fol = 0;
 	target->first_tlk = 0;
 	target->parent_rom = 0;
-	target->following = 0;
 
 	for(n=0; n<20; n++)
 		target->ready[n] = 0;
@@ -603,7 +599,8 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 	target->addToRoom(player->getRoom());
 	gServer->addActive(target);
 
-	addFollower(player, target, FALSE);
+	player->addPet(target);
+//	addFollower(player, target, FALSE);
 
 	petTalkDesc(target, player);
 	target->setFlag(M_PET);

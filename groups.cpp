@@ -17,10 +17,16 @@
  *
  */
 
+// Mud includes
 #include "mud.h"
+#include "move.h"
+#include "commands.h"
+
+// C++ Includes
 #include <sstream>
 #include <iomanip>
 #include <locale>
+
 
 //*********************************************************************
 //						cmdFollow
@@ -38,13 +44,13 @@ int cmdFollow(Player* player, cmd* cmnd) {
 		return(0);
 
 	if(cmnd->num < 2) {
-		player->print("Follow who?\n");
+		*player << "Follow whom?\n";
 		return(0);
 	}
 
 
 	if(player->flagIsSet(P_SITTING)) {
-		player->print("You need to stand first.\n");
+		*player << "You need to stand first.\n";
 		return(0);
 	}
 
@@ -52,252 +58,141 @@ int cmdFollow(Player* player, cmd* cmnd) {
 	lowercize(cmnd->str[1], 1);
 	toFollow = player->getRoom()->findPlayer(player, cmnd);
 	if(!toFollow) {
-		player->print("No one here by that name.\n");
+		*player << "No one here by that name.\n";
 		return(0);
 	}
 
-	if(toFollow == player && !player->following) {
-		player->print("You can't follow yourself.\n");
+	if(toFollow == player && !player->getGroup(false)) {
+		*player << "You can't group with yourself.\n";
 		return(0);
 	}
-
-
-
-	/*	if(player->flagIsSet(P_MISTED)) {
-	player->print("You cannot follow someone while misted.\n");
-	return(0);
-	} */
 
 	if(toFollow->flagIsSet(P_NO_FOLLOW) && !player->isCt() && toFollow != player) {
-		player->print("%M does not welcome followers.\n", toFollow);
+		*player << toFollow << " does not welcome group members.\n";
 		return(0);
 	}
 
 	if(toFollow->isRefusing(player->name)) {
-		player->print("%M doesn't allow you to follow %s right now.\n",
-		      toFollow, toFollow->himHer());
-		return(0);
-	}
-
-	if(toFollow->following && toFollow != player) {
-		player->print("You must follow %s to group with %s right now.\n",
-		      toFollow->following->name, toFollow->name);
+		player->print("%M doesn't allow you to group with %s right now.\n", toFollow, toFollow->himHer());
 		return(0);
 	}
 
 	if(toFollow->isGagging(player->name)) {
-		player->print("You start following %s.\n", toFollow->name);
+		*player << "You start following " << toFollow->getName() << ".\n";
 		return(0);
 	}
 
-	if(toFollow->following == player) {
-		player->print("You can't. %s's following you.\n",
-		      toFollow->upHeShe());
-		return(0);
-	}
 	if(toFollow->flagIsSet(P_MISTED) && !player->isCt()) {
-		player->print("How can you follow a mist?\n");
-		return(0);
+        player->print("How can you group with a mist?\n");
+        return(0);
+    }
+
+
+	Group* toJoin = toFollow->getGroup(false);
+	if(toJoin && player->getGroupStatus() != GROUP_INVITED) {
+        // Check if in same group
+        if(toJoin == player->getGroup() ) {
+            player->print("You can't. %s is in the same group as you!\n", toFollow->upHeShe());
+            return(0);
+        }
+        if(toJoin->getGroupType() != GROUP_PUBLIC) {
+            player->print("%s's group is invite only.\n", toFollow->getName());
+            return(0);
+        }
 	}
-
-
 
 	if(player->flagIsSet(P_NO_FOLLOW)) {
-		player->print("You welcome followers again.\n");
+		player->print("You welcome group members again.\n");
 		player->clearFlag(P_NO_FOLLOW);
 	}
-	if(player->following)
-		doStopFollowing(player, TRUE);
+	if((toJoin && player->getGroupStatus() != GROUP_INVITED) || player == toFollow)
+	    player->removeFromGroup(true);
 
 	if(player == toFollow)
 		return(0);
 
-	addFollower(toFollow, player, TRUE);
+	if(toJoin)
+	    player->addToGroup(toJoin);
+	else
+	    toFollow->createGroup(player);
+
+
 
 	return(0);
 
 }
+//********************************************************************************
+//* AddToGroup
+//********************************************************************************
+// Adds the creature to the group, and announces if requested
+void Creature::addToGroup(Group* toJoin, bool announce) {
+    toJoin->add(this);
+    if(announce) {
+    	*this << "You join \"" << toJoin->getName() << "\".\n";
+        toJoin->sendToAll(bstring(getName()) + " has joined your group.\n", this);
+        broadcast(getSock(), getRoom(), "%M joins the group \"%s\".", this, toJoin->getName().c_str());
+    }
 
+}
+//********************************************************************************
+//* CreateGroup
+//********************************************************************************
+// Creates a new group with the creature as the leader, and crt as a member
+void Creature::createGroup(Creature* crt) {
+    this->print("You have formed a group.\n");
+
+    // Note: Group leader is added to this group in the constructor
+    group = new Group(this);
+    groupStatus = GROUP_LEADER;
+
+    crt->addToGroup(group);
+}
 //*********************************************************************
 //						numFollowers
 //*********************************************************************
 
 int Creature::numFollowers() {
 	int num=0;
-	ctag *cp = first_fol;
-	while(cp) {
-		num += 1 + cp->crt->numFollowers();
-		cp = cp->next_tag;
-	}
+//	ctag *cp = first_fol;
+//	while(cp) {
+//		num += 1 + cp->crt->numFollowers();
+//		cp = cp->next_tag;
+//	}
 	return(num);
 }
 
 //*********************************************************************
-//						addFollower
+//						RemoveFromGroup
 //*********************************************************************
-// This function will make follower follow pCreature, pCreature must be a player
-// follower must NOT be following anyone else
+// Removes the creature and all of their pets from the group
 
-int addFollower(Creature * pCreature, Creature *follower, int notify) {
-	ctag	*pp=0, *cp=0, *last=0, *cpnext=0;
-	Player* creature = pCreature->getPlayer(), *pFollower = follower->getPlayer();
+bool Creature::removeFromGroup(bool announce) {
+    if(group) {
+        if(groupStatus == GROUP_INVITED) {
+        	if(announce) {
+        		if(!pFlagIsSet(P_DM_INVIS) && !pFlagIsSet(P_INCOGNITO))
+        			group->sendToAll(getCrtStr(NULL, CAP) + " rejects the invitation to join your group.\n");
+            	*this << "You reject the invitation to join \"" << group->getName() << "\".\n";
+        	}
+            group->remove(this);
+            group = null;
+        } else {
+        	if(announce) {
+        		if(!pFlagIsSet(P_DM_INVIS) && !pFlagIsSet(P_INCOGNITO))
+        			group->sendToAll(getCrtStr(NULL, CAP) + " leaves the group.\n", this);
+        		if(group->getLeader() == this)
+        			*this << "You leave your group.\n";
+        		else
+        			*this << "You leave \"" << group->getName() << "\".\n";
+        	}
+            group->remove(this);
+            group = null;
+        }
+        groupStatus = GROUP_NO_STATUS;
+        return(true);
+    }
 
-	ASSERTLOG( creature );
-	ASSERTLOG( follower->following == NULL );
-
-	follower->following = creature;
-
-	pp = new ctag;
-	if(!pp)
-		merror("follow", FATAL);
-
-	pp->crt = follower;
-	pp->next_tag = 0;
-
-	// creature = leader
-	// add 2: 1 for leader, 1 for new follower
-	int numFollowers = creature->numFollowers() + 2;
-
-	creature->statistics.group(numFollowers);
-	if(pFollower)
-		pFollower->statistics.group(numFollowers);
-
-	if(!creature->first_fol) {
-		creature->first_fol = pp;
-	} else {
-		// Add monsters to the start of the follow list, players to the end
-		if(!pFollower) {
-			pp->next_tag = creature->first_fol;
-			creature->first_fol = pp;
-
-			// skip over the creature we just added
-			cp = pp->next_tag;
-			while(cp) {
-				if(cp->crt->isPlayer())
-					cp->crt->getPlayer()->statistics.group(numFollowers);
-				cp = cp->next_tag;
-			}
-		} else {
-			cp = creature->first_fol;
-			while(cp) {
-				if(cp->crt->isPlayer())
-					cp->crt->getPlayer()->statistics.group(numFollowers);
-				last = cp;
-				cp = cp->next_tag;
-			}
-			last->next_tag = pp;
-		}
-	}
-
-	if(pFollower) {
-		pFollower->unmist();
-
-
-		pFollower->print("You start following %s.\n", creature->name);
-
-		if(!isDm(creature) && isStaff(creature))
-			log_immort(true, creature, "%s follows %s in room %s.\n", pFollower->name, creature->name,
-				pFollower->getRoom()->fullName().c_str());
-		else if(!isDm(pFollower))
-			log_immort(true, pFollower, "%s follows %s in room %s.\n", pFollower->name, creature->name,
-				pFollower->getRoom()->fullName().c_str());
-
-
-		if(!pFollower->flagIsSet(P_DM_INVIS) && !pFollower->flagIsSet(P_INCOGNITO) && !creature->isGagging(follower->name)) {
-			creature->print("%M starts following you.\n", pFollower);
-			broadcast(pFollower->getSock(), creature->getSock(), pFollower->getRoom(),
-				"%M follows %N.", pFollower, creature);
-		}
-		cp 	= pFollower->first_fol;
-		while(cp) {
-			cpnext = cp->next_tag; // No Guarantee cp will still be valid if we call
-								   // doStopFollowing
-			if(cp->crt->isPlayer()) {
-				if(!cp->crt->flagIsSet(P_DM_INVIS) && !cp->crt->flagIsSet(P_INCOGNITO))
-					follower->print("%s must also follow %s now to follow you.\n", cp->crt->name, creature->name);
-				cp->crt->print("You must follow %s now to follow %s.\n", creature->name, follower->name);
-				cp->crt->print("You stop following %s.\n", follower->name);
-				doStopFollowing(cp->crt, FALSE);
-			}
-			cp = cpnext;
-		}
-	}
-	return(0);
-}
-
-//*********************************************************************
-//						doStopFollowing
-//*********************************************************************
-// Causes the passed creature to stop following whoever they are
-// following, and if notify is TRUE, notify that person if they can
-// can see the person
-
-int doStopFollowing(Creature *target, int notify) {
-	ctag		*cp, *prev;
-	Creature * following; // The person they are following
-	Player* pTarget = target->getPlayer(), *pFollowing=0;
-
-	if(target->following == NULL)
-		return(0);
-
-	following = target->following;
-	cp = following->first_fol;
-
-	if(cp->crt == target) {
-		// They are the first person following them, so get rid of them
-		following->first_fol = cp->next_tag;
-		delete cp;
-	} else {
-		while(cp) {
-			// Go through and find them
-			if(cp->crt == target) {
-				prev->next_tag = cp->next_tag;
-				delete cp;
-				break;
-			}
-			prev = cp;
-			cp = cp->next_tag;
-		}
-	}
-	target->following = 0;
-
-	if(pTarget && notify == TRUE) {
-		pTarget->print("You stop following %s.\n", following->name);
-		pFollowing = following->getPlayer();
-
-		if(!pTarget->flagIsSet(P_DM_INVIS) && !pTarget->flagIsSet(P_INCOGNITO) && pFollowing && !pFollowing->isGagging(pTarget->name))
-			pFollowing->print("%M stops following you.\n", pTarget);
-	}
-	return(1);
-}
-
-//*********************************************************************
-//						doLose
-//*********************************************************************
-// Causes pFollower to stop following pCreature
-
-int doLose(Creature* crt, Creature* follower, int notify) {
-	ASSERTLOG( crt != NULL );
-	ASSERTLOG( follower != NULL );
-	Player* pCreature = crt->getPlayer();
-	Player *pFollower = follower->getPlayer();
-
-	doStopFollowing(follower, FALSE);
-
-	if(pCreature && pFollower && notify == TRUE) {
-		pCreature->print("You lose %s.\n", pFollower->himHer());
-
-		if(pFollower->isWatching(pCreature->name))
-			pFollower->delWatching(pCreature->name);
-		if(pCreature->isWatching(pFollower->name))
-			pCreature->delWatching(pFollower->name);
-
-		if(!pCreature->flagIsSet(P_DM_INVIS) && !pFollower->flagIsSet(P_INCOGNITO)) {
-			pFollower->print("%M loses you.\n", pCreature);
-			broadcast(pCreature->getSock(), pFollower->getSock(), pCreature->getRoom(), "%M loses %N.", pCreature, pFollower);
-		}
-	}
-	return(1);
+    return(false);
 }
 
 //*********************************************************************
@@ -309,8 +204,6 @@ int doLose(Creature* crt, Creature* follower, int notify) {
 
 int cmdLose(Player* player, cmd* cmnd) {
 	Creature* target=0;
-
-
 	player->clearFlag(P_AFK);
 
 	if(!player->ableToDoCommand())
@@ -318,144 +211,63 @@ int cmdLose(Player* player, cmd* cmnd) {
 
 	if(cmnd->num == 1) {
 
-		if(player->following == 0) {
-			player->print("You're not following anyone.\n");
+		if(!player->getGroup(false)) {
+			*player << "You're not in a group.\n";
 			return(0);
 		}
-		doStopFollowing(player, 1);
+		player->removeFromGroup(true);
 		return(0);
 	}
 
 	player->unhide();
 
+	Group* group = player->getGroup(true);
+
+	if(!group) {
+	    *player << "You are not in a group.\n";
+	    return(0);
+	}
+	if(player != group->getLeader()) {
+	    *player << "You are not the group leader.\n";
+	    return(0);
+	}
+
 	lowercize(cmnd->str[1], 1);
-	//target = findCreature(player, player->first_fol, cmnd);
-	ctag* cp = player->first_fol;
-	int match = 0;
-	while(cp) {
-		if(!player->canSee(cp->crt)) {
-			cp = cp->next_tag;
-			continue;
-		}
-		if(keyTxtEqual(cp->crt, cmnd->str[1])) {
-			match++;
-			if(match == cmnd->val[1]) {
-				target = cp->crt;
-				break;
-			}
-		}
-		cp = cp->next_tag;
-	}
+	target = group->getMember(cmnd->str[1], cmnd->val[1], player, false);
+
 	if(!target) {
-		player->print("That person is not following you.\n");
+		*player << "That person is not following you.\n";
 		return(0);
 	}
 
-	if(target->following != player) {
-		player->print("That person is not following you.\n");
-		return(0);
-	}
-	if(target->isPet()) {
-		player->print("You can't lose your own pet!\n");
-		return(0);
-	}
-
-	doLose(player, target, TRUE);
+	player->removeFromGroup(true);
 
 	return(0);
 
 }
 
-//*********************************************************************
-//						groupLine
-//*********************************************************************
-//
-// this function is responsible for printing out a line of group member info
-//
 
-bstring groupLine(Creature* player, Creature* target) {
-	bool	isPet = target->isPet();
-	std::ostringstream oStr;
-
-	if(!player->flagIsSet(P_NO_EXTRA_COLOR) && player->isEffected("know-aura"))
-		oStr << target->alignColor();
-
-	oStr << "  ";
-	if(isPet)
-		oStr << target->following->name << "'s " << target->name;
-	else
-		oStr << target->name;
-	oStr << "^x";
-
-	if(	player->isCt() ||
-		(isPet && !target->following->flagIsSet(P_NO_SHOW_STATS)) ||
-		(!isPet && !target->flagIsSet(P_NO_SHOW_STATS)) ||
-		(isPet && target->following == player) ||
-		(!isPet && target == player)
-	) {
-		oStr << " - " << (target->hp.getCur() < target->hp.getMax() && !player->flagIsSet(P_NO_EXTRA_COLOR) ? "^R" : "")
-			 << std::setw(3) << target->hp.getCur() << "^x/" << std::setw(3) << target->hp.getMax()
-			 << " Hp - " << std::setw(3) << target->mp.getCur() << "/" << std::setw(3)
-			 << target->mp.getMax() << " Mp";
-
-		if(!isPet) {
-			if(target->isEffected("blindness"))
-				oStr << ", Blind";
-			if(target->isEffected("drunkenness"))
-				oStr << ", Drunk";
-			if(target->isEffected("confusion"))
-				oStr << ", Confused";
-			if(target->isDiseased())
-				oStr << ", Diseased";
-			if(target->isEffected("petrification"))
-				oStr << ", Petrified";
-			if(target->isPoisoned())
-				oStr << ", Poisoned";
-			if(target->isEffected("silence"))
-				oStr << ", Silenced";
-			if(target->flagIsSet(P_SLEEPING))
-				oStr << ", Sleeping";
-			else if(target->flagIsSet(P_UNCONSCIOUS))
-				oStr << ", Unconscious";
-			if(target->isEffected("wounded"))
-				oStr << ", Wounded";
-		}
-
-		oStr << ".";
-	}
-	oStr << "\n";
-	return(oStr.str());
-}
-
-
-//*********************************************************************
-//						showGroupMembers
-//*********************************************************************
-
-bstring showGroupMembers(Player* player, ctag* cp, int *num) {
-	Creature* follower=0;
-	std::ostringstream oStr;
-	while(cp) {
-		follower = cp->crt;
-		cp = cp->next_tag;
-
-		// we assume that, if they're not a player, they're a pet
-		// and are following someone
-		// sending true to canSee skips invis/mist checks
-		if(!player->canSee(follower->isPlayer() ? follower : follower->following, true))
-			continue;
-
-		// print out the follower
-		if(follower != player) {
-			(*num)++;
-			oStr << groupLine(player, follower);
-		}
-
-		if(follower->first_fol)
-			oStr << showGroupMembers(player, follower->first_fol, num);
-
-	}
-	return(oStr.str());
+int printGroupSyntax(Player* player) {
+    player->printColor("Syntax: group ^e<^xleave^e>\n");
+    if(player->getGroupStatus() == GROUP_INVITED) {
+    	player->printColor("              ^e<^xreject^e>\n");
+    	player->printColor("              ^e<^xaccept^e>\n");
+    }
+    if(player->getGroupStatus() == GROUP_LEADER) {
+        player->printColor("              ^e<^xpromote^e>^x ^e<^cplayer name^e>^x\n");
+		player->printColor("              ^e<^xkick^e>^x ^e<^cplayer name^e>\n");
+		player->printColor("              ^e<^xname^e>^x ^e<^cgroup name^e>\n");
+		player->printColor("              ^e<^xtype^e>^x ^e<^cpublic/private/invite only^e>\n");
+		player->printColor("              ^e<^xset^e>^x ^e<^csplit/xpsplit^e>\n");
+		player->printColor("              ^e<^xclear^e>^x ^e<^csplit/xpsplit^e>\n");
+		player->printColor("              ^e<^xdisband^e>^x\n");
+    }
+    if(player->getGroupStatus() == GROUP_LEADER
+    		|| (player->getGroupStatus() == GROUP_MEMBER && player->getGroup(true) && player->getGroup(true)->getGroupType() < GROUP_PRIVATE) )
+    {
+		player->printColor("              ^e<^xinvite^e>^x ^e<^cplayer name^e>\n");
+    }
+    return(0);
 }
 
 //*********************************************************************
@@ -465,93 +277,400 @@ bstring showGroupMembers(Player* player, ctag* cp, int *num) {
 // who are following you.
 
 int cmdGroup(Player* player, cmd* cmnd) {
-	Creature *leader=0;
-	int num=0;
-	std::ostringstream oStr;
-
 	player->clearFlag(P_AFK);
 
 	if(!player->ableToDoCommand())
 		return(0);
 
-	if(player->following)
-		leader = player->following;
-	else
-		leader = player;
 
-	oStr << "People in your party:\n";
+	if(cmnd->num >= 2) {
+	    int len = strlen(cmnd->str[1]);
 
-	// you can always see who you're following
-	if(player != leader) {
-		// print out the leader
-		num++;
-		oStr << groupLine(player, leader);
+	    if(!strncasecmp(cmnd->str[1], "invite", len))       return(Group::invite(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "accept", len) || !strncasecmp(cmnd->str[1], "join", len))     return(Group::join(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "leave", len)  || !strncasecmp(cmnd->str[1], "reject",len))    return(Group::leave(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "disband", len)) return(Group::disband(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "kick", len))    return(Group::kick(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "promote", len)) return(Group::promote(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "name", len)) 	return(Group::rename(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "type", len)) 	return(Group::type(player, cmnd));
+	    else if(!strncasecmp(cmnd->str[1], "set", len))     return(Group::set(player, cmnd, true));
+	    else if(!strncasecmp(cmnd->str[1], "clear", len))   return(Group::set(player, cmnd, false));
+	    else return(printGroupSyntax(player));
 	}
 
-	oStr << showGroupMembers(player, leader->first_fol, &num);
+	Group* group = player->getGroup(false);
+    if(!group) {
+        *player << "You are not in a group.\n";
+        return(0);
+    }
+    if(player->getGroupStatus() == GROUP_INVITED) {
+        *player << "You have been invited to join \"" << group->getName() << "\".\nTo accept, type <group accept>; To reject type <group reject>.\n";
+        return(0);
+    }
+    *player << group->getName() << " " << group->getGroupTypeStr() << ":\n";
+    *player << ColorOn << group->getFlagsDisplay() << "\n" << ColorOff;
 
-	if(!num)
-		oStr << "  No one but you.\n";
-	player->printColor("%s\n", oStr.str().c_str());
+    *player << ColorOn << group->getGroupList(player) << ColorOff;
+
 	return(0);
 }
 
+int Group::invite(Player* player, cmd* cmnd) {
+    Player* target = 0;
 
-//********************************************************************
-//						remFromGroup
-//********************************************************************
-// if player is in a group, they will be removed from it.
+    if(cmnd->num < 3) {
+        *player << "Invite who into your group?\n";
+        return(0);
+    }
 
-void remFromGroup(Creature* player) {
-	ctag	*cp=0, *prev=0;
-	Creature *leader=0;
+    lowercize(cmnd->str[2], 1);
+    target = gServer->findPlayer(cmnd->str[2]);
 
-	if(!player->following)
-			return;
+    if(!target || !player->canSee(target) || target == player) {
+        *player << "That player is not logged on.\n";
+        return(0);
+    }
 
-	leader = player->following;
+    if(Move::tooFarAway(player, target, "invite to a group"))
+        return(0);
 
-	cp = leader->first_fol;
-	if(cp->crt == player) {
-			leader->first_fol = cp->next_tag;
-			delete cp;
-	} else {
-			while(cp) {
-					if(cp->crt == player) {
-							prev->next_tag = cp->next_tag;
-							delete cp;
-							break;
-					}
-					prev = cp;
-					cp = cp->next_tag;
-			}
+    if(target->getGroup(false)) {
+        if(target->getGroupStatus() == GROUP_INVITED) {
+            if(target->getGroup(false) == player->getGroup(false))
+                *player << target << " is already considering joining your group.\n";
+            else
+                *player << target << " is already considering joining another group.\n";
+        }
+        else
+            *player << target << " is already in another group.\n";
+        return(0);
+    }
 
-	}
-	player->following = 0;
+
+    Group* group = player->getGroup(false);
+    if(group) {
+    	if(group->getGroupType() == GROUP_PRIVATE && player->getGroupStatus() != GROUP_LEADER) {
+    		*player << "You are not the group leader of \"" << group->getName() << "\".\n";
+    		return(0);
+    	}
+    	if(player->getGroupStatus() < GROUP_MEMBER) {
+    		*player << "Reject your current group invitation before you try to start a group!\n";
+    		return(0);
+    	}
+    }
+
+    if(!group) {
+        group = new Group(player);
+        player->setGroupStatus(GROUP_LEADER);
+    }
+
+    group->add(target, false);
+    target->setGroupStatus(GROUP_INVITED);
+
+    *player << "You invite " << target << " to join your group.\n";
+    *target << player << " invites you to join \"" << group->getName() << "\".\n";
+
+    return(0);
 }
 
+// Accept an invitation and join a group
+int Group::join(Player* player, cmd *cmnd)  {
+	if(player->getGroupStatus() != GROUP_INVITED) {
+		*player << "You have not been invited to join any groups.\n";
+		return(0);
+	}
+	Group* toJoin = player->getGroup(false);
+	if(!toJoin) {
+		// Shouldn't happen
+		*player << "You have not been invited to join any groups.\n";
+		return(0);
+	}
+	player->addToGroup(toJoin, true);
+    return(0);
+}
+int Group::reject(Player* player, cmd* cmnd) {
+	if(player->getGroupStatus() != GROUP_INVITED) {
+		*player << "You have not been invited to join any groups.\n";
+		return(0);
+	}
+	Group* toReject = player->getGroup(false);
+	if(!toReject) {
+		// Shouldn't happen
+		*player << "You have not been invited to join any groups.\n";
+		return(0);
+	}
+	player->removeFromGroup(true);
+    return(0);
+}
+int Group::disband(Player* player, cmd* cmnd) {
+	Group* toDisband = player->getGroup(true);
+	if(!toDisband) {
+		*player << "You are not in a group.\n";
+		return(0);
+	}
+	if(player->getGroupStatus() != GROUP_LEADER) {
+		*player << "You are not the group leader of \"" << toDisband->getName() << "\".\n";
+		return(0);
+	}
+	*player << "You disband \"" << toDisband->getName() << "\".\n";
+	toDisband->sendToAll(bstring(player->getName()) + " disbands the group.\n", player);
+	toDisband->disband();
+
+    return(0);
+}
+int Group::promote(Player* player, cmd* cmnd) {
+	Group* group = player->getGroup(true);
+	if(!group) {
+		*player << "You are not in a group.\n";
+		return(0);
+	}
+	if(player->getGroupStatus() != GROUP_LEADER) {
+		*player << "You are not the group leader of \"" << group->getName() << "\".\n";
+		return(0);
+	}
+
+    Player* target = 0;
+
+    if(cmnd->num < 3) {
+        *player << "Who would you like to promote to leader?\n";
+        return(0);
+    }
+
+    lowercize(cmnd->str[2], 1);
+    target = gServer->findPlayer(cmnd->str[2]);
+
+    if(!target || !player->canSee(target) || target == player) {
+
+        *player << "That player is not logged on.\n";
+        return(0);
+    }
+
+    if(target->getGroup(true) != group) {
+    	*player << target->getName() << " is not in your group!\n";
+    	return(0);
+    }
+    group->setLeader(target);
+
+    *player << "You promote " << target->getName() << " to group leader\nYou are now a member of \"" << group->getName() << "\".\n";
+	group->sendToAll(bstring(player->getName()) + " promotes " + target->getName() + " to group leader.\n", player);
+
+	*target << "You are now the group leader of \"" << group->getName() << "\".\n";
+
+
+    return(0);
+}
+int Group::kick(Player* player, cmd* cmnd) {
+	Group* group = player->getGroup(true);
+	if(!group) {
+		*player << "You are not in a group.\n";
+		return(0);
+	}
+	if(group->getGroupType() == GROUP_PRIVATE && player->getGroupStatus() != GROUP_LEADER) {
+		*player << "You are not the group leader of \"" << group->getName() << "\".\n";
+		return(0);
+	}
+
+    Player* target = 0;
+
+    if(cmnd->num < 3) {
+        *player << "Who would you like to kick from your group?\n";
+        return(0);
+    }
+
+    lowercize(cmnd->str[2], 1);
+    target = gServer->findPlayer(cmnd->str[2]);
+
+    if(!target || !player->canSee(target) || target == player) {
+
+        *player << "That player is not logged on.\n";
+        return(0);
+    }
+
+    // We can also remove invitations from people by "kicking" them
+    if(target->getGroup(false) != group) {
+    	*player << target->getName() << " is not in your group!\n";
+    	return(0);
+    }
+    if(target->getGroupStatus() == GROUP_INVITED) {
+    	*player << "You rescind the group invitation from " << target->getName() << ".\n";
+    	group->sendToAll(bstring(player->getName()) + " rescinds the invitation for " + target->getName() + " to join the group.\n", player);
+    	*target << player << " rescinds your invitation to join \"" << group->getName() << "\".\n";
+    	target->removeFromGroup(false);
+    }
+    else {
+    	if(player->getGroupStatus() != GROUP_LEADER) {
+    		*player << "You can't kick people out of the group!\n";
+    		return(0);
+    	} else {
+			*player << "You kick " << target->getName() << " out of your group.\n";
+			group->sendToAll(bstring(player->getName()) + " kicks " + target->getName() + " out of the group.\n", player);
+			target->removeFromGroup(true);
+    	}
+    }
+    return(0);
+}
+int Group::leave(Player* player, cmd* cmnd) {
+	if(!player->getGroup(false)) {
+		*player << "You're not in a group.\n";
+		return(0);
+	}
+	if(!strncmp(cmnd->str[1], "reject", strlen(cmnd->str[1])) && player->getGroupStatus() != GROUP_INVITED) {
+	    *player << "You have no group invitations to reject.\n";
+	    return(0);
+	}
+	player->removeFromGroup(true);
+
+    return(0);
+}
+int Group::rename(Player* player, cmd* cmnd) {
+	Group* group = player->getGroup(true);
+	if(!group) {
+		*player << "You are not in a group.\n";
+		return(0);
+	}
+	if(player->getGroupStatus() != GROUP_LEADER) {
+		*player << "You are not the group leader of \"" << group->getName() << "\".\n";
+		return(0);
+	}
+
+	if(cmnd->num < 3) {
+		*player << "What would you like to name your group?\n";
+		return(0);
+	}
+
+	bstring newName = getFullstrText(cmnd->fullstr, 2);
+	if(newName.empty()) {
+		*player << "What would you like to name your group?\n";
+		return(0);
+	}
+	group->setName(newName);
+	*player << "You rename your group to \"" << newName << "\".\n";
+	group->sendToAll(bstring(player->getName()) + " renames the group to \"" + newName + "\".\n", player, true);
+
+    return(0);
+}
+int Group::type(Player* player, cmd* cmnd) {
+	Group* group = player->getGroup(true);
+	const char *errorMsg = "What would you like to switch your group to? (Public, Private, Invite Only)?\n";
+	if(!group) {
+		*player << "You are not in a group.\n";
+		return(0);
+	}
+	if(player->getGroupStatus() != GROUP_LEADER) {
+		*player << "You are not the group leader of \"" << group->getName() << "\".\n";
+		return(0);
+	}
+
+	if(cmnd->num < 3) {
+		*player << errorMsg;
+		return(0);
+	}
+
+	bstring newName = getFullstrText(cmnd->fullstr, 2);
+	if(newName.empty()) {
+	    *player << errorMsg;
+		return(0);
+	}
+	int len = newName.length();
+	const char *str = newName.c_str();
+	if(len >= 2) {
+		if(!strncasecmp(str, "public", len)) {
+			group->setGroupType(GROUP_PUBLIC);
+			*player << "You change the group type to Public.\n";
+			group->sendToAll(bstring(player->getName()) + " changes the group to Public.\n", player);
+			return(0);
+		} else if(!strncasecmp(str, "private", len)) {
+			group->setGroupType(GROUP_PRIVATE);
+			*player << "You change the group type to Private.\n";
+			group->sendToAll(bstring(player->getName()) + " changes the group to Private.\n", player);
+			return(0);
+		}
+	}
+	if(!strncasecmp(str, "invite only", len) || !strncmp(str, "inviteonly", len)) {
+		group->setGroupType(GROUP_INVITE_ONLY);
+		*player << "You change the group type to Invite Only.\n";
+		group->sendToAll(bstring(player->getName()) + " changes the group to Invite Only.\n", player);
+		return(0);
+	}
+	*player << errorMsg;
+    return(0);
+}
+
+int Group::set(Player* player, cmd* cmnd, bool set) {
+    Group* group = player->getGroup(true);
+    const char* errorMsg;
+    if(set)
+        errorMsg = "What group flag would you like to set? (Currently available: Split, XpSplit).\n";
+    else
+        errorMsg = "What group flag would you like to clear? (Currently available: Split, XpSplit).\n";
+
+    if(!group) {
+        *player << "You are not in a group.\n";
+        return(0);
+    }
+    if(player->getGroupStatus() != GROUP_LEADER) {
+        *player << "You are not the group leader of \"" << group->getName() << "\".\n";
+        return(0);
+    }
+
+    if(cmnd->num < 3) {
+        *player << errorMsg;
+        return(0);
+    }
+
+    bstring newName = getFullstrText(cmnd->fullstr, 2);
+    if(newName.empty()) {
+        *player << errorMsg;
+        return(0);
+    }
+    int len = newName.length();
+    const char *str = newName.c_str();
+    if(!strncasecmp(str, "split", len)) {
+        if(set) {
+            group->setFlag(GROUP_SPLIT_GOLD);
+            group->sendToAll("Gold will now be split with the group.\n");
+        } else {
+            group->clearFlag(GROUP_SPLIT_GOLD);
+            group->sendToAll("Gold will no longer be split with the group.\n");
+        }
+        return(0);
+    } else if(!strncasecmp(str, "xpsplit", len)) {
+        if(set) {
+            group->setFlag(GROUP_SPLIT_EXPERIENCE);
+            group->sendToAll("Group experience split enabled.\n");
+        } else {
+            group->clearFlag(GROUP_SPLIT_EXPERIENCE);
+            group->sendToAll("Group experience split disabled.\n");
+        }
+        return(0);
+    }
+
+    *player << errorMsg;
+    return(0);
+}
 //********************************************************************
 //						doFollow
 //********************************************************************
 
-void Player::doFollow() {
-	ctag* cp=0;
-
-	cp = first_fol;
-	while(cp) {
-		Player* pFollow = cp->crt->getPlayer();
-		Monster* mFollow = cp->crt->getMonster();
-		if(cp->crt->getRoom() != getRoom()) {
-			if(pFollow) {
-				pFollow->deleteFromRoom();
-				pFollow->addToRoom(getRoom());
-			} else {
-				mFollow->deleteFromRoom();
-				mFollow->addToRoom(getRoom());
+void Player::doFollow(BaseRoom* oldRoom) {
+	Group* group = getGroup(true);
+	if(getGroupStatus() == GROUP_LEADER && group) {
+		for(Creature* crt : group->members) {
+			if(crt->getRoom() == oldRoom) {
+				Player* pFollow = crt->getPlayer();
+				Monster* mFollow = crt->getMonster();
+				if(pFollow) {
+					pFollow->deleteFromRoom();
+					pFollow->addToRoom(getRoom());
+				} else {
+					mFollow->deleteFromRoom();
+					mFollow->addToRoom(getRoom());
+				}
 			}
 		}
-		cp = cp->next_tag;
 	}
+	doPetFollow();
 }
 
 //********************************************************************
@@ -559,35 +678,17 @@ void Player::doFollow() {
 //********************************************************************
 
 void Player::doPetFollow() {
-	Monster *pet = getPet();
-
-	if(pet && pet->getRoom() != getRoom()) {
-		pet->deleteFromRoom();
-		pet->addToRoom(getRoom());
+	for(Monster*pet : pets ){
+		if(pet && pet->getRoom() != getRoom()) {
+			pet->deleteFromRoom();
+			pet->addToRoom(getRoom());
+		}
+		// TODO: Not sure if we need this check any more
+		if(alias_crt && alias_crt->getRoom() != getRoom()) {
+			alias_crt->deleteFromRoom();
+			alias_crt->addToRoom(getRoom());
+		}
 	}
-	if(alias_crt && alias_crt->getRoom() != getRoom()) {
-		alias_crt->deleteFromRoom();
-		alias_crt->addToRoom(getRoom());
-	}
-}
-
-//*********************************************************************
-//						isGroupLeader
-//*********************************************************************
-// Are we a group leader against the given monster
-
-bool Creature::isGroupLeader(Monster* target) {
-	if(isMonster())
-		return(false);
-	ctag *cp = first_fol;
-	Creature *crt;
-	while(cp) {
-		crt = cp->crt;
-		if(crt && crt->getsGroupExperience(target))
-			return(true);
-		cp = cp->next_tag;
-	}
-	return(false);
 }
 
 //*********************************************************************

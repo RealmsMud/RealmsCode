@@ -105,8 +105,8 @@ bstring getCondition(Object* object) {
 	int percent = -1;
 
 	// possible division by 0
-	if(object->getShotscur() > 0 && object->getShotsmax() > 0)
-		percent = 100 * object->getShotscur() / object->getShotsmax();
+	if(object->getShotsCur() > 0 && object->getShotsMax() > 0)
+		percent = 100 * object->getShotsCur() / object->getShotsMax();
 
 	if(	object->getType() == WEAPON ||
 		object->getType() == ARMOR ||
@@ -129,7 +129,7 @@ bstring getCondition(Object* object) {
 			return("Horrible");
 		else if(percent >= 1)
 			return("Terrible");
-		else if(object->getShotscur() < 1)
+		else if(object->getShotsCur() < 1)
 			return("Broken");
 	}
 	return("Pristine");
@@ -642,7 +642,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 			player->print("Why would you want to sell second hand trash?\n");
 			return(0);
 		}
-		if(obj->getShotscur() < 1 && obj->getShotscur() != obj->getShotsmax() && obj->getType() != CONTAINER) {
+		if(obj->getShotsCur() < 1 && obj->getShotsCur() != obj->getShotsMax() && obj->getType() != CONTAINER) {
 			player->print("Why would you want to sell such trash in your shop?\n");
 			return(0);
 		}
@@ -1680,10 +1680,10 @@ int cmdSell(Player* player, cmd* cmnd) {
 	// Luck for sale of items
 	//	gold = ((Ply[fd].extr->getLuck()*gold)/100);
 
-	if((object->getType() == WEAPON || object->getType() == ARMOR) && object->getShotscur() <= object->getShotsmax()/8)
+	if((object->getType() == WEAPON || object->getType() == ARMOR) && object->getShotsCur() <= object->getShotsMax()/8)
 		poorquality = true;
 
-	if((object->getType() == WAND || object->getType() > MISC || object->getType() == KEY) && object->getShotscur() < 1)
+	if((object->getType() == WAND || object->getType() > MISC || object->getType() == KEY) && object->getShotsCur() < 1)
 		poorquality = true;
 
 	if (value[GOLD] < 20 || poorquality || object->getType() == SCROLL ||
@@ -1820,7 +1820,7 @@ int cmdRefund(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(!object->flagIsSet(O_JUST_BOUGHT) || (object->getShotscur() < object->getShotsmax()) || object->getShopValue()) {
+	if(!object->flagIsSet(O_JUST_BOUGHT) || (object->getShotsCur() < object->getShotsMax()) || object->getShopValue()) {
 		player->print("The shopkeep says, \"I don't return money for used goods!\"\n");
 		return(0);
 	}
@@ -2085,7 +2085,7 @@ int cmdTrade(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(!found || !object->info.id || ((object->getShotscur() <= object->getShotsmax()/10) && object->getType() != MISC)) {
+	if(!found || !object->info.id || ((object->getShotsCur() <= object->getShotsMax()/10) && object->getType() != MISC)) {
 		player->print("%M says, \"I don't want that!\"\n", creature);
 		failTrade(player, object, creature);
 		return(0);

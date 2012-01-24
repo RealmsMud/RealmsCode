@@ -372,7 +372,7 @@ void Guild::create(Player* player, cmd* cmnd) {
 		return;
 	}
 
-	len = strlen(cmnd->fullstr);
+	len = cmnd->fullstr.length();
 
 	// Kill the first 2 spaces
 	while(i < len) {
@@ -515,7 +515,7 @@ void Guild::support(Player* player, cmd* cmnd) {
 		return;
 	}
 
-	len = strlen(cmnd->fullstr);
+	len = cmnd->fullstr.length();
 
 	// Kill the first 2 spaces
 	while(i < len) {
@@ -1157,7 +1157,7 @@ int dmApproveGuild(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	len = strlen(cmnd->fullstr);
+	len = cmnd->fullstr.length();
 
 	// Kill the first space
 	while(i < len) {
@@ -1206,7 +1206,7 @@ int dmRejectGuild(Player* player, cmd* cmnd) {
 	GuildCreation * toReject;
 	int len,i=0,j=0, iTmp=0, strLen;
 
-	strLen = strlen(cmnd->fullstr);
+	strLen = cmnd->fullstr.length();
 
 	// This kills all leading whitespace
 	while(i<strLen && isspace(cmnd->fullstr[i]))

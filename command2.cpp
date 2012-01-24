@@ -463,7 +463,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
 		object->getType() == KEY ||
 		object->getSpecial() ||
 		object->getType() == MONEY ||
-		(object->getShotscur() < 1 && object->getType() != CONTAINER)
+		(object->getShotsCur() < 1 && object->getType() != CONTAINER)
 	) {
 		player->print("You can't break that.\n");
 		return(0);
@@ -471,7 +471,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
 
 
-	if(object->getType() == CONTAINER && object->getShotsmax() < 1) {
+	if(object->getType() == CONTAINER && object->getShotsMax() < 1) {
 		player->print("You can't break that.\n");
 		return(0);
 	}
@@ -486,8 +486,8 @@ int cmdBreak(Player* player, cmd* cmnd) {
 	if(player->isDm())
 		player->print("Chance(str): +%d%\n", player->strength.getCur()*4);
 
-	shots = (float)object->getShotscur();
-	shotsmax = (float)object->getShotsmax();
+	shots = (float)object->getShotsCur();
+	shotsmax = (float)object->getShotsMax();
 
 	mtbf = shots/shotsmax;
 	mtbf *=100;
@@ -550,11 +550,11 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
 
 		if(object->getType() == CONTAINER) {
-			object->setShotsmax(0);
+			object->setShotsMax(0);
 			object->setType(MISC);
 		}
 
-		object->setShotscur(0);
+		object->setShotsCur(0);
 		object->setFlag(O_NO_FIX);
 		player->updateAttackTimer(true, 60);
 

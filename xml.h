@@ -205,10 +205,7 @@ bool loadRoom(int index, UniqueRoom **pRoom);
 bool loadRoom(const CatRef cr, UniqueRoom **pRoom);
 bool loadRoomFromFile(const CatRef cr, UniqueRoom **pRoom, bstring filename="");
 
-bool loadPlayer(const char* name, Player** player, LoadType loadType=LS_NORMAL);
-
-void readCreaturesXml(xmlNodePtr curNode, void* parent, int type);
-void readObjectsXml(xmlNodePtr curNode, void* parent, int type);
+bool loadPlayer(const bstring name, Player** player, LoadType loadType=LS_NORMAL);
 
 void loadCarryArray(xmlNodePtr curNode, Carry array[], const char* name, int maxProp);
 void loadCatRefArray(xmlNodePtr curNode, std::map<int, CatRef>& array, const char* name, int maxProp);
@@ -235,7 +232,6 @@ void loadRanges(xmlNodePtr curNode, Player *pPlayer);
 //int saveObject(Object* pObject);
 
 int saveObjectsXml(xmlNodePtr parentNode, otag* op, int permOnly);
-int savePetsXml(xmlNodePtr parentNode, ctag* cp);
 int saveCreaturesXml(xmlNodePtr parentNode, ctag* cp, int permOnly);
 //int saveCreatureXml(xmlNodePtr rootNode, Creature * pCreature, int permOnly, LoadType saveType);
 int saveExitsXml(xmlNodePtr curNode, xtag *xp);

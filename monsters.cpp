@@ -585,7 +585,7 @@ int Monster::castSpell(Creature *target) {
 //*********************************************************************
 
 bool Monster::petCaster() {
-	Player *master = following->getPlayer();
+	Player *master = getPlayerMaster();
 	int		heal=0;
 	long	i=0, t = time(0);
 
@@ -963,7 +963,7 @@ int Monster::checkWander(long t) {
 			// if not fast-wander, can mobile if no enemies
 			!hasEnemy()) &&
 		// can't wander if following someone
-		!flagIsSet(M_DM_FOLLOW) && !following &&
+		!flagIsSet(M_DM_FOLLOW) && !getMaster() &&
 		// or if they're set no wander
 		!flagIsSet(M_NO_WANDER))
 	{

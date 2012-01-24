@@ -90,6 +90,7 @@ int Player::computeAttackPower() {
 			break;
 		default:
 			attackPower = strength.getCur();
+			break;
 	}
 
 	// Check equipment here for higher attack power
@@ -699,10 +700,11 @@ bool Creature::canParry(Creature* attacker) {
 //	 try a parry, so parry returns 0 without going off. -TC
 
 	// +3% fail for every monster mad at this besides the one he's currently hitting
-	combatPercent = 3*(MAX(0,numEnemyMonInRoom(this)-1));
+	combatPercent = 3*(tMAX(0,numEnemyMonInRoom(this)-1));
 	// Group members are assumed to fight together to help one another.
 	// -2% fail for every member in the this's group besides themself in the same room
-	combatPercent -= 2*(MAX(0,numInGroup(this)-1));
+	if(getGroup())
+		combatPercent -= 2*(tMAX(0,getGroup()->getNumInSameRoom(this)));
 
 	combatPercent = MAX(0,combatPercent);
 
@@ -724,7 +726,7 @@ bool Creature::canParry(Creature* attacker) {
 	if(t < i) {
 		return(false);
 	}
-	if(ready[WIELD-1]->getShotscur() < 1) // weapon must not be broken
+	if(ready[WIELD-1]->getShotsCur() < 1) // weapon must not be broken
 		return(false);
 
 	return(true);
@@ -1613,10 +1615,10 @@ int Creature::parry(Creature* target) {
 		}
 		if(weapon) {
 			if(!mrand(0, 3))
-				weapon->decShotscur();
+				weapon->decShotsCur();
 
 			// die check moved right before return.
-			if(weapon->getShotscur() <= 0) {
+			if(weapon->getShotsCur() <= 0) {
 				printColor("%O just broke.\n", weapon);
 				broadcast(getSock(), target->getSock(), getRoom(), "%M's just broke %P.", this, weapon);
 				unequip(WIELD);

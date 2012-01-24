@@ -99,7 +99,7 @@ void del_obj_obj(Object	*object, Object* container) {
 
 	Hooks::run(container, "beforeRemoveObject", object, "beforeRemoveFromObject");
 
-	container->decShotscur();
+	container->decShotsCur();
 	object->parent_crt = 0;
 	if(container->first_obj->obj == object) {
 		temp = container->first_obj->next_tag;
@@ -332,8 +332,8 @@ int new_scroll(int level, Object **new_obj) {
 	(*new_obj)->setWearflag(HELD);
 	(*new_obj)->setType(SCROLL);
 	(*new_obj)->setWeight(1);
-	(*new_obj)->setShotsmax(1);
-	(*new_obj)->setShotscur(1);
+	(*new_obj)->setShotsMax(1);
+	(*new_obj)->setShotsCur(1);
 	(*new_obj)->first_obj = 0;
 
 	if(lvl >= 4) {
@@ -381,7 +381,7 @@ void Object::loadContainerContents() {
 		if(mrand(1,100)<25) {
 			newObj->setDroppedBy(this, "ContainerContents");
 			addObj(newObj);
-			incShotscur();
+			incShotsCur();
 		} else {
 			delete newObj;
 		}
@@ -494,6 +494,8 @@ int displayObject(Player* player, Object* target) {
 	char filename[256];
 	bstring inv = "";
 
+	int flags = player->displayFlags();
+
 	// special 2 is a combo lock, should have normal descriptions
 	if(target->getSpecial() == 1) {
 		strcpy(str, target->name);
@@ -507,84 +509,84 @@ int displayObject(Player* player, Object* target) {
 			viewFile(player->getSock(), filename);
 		return(0);
 	}
+	std::ostringstream oStr;
 
 	if(target->description != "") {
-		player->printColor("%s\n", target->description.c_str());
+	    oStr << target->description << "\n";
 	} else if(!target->getRecipe()) {
 		// don't show this message if we have a recipe
-		player->print("You see nothing special about it.\n");
+	    oStr << "You see nothing special about it.\n";
 	}
 
 	if(target->getRecipe()) {
 		Recipe *r = gConfig->getRecipe(target->getRecipe());
 		if(!r)
-			player->print("Sorry, that recipe is faulty.\n");
+			oStr << "Sorry, that recipe is faulty.\n";
 		else
-			r->display(player);
+			oStr << r;
 	}
 
 	if(target->compass)
-		player->print("%s", target->getCompass(player, false).c_str());
+		oStr << target->getCompass(player, false);
 
 	if(target->getType() == LOTTERYTICKET)
-		player->print("It is good for powerbone cycle #%d.\n", target->getLotteryCycle());
+		oStr << "It is good for powerbone cycle #" << target->getLotteryCycle() << ".\n";
 
 	if(player->isEffected("know-aura") || player->getClass() == PALADIN || player->isCt()) {
 		if(target->flagIsSet(O_GOOD_ALIGN_ONLY))
-			player->print("It has a blue aura.\n");
+			oStr << "It has a blue aura.\n";
 		if(target->flagIsSet(O_EVIL_ALIGN_ONLY))
-			player->print("It has a red aura.\n");
+			oStr << "It has a red aura.\n";
 	}
 
 	if(target->getType() == CONTAINER) {
 		inv = listObjects(player, target->first_obj, true);
 		if(inv != "")
-			player->printColor("It contains: %s.\n", inv.c_str());
+			oStr << "It contains: " << inv << ".\n";
 	}
 
 	if(target->getType() == ARMOR)
-		player->printColor("%O is considered ^W%s^x armor.\n", target,
-				target->getArmorType().c_str());
+	    oStr << target->getObjStr(NULL, flags | CAP, 1) << " is considered ^W" << target->getArmorType() << "^x armor.\n";
+
+    if(target->getType() == WEAPON) {
+        oStr << target->getObjStr(NULL, flags | CAP, 1) << " is a " << obj_type(target->getType()) << "(" <<  target->getWeaponType() <<").\n";
+
+        if(target->flagIsSet(O_SILVER_OBJECT))
+            oStr << "It is alloyed with pure silver.\n";
+    }
 
 	if(target->flagIsSet(O_NO_DROP))
-		player->printColor("%O cannot be dropped.\n", target);
+		oStr << target->getObjStr(NULL, flags | CAP, 1) << " cannot be dropped.\n";
 
 	if(Lore::isLore(target))
-		player->printColor("%O is an object of lore.\n", target);
+	    oStr << target->getObjStr(NULL, flags | CAP, 1) << " is an object of lore.\n";
 
 	if(target->flagIsSet(O_DARKMETAL))
-		player->printColor("^yIt is vulnerable to sunlight.\n");
+		oStr << "^yIt is vulnerable to sunlight.\n";
 
 	if(target->flagIsSet(O_DARKNESS))
-		player->printColor("^DIt is engulfed by an aura of darkness.\n");
+		oStr << "^DIt is engulfed by an aura of darkness.\n";
 
 	if(Unique::isUnique(target))
-		player->printColor("%O is a unique or limited object.\n", target);
+	    oStr << target->getObjStr(NULL, flags | CAP, 1) << " is a unique or limited object.\n";
 
-	if(target->getType() == WEAPON) {
-		player->printColor("%O is a %s(%s).\n", target, obj_type(target->getType()),
-				target->getWeaponType().c_str());
-		if(target->flagIsSet(O_SILVER_OBJECT))
-			player->print("It is alloyed with pure silver.\n");
-	}
 
 	if(target->getType() == WEAPON && target->flagIsSet(O_ENVENOMED)) {
-		player->printColor("^gIt drips with poison.\n");
+		oStr << "^gIt drips with poison.\n";
 		if((player->getClass() == ASSASSIN && player->getLevel() >= 10) || player->isCt()) {
-			player->printColor("^gTime remaining before poison deludes: %s.\n",
-				timestr(MAX(0,(target->lasttime[LT_ENVEN].ltime+target->lasttime[LT_ENVEN].interval-time(0)))));
+			oStr << "^gTime remaining before poison deludes: " <<
+			   timestr(MAX(0,(target->lasttime[LT_ENVEN].ltime+target->lasttime[LT_ENVEN].interval-time(0)))) << ".\n";
 		}
 	}
 
 	if(	target->getType() == POISON && ((player->getClass() == ASSASSIN && player->getLevel() >= 10) || player->isCt()))
-		player->printColor("%O is a poison.\n", target);
+	    oStr << target->getObjStr(NULL, flags | CAP, 1) << " is a poison.\n";
 
 	if(target->flagIsSet(O_COIN_OPERATED_OBJECT))
-		player->printColor("%O costs %ld gold coins per use.\n", target,
-			target->getCoinCost());
+	    oStr << target->getObjStr(NULL, flags | CAP, 1) << " costs " << target->getCoinCost() << "gold coins per use.\n";
 
-	if(target->getShotscur() > 0)
-		percent = (100 * (target->getShotscur())) / (MAX(target->getShotsmax(),1));
+	if(target->getShotsCur() > 0)
+		percent = (100 * (target->getShotsCur())) / (MAX(target->getShotsMax(),1));
 	else
 		percent = -1;
 
@@ -598,43 +600,67 @@ int displayObject(Player* player, Object* target) {
 			target->getType() == BANDAGE
 		) {
 			if(percent >= 90)
-				player->print("It is in pristine condition.\n");
+				oStr << "It is in pristine condition.\n";
 			else if(percent >= 75)
-				player->print("It is in excellent condition.\n");
+			    oStr << "It is in excellent condition.\n";
 			else if(percent >= 60)
-				player->print("It is in good condition.\n");
+			    oStr << "It is in good condition.\n";
 			else if(percent >= 45)
-				player->print("It has a few scratches.\n");
+			    oStr << "It has a few scratches.\n";
 			else if(percent >= 30)
-				player->print("It has many scratches and dents.\n");
+			    oStr << "It has many scratches and dents.\n";
 			else if(percent >= 10)
-				player->print("It is in bad condition.\n");
-			else if(target->getShotscur())
-				player->print("It looks like it could fall apart any moment now.\n");
+			    oStr << "It is in bad condition.\n";
+			else if(target->getShotsCur())
+			    oStr << "It looks like it could fall apart any moment now.\n";
 			else
-				player->print("It is broken or used up.\n");
+				oStr << "It is broken or used up.\n";
 		}
 
 		if(target->flagIsSet(O_TEMP_ENCHANT) && (player->getClass() == MAGE
 				|| player->isCt() || player->isEffected("detect-magic")))
-			player->print("It is weakly enchanted.\n");
+		    oStr << "It is weakly enchanted.\n";
 
 	}
 
+	if(target->flagIsSet(O_WEAPON_CASTS) && flags && MAG) {
+        if(target->getChargesCur() > 0)
+            percent = (100 * (target->getChargesCur())) / (MAX(target->getChargesMax(),1));
+        else
+            percent = -1;
+
+        if(percent >= 90)
+            oStr << "It shimmers brightly.\n";
+        else if(percent >= 75)
+            oStr << "It has a bright glow about it.\n";
+        else if(percent >= 50)
+            oStr << "It has a glow about it.\n";
+        else if(percent >= 30)
+            oStr << "It has a dull glow about it.\n";
+        else if(percent >= 10)
+            oStr << "It has a faint glow about it.\n";
+        else if(target->getChargesCur())
+            oStr << "It has a very faint glow about it.\n";
+        else
+            oStr << "It no longer glows.\n";
+	}
+
+
 	if(target->getSize() != NO_SIZE)
-		player->printColor("It is ^W%s^x.\n", getSizeName(target->getSize()).c_str());
+	    oStr << "It is ^W" << getSizeName(target->getSize()).c_str() << "^x.\n";
 
 	if(target->getQuestOwner() != "") {
 		if(target->isQuestOwner(player))
-			player->printColor("You own %P.\n", target);
+			oStr << "You own "<< target->getObjStr(NULL, flags, 1) << ".\n";
 		else
-			player->printColor("You do not own %P.\n", target);
+		    oStr << "You do not own "<< target->getObjStr(NULL, flags, 1) << ".\n";
 	}
 
 	if(target->getType() == POTION || target->getType() == HERB) {
-		player->printColor("%s\n", target->showAlchemyEffects(player).c_str());
+	    oStr << target->showAlchemyEffects(player) << "\n";
 	}
 
+	player->printColor("%s", oStr.str().c_str());
 	return(0);
 }
 
@@ -783,7 +809,7 @@ void Creature::killDarkmetal() {
 	Player	*pTarget = getPlayer();
 	otag	*op=0;
 	Object	*object=0;
-	int		i=0, pfd=0;
+	int		i=0;
 	bool	found=false;
 
 	if(!getRoom()->isSunlight())
@@ -792,13 +818,8 @@ void Creature::killDarkmetal() {
 	if(pTarget) {
 		if( pTarget->getSock() == NULL ||
 			pTarget->isStaff() ||
-			!pTarget->flagIsSet(P_DARKMETAL)
-		)
+			!pTarget->flagIsSet(P_DARKMETAL))
 			return;
-		pfd = fd;
-	} else {
-		if(following)
-			pfd = following->fd;
 	}
 
 	// kill anything not in a bag
@@ -809,7 +830,7 @@ void Creature::killDarkmetal() {
 		if(object && object->flagIsSet(O_DARKMETAL)) {
 			if(pTarget)
 				printColor("^yYour %s was destroyed by the sunlight!\n", object->name);
-			else if(pfd)
+			else if(isPet())
 				printColor("^y%M's %s was destroyed by the sunlight!\n", this, object->name);
 			delObj(object, true, false, false, false);
 			delete object;
@@ -932,8 +953,10 @@ short Object::getArmor() const { return(armor); }
 short Object::getQuality() const { return(quality); }
 short Object::getAdjustment() const { return(adjustment); }
 short Object::getNumAttacks() const { return(numAttacks); }
-short Object::getShotsmax() const { return(shotsmax); }
-short Object::getShotscur() const { return(shotscur); }
+short Object::getShotsMax() const { return(shotsMax); }
+short Object::getShotsCur() const { return(shotsCur); }
+short Object::getChargesMax() const { return(chargesMax); }
+short Object::getChargesCur() const { return(chargesCur); }
 short Object::getMagicpower() const { return(magicpower); }
 short Object::getLevel() const { return(level); }
 int Object::getRequiredSkill() const { return(requiredSkill); }

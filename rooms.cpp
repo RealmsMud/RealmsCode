@@ -942,11 +942,11 @@ CatRef AreaRoom::getUnique(Creature *creature, bool skipDec) {
 		return(cr);
 
 	bool pet = creature->isPet();
-	Player*	player = creature->getMaster();
+	Player*	player = creature->getPlayerMaster();
 
 	if(	!player ||
 		!player->ready[HELD-1] ||
-		player->ready[HELD-1]->getShotscur() < 1 ||
+		player->ready[HELD-1]->getShotsCur() < 1 ||
 		!player->ready[HELD-1]->compass ||
 		*player->ready[HELD-1]->compass != *&mapmarker
 	)
@@ -954,7 +954,7 @@ CatRef AreaRoom::getUnique(Creature *creature, bool skipDec) {
 
 	// no need to decrement twice if their pet is going through
 	if(!skipDec && decCompass && !pet) {
-		player->ready[HELD-1]->decShotscur();
+		player->ready[HELD-1]->decShotsCur();
 		player->breakObject(player->ready[HELD-1], HELD);
 	}
 	return(unique);
@@ -1016,7 +1016,7 @@ Creature* BaseRoom::findCreaturePython(Creature* searcher, const bstring& name, 
 
 	bstring newName = name;
 	newName.trim();
-	int sLoc = newName.ReverseFind(" ");
+	unsigned int sLoc = newName.ReverseFind(" ");
 	if(sLoc != bstring::npos) {
 		num = newName.right(newName.length() - sLoc).toInt();
 		if(num != 0) {
@@ -1358,7 +1358,7 @@ void BaseRoom::doPrint(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, c
 		if(target->flagIsSet(P_UNCONSCIOUS))
 			continue;
 
-		target->vprint(target->customColorize(fmt).c_str(), ap, true);
+		target->vprint(target->customColorize(fmt).c_str(), ap);
 
 	}
 }

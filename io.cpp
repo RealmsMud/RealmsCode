@@ -101,7 +101,7 @@ void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, 
 		if(player && ply->isGagging(player->name) && !player->isCt())
 			continue;
 
-		ply->vprint(ply->customColorize(fmt).c_str(), ap, true);
+		ply->vprint(ply->customColorize(fmt).c_str(), ap);
 		ply->print("\n");
 	}
 }
@@ -125,7 +125,7 @@ void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, BaseRoo
 		if(target->flagIsSet(P_UNCONSCIOUS))
 			continue;
 
-		target->vprint(target->customColorize(fmt).c_str(), ap, true);
+		target->vprint(target->customColorize(fmt).c_str(), ap);
 		target->print("\n");
 
 	}
@@ -391,23 +391,19 @@ void broadcastGroupMember(bool dropLoot, Creature* player, const Player* listen,
 			return;
 	}
 
-	listen->vprint(listen->customColorize(fmt).c_str(), ap, true);
+	listen->vprint(listen->customColorize(fmt).c_str(), ap);
 }
 
 void broadcastGroup(bool dropLoot, Creature* player, const char *fmt,...) {
-	const Player *leader = (player->following ? player->following : player)->getConstPlayer();
-	if(!leader)
+	Group* group = player->getGroup();
+	if(!group)
 		return;
-	ctag	*cp = leader->first_fol;
-
 	va_list ap;
 	va_start(ap, fmt);
 
-	broadcastGroupMember(dropLoot, player, leader, fmt, ap);
-
-	while(cp) {
-		broadcastGroupMember(dropLoot, player, cp->crt->getConstPlayer(), fmt, ap);
-		cp = cp->next_tag;
+//	broadcastGroupMember(dropLoot, player, leader, fmt, ap);
+	for(Creature* crt : group->members) {
+		broadcastGroupMember(dropLoot, player, crt->getConstPlayer(), fmt, ap);
 	}
 }
 
@@ -486,7 +482,7 @@ void broadcastGuild(int guildNum, int showName, const char *fmt,...) {
 		if(!target->isConnected())
 			continue;
 		if(target->getGuild() == guildNum && target->getGuildRank() >= GUILD_PEON && !target->flagIsSet(P_NO_BROADCASTS)) {
-			target->vprint(target->customColorize(fmt2).c_str(), ap, true);
+			target->vprint(target->customColorize(fmt2).c_str(), ap);
 		}
 	}
 	va_end(ap);
@@ -548,16 +544,16 @@ int check_flood(int fd) {
 //						checkWinFilename
 //*********************************************************************
 
-int checkWinFilename(Socket* sock, const char *str) {
+int checkWinFilename(Socket* sock, const bstring str) {
 	// only do this if we're on windows
 	#ifdef __CYGWIN__
-	if(	!strcasecmp(str, "aux") ||
-		!strcasecmp(str, "prn") ||
-		!strcasecmp(str, "nul") ||
-		!strcasecmp(str, "con") ||
-		!strcasecmp(str, "com1") ||
-		!strcasecmp(str, "com2")
-	) {
+	if(	str.equals("aux") ||
+	        str.equals("prn") ||
+	        str.equals("nul") ||
+	        str.equals("con") ||
+	        str.equals("com1") ||
+	        str.equals("com2"))
+	{
 		if(sock) sock->print("\"%s\" could not be read.\n", str);
 		return(0);
 	}

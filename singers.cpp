@@ -350,7 +350,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 				get_spell_name(object->getMagicpower()-1));
 		} else if(object->getType() == KEY) {
 			player->printColor("%O is a %s %s.\n", object,
-			      (object->getShotscur() < 1 ? "broken" : (object->getShotscur() > 2 ? "sturdy" : "weak")),
+			      (object->getShotsCur() < 1 ? "broken" : (object->getShotsCur() > 2 ? "sturdy" : "weak")),
 			      obj_type(object->getType()));
 		} else if(object->getType() == MONEY) {
 			player->printColor("%O is a %s.\n", object, obj_type(object->getType()));
@@ -372,19 +372,19 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 		player->print("It is worth %s", output.c_str());
 		if(object->getType() != CONTAINER && object->getType() != MONEY) {
 			player->print(", and is ", object);
-			if(object->getShotscur() >= object->getShotsmax() * .99)
+			if(object->getShotsCur() >= object->getShotsMax() * .99)
 				player->print("brand new");
-			else if(object->getShotscur() >= object->getShotsmax() * .90)
+			else if(object->getShotsCur() >= object->getShotsMax() * .90)
 				player->print("almost brand new");
-			else if(object->getShotscur() >= object->getShotsmax() * .75)
+			else if(object->getShotsCur() >= object->getShotsMax() * .75)
 				player->print("in good condition");
-			else if(object->getShotscur() >= object->getShotsmax() * .50)
+			else if(object->getShotsCur() >= object->getShotsMax() * .50)
 				player->print("almost half used up");
-			else if(object->getShotscur() >= object->getShotsmax() * .25)
+			else if(object->getShotsCur() >= object->getShotsMax() * .25)
 				player->print("in fair condition");
-			else if(object->getShotscur() >= object->getShotsmax() * .10)
+			else if(object->getShotsCur() >= object->getShotsMax() * .10)
 				player->print("in poor condition");
-			else if(object->getShotscur() == 0)
+			else if(object->getShotsCur() == 0)
 				player->print("broken or used up");
 			else
 				player->print("close to breaking");
@@ -526,7 +526,7 @@ int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) 
 		lastname[0] = 0;
 		while(cp) {
 			// skip caster's pet
-			if(cp->crt->isPet() && cp->crt->following == player) {
+			if(cp->crt->isPet() && cp->crt->getMaster() == player) {
 				cp = cp->next_tag;
 				continue;
 			}
@@ -823,7 +823,7 @@ int songMPHeal(Player* player, cmd* cmnd) {
 		if(cp->crt->hasMp()) {
 			if(cp->crt != player)
 				cp->crt->print("%M's song mentally revitalizes you.\n", player);
-			addmp(cp->crt, heal);
+			cp->crt->mp.increase(heal);
 		}
 		cp = cp->next_tag;
 	}
@@ -831,7 +831,7 @@ int songMPHeal(Player* player, cmd* cmnd) {
 	while(cp) {
 		if(cp->crt->hasMp() && cp->crt->isPet()) {
 			cp->crt->print("%M's song mentally revitalizes you.\n", player);
-			addmp(cp->crt, heal);
+			cp->crt->mp.increase(heal);
 		}
 		cp = cp->next_tag;
 	}
@@ -863,7 +863,7 @@ int songRestore(Player* player, cmd* cmnd) {
 			if(cp->crt != player)
 				cp->crt->print("%M's song restores your spirits.\n", player);
 			player->doHeal(cp->crt, heal);
-			addmp(cp->crt, heal/2);
+			cp->crt->mp.increase(heal/2);
 		}
 		cp = cp->next_tag;
 	}
@@ -872,7 +872,7 @@ int songRestore(Player* player, cmd* cmnd) {
 		if(cp->crt->getClass() != LICH && cp->crt->isPet()) {
 			cp->crt->print("%M's song restores your spirits.\n", player);
 			player->doHeal(cp->crt, heal);
-			addmp(cp->crt, heal/2);
+			cp->crt->mp.increase(heal/2);
 		}
 		cp = cp->next_tag;
 	}
@@ -1045,7 +1045,6 @@ int songRecall(Player* player, cmd* cmnd) {
 
 int songSafety(Player* player, cmd* cmnd) {
 	Player	*follower=0;
-	ctag	*cp=0;
 	BaseRoom *newRoom=0;
 
 
@@ -1057,64 +1056,13 @@ int songSafety(Player* player, cmd* cmnd) {
 	broadcast(player->getSock(), player->getRoom(), "%M sings a song of safety.", player);
 
 	// handle everyone following singer
-	cp = player->first_fol;
-	while(cp) {
-		follower = cp->crt->getPlayer();
-		cp = cp->next_tag;
-
-		if(!follower)
-			continue;
-		if(!player->inSameRoom(follower))
-			continue;
-		if(follower->isStaff())
-			continue;
-
-		if(!player->isStaff() && follower->checkDimensionalAnchor()) {
-			player->printColor("^y%M's dimensional-anchor causes your song to go off-key!^w\n", follower);
-			follower->printColor("^yYour dimensional-anchor protects you from %N's song of safety!^w\n", player);
-			continue;
-		}
-
-		newRoom = follower->getRecallRoom().loadRoom(follower);
-		if(!newRoom)
-			continue;
-		broadcast(follower->getSock(), follower->getRoom(), "%M disappears.", follower);
-		follower->deleteFromRoom();
-		follower->addToRoom(newRoom);
-		follower->doPetFollow();
-	}
-	// if singer is following someone else
-	if(player->following) {
-		follower = player->following->getPlayer();
-
-		if(follower && player->inSameRoom(follower)) {
-			if(!player->isStaff() && follower->checkDimensionalAnchor()) {
-				player->printColor("^y%M's dimensional-anchor causes your song to go off-key!^w\n", follower);
-				follower->printColor("^yYour dimensional-anchor protects you from %N's song of safety!^w\n", player);
-			} else if(!follower->isStaff()) {
-				newRoom = follower->getRecallRoom().loadRoom(follower);
-				if(newRoom) {
-					broadcast(follower->getSock(), follower->getRoom(), "%M disappears.", follower);
-					follower->deleteFromRoom();
-					follower->addToRoom(newRoom);
-					follower->doPetFollow();
-				}
-			}
-		}
-
-		cp = player->following->first_fol;
-		while(cp) {
-			follower = cp->crt->getPlayer();
-			cp = cp->next_tag;
-
-			if(!follower)
-				continue;
-			if(follower == player)
-				continue;
-			if(!player->inSameRoom(follower))
-				continue;
-			if(follower->isStaff())
-				continue;
+	Group* group = player->getGroup();
+	if(group) {
+		for(Creature* crt : group->members) {
+			follower = crt->getPlayer();
+			if(!follower) continue;
+			if(!player->inSameRoom(follower)) continue;
+			if(follower->isStaff()) continue;
 
 			if(!player->isStaff() && follower->checkDimensionalAnchor()) {
 				player->printColor("^y%M's dimensional-anchor causes your song to go off-key!^w\n", follower);

@@ -339,8 +339,6 @@ bool Move::sneak(Player* player, bool sneaking) {
 // it should print the reason for failure
 
 bool Move::canEnter(Player* player, Exit* exit, bool leader) {
-	Monster* pet = player->getPet();
-
 	// this also keeps builders out of overland rooms
 	if(!player->checkBuilder(exit->target.room))
 		return(false);
@@ -349,8 +347,10 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
 	// why they can't enter
 	if(!player->canEnter(exit, true))
 		return(false);
-	if(pet && !pet->canEnter(exit) && !player->checkStaff("%M cannot go that way.\n", pet))
-		return(false);
+	for(Monster* pet : player->pets) {
+		if(pet && !pet->canEnter(exit) && !player->checkStaff("%M cannot go that way.\n", pet))
+			return(false);
+	}
 
 	if(player->isStaff())
 		return(true);
@@ -362,8 +362,8 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
 		Monster* mon = cp->crt->getMonster();
 		if(	mon->flagIsSet(M_BLOCK_EXIT) &&
 			mon->isEnemy(player) &&
-			mon->canSee(player)
-		) {
+			mon->canSee(player))
+		{
 			player->print("%M blocks your exit.\n", mon);
 			return(false);
 		}
@@ -402,12 +402,13 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
 	}
 
 	// don't follow someone to an incorrect bound room
-	// only if you arent trying to walk yourself through
+	// only if you aren't trying to walk yourself through
 	if(	!leader &&
 		exit->flagIsSet(X_TO_BOUND_ROOM) &&
-		player->following &&
-		player->following->getPlayer() &&
-		player->bound != player->following->getPlayer()->bound
+		player->getGroup() &&
+		player->getGroup()->getLeader() &&
+		player->getGroup()->getLeader()->getPlayer() &&
+		player->bound != player->getGroup()->getLeader()->getPlayer()->bound
 	)
 		return(false);
 
@@ -587,22 +588,22 @@ Exit *Move::getExit(Creature* player, cmd* cmnd) {
 	Exit	*exit=0;
 
 	if(player->isPet())
-		player = player->following;
+		player = player->getMaster();
 
 	if(Move::isOrdinal(cmnd)) {
 		xp = room->first_ext;
 		while(xp) {
 			if(	!strcmp(xp->ext->name, cmnd->str[1]) &&
 				player->canSee(xp->ext) &&
-				!(!player->isStaff() && xp->ext->flagIsSet(X_DESCRIPTION_ONLY))
-			) {
+				!(!player->isStaff() && xp->ext->flagIsSet(X_DESCRIPTION_ONLY)))
+			{
 				exit = xp->ext;
 				break;
 			}
 			xp = xp->next_tag;
 		}
 	} else {
-		if(strlen(cmnd->fullstr) < 3)
+		if(cmnd->fullstr.length() < 3)
 			return(0);
 
 		exit = findExit(player, Move::formatFindExit(cmnd), cmnd->val[cmnd->num-1], room->first_ext);
@@ -791,7 +792,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, UniqueRoom **uRoom, Are
 
 	// pets can go where players can go
 	if(!player && creature && creature->isPet())
-		player = creature->following->getPlayer();
+		player = creature->getPlayerMaster();
 
 	// find out where the exit actually points
 
@@ -799,7 +800,8 @@ bool Move::getRoom(Creature* creature, const Exit* exit, UniqueRoom **uRoom, Are
 		exit->flagIsSet(X_TO_BOUND_ROOM) ||
 		exit->flagIsSet(X_TO_PREVIOUS) ||
 		exit->flagIsSet(X_TO_STORAGE_ROOM)
-	) ) {
+	) )
+	{
 		// flags can cause us to completely ignore where the exit points
 		if(exit->flagIsSet(X_TO_PREVIOUS))
 			l = creature->previousRoom;
@@ -866,8 +868,8 @@ bool Move::getRoom(Creature* creature, const Exit* exit, UniqueRoom **uRoom, Are
 
 	if(l.room.id) {
 		if(	(creature && creature->parent_rom && l.room == creature->room) ||
-			!loadRoom(l.room, uRoom)
-		) {
+			!loadRoom(l.room, uRoom) )
+		{
 			if(!teleport && creature)
 				creature->print("Off map in that direction.\n");
 			return(false);
@@ -886,14 +888,14 @@ bool Move::getRoom(Creature* creature, const Exit* exit, UniqueRoom **uRoom, Are
 			// the rest of these rules are for players only
 			// exclude pets
 			if(player && !creature->isPet()) {
-				Monster* pet = player->getPet();
-				if(pet && !pet->canEnter(*uRoom, !teleport)) {
-					if(!teleport)
-						player->print("%M won't follow you there.\n", pet);
-					(*uRoom)=0;
-					return(false);
+				for(Monster*pet : player->pets) {
+					if(pet && !pet->canEnter(*uRoom, !teleport)) {
+						if(!teleport)
+							player->print("%M won't follow you there.\n", pet);
+						(*uRoom)=0;
+						return(false);
+					}
 				}
-
 				// if they're leaving limbo
 				if(!justLooking && player->getLocation() == player->getLimboRoom())
 					player->clearFlag(P_KILLED_BY_MOB);
@@ -929,110 +931,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, UniqueRoom **uRoom, Are
 
 	return(true);
 }
-/*
-bool Move::getRoom(Creature* creature, Exit* exit, Room **uRoom, AreaRoom **aRoom, bool justLooking, MapMarker* tMapmarker) {
-	Player* player = creature->getPlayer();
-	BaseRoom* room=0;
-	bool teleporting=false, recycle=true;
-	CatRef	cr;
 
-	// if we're teleporting, we won't get an exit,
-	// we'll only have the teleport mapmarker
-	if(tMapmarker)
-		teleporting = true;
-	else if(exit && exit->target.mapmarker.getArea())
-		tMapmarker = &exit->target.mapmarker;
-
-	(*uRoom)=0;
-	(*aRoom)=0;
-
-	// special exits to take us special places
-	if(exit) {
-		if(exit->flagIsSet(X_TO_BOUND_ROOM) || exit->flagIsSet(X_TO_PREVIOUS)) {
-			if(!player)
-				cr = creature->room;
-			else {
-				Location l = player->previousRoom;
-				if(exit->flagIsSet(X_TO_BOUND_ROOM))
-					l = player->getBound();
-
-				if(l.room.id)
-					cr = l.room;
-				else if(l.mapmarker.getArea())
-					tMapmarker = &l.mapmarker;
-			}
-		}
-	}
-
-	// use the exit to figure out what kind of room we're getting
-	if(tMapmarker) {
-		Area *area = gConfig->getArea(tMapmarker->getArea());
-		if(!area) {
-			if(!teleporting && creature)
-				creature->printColor("Off the map in that direction. ^e(gr)\n");
-			return(false);
-		}
-		// if we're in a unique room, don't activate any unique-room triggers on
-		// the overland unless we're teleporting
-		if(teleporting || !creature || !creature->parent_rom)
-			cr = area->getUnique(tMapmarker);
-		if(!cr.id) {
-			// don't recycle if we are teleporting or leaving
-			// a unique room
-			if(	teleporting ||
-				(creature && creature->area_room && creature->area_room->unique.id)
-			)
-				recycle=false;
-			// if we're only looking, don't use the function that will create a new room
-			// if one doesnt already exit
-			if(justLooking)
-				(*aRoom) = area->getRoom(tMapmarker);
-			else
-				(*aRoom) = area->loadRoom(creature, tMapmarker, recycle);
-			if(!*aRoom)
-				return(false);
-			// getUnique gets called again later, so skip the decrement process here
-			// or the compass will use 2 shots
-			if(teleporting || !creature || !creature->parent_rom)
-				cr = (*aRoom)->getUnique(creature, true);
-		}
-	}
-
-	if(cr.id) {
-	} else if(!tMapmarker) {
-		Player* player = 0;
-		if(creature)
-			player = creature->getPlayer();
-		(*uRoom) = Move::getUniqueRoom(creature, player, exit, 0);
-		if(!*uRoom)
-			return(false);
-		(*aRoom)=0;
-	}
-
-
-	room = (*aRoom);
-	if(!room)
-		room = (*uRoom);
-
-	if(!justLooking && creature) {
-		if( creature->isPlayer() &&
-			creature->flagIsSet(P_MISTED) &&
-			!creature->isStaff() &&
-			(room->flagIsSet(R_DISPERSE_MIST) || room->flagIsSet(R_ETHEREAL_PLANE) || room->isUnderwater())
-		) {
-			if(room->isUnderwater())
-				creature->print("Water currents disperse your mist.\n");
-			else {
-				creature->print("Swirling vapors disperse your mist.\n");
-				creature->stun(mrand(5,8));
-			}
-			creature->unmist();
-		}
-	}
-
-	return(true);
-}
-*/
 
 //*********************************************************************
 //						start
@@ -1043,14 +942,12 @@ bool Move::getRoom(Creature* creature, Exit* exit, Room **uRoom, AreaRoom **aRoo
 
 bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::list<Creature*> *followers, int* numPeople, bool& roomPurged) {
 	BaseRoom *oldRoom = creature->getRoom(), *newRoom=0;
-	Creature *pet=0, *follower=0;
 	UniqueRoom	*uRoom=0;
 	AreaRoom* aRoom=0;
 	Exit	*exit=0;
 	Player	*player = creature->getPlayer();
 	Monster* monster = creature->getMonster();
 	bool	sneaking=false, wasSneaking=false, mem=false;
-	ctag	*cp=0;
 
 	if(player) {
 		if(!Move::canMove(player, cmnd))
@@ -1065,8 +962,8 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 	exit = Move::getExit(creature, cmnd);
 	if(!exit) {
 		creature->print("You don't see that exit.\n");
-		if(monster && monster->following)
-			monster->following->print("Your pet doesn't see that exit.\n");
+		if(monster && monster->getMaster())
+			monster->getMaster()->print("Your pet doesn't see that exit.\n");
 		return(false);
 	}
 
@@ -1134,7 +1031,7 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 	else
 		creature->area_room = aRoom;
 
-	// the leader doesnt use the list
+	// the leader doesn't use the list
 	if(!leader)
 		followers->push_back(creature);
 
@@ -1152,33 +1049,42 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 
 	if(player && (wasSneaking || portal)) {
 		// TODO: Make pet unhide during failed sneak
-		pet = player->getPet();
-		if(pet && oldRoom == pet->getRoom())
-			Move::start(pet, cmnd, 0, 0, followers, numPeople, roomPurged);
+		for(Monster*pet : player->pets) {
+			if(pet && oldRoom == pet->getRoom())
+				Move::start(pet, cmnd, 0, 0, followers, numPeople, roomPurged);
+		}
 		// reset stayInMemory
 		if(aRoom)
 			aRoom->setStayInMemory(mem);
 		if(portal && oldRoom && exit)
-			Move::deletePortal(oldRoom, exit, leader ? player : player->following, followers);
+			Move::deletePortal(oldRoom, exit, leader ? player : player->getGroupLeader(), followers);
 		// portal owners close once they exit the room
 		if(player && player->flagIsSet(P_PORTAL))
-			Move::deletePortal(oldRoom, player->name, leader ? player : player->following);
+			Move::deletePortal(oldRoom, player->name, leader ? player : player->getGroupLeader());
 		return(true);
 	}
 
 
+	Group* group = creature->getGroup();
+	if(group && creature->getGroupStatus() == GROUP_LEADER && !creature->pFlagIsSet(P_DM_INVIS)) {
+		for(Creature* follower : group->members) {
+		    if(follower == creature || follower->getGroupStatus() < GROUP_MEMBER)
+		        continue;
 
-	cp = creature->first_fol;
-	while(cp) {
-		follower = cp->crt;
-		cp = cp->next_tag;
-
-		if(oldRoom == follower->getRoom())
-			Move::start(follower, cmnd, 0, 0, followers, numPeople, roomPurged);
-		if(roomPurged)
-			oldRoom = NULL;
+			if(oldRoom == follower->getRoom())
+				Move::start(follower, cmnd, 0, 0, followers, numPeople, roomPurged);
+			if(roomPurged)
+				oldRoom = NULL;
+		}
 	}
-
+	if(!group) {
+        for(Monster* pet : creature->pets) {
+            if(oldRoom == pet->getRoom())
+                Move::start(pet, cmnd, 0, 0, followers, numPeople, roomPurged);
+            if(roomPurged)
+                oldRoom = NULL;
+        }
+	}
 	if(player && !sneaking && !roomPurged && oldRoom)
 		Move::checkFollowed(player, exit, oldRoom, followers);
 
@@ -1188,7 +1094,7 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 
 	// portal owners close once they exit the room, but this means their group can follow
 	if(player && player->flagIsSet(P_PORTAL))
-		Move::deletePortal(oldRoom, player->name, leader ? player : player->following, followers);
+		Move::deletePortal(oldRoom, player->name, leader ? player : player->getGroupLeader(), followers);
 	return(true);
 }
 
@@ -1591,7 +1497,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(object->getShotscur() < 1) {
+	if(object->getShotsCur() < 1) {
 		player->printColor("%O is broken.\n", object);
 		return(0);
 	}
@@ -1613,7 +1519,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 
 	exit->clearFlag(X_LOCKED);
 	exit->ltime.ltime = time(0);
-	object->decShotscur();
+	object->decShotsCur();
 
 	if(object->use_output[0])
 		player->print("%s\n", object->use_output);
@@ -1623,7 +1529,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 
 	Hooks::run(player, "unlockExit", exit, "unlockByCreature");
 
-	if(object->getShotscur() < 1 && Unique::isUnique(object)) {
+	if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
 		player->delObj(object, true);
 		delete object;
 	}
@@ -1697,7 +1603,7 @@ int cmdLock(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(object->getShotscur() < 1) {
+	if(object->getShotsCur() < 1) {
 		player->printColor("%O is broken.\n", object);
 		return(0);
 	}
@@ -1723,7 +1629,7 @@ int cmdLock(Player* player, cmd* cmnd) {
 
 	Hooks::run(player, "lockExit", exit, "lockByCreature");
 
-	if(object->getShotscur() < 1 && Unique::isUnique(object)) {
+	if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
 		player->delObj(object, true);
 		delete object;
 	}

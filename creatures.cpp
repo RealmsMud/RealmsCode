@@ -738,7 +738,7 @@ bool Player::canUse(Object* object, bool all) {
 	}
 */
 
-	if(object->getShotscur() < 1 && object->getType() != WAND) {
+	if(object->getShotsCur() < 1 && object->getType() != WAND) {
 		if(!all)
 			print("You can't. It's broken.\n");
 		return(false);
@@ -903,7 +903,7 @@ unsigned long Creature::getInventoryValue() const {
 					continue;
 				}
 
-				if(object2->getShotscur() < 1 || object2->flagIsSet(O_NO_PAWN)) {
+				if(object2->getShotsCur() < 1 || object2->flagIsSet(O_NO_PAWN)) {
 					cop = cop->next_tag;
 					continue;
 				}
@@ -924,7 +924,7 @@ unsigned long Creature::getInventoryValue() const {
 			continue;
 		}
 
-		if(	(object->getShotscur() < 1 && object->getType() != CONTAINER) ||
+		if(	(object->getShotsCur() < 1 && object->getType() != CONTAINER) ||
 			object->flagIsSet(O_NO_PAWN)
 		) {
 			op = op->next_tag;
@@ -956,7 +956,7 @@ unsigned long Creature::getInventoryValue() const {
 					cop = cop->next_tag;
 					continue;
 				}
-				if(cop->obj->getShotscur() < 1 || cop->obj->flagIsSet(O_NO_PAWN)) {
+				if(cop->obj->getShotsCur() < 1 || cop->obj->flagIsSet(O_NO_PAWN)) {
 					cop = cop->next_tag;
 					continue;
 				}
@@ -974,7 +974,7 @@ unsigned long Creature::getInventoryValue() const {
 
 		if(object3->getType() == SCROLL || object3->getType()== POTION || object3->getType() == SONGSCROLL)
 			continue;
-		if(	(object3->getShotscur() < 1 && object3->getType() != CONTAINER) ||
+		if(	(object3->getShotsCur() < 1 && object3->getType() != CONTAINER) ||
 			object3->flagIsSet(O_NO_DROP) ||
 			object3->flagIsSet(O_NO_PAWN)
 		)
@@ -1159,7 +1159,9 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 	if(!this)
 		return("(ERROR: NULL CRT)");
 
-	flags |= viewer->displayFlags();
+	if(viewer)
+		flags |= viewer->displayFlags();
+
 	const Player* pThis = getConstPlayer();
 	// Player
 	if(isPlayer()) {

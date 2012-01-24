@@ -334,7 +334,7 @@ void Player::wearCursed() {
 		op = op->next_tag;
 
 		if(object->flagIsSet(O_CURSED) && object->flagIsSet(O_WORN)) {
-			if(object->getShotscur() < 1) {
+			if(object->getShotsCur() < 1) {
 				object->clearFlag(O_WORN);
 			} else {
 
@@ -497,7 +497,7 @@ bool doRemoveObj(Player* player, cmd* cmnd, int id) {
 		}
 
 		if(	object->flagIsSet(O_CURSED) &&
-			object->getShotscur() > 0 &&
+			object->getShotsCur() > 0 &&
 			!player->checkStaff("You can't. It's cursed!\n")
 		)
 			return(false);
@@ -621,7 +621,7 @@ void remove_all(Player* player) {
 	}
 
 	for(i=0; i<MAXWEAR; i++) {
-		if(player->ready[i] && (!(player->ready[i]->flagIsSet(O_CURSED) && player->ready[i]->getShotscur() > 0))) {
+		if(player->ready[i] && (!(player->ready[i]->flagIsSet(O_CURSED) && player->ready[i]->getShotsCur() > 0))) {
 			sprintf(str2,"%s, ", player->ready[i]->getObjStr(NULL, 0, 1).c_str());
 			strcat(str, str2);
 			player->ready[i]->clearFlag(O_WORN);
@@ -933,7 +933,7 @@ int doGetObject(Object* object, Creature* creature, bool doLimited, bool noSplit
 	// we're being sent either a player or a pet
 	//	- creature will be the one getting the object
 	//	- player will be the one getting the messages
-	Player *player = creature->getMaster();
+	Player *player = creature->getPlayerMaster();
 	int i = 0;
 
 	if(!player) {
@@ -951,11 +951,11 @@ int doGetObject(Object* object, Creature* creature, bool doLimited, bool noSplit
 		fulfillQuest(player, object);
 
 	if(object->getType() == MONEY) {
+	    Group* group = player->getGroup(true);
 
-
-		if(player->flagIsSet(P_GOLD_SPLIT) && !noSplit) {
+		if(group && group->flagIsSet(GROUP_SPLIT_GOLD) && !noSplit) {
 			gServer->logGold(GOLD_IN, player, object->value, object, "GetObject-Split");
-			if(!autosplit(player, object->value[GOLD])) {
+			if(!player->autosplit(object->value[GOLD])) {
 				player->coins.add(object->value);
 			}
 		} else {
@@ -1069,7 +1069,7 @@ void getPermObj(Object* object) {
 // the container by the second.
 
 void getAllObj(Creature* creature, Object *container) {
-	Player	*player = creature->getMaster();
+	Player	*player = creature->getPlayerMaster();
 	Property *p=0;
 	Object	*object=0, *last_obj=0;
 	otag	*op=0;
@@ -1212,7 +1212,7 @@ void getAllObj(Creature* creature, Object *container) {
 // to get everything they are able to see in the room.
 
 void get_all_rom(Creature* creature, char *item) {
-	Player	*player = creature->getMaster();
+	Player	*player = creature->getPlayerMaster();
 	BaseRoom* room = creature->getRoom();
 	Object	*object=0, *last_obj=0;
 	otag	*op=0;
@@ -1243,7 +1243,7 @@ void get_all_rom(Creature* creature, char *item) {
 			if(	cp->crt != player &&
 				player->canSee(cp->crt) &&
 				!cp->crt->flagIsSet(P_HIDDEN) &&
-				!in_group(player, cp->crt->name) &&
+				!player->inSameGroup(cp->crt) &&
 				!cp->crt->isStaff()
 			) {
 				player->print("You cannot do that when someone else is in the room.\n");
@@ -1321,7 +1321,7 @@ void get_all_rom(Creature* creature, char *item) {
 					strcat(str, ", ");
 				}
 //				if(player->flagIsSet(P_GOLD_SPLIT)) {
-//					if(!autosplit(player, object->value[2]))
+//					if(!player->autosplit(object->value[2]))
 //						player->coins[GOLD] += object->value[2];
 //				} else
 //					player->coins[GOLD] += object->value[2];
@@ -1396,12 +1396,12 @@ void get_all_rom(Creature* creature, char *item) {
 // inside another object.
 
 int cmdGet(Creature* creature, cmd* cmnd) {
-	Player	*player = creature->getMaster();
+	Player	*player = creature->getPlayerMaster();
 	BaseRoom* room = creature->getRoom();
 	Object	*object=0, *container=0;
 	otag	*cop=0;
 	int		 n=0, match=0, ground=0;
-	Creature *pet=0;
+	Monster *pet=0;
 	Property* p=0;
 
 	// we're being sent either a player or a pet
@@ -1613,7 +1613,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 			// check for pets
 			pet = room->findMonster(player, cmnd, 2);
 			if(pet) {
-				if(pet != player->getPet()) {
+				if(!player->findPet(pet)) {
 					player->print("%M is not your pet!\n", pet);
 					return(0);
 				}
@@ -2031,7 +2031,7 @@ bool canDropAllObj(Object* object, Object* container) {
 	if(object->getSize() && container->getSize() && object->getSize() > container->getSize())
 		return(false);
 
-	if(container->getShotscur() >= container->getShotsmax())
+	if(container->getShotsCur() >= container->getShotsMax())
 		return(false);
 
 	// cannot put NODROP items into normal bags
@@ -2049,7 +2049,7 @@ bool canDropAllObj(Object* object, Object* container) {
 // parameter, and the container by the second.
 
 void dropAllObj(Creature* creature, Object *container, Property *p) {
-	Player	*player = creature->getMaster();
+	Player	*player = creature->getPlayerMaster();
 	Object	*object=0, *last=0;
 	BaseRoom* room = creature->getRoom();
 	otag	*op=0;
@@ -2083,7 +2083,7 @@ void dropAllObj(Creature* creature, Object *container, Property *p) {
 			}
 
 
-			container->incShotscur();
+			container->incShotsCur();
 			creature->delObj(object, false, false, true, false);
 
 			// broadcast for devouring items
@@ -2277,7 +2277,7 @@ void containerOutput(const Player* player, const Object* container, const Object
 // to drop an object in the room at which they are located.
 
 int cmdDrop(Creature* creature, cmd* cmnd) {
-	Player	*player = creature->getMaster();
+	Player	*player = creature->getPlayerMaster();
 	BaseRoom* room = creature->getRoom();
 	Object	*object=0, *container=0;
 	otag	*op=0;
@@ -2540,7 +2540,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 			return(0);
 		}
 
-		if(container->getShotscur() >= container->getShotsmax()) {
+		if(container->getShotsCur() >= container->getShotsMax()) {
 			player->printColor("%O can't hold anymore.\n", container);
 			return(0);
 		}
@@ -2635,7 +2635,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 			player->delObj(object, false, in_room && !p, true, true, !in_room);
 
 		container->addObj(object);
-		container->incShotscur();
+		container->incShotsCur();
 		container->clearFlag(O_BEING_PREPARED);
 
 		if(!is_pet)
@@ -2669,8 +2669,8 @@ int canGiveTransport(Creature* creature, Creature* target, Object* object, bool 
 	// we're being sent either a player or a pet
 	//	- creature will be the one getting the object
 	//	- player will be the one getting the messages
-	player = creature->getMaster();
-	pMaster = target->getMaster();
+	player = creature->getPlayerMaster();
+	pMaster = target->getPlayerMaster();
 	pTarget = target->getPlayer();
 
 	if(!player) {
@@ -2770,7 +2770,7 @@ int canGiveTransport(Creature* creature, Creature* target, Object* object, bool 
 // another player or monster.
 
 int cmdGive(Creature* creature, cmd* cmnd) {
-	Player	*player = creature->getMaster();
+	Player	*player = creature->getPlayerMaster();
 	Object	*object=0;
 	Creature* target=0;
 	BaseRoom* room = creature->getRoom();
@@ -2901,7 +2901,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 	broadcast(player->getSock(), target->getSock(), room, "%M gave %1P to %N.", creature, object, target);
 
 	creature->delObj(object);
-	Limited::transferOwner(player, target->getMaster(), object);
+	Limited::transferOwner(player, target->getPlayerMaster(), object);
 	target->addObj(object);
 
 	if(!player->isDm())
@@ -2957,7 +2957,7 @@ void give_money(Player* player, cmd* cmnd) {
 
 	master = target;
 	if(target->isPet())
-		master = target->following;
+		master = target->getMaster();
 
 	if(master->flagIsSet(P_LINKDEAD)) {
 		player->print("%s doesn't want that right now!\n", target->name);
@@ -3241,7 +3241,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(object->getShotscur() > MAX(3, object->getShotsmax() / 10)) {
+	if(object->getShotsCur() > MAX(3, object->getShotsMax() / 10)) {
 		player->print("%M says, \"I've always said if it ain't broke, don't fix it!\"\n", smithy);
 		return(0);
 	}
@@ -3379,8 +3379,8 @@ int cmdRepair(Player* player, cmd* cmnd) {
 			}
 		}
 
-		object->setShotsmax(object->getShotsmax() * 9 / 10);
-		object->setShotscur(object->getShotsmax());
+		object->setShotsMax(object->getShotsMax() * 9 / 10);
+		object->setShotsCur(object->getShotsMax());
 
 
 		player->printColor("%M hands %P back to you, almost good as new.\n", smithy, object);
@@ -3390,7 +3390,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
 		player->print("\"Bah!\", %N shouts, \"Broke it. Sorry.\"\n", smithy);
 		broadcast(player->getSock(), player->getRoom(), "Oops! %s broke it.", smithy->heShe());
 
-		if(object->getShotscur() > 0 && !alignDiff) {
+		if(object->getShotsCur() > 0 && !alignDiff) {
 			player->print("%M says, \"Well, here's your cash back.\"\n", smithy);
 			player->coins.add(cost, GOLD);
 			gServer->logGold(GOLD_IN, player, Money(cost, GOLD), object, "RepairRefund");

@@ -636,8 +636,8 @@ BOOST_PYTHON_MODULE(MudObjects) {
 	class_<Object, bases<MudObject> >("Object", no_init)
 		.def("getType", &Object::getType)
 		.def("getWearflag", &Object::getWearflag)
-		.def("getShotsmax", &Object::getShotsmax)
-		.def("getShotscur", &Object::getShotscur)
+		.def("getShotsmax", &Object::getShotsMax)
+		.def("getShotscur", &Object::getShotsCur)
 
 		.def("flagIsSet", &Object::flagIsSet)
 		.def("setFlag", &Object::setFlag)

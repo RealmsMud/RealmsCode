@@ -931,17 +931,33 @@ void Player::setCustomColor(CustomColor i, char c) { customColors[i] = c; }
 //						getMaster
 //*********************************************************************
 
-Player* Creature::getMaster() {
-	return((isPet() ? following : this)->getPlayer());
+Creature* Creature::getMaster() {
+	return((isMonster() ? getMonster()->getMaster() : this));
 }
 
 //*********************************************************************
 //						getConstMaster
 //*********************************************************************
 
-const Player* Creature::getConstMaster() const {
-	return((isPet() ? following : this)->getConstPlayer());
+const Creature* Creature::getConstMaster() const {
+	return((isMonster() ? getConstMonster()->getMaster() : this));
 }
+//*********************************************************************
+//                      getPlayerMaster
+//*********************************************************************
+
+Player* Creature::getPlayerMaster() {
+    return(getMaster()->getPlayer());
+}
+
+//*********************************************************************
+//                      getConstPlayerMaster
+//*********************************************************************
+
+const Player* Creature::getConstPlayerMaster() const {
+    return(getConstMaster()->getConstPlayer());
+}
+
 
 //*********************************************************************
 //						isPlayer
@@ -965,6 +981,10 @@ bool Creature::isMonster() const {
 
 // Resets all common structure elements of creature
 void Creature::crtReset() {
+    // Reset Stream related
+    initStreamable();
+
+    // Reset other related
 	moReset();
 	playing = NULL;
 	myTarget = NULL;
@@ -1003,13 +1023,14 @@ void Creature::crtReset() {
 	for(i=0; i<MAXWEAR; i++)
 		ready[i] = 0;
 
-	following = 0;
-	first_fol = 0;
 	first_obj = 0;
 	first_tlk = 0;
 
 	parent_rom = 0;
 	area_room = 0;
+
+    group = 0;
+    groupStatus = GROUP_NO_STATUS;
 
 	current_language = 0;
 	afterProf = 0;
@@ -1056,6 +1077,7 @@ void Monster::reset() {
 	for(i=0; i<NUM_RESCUE; i++)
 		rescue[i].clear();
 
+    myMaster = 0;
 	updateAggro = 0;
 	cast = 0;
 	magicResistance = 0;
@@ -1199,8 +1221,10 @@ void Creature::CopyCommon(const Creature& cr) {
 	for(i=0; i<MAXWEAR; i++)
 		ready[i] = cr.ready[i];
 
-	following = cr.following;
-	first_fol = cr.first_fol;
+	//following = cr.following;
+
+	group = cr.group;
+	groupStatus = cr.groupStatus;
 	first_obj = cr.first_obj;
 	first_tlk = cr.first_tlk;
 
@@ -1255,6 +1279,11 @@ void Creature::CopyCommon(const Creature& cr) {
 		(*attack) = *(*sIt);
 		specials.push_back(attack);
 	}
+
+	for(Monster* pet : cr.pets) {
+	    pets.push_back(pet);
+	}
+
 
 	attackPower = cr.attackPower;
 	previousRoom = cr.previousRoom;
@@ -1422,6 +1451,8 @@ void Monster::doCopy(const Monster& cr) {
 	maxLevel = cr.maxLevel;
 	jail = cr.jail;
 	cast = cr.cast;
+
+	myMaster = cr.myMaster;
 
 	loadAggro = cr.loadAggro;
 	info = cr.info;
@@ -1592,16 +1623,6 @@ Player::~Player() {
 	questsInProgress.clear();
 	questsCompleted.clear();
 	setLastPawn(0);
-}
-
-//*********************************************************************
-//						isPet
-//*********************************************************************
-
-bool Creature::isPet() const {
-	if(isPlayer())
-		return(false);
-	return(flagIsSet(M_PET) && following);
 }
 
 //*********************************************************************

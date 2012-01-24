@@ -82,7 +82,7 @@ public:
 	MudObject* findTarget(Creature* searcher,  const bstring& name, const int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false);
 	MudObject* findTarget(Creature* searcher,  const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& retVal);
 
-	void effectEcho(bstring fmt, const MudObject* actor = NULL, const MudObject* applier = false, Socket* ignore = NULL);
+	void effectEcho(bstring fmt, const MudObject* actor = NULL, const MudObject* applier = null, Socket* ignore = null);
 
 	Monster* getGuardingExit(const Exit* exit, const Player* player) const;
 	void addExit(Exit *ext);

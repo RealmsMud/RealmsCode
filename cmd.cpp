@@ -38,6 +38,12 @@
 
 
 int dmTest(Player* player, cmd* cmnd) {
+    *player << ColorOn << "^rhi" << ColorOff << "\n";
+    *player << player << " " << player << "\n";
+    int i = 0;
+    for(Monster* pet : player->pets ){
+        *player << bstring(++i) << ") " << pet << " " << setf(CAP) << setn(10) << pet << "\n";
+    }
 	return(0);
 }
 
@@ -236,7 +242,7 @@ bool Config::initCommands() {
 // *************************************************************************************
 // Staff Commands
 
-	staffCommands["play"] = new PlyCommand("play", 			100,	cmdPlay,			isCt,		"Play a song.");
+	staffCommands["play"] = new PlyCommand("play", 			        100,	cmdPlay,			isCt,	"Play a song.");
 	staffCommands["*cache"] = new PlyCommand("*cache",				100,	dmCache,			isDm,	"Show DNS cache.");
 	staffCommands["*test"] = new PlyCommand("*test",				100,	dmTest,				isDm,	"");
 	staffCommands["pcast"] = new PlyCommand("pcast",				100,	pcast,				isDm,	"");
@@ -1350,7 +1356,7 @@ int allowedWhilePetrified(bstring str) {
 // This function takes the command structure of the person at the socket
 // in the first parameter and interprets the person's command.
 
-int cmdProcess(Creature *user, cmd* cmnd, bool pet) {
+int cmdProcess(Creature *user, cmd* cmnd, Creature* pet) {
 	Player	*player=0;
 	int		fd = user->fd;
 
@@ -1358,7 +1364,7 @@ int cmdProcess(Creature *user, cmd* cmnd, bool pet) {
 		if(!pet) {
 			player = user->getPlayer();
 		} else
-			user = user->getPlayer()->getPet();
+			user = pet;
 	}
 
 	if(player && player->afterProf) {

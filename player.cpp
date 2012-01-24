@@ -43,7 +43,7 @@ void Creature::fixLts() {
 	long tdiff=0, t = time(0);
 	int i=0;
 	if(isPet())  {
-		tdiff = t - following->lasttime[LT_AGE].ltime;
+		tdiff = t - getMaster()->lasttime[LT_AGE].ltime;
 	}
 	else
 		tdiff = t - lasttime[LT_AGE].ltime;
@@ -69,7 +69,7 @@ void Player::init() {
 	char	file[80], str[50], watchers[128];
 	BaseRoom *newRoom=0;
 	UniqueRoom	*uRoom=0;
-	ctag	*cp;
+//	ctag	*cp;
 	long	t = time(0);
 	int		watch=0;
 
@@ -341,7 +341,7 @@ void Player::init() {
 
 	// broadcast
 	if(!gServer->isRebooting()) {
-		defineColors();
+		setSockColors();
 		broadcast_login(this, 1);
 	}
 
@@ -354,12 +354,8 @@ void Player::init() {
 		addToRoom(uRoom);
 
 
-
-	// pet code
-	cp = first_fol;
-	while(cp) {
-		Monster* pet = cp->crt->getMonster();
-		pet->following = this;
+	for(Monster* pet : pets) {
+		pet->setMaster(this);
 		pet->fixLts();
 
 		pet->updateAttackTimer();
@@ -369,8 +365,6 @@ void Player::init() {
 
 		pet->addToRoom(getRoom());
 		gServer->addActive(pet);
-
-		cp = cp->next_tag;
 	}
 
 	fixLts();
@@ -505,8 +499,6 @@ void Player::init() {
 // is called.
 
 void Player::uninit() {
-	Creature* target=0;
-	ctag	*cp=0, *prev=0;
 	int		i=0;
 	long	t=0;
 	char	str[50];
@@ -517,64 +509,18 @@ void Player::uninit() {
 
 	courageous();
 	clearMaybeDueling();
+    removeFromGroup(!gServer->isRebooting());
 
-	cp = first_fol;
-	while(cp) {
-		// pet code
-		if(cp->crt->isPet()) {
-			Monster* pet = cp->crt->getMonster();
+	for(Monster* pet : pets) {
+		if(pet->isPet()) {
 			gServer->delActive(pet);
 			pet->deleteFromRoom();
 			free_crt(pet);
-			cp->crt = 0;
-			cp = cp->next_tag;
-			continue;
+		} else {
+			pet->setMaster(NULL);
 		}
-		cp->crt->following = 0;
-		if(cp->crt->isPlayer() && !gServer->isRebooting())
-			cp->crt->print("You stop following %s.\n", name);
-		prev = cp->next_tag;
-		cp->crt = NULL;
-		cp = prev;
 	}
-	while(first_fol && first_fol->crt == NULL) {
-		prev = first_fol;
-		first_fol = first_fol->next_tag;
-		delete prev;
-	}
-	cp = first_fol;
-	while(cp) {
-		if(cp->next_tag == NULL)
-			break;
-		if(cp->next_tag->crt == NULL) {
-			prev = cp->next_tag;
-			cp->next_tag = cp->next_tag->next_tag;
-			delete prev;
-			continue;
-		}
-		cp = cp->next_tag;
-	}
-	if(following) {
-		target = following;
-		cp = target->first_fol;
-		if(cp->crt == this) {
-			target->first_fol = cp->next_tag;
-			delete cp;
-		} else
-			while(cp) {
-				if(cp->crt == this) {
-					prev->next_tag = cp->next_tag;
-					delete cp;
-					break;
-				}
-				prev = cp;
-				cp = cp->next_tag;
-			}
-		following = 0;
-
-		if(!isStaff() && !gServer->isRebooting())
-			target->print("%s stops following you.\n", name);
-	}
+	pets.clear();
 
 	for(i=0; i<MAXWEAR; i++) {
 		if(ready[i]) {
@@ -991,15 +937,15 @@ void Player::update() {
 	item = getLight();
 	if(item && item != MAXWEAR+1) {
 		if(ready[item-1]->getType() == LIGHTSOURCE) {
-			ready[item-1]->decShotscur();
-			if(ready[item-1]->getShotscur() < 1) {
+			ready[item-1]->decShotsCur();
+			if(ready[item-1]->getShotsCur() < 1) {
 				print("Your %s died out.\n", ready[item-1]->name);
 				broadcast(getSock(), room, "%M's %s died out.", this, ready[item-1]->name);
 			}
 		}
 	}
 
-	if(isStaff() && flagIsSet(P_AUTO_INVIS) && !flagIsSet(P_DM_INVIS) && (t - getSock()->ltime) > 6000) {
+	if(isStaff() && flagIsSet(P_AUTO_INVIS) && !flagIsSet(P_DM_INVIS) && getSock() && (t - getSock()->ltime) > 6000) {
 		printColor("^g*** Automatically enabling DM invisibility ***\n");
 		setFlag(P_DM_INVIS);
 	}
@@ -1101,7 +1047,7 @@ void Creature::finishDelObj(Object* object, bool breakUnique, bool removeUnique,
 	if(darkmetal)
 		killDarkmetal();
 	if(breakUnique || removeUnique) {
-		Player* player = getMaster();
+		Player* player = getPlayerMaster();
 		if(player) {
 			if(breakUnique)
 				Limited::remove(player, object);
@@ -1568,7 +1514,7 @@ int Player::getLight() const {
 			continue;
 		if (ready[i]->flagIsSet(O_LIGHT_SOURCE)) {
 			if ((ready[i]->getType() == LIGHTSOURCE &&
-				ready[i]->getShotscur() > 0) ||
+				ready[i]->getShotsCur() > 0) ||
 				ready[i]->getType() != LIGHTSOURCE) {
 				light = 1;
 				break;
@@ -1635,7 +1581,6 @@ void Player::sendPrompt() {
 		toPrint += ga_str;
 	}
 
-	toPrint = colorize((char*)toPrint.c_str(), flagIsSet(P_ANSI_COLOR));
 	mySock->write(toPrint);
 }
 
@@ -2328,9 +2273,9 @@ int Player::getSneakChance() const {
 	switch(cClass) {
 	case THIEF:
 		if(cClass2 == MAGE)
-			MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
 		else
-			chance = MIN(90, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(90, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
 
 		break;
 	case ASSASSIN:
@@ -2338,40 +2283,41 @@ int Player::getSneakChance() const {
 		break;
 	case CLERIC:
 		if(cClass2 == ASSASSIN)
-			chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
 		else if(deity == KAMIRA || deity == ARACHNUS)
-			chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) piety.getCur()));
+			chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) piety.getCur()));
 
 		break;
 	case FIGHTER:
 		if(cClass2 == THIEF)
-			chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
 
 		break;
 	case MAGE:
 		if(cClass2 == THIEF || cClass2 == ASSASSIN)
-			chance = MIN(90, 5 + 8 * MAX(1,sLvl-3) + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(90, 5 + 8 * MAX(1,sLvl-3) + 3 * bonus((int) dexterity.getCur()));
 
 		break;
 	case DRUID:
 		if(getRoom()->isForest())
-			chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
 
 		break;
 	case RANGER:
 		if(getRoom()->isForest())
-			chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
 		else
-			chance = MIN(83, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
+			chance = tMIN(83, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
+		break;
 	case ROGUE:
-		chance = MIN(85, 5 + 7 * sLvl + 3 * bonus((int) dexterity.getCur()));
+		chance = tMIN(85, 5 + 7 * sLvl + 3 * bonus((int) dexterity.getCur()));
 		break;
 	default:
 		break;
 	}
 
 	if(isBlind())
-		chance = MIN(20, chance);
+		chance = tMIN(20, chance);
 
 	if(isEffected("camouflage")) {
 		if(getRoom()->isOutdoors())
@@ -2396,7 +2342,7 @@ bool Player::breakObject(Object* object, int loc) {
 	if(!object)
 		return(false);
 
-	if(object->getShotscur() < 1) {
+	if(object->getShotsCur() < 1) {
 		printColor("Your %s is broken.\n", object->name);
 		broadcast(getSock(), getRoom(), "%M broke %s %s.", this, hisHer(), object->name);
 

@@ -134,7 +134,7 @@ int dmWatcherBroad(Player *admin, cmd* cmnd) {
 
 	text = "broadcast " + text;
 	strcpy(cmnd->str[0], "broadcast");
-	strcpy(cmnd->fullstr, text.c_str());
+	cmnd->fullstr = text;
 	cmdProcess(watcher, cmnd);
 
 	log_immort(true, admin, "%s made %s broadcast \"%s\"\n", admin->name, watcher->name, text.c_str());

@@ -339,7 +339,7 @@ int cmdPrefs(Player* player, cmd* cmnd) {
 				player->print("Your client does not support MXP!\nYou will not be able to view extra colors.\n");
 				return(0);
 			}
-			player->defineMXP();
+			player->getSock()->defineMxp();
 		}
 
 		if(pref->name == "ignore") {

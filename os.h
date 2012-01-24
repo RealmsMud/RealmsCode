@@ -1,6 +1,6 @@
 /*
  * os.h
- *	 Operating system dependant includes and defines
+ *	 Operating system dependent includes and defines
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___ 
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|

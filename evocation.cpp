@@ -659,7 +659,7 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
 			// only do pets
 			if(!target->isPet())
 				continue;
-			if(target->following == player)
+			if(target->getMaster() == player)
 				continue;
 
 			if(!doMultiOffensive(player, target, &found_something, &something_died, spellData, spellname, osp))
