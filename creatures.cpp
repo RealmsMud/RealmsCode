@@ -1280,12 +1280,12 @@ bool Creature::setSkill(const bstring skillStr, int gained) {
 	if(!gConfig->skillExists(skillStr))
 		return(false);
 
-	CrtSkill* crSkill = getSkill(skillStr); //= new CrtSkill(skillStr, cmnd->val[4]);
-	if(crSkill)
-		crSkill->setGained(gained);
+	Skill* skill = getSkill(skillStr);
+	if(skill)
+		skill->setGained(gained);
 	else  {
-		crSkill = new CrtSkill(skillStr, gained);
-		skills[skillStr] = crSkill;
+		skill = new Skill(skillStr, gained);
+		skills[skillStr] = skill;
 	}
 
 	return(true);

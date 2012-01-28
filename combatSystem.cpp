@@ -152,7 +152,7 @@ const bstring Object::getWeaponCategory() const {
 	if(!this)
 		return("none");
 
-	Skill* weaponSkill = gConfig->getSkill(subType);
+	SkillInfo* weaponSkill = gConfig->getSkill(subType);
 
 	if(type != WEAPON || !weaponSkill)
 		return("none");
@@ -268,7 +268,7 @@ bool Object::needsTwoHands() const {
 //**********************************************************************
 
 bool Object::setWeaponType(const bstring& newType) {
-	Skill* weaponSkill = gConfig->getSkill(newType);
+	SkillInfo* weaponSkill = gConfig->getSkill(newType);
 	bstring category = "";
 	if(weaponSkill) {
 		category = weaponSkill->getGroup();
@@ -290,7 +290,7 @@ bool Object::setWeaponType(const bstring& newType) {
 bool Object::setArmorType(const bstring& newType) {
 	// Armor type must be ring, shield, or one of the armor type skills
 	if(newType != "ring" && newType != "shield") {
-		Skill* weaponSkill = gConfig->getSkill(newType);
+		SkillInfo* weaponSkill = gConfig->getSkill(newType);
 		bstring category = "";
 		if(weaponSkill) {
 			category = weaponSkill->getGroup();
@@ -350,7 +350,7 @@ int Player::getWeaponSkill(const Object* weapon) const {;
 	if(weaponType == "")
 		weaponType = "bare-hand";
 
-	CrtSkill* weaponSkill = getSkill(weaponType);
+	Skill* weaponSkill = getSkill(weaponType);
 	if(!weaponSkill)
 		return(0);
 	else
@@ -374,7 +374,7 @@ int Player::getDefenseSkill() const {
 	// Protection makes you harder to hit
 	if(isEffected("protection"))
 		bonus += 10;
-	CrtSkill* defenseSkill = getSkill("defense");
+	Skill* defenseSkill = getSkill("defense");
 	if(!defenseSkill)
 		return(-1);
 	else

@@ -697,7 +697,7 @@ void Creature::saveFactions(xmlNodePtr rootNode) const {
 
 void Creature::saveSkills(xmlNodePtr rootNode) const {
 	xmlNodePtr curNode = xml::newStringChild(rootNode, "Skills");
-	std::map<bstring, CrtSkill*>::const_iterator sIt;
+	std::map<bstring, Skill*>::const_iterator sIt;
 	for(sIt = skills.begin() ; sIt != skills.end() ; sIt++) {
 		(*sIt).second->save(curNode);
 	}
@@ -743,7 +743,7 @@ void Creature::saveAttacks(xmlNodePtr rootNode) const {
 //						save
 //*********************************************************************
 
-void CrtSkill::save(xmlNodePtr rootNode) const {
+void Skill::save(xmlNodePtr rootNode) const {
 	xmlNodePtr skillNode = xml::newStringChild(rootNode, "Skill");
 	xml::newStringChild(skillNode, "Name", getName());
 	xml::newNumChild(skillNode, "Gained", getGained());

@@ -246,7 +246,6 @@ int cmdScout(Player* player, cmd* cmnd);
 
 int cmdBite(Player* player, cmd* cmnd);
 int cmdDisarm(Player* player, cmd* cmnd);
-int cmdEndurance(Player* player, cmd* cmnd);
 int cmdCharm(Player* player, cmd* cmnd);
 int cmdEnthrall(Player* player, cmd* cmnd);
 int cmdIdentify(Player* player, cmd* cmnd);

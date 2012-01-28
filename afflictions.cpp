@@ -740,13 +740,13 @@ bool Creature::sunlightDamage() {
 void Creature::makeWerewolf() {
 	addPermEffect("lycanthropy");
 	if(!knowsSkill("maul"))
-		skills["maul"] = new CrtSkill("maul", 1);
+		skills["maul"] = new Skill("maul", 1);
 	if(!knowsSkill("frenzy"))
-		skills["frenzy"] = new CrtSkill("frenzy", 1);
+		skills["frenzy"] = new Skill("frenzy", 1);
 	if(!knowsSkill("howl"))
-		skills["howl"] = new CrtSkill("howl", 1);
+		skills["howl"] = new Skill("howl", 1);
 	if(!knowsSkill("claw"))
-		skills["claw"] = new CrtSkill("claw", level * 5);
+		skills["claw"] = new Skill("claw", level * 5);
 }
 
 //***********************************************************************

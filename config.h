@@ -22,7 +22,7 @@
 class Lore;
 class Unique;
 class PlayerClass;
-class Skill;
+class SkillInfo;
 class GuildCreation;
 class Ban;
 class Clan;
@@ -119,7 +119,7 @@ public:
 
 // Skills
 	bool skillExists(const bstring& skillName) const;
-	Skill* getSkill(const bstring& skillName) const;
+	SkillInfo* getSkill(const bstring& skillName) const;
 	bstring getSkillGroupDisplayName(const bstring& groupName) const;
 	bstring getSkillGroup(const bstring& skillName) const;
 	bstring getSkillDisplayName(const bstring& skillName) const;
@@ -508,7 +508,7 @@ public:
 
 	// Skills
 	std::map<bstring, bstring> skillGroups;
-	std::map<bstring, Skill*> skills;
+	std::map<bstring, SkillInfo*> skills;
 	std::map<bstring, PlayerClass*> classes;
 	std::map<bstring, StartLoc*> start;
 	std::map<bstring, Fishing> fishing;

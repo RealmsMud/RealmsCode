@@ -1255,12 +1255,12 @@ void Creature::CopyCommon(const Creature& cr) {
 	factions = cr.factions;
 
 	//skills = cr.skills;
-	CrtSkill* skill;
-	CrtSkill* crSkill;
-	std::map<bstring, CrtSkill*>::const_iterator csIt;
+	Skill* skill;
+	Skill* crSkill;
+	std::map<bstring, Skill*>::const_iterator csIt;
 	for(csIt = cr.skills.begin() ; csIt != cr.skills.end() ; csIt++) {
 		crSkill = (*csIt).second;
-		skill = new CrtSkill;
+		skill = new Skill;
 		(*skill) = (*crSkill);
 		skills[crSkill->getName()] = skill;
 	}
@@ -1564,8 +1564,8 @@ void Creature::crtDestroy() {
 
 	factions.clear();
 
-	CrtSkill* skill;
-	std::map<bstring, CrtSkill*>::iterator csIt;
+	Skill* skill;
+	std::map<bstring, Skill*>::iterator csIt;
 	for(csIt = skills.begin() ; csIt != skills.end() ; csIt++) {
 		skill = (*csIt).second;
 		delete skill;

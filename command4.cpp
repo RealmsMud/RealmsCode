@@ -101,8 +101,6 @@ void Player::score(const Player* viewer) const {
 		oStr << " ^y*Armor Spell*";
 	if(flagIsSet(P_BERSERKED))
 		oStr << " ^r*Berserked*";
-	if(flagIsSet(P_RUNNING))
-		oStr << " ^c*Running*";
 	if(isPoisoned())
 		oStr << " ^g^#*Poisoned*";
 

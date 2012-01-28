@@ -500,7 +500,6 @@ bool Config::initCommands() {
 	playerCommands["brew"] = new PlyCommand("brew",					100,	cmdBrew,			0,		"");
 	playerCommands["house"] = new PlyCommand("house",				100,	cmdHouse,			0,		"");
 	playerCommands["property"] = new PlyCommand("property",			100,	cmdProperties,		0,		"Manage your properties.");
-	playerCommands["endurance"] = new PlyCommand("endurance",		100,	cmdEndurance,		0,		"");
 	playerCommands["title"] = new PlyCommand("title",				100,	cmdTitle,			0,		"Choose a custom title.");
 	playerCommands["defecate"] = new PlyCommand("defecate",			 80,	plyAction,			0,		"");
 	playerCommands["tnl"] = new PlyCommand("tnl",					100,	plyAction,			0,		"Show the room how much experience you have to level.");

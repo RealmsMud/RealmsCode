@@ -609,8 +609,8 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
 
 		// handle objects that increase skills
 		if(object->increase->type == SkillIncrease) {
-			CrtSkill* crtSkill = player->getSkill(object->increase->increase);
-			const Skill *skill = gConfig->getSkill(object->increase->increase);
+			Skill* crtSkill = player->getSkill(object->increase->increase);
+			const SkillInfo *skill = gConfig->getSkill(object->increase->increase);
 
 			if(!skill) {
 				player->printColor("The skill set on this object is not a valid skill.\n");
@@ -730,8 +730,8 @@ void doStudy(Player* player, Object* object, bool immediate) {
 		// handle objects that increase skills
 		if(object->increase->type == SkillIncrease) {
 
-			CrtSkill* crtSkill = player->getSkill(object->increase->increase);
-			const Skill *skill = gConfig->getSkill(object->increase->increase);
+			Skill* crtSkill = player->getSkill(object->increase->increase);
+			const SkillInfo *skill = gConfig->getSkill(object->increase->increase);
 
 
 			// improve the skill
@@ -1608,8 +1608,7 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
 //*********************************************************************
 //						cmdTransmute
 //*********************************************************************
-// This allows a mage to recharge a wand provided they know the
-// spell of the wand and have enough gold.
+// This allows a mage to transmute gold into magical charges for a wand
 
 int cmdTransmute(Player* player, cmd* cmnd) {
 	Object	*object=0;
@@ -2117,60 +2116,6 @@ int cmdCommune(Player *player, cmd *cmnd) {
 	}
 
 	player->lasttime[LT_PRAY].ltime = t;
-	return(0);
-}
-
-
-//*********************************************************************
-//						cmdEndurance
-//*********************************************************************
-// This allows druids to speed walk like everyone used to be able to
-
-// This has been disabled in cmd.c
-
-int cmdEndurance(Player *player, cmd *cmnd) {
-	long	i, t;
-	int		chance;
-
-	player->clearFlag(P_AFK);
-
-	if(!player->ableToDoCommand())
-		return(0);
-
-	if(!player->knowsSkill("endurance")) {
-		player->print("You lack the training for endurance.\n");
-		return(0);
-	}
-
-	if(player->flagIsSet(P_RUNNING)) {
-		player->print("You are already able to run long distances.\n");
-		return(0);
-	}
-
-	i = player->lasttime[LT_ENDURANCE].ltime;
-	t = time(0);
-
-	if(t - i < 600L) {
-		player->pleaseWait(600L-t+i);
-		return(0);
-	}
-	int level = (int)player->getSkillLevel("endurance");
-	chance = MIN(85, level * 5 + bonus((int) player->dexterity.getCur())*5);
-
-	if(mrand(1, 100) <= chance) {
-		player->print("You are now able to run long distances.\n");
-		player->checkImprove("endurance", true);
-		broadcast(player->getSock(), player->getRoom(), "%M is now prepared to run long distances.", player);
-		player->setFlag(P_RUNNING);
-		player->lasttime[LT_ENDURANCE].ltime = t;
-		player->lasttime[LT_ENDURANCE].interval = 120L + 60L * (level / 5) + bonus((int) player->constitution.getCur())*30L;
-	} else {
-		player->print("You failed prepare yourself for long distance running.\n");
-		player->checkImprove("endurance", false);
-		broadcast(player->getSock(), player->getRoom(), "%M attempts to prepare for a run.",player);
-		player->lasttime[LT_ENDURANCE].ltime = t - 590L;
-	}
-
 	return(0);
 }
 

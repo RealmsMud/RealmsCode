@@ -364,15 +364,9 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 				target->ready[HELD-1] = 0;
 			}
 
-			player->setFlag(P_RUNNING);
-			player->lasttime[LT_ENDURANCE].ltime = t;
-			player->lasttime[LT_ENDURANCE].interval = 3L;
-
 			// killed while fleeing?
 			if(target->flee(true) == 2)
 				return(1);
-
-			target->clearFlag(P_RUNNING);
 
 			target->stun(mrand(5,8));
 

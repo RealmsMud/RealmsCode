@@ -498,6 +498,12 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 
 
 	if(isPlayer()) {
+		if(getVersion() < "2.46k" && knowsSkill("endurance")) {
+			remSkill("endurance");
+			#define P_RUNNING_OLD 56
+			clearFlag(P_RUNNING_OLD);
+		}
+
 		if(getVersion() < "2.43" && getClass() != BERSERKER) {
 			int skill = level;
 			if(isPureCaster() || isHybridCaster() || isStaff()) {
@@ -827,7 +833,7 @@ void Player::readXml(xmlNodePtr curNode) {
 //						load
 //*********************************************************************
 
-bool CrtSkill::load(xmlNodePtr rootNode) {
+bool Skill::load(xmlNodePtr rootNode) {
 	xmlNodePtr curNode = rootNode->children;
 	while(curNode) {
 		if(NODE_NAME(curNode, "Name")) {
@@ -845,29 +851,6 @@ bool CrtSkill::load(xmlNodePtr rootNode) {
 	return(true);
 }
 
-//*********************************************************************
-//						loadSkill
-//*********************************************************************
-
-bool Creature::loadSkill(xmlNodePtr rootNode) {
-	bstring name = "";
-	int			gained=0;
-	xmlNodePtr curNode = rootNode->children;
-	while(curNode) {
-		if(NODE_NAME(curNode, "Name")) {
-			xml::copyToBString(name, curNode);
-		} else if(NODE_NAME(curNode, "Gained")) {
-			xml::copyToNum(gained, curNode);
-		}
-		curNode = curNode->next;
-	}
-	if(name != "" && gained != 0) {
-		CrtSkill* skill = new CrtSkill(name, gained);
-		skills[name] = skill;
-		return(true);
-	}
-	return(false);
-}
 
 //*********************************************************************
 //						loadFaction
@@ -901,7 +884,7 @@ void Creature::loadSkills(xmlNodePtr rootNode) {
 	xmlNodePtr curNode = rootNode->children;
 	while(curNode) {
 		if(NODE_NAME(curNode, "Skill")) {
-			CrtSkill *skill = new CrtSkill();
+			Skill *skill = new Skill();
 			if(skill->load(curNode)) {
 				skills[skill->getName()] = skill;
 			} else {
@@ -1791,10 +1774,10 @@ void Config::loadSkillGroup(xmlNodePtr rootNode) {
 
 void Config::loadSkills(xmlNodePtr rootNode) {
 	xmlNodePtr curNode = rootNode->children;
-	Skill* skill=0;
+	SkillInfo* skill=0;
 	while(curNode != NULL) {
 		if(NODE_NAME(curNode, "Skill")) {
-			skill = new Skill;
+			skill = new SkillInfo;
 			if(skill->load(curNode) ) {
 				skills[skill->getName()] = skill;
 			} else {
@@ -1811,7 +1794,7 @@ void Config::loadSkills(xmlNodePtr rootNode) {
 //						load
 //*********************************************************************
 
-bool Skill::load(xmlNodePtr rootNode) {
+bool SkillInfo::load(xmlNodePtr rootNode) {
 	xmlNodePtr curNode = rootNode->children;
 	bstring group;
 	bstring description;

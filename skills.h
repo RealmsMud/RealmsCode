@@ -27,12 +27,12 @@ typedef enum {
 } SkillGainLevel;
 
 //**********************************************************************
-// Skill - Class to store base information about skills
+// SkillInfo - Class to store base information about skills
 //**********************************************************************
 
-class Skill {
+class SkillInfo {
 public:
-	Skill();
+	SkillInfo();
 protected:
 	bstring name;			// Name of the skill
 	bstring group;			// Group the skill belongs to
@@ -52,13 +52,13 @@ public:
 };
 
 //**********************************************************************
-// CrtSkills - Keeps track of skill information for a Creature
+// Skill - Keeps track of skill information for a Creature
 //**********************************************************************
 
-class CrtSkill {
+class Skill {
 public:
-	CrtSkill();
-	CrtSkill(const bstring& pName, int pGained);
+	Skill();
+	Skill(const bstring& pName, int pGained);
 protected:
 	bstring name;
 	int gained;			// How many points they have gained so far

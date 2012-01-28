@@ -300,7 +300,7 @@ public:
 // Data
 	bstring plural;
 	std::map<bstring, long> factions;
-	std::map<bstring, CrtSkill*> skills;
+	std::map<bstring, Skill*> skills;
 	char key[3][CRT_KEY_LENGTH];
 	short fd; // Socket number
 	short current_language;
@@ -394,7 +394,6 @@ public:
 	void loadFactions(xmlNodePtr rootNode);
 	bool loadFaction(xmlNodePtr rootNode);
 	void loadSkills(xmlNodePtr rootNode);
-	bool loadSkill(xmlNodePtr rootNode);
 	void loadStats(xmlNodePtr curNode);
 
 	bool pulseEffects(time_t t);
@@ -414,7 +413,7 @@ public:
 	double getSkillLevel(const bstring& skillName) const; // *
 	double getSkillGained(const bstring& skillName) const; // *
 	double getTradeSkillGained(const bstring& skillName) const; // *
-	CrtSkill* getSkill(const bstring& skillName) const;
+	Skill* getSkill(const bstring& skillName) const;
 	void addSkill(const bstring& skillName, int gained); // *
 	void remSkill(const bstring& skillName); // *
 	void checkSkillsGain(std::list<SkillGain*>::const_iterator begin, std::list<SkillGain*>::const_iterator end, bool setToLevel = false);

@@ -1221,10 +1221,10 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
 		sock->getPlayer()->addSkill("bare-hand", 1);
 
 	std::map<bstring, bstring>::const_iterator sgIt;
-	std::map<bstring, Skill*>::const_iterator sIt;
+	std::map<bstring, SkillInfo*>::const_iterator sIt;
 	int k = 0, n = 0;
 	bstring curGroup, curGroupDisplay;
-	Skill* curSkill;
+	SkillInfo* curSkill;
 	for(sgIt = gConfig->skillGroups.begin() ; sgIt != gConfig->skillGroups.end() ; sgIt++) {
 		curGroup = (*sgIt).first;
 		curGroupDisplay = (*sgIt).second;

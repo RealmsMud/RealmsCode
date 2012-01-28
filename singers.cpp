@@ -124,7 +124,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 		if(object->increase) {
 			
 			if(object->increase->type == SkillIncrease) {
-				const Skill* skill = gConfig->getSkill(object->increase->increase);
+				const SkillInfo* skill = gConfig->getSkill(object->increase->increase);
 				if(!skill)
 					player->printColor("^rThe skill set on this object is not a valid skill.\n");
 				else {

@@ -343,7 +343,7 @@ bstring Object::statObj(int statFlags) {
 	if(increase) {
 		objStr << "^cWhen studied, this object will increase:\n";
 		if(increase->type == SkillIncrease) {
-			const Skill* skill = gConfig->getSkill(increase->increase);
+			const SkillInfo* skill = gConfig->getSkill(increase->increase);
 			if(!skill)
 				objStr << "^rThe skill set on this object is not a valid skill.^x\n";
 			else

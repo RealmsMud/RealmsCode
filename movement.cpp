@@ -485,7 +485,7 @@ bool Move::canMove(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(Move::isSneaking(cmnd) || player->flagIsSet(P_RUNNING)) {
+	if(Move::isSneaking(cmnd)) {
 		if(t < s) {
 			player->pleaseWait(s - t);
 			return(0);
@@ -510,14 +510,16 @@ bool Move::canMove(Player* player, cmd* cmnd) {
 			moves = 3;
 
 		// check for speed move
+
+		// TODO: Tweak this check
 		if(	player->lasttime[LT_MOVED].ltime == t || (
 				player->getRoom()->flagIsSet(R_DIFFICULT_TO_MOVE) &&
 				!player->isEffected("fly") &&
 				!player->flagIsSet(P_FREE_ACTION) &&
 				!player->flagIsSet(P_MISTED) &&
 				mrand(1,100) > chance
-			)
-		) {
+			))
+		{
 			if(player->lasttime[LT_MOVED].misc > moves) {
 				if(moves == 1) {
 					if(player->getRoom()->flagIsSet(R_EARTH_BONUS)) {

@@ -187,7 +187,7 @@
 #define P_BERSERKED                 53       // Player is berserked
 #define P_LOG_WATCH                 54       // DM is watching the log channel
 #define P_MISTED                    55       // Player is in mist form
-#define P_RUNNING                   56       // Player is running
+// free	 							56       // UNUSED
 #define P_IGNORE_CLASS_SEND         57       // Player is ignoring class sends
 #define P_IGNORE_GROUP_BROADCAST    58       // Player is ignoring group broadcasts
 #define P_ENCHANT_ONLY              59       // Player resists-hands

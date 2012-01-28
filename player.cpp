@@ -707,11 +707,6 @@ void Player::checkEffectsWearingOff() {
 			broadcast(getSock(), getRoom(), "%M wakes up.", this);
 		}
 	}
-	if(flagIsSet(P_RUNNING)) {
-		if(t > LT(this, LT_ENDURANCE)) {
-			clearFlag(P_RUNNING);
-		}
-	}
 	if(flagIsSet(P_PRAYED)) {
 		if(t > LT(this, LT_PRAY)) {
 			losePray();
