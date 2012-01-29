@@ -513,17 +513,19 @@ int Player::packBonus() {
 	int		bns=0;
 
 	Group* group = getGroup();
-	for(Creature* crt : group->members) {
-		// pack isn't pure
-		if(!crt->isEffected("lycanthropy") || crt->isMonster())
-			return(0);
+	if(group) {
+        for(Creature* crt : group->members) {
+            // pack isn't pure
+            if(!crt->isEffected("lycanthropy") || crt->isMonster())
+                return(0);
 
-		if(!crt->inSameRoom(this)) continue;
+            if(!crt->inSameRoom(this)) continue;
 
-		// bonus for all within 3 levels.
-		if(crt->isEffected("lycanthropy") && (abs((int)getLevel() - (int)getLevel()) < 4))
-			bns += mrand(1,2);
+            // bonus for all within 3 levels.
+            if(crt->isEffected("lycanthropy") && (abs((int)getLevel() - (int)getLevel()) < 4))
+                bns += mrand(1,2);
 
+        }
 	}
 
 	return(MIN(10, bns));
