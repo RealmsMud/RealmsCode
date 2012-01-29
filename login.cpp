@@ -165,7 +165,7 @@ void login(Socket* sock, bstring str) {
 					delete pet;
 			}
 
-			delete player;
+			free_crt(player, false);
 			sock->setPlayer(NULL);
 
 			if(!loadPlayer(tempstr, &player)) {

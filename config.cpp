@@ -99,6 +99,7 @@ void Config::cleanUp() {
 	clearAlchemy();
 	clearCommands();
 	clearSocials();
+    clearSpells();
 	clearMsdpVariables();
 	clearMxpElements();
 	clearEffects();

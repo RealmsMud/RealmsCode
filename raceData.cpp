@@ -217,7 +217,12 @@ RaceData::RaceData(xmlNodePtr rootNode) {
 		curNode = curNode->next;
 	}
 }
-
+RaceData::~RaceData() {
+    for(SkillGain* skGain : baseSkills) {
+        delete skGain;
+    }
+    baseSkills.clear();
+}
 //*********************************************************************
 //						stattoNum
 //*********************************************************************

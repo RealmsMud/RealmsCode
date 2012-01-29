@@ -52,6 +52,7 @@ protected:
 	std::list<SkillGain*> baseSkills;
 public:
 	RaceData(xmlNodePtr rootNode);
+	~RaceData();
 
 	int getId() const;
 	bstring getName(int tryToShorten=0) const;

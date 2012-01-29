@@ -119,7 +119,7 @@ Object::Object() {
 	memset(use_attack, 0, sizeof(use_attack));
 	weight = type = adjustment = shotsMax = shotsCur = armor =
 		wearflag = magicpower = level = requiredSkill = clan =
-		special = delay = quality = effectStrength = effectDuration = 0;
+		special = delay = quality = effectStrength = effectDuration = chargesCur = chargesMax = 0;
 	memset(flags, 0, sizeof(flags));
 	questnum = 0;
 	first_obj = 0;

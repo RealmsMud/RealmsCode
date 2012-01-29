@@ -750,6 +750,7 @@ bool Server::initPython() {
 
 bool Server::cleanUpPython() {
 	Py_Finalize();
+	delete pythonHandler;
 	return(true);
 }
 

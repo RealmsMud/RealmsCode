@@ -86,7 +86,6 @@ void Streamable::setColorOff() {
 
 void Streamable::setManipFlags(int flags) {
     manipFlags |= flags;
-    std::cout << "setManipFlags" << std::endl;
 }
 
 // Returns the manipFlags and resets them

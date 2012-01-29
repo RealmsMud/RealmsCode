@@ -80,7 +80,7 @@ int pcast(Player* player, cmd* cmnd) {
 //**********************************************************************
 
 template<class Type>
-void compileSocialList(std::map<bstring, bstring>& list, const gstd::map<bstring, Type>& cList) {
+void compileSocialList(std::map<bstring, bstring>& list, const std::map<bstring, Type>& cList) {
 	bstring name = "";
 
 	for(std::pair<bstring, Type> pp : cList) {
