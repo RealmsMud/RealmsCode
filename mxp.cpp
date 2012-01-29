@@ -37,15 +37,7 @@ bool MxpElement::isColor() {
 void Socket::defineMxp() {
     if(!this || !getMxp())
         return;
-//    bprint(MXP_SECURE_OPEN);
     bprint(MXP_BEG "VERSION" MXP_END);
-//    bprint(MXP_BEG "!ELEMENT c1 '<COLOR #FFD700>'" MXP_END);    // gold
-//    bprint(MXP_BEG "!ELEMENT c2 '<COLOR #009CFF>'" MXP_END);    // cerulean
-//    bprint(MXP_BEG "!ELEMENT c3 '<COLOR #FF5ADE>'" MXP_END);    // pink
-//    bprint(MXP_BEG "!ELEMENT c4 '<COLOR #82E6FF>'" MXP_END);    // sky blue
-//    bprint(MXP_BEG "!ELEMENT c5 '<COLOR #484848>'" MXP_END);    // dark grey
-//    bprint(MXP_BEG "!ELEMENT c6 '<COLOR #95601A>'" MXP_END);    // brown
-//    bprint(MXP_LOCK_CLOSE);
     for(MxpElementMap::value_type p : gConfig->mxpElements) {
         bprint(p.second->getDefineString());
         std::cout << p.second->getDefineString() << std::endl;
@@ -65,13 +57,6 @@ void Config::clearMxpElements() {
 bstring& Config::getMxpColorTag(bstring str) {
     return(mxpColors[str]);
 }
-//bstring name;
-//MxpType mxpType;
-//bstring command;
-//bstring hint;
-//bool prompt;
-//bstring attributes;
-//bstring expire;
 
 bstring MxpElement::getDefineString() {
     std::ostringstream oStr;

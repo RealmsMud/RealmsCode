@@ -20,6 +20,8 @@
 #ifndef COMMANDS_H_
 #define COMMANDS_H_
 
+int orderPet(Player* player, cmd* cmnd);
+
 // Effects.cpp
 int dmEffectList(Player* player, cmd* cmnd);
 int dmShowEffectsIndex(Player* player, cmd* cmnd);
@@ -330,6 +332,9 @@ int cmdRescind(Player* player, cmd* cmnd);
 
 // cmd.c
 int cmdProcess(Creature *user, cmd* cmnd, Creature* pet=NULL);
+
+// socials.cpp
+int cmdSocial(Creature* creature, cmd* cmnd);
 
 // specials.c
 int dmSpecials(Player* player, cmd* cmnd);

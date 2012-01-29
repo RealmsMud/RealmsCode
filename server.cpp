@@ -2134,7 +2134,7 @@ void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, 
 	    if(player->getRoom()->getUniqueRoom()) {
 	        room = bstring(player->getRoom()->getName()) + "(" + player->getRoom()->getUniqueRoom()->info.str() + ")";
 	    } else if (player->getRoom()->getAreaRoom()) {
-	        room = bstring(player->getRoom()->getName()) + "(" + player->getRoom()->getAreaRoom()->mapmarker.str() + ")";
+	        room = player->getRoom()->getAreaRoom()->area->name + "(" + player->getRoom()->getAreaRoom()->mapmarker.str() + ")";
 	    }
 	}
 	// logType

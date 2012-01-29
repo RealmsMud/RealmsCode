@@ -98,6 +98,7 @@ void Config::cleanUp() {
 	clearQuests();
 	clearAlchemy();
 	clearCommands();
+	clearSocials();
 	clearMsdpVariables();
 	clearMxpElements();
 	clearEffects();
@@ -220,6 +221,8 @@ bool Config::load() {
 	printf("Initializing command table...%s.\n", initCommands() ? "done" : "*** FAILED ***");
 
 	printf("Loading Config...%s.\n", loadConfig() ? "done" : "*** FAILED ***");
+
+	printf("Loading Socials...%s.\n", loadSocials() ? "done" : "*** FAILED ***");
 	
 	printf("Loading Recipes...%s.\n", loadRecipes() ? "done" : "*** FAILED ***");
 	printf("Loading Flags...%s.\n", loadFlags() ? "done" : "*** FAILED ***");

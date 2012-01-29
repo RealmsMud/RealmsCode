@@ -373,7 +373,8 @@ void update_shutdown(long t) {
 		cleanUpMemory();
 
 		printf("Goodbye.\n");
-		kill(getpid(), 9);
+		exit(0);
+		//kill(getpid(), 9);
 	}
 }
 

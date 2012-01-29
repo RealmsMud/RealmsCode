@@ -188,7 +188,7 @@ public:
 };
 
 typedef std::list<Monster*> PetList;
-
+typedef std::map<bstring, Skill*> SkillMap;
 //*********************************************************************
 //						Creature
 //*********************************************************************
@@ -300,7 +300,7 @@ public:
 // Data
 	bstring plural;
 	std::map<bstring, long> factions;
-	std::map<bstring, Skill*> skills;
+	SkillMap skills;
 	char key[3][CRT_KEY_LENGTH];
 	short fd; // Socket number
 	short current_language;

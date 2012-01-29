@@ -1523,7 +1523,7 @@ int Creature::flee(bool magicTerror) {
 
 		for(Monster* pet : pThis->pets) {
 			if(pet && inSameRoom(pThis))
-				broadcast(getSock(), oldRoom, "%M flees to the %s^x with its master.", mThis, exit->name);
+				broadcast(getSock(), oldRoom, "%M flees to the %s^x with its master.", pet, exit->name);
 		}
 	}
 	exit->checkReLock(this, false);

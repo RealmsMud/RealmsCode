@@ -763,7 +763,7 @@ bstring roomEffStr(bstring effect, bstring str, const BaseRoom* room, bool detec
 // and all the exits in a room.  That is, unless they are not visible
 // or the room is dark.
 
-void displayRoom(const Player* player, const BaseRoom* room, const UniqueRoom* uRoom, const AreaRoom* aRoom, int magicShowHidden) {
+void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, const AreaRoom* aRoom, int magicShowHidden) {
 	UniqueRoom *target=0;
 	xtag	*xp=0;
 	ctag	*cp=0;
@@ -1028,7 +1028,7 @@ void displayRoom(const Player* player, const BaseRoom* room, const UniqueRoom* u
 	if(str != "")
 		oStr << "^yYou see " << str << ".^w\n";
 
-	player->printColor("%s", oStr.str().c_str());
+	*player << ColorOn << oStr.str();
 
 	cp = room->first_mon;
 	while(cp) {
@@ -1036,19 +1036,19 @@ void displayRoom(const Player* player, const BaseRoom* room, const UniqueRoom* u
         if(mons && mons->hasEnemy()) {
             creature = mons->getTarget();
 
+
 			if(creature == player)
-				player->printColor("^r%M is attacking you.\n", cp->crt);
+			    *player << "^r" << setf(CAP) << cp->crt << " is attacking you.\n";
 			else if(creature)
-				player->printColor("^r%M is attacking %N.\n", cp->crt, creature);
-			oStr << str;
+			    *player << "^r" << setf(CAP) << cp->crt << " is attacking " << setf(CAP) << creature << ".\n";
 		}
 		cp = cp->next_tag;
 	}
 
-	player->print("\n");
+	player->print("^x\n");
 }
 
-void display_rom(const Player* player, const Player *looker, int magicShowHidden) {
+void display_rom(Player* player, Player *looker, int magicShowHidden) {
 	if(!looker)
 		looker = player;
 	if(player->parent_rom)
@@ -1057,7 +1057,7 @@ void display_rom(const Player* player, const Player *looker, int magicShowHidden
 		displayRoom(looker, player->area_room, 0, player->area_room, magicShowHidden);
 }
 
-void display_rom(const Player* player, const BaseRoom* room) {
+void display_rom(Player* player,BaseRoom* room) {
 	displayRoom(player, room, room->getConstUniqueRoom(), room->getConstAreaRoom(), 0);
 }
 

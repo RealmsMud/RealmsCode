@@ -18,6 +18,7 @@
  */
 #include "mud.h"
 #include "commands.h"
+#include "login.h"
 #include "boost/format.hpp"
 
 // having a pref that starts with a hyphen (-) is instead a category
@@ -340,6 +341,14 @@ int cmdPrefs(Player* player, cmd* cmnd) {
 				return(0);
 			}
 			player->getSock()->defineMxp();
+			player->getSock()->setColorOpt(MXP_COLOR);
+		}
+
+		if(pref->name == "ansi") {
+		    if(player->flagIsSet(P_MXP_ENABLED))
+		        player->getSock()->setColorOpt(MXP_COLOR);
+		    else
+		        player->getSock()->setColorOpt(ANSI_COLOR);
 		}
 
 		if(pref->name == "ignore") {
@@ -376,6 +385,9 @@ int cmdPrefs(Player* player, cmd* cmnd) {
 		set = true;
 
 	} else {
+	    if(pref->name == "ansi") {
+	        player->getSock()->setColorOpt(NO_COLOR);
+	    }
 
 		if(pref->name == "ignore") {
 			player->clearFlag(P_IGNORE_CLASS_SEND);

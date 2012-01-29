@@ -397,7 +397,8 @@ void viewFileReal(Socket* sock, bstring str ) {
 				if(buf[i] == '\n') {
 					buf[i] = 0;
 					line++;
-					sock->printColor("%s\n", &buf[l]);
+					sock->bprint(&buf[l]);
+					sock->bprint("\n");
 					offset += (i-l+1);
 					l = i+1;
 				}
@@ -408,7 +409,7 @@ void viewFileReal(Socket* sock, bstring str ) {
 				sprintf(sock->tempstr[0], "%ld", offset);
 				break;
 			} else if(l != n) {
-				sock->printColor("%s", &buf[l]);
+			    sock->bprint(&buf[l]);
 				offset += (i-l);
 			}
 			if(n<FBUF)
@@ -458,7 +459,8 @@ void viewFileReal(Socket* sock, bstring str ) {
 				if(buf[i] == '\n') {
 					buf[i] = 0;
 					line++;
-					sock->printColor("%s\n", &buf[l]);
+					sock->bprint(&buf[l]);
+					sock->bprint("\n");
 					offset += (i-l+1);
 					l = i+1;
 				}
@@ -469,7 +471,7 @@ void viewFileReal(Socket* sock, bstring str ) {
 				sprintf(sock->tempstr[0], "%ld", offset);
 				break;
 			} else if(l != n) {
-				sock->printColor("%s", &buf[l]);
+			    sock->bprint(&buf[l]);
 				offset += (i-l);
 			}
 			if(n<FBUF)

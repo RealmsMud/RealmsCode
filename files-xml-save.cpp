@@ -38,6 +38,7 @@
 #include "quests.h"
 #include "unique.h"
 #include "alchemy.h"
+#include "socials.h"
 
 xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits);
 // Object flags to be saved for object refs
@@ -1218,6 +1219,51 @@ bool Guild::saveToXml(xmlNodePtr rootNode) const {
 	return(true);
 }
 
+
+bool Config::saveSocials() {
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr  rootNode;
+
+    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
+    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Socials", NULL);
+    xmlDocSetRootElement(xmlDoc, rootNode);
+
+    for(SocialMap::value_type p : socials) {
+        p.second->saveToXml(rootNode);
+    }
+    bstring filename = bstring(Path::Code) + "/" + "socials.xml";
+    xml::saveFile(filename.c_str(), xmlDoc);
+    xmlFreeDoc(xmlDoc);
+    return(true);
+
+}
+
+bool SocialCommand::saveToXml(xmlNodePtr rootNode) const {
+    xmlNodePtr curNode;
+
+    curNode = xml::newStringChild(rootNode, "Social");
+    xml::newStringChild(curNode, "Name", name);
+
+    if(wakeTarget)
+        xml::newBoolChild(curNode, "WakeTarget", wakeTarget);
+    if(rudeWakeTarget)
+        xml::newBoolChild(curNode, "RudeWakeTarget", rudeWakeTarget);
+    if(wakeRoom)
+        xml::newBoolChild(curNode, "WakeRoom", wakeRoom);
+
+    xml::saveNonNullString(curNode, "Description", desc);
+    xml::saveNonZeroNum(curNode, "Priority", priority);
+
+    xml::saveNonNullString(curNode, "SelfNoTarget", selfNoTarget);
+    xml::saveNonNullString(curNode, "RoomNoTarget", roomNoTarget);
+    xml::saveNonNullString(curNode, "SelfOnTarget", selfOnTarget);
+    xml::saveNonNullString(curNode, "RoomOnTarget", roomOnTarget);
+    xml::saveNonNullString(curNode, "VictimOnTarget", victimOnTarget);
+    xml::saveNonNullString(curNode, "SelfOnSelf", selfOnSelf);
+    xml::saveNonNullString(curNode, "RoomOnSelf", roomOnSelf);
+
+    return(true);
+}
 //*********************************************************************
 //						saveToXml
 //*********************************************************************

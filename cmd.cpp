@@ -27,6 +27,7 @@
 #include "web.h"
 #include "server.h"
 #include "math.h"
+#include "socials.h"
 
 #include <sstream>
 #include <iomanip>
@@ -38,12 +39,8 @@
 
 
 int dmTest(Player* player, cmd* cmnd) {
-    *player << ColorOn << "^rhi" << ColorOff << "\n";
-    *player << player << " " << player << "\n";
-    int i = 0;
-    for(Monster* pet : player->pets ){
-        *player << bstring(++i) << ") " << pet << " " << setf(CAP) << setn(10) << pet << "\n";
-    }
+    gConfig->saveSocials();
+    *player << "Socials saved\n";
 	return(0);
 }
 
@@ -504,7 +501,6 @@ bool Config::initCommands() {
 	playerCommands["defecate"] = new PlyCommand("defecate",			 80,	plyAction,			0,		"");
 	playerCommands["tnl"] = new PlyCommand("tnl",					100,	plyAction,			0,		"Show the room how much experience you have to level.");
 	playerCommands["mark"] = new PlyCommand("mark",					100,	plyAction,			0,		"");
-	playerCommands["beckon"] = new PlyCommand("beckon",				100,	plyAction,			0,		"");
 	playerCommands["show"] = new PlyCommand("show",					100,	plyAction,			0,		"");
 	playerCommands["dream"] = new PlyCommand("dream",				100,	plyAction,			0,		"");
 	playerCommands["rollover"] = new PlyCommand("rollover",			100,	plyAction,			0,		"");
@@ -573,7 +569,6 @@ bool Config::initCommands() {
 	//playerCommands["ask"] = new PlyCommand("ask",					100,	cmdTalkNew,			0,		"");
 	playerCommands["ask"] = new PlyCommand("ask",					100,	cmdTalk,			0,		"");
 	playerCommands["parley"] = new PlyCommand("parley",				100,	cmdTalk,			0,		"");
-	playerCommands["gag"] = new PlyCommand("gag",					100,	cmdGag,				0,		"Gag a player.");
 	playerCommands["sendclan"] = new PlyCommand("sendclan",			100,	channel,			0,		"");
 	playerCommands["clansend"] = new PlyCommand("clansend",			100,	channel,			0,		"Communicate via the clan channel.");
 	playerCommands["bemote"] = new PlyCommand("bemote",				100,	channel,			0,		"");
@@ -816,316 +811,44 @@ bool Config::initCommands() {
 
 	// socials
 	generalCommands["chest"] = new CrtCommand("chest",				100,	cmdAction,				0,		"");
-	generalCommands["anvil"] = new CrtCommand("anvil",				100,	cmdAction,				0,		"");
 	generalCommands["stab"] = new CrtCommand("stab",				100,	cmdAction,				0,		"");
 	generalCommands["vangogh"] = new CrtCommand("vangogh",			100,	cmdAction,				0,		"");
-	generalCommands["pan"] = new CrtCommand("pan",					100,	cmdAction,				0,		"");
 	generalCommands["smooch"] = new CrtCommand("smooch",			100,	cmdAction,				0,		"");
-	generalCommands["peck"] = new CrtCommand("peck",				100,	cmdAction,				0,		"");
-	generalCommands["squeeze"] = new CrtCommand("squeeze",			100,	cmdAction,				0,		"");
-	generalCommands["french"] = new CrtCommand("french",			100,	cmdAction,				0,		"");
-	generalCommands["froth"] = new CrtCommand("froth",				100,	cmdAction,				0,		"");
 	generalCommands["lobotomy"] = new CrtCommand("lobotomy",		100,	cmdAction,				0,		"");
-	generalCommands["maniac"] = new CrtCommand("maniac",			100,	cmdAction,				0,		"");
-	generalCommands["hail"] = new CrtCommand("hail",				100,	cmdAction,				0,		"");
-	generalCommands["boo"] = new CrtCommand("boo",					100,	cmdAction,				0,		"");
-	generalCommands["punch"] = new CrtCommand("punch",				100,	cmdAction,				0,		"");
-	generalCommands["bubble"] = new CrtCommand("bubble",			100,	cmdAction,				0,		"");
-	generalCommands["moan"] = new CrtCommand("moan",				100,	cmdAction,				0,		"");
-	generalCommands["nod"] = new CrtCommand("nod",					100,	cmdAction,				0,		"");
 	generalCommands["sleep"] = new CrtCommand("sleep",				100,	cmdAction,				0,		"Go to sleep to heal faster.");
 	generalCommands["stand"] = new CrtCommand("stand",				100,	cmdAction,				0,		"Stand up from a sitting position.");
 	generalCommands["sit"] = new CrtCommand("sit",					100,	cmdAction,				0,		"Sit down to heal faster.");
-	generalCommands["grab"] = new CrtCommand("grab",				100,	cmdAction,				0,		"");
-	generalCommands["shove"] = new CrtCommand("shove",				100,	cmdAction,				0,		"");
-	generalCommands["nervous"] = new CrtCommand("nervous",			100,	cmdAction,				0,		"");
-	generalCommands["bird"] = new CrtCommand("bird",				100,	cmdAction,				0,		"");
-	generalCommands["ogle"] = new CrtCommand("ogle",				100,	cmdAction,				0,		"");
-	generalCommands["nod"] = new CrtCommand("nod",					100,	cmdAction,				0,		"");
-	generalCommands["relax"] = new CrtCommand("relax",				100,	cmdAction,				0,		"");
-	generalCommands["puke"] = new CrtCommand("puke",				100,	cmdAction,				0,		"");
-	generalCommands["think"] = new CrtCommand("think",				100,	cmdAction,				0,		"");
-	generalCommands["dirt"] = new CrtCommand("dirt",				100,	cmdAction,				0,		"");
-	generalCommands["cheer"] = new CrtCommand("cheer",				100,	cmdAction,				0,		"");
-	generalCommands["ponder"] = new CrtCommand("ponder",			100,	cmdAction,				0,		"");
-	generalCommands["ack"] = new CrtCommand("ack",					100,	cmdAction,				0,		"");
 	generalCommands["dismiss"] = new CrtCommand("dismiss",			100,	cmdAction,				0,		"");
-	generalCommands["laugh"] = new CrtCommand("laugh",				100,	cmdAction,				0,		"");
-	generalCommands["hysterical"] = new CrtCommand("hysterical",	100,	cmdAction,				0,		"");
 	generalCommands["burp"] = new CrtCommand("burp",				100,	cmdAction,				0,		"");
-	generalCommands["psycho"] = new CrtCommand("psycho",			100,	cmdAction,				0,		"");
-	generalCommands["frustrate"] = new CrtCommand("frustrate",		100,	cmdAction,				0,		"");
-	generalCommands["warm"] = new CrtCommand("warm",				100,	cmdAction,				0,		"");
-	generalCommands["kic"] = new CrtCommand("kic",					100,	cmdAction,				0,		"");
-	generalCommands["tackle"] = new CrtCommand("tackle",			100,	cmdAction,				0,		"");
-	generalCommands["knee"] = new CrtCommand("knee",				100,	cmdAction,				0,		"");
-	generalCommands["pounce"] = new CrtCommand("pounce",			100,	cmdAction,				0,		"");
 	generalCommands["rps"] = new CrtCommand("rps",					100,	cmdAction,				0,		"");
-	generalCommands["tickle"] = new CrtCommand("tickle",			100,	cmdAction,				0,		"");
-	generalCommands["snicker"] = new CrtCommand("snicker",			100,	cmdAction,				0,		"");
-	generalCommands["tap"] = new CrtCommand("tap",					100,	cmdAction,				0,		"");
-	generalCommands["smile"] = new CrtCommand("smile",				100,	cmdAction,				0,		"");
-	generalCommands["beam"] = new CrtCommand("beam",				100,	cmdAction,				0,		"");
 	generalCommands["masturbate"] = new CrtCommand("masturbate",	90,		cmdAction,				0,		"");
-	generalCommands["smoke"] = new CrtCommand("smoke",				100,	cmdAction,				0,		"");
-	generalCommands["shake"] = new CrtCommand("shake",				100,	cmdAction,				0,		"");
-	generalCommands["cackle"] = new CrtCommand("cackle",			100,	cmdAction,				0,		"");
-	generalCommands["chuckle"] = new CrtCommand("chuckle",			100,	cmdAction,				0,		"");
-	generalCommands["wave"] = new CrtCommand("wave",				100,	cmdAction,				0,		"");
-	generalCommands["poke"] = new CrtCommand("poke",				100,	cmdAction,				0,		"");
-	generalCommands["yawn"] = new CrtCommand("yawn",				100,	cmdAction,				0,		"");
-	generalCommands["sigh"] = new CrtCommand("sigh",				100,	cmdAction,				0,		"");
-	generalCommands["bounce"] = new CrtCommand("bounce",			100,	cmdAction,				0,		"");
-	generalCommands["shrug"] = new CrtCommand("shrug",				100,	cmdAction,				0,		"");
-	generalCommands["twiddle"] = new CrtCommand("twiddle",			100,	cmdAction,				0,		"");
-	generalCommands["grin"] = new CrtCommand("grin",				100,	cmdAction,				0,		"");
-	generalCommands["frown"] = new CrtCommand("frown",				100,	cmdAction,				0,		"");
-	generalCommands["giggle"] = new CrtCommand("giggle",			100,	cmdAction,				0,		"");
-	generalCommands["behind"] = new CrtCommand("behind",			100,	cmdAction,				0,		"");
 	generalCommands["hum"] = new CrtCommand("hum",					100,	cmdAction,				0,		"");
-	generalCommands["hump"] = new CrtCommand("hump",				100,	cmdAction,				0,		"");
-	generalCommands["snap"] = new CrtCommand("snap",				100,	cmdAction,				0,		"");
-	generalCommands["jump"] = new CrtCommand("jump",				50,		cmdAction,				0,		"");
-	generalCommands["skip"] = new CrtCommand("skip",				100,	cmdAction,				0,		"");
-	generalCommands["dance"] = new CrtCommand("dance",				100,	cmdAction,				0,		"");
-	generalCommands["cry"] = new CrtCommand("cry",					100,	cmdAction,				0,		"");
-	generalCommands["bleed"] = new CrtCommand("bleed",				100,	cmdAction,				0,		"");
-	generalCommands["sniff"] = new CrtCommand("sniff",				100,	cmdAction,				0,		"");
 	generalCommands["whimper"] = new CrtCommand("whimper",			100,	cmdAction,				0,		"");
-	generalCommands["cringe"] = new CrtCommand("cringe",			100,	cmdAction,				0,		"");
 	generalCommands["whistle"] = new CrtCommand("whistle",			90,		cmdAction,				0,		"");
-	generalCommands["smirk"] = new CrtCommand("smirk",				100,	cmdAction,				0,		"");
-	generalCommands["gasp"] = new CrtCommand("gasp",				100,	cmdAction,				0,		"");
-	generalCommands["grunt"] = new CrtCommand("grunt",				100,	cmdAction,				0,		"");
-	generalCommands["stomp"] = new CrtCommand("stomp",				100,	cmdAction,				0,		"");
-	generalCommands["flex"] = new CrtCommand("flex",				100,	cmdAction,				0,		"");
-	generalCommands["curtsy"] = new CrtCommand("curtsy",			100,	cmdAction,				0,		"");
-	generalCommands["grr"] = new CrtCommand("grr",					100,	cmdAction,				0,		"");
 	// "pet" also links to orderPet within action
 	generalCommands["pet"] = new CrtCommand("pet",					100,	cmdAction,				0,		"");
-	generalCommands["blush"] = new CrtCommand("blush",				100,	cmdAction,				0,		"");
-	generalCommands["faint"] = new CrtCommand("faint",				100,	cmdAction,				0,		"");
-	generalCommands["hug"] = new CrtCommand("hug",					100,	cmdAction,				0,		"");
-	generalCommands["cstr"] = new CrtCommand("cstr",				100,	cmdAction,				0,		"");
-	generalCommands["expose"] = new CrtCommand("expose",			100,	cmdAction,				0,		"");
-	generalCommands["wink"] = new CrtCommand("wink",				100,	cmdAction,				0,		"");
-	generalCommands["blink"] = new CrtCommand("blink",				100,	cmdAction,				0,		"");
-	generalCommands["clap"] = new CrtCommand("clap",				100,	cmdAction,				0,		"");
-	generalCommands["drool"] = new CrtCommand("drool",				100,	cmdAction,				0,		"");
-	generalCommands["copulate"] = new CrtCommand("copulate",		100,	cmdAction,				0,		"");
-	generalCommands["goose"] = new CrtCommand("goose",				100,	cmdAction,				0,		"");
-	generalCommands["fume"] = new CrtCommand("fume",				100,	cmdAction,				0,		"");
-	generalCommands["rage"] = new CrtCommand("rage",				100,	cmdAction,				0,		"");
-	generalCommands["pout"] = new CrtCommand("pout",				100,	cmdAction,				0,		"");
-	generalCommands["spit"] = new CrtCommand("spit",				100,	cmdAction,				0,		"");
-	generalCommands["fart"] = new CrtCommand("fart",				100,	cmdAction,				0,		"");
-	generalCommands["comfort"] = new CrtCommand("comfort",			100,	cmdAction,				0,		"");
 	generalCommands["pat"] = new CrtCommand("pat",					100,	cmdAction,				0,		"");
-	generalCommands["jk"] = new CrtCommand("jk",					100,	cmdAction,				0,		"");
-	generalCommands["thank"] = new CrtCommand("thank",				100,	cmdAction,				0,		"");
-	generalCommands["bitchslap"] = new CrtCommand("bitchslap",		100,	cmdAction,				0,		"");
-	generalCommands["kiss"] = new CrtCommand("kiss",				100,	cmdAction,				0,		"");
 	generalCommands["glare"] = new CrtCommand("glare",				100,	cmdAction,				0,		"");
 	generalCommands["bless"] = new CrtCommand("bless",				100,	cmdAction,				0,		"");
-	generalCommands["hbeer"] = new CrtCommand("hbeer",				100,	cmdAction,				0,		"");
-	generalCommands["slap"] = new CrtCommand("slap",				100,	cmdAction,				0,		"");
-	generalCommands["woot"] = new CrtCommand("woot",				100,	cmdAction,				0,		"");
-	generalCommands["hammer"] = new CrtCommand("hammer",			100,	cmdAction,				0,		"");
-	generalCommands["suck"] = new CrtCommand("suck",				100,	cmdAction,				0,		"");
-	generalCommands["bow"] = new CrtCommand("bow",					100,	cmdAction,				0,		"");
-	generalCommands["cough"] = new CrtCommand("cough",				100,	cmdAction,				0,		"");
-	generalCommands["confused"] = new CrtCommand("confused",		100,	cmdAction,				0,		"");
-	generalCommands["grumble"] = new CrtCommand("grumble",			100,	cmdAction,				0,		"");
-	generalCommands["hiccup"] = new CrtCommand("hiccup",			100,	cmdAction,				0,		"");
-	generalCommands["mutter"] = new CrtCommand("mutter",			100,	cmdAction,				0,		"");
-	generalCommands["scratch"] = new CrtCommand("scratch",			90,		cmdAction,				0,		"");
-	generalCommands["bonk"] = new CrtCommand("bonk",				100,	cmdAction,				0,		"");
-	generalCommands["boggle"] = new CrtCommand("boggle",			100,	cmdAction,				0,		"");
-	generalCommands["strut"] = new CrtCommand("strut",				100,	cmdAction,				0,		"");
-	generalCommands["sulk"] = new CrtCommand("sulk",				100,	cmdAction,				0,		"");
-	generalCommands["satisfied"] = new CrtCommand("satisfied",		100,	cmdAction,				0,		"");
-	generalCommands["wince"] = new CrtCommand("wince",				100,	cmdAction,				0,		"");
-	generalCommands["roll"] = new CrtCommand("roll",				100,	cmdAction,				0,		"");
-	generalCommands["raise"] = new CrtCommand("raise",				100,	cmdAction,				0,		"");
-	generalCommands["whine"] = new CrtCommand("whine",				100,	cmdAction,				0,		"");
-	generalCommands["growl"] = new CrtCommand("growl",				100,	cmdAction,				0,		"");
-	generalCommands["high5"] = new CrtCommand("high5",				100,	cmdAction,				0,		"");
-	generalCommands["moon"] = new CrtCommand("moon",				100,	cmdAction,				0,		"");
-	generalCommands["purr"] = new CrtCommand("purr",				100,	cmdAction,				0,		"");
-	generalCommands["oink"] = new CrtCommand("oink",				100,	cmdAction,				0,		"");
-	generalCommands["taunt"] = new CrtCommand("taunt",				100,	cmdAction,				0,		"");
-	generalCommands["eye"] = new CrtCommand("eye",					100,	cmdAction,				0,		"");
-	generalCommands["worship"] = new CrtCommand("worship",			100,	cmdAction,				0,		"");
 	generalCommands["flip"] = new CrtCommand("flip",				100,	cmdAction,				0,		"");
-	generalCommands["groan"] = new CrtCommand("groan",				100,	cmdAction,				0,		"");
-	generalCommands["meiko"] = new CrtCommand("meiko",				100,	cmdAction,				0,		"");
-	generalCommands["halo"] = new CrtCommand("halo",				100,	cmdAction,				0,		"");
-	generalCommands["twitch"] = new CrtCommand("twitch",			100,	cmdAction,				0,		"");
 	generalCommands["point"] = new CrtCommand("point",				100,	cmdAction,				0,		"");
-	generalCommands["die"] = new CrtCommand("die",					100,	cmdAction,				0,		"");
 	generalCommands["afk"] = new CrtCommand("afk",					100,	cmdAction,				0,		"");
-	generalCommands["ahem"] = new CrtCommand("ahem",				100,	cmdAction,				0,		"");
-	generalCommands["attention"] = new CrtCommand("attention",		100,	cmdAction,				0,		"");
-	generalCommands["bark"] = new CrtCommand("bark",				100,	cmdAction,				0,		"");
-	generalCommands["babble"] = new CrtCommand("babble",			100,	cmdAction,				0,		"");
-	generalCommands["pants"] = new CrtCommand("pants",				100,	cmdAction,				0,		"");
-	generalCommands["beer"] = new CrtCommand("beer",				100,	cmdAction,				0,		"");
-	generalCommands["collapse"] = new CrtCommand("collapse",		100,	cmdAction,				0,		"");
-	generalCommands["comb"] = new CrtCommand("comb",				100,	cmdAction,				0,		"");
 	generalCommands["fangs"] = new CrtCommand("fangs",				100,	cmdAction,				0,		"");
 	generalCommands["hiss"] = new CrtCommand("hiss",				100,	cmdAction,				0,		"");
 	generalCommands["hunger"] = new CrtCommand("hunger",			100,	cmdAction,				0,		"");
-	generalCommands["compose"] = new CrtCommand("compose",			100,	cmdAction,				0,		"");
-	generalCommands["crazy"] = new CrtCommand("crazy",				100,	cmdAction,				0,		"");
-	generalCommands["curl"] = new CrtCommand("curl",				100,	cmdAction,				0,		"");
-	generalCommands["curse"] = new CrtCommand("curse",				100,	cmdAction,				0,		"");
-	generalCommands["daydream"] = new CrtCommand("daydream",		100,	cmdAction,				0,		"");
-	generalCommands["doh"] = new CrtCommand("doh",					100,	cmdAction,				0,		"");
-	generalCommands["fidget"] = new CrtCommand("fidget",			100,	cmdAction,				0,		"");
-	generalCommands["foam"] = new CrtCommand("foam",				100,	cmdAction,				0,		"");
-	generalCommands["freak"] = new CrtCommand("freak",				100,	cmdAction,				0,		"");
 	generalCommands["freeze"] = new CrtCommand("freeze",			100,	cmdAction,				0,		"");
-	generalCommands["gibber"] = new CrtCommand("gibber",			100,	cmdAction,				0,		"");
-	generalCommands["grimace"] = new CrtCommand("grimace",			100,	cmdAction,				0,		"");
-	generalCommands["grind"] = new CrtCommand("grind",				100,	cmdAction,				0,		"");
-	generalCommands["jiggy"] = new CrtCommand("jiggy",				100,	cmdAction,				0,		"");
 	generalCommands["ballz"] = new CrtCommand("ballz",				100,	cmdAction,				0,		"");
 	generalCommands["wag"] = new CrtCommand("wag",					100,	cmdAction,				0,		"");
-	generalCommands["lag"] = new CrtCommand("lag",					100,	cmdAction,				0,		"");
-	generalCommands["monkey"] = new CrtCommand("monkey",			100,	cmdAction,				0,		"");
-	generalCommands["moo"] = new CrtCommand("moo",					100,	cmdAction,				0,		"");
-	generalCommands["mope"] = new CrtCommand("mope",				100,	cmdAction,				0,		"");
-	generalCommands["mosh"] = new CrtCommand("mosh",				100,	cmdAction,				0,		"");
 	generalCommands["murmur"] = new CrtCommand("murmur",			100,	cmdAction,				0,		"");
-	generalCommands["pace"] = new CrtCommand("pace",				100,	cmdAction,				0,		"");
-	generalCommands["panic"] = new CrtCommand("panic",				100,	cmdAction,				0,		"");
-	generalCommands["pant"] = new CrtCommand("pant",				100,	cmdAction,				0,		"");
-	generalCommands["quack"] = new CrtCommand("quack",				100,	cmdAction,				0,		"");
-	generalCommands["rant"] = new CrtCommand("rant",				100,	cmdAction,				0,		"");
-	generalCommands["roar"] = new CrtCommand("roar",				100,	cmdAction,				0,		"");
-	generalCommands["rofl"] = new CrtCommand("rofl",				100,	cmdAction,				0,		"");
-	generalCommands["sad"] = new CrtCommand("sad",					100,	cmdAction,				0,		"");
-	generalCommands["scream"] = new CrtCommand("scream",			100,	cmdAction,				0,		"");
-	generalCommands["shiver"] = new CrtCommand("shiver",			100,	cmdAction,				0,		"");
-	generalCommands["shudder"] = new CrtCommand("shudder",			100,	cmdAction,				0,		"");
 	generalCommands["snore"] = new CrtCommand("snore",				100,	cmdAction,				0,		"");
-	generalCommands["snort"] = new CrtCommand("snort",				100,	cmdAction,				0,		"");
-	generalCommands["spaz"] = new CrtCommand("spaz",				100,	cmdAction,				0,		"");
-	generalCommands["spin"] = new CrtCommand("spin",				100,	cmdAction,				0,		"");
-	generalCommands["squeal"] = new CrtCommand("squeal",			100,	cmdAction,				0,		"");
-	generalCommands["squirm"] = new CrtCommand("squirm",			100,	cmdAction,				0,		"");
 	generalCommands["tag"] = new CrtCommand("tag",					100,	cmdAction,				0,		"");
-	generalCommands["stretch"] = new CrtCommand("stretch",			100,	cmdAction,				0,		"");
-	generalCommands["strip"] = new CrtCommand("strip",				100,	cmdAction,				0,		"");
-	generalCommands["stumble"] = new CrtCommand("stumble",			100,	cmdAction,				0,		"");
-	generalCommands["meow"] = new CrtCommand("meow",				100,	cmdAction,				0,		"");
 	generalCommands["narrow"] = new CrtCommand("narrow",			100,	cmdAction,				0,		"");
-	generalCommands["surrender"] = new CrtCommand("surrender",		100,	cmdAction,				0,		"");
-	generalCommands["sweat"] = new CrtCommand("sweat",				100,	cmdAction,				0,		"");
-	generalCommands["tantrum"] = new CrtCommand("tantrum",			100,	cmdAction,				0,		"");
-	generalCommands["triumph"] = new CrtCommand("triumph",			100,	cmdAction,				0,		"");
-	generalCommands["wail"] = new CrtCommand("wail",				100,	cmdAction,				0,		"");
-	generalCommands["wall"] = new CrtCommand("wall",				100,	cmdAction,				0,		"");
-	generalCommands["wiggle"] = new CrtCommand("wiggle",			100,	cmdAction,				0,		"");
-	generalCommands["writhe"] = new CrtCommand("writhe",			100,	cmdAction,				0,		"");
-	generalCommands["yodel"] = new CrtCommand("yodel",				100,	cmdAction,				0,		"");
-	generalCommands["glaze"] = new CrtCommand("glaze",				100,	cmdAction,				0,		"");
-	generalCommands["count"] = new CrtCommand("count",				100,	cmdAction,				0,		"");
-	generalCommands["worry"] = new CrtCommand("worry",				100,	cmdAction,				0,		"");
 	generalCommands["fall"] = new CrtCommand("fall",				100,	cmdAction,				0,		"");
-	generalCommands["cluck"] = new CrtCommand("cluck",				100,	cmdAction,				0,		"");
-	generalCommands["stagger"] = new CrtCommand("stagger",			100,	cmdAction,				0,		"");
-	generalCommands["crow"] = new CrtCommand("crow",				100,	cmdAction,				0,		"");
-	generalCommands["munch"] = new CrtCommand("munch",				100,	cmdAction,				0,		"");
-	generalCommands["cornholio"] = new CrtCommand("cornholio",		100,	cmdAction,				0,		"");
-	generalCommands["fft"] = new CrtCommand("fft",					100,	cmdAction,				0,		"");
-	generalCommands["tease"] = new CrtCommand("tease",				100,	cmdAction,				0,		"");
-	generalCommands["bhand"] = new CrtCommand("bhand",				100,	cmdAction,				0,		"");
-	generalCommands["beg"] = new CrtCommand("beg",					100,	cmdAction,				0,		"");
-	generalCommands["blow"] = new CrtCommand("blow",				100,	cmdAction,				0,		"");
-	generalCommands["caress"] = new CrtCommand("caress",			100,	cmdAction,				0,		"");
-	generalCommands["cuddle"] = new CrtCommand("cuddle",			100,	cmdAction,				0,		"");
-	generalCommands["cower"] = new CrtCommand("cower",				100,	cmdAction,				0,		"");
-	generalCommands["disgust"] = new CrtCommand("disgust",			100,	cmdAction,				0,		"");
-	generalCommands["embrace"] = new CrtCommand("embrace",			100,	cmdAction,				0,		"");
-	generalCommands["fondle"] = new CrtCommand("fondle",			100,	cmdAction,				0,		"");
 	generalCommands["gnaw"] = new CrtCommand("gnaw",				100,	cmdAction,				0,		"");
-	generalCommands["grope"] = new CrtCommand("grope",				100,	cmdAction,				0,		"");
-	generalCommands["grovel"] = new CrtCommand("grovel",			100,	cmdAction,				0,		"");
-	generalCommands["listen"] = new CrtCommand("listen",			100,	cmdAction,				0,		"");
-	generalCommands["loom"] = new CrtCommand("loom",				100,	cmdAction,				0,		"");
-	generalCommands["lust"] = new CrtCommand("lust",				100,	cmdAction,				0,		"");
-	generalCommands["massage"] = new CrtCommand("massage",			100,	cmdAction,				0,		"");
-	generalCommands["nose"] = new CrtCommand("nose",				100,	cmdAction,				0,		"");
-	generalCommands["nibble"] = new CrtCommand("nibble",			100,	cmdAction,				0,		"");
-	generalCommands["noogie"] = new CrtCommand("noogie",			100,	cmdAction,				0,		"");
-	generalCommands["nudge"] = new CrtCommand("nudge",				100,	cmdAction,				0,		"");
-	generalCommands["pinch"] = new CrtCommand("pinch",				100,	cmdAction,				0,		"");
-	generalCommands["pummel"] = new CrtCommand("pummel",			100,	cmdAction,				0,		"");
-	generalCommands["rub"] = new CrtCommand("rub",					100,	cmdAction,				0,		"");
-	generalCommands["ruffle"] = new CrtCommand("ruffle",			100,	cmdAction,				0,		"");
-	generalCommands["salute"] = new CrtCommand("salute",			100,	cmdAction,				0,		"");
-	generalCommands["scowl"] = new CrtCommand("scowl",				100,	cmdAction,				0,		"");
-	generalCommands["seduce"] = new CrtCommand("seduce",			100,	cmdAction,				0,		"");
-	generalCommands["shove"] = new CrtCommand("shove",				100,	cmdAction,				0,		"");
-	generalCommands["slobber"] = new CrtCommand("slobber",			100,	cmdAction,				0,		"");
-	generalCommands["smack"] = new CrtCommand("smack",				100,	cmdAction,				0,		"");
-	generalCommands["smell"] = new CrtCommand("smell",				100,	cmdAction,				0,		"");
-	generalCommands["snarl"] = new CrtCommand("snarl",				100,	cmdAction,				0,		"");
-	generalCommands["sneer"] = new CrtCommand("sneer",				100,	cmdAction,				0,		"");
-	generalCommands["snuggle"] = new CrtCommand("snuggle",			100,	cmdAction,				0,		"");
-	generalCommands["squint"] = new CrtCommand("squint",			100,	cmdAction,				0,		"");
-	generalCommands["stare"] = new CrtCommand("stare",				100,	cmdAction,				0,		"");
-	generalCommands["spank"] = new CrtCommand("spank",				100,	cmdAction,				0,		"");
-	generalCommands["thumb"] = new CrtCommand("thumb",				100,	cmdAction,				0,		"");
-	generalCommands["thwack"] = new CrtCommand("thwack",			100,	cmdAction,				0,		"");
-	generalCommands["tip"] = new CrtCommand("tip",					100,	cmdAction,				0,		"");
-	generalCommands["tug"] = new CrtCommand("tug",					100,	cmdAction,				0,		"");
-	generalCommands["choke"] = new CrtCommand("choke",				100,	cmdAction,				0,		"");
-	generalCommands["warn"] = new CrtCommand("warn",				100,	cmdAction,				0,		"");
-	generalCommands["fun"] = new CrtCommand("fun",					100,	cmdAction,				0,		"");
-	generalCommands["evil"] = new CrtCommand("evil",				100,	cmdAction,				0,		"");
-	generalCommands["lol"] = new CrtCommand("lol",					100,	cmdAction,				0,		"");
-	generalCommands["bear"] = new CrtCommand("bear",				100,	cmdAction,				0,		"");
-	generalCommands["wait"] = new CrtCommand("wait",				100,	cmdAction,				0,		"");
 	generalCommands["sneeze"] = new CrtCommand("sneeze",			100,	cmdAction,				0,		"");
-	generalCommands["wedgy"] = new CrtCommand("wedgy",				100,	cmdAction,				0,		"");
-	generalCommands["cigar"] = new CrtCommand("cigar",				100,	cmdAction,				0,		"");
-	generalCommands["zip"] = new CrtCommand("zip",					100,	cmdAction,				0,		"");
-	generalCommands["wicked"] = new CrtCommand("wicked",			100,	cmdAction,				0,		"");
-	generalCommands["bored"] = new CrtCommand("bored",				100,	cmdAction,				0,		"");
-	generalCommands["rag"] = new CrtCommand("rag",					100,	cmdAction,				0,		"");
-	generalCommands["trip"] = new CrtCommand("trip",				100,	cmdAction,				0,		"");
-	generalCommands["innocent"] = new CrtCommand("innocent",		100,	cmdAction,				0,		"");
-	generalCommands["phew"] = new CrtCommand("phew",				100,	cmdAction,				0,		"");
-	generalCommands["pester"] = new CrtCommand("pester",			100,	cmdAction,				0,		"");
-	generalCommands["usagi"] = new CrtCommand("usagi",				100,	cmdAction,				0,		"");
-	generalCommands["doodle"] = new CrtCommand("doodle",			100,	cmdAction,				0,		"");
-	generalCommands["whip"] = new CrtCommand("whip",				100,	cmdAction,				0,		"");
-	generalCommands["pose"] = new CrtCommand("pose",				100,	cmdAction,				0,		"");
-	generalCommands["sniffle"] = new CrtCommand("sniffle",			100,	cmdAction,				0,		"");
-	generalCommands["sob"] = new CrtCommand("sob",					100,	cmdAction,				0,		"");
-	generalCommands["shuffle"] = new CrtCommand("shuffle",			100,	cmdAction,				0,		"");
-	generalCommands["lick"] = new CrtCommand("lick",				100,	cmdAction,				0,		"");
-	generalCommands["shush"] = new CrtCommand("shush",				100,	cmdAction,				0,		"");
 	// wake is a special command that you might be able to
 	// use while unconscious. rules are in Creature::ableToDoCommand
 	generalCommands["wake"] = new CrtCommand("wake",				100,	cmdAction,				0,		"Wake up from being asleep.");
-	generalCommands["ok"] = new CrtCommand("ok",					100,	cmdAction,				0,		"");
-	generalCommands["congrats"] = new CrtCommand("congrats",		100,	cmdAction,				0,		"");
-	generalCommands["imitate"] = new CrtCommand("imitate",			100,	cmdAction,				0,		"");
-	generalCommands["paranoid"] = new CrtCommand("paranoid",		100,	cmdAction,				0,		"");
-	generalCommands["wild"] = new CrtCommand("wild",				100,	cmdAction,				0,		"");
-	generalCommands["damn"] = new CrtCommand("damn",				100,	cmdAction,				0,		"");
-	generalCommands["fist"] = new CrtCommand("fist",				100,	cmdAction,				0,		"");
-	generalCommands["defenestrate"] = new CrtCommand("defenestrate",100,	cmdAction,				0,		"");
-	generalCommands["clean"] = new CrtCommand("clean",				100,	cmdAction,				0,		"");
-	generalCommands["bathe"] = new CrtCommand("bathe",				100,	cmdAction,				0,		"");
-	generalCommands["vomjom"] = new CrtCommand("vomjom",			100,	cmdAction,				0,		"");
-	generalCommands["haha"] = new CrtCommand("haha",				100,	cmdAction,				0,		"");
-	generalCommands["swat"] = new CrtCommand("swat",				100,	cmdAction,				0,		"");
-	generalCommands["crack"] = new CrtCommand("crack",				100,	cmdAction,				0,		"");
-	generalCommands["livejournal"] = new CrtCommand("livejournal",	100,	cmdAction,				0,		"");
 
 	generalCommands["dice"] = new CrtCommand("dice",				100,	cmdDice,			0,		"Roll dice.");
 
@@ -1152,6 +875,10 @@ void Config::clearCommands() {
 	for(std::pair<bstring, CrtCommand*> cc : generalCommands)
 		if(cc.second)
 			delete cc.second;
+
+	staffCommands.clear();
+	playerCommands.clear();
+	generalCommands.clear();
 }
 
 bool MudMethod::exactMatch(bstring toMatch) {
@@ -1193,7 +920,13 @@ void examineList(std::map<bstring, Type>& myMap, bstring& str, int& match, bool&
 
 	Type2* curMethod = 0;
 
-	for(std::pair<bstring, Type> cp : myMap) {
+	// Narrow down the range of the map we'll be looking at
+	typename std::map<bstring, Type>::iterator it = myMap.lower_bound(str);
+	typename std::map<bstring, Type>::iterator endIt = myMap.upper_bound(bstring(1,char(str.at(0)+1)));
+
+    while(it != endIt) {
+        std::pair<bstring, Type> cp = (*it++);
+
 		if(!cp.second) continue;
 		curMethod = cp.second; 
 
@@ -1264,6 +997,8 @@ void getCommand(Creature *user, cmd* cmnd) {
 		if(!found && pUser->isStaff()) // Still no exact match, check staff commands
 			examineList<PlyCommand*, Command>(gConfig->staffCommands, str, match, found, cmnd->myCommand);
 	}
+	if(!found)
+	    examineList<SocialCommand*, Command>(gConfig->socials, str, match, found, cmnd->myCommand);
 
 	if(!match)
 		cmnd->ret = CMD_NOT_FOUND;

@@ -381,15 +381,13 @@ void Player::defineColors() {
 // overide what we've negotiated)
 void Player::setSockColors() {
     if(flagIsSet(P_ANSI_COLOR)) {
-        mySock->setColorOpt(ANSI_COLOR);
-    }
-
-    if(flagIsSet(P_MXP_ENABLED)) {
-        if(mySock->getMxp()) {
-            // If we have the MXP flag set and we have mxp enabled, then change
-            // our color to mxp, otherwise stay with ANSI
+        if(flagIsSet(P_MXP_ENABLED) && mySock->getMxp()) {
             mySock->setColorOpt(MXP_COLOR);
+        } else {
+            mySock->setColorOpt(ANSI_COLOR);
         }
+    } else {
+        mySock->setColorOpt(NO_COLOR);
     }
 }
 

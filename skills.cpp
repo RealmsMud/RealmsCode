@@ -279,7 +279,12 @@ void Creature::addSkill(const bstring& skillName, int gained) {
 void Creature::remSkill(const bstring& skillName) {
 	if(skillName == "")
 		return;
-	Skill* skill = skills.find(skillName);
+	SkillMap::iterator it = skills.find(skillName);
+	if(it == skills.end())
+	    return;
+	Skill* skill = (*it).second;
+
+
 	if(!skill)
 		return;
 	delete skill;

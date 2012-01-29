@@ -26,8 +26,8 @@ public:
 	virtual ~Streamable() {};
 	void initStreamable();
     // Stream operators
-	Streamable& operator<< (MudObject* obj);
-	Streamable& operator<< (MudObject& obj);
+	Streamable& operator<< (const MudObject* obj);
+	Streamable& operator<< (const MudObject& obj);
 	Streamable& operator<< (const bstring& str);
 
 	// This is to allow simple function based manipulators (like ColorOn, ColorOff)
@@ -46,6 +46,7 @@ protected:
     int manipFlags;
     int manipNum;
     bool streamColor;
+    bool petPrinted;
 
     void doPrint(const bstring& toPrint);
 };

@@ -547,8 +547,8 @@ int cmdRefuse(Player* player, cmd* cmnd);
 int cmdWatch(Player* player, cmd* cmnd);
 
 // room.cpp
-void display_rom(const Player* player, const Player *looker=0, int magicShowHidden=0);
-void display_rom(const Player* player, const BaseRoom* room);
+void display_rom(Player* player, Player *looker=0, int magicShowHidden=0);
+void display_rom(Player* player, BaseRoom* room);
 Exit *findExit(Creature* creature, cmd* cmnd, int val=1, xtag *first_xt=0);
 Exit *findExit(Creature* creature, bstring str, int val, xtag *first_xt=0);
 int createStorage(CatRef cr, const Player* player);

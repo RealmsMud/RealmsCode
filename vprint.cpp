@@ -111,7 +111,8 @@ void Socket::vprint(const char *fmt, va_list ap) {
         toPrint = delimit( msg, myPlayer->getWrap());
     else
         toPrint = msg;
-    bprint(toPrint + "^x");
+    toPrint += "^x";
+    bprint(toPrint);
 
 	free(msg);
 }

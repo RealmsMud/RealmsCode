@@ -47,14 +47,15 @@ void Streamable::initStreamable() {
     manipFlags = 0;
     manipNum = 0;
     streamColor = false;
+    petPrinted = false;
 }
 
 
-Streamable& Streamable::operator<< ( MudObject& mo) {
+Streamable& Streamable::operator<< ( const MudObject& mo) {
 	Player* player = dynamic_cast<Player*>(this);
     if(player && player->getSock()) {
-        const Creature* creature = mo.getCreature();
-        const Object* object = mo.getObject();
+        const Creature* creature = mo.getConstCreature();
+        const Object* object = mo.getConstObject();
 
         int mFlags = player->displayFlags() | player->getManipFlags();
         int mNum = player->getManipNum();
@@ -68,15 +69,12 @@ Streamable& Streamable::operator<< ( MudObject& mo) {
     return(*this);
 }
 
-Streamable& Streamable::operator<< ( MudObject* mo) {
+Streamable& Streamable::operator<< ( const MudObject* mo) {
     return(*this << *mo);
 }
 
 Streamable& Streamable::operator<< (const bstring& str) {
-    const Player* player = dynamic_cast<Player*>(this);
-    if(player && player->getSock()) {
-        doPrint(str);
-    }
+    doPrint(str);
     return(*this);
 }
 void Streamable::setColorOn() {
@@ -113,13 +111,34 @@ int Streamable::getManipNum() {
 
 void Streamable::doPrint(const bstring& toPrint) {
     const Player* player = dynamic_cast<Player*>(this);
-    if(player) {
-        Socket* sock = player->getSock();
-        if(sock) {
-            if(streamColor)
-                sock->bprintColor(toPrint);
-            else
-                sock->bprintNoColor(toPrint);
-        }
+    const Monster* monster = dynamic_cast<Monster*>(this);
+    const Player* master = null;
+    Socket* sock = null;
+
+    if(player)
+        sock = player->getSock();
+
+    if(monster) {
+        master = monster->getConstPlayerMaster();
+        if(master)
+            sock = master->getSock();
     }
+    if(sock) {
+        if(master) {
+            if(!petPrinted) {
+                sock->bprint("Pet> ");
+                if(toPrint.find("\n") == bstring::npos)
+                    petPrinted = true;
+            }
+            else {
+                if(toPrint.find("\n") != bstring::npos)
+                    petPrinted = false;
+            }
+        }
+        if(streamColor)
+            sock->bprintColor(toPrint);
+        else
+            sock->bprintNoColor(toPrint);
+    }
+
 }

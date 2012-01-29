@@ -39,6 +39,7 @@
 #include "unique.h"
 #include "alchemy.h"
 #include "mxp.h"
+#include "socials.h"
 
 extern int objRefSaveFlags[];
 
@@ -1359,6 +1360,82 @@ void BaseRoom::readExitsXml(xmlNodePtr curNode) {
 	}
 }
 
+//*********************************************************************
+//                      loadSocials
+//*********************************************************************
+
+bool Config::loadSocials() {
+    xmlDocPtr   xmlDoc;
+
+    xmlNodePtr  curNode;
+    char        filename[80];
+
+    // build an XML tree from a the file
+    sprintf(filename, "%s/socials.xml", Path::Code);
+
+    xmlDoc = xml::loadFile(filename, "Socials");
+    if(xmlDoc == NULL)
+        return(false);
+
+    curNode = xmlDocGetRootElement(xmlDoc);
+
+    curNode = curNode->children;
+    while(curNode && xmlIsBlankNode(curNode)) {
+        curNode = curNode->next;
+    }
+    if(curNode == 0) {
+        xmlFreeDoc(xmlDoc);
+        xmlCleanupParser();
+        return(false);
+    }
+
+    clearAlchemy();
+    while(curNode != NULL) {
+        if(NODE_NAME(curNode, "Social")) {
+            SocialCommand* social = new SocialCommand(curNode);
+            if(social)
+                socials[social->getName()]  = social;
+        }
+        curNode = curNode->next;
+    }
+    xmlFreeDoc(xmlDoc);
+    xmlCleanupParser();
+    return(true);
+}
+
+int cmdSocial(Creature* creature, cmd* cmnd);
+SocialCommand::SocialCommand(xmlNodePtr rootNode) {
+    rootNode = rootNode->children;
+    priority = 100;
+    auth = NULL;
+    desc = "";
+    fn = cmdSocial;
+
+    wakeTarget = false;
+    rudeWakeTarget = false;
+    wakeRoom = false;
+
+    while(rootNode != NULL)
+    {
+        if(NODE_NAME(rootNode, "Name")) xml::copyToBString(name, rootNode);
+        else if(NODE_NAME(rootNode, "Description")) xml::copyToBString(desc, rootNode);
+        else if(NODE_NAME(rootNode, "Priority")) xml::copyToNum(priority, rootNode);
+        else if(NODE_NAME(rootNode, "Script")) xml::copyToBString(script, rootNode);
+        else if(NODE_NAME(rootNode, "SelfNoTarget")) xml::copyToBString(selfNoTarget, rootNode);
+        else if(NODE_NAME(rootNode, "RoomNoTarget")) xml::copyToBString(roomNoTarget, rootNode);
+        else if(NODE_NAME(rootNode, "SelfOnTarget")) xml::copyToBString(selfOnTarget, rootNode);
+        else if(NODE_NAME(rootNode, "RoomOnTarget")) xml::copyToBString(roomOnTarget, rootNode);
+        else if(NODE_NAME(rootNode, "VictimOnTarget")) xml::copyToBString(victimOnTarget, rootNode);
+        else if(NODE_NAME(rootNode, "SelfOnSelf")) xml::copyToBString(selfOnSelf, rootNode);
+        else if(NODE_NAME(rootNode, "RoomOnSelf")) xml::copyToBString(roomOnSelf, rootNode);
+        else if(NODE_NAME(rootNode, "WakeTarget")) xml::copyToBool(wakeTarget, rootNode);
+        else if(NODE_NAME(rootNode, "RudeWakeTarget")) xml::copyToBool(rudeWakeTarget, rootNode);
+        else if(NODE_NAME(rootNode, "WakeRoom")) xml::copyToBool(wakeRoom, rootNode);
+
+        rootNode = rootNode->next;
+    }
+    std::cout << "Social: " << name << std::endl;
+}
 //*********************************************************************
 //						loadAlchemy
 //*********************************************************************

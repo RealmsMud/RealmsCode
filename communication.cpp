@@ -1308,11 +1308,11 @@ void Monster::sayTo(const Player* player, const bstring& message) {
 
 	broadcast_rom_LangWc(NORMAL, get_lang_color(language),
 		language, player->getSock(), player->area_room, player->room,
-		"%M says to %N, \"%s\"", this, player, message.c_str());
+		"%M says to %N, \"%s\"^x", this, player, message.c_str());
 	printForeignTongueMsg(player->getRoom(), this);
 
 	ANSI(player->getSock(), get_lang_color(language));
-	player->printColor("%M says to you, \"%s\"\n", this, message.c_str());
+	player->printColor("%M says to you, \"%s\"\n^x", this, message.c_str());
 }
 
 

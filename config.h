@@ -35,10 +35,12 @@ class Fishing;
 class Effect;
 class MsdpVariable;
 class MxpElement;
+class SocialCommand;
 
 typedef std::pair<bstring, bstring> accountDouble;
 typedef std::map<bstring, MxpElement*> MxpElementMap;
 typedef std::map<bstring, bstring> BstringMap;
+typedef std::map<bstring, SocialCommand*> SocialMap;
 
 
 class LottoTicket {
@@ -93,6 +95,11 @@ public:
 // Commands
 	bool initCommands();
 	void clearCommands();
+
+// Socials
+	bool loadSocials();
+	bool saveSocials();
+	void clearSocials();
 
 // Effects
 	bool loadEffects();
@@ -492,12 +499,14 @@ public:
 	std::map<bstring, Effect*> effects;
 
 	// Commands
-	   std::map<bstring, PlyCommand*> staffCommands;
+	std::map<bstring, PlyCommand*> staffCommands;
 	std::map<bstring, PlyCommand*> playerCommands;
 	std::map<bstring, CrtCommand*> generalCommands;
 
 	std::map<bstring, Spell*> spells;
 	std::map<bstring, Song*> songs;
+
+	SocialMap socials;
 
 	// Guilds
 	std::list<GuildCreation*> guildCreations;

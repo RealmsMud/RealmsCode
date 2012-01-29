@@ -102,7 +102,7 @@ void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, 
 			continue;
 
 		ply->vprint(ply->customColorize(fmt).c_str(), ap);
-		ply->print("\n");
+		ply->printColor("^x\n");
 	}
 }
 
@@ -126,7 +126,7 @@ void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, BaseRoo
 			continue;
 
 		target->vprint(target->customColorize(fmt).c_str(), ap);
-		target->print("\n");
+		target->printColor("^x\n");
 
 	}
 }
