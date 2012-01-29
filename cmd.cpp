@@ -80,8 +80,7 @@ int pcast(Player* player, cmd* cmnd) {
 //**********************************************************************
 
 template<class Type>
-std::map<bstring,bstring> compileSocialList(std::map<bstring, Type>& cList) {
-	std::map<bstring,bstring> list;
+void compileSocialList(std::map<bstring, bstring>& list, const gstd::map<bstring, Type>& cList) {
 	bstring name = "";
 
 	for(std::pair<bstring, Type> pp : cList) {
@@ -90,10 +89,11 @@ std::map<bstring,bstring> compileSocialList(std::map<bstring, Type>& cList) {
 
 		CrtCommand* cc = dynamic_cast<CrtCommand*>(cmnd);
 		PlyCommand* pc = dynamic_cast<PlyCommand*>(cmnd);
+		SocialCommand* sc = dynamic_cast<SocialCommand*>(cmnd);
 
 		if(	(!cc || (int(*)(Creature*, cmd*))cc->fn != cmdAction) &&
-			(!pc || (int(*)(Player*, cmd*))pc->fn != plyAction)
-		)
+			(!pc || (int(*)(Player*, cmd*))pc->fn != plyAction) &&
+			!sc )
 			continue;
 
 		name = cmnd->getName();
@@ -104,7 +104,7 @@ std::map<bstring,bstring> compileSocialList(std::map<bstring, Type>& cList) {
 		list[name] = "";
 	}
 
-	return(list);
+	return;
 }
 
 //**********************************************************************
@@ -112,10 +112,9 @@ std::map<bstring,bstring> compileSocialList(std::map<bstring, Type>& cList) {
 //**********************************************************************
 // Updates helpfiles for the game's socials.
 
-void writeSocialFile() {
+bool Config::writeSocialFile() const {
 	char	file[100], fileLink[100];
 	std::map<bstring,bstring> list;
-	std::map<bstring,bstring> list2;
 	std::map<bstring,bstring>::iterator it;
 
 	sprintf(file, "%s/socials.txt", Path::Help);
@@ -129,13 +128,9 @@ void writeSocialFile() {
 	out << loadHelpTemplate("socials");
 
 
-	list = compileSocialList<PlyCommand*>(gConfig->playerCommands);
-	list2 = compileSocialList<CrtCommand*>(gConfig->generalCommands);
-
-	// combine the lists
-	for(it = list2.begin(); it != list2.end(); it++) {
-		list[(*it).first] = (*it).second;
-	}
+	compileSocialList<PlyCommand*>(list, playerCommands);
+	compileSocialList<CrtCommand*>(list, generalCommands);
+	compileSocialList<SocialCommand*>(list, socials);
 
 
 	int i = 0;
@@ -153,6 +148,7 @@ void writeSocialFile() {
 
 	out.close();
 	link(file, fileLink);
+	return(true);
 }
 
 //**********************************************************************
@@ -857,7 +853,6 @@ bool Config::initCommands() {
 	writeCommandFile(0, Path::Help, "commands");
 	writeCommandFile(DUNGEONMASTER, Path::DMHelp, "dmcommands");
 	writeCommandFile(BUILDER, Path::BuilderHelp, "bhcommands");
-	writeSocialFile();
 
 	return(true);
 }

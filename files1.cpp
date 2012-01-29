@@ -302,9 +302,11 @@ void free_crt(Creature* creature, bool remove) {
 // flags are written in loadFlags
 
 bool Config::writeHelpFiles() const {
-	bool success = false;
+	bool success = true;
 
-	success = writeSpellFiles() || success;
+	success &= writeSpellFiles();
+	success &= writeSocialFile();
+
 
 	return(success);
 }

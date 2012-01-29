@@ -100,6 +100,8 @@ public:
 	bool loadSocials();
 	bool saveSocials();
 	void clearSocials();
+	// For help socials
+	bool writeSocialFile() const;
 
 // Effects
 	bool loadEffects();
