@@ -1057,7 +1057,7 @@ int Object::readFromXml(xmlNodePtr rootNode) {
 		curNode = curNode->next;
 	}
 
-	if(version < "2.46j") {
+	if(version < "2.46j" && flagIsSet(O_WEAPON_CASTS)) {
 	    // Version 2.46j added charges for casting weapons, versions before that
 	    // used shots.  Initialize charges as 1/3rd of shots
 	    chargesMax = shotsMax / 3;

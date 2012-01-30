@@ -115,33 +115,45 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
         room->wake("You awaken suddenly!", true);
 
     if(target && !social->getSelfOnTarget().empty()) {
+        // Social on Target
+
         bstring toSelf = social->getSelfOnTarget();
         toSelf.Replace("*TARGET*", target->getCrtStr(creature).c_str());
         toSelf.Replace("*VICTIM*", target->getCrtStr(creature).c_str());
         *creature << toSelf << "\n";
 
-        bstring toTarget = social->getVictimOnTarget();
-        toTarget.Replace("*A-HISHER*", creature->hisHer());
-        toTarget.Replace("*A-HIMHER*", creature->himHer());
-        toTarget.Replace("*A-HESHE*", creature->heShe());
-        toTarget.Replace("*ACTOR*", creature->getCrtStr(target, CAP).c_str());
+        if(actionShow(pTarget, creature)) {
+            bstring toTarget = social->getVictimOnTarget();
+            toTarget.Replace("*A-HISHER*", creature->hisHer());
+            toTarget.Replace("*A-HIMHER*", creature->himHer());
+            toTarget.Replace("*A-HESHE*", creature->heShe());
+            toTarget.Replace("*ACTOR*", creature->getCrtStr(target, CAP).c_str());
 
-        *target << toTarget << "\n";
+            *target << toTarget << "\n";
+        }
 
         bstring toRoom = social->getRoomOnTarget();
         room->doSocialEcho(toRoom, creature, target);
+
+        socialHooks(creature, target, str);
     } else {
+        // Social no target
+
         *creature << social->getSelfNoTarget() << "\n";
 
         bstring toRoom = social->getRoomNoTarget();
 
-        if(!toRoom.empty() && room)
+        if(!toRoom.empty() && room) {
             room->doSocialEcho(toRoom, creature, target);
+            socialHooks(creature, str);
+        }
+
 
     }
 
     return(0);
 }
+
 
 void BaseRoom::doSocialEcho(bstring str, const Creature* actor, const Creature* target) {
     if(str.empty() || !actor)

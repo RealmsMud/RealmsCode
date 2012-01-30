@@ -202,6 +202,7 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
 		loadList.push_back("recipes");
 		loadList.push_back("ships");
 		loadList.push_back("skills");
+		loadList.push_back("socials");
 		loadList.push_back("spells");
 		loadList.push_back("spl [spell id]");
 		loadList.push_back("startlocs");
@@ -212,6 +213,7 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
 		saveList.push_back("limited");
 		saveList.push_back("properties");
 		saveList.push_back("recipes");
+        saveList.push_back("socials");
 		saveList.push_back("spells");
 
 		// run through the lists and display them
@@ -274,7 +276,20 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
 			player->print("Saving guilds.\n");
 			gConfig->saveGuilds();
 		}
-	} else if(!strcmp(cmnd->str[1], "recipes")) {
+	}
+	else if(!strcmp(cmnd->str[1], "socials")) {
+	    if(load) {
+	        gConfig->clearSocials();
+	        gConfig->loadSocials();
+	        gConfig->writeSocialFile();
+
+	        *player << "Socials reloaded.\n";
+	    } else {
+	        gConfig->saveSocials();
+	        *player << "Socials saved\n";
+	    }
+	}
+	else if(!strcmp(cmnd->str[1], "recipes")) {
 		if(load) {
 			gConfig->loadRecipes();
 			player->print("Recipes reloaded.\n");
@@ -333,7 +348,8 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
 		gConfig->loadQuests();
 		gConfig->resetParentQuests();
 		player->print("Quests reloaded.\n");
-	} else if(!strcmp(cmnd->str[1], "clans") && load) {
+	}
+	else if(!strcmp(cmnd->str[1], "clans") && load) {
 		gConfig->loadClans();
 		player->print("Clans reloaded.\n");
 	} else if(!strcmp(cmnd->str[1], "msdp") && load) {

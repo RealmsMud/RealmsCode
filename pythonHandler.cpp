@@ -818,7 +818,7 @@ bool Server::runPython(const bstring& pyScript, bstring args, MudObject *actor, 
 	localNamespace["args"] = args;
 
 	addMudObjectToDictionary(localNamespace, "actor", actor);
-	addMudObjectToDictionary(localNamespace, "target", actor);
+	addMudObjectToDictionary(localNamespace, "target", target);
 
 	return(runPython(pyScript, localNamespace));
 }

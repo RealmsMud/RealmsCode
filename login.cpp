@@ -160,10 +160,6 @@ void login(Socket* sock, bstring str) {
 			gServer->cleanUp();
 
 			player = sock->getPlayer();
-			if(player->hasPet()) {
-				for(Monster* pet : player->pets)
-					delete pet;
-			}
 
 			free_crt(player, false);
 			sock->setPlayer(NULL);

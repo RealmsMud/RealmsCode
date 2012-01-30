@@ -134,7 +134,7 @@ int cmdBribe(Player* player, cmd* cmnd) {
 	if(amount < cost[GOLD] || creature->flagIsSet(M_PERMENANT_MONSTER)) {
 		player->print("%M takes your money, but stays.\n", creature);
 		broadcast(player->getSock(), player->getRoom(), "%M tried to bribe %N.", player, creature);
-		creature->coins.add(cost);
+		creature->coins.add(amount, GOLD);
 	} else {
 		player->print("%M takes your money and leaves.\n", creature);
 		broadcast(player->getSock(), player->getRoom(), "%M bribed %N.", player, creature);

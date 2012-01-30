@@ -24,6 +24,11 @@
 class Ship;
 class ShipStop;
 
+// Socials
+void socialHooks(Creature *creature, MudObject* target, bstring action, bstring result = "");
+void socialHooks(Creature *target, bstring action, bstring result = "");
+bool actionShow(Player* pTarget, Creature* creature);
+
 // afflictions.cpp
 unsigned int standardPoisonDuration(short level, short con);
 

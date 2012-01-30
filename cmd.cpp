@@ -819,8 +819,6 @@ bool Config::initCommands() {
 	generalCommands["rps"] = new CrtCommand("rps",					100,	cmdAction,				0,		"");
 	generalCommands["masturbate"] = new CrtCommand("masturbate",	90,		cmdAction,				0,		"");
 	generalCommands["hum"] = new CrtCommand("hum",					100,	cmdAction,				0,		"");
-	generalCommands["whimper"] = new CrtCommand("whimper",			100,	cmdAction,				0,		"");
-	generalCommands["whistle"] = new CrtCommand("whistle",			90,		cmdAction,				0,		"");
 	// "pet" also links to orderPet within action
 	generalCommands["pet"] = new CrtCommand("pet",					100,	cmdAction,				0,		"");
 	generalCommands["pat"] = new CrtCommand("pat",					100,	cmdAction,				0,		"");
