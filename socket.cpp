@@ -1065,7 +1065,9 @@ int Socket::processOneCommand(void) {
 // Returns a fd to it's previous state
 
 void Socket::restoreState() {
-	return (setState(lastState));
+	setState(lastState);
+	createPlayer(this, "");
+	return;
 }
 
 int restoreState(Socket* sock) {

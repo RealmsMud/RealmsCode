@@ -136,6 +136,9 @@ void login(Socket* sock, bstring str) {
 			return;
 		} else {
 
+
+			sock->print("\nTo get help at any time during creation use the \"^Whelp^x\" command. \n");
+
 			sock->print("\nHit return: ");
 			sock->setState(CREATE_NEW);
 			return;
@@ -311,7 +314,43 @@ void setPlyDeity(Socket* sock, int deity) {
 //*********************************************************************
 // This function allows a new player to create their character.
 
+void doCreateHelp(Socket* sock, bstring str) {
+	cmd cmnd;
+	parse(str, &cmnd);
+
+	bstring helpfile;
+	if(cmnd.num < 2) {
+		helpfile = bstring(Path::CreateHelp) + "/helpfile.txt";
+		viewFile(sock, helpfile.c_str());
+		return;
+	}
+
+	if(!checkWinFilename(sock, cmnd.str[1]))
+		return;
+
+	if(strchr(cmnd.str[1], '/')!=NULL) {
+		sock->print("You may not use backslashes.\n");
+		return;
+	}
+	helpfile = bstring(Path::CreateHelp) + "/" + cmnd.str[1] + ".txt";
+	viewFile(sock, helpfile.c_str());
+	return;
+
+}
+
 void createPlayer(Socket* sock, bstring str) {
+
+	switch(sock->getState()) {
+	case CREATE_NEW:
+	case CREATE_GET_DM_PASSWORD:
+		break;
+	default:
+		if(str.left(4).equals("help")) {
+			doCreateHelp(sock, str);
+			return;
+		}
+		break;
+	}
 	switch(sock->getState()) {
 	case CREATE_NEW:
 		{
@@ -390,7 +429,7 @@ no_pass:
 		if(gConfig->classes[get_class_string(sock->getPlayer()->getClass())]->needsDeity())
 			Create::getDeity(sock, str, Create::doPrint);
 		else if(Create::getLocation(sock, str, Create::doPrint))
-			Create::getStats(sock, str, Create::doPrint);
+			Create::getStatsChoice(sock, str, Create::doPrint);
 		return;
 
 	case CREATE_GET_DEITY:
@@ -398,14 +437,20 @@ no_pass:
 		if(!Create::getDeity(sock, str, Create::doWork))
 			return;
 		if(Create::getLocation(sock, str, Create::doPrint))
-			Create::getStats(sock, str, Create::doPrint);
+			Create::getStatsChoice(sock, str, Create::doPrint);
 		return;
 
 	case CREATE_START_LOC:
 
 		if(!Create::getLocation(sock, str, Create::doWork))
 			return;
-		Create::getStats(sock, str, Create::doPrint);
+		Create::getStatsChoice(sock, str, Create::doPrint);
+		return;
+	case CREATE_GET_STATS_CHOICE:
+		if(!Create::getStatsChoice(sock, str, Create::doWork))
+			return;
+		Create::finishStats(sock);
+		Create::startCustom(sock, str, Create::doPrint);
 		return;
 
 	case CREATE_GET_STATS:
@@ -723,7 +768,7 @@ bool Create::getRace(Socket* sock, bstring str, int mode) {
 		if(choices.find(k) != choices.end()) {
 			sock->getPlayer()->setRace(choices[k]->getId());
 		} else {
-			sock->print("\nChoose one: ");
+			Create::getRace(sock, "", Create::doPrint);
 			sock->setState(CREATE_GET_RACE);
 			return(false);
 		}
@@ -882,7 +927,7 @@ bool Create::getClass(Socket* sock, bstring str, int mode) {
 		}
 		if(!sock->getPlayer()->getClass()) {
 			sock->printColor("Invalid selection: ^W%s\n", str.c_str());
-			sock->askFor("Choose one: ");
+			Create::getClass(sock, "", Create::doPrint);
 
 			sock->setState(CREATE_GET_CLASS);
 			return(false);
@@ -935,7 +980,7 @@ bool Create::getDeity(Socket* sock, bstring str, int mode) {
 			sock->printColor("Your chosen deity: ^W%s\n", gConfig->getDeity(sock->getPlayer()->getDeity())->getName().c_str());
 		else {
 			sock->printColor("Invalid selection: ^W%s\n", str.c_str());
-			sock->askFor("Choose one: ");
+			Create::getDeity(sock, "", Create::doPrint);
 
 			sock->setState(CREATE_GET_DEITY);
 			return(false);
@@ -1014,6 +1059,56 @@ bool Create::startCustom(Socket* sock, bstring str, int mode) {
 	}
 	return(true);
 }
+//*********************************************************************
+//						getStatsChoice
+//*********************************************************************
+
+bool Create::getStatsChoice(Socket* sock, bstring str, int mode) {
+	if(mode == Create::doPrint) {
+		PlayerClass *pClass = gConfig->classes[sock->getPlayer()->getClassString()];
+		if(!pClass || !pClass->hasDefaultStats()) {
+			Create::getStats(sock, str, Create::doPrint);
+			return(false);
+		}
+
+		sock->print("\nFor character stats, you may:\n");
+
+		sock->printColor("\n[^WC^x]hoose your own stats");
+		sock->printColor("\n[^WU^x]se predefined stats provided by the mud");
+
+		sock->print("\n\nNote: For beginners that are unfamiliar with game mechanics, it is highly recommended to use predefined stats to reduce the learning curve.\n");
+
+		sock->askFor(": ");
+
+		sock->setState(CREATE_GET_STATS_CHOICE);
+
+	} else if(mode == Create::doWork) {
+
+		if(str.trim().left(1).equals("c",false)) {
+			sock->print("You have chosen to select your own stats.\n");
+			Create::getStats(sock, "", Create::doPrint);
+			// We've set the next state so don't change it after we return
+			return(false);
+		} else if(str.trim().left(1).equals("u",false)) {
+			PlayerClass *pClass = gConfig->classes[sock->getPlayer()->getClassString()];
+			if(!pClass) {
+				Create::getStats(sock, str, Create::doPrint);
+				return(false);
+			}
+			pClass->setDefaultStats(sock->getPlayer());
+
+			// Continue on with character creation
+			return(true);
+		}
+
+		sock->askFor(": ");
+
+		sock->setState(CREATE_GET_STATS_CHOICE);
+
+	}
+	return(false);
+}
+
 
 //*********************************************************************
 //						getStats
@@ -1063,7 +1158,7 @@ bool Create::getStats(Socket* sock, bstring str, int mode) {
 		}
 
 		if(sum != 56) {
-			sock->print("Stat total must equal 56 points.\n");
+			sock->print("Stat total must equal 56 points, yours totaled %d.\n", sum);
 			sock->print(": ");
 			sock->setState(CREATE_GET_STATS);
 			return(false);

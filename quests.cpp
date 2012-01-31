@@ -1026,7 +1026,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
 	} else {
 		question = keyTxtConvert(getFullstrText(cmnd->fullstr, 2).toLower());
 		broadcast_rom_LangWc(NORMAL, get_lang_color(target->current_language),
-			target->current_language, player->getSock(), player->area_room, player->room, "%M asks %N \"%s\".",
+			target->current_language, player->getSock(), player->area_room, player->room, "%M asks %N \"%s\".^x",
 			player, target, question.c_str());
 		bstring key = "", keyword = "";
 		for(TalkResponse * talkResponse : target->responses) {

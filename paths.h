@@ -52,6 +52,7 @@ namespace Path {
 
 	extern const char* BaseHelp;
 	extern const char* Help;
+	extern const char* CreateHelp;
 	extern const char* Wiki;
 	extern const char* DMHelp;
 	extern const char* BuilderHelp;

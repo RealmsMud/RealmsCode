@@ -41,6 +41,9 @@ public:
 	bstring getUnarmedWeaponSkill() const;
 
 	std::map<int, PlayerTitle*> titles;
+	bool hasDefaultStats();
+	bool setDefaultStats(Player* player);
+
 	Dice damage;
 protected:
 	void load(xmlNodePtr rootNode);
@@ -50,6 +53,14 @@ protected:
 	int id;
 	short baseHp;
 	short baseMp;
+	bool hasAutomaticStats;
+	void checkAutomaticStats();
+	short baseStrength;
+	short baseDexterity;
+	short baseConstitution;
+	short baseIntelligence;
+	short basePiety;
+
 	bool needDeity;
 	short numProf;
 	// Skills they start with
@@ -61,4 +72,3 @@ protected:
 
 
 #endif	/* _PLAYERCLASS_H */
-

@@ -40,7 +40,6 @@ void Socket::defineMxp() {
     bprint(MXP_BEG "VERSION" MXP_END);
     for(MxpElementMap::value_type p : gConfig->mxpElements) {
         bprint(p.second->getDefineString());
-        std::cout << p.second->getDefineString() << std::endl;
     }
 
 }

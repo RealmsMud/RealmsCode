@@ -84,6 +84,7 @@ typedef enum {
 	CREATE_GET_DEITY,
 	CREATE_START_LOC,
 	CREATE_START_CUSTOM,
+	CREATE_GET_STATS_CHOICE,
 	CREATE_GET_STATS,
 	CREATE_GET_PROF,
 	CREATE_GET_ALIGNMENT,
@@ -138,6 +139,7 @@ namespace Create {
 	bool getClass(Socket* sock, bstring str, int mode);
 	bool getDeity(Socket* sock, bstring str, int mode);
 	bool getLocation(Socket* sock, bstring str, int mode);
+	bool getStatsChoice(Socket* sock, bstring str, int mode);
 	bool getStats(Socket* sock, bstring str, int mode);
 	void finishStats(Socket* sock);
 	bool getBonusStat(Socket* sock, bstring str, int mode);

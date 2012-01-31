@@ -1434,7 +1434,6 @@ SocialCommand::SocialCommand(xmlNodePtr rootNode) {
 
         rootNode = rootNode->next;
     }
-    std::cout << "Social: " << name << std::endl;
 }
 //*********************************************************************
 //						loadAlchemy
@@ -1529,7 +1528,6 @@ bool Config::loadMxpElements() {
                 mxpElements.insert(std::pair<bstring, MxpElement*>(mxpElement->getName(), mxpElement));
                 if(mxpElement->isColor()) {
                     mxpColors.insert(std::pair<bstring, bstring>(mxpElement->getColor(), mxpElement->getName()));
-                    std::cout << "Inserted color " << mxpElement->getColor() << " - " << mxpElement->getName() << std::endl;
                 }
             }
         }

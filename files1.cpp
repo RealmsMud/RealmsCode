@@ -57,6 +57,7 @@ namespace Path {
 
 	const char* BaseHelp = "/home/realms/realms/help/";
 	const char* Help = "/home/realms/realms/help/help/";
+	const char* CreateHelp = "/home/realms/realms/help/create/";
 	const char* Wiki = "/home/realms/realms/help/wiki/";
 	const char* DMHelp = "/home/realms/realms/help/dmhelp/";
 	const char* BuilderHelp = "/home/realms/realms/help/bhelp/";

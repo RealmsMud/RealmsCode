@@ -26,6 +26,12 @@
 PlayerClass::PlayerClass(xmlNodePtr rootNode) {
 	needDeity = false;
 	numProf = 1;
+	hasAutomaticStats = false;
+	baseStrength=-1;
+	baseDexterity=-1;
+	baseConstitution=-1;
+	baseIntelligence=-1;
+	basePiety=-1;
 	unarmedWeaponSkill = "bare-hand";
 	load(rootNode);
 }
@@ -90,6 +96,21 @@ void PlayerClass::load(xmlNodePtr rootNode) {
 							xml::copyToNum(baseHp, statNode);
 						} else if(NODE_NAME(statNode, "Mp")) {
 							xml::copyToNum(baseMp, statNode);
+						} else if(NODE_NAME(statNode, "Strength")) {
+							xml::copyToNum(baseStrength, statNode);
+							checkAutomaticStats();
+						} else if(NODE_NAME(statNode, "Dexterity")) {
+							xml::copyToNum(baseDexterity, statNode);
+							checkAutomaticStats();
+						} else if(NODE_NAME(statNode, "Constitution")) {
+							xml::copyToNum(baseConstitution, statNode);
+							checkAutomaticStats();
+						} else if(NODE_NAME(statNode, "Intelligence")) {
+							xml::copyToNum(baseIntelligence, statNode);
+							checkAutomaticStats();
+						} else if(NODE_NAME(statNode, "Piety")) {
+							xml::copyToNum(basePiety, statNode);
+							checkAutomaticStats();
 						}
 						statNode = statNode->next;
 					}
@@ -206,6 +227,34 @@ short PlayerClass::numProfs() { return(numProf); }
 
 LevelGain* PlayerClass::getLevelGain(int lvl) { return(levels[lvl]); }
 
+//*********************************************************************
+//						hasDefaultStats
+//*********************************************************************
+bool PlayerClass::hasDefaultStats() { return(hasAutomaticStats); }
+
+//*********************************************************************
+//						setDefaultStats
+//*********************************************************************
+bool PlayerClass::setDefaultStats(Player* player) {
+	if(!hasDefaultStats() || !player)
+		return(false);
+
+	player->strength.setMax(baseStrength * 10);
+	player->dexterity.setMax(baseDexterity * 10);
+	player->constitution.setMax(baseConstitution * 10);
+	player->intelligence.setMax(baseIntelligence * 10);
+	player->piety.setMax(basePiety * 10);
+
+}
+//*********************************************************************
+//						checkAutomaticStats
+//*********************************************************************
+void PlayerClass::checkAutomaticStats() {
+	if(baseStrength != -1 && baseDexterity != -1 && baseConstitution != -1 && baseIntelligence != -1 && basePiety != -1) {
+		std::cout << "Automatic stats registered for " << this->getName() << std::endl;
+		hasAutomaticStats = true;
+	}
+}
 //*********************************************************************
 //						loadClasses
 //*********************************************************************
