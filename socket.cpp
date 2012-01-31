@@ -411,6 +411,8 @@ bstring Socket::parseForOutput(bstring& outBuf) {
                 if(ch == '^') {
                     ch = outBuf[i++];
                     oStr << getColorCode(ch);
+                } else if(ch == '\n') {
+                	oStr << "\r\n";
                 } else {
                     oStr << ch;
                 }
