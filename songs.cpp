@@ -132,6 +132,9 @@ bool Song::runScript(MudObject* singer, MudObject* target) {
 void Config::clearSongs() {
 
 	// TODO: Loop through all players and stop any songs being played
+    for(PlayerMap::value_type p : gServer->players) {
+        p.second->stopPlaying(true);
+    }
 	for(std::pair<bstring, Song*> sp : songs) {
 		delete sp.second;
 	}

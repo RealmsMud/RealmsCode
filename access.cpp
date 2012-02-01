@@ -18,10 +18,6 @@
  */
 #include "mud.h"
 #include "calendar.h"
-//#include "structs.h"
-//#include "mextern.h"
-////#include <stdlib.h>
-//#include <sstream>
 
 //
 //		object
@@ -47,7 +43,7 @@
 //		sword
 //
 //};
-char object_type[][20] = { "error", "error", "error", "error", "herb",
+char object_type[][20] = { "error", "error", "error", "instrument", "herb",
 		"weapon", "piece of armor", "potion", "scroll", "magic wand", "container", "money", "key",
 		"light source", "miscellaneous item", "song scroll", "poison", "bandage", "ammo", "quiver", "lottery ticket",
 		"unknown item" };

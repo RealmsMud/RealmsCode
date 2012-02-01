@@ -42,11 +42,6 @@ int	 Crash = 0;
 // Numbers of supports required to create a guild
 int	SUPPORT_REQUIRED = 2;
 
-
-
-//int	SHOWLVLONWHOIS=0;
-//int	LOTTERY = 0;
-
 int		Tablesize;
 int		Cmdnum;
 long	StartTime;

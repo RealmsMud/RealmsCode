@@ -489,6 +489,8 @@ CLASS_COUNT
 //#define MISSILE		4
 //#define CLEAVE		5
 
+// Bard Instrument
+#define INSTRUMENT      3
 // Item is a herb!  Subtype if needed in subtype
 #define HERB			4
 
@@ -501,7 +503,7 @@ CLASS_COUNT
 #define CONTAINER		10
 
 #define MONEY			11
-#define KEY			12
+#define KEY			    12
 #define LIGHTSOURCE		13
 #define MISC			14
 #define SONGSCROLL		15
@@ -509,9 +511,9 @@ CLASS_COUNT
 #define BANDAGE			17
 #define AMMO			18
 #define QUIVER			19
-#define LOTTERYTICKET		20
+#define LOTTERYTICKET	20
 
-#define MAX_OBJ_TYPE		21
+#define MAX_OBJ_TYPE	21
 
 #define DEFAULT_WEAPON_DELAY	30 // 3 seconds
 

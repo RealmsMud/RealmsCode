@@ -231,7 +231,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 
 	if(osp->bonus_type) {
 		bns = bonus((int) caster->intelligence.getCur());
-		if(caster->getClass() == MAGE || caster->getClass() == LICH)
+		if(caster->getClass() == MAGE || caster->getClass() == LICH || caster->isStaff())
 			bns = (bns * 3)/2;
 
 		if(spellData->how == CAST || spellData->how == WAND || spellData->how == SCROLL) {
