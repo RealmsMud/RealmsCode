@@ -289,6 +289,7 @@ public:
 	bool hasAttackableTarget();
 	Creature* getTarget();
 	Creature* addTarget(Creature* toTarget);
+	void checkTarget(Creature* toTarget);
 	void addTargetingThis(Creature* targeter);
 	void clearTarget(bool clearTargetsList = true);
 	void clearTargetingThis(Creature* targeter);

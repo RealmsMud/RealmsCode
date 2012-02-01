@@ -347,6 +347,11 @@ int Creature::doHeal(Creature* target, int amt, double threatFactor) {
 // Targeting Functions
 //################################################################################
 
+void Creature::checkTarget(Creature* toTarget) {
+	if(isPlayer() && !flagIsSet(P_NO_AUTO_TARGET) && getTarget() == NULL) {
+		addTarget(toTarget);
+	}
+}
 
 //*********************************************************************
 //							addTarget

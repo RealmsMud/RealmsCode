@@ -85,6 +85,7 @@ prefInfo prefList[] =
 	{ "wimpy",		P_WIMPY,				0,		"flee when HP below this number",0 },
 	{ "killaggros",	P_KILL_AGGROS,			0,		"attack aggros first",		0 },
 	{ "mobnums",	P_NO_NUMBERS,			0,		"monster ordinal numbers",	true },
+	{ "autotarget",	P_NO_AUTO_TARGET,		0,		"automatic targeting",		true },
 
 	{ "-Group",		0, 0, "", 0 },
 	{ "group",		P_IGNORE_GROUP_BROADCAST,0,		"group combat messages",	true },
