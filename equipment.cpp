@@ -71,8 +71,12 @@ int cmdCompare(Player* player, cmd* cmnd) {
     }
     if(toCompare->getWearflag() != compareTo->getWearflag() ||
             toCompare->getType() != compareTo->getType()) {
-        *player << "You don't know how to compare " << toCompare << " to " << compareTo << "!\n";
+        *player << ColorOn << "You don't know how to compare " << toCompare << " to " << compareTo << "!\n" << ColorOff;
         return(0);
+    }
+    if(toCompare == compareTo) {
+    	*player << ColorOn << "You compare " << compareTo << " to itself...it looks about the same.\n" << ColorOff;
+    	return(0);
     }
 
     if(toCompare->getType() == WEAPON) {
