@@ -234,7 +234,6 @@ void loadRanges(xmlNodePtr curNode, Player *pPlayer);
 int saveObjectsXml(xmlNodePtr parentNode, otag* op, int permOnly);
 int saveCreaturesXml(xmlNodePtr parentNode, ctag* cp, int permOnly);
 //int saveCreatureXml(xmlNodePtr rootNode, Creature * pCreature, int permOnly, LoadType saveType);
-int saveExitsXml(xmlNodePtr curNode, xtag *xp);
 
 Ban *parseBan(xmlNodePtr cur);
 

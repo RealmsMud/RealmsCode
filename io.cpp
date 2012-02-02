@@ -618,10 +618,8 @@ void UniqueRoom::escapeText() {
 	short_desc = Pueblo::multiline(short_desc);
 	long_desc = Pueblo::multiline(long_desc);
 
-	xtag* xp = first_ext;
-	while(xp) {
-		xp->ext->escapeText();
-		xp = xp->next_tag;
+	for(Exit* exit : exits) {
+		exit->escapeText();
 	}
 }
 

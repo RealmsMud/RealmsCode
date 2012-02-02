@@ -23,7 +23,6 @@
 
 
 BaseRoom::BaseRoom() {
-	first_ext = 0;
 	first_obj = 0;
 	first_mon = 0;
 	first_ply = 0;
@@ -110,20 +109,7 @@ void UniqueRoom::setSize(Size s) { size = s; }
 //*********************************************************************
 
 void BaseRoom::BaseDestroy() {
-	xtag 	*xp = first_ext, *xtemp=0;
-	while(xp) {
-		if(xp->ext->flagIsSet(X_PORTAL)) {
-			BaseRoom* target = xp->ext->target.loadRoom();
-			// BUG: argument 3 is wrong, crash waiting to happen
-			Move::deletePortal(target, xp->ext->getPassPhrase());
-		}
-		xtemp = xp->next_tag;
-		delete xp->ext;
-		delete xp;
-		xp = xtemp;
-	}
-	first_ext = 0;
-
+	clearExits();
 	otag	*op = first_obj, *otemp=0;
 	while(op) {
 		otemp = op->next_tag;
@@ -169,18 +155,16 @@ AreaRoom::~AreaRoom() {
 //*********************************************************************
 
 void AreaRoom::reset() {
-	xtag 	*xp = first_ext, *xtemp=0;
-
 	area = 0;
 	decCompass = needsCompass = stayInMemory = false;
 
-	while(xp) {
-		xtemp = xp->next_tag;
-		delete xp->ext;
-		delete xp;
-		xp = xtemp;
+	ExitList::iterator xit;
+	for(xit = exits.begin() ; xit != exits.end(); ) {
+		Exit* exit = (*xit++);
+		delete exit;
 	}
-	first_ext = 0;
+	exits.clear();
+
 }
 
 //*********************************************************************
@@ -319,7 +303,6 @@ const char *exitNameByOrder(int i) {
 //*********************************************************************
 
 bool AreaRoom::canSave() const {
-	xtag	*xp=0;
 	int		i=0;
 
 	if(unique.id)
@@ -328,15 +311,13 @@ bool AreaRoom::canSave() const {
 	if(needsEffectsIndex())
 		return(true);
 
-	if(first_ext) {
-		xp = first_ext;
-		while(xp) {
-			if(strcmp(xp->ext->name, exitNameByOrder(i++)))
+	if(!exits.empty()) {
+		for(Exit* ext : exits) {
+			if(strcmp(ext->name, exitNameByOrder(i++)))
 				return(true);
 			// doesnt check rooms leading to other area rooms
-			if(xp->ext->target.room.id)
+			if(ext->target.room.id)
 				return(true);
-			xp = xp->next_tag;
 		}
 		if(i != 8)
 			return(true);
@@ -433,7 +414,7 @@ void AreaRoom::save(Player* player) const {
 	mapmarker.save(curNode);
 
 	curNode = xml::newStringChild(rootNode, "Exits");
-	saveExitsXml(curNode, first_ext);
+	saveExitsXml(curNode);
 
 	xml::saveFile(filename, xmlDoc);
 	xmlFreeDoc(xmlDoc);
@@ -442,7 +423,47 @@ void AreaRoom::save(Player* player) const {
 		player->print("Room saved.\n");
 }
 
+//*********************************************************************
+//						delExit
+//*********************************************************************
 
+bool BaseRoom::delExit(Exit *exit) {
+	if(exit) {
+		ExitList::iterator xit = std::find(exits.begin(), exits.end(), exit);
+		if(xit != exits.end()) {
+			exits.erase(xit);
+			delete exit;
+			return(true);
+		}
+	}
+	return(false);
+}
+bool BaseRoom::delExit( bstring dir) {
+    for(Exit* ext : exits) {
+        if(!strcmp(ext->name, dir.c_str())) {
+
+        	exits.remove(ext);
+            delete ext;
+            return(true);
+        }
+    }
+
+    return(false);
+}
+
+
+void BaseRoom::clearExits() {
+	ExitList::iterator xit;
+	for(xit = exits.begin() ; xit != exits.end(); ) {
+		Exit* exit = (*xit++);
+		if(exit->flagIsSet(X_PORTAL)) {
+			BaseRoom* target = exit->target.loadRoom();
+			Move::deletePortal(target, exit->getPassPhrase());
+		}
+		delete exit;
+	}
+	exits.clear();
+}
 //*********************************************************************
 //						load
 //*********************************************************************
@@ -450,16 +471,7 @@ void AreaRoom::save(Player* player) const {
 void AreaRoom::load(xmlNodePtr rootNode) {
 	xmlNodePtr childNode = rootNode->children;
 
-	if(first_ext) {
-		xtag	*prev=0, *xp = first_ext;
-
-		while(xp) {
-			prev = xp;
-			xp = xp->next_tag;
-			delete prev;
-		}
-		first_ext = 0;
-	}
+	clearExits();
 
 	while(childNode) {
 		if(NODE_NAME(childNode, "Exits"))
@@ -502,16 +514,14 @@ bool AreaRoom::canDelete() {
 	// any room effects?
 	if(needsEffectsIndex())
 		return(false);
-	if(first_ext) {
+	if(!exits.empty()) {
 		int		i=0;
-		xtag	*xp = first_ext;
-		while(xp) {
-			if(strcmp(xp->ext->name, exitNameByOrder(i++)))
+		for(Exit* ext : exits) {
+			if(strcmp(ext->name, exitNameByOrder(i++)))
 				return(false);
 			// doesnt check rooms leading to other area rooms
-			if(xp->ext->target.room.id)
+			if(ext->target.room.id)
 				return(false);
-			xp = xp->next_tag;
 		}
 		if(i != 8)
 			return(false);
@@ -527,7 +537,6 @@ bool AreaRoom::canDelete() {
 
 bool AreaRoom::isInteresting(const Player *viewer) const {
 	ctag	*cp=0;
-	xtag	*xp=0;
 	int		i=0;
 
 	if(unique.id)
@@ -547,21 +556,34 @@ bool AreaRoom::isInteresting(const Player *viewer) const {
 		cp = cp->next_tag;
 	}
 
-	xp = first_ext;
-	for(i=0; i<8; i++) {
-		if(!xp)
+	i = 0;
+	for(Exit* ext : exits) {
+		if(i < 7 && strcmp(ext->name, exitNameByOrder(i)))
 			return(true);
-		if(strcmp(xp->ext->name, exitNameByOrder(i)))
-			return(true);
-		xp = xp->next_tag;
+		if(i >= 8) {
+			if(viewer->showExit(ext))
+				return(true);
+		}
+		i++;
 	}
-
+	// Fewer than 8 exits
+	if( i < 7 )
+		return(true);
+//	xp = first_ext;
+//	for(i=0; i<8; i++) {
+//		if(!xp)
+//			return(true);
+//		if(strcmp(xp->ext->name, exitNameByOrder(i)))
+//			return(true);
+//		xp = xp->next_tag;
+//	}
+//
 	// check out the remaining exits
-	while(xp) {
-		if(viewer->showExit(xp->ext))
-			return(true);
-		xp = xp->next_tag;
-	}
+//	while(xp) {
+//		if(viewer->showExit(xp->ext))
+//			return(true);
+//		xp = xp->next_tag;
+//	}
 
 	return(false);
 }
@@ -646,28 +668,9 @@ bool BaseRoom::isNormalDark() const {
 
 
 void BaseRoom::addExit(Exit *ext) {
-	xtag	*xp, *temp, *prev;
-
-	xp = 0;
-	xp = new xtag;
-	if(!xp) merror("addExit", FATAL);
-
-	xp->ext = ext;
-    
     ext->setRoom(this);
 
-	if(!first_ext) {
-		first_ext = xp;
-		return;
-	}
-
-	temp = first_ext;
-
-	while(temp) {
-		prev = temp;
-		temp = temp->next_tag;
-	}
-	prev->next_tag = xp;
+    exits.push_back(ext);
 }
 
 //
@@ -677,26 +680,15 @@ void BaseRoom::addExit(Exit *ext) {
 // re-shut/re-closed.
 //
 void BaseRoom::checkExits() {
-	xtag	*xp=0;
 	long	t = time(0);
 
-	xp = first_ext;
-	while(xp) {
-		if(!xp->ext) {
-			broadcast(isDm, "^G*** Room %s has an exit tag with a null exit!", this->fullName().c_str());
-			xp = xp->next_tag;
-			continue;
-		}
-		if(	xp->ext->flagIsSet(X_LOCKABLE) &&
-			(xp->ext->ltime.ltime + xp->ext->ltime.interval) < t)
+	for(Exit* ext : exits) {
+		if(	ext->flagIsSet(X_LOCKABLE) && (ext->ltime.ltime + ext->ltime.interval) < t)
 		{
-			xp->ext->setFlag(X_LOCKED);
-			xp->ext->setFlag(X_CLOSED);
-		} else if(	xp->ext->flagIsSet(X_CLOSABLE) &&
-					(xp->ext->ltime.ltime + xp->ext->ltime.interval) < t)
-			xp->ext->setFlag(X_CLOSED);
-
-		xp = xp->next_tag;
+			ext->setFlag(X_LOCKED);
+			ext->setFlag(X_CLOSED);
+		} else if(	ext->flagIsSet(X_CLOSABLE) && (ext->ltime.ltime + ext->ltime.interval) < t)
+			ext->setFlag(X_CLOSED);
 	}
 }
 

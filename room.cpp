@@ -765,7 +765,6 @@ bstring roomEffStr(bstring effect, bstring str, const BaseRoom* room, bool detec
 
 void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, const AreaRoom* aRoom, int magicShowHidden) {
 	UniqueRoom *target=0;
-	xtag	*xp=0;
 	ctag	*cp=0;
 	const Player *pCreature=0;
 	const Creature* creature=0;
@@ -819,12 +818,11 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 	n=0;
 
 	str = "";
-	xp = room->first_ext;
-	while(xp) {
-		wallOfFire = xp->ext->isWall("wall-of-fire");
-		wallOfThorns = xp->ext->isWall("wall-of-thorns");
+	for(Exit* ext : room->exits) {
+		wallOfFire = ext->isWall("wall-of-fire");
+		wallOfThorns = ext->isWall("wall-of-thorns");
 
-		canSee = player->showExit(xp->ext, magicShowHidden);
+		canSee = player->showExit(ext, magicShowHidden);
 		if(canSee) {
 			if(n)
 				oStr << "^g, ";
@@ -839,9 +837,9 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 			} else if(wallOfThorns) {
 				oStr << "o";
 			} else if(	!player->flagIsSet(P_NO_EXTRA_COLOR) &&
-				(	!player->canEnter(xp->ext) || (
-						xp->ext->target.room.id && (
-							!loadRoom(xp->ext->target.room, &target) ||
+				(	!player->canEnter(ext) || (
+						ext->target.room.id && (
+							!loadRoom(ext->target.room, &target) ||
 							!target ||
 							!player->canEnter(target)
 						)
@@ -852,33 +850,33 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 			} else {
 				oStr << "g";
 			}
-			oStr << xp->ext->name;
+			oStr << ext->name;
 
-			if(xp->ext->flagIsSet(X_CLOSED) || xp->ext->flagIsSet(X_LOCKED)) {
+			if(ext->flagIsSet(X_CLOSED) || ext->flagIsSet(X_LOCKED)) {
 				oStr << "[";
-				if(xp->ext->flagIsSet(X_CLOSED))
+				if(ext->flagIsSet(X_CLOSED))
 					oStr << "c";
-				if(xp->ext->flagIsSet(X_LOCKED))
+				if(ext->flagIsSet(X_LOCKED))
 					oStr << "l";
 				oStr << "]";
 			}
 
 			if(staff) {
-				if(xp->ext->flagIsSet(X_SECRET))
+				if(ext->flagIsSet(X_SECRET))
 					oStr << "(h)";
-				if(xp->ext->flagIsSet(X_CAN_LOOK) || xp->ext->flagIsSet(X_LOOK_ONLY))
+				if(ext->flagIsSet(X_CAN_LOOK) || ext->flagIsSet(X_LOOK_ONLY))
 					oStr << "(look)";
-				if(xp->ext->flagIsSet(X_NO_WANDER))
+				if(ext->flagIsSet(X_NO_WANDER))
 					oStr << "(nw)";
-				if(xp->ext->flagIsSet(X_NO_SEE))
+				if(ext->flagIsSet(X_NO_SEE))
 					oStr << "(dm)";
-				if(xp->ext->flagIsSet(X_INVISIBLE))
+				if(ext->flagIsSet(X_INVISIBLE))
 					oStr << "(*)";
-				if(xp->ext->isConcealed(player))
+				if(ext->isConcealed(player))
 					oStr << "(c)";
-				if(xp->ext->flagIsSet(X_DESCRIPTION_ONLY))
+				if(ext->flagIsSet(X_DESCRIPTION_ONLY))
 					oStr << "(desc)";
-				if(xp->ext->flagIsSet(X_NEEDS_FLY))
+				if(ext->flagIsSet(X_NEEDS_FLY))
 					oStr << "(fly)";
 			}
 
@@ -886,13 +884,12 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 		}
 
 		if(wallOfFire)
-			str += xp->ext->blockedByStr('R', "wall of fire", "wall-of-fire", flags & MAG, canSee);
-		if(xp->ext->isWall("wall-of-force"))
-			str += xp->ext->blockedByStr('s', "wall of force", "wall-of-force", flags & MAG, canSee);
+			str += ext->blockedByStr('R', "wall of fire", "wall-of-fire", flags & MAG, canSee);
+		if(ext->isWall("wall-of-force"))
+			str += ext->blockedByStr('s', "wall of force", "wall-of-force", flags & MAG, canSee);
 		if(wallOfThorns)
-			str += xp->ext->blockedByStr('o', "wall of thorns", "wall-of-thorns", flags & MAG, canSee);
+			str += ext->blockedByStr('o', "wall of thorns", "wall-of-thorns", flags & MAG, canSee);
 
-		xp = xp->next_tag;
 	}
 
 	if(!n)
@@ -1089,7 +1086,7 @@ int createStorage(CatRef cr, const Player* player) {
 	CatRef sr;
 	sr.id = 2633;
 	link_rom(newRoom, sr, "out");
-	newRoom->first_ext->ext->setFlag(X_TO_PREVIOUS);
+	newRoom->exits.front()->setFlag(X_TO_PREVIOUS);
 
 	// reuse catref
 	cr.id = 1;

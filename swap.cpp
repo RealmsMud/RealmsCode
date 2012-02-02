@@ -241,14 +241,12 @@ void swap(const Player* player, cmd* cmnd, SwapType type) {
 
 	if(type == SwapRoom) {
 		if(!s.target.isArea(s.origin.area) && getFullstrText(cmnd->fullstr, 2) != "confirm") {
-			xtag *xp = player->parent_rom->first_ext;
-			while(xp) {
-				if(xp->ext->flagIsSet(X_LOCKABLE) && xp->ext->getKey()) {
+			for(Exit* ext : player->parent_rom->exits) {
+				if(ext->flagIsSet(X_LOCKABLE) && ext->getKey()) {
 					player->printColor("^YRS: ^RError: ^xthis room contains a lockable exit and is being moved to a different area.\n");
 					player->printColor("   To continue, type ^W*rswap %s confirm^x. Make sure all keys work correctly.\n", s.target.area.c_str());
 					return;
 				}
-				xp = xp->next_tag;
 			}
 		}
 
@@ -1590,16 +1588,14 @@ bool UniqueRoom::swap(Swap s) {
 		found = true;
 	}
 
-	xtag *xp = first_ext;
-	while(xp) {
-		if(xp->ext->target.room == s.origin) {
-			xp->ext->target.room = s.target;
+	for(Exit* ext : exits) {
+		if(ext->target.room == s.origin) {
+			ext->target.room = s.target;
 			found = true;
-		} else if(xp->ext->target.room == s.target) {
-			xp->ext->target.room = s.origin;
+		} else if(ext->target.room == s.target) {
+			ext->target.room = s.origin;
 			found = true;
 		}
-		xp = xp->next_tag;
 	}
 
 	if(hooks.swap(s))
@@ -1628,11 +1624,9 @@ bool UniqueRoom::swapIsInteresting(Swap s) const {
 	if(trapexit == s.origin || trapexit == s.target)
 		return(true);
 
-	xtag *xp = first_ext;
-	while(xp) {
-		if(xp->ext->target.room == s.origin || xp->ext->target.room == s.target)
+	for(Exit* ext : exits) {
+		if(ext->target.room == s.origin || ext->target.room == s.target)
 			return(true);
-		xp = xp->next_tag;
 	}
 
 	if(hooks.swapIsInteresting(s))
@@ -1656,16 +1650,14 @@ bool AreaRoom::swap(Swap s) {
 		found = true;
 	}
 
-	xtag *xp = first_ext;
-	while(xp) {
-		if(xp->ext->target.room == s.origin) {
-			xp->ext->target.room = s.target;
+	for(Exit* ext : exits) {
+		if(ext->target.room == s.origin) {
+			ext->target.room = s.target;
 			found = true;
-		} else if(xp->ext->target.room == s.target) {
-			xp->ext->target.room = s.origin;
+		} else if(ext->target.room == s.target) {
+			ext->target.room = s.origin;
 			found = true;
 		}
-		xp = xp->next_tag;
 	}
 
 	Monster* monster=0;
@@ -1691,11 +1683,9 @@ bool AreaRoom::swapIsInteresting(Swap s) const {
 	if(unique == s.origin || unique == s.target)
 		return(true);
 
-	xtag *xp = first_ext;
-	while(xp) {
-		if(xp->ext->target.room == s.origin || xp->ext->target.room == s.target)
+	for(Exit* ext : exits) {
+		if(ext->target.room == s.origin || ext->target.room == s.target)
 			return(true);
-		xp = xp->next_tag;
 	}
 
 	const Monster* monster=0;

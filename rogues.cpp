@@ -194,7 +194,6 @@ bool canSearch(const Player* player) {
 
 void doSearch(Player* player, bool immediate) {
 	BaseRoom* room = player->getRoom();
-	xtag	*xp=0;
 	otag	*op=0;
 	ctag	*cp=0;
 	int		chance=0;
@@ -230,25 +229,23 @@ void doSearch(Player* player, bool immediate) {
 		chance = 100;
 
 	
-	xp = room->first_ext;
-	while(xp) {
-		if(	(xp->ext->flagIsSet(X_SECRET) && mrand(1,100) <= (chance + searchMod(xp->ext->getSize()))) ||
-			(xp->ext->isConcealed(player) && mrand(1,100) <= 5)
-		) {
+	for(Exit* ext : room->exits) {
+		if(	(ext->flagIsSet(X_SECRET) && mrand(1,100) <= (chance + searchMod(ext->getSize()))) ||
+			(ext->isConcealed(player) && mrand(1,100) <= 5))
+		{
 			// canSee doesnt handle DescOnly
-			if(player->canSee(xp->ext) && !xp->ext->flagIsSet(X_DESCRIPTION_ONLY)) {
+			if(player->canSee(ext) && !ext->flagIsSet(X_DESCRIPTION_ONLY)) {
 				found = true;
-				player->printColor("You found an exit: %s^x.\n", xp->ext->name);
+				player->printColor("You found an exit: %s^x.\n", ext->name);
 
-				if(xp->ext->isWall("wall-of-fire"))
-					player->printColor("%s", xp->ext->blockedByStr('R', "wall of fire", "wall-of-fire", detectMagic, true).c_str());
-				if(xp->ext->isWall("wall-of-force"))
-					player->printColor("%s", xp->ext->blockedByStr('s', "wall of force", "wall-of-force", detectMagic, true).c_str());
-				if(xp->ext->isWall("wall-of-thorns"))
-					player->printColor("%s", xp->ext->blockedByStr('o', "wall of thorns", "wall-of-thorns", detectMagic, true).c_str());
+				if(ext->isWall("wall-of-fire"))
+					player->printColor("%s", ext->blockedByStr('R', "wall of fire", "wall-of-fire", detectMagic, true).c_str());
+				if(ext->isWall("wall-of-force"))
+					player->printColor("%s", ext->blockedByStr('s', "wall of force", "wall-of-force", detectMagic, true).c_str());
+				if(ext->isWall("wall-of-thorns"))
+					player->printColor("%s", ext->blockedByStr('o', "wall of thorns", "wall-of-thorns", detectMagic, true).c_str());
 			}
 		}
-		xp = xp->next_tag;
 	}
 
 	op = room->first_obj;
@@ -719,7 +716,7 @@ int cmdScout(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	exit = findExit(player, Move::formatFindExit(cmnd), cmnd->val[1], player->getRoom()->first_ext);
+	exit = findExit(player, Move::formatFindExit(cmnd), cmnd->val[1], player->getRoom());
 
 
 	if(!exit) {

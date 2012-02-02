@@ -1040,7 +1040,7 @@ int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
 
 	// Save Exits
 	curNode = xml::newStringChild(rootNode, "Exits");
-	saveExitsXml(curNode, first_ext);
+	saveExitsXml(curNode);
 	return(0);
 }
 
@@ -1096,11 +1096,9 @@ int Exit::saveToXml(xmlNodePtr parentNode) const {
 //						saveExitsXml
 //*********************************************************************
 
-int saveExitsXml(xmlNodePtr curNode, xtag *xp) {
-	while(xp) {
-		if(xp->ext)
-			xp->ext->saveToXml(curNode);
-		xp = xp->next_tag;
+int BaseRoom::saveExitsXml(xmlNodePtr curNode) const {
+	for(Exit* exit : exits) {
+		exit->saveToXml(curNode);
 	}
 	return(0);
 }

@@ -706,10 +706,8 @@ bool Creature::pulseEffects(time_t t) {
 bool BaseRoom::pulseEffects(time_t t) {
 	effects.pulse(t, this);
 
-	xtag* xp = first_ext;
-	while(xp) {
-		xp->ext->pulseEffects(t);
-		xp = xp->next_tag;
+	for(Exit* exit : exits) {
+		exit->pulseEffects(t);
 	}
 	return(true);
 }
@@ -1273,11 +1271,9 @@ bool BaseRoom::needsEffectsIndex() const {
 		return(true);
 
 	// any exit effects?
-	xtag* xp = first_ext;
-	while(xp) {
-		if(xp->ext->effects.list.size())
+	for(Exit* exit : exits) {
+		if(exit->effects.list.size())
 			return(true);
-		xp = xp->next_tag;
 	}
 
 	return(false);
@@ -1314,14 +1310,11 @@ void Server::removeEffectsIndex(BaseRoom* room) {
 
 void Server::removeEffectsOwner(const Creature* owner) {
 	std::list<BaseRoom*>::iterator it;
-	xtag* xp=0;
 
 	for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
 		(*it)->effects.removeOwner(owner);
-		xp = (*it)->first_ext;
-		while(xp) {
-			xp->ext->effects.removeOwner(owner);
-			xp = xp->next_tag;
+		for(Exit* exit : (*it)->exits) {
+			exit->effects.removeOwner(owner);
 		}
 	}
 }

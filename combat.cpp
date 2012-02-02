@@ -696,7 +696,6 @@ int check_for_yell(Monster *monster, Creature* target) {
 //*********************************************************************
 
 int Player::lagProtection() {
-	xtag	*xp=0;
 	BaseRoom* room = getRoom();
 	int		t=0, idle=0;
 
@@ -749,49 +748,26 @@ int Player::lagProtection() {
 		}
 	}
 
-	xp = room->first_ext;
-	while(xp) {
+	for(Exit* ext : room->exits) {
 		// Opens all unlocked exits.
-		if(!xp->ext->flagIsSet(X_LOCKED))
-			xp->ext->clearFlag(X_CLOSED);
-		xp = xp->next_tag;
+		if(!ext->flagIsSet(X_LOCKED))
+			ext->clearFlag(X_CLOSED);
 	}
 
-	//while(attempts < 6) {
-	//	attempts++;
-		setFlag(P_LAG_PROTECTION_OPERATING);
-		if(flee()) {
-			if(isStaff()) {
-				broadcast(::isStaff, "^C### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.",
-					name, level, hp.getCur(), hp.getMax(), getRoom()->fullName().c_str());
-			} else {
-				broadcast(::isWatcher, "^C### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.",
-					name, level, hp.getCur(), hp.getMax(), getRoom()->fullName().c_str());
-			}
-			logn("log.lprotect","### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.\n",
+	setFlag(P_LAG_PROTECTION_OPERATING);
+	if(flee()) {
+		if(isStaff()) {
+			broadcast(::isStaff, "^C### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.",
 				name, level, hp.getCur(), hp.getMax(), getRoom()->fullName().c_str());
-/*
-			attempts = 6;
-			cp = first_fol;
-			while(cp) {
-				if(!inSameRoom(cp->crt))
-					if(cp->crt->isMonster() && cp->crt->isPet()) {
-						Monster* monster = cp->crt->getMonster();
-						if(cp)
-							broadcast(getSock(), room, "%M flees to the %s with its master.", monster, xp->ext->name);
-						cp->crt->first_enm = NULL;
-						gServer->delActive(monster);
-						monster->deleteFromRoom();
-						monster->addToRoom(getRoom());
-						gServer->addActive(monster);
-					}
-				cp = cp->next_tag;
-			}
-*/
-
-			return(1);
+		} else {
+			broadcast(::isWatcher, "^C### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.",
+				name, level, hp.getCur(), hp.getMax(), getRoom()->fullName().c_str());
 		}
-	//}
+		logn("log.lprotect","### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.\n",
+			name, level, hp.getCur(), hp.getMax(), getRoom()->fullName().c_str());
+
+		return(1);
+	}
 	return(0);
 }
 

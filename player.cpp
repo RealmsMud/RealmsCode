@@ -2120,7 +2120,7 @@ bool UniqueRoom::canPortHere(const Creature* creature) const {
 	// artificial limits for the misc area
 	if(info.isArea("misc") && info.id <= 1000)
 		return(false);
-	if(!first_ext)
+	if(exits.empty())
 		return(false);
 
 	return(true);

@@ -32,6 +32,8 @@ class Fishing;
 #include "location.h"
 #include "exits.h"
 
+typedef std::list<Exit*> ExitList;
+
 class BaseRoom: public MudObject {
 protected:
 	void BaseDestroy();
@@ -39,7 +41,8 @@ protected:
 	bool tempNoKillDarkmetal;
 
 public:
-	xtag	*first_ext;		// Exits
+	//xtag	*first_ext;		// Exits
+	ExitList exits;
 	otag	*first_obj;		// Items
 	ctag	*first_mon;		// Monsters
 	ctag	*first_ply;		// Players
@@ -51,6 +54,9 @@ public:
 	virtual ~BaseRoom() {};
 
 	void readExitsXml(xmlNodePtr curNode);
+	bool delExit(bstring dir);
+	bool delExit(Exit *exit);
+	void clearExits();
 
 	bool isSunlight() const;
 	// handles darkmetal and unique
@@ -62,6 +68,8 @@ public:
 
 	bool isCombat() const;
 	bool isConstruction() const;
+
+	int saveExitsXml(xmlNodePtr curNode) const;
 
 	Creature* findCreature(Creature* searcher, const cmd* cmnd, int num=1);
 

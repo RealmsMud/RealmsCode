@@ -1312,7 +1312,7 @@ bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int 
 		}
 
 		if(findWhere & FIND_EXIT) {
-			Exit* exit = findExit(player, str, val, player->getRoom()->first_ext);
+			Exit* exit = findExit(player, str, val, player->getRoom());
 			if(exit) {
 				*(Exit **)target = exit;
 				*targetType = EXIT;

@@ -175,7 +175,6 @@ void ShipStop::spawnRaiders() {
 // it also takes care of announcing the ship's arrival
 
 bool ShipExit::createExit() {
-	xtag	*xp=0;
 	BaseRoom* newRoom=0;
 	int		i=0;
 
@@ -188,21 +187,19 @@ bool ShipExit::createExit() {
 
 	link_rom(newRoom, target, name);
 
-	xp = newRoom->first_ext;
-	while(xp) {
-		if(!strcmp(xp->ext->name, name.c_str())) {
-			zero(xp->ext->flags, sizeof(xp->ext->flags));
+	for(Exit* ext : newRoom->exits) {
+		if(!strcmp(ext->name, name.c_str())) {
+			zero(ext->flags, sizeof(ext->flags));
 
 			// TODO: Dom: needs to use getFlags() and setFlags()
-			for(i=sizeof(xp->ext->flags)-1; i>=0; i--)
-				xp->ext->flags[i] = flags[i];
-			xp->ext->setFlag(X_MOVING);
+			for(i=sizeof(ext->flags)-1; i>=0; i--)
+				ext->flags[i] = flags[i];
+			ext->setFlag(X_MOVING);
 
 			if(arrives != "")
 				broadcast(NULL, newRoom, "%s", arrives.c_str());
 			return(true);
 		}
-		xp = xp->next_tag;
 	}
 
 	return(false);
@@ -236,8 +233,6 @@ void ShipExit::removeExit() {
 	ctag	*cp=0;
 	BaseRoom* newRoom=0;
 	AreaRoom* aRoom=0;
-	Exit	*xt=0;
-	xtag	*xp=0;
 	int		i=0, n=0;
 
 	newRoom = getRoom(true);
@@ -264,22 +259,21 @@ void ShipExit::removeExit() {
 		broadcast(NULL, newRoom, "%s", departs.c_str());
 
 	aRoom = newRoom->getAreaRoom();
-	xp = newRoom->first_ext;
-	while(xp) {
-		xt = xp->ext;
-		xp = xp->next_tag;
+	ExitList::iterator xit;
+	for(xit = newRoom->exits.begin() ; xit != newRoom->exits.end() ; ) {
+		Exit* ext = (*xit++);
 		// if we're given an exit, delete it
 		// otherwise delete all exits
-		if(xt->flagIsSet(X_MOVING) && !strcmp(xt->name, name.c_str()) ) {
+		if(ext->flagIsSet(X_MOVING) && !strcmp(ext->name, name.c_str()) ) {
 			//oldPrintColor(4, "^rDeleting^w exit %s in room %d.\n", xt->name, room);
 			if(i < 8 && aRoom) {
 				// it's a cardinal direction, clear all flags
 				for(n=0; n<MAX_EXIT_FLAGS; n++)
-					xt->clearFlag(n);
-				xt->target.room.id = 0;
+					ext->clearFlag(n);
+				ext->target.room.id = 0;
 				aRoom->updateExits();
 			} else
-				del_exit(newRoom, xt->name);
+				newRoom->delExit(ext);
 		}
 		i++;
 	}

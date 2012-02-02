@@ -237,7 +237,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 	// done with throw checks
 
 
-	exit = findExit(creature, cmnd, 2, room->first_ext);
+	exit = findExit(creature, cmnd, 2, room);
 
 	if(!exit)
 		victim = room->findCreature(creature, cmnd, 2);

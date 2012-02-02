@@ -140,13 +140,13 @@ public:
 } rtag;
 
 
-// Exit list tags
-typedef struct ext_tag {
-public:
-	ext_tag() { next_tag = 0; ext = 0; };
-	struct ext_tag	*next_tag;
-	Exit* ext;
-} xtag;
+//// Exit list tags
+//typedef struct ext_tag {
+//public:
+//	ext_tag() { next_tag = 0; ext = 0; };
+//	struct ext_tag	*next_tag;
+//	Exit* ext;
+//} xtag;
 
 // TODO: Rework first_charm and remove this
 // Enemy list tags

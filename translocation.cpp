@@ -485,19 +485,16 @@ void Move::createPortal(BaseRoom* room, BaseRoom* target, const Player* player, 
 	}
 
 	// the new portal is always the last exit in the room
-	xtag* xp = room->first_ext;
-	while(xp->next_tag)
-		xp = xp->next_tag;
-
-	strcpy(xp->ext->name, "^Yportal");
-	xp->ext->setLevel(7);
-	xp->ext->setFlag(X_PORTAL);
-	xp->ext->setFlag(X_NO_WANDER);
-	xp->ext->setFlag(X_CAN_LOOK);
-	xp->ext->setEnter("You step through the portal and find yourself in another location.");
-	xp->ext->setPassPhrase(player->name);
-	xp->ext->setKey(MAX(1, ((int)player->getLevel() - 28) / 2));
-	xp->ext->setDescription("You see a shimmering portal of mystical origin.");
+	Exit* ext = room->exits.back();
+	strcpy(ext->name, "^Yportal");
+	ext->setLevel(7);
+	ext->setFlag(X_PORTAL);
+	ext->setFlag(X_NO_WANDER);
+	ext->setFlag(X_CAN_LOOK);
+	ext->setEnter("You step through the portal and find yourself in another location.");
+	ext->setPassPhrase(player->name);
+	ext->setKey(MAX(1, ((int)player->getLevel() - 28) / 2));
+	ext->setDescription("You see a shimmering portal of mystical origin.");
 
 	broadcast(0, room, "^YA dimensional portal forms in the room!");
 
@@ -521,16 +518,16 @@ bool Move::usePortal(Creature* player, BaseRoom* room, Exit* exit, bool initial)
 
 	if(initial) {
 		BaseRoom* target = exit->target.loadRoom();
-		xtag* xp = target->first_ext;
-
-		while(xp) {
-			if(xp->ext->flagIsSet(X_PORTAL) && xp->ext->getPassPhrase() == exit->getPassPhrase())
+		Exit* toUse = 0;
+		for(Exit* ext : target->exits) {
+			if(ext->flagIsSet(X_PORTAL) && ext->getPassPhrase() == exit->getPassPhrase()) {
+				toUse = ext;
 				break;
-			xp = xp->next_tag;
+			}
 		}
 
-		if(xp)
-			return(Move::usePortal(player, target, xp->ext, false));
+		if(toUse)
+			return(Move::usePortal(player, target, toUse, false));
 	}
 
 	return(false);
@@ -545,45 +542,38 @@ bool Move::deletePortal(BaseRoom* room, Exit* exit, const Creature* leader, std:
 }
 
 bool Move::deletePortal(BaseRoom* room, bstring name, const Creature* leader, std::list<Creature*> *followers, bool initial) {
-	xtag	*xp = room->first_ext, *xprev=0;
+	ExitList::iterator xit;
+	for(xit = room->exits.begin() ; xit != room->exits.end() ; xit++) {
+		Exit* ext = *xit;
 
-	while(xp) {
-		if(xp->ext->flagIsSet(X_PORTAL) && xp->ext->getPassPhrase() == name) {
-			if(xprev)
-				xprev->next_tag = xp->next_tag;
-			else
-				room->first_ext = xp->next_tag;
-
+		if(ext->flagIsSet(X_PORTAL) && ext->getPassPhrase() == name) {
 			if(initial) {
 				if(leader && leader->isPlayer())
-					leader->printColor("The %s^x collapses into nothingness.\n", xp->ext->name);
+					leader->printColor("The %s^x collapses into nothingness.\n", ext->name);
 				if(followers) {
 					std::list<Creature*>::const_iterator it;
 					for(it = followers->begin(); it != followers->end(); it++) {
 						if(!(*it)->isPlayer())
 							continue;
-						(*it)->printColor("The %s^x collapses into nothingness.\n", xp->ext->name);
+						(*it)->printColor("The %s^x collapses into nothingness.\n", ext->name);
 					}
 				}
 			}
 
-			broadcast(0, room, "The %s^x collapses into nothingness.", xp->ext->name);
+			broadcast(0, room, "The %s^x collapses into nothingness.", ext->name);
 
 			if(initial) {
-				BaseRoom* target = xp->ext->target.loadRoom();
+				BaseRoom* target = ext->target.loadRoom();
 				Move::deletePortal(target, name, 0, 0, false);
 			}
-
-			delete xp->ext;
-			delete xp;
+			room->exits.erase(xit);
+			delete ext;
 
 			Player* owner = gServer->findPlayer(name.c_str());
 			if(owner)
 				owner->clearFlag(P_PORTAL);
 			return(true);
 		}
-		xprev = xp;
-		xp = xp->next_tag;
 	}
 	return(false);
 }
@@ -1752,7 +1742,6 @@ void BaseRoom::scatterObjects() {
 	Object* object=0;
 	Exit* exit=0;
 	otag* op = first_obj;
-	xtag* xp=0;
 	int pick=0;
 
 	while(op) {
@@ -1771,11 +1760,9 @@ void BaseRoom::scatterObjects() {
 
 		// pick an exit
 		pick = 0;
-		xp = first_ext;
-		while(xp) {
-			if(willScatterTo(object, this, xp->ext))
+		for(Exit* ext : exits) {
+			if(willScatterTo(object, this, ext))
 				pick++;
-			xp = xp->next_tag;
 		}
 
 		// no exits to scatter to
@@ -1783,16 +1770,14 @@ void BaseRoom::scatterObjects() {
 			return;
 
 		pick = mrand(1, pick);
-		xp = first_ext;
-		while(xp) {
-			if(willScatterTo(object, this, xp->ext)) {
+		for(Exit* ext : exits) {
+			if(willScatterTo(object, this, ext)) {
 				pick--;
 				if(!pick) {
-					exit = xp->ext;
+					exit = ext;
 					break;
 				}
 			}
-			xp = xp->next_tag;
 		}
 
 		newRoom = exit->target.loadRoom();

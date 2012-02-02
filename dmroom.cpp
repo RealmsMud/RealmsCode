@@ -388,21 +388,16 @@ int dmResetPerms(Player* player, cmd* cmnd) {
 // Display information on room given to staff.
 
 void stat_rom_exits(Creature* player, BaseRoom* room) {
-	xtag	*xp=0;
-	Exit	*exit=0;
 	char	str[1024], temp[25], tempstr[32];
 	int		i=0, flagcount=0;
 	UniqueRoom*	uRoom = room->getUniqueRoom();
 
-	if(!room->first_ext)
+	if(room->exits.empty())
 		return;
 
 	player->print("Exits:\n");
 
-	xp = room->first_ext;
-	while(xp) {
-		exit = xp->ext;
-		xp = xp->next_tag;
+	for(Exit* exit : room->exits) {
 
 		if(!exit->getLevel())
 			player->print("  %s: ", exit->name);
@@ -774,16 +769,14 @@ void validateShop(const Player* player, const UniqueRoom* shop, const UniqueRoom
 	if(storage->flagIsSet(R_NO_CLAIR_ROOM))
 		player->printColor("^rThe storage room does not need flag 43-No Clair set.\n");
 
-	if(!storage->first_ext) {
+	if(storage->exits.empty()) {
 		player->printColor("^yThe storage room does not have an out exit pointing to the shop.\n");
 	} else {
-		const Exit* exit = storage->first_ext->ext;
+		const Exit* exit = storage->exits.front();
 		
-		if(	exit->target.room != shop->info ||
-			strcmp(exit->getName(), "out")
-		)
+		if(	exit->target.room != shop->info || strcmp(exit->getName(), "out"))
 			player->printColor("^yThe storage room does not have an out exit pointing to the shop.\n");
-		else if(storage->first_ext->next_tag)
+		else if(storage->exits.size() > 1)
 			player->printColor("^yThe storage room has more than one exit - it only needs one out exit pointing to the shop.\n");
 	}
 }
@@ -1356,7 +1349,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			// try and be smart
  			if(	num-1 == R_SHOP_STORAGE &&
  				!strcmp(player->parent_rom->name, "New Room") &&
- 				!player->parent_rom->first_ext
+ 				player->parent_rom->exits.empty()
  			) {
  				cr = player->parent_rom->info;
  				UniqueRoom* shop=0;
@@ -1837,13 +1830,8 @@ int dmSetExit(Player* player, cmd* cmnd) {
 	if(!mapmarker.getArea() && !cr.id) {
 		// if the expanded exit wasnt found
 		// and the exit was expanded, check to delete the original
-		if(del_exit(room, cmnd->str[2]))
+		if(room->delExit(cmnd->str[2]))
 			player->print("Exit %s deleted.\n", cmnd->str[2]);
-		//} else if(
-		//	strcmp(orig_exit, cmnd->str[2]) &&
-		//	del_exit(room, orig_exit)
-		//)
-		//	player->print("Exit %s not found.\nExit %s deleted.\n", cmnd->str[2], orig_exit);
 		else
 			player->print("Exit %s not found.\n", cmnd->str[2]);
 		return(0);
@@ -2579,20 +2567,13 @@ int dmWrap(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmDeleteAllExits(Player* player, cmd* cmnd) {
-	xtag	*xp=0, *prev = 0;
 
-	xp = player->getRoom()->first_ext;
-	if(!xp) {
+	if(player->getRoom()->exits.empty()) {
 		player->print("No exits to delete.\n");
 		return(0);
 	}
 
-	player->getRoom()->first_ext = 0;
-	while(xp) {
-		prev = xp;
-		xp = xp->next_tag;
-		delete prev;
-	}
+	player->getRoom()->clearExits();
 
 	// sorry, can't delete exits in overland
 	if(player->area_room)
@@ -2611,7 +2592,7 @@ int dmDeleteAllExits(Player* player, cmd* cmnd) {
 // 1 mean exit2 goes in front of exit1
 // 0 means keep looking
 
-int exit_ordering(char *exit1, char *exit2) {
+int exit_ordering(const char *exit1, const char *exit2) {
 
 	// always skip if they're the same name
 	if(!strcmp(exit1, exit2)) return(0);
@@ -2656,63 +2637,18 @@ int exit_ordering(char *exit1, char *exit2) {
 //*********************************************************************
 //						dmArrangeExits
 //*********************************************************************
-
+bool exitCompare( const Exit* left, const Exit* right ){
+	return(exit_ordering(left->name, right->name));
+}
 void BaseRoom::arrangeExits(Player* player) {
-	xtag	*xp=0, *prev=0, *sxp=0;
 
-	xp = first_ext;
-
-	if(!xp || !xp->next_tag) {
+	if(exits.size() <= 1) {
 		if(player)
 			player->print("No exits to rearrange!\n");
 		return;
 	}
 
-	// start at the 2nd one
-	prev = xp;
-	xp = xp->next_tag;
-
-	while(xp) {
-		if(player)
-			player->print("Checking exit %s vs %s...%s\n",
-				xp->ext->name, prev->ext->name,
-				exit_ordering(prev->ext->name, xp->ext->name) ? "" : "ok.");
-
-		// we're looking at an exit, we've got a pointer to the previous exit
-		if(exit_ordering(prev->ext->name, xp->ext->name)) {
-			// if xp goes before prev, start rearranging!
-			if(	prev->ext == first_ext->ext ||
-				exit_ordering(first_ext->ext->name, xp->ext->name)
-			) {
-				// if it should go before the FIRST exit..
-				if(player)
-					player->print("  Moving %s to the front...\n", xp->ext->name);
-				prev->next_tag = xp->next_tag;
-				xp->next_tag = first_ext;
-				first_ext = xp;
-				xp = prev->next_tag;
-			} else {
-				// otherwise, start over from the top:
-				// find where xp belongs!
-				if(player)
-					player->print("  Finding a spot for %s...\n", xp->ext->name);
-				sxp = first_ext;
-				while(!exit_ordering(sxp->next_tag->ext->name, xp->ext->name))
-					sxp = sxp->next_tag;
-				if(player)
-					player->print("  Spot found after: %s.\n", sxp->ext->name);
-
-				// ok we found it, time to do some magic
-				prev->next_tag = xp->next_tag;
-				xp->next_tag = sxp->next_tag;
-				sxp->next_tag = xp;
-				xp = prev->next_tag;
-			}
-		} else {
-			prev = xp;
-			xp = xp->next_tag;
-		}
-	}
+	exits.sort(exitCompare);
 
 	if(player)
 		player->print("Exits rearranged!\n");
@@ -2734,38 +2670,23 @@ int dmArrangeExits(Player* player, cmd* cmnd) {
 //*********************************************************************
 // from this room to unique room
 void link_rom(BaseRoom* room, Location l, bstring str) {
-	Exit	*exit=0;
-	xtag	*xp=0, *prev=0, *temp=0;
 
 	const char* dir = str.c_str();
-	xp = room->first_ext;
-
-	while(xp) {
-		exit = xp->ext;
-		prev = xp;
-		xp = xp->next_tag;
-		if(!strcmp(exit->name, dir)) {
-			strcpy(exit->name, dir);
-			exit->target = l;
+	for(Exit* ext : room->exits) {
+		if(!strcmp(ext->name, dir)) {
+			ext->target = l;
 			return;
 		}
 	}
 
-	temp = new xtag;
-	exit = new Exit;
+	Exit* exit = new Exit;
 
     exit->setRoom(room);
 
 	strcpy(exit->name, dir);
 	exit->target = l;
 
-	temp->next_tag = 0;
-	temp->ext = exit;
-
-	if(prev)
-		prev->next_tag = temp;
-	else
-		room->first_ext = temp;
+	room->exits.push_back(exit);
 }
 
 void link_rom(BaseRoom* room, short tonum, bstring str) {
@@ -2785,51 +2706,6 @@ void link_rom(BaseRoom* room, MapMarker *mapmarker, bstring str) {
 }
 
 
-//*********************************************************************
-//						del_exit
-//*********************************************************************
-
-int del_exit(BaseRoom* room, Exit *exit) {
-	xtag	*xp = room->first_ext, *prev=0;
-
-	while(xp) {
-		if(xp->ext == exit) {
-			if(prev)
-				prev->next_tag = xp->next_tag;
-			else
-				room->first_ext = xp->next_tag;
-
-			delete xp->ext;
-			delete xp;
-			return(1);
-		}
-		prev = xp;
-		xp = xp->next_tag;
-	}
-
-	return(0);
-}
-
-int del_exit(BaseRoom* room, const char *dir) {
-	xtag	*xp = room->first_ext, *prev=0;
-
-	while(xp) {
-		if(!strcmp(xp->ext->name, dir)) {
-			if(prev)
-				prev->next_tag = xp->next_tag;
-			else
-				room->first_ext = xp->next_tag;
-
-			delete xp->ext;
-			delete xp;
-			return(1);
-		}
-		prev = xp;
-		xp = xp->next_tag;
-	}
-
-	return(0);
-}
 
 
 //*********************************************************************

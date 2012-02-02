@@ -586,29 +586,26 @@ bool Move::canMove(Player* player, cmd* cmnd) {
 
 Exit *Move::getExit(Creature* player, cmd* cmnd) {
 	BaseRoom* room = player->getRoom();
-	xtag	*xp=0;
 	Exit	*exit=0;
 
 	if(player->isPet())
 		player = player->getMaster();
 
 	if(Move::isOrdinal(cmnd)) {
-		xp = room->first_ext;
-		while(xp) {
-			if(	!strcmp(xp->ext->name, cmnd->str[1]) &&
-				player->canSee(xp->ext) &&
-				!(!player->isStaff() && xp->ext->flagIsSet(X_DESCRIPTION_ONLY)))
+		for(Exit* ext : room->exits) {
+			if(	!strcmp(ext->name, cmnd->str[1]) &&
+				player->canSee(ext) &&
+				!(!player->isStaff() && ext->flagIsSet(X_DESCRIPTION_ONLY)))
 			{
-				exit = xp->ext;
+				exit = ext;
 				break;
 			}
-			xp = xp->next_tag;
 		}
 	} else {
 		if(cmnd->fullstr.length() < 3)
 			return(0);
 
-		exit = findExit(player, Move::formatFindExit(cmnd), cmnd->val[cmnd->num-1], room->first_ext);
+		exit = findExit(player, Move::formatFindExit(cmnd), cmnd->val[cmnd->num-1], room);
 	}
 	return(exit);
 }

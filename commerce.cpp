@@ -329,16 +329,14 @@ bool canBuildShop(const Player* player, const UniqueRoom* room) {
 	if(	player->getGuild() &&
 		player->getGuildRank() == GUILD_MASTER &&
 		room->flagIsSet(R_GUILD_OPEN_ACCESS) &&
-		room->info.isArea("guild")
-	) {
+		room->info.isArea("guild"))
+	{
 		Property* p = gConfig->getProperty(room->info);
 		if(p->getType() == PROP_GUILDHALL && player->getGuild() == p->getGuild()) {
 			// already hosts a shop?
-			xtag* xp = room->first_ext;
-			while(xp) {
-				if(xp->ext->target.room.isArea("shop"))
+			for(Exit* exit : room->exits) {
+				if(exit->target.room.isArea("shop"))
 					return(false);
-				xp = xp->next_tag;
 			}
 
 			// If we pass these checks, too, then we can build a shop here
@@ -419,14 +417,11 @@ int cmdShop(Player* player, cmd* cmnd) {
 		CatRef cr = room->info;
 		// If we're inside a guild, check the out exit instead
 		if(room->info.isArea("guild")) {
-			xtag* xp = room->first_ext;
-
-			while(xp) {
-				if(!xp->ext->target.room.isArea("guild")) {
-					cr = xp->ext->target.room;
+			for(Exit* exit : room->exits) {
+				if(!exit->target.room.isArea("guild")) {
+					cr = exit->target.room;
 					break;
 				}
-				xp = xp->next_tag;
 			}
 		}
 

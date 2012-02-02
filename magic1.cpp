@@ -1987,7 +1987,6 @@ int cmdCommune(Player *player, cmd *cmnd) {
 	int		chance=0;
 	UniqueRoom*	uRoom=0;
 	AreaRoom* aRoom=0;
-	xtag	*xp=0;
 	ctag	*cp=0;
 
 	player->clearFlag(P_AFK);
@@ -2025,29 +2024,25 @@ int cmdCommune(Player *player, cmd *cmnd) {
 		player->print("You successfully commune with nature.\n");
 		player->print("You sense any living creatures in your surroundings.\n");
 
-		xp = player->getRoom()->first_ext;
 		first_exit = 1;
-
-		while(xp) {
-			if(	xp->ext->flagIsSet(X_DESCRIPTION_ONLY) ||
-				xp->ext->flagIsSet(X_SECRET) ||
-				xp->ext->isConcealed(player) ||
-				xp->ext->flagIsSet(X_STAFF_ONLY) ||
-				xp->ext->flagIsSet(X_LOOK_ONLY) ||
-				xp->ext->flagIsSet(X_CLOSED) ||
-				xp->ext->flagIsSet(X_NO_SEE)
-			) {
-				xp = xp->next_tag;
+		for(Exit* ext : player->getRoom()->exits) {
+			if(	ext->flagIsSet(X_DESCRIPTION_ONLY) ||
+				ext->flagIsSet(X_SECRET) ||
+				ext->isConcealed(player) ||
+				ext->flagIsSet(X_STAFF_ONLY) ||
+				ext->flagIsSet(X_LOOK_ONLY) ||
+				ext->flagIsSet(X_CLOSED) ||
+				ext->flagIsSet(X_NO_SEE) )
+			{
 				continue;
 			}
 
 			if(!first_exit)
 				player->print("\n");
-			player->print("%s:\n", xp->ext->name);
+			player->print("%s:\n", ext->name);
 			first_exit = 0;
 
-			if(!Move::getRoom(player, xp->ext, &uRoom, &aRoom, true)) {
-				xp = xp->next_tag;
+			if(!Move::getRoom(player, ext, &uRoom, &aRoom, true)) {
 				continue;
 			}
 
@@ -2103,8 +2098,6 @@ int cmdCommune(Player *player, cmd *cmnd) {
 				player->print("   %s\n", cp->crt->name);
 				cp = cp->next_tag;
 			}
-
-			xp = xp->next_tag;
 		}
 		player->checkImprove("commune", true);
 		player->lasttime[LT_PRAY].interval = 60L;

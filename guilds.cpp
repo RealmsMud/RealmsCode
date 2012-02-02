@@ -668,7 +668,7 @@ void Guild::invite(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 bool shopStaysWithGuild(const UniqueRoom* shop) {
-	return(shop->first_ext && shop->first_ext->ext->target.room.isArea("guild"));
+	return(!shop->exits.empty() && shop->exits.front()->target.room.isArea("guild"));
 }
 
 //*********************************************************************
@@ -2073,7 +2073,7 @@ bool Config::deleteGuild(int guildId) {
 				UniqueRoom* shop=0;
 				if(loadRoom(cr, &shop)) {
 					// If the shop belongs to the guild, remove and continue
-					if(shop->first_ext && !shopStaysWithGuild(shop)) {
+					if(!shop->exits.empty() && !shopStaysWithGuild(shop)) {
 						shopRemoveGuild(*it, player, shop, 0);
 						it++;
 						continue;

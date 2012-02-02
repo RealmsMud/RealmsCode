@@ -511,8 +511,6 @@ int communicate(Creature* creature, cmd* cmnd) {
 	int		i=0;
 	char	speak[35], lang, ooc_str[10];
 	ctag	*cp=0;
-	xtag	*xp=0;
-
 	if(creature->isPet())
 		owner = creature->getMaster();
 	else
@@ -649,18 +647,17 @@ int communicate(Creature* creature, cmd* cmnd) {
             // This allows a player to yell something that will be heard
             // not only in their room, but also in all rooms adjacent to them. In
             // the adjacent rooms, however, people will not know who yelled.
-            xp = creature->getRoom()->first_ext;
-            while(xp) {
+
+
+            for(Exit* exit : creature->getRoom()->exits) {
                 aRoom = 0;
                 new_rom = 0;
                 i=0;
                 cp=0;
 
                 // don't shout through closed doors
-                if(!xp->ext->flagIsSet(X_CLOSED))
-                    Move::getRoom(0, xp->ext, &new_rom, &aRoom, true);
-
-                xp = xp->next_tag;
+                if(!exit->flagIsSet(X_CLOSED))
+                    Move::getRoom(0, exit, &new_rom, &aRoom, true);
 
                 // the same-room checks aren't run in getRoom because
                 // we don't send a creature.
@@ -706,30 +703,29 @@ int communicate(Creature* creature, cmd* cmnd) {
         }
 
         if(chan->passphrase) {
-            xp = creature->getRoom()->first_ext;
-            while(xp) {
-                // got the phrase right?
-                if(xp->ext->getPassPhrase() != "" && xp->ext->getPassPhrase() == text) {
-                    // right language?
-                    if(!xp->ext->getPassLanguage() || lang == xp->ext->getPassLanguage()) {
-                        // even needs to be open?
-                        if(xp->ext->flagIsSet(X_LOCKED)) {
-                            broadcast(NULL, creature->getRoom(), "The %s opens!", xp->ext->name);
-                            xp->ext->clearFlag(X_LOCKED);
-                            xp->ext->clearFlag(X_CLOSED);
 
-                            if(xp->ext->getOpen() != "") {
-                                if(xp->ext->flagIsSet(X_ONOPEN_PLAYER)) {
-                                    creature->print("%s.\n", xp->ext->getOpen().c_str());
+           	for(Exit* exit : creature->getRoom()->exits) {
+                // got the phrase right?
+                if(exit->getPassPhrase() != "" && exit->getPassPhrase() == text) {
+                    // right language?
+                    if(!exit->getPassLanguage() || lang == exit->getPassLanguage()) {
+                        // even needs to be open?
+                        if(exit->flagIsSet(X_LOCKED)) {
+                            broadcast(NULL, creature->getRoom(), "The %s opens!", exit->name);
+                            exit->clearFlag(X_LOCKED);
+                            exit->clearFlag(X_CLOSED);
+
+                            if(exit->getOpen() != "") {
+                                if(exit->flagIsSet(X_ONOPEN_PLAYER)) {
+                                    creature->print("%s.\n", exit->getOpen().c_str());
                                 } else {
-                                    broadcast(0, creature->getRoom(), xp->ext->getOpen().c_str());
+                                    broadcast(0, creature->getRoom(), exit->getOpen().c_str());
                                 }
                             }
 
                         }
                     }
                 }
-                xp = xp->next_tag;
             }
         }
 

@@ -302,13 +302,11 @@ void Property::load(xmlNodePtr rootNode) {
 		// load intro room, find the out exit, look at the room info
 		UniqueRoom* room=0;
 		if(loadRoom(low, &room)) {
-			xtag* xp = room->first_ext;
-			while(xp) {
-				if(xp->ext->target.room.area != "shop" && low.area != xp->ext->target.room.area) {
-					area = xp->ext->target.room.area;
+			for(Exit* ext : room->exits) {
+				if(ext->target.room.area != "shop" && low.area != ext->target.room.area) {
+					area = ext->target.room.area;
 					break;
 				}
-				xp = xp->next_tag;
 			}
 		}
 	}
@@ -628,13 +626,11 @@ bool Property::goodExit(const Player* player, const BaseRoom* room, const char *
 		}
 	}
 
-	xtag* xp = room->first_ext;
-	while(xp) {
-		if(!strcmp(xp->ext->name, xname.c_str())) {
+	for(Exit* ext : room->exits) {
+		if(!strcmp(ext->name, xname.c_str())) {
 			player->print("An exit with that name already exists in this room.\n");
 			return(false);
 		}
-		xp = xp->next_tag;
 	}
 
 	return(true);
@@ -648,7 +644,6 @@ void Property::destroy() {
 	BaseRoom* outside=0;
 	AreaRoom* aRoom=0;
 	UniqueRoom	*room=0, *uRoom=0;
-	xtag*	xp=0, *oxp=0;
 	std::list<Range>::iterator rt;
 
 	for(rt = ranges.begin() ; rt != ranges.end() ; rt++) {
@@ -659,26 +654,23 @@ void Property::destroy() {
 
 				if(type != PROP_STORAGE) {
 					// handle the exits that point outside
-					xp = room->first_ext;
-					while(xp) {
-						if(	xp->ext->target.mapmarker.getArea() ||
-							!xp->ext->target.room.isArea(room->info.area)
-						) {
-							outside = xp->ext->target.loadRoom();
+					for(Exit* ext : room->exits) {
+						if(	ext->target.mapmarker.getArea() ||
+							!ext->target.room.isArea(room->info.area) )
+						{
+							outside = ext->target.loadRoom();
 							if(outside) {
 								uRoom = outside->getUniqueRoom();
 								aRoom = outside->getAreaRoom();
 
 								// get rid of all exits
-								oxp = outside->first_ext;
-								while(oxp) {
-									if(oxp->ext->target.room == room->info) {
+								ExitList::iterator xit;
+								for(xit = outside->exits.begin() ; xit != outside->exits.end() ; ) {
+									Exit* oExit = (*xit++);
+									if(oExit->target.room == room->info) {
 										broadcast(NULL, outside, "%s closes its doors.", name.c_str());
-										del_exit(outside, oxp->ext);
-										oxp = outside->first_ext;
+										outside->delExit(oExit);
 									}
-									if(oxp)
-										oxp = oxp->next_tag;
 								}
 
 								// reset flags
@@ -697,7 +689,6 @@ void Property::destroy() {
 								}
 							}
 						}
-						xp = xp->next_tag;
 					}
 				}
 
@@ -930,17 +921,14 @@ void Property::expelToExit(Player* player, bool offline) {
 	BaseRoom* newRoom=0;
 
 	if(loadRoom(ranges.front().low, &uRoom)) {
-		xtag *xp = uRoom->first_ext;
-		uRoom = 0;
-
-		while(xp) {
-			if(!xp->ext->target.room.id || !belongs(xp->ext->target.room)) {
-				newRoom = xp->ext->target.loadRoom(player);
+		for(Exit* ext : uRoom->exits ) {
+			if(!ext->target.room.id || !belongs(ext->target.room)) {
+				newRoom = ext->target.loadRoom(player);
 				if(newRoom)
 					break;
 			}
-			xp = xp->next_tag;
 		}
+		uRoom = 0;
 	}
 
 	if(!newRoom)
@@ -2739,21 +2727,20 @@ void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x)
 		return;
 
 
-	xtag *xp = player->parent_rom->first_ext, *found=0;
+	Exit* found = 0;
 	bool unique=true;
-	while(xp) {
+	for(Exit* ext : room->exits ) {
 		// exact match
-		if(!strcmp(xp->ext->name, origExit.c_str())) {
+		if(!strcmp(ext->name, origExit.c_str())) {
 			unique = true;
-			found = xp;
+			found = ext;
 			break;
 		}
-		if(!strncmp(xp->ext->name, origExit.c_str(), origExit.getLength())) {
+		if(!strncmp(ext->name, origExit.c_str(), origExit.getLength())) {
 			if(found)
 				unique = false;
-			found = xp;
+			found = ext;
 		}
-		xp = xp->next_tag;
 	}
 
 	if(!unique) {
@@ -2765,12 +2752,12 @@ void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x)
 		return;
 	}
 
-	if(isCardinal(found->ext->name)) {
+	if(isCardinal(found->name)) {
 		player->print("Cardinal directions cannot be renamed.\n");
 		return;
 	}
 
-	strcpy(found->ext->name, newExit.c_str());
+	strcpy(found->name, newExit.c_str());
 	player->parent_rom->arrangeExits();
 	player->print("Exit renamed to '%s'.\n", newExit.c_str());
 	player->parent_rom->saveToFile(0);
@@ -2961,14 +2948,11 @@ void Property::found(const Player* player, PropType propType, bstring location, 
 			UniqueRoom* room=0;
 			if(loadRoom(cr, &room)) {
 				// Look for the first exit not linking to the shop
-				xtag* xp = room->first_ext;
-
-				while(xp) {
-					if(!xp->ext->target.room.isArea("guild")) {
-						pArea = xp->ext->target.room.area;
+				for(Exit* ext : room->exits) {
+					if(!ext->target.room.isArea("guild")) {
+						pArea = ext->target.room.area;
 						break;
 					}
-					xp = xp->next_tag;
 				}
 			}
 		}

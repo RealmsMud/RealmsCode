@@ -487,7 +487,6 @@ int Monster::mobileCrt() {
 	BaseRoom *newRoom=0;
 	UniqueRoom	*uRoom=0;
 	AreaRoom* aRoom=0, *caRoom = area_room;
-	xtag	*xp=0;
 	int		i=0, num=0, ret=0;
 	bool	mem=false;
 
@@ -501,12 +500,10 @@ int Monster::mobileCrt() {
 	if(nearEnemy())
 		return(0);
 
-	xp = getRoom()->first_ext;
-	while(xp) {
+	for(Exit* exit : getRoom()->exits) {
 		// count up exits
-		if(mobileEnter(xp->ext))
+		if(mobileEnter(exit))
 			i += 1;
-		xp = xp->next_tag;
 	}
 
 	if(!i)
@@ -515,15 +512,14 @@ int Monster::mobileCrt() {
 	num = mrand(1, i);
 	i = 0;
 
-	xp = getRoom()->first_ext;
-	while(xp) {
-		if(mobileEnter(xp->ext))
+	for(Exit* exit : getRoom()->exits) {
+		if(mobileEnter(exit))
 			i += 1;
 
 		if(i == num) {
 
 			// get us out of this room
-			if(!Move::getRoom(this, xp->ext, &uRoom, &aRoom))
+			if(!Move::getRoom(this, exit, &uRoom, &aRoom))
 				return(0);
 			if(aRoom) {
 				mem = aRoom->getStayInMemory();
@@ -542,9 +538,9 @@ int Monster::mobileCrt() {
 			if(newRoom->isConstruction() != getRoom()->isConstruction())
 				return(0);
 
-			if(xp->ext->flagIsSet(X_CLOSED) && !xp->ext->flagIsSet(X_LOCKED)) {
-				broadcast(NULL, getRoom(), "%M just opened the %s.", this, xp->ext->name);
-				xp->ext->clearFlag(X_CLOSED);
+			if(exit->flagIsSet(X_CLOSED) && !exit->flagIsSet(X_LOCKED)) {
+				broadcast(NULL, getRoom(), "%M just opened the %s.", this, exit->name);
+				exit->clearFlag(X_CLOSED);
 			}
 
 			if(flagIsSet(M_WILL_SNEAK) && flagIsSet(M_HIDDEN))
@@ -553,17 +549,17 @@ int Monster::mobileCrt() {
 			if(	flagIsSet(M_SNEAKING) &&
 				mrand (1,100) <= (3+dexterity.getCur())*3)
 			{
-				broadcast(::isStaff, getSock(), getRoom(), "*DM* %M just snuck to the %s.", this,xp->ext->name);
+				broadcast(::isStaff, getSock(), getRoom(), "*DM* %M just snuck to the %s.", this,exit->name);
 			} else {
 			    Creature* lookingFor = NULL;
 				if(flagIsSet(M_CHASING_SOMEONE) && hasEnemy() && ((lookingFor = getTarget(false)) != NULL) ) {
 
 					broadcast(NULL, getRoom(), "%M %s to the %s^x, looking for %s.",
-						this, Move::getString(this).c_str(), xp->ext->name, lookingFor->getName());
+						this, Move::getString(this).c_str(), exit->name, lookingFor->getName());
 				}
 				else
 					broadcast(NULL, getRoom(), "%M just %s to the %s^x.",
-						this, Move::getString(this).c_str(), xp->ext->name);
+						this, Move::getString(this).c_str(), exit->name);
 
 				clearFlag(M_SNEAKING);
 			}
@@ -572,7 +568,7 @@ int Monster::mobileCrt() {
 			// see if we can recycle this room
 			deleteFromRoom();
 			if(caRoom && aRoom == caRoom) {
-				aRoom = Move::recycle(aRoom, xp->ext);
+				aRoom = Move::recycle(aRoom, exit);
 				newRoom = aRoom;
 			}
 			addToRoom(newRoom);
@@ -587,7 +583,6 @@ int Monster::mobileCrt() {
 			ret = 1;
 			break;
 		}
-		xp = xp->next_tag;
 	}
 
 	if(mrand(1,100) > 80)
@@ -1344,15 +1339,14 @@ bool Creature::canFleeToExit(const Exit *exit, bool skipScary, bool blinking) {
 //*********************************************************************
 
 Exit* Creature::getFleeableExit() {
-	xtag*	xp = getRoom()->first_ext;
 	int		i=0, exit=0;
 	bool	skipScary=false;
 
 	// count exits so we can randomly pick one
-	while(xp) {
-		if(canFleeToExit(xp->ext))
+
+	for(Exit* ext : getRoom()->exits) {
+		if(canFleeToExit(ext))
 			i++;
-		xp = xp->next_tag;
 	}
 
 	if(i) {
@@ -1360,14 +1354,12 @@ Exit* Creature::getFleeableExit() {
 		exit = mrand(1, i);
 	} else if(isPlayer()) {
 		// force players to skip the scary list
-		xp = getRoom()->first_ext;
 		skipScary = true;
 		i=0;
 
-		while(xp) {
-			if(canFleeToExit(xp->ext, true))
+		for(Exit* ext : getRoom()->exits) {
+			if(canFleeToExit(ext, true))
 				i++;
-			xp = xp->next_tag;
 		}
 		if(i)
 			exit = mrand(1, i);
@@ -1377,13 +1369,11 @@ Exit* Creature::getFleeableExit() {
 		return(0);
 
 	i=0;
-	xp = getRoom()->first_ext;
-	while(xp) {
-		if(canFleeToExit(xp->ext, skipScary))
+	for(Exit* ext : getRoom()->exits) {
+		if(canFleeToExit(ext, skipScary))
 			i++;
 		if(i == exit)
-			return(xp->ext);
-		xp = xp->next_tag;
+			return(ext);
 	}
 
 	return(0);
