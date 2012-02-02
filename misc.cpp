@@ -406,7 +406,7 @@ void viewFileReal(Socket* sock, bstring str ) {
 					break;
 			}
 			if(line > 20) {
-				sprintf(sock->tempstr[0], "%ld", offset);
+				sprintf(sock->tempstr[2], "%ld", offset);
 				break;
 			} else if(l != n) {
 			    sock->bprint(&buf[l]);
@@ -441,7 +441,7 @@ void viewFileReal(Socket* sock, bstring str ) {
 			sock->restoreState();
 			return;
 		}
-		offset = atol(sock->tempstr[0]);
+		offset = atol(sock->tempstr[2]);
 		ff = open(sock->tempstr[1], O_RDONLY, 0);
 		if(ff < 0) {
 			sock->print("File could not be opened [%s].\n", sock->tempstr);
@@ -468,7 +468,7 @@ void viewFileReal(Socket* sock, bstring str ) {
 					break;
 			}
 			if(line > 20) {
-				sprintf(sock->tempstr[0], "%ld", offset);
+				sprintf(sock->tempstr[2], "%ld", offset);
 				break;
 			} else if(l != n) {
 			    sock->bprint(&buf[l]);
@@ -619,7 +619,7 @@ void viewFileReverseReal(Socket* sock, bstring str) {
 			return;
 		}
 
-		offset = atol(sock->tempstr[0]);
+		offset = atol(sock->tempstr[2]);
 		fseek(ff, offset, SEEK_SET);
 		oldpos = ftell(ff);
 		if(oldpos < 1) {
@@ -669,7 +669,7 @@ nomatch:
 	if(oldpos < 3)
 		more_file = 0;
 
-	sprintf(sock->tempstr[0], "%ld", (long) oldpos);
+	sprintf(sock->tempstr[2], "%ld", (long) oldpos);
 
 
 	if(more_file && count == 0)
