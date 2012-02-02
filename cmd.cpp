@@ -473,6 +473,7 @@ bool Config::initCommands() {
 	playerCommands["*gag"] = new PlyCommand("*gag",					100,	dmGag,				0,		"");
 	playerCommands["*wts"] = new PlyCommand("*wts",					100,	channel,			0,		"");
 
+	playerCommands["compare"] = new PlyCommand("compare",           100,    cmdCompare,         0,      "Compare two items.");
 	playerCommands["weapons"] = new PlyCommand("weapons",			100,	cmdWeapons,			0,		"Use weapon trains.");
 	playerCommands["fish"] = new PlyCommand("fish",					100,	cmdFish,			0,		"Go fishing.");
 	playerCommands["religion"] = new PlyCommand("religion",			100,	cmdReligion,		0,		"");

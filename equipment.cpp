@@ -26,6 +26,81 @@
 #include "effects.h"
 #include <sstream>
 
+
+int cmdCompare(Player* player, cmd* cmnd) {
+
+    if(!player->ableToDoCommand())
+        return(0);
+
+    if(cmnd->num < 2) {
+        *player << "What would you like to compare?\n";
+        return(0);
+    }
+    Object* toCompare = 0;
+    Object* compareTo = 0;
+
+    // Attempt to compare to something we're wearing
+    toCompare = findObject(player, player->first_obj, cmnd);
+    if(!toCompare) {
+        *player << "You don't have that in your inventory.\n";
+        return(0);
+    }
+
+    if(cmnd->num == 2) {
+        for(int i=0; i<MAXWEAR; i++) {
+            if( player->ready[i] ) {
+                if( player->ready[i]->getType() == toCompare->getType()
+                        && player->ready[i]->getWearflag() == toCompare->getWearflag())
+                {
+                    compareTo = player->ready[i];
+                    break;
+                }
+            }
+        }
+        if(!compareTo) {
+            *player << "You're not wearing anything to compare it with!\n";
+            return(0);
+        }
+    } else {
+        // cmnd > 2
+        compareTo = findObject(player, player->first_obj, cmnd, 2);
+        if(!compareTo) {
+            *player << "You don't have that in your inventory to compare with!\n";
+            return(0);
+        }
+    }
+    if(toCompare->getWearflag() != compareTo->getWearflag() ||
+            toCompare->getType() != compareTo->getType()) {
+        *player << "You don't know how to compare " << toCompare << " to " << compareTo << "!\n";
+        return(0);
+    }
+
+    if(toCompare->getType() == WEAPON) {
+        *player << ColorOn << setf(CAP) << toCompare << " seems ";
+        if(toCompare->getDps() > compareTo->getDps()) {
+            *player << ColorOn << "^gbetter^x than ";
+        } else if(toCompare->getDps() < compareTo->getDps()) {
+            *player << ColorOn << "^rworse^x than ";
+        } else {
+            *player << "about the same as " << ColorOff;
+        }
+        *player << compareTo << ".\n";
+    } else if(toCompare->getType() == ARMOR) {
+        *player << ColorOn << setf(CAP) << toCompare << " seems ";
+        if(toCompare->getArmor() > compareTo->getArmor()) {
+            *player << ColorOn << "^gbetter^x than ";
+        } else if(toCompare->getArmor() < compareTo->getArmor()) {
+            *player << ColorOn << "^rworse^x than ";
+        } else {
+            *player << "about the same as ";
+        }
+        *player << compareTo << ".\n" << ColorOff;
+    } else {
+        *player << "You don't know how to compare " << toCompare << " to " << compareTo << "!\n";
+    }
+    return(0);
+
+}
 // Rules for creating a new ownership object for unique items
 // 		no - pet gets
 // 		yes -get from normal room

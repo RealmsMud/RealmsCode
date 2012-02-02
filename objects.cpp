@@ -1213,3 +1213,12 @@ void spawnObjects(const bstring& room, const bstring& objects) {
 		}
 	} while(obj != "");
 }
+
+
+double Object::getDps() {
+    short num = numAttacks;
+    if(!numAttacks)
+        num = 1;
+
+    return(( (damage.average() + adjustment) * (1+num) / 2) / (getWeaponDelay()/10.0));
+}

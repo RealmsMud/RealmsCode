@@ -146,6 +146,7 @@ public:
     char use_attack[50];
 
     Dice damage;
+    double getDps();
 
     otag *first_obj;	// objects contained inside
     class Object *parent_obj;	// object this is in
