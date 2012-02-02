@@ -22,6 +22,7 @@
 
 int orderPet(Player* player, cmd* cmnd);
 
+
 // Effects.cpp
 int dmEffectList(Player* player, cmd* cmnd);
 int dmShowEffectsIndex(Player* player, cmd* cmnd);
@@ -276,6 +277,7 @@ int cmdMistbane(Player* player, cmd* cmnd);
 int cmdDuel(Player* player, cmd* cmnd);
 
 // Equipment.c
+int cmdCompare(Player* player, cmd* cmnd);
 void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cash=false, bool printPlayer=true, bool printRoom=true);
 int cmdGet(Creature* player, cmd* cmnd);
 int cmdCost(Player* player, cmd* cmnd);
