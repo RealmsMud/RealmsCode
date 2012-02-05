@@ -238,6 +238,7 @@ public:
 	Creature(Creature& cr);
 	Creature(const Creature& cr);
 	Creature& operator=(const Creature& cr);
+	//virtual bool operator< (const MudObject& t) const = 0;
 	virtual ~Creature() {};
 
 //	Monster* getMonster();
@@ -747,6 +748,7 @@ public:
 	Monster(Monster& cr);
 	Monster(const Monster& cr);
 	Monster& operator=(const Monster& cr);
+	bool operator< (const Monster& t) const;
 	~Monster();
 	void readXml(xmlNodePtr curNode);
 	void saveXml(xmlNodePtr curNode) const;
@@ -966,6 +968,7 @@ public:
 	Player(Player& cr);
 	Player(const Player& cr);
 	Player& operator=(const Player& cr);
+	bool operator< (const Player& t) const;
 	~Player();
 	int save(bool updateTime=false, LoadType saveType=LS_NORMAL);
 	int saveToFile(LoadType saveType=LS_NORMAL);

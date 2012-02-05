@@ -34,6 +34,20 @@
 //#include <c++/4.3.3/bits/stl_list.h>
 #include <list>
 
+
+
+bool PlayerPtrLess::operator()(const Player* lhs, const Player* rhs) const {
+    return *lhs < *rhs;
+}
+
+bool MonsterPtrLess::operator()(const Monster* lhs, const Monster* rhs) const {
+    return *lhs < *rhs;
+}
+
+bool ObjectPtrLess::operator()(const Object* lhs, const Object* rhs) const {
+    return *lhs < *rhs;
+}
+
 //***********************************************************************
 //						moReset
 //***********************************************************************

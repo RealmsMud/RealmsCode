@@ -37,7 +37,6 @@ bstring BaseRoom::getVersion() const { return(version); }
 void BaseRoom::setVersion(bstring v) { version = v; }
 
 
-
 bstring BaseRoom::fullName() const {
 	const UniqueRoom* uRoom = getConstUniqueRoom();
 	const AreaRoom* aRoom = getConstAreaRoom();
@@ -72,6 +71,14 @@ UniqueRoom::UniqueRoom() {
 
 	memset(lastPly, 0, sizeof(lastPly));
 	memset(lastPlyTime, 0, sizeof(lastPlyTime));
+}
+
+bool UniqueRoom::operator< (const UniqueRoom& t) const {
+    if(this->info.area[0] == t.info.area[0]) {
+        return(this->info.id < t.info.id);
+    } else {
+        return(this->info.area < t.info.area);
+    }
 }
 
 bstring UniqueRoom::getShortDescription() const { return(short_desc); }
@@ -148,6 +155,17 @@ UniqueRoom::~UniqueRoom() {
 AreaRoom::~AreaRoom() {
 	BaseDestroy();
 	reset();
+}
+bool AreaRoom::operator< (const AreaRoom& t) const {
+    if(this->mapmarker.getX() == t.mapmarker.getX()) {
+        if(this->mapmarker.getY() == t.mapmarker.getY()) {
+            return(this->mapmarker.getZ() < t.mapmarker.getZ());
+        } else {
+            return(this->mapmarker.getY() < t.mapmarker.getY());
+        }
+    } else {
+        return(this->mapmarker.getX() < t.mapmarker.getX());
+    }
 }
 
 //*********************************************************************

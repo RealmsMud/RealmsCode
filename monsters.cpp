@@ -22,6 +22,10 @@
 #include "math.h"
 #include "unique.h"
 
+
+bool Monster::operator <(const Monster& t) const {
+    return(strcmp(this->name, t.name) < 0);
+}
 /*
  * mTypes formatted as case for use in functions below
  *

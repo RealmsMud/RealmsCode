@@ -51,6 +51,12 @@ Exit::~Exit() {
 	}
 }
 
+int exit_ordering(const char *exit1, const char *exit2);
+
+bool Exit::operator< (const MudObject& t) const {
+    return(exit_ordering(this->name, t.name));
+}
+
 short Exit::getLevel() const { return(level); }
 bstring Exit::getOpen() const { return(open); }
 short Exit::getTrap() const { return(trap); }

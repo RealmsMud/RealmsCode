@@ -40,6 +40,8 @@ class Exit: public MudObject {
 public:
 	Exit();
 	~Exit();
+	bool operator< (const MudObject& t) const;
+
 	int readFromXml(xmlNodePtr rootNode, BaseRoom* room);
 	int saveToXml(xmlNodePtr parentNode) const;
 

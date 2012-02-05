@@ -79,6 +79,7 @@ public:
     Object& operator=(const Object& o);
     bool operator==(const Object& o) const;
     bool operator!=(const Object& o) const;
+    bool operator< (const MudObject& t) const;
     void validateId();
 
 protected:

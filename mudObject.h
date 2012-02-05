@@ -21,17 +21,18 @@
 #define MUDOBJECTS_H
 
 #include <map>
+#include <set>
 //#include <boost/unordered_map.hpp> // Gnu gcc specific, switch to <map>
-#include <unordered_map>
+//#include <unordered_map>
 
 // allow the gnu hash_map to work on bstring
-namespace std {
-   template<> struct hash< bstring > {
-	  size_t operator()(const bstring& s) const {
-		 return hash< const char* >()( s.c_str() );
-	  }
-   }; // gcc.gnu.org/ml/libstdc++/2002-04/msg00107.html
-}
+//namespace std {
+//   template<> struct hash< bstring > {
+//	  size_t operator()(const bstring& s) const {
+//		 return hash< const char* >()( s.c_str() );
+//	  }
+//   }; // gcc.gnu.org/ml/libstdc++/2002-04/msg00107.html
+//}
 
 //typedef std::unordered_map<bstring, bstring> MultiMap;  // change to std::map
 class MudObject;
@@ -44,12 +45,32 @@ class Creature;
 
 #include "hooks.h"
 
+struct PlayerPtrLess : public std::binary_function<const Player*, const Player*, bool> {
+    bool operator()(const Player* lhs, const Player* rhs) const;
+};
+
+struct MonsterPtrLess : public std::binary_function<const Monster*, const Monster*, bool> {
+    bool operator()(const Monster* lhs, const Monster* rhs) const;
+};
+
+struct ObjectPtrLess : public std::binary_function<const Object*, const Object*, bool> {
+    bool operator()(const Object* lhs, const Object* rhs) const;
+};
+
+typedef std::set<Player*, PlayerPtrLess> PlayerSet;
+typedef std::set<Monster*, MonsterPtrLess> MonsterSet;
+typedef std::set<Object*, ObjectPtrLess> ObjectSet;
+
 class MudObject {
 public:
 	char name[80];
 	bstring id;		// Unique identifier
 	Hooks hooks;
 	void moCopy(const MudObject& mo);
+
+	PlayerSet playerSet;
+	MonsterSet monsterSet;
+	ObjectSet objectSet;
 
 public:
 	virtual ~MudObject() {};

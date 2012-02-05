@@ -52,6 +52,7 @@ public:
 public:
 	BaseRoom();
 	virtual ~BaseRoom() {};
+	virtual bool operator< (const MudObject& t) const = 0;
 
 	void readExitsXml(xmlNodePtr curNode);
 	bool delExit(bstring dir);
@@ -155,6 +156,7 @@ class UniqueRoom: public BaseRoom {
 public:
 	UniqueRoom();
 	~UniqueRoom();
+	bool operator< (const UniqueRoom& t) const;
 
 	void escapeText();
 	int readFromXml(xmlNodePtr rootNode);
@@ -256,6 +258,8 @@ class AreaRoom: public BaseRoom {
 public:
 	AreaRoom(Area *a, const MapMarker *m=0);
 	~AreaRoom();
+	bool operator< (const AreaRoom& t) const;
+
 	void reset();
 	WanderInfo* getRandomWanderInfo();
 	Size getSize() const;
