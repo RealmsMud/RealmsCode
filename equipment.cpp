@@ -100,7 +100,7 @@ int cmdCompare(Player* player, cmd* cmnd) {
         }
         *player << compareTo << ".\n" << ColorOff;
     } else {
-        *player << "You don't know how to compare " << toCompare << " to " << compareTo << "!\n";
+        *player << ColorOn << "You don't know how to compare " << toCompare << " to " << compareTo << "!\n" << ColorOff;
     }
     return(0);
 
