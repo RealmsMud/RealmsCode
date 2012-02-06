@@ -79,14 +79,14 @@ int Config::reloadRoom(CatRef cr) {
 	if(!loadRoomFromFile(cr, &room))
 		return(-1);
 
-	room->first_ply = roomQueue[str].rom->first_ply;
-	roomQueue[str].rom->first_ply = 0;
+	room->players = roomQueue[str].rom->players;
+	roomQueue[str].rom->players.clear();
 
 	// have to do this in dmReloadRoom() now
 	// room->addPermCrt();
-	if(!room->first_mon) {
-		room->first_mon = roomQueue[str].rom->first_mon;
-		roomQueue[str].rom->first_mon = 0;
+	if(room->monsters) {
+		room->monsters = roomQueue[str].rom->monsters;
+		roomQueue[str].rom->monsters.clear();
 	}
 
 	if(!room->first_obj) {
@@ -97,18 +97,13 @@ int Config::reloadRoom(CatRef cr) {
 	delete roomQueue[str].rom;
 	roomQueue[str].rom = room;
 
-	cp = room->first_ply;
-	while(cp) {
-		cp->crt->parent_rom = room;
-		*&cp->crt->room = *&room->info;
-		cp = cp->next_tag;
+	for(Player* ply : room->players) {
+	    ply->setParent(room);
+	    ply->room = room->info;
 	}
-
-	cp = room->first_mon;
-	while(cp) {
-		cp->crt->parent_rom = room;
-		cp->crt->room = room->info;
-		cp = cp->next_tag;
+	for(Monster* mons : room->monsters) {
+	    mons->setParent(room);
+	    mons->room = room->info;
 	}
 
 	op = room->first_obj;

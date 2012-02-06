@@ -1104,33 +1104,19 @@ bool Creature::inCombat(const Creature* target, bool countPets) const {
 	ctag	*cp=0;
 
 	if(mThis) {
-		cp = room->first_ply;
-		while(cp) {
-			if(mThis->isEnemy(cp->crt))
-				return(true);
-			cp = cp->next_tag;
-		}
-
-		cp = room->first_mon;
-		while(cp) {
-			if(mThis->isEnemy(cp->crt))
-				return(true);
-			cp = cp->next_tag;
-		}
-
+	    for(Player* ply : room->players) {
+	        if(mThis->isEnemy(ply))
+	            return(true);
+	    }
+	    for(Monster* mons : room->monsters) {
+	        if(mThis->isEnemy(mons))
+	            return(true);
+	    }
 	} else {
-
-		cp = room->first_mon;
-		while(cp) {
-			if(	cp->crt->getConstMonster()->isEnemy(this) &&
-				(!target || cp->crt != target) &&
-				(countPets || !cp->crt->isPet())
-			)
-				return(true);
-
-			cp = cp->next_tag;
-		}
-
+	    for(Monster* mons : room->monsters) {
+	        if(mons->isEnemy(this) && (!target || mons != target) && (countPets || !mons->isPet()))
+	            return(true);
+	    }
 	}
 
 	return(false);

@@ -232,7 +232,7 @@ void loadRanges(xmlNodePtr curNode, Player *pPlayer);
 //int saveObject(Object* pObject);
 
 int saveObjectsXml(xmlNodePtr parentNode, otag* op, int permOnly);
-int saveCreaturesXml(xmlNodePtr parentNode, ctag* cp, int permOnly);
+int saveCreaturesXml(xmlNodePtr parentNode, const std::set<Monster*, MonsterPtrLess>& set, int permOnly);
 //int saveCreatureXml(xmlNodePtr rootNode, Creature * pCreature, int permOnly, LoadType saveType);
 
 Ban *parseBan(xmlNodePtr cur);

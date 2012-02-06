@@ -27,12 +27,12 @@
 // we get the bankteller mob in the room, if there is one
 
 Monster* Bank::teller(const BaseRoom* room) {
-	ctag* cp = room->first_mon;
-	while(cp) {
-		if(!strcmp(cp->crt->name, "bank teller"))
-			return(cp->crt->getMonster());
-		cp = cp->next_tag;
-	}
+    for(Monster* mons : room->monsters ) {
+        if(!strcmp(mons->name, "bank teller"))
+            return(mons);
+
+    }
+
 	return(0);
 }
 

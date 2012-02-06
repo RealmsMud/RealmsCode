@@ -217,16 +217,16 @@ bool Hooks::run(MudObject* trigger1, const bstring& event1, MudObject* trigger2,
 //*********************************************************************
 // For hooks that need to be run on a lot of people (skipping the trigger), run this
 
-bool Hooks::run(ctag* cp, MudObject* trigger, const bstring& event, const bstring& param1, const bstring& param2, const bstring& param3) {
+
+template<class Type, class Compare>
+bool Hooks::run(std::set<Type, Compare>& set, MudObject* trigger, const bstring& event, const bstring& param1, const bstring& param2, const bstring& param3) {
 	bool ran=false;
 
-	while(cp) {
-		if(cp->crt != trigger) {
-			if(cp->crt->hooks.execute(event, trigger, param1, param2, param3))
-				ran = true;
-		}
-		cp = cp->next_tag;
+	for(Type crt : set) {
+	    if(crt != trigger) {
+	        if(crt->hooks.execute(event, trigger, param1, param2, param3))
+	            ran = true;
+	    }
 	}
-
 	return(ran);
 }

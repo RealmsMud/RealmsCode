@@ -33,7 +33,7 @@ void socialHooks(Creature *creature, MudObject* target, bstring action, bstring 
 void socialHooks(Creature *target, bstring action, bstring result) {
 	if(!target->getRoom())
 		return;
-	Hooks::run(target->getRoom()->first_mon, target, "roomSocial", action, result);
+	Hooks::run<Monster*,MonsterPtrLess>(target->getRoom()->monsters, target, "roomSocial", action, result);
 }
 
 //*********************************************************************

@@ -45,22 +45,6 @@ class Creature;
 
 #include "hooks.h"
 
-struct PlayerPtrLess : public std::binary_function<const Player*, const Player*, bool> {
-    bool operator()(const Player* lhs, const Player* rhs) const;
-};
-
-struct MonsterPtrLess : public std::binary_function<const Monster*, const Monster*, bool> {
-    bool operator()(const Monster* lhs, const Monster* rhs) const;
-};
-
-struct ObjectPtrLess : public std::binary_function<const Object*, const Object*, bool> {
-    bool operator()(const Object* lhs, const Object* rhs) const;
-};
-
-typedef std::set<Player*, PlayerPtrLess> PlayerSet;
-typedef std::set<Monster*, MonsterPtrLess> MonsterSet;
-typedef std::set<Object*, ObjectPtrLess> ObjectSet;
-
 class MudObject {
 public:
 	char name[80];
@@ -68,9 +52,6 @@ public:
 	Hooks hooks;
 	void moCopy(const MudObject& mo);
 
-	PlayerSet playerSet;
-	MonsterSet monsterSet;
-	ObjectSet objectSet;
 
 public:
 	virtual ~MudObject() {};

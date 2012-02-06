@@ -95,37 +95,32 @@ bool Creature::useSpecial(SpecialAttack* attack, Creature* victim) {
 	if(attack->isAreaAttack() && getRoom()) {
 		attack->printRoomString(this);
 
-		Creature* target;
 		BaseRoom* room = getRoom();
-		ctag *cp=0;
 		if(attack->flagIsSet(SA_AE_PLAYER) || attack->flagIsSet(SA_AE_ALL)) {
 			// First hit players
-			cp = room->first_ply;
-			while(cp) {
-				target = cp->crt;
-				cp = cp->next_tag;
-				doSpecial(attack, target);
+		    PlayerSet::iterator pIt = room->players.begin();
+		    while(pIt != room->players.end()) {
+		        Player* ply = (*pIt++);
+				doSpecial(attack, ply);
 				attacked = true;
 			}
 			// Second, hit pets
-			cp = room->first_mon;
-			while(cp) {
-				target = cp->crt;
-				cp = cp->next_tag;
-				if(target->isPet()) {
-					doSpecial(attack, target);
+            MonsterSet::iterator mIt = room->monsters.begin();
+            while(mIt != room->monsters.end()) {
+                Monster* mons = (*mIt++);
+				if(mons->isPet()) {
+					doSpecial(attack, mons);
 					attacked = true;
 				}
 			}
 		}
 		if(attack->flagIsSet(SA_AE_MONSTER) || attack->flagIsSet(SA_AE_ALL)) {
 			// Hit all non pets
-			cp = room->first_mon;
-			while(cp) {
-				target = cp->crt;
-				cp = cp->next_tag;
-				if(!target->isPet()) {
-					doSpecial(attack, target);
+            MonsterSet::iterator mIt = room->monsters.begin();
+            while(mIt != room->monsters.end()) {
+                Monster* mons = (*mIt++);
+				if(!mons->isPet()) {
+					doSpecial(attack, mons);
 					attacked = true;
 				}
 			}

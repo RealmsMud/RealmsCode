@@ -68,7 +68,9 @@ bstring getSexName(Sex sex);
 Creature *find_exact_crt(const Creature* player, ctag *first_ct, char *str, int val);
 Creature *getFirstAggro(Creature* creature, Creature* player);
 Creature *enm_in_group(Creature *target);
-int findCrt(Creature * player, ctag *first_ct, int findFlags, char *str, int val, int* match, Creature ** target );
+
+template<class Type, class Compare>
+int findCrt(Creature * player, std::set<Type, Compare>& set, int findFlags, char *str, int val, int* match, Creature ** target );
 
 // data.cpp
 int cmdRecipes(Player* player, cmd* cmnd);
@@ -323,9 +325,9 @@ bool antiGradius(int race);
 
 
 // io.cpp
-void broadcast(Socket* ignore, BaseRoom* room, const char *fmt, ...);
-void broadcast(Socket* ignore1, Socket* ignore2, BaseRoom* room, const char *fmt, ...);
-void broadcast(bool showTo(Socket*), Socket*, BaseRoom* room, const char *fmt, ...);
+void broadcast(Socket* ignore, Container* container, const char *fmt, ...);
+void broadcast(Socket* ignore1, Socket* ignore2, Container* container, const char *fmt, ...);
+void broadcast(bool showTo(Socket*), Socket*, Container* container, const char *fmt, ...);
 
 bool yes(Socket* sock);
 bool yes(Creature* player);

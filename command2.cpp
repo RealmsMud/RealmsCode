@@ -151,18 +151,15 @@ Monster* BaseRoom::getGuardingExit(const Exit* exit, const Player* player) const
 	if(!exit->flagIsSet(X_PASSIVE_GUARD))
 		return(0);
 
-	ctag* cp = first_mon;
-	while(cp) {
-		monster = cp->crt;
-		cp = cp->next_tag;
+	for(Monster* mons : monsters) {
+        if(!mons->flagIsSet(M_PASSIVE_EXIT_GUARD))
+            continue;
+        if(player && mons->flagIsSet(M_FACTION_NO_GUARD) && Faction::willLetThrough(player, mons->getMonster()->getPrimeFaction()))
+            continue;
 
-		if(!monster->flagIsSet(M_PASSIVE_EXIT_GUARD))
-			continue;
-		if(player && monster->flagIsSet(M_FACTION_NO_GUARD) && Faction::willLetThrough(player, monster->getMonster()->getPrimeFaction()))
-			continue;
-		
-		return(monster->getMonster());
+        return(mons);
 	}
+
 	return(0);
 }
 

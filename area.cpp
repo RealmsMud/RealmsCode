@@ -1046,28 +1046,26 @@ char Area::getTerrain(const Player* player, const MapMarker *mapmarker, short y,
 		if(rooms.find(m.str()) != rooms.end()) {
 			room = (*rooms.find(m.str())).second;
 
-			if(room->first_ply || room->first_mon) {
+			if(!room->players.empty() || !room->monsters.empty()) {
 				if(!staff && room->isMagicDark())
 					return('#');
 
 				// can they see anybody in the room?
-				cp = room->first_ply;
-				while(!found && cp) {
-					if(	player == cp->crt || (
-							player->canSee(cp->crt) &&
-							(staff || !cp->crt->flagIsSet(P_HIDDEN))
-					) )
-						found = true;
-					cp = cp->next_tag;
+				for(Player* ply : room->players) {
+				    if(player == ply || (player->canSee(ply) && (staff || !ply->flagIsSet(P_HIDDEN)))) {
+				        found = true;
+				        break;
+				    }
 				}
-				cp = room->first_mon;
-				while(!found && cp) {
-					if(	player->canSee(cp->crt) &&
-						(staff || !cp->crt->flagIsSet(M_HIDDEN))
-					)
-						found = true;
-					cp = cp->next_tag;
+				if(!found) {
+				    for(Monster* mons : room->monsters) {
+				        if( player->canSee(mons) && (staff || !mons->flagIsSet(M_HIDDEN))) {
+				            found = true;
+				            break;
+				        }
+				    }
 				}
+
 				// if so, show them the creatue symbol
 				if(found)
 					return('@');
@@ -1766,10 +1764,10 @@ int dmListArea(Player* player, cmd* cmnd) {
 
 		for(rt = area->rooms.begin() ; rt != area->rooms.end() ; rt++) {
 			room = (*rt).second;
-			if(room->first_ply || room->first_mon || room->first_obj || empty) {
+			if(!room->players.empty() || !room->monsters.empty() || room->first_obj || empty) {
 				player->printColor("     %-16s Ply: %s^x  Mon: %s^x  Obj: %s\n",
-					room->fullName().c_str(), room->first_ply ? "^gy" : "^rn",
-					room->first_mon ? "^gy" : "^rn", room->first_obj ? "^gy" : "^rn");
+					room->fullName().c_str(), !room->players.empty() ? "^gy" : "^rn",
+					!room->monsters.empty() ? "^gy" : "^rn", room->first_obj ? "^gy" : "^rn");
 			}
 		}
 		player->print("\n");

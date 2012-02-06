@@ -576,10 +576,9 @@ int cmdHowl(Creature* player, cmd* cmnd) {
 	player->lasttime[LT_HOWLS].ltime = t;
 	player->lasttime[LT_HOWLS].interval = 240L; // every 4 minutes
 
-	cp = room->first_mon;
-	while(cp && numEffected < maxEffected) {
-		monster = cp->crt->getMonster();
-		cp = cp->next_tag;
+	MonsterSet::iterator mIt = room->monsters.begin();
+	while(mIt != room->monsters.end() && numEffected < maxEffected) {
+		monster = (*mIt++);
 
 		if(!monster || !monster->isEnemy(player))
 			continue;

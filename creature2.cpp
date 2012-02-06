@@ -307,21 +307,17 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
 
 int Monster::getNumMobs() const {
 	int		i=0;
-	ctag	*cp=0;
 
 	if(flagIsSet(M_DM_FOLLOW) || flagIsSet(M_WAS_PORTED))
 		return(0);
 
-	cp = getRoom()->first_mon;
-	while(cp) {
-		if(!strcmp(cp->crt->name, name)) {
-			i++;
-			if(cp->crt == this)
-				return(i);
-		}
-		cp = cp->next_tag;
+	for(Monster* mons : getRoom()->monsters) {
+	    if(!strcmp(mons->name, name)) {
+	        i++;
+	        if(mons == this)
+	            return(i);
+	    }
 	}
-
 	return(0);
 }
 
@@ -339,18 +335,13 @@ Creature *getRandomMonster(BaseRoom *inRoom) {
 		return(0);
 
 	roll = mrand(1, num);
-	cp = inRoom->first_mon;
-	while(cp) {
-		if(cp->crt->isPet()) {
-			cp = cp->next_tag;
-			continue;
-		}
-		count++;
-		if(count == roll) {
-			foundCrt = cp->crt;
-			break;
-		}
-		cp = cp->next_tag;
+	for(Monster* mons : inRoom->monsters) {
+	    if(mons->isPet())
+	        continue;
+	    if(++count == roll) {
+	        foundCrt = mons;
+	        break;
+	    }
 	}
 
 	if(foundCrt)
@@ -525,17 +516,10 @@ int Monster::doHarmfulAuras() {
 //***********************************************************************
 
 bool isGuardLoot(BaseRoom *inRoom, Creature* player, const char *fmt) {
-	ctag	*cp=0;
-
-	cp = inRoom->first_mon;
-	while(cp) {
-		if(cp->crt->flagIsSet(M_GUARD_TREATURE) &&
-			!player->checkStaff(fmt, cp->crt)) {
-			return(true);
-		}
-		cp = cp->next_tag;
+	for(Monster* mons : inRoom->monsters) {
+	    if(mons->flagIsSet(M_GUARD_TREATURE) && !player->checkStaff(fmt, mons))
+	        return(true);
 	}
-
 	return(false);
 }
 
@@ -545,15 +529,10 @@ bool isGuardLoot(BaseRoom *inRoom, Creature* player, const char *fmt) {
 
 bool npcPresent(UniqueRoom *inRoom, short trade) {
 	Monster	*monster=0;
-	ctag	*cp=0;
 
-	cp = inRoom->first_mon;
-	while(cp) {
-		monster = cp->crt->getMonster();
-		cp = cp->next_tag;
-
-		if(monster->getMobTrade() == trade)
-			return(true);
+	for(Monster* mons : inRoom->monsters) {
+	    if(mons->getMobTrade() == trade)
+	        return(true);
 	}
 
 	return(false);

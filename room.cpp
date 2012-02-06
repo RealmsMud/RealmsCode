@@ -114,39 +114,12 @@ void Player::finishAddPlayer(BaseRoom* room) {
 		room->checkExits();
 
 
-
-	if(!room->first_ply) {
-		room->first_ply = cg;
-		cp = room->first_mon;
-		Monster *mon;
-		while(cp) {
-			mon = cp->crt->getMonster();
-			gServer->addActive(mon);
-			cp = cp->next_tag;
-		}
-		display_rom(this);
-		Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
-		return;
+	if(room->players.empty()) {
+	    for(Monster* mons : room->monsters) {
+	        gServer->addActive(mons);
+	    }
 	}
-
-	temp = room->first_ply;
-	if(strcmp(temp->crt->name, name) > 0) {
-		cg->next_tag = temp;
-		room->first_ply = cg;
-		display_rom(this);
-		Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
-		return;
-	}
-
-	while(temp) {
-		if(strcmp(temp->crt->name, name) > 0)
-			break;
-		prev = temp;
-		temp = temp->next_tag;
-	}
-	cg->next_tag = prev->next_tag;
-	prev->next_tag = cg;
-
+	room->players.insert(this);
 	display_rom(this);
 
 	Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
@@ -304,55 +277,30 @@ int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 	// when we're removing them from the room - AreaRoom, usually -
 	// but they were never added to the player list. this happens
 	// in dmMove for offline players.
-	if(!room->first_ply) {
+	if(room->players.empty()) {
 		Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
 		return(i);
 	}
 
-	if(room->first_ply->crt == this) {
-		temp = room->first_ply->next_tag;
-		delete room->first_ply;
-		room->first_ply = temp;
-
-		if(!temp) {
-			cp = room->first_mon;
-			while(cp) {
-				/*
-				 * pets and fast wanderers are always active
-				 *
-				if(!cp->crt->flagIsSet(M_FAST_WANDER) && !cp->crt->isPet() && !cp->crt->flagIsSet(M_POISONED) &&
-				!cp->crt->flagIsSet(M_FAST_TICK) && !cp->crt->flagIsSet(M_REGENERATES) && !cp->crt->flagIsSet(M_SLOW) &&
-				!(cp->crt->flagIsSet(M_PERMENANT_MONSTER) && (cp->crt->hp.getCur() < cp->crt->hp.getMax())))
-				*/
-				if(	!cp->crt->flagIsSet(M_FAST_WANDER) &&
-					!cp->crt->isPet() &&
-					!cp->crt->isPoisoned() &&
-					!cp->crt->flagIsSet(M_FAST_TICK) &&
-					!cp->crt->flagIsSet(M_ALWAYS_ACTIVE) &&
-					!cp->crt->flagIsSet(M_REGENERATES) &&
-					!cp->crt->isEffected("slow") &&
-					!cp->crt->flagIsSet(M_PERMENANT_MONSTER) &&
-					!cp->crt->flagIsSet(M_AGGRESSIVE)
-				)
-					gServer->delActive(cp->crt->getMonster());
-				cp = cp->next_tag;
-			}
-		}
-		Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
-		return(i);
-	}
-
-	prev = room->first_ply;
-	temp = prev->next_tag;
-	while(temp) {
-		if(temp->crt == this) {
-			prev->next_tag = temp->next_tag;
-			delete temp;
-		Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
-			return(i);
-		}
-		prev = temp;
-		temp = temp->next_tag;
+	room->players.erase(this);
+	if(room->players.empty()) {
+	    for(Monster* mons : room->monsters) {
+            /*
+             * pets and fast wanderers are always active
+             *
+            */
+            if( !mons->flagIsSet(M_FAST_WANDER) &&
+                !mons->isPet() &&
+                !mons->isPoisoned() &&
+                !mons->flagIsSet(M_FAST_TICK) &&
+                !mons->flagIsSet(M_ALWAYS_ACTIVE) &&
+                !mons->flagIsSet(M_REGENERATES) &&
+                !mons->isEffected("slow") &&
+                !mons->flagIsSet(M_PERMENANT_MONSTER) &&
+                !mons->flagIsSet(M_AGGRESSIVE)
+            )
+                gServer->delActive(mons->getMonster());
+	    }
 	}
 
 	Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
@@ -479,7 +427,6 @@ void Monster::addToRoom(BaseRoom* room, int num) {
 }
 
 void Monster::addToRoom(BaseRoom* room, UniqueRoom* uRoom, AreaRoom* aRoom, int num) {
-	ctag	*cg=NULL, *temp=NULL, *prev=NULL;
 	char	str[160];
 
 	validateId();
@@ -492,13 +439,6 @@ void Monster::addToRoom(BaseRoom* room, UniqueRoom* uRoom, AreaRoom* aRoom, int 
 
 	lasttime[LT_AGGRO_ACTION].ltime = time(0);
 	killDarkmetal();
-
-	cg = 0;
-	cg = new ctag;
-	if(!cg)
-		merror("add_crt_rom", FATAL);
-	cg->crt = this;
-	cg->next_tag = 0;
 
 	// Only show if num != 0 and it isn't a perm, otherwise we'll either
 	// show to staff or players
@@ -526,30 +466,7 @@ void Monster::addToRoom(BaseRoom* room, UniqueRoom* uRoom, AreaRoom* aRoom, int 
 			setFlag(M_WILL_BE_AGGRESSIVE);
 	}
 
-
-	if(!room->first_mon) {
-		room->first_mon = cg;
-		Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
-		return;
-	}
-
-	temp = room->first_mon;
-	if(strcmp(temp->crt->name, name) > 0) {
-		cg->next_tag = temp;
-		room->first_mon = cg;
-		Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
-		return;
-	}
-
-	while(temp) {
-		if(strcmp(temp->crt->name, name) > 0)
-			break;
-		prev = temp;
-		temp = temp->next_tag;
-	}
-	cg->next_tag = prev->next_tag;
-	prev->next_tag = cg;
-
+	room->monsters.insert(this);
 	Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
 }
 
@@ -570,31 +487,10 @@ int Monster::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 
 	if(!room)
 		return(0);
-	if(!room->first_mon)
+	if(room->monsters.empty())
 		return(0);
 
-	if(room->first_mon->crt == this) {
-		temp = room->first_mon->next_tag;
-		delete room->first_mon;
-		room->first_mon = temp;
-		Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
-		return(0);
-	}
-
-
-	prev = room->first_mon;
-	temp = prev->next_tag;
-	while(temp) {
-		if(temp->crt == this) {
-			prev->next_tag = temp->next_tag;
-			delete temp;
-			Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
-			return(0);
-		}
-		prev = temp;
-		temp = temp->next_tag;
-	}
-
+	room->monsters.erase(this);
 	Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
 	return(0);
 }
@@ -640,14 +536,9 @@ void UniqueRoom::addPermCrt() {
 		if(!loadMonster(crtm->cr, &creature))
 			continue;
 
-		cp = first_mon;
-		m = 0;
-		while(cp) {
-			if(	cp->crt->flagIsSet(M_PERMENANT_MONSTER) &&
-				!strcmp(cp->crt->name, creature->name)
-			)
+		for(Monster* mons : monsters) {
+			if(	mons->flagIsSet(M_PERMENANT_MONSTER) && !strcmp(mons->name, creature->name) )
 				m++;
-			cp = cp->next_tag;
 		}
 
 		free_crt(creature);
@@ -665,7 +556,7 @@ void UniqueRoom::addPermCrt() {
 			creature->validateAc();
 			creature->addToRoom(this, 0);
 
-			if(first_ply)
+			if(!players.empty())
 				gServer->addActive(creature);
 		}
 	}
@@ -765,7 +656,6 @@ bstring roomEffStr(bstring effect, bstring str, const BaseRoom* room, bool detec
 
 void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, const AreaRoom* aRoom, int magicShowHidden) {
 	UniqueRoom *target=0;
-	ctag	*cp=0;
 	const Player *pCreature=0;
 	const Creature* creature=0;
 	char	name[256];
@@ -980,22 +870,21 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 		oStr << ".\n";
 	oStr << "^m";
 
-	cp = room->first_mon;
 	n=0;
 
-	while(cp) {
-		creature = cp->crt;
-		cp = cp->next_tag;
+	MonsterSet::iterator mIt = room->monsters.begin();
+	while(mIt != room->monsters.end()) {
+		creature = (*mIt++);
 
 		if(staff || (player->canSee(creature) && (!creature->flagIsSet(M_HIDDEN) || magicShowHidden))) {
 			m=1;
-			while(cp) {
-				if(	!strcmp(cp->crt->name, creature->name) &&
-					(staff || (player->canSee(cp->crt) && (!cp->crt->flagIsSet(M_HIDDEN) || magicShowHidden))) &&
-					creature->isInvisible() == cp->crt->isInvisible()
-				) {
+			while(mIt != room->monsters.end()) {
+				if(	!strcmp((*mIt)->name, creature->name) &&
+					(staff || (player->canSee(*mIt) && (!(*mIt)->flagIsSet(M_HIDDEN) || magicShowHidden))) &&
+					creature->isInvisible() == (*mIt)->isInvisible() )
+				{
 					m++;
-					cp = cp->next_tag;
+					mIt++;
 				} else
 					break;
 			}
@@ -1027,9 +916,7 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 
 	*player << ColorOn << oStr.str();
 
-	cp = room->first_mon;
-	while(cp) {
-	    Monster* mons = cp->crt->getMonster();
+	for(Monster* mons : room->monsters) {
         if(mons && mons->hasEnemy()) {
             creature = mons->getTarget();
 
@@ -1039,7 +926,6 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 			else if(creature)
 			    *player << "^r" << setf(CAP) << cp->crt << " is attacking " << setf(CAP) << creature << ".\n";
 		}
-		cp = cp->next_tag;
 	}
 
 	player->print("^x\n");
@@ -1281,16 +1167,13 @@ BaseRoom *abortFindRoom(Creature* player, const char from[15]) {
 //*********************************************************************
 
 int UniqueRoom::getWeight() {
-	ctag	*cp=0;
 	otag	*op=0;
 	int		i=0;
 
 	// count weight of all players in this
-	cp = first_ply;
-	while(cp) {
-		if(cp->crt->countForWeightTrap())
-			i += cp->crt->getWeight();
-		cp = cp->next_tag;
+	for(Player* ply : players) {
+		if(ply->countForWeightTrap())
+			i += ply->getWeight();
 	}
 
 	// count weight of all objects in this
@@ -1301,16 +1184,10 @@ int UniqueRoom::getWeight() {
 	}
 
 	// count weight of all monsters in this
-	cp = first_mon;
-	while(cp) {
-		if(cp->crt->countForWeightTrap()) {
-			op = cp->crt->first_obj;
-			while(op) {
-				i += op->obj->getWeight();
-				op = op->next_tag;
-			}
+	for(Monster* mons : monsters) {
+		if(mons->countForWeightTrap()) {
+		    i+= mons->getWeight();
 		}
-		cp = cp->next_tag;
 	}
 
 	return(i);

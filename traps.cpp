@@ -100,7 +100,6 @@ int Player::doCheckTraps(UniqueRoom* room) {
 	Player	*ply=0;
 	BaseRoom *newRoom=0;
 	UniqueRoom	*uRoom=0;
-	ctag	*cp=0;
 	Creature* target=0;
 	int		toHit=0, a=0, num=0, roll=0, saved=0;
 	Location l;
@@ -806,13 +805,13 @@ int Player::doCheckTraps(UniqueRoom* room) {
 			return(0);
 
 		uRoom->addPermCrt();
-		cp = uRoom->first_mon;
+
 		Monster *tmp_crt=0;
-		while(cp) {
-			tmp_crt = (Monster*)cp->crt;
-			cp = cp->next_tag;
+		MonsterSet::iterator mIt = uRoom->monsters.begin();
+		while(mIt != uRoom->monsters.end()) {
+			tmp_crt = (*mIt++);
 			if(tmp_crt->flagIsSet(M_PERMENANT_MONSTER)) {
-				if(uRoom->first_ply)
+				if(!uRoom->players.empty())
 					broadcast(tmp_crt->getSock(), tmp_crt->getRoom(),
 						"%M hears an alarm and leaves to investigate.",tmp_crt);
 				else

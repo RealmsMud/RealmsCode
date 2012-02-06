@@ -83,7 +83,6 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
 	long	i=0, t=0;
 	int		(*fn)(SpellFn);
 	int		c=0, match=0, n=0, num=0, lvl=0, reqMp=0;
-	ctag	*cp=0;
 	Player* player = creature->getPlayerMaster();
 	bool	offensive=false, self = (!player || player == creature);
 	Creature* listen = (player ? player : creature);
@@ -256,18 +255,13 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
 
 
 	if(!player || !player->isStaff()) {
-		cp = creature->getRoom()->first_mon;
-		while(cp) {
-			if(cp->crt->flagIsSet(M_ANTI_MAGIC_AURA)) {
-				broadcast(NULL, creature->getRoom(), "^B%M glows bright blue.", cp->crt);
-				if(self)
-					listen->printColor("^yYour spell fails.\n");
-				else
-					listen->printColor("^y%M's spell fails.\n", creature);
-				return(CAST_RESULT_SPELL_FAILURE);
-			}
-			cp = cp->next_tag;
-		}
+	    if(creature->getRoom()->checkAntiMagic()) {
+            if(self)
+                listen->printColor("^yYour spell fails.\n");
+            else
+                listen->printColor("^y%M's spell fails.\n", creature);
+            return(CAST_RESULT_SPELL_FAILURE);
+	    }
 	}
 
 	reqMp = doMpCheck(creature, data.splno);
@@ -863,7 +857,6 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 	int		(*fn)(SpellFn);
 	long	i=0, t=0;
 	int		n=0, match=0, c=0;
-	ctag	*cp=0;
 	bool	dimensionalFailure=false;
 	SpellData data;
 
@@ -932,14 +925,9 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	cp = player->getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt->flagIsSet(M_ANTI_MAGIC_AURA)) {
-			broadcast(NULL,  player->getRoom(), "^B%M glows bright blue.", cp->crt);
-			player->print("Nothing happens.\n");
-			return(0);
-		}
-		cp = cp->next_tag;
+	if(player->getRoom()->checkAntiMagic()) {
+	    player->print("Nothing happens.\n");
+	    return(0);
 	}
 
 	player->unhide();
@@ -1274,14 +1262,9 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 
 	player->unhide();
 
-	cp = player->getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt->flagIsSet(M_ANTI_MAGIC_AURA)) {
-			broadcast(NULL, player->getRoom(), "^B%M glows bright blue.", cp->crt);
-			player->printColor("%O sputters and smokes.\n", object);
-			return(0);
-		}
-		cp = cp->next_tag;
+	if(player->getRoom()->checkAntiMagic()) {
+        player->printColor("%O sputters and smokes.\n", object);
+        return(0);
 	}
 
 	data.splno = object->getMagicpower() - 1;

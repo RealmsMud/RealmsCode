@@ -1036,7 +1036,7 @@ int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
 
 	// Save Creatures
 	curNode = xml::newStringChild(rootNode, "Creatures");
-	saveCreaturesXml(curNode, first_mon, permOnly);
+	saveCreaturesXml(curNode, monsters, permOnly);
 
 	// Save Exits
 	curNode = xml::newStringChild(rootNode, "Exits");
@@ -1147,25 +1147,25 @@ int saveObjectsXml(xmlNodePtr parentNode, otag* op, int permOnly) {
 //						saveCreaturesXml
 //*********************************************************************
 
-int saveCreaturesXml(xmlNodePtr parentNode, ctag* cp, int permOnly) {
+int saveCreaturesXml(xmlNodePtr parentNode, const std::set<Monster*, MonsterPtrLess>& set, int permOnly) {
 	xmlNodePtr curNode;
-	while(cp) {
-		if(	cp->crt && cp->crt->isMonster() &&
-			(	(permOnly == ALLITEMS && !cp->crt->isPet()) ||
-				(permOnly == PERMONLY && cp->crt->flagIsSet(M_PERMENANT_MONSTER))
-			)
-		) {
-			if(cp->crt->flagIsSet(M_SAVE_FULL)) {
-				// Save a fully copy of the mob to the node
-				curNode = xml::newStringChild(parentNode, "Creature");
-				cp->crt->saveToXml(curNode, permOnly, LS_FULL);
-			} else {
-				// Just save a reference
-				curNode = xml::newStringChild(parentNode, "CrtRef");
-				cp->crt->saveToXml(curNode, permOnly, LS_REF);
-			}
-		}
-		cp = cp->next_tag;
+	for(const Monster* mons : set) {
+        if( mons && mons->isMonster() &&
+            (   (permOnly == ALLITEMS && !mons->isPet()) ||
+                (permOnly == PERMONLY && mons->flagIsSet(M_PERMENANT_MONSTER))
+            )
+        ) {
+            if(mons->flagIsSet(M_SAVE_FULL)) {
+                // Save a fully copy of the mob to the node
+                curNode = xml::newStringChild(parentNode, "Creature");
+                mons->saveToXml(curNode, permOnly, LS_FULL);
+            } else {
+                // Just save a reference
+                curNode = xml::newStringChild(parentNode, "CrtRef");
+                mons->saveToXml(curNode, permOnly, LS_REF);
+            }
+        }
+
 	}
 	return(0);
 }

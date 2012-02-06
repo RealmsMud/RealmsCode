@@ -22,6 +22,11 @@
 #include "clans.h"
 #include "alchemy.h"
 
+
+bool Object::operator< (const Object& t) const {
+    return(strcmp(this->name, t.name) < 0 && this->adjustment < t.adjustment && this->shopValue < t.shopValue);
+}
+
 bstring DroppedBy::getName() const {
 	return(name);
 }

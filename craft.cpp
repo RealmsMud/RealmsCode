@@ -424,19 +424,17 @@ bstring Recipe::display() {
 
 bool Recipe::canUseEquipment(const Player* player, bstring skill) const {
 	if(!equipment.empty() || skill == "cooking") {
-		ctag*	cp = player->getRoom()->first_mon;
+	    for(Monster* mons : player->getRoom()->monsters) {
+            if(mons->canSee(player)) {
+                if( mons->getConstMonster()->isEnemy(player) ||
+                    !Faction::willDoBusinessWith(player, mons->getMonster()->getPrimeFaction())
+                ) {
+                    player->print("%M won't let you use any equipment in this room.", mons);
+                    return(false);
+                }
+            }
 
-		while(cp) {
-			if(cp->crt->canSee(player)) {
-				if(	cp->crt->getConstMonster()->isEnemy(player) ||
-					!Faction::willDoBusinessWith(player, cp->crt->getMonster()->getPrimeFaction())
-				) {
-					player->print("%M won't let you use any equipment in this room.", cp->crt);
-					return(false);
-				}
-			}
-			cp = cp->next_tag;
-		}
+	    }
 	}
 	return(true);
 }

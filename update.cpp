@@ -1018,13 +1018,11 @@ void Player::checkOutlawAggro() {
 	if(!flagIsSet(P_OUTLAW_WILL_BE_ATTACKED))
 		return;
 
-	ctag *cp = getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt->flagIsSet(M_OUTLAW_AGGRO) && !cp->crt->getMonster()->hasEnemy()) {
-			cp->crt->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
-			cp->crt->getMonster()->addEnemy(this, true);
+	for(Monster* mons : getRoom()->monsters) {
+		if(mons->flagIsSet(M_OUTLAW_AGGRO) && !mons->getMonster()->hasEnemy()) {
+			mons->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
+			mons->getMonster()->addEnemy(this, true);
 		}
-		cp = cp->next_tag;
 	}
 }
 

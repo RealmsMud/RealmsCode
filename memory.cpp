@@ -74,57 +74,55 @@ void Config::showMemory(Socket* sock) {
 			continue;
 		rooms++;
 		rom_mem += sizeof(UniqueRoom);
-		for(cp = r->first_mon; cp; cp = cp->next_tag) {
-			if(cp->crt) {
-				crts++;
-				crt_mem += sizeof(Creature);
-				// add object counting on crts
-				// and object wear on crts
+		for(Monster* mons : r->monsters) {
+            crts++;
+            crt_mem += sizeof(Monster);
+            // add object counting on crts
+            // and object wear on crts
 
-				if(cp->crt->first_tlk) {
-					tlk = cp->crt->first_tlk;
-					if(cp->crt->flagIsSet(M_TALKS)) {
-						for(; tlk; tlk = tlk->next_tag) {
-							talks++;
-							talk_mem += sizeof(ttag);
-							if(tlk->key)
-								talk_mem += strlen(tlk->key);
-							if(tlk->response)
-								talk_mem += strlen(tlk->response);
-							if(tlk->action)
-								talk_mem += strlen(tlk->action);
-							if(tlk->target)
-								talk_mem += strlen(tlk->target);
-						}
-					} else if(cp->crt->flagIsSet(M_LOGIC_MONSTER)) {
-						for(; tlk; tlk = tlk->next_tag) {
-							actions++;
-							act_mem += sizeof(ttag);
-							if(tlk->response)
-								act_mem += strlen(tlk->response);
-							if(tlk->action)
-								act_mem += strlen(tlk->action);
-							if(tlk->target)
-								act_mem += strlen(tlk->target);
-						}
-					} else {
-						sprintf(buf, "%s has a talk and should not.", cp->crt->name);
-						loge(buf);
-						for(; tlk; tlk = tlk->next_tag) {
-							badtalk++;
-							bt_mem += sizeof(ttag);
-							if(tlk->key)
-								bt_mem += strlen(tlk->key);
-							if(tlk->response)
-								bt_mem += strlen(tlk->response);
-							if(tlk->action)
-								bt_mem += strlen(tlk->action);
-							if(tlk->target)
-								bt_mem += strlen(tlk->target);
-						}
-					}
-				}
-			}
+            if(mons->first_tlk) {
+                tlk = mons->first_tlk;
+                if(mons->flagIsSet(M_TALKS)) {
+                    for(; tlk; tlk = tlk->next_tag) {
+                        talks++;
+                        talk_mem += sizeof(ttag);
+                        if(tlk->key)
+                            talk_mem += strlen(tlk->key);
+                        if(tlk->response)
+                            talk_mem += strlen(tlk->response);
+                        if(tlk->action)
+                            talk_mem += strlen(tlk->action);
+                        if(tlk->target)
+                            talk_mem += strlen(tlk->target);
+                    }
+                } else if(mons->flagIsSet(M_LOGIC_MONSTER)) {
+                    for(; tlk; tlk = tlk->next_tag) {
+                        actions++;
+                        act_mem += sizeof(ttag);
+                        if(tlk->response)
+                            act_mem += strlen(tlk->response);
+                        if(tlk->action)
+                            act_mem += strlen(tlk->action);
+                        if(tlk->target)
+                            act_mem += strlen(tlk->target);
+                    }
+                } else {
+                    sprintf(buf, "%s has a talk and should not.", mons->name);
+                    loge(buf);
+                    for(; tlk; tlk = tlk->next_tag) {
+                        badtalk++;
+                        bt_mem += sizeof(ttag);
+                        if(tlk->key)
+                            bt_mem += strlen(tlk->key);
+                        if(tlk->response)
+                            bt_mem += strlen(tlk->response);
+                        if(tlk->action)
+                            bt_mem += strlen(tlk->action);
+                        if(tlk->target)
+                            bt_mem += strlen(tlk->target);
+                    }
+                }
+            }
 		}
 		for(op = r->first_obj; op; op = op->next_tag) {
 			if(op->obj) {

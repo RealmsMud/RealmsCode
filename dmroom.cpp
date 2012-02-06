@@ -211,7 +211,6 @@ bstring opposite_exit_name(const bstring& name) {
 // monsters.
 
 int dmPurge(Player* player, cmd* cmnd) {
-	ctag	*cp=0, *ctemp=0, *pet=0;
 	otag	*op=0, *otemp=0;
 	BaseRoom* room = player->getRoom();
 
@@ -222,38 +221,27 @@ int dmPurge(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	cp = room->first_mon;
-	room->first_mon = 0;
-	while(cp) {
-		ctemp = cp->next_tag;
-		if(cp->crt->isPet()) {
-			player->print("Skipping %N.\n", cp->crt);
-			// don't kill pets
-			if(!room->first_mon) {
-				room->first_mon = cp;
-				pet = room->first_mon;
-			} else {
-				pet->next_tag = cp;
-				pet = pet->next_tag;
-			}
-			pet->next_tag = 0;
-			cp = ctemp;
-			continue;
-		}
+	MonsterSet::iterator mIt = room->monsters.begin();
+	while(mIt != room->monsters.end()) {
+	    Monster* mons = (*mIt++);
+        if(mons->isPet()) {
+            player->print("Skipping %N.\n", mons);
+            // don't kill pets
+            continue;
+        }
 
-		if(cp->crt->flagIsSet(M_DM_FOLLOW)) {
-		    Player* master = cp->crt->getPlayerMaster();
-			if(master) {
-				master->clearFlag(P_ALIASING);
+        if(mons->flagIsSet(M_DM_FOLLOW)) {
+            Player* master = mons->getPlayerMaster();
+            if(master) {
+                master->clearFlag(P_ALIASING);
 
-				master->setAlias(0);
-				master->print("%1M's soul was purged.\n", cp->crt);
-				master->delPet(cp->crt->getMonster());
-			}
-		}
-		free_crt(cp->crt);
-		delete cp;
-		cp = ctemp;
+                master->setAlias(0);
+                master->print("%1M's soul was purged.\n", mons);
+                master->delPet(mons->getMonster());
+            }
+        }
+        room->monsters.erase(mons);
+        free_crt(mons);
 	}
 
 	op = room->first_obj;

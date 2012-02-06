@@ -24,8 +24,6 @@
 
 BaseRoom::BaseRoom() {
 	first_obj = 0;
-	first_mon = 0;
-	first_ply = 0;
 
 	tempNoKillDarkmetal = false;
 	memset(misc, 0, sizeof(misc));
@@ -126,22 +124,14 @@ void BaseRoom::BaseDestroy() {
 	}
 	first_obj = 0;
 
-	ctag	*cp = first_mon, *ctemp=0;
-	while(cp) {
-		ctemp = cp->next_tag;
-		free_crt(cp->crt);
-		delete cp;
-		cp = ctemp;
+	MonsterSet::iterator mIt = monsters.begin();
+	while(mIt != monsters.end()) {
+	    Monster* mons = (*mIt++);
+	    free_crt(mons);
 	}
-	first_mon = 0;
+	monsters.clear();
 
-	cp = first_ply;
-	while(cp) {
-		ctemp = cp->next_tag;
-		delete cp;
-		cp = ctemp;
-	}
-	first_ply = 0;
+	players.clear();
 
 	effects.removeAll();
 	removeEffectsIndex();
@@ -517,9 +507,9 @@ bool AreaRoom::canDelete() {
 	// don't delete unique rooms
 	if(stayInMemory || unique.id)
 		return(false);
-	if(first_mon)
+	if(!monsters.empty())
 		return(false);
-	if(first_ply)
+	if(!players.empty())
 		return(false);
 	if(first_obj) {
 		otag	*op = first_obj;
@@ -560,20 +550,14 @@ bool AreaRoom::isInteresting(const Player *viewer) const {
 	if(unique.id)
 		return(true);
 
-	cp = first_ply;
-	while(cp) {
-		if(!cp->crt->flagIsSet(P_HIDDEN) && viewer->canSee(cp->crt))
-			return(true);
-		cp = cp->next_tag;
+	for(Player* ply : players) {
+	    if(!ply->flagIsSet(P_HIDDEN) && viewer->canSee(ply))
+	        return(true);
 	}
-
-	cp = first_mon;
-	while(cp) {
-		if(!cp->crt->flagIsSet(M_HIDDEN) && viewer->canSee(cp->crt))
-			return(true);
-		cp = cp->next_tag;
+	for(Monster* mons : monsters) {
+	    if(!mons->flagIsSet(M_HIDDEN) && viewer->canSee(mons))
+	        return(true);
 	}
-
 	i = 0;
 	for(Exit* ext : exits) {
 		if(i < 7 && strcmp(ext->name, exitNameByOrder(i)))
@@ -642,22 +626,18 @@ bool BaseRoom::isMagicDark() const {
 		return(true);
 
 	// check for darkness spell
-	cp = first_ply;
-	while(cp) {
+	for(Player* ply : players) {
 		// darkness spell on staff does nothing
-		if(cp->crt->isEffected("darkness") && !cp->crt->isStaff())
+		if(ply->isEffected("darkness") && !ply->isStaff())
 			return(true);
-		if(cp->crt->flagIsSet(P_DARKNESS) && !cp->crt->flagIsSet(P_DM_INVIS))
+		if(ply->flagIsSet(P_DARKNESS) && !ply->flagIsSet(P_DM_INVIS))
 			return(true);
-		cp = cp->next_tag;
 	}
-	cp = first_mon;
-	while(cp) {
-		if(cp->crt->isEffected("darkness"))
+	for(Monster* mons : monsters) {
+		if(mons->isEffected("darkness"))
 			return(true);
-		if(cp->crt->flagIsSet(M_DARKNESS))
+		if(mons->flagIsSet(M_DARKNESS))
 			return(true);
-		cp = cp->next_tag;
 	}
 
 	op = first_obj;
@@ -800,11 +780,9 @@ int BaseRoom::countCrt() const {
 	ctag	*cp;
 	int	num = 0;
 
-	cp = first_mon;
-	while(cp) {
-		if(!cp->crt->isPet())
+	for(Monster* mons : monsters) {
+		if(!mons->isPet())
 			num++;
-		cp = cp->next_tag;
 	}
 
 	return(num);
@@ -867,18 +845,13 @@ bool BaseRoom::vampCanSleep(Socket* sock) const {
 bool BaseRoom::isCombat() const {
 	ctag	*cp=0;
 
-	cp = first_ply;
-	while(cp) {
-		if(cp->crt->inCombat(true))
+	for(Player* ply : players) {
+		if(ply->inCombat(true))
 			return(true);
-		cp = cp->next_tag;
 	}
-
-	cp = first_mon;
-	while(cp) {
-		if(cp->crt->inCombat(true))
+	for(Monster* mons : monsters) {
+		if(mons->inCombat(true))
 			return(true);
-		cp = cp->next_tag;
 	}
 
 	return(false);
@@ -987,11 +960,9 @@ bool BaseRoom::hasOppositeRealmBonus(Realm realm) const {
 
 
 Monster* BaseRoom::getTollkeeper() {
-	ctag	*cp = first_mon;
-	while(cp) {
-		if(!cp->crt->isPet() && cp->crt->flagIsSet(M_TOLLKEEPER))
-			return(cp->crt->getMonster());
-		cp = cp->next_tag;
+    for(Monster* mons : monsters) {
+		if(!mons->isPet() && mons->flagIsSet(M_TOLLKEEPER))
+			return(mons->getMonster());
 	}
 	return(0);
 }

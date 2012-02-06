@@ -1571,11 +1571,7 @@ bool UniqueRoom::swap(Swap s) {
 		found = true;
 	}
 
-	Monster* monster=0;
-	ctag* cp = first_mon;
-	while(cp) {
-		monster = cp->crt->getMonster();
-		cp = cp->next_tag;
+	for(Monster* monster : monsters) {
 		if(monster->swap(s))
 			found = true;
 	}
@@ -1612,11 +1608,7 @@ bool UniqueRoom::swapIsInteresting(Swap s) const {
 	if(info == s.origin || info == s.target)
 		return(true);
 
-	const Monster* monster=0;
-	ctag* cp = first_mon;
-	while(cp) {
-		monster = cp->crt->getConstMonster();
-		cp = cp->next_tag;
+	for(const Monster* monster : monsters) {
 		if(monster->swapIsInteresting(s))
 			return(true);
 	}
@@ -1659,12 +1651,7 @@ bool AreaRoom::swap(Swap s) {
 			found = true;
 		}
 	}
-
-	Monster* monster=0;
-	ctag* cp = first_mon;
-	while(cp) {
-		monster = cp->crt->getMonster();
-		cp = cp->next_tag;
+	for(Monster* monster : monsters) {
 		if(monster->swap(s))
 			found = true;
 	}
@@ -1688,11 +1675,7 @@ bool AreaRoom::swapIsInteresting(Swap s) const {
 			return(true);
 	}
 
-	const Monster* monster=0;
-	ctag* cp = first_mon;
-	while(cp) {
-		monster = cp->crt->getConstMonster();
-		cp = cp->next_tag;
+	for(const Monster* monster : monsters) {
 		if(monster->swapIsInteresting(s))
 			return(true);
 	}

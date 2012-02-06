@@ -784,17 +784,12 @@ void BaseRoom::killMortalObjects(bool floor) {
 		return;
 	if(isSunlight()) {
 		// kill all players' darkmetal
-		ctag*	cp = first_ply;
-		while(cp) {
-			cp->crt->killDarkmetal();
-			cp = cp->next_tag;
-		}
-		// kill all monsters' darkmetal
-		cp = first_mon;
-		while(cp) {
-			cp->crt->killDarkmetal();
-			cp = cp->next_tag;
-		}
+	    for(Player* ply : players) {
+	        ply->killDarkmetal();
+	    }
+	    for(Monster* mons : monsters) {
+	        mons->killDarkmetal();
+	    }
 	}
 	if(floor)
 		killMortalObjectsOnFloor();

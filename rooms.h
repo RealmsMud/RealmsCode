@@ -34,7 +34,7 @@ class Fishing;
 
 typedef std::list<Exit*> ExitList;
 
-class BaseRoom: public MudObject {
+class BaseRoom: public MudObject, public Container {
 protected:
 	void BaseDestroy();
 	bstring	version;	// What version of the mud this object was saved under
@@ -44,15 +44,15 @@ public:
 	//xtag	*first_ext;		// Exits
 	ExitList exits;
 	otag	*first_obj;		// Items
-	ctag	*first_mon;		// Monsters
-	ctag	*first_ply;		// Players
+//	ctag	*first_mon;		// Monsters
+//	ctag	*first_ply;		// Players
 
 	char	misc[64]; 		// miscellaneous space
 
 public:
 	BaseRoom();
 	virtual ~BaseRoom() {};
-	virtual bool operator< (const MudObject& t) const = 0;
+//	virtual bool operator< (const MudObject& t) const = 0;
 
 	void readExitsXml(xmlNodePtr curNode);
 	bool delExit(bstring dir);

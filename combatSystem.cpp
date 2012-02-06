@@ -655,17 +655,13 @@ double Creature::getParryChance(Creature* attacker, const int& difference) {
 	)
 		chance /= 2;
 
-	ctag* cp = getRoom()->first_mon;
 	int numEnm = 0;
-	while(cp) {
-		numEnm++;
-		if(cp->crt->isPet()) {
-			cp = cp->next_tag;
-			continue;
-		}
-		if(cp->crt->getMonster()->isEnemy(this) && numEnm > 1)
-			chance -= .02;
-		cp = cp->next_tag;
+	for(Monster* mons : getRoom()->monsters) {
+	    if(mons->isPet())
+	        continue;
+	    if(mons->isEnemy(this))
+	        if(numEnm++ > 1)
+	            chance -= .02;
 	}
 	chance = MAX(0.0, chance);
 	return(chance);

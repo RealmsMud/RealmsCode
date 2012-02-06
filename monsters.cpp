@@ -748,16 +748,12 @@ bool Monster::checkAssist() {
 	}
 
 	if(assist) {
-		Monster *toAssist=0;
-		ctag *ap = getRoom()->first_mon;
-		while(ap) {
-			toAssist = ap->crt->getMonster();
-			if(!toAssist || toAssist == this) {
-				ap = ap->next_tag;
+		for(Monster* mons : getRoom()->monsters) {
+			if(mons == this)
 				continue;
-			}
-			if(toAssist->hasEnemy() && willAssist(toAssist)) {
-			    crt = toAssist->getTarget(false);
+
+			if(mons->hasEnemy() && willAssist(mons)) {
+			    crt = mons->getTarget(false);
 
 			    crt = enm_in_group(crt);
 
@@ -773,39 +769,32 @@ bool Monster::checkAssist() {
 					crt = 0;
 				}
 			}
-			ap = ap->next_tag;
 		}
 	}
 
 
 	if(flagIsSet(M_WILL_BE_ASSISTED) || primeFaction != "") {
 		Creature* target=0;
-		Monster* assister=0;
-		ctag*	ast;
 		if(hasEnemy()) {
 			target = getTarget();
 			if(target)
 				target = target->getPlayer();
 			if(target) {
-				ast = target->getRoom()->first_mon;
-				while(ast) {
-					assister = ast->crt->getMonster();
-					ast = ast->next_tag;
-
-					if(!assister || assister == this)
+			    for(Monster* mons : target->getRoom()->monsters) {
+					if(mons == this)
 						continue;
-					if(assister->hasEnemy() || !assister->canSee(target))
+					if(mons->hasEnemy() || !mons->canSee(target))
 						continue;
 
-					if(	(assister->flagIsSet(M_WILL_ASSIST) && flagIsSet(M_WILL_BE_ASSISTED)) ||
-						(assister->flagIsSet(M_FACTION_ASSIST) && primeFaction == assister->getPrimeFaction()))
+					if(	(mons->flagIsSet(M_WILL_ASSIST) && flagIsSet(M_WILL_BE_ASSISTED)) ||
+						(mons->flagIsSet(M_FACTION_ASSIST) && primeFaction == mons->getPrimeFaction()))
 					{
-						target->printColor("^r%M quickly assists %N!\n", assister, this);
+						target->printColor("^r%M quickly assists %N!\n", mons, this);
 
-						assister->setFlag(M_ALWAYS_ACTIVE);
+						mons->setFlag(M_ALWAYS_ACTIVE);
 
-						assister->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
-						assister->getMonster()->addEnemy(enm_in_group(target), true);
+						mons->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
+						mons->getMonster()->addEnemy(enm_in_group(target), true);
 					}
 				}
 			}
@@ -1139,17 +1128,13 @@ bool Monster::checkEnemyMobs() {
 	// We know we have some enemies, now lets see if we have any
 	// enemies in the room with us to attack!
 
-	ctag* cp = room->first_mon;
-	Monster* target = 0;
-	while(cp) {
-		target = cp->crt->getMonster();
-		cp = cp->next_tag;
-		if(target != this && isEnemyMob(target)) {
-			broadcast(NULL, room, "%M yells, \"Die!\"\n%M attacks %N!", this, this, target);
-			addEnemy(target);
-			updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
-			return(true);
-		}
+	for(Monster* mons : room->monsters) {
+        if(mons != this && isEnemyMob(mons)) {
+            broadcast(NULL, room, "%M yells, \"Die!\"\n%M attacks %N!", this, this, mons);
+            addEnemy(mons);
+            updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
+            return(true);
+        }
 	}
 
 	return(false);

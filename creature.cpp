@@ -83,24 +83,19 @@ Creature *find_exact_crt(const Creature* player, ctag *first_ct, char *str, int 
 //*********************************************************************
 
 Creature *getFirstAggro(Creature* creature, Creature* player) {
-	ctag		*cp=0;
 	Creature *foundCrt=0;
 
 	if(creature->isPlayer())
 		return(creature);
 
-	cp = creature->getRoom()->first_mon;
-	while(cp) {
-		if(strcmp(cp->crt->name, creature->name)) {
-			cp = cp->next_tag;
-			continue;
-		}
-		if(cp->crt->getMonster()->isEnemy(player)) {
-			foundCrt = cp->crt;
-			break;
-		}
+	for(Monster* mons : creature->getRoom()->monsters) {
+        if(strcmp(mons->name, creature->name))
+            continue;
 
-		cp = cp->next_tag;
+        if(mons->getMonster()->isEnemy(player)) {
+            foundCrt = mons;
+            break;
+        }
 	}
 
 	if(foundCrt)
@@ -174,16 +169,12 @@ Creature* Monster::getTarget(bool sameRoom) {
 //*********************************************************************
 
 bool Monster::nearEnemy() const {
-	ctag	*cp=0;
-
 	if(nearEnmPly())
 		return(true);
 
-	cp = getRoom()->first_mon;
-	while(cp) {
-		if(isEnemy(cp->crt) && !cp->crt->flagIsSet(M_FAST_WANDER))
-			return(true);
-		cp = cp->next_tag;
+	for(Monster* mons : getRoom()->monsters) {
+        if(isEnemy(mons) && !mons->flagIsSet(M_FAST_WANDER))
+            return(true);
 	}
 
 	return(false);
@@ -214,21 +205,16 @@ bool Monster::nearEnemy(const Creature* target) const {
 	ctag	*cp=0;
 	BaseRoom* room = getRoom();
 
-	cp = room->first_ply;
-	while(cp) {
-		if(	isEnemy(cp->crt) &&
-			!cp->crt->flagIsSet(P_DM_INVIS) &&
-			strcmp(target->name, cp->crt->name)
-		)
-			return(true);
-		cp = cp->next_tag;
+	for(Player* ply : room->players) {
+        if( isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS) && strcmp(target->name, ply->name) )
+            return(true);
+
 	}
 
-	cp = room->first_mon;
-	while(cp) {
-		if(isEnemy(cp->crt) && !cp->crt->flagIsSet(M_FAST_WANDER))
-			return(true);
-		cp = cp->next_tag;
+	for(Monster* mons : room->monsters) {
+        if(isEnemy(mons) && !mons->flagIsSet(M_FAST_WANDER))
+            return(true);
+
 	}
 
 	return(false);
@@ -1084,28 +1070,28 @@ int Player::displayCreature(Creature* target) const {
 //						findCrt
 //*********************************************************************
 
-int findCrt(Creature * player, ctag *first_ct, int findFlags, char *str, int val, int* match, Creature ** target ) {
+template<class Type, class Compare>
+int findCrt(Creature * player, std::set<Type, Compare>& set, int findFlags, char *str, int val, int* match, Creature ** target ) {
 	ctag *cp;
 	int found=0;
 
-	if(!player || !str || !first_ct)
+	if(!player || !str || set.empty())
 		return(0);
 
-	cp = first_ct;
-	while(cp) {
-		if(!cp->crt) {
+	for(Type crt : set) {
+		if(!crt) {
 			cp = cp->next_tag;
 			continue;
 		}
-		if(!player->canSee(cp->crt)) {
+		if(!player->canSee(crt)) {
 			cp = cp->next_tag;
 			continue;
 		}
 
-		if(keyTxtEqual(cp->crt, str)) {
+		if(keyTxtEqual(crt, str)) {
 			(*match)++;
 			if(*match == val) {
-				*target = cp->crt;
+				*target = crt;
 				found = 1;
 				break;
 			}
@@ -1205,27 +1191,25 @@ bool Creature::canFlee() const {
 
 
 		// players can only flee if someone/something else is in the room
-		cp = getRoom()->first_mon;
-		while(cp && !crtInRoom) {
-			if(!cp->crt->isPet())
-				crtInRoom = true;
-			cp = cp->next_tag;
+		for(Monster* mons : getRoom()->monsters) {
+		    if(!mons->isPet()) {
+		        crtInRoom = true;
+		        break;
+		    }
 		}
 
-		cp = getRoom()->first_ply;
-		while(cp && !crtInRoom) {
-			if(cp->crt == this) {
-				cp = cp->next_tag;
-				continue;
-			}
-			if(!cp->crt->isStaff())
-				crtInRoom = true;
-			cp = cp->next_tag;
+		if(!crtInRoom) {
+		    for(Player* ply : getRoom()->players) {
+		        if(ply == this)
+		            continue;
+		        if(!ply->isStaff()) {
+		            crtInRoom = true;
+		            break;
+		        }
+		    }
 		}
 
-		if(	!crtInRoom &&
-			!checkStaff("There's nothing to flee from!\n")
-		)
+		if(	!crtInRoom && !checkStaff("There's nothing to flee from!\n") )
 			return(false);
 	}
 

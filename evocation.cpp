@@ -624,49 +624,41 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
 		player->subMp(5);
 
 	if(monsters) {
-		cp = player->getRoom()->first_mon;
-		while(cp) {
-			target = cp->crt;
-			cp = cp->next_tag;
+	    MonsterSet::iterator mIt = player->getRoom()->monsters.begin();
+	    while(mIt != player->getRoom()->monsters.end()) {
+	        target = (*mIt++);
+            // skip all pets - they are treated as players
+            if(target->isPet())
+                continue;
 
-			// skip all pets - they are treated as players
-			if(target->isPet())
-				continue;
-
-			if(!doMultiOffensive(player, target, &found_something, &something_died, spellData, spellname, osp))
-				return(found_something);
-
-		}
+            if(!doMultiOffensive(player, target, &found_something, &something_died, spellData, spellname, osp))
+                return(found_something);
+	    }
 	}
 	if(players) {
-		cp = player->getRoom()->first_ply;
-		while(cp) {
-			target = cp->crt;
-			cp = cp->next_tag;
+        PlayerSet::iterator pIt = player->getRoom()->players.begin();
+        while(pIt != player->getRoom()->players.end()) {
+            target = (*pIt++);
+            if(target == player)
+                continue;
 
-			// skip self
-			if(target == player)
-				continue;
+            if(!doMultiOffensive(player, target, &found_something, &something_died, spellData, spellname, osp))
+                return(found_something);
 
-			if(!doMultiOffensive(player, target, &found_something, &something_died, spellData, spellname, osp))
-				return(found_something);
+        }
 
-		}
-		cp = player->getRoom()->first_mon;
-		while(cp) {
-			target = cp->crt;
-			cp = cp->next_tag;
+        MonsterSet::iterator mIt = player->getRoom()->monsters.begin();
+        while(mIt != player->getRoom()->monsters.end()) {
+            target = (*mIt++);
+            // only do pets
+            if(!target->isPet())
+                continue;
+            if(target->getMaster() == player)
+                continue;
 
-			// only do pets
-			if(!target->isPet())
-				continue;
-			if(target->getMaster() == player)
-				continue;
-
-			if(!doMultiOffensive(player, target, &found_something, &something_died, spellData, spellname, osp))
-				return(found_something);
-
-		}
+            if(!doMultiOffensive(player, target, &found_something, &something_died, spellData, spellname, osp))
+                return(found_something);
+        }
 	}
 
 	if(!found_something && spellData->how == CAST) {

@@ -272,16 +272,14 @@ void doSearch(Player* player, bool immediate) {
 		cp = cp->next_tag;
 	}
 
-	cp = room->first_mon;
-	while(cp) {
-		if(	cp->crt->flagIsSet(M_HIDDEN) &&
-			player->canSee(cp->crt) &&
-			mrand(1,100) <= (chance + searchMod(cp->crt->getSize()))
-		) {
+	for(Monster* mons : room->monsters) {
+		if(	mons->flagIsSet(M_HIDDEN) &&
+			player->canSee(mons) &&
+			mrand(1,100) <= (chance + searchMod(mons->getSize())))
+		{
 			found = true;
-			player->print("You found %1N hiding.\n", cp->crt);
+			player->print("You found %1N hiding.\n", mons);
 		}
-		cp = cp->next_tag;
 	}
 
 	// reuse chance as chance to find herbs
@@ -904,7 +902,6 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 	UniqueRoom	*room=0, *storage=0;
 	Object	*object=0, *object2=0;
 	ctag	*cp=0;
-	Monster *tmp_crt=0;
 	int		chance=0, guarded=0;
 
 
@@ -976,11 +973,9 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 
 	
 	storage->addPermCrt();
-	cp = storage->first_mon;
-	while(cp) {
-		if(cp->crt->getLevel() >= 10 && cp->crt->flagIsSet(M_PERMENANT_MONSTER))
+	for(Monster* mons : storage->monsters) {
+		if(mons->getLevel() >= 10 && mons->flagIsSet(M_PERMENANT_MONSTER))
 			guarded++;
-		cp = cp->next_tag;
 	}
 
 	// This is done in order that a catastrophic building mistake cannot be made.
@@ -995,13 +990,11 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 
 	// This has to be done to prevent baiting.
 	// The mobs will wander after a time.
-	cp = room->first_mon;
-	while(cp) {
-		if(cp->crt->flagIsSet(M_ATTACKING_SHOPLIFTER) && !player->isDm()) {
+	for(Monster* mons : room->monsters) {
+		if(mons->flagIsSet(M_ATTACKING_SHOPLIFTER) && !player->isDm()) {
 			player->print("The shopkeep or shop's guards are too alert right now.\n");
 			return(0);
 		}
-		cp = cp->next_tag;
 	}
 
 
@@ -1102,59 +1095,54 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 		if(player->flagIsSet(P_LAG_PROTECTION_SET))
 			player->setFlag(P_LAG_PROTECTION_ACTIVE);
 
-		cp = room->first_mon;
-		// Any shopkeeper perms will attack.
-		while(cp) {
-			tmp_crt = cp->crt->getMonster();
-			if(tmp_crt->flagIsSet(M_PERMENANT_MONSTER)) {
+		for(Monster* mons : room->monsters) {
+			if(mons->flagIsSet(M_PERMENANT_MONSTER)) {
 
-				gServer->addActive(tmp_crt);
-				tmp_crt->clearFlag(M_DEATH_SCENE);
-				tmp_crt->clearFlag(M_FAST_WANDER);
-				tmp_crt->addPermEffect("detect-invisible");
-				tmp_crt->addPermEffect("true-sight");
-				tmp_crt->setFlag(M_BLOCK_EXIT);
-				tmp_crt->setFlag(M_ATTACKING_SHOPLIFTER);
+				gServer->addActive(mons);
+				mons->clearFlag(M_DEATH_SCENE);
+				mons->clearFlag(M_FAST_WANDER);
+				mons->addPermEffect("detect-invisible");
+				mons->addPermEffect("true-sight");
+				mons->setFlag(M_BLOCK_EXIT);
+				mons->setFlag(M_ATTACKING_SHOPLIFTER);
 
-				tmp_crt->addEnemy(player, true);
-				tmp_crt->diePermCrt();
+				mons->addEnemy(player, true);
+				mons->diePermCrt();
 			}
-			cp = cp->next_tag;
 		}
+		MonsterSet::iterator mIt = storage->monsters.begin();
 
-		cp = storage->first_mon;
-		// All guard mobs permed in storeroom will attack.
-		while(cp) {
-			tmp_crt = cp->crt->getMonster();
-			cp = cp->next_tag;
-			if(tmp_crt->flagIsSet(M_PERMENANT_MONSTER)) {
-				if(storage->first_ply)
-					broadcast(tmp_crt->getSock(), tmp_crt->getRoom(),
+		while(mIt != storage->monsters.end()) {
+
+		    Monster *mons = (*mIt++);
+			if(mons->flagIsSet(M_PERMENANT_MONSTER)) {
+				if(!storage->players.empty())
+					broadcast(mons->getSock(), mons->getRoom(),
 						"%M runs out after a shoplifter.", tmp_crt);
 				else
-					gServer->addActive(tmp_crt);
-				tmp_crt->clearFlag(M_PERMENANT_MONSTER);  // This is all done to prevent people from getting
-				tmp_crt->clearFlag(M_FAST_WANDER);  // killed mostly by others baiting these mobs in.
-				tmp_crt->clearFlag(M_DEATH_SCENE);
-				tmp_crt->addPermEffect("detect-invisible");
-				tmp_crt->addPermEffect("true-sight");
-				tmp_crt->setFlag(M_BLOCK_EXIT);
-				tmp_crt->setFlag(M_WILL_ASSIST);
-				tmp_crt->setFlag(M_WILL_BE_ASSISTED);
-				tmp_crt->clearFlag(M_AGGRESSIVE_GOOD);
-				tmp_crt->clearFlag(M_AGGRESSIVE_EVIL);
-				tmp_crt->clearFlag(M_AGGRESSIVE);
+					gServer->addActive(mons);
+				mons->clearFlag(M_PERMENANT_MONSTER);  // This is all done to prevent people from getting
+				mons->clearFlag(M_FAST_WANDER);  // killed mostly by others baiting these mobs in.
+				mons->clearFlag(M_DEATH_SCENE);
+				mons->addPermEffect("detect-invisible");
+				mons->addPermEffect("true-sight");
+				mons->setFlag(M_BLOCK_EXIT);
+				mons->setFlag(M_WILL_ASSIST);
+				mons->setFlag(M_WILL_BE_ASSISTED);
+				mons->clearFlag(M_AGGRESSIVE_GOOD);
+				mons->clearFlag(M_AGGRESSIVE_EVIL);
+				mons->clearFlag(M_AGGRESSIVE);
 
-				tmp_crt->setFlag(M_OUTLAW_AGGRO);
-				tmp_crt->setFlag(M_ATTACKING_SHOPLIFTER);
+				mons->setFlag(M_OUTLAW_AGGRO);
+				mons->setFlag(M_ATTACKING_SHOPLIFTER);
 
-				tmp_crt->setExperience(10);
-				tmp_crt->coins.zero();
+				mons->setExperience(10);
+				mons->coins.zero();
 
-				tmp_crt->addEnemy(player, true);
-				tmp_crt->diePermCrt();
-				tmp_crt->deleteFromRoom();
-				tmp_crt->addToRoom(room);
+				mons->addEnemy(player, true);
+				mons->diePermCrt();
+				mons->deleteFromRoom();
+				mons->addToRoom(room);
 			}
 		}
 

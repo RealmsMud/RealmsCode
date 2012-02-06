@@ -21,7 +21,7 @@ namespace Move {
 	bool tooFarAway(BaseRoom* pRoom, BaseRoom* tRoom, bool track);
 	bool tooFarAway(Creature *player, BaseRoom* room);
 	bool tooFarAway(Creature *player, Creature *target, bstring action);
-	void broadcast(Creature* player, BaseRoom* room, bool ordinal, bstring exit, bool hiddenExit);
+	void broadcast(Creature* player, Container* container, bool ordinal, bstring exit, bool hiddenExit);
 	bstring formatFindExit(cmd* cmnd);
 	bool isSneaking(cmd* cmnd);
 	bool isOrdinal(cmd* cmnd);

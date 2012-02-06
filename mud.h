@@ -1109,6 +1109,7 @@ enum CastResult {
 #include "os.h"
 
 #include "catRef.h"
+#include "container.h"
 #include "swap.h"
 #include "structs.h"
 #include "range.h"

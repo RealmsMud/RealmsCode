@@ -1505,18 +1505,11 @@ int cmdQuests(Player* player, cmd* cmnd) {
 
 				// We've found the quest that matches the string the user put in, now lets see if we can
 				// find the finishing monster
-				ctag* cp;
-				cp = player->getRoom()->first_mon;
-				Monster *monster;
-				while(cp) {
-					if(	cp->crt &&
-						(monster = cp->crt->getMonster()) != NULL &&
-						monster->info == quest->getParentQuest()->getTurnInMob()
-					) {
+				for(Monster* mons : player->getRoom()->monsters) {
+					if(	mons->info == quest->getParentQuest()->getTurnInMob() ) {
 						// We have a turn in monster, lets complete the quest
-//						player->printColor("Found ^W%s^x as a turn in monster!\n", monster->name);
-						if(monster->isEnemy(player)) {
-							player->print("%M refuses to deal with you right now!\n", monster);
+						if(mons->isEnemy(player)) {
+							player->print("%M refuses to deal with you right now!\n", mons);
 							return(0);
 						}
 
@@ -1524,7 +1517,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
 						player->printColor("Completing quest ^W%s^x.\n", name.c_str());
 
 						// NOTE: After quest->complete, quest is INVALID, do not attempt to access it
-						if(quest->complete(monster)) {
+						if(quest->complete(mons)) {
 							broadcast(player->getSock(), player->getRoom(), "%M just completed ^W%s^x.",
 								player, name.c_str());
 						} else {

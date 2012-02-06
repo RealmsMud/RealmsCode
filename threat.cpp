@@ -320,21 +320,16 @@ int Creature::doHeal(Creature* target, int amt, double threatFactor) {
     // If the target is a player/pet and they're in combat
     // then this counts towards the damage done/hatred on that monster
     if((target->isPlayer() || target->isPet()) && target->inCombat(false)) {
-		ctag* cp = getRoom()->first_mon;
-		while(cp) {
-		    Monster* mons = cp->crt->getMonster();
-		    if(mons) {
-				if(mons->isEnemy(target)) {
-				    // If we're not on the enemy list, put us on at the end
-				    if(!mons->isEnemy(this)) {
-						mons->addEnemy(this);
-						this->printColor("^R%M gets angry at you!^x\n", mons);
-				    }
-				    // Add the amount of healing threat done to effort done
-				    mons->adjustThreat(this, healed, threatFactor);
-				}
-		    }
-		    cp = cp->next_tag;
+        for(Monster* mons : getRoom()->monsters) {
+            if(mons->isEnemy(target)) {
+                // If we're not on the enemy list, put us on at the end
+                if(!mons->isEnemy(this)) {
+                    mons->addEnemy(this);
+                    this->printColor("^R%M gets angry at you!^x\n", mons);
+                }
+                // Add the amount of healing threat done to effort done
+                mons->adjustThreat(this, healed, threatFactor);
+            }
 		}
     }
     return(healed);

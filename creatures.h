@@ -193,7 +193,7 @@ typedef std::map<bstring, Skill*> SkillMap;
 //						Creature
 //*********************************************************************
 
-class Creature: public MudObject, public Streamable {
+class Creature: public MudObject, public Streamable, public Container, public Containable {
 
 protected:
 	void CopyCommon(const Creature& cr);

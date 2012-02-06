@@ -108,51 +108,47 @@ void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, 
 
 
 // room broadcast
-void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, BaseRoom* room, const char *fmt, va_list ap) {
+void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, Container* container, const char *fmt, va_list ap) {
 	Player* target=0;
 	ctag	*cp=0;
 
-	if(!room)
+	if(!container)
 		return;
 
-	cp = room->first_ply;
-	while(cp) {
-		target = cp->crt->getPlayer();
-		cp = cp->next_tag;
+	for(Player* ply : container->players) {
+        if(!hearBroadcast(ply, ignore1, ignore2, showTo))
+            continue;
+        if(ply->flagIsSet(P_UNCONSCIOUS))
+            continue;
 
-		if(!hearBroadcast(target, ignore1, ignore2, showTo))
-			continue;
-		if(target->flagIsSet(P_UNCONSCIOUS))
-			continue;
-
-		target->vprint(target->customColorize(fmt).c_str(), ap);
-		target->printColor("^x\n");
+        ply->vprint(ply->customColorize(fmt).c_str(), ap);
+        ply->printColor("^x\n");
 
 	}
 }
 
 
 // room broadcast, 1 ignore
-void broadcast(Socket* ignore, BaseRoom* room, const char *fmt, ...) {
+void broadcast(Socket* ignore, Container* container, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
-	doBroadcast(0, ignore, NULL, room, fmt, ap);
+	doBroadcast(0, ignore, NULL, container, fmt, ap);
 	va_end(ap);
 }
 
 // room broadcast, 2 ignores
-void broadcast(Socket* ignore1, Socket* ignore2, BaseRoom* room, const char *fmt, ...) {
+void broadcast(Socket* ignore1, Socket* ignore2, Container* container, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
-	doBroadcast(0, ignore1, ignore2, room, fmt, ap);
+	doBroadcast(0, ignore1, ignore2, container, fmt, ap);
 	va_end(ap);
 }
 
 // room broadcast, 1 ignore, showTo function
-void broadcast(bool showTo(Socket*), Socket* ignore, BaseRoom* room, const char *fmt, ...) {
+void broadcast(bool showTo(Socket*), Socket* ignore, Container* container, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
-	doBroadcast(showTo, ignore, NULL, room, fmt, ap);
+	doBroadcast(showTo, ignore, NULL, container, fmt, ap);
 	va_end(ap);
 }
 

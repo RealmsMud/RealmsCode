@@ -50,8 +50,6 @@ int Monster::updateCombat() {
 	Creature* target=0;
 	Player*	pTarget=0;
 	Monster* mTarget=0;
-	//ctag*	cp=0, *amp=0;
-	ctag   *amp=0;
 	char	atk[30];
 	int		n=1, rtn=0, yellchance=0, num=0, breathe=0;
 	int		x=0;
@@ -146,19 +144,8 @@ int Monster::updateCombat() {
 
 	if(mrand(1,100) < n) {
 		willCast = true;
-		amp = room->first_mon;
-		while(amp) {
-			if(amp->crt == this) {
-				amp = amp->next_tag;
-				continue;
-			}
-			if(amp->crt->flagIsSet(M_ANTI_MAGIC_AURA)) {
-				broadcast(NULL, room, "^B%M glows bright blue.", amp->crt);
-				antiMagic = true;
-				break;
-			}
-			amp = amp->next_tag;
-		}
+		if(room->checkAntiMagic(this))
+		    antiMagic = true
 	}
 	if(isUndead() && target->isEffected("undead-ward"))
 		willCast = false;
@@ -977,18 +964,9 @@ void Creature::clearAsEnemy() {
 	if(!getRoom())
 		return;
 
-	cp = getRoom()->first_mon;
-	Monster *mTarget = 0;
-	while(cp) {
-		if(!cp->crt) {
-			cp = cp->next_tag;
-			continue;
-		}
-		mTarget = cp->crt->getMonster();
-		mTarget->clearEnemy(this);
-		cp = cp->next_tag;
+	for(Monster* mons : getRoom()->monsters) {
+	    mons->clearEnemy(this);
 	}
-
 	return;
 }
 
@@ -1061,23 +1039,15 @@ void Player::checkArmor(int wear) {
 //*********************************************************************
 
 Creature *findFirstEnemyCrt(Creature *crt, Creature *pet) {
-	ctag	*cp=0;
-
 	if(!pet->getMaster())
 		return(crt);
 
-	cp = pet->getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt == pet) {
-			cp = cp->next_tag;
-			continue;
-		}
+	for(Monster* mons : pet->getRoom()->monsters) {
+	    if(mons == pet)
+	        continue;
+	    if(mons->getMonster()->isEnemy(pet->getMaster()) && !strcmp(mons->name, crt->name))
+	        return(mons);
 
-		if(cp->crt->getMonster()->isEnemy(pet->getMaster()) && !strcmp(cp->crt->name, crt->name)) {
-			return(cp->crt);
-		}
-
-		cp = cp->next_tag;
 	}
 
 	return(crt);

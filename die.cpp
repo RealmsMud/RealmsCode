@@ -1710,11 +1710,7 @@ int Creature::checkDieRobJail(Monster *killer, bool &freeTarget) {
 		pVictim->knockUnconscious(39);
 		broadcast(pVictim->getSock(), room, "%M knocked %N unconscious.", killer, pVictim);
 		pVictim->hp.setCur( pVictim->hp.getMax()/20);
-		rcp = room->first_mon;
-		while(rcp) {
-			rcp->crt->getMonster()->clearEnemy(pVictim);
-			rcp = rcp->next_tag;
-		}
+		pVictim->clearAsEnemy();
 		killer->clearEnemy(pVictim);
 		if(killer->flagIsSet(M_POLICE)) {
 			broadcast(pVictim->getSock(), room, "%M picks %N up and hauls %s off.",killer, pVictim, pVictim->himHer());
@@ -2179,12 +2175,10 @@ void Player::die(DeathType dt) {
 //********************************************************************
 
 void Creature::clearAsPetEnemy() {
-	ctag *cp = getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt->isPet())
-			cp->crt->getMonster()->clearEnemy(this);
-		cp = cp->next_tag;
-	}
+    for(Monster* mons : getRoom()->monsters) {
+        if(mons->isPet())
+            mons->clearEnemy(this);
+    }
 }
 
 //********************************************************************

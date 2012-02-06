@@ -24,6 +24,9 @@
 
 #include <sstream>
 
+bool Player::operator <(const Player& t) const {
+    return(strcmp(this->name, t.name) < 0);
+}
 
 //*********************************************************************
 //						regenModifyDuration

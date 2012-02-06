@@ -86,31 +86,31 @@ bool Move::tooFarAway(Creature *player, Creature *target, bstring action) {
 //						broadcast
 //*********************************************************************
 
-void Move::broadcast(Creature* player, BaseRoom* room, bool ordinal, bstring exit, bool hiddenExit) {
+void Move::broadcast(Creature* player, Container* container, bool ordinal, bstring exit, bool hiddenExit) {
 	bstring strAction = Move::getString(player, ordinal, exit);
 	bool noShow = (player->pFlagIsSet(P_DM_INVIS));
 
 	if(!noShow) {
 		if(player->isMonster() || (player->isPlayer() && !player->flagIsSet(P_MISTED))) {
 			if(hiddenExit)
-				broadcast(player->getSock(), room, "%M slips out of sight.", player);
+				broadcast(player->getSock(), container, "%M slips out of sight.", player);
 			else
-				broadcast(player->getSock(), room, "%M %s %s^x.", player, strAction.c_str(), exit.c_str());
+				broadcast(player->getSock(), container, "%M %s %s^x.", player, strAction.c_str(), exit.c_str());
 		} else if(player->flagIsSet(P_MISTED) && !player->flagIsSet(P_DM_INVIS)) {
 			if(hiddenExit)
-				broadcast(player->getSock(), room, "A light mist slips out of sight.");
+				broadcast(player->getSock(), container, "A light mist slips out of sight.");
 			else
-				broadcast(player->getSock(), room, "A light mist %s %s^x.", strAction.c_str(), exit.c_str());
+				broadcast(player->getSock(), container, "A light mist %s %s^x.", strAction.c_str(), exit.c_str());
 		}
 	}
 
 	if(noShow || hiddenExit) {
 		if(player->isDm())
-			broadcast(isDm, player->getSock(), room, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
+			broadcast(isDm, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
 		if(player->getClass() == CARETAKER)
-			broadcast(isCt, player->getSock(), room, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
+			broadcast(isCt, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
 		if(!player->isCt())
-			broadcast(isStaff, player->getSock(), room, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
+			broadcast(isStaff, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
 	}
 }
 
@@ -357,19 +357,12 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
 
 	// This is handled here and not in canEnter. If it were in canEnter,
 	// they wouldn't be able to flee past the monster.
-	ctag *cp = player->getRoom()->first_mon;
-	while(cp) {
-		Monster* mon = cp->crt->getMonster();
-		if(	mon->flagIsSet(M_BLOCK_EXIT) &&
-			mon->isEnemy(player) &&
-			mon->canSee(player))
-		{
-			player->print("%M blocks your exit.\n", mon);
-			return(false);
-		}
-		cp = cp->next_tag;
+	for(Monster* mons : player->getRoom()->monsters) {
+        if( mons->flagIsSet(M_BLOCK_EXIT) && mons->isEnemy(player) && mons->canSee(player)) {
+            player->print("%M blocks your exit.\n", mons);
+            return(false);
+        }
 	}
-
 
 	if(	(exit->flagIsSet(X_NEEDS_CLIMBING_GEAR) || exit->flagIsSet(X_CLIMBING_GEAR_TO_REPEL)) &&
 	    !player->isEffected("levitate") &&
@@ -701,14 +694,12 @@ bstring Move::getString(Creature* creature, bool ordinal, bstring exit) {
 
 void Move::checkFollowed(Player* player, Exit* exit, BaseRoom* room, std::list<Creature*> *followers) {
 	Monster *target=0;
-	ctag	*cp=0;
 	if(!room)
 		return;
 
-	cp = room->first_mon;
-	while(cp) {
-		target = (Monster*)cp->crt;
-		cp = cp->next_tag;
+	MonsterSet::iterator mIt = room->monsters.begin();
+	while(mIt != room->monsters.end()) {
+		target = (*mIt++);
 
 		if(!target->flagIsSet(M_FOLLOW_ATTACKER) || target->flagIsSet(M_DM_FOLLOW))
 			continue;
@@ -1333,8 +1324,6 @@ int cmdOpen(Player* player, cmd* cmnd) {
 
 int cmdClose(Player* player, cmd* cmnd) {
 	Exit	*exit=0;
-	ctag	*cp=0;
-
 
 	player->clearFlag(P_AFK);
 
@@ -1369,13 +1358,11 @@ int cmdClose(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	cp = player->getRoom()->first_ply;
-	while(cp) {
-		if(cp->crt->inCombat()) {
+	for(Player* ply : player->getRoom()->players) {
+		if(ply->inCombat()) {
 			player->print("You cannot do that right now.\n");
 			return(0);
 		}
-		cp = cp->next_tag;
 	}
 
 	if(exit->isWall("wall-of-force")) {

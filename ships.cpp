@@ -240,10 +240,9 @@ void ShipExit::removeExit() {
 		return;
 
 	// kill all raiders
-	cp = newRoom->first_mon;
-	while(cp) {
-		raider = cp->crt->getMonster();
-		cp = cp->next_tag;
+	MonsterSet::iterator mIt = newRoom->monsters.begin();
+	while(mIt != newRoom->monsters.end()) {
+		raider = (*mIt++);
 
 		if(raider && raider->flagIsSet(M_RAIDING)) {
 			broadcast(NULL, newRoom, "%1M just %s away.", raider, Move::getString(raider).c_str());

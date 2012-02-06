@@ -336,11 +336,10 @@ int get_steal_chance(Player* player, Creature* target, Object* object) {
 // this function allows a player to steal from a monster or another player
 
 int cmdSteal(Player* player, cmd* cmnd) {
-	Creature* target=0, *bystander=0;
-	Monster	*mTarget=0, *assist=0;
+	Creature* target=0;
+	Monster	*mTarget=0;
 	Player* pTarget=0;
 	BaseRoom* room = player->getRoom();
-	ctag		*ap=0, *cp=0;
 	Object		*object=0;
 	long		i=0, t = time(0);
 	int			cantSteal=0;
@@ -541,10 +540,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 		     room->fullName().c_str());
 
 		// Other people in the room will possibly notice what's going on.
-		cp = room->first_ply;
-		while(cp) {
-			bystander = cp->crt;
-			cp = cp->next_tag;
+		for(Player* bystander : room->players ) {
 
 			// We only want to test bystanders.
 			if(bystander == player || bystander == target)
@@ -596,10 +592,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 		// Assisting monsters will now all watch one another's backs against stealing.
 		// If thief steals from one, others in room might notice and attack.
 		if(mTarget && !player->flagIsSet(P_DM_INVIS)) {
-			ap = room->first_mon;
-			while(ap) {
-				assist = ap->crt->getMonster();
-				ap = ap->next_tag;
+		    for(Monster* assist : room->monsters) {
 
 				// Victim doesn't assist itself
 				if(!assist || assist == mTarget)

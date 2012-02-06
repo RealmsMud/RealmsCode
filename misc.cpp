@@ -1129,12 +1129,9 @@ void Creature::stun(int delay) {
 
 int	numEnemyMonInRoom(Creature* player) {
 	int		count=0;
-	ctag	*cp = player->getRoom()->first_mon;
-
-	while(cp) {
-		if(cp->crt->getMonster()->isEnemy(player))
-			count++;
-		cp = cp->next_tag;
+	for(Monster* mons : player->getRoom()->monsters) {
+        if(mons->getMonster()->isEnemy(player))
+            count++;
 	}
 
 	return(count);
@@ -1296,7 +1293,7 @@ bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int 
 		}
 
 		if(findWhere & FIND_MON_ROOM) {
-			if(findCrt(player, player->getRoom()->first_mon, findFlags, str, val, &match, (Creature **)target)) {
+			if(findCrt<Monster*, MonsterPtrLess>(player, player->getRoom()->monsters, findFlags, str, val, &match, (Creature **)target)) {
 				*targetType = MONSTER;
 				found = true;
 				break;
@@ -1304,7 +1301,7 @@ bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int 
 		}
 
 		if(findWhere & FIND_PLY_ROOM) {
-			if(findCrt(player, player->getRoom()->first_ply, findFlags, str, val, &match, (Creature **)target)) {
+			if(findCrt<Player*, PlayerPtrLess>(player, player->getRoom()->players, findFlags, str, val, &match, (Creature **)target)) {
 				*targetType = PLAYER;
 				found = true;
 				break;

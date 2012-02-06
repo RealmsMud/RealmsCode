@@ -490,7 +490,6 @@ int cmdSing(Creature* creature, cmd* cmnd) {
 int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) {
 	int		len=0, ret=0;
 	int		monsters=0, players=0;
-	ctag	*cp=0;
 	char	lastname[80];
 	int		count=0;
 	int		something_died=0;
@@ -522,23 +521,22 @@ int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) 
 	}
 	cmnd->num = 3;
 	if(monsters) {
-		cp = player->getRoom()->first_mon;
+	    MonsterSet::iterator mIt = player->getRoom()->monsters.begin();
 		lastname[0] = 0;
-		while(cp) {
+        while(mIt != player->getRoom()->monsters.end()) {
+            Monster* mons = (*mIt++);
 			// skip caster's pet
-			if(cp->crt->isPet() && cp->crt->getMaster() == player) {
-				cp = cp->next_tag;
+			if(mons->isPet() && mons->getMaster() == player) {
 				continue;
 			}
-			if(lastname[0] && !strncmp(cp->crt->name, lastname, 79)) {
+			if(lastname[0] && !strncmp(mons->name, lastname, 79)) {
 				count++;
 			} else {
 				count = 1;
 			}
-			strncpy(cmnd->str[2], cp->crt->name, 25);
+			strncpy(cmnd->str[2], mons->name, 25);
 			cmnd->val[2] = count;
-			strncpy(lastname, cp->crt->name, 79);
-			cp = cp->next_tag;
+			strncpy(lastname, mons->name, 79);
 			ret = songOffensive(player, cmnd, songname, oso);
 			if(ret == 0)
 				return(found_something);
@@ -551,23 +549,22 @@ int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) 
 		}
 	}
 	if(players) {
-		cp = player->getRoom()->first_ply;
-		lastname[0] = 0;
-		while(cp) {
+        PlayerSet::iterator pIt = player->getRoom()->players.begin();
+        lastname[0] = 0;
+        while(pIt != player->getRoom()->players.end()) {
+            Player* ply = (*pIt++);
 			// skip self
-			if(cp->crt == player) {
-				cp = cp->next_tag;
+			if(ply == player) {
 				continue;
 			}
-			if(lastname[0] && !strncmp(cp->crt->name, lastname, 79)) {
+			if(lastname[0] && !strncmp(ply->name, lastname, 79)) {
 				count++;
 			} else {
 				count = 1;
 			}
-			strncpy(cmnd->str[2], cp->crt->name, 25);
+			strncpy(cmnd->str[2], ply->name, 25);
 			cmnd->val[2] = count;
-			strncpy(lastname, cp->crt->name, 79);
-			cp = cp->next_tag;
+			strncpy(lastname, ply->name, 79);
 			ret = songOffensive(player, cmnd, songname, oso);
 			if(ret == 0)
 				return(found_something);
@@ -779,22 +776,19 @@ int songHeal(Player* player, cmd* cmnd) {
 		heal += mrand(5, 10);
 	}
 
-	cp = player->getRoom()->first_ply;
-	while(cp) {
-		if(cp->crt->getClass() != LICH) {
-			if(cp->crt != player)
-				cp->crt->print("%M's song rejuvinates you.\n", player);
-			player->doHeal(cp->crt, heal);
+	for(Player* ply : player->getRoom()->players) {
+		if(ply->getClass() != LICH) {
+			if(ply != player)
+				ply->print("%M's song rejuvinates you.\n", player);
+			player->doHeal(ply, heal);
 		}
-		cp = cp->next_tag;
 	}
-	cp = player->getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt->getClass() != LICH && cp->crt->isPet()) {
-			cp->crt->print("%M's song rejuvinates you.\n", player);
-			player->doHeal(cp->crt, heal);
+
+	for(Monster* mons : player->getRoom()->monsters) {
+		if(mons->getClass() != LICH && mons->isPet()) {
+			mons->print("%M's song rejuvinates you.\n", player);
+			player->doHeal(mons, heal);
 		}
-		cp = cp->next_tag;
 	}
 
 	return(1);
@@ -817,23 +811,18 @@ int songMPHeal(Player* player, cmd* cmnd) {
 		player->print("The room's magical properties increase the power of your song.\n");
 		heal += mrand(5, 10);
 	}
-
-	cp = player->getRoom()->first_ply;
-	while(cp) {
-		if(cp->crt->hasMp()) {
-			if(cp->crt != player)
-				cp->crt->print("%M's song mentally revitalizes you.\n", player);
-			cp->crt->mp.increase(heal);
+    for(Player* ply : player->getRoom()->players) {
+		if(ply->hasMp()) {
+			if(ply != player)
+				ply->print("%M's song mentally revitalizes you.\n", player);
+			ply->mp.increase(heal);
 		}
-		cp = cp->next_tag;
 	}
-	cp = player->getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt->hasMp() && cp->crt->isPet()) {
-			cp->crt->print("%M's song mentally revitalizes you.\n", player);
-			cp->crt->mp.increase(heal);
+    for(Monster* mons : player->getRoom()->monsters) {
+		if(mons->hasMp() && mons->isPet()) {
+			mons->print("%M's song mentally revitalizes you.\n", player);
+			mons->mp.increase(heal);
 		}
-		cp = cp->next_tag;
 	}
 
 	return(1);
@@ -856,25 +845,20 @@ int songRestore(Player* player, cmd* cmnd) {
 		player->print("The room's magical properties increase the power of your song.\n");
 		heal += mrand(5, 10);
 	}
-
-	cp = player->getRoom()->first_ply;
-	while(cp) {
-		if(cp->crt->getClass() != LICH) {
-			if(cp->crt != player)
-				cp->crt->print("%M's song restores your spirits.\n", player);
-			player->doHeal(cp->crt, heal);
-			cp->crt->mp.increase(heal/2);
+    for(Player* ply : player->getRoom()->players) {
+		if(ply->getClass() != LICH) {
+			if(ply != player)
+				ply->print("%M's song restores your spirits.\n", player);
+			player->doHeal(ply, heal);
+			ply->mp.increase(heal/2);
 		}
-		cp = cp->next_tag;
 	}
-	cp = player->getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt->getClass() != LICH && cp->crt->isPet()) {
-			cp->crt->print("%M's song restores your spirits.\n", player);
-			player->doHeal(cp->crt, heal);
-			cp->crt->mp.increase(heal/2);
+    for(Monster* mons : player->getRoom()->monsters) {
+		if(mons->getClass() != LICH && mons->isPet()) {
+			mons->print("%M's song restores your spirits.\n", player);
+			player->doHeal(mons, heal);
+			mons->mp.increase(heal/2);
 		}
-		cp = cp->next_tag;
 	}
 
 	return(1);
@@ -885,28 +869,22 @@ int songRestore(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int songBless(Player* player, cmd* cmnd) {
-	ctag    *cp=0;
-
 	player->print("You sing a song of holiness.\n");
 
 	int duration = 600;
 	if(player->getRoom()->magicBonus())
 		duration += 300L;
 
-	cp = player->getRoom()->first_ply;
-	while(cp) {
-		if(cp->crt != player)
-			cp->crt->print("%M sings a song of holiness.\n", player);
-		cp->crt->addEffect("bless", duration, 1, player, true, player);
-		cp = cp->next_tag;
+    for(Player* ply : player->getRoom()->players) {
+		if(ply != player)
+			ply->print("%M sings a song of holiness.\n", player);
+		ply->addEffect("bless", duration, 1, player, true, player);
 	}
-	cp = player->getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt->isPet()) {
-			cp->crt->print("%M sings a song of holiness.\n", player);
-			cp->crt->addEffect("bless", duration, 1, player, true, player);
+    for(Monster* mons : player->getRoom()->monsters) {
+		if(mons->isPet()) {
+			mons->print("%M sings a song of holiness.\n", player);
+			mons->addEffect("bless", duration, 1, player, true, player);
 		}
-		cp = cp->next_tag;
 	}
 
 	if(player->getRoom()->magicBonus())
@@ -919,28 +897,22 @@ int songBless(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int songProtection(Player* player, cmd* cmnd) {
-	ctag    *cp=0;
-
 	player->print("You sing a song of protection.\n");
 	int duration = MAX(300, 1200 + bonus(player->intelligence.getCur()) * 600);
 
 	if(player->getRoom()->magicBonus())
 		duration += 800L;
 
-	cp = player->getRoom()->first_ply;
-	while(cp) {
-		if(cp->crt != player)
-			cp->crt->print("%M sings a song of protection.\n", player);
-		cp->crt->addEffect("protection", duration, 1, player, true, player);
-		cp = cp->next_tag;
+    for(Player* ply : player->getRoom()->players) {
+		if(ply != player)
+			ply->print("%M sings a song of protection.\n", player);
+		ply->addEffect("protection", duration, 1, player, true, player);
 	}
-	cp = player->getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt->isPet()) {
-			cp->crt->print("%M sings a song of protection.\n", player);
-			cp->crt->addEffect("protection", duration, 1, player, true, player);
+    for(Monster* mons : player->getRoom()->monsters) {
+		if(mons->isPet()) {
+			mons->print("%M sings a song of protection.\n", player);
+			mons->addEffect("protection", duration, 1, player, true, player);
 		}
-		cp = cp->next_tag;
 	}
 
 	if(player->getRoom()->magicBonus())

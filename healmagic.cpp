@@ -55,18 +55,16 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 	Player	*pHealer = healer->getPlayer();
 	int		level=0, statBns=0, base=0, mod=0, heal=0, dmg=0;
 	int		vigPet=0;
-	ctag	*cp=0;
 
 	if(target) {
 		/* Mobs with intelligence > 12 do not like people vigging their enemies and
 		   will attack them. -TC */
 		if(target != healer && target->isPlayer() && target->inCombat()) {
-			cp = target->getRoom()->first_mon;
-			while(cp) {
-				if(cp->crt->intelligence.getCur() > 120 && cp->crt->getMonster()->isEnemy(target))
-					cp->crt->getMonster()->addEnemy(healer);
-				cp = cp->next_tag;
-			}
+		    for(Monster* mons : target->getRoom()->monsters) {
+                if(mons->intelligence.getCur() > 120 && mons->getMonster()->isEnemy(target))
+                    mons->getMonster()->addEnemy(healer);
+
+		    }
 		}
 
 		if(target == healer)

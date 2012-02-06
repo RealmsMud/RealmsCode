@@ -872,34 +872,26 @@ void Server::updateActive(long t) {
 
 
 		if(monster->flagIsSet(M_KILL_PERMS)) {
-			ap = room->first_mon;
-			while(ap) {
-				if(ap->crt == monster) {
-					ap = ap->next_tag;
-					continue;
-				}
-				if(	ap->crt->flagIsSet(M_PERMENANT_MONSTER) &&
-					!monster->willAssist(ap->crt->getMonster()) &&
-					!monster->isEnemy(ap->crt)
+		    for(Monster* mons : room->monsters) {
+		        if(mons == monster)
+		            continue;
+				if(	mons->flagIsSet(M_PERMENANT_MONSTER) &&
+					!monster->willAssist(mons->getMonster()) &&
+					!monster->isEnemy(mons)
 				)
-					monster->addEnemy(ap->crt);
-				ap = ap->next_tag;
+					monster->addEnemy(mons);
 			}
 		}
 
 		if(monster->flagIsSet(M_KILL_NON_ASSIST_MOBS)) {
-			ap = room->first_mon;
-			while(ap) {
-				if(ap->crt == monster) {
-					ap = ap->next_tag;
-					continue;
-				}
-				if(	!monster->willAssist(ap->crt->getMonster()) &&
-					!ap->crt->flagIsSet(M_PERMENANT_MONSTER) &&
-					!monster->isEnemy(ap->crt)
+            for(Monster* mons : room->monsters) {
+                if(mons == monster)
+                    continue;
+				if(	!monster->willAssist(mons->getMonster()) &&
+					!mons->flagIsSet(M_PERMENANT_MONSTER) &&
+					!monster->isEnemy(mons)
 				)
-					monster->addEnemy(ap->crt);
-				ap = ap->next_tag;
+					monster->addEnemy(mons);
 			}
 		}
 

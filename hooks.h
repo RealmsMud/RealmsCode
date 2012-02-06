@@ -32,7 +32,9 @@ public:
 	void setParent(MudObject* target);
 
 	static bool run(MudObject* trigger1, const bstring& event1, MudObject* trigger2, const bstring& event2, const bstring& param1="", const bstring& param2="", const bstring& param3="");
-	static bool run(ctag* cp, MudObject* trigger, const bstring& event, const bstring& param1="", const bstring& param2="", const bstring& param3="");
+
+	template<class Type, class Compare>
+	static bool run(std::set<Type, Compare>& set, MudObject* trigger, const bstring& event, const bstring& param1="", const bstring& param2="", const bstring& param3="");
 
 	bool swap(Swap s);
 	bool swapIsInteresting(Swap s) const;
