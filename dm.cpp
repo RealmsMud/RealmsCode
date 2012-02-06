@@ -1919,7 +1919,6 @@ int dmCast(Player* player, cmd* cmnd) {
 	Player	*target=0;
 	char	rcast=0, *sp;
 	int     splno=0, c=0, fd = player->fd, i=0, silent=0;
-	ctag	*cp=0;
 
 	if(cmnd->num < 2) {
 		player->print("Globally cast what?\n");
@@ -1962,7 +1961,6 @@ int dmCast(Player* player, cmd* cmnd) {
 
 	if(rcast) {
 
-		cp = player->getRoom()->first_ply;
 
 		if(splno == S_WORD_OF_RECALL) {
 			BaseRoom *room = player->getRecallRoom().loadRoom(player);
@@ -1978,13 +1976,9 @@ int dmCast(Player* player, cmd* cmnd) {
 			log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->name, get_spell_name(splno),
 				player->getRoom()->fullName().c_str());
 
-			while(cp) {
-				target = cp->crt->getPlayer();
-				cp = cp->next_tag;
-
-				if(!target)
-					continue;
-
+	        PlayerSet::iterator pIt = player->getRoom()->players.begin();
+	        while(pIt != player->getRoom()->players.end()) {
+	            target = (*pIt++);
 				target->print("%M casts %s on you.\n", player, get_spell_name(splno));
 
 				target->deleteFromRoom();
@@ -2000,17 +1994,12 @@ int dmCast(Player* player, cmd* cmnd) {
 
 		player->print("You cast %s on everyone in the room.\n", get_spell_name(splno));
 
-		while(cp) {
-			target = cp->crt->getPlayer();
-			cp = cp->next_tag;
-
-			if(!target)
-				continue;
-			if(target->flagIsSet(P_DM_INVIS))
+		for(Player* ply : player->getRoom()->players.begin()) {
+			if(ply->flagIsSet(P_DM_INVIS))
 				continue;
 
-			target->print("%M casts %s on you.\n", player, get_spell_name(splno));
-			dmGlobalSpells(target, splno, false);
+			ply->print("%M casts %s on you.\n", player, get_spell_name(splno));
+			dmGlobalSpells(ply, splno, false);
 		}
 
 		broadcast(player->getSock(), player->getRoom(), "%M casts %s on everyone in the room.\n",

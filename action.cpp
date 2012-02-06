@@ -161,7 +161,6 @@ int plyAction(Player* player, cmd* cmnd) {
 
 int cmdAction(Creature* creature, cmd* cmnd) {
 	BaseRoom* room = creature->getRoom();
-	ctag	*cp=0;
 	Player	*player=0, *pTarget=0;
 	Creature* target=0;
 	Object	*object=0;
@@ -405,20 +404,18 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 		} else {
 			OUT("You let rip a nasty one.\n", "%M lets out a deadly fart.");
 			sock->print("You knock everyone in the room unconscious!\n");
-			cp = room->first_ply;
-			while(cp) {
-				if(	cp->crt != player &&
-					!cp->crt->flagIsSet(P_DM_INVIS) &&
-					!cp->crt->isUnconscious() &&
-					!cp->crt->isDm() &&
-					!cp->crt->inCombat()
+			for(Player* ply : room->players) {
+				if(	ply != player &&
+					!ply->flagIsSet(P_DM_INVIS) &&
+					!ply->isUnconscious() &&
+					!ply->isDm() &&
+					!ply->inCombat()
 				) {
-					cp->crt->print("%M's fart knocks you unconscious!\n", creature);
-					cp->crt->knockUnconscious(30);
-					broadcast(sock, cp->crt->getSock(), room,
-						"%M falls to the ground unconscious.", cp->crt);
+					ply->print("%M's fart knocks you unconscious!\n", creature);
+					ply->knockUnconscious(30);
+					broadcast(sock, ply->getSock(), room,
+						"%M falls to the ground unconscious.", ply);
 				}
-				cp = cp->next_tag;
 			}
 
 		}

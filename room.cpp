@@ -186,14 +186,12 @@ void Player::addToRoom(UniqueRoom* uRoom) {
 		checkRangeRestrict(uRoom->info))
 	{
 		// only log if another builder is not in the room
-		cp = uRoom->first_ply;
-		while(cp) {
-			if( cp->crt != this &&
-				cp->crt->getClass() == BUILDER
-			) {
+	    for(Player* ply : uRoom->players) {
+			if( ply != this &&
+				ply->getClass() == BUILDER)
+			{
 				builderInRoom = true;
 			}
-			cp = cp->next_tag;
 		}
 		if(!builderInRoom) {
 			checkBuilder(uRoom);
@@ -804,24 +802,19 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 	oStr << str << "^c";
 	str = "";
 
-	cp = room->first_ply;
-	n=0;
-	while(cp) {
-		pCreature = cp->crt->getConstPlayer();
-		cp = cp->next_tag;
-
-		if(pCreature != player && player->canSee(pCreature)) {
+	for(const Player* ply : room->players) {
+		if(ply != player && player->canSee(ply)) {
 
 			// other non-vis rules
 			if(!staff) {
-				if(pCreature->flagIsSet(P_HIDDEN)) {
+				if(ply->flagIsSet(P_HIDDEN)) {
 					// if we're using magic to see hidden creatures
 					if(!magicShowHidden)
 						continue;
 					if(pCreature->isEffected("resist-magic")) {
 						// if resisting magic, we use the strength of each spell to
 						// determine if they are seen
-						EffectInfo* effect = pCreature->getEffect("resist-magic");
+						EffectInfo* effect = ply->getEffect("resist-magic");
 						if(effect->getStrength() >= magicShowHidden)
 							continue;
 					}
@@ -834,32 +827,32 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 			else
 				oStr << "You see ";
 
-			oStr << pCreature->fullName();
+			oStr << ply->fullName();
 
-			if(pCreature->isStaff())
-				oStr << " the " << pCreature->getTitle();
+			if(ply->isStaff())
+				oStr << " the " << ply->getTitle();
 
-			if(pCreature->flagIsSet(P_SLEEPING))
+			if(ply->flagIsSet(P_SLEEPING))
 				oStr << "(sleeping)";
-			else if(pCreature->flagIsSet(P_UNCONSCIOUS))
+			else if(ply->flagIsSet(P_UNCONSCIOUS))
 				oStr << "(unconscious)";
-			else if(pCreature->flagIsSet(P_SITTING))
+			else if(ply->flagIsSet(P_SITTING))
 				oStr << "(sitting)";
 
-			if(pCreature->flagIsSet(P_AFK))
+			if(ply->flagIsSet(P_AFK))
 				oStr << "(afk)";
 
-			if(pCreature->isEffected("petrification"))
+			if(ply->isEffected("petrification"))
 				oStr << "(statue)";
 
 			if(staff) {
-				if(pCreature->flagIsSet(P_HIDDEN))
+				if(ply->flagIsSet(P_HIDDEN))
 					oStr << "(h)";
-				if(pCreature->isInvisible())
+				if(ply->isInvisible())
 					oStr << "(*)";
-				if(pCreature->flagIsSet(P_MISTED))
+				if(ply->flagIsSet(P_MISTED))
 					oStr << "(m)";
-				if(pCreature->flagIsSet(P_OUTLAW))
+				if(ply->flagIsSet(P_OUTLAW))
 					oStr << "(o)";
 			}
 			n++;

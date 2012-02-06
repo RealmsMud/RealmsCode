@@ -827,13 +827,11 @@ void Server::updateActive(long t) {
 			(monster->flagIsSet(M_DAY_ONLY) && !isDay()))
 		{
 
-			imp = room->first_ply;
-			while(imp) {
-				if(imp->crt->isStaff()) {
+		    for(Player* ply : room->players) {
+				if(ply->isStaff()) {
 					immort = 1;
 					break;
 				}
-				imp = imp->next_tag;
 			}
 			if(!immort) {
 				timetowander=1;
@@ -848,7 +846,7 @@ void Server::updateActive(long t) {
 		}
 
 		// fast wanderers and pets always stay active
-		if(	!room->first_ply &&
+		if(	room->players.empty() &&
 			!monster->flagIsSet(M_ALWAYS_ACTIVE) &&
 			!monster->flagIsSet(M_FAST_WANDER) &&
 			!monster->flagIsSet(M_FAST_TICK) &&
@@ -866,7 +864,6 @@ void Server::updateActive(long t) {
 
 		// Lets see if we'll attack any other monsters in this room
 		if(monster->checkEnemyMobs()) {
-//			cp = cp->next_tag;
 			continue;
 		}
 

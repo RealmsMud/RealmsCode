@@ -220,15 +220,10 @@ bool Creature::pulseSong(long t) {
 			}
 		}
 		if(targetType.equals("room", false)) {
-			ctag* cp = 0;
-			Creature* crt = 0;
-			cp = getRoom()->first_ply;
-			while(cp) {
-				crt = cp->crt;
-				cp = cp->next_tag;
-				if(getPlayer() && crt->getPlayer() && getPlayer()->isDueling(crt->getName()))
+		    for(Player* ply : getRoom()->players) {
+				if(getPlayer() && ply->getPlayer() && getPlayer()->isDueling(ply->getName()))
 					continue;
-				crt->addEffect(playing->getEffect(), -2, -2, this)->setDuration(playing->getDuration());
+				ply->addEffect(playing->getEffect(), -2, -2, this)->setDuration(playing->getDuration());
 			}
 		}
 	} else if(playing->getType() == "script") {

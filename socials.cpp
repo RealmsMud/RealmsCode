@@ -162,13 +162,7 @@ void BaseRoom::doSocialEcho(bstring str, const Creature* actor, const Creature* 
     str.Replace("*A-HIMHER*", actor->himHer());
     str.Replace("*A-HESHE*", actor->heShe());
 
-    ctag* cp;
-    cp = first_ply;
-    Player *ply;
-    while(cp) {
-        ply = cp->crt->getPlayer();
-        cp = cp->next_tag;
-
+    for(Player* ply : players) {
         if(ply == actor || ply == target) continue;
 
         bstring out = str;

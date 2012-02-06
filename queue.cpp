@@ -305,7 +305,7 @@ void Config::addRoomQueue(const CatRef cr, UniqueRoom** pRoom) {
 
 	while(roomQueue.size() > RQMAX) {
 		pullQueue(&qt, &roomHead, &roomTail);
-		if(roomQueue[qt->str].rom->first_ply) {
+		if(!roomQueue[qt->str].rom->players.empty()) {
 			putQueue(&qt, &roomHead, &roomTail);
 			continue;
 		}

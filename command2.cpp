@@ -602,22 +602,25 @@ int cmdBreak(Player* player, cmd* cmnd) {
 			player->printColor("You take %s%d^x damage from the release of magical energy!\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg);
 
 			if(splvl >= 4) {
-				cp = player->getRoom()->first_ply;
-				while(cp) {
-					if(cp->crt != player && !cp->crt->inCombat()) {
+			    PlayerSet::iterator pIt = player->getRoom()->players.begin();
+			    PlayerSet::iterator pEnd = player->getRoom()->players.end();
+
+			    Player* ply=0;
+				while(pIt != pEnd) {
+				    ply = (*pIt++);
+					if(ply != player && !ply->inCombat()) {
 						dmg = mrand(splvl*4, splvl*8);
 
-						if(cp->crt->chkSave(BRE, cp->crt, 0))
+						if(ply->chkSave(BRE, ply, 0))
 							dmg /= 2;
 
-						cp->crt->printColor("You take %s%d^x damage from the magical explosion!\n", cp->crt->customColorize("*CC:DAMAGE*").c_str(), dmg);
+						ply->printColor("You take %s%d^x damage from the magical explosion!\n", ply->customColorize("*CC:DAMAGE*").c_str(), dmg);
 
-						if(player->doDamage(cp->crt, dmg, CHECK_DIE)) {
+						if(player->doDamage(ply, dmg, CHECK_DIE)) {
 							cp = cp->next_tag;
 							continue;
 						}
 					}
-					cp = cp->next_tag;
 				}
 			}
 

@@ -182,36 +182,32 @@ void Monster::pulseTick(long t) {
 // clinics and such to make them more interactive. The chance to cast is random.
 
 void Monster::beneficialCaster() {
-	Player	*player=0;
 	ctag	*cp=0;
 	int		chance=0, heal=0;
 
-	cp = getRoom()->first_ply;
 
 	if(!cp || mp.getCur() < 2)
 		return;
 
-	while(cp) {
-		player = cp->crt->getPlayer();
-		cp = cp->next_tag;
+	for(Player* ply : getRoom()->players) {
 
-		if(	player->flagIsSet(P_DM_INVIS) ||
-			player->flagIsSet(P_HIDDEN) ||
-			player->isEffected("petrification") ||
-			!canSee(player)
+		if(	ply->flagIsSet(P_DM_INVIS) ||
+			ply->flagIsSet(P_HIDDEN) ||
+			ply->isEffected("petrification") ||
+			!canSee(ply)
 		)
 			continue;
 
 		// mobs won'twont cast on people in combat
-		if(player->inCombat())
+		if(ply->inCombat())
 			continue;
-		if(!Faction::willBeneCast(player, primeFaction))
+		if(!Faction::willBeneCast(ply, primeFaction))
 			continue;
 
-		if(player->flagIsSet(P_DOCTOR_KILLER)) {
+		if(ply->flagIsSet(P_DOCTOR_KILLER)) {
 			if(mrand(1,100)<=2) {
-				broadcast(player->getSock(), player->getRoom(), "%M spits, \"Doctor killer!\" at %N.", this, player);
-				player->print("%M spits, \"Doctor killer!\" at you.\n", this);
+				broadcast(ply->getSock(), ply->getRoom(), "%M spits, \"Doctor killer!\" at %N.", this, ply);
+				ply->print("%M spits, \"Doctor killer!\" at you.\n", this);
 			}
 			continue;
 		}
@@ -219,20 +215,20 @@ void Monster::beneficialCaster() {
 		if(spellIsKnown(S_SLOW_POISON)) {
 
 			chance = mrand(1,100);
-			if((mp.getCur() >= 8) && (chance < 10) && !player->isEffected("slow-poison") && player->isPoisoned()) {
-				if(player->immuneToPoison())
+			if((mp.getCur() >= 8) && (chance < 10) && !ply->isEffected("slow-poison") && player->isPoisoned()) {
+				if(ply->immuneToPoison())
 					continue;
 
-				if(player->isEffected("slow-poison"))
+				if(ply->isEffected("slow-poison"))
 					continue;
 
 
-				player->print("%M casts a slow-poison spell on you.\n", this);
-				broadcast(player->getSock(), player->getSock(), getRoom(),
+				ply->print("%M casts a slow-poison spell on you.\n", this);
+				broadcast(ply->getSock(), ply->getSock(), getRoom(),
 					"%M casts a slow-poison spell on %N.", this, player);
 				mp.decrease(8);
 
-				player->addPermEffect("slow-poison");
+				ply->addPermEffect("slow-poison");
 				continue;
 			}
 		}
@@ -240,34 +236,34 @@ void Monster::beneficialCaster() {
 		if(spellIsKnown(S_CURE_DISEASE)) {
 
 			chance = mrand(1,100);
-			if((mp.getCur() >= 12) && (chance < 10) && (player->isDiseased())) {
-				if(player->immuneToDisease())
+			if((mp.getCur() >= 12) && (chance < 10) && (ply->isDiseased())) {
+				if(ply->immuneToDisease())
 					continue;
 
-				player->print("%M casts a cure-disease spell on you.\n", this);
+				ply->print("%M casts a cure-disease spell on you.\n", this);
 
-				broadcast(player->getSock(), player->getSock(), getRoom(), "%M casts a cure-disease spell on %N.",
-					this, player);
+				broadcast(ply->getSock(), ply->getSock(), getRoom(), "%M casts a cure-disease spell on %N.",
+					this, ply);
 				mp.decrease(12);
 
-				player->cureDisease();
+				ply->cureDisease();
 				continue;
 			}
 		}
 
-		if(player->getClass() == LICH)
+		if(ply->getClass() == LICH)
 			continue;
-		if(player->flagIsSet(P_POISONED_BY_PLAYER) && mrand(1,100) >= 3)
+		if(ply->flagIsSet(P_POISONED_BY_PLAYER) && mrand(1,100) >= 3)
 			continue;
 
 		if(spellIsKnown(S_VIGOR)) {
 			chance = mrand(1,100);
-			if((mp.getCur() >= 2) && (chance <= 5) && (player->hp.getCur() < player->hp.getMax())) {
+			if((mp.getCur() >= 2) && (chance <= 5) && (ply->hp.getCur() < ply->hp.getMax())) {
 
-				player->print("%M casts a vigor spell on you.\n", this);
+				ply->print("%M casts a vigor spell on you.\n", this);
 
-				broadcast(player->getSock(), player->getSock(), getRoom(), "%M casts a vigor spell on %N.",
-					this, player);
+				broadcast(ply->getSock(), ply->getSock(), getRoom(), "%M casts a vigor spell on %N.",
+					this, ply);
 				mp.decrease(2);
 				heal = mrand(1,6) + bonus((int) piety.getCur());
 				heal = MAX(1, heal);
@@ -280,7 +276,7 @@ void Monster::beneficialCaster() {
 					(cClass == PALADIN)
 				)
 					heal += mrand(1,4);
-				player->hp.increase(heal);
+				ply->hp.increase(heal);
 				heal = 0;
 				continue;
 			}
@@ -289,12 +285,12 @@ void Monster::beneficialCaster() {
 		if(spellIsKnown(S_MEND_WOUNDS)) {
 
 			chance = mrand(1,100);
-			if((mp.getCur() >= 4) && (chance <= 5) && (player->hp.getCur() < (player->hp.getMax()/2))) {
+			if((mp.getCur() >= 4) && (chance <= 5) && (ply->hp.getCur() < (ply->hp.getMax()/2))) {
 
-				player->print("%M casts a mend-wounds spell on you.\n", this);
+				ply->print("%M casts a mend-wounds spell on you.\n", this);
 
-				broadcast(player->getSock(), player->getSock(), getRoom(), "%M casts a mend-wounds spell on %N.",
-					this, player);
+				broadcast(ply->getSock(), ply->getSock(), getRoom(), "%M casts a mend-wounds spell on %N.",
+					this, ply);
 				mp.decrease(4);
 				heal = mrand(6,9) + bonus((int) piety.getCur());
 				heal = MAX(1, heal);
@@ -306,7 +302,7 @@ void Monster::beneficialCaster() {
 					(cClass == PALADIN)
 				)
 					heal += mrand(1,4);
-				player->hp.increase(heal);
+				ply->hp.increase(heal);
 				heal = 0;
 				continue;
 			}
@@ -316,14 +312,14 @@ void Monster::beneficialCaster() {
 
 			chance = mrand(1,100);
 			if((mp.getCur() >= 25) && (chance < 3) && (cClass == CLERIC && clan != 12) &&
-			        (player->hp.getCur() < (player->hp.getMax()/4)) && (player->getLevel() >= 5)) {
+			        (ply->hp.getCur() < (ply->hp.getMax()/4)) && (ply->getLevel() >= 5)) {
 
-				player->print("%M casts a heal spell on you.\n", this);
+				ply->print("%M casts a heal spell on you.\n", this);
 
-				broadcast(player->getSock(), player->getSock(), getRoom(), "%M casts a heal spell on %N.", this, player);
+				broadcast(ply->getSock(), ply->getSock(), getRoom(), "%M casts a heal spell on %N.", this, ply);
 				mp.decrease(25);
 
-				player->hp.restore();
+				ply->hp.restore();
 				continue;
 			}
 		}
@@ -339,7 +335,6 @@ int Monster::mobDeathScream() {
 	long	i=0, t=0, n=0;
 	int		death=0;
 	Creature* target=0;
-	ctag*	cp=0;
 
 	i = lasttime[LT_BERSERK].ltime;
 	t = time(0);
@@ -359,12 +354,10 @@ int Monster::mobDeathScream() {
 
 	broadcast(NULL, getRoom(), "%M bellows out a deadly ear-splitting scream!!", this);
 
-	cp = getRoom()->first_ply;
-	while(cp) {
-//		death=0;
-		target = cp->crt;
-		cp = cp->next_tag;
-
+	PlayerSet::iterator pIt = getRoom()->players.begin();
+	PlayerSet::iterator pEnd = getRoom()->players.end();
+	while(pIt != pEnd) {
+	    target = (*pIt++);
 		n = mrand(1,15) + level; // Damage done.
 
 		if(target->isEffected("resist-magic"))
@@ -405,7 +398,6 @@ int Monster::mobDeathScream() {
 // designed for fast wandering, hunting mobs....like inquisitors. -- TC
 
 bool Monster::possibleEnemy() {
-	ctag	*cp=0;
 	bool	possible=0, nodetect=0;
 
 	ASSERTLOG(this);
@@ -417,20 +409,19 @@ bool Monster::possibleEnemy() {
 	)
 		return(0);
 
-	cp = getRoom()->first_ply;
-	while(cp) {
+	for(Player* ply : getRoom()->players) {
 		if(flagIsSet(M_AGGRESSIVE))
 			possible = true;
 		if(flagIsSet(M_STEAL_ALWAYS))
 			possible = true;
-		if(flagIsSet(M_AGGRESSIVE_GOOD) && cp->crt->getAlignment() > 99)
+		if(flagIsSet(M_AGGRESSIVE_GOOD) && ply->getAlignment() > 99)
 			possible = true;
-		if(flagIsSet(M_AGGRESSIVE_EVIL) && cp->crt->getAlignment() < -99)
+		if(flagIsSet(M_AGGRESSIVE_EVIL) && ply->getAlignment() < -99)
 			possible = true;
 
-		if(cp->crt->flagIsSet(P_HIDDEN))
+		if(ply->flagIsSet(P_HIDDEN))
 			nodetect = true;
-		if(!canSee(cp->crt))
+		if(!canSee(ply))
 			nodetect = true;
 
 		if(nodetect)
@@ -438,7 +429,6 @@ bool Monster::possibleEnemy() {
 
 		if(possible)
 			return(true);
-		cp = cp->next_tag;
 	}
 
 	return(possible);

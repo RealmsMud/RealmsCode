@@ -185,12 +185,9 @@ bool Monster::nearEnemy() const {
 //*********************************************************************
 
 bool Monster::nearEnmPly() const {
-	ctag	*cp = getRoom()->first_ply;
-
-	while(cp) {
-		if(isEnemy(cp->crt) && !cp->crt->flagIsSet(P_DM_INVIS))
+	for(Player* ply : getRoom()->players) {
+		if(isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS))
 			return(true);
-		cp = cp->next_tag;
 	}
 
 	return(false);

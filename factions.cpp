@@ -843,17 +843,13 @@ void Faction::worshipSocial(Monster *monster) {
 
 	// we've made sure everything is ok; let's continue
 	// with the actual work
-	ctag	*cp = monster->getRoom()->first_ply;
 	Player* player;
 	cmd		cmnd;
 
 	strcpy(cmnd.str[0], social.c_str());
 	cmnd.num = 2;
 	cmnd.val[1] = 1;
-	while(cp) {
-		player = cp->crt->getPlayer();
-		cp = cp->next_tag;
-
+	for(Player* player : monster->getRoom()->players) {
 		if(	mrand(1,100)>2 ||
 			!player ||
 			player->flagIsSet(P_UNCONSCIOUS) ||

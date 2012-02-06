@@ -260,16 +260,14 @@ void doSearch(Player* player, bool immediate) {
 		op = op->next_tag;
 	}
 
-	cp = room->first_ply;
-	while(cp) {
-		if(	cp->crt->flagIsSet(P_HIDDEN) &&
-			player->canSee(cp->crt) &&
-			mrand(1,100) <= (chance + searchMod(cp->crt->getSize()))
-		) {
+	for(Player* ply : room->players) {
+		if(	ply->flagIsSet(P_HIDDEN) &&
+			player->canSee(ply) &&
+			mrand(1,100) <= (chance + searchMod(ply->getSize())))
+		{
 			found = true;
-			player->print("You found %s hiding.\n", cp->crt->name);
+			player->print("You found %s hiding.\n", ply->name);
 		}
-		cp = cp->next_tag;
 	}
 
 	for(Monster* mons : room->monsters) {

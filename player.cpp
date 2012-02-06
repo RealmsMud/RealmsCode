@@ -1448,48 +1448,43 @@ int Player::getFallBonus() const {
 
 Player* lowest_piety(BaseRoom* room, bool invis) {
 	Creature* player=0;
-	ctag	*cp = room->first_ply;
 	int		totalpiety=0, pick=0;
 
-	if(!cp)
+	if(room->players.empty())
 		return(0);
 
-	while(cp) {
-		if(	cp->crt->flagIsSet(P_HIDDEN) ||
-			(	cp->crt->isInvisible() &&
+	for(Player* ply : room->players) {
+		if(	ply->flagIsSet(P_HIDDEN) ||
+			(	ply->isInvisible() &&
 				!invis
 			) ||
-			cp->crt->flagIsSet(P_DM_INVIS)
-		) {
-			cp = cp->next_tag;
+			ply->flagIsSet(P_DM_INVIS) )
+		{
 			continue;
 		}
-		totalpiety += MAX(1, (25 - cp->crt->piety.getCur()));
-		cp = cp->next_tag;
+		totalpiety += MAX(1, (25 - ply->piety.getCur()));
 	}
 
 	if(!totalpiety)
 		return(0);
 	pick = mrand(1, totalpiety);
 
-	cp = room->first_ply;
 	totalpiety = 0;
-	while(cp) {
-		if(	cp->crt->flagIsSet(P_HIDDEN) ||
-			(	cp->crt->isInvisible() &&
+
+    for(Player* ply : room->players) {
+		if(	ply->flagIsSet(P_HIDDEN) ||
+			(	ply->isInvisible() &&
 				!invis
 			) ||
-			cp->crt->flagIsSet(P_DM_INVIS)
-		) {
-			cp = cp->next_tag;
+			ply->flagIsSet(P_DM_INVIS) )
+		{
 			continue;
 		}
-		totalpiety += MAX(1, (25 - cp->crt->piety.getCur()));
+		totalpiety += MAX(1, (25 - ply->piety.getCur()));
 		if(totalpiety >= pick) {
-			player = cp->crt;
+			player = ply;
 			break;
 		}
-		cp = cp->next_tag;
 	}
 
 	return(player->getPlayer());

@@ -58,13 +58,11 @@ void teleport_trap(Player* player) {
 void rock_slide(Player* player) {
 	Player	*target=0;
 	int		dmg=0;
-	ctag	*cp=0;
 
-	cp = player->getRoom()->first_ply;
-
-	while(cp) {
-		target = cp->crt->getPlayer();
-		cp = cp->next_tag;
+	PlayerSet::iterator pIt = player->getRoom()->players.begin();
+	PlayerSet::iterator pEnd = player->getRoom()->players.end();
+	while(pIt != pEnd) {
+		target = (*pIt++);
 
 		if(!target)
 			continue;
@@ -478,19 +476,17 @@ int Player::doCheckTraps(UniqueRoom* room) {
 		print("Gas rapidly fills the room!\n");
 		broadcast(getSock(), getRoom(), "Gas rapidly fills the room!");
 
-		cp = getRoom()->first_ply;
-		while(cp) {
-			if(!cp->crt->chkSave(DEA,cp->crt,0)) {
-				if(!cp->crt->flagIsSet(P_RESIST_STUN)) {
-					cp->crt->print("Billowing white clouds surrounds you!\n");
-					cp->crt->print("You are stunned!\n");
-					cp->crt->stun(mrand(10, 18));
+		for(Player* ply : getRoom()->players) {
+			if(!ply->chkSave(DEA,ply,0)) {
+				if(!ply->flagIsSet(P_RESIST_STUN)) {
+					ply->print("Billowing white clouds surrounds you!\n");
+					ply->print("You are stunned!\n");
+					ply->stun(mrand(10, 18));
 				} else {
-					cp->crt->print("The billowing cloud of white gas has no effect on you.\n");
+					ply->print("The billowing cloud of white gas has no effect on you.\n");
 				}
 			} else
-				cp->crt->print("The billowing cloud of white gas has no effect on you.\n");
-			cp = cp->next_tag;
+				ply->print("The billowing cloud of white gas has no effect on you.\n");
 		}
 		break;
 
@@ -874,10 +870,11 @@ int Player::checkTraps(UniqueRoom* room, bool self, bool isEnter) {
 		}
 
 		// we loop through everyone in the room!
-		cp = room->first_ply;
-		while(cp) {
-			target = cp->crt->getPlayer();
-			cp = cp->next_tag;
+
+	    PlayerSet::iterator pIt = room->players.begin();
+	    PlayerSet::iterator pEnd = room->players.end();
+	    while(pIt != pEnd) {
+	        target = (*pIt++);
 			if(target)
 				target->doCheckTraps(room);
 		}

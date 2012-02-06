@@ -1671,7 +1671,6 @@ int dmKillAll(int type, int silent, int unconscious, int uncon_length) {
 
 int dmKill(Player* player, Player *victim, int type, int silent, int unconscious, int uncon_length) {
 	int		kill_room=0, no_limbo=0;
-	ctag	*cp=0;
 	BaseRoom *newRoom=0;
 
 	char filename[80];
@@ -1890,12 +1889,10 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
 		}
 	}
 
-
-	cp = victim->getRoom()->first_ply;
-	while(cp) {
-
-		player = cp->crt->getPlayer();
-		cp = cp->next_tag;
+	PlayerSet::iterator pIt = victim->getRoom()->players.begin();
+	PlayerSet::iterator pEnd = victim->getRoom()->players.end();
+	while(pIt != pEnd) {
+		player = (*pIt++);
 		if(!player || (player->isStaff() && player!=victim))
 			continue;
 

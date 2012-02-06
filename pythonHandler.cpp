@@ -30,31 +30,6 @@ int pythonRand(int a, int b) {
 
 namespace bp = boost::python;
 
-struct crt_tag_wrapper : crt_tag, bp::wrapper< crt_tag > {
-
-	crt_tag_wrapper( )
-	: crt_tag( )
-	  , bp::wrapper< crt_tag >(){
-		// null constructor
-	}
-
-	static ::Creature * get_crt(crt_tag const & inst ){
-		return inst.crt;
-	}
-
-	static void set_crt( crt_tag & inst, ::Creature * new_value ){
-		inst.crt = new_value;
-	}
-
-	static ::crt_tag * get_next_tag(crt_tag const & inst ){
-		return inst.next_tag;
-	}
-
-	static void set_next_tag( crt_tag & inst, ::crt_tag * new_value ){
-		inst.next_tag = new_value;
-	}
-
-};
 
 
 struct BaseRoom_wrapper : BaseRoom, bp::wrapper< BaseRoom > {
@@ -82,13 +57,6 @@ struct BaseRoom_wrapper : BaseRoom, bp::wrapper< BaseRoom > {
 	virtual ::Fishing const * getFishing(  ) const {
 		bp::override func_getFishing = this->get_override( "getFishing" );
 		return func_getFishing(  );
-	}
-
-	static ::ctag * get_first_ply(BaseRoom const & inst ){
-		return inst.first_ply;
-	}
-	static void set_first_ply( BaseRoom & inst, ::ctag * new_value ){
-		inst.first_ply = new_value;
 	}
 
 };
@@ -276,13 +244,6 @@ BOOST_PYTHON_MODULE(mud) {
 		.export_values()
 		;
 
-		bp::class_< crt_tag_wrapper, boost::noncopyable >( "crt_tag", bp::init< >() )
-			.add_property( "crt"
-						, bp::make_function( (::Creature * (*)( ::crt_tag const & ))(&crt_tag_wrapper::get_crt), return_value_policy<reference_existing_object>() )
-						, bp::make_function( (void (*)( ::crt_tag &,::Creature * ))(&crt_tag_wrapper::set_crt), bp::with_custodian_and_ward_postcall< 1, 2 >() ) )
-			.add_property( "next_tag"
-						, bp::make_function( (::crt_tag * (*)( ::crt_tag const & ))(&crt_tag_wrapper::get_next_tag), return_value_policy<reference_existing_object>() )
-						, bp::make_function( (void (*)( ::crt_tag &,::crt_tag * ))(&crt_tag_wrapper::set_next_tag), bp::with_custodian_and_ward_postcall< 1, 2 >() ) );
 
 	def("dice", &::dice);
 	def("rand", &::pythonRand);
@@ -398,10 +359,6 @@ BOOST_PYTHON_MODULE(MudObjects) {
 				, ( bp::arg("floor")=(bool)(true) ) );
 
 		}
-		BaseRoom_exposer.add_property( "first_ply"
-					, bp::make_function( (::ctag * (*)( ::BaseRoom const & ))(&BaseRoom_wrapper::get_first_ply), bp::return_internal_reference< >() )
-					, bp::make_function( (void (*)( ::BaseRoom &,::ctag * ))(&BaseRoom_wrapper::set_first_ply), bp::with_custodian_and_ward_postcall< 1, 2 >() ) );
-
 
 		BaseRoom_exposer.def("hasMagicBonus", &::BaseRoom::magicBonus)
 						.def("isForest", &::BaseRoom::isForest)

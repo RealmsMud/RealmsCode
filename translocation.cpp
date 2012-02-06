@@ -1631,41 +1631,36 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		broadcast(0, room, "^YThe %s^Y explodes violently as the dimensional tunnels converge!", exit->name);
 
-		Player* target=0;
-		ctag* cp = room->first_ply;
 		int dmg=0;
-		while(cp) {
-			target = cp->crt->getPlayer();
-			cp = cp->next_tag;
-
+		for(Player* ply : room->players) {
 			// more damage for caster
-			if(target->isStaff())
+			if(ply->isStaff())
 				dmg = 0;
-			else if(target == player)
+			else if(ply == player)
 				dmg = mrand(25,45);
 			else
 				dmg = mrand(5,25);
 
-			if(target->chkSave(BRE, player, -25))
+			if(ply->chkSave(BRE, player, -25))
 				dmg /= 2;
 
 
-			target->printColor("You are blasted with energy for %s%d^x damage!\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-			broadcast(target->getSock(), target->getRoom(), "%M is blasted with energy!", target);
-			broadcastGroup(false, target, "%M is blasted by energy for *CC:DAMAGE*%d^x damage, %s%s\n",
-				target, dmg, target->heShe(), target->getStatusStr(dmg));
+			ply->printColor("You are blasted with energy for %s%d^x damage!\n", ply->customColorize("*CC:DAMAGE*").c_str(), dmg);
+			broadcast(ply->getSock(), ply->getRoom(), "%M is blasted with energy!", ply);
+			broadcastGroup(false, ply, "%M is blasted by energy for *CC:DAMAGE*%d^x damage, %s%s\n",
+				ply, dmg, ply->heShe(), ply->getStatusStr(dmg));
 
-			target->hp.decrease(dmg);
+			ply->hp.decrease(dmg);
 
-			if(target->hp.getCur() < 1) {
+			if(ply->hp.getCur() < 1) {
 				// killing the owner of a portal will invalidate the exit
-				if(!portalDestroyed && exit->getPassPhrase() == target->name)
+				if(!portalDestroyed && exit->getPassPhrase() == ply->name)
 					portalDestroyed = true;
-				target->die(EXPLOSION);
-				if(target == player)
+				ply->die(EXPLOSION);
+				if(ply == player)
 					doMove = false;
 			} else {
-				if(target == player) {
+				if(ply == player) {
 					player->print("You are violently ejected from the room!\n\n");
 					broadcast(pPlayer->getSock(), room, "%M is violently ejected from the room!", player);
 				}

@@ -756,14 +756,11 @@ bool BaseRoom::isFull() const {
 // room and returns that number.
 
 int BaseRoom::countVisPly() const {
-	ctag	*cp;
 	int		num = 0;
 
-	cp = first_ply;
-	while(cp) {
-		if(!cp->crt->flagIsSet(P_DM_INVIS))
+	for(Player* ply : players) {
+		if(!ply->flagIsSet(P_DM_INVIS))
 			num++;
-		cp = cp->next_tag;
 	}
 
 	return(num);
@@ -777,7 +774,6 @@ int BaseRoom::countVisPly() const {
 // room and returns that number.
 
 int BaseRoom::countCrt() const {
-	ctag	*cp;
 	int	num = 0;
 
 	for(Monster* mons : monsters) {
@@ -805,11 +801,8 @@ int BaseRoom::getMaxMobs() const {
 //*********************************************************************
 
 void BaseRoom::wake(bstring str, bool noise) const {
-	ctag *cp = first_ply;
-
-	while(cp) {
-		cp->crt->wake(str, noise);
-		cp = cp->next_tag;
+    for(Player* ply : players) {
+		ply->wake(str, noise);
 	}
 }
 
@@ -1198,7 +1191,6 @@ void UniqueRoom::destroy() {
 
 void BaseRoom::expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelStaff) {
 	Player* target=0;
-	ctag*	cp = first_ply;
 	BaseRoom* newRoom=0;
 	UniqueRoom* uRoom=0;
 
@@ -1213,9 +1205,10 @@ void BaseRoom::expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelS
 		}
 	}
 
-	while(cp) {
-		target = cp->crt->getPlayer();
-		cp = cp->next_tag;
+	PlayerSet::iterator pIt = players.begin();
+	PlayerSet::iterator pEnd = players.end();
+	while(pIt != pEnd) {
+	    target = (*pIt++);
 
 		if(!expelStaff && target->isStaff())
 			continue;
@@ -1329,17 +1322,13 @@ void BaseRoom::doPrint(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, c
 	Player* target=0;
 	ctag	*cp=0;
 
-	cp = first_ply;
-	while(cp) {
-		target = cp->crt->getPlayer();
-		cp = cp->next_tag;
-
-		if(!hearBroadcast(target, ignore1, ignore2, showTo))
+	for(Player* ply : players) {
+		if(!hearBroadcast(ply, ignore1, ignore2, showTo))
 			continue;
-		if(target->flagIsSet(P_UNCONSCIOUS))
+		if(ply->flagIsSet(P_UNCONSCIOUS))
 			continue;
 
-		target->vprint(target->customColorize(fmt).c_str(), ap);
+		ply->vprint(ply->customColorize(fmt).c_str(), ap);
 
 	}
 }

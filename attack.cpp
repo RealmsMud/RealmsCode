@@ -1344,18 +1344,16 @@ Player* Monster::whoToAggro() const {
 		return(0);
 	}
 
-	ctag	*cp = myRoom->first_ply;
-	while(cp) {
-		if(canSee(cp->crt) && !cp->crt->flagIsSet(P_HIDDEN)) {
+	for(Player* ply : myRoom->players) {
+		if(canSee(ply) && !ply->flagIsSet(P_HIDDEN)) {
 
-			player = cp->crt->getPlayer();
+			player = ply->getPlayer();
 			if(willAggro(player)) {
 				total += MAX(1, 300 - player->piety.getCur());
 				players.push_back(player);
 			}
 
 		}
-		cp = cp->next_tag;
 	}
 	if(players.empty())
 		return(0);

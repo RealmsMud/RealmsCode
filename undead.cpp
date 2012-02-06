@@ -416,7 +416,6 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 int cmdRegenerate(Player* player, cmd* cmnd) {
 	int		chance=0, xtra=0, pasthalf=0;
 	long	i=0, t=0;
-	ctag	*cp=0;
 
 	if(!player->ableToDoCommand())
 		return(0);
@@ -465,11 +464,9 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
 		player->checkImprove("regenerate", true);
 		broadcast(player->getSock(), player->getRoom(), "%M regenerates.", player);
 
-		cp = player->getRoom()->first_ply;
-		while(cp) {
-			if(!player->isUndead())
-				cp->crt->print("You shiver from a sudden deathly coldness.\n");
-			cp = cp->next_tag;
+		for(Player* ply : player->getRoom()->players) {
+			if(!ply->isUndead())
+				ply->print("You shiver from a sudden deathly coldness.\n");
 		}
 
 		player->hp.increase(mrand(level+4,level*(5/2)+5));

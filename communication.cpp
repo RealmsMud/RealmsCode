@@ -398,18 +398,14 @@ int communicateWith(Player* player, cmd* cmnd) {
 
 	} else {
 
-		cp = player->getRoom()->first_ply;
-		while(cp) {
-			if(	cp->crt != player &&
-				cp->crt != target &&
-				!cp->crt->isEffected("blindness")
-			) {
-				if(cp->crt->getRace() == DARKELF || cp->crt->isStaff())
-					cp->crt->print("%M signed, \"%s\" to %N.\n", player, text.c_str(), target);
+	    for(Player* ply : player->getRoom()->players()) {
+			if(	ply != player && ply != target && !ply->isEffected("blindness"))
+			{
+				if(ply->getRace() == DARKELF || ply->isStaff())
+					ply->print("%M signed, \"%s\" to %N.\n", player, text.c_str(), target);
 				else
-					cp->crt->print("%M signed something in dark elven to %N.\n", player, target);
+					ply->print("%M signed something in dark elven to %N.\n", player, target);
 			}
-			cp = cp->next_tag;
 		}
 
 	}
@@ -510,7 +506,6 @@ int communicate(Creature* creature, cmd* cmnd) {
 	UniqueRoom	*new_rom=0;
 	int		i=0;
 	char	speak[35], lang, ooc_str[10];
-	ctag	*cp=0;
 	if(creature->isPet())
 		owner = creature->getMaster();
 	else
@@ -593,7 +588,6 @@ int communicate(Creature* creature, cmd* cmnd) {
 	    }
 
 	} else {
-		cp = creature->getRoom()->first_ply;
 		creature->unhide();
 
         if(chan->type == COM_EMOTE) {
@@ -616,25 +610,18 @@ int communicate(Creature* creature, cmd* cmnd) {
 
         }
 
-
-        while(cp) {
-            pTarget = cp->crt->getPlayer();
-            cp = cp->next_tag;
-
-            if(!pTarget)
-                continue;
-
+        for(Player* ply : creature->getRoom()->players) {
             if(chan->shout)
-                pTarget->wake("Loud noises disturb your sleep.", true);
+                ply->wake("Loud noises disturb your sleep.", true);
 
             // GT prints to the player!
-            if(pTarget == creature && chan->type != COM_GT)
+            if(ply == creature && chan->type != COM_GT)
                 continue;
 
-            if(pTarget->isGagging(creature->isPet() ? creature->getMaster()->name : creature->name))
+            if(ply->isGagging(creature->isPet() ? creature->getMaster()->name : creature->name))
                 continue;
 
-            commTarget(creature, pTarget, chan->type, chan->ooc, lang, text, speak, ooc_str, false);
+            commTarget(creature, ply, chan->type, chan->ooc, lang, text, speak, ooc_str, false);
         }
 
         if(chan->shout) {
@@ -653,8 +640,7 @@ int communicate(Creature* creature, cmd* cmnd) {
                 aRoom = 0;
                 new_rom = 0;
                 i=0;
-                cp=0;
-
+                PlayerSet::iterator pIt, pEnd;
                 // don't shout through closed doors
                 if(!exit->flagIsSet(X_CLOSED))
                     Move::getRoom(0, exit, &new_rom, &aRoom, true);
@@ -664,17 +650,18 @@ int communicate(Creature* creature, cmd* cmnd) {
                 if(aRoom) {
                     if(creature->area_room && aRoom == creature->area_room)
                         continue;
-                    cp = aRoom->first_ply;
+                    pIt = aRoom->players.begin();
+                    pEnd = aRoom->players.end();
                 } else if(new_rom) {
                     if(creature->parent_rom && new_rom == creature->parent_rom)
                         continue;
-                    cp = new_rom->first_ply;
+                    pIt = new_rom->players.begin();
+                    pEnd = new_rom->players.end();
                 } else
                     continue;
 
-                while(cp) {
-                    pTarget = cp->crt->getPlayer();
-                    cp = cp->next_tag;
+                while(pIt != pEnd) {
+                    pTarget = (*pIt++);
 
                     if(!pTarget)
                         continue;
@@ -1283,15 +1270,12 @@ void printForeignTongueMsg(BaseRoom *inRoom, Creature *talker) {
 	if(!lang)
 		return;
 
-	cp = inRoom->first_ply;
-	while(cp) {
-		if(cp->crt->languageIsKnown(lang) || cp->crt->isEffected("comprehend-languages") || cp->crt->isStaff()) {
+	for(Player* ply : inRoom->players) {
+		if(ply->languageIsKnown(lang) || ply->isEffected("comprehend-languages") || ply->isStaff()) {
 			cp = cp->next_tag;
 			continue;
 		}
-		cp->crt->print("%M says something in %s.\n", talker, get_language_adj(lang));
-
-		cp = cp->next_tag;
+		ply->print("%M says something in %s.\n", talker, get_language_adj(lang));
 	}
 }
 

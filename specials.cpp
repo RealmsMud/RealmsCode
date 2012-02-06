@@ -526,18 +526,13 @@ void SpecialAttack::printToRoom(BaseRoom* room, const bstring& str, Creature* at
 	if(str.empty())
 		return;
 
-	ctag* cp = room->first_ply;
-	Player* player=0;
 	bstring toPrint = "";
-	while(cp) {
-		player = cp->crt->getPlayer();
-		cp = cp->next_tag;
-
-		if(!player || player == target)
+	for(Player* ply : room->players) {
+		if(!ply || ply == target)
 			continue;
 
-		toPrint = modifyAttackString(str, player, attacker, target, dmg);
-		player->printColor("%s\n", toPrint.c_str());
+		toPrint = modifyAttackString(str, ply, attacker, target, dmg);
+		ply->printColor("%s\n", toPrint.c_str());
 	}
 
 }

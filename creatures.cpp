@@ -66,17 +66,14 @@ bool Creature::canSee(const BaseRoom* room, bool p) const {
 		// there are several sources of normal vision
 		bool	normal_sight = gConfig->getRace(race)->hasInfravision() ||
 	    	isUndead() || isEffected("lycanthropy") || (player && player->getLight());
-		ctag*	cp=0;
 
 		// if they can't see, maybe someone else in the room has light for them
 		if(!normal_sight) {
-			cp = room->first_ply;
-			while(cp) {
-				if(cp->crt->getPlayer()->getLight()) {
+		    for(Player* ply : room->players) {
+				if(ply->getPlayer()->getLight()) {
 					normal_sight = true;
 					break;
 				}
-				cp = cp->next_tag;
 			}
 		}
 

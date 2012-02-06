@@ -362,18 +362,15 @@ Creature *getRandomPlayer(BaseRoom *inRoom) {
 	if(!num)
 		return(0);
 	roll = mrand(1, num);
-	cp = inRoom->first_ply;
-	while(cp) {
-		if(cp->crt->flagIsSet(P_DM_INVIS)) {
-			cp = cp->next_tag;
+	for(Player* ply : inRoom->players) {
+		if(ply->flagIsSet(P_DM_INVIS)) {
 			continue;
 		}
 		count++;
 		if(count == roll) {
-			foundPly = cp->crt;
+			foundPly = ply;
 			break;
 		}
-		cp = cp->next_tag;
 	}
 
 	if(foundPly)
@@ -438,12 +435,10 @@ int Monster::doHarmfulAuras() {
 
 		if(!flagIsSet(M_FIRE_AURA + a))
 			continue;
-
-		cp = inRoom->first_ply;
-		while(cp) {
-			player = cp->crt;
-
-			cp = cp->next_tag;
+		PlayerSet::iterator pIt = inRoom->players.begin();
+		PlayerSet::iterator pEnd = inRoom->players.end();
+		while(pIt != pEnd) {
+			player = (*pIt++);
 
 			if(player->isEffected("petrification") || player->isCt())
 				continue;

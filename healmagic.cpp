@@ -1249,7 +1249,6 @@ int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splRoomVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
 	int		 heal=0;
-	ctag	*cp = player->getRoom()->first_ply, *cp_tmp=0;
 
 	if(spellData->how == POTION) {
 		player->print("The spell fizzles.\n");
@@ -1271,16 +1270,14 @@ int splRoomVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
 		player->print("\nThe room's magical properties increase the power of your spell\n");
 	}
 
-	while(cp) {
-		cp_tmp = cp->next_tag;
-		if(canCastHealing(player, cp->crt, false, false, false)) {
-			if(cp->crt != player)
-				cp->crt->print("%M casts vigor on you.\n", player);
-			player->doHeal(cp->crt, heal);
-			if(cp->crt->inCombat(false))
+	for(Player* ply : player->getRoom()->players) {
+		if(canCastHealing(player, ply, false, false, false)) {
+			if(ply != player)
+				ply->print("%M casts vigor on you.\n", player);
+			player->doHeal(ply, heal);
+			if(ply->inCombat(false))
 				player->smashInvis();
 		}
-		cp = cp_tmp;
 	}
 
 	return(1);

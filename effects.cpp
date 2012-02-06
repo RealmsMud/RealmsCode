@@ -1099,14 +1099,10 @@ bstring Creature::doReplace(bstring fmt, const MudObject* actor, const MudObject
 //*********************************************************************
 
 void BaseRoom::effectEcho(bstring fmt, const MudObject* actor, const MudObject* applier, Socket* ignore) {
-	ctag* cp = first_ply;
 	Socket* ignore2 = NULL;
 	if(actor->getConstCreature())
 		ignore2 = actor->getConstCreature()->getSock();
-	while(cp) {
-		const Creature *ply = cp->crt->getConstCreature();
-		cp = cp->next_tag;
-
+	for(const Player* ply : players) {
 		if(!ply || (ply->getSock() && (ply->getSock() == ignore || ply->getSock() == ignore2)) || ply->isUnconscious())
 			continue;
 

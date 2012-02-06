@@ -1970,7 +1970,6 @@ int cmdCommune(Player *player, cmd *cmnd) {
 	int		chance=0;
 	UniqueRoom*	uRoom=0;
 	AreaRoom* aRoom=0;
-	ctag	*cp=0;
 
 	player->clearFlag(P_AFK);
 
@@ -2029,57 +2028,57 @@ int cmdCommune(Player *player, cmd *cmnd) {
 				continue;
 			}
 
-			if(uRoom)
-				cp = uRoom->first_ply;
-			else
-				cp = aRoom->first_ply;
-			while(cp) {
-				if(cp->crt->isUndead() && !player->isCt()) {
-					cp = cp->next_tag;
+			PlayerSet::iterator pIt;
+			PlayerSet::iterator pEnd;
+			if(uRoom) {
+				pIt = uRoom->players.begin();
+				pEnd = uRoom->players.end();
+			}
+			else {
+				pIt = aRoom->players.begin();
+				pEnd = aRoom->players.end();
+			}
+			Player* ply;
+			while(pIt != pEnd) {
+			    ply = (*pIt++);
+				if(ply->isUndead() && !player->isCt())
 					continue;
-				}
 
-				if(cp->crt->flagIsSet(P_DM_INVIS) && !player->isDm()) {
-					cp = cp->next_tag;
+				if(ply->flagIsSet(P_DM_INVIS) && !player->isDm())
 					continue;
-				}
 
-				if(cp->crt->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt()) {
-					cp = cp->next_tag;
+				if(ply->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt())
 					continue;
-				}
 
-				player->print("   %M\n", cp->crt);
-				cp = cp->next_tag;
+				player->print("   %M\n", ply);
 			}
 
-			if(uRoom)
-				cp = uRoom->first_mon;
-			else
-				cp = aRoom->first_mon;
-			while(cp) {
-				if(cp->crt->isUndead() && !player->isCt()) {
-					cp = cp->next_tag;
+			MonsterSet::iterator mIt;
+			MonsterSet::iterator mEnd;
+            if(uRoom) {
+                mIt = uRoom->monsters.begin();
+                mEnd = uRoom->monsters.end();
+            }
+            else {
+                mIt = aRoom->monsters.begin();
+                mEnd = aRoom->monsters.end();
+            }
+			Monster* mons;
+			while(mIt != mEnd) {
+			    mons = (*mIt++);
+				if(mons->isUndead() && !player->isCt())
 					continue;
-				}
 
-				if(cp->crt->isPet() && !player->isCt()) {
-					cp = cp->next_tag;
+				if(mons->isPet() && !player->isCt())
 					continue;
-				}
 
-				if(cp->crt->isUndead() && !player->isCt()) {
-					cp = cp->next_tag;
+				if(mons->isUndead() && !player->isCt())
 					continue;
-				}
 
-				if(cp->crt->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt()) {
-					cp = cp->next_tag;
+				if(mons->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt())
 					continue;
-				}
 
-				player->print("   %s\n", cp->crt->name);
-				cp = cp->next_tag;
+				player->print("   %s\n", mons->name);
 			}
 		}
 		player->checkImprove("commune", true);

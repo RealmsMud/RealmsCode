@@ -571,7 +571,6 @@ void Server::updateAction(long t) {
 	Creature* victim=0;
 	Object	*object=0;
 	BaseRoom* room=0;
-	ctag	*vcp=0;
 	ttag	*act=0, *tact=0;
 	int		i=0, on_cmd=0, thresh=0;
 	int		xdir=0, num=0;
@@ -622,27 +621,27 @@ void Server::updateAction(long t) {
 							break;
 						case 'C': // test for a player with class
 						case 'R': // test for a player with race
-							for(vcp = room->first_ply; vcp; vcp = vcp->next_tag) {
+						    for(Player* ply : room->players) {
 								if(act->test_for == 'C')
-									if(vcp->crt->getClass() == act->arg1) {
+									if(ply->getClass() == act->arg1) {
 										if(monster->first_tlk->target)
 											delete[] monster->first_tlk->target;
-										monster->first_tlk->target = new char[strlen(vcp->crt->name)+1];
-										strcpy(monster->first_tlk->target, vcp->crt->name);
+										monster->first_tlk->target = new char[strlen(ply->name)+1];
+										strcpy(monster->first_tlk->target, ply->name);
 										act->success = 1;
 										break;
 									}
 								if(act->test_for == 'R')
-									if(vcp->crt->getRace() == act->arg1) {
+									if(ply->getRace() == act->arg1) {
 										if(monster->first_tlk->target)
 											delete monster->first_tlk->target;
-										monster->first_tlk->target = new char[strlen(vcp->crt->name)+1];
-										strcpy(monster->first_tlk->target, vcp->crt->name);
+										monster->first_tlk->target = new char[strlen(ply->name)+1];
+										strcpy(monster->first_tlk->target, ply->name);
 										act->success = 1;
 										break;
 									}
 							}
-							if(!vcp) {
+							if(!act->success) {
 								if(monster->first_tlk->target)
 									delete monster->first_tlk->target;
 								monster->first_tlk->target = 0;
@@ -999,14 +998,10 @@ void Server::clearAsEnemy(Player* player) {
 // This function will return 1 if anyone is in the room while dmInvis
 
 int BaseRoom::dmInRoom() const {
-	ctag *cp = first_ply;
-
-	while(cp) {
-		if(cp->crt->flagIsSet(P_DM_INVIS))
+    for(Player* ply : players) {
+		if(ply->flagIsSet(P_DM_INVIS))
 			return(1);
-		cp = cp->next_tag;
 	}
-
 	return(0);
 }
 

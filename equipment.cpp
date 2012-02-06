@@ -1317,18 +1317,16 @@ void get_all_rom(Creature* creature, char *item) {
 	str[0] = 0;
 
 	if(!player->isStaff()) {
-		cp = room->first_ply;
-		while(cp) {
-			if(	cp->crt != player &&
-				player->canSee(cp->crt) &&
-				!cp->crt->flagIsSet(P_HIDDEN) &&
-				!player->inSameGroup(cp->crt) &&
-				!cp->crt->isStaff()
-			) {
+	    for(Player* ply : room->players) {
+			if(	ply != player &&
+				player->canSee(ply) &&
+				!ply->flagIsSet(P_HIDDEN) &&
+				!player->inSameGroup(ply) &&
+				!ply->isStaff())
+			{
 				player->print("You cannot do that when someone else is in the room.\n");
 				return;
 			}
-			cp = cp->next_tag;
 		}
 	}
 
