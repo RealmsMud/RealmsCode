@@ -1049,7 +1049,6 @@ int dmAc(Player* player, cmd* cmnd) {
 
 int dmWipe(Player* player, cmd* cmnd) {
 //	Room* room=0;
-	//	ctag	*cp;
 	//otag	*op;
 //	int		a=0, fd = player->fd, low=0, high=0;
 
@@ -1994,7 +1993,7 @@ int dmCast(Player* player, cmd* cmnd) {
 
 		player->print("You cast %s on everyone in the room.\n", get_spell_name(splno));
 
-		for(Player* ply : player->getRoom()->players.begin()) {
+		for(Player* ply : player->getRoom()->players) {
 			if(ply->flagIsSet(P_DM_INVIS))
 				continue;
 

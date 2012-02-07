@@ -66,7 +66,7 @@ public:
     virtual ~Containable() {};
 
     bool addTo(Container* container);
-    bool remove();
+    bool removeFrom(void);
 
     void setParent(Container* container);
 

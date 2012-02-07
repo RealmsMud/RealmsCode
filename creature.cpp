@@ -40,50 +40,11 @@ bool Creature::inSameRoom(const Creature *b) const {
 }
 
 //*********************************************************************
-//						find_exact_crt
-//*********************************************************************
-// This function will attempt to locate a given creature within a given
-// list.  The first parameter contains a pointer to the creature doing
-// the search, the second contains a tag pointer to the first tag in
-// the list.  The third contains the match string, and the fourth
-// contains the number of times to match the string.
-
-Creature *find_exact_crt(const Creature* player, ctag *first_ct, char *str, int val) {
-	Creature* target=0;
-	ctag	*cp=0;
-	int		match=0;
-
-	ASSERTLOG( player );
-	ASSERTLOG( str );
-
-	if(!player || !str || !first_ct)
-		return(0);
-
-	cp = first_ct;
-	while(cp) {
-		target = cp->crt;
-		cp = cp->next_tag;
-
-		if(!target)
-			continue;
-		if(!player->canSee(target))
-			continue;
-
-		if(!strcmp(target->name, str)) {
-			match++;
-			if(match == val)
-				return(target);
-		}
-	}
-	return(0);
-}
-
-//*********************************************************************
 //						getFirstAggro
 //*********************************************************************
 
-Creature *getFirstAggro(Creature* creature, Creature* player) {
-	Creature *foundCrt=0;
+Monster *getFirstAggro(Monster* creature, Creature* player) {
+	Monster *foundCrt=0;
 
 	if(creature->isPlayer())
 		return(creature);
@@ -199,7 +160,6 @@ bool Monster::nearEnmPly() const {
 // Searches for a near enemy, excluding the current player being attacked.
 
 bool Monster::nearEnemy(const Creature* target) const {
-	ctag	*cp=0;
 	BaseRoom* room = getRoom();
 
 	for(Player* ply : room->players) {
@@ -1064,42 +1024,6 @@ int Player::displayCreature(Creature* target) const {
 }
 
 //*********************************************************************
-//						findCrt
-//*********************************************************************
-
-template<class Type, class Compare>
-int findCrt(Creature * player, std::set<Type, Compare>& set, int findFlags, char *str, int val, int* match, Creature ** target ) {
-	ctag *cp;
-	int found=0;
-
-	if(!player || !str || set.empty())
-		return(0);
-
-	for(Type crt : set) {
-		if(!crt) {
-			cp = cp->next_tag;
-			continue;
-		}
-		if(!player->canSee(crt)) {
-			cp = cp->next_tag;
-			continue;
-		}
-
-		if(keyTxtEqual(crt, str)) {
-			(*match)++;
-			if(*match == val) {
-				*target = crt;
-				found = 1;
-				break;
-			}
-		}
-
-		cp = cp->next_tag;
-	}
-	return(found);
-}
-
-//*********************************************************************
 //						checkSpellWearoff
 //*********************************************************************
 
@@ -1130,7 +1054,6 @@ bool Creature::canFlee() const {
 	bool	crtInRoom=false;
 	long	t=0;
 	int		i=0;
-	ctag*	cp=0;
 
 	if(isMonster()) {
 

@@ -591,7 +591,6 @@ int doMultiOffensive(Creature* player, Creature* target, int *found_something, i
 
 int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *spellname, osp_t *osp) {
 	Creature* target=0;
-	ctag	*cp=0;
 	int		monsters=0, players=0, len=0;
 	int		something_died=0, found_something=0;
 

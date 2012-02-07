@@ -162,7 +162,6 @@ int communicateWith(Player* player, cmd* cmnd) {
 	bstring text = "";
 	Player	*target=0;
 	int		i=0, found=0;
-	ctag	*cp=0;
 	char	ooc_str[10];
 
 	// reuse text
@@ -398,7 +397,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 
 	} else {
 
-	    for(Player* ply : player->getRoom()->players()) {
+	    for(Player* ply : player->getRoom()->players) {
 			if(	ply != player && ply != target && !ply->isEffected("blindness"))
 			{
 				if(ply->getRace() == DARKELF || ply->isStaff())
@@ -1260,7 +1259,6 @@ int cmdLanguages(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 void printForeignTongueMsg(BaseRoom *inRoom, Creature *talker) {
-	ctag		*cp = 0;
 	int			lang=0;
 
 	if(!talker || !inRoom)
@@ -1272,7 +1270,6 @@ void printForeignTongueMsg(BaseRoom *inRoom, Creature *talker) {
 
 	for(Player* ply : inRoom->players) {
 		if(ply->languageIsKnown(lang) || ply->isEffected("comprehend-languages") || ply->isStaff()) {
-			cp = cp->next_tag;
 			continue;
 		}
 		ply->print("%M says something in %s.\n", talker, get_language_adj(lang));

@@ -63,7 +63,6 @@ void Hooks::setParent(MudObject* target) {
 
 void Hooks::add(const bstring& event, const bstring& code) {
 	hooks.insert(std::pair<bstring,bstring>(event, code));
-	std::cout << "inserted " << event << " : " << code << std::endl;
 }
 
 //*********************************************************************
@@ -209,24 +208,5 @@ bool Hooks::run(MudObject* trigger1, const bstring& event1, MudObject* trigger2,
 		ran = true;
 	if(trigger2 && trigger2->hooks.execute(event2, trigger1, param1, param2, param3))
 		ran = true;
-	return(ran);
-}
-
-//*********************************************************************
-//						execute
-//*********************************************************************
-// For hooks that need to be run on a lot of people (skipping the trigger), run this
-
-
-template<class Type, class Compare>
-bool Hooks::run(std::set<Type, Compare>& set, MudObject* trigger, const bstring& event, const bstring& param1, const bstring& param2, const bstring& param3) {
-	bool ran=false;
-
-	for(Type crt : set) {
-	    if(crt != trigger) {
-	        if(crt->hooks.execute(event, trigger, param1, param2, param3))
-	            ran = true;
-	    }
-	}
 	return(ran);
 }

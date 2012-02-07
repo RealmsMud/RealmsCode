@@ -189,7 +189,6 @@ protected:
 
 class Area {
 protected:
-	//void	move(ctag *fp, AreaRoom* room);
 
 public:
 	Area();

@@ -44,8 +44,6 @@ public:
 	//xtag	*first_ext;		// Exits
 	ExitList exits;
 	otag	*first_obj;		// Items
-//	ctag	*first_mon;		// Monsters
-//	ctag	*first_ply;		// Players
 
 	char	misc[64]; 		// miscellaneous space
 
@@ -72,24 +70,24 @@ public:
 
 	int saveExitsXml(xmlNodePtr curNode) const;
 
-	Creature* findCreature(Creature* searcher, const cmd* cmnd, int num=1);
-
 	Creature* findCreaturePython(Creature* searcher, const bstring& name, bool monFirst = true, bool firstAggro = false, bool exactMatch = false );
 
-
+    Creature* findCreature(Creature* searcher, const cmd* cmnd, int num=1);
 	Creature* findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst = true, bool firstAggro = false, bool exactMatch = false);
-	Creature* findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& retVal);
+	Creature* findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match);
 
 
 
 	Monster* findMonster(Creature* searcher, const cmd* cmnd, int num=1);
 	Monster* findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro = false, bool exactMatch = false);
+	Monster* findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match);
 	Player* findPlayer(Creature* searcher, const cmd* cmnd, int num=1);
 	Player* findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch = false);
+	Player* findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match);
 
 	MudObject* findTarget(Creature* searcher, const cmd* cmnd, int num=1);
 	MudObject* findTarget(Creature* searcher,  const bstring& name, const int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false);
-	MudObject* findTarget(Creature* searcher,  const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& retVal);
+	MudObject* findTarget(Creature* searcher,  const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match);
 
 	void doSocialEcho(bstring str, const Creature* actor, const Creature* target = null);
 

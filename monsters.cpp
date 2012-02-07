@@ -182,11 +182,10 @@ void Monster::pulseTick(long t) {
 // clinics and such to make them more interactive. The chance to cast is random.
 
 void Monster::beneficialCaster() {
-	ctag	*cp=0;
 	int		chance=0, heal=0;
 
 
-	if(!cp || mp.getCur() < 2)
+	if(mp.getCur() < 2)
 		return;
 
 	for(Player* ply : getRoom()->players) {
@@ -215,7 +214,7 @@ void Monster::beneficialCaster() {
 		if(spellIsKnown(S_SLOW_POISON)) {
 
 			chance = mrand(1,100);
-			if((mp.getCur() >= 8) && (chance < 10) && !ply->isEffected("slow-poison") && player->isPoisoned()) {
+			if((mp.getCur() >= 8) && (chance < 10) && !ply->isEffected("slow-poison") && ply->isPoisoned()) {
 				if(ply->immuneToPoison())
 					continue;
 
@@ -225,7 +224,7 @@ void Monster::beneficialCaster() {
 
 				ply->print("%M casts a slow-poison spell on you.\n", this);
 				broadcast(ply->getSock(), ply->getSock(), getRoom(),
-					"%M casts a slow-poison spell on %N.", this, player);
+					"%M casts a slow-poison spell on %N.", this, ply);
 				mp.decrease(8);
 
 				ply->addPermEffect("slow-poison");

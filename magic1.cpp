@@ -1186,7 +1186,6 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 	int		(*fn)(SpellFn);
 	bool	dimensionalFailure=false;
 	int		match=0, n=0, c=0;
-	ctag	*cp=0;
 	SpellData data;
 
 	if(!player->ableToDoCommand())

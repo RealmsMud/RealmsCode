@@ -195,7 +195,6 @@ bool canSearch(const Player* player) {
 void doSearch(Player* player, bool immediate) {
 	BaseRoom* room = player->getRoom();
 	otag	*op=0;
-	ctag	*cp=0;
 	int		chance=0;
 	bool	found=false, detectMagic = player->isEffected("detect-magic");
 
@@ -899,7 +898,6 @@ bool isValidShop(const UniqueRoom* shop, const UniqueRoom* storage);
 int cmdShoplift(Player* player, cmd* cmnd) {
 	UniqueRoom	*room=0, *storage=0;
 	Object	*object=0, *object2=0;
-	ctag	*cp=0;
 	int		chance=0, guarded=0;
 
 
@@ -1116,7 +1114,7 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 			if(mons->flagIsSet(M_PERMENANT_MONSTER)) {
 				if(!storage->players.empty())
 					broadcast(mons->getSock(), mons->getRoom(),
-						"%M runs out after a shoplifter.", tmp_crt);
+						"%M runs out after a shoplifter.", mons);
 				else
 					gServer->addActive(mons);
 				mons->clearFlag(M_PERMENANT_MONSTER);  // This is all done to prevent people from getting

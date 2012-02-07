@@ -763,7 +763,6 @@ int songFail(Player* player) {
 //*********************************************************************
 
 int songHeal(Player* player, cmd* cmnd) {
-	ctag	*cp=0;
 	int 	 heal=0;
 
 	player->print("You sing a song of healing.\n");
@@ -799,7 +798,6 @@ int songHeal(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int songMPHeal(Player* player, cmd* cmnd) {
-	ctag    *cp=0;
 	int      heal=0;
 
 	player->print("You sing a song of magic restoration.\n");
@@ -833,7 +831,6 @@ int songMPHeal(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int songRestore(Player* player, cmd* cmnd) {
-	ctag    *cp=0;
 	int      heal=0;
 
 	player->print("You sing a song of restoration.\n");

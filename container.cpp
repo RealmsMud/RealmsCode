@@ -36,19 +36,25 @@ bool Container::remove(Containable* toRemove) {
     Player* remPlayer = dynamic_cast<Player*>(toRemove);
     Monster* remMonster = dynamic_cast<Monster*>(toRemove);
 
+    bool toReturn = false;
     if(remObject) {
         objects.erase(remObject);
-        return(true);
+        toReturn = true;
     } else if(remPlayer) {
         players.erase(remPlayer);
-        return(true);
+        toReturn = true;
     } else if(remMonster) {
         monsters.erase(remMonster);
-        return(true);
+        toReturn = true;
     } else {
         std::cout << "Don't know how to add " << toRemove << std::endl;
-        return(false);
+        toReturn = false;
     }
+
+    if(toReturn)
+        toRemove->setParent(NULL);
+
+    return(toReturn);
 }
 
 bool Container::add(Containable* toAdd) {
@@ -58,20 +64,31 @@ bool Container::add(Containable* toAdd) {
     Object* addObject = dynamic_cast<Object*>(toAdd);
     Player* addPlayer = dynamic_cast<Player*>(toAdd);
     Monster* addMonster = dynamic_cast<Monster*>(toAdd);
-
+    bool toReturn = false;
     if(addObject) {
-        objects.insert(addObject);
-        return(true);
+        std::cout << "Added " << addObject;
+        std::pair<ObjectSet::iterator, bool> p = objects.insert(addObject);
+        toReturn = p.second;
     } else if(addPlayer) {
-        players.insert(addPlayer);
-        return(true);
+        std::cout << "Added " << addPlayer;
+        std::pair<PlayerSet::iterator, bool> p = players.insert(addPlayer);
+        toReturn = p.second;
     } else if(addMonster) {
-        monsters.insert(addMonster);
-        return(true);
+        std::cout << "Added " << addMonster;
+        std::pair<MonsterSet::iterator, bool> p = monsters.insert(addMonster);
+        toReturn = p.second;
     } else {
         std::cout << "Don't know how to add " << toAdd << std::endl;
-        return(false);
+        toReturn = false;
     }
+    if(toReturn) {
+        toAdd->setParent(this);
+        std::cout << " Success" << std::endl;
+    } else {
+        std::cout << " Failure" << std::endl;
+    }
+
+    return(toReturn);
 }
 
 bool Container::checkAntiMagic(Monster* ignore) {
@@ -83,6 +100,7 @@ bool Container::checkAntiMagic(Monster* ignore) {
             return(true);
         }
     }
+    return(false);
 }
 //################################################################################
 //# Containable
@@ -92,18 +110,22 @@ Containable::Containable() {
 }
 
 bool Containable::addTo(Container* container) {
-    if(this->parent != NULL)
+    if(this->parent != NULL) {
+        std::cout << "Non Null Parent" << std::endl;
         return(0);
+    }
 
     if(container == NULL)
-        return(remove());
+        return(removeFrom());
 
     return(container->add(this));
 }
 
-bool Containable::remove() {
-    if(!parent)
+bool Containable::removeFrom() {
+    if(!parent) {
+        std::cout << "No Parent!" << std::endl;
         return(false);
+    }
 
     return(parent->remove(this));
 }

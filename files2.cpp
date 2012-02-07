@@ -66,7 +66,6 @@ bool Config::reloadRoom(BaseRoom* room) {
 
 int Config::reloadRoom(CatRef cr) {
 	UniqueRoom	*room=0;
-	ctag	*cp=0;
 	otag	*op=0;
 
 	bstring str = cr.str();
@@ -84,7 +83,7 @@ int Config::reloadRoom(CatRef cr) {
 
 	// have to do this in dmReloadRoom() now
 	// room->addPermCrt();
-	if(room->monsters) {
+	if(room->monsters.empty()) {
 		room->monsters = roomQueue[str].rom->monsters;
 		roomQueue[str].rom->monsters.clear();
 	}

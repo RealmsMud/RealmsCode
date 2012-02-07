@@ -65,12 +65,11 @@ int getPkillInCombatDisabled();
 bool isRace(int subRace, int mainRace);
 bstring getSexName(Sex sex);
 
-Creature *find_exact_crt(const Creature* player, ctag *first_ct, char *str, int val);
-Creature *getFirstAggro(Creature* creature, Creature* player);
+Monster *getFirstAggro(Monster* creature, Creature* player);
 Creature *enm_in_group(Creature *target);
 
-template<class Type, class Compare>
-int findCrt(Creature * player, std::set<Type, Compare>& set, int findFlags, char *str, int val, int* match, Creature ** target );
+//template<class Type, class Compare>
+//int findCrt(Creature * player, std::set<Type, Compare>& set, int findFlags, char *str, int val, int* match, Creature ** target );
 
 // data.cpp
 int cmdRecipes(Player* player, cmd* cmnd);

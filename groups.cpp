@@ -147,19 +147,6 @@ void Creature::createGroup(Creature* crt) {
 
     crt->addToGroup(group);
 }
-//*********************************************************************
-//						numFollowers
-//*********************************************************************
-
-int Creature::numFollowers() {
-	int num=0;
-//	ctag *cp = first_fol;
-//	while(cp) {
-//		num += 1 + cp->crt->numFollowers();
-//		cp = cp->next_tag;
-//	}
-	return(num);
-}
 
 //*********************************************************************
 //						RemoveFromGroup

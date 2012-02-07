@@ -544,7 +544,6 @@ bool AreaRoom::canDelete() {
 // interest in the room. This is used by cmdScout.
 
 bool AreaRoom::isInteresting(const Player *viewer) const {
-	ctag	*cp=0;
 	int		i=0;
 
 	if(unique.id)
@@ -619,7 +618,6 @@ bool UniqueRoom::toggleFlag(int flag) {
 //*********************************************************************
 
 bool BaseRoom::isMagicDark() const {
-	ctag	*cp=0;
 	otag	*op=0;
 
 	if(flagIsSet(R_MAGIC_DARKNESS))
@@ -836,7 +834,6 @@ bool BaseRoom::vampCanSleep(Socket* sock) const {
 // checks to see if there is any time of combat going on in this room
 
 bool BaseRoom::isCombat() const {
-	ctag	*cp=0;
 
 	for(Player* ply : players) {
 		if(ply->inCombat(true))
@@ -1010,6 +1007,24 @@ Creature* BaseRoom::findCreature(Creature* searcher, const bstring& name, const 
 	int ignored=0;
 	return(findCreature(searcher, name, num, monFirst, firstAggro, exactMatch, ignored));
 }
+bool isMatch(Creature* searcher, Creature* target, const bstring& name, bool exactMatch) {
+    if(!target)
+        return(false);
+    if(!searcher->canSee(target))
+        return(false);;
+
+    if(exactMatch) {
+        if(!strcmp(target->name, name.c_str())) {
+            return(true);
+        }
+
+    } else {
+        if(keyTxtEqual(target, name.c_str())) {
+            return(true);
+        }
+    }
+    return(false);
+}
 
 // The real findCreature, will take and return the value of match as to allow for findTarget to find the 3rd thing named
 // gold with a monster name goldfish, player named goldmine, and some gold in the room!
@@ -1019,98 +1034,71 @@ Creature* BaseRoom::findCreature(Creature* searcher, const bstring& name, const 
 		return(NULL);
 
 	Creature* target=0;
-	ctag	*cp;
-	//match=0,
-	int		found=0;
-	bool	firstSearchDone=false;
+	for(int i = 1 ; i <= 2 ; i++) {
+	    if( (monFirst && i == 1) || (!monFirst && i == 2) ) {
+	        target = findMonster(searcher, name, num, firstAggro, exactMatch, match);
+	    } else {
+	        target = findPlayer(searcher, name, num, exactMatch, match);
+	    }
 
-	// check for monsters first
-	if(monFirst) {
-		cp = first_mon;
-	} else {
-		cp = first_ply;
+	    if(target) {
+	        return(target);
+	    }
 	}
+	return(target);
 
-	// Incase we start off with a null first ply/mon list
-	if(!cp) {
-		firstSearchDone = true;
-		if(monFirst)
-			cp = first_ply;
-		else
-			cp = first_mon;
-	}
-
-	while(cp) {
-		target = cp->crt;
-		cp = cp->next_tag;
-		if(cp == NULL && firstSearchDone == false) {
-			firstSearchDone = true;
-			// We've run to the end of the first search, switch to the next list now
-			if(!monFirst) {
-				// checking for monster now
-				cp = first_mon;
-			} else {
-				// checking for player now
-				cp = first_ply;
-			}
-		}
-		if(!target)
-			continue;
-		if(!searcher->canSee(target))
-			continue;
-
-		if(exactMatch) {
-			if(!strcmp(target->name, name.c_str())) {
-				match++;
-				if(match == num)
-					return(target);
-			}
-
-		} else {
-			if(keyTxtEqual(target, name.c_str())) {
-				match++;
-				if(match == num) {
-					found = 1;
-					break;
-				}
-			}
-		}
-
-	}
-
-	if(firstAggro && found) {
-		if(num < 2 && searcher->pFlagIsSet(P_KILL_AGGROS))
-			return(getFirstAggro(target, searcher));
-		else
-			return(target);
-	} else if(found) {
-		return(target);
-	} else {
-		return(NULL);
-	}
 }
-
 
 Monster* BaseRoom::findMonster(Creature* searcher, const cmd* cmnd, int num) {
 	return(findMonster(searcher, cmnd->str[num], cmnd->val[num]));
 }
 Monster* BaseRoom::findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch) {
-	Creature* creature = findCreature(searcher, name, num, true, firstAggro, exactMatch);
-	if(creature)
-		return(creature->getMonster());
-	return(NULL);
+    int match = 0;
+    return(findMonster(searcher, name, num, firstAggro, exactMatch, match));
 }
+Monster* BaseRoom::findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) {
+    Monster* target = 0;
+    for(Monster* mons : searcher->getRoom()->monsters) {
+        if(isMatch(searcher, mons, name, exactMatch)) {
+            match++;
+            if(match == num) {
+                if(exactMatch)
+                    return(mons);
+                else {
+                    target = mons;
+                    break;
+                }
 
+            }
+        }
+    }
+    if(firstAggro && target) {
+        if(num < 2 && searcher->pFlagIsSet(P_KILL_AGGROS))
+            return(getFirstAggro(target, searcher));
+        else
+            return(target);
+    } else  {
+        return(target);
+    }
+}
 Player* BaseRoom::findPlayer(Creature* searcher, const cmd* cmnd, int num) {
 	return(findPlayer(searcher, cmnd->str[num], cmnd->val[num]));
 }
 Player* BaseRoom::findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch) {
-	Creature* creature = findCreature(searcher, name, num, false, false, exactMatch);
-	if(creature)
-		return(creature->getPlayer());
-	return(NULL);
+    int match = 0;
+    return(findPlayer(searcher, name, num, exactMatch, match));
 }
-
+Player* BaseRoom::findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) {
+    for(Player* ply : searcher->getRoom()->players) {
+        if(isMatch(searcher, ply, name, exactMatch)) {
+            match++;
+            if(match == num) {
+                return(ply);
+            }
+        }
+    }
+    return(NULL);
+}
 //*********************************************************************
 //						isSunlight
 //*********************************************************************
@@ -1320,7 +1308,6 @@ void BaseRoom::print(Socket* ignore1, Socket* ignore2, const char *fmt, ...) {
 
 void BaseRoom::doPrint(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const char *fmt, va_list ap) {
 	Player* target=0;
-	ctag	*cp=0;
 
 	for(Player* ply : players) {
 		if(!hearBroadcast(ply, ignore1, ignore2, showTo))

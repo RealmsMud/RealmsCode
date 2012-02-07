@@ -1246,6 +1246,39 @@ char *ltoa(
 	*buf   = '\0';
 	return(buf);
 }
+//*********************************************************************
+//                      findCrt
+//*********************************************************************
+
+template<class Type, class Compare>
+int findCrt(Creature * player, std::set<Type, Compare>& set, int findFlags, char *str, int val, int* match, Creature ** target ) {
+    int found=0;
+
+    if(!player || !str || set.empty())
+        return(0);
+
+    for(Type crt : set) {
+        if(!crt) {
+            continue;
+        }
+        if(!player->canSee(crt)) {
+            continue;
+        }
+
+        if(keyTxtEqual(crt, str)) {
+            (*match)++;
+            if(*match == val) {
+                *target = crt;
+                found = 1;
+                break;
+            }
+        }
+
+    }
+    return(found);
+}
+
+
 
 //*********************************************************************
 //						findTarget

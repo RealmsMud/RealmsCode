@@ -40,17 +40,11 @@ void Player::addToSameRoom(Creature* target) {
 
 
 void Player::finishAddPlayer(BaseRoom* room) {
-	ctag	*cg=0, *cp=0, *temp=0, *prev=0;
 	otag	*op=0, *cop=0;
 
 	wake("You awaken suddenly!");
 	interruptDelayedActions();
 
-	cg = new ctag;
-	if(!cg)
-		merror("add_ply_rom", FATAL);
-	cg->crt = this;
-	cg->next_tag = 0;
 	if(!gServer->isRebooting()) {
 
 		if(!flagIsSet(P_DM_INVIS) && !flagIsSet(P_HIDDEN) && !flagIsSet(P_MISTED) ) {
@@ -119,7 +113,7 @@ void Player::finishAddPlayer(BaseRoom* room) {
 	        gServer->addActive(mons);
 	    }
 	}
-	room->players.insert(this);
+	addTo(room);
 	display_rom(this);
 
 	Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
@@ -143,7 +137,6 @@ void Player::addToRoom(AreaRoom* aRoom) {
 }
 
 void Player::addToRoom(UniqueRoom* uRoom) {
-	ctag	*cp=0;
 	bool	builderInRoom=false;
 
 	Hooks::run(uRoom, "beforeAddCreature", this, "beforeAddToRoom");
@@ -256,7 +249,6 @@ int Creature::deleteFromRoom(bool delPortal) {
 }
 
 int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
-	ctag 	*cp, *temp, *prev;
 	long	t=0;
 	int		i=0;
 
@@ -280,7 +272,8 @@ int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 		return(i);
 	}
 
-	room->players.erase(this);
+	removeFrom();
+
 	if(room->players.empty()) {
 	    for(Monster* mons : room->monsters) {
             /*
@@ -464,7 +457,8 @@ void Monster::addToRoom(BaseRoom* room, UniqueRoom* uRoom, AreaRoom* aRoom, int 
 			setFlag(M_WILL_BE_AGGRESSIVE);
 	}
 
-	room->monsters.insert(this);
+	addTo(room);
+//	room->monsters.insert(this);
 	Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
 }
 
@@ -477,8 +471,6 @@ void Monster::addToRoom(BaseRoom* room, UniqueRoom* uRoom, AreaRoom* aRoom, int 
 // 				 False otherwise
 
 int Monster::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
-	ctag 	*temp, *prev;
-
 	parent_rom = 0;
 	area_room = 0;
 	this->room.clear();
@@ -488,7 +480,7 @@ int Monster::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 	if(room->monsters.empty())
 		return(0);
 
-	room->monsters.erase(this);
+	removeFrom();
 	Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
 	return(0);
 }
@@ -505,7 +497,6 @@ void UniqueRoom::addPermCrt() {
 	crlasttime* crtm=0;
 	std::map<int, bool> checklist;
 	Monster	*creature=0;
-	ctag	*cp=0;
 	long	t = time(0);
 	int		j=0, m=0, n=0;
 
@@ -801,7 +792,7 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 
 	oStr << str << "^c";
 	str = "";
-
+	n = 0;
 	for(const Player* ply : room->players) {
 		if(ply != player && player->canSee(ply)) {
 
@@ -915,9 +906,9 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 
 
 			if(creature == player)
-			    *player << "^r" << setf(CAP) << cp->crt << " is attacking you.\n";
+			    *player << "^r" << setf(CAP) << mons << " is attacking you.\n";
 			else if(creature)
-			    *player << "^r" << setf(CAP) << cp->crt << " is attacking " << setf(CAP) << creature << ".\n";
+			    *player << "^r" << setf(CAP) << mons << " is attacking " << setf(CAP) << creature << ".\n";
 		}
 	}
 

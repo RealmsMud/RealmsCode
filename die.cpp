@@ -1705,7 +1705,6 @@ int Creature::checkDieRobJail(Monster *killer, bool &freeTarget) {
 		pVictim && pVictim->hp.getCur() < pVictim->hp.getMax()/10)
 	{
 		freeTarget = false;
-		ctag *rcp;
 		pVictim->printColor("^r%M knocks you unconscious.\n",killer);
 		pVictim->knockUnconscious(39);
 		broadcast(pVictim->getSock(), room, "%M knocked %N unconscious.", killer, pVictim);

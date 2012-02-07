@@ -146,8 +146,6 @@ int cmdLook(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 Monster* BaseRoom::getGuardingExit(const Exit* exit, const Player* player) const {
-	Creature* monster=0;
-
 	if(!exit->flagIsSet(X_PASSIVE_GUARD))
 		return(0);
 
@@ -432,7 +430,6 @@ int cmdBreak(Player* player, cmd* cmnd) {
 	CatRef	newloc;
 	int  	chance=0, dmg=0, xpgain=0, splvl=0;
 	float	mtbf=0, shots=0, shotsmax=0;
-	ctag	*cp=0;
 	UniqueRoom *new_rom=0;
 	char	item[80];
 	Object	*object=0;
@@ -617,7 +614,6 @@ int cmdBreak(Player* player, cmd* cmnd) {
 						ply->printColor("You take %s%d^x damage from the magical explosion!\n", ply->customColorize("*CC:DAMAGE*").c_str(), dmg);
 
 						if(player->doDamage(ply, dmg, CHECK_DIE)) {
-							cp = cp->next_tag;
 							continue;
 						}
 					}

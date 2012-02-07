@@ -122,15 +122,6 @@ public:
 } otag;
 
 
-// Creature list tags
-typedef struct crt_tag {
-public:
-	crt_tag() { next_tag = 0; crt = 0; };
-	struct crt_tag	*next_tag;
-	Creature* crt;
-} ctag;
-
-
 // UniqueRoom list tags
 typedef struct rom_tag {
 public:

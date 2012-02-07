@@ -476,17 +476,17 @@ int Player::doCheckTraps(UniqueRoom* room) {
 		print("Gas rapidly fills the room!\n");
 		broadcast(getSock(), getRoom(), "Gas rapidly fills the room!");
 
-		for(Player* ply : getRoom()->players) {
-			if(!ply->chkSave(DEA,ply,0)) {
-				if(!ply->flagIsSet(P_RESIST_STUN)) {
-					ply->print("Billowing white clouds surrounds you!\n");
-					ply->print("You are stunned!\n");
-					ply->stun(mrand(10, 18));
+		for(Player* fPly : getRoom()->players) {
+			if(!fPly->chkSave(DEA,fPly,0)) {
+				if(!fPly->flagIsSet(P_RESIST_STUN)) {
+					fPly->print("Billowing white clouds surrounds you!\n");
+					fPly->print("You are stunned!\n");
+					fPly->stun(mrand(10, 18));
 				} else {
-					ply->print("The billowing cloud of white gas has no effect on you.\n");
+					fPly->print("The billowing cloud of white gas has no effect on you.\n");
 				}
 			} else
-				ply->print("The billowing cloud of white gas has no effect on you.\n");
+				fPly->print("The billowing cloud of white gas has no effect on you.\n");
 		}
 		break;
 
@@ -837,7 +837,6 @@ int Player::checkTraps(UniqueRoom* room, bool self, bool isEnter) {
 	if(!room)
 		return(0);
 
-	ctag	*cp=0;
 	Player	*target=0;
 
 	if(!room->getTrap()) {

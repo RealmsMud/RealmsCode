@@ -61,7 +61,6 @@ void Config::showMemory(Socket* sock) {
 	//  long total_mem  = 0L;
 	long bt_mem     = 0L;
 	long total=0;
-	ctag	*cp;
 	otag	*op;
 	ttag	*tlk;
 	UniqueRoom*	r=0;

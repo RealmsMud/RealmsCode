@@ -843,7 +843,6 @@ void Faction::worshipSocial(Monster *monster) {
 
 	// we've made sure everything is ok; let's continue
 	// with the actual work
-	Player* player;
 	cmd		cmnd;
 
 	strcpy(cmnd.str[0], social.c_str());

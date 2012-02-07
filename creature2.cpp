@@ -326,7 +326,6 @@ int Monster::getNumMobs() const {
 //***********************************************************************
 
 Creature *getRandomMonster(BaseRoom *inRoom) {
-	ctag		*cp=0;
 	Creature *foundCrt=0;
 	int			count=0, roll=0, num=0;
 
@@ -354,7 +353,6 @@ Creature *getRandomMonster(BaseRoom *inRoom) {
 //***********************************************************************
 
 Creature *getRandomPlayer(BaseRoom *inRoom) {
-	ctag		*cp=0;
 	Creature *foundPly=0;
 	int			count=0, roll=0, num=0;
 
@@ -398,7 +396,6 @@ void Monster::validateAc() {
 int Monster::doHarmfulAuras() {
 	int			a=0,dmg=0,aura=0, saved=0;
 	long		i=0,t=0;
-	ctag		*cp=0;
 	BaseRoom	*inRoom=0;
 	Creature* player=0;
 
@@ -523,8 +520,6 @@ bool isGuardLoot(BaseRoom *inRoom, Creature* player, const char *fmt) {
 //***********************************************************************
 
 bool npcPresent(UniqueRoom *inRoom, short trade) {
-	Monster	*monster=0;
-
 	for(Monster* mons : inRoom->monsters) {
 	    if(mons->getMobTrade() == trade)
 	        return(true);

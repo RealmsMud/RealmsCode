@@ -1529,7 +1529,6 @@ int cmdQuests(Player* player, cmd* cmnd) {
 						return(0);
 					}
 
-					cp = cp->next_tag;
 				}
 
 				if(!questName.empty()) {

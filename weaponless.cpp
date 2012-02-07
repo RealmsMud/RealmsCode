@@ -539,7 +539,6 @@ int Player::packBonus() {
 int cmdHowl(Creature* player, cmd* cmnd) {
 	BaseRoom* room = player->getRoom();
 	Monster *monster=0;
-	ctag	*cp=0;
 	long	i=0, t=0, stunTime=0;
 	int		maxEffected=0, numEffected=0, bns=0;
 

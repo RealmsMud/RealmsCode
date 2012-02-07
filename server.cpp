@@ -785,7 +785,6 @@ void Server::updateActive(long t) {
 	Creature *target=0;
 	Monster	*monster=0;
 	BaseRoom* room=0;
-	ctag	*imp=0, *ap=0;
 
 	long	tt = gConfig->currentHour();
 	int		timetowander=0, immort=0;

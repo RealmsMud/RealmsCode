@@ -230,7 +230,6 @@ int shipSetExits(Ship *ship, ShipStop *stop) {
 
 void ShipExit::removeExit() {
 	Monster *raider=0;
-	ctag	*cp=0;
 	BaseRoom* newRoom=0;
 	AreaRoom* aRoom=0;
 	int		i=0, n=0;

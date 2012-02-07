@@ -109,9 +109,6 @@ void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, 
 
 // room broadcast
 void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, Container* container, const char *fmt, va_list ap) {
-	Player* target=0;
-	ctag	*cp=0;
-
 	if(!container)
 		return;
 

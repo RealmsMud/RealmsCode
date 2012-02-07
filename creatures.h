@@ -314,8 +314,6 @@ public:
 #define 				NUMHITS quests[0]
 	short questnum; // Quest fulfillment number (M)
 	Object *ready[MAXWEAR];// Worn/readied items
-//	struct Creature *following; // creature being followed
-//	ctag *first_fol; // List of followers
 	otag *first_obj; // List of inventory
 	//etag *first_enm; // List of enemies
 	ttag *first_tlk; // List of talk responses
@@ -684,7 +682,6 @@ public:
 	void fixLts();
 	void doDispelMagic(int num=-1);
 	bool changeSize(int oldStrength, int newStrength, bool enlarge);
-	int numFollowers();
 
 	// these handle total invisibility, no concealment (ie, being hidden)
 	bool canSee(const BaseRoom* room, bool p=false) const;

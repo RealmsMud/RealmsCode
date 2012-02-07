@@ -145,7 +145,7 @@ int Monster::updateCombat() {
 	if(mrand(1,100) < n) {
 		willCast = true;
 		if(room->checkAntiMagic(this))
-		    antiMagic = true
+		    antiMagic = true;
 	}
 	if(isUndead() && target->isEffected("undead-ward"))
 		willCast = false;
@@ -959,8 +959,6 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
 // other creature in the vicinity. -TC
 
 void Creature::clearAsEnemy() {
-	ctag		*cp=0;
-
 	if(!getRoom())
 		return;
 

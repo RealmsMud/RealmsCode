@@ -1295,7 +1295,6 @@ void get_all_rom(Creature* creature, char *item) {
 	BaseRoom* room = creature->getRoom();
 	Object	*object=0, *last_obj=0;
 	otag	*op=0;
-	ctag	*cp=0;
 	char	str[2048];
 	const char *str2;
 	int 	n=1, found=0, heavy=0, dogoldmsg=0;

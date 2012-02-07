@@ -732,7 +732,6 @@ int cmdBash(Player* player, cmd* cmnd) {
 
 int cmdKick(Player* player, cmd* cmnd) {
 	Creature* creature=0;
-	Player	*pCreature=0;
 	long	i=0, t=0;
 	int		chance=0;
 
@@ -750,8 +749,6 @@ int cmdKick(Player* player, cmd* cmnd) {
     if(!(creature = player->findVictim(cmnd, 1, true, false, "Kick whom?\n", "You don't see that here.\n")))
    		return(0);
 
-	if(creature)
-		pCreature = creature->getPlayer();
 
 	if(!player->canAttack(creature))
 		return(0);

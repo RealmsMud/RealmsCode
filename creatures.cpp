@@ -1098,8 +1098,6 @@ bool Creature::inCombat(const Creature* target, bool countPets) const {
 		return(false);
 	const Monster* mThis = getConstMonster();
 
-	ctag	*cp=0;
-
 	if(mThis) {
 	    for(Player* ply : room->players) {
 	        if(mThis->isEnemy(ply))

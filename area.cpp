@@ -744,35 +744,6 @@ CatRef Area::getUnique(const MapMarker *mapmarker) const {
 //						move
 //*********************************************************************
 
-//void Area::move(ctag *fp, AreaRoom* room) {
-//	Creature* target=0;
-//	Player*	player=0;
-//	Monster*  monster=0;
-//	ctag	*cp = fp;
-//
-//	while(cp) {
-//		target = cp->crt;
-//		cp = cp->next_tag;
-//		player = target->getPlayer();
-//		monster = target->getMonster();
-//		if(player) {
-//			if(room) {
-//				player->addToRoom(room);
-//			} else {
-//				player->deleteFromRoom();
-//			}
-//		} else {
-//			if(room) {
-//				monster->addToRoom(room);
-//			} else {
-//				monster->deleteFromRoom();
-//			}
-//		}
-//		move(target->first_fol, room);
-//	}
-//}
-
-
 // this function does not check rules for moving
 bool Area::move(Player* player, MapMarker *mapmarker) {
 	bool	mem=false;
@@ -1031,7 +1002,6 @@ TileInfo *Area::getTile(char grid, char seasonFlags, Season season, bool checkSe
 char Area::getTerrain(const Player* player, const MapMarker *mapmarker, short y, short x, short z, bool terOnly) const {
 	std::list<AreaRoom*>::iterator it;
 	AreaRoom* room=0;
-	ctag	*cp=0;
 	bool	staff = player ? player->isStaff() : false;
 	bool	found=false;
 

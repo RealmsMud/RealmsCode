@@ -69,7 +69,6 @@ void Player::init() {
 	char	file[80], str[50], watchers[128];
 	BaseRoom *newRoom=0;
 	UniqueRoom	*uRoom=0;
-//	ctag	*cp;
 	long	t = time(0);
 	int		watch=0;
 

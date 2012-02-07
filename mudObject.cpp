@@ -41,7 +41,9 @@ bool PlayerPtrLess::operator()(const Player* lhs, const Player* rhs) const {
 }
 
 bool MonsterPtrLess::operator()(const Monster* lhs, const Monster* rhs) const {
-    return *lhs < *rhs;
+    bstring lhsStr = bstring(lhs->name) + lhs->id;
+    bstring rhsStr = bstring(rhs->name) + rhs->id;
+    return(lhsStr.compare(rhsStr) < 0);
 }
 
 bool ObjectPtrLess::operator()(const Object* lhs, const Object* rhs) const {
