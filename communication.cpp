@@ -603,7 +603,7 @@ int communicate(Creature* creature, cmd* cmnd) {
 
             if(!chan->ooc && creature->flagIsSet(P_LANGUAGE_COLORS))
                 ANSI(creature->getSock(), get_lang_color(lang));
-            creature->printColor("%s \"%s%s\"^x.\n", intro, ooc_str, text.c_str());
+            creature->printColor("%s \"%s%s\".^x\n", intro, ooc_str, text.c_str());
             player->bug("%s %s in %s, \"%s%s.\"\n", creature->name, com_text[chan->type],
                 get_language_adj(lang), ooc_str, text.c_str());
 
