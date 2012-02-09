@@ -245,6 +245,7 @@ bool PlayerClass::setDefaultStats(Player* player) {
 	player->intelligence.setMax(baseIntelligence * 10);
 	player->piety.setMax(basePiety * 10);
 
+	return(true);
 }
 //*********************************************************************
 //						checkAutomaticStats

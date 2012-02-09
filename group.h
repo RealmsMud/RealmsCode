@@ -90,6 +90,7 @@ public:
     int size();
     int getSize(bool countDmInvis = false, bool membersOnly = true);
     int getNumInSameRoom(Creature* target);
+    int getNumPlyInSameRoom(Creature* target);
     Creature* getMember(int num, bool countDmInvis = false);
     Creature* getMember(bstring name, int num, Creature* searcher = NULL, bool includePets = false);
     GroupType getGroupType();
