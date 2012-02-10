@@ -295,7 +295,7 @@ int cmdLayHands(Player* player, cmd* cmnd) {
 		// Lay hands on another player or monster
 
 		cmnd->str[1][0] = up(cmnd->str[1][0]);
-		creature = player->getRoom()->findCreature(player, cmnd->str[1], cmnd->val[1], false);
+		creature = player->getParent()->findCreature(player, cmnd->str[1], cmnd->val[1], false);
 		if(!creature) {
 			player->print("That person is not here.\n");
 			return(0);
@@ -789,7 +789,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
 		if(mrand(1,100) > chance) {
 			player->print("Your god refuses to renounce %N.\n", target);
 			player->checkImprove("renounce", false);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M tried to renounce %N.", player, target);
 			target->print("%M tried to renounce you!\n", player);
 			return(0);
@@ -809,7 +809,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
 			player->print("You destroyed %N with your faith.\n", target);
 			player->checkImprove("renounce", true);
 			target->print("The power of %N's faith destroys you!\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M destroys %N with %s faith!",
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M destroys %N with %s faith!",
 				player, target, target->hisHer());
 			//player->statistics.attackDamage(target->hp.getCur(), "renounce");
 			target->die(player);
@@ -820,7 +820,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
 			player->printColor("You renounced %N for %s%d^x damage.\n", target, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
 			player->checkImprove("renounce", true);
 			target->printColor("%M renounced you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M renounced %N!", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M renounced %N!", player, target);
 			player->doDamage(target, dmg, CHECK_DIE);
 		}
 
@@ -990,7 +990,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 		if(mrand(1,100) > chance) {
 			player->print("Your holy word is ineffective on %N.\n", target);
 			player->checkImprove("holyword", false);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M tried to pronounce a holy word on %N.", player, target);
 			target->print("%M tried to pronounce a holy word you!\n", player);
 			return(0);
@@ -1010,7 +1010,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 			player->print("Your holy word utterly destroys %N.\n", target);
 			player->checkImprove("holyword", true);
 			target->print("You are utterly destroyed by %N's holy word!\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M utterly destroys %N with %s holy word!", player, target, target->hisHer());
 			player->statistics.attackDamage(target->hp.getCur(), "holyword");
 			target->die(player);
@@ -1026,7 +1026,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 			target->stun((bonus((int)player->piety.getCur()) + mrand(2,6)) );
 
 			target->printColor("%M pronounced a holy word on you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M pronounced a holy word on %N!", player, target);
 			player->doDamage(target, dmg, CHECK_DIE);
 		}
@@ -1138,7 +1138,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		creature = player->getRoom()->findCreature(player, cmnd->str[1], cmnd->val[1], false);
+		creature = player->getParent()->findCreature(player, cmnd->str[1], cmnd->val[1], false);
 		if(!creature) {
 			player->print("That person is not here.\n");
 			return(0);

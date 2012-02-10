@@ -475,7 +475,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 		}
 
 		if(mVictim->flagIsSet(M_ONLY_HARMED_BY_MAGIC) && !checkStaff("Your weapon%s had no effect on %N.\n", duelWield ? "s" : "", mVictim)) {
-			getRoom()->wake("Loud noises disturb your sleep.", true);
+			getParent()->wake("Loud noises disturb your sleep.", true);
 			return(0);
 		}
 	} else if(pVictim && attackType == ATTACK_NORMAL) {
@@ -725,7 +725,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 						checkImprove(weaponSkill, true);
 				}
 
-				getRoom()->wake("Loud noises disturb your sleep.", true);
+				getParent()->wake("Loud noises disturb your sleep.", true);
 
 				if(	doDamage(victim, attackDamage.get(), CHECK_DIE, PHYSICAL_DMG, freeTarget) ||
 					wasKilled ||
@@ -791,7 +791,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 				// check riposte death here
 				if(parryResult == 2) {
 					// Damn, we're dead, no more attacks then
-					getRoom()->wake("Loud noises disturb your sleep.", true);
+					getParent()->wake("Loud noises disturb your sleep.", true);
 					return(0);
 				}
 			} else if(result == ATTACK_FUMBLE) {
@@ -821,7 +821,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 	if(hit == 1 && !pVictim)
 		victim->flee();
 
-	getRoom()->wake("Loud noises disturb your sleep.", true);
+	getParent()->wake("Loud noises disturb your sleep.", true);
 	return(0);
 }
 

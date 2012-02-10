@@ -81,7 +81,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == NULL)
 		return(0);
 
-//	target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], true, true);
+//	target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], true, true);
 //	if(!target || target == player) {
 //		player->print("That is not here.\n");
 //		return(0);
@@ -139,7 +139,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
 	player->smashInvis();
 
 	target->print("%M casts a magic missile spell.\n", player);
-	broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a magic-missile spell.", player);
+	broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a magic-missile spell.", player);
 	if(mTarget)
 		mTarget->addEnemy(player);
 
@@ -156,7 +156,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
 		missileDmg = mrand(2,5) + bonus(player->intelligence.getCur())/2;
 		if(mrand(1,100) <= 25 && target->isEffected("resist-magic")) {
 			player->print("Your magic-missile deflects off of %N.\n", target);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M's magic-missile deflects off of %N.", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's magic-missile deflects off of %N.", player, target);
 			target->print("%M's magic-missile deflects off of you.\n", player);
 			continue;
 		}
@@ -164,7 +164,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		player->printColor("^@^%cYour magic-missile strikes %N for %d damage.\n", colorCh, target, missileDmg);
 		target->printColor("^@^%c%M's magic-missile strikes you for %d damage!\n", colorCh, player, missileDmg);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(),
+		broadcast(player->getSock(), target->getSock(), player->getParent(),
 			"^@^%c%M's magic-missile strikes %N!", colorCh, player, target);
 		if(player->doDamage(target, missileDmg, CHECK_DIE))
 			return(1);
@@ -566,7 +566,7 @@ int doMultiOffensive(Creature* player, Creature* target, int *found_something, i
 	int		ret=0;
 
 	if(!*found_something)
-		player->getRoom()->wake("Loud noises disturb your sleep.", true);
+		player->getParent()->wake("Loud noises disturb your sleep.", true);
 
 	*(found_something) = 1;
 	// check here so doOffensive doesn't abort our routine prematurely
@@ -720,7 +720,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
 
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(target) {
 
@@ -746,7 +746,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
 			}
 
 			player->print("You cast a darkness spell on %N.\n", target);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a darkness spell on %N.", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a darkness spell on %N.", player, target);
 			target->print("%M casts a darkness spell on you.\n", player);
 
 			if(spellData->how == CAST)

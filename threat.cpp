@@ -433,7 +433,7 @@ int cmdAssist(Player* player, cmd* cmnd) {
 		player->print("Who would you like to assist?\n");
 
     }
-    Player* toAssist = player->getRoom()->findPlayer(player, cmnd);
+    Player* toAssist = player->getParent()->findPlayer(player, cmnd);
 	if(!toAssist) {
 		player->print("You don't see that person here.\n");
 		return(0);
@@ -484,7 +484,7 @@ int cmdTarget(Player* player, cmd* cmnd) {
 
 	lowercize(cmnd->str[1], 1);
 
-	Creature* toTarget = player->getRoom()->findCreature(player, cmnd);
+	Creature* toTarget = player->getParent()->findCreature(player, cmnd);
 	if(!toTarget) {
 		player->print("You don't see that here.\n");
 		return(0);

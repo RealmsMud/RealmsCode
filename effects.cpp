@@ -789,7 +789,7 @@ int cmdEffects(Creature* creature, cmd* cmnd) {
 
 	if(creature->isCt()) {
 		if(cmnd->num > 1) {
-			target = creature->getRoom()->findCreature(creature, cmnd);
+			target = creature->getParent()->findCreature(creature, cmnd);
 			cmnd->str[1][0] = up(cmnd->str[1][0]);
 
 			if(!target) {

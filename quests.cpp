@@ -963,7 +963,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	target = player->getRoom()->findMonster(player, cmnd);
+	target = player->getParent()->findMonster(player, cmnd);
 	if(!target) {
 		player->print("You don't see that here.\n");
 		return(0);

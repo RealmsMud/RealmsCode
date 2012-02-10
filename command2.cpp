@@ -395,7 +395,7 @@ int cmdKnock(Creature* creature, cmd* cmnd) {
 		return(0);
 	}
 
-	creature->getRoom()->wake("You awaken suddenly!", true);
+	creature->getParent()->wake("You awaken suddenly!", true);
 	creature->printColor("You knock on the %s^x.\n", exit->name);
 	broadcast(creature->getSock(), creature->getRoom(), "%M knocks on the %s^x.", creature, exit->name);
 

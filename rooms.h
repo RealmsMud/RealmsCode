@@ -84,7 +84,6 @@ public:
 	int countCrt() const;
 	Monster* getTollkeeper();
 
-	void wake(bstring str, bool noise) const;
 	bool isMagicDark() const;
 	bool isNormalDark() const;
 	bool isUnderwater() const;

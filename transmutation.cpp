@@ -79,7 +79,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
 
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], true, true);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], true, true);
 
 		if(!target) {
 			player->print("Cast on whom?\n");
@@ -112,7 +112,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		player->print("You cast an entangle spell on %N.\n", target);
 		target->print("%M casts an entangle spell on you.\n", player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts an entangle spell on %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts an entangle spell on %N.", player, target);
 
 
 		if(	target->isPlayer() &&
@@ -283,7 +283,7 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			player->print("You don't see that here.\n");
@@ -306,7 +306,7 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		player->print("You cast an infravision spell on %N.\n", target);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts an infravision spell on %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts an infravision spell on %N.", player, target);
 		target->print("%M casts an infravision spell on you.\n", player);
 
 	}
@@ -491,7 +491,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target || player == target) {
 			// disintegrate can destroy walls of force
@@ -528,7 +528,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		player->printColor("^GYou cast a disintegration spell on %N.\n", target);
 		target->printColor("^G%M casts a disintegration spell on you.\n", player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "^G%M casts a disintegration spell on %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "^G%M casts a disintegration spell on %N.", player, target);
 
 		bns = ((int)target->getLevel() - (int)player->getLevel())  * 25;
 
@@ -624,7 +624,7 @@ int splStatChange(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			player->print( "That person is not here.\n");
@@ -636,7 +636,7 @@ int splStatChange(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 
 		player->print( "You cast %s on %N.\n", effect.c_str(), target);
 		target->print("%M casts %s on you.\n", player, effect.c_str());
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts %s on %N.", player, effect.c_str(), target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts %s on %N.", player, effect.c_str(), target);
 
 	}
 
@@ -725,7 +725,7 @@ int splStoneToFlesh(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 
 	cmnd->str[2][0] = up(cmnd->str[2][0]);
-	target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+	target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 	if(!target) {
 		player->print("That's not here.\n");
 		return(0);
@@ -736,7 +736,7 @@ int splStoneToFlesh(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 		player->print("You cast stone-to-flesh on %N.\n", target);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts stone-to-flesh on %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts stone-to-flesh on %N.", player, target);
 		target->print("%M casts stone-to-flesh on you.\n", player);
 		if(target->isEffected("petrification"))
 			target->print("Your body returns to flesh.\n");
@@ -806,7 +806,7 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(noPotion(player, spellData))
 			return(0);
 
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target || target == player) {
 			player->print("That's not here.\n");
@@ -842,7 +842,7 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(target->chkSave(SPL, player, bns) && !player->isCt()) {
 			target->print("%M tried to cast a deafness spell on you!\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M tried to cast a deafness spell on %N!", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a deafness spell on %N!", player, target);
 			player->print("Your spell fizzles.\n");
 			return(0);
 		}
@@ -858,7 +858,7 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Deafness casted on %s.\n", target->name);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a deafness spell on %N.", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a deafness spell on %N.", player, target);
 
 			logCast(player, target, "silence");
 

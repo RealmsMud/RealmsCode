@@ -100,7 +100,7 @@ int cmdBribe(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findMonster(player, cmnd);
+	creature = player->getParent()->findMonster(player, cmnd);
 	if(!creature) {
 		player->print("That is not here.\n");
 		return(0);
@@ -1243,7 +1243,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 
 	player->print("You attempt to backstab %N.\n", target);
 	target->print("%M attempts to backstab you!\n", player);
-	broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M attempts to backstab %N.", player, target);
+	broadcast(player->getSock(), target->getSock(), player->getParent(), "%M attempts to backstab %N.", player, target);
 
 	if(target->isMonster())
 		target->getMonster()->addEnemy(player);
@@ -1837,7 +1837,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findCreature(player, cmnd);
+	creature = player->getParent()->findCreature(player, cmnd);
 	if(!creature || creature == player) {
 		player->print("That person is not here.\n");
 		return(0);
@@ -2002,7 +2002,7 @@ int peek_bag(Player* player, Player* target, cmd* cmnd, int inv) {
 
 			player->print("You manage to peek inside %N's %s.\n", target, container->name);
 			target->print("%M managed to peek in your %s!\n", player, container->name);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M peeked at %N's inventory.",
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M peeked at %N's inventory.",
 				player, target);
 			player->print("%s noticed!\n", target->upHeShe());
 

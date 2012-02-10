@@ -480,7 +480,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 		if(!target) {
 			player->print("That person is not here.\n");
 			return(0);
@@ -505,7 +505,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("%s spell cast on %N.\n", capSpellName, target);
 			target->print("%M casts a %s spell on you.\n",  player, spellName);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a %s spell on %N.",
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.",
 				player, spellName, target);
 
 			niceExp(player, target, heal, spellData->how);
@@ -616,7 +616,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 		if(!target) {
 			player->print("That person is not here.\n");
 			return(0);
@@ -663,7 +663,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			player->print("Rejuvenate spell cast on %N.\n", target);
 			target->print("%M casts a rejuvenate spell on you.\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a rejuvenate spell on %N.",
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a rejuvenate spell on %N.",
 				player, target);
 
 			niceExp(player, target, (heal+mpHeal)/2, spellData->how);
@@ -734,7 +734,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(noPotion(player, spellData))
 			return(0);
 
-		creature = player->getRoom()->findCreature(player,  cmnd->str[2], cmnd->val[2], false);
+		creature = player->getParent()->findCreature(player,  cmnd->str[2], cmnd->val[2], false);
 
 		if(!creature) {
 			player->print("That person is not here.\n");
@@ -1215,7 +1215,7 @@ int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			player->print("That person is not here.\n");
@@ -1225,7 +1225,7 @@ int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		player->print("Restore spell cast on %N.\n", target);
 		target->print("%M casts a restore spell on you.\n", player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a restore spell on %N.",
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a restore spell on %N.",
 			player, target);
 
 		logCast(player, target, "restore");

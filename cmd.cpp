@@ -66,7 +66,7 @@ int pcast(Player* player, cmd* cmnd) {
 	bstring args = getFullstrText(cmnd->fullstr, 2);
 	MudObject *target = NULL;
 
-	//target = player->getRoom()->findTarget(cmnd->fullstr);
+	//target = player->getParent()->findTarget(cmnd->fullstr);
 
 	gServer->runPython(spell->script, args, player, target);
 	return(0);

@@ -585,7 +585,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 		}
 
 		target->print("%M circles you.\n", player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M circles %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M circles %N.", player, target);
 		player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY - 10);
 
 		if(mTarget) {
@@ -598,7 +598,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 		player->print("You failed to circle %N.\n", target);
 		player->checkImprove("circle", false);
 		target->print("%M tried to circle you.\n", player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M tried to circle %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to circle %N.", player, target);
 		player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
 		if(mTarget) {
             // An un-successful circle gives 2.5% of the target's max health as threat

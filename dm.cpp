@@ -87,7 +87,7 @@ int dmMobInventory(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	monster = player->getRoom()->findMonster(player, cmnd);
+	monster = player->getParent()->findMonster(player, cmnd);
 	if(!monster) {
 		player->print("That's not here.\n");
 		return(0);
@@ -2371,7 +2371,7 @@ int dmStat(Player* player, cmd* cmnd) {
 	if(cmnd->num < 3)
 		player2 = player;
 	else {
-		player2 = player->getRoom()->findCreature(player, cmnd, 2);
+		player2 = player->getParent()->findCreature(player, cmnd, 2);
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
 		if(!player2)
 			player2 = gServer->findPlayer(cmnd->str[2]);
@@ -2418,7 +2418,7 @@ int dmStat(Player* player, cmd* cmnd) {
 	}
 
 	// Search for creature or player to get info on
-	target = player->getRoom()->findCreature(player, cmnd);
+	target = player->getParent()->findCreature(player, cmnd);
 
 	cmnd->str[1][0] = up(cmnd->str[1][0]);
 	if(!target)

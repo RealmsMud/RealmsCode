@@ -1386,7 +1386,7 @@ int cmdWeapons(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-//	if(!player->getRoom()->findWeaponsTrainer()) {
+//	if(!player->getParent()->findWeaponsTrainer()) {
 //		player->print("You can't find anyone here to train you in weapon skills!\n");
 //		return(0);
 //	}

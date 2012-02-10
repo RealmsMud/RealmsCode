@@ -56,7 +56,7 @@ int cmdFollow(Player* player, cmd* cmnd) {
 
 	player->unhide();
 	lowercize(cmnd->str[1], 1);
-	toFollow = player->getRoom()->findPlayer(player, cmnd);
+	toFollow = player->getParent()->findPlayer(player, cmnd);
 	if(!toFollow) {
 		*player << "No one here by that name.\n";
 		return(0);

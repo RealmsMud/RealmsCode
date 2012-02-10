@@ -306,7 +306,7 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			cmnd->str[2][0] = up(cmnd->str[2][0]);
 
-			creature = pPlayer->getRoom()->findCreature(pPlayer, cmnd->str[2], cmnd->val[2], false);
+			creature = pPlayer->getParent()->findCreature(pPlayer, cmnd->str[2], cmnd->val[2], false);
 			if(creature)
 				target = creature->getPlayer();
 

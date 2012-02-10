@@ -932,12 +932,12 @@ int songFlight(Player* player, cmd* cmnd) {
 
 	} else {
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findPlayer(player, cmnd, 2);
+		target = player->getParent()->findPlayer(player, cmnd, 2);
 		if(!target) {
 			player->print("You don't see that player here.\n");
 			return(0);
 		}
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M sings a song of flight to %N.\n", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M sings a song of flight to %N.\n", player, target);
 		target->print("%M sings a song of flight to you.\n",player);
 		player->print("You sing %N a song of flight.\n", target);
 	}
@@ -977,7 +977,7 @@ int songRecall(Player* player, cmd* cmnd) {
 	// Sing on another player
 	} else {
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findPlayer(player, cmnd, 2);
+		target = player->getParent()->findPlayer(player, cmnd, 2);
 		if(!target) {
 			player->print("That person is not here.\n");
 			return(0);
@@ -985,7 +985,7 @@ int songRecall(Player* player, cmd* cmnd) {
 
 		player->print("You sing a song of recall on %N.\n", target);
 		target->print("%M sings a song of recall on you.\n", player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M sings a song of recall on %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M sings a song of recall on %N.", player, target);
 
 		if(!player->isStaff() && target->checkDimensionalAnchor()) {
 			player->printColor("^y%M's dimensional-anchor causes your song to go off-key!^w\n", target);

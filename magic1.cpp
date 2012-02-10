@@ -433,7 +433,7 @@ int cmdTeach(Player* player, cmd* cmnd) {
 		}
 	}
 
-	target = player->getRoom()->findCreature(player, cmnd->str[1], cmnd->val[1], false);
+	target = player->getParent()->findCreature(player, cmnd->str[1], cmnd->val[1], false);
 
 	if(!target || target == player) {
 		player->print("You don't see that person here.\n");
@@ -549,7 +549,7 @@ int cmdTeach(Player* player, cmd* cmnd) {
 		      get_spell_name(splno));
 		player->print("Spell \"%s\" taught to %N.\n", get_spell_name(splno), target);
 		if(!player->flagIsSet(P_DM_INVIS) && !player->flagIsSet(P_INCOGNITO)) {
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M taught %N the %s spell.", player, target, get_spell_name(splno));
 		}
 	}
@@ -1531,7 +1531,7 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			player->print("You don't see that player here.\n");
@@ -1552,7 +1552,7 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
 			return(0);
 		}
 
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts %s %s spell on %N.",
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts %s %s spell on %N.",
 			player, article, spell, target);
 		target->print("%M casts %s on you.\n", player, spell);
 		player->print("You cast %s %s spell on %N.\n", article, spell, target);
@@ -1706,7 +1706,7 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(noPotion(player, spellData))
 			return(0);
 
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target || target == player) {
 			player->print("That's not here.\n");
@@ -1721,14 +1721,14 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(target->chkSave(SPL, player, 0) && !player->isCt()) {
 			target->print("%M tried to cast a blind spell on you!\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M tried to cast a blind spell on %N!", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a blind spell on %N!", player, target);
 			player->print("Your spell fizzles.\n");
 			return(0);
 		}
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Blindness spell cast on %s.\n", target->name);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a blindness spell on %N.", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a blindness spell on %N.", player, target);
 			target->print("%M casts a blindness spell on you.\n", player);
 		}
 
@@ -1873,7 +1873,7 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findPlayer(player, cmnd, 2);
+		target = player->getParent()->findPlayer(player, cmnd, 2);
 		if(!target) {
 			player->print("That player is not here.\n");
 			return(0);
@@ -1883,7 +1883,7 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You pass judgemet on %N.\n", target);
 			target->print("%M passes judgement on you.\nYou have been judged.\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M passes judgement on %N.", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M passes judgement on %N.", player, target);
 
 			logCast(player, target, "judgement", true);
 

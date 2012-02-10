@@ -580,7 +580,7 @@ int dmSkills(Player* player, cmd* cmnd) {
 		target = gServer->findPlayer(cmnd->str[1]);
 		cmnd->str[1][0] = low(cmnd->str[1][0]);
 		if(!target || (!player->isCt() && target->flagIsSet(P_DM_INVIS)))
-			target = player->getRoom()->findCreature(player, cmnd);
+			target = player->getParent()->findCreature(player, cmnd);
 
 		if(!target) {
 			player->print("Target not found.\n");

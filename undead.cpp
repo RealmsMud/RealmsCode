@@ -113,7 +113,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 		player->print("%s eludes your bite.\n", target->upHeShe());
 		player->checkImprove("bite", false);
 		target->print("%M tried to bite you!\n",player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M tried to bite %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to bite %N.", player, target);
 		return(0);
 	}
 
@@ -141,7 +141,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 
 	target->printColor("%M bites you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), dmgnum);
 	target->stun((mrand(5, 8) + bonus((int) player->strength.getCur())));
-	broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M bites %N!", player, target);
+	broadcast(player->getSock(), target->getSock(), player->getParent(), "%M bites %N!", player, target);
 	broadcastGroup(false, target, "^M%M^x bites ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n",
 		player, target, dmgnum, target->heShe(), target->getStatusStr(dmgnum));
 
@@ -358,7 +358,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 	if(mrand(1, 100) > chance && !player->isCt()) {
 		player->print("You fail to hypnotize %N.\n", target);
 		player->checkImprove("hypnotize", false);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M attempts to hypnotize %N.",player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M attempts to hypnotize %N.",player, target);
 		if(target->isMonster()) {
 			target->getMonster()->addEnemy(player);
 			if(player->flagIsSet(P_LAG_PROTECTION_SET)) {    // Activates lag protection.
@@ -389,7 +389,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 
 	player->print("You hypnotize %N.\n", target);
 	player->checkImprove("hypnotize", true);
-	broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M hypnotizes %N!", player, target);
+	broadcast(player->getSock(), target->getSock(), player->getParent(), "%M hypnotizes %N!", player, target);
 	target->print("%M hypnotizes you.\n", player);
 
 
@@ -593,7 +593,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 		player->print("You failed to drain %N's life.\n", target);
 		player->checkImprove("drain", false);
 
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M tried to drain %N's life.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to drain %N's life.", player, target);
 		target->print("%M tried drain your life!\n", player);
 		return(0);
 	}
@@ -634,7 +634,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 		player->print("%M resisted your drain!\n", target);
 
 	target->printColor("%M drained you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), damage.get());
-	broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M drained %N's life.", player, target);
+	broadcast(player->getSock(), target->getSock(), player->getParent(), "%M drained %N's life.", player, target);
 
 	if(player->doDamage(target, damage.get(), CHECK_DIE)) {
 		if(player->getClass() == CARETAKER && pTarget)

@@ -211,7 +211,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 		pos = 3;
 
 		if(!target) {
@@ -231,7 +231,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 		}
 		player->print("You cast %s on %N.\n", spell.c_str(), target);
 		target->print("%M casts %s on you.\n", player, spell.c_str());
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts %s on %N.",
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts %s on %N.",
 			player, spell.c_str(), target);
 	}
 

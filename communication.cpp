@@ -353,7 +353,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 
 
 	if(chan->type == COM_WHISPER)
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M whispers something to %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M whispers something to %N.", player, target);
 
 
 	if(!target->isGagging(player->name)) {

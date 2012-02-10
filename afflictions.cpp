@@ -51,7 +51,7 @@ int cmdCreepingDoom(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findCreature(player, cmnd->str[1], cmnd->val[1], true, true);
+	creature = player->getParent()->findCreature(player, cmnd->str[1], cmnd->val[1], true, true);
 	if(!creature || creature == player) {
 		player->print("You don't see that here.\n");
 		return(0);
@@ -161,7 +161,7 @@ int cmdPoison(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findCreature(player, cmnd->str[1], cmnd->val[1], true, true);
+	creature = player->getParent()->findCreature(player, cmnd->str[1], cmnd->val[1], true, true);
 	if(!creature || creature == player) {
 		player->print("You don't see that here.\n");
 		return(0);
@@ -830,7 +830,7 @@ int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			player->print("That person is not here.\n");
@@ -842,7 +842,7 @@ int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Cure-poison cast on %N.\n", target);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts cure-poison on %N.", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts cure-poison on %N.", player, target);
 			target->print("%M casts cure-poison on you.\nYou feel much better.\n", player);
 		}
 
@@ -885,7 +885,7 @@ int splSlowPoison(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
 		// monsters are now valid targets
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			player->print("That person is not here.\n");
@@ -896,7 +896,7 @@ int splSlowPoison(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		player->print("Slow-poison cast on %N.\n", target);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts slow-poison on %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts slow-poison on %N.", player, target);
 		target->print("%M casts slow-poison on you.\n", player);
 
 		if(!target->isPoisoned()) {
@@ -948,7 +948,7 @@ int splCureDisease(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			player->print("That's not here.\n");
@@ -959,7 +959,7 @@ int splCureDisease(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		player->print("You cure-disease cast on %N.\n", target);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts cure-disease on %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts cure-disease on %N.", player, target);
 		target->print("%M casts cure-disease on you.\nYou feel your fever subside.\n", player);
 
 	}
@@ -993,7 +993,7 @@ int splCureBlindness(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			player->print("That's not here.\n");
@@ -1007,7 +1007,7 @@ int splCureBlindness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You cast cure blindess on %N.\n", target);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts cure blindness on %N.",
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts cure blindness on %N.",
 				player, target);
 			if(target->isPlayer()) {
 				target->print("%M casts cure blindness on you.\n", player);
@@ -1429,7 +1429,7 @@ int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findPlayer(player, cmnd, 2);
+		target = player->getParent()->findPlayer(player, cmnd, 2);
 
 		if(!target) {
 			player->print("That player is not here.\n");
@@ -1444,7 +1444,7 @@ int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		player->print("Remove-curse cast on %N.\n", target);
 		target->print("%M casts a remove-curse spell on you.\n", player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts remove-curse on %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts remove-curse on %N.", player, target);
 	}
 
 	if(target->inCombat(false))

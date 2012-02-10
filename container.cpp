@@ -83,6 +83,15 @@ bool Container::add(Containable* toAdd) {
     }
     return(toReturn);
 }
+//*********************************************************************
+//						wake
+//*********************************************************************
+
+void Container::wake(bstring str, bool noise) const {
+    for(Player* ply : players) {
+		ply->wake(str, noise);
+	}
+}
 
 bool Container::checkAntiMagic(Monster* ignore) {
     for(Monster* mons : monsters) {

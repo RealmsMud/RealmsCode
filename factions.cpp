@@ -551,7 +551,7 @@ int dmShowFactions(Player *player, cmd* cmnd) {
 		Creature* target=0;
 		Monster *mTarget=0;
 
-		target = player->getRoom()->findCreature(player, cmnd);
+		target = player->getParent()->findCreature(player, cmnd);
 		if(player->isCt()) {
 			cmnd->str[1][0] = up(cmnd->str[1][0]);
 			if(!target)

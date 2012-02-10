@@ -3205,7 +3205,7 @@ int cmdCost(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	smithy = player->getRoom()->findMonster(player, cmnd, 2);
+	smithy = player->getParent()->findMonster(player, cmnd, 2);
 	if(!smithy) {
 		player->print("That smithy is not here.\n");
 		return(0);
@@ -3289,7 +3289,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	smithy = player->getRoom()->findMonster(player, cmnd, 2);
+	smithy = player->getParent()->findMonster(player, cmnd, 2);
 	if(!smithy) {
 		player->print("That smithy is not here!\n");
 		return(0);

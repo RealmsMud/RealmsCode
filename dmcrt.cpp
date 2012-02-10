@@ -667,7 +667,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 	target = gServer->findPlayer(cmnd->str[2]);
 	cmnd->str[2][0] = low(cmnd->str[2][0]);
 	if(!target || (!player->isCt() && target->flagIsSet(P_DM_INVIS)))
-		target = player->getRoom()->findCreature(player, cmnd, 2);
+		target = player->getParent()->findCreature(player, cmnd, 2);
 
 	if(!target) {
 		player->print("Creature not found.\n");
@@ -2126,7 +2126,7 @@ int dmCrtName(Player* player, cmd* cmnd) {
 	if(isdigit(cmnd->fullstr[i]))
 		cmnd->val[1] = atoi(&cmnd->fullstr[i]);
 
-	target = player->getRoom()->findMonster(player, cmnd);
+	target = player->getParent()->findMonster(player, cmnd);
 	if(!target) {
 		player->print("Monster not found in the room.\n");
 		return(PROMPT);
@@ -2323,7 +2323,7 @@ int dmAlias(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	monster = player->getRoom()->findMonster(player, cmnd);
+	monster = player->getParent()->findMonster(player, cmnd);
 	if(!monster) {
 		player->print("Can't seem to locate that monster here.\n");
 		return(0);
@@ -2401,7 +2401,7 @@ int dmFollow(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findMonster(player, cmnd);
+	creature = player->getParent()->findMonster(player, cmnd);
 	if(!creature) {
 		player->print("Can't seem to locate that creature here.\n");
 		return(0);
@@ -2444,7 +2444,7 @@ int dmAttack(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	attacker = player->getRoom()->findMonster(player, cmnd);
+	attacker = player->getParent()->findMonster(player, cmnd);
 
 	if(!attacker || !player->canSee(attacker)) {
 		player->print("Can't seem to locate that attacker here.\n");
@@ -2457,7 +2457,7 @@ int dmAttack(Player* player, cmd* cmnd) {
 	}
 
 
-	victim = player->getRoom()->findMonster(player, cmnd, 2);
+	victim = player->getParent()->findMonster(player, cmnd, 2);
 
 	if(!victim) {
 		lowercize(cmnd->str[2], 1);
@@ -2496,7 +2496,7 @@ int dmAttack(Player* player, cmd* cmnd) {
 int dmListEnemy(Player* player, cmd* cmnd) {
 	Monster* target=0;
 
-	target = player->getRoom()->findMonster(player, cmnd);
+	target = player->getParent()->findMonster(player, cmnd);
 
 	if(!target) {
 		player->print("Not here.\n");
@@ -2574,7 +2574,7 @@ void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
 		return;
 	}
 
-	target = player->getRoom()->findMonster(player, cmnd->str[2], 1);
+	target = player->getParent()->findMonster(player, cmnd->str[2], 1);
 
 	if(!target) {
 		player->print("Monster not found.\n");
@@ -2760,7 +2760,7 @@ int	dmForceWander(Player* player, cmd* cmnd) {
 	}
 
 
-	monster = player->getRoom()->findMonster(player, cmnd);
+	monster = player->getParent()->findMonster(player, cmnd);
 
 	if(!monster) {
 		player->print("That is not here.\n");
@@ -2809,7 +2809,7 @@ int dmBalance(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	target = player->getRoom()->findMonster(player, cmnd->str[1], 1);
+	target = player->getParent()->findMonster(player, cmnd->str[1], 1);
 
 	if(!target) {
 		player->print("Monster not found.\n");

@@ -340,7 +340,7 @@ int dmGroup(Player* player, cmd* cmnd) {
 		return(PROMPT);
 	}
 
-	target = player->getRoom()->findCreature(player, cmnd);
+	target = player->getParent()->findCreature(player, cmnd);
 
 	if(!target) {
 		lowercize(cmnd->str[1], 1);

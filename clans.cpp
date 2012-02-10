@@ -225,7 +225,7 @@ int cmdPledge(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findMonster(player, cmnd);
+	creature = player->getParent()->findMonster(player, cmnd);
 
 	if(!creature) {
 		player->print("You don't see that here.\n");
@@ -312,7 +312,7 @@ int cmdRescind(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findMonster(player, cmnd);
+	creature = player->getParent()->findMonster(player, cmnd);
 
 	if(!creature) {
 		player->print("You don't see that here.\n");

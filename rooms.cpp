@@ -794,15 +794,6 @@ int BaseRoom::getMaxMobs() const {
 	return(room->getMaxMobs() ? room->getMaxMobs() : MAX_MOBS_IN_ROOM);
 }
 
-//*********************************************************************
-//						wake
-//*********************************************************************
-
-void BaseRoom::wake(bstring str, bool noise) const {
-    for(Player* ply : players) {
-		ply->wake(str, noise);
-	}
-}
 
 //*********************************************************************
 //						vampCanSleep

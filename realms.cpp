@@ -209,7 +209,7 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findPlayer(player, cmnd, 2);
+		target = player->getParent()->findPlayer(player, cmnd, 2);
 
 		if(!target || !target->getPlayer()) {
 			player->print("You don't see that player here.\n");
@@ -219,7 +219,7 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
 		if(checkRefusingMagic(player, target))
 			return(0);
 
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a resist-%s spell on %N.", player, name.c_str(), target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a resist-%s spell on %N.", player, name.c_str(), target);
 		target->print("%M casts resist-%s on you.\n", player, name.c_str());
 
 		if(spellData->how == CAST) {

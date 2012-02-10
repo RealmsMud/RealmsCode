@@ -600,7 +600,7 @@ int dmSpecials(Player* player, cmd* cmnd) {
 		return(cmdNoAuth(player));
 
 	if(cmnd->num > 1) {
-		target = player->getRoom()->findCreature(player, cmnd);
+		target = player->getParent()->findCreature(player, cmnd);
 
 		if(target && player->getClass() == BUILDER) {
 			mTarget = target->getMonster();

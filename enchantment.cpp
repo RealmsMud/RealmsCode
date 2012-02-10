@@ -69,7 +69,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
 
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], true, true);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], true, true);
 		if(!target) {
 			player->print("Cast on whom?\n");
 			return(0);
@@ -93,7 +93,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		player->print("You cast a hold-person spell on %N.\n", target);
 		target->print("%M casts a hold-person spell on you.\n", player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a hold-person spell on %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a hold-person spell on %N.", player, target);
 
 
 		if(target->getClass() == LICH) {
@@ -275,7 +275,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
 
-		target = player->getRoom()->findPlayer(player, cmnd, 2);
+		target = player->getParent()->findPlayer(player, cmnd, 2);
 		if(!target) {
 			player->print("On whom?\n");
 			return(0);
@@ -305,7 +305,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		player->print("You cast a scare spell on %N.\n", target);
 		target->print("%M casts a scare spell on you.\n", player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a scare spell on %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a scare spell on %N.", player, target);
 
 
 		if(target->getClass() == PALADIN) {
@@ -434,7 +434,7 @@ int splCourage(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
 
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			player->print("You don't see that person here.\n");
@@ -446,7 +446,7 @@ int splCourage(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		player->print("Courage cast on %s.\n", target->name);
 		target->print("%M casts a courage spell on you.\n", player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a courage spell on %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a courage spell on %N.", player, target);
 	}
 
 	target->removeEffect("fear", true, false);
@@ -517,7 +517,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(noPotion(player, spellData))
 			return(0);
 
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 		if(!target || target == player) {
 			player->print("That's not here.\n");
 			return(0);
@@ -542,9 +542,9 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 			(target->getClass() == PALADIN && target->isMonster())
 		) {
 			player->print("%M seems unaffected by fear.\n", target);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M casts a fear spell on %N.\n", player, target);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M brushes it off and attacks %N.\n", player, target);
 
 			target->getMonster()->addEnemy(player, true);
@@ -564,7 +564,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(target->isPlayer() && target->getClass() == PALADIN) {
 			player->print("Fear spell cast on %s.\n", target->name);
 			player->print("It doesn't do anything noticeable.\n");
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts fear on %N.",
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts fear on %N.",
 				player, target);
 			target->print("%M casts a fear spell on you.\n", player);
 			target->print("It has no apparent effect.\n");
@@ -573,14 +573,14 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(target->chkSave(SPL, player, 0) && !player->isCt()) {
 			target->print("%M tried to cast a fear spell on you!\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M tried to cast a fear spell on %N!", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a fear spell on %N!", player, target);
 			player->print("Your spell fizzles.\n");
 			return(0);
 		}
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Fear spell cast on %s.\n", target->name);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts fear on %N.",
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts fear on %N.",
 				player, target);
 			target->print("%M casts a fear spell on you.\n", player);
 		}
@@ -667,7 +667,7 @@ int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(noPotion(player, spellData))
 			return(0);
 
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target || target == player) {
 			player->print("That's not here.\n");
@@ -706,7 +706,7 @@ int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(target->chkSave(SPL, player, bns) && !player->isCt()) {
 			target->print("%M tried to cast a silence spell on you!\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M tried to cast a silence spell on %N!", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a silence spell on %N!", player, target);
 			player->print("Your spell fizzles.\n");
 			return(0);
 		}
@@ -722,7 +722,7 @@ int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Silence casted on %s.\n", target->name);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a silence spell on %N.", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a silence spell on %N.", player, target);
 
 			logCast(player, target, "silence");
 
@@ -1072,7 +1072,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 				target->print("%M's stun is reflected back at %s!\n", player, player->himHer());
 				if(player->flagIsSet(P_RESIST_STUN) || player->isEffected("resist-magic"))
 					dur = 3;
-				broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M's stun is reflected back at %s!",
+				broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's stun is reflected back at %s!",
 					player, player->himHer());
 				if(target->isDm() && !player->isDm())
 					dur = 0;
@@ -1104,7 +1104,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Stun cast on %s.\n", target->name);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M casts stun on %N.", player, target);
 
 			logCast(player, target, "stun");

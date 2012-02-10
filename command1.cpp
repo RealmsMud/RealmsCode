@@ -459,7 +459,7 @@ int cmdPayToll(Player* player, cmd* cmnd) {
 
 	amt = MIN(amt, 30000);
 
-	target = player->getRoom()->findMonster(player, cmnd, 2);
+	target = player->getParent()->findMonster(player, cmnd, 2);
 	if(!target) {
 		player->print("That creature is not here.\n");
 		return(0);

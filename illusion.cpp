@@ -132,7 +132,7 @@ int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = pPlayer->getRoom()->findPlayer(pPlayer, cmnd->str[2], cmnd->val[2], false);
+		target = pPlayer->getParent()->findPlayer(pPlayer, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			pPlayer->print("You don't see that player here.\n");

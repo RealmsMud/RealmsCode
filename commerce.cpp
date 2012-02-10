@@ -1006,7 +1006,7 @@ int cmdPurchase(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findMonster(player, cmnd, 2);
+	creature = player->getParent()->findMonster(player, cmnd, 2);
 	if(!creature) {
 		player->print("That is not here.\n");
 		return(0);
@@ -1146,7 +1146,7 @@ int cmdSelection(Player* player, cmd* cmnd) {
 		return(0);
 
 
-	creature = player->getRoom()->findMonster(player, cmnd);
+	creature = player->getParent()->findMonster(player, cmnd);
 	if(!creature) {
 		player->print("That is not here.\n");
 		return(0);
@@ -2022,7 +2022,7 @@ int cmdTrade(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findMonster(player, cmnd, 2);
+	creature = player->getParent()->findMonster(player, cmnd, 2);
 	if(!creature) {
 		player->print("That is not here.\n");
 		return(0);

@@ -210,7 +210,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 				return(0);
 
 			cmnd->str[2][0] = up(cmnd->str[2][0]);
-			creature = pPlayer->getRoom()->findCreature(pPlayer, cmnd->str[2], cmnd->val[2], false);
+			creature = pPlayer->getParent()->findCreature(pPlayer, cmnd->str[2], cmnd->val[2], false);
 			if(creature)
 				target = creature->getPlayer();
 			if(!target) {
@@ -228,7 +228,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			player->print("Anchor cast on %s.\n", target->name);
 			target->print("%M casts a dimensional-anchor spell on you.\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M casts a dimensional-anchor spell on %N.", player, target);
 		}
 
@@ -682,7 +682,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 
 		if(pPlayer && !target) {
@@ -960,7 +960,7 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findPlayer(player, cmnd, 2);
+		target = player->getParent()->findPlayer(player, cmnd, 2);
 		if(!target || !player->canSee(target)) {
 			player->print("That person is not here.\n");
 			return(0);
@@ -1009,11 +1009,11 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
 			target->print("You turn translucent and fade away.\n");
 			target->print("You have been transported to the ethereal plane.\n");
 
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts ethereal-travel on %N.",
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts ethereal-travel on %N.",
 				player, target);
 
 			logCast(player, target, "ethereal-travel");
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%N turns translucent and fades away.", target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%N turns translucent and fades away.", target);
 
 			cr = getEtherealTravelRoom();
 
@@ -1152,7 +1152,7 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			player->print("You summon %N.\n", target);
 			target->print("%M summons you.\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M summons %N.", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M summons %N.", player, target);
 
 			broadcast(target->getSock(), target->getRoom(), "%M vanishes!", target);
 
@@ -1416,7 +1416,7 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findPlayer(player, cmnd, 2);
+		target = player->getParent()->findPlayer(player, cmnd, 2);
 		if(!target) {
 			player->print("That person is not here.\n");
 			return(0);
@@ -1431,7 +1431,7 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			player->print("Word of recall cast on %N.\n", target);
 			target->print("%M casts a word of recall spell on you.\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M casts word of recall on %N.", player, target);
 
 			if(spellData->how == CAST && !player->isStaff() && target->checkDimensionalAnchor()) {
@@ -1481,7 +1481,7 @@ int splPlaneShift(Creature* player, cmd* cmnd, SpellData* spellData) {
 	} else {
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = pPlayer->getRoom()->findPlayer(pPlayer, cmnd, 2);
+		target = pPlayer->getParent()->findPlayer(pPlayer, cmnd, 2);
 		if(!target) {
 			pPlayer->print("That player is not here.\n");
 			return(0);
