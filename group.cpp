@@ -191,6 +191,20 @@ int Group::getNumInSameRoom(Creature* target) {
 	return(count);
 }
 //********************************************************************************
+//* getNumPlyInSameRoup
+//********************************************************************************
+// Returns the number of group members (players) in the same room as the target
+
+int Group::getNumPlyInSameRoom(Creature* target) {
+	int count=0;
+	for(Creature* crt : members) {
+		if(crt != target && crt->isPlayer() && target->inSameRoom(crt))
+			count++;
+	}
+	return(count);
+}
+
+//********************************************************************************
 //* getMember
 //********************************************************************************
 // Parameters: countDmInvis - Should we count DM invis players or not?
@@ -249,7 +263,7 @@ bool Group::inGroup(Creature* target) {
 void Group::sendToAll(bstring msg, Creature* ignore, bool sendToInvited) {
     for(Creature* crt : members) {
         if(!crt->isPet() && crt != ignore && (sendToInvited || crt->getGroupStatus() >= GROUP_MEMBER )) {
-            *crt << msg;
+            *crt << ColorOn << msg << ColorOff;
         }
     }
 }

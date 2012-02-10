@@ -601,9 +601,8 @@ int communicate(Creature* creature, cmd* cmnd) {
             else
                 sprintf(intro, "You %s in %s,", speak, get_language_adj(lang));
 
-            if(!chan->ooc && creature->flagIsSet(P_LANGUAGE_COLORS))
-                ANSI(creature->getSock(), get_lang_color(lang));
-            creature->printColor("%s \"%s%s\".^x\n", intro, ooc_str, text.c_str());
+            creature->printColor("%s%s \"%s%s\".\n^x", ((!chan->ooc && creature->flagIsSet(P_LANGUAGE_COLORS)) ? get_lang_color(lang) : ""),
+            		intro, ooc_str, text.c_str());
             player->bug("%s %s in %s, \"%s%s.\"\n", creature->name, com_text[chan->type],
                 get_language_adj(lang), ooc_str, text.c_str());
 
@@ -1283,13 +1282,11 @@ void printForeignTongueMsg(BaseRoom *inRoom, Creature *talker) {
 void Monster::sayTo(const Player* player, const bstring& message) {
 	short language = player->current_language;
 
-	broadcast_rom_LangWc(NORMAL, get_lang_color(language),
-		language, player->getSock(), player->area_room, player->room,
+	broadcast_rom_LangWc(language, player->getSock(), player->area_room, player->room,
 		"%M says to %N, \"%s\"^x", this, player, message.c_str());
 	printForeignTongueMsg(player->getRoom(), this);
 
-	ANSI(player->getSock(), get_lang_color(language));
-	player->printColor("%M says to you, \"%s\"\n^x", this, message.c_str());
+	player->printColor("%s%M says to you, \"%s\"\n^x",get_lang_color(language), this, message.c_str());
 }
 
 

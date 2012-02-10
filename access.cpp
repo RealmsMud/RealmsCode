@@ -81,31 +81,31 @@ unsigned int permAC[30] = {
 //		language
 //
 
-int lang_color[LANGUAGE_COUNT] = {
-	MAGENTA,					// Alien
-	CYAN,						// Dwarven
-	GREEN,						// Elven
-	CYAN,						// Halfling
-	CYAN,						// Common
-	YELLOW,						// Orcish
-	YELLOW,						// Giantkin
-	BLUE,						// Gnomish
-	GREEN,						// Trollish
-	YELLOW,						// Ogrish
-	MAGENTA,					// Dark-Elven (Drow)
-	GREEN,						// Goblinoid
-	YELLOW,						// Minotaur
-	BLUE,						// Celestial
-	CYAN,						// Kobold
-	RED,						// Infernal
-	YELLOW,						// Schnai
-	RED,						// Kataran
-	GREEN,						// Druidic
-	YELLOW,						// Wolfen
-	MAGENTA,					// Thieves' Cant
-	MAGENTA,					// Arcanic (Mages/Lich)
-	MAGENTA,					// Abyssal
-	RED,						// Tiefling
+char lang_color[LANGUAGE_COUNT][3] = {
+	"^m",						// Alien
+	"^c",						// Dwarven
+	"^g",						// Elven
+	"^c",						// Halfling
+	"^c",						// Common
+	"^y",						// Orcish
+	"^y",						// Giantkin
+	"^b",						// Gnomish
+	"^g",						// Trollish
+	"^y",						// Ogrish
+	"^m",						// Dark-Elven (Drow)
+	"^g",						// Goblinoid
+	"^y",						// Minotaur
+	"^b",						// Celestial
+	"^c",						// Kobold
+	"^r",						// Infernal
+	"^y",						// Schnai
+	"^r",						// Kataran
+	"^g",						// Druidic
+	"^y",						// Wolfen
+	"^m",						// Thieves' Cant
+	"^m",						// Arcanic (Mages/Lich)
+	"^m",						// Abyssal
+	"^r",						// Tiefling
 };
 
 char language_adj[][32] = { "an alien language", "dwarven", "elven", "halfling", "common", "orcish", "giantkin",
@@ -289,7 +289,7 @@ char *get_class_string(int nIndex) {
 	return(class_str[nIndex]);
 }
 
-int get_lang_color(int nIndex) {
+char* get_lang_color(int nIndex) {
 	ASSERTLOG( nIndex >= 0 );
 	ASSERTLOG( nIndex < LANGUAGE_COUNT );
 

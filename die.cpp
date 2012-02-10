@@ -1413,7 +1413,8 @@ void Monster::distributeExperience(Creature *killer) {
 
 		std::map<Player*, int> expList;
 		// See if the group has experience split turned on
-		if(group && group->flagIsSet(GROUP_SPLIT_EXPERIENCE)) {
+		if(group && group->flagIsSet(GROUP_SPLIT_EXPERIENCE) && group->getNumPlyInSameRoom(player) >= 1) {
+
 			// Split exp evenly amongst the group
 			int numGroupMembers=0, totalGroupLevel=0, totalGroupDamage=0;
 			long n = 0;
@@ -1433,7 +1434,9 @@ void Monster::distributeExperience(Creature *killer) {
 						n = clearEnemy(groupMember);
 						totalGroupDamage += n;
 						expList[groupMember] += n;
-					} else if(crt->isPet() && crt->getMaster()->getsGroupExperience(this)) {
+					} else if(crt->isPet() && (crt->getMaster()->getsGroupExperience(this) || expList.find(crt->getPlayerMaster()) != expList.end() )) {
+						// If the master gets group experience, or was calculated earlier to get group experience (They're in expList already)
+						// then count the pet as the same
 						n = clearEnemy(crt);
 						totalGroupDamage += n;
 						expList[crt->getPlayerMaster()] += n;
