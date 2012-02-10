@@ -287,7 +287,7 @@ void handleObject(Player* player, cmd* cmnd, HandleObject type) {
 		}
 
 		player->printColor("You %s %P^x.\n", action.c_str(), object);
-		broadcast(player->getSock(), player->getRoom(), "%M %s %P^x.", player, action2.c_str(), object);
+		broadcast(player->getSock(), player->getParent(), "%M %s %P^x.", player, action2.c_str(), object);
 
 		if(player->checkTraps(player->parent_rom, true, false))
 			player->stun(3);
@@ -518,7 +518,7 @@ int cmdPayToll(Player* player, cmd* cmnd) {
 	gServer->logGold(GOLD_OUT, player, Money(amt, GOLD), exit, "Toll");
 
 	player->printColor("%M accepts your toll and ushers you through the %s^x.\n", target, exit->name);
-	broadcast(player->getSock(), player->getRoom(), "%M pays %N some coins and goes through the %s^x.", player, target, exit->name);
+	broadcast(player->getSock(), player->getParent(), "%M pays %N some coins and goes through the %s^x.", player, target, exit->name);
 
 	player->deleteFromRoom();
 	player->addToRoom(newRoom);

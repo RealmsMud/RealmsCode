@@ -582,7 +582,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	player->print("You conjure a %s.\n", target->name);
 	player->checkImprove("conjure", true);
-	broadcast(player->getSock(), player->getRoom(), "%M conjures a %s.", player, target->name);
+	broadcast(player->getSock(), player->getParent(), "%M conjures a %s.", player, target->name);
 
 
 	if(!combatPet) {
@@ -657,7 +657,7 @@ int splDenseFog(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	player->print("You cast a dense fog spell.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M casts a dense fog spell.", player);
+	broadcast(player->getSock(), player->getParent(), "%M casts a dense fog spell.", player);
 
 	if(player->getRoom()->hasPermEffect("dense-fog")) {
 		player->print("The spell didn't take hold.\n");
@@ -696,7 +696,7 @@ int splToxicCloud(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	player->print("You cast a toxic cloud spell.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M casts a toxic cloud spell.", player);
+	broadcast(player->getSock(), player->getParent(), "%M casts a toxic cloud spell.", player);
 
 	if(player->getRoom()->hasPermEffect("toxic-cloud")) {
 		player->print("The spell didn't take hold.\n");
@@ -743,7 +743,7 @@ int splWallOfFire(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	player->printColor("You cast a wall of fire spell on the %s^x.\n", exit->name);
-	broadcast(player->getSock(), player->getRoom(), "%M casts a wall of fire spell on the %s^x.",
+	broadcast(player->getSock(), player->getParent(), "%M casts a wall of fire spell on the %s^x.",
 		player, exit->name);
 
 	if(exit->hasPermEffect("wall-of-fire")) {
@@ -780,7 +780,7 @@ int splWallOfForce(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	player->printColor("You cast a wall of force spell on the %s^x.\n", exit->name);
-	broadcast(player->getSock(), player->getRoom(), "%M casts a wall of force spell on the %s^x.",
+	broadcast(player->getSock(), player->getParent(), "%M casts a wall of force spell on the %s^x.",
 		player, exit->name);
 
 	if(exit->hasPermEffect("wall-of-force")) {
@@ -822,7 +822,7 @@ int splWallOfThorns(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	player->printColor("You cast a wall of thorns spell on the %s^x.\n", exit->name);
-	broadcast(player->getSock(), player->getRoom(), "%M casts a wall of thorns spell on the %s^x.",
+	broadcast(player->getSock(), player->getParent(), "%M casts a wall of thorns spell on the %s^x.",
 		player, exit->name);
 
 	if(exit->hasPermEffect("wall-of-thorns")) {

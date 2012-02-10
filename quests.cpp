@@ -1021,7 +1021,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
 			}
 		}
 		if(response != "")
-			broadcast(player->getSock(), player->getRoom(), "%M speaks to %N in %s.",
+			broadcast(player->getSock(), player->getParent(), "%M speaks to %N in %s.",
 				player, target, get_language_adj(player->current_language));
 	} else {
 		question = keyTxtConvert(getFullstrText(cmnd->fullstr, 2).toLower());
@@ -1517,11 +1517,11 @@ int cmdQuests(Player* player, cmd* cmnd) {
 
 						// NOTE: After quest->complete, quest is INVALID, do not attempt to access it
 						if(quest->complete(mons)) {
-							broadcast(player->getSock(), player->getRoom(), "%M just completed ^W%s^x.",
+							broadcast(player->getSock(), player->getParent(), "%M just completed ^W%s^x.",
 								player, name.c_str());
 						} else {
 							//player->print("Quest completion failed.\n");
-							broadcast(player->getSock(), player->getRoom(), "%M tried to complete ^W%s^x.",
+							broadcast(player->getSock(), player->getParent(), "%M tried to complete ^W%s^x.",
 								player, name.c_str());
 						}
 

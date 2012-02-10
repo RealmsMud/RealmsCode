@@ -404,7 +404,7 @@ int cmdDice(Creature* player, cmd* cmnd) {
 
 
 	player->print("You roll %s\n: %d\n", diceOutput, total);
-	broadcast(player->getSock(), player->getRoom(), "(Dice %s): %M got %d.", diceOutput, player, total );
+	broadcast(player->getSock(), player->getParent(), "(Dice %s): %M got %d.", diceOutput, player, total );
 
 	return(0);
 }

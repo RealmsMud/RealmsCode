@@ -62,7 +62,7 @@ int cmdPrepareForTraps(Player* player, cmd* cmnd) {
 	player->lasttime[LT_PREPARE].interval = player->isDm() ? 0:15;
 
 	player->print("You prepare yourself for traps.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M prepares for traps.", player);
+	broadcast(player->getSock(), player->getParent(), "%M prepares for traps.", player);
 	player->setFlag(P_PREPARED);
 	if(player->isBlind())
 		player->clearFlag(P_PREPARED);
@@ -133,11 +133,11 @@ int cmdBribe(Player* player, cmd* cmnd) {
 
 	if(amount < cost[GOLD] || creature->flagIsSet(M_PERMENANT_MONSTER)) {
 		player->print("%M takes your money, but stays.\n", creature);
-		broadcast(player->getSock(), player->getRoom(), "%M tried to bribe %N.", player, creature);
+		broadcast(player->getSock(), player->getParent(), "%M tried to bribe %N.", player, creature);
 		creature->coins.add(amount, GOLD);
 	} else {
 		player->print("%M takes your money and leaves.\n", creature);
-		broadcast(player->getSock(), player->getRoom(), "%M bribed %N.", player, creature);
+		broadcast(player->getSock(), player->getParent(), "%M bribed %N.", player, creature);
 
 		log_immort(true, player, "%s bribed %s.\n", player->name, creature->name);
 
@@ -347,7 +347,7 @@ int cmdSearch(Player* player, cmd* cmnd) {
 	
 	player->interruptDelayedActions();
 
-	broadcast(player->getSock(), player->getRoom(), "%M searches the room.", player);
+	broadcast(player->getSock(), player->getParent(), "%M searches the room.", player);
 
 	// big rooms take longer to search
 	if(player->getRoom()->getSize() >= SIZE_GARGANTUAN) {
@@ -553,7 +553,7 @@ int cmdHide(Player* player, cmd* cmnd) {
 			player->checkImprove("hide", true);
 		} else {
 			player->unhide();
-			broadcast(player->getSock(), player->getRoom(), "%M tries to hide in the shadows.", player);
+			broadcast(player->getSock(), player->getParent(), "%M tries to hide in the shadows.", player);
 			player->checkImprove("hide", false);
 		}
 
@@ -589,7 +589,7 @@ int cmdHide(Player* player, cmd* cmnd) {
 
 
 	player->print("You attempt to hide it.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M attempts to hide %1P.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M attempts to hide %1P.", player, object);
 
 	if(mrand(1, 100) <= chance) {
 		object->setFlag(O_HIDDEN);
@@ -785,9 +785,9 @@ int cmdScout(Player* player, cmd* cmnd) {
 	if(player->isStaff() && player->flagIsSet(P_DM_INVIS))
 		broadcast(isStaff, player->getSock(), player->getRoom(), "%M scouts the %s^x exit.", player, exit->name);
 	else if(exit->flagIsSet(X_SECRET) || exit->isConcealed() || exit->flagIsSet(X_DESCRIPTION_ONLY))
-		broadcast(player->getSock(), player->getRoom(), "%M scouts the area.", player);
+		broadcast(player->getSock(), player->getParent(), "%M scouts the area.", player);
 	else
-		broadcast(player->getSock(), player->getRoom(), "%M scouts the %s^x exit.", player, exit->name);
+		broadcast(player->getSock(), player->getParent(), "%M scouts the %s^x exit.", player, exit->name);
 
 	doScout(player, exit);
 	return(0);
@@ -863,7 +863,7 @@ int cmdEnvenom(Player* player, cmd* cmnd) {
 
 	player->printColor("You envenom %P with %P.\n", weapon, object);
 	player->checkImprove("envenom", true);
-	broadcast(player->getSock(), player->getRoom(), "%M envenoms %P with %P.", player, weapon, object);
+	broadcast(player->getSock(), player->getParent(), "%M envenoms %P with %P.", player, weapon, object);
 
 
 	// TODO: make poison more powerful with better envenom skill
@@ -1249,7 +1249,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 		target->getMonster()->addEnemy(player);
 
 	if(player->breakObject(player->ready[WIELD-1], WIELD)) {
-		broadcast(player->getSock(), player->getRoom(), "%s backstab failed.", player->upHisHer());
+		broadcast(player->getSock(), player->getParent(), "%s backstab failed.", player->upHisHer());
 		player->setAttackDelay(player->getAttackDelay()*2);
 		return(0);
 	}
@@ -1408,7 +1408,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 			switch(mrand(1,4)) {
 			case 1:
 				player->printColor("^cYou completely disemboweled %N! %s's dead!\n", target, target->upHeShe());
-				broadcast(player->getSock(), player->getRoom(), "%M completely disembowels %N! %s's dead!",
+				broadcast(player->getSock(), player->getParent(), "%M completely disembowels %N! %s's dead!",
 					player, target, target->upHeShe());
 				if(target->isPlayer())
 					target->print("%M completely disemboweled you! You're dead!\n", player);
@@ -1417,7 +1417,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 			case 2:
 				player->printColor("^cYou impaled %N through %s back! %s's dead!\n",
 					target, target->hisHer(), target->upHeShe());
-				broadcast(player->getSock(), player->getRoom(), "%M impales %N through %s back! %s's dead!",
+				broadcast(player->getSock(), player->getParent(), "%M impales %N through %s back! %s's dead!",
 					player, target, target->hisHer(), target->upHeShe());
 				if(target->isPlayer())
 					target->print("%M impaled you through the back! You're dead!\n", player);
@@ -1427,7 +1427,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 				if(weapon) {
 					player->printColor("^cThe %s went completely through %N! %s's dead!\n",
 						weapon->name, target, target->upHeShe());
-					broadcast(player->getSock(), player->getRoom(), "%M's %s goes completely through %N! %s's dead!",
+					broadcast(player->getSock(), player->getParent(), "%M's %s goes completely through %N! %s's dead!",
 						player, weapon->name, target, target->upHeShe());
 
 					if(target->isPlayer())
@@ -1439,7 +1439,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 			case 4:
 				player->printColor("^cYou cut %N in half from behind! %s's dead!\n",
 					target, target->upHeShe());
-				broadcast(player->getSock(), player->getRoom(), "%M cut %N in half from behind! %s's dead!",
+				broadcast(player->getSock(), player->getParent(), "%M cut %N in half from behind! %s's dead!",
 					player, target, target->upHeShe());
 				if(target->isPlayer())
 					target->print("%M cut you in half from behind! You're dead!\n", player);
@@ -1464,7 +1464,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 			target->getPlayer()->statistics.wasMissed();
 		player->print("You missed.\n");
 		player->checkImprove("backstab", false);
-		broadcast(player->getSock(), player->getRoom(), "%s backstab failed.", player->upHisHer());
+		broadcast(player->getSock(), player->getParent(), "%s backstab failed.", player->upHisHer());
 		player->setAttackDelay(mrand(30,90));
 	} else if(result == ATTACK_DODGE) {
 		target->dodge(player);
@@ -1477,14 +1477,14 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 	} else if(result == ATTACK_FUMBLE) {
 		player->statistics.fumble();
 		player->printColor("^gYou FUMBLED your weapon.\n");
-		broadcast(player->getSock(), player->getRoom(), "^g%M fumbled %s weapon.", player, player->hisHer());
+		broadcast(player->getSock(), player->getParent(), "^g%M fumbled %s weapon.", player, player->hisHer());
 
 		if(weapon->flagIsSet(O_ENVENOMED)) {
 			if(!player->immuneToPoison() &&
 				!player->chkSave(POI, player, -5) && !induel(player, target->getPlayer())
 			) {
 				player->printColor("^G^#You poisoned yourself!!\n");
-				broadcast(player->getSock(), player->getRoom(), "%M poisoned %sself!!",
+				broadcast(player->getSock(), player->getParent(), "%M poisoned %sself!!",
 					player, player->himHer());
 
 				if(weapon->getEffectStrength()) {
@@ -1509,7 +1509,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 
 			} else {
 				player->print("You almost poisoned yourself!\n");
-				broadcast(player->getSock(), player->getRoom(), "%M almost poisoned %sself!", player, player->himHer());
+				broadcast(player->getSock(), player->getParent(), "%M almost poisoned %sself!", player, player->himHer());
 			}
 		}
 
@@ -1776,7 +1776,7 @@ int cmdPickLock(Player* player, cmd* cmnd) {
 	if(player->isCt())
 		chance = 101;
 
-	broadcast(player->getSock(), player->getRoom(), "%M attempts to pick the %s^x.", player, exit->name);
+	broadcast(player->getSock(), player->getParent(), "%M attempts to pick the %s^x.", player, exit->name);
 
 	if(mrand(1,100) <= chance) {
 		log_immort(false, player, "%s picked the %s in room %s.\n", player->name, exit->name,
@@ -1785,7 +1785,7 @@ int cmdPickLock(Player* player, cmd* cmnd) {
 		player->print("You successfully picked the lock.\n");
 		player->checkImprove("pick", true);
 		exit->clearFlag(X_LOCKED);
-		broadcast(player->getSock(), player->getRoom(), "%s succeeded.", player->upHeShe());
+		broadcast(player->getSock(), player->getParent(), "%s succeeded.", player->upHeShe());
 
 		Hooks::run(player, "succeedPickExit", exit, "succeedPickByCreature");
 

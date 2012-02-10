@@ -66,15 +66,12 @@ bool Container::add(Containable* toAdd) {
     Monster* addMonster = dynamic_cast<Monster*>(toAdd);
     bool toReturn = false;
     if(addObject) {
-        std::cout << "Added " << addObject;
         std::pair<ObjectSet::iterator, bool> p = objects.insert(addObject);
         toReturn = p.second;
     } else if(addPlayer) {
-        std::cout << "Added " << addPlayer;
         std::pair<PlayerSet::iterator, bool> p = players.insert(addPlayer);
         toReturn = p.second;
     } else if(addMonster) {
-        std::cout << "Added " << addMonster;
         std::pair<MonsterSet::iterator, bool> p = monsters.insert(addMonster);
         toReturn = p.second;
     } else {
@@ -83,11 +80,7 @@ bool Container::add(Containable* toAdd) {
     }
     if(toReturn) {
         toAdd->setParent(this);
-        std::cout << " Success" << std::endl;
-    } else {
-        std::cout << " Failure" << std::endl;
     }
-
     return(toReturn);
 }
 
@@ -133,6 +126,150 @@ bool Containable::removeFrom() {
 void Containable::setParent(Container* container) {
     parent = container;
 }
-Container* Containable::getParent() {
+Container* Containable::getParent() const {
     return(parent);
+}
+
+MudObject* Container::findTarget(Creature* searcher, const cmd* cmnd, int num) {
+	return(findTarget(searcher, cmnd->str[num], cmnd->val[num]));
+}
+
+MudObject* Container::findTarget(Creature* searcher, const bstring& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch) {
+	int match=0;
+	return(findTarget(searcher, name, num, monFirst, firstAggro, exactMatch, match));
+}
+
+MudObject* Container::findTarget(Creature* searcher, const bstring& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch, int& match) {
+	MudObject* toReturn = 0;
+
+	if((toReturn = findCreature(searcher, name, num, monFirst, firstAggro, exactMatch, match))) {
+		return(toReturn);
+	}
+	// TODO: Search the container's objects
+	return(toReturn);
+}
+
+
+// Wrapper for the real findCreature to support legacy callers
+Creature* Container::findCreature(Creature* searcher, const cmd* cmnd, int num) {
+	return(findCreature(searcher, cmnd->str[num], cmnd->val[num]));
+}
+
+Creature* Container::findCreaturePython(Creature* searcher, const bstring& name, bool monFirst, bool firstAggro, bool exactMatch ) {
+	int ignored=0;
+	int num = 1;
+
+	bstring newName = name;
+	newName.trim();
+	unsigned int sLoc = newName.ReverseFind(" ");
+	if(sLoc != bstring::npos) {
+		num = newName.right(newName.length() - sLoc).toInt();
+		if(num != 0) {
+			newName = newName.left(sLoc);
+		} else {
+			num = 1;
+		}
+	}
+
+	std::cout << "Looking for '" << newName << "' #" << num << "\n";
+
+	return(findCreature(searcher, newName, num, monFirst, firstAggro, exactMatch, ignored));
+}
+
+// Wrapper for the real findCreature for callers that don't care about the value of match
+Creature* Container::findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch ) {
+	int ignored=0;
+	return(findCreature(searcher, name, num, monFirst, firstAggro, exactMatch, ignored));
+}
+bool isMatch(Creature* searcher, Creature* target, const bstring& name, bool exactMatch, bool checkVisibility) {
+    if(!target)
+        return(false);
+    if(checkVisibility && !searcher->canSee(target))
+        return(false);
+
+    if(exactMatch) {
+        if(!strcmp(target->name, name.c_str())) {
+            return(true);
+        }
+
+    } else {
+        if(keyTxtEqual(target, name.c_str())) {
+            return(true);
+        }
+    }
+    return(false);
+}
+
+// The real findCreature, will take and return the value of match as to allow for findTarget to find the 3rd thing named
+// gold with a monster name goldfish, player named goldmine, and some gold in the room!
+Creature* Container::findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) {
+
+	if(!searcher || name.empty())
+		return(NULL);
+
+	Creature* target=0;
+	for(int i = 1 ; i <= 2 ; i++) {
+	    if( (monFirst && i == 1) || (!monFirst && i == 2) ) {
+	        target = findMonster(searcher, name, num, firstAggro, exactMatch, match);
+	    } else {
+	        target = findPlayer(searcher, name, num, exactMatch, match);
+	    }
+
+	    if(target) {
+	        return(target);
+	    }
+	}
+	return(target);
+
+}
+
+Monster* Container::findMonster(Creature* searcher, const cmd* cmnd, int num) {
+	return(findMonster(searcher, cmnd->str[num], cmnd->val[num]));
+}
+Monster* Container::findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch) {
+    int match = 0;
+    return(findMonster(searcher, name, num, firstAggro, exactMatch, match));
+}
+Monster* Container::findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) {
+    Monster* target = 0;
+    for(Monster* mons : searcher->getRoom()->monsters) {
+        if(isMatch(searcher, mons, name, exactMatch)) {
+            match++;
+            if(match == num) {
+                if(exactMatch)
+                    return(mons);
+                else {
+                    target = mons;
+                    break;
+                }
+
+            }
+        }
+    }
+    if(firstAggro && target) {
+        if(num < 2 && searcher->pFlagIsSet(P_KILL_AGGROS))
+            return(getFirstAggro(target, searcher));
+        else
+            return(target);
+    } else  {
+        return(target);
+    }
+}
+Player* Container::findPlayer(Creature* searcher, const cmd* cmnd, int num) {
+	return(findPlayer(searcher, cmnd->str[num], cmnd->val[num]));
+}
+Player* Container::findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch) {
+    int match = 0;
+    return(findPlayer(searcher, name, num, exactMatch, match));
+}
+Player* Container::findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) {
+    for(Player* ply : searcher->getRoom()->players) {
+        if(isMatch(searcher, ply, name, exactMatch)) {
+            match++;
+            if(match == num) {
+                return(ply);
+            }
+        }
+    }
+    return(NULL);
 }

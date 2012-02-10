@@ -24,6 +24,10 @@
 class Ship;
 class ShipStop;
 
+// Container
+bool isMatch(Creature* searcher, Creature* target, const bstring& name, bool exactMatch, bool checkVisibility = false);
+
+
 // Socials
 void socialHooks(Creature *creature, MudObject* target, bstring action, bstring result = "");
 void socialHooks(Creature *target, bstring action, bstring result = "");

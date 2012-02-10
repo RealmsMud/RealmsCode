@@ -86,7 +86,7 @@ int Object::doSpecial(Player* player) {
 					return(0);
 				player->statistics.combo();
 				player->print("You opened the %s!\n", toOpen->name);
-				broadcast(player->getSock(), player->getRoom(),
+				broadcast(player->getSock(), player->getParent(),
 					"%M opened the %s!", player, toOpen->name);
 				toOpen->clearFlag(X_LOCKED);
 				toOpen->clearFlag(X_CLOSED);

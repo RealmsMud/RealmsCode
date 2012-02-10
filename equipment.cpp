@@ -508,7 +508,7 @@ void wearAll(Player* player, bool login) {
 		if(!login) {
 			str[strlen(str)-2] = 0;
 			player->printColor("You wear %s.\n", str);
-			broadcast(player->getSock(), player->getRoom(), "%M wears %s.", player, str);
+			broadcast(player->getSock(), player->getParent(), "%M wears %s.", player, str);
 		}
 	} else
 		if(!login)
@@ -609,11 +609,11 @@ bool doRemoveObj(Player* player, cmd* cmnd, int id) {
 
 			if(second->flagIsSet(O_NO_PREFIX)) {
 				player->printColor("%s jumped to your primary hand! It's cursed!\n", second->name);
-				broadcast(player->getSock(), player->getRoom(), "%s jumped to %N's primary hand! It's cursed!",
+				broadcast(player->getSock(), player->getParent(), "%s jumped to %N's primary hand! It's cursed!",
 					second->name, player);
 			} else {
 				player->printColor("The %s jumped to your primary hand! It's cursed!\n", second->name);
-				broadcast(player->getSock(), player->getRoom(), "%M's %s jumped to %s primary hand! It's cursed!", player,
+				broadcast(player->getSock(), player->getParent(), "%M's %s jumped to %s primary hand! It's cursed!", player,
 					second->name, player->hisHer());
 			}
 
@@ -621,11 +621,11 @@ bool doRemoveObj(Player* player, cmd* cmnd, int id) {
 		}
 
 		player->printColor("You removed %1P.\n", object);
-		broadcast(player->getSock(), player->getRoom(), "%M removed %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M removed %1P.", player, object);
 
 		if(second && !jumped) {
 			player->printColor("You removed %1P.\n", second);
-			broadcast(player->getSock(), player->getRoom(), "%M removed %1P.", player, second);
+			broadcast(player->getSock(), player->getParent(), "%M removed %1P.", player, second);
 		}
 
 		object->clearFlag(O_WORN);
@@ -718,7 +718,7 @@ void remove_all(Player* player) {
 	player->computeAttackPower();
 
 	str[strlen(str)-2] = 0;
-	broadcast(player->getSock(), player->getRoom(), "%M removes %s.", player, str);
+	broadcast(player->getSock(), player->getParent(), "%M removes %s.", player, str);
 	player->printColor("You remove %s.\n", str);
 
 }
@@ -956,7 +956,7 @@ int cmdHold(Player* player, cmd* cmnd) {
 		player->delObj(object, false, false, true, true, true);
 
 		player->printColor("You hold %1P.\n", object);
-		broadcast(player->getSock(), player->getRoom(), "%M holds %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M holds %1P.", player, object);
 		if(object->use_output[0] && object->getType() != POTION && object->getType() != CONTAINER && object->getType() != WAND)
 			player->printColor("%s\n", object->use_output);
 
@@ -1269,7 +1269,7 @@ void getAllObj(Creature* creature, Object *container) {
 	if(!strlen(str))
 		return;
 
-	broadcast(player->getSock(), player->getRoom(), "%M gets %s from %1P.", creature, str, container);
+	broadcast(player->getSock(), player->getParent(), "%M gets %s from %1P.", creature, str, container);
 
 	player->bug("%s%s gets %s from %s.\n", player->name, player != creature ? "'s pet" : "", str, container->name);
 	if(player == creature)
@@ -3335,7 +3335,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
 
 	gServer->logGold(GOLD_OUT, player, Money(cost, GOLD), object, "Repair");
 
-	broadcast(player->getSock(), player->getRoom(), "%M has %N repair %1P.", player, smithy, object);
+	broadcast(player->getSock(), player->getParent(), "%M has %N repair %1P.", player, smithy, object);
 
 
 	alignDiff = getAlignDiff(player, smithy);
@@ -3344,28 +3344,28 @@ int cmdRepair(Player* player, cmd* cmnd) {
 	switch(alignDiff) {
 	case 2:
 		player->print("%M gives you sidelong glances and is working slow on purpose.", smithy);
-		broadcast(player->getSock(), player->getRoom(),
+		broadcast(player->getSock(), player->getParent(),
 			"%M gives %N sidelong glances as %s works and is working slow on purpose.", smithy, player, smithy->heShe());
 		break;
 
 	case 3:
 		player->print("%M openly glares at you as %s works.\n", smithy, smithy->heShe());
-		broadcast(player->getSock(), player->getRoom(),
+		broadcast(player->getSock(), player->getParent(),
 			"%M openly glares at %N as %s works.\n", smithy, player, smithy->heShe());
 		break;
 	case 4:
 		player->print("%M scowls and curses about you as %s works.\n", smithy, smithy->heShe());
-		broadcast(player->getSock(), player->getRoom(),
+		broadcast(player->getSock(), player->getParent(),
 			"%M scowls and curses about %N as %s works.\n", smithy, player, smithy->heShe());
 		break;
 	case 5:
 		player->print("%M sneers at you in disgust as %s works.\n", smithy, smithy->heShe());
-		broadcast(player->getSock(), player->getRoom(),
+		broadcast(player->getSock(), player->getParent(),
 			"%M sneers at %N in disgust as %s works.\n", smithy, player, smithy->heShe());
 		break;
 	case 6:
 		player->print("As %N works, %s makes no bones about openly despising you.\n", smithy, smithy->heShe());
-		broadcast(player->getSock(), player->getRoom(),
+		broadcast(player->getSock(), player->getParent(),
 			"As %N works, %s makes no bones about openly despising %N.\n", smithy, smithy->heShe(), player);
 		break;
 	}
@@ -3464,7 +3464,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
 	} else {
 
 		player->print("\"Bah!\", %N shouts, \"Broke it. Sorry.\"\n", smithy);
-		broadcast(player->getSock(), player->getRoom(), "Oops! %s broke it.", smithy->heShe());
+		broadcast(player->getSock(), player->getParent(), "Oops! %s broke it.", smithy->heShe());
 
 		if(object->getShotsCur() > 0 && !alignDiff) {
 			player->print("%M says, \"Well, here's your cash back.\"\n", smithy);

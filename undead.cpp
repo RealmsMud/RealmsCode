@@ -220,7 +220,7 @@ int cmdMist(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	broadcast(player->getSock(), player->getRoom(), "%M turns to mist.", player);
+	broadcast(player->getSock(), player->getParent(), "%M turns to mist.", player);
 	player->setFlag(P_MISTED);
 	player->print("You turn to mist.\n");
 	//player->checkImprove("mist", true);
@@ -462,7 +462,7 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
 	if(mrand(1, 100) <= chance) {
 		player->print("You feel the evil in your soul rebuilding.\n");
 		player->checkImprove("regenerate", true);
-		broadcast(player->getSock(), player->getRoom(), "%M regenerates.", player);
+		broadcast(player->getSock(), player->getParent(), "%M regenerates.", player);
 
 		for(Player* ply : player->getRoom()->players) {
 			if(!ply->isUndead())
@@ -495,7 +495,7 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
 	} else {
 		player->print("You fail to regenerate.\n");
 		player->checkImprove("regenerate", false);
-		broadcast(player->getSock(), player->getRoom(), "%M tried to regenerate.", player);
+		broadcast(player->getSock(), player->getParent(), "%M tried to regenerate.", player);
 		player->lasttime[LT_REGENERATE].ltime = t;
 		player->lasttime[LT_REGENERATE].interval = 10L;
 	}

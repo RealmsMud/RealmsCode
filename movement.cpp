@@ -374,7 +374,7 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
 			int dmg = mrand(5, 15 + fall / 10);
 
 			player->printColor("You fell and hurt yourself for %s%d^x damage.\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg);
-			broadcast(player->getSock(), player->getRoom(), "%M fell down.", player);
+			broadcast(player->getSock(), player->getParent(), "%M fell down.", player);
 			broadcastGroup(false, player, "%M fell and took *CC:DAMAGE*%d^x damage, %s%s\n",
 				player, dmg, player->heShe(), player->getStatusStr(dmg));
 
@@ -382,7 +382,7 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
 			if(player->hp.getCur() <= 0) {
 				player->print("You fell to your death.\n");
 				player->hp.setCur(0);
-				broadcast(player->getSock(), player->getRoom(), "%M died from the fall.\n", player);
+				broadcast(player->getSock(), player->getParent(), "%M died from the fall.\n", player);
 				player->die(FALL);
 				return(false);
 			}
@@ -517,25 +517,25 @@ bool Move::canMove(Player* player, cmd* cmnd) {
 				if(moves == 1) {
 					if(player->getRoom()->flagIsSet(R_EARTH_BONUS)) {
 						player->print("You are stuck in the mud!\n");
-						broadcast(player->getSock(), player->getRoom(), "%M got stuck in the mud!", player);
+						broadcast(player->getSock(), player->getParent(), "%M got stuck in the mud!", player);
 					} else if(player->getRoom()->flagIsSet(R_AIR_BONUS)) {
 						player->print("The strong wind knocks you from your feet!\n");
-						broadcast(player->getSock(), player->getRoom(), "%M got blown over by the wind!", player);
+						broadcast(player->getSock(), player->getParent(), "%M got blown over by the wind!", player);
 					} else if(player->getRoom()->flagIsSet(R_FIRE_BONUS)) {
 						player->print("You are knocked down by heat waves!\n");
-						broadcast(player->getSock(), player->getRoom(), "%M got knocked down by heat waves!", player);
+						broadcast(player->getSock(), player->getParent(), "%M got knocked down by heat waves!", player);
 					} else if(player->getRoom()->flagIsSet(R_WATER_BONUS)) {
 						player->print("Strong water currents make you lose balance!\n");
-						broadcast(player->getSock(), player->getRoom(), "%M got knocked down by the current!", player);
+						broadcast(player->getSock(), player->getParent(), "%M got knocked down by the current!", player);
 					} else if(player->getRoom()->flagIsSet(R_COLD_BONUS) || player->getRoom()->isWinter()) {
 						player->print("You are stuck in the ice and snow!\n");
-						broadcast(player->getSock(), player->getRoom(), "%M got stuck in the ice and snow!", player);
+						broadcast(player->getSock(), player->getParent(), "%M got stuck in the ice and snow!", player);
 					} else if(player->getRoom()->flagIsSet(R_ELEC_BONUS)) {
 						player->print("Strong magnetic forces knock you down!\n");
-						broadcast(player->getSock(), player->getRoom(), "%M got knocked down by magnetic forces!", player);
+						broadcast(player->getSock(), player->getParent(), "%M got knocked down by magnetic forces!", player);
 					} else {
 						player->print("You are stuck!!\n");
-						broadcast(player->getSock(), player->getRoom(), "%M got stuck!", player);
+						broadcast(player->getSock(), player->getParent(), "%M got stuck!", player);
 					}
 				}
 				player->pleaseWait(1);
@@ -1301,7 +1301,7 @@ int cmdOpen(Player* player, cmd* cmnd) {
 	exit->ltime.ltime = time(0);
 
 	player->printColor("You open the %s^x.\n", exit->name);
-	broadcast(player->getSock(), player->getRoom(), "%M opens the %s^x.", player, exit->name);
+	broadcast(player->getSock(), player->getParent(), "%M opens the %s^x.", player, exit->name);
 
 	Hooks::run(player, "openExit", exit, "openByCreature");
 
@@ -1379,7 +1379,7 @@ int cmdClose(Player* player, cmd* cmnd) {
 	Hooks::run(player, "closeExit", exit, "closeByCreature");
 
 	player->printColor("You close the %s^x.\n", exit->name);
-	broadcast(player->getSock(), player->getRoom(), "%M closes the %s^x.", player, exit->name);
+	broadcast(player->getSock(), player->getParent(), "%M closes the %s^x.", player, exit->name);
 
 	return(0);
 
@@ -1452,7 +1452,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 		exit->ltime.ltime = time(0);
 		player->print("Click.\n");
 
-		broadcast(player->getSock(), player->getRoom(), "%M unlocks the %s^x.", player, exit->name);
+		broadcast(player->getSock(), player->getParent(), "%M unlocks the %s^x.", player, exit->name);
 
 		broadcast(isWatcher, "^C%s unlocked the %s^x exit in room %s.\n",
 			player->name, exit->name, player->getRoom()->fullName().c_str());
@@ -1511,7 +1511,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 		player->print("%s\n", object->use_output);
 	else
 		player->print("Click.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M unlocks the %s^x.", player, exit->name);
+	broadcast(player->getSock(), player->getParent(), "%M unlocks the %s^x.", player, exit->name);
 
 	Hooks::run(player, "unlockExit", exit, "unlockByCreature");
 
@@ -1611,7 +1611,7 @@ int cmdLock(Player* player, cmd* cmnd) {
 	exit->setFlag(X_LOCKED);
 
 	player->print("Click.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M locks the %s^x.", player, exit->name);
+	broadcast(player->getSock(), player->getParent(), "%M locks the %s^x.", player, exit->name);
 
 	Hooks::run(player, "lockExit", exit, "lockByCreature");
 

@@ -94,7 +94,7 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
 	if((chance < mrand(1, 100)) && (chance != 101)) {
 		player->print("You were unable to enthrall %N.\n", creature);
 		player->checkImprove("enthrall",false);
-		broadcast(player->getSock(), player->getRoom(), "%M tried to enthrall %N.",player, creature);
+		broadcast(player->getSock(), player->getParent(), "%M tried to enthrall %N.",player, creature);
 		if(creature->isMonster()) {
 			creature->getMonster()->addEnemy(player);
 			return(0);
@@ -283,7 +283,7 @@ int cmdLayHands(Player* player, cmd* cmnd) {
 
 		player->doHeal(player, num);
 
-		broadcast(player->getSock(), player->getRoom(), "%M heals %sself with the power of %s.",
+		broadcast(player->getSock(), player->getParent(), "%M heals %sself with the power of %s.",
 			player, player->himHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
 
 		player->print("You feel much better now.\n");
@@ -402,12 +402,12 @@ int cmdPray(Player* player, cmd* cmnd) {
 
 		if(player->getClass() != DEATHKNIGHT) {
 			player->print("You feel extremely pious.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M bows %s head in prayer.", player, player->hisHer());
+			broadcast(player->getSock(), player->getParent(), "%M bows %s head in prayer.", player, player->hisHer());
 			player->piety.addCur(50);
 			player->lasttime[LT_PRAY].interval = 450L;
 		} else {
 			player->print("The evil in your soul infuses your body with power.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M glows with evil.", player);
+			broadcast(player->getSock(), player->getParent(), "%M glows with evil.", player);
 			player->strength.addCur(30);
 			player->computeAC();
 			player->computeAttackPower();
@@ -421,7 +421,7 @@ int cmdPray(Player* player, cmd* cmnd) {
 			player->print("The evil in your soul fails to aid you.\n");
 		}
 		player->checkImprove("pray", false);
-		broadcast(player->getSock(), player->getRoom(), "%M prays.", player);
+		broadcast(player->getSock(), player->getParent(), "%M prays.", player);
 		player->lasttime[LT_PRAY].ltime = t - 590L;
 	}
 
@@ -606,7 +606,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
 		if(target->mFlagIsSet(M_SPECIAL_UNDEAD))
 			player->print("%M greatly resisted your efforts to turn %s!\n",
 			      target, target->himHer());
-		broadcast(player->getSock(), player->getRoom(), "%M failed to turn %N.", player, target);
+		broadcast(player->getSock(), player->getParent(), "%M failed to turn %N.", player, target);
 		return(0);
 	}
 
@@ -615,7 +615,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
 	if((disroll < (dis + bns) && !target->flagIsSet(M_SPECIAL_UNDEAD)) || player->isDm()) {
 		player->printColor("^BYou disintegrated %N.\n", target);
 
-		broadcast(player->getSock(), player->getRoom(), "^B%M disintegrated %N.", player, target);
+		broadcast(player->getSock(), player->getParent(), "^B%M disintegrated %N.", player, target);
 		// TODO: SKILLS: add a bonus to this
 		player->checkImprove("turn", true);
 		if(target->isMonster())
@@ -634,7 +634,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
 		player->printColor("^YYou turned %N for %d damage.\n", target, dmg);
 		player->checkImprove("turn", true);
 
-		broadcast(player->getSock(), player->getRoom(), "^Y%M turned %N.", player, target);
+		broadcast(player->getSock(), player->getParent(), "^Y%M turned %N.", player, target);
 		player->doDamage(target, dmg, CHECK_DIE);
 
 	}
@@ -715,7 +715,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
 		if(mrand(1,100) > chance) {
 			player->print("Your god refuses to renounce %N.\n", target);
 			player->checkImprove("renounce", false);
-			broadcast(player->getSock(), player->getRoom(), "%M tried to renounce %N.", player, target);
+			broadcast(player->getSock(), player->getParent(), "%M tried to renounce %N.", player, target);
 			return(0);
 		}
 
@@ -732,7 +732,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
 		if(mrand(1,100) > 90 - bonus((int)player->piety.getCur()) || player->isDm()) {
 			player->print("You destroy %N with your faith.\n", target);
 			player->checkImprove("renounce", true);
-			broadcast(player->getSock(), player->getRoom(), "The power of %N's faith destroys %N.",
+			broadcast(player->getSock(), player->getParent(), "The power of %N's faith destroys %N.",
 				player, target);
 			mTarget->adjustThreat(player, target->hp.getCur());
 
@@ -746,7 +746,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
 			player->printColor("You renounced %N for %s%d^x damage.\n", target, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
 			player->checkImprove("renounce", true);
 			//target->print("%M renounced you for %d damage!\n", player, dmg);
-			broadcast(player->getSock(), player->getRoom(), "%M renounced %N.", player, target);
+			broadcast(player->getSock(), player->getParent(), "%M renounced %N.", player, target);
 			player->doDamage(target, dmg, CHECK_DIE);
 		}
 
@@ -909,7 +909,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 		if(mrand(1,100) > chance) {
 			player->print("Your holy word is ineffective on %N.\n", target);
 			player->checkImprove("holyword", false);
-			broadcast(player->getSock(), player->getRoom(), "%M tried to pronounce a holy word on %N.", player, target);
+			broadcast(player->getSock(), player->getParent(), "%M tried to pronounce a holy word on %N.", player, target);
 			return(0);
 		}
 
@@ -925,7 +925,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 		if((mrand(1,100) > (90 - bonus((int)player->piety.getCur()))) || (player->isDm())) {
 			player->print("Your holy word utterly destroys %N.\n", target);
 			player->checkImprove("holyword", true);
-			broadcast(player->getSock(), player->getRoom(), "%M's holy word utterly destroys %N.",
+			broadcast(player->getSock(), player->getParent(), "%M's holy word utterly destroys %N.",
 				player, target);
 			if(mTarget)
 				mTarget->adjustThreat(player, target->hp.getCur());
@@ -940,7 +940,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 			player->checkImprove("holyword", true);
 			target->stun((bonus((int)player->piety.getCur()) + mrand(2,6)) );
 
-			broadcast(player->getSock(), player->getRoom(), "%M pronounces a holy word on %N.", player, target);
+			broadcast(player->getSock(), player->getParent(), "%M pronounces a holy word on %N.", player, target);
 
 			player->doDamage(target, dmg, CHECK_DIE);
 		}
@@ -1123,7 +1123,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 			player->printColor("Your %s %s all used up.\n", object->name,
 			      (object->flagIsSet(O_SOME_PREFIX) ? "are":"is"));
 
-		broadcast(player->getSock(), player->getRoom(), "%M bandages %sself.",
+		broadcast(player->getSock(), player->getParent(), "%M bandages %sself.",
 			player, player->himHer());
 
 		player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
@@ -1234,7 +1234,7 @@ int splHallow(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 		}
 		player->print("You cast a hallow spell.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M casts a hallow spell.", player);
+		broadcast(player->getSock(), player->getParent(), "%M casts a hallow spell.", player);
 	}
 
 	if(player->getRoom()->hasPermEffect("hallow")) {
@@ -1269,7 +1269,7 @@ int splUnhallow(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 	}
 	player->print("You cast an unhallow spell.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M casts an unhallow spell.", player);
+	broadcast(player->getSock(), player->getParent(), "%M casts an unhallow spell.", player);
 
 	if(player->getRoom()->hasPermEffect("unhallow")) {
 		player->print("The spell didn't take hold.\n");

@@ -563,7 +563,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 		player->print("Congratulations! You are now the owner of a brand new shop.\n");
 		logn("log.shops", "*** %s just built a shop! (%s - %s) (Shop %s).\n",
 			player->name, room->info.str().c_str(), xname.c_str(), shop->info.str().c_str());
-		broadcast(player->getSock(), player->getRoom(), "%M just opened a shop!", player );
+		broadcast(player->getSock(), player->getParent(), "%M just opened a shop!", player );
 		if(!player->flagIsSet(P_DM_INVIS))
 			broadcast("### %s just opened a shop! It's located at: %s.", player->name, room->name);
 
@@ -658,7 +658,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 		obj->addToRoom(storage);
 		p->appendLog(player->name, "%s stocked %s for $%d.", player->name, obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
 		player->printColor("You stock %s in the store for $%d.\n", obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
-		broadcast(player->getSock(), player->getRoom(), "%M just stocked something in this store.", player);
+		broadcast(player->getSock(), player->getParent(), "%M just stocked something in this store.", player);
 		// obj->shopValue
 		if(limited)
 			player->save(true);
@@ -683,7 +683,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 		obj->setShopValue(value);
 		p->appendLog(player->name, "%s set the price for %s to $%d.", player->name, obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
 		player->printColor("You set the price for %s to $%d.\n", obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
-		broadcast(player->getSock(), player->getRoom(), "%M just updated the prices in this store.", player);
+		broadcast(player->getSock(), player->getParent(), "%M just updated the prices in this store.", player);
 	} else if(action == SHOP_REMOVE) {
 		Object *obj = findObject(player, storage->first_obj, cmnd, 2);
 
@@ -712,7 +712,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 		player->addObj(obj);
 		p->appendLog(player->name, "%s removed %s.", player->name, obj->getObjStr(NULL, flags, 1).c_str());
 		player->printColor("You remove %s from your store.\n", obj->getObjStr(NULL, flags, 1).c_str());
-		broadcast(player->getSock(), player->getRoom(), "%M just removed something from this store.", player);
+		broadcast(player->getSock(), player->getParent(), "%M just removed something from this store.", player);
 
 		obj->clearFlag(O_PERM_ITEM);
 		obj->setShopValue(0);
@@ -1104,7 +1104,7 @@ int cmdPurchase(Player* player, cmd* cmnd) {
 		player->printColor("%M says, \"%sHere is your %s.\"\n", creature,
 			Faction::getAttitude(player->getFactionStanding(creature->getPrimeFaction())) < Faction::INDIFFERENT ? "Hrmph. " : "Thank you very much. ",
 			object->name);
-		broadcast(player->getSock(), player->getRoom(), "%M pays %N %s for %P.\n", player, creature, cost.str().c_str(), object);
+		broadcast(player->getSock(), player->getParent(), "%M pays %N %s for %P.\n", player, creature, cost.str().c_str(), object);
 		player->coins.sub(cost);
 
 		player->doHaggling(creature, object, BUY);
@@ -1329,7 +1329,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
 
 		player->printColor("You buy a %s.\n", object->getObjStr(NULL, flags, 1).c_str());
-		broadcast(player->getSock(), player->getRoom(), "%M just bought %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M just bought %1P.", player, object);
 		object->clearFlag(O_PERM_INV_ITEM);
 		object->clearFlag(O_PERM_ITEM);
 		object->clearFlag(O_TEMP_PERM);
@@ -1532,7 +1532,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			if(strcmp(object2->name, "storage room") && strcmp(object2->name, "bail") && object2->getType() != LOTTERYTICKET)
 				object2->setFlag(O_JUST_BOUGHT);
 
-			broadcast(player->getSock(), player->getRoom(), "%M bought %1P.", player, object2);
+			broadcast(player->getSock(), player->getParent(), "%M bought %1P.", player, object2);
 
 			player->bug("%s just bought %s for %s in room %s.\n",
 				player->name, object2->name, cost.str().c_str(), player->getRoom()->fullName().c_str());
@@ -1588,7 +1588,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
 			player->print("The shopkeeper says, \"Congratulations, you are now the proud owner of a new storage room. Don't forget, to get in you must also buy a key.\"\n");
 			player->print("You have %s left.\n", player->coins.str().c_str());
-			broadcast(player->getSock(), player->getRoom(), "%M just bought a storage room.", player);
+			broadcast(player->getSock(), player->getParent(), "%M just bought a storage room.", player);
 			logn("log.storage", "%s bought storage room %s.\n",
 				player->name, cr.str().c_str());
 
@@ -1718,7 +1718,7 @@ int cmdSell(Player* player, cmd* cmnd) {
 	}
 
 	player->printColor("The shopkeep gives you %s for %P.\n", value.str().c_str(), object);
-	broadcast(player->getSock(), player->getRoom(), "%M sells %1P.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M sells %1P.", player, object);
 
 	object->refund.zero();
 	object->refund.set(value);
@@ -1778,7 +1778,7 @@ int cmdValue(Player* player, cmd* cmnd) {
 
 	player->printColor("The shopkeep says, \"%O's worth %s.\"\n", object, value.str().c_str());
 
-	broadcast(player->getSock(), player->getRoom(), "%M gets %P appraised.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M gets %P appraised.", player, object);
 
 	return(0);
 }
@@ -1829,7 +1829,7 @@ int cmdRefund(Player* player, cmd* cmnd) {
 	
 	player->coins.add(object->refund);
 	player->printColor("The shopkeep takes the %s from you and returns %s to you.\n", object->name, object->refund.str().c_str());
-	broadcast(player->getSock(), player->getRoom(), "%M refunds %P.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M refunds %P.", player, object);
 	gServer->logGold(GOLD_IN, player, object->refund, object, "Refund");
 	player->delObj(object, true);
 	// No further haggling allowed in this store until they buy a full priced item and have left the room
@@ -1851,7 +1851,7 @@ void failTrade(const Player* player, const Object* object, const Monster* target
 		player->printColor("%s gives you back %P.\n", target->upHeShe(), object);
 	else
 		player->printColor("%M gives you back %P.\n", target, object);
-	broadcast(player->getSock(), player->getRoom(), "%M tried to trade %P with %N.",
+	broadcast(player->getSock(), player->getParent(), "%M tried to trade %P with %N.",
 		player, object, target);
 	if(trade)
 		delete trade;
@@ -2167,7 +2167,7 @@ int cmdTrade(Player* player, cmd* cmnd) {
 	player->printColor("%M says, \"Thank you for retrieving %s for me.\n", creature, object->getObjStr(player, flags, numTrade).c_str());
 	player->printColor("For it, I will reward you.\"\n");
 
-	broadcast(player->getSock(), player->getRoom(), "%M trades %P to %N.", player,object,creature);
+	broadcast(player->getSock(), player->getParent(), "%M trades %P to %N.", player,object,creature);
 
 
 	for(oIt = objects.begin(); oIt != objects.end(); oIt++) {

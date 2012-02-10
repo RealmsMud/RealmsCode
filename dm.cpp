@@ -1969,7 +1969,7 @@ int dmCast(Player* player, cmd* cmnd) {
 				return(0);
 			}
 			player->print("You cast %s on everyone in the room.\n", get_spell_name(splno));
-			broadcast(player->getSock(), player->getRoom(),
+			broadcast(player->getSock(), player->getParent(),
 				"%M casts %s on everyone in the room.\n", player, get_spell_name(splno));
 
 			log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->name, get_spell_name(splno),
@@ -2001,7 +2001,7 @@ int dmCast(Player* player, cmd* cmnd) {
 			dmGlobalSpells(ply, splno, false);
 		}
 
-		broadcast(player->getSock(), player->getRoom(), "%M casts %s on everyone in the room.\n",
+		broadcast(player->getSock(), player->getParent(), "%M casts %s on everyone in the room.\n",
 			player, get_spell_name(splno));
 
 		log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->name, get_spell_name(splno),

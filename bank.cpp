@@ -253,7 +253,7 @@ void Bank::deposit(Player* player, cmd* cmnd, bool isGuild) {
 	player->save(true);
 
 	Bank::balance(player, isGuild);
-	broadcast(player->getSock(), player->getRoom(), "%s deposits some gold.", player->name);
+	broadcast(player->getSock(), player->getParent(), "%s deposits some gold.", player->name);
 }
 
 //*********************************************************************
@@ -331,7 +331,7 @@ void Bank::withdraw(Player* player, cmd* cmnd, bool isGuild) {
 	player->save(true);
 	
 	Bank::balance(player, isGuild);
-	broadcast(player->getSock(), player->getRoom(), "%s withdrew some gold.", player->name);
+	broadcast(player->getSock(), player->getParent(), "%s withdrew some gold.", player->name);
 }
 
 //*********************************************************************
@@ -470,7 +470,7 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
 		free_crt(target);
 
 	Bank::balance(player, isGuild);
-	broadcast(player->getSock(), player->getRoom(), "%s transfers some gold.", player->name);
+	broadcast(player->getSock(), player->getParent(), "%s transfers some gold.", player->name);
 }
 
 //*********************************************************************

@@ -694,7 +694,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		player->print("You cast a darkness spell.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M casts a darkness spell.", player);
+		broadcast(player->getSock(), player->getParent(), "%M casts a darkness spell.", player);
 
 		if(spellData->how == CAST)
 			player->subMp(15);

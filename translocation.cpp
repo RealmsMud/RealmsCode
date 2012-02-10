@@ -199,7 +199,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 			}
 			if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 				player->print("Anchor spell cast.\n");
-				broadcast(player->getSock(), player->getRoom(), "%M casts a dimensional-anchor spell on %sself.",
+				broadcast(player->getSock(), player->getParent(), "%M casts a dimensional-anchor spell on %sself.",
 						player, player->himHer());
 			} else if(spellData->how == POTION)
 				player->print("You feel stable.\n");
@@ -657,7 +657,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(1);
 		}
 
-		broadcast(player->getSock(), player->getRoom(), "%M disappears.", player);
+		broadcast(player->getSock(), player->getParent(), "%M disappears.", player);
 
 		if(spellData->how != CAST && spellData->how != SCROLL)
 			player->print("You become disoriented and find yourself in another place.\n");
@@ -1392,7 +1392,7 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Word of recall spell cast.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts word of recall on %sself.",
+			broadcast(player->getSock(), player->getParent(), "%M casts word of recall on %sself.",
 				caster, caster->himHer());
 		}
 

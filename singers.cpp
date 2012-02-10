@@ -80,7 +80,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 		}
 
 		if(object->getLevel() > player->getLevel()) {
-			broadcast(player->getSock(), player->getRoom(), "%M is totally puzzled by %P.", player, object);
+			broadcast(player->getSock(), player->getParent(), "%M is totally puzzled by %P.", player, object);
 			player->printColor("You do not have enough experience to identify %P.\n", object);
 			return(0);
 		}
@@ -105,13 +105,13 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 	if(!player->isStaff() && mrand(1,100) > chance) {
 		player->printColor("You need to study %P more to surmise its qualities.\n", object);
 		player->checkImprove("identify", false);
-		broadcast(player->getSock(), player->getRoom(), "%M carefully studies %P.",player, object);
+		broadcast(player->getSock(), player->getParent(), "%M carefully studies %P.",player, object);
 		player->lasttime[LT_IDENTIFY].ltime = t;
 		player->lasttime[LT_IDENTIFY].interval = 60L;
 		return(0);
 	} else {
-		broadcast(player->getSock(), player->getRoom(), "%M carefully studies %P.", player, object);
-		broadcast(player->getSock(), player->getRoom(), "%s successfully identifies it!", player->upHeShe());
+		broadcast(player->getSock(), player->getParent(), "%M carefully studies %P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%s successfully identifies it!", player->upHeShe());
 		player->printColor("You carefully study %P.\n",object);
 		player->printColor("You manage to learn about %P!\n", object);
 		player->checkImprove("identify", true);
@@ -752,7 +752,7 @@ int songFail(Player* player) {
 	chance = chance * player->getLuck() / 50;
 	if(n > chance) {
 		player->print("You sing off key.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M sings off key.", player);
+		broadcast(player->getSock(), player->getParent(), "%M sings off key.", player);
 		return(1);
 	} else
 		return(0);
@@ -926,7 +926,7 @@ int songFlight(Player* player, cmd* cmnd) {
 
 	if(cmnd->num == 2) {
 		player->print("Your song makes you feel light as a feather.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M sings a song of flight.", player);
+		broadcast(player->getSock(), player->getParent(), "%M sings a song of flight.", player);
 
 		target = player;
 
@@ -965,7 +965,7 @@ int songRecall(Player* player, cmd* cmnd) {
 	// Sing on self
 	if(cmnd->num == 2) {
 		player->print("You sing a song of recall.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M sings a song of recall.", player);
+		broadcast(player->getSock(), player->getParent(), "%M sings a song of recall.", player);
 
 		if(!player->isStaff() && player->checkDimensionalAnchor()) {
 			player->printColor("^yYour dimensional-anchor causes your song to go off-key!^w\n");
@@ -1022,7 +1022,7 @@ int songSafety(Player* player, cmd* cmnd) {
 		return(0);
 	}
 	player->print("You sing a song of safety.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M sings a song of safety.", player);
+	broadcast(player->getSock(), player->getParent(), "%M sings a song of safety.", player);
 
 	// handle everyone following singer
 	Group* group = player->getGroup();
@@ -1056,7 +1056,7 @@ int songSafety(Player* player, cmd* cmnd) {
 
 	newRoom = follower->getRecallRoom().loadRoom(follower);
 	if(newRoom) {
-		broadcast(player->getSock(), player->getRoom(), "%M disappears.", player);
+		broadcast(player->getSock(), player->getParent(), "%M disappears.", player);
 		player->courageous();
 		player->deleteFromRoom();
 		player->addToRoom(newRoom);
@@ -1147,7 +1147,7 @@ int cmdCharm(Player* player, cmd* cmnd) {
 	if((creature->isUndead() || chance < mrand(1, 100)) && chance != 101) {
 		player->print("Your song has no effect on %N.\n", creature);
 		player->checkImprove("charm", false);
-		broadcast(player->getSock(), player->getRoom(), "%M sings off key.",player);
+		broadcast(player->getSock(), player->getParent(), "%M sings off key.",player);
 		if(creature->isMonster()) {
 			creature->getMonster()->addEnemy(player);
 			return(0);

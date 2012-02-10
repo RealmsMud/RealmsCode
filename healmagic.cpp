@@ -466,7 +466,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
 
 		if(spellData->how == CAST || spellData->how == SCROLL) {
 			player->print("%s spell cast.\n", capSpellName);
-			broadcast(player->getSock(), player->getRoom(), "%M casts a %s spell on %sself.",
+			broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on %sself.",
 				player, spellName, player->himHer());
 			return(1);
 		} else {
@@ -603,7 +603,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how == CAST || spellData->how == SCROLL) {
 
 			player->print("Rejuvenate spell cast.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts a rejuvenate spell on %sself.",
+			broadcast(player->getSock(), player->getParent(), "%M casts a rejuvenate spell on %sself.",
 				player, player->himHer());
 
 		} else {
@@ -721,7 +721,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 			if(player->isPlayer())
 				player->getPlayer()->statistics.healingCast();
 			player->print("Heal spell cast.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts a heal spell on %sself.", player,
+			broadcast(player->getSock(), player->getParent(), "%M casts a heal spell on %sself.", player,
 				player->himHer());
 			return(1);
 		} else {
@@ -1205,7 +1205,7 @@ int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == WAND) {
 			player->print("Restore spell cast.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts restore on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts restore on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION)
 			player->print("You feel restored.\n");
 
@@ -1261,7 +1261,7 @@ int splRoomVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	player->print("You cast vigor on everyone in the room.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M casts vigor on everyone in the room.\n", player);
+	broadcast(player->getSock(), player->getParent(), "%M casts vigor on everyone in the room.\n", player);
 
 	heal = mrand(1, 6) + bonus((int) player->piety.getCur());
 

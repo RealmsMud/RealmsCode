@@ -534,10 +534,10 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 			if(object) {
 				if(!(object->flagIsSet(O_NO_PREFIX) && (object->flagIsSet(O_NO_TAKE) || object->flagIsSet(O_SCENERY)))) {
 					sock->printColor("You piss on %P.\n", object);
-					broadcast(player->getSock(), player->getRoom(), "%M pisses on %P.", player, object);
+					broadcast(player->getSock(), player->getParent(), "%M pisses on %P.", player, object);
 				} else {
 					sock->printColor("You piss on the %P.\n", object);
-					broadcast(player->getSock(), player->getRoom(), "%M pisses on the %P.", player, object);
+					broadcast(player->getSock(), player->getParent(), "%M pisses on the %P.", player, object);
 				}
 
 				socialHooks(creature, object, str);
@@ -547,7 +547,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
 				if(exit && !exit->flagIsSet(X_DESCRIPTION_ONLY) && !exit->isConcealed(player)) {
 					sock->printColor("You piss on the %s^x.\n", exit->name);
-					broadcast(player->getSock(), player->getRoom(), "%M pisses on the %s^x.", player, exit->name);
+					broadcast(player->getSock(), player->getParent(), "%M pisses on the %s^x.", player, exit->name);
 
 					socialHooks(creature, exit, str);
 				} else {
@@ -758,10 +758,10 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 	}  else if(str == "tnl" && player) {
 
 		if(player->getActualLevel() > player->getLevel()) {
-			broadcast(player->getSock(), player->getRoom(), "%M needs %s experience to relevel.", player, player->expToLevel(false).c_str());
+			broadcast(player->getSock(), player->getParent(), "%M needs %s experience to relevel.", player, player->expToLevel(false).c_str());
 			sock->print("You need %s experience to relevel.\n", player->expToLevel(false).c_str());
 		} else {
-			broadcast(player->getSock(), player->getRoom(), "%M needs %s experience to level.", player, player->expToLevel(false).c_str());
+			broadcast(player->getSock(), player->getParent(), "%M needs %s experience to level.", player, player->expToLevel(false).c_str());
 			sock->print("You need %s experience to level.\n", player->expToLevel(false).c_str());
 		}
 

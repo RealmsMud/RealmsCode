@@ -817,7 +817,7 @@ int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Cure-poison spell cast on yourself.\n");
 			player->print("You feel much better.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts cure-poison on %sself.",
+			broadcast(player->getSock(), player->getParent(), "%M casts cure-poison on %sself.",
 				player, player->himHer());
 		} else if(spellData->how == POTION && player->isPoisoned())
 			player->print("You feel the poison subside.\n");
@@ -866,7 +866,7 @@ int splSlowPoison(Creature* player, cmd* cmnd, SpellData* spellData) {
 		target = player;
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Slow-poison spell cast on yourself.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts slow-poison on %sself.",
+			broadcast(player->getSock(), player->getParent(), "%M casts slow-poison on %sself.",
 				player, player->himHer());
 			if(!player->isPoisoned()) {
 				player->print("Nothing happens.\n");
@@ -938,7 +938,7 @@ int splCureDisease(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Cure-disease spell cast on yourself.\n");
 			player->print("Your fever subsides.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts cure-disease on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts cure-disease on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION && player->isDiseased())
 			player->print("You feel your fever subside.\n");
 		else if(spellData->how == POTION)
@@ -1396,7 +1396,7 @@ int splCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 	object->setFlag(O_CURSED);
 
 	player->printColor("%O glows darkly.\n", object);
-	broadcast(player->getSock(), player->getRoom(), "%M places a curse on %1P.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M places a curse on %1P.", player, object);
 
 	return(1);
 }
@@ -1419,7 +1419,7 @@ int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 		target = player;
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Remove-curse spell cast.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts remove-curse on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts remove-curse on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION)
 			player->print("You feel relieved of burdens.\n");
 
@@ -1471,7 +1471,7 @@ int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 				op = op->next_tag;
 			}
 			player->print("The aura of darkness around you dissipates.\n");
-			broadcast(player->getSock(), player->getRoom(), "The aura of darkness around %N dissipates.", player);
+			broadcast(player->getSock(), player->getParent(), "The aura of darkness around %N dissipates.", player);
 			target->clearFlag(P_DARKNESS);
 		}
 	}

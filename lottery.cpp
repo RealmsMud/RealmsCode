@@ -307,7 +307,7 @@ int cmdClaim(Player* player, cmd* cmnd) {
 	logn("log.prizes", "%s just won %ld.\n", player->name, prize);
 	gConfig->addLotteryWinnings(prize);
 
-	broadcast(player->getSock(), player->getRoom(), "%s claims a Powerbone ticket.", player->name);
+	broadcast(player->getSock(), player->getParent(), "%s claims a Powerbone ticket.", player->name);
 
 	if(prize != gConfig->getLotteryJackpot()) { // Didn't win the big pot
 		player->print("Sorry you didn't win the jackpot this time, but you did win $%ld today!\n", prize);

@@ -56,7 +56,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
 		} else {
 
 			player->print("You are suddenly unable to move!\n");
-			broadcast(player->getSock(), player->getRoom(), "%M becomes unable to move!", player);
+			broadcast(player->getSock(), player->getParent(), "%M becomes unable to move!", player);
 
 			player->unhide();
 			player->addEffect("hold-person", 0, 0, player, true, player);
@@ -163,7 +163,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
 				player->print("%M is held in place!\n", target);
-				broadcast(player->getSock(), player->getRoom(), "%M's spell holds %N in place!", player, target);
+				broadcast(player->getSock(), player->getParent(), "%M's spell holds %N in place!", player, target);
 
 				if(player->isCt())
 					player->print("*DM* %d seconds.\n", dur);
@@ -246,7 +246,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		player->print("You are suddenly terrified to the bone!\n");
-		broadcast(player->getSock(), player->getRoom(), "%M becomes utterly terrified!", player);
+		broadcast(player->getSock(), player->getParent(), "%M becomes utterly terrified!", player);
 		if(player->ready[WIELD-1]) {
 			weapon = player->ready[WIELD-1];
 			player->ready[WIELD-1] = 0;
@@ -424,7 +424,7 @@ int splCourage(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Courage spell cast.\nYou feel unnaturally brave.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts a courage spell on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts a courage spell on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION)
 			player->print("You feel unnaturally brave.\n");
 
@@ -502,7 +502,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how == CAST || spellData->how == WAND || spellData->how == SCROLL) {
 			player->print("You cast a fear spell on yourself.\n");
 			player->print("Nothing happens.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts a fear spell on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts a fear spell on %sself.", player, player->himHer());
 			return(0);
 		}
 
@@ -658,7 +658,7 @@ int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 			dur /= 2;
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
-			broadcast(player->getSock(), player->getRoom(), "%M casts silence on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts silence on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION)
 			player->print("Your throat goes dry and you cannot speak.\n");
 
@@ -905,7 +905,7 @@ int cmdEnchant(Player* player, cmd* cmnd) {
 	object->randomEnchant((int)player->getSkillLevel("enchant")/2);
 
 	player->printColor("%O begins to glow brightly.\n", object);
-	broadcast(player->getSock(), player->getRoom(), "%M enchants %1P.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M enchants %1P.", player, object);
 	player->checkImprove("enchant", true);
 	if(!player->isDm())
 		log_immort(true, player, "%s temp_enchants a %s in room %s.\n", player->name, object->name,
@@ -952,7 +952,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You're stunned.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts a stun spell on %sself.",
+			broadcast(player->getSock(), player->getParent(), "%M casts a stun spell on %sself.",
 				player, player->himHer());
 		} else if(spellData->how == POTION)
 			player->print("You feel dizzy.\n");
@@ -973,7 +973,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 			if(mrand(1,100) < mTarget->getMagicResistance()) {
 				player->printColor("^MYour spell has no effect on %N.\n", mTarget);
 				if(player->isPlayer())
-					broadcast(player->getSock(), player->getRoom(), "%M's spell has no effect on %N.", player, mTarget);
+					broadcast(player->getSock(), player->getParent(), "%M's spell has no effect on %N.", player, mTarget);
 				return(0);
 			}
 
@@ -1174,7 +1174,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 				if(target->chkSave(SPL, player, bns)) {
 					player->printColor("^y%M avoided the full power of your stun!\n", target);
 					if(target->isPlayer())
-						broadcast(player->getSock(), player->getRoom(), "%M avoided a full stun.", target);
+						broadcast(player->getSock(), player->getParent(), "%M avoided a full stun.", target);
 					dur /= 2;
 					dur = MIN(5,dur);
 					target->print("You avoided a full stun.\n");
@@ -1208,7 +1208,7 @@ int splGlobeOfSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	player->print("You cast a globe of silence spell.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M casts a globe of silence spell.", player);
+	broadcast(player->getSock(), player->getParent(), "%M casts a globe of silence spell.", player);
 
 	if(player->getRoom()->hasPermEffect("globe-of-silence")) {
 		player->print("The spell didn't take hold.\n");

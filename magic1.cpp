@@ -782,9 +782,9 @@ void doStudy(Player* player, Object* object, bool immediate) {
 
 	player->printColor("%O disintegrates!\n", object);
 	if(immediate)
-		broadcast(player->getSock(), player->getRoom(), "%M studies %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M studies %1P.", player, object);
 	else
-		broadcast(player->getSock(), player->getRoom(), "%M finishes studiying %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M finishes studiying %1P.", player, object);
 
 	player->delObj(object, true);
 	delete object;
@@ -836,7 +836,7 @@ int cmdStudy(Player* player, cmd* cmnd) {
 		player->unhide();
 
 		player->printColor("You begin studying %P.\n", object);
-		broadcast(player->getSock(), player->getRoom(), "%M begins studying %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M begins studying %1P.", player, object);
 		gServer->addDelayedAction(doStudy, player, cmnd, ActionStudy, delay);
 	} else {
 		doStudy(player, object, true);
@@ -1004,10 +1004,10 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 int endConsume(Object* object, Player* player, bool forceDelete=false) {
 	if(object->flagIsSet(O_EATABLE)) {
 		player->print("Food eaten.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M eats %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M eats %1P.", player, object);
 	} else {
 		player->print("Potion drank.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M drinks %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M drinks %1P.", player, object);
 	}
 
 	if(!forceDelete)
@@ -1034,7 +1034,7 @@ int consume(Player* player, Object* object, cmd* cmnd) {
 	fn = 0;
 
 	if(player->isStaff() && object->getType() != POTION && !strcmp(cmnd->str[0], "eat")) {
-		broadcast(player->getSock(), player->getRoom(), "%M eats %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M eats %1P.", player, object);
 		player->printColor("You ate %P.\n", object);
 
 		player->delObj(object);
@@ -1524,7 +1524,7 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
 
 		if(spellData->how == CAST) {
 			player->print("You cast %s %s spell.\n", article, spell);
-			broadcast(player->getSock(), player->getRoom(), "%M casts %s %s spell.", player, article, spell);
+			broadcast(player->getSock(), player->getParent(), "%M casts %s %s spell.", player, article, spell);
 		}
 	} else {
 		if(noPotion(player, spellData))
@@ -1652,7 +1652,7 @@ int cmdTransmute(Player* player, cmd* cmnd) {
 	if(spell_fail(player, CAST)) {
 		int dmg = 0;
 		player->print("The wand glows bright red and explodes!\n");
-		broadcast(player->getSock(), player->getRoom(), "A wand explodes in %s's hand!\n", player->name);
+		broadcast(player->getSock(), player->getParent(), "A wand explodes in %s's hand!\n", player->name);
 
 		if(player->chkSave(SPL, player, -1)) {
 			dmg = mrand(5, 10);
@@ -1697,7 +1697,7 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
 		target = player;
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You are blind and can no longer see.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts blindness on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts blindness on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION)
 			player->print("Everything goes dark.\n");
 
@@ -1862,10 +1862,10 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
 		target = player->getPlayer();
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You pass judgement upon yourself.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts word of Judgement on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts word of Judgement on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION) {
 			player->print("You find yourself elsewhere.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M drinks a potion of judgement and disapears.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M drinks a potion of judgement and disapears.", player, player->himHer());
 		}
 	// Cast word of judgement on another player
 	} else {
@@ -1945,7 +1945,7 @@ int cmdBarkskin(Player *player, cmd *cmnd) {
 	player->smashInvis();
 	player->unhide();
 
-	broadcast(player->getSock(), player->getRoom(), "%M's skin turns to bark.", player);
+	broadcast(player->getSock(), player->getParent(), "%M's skin turns to bark.", player);
 
 	adjustment = mrand(3,6);
 	player->addEffect("barkskin", 120, adjustment, player, true, player);
@@ -2084,7 +2084,7 @@ int cmdCommune(Player *player, cmd *cmnd) {
 		player->lasttime[LT_PRAY].interval = 60L;
 	} else {
 		player->print("You failed to commune with nature.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M tries to commune with nature.", player);
+		broadcast(player->getSock(), player->getParent(), "%M tries to commune with nature.", player);
 		player->checkImprove("commune", false);
 		player->lasttime[LT_PRAY].ltime = 10L;
 	}

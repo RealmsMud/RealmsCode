@@ -201,7 +201,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You cast %s on yourself.\n", spell.c_str());
-			broadcast(player->getSock(), player->getRoom(), "%M casts %s on %sself.",
+			broadcast(player->getSock(), player->getParent(), "%M casts %s on %sself.",
 				player, spell.c_str(), player->himHer());
 		}
 

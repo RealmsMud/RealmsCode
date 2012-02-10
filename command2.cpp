@@ -527,10 +527,10 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
 		if(!(object->getType() == POISON && player->getClass() == PALADIN)) {
 			player->printColor("You manage to break %P.\n", object);
-			broadcast(player->getSock(), player->getRoom(), "%M breaks %P.", player, object);
+			broadcast(player->getSock(), player->getParent(), "%M breaks %P.", player, object);
 		} else {
 			player->printColor("You dispose of the vile %P.\n", object);
-			broadcast(player->getSock(), player->getRoom(), "%M neatly disposes of the vile %P.", player, object);
+			broadcast(player->getSock(), player->getParent(), "%M neatly disposes of the vile %P.", player, object);
 		}
 
 
@@ -575,20 +575,20 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
 			if(splvl >= 4) {
 				player->printColor("%O explodes in a retributive strike!\n", object);
-				broadcast(player->getSock(), player->getRoom(), "%O explodes in a retributive strike!", object);
+				broadcast(player->getSock(), player->getParent(), "%O explodes in a retributive strike!", object);
 
 				player->delObj(object, true);
 				delete object;
 			} else {
 				player->printColor("%O explodes!\n", object);
-				broadcast(player->getSock(), player->getRoom(), "%O explodes!", object);
-				broadcast(player->getSock(), player->getRoom(), "%M is engulfed by magical energy!", player);
+				broadcast(player->getSock(), player->getParent(), "%O explodes!", object);
+				broadcast(player->getSock(), player->getParent(), "%M is engulfed by magical energy!", player);
 
 				player->delObj(object, true);
 				delete object;
 			}
 
-			broadcast(player->getSock(), player->getRoom(), "%M is engulfed by a magical vortex!", player);
+			broadcast(player->getSock(), player->getParent(), "%M is engulfed by a magical vortex!", player);
 
 			dmg = mrand(1,5);
 			dmg += MAX(5,(mrand(splvl*2, splvl*6)))+((int)mtbf/2);
@@ -641,7 +641,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
 						return(0);
 
 					if(!player->getRoom()->flagIsSet(R_ETHEREAL_PLANE)) {
-						broadcast(player->getSock(), player->getRoom(), "%M was blown from this universe by the explosion!", player);
+						broadcast(player->getSock(), player->getParent(), "%M was blown from this universe by the explosion!", player);
 						player->print("You are blown into an alternate dimension.\n");
 					}
 					player->deleteFromRoom();
@@ -669,10 +669,10 @@ int cmdBreak(Player* player, cmd* cmnd) {
 	} else {
 		if(!(object->getType() == POISON && player->getClass() == PALADIN)) {
 			player->printColor("You were unable to break %P.\n", object);
-			broadcast(player->getSock(), player->getRoom(), "%M tried to break %P.", player, object);
+			broadcast(player->getSock(), player->getParent(), "%M tried to break %P.", player, object);
 		} else {
 			player->printColor("You were unable to properly dispose of the %P.\n", object);
-			broadcast(player->getSock(), player->getRoom(), "%M tried to dispose of the %P.", player, object);
+			broadcast(player->getSock(), player->getParent(), "%M tried to dispose of the %P.", player, object);
 			chance = 30 - (bonus((int)player->dexterity.getCur()));
 
 			if(player->immuneToPoison())
@@ -680,7 +680,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
 			if(mrand(1,100) <= chance) {
 				player->printColor("^r^#You accidentally poisoned yourself!\n");
-				broadcast(player->getSock(), player->getRoom(), "%M accidentally poisoned %sself!",
+				broadcast(player->getSock(), player->getParent(), "%M accidentally poisoned %sself!",
 					player, player->himHer());
 
 				duration = standardPoisonDuration(object->getEffectDuration(), player->constitution.getCur());

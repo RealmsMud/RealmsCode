@@ -1226,7 +1226,7 @@ int cmdPrepareObject(Player* player, cmd* cmnd) {
 	}
 
 	player->printColor("You prepare %P.\n", object);
-	broadcast(player->getSock(), player->getRoom(), "%M prepares %P.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M prepares %P.", player, object);
 
 	object->setFlag(O_BEING_PREPARED);
 	return(0);
@@ -1256,7 +1256,7 @@ int cmdUnprepareObject(Player* player, cmd* cmnd) {
 	}
 
 	player->printColor("You no longer are preparing %P.\n", object);
-	broadcast(player->getSock(), player->getRoom(), "%M stops preparing %P.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M stops preparing %P.", player, object);
 
 	object->clearFlag(O_BEING_PREPARED);
 	return(0);
@@ -1485,10 +1485,10 @@ int cmdCraft(Player* player, cmd* cmnd) {
 				player->addExperience(recipe->getExperience());
 			}
 		}
-		broadcast(player->getSock(), player->getRoom(), "%M successfully %s %1P.^x", player, result.c_str(), object);
+		broadcast(player->getSock(), player->getParent(), "%M successfully %s %1P.^x", player, result.c_str(), object);
 	} else {
 		player->printColor("^yYou attempted to %s %1P^y, but failed.\n", fail.c_str(), object);
-		broadcast(player->getSock(), player->getRoom(), "%M tried to %s an object.", player, fail.c_str());
+		broadcast(player->getSock(), player->getParent(), "%M tried to %s an object.", player, fail.c_str());
 		delete object;
 	}
 

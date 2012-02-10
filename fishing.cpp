@@ -215,7 +215,7 @@ bool doFish(Player* player) {
 		} else {
 			player->printColor("You catch %1P!\n", fish);
 		}
-		broadcast(player->getSock(), player->getRoom(), "%M catches something!", player);
+		broadcast(player->getSock(), player->getParent(), "%M catches something!", player);
 	} else {
 		if(item->getExp()) {
 			if(!player->halftolevel()) {
@@ -225,7 +225,7 @@ bool doFish(Player* player) {
 		} else {
 			player->printColor("You catch %1N!\n", monster);
 		}
-		broadcast(player->getSock(), player->getRoom(), "%M catches %1N!", player, monster);
+		broadcast(player->getSock(), player->getParent(), "%M catches %1N!", player, monster);
 	}
 
 	player->statistics.fish();
@@ -275,7 +275,7 @@ int cmdFish(Player* player, cmd* cmnd) {
 	gServer->addDelayedAction(doFish, player, 0, ActionFish, 10 - (int)(player->getSkillLevel("fishing") / 10) - mrand(0,3));
 
 	player->print("You begin fishing.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M begins fishing.", player);
+	broadcast(player->getSock(), player->getParent(), "%M begins fishing.", player);
 	return(0);
 }
 

@@ -176,7 +176,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Free-action spell cast.\nYou can now move freely.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts a free-action spell on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts a free-action spell on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION)
 			player->print("You can now move freely.\n");
 
@@ -245,7 +245,7 @@ int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 				player->print("You feel brave again.\n");
 			else
 				player->print("Nothing happens.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts remove-fear on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts remove-fear on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION && player->isEffected("fear"))
 			player->print("You feel brave again.\n");
 		else if(spellData->how == POTION)
@@ -382,11 +382,11 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 
 			player->print("You feel as if your soul is savagely ripped apart!\n");
 			player->printColor("You take %s%d^x points of damage!\n", player->customColorize("*CC:DAMAGE*").c_str(), damage.get());
-			broadcast(player->getSock(), player->getRoom(), "%M screams and doubles over in pain!", player);
+			broadcast(player->getSock(), player->getParent(), "%M screams and doubles over in pain!", player);
 			player->hp.decrease(damage.get());
 			if(player->hp.getCur() < 1) {
 				player->print("Your body explodes. You're dead!\n");
-				broadcast(player->getSock(), player->getRoom(), "%M's body explodes! %s's dead!", player,
+				broadcast(player->getSock(), player->getParent(), "%M's body explodes! %s's dead!", player,
 						player->upHeShe());
 				player->getPlayer()->die(EXPLODED);
 			}
@@ -675,7 +675,7 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 		player->print("Stoneskin spell cast.\nYou feel impervious.\n");
-		broadcast(player->getSock(), player->getRoom(),"%M casts a stoneskin spell on %sself.", player,
+		broadcast(player->getSock(), player->getParent(),"%M casts a stoneskin spell on %sself.", player,
 			player->himHer());
 	} else if(spellData->how == POTION)
 		player->print("You feel impervious.\n");
@@ -704,7 +704,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 
 	if(cmnd->num == 2) {
 		target = player;
-		broadcast(player->getSock(), player->getRoom(), "%M casts a %s spell on %sself.", player, spell, player->himHer());
+		broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on %sself.", player, spell, player->himHer());
 
 
 		player->print("You cast a %s spell on yourself.\n", spell);
@@ -725,7 +725,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 
 			if(exit) {
 				player->printColor("You cast a %s spell on the %s^x.\n", spell, exit->name);
-				broadcast(player->getSock(), player->getRoom(), "%M casts a %s spell on the %s^x.", player, spell, exit->name);
+				broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on the %s^x.", player, spell, exit->name);
 
 				if(exit->flagIsSet(X_PORTAL))
 					Move::deletePortal(player->getRoom(), exit);

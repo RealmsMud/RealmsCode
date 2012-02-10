@@ -274,7 +274,7 @@ int cmdMistbane(Player* player, cmd* cmnd) {
 
 	if(mrand(1, 100) <= chance) {
 		player->print("You imbue yourself with positive energy.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M imbues %sself with positive energy.", player, player->himHer());
+		broadcast(player->getSock(), player->getParent(), "%M imbues %sself with positive energy.", player, player->himHer());
 		player->checkImprove("mistbane", true);
 		player->setFlag(P_MISTBANE);
 		player->lasttime[LT_MISTBANE].ltime = t;
@@ -282,7 +282,7 @@ int cmdMistbane(Player* player, cmd* cmnd) {
 
 	} else {
 		player->print("You failed to imbue yourself with positive energy.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M tried to imbue %sself with positive energy.",
+		broadcast(player->getSock(), player->getParent(), "%M tried to imbue %sself with positive energy.",
 			player, player->himHer());
 		player->checkImprove("mistbane", false);
 		player->lasttime[LT_MISTBANE].ltime = t - 590L;
@@ -441,7 +441,7 @@ int cmdBerserk(Player* player, cmd* cmnd) {
 
 	if(mrand(1, 100) <= chance) {
 		player->print("Rage swells up inside you.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M goes berserk!", player);
+		broadcast(player->getSock(), player->getParent(), "%M goes berserk!", player);
 		player->checkImprove("berserk", true);
 		// TODO: SKILLS: Add a modifier based on berserk skill level
 		player->setFlag(P_BERSERKED);
@@ -457,7 +457,7 @@ int cmdBerserk(Player* player, cmd* cmnd) {
 	} else {
 		player->print("You failed to gather your strength.\n");
 		player->checkImprove("berserk", false);
-		broadcast(player->getSock(), player->getRoom(), "%M runs around trying to go berserk.", player);
+		broadcast(player->getSock(), player->getParent(), "%M runs around trying to go berserk.", player);
 		player->lasttime[LT_BERSERK].ltime = t - 590L;
 	}
 	return(0);
@@ -953,16 +953,16 @@ int cmdTrack(Player* player, cmd* cmnd) {
 
 		if(scentTrack(player)) {
 			player->print("You begin sniffing for tracks.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M sniffs for tracks.", player);
+			broadcast(player->getSock(), player->getParent(), "%M sniffs for tracks.", player);
 		} else {
 			player->print("You begin searching for tracks.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M searches for tracks.", player);
+			broadcast(player->getSock(), player->getParent(), "%M searches for tracks.", player);
 		}
 	} else {
 		if(scentTrack(player))
-			broadcast(player->getSock(), player->getRoom(), "%M sniffs for tracks.", player);
+			broadcast(player->getSock(), player->getParent(), "%M sniffs for tracks.", player);
 		else
-			broadcast(player->getSock(), player->getRoom(), "%M searches for tracks.", player);
+			broadcast(player->getSock(), player->getParent(), "%M searches for tracks.", player);
 
 		doTrack(player);
 	}
@@ -1138,7 +1138,7 @@ int cmdBloodsacrifice(Player* player, cmd* cmnd) {
 		player->lasttime[LT_BLOOD_SACRIFICE].ltime = t - 590L;
 	}
 
-	broadcast(player->getSock(), player->getRoom(), "%M sacrifices %s blood.",
+	broadcast(player->getSock(), player->getParent(), "%M sacrifices %s blood.",
 		player, player->hisHer());
 	return(0);
 }

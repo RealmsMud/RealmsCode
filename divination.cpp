@@ -126,7 +126,7 @@ int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
 				player->print("You can't tell right now.\n");
 			}
 
-			broadcast(player->getSock(), player->getRoom(), "%M reads %s fortune.", player, player->hisHer());
+			broadcast(player->getSock(), player->getParent(), "%M reads %s fortune.", player, player->hisHer());
 		} else if(spellData->how == POTION)
 			player->print("Nothing happens.\n");
 
@@ -186,7 +186,7 @@ int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
 		default:
 			player->print("You can't tell right now.\n");
 		}
-		broadcast(player->getSock(), player->getRoom(), "%M checks %N's fortune.", player, target);
+		broadcast(player->getSock(), player->getParent(), "%M checks %N's fortune.", player, target);
 
 	}
 	return(1);
@@ -327,7 +327,7 @@ int splDetectHidden(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(!isMageLich(player))
 			return(0);
 		player->print("You cast a detect-hidden spell.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M casts a detect-hidden spell.", player);
+		broadcast(player->getSock(), player->getParent(), "%M casts a detect-hidden spell.", player);
 	}
 
 	Player* viewer = player->getPlayer();

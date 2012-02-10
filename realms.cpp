@@ -199,7 +199,7 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
 	if(cmnd->num == 2) {
 		target = player;
 		pTarget = player->getPlayer();
-		broadcast(player->getSock(), player->getRoom(), "%M casts resist-%s.", player, name.c_str());
+		broadcast(player->getSock(), player->getParent(), "%M casts resist-%s.", player, name.c_str());
 
 		if(spellData->how == CAST) {
 			player->print("You cast a resist-%s spell.\n", name.c_str());

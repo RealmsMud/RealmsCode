@@ -65,7 +65,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 		} else {
 
 			player->print("Weeds and vines reach out to engangle you!\n");
-			broadcast(player->getSock(), player->getRoom(), "%M becomes entangled by vines and weeds!", player);
+			broadcast(player->getSock(), player->getParent(), "%M becomes entangled by vines and weeds!", player);
 
 			player->unhide();
 			player->addEffect("hold-person", 0, 0, player, true, player);
@@ -164,7 +164,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
 				player->print("%M is held in place by vines and weeds!\n", target);
-				broadcast(player->getSock(), player->getRoom(), "%M's spell entangles %N in place!", player, target);
+				broadcast(player->getSock(), player->getParent(), "%M's spell entangles %N in place!", player, target);
 
 
 				if(player->isCt())
@@ -255,7 +255,7 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		player->print("You cast an infravision spell.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M casts an infravision spell.", player);
+		broadcast(player->getSock(), player->getParent(), "%M casts an infravision spell.", player);
 
 		if(spellData->how == CAST) {
 			player->subMp(5);
@@ -421,7 +421,7 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(spellData->how == CAST)
 		player->printColor("You cast a knock spell on the \"%s^x\" exit.\n", exit->name);
-	broadcast(player->getSock(), player->getRoom(), "%M casts a knock spell at the %s^x.", player, exit->name);
+	broadcast(player->getSock(), player->getParent(), "%M casts a knock spell at the %s^x.", player, exit->name);
 
 
 	if(player->isStaff() || mrand(1,100) <= chance) {
@@ -429,11 +429,11 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how == CAST)
 			player->print(" Your knock spell was successful!");
 		player->print("\n");
-		broadcast(player->getSock(), player->getRoom(), "%M's knock spell was successful.", player);
+		broadcast(player->getSock(), player->getParent(), "%M's knock spell was successful.", player);
 		exit->clearFlag(X_LOCKED);
 	} else {
 		player->printColor("^yYour spell failed.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M's knock spell failed.", player);
+		broadcast(player->getSock(), player->getParent(), "%M's knock spell failed.", player);
 	}
 
 	return(1);
@@ -506,7 +506,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 					exit->flagIsSet(X_PORTAL)
 				) {
 					player->printColor("You cast a disintegration spell on the %s^x.\n", exit->name);
-					broadcast(player->getSock(), player->getRoom(), "%M casts a disintegration spell on the %s^x.", player, exit->name);
+					broadcast(player->getSock(), player->getParent(), "%M casts a disintegration spell on the %s^x.", player, exit->name);
 
 					if(exit->flagIsSet(X_PORTAL)) {
 						broadcast(0, player->getRoom(), "^GAn eerie green light engulfs the %s^x!", exit->name);
@@ -616,7 +616,7 @@ int splStatChange(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You cast %s on yourself.\n", effect.c_str());
-			broadcast(player->getSock(), player->getRoom(), "%M casts %s on %sself.", player, effect.c_str(), player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts %s on %sself.", player, effect.c_str(), player->himHer());
 		}
 	// cast on another
 	} else {
@@ -797,7 +797,7 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
 			dur /= 2;
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
-			broadcast(player->getSock(), player->getRoom(), "%M casts deafness on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts deafness on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION)
 			player->print("Your throat goes dry and you cannot speak.\n");
 

@@ -194,7 +194,7 @@ void fulfillQuest(Player* player, Object* object) {
 //	if(cmnd->num == 2 || !target->flagIsSet(M_TALKS)) {
 //		talk = target->talk;
 //		if(talk != "")
-//			broadcast(player->getSock(), player->getRoom(), "%M speaks to %N in %s.",
+//			broadcast(player->getSock(), player->getParent(), "%M speaks to %N in %s.",
 //				player, target, get_language_adj(player->current_language));
 //	} else {
 //		if(!target->first_tlk && !loadCreature_tlk(target)) {
@@ -261,7 +261,7 @@ void fulfillQuest(Player* player, Object* object) {
 //	// attack
 //	case 1:
 //		target->addEnemy(player);
-//		broadcast(player->getSock(), player->getRoom(), "%M attacks %N\n", target, player);
+//		broadcast(player->getSock(), player->getParent(), "%M attacks %N\n", target, player);
 //		oldPrint(fd, "%M attacks you.\n", target);
 //		break;
 //
@@ -351,7 +351,7 @@ void fulfillQuest(Player* player, Object* object) {
 //
 //				player->addObj(object);
 //				player->printColor("%M gives you %P\n", target, object);
-//				broadcast(player->getSock(), player->getRoom(), "%M gives %N %P\n", target, player, object);
+//				broadcast(player->getSock(), player->getParent(), "%M gives %N %P\n", target, player, object);
 //			} else
 //				player->print("%M has nothing to give you.\n", target);
 //		}

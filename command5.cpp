@@ -514,7 +514,7 @@ int cmdSuicide(Player* player, cmd* cmnd) {
 	// Prevents players from suiciding in jail
 	if(player->inJail()) {
 		player->print("You attempt to kill yourself and fail. It sure hurts though!\n");
-		broadcast(player->getSock(), player->getRoom(),"%M tries to kill %sself.", player, player->himHer());
+		broadcast(player->getSock(), player->getParent(),"%M tries to kill %sself.", player, player->himHer());
 		return(0);
 	}
 

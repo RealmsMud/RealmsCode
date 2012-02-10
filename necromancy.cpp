@@ -211,7 +211,7 @@ int drain_exp(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how == CAST || spellData->how == WAND) {
 			player->print("You cast an energy drain spell on yourself.\n");
 			player->print("You lose %d experience.\n", loss);
-			broadcast(player->getSock(), player->getRoom(), "%M casts energy drain on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts energy drain on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION) {
 			player->print("You feel your experience slipping away.\n");
 			player->print("You lose %d experience.\n", loss);

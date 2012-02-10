@@ -947,7 +947,7 @@ void Property::expelToExit(Player* player, bool offline) {
 			player->area_room = aRoom;
 	} else {
 		player->print("You are escorted off the premises.\n");
-		broadcast(player->getSock(), player->parent_rom, "%M is escorted off the premises.", player);
+		broadcast(player->getSock(), player->getParent(), "%M is escorted off the premises.", player);
 		player->deleteFromRoom();
 		player->addToRoom(newRoom);
 		player->doPetFollow();
@@ -2547,7 +2547,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 	if(propType == PROP_GUILDHALL) {
 		player->print("Congratulations! Your guild is now the owner of a brand new guild hall.\n");
 		if(!player->flagIsSet(P_DM_INVIS)) {
-			broadcast(player->getSock(), player->getRoom(), "%M just opened a guild hall!", player);
+			broadcast(player->getSock(), player->getParent(), "%M just opened a guild hall!", player);
 			broadcast("### %s, leader of %s, just opened a guild hall!", player->name, guild->getName().c_str());
 		}
 
@@ -2556,7 +2556,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 	} else if(propType == PROP_HOUSE) {
 		player->print("Congratulations! You are now the owner of a brand new house.\n");
 		if(!player->flagIsSet(P_DM_INVIS))
-			broadcast(player->getSock(), player->getRoom(), "%M just built a house!", player);
+			broadcast(player->getSock(), player->getParent(), "%M just built a house!", player);
 	}
 
 	player->delObj(deed, true, false, true, false);
