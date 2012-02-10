@@ -128,8 +128,8 @@ int cmdFollow(Player* player, cmd* cmnd) {
 void Creature::addToGroup(Group* toJoin, bool announce) {
     toJoin->add(this);
     if(announce) {
-    	*this << "You join \"" << toJoin->getName() << "\".\n";
-        toJoin->sendToAll(bstring(getName()) + " has joined your group.\n", this);
+    	*this << ColorOn << "^gYou join \"" << toJoin->getName() << "\".\n" << ColorOff;
+        toJoin->sendToAll(bstring("^g") + getName() + " has joined your group.\n", this);
         broadcast(getSock(), getRoom(), "%M joins the group \"%s\".", this, toJoin->getName().c_str());
     }
 
@@ -172,7 +172,7 @@ bool Creature::removeFromGroup(bool announce) {
         	if(announce) {
         		if(!pFlagIsSet(P_DM_INVIS) && !pFlagIsSet(P_INCOGNITO))
         			group->sendToAll(getCrtStr(NULL, CAP) + " rejects the invitation to join your group.\n");
-            	*this << "You reject the invitation to join \"" << group->getName() << "\".\n";
+            	*this << ColorOn << "^gYou reject the invitation to join \"" << group->getName() << "\".\n^x" << ColorOff;
         	}
             group->remove(this);
             group = null;
@@ -181,9 +181,9 @@ bool Creature::removeFromGroup(bool announce) {
         		if(!pFlagIsSet(P_DM_INVIS) && !pFlagIsSet(P_INCOGNITO))
         			group->sendToAll(getCrtStr(NULL, CAP) + " leaves the group.\n", this);
         		if(group->getLeader() == this)
-        			*this << "You leave your group.\n";
+        			*this << ColorOn << "^gYou leave your group.^x\n" << ColorOff;
         		else
-        			*this << "You leave \"" << group->getName() << "\".\n";
+        			*this << ColorOn << "^gYou leave \"" << group->getName() << "\".\n^x" << ColorOff;
         	}
             group->remove(this);
             group = null;
@@ -368,8 +368,8 @@ int Group::invite(Player* player, cmd* cmnd) {
     group->add(target, false);
     target->setGroupStatus(GROUP_INVITED);
 
-    *player << "You invite " << target << " to join your group.\n";
-    *target << player << " invites you to join \"" << group->getName() << "\".\n";
+    *player << ColorOn << "^gYou invite " << target << " to join your group.\n" << ColorOff;
+    *target << ColorOn << "^g" << player << " invites you to join \"" << group->getName() << "\".\n" << ColorOff;
 
     return(0);
 }
@@ -452,10 +452,10 @@ int Group::promote(Player* player, cmd* cmnd) {
     }
     group->setLeader(target);
 
-    *player << "You promote " << target->getName() << " to group leader\nYou are now a member of \"" << group->getName() << "\".\n";
-	group->sendToAll(bstring(player->getName()) + " promotes " + target->getName() + " to group leader.\n", player);
+    *player << ColorOn << "^gYou promote " << target->getName() << " to group leader\nYou are now a member of \"" << group->getName() << "\".\n" << ColorOff;
+	group->sendToAll(bstring("^g") + player->getName() + " promotes " + target->getName() + " to group leader.^x\n", player);
 
-	*target << "You are now the group leader of \"" << group->getName() << "\".\n";
+	*target << ColorOn << "^gYou are now the group leader of \"" << group->getName() << "\".\n^x" << ColorOff;
 
 
     return(0);
@@ -503,8 +503,8 @@ int Group::kick(Player* player, cmd* cmnd) {
     		*player << "You can't kick people out of the group!\n";
     		return(0);
     	} else {
-			*player << "You kick " << target->getName() << " out of your group.\n";
-			group->sendToAll(bstring(player->getName()) + " kicks " + target->getName() + " out of the group.\n", player);
+			*player << ColorOn << "^gYou kick " << target->getName() << " out of your group.^x\n" << ColorOff;
+			group->sendToAll(bstring("^g") + player->getName() + " kicks " + target->getName() + " out of the group.^x\n", player);
 			target->removeFromGroup(true);
     	}
     }
@@ -545,8 +545,8 @@ int Group::rename(Player* player, cmd* cmnd) {
 		return(0);
 	}
 	group->setName(newName);
-	*player << "You rename your group to \"" << newName << "\".\n";
-	group->sendToAll(bstring(player->getName()) + " renames the group to \"" + newName + "\".\n", player, true);
+	*player << ColorOn << "^gYou rename your group to \"" << newName << "\".\n^x" << ColorOff;
+	group->sendToAll(bstring("^g") + player->getName() + " renames the group to \"" + newName + "\".\n^x", player, true);
 
     return(0);
 }
@@ -577,20 +577,20 @@ int Group::type(Player* player, cmd* cmnd) {
 	if(len >= 2) {
 		if(!strncasecmp(str, "public", len)) {
 			group->setGroupType(GROUP_PUBLIC);
-			*player << "You change the group type to Public.\n";
-			group->sendToAll(bstring(player->getName()) + " changes the group to Public.\n", player);
+			*player << ColorOn << "^gYou change the group type to Public.\n" << ColorOff;
+			group->sendToAll(bstring("^g") + player->getName() + " changes the group to Public.\n^x", player);
 			return(0);
 		} else if(!strncasecmp(str, "private", len)) {
 			group->setGroupType(GROUP_PRIVATE);
-			*player << "You change the group type to Private.\n";
-			group->sendToAll(bstring(player->getName()) + " changes the group to Private.\n", player);
+			*player << ColorOn << "^gYou change the group type to Private.^x\n" << ColorOff;
+			group->sendToAll(bstring("^g") + player->getName() + " changes the group to Private.^x\n", player);
 			return(0);
 		}
 	}
 	if(!strncasecmp(str, "invite only", len) || !strncmp(str, "inviteonly", len)) {
 		group->setGroupType(GROUP_INVITE_ONLY);
-		*player << "You change the group type to Invite Only.\n";
-		group->sendToAll(bstring(player->getName()) + " changes the group to Invite Only.\n", player);
+		*player << ColorOn << "^gYou change the group type to Invite Only.^x\n" << ColorOff;
+		group->sendToAll(bstring("^g") + player->getName() + " changes the group to Invite Only.\n^x", player);
 		return(0);
 	}
 	*player << errorMsg;
@@ -629,19 +629,19 @@ int Group::set(Player* player, cmd* cmnd, bool set) {
     if(!strncasecmp(str, "split", len)) {
         if(set) {
             group->setFlag(GROUP_SPLIT_GOLD);
-            group->sendToAll("Gold will now be split with the group.\n");
+            group->sendToAll("^gGold will now be split with the group.^x\n");
         } else {
             group->clearFlag(GROUP_SPLIT_GOLD);
-            group->sendToAll("Gold will no longer be split with the group.\n");
+            group->sendToAll("^gGold will no longer be split with the group.^x\n");
         }
         return(0);
     } else if(!strncasecmp(str, "xpsplit", len)) {
         if(set) {
             group->setFlag(GROUP_SPLIT_EXPERIENCE);
-            group->sendToAll("Group experience split enabled.\n");
+            group->sendToAll("^gGroup experience split enabled.^x\n");
         } else {
             group->clearFlag(GROUP_SPLIT_EXPERIENCE);
-            group->sendToAll("Group experience split disabled.\n");
+            group->sendToAll("^gGroup experience split disabled.^x\n");
         }
         return(0);
     }

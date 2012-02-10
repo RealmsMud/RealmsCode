@@ -263,7 +263,7 @@ bool Group::inGroup(Creature* target) {
 void Group::sendToAll(bstring msg, Creature* ignore, bool sendToInvited) {
     for(Creature* crt : members) {
         if(!crt->isPet() && crt != ignore && (sendToInvited || crt->getGroupStatus() >= GROUP_MEMBER )) {
-            *crt << msg;
+            *crt << ColorOn << msg << ColorOff;
         }
     }
 }
