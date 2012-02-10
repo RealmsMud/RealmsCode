@@ -315,16 +315,13 @@ void broadcast_login(Player* player, int login) {
 // descriptor is present in the room, they are not given the message
 
 // TODO: Dom: remove
-void broadcast_rom_LangWc(int face, int color, int lang, Socket* ignore, AreaRoom* aRoom, CatRef cr, const char *fmt,...) {
+void broadcast_rom_LangWc(int lang, Socket* ignore, AreaRoom* aRoom, CatRef cr, const char *fmt,...) {
 	char	fmt2[1024];
 	va_list ap;
 
 	va_start(ap, fmt);
 	strcpy(fmt2, fmt);
 	strcat(fmt2, "\n");
-
-	face = MAX(0,face);
-	color = MAX(0,color);
 
 	Player* ply;
 	for(std::pair<bstring, Player*> p : gServer->players) {
@@ -345,12 +342,9 @@ void broadcast_rom_LangWc(int face, int color, int lang, Socket* ignore, AreaRoo
 			sock->getFd() > -1 &&
 			sock != ignore &&
 			!ply->flagIsSet(P_UNCONSCIOUS) &&
-			(ply->languageIsKnown(lang) || ply->isEffected("comprehend-languages"))
-		) {
-			if(face)
-				ANSI(sock, face);
-			if(color)
-				ANSI(sock, color);
+			(ply->languageIsKnown(lang) || ply->isEffected("comprehend-languages")))
+		{
+			ply->printColor("%s", get_lang_color(lang));
 			ply->vprint(fmt2, ap);
 		}
 	}

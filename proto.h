@@ -153,7 +153,7 @@ int checkWinFilename(Socket* sock, const bstring str);
 bstring intToText(int nNumber, bool cap=false);
 char *alignmentString(Creature* player);
 char *get_class_string(int nIndex);
-int get_lang_color(int nIndex);
+char* get_lang_color(int nIndex);
 char *get_language_adj(int nIndex);
 char *get_language_verb(int lang);
 
@@ -345,7 +345,7 @@ void announcePermDeath(Creature* player, const char *fmt,...);
 void broadcast_wc(int color,const char *fmt, ...);
 void broadcast_login(Player* player, int login);
 
-void broadcast_rom_LangWc(int face, int color, int lang, Socket* ignore, AreaRoom* aRoom, CatRef cr, const char *fmt,...);
+void broadcast_rom_LangWc(int lang, Socket* ignore, AreaRoom* aRoom, CatRef cr, const char *fmt,...);
 void broadcastGroup(bool dropLoot, Creature* player, const char *fmt, ...);
 void child_died(int sig);
 void quick_shutdown(int sig);
