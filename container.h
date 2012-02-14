@@ -28,6 +28,9 @@ class Object;
 class Containable;
 class Container;
 class MudObject;
+class BaseRoom;
+class AreaRoom;
+class UniqueRoom;
 class cmd;
 
 struct PlayerPtrLess : public std::binary_function<const Player*, const Player*, bool> {
@@ -61,6 +64,8 @@ public:
     bool add(Containable* toAdd);
     bool checkAntiMagic(Monster* ignore = 0);
 
+    virtual bool flagIsSet(int flag) const = 0;
+    virtual void setFlag(int flag) = 0;
 
 	void wake(bstring str, bool noise) const;
 
@@ -94,6 +99,32 @@ public:
     void setParent(Container* container);
 
     Container* getParent() const;
+
+
+	// What type of parent are we contained in?
+	bool inRoom() const;
+	bool inUniqueRoom() const;
+	bool inAreaRoom() const;
+	bool inObject() const;
+	bool inPlayer() const;
+	bool inMonster() const;
+	bool inCreature() const;
+
+	BaseRoom* getRoomParent();
+	UniqueRoom* getUniqueRoomParent();
+	AreaRoom* getAreaRoomParent();
+	Object* getObjectParent();
+	Player* getPlayerParent();
+	Monster* getMonsterParent();
+	Creature* getCreatureParent();
+
+	const BaseRoom* getConstRoomParent() const;
+	const UniqueRoom* getConstUniqueRoomParent() const;
+	const AreaRoom* getConstAreaRoomParent() const;
+	const Object* getConstObjectParent() const;
+	const Player* getConstPlayerParent() const;
+	const Monster* getConstMonsterParent() const;
+	const Creature* getConstCreatureParent() const;
 
 private:
     Container* parent;   // Parent Container

@@ -60,9 +60,9 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
 	player->print("%s is now a builder.\n", target->name);
 	log_immort(true, player, "%s made %s a builder.\n", player->name, target->name);
 
-	if(	!target->parent_rom ||
-		!target->parent_rom->info.isArea("test") ||
-		target->parent_rom->info.id != 1)
+	if(	!target->inUniqueRoom() ||
+		!target->getUniqueRoomParent()->info.isArea("test") ||
+		target->getUniqueRoomParent()->info.id != 1)
 	{
 		UniqueRoom* uRoom=0;
 		CatRef cr;

@@ -473,7 +473,7 @@ void stat_rom_exits(Creature* player, BaseRoom* room) {
 			player->print("\n");
 		}
 
-		if(exit->effects.list.size())
+		if(exit->effects.effectList.size())
 			player->printColor("    Effects:\n%s", exit->effects.getEffectsString(player).c_str());
 		player->printColor("%s", exit->hooks.display().c_str());
 	}
@@ -696,7 +696,7 @@ int stat_rom(Player* player, AreaRoom* room) {
 	player->print("\n");
 
 	showRoomFlags(player, room, 0, 0);
-	if(room->effects.list.size())
+	if(room->effects.effectList.size())
 		player->printColor("Effects:\n%s", room->effects.getEffectsString(player).c_str());
 	player->printColor("%s", room->hooks.display().c_str());
 	stat_rom_exits(player, room);
@@ -1022,7 +1022,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
 	showRoomFlags(player, room, 0, 0);
 
 
-	if(room->effects.list.size())
+	if(room->effects.effectList.size())
 		player->printColor("Effects:\n%s", room->effects.getEffectsString(player).c_str());
 	player->printColor("%s", room->hooks.display().c_str());
 	stat_rom_exits(player, room);
@@ -1524,7 +1524,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(player->parent_rom)
+	if(player->inUniqueRoom())
 		player->parent_rom->escapeText();
 	room_track(player);
 	return(0);
@@ -1787,7 +1787,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		if(player->parent_rom)
+		if(player->inUniqueRoom())
 			player->parent_rom->escapeText();
 		room_track(player);
 		return(0);
@@ -1870,7 +1870,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 		if(cr.id) {
 			link_rom(room, cr, newName);
 
-			if(player->parent_rom)
+			if(player->inUniqueRoom())
 				link_rom(uRoom, player->parent_rom->info, returnExit);
 			else
 				link_rom(uRoom, &player->area_room->mapmarker, returnExit);
@@ -1880,7 +1880,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 		} else {
 			link_rom(room, &mapmarker, newName);
 
-			if(player->parent_rom)
+			if(player->inUniqueRoom())
 				link_rom(aRoom, player->parent_rom->info, returnExit);
 			else
 				link_rom(aRoom, &player->area_room->mapmarker, returnExit);
@@ -1909,7 +1909,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 
 	}
 
-	if(player->parent_rom)
+	if(player->inUniqueRoom())
 		gConfig->resaveRoom(player->parent_rom->info);
 
 	if(aRoom && aRoom->canDelete())
@@ -2453,7 +2453,7 @@ int dmMobList(Player* player, cmd* cmnd) {
 
 	player->print("Random monsters which come in this room:\n");
 
-	if(player->parent_rom)
+	if(player->inUniqueRoom())
 		showMobList(player, &player->parent_rom->wander, "room");
 	else if(player->area_room) {
 
@@ -2953,7 +2953,7 @@ int dmFind(Player* player, cmd* cmnd) {
 	bstring type = getFullstrText(cmnd->fullstr, 1);
 	CatRef cr;
 
-	if(player->parent_rom)
+	if(player->inUniqueRoom())
 		cr = player->parent_rom->info;
 	else
 		cr.setArea("area");

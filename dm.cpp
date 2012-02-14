@@ -607,7 +607,7 @@ int dmUsers(Player* player, cmd* cmnd) {
 	oStr.imbue(std::locale(""));
 
 	bstring cr = gConfig->defaultArea;
-	if(player->parent_rom)
+	if(player->inUniqueRoom())
 		cr = player->parent_rom->info.area;
 
 	if(cmnd->num > 1 && cmnd->str[1][0] == 'f')
@@ -794,7 +794,7 @@ int dmResave(Player* player, cmd* cmnd) {
 	}
 
 
-	if(player->parent_rom) {
+	if(player->inUniqueRoom()) {
 
 		s = gConfig->resaveRoom(player->parent_rom->info);
 		if(s < 0)
@@ -2312,7 +2312,7 @@ int dmStat(Player* player, cmd* cmnd) {
 
 		// if they're not *st-ing anything in particular
 		if(str == "") {
-			if(player->parent_rom) {
+			if(player->inUniqueRoom()) {
 				uRoom = player->parent_rom;
 				cr = player->parent_rom->info;
 			} else if(player->area_room) {

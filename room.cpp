@@ -918,7 +918,7 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 void display_rom(Player* player, Player *looker, int magicShowHidden) {
 	if(!looker)
 		looker = player;
-	if(player->parent_rom)
+	if(player->inUniqueRoom())
 		displayRoom(looker, player->parent_rom, player->parent_rom, 0, magicShowHidden);
 	else
 		displayRoom(looker, player->area_room, 0, player->area_room, magicShowHidden);
@@ -1182,7 +1182,7 @@ int UniqueRoom::getWeight() {
 //*********************************************************************
 
 bool needUniqueRoom(const Creature* player) {
-	if(!player->parent_rom) {
+	if(!player->inUniqueRoom()) {
 		player->print("You can't do that here.\n");
 		return(false);
 	}

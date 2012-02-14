@@ -922,7 +922,7 @@ void Effects::load(xmlNodePtr rootNode, MudObject* pParent) {
 				EffectInfo* newEffect = new EffectInfo(curNode);
 				if(newEffect) {
 					newEffect->setParent(pParent);
-					list.push_back(newEffect);
+					effectList.push_back(newEffect);
 				}
 			} catch(bstring err) {
 				std::cout << "Error adding effect: " << err << std::endl;

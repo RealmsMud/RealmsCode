@@ -248,7 +248,7 @@ void broadcast_login(Player* player, int login) {
 		illusion += " (" + gConfig->getRace(player->getRace())->getAdjective() + ")";
 	illusion += postText.str();
 
-	if(player->parent_rom)
+	if(player->inUniqueRoom())
 		room << " (" << player->parent_rom->info.str() << ")";
 	else if(player->area_room)
 		room << " " << player->area_room->mapmarker.str();

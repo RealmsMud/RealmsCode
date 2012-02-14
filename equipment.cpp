@@ -1080,7 +1080,7 @@ bool limitedInStorage(const Player* player, const Object* object, const Property
 // runs checks to see if the player is allowed to get/drop/throw
 
 bool storageProperty(const Player* player, const Object* object, Property **p) {
-	if(player->parent_rom) {
+	if(player->inUniqueRoom()) {
 		(*p) = gConfig->getProperty(player->parent_rom->info);
 		if(*p) {
 			// currently, we only care about storage rooms. we don't log gets

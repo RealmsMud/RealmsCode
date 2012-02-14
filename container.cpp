@@ -83,6 +83,72 @@ bool Container::add(Containable* toAdd) {
     }
     return(toReturn);
 }
+
+bool Containable::inRoom() const {
+	return(typeid(*this) == typeid(BaseRoom));
+}
+bool Containable::inUniqueRoom() const {
+	return(typeid(*this) == typeid(UniqueRoom));
+}
+bool Containable::inAreaRoom() const {
+	return(typeid(*this) == typeid(AreaRoom));
+}
+bool Containable::inObject() const {
+	return(typeid(*this) == typeid(Object));
+}
+bool Containable::inPlayer() const {
+	return(typeid(*this) == typeid(Player));
+}
+bool Containable::inMonster() const {
+	return(typeid(*this) == typeid(Monster));
+}
+bool Containable::inCreature() const {
+	return(typeid(*this) == typeid(Creature));
+}
+
+BaseRoom* Containable::getRoomParent() {
+	return(dynamic_cast<BaseRoom*>(this));
+}
+UniqueRoom* Containable::getUniqueRoomParent() {
+	return(dynamic_cast<UniqueRoom*>(this));
+}
+AreaRoom* Containable::getAreaRoomParent() {
+	return(dynamic_cast<AreaRoom*>(this));
+}
+Object* Containable::getObjectParent() {
+	return(dynamic_cast<Object*>(this));
+}
+Player* Containable::getPlayerParent() {
+	return(dynamic_cast<Player*>(this));
+}
+Monster* Containable::getMonsterParent() {
+	return(dynamic_cast<Monster*>(this));
+}
+Creature* Containable::getCreatureParent() {
+	return(dynamic_cast<Creature*>(this));
+}
+
+const BaseRoom* Containable::getConstRoomParent() const {
+	return(dynamic_cast<const BaseRoom*>(this));
+}
+const UniqueRoom* Containable::getConstUniqueRoomParent() const {
+	return(dynamic_cast<const UniqueRoom*>(this));
+}
+const AreaRoom* Containable::getConstAreaRoomParent() const {
+	return(dynamic_cast<const AreaRoom*>(this));
+}
+const Object* Containable::getConstObjectParent() const {
+	return(dynamic_cast<const Object*>(this));
+}
+const Player* Containable::getConstPlayerParent() const {
+	return(dynamic_cast<const Player*>(this));
+}
+const Monster* Containable::getConstMonsterParent() const {
+	return(dynamic_cast<const Monster*>(this));
+}
+const Creature* Containable::getConstCreatureParent() const {
+	return(dynamic_cast<const Creature*>(this));
+}
 //*********************************************************************
 //						wake
 //*********************************************************************

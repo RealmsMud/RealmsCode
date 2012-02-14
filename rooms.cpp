@@ -595,6 +595,10 @@ bool AreaRoom::flagIsSet(int flag) const {
 	return(area->flagIsSet(flag, &m));
 }
 
+void AreaRoom::setFlag(int flag) {
+	std::cout << "Trying to set a flag on an area room!" << std::endl;
+	return;
+}
 bool UniqueRoom::flagIsSet(int flag) const {
 	return(flags[flag/8] & 1<<(flag%8));
 }
@@ -862,6 +866,8 @@ bool BaseRoom::isOutdoors() const {
 //*********************************************************************
 
 bool BaseRoom::magicBonus() const {
+	if(!this)
+		return(false);
 	return(flagIsSet(R_MAGIC_BONUS));
 }
 

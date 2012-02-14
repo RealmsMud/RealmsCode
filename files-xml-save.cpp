@@ -710,8 +710,8 @@ void Creature::saveSkills(xmlNodePtr rootNode) const {
 
 void Effects::save(xmlNodePtr rootNode, const char* name) const {
 	xmlNodePtr curNode = xml::newStringChild(rootNode, name);
-	std::list<EffectInfo*>::const_iterator eIt;
-	for(eIt = list.begin() ; eIt != list.end() ; eIt++) {
+	EffectList::const_iterator eIt;
+	for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
 		(*eIt)->save(curNode);
 	}
 }

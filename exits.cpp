@@ -44,7 +44,7 @@ Exit::Exit() {
 }
 
 Exit::~Exit() {
-	if(effects.list.size()) {
+	if(effects.effectList.size()) {
 		//BaseRoom* parent = effects.list.front()->getParentRoom();
 		effects.removeAll();
 		//parent->removeEffectsIndex();

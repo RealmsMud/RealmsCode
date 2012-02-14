@@ -573,7 +573,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 		log_immort(false, player, "%s circled %s.\n", player->name, target->name);
 
 		if(mTarget && player->isPlayer()) {
-			if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (mrand(1,100) <= (MAX(15, (mTarget->parent_rom ? mTarget->parent_rom->wander.getTraffic() : 15)/2)))) {
+			if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (mrand(1,100) <= (MAX(15, (mTarget->inUniqueRoom() ? mTarget->getUniqueRoomParent()->wander.getTraffic() : 15)/2)))) {
 				mTarget->summonMobs(player);
 				mTarget->clearFlag(M_YELLED_FOR_HELP);
 				mTarget->setFlag(M_WILL_YELL_FOR_HELP);
@@ -874,10 +874,10 @@ void doTrack(Player* player) {
 	if(!canTrack(player))
 		return;
 
-	if(player->area_room)
-		track = player->area_room->area->getTrack(&player->area_room->mapmarker);
-	else if(player->parent_rom)
-		track = &player->parent_rom->track;
+	if(player->inAreaRoom())
+		track = player->getAreaRoomParent()->area->getTrack(&player->area_room->mapmarker);
+	else if(player->inUniqueRoom())
+		track = &player->getUniqueRoomParent()->track;
 
 	chance = 25 + (int)((bonus((int)player->dexterity.getCur()) + skLevel)*5);
 

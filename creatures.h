@@ -349,7 +349,7 @@ public:
 	struct spellTimer spellTimer[16]; // spell effect timers (specific to magic)
 	char misc[21]; // miscellaneous space
 
-	//std::list<EffectInfo*> effects; // List of all effects on this creature
+	//EffectList effects; // List of all effects on this creature
 	Timer attackTimer;
 	std::list<SpecialAttack*> specials; // List of all special attack this creature has
 	std::list<bstring> minions; // vampire minions

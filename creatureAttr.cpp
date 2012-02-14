@@ -1610,9 +1610,12 @@ Player::~Player() {
 		birthday = NULL;
 	}
 
-	for(i=0; i<MAX_DIMEN_ANCHORS; i++)
-		if(anchor[i])
+	for(i=0; i<MAX_DIMEN_ANCHORS; i++) {
+		if(anchor[i]) {
 			delete anchor[i];
+			anchor[i] = 0;
+		}
+	}
 
 	QuestCompletion *quest;
 	for(std::pair<int, QuestCompletion*> p : questsInProgress) {

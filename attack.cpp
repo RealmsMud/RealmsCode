@@ -179,7 +179,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
 			print("You are not allowed to %s monsters.\n", verb.c_str());
 			return(false);
 		}
-		if(!pThis->checkBuilder(parent_rom)) {
+		if(!pThis->checkBuilder(getUniqueRoomParent())) {
 			print("Error: Room number not inside any of your alotted ranges.\n");
 			return(false);
 		}

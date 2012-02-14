@@ -318,8 +318,8 @@ bool Creature::isPoisoned() const {
 //*********************************************************************
 
 bool Effects::hasPoison() const {
-	std::list<EffectInfo*>::const_iterator eIt;
-	for(eIt = list.begin() ; eIt != list.end() ; eIt++) {
+	EffectList::const_iterator eIt;
+	for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
 		if((*eIt)->isPoison())
 			return(true);
 	}
@@ -346,16 +346,16 @@ bool Creature::curePoison() {
 bool Effects::removePoison() {
 	bool removed=false;
 	// remove all effects flagged as poison
-	std::list<EffectInfo*>::iterator eIt;
+	EffectList::iterator eIt;
 	EffectInfo *effect=0;
-	for(eIt = list.begin() ; eIt != list.end() ;) {
+	for(eIt = effectList.begin() ; eIt != effectList.end() ;) {
 		effect = (*eIt);
 
 		if(effect->isPoison()) {
 			removed = true;
 			effect->remove();
 			delete effect;
-			eIt = list.erase(eIt);
+			eIt = effectList.erase(eIt);
 		} else
 			eIt++;
 	}
@@ -424,8 +424,8 @@ bool Creature::isDiseased() const {
 //*********************************************************************
 
 bool Effects::hasDisease() const {
-	std::list<EffectInfo*>::const_iterator eIt;
-	for(eIt = list.begin() ; eIt != list.end() ; eIt++) {
+	EffectList::const_iterator eIt;
+	for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
 		if((*eIt)->isDisease())
 			return(true);
 	}
@@ -447,16 +447,16 @@ bool Creature::cureDisease() {
 bool Effects::removeDisease() {
 	bool removed=false;
 	// remove all effects flagged as disease
-	std::list<EffectInfo*>::iterator eIt;
+	EffectList::iterator eIt;
 	EffectInfo *effect=0;
-	for(eIt = list.begin() ; eIt != list.end() ;) {
+	for(eIt = effectList.begin() ; eIt != effectList.end() ;) {
 		effect = (*eIt);
 
 		if(effect->isDisease()) {
 			removed = true;
 			effect->remove();
 			delete effect;
-			eIt = list.erase(eIt);
+			eIt = effectList.erase(eIt);
 		} else
 			eIt++;
 	}
@@ -474,16 +474,16 @@ bool Creature::removeCurse() {
 
 bool Effects::removeCurse() {
 	bool removed=false;
-	std::list<EffectInfo*>::iterator eIt;
+	EffectList::iterator eIt;
 	EffectInfo *effect=0;
-	for(eIt = list.begin() ; eIt != list.end() ;) {
+	for(eIt = effectList.begin() ; eIt != effectList.end() ;) {
 		effect = (*eIt);
 
 		if(effect->isCurse()) {
 			removed = true;
 			effect->remove();
 			delete effect;
-			eIt = list.erase(eIt);
+			eIt = effectList.erase(eIt);
 		} else
 			eIt++;
 	}

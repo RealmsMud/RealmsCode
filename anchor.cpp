@@ -81,10 +81,11 @@ void Anchor::reset() {
 //*********************************************************************
 
 void Anchor::bind(const Player* player) {
-	if(player->parent_rom)
-		bind(player->parent_rom);
+
+	if(player->inUniqueRoom())
+		bind(player->getConstUniqueRoomParent());
 	else
-		bind(player->area_room);
+		bind(player->getConstAreaRoomParent());
 }
 void Anchor::bind(const UniqueRoom* uRoom) {
 	roomName = uRoom->name;
@@ -112,10 +113,10 @@ bool Anchor::is(const BaseRoom* room) const {
 		return(is(room->getConstAreaRoom()));
 }
 bool Anchor::is(const Player* player) const {
-	if(player->parent_rom)
-		return(is(player->parent_rom));
+	if(player->inUniqueRoom())
+		return(is(player->getConstUniqueRoomParent()));
 	else
-		return(is(player->area_room));
+		return(is(player->getConstAreaRoomParent()));
 }
 bool Anchor::is(const UniqueRoom* uRoom) const {
 	return(room.id && room == uRoom->info);

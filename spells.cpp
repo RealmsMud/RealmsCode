@@ -459,10 +459,10 @@ void spellsUnder(const Player* viewer, const Creature* target, bool notSelf) {
 	std::list<bstring> spells;
 	std::list<bstring>::const_iterator it;
 	const Effect* effect=0;
-	std::list<EffectInfo*>::const_iterator eIt;
+	EffectList::const_iterator eIt;
 
 	// effects are flagged as whether or not they are a spell effect
-	for(eIt = target->effects.list.begin() ; eIt != target->effects.list.end() ; eIt++) {
+	for(eIt = target->effects.effectList.begin() ; eIt != target->effects.effectList.end() ; eIt++) {
 		effect = (*eIt)->getEffect();
 		if(!effect->isSpell())
 			continue;

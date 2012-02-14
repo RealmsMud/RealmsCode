@@ -102,6 +102,7 @@ public:
 
 
 	virtual bool flagIsSet(int flag) const = 0;
+//	virtual void setFlag(int flag) = 0;
 	virtual Size getSize() const = 0;
 	bool hasRealmBonus(Realm realm) const;
 	bool hasOppositeRealmBonus(Realm realm) const;
@@ -257,6 +258,7 @@ public:
 	bool	spawnHerbs();
 
 	bool flagIsSet(int flag) const;
+	void setFlag(int flag);
 
 	const Fishing* doGetFishing(short y, short x) const;
 	const Fishing* getFishing() const;

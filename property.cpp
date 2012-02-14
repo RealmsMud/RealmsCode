@@ -1367,8 +1367,8 @@ int cmdProperties(Player* player, cmd* cmnd) {
 	Property *p=0;
 	PartialOwner *po=0;
 
-	if(player->parent_rom)
-		p = gConfig->getProperty(player->parent_rom->info);
+	if(player->inUniqueRoom())
+		p = gConfig->getProperty(player->getUniqueRoomParent()->info);
 
 	int len = strlen(cmnd->str[1]);
 	if(len && !strncmp(cmnd->str[1], "help", len)) {
@@ -2082,20 +2082,20 @@ void Property::descEdit(Socket* sock, bstring str) {
 			return;
 		}
 
-		ply->parent_rom->setLongDescription("");
+		ply->getUniqueRoomParent()->setLongDescription("");
 		while(!feof(fp)) {
 			fgets(outcstr, sizeof(outcstr), fp);
-			ply->parent_rom->appendLongDescription(outcstr);
+			ply->getUniqueRoomParent()->appendLongDescription(outcstr);
 			strcpy(outcstr, "");
 		}
 
-		ply->parent_rom->setLongDescription(ply->parent_rom->getLongDescription().left(ply->parent_rom->getLongDescription().getLength()-1));
+		ply->getUniqueRoomParent()->setLongDescription(ply->getUniqueRoomParent()->getLongDescription().left(ply->getUniqueRoomParent()->getLongDescription().getLength()-1));
 		fclose(fp);
 		unlink(sock->tempstr[0]);
 
 		ply->print("Room description replaced.\n");
-		ply->parent_rom->escapeText();
-		ply->parent_rom->saveToFile(0);
+		ply->getUniqueRoomParent()->escapeText();
+		ply->getUniqueRoomParent()->saveToFile(0);
 		return;
 	}
 
@@ -2200,9 +2200,9 @@ void Property::manageShort(Player* player, cmd* cmnd, PropType propType, int x) 
 	if(!Property::goodNameDesc(player, desc, "Set room short description to what?", "description string"))
 		return;
 
-	player->parent_rom->setShortDescription(desc);
+	player->getUniqueRoomParent()->setShortDescription(desc);
 	player->print("Property short description set to '%s'.\n", desc.c_str());
-	player->parent_rom->saveToFile(0);
+	player->getUniqueRoomParent()->saveToFile(0);
 }
 
 //*********************************************************************
@@ -2215,9 +2215,9 @@ void Property::manageName(Player* player, cmd* cmnd, PropType propType, int x) {
 	if(!Property::goodNameDesc(player, name, "Rename this room to what?", "room name"))
 		return;
 
-	strcpy(player->parent_rom->name, name.c_str());
-	player->print("Room renamed to '%s'.\n", player->parent_rom->name);
-	player->parent_rom->saveToFile(0);
+	strcpy(player->getUniqueRoomParent()->name, name.c_str());
+	player->print("Room renamed to '%s'.\n", player->getUniqueRoomParent()->name);
+	player->getUniqueRoomParent()->saveToFile(0);
 }
 
 //*********************************************************************
@@ -2551,8 +2551,8 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 			broadcast("### %s, leader of %s, just opened a guild hall!", player->name, guild->getName().c_str());
 		}
 
-		if(player->parent_rom)
-			sendMail(gConfig->getReviewer(), (bstring)player->name + " (" + guild->getName() + ") opened a guild hall in " + gConfig->catRefName(player->parent_rom->info.area) + ".\n");
+		if(player->inUniqueRoom())
+			sendMail(gConfig->getReviewer(), (bstring)player->name + " (" + guild->getName() + ") opened a guild hall in " + gConfig->catRefName(player->getUniqueRoomParent()->info.area) + ".\n");
 	} else if(propType == PROP_HOUSE) {
 		player->print("Congratulations! You are now the owner of a brand new house.\n");
 		if(!player->flagIsSet(P_DM_INVIS))
@@ -2599,13 +2599,13 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 	player->checkDarkness();
 
 	if(propType == PROP_GUILDHALL) {
-		player->parent_rom->clearFlag(R_BUILD_GUILDHALL);
-		player->parent_rom->setFlag(R_WAS_BUILD_GUILDHALL);
+		player->getUniqueRoomParent()->clearFlag(R_BUILD_GUILDHALL);
+		player->getUniqueRoomParent()->setFlag(R_WAS_BUILD_GUILDHALL);
 	} else if(propType == PROP_HOUSE) {
-		player->parent_rom->clearFlag(R_BUILD_HOUSE);
-		player->parent_rom->setFlag(R_WAS_BUILD_HOUSE);
+		player->getUniqueRoomParent()->clearFlag(R_BUILD_HOUSE);
+		player->getUniqueRoomParent()->setFlag(R_WAS_BUILD_HOUSE);
 	}
-	player->parent_rom->saveToFile(0);
+	player->getUniqueRoomParent()->saveToFile(0);
 }
 
 //*********************************************************************
@@ -2758,9 +2758,9 @@ void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x)
 	}
 
 	strcpy(found->name, newExit.c_str());
-	player->parent_rom->arrangeExits();
+	player->getUniqueRoomParent()->arrangeExits();
 	player->print("Exit renamed to '%s'.\n", newExit.c_str());
-	player->parent_rom->saveToFile(0);
+	player->getUniqueRoomParent()->saveToFile(0);
 }
 
 //*********************************************************************
@@ -2834,7 +2834,7 @@ void Property::manage(Player* player, cmd* cmnd, PropType propType, int x) {
 	if(!strncmp(cmnd->str[2-x], "survey", len)) {
 		if(canBuildFlag && !strcmp(cmnd->str[3-x], "all")) {
 			player->print("Searching for suitable %s locations in this city.\n", getTypeStr(propType).c_str());
-			findRoomsWithFlag(player, player->parent_rom->info, canBuildFlag);
+			findRoomsWithFlag(player, player->getUniqueRoomParent()->info, canBuildFlag);
 		} else {
 			if(!canBuildFlag || !room->flagIsSet(canBuildFlag))
 				player->print("You are unable to build a %s here.\n", getTypeStr(propType).c_str());
@@ -2860,7 +2860,7 @@ void Property::manage(Player* player, cmd* cmnd, PropType propType, int x) {
 	// guild bankers can perform these commands
 	if(propType != PROP_GUILDHALL || player->getGuildRank() >= GUILD_BANKER) {
 		if(!strncmp(cmnd->str[2-x], "desc", len)) {
-			if(!Property::requireInside(player, player->parent_rom, &p, propType))
+			if(!Property::requireInside(player, player->getConstUniqueRoomParent(), &p, propType))
 				return;
 			
 			Property::manageDesc(player, cmnd, propType, x);
@@ -2868,7 +2868,7 @@ void Property::manage(Player* player, cmd* cmnd, PropType propType, int x) {
 		}
 
 		if(!strncmp(cmnd->str[2-x], "short", len)) {
-			if(!Property::requireInside(player, player->parent_rom, &p, propType))
+			if(!Property::requireInside(player, player->getConstUniqueRoomParent(), &p, propType))
 				return;
 
 			Property::manageShort(player, cmnd, propType, x);
@@ -2876,7 +2876,7 @@ void Property::manage(Player* player, cmd* cmnd, PropType propType, int x) {
 		}
 
 		if(!strncmp(cmnd->str[2-x], "name", len)) {
-			if(!Property::requireInside(player, player->parent_rom, &p, propType))
+			if(!Property::requireInside(player, player->getConstUniqueRoomParent(), &p, propType))
 				return;
 
 			Property::manageName(player, cmnd, propType, x);
@@ -2907,7 +2907,7 @@ void Property::manage(Player* player, cmd* cmnd, PropType propType, int x) {
 	}
 
 
-	if(!Property::requireInside(player, player->parent_rom, &p, propType))
+	if(!Property::requireInside(player, player->getConstUniqueRoomParent(), &p, propType))
 		return;
 
 	if(!strncmp(cmnd->str[2-x], "extend", len)) {
@@ -2936,13 +2936,13 @@ void Property::found(const Player* player, PropType propType, bstring location, 
 	setOwner(player->name);
 	setDateFounded();
 	if(location == "")
-		location = player->parent_rom->name;
+		location = player->getConstUniqueRoomParent()->name;
 	setLocation(location);
 	if(shouldSetArea && player->parent_rom) {
-		bstring pArea = player->parent_rom->info.area;
-		if(player->parent_rom->info.isArea("guild")) {
+		bstring pArea = player->getConstUniqueRoomParent()->info.area;
+		if(player->getConstUniqueRoomParent()->info.isArea("guild")) {
 			// load the guild entrance, look for the out exit, load that room, get the area
-			Property* p = gConfig->getProperty(player->parent_rom->info);
+			Property* p = gConfig->getProperty(player->getConstUniqueRoomParent()->info);
 
 			CatRef cr = p->ranges.front().low;
 			UniqueRoom* room=0;

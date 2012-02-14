@@ -352,7 +352,7 @@ bool canBuildShop(const Player* player, const UniqueRoom* room) {
 //*********************************************************************
 
 int cmdShop(Player* player, cmd* cmnd) {
-	UniqueRoom* room = player->parent_rom, *storage=0;
+	UniqueRoom* room = player->getUniqueRoomParent(), *storage=0;
 	Object	*deed=0;
 	otag	*op;
 	int		action=0;
@@ -386,7 +386,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 	if(!strncmp(cmnd->str[1], "survey", len)) {
 		if(!strcmp(cmnd->str[2], "all")) {
 			player->print("Searching for suitable shop locations in this city.\n");
-			findRoomsWithFlag(player, player->parent_rom->info, R_BUILD_SHOP);
+			findRoomsWithFlag(player, player->getUniqueRoomParent()->info, R_BUILD_SHOP);
 		} else {
 			if(!canBuildShop(player, room))
 				player->print("You are unable to build a shop here.\n");
@@ -574,9 +574,9 @@ int cmdShop(Player* player, cmd* cmnd) {
 		delete storage;
 		player->delObj(deed, true);
 		delete deed;
-		player->parent_rom->clearFlag(R_BUILD_SHOP);
-		player->parent_rom->setFlag(R_WAS_BUILD_SHOP);
-		player->parent_rom->saveToFile(0);
+		player->getUniqueRoomParent()->clearFlag(R_BUILD_SHOP);
+		player->getUniqueRoomParent()->setFlag(R_WAS_BUILD_SHOP);
+		player->getUniqueRoomParent()->saveToFile(0);
 		return(0);
 	} else if(action == SHOP_GUILD) {
 		if(!strncmp(cmnd->str[2], "assign", strlen(cmnd->str[2]))) {
@@ -741,13 +741,13 @@ int cmdShop(Player* player, cmd* cmnd) {
 			}
 		}
 
-		strcpy(player->parent_rom->name, name.c_str());
+		strcpy(player->getUniqueRoomParent()->name, name.c_str());
 		p->setName(name);
-		p->appendLog(player->name, "%s renamed the shop to %s.", player->name, player->parent_rom->name);
+		p->appendLog(player->name, "%s renamed the shop to %s.", player->name, player->getUniqueRoomParent()->name);
 		logn("log.shops", "%s renamed shop %s to %s.\n",
-			player->name, player->parent_rom->info.str().c_str(), player->parent_rom->name);
-		player->print("Shop renamed to '%s'.\n", player->parent_rom->name);
-		player->parent_rom->saveToFile(0);
+			player->name, player->getUniqueRoomParent()->info.str().c_str(), player->getUniqueRoomParent()->name);
+		player->print("Shop renamed to '%s'.\n", player->getUniqueRoomParent()->name);
+		player->getUniqueRoomParent()->saveToFile(0);
 
 		return(0);
 	} else {
@@ -827,7 +827,7 @@ const char* cannotUseMarker(Player* player, Object* object) {
 // shop.
 
 int cmdList(Player* player, cmd* cmnd) {
-	UniqueRoom* room = player->parent_rom, *storage=0;
+	UniqueRoom* room = player->getUniqueRoomParent(), *storage=0;
 	Object* object=0;
 	otag	*op=0;
 	int		n=0;
@@ -870,7 +870,7 @@ int cmdList(Player* player, cmd* cmnd) {
 	if(!p || p->getType() != PROP_SHOP) {
 		Money cost;
 
-		if(!Faction::willDoBusinessWith(player, player->parent_rom->getFaction())) {
+		if(!Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
 			player->print("The shopkeeper refuses to do business with you.\n");
 			return(0);
 		}
@@ -1211,7 +1211,7 @@ int cmdSelection(Player* player, cmd* cmnd) {
 // This function allows a player to buy something from a shop.
 
 int cmdBuy(Player* player, cmd* cmnd) {
-	UniqueRoom* room = player->parent_rom, *storage=0;
+	UniqueRoom* room = player->getUniqueRoomParent(), *storage=0;
 	Object	*object=0, *object2=0;
 	otag	*op=0;
 	int		num=0, n=1;
@@ -1388,7 +1388,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		if(!Faction::willDoBusinessWith(player, player->parent_rom->getFaction())) {
+		if(!Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
 			player->print("The shopkeeper refuses to do business with you.\n");
 			return(0);
 		}
@@ -1564,7 +1564,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 								continue;
 							if(player->getGuild() != (*it)->getGuild())
 								continue;
-							if(player->parent_rom && !player->parent_rom->info.isArea((*it)->getArea()))
+							if(player->parent_rom && !player->getUniqueRoomParent()->info.isArea((*it)->getArea()))
 								continue;
 							player->printColor("^YCaution:^x your guild already owns a guildhall in %s.\n", gConfig->catRefName((*it)->getArea()).c_str());
 						}
@@ -1664,12 +1664,12 @@ int cmdSell(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(!Faction::willDoBusinessWith(player, player->parent_rom->getFaction())) {
+	if(!Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
 		player->print("The shopkeeper refuses to do business with you.\n");
 		return(0);
 	}
 
-	value = sellAmount(player, player->parent_rom, object, false);
+	value = sellAmount(player, player->getConstUniqueRoomParent(), object, false);
 
 	player->computeLuck();
 	// Luck for sale of items
@@ -1769,12 +1769,12 @@ int cmdValue(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(!Faction::willDoBusinessWith(player, player->parent_rom->getFaction())) {
+	if(!Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
 		player->print("The shopkeeper refuses to do business with you.\n");
 		return(0);
 	}
 
-	value = sellAmount(player, player->parent_rom, object, false);
+	value = sellAmount(player, player->getConstUniqueRoomParent(), object, false);
 
 	player->printColor("The shopkeep says, \"%O's worth %s.\"\n", object, value.str().c_str());
 

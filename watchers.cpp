@@ -157,10 +157,10 @@ int reportTypo(Player* player, cmd* cmnd) {
 	if(!needUniqueRoom(player))
 		return(0);
 
-	if(player->parent_rom->flagIsSet(R_TYPO)) {
+	if(player->getParent()->flagIsSet(R_TYPO)) {
 		player->printColor("^YA typo has already been reported in this room.\n");
 	} else {
-		player->parent_rom->setFlag(R_TYPO);
+		player->getParent()->setFlag(R_TYPO);
 		player->printColor("^YTypo reported!\n");
 		broadcast(isCt, "^Y*** %s reported a typo in room %s.", player->name, player->getRoom()->fullName().c_str());
 	}
