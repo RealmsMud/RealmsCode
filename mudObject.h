@@ -60,23 +60,31 @@ public:
 
 	void setId(bstring newId);
 
-	Monster* getMonster();
-	Player* getPlayer();
-	Creature* getCreature();
-	Object* getObject();
-	UniqueRoom *getUniqueRoom();
-	AreaRoom *getAreaRoom();
-	BaseRoom* getRoom();
-	Exit* getExit();
+	Monster* getAsMonster();
+	Player* getAsPlayer();
+	Creature* getAsCreature();
+	Object* getAsObject();
+	UniqueRoom *getAsUniqueRoom();
+	AreaRoom *getAsAreaRoom();
+	BaseRoom* getAsRoom();
+	Exit* getAsExit();
 
-	const Monster* getConstMonster() const;
-	const Player* getConstPlayer() const;
-	const Creature* getConstCreature() const;
-	const Object* getConstObject() const;
-	const UniqueRoom *getConstUniqueRoom() const;
-	const AreaRoom *getConstAreaRoom() const;
-	const BaseRoom* getConstRoom() const;
-	const Exit* getConstExit() const;
+	const Monster* getAsConstMonster() const;
+	const Player* getAsConstPlayer() const;
+	const Creature* getAsConstCreature() const;
+	const Object* getAsConstObject() const;
+	const UniqueRoom *getAsConstUniqueRoom() const;
+	const AreaRoom *getAsConstAreaRoom() const;
+	const BaseRoom* getAsConstRoom() const;
+	const Exit* getAsConstExit() const;
+
+	bool isRoom() const;
+	bool isUniqueRoom() const;
+	bool isAreaRoom() const;
+	bool isObject() const;
+	bool isPlayer() const;
+	bool isMonster() const;
+	bool isCreature() const;
 
 	const char* getName() const;
 	const bstring& getId() const;

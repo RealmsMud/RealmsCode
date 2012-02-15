@@ -193,7 +193,7 @@ typedef std::map<bstring, Skill*> SkillMap;
 //						Creature
 //*********************************************************************
 
-class Creature: public MudObject, public Streamable, public Container, public Containable {
+class Creature: public Streamable, public Container, public Containable {
 
 protected:
 	void CopyCommon(const Creature& cr);
@@ -705,7 +705,6 @@ public:
 
 	void doHaggling(Creature *vendor, Object* object, int trans);
 
-	BaseRoom *getRoom() const;
 	BaseRoom* recallWhere();
 	BaseRoom* teleportWhere();
 	Location getLimboRoom() const;

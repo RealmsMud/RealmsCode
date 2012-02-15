@@ -271,7 +271,7 @@ int dmStartLocs(Player* player, cmd* cmnd) {
 
 int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Creature* creature=0;
-	Player*	target=0, *pPlayer = player->getPlayer();
+	Player*	target=0, *pPlayer = player->getAsPlayer();
 	const StartLoc* location=0;
 
 	if(!pPlayer)
@@ -308,7 +308,7 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			creature = pPlayer->getParent()->findCreature(pPlayer, cmnd->str[2], cmnd->val[2], false);
 			if(creature)
-				target = creature->getPlayer();
+				target = creature->getAsPlayer();
 
 			if(!target) {
 				pPlayer->print("You don't see that person here.\n");
@@ -349,7 +349,7 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(pPlayer == target) {
 
 			pPlayer->print("Bind spell cast.\nYou are now bound to %s.\n", location->getBindName().c_str());
-			broadcast(pPlayer->getSock(), pPlayer->getRoom(), "%M casts a bind spell on %sself.", pPlayer, pPlayer->himHer());
+			broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts a bind spell on %sself.", pPlayer, pPlayer->himHer());
 
 		} else {
 
@@ -365,7 +365,7 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 				target->name, target->name, location->getBindName().c_str());
 			target->print("%M casts a bind spell on you.\nYou are now bound to %s.\n",
 				pPlayer, location->getBindName().c_str());
-			broadcast(player->getSock(), target->getSock(), pPlayer->getRoom(),
+			broadcast(player->getSock(), target->getSock(), pPlayer->getRoomParent(),
 				"%M casts a bind spell on %N.", pPlayer, target);
 
 		}

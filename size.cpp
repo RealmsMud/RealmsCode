@@ -268,7 +268,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 		strength = sizePower(player->getLevel());
 		num = MAX(300, 400 + bonus(player->intelligence.getCur()) * 400) + 20 * player->getLevel();
 
-		if(player->getRoom()->magicBonus()) {
+		if(player->getRoomParent()->magicBonus()) {
 			player->print("The room's magical properties increase the power of your spell.\n");
 			strength++;
 			num += 200;
@@ -344,7 +344,7 @@ bool Creature::changeSize(int oldStrength, int newStrength, bool enlarge) {
 		return(false);
 	size = whatSize(size+change);
 
-	Player *player = getPlayer();
+	Player *player = getAsPlayer();
 	if(player) {
 		wake("You awaken suddenly!");
 		for(int i=0; i<MAXWEAR; i++) {

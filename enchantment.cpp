@@ -169,13 +169,13 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
 					player->print("*DM* %d seconds.\n", dur);
 
 				if(target->isMonster())
-					target->getMonster()->addEnemy(player);
+					target->getAsMonster()->addEnemy(player);
 
 			} else {
 				player->print("%M resisted your spell.\n", target);
-				broadcast(player->getSock(), target->getRoom(), "%M resisted %N's hold-person spell.",target, player);
+				broadcast(player->getSock(), target->getRoomParent(), "%M resisted %N's hold-person spell.",target, player);
 				if(target->isMonster())
-					target->getMonster()->addEnemy(player);
+					target->getAsMonster()->addEnemy(player);
 			}
 
 		} else {
@@ -194,7 +194,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			} else {
 				player->print("%M resisted your spell.\n", target);
-				broadcast(player->getSock(), target->getSock(), target->getRoom(), "%M resisted %N's hold-person spell.",target, player);
+				broadcast(player->getSock(), target->getSock(), target->getRoomParent(), "%M resisted %N's hold-person spell.",target, player);
 				target->print("%M tried to cast a hold-person spell on you.\n", player);
 			}
 		}
@@ -256,7 +256,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 			player->ready[HELD-1] = 0;
 		}
 
-		target = player->getPlayer();
+		target = player->getAsPlayer();
 
 		// killed while fleeing?
 		if(target->flee(true) == 2)
@@ -340,11 +340,11 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(!target->chkSave(SPL, player, bns) || player->isCt()) {
 
 			if(spellData->how == CAST && player->isPlayer())
-				player->getPlayer()->statistics.offensiveCast();
+				player->getAsPlayer()->statistics.offensiveCast();
 
 			target->clearFlag(P_SITTING);
 			target->print("You are suddenly terrified to the bone!\n");
-			broadcast(target->getSock(), player->getRoom(), "%M becomes utterly terrified!", target);
+			broadcast(target->getSock(), player->getRoomParent(), "%M becomes utterly terrified!", target);
 
 			target->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
 		    target->lasttime[LT_SPELL].ltime = t;
@@ -378,7 +378,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 			//*********************************************************************
 		} else {
 			player->print("%M resisted your spell.\n", target);
-			broadcast(player->getSock(), target->getSock(), target->getRoom(), "%M resisted %N's scare spell.",target, player);
+			broadcast(player->getSock(), target->getSock(), target->getRoomParent(), "%M resisted %N's scare spell.",target, player);
 			target->print("%M tried to cast a scare spell on you.\n", player);
 		}
 	}
@@ -460,7 +460,7 @@ int splCourage(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if(spellData->how == CAST) {
 		dur = MAX(300, 900 + bonus((int) player->intelligence.getCur()) * 300);
 
-		if(player->getRoom()->magicBonus()) {
+		if(player->getRoomParent()->magicBonus()) {
 			player->print("The room's magical properties increase the power of your spell.\n");
 			dur += 300L;
 		}
@@ -526,7 +526,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how == WAND || spellData->how == SCROLL || spellData->how == CAST) {
 			if(	player->isPlayer() &&
 				target->isPlayer() &&
-				player->getRoom()->isPkSafe() &&
+				player->getRoomParent()->isPkSafe() &&
 				!target->flagIsSet(P_OUTLAW)
 			) {
 				player->print("You cannot cast that spell here.\n");
@@ -547,7 +547,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M brushes it off and attacks %N.\n", player, target);
 
-			target->getMonster()->addEnemy(player, true);
+			target->getAsMonster()->addEnemy(player, true);
 			return(0);
 		}
 
@@ -586,13 +586,13 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		if(target->isMonster())
-			target->getMonster()->addEnemy(player);
+			target->getAsMonster()->addEnemy(player);
 	}
 
 	target->addEffect("fear", dur, 1, player, true, player);
 
 	if(spellData->how == CAST && player->isPlayer())
-		player->getPlayer()->statistics.offensiveCast();
+		player->getAsPlayer()->statistics.offensiveCast();
 	return(1);
 }
 
@@ -730,13 +730,13 @@ int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		if(target->isMonster())
-			target->getMonster()->addEnemy(player);
+			target->getAsMonster()->addEnemy(player);
 	}
 
 	target->addEffect("silence", dur, 1, player, true, player);
 
 	if(spellData->how == CAST && player->isPlayer())
-		player->getPlayer()->statistics.offensiveCast();
+		player->getAsPlayer()->statistics.offensiveCast();
 	if(player->isCt() && target->isPlayer())
 		target->setFlag(P_DM_SILENCED);
 
@@ -805,7 +805,7 @@ bool decEnchant(Player* player, int how) {
 // This function allows mages to enchant items.
 
 int splEnchant(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player* pPlayer = player->getPlayer();
+	Player* pPlayer = player->getAsPlayer();
 	if(!pPlayer)
 		return(0);
 
@@ -844,11 +844,11 @@ int splEnchant(Creature* player, cmd* cmnd, SpellData* spellData) {
 	object->value.set(500 * adj, GOLD);
 
 	pPlayer->printColor("%O begins to glow brightly.\n", object);
-	broadcast(pPlayer->getSock(), pPlayer->getRoom(), "%M enchants %1P.", pPlayer, object);
+	broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M enchants %1P.", pPlayer, object);
 
 	if(!pPlayer->isDm())
 		log_immort(true, pPlayer, "%s enchants a %s^g in room %s.\n", pPlayer->name, object->name,
-			pPlayer->getRoom()->fullName().c_str());
+			pPlayer->getRoomParent()->fullName().c_str());
 
 	return(1);
 }
@@ -909,7 +909,7 @@ int cmdEnchant(Player* player, cmd* cmnd) {
 	player->checkImprove("enchant", true);
 	if(!player->isDm())
 		log_immort(true, player, "%s temp_enchants a %s in room %s.\n", player->name, object->name,
-			player->getRoom()->fullName().c_str());
+			player->getRoomParent()->fullName().c_str());
 
 	object->setFlag(O_TEMP_ENCHANT);
 	return(0);
@@ -920,7 +920,7 @@ int cmdEnchant(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player	*pPlayer = player->getPlayer();
+	Player	*pPlayer = player->getAsPlayer();
 	Creature* target=0;
 	Monster	*mTarget=0;
 	int		dur=0, bns=0, mageStunBns=0;
@@ -959,7 +959,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Stun a monster or player
 	} else {
-		mTarget = target->getMonster();
+		mTarget = target->getAsMonster();
 
 		if(mTarget) {
 			if(player->flagIsSet(P_LAG_PROTECTION_SET))
@@ -1052,7 +1052,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 			}
 			if(mTarget->isEffected("reflect-magic")) {
 				player->print("Your stun is reflected back at you!\n");
-				broadcast(player->getSock(), mTarget->getSock(), player->getRoom(), "%M's stun is reflected back at %s!",
+				broadcast(player->getSock(), mTarget->getSock(), player->getRoomParent(), "%M's stun is reflected back at %s!",
 					player, player->himHer());
 				if(mTarget->isDm() && !player->isDm())
 					dur = 0;
@@ -1202,7 +1202,7 @@ int splGlobeOfSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if(noPotion(player, spellData))
 		return(0);
 
-	if(player->getRoom()->isPkSafe() && !player->isCt()) {
+	if(player->getRoomParent()->isPkSafe() && !player->isCt()) {
 		player->print("That spell is not allowed here.\n");
 		return(0);
 	}
@@ -1210,16 +1210,16 @@ int splGlobeOfSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 	player->print("You cast a globe of silence spell.\n");
 	broadcast(player->getSock(), player->getParent(), "%M casts a globe of silence spell.", player);
 
-	if(player->getRoom()->hasPermEffect("globe-of-silence")) {
+	if(player->getRoomParent()->hasPermEffect("globe-of-silence")) {
 		player->print("The spell didn't take hold.\n");
 		return(0);
 	}
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus())
+		if(player->getRoomParent()->magicBonus())
 			player->print("The room's magical properties increase the power of your spell.\n");
 	}
 
-	player->getRoom()->addEffect("globe-of-silence", duration, strength, player, true, player);
+	player->getRoomParent()->addEffect("globe-of-silence", duration, strength, player, true, player);
 	return(1);
 }

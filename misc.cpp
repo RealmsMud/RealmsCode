@@ -184,7 +184,7 @@ char *crt_str(const Creature *crt, int num, int flag ) {
 	if(!crt)
 		return("(NULL CRT)");
 
-	const Player* pCrt = crt->getConstPlayer();
+	const Player* pCrt = crt->getAsConstPlayer();
 
 	str = xstr[xnum];
 	xnum = (xnum + 1)%5;
@@ -1129,8 +1129,8 @@ void Creature::stun(int delay) {
 
 int	numEnemyMonInRoom(Creature* player) {
 	int		count=0;
-	for(Monster* mons : player->getRoom()->monsters) {
-        if(mons->getMonster()->isEnemy(player))
+	for(Monster* mons : player->getRoomParent()->monsters) {
+        if(mons->getAsMonster()->isEnemy(player))
             count++;
 	}
 
@@ -1318,7 +1318,7 @@ bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int 
 		}
 
 		if(findWhere & FIND_OBJ_ROOM) {
-			if(findObj(player, player->getRoom()->first_obj, findFlags, str, val, &match, (Object**)target)) {
+			if(findObj(player, player->getRoomParent()->first_obj, findFlags, str, val, &match, (Object**)target)) {
 				*targetType = OBJECT;
 				found = true;
 				break;
@@ -1326,7 +1326,7 @@ bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int 
 		}
 
 		if(findWhere & FIND_MON_ROOM) {
-			if(findCrt<Monster*, MonsterPtrLess>(player, player->getRoom()->monsters, findFlags, str, val, &match, (Creature **)target)) {
+			if(findCrt<Monster*, MonsterPtrLess>(player, player->getRoomParent()->monsters, findFlags, str, val, &match, (Creature **)target)) {
 				*targetType = MONSTER;
 				found = true;
 				break;
@@ -1334,7 +1334,7 @@ bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int 
 		}
 
 		if(findWhere & FIND_PLY_ROOM) {
-			if(findCrt<Player*, PlayerPtrLess>(player, player->getRoom()->players, findFlags, str, val, &match, (Creature **)target)) {
+			if(findCrt<Player*, PlayerPtrLess>(player, player->getRoomParent()->players, findFlags, str, val, &match, (Creature **)target)) {
 				*targetType = PLAYER;
 				found = true;
 				break;
@@ -1342,7 +1342,7 @@ bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int 
 		}
 
 		if(findWhere & FIND_EXIT) {
-			Exit* exit = findExit(player, str, val, player->getRoom());
+			Exit* exit = findExit(player, str, val, player->getRoomParent());
 			if(exit) {
 				*(Exit **)target = exit;
 				*targetType = EXIT;

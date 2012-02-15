@@ -470,7 +470,7 @@ int listFactions(const Player* viewer, const Creature* target) {
 	std::map<bstring, bstring>::const_iterator it;
 	std::map<bstring, long>::const_iterator fIt;
 	const Faction* faction=0;
-	const Player* player = target->getConstPlayer();
+	const Player* player = target->getAsConstPlayer();
 	long	regard=0;
 	long	i=0;
 
@@ -478,7 +478,7 @@ int listFactions(const Player* viewer, const Creature* target) {
 		viewer->print("Faction Standing");
 	else {
 		viewer->print("%s's Faction", target->name);
-		const Monster* monster = target->getConstMonster();
+		const Monster* monster = target->getAsConstMonster();
 		if(monster)
 			viewer->printColor(", primeFaction: ^y%s", monster->getPrimeFaction().c_str());
 	}
@@ -559,7 +559,7 @@ int dmShowFactions(Player *player, cmd* cmnd) {
 		}
 		if(target) {
 			if(player->getClass() == BUILDER) {
-				mTarget = target->getMonster();
+				mTarget = target->getAsMonster();
 				if(mTarget && !player->checkBuilder(mTarget->info)) {
 					player->print("Error: monster index not in any of your alotted ranges.\n");
 					return(0);
@@ -848,7 +848,7 @@ void Faction::worshipSocial(Monster *monster) {
 	strcpy(cmnd.str[0], social.c_str());
 	cmnd.num = 2;
 	cmnd.val[1] = 1;
-	for(Player* player : monster->getRoom()->players) {
+	for(Player* player : monster->getRoomParent()->players) {
 		if(	mrand(1,100)>2 ||
 			!player ||
 			player->flagIsSet(P_UNCONSCIOUS) ||

@@ -57,7 +57,7 @@ int cmdCreepingDoom(Player* player, cmd* cmnd) {
 		return(0);
 	}
 //	pCreature = creature->getPlayer();
-	mCreature = creature->getMonster();
+	mCreature = creature->getAsMonster();
 
 	player->smashInvis();
 	player->interruptDelayedActions();
@@ -99,7 +99,7 @@ int cmdCreepingDoom(Player* player, cmd* cmnd) {
 	if(!creature->isCt()) {
 		if(mrand(1, 100) > chance) {
 			player->print("You failed to strike %N with creeping doom.\n", creature);
-			broadcast(player->getSock(), creature->getSock(), player->getRoom(), "%M tried to strike %N with creeping doom!", player, creature);
+			broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M tried to strike %N with creeping doom!", player, creature);
 			creature->print("%M tried to strike you with creeping doom!\n", player);
 			player->checkImprove("creeping-doom", false);
 			return(0);
@@ -116,7 +116,7 @@ int cmdCreepingDoom(Player* player, cmd* cmnd) {
 	player->statistics.attackDamage(dmg, "creeping-doom");
 
 	creature->printColor("%M struck you with creeping doom for %s%d^x damage!\n", player, creature->customColorize("*CC:DAMAGE*").c_str(), dmg);
-	broadcast(player->getSock(), creature->getSock(), player->getRoom(), "%M struck %N with creeping doom!", player, creature);
+	broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M struck %N with creeping doom!", player, creature);
 
 	// if they didn't die from the damage, curse them
 	if(!player->doDamage(creature, dmg, CHECK_DIE))
@@ -167,7 +167,7 @@ int cmdPoison(Player* player, cmd* cmnd) {
 		return(0);
 	}
 //	pCreature = creature->getPlayer();
-	mCreature = creature->getMonster();
+	mCreature = creature->getAsMonster();
 
 	player->smashInvis();
 	player->interruptDelayedActions();
@@ -210,7 +210,7 @@ int cmdPoison(Player* player, cmd* cmnd) {
 			player->printColor("^GYou fail to poison %N.\n", creature);
 			creature->printColor("^G%M tried to poison you!\n", player);
 			broadcastGroup(false, creature, "%M tried to poison %N.\n", player, creature);
-			broadcast(player->getSock(), creature->getSock(), player->getRoom(), "%M tried to poison %N.", player, creature);
+			broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M tried to poison %N.", player, creature);
 			player->checkImprove("poison", false);
 			return(0);
 		}
@@ -219,7 +219,7 @@ int cmdPoison(Player* player, cmd* cmnd) {
 	player->printColor("^GYou poison %N.\n", creature);
 	creature->printColor("^G%M poisons you!\n", player);
 	broadcastGroup(false, creature, "^G%M poisons %N.\n", player, creature);
-	broadcast(player->getSock(), creature->getSock(), player->getRoom(), "^G%M poisons %N.", player, creature);
+	broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "^G%M poisons %N.", player, creature);
 
 	if(creature->chkSave(POI, player, 0)) {
 		player->print("%N partially resists your poison.\n", creature);
@@ -529,7 +529,7 @@ void Creature::makeVampire() {
 		setFlag(P_CHAOTIC);
 
 		// make sure the master still exists and is still a vampire
-		Player* player = getPlayer();
+		Player* player = getAsPlayer();
 		if(player->getAfflictedBy() != "") {
 			bool online = true;
 			Player* master = gServer->findPlayer(player->getAfflictedBy());
@@ -589,7 +589,7 @@ bool Creature::vampireCharmed(Player* master) {
 	if(isEffected("porphyria"))
 		return(false);
 
-	Player* player = getPlayer();
+	Player* player = getAsPlayer();
 	bool charmed = true;
 
 	// we need to make sure the minion lists match up;
@@ -628,7 +628,7 @@ bool Creature::vampireCharmed(Player* master) {
 void Creature::clearMinions() {
 	if(!isPlayer())
 		return;
-	Player* player = getPlayer(), *target=0;
+	Player* player = getAsPlayer(), *target=0;
 	bool online = true;
 
 	if(player->getAfflictedBy() != "") {
@@ -717,7 +717,7 @@ bool Creature::sunlightDamage() {
 	unmist();
 	wake("Terrible nightmares disturb your sleep!");
 	printColor("^Y^#The searing sunlight burns your flesh!\n");
-	broadcast(getSock(), getRoom(), "^Y%M's flesh is burned by the sunlight!", this);
+	broadcast(getSock(), getRoomParent(), "^Y%M's flesh is burned by the sunlight!", this);
 
 	// lots of damage every 5 seconds
 	hp.decrease(dmg);
@@ -725,9 +725,9 @@ bool Creature::sunlightDamage() {
 	if(hp.getCur() < 1) {
 		printColor("^YYou have been disintegrated!\n");
 		if(isPlayer())
-			getPlayer()->die(SUNLIGHT);
+			getAsPlayer()->die(SUNLIGHT);
 		else
-			getMonster()->mobDeath();
+			getAsMonster()->mobDeath();
 		return(true);
 	}
 	return(false);

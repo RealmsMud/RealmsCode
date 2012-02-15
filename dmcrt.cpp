@@ -36,7 +36,7 @@
 
 int dmCreateMob(Player* player, cmd* cmnd) {
 	Monster	*monster=0;
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	int		l=0, total=1;
 	bstring	noMonsters = "^mNo monsters were summoned.\n";
 
@@ -55,7 +55,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
 	if(!player->builderCanEditRoom("create monsters"))
 		return(0);
 
-	WanderInfo* wander = player->getRoom()->getWanderInfo();
+	WanderInfo* wander = player->getRoomParent()->getWanderInfo();
 
 	if(cr.id < 1) {
 		if(!wander) {
@@ -125,7 +125,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
 
 	if(!player->isDm())
 		log_immort(false,player, "%s created %d %s's in room %s.\n", player->name, total, monster->name,
-			player->getRoom()->fullName().c_str());
+			player->getRoomParent()->fullName().c_str());
 
 	return(0);
 }
@@ -136,8 +136,8 @@ int dmCreateMob(Player* player, cmd* cmnd) {
 //  Display information on creature given to player given.
 
 bstring Creature::statCrt(int statFlags) {
-	const Player *pTarget = getConstPlayer();
-	const Monster *mTarget = getConstMonster();
+	const Player *pTarget = getAsConstPlayer();
+	const Monster *mTarget = getAsConstMonster();
 	std::ostringstream crtStr;
 	bstring str = "";
 	int		i=0, n=0;
@@ -175,7 +175,7 @@ bstring Creature::statCrt(int statFlags) {
 		if(pTarget->getForum() != "")
 			crtStr << "^gForum Account:^x " << pTarget->getForum() << "\n";
 
-		crtStr << "Room: " << pTarget->getRoom()->fullName() << "\n";
+		crtStr << "Room: " << pTarget->getConstRoomParent()->fullName() << "\n";
 		crtStr << "Cmd : ";
 		if(!pTarget->isDm() || (statFlags & ISDM))
 			crtStr << dmLastCommand(pTarget);
@@ -674,8 +674,8 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	pTarget = target->getPlayer();
-	mTarget = target->getMonster();
+	pTarget = target->getAsPlayer();
+	mTarget = target->getAsMonster();
 
 	// trying to modify a player?
 	if(pTarget && !player->isDm()) {
@@ -2381,7 +2381,7 @@ int dmAlias(Player* player, cmd* cmnd) {
 	}
 
 	log_immort(false,player, "%s possesses %s in room %s.\n", player->name, monster->name,
-		player->getRoom()->fullName().c_str());
+		player->getRoomParent()->fullName().c_str());
 
 	return(0);
 }
@@ -2482,7 +2482,7 @@ int dmAttack(Player* player, cmd* cmnd) {
 	attacker->addEnemy(victim);
 
 	if(inroom) {
-		broadcast(victim->getSock(), victim->getRoom(), "%M attacks %N.", attacker, victim);
+		broadcast(victim->getSock(), victim->getRoomParent(), "%M attacks %N.", attacker, victim);
 		victim->print("%M attacked you!\n", attacker);
 	}
 	return(0);
@@ -2640,7 +2640,7 @@ void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
 	// clean up possesed before save
 	if(target->flagIsSet(M_DM_FOLLOW)) { // clear relevant follow lists
 		if(target->getMaster()) {
-		    Player* master = target->getMaster()->getPlayer();
+		    Player* master = target->getMaster()->getAsPlayer();
 
 		    master->clearFlag(P_ALIASING);
 
@@ -2728,7 +2728,7 @@ int dmAddMob(Player* player, cmd* cmnd) {
 	new_mob->lasttime[LT_TICK].ltime =
 	new_mob->lasttime[LT_TICK_SECONDARY].ltime =
 	new_mob->lasttime[LT_TICK_HARMFUL].ltime = t;
-	new_mob->addToRoom(player->getRoom());
+	new_mob->addToRoom(player->getRoomParent());
 
 
 	player->print("Monster created.\n");
@@ -2782,13 +2782,13 @@ int	dmForceWander(Player* player, cmd* cmnd) {
 	}
 
 	strcpy(name, monster->name);
-	broadcast(NULL, player->getRoom(), "%1M just %s away.", monster, Move::getString(monster).c_str());
+	broadcast(NULL, player->getRoomParent(), "%1M just %s away.", monster, Move::getString(monster).c_str());
 
 	monster->deleteFromRoom();
 	free_crt(monster);
 
 	log_immort(false,player,"%s forced %s to wander away in room %s.\n",
-		player->name, name, player->getRoom()->fullName().c_str());
+		player->name, name, player->getRoomParent()->fullName().c_str());
 
 
 	return(0);

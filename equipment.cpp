@@ -118,7 +118,7 @@ int cmdCompare(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 bool Creature::equip(Object* object, bool showMessage, bool resetUniqueId) {
-	Player* player = getPlayer();
+	Player* player = getAsPlayer();
 	bool isWeapon = false;
 
 	switch(object->getWearflag()) {
@@ -151,14 +151,14 @@ bool Creature::equip(Object* object, bool showMessage, bool resetUniqueId) {
 			// weapons going in the first hand
 			if(showMessage) {
 				printColor("You wield %1P.\n", object);
-				broadcast(getSock(), getRoom(), "%M wields %1P.", this, object);
+				broadcast(getSock(), getRoomParent(), "%M wields %1P.", this, object);
 			}
 			ready[WIELD-1] = object;
 		} else if(!ready[HELD-1]) {
 			// weapons going in the off hand
 			if(showMessage) {
 				printColor("You wield %1P in your off hand.\n", object);
-				broadcast(getSock(), getRoom(), "%M wields %1P in %s off hand.",
+				broadcast(getSock(), getRoomParent(), "%M wields %1P in %s off hand.",
 					this, object, hisHer());
 			}
 			ready[HELD-1] = object;
@@ -174,7 +174,7 @@ bool Creature::equip(Object* object, bool showMessage, bool resetUniqueId) {
 	// message for armor/rings
 	if(!isWeapon && showMessage) {
 		printColor("You wear %1P.\n", object);
-		broadcast(getSock(), getRoom(), "%M wore %1P.", this, object);
+		broadcast(getSock(), getRoomParent(), "%M wore %1P.", this, object);
 	}
 
 
@@ -221,7 +221,7 @@ Object* Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool
 		if(!object->flagIsSet(O_DARKNESS))
 			darkness = false;
 		if(action == UNEQUIP_DELETE) {
-			Limited::remove(getPlayer(), object);
+			Limited::remove(getAsPlayer(), object);
 			darkness = object->flagIsSet(O_DARKNESS);
 			delete object;
 			object = 0;
@@ -244,7 +244,7 @@ Object* Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool
 
 int cmdUse(Player* player, cmd* cmnd) {
 	Object	*object=0;
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	unsigned long amt=0;
 
 	player->clearFlag(P_AFK);
@@ -1017,7 +1017,7 @@ int doGetObject(Object* object, Creature* creature, bool doLimited, bool noSplit
 
 	if(!player) {
 		creature->print("Unable to get item!\n");
-		object->addToRoom(creature->getRoom());
+		object->addToRoom(creature->getRoomParent());
 		return(i);
 	}
 
@@ -1119,7 +1119,7 @@ void getPermObj(Object* object) {
 	object->setFlag(O_PERM_INV_ITEM);
 	object->clearFlag(O_PERM_ITEM);
 
-	room = object->parent_room->getUniqueRoom();
+	room = object->parent_room->getAsUniqueRoom();
 	if(!room)
 		return;
 
@@ -1292,7 +1292,7 @@ void getAllObj(Creature* creature, Object *container) {
 
 void get_all_rom(Creature* creature, char *item) {
 	Player	*player = creature->getPlayerMaster();
-	BaseRoom* room = creature->getRoom();
+	BaseRoom* room = creature->getRoomParent();
 	Object	*object=0, *last_obj=0;
 	otag	*op=0;
 	char	str[2048];
@@ -1473,7 +1473,7 @@ void get_all_rom(Creature* creature, char *item) {
 
 int cmdGet(Creature* creature, cmd* cmnd) {
 	Player	*player = creature->getPlayerMaster();
-	BaseRoom* room = creature->getRoom();
+	BaseRoom* room = creature->getRoomParent();
 	Object	*object=0, *container=0;
 	otag	*cop=0;
 	int		 n=0, match=0, ground=0;
@@ -1967,10 +1967,10 @@ bool delete_drop_obj(const BaseRoom* room, const Object* object, bool factionCan
 //*********************************************************************
 
 void dropAllRoom(Creature* creature, Player *player, bool factionCanRecycle) {
-	Player	*pCreature = creature->getPlayer();
+	Player	*pCreature = creature->getAsPlayer();
 	int		money=0, flags=0, m=0, n=0;
 	otag	*op=0, *oprev=0;
-	BaseRoom* room = creature->getRoom();
+	BaseRoom* room = creature->getRoomParent();
 	Object	*object=0;
 	Property* p=0;
 	bool	first=false;
@@ -2127,7 +2127,7 @@ bool canDropAllObj(Object* object, Object* container) {
 void dropAllObj(Creature* creature, Object *container, Property *p) {
 	Player	*player = creature->getPlayerMaster();
 	Object	*object=0, *last=0;
-	BaseRoom* room = creature->getRoom();
+	BaseRoom* room = creature->getRoomParent();
 	otag	*op=0;
 	int		n=1, found=0, full=0;
 	bstring txt = "";
@@ -2240,7 +2240,7 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
 		sock = player->getSock();
 
 	if(room->isDropDestroy()) {
-		const AreaRoom* aRoom = room->getConstAreaRoom();
+		const AreaRoom* aRoom = room->getAsConstAreaRoom();
 
 		if(room->flagIsSet(R_EARTH_BONUS)) {
 			if(printPlayer) {
@@ -2308,7 +2308,7 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
 		}
 
 		if(player)
-			Limited::remove(player->getPlayer(), object);
+			Limited::remove(player->getAsPlayer(), object);
 		delete object;
 	} else if(object->flagIsSet(O_BREAK_ON_DROP) && (!player || !player->isStaff())) {
 		if(printPlayer)
@@ -2317,14 +2317,14 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
 			broadcast(sock, room, "It shattered and turned to dust!");
 
 		if(player)
-			Limited::remove(player->getPlayer(), object);
+			Limited::remove(player->getAsPlayer(), object);
 		delete object;
 	} else {
 		if(player) {
 			if(!player->isPet())
-				Limited::deleteOwner(player->getPlayer(), object);
+				Limited::deleteOwner(player->getAsPlayer(), object);
 			else
-				Lore::remove(player->getPlayer(), object, true);
+				Lore::remove(player->getAsPlayer(), object, true);
 		}
 
 		object->addToRoom(room);
@@ -2354,7 +2354,7 @@ void containerOutput(const Player* player, const Object* container, const Object
 
 int cmdDrop(Creature* creature, cmd* cmnd) {
 	Player	*player = creature->getPlayerMaster();
-	BaseRoom* room = creature->getRoom();
+	BaseRoom* room = creature->getRoomParent();
 	Object	*object=0, *container=0;
 	otag	*op=0;
 	int		n=0, match=0, in_room=0;
@@ -2747,7 +2747,7 @@ int canGiveTransport(Creature* creature, Creature* target, Object* object, bool 
 	//	- player will be the one getting the messages
 	player = creature->getPlayerMaster();
 	pMaster = target->getPlayerMaster();
-	pTarget = target->getPlayer();
+	pTarget = target->getAsPlayer();
 
 	if(!player) {
 		creature->print("Unable to give!\n");
@@ -2849,7 +2849,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 	Player	*player = creature->getPlayerMaster();
 	Object	*object=0;
 	Creature* target=0;
-	BaseRoom* room = creature->getRoom();
+	BaseRoom* room = creature->getRoomParent();
 
 	// we're being sent either a player or a pet
 	//	- creature will be the one giving the object
@@ -2909,14 +2909,14 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 			player->print("You are not allowed to give items to players.\n");
 			return(0);
 		}
-		if(!target->getPlayer()->canBuildObjects()) {
+		if(!target->getAsPlayer()->canBuildObjects()) {
 			player->print("%s are not allowed to receive items.\n", target->upHeShe());
 			return(0);
 		}
 
 		// they can give it, but can the builder *st/modify it?
 		if(	target->getClass()==BUILDER &&
-			target->getPlayer()->checkRangeRestrict(object->info)
+			target->getAsPlayer()->checkRangeRestrict(object->info)
 		) {
 			player->printColor("That item is outside their range. Please save to the ^ytest^x range.\n");
 			return(0);
@@ -2936,7 +2936,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 			return(0);
 		}
 
-		if(!Faction::willDoBusinessWith(player, target->getMonster()->getPrimeFaction())) {
+		if(!Faction::willDoBusinessWith(player, target->getAsMonster()->getPrimeFaction())) {
 			player->print("%M refuses to accept that from you.\n", target);
 			return(0);
 		}
@@ -3005,7 +3005,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 void give_money(Player* player, cmd* cmnd) {
 	Creature* target=0, *master=0;
 	Monster* mTarget=0;
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	unsigned long amt = strtoul(&cmnd->str[1][1], 0, 0);
 
 	if(!player->ableToDoCommand()) return;
@@ -3056,7 +3056,7 @@ void give_money(Player* player, cmd* cmnd) {
 		log_immort(true, player, "%s gave %d gold to %s.\n", player->name, amt, master->name);
 
 	player->save(true);
-	mTarget = target->getMonster();
+	mTarget = target->getAsMonster();
 
 	if(mTarget && !mTarget->isPet()) {
 		bstring pay = "$pay " + (bstring)amt;

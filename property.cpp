@@ -660,8 +660,8 @@ void Property::destroy() {
 						{
 							outside = ext->target.loadRoom();
 							if(outside) {
-								uRoom = outside->getUniqueRoom();
-								aRoom = outside->getAreaRoom();
+								uRoom = outside->getAsUniqueRoom();
+								aRoom = outside->getAsAreaRoom();
 
 								// get rid of all exits
 								ExitList::iterator xit;
@@ -937,8 +937,8 @@ void Property::expelToExit(Player* player, bool offline) {
 	if(!newRoom)
 		newRoom = abortFindRoom(player, "expelToExit");
 
-	uRoom = newRoom->getUniqueRoom();
-	aRoom = newRoom->getAreaRoom();
+	uRoom = newRoom->getAsUniqueRoom();
+	aRoom = newRoom->getAsAreaRoom();
 
 	if(offline) {
 		if(uRoom)
@@ -1960,8 +1960,8 @@ void Property::roomSetup(UniqueRoom *room, PropType propType, const Player* play
 //*********************************************************************
 
 void Property::linkRoom(BaseRoom* inside, BaseRoom* outside, bstring xname) {
-	UniqueRoom* uRoom = outside->getUniqueRoom();
-	AreaRoom* aRoom = outside->getAreaRoom();
+	UniqueRoom* uRoom = outside->getAsUniqueRoom();
+	AreaRoom* aRoom = outside->getAsAreaRoom();
 	if(uRoom) {
 		link_rom(inside, uRoom->info, xname.c_str());
 		uRoom->saveToFile(0);
@@ -1970,8 +1970,8 @@ void Property::linkRoom(BaseRoom* inside, BaseRoom* outside, bstring xname) {
 		aRoom->save();
 	}
 
-	uRoom = inside->getUniqueRoom();
-	aRoom = inside->getAreaRoom();
+	uRoom = inside->getAsUniqueRoom();
+	aRoom = inside->getAsAreaRoom();
 	if(uRoom) {
 		link_rom(outside, uRoom->info, "out");
 		uRoom->saveToFile(0);
@@ -2228,7 +2228,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 	Object	*deed=0, *oHidden=0, *oConceal=0, *oInvis=0, *oFoyer=0;
 	AreaRoom* aRoom = player->area_room;
 	UniqueRoom* uRoom = player->parent_rom;
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	int canBuildFlag = Property::buildFlag(propType);
 	CatRef cr;
 
@@ -2613,7 +2613,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 //*********************************************************************
 
 void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Property* p, const Guild* guild, int x) {
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	Object* obj = findObject(player, player->first_obj, cmnd, 3-x);
 	CatRef cr;
 
@@ -2706,7 +2706,7 @@ void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Proper
 //*********************************************************************
 
 void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x) {
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	bstring origExit = cmnd->str[3-x];
 	bstring newExit = getFullstrText(cmnd->fullstr, 4-x);
 
@@ -2772,7 +2772,7 @@ void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x)
 //		PROP_HOUSE
 
 void Property::manage(Player* player, cmd* cmnd, PropType propType, int x) {
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	const Guild* guild=0;
 	Property *p=0;
 	int canBuildFlag = Property::buildFlag(propType);

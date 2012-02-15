@@ -352,7 +352,7 @@ int showSkills(Player* toShow, Creature* player, bool magicOnly=false) {
 
 
 	// Tell the player what skills they are looking at
-	if(toShow->getPlayer() == player)
+	if(toShow->getAsPlayer() == player)
 		toShow->printColor("^YYour Skills:");
 	else
 		toShow->printColor("^Y%s's Skills:", player->name);

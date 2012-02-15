@@ -430,7 +430,7 @@ int dmDust(Player* player, cmd* cmnd) {
 		broadcast(isCt, "^y### %s has been turned to dust!", target->name);
 	} else {
 		broadcast("### %s has been turned to dust!", target->name);
-		broadcast(target->getSock(), target->getRoom(), "A bolt of lightning strikes %s from on high.", target->name);
+		broadcast(target->getSock(), target->getRoomParent(), "A bolt of lightning strikes %s from on high.", target->name);
 		last_dust_output = time(0) + 15L;
 	}
 
@@ -1004,7 +1004,7 @@ int dmPut(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(object->flagIsSet(O_DARKMETAL) && target->getRoom()->isSunlight()) {
+	if(object->flagIsSet(O_DARKMETAL) && target->getRoomParent()->isSunlight()) {
 		player->printColor("You cannot give %P to %N now!\nIt would surely be destroyed!\n", object, target);
 		return(0);
 	}
@@ -1133,12 +1133,12 @@ int dmWordAll(Player* player, cmd* cmnd) {
 		room = target->getRecallRoom().loadRoom(target);
 
 		target->print("An astral vortex just arrived.\n");
-		broadcast(target->getSock(), target->getRoom(), "An astral vortex just arrived.");
+		broadcast(target->getSock(), target->getRoomParent(), "An astral vortex just arrived.");
 
 		target->print("The astral vortex sucks you in!\n");
-		broadcast(target->getSock(), target->getRoom(), "The astral vortex sucks %N into it!", target);
+		broadcast(target->getSock(), target->getRoomParent(), "The astral vortex sucks %N into it!", target);
 
-		broadcast(target->getSock(), target->getRoom(), "The astral vortex disappears.");
+		broadcast(target->getSock(), target->getRoomParent(), "The astral vortex disappears.");
 
 		broadcast("^Y### Strangely, %N was sucked into an astral vortex.", target);
 
@@ -1606,15 +1606,15 @@ int dmKillAll(int type, int silent, int unconscious, int uncon_length) {
 		switch(type) {
 		case DM_ARMAGEDDON:
 			target->print("Meteors begin falling from the sky!\n");
-			broadcast(target->getSock(), target->getRoom(), "Meteors begin falling from the sky!\n");
+			broadcast(target->getSock(), target->getRoomParent(), "Meteors begin falling from the sky!\n");
 
 			target->print("A freak meteor strikes you!\n");
-			broadcast(target->getSock(), target->getRoom(), "A freak meteors strikes %N!", target);
+			broadcast(target->getSock(), target->getRoomParent(), "A freak meteors strikes %N!", target);
 
 			target->print("The freak meteor slams into you for %d damage!\n", mrand(5000,10000));
-			broadcast(target->getSock(), target->getRoom(), "The freak meteor blasts right through %N!", target);
+			broadcast(target->getSock(), target->getRoomParent(), "The freak meteor blasts right through %N!", target);
 			target->print("You die as your ashes fall to the ground.\n");
-			broadcast(target->getSock(), target->getRoom(), "The freak meteor vaporized %N!", target);
+			broadcast(target->getSock(), target->getRoomParent(), "The freak meteor vaporized %N!", target);
 
 			if(!silent)
 				broadcast("### Sadly, %N was killed by a freak meteor shower.", target);
@@ -1792,54 +1792,54 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
 	if(victim->getClass() < BUILDER && !silent) {
 		switch(type) {
 		case DM_COMBUST:
-			broadcast(victim->getSock(), victim->getRoom(), "^r%s bursts into flames!", victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^r%s bursts into flames!", victim->name);
 			broadcast("^r### Sadly, %s spontaneously combusted.", victim->name);
 			break;
 		case DM_SLIME:
-			broadcast(victim->getSock(), victim->getRoom(),
+			broadcast(victim->getSock(), victim->getRoomParent(),
 				"^gA massive green slime just arrived.\nThe massive green slime attacks %s!", victim->name);
 			broadcast("^g### Sadly, %s was dissolved by a massive green slime.", victim->name);
 			break;
 		case DM_GNATS:
-			broadcast(victim->getSock(), victim->getRoom(),
+			broadcast(victim->getSock(), victim->getRoomParent(),
 				"^mA demonic gnat swarm just arrived.\nThe demonic gnat swarm attacks %s!", victim->name);
 			broadcast("^m### Sadly, %s was eaten by a ravenous demonic gnat swarm!", victim->name);
 			break;
 		case DM_TRIP:
-			broadcast(victim->getSock(), victim->getRoom(), "^m%s slips on an oversized banana peel!", victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^m%s slips on an oversized banana peel!", victim->name);
 			broadcast("^m### Sadly, %s tripped and broke %s neck.", victim->name, victim->hisHer());
 			break;
 		case DM_BOMB:
-			broadcast(victim->getSock(), victim->getRoom(), "^r%s begins to tick!", victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^r%s begins to tick!", victim->name);
 			broadcast("^r### Sadly, %s blew %sself up!", victim->name, victim->himHer());
 			break;
 		case DM_NUCLEAR:
-			broadcast(victim->getSock(), victim->getRoom(), "^g%s begins to meltdown!", victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^g%s begins to meltdown!", victim->name);
 			broadcast("^g### Sadly, %s was killed in a nuclear explosion.", victim->name);
 			break;
 		case DM_KILL:
-			broadcast(victim->getSock(), victim->getRoom(), "^rA giant lightning bolt strikes %s!", victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^rA giant lightning bolt strikes %s!", victim->name);
 			broadcast("^r### Sadly, %s has been incinerated by lightning from the heavens!", victim->name);
 			break;
 		case DM_RAPE:
-			broadcast(victim->getSock(), victim->getRoom(), "^m%s was raped by the gods!", victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^m%s was raped by the gods!", victim->name);
 			broadcast(isStaff, "^m*** %s raped %s.", player->name, victim->name);
 			break;
 		case DM_DRAIN:
-			broadcast(victim->getSock(), victim->getRoom(), "^c%s's life force drains away!", victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^c%s's life force drains away!", victim->name);
 			broadcast(isStaff, "^g*** %s drained %s.", player->name, victim->name);
 			break;
 		case DM_CRUSH:
-			broadcast(victim->getSock(), victim->getRoom(), "^cA giant stone slab falls on %s!", victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^cA giant stone slab falls on %s!", victim->name);
 			broadcast("^c### Sadly, %s was crushed under a giant stone slab.", victim->name);
 			break;
 		case DM_MISSILE:
-			broadcast(victim->getSock(), victim->getRoom(),
+			broadcast(victim->getSock(), victim->getRoomParent(),
 				"^r%s was struck by a cruise missile!\n%s exploded!", victim->name, victim->name);
 			broadcast("^r### Sadly, %s was killed by a precision-strike cruise missile.", victim->name);
 			break;
 		case DM_NOMNOM:
-			broadcast(victim->getSock(), victim->getRoom(),
+			broadcast(victim->getSock(), victim->getRoomParent(),
 				"A fearsome monster leaps out of the shadows!\nIt tears off %s's limbs and greedily devours them!", victim->name);
 			broadcast("### Sadly, %s was devoured by a fearsome monster.", victim->name);
 			break;
@@ -1889,8 +1889,8 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
 		}
 	}
 
-	PlayerSet::iterator pIt = victim->getRoom()->players.begin();
-	PlayerSet::iterator pEnd = victim->getRoom()->players.end();
+	PlayerSet::iterator pIt = victim->getRoomParent()->players.begin();
+	PlayerSet::iterator pEnd = victim->getRoomParent()->players.end();
 	while(pIt != pEnd) {
 		player = (*pIt++);
 		if(!player || (player->isStaff() && player!=victim))
@@ -2434,11 +2434,11 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 			return(0);
 		} else {
 			player->print("%s is now jailed.\n", target->name);
-			broadcast(NULL, target->getRoom(),
+			broadcast(NULL, target->getRoomParent(),
 				"^RA demonic jailer just arrived.\nThe demonic jailer opens a portal to Hell.\nThe demonic jailer drags %s screaming to the Dungeon of Despair.", target->name);
 
 			target->printColor("^RThe demonic jailer grips your soul and drags you to the Dungeon of Despair.\n");
-			broadcast(target->getSock(), target->getRoom(), "^RThe portal closes with a puff of smoke.");
+			broadcast(target->getSock(), target->getRoomParent(), "^RThe portal closes with a puff of smoke.");
 
 			target->deleteFromRoom();
 			target->addToRoom(newRoom);

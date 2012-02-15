@@ -151,9 +151,9 @@ MagicType Creature::getCastingType() const {
 	int cls = getClass();
 
 	if(isPlayer()) {
-		if(getConstPlayer()->getSecondClass() == MAGE)
+		if(getAsConstPlayer()->getSecondClass() == MAGE)
 			cls = MAGE;
-		else if(getConstPlayer()->getSecondClass() == CLERIC)
+		else if(getAsConstPlayer()->getSecondClass() == CLERIC)
 			cls = CLERIC;
 	}
 
@@ -187,7 +187,7 @@ MagicType Creature::getCastingType() const {
 //*********************************************************************
 
 bool Creature::isPureCaster() const {
-	int second = isPlayer() ? getConstPlayer()->getSecondClass() : 0;
+	int second = isPlayer() ? getAsConstPlayer()->getSecondClass() : 0;
 	return(	(cClass == MAGE && !second) ||
 			cClass == LICH ||
 			(cClass == CLERIC && !second) ||
@@ -200,7 +200,7 @@ bool Creature::isPureCaster() const {
 //*********************************************************************
 
 bool Creature::isHybridCaster() const {
-	int second = isPlayer() ? getConstPlayer()->getSecondClass() : 0;
+	int second = isPlayer() ? getAsConstPlayer()->getSecondClass() : 0;
 	return(	cClass == BARD ||
 			cClass == DEATHKNIGHT ||
 			cClass == PALADIN ||
@@ -282,7 +282,7 @@ bool SpellData::check(const Creature* player, bool skipKnowCheck) const {
 // This function is the second half of info which outputs spells
 
 void infoSpells(const Player* viewer, Creature* target, bool notSelf) {
-	Player *player = target->getPlayer();
+	Player *player = target->getAsPlayer();
 	const Anchor* anchor=0;
 	MagicType castingType = target->getCastingType();
 	int		min = (castingType == Divine ? (int)MIN_DOMAIN : (int)MIN_SCHOOL) + 1, max = (castingType == Divine ? (int)MAX_DOMAIN : (int)MAX_SCHOOL);
@@ -397,7 +397,7 @@ int cmdSpells(Creature* player, cmd* cmnd) {
 		viewer = player->getPlayerMaster();
 		notSelf = true;
 	} else {
-		viewer = player->getPlayer();
+		viewer = player->getAsPlayer();
 	}
 
 	viewer->clearFlag(P_AFK);
@@ -455,7 +455,7 @@ bstring effectSpellName(bstring effect) {
 
 void spellsUnder(const Player* viewer, const Creature* target, bool notSelf) {
 	bstring str = "";
-	const Player* player = target->getConstPlayer();
+	const Player* player = target->getAsConstPlayer();
 	std::list<bstring> spells;
 	std::list<bstring>::const_iterator it;
 	const Effect* effect=0;

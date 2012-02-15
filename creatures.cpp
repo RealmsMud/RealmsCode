@@ -37,7 +37,7 @@
 bool Creature::canSee(const BaseRoom* room, bool p) const {
 	if(isStaff())
 		return(true);
-	const Player* player = getConstPlayer();
+	const Player* player = getAsConstPlayer();
 
 	// blind people can't see anything
 	if(isBlind()) {
@@ -70,7 +70,7 @@ bool Creature::canSee(const BaseRoom* room, bool p) const {
 		// if they can't see, maybe someone else in the room has light for them
 		if(!normal_sight) {
 		    for(Player* ply : room->players) {
-				if(ply->getPlayer()->getLight()) {
+				if(ply->getAsPlayer()->getLight()) {
 					normal_sight = true;
 					break;
 				}
@@ -157,7 +157,7 @@ bool Creature::canSee(const Creature* target, bool skip) const {
 				return(false);
 			if(target->isStaff() && target->flagIsSet(P_DM_INVIS) && !isStaff())
 				return(false);
-			if(target->flagIsSet(P_INCOGNITO) && (getClass() < target->getClass()) && getRoom() != target->getRoom())
+			if(target->flagIsSet(P_INCOGNITO) && (getClass() < target->getClass()) && getParent() != target->getParent())
 				return(false);
 
 			if(!skip) {
@@ -286,10 +286,10 @@ bool Creature::canEnter(const Exit *exit, bool p, bool blinking) const {
 		if(!staff) return(false);
 	}
 
-	if(	getRoom()->getTollkeeper() &&
+	if(	getConstRoomParent()->getTollkeeper() &&
 		(exit->flagIsSet(X_TOLL_TO_PASS) || exit->flagIsSet(X_LEVEL_BASED_TOLL))
 	) {
-		if(p) checkStaff("You must pay a toll of %lu gold coins to go through the %s^x.\n", tollcost(this->getConstPlayer(), exit, 0), exit->name);
+		if(p) checkStaff("You must pay a toll of %lu gold coins to go through the %s^x.\n", tollcost(this->getAsConstPlayer(), exit, 0), exit->name);
 		if(!staff) return(false);
 	}
 
@@ -355,12 +355,12 @@ bool Creature::canEnter(const Exit *exit, bool p, bool blinking) const {
 		}
 
 		if(exit->flagIsSet(X_MIST_ONLY) && !flagIsSet(P_MISTED)) {
-			if(p) checkStaff(getConstPlayer()->canMistNow() ? "You must turn to mist before you can go that way.\n" : "You cannot fit through that exit.\n");
+			if(p) checkStaff(getAsConstPlayer()->canMistNow() ? "You must turn to mist before you can go that way.\n" : "You cannot fit through that exit.\n");
 			if(!staff) return(false);
 		}
 
 
-		const Monster* guard = getRoom()->getGuardingExit(exit, getConstPlayer());
+		const Monster* guard = getConstRoomParent()->getGuardingExit(exit, getAsConstPlayer());
 		if(guard) {
 			if(p) checkStaff("%M %s.\n", guard, guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you go there" : "blocks your exit");
 			if(!staff) return(false);
@@ -402,7 +402,7 @@ bool Creature::canEnter(const UniqueRoom* room, bool p) const {
 
 	// special rules for pets
 	if(isPet()) {
-		const Monster* mThis = getConstMonster();
+		const Monster* mThis = getAsConstMonster();
 		if( room->isUnderwater() &&
 			mThis->getBaseRealm() != WATER &&
 			!isEffected("breathe-water") &&
@@ -457,7 +457,7 @@ bool Creature::canEnter(const UniqueRoom* room, bool p) const {
 			return(false);
 		}
 
-		if(!Property::canEnter(getConstPlayer(), room, p))
+		if(!Property::canEnter(getAsConstPlayer(), room, p))
 			return(false);
 
 	// we are a monster
@@ -1092,23 +1092,22 @@ bool Creature::inCombat(bool countPets) const {
 // target is used when you want to check for a player being in combat
 // with a mob BESIDES the one pointed to by creature.
 bool Creature::inCombat(const Creature* target, bool countPets) const {
-	BaseRoom* room = getRoom();
 	// people just logging in
-	if(!room)
+	if(!getParent())
 		return(false);
-	const Monster* mThis = getConstMonster();
+	const Monster* mThis = getAsConstMonster();
 
 	if(mThis) {
-	    for(Player* ply : room->players) {
+	    for(Player* ply : getParent()->players) {
 	        if(mThis->isEnemy(ply))
 	            return(true);
 	    }
-	    for(Monster* mons : room->monsters) {
+	    for(Monster* mons : getParent()->monsters) {
 	        if(mThis->isEnemy(mons))
 	            return(true);
 	    }
 	} else {
-	    for(Monster* mons : room->monsters) {
+	    for(Monster* mons : getParent()->monsters) {
 	        if(mons->isEnemy(this) && (!target || mons != target) && (countPets || !mons->isPet()))
 	            return(true);
 	    }
@@ -1143,7 +1142,7 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 	if(viewer)
 		flags |= viewer->displayFlags();
 
-	const Player* pThis = getConstPlayer();
+	const Player* pThis = getAsConstPlayer();
 	// Player
 	if(isPlayer()) {
 		// Target is possessing a monster -- Show the monsters name if invis
@@ -1277,7 +1276,7 @@ bool Creature::setSkill(const bstring skillStr, int gained) {
 //*********************************************************************
 
 bool Creature::inSameRoom(Creature* target) {
-	return(target && target->getRoom() == getRoom());
+	return(target && target->getRoomParent() == getRoomParent());
 }
 
 //*********************************************************************
@@ -1312,7 +1311,7 @@ void Creature::setLastTime(int myLT, long t, long interval) {
 //*********************************************************************
 
 void Creature::unApplyTongues() {
-	Player* pTarget = getPlayer();
+	Player* pTarget = getAsPlayer();
 	if(pTarget) {
 		if(!pTarget->languageIsKnown(LUNKNOWN + pTarget->current_language)) {
 			bstring selfStr = "";

@@ -248,7 +248,7 @@ unsigned long Statistics::calcToughness(const Creature* target) {
 
 	if(target->isMonster()) {
 
-		const Monster* monster = target->getConstMonster();
+		const Monster* monster = target->getAsConstMonster();
 		t += target->hp.getMax();
 		t += target->getAttackPower();
 		t += target->getWeaponSkill();

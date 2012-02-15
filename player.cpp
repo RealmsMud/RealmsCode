@@ -282,7 +282,7 @@ void Player::init() {
 			broadcast(::isCt, "^y%s: %s (%s) Attempted logon to bad or missing room (normal)!", name,
 				getSock()->getHostname().c_str(), room.str().c_str());
 			newRoom = abortFindRoom(this, "init_ply");
-			uRoom = newRoom->getUniqueRoom();
+			uRoom = newRoom->getAsUniqueRoom();
 		}
 
 
@@ -297,7 +297,7 @@ void Player::init() {
 				broadcast(::isCt, "^y%s: %s (%s) Attempted logon to bad or missing room!", name,
 			    	getSock()->getHostname().c_str(), uRoom->getTrapExit().str().c_str());
 				newRoom = abortFindRoom(this, "init_ply");
-				uRoom = newRoom->getUniqueRoom();
+				uRoom = newRoom->getAsUniqueRoom();
 			}
 
 			if(	uRoom &&
@@ -313,7 +313,7 @@ void Player::init() {
 						getSock()->getHostname().c_str(), getRecallRoom().str().c_str());
 					newRoom = abortFindRoom(this, "init_ply");
 				}
-				uRoom = newRoom->getUniqueRoom();
+				uRoom = newRoom->getAsUniqueRoom();
 			}
 		}
 
@@ -323,7 +323,7 @@ void Player::init() {
 			// it doesnt actually do anything
 			parent_rom = uRoom;
 		} else {
-			area_room = newRoom->getAreaRoom();
+			area_room = newRoom->getAsAreaRoom();
 		}
 	}
 
@@ -331,7 +331,7 @@ void Player::init() {
 	if(!isDm()) {
 		loge("%s(L:%d) (%s) %s. Room - %s (Port-%d)\n", name, level,
 		     getSock()->getHostname().c_str(), gServer->isRebooting() ? "reloaded" : "logged on",
-		     getRoom()->fullName().c_str(), Port);
+		     getRoomParent()->fullName().c_str(), Port);
 	}
 	if(isStaff())
 		logn("log.imm", "%s  (%s) %s.\n",
@@ -362,7 +362,7 @@ void Player::init() {
 		pet->lasttime[LT_SPELL].ltime =
 		pet->lasttime[LT_MOB_THIEF].ltime = t;
 
-		pet->addToRoom(getRoom());
+		pet->addToRoom(getRoomParent());
 		gServer->addActive(pet);
 	}
 
@@ -374,7 +374,7 @@ void Player::init() {
 	}
 
 	if(!gServer->isRebooting())
-		bug("%s logged into room %s.\n", name, getRoom()->fullName().c_str());
+		bug("%s logged into room %s.\n", name, getRoomParent()->fullName().c_str());
 
 
 	wearCursed();
@@ -695,7 +695,7 @@ void Player::checkEffectsWearingOff() {
 			) ||
 			(	flagIsSet(P_SLEEPING) && (
 				(hp.getCur() >= hp.getMax() && mp.getCur() >= mp.getMax()) ||
-				(cClass == VAMPIRE && !getRoom()->vampCanSleep(getSock()))
+				(cClass == VAMPIRE && !getRoomParent()->vampCanSleep(getSock()))
 			) )
 		) {
 			printColor("^cYou wake up.\n");
@@ -703,7 +703,7 @@ void Player::checkEffectsWearingOff() {
 			wake();
 
 			clearFlag(P_DIED_IN_DUEL);
-			broadcast(getSock(), getRoom(), "%M wakes up.", this);
+			broadcast(getSock(), getRoomParent(), "%M wakes up.", this);
 		}
 	}
 	if(flagIsSet(P_PRAYED)) {
@@ -827,8 +827,8 @@ void Player::checkEffectsWearingOff() {
 		printColor("The demonic jailer says, \"You have been released from your torment.\"\n");
 		printColor("The demonic jailer casts word of recall on you.\n");
 
-		broadcast(getSock(), getRoom(), "A demonic jailer just arrived.\nThe demonic jailer casts word of recall on %s.", name);
-		broadcast(getSock(), getRoom(), "The demonic jailer sneers evilly and spits on you.\nThe demonic jailer vanishes.");
+		broadcast(getSock(), getRoomParent(), "A demonic jailer just arrived.\nThe demonic jailer casts word of recall on %s.", name);
+		broadcast(getSock(), getRoomParent(), "The demonic jailer sneers evilly and spits on you.\nThe demonic jailer vanishes.");
 		broadcast("^R### Cackling demons shove %s from the Dungeon of Despair.", name);
 		doRecall();
 
@@ -862,7 +862,7 @@ bool Creature::doPetrificationDmg() {
 	hp.decrease(MAX(1,(hp.getMax()/15 - bonus((int)constitution.getCur()))));
 
 	if(hp.getCur() < 1) {
-		Player* pThis = getPlayer();
+		Player* pThis = getAsPlayer();
 		if(pThis)
 			pThis->die(PETRIFIED);
 		else
@@ -919,7 +919,7 @@ void Player::update() {
 	if(mp.getCur() < 0)
 		mp.setCur(0);
 
-	room = getRoom();
+	room = getRoomParent();
 	if(room && !flagIsSet(P_LINKDEAD))
 		doRoomHarms(room, this);
 
@@ -958,7 +958,7 @@ void Player::update() {
 
 void Creature::addObj(Object* object, bool resetUniqueId) {
 	otag	*op=0, *temp=0, *prev=0;
-	Player* pPlayer = getPlayer();
+	Player* pPlayer = getAsPlayer();
 
 	object->validateId();
 
@@ -1222,7 +1222,7 @@ int Player::getArmorWeight() const {
 // This function returns the magical realm proficiency as a percentage
 
 int mprofic(const Creature* player, int index) {
-	const Player *pPlayer = player->getConstPlayer();
+	const Player *pPlayer = player->getAsConstPlayer();
 	long	prof_array[12];
 	int	i=0, n=0, prof=0;
 
@@ -1486,7 +1486,7 @@ Player* lowest_piety(BaseRoom* room, bool invis) {
 		}
 	}
 
-	return(player->getPlayer());
+	return(player->getAsPlayer());
 }
 
 //*********************************************************************
@@ -1716,7 +1716,7 @@ void Player::silenceSpammer() {
 		addEffect("silence", 120, 1);
 
 		printColor("^rYou have been silenced for 2 minutes for spamming!\n");
-		broadcast(getSock(), getRoom(), "%s has been silenced for spamming!\n",name);
+		broadcast(getSock(), getRoomParent(), "%s has been silenced for spamming!\n",name);
 	}
 }
 
@@ -1793,7 +1793,7 @@ int	getMultiClassID(char cls, char cls2) {
 
 bool isOutdoors(Socket* sock) {
 	if(sock && sock->getPlayer())
-		return(sock->getPlayer()->getRoom()->isOutdoors());
+		return(sock->getPlayer()->getRoomParent()->isOutdoors());
 	return(false);
 }
 
@@ -1985,13 +1985,13 @@ BaseRoom* Creature::recallWhere() {
 			return(uRoom);
 	}
 
-	if(	getRoom()->flagIsSet(R_ETHEREAL_PLANE) &&
+	if(	getRoomParent()->flagIsSet(R_ETHEREAL_PLANE) &&
 		(mrand(1,100) <= 50)
 	) {
 		return(teleportWhere());
 	}
 
-	BaseRoom* room = getRecallRoom().loadRoom(getPlayer());
+	BaseRoom* room = getRecallRoom().loadRoom(getAsPlayer());
 	// uh oh!
 	if(!room)
 		return(abortFindRoom(this, "recallWhere"));
@@ -2009,7 +2009,7 @@ BaseRoom* Creature::teleportWhere() {
 	UniqueRoom	*uRoom=0;
 	BaseRoom *newRoom=0;
 	AreaRoom* aRoom=0;
-	const CatRefInfo* cri = gConfig->getCatRefInfo(getRoom());
+	const CatRefInfo* cri = gConfig->getCatRefInfo(getRoomParent());
 	int		i=0, zone = cri ? cri->getTeleportZone() : 0;
 	Area	*area=0;
 	Location l;
@@ -2034,7 +2034,7 @@ BaseRoom* Creature::teleportWhere() {
 
 		// if this fails, we have nowhere to teleport to
 		if(!cri)
-			return(getRoom());
+			return(getRoomParent());
 
 		// special area used to signify overland map
 		if(cri->getArea() == "area") {
@@ -2288,12 +2288,12 @@ int Player::getSneakChance() const {
 
 		break;
 	case DRUID:
-		if(getRoom()->isForest())
+		if(getConstRoomParent()->isForest())
 			chance = tMIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
 
 		break;
 	case RANGER:
-		if(getRoom()->isForest())
+		if(getConstRoomParent()->isForest())
 			chance = tMIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
 		else
 			chance = tMIN(83, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
@@ -2309,9 +2309,9 @@ int Player::getSneakChance() const {
 		chance = tMIN(20, chance);
 
 	if(isEffected("camouflage")) {
-		if(getRoom()->isOutdoors())
+		if(getConstRoomParent()->isOutdoors())
 			chance += 15;
-		if(cClass == DRUID && getRoom()->isForest())
+		if(cClass == DRUID && getConstRoomParent()->isForest())
 			chance += 5;
 	}
 
@@ -2333,7 +2333,7 @@ bool Player::breakObject(Object* object, int loc) {
 
 	if(object->getShotsCur() < 1) {
 		printColor("Your %s is broken.\n", object->name);
-		broadcast(getSock(), getRoom(), "%M broke %s %s.", this, hisHer(), object->name);
+		broadcast(getSock(), getRoomParent(), "%M broke %s %s.", this, hisHer(), object->name);
 
 		if(object->compass) {
 			delete object->compass;
@@ -2410,7 +2410,7 @@ bstring Player::getWhoString(bool whois, bool color, bool ignoreIllusion) const 
 	else if(flagIsSet(P_OUTLAW))
 		whoStr << (color ? "^r" : "") << "O ";
 	else if( (flagIsSet(P_NO_PKILL) || flagIsSet(P_DIED_IN_DUEL) ||
-			getRoom()->isPkSafe()) &&
+			getConstRoomParent()->isPkSafe()) &&
 			(flagIsSet(P_CHAOTIC) || clan || cClass == CLERIC) )
 		whoStr << (color ? "^y" : "") << "N ";
 	else if(flagIsSet(P_CHAOTIC)) // Chaotic

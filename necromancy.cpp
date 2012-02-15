@@ -24,7 +24,7 @@
 //*********************************************************************
 
 int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player	*pPlayer = player->getPlayer();
+	Player	*pPlayer = player->getAsPlayer();
 	Creature* target=0;
 	int	wrongdiety=0, multi=0, roll=0, dmg=0, bns=0, saved=0;
 
@@ -73,7 +73,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 		} else {
 			if(spellData->how == CAST && player->isPlayer())
-				player->getPlayer()->statistics.offensiveCast();
+				player->getAsPlayer()->statistics.offensiveCast();
 			player->hp.setCur(MIN(player->hp.getCur(), mrand(1,10)));
 			player->print("Your lifeforce is nearly sucked away by deadly magic.\n");
 			return(0);
@@ -100,7 +100,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		if(pPlayer && target->isMonster() && !target->isPet()
-				&& target->getMonster()->nearEnemy() && !target->getMonster()->isEnemy(player)) {
+				&& target->getAsMonster()->nearEnemy() && !target->getAsMonster()->isEnemy(player)) {
 			player->print("Not while %N is in combat with someone.\n", target);
 			return(0);
 		}
@@ -125,10 +125,10 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
 		target->print("%M casts a harm spell on you!\n", player);
 		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a harm spell on %N!", player, target);
 		if(target->isMonster())
-			target->getMonster()->addEnemy(player);
+			target->getAsMonster()->addEnemy(player);
 
 		if(spellData->how == CAST && player->isPlayer())
-			player->getPlayer()->statistics.offensiveCast();
+			player->getAsPlayer()->statistics.offensiveCast();
 
 		if(target->isPlayer() && target->getClass() == LICH) {
 			target->hp.restore();
@@ -158,7 +158,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
 			player->print("Your harm spell nearly sucks the life out of %N!\n", target);
 			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's harm spell sucks away %N's life.", player, target);
 			if(target->isMonster())
-				target->getMonster()->adjustThreat(player, dmg);
+				target->getAsMonster()->adjustThreat(player, dmg);
 
 		} else {
 
@@ -265,7 +265,7 @@ int animateDeadCmd(Player* player, cmd* cmnd) {
 }
 
 int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player* pPlayer = player->getPlayer();
+	Player* pPlayer = player->getAsPlayer();
 	if(!pPlayer)
 		return(0);
 
@@ -403,12 +403,12 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	player->print("A %s crawls forth from the earth to aid you.\n", target->name);
 	player->checkImprove("animate", true);
-	broadcast(pPlayer->getSock(), player->getRoom(), "A %s crawls forth from the earth to aid %N.",
+	broadcast(pPlayer->getSock(), player->getRoomParent(), "A %s crawls forth from the earth to aid %N.",
 		target->name, player);
 
 	// add mob to the room, make it active, and make it follow the summoner
 	target->updateAttackTimer();
-	target->addToRoom(player->getRoom());
+	target->addToRoom(player->getRoomParent());
 	gServer->addActive(target);
 
 	player->addPet(target);

@@ -73,8 +73,8 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
 			player->print("Error: could not load Builder Waiting Room (%s)\n", cr.str().c_str());
 			return(0);
 		}
-		BaseRoom* oldRoom = target->getRoom();
-		target->dmPoof(target->getRoom(), uRoom);
+		BaseRoom* oldRoom = target->getRoomParent();
+		target->dmPoof(target->getRoomParent(), uRoom);
 
 		target->deleteFromRoom();
 		target->addToRoom(uRoom);
@@ -292,7 +292,7 @@ bool Creature::canBuildMonsters() const {
 //*********************************************************************
 
 bool Player::builderCanEditRoom(bstring action) {
-	if(cClass == BUILDER && !getRoom()->isConstruction()) {
+	if(cClass == BUILDER && !getRoomParent()->isConstruction()) {
 		print("You cannot %s while you are in a room that is not under construction.\n", action.c_str());
 		return(false);
 	}
@@ -306,7 +306,7 @@ bool Player::builderCanEditRoom(bstring action) {
 bool BaseRoom::isConstruction() const {
 	if(flagIsSet(R_CONSTRUCTION))
 		return(true);
-	const UniqueRoom* uRoom = getConstUniqueRoom();
+	const UniqueRoom* uRoom = getAsConstUniqueRoom();
 	if(uRoom && uRoom->info.isArea("test"))
 		return(true);
 	return(false);

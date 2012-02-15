@@ -179,7 +179,7 @@ void doTrain(Player* player) {
 	}
 
 	logn("log.train", "%s just trained to level %d in room %s.\n",
-		player->name, player->getLevel(), player->getRoom()->fullName().c_str());
+		player->name, player->getLevel(), player->getRoomParent()->fullName().c_str());
 	updateRecentActivity();
 }
 
@@ -678,7 +678,7 @@ int cmdTrain(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(player->getRoom()->whatTraining() != player->getClass()) {
+	if(player->getRoomParent()->whatTraining() != player->getClass()) {
 		player->print("This is not your training location.\n");
 		return(0);
 	}

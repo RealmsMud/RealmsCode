@@ -49,7 +49,7 @@ char getRandColor() {
 //*********************************************************************
 
 int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player	*pPlayer = player->getPlayer();
+	Player	*pPlayer = player->getAsPlayer();
 	int		maxMissiles=0, mpNeeded=0, canCast=0, num=0;
 	int		missileDmg = 0, a=0;
 	char	colorCh=0;
@@ -86,7 +86,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
 //		player->print("That is not here.\n");
 //		return(0);
 //	}
-	mTarget = target->getMonster();
+	mTarget = target->getAsMonster();
 
 	// default is to cast max number of missiles.
 
@@ -144,7 +144,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
 		mTarget->addEnemy(player);
 
 	if(spellData->how == CAST && player->isPlayer())
-		player->getPlayer()->statistics.offensiveCast();
+		player->getAsPlayer()->statistics.offensiveCast();
 
 	if(mTarget && mrand(1,100) <= mTarget->getMagicResistance()) {
 		player->print("Your missiles have no effect on %N.\n", mTarget);
@@ -180,10 +180,10 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
 // The actual routine for damage.
 
 int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const char *spellname, osp_t *osp, bool multi) {
-	Player	*pTarget = target->getPlayer(), *pCaster = caster->getPlayer();
-	Monster	*mTarget = target->getMonster();
-	Monster	*mCaster = caster->getMonster();
-	BaseRoom* room = caster->getRoom();
+	Player	*pTarget = target->getAsPlayer(), *pCaster = caster->getAsPlayer();
+	Monster	*mTarget = target->getAsMonster();
+	Monster	*mCaster = caster->getAsMonster();
+	BaseRoom* room = caster->getRoomParent();
 	int		m=0, bns=0;
 	Damage damage;
 	int		slvl=0, skillPercent=0;
@@ -280,12 +280,12 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 			caster->print("You cast a %s spell on yourself.\n", spellname);
 
 			if(!multi && spellData->how == CAST && caster->isPlayer())
-				caster->getPlayer()->statistics.offensiveCast();
+				caster->getAsPlayer()->statistics.offensiveCast();
 			if(caster->negAuraRepel())
 				caster->printColor("^cYour negative aura repelled some of the damage.\n");
 
 			if(caster->isPlayer())
-				caster->getPlayer()->statistics.magicDamage(damage.get(), (bstring)"a " + spellname + " spell");
+				caster->getAsPlayer()->statistics.magicDamage(damage.get(), (bstring)"a " + spellname + " spell");
 			caster->printColor("The spell did %s%d^x damage.\n", caster->customColorize("*CC:DAMAGE*").c_str(), damage.get());
 			broadcast(caster->getSock(), room, "%M casts a %s spell on %sself.",
 				caster, spellname, caster->himHer());
@@ -404,9 +404,9 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 			}
 
 			if(!multi && spellData->how == CAST && caster->isPlayer())
-				caster->getPlayer()->statistics.offensiveCast();
+				caster->getAsPlayer()->statistics.offensiveCast();
 			if(caster->isPlayer())
-				caster->getPlayer()->statistics.magicDamage(damage.get(), (bstring)"a " + spellname + " spell");
+				caster->getAsPlayer()->statistics.magicDamage(damage.get(), (bstring)"a " + spellname + " spell");
 
 			caster->printColor("The spell did %s%d^x damage.\n", caster->customColorize("*CC:DAMAGE*").c_str(), damage.get());
 			broadcast(caster->getSock(), target->getSock(), room, "%M casts a %s spell on %N.",
@@ -526,8 +526,8 @@ Creature* Creature::findMagicVictim(bstring toFind, int num, SpellData* spellDat
 				// Cast offensive spell on self
 				return(this);
 			} else {
-				victim = getRoom()->findCreature(this, toFind.c_str(), num, true, true);
-				pVictim = victim->getPlayer();
+				victim = getRoomParent()->findCreature(this, toFind.c_str(), num, true, true);
+				pVictim = victim->getAsPlayer();
 
 				if(!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3)
 						|| (!selfOk && victim == this)) {
@@ -538,7 +538,7 @@ Creature* Creature::findMagicVictim(bstring toFind, int num, SpellData* spellDat
 				if(isMonster()) {
 					if(victim == this) {
 						// for monster casting we need to make sure its not on itself
-						victim = getRoom()->findCreature(this, toFind.c_str(), 2, true, true);
+						victim = getRoomParent()->findCreature(this, toFind.c_str(), 2, true, true);
 						// look for second creature with same name
 						if(!victim || victim == this)
 							return(NULL);
@@ -623,8 +623,8 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
 		player->subMp(5);
 
 	if(monsters) {
-	    MonsterSet::iterator mIt = player->getRoom()->monsters.begin();
-	    while(mIt != player->getRoom()->monsters.end()) {
+	    MonsterSet::iterator mIt = player->getRoomParent()->monsters.begin();
+	    while(mIt != player->getRoomParent()->monsters.end()) {
 	        target = (*mIt++);
             // skip all pets - they are treated as players
             if(target->isPet())
@@ -635,8 +635,8 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
 	    }
 	}
 	if(players) {
-        PlayerSet::iterator pIt = player->getRoom()->players.begin();
-        while(pIt != player->getRoom()->players.end()) {
+        PlayerSet::iterator pIt = player->getRoomParent()->players.begin();
+        while(pIt != player->getRoomParent()->players.end()) {
             target = (*pIt++);
             if(target == player)
                 continue;
@@ -646,8 +646,8 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
 
         }
 
-        MonsterSet::iterator mIt = player->getRoom()->monsters.begin();
-        while(mIt != player->getRoom()->monsters.end()) {
+        MonsterSet::iterator mIt = player->getRoomParent()->monsters.begin();
+        while(mIt != player->getRoomParent()->monsters.end()) {
             target = (*mIt++);
             // only do pets
             if(!target->isPet())
@@ -669,7 +669,7 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
 	}
 
 	if(found_something && spellData->how == CAST && player->isPlayer())
-		player->getPlayer()->statistics.offensiveCast();
+		player->getAsPlayer()->statistics.offensiveCast();
 	return(found_something + something_died);
 }
 
@@ -679,7 +679,7 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
 // This spell allows a player to cast darkness spell.
 
 int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player* pPlayer = player->getPlayer();
+	Player* pPlayer = player->getAsPlayer();
 	Creature* target=0;
 	Object* object=0;
 
@@ -732,7 +732,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
 			if(target->isMonster()) {
 				if(!player->canAttack(target))
 					return(0);
-				target->getMonster()->addEnemy(player);
+				target->getAsMonster()->addEnemy(player);
 			} else {
 				if(	target->getLevel() < 4 &&
 					!player->checkStaff("You cannot cast that spell on %N, yet.\n", target)
@@ -792,11 +792,11 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
 				object->setFlag(O_DARKNESS);
 
 				pPlayer->printColor("%O begins to emanate darkness.\n", object);
-				broadcast(pPlayer->getSock(), pPlayer->getRoom(), "%M enchants %1P with darkness.", pPlayer, object);
+				broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M enchants %1P with darkness.", pPlayer, object);
 
 				if(!pPlayer->isDm())
 					log_immort(true, pPlayer, "%s enchants a %s in room %s.\n", pPlayer->name, object->name,
-						pPlayer->getRoom()->fullName().c_str());
+						pPlayer->getRoomParent()->fullName().c_str());
 
 				pPlayer->setFlag(P_DARKNESS);
 				object->clearFlag(O_JUST_BOUGHT);
@@ -815,7 +815,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
 	// final routines for creatures only
 	if(target) {
 		if(spellData->how == CAST) {
-			if(player->getRoom()->magicBonus()) {
+			if(player->getRoomParent()->magicBonus()) {
 				player->print("The room's magical properties increase the power of your spell.\n");
 			}
 			target->addEffect("darkness", -2, -2, player, true, player);

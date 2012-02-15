@@ -399,7 +399,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdSing(Creature* creature, cmd* cmnd) {
-	Player *player = creature->getPlayer();
+	Player *player = creature->getAsPlayer();
 	long	i, t;
 	int		(*fn) ();
 	int		songno=0, c=0, match=0, n=0;
@@ -410,10 +410,10 @@ int cmdSing(Creature* creature, cmd* cmnd) {
 	if(!player || (player->getClass() != BARD && !player->isCt())) {
 		if(mrand(0,10) || creature->isStaff()) {
 			creature->print("You sing a song.\n");
-			broadcast(creature->getSock(), creature->getRoom(), "%M sings a song.", creature);
+			broadcast(creature->getSock(), creature->getRoomParent(), "%M sings a song.", creature);
 		} else {
 			creature->print("You sing off-key.\n");
-			broadcast(creature->getSock(), creature->getRoom(), "%M sings off-key.", creature);
+			broadcast(creature->getSock(), creature->getRoomParent(), "%M sings off-key.", creature);
 		}
 		return(0);
 	}
@@ -521,9 +521,9 @@ int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) 
 	}
 	cmnd->num = 3;
 	if(monsters) {
-	    MonsterSet::iterator mIt = player->getRoom()->monsters.begin();
+	    MonsterSet::iterator mIt = player->getRoomParent()->monsters.begin();
 		lastname[0] = 0;
-        while(mIt != player->getRoom()->monsters.end()) {
+        while(mIt != player->getRoomParent()->monsters.end()) {
             Monster* mons = (*mIt++);
 			// skip caster's pet
 			if(mons->isPet() && mons->getMaster() == player) {
@@ -549,9 +549,9 @@ int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) 
 		}
 	}
 	if(players) {
-        PlayerSet::iterator pIt = player->getRoom()->players.begin();
+        PlayerSet::iterator pIt = player->getRoomParent()->players.begin();
         lastname[0] = 0;
-        while(pIt != player->getRoom()->players.end()) {
+        while(pIt != player->getRoomParent()->players.end()) {
             Player* ply = (*pIt++);
 			// skip self
 			if(ply == player) {
@@ -591,7 +591,7 @@ int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) 
 int songOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) {
 	Player	*pCreature=0;
 	Creature* creature=0;
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	int		m=0, dmg=0, bns=0;
 
 	if(!player->ableToDoCommand())
@@ -626,7 +626,7 @@ int songOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) {
 			return(0);
 		}
 
-		pCreature = creature->getPlayer();
+		pCreature = creature->getAsPlayer();
 
 		if(!pCreature) {
 			// Activates lag protection.
@@ -660,7 +660,7 @@ int songOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) {
 			// del_charm_crt(creature, player);
 			m = MIN(creature->hp.getCur(), dmg);
 
-			creature->getMonster()->adjustThreat(player, m);
+			creature->getAsMonster()->adjustThreat(player, m);
 		}
 
 
@@ -770,12 +770,12 @@ int songHeal(Player* player, cmd* cmnd) {
 
 	heal = mrand(player->getLevel(), player->getLevel()*2);
 
-	if(player->getRoom()->magicBonus()) {
+	if(player->getRoomParent()->magicBonus()) {
 		player->print("The room's magical properties increase the power of your song.\n");
 		heal += mrand(5, 10);
 	}
 
-	for(Player* ply : player->getRoom()->players) {
+	for(Player* ply : player->getRoomParent()->players) {
 		if(ply->getClass() != LICH) {
 			if(ply != player)
 				ply->print("%M's song rejuvinates you.\n", player);
@@ -783,7 +783,7 @@ int songHeal(Player* player, cmd* cmnd) {
 		}
 	}
 
-	for(Monster* mons : player->getRoom()->monsters) {
+	for(Monster* mons : player->getRoomParent()->monsters) {
 		if(mons->getClass() != LICH && mons->isPet()) {
 			mons->print("%M's song rejuvinates you.\n", player);
 			player->doHeal(mons, heal);
@@ -805,18 +805,18 @@ int songMPHeal(Player* player, cmd* cmnd) {
 
 	heal = mrand(player->getLevel(), player->getLevel()*2)/2;
 
-	if(player->getRoom()->magicBonus()) {
+	if(player->getRoomParent()->magicBonus()) {
 		player->print("The room's magical properties increase the power of your song.\n");
 		heal += mrand(5, 10);
 	}
-    for(Player* ply : player->getRoom()->players) {
+    for(Player* ply : player->getRoomParent()->players) {
 		if(ply->hasMp()) {
 			if(ply != player)
 				ply->print("%M's song mentally revitalizes you.\n", player);
 			ply->mp.increase(heal);
 		}
 	}
-    for(Monster* mons : player->getRoom()->monsters) {
+    for(Monster* mons : player->getRoomParent()->monsters) {
 		if(mons->hasMp() && mons->isPet()) {
 			mons->print("%M's song mentally revitalizes you.\n", player);
 			mons->mp.increase(heal);
@@ -838,11 +838,11 @@ int songRestore(Player* player, cmd* cmnd) {
 
 	heal = mrand(player->getLevel(), player->getLevel()*2)*2;
 
-	if(player->getRoom()->magicBonus()) {
+	if(player->getRoomParent()->magicBonus()) {
 		player->print("The room's magical properties increase the power of your song.\n");
 		heal += mrand(5, 10);
 	}
-    for(Player* ply : player->getRoom()->players) {
+    for(Player* ply : player->getRoomParent()->players) {
 		if(ply->getClass() != LICH) {
 			if(ply != player)
 				ply->print("%M's song restores your spirits.\n", player);
@@ -850,7 +850,7 @@ int songRestore(Player* player, cmd* cmnd) {
 			ply->mp.increase(heal/2);
 		}
 	}
-    for(Monster* mons : player->getRoom()->monsters) {
+    for(Monster* mons : player->getRoomParent()->monsters) {
 		if(mons->getClass() != LICH && mons->isPet()) {
 			mons->print("%M's song restores your spirits.\n", player);
 			player->doHeal(mons, heal);
@@ -869,22 +869,22 @@ int songBless(Player* player, cmd* cmnd) {
 	player->print("You sing a song of holiness.\n");
 
 	int duration = 600;
-	if(player->getRoom()->magicBonus())
+	if(player->getRoomParent()->magicBonus())
 		duration += 300L;
 
-    for(Player* ply : player->getRoom()->players) {
+    for(Player* ply : player->getRoomParent()->players) {
 		if(ply != player)
 			ply->print("%M sings a song of holiness.\n", player);
 		ply->addEffect("bless", duration, 1, player, true, player);
 	}
-    for(Monster* mons : player->getRoom()->monsters) {
+    for(Monster* mons : player->getRoomParent()->monsters) {
 		if(mons->isPet()) {
 			mons->print("%M sings a song of holiness.\n", player);
 			mons->addEffect("bless", duration, 1, player, true, player);
 		}
 	}
 
-	if(player->getRoom()->magicBonus())
+	if(player->getRoomParent()->magicBonus())
 		player->print("The room's magical properties increase the power of your song.\n");
 	return(1);
 }
@@ -897,22 +897,22 @@ int songProtection(Player* player, cmd* cmnd) {
 	player->print("You sing a song of protection.\n");
 	int duration = MAX(300, 1200 + bonus(player->intelligence.getCur()) * 600);
 
-	if(player->getRoom()->magicBonus())
+	if(player->getRoomParent()->magicBonus())
 		duration += 800L;
 
-    for(Player* ply : player->getRoom()->players) {
+    for(Player* ply : player->getRoomParent()->players) {
 		if(ply != player)
 			ply->print("%M sings a song of protection.\n", player);
 		ply->addEffect("protection", duration, 1, player, true, player);
 	}
-    for(Monster* mons : player->getRoom()->monsters) {
+    for(Monster* mons : player->getRoomParent()->monsters) {
 		if(mons->isPet()) {
 			mons->print("%M sings a song of protection.\n", player);
 			mons->addEffect("protection", duration, 1, player, true, player);
 		}
 	}
 
-	if(player->getRoom()->magicBonus())
+	if(player->getRoomParent()->magicBonus())
 		player->print("The room's magical properties increase the power of your song.\n");
 	return(1);
 }
@@ -942,7 +942,7 @@ int songFlight(Player* player, cmd* cmnd) {
 		player->print("You sing %N a song of flight.\n", target);
 	}
 
-	if(player->getRoom()->magicBonus())
+	if(player->getRoomParent()->magicBonus())
 		player->print("The room's magical properties increase the power of your song.\n");
 
 	target->addEffect("fly", -2, -2, player, true, player);
@@ -1000,7 +1000,7 @@ int songRecall(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	broadcast(target->getSock(), player->getRoom(), "%M disappears.", target);
+	broadcast(target->getSock(), player->getRoomParent(), "%M disappears.", target);
 
 	target->deleteFromRoom();
 	target->addToRoom(newRoom);
@@ -1028,7 +1028,7 @@ int songSafety(Player* player, cmd* cmnd) {
 	Group* group = player->getGroup();
 	if(group) {
 		for(Creature* crt : group->members) {
-			follower = crt->getPlayer();
+			follower = crt->getAsPlayer();
 			if(!follower) continue;
 			if(!player->inSameRoom(follower)) continue;
 			if(follower->isStaff()) continue;
@@ -1042,7 +1042,7 @@ int songSafety(Player* player, cmd* cmnd) {
 			newRoom = follower->getRecallRoom().loadRoom(follower);
 			if(!newRoom)
 				continue;
-			broadcast(follower->getSock(), follower->getRoom(), "%M disappears.", follower);
+			broadcast(follower->getSock(), follower->getRoomParent(), "%M disappears.", follower);
 			follower->deleteFromRoom();
 			follower->addToRoom(newRoom);
 			follower->doPetFollow();
@@ -1108,7 +1108,7 @@ int cmdCharm(Player* player, cmd* cmnd) {
 		return(0);
 
 	if(	creature->isPlayer() &&
-		(	player->vampireCharmed(creature->getPlayer()) ||
+		(	player->vampireCharmed(creature->getAsPlayer()) ||
 			(creature->hasCharm(player->name) && player->flagIsSet(P_CHARMED))
 		)
 	) {
@@ -1127,7 +1127,7 @@ int cmdCharm(Player* player, cmd* cmnd) {
 		return(0);
 
 
-	if(creature->isMonster() && creature->getMonster()->isEnemy(player)) {
+	if(creature->isMonster() && creature->getAsMonster()->isEnemy(player)) {
 		player->print("Not while you are already fighting %s.\n", creature->himHer());
 		return(0);
 	}
@@ -1149,7 +1149,7 @@ int cmdCharm(Player* player, cmd* cmnd) {
 		player->checkImprove("charm", false);
 		broadcast(player->getSock(), player->getParent(), "%M sings off key.",player);
 		if(creature->isMonster()) {
-			creature->getMonster()->addEnemy(player);
+			creature->getAsMonster()->addEnemy(player);
 			return(0);
 		}
 		creature->printColor("^m%M tried to charm you.\n", player);
@@ -1172,7 +1172,7 @@ int cmdCharm(Player* player, cmd* cmnd) {
 
 	player->print("Your song charms %N.\n", creature);
 	player->checkImprove("charm", true);
-	broadcast(player->getSock(), creature->getSock(), player->getRoom(), "%M sings to %N!", player, creature);
+	broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M sings to %N!", player, creature);
 	creature->print("%M's song charms you.\n", player);
 	player->addCharm(creature);
 

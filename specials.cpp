@@ -92,10 +92,10 @@ bool Creature::useSpecial(SpecialAttack* attack, Creature* victim) {
 
 
 	bool attacked = false;
-	if(attack->isAreaAttack() && getRoom()) {
+	if(attack->isAreaAttack() && getRoomParent()) {
 		attack->printRoomString(this);
 
-		BaseRoom* room = getRoom();
+		BaseRoom* room = getRoomParent();
 		if(attack->flagIsSet(SA_AE_PLAYER) || attack->flagIsSet(SA_AE_ALL)) {
 			// First hit players
 		    PlayerSet::iterator pIt = room->players.begin();
@@ -134,8 +134,8 @@ bool Creature::useSpecial(SpecialAttack* attack, Creature* victim) {
 
 // Run the given special on a target, should only be called from useSpecial
 bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
-	Player* pVictim = victim->getPlayer();
-	Monster* mThis = getMonster();
+	Player* pVictim = victim->getAsPlayer();
+	Monster* mThis = getAsMonster();
 
 	if(victim->isMonster() && victim->flagIsSet(M_NO_CIRCLE) && attack->getName() == "circle")
 		return(false);
@@ -537,13 +537,13 @@ void SpecialAttack::printToRoom(BaseRoom* room, const bstring& str, Creature* at
 
 }
 void SpecialAttack::printFailStrings(Creature* attacker, Creature* target) {
-	printToRoom(target->getRoom(), roomFailStr, attacker, target);
+	printToRoom(target->getRoomParent(), roomFailStr, attacker, target);
 	bstring toPrint = modifyAttackString(targetFailStr, target, attacker, target);
 	target->printColor("%s\n", toPrint.c_str());
 	return;
 }
 void SpecialAttack::printRoomString(Creature* attacker, Creature* target) {
-	return(printToRoom(attacker->getRoom(), roomStr, attacker, target));
+	return(printToRoom(attacker->getRoomParent(), roomStr, attacker, target));
 }
 
 void SpecialAttack::printTargetString(Creature* attacker, Creature* target, int dmg) {
@@ -553,7 +553,7 @@ void SpecialAttack::printTargetString(Creature* attacker, Creature* target, int 
 }
 
 void SpecialAttack::printRoomSaveString(Creature* attacker, Creature* target) {
-	return(printToRoom(attacker->getRoom(), roomSaveStr, attacker, target));
+	return(printToRoom(attacker->getRoomParent(), roomSaveStr, attacker, target));
 }
 void SpecialAttack::printTargetSaveString(Creature* attacker, Creature* target, int dmg) {
 	bstring toPrint = modifyAttackString(targetSaveStr, target, attacker, target, dmg);
@@ -603,7 +603,7 @@ int dmSpecials(Player* player, cmd* cmnd) {
 		target = player->getParent()->findCreature(player, cmnd);
 
 		if(target && player->getClass() == BUILDER) {
-			mTarget = target->getMonster();
+			mTarget = target->getAsMonster();
 			if(mTarget) {
 				if(mTarget->info.id && !player->checkBuilder(mTarget->info)) {
 					player->print("Error: monster index not in any of your alotted ranges.\n");

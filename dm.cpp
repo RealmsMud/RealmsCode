@@ -490,11 +490,11 @@ int dmTeleport(Player* player, cmd* cmnd) {
 			}
 
 			// pointer to old room
-			player->dmPoof(player->getRoom(), 0);
+			player->dmPoof(player->getRoomParent(), 0);
 			area->move(player, &l.mapmarker);
 			// manual
 			if(player->flagIsSet(P_ALIASING))
-				player->getAlias()->addToRoom(player->getRoom());
+				player->getAlias()->addToRoom(player->getRoomParent());
 			return(0);
 		}
 
@@ -528,8 +528,8 @@ int dmTeleport(Player* player, cmd* cmnd) {
 		}
 
 
-		old_room = player->getRoom();
-		room = creature->getRoom();
+		old_room = player->getRoomParent();
+		room = creature->getRoomParent();
 
 		player->dmPoof(old_room, room);
 
@@ -565,8 +565,8 @@ int dmTeleport(Player* player, cmd* cmnd) {
 		}
 
 
-		old_room = target->getRoom();
-		room = target2->getRoom();
+		old_room = target->getRoomParent();
+		room = target2->getRoomParent();
 
 		target->dmPoof(old_room, room);
 
@@ -576,7 +576,7 @@ int dmTeleport(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	old_room = player->getRoom();
+	old_room = player->getRoomParent();
 
 	player->dmPoof(old_room, room);
 
@@ -1206,7 +1206,7 @@ int dmGameStatus(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmWeather(Player* player, cmd* cmnd) {
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	player->printColor("^BWeather Strings: note that these strings may be specific to this room.\n");
 	player->printColor("^cSunrise: ^x%s\n", gConfig->weatherize(WEATHER_SUNRISE, room).c_str());
 	player->printColor("^cSunset: ^x%s\n", gConfig->weatherize(WEATHER_SUNSET, room).c_str());
@@ -1973,10 +1973,10 @@ int dmCast(Player* player, cmd* cmnd) {
 				"%M casts %s on everyone in the room.\n", player, get_spell_name(splno));
 
 			log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->name, get_spell_name(splno),
-				player->getRoom()->fullName().c_str());
+				player->getRoomParent()->fullName().c_str());
 
-	        PlayerSet::iterator pIt = player->getRoom()->players.begin();
-	        while(pIt != player->getRoom()->players.end()) {
+	        PlayerSet::iterator pIt = player->getRoomParent()->players.begin();
+	        while(pIt != player->getRoomParent()->players.end()) {
 	            target = (*pIt++);
 				target->print("%M casts %s on you.\n", player, get_spell_name(splno));
 
@@ -1993,7 +1993,7 @@ int dmCast(Player* player, cmd* cmnd) {
 
 		player->print("You cast %s on everyone in the room.\n", get_spell_name(splno));
 
-		for(Player* ply : player->getRoom()->players) {
+		for(Player* ply : player->getRoomParent()->players) {
 			if(ply->flagIsSet(P_DM_INVIS))
 				continue;
 
@@ -2005,7 +2005,7 @@ int dmCast(Player* player, cmd* cmnd) {
 			player, get_spell_name(splno));
 
 		log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->name, get_spell_name(splno),
-			player->getRoom()->fullName().c_str());
+			player->getRoomParent()->fullName().c_str());
 
 	} else {
 		if(!dmGlobalSpells(player, splno, true)) {
@@ -2385,7 +2385,7 @@ int dmStat(Player* player, cmd* cmnd) {
 				player->print("Error: you do not have authorization to modify monsters.\n");
 				return(PROMPT);
 			}
-			mTarget = player->getMonster();
+			mTarget = player->getAsMonster();
 			if(!mTarget) {
 				player->print("Error: you are not allowed to modify players.\n");
 				return(0);
@@ -2410,7 +2410,7 @@ int dmStat(Player* player, cmd* cmnd) {
 		}
 	}
 	if(!object)
-		object = findObject(player2, player->getRoom()->first_obj, cmnd);
+		object = findObject(player2, player->getRoomParent()->first_obj, cmnd);
 
 	if(object) {
 		stat_obj(player, object);
@@ -2425,8 +2425,8 @@ int dmStat(Player* player, cmd* cmnd) {
 		target = gServer->findPlayer(cmnd->str[1]);
 
 	if(target && player->canSee(target)) {
-		Player	*pTarget = target->getPlayer();
-		mTarget = target->getMonster();
+		Player	*pTarget = target->getAsPlayer();
+		mTarget = target->getAsMonster();
 
 		if(player->getClass() == BUILDER) {
 			if(!player->canBuildMonsters()) {
@@ -2443,7 +2443,7 @@ int dmStat(Player* player, cmd* cmnd) {
 		}
 		if(mTarget && !player->isDm())
 			log_immort(false, player, "%s statted %s in room %s.\n", player->name, mTarget->name,
-				player->getRoom()->fullName().c_str());
+				player->getRoomParent()->fullName().c_str());
 		int statFlags = 0;
 		if(player->isDm())
 			statFlags |= ISDM;

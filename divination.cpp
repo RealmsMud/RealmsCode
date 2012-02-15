@@ -77,7 +77,7 @@ int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Creature* target=0;
 	int		luk;
 
-	Player	*pPlayer = player->getPlayer();
+	Player	*pPlayer = player->getAsPlayer();
 
 	if(player->getClass() != BARD && !player->isCt()) {
 		player->print("Only bards may cast that spell.\n");
@@ -147,7 +147,7 @@ int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(target->isMonster())
 			luk = target->getAlignment() / 10;
 		else
-			luk = target->getPlayer()->getLuck() / 10;
+			luk = target->getAsPlayer()->getLuck() / 10;
 
 		luk = MAX(luk, 1);
 		player->print("Fortune spell cast on %N.\n", target);
@@ -197,7 +197,7 @@ int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player	*pPlayer = player->getPlayer();
+	Player	*pPlayer = player->getAsPlayer();
 	if(!pPlayer)
 		return(0);
 
@@ -225,7 +225,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if(Move::tooFarAway(pPlayer, target, "clair"))
 		return(0);
 
-	broadcast(pPlayer->getSock(), pPlayer->getRoom(), "%M casts clairvoyance.", pPlayer);
+	broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts clairvoyance.", pPlayer);
 	if(spellData->how == CAST)
 		pPlayer->print("You attempt to focus on %N.\n", target);
 
@@ -237,11 +237,11 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(target->isStaff())
 		chance = 0;
-	if( target->getRoom()->flagIsSet(R_NO_CLAIR_ROOM) ||
-		target->getRoom()->flagIsSet(R_LIMBO) ||
-		target->getRoom()->flagIsSet(R_VAMPIRE_COVEN) ||
-		target->getRoom()->isConstruction() ||
-		target->getRoom()->flagIsSet(R_SHOP_STORAGE)
+	if( target->getRoomParent()->flagIsSet(R_NO_CLAIR_ROOM) ||
+		target->getRoomParent()->flagIsSet(R_LIMBO) ||
+		target->getRoomParent()->flagIsSet(R_VAMPIRE_COVEN) ||
+		target->getRoomParent()->isConstruction() ||
+		target->getRoomParent()->flagIsSet(R_SHOP_STORAGE)
 	)
 		chance = 0;
 
@@ -330,7 +330,7 @@ int splDetectHidden(Creature* player, cmd* cmnd, SpellData* spellData) {
 		broadcast(player->getSock(), player->getParent(), "%M casts a detect-hidden spell.", player);
 	}
 
-	Player* viewer = player->getPlayer();
+	Player* viewer = player->getAsPlayer();
 	display_rom(viewer, viewer, spellData->level);
 	return(1);
 }

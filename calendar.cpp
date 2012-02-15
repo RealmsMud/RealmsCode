@@ -408,7 +408,7 @@ void Calendar::setSeason() {
 void Calendar::printtime(const Player* player) const {
 	int daytime = gConfig->currentHour(), sun=0;
 	cMonth* month = getMonth(curMonth);
-	const CatRefInfo* cri = gConfig->getCatRefInfo(player->getRoom(), 1);
+	const CatRefInfo* cri = gConfig->getCatRefInfo(player->getConstRoomParent(), 1);
 	bstring yearsSince = "";
 	int year = curYear;
 

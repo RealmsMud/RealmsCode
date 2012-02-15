@@ -744,7 +744,7 @@ void Object::nameCoin(bstring type, unsigned long value) {
 //*********************************************************************
 
 void BaseRoom::killMortalObjectsOnFloor() {
-	UniqueRoom*	room = getUniqueRoom();
+	UniqueRoom*	room = getAsUniqueRoom();
 
 	// if area = shop, kill in main room, but not in storage
 	if(room && room->info.isArea("shop") && !room->flagIsSet(R_SHOP))
@@ -801,13 +801,13 @@ void BaseRoom::killMortalObjects(bool floor) {
 // if allowed, will kill the darkmetal the target carries
 
 void Creature::killDarkmetal() {
-	Player	*pTarget = getPlayer();
+	Player	*pTarget = getAsPlayer();
 	otag	*op=0;
 	Object	*object=0;
 	int		i=0;
 	bool	found=false;
 
-	if(!getRoom()->isSunlight())
+	if(!getRoomParent()->isSunlight())
 		return;
 
 	if(pTarget) {

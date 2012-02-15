@@ -79,7 +79,7 @@ int conjureCmd(Player* player, cmd* cmnd) {
 }
 
 int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player* pPlayer = player->getPlayer();
+	Player* pPlayer = player->getAsPlayer();
 	if(!pPlayer)
 		return(0);
 
@@ -596,7 +596,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 	// add it to the room, make it active, and make it follow the summoner
 	target->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
     target->lasttime[LT_MOB_THIEF].ltime = t;
-	target->addToRoom(player->getRoom());
+	target->addToRoom(player->getRoomParent());
 	gServer->addActive(target);
 
 	player->addPet(target);
@@ -650,7 +650,7 @@ int splDenseFog(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 
 	if(!player->isCt()) {
-		if(player->getRoom()->isUnderwater()) {
+		if(player->getRoomParent()->isUnderwater()) {
 			player->print("Water currents prevent you from casting that spell.\n");
 			return(0);
 		}
@@ -659,17 +659,17 @@ int splDenseFog(Creature* player, cmd* cmnd, SpellData* spellData) {
 	player->print("You cast a dense fog spell.\n");
 	broadcast(player->getSock(), player->getParent(), "%M casts a dense fog spell.", player);
 
-	if(player->getRoom()->hasPermEffect("dense-fog")) {
+	if(player->getRoomParent()->hasPermEffect("dense-fog")) {
 		player->print("The spell didn't take hold.\n");
 		return(0);
 	}
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus())
+		if(player->getRoomParent()->magicBonus())
 			player->print("The room's magical properties increase the power of your spell.\n");
 	}
 
-	player->getRoom()->addEffect("dense-fog", duration, strength, player, true, player);
+	player->getRoomParent()->addEffect("dense-fog", duration, strength, player, true, player);
 	return(1);
 }
 
@@ -685,11 +685,11 @@ int splToxicCloud(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 
 	if(!player->isCt()) {
-		if(player->getRoom()->isPkSafe()) {
+		if(player->getRoomParent()->isPkSafe()) {
 			player->print("That spell is not allowed here.\n");
 			return(0);
 		}
-		if(player->getRoom()->isUnderwater()) {
+		if(player->getRoomParent()->isUnderwater()) {
 			player->print("Water currents prevent you from casting that spell.\n");
 			return(0);
 		}
@@ -698,17 +698,17 @@ int splToxicCloud(Creature* player, cmd* cmnd, SpellData* spellData) {
 	player->print("You cast a toxic cloud spell.\n");
 	broadcast(player->getSock(), player->getParent(), "%M casts a toxic cloud spell.", player);
 
-	if(player->getRoom()->hasPermEffect("toxic-cloud")) {
+	if(player->getRoomParent()->hasPermEffect("toxic-cloud")) {
 		player->print("The spell didn't take hold.\n");
 		return(0);
 	}
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus())
+		if(player->getRoomParent()->magicBonus())
 			player->print("The room's magical properties increase the power of your spell.\n");
 	}
 
-	player->getRoom()->addEffect("toxic-cloud", duration, strength, player, true, player);
+	player->getRoomParent()->addEffect("toxic-cloud", duration, strength, player, true, player);
 	return(1);
 }
 
@@ -725,11 +725,11 @@ int splWallOfFire(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 
 	if(!player->isCt()) {
-		if(player->getRoom()->isPkSafe()) {
+		if(player->getRoomParent()->isPkSafe()) {
 			player->print("That spell is not allowed here.\n");
 			return(0);
 		}
-		if(player->getRoom()->isUnderwater()) {
+		if(player->getRoomParent()->isUnderwater()) {
 			player->print("Water currents prevent you from casting that spell.\n");
 			return(0);
 		}
@@ -752,7 +752,7 @@ int splWallOfFire(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus())
+		if(player->getRoomParent()->magicBonus())
 			player->print("The room's magical properties increase the power of your spell.\n");
 	}
 
@@ -789,7 +789,7 @@ int splWallOfForce(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus())
+		if(player->getRoomParent()->magicBonus())
 			player->print("The room's magical properties increase the power of your spell.\n");
 	}
 
@@ -809,7 +809,7 @@ int splWallOfThorns(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if(noPotion(player, spellData))
 		return(0);
 
-	if(player->getRoom()->isPkSafe() && !player->isCt()) {
+	if(player->getRoomParent()->isPkSafe() && !player->isCt()) {
 		player->print("That spell is not allowed here.\n");
 		return(0);
 	}
@@ -831,7 +831,7 @@ int splWallOfThorns(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus())
+		if(player->getRoomParent()->magicBonus())
 			player->print("The room's magical properties increase the power of your spell.\n");
 	}
 

@@ -31,9 +31,9 @@ void socialHooks(Creature *creature, MudObject* target, bstring action, bstring 
 }
 
 void socialHooks(Creature *target, bstring action, bstring result) {
-	if(!target->getRoom())
+	if(!target->getRoomParent())
 		return;
-	Hooks::run<Monster*,MonsterPtrLess>(target->getRoom()->monsters, target, "roomSocial", action, result);
+	Hooks::run<Monster*,MonsterPtrLess>(target->getRoomParent()->monsters, target, "roomSocial", action, result);
 }
 
 //*********************************************************************
@@ -160,7 +160,7 @@ int plyAction(Player* player, cmd* cmnd) {
 // if you create a new social and wish to exclude it from the socials helpfile.
 
 int cmdAction(Creature* creature, cmd* cmnd) {
-	BaseRoom* room = creature->getRoom();
+	BaseRoom* room = creature->getRoomParent();
 	Player	*player=0, *pTarget=0;
 	Creature* target=0;
 	Object	*object=0;
@@ -173,7 +173,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 	ASSERTLOG( cmnd );
 
 	// some actions are creature-only; we will need this variable to use them
-	player = creature->getPlayer();
+	player = creature->getAsPlayer();
 
 	Socket* sock = NULL;
 	if(player)
@@ -200,7 +200,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 	if(cmnd->num == 2) {
 		target = room->findCreature(creature, cmnd->str[1], cmnd->val[1], true, true);
 		if(target)
-			pTarget = target->getPlayer();
+			pTarget = target->getAsPlayer();
 		if( (!target || target == creature) &&
 			str != "point" &&
 			str != "show" &&
@@ -584,7 +584,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
 		if(target) {
 			if(target->isPet() && target->getMaster() == creature) {
-				player->dismissPet(target->getMonster());
+				player->dismissPet(target->getAsMonster());
 			} else {
 				OUT4("You curtly dismiss %N.\n", "%M dismisses you curtly.\n",
 					"%M curtly dismisses %N .");
@@ -923,7 +923,7 @@ bool Player::canDefecate() const {
 //*********************************************************************
 
 void Creature::stand() {
-	Player* player = getPlayer();
+	Player* player = getAsPlayer();
 
 	if(player && player->flagIsSet(P_SITTING)) {
 		player->unhide();
@@ -932,8 +932,8 @@ void Creature::stand() {
 	}
 
 	print("You stand up.\n");
-	if(getRoom()) {
-		broadcast(getSock(), getRoom(), "%M stands up.", this);
+	if(getRoomParent()) {
+		broadcast(getSock(), getRoomParent(), "%M stands up.", this);
 		socialHooks(this, "stand");
 	}
 }
@@ -956,7 +956,7 @@ void Creature::wake(bstring str, bool noise) {
 
 	if(str != "") {
 		printColor("%s\n", str.c_str());
-		broadcast(getSock(), getRoom(), "%M wakes up.", this);
+		broadcast(getSock(), getRoomParent(), "%M wakes up.", this);
 	}
 
 	clearFlag(P_SLEEPING);

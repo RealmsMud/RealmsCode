@@ -201,7 +201,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
 		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a free-action spell on %N.",player, target);
 	}
 
-	pTarget = target->getPlayer();
+	pTarget = target->getAsPlayer();
 
 	if(pTarget) {
 		pTarget->setFlag(P_FREE_ACTION);
@@ -211,7 +211,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
 			pTarget->lasttime[LT_FREE_ACTION].interval = MAX(300, 900 +
 				bonus((int) player->intelligence.getCur()) * 300);
 
-			if(player->getRoom()->magicBonus()) {
+			if(player->getRoomParent()->magicBonus()) {
 				pTarget->print("The room's magical properties increase the power of your spell.\n");
 				pTarget->lasttime[LT_FREE_ACTION].interval += 300L;
 			}
@@ -359,7 +359,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 
 	if(player == target) {
 		// mobs can't cast on themselves!
-		if(!player->getPlayer())
+		if(!player->getAsPlayer())
 			return(0);
 
 		// turn into a boolean!
@@ -388,7 +388,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 				player->print("Your body explodes. You're dead!\n");
 				broadcast(player->getSock(), player->getParent(), "%M's body explodes! %s's dead!", player,
 						player->upHeShe());
-				player->getPlayer()->die(EXPLODED);
+				player->getAsPlayer()->die(EXPLODED);
 			}
 		}
 
@@ -428,7 +428,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 			player->print("You cast %s on %N.\n", spell, target);
 			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.", player, spell, target);
 
-			if(target->getPlayer()) {
+			if(target->getAsPlayer()) {
 				target->wake("Terrible nightmares disturb your sleep!");
 				target->print("%M casts a %s spell on you.\n", player, spell);
 			}
@@ -454,7 +454,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 				player->doReflectionDamage(damage, target, target->isEffected("reflect-magic") ? REFLECTED_MAGIC : REFLECTED_NONE);
 
 				if(spellData->how == CAST && player->isPlayer())
-					player->getPlayer()->statistics.offensiveCast();
+					player->getAsPlayer()->statistics.offensiveCast();
 
 				if(target->chkSave(SPL, player,0))
 					damage.set(damage.get() / 2);
@@ -533,7 +533,7 @@ int splDispelGood(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This spell does NOT absorb damage, it only protects by giving better AC. -TC
 
 int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player	*pPlayer = player->getPlayer();
+	Player	*pPlayer = player->getAsPlayer();
 	int	mpNeeded=0, multi=0;
 
 	if(!pPlayer)
@@ -578,7 +578,7 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST)
 			pPlayer->subMp(mpNeeded);
-		if(pPlayer->getRoom()->magicBonus()) {
+		if(pPlayer->getRoomParent()->magicBonus()) {
 			player->print("The room's magical properties increase the power of your spell.\n");
 			duration += 600L;
 		}
@@ -597,7 +597,7 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 		player->print("Armor spell cast.\n");
-		broadcast(pPlayer->getSock(), pPlayer->getRoom(),"%M casts an armor spell on %sself.", pPlayer, pPlayer->himHer());
+		broadcast(pPlayer->getSock(), pPlayer->getRoomParent(),"%M casts an armor spell on %sself.", pPlayer, pPlayer->himHer());
 	}
 
 	return(1);
@@ -610,7 +610,7 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
 // stone-hard to ward off physical attacks.
 
 int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player	*pPlayer = player->getPlayer();
+	Player	*pPlayer = player->getAsPlayer();
 	int		mpNeeded=0, multi=0;
 
 	if(player->getClass() != LICH)
@@ -657,7 +657,7 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
 		duration = 240 + 10*bonus((int)player->intelligence.getCur());
 		if(spellData->how == CAST)
 			player->subMp(mpNeeded);
-		if(player->getRoom()->magicBonus()) {
+		if(player->getRoomParent()->magicBonus()) {
 			player->print("The room's magical properties increase the power of your spell.\n");
 			duration += 300L;
 		}
@@ -728,9 +728,9 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 				broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on the %s^x.", player, spell, exit->name);
 
 				if(exit->flagIsSet(X_PORTAL))
-					Move::deletePortal(player->getRoom(), exit);
+					Move::deletePortal(player->getRoomParent(), exit);
 				else
-					exit->doDispelMagic(player->getRoom());
+					exit->doDispelMagic(player->getRoomParent());
 				return(0);
 			}
 
@@ -738,7 +738,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 			return(0);
 		}
 
-		if(player->isPlayer() && player->getRoom()->isPkSafe() && (!player->isCt()) && !target->flagIsSet(P_OUTLAW)) {
+		if(player->isPlayer() && player->getRoomParent()->isPkSafe() && (!player->isCt()) && !target->flagIsSet(P_OUTLAW)) {
 			player->print("That spell is not allowed here.\n");
 			return(0);
 		}
@@ -1022,7 +1022,7 @@ bool Creature::doReflectionDamage(Damage damage, Creature* target, ReflectedDama
 		return(false);
 
 	if(target->isPlayer() && isMonster())
-		getMonster()->adjustThreat(target, dmg);
+		getAsMonster()->adjustThreat(target, dmg);
 
 	hp.decrease(dmg);
 	if(hp.getCur() <= 0)

@@ -212,7 +212,7 @@ bstring opposite_exit_name(const bstring& name) {
 
 int dmPurge(Player* player, cmd* cmnd) {
 	otag	*op=0, *otemp=0;
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 
 	if(!player->canBuildMonsters() && !player->canBuildObjects())
 		return(cmdNoAuth(player));
@@ -237,7 +237,7 @@ int dmPurge(Player* player, cmd* cmnd) {
 
                 master->setAlias(0);
                 master->print("%1M's soul was purged.\n", mons);
-                master->delPet(mons->getMonster());
+                master->delPet(mons->getAsMonster());
             }
         }
         room->monsters.erase(mons);
@@ -258,7 +258,7 @@ int dmPurge(Player* player, cmd* cmnd) {
 	player->print("Purged.\n");
 
 	if(!player->isDm())
-		log_immort(false,player, "%s purged room %s.\n", player->name, player->getRoom()->fullName().c_str());
+		log_immort(false,player, "%s purged room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
 
 	return(0);
 }
@@ -285,9 +285,9 @@ int dmEcho(Player* player, cmd* cmnd) {
 
 	if(!player->isCt())
 		broadcast(isStaff, "^G*** %s (%s) echoed: %s",
-			player->name, player->getRoom()->fullName().c_str(), text.c_str());
+			player->name, player->getRoomParent()->fullName().c_str(), text.c_str());
 
-	broadcast(NULL, player->getRoom(), "%s", text.c_str());
+	broadcast(NULL, player->getRoomParent(), "%s", text.c_str());
 	return(0);
 }
 
@@ -303,7 +303,7 @@ int dmReloadRoom(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(gConfig->reloadRoom(player->getRoom()))
+	if(gConfig->reloadRoom(player->getRoomParent()))
 		player->print("Ok.\n");
 	else
 		player->print("Reload failed.\n");
@@ -360,7 +360,7 @@ int dmResetPerms(Player* player, cmd* cmnd) {
 		crtm->ltime = time(0);
 	}
 
-	log_immort(true, player, "%s reset perm timeouts in room %s\n", player->name, player->getRoom()->fullName().c_str());
+	log_immort(true, player, "%s reset perm timeouts in room %s\n", player->name, player->getRoomParent()->fullName().c_str());
 
 	if(gConfig->resaveRoom(room->info) < 0)
 		player->print("Room fail saved.\n");
@@ -378,7 +378,7 @@ int dmResetPerms(Player* player, cmd* cmnd) {
 void stat_rom_exits(Creature* player, BaseRoom* room) {
 	char	str[1024], temp[25], tempstr[32];
 	int		i=0, flagcount=0;
-	UniqueRoom*	uRoom = room->getUniqueRoom();
+	UniqueRoom*	uRoom = room->getAsUniqueRoom();
 
 	if(room->exits.empty())
 		return;
@@ -553,7 +553,7 @@ void showRoomFlags(const Player* player, const BaseRoom* room, const TileInfo *t
 	player->printColor("%s", oStr.str().c_str());
 
 	// inform user of redundant flags
-	if(room && room->getConstUniqueRoom()) {
+	if(room && room->getAsConstUniqueRoom()) {
 		int whatTraining = room->whatTraining();
 		bool limboOrCoven = room->flagIsSet(R_LIMBO) || room->flagIsSet(R_VAMPIRE_COVEN);
 
@@ -656,7 +656,7 @@ int stat_rom(Player* player, AreaRoom* room) {
 		return(0);
 
 	if(player->getClass() == CARETAKER)
-		log_immort(false,player, "%s statted room %s.\n", player->name, player->getRoom()->fullName().c_str());
+		log_immort(false,player, "%s statted room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
 
 	player->print("Room: %s %s\n\n",
 		room->area->name.c_str(), room->fullName().c_str());
@@ -785,7 +785,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
 		return(0);
 
 	if(player->getClass() == CARETAKER)
-		log_immort(false,player, "%s statted room %s.\n", player->name, player->getRoom()->fullName().c_str());
+		log_immort(false,player, "%s statted room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
 
 	player->printColor("Room: %s", room->info.str("", 'y').c_str());
 	if(gConfig->inSwapQueue(room->info, SwapRoom, true))
@@ -1111,7 +1111,7 @@ int dmAddRoom(Player* player, cmd* cmnd) {
 // This function allows staff to set a characteristic of a room.
 
 int dmSetRoom(Player* player, cmd* cmnd) {
-	BaseRoom *room = player->getRoom();
+	BaseRoom *room = player->getRoomParent();
 	int		a=0, num=0;
 	CatRef	cr;
 
@@ -1537,7 +1537,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 // This function allows staff to set a characteristic of an exit.
 
 int dmSetExit(Player* player, cmd* cmnd) {
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	int		num=0;
 	//char	orig_exit[30];
 	short	n=0;
@@ -2264,7 +2264,7 @@ int dmNameRoom(Player* player, cmd* cmnd) {
 		name = name.left(79);
 
 	strcpy(player->parent_rom->name, name.c_str());
-	log_immort(true, player, "%s renamed room %s.\n", player->name, player->getRoom()->fullName().c_str());
+	log_immort(true, player, "%s renamed room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
 	player->print("Done.\n");
 
 	return(0);
@@ -2544,7 +2544,7 @@ int dmWrap(Player* player, cmd* cmnd) {
 
 	player->print("Text wrapped.\n");
 	player->parent_rom->escapeText();
-	log_immort(false, player, "%s wrapped the description in room %s.\n", player->name, player->getRoom()->fullName().c_str());
+	log_immort(false, player, "%s wrapped the description in room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
 	return(0);
 }
 
@@ -2556,12 +2556,12 @@ int dmWrap(Player* player, cmd* cmnd) {
 
 int dmDeleteAllExits(Player* player, cmd* cmnd) {
 
-	if(player->getRoom()->exits.empty()) {
+	if(player->getRoomParent()->exits.empty()) {
 		player->print("No exits to delete.\n");
 		return(0);
 	}
 
-	player->getRoom()->clearExits();
+	player->getRoomParent()->clearExits();
 
 	// sorry, can't delete exits in overland
 	if(player->area_room)
@@ -2569,7 +2569,7 @@ int dmDeleteAllExits(Player* player, cmd* cmnd) {
 
 	player->print("All exits deleted.\n");
 
-	log_immort(true, player, "%s deleted all exits in room %s.\n", player->name, player->getRoom()->fullName().c_str());
+	log_immort(true, player, "%s deleted all exits in room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
 	room_track(player);
 	return(0);
 }
@@ -2648,7 +2648,7 @@ int dmArrangeExits(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	player->getRoom()->arrangeExits(player);
+	player->getRoomParent()->arrangeExits(player);
 	return(0);
 }
 
@@ -2725,7 +2725,7 @@ int dmFix(Player* player, cmd* cmnd, bstring name, char find, char replace) {
 
 	if(fixed) {
 		log_immort(true, player, "%s %sed the exit '%s' in room %s.\n",
-			player->name, name.c_str(), exit->name, player->getRoom()->fullName().c_str());
+			player->name, name.c_str(), exit->name, player->getRoomParent()->fullName().c_str());
 		player->print("Done.\n");
 	} else
 		player->print("Couldn't find any underscores.\n");
@@ -2782,7 +2782,7 @@ int dmRenameExit(Player* player, cmd* cmnd) {
 
 	player->printColor("Exit \"%s^x\" renamed to \"%s^x\".\n", exit->name, newName.c_str());
 	log_immort(false, player, "%s renamed exit %s^g to %s^g in room %s.\n",
-		player->name, exit->name, newName.c_str(), player->getRoom()->fullName().c_str());
+		player->name, exit->name, newName.c_str(), player->getRoomParent()->fullName().c_str());
 	room_track(player);
 
 	if(getDir(newName) != NoDirection)
@@ -2847,7 +2847,7 @@ int dmDestroyRoom(Player* player, cmd* cmnd) {
 	}
 
 	log_immort(true, player, "%s destroyed room %s.\n",
-		player->name, player->getRoom()->fullName().c_str());
+		player->name, player->getRoomParent()->fullName().c_str());
 	player->parent_rom->destroy();
 	return(0);
 }

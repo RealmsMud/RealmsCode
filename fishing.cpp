@@ -152,7 +152,7 @@ bool doFish(Player* player) {
 
 	if(!item)
 		return(failFishing(player, "No FishingItem found.", false));
-	if(list->id == "river" && player->getRoom()->isWinter())
+	if(list->id == "river" && player->getRoomParent()->isWinter())
 		return(failFishing(player, "Winter."));
 	if(day && item->isNightOnly())
 		return(failFishing(player, "Night-time only.", false));
@@ -195,7 +195,7 @@ bool doFish(Player* player) {
 		// some fish they get will be monsters
 		if(!loadMonster(item->getFish(), &monster))
 			return(failFishing(player, "Monster failed to load.", false));
-		if(player->getRoom()->countCrt() + 1 >= player->getRoom()->getMaxMobs()) {
+		if(player->getRoomParent()->countCrt() + 1 >= player->getRoomParent()->getMaxMobs()) {
 			delete monster;
 			return(failFishing(player, "Room too full.", false));
 		}
@@ -234,7 +234,7 @@ bool doFish(Player* player) {
 	if(!item->isMonster()) {
 		doGetObject(fish, player);
 	} else {
-		monster->addToRoom(player->getRoom(), 1);
+		monster->addToRoom(player->getRoomParent(), 1);
 
 		// most fish will be angry about this
 		if(item->willAggro()) {
@@ -243,14 +243,14 @@ bool doFish(Player* player) {
 			monster->addEnemy(player, true);
 
 			broadcast(hearMobAggro, "^y*** %s(R:%s) added %s to %s attack list (fishing aggro).",
-				monster->name, player->getRoom()->fullName().c_str(), player->name, monster->hisHer());
+				monster->name, player->getRoomParent()->fullName().c_str(), player->name, monster->hisHer());
 		}
 	}
 	return(true);
 }
 
 void doFish(const DelayedAction* action) {
-	doFish(action->target->getPlayer());
+	doFish(action->target->getAsPlayer());
 }
 
 //**********************************************************************

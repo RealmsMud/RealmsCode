@@ -136,7 +136,7 @@ bool Player::checkConfusion() {
 	char	atk[50];
 	Creature* target=0;
 	Exit	*newExit=0;
-	BaseRoom* room = getRoom(), *bRoom=0;
+	BaseRoom* room = getRoomParent(), *bRoom=0;
 	CatRef	cr;
 
 
@@ -468,7 +468,7 @@ bool plyHasObj(Creature* player, Object *item) {
 
 	// check player's storage room, if it exists
 	if(player->isPlayer()) {
-		CatRef	sr = gConfig->getSingleProperty(player->getPlayer(), PROP_STORAGE);
+		CatRef	sr = gConfig->getSingleProperty(player->getAsPlayer(), PROP_STORAGE);
 		if(sr.id < 1 || !loadRoom(sr, &room))
 			return(0);
 

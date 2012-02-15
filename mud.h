@@ -1109,12 +1109,11 @@ enum CastResult {
 #include "os.h"
 
 #include "catRef.h"
-#include "container.h"
 #include "swap.h"
 #include "structs.h"
 #include "range.h"
 #include "carry.h"
-#include "mudObject.h"
+#include "container.h"
 #include "xml.h"
 
 #include "size.h"

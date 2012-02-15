@@ -1513,8 +1513,8 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			    player->doHaggling(0, object2, BUY);
 
 			// We just did a full priced purchase, we can now haggle again (unless they do another refund)
-			if(player->getRoom() && player->getRoom()->getUniqueRoom())
-			    player->removeRefundedInStore(player->getRoom()->getUniqueRoom()->info);
+			if(player->getRoomParent() && player->getRoomParent()->getAsUniqueRoom())
+			    player->removeRefundedInStore(player->getRoomParent()->getAsUniqueRoom()->info);
 
 			object2->setDroppedBy(room, "StoreBought");
 	        gServer->logGold(GOLD_OUT, player, object2->refund, object2, "StoreBought");
@@ -1535,10 +1535,10 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			broadcast(player->getSock(), player->getParent(), "%M bought %1P.", player, object2);
 
 			player->bug("%s just bought %s for %s in room %s.\n",
-				player->name, object2->name, cost.str().c_str(), player->getRoom()->fullName().c_str());
+				player->name, object2->name, cost.str().c_str(), player->getRoomParent()->fullName().c_str());
 
 			logn("log.commerce", "%s just bought %s for %s in room %s.\n",
-				player->name, object2->name, cost.str().c_str(), player->getRoom()->fullName().c_str());
+				player->name, object2->name, cost.str().c_str(), player->getRoomParent()->fullName().c_str());
 
 			if(isDeed) {
 				int flag=0;
@@ -1636,7 +1636,7 @@ int cmdSell(Player* player, cmd* cmnd) {
 	if(!player->ableToDoCommand())
 		return(0);
 
-	if(!player->getRoom()->flagIsSet(R_PAWN_SHOP)) {
+	if(!player->getRoomParent()->flagIsSet(R_PAWN_SHOP)) {
 		player->print("This is not a pawn shop.\n");
 		return(0);
 	}
@@ -1725,9 +1725,9 @@ int cmdSell(Player* player, cmd* cmnd) {
 	player->doHaggling(0, object, SELL);
 	gServer->logGold(GOLD_IN, player, object->refund, object, "Pawn");
 	player->bug("%s sold %s in room %s.\n", player->name, object->name,
-		player->getRoom()->fullName().c_str());
+		player->getRoomParent()->fullName().c_str());
 	logn("log.commerce", "%s sold %s in room %s.\n", player->name, object->name,
-		player->getRoom()->fullName().c_str());
+		player->getRoomParent()->fullName().c_str());
 
 
 	player->coins.add(value);
@@ -1750,7 +1750,7 @@ int cmdValue(Player* player, cmd* cmnd) {
 	if(!player->ableToDoCommand())
 		return(0);
 
-	if(!player->getRoom()->flagIsSet(R_PAWN_SHOP)) {
+	if(!player->getRoomParent()->flagIsSet(R_PAWN_SHOP)) {
 		player->print("You must be in a pawn shop.\n");
 		return(0);
 	}
@@ -1799,7 +1799,7 @@ int cmdRefund(Player* player, cmd* cmnd) {
 	if(!player->ableToDoCommand())
 		return(0);
 
-	if(!player->getRoom()->flagIsSet(R_SHOP)) {
+	if(!player->getRoomParent()->flagIsSet(R_SHOP)) {
 		player->print("This is not a shop.\n");
 		return(0);
 	}
@@ -1834,8 +1834,8 @@ int cmdRefund(Player* player, cmd* cmnd) {
 	player->delObj(object, true);
 	// No further haggling allowed in this store until they buy a full priced item and have left the room
 	player->setFlag(P_JUST_REFUNDED);
-	if(player->getRoom() && player->getRoom()->getUniqueRoom()) {
-	    player->addRefundedInStore(player->getRoom()->getUniqueRoom()->info);
+	if(player->getRoomParent() && player->getRoomParent()->getAsUniqueRoom()) {
+	    player->addRefundedInStore(player->getRoomParent()->getAsUniqueRoom()->info);
 	}
 
 	delete object;
@@ -2311,7 +2311,7 @@ void Player::setLastPawn(Object* object) {
 //*********************************************************************
 
 bool Player::restoreLastPawn() {
-	if(!getRoom()->flagIsSet(R_PAWN_SHOP) || !getRoom()->flagIsSet(R_DUMP_ROOM)) {
+	if(!getRoomParent()->flagIsSet(R_PAWN_SHOP) || !getRoomParent()->flagIsSet(R_DUMP_ROOM)) {
 		print("You must be in a pawn shop to reclaim items.\n");
 		return(false);
 	}
@@ -2397,12 +2397,12 @@ void Creature::doHaggling(Creature *vendor, Object* object, int trans) {
 	// If we've refunded an item in this shop, no haggling until having bought a full priced item again
 
 	if(trans == BUY) {
-	    if(getPlayer() && flagIsSet(P_JUST_REFUNDED))
+	    if(getAsPlayer() && flagIsSet(P_JUST_REFUNDED))
 	        chance = 0;
-	    if(chance > 0 && getRoom() && getRoom()->getUniqueRoom() ) {
-            Player* player = getPlayer();
+	    if(chance > 0 && getRoomParent() && getRoomParent()->getAsUniqueRoom() ) {
+            Player* player = getAsPlayer();
             if( player && !player->storesRefunded.empty()) {
-                if(player->hasRefundedInStore(getRoom()->getUniqueRoom()->info)) {
+                if(player->hasRefundedInStore(getRoomParent()->getAsUniqueRoom()->info)) {
                     chance = 0;
                 }
             }
@@ -2449,7 +2449,7 @@ void Creature::doHaggling(Creature *vendor, Object* object, int trans) {
 
 		if(modAmt) {
 			if(npcVendor)
-				broadcast(getSock(), getRoom(), "%M haggles over prices with %N.", this, vendor);
+				broadcast(getSock(), getRoomParent(), "%M haggles over prices with %N.", this, vendor);
 			switch(trans) {
 			case BUY:
 				printColor("^yYour haggling skills saved you %ld gold coins.\n", modAmt);

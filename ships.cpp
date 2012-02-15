@@ -256,7 +256,7 @@ void ShipExit::removeExit() {
 	if(departs != "")
 		broadcast(NULL, newRoom, "%s", departs.c_str());
 
-	aRoom = newRoom->getAreaRoom();
+	aRoom = newRoom->getAsAreaRoom();
 	ExitList::iterator xit;
 	for(xit = newRoom->exits.begin() ; xit != newRoom->exits.end() ; ) {
 		Exit* ext = (*xit++);

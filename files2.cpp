@@ -27,7 +27,7 @@
 // already in the memory room queue.
 
 bool Config::reloadRoom(BaseRoom* room) {
-	UniqueRoom*	uRoom = room->getUniqueRoom();
+	UniqueRoom*	uRoom = room->getAsUniqueRoom();
 
 	if(uRoom) {
 		bstring str = uRoom->info.str();
@@ -40,7 +40,7 @@ bool Config::reloadRoom(BaseRoom* room) {
 		}
 	} else {
 
-		AreaRoom* aRoom = room->getAreaRoom();
+		AreaRoom* aRoom = room->getAsAreaRoom();
 		char	filename[256];
 		sprintf(filename, "%s/%d/%s", Path::AreaRoom, aRoom->area->id,
 			aRoom->mapmarker.filename().c_str());

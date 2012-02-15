@@ -34,7 +34,7 @@ class Fishing;
 
 typedef std::list<Exit*> ExitList;
 
-class BaseRoom: public MudObject, public Container {
+class BaseRoom: public Container {
 protected:
 	void BaseDestroy();
 	bstring	version;	// What version of the mud this object was saved under
@@ -82,7 +82,7 @@ public:
 	bool isFull() const;
 	int countVisPly() const;
 	int countCrt() const;
-	Monster* getTollkeeper();
+	Monster* getTollkeeper() const;
 
 	bool isMagicDark() const;
 	bool isNormalDark() const;

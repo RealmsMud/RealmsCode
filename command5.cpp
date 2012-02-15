@@ -915,7 +915,7 @@ void showAbility(Player* player, const char *skill, const char *display, int lt,
 
 int cmdTime(Player* player, cmd* cmnd) {
 	long	t = time(0), u=0, tmp=0, i=0;
-	const CatRefInfo* cri = gConfig->getCatRefInfo(player->getRoom(), 1);
+	const CatRefInfo* cri = gConfig->getCatRefInfo(player->getRoomParent(), 1);
 	bstring world = "";
 
 	if(cri && cri->getWorldName() != "") {

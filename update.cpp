@@ -248,11 +248,11 @@ void Server::weather(WeatherString w) {
 		) {
 			// if sunrise/sunset, vampires always see it
 		} else {
-			if(!player->getRoom()->isOutdoors())
+			if(!player->getRoomParent()->isOutdoors())
 				continue;
 		}
 
-		weather = gConfig->weatherize(w, player->getRoom());
+		weather = gConfig->weatherize(w, player->getRoomParent());
 		if(weather != "") {
 			player->printColor("^%c%s\n", color, weather.c_str());
 			player->hooks.execute(event, 0, season);
@@ -273,13 +273,13 @@ void Server::weather(WeatherString w) {
 		{
 			// if sunrise/sunset, vampires always see it
 		} else {
-			if(!monster->getRoom()->isOutdoors())
+			if(!monster->getRoomParent()->isOutdoors())
 				continue;
 		}
 
 		// monsters don't need to see the message, but we need to know if there is a message or not
 		// as that will decide whether or not we tell them to execute a hook
-		weather = gConfig->weatherize(w, monster->getRoom());
+		weather = gConfig->weatherize(w, monster->getRoomParent());
 		if(weather != "")
 			monster->hooks.execute(event, 0, season);
 	}
@@ -586,7 +586,7 @@ void Server::updateAction(long t) {
 	while(it != activeList.end()) {
 		monster = (*it++);
 		if(monster) {
-			room = monster->getRoom();
+			room = monster->getRoomParent();
 			if(room && monster->flagIsSet(M_LOGIC_MONSTER)) {
 				if(!monster->first_tlk)
 					loadCreature_actions(monster);
@@ -724,17 +724,17 @@ void Server::updateAction(long t) {
 						switch(act->do_act) {
 						case 'E': // broadcast response to room
 							if(thresh <= num)
-								broadcast(NULL, monster->getRoom(), "%s", resp);
+								broadcast(NULL, monster->getRoomParent(), "%s", resp);
 
 							break;
 						case 'S': // say to room
 							if(thresh <= num)
-								broadcast(NULL, monster->getRoom(), "%M says, \"%s\"", monster, resp);
+								broadcast(NULL, monster->getRoomParent(), "%M says, \"%s\"", monster, resp);
 							break;
 						case 'T':	// Mob Trash-talk
 							if(mrand(1,100) <= 10) {
 
-								if(countTotalEnemies(monster) > 0 && !monster->getMonster()->nearEnemy()) {
+								if(countTotalEnemies(monster) > 0 && !monster->getAsMonster()->nearEnemy()) {
 									if(monster->daily[DL_BROAD].cur > 0) {
 										broadcast("### %M broadcasted, \"%s\"", monster, resp);
 										subtractMobBroadcast(monster, 0);
@@ -754,11 +754,11 @@ void Server::updateAction(long t) {
 							}
 							break;
 						case 'A': // attack monster in target string
-							if(monster->first_tlk->target && !monster->getMonster()->hasEnemy()) {
+							if(monster->first_tlk->target && !monster->getAsMonster()->hasEnemy()) {
 								victim = room->findMonster(monster, monster->first_tlk->target, 1);
 								if(!victim)
 									return;
-								victim->getMonster()->monsterCombat((Monster*)monster);
+								victim->getAsMonster()->monsterCombat((Monster*)monster);
 								if(monster->first_tlk->target)
 									free(monster->first_tlk->target);
 								monster->first_tlk->target = 0;
@@ -966,7 +966,7 @@ void subtractMobBroadcast(Creature *monster, int num) {
 int countTotalEnemies(Creature *monster) {
 	if(monster->isPlayer())
 		return(0);
-	Monster* mons = monster->getMonster();
+	Monster* mons = monster->getAsMonster();
 	return(mons->threatTable->size());
 }
 
@@ -1013,10 +1013,10 @@ void Player::checkOutlawAggro() {
 	if(!flagIsSet(P_OUTLAW_WILL_BE_ATTACKED))
 		return;
 
-	for(Monster* mons : getRoom()->monsters) {
-		if(mons->flagIsSet(M_OUTLAW_AGGRO) && !mons->getMonster()->hasEnemy()) {
+	for(Monster* mons : getRoomParent()->monsters) {
+		if(mons->flagIsSet(M_OUTLAW_AGGRO) && !mons->getAsMonster()->hasEnemy()) {
 			mons->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
-			mons->getMonster()->addEnemy(this, true);
+			mons->getAsMonster()->addEnemy(this, true);
 		}
 	}
 }
@@ -1100,10 +1100,10 @@ bstring Server::showActiveList() {
 			continue;
 		}
 		if(!monster->getName()) {
-			oStr << "Bad Mb - Room " << monster->getRoom()->fullName() << "\n";
+			oStr << "Bad Mb - Room " << monster->getRoomParent()->fullName() << "\n";
 			continue;
 		}
-		oStr << monster->getName() << " - " << monster->getRoom()->fullName() << "\n";
+		oStr << monster->getName() << " - " << monster->getRoomParent()->fullName() << "\n";
 	}
 	return(oStr.str());
 

@@ -232,7 +232,7 @@ Creature* ThreatTable::getTarget(bool sameRoom) {
         }
         // If we're looking for someone who isn't in the same room, we don't care if we can see them
         // however if we want the target in the current room, we must be able to see them!
-        if(!crt || (sameRoom && (crt->getRoom() != myParent->getRoom() || !myParent->canSee(crt)))) continue;
+        if(!crt || (sameRoom && (crt->getRoomParent() != myParent->getRoomParent() || !myParent->canSee(crt)))) continue;
 
         // The highest threat creature (in the same room if sameRoom is true)
         toReturn = crt;
@@ -320,7 +320,7 @@ int Creature::doHeal(Creature* target, int amt, double threatFactor) {
     // If the target is a player/pet and they're in combat
     // then this counts towards the damage done/hatred on that monster
     if((target->isPlayer() || target->isPet()) && target->inCombat(false)) {
-        for(Monster* mons : getRoom()->monsters) {
+        for(Monster* mons : getRoomParent()->monsters) {
             if(mons->isEnemy(target)) {
                 // If we're not on the enemy list, put us on at the end
                 if(!mons->isEnemy(this)) {
@@ -365,7 +365,7 @@ Creature* Creature::addTarget(Creature* toTarget) {
 	toTarget->addTargetingThis(this);
 	myTarget = toTarget;
 
-	Player* ply = getPlayer();
+	Player* ply = getAsPlayer();
 	if(ply) {
 		ply->printColor("You are now targeting %s.\n", myTarget->getName());
 	}
@@ -381,7 +381,7 @@ Creature* Creature::addTarget(Creature* toTarget) {
 void Creature::addTargetingThis(Creature* targeter) {
 	ASSERTLOG(targeter);
 
-	Player* ply = getPlayer();
+	Player* ply = getAsPlayer();
 	if(ply) {
 		ply->printColor("%s is now targeting you!\n", targeter->getName());
 	}
@@ -396,7 +396,7 @@ void Creature::clearTarget(bool clearTargetsList) {
 	if(!myTarget)
 		return;
 
-	Player* ply = getPlayer();
+	Player* ply = getAsPlayer();
 	if(ply) {
 		ply->printColor("You are no longer targeting %s!\n", myTarget->getName());
 	}
@@ -416,7 +416,7 @@ void Creature::clearTarget(bool clearTargetsList) {
 void Creature::clearTargetingThis(Creature* targeter) {
 	ASSERTLOG(targeter);
 
-	Player* ply = getPlayer();
+	Player* ply = getAsPlayer();
 	if(ply) {
 		ply->printColor("%s is no longer targeting you!\n", targeter->getName());
 	}

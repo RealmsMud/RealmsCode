@@ -105,7 +105,7 @@ void Server::addDelayedAction(void (*callback)(DelayedActionFn), MudObject* targ
 		case ActionTrack:
 		case ActionStudy:
 			// these actions are player-only
-			if(!target->getConstPlayer())
+			if(!target->getAsConstPlayer())
 				return;
 			break;
 		default:
@@ -188,7 +188,7 @@ void MudObject::interruptDelayedActions() {
 	if(delayedActionQueue.size()) {
 		// true means we are only removing interrupt-able actions
 		if(gServer->removeDelayedActions(this, true)) {
-			const Creature* creature = getConstCreature();
+			const Creature* creature = getAsConstCreature();
 			if(creature)
 				creature->print("You stop what you are doing.\n");
 		}
@@ -238,7 +238,7 @@ void MudObject::clearDelayedActions() {
 //*********************************************************************
 
 void doDelayedAction(const DelayedAction* action) {
-	Creature* creature = action->target->getCreature();
+	Creature* creature = action->target->getAsCreature();
 	if(!creature)
 		return;
 	// we need a non-const command
@@ -272,7 +272,7 @@ void Creature::delayedAction(bstring action, int delay, MudObject* target) {
 //*********************************************************************
 
 void doDelayedScript(const DelayedAction* action) {
-	Creature* creature = action->target->getCreature();
+	Creature* creature = action->target->getAsCreature();
 	if(!creature)
 		return;
 	gServer->runPython(action->script, "", creature);

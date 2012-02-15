@@ -149,7 +149,7 @@ bool seeAllHooks(Socket* sock) {
 bstring hookMudObjName(const MudObject* target) {
 	if(!target)
 		return("^W-none-^o");
-	const AreaRoom* aRoom = target->getConstAreaRoom();
+	const AreaRoom* aRoom = target->getAsConstAreaRoom();
 	if(!aRoom)
 		return((bstring)target->getName() + "^o");
 	return(aRoom->mapmarker.str() + "^o");

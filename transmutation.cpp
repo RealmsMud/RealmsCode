@@ -47,7 +47,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 
-	if(!player->getRoom()->isOutdoors() && !player->isCt()) {
+	if(!player->getRoomParent()->isOutdoors() && !player->isCt()) {
 		player->print("You cannot cast that spell indoors.\n");
 		return(0);
 	}
@@ -171,13 +171,13 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 					player->print("*DM* %d seconds.\n", dur);
 
 				if(target->isMonster())
-					target->getMonster()->addEnemy(player);
+					target->getAsMonster()->addEnemy(player);
 
 			} else {
 				player->print("%M resisted your spell.\n", target);
-				broadcast(player->getSock(), target->getRoom(), "%M resisted %N's entangle spell.",target, player);
+				broadcast(player->getSock(), target->getRoomParent(), "%M resisted %N's entangle spell.",target, player);
 				if(target->isMonster())
-					target->getMonster()->addEnemy(player);
+					target->getAsMonster()->addEnemy(player);
 			}
 
 		} else {
@@ -186,7 +186,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 				target->print("You are entangled in vines and weeds!\nYou are unable to move!\n");
 
-				broadcast(target->getSock(), player->getRoom(), "%M becomes entangled in vines and weeds!", target);
+				broadcast(target->getSock(), player->getRoomParent(), "%M becomes entangled in vines and weeds!", target);
 
 				if(spellData->how == CAST)
 					dur = mrand(12,18) + 2*bonus((int)player->intelligence.getCur()) - statmod;
@@ -200,7 +200,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 				//*********************************************************************
 			} else {
 				player->print("%M resisted your spell.\n", target);
-				broadcast(player->getSock(), target->getSock(), target->getRoom(), "%M resisted %N's hold-person spell.",target, player);
+				broadcast(player->getSock(), target->getSock(), target->getRoomParent(), "%M resisted %N's hold-person spell.",target, player);
 				target->print("%M tried to cast a hold-person spell on you.\n", player);
 			}
 		}
@@ -259,7 +259,7 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST) {
 			player->subMp(5);
-			if(player->getRoom()->magicBonus())
+			if(player->getRoomParent()->magicBonus())
 				player->print("The room's magical properties increase the power of your spell.\n");
 		}
 
@@ -300,7 +300,7 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST) {
 			player->subMp(10);
-			if(player->getRoom()->magicBonus())
+			if(player->getRoomParent()->magicBonus())
 				player->print("The room's magical properties increase the power of your spell.\n");
 
 		}
@@ -314,7 +314,7 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
 		player->smashInvis();
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus())
+		if(player->getRoomParent()->magicBonus())
 			player->print("The room's magical properties increase the power of your spell.\n");
 		target->addEffect("infravision", -2, -2, player, true, player);
 	} else {
@@ -329,7 +329,7 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player	*pPlayer = player->getPlayer();
+	Player	*pPlayer = player->getAsPlayer();
 	int			chance=0, canCast=0, mpNeeded=0;
 	Exit		*exit=0;
 
@@ -375,7 +375,7 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	const Monster* guard = player->getRoom()->getGuardingExit(exit, player->getConstPlayer());
+	const Monster* guard = player->getRoomParent()->getGuardingExit(exit, player->getAsConstPlayer());
 	if(guard && !player->checkStaff("%M %s %s that.\n", guard, guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you" : "won't let you", spellData->how == CAST ? "cast" : "do"))
 		return(0);
 
@@ -509,11 +509,11 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 					broadcast(player->getSock(), player->getParent(), "%M casts a disintegration spell on the %s^x.", player, exit->name);
 
 					if(exit->flagIsSet(X_PORTAL)) {
-						broadcast(0, player->getRoom(), "^GAn eerie green light engulfs the %s^x!", exit->name);
-						Move::deletePortal(player->getRoom(), exit);
+						broadcast(0, player->getRoomParent(), "^GAn eerie green light engulfs the %s^x!", exit->name);
+						Move::deletePortal(player->getRoomParent(), exit);
 					} else {
-						broadcast(0, player->getRoom(), "^GAn eerie green light engulfs the wall of force blocking the %s^x!", exit->name);
-						bringDownTheWall(effect, player->getRoom(), exit);
+						broadcast(0, player->getRoomParent(), "^GAn eerie green light engulfs the wall of force blocking the %s^x!", exit->name);
+						bringDownTheWall(effect, player->getRoomParent(), exit);
 					}
 					return(0);
 				}
@@ -539,7 +539,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 			bns += MIN(30, target->saves[DEA].chance);
 
 		if(spellData->how == CAST && player->isPlayer())
-			player->getPlayer()->statistics.offensiveCast();
+			player->getAsPlayer()->statistics.offensiveCast();
 
 		saved = target->chkSave(DEA, player, bns);
 
@@ -551,14 +551,14 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 		} else {
 			target->printColor("^GYou are engulfed in an eerie green light.\n");
 			target->printColor("You've been disintegrated!^x\n");
-			broadcast(target->getSock(), player->getRoom(),
+			broadcast(target->getSock(), player->getRoomParent(),
 				"^G%M is engulfed in an eerie green light\n%M was disintegrated!", target, target);
 
 			target->hp.setCur(1);
 			target->mp.setCur(1);
 
 			// goodbye inventory
-			if(target->getMonster()) {
+			if(target->getAsMonster()) {
 				while(target->first_obj) {
 					op = target->first_obj->next_tag;
 					delete target->first_obj->obj;
@@ -649,7 +649,7 @@ int splStatChange(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 	}
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus())
+		if(player->getRoomParent()->magicBonus())
 			player->print( "The room's magical properties increase the power of your spell.\n");
 		target->addEffect(effect, -2, -2, player, true, player);
 	} else {
@@ -866,13 +866,13 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		if(target->isMonster())
-			target->getMonster()->addEnemy(player);
+			target->getAsMonster()->addEnemy(player);
 	}
 
 	target->addEffect("deafness", dur, player->getLevel());
 
 	if(spellData->how == CAST && player->isPlayer())
-		player->getPlayer()->statistics.offensiveCast();
+		player->getAsPlayer()->statistics.offensiveCast();
 
 	return(1);
 }

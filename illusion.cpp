@@ -86,7 +86,7 @@ int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(!player->isPlayer())
 		return(0);
-	pPlayer = player->getPlayer();
+	pPlayer = player->getAsPlayer();
 
 	if(spellData->how == CAST) {
 		// if the spell was cast
@@ -125,7 +125,7 @@ int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how != POTION) {
 			pPlayer->print("You cast an illusion spell.\n");
-			broadcast(pPlayer->getSock(), pPlayer->getRoom(), "%M casts an illusion spell.", pPlayer);
+			broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts an illusion spell.", pPlayer);
 		}
 	} else {
 		if(noPotion(player, spellData))
@@ -142,13 +142,13 @@ int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(checkRefusingMagic(player, target))
 			return(0);
 
-		broadcast(pPlayer->getSock(), target->getSock(), pPlayer->getRoom(), "%M casts an illusion spell on %N.",
+		broadcast(pPlayer->getSock(), target->getSock(), pPlayer->getRoomParent(), "%M casts an illusion spell on %N.",
 			pPlayer, target);
 		target->print("%M casts illusion on you.\n", pPlayer);
 		pPlayer->print("You cast an illusion spell on %N.\n", target);
 	}
 
-	if(pPlayer->getRoom()->magicBonus())
+	if(pPlayer->getRoomParent()->magicBonus())
 		pPlayer->print("The room's magical properties increase the power of your spell.\n");
 
 	if(target->isEffected("illusion"))
@@ -219,7 +219,7 @@ int splIllusoryWall(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus())
+		if(player->getRoomParent()->magicBonus())
 			player->print("The room's magical properties increase the power of your spell.\n");
 	}
 

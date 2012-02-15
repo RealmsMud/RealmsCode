@@ -68,7 +68,7 @@ public:
     void load(xmlNodePtr rootNode);
 };
 
-class Object: public MudObject, public Container, public Containable {
+class Object: public Container, public Containable {
     // Static class functions
 public:
     static Object* getNewPotion();	// Creates a new blank potion object

@@ -673,7 +673,7 @@ bool Object::classRestrict(const Creature* creature, bool p) const {
 
 bool Object::classRestrict(const Creature* creature) const {
 	bool pass = false;
-	const Player* player = creature->getConstPlayer();
+	const Player* player = creature->getAsConstPlayer();
 
 	int cClass = creature->getClass();
 	if(player && player->getClass() == MAGE && (player->getSecondClass() == ASSASSIN || player->getSecondClass() == THIEF))
@@ -802,7 +802,7 @@ bool Object::alignRestrict(const Creature* creature, bool p) const {
 		if(p) {
 			creature->checkStaff("%O shocks you and you drop it.\n", this);
 			if(!creature->isStaff())
-				broadcast(creature->getSock(), creature->getRoom(), "%M is shocked by %P.", creature, this);
+				broadcast(creature->getSock(), creature->getConstRoomParent(), "%M is shocked by %P.", creature, this);
 		}
 		if(!creature->isStaff()) return(true);
 	}
@@ -945,7 +945,7 @@ bool Object::doRestrict(Creature* creature, bool p) {
 	if(alignRestrict(creature, p)) {
 		if(p && !creature->isStaff()) {
 			creature->delObj(this, false, true);
-			addToRoom(creature->getRoom());
+			addToRoom(creature->getRoomParent());
 		}
 		return(true);
 	}

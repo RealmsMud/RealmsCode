@@ -60,7 +60,7 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
 		return(0);
 
     if(creature->isMonster()) {
-		if(creature->getMonster()->isEnemy(player)) {
+		if(creature->getAsMonster()->isEnemy(player)) {
 			player->print("Not while you are already fighting %s.\n", creature->himHer());
 			return(0);
 		}
@@ -96,7 +96,7 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
 		player->checkImprove("enthrall",false);
 		broadcast(player->getSock(), player->getParent(), "%M tried to enthrall %N.",player, creature);
 		if(creature->isMonster()) {
-			creature->getMonster()->addEnemy(player);
+			creature->getAsMonster()->addEnemy(player);
 			return(0);
 		}
 		creature->printColor("^r%M tried to enthrall you with the power of %s.\n", player, gConfig->getDeity(player->getDeity())->getName().c_str());
@@ -122,7 +122,7 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
 	player->print("You enthrall %N with the power of %s.\n", creature, gConfig->getDeity(player->getDeity())->getName().c_str());
 	player->checkImprove("enthrall",true);
 
-	broadcast(player->getSock(), creature->getSock(), player->getRoom(), "%M flashes %s symbol of %s to %N, enthralling %s.",
+	broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M flashes %s symbol of %s to %N, enthralling %s.",
 		player, player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str(), creature,
 	    player->himHer());
 	creature->print("%M's chant of %s's word enthralls you.\n", player, gConfig->getDeity(player->getDeity())->getName().c_str());
@@ -170,8 +170,8 @@ int cmdEarthSmother(Player* player, cmd* cmnd) {
     if(!(creature = player->findVictim(cmnd, 1, true, false, "Smother whom?\n", "You don't see that here.\n")))
 		return(0);
 
-	pCreature = creature->getPlayer();
-	mCreature = creature->getMonster();
+	pCreature = creature->getAsPlayer();
+	mCreature = creature->getAsMonster();
 
 	player->smashInvis();
 	player->interruptDelayedActions();
@@ -207,7 +207,7 @@ int cmdEarthSmother(Player* player, cmd* cmnd) {
 	dmg = mrand((int)(level*3), (int)(level*4));
 	if(creature->isEffected("resist-earth"))
 		dmg = mrand(1, (int)level);
-	if(player->getRoom()->flagIsSet(R_EARTH_BONUS) && player->getRoom()->flagIsSet(R_ROOM_REALM_BONUS))
+	if(player->getRoomParent()->flagIsSet(R_EARTH_BONUS) && player->getRoomParent()->flagIsSet(R_ROOM_REALM_BONUS))
 		dmg = dmg*3/2;
 
 	if(mCreature)
@@ -216,7 +216,7 @@ int cmdEarthSmother(Player* player, cmd* cmnd) {
 	if(!player->isCt()) {
 		if(mrand(1, 100) > chance) {
 			player->print("You failed to earth smother %N.\n", creature);
-			broadcast(player->getSock(), creature->getSock(), player->getRoom(), "%M tried to earth smother %N.", player, creature);
+			broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M tried to earth smother %N.", player, creature);
 			creature->print("%M tried to earth smother you!\n", player);
 			player->checkImprove("smother", false);
 			return(0);
@@ -236,7 +236,7 @@ int cmdEarthSmother(Player* player, cmd* cmnd) {
 		player->print("%M resisted your smother!\n", creature);
 
 	creature->printColor("%M earth-smothered you for %s%d^x damage!\n", player, creature->customColorize("*CC:DAMAGE*").c_str(), dmg);
-	broadcast(player->getSock(), creature->getSock(), player->getRoom(), "%M earth-smothered %N!", player, creature);
+	broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M earth-smothered %N!", player, creature);
 
 	player->doDamage(creature, dmg, CHECK_DIE);
 	return(0);
@@ -324,7 +324,7 @@ int cmdLayHands(Player* player, cmd* cmnd) {
 
 		player->doHeal(creature, num);
 
-		broadcast(player->getSock(), creature->getSock(), creature->getRoom(), "%M heals %N with the power of %s.",
+		broadcast(player->getSock(), creature->getSock(), creature->getRoomParent(), "%M heals %N with the power of %s.",
 			player, creature, gConfig->getDeity(player->getDeity())->getName().c_str());
 
 		creature->print("You feel much better now.\n");
@@ -437,7 +437,7 @@ bool Creature::kamiraLuck(Creature *attacker) {
 
 	chance = (level / 10)+3;
 	if(mrand(1,100) <= chance) {
-		broadcast(getSock(), getRoom(), "^YA feeling of deja vous comes over you.");
+		broadcast(getSock(), getRoomParent(), "^YA feeling of deja vous comes over you.");
 		printColor("^YThe luck of %s was with you!\n", gConfig->getDeity(KAMIRA)->getName().c_str());
 		printColor("^C%M missed you.\n", attacker);
 		attacker->print("You thought you hit, but you missed!\n");
@@ -552,7 +552,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
 
 
 	if(target->isMonster())
-		target->getMonster()->addEnemy(player);
+		target->getAsMonster()->addEnemy(player);
 
 	player->lasttime[LT_TURN].ltime = t;
 	player->updateAttackTimer(false);
@@ -619,7 +619,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
 		// TODO: SKILLS: add a bonus to this
 		player->checkImprove("turn", true);
 		if(target->isMonster())
-			target->getMonster()->adjustThreat(player, target->hp.getCur());
+			target->getAsMonster()->adjustThreat(player, target->hp.getCur());
 		//player->statistics.attackDamage(target->hp.getCur(), "turn undead");
 
 		target->die(player);
@@ -629,7 +629,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
 		//player->statistics.attackDamage(dmg, "turn undead");
 
 		if(target->isMonster())
-			target->getMonster()->adjustThreat(player, m);
+			target->getAsMonster()->adjustThreat(player, m);
 
 		player->printColor("^YYou turned %N for %d damage.\n", target, dmg);
 		player->checkImprove("turn", true);
@@ -668,7 +668,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
 
 	double level = player->getSkillLevel("renounce");
 	if(target->isMonster()) {
-		Monster* mTarget = target->getMonster();
+		Monster* mTarget = target->getAsMonster();
 		if( (!player->isCt()) &&
 			(((player->getClass() == PALADIN) && (target->getClass() != DEATHKNIGHT)) ||
 			((player->getClass() == DEATHKNIGHT) && (target->getClass() != PALADIN)))
@@ -861,7 +861,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 
 	double level = player->getSkillLevel("holyword");
 	if(target->isMonster()) {
-		Monster* mTarget = target->getMonster();
+		Monster* mTarget = target->getAsMonster();
 		if(target->getAdjustedAlignment() >= NEUTRAL && !player->isCt()) {
 			player->print("A holy word cannot be pronounced on a good creature.\n");
 			return(0);
@@ -1179,8 +1179,8 @@ int cmdBandage(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		if(creature->getType() !=PLAYER && !creature->isPet() && creature->getMonster()->nearEnemy()
-				&& !creature->getMonster()->isEnemy(player)) {
+		if(creature->getType() !=PLAYER && !creature->isPet() && creature->getAsMonster()->nearEnemy()
+				&& !creature->getAsMonster()->isEnemy(player)) {
 			player->print("Not while %N is in combat with someone.\n", creature);
 			return(0);
 		}
@@ -1210,7 +1210,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 			player->printColor("Your %s %s all used up.\n", object->name,
 			      (object->flagIsSet(O_SOME_PREFIX) ? "are":"is"));
 
-		broadcast(player->getSock(), creature->getSock(), player->getRoom(), "%M bandages %N.", player, creature);
+		broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M bandages %N.", player, creature);
 		player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
 	}
 
@@ -1237,17 +1237,17 @@ int splHallow(Creature* player, cmd* cmnd, SpellData* spellData) {
 		broadcast(player->getSock(), player->getParent(), "%M casts a hallow spell.", player);
 	}
 
-	if(player->getRoom()->hasPermEffect("hallow")) {
+	if(player->getRoomParent()->hasPermEffect("hallow")) {
 		player->print("The spell didn't take hold.\n");
 		return(0);
 	}
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus())
+		if(player->getRoomParent()->magicBonus())
 			player->print("The room's magical properties increase the power of your spell.\n");
 	}
 
-	player->getRoom()->addEffect("hallow", duration, strength, player, true, player);
+	player->getRoomParent()->addEffect("hallow", duration, strength, player, true, player);
 	return(1);
 }
 
@@ -1271,16 +1271,16 @@ int splUnhallow(Creature* player, cmd* cmnd, SpellData* spellData) {
 	player->print("You cast an unhallow spell.\n");
 	broadcast(player->getSock(), player->getParent(), "%M casts an unhallow spell.", player);
 
-	if(player->getRoom()->hasPermEffect("unhallow")) {
+	if(player->getRoomParent()->hasPermEffect("unhallow")) {
 		player->print("The spell didn't take hold.\n");
 		return(0);
 	}
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus())
+		if(player->getRoomParent()->magicBonus())
 			player->print("The room's magical properties increase the power of your spell.\n");
 	}
 
-	player->getRoom()->addEffect("unhallow", duration, strength, player, true, player);
+	player->getRoomParent()->addEffect("unhallow", duration, strength, player, true, player);
 	return(1);
 }

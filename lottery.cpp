@@ -246,7 +246,7 @@ time_t Config::getLotteryRunTime() {
 	return(lotteryRunTime);
 }
 int cmdClaim(Player* player, cmd* cmnd) {
-	BaseRoom *inRoom = player->getRoom();
+	BaseRoom *inRoom = player->getRoomParent();
 	Object	*ticket=0;
 	long	prize=0;
 

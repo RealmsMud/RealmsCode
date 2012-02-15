@@ -150,11 +150,11 @@ Exit *findExit(Creature* creature, cmd* cmnd, int val, BaseRoom* room) {
 
 Exit *findExit(Creature* creature, bstring str, int val, BaseRoom* room) {
 	int		match=0;
-	bool	minThree = (creature->getPlayer() && !creature->isStaff() && str.length() < 3);
+	bool	minThree = (creature->getAsPlayer() && !creature->isStaff() && str.length() < 3);
 	str = removeColor(str);
 
 	if(!room)
-		if((room = creature->getRoom()) == NULL)
+		if((room = creature->getRoomParent()) == NULL)
 			return(NULL);
 
 	for(Exit* exit : room->exits) {
@@ -367,8 +367,8 @@ Exit* Exit::getReturnExit(const BaseRoom* parent, BaseRoom** targetRoom) const {
 	Exit* exit=0;
 	bool found = false;
 
-	const AreaRoom* aRoom = parent->getConstAreaRoom();
-	const UniqueRoom* uRoom = parent->getConstUniqueRoom();
+	const AreaRoom* aRoom = parent->getAsConstAreaRoom();
+	const UniqueRoom* uRoom = parent->getAsConstUniqueRoom();
 
 	for(Exit* ext : (*targetRoom)->exits) {
 		if(ext->target.mapmarker.getArea()) {
@@ -440,7 +440,7 @@ void Exit::addEffectReturnExit(bstring effect, long duration, int strength, cons
 
 	addEffect(effect, duration, strength, NULL, true, owner);
 	// switch the meaning of exit
-	Exit* exit = getReturnExit(owner->getRoom(), &targetRoom);
+	Exit* exit = getReturnExit(owner->getConstRoomParent(), &targetRoom);
 	if(exit)
 		exit->addEffect(effect, duration, strength, NULL, true, owner);
 }

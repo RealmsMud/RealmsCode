@@ -1215,23 +1215,23 @@ bool Config::swapIsInteresting(const MudObject* target) const {
 	if(!isSwapping())
 		return(false);
 
-	const Monster* monster = target->getConstMonster();
+	const Monster* monster = target->getAsConstMonster();
 	if(monster && monster->swapIsInteresting(currentSwap))
 		return(true);
 
-	const Player* player = target->getConstPlayer();
+	const Player* player = target->getAsConstPlayer();
 	if(player && player->swapIsInteresting(currentSwap))
 		return(true);
 
-	const Object* object = target->getConstObject();
+	const Object* object = target->getAsConstObject();
 	if(object && object->swapIsInteresting(currentSwap))
 		return(true);
 
-	const AreaRoom* aRoom = target->getConstAreaRoom();
+	const AreaRoom* aRoom = target->getAsConstAreaRoom();
 	if(aRoom && aRoom->swapIsInteresting(currentSwap))
 		return(true);
 
-	const UniqueRoom* uRoom = target->getConstUniqueRoom();
+	const UniqueRoom* uRoom = target->getAsConstUniqueRoom();
 	if(uRoom && uRoom->swapIsInteresting(currentSwap))
 		return(true);
 

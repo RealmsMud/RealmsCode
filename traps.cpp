@@ -59,8 +59,8 @@ void rock_slide(Player* player) {
 	Player	*target=0;
 	int		dmg=0;
 
-	PlayerSet::iterator pIt = player->getRoom()->players.begin();
-	PlayerSet::iterator pEnd = player->getRoom()->players.end();
+	PlayerSet::iterator pIt = player->getRoomParent()->players.begin();
+	PlayerSet::iterator pEnd = player->getRoomParent()->players.end();
 	while(pIt != pEnd) {
 		target = (*pIt++);
 
@@ -210,7 +210,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 				return(0);
 
 			print("You fell into a pit trap!\n");
-			broadcast(getSock(), getRoom(), "%M fell into a pit trap!", this);
+			broadcast(getSock(), getRoomParent(), "%M fell into a pit trap!", this);
 
 			deleteFromRoom(room);
 			addToRoom(newRoom);
@@ -228,7 +228,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 			if(hp.getCur() < 1)
 				die(PIT);
 			else
-				checkTraps(newRoom->getUniqueRoom());
+				checkTraps(newRoom->getAsUniqueRoom());
 		}
 		break;
 
@@ -239,7 +239,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 				return(0);
 
 			print("You tumble downward uncontrollably!\n");
-			broadcast(getSock(), getRoom(), "%M tumbles downward uncontrollably!", this);
+			broadcast(getSock(), getRoomParent(), "%M tumbles downward uncontrollably!", this);
 			deleteFromRoom(room);
 			addToRoom(newRoom);
 			doPetFollow();
@@ -254,7 +254,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 			if(hp.getCur() < 1)
 				die(SPLAT);
 			else
-				checkTraps(newRoom->getUniqueRoom());
+				checkTraps(newRoom->getAsUniqueRoom());
 		}
 		break;
 
@@ -268,11 +268,11 @@ int Player::doCheckTraps(UniqueRoom* room) {
 
 
 		print("You are overcome by vertigo!\n");
-		broadcast(getSock(), getRoom(), "%M vanishes!", this);
+		broadcast(getSock(), getRoomParent(), "%M vanishes!", this);
 		deleteFromRoom(room);
 		addToRoom(newRoom);
 		doPetFollow();
-		checkTraps(newRoom->getUniqueRoom());
+		checkTraps(newRoom->getAsUniqueRoom());
 		break;
 
 	case TRAP_CHUTE:
@@ -281,18 +281,18 @@ int Player::doCheckTraps(UniqueRoom* room) {
 			return(0);
 
 		print("You fall down a chute!\n");
-		broadcast(getSock(), getRoom(), "%M fell down a chute!", this);
+		broadcast(getSock(), getRoomParent(), "%M fell down a chute!", this);
 		deleteFromRoom(room);
 		addToRoom(newRoom);
 		doPetFollow();
-		checkTraps(newRoom->getUniqueRoom());
+		checkTraps(newRoom->getAsUniqueRoom());
 
 		break;
 
 	case TRAP_ROCKS:
 		if(!isEffected("fly")) {
 			print("You have triggered a rock slide!\n");
-			broadcast(getSock(), getRoom(), "%M triggers a rock slide!", this);
+			broadcast(getSock(), getRoomParent(), "%M triggers a rock slide!", this);
 
 			rock_slide(this);
 		}
@@ -305,7 +305,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 
 		print("You have triggered an avalanche of bones!\n");
 		print("You are knocked down by its immense weight!\n");
-		broadcast(getSock(), getRoom(), "%M was crushed by an avalanche of bones!", this);
+		broadcast(getSock(), getRoomParent(), "%M was crushed by an avalanche of bones!", this);
 		deleteFromRoom(room);
 		addToRoom(newRoom);
 		doPetFollow();
@@ -320,7 +320,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 		if(hp.getCur() < 1)
 			die(BONES);
 		else
-			checkTraps(newRoom->getUniqueRoom());
+			checkTraps(newRoom->getAsUniqueRoom());
 
 		break;
 
@@ -332,8 +332,8 @@ int Player::doCheckTraps(UniqueRoom* room) {
 
 			print("You fell into a pit!\n");
 			print("You are impaled by spikes!\n");
-			broadcast(getSock(), getRoom(), "%M fell into a pit!", this);
-			broadcast(getSock(), getRoom(), "It has spikes at the bottom!");
+			broadcast(getSock(), getRoomParent(), "%M fell into a pit!", this);
+			broadcast(getSock(), getRoomParent(), "It has spikes at the bottom!");
 			deleteFromRoom(room);
 			addToRoom(newRoom);
 			doPetFollow();
@@ -350,13 +350,13 @@ int Player::doCheckTraps(UniqueRoom* room) {
 			if(hp.getCur() < 1)
 				die(SPIKED_PIT);
 			else
-				checkTraps(newRoom->getUniqueRoom());
+				checkTraps(newRoom->getAsUniqueRoom());
 		}
 		break;
 
 	case TRAP_DART:
 		print("You triggered a hidden dart!\n");
-		broadcast(getSock(), getRoom(), "%M gets hit by a hidden poisoned dart!", this);
+		broadcast(getSock(), getRoomParent(), "%M gets hit by a hidden poisoned dart!", this);
 		trapDamage.set(mrand(1,10));
 		if(chkSave(DEA,this,-1)) {
 			print("The dart barely scratches you.\n");
@@ -378,7 +378,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 	case TRAP_ARROW:
 		print("You triggered an arrow trap!\n");
 		print("A flight of arrows peppers you!\n");
-		broadcast(getSock(), getRoom(), "%M gets hit by a flight of arrows!", this);
+		broadcast(getSock(), getRoomParent(), "%M gets hit by a flight of arrows!", this);
 		trapDamage.set(mrand(15,20));
 
 		if(chkSave(DEA,this,0)) {
@@ -396,7 +396,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 	case TRAP_SPEAR:
 		print("You triggered a spear trap!\n");
 		print("A giant spear impales you!\n");
-		broadcast(getSock(), getRoom(), "%M gets hit by a giant spear!", this);
+		broadcast(getSock(), getRoomParent(), "%M gets hit by a giant spear!", this);
 		trapDamage.set(mrand(10, 15));
 
 		if(chkSave(DEA, this, 0)) {
@@ -414,7 +414,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 	case TRAP_CROSSBOW:
 		print("You triggered a crossbow trap!\n");
 		print("A giant poisoned crossbow bolt hits you in the chest!\n");
-		broadcast(getSock(), getRoom(), "%M gets hit by a giant crossbow bolt!", this);
+		broadcast(getSock(), getRoomParent(), "%M gets hit by a giant crossbow bolt!", this);
 		trapDamage.set(mrand(20, 25));
 
 		if(chkSave(DEA, this, 0)) {
@@ -441,7 +441,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 	case TRAP_GASP:
 		print("You triggered a gas trap!\n");
 		print("Gas rapidly fills the room!\n");
-		broadcast(getSock(), getRoom(), "Gas rapidly fills the room!");
+		broadcast(getSock(), getRoomParent(), "Gas rapidly fills the room!");
 
 		if(!immuneToPoison()) {
 			if(!chkSave(POI, this, -15)) {
@@ -463,7 +463,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 	case TRAP_GASB:
 		print("You triggered a gas trap!\n");
 		print("Gas rapidly fills the room!\n");
-		broadcast(getSock(), getRoom(), "Gas rapidly fills the room!");
+		broadcast(getSock(), getRoomParent(), "Gas rapidly fills the room!");
 
 		if(!chkSave(DEA, this, 0)) {
 			print("The billowing red cloud blinds your eyes!\n");
@@ -474,9 +474,9 @@ int Player::doCheckTraps(UniqueRoom* room) {
 	case TRAP_GASS:
 		print("You triggered a gas trap!\n");
 		print("Gas rapidly fills the room!\n");
-		broadcast(getSock(), getRoom(), "Gas rapidly fills the room!");
+		broadcast(getSock(), getRoomParent(), "Gas rapidly fills the room!");
 
-		for(Player* fPly : getRoom()->players) {
+		for(Player* fPly : getRoomParent()->players) {
 			if(!fPly->chkSave(DEA,fPly,0)) {
 				if(!fPly->flagIsSet(P_RESIST_STUN)) {
 					fPly->print("Billowing white clouds surrounds you!\n");
@@ -496,11 +496,11 @@ int Player::doCheckTraps(UniqueRoom* room) {
 		if(room->getTrap() == TRAP_MUD) {
 			print("You sink into chest high mud!\n");
 			print("You are stuck!\n");
-			broadcast(getSock(), getRoom(), "%M sank chest deep into some mud!", this);
+			broadcast(getSock(), getRoomParent(), "%M sank chest deep into some mud!", this);
 		} else if(room->getTrap() == TRAP_WEB) {
 			print("You brush against some large spider webs!\n");
 			print("You are stuck!\n");
-			broadcast(getSock(), getRoom(), "%M stuck to some large spider webs!", this);
+			broadcast(getSock(), getRoomParent(), "%M stuck to some large spider webs!", this);
 		}
 
 		if(chkSave(DEA, this , -1))
@@ -516,7 +516,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 		} else if(!chkSave(SPL, this, -25)) {
 			printColor("^BYou become tranlucent and fade away!\n");
 			printColor("You've been transported to the ethereal plane!\n");
-			broadcast(getSock(), getRoom(), "^B%N becomes translucent and fades away!", this);
+			broadcast(getSock(), getRoomParent(), "^B%N becomes translucent and fades away!", this);
 			etherealTravel(this);
 		} else {
 			print("You feel a warm feeling all over.\n");
@@ -533,7 +533,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 			if(!target)
 				continue;
 
-			ply = target->getPlayer();
+			ply = target->getAsPlayer();
 
 			if(ply && ply->flagIsSet(P_DM_INVIS))
 				continue;
@@ -561,7 +561,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 						ply->die(PIERCER);
 						continue;
 					} else {
-						Monster* mon = target->getMonster();
+						Monster* mon = target->getAsMonster();
 						broadcast(NULL,  room, "%M was killed!", mon);
 						if(mon->flagIsSet(M_PERMENANT_MONSTER))
 							mon->diePermCrt();
@@ -584,7 +584,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 	case TRAP_FIRE:
 		print("You set off a fire trap!\n");
 		print("Flames engulf you!\n");
-		broadcast(getSock(), getRoom(), "%M is engulfed by flames!", this);
+		broadcast(getSock(), getRoomParent(), "%M is engulfed by flames!", this);
 		trapDamage.set(mrand(20,40));
 
 		if(chkSave(BRE, this, 0)) {
@@ -608,7 +608,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 	case TRAP_FROST:
 		print("You are hit by a blast of ice!\n");
 		print("Frost envelopes you!\n");
-		broadcast(getSock(), getRoom(), "%M is engulfed by a cloud of frost!", this);
+		broadcast(getSock(), getRoomParent(), "%M is engulfed by a cloud of frost!", this);
 		trapDamage.set(mrand(20,40));
 
 		if(chkSave(BRE, this, 0)) {
@@ -632,7 +632,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 	case TRAP_ELEC:
 		print("You are hit by a crackling blue bolt!\n");
 		print("Electricity pulses through your body!\n");
-		broadcast(getSock(), getRoom(), "%M is surrounded by crackling blue arcs!", this);
+		broadcast(getSock(), getRoomParent(), "%M is surrounded by crackling blue arcs!", this);
 		trapDamage.set(mrand(20,40));
 
 		if(chkSave(BRE, this, 0)) {
@@ -654,7 +654,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 	case TRAP_ACID:
 		print("You are blasted by a jet of acid!\n");
 		print("You are immersed in dissolving liquid.\n");
-		broadcast(getSock(), getRoom(), "%M is immersed in acid!", this);
+		broadcast(getSock(), getRoomParent(), "%M is immersed in acid!", this);
 		trapDamage.set(mrand(20,30));
 
 		if(chkSave(BRE, this, 0)) {
@@ -677,7 +677,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 
 	case TRAP_BLOCK:
 		print("You triggered a falling block!\n");
-		broadcast(getSock(), getRoom(), "A large block falls on %N.", this);
+		broadcast(getSock(), getRoomParent(), "A large block falls on %N.", this);
 		trapDamage.set(hp.getMax() / 2);
 
 		if(chkSave(DEA, this, -5)) {
@@ -692,7 +692,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 
 	case TRAP_ICE:
 		print("A giant icicle falls from above!\n");
-		broadcast(getSock(), getRoom(), "%N's vibrations caused a giant icicle to drop!", this);
+		broadcast(getSock(), getRoomParent(), "%N's vibrations caused a giant icicle to drop!", this);
 		trapDamage.set(hp.getMax() / 2);
 
 		if(chkSave(DEA, this, -5)) {
@@ -700,7 +700,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 			print("The icicle slashes you but doesn't impale you.\n");
 		} else {
 			print("You are impaled!\n");
-			broadcast(getSock(), getRoom(), "%N is impaled by a huge icicle!", this);
+			broadcast(getSock(), getRoomParent(), "%N is impaled by a huge icicle!", this);
 		}
 		print("You lost %d hit points.\n", trapDamage.get());
 		hp.decrease(trapDamage.get());
@@ -714,7 +714,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 			break;
 
 		print("You feel an exploding force in your mind!\n");
-		broadcast(getSock(), getRoom(), "An energy bolt strikes %N.", this);
+		broadcast(getSock(), getRoomParent(), "An energy bolt strikes %N.", this);
 
 		if(chkSave(MEN, this,0)) {
 			trapDamage.set(MIN(mp.getCur(),mp.getMax() / 2));
@@ -730,7 +730,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 	case TRAP_RMSPL:
 		print("A foul smelling charcoal cloud surrounds you.\n");
 
-		broadcast(getSock(), getRoom(), "A charcoal cloud surrounds %N.", this);
+		broadcast(getSock(), getRoomParent(), "A charcoal cloud surrounds %N.", this);
 		if(!chkSave(SPL, this,0)) {
 			doDispelMagic();
 			print("Your magic begins to dissolve.\n");
@@ -741,7 +741,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 		printColor("^gYou are covered in oozing green slime.\n");
 
 		if(chkSave(DEA, this, 0)) {
-			broadcast(getSock(), getRoom(), "^gA foul smelling and oozing green slime envelops %N.", this);
+			broadcast(getSock(), getRoomParent(), "^gA foul smelling and oozing green slime envelops %N.", this);
 			stun(mrand(1,10));
 		} else {
 			print("Your possessions begin to dissolve!\n");
@@ -757,7 +757,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 		} else if(!chkSave(SPL, this, 0)) {
 			printColor("^yThe world changes rapidly around you!\n");
 			printColor("You've been teleported!\n");
-			broadcast(getSock(), getRoom(), "%N disappears!", this);
+			broadcast(getSock(), getRoomParent(), "%N disappears!", this);
 			teleport_trap(this);
 		} else {
 			print("You feel a strange tingling all over.\n");
@@ -772,7 +772,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 			printColor("^yYour dimensional-anchor protects you from the word-of-recall trap!^w\n");
 		} else {
 			printColor("^cYou phase in and out of existence.\n");
-			broadcast(getSock(), getRoom(), "%N disappears.", this);
+			broadcast(getSock(), getRoomParent(), "%N disappears.", this);
 
 			newRoom = getRecallRoom().loadRoom(this);
 			if(!newRoom)
@@ -786,7 +786,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 	case TRAP_ALARM:
 		print("You set off an alarm!\n");
 		print("You hope there aren't any guards around.\n\n");
-		broadcast(getSock(), getRoom(), "%M sets off an alarm!\n", this);
+		broadcast(getSock(), getRoomParent(), "%M sets off an alarm!\n", this);
 
 		CatRef	acr;
 
@@ -808,7 +808,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 			tmp_crt = (*mIt++);
 			if(tmp_crt->flagIsSet(M_PERMENANT_MONSTER)) {
 				if(!uRoom->players.empty())
-					broadcast(tmp_crt->getSock(), tmp_crt->getRoom(),
+					broadcast(tmp_crt->getSock(), tmp_crt->getRoomParent(),
 						"%M hears an alarm and leaves to investigate.",tmp_crt);
 				else
 					gServer->addActive(tmp_crt);
@@ -817,7 +817,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 				tmp_crt->diePermCrt();
 				tmp_crt->deleteFromRoom();
 				tmp_crt->addToRoom(room);
-				broadcast(tmp_crt->getSock(), tmp_crt->getRoom(),
+				broadcast(tmp_crt->getSock(), tmp_crt->getRoomParent(),
 					"%M comes to investigate the alarm.", tmp_crt);
 			}
 		}
@@ -930,7 +930,7 @@ void lose_all(Player* player, bool destroyAll, const char* lostTo) {
 			}
 
 			logn("log.dissolve", "%s(L%d) lost %s to %s in room %s.\n",
-				player->name, player->getLevel(), player->ready[i]->name, lostTo, player->getRoom()->fullName().c_str());
+				player->name, player->getLevel(), player->ready[i]->name, lostTo, player->getRoomParent()->fullName().c_str());
 			player->ready[i]->popBag(player, true, false, false, false, true);
 			player->unequip(i+1, UNEQUIP_DELETE);
 		}
@@ -951,7 +951,7 @@ void lose_all(Player* player, bool destroyAll, const char* lostTo) {
 		}
 
 		logn("log.dissolve", "%s(L%d) lost %s to %s in room %s.\n",
-			player->name, player->getLevel(), object->name, lostTo, player->getRoom()->fullName().c_str());
+			player->name, player->getLevel(), object->name, lostTo, player->getRoomParent()->fullName().c_str());
 		object->popBag(player, true, false, false, false, true);
 		player->delObj(object, true, false, true, false);
 		delete object;
@@ -996,10 +996,10 @@ void Player::dissolveItem(Creature* creature) {
 
 
 	if(n) {
-		broadcast(getSock(), getRoom(),"%M destroys %N's %s.", creature, this, ready[n-1]->name);
+		broadcast(getSock(), getRoomParent(),"%M destroys %N's %s.", creature, this, ready[n-1]->name);
 		printColor("%M destroys your %s.\n",creature, ready[n-1]->name);
 		logn("log.dissolve", "%s(L%d) lost %s to acid in room %s.\n",
-			name, level, ready[n-1]->name, getRoom()->fullName().c_str());
+			name, level, ready[n-1]->name, getRoomParent()->fullName().c_str());
 		// Unequip it and don't add it to the inventory, delete it
 		unequip(n, UNEQUIP_DELETE);
 		computeAC();
@@ -1030,7 +1030,7 @@ void Player::loseAcid() {
 				}
 
 				logn("log.dissolve", "%s(L%d) lost %s to acid in room %s.\n",
-					name, level, ready[i]->name, getRoom()->fullName().c_str());
+					name, level, ready[i]->name, getRoomParent()->fullName().c_str());
 				unequip(i+1, UNEQUIP_DELETE);
 			}
 		}
@@ -1054,7 +1054,7 @@ void Player::loseAcid() {
 				printColor("^rYour %s is dissolved by acid!\n", object->name);
 			}
 			logn("log.dissolve", "%s(L%d) lost %s to acid in room %s.\n",
-				name, level, object->name, getRoom()->fullName().c_str());
+				name, level, object->name, getRoomParent()->fullName().c_str());
 			delObj(object, true, false, true, false);
 			delete object;
 		}

@@ -143,13 +143,13 @@ BOOST_PYTHON_MODULE(mud)
 		 */
 		MudObject_exposer.def("removeOppositeEffect",
 				&::MudObject::removeOppositeEffect).def("getPlayer",
-				&MudObject::getPlayer,
+				&MudObject::getAsPlayer,
 				return_value_policy<reference_existing_object>()).def(
-				"getMonster", &MudObject::getMonster,
+				"getMonster", &MudObject::getAsMonster,
 				return_value_policy<reference_existing_object>()).def(
-				"getObject", &MudObject::getObject,
+				"getObject", &MudObject::getAsObject,
 				return_value_policy<reference_existing_object>()).def("getExit",
-				&MudObject::getExit,
+				&MudObject::getAsExit,
 				return_value_policy<reference_existing_object>()).def("equals",
 				&MudObject::equals).def("getId", &MudObject::getIdPython);
 	}
@@ -373,7 +373,7 @@ BOOST_PYTHON_MODULE(MudObjects)
 	.def("send", &Creature::bPrint)
 	.def("getCrtStr", &Creature::getCrtStr, ( bp::arg("viewer")=0l, bp::arg("flags")=(int)(0), bp::arg("num")=(int)(0) ))
 
-	.def("getRoom", &Creature::getRoom, return_value_policy<reference_existing_object>())
+	.def("getRoom", &Creature::getRoomParent, return_value_policy<reference_existing_object>())
 	.def("getTarget", &Creature::getTarget, return_value_policy<reference_existing_object>())
 	.def("getDeity", &Creature::getDeity)
 	.def("getName", &Creature::getName)
@@ -661,12 +661,12 @@ bool addMudObjectToDictionary(object& dictionary, bstring key,
 		return (true);
 	}
 
-	Monster* mPtr = myObject->getMonster();
-	Player* pPtr = myObject->getPlayer();
-	Object* oPtr = myObject->getObject();
-	UniqueRoom* rPtr = myObject->getUniqueRoom();
-	AreaRoom* aPtr = myObject->getAreaRoom();
-	Exit* xPtr = myObject->getExit();
+	Monster* mPtr = myObject->getAsMonster();
+	Player* pPtr = myObject->getAsPlayer();
+	Object* oPtr = myObject->getAsObject();
+	UniqueRoom* rPtr = myObject->getAsUniqueRoom();
+	AreaRoom* aPtr = myObject->getAsAreaRoom();
+	Exit* xPtr = myObject->getAsExit();
 
 	if (mPtr) {
 		dictionary[key.c_str()] = ptr(mPtr);

@@ -65,12 +65,12 @@ void steal_gold(Player* player, Creature* creature) {
 	if(creature->isMonster()) {
 		if(creature->flagIsSet(M_UNKILLABLE) && !player->checkStaff("%s don't have anything you want.\n", creature->upHeShe()))
 			return;
-		if( creature->getMonster()->isEnemy(player) &&
+		if( creature->getAsMonster()->isEnemy(player) &&
 			!player->checkStaff("Not while %s's attacking you.\n", creature->heShe()))
 			return;
 
 	} else {
-		if(	player->getRoom()->isPkSafe() &&
+		if(	player->getRoomParent()->isPkSafe() &&
 			!player->isCt() &&
 			!creature->flagIsSet(P_OUTLAW))
 		{
@@ -146,7 +146,7 @@ void steal_gold(Player* player, Creature* creature) {
 
 		if(creature->isPlayer())
 			log_immort(false,player, "%s stole %d gold from %s.\n", player->name, amt, creature->name);
-		if(creature->getMonster())
+		if(creature->getAsMonster())
 			gServer->logGold(GOLD_IN, player, Money(amt, GOLD), creature, "StealGold");
 
 
@@ -161,7 +161,7 @@ void steal_gold(Player* player, Creature* creature) {
 			else
 				creature->print("Someone tried to steal something from you.\n");
 		} else
-			creature->getMonster()->addEnemy(player);
+			creature->getAsMonster()->addEnemy(player);
 
 	}
 }
@@ -171,7 +171,7 @@ void steal_gold(Player* player, Creature* creature) {
 //*********************************************************************
 
 int get_steal_chance(Player* player, Creature* target, Object* object) {
-	Player	*pTarget = target->getPlayer();
+	Player	*pTarget = target->getAsPlayer();
 	int		chance=0, classmod=0, bulk=0, weight=0, level=0;
 
 	if(!target || !object || !player)
@@ -188,7 +188,7 @@ int get_steal_chance(Player* player, Creature* target, Object* object) {
 		object->flagIsSet(O_STARTING) ||
 		!Unique::canGet(player, object, true) ||
 		// no stealing uniques from monsters
-		(Unique::is(object) && !target->getPlayer()) ||
+		(Unique::is(object) && !target->getAsPlayer()) ||
 		object->getQuestnum()
 	)
 		return(0);
@@ -339,7 +339,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 	Creature* target=0;
 	Monster	*mTarget=0;
 	Player* pTarget=0;
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	Object		*object=0;
 	long		i=0, t = time(0);
 	int			cantSteal=0;
@@ -436,8 +436,8 @@ int cmdSteal(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	mTarget = target->getMonster();
-	pTarget = target->getPlayer();
+	mTarget = target->getAsMonster();
+	pTarget = target->getAsPlayer();
 
 	if(pTarget) {
 		// Cannot steal from those they are dueling with.
@@ -604,7 +604,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 
 				// If assisting mob has an enemy and that enemy is NOT the
 				// thief, they will not be watching because they are distracted.
-				if(assist->hasEnemy() && !assist->getMonster()->isEnemy(player))
+				if(assist->hasEnemy() && !assist->getAsMonster()->isEnemy(player))
 					continue;
 
 				// If assisting monster can't see the thief,
@@ -630,7 +630,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 				if(roll > caught && !player->isCt()) {
 					player->printColor("^r%M notices you in the act and attacks!\n", assist);
 					broadcast(player->getSock(), room, "^r%M catches %N stealing and attacks!", assist, player);
-					assist->getMonster()->addEnemy(player);
+					assist->getAsMonster()->addEnemy(player);
 				}
 			}
 		}
@@ -653,7 +653,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 		// Correctly handle quest items, objects and such
 		// NOTE: Object MAY be undefined after this function, don't reference it any longer
 		target->delObj(object);
-		Limited::transferOwner(target->getPlayer(), player, object);
+		Limited::transferOwner(target->getAsPlayer(), player, object);
 		doGetObject(object, player, false);
 
 	} else {

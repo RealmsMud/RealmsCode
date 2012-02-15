@@ -92,7 +92,7 @@ void command(Socket* sock, bstring str) {
 
 	if(ply->getClass() == CARETAKER && !dmIson() )
 		log_immort(false, ply, "%s-%d (%s): %s\n", ply->name, sock->getFd(),
-			ply->getRoom()->fullName().c_str(), str.c_str());
+			ply->getRoomParent()->fullName().c_str(), str.c_str());
 
 	if(str == "!")
 		str = ply->getLastCommand();
@@ -510,7 +510,7 @@ int cmdPayToll(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	UniqueRoom* uRoom = newRoom->getUniqueRoom();
+	UniqueRoom* uRoom = newRoom->getAsUniqueRoom();
 	if(uRoom && !player->canEnter(uRoom, true))
 		return(0);
 
@@ -538,7 +538,7 @@ unsigned long tollcost(const Player* player, const Exit* exit, Monster* keeper) 
 		cost = cost * player->getLevel() * 2;
 
 	if(!keeper)
-		keeper = player->getRoom()->getTollkeeper();
+		keeper = player->getConstRoomParent()->getTollkeeper();
 	if(keeper) {
 		Money money;
 		money.set(cost, GOLD);

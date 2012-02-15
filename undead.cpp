@@ -50,7 +50,7 @@ int cmdBite(Player* player, cmd* cmnd) {
     if(!(target = player->findVictim(cmnd, 1, true, false, "Bite what?\n", "You don't see that here.\n")))
 		return(0);
 
-	pTarget = target->getPlayer();
+	pTarget = target->getAsPlayer();
 
 	if(!player->canAttack(target))
 		return(0);
@@ -69,7 +69,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 		!player->checkStaff("That won't work on the undead.\n")
 	) {
 		if(target->isMonster())
-			target->getMonster()->addEnemy(player);
+			target->getAsMonster()->addEnemy(player);
 		return(0);
 	}
 
@@ -87,7 +87,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 	if(pTarget) {
 
 	} else {
-		target->getMonster()->addEnemy(player);
+		target->getAsMonster()->addEnemy(player);
 		// Activates lag protection.
 		if(player->flagIsSet(P_LAG_PROTECTION_SET))
 			player->setFlag(P_LAG_PROTECTION_ACTIVE);
@@ -181,7 +181,7 @@ int cmdMist(Player* player, cmd* cmnd) {
 		player->print("You are unable to turn to mist.\n");
 		return(0);
 	}
-	if(player->getRoom()->flagIsSet(R_ETHEREAL_PLANE)) {
+	if(player->getRoomParent()->flagIsSet(R_ETHEREAL_PLANE)) {
 		player->print("That is not possible here.\n");
 		return(0);
 	}
@@ -201,7 +201,7 @@ int cmdMist(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(player->getRoom()->flagIsSet(R_DISPERSE_MIST)) {
+	if(player->getRoomParent()->flagIsSet(R_DISPERSE_MIST)) {
 		player->print("Swirling vapors prevent you from entering mist form.\n");
 		return(0);
 	}
@@ -246,7 +246,7 @@ bool Player::canMistNow() const {
 		return(false);
 	// does the room let them mist anyway?
 	// BUG: callin flagIsSet() with possibly invalid getRoom()
-	if(getRoom() && (getRoom()->flagIsSet(R_VAMPIRE_COVEN) || getRoom()->flagIsSet(R_CAN_ALWAYS_MIST)))
+	if(getConstRoomParent() && (getConstRoomParent()->flagIsSet(R_VAMPIRE_COVEN) || getConstRoomParent()->flagIsSet(R_CAN_ALWAYS_MIST)))
 		return(true);
 	// otherwise, not during the day
 	if(isDay())
@@ -313,7 +313,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 		return(0);
 
 	if(target->isMonster()) {
-		if(target->getMonster()->isEnemy(player)) {
+		if(target->getAsMonster()->isEnemy(player)) {
 			player->print("Not while you are already fighting %s.\n", target->himHer());
 			return(0);
 		}
@@ -322,7 +322,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 
 
 	if(	target->isPlayer() &&
-		(	player->vampireCharmed(target->getPlayer()) ||
+		(	player->vampireCharmed(target->getAsPlayer()) ||
 			(target->hasCharm(player->name) && player->flagIsSet(P_CHARMED))
 		)
 	) {
@@ -360,7 +360,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 		player->checkImprove("hypnotize", false);
 		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M attempts to hypnotize %N.",player, target);
 		if(target->isMonster()) {
-			target->getMonster()->addEnemy(player);
+			target->getAsMonster()->addEnemy(player);
 			if(player->flagIsSet(P_LAG_PROTECTION_SET)) {    // Activates lag protection.
 				player->setFlag(P_LAG_PROTECTION_ACTIVE);
 			}
@@ -464,7 +464,7 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
 		player->checkImprove("regenerate", true);
 		broadcast(player->getSock(), player->getParent(), "%M regenerates.", player);
 
-		for(Player* ply : player->getRoom()->players) {
+		for(Player* ply : player->getRoomParent()->players) {
 			if(!ply->isUndead())
 				ply->print("You shiver from a sudden deathly coldness.\n");
 		}
@@ -534,7 +534,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
     if(!(target = player->findVictim(cmnd, 1, true, false, "Drain whom?\n", "You don't see that here.\n")))
    		return(0);
 
-	pTarget = target->getPlayer();
+	pTarget = target->getAsPlayer();
 
     player->smashInvis();
 	player->interruptDelayedActions();
@@ -560,7 +560,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 				player->print("Sorry, that creature is lawful.\n");
 				return(0);
 			}
-			if(player->getRoom()->isPkSafe() && !target->getPlayerMaster()->flagIsSet(P_OUTLAW)) {
+			if(player->getRoomParent()->isPkSafe() && !target->getPlayerMaster()->flagIsSet(P_OUTLAW)) {
 				player->print("No killing allowed in this room.\n");
 				return(0);
 			}
@@ -575,7 +575,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 	}
 
 	if(target->isMonster())
-		target->getMonster()->addEnemy(player);
+		target->getAsMonster()->addEnemy(player);
 
 	player->lasttime[LT_DRAIN_LIFE].ltime = t;
 	player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);

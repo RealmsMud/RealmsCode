@@ -322,8 +322,8 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
 	if(name[0] == '\0' || rootNode == NULL)
 		return(-1);
 
-	const Player	*pPlayer = getConstPlayer();
-	const Monster	*mMonster = getConstMonster();
+	const Player	*pPlayer = getAsConstPlayer();
+	const Monster	*mMonster = getAsConstMonster();
 
 	if(pPlayer) {
 		xml::newProp(rootNode, "Name", pPlayer->name);

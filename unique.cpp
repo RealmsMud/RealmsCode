@@ -142,7 +142,7 @@ void UniqueOwner::doRemove(Player* player, Object* parent, Object* object, bool 
 			player->delObj(object);
 		else if(parent)
 			del_obj_obj(object, parent);
-		UniqueRoom* uRoom = object->parent_room->getUniqueRoom();
+		UniqueRoom* uRoom = object->parent_room->getAsUniqueRoom();
 		object->deleteFromRoom();
 		if(uRoom)
 			uRoom->saveToFile(0);

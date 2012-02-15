@@ -685,11 +685,11 @@ void Server::updateRandom(long t) {
 	for(Socket * sock : sockets) {
 		player = sock->getPlayer();
 
-		if(!player || !player->getRoom())
+		if(!player || !player->getRoomParent())
 			continue;
 		uRoom = player->parent_rom;
 		aRoom = player->area_room;
-		room = player->getRoom();
+		room = player->getRoomParent();
 
 		wander = 0;
 		if(uRoom) {
@@ -816,7 +816,7 @@ void Server::updateActive(long t) {
 		}
 
 
-		room = monster->getRoom();
+		room = monster->getRoomParent();
 
 		// Reset's mob's smack-talking broadcasts at 7am every day
 		if(tt == 7 && ((t - last_time_update) / 2) == 0)
@@ -834,7 +834,7 @@ void Server::updateActive(long t) {
 			}
 			if(!immort) {
 				timetowander=1;
-				broadcast(NULL, monster->getRoom(), "%M wanders slowly away.", monster);
+				broadcast(NULL, monster->getRoomParent(), "%M wanders slowly away.", monster);
 				monster->deleteFromRoom();
 				gServer->delActive(monster);
 				free_crt(monster);
@@ -872,7 +872,7 @@ void Server::updateActive(long t) {
 		        if(mons == monster)
 		            continue;
 				if(	mons->flagIsSet(M_PERMENANT_MONSTER) &&
-					!monster->willAssist(mons->getMonster()) &&
+					!monster->willAssist(mons->getAsMonster()) &&
 					!monster->isEnemy(mons)
 				)
 					monster->addEnemy(mons);
@@ -883,7 +883,7 @@ void Server::updateActive(long t) {
             for(Monster* mons : room->monsters) {
                 if(mons == monster)
                     continue;
-				if(	!monster->willAssist(mons->getMonster()) &&
+				if(	!monster->willAssist(mons->getAsMonster()) &&
 					!mons->flagIsSet(M_PERMENANT_MONSTER) &&
 					!monster->isEnemy(mons)
 				)
@@ -900,7 +900,7 @@ void Server::updateActive(long t) {
 				monster->mp.getCur() >=6 &&
 				(mrand(1,100) < (30+monster->intelligence.getCur()/10)))
 			{
-				broadcast(NULL, monster->getRoom(), "%M casts a curepoison spell on %sself.", monster, monster->himHer());
+				broadcast(NULL, monster->getRoomParent(), "%M casts a curepoison spell on %sself.", monster, monster->himHer());
 				monster->mp.decrease(6);
 				monster->curePoison();
 				continue;
@@ -2000,7 +2000,7 @@ Creature* Server::lookupCrtId(const bstring& toLookup) {
     if(it == registeredIds.end())
         return(NULL);
     else
-        return(((*it).second)->getCreature());
+        return(((*it).second)->getAsCreature());
 
 }
 bstring Server::getRegisteredList() {
@@ -2109,7 +2109,7 @@ void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, 
 
 	if(target) {
 	    targetStr = stripColor(target->getName());
-	    Object* oTarget = target->getObject();
+	    Object* oTarget = target->getAsObject();
 	    if(oTarget) {
 	        targetStr += "(" + oTarget->info.str() + ")";
 	        if(dir == GOLD_IN) {
@@ -2118,11 +2118,11 @@ void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, 
 	    }
 	}
 	bstring room = "";
-	if(player->getRoom()) {
-	    if(player->getRoom()->getUniqueRoom()) {
-	        room = bstring(player->getRoom()->getName()) + "(" + player->getRoom()->getUniqueRoom()->info.str() + ")";
-	    } else if (player->getRoom()->getAreaRoom()) {
-	        room = player->getRoom()->getAreaRoom()->area->name + "(" + player->getRoom()->getAreaRoom()->mapmarker.str() + ")";
+	if(player->getRoomParent()) {
+	    if(player->getRoomParent()->getAsUniqueRoom()) {
+	        room = bstring(player->getRoomParent()->getName()) + "(" + player->getRoomParent()->getAsUniqueRoom()->info.str() + ")";
+	    } else if (player->getRoomParent()->getAsAreaRoom()) {
+	        room = player->getRoomParent()->getAsAreaRoom()->area->name + "(" + player->getRoomParent()->getAsAreaRoom()->mapmarker.str() + ")";
 	    }
 	}
 	// logType

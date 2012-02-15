@@ -262,7 +262,7 @@ int adjustStat(Creature* creature, Stat* stat, int amt) {
 
 bool Creature::addStatModEffect(EffectInfo* effect) {
 	Stat* stat=0;
-	Player* pThis = getPlayer();
+	Player* pThis = getAsPlayer();
 	bool good;
 	int hpMod = 0;
 	int mpMod = 0;
@@ -350,7 +350,7 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 
 bool Creature::remStatModEffect(EffectInfo* effect) {
 	Stat* stat=0;
-	Player* pThis = getPlayer();
+	Player* pThis = getAsPlayer();
 	int hpMod = 0;
 	int mpMod = 0;
 

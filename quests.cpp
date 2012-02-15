@@ -1089,7 +1089,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
 		}
 
 		if(response == "" && action == "") {
-			broadcast(NULL, player->getRoom(), "%M shrugs.", target);
+			broadcast(NULL, player->getRoomParent(), "%M shrugs.", target);
 			return(0);
 		}
 	}
@@ -1102,7 +1102,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
 		target->doTalkAction(player, action);
 
 	if(response == "" && action == "")
-		broadcast(NULL, player->getRoom(), "%M doesn't say anything.", target);
+		broadcast(NULL, player->getRoomParent(), "%M doesn't say anything.", target);
 
 	return(0);
 }
@@ -1270,7 +1270,7 @@ bool Monster::doTalkAction(Player* target, bstring action) {
 
 				target->addObj(object);
 				target->printColor("%M gives you %1P\n", this, object);
-				broadcast(target->getSock(), target->getRoom(), "%M gives %N %1P\n", this, target, object);
+				broadcast(target->getSock(), target->getRoomParent(), "%M gives %N %1P\n", this, target, object);
 			} else
 				target->print("%M has nothing to give you.\n", this);
 
@@ -1300,7 +1300,7 @@ bool Monster::doTalkAction(Player* target, bstring action) {
 			return(false);
 
 		target->printColor("^m%M shares ^W%s^m with you.\n",  this, questInfo->getName().c_str());
-		broadcast(target->getSock(), target->getRoom(), "^x%M shares ^W%s^x with %N.\n",
+		broadcast(target->getSock(), target->getRoomParent(), "^x%M shares ^W%s^x with %N.\n",
 			this, questInfo->getName().c_str(), target);
 		questInfo->printReceiveString(target, this);
 		target->addQuest(questInfo);
@@ -1504,7 +1504,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
 
 				// We've found the quest that matches the string the user put in, now lets see if we can
 				// find the finishing monster
-				for(Monster* mons : player->getRoom()->monsters) {
+				for(Monster* mons : player->getRoomParent()->monsters) {
 					if(	mons->info == quest->getParentQuest()->getTurnInMob() ) {
 						// We have a turn in monster, lets complete the quest
 						if(mons->isEnemy(player)) {

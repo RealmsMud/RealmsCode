@@ -215,7 +215,7 @@ int cmdPledge(Player* player, cmd* cmnd) {
 		player->print("You have already joined.\n");
 		return(0);
 	}
-	if(!player->getRoom()->flagIsSet(R_PLEDGE)) {
+	if(!player->getRoomParent()->flagIsSet(R_PLEDGE)) {
 		player->print("You cannot join here.\n");
 		return(0);
 	}
@@ -307,7 +307,7 @@ int cmdRescind(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(!player->getRoom()->flagIsSet(R_RESCIND)) {
+	if(!player->getRoomParent()->flagIsSet(R_RESCIND)) {
 		player->print("You cannot rescind from your clan here.\n");
 		return(0);
 	}

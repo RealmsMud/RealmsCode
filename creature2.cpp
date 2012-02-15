@@ -311,7 +311,7 @@ int Monster::getNumMobs() const {
 	if(flagIsSet(M_DM_FOLLOW) || flagIsSet(M_WAS_PORTED))
 		return(0);
 
-	for(Monster* mons : getRoom()->monsters) {
+	for(Monster* mons : getConstRoomParent()->monsters) {
 	    if(!strcmp(mons->name, name)) {
 	        i++;
 	        if(mons == this)
@@ -424,7 +424,7 @@ int Monster::doHarmfulAuras() {
 		lasttime[LT_M_AURA_ATTACK].interval = 20L;
 	}
 
-	inRoom = getRoom();
+	inRoom = getRoomParent();
 	if(!inRoom)
 		return(0);
 

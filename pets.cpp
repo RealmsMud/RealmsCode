@@ -109,7 +109,7 @@ Monster* Creature::findPet(bstring pName, int pNum) {
 bool Creature::isPet() const {
     if(isPlayer())
         return(false);
-    return(flagIsSet(M_PET) && getConstMonster()->getMaster());
+    return(flagIsSet(M_PET) && getAsConstMonster()->getMaster());
 }
 
 void Creature::dismissPet(Monster* pet) {
@@ -117,12 +117,12 @@ void Creature::dismissPet(Monster* pet) {
 		return;
 
 	print("You dismiss %N.\n", pet);
-	broadcast(getSock(), getRoom(), "%M dismisses %N.", this, pet);
+	broadcast(getSock(), getRoomParent(), "%M dismisses %N.", this, pet);
 
 	if(pet->isUndead())
-		broadcast(NULL, getRoom(), "%M wanders away.", pet);
+		broadcast(NULL, getRoomParent(), "%M wanders away.", pet);
 	else
-		broadcast(NULL, getRoom(), "%M fades away.", pet);
+		broadcast(NULL, getRoomParent(), "%M fades away.", pet);
 	pet->die(this);
 
 }

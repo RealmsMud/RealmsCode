@@ -767,7 +767,7 @@ bool Area::move(Player* player, MapMarker *mapmarker) {
 	room->setStayInMemory(true);
 
 	// everyone leaves room
-	BaseRoom* old_room = player->getRoom();
+	BaseRoom* old_room = player->getRoomParent();
 	player->deleteFromRoom();
 
 	room->killMortalObjects();

@@ -177,7 +177,7 @@ char *alignmentString(Creature* player) {
 
 	if(	(player->flagIsSet(P_NO_PKILL) ||
 		player->flagIsSet(P_DIED_IN_DUEL) ||
-		player->getRoom()->isPkSafe()) && (player->flagIsSet(P_CHAOTIC) ||
+		player->getRoomParent()->isPkSafe()) && (player->flagIsSet(P_CHAOTIC) ||
 		player->getClan())
 	)
 		strcat(returnStr, "Neutral");

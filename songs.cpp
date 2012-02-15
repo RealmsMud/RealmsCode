@@ -183,7 +183,7 @@ bool Creature::stopPlaying(bool echo) {
 
 	if(echo) {
 		print("You stop playing \"%s\"\n", getPlaying()->getName().c_str());
-		getRoom()->print(getSock(), "%M stops playing %s\n", this, getPlaying()->getName().c_str());
+		getRoomParent()->print(getSock(), "%M stops playing %s\n", this, getPlaying()->getName().c_str());
 	}
 	playing = NULL;
 	return(true);
@@ -220,8 +220,8 @@ bool Creature::pulseSong(long t) {
 			}
 		}
 		if(targetType.equals("room", false)) {
-		    for(Player* ply : getRoom()->players) {
-				if(getPlayer() && ply->getPlayer() && getPlayer()->isDueling(ply->getName()))
+		    for(Player* ply : getRoomParent()->players) {
+				if(getAsPlayer() && ply->getAsPlayer() && getAsPlayer()->isDueling(ply->getName()))
 					continue;
 				ply->addEffect(playing->getEffect(), -2, -2, this)->setDuration(playing->getDuration());
 			}
@@ -305,7 +305,7 @@ int cmdPlay(Player* player, cmd* cmnd) {
 		player->setPlaying(song);
 
 	player->print("You start playing \"%s\"\n", song->getName().c_str());
-	player->getRoom()->print(player->getSock(), "%M starts playing %s\n", player, song->getName().c_str());
+	player->getRoomParent()->print(player->getSock(), "%M starts playing %s\n", player, song->getName().c_str());
 
 	return(0);
 }

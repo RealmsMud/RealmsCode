@@ -85,69 +85,98 @@ bool Container::add(Containable* toAdd) {
 }
 
 bool Containable::inRoom() const {
-	return(typeid(*this) == typeid(BaseRoom));
+	return(parent && parent->isRoom());
 }
 bool Containable::inUniqueRoom() const {
-	return(typeid(*this) == typeid(UniqueRoom));
+	return(parent && parent->isUniqueRoom());
 }
 bool Containable::inAreaRoom() const {
-	return(typeid(*this) == typeid(AreaRoom));
+	return(parent && parent->isAreaRoom());
 }
 bool Containable::inObject() const {
-	return(typeid(*this) == typeid(Object));
+	return(parent && parent->isObject());
 }
 bool Containable::inPlayer() const {
-	return(typeid(*this) == typeid(Player));
+	return(parent && parent->isPlayer());
 }
 bool Containable::inMonster() const {
-	return(typeid(*this) == typeid(Monster));
+	return(parent && parent->isMonster());
 }
 bool Containable::inCreature() const {
-	return(typeid(*this) == typeid(Creature));
+	return(parent && parent->isCreature());
 }
 
 BaseRoom* Containable::getRoomParent() {
-	return(dynamic_cast<BaseRoom*>(this));
+	if(!parent)
+		return(NULL);
+	return(parent->getAsAreaRoom());
 }
 UniqueRoom* Containable::getUniqueRoomParent() {
-	return(dynamic_cast<UniqueRoom*>(this));
+	if(!parent)
+			return(NULL);
+	return(parent->getAsUniqueRoom());
 }
 AreaRoom* Containable::getAreaRoomParent() {
-	return(dynamic_cast<AreaRoom*>(this));
+	if(!parent)
+		return(NULL);
+	return(parent->getAsAreaRoom());
 }
 Object* Containable::getObjectParent() {
-	return(dynamic_cast<Object*>(this));
+	if(!parent)
+		return(NULL);
+	return(parent->getAsObject());
 }
 Player* Containable::getPlayerParent() {
-	return(dynamic_cast<Player*>(this));
+	if(!parent)
+		return(NULL);
+	return(parent->getAsPlayer());
 }
 Monster* Containable::getMonsterParent() {
-	return(dynamic_cast<Monster*>(this));
+	if(!parent)
+		return(NULL);
+	return(parent->getAsMonster());
 }
 Creature* Containable::getCreatureParent() {
-	return(dynamic_cast<Creature*>(this));
+	if(!parent)
+		return(NULL);
+	return(parent->getAsCreature());
 }
 
 const BaseRoom* Containable::getConstRoomParent() const {
-	return(dynamic_cast<const BaseRoom*>(this));
+	if(!parent)
+		return(NULL);
+	return(parent->getAsConstRoom());
 }
 const UniqueRoom* Containable::getConstUniqueRoomParent() const {
-	return(dynamic_cast<const UniqueRoom*>(this));
+	if(!parent)
+		return(NULL);
+	return(parent->getAsConstUniqueRoom());
 }
 const AreaRoom* Containable::getConstAreaRoomParent() const {
-	return(dynamic_cast<const AreaRoom*>(this));
+	if(!parent)
+		return(NULL);
+	return(parent->getAsConstAreaRoom());
 }
 const Object* Containable::getConstObjectParent() const {
-	return(dynamic_cast<const Object*>(this));
+	if(!parent)
+		return(NULL);
+	return(parent->getAsConstObject());
 }
 const Player* Containable::getConstPlayerParent() const {
-	return(dynamic_cast<const Player*>(this));
+	if(!parent)
+		return(NULL);
+	return(parent->getAsConstPlayer());
 }
 const Monster* Containable::getConstMonsterParent() const {
-	return(dynamic_cast<const Monster*>(this));
+	if(!parent)
+		return(NULL);
+	return(parent->getAsConstMonster());
 }
+
 const Creature* Containable::getConstCreatureParent() const {
-	return(dynamic_cast<const Creature*>(this));
+	if(!parent)
+		return(NULL);
+	return(parent->getAsConstCreature());
 }
 //*********************************************************************
 //						wake
@@ -307,7 +336,7 @@ Monster* Container::findMonster(Creature* searcher, const bstring& name, const i
 }
 Monster* Container::findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) {
     Monster* target = 0;
-    for(Monster* mons : searcher->getRoom()->monsters) {
+    for(Monster* mons : searcher->getRoomParent()->monsters) {
         if(isMatch(searcher, mons, name, exactMatch)) {
             match++;
             if(match == num) {
@@ -338,7 +367,7 @@ Player* Container::findPlayer(Creature* searcher, const bstring& name, const int
     return(findPlayer(searcher, name, num, exactMatch, match));
 }
 Player* Container::findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) {
-    for(Player* ply : searcher->getRoom()->players) {
+    for(Player* ply : searcher->getRoomParent()->players) {
         if(isMatch(searcher, ply, name, exactMatch)) {
             match++;
             if(match == num) {

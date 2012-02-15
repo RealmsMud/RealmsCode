@@ -48,7 +48,7 @@ int getOffensiveSpell(Realm realm, int level) {
 bool Creature::checkResistPet(Creature *pet, bool& resistPet, bool& immunePet, bool& vulnPet) {
 	if(!pet->isPet())
 		return(false);
-	bstring realm = getRealmSpellName(pet->getConstMonster()->getBaseRealm());
+	bstring realm = getRealmSpellName(pet->getAsConstMonster()->getBaseRealm());
 	resistPet = isEffected("resist-" + realm);
 	immunePet = isEffected("immune-" + realm);
 	vulnPet = isEffected("vuln-" + realm);
@@ -198,7 +198,7 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
 
 	if(cmnd->num == 2) {
 		target = player;
-		pTarget = player->getPlayer();
+		pTarget = player->getAsPlayer();
 		broadcast(player->getSock(), player->getParent(), "%M casts resist-%s.", player, name.c_str());
 
 		if(spellData->how == CAST) {
@@ -211,7 +211,7 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
 		target = player->getParent()->findPlayer(player, cmnd, 2);
 
-		if(!target || !target->getPlayer()) {
+		if(!target || !target->getAsPlayer()) {
 			player->print("You don't see that player here.\n");
 			return(0);
 		}
@@ -225,7 +225,7 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
 		if(spellData->how == CAST) {
 			player->print("You cast a resist-%s spell on %N.\n", name.c_str(), target);
 
-			if(player->getRoom()->magicBonus()) {
+			if(player->getRoomParent()->magicBonus()) {
 				player->print("The room's magical properties increase the power of your spell.\n");
 			}
 		} else {
@@ -240,7 +240,7 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
 
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus()) {
+		if(player->getRoomParent()->magicBonus()) {
 			player->print("The room's magical properties increase the power of your spell.\n");
 		}
 		target->addEffect(effect, -2, -2, player, true, player);

@@ -106,11 +106,11 @@ void Anchor::bind(const AreaRoom* aRoom) {
 //*********************************************************************
 
 bool Anchor::is(const BaseRoom* room) const {
-	const UniqueRoom* uRoom = room->getConstUniqueRoom();
+	const UniqueRoom* uRoom = room->getAsConstUniqueRoom();
 	if(uRoom)
 		return(is(uRoom));
 	else
-		return(is(room->getConstAreaRoom()));
+		return(is(room->getAsConstAreaRoom()));
 }
 bool Anchor::is(const Player* player) const {
 	if(player->inUniqueRoom())

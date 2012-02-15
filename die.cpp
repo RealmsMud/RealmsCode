@@ -59,7 +59,7 @@ void hardcoreDeath(Player* player) {
 	player->computeAttackPower();
 
 
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	Object* object=0;
 	otag *op = player->first_obj,*oprev=0;
 
@@ -129,7 +129,7 @@ bstring isHoliday() {
 // Handles the dropping of items from creatures
 
 void Monster::dropCorpse(Creature *killer) {
-	BaseRoom* room = getRoom();
+	BaseRoom* room = getRoomParent();
 	bstring str = "", carry = "";
 	otag		*op=0;
 	Object		*object=0;
@@ -233,11 +233,11 @@ void Creature::die(Creature *killer) {
 // Handles the death of people
 
 void Creature::die(Creature *killer, bool &freeTarget) {
-	Player*  pVictim = getPlayer();
-	Monster* mVictim = getMonster();
+	Player*  pVictim = getAsPlayer();
+	Monster* mVictim = getAsMonster();
 
-	Player*  pKiller = killer->getPlayer();
-	Monster* mKiller = killer->getMonster();
+	Player*  pKiller = killer->getAsPlayer();
+	Monster* mKiller = killer->getAsMonster();
 	bool duel = induel(pVictim, pKiller);
 
 	if(pKiller) {
@@ -337,7 +337,7 @@ void Player::dieToMonster(Monster *killer) {
 
 	// more info for staff
 	broadcast(::isCt, "^rOld Exp: %u Lost Exp: %d, Old Lvl: %u, Lvl: %u, Room: %s",
-		oldxp, (int)(oldxp - experience), oldlvl, level, getRoom()->fullName().c_str());
+		oldxp, (int)(oldxp - experience), oldlvl, level, getRoomParent()->fullName().c_str());
 
 	resetPlayer(killer);
 }
@@ -352,7 +352,7 @@ void Player::dieToPet(Monster *killer) {
 	Player	*master=0;
 
 	if(killer->getMaster())
-		master = killer->getMaster()->getPlayer();
+		master = killer->getMaster()->getAsPlayer();
 	else {
 		broadcast(::isCt, "^y*** Pet %s has no master and is trying to kill a player. Room %s",
 			killer->name, killer->room.str().c_str());
@@ -389,7 +389,7 @@ void Monster::dieToPet(Monster *killer, bool &freeTarget) {
 
 	if(killer->getMaster()) {
 		petKiller = killer;
-		pKiller = killer->getMaster()->getPlayer();
+		pKiller = killer->getMaster()->getAsPlayer();
 	} else {
 		broadcast(::isCt, "^y*** Pet %s has no master and is trying to kill a mob. Room %s",
 			killer->name, killer->room.str().c_str());
@@ -397,7 +397,7 @@ void Monster::dieToPet(Monster *killer, bool &freeTarget) {
 	}
 
 
-	broadcast(NULL, pKiller->getRoom(), "%M's %s killed %N.", pKiller, petKiller->name, this);
+	broadcast(NULL, pKiller->getRoomParent(), "%M's %s killed %N.", pKiller, petKiller->name, this);
 
 	mobDeath(pKiller, freeTarget);
 }
@@ -412,7 +412,7 @@ void Monster::dieToPet(Monster *killer, bool &freeTarget) {
 // Handles monsters killing monsters
 void Monster::dieToMonster(Monster *killer, bool &freeTarget) {
 	if(this != killer)
-		broadcast(NULL, killer->getRoom(), "%M killed %N.", killer, this);
+		broadcast(NULL, killer->getRoomParent(), "%M killed %N.", killer, this);
 	mobDeath(killer, freeTarget);
 }
 
@@ -428,7 +428,7 @@ void Monster::dieToPlayer(Player *killer, bool &freeTarget) {
 	logDeath(killer);
 	if(getMaster() != killer) {
 		killer->print("You killed %N.\n", this);
-		broadcast(killer->getSock(), killer->getRoom(), "%M killed %N.", killer, this);
+		broadcast(killer->getSock(), killer->getRoomParent(), "%M killed %N.", killer, this);
 	}
 	mobDeath(killer, freeTarget);
 }
@@ -487,7 +487,7 @@ void Player::dieToPlayer(Player *killer) {
 
 	killer->print("You killed %N.\n", this);
 	print("%M killed you.\n", killer);
-	broadcast(killer->getSock(), getSock(), killer->getRoom(), "%M killed %N.", killer, this);
+	broadcast(killer->getSock(), getSock(), killer->getRoomParent(), "%M killed %N.", killer, this);
 
 	if(killer->isEffected("lycanthropy") && killer->getLevel() >= 13)
 		strcpy(deathstring, "eaten");
@@ -540,7 +540,7 @@ void Player::getPkilled(Player *killer, bool dueling, bool reset) {
 
 		// more info for staff
 		broadcast(::isCt, "^rOld Exp: %u Lost Exp: %d, Old Lvl: %u, Lvl: %u, Room: %s",
-			oldxp, (int)(oldxp - experience), oldlvl, level, getRoom()->fullName().c_str());
+			oldxp, (int)(oldxp - experience), oldlvl, level, getRoomParent()->fullName().c_str());
 
 	}
 
@@ -853,7 +853,7 @@ int Player::checkLevel() {
 		}
 		print("You have releveled to level %s!\n", int_to_text(n));
 		logn("log.relevel", "%s just releveled to level %d from level %d in room %s.\n",
-			name, n, level, getRoom()->fullName().c_str());
+			name, n, level, getRoomParent()->fullName().c_str());
 		if(!isStaff())
 			broadcast("### %s just releveled to %s!", name, int_to_text(n));
 		while(level < n)
@@ -906,7 +906,7 @@ void Player::dropEquipment(bool dropAll, Socket* killerSock) {
 
 
 		// don't make them lose all their inventory in a drop-destroy room
-		if(!getRoom()->isDropDestroy()) {
+		if(!getRoomParent()->isDropDestroy()) {
 
 			// we reassign these for the purposes of having them printed in the list;
 			// they will be reset afterwards
@@ -935,7 +935,7 @@ void Player::dropEquipment(bool dropAll, Socket* killerSock) {
 					// I is wearloc-1, so add one to it
 					Object* temp = unequip(i+1, UNEQUIP_NOTHING, false);
 					if(temp)
-						finishDropObject(temp, getRoom(), this);
+						finishDropObject(temp, getRoomParent(), this);
 				}
 			}
 
@@ -967,7 +967,7 @@ void Player::dropEquipment(bool dropAll, Socket* killerSock) {
 void Player::dropBodyPart(Player *killer) {
 	ASSERTLOG( killer->isPlayer());
 
-	if(getRoom()->isDropDestroy())
+	if(getRoomParent()->isDropDestroy())
 		return;
 
 	bool nopart = false;
@@ -1066,7 +1066,7 @@ void Player::dropBodyPart(Player *killer) {
 			if(mrand(1,100) == 1)
 				body_part->setAdjustment(3);
 
-			body_part->addToRoom(getRoom());
+			body_part->addToRoom(getRoomParent());
 		}
 	}
 
@@ -1078,7 +1078,7 @@ void Player::dropBodyPart(Player *killer) {
 
 void Player::logDeath(Creature *killer) {
 	char	file[16], killerName[80];
-	Player*	pKiller = killer->getPlayer();
+	Player*	pKiller = killer->getAsPlayer();
 
 	if(!killer->isStaff())
 		statistics.die();
@@ -1096,13 +1096,13 @@ void Player::logDeath(Creature *killer) {
 
 	if(!(!pKiller && killer->flagIsSet(M_NO_EXP_LOSS))) {
 		logn(file, "%s(%d) was killed by %s(%d) in room %s.\n", name, level,
-		     killer->name, killer->getLevel(), killer->getRoom()->fullName().c_str());
+		     killer->name, killer->getLevel(), killer->getRoomParent()->fullName().c_str());
 
 	}
 
 	if(pKiller && pKiller->isStaff()) {
 		log_immort(false, pKiller, "%s(%d) was killed by %s(%d) in room %s.\n", name, level,
-			pKiller->name, pKiller->getLevel(), pKiller->getRoom()->fullName().c_str());
+			pKiller->name, pKiller->getLevel(), pKiller->getRoomParent()->fullName().c_str());
 	}
 	
 	updateRecentActivity();
@@ -1118,7 +1118,7 @@ void Player::logDeath(Creature *killer) {
 void Player::resetPlayer(Creature *killer) {
 	int		duel=0;
 	bool	same=false;
-	Player* pKiller = killer->getPlayer();
+	Player* pKiller = killer->getAsPlayer();
 	BaseRoom *newRoom = getLimboRoom().loadRoom(this);
 
 	duel = induel(this, pKiller);
@@ -1169,7 +1169,7 @@ void Player::resetPlayer(Creature *killer) {
 	if(duel) {
 		setFlag(P_DIED_IN_DUEL);
 		knockUnconscious(10);
-		broadcast(getSock(), getRoom(), "%s is knocked unconscious!", name);
+		broadcast(getSock(), getRoomParent(), "%s is knocked unconscious!", name);
 
 		updateAttackTimer(true, 300);
 		pKiller->delDueling(name);
@@ -1216,7 +1216,7 @@ bool hearMobDeath(Socket* sock) {
 void Monster::logDeath(Creature *killer) {
 	int			logType=0;
 	Creature *leader=0, *pet=0;
-	BaseRoom* room = killer->getRoom();
+	BaseRoom* room = killer->getRoomParent();
 	char		file[80], killerString[1024];
 	char		logStr[2096];
 
@@ -1403,9 +1403,9 @@ void Monster::distributeExperience(Creature *killer) {
 	if(killer) {
         Group* group = NULL;
 		if(killer->isPet())
-			player = killer->getMaster()->getPlayer();
+			player = killer->getMaster()->getAsPlayer();
 		else
-			player = killer->getPlayer();
+			player = killer->getAsPlayer();
 
 		if(player) {
 		    group = player->getGroup();
@@ -1428,7 +1428,7 @@ void Monster::distributeExperience(Creature *killer) {
 				if(isEnemy(crt) && inSameRoom(crt)) {
 					if(crt->getsGroupExperience(this)) {
 						// Group member
-					    groupMember = crt->getPlayer();
+					    groupMember = crt->getAsPlayer();
 						numGroupMembers++;
 						totalGroupLevel += groupMember->getLevel();
 						n = clearEnemy(groupMember);
@@ -1486,7 +1486,7 @@ void Monster::distributeExperience(Creature *killer) {
 		if(crt->isPet())
 		    expList[crt->getPlayerMaster()] += clearEnemy(crt);
 		else if(crt->isPlayer())
-		    expList[crt->getPlayer()] += clearEnemy(crt);
+		    expList[crt->getAsPlayer()] += clearEnemy(crt);
 	}
 
 	for(std::pair<Player*, int> p : expList) {
@@ -1518,9 +1518,9 @@ void Monster::distributeExperience(Creature *killer) {
 void Creature::adjustExperience(Monster* victim, int& expAmount, int& holidayExp) {
 	Player* player;
 	if(isPet())
-		player = getMaster()->getPlayer();
+		player = getMaster()->getAsPlayer();
 	else
-		player = getPlayer();
+		player = getAsPlayer();
 
 	if(player->halftolevel()) {
 		expAmount = 0;
@@ -1692,8 +1692,8 @@ int Creature::checkDieRobJail(Monster *killer) {
 //				  0 <Nothing>
 
 int Creature::checkDieRobJail(Monster *killer, bool &freeTarget) {
-	BaseRoom* room = getRoom();
-	Player	*pVictim = getPlayer();
+	BaseRoom* room = getRoomParent();
+	Player	*pVictim = getAsPlayer();
 	ASSERTLOG(killer->isMonster());
 
 	// Less than 1 hp & not police/greedy monster or it's monster, then die
@@ -1851,7 +1851,7 @@ void Player::die(DeathType dt) {
 				statue->setBulk(50);
 				statue->setFlag(O_NO_BREAK);
 
-				statue->addToRoom(getRoom());
+				statue->addToRoom(getRoomParent());
 			}
 		}
 
@@ -2157,7 +2157,7 @@ void Player::die(DeathType dt) {
 
 	// more info for staff
 	broadcast(::isCt, "^rOld Exp: %u Lost Exp: %d, Old Lvl: %u, Lvl: %u, Room: %s",
-		oldxp, xploss, oldlvl, level, getRoom()->fullName().c_str());
+		oldxp, xploss, oldlvl, level, getRoomParent()->fullName().c_str());
 
 	if(isHardcore()) {
 		hardcoreDeath(this);
@@ -2177,7 +2177,7 @@ void Player::die(DeathType dt) {
 //********************************************************************
 
 void Creature::clearAsPetEnemy() {
-    for(Monster* mons : getRoom()->monsters) {
+    for(Monster* mons : getRoomParent()->monsters) {
         if(mons->isPet())
             mons->clearEnemy(this);
     }
@@ -2189,7 +2189,7 @@ void Creature::clearAsPetEnemy() {
 
 void Monster::cleanFollow(Creature *killer) {
 	if(isMonster() && getMaster()) {
-		Player* player = getMaster()->getPlayer();
+		Player* player = getMaster()->getAsPlayer();
 
 		// This should fix the bug with having a dm's pet killed while possessing a mob
 		if(flagIsSet(M_DM_FOLLOW)) {
@@ -2199,7 +2199,7 @@ void Monster::cleanFollow(Creature *killer) {
 		if(getMaster() != killer) {
 			player->printColor("^r%M's body has been destroyed.\n", this);
 			if(killer)
-				broadcast(killer->getSock(), getRoom(), "%M was killed by %N.", this, killer);
+				broadcast(killer->getSock(), getRoomParent(), "%M was killed by %N.", this, killer);
 		}
 		removeFromGroup(false);
 		player->delPet(this);
@@ -2213,7 +2213,7 @@ void Monster::cleanFollow(Creature *killer) {
 // Return: true if any weapons were dropped, false if none were dropped
 
 bool Player::dropWeapons() {
-	BaseRoom* room = getRoom();
+	BaseRoom* room = getRoomParent();
 	Object* weapon;
 	bool	dropMain=false, dropSec=false, fumbleMain=false, fumbleSec=false;
 	bool	dropDestroy = room->isDropDestroy();

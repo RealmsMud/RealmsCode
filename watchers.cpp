@@ -91,7 +91,7 @@ int	dmLocatePlayer(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	player->print("%s is in the following room: %s\n", target->name, target->getRoom()->fullName().c_str());
+	player->print("%s is in the following room: %s\n", target->name, target->getRoomParent()->fullName().c_str());
 	return(0);
 }
 
@@ -157,12 +157,12 @@ int reportTypo(Player* player, cmd* cmnd) {
 	if(!needUniqueRoom(player))
 		return(0);
 
-	if(player->getParent()->flagIsSet(R_TYPO)) {
+	if(player->getConstRoomParent()->flagIsSet(R_TYPO)) {
 		player->printColor("^YA typo has already been reported in this room.\n");
 	} else {
-		player->getParent()->setFlag(R_TYPO);
+		player->getUniqueRoomParent()->setFlag(R_TYPO);
 		player->printColor("^YTypo reported!\n");
-		broadcast(isCt, "^Y*** %s reported a typo in room %s.", player->name, player->getRoom()->fullName().c_str());
+		broadcast(isCt, "^Y*** %s reported a typo in room %s.", player->name, player->getRoomParent()->fullName().c_str());
 	}
 	return(0);
 }

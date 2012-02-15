@@ -38,7 +38,7 @@ int numIngredients(Size size);
 
 Object* findHot(const Player* player) {
 	// we can cook from any hot object
-	otag* op = player->getRoom()->first_obj;
+	otag* op = player->getConstRoomParent()->first_obj;
 	while(op) {
 		if(Recipe::goodObject(player, op->obj) && op->obj->flagIsSet(O_HOT))
 			return(op->obj);
@@ -219,7 +219,7 @@ bool Recipe::goodObject(const Player* player, const Object* object, const CatRef
 
 bool Recipe::check(const Player* player, const std::list<CatRef>* list, bstring type, int numIngredients) const {
 	Object* object=0;
-	otag*	op=0, *first = (type == "equipment" ? player->getRoom()->first_obj : player->first_obj);
+	otag*	op=0, *first = (type == "equipment" ? player->getConstRoomParent()->first_obj : player->first_obj);
 	std::list<CatRef>::const_iterator it;
 	int has=0;
 	if(!isSizable())
@@ -424,10 +424,10 @@ bstring Recipe::display() {
 
 bool Recipe::canUseEquipment(const Player* player, bstring skill) const {
 	if(!equipment.empty() || skill == "cooking") {
-	    for(Monster* mons : player->getRoom()->monsters) {
+	    for(Monster* mons : player->getConstRoomParent()->monsters) {
             if(mons->canSee(player)) {
-                if( mons->getConstMonster()->isEnemy(player) ||
-                    !Faction::willDoBusinessWith(player, mons->getMonster()->getPrimeFaction())
+                if( mons->getAsConstMonster()->isEnemy(player) ||
+                    !Faction::willDoBusinessWith(player, mons->getAsMonster()->getPrimeFaction())
                 ) {
                     player->print("%M won't let you use any equipment in this room.", mons);
                     return(false);
@@ -556,7 +556,7 @@ Recipe* Config::searchRecipes(const Player* player, bstring skill, Size recipeSi
 					hasEquipment = false;
 			} else {
 				for(iIt = recipe->equipment.begin(); iIt != recipe->equipment.end() ; iIt++) {
-					op = player->getRoom()->first_obj;
+					op = player->getConstRoomParent()->first_obj;
 					while(op) {
 						if(Recipe::goodObject(player, op->obj, &(*iIt))) {
 							str += "You prepare ";
@@ -1310,7 +1310,7 @@ int cmdCraft(Player* player, cmd* cmnd) {
 			player->printColor("You must be in corporeal form to work with items.\n");
 			return(0);
 		}
-		if(!player->canSee(player->getRoom(), true))
+		if(!player->canSee(player->getRoomParent(), true))
 			return(0);
 
 		if(!player->checkAttackTimer())

@@ -27,15 +27,15 @@
 //*********************************************************************
 
 bool healCombatCheck(Creature* healer, Creature* target, bool print=true) {
-	Monster* mTarget = target->getMonster();
+	Monster* mTarget = target->getAsMonster();
 
 	if(!mTarget)
 		return(true);
 	if(mTarget->isPet() && mTarget->getMaster() == healer)
 		return(true);
-	if(!mTarget->getMonster()->nearEnemy())
+	if(!mTarget->getAsMonster()->nearEnemy())
 		return(true);
-	if(target->getMonster()->isEnemy(healer))
+	if(target->getAsMonster()->isEnemy(healer))
 		return(true);
 
 	// if healer is in group with pet, they can heal
@@ -52,7 +52,7 @@ bool healCombatCheck(Creature* healer, Creature* target, bool print=true) {
 //*********************************************************************
 
 int getHeal(Creature *healer, Creature* target, int spell) {
-	Player	*pHealer = healer->getPlayer();
+	Player	*pHealer = healer->getAsPlayer();
 	int		level=0, statBns=0, base=0, mod=0, heal=0, dmg=0;
 	int		vigPet=0;
 
@@ -60,9 +60,9 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 		/* Mobs with intelligence > 12 do not like people vigging their enemies and
 		   will attack them. -TC */
 		if(target != healer && target->isPlayer() && target->inCombat()) {
-		    for(Monster* mons : target->getRoom()->monsters) {
-                if(mons->intelligence.getCur() > 120 && mons->getMonster()->isEnemy(target))
-                    mons->getMonster()->addEnemy(healer);
+		    for(Monster* mons : target->getRoomParent()->monsters) {
+                if(mons->intelligence.getCur() > 120 && mons->getAsMonster()->isEnemy(target))
+                    mons->getAsMonster()->addEnemy(healer);
 
 		    }
 		}
@@ -272,7 +272,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 			healer->print("FOOL! You dare turn from %s's evil ways!\n", gConfig->getDeity(healer->getDeity())->getName().c_str());
 			dmg = mrand(1,10);
 			healer->print("You are shocked for %d damage by %s's wrath!\n", dmg, gConfig->getDeity(healer->getDeity())->getName().c_str());
-			broadcast(healer->getSock(), healer->getRoom(), "%M doubles over in pain and wretches.\n", healer);
+			broadcast(healer->getSock(), healer->getRoomParent(), "%M doubles over in pain and wretches.\n", healer);
 			healer->hp.decrease(dmg);
 			mod = 0;
 
@@ -282,7 +282,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 				healer->print("How DARE you heal the righteous and good of heart!\n");
 				dmg = mrand(1,10);
 				healer->print("You are shocked for %d damage by %s's wrath!\n", dmg, gConfig->getDeity(healer->getDeity())->getName().c_str());
-				broadcast(healer->getSock(), healer->getRoom(), "%M doubles over in pain and wretches.\n", healer);
+				broadcast(healer->getSock(), healer->getRoomParent(), "%M doubles over in pain and wretches.\n", healer);
 				healer->hp.decrease(dmg);
 				mod = 0;
 			} else if(	healer->getDeity() == ARAMON || (
@@ -316,7 +316,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 
 	heal = base + statBns + mod;
 
-	if(healer->getRoom()->magicBonus()) {
+	if(healer->getRoomParent()->magicBonus()) {
 		if(spell == S_MEND_WOUNDS)
 			heal += mrand(1, 6);
 		else
@@ -332,14 +332,14 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 			if(target->flagIsSet(P_POISONED_BY_PLAYER))
 				heal = mrand(1,4);
 
-			if(target->flagIsSet(P_OUTLAW) && target->getRoom()->isOutlawSafe())
+			if(target->flagIsSet(P_OUTLAW) && target->getRoomParent()->isOutlawSafe())
 				heal = mrand(1,3);
 
 		}
 	} else {
 		if(healer->isEffected("stoneskin"))
 			heal /= 2;
-		if(healer->flagIsSet(P_OUTLAW) && healer->getRoom()->isOutlawSafe())
+		if(healer->flagIsSet(P_OUTLAW) && healer->getRoomParent()->isOutlawSafe())
 			heal = mrand (1,3);
 	}
 
@@ -356,8 +356,8 @@ void niceExp(Creature *healer, Creature *creature, int heal, int how) {
 
 	// only players are allowed to use this function! It's called from creature-spells
 	// though, so we have to cast
-	player = healer->getPlayer();
-	target = creature->getPlayer();
+	player = healer->getAsPlayer();
+	target = creature->getAsPlayer();
 
 	if(!player || !target || healer == target)
 		return;
@@ -456,7 +456,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
 		if(spellData->how == CAST) {
 
 			if(player->isPlayer())
-				player->getPlayer()->statistics.healingCast();
+				player->getAsPlayer()->statistics.healingCast();
 			heal = getHeal(player, 0, flag);
 
 		} else
@@ -494,7 +494,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
 
 		if(spellData->how == CAST) {
 			if(player->isPlayer())
-				player->getPlayer()->statistics.healingCast();
+				player->getAsPlayer()->statistics.healingCast();
 			heal = getHeal(player, target, flag);
 		} else {
 			heal = defaultAmount;
@@ -582,7 +582,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how == CAST) {
 
 			if(player->isPlayer())
-				player->getPlayer()->statistics.healingCast();
+				player->getAsPlayer()->statistics.healingCast();
 			heal = getHeal(player, 0, S_REJUVENATE);
 			mpHeal = getHeal(player, 0, S_REJUVENATE);
 
@@ -646,7 +646,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST) {
 			if(player->isPlayer())
-				player->getPlayer()->statistics.healingCast();
+				player->getAsPlayer()->statistics.healingCast();
 			player->mp.decrease(8);
 			heal = getHeal(player, target, S_REJUVENATE);
 			mpHeal = getHeal(player, target, S_REJUVENATE);
@@ -719,7 +719,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL) {
 			if(player->isPlayer())
-				player->getPlayer()->statistics.healingCast();
+				player->getAsPlayer()->statistics.healingCast();
 			player->print("Heal spell cast.\n");
 			broadcast(player->getSock(), player->getParent(), "%M casts a heal spell on %sself.", player,
 				player->himHer());
@@ -763,7 +763,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 				if(!player->canAttack(creature))
 					return(0);
 
-				if(player->getRoom()->isPkSafe() && !creature->flagIsSet(P_OUTLAW)) {
+				if(player->getRoomParent()->isPkSafe() && !creature->flagIsSet(P_OUTLAW)) {
 					player->print("Your heal spell will harm a lich.\n");
 					player->print("No killing is allowed here.\n");
 					return(0);
@@ -797,11 +797,11 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 				if(creature->isPlayer())
 					creature->print("%M's heal spell sucks away your life force!\n", player);
 
-				broadcast(player->getSock(), creature->getSock(), player->getRoom(), "%M's heal spell nearly kills %N!",
+				broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M's heal spell nearly kills %N!",
 					player, creature);
 				player->smashInvis();
 				if(creature->isMonster())
-					creature->getMonster()->adjustThreat(player, dmg);
+					creature->getAsMonster()->adjustThreat(player, dmg);
 				return(1);
 			}
 
@@ -809,14 +809,14 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 				player->smashInvis();
 
 			if(player->isPlayer())
-				player->getPlayer()->statistics.healingCast();
+				player->getAsPlayer()->statistics.healingCast();
 			int healed = tMAX(creature->hp.getMax() - creature->hp.getCur() - mrand(1,4), 0);
 			player->doHeal(creature, healed, 0.33);
 			//creature->hp.setCur(MAX(1, creature->hp.getMax() - mrand(1,4)));
 
 			player->print("Heal spell cast on %N.\n", creature);
 			creature->print("%M casts a heal spell on you.\n", player);
-			broadcast(player->getSock(), creature->getSock(), player->getRoom(), "%M casts a heal spell on %N.",
+			broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M casts a heal spell on %N.",
 				player, creature);
 
 			logCast(player, creature, "heal");
@@ -832,7 +832,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 void Creature::removeStatEffects() {
-	Player* pThis = getPlayer();
+	Player* pThis = getAsPlayer();
 	if(pThis) {
 		pThis->loseRage();
 		pThis->loseFrenzy();
@@ -864,7 +864,7 @@ int doRessLoss(int curr, int prev, bool full) {
 
 int doRess(Creature* caster, cmd* cmnd, bool ress) {
 	// if ress=false, it's a bloodfusion
-	Player	*player = caster->getPlayer();
+	Player	*player = caster->getAsPlayer();
 	int		a=0, prevLevel=0;
 	bool	full=false;
 	long	t=0, xploss=0;
@@ -1074,7 +1074,7 @@ int doRess(Creature* caster, cmd* cmnd, bool ress) {
 	dec_daily(&target->daily[DL_RESURRECT]);
 
 
-	broadcast(caster->getSock(), caster->getRoom(), "%M casts a %s spell on %N.", caster, ress ? "resurrection" : "bloodfusion", target);
+	broadcast(caster->getSock(), caster->getRoomParent(), "%M casts a %s spell on %N.", caster, ress ? "resurrection" : "bloodfusion", target);
 
 	logn("log.resurrect", "%s(L:%d) %s %s(L%d:%d) %s.\n", caster->name, caster->getLevel(),
 		ress ? "resurrected" : "fused", target->name, prevLevel, target->getLevel(),
@@ -1093,7 +1093,7 @@ int doRess(Creature* caster, cmd* cmnd, bool ress) {
 		caster->lasttime[LT_NOMPTICK].ltime = t;
 		caster->lasttime[LT_NOMPTICK].interval = 1200L;
 
-		broadcast(caster->getSock(), caster->getRoom(), "%M collapses from exhaustion.", caster);
+		broadcast(caster->getSock(), caster->getRoomParent(), "%M collapses from exhaustion.", caster);
 		caster->print("You collapse from exhaustion.\n");
 		caster->knockUnconscious(120);
 
@@ -1265,12 +1265,12 @@ int splRoomVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	heal = mrand(1, 6) + bonus((int) player->piety.getCur());
 
-	if(player->getRoom()->magicBonus()) {
+	if(player->getRoomParent()->magicBonus()) {
 		heal += mrand(1, 3);
 		player->print("\nThe room's magical properties increase the power of your spell\n");
 	}
 
-	for(Player* ply : player->getRoom()->players) {
+	for(Player* ply : player->getRoomParent()->players) {
 		if(canCastHealing(player, ply, false, false, false)) {
 			if(ply != player)
 				ply->print("%M casts vigor on you.\n", player);

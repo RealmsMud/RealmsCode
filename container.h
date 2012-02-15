@@ -20,6 +20,8 @@
 #ifndef CONTAINER_H_
 #define CONTAINER_H_
 
+#include "mudObject.h"
+
 #include <set>
 
 class Player;
@@ -31,6 +33,7 @@ class MudObject;
 class BaseRoom;
 class AreaRoom;
 class UniqueRoom;
+class EffectInfo;
 class cmd;
 
 struct PlayerPtrLess : public std::binary_function<const Player*, const Player*, bool> {
@@ -49,9 +52,10 @@ typedef std::set<Player*, PlayerPtrLess> PlayerSet;
 typedef std::set<Monster*, MonsterPtrLess> MonsterSet;
 typedef std::set<Object*, ObjectPtrLess> ObjectSet;
 
+// Any container or containable item is a MudObject.  Since an object can be both a container and containable...
+// make sure we use virtual MudObject as the parent to avoid the "dreaded" diamond
 
-
-class Container {
+class Container : public virtual MudObject {
 public:
     Container();
     virtual ~Container() {};
@@ -64,8 +68,10 @@ public:
     bool add(Containable* toAdd);
     bool checkAntiMagic(Monster* ignore = 0);
 
-    virtual bool flagIsSet(int flag) const = 0;
-    virtual void setFlag(int flag) = 0;
+//    virtual bool flagIsSet(int flag) const = 0;
+//    virtual void setFlag(int flag) = 0;
+//    virtual bool isEffected(const bstring& effect) const = 0;
+//    virtual bool isEffected(EffectInfo*) const = 0;
 
 	void wake(bstring str, bool noise) const;
 
@@ -88,7 +94,7 @@ public:
 
 };
 
-class Containable {
+class Containable : public virtual MudObject {
 public:
     Containable();
     virtual ~Containable() {};

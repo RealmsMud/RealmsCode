@@ -53,15 +53,15 @@ void Player::finishAddPlayer(BaseRoom* room) {
 			broadcast(getSock(), room, "A light mist just arrived.");
 		} else {
 			if(isDm())
-				broadcast(::isDm, getSock(), getRoom(), "*DM* %M just arrived.", this);
+				broadcast(::isDm, getSock(), getRoomParent(), "*DM* %M just arrived.", this);
 			if(cClass == CARETAKER)
-				broadcast(::isCt, getSock(), getRoom(), "*DM* %M just arrived.", this);
+				broadcast(::isCt, getSock(), getRoomParent(), "*DM* %M just arrived.", this);
 			if(!isCt())
-				broadcast(::isStaff, getSock(), getRoom(), "*DM* %M just arrived.", this);
+				broadcast(::isStaff, getSock(), getRoomParent(), "*DM* %M just arrived.", this);
 		}
 
 		if(!isStaff()) {
-			if((isEffected("darkness") || flagIsSet(P_DARKNESS)) && !getRoom()->flagIsSet(R_MAGIC_DARKNESS))
+			if((isEffected("darkness") || flagIsSet(P_DARKNESS)) && !getRoomParent()->flagIsSet(R_MAGIC_DARKNESS))
 				broadcast(getSock(), room, "^DA globe of darkness just arrived.");
 		}
 	}
@@ -120,12 +120,12 @@ void Player::finishAddPlayer(BaseRoom* room) {
 }
 
 void Player::addToRoom(BaseRoom* room) {
-	AreaRoom* aRoom = room->getAreaRoom();
+	AreaRoom* aRoom = room->getAsAreaRoom();
 
 	if(aRoom)
 		addToRoom(aRoom);
 	else
-		addToRoom(room->getUniqueRoom());
+		addToRoom(room->getAsUniqueRoom());
 }
 
 void Player::addToRoom(AreaRoom* aRoom) {
@@ -230,7 +230,7 @@ void Creature::setPreviousRoom() {
 // This function removes a player from a room's linked list of players.
 
 int Creature::deleteFromRoom(bool delPortal) {
-	Hooks::run(getRoom(), "beforeRemoveCreature", this, "beforeRemoveFromRoom");
+	Hooks::run(getRoomParent(), "beforeRemoveCreature", this, "beforeRemoveFromRoom");
 
 	setPreviousRoom();
 
@@ -290,7 +290,7 @@ int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
                 !mons->flagIsSet(M_PERMENANT_MONSTER) &&
                 !mons->flagIsSet(M_AGGRESSIVE)
             )
-                gServer->delActive(mons->getMonster());
+                gServer->delActive(mons->getAsMonster());
 	    }
 	}
 
@@ -414,7 +414,7 @@ void Object::deleteFromRoom() {
 
 void Monster::addToRoom(BaseRoom* room, int num) {
 	Hooks::run(room, "beforeAddCreature", this, "beforeAddToRoom");
-	addToRoom(room, room->getUniqueRoom(), room->getAreaRoom(), num);
+	addToRoom(room, room->getAsUniqueRoom(), room->getAsAreaRoom(), num);
 }
 
 void Monster::addToRoom(BaseRoom* room, UniqueRoom* uRoom, AreaRoom* aRoom, int num) {
@@ -925,7 +925,7 @@ void display_rom(Player* player, Player *looker, int magicShowHidden) {
 }
 
 void display_rom(Player* player,BaseRoom* room) {
-	displayRoom(player, room, room->getConstUniqueRoom(), room->getConstAreaRoom(), 0);
+	displayRoom(player, room, room->getAsConstUniqueRoom(), room->getAsConstAreaRoom(), 0);
 }
 
 
@@ -1116,19 +1116,19 @@ BaseRoom *abortFindRoom(Creature* player, const char from[15]) {
 	loge("Error: abortFindRoom called by %s in %s().\n", player->name, from);
 	broadcast(isCt, "^yError: abortFindRoom called by %s in %s().", player->name, from);
 
-	room = player->getRecallRoom().loadRoom(player->getPlayer());
+	room = player->getRecallRoom().loadRoom(player->getAsPlayer());
 	if(room)
 		return(room);
 	broadcast(isCt, "^yError: could not load Recall: %s.", player->getRecallRoom().str().c_str());
 
-	room = player->getLimboRoom().loadRoom(player->getPlayer());
+	room = player->getLimboRoom().loadRoom(player->getAsPlayer());
 	if(room)
 		return(room);
 	broadcast(isCt, "^yError: could not load Limbo: %s.", player->getLimboRoom().str().c_str());
 
 	Player *target=0;
 	if(player)
-		target = player->getPlayer();
+		target = player->getAsPlayer();
 	if(target) {
 		room = target->bound.loadRoom(target);
 		if(room)

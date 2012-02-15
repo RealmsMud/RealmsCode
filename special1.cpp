@@ -23,7 +23,7 @@
 //*********************************************************************
 
 int Object::doSpecial(Player* player) {
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	Socket* sock = player->getSock();
 	char	str[80], str2[160];
 	unsigned int i=0;

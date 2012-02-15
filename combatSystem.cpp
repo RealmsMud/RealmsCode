@@ -424,8 +424,8 @@ AttackResult Creature::getAttackResult(Creature* victim, const Object* weapon, i
 	if(victim->isEffected("blur") && !isEffected("true-sight"))
 		missChance += victim->getEffect("blur")->getStrength();
 
-	if(victim->getRoom()->isEffected("dense-fog")) {
-		effect = victim->getRoom()->getEffect("dense-fog");
+	if(victim->getRoomParent()->isEffected("dense-fog")) {
+		effect = victim->getRoomParent()->getEffect("dense-fog");
 		if(!effect->isOwner(this))
 			missChance += effect->getStrength();
 	}
@@ -656,7 +656,7 @@ double Creature::getParryChance(Creature* attacker, const int& difference) {
 		chance /= 2;
 
 	int numEnm = 0;
-	for(Monster* mons : getRoom()->monsters) {
+	for(Monster* mons : getRoomParent()->monsters) {
 	    if(mons->isPet())
 	        continue;
 	    if(mons->isEnemy(this))
@@ -745,10 +745,10 @@ bool Creature::canDodge(Creature* attacker) {
 		if(flagIsSet(P_UNCONSCIOUS)) // Can't dodge while unconscious
 			return(false);
 
-		if(getRoom()->isUnderwater() && !flagIsSet(P_FREE_ACTION))
+		if(getRoomParent()->isUnderwater() && !flagIsSet(P_FREE_ACTION))
 			return(false);
 
-		if(getRoom()->flagIsSet(R_NO_DODGE))
+		if(getRoomParent()->flagIsSet(R_NO_DODGE))
 			return(false);
 
 		// Players cannot dodge if stunned in any way.
@@ -782,7 +782,7 @@ double Creature::getDodgeChance(Creature* attacker, const int& difference) {
 //		return(0);
 //
 	double chance = 0.0;
-	Player* pPlayer = getPlayer();
+	Player* pPlayer = getAsPlayer();
 
 	// Find the base chance
 	if(pPlayer) {
@@ -871,7 +871,7 @@ double Creature::getMissChance(const int& difference) {
 		chance = 5.0;
 
 	chance += adjustChance(difference);
-	Player* pPlayer = getPlayer();
+	Player* pPlayer = getAsPlayer();
 	// Class modification for miss
 	if(pPlayer) {
 		switch(cClass) {
@@ -951,7 +951,7 @@ void Monster::setDefenseSkill(int amt) {
 
 bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail) {
 	//Monster* mVictim = victim->getMonster();
-	Player* pVictim = victim->getPlayer();
+	Player* pVictim = victim->getAsPlayer();
 
 	if(isMonster()) {
 
@@ -1248,7 +1248,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
 		}
 
 		printColor("^gCRITICAL %s!\n", atk);
-		broadcast(getSock(), getRoom(), "^g%M made a critical %s.", this, atk);
+		broadcast(getSock(), getRoomParent(), "^g%M made a critical %s.", this, atk);
 		mult = mrand(3, 5);
 		attackDamage.set(attackDamage.get() * mult);
 		drain *= mult;
@@ -1269,12 +1269,12 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
 			)
 		) {
 			printColor("^YYour %s shatters.\n", weapon->name);
-			broadcast(getSock(), getRoom(),"^Y%s %s shattered.", upHisHer(), weapon->name);
+			broadcast(getSock(), getRoomParent(),"^Y%s %s shattered.", upHisHer(), weapon->name);
 			retVal = 1;
 		}
 	} else if(result == ATTACK_GLANCING) {
 		printColor("^CYou only managed to score a glancing blow!\n");
-		broadcast(getSock(), getRoom(), "^C%M scored a glancing blow!", this);
+		broadcast(getSock(), getRoomParent(), "^C%M scored a glancing blow!", this);
 		if(mrand(1,2)) {
 			attackDamage.set(attackDamage.get() / 2);
 			drain /= 2;
@@ -1331,7 +1331,7 @@ int Monster::computeDamage(Creature* victim, Object* weapon, AttackType attackTy
 	attackDamage.add(::bonus(strength.getCur()));
 
 	if(result == ATTACK_CRITICAL) {
-		broadcast(NULL, getRoom(), "%M made a critical hit.", this);
+		broadcast(NULL, getRoomParent(), "%M made a critical hit.", this);
 		int mult = mrand(2, 5);
 		attackDamage.set(attackDamage.get() * mult);
 		drain *= mult;
@@ -1376,63 +1376,63 @@ int Creature::dodge(Creature* target) {
 	smashInvis();
 
 	if(isPlayer()) {
-	    Player* player = getPlayer();
+	    Player* player = getAsPlayer();
 		player->statistics.dodge();
 		player->increaseFocus(FOCUS_DODGE);
 	}
 
 	if(target->isPlayer())
-		target->getPlayer()->statistics.miss();
+		target->getAsPlayer()->statistics.miss();
 
 	if(i == 1) {
 		printColor("^cYou barely manage to dodge %N's attack.\n", target);
-		broadcast(getSock(), target->getSock(), getRoom(),
+		broadcast(getSock(), target->getSock(), getRoomParent(),
 			"%M barely dodges %N's attack.", this, target);
 		if(target->isPlayer())
 			target->printColor("^c%M somehow manages to dodge your attack.\n", this);
 	} else if(i == 2) {
 		printColor("^cYou deftly dodge %N's attack.\n", target);
-		broadcast(getSock(), target->getSock(), getRoom(),
+		broadcast(getSock(), target->getSock(), getRoomParent(),
 			"%M deftly dodges %N's attack.", this, target);
 		if(target->isPlayer())
 			target->printColor("^c%M deftly dodges your attack.\n", this);
 	} else if(i == 3 && (target->isPlayer())) {
 		printColor("^cYou side-step %N's attack and smack %s on the back of the head.\n", target,
 			target->himHer());
-		broadcast(getSock(), target->getSock(), getRoom(),
+		broadcast(getSock(), target->getSock(), getRoomParent(),
 			"%M side-steps %N's attack and smacks %s on the back of the head.", this,
 			target, target->himHer());
 		if(target->isPlayer())
 			target->printColor("^c%M side-steps your attack and smacks you on the back of the head.\n", this);
 	} else if(i > 3 && i < 6) {
 		printColor("^cYou dance gracefully around %N's attack.\n", target);
-		broadcast(getSock(), target->getSock(), getRoom(),
+		broadcast(getSock(), target->getSock(), getRoomParent(),
 			"%M dances gracefully around %N's attack.", this, target);
 		if(target->isPlayer())
 			target->printColor("^c%M dances gracefully around your attack.\n", this);
 	} else if(i >= 6 && i < 8) {
 		printColor("^cYou easily dodge %N's attack.\n", target);
-		broadcast(getSock(), target->getSock(), getRoom(),
+		broadcast(getSock(), target->getSock(), getRoomParent(),
 			"%M easily dodges %N's attack.", this, target);
 		if(target->isPlayer())
 			target->printColor("^c%M easily dodges your attack.\n",this);
 	}
 	else if(i >= 8 && i < 9) {
 		printColor("^cYou easily duck under %N's pitifully executed attack.\n", target);
-		broadcast(getSock(), target->getSock(), getRoom(),
+		broadcast(getSock(), target->getSock(), getRoomParent(),
 			"%M easily ducks under %N's pitifully executed attack.", this, target);
 		if(target->isPlayer())
 			target->printColor("^c%M easily ducks under your pitifully executed attack.\n",this);
 	} else if(i >= 9 && i <= 10) {
 		printColor("^cYou laugh at %N as you easily dodge %s attack.\n",
 			target, target->hisHer());
-		broadcast(getSock(), target->getSock(), getRoom(),
+		broadcast(getSock(), target->getSock(), getRoomParent(),
 			"%M laughs as %s easily dodges %N's attack.", this, heShe(), target);
 		if(target->isPlayer())
 			target->printColor("^c%M laughs as %s dodges your attack.\n", this, heShe());
 	} else {
 		printColor("^cYou deftly dodge %N's attack.\n", target);
-		broadcast(getSock(), target->getSock(), getRoom(),
+		broadcast(getSock(), target->getSock(), getRoomParent(),
 			"%M deftly dodges %N's attack.", this, target);
 		if(target->isPlayer())
 			target->printColor("^c%M deftly dodges your attack.\n",this);
@@ -1519,11 +1519,11 @@ int Creature::parry(Creature* target) {
 	// if result == miss || can't hit target, parry
 	if(result == ATTACK_MISS || !canHit(target, weapon, true, false)) {
 		printColor("^cYou parry %N's attack.\n", target);
-		broadcast(getSock(), target->getSock(), getRoom(), "%M parries %N's attack.", this, target);
+		broadcast(getSock(), target->getSock(), getRoomParent(), "%M parries %N's attack.", this, target);
 		if(target->isPlayer())
 			target->printColor("^c%M parries your attack.\n", this);
 		if(isPlayer()) {
-		    getPlayer()->increaseFocus(FOCUS_PARRY);
+		    getAsPlayer()->increaseFocus(FOCUS_PARRY);
 		}
 	} else {
 		// We have a riposte, calculate damage and such
@@ -1548,7 +1548,7 @@ int Creature::parry(Creature* target) {
 		case 1:
 			printColor("^cYou side-step ^M%N's^c attack and %s %s for %s%d^c damage.\n",
 					target, verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
-			broadcast(getSock(), target->getSock(), getRoom(), "%M side-steps %N's attack and %s %s.",
+			broadcast(getSock(), target->getSock(), getRoomParent(), "%M side-steps %N's attack and %s %s.",
 				this, target, verbPlural.c_str(), target->himHer());
 			if(target->isPlayer())
 				target->printColor("^M%M^x side-steps your attack and %s you for %s%d^x damage.\n",
@@ -1557,7 +1557,7 @@ int Creature::parry(Creature* target) {
 		case 2:
 			printColor("^cYou lunge and viciously %s ^M%N^c for %s%d^c damage.\n",
 				verb.c_str(), target, customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
-			broadcast(getSock(), target->getSock(), getRoom(), "%M lunges and viciously %s %N.",
+			broadcast(getSock(), target->getSock(), getRoomParent(), "%M lunges and viciously %s %N.",
 				this, verbPlural.c_str(), target );
 			if(target->isPlayer())
 				target->printColor("^M%M^x lunges at you and viciously %s you for %s%d^x damage.\n",
@@ -1566,7 +1566,7 @@ int Creature::parry(Creature* target) {
 		case 3:
 			printColor("^cYou slide around ^M%N's^c attack and %s %s for %s%d^c damage.\n",
 				target, verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
-			broadcast(getSock(), target->getSock(), getRoom(), "%M slides around %N's attack and %s %s.",
+			broadcast(getSock(), target->getSock(), getRoomParent(), "%M slides around %N's attack and %s %s.",
 				this, target, verbPlural.c_str(), target->himHer());
 			if(target->isPlayer())
 				target->printColor("^M%M^x slides around your attack and %s you for %s%d^x damage.\n",
@@ -1575,7 +1575,7 @@ int Creature::parry(Creature* target) {
 		case 4:
 			printColor("^cYou spin away from ^M%N^c's attack and %s %s for %s%d^c damage.\n",
 				target, verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
-			broadcast(getSock(), target->getSock(), getRoom(), "%M spins away from %N's attack and %s %s.",
+			broadcast(getSock(), target->getSock(), getRoomParent(), "%M spins away from %N's attack and %s %s.",
 				this, target, verbPlural.c_str(), target->himHer());
 			if(target->isPlayer())
 				target->printColor("^M%M^x spins away from your attack and %s you for %s%d^x damage.\n",
@@ -1584,7 +1584,7 @@ int Creature::parry(Creature* target) {
 		case 5:
 			printColor("^cYou duck under ^M%N's^c attack and %s %s for %s%d^c damage.\n",
 				target, verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
-			broadcast(getSock(), target->getSock(), getRoom(), "%M ducks under %N's attack and %s %s.",
+			broadcast(getSock(), target->getSock(), getRoomParent(), "%M ducks under %N's attack and %s %s.",
 				this, target, verbPlural.c_str(), target->himHer() );
 			if(target->isPlayer())
 				target->printColor("^M%M^x ducks under your attack and %s you for %s%d^x damage.\n",
@@ -1593,7 +1593,7 @@ int Creature::parry(Creature* target) {
 		case 6:
 			printColor("^cYou laugh at ^M%N^c and quickly %s %s for %s%d^c damage.\n",
 				target, verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
-			broadcast(getSock(), target->getSock(), getRoom(), "%M laughs at %N and quickly %s %s.",
+			broadcast(getSock(), target->getSock(), getRoomParent(), "%M laughs at %N and quickly %s %s.",
 				this, target, verbPlural.c_str(), target->himHer() );
 			if(target->isPlayer())
 				target->printColor("^M%M^x laughs at you and quickly %s you for %s%d^x damage.\n",
@@ -1602,7 +1602,7 @@ int Creature::parry(Creature* target) {
 		case 7:
 			printColor("^cYou riposte ^M%N's^c attack and %s %s for %s%d^c damage.\n",
 				target, verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
-			broadcast(getSock(), target->getSock(), getRoom(), "%M ripostes %N's attack and %s %s.",
+			broadcast(getSock(), target->getSock(), getRoomParent(), "%M ripostes %N's attack and %s %s.",
 				this, target, verbPlural.c_str(), target->himHer() );
 			if(target->isPlayer())
 				target->printColor("^M%M^x ripostes your attack and %s you for %s%d^x damage.\n",
@@ -1616,18 +1616,18 @@ int Creature::parry(Creature* target) {
 			// die check moved right before return.
 			if(weapon->getShotsCur() <= 0) {
 				printColor("%O just broke.\n", weapon);
-				broadcast(getSock(), target->getSock(), getRoom(), "%M's just broke %P.", this, weapon);
+				broadcast(getSock(), target->getSock(), getRoomParent(), "%M's just broke %P.", this, weapon);
 				unequip(WIELD);
 			}
 		}
 
 		if(target->isPlayer()) {
-			Player* pCrt = target->getPlayer();
+			Player* pCrt = target->getAsPlayer();
 			pCrt->updateAttackTimer();
 		}
 
 		if(isPlayer()) {
-            getPlayer()->increaseFocus(FOCUS_RIPOSTE, attackDamage.get(), target);
+            getAsPlayer()->increaseFocus(FOCUS_RIPOSTE, attackDamage.get(), target);
         }
 
 

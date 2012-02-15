@@ -112,7 +112,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
    		return(0);
 
 	if(creature)
-		pCreature = creature->getPlayer();
+		pCreature = creature->getAsPlayer();
 
 	if(!player->canAttack(creature))
 		return(0);
@@ -127,7 +127,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
 		!player->checkStaff("That won't work on the undead.\n") )
 	{
 		if(!pCreature)
-			creature->getMonster()->addEnemy(player);
+			creature->getAsMonster()->addEnemy(player);
 		return(0);
 	}
 
@@ -146,7 +146,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
 	if(pCreature) {
 
 	} else {
-		creature->getMonster()->addEnemy(player);
+		creature->getAsMonster()->addEnemy(player);
 		if(player->flagIsSet(P_LAG_PROTECTION_SET)) {    // Activates lag protection.
 			player->setFlag(P_LAG_PROTECTION_ACTIVE);
 		}
@@ -203,7 +203,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
 
 		broadcast(player->getSock(), player->getParent(), "%M fatally wounds %N.", player, creature);
 		if(creature->isMonster())
-			creature->getMonster()->adjustThreat(player, creature->hp.getCur());
+			creature->getAsMonster()->adjustThreat(player, creature->hp.getCur());
 		//player->statistics.attackDamage(creature->hp.getCur(), "touch-of-death");
 		creature->die(player);
 
@@ -398,13 +398,13 @@ int cmdMaul(Player* player, cmd* cmnd) {
 		return(0);
 
 	if(creature)
-		pCreature = creature->getPlayer();
+		pCreature = creature->getAsPlayer();
 
 	if(!player->canAttack(creature))
 		return(0);
 
 	if(!player->isCt()) {
-		if(!pCreature && creature->getMonster()->isEnemy(player)) {
+		if(!pCreature && creature->getAsMonster()->isEnemy(player)) {
 			player->print("Not while you're already fighting %s.\n", creature->himHer());
 			return(0);
 		}
@@ -456,7 +456,7 @@ int cmdMaul(Player* player, cmd* cmnd) {
 
 	if(!pCreature) {
 
-		creature->getMonster()->addEnemy(player);
+		creature->getAsMonster()->addEnemy(player);
 
 		// Activates lag protection.
 		if(player->flagIsSet(P_LAG_PROTECTION_SET))
@@ -497,7 +497,7 @@ int cmdMaul(Player* player, cmd* cmnd) {
 		player->print("You failed to maul %N.\n", creature);
 		player->checkImprove("maul", false);
 		creature->print("%M tried to maul you.\n", player);
-		broadcast(player->getSock(), creature->getSock(), creature->getRoom(),
+		broadcast(player->getSock(), creature->getSock(), creature->getRoomParent(),
 			"%M tried to maul %N.", player, creature);
 	}
 
@@ -537,7 +537,7 @@ int Player::packBonus() {
 //*********************************************************************
 
 int cmdHowl(Creature* player, cmd* cmnd) {
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	Monster *monster=0;
 	long	i=0, t=0, stunTime=0;
 	int		maxEffected=0, numEffected=0, bns=0;

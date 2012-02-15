@@ -328,9 +328,9 @@ bool antiGradius(int race);
 
 
 // io.cpp
-void broadcast(Socket* ignore, Container* container, const char *fmt, ...);
-void broadcast(Socket* ignore1, Socket* ignore2, Container* container, const char *fmt, ...);
-void broadcast(bool showTo(Socket*), Socket*, Container* container, const char *fmt, ...);
+void broadcast(Socket* ignore, const Container* container, const char *fmt, ...);
+void broadcast(Socket* ignore1, Socket* ignore2, const Container* container, const char *fmt, ...);
+void broadcast(bool showTo(Socket*), Socket*, const Container* container, const char *fmt, ...);
 
 bool yes(Socket* sock);
 bool yes(Creature* player);

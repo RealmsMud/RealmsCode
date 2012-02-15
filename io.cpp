@@ -66,7 +66,7 @@ bool hearBroadcast(Creature* target, Socket* ignore1, Socket* ignore2, bool show
 	if(showTo && !showTo(target->getSock()))
 		return(false);
 
-	Player* pTarget = target->getPlayer();
+	Player* pTarget = target->getAsPlayer();
 	if(pTarget) {
 		if(	ignore1 != NULL &&
 			ignore1->getPlayer() &&
@@ -108,7 +108,7 @@ void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, 
 
 
 // room broadcast
-void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, Container* container, const char *fmt, va_list ap) {
+void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const Container* container, const char *fmt, va_list ap) {
 	if(!container)
 		return;
 
@@ -126,7 +126,7 @@ void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, Contain
 
 
 // room broadcast, 1 ignore
-void broadcast(Socket* ignore, Container* container, const char *fmt, ...) {
+void broadcast(Socket* ignore, const Container* container, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	doBroadcast(0, ignore, NULL, container, fmt, ap);
@@ -134,7 +134,7 @@ void broadcast(Socket* ignore, Container* container, const char *fmt, ...) {
 }
 
 // room broadcast, 2 ignores
-void broadcast(Socket* ignore1, Socket* ignore2, Container* container, const char *fmt, ...) {
+void broadcast(Socket* ignore1, Socket* ignore2, const Container* container, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	doBroadcast(0, ignore1, ignore2, container, fmt, ap);
@@ -142,7 +142,7 @@ void broadcast(Socket* ignore1, Socket* ignore2, Container* container, const cha
 }
 
 // room broadcast, 1 ignore, showTo function
-void broadcast(bool showTo(Socket*), Socket* ignore, Container* container, const char *fmt, ...) {
+void broadcast(bool showTo(Socket*), Socket* ignore, const Container* container, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	doBroadcast(showTo, ignore, NULL, container, fmt, ap);
@@ -390,7 +390,7 @@ void broadcastGroup(bool dropLoot, Creature* player, const char *fmt,...) {
 
 //	broadcastGroupMember(dropLoot, player, leader, fmt, ap);
 	for(Creature* crt : group->members) {
-		broadcastGroupMember(dropLoot, player, crt->getConstPlayer(), fmt, ap);
+		broadcastGroupMember(dropLoot, player, crt->getAsConstPlayer(), fmt, ap);
 	}
 }
 

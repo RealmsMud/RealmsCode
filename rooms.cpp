@@ -36,8 +36,8 @@ void BaseRoom::setVersion(bstring v) { version = v; }
 
 
 bstring BaseRoom::fullName() const {
-	const UniqueRoom* uRoom = getConstUniqueRoom();
-	const AreaRoom* aRoom = getConstAreaRoom();
+	const UniqueRoom* uRoom = getAsConstUniqueRoom();
+	const AreaRoom* aRoom = getAsConstAreaRoom();
 	std::ostringstream oStr;
 
 	if(uRoom) {
@@ -369,10 +369,10 @@ WanderInfo* AreaRoom::getRandomWanderInfo() {
 //*********************************************************************
 
 WanderInfo* BaseRoom::getWanderInfo() {
-	UniqueRoom*	uRoom = getUniqueRoom();
+	UniqueRoom*	uRoom = getAsUniqueRoom();
 	if(uRoom)
 		return(&uRoom->wander);
-	AreaRoom* aRoom = getAreaRoom();
+	AreaRoom* aRoom = getAsAreaRoom();
 	if(aRoom)
 		return(aRoom->getRandomWanderInfo());
 	return(0);
@@ -792,7 +792,7 @@ int BaseRoom::countCrt() const {
 //*********************************************************************
 
 int BaseRoom::getMaxMobs() const {
-	const UniqueRoom* room = getConstUniqueRoom();
+	const UniqueRoom* room = getAsConstUniqueRoom();
 	if(!room)
 		return(MAX_MOBS_IN_ROOM);
 	return(room->getMaxMobs() ? room->getMaxMobs() : MAX_MOBS_IN_ROOM);
@@ -933,7 +933,7 @@ CatRef AreaRoom::getUnique(Creature *creature, bool skipDec) {
 bool BaseRoom::isDropDestroy() const {
 	if(!flagIsSet(R_DESTROYS_ITEMS))
 		return(false);
-	const AreaRoom* aRoom = getConstAreaRoom();
+	const AreaRoom* aRoom = getAsConstAreaRoom();
 	if(aRoom && aRoom->area->isRoad(aRoom->mapmarker.getX(), aRoom->mapmarker.getY(), aRoom->mapmarker.getZ(), true))
 		return(false);
 	return(true);
@@ -946,10 +946,10 @@ bool BaseRoom::hasOppositeRealmBonus(Realm realm) const {
 }
 
 
-Monster* BaseRoom::getTollkeeper() {
+Monster* BaseRoom::getTollkeeper() const {
     for(Monster* mons : monsters) {
 		if(!mons->isPet() && mons->flagIsSet(M_TOLLKEEPER))
-			return(mons->getMonster());
+			return(mons->getAsMonster());
 	}
 	return(0);
 }
@@ -990,7 +990,7 @@ bool BaseRoom::isSunlight() const {
 	if(!isDay() || !isOutdoors() || isMagicDark())
 		return(false);
 
-	const UniqueRoom* uRoom = getConstUniqueRoom();
+	const UniqueRoom* uRoom = getAsConstUniqueRoom();
 	const CatRefInfo* cri=0;
 	if(uRoom)
 		cri = gConfig->getCatRefInfo(uRoom->info.area);
@@ -1039,7 +1039,7 @@ void BaseRoom::expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelS
 
 	// allow them to be sent to the room's trap exit
 	if(useTrapExit) {
-		uRoom = getUniqueRoom();
+		uRoom = getAsUniqueRoom();
 		if(uRoom) {
 			CatRef cr = uRoom->getTrapExit();
 			uRoom = 0;
@@ -1131,7 +1131,7 @@ Location Creature::getLimboRoom() const {
 //*********************************************************************
 
 Location Creature::getRecallRoom() const {
-	const Player* player = getConstPlayer();
+	const Player* player = getAsConstPlayer();
 	if(player && (player->flagIsSet(P_T_TO_BOUND) || player->getClass() == BUILDER))
 		return(player->bound);
 	return(getSpecialArea(&CatRefInfo::recall, this, "", 0));
