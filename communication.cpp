@@ -635,8 +635,7 @@ int communicate(Creature* creature, cmd* cmnd) {
 
 
             for(Exit* exit : creature->getRoomParent()->exits) {
-                aRoom = 0;
-                new_rom = 0;
+                room = 0;
                 i=0;
                 PlayerSet::iterator pIt, pEnd;
                 // don't shout through closed doors

@@ -428,8 +428,7 @@ bool mobileEnter(Exit* exit) {
 
 int Monster::mobileCrt() {
 	BaseRoom *newRoom=0;
-	UniqueRoom	*uRoom=0;
-	AreaRoom* aRoom=0, *caRoom = area_room;
+	AreaRoom *caRoom = area_room;
 	int		i=0, num=0, ret=0;
 	bool	mem=false;
 
@@ -462,14 +461,12 @@ int Monster::mobileCrt() {
 		if(i == num) {
 
 			// get us out of this room
-			if(!Move::getRoom(this, exit, &uRoom, &aRoom))
+			if(!Move::getRoom(this, exit, &newRoom,))
 				return(0);
-			if(aRoom) {
-				mem = aRoom->getStayInMemory();
-				aRoom->setStayInMemory(true);
-				newRoom = aRoom;
-			} else
-				newRoom = uRoom;
+			if(newRoom->isAreaRoom()) {
+				mem = newRoom->getAsAreaRoom()->getStayInMemory();
+				newRoom->getAsAreaRoom()->setStayInMemory(true);
+			}
 
 			// make sure there are no problems with the new room
 			if(!newRoom)
@@ -510,15 +507,14 @@ int Monster::mobileCrt() {
 
 			// see if we can recycle this room
 			deleteFromRoom();
-			if(caRoom && aRoom == caRoom) {
-				aRoom = Move::recycle(aRoom, exit);
-				newRoom = aRoom;
+			if(caRoom && newRoom == caRoom && newRoom->isAreaRoom()) {
+				newRoom = Move::recycle(newRoom->getAsAreaRoom(), exit);
 			}
 			addToRoom(newRoom);
 
 			// reset stayInMemory
-			if(aRoom)
-				aRoom->setStayInMemory(mem);
+			if(newRoom->isAreaRoom())
+				newRoom->getAsAreaRoom()->setStayInMemory(mem);
 
 			lasttime[LT_MON_WANDER].ltime = time(0);
 			lasttime[LT_MON_WANDER].interval = mrand(5,60);
@@ -1289,18 +1285,14 @@ Exit* Creature::getFleeableExit() {
 //*********************************************************************
 
 BaseRoom* Creature::getFleeableRoom(Exit* exit) {
-	AreaRoom* aRoom=0;
+	BaseRoom* newRoom=0;
 	UniqueRoom*	uRoom=0;
 	if(!exit)
 		return(0);
 	// exit flags have already been taken care of above, so
 	// feign teleporting so we don't recycle the room
-	Move::getRoom(this, exit, &uRoom, &aRoom, false, 0, false);
-	if(uRoom)
-		return(uRoom);
-	else if(aRoom)
-		return(aRoom);
-	return(0);
+	Move::getRoom(this, exit, &newRoom, false, 0, false);
+	return(newRoom);
 }
 
 
