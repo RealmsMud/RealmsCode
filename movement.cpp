@@ -776,7 +776,7 @@ void Move::finish(Creature* creature, BaseRoom* room, UniqueRoom* uRoom, bool se
 // creature is allowed to be null if we're just trying to load the room
 // out of the exit.
 
-bool Move::getRoom(Creature* creature, const Exit* exit, UniqueRoom **uRoom, AreaRoom **aRoom, bool justLooking, MapMarker* teleport, bool recycle) {
+bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, bool justLooking, MapMarker* teleport, bool recycle) {
 	Player* player = creature->getAsPlayer();
 	Location l;
 
@@ -844,34 +844,32 @@ bool Move::getRoom(Creature* creature, const Exit* exit, UniqueRoom **uRoom, Are
 			// if we're only looking, don't use the function that will create a new room
 			// if one doesnt already exit
 			if(justLooking)
-				(*aRoom) = area->getRoom(&l.mapmarker);
+				(*newRoom) = area->getRoom(&l.mapmarker);
 			else
-				(*aRoom) = area->loadRoom(creature, &l.mapmarker, recycle);
-			if(!*aRoom)
+				(*newRoom) = area->loadRoom(creature, &l.mapmarker, recycle);
+			if(!*newRoom)
 				return(false);
 			// getUnique gets called again later, so skip the decrement process here
 			// or the compass will use 2 shots
 			if(teleport || !creature || !creature->parent_rom)
-				l.room = (*aRoom)->getUnique(creature, true);
+				l.room = (*newRoom)->getAsAreaRoom()->getUnique(creature, true);
 		}
 	}
 
 	if(l.room.id) {
 		if(	(creature && creature->parent_rom && l.room == creature->room) ||
-			!loadRoom(l.room, uRoom) )
+			!loadRoom(l.room, newRoom) )
 		{
 			if(!teleport && creature)
 				creature->print("Off map in that direction.\n");
 			return(false);
 		}
 
-		(*aRoom)=0;
-
 		if(creature) {
 			// sending true to this function tells the player why
 			// they can't cant enter the room: if teleporting send false
-			if(!creature->canEnter(*uRoom, !teleport)) {
-				(*uRoom)=0;
+			if(!creature->canEnter((*newRoom)->getAsUniqueRoom(), !teleport)) {
+				(*newRoom)=0;
 				return(false);
 			}
 
@@ -879,10 +877,10 @@ bool Move::getRoom(Creature* creature, const Exit* exit, UniqueRoom **uRoom, Are
 			// exclude pets
 			if(player && !creature->isPet()) {
 				for(Monster*pet : player->pets) {
-					if(pet && !pet->canEnter(*uRoom, !teleport)) {
+					if(pet && !pet->canEnter((*newRoom)->getAsUniqueRoom(), !teleport)) {
 						if(!teleport)
 							player->print("%M won't follow you there.\n", pet);
-						(*uRoom)=0;
+						(*newRoom)=0;
 						return(false);
 					}
 				}
@@ -899,17 +897,15 @@ bool Move::getRoom(Creature* creature, const Exit* exit, UniqueRoom **uRoom, Are
 	}
 
 
-	BaseRoom* room = (*aRoom);
-	if(!room)
-		room = (*uRoom);
+	BaseRoom* room = (*newRoom);
 
 	// when entering the room, we may have to unmist them
 	if( !justLooking &&
 		player &&
 		player->flagIsSet(P_MISTED) &&
 		!player->isStaff() &&
-		(room->flagIsSet(R_DISPERSE_MIST) || room->flagIsSet(R_ETHEREAL_PLANE) || room->isUnderwater())
-	) {
+		(room->flagIsSet(R_DISPERSE_MIST) || room->flagIsSet(R_ETHEREAL_PLANE) || room->isUnderwater()) )
+	{
 		if(room->isUnderwater())
 			player->print("Water currents disperse your mist.\n");
 		else {
@@ -932,8 +928,8 @@ bool Move::getRoom(Creature* creature, const Exit* exit, UniqueRoom **uRoom, Are
 
 bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::list<Creature*> *followers, int* numPeople, bool& roomPurged) {
 	BaseRoom *oldRoom = creature->getRoomParent(), *newRoom=0;
-	UniqueRoom	*uRoom=0;
-	AreaRoom* aRoom=0;
+//	UniqueRoom	*uRoom=0;
+//	AreaRoom* aRoom=0;
 	Exit	*exit=0;
 	Player	*player = creature->getAsPlayer();
 	Monster* monster = creature->getAsMonster();
@@ -961,20 +957,17 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 	if(player && !Move::canEnter(player, exit, leader))
 		return(false);
 
-	if(!Move::getRoom(creature, exit, &uRoom, &aRoom))
+	if(!Move::getRoom(creature, exit, &newRoom))
 		return(false);
 
 	// Rangers and F/T can't sneak with heavy armor on!
 	if(sneaking && player && player->checkHeavyRestrict("sneak"))
 		return(false);
 
-	if(aRoom) {
-		mem = aRoom->getStayInMemory();
-		aRoom->setStayInMemory(true);
-		newRoom = aRoom;
-	} else
-		newRoom = uRoom;
-
+	if(newRoom->isAreaRoom()) {
+		mem = newRoom->getAsAreaRoom()->getStayInMemory();
+		newRoom->getAsAreaRoom()->setStayInMemory(true);
+	}
 	// we have to run a manual isFull check here because nobody is
 	// in the room yet
 	(*numPeople)++;
@@ -982,8 +975,8 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 		if(newRoom->maxCapacity() && (newRoom->countVisPly() + *numPeople) > newRoom->maxCapacity()) {
 			creature->print("That room is full.\n");
 			// reset stayInMemory
-			if(aRoom)
-				aRoom->setStayInMemory(mem);
+			if(newRoom->isAreaRoom())
+				newRoom->getAsAreaRoom()->setStayInMemory(mem);
 			return(false);
 		}
 	}
@@ -1048,8 +1041,8 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 				Move::start(pet, cmnd, 0, 0, followers, numPeople, roomPurged);
 		}
 		// reset stayInMemory
-		if(aRoom)
-			aRoom->setStayInMemory(mem);
+		if(newRoom->isAreaRoom())
+			newRoom->getAsAreaRoom()->setStayInMemory(mem);
 		if(portal && oldRoom && exit)
 			Move::deletePortal(oldRoom, exit, leader ? player : player->getGroupLeader(), followers);
 		// portal owners close once they exit the room
@@ -1083,8 +1076,8 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 		Move::checkFollowed(player, exit, oldRoom, followers);
 
 	// reset stayInMemory
-	if(aRoom)
-		aRoom->setStayInMemory(mem);
+	if(newRoom->isAreaRoom())
+		newRoom->getAsAreaRoom()->setStayInMemory(mem);
 
 	// portal owners close once they exit the room, but this means their group can follow
 	if(player && player->flagIsSet(P_PORTAL))
