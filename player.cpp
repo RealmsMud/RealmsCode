@@ -274,6 +274,12 @@ void Player::init() {
 				currentLocation.room = l.room;
 			else
 				gConfig->areaInit(this, l.mapmarker);
+
+			if(this->currentLocation.mapmarker.getArea() != 0) {
+		        Area *area = gConfig->getArea(currentLocation.mapmarker.getArea());
+		        if(area)
+		            newRoom = area->loadRoom(0, &currentLocation.mapmarker, false);
+			}
 		}
 	}
 
@@ -325,11 +331,10 @@ void Player::init() {
 
 		if(uRoom) {
 			uRoom->killMortalObjects();
-			// this gets assigned just for the sake of broadcast_login;
-			// it doesnt actually do anything
-			parent_rom = uRoom;
+            newRoom = uRoom;
 		}
 	}
+    addToRoom(newRoom);
 
 	//	str[0] = 0;
 	if(!isDm()) {
@@ -342,6 +347,7 @@ void Player::init() {
 		     name, getSock()->getHostname().c_str(),
 		     gServer->isRebooting() ? "reloaded" : "logged on");
 
+
 	// broadcast
 	if(!gServer->isRebooting()) {
 		setSockColors();
@@ -351,7 +357,6 @@ void Player::init() {
 	checkDarkness();
 
 	// don't do the actual adding until after broadcast
-	addToRoom(newRoom);
 
 
 	for(Monster* pet : pets) {

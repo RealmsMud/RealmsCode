@@ -59,7 +59,7 @@ bool canFish(const Player* player, const Fishing** list, Object** pole) {
 	if(player->inAreaRoom())
 		*list = player->getConstAreaRoomParent()->getFishing();
 	else if(player->inUniqueRoom())
-		*list = player->parent_rom->getFishing();
+		*list = player->getConstUniqueRoomParent()->getFishing();
 
 	if(!*list || (*list)->empty()) {
 		player->printColor("You can't go fishing here!\n");

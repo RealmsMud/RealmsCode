@@ -1091,7 +1091,7 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, bs
 	if(creature) {
 		if(creature->inAreaRoom()) {
 			l.room.setArea("area");
-			l.room.id = creature->area_room->area->id;
+			l.room.id = creature->getConstAreaRoomParent()->area->id;
 		} else {
 			l.room.setArea(creature->currentLocation.room.area);
 		}
@@ -1162,8 +1162,6 @@ void BaseRoom::print(Socket* ignore1, Socket* ignore2, const char *fmt, ...) {
 //*********************************************************************
 
 void BaseRoom::doPrint(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const char *fmt, va_list ap) {
-	Player* target=0;
-
 	for(Player* ply : players) {
 		if(!hearBroadcast(ply, ignore1, ignore2, showTo))
 			continue;

@@ -78,7 +78,7 @@ void MudObject::moDestroy() {
 //***********************************************************************
 
 Monster* MudObject::getAsMonster() {
-	return(dynamic_cast<Monster*>(this));
+    return(dynamic_cast<Monster*>(this));
 }
 
 //***********************************************************************
@@ -86,7 +86,7 @@ Monster* MudObject::getAsMonster() {
 //***********************************************************************
 
 Creature* MudObject::getAsCreature() {
-	return(dynamic_cast<Creature*>(this));
+    return(dynamic_cast<Creature*>(this));
 }
 
 //***********************************************************************
@@ -249,8 +249,8 @@ bstring MudObject::getIdPython() const {
 bool MudObject::isRoom() const {
 	return(this &&
 	  	  (typeid(*this) == typeid(BaseRoom) ||
-		   typeid(this) == typeid(UniqueRoom) ||
-		   typeid(this) == typeid(AreaRoom)));
+		   typeid(*this) == typeid(UniqueRoom) ||
+		   typeid(*this) == typeid(AreaRoom)));
 }
 bool MudObject::isUniqueRoom() const {
 	return(this && typeid(*this) == typeid(UniqueRoom));

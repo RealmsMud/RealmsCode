@@ -46,7 +46,7 @@ bool delete_drop_obj(const BaseRoom* room, const Object* object, bool factionCan
 void hardcoreDeath(Player* player) {
 	if(!player->isHardcore())
 		return;
-	bool factionCanRecycle = !player->parent_rom || Faction::willDoBusinessWith(player, player->parent_rom->getFaction());
+	bool factionCanRecycle = !player->parent_rom || Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction());
 	player->hooks.execute("preHardcoreDeath");
 
 	for(int i=0; i<MAXWEAR; i++) {

@@ -1001,7 +1001,7 @@ int cmdTime(Player* player, cmd* cmnd) {
 
 		if(player->flagIsSet(P_JAILED)) {
 			if(	player->parent_rom &&
-				player->parent_rom->flagIsSet(R_MOB_JAIL)
+				player->getUniqueRoomParent()->flagIsSet(R_MOB_JAIL)
 			)
 				i = LT(player, LT_MOB_JAILED);
 			else
@@ -1072,8 +1072,8 @@ int cmdSave(Player* player, cmd* cmnd) {
 
 	player->save(true);
 	// Save storage rooms
-	if(player->parent_rom && player->parent_rom->info.isArea("stor"))
-		gConfig->resaveRoom(player->parent_rom->info);
+	if(player->parent_rom && player->getUniqueRoomParent()->info.isArea("stor"))
+		gConfig->resaveRoom(player->getUniqueRoomParent()->info);
 
 	player->print("Player saved.\n");
 	return(0);

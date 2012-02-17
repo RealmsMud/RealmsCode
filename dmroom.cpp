@@ -1132,11 +1132,11 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			return(0);
 		}
 		if(low(cmnd->str[2][1]) == 'l') {
-			player->parent_rom->setLowLevel(cmnd->val[2]);
-			player->print("Low level boundary %d\n", player->parent_rom->getLowLevel());
+			player->getUniqueRoomParent()->setLowLevel(cmnd->val[2]);
+			player->print("Low level boundary %d\n", player->getUniqueRoomParent()->getLowLevel());
 		} else if(low(cmnd->str[2][1]) == 'h') {
-			player->parent_rom->setHighLevel(cmnd->val[2]);
-			player->print("Upper level boundary %d\n", player->parent_rom->getHighLevel());
+			player->getUniqueRoomParent()->setHighLevel(cmnd->val[2]);
+			player->print("Upper level boundary %d\n", player->getUniqueRoomParent()->getHighLevel());
 		}
 
 		break;
@@ -1216,11 +1216,11 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 				player->print("Error: You need to be in a unique room to do that.\n");
 				return(0);
 			}
-			player->parent_rom->setRoomExperience(cmnd->val[2]);
+			player->getUniqueRoomParent()->setRoomExperience(cmnd->val[2]);
 
-			player->print("Room experience set to %d.\n", player->parent_rom->getRoomExperience());
+			player->print("Room experience set to %d.\n", player->getUniqueRoomParent()->getRoomExperience());
 			log_immort(true, player, "%s set roomExp to %d in room %s.\n", player->name,
-				player->parent_rom->getRoomExperience(), room->fullName().c_str());
+				player->getUniqueRoomParent()->getRoomExperience(), room->fullName().c_str());
 		} else {
 			player->print("Invalid option.\n");
 			return(0);
@@ -1229,7 +1229,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 	case 'f':
 		if(low(cmnd->str[2][1]) == 'i') {
 			if(!strcmp(cmnd->str[3], "")) {
-				player->parent_rom->setFishing("");
+				player->getUniqueRoomParent()->setFishing("");
 
 				player->print("Fishing list cleared.\n");
 				log_immort(true, player, "%s cleared fishing list in room %s.\n", player->name,
@@ -1242,11 +1242,11 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 					return(0);
 				}
 
-				player->parent_rom->setFishing(cmnd->str[3]);
+				player->getUniqueRoomParent()->setFishing(cmnd->str[3]);
 
-				player->print("Fishing list set to %s.\n", player->parent_rom->getFishingStr().c_str());
+				player->print("Fishing list set to %s.\n", player->getUniqueRoomParent()->getFishingStr().c_str());
 				log_immort(true, player, "%s set fishing list to %s in room %s.\n", player->name,
-					player->parent_rom->getFishingStr().c_str(), room->fullName().c_str());
+					player->getUniqueRoomParent()->getFishingStr().c_str(), room->fullName().c_str());
 			}
 		} else if(low(cmnd->str[2][1]) == 'a') {
 			if(!player->parent_rom) {
@@ -1258,14 +1258,14 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 				player->print("Set faction to what?\n");
 				return(0);
 			} else if(cmnd->num == 3) {
-				player->parent_rom->setFaction("");
+				player->getUniqueRoomParent()->setFaction("");
 				player->print("Faction cleared.\n");
 				log_immort(true, player, "%s cleared faction in room %s.\n", player->name,
 					room->fullName().c_str());
 				return(0);
 			}
 
-			Property* p = gConfig->getProperty(player->parent_rom->info);
+			Property* p = gConfig->getProperty(player->getUniqueRoomParent()->info);
 
 			if(p && p->getType() == PROP_SHOP) {
 				player->print("You can't set room faction on player shops!\n");
@@ -1277,10 +1277,10 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 				player->print("'%s' is an invalid faction.\n", cmnd->str[3]);
 				return(0);
 			}
-			player->parent_rom->setFaction(faction->getName());
-			player->print("Faction set to %s.\n", player->parent_rom->getFaction().c_str());
+			player->getUniqueRoomParent()->setFaction(faction->getName());
+			player->print("Faction set to %s.\n", player->getUniqueRoomParent()->getFaction().c_str());
 			log_immort(true, player, "%s set faction to %s in room %s.\n", player->name,
-				player->parent_rom->getFaction().c_str(), room->fullName().c_str());
+				player->getUniqueRoomParent()->getFaction().c_str(), room->fullName().c_str());
 			break;
 		} else {
 			if(!player->parent_rom) {
@@ -1300,7 +1300,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 
 			if(!strcmp(cmnd->str[3], "del")) {
 				for(a=0;a<MAX_ROOM_FLAGS;a++)
-					player->parent_rom->clearFlag(a);
+					player->getUniqueRoomParent()->clearFlag(a);
 
 				player->print("All room flags cleared.\n");
 				log_immort(true, player, "%s cleared all flags in room %s.\n",
@@ -1308,8 +1308,8 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 				break;
 			}
 
-			if(player->parent_rom->flagIsSet(num - 1)) {
-				player->parent_rom->clearFlag(num - 1);
+			if(player->getUniqueRoomParent()->flagIsSet(num - 1)) {
+				player->getUniqueRoomParent()->clearFlag(num - 1);
 				player->print("Room flag #%d(%s) off.\n", num, get_rflag(num-1));
 
 				log_immort(true, player, "%s cleared flag #%d(%s) in room %s.\n", player->name, num, get_rflag(num-1),
@@ -1317,29 +1317,29 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			} else {
 	 			if(num >= R_TRAINING_ROOM && num - 4 <= R_TRAINING_ROOM) {
 	 				// setting a training flag - do we let them?
-	 				if(!player->parent_rom->whatTraining(num-1)) {
+	 				if(!player->getUniqueRoomParent()->whatTraining(num-1)) {
 	 					player->print("You are setting training for a class that does not exist.\n");
 	 					return(0);
 	 				}
 	 			}
 
-	 			player->parent_rom->setFlag(num - 1);
+	 			player->getUniqueRoomParent()->setFlag(num - 1);
 				player->print("Room flag #%d(%s) on.\n", num, get_rflag(num-1));
 				log_immort(true, player, "%s set flag #%d(%s) in room %s.\n", player->name, num, get_rflag(num-1),
 					room->fullName().c_str());
 
 				if(num-1 == R_SHOP)
 					player->printColor("^YNote:^x you must set the Shop Storage (97) to use this room as a shop.\n");
-				if((num-1 == R_INDOORS || num-1 == R_VAMPIRE_COVEN || num-1 == R_UNDERGROUND) && player->parent_rom->getSize() == NO_SIZE)
+				if((num-1 == R_INDOORS || num-1 == R_VAMPIRE_COVEN || num-1 == R_UNDERGROUND) && player->getUniqueRoomParent()->getSize() == NO_SIZE)
 					player->printColor("^YNote:^x don't forget to set the size for this room.\n");
 			}
 
 			// try and be smart
  			if(	num-1 == R_SHOP_STORAGE &&
- 				!strcmp(player->parent_rom->name, "New Room") &&
- 				player->parent_rom->exits.empty()
+ 				!strcmp(player->getUniqueRoomParent()->name, "New Room") &&
+ 				player->getUniqueRoomParent()->exits.empty()
  			) {
- 				cr = player->parent_rom->info;
+ 				cr = player->getUniqueRoomParent()->info;
  				UniqueRoom* shop=0;
  				bstring storageName = "Storage: ";
 
@@ -1350,13 +1350,13 @@ int dmSetRoom(Player* player, cmd* cmnd) {
  					) {
  						player->printColor("^ySetting up this storage room for you...\n");
  						player->printColor("^y * ^xSetting the trap exit to %s...\n", cr.str().c_str());
- 						player->parent_rom->setTrapExit(cr);
+ 						player->getUniqueRoomParent()->setTrapExit(cr);
  						player->printColor("^y * ^xCreating exit ""out"" to %s...\n", cr.str().c_str());
  						link_rom(player->parent_rom, cr, "out");
- 						player->parent_rom->setTrapExit(cr);
+ 						player->getUniqueRoomParent()->setTrapExit(cr);
  						player->printColor("^y * ^xNaming this room...\n");
  						storageName += shop->name;
- 						strcpy(player->parent_rom->name, storageName.c_str());
+ 						strcpy(player->getUniqueRoomParent()->name, storageName.c_str());
  						player->print("Done!\n");
  					}
  				}
@@ -1372,8 +1372,8 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			player->print("Are you sure?\nType \"*set r last clear\" to clear last-arrived info.\n");
 			return(0);
 		}
-		strcpy(player->parent_rom->lastPly, "");
-		strcpy(player->parent_rom->lastPlyTime, "");
+		strcpy(player->getUniqueRoomParent()->lastPly, "");
+		strcpy(player->getUniqueRoomParent()->lastPlyTime, "");
 		player->print("Last-arrived info cleared.\n");
 		break;
 	case 'm':
@@ -1381,14 +1381,14 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			player->print("Error: You need to be in a unique room to do that.\n");
 			return(0);
 		}
-		player->parent_rom->setMaxMobs(cmnd->val[2]);
+		player->getUniqueRoomParent()->setMaxMobs(cmnd->val[2]);
 
-		if(!player->parent_rom->getMaxMobs())
+		if(!player->getUniqueRoomParent()->getMaxMobs())
 			player->print("The limit on the number of creatures that can be here has been removed.\n");
 		else
-			player->print("Only %d creature%s can now be in here at a time.\n", player->parent_rom->getMaxMobs(), player->parent_rom->getMaxMobs() != 1 ? "s" : "");
+			player->print("Only %d creature%s can now be in here at a time.\n", player->getUniqueRoomParent()->getMaxMobs(), player->getUniqueRoomParent()->getMaxMobs() != 1 ? "s" : "");
 
-		log_immort(true, player, "%s set max %d mobs in room %s.\n", player->name, player->parent_rom->getMaxMobs(),
+		log_immort(true, player, "%s set max %d mobs in room %s.\n", player->name, player->getUniqueRoomParent()->getMaxMobs(),
 			room->fullName().c_str());
 
 		break;
@@ -1423,10 +1423,10 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 		getCatRef(getFullstrText(cmnd->fullstr, 3), &cr, player);
 
 		if(!cr.id) {
-			player->parent_rom->wander.random.erase(num-1);
+			player->getUniqueRoomParent()->wander.random.erase(num-1);
 			player->print("Random #%d has been cleared.\n", num);
 		} else {
-			player->parent_rom->wander.random[num-1] = cr;
+			player->getUniqueRoomParent()->wander.random[num-1] = cr;
 			player->print("Random #%d is now %s.\n", num, cr.str().c_str());
 		}
 
@@ -1440,21 +1440,21 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			player->print("Error: You need to be in a unique room to do that.\n");
 			return(0);
 		}
-		player->parent_rom->setSize(getSize(cmnd->str[3]));
+		player->getUniqueRoomParent()->setSize(getSize(cmnd->str[3]));
 
-		player->print("Size set to %s.\n", getSizeName(player->parent_rom->getSize()).c_str());
+		player->print("Size set to %s.\n", getSizeName(player->getUniqueRoomParent()->getSize()).c_str());
 		log_immort(true, player, "%s set room %s's %s to %s.\n",
-			player->name, room->fullName().c_str(), "Size", getSizeName(player->parent_rom->getSize()).c_str());
+			player->name, room->fullName().c_str(), "Size", getSizeName(player->getUniqueRoomParent()->getSize()).c_str());
 		break;
 	case 't':
 		if(!player->parent_rom) {
 			player->print("Error: You need to be in a unique room to do that.\n");
 			return(0);
 		}
-		player->parent_rom->wander.setTraffic(cmnd->val[2]);
+		player->getUniqueRoomParent()->wander.setTraffic(cmnd->val[2]);
 		log_immort(true, player, "%s set room %s's traffic to %ld.\n", player->name,
-			player->parent_rom->info.str().c_str(), player->parent_rom->wander.getTraffic());
-		player->print("Traffic is now %d%%.\n", player->parent_rom->wander.getTraffic());
+			player->getUniqueRoomParent()->info.str().c_str(), player->getUniqueRoomParent()->wander.getTraffic());
+		player->print("Traffic is now %d%%.\n", player->getUniqueRoomParent()->wander.getTraffic());
 
 		break;
 	case 'x':
@@ -1469,19 +1469,19 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 				player->print("Trap's exit must be within an assigned range.\n");
 				return(0);
 			}
-			player->parent_rom->setTrapExit(cr);
-			player->print("Room's trap exit is now %s.\n", player->parent_rom->getTrapExit().str().c_str());
+			player->getUniqueRoomParent()->setTrapExit(cr);
+			player->print("Room's trap exit is now %s.\n", player->getUniqueRoomParent()->getTrapExit().str().c_str());
 			log_immort(true, player, "%s set trapexit to %s in room %s.\n", player->name,
-				player->parent_rom->getTrapExit().str().c_str(), room->fullName().c_str());
+				player->getUniqueRoomParent()->getTrapExit().str().c_str(), room->fullName().c_str());
 		} else if(low(cmnd->str[2][1]) == 'w') {
 			num = (int)cmnd->val[2];
 			if(num < 0 || num > 5000) {
 				player->print("Trap weight cannot be less than 0 or greater than 5000.\n");
 				return(0);
 			}
-			player->parent_rom->setTrapWeight(num);
-			player->print("Room's trap weight is now %d.\n", player->parent_rom->getTrapWeight());
-			log_immort(true, player, "%s set trapweight to %d in room %s.\n", player->name, player->parent_rom->getTrapWeight(),
+			player->getUniqueRoomParent()->setTrapWeight(num);
+			player->print("Room's trap weight is now %d.\n", player->getUniqueRoomParent()->getTrapWeight());
+			log_immort(true, player, "%s set trapweight to %d in room %s.\n", player->name, player->getUniqueRoomParent()->getTrapWeight(),
 				room->fullName().c_str());
 		} else if(low(cmnd->str[2][1]) == 's') {
 			num = (int)cmnd->val[2];
@@ -1489,14 +1489,14 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 				player->print("Trap strength cannot be less than 0 or greater than 5000.\n");
 				return(0);
 			}
-			player->parent_rom->setTrapStrength(num);
-			player->print("Room's trap strength is now %d.\n", player->parent_rom->getTrapStrength());
-			log_immort(true, player, "%s set trapstrength to %d in room %s.\n", player->name, player->parent_rom->getTrapStrength(),
+			player->getUniqueRoomParent()->setTrapStrength(num);
+			player->print("Room's trap strength is now %d.\n", player->getUniqueRoomParent()->getTrapStrength());
+			log_immort(true, player, "%s set trapstrength to %d in room %s.\n", player->name, player->getUniqueRoomParent()->getTrapStrength(),
 				room->fullName().c_str());
 		} else {
-			player->parent_rom->setTrap(cmnd->val[2]);
-			player->print("Room has trap #%d set.\n", player->parent_rom->getTrap());
-			log_immort(true, player, "%s set trap #%d in room %s.\n", player->name, player->parent_rom->getTrap(),
+			player->getUniqueRoomParent()->setTrap(cmnd->val[2]);
+			player->print("Room has trap #%d set.\n", player->getUniqueRoomParent()->getTrap());
+			log_immort(true, player, "%s set trap #%d in room %s.\n", player->name, player->getUniqueRoomParent()->getTrap(),
 				room->fullName().c_str());
 		}
 
@@ -1525,7 +1525,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 	}
 
 	if(player->inUniqueRoom())
-		player->parent_rom->escapeText();
+		player->getUniqueRoomParent()->escapeText();
 	room_track(player);
 	return(0);
 }
@@ -1788,7 +1788,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 		}
 
 		if(player->inUniqueRoom())
-			player->parent_rom->escapeText();
+			player->getUniqueRoomParent()->escapeText();
 		room_track(player);
 		return(0);
 	}
@@ -1910,7 +1910,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 	}
 
 	if(player->inUniqueRoom())
-		gConfig->resaveRoom(player->parent_rom->info);
+		gConfig->resaveRoom(player->getUniqueRoomParent()->info);
 
 	if(aRoom && aRoom->canDelete())
 		area->remove(aRoom);
@@ -1929,8 +1929,8 @@ int room_track(Creature* player) {
 	if(player->isMonster() || !player->parent_rom)
 		return(0);
 
-	strcpy(player->parent_rom->last_mod, player->name);
-	strcpy(player->parent_rom->lastModTime, ctime(&t));
+	strcpy(player->getUniqueRoomParent()->last_mod, player->name);
+	strcpy(player->getUniqueRoomParent()->lastModTime, ctime(&t));
 	return(0);
 }
 
@@ -2235,7 +2235,7 @@ int dmDelete(Player* player, cmd* cmnd) {
 	} // *del -A
 
 	log_immort(true, player, "%s deleted description in room %s.\n", player->name,
-		player->parent_rom->info.str().c_str());
+		player->getUniqueRoomParent()->info.str().c_str());
 
 	player->print("Deleted.\n");
 	return(0);
@@ -2263,7 +2263,7 @@ int dmNameRoom(Player* player, cmd* cmnd) {
 	if(name.getLength() > 79)
 		name = name.left(79);
 
-	strcpy(player->parent_rom->name, name.c_str());
+	strcpy(player->getUniqueRoomParent()->name, name.c_str());
 	log_immort(true, player, "%s renamed room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
 	player->print("Done.\n");
 
@@ -2338,9 +2338,9 @@ int dmDescription(Player* player, cmd* cmnd, bool append) {
 		player->print("Long description %s.\n", append ? "appended" : "prepended");
 	}
 
-	player->parent_rom->escapeText();
+	player->getUniqueRoomParent()->escapeText();
 	log_immort(true, player, "%s descripted in room %s.\n", player->name,
-		player->parent_rom->info.str().c_str());
+		player->getUniqueRoomParent()->info.str().c_str());
 	return(0);
 }
 
@@ -2544,7 +2544,7 @@ int dmWrap(Player* player, cmd* cmnd) {
 		room->setLongDescription(wrapText(room->getLongDescription(), wrap));
 
 	player->print("Text wrapped.\n");
-	player->parent_rom->escapeText();
+	player->getUniqueRoomParent()->escapeText();
 	log_immort(false, player, "%s wrapped the description in room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
 	return(0);
 }
@@ -2807,8 +2807,8 @@ int dmDestroyRoom(Player* player, cmd* cmnd) {
 		player->print("Room is not in any of your alotted room ranges.\n");
 		return(0);
 	}
-	if(	player->parent_rom->info.isArea("test") &&
-		player->parent_rom->info.id == 1
+	if(	player->getUniqueRoomParent()->info.isArea("test") &&
+		player->getUniqueRoomParent()->info.id == 1
 	) {
 		player->print("Sorry, you cannot destroy this room.\n");
 		player->print("It is the Builder Waiting Room.\n");
@@ -2822,8 +2822,8 @@ int dmDestroyRoom(Player* player, cmd* cmnd) {
 
 	std::map<bstring, StartLoc*>::iterator sIt;
 	for(sIt = gConfig->start.begin() ; sIt != gConfig->start.end() ; sIt++) {
-		if(	player->parent_rom->info == (*sIt).second->getBind().room ||
-			player->parent_rom->info == (*sIt).second->getRequired().room
+		if(	player->getUniqueRoomParent()->info == (*sIt).second->getBind().room ||
+			player->getUniqueRoomParent()->info == (*sIt).second->getRequired().room
 		) {
 			player->print("Sorry, you cannot destroy this room.\n");
 			player->print("It is important to starting locations.\n");
@@ -2833,13 +2833,13 @@ int dmDestroyRoom(Player* player, cmd* cmnd) {
 
 	std::list<CatRefInfo*>::const_iterator crIt;
 	for(crIt = gConfig->catRefInfo.begin() ; crIt != gConfig->catRefInfo.end() ; crIt++) {
-		if(player->parent_rom->info.isArea((*crIt)->getArea())) {
-			if((*crIt)->getLimbo() == player->parent_rom->info.id) {
+		if(player->getUniqueRoomParent()->info.isArea((*crIt)->getArea())) {
+			if((*crIt)->getLimbo() == player->getUniqueRoomParent()->info.id) {
 				player->print("Sorry, you cannot destroy this room.\n");
 				player->print("It is a Limbo room.\n");
 				return(0);
 			}
-			if((*crIt)->getRecall() == player->parent_rom->info.id) {
+			if((*crIt)->getRecall() == player->getUniqueRoomParent()->info.id) {
 				player->print("Sorry, you cannot destroy this room.\n");
 				player->print("It is a recall room.\n");
 				return(0);
@@ -2849,7 +2849,7 @@ int dmDestroyRoom(Player* player, cmd* cmnd) {
 
 	log_immort(true, player, "%s destroyed room %s.\n",
 		player->name, player->getRoomParent()->fullName().c_str());
-	player->parent_rom->destroy();
+	player->getUniqueRoomParent()->destroy();
 	return(0);
 }
 
@@ -2955,7 +2955,7 @@ int dmFind(Player* player, cmd* cmnd) {
 	CatRef cr;
 
 	if(player->inUniqueRoom())
-		cr = player->parent_rom->info;
+		cr = player->getUniqueRoomParent()->info;
 	else
 		cr.setArea("area");
 

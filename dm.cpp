@@ -608,7 +608,7 @@ int dmUsers(Player* player, cmd* cmnd) {
 
 	bstring cr = gConfig->defaultArea;
 	if(player->inUniqueRoom())
-		cr = player->parent_rom->info.area;
+		cr = player->getUniqueRoomParent()->info.area;
 
 	if(cmnd->num > 1 && cmnd->str[1][0] == 'f')
 		full = true;
@@ -799,7 +799,7 @@ int dmResave(Player* player, cmd* cmnd) {
 
 	if(player->inUniqueRoom()) {
 
-		s = gConfig->resaveRoom(player->parent_rom->info);
+		s = gConfig->resaveRoom(player->getUniqueRoomParent()->info);
 		if(s < 0)
 			player->print("Resave failed. Tell this number to Bane: (%d)\n",s);
 		else
@@ -859,9 +859,9 @@ int dmPerm(Player* player, cmd* cmnd) {
 				return(0);
 			}
 
-			it = player->parent_rom->permObjects.find(cmnd->val[2]-1);
-			if(it != player->parent_rom->permObjects.end()) {
-				player->parent_rom->permObjects.erase(it);
+			it = player->getUniqueRoomParent()->permObjects.find(cmnd->val[2]-1);
+			if(it != player->getUniqueRoomParent()->permObjects.end()) {
+				player->getUniqueRoomParent()->permObjects.erase(it);
 				player->print("Perm Object slot #%d cleared.\n", cmnd->val[2]);
 			} else {
 				player->print("Perm object slot #%d already empty.\n", cmnd->val[2]);
@@ -871,7 +871,7 @@ int dmPerm(Player* player, cmd* cmnd) {
 		}
 
 
-		object = findObject(player, player->parent_rom->first_obj, cmnd->str[2], 1);
+		object = findObject(player, player->getUniqueRoomParent()->first_obj, cmnd->str[2], 1);
 
 		if(!object) {
 			player->print("Object not found.\n");
@@ -886,17 +886,17 @@ int dmPerm(Player* player, cmd* cmnd) {
 		if(cmnd->val[2] < 2)
 			cmnd->val[2] = 7200;
 
-		x = player->parent_rom->permObjects.size();
+		x = player->getUniqueRoomParent()->permObjects.size();
 		if(x > NUM_PERM_SLOTS) {
 			player->print("Room is already full.\n");
 			return(0);
 		}
 
-		player->parent_rom->permObjects[x].cr = object->info;
-		player->parent_rom->permObjects[x].interval = (long)cmnd->val[2];
+		player->getUniqueRoomParent()->permObjects[x].cr = object->info;
+		player->getUniqueRoomParent()->permObjects[x].interval = (long)cmnd->val[2];
 
 		log_immort(true, player, "%s permed %s^g in room %s.\n", player->name,
-			object->name, player->parent_rom->info.str().c_str());
+			object->name, player->getUniqueRoomParent()->info.str().c_str());
 
 		player->printColor("%s^x (%s) permed with timeout of %d.\n", object->name, object->info.str().c_str(), cmnd->val[2]);
 
@@ -915,9 +915,9 @@ int dmPerm(Player* player, cmd* cmnd) {
 				return(0);
 			}
 
-			it = player->parent_rom->permMonsters.find(cmnd->val[2]-1);
-			if(it != player->parent_rom->permMonsters.end()) {
-				player->parent_rom->permMonsters.erase(it);
+			it = player->getUniqueRoomParent()->permMonsters.find(cmnd->val[2]-1);
+			if(it != player->getUniqueRoomParent()->permMonsters.end()) {
+				player->getUniqueRoomParent()->permMonsters.erase(it);
 				player->print("Perm monster slot #%d cleared.\n", cmnd->val[2]);
 			} else {
 				player->print("Perm monster slot #%d already empty.\n", cmnd->val[2]);
@@ -926,7 +926,7 @@ int dmPerm(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		target = player->parent_rom->findMonster(player, cmnd->str[2], 1);
+		target = player->getUniqueRoomParent()->findMonster(player, cmnd->str[2], 1);
 		if(!target) {
 			player->print("Creature not found.\n");
 			return(0);
@@ -946,17 +946,17 @@ int dmPerm(Player* player, cmd* cmnd) {
 		if(cmnd->val[2] < 2)
 			cmnd->val[2] = 7200;
 
-		x = player->parent_rom->permMonsters.size();
+		x = player->getUniqueRoomParent()->permMonsters.size();
 		if(x > NUM_PERM_SLOTS) {
 			player->print("Room is already full.\n");
 			return(0);
 		}
 
-		player->parent_rom->permMonsters[x].cr = target->info;
-		player->parent_rom->permMonsters[x].interval = (long)cmnd->val[2];
+		player->getUniqueRoomParent()->permMonsters[x].cr = target->info;
+		player->getUniqueRoomParent()->permMonsters[x].interval = (long)cmnd->val[2];
 
 		log_immort(true, player, "%s permed %s in room %s.\n", player->name,
-			target->name, player->parent_rom->info.str().c_str());
+			target->name, player->getUniqueRoomParent()->info.str().c_str());
 
 		player->print("%s (%s) permed with timeout of %d.\n", target->name, target->info.str().c_str(), cmnd->val[2]);
 
@@ -964,13 +964,13 @@ int dmPerm(Player* player, cmd* cmnd) {
 		// perm tracks
 	case 't':
 		if(!strcmp(cmnd->str[2], "d") || cmnd->num < 3) {
-			player->parent_rom->clearFlag(R_PERMENANT_TRACKS);
+			player->getUniqueRoomParent()->clearFlag(R_PERMENANT_TRACKS);
 			player->print("Perm tracks deleted.\n");
 			return(0);
 		}
-		player->parent_rom->track.setDirection(cmnd->str[2]);
-		player->parent_rom->setFlag(R_PERMENANT_TRACKS);
-		player->print("Perm tracks added leading %s.\n", player->parent_rom->track.getDirection().c_str());
+		player->getUniqueRoomParent()->track.setDirection(cmnd->str[2]);
+		player->getUniqueRoomParent()->setFlag(R_PERMENANT_TRACKS);
+		player->print("Perm tracks added leading %s.\n", player->getUniqueRoomParent()->track.getDirection().c_str());
 		return(0);
 
 	default:
@@ -2318,8 +2318,9 @@ int dmStat(Player* player, cmd* cmnd) {
 			if(player->inUniqueRoom()) {
 				uRoom = player->getUniqueRoomParent();
 				cr = player->getUniqueRoomParent()->info;
-			} else if(player->inUniqueRoom()) {
+			} else if(player->inAreaRoom()) {
 				aRoom = player->getAreaRoomParent();
+//				mapmarker = aRoom->mapmarker;
 			}
 		} else {
 
@@ -2354,7 +2355,7 @@ int dmStat(Player* player, cmd* cmnd) {
 				player->print("Error: out of room range.\n");
 				return(0);
 			}
-			if(player->parent_rom && cr == player->parent_rom->info)
+			if(player->parent_rom && cr == player->getUniqueRoomParent()->info)
 				uRoom = player->parent_rom;
 			else {
 				if(!loadRoom(cr, &uRoom)) {

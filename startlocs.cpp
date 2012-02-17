@@ -321,8 +321,8 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(pPlayer->isCt() && cmnd->num == 4)
 			location = gConfig->getStartLoc(cmnd->str[3]);
-		else if(pPlayer->parent_rom && pPlayer->parent_rom->info.id)
-			location = gConfig->getStartLocByReq(pPlayer->parent_rom->info);
+		else if(pPlayer->parent_rom && pPlayer->getUniqueRoomParent()->info.id)
+			location = gConfig->getStartLocByReq(pPlayer->getUniqueRoomParent()->info);
 
 		if(	!location ||
 			!location->getRequired().getId() ||
@@ -334,8 +334,8 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		if(!pPlayer->isCt()) {
-			if(	(pPlayer->area_room && pPlayer->area_room->mapmarker != location->getRequired().mapmarker) ||
-				(pPlayer->parent_rom && pPlayer->parent_rom->info != location->getRequired().room)
+			if(	(pPlayer->inAreaRoom() && pPlayer->getAreaRoomParent()->mapmarker != location->getRequired().mapmarker) ||
+				(pPlayer->inUniqueRoom() && pPlayer->getUniqueRoomParent()->info != location->getRequired().room)
 			) {
 				pPlayer->print("To bind to this location, you must be at %s.\n", location->getRequiredName().c_str());
 				return(0);

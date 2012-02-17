@@ -220,7 +220,7 @@ void swap(const Player* player, cmd* cmnd, SwapType type) {
 			return;
 		}
 
-		s.origin = player->parent_rom->info;
+		s.origin = player->getConstUniqueRoomParent()->info;
 	} else {
 		getCatRef(str, &s.origin, player);
 		str = getFullstrText(str, 1);
@@ -241,7 +241,7 @@ void swap(const Player* player, cmd* cmnd, SwapType type) {
 
 	if(type == SwapRoom) {
 		if(!s.target.isArea(s.origin.area) && getFullstrText(cmnd->fullstr, 2) != "confirm") {
-			for(Exit* ext : player->parent_rom->exits) {
+			for(Exit* ext : player->getConstUniqueRoomParent()->exits) {
 				if(ext->flagIsSet(X_LOCKABLE) && ext->getKey()) {
 					player->printColor("^YRS: ^RError: ^xthis room contains a lockable exit and is being moved to a different area.\n");
 					player->printColor("   To continue, type ^W*rswap %s confirm^x. Make sure all keys work correctly.\n", s.target.area.c_str());
@@ -250,12 +250,12 @@ void swap(const Player* player, cmd* cmnd, SwapType type) {
 			}
 		}
 
-		if(player->parent_rom->flagIsSet(R_SHOP))
+		if(player->getConstUniqueRoomParent()->flagIsSet(R_SHOP))
 			player->printColor("^YRS: ^GThis room is a shop - don't forget to swap the storage room: %s.\n",
 				shopStorageRoom(player->parent_rom).rstr().c_str());
-		else if(player->parent_rom->getTrapExit().id)
+		else if(player->getConstUniqueRoomParent()->getTrapExit().id)
 			player->printColor("^YRS: ^GThis room has a trap exit set: %s.\n",
-				player->parent_rom->getTrapExit().rstr().c_str());
+				player->getConstUniqueRoomParent()->getTrapExit().rstr().c_str());
 	}
 
 	if(gConfig->isSwapping()) {

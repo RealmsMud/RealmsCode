@@ -984,7 +984,7 @@ void Server::clearAsEnemy(Player* player) {
 		// Increment the iterator in case this monster dies during the update and is removed from the active list
 		monster = (*it++);
 
-		if(!(monster->parent_rom && monster->parent_rom->info.id) && !monster->area_room) continue;
+		if(!(monster->inUniqueRoom() && monster->getUniqueRoomParent()->info.id) && !monster->inAreaRoom()) continue;
 
 		monster->clearEnemy(player);
 	}
@@ -1092,7 +1092,7 @@ bstring Server::showActiveList() {
 
 	while(it != activeList.end()) {
 		monster = (*it++);
-		if((!monster->parent_rom || !monster->parent_rom->info.id) && !monster->area_room ) {
+		if((!monster->inUniqueRoom() || !monster->getUniqueRoomParent()->info.id) && !monster->inAreaRoom()) {
 			if(monster->getName())
 				oStr << "Bad Mob " << monster->getName() << ".\n";
 			else

@@ -628,7 +628,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
 				if(mrand(1,100) <= 50) {
 					newloc = getEtherealTravelRoom();
 					if(player->inJail())
-						newloc = player->parent_rom->info;
+						newloc = player->getUniqueRoomParent()->info;
 					else if(player->getRoomParent()->flagIsSet(R_ETHEREAL_PLANE))
 						newloc.id = 50;
 

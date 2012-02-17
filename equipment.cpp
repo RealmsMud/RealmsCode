@@ -1081,7 +1081,7 @@ bool limitedInStorage(const Player* player, const Object* object, const Property
 
 bool storageProperty(const Player* player, const Object* object, Property **p) {
 	if(player->inUniqueRoom()) {
-		(*p) = gConfig->getProperty(player->parent_rom->info);
+		(*p) = gConfig->getProperty(player->getConstUniqueRoomParent()->info);
 		if(*p) {
 			// currently, we only care about storage rooms. we don't log gets
 			// in any other type of property
@@ -2407,7 +2407,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 
 
 	player->unhide();
-	factionCanRecycle = !player->parent_rom || Faction::willDoBusinessWith(player, player->parent_rom->getFaction());
+	factionCanRecycle = !player->parent_rom || Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction());
 
 	if(cmnd->num == 2) {
 

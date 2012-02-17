@@ -145,17 +145,17 @@ static void check_spelling(Player* player, cmd* cmnd) {
 
 	if(short_desc) {
 		player->print("Checking for misspelled words in short description...\n");
-		do_spelling_check(player, mode, player->parent_rom->getShortDescription());
+		do_spelling_check(player, mode, player->getUniqueRoomParent()->getShortDescription());
 	}
 
 	if(long_desc) {
 		player->print("Checking for misspelled words in long description...\n");
-		do_spelling_check(player, mode, player->parent_rom->getLongDescription());
+		do_spelling_check(player, mode, player->getUniqueRoomParent()->getLongDescription());
 	}
 
-	if(exit_desc && !player->parent_rom->exits.empty()) {
+	if(exit_desc && !player->getUniqueRoomParent()->exits.empty()) {
 		player->print("Checking for misspelled words in exit descriptions...\n");
-		for(Exit* ext : player->parent_rom->exits) {
+		for(Exit* ext : player->getUniqueRoomParent()->exits) {
 			player->print("   %s:\n", ext->name);
 			do_spelling_check(player, mode, ext->getDescription());
 		}

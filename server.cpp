@@ -687,8 +687,8 @@ void Server::updateRandom(long t) {
 
 		if(!player || !player->getRoomParent())
 			continue;
-		uRoom = player->parent_rom;
-		aRoom = player->area_room;
+		uRoom = player->getUniqueRoomParent();
+		aRoom = player->getAreaRoomParent();
 		room = player->getRoomParent();
 
 		wander = 0;
@@ -805,7 +805,7 @@ void Server::updateActive(long t) {
 		// Better be a monster to be on the active list
 		ASSERTLOG(monster);
 
-		if(!monster->parent_rom && !monster->area_room) {
+		if(!monster->inRoom()) {
 			broadcast(isStaff, "^y%s without a parent/area room on the active list. Info: %s. Deleting.",
 				monster->name, monster->info.str().c_str());
 			monster->deleteFromRoom();

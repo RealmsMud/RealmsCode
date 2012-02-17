@@ -274,8 +274,8 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if( !pPlayer->isCt() &&
 		pPlayer->parent_rom &&
 		(
-			!pPlayer->parent_rom->canPortHere(pPlayer) ||
-			pPlayer->parent_rom->flagIsSet(R_ELEC_BONUS)
+			!pPlayer->getUniqueRoomParent()->canPortHere(pPlayer) ||
+			pPlayer->getUniqueRoomParent()->flagIsSet(R_ELEC_BONUS)
 		)
 	) {
 		player->print("Dimensional anchors do not work here.\n");

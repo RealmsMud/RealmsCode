@@ -249,7 +249,7 @@ void broadcast_login(Player* player, int login) {
 	illusion += postText.str();
 
 	if(player->inUniqueRoom())
-		room << " (" << player->parent_rom->info.str() << ")";
+		room << " (" << player->getUniqueRoomParent()->info.str() << ")";
 	else if(player->inAreaRoom())
 		room << " " << player->getAreaRoomParent()->mapmarker.str();
 

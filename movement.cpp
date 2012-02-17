@@ -889,7 +889,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
 				if(!justLooking && player->getLocation() == player->getLimboRoom())
 					player->clearFlag(P_KILLED_BY_MOB);
 
-				if(player->parent_rom && player->parent_rom->info.isArea("stor"))
+				if(player->parent_rom && player->getUniqueRoomParent()->info.isArea("stor"))
 					gConfig->saveStorage(player->parent_rom);
 
 			}
@@ -1429,7 +1429,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 		return(0);
 
 	if(player->inJail()) {
-		if(player->parent_rom->countVisPly() > 1) {
+		if(player->getUniqueRoomParent()->countVisPly() > 1) {
 			player->print("You can't do that! Someone else might get out!\n");
 			return(0);
 		}

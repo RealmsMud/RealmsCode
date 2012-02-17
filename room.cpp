@@ -920,7 +920,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 void display_rom(Player* player, Player *looker, int magicShowHidden) {
 	if(!looker)
 		looker = player;
-	displayRoom(looker, player->getUniqueRoomParent(), magicShowHidden);
+	displayRoom(looker, player->getRoomParent(), magicShowHidden);
 }
 
 void display_rom(Player* player,BaseRoom* room) {
