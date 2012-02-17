@@ -2718,7 +2718,6 @@ int dmAddMob(Player* player, cmd* cmnd) {
 	new_mob->first_obj = 0;
 	new_mob->first_tlk = 0;
 	new_mob->parent_rom = 0;
-	new_mob->area_room = 0;
 	for(n=0; n<20; n++)
 		new_mob->ready[n] = 0;
 	new_mob->setFlag(M_SAVE_FULL);

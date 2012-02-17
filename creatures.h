@@ -310,7 +310,7 @@ public:
 	int afterProf;
 	Dice damage;
 	Money coins;
-	CatRef room;
+	//CatRef room;
 #define 				NUMHITS quests[0]
 	short questnum; // Quest fulfillment number (M)
 	Object *ready[MAXWEAR];// Worn/readied items
@@ -323,7 +323,7 @@ public:
 	// written. getRoom() is used when we don't care if its a unique
 	// room or not
 	UniqueRoom *parent_rom;
-	AreaRoom *area_room;
+//	AreaRoom *area_room;
 
 	struct saves saves[6]; // Saving throws struct. POI, DEA, BRE, MEN, SPL, x, x
 	char languages[16];
@@ -355,6 +355,7 @@ public:
 	std::list<bstring> minions; // vampire minions
 
 
+	Location currentLocation;
 	Location previousRoom; // last room they were in
 	void setPreviousRoom();
 
@@ -735,7 +736,6 @@ class Monster : public Creature {
 protected:
 	void doCopy(const Monster& cr);
 	void reset();
-	void addToRoom(BaseRoom* room, UniqueRoom* uRoom, AreaRoom* aRoom, int num);
 	int doDeleteFromRoom(BaseRoom* room, bool delPortal);
 
 public:

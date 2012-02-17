@@ -1276,7 +1276,7 @@ void printForeignTongueMsg(const BaseRoom *inRoom, Creature *talker) {
 void Monster::sayTo(const Player* player, const bstring& message) {
 	short language = player->current_language;
 
-	broadcast_rom_LangWc(language, player->getSock(), player->area_room, player->room,
+	broadcast_rom_LangWc(language, player->getSock(), player->currentLocation,
 		"%M says to %N, \"%s\"^x", this, player, message.c_str());
 	printForeignTongueMsg(player->getConstRoomParent(), this);
 

@@ -466,7 +466,7 @@ int dmTeleport(Player* player, cmd* cmnd) {
 	if(str == "") {
 		l = player->getRecallRoom();
 
-		if(player->area_room && l.mapmarker == player->area_room->mapmarker) {
+		if(player->inAreaRoom() && l.mapmarker == player->currentLocation.mapmarker) {
 			player->print("You are already there!\n");
 			return(0);
 		}
@@ -478,7 +478,7 @@ int dmTeleport(Player* player, cmd* cmnd) {
 		getDestination(str, &l, player);
 
 		if(player->getClass() != BUILDER && l.mapmarker.getArea()) {
-			if(player->area_room && l.mapmarker == player->area_room->mapmarker) {
+			if(player->inAreaRoom() && l.mapmarker == player->currentLocation.mapmarker) {
 				player->print("You are already there!\n");
 				return(0);
 			}
@@ -672,13 +672,16 @@ int dmUsers(Player* player, cmd* cmnd) {
 		} else if(full) {
 			oStr << "^m" << std::setw(58) << host.left(58);
 		} else {
-			if(user->parent_rom) {
-				sprintf(str, "%s: ^b%s", user->parent_rom->info.str(cr, 'b').c_str(), bstring(user->parent_rom->name).c_str());
+			if(user->inUniqueRoom()) {
+				sprintf(str, "%s: ^b%s", user->parent_rom->info.str(cr, 'b').c_str(), bstring(user->getUniqueRoomParent()->name).c_str());
 				oStr << std::setw(22 + (str[0] == '^' ? 4 : 0)) << bstring(str).left(22 + (str[0] == '^' ? 4 : 0));
-			} else {
+			} else if(user->inAreaRoom()){
 				//sprintf(str, "%s", user->area_room->mapmarker.str(true).c_str());
 				//oStr << std::setw(26) << bstring(str).left(26);
-				oStr << std::setw(38) << user->area_room->mapmarker.str(true).left(38);
+				// TODO: Strip Color
+				oStr << std::setw(38) << user->getAreaRoomParent()->mapmarker.str(true).left(38);
+			} else {
+				oStr << std::setw(38) << "(Unknown)";
 			}
 
 
@@ -802,9 +805,9 @@ int dmResave(Player* player, cmd* cmnd) {
 		else
 			player->print("Room saved.\n");
 
-	} else if(player->area_room) {
+	} else if(player->inAreaRoom()) {
 
-		player->area_room->save(player);
+		player->getAreaRoomParent()->save(player);
 
 	} else
 		player->print("Nothing to save!\n");
@@ -1084,7 +1087,7 @@ int dmWipe(Player* player, cmd* cmnd) {
 	}
 
 	for(a=low; a<high+1; a++) {
-		if(a == player->room.id) {
+		if(a == player->currentLocation.room.id) {
 			player->printColor("^rCURRENT ROOM SKIPPED.\n");
 			continue;
 		}
@@ -2313,10 +2316,10 @@ int dmStat(Player* player, cmd* cmnd) {
 		// if they're not *st-ing anything in particular
 		if(str == "") {
 			if(player->inUniqueRoom()) {
-				uRoom = player->parent_rom;
-				cr = player->parent_rom->info;
-			} else if(player->area_room) {
-				aRoom = player->area_room;
+				uRoom = player->getUniqueRoomParent();
+				cr = player->getUniqueRoomParent()->info;
+			} else if(player->inUniqueRoom()) {
+				aRoom = player->getAreaRoomParent();
 			}
 		} else {
 

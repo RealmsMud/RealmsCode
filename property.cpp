@@ -913,7 +913,7 @@ bool Property::expelOnRemove() const {
 // to be kicked out or not
 
 void Property::expelToExit(Player* player, bool offline) {
-	if(!expelOnRemove() || player->area_room || !belongs(player->room))
+	if(!expelOnRemove() || player->inAreaRoom() || !belongs(player->currentLocation.room))
 		return;
 
 	AreaRoom* aRoom=0;
@@ -941,10 +941,12 @@ void Property::expelToExit(Player* player, bool offline) {
 	aRoom = newRoom->getAsAreaRoom();
 
 	if(offline) {
+		player->currentLocation.room.clear();
+		player->currentLocation.mapmarker.reset();
 		if(uRoom)
-			player->room = uRoom->info;
+			player->currentLocation.room = uRoom->info;
 		else
-			player->area_room = aRoom;
+			player->currentLocation.mapmarker = aRoom->mapmarker;
 	} else {
 		player->print("You are escorted off the premises.\n");
 		broadcast(player->getSock(), player->getParent(), "%M is escorted off the premises.", player);
@@ -2226,7 +2228,7 @@ void Property::manageName(Player* player, cmd* cmnd, PropType propType, int x) {
 
 void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const Guild* guild, int x) {
 	Object	*deed=0, *oHidden=0, *oConceal=0, *oInvis=0, *oFoyer=0;
-	AreaRoom* aRoom = player->area_room;
+	AreaRoom* aRoom = player->getAreaRoomParent();
 	UniqueRoom* uRoom = player->parent_rom;
 	BaseRoom* room = player->getRoomParent();
 	int canBuildFlag = Property::buildFlag(propType);

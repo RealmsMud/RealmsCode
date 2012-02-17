@@ -1141,20 +1141,20 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 
 		break;
 	case 'd':
-		if(!player->area_room) {
+		if(!player->inAreaRoom()) {
 			player->print("Error: You need to be in an area room to do that.\n");
 			return(0);
 		}
-		if(!player->area_room->unique.id) {
+		if(!player->getAreaRoomParent()->unique.id) {
 			player->print("Error: The area room must have the unique field set [*set r unique #].\n");
 			return(0);
 		}
-		player->area_room->setDecCompass(!player->area_room->getDecCompass());
+		player->getAreaRoomParent()->setDecCompass(!player->getAreaRoomParent()->getDecCompass());
 		player->printColor("DecCompass toggled, set to %s^x.\n",
-			player->area_room->getDecCompass() ? "^gYes" : "^rNo");
+			player->getAreaRoomParent()->getDecCompass() ? "^gYes" : "^rNo");
 
 		log_immort(true, player, "%s set decCompass to %s in room %s.\n", player->name,
-			player->area_room->getDecCompass() ? "true" : "false", room->fullName().c_str());
+			player->getAreaRoomParent()->getDecCompass() ? "true" : "false", room->fullName().c_str());
 
 		break;
 	case 'e':
@@ -1393,20 +1393,20 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 
 		break;
 	case 'n':
-		if(!player->area_room) {
+		if(!player->inAreaRoom()) {
 			player->print("Error: You need to be in an area room to do that.\n");
 			return(0);
 		}
-		if(!player->area_room->unique.id) {
+		if(!player->getAreaRoomParent()->unique.id) {
 			player->print("Error: The area room must have the unique field set [*set r unique #].\n");
 			return(0);
 		}
-		player->area_room->setNeedsCompass(!player->area_room->getNeedsCompass());
+		player->getAreaRoomParent()->setNeedsCompass(!player->getAreaRoomParent()->getNeedsCompass());
 		player->printColor("NeedsCompass toggled, set to %s^x.\n",
-			player->area_room->getNeedsCompass() ? "^gYes" : "^rNo");
+			player->getAreaRoomParent()->getNeedsCompass() ? "^gYes" : "^rNo");
 
 		log_immort(true, player, "%s set needsCompass to %s in room %s.\n", player->name,
-			player->area_room->getNeedsCompass() ? "true" : "false", room->fullName().c_str());
+			player->getAreaRoomParent()->getNeedsCompass() ? "true" : "false", room->fullName().c_str());
 
 		break;
 	case 'r':
@@ -1502,20 +1502,20 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 
 		break;
 	case 'u':
-		if(!player->area_room) {
+		if(!player->inAreaRoom()) {
 			player->print("Error: You need to be in an area room to do that.\n");
 			return(0);
 		}
 
 		getCatRef(getFullstrText(cmnd->fullstr, 3), &cr, player);
 
-		player->area_room->unique = cr;
-		player->print("Unique room set to %s.\n", player->area_room->unique.str().c_str());
-		if(player->area_room->unique.id)
+		player->getAreaRoomParent()->unique = cr;
+		player->print("Unique room set to %s.\n", player->getAreaRoomParent()->unique.str().c_str());
+		if(player->getAreaRoomParent()->unique.id)
 			player->print("You'll need to use *teleport to get to this room in the future.\n");
 
 		log_immort(true, player, "%s set unique room to %s in room %s.\n",
-			player->name, player->area_room->unique.str().c_str(),
+			player->name, player->getAreaRoomParent()->unique.str().c_str(),
 			room->fullName().c_str());
 
 		break;
@@ -1542,7 +1542,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 	//char	orig_exit[30];
 	short	n=0;
 
-	if(!player->checkBuilder(player->parent_rom)) {
+	if(!player->checkBuilder(player->getUniqueRoomParent())) {
 		player->print("Error: Room number not inside any of your alotted ranges.\n");
 		return(0);
 	}
@@ -1871,9 +1871,9 @@ int dmSetExit(Player* player, cmd* cmnd) {
 			link_rom(room, cr, newName);
 
 			if(player->inUniqueRoom())
-				link_rom(uRoom, player->parent_rom->info, returnExit);
+				link_rom(uRoom, player->getUniqueRoomParent()->info, returnExit);
 			else
-				link_rom(uRoom, &player->area_room->mapmarker, returnExit);
+				link_rom(uRoom, &player->getAreaRoomParent()->mapmarker, returnExit);
 
 			gConfig->resaveRoom(cr);
 
@@ -1881,9 +1881,9 @@ int dmSetExit(Player* player, cmd* cmnd) {
 			link_rom(room, &mapmarker, newName);
 
 			if(player->inUniqueRoom())
-				link_rom(aRoom, player->parent_rom->info, returnExit);
+				link_rom(aRoom, player->getUniqueRoomParent()->info, returnExit);
 			else
-				link_rom(aRoom, &player->area_room->mapmarker, returnExit);
+				link_rom(aRoom, &player->getAreaRoomParent()->mapmarker, returnExit);
 
 			aRoom->save();
 		}
@@ -2454,22 +2454,23 @@ int dmMobList(Player* player, cmd* cmnd) {
 	player->print("Random monsters which come in this room:\n");
 
 	if(player->inUniqueRoom())
-		showMobList(player, &player->parent_rom->wander, "room");
-	else if(player->area_room) {
+		showMobList(player, &player->getUniqueRoomParent()->wander, "room");
+	else if(player->inAreaRoom()) {
 
-		Area* area = player->area_room->area;
+		Area* area = player->getAreaRoomParent()->area;
 		std::list<AreaZone*>::iterator it;
 		AreaZone *zone=0;
 
 		for(it = area->zones.begin() ; it != area->zones.end() ; it++) {
 			zone = (*it);
-			if(zone->inside(area, &player->area_room->mapmarker)) {
+			if(zone->inside(area, &player->getAreaRoomParent()->mapmarker)) {
 				player->print("Zone: %s\n", zone->name.c_str());
 				showMobList(player, &zone->wander, "zone");
 			}
 		}
 
-		TileInfo* tile = area->getTile(area->getTerrain(0, &player->area_room->mapmarker, 0, 0, 0, true), area->getSeasonFlags(&player->area_room->mapmarker));
+		TileInfo* tile = area->getTile(area->getTerrain(0, &player->getAreaRoomParent()->mapmarker, 0, 0, 0, true),
+				area->getSeasonFlags(&player->getAreaRoomParent()->mapmarker));
 		if(tile && tile->wander.getTraffic()) {
 			player->print("Tile: %s\n", tile->getName().c_str());
 			showMobList(player, &tile->wander, "tile");
@@ -2564,8 +2565,8 @@ int dmDeleteAllExits(Player* player, cmd* cmnd) {
 	player->getRoomParent()->clearExits();
 
 	// sorry, can't delete exits in overland
-	if(player->area_room)
-		player->area_room->updateExits();
+	if(player->inAreaRoom())
+		player->getAreaRoomParent()->updateExits();
 
 	player->print("All exits deleted.\n");
 
@@ -2813,7 +2814,7 @@ int dmDestroyRoom(Player* player, cmd* cmnd) {
 		player->print("It is the Builder Waiting Room.\n");
 		return(0);
 	}
-	if(player->bound.room == player->room) {
+	if(player->bound.room == player->currentLocation.room) {
 		player->print("Sorry, you cannot destroy this room.\n");
 		player->print("It is your bound room.\n");
 		return(0);

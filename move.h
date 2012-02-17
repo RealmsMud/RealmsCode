@@ -37,9 +37,9 @@ namespace Move {
 	Exit *getExit(Creature* player, cmd* cmnd);
 	bstring getString(Creature* creature, bool ordinal=false, bstring exit = "");
 	void checkFollowed(Player* player, Exit* exit, BaseRoom* room, std::list<Creature*> *followers);
-	void finish(Creature* creature, BaseRoom* room, UniqueRoom* uRoom, bool self, std::list<Creature*> *followers);
+	void finish(Creature* creature, BaseRoom* room, bool self, std::list<Creature*> *followers);
 	bool getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, bool justLooking=false, MapMarker* tMapmarker=0, bool recycle=true);
-	bool start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::list<Creature*> *followers, int* numPeople, bool& roomPurged);
+	BaseRoom* start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, std::list<Creature*> *followers, int* numPeople, bool& roomPurged);
 
 	void createPortal(BaseRoom* room, BaseRoom* target, const Player* player, bool initial=true);
 	bool usePortal(Creature* player, BaseRoom* room, Exit* exit, bool initial=true);

@@ -31,10 +31,8 @@
 // the player's room pointer is updated.
 
 void Player::addToSameRoom(Creature* target) {
-	if(target->parent_rom)
-		addToRoom(target->parent_rom);
-	else
-		addToRoom(target->area_room);
+	if(target->inRoom())
+		addToRoom(target->getRoomParent());
 }
 
 
@@ -130,8 +128,7 @@ void Player::addToRoom(BaseRoom* room) {
 
 void Player::addToRoom(AreaRoom* aRoom) {
 	Hooks::run(aRoom, "afterAddCreature", this, "afterAddToRoom");
-	area_room = aRoom;
-	room.clear();
+	currentLocation.room.clear();
 	parent_rom = 0;
 	finishAddPlayer(aRoom);
 }
@@ -141,8 +138,8 @@ void Player::addToRoom(UniqueRoom* uRoom) {
 
 	Hooks::run(uRoom, "beforeAddCreature", this, "beforeAddToRoom");
 	parent_rom = uRoom;
-	*&room = uRoom->info;
-	area_room = 0;
+	currentLocation.room = uRoom->info;
+	currentLocation.mapmarker.reset();
 
 	// So we can see an accurate this count.
 	if(!isStaff())
@@ -211,15 +208,15 @@ void Player::addToRoom(UniqueRoom* uRoom) {
 // This function records what room the player was last in
 
 void Creature::setPreviousRoom() {
-	if(parent_rom) {
-		if(!parent_rom->flagIsSet(R_NO_PREVIOUS)) {
-			previousRoom.room = parent_rom->info;
+	if(inUniqueRoom()) {
+		if(!getUniqueRoomParent()->flagIsSet(R_NO_PREVIOUS)) {
+			previousRoom.room = getUniqueRoomParent()->info;
 			previousRoom.mapmarker.reset();
 		}
-	} else if(area_room) {
-		if(!area_room->flagIsSet(R_NO_PREVIOUS)) {
-			previousRoom.room.id = 0;
-			previousRoom.mapmarker = area_room->mapmarker;
+	} else if(inAreaRoom()) {
+		if(!getAreaRoomParent()->flagIsSet(R_NO_PREVIOUS)) {
+			previousRoom.room.clear();
+			previousRoom.mapmarker = getAreaRoomParent()->mapmarker;
 		}
 	}
 }
@@ -234,11 +231,11 @@ int Creature::deleteFromRoom(bool delPortal) {
 
 	setPreviousRoom();
 
-	if(parent_rom) {
-		return(doDeleteFromRoom(parent_rom, delPortal));
-	} else if(area_room) {
-		AreaRoom* room = area_room;
-		int i = doDeleteFromRoom(area_room, delPortal);
+	if(inUniqueRoom()) {
+		return(doDeleteFromRoom(getUniqueRoomParent(), delPortal));
+	} else if(inAreaRoom()) {
+		AreaRoom* room = getAreaRoomParent();
+		int i = doDeleteFromRoom(room, delPortal);
 		if(room->canDelete()) {
 			room->area->remove(room);
 			i |= DEL_ROOM_DESTROYED;
@@ -258,8 +255,10 @@ int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 		strcpy(parent_rom->lastPlyTime, ctime(&t));
 	}
 
+	currentLocation.mapmarker.reset();
+	currentLocation.room.clear();
+
 	parent_rom = 0;
-	area_room = 0;
 
 	if(delPortal && flagIsSet(P_PORTAL) && Move::deletePortal(room, name))
 		i |= DEL_PORTAL_DESTROYED;
@@ -414,19 +413,19 @@ void Object::deleteFromRoom() {
 
 void Monster::addToRoom(BaseRoom* room, int num) {
 	Hooks::run(room, "beforeAddCreature", this, "beforeAddToRoom");
-	addToRoom(room, room->getAsUniqueRoom(), room->getAsAreaRoom(), num);
-}
 
-void Monster::addToRoom(BaseRoom* room, UniqueRoom* uRoom, AreaRoom* aRoom, int num) {
 	char	str[160];
-
 	validateId();
 
-	if(uRoom) {
-		parent_rom = uRoom;
-		*&this->room = *&uRoom->info;
-	} else
-		area_room = aRoom;
+	currentLocation.room.clear();
+	currentLocation.mapmarker.reset();
+
+	if(room->isUniqueRoom()) {
+		parent_rom = room->getAsUniqueRoom();
+		currentLocation.room = room->getAsUniqueRoom()->info;
+	} else {
+		currentLocation.mapmarker = room->getAsAreaRoom()->mapmarker;
+	}
 
 	lasttime[LT_AGGRO_ACTION].ltime = time(0);
 	killDarkmetal();
@@ -472,8 +471,9 @@ void Monster::addToRoom(BaseRoom* room, UniqueRoom* uRoom, AreaRoom* aRoom, int 
 
 int Monster::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 	parent_rom = 0;
-	area_room = 0;
-	this->room.clear();
+
+	currentLocation.room.clear();
+	currentLocation.mapmarker.reset();
 
 	if(!room)
 		return(0);
@@ -643,7 +643,7 @@ bstring roomEffStr(bstring effect, bstring str, const BaseRoom* room, bool detec
 // and all the exits in a room.  That is, unless they are not visible
 // or the room is dark.
 
-void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, const AreaRoom* aRoom, int magicShowHidden) {
+void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 	UniqueRoom *target=0;
 	const Player *pCreature=0;
 	const Creature* creature=0;
@@ -653,6 +653,8 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 	bstring str = "";
 	bool	wallOfFire=false, wallOfThorns=false, canSee=false;
 
+	const UniqueRoom* uRoom = room->getAsConstUniqueRoom();
+	const AreaRoom* aRoom = room->getAsConstAreaRoom();
 	strcpy(name, "");
 
 	staff = player->isStaff();
@@ -690,7 +692,7 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 			oStr << "^x\n\n";
 		}
 
-		oStr << aRoom->area->showGrid(player, &aRoom->mapmarker, player->area_room == aRoom);
+		oStr << aRoom->area->showGrid(player, &aRoom->mapmarker, player->getAreaRoomParent() == aRoom);
 	}
 
 	oStr << "^g" << (staff ? "All" : "Obvious") << " exits: ";
@@ -918,14 +920,11 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 void display_rom(Player* player, Player *looker, int magicShowHidden) {
 	if(!looker)
 		looker = player;
-	if(player->inUniqueRoom())
-		displayRoom(looker, player->parent_rom, player->parent_rom, 0, magicShowHidden);
-	else
-		displayRoom(looker, player->area_room, 0, player->area_room, magicShowHidden);
+	displayRoom(looker, player->getUniqueRoomParent(), magicShowHidden);
 }
 
 void display_rom(Player* player,BaseRoom* room) {
-	displayRoom(player, room, room->getAsConstUniqueRoom(), room->getAsConstAreaRoom(), 0);
+	displayRoom(player, room, 0);
 }
 
 

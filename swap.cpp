@@ -805,7 +805,7 @@ void Config::swap(Player* player, bstring name) {
 
 	found = false;
 	if(player) {
-		if(player->room == currentSwap.origin || player->room == currentSwap.target)
+		if(player->currentLocation.room == currentSwap.origin || player->currentLocation.room == currentSwap.target)
 			display_rom(player);
 		player->printColor("^YRS: Room swap complete.\n");
 		found = true;
@@ -1410,11 +1410,11 @@ bool Player::swap(Swap s) {
 		bound.room = s.origin;
 		found = true;
 	}
-	if(room == s.origin) {
-		room = s.target;
+	if(currentLocation.room == s.origin) {
+		currentLocation.room = s.target;
 		found = true;
-	} else if(room == s.target) {
-		room = s.origin;
+	} else if(currentLocation.room == s.target) {
+		currentLocation.room = s.origin;
 		found = true;
 	}
 
@@ -1457,7 +1457,7 @@ bool Player::swapIsInteresting(Swap s) const {
 
 	if(bound.room == s.origin || bound.room == s.target)
 		return(true);
-	if(room == s.origin || room == s.target)
+	if(currentLocation.room == s.origin || currentLocation.room == s.target)
 		return(true);
 
 	for(int i=0; i<MAX_DIMEN_ANCHORS; i++) {
@@ -1493,11 +1493,11 @@ bool Monster::swap(Swap s) {
 		jail = s.origin;
 		found = true;
 	}
-	if(room == s.origin) {
-		room = s.target;
+	if(currentLocation.room == s.origin) {
+		currentLocation.room = s.target;
 		found = true;
-	} else if(room == s.target) {
-		room = s.origin;
+	} else if(currentLocation.room == s.target) {
+		currentLocation.room = s.origin;
 		found = true;
 	}
 
@@ -1514,7 +1514,7 @@ bool Monster::swap(Swap s) {
 bool Monster::swapIsInteresting(Swap s) const {
 	if(jail == s.origin || jail == s.target)
 		return(true);
-	if(room == s.origin || room == s.target)
+	if(currentLocation.room == s.origin || currentLocation.room == s.target)
 		return(true);
 
 	if(hooks.swapIsInteresting(s))

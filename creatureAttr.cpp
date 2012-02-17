@@ -1031,7 +1031,8 @@ void Creature::crtReset() {
 	first_tlk = 0;
 
 	parent_rom = 0;
-	area_room = 0;
+	currentLocation.mapmarker.reset();
+	currentLocation.room.clear();
 
     group = 0;
     groupStatus = GROUP_NO_STATUS;
@@ -1232,9 +1233,11 @@ void Creature::CopyCommon(const Creature& cr) {
 	first_obj = cr.first_obj;
 	first_tlk = cr.first_tlk;
 
-	room = cr.room;
+	currentLocation.room = cr.currentLocation.room;
+	currentLocation.mapmarker = cr.currentLocation.mapmarker;
+
+	// TODO: Remove
 	parent_rom = cr.parent_rom;
-	area_room = cr.area_room;
 
 	for(i=0; i<6; i++)
 		saves[i] = cr.saves[i];
@@ -2210,10 +2213,11 @@ bool Creature::poisonedByPlayer() const {
 //*********************************************************************
 
 Location Creature::getLocation() {
-	Location l;
-	if(parent_rom)
-		l.room = room;
-	if(area_room)
-		l.mapmarker = area_room->mapmarker;
-	return(l);
+	return(currentLocation);
+//	Location l;
+//	if(parent_rom)
+//		l.room = room;
+//	if(area_room)
+//		l.mapmarker = area_room->mapmarker;
+//	return(l);
 }

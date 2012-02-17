@@ -109,7 +109,7 @@ bool Containable::inCreature() const {
 BaseRoom* Containable::getRoomParent() {
 	if(!parent)
 		return(NULL);
-	return(parent->getAsAreaRoom());
+	return(parent->getAsRoom());
 }
 UniqueRoom* Containable::getUniqueRoomParent() {
 	if(!parent)

@@ -1065,10 +1065,11 @@ int dmMove(Player* player, cmd* cmnd) {
 
 	// put them in their new location
 	log << player->name << " moved player " << creature->name << " from room ";
-	if(creature->area_room)
-		log << creature->area_room->fullName();
+	// TODO: area_room isn't valid
+	if(creature->currentLocation.mapmarker.getArea() != 0)
+		log << creature->currentLocation.mapmarker.str(false);
 	else
-		log << creature->room.str();
+		log << creature->currentLocation.room.str();
 
 	log << " to room ";
 
@@ -1081,24 +1082,18 @@ int dmMove(Player* player, cmd* cmnd) {
 			free_crt(creature);
 			return(0);
 		}
-		creature->room.clear();
-		if(creature->area_room)
-			creature->area_room->mapmarker = mapmarker;
-		else {
-			AreaRoom *aRoom = area->loadRoom(0, &mapmarker, false);
-			creature->area_room = aRoom;
-		}
-		log << creature->area_room->fullName();
-		player->print("Player %s moved to location %s.\n", creature->name, creature->area_room->fullName().c_str());
+		creature->currentLocation.room.clear();
+		creature->currentLocation.mapmarker = mapmarker;
+
+		log << creature->currentLocation.mapmarker.str(false);
+		player->print("Player %s moved to location %s.\n", creature->name, creature->currentLocation.mapmarker.str(false).c_str());
 	} else {
 		if(!validRoomId(cr)) {
 			player->print("Can only put players in the range of 1-%d.\n", RMAX);
 			free_crt(creature);
 			return(0);
 		}
-		if(creature->area_room)
-			creature->deleteFromRoom();
-		*&creature->room = *&cr;
+		*&creature->currentLocation.room = *&cr;
 		log << cr.str();
 		player->print("Player %s moved to location %s.\n", creature->name, cr.str().c_str());
 	}
@@ -2414,7 +2409,7 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 
 	if(player->isWatcher())
 		logn("log.wjail", "%s jailed %s(%s) for %d minutes. Reason: %s\n",
-			player->name, target->name, target->room.str().c_str(), tm, reason);
+			player->name, target->name, target->currentLocation.room.str().c_str(), tm, reason);
 
 	CatRef	cr;
 	cr.setArea("jail");
@@ -2424,7 +2419,9 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 
 		if(!strcmp(cmnd->str[2], "-b"))
 			broadcast("^R### Cackling demons drag %s to the Dungeon of Despair.", target->name);
-		target->room = cr;
+		target->currentLocation.room = cr;
+		target->currentLocation.mapmarker.reset();
+
 		player->print("%s is now jailed.\n", target->name);
 
 	} else {

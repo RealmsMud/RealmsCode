@@ -147,7 +147,7 @@ void Monster::pulseTick(long t) {
 
 	if(flagIsSet(M_PERMENANT_MONSTER) && (hpTickAmt || mpTickAmt)) {
 		broadcast(hearMobTick, "^y*** %M(L%d,R%s) just ticked. [%d/%dH](+%d) [%d/%dM](+%d)",
-			this, level, room.str().c_str(),
+			this, level, currentLocation.room.str().c_str(),
 			MIN(hp.getCur(),hp.getMax()), hp.getMax(), hpTickAmt,
 			MIN(mp.getCur(),mp.getMax()), mp.getMax(), mpTickAmt);
 	}

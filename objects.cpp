@@ -970,11 +970,11 @@ bstring Object::getCompass(const Creature* creature, bool useName) {
 		return(oStr.str());
 	}
 
-	MapMarker *mapmarker=0;
-	if(creature->area_room)
-		mapmarker = &creature->area_room->mapmarker;
+	const MapMarker *mapmarker=0;
+	if(creature->inAreaRoom())
+		mapmarker = &creature->getConstAreaRoomParent()->mapmarker;
 
-	if(	!creature->area_room ||
+	if(	!creature->inAreaRoom() ||
 		!mapmarker->getArea() ||
 		!compass->getArea() ||
 		mapmarker->getArea() != compass->getArea() ||

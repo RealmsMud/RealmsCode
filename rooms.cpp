@@ -1089,11 +1089,11 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, bs
 	Location l;
 
 	if(creature) {
-		if(creature->area_room) {
+		if(creature->inAreaRoom()) {
 			l.room.setArea("area");
 			l.room.id = creature->area_room->area->id;
 		} else {
-			l.room.setArea(creature->room.area);
+			l.room.setArea(creature->currentLocation.room.area);
 		}
 	}
 	if(area != "")

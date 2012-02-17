@@ -1967,8 +1967,7 @@ int cmdBarkskin(Player *player, cmd *cmnd) {
 int cmdCommune(Player *player, cmd *cmnd) {
 	long	i=0, t = time(0), first_exit=0;
 	int		chance=0;
-	UniqueRoom*	uRoom=0;
-	AreaRoom* aRoom=0;
+	BaseRoom* newRoom=0;
 
 	player->clearFlag(P_AFK);
 
@@ -2023,20 +2022,14 @@ int cmdCommune(Player *player, cmd *cmnd) {
 			player->print("%s:\n", ext->name);
 			first_exit = 0;
 
-			if(!Move::getRoom(player, ext, &uRoom, &aRoom, true)) {
+			if(!Move::getRoom(player, ext, &newRoom, true)) {
 				continue;
 			}
 
 			PlayerSet::iterator pIt;
 			PlayerSet::iterator pEnd;
-			if(uRoom) {
-				pIt = uRoom->players.begin();
-				pEnd = uRoom->players.end();
-			}
-			else {
-				pIt = aRoom->players.begin();
-				pEnd = aRoom->players.end();
-			}
+			pIt = newRoom->players.begin();
+			pEnd = newRoom->players.end();
 			Player* ply;
 			while(pIt != pEnd) {
 			    ply = (*pIt++);
@@ -2054,14 +2047,8 @@ int cmdCommune(Player *player, cmd *cmnd) {
 
 			MonsterSet::iterator mIt;
 			MonsterSet::iterator mEnd;
-            if(uRoom) {
-                mIt = uRoom->monsters.begin();
-                mEnd = uRoom->monsters.end();
-            }
-            else {
-                mIt = aRoom->monsters.begin();
-                mEnd = aRoom->monsters.end();
-            }
+			mIt = newRoom->monsters.begin();
+			mEnd = newRoom->monsters.end();
 			Monster* mons;
 			while(mIt != mEnd) {
 			    mons = (*mIt++);

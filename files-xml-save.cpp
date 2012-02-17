@@ -346,11 +346,11 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
 	xml::newProp(rootNode, "Version", VERSION);
 
 	if(pPlayer) {
-		if(pPlayer->area_room) {
+		if(pPlayer->currentLocation.mapmarker.getArea() != 0) {
 			curNode = xml::newStringChild(rootNode, "AreaRoom");
-			pPlayer->area_room->mapmarker.save(curNode);
+			pPlayer->currentLocation.mapmarker.save(curNode);
 		} else
-			pPlayer->room.save(rootNode, "Room", true);
+			pPlayer->currentLocation.room.save(rootNode, "Room", true);
 	}
 
 	// Saved for LS_REF and LS_FULL

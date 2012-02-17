@@ -172,9 +172,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 	Creature* victim=0;
 	const Monster* guard=0;
 	Exit*	exit=0;
-	BaseRoom *room=0;
-	UniqueRoom*	uRoom=0;
-	AreaRoom* aRoom=0;
+	BaseRoom *room=0, *newRoom=0;
 	Property* p=0;
 	otag* op=0;
 	Player* player = creature->getAsPlayer(), *pVictim=0;
@@ -205,8 +203,8 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 	}
 
 	if(	object->flagIsSet(O_NO_DROP) &&
-		!player->checkStaff("You cannot throw that.\n")
-	) {
+		!player->checkStaff("You cannot throw that.\n"))
+	{
 		return(0);
 	}
 
@@ -251,12 +249,12 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 		// don't bother getting rooms if exit is closed or guarded
 		bool loadExit = (!exit->flagIsSet(X_CLOSED) && !exit->flagIsSet(X_PORTAL) && !guard);
 		if(loadExit)
-			Move::getRoom(creature, exit, &uRoom, &aRoom, false, &exit->target.mapmarker);
+			Move::getRoom(creature, exit, &newRoom, false, &exit->target.mapmarker);
 
 		room->wake("Loud noises disturb your sleep.", true);
 
 		// closed, or off map, or being guarded
-		if(!loadExit || (!uRoom && !aRoom)) {
+		if(!loadExit || (!newRoom)) {
 			if(guard)
 				broadcast(0, room, "%M knocks %P to the ground.", guard, object);
 			else
@@ -264,17 +262,14 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 					object, exit->name);
 			finishDropObject(object, room, creature);
 		} else {
-			if(aRoom)
-				room = aRoom;
-			else
-				room = uRoom;
+			room = newRoom;
 
 			broadcast(0, room, "%1O comes flying into the room.", object);
 			room->wake("Loud noises disturb your sleep.", true);
 			finishDropObject(object, room, creature, false, false, true);
 
-			if(aRoom && aRoom->canDelete())
-				aRoom->area->remove(aRoom);
+			if(newRoom->isAreaRoom() && newRoom->getAsAreaRoom()->canDelete())
+				newRoom->getAsAreaRoom()->area->remove(newRoom->getAsAreaRoom());
 		}
 
 		creature->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);

@@ -706,7 +706,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
 			player->setGuildRank(GUILD_NONE);
 
 			// Kick them out if they don't belong
-			p = gConfig->getProperty(player->room);
+			p = gConfig->getProperty(player->currentLocation.room);
 			if(p && p->getGuild() == guildId)
 				p->expelToExit(player, false);
 		} else {
@@ -768,7 +768,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
 	}
 
 	// Kick them out if they don't belong
-	p = gConfig->getProperty(target->room);
+	p = gConfig->getProperty(target->currentLocation.room);
 	if(p && p->getGuild() == guildId)
 		p->expelToExit(target, !online);
 

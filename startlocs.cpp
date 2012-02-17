@@ -40,8 +40,8 @@ void initialBind(Player* player, bstring str) {
 	}
 
 	player->bind(location);
-	player->room = player->bound.room;
-	player->room = player->getRecallRoom().room;
+	player->currentLocation.room = player->bound.room;
+	player->currentLocation.room = player->getRecallRoom().room;
 
 	if(cr.id)
 		Create::addStartingItem(player, cr.area, cr.id, false, true);

@@ -203,7 +203,7 @@ void fulfillQuest(Player* player, Object* object) {
 //		}
 //
 //		broadcast_rom_LangWc(NORMAL, get_lang_color(target->current_language),
-//			target->current_language, fd, player->area_room, player->room, "%M asks %N about \"%s\".",
+//			target->current_language, fd, player->area_room, player->currentLocation.room, "%M asks %N about \"%s\".",
 //			player, target, cmnd->str[2]);
 //
 //		tp = target->first_tlk;

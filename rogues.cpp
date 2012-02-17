@@ -287,7 +287,7 @@ void doSearch(Player* player, bool immediate) {
 		chance = 100;
 
 	if(chance >= mrand(1,100)) {
-		if(player->area_room && player->area_room->spawnHerbs()) {
+		if(player->inAreaRoom() && player->getAreaRoomParent()->spawnHerbs()) {
 			player->print("You found some herbs!\n");
 			found = true;
 		}
@@ -609,8 +609,6 @@ int cmdHide(Player* player, cmd* cmnd) {
 
 bool doScout(Player* player, const Exit* exit) {
 	BaseRoom *room=0;
-	AreaRoom *aRoom=0;
-	UniqueRoom	*uRoom=0;
 
 
 	if(exit->flagIsSet(X_STAFF_ONLY) && !player->isStaff()) {
@@ -619,12 +617,7 @@ bool doScout(Player* player, const Exit* exit) {
 	}
 
 
-	Move::getRoom(player, exit, &uRoom, &aRoom, true);
-
-	if(aRoom)
-		room = aRoom;
-	else if(uRoom)
-		room = uRoom;
+	Move::getRoom(player, exit, &room, true);
 
 	if(player->getClass() == BUILDER && room && !room->isConstruction()) {
 		player->print("A magical force prevents you from seeing into the room.\n");
@@ -633,8 +626,7 @@ bool doScout(Player* player, const Exit* exit) {
 
 	if(	room &&
 		room->isEffected("dense-fog")&&
-		!player->checkStaff("That room is filled with a dense fog.\n")
-	)
+		!player->checkStaff("That room is filled with a dense fog.\n"))
 		return(false);
 
 	if(!room && exit->target.mapmarker.getArea()) {

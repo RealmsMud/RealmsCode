@@ -428,7 +428,7 @@ bool mobileEnter(Exit* exit) {
 
 int Monster::mobileCrt() {
 	BaseRoom *newRoom=0;
-	AreaRoom *caRoom = area_room;
+	AreaRoom *caRoom = getAreaRoomParent();
 	int		i=0, num=0, ret=0;
 	bool	mem=false;
 
@@ -461,7 +461,7 @@ int Monster::mobileCrt() {
 		if(i == num) {
 
 			// get us out of this room
-			if(!Move::getRoom(this, exit, &newRoom,))
+			if(!Move::getRoom(this, exit, &newRoom))
 				return(0);
 			if(newRoom->isAreaRoom()) {
 				mem = newRoom->getAsAreaRoom()->getStayInMemory();
@@ -1286,7 +1286,6 @@ Exit* Creature::getFleeableExit() {
 
 BaseRoom* Creature::getFleeableRoom(Exit* exit) {
 	BaseRoom* newRoom=0;
-	UniqueRoom*	uRoom=0;
 	if(!exit)
 		return(0);
 	// exit flags have already been taken care of above, so
@@ -1308,7 +1307,7 @@ int Creature::flee(bool magicTerror) {
 	Player* pThis = getAsPlayer();
 	BaseRoom* oldRoom = getRoomParent(), *newRoom=0;
 	UniqueRoom*	uRoom=0;
-	MapMarker* mapmarker=0;
+//	MapMarker* mapmarker=0;
 	Exit*	exit=0;
 	unsigned int n=0;
 
@@ -1383,9 +1382,7 @@ int Creature::flee(bool magicTerror) {
 		if(magicTerror)
 			printColor("^rYou flee from unnatural fear!\n");
 
-		if(area_room)
-			mapmarker = &(area_room->mapmarker);
-		Move::track(parent_rom, mapmarker, exit, pThis, false);
+		Move::track(parent_rom, &currentLocation.mapmarker, exit, pThis, false);
 
 		if(pThis->flagIsSet(P_ALIASING)) {
 			pThis->getAlias()->deleteFromRoom();

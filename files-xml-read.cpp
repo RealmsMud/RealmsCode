@@ -367,8 +367,8 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 		}
 		else if(NODE_NAME(curNode, "Level")) setLevel(xml::toNum<unsigned short>(curNode), true);
 		else if(NODE_NAME(curNode, "Type")) setType(xml::toNum<unsigned short>(curNode));
-		else if(NODE_NAME(curNode, "RoomNum")&& getVersion() < "2.34" ) xml::copyToNum(room.id, curNode);
-		else if(NODE_NAME(curNode, "Room")) room.load(curNode);
+		else if(NODE_NAME(curNode, "RoomNum")&& getVersion() < "2.34" ) xml::copyToNum(currentLocation.room.id, curNode);
+		else if(NODE_NAME(curNode, "Room")) currentLocation.room.load(curNode);
 
 		else if(NODE_NAME(curNode, "Race")) setRace(xml::toNum<unsigned short>(curNode));
 		else if(NODE_NAME(curNode, "Class")) c = xml::toNum<unsigned short>(curNode);

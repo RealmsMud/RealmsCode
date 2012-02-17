@@ -751,7 +751,7 @@ bool Area::move(Player* player, MapMarker *mapmarker) {
 	AreaRoom* room = getRoom(mapmarker);
 
 	if(!room) {
-		room = player->area_room;
+		room = player->getAreaRoomParent();
 
 		if(room && room->canDelete()) {
 			room->setMapMarker(mapmarker);
@@ -839,7 +839,7 @@ AreaRoom *Area::getRoom(const MapMarker *mapmarker) {
 // loads the room, including options for recycling, if needed.
 // creature is allowed to be null.
 
-AreaRoom *Area::loadRoom(const Creature* creature, const MapMarker* mapmarker, bool recycle, bool p) {
+AreaRoom *Area::loadRoom(Creature* creature, const MapMarker* mapmarker, bool recycle, bool p) {
 
 	// we only care about this if we have a creature
 	if(creature) {
@@ -858,7 +858,7 @@ AreaRoom *Area::loadRoom(const Creature* creature, const MapMarker* mapmarker, b
 	// because an AreaRoom can only be a candidate for recycling once
 	// it is completely empty, we'll just use this room for now
 	if(!room && creature && recycle)
-		room = creature->area_room;
+		room = creature->getAreaRoomParent();
 	if(!room)
 		room = new AreaRoom(this, mapmarker);
 
@@ -1880,10 +1880,12 @@ void Config::areaInit(Creature* player, xmlNodePtr curNode) {
 
 void Config::areaInit(Creature* player, MapMarker mapmarker) {
 	Area *area = getArea(mapmarker.getArea());
-	AreaRoom* aRoom=0;
 	if(area)
-		aRoom = area->loadRoom(0, &mapmarker, false);
-	player->area_room = aRoom;
+		player->currentLocation.mapmarker = mapmarker;
+//	AreaRoom* aRoom=0;
+//	if(area)
+//		aRoom = area->loadRoom(0, &mapmarker, false);
+//	player->area_room = aRoom;
 }
 
 

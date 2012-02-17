@@ -108,7 +108,7 @@ int restore(Player* player, cmd* cmnd) {
 	target->bound.room.id = 2;
 	target->setGuild(0);
 	target->setGuildRank(0);
-	target->room.id = 1;
+	target->currentLocation.room.id = 1;
 	target->clearFlag(P_WATCHER);
 
 	strcpy(target->name, cmnd->str[3]);

@@ -250,8 +250,8 @@ void broadcast_login(Player* player, int login) {
 
 	if(player->inUniqueRoom())
 		room << " (" << player->parent_rom->info.str() << ")";
-	else if(player->area_room)
-		room << " " << player->area_room->mapmarker.str();
+	else if(player->inAreaRoom())
+		room << " " << player->getAreaRoomParent()->mapmarker.str();
 
 
 	// TODO: these are set elsewhere, too... check that out
@@ -308,7 +308,7 @@ void broadcast_login(Player* player, int login) {
 // descriptor is present in the room, they are not given the message
 
 // TODO: Dom: remove
-void broadcast_rom_LangWc(int lang, Socket* ignore, AreaRoom* aRoom, CatRef cr, const char *fmt,...) {
+void broadcast_rom_LangWc(int lang, Socket* ignore, Location currentLocation, const char *fmt,...) {
 	char	fmt2[1024];
 	va_list ap;
 
@@ -329,8 +329,8 @@ void broadcast_rom_LangWc(int lang, Socket* ignore, AreaRoom* aRoom, CatRef cr, 
 			ply->isGagging(ignore->getPlayer()->name)
 		)
 			continue;
-		if(	(	(cr.id && *&ply->room == *&cr) ||
-				(aRoom && ply->area_room && *&aRoom->mapmarker == *&ply->area_room->mapmarker)
+		if(	(	(currentLocation.room.id && ply->currentLocation.room == currentLocation.room) ||
+				(currentLocation.mapmarker.getArea() != 0 && currentLocation.mapmarker == ply->currentLocation.mapmarker)
 			) &&
 			sock->getFd() > -1 &&
 			sock != ignore &&

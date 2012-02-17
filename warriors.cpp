@@ -875,7 +875,7 @@ void doTrack(Player* player) {
 		return;
 
 	if(player->inAreaRoom())
-		track = player->getAreaRoomParent()->area->getTrack(&player->area_room->mapmarker);
+		track = player->getAreaRoomParent()->area->getTrack(&player->getAreaRoomParent()->mapmarker);
 	else if(player->inUniqueRoom())
 		track = &player->getUniqueRoomParent()->track;
 

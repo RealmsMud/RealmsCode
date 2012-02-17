@@ -70,7 +70,7 @@ bool Move::tooFarAway(Creature *player, Creature *target, bstring action) {
 	// target is offline, so we need to load their room
 	if(!tRoom) {
 		UniqueRoom *room=0;
-		if(target->room.id && loadRoom(target->room, &room))
+		if(target->currentLocation.room.id && loadRoom(target->currentLocation.room, &room))
 			tRoom = room;
 	}
 
@@ -243,8 +243,8 @@ bool Move::track(UniqueRoom* room, MapMarker *mapmarker, Exit* exit, Player* pla
 		!player->isEffected("fly") &&
 		!player->isEffected("levitate") &&
 		!player->isEffected("pass-without-trace") &&
-		!player->isStaff()
-	) {
+		!player->isStaff())
+	{
 		Track *track=0;
 
 		if(room)
@@ -745,7 +745,7 @@ void Move::checkFollowed(Player* player, Exit* exit, BaseRoom* room, std::list<C
 //*********************************************************************
 // this finishes up all the work of adding people to the room
 
-void Move::finish(Creature* creature, BaseRoom* room, UniqueRoom* uRoom, bool self, std::list<Creature*> *followers) {
+void Move::finish(Creature* creature, BaseRoom* room, bool self, std::list<Creature*> *followers) {
 	Player	*player = creature->getAsPlayer();
 	Monster *monster = creature->getAsMonster();
 
@@ -756,14 +756,14 @@ void Move::finish(Creature* creature, BaseRoom* room, UniqueRoom* uRoom, bool se
 
 	if(followers && !followers->empty()) {
 		while(!followers->empty()) {
-			Move::finish(followers->front(), room, uRoom, false, 0);
+			Move::finish(followers->front(), room, false, 0);
 			followers->pop_front();
 		}
 		followers->clear();
 	}
 
-	if(player && uRoom)
-		player->checkTraps(uRoom, self);
+	if(player && room->isUniqueRoom())
+		player->checkTraps(room->getAsUniqueRoom(), self);
 }
 
 
@@ -810,7 +810,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
 		} else if(player && exit->flagIsSet(X_TO_BOUND_ROOM))
 			l = player->getBound();
 		else
-			l.room = creature->room;
+			l.room = creature->currentLocation.room;
 	} else if(!exit || teleport) {
 		// if we're teleporting
 		l.mapmarker = *teleport;
@@ -838,7 +838,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
 			// don't recycle if we are teleporting or leaving
 			// a unique room
 			if(	teleport ||
-				(creature && creature->area_room && creature->area_room->unique.id)
+				(creature && creature->inAreaRoom() && creature->getAreaRoomParent()->unique.id)
 			)
 				recycle = false;
 			// if we're only looking, don't use the function that will create a new room
@@ -857,18 +857,19 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
 	}
 
 	if(l.room.id) {
-		if(	(creature && creature->parent_rom && l.room == creature->room) ||
-			!loadRoom(l.room, newRoom) )
+		UniqueRoom* uRoom = 0;
+		if(	(creature && creature->parent_rom && l.room == creature->currentLocation.room) ||
+			!loadRoom(l.room, &uRoom) )
 		{
 			if(!teleport && creature)
 				creature->print("Off map in that direction.\n");
 			return(false);
 		}
-
+		*newRoom = uRoom;
 		if(creature) {
 			// sending true to this function tells the player why
 			// they can't cant enter the room: if teleporting send false
-			if(!creature->canEnter((*newRoom)->getAsUniqueRoom(), !teleport)) {
+			if(!creature->canEnter(uRoom, !teleport)) {
 				(*newRoom)=0;
 				return(false);
 			}
@@ -877,7 +878,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
 			// exclude pets
 			if(player && !creature->isPet()) {
 				for(Monster*pet : player->pets) {
-					if(pet && !pet->canEnter((*newRoom)->getAsUniqueRoom(), !teleport)) {
+					if(pet && !pet->canEnter(uRoom, !teleport)) {
 						if(!teleport)
 							player->print("%M won't follow you there.\n", pet);
 						(*newRoom)=0;
@@ -926,7 +927,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
 // the exit, sees if they can enter, then removes them from the current
 // room. the final step is completed in Move::finish
 
-bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::list<Creature*> *followers, int* numPeople, bool& roomPurged) {
+BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, std::list<Creature*> *followers, int* numPeople, bool& roomPurged) {
 	BaseRoom *oldRoom = creature->getRoomParent(), *newRoom=0;
 //	UniqueRoom	*uRoom=0;
 //	AreaRoom* aRoom=0;
@@ -937,7 +938,7 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 
 	if(player) {
 		if(!Move::canMove(player, cmnd))
-			return(false);
+			return(NULL);
 		// only players sneak
 		sneaking = wasSneaking = Move::isSneaking(cmnd);
 
@@ -950,19 +951,19 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 		creature->print("You don't see that exit.\n");
 		if(monster && monster->getMaster())
 			monster->getMaster()->print("Your pet doesn't see that exit.\n");
-		return(false);
+		return(NULL);
 	}
 
 
 	if(player && !Move::canEnter(player, exit, leader))
-		return(false);
+		return(NULL);
 
 	if(!Move::getRoom(creature, exit, &newRoom))
-		return(false);
+		return(NULL);
 
 	// Rangers and F/T can't sneak with heavy armor on!
 	if(sneaking && player && player->checkHeavyRestrict("sneak"))
-		return(false);
+		return(NULL);
 
 	if(newRoom->isAreaRoom()) {
 		mem = newRoom->getAsAreaRoom()->getStayInMemory();
@@ -977,18 +978,17 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 			// reset stayInMemory
 			if(newRoom->isAreaRoom())
 				newRoom->getAsAreaRoom()->setStayInMemory(mem);
-			return(false);
+			return(NULL);
 		}
 	}
 
 	// were they killed by exit effect damage?
 	if(exit->doEffectDamage(creature))
-		return(false);
+		return(NULL);
 
 	// save a copy of the exit for the track function
 	if(leader) {
-		strcpy(gExit->name, exit->name);
-		strcpy(gExit->flags, exit->flags);
+		*gExit = exit;
 	}
 
 
@@ -1012,11 +1012,11 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 	// BUG: no parent, but have a parent/area_room
 	//      other functions rely on this broken behavior
 	// *******************************************
-	// we store the room here so we can add them in the near future
-	if(uRoom)
-		creature->parent_rom = uRoom;
-	else
-		creature->area_room = aRoom;
+//	// we store the room here so we can add them in the near future
+//	if(uRoom)
+//		creature->parent_rom = uRoom;
+//	else
+//		creature->area_room = aRoom;
 
 	// the leader doesn't use the list
 	if(!leader)
@@ -1048,7 +1048,7 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 		// portal owners close once they exit the room
 		if(player && player->flagIsSet(P_PORTAL))
 			Move::deletePortal(oldRoom, player->name, leader ? player : player->getGroupLeader());
-		return(true);
+		return(newRoom);
 	}
 
 
@@ -1082,7 +1082,7 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 	// portal owners close once they exit the room, but this means their group can follow
 	if(player && player->flagIsSet(P_PORTAL))
 		Move::deletePortal(oldRoom, player->name, leader ? player : player->getGroupLeader(), followers);
-	return(true);
+	return(newRoom);
 }
 
 
@@ -1096,7 +1096,7 @@ bool Move::start(Creature* creature, cmd* cmnd, Exit *gExit, bool leader, std::l
 int cmdGo(Player* player, cmd* cmnd) {
 	MapMarker *oldMarker=0;
 	UniqueRoom	*oldRoom = player->parent_rom;
-	Exit	exit;
+	Exit*	exit;
 	int		numPeople=0;
 
 	if(!player->getRoomParent()) {
@@ -1110,7 +1110,7 @@ int cmdGo(Player* player, cmd* cmnd) {
 	}
 
 	// keep track of this room
-	AreaRoom* aRoom = player->area_room;
+	AreaRoom* aRoom = player->getAreaRoomParent();
 	std::list<Creature*> followers;
 
 	if(aRoom) {
@@ -1120,31 +1120,27 @@ int cmdGo(Player* player, cmd* cmnd) {
 
 	bool roomPurged = false;
 	// this removes everyone from the room
-	if(!Move::start(player, cmnd, &exit, true, &followers, &numPeople, roomPurged))
+	BaseRoom* newRoom = 0;
+	if(!(newRoom = Move::start(player, cmnd, &exit, true, &followers, &numPeople, roomPurged)))
 		return(0);
 
 	if(!roomPurged)
-		Move::track(oldRoom, oldMarker, &exit, player, &followers);
+		Move::track(oldRoom, oldMarker, exit, player, &followers);
 
 	if(oldMarker)
 		delete oldMarker;
 
 	// for display reasons, we only need to kill objects in
 	// the room they're entering
-
-	// ***********************************************************************
-	// BUG: Relies on parent_rom/area_rom being set without player being added
-	// ***********************************************************************
-
-	player->getRoomParent()->killMortalObjectsOnFloor();
+	newRoom->killMortalObjectsOnFloor();
 
 	// loadRoom is telling us the room the player used to be in is
 	// a candidate for recycling
-	if(player->area_room && aRoom == player->area_room)
-		player->area_room = Move::recycle(aRoom, Move::getExit(player, cmnd));
+	if(newRoom->isAreaRoom() && aRoom == newRoom)
+		newRoom = Move::recycle(aRoom, exit);
 
 	// this adds everyone to the room
-	Move::finish(player, player->getRoomParent(), player->parent_rom, true, &followers);
+	Move::finish(player, newRoom, true, &followers);
 	// we killed objects already, we can skip those this time around
 	player->getRoomParent()->killMortalObjects(false);
 	return(0);

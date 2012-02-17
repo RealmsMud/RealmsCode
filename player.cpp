@@ -68,7 +68,6 @@ void Creature::fixLts() {
 void Player::init() {
 	char	file[80], str[50], watchers[128];
 	BaseRoom *newRoom=0;
-	UniqueRoom	*uRoom=0;
 	long	t = time(0);
 	int		watch=0;
 
@@ -250,11 +249,16 @@ void Player::init() {
 	lasttime[LT_PLAYER_SEND].ltime = t;
 	lasttime[LT_PLAYER_SEND].misc = 0;
 
+	if(currentLocation.mapmarker.getArea() != 0) {
+		Area *area = gConfig->getArea(currentLocation.mapmarker.getArea());
+		if(area)
+			newRoom = area->loadRoom(0, &currentLocation.mapmarker, false);
 
+	}
 	// load up parent_rom for the broadcast below, but don't add the
 	// player to the room or the messages will be out of order
-	if(!area_room) {
-		Property *p = gConfig->getProperty(room);
+	if(!newRoom) {
+		Property *p = gConfig->getProperty(currentLocation.room);
 		if(	p &&
 			p->getType() == PROP_STORAGE &&
 			!p->isOwner(name) &&
@@ -267,20 +271,22 @@ void Player::init() {
 				l = previousRoom;
 
 			if(l.room.id)
-				room = l.room;
+				currentLocation.room = l.room;
 			else
 				gConfig->areaInit(this, l.mapmarker);
 		}
 	}
 
+
 	// area_room might get set by areaInit, so check again
-	if(!area_room) {
-		if(!loadRoom(room, &uRoom)) {
+	if(!newRoom) {
+		UniqueRoom	*uRoom=0;
+		if(!loadRoom(currentLocation.room, &uRoom)) {
 			loge("%s: %s (%s) Attempted logon to bad or missing room!\n", name,
-				getSock()->getHostname().c_str(), room.str().c_str());
+				getSock()->getHostname().c_str(), currentLocation.room.str().c_str());
 			// NOTE: Using ::isCt to use the global function, not the local function
 			broadcast(::isCt, "^y%s: %s (%s) Attempted logon to bad or missing room (normal)!", name,
-				getSock()->getHostname().c_str(), room.str().c_str());
+				getSock()->getHostname().c_str(), currentLocation.room.str().c_str());
 			newRoom = abortFindRoom(this, "init_ply");
 			uRoom = newRoom->getAsUniqueRoom();
 		}
@@ -322,8 +328,6 @@ void Player::init() {
 			// this gets assigned just for the sake of broadcast_login;
 			// it doesnt actually do anything
 			parent_rom = uRoom;
-		} else {
-			area_room = newRoom->getAsAreaRoom();
 		}
 	}
 
@@ -347,10 +351,7 @@ void Player::init() {
 	checkDarkness();
 
 	// don't do the actual adding until after broadcast
-	if(area_room)
-		addToRoom(area_room);
-	else
-		addToRoom(uRoom);
+	addToRoom(newRoom);
 
 
 	for(Monster* pet : pets) {
@@ -531,8 +532,10 @@ void Player::uninit() {
 	if(!gServer->isRebooting())
 		broadcast_login(this, 0);
 
-	if(parent_rom || area_room)
+	if(this->inRoom())
 		deleteFromRoom();
+
+	// TODO: Handle deleting from non rooms
 
 	t = time(0);
 	strcpy(str, (char *)ctime(&t));
@@ -2006,9 +2009,7 @@ BaseRoom* Creature::recallWhere() {
 // This function will always return a room or it will crash trying to.
 
 BaseRoom* Creature::teleportWhere() {
-	UniqueRoom	*uRoom=0;
 	BaseRoom *newRoom=0;
-	AreaRoom* aRoom=0;
 	const CatRefInfo* cri = gConfig->getCatRefInfo(getRoomParent());
 	int		i=0, zone = cri ? cri->getTeleportZone() : 0;
 	Area	*area=0;
@@ -2023,6 +2024,7 @@ BaseRoom* Creature::teleportWhere() {
 		CatRef cr;
 		cr.setArea("test");
 		cr.id = 1;
+		UniqueRoom* uRoom =0;
 		if(loadRoom(cr, &uRoom))
 			return(uRoom);
 	}
@@ -2046,16 +2048,13 @@ BaseRoom* Creature::teleportWhere() {
 				// don't bother sending a creature because we've already done
 				// canPass check here
 				//aRoom = area->loadRoom(0, &mapmarker, false);
-				uRoom = 0;
-				aRoom = 0;
-				if(Move::getRoom(this, 0, &uRoom, &aRoom, false, &l.mapmarker)) {
-					if(uRoom) {
+				if(Move::getRoom(this, 0, &newRoom, false, &l.mapmarker)) {
+					if(newRoom->isUniqueRoom()) {
 						// recheck, just to be safe
-						found = uRoom->canPortHere(this);
-						if(found)
-							newRoom = uRoom;
+						found = newRoom->getAsUniqueRoom()->canPortHere(this);
+						if(!found)
+							newRoom = 0;
 					} else {
-						newRoom = aRoom;
 						found = true;
 					}
 				}
@@ -2064,6 +2063,7 @@ BaseRoom* Creature::teleportWhere() {
 			l.room.setArea(cri->getArea());
 			// if misc, first 1000 rooms are off-limits
 			l.room.id = mrand(l.room.isArea("misc") ? 1000 : 1, cri->getTeleportWeight());
+			UniqueRoom* uRoom = 0;
 
 			if(loadRoom(l.room, &uRoom))
 				found = uRoom->canPortHere(this);

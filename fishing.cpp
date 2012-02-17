@@ -56,8 +56,8 @@ bool canFish(const Player* player, const Fishing** list, Object** pole) {
 		}
 	}
 
-	if(player->area_room)
-		*list = player->area_room->getFishing();
+	if(player->inAreaRoom())
+		*list = player->getConstAreaRoomParent()->getFishing();
 	else if(player->inUniqueRoom())
 		*list = player->parent_rom->getFishing();
 
@@ -200,8 +200,8 @@ bool doFish(Player* player) {
 			return(failFishing(player, "Room too full.", false));
 		}
 		// do this so the print functions work properly
-		monster->parent_rom = player->parent_rom;
-		monster->area_room = player->area_room;
+//		monster->parent_rom = player->parent_rom;
+//		monster->area_room = player->area_room;
 	}
 
 	// they caught something!

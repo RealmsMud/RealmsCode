@@ -355,7 +355,7 @@ void Player::dieToPet(Monster *killer) {
 		master = killer->getMaster()->getAsPlayer();
 	else {
 		broadcast(::isCt, "^y*** Pet %s has no master and is trying to kill a player. Room %s",
-			killer->name, killer->room.str().c_str());
+			killer->name, killer->currentLocation.room.str().c_str());
 		return;
 	}
 
@@ -392,7 +392,7 @@ void Monster::dieToPet(Monster *killer, bool &freeTarget) {
 		pKiller = killer->getMaster()->getAsPlayer();
 	} else {
 		broadcast(::isCt, "^y*** Pet %s has no master and is trying to kill a mob. Room %s",
-			killer->name, killer->room.str().c_str());
+			killer->name, killer->currentLocation.room.str().c_str());
 		return;
 	}
 

@@ -437,7 +437,7 @@ bool Player::doPlayerHarmRooms() {
 					!doesntBreathe() && (
 						room->flagIsSet(R_WATER_BONUS) ||(
 						room->flagIsSet(R_UNDER_WATER_BONUS) ||
-						(area_room && area_room->isWater() && !isEffected("fly"))
+						(inAreaRoom() && getAreaRoomParent()->isWater() && !isEffected("fly"))
 					)
 		) ) {
 			wake("You awaken suddenly!");
