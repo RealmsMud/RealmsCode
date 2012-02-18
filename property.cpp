@@ -2075,7 +2075,7 @@ void Property::descEdit(Socket* sock, bstring str) {
 		sock->restoreState();
 
 		Property *p=0;
-		if(!Property::requireInside(ply, ply->parent_rom, &p))
+		if(!Property::requireInside(ply, ply->getUniqueRoomParent(), &p))
 			return;
 
 		FILE* fp = fopen(sock->tempstr[0], "r");
@@ -2229,7 +2229,7 @@ void Property::manageName(Player* player, cmd* cmnd, PropType propType, int x) {
 void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const Guild* guild, int x) {
 	Object	*deed=0, *oHidden=0, *oConceal=0, *oInvis=0, *oFoyer=0;
 	AreaRoom* aRoom = player->getAreaRoomParent();
-	UniqueRoom* uRoom = player->parent_rom;
+	UniqueRoom* uRoom = player->getUniqueRoomParent();
 	BaseRoom* room = player->getRoomParent();
 	int canBuildFlag = Property::buildFlag(propType);
 	CatRef cr;
@@ -2692,7 +2692,7 @@ void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Proper
 	}
 
 	target->info = cr;
-	linkRoom(player->parent_rom, target, xname);
+	linkRoom(player->getUniqueRoomParent(), target, xname);
 	roomSetup(target, propType, player, guild, outside);
 
 	player->delObj(obj, true);
@@ -2940,7 +2940,7 @@ void Property::found(const Player* player, PropType propType, bstring location, 
 	if(location == "")
 		location = player->getConstUniqueRoomParent()->name;
 	setLocation(location);
-	if(shouldSetArea && player->parent_rom) {
+	if(shouldSetArea && player->inUniqueRoom()) {
 		bstring pArea = player->getConstUniqueRoomParent()->info.area;
 		if(player->getConstUniqueRoomParent()->info.isArea("guild")) {
 			// load the guild entrance, look for the out exit, load that room, get the area

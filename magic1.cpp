@@ -427,7 +427,7 @@ int cmdTeach(Player* player, cmd* cmnd) {
 	} else if(player->getClass() == BUILDER) {
 		if(!player->canBuildMonsters())
 			return(cmdNoAuth(player));
-		if(!player->checkBuilder(player->parent_rom)) {
+		if(!player->checkBuilder(player->getUniqueRoomParent())) {
 			player->print("Error: room number not in any of your alotted ranges.\n");
 			return(0);
 		}

@@ -48,7 +48,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
 		player->print("Error: monster index not in any of your alotted ranges.\n");
 		return(0);
 	}
-	if(!player->checkBuilder(player->parent_rom)) {
+	if(!player->checkBuilder(player->getUniqueRoomParent())) {
 		player->print("Error: room number not in any of your alotted ranges.\n");
 		return(0);
 	}
@@ -475,8 +475,8 @@ bstring Creature::statCrt(int statFlags) {
 		if(pTarget->getPoisonedBy() != "")
 			crtStr << "^r*Poisoned* by " <<  pTarget->getPoisonedBy() << ".^x";
 
-		if(	pTarget->parent_rom &&
-			pTarget->parent_rom->flagIsSet(R_MOB_JAIL)
+		if(	pTarget->inUniqueRoom() &&
+			pTarget->getConstUniqueRoomParent()->flagIsSet(R_MOB_JAIL)
 		) {
 			crtStr << "^bIn Jailhouse. ";
 			crtStr << "Time remaining: " <<
@@ -650,7 +650,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 	if(player->getClass() == BUILDER) {
 		if(!player->canBuildMonsters())
 			return(cmdNoAuth(player));
-		if(!player->checkBuilder(player->parent_rom)) {
+		if(!player->checkBuilder(player->getUniqueRoomParent())) {
 			player->print("Error: Room number not inside any of your alotted ranges.\n");
 			return(0);
 		}
@@ -2432,7 +2432,7 @@ int dmAttack(Player* player, cmd* cmnd) {
 	Creature* victim=0;
 	int	inroom=1;
 
-	if(!player->checkBuilder(player->parent_rom)) {
+	if(!player->checkBuilder(player->getUniqueRoomParent())) {
 		player->print("Error: Room number not inside any of your alotted ranges.\n");
 		return(0);
 	}
@@ -2680,7 +2680,7 @@ int dmAddMob(Player* player, cmd* cmnd) {
 
 	if(!player->canBuildMonsters())
 		return(cmdNoAuth(player));
-	if(!player->checkBuilder(player->parent_rom)) {
+	if(!player->checkBuilder(player->getUniqueRoomParent())) {
 		player->print("Error: this room is out of your range; you cannot create a mob here.\n");
 		return(0);
 	}
@@ -2717,7 +2717,8 @@ int dmAddMob(Player* player, cmd* cmnd) {
 	new_mob->damage.setPlus(1);
 	new_mob->first_obj = 0;
 	new_mob->first_tlk = 0;
-	new_mob->parent_rom = 0;
+	new_mob->setParent(NULL);
+
 	for(n=0; n<20; n++)
 		new_mob->ready[n] = 0;
 	new_mob->setFlag(M_SAVE_FULL);
@@ -2746,7 +2747,7 @@ int	dmForceWander(Player* player, cmd* cmnd) {
 
 	strcpy(name,"");
 
-	if(!player->checkBuilder(player->parent_rom)) {
+	if(!player->checkBuilder(player->getUniqueRoomParent())) {
 		player->print("Error: Room number not inside any of your alotted ranges.\n");
 		return(0);
 	}

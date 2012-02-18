@@ -215,6 +215,13 @@ bool Containable::addTo(Container* container) {
     if(container == NULL)
         return(removeFrom());
 
+    if(this->isCreature()) {
+    	if(container->isUniqueRoom()) {
+    		getAsCreature()->currentLocation.room = container->getAsUniqueRoom()->info;
+    	} else if (container->isAreaRoom()) {
+    		getAsCreature()->currentLocation.mapmarker = container->getAsAreaRoom()->mapmarker;
+    	}
+    }
     return(container->add(this));
 }
 
@@ -224,6 +231,10 @@ bool Containable::removeFrom() {
         return(false);
     }
 
+    if(isCreature()) {
+    	getAsCreature()->currentLocation.room.clear();
+    	getAsCreature()->currentLocation.mapmarker.reset();
+    }
     return(parent->remove(this));
 }
 

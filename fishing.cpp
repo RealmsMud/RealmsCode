@@ -199,7 +199,8 @@ bool doFish(Player* player) {
 			delete monster;
 			return(failFishing(player, "Room too full.", false));
 		}
-		// do this so the print functions work properly
+		// TODO: do this so the print functions work properly
+		monster->setParent(player->getParent());
 //		monster->parent_rom = player->parent_rom;
 //		monster->area_room = player->area_room;
 	}

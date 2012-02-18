@@ -77,7 +77,7 @@ bstring swapName(SwapType type) {
 //							swap
 //*********************************************************************
 
-void swap(const Player* player, cmd* cmnd, SwapType type) {
+void swap(Player* player, cmd* cmnd, SwapType type) {
 	bstring str = getFullstrText(cmnd->fullstr, 1);
 	bstring name="";
 	bstring cmd = " *swap";
@@ -215,7 +215,7 @@ void swap(const Player* player, cmd* cmnd, SwapType type) {
 	if(type == SwapRoom) {
 		if(!needUniqueRoom(player))
 			return;
-		if(!player->checkBuilder(player->parent_rom)) {
+		if(!player->checkBuilder(player->getUniqueRoomParent())) {
 			player->printColor("^YRS: ^RError: ^xRoom number not inside any of your alotted ranges.\n");
 			return;
 		}
@@ -252,7 +252,7 @@ void swap(const Player* player, cmd* cmnd, SwapType type) {
 
 		if(player->getConstUniqueRoomParent()->flagIsSet(R_SHOP))
 			player->printColor("^YRS: ^GThis room is a shop - don't forget to swap the storage room: %s.\n",
-				shopStorageRoom(player->parent_rom).rstr().c_str());
+				shopStorageRoom(player->getConstUniqueRoomParent()).rstr().c_str());
 		else if(player->getConstUniqueRoomParent()->getTrapExit().id)
 			player->printColor("^YRS: ^GThis room has a trap exit set: %s.\n",
 				player->getConstUniqueRoomParent()->getTrapExit().rstr().c_str());

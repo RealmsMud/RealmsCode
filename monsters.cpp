@@ -1042,7 +1042,7 @@ int Monster::checkWander(long t) {
 		!isPet() && !flagIsSet(M_DM_FOLLOW)))
 	{
 		if(	// If it's time to wander, and we have no enemey
-			(t - i > 60 && (parent_rom && mrand(1, 100) <= parent_rom->wander.getTraffic()) && !hasEnemy()) ||
+			(t - i > 60 && (inUniqueRoom() && mrand(1, 100) <= getUniqueRoomParent()->wander.getTraffic()) && !hasEnemy()) ||
 			// or we fast-wander if enemies are not nearby
 			(flagIsSet(M_FAST_WANDER) && !nearEnemy()))
 		{

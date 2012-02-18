@@ -832,7 +832,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
 		}
 		// if we're in a unique room, don't activate any unique-room triggers on
 		// the overland unless we're teleporting
-		if(teleport || !creature || !creature->parent_rom)
+		if(teleport || !creature || !creature->inUniqueRoom())
 			l.room = area->getUnique(&l.mapmarker);
 		if(!l.room.id) {
 			// don't recycle if we are teleporting or leaving
@@ -851,14 +851,14 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
 				return(false);
 			// getUnique gets called again later, so skip the decrement process here
 			// or the compass will use 2 shots
-			if(teleport || !creature || !creature->parent_rom)
+			if(teleport || !creature || !creature->inUniqueRoom())
 				l.room = (*newRoom)->getAsAreaRoom()->getUnique(creature, true);
 		}
 	}
 
 	if(l.room.id) {
 		UniqueRoom* uRoom = 0;
-		if(	(creature && creature->parent_rom && l.room == creature->currentLocation.room) ||
+		if(	(creature && creature->inUniqueRoom() && l.room == creature->currentLocation.room) ||
 			!loadRoom(l.room, &uRoom) )
 		{
 			if(!teleport && creature)
@@ -889,8 +889,8 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
 				if(!justLooking && player->getLocation() == player->getLimboRoom())
 					player->clearFlag(P_KILLED_BY_MOB);
 
-				if(player->parent_rom && player->getUniqueRoomParent()->info.isArea("stor"))
-					gConfig->saveStorage(player->parent_rom);
+				if(player->inUniqueRoom() && player->getUniqueRoomParent()->info.isArea("stor"))
+					gConfig->saveStorage(player->getUniqueRoomParent());
 
 			}
 
@@ -1008,16 +1008,6 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
 		oldRoom = 0;
 	}
 
-	// *******************************************
-	// BUG: no parent, but have a parent/area_room
-	//      other functions rely on this broken behavior
-	// *******************************************
-//	// we store the room here so we can add them in the near future
-//	if(uRoom)
-//		creature->parent_rom = uRoom;
-//	else
-//		creature->area_room = aRoom;
-
 	// the leader doesn't use the list
 	if(!leader)
 		followers->push_back(creature);
@@ -1095,7 +1085,7 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
 
 int cmdGo(Player* player, cmd* cmnd) {
 	MapMarker *oldMarker=0;
-	UniqueRoom	*oldRoom = player->parent_rom;
+	UniqueRoom	*oldRoom = player->getUniqueRoomParent();
 	Exit*	exit;
 	int		numPeople=0;
 
@@ -1494,7 +1484,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 	if(exit->doEffectDamage(player))
 		return(0);
 	
-	if(!object->isKey(player->parent_rom, exit)) {
+	if(!object->isKey(player->getUniqueRoomParent(), exit)) {
 		player->print("Wrong key.\n");
 		return(0);
 	}
@@ -1600,7 +1590,7 @@ int cmdLock(Player* player, cmd* cmnd) {
 	if(exit->doEffectDamage(player))
 		return(0);
 	
-	if(!object->isKey(player->parent_rom, exit)) {
+	if(!object->isKey(player->getUniqueRoomParent(), exit)) {
 		player->print("Wrong key.\n");
 		return(0);
 	}

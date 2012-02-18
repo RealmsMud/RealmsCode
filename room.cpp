@@ -51,15 +51,15 @@ void Player::finishAddPlayer(BaseRoom* room) {
 			broadcast(getSock(), room, "A light mist just arrived.");
 		} else {
 			if(isDm())
-				broadcast(::isDm, getSock(), getRoomParent(), "*DM* %M just arrived.", this);
+				broadcast(::isDm, getSock(), room, "*DM* %M just arrived.", this);
 			if(cClass == CARETAKER)
-				broadcast(::isCt, getSock(), getRoomParent(), "*DM* %M just arrived.", this);
+				broadcast(::isCt, getSock(), room, "*DM* %M just arrived.", this);
 			if(!isCt())
-				broadcast(::isStaff, getSock(), getRoomParent(), "*DM* %M just arrived.", this);
+				broadcast(::isStaff, getSock(), room, "*DM* %M just arrived.", this);
 		}
 
 		if(!isStaff()) {
-			if((isEffected("darkness") || flagIsSet(P_DARKNESS)) && !getRoomParent()->flagIsSet(R_MAGIC_DARKNESS))
+			if((isEffected("darkness") || flagIsSet(P_DARKNESS)) && !room->flagIsSet(R_MAGIC_DARKNESS))
 				broadcast(getSock(), room, "^DA globe of darkness just arrived.");
 		}
 	}
@@ -111,6 +111,7 @@ void Player::finishAddPlayer(BaseRoom* room) {
 	        gServer->addActive(mons);
 	    }
 	}
+
 	addTo(room);
 	display_rom(this);
 
@@ -129,7 +130,6 @@ void Player::addToRoom(BaseRoom* room) {
 void Player::addToRoom(AreaRoom* aRoom) {
 	Hooks::run(aRoom, "afterAddCreature", this, "afterAddToRoom");
 	currentLocation.room.clear();
-	parent_rom = 0;
 	finishAddPlayer(aRoom);
 }
 
@@ -137,7 +137,6 @@ void Player::addToRoom(UniqueRoom* uRoom) {
 	bool	builderInRoom=false;
 
 	Hooks::run(uRoom, "beforeAddCreature", this, "beforeAddToRoom");
-	parent_rom = uRoom;
 	currentLocation.room = uRoom->info;
 	currentLocation.mapmarker.reset();
 
@@ -250,15 +249,13 @@ int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 	int		i=0;
 
 	t = time(0);
-	if(parent_rom && !isStaff()) {
-		strcpy(parent_rom->lastPly, name);
-		strcpy(parent_rom->lastPlyTime, ctime(&t));
+	if(inUniqueRoom() && !isStaff()) {
+		strcpy(getUniqueRoomParent()->lastPly, name);
+		strcpy(getUniqueRoomParent()->lastPlyTime, ctime(&t));
 	}
 
 	currentLocation.mapmarker.reset();
 	currentLocation.room.clear();
-
-	parent_rom = 0;
 
 	if(delPortal && flagIsSet(P_PORTAL) && Move::deletePortal(room, name))
 		i |= DEL_PORTAL_DESTROYED;
@@ -417,16 +414,6 @@ void Monster::addToRoom(BaseRoom* room, int num) {
 	char	str[160];
 	validateId();
 
-	currentLocation.room.clear();
-	currentLocation.mapmarker.reset();
-
-	if(room->isUniqueRoom()) {
-		parent_rom = room->getAsUniqueRoom();
-		currentLocation.room = room->getAsUniqueRoom()->info;
-	} else {
-		currentLocation.mapmarker = room->getAsAreaRoom()->mapmarker;
-	}
-
 	lasttime[LT_AGGRO_ACTION].ltime = time(0);
 	killDarkmetal();
 
@@ -470,10 +457,7 @@ void Monster::addToRoom(BaseRoom* room, int num) {
 // 				 False otherwise
 
 int Monster::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
-	parent_rom = 0;
 
-	currentLocation.room.clear();
-	currentLocation.mapmarker.reset();
 
 	if(!room)
 		return(0);

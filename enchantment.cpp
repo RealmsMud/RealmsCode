@@ -1110,7 +1110,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 			logCast(player, target, "stun");
 
 			if(mTarget && player->isPlayer()) {
-				if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (mrand(1,100) <= (MAX(25, mTarget->parent_rom ? mTarget->parent_rom->wander.getTraffic() : 25)))) {
+				if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (mrand(1,100) <= (MAX(25, mTarget->inUniqueRoom() ? mTarget->getUniqueRoomParent()->wander.getTraffic() : 25)))) {
 					mTarget->summonMobs(player);
 					mTarget->clearFlag(M_YELLED_FOR_HELP);
 					mTarget->setFlag(M_WILL_YELL_FOR_HELP);

@@ -334,13 +334,12 @@ void Player::init() {
             newRoom = uRoom;
 		}
 	}
-    addToRoom(newRoom);
 
 	//	str[0] = 0;
 	if(!isDm()) {
 		loge("%s(L:%d) (%s) %s. Room - %s (Port-%d)\n", name, level,
 		     getSock()->getHostname().c_str(), gServer->isRebooting() ? "reloaded" : "logged on",
-		     getRoomParent()->fullName().c_str(), Port);
+		    		 newRoom->fullName().c_str(), Port);
 	}
 	if(isStaff())
 		logn("log.imm", "%s  (%s) %s.\n",
@@ -351,12 +350,14 @@ void Player::init() {
 	// broadcast
 	if(!gServer->isRebooting()) {
 		setSockColors();
-		broadcast_login(this, 1);
+		broadcast_login(this, newRoom, 1);
 	}
+
+	// don't do the actual adding until after broadcast
+	addToRoom(newRoom);
 
 	checkDarkness();
 
-	// don't do the actual adding until after broadcast
 
 
 	for(Monster* pet : pets) {
@@ -509,8 +510,8 @@ void Player::uninit() {
 	char	str[50];
 
 	// Save storage rooms
-	if(parent_rom && parent_rom->info.isArea("stor"))
-		gConfig->resaveRoom(parent_rom->info);
+	if(inUniqueRoom() && getUniqueRoomParent()->info.isArea("stor"))
+		gConfig->resaveRoom(getUniqueRoomParent()->info);
 
 	courageous();
 	clearMaybeDueling();
@@ -535,7 +536,7 @@ void Player::uninit() {
 	}
 
 	if(!gServer->isRebooting())
-		broadcast_login(this, 0);
+		broadcast_login(this, this->getRoomParent(), 0);
 
 	if(this->inRoom())
 		deleteFromRoom();
@@ -845,7 +846,7 @@ void Player::checkEffectsWearingOff() {
 
 
 	if(	t > LT(this, LT_JAILED) &&
-		parent_rom && parent_rom->flagIsSet(R_MOB_JAIL) &&
+		inUniqueRoom() && getUniqueRoomParent()->flagIsSet(R_MOB_JAIL) &&
 		!staff
 	) {
 		printColor("A jailer just arrived.\n");

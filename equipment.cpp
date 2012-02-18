@@ -1499,7 +1499,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 			player->print("You are not allowed get items.\n");
 			return(0);
 		}
-		if(!player->checkBuilder(player->parent_rom)) {
+		if(!player->checkBuilder(player->getUniqueRoomParent())) {
 			player->print("Error: Room number not inside any of your alotted ranges.\n");
 			return(0);
 		}
@@ -2390,7 +2390,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 			player->print("You are not allowed drop items.\n");
 			return(0);
 		}
-		if(!player->checkBuilder(player->parent_rom)) {
+		if(!player->checkBuilder(player->getUniqueRoomParent())) {
 			player->print("Error: Room number not inside any of your alotted ranges.\n");
 			return(0);
 		}
@@ -2407,7 +2407,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 
 
 	player->unhide();
-	factionCanRecycle = !player->parent_rom || Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction());
+	factionCanRecycle = !player->inUniqueRoom() || Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction());
 
 	if(cmnd->num == 2) {
 

@@ -106,11 +106,9 @@ int Config::reloadRoom(CatRef cr) {
 	}
 	for(Player* ply : room->players) {
 		ply->setParent(room);
-		ply->parent_rom = room;
 	}
 	for(Monster* mons : room->monsters) {
 		mons->setParent(room);
-		mons->parent_rom = room;
 	}
 
 	return(0);

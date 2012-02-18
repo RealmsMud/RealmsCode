@@ -907,7 +907,7 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 	if(player->getClass() == BUILDER)
 		return(0);
 
-	room = player->parent_rom;
+	room = player->getUniqueRoomParent();
 
 	if(!player->isCt() && player->getLevel() < 7 && player->getClass() != THIEF) {
 		player->print("You couldn't possibly succeed. Wait until level 7.\n");
@@ -1844,7 +1844,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
 		}
 	if(!player->canBuildMonsters() && !player->canBuildObjects())
 			return(cmdNoAuth(player));
-		if(!player->checkBuilder(player->parent_rom)) {
+		if(!player->checkBuilder(player->getUniqueRoomParent())) {
 			player->print("Error: Room number not inside any of your alotted ranges.\n");
 			return(0);
 		}

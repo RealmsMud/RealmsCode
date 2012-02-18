@@ -132,7 +132,7 @@ public:
 	const Monster* getConstMonsterParent() const;
 	const Creature* getConstCreatureParent() const;
 
-private:
+protected:
     Container* parent;   // Parent Container
 };
 

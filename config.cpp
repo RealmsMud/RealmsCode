@@ -178,12 +178,10 @@ void Config::reset(bool reload) {
 		delete ticket;
 	}
 
-#ifdef SQL_LOGGER
     logDbType="";
     logDbUser="";
     logDbPass="";
     logDbDatabase="";
-#endif
 
 	
 	// the following settings aren't cleared on reload
@@ -341,12 +339,10 @@ void Config::loadGeneral(xmlNodePtr rootNode) {
 		else if(NODE_NAME(curNode, "CheckDouble")) xml::copyToBool(checkDouble, curNode);
 		else if(NODE_NAME(curNode, "GetHostByName")) xml::copyToBool(getHostByName, curNode);
 		else if(NODE_NAME(curNode, "LessExpLoss")) xml::copyToBool(lessExpLoss, curNode);
-#ifdef SQL_LOGGER
 		else if(NODE_NAME(curNode, "LogDatabaseType")) xml::copyToBString(logDbType, curNode);
 		else if(NODE_NAME(curNode, "LogDatabaseUser")) xml::copyToBString(logDbUser, curNode);
 		else if(NODE_NAME(curNode, "LogDatabasePassword")) xml::copyToBString(logDbPass, curNode);
 		else if(NODE_NAME(curNode, "LogDatabaseDatabase")) xml::copyToBString(logDbDatabase, curNode);
-#endif
 		else if(NODE_NAME(curNode, "LogDeath")) xml::copyToBool(logDeath, curNode);
 		else if(NODE_NAME(curNode, "PkillInCombatDisabled")) xml::copyToBool(pkillInCombatDisabled, curNode);
 		else if(NODE_NAME(curNode, "RecordAll")) xml::copyToBool(recordAll, curNode);
@@ -438,12 +434,10 @@ bool Config::saveConfig() const {
 	xml::saveNonNullString(curNode, "CustomColors", customColors);
 	xml::saveNonNullString(curNode, "Reviewer", reviewer);
 
-#ifdef SQL_LOGGER
     xml::newStringChild(curNode, "LogDatabaseType", logDbType);
     xml::newStringChild(curNode, "LogDatabaseUser", logDbUser);
     xml::newStringChild(curNode, "LogDatabasePassword", logDbPass);
     xml::newStringChild(curNode, "LogDatabaseDatabase", logDbDatabase);
-#endif
 
 	xml::newBoolChild(curNode, "AprilFools", doAprilFools);
 	xml::saveNonZeroNum(curNode, "FlashPolicyPort", flashPolicyPort);

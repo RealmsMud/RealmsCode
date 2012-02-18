@@ -289,7 +289,7 @@ void handleObject(Player* player, cmd* cmnd, HandleObject type) {
 		player->printColor("You %s %P^x.\n", action.c_str(), object);
 		broadcast(player->getSock(), player->getParent(), "%M %s %P^x.", player, action2.c_str(), object);
 
-		if(player->checkTraps(player->parent_rom, true, false))
+		if(player->checkTraps(player->getUniqueRoomParent(), true, false))
 			player->stun(3);
 		return;
 	}

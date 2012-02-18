@@ -272,7 +272,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
 	if( !pPlayer->isCt() &&
-		pPlayer->parent_rom &&
+		pPlayer->inUniqueRoom() &&
 		(
 			!pPlayer->getUniqueRoomParent()->canPortHere(pPlayer) ||
 			pPlayer->getUniqueRoomParent()->flagIsSet(R_ELEC_BONUS)
@@ -1118,7 +1118,7 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 		// you can't summon them right now
 		if(	(	player->getRoomParent()->isConstruction() ||
 				player->getRoomParent()->flagIsSet(R_SHOP_STORAGE) ||
-				(player->parent_rom && !target->canEnter(player->parent_rom, false))
+				(player->inUniqueRoom() && !target->canEnter(player->getUniqueRoomParent(), false))
 			) &&
 			!player->checkStaff("The spell fizzles.\nYou cannot summon %s to this location at this time.\n", target->name)
 		)
@@ -1230,7 +1230,7 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	troom = target->parent_rom;
+	troom = target->getUniqueRoomParent();
 	if(!pPlayer->isStaff()) {
 
 		if( (	target->getRoomParent()->flagIsSet(R_IS_STORAGE_ROOM) ||

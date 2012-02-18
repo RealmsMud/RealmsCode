@@ -210,7 +210,7 @@ void announcePermDeath(Creature* player, const char *fmt,...) {
 // This function broadcasts a message to all the players that are in the
 // game. If they have the NO-BROADCAST flag set, then they will not see it.
 
-void broadcast_login(Player* player, int login) {
+void broadcast_login(Player* player, BaseRoom* inRoom, int login) {
 	std::ostringstream preText, postText, extra, room;
 	bstring text = "", illusion = "";
 	int    logoff=0;
@@ -248,11 +248,12 @@ void broadcast_login(Player* player, int login) {
 		illusion += " (" + gConfig->getRace(player->getRace())->getAdjective() + ")";
 	illusion += postText.str();
 
-	if(player->inUniqueRoom())
-		room << " (" << player->getUniqueRoomParent()->info.str() << ")";
-	else if(player->inAreaRoom())
-		room << " " << player->getAreaRoomParent()->mapmarker.str();
-
+	if(inRoom) {
+		if(inRoom->isUniqueRoom())
+			room << " (" << inRoom->getAsUniqueRoom()->info.str() << ")";
+		else if(inRoom->isAreaRoom())
+			room << " " << inRoom->getAsAreaRoom()->mapmarker.str();
+	}
 
 	// TODO: these are set elsewhere, too... check that out
 	if(!player->isStaff()) {

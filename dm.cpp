@@ -673,7 +673,7 @@ int dmUsers(Player* player, cmd* cmnd) {
 			oStr << "^m" << std::setw(58) << host.left(58);
 		} else {
 			if(user->inUniqueRoom()) {
-				sprintf(str, "%s: ^b%s", user->parent_rom->info.str(cr, 'b').c_str(), bstring(user->getUniqueRoomParent()->name).c_str());
+				sprintf(str, "%s: ^b%s", user->getUniqueRoomParent()->info.str(cr, 'b').c_str(), stripColor(user->getUniqueRoomParent()->name).c_str());
 				oStr << std::setw(22 + (str[0] == '^' ? 4 : 0)) << bstring(str).left(22 + (str[0] == '^' ? 4 : 0));
 			} else if(user->inAreaRoom()){
 				//sprintf(str, "%s", user->area_room->mapmarker.str(true).c_str());
@@ -791,7 +791,7 @@ int dmResave(Player* player, cmd* cmnd) {
 	}
 
 
-	if(!player->checkBuilder(player->parent_rom)) {
+	if(!player->checkBuilder(player->getUniqueRoomParent())) {
 		player->print("Error: this room is out of your range; you cannot save this room.\n");
 		return(0);
 	}
@@ -830,7 +830,7 @@ int dmPerm(Player* player, cmd* cmnd) {
 	if(!player->canBuildMonsters() && !player->canBuildObjects())
 		return(cmdNoAuth(player));
 
-	if(!player->checkBuilder(player->parent_rom)) {
+	if(!player->checkBuilder(player->getUniqueRoomParent())) {
 		player->print("Room number not in any of your alotted ranges.\n");
 		return(0);
 	}
@@ -2294,7 +2294,7 @@ int dmStat(Player* player, cmd* cmnd) {
 	int	i=0, j=0;
 	CatRef	cr;
 
-	if(!player->checkBuilder(player->parent_rom)) {
+	if(!player->checkBuilder(player->getUniqueRoomParent())) {
 		player->print("Current room number not in any of your alotted ranges.\n");
 		return(0);
 	}
@@ -2355,8 +2355,8 @@ int dmStat(Player* player, cmd* cmnd) {
 				player->print("Error: out of room range.\n");
 				return(0);
 			}
-			if(player->parent_rom && cr == player->getUniqueRoomParent()->info)
-				uRoom = player->parent_rom;
+			if(player->inUniqueRoom() && cr == player->getUniqueRoomParent()->info)
+				uRoom = player->getUniqueRoomParent();
 			else {
 				if(!loadRoom(cr, &uRoom)) {
 					player->print("Error (%s)\n", cr.str().c_str());

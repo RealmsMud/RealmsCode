@@ -233,7 +233,7 @@ int Monster::updateCombat() {
 	}
 
 	if(	flagIsSet(M_YELLED_FOR_HELP) &&
-		(mrand(1,100) < (MAX(15, parent_rom ? parent_rom->wander.getTraffic() : 15))) &&
+		(mrand(1,100) < (MAX(15, inUniqueRoom() ? getUniqueRoomParent()->wander.getTraffic() : 15))) &&
 		!flagIsSet(M_WILL_YELL_FOR_HELP)
 	) {
 		setFlag(M_WILL_YELL_FOR_HELP);
@@ -1064,12 +1064,13 @@ int Creature::doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, Dam
 	return(doDamage(target, dmg, shouldCheckDie, dmgType, freeTarget));
 }
 int Creature::doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget) {
+	ASSERTLOG( target );
+
 	Player* pTarget = target->getAsPlayer();
 	Monster* mTarget = target->getAsMonster();
 	Player* pThis = getAsPlayer();
 	Monster* mThis = getAsMonster();
 
-	ASSERTLOG( target );
 	int m = MIN(target->hp.getCur(), dmg);
 
 	target->hp.decrease(dmg);

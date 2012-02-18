@@ -1061,7 +1061,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 			player->print("You are not allowed to use items.\n");
 			return(0);
 		}
-		if(!player->checkBuilder(player->parent_rom)) {
+		if(!player->checkBuilder(player->getUniqueRoomParent())) {
 			player->print("Error: Room number not inside any of your alotted ranges.\n");
 			return(0);
 		}

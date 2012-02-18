@@ -37,7 +37,9 @@ Creature* Creature::findVictim(bstring toFind, int num, bool aggressive, bool se
 		return(NULL);
 	} else {
 		victim = getRoomParent()->findCreature(this, toFind.c_str(), num, true, true);
-		pVictim = victim->getAsPlayer();
+
+		if(victim)
+			pVictim = victim->getAsPlayer();
 
 		if(!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3)
 				|| (!selfOk && victim == this)) {
@@ -413,6 +415,9 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 	bool	glow=true;
 
 	char	atk[50];
+
+	if(!victim)
+		return(0);
 
 	pVictim = victim->getAsPlayer();
 	mVictim = victim->getAsMonster();

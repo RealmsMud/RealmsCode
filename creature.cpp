@@ -213,9 +213,9 @@ void Monster::diePermCrt() {
 
 	strcpy(perm,name);
 
-	if(!parent_rom)
+	if(!inUniqueRoom())
 		return;
-	room = parent_rom;
+	room = getUniqueRoomParent();
 
 	for(it = room->permMonsters.begin(); it != room->permMonsters.end() ; it++) {
 		crtm = &(*it).second;
@@ -1196,10 +1196,10 @@ bool Creature::canFleeToExit(const Exit *exit, bool skipScary, bool blinking) {
 						return(false);
 
 					// success; means that the player is now scared of this room
-					if(parent_rom && fd > -1) {
+					if(inUniqueRoom() && fd > -1) {
 						scary = pThis->scared_of;
 						{
-							int roomNum = parent_rom->info.id;
+							int roomNum = getUniqueRoomParent()->info.id;
 							if(scary) {
 								int size = 0;
 								while(*scary) {
@@ -1382,7 +1382,7 @@ int Creature::flee(bool magicTerror) {
 		if(magicTerror)
 			printColor("^rYou flee from unnatural fear!\n");
 
-		Move::track(parent_rom, &currentLocation.mapmarker, exit, pThis, false);
+		Move::track(getUniqueRoomParent(), &currentLocation.mapmarker, exit, pThis, false);
 
 		if(pThis->flagIsSet(P_ALIASING)) {
 			pThis->getAlias()->deleteFromRoom();

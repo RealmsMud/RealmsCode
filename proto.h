@@ -346,7 +346,7 @@ void announcePermDeath(Creature* player, const char *fmt,...);
 
 //void run_game();
 void broadcast_wc(int color,const char *fmt, ...);
-void broadcast_login(Player* player, int login);
+void broadcast_login(Player* player, BaseRoom* inRoom, int login);
 
 void broadcast_rom_LangWc(int lang, Socket* ignore, Location currentLocation, const char *fmt,...);
 void broadcastGroup(bool dropLoot, Creature* player, const char *fmt, ...);

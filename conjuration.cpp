@@ -387,7 +387,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 	target->damage.setPlus(conjureStats[buff][level].pdice);
 	target->first_obj = 0;
 	target->first_tlk = 0;
-	target->parent_rom = 0;
+	target->setParent(NULL);
 
 	for(n=0; n<20; n++)
 		target->ready[n] = 0;

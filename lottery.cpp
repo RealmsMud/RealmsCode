@@ -281,7 +281,7 @@ int cmdClaim(Player* player, cmd* cmnd) {
 	}
 
 
-	if(player->parent_rom && !Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
+	if(player->inUniqueRoom() && !Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
 		player->print("The shopkeeper refuses to do business with you.\n");
 		return(0);
 	}

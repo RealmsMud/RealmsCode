@@ -318,13 +318,6 @@ public:
 	//etag *first_enm; // List of enemies
 	ttag *first_tlk; // List of talk responses
 
-	// room creature is in
-	// parent_rom is a unique room because of the way the code was
-	// written. getRoom() is used when we don't care if its a unique
-	// room or not
-	UniqueRoom *parent_rom;
-//	AreaRoom *area_room;
-
 	struct saves saves[6]; // Saving throws struct. POI, DEA, BRE, MEN, SPL, x, x
 	char languages[16];
 	char movetype[3][CRT_MOVETYPE_LENGTH]; // Movement types..."flew..oozed...etc.."

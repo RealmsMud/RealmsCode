@@ -160,9 +160,9 @@ bstring Creature::getPoisonedBy() const { return(poisonedBy); }
 bool Creature::inJail() const {
 	if(isStaff())
 		return(false);
-	if(!parent_rom)
+	if(!inUniqueRoom())
 		return(false);
-	return(parent_rom->flagIsSet(R_JAIL));
+	return(getConstUniqueRoomParent()->flagIsSet(R_JAIL));
 }
 
 //*********************************************************************
@@ -1030,7 +1030,6 @@ void Creature::crtReset() {
 	first_obj = 0;
 	first_tlk = 0;
 
-	parent_rom = 0;
 	currentLocation.mapmarker.reset();
 	currentLocation.room.clear();
 
@@ -1236,8 +1235,7 @@ void Creature::CopyCommon(const Creature& cr) {
 	currentLocation.room = cr.currentLocation.room;
 	currentLocation.mapmarker = cr.currentLocation.mapmarker;
 
-	// TODO: Remove
-	parent_rom = cr.parent_rom;
+	parent = cr.parent;
 
 	for(i=0; i<6; i++)
 		saves[i] = cr.saves[i];
@@ -2214,10 +2212,4 @@ bool Creature::poisonedByPlayer() const {
 
 Location Creature::getLocation() {
 	return(currentLocation);
-//	Location l;
-//	if(parent_rom)
-//		l.room = room;
-//	if(area_room)
-//		l.mapmarker = area_room->mapmarker;
-//	return(l);
 }

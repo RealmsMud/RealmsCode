@@ -321,7 +321,7 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(pPlayer->isCt() && cmnd->num == 4)
 			location = gConfig->getStartLoc(cmnd->str[3]);
-		else if(pPlayer->parent_rom && pPlayer->getUniqueRoomParent()->info.id)
+		else if(pPlayer->inUniqueRoom() && pPlayer->getUniqueRoomParent()->info.id)
 			location = gConfig->getStartLocByReq(pPlayer->getUniqueRoomParent()->info);
 
 		if(	!location ||

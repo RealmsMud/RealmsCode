@@ -346,9 +346,10 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
 	xml::newProp(rootNode, "Version", VERSION);
 
 	if(pPlayer) {
-		if(pPlayer->currentLocation.mapmarker.getArea() != 0) {
+		if(pPlayer->inAreaRoom()) {
 			curNode = xml::newStringChild(rootNode, "AreaRoom");
-			pPlayer->currentLocation.mapmarker.save(curNode);
+			pPlayer->getConstAreaRoomParent()->mapmarker.save(curNode);
+			//pPlayer->currentLocation.mapmarker.save(curNode);
 		} else
 			pPlayer->currentLocation.room.save(rootNode, "Room", true);
 	}

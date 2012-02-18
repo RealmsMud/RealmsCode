@@ -79,11 +79,11 @@ void shipBroadcastRange(Ship *ship, ShipStop *stop, bstring message) {
 
 		if(!target->isConnected())
 			continue;
-		if(!target->parent_rom)
+		if(!target->inUniqueRoom())
 			continue;
 
-		if(	ship->belongs(target->parent_rom->info) ||
-			stop->belongs(target->parent_rom->info)
+		if(	ship->belongs(target->getUniqueRoomParent()->info) ||
+			stop->belongs(target->getUniqueRoomParent()->info)
 		)
 			target->print("%s\n", message.c_str());
 	}
@@ -306,14 +306,14 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
 					continue;
 				if(ply->isStaff())
 					continue;
-				if(!ply->parent_rom)
+				if(!ply->inUniqueRoom())
 					continue;
 
-				if(!ship->belongs(ply->parent_rom->info))
+				if(!ship->belongs(ply->getUniqueRoomParent()->info))
 					continue;
 
 
-				if(!loadRoom(ply->parent_rom->info, &room))
+				if(!loadRoom(ply->getUniqueRoomParent()->info, &room))
 					continue;
 				if(!room->wander.getTraffic())
 					continue;

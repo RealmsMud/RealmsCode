@@ -580,20 +580,20 @@ int cmdShop(Player* player, cmd* cmnd) {
 		return(0);
 	} else if(action == SHOP_GUILD) {
 		if(!strncmp(cmnd->str[2], "assign", strlen(cmnd->str[2]))) {
-			if(!shopAssignGuild(p, player, guild, player->parent_rom, storage, true))
+			if(!shopAssignGuild(p, player, guild, player->getUniqueRoomParent(), storage, true))
 				return(0);
 		} else if(!strncmp(cmnd->str[2], "remove", strlen(cmnd->str[2]))) {
 			if(!p->getGuild()) {
 				player->print("This property is not assigned to a guild.\n");
 				return(0);
 			}
-			if(shopStaysWithGuild(player->parent_rom)) {
+			if(shopStaysWithGuild(player->getUniqueRoomParent())) {
 				player->print("This property was constructed inside the guild hall.\nIt cannot be removed from the guild.\n");
 				return(0);
 			}
 			broadcastGuild(p->getGuild(), 1, "### %s's shop located at %s is no longer partially run by the guild.",
 				player->name, p->getLocation().c_str());
-			shopRemoveGuild(p, player, player->parent_rom, storage);
+			shopRemoveGuild(p, player, player->getUniqueRoomParent(), storage);
 			player->print("This property is no longer associated with a guild.\n");
 		} else {
 			player->print("Command not understood.\n");
@@ -892,7 +892,7 @@ int cmdList(Player* player, cmd* cmnd) {
 				if(!strcmp(object->name, "bail"))
 					object->value = bailCost(player);
 
-				cost = buyAmount(player, player->parent_rom, object, true);
+				cost = buyAmount(player, player->getUniqueRoomParent(), object, true);
 
 				// even if they love you, lottery tickets are the same price
 				if(object->getType() == LOTTERYTICKET) {
@@ -1409,7 +1409,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 		if(!strcmp(object->name, "bail"))
 			object->value = bailCost(player);
 
-		Money cost = buyAmount(player, player->parent_rom, object, true);
+		Money cost = buyAmount(player, player->getUniqueRoomParent(), object, true);
 
 		// even if they love you, lottery tickets are the same price
 		if(object->getType() == LOTTERYTICKET) {
@@ -1564,7 +1564,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 								continue;
 							if(player->getGuild() != (*it)->getGuild())
 								continue;
-							if(player->parent_rom && !player->getUniqueRoomParent()->info.isArea((*it)->getArea()))
+							if(player->inUniqueRoom() && !player->getUniqueRoomParent()->info.isArea((*it)->getArea()))
 								continue;
 							player->printColor("^YCaution:^x your guild already owns a guildhall in %s.\n", gConfig->catRefName((*it)->getArea()).c_str());
 						}
