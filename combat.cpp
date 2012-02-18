@@ -1074,7 +1074,7 @@ int Creature::doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, Dam
 	int m = MIN(target->hp.getCur(), dmg);
 
 	target->hp.decrease(dmg);
-	checkTarget(target);
+	//checkTarget(target);
 	if(mTarget) {
 		mTarget->lasttime[LT_AGGRO_ACTION].ltime = time(0);
 		mTarget->adjustThreat(this, m);

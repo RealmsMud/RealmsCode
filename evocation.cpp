@@ -431,7 +431,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 			if(mCaster)
 				mCaster->addEnemy(target);
 
-			caster->checkTarget(target);
+			//caster->checkTarget(target);
 			target->hp.decrease(damage.get());
 
 			broadcastGroup(false, target, "%M cast a %s spell on ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n",

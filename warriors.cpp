@@ -550,7 +550,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 
 	if((mTarget && mTarget->flagIsSet(M_NO_CIRCLE)) || player->isBlind())
 		chance = 1;
-	player->checkTarget(target);
+	//player->checkTarget(target);
 
 	if(player->isCt()) chance = 101;
 

@@ -110,6 +110,7 @@ long Monster::adjustContribution(Creature* target, long modAmt) {
     return(threatTable->adjustThreat(target, modAmt, 0));
 }
 long Monster::adjustThreat(Creature* target, long modAmt, double threatFactor) {
+	target->checkTarget(this);
     return(threatTable->adjustThreat(target, modAmt, threatFactor));
 }
 long Monster::clearEnemy(Creature* target) {
