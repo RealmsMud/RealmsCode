@@ -36,13 +36,14 @@ public:
 	template<class Type, class Compare>
 	inline static bool run(std::set<Type, Compare>& set, MudObject* trigger, const bstring& event, const bstring& param1="", const bstring& param2="", const bstring& param3="") {
 	    bool ran=false;
-
+#ifndef PYTHON_CODE_GEN
 	    for(Type crt : set) {
 	        if(crt != trigger) {
 	            if(crt->hooks.execute(event, trigger, param1, param2, param3))
 	                ran = true;
 	        }
 	    }
+#endif
 	    return(ran);
 	}
 

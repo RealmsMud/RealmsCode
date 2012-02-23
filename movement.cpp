@@ -777,7 +777,10 @@ void Move::finish(Creature* creature, BaseRoom* room, bool self, std::list<Creat
 // out of the exit.
 
 bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, bool justLooking, MapMarker* teleport, bool recycle) {
-	Player* player = creature->getAsPlayer();
+
+	Player* player = 0;
+	if(creature)
+	   player = creature->getAsPlayer();
 	Location l;
 
 	// pets can go where players can go

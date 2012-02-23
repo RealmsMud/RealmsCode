@@ -161,7 +161,7 @@ namespace xml {
 	void loadNumArray(xmlNodePtr curNode, Type array[], const char* nodeName, int maxProp) {
 		xmlNodePtr childNode = curNode->children;
 		int i;
-
+#ifndef PYTHON_CODE_GEN
 		while(childNode) {
 			if(NODE_NAME(childNode , nodeName)) {
 				i = xml::getIntProp(childNode, "Num");
@@ -170,6 +170,7 @@ namespace xml {
 			}
 			childNode = childNode->next;
 		}
+#endif
 	}
 
 	xmlNodePtr newBoolChild(xmlNodePtr node, const bstring name, const bool value);

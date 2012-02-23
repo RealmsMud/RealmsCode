@@ -260,10 +260,12 @@ class Command;
 class cmd {
 public:
 	cmd() {
+#ifndef PYTHON_CODE_GEN
 	    ret = num = 0;
 	    memset(str, 0, sizeof(str));
 	    memset(val, 0, sizeof(val));
 	    myCommand=0;
+#endif
 	};
 	int			num;
 	bstring     fullstr;

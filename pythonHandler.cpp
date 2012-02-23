@@ -369,7 +369,15 @@ BOOST_PYTHON_MODULE(MudObjects)
 	.def("isPulsed", &Effect::isPulsed)
 	;
 
-	class_<Creature, boost::noncopyable, bases<MudObject> >("Creature", no_init)
+	class_<Containable, boost::noncopyable, bases<MudObject> >("Containable", no_init)
+	        .def("addTo", &Containable::addTo);
+
+	class_<Container, boost::noncopyable, bases<MudObject> > ("Container", no_init)
+	        .def("monsters", &Container::monsters)
+//	        .def("players", &Container::players)
+	        .def("wake", &Container::wake);
+
+	class_<Creature, boost::noncopyable, bases<Container> >("Creature", no_init)
 	.def("send", &Creature::bPrint)
 	.def("getCrtStr", &Creature::getCrtStr, ( bp::arg("viewer")=0l, bp::arg("flags")=(int)(0), bp::arg("num")=(int)(0) ))
 
