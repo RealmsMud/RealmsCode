@@ -3,7 +3,7 @@ LANG=C
 # so we can modify the makefile and not worry about changing g++/icc
 include compiler
 
-CFLAGS := -g -Wall -I/usr/include/libxml2 -O0 $(COMPILER_CFLAGS) -std=c++0x
+CFLAGS := -g -Wall -I/usr/include/libxml2 -O0 $(COMPILER_CFLAGS) -std=c++0x -I.
 CFLAGS += -I/usr/include/python2.6 
 
 

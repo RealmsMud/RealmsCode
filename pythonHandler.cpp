@@ -23,6 +23,8 @@
 #include "pythonHandler.h"
 #include "effects.h"
 #include "msdp.h"
+#include <indexing_suite/container_suite.hpp>
+#include <indexing_suite/set.hpp>
 
 int pythonRand(int a, int b) {
 	return (mrand(a,b));
@@ -74,7 +76,8 @@ struct MudObject_wrapper: MudObject, bp::wrapper<MudObject> {
 
 BOOST_PYTHON_MODULE(mud)
 {
-	class_<Config>("Config", no_init).def("getVersion", &Config::getVersion).def(
+
+    class_<Config>("Config", no_init).def("getVersion", &Config::getVersion).def(
 			"getMudName", &Config::getMudName).def("getMudNameAndVersion",
 			&Config::getMudNameAndVersion);
 
@@ -206,7 +209,22 @@ BOOST_PYTHON_MODULE(mud)
 BOOST_PYTHON_MODULE(MudObjects)
 {
 
-	bp::class_<Stat, boost::noncopyable>("Stat", bp::init<>()).def("addCur",
+    class_<MonsterSet> ("MonsterSet")
+            .def (indexing::container_suite< MonsterSet >::with_policies(return_internal_reference<>()));
+
+    class_<PlayerSet> ("PlayerSet")
+                .def (indexing::container_suite< PlayerSet >::with_policies(return_internal_reference<>()));
+
+    class_<Containable, boost::noncopyable, bases<MudObject> >("Containable", no_init)
+            .def("addTo", &Containable::addTo);
+
+    class_<Container, boost::noncopyable, bases<MudObject> > ("Container", no_init)
+            .def_readwrite("monsters", &Container::monsters)
+            .def_readwrite("players", &Container::players)
+            .def("wake", &Container::wake);
+
+
+    bp::class_<Stat, boost::noncopyable>("Stat", bp::init<>()).def("addCur",
 			(void(::Stat::*)(short int) )( &::Stat::addCur )
 			, ( bp::arg("a") ) )
 			.def(
@@ -272,7 +290,7 @@ BOOST_PYTHON_MODULE(MudObjects)
 	;
 
 	{ //::BaseRoom
-		typedef bp::class_< BaseRoom_wrapper, bp::bases< MudObject >, boost::noncopyable > BaseRoom_exposer_t;
+		typedef bp::class_< BaseRoom_wrapper, bp::bases< Container >, boost::noncopyable > BaseRoom_exposer_t;
 		BaseRoom_exposer_t BaseRoom_exposer = BaseRoom_exposer_t( "BaseRoom", bp::no_init );
 		bp::scope BaseRoom_scope( BaseRoom_exposer );
 		BaseRoom_exposer.def( bp::init< >() );
@@ -368,14 +386,6 @@ BOOST_PYTHON_MODULE(MudObjects)
 
 	.def("isPulsed", &Effect::isPulsed)
 	;
-
-	class_<Containable, boost::noncopyable, bases<MudObject> >("Containable", no_init)
-	        .def("addTo", &Containable::addTo);
-
-	class_<Container, boost::noncopyable, bases<MudObject> > ("Container", no_init)
-	        .def("monsters", &Container::monsters)
-//	        .def("players", &Container::players)
-	        .def("wake", &Container::wake);
 
 	class_<Creature, boost::noncopyable, bases<Container> >("Creature", no_init)
 	.def("send", &Creature::bPrint)
