@@ -29,7 +29,7 @@
 // another player.
 
 int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player* pPlayer = player->getPlayer();
+	Player* pPlayer = player->getAsPlayer();
 	Creature* target=0;
 	Object	*object=0;
 	int		cost;
@@ -110,8 +110,8 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
 	object->clearFlag(O_JUST_BOUGHT);
 
 	if(!pPlayer->flagIsSet(P_DM_INVIS)) {
-		broadcast(pPlayer->getSock(), pPlayer->getRoom(), "%M transports an object to someone.", pPlayer);
-		broadcast(isCt, pPlayer->getSock(), pPlayer->getRoom(), "*DM* %M transports %1P to %N.", pPlayer, object, target);
+		broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M transports an object to someone.", pPlayer);
+		broadcast(isCt, pPlayer->getSock(), pPlayer->getRoomParent(), "*DM* %M transports %1P to %N.", pPlayer, object, target);
 	}
 
 	pPlayer->printColor("You concentrate intensely on %P as it disappears.\n", object);
@@ -119,7 +119,7 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(!pPlayer->isDm())
 		log_immort(true, pPlayer, "%s transports a %s to %s in room %s.\n", pPlayer->name, object->name,
-			target->name, target->getRoom()->fullName().c_str());
+			target->name, target->getRoomParent()->fullName().c_str());
 
 	if(!pPlayer->flagIsSet(P_DM_INVIS) && (!target->flagIsSet(P_INCOGNITO) || pPlayer->inSameRoom(target))) {
 		target->wake("You awaken suddenly!");
@@ -127,7 +127,7 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	pPlayer->delObj(object);
-	Limited::transferOwner(pPlayer, target->getPlayer(), object);
+	Limited::transferOwner(pPlayer, target->getAsPlayer(), object);
 	target->addObj(object);
 
 	return(1);
@@ -155,7 +155,7 @@ bool hinderedByDimensionalAnchor(int splno) {
 
 int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Creature* creature=0;
-	Player*	target=0, *pPlayer = player->getPlayer();
+	Player*	target=0, *pPlayer = player->getAsPlayer();
 	int		i=0, num=-1;
 	bool	destroy=false;
 
@@ -199,7 +199,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 			}
 			if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 				player->print("Anchor spell cast.\n");
-				broadcast(player->getSock(), player->getRoom(), "%M casts a dimensional-anchor spell on %sself.",
+				broadcast(player->getSock(), player->getParent(), "%M casts a dimensional-anchor spell on %sself.",
 						player, player->himHer());
 			} else if(spellData->how == POTION)
 				player->print("You feel stable.\n");
@@ -210,9 +210,9 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 				return(0);
 
 			cmnd->str[2][0] = up(cmnd->str[2][0]);
-			creature = pPlayer->getRoom()->findCreature(pPlayer, cmnd->str[2], cmnd->val[2], false);
+			creature = pPlayer->getParent()->findCreature(pPlayer, cmnd->str[2], cmnd->val[2], false);
 			if(creature)
-				target = creature->getPlayer();
+				target = creature->getAsPlayer();
 			if(!target) {
 				player->print("That person is not here.\n");
 				return(0);
@@ -228,7 +228,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			player->print("Anchor cast on %s.\n", target->name);
 			target->print("%M casts a dimensional-anchor spell on you.\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M casts a dimensional-anchor spell on %N.", player, target);
 		}
 
@@ -254,7 +254,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 				bonus((int) player->intelligence.getCur()) * 300);
 			target->lasttime[LT_ANCHOR].interval += 30 * player->getLevel();
 
-			if(pPlayer->getRoom()->magicBonus()) {
+			if(pPlayer->getRoomParent()->magicBonus()) {
 				player->print("The room's magical properties increase the power of your spell.\n");
 				target->lasttime[LT_ANCHOR].interval += 200L;
 			}
@@ -272,10 +272,10 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
 	if( !pPlayer->isCt() &&
-		pPlayer->parent_rom &&
+		pPlayer->inUniqueRoom() &&
 		(
-			!pPlayer->parent_rom->canPortHere(pPlayer) ||
-			pPlayer->parent_rom->flagIsSet(R_ELEC_BONUS)
+			!pPlayer->getUniqueRoomParent()->canPortHere(pPlayer) ||
+			pPlayer->getUniqueRoomParent()->flagIsSet(R_ELEC_BONUS)
 		)
 	) {
 		player->print("Dimensional anchors do not work here.\n");
@@ -320,7 +320,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 	for(i=0; i<MAX_DIMEN_ANCHORS; i++) {
 		if(!destroy) {
 			if(pPlayer->hasAnchor(i)) {
-				if(pPlayer->isAnchor(i, pPlayer->getRoom())) {
+				if(pPlayer->isAnchor(i, pPlayer->getRoomParent())) {
 					player->print("You already have an anchor to this room.\n");
 					return(0);
 				}
@@ -356,10 +356,10 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 	pPlayer->setAnchor(num, cmnd->str[2]);
 
 	player->print("Anchor spell cast.\nDimensional anchor \"%s\" created.\n", pPlayer->getAnchorAlias(num).c_str());
-	broadcast(player->getSock(), pPlayer->getRoom(),
+	broadcast(player->getSock(), pPlayer->getRoomParent(),
 			"%M forms a dimensional anchor in the room.", pPlayer);
 	broadcast(isCt, "^y%M forms a dimensional anchor in room %s.",
-			pPlayer, pPlayer->getRoom()->fullName().c_str());
+			pPlayer, pPlayer->getRoomParent()->fullName().c_str());
 
 	if(spellData->how == CAST)
 		pPlayer->subMp(50);
@@ -373,7 +373,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function creates a portal to the caster's anchor
 
 int splPortal(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player*	pPlayer = player->getPlayer();
+	Player*	pPlayer = player->getAsPlayer();
 	const Anchor* destination=0;
 	BaseRoom* newRoom=0;
 	UniqueRoom*	uRoom=0;
@@ -401,8 +401,8 @@ int splPortal(Creature* player, cmd* cmnd, SpellData* spellData) {
 			pPlayer->print("You are not strong enough to cast this spell.\n");
 			return(0);
 		}
-		if(	player->getRoom()->flagIsSet(R_NO_CAST_TELEPORT) ||
-			player->getRoom()->flagIsSet(R_LIMBO)
+		if(	player->getRoomParent()->flagIsSet(R_NO_CAST_TELEPORT) ||
+			player->getRoomParent()->flagIsSet(R_LIMBO)
 		) {
 			player->print("The spell fizzles.\n");
 			player->print("You cannot cast that spell in this room.\n");
@@ -424,7 +424,7 @@ int splPortal(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	if(destination->is(pPlayer->getRoom())) {
+	if(destination->is(pPlayer->getRoomParent())) {
 		player->printColor("You are already there!\n^yYour spell fails.\n");
 		return(0);
 	}
@@ -462,10 +462,10 @@ int splPortal(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	player->print("You cast a portal spell.\n");
-	broadcast(pPlayer->getSock(), pPlayer->getRoom(), "%M casts a portal spell.", pPlayer);
+	broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts a portal spell.", pPlayer);
 
 	player->setFlag(P_PORTAL);
-	Move::createPortal(pPlayer->getRoom(), newRoom, pPlayer);
+	Move::createPortal(pPlayer->getRoomParent(), newRoom, pPlayer);
 	return(1);
 }
 
@@ -476,28 +476,25 @@ int splPortal(Creature* player, cmd* cmnd, SpellData* spellData) {
 void Move::createPortal(BaseRoom* room, BaseRoom* target, const Player* player, bool initial) {
 	// start with a unique exit name so we don't override any existing
 	// portal exits in the room
-	UniqueRoom *uRoom = target->getUniqueRoom();
+	UniqueRoom *uRoom = target->getAsUniqueRoom();
 	if(uRoom) {
 		link_rom(room, uRoom->info, "uniqueportalname");
 	} else {
-		AreaRoom* aRoom = target->getAreaRoom();
+		AreaRoom* aRoom = target->getAsAreaRoom();
 		link_rom(room, &aRoom->mapmarker, "uniqueportalname");
 	}
 
 	// the new portal is always the last exit in the room
-	xtag* xp = room->first_ext;
-	while(xp->next_tag)
-		xp = xp->next_tag;
-
-	strcpy(xp->ext->name, "^Yportal");
-	xp->ext->setLevel(7);
-	xp->ext->setFlag(X_PORTAL);
-	xp->ext->setFlag(X_NO_WANDER);
-	xp->ext->setFlag(X_CAN_LOOK);
-	xp->ext->setEnter("You step through the portal and find yourself in another location.");
-	xp->ext->setPassPhrase(player->name);
-	xp->ext->setKey(MAX(1, ((int)player->getLevel() - 28) / 2));
-	xp->ext->setDescription("You see a shimmering portal of mystical origin.");
+	Exit* ext = room->exits.back();
+	strcpy(ext->name, "^Yportal");
+	ext->setLevel(7);
+	ext->setFlag(X_PORTAL);
+	ext->setFlag(X_NO_WANDER);
+	ext->setFlag(X_CAN_LOOK);
+	ext->setEnter("You step through the portal and find yourself in another location.");
+	ext->setPassPhrase(player->name);
+	ext->setKey(MAX(1, ((int)player->getLevel() - 28) / 2));
+	ext->setDescription("You see a shimmering portal of mystical origin.");
 
 	broadcast(0, room, "^YA dimensional portal forms in the room!");
 
@@ -521,16 +518,16 @@ bool Move::usePortal(Creature* player, BaseRoom* room, Exit* exit, bool initial)
 
 	if(initial) {
 		BaseRoom* target = exit->target.loadRoom();
-		xtag* xp = target->first_ext;
-
-		while(xp) {
-			if(xp->ext->flagIsSet(X_PORTAL) && xp->ext->getPassPhrase() == exit->getPassPhrase())
+		Exit* toUse = 0;
+		for(Exit* ext : target->exits) {
+			if(ext->flagIsSet(X_PORTAL) && ext->getPassPhrase() == exit->getPassPhrase()) {
+				toUse = ext;
 				break;
-			xp = xp->next_tag;
+			}
 		}
 
-		if(xp)
-			return(Move::usePortal(player, target, xp->ext, false));
+		if(toUse)
+			return(Move::usePortal(player, target, toUse, false));
 	}
 
 	return(false);
@@ -545,45 +542,38 @@ bool Move::deletePortal(BaseRoom* room, Exit* exit, const Creature* leader, std:
 }
 
 bool Move::deletePortal(BaseRoom* room, bstring name, const Creature* leader, std::list<Creature*> *followers, bool initial) {
-	xtag	*xp = room->first_ext, *xprev=0;
+	ExitList::iterator xit;
+	for(xit = room->exits.begin() ; xit != room->exits.end() ; xit++) {
+		Exit* ext = *xit;
 
-	while(xp) {
-		if(xp->ext->flagIsSet(X_PORTAL) && xp->ext->getPassPhrase() == name) {
-			if(xprev)
-				xprev->next_tag = xp->next_tag;
-			else
-				room->first_ext = xp->next_tag;
-
+		if(ext->flagIsSet(X_PORTAL) && ext->getPassPhrase() == name) {
 			if(initial) {
 				if(leader && leader->isPlayer())
-					leader->printColor("The %s^x collapses into nothingness.\n", xp->ext->name);
+					leader->printColor("The %s^x collapses into nothingness.\n", ext->name);
 				if(followers) {
 					std::list<Creature*>::const_iterator it;
 					for(it = followers->begin(); it != followers->end(); it++) {
 						if(!(*it)->isPlayer())
 							continue;
-						(*it)->printColor("The %s^x collapses into nothingness.\n", xp->ext->name);
+						(*it)->printColor("The %s^x collapses into nothingness.\n", ext->name);
 					}
 				}
 			}
 
-			broadcast(0, room, "The %s^x collapses into nothingness.", xp->ext->name);
+			broadcast(0, room, "The %s^x collapses into nothingness.", ext->name);
 
 			if(initial) {
-				BaseRoom* target = xp->ext->target.loadRoom();
+				BaseRoom* target = ext->target.loadRoom();
 				Move::deletePortal(target, name, 0, 0, false);
 			}
-
-			delete xp->ext;
-			delete xp;
+			room->exits.erase(xit);
+			delete ext;
 
 			Player* owner = gServer->findPlayer(name.c_str());
 			if(owner)
 				owner->clearFlag(P_PORTAL);
 			return(true);
 		}
-		xprev = xp;
-		xp = xp->next_tag;
 	}
 	return(false);
 }
@@ -596,7 +586,7 @@ bool Move::deletePortal(BaseRoom* room, bstring name, const Creature* leader, st
 
 int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Creature* target=0;
-	Player*	pPlayer = player->getPlayer(), *pTarget=0;
+	Player*	pPlayer = player->getAsPlayer(), *pTarget=0;
 	Monster* mTarget=0;
 	UniqueRoom	*uRoom=0;
 	BaseRoom *newRoom=0;
@@ -627,8 +617,8 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 			player->print("You are not high enough level to cast this spell.\n");
 			return(0);
 		}
-		if(	player->getRoom()->flagIsSet(R_NO_CAST_TELEPORT) ||
-			player->getRoom()->flagIsSet(R_LIMBO)
+		if(	player->getRoomParent()->flagIsSet(R_NO_CAST_TELEPORT) ||
+			player->getRoomParent()->flagIsSet(R_LIMBO)
 		) {
 			player->print("The spell fizzles.\n");
 			player->print("You cannot cast that spell in this room.\n");
@@ -667,7 +657,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(1);
 		}
 
-		broadcast(player->getSock(), player->getRoom(), "%M disappears.", player);
+		broadcast(player->getSock(), player->getParent(), "%M disappears.", player);
 
 		if(spellData->how != CAST && spellData->how != SCROLL)
 			player->print("You become disoriented and find yourself in another place.\n");
@@ -680,7 +670,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 			pPlayer->addToRoom(newRoom);
 			pPlayer->doPetFollow();
 		} else {
-			player->getMonster()->addToRoom(newRoom);
+			player->getAsMonster()->addToRoom(newRoom);
 			broadcast(isCt, "^y%s just teleported %sself to %s.", player->name, player->himHer(),
 				newRoom->fullName().c_str());
 		}
@@ -692,7 +682,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 
 		if(pPlayer && !target) {
@@ -716,7 +706,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 				return(0);
 			}
 
-			if(destination->is(player->getRoom())) {
+			if(destination->is(player->getRoomParent())) {
 				player->printColor("You are already there!\n^yYour spell fails.\n");
 				return(0);
 			}
@@ -764,7 +754,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			player->print("You cast a teleport spell on yourself.\n");
 
-			broadcast(pPlayer->getSock(), pPlayer->getRoom(), "%M casts a teleport spell on %sself.",
+			broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts a teleport spell on %sself.",
 				pPlayer, pPlayer->himHer());
 
 			if(spellData->how == CAST && !player->isStaff() && player->checkDimensionalAnchor()) {
@@ -775,7 +765,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 			player->print("You teleport yourself to dimensional anchor \"%s\".\n",
 				destination->getAlias().c_str());
 
-			broadcast(pPlayer->getSock(), pPlayer->getRoom(), "%s vanishes in a puff of swirling smoke.",
+			broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%s vanishes in a puff of swirling smoke.",
 				pPlayer->upHeShe());
 			if(!pPlayer->flagIsSet(P_DM_INVIS))
 				broadcast(NULL, newRoom, "POOF!");
@@ -790,8 +780,8 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 		// end anchor-teleport, on to targetting another player
 
 
-		pTarget = target->getPlayer();
-		mTarget = target->getMonster();
+		pTarget = target->getAsPlayer();
+		mTarget = target->getAsMonster();
 
 
 		if(mTarget) {
@@ -872,19 +862,19 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 				pTarget->doPetFollow();
 			} else {
 				mTarget->setFlag(M_WAS_PORTED);
-				broadcast(NULL, player->getRoom(), "%M vanishes!", mTarget);
+				broadcast(NULL, player->getRoomParent(), "%M vanishes!", mTarget);
 				// being ported pisses mobs off! haha
 				mTarget->addEnemy(player);
 				mTarget->deleteFromRoom();
 				mTarget->addToRoom(newRoom);
-				broadcast(NULL, mTarget->getRoom(), "%M was thrown from %N's dimensional rift!", mTarget, player);
+				broadcast(NULL, mTarget->getRoomParent(), "%M was thrown from %N's dimensional rift!", mTarget, player);
 			}
 
 			logn("log.teleport", "%s(L%dH%dM%dR:%s) was just teleported to room %s by %s(L%d)\n",
-				target->name, target->getLevel(), target->hp.getCur(), target->mp.getCur(), player->getRoom()->fullName().c_str(),
+				target->name, target->getLevel(), target->hp.getCur(), target->mp.getCur(), player->getRoomParent()->fullName().c_str(),
 				newRoom->fullName().c_str(), player->name, player->getLevel());
 			broadcast(isCt, "^y%M(L%dH%dM%dR:%s) was just teleported to room %s by %s(L%d)",
-				target, target->getLevel(), target->hp.getCur(), target->mp.getCur(), player->getRoom()->fullName().c_str(),
+				target, target->getLevel(), target->hp.getCur(), target->mp.getCur(), player->getRoomParent()->fullName().c_str(),
 				newRoom->fullName().c_str(), player->name, player->getLevel());
 
 			return(2);
@@ -902,22 +892,22 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if(!player->isStaff()) {
-		const CatRefInfo* cri = gConfig->getCatRefInfo(player->getRoom());
+		const CatRefInfo* cri = gConfig->getCatRefInfo(player->getRoomParent());
 		const CatRefInfo* eth = gConfig->getCatRefInfo(gConfig->defaultArea);
 		// can only cast ethereal-travel if in same teleportZone
 		if(!cri || !eth || cri->getTeleportZone() != eth->getTeleportZone()) {
 			player->print("You are currently unable to cast this spell.\n");
 			return(0);
 		}
-		if(	player->getRoom()->flagIsSet(R_NO_CAST_TELEPORT) ||
-			player->getRoom()->flagIsSet(R_LIMBO)
+		if(	player->getRoomParent()->flagIsSet(R_NO_CAST_TELEPORT) ||
+			player->getRoomParent()->flagIsSet(R_LIMBO)
 		) {
 			player->print("The spell fizzles.\n");
 			return(1);
 		}
 	}
 
-	Player	*target=0, *pCaster = player->getPlayer();
+	Player	*target=0, *pCaster = player->getAsPlayer();
 	UniqueRoom	*new_rom=0;
 	CatRef	cr;
 
@@ -938,12 +928,12 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
 			player->print("Ethereal-travel spell cast.\n");
 			player->print("You turn translucent and fade away.\n");
 			player->print("You have been transported to the ethereal plane.\n");
-			broadcast(pCaster->getSock(), pCaster->getRoom(), "%M casts ethereal-travel on %sself.",
+			broadcast(pCaster->getSock(), pCaster->getRoomParent(), "%M casts ethereal-travel on %sself.",
 				pCaster, pCaster->himHer());
 		} else if(spellData->how == POTION) {
 			player->print("You turn translucent and fade away.\n");
 			player->print("You have been transported to the ethereal plane.\n");
-			broadcast(pCaster->getSock(), pCaster->getRoom(), "%M turns translucent and fades away.", player);
+			broadcast(pCaster->getSock(), pCaster->getRoomParent(), "%M turns translucent and fades away.", player);
 		}
 
 
@@ -970,7 +960,7 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findPlayer(player, cmnd, 2);
+		target = player->getParent()->findPlayer(player, cmnd, 2);
 		if(!target || !player->canSee(target)) {
 			player->print("That person is not here.\n");
 			return(0);
@@ -981,7 +971,7 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 		}
 
-		if(player->getRoom()->isPkSafe() && !player->isDm()) {
+		if(player->getRoomParent()->isPkSafe() && !player->isDm()) {
 			player->print("A mystical force prevents you from casting that spell in this room.\n");
 			return(0);
 		}
@@ -1019,11 +1009,11 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
 			target->print("You turn translucent and fade away.\n");
 			target->print("You have been transported to the ethereal plane.\n");
 
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts ethereal-travel on %N.",
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts ethereal-travel on %N.",
 				player, target);
 
 			logCast(player, target, "ethereal-travel");
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%N turns translucent and fades away.", target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%N turns translucent and fades away.", target);
 
 			cr = getEtherealTravelRoom();
 
@@ -1102,9 +1092,9 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		// the target cannot leave their room
-		if( (	target->getRoom()->flagIsSet(R_NO_SUMMON_OUT) ||
-				target->getRoom()->flagIsSet(R_IS_STORAGE_ROOM) ||
-				target->getRoom()->flagIsSet(R_LIMBO)
+		if( (	target->getRoomParent()->flagIsSet(R_NO_SUMMON_OUT) ||
+				target->getRoomParent()->flagIsSet(R_IS_STORAGE_ROOM) ||
+				target->getRoomParent()->flagIsSet(R_LIMBO)
 			) &&
 			!player->checkStaff("The spell fizzles.\nYour magic cannot locate %s.\n", target->name)
 		)
@@ -1112,23 +1102,23 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		// you can never summon someone here
 		// one person room always fails because the target will never fit
-		if(	(	player->getRoom()->flagIsSet(R_NO_TELEPORT) ||
-				player->getRoom()->flagIsSet(R_LIMBO) ||
-				player->getRoom()->flagIsSet(R_VAMPIRE_COVEN) ||
-				player->getRoom()->flagIsSet(R_NO_SUMMON_TO) ||
-				player->getRoom()->flagIsSet(R_SHOP_STORAGE) ||
+		if(	(	player->getRoomParent()->flagIsSet(R_NO_TELEPORT) ||
+				player->getRoomParent()->flagIsSet(R_LIMBO) ||
+				player->getRoomParent()->flagIsSet(R_VAMPIRE_COVEN) ||
+				player->getRoomParent()->flagIsSet(R_NO_SUMMON_TO) ||
+				player->getRoomParent()->flagIsSet(R_SHOP_STORAGE) ||
 				player->flagIsSet(P_NO_CAST_SUMMON) ||
-				player->getRoom()->flagIsSet(R_ONE_PERSON_ONLY) ||
-				player->getRoom()->whatTraining()
+				player->getRoomParent()->flagIsSet(R_ONE_PERSON_ONLY) ||
+				player->getRoomParent()->whatTraining()
 			) &&
 			!player->checkStaff("The spell fizzles.\nYou cannot summon anyone to this location.\n")
 		)
 			return(0);
 
 		// you can't summon them right now
-		if(	(	player->getRoom()->isConstruction() ||
-				player->getRoom()->flagIsSet(R_SHOP_STORAGE) ||
-				(player->parent_rom && !target->canEnter(player->parent_rom, false))
+		if(	(	player->getRoomParent()->isConstruction() ||
+				player->getRoomParent()->flagIsSet(R_SHOP_STORAGE) ||
+				(player->inUniqueRoom() && !target->canEnter(player->getUniqueRoomParent(), false))
 			) &&
 			!player->checkStaff("The spell fizzles.\nYou cannot summon %s to this location at this time.\n", target->name)
 		)
@@ -1162,9 +1152,9 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			player->print("You summon %N.\n", target);
 			target->print("%M summons you.\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M summons %N.", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M summons %N.", player, target);
 
-			broadcast(target->getSock(), target->getRoom(), "%M vanishes!", target);
+			broadcast(target->getSock(), target->getRoomParent(), "%M vanishes!", target);
 
 			target->deleteFromRoom();
 			target->addToSameRoom(player);
@@ -1190,10 +1180,10 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 	int		chance=0;
 	long	t = time(0);
 
-	pPlayer = player->getPlayer();
+	pPlayer = player->getAsPlayer();
 	if(!pPlayer)
 		return(0);
-	oldRoom = pPlayer->getRoom();
+	oldRoom = pPlayer->getRoomParent();
 	bool groupTrack = (pPlayer->getClass() == RANGER || pPlayer->getClass() == DRUID) && pPlayer->getLevel() >= 16;
 
 	if(pPlayer->getClass() == BUILDER) {
@@ -1240,22 +1230,22 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	troom = target->parent_rom;
+	troom = target->getUniqueRoomParent();
 	if(!pPlayer->isStaff()) {
 
-		if( (	target->getRoom()->flagIsSet(R_IS_STORAGE_ROOM) ||
-				target->getRoom()->flagIsSet(R_SHOP_STORAGE) ||
-				target->getRoom()->flagIsSet(R_NO_TRACK_TO) ||
-				target->getRoom()->flagIsSet(R_NO_TELEPORT) ||
-				target->getRoom()->flagIsSet(R_VAMPIRE_COVEN) ||
-				target->getRoom()->flagIsSet(R_LIMBO) ||
-				target->getRoom()->isFull() ||
-				target->getRoom()->isConstruction() ||
-				target->getRoom()->whatTraining()
+		if( (	target->getRoomParent()->flagIsSet(R_IS_STORAGE_ROOM) ||
+				target->getRoomParent()->flagIsSet(R_SHOP_STORAGE) ||
+				target->getRoomParent()->flagIsSet(R_NO_TRACK_TO) ||
+				target->getRoomParent()->flagIsSet(R_NO_TELEPORT) ||
+				target->getRoomParent()->flagIsSet(R_VAMPIRE_COVEN) ||
+				target->getRoomParent()->flagIsSet(R_LIMBO) ||
+				target->getRoomParent()->isFull() ||
+				target->getRoomParent()->isConstruction() ||
+				target->getRoomParent()->whatTraining()
 			) || (
-				pPlayer->getRoom()->flagIsSet(R_NO_TRACK_OUT) ||
-				pPlayer->getRoom()->flagIsSet(R_LIMBO) ||
-				pPlayer->getRoom()->flagIsSet(R_ETHEREAL_PLANE)
+				pPlayer->getRoomParent()->flagIsSet(R_NO_TRACK_OUT) ||
+				pPlayer->getRoomParent()->flagIsSet(R_LIMBO) ||
+				pPlayer->getRoomParent()->flagIsSet(R_ETHEREAL_PLANE)
 			)
 		) {
 			pPlayer->print("The spell fizzles.\n");
@@ -1338,9 +1328,9 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if(groupTrack) {
 		if(pPlayer->getGroupStatus() == GROUP_LEADER && group) {
 			for(Creature* crt : group->members) {
-				follower = crt->getPlayer();
+				follower = crt->getAsPlayer();
 
-				if(!follower || follower->getRoom() != oldRoom)
+				if(!follower || follower->getRoomParent() != oldRoom)
 					continue;
 				if(troom && !follower->canEnter(troom))
 					continue;
@@ -1374,7 +1364,7 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 // to the recall room
 
 int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player	*caster = player->getPlayer();
+	Player	*caster = player->getAsPlayer();
 	Player	*target=0;
 
 	if(player->getClass() == BUILDER) {
@@ -1392,7 +1382,7 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 
-	if(player->getRoom()->flagIsSet(R_NO_WORD_OF_RECALL) && !player->isCt()) {
+	if(player->getRoomParent()->flagIsSet(R_NO_WORD_OF_RECALL) && !player->isCt()) {
 		player->print("Nothing happens.\n");
 		return(0);
 	}
@@ -1402,7 +1392,7 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Word of recall spell cast.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts word of recall on %sself.",
+			broadcast(player->getSock(), player->getParent(), "%M casts word of recall on %sself.",
 				caster, caster->himHer());
 		}
 
@@ -1413,7 +1403,7 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == POTION) {
 			player->print("You phase in and out of existence.\n");
-			broadcast(player->getSock(), caster->getRoom(), "%M disappears.", caster);
+			broadcast(player->getSock(), caster->getRoomParent(), "%M disappears.", caster);
 		}
 
 		caster->statistics.recall();
@@ -1426,7 +1416,7 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findPlayer(player, cmnd, 2);
+		target = player->getParent()->findPlayer(player, cmnd, 2);
 		if(!target) {
 			player->print("That person is not here.\n");
 			return(0);
@@ -1441,7 +1431,7 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			player->print("Word of recall cast on %N.\n", target);
 			target->print("%M casts a word of recall spell on you.\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M casts word of recall on %N.", player, target);
 
 			if(spellData->how == CAST && !player->isStaff() && target->checkDimensionalAnchor()) {
@@ -1472,7 +1462,7 @@ int splPlaneShift(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Player	*pPlayer=0, *target=0;
 	UniqueRoom	*new_rom=0;
 
-	pPlayer = player->getPlayer();
+	pPlayer = player->getAsPlayer();
 	if(!pPlayer)
 		return(0);
 
@@ -1485,13 +1475,13 @@ int splPlaneShift(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if(cmnd->num == 2) {
 		target = pPlayer;
 		pPlayer->print("You fade out of existence.\n");
-		broadcast(pPlayer->getSock(), pPlayer->getRoom(), "%M slowly fades out of existence.", pPlayer);
+		broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M slowly fades out of existence.", pPlayer);
 
 	// Cast plane-shift on another pPlayer
 	} else {
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = pPlayer->getRoom()->findPlayer(pPlayer, cmnd, 2);
+		target = pPlayer->getParent()->findPlayer(pPlayer, cmnd, 2);
 		if(!target) {
 			pPlayer->print("That player is not here.\n");
 			return(0);
@@ -1500,7 +1490,7 @@ int splPlaneShift(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			pPlayer->print("You cast plane-shift on %N.\n", target);
 			target->print("%M casts plane-shift on you.\n", pPlayer);
-			broadcast(pPlayer->getSock(), target->getSock(), pPlayer->getRoom(), "%M casts plane-shift on %N.", pPlayer, target);
+			broadcast(pPlayer->getSock(), target->getSock(), pPlayer->getRoomParent(), "%M casts plane-shift on %N.", pPlayer, target);
 			broadcast("");
 		}
 	}
@@ -1541,14 +1531,14 @@ bool Creature::checkDimensionalAnchor() const {
 //*********************************************************************
 
 int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player	*pPlayer = player->getPlayer();
+	Player	*pPlayer = player->getAsPlayer();
 	Exit	*exit=0;
 	int		i=0;
 	bool doMove = true;
 	bool portalDestroyed = false;
 	bool isPortal = false;
 	bool canCast = false;
-	BaseRoom* newRoom=0, *room = player->getRoom();
+	BaseRoom* newRoom=0, *room = player->getRoomParent();
 
 	if(!pPlayer)
 		return(0);
@@ -1641,41 +1631,36 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		broadcast(0, room, "^YThe %s^Y explodes violently as the dimensional tunnels converge!", exit->name);
 
-		Player* target=0;
-		ctag* cp = room->first_ply;
 		int dmg=0;
-		while(cp) {
-			target = cp->crt->getPlayer();
-			cp = cp->next_tag;
-
+		for(Player* ply : room->players) {
 			// more damage for caster
-			if(target->isStaff())
+			if(ply->isStaff())
 				dmg = 0;
-			else if(target == player)
+			else if(ply == player)
 				dmg = mrand(25,45);
 			else
 				dmg = mrand(5,25);
 
-			if(target->chkSave(BRE, player, -25))
+			if(ply->chkSave(BRE, player, -25))
 				dmg /= 2;
 
 
-			target->printColor("You are blasted with energy for %s%d^x damage!\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-			broadcast(target->getSock(), target->getRoom(), "%M is blasted with energy!", target);
-			broadcastGroup(false, target, "%M is blasted by energy for *CC:DAMAGE*%d^x damage, %s%s\n",
-				target, dmg, target->heShe(), target->getStatusStr(dmg));
+			ply->printColor("You are blasted with energy for %s%d^x damage!\n", ply->customColorize("*CC:DAMAGE*").c_str(), dmg);
+			broadcast(ply->getSock(), ply->getRoomParent(), "%M is blasted with energy!", ply);
+			broadcastGroup(false, ply, "%M is blasted by energy for *CC:DAMAGE*%d^x damage, %s%s\n",
+				ply, dmg, ply->heShe(), ply->getStatusStr(dmg));
 
-			target->hp.decrease(dmg);
+			ply->hp.decrease(dmg);
 
-			if(target->hp.getCur() < 1) {
+			if(ply->hp.getCur() < 1) {
 				// killing the owner of a portal will invalidate the exit
-				if(!portalDestroyed && exit->getPassPhrase() == target->name)
+				if(!portalDestroyed && exit->getPassPhrase() == ply->name)
 					portalDestroyed = true;
-				target->die(EXPLOSION);
-				if(target == player)
+				ply->die(EXPLOSION);
+				if(ply == player)
 					doMove = false;
 			} else {
-				if(target == player) {
+				if(ply == player) {
 					player->print("You are violently ejected from the room!\n\n");
 					broadcast(pPlayer->getSock(), room, "%M is violently ejected from the room!", player);
 				}
@@ -1752,7 +1737,6 @@ void BaseRoom::scatterObjects() {
 	Object* object=0;
 	Exit* exit=0;
 	otag* op = first_obj;
-	xtag* xp=0;
 	int pick=0;
 
 	while(op) {
@@ -1771,11 +1755,9 @@ void BaseRoom::scatterObjects() {
 
 		// pick an exit
 		pick = 0;
-		xp = first_ext;
-		while(xp) {
-			if(willScatterTo(object, this, xp->ext))
+		for(Exit* ext : exits) {
+			if(willScatterTo(object, this, ext))
 				pick++;
-			xp = xp->next_tag;
 		}
 
 		// no exits to scatter to
@@ -1783,16 +1765,14 @@ void BaseRoom::scatterObjects() {
 			return;
 
 		pick = mrand(1, pick);
-		xp = first_ext;
-		while(xp) {
-			if(willScatterTo(object, this, xp->ext)) {
+		for(Exit* ext : exits) {
+			if(willScatterTo(object, this, ext)) {
 				pick--;
 				if(!pick) {
-					exit = xp->ext;
+					exit = ext;
 					break;
 				}
 			}
-			xp = xp->next_tag;
 		}
 
 		newRoom = exit->target.loadRoom();

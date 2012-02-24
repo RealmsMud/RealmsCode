@@ -44,11 +44,17 @@ Exit::Exit() {
 }
 
 Exit::~Exit() {
-	if(effects.list.size()) {
+	if(effects.effectList.size()) {
 		//BaseRoom* parent = effects.list.front()->getParentRoom();
 		effects.removeAll();
 		//parent->removeEffectsIndex();
 	}
+}
+
+int exit_ordering(const char *exit1, const char *exit2);
+
+bool Exit::operator< (const MudObject& t) const {
+    return(exit_ordering(this->name, t.name));
 }
 
 short Exit::getLevel() const { return(level); }
@@ -138,23 +144,20 @@ bool Exit::toggleFlag(int flag) {
 // and value by looking through the exit list headed by the second para-
 // meter.  If found, a pointer to the exit is returned.
 
-Exit *findExit(Creature* creature, cmd* cmnd, int val, xtag *first_xt) {
-	return(findExit(creature, cmnd->str[val], cmnd->val[val], first_xt));
+Exit *findExit(Creature* creature, cmd* cmnd, int val, BaseRoom* room) {
+	return(findExit(creature, cmnd->str[val], cmnd->val[val], room));
 }
 
-Exit *findExit(Creature* creature, bstring str, int val, xtag *first_xt) {
-	xtag	*xp = first_xt;
-	Exit	*exit=0;
+Exit *findExit(Creature* creature, bstring str, int val, BaseRoom* room) {
 	int		match=0;
-	bool	minThree = (creature->getPlayer() && !creature->isStaff() && str.length() < 3);
+	bool	minThree = (creature->getAsPlayer() && !creature->isStaff() && str.length() < 3);
 	str = removeColor(str);
 
-	if(!xp)
-		xp = creature->getRoom()->first_ext;
+	if(!room)
+		if((room = creature->getRoomParent()) == NULL)
+			return(NULL);
 
-	while(xp) {
-		exit = xp->ext;
-		xp = xp->next_tag;
+	for(Exit* exit : room->exits) {
 		bstring name = removeColor(exit->name);
 		name = name.toLower();
 
@@ -361,30 +364,28 @@ Exit* Exit::getReturnExit(const BaseRoom* parent, BaseRoom** targetRoom) const {
 	if(!*targetRoom)
 		return(0);
 
-	xtag* xp = (*targetRoom)->first_ext;
 	Exit* exit=0;
 	bool found = false;
 
-	const AreaRoom* aRoom = parent->getConstAreaRoom();
-	const UniqueRoom* uRoom = parent->getConstUniqueRoom();
+	const AreaRoom* aRoom = parent->getAsConstAreaRoom();
+	const UniqueRoom* uRoom = parent->getAsConstUniqueRoom();
 
-	while(xp) {
-		if(xp->ext->target.mapmarker.getArea()) {
-			if(aRoom && xp->ext->target.mapmarker == aRoom->mapmarker) {
+	for(Exit* ext : (*targetRoom)->exits) {
+		if(ext->target.mapmarker.getArea()) {
+			if(aRoom && ext->target.mapmarker == aRoom->mapmarker) {
 				if(found)
 					return(0);
-				exit = xp->ext;
+				exit = ext;
 				found = true;
 			}
 		} else {
-			if(uRoom && xp->ext-> target.room == uRoom->info) {
+			if(uRoom && ext-> target.room == uRoom->info) {
 				if(found)
 					return(0);
-				exit = xp->ext;
+				exit = ext;
 				found = true;
 			}
 		}
-		xp = xp->next_tag;
 	}
 
 	return(exit);
@@ -439,7 +440,7 @@ void Exit::addEffectReturnExit(bstring effect, long duration, int strength, cons
 
 	addEffect(effect, duration, strength, NULL, true, owner);
 	// switch the meaning of exit
-	Exit* exit = getReturnExit(owner->getRoom(), &targetRoom);
+	Exit* exit = getReturnExit(owner->getConstRoomParent(), &targetRoom);
 	if(exit)
 		exit->addEffect(effect, duration, strength, NULL, true, owner);
 }

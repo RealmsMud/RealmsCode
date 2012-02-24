@@ -1113,7 +1113,7 @@ enum CastResult {
 #include "structs.h"
 #include "range.h"
 #include "carry.h"
-#include "mudObject.h"
+#include "container.h"
 #include "xml.h"
 
 #include "size.h"

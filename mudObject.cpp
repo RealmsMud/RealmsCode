@@ -34,6 +34,22 @@
 //#include <c++/4.3.3/bits/stl_list.h>
 #include <list>
 
+
+
+bool PlayerPtrLess::operator()(const Player* lhs, const Player* rhs) const {
+    return *lhs < *rhs;
+}
+
+bool MonsterPtrLess::operator()(const Monster* lhs, const Monster* rhs) const {
+    bstring lhsStr = bstring(lhs->name) + lhs->id;
+    bstring rhsStr = bstring(rhs->name) + rhs->id;
+    return(lhsStr.compare(rhsStr) < 0);
+}
+
+bool ObjectPtrLess::operator()(const Object* lhs, const Object* rhs) const {
+    return *lhs < *rhs;
+}
+
 //***********************************************************************
 //						moReset
 //***********************************************************************
@@ -49,7 +65,7 @@ void MudObject::moReset() {
 void MudObject::moDestroy() {
 	// If it's a valid ID and it's not a player, unregister their ID.  Players
 	// are unregistered by the server
-	if(!id.equals("-1") && !getPlayer()) {
+	if(!id.equals("-1") && !getAsPlayer()) {
 		gServer->unRegisterMudObject(this);
 	}
 	moReset();
@@ -61,23 +77,23 @@ void MudObject::moDestroy() {
 //						getMonster
 //***********************************************************************
 
-Monster* MudObject::getMonster() {
-	return(dynamic_cast<Monster*>(this));
+Monster* MudObject::getAsMonster() {
+    return(dynamic_cast<Monster*>(this));
 }
 
 //***********************************************************************
 //						getCreature
 //***********************************************************************
 
-Creature* MudObject::getCreature() {
-	return(dynamic_cast<Creature*>(this));
+Creature* MudObject::getAsCreature() {
+    return(dynamic_cast<Creature*>(this));
 }
 
 //***********************************************************************
 //						getPlayer
 //***********************************************************************
 
-Player* MudObject::getPlayer() {
+Player* MudObject::getAsPlayer() {
 	return(dynamic_cast<Player*>(this));
 }
 
@@ -85,7 +101,7 @@ Player* MudObject::getPlayer() {
 //						getObject
 //***********************************************************************
 
-Object* MudObject::getObject() {
+Object* MudObject::getAsObject() {
 	return(dynamic_cast<Object*>(this));
 }
 
@@ -93,7 +109,7 @@ Object* MudObject::getObject() {
 //						getUniqueRoom
 //***********************************************************************
 
-UniqueRoom* MudObject::getUniqueRoom() {
+UniqueRoom* MudObject::getAsUniqueRoom() {
 	return(dynamic_cast<UniqueRoom*>(this));
 }
 
@@ -101,7 +117,7 @@ UniqueRoom* MudObject::getUniqueRoom() {
 //						getAreaRoom
 //***********************************************************************
 
-AreaRoom* MudObject::getAreaRoom() {
+AreaRoom* MudObject::getAsAreaRoom() {
 	return(dynamic_cast<AreaRoom*>(this));
 }
 
@@ -109,7 +125,7 @@ AreaRoom* MudObject::getAreaRoom() {
 //						getRoom
 //***********************************************************************
 
-BaseRoom* MudObject::getRoom() {
+BaseRoom* MudObject::getAsRoom() {
 	return(dynamic_cast<BaseRoom*>(this));
 }
 
@@ -117,7 +133,7 @@ BaseRoom* MudObject::getRoom() {
 //						getExit
 //***********************************************************************
 
-Exit* MudObject::getExit() {
+Exit* MudObject::getAsExit() {
 	return(dynamic_cast<Exit*>(this));
 }
 
@@ -125,7 +141,7 @@ Exit* MudObject::getExit() {
 //						getConstMonster
 //***********************************************************************
 
-const Monster* MudObject::getConstMonster() const {
+const Monster* MudObject::getAsConstMonster() const {
 	return(dynamic_cast<const Monster*>(this));
 }
 
@@ -133,7 +149,7 @@ const Monster* MudObject::getConstMonster() const {
 //						getConstPlayer
 //***********************************************************************
 
-const Player* MudObject::getConstPlayer() const {
+const Player* MudObject::getAsConstPlayer() const {
 	return(dynamic_cast<const Player*>(this));
 }
 
@@ -141,7 +157,7 @@ const Player* MudObject::getConstPlayer() const {
 //						getConstCreature
 //***********************************************************************
 
-const Creature* MudObject::getConstCreature() const {
+const Creature* MudObject::getAsConstCreature() const {
 	return(dynamic_cast<const Creature*>(this));
 }
 
@@ -149,7 +165,7 @@ const Creature* MudObject::getConstCreature() const {
 //						getConstObject
 //***********************************************************************
 
-const Object* MudObject::getConstObject() const {
+const Object* MudObject::getAsConstObject() const {
 	return(dynamic_cast<const Object*>(this));
 }
 
@@ -157,7 +173,7 @@ const Object* MudObject::getConstObject() const {
 //						getConstUniqueRoom
 //***********************************************************************
 
-const UniqueRoom* MudObject::getConstUniqueRoom() const {
+const UniqueRoom* MudObject::getAsConstUniqueRoom() const {
 	return(dynamic_cast<const UniqueRoom*>(this));
 }
 
@@ -165,7 +181,7 @@ const UniqueRoom* MudObject::getConstUniqueRoom() const {
 //						getConstAreaRoom
 //***********************************************************************
 
-const AreaRoom* MudObject::getConstAreaRoom() const {
+const AreaRoom* MudObject::getAsConstAreaRoom() const {
 	return(dynamic_cast<const AreaRoom*>(this));
 }
 
@@ -173,7 +189,7 @@ const AreaRoom* MudObject::getConstAreaRoom() const {
 //						getConstRoom
 //***********************************************************************
 
-const BaseRoom* MudObject::getConstRoom() const {
+const BaseRoom* MudObject::getAsConstRoom() const {
 	return(dynamic_cast<const BaseRoom*>(this));
 }
 
@@ -181,7 +197,7 @@ const BaseRoom* MudObject::getConstRoom() const {
 //						getConstExit
 //***********************************************************************
 
-const Exit* MudObject::getConstExit() const {
+const Exit* MudObject::getAsConstExit() const {
 	return(dynamic_cast<const Exit*>(this));
 }
 
@@ -211,7 +227,7 @@ void MudObject::setId(bstring newId) {
 		id = newId;
 		// Register the ID with the server if we're not a player, handle player registration
 		// when adding the player to the server's list of players
-		if(!getPlayer()) {
+		if(!getAsPlayer()) {
 			if(gServer->lookupCrtId(newId)) {
 				// We already have a creature with this registered ID, so this creature needs a new ID
 				id = gServer->getNextMonsterId();
@@ -229,3 +245,33 @@ const bstring& MudObject::getId() const {
 bstring MudObject::getIdPython() const {
 	return(id);
 }
+
+bool MudObject::isRoom() const {
+	return(this &&
+	  	  (typeid(*this) == typeid(BaseRoom) ||
+		   typeid(*this) == typeid(UniqueRoom) ||
+		   typeid(*this) == typeid(AreaRoom)));
+}
+bool MudObject::isUniqueRoom() const {
+	return(this && typeid(*this) == typeid(UniqueRoom));
+}
+bool MudObject::isAreaRoom() const {
+	return(this && typeid(*this) == typeid(AreaRoom));
+}
+bool MudObject::isObject() const {
+	return(this && typeid(*this) == typeid(Object));
+}
+bool MudObject::isPlayer() const {
+	return(this && typeid(*this) == typeid(Player));
+}
+bool MudObject::isMonster() const {
+	return(this && typeid(*this) == typeid(Monster));
+}
+bool MudObject::isCreature() const {
+	return(this &&
+		  (typeid(*this) == typeid(Creature) ||
+		   typeid(*this) == typeid(Player) ||
+		   typeid(*this) == typeid(Monster)));
+}
+
+

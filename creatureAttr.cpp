@@ -160,9 +160,9 @@ bstring Creature::getPoisonedBy() const { return(poisonedBy); }
 bool Creature::inJail() const {
 	if(isStaff())
 		return(false);
-	if(!parent_rom)
+	if(!inUniqueRoom())
 		return(false);
-	return(parent_rom->flagIsSet(R_JAIL));
+	return(getConstUniqueRoomParent()->flagIsSet(R_JAIL));
 }
 
 //*********************************************************************
@@ -172,7 +172,7 @@ bool Creature::inJail() const {
 void Creature::addExperience(unsigned long e) {
 	setExperience(experience + e);
 	if(isPlayer())
-		getPlayer()->checkLevel();
+		getAsPlayer()->checkLevel();
 }
 
 //*********************************************************************
@@ -182,7 +182,7 @@ void Creature::addExperience(unsigned long e) {
 void Creature::subExperience(unsigned long e) {
 	setExperience(e > experience ? 0 : experience - e);
 	if(isPlayer())
-		getPlayer()->checkLevel();
+		getAsPlayer()->checkLevel();
 }
 
 //*********************************************************************
@@ -207,13 +207,13 @@ void Creature::setClass(unsigned short c) {
 		if(!isEffected("vampirism")) {
 			addPermEffect("vampirism");
 			if(isPlayer())
-				getPlayer()->makeVampire();
+				getAsPlayer()->makeVampire();
 		}
 	} else if(cClass != WEREWOLF && c == WEREWOLF) {
 		if(!isEffected("lycanthropy")) {
 			addPermEffect("lycanthropy");
 			if(isPlayer())
-				getPlayer()->makeWerewolf();
+				getAsPlayer()->makeWerewolf();
 		}
 	}
 
@@ -932,7 +932,7 @@ void Player::setCustomColor(CustomColor i, char c) { customColors[i] = c; }
 //*********************************************************************
 
 Creature* Creature::getMaster() {
-	return((isMonster() ? getMonster()->getMaster() : this));
+	return((isMonster() ? getAsMonster()->getMaster() : this));
 }
 
 //*********************************************************************
@@ -940,14 +940,16 @@ Creature* Creature::getMaster() {
 //*********************************************************************
 
 const Creature* Creature::getConstMaster() const {
-	return((isMonster() ? getConstMonster()->getMaster() : this));
+	return((isMonster() ? getAsConstMonster()->getMaster() : this));
 }
 //*********************************************************************
 //                      getPlayerMaster
 //*********************************************************************
 
 Player* Creature::getPlayerMaster() {
-    return(getMaster()->getPlayer());
+	if(!getMaster())
+		return(NULL);
+    return(getMaster()->getAsPlayer());
 }
 
 //*********************************************************************
@@ -955,7 +957,9 @@ Player* Creature::getPlayerMaster() {
 //*********************************************************************
 
 const Player* Creature::getConstPlayerMaster() const {
-    return(getConstMaster()->getConstPlayer());
+	if(!getConstMaster())
+		return(NULL);
+    return(getConstMaster()->getAsConstPlayer());
 }
 
 
@@ -1026,8 +1030,8 @@ void Creature::crtReset() {
 	first_obj = 0;
 	first_tlk = 0;
 
-	parent_rom = 0;
-	area_room = 0;
+	currentLocation.mapmarker.reset();
+	currentLocation.room.clear();
 
     group = 0;
     groupStatus = GROUP_NO_STATUS;
@@ -1228,9 +1232,10 @@ void Creature::CopyCommon(const Creature& cr) {
 	first_obj = cr.first_obj;
 	first_tlk = cr.first_tlk;
 
-	room = cr.room;
-	parent_rom = cr.parent_rom;
-	area_room = cr.area_room;
+	currentLocation.room = cr.currentLocation.room;
+	currentLocation.mapmarker = cr.currentLocation.mapmarker;
+
+	parent = cr.parent;
 
 	for(i=0; i<6; i++)
 		saves[i] = cr.saves[i];
@@ -1610,9 +1615,12 @@ Player::~Player() {
 		birthday = NULL;
 	}
 
-	for(i=0; i<MAX_DIMEN_ANCHORS; i++)
-		if(anchor[i])
+	for(i=0; i<MAX_DIMEN_ANCHORS; i++) {
+		if(anchor[i]) {
 			delete anchor[i];
+			anchor[i] = 0;
+		}
+	}
 
 	QuestCompletion *quest;
 	for(std::pair<int, QuestCompletion*> p : questsInProgress) {
@@ -1705,7 +1713,7 @@ bool Creature::mFlagIsSet(int flag) const {
 void Creature::setFlag(int flag) {
 	flags[flag/8] |= 1<<(flag%8);
 	if(flag == P_NO_TRACK_STATS && isPlayer())
-		getPlayer()->statistics.track = false;
+		getAsPlayer()->statistics.track = false;
 }
 void Creature::pSetFlag(int flag) {
     if(!isPlayer()) return;
@@ -1724,7 +1732,7 @@ void Creature::mSetFlag(int flag) {
 void Creature::clearFlag(int flag) {
 	flags[flag/8] &= ~(1<<(flag%8));
 	if(flag == P_NO_TRACK_STATS && isPlayer())
-		getPlayer()->statistics.track = true;
+		getAsPlayer()->statistics.track = true;
 }
 
 void Creature::pClearFlag(int flag) {
@@ -2017,21 +2025,11 @@ bool Creature::isBraindead()  const {
 }
 
 //*********************************************************************
-//						getRoom
-//*********************************************************************
-
-BaseRoom *Creature::getRoom() const {
-	if(parent_rom)
-		return(parent_rom);
-	return(area_room);
-}
-
-//*********************************************************************
 //						fullName
 //*********************************************************************
 
 bstring Creature::fullName() const {
-	const Player *player = getConstPlayer();
+	const Player *player = getAsConstPlayer();
 	bstring str = name;
 
 	if(player && player->flagIsSet(P_CHOSEN_SURNAME) && player->getSurname() != "") {
@@ -2057,8 +2055,8 @@ void Creature::unmist() {
 	unhide();
 
 	printColor("^mYou return to your natural form.\n");
-	if(getRoom())
-		broadcast(getSock(), getRoom(), "%M reforms.", this);
+	if(getRoomParent())
+		broadcast(getSock(), getRoomParent(), "%M reforms.", this);
 }
 
 //*********************************************************************
@@ -2169,7 +2167,7 @@ bool Creature::canSpeak() const {
 		return(true);
 	if(isEffected("silence"))
 		return(false);
-	if(getRoom()->isEffected("globe-of-silence"))
+	if(getParent()->isEffected("globe-of-silence"))
 		return(false);
 	return(true);
 }
@@ -2179,7 +2177,7 @@ bool Creature::canSpeak() const {
 //*********************************************************************
 
 void Creature::unBlind() {
-	if(getPlayer())
+	if(getAsPlayer())
 		clearFlag(P_DM_BLINDED);
 }
 
@@ -2188,7 +2186,7 @@ void Creature::unBlind() {
 //*********************************************************************
 
 void Creature::unSilence() {
-	if(getPlayer())
+	if(getAsPlayer())
 		clearFlag(P_DM_SILENCED);
 }
 
@@ -2213,10 +2211,5 @@ bool Creature::poisonedByPlayer() const {
 //*********************************************************************
 
 Location Creature::getLocation() {
-	Location l;
-	if(parent_rom)
-		l.room = room;
-	if(area_room)
-		l.mapmarker = area_room->mapmarker;
-	return(l);
+	return(currentLocation);
 }

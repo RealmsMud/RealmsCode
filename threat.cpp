@@ -232,7 +232,7 @@ Creature* ThreatTable::getTarget(bool sameRoom) {
         }
         // If we're looking for someone who isn't in the same room, we don't care if we can see them
         // however if we want the target in the current room, we must be able to see them!
-        if(!crt || (sameRoom && (crt->getRoom() != myParent->getRoom() || !myParent->canSee(crt)))) continue;
+        if(!crt || (sameRoom && (crt->getRoomParent() != myParent->getRoomParent() || !myParent->canSee(crt)))) continue;
 
         // The highest threat creature (in the same room if sameRoom is true)
         toReturn = crt;
@@ -320,21 +320,16 @@ int Creature::doHeal(Creature* target, int amt, double threatFactor) {
     // If the target is a player/pet and they're in combat
     // then this counts towards the damage done/hatred on that monster
     if((target->isPlayer() || target->isPet()) && target->inCombat(false)) {
-		ctag* cp = getRoom()->first_mon;
-		while(cp) {
-		    Monster* mons = cp->crt->getMonster();
-		    if(mons) {
-				if(mons->isEnemy(target)) {
-				    // If we're not on the enemy list, put us on at the end
-				    if(!mons->isEnemy(this)) {
-						mons->addEnemy(this);
-						this->printColor("^R%M gets angry at you!^x\n", mons);
-				    }
-				    // Add the amount of healing threat done to effort done
-				    mons->adjustThreat(this, healed, threatFactor);
-				}
-		    }
-		    cp = cp->next_tag;
+        for(Monster* mons : getRoomParent()->monsters) {
+            if(mons->isEnemy(target)) {
+                // If we're not on the enemy list, put us on at the end
+                if(!mons->isEnemy(this)) {
+                    mons->addEnemy(this);
+                    this->printColor("^R%M gets angry at you!^x\n", mons);
+                }
+                // Add the amount of healing threat done to effort done
+                mons->adjustThreat(this, healed, threatFactor);
+            }
 		}
     }
     return(healed);
@@ -370,7 +365,7 @@ Creature* Creature::addTarget(Creature* toTarget) {
 	toTarget->addTargetingThis(this);
 	myTarget = toTarget;
 
-	Player* ply = getPlayer();
+	Player* ply = getAsPlayer();
 	if(ply) {
 		ply->printColor("You are now targeting %s.\n", myTarget->getName());
 	}
@@ -386,7 +381,7 @@ Creature* Creature::addTarget(Creature* toTarget) {
 void Creature::addTargetingThis(Creature* targeter) {
 	ASSERTLOG(targeter);
 
-	Player* ply = getPlayer();
+	Player* ply = getAsPlayer();
 	if(ply) {
 		ply->printColor("%s is now targeting you!\n", targeter->getName());
 	}
@@ -401,7 +396,7 @@ void Creature::clearTarget(bool clearTargetsList) {
 	if(!myTarget)
 		return;
 
-	Player* ply = getPlayer();
+	Player* ply = getAsPlayer();
 	if(ply) {
 		ply->printColor("You are no longer targeting %s!\n", myTarget->getName());
 	}
@@ -421,7 +416,7 @@ void Creature::clearTarget(bool clearTargetsList) {
 void Creature::clearTargetingThis(Creature* targeter) {
 	ASSERTLOG(targeter);
 
-	Player* ply = getPlayer();
+	Player* ply = getAsPlayer();
 	if(ply) {
 		ply->printColor("%s is no longer targeting you!\n", targeter->getName());
 	}
@@ -438,7 +433,7 @@ int cmdAssist(Player* player, cmd* cmnd) {
 		player->print("Who would you like to assist?\n");
 
     }
-    Player* toAssist = player->getRoom()->findPlayer(player, cmnd);
+    Player* toAssist = player->getParent()->findPlayer(player, cmnd);
 	if(!toAssist) {
 		player->print("You don't see that person here.\n");
 		return(0);
@@ -489,7 +484,7 @@ int cmdTarget(Player* player, cmd* cmnd) {
 
 	lowercize(cmnd->str[1], 1);
 
-	Creature* toTarget = player->getRoom()->findCreature(player, cmnd);
+	Creature* toTarget = player->getParent()->findCreature(player, cmnd);
 	if(!toTarget) {
 		player->print("You don't see that here.\n");
 		return(0);

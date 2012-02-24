@@ -38,7 +38,7 @@ int numIngredients(Size size);
 
 Object* findHot(const Player* player) {
 	// we can cook from any hot object
-	otag* op = player->getRoom()->first_obj;
+	otag* op = player->getConstRoomParent()->first_obj;
 	while(op) {
 		if(Recipe::goodObject(player, op->obj) && op->obj->flagIsSet(O_HOT))
 			return(op->obj);
@@ -219,7 +219,7 @@ bool Recipe::goodObject(const Player* player, const Object* object, const CatRef
 
 bool Recipe::check(const Player* player, const std::list<CatRef>* list, bstring type, int numIngredients) const {
 	Object* object=0;
-	otag*	op=0, *first = (type == "equipment" ? player->getRoom()->first_obj : player->first_obj);
+	otag*	op=0, *first = (type == "equipment" ? player->getConstRoomParent()->first_obj : player->first_obj);
 	std::list<CatRef>::const_iterator it;
 	int has=0;
 	if(!isSizable())
@@ -424,19 +424,17 @@ bstring Recipe::display() {
 
 bool Recipe::canUseEquipment(const Player* player, bstring skill) const {
 	if(!equipment.empty() || skill == "cooking") {
-		ctag*	cp = player->getRoom()->first_mon;
+	    for(Monster* mons : player->getConstRoomParent()->monsters) {
+            if(mons->canSee(player)) {
+                if( mons->getAsConstMonster()->isEnemy(player) ||
+                    !Faction::willDoBusinessWith(player, mons->getAsMonster()->getPrimeFaction())
+                ) {
+                    player->print("%M won't let you use any equipment in this room.", mons);
+                    return(false);
+                }
+            }
 
-		while(cp) {
-			if(cp->crt->canSee(player)) {
-				if(	cp->crt->getConstMonster()->isEnemy(player) ||
-					!Faction::willDoBusinessWith(player, cp->crt->getMonster()->getPrimeFaction())
-				) {
-					player->print("%M won't let you use any equipment in this room.", cp->crt);
-					return(false);
-				}
-			}
-			cp = cp->next_tag;
-		}
+	    }
 	}
 	return(true);
 }
@@ -558,7 +556,7 @@ Recipe* Config::searchRecipes(const Player* player, bstring skill, Size recipeSi
 					hasEquipment = false;
 			} else {
 				for(iIt = recipe->equipment.begin(); iIt != recipe->equipment.end() ; iIt++) {
-					op = player->getRoom()->first_obj;
+					op = player->getConstRoomParent()->first_obj;
 					while(op) {
 						if(Recipe::goodObject(player, op->obj, &(*iIt))) {
 							str += "You prepare ";
@@ -1228,7 +1226,7 @@ int cmdPrepareObject(Player* player, cmd* cmnd) {
 	}
 
 	player->printColor("You prepare %P.\n", object);
-	broadcast(player->getSock(), player->getRoom(), "%M prepares %P.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M prepares %P.", player, object);
 
 	object->setFlag(O_BEING_PREPARED);
 	return(0);
@@ -1258,7 +1256,7 @@ int cmdUnprepareObject(Player* player, cmd* cmnd) {
 	}
 
 	player->printColor("You no longer are preparing %P.\n", object);
-	broadcast(player->getSock(), player->getRoom(), "%M stops preparing %P.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M stops preparing %P.", player, object);
 
 	object->clearFlag(O_BEING_PREPARED);
 	return(0);
@@ -1312,7 +1310,7 @@ int cmdCraft(Player* player, cmd* cmnd) {
 			player->printColor("You must be in corporeal form to work with items.\n");
 			return(0);
 		}
-		if(!player->canSee(player->getRoom(), true))
+		if(!player->canSee(player->getRoomParent(), true))
 			return(0);
 
 		if(!player->checkAttackTimer())
@@ -1487,10 +1485,10 @@ int cmdCraft(Player* player, cmd* cmnd) {
 				player->addExperience(recipe->getExperience());
 			}
 		}
-		broadcast(player->getSock(), player->getRoom(), "%M successfully %s %1P.^x", player, result.c_str(), object);
+		broadcast(player->getSock(), player->getParent(), "%M successfully %s %1P.^x", player, result.c_str(), object);
 	} else {
 		player->printColor("^yYou attempted to %s %1P^y, but failed.\n", fail.c_str(), object);
-		broadcast(player->getSock(), player->getRoom(), "%M tried to %s an object.", player, fail.c_str());
+		broadcast(player->getSock(), player->getParent(), "%M tried to %s an object.", player, fail.c_str());
 		delete object;
 	}
 

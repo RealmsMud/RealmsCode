@@ -22,6 +22,11 @@
 #include "clans.h"
 #include "alchemy.h"
 
+
+bool Object::operator< (const Object& t) const {
+    return(strcmp(this->name, t.name) < 0 && this->adjustment < t.adjustment && this->shopValue < t.shopValue);
+}
+
 bstring DroppedBy::getName() const {
 	return(name);
 }
@@ -668,7 +673,7 @@ bool Object::classRestrict(const Creature* creature, bool p) const {
 
 bool Object::classRestrict(const Creature* creature) const {
 	bool pass = false;
-	const Player* player = creature->getConstPlayer();
+	const Player* player = creature->getAsConstPlayer();
 
 	int cClass = creature->getClass();
 	if(player && player->getClass() == MAGE && (player->getSecondClass() == ASSASSIN || player->getSecondClass() == THIEF))
@@ -797,7 +802,7 @@ bool Object::alignRestrict(const Creature* creature, bool p) const {
 		if(p) {
 			creature->checkStaff("%O shocks you and you drop it.\n", this);
 			if(!creature->isStaff())
-				broadcast(creature->getSock(), creature->getRoom(), "%M is shocked by %P.", creature, this);
+				broadcast(creature->getSock(), creature->getConstRoomParent(), "%M is shocked by %P.", creature, this);
 		}
 		if(!creature->isStaff()) return(true);
 	}
@@ -940,7 +945,7 @@ bool Object::doRestrict(Creature* creature, bool p) {
 	if(alignRestrict(creature, p)) {
 		if(p && !creature->isStaff()) {
 			creature->delObj(this, false, true);
-			addToRoom(creature->getRoom());
+			addToRoom(creature->getRoomParent());
 		}
 		return(true);
 	}
@@ -965,11 +970,11 @@ bstring Object::getCompass(const Creature* creature, bool useName) {
 		return(oStr.str());
 	}
 
-	MapMarker *mapmarker=0;
-	if(creature->area_room)
-		mapmarker = &creature->area_room->mapmarker;
+	const MapMarker *mapmarker=0;
+	if(creature->inAreaRoom())
+		mapmarker = &creature->getConstAreaRoomParent()->mapmarker;
 
-	if(	!creature->area_room ||
+	if(	!creature->inAreaRoom() ||
 		!mapmarker->getArea() ||
 		!compass->getArea() ||
 		mapmarker->getArea() != compass->getArea() ||

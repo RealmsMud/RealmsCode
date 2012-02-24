@@ -92,7 +92,7 @@ void command(Socket* sock, bstring str) {
 
 	if(ply->getClass() == CARETAKER && !dmIson() )
 		log_immort(false, ply, "%s-%d (%s): %s\n", ply->name, sock->getFd(),
-			ply->getRoom()->fullName().c_str(), str.c_str());
+			ply->getRoomParent()->fullName().c_str(), str.c_str());
 
 	if(str == "!")
 		str = ply->getLastCommand();
@@ -287,9 +287,9 @@ void handleObject(Player* player, cmd* cmnd, HandleObject type) {
 		}
 
 		player->printColor("You %s %P^x.\n", action.c_str(), object);
-		broadcast(player->getSock(), player->getRoom(), "%M %s %P^x.", player, action2.c_str(), object);
+		broadcast(player->getSock(), player->getParent(), "%M %s %P^x.", player, action2.c_str(), object);
 
-		if(player->checkTraps(player->parent_rom, true, false))
+		if(player->checkTraps(player->getUniqueRoomParent(), true, false))
 			player->stun(3);
 		return;
 	}
@@ -459,7 +459,7 @@ int cmdPayToll(Player* player, cmd* cmnd) {
 
 	amt = MIN(amt, 30000);
 
-	target = player->getRoom()->findMonster(player, cmnd, 2);
+	target = player->getParent()->findMonster(player, cmnd, 2);
 	if(!target) {
 		player->print("That creature is not here.\n");
 		return(0);
@@ -510,7 +510,7 @@ int cmdPayToll(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	UniqueRoom* uRoom = newRoom->getUniqueRoom();
+	UniqueRoom* uRoom = newRoom->getAsUniqueRoom();
 	if(uRoom && !player->canEnter(uRoom, true))
 		return(0);
 
@@ -518,7 +518,7 @@ int cmdPayToll(Player* player, cmd* cmnd) {
 	gServer->logGold(GOLD_OUT, player, Money(amt, GOLD), exit, "Toll");
 
 	player->printColor("%M accepts your toll and ushers you through the %s^x.\n", target, exit->name);
-	broadcast(player->getSock(), player->getRoom(), "%M pays %N some coins and goes through the %s^x.", player, target, exit->name);
+	broadcast(player->getSock(), player->getParent(), "%M pays %N some coins and goes through the %s^x.", player, target, exit->name);
 
 	player->deleteFromRoom();
 	player->addToRoom(newRoom);
@@ -538,7 +538,7 @@ unsigned long tollcost(const Player* player, const Exit* exit, Monster* keeper) 
 		cost = cost * player->getLevel() * 2;
 
 	if(!keeper)
-		keeper = player->getRoom()->getTollkeeper();
+		keeper = player->getConstRoomParent()->getTollkeeper();
 	if(keeper) {
 		Money money;
 		money.set(cost, GOLD);

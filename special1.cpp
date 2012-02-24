@@ -23,7 +23,7 @@
 //*********************************************************************
 
 int Object::doSpecial(Player* player) {
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	Socket* sock = player->getSock();
 	char	str[80], str2[160];
 	unsigned int i=0;
@@ -42,7 +42,6 @@ int Object::doSpecial(Player* player) {
 		break;
 		
 	case SP_COMBO:
-		xtag	*xp;
 		char	str[80];
 		int		dmg, i;
 
@@ -70,23 +69,28 @@ int Object::doSpecial(Player* player) {
 
 				if(player->hp.getCur() < 1) {
 					player->print("You died.\n");
-					//((Creature*)player)->die((Creature*)player);
 					player->die(ZAPPED);
 				}
 			} else {
-				for(i=1, xp = room->first_ext;
-						xp && i < damage.getPlus();
-						i++, xp = xp->next_tag)
-					;
-				if(!xp)
+				Exit* toOpen = 0;
+				i = 1;
+				for(Exit* ext : room->exits) {
+					if(i++ >= damage.getPlus())
+						toOpen = ext;
+				}
+//				for(i=1, xp = room->first_ext;
+//						xp && i < damage.getPlus();
+//						i++, xp = xp->next_tag)
+//					;
+				if(!toOpen)
 					return(0);
 				player->statistics.combo();
-				player->print("You opened the %s!\n", xp->ext->name);
-				broadcast(player->getSock(), player->getRoom(),
-					"%M opened the %s!", player, xp->ext->name);
-				xp->ext->clearFlag(X_LOCKED);
-				xp->ext->clearFlag(X_CLOSED);
-				xp->ext->ltime.ltime = time(0);
+				player->print("You opened the %s!\n", toOpen->name);
+				broadcast(player->getSock(), player->getParent(),
+					"%M opened the %s!", player, toOpen->name);
+				toOpen->clearFlag(X_LOCKED);
+				toOpen->clearFlag(X_CLOSED);
+				toOpen->ltime.ltime = time(0);
 			}
 		}
 		break;

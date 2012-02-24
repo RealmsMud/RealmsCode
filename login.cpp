@@ -177,8 +177,8 @@ void login(Socket* sock, bstring str) {
 				const StartLoc *location = gConfig->getStartLoc("highport");
 				player->bind(location);
 				// put them in the docks: hp.100
-				player->room.area = "hp";
-				player->room.id = 100;
+				player->currentLocation.room.area = "hp";
+				player->currentLocation.room.id = 100;
 				// remove all their stuff
 				player->coins.zero();
 				otag *obj=0, *op = player->first_obj;
@@ -1386,7 +1386,7 @@ int cmdWeapons(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-//	if(!player->getRoom()->findWeaponsTrainer()) {
+//	if(!player->getParent()->findWeaponsTrainer()) {
 //		player->print("You can't find anyone here to train you in weapon skills!\n");
 //		return(0);
 //	}

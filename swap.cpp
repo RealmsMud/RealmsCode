@@ -77,7 +77,7 @@ bstring swapName(SwapType type) {
 //							swap
 //*********************************************************************
 
-void swap(const Player* player, cmd* cmnd, SwapType type) {
+void swap(Player* player, cmd* cmnd, SwapType type) {
 	bstring str = getFullstrText(cmnd->fullstr, 1);
 	bstring name="";
 	bstring cmd = " *swap";
@@ -215,12 +215,12 @@ void swap(const Player* player, cmd* cmnd, SwapType type) {
 	if(type == SwapRoom) {
 		if(!needUniqueRoom(player))
 			return;
-		if(!player->checkBuilder(player->parent_rom)) {
+		if(!player->checkBuilder(player->getUniqueRoomParent())) {
 			player->printColor("^YRS: ^RError: ^xRoom number not inside any of your alotted ranges.\n");
 			return;
 		}
 
-		s.origin = player->parent_rom->info;
+		s.origin = player->getConstUniqueRoomParent()->info;
 	} else {
 		getCatRef(str, &s.origin, player);
 		str = getFullstrText(str, 1);
@@ -241,23 +241,21 @@ void swap(const Player* player, cmd* cmnd, SwapType type) {
 
 	if(type == SwapRoom) {
 		if(!s.target.isArea(s.origin.area) && getFullstrText(cmnd->fullstr, 2) != "confirm") {
-			xtag *xp = player->parent_rom->first_ext;
-			while(xp) {
-				if(xp->ext->flagIsSet(X_LOCKABLE) && xp->ext->getKey()) {
+			for(Exit* ext : player->getConstUniqueRoomParent()->exits) {
+				if(ext->flagIsSet(X_LOCKABLE) && ext->getKey()) {
 					player->printColor("^YRS: ^RError: ^xthis room contains a lockable exit and is being moved to a different area.\n");
 					player->printColor("   To continue, type ^W*rswap %s confirm^x. Make sure all keys work correctly.\n", s.target.area.c_str());
 					return;
 				}
-				xp = xp->next_tag;
 			}
 		}
 
-		if(player->parent_rom->flagIsSet(R_SHOP))
+		if(player->getConstUniqueRoomParent()->flagIsSet(R_SHOP))
 			player->printColor("^YRS: ^GThis room is a shop - don't forget to swap the storage room: %s.\n",
-				shopStorageRoom(player->parent_rom).rstr().c_str());
-		else if(player->parent_rom->getTrapExit().id)
+				shopStorageRoom(player->getConstUniqueRoomParent()).rstr().c_str());
+		else if(player->getConstUniqueRoomParent()->getTrapExit().id)
 			player->printColor("^YRS: ^GThis room has a trap exit set: %s.\n",
-				player->parent_rom->getTrapExit().rstr().c_str());
+				player->getConstUniqueRoomParent()->getTrapExit().rstr().c_str());
 	}
 
 	if(gConfig->isSwapping()) {
@@ -807,7 +805,7 @@ void Config::swap(Player* player, bstring name) {
 
 	found = false;
 	if(player) {
-		if(player->room == currentSwap.origin || player->room == currentSwap.target)
+		if(player->currentLocation.room == currentSwap.origin || player->currentLocation.room == currentSwap.target)
 			display_rom(player);
 		player->printColor("^YRS: Room swap complete.\n");
 		found = true;
@@ -1217,23 +1215,23 @@ bool Config::swapIsInteresting(const MudObject* target) const {
 	if(!isSwapping())
 		return(false);
 
-	const Monster* monster = target->getConstMonster();
+	const Monster* monster = target->getAsConstMonster();
 	if(monster && monster->swapIsInteresting(currentSwap))
 		return(true);
 
-	const Player* player = target->getConstPlayer();
+	const Player* player = target->getAsConstPlayer();
 	if(player && player->swapIsInteresting(currentSwap))
 		return(true);
 
-	const Object* object = target->getConstObject();
+	const Object* object = target->getAsConstObject();
 	if(object && object->swapIsInteresting(currentSwap))
 		return(true);
 
-	const AreaRoom* aRoom = target->getConstAreaRoom();
+	const AreaRoom* aRoom = target->getAsConstAreaRoom();
 	if(aRoom && aRoom->swapIsInteresting(currentSwap))
 		return(true);
 
-	const UniqueRoom* uRoom = target->getConstUniqueRoom();
+	const UniqueRoom* uRoom = target->getAsConstUniqueRoom();
 	if(uRoom && uRoom->swapIsInteresting(currentSwap))
 		return(true);
 
@@ -1412,11 +1410,11 @@ bool Player::swap(Swap s) {
 		bound.room = s.origin;
 		found = true;
 	}
-	if(room == s.origin) {
-		room = s.target;
+	if(currentLocation.room == s.origin) {
+		currentLocation.room = s.target;
 		found = true;
-	} else if(room == s.target) {
-		room = s.origin;
+	} else if(currentLocation.room == s.target) {
+		currentLocation.room = s.origin;
 		found = true;
 	}
 
@@ -1459,7 +1457,7 @@ bool Player::swapIsInteresting(Swap s) const {
 
 	if(bound.room == s.origin || bound.room == s.target)
 		return(true);
-	if(room == s.origin || room == s.target)
+	if(currentLocation.room == s.origin || currentLocation.room == s.target)
 		return(true);
 
 	for(int i=0; i<MAX_DIMEN_ANCHORS; i++) {
@@ -1495,11 +1493,11 @@ bool Monster::swap(Swap s) {
 		jail = s.origin;
 		found = true;
 	}
-	if(room == s.origin) {
-		room = s.target;
+	if(currentLocation.room == s.origin) {
+		currentLocation.room = s.target;
 		found = true;
-	} else if(room == s.target) {
-		room = s.origin;
+	} else if(currentLocation.room == s.target) {
+		currentLocation.room = s.origin;
 		found = true;
 	}
 
@@ -1516,7 +1514,7 @@ bool Monster::swap(Swap s) {
 bool Monster::swapIsInteresting(Swap s) const {
 	if(jail == s.origin || jail == s.target)
 		return(true);
-	if(room == s.origin || room == s.target)
+	if(currentLocation.room == s.origin || currentLocation.room == s.target)
 		return(true);
 
 	if(hooks.swapIsInteresting(s))
@@ -1573,11 +1571,7 @@ bool UniqueRoom::swap(Swap s) {
 		found = true;
 	}
 
-	Monster* monster=0;
-	ctag* cp = first_mon;
-	while(cp) {
-		monster = cp->crt->getMonster();
-		cp = cp->next_tag;
+	for(Monster* monster : monsters) {
 		if(monster->swap(s))
 			found = true;
 	}
@@ -1590,16 +1584,14 @@ bool UniqueRoom::swap(Swap s) {
 		found = true;
 	}
 
-	xtag *xp = first_ext;
-	while(xp) {
-		if(xp->ext->target.room == s.origin) {
-			xp->ext->target.room = s.target;
+	for(Exit* ext : exits) {
+		if(ext->target.room == s.origin) {
+			ext->target.room = s.target;
 			found = true;
-		} else if(xp->ext->target.room == s.target) {
-			xp->ext->target.room = s.origin;
+		} else if(ext->target.room == s.target) {
+			ext->target.room = s.origin;
 			found = true;
 		}
-		xp = xp->next_tag;
 	}
 
 	if(hooks.swap(s))
@@ -1616,11 +1608,7 @@ bool UniqueRoom::swapIsInteresting(Swap s) const {
 	if(info == s.origin || info == s.target)
 		return(true);
 
-	const Monster* monster=0;
-	ctag* cp = first_mon;
-	while(cp) {
-		monster = cp->crt->getConstMonster();
-		cp = cp->next_tag;
+	for(const Monster* monster : monsters) {
 		if(monster->swapIsInteresting(s))
 			return(true);
 	}
@@ -1628,11 +1616,9 @@ bool UniqueRoom::swapIsInteresting(Swap s) const {
 	if(trapexit == s.origin || trapexit == s.target)
 		return(true);
 
-	xtag *xp = first_ext;
-	while(xp) {
-		if(xp->ext->target.room == s.origin || xp->ext->target.room == s.target)
+	for(Exit* ext : exits) {
+		if(ext->target.room == s.origin || ext->target.room == s.target)
 			return(true);
-		xp = xp->next_tag;
 	}
 
 	if(hooks.swapIsInteresting(s))
@@ -1656,23 +1642,16 @@ bool AreaRoom::swap(Swap s) {
 		found = true;
 	}
 
-	xtag *xp = first_ext;
-	while(xp) {
-		if(xp->ext->target.room == s.origin) {
-			xp->ext->target.room = s.target;
+	for(Exit* ext : exits) {
+		if(ext->target.room == s.origin) {
+			ext->target.room = s.target;
 			found = true;
-		} else if(xp->ext->target.room == s.target) {
-			xp->ext->target.room = s.origin;
+		} else if(ext->target.room == s.target) {
+			ext->target.room = s.origin;
 			found = true;
 		}
-		xp = xp->next_tag;
 	}
-
-	Monster* monster=0;
-	ctag* cp = first_mon;
-	while(cp) {
-		monster = cp->crt->getMonster();
-		cp = cp->next_tag;
+	for(Monster* monster : monsters) {
 		if(monster->swap(s))
 			found = true;
 	}
@@ -1691,18 +1670,12 @@ bool AreaRoom::swapIsInteresting(Swap s) const {
 	if(unique == s.origin || unique == s.target)
 		return(true);
 
-	xtag *xp = first_ext;
-	while(xp) {
-		if(xp->ext->target.room == s.origin || xp->ext->target.room == s.target)
+	for(Exit* ext : exits) {
+		if(ext->target.room == s.origin || ext->target.room == s.target)
 			return(true);
-		xp = xp->next_tag;
 	}
 
-	const Monster* monster=0;
-	ctag* cp = first_mon;
-	while(cp) {
-		monster = cp->crt->getConstMonster();
-		cp = cp->next_tag;
+	for(const Monster* monster : monsters) {
 		if(monster->swapIsInteresting(s))
 			return(true);
 	}

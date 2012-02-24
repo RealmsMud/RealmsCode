@@ -28,7 +28,7 @@ void Player::disarmSelf() {
 	bool removed = false;
 	if(ready[WIELD-1] && ready[WIELD-1]->getType() == WEAPON && !ready[WIELD-1]->flagIsSet(O_CURSED)) {
 		printColor("You removed %1P\n", ready[WIELD-1]);
-		broadcast(getSock(),  getRoom(), "%M removed %1P.", this, ready[WIELD-1]);
+		broadcast(getSock(),  getRoomParent(), "%M removed %1P.", this, ready[WIELD-1]);
 		unequip(WIELD);
 		removed = true;
 	}
@@ -46,7 +46,7 @@ void Player::disarmSelf() {
 			}
 		} else {
 			printColor("You removed %1P\n", ready[HELD-1]);
-			broadcast(getSock(),  getRoom(), "%M removed %1P.", this, ready[HELD-1]);
+			broadcast(getSock(),  getRoomParent(), "%M removed %1P.", this, ready[HELD-1]);
 			unequip(HELD);
 			removed = true;
 		}
@@ -64,7 +64,7 @@ void Player::disarmSelf() {
 int cmdDisarm(Player* player, cmd* cmnd) {
 	Creature* creature=0;
 	Player	*pCreature=0;
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	long	i=0, t=0;
 	int		chance=0, drop=0;
 
@@ -83,7 +83,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
 
 	creature = room->findCreature(player, cmnd->str[1], cmnd->val[1], true, true);
 	if(creature)
-		pCreature = creature->getPlayer();
+		pCreature = creature->getAsPlayer();
 	if(!creature || creature == player || (pCreature && strlen(cmnd->str[1]) < 3)) {
 		player->print("They aren't here.\n");
 		return(0);
@@ -172,7 +172,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
 		creature->print("%M tried to disarm you!\n",player);
 		broadcast(player->getSock(),  creature->getSock(), room, "%M attempts to disarm %N.\n", player, creature);
 		if(creature->isMonster())
-			creature->getMonster()->addEnemy(player);
+			creature->getAsMonster()->addEnemy(player);
 		return(0);
 	} else {
 		if(player->getClass() == CARETAKER)
@@ -206,7 +206,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
 			if(creature->isPlayer())
 				creature->unhide();
 			if(creature->isMonster())  {
-				creature->getMonster()->addEnemy(player);
+				creature->getAsMonster()->addEnemy(player);
 				//		creature->setFlag(MDRWPN);
 				creature->setFlag(M_GUARD_TREATURE);   // Can't pick up weapon until you kill mob that dropped it.
 			}
@@ -227,7 +227,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
 			if(creature->isPlayer())
 				creature->unhide();
 			else
-				creature->getMonster()->addEnemy(player);
+				creature->getAsMonster()->addEnemy(player);
 		}
 	}
 
@@ -274,7 +274,7 @@ int cmdMistbane(Player* player, cmd* cmnd) {
 
 	if(mrand(1, 100) <= chance) {
 		player->print("You imbue yourself with positive energy.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M imbues %sself with positive energy.", player, player->himHer());
+		broadcast(player->getSock(), player->getParent(), "%M imbues %sself with positive energy.", player, player->himHer());
 		player->checkImprove("mistbane", true);
 		player->setFlag(P_MISTBANE);
 		player->lasttime[LT_MISTBANE].ltime = t;
@@ -282,7 +282,7 @@ int cmdMistbane(Player* player, cmd* cmnd) {
 
 	} else {
 		player->print("You failed to imbue yourself with positive energy.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M tried to imbue %sself with positive energy.",
+		broadcast(player->getSock(), player->getParent(), "%M tried to imbue %sself with positive energy.",
 			player, player->himHer());
 		player->checkImprove("mistbane", false);
 		player->lasttime[LT_MISTBANE].ltime = t - 590L;
@@ -441,7 +441,7 @@ int cmdBerserk(Player* player, cmd* cmnd) {
 
 	if(mrand(1, 100) <= chance) {
 		player->print("Rage swells up inside you.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M goes berserk!", player);
+		broadcast(player->getSock(), player->getParent(), "%M goes berserk!", player);
 		player->checkImprove("berserk", true);
 		// TODO: SKILLS: Add a modifier based on berserk skill level
 		player->setFlag(P_BERSERKED);
@@ -457,7 +457,7 @@ int cmdBerserk(Player* player, cmd* cmnd) {
 	} else {
 		player->print("You failed to gather your strength.\n");
 		player->checkImprove("berserk", false);
-		broadcast(player->getSock(), player->getRoom(), "%M runs around trying to go berserk.", player);
+		broadcast(player->getSock(), player->getParent(), "%M runs around trying to go berserk.", player);
 		player->lasttime[LT_BERSERK].ltime = t - 590L;
 	}
 	return(0);
@@ -488,9 +488,9 @@ int cmdCircle(Player* player, cmd* cmnd) {
     if(!(target = player->findVictim(cmnd, 1, true, false, "Circle whom?\n", "You don't see that here.\n")))
 		return(0);
     
-	pTarget = target->getPlayer();
+	pTarget = target->getAsPlayer();
 
-	mTarget = target->getMonster();
+	mTarget = target->getAsMonster();
 
 	if(!player->canAttack(target))
 		return(0);
@@ -550,7 +550,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 
 	if((mTarget && mTarget->flagIsSet(M_NO_CIRCLE)) || player->isBlind())
 		chance = 1;
-	player->checkTarget(target);
+	//player->checkTarget(target);
 
 	if(player->isCt()) chance = 101;
 
@@ -573,7 +573,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 		log_immort(false, player, "%s circled %s.\n", player->name, target->name);
 
 		if(mTarget && player->isPlayer()) {
-			if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (mrand(1,100) <= (MAX(15, (mTarget->parent_rom ? mTarget->parent_rom->wander.getTraffic() : 15)/2)))) {
+			if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (mrand(1,100) <= (MAX(15, (mTarget->inUniqueRoom() ? mTarget->getUniqueRoomParent()->wander.getTraffic() : 15)/2)))) {
 				mTarget->summonMobs(player);
 				mTarget->clearFlag(M_YELLED_FOR_HELP);
 				mTarget->setFlag(M_WILL_YELL_FOR_HELP);
@@ -585,7 +585,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 		}
 
 		target->print("%M circles you.\n", player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M circles %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M circles %N.", player, target);
 		player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY - 10);
 
 		if(mTarget) {
@@ -598,7 +598,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 		player->print("You failed to circle %N.\n", target);
 		player->checkImprove("circle", false);
 		target->print("%M tried to circle you.\n", player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M tried to circle %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to circle %N.", player, target);
 		player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
 		if(mTarget) {
             // An un-successful circle gives 2.5% of the target's max health as threat
@@ -645,14 +645,14 @@ int cmdBash(Player* player, cmd* cmnd) {
    		return(0);
 
     if(creature)
-		pCreature = creature->getPlayer();
+		pCreature = creature->getAsPlayer();
 
     if(!player->canAttack(creature))
 		return(0);
 
 	if(!player->isCt()) {
 		if(!pCreature) {
-			if(creature->getMonster()->isEnemy(player)) {
+			if(creature->getAsMonster()->isEnemy(player)) {
 				player->print("Not while you're already fighting %s.\n", creature->himHer());
 				return(0);
 			}
@@ -678,7 +678,7 @@ int cmdBash(Player* player, cmd* cmnd) {
 	player->interruptDelayedActions();
 
 	if(creature->isMonster()) {
-		creature->getMonster()->addEnemy(player);
+		creature->getAsMonster()->addEnemy(player);
 	}
 
 	if(player->flagIsSet(P_LAG_PROTECTION_SET)) // Activates Lag protection.
@@ -716,7 +716,7 @@ int cmdBash(Player* player, cmd* cmnd) {
 		player->print("Your bash failed.\n");
 		player->checkImprove("bash", false);
 		creature->print("%M tried to bash you.\n", player);
-		broadcast(player->getSock(),  creature->getSock(), creature->getRoom(),
+		broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(),
 			"%M tried to bash %N.", player, creature);
 	}
 
@@ -732,7 +732,6 @@ int cmdBash(Player* player, cmd* cmnd) {
 
 int cmdKick(Player* player, cmd* cmnd) {
 	Creature* creature=0;
-	Player	*pCreature=0;
 	long	i=0, t=0;
 	int		chance=0;
 
@@ -750,8 +749,6 @@ int cmdKick(Player* player, cmd* cmnd) {
     if(!(creature = player->findVictim(cmnd, 1, true, false, "Kick whom?\n", "You don't see that here.\n")))
    		return(0);
 
-	if(creature)
-		pCreature = creature->getPlayer();
 
 	if(!player->canAttack(creature))
 		return(0);
@@ -786,7 +783,7 @@ int cmdKick(Player* player, cmd* cmnd) {
 		player->setFlag(P_LAG_PROTECTION_ACTIVE);
 
 	if(creature->isMonster()) {
-		creature->getMonster()->addEnemy(player);
+		creature->getAsMonster()->addEnemy(player);
 	}
 
 	chance = 40 + (int)((player->getSkillLevel("kick") - creature->getLevel())*10) +
@@ -817,7 +814,7 @@ int cmdKick(Player* player, cmd* cmnd) {
 		player->print("Your kick was ineffective.\n");
 		player->checkImprove("kick", false);
 		creature->print("%M tried to kick you.\n", player);
-		broadcast(player->getSock(),  creature->getSock(), creature->getRoom(), "%M tried to kick %N.", player, creature);
+		broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M tried to kick %N.", player, creature);
 	}
 
 	return(0);
@@ -877,10 +874,10 @@ void doTrack(Player* player) {
 	if(!canTrack(player))
 		return;
 
-	if(player->area_room)
-		track = player->area_room->area->getTrack(&player->area_room->mapmarker);
-	else if(player->parent_rom)
-		track = &player->parent_rom->track;
+	if(player->inAreaRoom())
+		track = player->getAreaRoomParent()->area->getTrack(&player->getAreaRoomParent()->mapmarker);
+	else if(player->inUniqueRoom())
+		track = &player->getUniqueRoomParent()->track;
 
 	chance = 25 + (int)((bonus((int)player->dexterity.getCur()) + skLevel)*5);
 
@@ -909,7 +906,7 @@ void doTrack(Player* player) {
 }
 
 void doTrack(const DelayedAction* action) {
-	doTrack(action->target->getPlayer());
+	doTrack(action->target->getAsPlayer());
 }
 
 //*********************************************************************
@@ -948,7 +945,7 @@ int cmdTrack(Player* player, cmd* cmnd) {
 	player->interruptDelayedActions();
 
 	// big rooms take longer to search
-	if(player->getRoom()->getSize() >= SIZE_HUGE) {
+	if(player->getRoomParent()->getSize() >= SIZE_HUGE) {
 		// doSearch calls unhide, no need to do it twice
 		player->unhide();
 
@@ -956,16 +953,16 @@ int cmdTrack(Player* player, cmd* cmnd) {
 
 		if(scentTrack(player)) {
 			player->print("You begin sniffing for tracks.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M sniffs for tracks.", player);
+			broadcast(player->getSock(), player->getParent(), "%M sniffs for tracks.", player);
 		} else {
 			player->print("You begin searching for tracks.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M searches for tracks.", player);
+			broadcast(player->getSock(), player->getParent(), "%M searches for tracks.", player);
 		}
 	} else {
 		if(scentTrack(player))
-			broadcast(player->getSock(), player->getRoom(), "%M sniffs for tracks.", player);
+			broadcast(player->getSock(), player->getParent(), "%M sniffs for tracks.", player);
 		else
-			broadcast(player->getSock(), player->getRoom(), "%M searches for tracks.", player);
+			broadcast(player->getSock(), player->getParent(), "%M searches for tracks.", player);
 
 		doTrack(player);
 	}
@@ -1028,7 +1025,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
 
 
 	creature->print("%M hits you with fists shrouded in darkness!\n", player);
-	broadcast(player->getSock(),  creature->getSock(), creature->getRoom(), "%M hits %N with fists shrouded in darkness!", player, creature);
+	broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M hits %N with fists shrouded in darkness!", player, creature);
 
 
 	chance = 65 + ((int)(player->getSkillLevel("harm") - creature->getLevel())*10) +
@@ -1041,7 +1038,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
 	//		(creature->isEffected("lycanthropy") && creature->getClass() >=10)) && !player->isCt())
 	//		chance = 0;
 	if(creature->isMonster())
-		creature->getMonster()->addEnemy(player);
+		creature->getAsMonster()->addEnemy(player);
 
 	if(mrand(1,100) <= chance) {
 
@@ -1065,7 +1062,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
 		player->print("Your harm touch failed!\n");
 		player->checkImprove("harm", false);
 		creature->print("%s's attack had no effect.\n", player->upHisHer());
-		broadcast(player->getSock(),  creature->getSock(), creature->getRoom(), "%M's attack failed.", player);
+		broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M's attack failed.", player);
 	}
 
 
@@ -1141,7 +1138,7 @@ int cmdBloodsacrifice(Player* player, cmd* cmnd) {
 		player->lasttime[LT_BLOOD_SACRIFICE].ltime = t - 590L;
 	}
 
-	broadcast(player->getSock(), player->getRoom(), "%M sacrifices %s blood.",
+	broadcast(player->getSock(), player->getParent(), "%M sacrifices %s blood.",
 		player, player->hisHer());
 	return(0);
 }

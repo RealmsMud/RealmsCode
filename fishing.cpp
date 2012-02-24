@@ -56,10 +56,10 @@ bool canFish(const Player* player, const Fishing** list, Object** pole) {
 		}
 	}
 
-	if(player->area_room)
-		*list = player->area_room->getFishing();
-	else if(player->parent_rom)
-		*list = player->parent_rom->getFishing();
+	if(player->inAreaRoom())
+		*list = player->getConstAreaRoomParent()->getFishing();
+	else if(player->inUniqueRoom())
+		*list = player->getConstUniqueRoomParent()->getFishing();
 
 	if(!*list || (*list)->empty()) {
 		player->printColor("You can't go fishing here!\n");
@@ -152,7 +152,7 @@ bool doFish(Player* player) {
 
 	if(!item)
 		return(failFishing(player, "No FishingItem found.", false));
-	if(list->id == "river" && player->getRoom()->isWinter())
+	if(list->id == "river" && player->getRoomParent()->isWinter())
 		return(failFishing(player, "Winter."));
 	if(day && item->isNightOnly())
 		return(failFishing(player, "Night-time only.", false));
@@ -195,13 +195,14 @@ bool doFish(Player* player) {
 		// some fish they get will be monsters
 		if(!loadMonster(item->getFish(), &monster))
 			return(failFishing(player, "Monster failed to load.", false));
-		if(player->getRoom()->countCrt() + 1 >= player->getRoom()->getMaxMobs()) {
+		if(player->getRoomParent()->countCrt() + 1 >= player->getRoomParent()->getMaxMobs()) {
 			delete monster;
 			return(failFishing(player, "Room too full.", false));
 		}
-		// do this so the print functions work properly
-		monster->parent_rom = player->parent_rom;
-		monster->area_room = player->area_room;
+		// TODO: do this so the print functions work properly
+		monster->setParent(player->getParent());
+//		monster->parent_rom = player->parent_rom;
+//		monster->area_room = player->area_room;
 	}
 
 	// they caught something!
@@ -215,7 +216,7 @@ bool doFish(Player* player) {
 		} else {
 			player->printColor("You catch %1P!\n", fish);
 		}
-		broadcast(player->getSock(), player->getRoom(), "%M catches something!", player);
+		broadcast(player->getSock(), player->getParent(), "%M catches something!", player);
 	} else {
 		if(item->getExp()) {
 			if(!player->halftolevel()) {
@@ -225,7 +226,7 @@ bool doFish(Player* player) {
 		} else {
 			player->printColor("You catch %1N!\n", monster);
 		}
-		broadcast(player->getSock(), player->getRoom(), "%M catches %1N!", player, monster);
+		broadcast(player->getSock(), player->getParent(), "%M catches %1N!", player, monster);
 	}
 
 	player->statistics.fish();
@@ -234,7 +235,7 @@ bool doFish(Player* player) {
 	if(!item->isMonster()) {
 		doGetObject(fish, player);
 	} else {
-		monster->addToRoom(player->getRoom(), 1);
+		monster->addToRoom(player->getRoomParent(), 1);
 
 		// most fish will be angry about this
 		if(item->willAggro()) {
@@ -243,14 +244,14 @@ bool doFish(Player* player) {
 			monster->addEnemy(player, true);
 
 			broadcast(hearMobAggro, "^y*** %s(R:%s) added %s to %s attack list (fishing aggro).",
-				monster->name, player->getRoom()->fullName().c_str(), player->name, monster->hisHer());
+				monster->name, player->getRoomParent()->fullName().c_str(), player->name, monster->hisHer());
 		}
 	}
 	return(true);
 }
 
 void doFish(const DelayedAction* action) {
-	doFish(action->target->getPlayer());
+	doFish(action->target->getAsPlayer());
 }
 
 //**********************************************************************
@@ -275,7 +276,7 @@ int cmdFish(Player* player, cmd* cmnd) {
 	gServer->addDelayedAction(doFish, player, 0, ActionFish, 10 - (int)(player->getSkillLevel("fishing") / 10) - mrand(0,3));
 
 	player->print("You begin fishing.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M begins fishing.", player);
+	broadcast(player->getSock(), player->getParent(), "%M begins fishing.", player);
 	return(0);
 }
 

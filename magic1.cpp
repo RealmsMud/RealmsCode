@@ -83,7 +83,6 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
 	long	i=0, t=0;
 	int		(*fn)(SpellFn);
 	int		c=0, match=0, n=0, num=0, lvl=0, reqMp=0;
-	ctag	*cp=0;
 	Player* player = creature->getPlayerMaster();
 	bool	offensive=false, self = (!player || player == creature);
 	Creature* listen = (player ? player : creature);
@@ -199,7 +198,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
 	}
 	
 
-	if(	creature->getRoom()->flagIsSet(R_NO_MAGIC) &&
+	if(	creature->getRoomParent()->flagIsSet(R_NO_MAGIC) &&
 		!creature->checkStaff("Nothing happens.\n")
 	)
 		return(CAST_RESULT_FAILURE);
@@ -256,18 +255,13 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
 
 
 	if(!player || !player->isStaff()) {
-		cp = creature->getRoom()->first_mon;
-		while(cp) {
-			if(cp->crt->flagIsSet(M_ANTI_MAGIC_AURA)) {
-				broadcast(NULL, creature->getRoom(), "^B%M glows bright blue.", cp->crt);
-				if(self)
-					listen->printColor("^yYour spell fails.\n");
-				else
-					listen->printColor("^y%M's spell fails.\n", creature);
-				return(CAST_RESULT_SPELL_FAILURE);
-			}
-			cp = cp->next_tag;
-		}
+	    if(creature->getRoomParent()->checkAntiMagic()) {
+            if(self)
+                listen->printColor("^yYour spell fails.\n");
+            else
+                listen->printColor("^y%M's spell fails.\n", creature);
+            return(CAST_RESULT_SPELL_FAILURE);
+	    }
 	}
 
 	reqMp = doMpCheck(creature, data.splno);
@@ -433,13 +427,13 @@ int cmdTeach(Player* player, cmd* cmnd) {
 	} else if(player->getClass() == BUILDER) {
 		if(!player->canBuildMonsters())
 			return(cmdNoAuth(player));
-		if(!player->checkBuilder(player->parent_rom)) {
+		if(!player->checkBuilder(player->getUniqueRoomParent())) {
 			player->print("Error: room number not in any of your alotted ranges.\n");
 			return(0);
 		}
 	}
 
-	target = player->getRoom()->findCreature(player, cmnd->str[1], cmnd->val[1], false);
+	target = player->getParent()->findCreature(player, cmnd->str[1], cmnd->val[1], false);
 
 	if(!target || target == player) {
 		player->print("You don't see that person here.\n");
@@ -555,7 +549,7 @@ int cmdTeach(Player* player, cmd* cmnd) {
 		      get_spell_name(splno));
 		player->print("Spell \"%s\" taught to %N.\n", get_spell_name(splno), target);
 		if(!player->flagIsSet(P_DM_INVIS) && !player->flagIsSet(P_INCOGNITO)) {
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M taught %N the %s spell.", player, target, get_spell_name(splno));
 		}
 	}
@@ -788,9 +782,9 @@ void doStudy(Player* player, Object* object, bool immediate) {
 
 	player->printColor("%O disintegrates!\n", object);
 	if(immediate)
-		broadcast(player->getSock(), player->getRoom(), "%M studies %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M studies %1P.", player, object);
 	else
-		broadcast(player->getSock(), player->getRoom(), "%M finishes studiying %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M finishes studiying %1P.", player, object);
 
 	player->delObj(object, true);
 	delete object;
@@ -798,7 +792,7 @@ void doStudy(Player* player, Object* object, bool immediate) {
 
 // this function is called when we are ready to finish studying the object
 void doStudy(const DelayedAction* action) {
-	Player* player = action->target->getPlayer();
+	Player* player = action->target->getAsPlayer();
 	Object* object = studyFindObject(player, &action->cmnd);
 
 	// nothing to study?
@@ -842,7 +836,7 @@ int cmdStudy(Player* player, cmd* cmnd) {
 		player->unhide();
 
 		player->printColor("You begin studying %P.\n", object);
-		broadcast(player->getSock(), player->getRoom(), "%M begins studying %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M begins studying %1P.", player, object);
 		gServer->addDelayedAction(doStudy, player, cmnd, ActionStudy, delay);
 	} else {
 		doStudy(player, object, true);
@@ -863,7 +857,6 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 	int		(*fn)(SpellFn);
 	long	i=0, t=0;
 	int		n=0, match=0, c=0;
-	ctag	*cp=0;
 	bool	dimensionalFailure=false;
 	SpellData data;
 
@@ -917,7 +910,7 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 		return(0);
 
 
-	if( (player->getRoom()->flagIsSet(R_NO_MAGIC)) ||
+	if( (player->getRoomParent()->flagIsSet(R_NO_MAGIC)) ||
 		(object->getMagicpower() - 1 < 0)
 	) {
 		player->print("Nothing happens.\n");
@@ -932,14 +925,9 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	cp = player->getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt->flagIsSet(M_ANTI_MAGIC_AURA)) {
-			broadcast(NULL,  player->getRoom(), "^B%M glows bright blue.", cp->crt);
-			player->print("Nothing happens.\n");
-			return(0);
-		}
-		cp = cp->next_tag;
+	if(player->getRoomParent()->checkAntiMagic()) {
+	    player->print("Nothing happens.\n");
+	    return(0);
 	}
 
 	player->unhide();
@@ -1016,10 +1004,10 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 int endConsume(Object* object, Player* player, bool forceDelete=false) {
 	if(object->flagIsSet(O_EATABLE)) {
 		player->print("Food eaten.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M eats %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M eats %1P.", player, object);
 	} else {
 		player->print("Potion drank.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M drinks %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M drinks %1P.", player, object);
 	}
 
 	if(!forceDelete)
@@ -1046,7 +1034,7 @@ int consume(Player* player, Object* object, cmd* cmnd) {
 	fn = 0;
 
 	if(player->isStaff() && object->getType() != POTION && !strcmp(cmnd->str[0], "eat")) {
-		broadcast(player->getSock(), player->getRoom(), "%M eats %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M eats %1P.", player, object);
 		player->printColor("You ate %P.\n", object);
 
 		player->delObj(object);
@@ -1091,8 +1079,8 @@ int consume(Player* player, Object* object, cmd* cmnd) {
 		return(endConsume(object, player, true));
 	}
 
-	if(	player->getRoom()->flagIsSet(R_NO_POTION) ||
-		player->getRoom()->flagIsSet(R_LIMBO)
+	if(	player->getRoomParent()->flagIsSet(R_NO_POTION) ||
+		player->getRoomParent()->flagIsSet(R_LIMBO)
 	) {
 		if(!player->checkStaff("%O starts to %s before you %s it.\n",
 			object, eat ? "get moldy" : "evaporate", eat ? "eat" : "drink"))
@@ -1198,7 +1186,6 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 	int		(*fn)(SpellFn);
 	bool	dimensionalFailure=false;
 	int		match=0, n=0, c=0;
-	ctag	*cp=0;
 	SpellData data;
 
 	if(!player->ableToDoCommand())
@@ -1232,7 +1219,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 	}
 
 	if(!object) {
-		object = findObject(player, player->getRoom()->first_obj, cmnd);
+		object = findObject(player, player->getRoomParent()->first_obj, cmnd);
 		if(object && !object->flagIsSet(O_CAN_USE_FROM_FLOOR)) {
 			player->print("You don't have that.\n");
 			return(0);
@@ -1257,7 +1244,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(	(player->getRoom()->flagIsSet(R_NO_MAGIC)) ||
+	if(	(player->getRoomParent()->flagIsSet(R_NO_MAGIC)) ||
 		(object->getMagicpower() < 1)
 	) {
 		player->print("Nothing happens.\n");
@@ -1274,14 +1261,9 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 
 	player->unhide();
 
-	cp = player->getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt->flagIsSet(M_ANTI_MAGIC_AURA)) {
-			broadcast(NULL, player->getRoom(), "^B%M glows bright blue.", cp->crt);
-			player->printColor("%O sputters and smokes.\n", object);
-			return(0);
-		}
-		cp = cp->next_tag;
+	if(player->getRoomParent()->checkAntiMagic()) {
+        player->printColor("%O sputters and smokes.\n", object);
+        return(0);
 	}
 
 	data.splno = object->getMagicpower() - 1;
@@ -1378,7 +1360,7 @@ void recallLog(Player* player, bstring name, bstring cname, bstring room) {
 	if(cname != "")
 		log << "(out of bag: " << cname << ") ";
 	log << "due to lag protection. HP: " << player->hp.getCur() << "/" << player->hp.getMax()
-		<< ". Room: " << room << " to " << player->getRoom()->fullName() << ".";
+		<< ". Room: " << room << " to " << player->getRoomParent()->fullName() << ".";
 
 	broadcast(isWatcher, "^C%s", log.str().c_str());
 	logn("log.lprotect", "%s", log.str().c_str());
@@ -1395,7 +1377,7 @@ int recallCheckBag(Player* player, Object *cont, cmd* cmnd, int show, int log) {
 	Object	*object=NULL;
 	otag	*cop=0, *prev=0;
 	int		drank=0, first=1;
-	bstring room = player->getRoom()->fullName(), name = "";
+	bstring room = player->getRoomParent()->fullName(), name = "";
 
 	prev = cont->first_obj;
 	cop = cont->first_obj;
@@ -1434,7 +1416,7 @@ int useRecallPotion(Player* player, int show, int log) {
 	Object	*object=NULL;
 	otag	*op=0;
 	int		i=0;
-	bstring room = player->getRoom()->fullName(), name = "";
+	bstring room = player->getRoomParent()->fullName(), name = "";
 
 	if(player->flagIsSet(P_ANCHOR)) {
 		player->print("%s will not work while you are protected by a dimensional anchor.\n",
@@ -1508,12 +1490,12 @@ int useRecallPotion(Player* player, int show, int log) {
 //*********************************************************************
 
 void logCast(Creature* caster, Creature* target, bstring spell, bool dmToo) {
-	Player* pCaster = caster->getPlayer();
+	Player* pCaster = caster->getAsPlayer();
 	if(!pCaster || !pCaster->isStaff() || (!dmToo && pCaster->isDm()))
 		return;
 	log_immort(true, pCaster, "%s cast an %s spell on %s in room %s.\n",
 		caster->name, spell.c_str(), target ? target->name : "self",
-		caster->getRoom()->fullName().c_str());
+		caster->getRoomParent()->fullName().c_str());
 }
 
 //*********************************************************************
@@ -1542,14 +1524,14 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
 
 		if(spellData->how == CAST) {
 			player->print("You cast %s %s spell.\n", article, spell);
-			broadcast(player->getSock(), player->getRoom(), "%M casts %s %s spell.", player, article, spell);
+			broadcast(player->getSock(), player->getParent(), "%M casts %s %s spell.", player, article, spell);
 		}
 	} else {
 		if(noPotion(player, spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			player->print("You don't see that player here.\n");
@@ -1570,7 +1552,7 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
 			return(0);
 		}
 
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts %s %s spell on %N.",
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts %s %s spell on %N.",
 			player, article, spell, target);
 		target->print("%M casts %s on you.\n", player, spell);
 		player->print("You cast %s %s spell on %N.\n", article, spell, target);
@@ -1594,7 +1576,7 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
 
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus())
+		if(player->getRoomParent()->magicBonus())
 			player->print("The room's magical properties increase the power of your spell.\n");
 		if(!target->addEffect(effect, duration, strength, player, true))
 			return(0);
@@ -1670,7 +1652,7 @@ int cmdTransmute(Player* player, cmd* cmnd) {
 	if(spell_fail(player, CAST)) {
 		int dmg = 0;
 		player->print("The wand glows bright red and explodes!\n");
-		broadcast(player->getSock(), player->getRoom(), "A wand explodes in %s's hand!\n", player->name);
+		broadcast(player->getSock(), player->getParent(), "A wand explodes in %s's hand!\n", player->name);
 
 		if(player->chkSave(SPL, player, -1)) {
 			dmg = mrand(5, 10);
@@ -1715,7 +1697,7 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
 		target = player;
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You are blind and can no longer see.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts blindness on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts blindness on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION)
 			player->print("Everything goes dark.\n");
 
@@ -1724,7 +1706,7 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(noPotion(player, spellData))
 			return(0);
 
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target || target == player) {
 			player->print("That's not here.\n");
@@ -1739,19 +1721,19 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(target->chkSave(SPL, player, 0) && !player->isCt()) {
 			target->print("%M tried to cast a blind spell on you!\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M tried to cast a blind spell on %N!", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a blind spell on %N!", player, target);
 			player->print("Your spell fizzles.\n");
 			return(0);
 		}
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Blindness spell cast on %s.\n", target->name);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a blindness spell on %N.", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a blindness spell on %N.", player, target);
 			target->print("%M casts a blindness spell on you.\n", player);
 		}
 
 		if(target->isMonster()) {
-			target->getMonster()->addEnemy(player);
+			target->getAsMonster()->addEnemy(player);
 		}
 	}
 	if(target->isPlayer()) {
@@ -1759,7 +1741,7 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
 			target->setFlag(P_DM_BLINDED);
 	}
 	if(spellData->how == CAST && player->isPlayer())
-		player->getPlayer()->statistics.offensiveCast();
+		player->getAsPlayer()->statistics.offensiveCast();
 	if(!player->isCt())
 		target->addEffect("blindness", 180 - (target->constitution.getCur()/10), 1, player, true, player);
 	else
@@ -1776,7 +1758,7 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
 // sucessful.
 
 int spell_fail(Creature* player, int how) {
-	Player	*pPlayer = player->getPlayer();
+	Player	*pPlayer = player->getAsPlayer();
 	int		chance=0, n=0;
 
 	if(how == POTION)
@@ -1877,13 +1859,13 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Cast judgement on yourself
 	if(cmnd->num == 2) {
-		target = player->getPlayer();
+		target = player->getAsPlayer();
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You pass judgement upon yourself.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts word of Judgement on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts word of Judgement on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION) {
 			player->print("You find yourself elsewhere.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M drinks a potion of judgement and disapears.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M drinks a potion of judgement and disapears.", player, player->himHer());
 		}
 	// Cast word of judgement on another player
 	} else {
@@ -1891,7 +1873,7 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findPlayer(player, cmnd, 2);
+		target = player->getParent()->findPlayer(player, cmnd, 2);
 		if(!target) {
 			player->print("That player is not here.\n");
 			return(0);
@@ -1901,7 +1883,7 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You pass judgemet on %N.\n", target);
 			target->print("%M passes judgement on you.\nYou have been judged.\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M passes judgement on %N.", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M passes judgement on %N.", player, target);
 
 			logCast(player, target, "judgement", true);
 
@@ -1932,7 +1914,7 @@ int cmdBarkskin(Player *player, cmd *cmnd) {
 		player->print("You don't know how to turn your skin to bark.\n");
 		return(0);
 	}
-	if(player->getRoom()->flagIsSet(R_ETHEREAL_PLANE)) {
+	if(player->getRoomParent()->flagIsSet(R_ETHEREAL_PLANE)) {
 		player->print("That is not possible here.\n");
 		return(0);
 	}
@@ -1963,7 +1945,7 @@ int cmdBarkskin(Player *player, cmd *cmnd) {
 	player->smashInvis();
 	player->unhide();
 
-	broadcast(player->getSock(), player->getRoom(), "%M's skin turns to bark.", player);
+	broadcast(player->getSock(), player->getParent(), "%M's skin turns to bark.", player);
 
 	adjustment = mrand(3,6);
 	player->addEffect("barkskin", 120, adjustment, player, true, player);
@@ -1985,10 +1967,7 @@ int cmdBarkskin(Player *player, cmd *cmnd) {
 int cmdCommune(Player *player, cmd *cmnd) {
 	long	i=0, t = time(0), first_exit=0;
 	int		chance=0;
-	UniqueRoom*	uRoom=0;
-	AreaRoom* aRoom=0;
-	xtag	*xp=0;
-	ctag	*cp=0;
+	BaseRoom* newRoom=0;
 
 	player->clearFlag(P_AFK);
 
@@ -2001,7 +1980,7 @@ int cmdCommune(Player *player, cmd *cmnd) {
 		return(0);
 	}
 
-	if(!player->getRoom()->isOutdoors()) {
+	if(!player->getRoomParent()->isOutdoors()) {
 		player->print("You can only commune with nature while outdoors.\n");
 		return(0);
 	}
@@ -2025,92 +2004,74 @@ int cmdCommune(Player *player, cmd *cmnd) {
 		player->print("You successfully commune with nature.\n");
 		player->print("You sense any living creatures in your surroundings.\n");
 
-		xp = player->getRoom()->first_ext;
 		first_exit = 1;
-
-		while(xp) {
-			if(	xp->ext->flagIsSet(X_DESCRIPTION_ONLY) ||
-				xp->ext->flagIsSet(X_SECRET) ||
-				xp->ext->isConcealed(player) ||
-				xp->ext->flagIsSet(X_STAFF_ONLY) ||
-				xp->ext->flagIsSet(X_LOOK_ONLY) ||
-				xp->ext->flagIsSet(X_CLOSED) ||
-				xp->ext->flagIsSet(X_NO_SEE)
-			) {
-				xp = xp->next_tag;
+		for(Exit* ext : player->getRoomParent()->exits) {
+			if(	ext->flagIsSet(X_DESCRIPTION_ONLY) ||
+				ext->flagIsSet(X_SECRET) ||
+				ext->isConcealed(player) ||
+				ext->flagIsSet(X_STAFF_ONLY) ||
+				ext->flagIsSet(X_LOOK_ONLY) ||
+				ext->flagIsSet(X_CLOSED) ||
+				ext->flagIsSet(X_NO_SEE) )
+			{
 				continue;
 			}
 
 			if(!first_exit)
 				player->print("\n");
-			player->print("%s:\n", xp->ext->name);
+			player->print("%s:\n", ext->name);
 			first_exit = 0;
 
-			if(!Move::getRoom(player, xp->ext, &uRoom, &aRoom, true)) {
-				xp = xp->next_tag;
+			if(!Move::getRoom(player, ext, &newRoom, true)) {
 				continue;
 			}
 
-			if(uRoom)
-				cp = uRoom->first_ply;
-			else
-				cp = aRoom->first_ply;
-			while(cp) {
-				if(cp->crt->isUndead() && !player->isCt()) {
-					cp = cp->next_tag;
+			PlayerSet::iterator pIt;
+			PlayerSet::iterator pEnd;
+			pIt = newRoom->players.begin();
+			pEnd = newRoom->players.end();
+			Player* ply;
+			while(pIt != pEnd) {
+			    ply = (*pIt++);
+				if(ply->isUndead() && !player->isCt())
 					continue;
-				}
 
-				if(cp->crt->flagIsSet(P_DM_INVIS) && !player->isDm()) {
-					cp = cp->next_tag;
+				if(ply->flagIsSet(P_DM_INVIS) && !player->isDm())
 					continue;
-				}
 
-				if(cp->crt->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt()) {
-					cp = cp->next_tag;
+				if(ply->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt())
 					continue;
-				}
 
-				player->print("   %M\n", cp->crt);
-				cp = cp->next_tag;
+				player->print("   %M\n", ply);
 			}
 
-			if(uRoom)
-				cp = uRoom->first_mon;
-			else
-				cp = aRoom->first_mon;
-			while(cp) {
-				if(cp->crt->isUndead() && !player->isCt()) {
-					cp = cp->next_tag;
+			MonsterSet::iterator mIt;
+			MonsterSet::iterator mEnd;
+			mIt = newRoom->monsters.begin();
+			mEnd = newRoom->monsters.end();
+			Monster* mons;
+			while(mIt != mEnd) {
+			    mons = (*mIt++);
+				if(mons->isUndead() && !player->isCt())
 					continue;
-				}
 
-				if(cp->crt->isPet() && !player->isCt()) {
-					cp = cp->next_tag;
+				if(mons->isPet() && !player->isCt())
 					continue;
-				}
 
-				if(cp->crt->isUndead() && !player->isCt()) {
-					cp = cp->next_tag;
+				if(mons->isUndead() && !player->isCt())
 					continue;
-				}
 
-				if(cp->crt->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt()) {
-					cp = cp->next_tag;
+				if(mons->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt())
 					continue;
-				}
 
-				player->print("   %s\n", cp->crt->name);
-				cp = cp->next_tag;
+				player->print("   %s\n", mons->name);
 			}
-
-			xp = xp->next_tag;
 		}
 		player->checkImprove("commune", true);
 		player->lasttime[LT_PRAY].interval = 60L;
 	} else {
 		player->print("You failed to commune with nature.\n");
-		broadcast(player->getSock(), player->getRoom(), "%M tries to commune with nature.", player);
+		broadcast(player->getSock(), player->getParent(), "%M tries to commune with nature.", player);
 		player->checkImprove("commune", false);
 		player->lasttime[LT_PRAY].ltime = 10L;
 	}
@@ -2125,7 +2086,7 @@ int cmdCommune(Player *player, cmd *cmnd) {
 
 bool isMageLich(const Creature* creature) {
 	if(	creature->getClass() != MAGE &&
-		(creature->isPlayer() && creature->getConstPlayer()->getSecondClass() != MAGE) &&
+		(creature->isPlayer() && creature->getAsConstPlayer()->getSecondClass() != MAGE) &&
 		creature->getClass() != LICH &&
 		!creature->isCt()
 	) {

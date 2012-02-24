@@ -438,12 +438,12 @@ public:
 	bstring userAgent;
 	bstring defaultArea;	// loaded from catrefinfo file
 
-#ifdef SQL_LOGGER
+//#ifdef SQL_LOGGER
 	bstring logDbType;
 	bstring logDbUser;
 	bstring logDbPass;
 	bstring logDbDatabase;
-#endif
+//#endif
 
 	// Lottery
 private:

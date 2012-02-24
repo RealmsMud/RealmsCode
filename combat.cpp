@@ -28,7 +28,7 @@
 // comes in as a creature, our job to turn into a player
 
 int Creature::doLagProtect() {
-	Player	*pThis = getPlayer();
+	Player	*pThis = getAsPlayer();
 
 	if(!pThis)
 		return(0);
@@ -50,8 +50,6 @@ int Monster::updateCombat() {
 	Creature* target=0;
 	Player*	pTarget=0;
 	Monster* mTarget=0;
-	//ctag*	cp=0, *amp=0;
-	ctag   *amp=0;
 	char	atk[30];
 	int		n=1, rtn=0, yellchance=0, num=0, breathe=0;
 	int		x=0;
@@ -60,7 +58,7 @@ int Monster::updateCombat() {
 	bool	willCast=false, antiMagic=false, isCharmed=false;
 
 	ASSERTLOG(this);
-	room = getRoom();
+	room = getRoomParent();
 
 	strcpy(atk, "");
 
@@ -69,8 +67,8 @@ int Monster::updateCombat() {
 	if(!target) return(0);
 
 	// is this a player?
-	pTarget = target->getPlayer();
-	mTarget = target->getMonster();
+	pTarget = target->getAsPlayer();
+	mTarget = target->getAsMonster();
 
 	// If we're fighting a pet, see if we'll ignore the pet and attack a player instead
 	if(target->isPet() && target->getMaster()) {
@@ -86,7 +84,7 @@ int Monster::updateCombat() {
 	if(	pTarget &&
 		isPet() &&
 		!getMaster()->isCt() &&
-		getRoom()->isPkSafe()
+		getRoomParent()->isPkSafe()
 	)
 		return(0);
 
@@ -146,19 +144,8 @@ int Monster::updateCombat() {
 
 	if(mrand(1,100) < n) {
 		willCast = true;
-		amp = room->first_mon;
-		while(amp) {
-			if(amp->crt == this) {
-				amp = amp->next_tag;
-				continue;
-			}
-			if(amp->crt->flagIsSet(M_ANTI_MAGIC_AURA)) {
-				broadcast(NULL, room, "^B%M glows bright blue.", amp->crt);
-				antiMagic = true;
-				break;
-			}
-			amp = amp->next_tag;
-		}
+		if(room->checkAntiMagic(this))
+		    antiMagic = true;
 	}
 	if(isUndead() && target->isEffected("undead-ward"))
 		willCast = false;
@@ -175,7 +162,7 @@ int Monster::updateCombat() {
 	if(	willCast &&
 		flagIsSet(M_CAN_CAST) &&
 		canSpeak() &&
-		!getRoom()->flagIsSet(R_NO_MAGIC) &&
+		!getRoomParent()->flagIsSet(R_NO_MAGIC) &&
 		!antiMagic &&
 		!isCharmed
 	) {
@@ -246,7 +233,7 @@ int Monster::updateCombat() {
 	}
 
 	if(	flagIsSet(M_YELLED_FOR_HELP) &&
-		(mrand(1,100) < (MAX(15, parent_rom ? parent_rom->wander.getTraffic() : 15))) &&
+		(mrand(1,100) < (MAX(15, inUniqueRoom() ? getUniqueRoomParent()->wander.getTraffic() : 15))) &&
 		!flagIsSet(M_WILL_YELL_FOR_HELP)
 	) {
 		setFlag(M_WILL_YELL_FOR_HELP);
@@ -504,7 +491,7 @@ int Monster::zapMp(Creature *victim, SpecialAttack* attack) {
 
 	victim->printColor("^M%M zaps your magical talents!\n", this);
 	victim->printColor("%M stole %d magic points!\n", this, n);
-	broadcast(victim->getSock(), victim->getSock(), victim->getRoom(), "^M%M zapped %N!", this, victim);
+	broadcast(victim->getSock(), victim->getSock(), victim->getRoomParent(), "^M%M zapped %N!", this, victim);
 
 	if(victim->chkSave(MEN, this, 0))
 		n /= 2;
@@ -573,9 +560,9 @@ int Monster::steal(Player *victim) {
 		addObj(object);
 
 		logn("log.msteal", "%s(L%d) stole %s from %s(L%d) in room %s.\n",
-			name, level, object->name, victim->name, victim->getLevel(), getRoom()->fullName().c_str());
+			name, level, object->name, victim->name, victim->getLevel(), getRoomParent()->fullName().c_str());
 	} else {
-		broadcast(victim->getSock(), getRoom(), "%M tried to steal from %N.", this, victim);
+		broadcast(victim->getSock(), getRoomParent(), "%M tried to steal from %N.", this, victim);
 		victim->printColor("^Y%M tried to steal %P^Y from you.\n", this, object);
 	}
 	return(1);
@@ -595,7 +582,7 @@ void Monster::berserk() {
 	num = (int)strength.getCur()+50;
 	strength.setCur(MIN(280, num));
 
-	broadcast(NULL, getRoom(), "^R%M goes berserk!", this);
+	broadcast(NULL, getRoomParent(), "^R%M goes berserk!", this);
 	return;
 }
 
@@ -618,7 +605,7 @@ int Monster::summonMobs(Creature *victim) {
 	if(!found)
 		return(0);
 
-	if(getRoom()->countCrt() >= getRoom()->getMaxMobs())
+	if(getRoomParent()->countCrt() >= getRoomParent()->getMaxMobs())
 		return(0);
 
 	found = mrand(1, found)-1;
@@ -641,13 +628,13 @@ int Monster::summonMobs(Creature *victim) {
 			return(0);
 
 		gServer->addActive(monster);
-		monster->addToRoom(victim->getRoom());
+		monster->addToRoom(victim->getRoomParent());
 		monster->addEnemy(victim);
 
 		if(victim->getMaster() && victim->isMonster())
 			monster->addEnemy(victim->getMaster());
 
-		broadcast(getSock(), victim->getRoom(), "%M runs to the aid of %N!", monster, this);
+		broadcast(getSock(), victim->getRoomParent(), "%M runs to the aid of %N!", monster, this);
 
 		monster->setFlag(M_WILL_ASSIST);
 		monster->setFlag(M_WILL_BE_ASSISTED);
@@ -680,7 +667,7 @@ int check_for_yell(Monster *monster, Creature* target) {
 
 	if(monster->flagIsSet(M_WILL_YELL_FOR_HELP) && ((mrand(1,100) < yellchance) || (monster->hp.getCur() <= monster->hp.getCur()/5))) {
 		if(!monster->flagIsSet(M_WILL_BE_HELPED))
-			broadcast(monster->getSock(), target->getRoom(), "%M yells for help!", monster);
+			broadcast(monster->getSock(), target->getRoomParent(), "%M yells for help!", monster);
 		monster->setFlag(M_YELLED_FOR_HELP);
 		monster->setFlag(M_WILL_BE_ASSISTED);
 		monster->clearFlag(M_WILL_YELL_FOR_HELP);
@@ -696,8 +683,7 @@ int check_for_yell(Monster *monster, Creature* target) {
 //*********************************************************************
 
 int Player::lagProtection() {
-	xtag	*xp=0;
-	BaseRoom* room = getRoom();
+	BaseRoom* room = getRoomParent();
 	int		t=0, idle=0;
 
 	// Can't do anything while unconsious!
@@ -749,49 +735,26 @@ int Player::lagProtection() {
 		}
 	}
 
-	xp = room->first_ext;
-	while(xp) {
+	for(Exit* ext : room->exits) {
 		// Opens all unlocked exits.
-		if(!xp->ext->flagIsSet(X_LOCKED))
-			xp->ext->clearFlag(X_CLOSED);
-		xp = xp->next_tag;
+		if(!ext->flagIsSet(X_LOCKED))
+			ext->clearFlag(X_CLOSED);
 	}
 
-	//while(attempts < 6) {
-	//	attempts++;
-		setFlag(P_LAG_PROTECTION_OPERATING);
-		if(flee()) {
-			if(isStaff()) {
-				broadcast(::isStaff, "^C### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.",
-					name, level, hp.getCur(), hp.getMax(), getRoom()->fullName().c_str());
-			} else {
-				broadcast(::isWatcher, "^C### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.",
-					name, level, hp.getCur(), hp.getMax(), getRoom()->fullName().c_str());
-			}
-			logn("log.lprotect","### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.\n",
-				name, level, hp.getCur(), hp.getMax(), getRoom()->fullName().c_str());
-/*
-			attempts = 6;
-			cp = first_fol;
-			while(cp) {
-				if(!inSameRoom(cp->crt))
-					if(cp->crt->isMonster() && cp->crt->isPet()) {
-						Monster* monster = cp->crt->getMonster();
-						if(cp)
-							broadcast(getSock(), room, "%M flees to the %s with its master.", monster, xp->ext->name);
-						cp->crt->first_enm = NULL;
-						gServer->delActive(monster);
-						monster->deleteFromRoom();
-						monster->addToRoom(getRoom());
-						gServer->addActive(monster);
-					}
-				cp = cp->next_tag;
-			}
-*/
-
-			return(1);
+	setFlag(P_LAG_PROTECTION_OPERATING);
+	if(flee()) {
+		if(isStaff()) {
+			broadcast(::isStaff, "^C### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.",
+				name, level, hp.getCur(), hp.getMax(), getRoomParent()->fullName().c_str());
+		} else {
+			broadcast(::isWatcher, "^C### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.",
+				name, level, hp.getCur(), hp.getMax(), getRoomParent()->fullName().c_str());
 		}
-	//}
+		logn("log.lprotect","### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.\n",
+			name, level, hp.getCur(), hp.getMax(), getRoomParent()->fullName().c_str());
+
+		return(1);
+	}
 	return(0);
 }
 
@@ -815,7 +778,7 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
 	long	j=0, t=0;
 
 
-	pCreature = getPlayer();
+	pCreature = getAsPlayer();
 
 	if(target && target != this)
 		opposing = 1;
@@ -979,11 +942,11 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
 	}
 
 	if(isPlayer())
-		getPlayer()->statistics.attemptSave();
+		getAsPlayer()->statistics.attemptSave();
 	if(roll <= chance && natural == 1) {
 		// save made
 		if(isPlayer())
-			getPlayer()->statistics.save();
+			getAsPlayer()->statistics.save();
 		return(1);
 	}
 	return(0);
@@ -996,23 +959,12 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
 // other creature in the vicinity. -TC
 
 void Creature::clearAsEnemy() {
-	ctag		*cp=0;
-
-	if(!getRoom())
+	if(!getRoomParent())
 		return;
 
-	cp = getRoom()->first_mon;
-	Monster *mTarget = 0;
-	while(cp) {
-		if(!cp->crt) {
-			cp = cp->next_tag;
-			continue;
-		}
-		mTarget = cp->crt->getMonster();
-		mTarget->clearEnemy(this);
-		cp = cp->next_tag;
+	for(Monster* mons : getRoomParent()->monsters) {
+	    mons->clearEnemy(this);
 	}
-
 	return;
 }
 
@@ -1070,9 +1022,9 @@ void Player::checkArmor(int wear) {
 		printColor("Your %s fell apart.\n", ready[wear-1]->name);
 		if(ready[wear-1]->flagIsSet(O_CURSED)) {
 			logn("log.curseabuse", "%s's %s fell apart. Room: %s\n",
-				name, ready[wear-1], getRoom()->fullName().c_str());
+				name, ready[wear-1], getRoomParent()->fullName().c_str());
 		}
-		broadcast(getSock(), getRoom(), "%M's %s fell apart.", this, ready[wear-1]->name);
+		broadcast(getSock(), getRoomParent(), "%M's %s fell apart.", this, ready[wear-1]->name);
 
 		Limited::remove(this, ready[wear-1]);
 		unequip(wear, Limited::isLimited(ready[wear-1]) ? UNEQUIP_DELETE : UNEQUIP_ADD_TO_INVENTORY);
@@ -1085,23 +1037,15 @@ void Player::checkArmor(int wear) {
 //*********************************************************************
 
 Creature *findFirstEnemyCrt(Creature *crt, Creature *pet) {
-	ctag	*cp=0;
-
 	if(!pet->getMaster())
 		return(crt);
 
-	cp = pet->getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt == pet) {
-			cp = cp->next_tag;
-			continue;
-		}
+	for(Monster* mons : pet->getRoomParent()->monsters) {
+	    if(mons == pet)
+	        continue;
+	    if(mons->getAsMonster()->isEnemy(pet->getMaster()) && !strcmp(mons->name, crt->name))
+	        return(mons);
 
-		if(cp->crt->getMonster()->isEnemy(pet->getMaster()) && !strcmp(cp->crt->name, crt->name)) {
-			return(cp->crt);
-		}
-
-		cp = cp->next_tag;
 	}
 
 	return(crt);
@@ -1120,16 +1064,17 @@ int Creature::doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, Dam
 	return(doDamage(target, dmg, shouldCheckDie, dmgType, freeTarget));
 }
 int Creature::doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget) {
-	Player* pTarget = target->getPlayer();
-	Monster* mTarget = target->getMonster();
-	Player* pThis = getPlayer();
-	Monster* mThis = getMonster();
-
 	ASSERTLOG( target );
+
+	Player* pTarget = target->getAsPlayer();
+	Monster* mTarget = target->getAsMonster();
+	Player* pThis = getAsPlayer();
+	Monster* mThis = getAsMonster();
+
 	int m = MIN(target->hp.getCur(), dmg);
 
 	target->hp.decrease(dmg);
-	checkTarget(target);
+	//checkTarget(target);
 	if(mTarget) {
 		mTarget->lasttime[LT_AGGRO_ACTION].ltime = time(0);
 		mTarget->adjustThreat(this, m);
@@ -1181,11 +1126,11 @@ void Creature::simultaneousDeath(Creature* attacker, Creature* target, bool free
 
 	// clean up anything that might still need cleaning
 	if(freeTarget && target->isMonster()) {
-		target->getMonster()->finishMobDeath(attacker);
+		target->getAsMonster()->finishMobDeath(attacker);
 		target = null;
 	}
 	if(freeAttacker && attacker->isMonster()) {
-		attacker->getMonster()->finishMobDeath(target);
+		attacker->getAsMonster()->finishMobDeath(target);
 		attacker = null;
 	}
 }
@@ -1197,8 +1142,8 @@ void Creature::simultaneousDeath(Creature* attacker, Creature* target, bool free
 // Return: true if they are poisoned, false if they aren't
 
 bool Monster::tryToPoison(Creature* target, SpecialAttack* attack) {
-	Player* pTarget = target->getPlayer();
-	BaseRoom* room=getRoom();
+	Player* pTarget = target->getAsPlayer();
+	BaseRoom* room=getRoomParent();
 	int saveBonus = 0;
 	if(attack)
 		saveBonus = attack->saveBonus;
@@ -1250,7 +1195,7 @@ bool Monster::tryToPoison(Creature* target, SpecialAttack* attack) {
 // Return: true if they have been petrified, false if they haven't
 
 bool Monster::tryToStone(Creature* target, SpecialAttack* attack) {
-	Player* pTarget = target->getPlayer();
+	Player* pTarget = target->getAsPlayer();
 	int		bns=0;
 	bool	avoid=false;
 
@@ -1277,11 +1222,11 @@ bool Monster::tryToStone(Creature* target, SpecialAttack* attack) {
 	bns = MAX(0,MIN(bns,75));
 
 	if(pTarget->isStaff() || avoid || pTarget->chkSave(DEA, pTarget, bns)) {
-		broadcast(getSock(), getRoom(), "%M tried to petrify %N!", this, pTarget);
+		broadcast(getSock(), getRoomParent(), "%M tried to petrify %N!", this, pTarget);
 		target->printColor("^c%M tried to petrify you!^x\n", this);
 	} else {
 		pTarget->addEffect("petrification", 0, 0, NULL, true, this);
-		broadcast(target->getSock(), getRoom(), "%M turned %N to stone!", this, pTarget);
+		broadcast(target->getSock(), getRoomParent(), "%M turned %N to stone!", this, pTarget);
 		target->printColor("^D%M turned you to stone!^x\n", this);
 		pTarget->clearAsEnemy();
 		pTarget->removeFromGroup();
@@ -1311,7 +1256,7 @@ bool Monster::tryToDisease(Creature* target, SpecialAttack* attack) {
 	if(target->immuneToDisease()) {
 		target->printColor("^c%M tried to infect you!\n", this);
 		broadcastGroup(false, target, "%M tried to infect %N.\n", this, target, 1);
-		broadcast(getSock(), target->getSock(), getRoom(), "%M tried to infect %N.", this, target);
+		broadcast(getSock(), target->getSock(), getRoomParent(), "%M tried to infect %N.", this, target);
 		return(false);
 	}
 
@@ -1321,7 +1266,7 @@ bool Monster::tryToDisease(Creature* target, SpecialAttack* attack) {
 	if(!target->chkSave(POI, this, bns)) {
 		target->printColor("^D%M infects you.\n", this);
 		broadcastGroup(false, target, "%M infects %N.\n", this, target, 1);
-		broadcast(getSock(), target->getSock(), getRoom(), "%M infected %N.", this, target);
+		broadcast(getSock(), target->getSock(), getRoomParent(), "%M infected %N.", this, target);
 		if(isPet())
 			getMaster()->printColor("^D%M infects %N.\n", this, target);
 		else

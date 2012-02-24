@@ -193,7 +193,7 @@ typedef std::map<bstring, Skill*> SkillMap;
 //						Creature
 //*********************************************************************
 
-class Creature: public MudObject, public Streamable {
+class Creature: public virtual MudObject, public Streamable, public Container, public Containable {
 
 protected:
 	void CopyCommon(const Creature& cr);
@@ -238,6 +238,7 @@ public:
 	Creature(Creature& cr);
 	Creature(const Creature& cr);
 	Creature& operator=(const Creature& cr);
+	//virtual bool operator< (const MudObject& t) const = 0;
 	virtual ~Creature() {};
 
 //	Monster* getMonster();
@@ -309,22 +310,13 @@ public:
 	int afterProf;
 	Dice damage;
 	Money coins;
-	CatRef room;
+	//CatRef room;
 #define 				NUMHITS quests[0]
 	short questnum; // Quest fulfillment number (M)
 	Object *ready[MAXWEAR];// Worn/readied items
-//	struct Creature *following; // creature being followed
-//	ctag *first_fol; // List of followers
 	otag *first_obj; // List of inventory
 	//etag *first_enm; // List of enemies
 	ttag *first_tlk; // List of talk responses
-
-	// room creature is in
-	// parent_rom is a unique room because of the way the code was
-	// written. getRoom() is used when we don't care if its a unique
-	// room or not
-	UniqueRoom *parent_rom;
-	AreaRoom *area_room;
 
 	struct saves saves[6]; // Saving throws struct. POI, DEA, BRE, MEN, SPL, x, x
 	char languages[16];
@@ -350,12 +342,13 @@ public:
 	struct spellTimer spellTimer[16]; // spell effect timers (specific to magic)
 	char misc[21]; // miscellaneous space
 
-	//std::list<EffectInfo*> effects; // List of all effects on this creature
+	//EffectList effects; // List of all effects on this creature
 	Timer attackTimer;
 	std::list<SpecialAttack*> specials; // List of all special attack this creature has
 	std::list<bstring> minions; // vampire minions
 
 
+	Location currentLocation;
 	Location previousRoom; // last room they were in
 	void setPreviousRoom();
 
@@ -683,7 +676,6 @@ public:
 	void fixLts();
 	void doDispelMagic(int num=-1);
 	bool changeSize(int oldStrength, int newStrength, bool enlarge);
-	int numFollowers();
 
 	// these handle total invisibility, no concealment (ie, being hidden)
 	bool canSee(const BaseRoom* room, bool p=false) const;
@@ -707,7 +699,6 @@ public:
 
 	void doHaggling(Creature *vendor, Object* object, int trans);
 
-	BaseRoom *getRoom() const;
 	BaseRoom* recallWhere();
 	BaseRoom* teleportWhere();
 	Location getLimboRoom() const;
@@ -738,7 +729,6 @@ class Monster : public Creature {
 protected:
 	void doCopy(const Monster& cr);
 	void reset();
-	void addToRoom(BaseRoom* room, UniqueRoom* uRoom, AreaRoom* aRoom, int num);
 	int doDeleteFromRoom(BaseRoom* room, bool delPortal);
 
 public:
@@ -747,6 +737,7 @@ public:
 	Monster(Monster& cr);
 	Monster(const Monster& cr);
 	Monster& operator=(const Monster& cr);
+	bool operator< (const Monster& t) const;
 	~Monster();
 	void readXml(xmlNodePtr curNode);
 	void saveXml(xmlNodePtr curNode) const;
@@ -966,6 +957,7 @@ public:
 	Player(Player& cr);
 	Player(const Player& cr);
 	Player& operator=(const Player& cr);
+	bool operator< (const Player& t) const;
 	~Player();
 	int save(bool updateTime=false, LoadType saveType=LS_NORMAL);
 	int saveToFile(LoadType saveType=LS_NORMAL);

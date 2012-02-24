@@ -963,7 +963,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	target = player->getRoom()->findMonster(player, cmnd);
+	target = player->getParent()->findMonster(player, cmnd);
 	if(!target) {
 		player->print("You don't see that here.\n");
 		return(0);
@@ -1021,11 +1021,11 @@ int cmdTalk(Player* player, cmd* cmnd) {
 			}
 		}
 		if(response != "")
-			broadcast(player->getSock(), player->getRoom(), "%M speaks to %N in %s.",
+			broadcast(player->getSock(), player->getParent(), "%M speaks to %N in %s.",
 				player, target, get_language_adj(player->current_language));
 	} else {
 		question = keyTxtConvert(getFullstrText(cmnd->fullstr, 2).toLower());
-		broadcast_rom_LangWc(target->current_language, player->getSock(), player->area_room, player->room, "%M asks %N \"%s\".^x",
+		broadcast_rom_LangWc(target->current_language, player->getSock(), player->currentLocation, "%M asks %N \"%s\".^x",
 			player, target, question.c_str());
 		bstring key = "", keyword = "";
 		for(TalkResponse * talkResponse : target->responses) {
@@ -1089,7 +1089,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
 		}
 
 		if(response == "" && action == "") {
-			broadcast(NULL, player->getRoom(), "%M shrugs.", target);
+			broadcast(NULL, player->getRoomParent(), "%M shrugs.", target);
 			return(0);
 		}
 	}
@@ -1102,7 +1102,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
 		target->doTalkAction(player, action);
 
 	if(response == "" && action == "")
-		broadcast(NULL, player->getRoom(), "%M doesn't say anything.", target);
+		broadcast(NULL, player->getRoomParent(), "%M doesn't say anything.", target);
 
 	return(0);
 }
@@ -1270,7 +1270,7 @@ bool Monster::doTalkAction(Player* target, bstring action) {
 
 				target->addObj(object);
 				target->printColor("%M gives you %1P\n", this, object);
-				broadcast(target->getSock(), target->getRoom(), "%M gives %N %1P\n", this, target, object);
+				broadcast(target->getSock(), target->getRoomParent(), "%M gives %N %1P\n", this, target, object);
 			} else
 				target->print("%M has nothing to give you.\n", this);
 
@@ -1300,7 +1300,7 @@ bool Monster::doTalkAction(Player* target, bstring action) {
 			return(false);
 
 		target->printColor("^m%M shares ^W%s^m with you.\n",  this, questInfo->getName().c_str());
-		broadcast(target->getSock(), target->getRoom(), "^x%M shares ^W%s^x with %N.\n",
+		broadcast(target->getSock(), target->getRoomParent(), "^x%M shares ^W%s^x with %N.\n",
 			this, questInfo->getName().c_str(), target);
 		questInfo->printReceiveString(target, this);
 		target->addQuest(questInfo);
@@ -1504,18 +1504,11 @@ int cmdQuests(Player* player, cmd* cmnd) {
 
 				// We've found the quest that matches the string the user put in, now lets see if we can
 				// find the finishing monster
-				ctag* cp;
-				cp = player->getRoom()->first_mon;
-				Monster *monster;
-				while(cp) {
-					if(	cp->crt &&
-						(monster = cp->crt->getMonster()) != NULL &&
-						monster->info == quest->getParentQuest()->getTurnInMob()
-					) {
+				for(Monster* mons : player->getRoomParent()->monsters) {
+					if(	mons->info == quest->getParentQuest()->getTurnInMob() ) {
 						// We have a turn in monster, lets complete the quest
-//						player->printColor("Found ^W%s^x as a turn in monster!\n", monster->name);
-						if(monster->isEnemy(player)) {
-							player->print("%M refuses to deal with you right now!\n", monster);
+						if(mons->isEnemy(player)) {
+							player->print("%M refuses to deal with you right now!\n", mons);
 							return(0);
 						}
 
@@ -1523,19 +1516,18 @@ int cmdQuests(Player* player, cmd* cmnd) {
 						player->printColor("Completing quest ^W%s^x.\n", name.c_str());
 
 						// NOTE: After quest->complete, quest is INVALID, do not attempt to access it
-						if(quest->complete(monster)) {
-							broadcast(player->getSock(), player->getRoom(), "%M just completed ^W%s^x.",
+						if(quest->complete(mons)) {
+							broadcast(player->getSock(), player->getParent(), "%M just completed ^W%s^x.",
 								player, name.c_str());
 						} else {
 							//player->print("Quest completion failed.\n");
-							broadcast(player->getSock(), player->getRoom(), "%M tried to complete ^W%s^x.",
+							broadcast(player->getSock(), player->getParent(), "%M tried to complete ^W%s^x.",
 								player, name.c_str());
 						}
 
 						return(0);
 					}
 
-					cp = cp->next_tag;
 				}
 
 				if(!questName.empty()) {

@@ -162,7 +162,6 @@ int communicateWith(Player* player, cmd* cmnd) {
 	bstring text = "";
 	Player	*target=0;
 	int		i=0, found=0;
-	ctag	*cp=0;
 	char	ooc_str[10];
 
 	// reuse text
@@ -354,7 +353,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 
 
 	if(chan->type == COM_WHISPER)
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M whispers something to %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M whispers something to %N.", player, target);
 
 
 	if(!target->isGagging(player->name)) {
@@ -398,18 +397,14 @@ int communicateWith(Player* player, cmd* cmnd) {
 
 	} else {
 
-		cp = player->getRoom()->first_ply;
-		while(cp) {
-			if(	cp->crt != player &&
-				cp->crt != target &&
-				!cp->crt->isEffected("blindness")
-			) {
-				if(cp->crt->getRace() == DARKELF || cp->crt->isStaff())
-					cp->crt->print("%M signed, \"%s\" to %N.\n", player, text.c_str(), target);
+	    for(Player* ply : player->getRoomParent()->players) {
+			if(	ply != player && ply != target && !ply->isEffected("blindness"))
+			{
+				if(ply->getRace() == DARKELF || ply->isStaff())
+					ply->print("%M signed, \"%s\" to %N.\n", player, text.c_str(), target);
 				else
-					cp->crt->print("%M signed something in dark elven to %N.\n", player, target);
+					ply->print("%M signed something in dark elven to %N.\n", player, target);
 			}
-			cp = cp->next_tag;
 		}
 
 	}
@@ -506,18 +501,15 @@ int communicate(Creature* creature, cmd* cmnd) {
 	bstring text = "", name = "";
 	Creature *owner=0;
 	Player*	pTarget=0;
-	AreaRoom* aRoom=0;
-	UniqueRoom	*new_rom=0;
+	BaseRoom* room=0;
+
 	int		i=0;
 	char	speak[35], lang, ooc_str[10];
-	ctag	*cp=0;
-	xtag	*xp=0;
-
 	if(creature->isPet())
 		owner = creature->getMaster();
 	else
 		owner = creature;
-	player = owner->getConstPlayer();
+	player = owner->getAsConstPlayer();
 
 	// reuse text
 	text = cmnd->myCommand->getName();
@@ -576,7 +568,7 @@ int communicate(Creature* creature, cmd* cmnd) {
 	    Group* group = creature->getGroup();
 	    if(group) {
 	        for(Creature* crt : group->members) {
-	            pTarget = crt->getPlayer();
+	            pTarget = crt->getAsPlayer();
 	            if(!pTarget) continue;
 	            // GT prints to the player!
 	            if(pTarget == creature && chan->type != COM_GT)
@@ -595,7 +587,6 @@ int communicate(Creature* creature, cmd* cmnd) {
 	    }
 
 	} else {
-		cp = creature->getRoom()->first_ply;
 		creature->unhide();
 
         if(chan->type == COM_EMOTE) {
@@ -617,25 +608,18 @@ int communicate(Creature* creature, cmd* cmnd) {
 
         }
 
-
-        while(cp) {
-            pTarget = cp->crt->getPlayer();
-            cp = cp->next_tag;
-
-            if(!pTarget)
-                continue;
-
+        for(Player* ply : creature->getRoomParent()->players) {
             if(chan->shout)
-                pTarget->wake("Loud noises disturb your sleep.", true);
+                ply->wake("Loud noises disturb your sleep.", true);
 
             // GT prints to the player!
-            if(pTarget == creature && chan->type != COM_GT)
+            if(ply == creature && chan->type != COM_GT)
                 continue;
 
-            if(pTarget->isGagging(creature->isPet() ? creature->getMaster()->name : creature->name))
+            if(ply->isGagging(creature->isPet() ? creature->getMaster()->name : creature->name))
                 continue;
 
-            commTarget(creature, pTarget, chan->type, chan->ooc, lang, text, speak, ooc_str, false);
+            commTarget(creature, ply, chan->type, chan->ooc, lang, text, speak, ooc_str, false);
         }
 
         if(chan->shout) {
@@ -648,35 +632,28 @@ int communicate(Creature* creature, cmd* cmnd) {
             // This allows a player to yell something that will be heard
             // not only in their room, but also in all rooms adjacent to them. In
             // the adjacent rooms, however, people will not know who yelled.
-            xp = creature->getRoom()->first_ext;
-            while(xp) {
-                aRoom = 0;
-                new_rom = 0;
+
+
+            for(Exit* exit : creature->getRoomParent()->exits) {
+                room = 0;
                 i=0;
-                cp=0;
-
+                PlayerSet::iterator pIt, pEnd;
                 // don't shout through closed doors
-                if(!xp->ext->flagIsSet(X_CLOSED))
-                    Move::getRoom(0, xp->ext, &new_rom, &aRoom, true);
-
-                xp = xp->next_tag;
+                if(!exit->flagIsSet(X_CLOSED))
+                    Move::getRoom(0, exit, &room, true);
 
                 // the same-room checks aren't run in getRoom because
                 // we don't send a creature.
-                if(aRoom) {
-                    if(creature->area_room && aRoom == creature->area_room)
+                if(room) {
+                    if(creature->getParent() && room == creature->getParent())
                         continue;
-                    cp = aRoom->first_ply;
-                } else if(new_rom) {
-                    if(creature->parent_rom && new_rom == creature->parent_rom)
-                        continue;
-                    cp = new_rom->first_ply;
+                    pIt = room->players.begin();
+                    pEnd = room->players.end();
                 } else
                     continue;
 
-                while(cp) {
-                    pTarget = cp->crt->getPlayer();
-                    cp = cp->next_tag;
+                while(pIt != pEnd) {
+                    pTarget = (*pIt++);
 
                     if(!pTarget)
                         continue;
@@ -705,30 +682,29 @@ int communicate(Creature* creature, cmd* cmnd) {
         }
 
         if(chan->passphrase) {
-            xp = creature->getRoom()->first_ext;
-            while(xp) {
-                // got the phrase right?
-                if(xp->ext->getPassPhrase() != "" && xp->ext->getPassPhrase() == text) {
-                    // right language?
-                    if(!xp->ext->getPassLanguage() || lang == xp->ext->getPassLanguage()) {
-                        // even needs to be open?
-                        if(xp->ext->flagIsSet(X_LOCKED)) {
-                            broadcast(NULL, creature->getRoom(), "The %s opens!", xp->ext->name);
-                            xp->ext->clearFlag(X_LOCKED);
-                            xp->ext->clearFlag(X_CLOSED);
 
-                            if(xp->ext->getOpen() != "") {
-                                if(xp->ext->flagIsSet(X_ONOPEN_PLAYER)) {
-                                    creature->print("%s.\n", xp->ext->getOpen().c_str());
+           	for(Exit* exit : creature->getRoomParent()->exits) {
+                // got the phrase right?
+                if(exit->getPassPhrase() != "" && exit->getPassPhrase() == text) {
+                    // right language?
+                    if(!exit->getPassLanguage() || lang == exit->getPassLanguage()) {
+                        // even needs to be open?
+                        if(exit->flagIsSet(X_LOCKED)) {
+                            broadcast(NULL, creature->getRoomParent(), "The %s opens!", exit->name);
+                            exit->clearFlag(X_LOCKED);
+                            exit->clearFlag(X_CLOSED);
+
+                            if(exit->getOpen() != "") {
+                                if(exit->flagIsSet(X_ONOPEN_PLAYER)) {
+                                    creature->print("%s.\n", exit->getOpen().c_str());
                                 } else {
-                                    broadcast(0, creature->getRoom(), xp->ext->getOpen().c_str());
+                                    broadcast(0, creature->getRoomParent(), exit->getOpen().c_str());
                                 }
                             }
 
                         }
                     }
                 }
-                xp = xp->next_tag;
             }
         }
 
@@ -751,7 +727,7 @@ int communicate(Creature* creature, cmd* cmnd) {
 		broadcast(watchingSuperEaves, "^E--- %s %s, \"%s%s\" in %s.", name.c_str(), com_text[chan->type],
 			ooc_str, text.c_str(), get_language_adj(lang));
 
-	Player* pPlayer = creature->getPlayer();
+	Player* pPlayer = creature->getAsPlayer();
 	// spam check
 	if(pPlayer)
 		pPlayer->checkForSpam();
@@ -1275,8 +1251,7 @@ int cmdLanguages(Player* player, cmd* cmnd) {
 //						printForeignTongueMsg
 //*********************************************************************
 
-void printForeignTongueMsg(BaseRoom *inRoom, Creature *talker) {
-	ctag		*cp = 0;
+void printForeignTongueMsg(const BaseRoom *inRoom, Creature *talker) {
 	int			lang=0;
 
 	if(!talker || !inRoom)
@@ -1286,15 +1261,11 @@ void printForeignTongueMsg(BaseRoom *inRoom, Creature *talker) {
 	if(!lang)
 		return;
 
-	cp = inRoom->first_ply;
-	while(cp) {
-		if(cp->crt->languageIsKnown(lang) || cp->crt->isEffected("comprehend-languages") || cp->crt->isStaff()) {
-			cp = cp->next_tag;
+	for(Player* ply : inRoom->players) {
+		if(ply->languageIsKnown(lang) || ply->isEffected("comprehend-languages") || ply->isStaff()) {
 			continue;
 		}
-		cp->crt->print("%M says something in %s.\n", talker, get_language_adj(lang));
-
-		cp = cp->next_tag;
+		ply->print("%M says something in %s.\n", talker, get_language_adj(lang));
 	}
 }
 
@@ -1305,9 +1276,9 @@ void printForeignTongueMsg(BaseRoom *inRoom, Creature *talker) {
 void Monster::sayTo(const Player* player, const bstring& message) {
 	short language = player->current_language;
 
-	broadcast_rom_LangWc(language, player->getSock(), player->area_room, player->room,
+	broadcast_rom_LangWc(language, player->getSock(), player->currentLocation,
 		"%M says to %N, \"%s\"^x", this, player, message.c_str());
-	printForeignTongueMsg(player->getRoom(), this);
+	printForeignTongueMsg(player->getConstRoomParent(), this);
 
 	player->printColor("%s%M says to you, \"%s\"\n^x",get_lang_color(language), this, message.c_str());
 }

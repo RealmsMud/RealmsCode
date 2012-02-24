@@ -184,7 +184,7 @@ char *crt_str(const Creature *crt, int num, int flag ) {
 	if(!crt)
 		return("(NULL CRT)");
 
-	const Player* pCrt = crt->getConstPlayer();
+	const Player* pCrt = crt->getAsConstPlayer();
 
 	str = xstr[xnum];
 	xnum = (xnum + 1)%5;
@@ -1129,12 +1129,9 @@ void Creature::stun(int delay) {
 
 int	numEnemyMonInRoom(Creature* player) {
 	int		count=0;
-	ctag	*cp = player->getRoom()->first_mon;
-
-	while(cp) {
-		if(cp->crt->getMonster()->isEnemy(player))
-			count++;
-		cp = cp->next_tag;
+	for(Monster* mons : player->getRoomParent()->monsters) {
+        if(mons->getAsMonster()->isEnemy(player))
+            count++;
 	}
 
 	return(count);
@@ -1249,6 +1246,39 @@ char *ltoa(
 	*buf   = '\0';
 	return(buf);
 }
+//*********************************************************************
+//                      findCrt
+//*********************************************************************
+
+template<class Type, class Compare>
+int findCrt(Creature * player, std::set<Type, Compare>& set, int findFlags, char *str, int val, int* match, Creature ** target ) {
+    int found=0;
+
+    if(!player || !str || set.empty())
+        return(0);
+
+    for(Type crt : set) {
+        if(!crt) {
+            continue;
+        }
+        if(!player->canSee(crt)) {
+            continue;
+        }
+
+        if(keyTxtEqual(crt, str)) {
+            (*match)++;
+            if(*match == val) {
+                *target = crt;
+                found = 1;
+                break;
+            }
+        }
+
+    }
+    return(found);
+}
+
+
 
 //*********************************************************************
 //						findTarget
@@ -1288,7 +1318,7 @@ bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int 
 		}
 
 		if(findWhere & FIND_OBJ_ROOM) {
-			if(findObj(player, player->getRoom()->first_obj, findFlags, str, val, &match, (Object**)target)) {
+			if(findObj(player, player->getRoomParent()->first_obj, findFlags, str, val, &match, (Object**)target)) {
 				*targetType = OBJECT;
 				found = true;
 				break;
@@ -1296,7 +1326,7 @@ bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int 
 		}
 
 		if(findWhere & FIND_MON_ROOM) {
-			if(findCrt(player, player->getRoom()->first_mon, findFlags, str, val, &match, (Creature **)target)) {
+			if(findCrt<Monster*, MonsterPtrLess>(player, player->getRoomParent()->monsters, findFlags, str, val, &match, (Creature **)target)) {
 				*targetType = MONSTER;
 				found = true;
 				break;
@@ -1304,7 +1334,7 @@ bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int 
 		}
 
 		if(findWhere & FIND_PLY_ROOM) {
-			if(findCrt(player, player->getRoom()->first_ply, findFlags, str, val, &match, (Creature **)target)) {
+			if(findCrt<Player*, PlayerPtrLess>(player, player->getRoomParent()->players, findFlags, str, val, &match, (Creature **)target)) {
 				*targetType = PLAYER;
 				found = true;
 				break;
@@ -1312,7 +1342,7 @@ bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int 
 		}
 
 		if(findWhere & FIND_EXIT) {
-			Exit* exit = findExit(player, str, val, player->getRoom()->first_ext);
+			Exit* exit = findExit(player, str, val, player->getRoomParent());
 			if(exit) {
 				*(Exit **)target = exit;
 				*targetType = EXIT;

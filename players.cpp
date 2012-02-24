@@ -24,6 +24,9 @@
 
 #include <sstream>
 
+bool Player::operator <(const Player& t) const {
+    return(strcmp(this->name, t.name) < 0);
+}
 
 //*********************************************************************
 //						regenModifyDuration
@@ -56,7 +59,7 @@ long Player::tickInterval(const Stat stat, bool fastTick, bool deathSickness, bo
 // return true if they were destroyed, false if they still exist
 
 void Player::pulseTick(long t) {
-	BaseRoom* room = getRoom();
+	BaseRoom* room = getRoomParent();
 	bool ill = false;
 	bool noTick = false;
 	bool fastTick = room && room->isFastTick();
@@ -378,7 +381,7 @@ bool Player::doPlayerHarmRooms() {
 	// gives us a range of 10-18 dmg
 	int		dmg = 15 - (constitution.getCur() - 150)/50;
 
-	BaseRoom* room = getRoom();
+	BaseRoom* room = getRoomParent();
 
 	// Poison rooms
 	if(room->flagIsSet(R_POISONS) && !isPoisoned() && !immuneToPoison()) {
@@ -434,7 +437,7 @@ bool Player::doPlayerHarmRooms() {
 					!doesntBreathe() && (
 						room->flagIsSet(R_WATER_BONUS) ||(
 						room->flagIsSet(R_UNDER_WATER_BONUS) ||
-						(area_room && area_room->isWater() && !isEffected("fly"))
+						(inAreaRoom() && getAreaRoomParent()->isWater() && !isEffected("fly"))
 					)
 		) ) {
 			wake("You awaken suddenly!");
@@ -541,7 +544,7 @@ bool Player::doPlayerHarmRooms() {
 //		lasttime[LT_TICK].interval = 20L;
 		if(hp.getCur() < 1) {
 			print("You are blown away by energy bolts. You died!\n");
-			broadcast(getSock(), getRoom(), "%M was blown to bits by energy bolts. %s died.", this, heShe());
+			broadcast(getSock(), getRoomParent(), "%M was blown to bits by energy bolts. %s died.", this, heShe());
 			die(BOLTS);
 			return(true);
 		}

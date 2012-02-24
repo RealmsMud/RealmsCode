@@ -890,7 +890,7 @@ bstring webwho() {
 		if(player->flagIsSet(P_OUTLAW))
 			oStr << "O";
 		else if((player->flagIsSet(P_NO_PKILL) || player->flagIsSet(P_DIED_IN_DUEL) ||
-				(player->getRoom()->isPkSafe())) && (player->flagIsSet(P_CHAOTIC) || player->getClan()) )
+				(player->getConstRoomParent()->isPkSafe())) && (player->flagIsSet(P_CHAOTIC) || player->getClan()) )
 			oStr << "N";
 		else if(player->flagIsSet(P_CHAOTIC)) // Chaotic
 			oStr << "C";

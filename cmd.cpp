@@ -66,7 +66,7 @@ int pcast(Player* player, cmd* cmnd) {
 	bstring args = getFullstrText(cmnd->fullstr, 2);
 	MudObject *target = NULL;
 
-	//target = player->getRoom()->findTarget(cmnd->fullstr);
+	//target = player->getParent()->findTarget(cmnd->fullstr);
 
 	gServer->runPython(spell->script, args, player, target);
 	return(0);
@@ -977,7 +977,7 @@ void getCommand(Creature *user, cmd* cmnd) {
 	bool	found=false;
 //	int		i=0;
 
-	Player* pUser = user->getPlayer();
+	Player* pUser = user->getAsPlayer();
 	str = cmnd->str[0];
 
 	//std::cout << "Looking for a match for '" << str << "'\n";
@@ -1090,7 +1090,7 @@ int cmdProcess(Creature *user, cmd* cmnd, Creature* pet) {
 
 	if(fd > 0) {
 		if(!pet) {
-			player = user->getPlayer();
+			player = user->getAsPlayer();
 		} else
 			user = pet;
 	}
@@ -1141,7 +1141,7 @@ bstring MudMethod::getDesc() const {
 }
 
 int PlyCommand::execute(Creature* player, cmd* cmnd) {
-	Player *ply = player->getPlayer();
+	Player *ply = player->getAsPlayer();
 	if(!ply)
 		return(false);
 	return((fn)(ply, cmnd));

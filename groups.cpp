@@ -56,7 +56,7 @@ int cmdFollow(Player* player, cmd* cmnd) {
 
 	player->unhide();
 	lowercize(cmnd->str[1], 1);
-	toFollow = player->getRoom()->findPlayer(player, cmnd);
+	toFollow = player->getParent()->findPlayer(player, cmnd);
 	if(!toFollow) {
 		*player << "No one here by that name.\n";
 		return(0);
@@ -130,7 +130,7 @@ void Creature::addToGroup(Group* toJoin, bool announce) {
     if(announce) {
     	*this << ColorOn << "^gYou join \"" << toJoin->getName() << "\".\n" << ColorOff;
         toJoin->sendToAll(bstring("^g") + getName() + " has joined your group.\n", this);
-        broadcast(getSock(), getRoom(), "%M joins the group \"%s\".", this, toJoin->getName().c_str());
+        broadcast(getSock(), getRoomParent(), "%M joins the group \"%s\".", this, toJoin->getName().c_str());
     }
 
 }
@@ -146,19 +146,6 @@ void Creature::createGroup(Creature* crt) {
     groupStatus = GROUP_LEADER;
 
     crt->addToGroup(group);
-}
-//*********************************************************************
-//						numFollowers
-//*********************************************************************
-
-int Creature::numFollowers() {
-	int num=0;
-//	ctag *cp = first_fol;
-//	while(cp) {
-//		num += 1 + cp->crt->numFollowers();
-//		cp = cp->next_tag;
-//	}
-	return(num);
 }
 
 //*********************************************************************
@@ -657,15 +644,15 @@ void Player::doFollow(BaseRoom* oldRoom) {
 	Group* group = getGroup(true);
 	if(getGroupStatus() == GROUP_LEADER && group) {
 		for(Creature* crt : group->members) {
-			if(crt->getRoom() == oldRoom) {
-				Player* pFollow = crt->getPlayer();
-				Monster* mFollow = crt->getMonster();
+			if(crt->getRoomParent() == oldRoom) {
+				Player* pFollow = crt->getAsPlayer();
+				Monster* mFollow = crt->getAsMonster();
 				if(pFollow) {
 					pFollow->deleteFromRoom();
-					pFollow->addToRoom(getRoom());
+					pFollow->addToRoom(getRoomParent());
 				} else {
 					mFollow->deleteFromRoom();
-					mFollow->addToRoom(getRoom());
+					mFollow->addToRoom(getRoomParent());
 				}
 			}
 		}
@@ -679,14 +666,14 @@ void Player::doFollow(BaseRoom* oldRoom) {
 
 void Player::doPetFollow() {
 	for(Monster*pet : pets ){
-		if(pet && pet->getRoom() != getRoom()) {
+		if(pet && pet->getRoomParent() != getRoomParent()) {
 			pet->deleteFromRoom();
-			pet->addToRoom(getRoom());
+			pet->addToRoom(getRoomParent());
 		}
 		// TODO: Not sure if we need this check any more
-		if(alias_crt && alias_crt->getRoom() != getRoom()) {
+		if(alias_crt && alias_crt->getRoomParent() != getRoomParent()) {
 			alias_crt->deleteFromRoom();
-			alias_crt->addToRoom(getRoom());
+			alias_crt->addToRoom(getRoomParent());
 		}
 	}
 }
@@ -699,7 +686,7 @@ bool Creature::getsGroupExperience(Monster* target) {
 	// We can get exp if we're a player...
 	return(isPlayer() &&
 		// And idle less than 2 minutes
-		getPlayer()->getIdle() < 120 &&
+		getAsPlayer()->getIdle() < 120 &&
 		// And we haven't abused group exp
 		!flagIsSet(P_GROUP_EXP_ABUSE) &&
 		// And we're not a DM invis person

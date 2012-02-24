@@ -470,7 +470,7 @@ int listFactions(const Player* viewer, const Creature* target) {
 	std::map<bstring, bstring>::const_iterator it;
 	std::map<bstring, long>::const_iterator fIt;
 	const Faction* faction=0;
-	const Player* player = target->getConstPlayer();
+	const Player* player = target->getAsConstPlayer();
 	long	regard=0;
 	long	i=0;
 
@@ -478,7 +478,7 @@ int listFactions(const Player* viewer, const Creature* target) {
 		viewer->print("Faction Standing");
 	else {
 		viewer->print("%s's Faction", target->name);
-		const Monster* monster = target->getConstMonster();
+		const Monster* monster = target->getAsConstMonster();
 		if(monster)
 			viewer->printColor(", primeFaction: ^y%s", monster->getPrimeFaction().c_str());
 	}
@@ -543,7 +543,7 @@ int dmShowFactions(Player *player, cmd* cmnd) {
 		if(player->getClass() == BUILDER) {
 			if(!player->canBuildMonsters())
 				return(cmdNoAuth(player));
-			if(!player->checkBuilder(player->parent_rom)) {
+			if(!player->checkBuilder(player->getUniqueRoomParent())) {
 				player->print("Error: room number not in any of your alotted ranges.\n");
 				return(0);
 			}
@@ -551,7 +551,7 @@ int dmShowFactions(Player *player, cmd* cmnd) {
 		Creature* target=0;
 		Monster *mTarget=0;
 
-		target = player->getRoom()->findCreature(player, cmnd);
+		target = player->getParent()->findCreature(player, cmnd);
 		if(player->isCt()) {
 			cmnd->str[1][0] = up(cmnd->str[1][0]);
 			if(!target)
@@ -559,7 +559,7 @@ int dmShowFactions(Player *player, cmd* cmnd) {
 		}
 		if(target) {
 			if(player->getClass() == BUILDER) {
-				mTarget = target->getMonster();
+				mTarget = target->getAsMonster();
 				if(mTarget && !player->checkBuilder(mTarget->info)) {
 					player->print("Error: monster index not in any of your alotted ranges.\n");
 					return(0);
@@ -843,17 +843,12 @@ void Faction::worshipSocial(Monster *monster) {
 
 	// we've made sure everything is ok; let's continue
 	// with the actual work
-	ctag	*cp = monster->getRoom()->first_ply;
-	Player* player;
 	cmd		cmnd;
 
 	strcpy(cmnd.str[0], social.c_str());
 	cmnd.num = 2;
 	cmnd.val[1] = 1;
-	while(cp) {
-		player = cp->crt->getPlayer();
-		cp = cp->next_tag;
-
+	for(Player* player : monster->getRoomParent()->players) {
 		if(	mrand(1,100)>2 ||
 			!player ||
 			player->flagIsSet(P_UNCONSCIOUS) ||

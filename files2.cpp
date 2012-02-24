@@ -27,7 +27,7 @@
 // already in the memory room queue.
 
 bool Config::reloadRoom(BaseRoom* room) {
-	UniqueRoom*	uRoom = room->getUniqueRoom();
+	UniqueRoom*	uRoom = room->getAsUniqueRoom();
 
 	if(uRoom) {
 		bstring str = uRoom->info.str();
@@ -40,7 +40,7 @@ bool Config::reloadRoom(BaseRoom* room) {
 		}
 	} else {
 
-		AreaRoom* aRoom = room->getAreaRoom();
+		AreaRoom* aRoom = room->getAsAreaRoom();
 		char	filename[256];
 		sprintf(filename, "%s/%d/%s", Path::AreaRoom, aRoom->area->id,
 			aRoom->mapmarker.filename().c_str());
@@ -66,7 +66,6 @@ bool Config::reloadRoom(BaseRoom* room) {
 
 int Config::reloadRoom(CatRef cr) {
 	UniqueRoom	*room=0;
-	ctag	*cp=0;
 	otag	*op=0;
 
 	bstring str = cr.str();
@@ -78,17 +77,19 @@ int Config::reloadRoom(CatRef cr) {
 	// if(read_rom(fd, room) < 0) {
 	if(!loadRoomFromFile(cr, &room))
 		return(-1);
-
-	room->first_ply = roomQueue[str].rom->first_ply;
-	roomQueue[str].rom->first_ply = 0;
-
-	// have to do this in dmReloadRoom() now
-	// room->addPermCrt();
-	if(!room->first_mon) {
-		room->first_mon = roomQueue[str].rom->first_mon;
-		roomQueue[str].rom->first_mon = 0;
+	// Move any current players & monsters into the new room
+	for(Player* ply : roomQueue[str].rom->players) {
+		room->players.insert(ply);
 	}
+	roomQueue[str].rom->players.clear();
 
+	// Only Monsters copy if target room is empty
+	if(room->monsters.empty()) {
+		for(Monster* mons : roomQueue[str].rom->monsters) {
+			room->monsters.insert(mons);
+		}
+		roomQueue[str].rom->monsters.clear();
+	}
 	if(!room->first_obj) {
 		room->first_obj = roomQueue[str].rom->first_obj;
 		roomQueue[str].rom->first_obj = 0;
@@ -97,24 +98,17 @@ int Config::reloadRoom(CatRef cr) {
 	delete roomQueue[str].rom;
 	roomQueue[str].rom = room;
 
-	cp = room->first_ply;
-	while(cp) {
-		cp->crt->parent_rom = room;
-		*&cp->crt->room = *&room->info;
-		cp = cp->next_tag;
-	}
-
-	cp = room->first_mon;
-	while(cp) {
-		cp->crt->parent_rom = room;
-		cp->crt->room = room->info;
-		cp = cp->next_tag;
-	}
-
+	// Make sure we have the right parent set on everyone
 	op = room->first_obj;
 	while(op) {
 		op->obj->parent_room = room;
 		op = op->next_tag;
+	}
+	for(Player* ply : room->players) {
+		ply->setParent(room);
+	}
+	for(Monster* mons : room->monsters) {
+		mons->setParent(room);
 	}
 
 	return(0);

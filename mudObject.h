@@ -21,17 +21,18 @@
 #define MUDOBJECTS_H
 
 #include <map>
+#include <set>
 //#include <boost/unordered_map.hpp> // Gnu gcc specific, switch to <map>
-#include <unordered_map>
+//#include <unordered_map>
 
 // allow the gnu hash_map to work on bstring
-namespace std {
-   template<> struct hash< bstring > {
-	  size_t operator()(const bstring& s) const {
-		 return hash< const char* >()( s.c_str() );
-	  }
-   }; // gcc.gnu.org/ml/libstdc++/2002-04/msg00107.html
-}
+//namespace std {
+//   template<> struct hash< bstring > {
+//	  size_t operator()(const bstring& s) const {
+//		 return hash< const char* >()( s.c_str() );
+//	  }
+//   }; // gcc.gnu.org/ml/libstdc++/2002-04/msg00107.html
+//}
 
 //typedef std::unordered_map<bstring, bstring> MultiMap;  // change to std::map
 class MudObject;
@@ -51,6 +52,7 @@ public:
 	Hooks hooks;
 	void moCopy(const MudObject& mo);
 
+
 public:
 	virtual ~MudObject() {};
 	void moReset();
@@ -58,23 +60,31 @@ public:
 
 	void setId(bstring newId);
 
-	Monster* getMonster();
-	Player* getPlayer();
-	Creature* getCreature();
-	Object* getObject();
-	UniqueRoom *getUniqueRoom();
-	AreaRoom *getAreaRoom();
-	BaseRoom* getRoom();
-	Exit* getExit();
+	Monster* getAsMonster();
+	Player* getAsPlayer();
+	Creature* getAsCreature();
+	Object* getAsObject();
+	UniqueRoom *getAsUniqueRoom();
+	AreaRoom *getAsAreaRoom();
+	BaseRoom* getAsRoom();
+	Exit* getAsExit();
 
-	const Monster* getConstMonster() const;
-	const Player* getConstPlayer() const;
-	const Creature* getConstCreature() const;
-	const Object* getConstObject() const;
-	const UniqueRoom *getConstUniqueRoom() const;
-	const AreaRoom *getConstAreaRoom() const;
-	const BaseRoom* getConstRoom() const;
-	const Exit* getConstExit() const;
+	const Monster* getAsConstMonster() const;
+	const Player* getAsConstPlayer() const;
+	const Creature* getAsConstCreature() const;
+	const Object* getAsConstObject() const;
+	const UniqueRoom *getAsConstUniqueRoom() const;
+	const AreaRoom *getAsConstAreaRoom() const;
+	const BaseRoom* getAsConstRoom() const;
+	const Exit* getAsConstExit() const;
+
+	bool isRoom() const;
+	bool isUniqueRoom() const;
+	bool isAreaRoom() const;
+	bool isObject() const;
+	bool isPlayer() const;
+	bool isMonster() const;
+	bool isCreature() const;
 
 	const char* getName() const;
 	const bstring& getId() const;

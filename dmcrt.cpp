@@ -36,7 +36,7 @@
 
 int dmCreateMob(Player* player, cmd* cmnd) {
 	Monster	*monster=0;
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	int		l=0, total=1;
 	bstring	noMonsters = "^mNo monsters were summoned.\n";
 
@@ -48,14 +48,14 @@ int dmCreateMob(Player* player, cmd* cmnd) {
 		player->print("Error: monster index not in any of your alotted ranges.\n");
 		return(0);
 	}
-	if(!player->checkBuilder(player->parent_rom)) {
+	if(!player->checkBuilder(player->getUniqueRoomParent())) {
 		player->print("Error: room number not in any of your alotted ranges.\n");
 		return(0);
 	}
 	if(!player->builderCanEditRoom("create monsters"))
 		return(0);
 
-	WanderInfo* wander = player->getRoom()->getWanderInfo();
+	WanderInfo* wander = player->getRoomParent()->getWanderInfo();
 
 	if(cr.id < 1) {
 		if(!wander) {
@@ -125,7 +125,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
 
 	if(!player->isDm())
 		log_immort(false,player, "%s created %d %s's in room %s.\n", player->name, total, monster->name,
-			player->getRoom()->fullName().c_str());
+			player->getRoomParent()->fullName().c_str());
 
 	return(0);
 }
@@ -136,8 +136,8 @@ int dmCreateMob(Player* player, cmd* cmnd) {
 //  Display information on creature given to player given.
 
 bstring Creature::statCrt(int statFlags) {
-	const Player *pTarget = getConstPlayer();
-	const Monster *mTarget = getConstMonster();
+	const Player *pTarget = getAsConstPlayer();
+	const Monster *mTarget = getAsConstMonster();
 	std::ostringstream crtStr;
 	bstring str = "";
 	int		i=0, n=0;
@@ -175,7 +175,7 @@ bstring Creature::statCrt(int statFlags) {
 		if(pTarget->getForum() != "")
 			crtStr << "^gForum Account:^x " << pTarget->getForum() << "\n";
 
-		crtStr << "Room: " << pTarget->getRoom()->fullName() << "\n";
+		crtStr << "Room: " << pTarget->getConstRoomParent()->fullName() << "\n";
 		crtStr << "Cmd : ";
 		if(!pTarget->isDm() || (statFlags & ISDM))
 			crtStr << dmLastCommand(pTarget);
@@ -475,8 +475,8 @@ bstring Creature::statCrt(int statFlags) {
 		if(pTarget->getPoisonedBy() != "")
 			crtStr << "^r*Poisoned* by " <<  pTarget->getPoisonedBy() << ".^x";
 
-		if(	pTarget->parent_rom &&
-			pTarget->parent_rom->flagIsSet(R_MOB_JAIL)
+		if(	pTarget->inUniqueRoom() &&
+			pTarget->getConstUniqueRoomParent()->flagIsSet(R_MOB_JAIL)
 		) {
 			crtStr << "^bIn Jailhouse. ";
 			crtStr << "Time remaining: " <<
@@ -650,7 +650,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 	if(player->getClass() == BUILDER) {
 		if(!player->canBuildMonsters())
 			return(cmdNoAuth(player));
-		if(!player->checkBuilder(player->parent_rom)) {
+		if(!player->checkBuilder(player->getUniqueRoomParent())) {
 			player->print("Error: Room number not inside any of your alotted ranges.\n");
 			return(0);
 		}
@@ -667,15 +667,15 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 	target = gServer->findPlayer(cmnd->str[2]);
 	cmnd->str[2][0] = low(cmnd->str[2][0]);
 	if(!target || (!player->isCt() && target->flagIsSet(P_DM_INVIS)))
-		target = player->getRoom()->findCreature(player, cmnd, 2);
+		target = player->getParent()->findCreature(player, cmnd, 2);
 
 	if(!target) {
 		player->print("Creature not found.\n");
 		return(0);
 	}
 
-	pTarget = target->getPlayer();
-	mTarget = target->getMonster();
+	pTarget = target->getAsPlayer();
+	mTarget = target->getAsMonster();
 
 	// trying to modify a player?
 	if(pTarget && !player->isDm()) {
@@ -2126,7 +2126,7 @@ int dmCrtName(Player* player, cmd* cmnd) {
 	if(isdigit(cmnd->fullstr[i]))
 		cmnd->val[1] = atoi(&cmnd->fullstr[i]);
 
-	target = player->getRoom()->findMonster(player, cmnd);
+	target = player->getParent()->findMonster(player, cmnd);
 	if(!target) {
 		player->print("Monster not found in the room.\n");
 		return(PROMPT);
@@ -2323,7 +2323,7 @@ int dmAlias(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	monster = player->getRoom()->findMonster(player, cmnd);
+	monster = player->getParent()->findMonster(player, cmnd);
 	if(!monster) {
 		player->print("Can't seem to locate that monster here.\n");
 		return(0);
@@ -2381,7 +2381,7 @@ int dmAlias(Player* player, cmd* cmnd) {
 	}
 
 	log_immort(false,player, "%s possesses %s in room %s.\n", player->name, monster->name,
-		player->getRoom()->fullName().c_str());
+		player->getRoomParent()->fullName().c_str());
 
 	return(0);
 }
@@ -2401,7 +2401,7 @@ int dmFollow(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findMonster(player, cmnd);
+	creature = player->getParent()->findMonster(player, cmnd);
 	if(!creature) {
 		player->print("Can't seem to locate that creature here.\n");
 		return(0);
@@ -2432,7 +2432,7 @@ int dmAttack(Player* player, cmd* cmnd) {
 	Creature* victim=0;
 	int	inroom=1;
 
-	if(!player->checkBuilder(player->parent_rom)) {
+	if(!player->checkBuilder(player->getUniqueRoomParent())) {
 		player->print("Error: Room number not inside any of your alotted ranges.\n");
 		return(0);
 	}
@@ -2444,7 +2444,7 @@ int dmAttack(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	attacker = player->getRoom()->findMonster(player, cmnd);
+	attacker = player->getParent()->findMonster(player, cmnd);
 
 	if(!attacker || !player->canSee(attacker)) {
 		player->print("Can't seem to locate that attacker here.\n");
@@ -2457,7 +2457,7 @@ int dmAttack(Player* player, cmd* cmnd) {
 	}
 
 
-	victim = player->getRoom()->findMonster(player, cmnd, 2);
+	victim = player->getParent()->findMonster(player, cmnd, 2);
 
 	if(!victim) {
 		lowercize(cmnd->str[2], 1);
@@ -2482,7 +2482,7 @@ int dmAttack(Player* player, cmd* cmnd) {
 	attacker->addEnemy(victim);
 
 	if(inroom) {
-		broadcast(victim->getSock(), victim->getRoom(), "%M attacks %N.", attacker, victim);
+		broadcast(victim->getSock(), victim->getRoomParent(), "%M attacks %N.", attacker, victim);
 		victim->print("%M attacked you!\n", attacker);
 	}
 	return(0);
@@ -2496,7 +2496,7 @@ int dmAttack(Player* player, cmd* cmnd) {
 int dmListEnemy(Player* player, cmd* cmnd) {
 	Monster* target=0;
 
-	target = player->getRoom()->findMonster(player, cmnd);
+	target = player->getParent()->findMonster(player, cmnd);
 
 	if(!target) {
 		player->print("Not here.\n");
@@ -2574,7 +2574,7 @@ void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
 		return;
 	}
 
-	target = player->getRoom()->findMonster(player, cmnd->str[2], 1);
+	target = player->getParent()->findMonster(player, cmnd->str[2], 1);
 
 	if(!target) {
 		player->print("Monster not found.\n");
@@ -2640,7 +2640,7 @@ void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
 	// clean up possesed before save
 	if(target->flagIsSet(M_DM_FOLLOW)) { // clear relevant follow lists
 		if(target->getMaster()) {
-		    Player* master = target->getMaster()->getPlayer();
+		    Player* master = target->getMaster()->getAsPlayer();
 
 		    master->clearFlag(P_ALIASING);
 
@@ -2680,7 +2680,7 @@ int dmAddMob(Player* player, cmd* cmnd) {
 
 	if(!player->canBuildMonsters())
 		return(cmdNoAuth(player));
-	if(!player->checkBuilder(player->parent_rom)) {
+	if(!player->checkBuilder(player->getUniqueRoomParent())) {
 		player->print("Error: this room is out of your range; you cannot create a mob here.\n");
 		return(0);
 	}
@@ -2717,8 +2717,8 @@ int dmAddMob(Player* player, cmd* cmnd) {
 	new_mob->damage.setPlus(1);
 	new_mob->first_obj = 0;
 	new_mob->first_tlk = 0;
-	new_mob->parent_rom = 0;
-	new_mob->area_room = 0;
+	new_mob->setParent(NULL);
+
 	for(n=0; n<20; n++)
 		new_mob->ready[n] = 0;
 	new_mob->setFlag(M_SAVE_FULL);
@@ -2728,7 +2728,7 @@ int dmAddMob(Player* player, cmd* cmnd) {
 	new_mob->lasttime[LT_TICK].ltime =
 	new_mob->lasttime[LT_TICK_SECONDARY].ltime =
 	new_mob->lasttime[LT_TICK_HARMFUL].ltime = t;
-	new_mob->addToRoom(player->getRoom());
+	new_mob->addToRoom(player->getRoomParent());
 
 
 	player->print("Monster created.\n");
@@ -2747,7 +2747,7 @@ int	dmForceWander(Player* player, cmd* cmnd) {
 
 	strcpy(name,"");
 
-	if(!player->checkBuilder(player->parent_rom)) {
+	if(!player->checkBuilder(player->getUniqueRoomParent())) {
 		player->print("Error: Room number not inside any of your alotted ranges.\n");
 		return(0);
 	}
@@ -2760,7 +2760,7 @@ int	dmForceWander(Player* player, cmd* cmnd) {
 	}
 
 
-	monster = player->getRoom()->findMonster(player, cmnd);
+	monster = player->getParent()->findMonster(player, cmnd);
 
 	if(!monster) {
 		player->print("That is not here.\n");
@@ -2782,13 +2782,13 @@ int	dmForceWander(Player* player, cmd* cmnd) {
 	}
 
 	strcpy(name, monster->name);
-	broadcast(NULL, player->getRoom(), "%1M just %s away.", monster, Move::getString(monster).c_str());
+	broadcast(NULL, player->getRoomParent(), "%1M just %s away.", monster, Move::getString(monster).c_str());
 
 	monster->deleteFromRoom();
 	free_crt(monster);
 
 	log_immort(false,player,"%s forced %s to wander away in room %s.\n",
-		player->name, name, player->getRoom()->fullName().c_str());
+		player->name, name, player->getRoomParent()->fullName().c_str());
 
 
 	return(0);
@@ -2809,7 +2809,7 @@ int dmBalance(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	target = player->getRoom()->findMonster(player, cmnd->str[1], 1);
+	target = player->getParent()->findMonster(player, cmnd->str[1], 1);
 
 	if(!target) {
 		player->print("Monster not found.\n");

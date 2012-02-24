@@ -246,7 +246,7 @@ time_t Config::getLotteryRunTime() {
 	return(lotteryRunTime);
 }
 int cmdClaim(Player* player, cmd* cmnd) {
-	BaseRoom *inRoom = player->getRoom();
+	BaseRoom *inRoom = player->getRoomParent();
 	Object	*ticket=0;
 	long	prize=0;
 
@@ -281,7 +281,7 @@ int cmdClaim(Player* player, cmd* cmnd) {
 	}
 
 
-	if(player->parent_rom && !Faction::willDoBusinessWith(player, player->parent_rom->getFaction())) {
+	if(player->inUniqueRoom() && !Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
 		player->print("The shopkeeper refuses to do business with you.\n");
 		return(0);
 	}
@@ -307,7 +307,7 @@ int cmdClaim(Player* player, cmd* cmnd) {
 	logn("log.prizes", "%s just won %ld.\n", player->name, prize);
 	gConfig->addLotteryWinnings(prize);
 
-	broadcast(player->getSock(), player->getRoom(), "%s claims a Powerbone ticket.", player->name);
+	broadcast(player->getSock(), player->getParent(), "%s claims a Powerbone ticket.", player->name);
 
 	if(prize != gConfig->getLotteryJackpot()) { // Didn't win the big pot
 		player->print("Sorry you didn't win the jackpot this time, but you did win $%ld today!\n", prize);

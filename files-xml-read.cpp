@@ -342,8 +342,8 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 	int i;
 	unsigned short c = 0;
 
-	Player *pPlayer = getPlayer();
-	Monster *mMonster = getMonster();
+	Player *pPlayer = getAsPlayer();
+	Monster *mMonster = getAsMonster();
 
 	if(mMonster) {
 		mMonster->info.load(rootNode);
@@ -367,8 +367,8 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 		}
 		else if(NODE_NAME(curNode, "Level")) setLevel(xml::toNum<unsigned short>(curNode), true);
 		else if(NODE_NAME(curNode, "Type")) setType(xml::toNum<unsigned short>(curNode));
-		else if(NODE_NAME(curNode, "RoomNum")&& getVersion() < "2.34" ) xml::copyToNum(room.id, curNode);
-		else if(NODE_NAME(curNode, "Room")) room.load(curNode);
+		else if(NODE_NAME(curNode, "RoomNum")&& getVersion() < "2.34" ) xml::copyToNum(currentLocation.room.id, curNode);
+		else if(NODE_NAME(curNode, "Room")) currentLocation.room.load(curNode);
 
 		else if(NODE_NAME(curNode, "Race")) setRace(xml::toNum<unsigned short>(curNode));
 		else if(NODE_NAME(curNode, "Class")) c = xml::toNum<unsigned short>(curNode);
@@ -922,7 +922,7 @@ void Effects::load(xmlNodePtr rootNode, MudObject* pParent) {
 				EffectInfo* newEffect = new EffectInfo(curNode);
 				if(newEffect) {
 					newEffect->setParent(pParent);
-					list.push_back(newEffect);
+					effectList.push_back(newEffect);
 				}
 			} catch(bstring err) {
 				std::cout << "Error adding effect: " << err << std::endl;
@@ -1219,11 +1219,11 @@ void MudObject::readObjects(xmlNodePtr curNode) {
 	CatRef	cr;
 	int		i=0,quantity=0;
 
-	Creature* cParent = getCreature();
+	Creature* cParent = getAsCreature();
 //  Monster* mParent = parent->getMonster();
 //  Player* pParent = parent->getPlayer();
-    UniqueRoom* rParent = getUniqueRoom();
-    Object* oParent = getObject();
+    UniqueRoom* rParent = getAsUniqueRoom();
+    Object* oParent = getAsObject();
 
 
 	while(childNode) {
@@ -1290,11 +1290,11 @@ void MudObject::readCreatures(xmlNodePtr curNode) {
 	Monster *mob=0;
 	CatRef	cr;
 
-	Creature* cParent = getCreature();
+	Creature* cParent = getAsCreature();
 //	Monster* mParent = parent->getMonster();
 //	Player* pParent = parent->getPlayer();
-	UniqueRoom* rParent = getUniqueRoom();
-	Object* oParent = getObject();
+	UniqueRoom* rParent = getAsUniqueRoom();
+	Object* oParent = getAsObject();
 
 	while(childNode) {
 		mob = NULL;
@@ -1338,7 +1338,7 @@ void MudObject::readCreatures(xmlNodePtr curNode) {
 void BaseRoom::readExitsXml(xmlNodePtr curNode) {
 	xmlNodePtr childNode = curNode->children;
 	Exit* ext=0;
-	AreaRoom* aRoom = getAreaRoom();
+	AreaRoom* aRoom = getAsAreaRoom();
 
 	while(childNode) {
 		if(NODE_NAME(childNode , "Exit")) {
@@ -2261,7 +2261,7 @@ void Creature::loadStats(xmlNodePtr curNode) {
 			else if(stat == "Hp") hp.load(childNode);
 			else if(stat == "Mp") mp.load(childNode);
 			else if(stat == "Focus") {
-				Player* player = getPlayer();
+				Player* player = getAsPlayer();
 				if(player)
 					player->focus.load(childNode);
 			}

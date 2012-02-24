@@ -66,7 +66,7 @@ bool hearBroadcast(Creature* target, Socket* ignore1, Socket* ignore2, bool show
 	if(showTo && !showTo(target->getSock()))
 		return(false);
 
-	Player* pTarget = target->getPlayer();
+	Player* pTarget = target->getAsPlayer();
 	if(pTarget) {
 		if(	ignore1 != NULL &&
 			ignore1->getPlayer() &&
@@ -108,51 +108,44 @@ void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, 
 
 
 // room broadcast
-void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, BaseRoom* room, const char *fmt, va_list ap) {
-	Player* target=0;
-	ctag	*cp=0;
-
-	if(!room)
+void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const Container* container, const char *fmt, va_list ap) {
+	if(!container)
 		return;
 
-	cp = room->first_ply;
-	while(cp) {
-		target = cp->crt->getPlayer();
-		cp = cp->next_tag;
+	for(Player* ply : container->players) {
+        if(!hearBroadcast(ply, ignore1, ignore2, showTo))
+            continue;
+        if(ply->flagIsSet(P_UNCONSCIOUS))
+            continue;
 
-		if(!hearBroadcast(target, ignore1, ignore2, showTo))
-			continue;
-		if(target->flagIsSet(P_UNCONSCIOUS))
-			continue;
-
-		target->vprint(target->customColorize(fmt).c_str(), ap);
-		target->printColor("^x\n");
+        ply->vprint(ply->customColorize(fmt).c_str(), ap);
+        ply->printColor("^x\n");
 
 	}
 }
 
 
 // room broadcast, 1 ignore
-void broadcast(Socket* ignore, BaseRoom* room, const char *fmt, ...) {
+void broadcast(Socket* ignore, const Container* container, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
-	doBroadcast(0, ignore, NULL, room, fmt, ap);
+	doBroadcast(0, ignore, NULL, container, fmt, ap);
 	va_end(ap);
 }
 
 // room broadcast, 2 ignores
-void broadcast(Socket* ignore1, Socket* ignore2, BaseRoom* room, const char *fmt, ...) {
+void broadcast(Socket* ignore1, Socket* ignore2, const Container* container, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
-	doBroadcast(0, ignore1, ignore2, room, fmt, ap);
+	doBroadcast(0, ignore1, ignore2, container, fmt, ap);
 	va_end(ap);
 }
 
 // room broadcast, 1 ignore, showTo function
-void broadcast(bool showTo(Socket*), Socket* ignore, BaseRoom* room, const char *fmt, ...) {
+void broadcast(bool showTo(Socket*), Socket* ignore, const Container* container, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
-	doBroadcast(showTo, ignore, NULL, room, fmt, ap);
+	doBroadcast(showTo, ignore, NULL, container, fmt, ap);
 	va_end(ap);
 }
 
@@ -217,7 +210,7 @@ void announcePermDeath(Creature* player, const char *fmt,...) {
 // This function broadcasts a message to all the players that are in the
 // game. If they have the NO-BROADCAST flag set, then they will not see it.
 
-void broadcast_login(Player* player, int login) {
+void broadcast_login(Player* player, BaseRoom* inRoom, int login) {
 	std::ostringstream preText, postText, extra, room;
 	bstring text = "", illusion = "";
 	int    logoff=0;
@@ -255,11 +248,12 @@ void broadcast_login(Player* player, int login) {
 		illusion += " (" + gConfig->getRace(player->getRace())->getAdjective() + ")";
 	illusion += postText.str();
 
-	if(player->parent_rom)
-		room << " (" << player->parent_rom->info.str() << ")";
-	else if(player->area_room)
-		room << " " << player->area_room->mapmarker.str();
-
+	if(inRoom) {
+		if(inRoom->isUniqueRoom())
+			room << " (" << inRoom->getAsUniqueRoom()->info.str() << ")";
+		else if(inRoom->isAreaRoom())
+			room << " " << inRoom->getAsAreaRoom()->mapmarker.str();
+	}
 
 	// TODO: these are set elsewhere, too... check that out
 	if(!player->isStaff()) {
@@ -315,7 +309,7 @@ void broadcast_login(Player* player, int login) {
 // descriptor is present in the room, they are not given the message
 
 // TODO: Dom: remove
-void broadcast_rom_LangWc(int lang, Socket* ignore, AreaRoom* aRoom, CatRef cr, const char *fmt,...) {
+void broadcast_rom_LangWc(int lang, Socket* ignore, Location currentLocation, const char *fmt,...) {
 	char	fmt2[1024];
 	va_list ap;
 
@@ -336,8 +330,8 @@ void broadcast_rom_LangWc(int lang, Socket* ignore, AreaRoom* aRoom, CatRef cr, 
 			ply->isGagging(ignore->getPlayer()->name)
 		)
 			continue;
-		if(	(	(cr.id && *&ply->room == *&cr) ||
-				(aRoom && ply->area_room && *&aRoom->mapmarker == *&ply->area_room->mapmarker)
+		if(	(	(currentLocation.room.id && ply->currentLocation.room == currentLocation.room) ||
+				(currentLocation.mapmarker.getArea() != 0 && currentLocation.mapmarker == ply->currentLocation.mapmarker)
 			) &&
 			sock->getFd() > -1 &&
 			sock != ignore &&
@@ -397,7 +391,7 @@ void broadcastGroup(bool dropLoot, Creature* player, const char *fmt,...) {
 
 //	broadcastGroupMember(dropLoot, player, leader, fmt, ap);
 	for(Creature* crt : group->members) {
-		broadcastGroupMember(dropLoot, player, crt->getConstPlayer(), fmt, ap);
+		broadcastGroupMember(dropLoot, player, crt->getAsConstPlayer(), fmt, ap);
 	}
 }
 
@@ -612,10 +606,8 @@ void UniqueRoom::escapeText() {
 	short_desc = Pueblo::multiline(short_desc);
 	long_desc = Pueblo::multiline(long_desc);
 
-	xtag* xp = first_ext;
-	while(xp) {
-		xp->ext->escapeText();
-		xp = xp->next_tag;
+	for(Exit* exit : exits) {
+		exit->escapeText();
 	}
 }
 

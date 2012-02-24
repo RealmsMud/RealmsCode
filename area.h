@@ -189,7 +189,6 @@ protected:
 
 class Area {
 protected:
-	//void	move(ctag *fp, AreaRoom* room);
 
 public:
 	Area();
@@ -200,7 +199,7 @@ public:
 	bool	move(Player* player, MapMarker *mapmarker);
 	void	remove(AreaRoom* room);
 	AreaRoom *getRoom(const MapMarker *mapmarker);
-	AreaRoom *loadRoom(const Creature* creature, const MapMarker* mapmarker, bool recycle, bool p=false);
+	AreaRoom *loadRoom(Creature* creature, const MapMarker* mapmarker, bool recycle, bool p=false);
 	void	checkCycle(MapMarker *mapmarker) const;
 	short	checkCycle(short vector, short critical) const;
 	bool	canPass(const Creature* creature, const MapMarker *mapmarker, bool adjust=false) const;

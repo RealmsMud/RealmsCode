@@ -24,6 +24,10 @@
 class Ship;
 class ShipStop;
 
+// Container
+bool isMatch(Creature* searcher, Creature* target, const bstring& name, bool exactMatch, bool checkVisibility = false);
+
+
 // Socials
 void socialHooks(Creature *creature, MudObject* target, bstring action, bstring result = "");
 void socialHooks(Creature *target, bstring action, bstring result = "");
@@ -65,10 +69,11 @@ int getPkillInCombatDisabled();
 bool isRace(int subRace, int mainRace);
 bstring getSexName(Sex sex);
 
-Creature *find_exact_crt(const Creature* player, ctag *first_ct, char *str, int val);
-Creature *getFirstAggro(Creature* creature, Creature* player);
+Monster *getFirstAggro(Monster* creature, Creature* player);
 Creature *enm_in_group(Creature *target);
-int findCrt(Creature * player, ctag *first_ct, int findFlags, char *str, int val, int* match, Creature ** target );
+
+//template<class Type, class Compare>
+//int findCrt(Creature * player, std::set<Type, Compare>& set, int findFlags, char *str, int val, int* match, Creature ** target );
 
 // data.cpp
 int cmdRecipes(Player* player, cmd* cmnd);
@@ -122,8 +127,6 @@ int cmdSing(Creature* creature, cmd* cmnd);
 void link_rom(BaseRoom* room, Location l, bstring str);
 void link_rom(BaseRoom* room, CatRef cr, bstring str);
 void link_rom(BaseRoom* room, MapMarker *mapmarker, bstring str);
-int del_exit(BaseRoom* room, Exit *exit);
-int del_exit(BaseRoom* room, const char *dir);
 int view_log(Socket* sock);
 int room_track(Creature* player);
 int obj_track(Creature* player, Object* object);
@@ -325,9 +328,9 @@ bool antiGradius(int race);
 
 
 // io.cpp
-void broadcast(Socket* ignore, BaseRoom* room, const char *fmt, ...);
-void broadcast(Socket* ignore1, Socket* ignore2, BaseRoom* room, const char *fmt, ...);
-void broadcast(bool showTo(Socket*), Socket*, BaseRoom* room, const char *fmt, ...);
+void broadcast(Socket* ignore, const Container* container, const char *fmt, ...);
+void broadcast(Socket* ignore1, Socket* ignore2, const Container* container, const char *fmt, ...);
+void broadcast(bool showTo(Socket*), Socket*, const Container* container, const char *fmt, ...);
 
 bool yes(Socket* sock);
 bool yes(Creature* player);
@@ -343,9 +346,9 @@ void announcePermDeath(Creature* player, const char *fmt,...);
 
 //void run_game();
 void broadcast_wc(int color,const char *fmt, ...);
-void broadcast_login(Player* player, int login);
+void broadcast_login(Player* player, BaseRoom* inRoom, int login);
 
-void broadcast_rom_LangWc(int lang, Socket* ignore, AreaRoom* aRoom, CatRef cr, const char *fmt,...);
+void broadcast_rom_LangWc(int lang, Socket* ignore, Location currentLocation, const char *fmt,...);
 void broadcastGroup(bool dropLoot, Creature* player, const char *fmt, ...);
 void child_died(int sig);
 void quick_shutdown(int sig);
@@ -554,8 +557,8 @@ int cmdWatch(Player* player, cmd* cmnd);
 // room.cpp
 void display_rom(Player* player, Player *looker=0, int magicShowHidden=0);
 void display_rom(Player* player, BaseRoom* room);
-Exit *findExit(Creature* creature, cmd* cmnd, int val=1, xtag *first_xt=0);
-Exit *findExit(Creature* creature, bstring str, int val, xtag *first_xt=0);
+Exit *findExit(Creature* creature, cmd* cmnd, int val=1, BaseRoom* room = 0);
+Exit *findExit(Creature* creature, bstring str, int val, BaseRoom* room = 0);
 int createStorage(CatRef cr, const Player* player);
 void doRoomHarms(BaseRoom *inRoom, Player* target);
 BaseRoom *abortFindRoom(Creature* player, const char from[15]);

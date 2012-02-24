@@ -423,7 +423,7 @@ int setWhich(const Player* player, bstring options) {
 int dmSetObj(Player* player, cmd* cmnd) {
 	Creature* creature=0;
 	Monster* mTarget=0;
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	Object	*object=0;
 	int		n=0, match=0, test=0;
 	long	num=0;
@@ -539,7 +539,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 				player->print("Error: you do not have authorization to modify monsters.\n");
 				return(PROMPT);
 			}
-			mTarget = creature->getMonster();
+			mTarget = creature->getAsMonster();
 			if(!mTarget) {
 				player->print("Error: you are not allowed to modify players.\n");
 				return(0);
@@ -1253,7 +1253,7 @@ int dmObjName(Player* player, cmd* cmnd) {
 
 	object = findObject(player, player->first_obj, cmnd);
 	if(!object)
-		object = findObject(player, player->getRoom()->first_obj, cmnd);
+		object = findObject(player, player->getRoomParent()->first_obj, cmnd);
 	if(!object) {
 		player->print("Item not found.\n");
 		return(0);
@@ -1423,7 +1423,7 @@ void dmSaveObj(Player* player, cmd* cmnd, CatRef cr) {
 
 	object = findObject(player, player->first_obj, cmnd->str[2], 1);
 	if(!object)
-		object = findObject(player, player->getRoom()->first_obj, cmnd->str[2], 1);
+		object = findObject(player, player->getRoomParent()->first_obj, cmnd->str[2], 1);
 	if(!object) {
 		player->print("Object not found.\n");
 		return;

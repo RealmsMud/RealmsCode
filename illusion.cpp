@@ -86,7 +86,7 @@ int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(!player->isPlayer())
 		return(0);
-	pPlayer = player->getPlayer();
+	pPlayer = player->getAsPlayer();
 
 	if(spellData->how == CAST) {
 		// if the spell was cast
@@ -125,14 +125,14 @@ int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how != POTION) {
 			pPlayer->print("You cast an illusion spell.\n");
-			broadcast(pPlayer->getSock(), pPlayer->getRoom(), "%M casts an illusion spell.", pPlayer);
+			broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts an illusion spell.", pPlayer);
 		}
 	} else {
 		if(noPotion(player, spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = pPlayer->getRoom()->findPlayer(pPlayer, cmnd->str[2], cmnd->val[2], false);
+		target = pPlayer->getParent()->findPlayer(pPlayer, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			pPlayer->print("You don't see that player here.\n");
@@ -142,13 +142,13 @@ int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(checkRefusingMagic(player, target))
 			return(0);
 
-		broadcast(pPlayer->getSock(), target->getSock(), pPlayer->getRoom(), "%M casts an illusion spell on %N.",
+		broadcast(pPlayer->getSock(), target->getSock(), pPlayer->getRoomParent(), "%M casts an illusion spell on %N.",
 			pPlayer, target);
 		target->print("%M casts illusion on you.\n", pPlayer);
 		pPlayer->print("You cast an illusion spell on %N.\n", target);
 	}
 
-	if(pPlayer->getRoom()->magicBonus())
+	if(pPlayer->getRoomParent()->magicBonus())
 		pPlayer->print("The room's magical properties increase the power of your spell.\n");
 
 	if(target->isEffected("illusion"))
@@ -210,7 +210,7 @@ int splIllusoryWall(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	player->printColor("You cast an illusory wall spell on the %s^x.\n", exit->name);
-	broadcast(player->getSock(), player->getRoom(), "%M casts an illusory wall spell on the %s^x.",
+	broadcast(player->getSock(), player->getParent(), "%M casts an illusory wall spell on the %s^x.",
 		player, exit->name);
 
 	if(exit->flagIsSet(X_CONCEALED) || exit->hasPermEffect("illusory-wall")) {
@@ -219,7 +219,7 @@ int splIllusoryWall(Creature* player, cmd* cmnd, SpellData* spellData) {
 	}
 
 	if(spellData->how == CAST) {
-		if(player->getRoom()->magicBonus())
+		if(player->getRoomParent()->magicBonus())
 			player->print("The room's magical properties increase the power of your spell.\n");
 	}
 

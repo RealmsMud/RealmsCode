@@ -215,7 +215,7 @@ int cmdPledge(Player* player, cmd* cmnd) {
 		player->print("You have already joined.\n");
 		return(0);
 	}
-	if(!player->getRoom()->flagIsSet(R_PLEDGE)) {
+	if(!player->getRoomParent()->flagIsSet(R_PLEDGE)) {
 		player->print("You cannot join here.\n");
 		return(0);
 	}
@@ -225,7 +225,7 @@ int cmdPledge(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findMonster(player, cmnd);
+	creature = player->getParent()->findMonster(player, cmnd);
 
 	if(!creature) {
 		player->print("You don't see that here.\n");
@@ -253,7 +253,7 @@ int cmdPledge(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	broadcast(player->getSock(), player->getRoom(), "%M pledges %s allegiance to %N.",
+	broadcast(player->getSock(), player->getParent(), "%M pledges %s allegiance to %N.",
 		player, creature->hisHer(), creature);
 	player->print("You swear your allegiance to %N as you join %s clan.\n", creature, creature->hisHer());
 	player->print("You are now a member of the %s.\n", clan->getName().c_str());
@@ -307,12 +307,12 @@ int cmdRescind(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(!player->getRoom()->flagIsSet(R_RESCIND)) {
+	if(!player->getRoomParent()->flagIsSet(R_RESCIND)) {
 		player->print("You cannot rescind from your clan here.\n");
 		return(0);
 	}
 
-	creature = player->getRoom()->findMonster(player, cmnd);
+	creature = player->getParent()->findMonster(player, cmnd);
 
 	if(!creature) {
 		player->print("You don't see that here.\n");
@@ -345,7 +345,7 @@ int cmdRescind(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	broadcast(player->getSock(), player->getRoom(), "%M rescinds %s allegiance to %N.",
+	broadcast(player->getSock(), player->getParent(), "%M rescinds %s allegiance to %N.",
 		player, creature->hisHer(), creature);
 	player->print("%M scourns you as %s strips you of all your rights and privileges!\n",
 		creature, creature->heShe());

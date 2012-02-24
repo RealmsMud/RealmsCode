@@ -176,7 +176,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("Free-action spell cast.\nYou can now move freely.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts a free-action spell on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts a free-action spell on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION)
 			player->print("You can now move freely.\n");
 
@@ -186,7 +186,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
 
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target || (target && target->isMonster())) {
 			player->print("You don't see that person here.\n");
@@ -198,10 +198,10 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		player->print("Free-action cast on %s.\n", target->name);
 		target->print("%M casts a free-action spell on you.\n%s", player, "You can now move freely.\n");
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a free-action spell on %N.",player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a free-action spell on %N.",player, target);
 	}
 
-	pTarget = target->getPlayer();
+	pTarget = target->getAsPlayer();
 
 	if(pTarget) {
 		pTarget->setFlag(P_FREE_ACTION);
@@ -211,7 +211,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
 			pTarget->lasttime[LT_FREE_ACTION].interval = MAX(300, 900 +
 				bonus((int) player->intelligence.getCur()) * 300);
 
-			if(player->getRoom()->magicBonus()) {
+			if(player->getRoomParent()->magicBonus()) {
 				pTarget->print("The room's magical properties increase the power of your spell.\n");
 				pTarget->lasttime[LT_FREE_ACTION].interval += 300L;
 			}
@@ -245,7 +245,7 @@ int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 				player->print("You feel brave again.\n");
 			else
 				player->print("Nothing happens.\n");
-			broadcast(player->getSock(), player->getRoom(), "%M casts remove-fear on %sself.", player, player->himHer());
+			broadcast(player->getSock(), player->getParent(), "%M casts remove-fear on %sself.", player, player->himHer());
 		} else if(spellData->how == POTION && player->isEffected("fear"))
 			player->print("You feel brave again.\n");
 		else if(spellData->how == POTION)
@@ -256,7 +256,7 @@ int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 		if(!target) {
 			player->print("That's not here.\n");
 			return(0);
@@ -269,7 +269,7 @@ int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You cast remove-fear on %N.\n", target);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts remove-fear on %N.", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts remove-fear on %N.", player, target);
 			if(target->isPlayer()) {
 				target->print("%M casts remove-fear on you.\n", player);
 				if(target->isEffected("fear"))
@@ -307,7 +307,7 @@ int splRemoveSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			player->print("That's not here.\n");
@@ -319,7 +319,7 @@ int splRemoveSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You cast remove-silence on %N.\n", target);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(),
+			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M casts remove-silence on %N.", player, target);
 
 			logCast(player, target, "remove-silence");
@@ -359,7 +359,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 
 	if(player == target) {
 		// mobs can't cast on themselves!
-		if(!player->getPlayer())
+		if(!player->getAsPlayer())
 			return(0);
 
 		// turn into a boolean!
@@ -382,13 +382,13 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 
 			player->print("You feel as if your soul is savagely ripped apart!\n");
 			player->printColor("You take %s%d^x points of damage!\n", player->customColorize("*CC:DAMAGE*").c_str(), damage.get());
-			broadcast(player->getSock(), player->getRoom(), "%M screams and doubles over in pain!", player);
+			broadcast(player->getSock(), player->getParent(), "%M screams and doubles over in pain!", player);
 			player->hp.decrease(damage.get());
 			if(player->hp.getCur() < 1) {
 				player->print("Your body explodes. You're dead!\n");
-				broadcast(player->getSock(), player->getRoom(), "%M's body explodes! %s's dead!", player,
+				broadcast(player->getSock(), player->getParent(), "%M's body explodes! %s's dead!", player,
 						player->upHeShe());
-				player->getPlayer()->die(EXPLODED);
+				player->getAsPlayer()->die(EXPLODED);
 			}
 		}
 
@@ -397,7 +397,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
 		if(!target) {
 			player->print("That's not here.\n");
@@ -426,9 +426,9 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You cast %s on %N.\n", spell, target);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a %s spell on %N.", player, spell, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.", player, spell, target);
 
-			if(target->getPlayer()) {
+			if(target->getAsPlayer()) {
 				target->wake("Terrible nightmares disturb your sleep!");
 				target->print("%M casts a %s spell on you.\n", player, spell);
 			}
@@ -448,13 +448,13 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 				broadcastGroup(false, target, "%M cast a %s spell on ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n",
 					player, spell, target, damage.get(), target->heShe(), target->getStatusStr(damage.get()));
 
-				broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M screams and doubles over in pain!", target);
+				broadcast(player->getSock(), target->getSock(), player->getParent(), "%M screams and doubles over in pain!", target);
 
 				// if the target is reflecting magic, force printing a message (it will say 0 damage)
 				player->doReflectionDamage(damage, target, target->isEffected("reflect-magic") ? REFLECTED_MAGIC : REFLECTED_NONE);
 
 				if(spellData->how == CAST && player->isPlayer())
-					player->getPlayer()->statistics.offensiveCast();
+					player->getAsPlayer()->statistics.offensiveCast();
 
 				if(target->chkSave(SPL, player,0))
 					damage.set(damage.get() / 2);
@@ -462,7 +462,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 				player->doDamage(target, damage.get(), NO_CHECK);
 				if(target->hp.getCur() < 1) {
 					target->print("Your body explodes! You die!\n");
-					broadcast(player->getSock(), target->getSock(), player->getRoom(),
+					broadcast(player->getSock(), target->getSock(), player->getParent(),
 						"%M's body explodes! %s's dead!", target, target->upHeShe());
 					player->print("%M's body explodes! %s's dead!\n", target, target->upHeShe());
 					target->die(player);
@@ -533,7 +533,7 @@ int splDispelGood(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This spell does NOT absorb damage, it only protects by giving better AC. -TC
 
 int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player	*pPlayer = player->getPlayer();
+	Player	*pPlayer = player->getAsPlayer();
 	int	mpNeeded=0, multi=0;
 
 	if(!pPlayer)
@@ -578,7 +578,7 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(spellData->how == CAST)
 			pPlayer->subMp(mpNeeded);
-		if(pPlayer->getRoom()->magicBonus()) {
+		if(pPlayer->getRoomParent()->magicBonus()) {
 			player->print("The room's magical properties increase the power of your spell.\n");
 			duration += 600L;
 		}
@@ -597,7 +597,7 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 		player->print("Armor spell cast.\n");
-		broadcast(pPlayer->getSock(), pPlayer->getRoom(),"%M casts an armor spell on %sself.", pPlayer, pPlayer->himHer());
+		broadcast(pPlayer->getSock(), pPlayer->getRoomParent(),"%M casts an armor spell on %sself.", pPlayer, pPlayer->himHer());
 	}
 
 	return(1);
@@ -610,7 +610,7 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
 // stone-hard to ward off physical attacks.
 
 int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
-	Player	*pPlayer = player->getPlayer();
+	Player	*pPlayer = player->getAsPlayer();
 	int		mpNeeded=0, multi=0;
 
 	if(player->getClass() != LICH)
@@ -657,7 +657,7 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
 		duration = 240 + 10*bonus((int)player->intelligence.getCur());
 		if(spellData->how == CAST)
 			player->subMp(mpNeeded);
-		if(player->getRoom()->magicBonus()) {
+		if(player->getRoomParent()->magicBonus()) {
 			player->print("The room's magical properties increase the power of your spell.\n");
 			duration += 300L;
 		}
@@ -675,7 +675,7 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 		player->print("Stoneskin spell cast.\nYou feel impervious.\n");
-		broadcast(player->getSock(), player->getRoom(),"%M casts a stoneskin spell on %sself.", player,
+		broadcast(player->getSock(), player->getParent(),"%M casts a stoneskin spell on %sself.", player,
 			player->himHer());
 	} else if(spellData->how == POTION)
 		player->print("You feel impervious.\n");
@@ -704,7 +704,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 
 	if(cmnd->num == 2) {
 		target = player;
-		broadcast(player->getSock(), player->getRoom(), "%M casts a %s spell on %sself.", player, spell, player->himHer());
+		broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on %sself.", player, spell, player->himHer());
 
 
 		player->print("You cast a %s spell on yourself.\n", spell);
@@ -717,7 +717,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findPlayer(player, cmnd, 2);
+		target = player->getParent()->findPlayer(player, cmnd, 2);
 		if(!target) {
 			// dispel-magic on an exit
 			cmnd->str[2][0] = low(cmnd->str[2][0]);
@@ -725,12 +725,12 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 
 			if(exit) {
 				player->printColor("You cast a %s spell on the %s^x.\n", spell, exit->name);
-				broadcast(player->getSock(), player->getRoom(), "%M casts a %s spell on the %s^x.", player, spell, exit->name);
+				broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on the %s^x.", player, spell, exit->name);
 
 				if(exit->flagIsSet(X_PORTAL))
-					Move::deletePortal(player->getRoom(), exit);
+					Move::deletePortal(player->getRoomParent(), exit);
 				else
-					exit->doDispelMagic(player->getRoom());
+					exit->doDispelMagic(player->getRoomParent());
 				return(0);
 			}
 
@@ -738,7 +738,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 			return(0);
 		}
 
-		if(player->isPlayer() && player->getRoom()->isPkSafe() && (!player->isCt()) && !target->flagIsSet(P_OUTLAW)) {
+		if(player->isPlayer() && player->getRoomParent()->isPkSafe() && (!player->isCt()) && !target->flagIsSet(P_OUTLAW)) {
 			player->print("That spell is not allowed here.\n");
 			return(0);
 		}
@@ -752,14 +752,14 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 			if(mrand(1,100) < 50) {
 
 				target->print("%M casts a %s spell on you.\nYour body returns to flesh.\n", player, spell);
-				broadcast(player->getSock(), target->getSock(), player->getRoom(),
+				broadcast(player->getSock(), target->getSock(), player->getParent(),
 					"%M casts a %s spell on %N.\n%s body returns to flesh.\n",
 					player, spell, target, target->upHisHer());
 				target->removeEffect("petrification");
 				return(1);
 			} else {
 				target->print("%M casts a dispel-magic spell on you.\n", player);
-				broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a dispel-magic spell on %N.\n",player, target);
+				broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a dispel-magic spell on %N.\n",player, target);
 				return(0);
 			}
 
@@ -787,7 +787,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 
 			logCast(player, target, spell);
 
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts a %s spell on %N.", player, spell, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.", player, spell, target);
 			target->print("%M casts a %s spell on you.\n", player, spell);
 			target->print("Your spells begin to dissolve away.\n");
 
@@ -807,7 +807,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 		} else {
 			player->printColor("^yYour spell fails against %N.\n", target);
 			target->print("%M tried to cast a dispel-magic spell on you.\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M tried to cast a dispel-magic spell on %N.", player, target);
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a dispel-magic spell on %N.", player, target);
 			return(0);
 		}
 	}
@@ -1022,7 +1022,7 @@ bool Creature::doReflectionDamage(Damage damage, Creature* target, ReflectedDama
 		return(false);
 
 	if(target->isPlayer() && isMonster())
-		getMonster()->adjustThreat(target, dmg);
+		getAsMonster()->adjustThreat(target, dmg);
 
 	hp.decrease(dmg);
 	if(hp.getCur() <= 0)

@@ -352,7 +352,7 @@ int showSkills(Player* toShow, Creature* player, bool magicOnly=false) {
 
 
 	// Tell the player what skills they are looking at
-	if(toShow->getPlayer() == player)
+	if(toShow->getAsPlayer() == player)
 		toShow->printColor("^YYour Skills:");
 	else
 		toShow->printColor("^Y%s's Skills:", player->name);
@@ -580,7 +580,7 @@ int dmSkills(Player* player, cmd* cmnd) {
 		target = gServer->findPlayer(cmnd->str[1]);
 		cmnd->str[1][0] = low(cmnd->str[1][0]);
 		if(!target || (!player->isCt() && target->flagIsSet(P_DM_INVIS)))
-			target = player->getRoom()->findCreature(player, cmnd);
+			target = player->getParent()->findCreature(player, cmnd);
 
 		if(!target) {
 			player->print("Target not found.\n");

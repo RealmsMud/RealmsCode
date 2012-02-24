@@ -118,7 +118,7 @@ int cmdCompare(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 bool Creature::equip(Object* object, bool showMessage, bool resetUniqueId) {
-	Player* player = getPlayer();
+	Player* player = getAsPlayer();
 	bool isWeapon = false;
 
 	switch(object->getWearflag()) {
@@ -151,14 +151,14 @@ bool Creature::equip(Object* object, bool showMessage, bool resetUniqueId) {
 			// weapons going in the first hand
 			if(showMessage) {
 				printColor("You wield %1P.\n", object);
-				broadcast(getSock(), getRoom(), "%M wields %1P.", this, object);
+				broadcast(getSock(), getRoomParent(), "%M wields %1P.", this, object);
 			}
 			ready[WIELD-1] = object;
 		} else if(!ready[HELD-1]) {
 			// weapons going in the off hand
 			if(showMessage) {
 				printColor("You wield %1P in your off hand.\n", object);
-				broadcast(getSock(), getRoom(), "%M wields %1P in %s off hand.",
+				broadcast(getSock(), getRoomParent(), "%M wields %1P in %s off hand.",
 					this, object, hisHer());
 			}
 			ready[HELD-1] = object;
@@ -174,7 +174,7 @@ bool Creature::equip(Object* object, bool showMessage, bool resetUniqueId) {
 	// message for armor/rings
 	if(!isWeapon && showMessage) {
 		printColor("You wear %1P.\n", object);
-		broadcast(getSock(), getRoom(), "%M wore %1P.", this, object);
+		broadcast(getSock(), getRoomParent(), "%M wore %1P.", this, object);
 	}
 
 
@@ -221,7 +221,7 @@ Object* Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool
 		if(!object->flagIsSet(O_DARKNESS))
 			darkness = false;
 		if(action == UNEQUIP_DELETE) {
-			Limited::remove(getPlayer(), object);
+			Limited::remove(getAsPlayer(), object);
 			darkness = object->flagIsSet(O_DARKNESS);
 			delete object;
 			object = 0;
@@ -244,7 +244,7 @@ Object* Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool
 
 int cmdUse(Player* player, cmd* cmnd) {
 	Object	*object=0;
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	unsigned long amt=0;
 
 	player->clearFlag(P_AFK);
@@ -508,7 +508,7 @@ void wearAll(Player* player, bool login) {
 		if(!login) {
 			str[strlen(str)-2] = 0;
 			player->printColor("You wear %s.\n", str);
-			broadcast(player->getSock(), player->getRoom(), "%M wears %s.", player, str);
+			broadcast(player->getSock(), player->getParent(), "%M wears %s.", player, str);
 		}
 	} else
 		if(!login)
@@ -609,11 +609,11 @@ bool doRemoveObj(Player* player, cmd* cmnd, int id) {
 
 			if(second->flagIsSet(O_NO_PREFIX)) {
 				player->printColor("%s jumped to your primary hand! It's cursed!\n", second->name);
-				broadcast(player->getSock(), player->getRoom(), "%s jumped to %N's primary hand! It's cursed!",
+				broadcast(player->getSock(), player->getParent(), "%s jumped to %N's primary hand! It's cursed!",
 					second->name, player);
 			} else {
 				player->printColor("The %s jumped to your primary hand! It's cursed!\n", second->name);
-				broadcast(player->getSock(), player->getRoom(), "%M's %s jumped to %s primary hand! It's cursed!", player,
+				broadcast(player->getSock(), player->getParent(), "%M's %s jumped to %s primary hand! It's cursed!", player,
 					second->name, player->hisHer());
 			}
 
@@ -621,11 +621,11 @@ bool doRemoveObj(Player* player, cmd* cmnd, int id) {
 		}
 
 		player->printColor("You removed %1P.\n", object);
-		broadcast(player->getSock(), player->getRoom(), "%M removed %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M removed %1P.", player, object);
 
 		if(second && !jumped) {
 			player->printColor("You removed %1P.\n", second);
-			broadcast(player->getSock(), player->getRoom(), "%M removed %1P.", player, second);
+			broadcast(player->getSock(), player->getParent(), "%M removed %1P.", player, second);
 		}
 
 		object->clearFlag(O_WORN);
@@ -718,7 +718,7 @@ void remove_all(Player* player) {
 	player->computeAttackPower();
 
 	str[strlen(str)-2] = 0;
-	broadcast(player->getSock(), player->getRoom(), "%M removes %s.", player, str);
+	broadcast(player->getSock(), player->getParent(), "%M removes %s.", player, str);
 	player->printColor("You remove %s.\n", str);
 
 }
@@ -956,7 +956,7 @@ int cmdHold(Player* player, cmd* cmnd) {
 		player->delObj(object, false, false, true, true, true);
 
 		player->printColor("You hold %1P.\n", object);
-		broadcast(player->getSock(), player->getRoom(), "%M holds %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M holds %1P.", player, object);
 		if(object->use_output[0] && object->getType() != POTION && object->getType() != CONTAINER && object->getType() != WAND)
 			player->printColor("%s\n", object->use_output);
 
@@ -1017,7 +1017,7 @@ int doGetObject(Object* object, Creature* creature, bool doLimited, bool noSplit
 
 	if(!player) {
 		creature->print("Unable to get item!\n");
-		object->addToRoom(creature->getRoom());
+		object->addToRoom(creature->getRoomParent());
 		return(i);
 	}
 
@@ -1080,8 +1080,8 @@ bool limitedInStorage(const Player* player, const Object* object, const Property
 // runs checks to see if the player is allowed to get/drop/throw
 
 bool storageProperty(const Player* player, const Object* object, Property **p) {
-	if(player->parent_rom) {
-		(*p) = gConfig->getProperty(player->parent_rom->info);
+	if(player->inUniqueRoom()) {
+		(*p) = gConfig->getProperty(player->getConstUniqueRoomParent()->info);
 		if(*p) {
 			// currently, we only care about storage rooms. we don't log gets
 			// in any other type of property
@@ -1119,7 +1119,7 @@ void getPermObj(Object* object) {
 	object->setFlag(O_PERM_INV_ITEM);
 	object->clearFlag(O_PERM_ITEM);
 
-	room = object->parent_room->getUniqueRoom();
+	room = object->parent_room->getAsUniqueRoom();
 	if(!room)
 		return;
 
@@ -1269,7 +1269,7 @@ void getAllObj(Creature* creature, Object *container) {
 	if(!strlen(str))
 		return;
 
-	broadcast(player->getSock(), player->getRoom(), "%M gets %s from %1P.", creature, str, container);
+	broadcast(player->getSock(), player->getParent(), "%M gets %s from %1P.", creature, str, container);
 
 	player->bug("%s%s gets %s from %s.\n", player->name, player != creature ? "'s pet" : "", str, container->name);
 	if(player == creature)
@@ -1292,10 +1292,9 @@ void getAllObj(Creature* creature, Object *container) {
 
 void get_all_rom(Creature* creature, char *item) {
 	Player	*player = creature->getPlayerMaster();
-	BaseRoom* room = creature->getRoom();
+	BaseRoom* room = creature->getRoomParent();
 	Object	*object=0, *last_obj=0;
 	otag	*op=0;
-	ctag	*cp=0;
 	char	str[2048];
 	const char *str2;
 	int 	n=1, found=0, heavy=0, dogoldmsg=0;
@@ -1317,18 +1316,16 @@ void get_all_rom(Creature* creature, char *item) {
 	str[0] = 0;
 
 	if(!player->isStaff()) {
-		cp = room->first_ply;
-		while(cp) {
-			if(	cp->crt != player &&
-				player->canSee(cp->crt) &&
-				!cp->crt->flagIsSet(P_HIDDEN) &&
-				!player->inSameGroup(cp->crt) &&
-				!cp->crt->isStaff()
-			) {
+	    for(Player* ply : room->players) {
+			if(	ply != player &&
+				player->canSee(ply) &&
+				!ply->flagIsSet(P_HIDDEN) &&
+				!player->inSameGroup(ply) &&
+				!ply->isStaff())
+			{
 				player->print("You cannot do that when someone else is in the room.\n");
 				return;
 			}
-			cp = cp->next_tag;
 		}
 	}
 
@@ -1476,7 +1473,7 @@ void get_all_rom(Creature* creature, char *item) {
 
 int cmdGet(Creature* creature, cmd* cmnd) {
 	Player	*player = creature->getPlayerMaster();
-	BaseRoom* room = creature->getRoom();
+	BaseRoom* room = creature->getRoomParent();
 	Object	*object=0, *container=0;
 	otag	*cop=0;
 	int		 n=0, match=0, ground=0;
@@ -1502,7 +1499,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 			player->print("You are not allowed get items.\n");
 			return(0);
 		}
-		if(!player->checkBuilder(player->parent_rom)) {
+		if(!player->checkBuilder(player->getUniqueRoomParent())) {
 			player->print("Error: Room number not inside any of your alotted ranges.\n");
 			return(0);
 		}
@@ -1970,10 +1967,10 @@ bool delete_drop_obj(const BaseRoom* room, const Object* object, bool factionCan
 //*********************************************************************
 
 void dropAllRoom(Creature* creature, Player *player, bool factionCanRecycle) {
-	Player	*pCreature = creature->getPlayer();
+	Player	*pCreature = creature->getAsPlayer();
 	int		money=0, flags=0, m=0, n=0;
 	otag	*op=0, *oprev=0;
-	BaseRoom* room = creature->getRoom();
+	BaseRoom* room = creature->getRoomParent();
 	Object	*object=0;
 	Property* p=0;
 	bool	first=false;
@@ -2130,7 +2127,7 @@ bool canDropAllObj(Object* object, Object* container) {
 void dropAllObj(Creature* creature, Object *container, Property *p) {
 	Player	*player = creature->getPlayerMaster();
 	Object	*object=0, *last=0;
-	BaseRoom* room = creature->getRoom();
+	BaseRoom* room = creature->getRoomParent();
 	otag	*op=0;
 	int		n=1, found=0, full=0;
 	bstring txt = "";
@@ -2243,7 +2240,7 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
 		sock = player->getSock();
 
 	if(room->isDropDestroy()) {
-		const AreaRoom* aRoom = room->getConstAreaRoom();
+		const AreaRoom* aRoom = room->getAsConstAreaRoom();
 
 		if(room->flagIsSet(R_EARTH_BONUS)) {
 			if(printPlayer) {
@@ -2311,7 +2308,7 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
 		}
 
 		if(player)
-			Limited::remove(player->getPlayer(), object);
+			Limited::remove(player->getAsPlayer(), object);
 		delete object;
 	} else if(object->flagIsSet(O_BREAK_ON_DROP) && (!player || !player->isStaff())) {
 		if(printPlayer)
@@ -2320,14 +2317,14 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
 			broadcast(sock, room, "It shattered and turned to dust!");
 
 		if(player)
-			Limited::remove(player->getPlayer(), object);
+			Limited::remove(player->getAsPlayer(), object);
 		delete object;
 	} else {
 		if(player) {
 			if(!player->isPet())
-				Limited::deleteOwner(player->getPlayer(), object);
+				Limited::deleteOwner(player->getAsPlayer(), object);
 			else
-				Lore::remove(player->getPlayer(), object, true);
+				Lore::remove(player->getAsPlayer(), object, true);
 		}
 
 		object->addToRoom(room);
@@ -2357,7 +2354,7 @@ void containerOutput(const Player* player, const Object* container, const Object
 
 int cmdDrop(Creature* creature, cmd* cmnd) {
 	Player	*player = creature->getPlayerMaster();
-	BaseRoom* room = creature->getRoom();
+	BaseRoom* room = creature->getRoomParent();
 	Object	*object=0, *container=0;
 	otag	*op=0;
 	int		n=0, match=0, in_room=0;
@@ -2393,7 +2390,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 			player->print("You are not allowed drop items.\n");
 			return(0);
 		}
-		if(!player->checkBuilder(player->parent_rom)) {
+		if(!player->checkBuilder(player->getUniqueRoomParent())) {
 			player->print("Error: Room number not inside any of your alotted ranges.\n");
 			return(0);
 		}
@@ -2410,7 +2407,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 
 
 	player->unhide();
-	factionCanRecycle = !player->parent_rom || Faction::willDoBusinessWith(player, player->parent_rom->getFaction());
+	factionCanRecycle = !player->inUniqueRoom() || Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction());
 
 	if(cmnd->num == 2) {
 
@@ -2750,7 +2747,7 @@ int canGiveTransport(Creature* creature, Creature* target, Object* object, bool 
 	//	- player will be the one getting the messages
 	player = creature->getPlayerMaster();
 	pMaster = target->getPlayerMaster();
-	pTarget = target->getPlayer();
+	pTarget = target->getAsPlayer();
 
 	if(!player) {
 		creature->print("Unable to give!\n");
@@ -2852,7 +2849,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 	Player	*player = creature->getPlayerMaster();
 	Object	*object=0;
 	Creature* target=0;
-	BaseRoom* room = creature->getRoom();
+	BaseRoom* room = creature->getRoomParent();
 
 	// we're being sent either a player or a pet
 	//	- creature will be the one giving the object
@@ -2912,14 +2909,14 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 			player->print("You are not allowed to give items to players.\n");
 			return(0);
 		}
-		if(!target->getPlayer()->canBuildObjects()) {
+		if(!target->getAsPlayer()->canBuildObjects()) {
 			player->print("%s are not allowed to receive items.\n", target->upHeShe());
 			return(0);
 		}
 
 		// they can give it, but can the builder *st/modify it?
 		if(	target->getClass()==BUILDER &&
-			target->getPlayer()->checkRangeRestrict(object->info)
+			target->getAsPlayer()->checkRangeRestrict(object->info)
 		) {
 			player->printColor("That item is outside their range. Please save to the ^ytest^x range.\n");
 			return(0);
@@ -2939,7 +2936,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 			return(0);
 		}
 
-		if(!Faction::willDoBusinessWith(player, target->getMonster()->getPrimeFaction())) {
+		if(!Faction::willDoBusinessWith(player, target->getAsMonster()->getPrimeFaction())) {
 			player->print("%M refuses to accept that from you.\n", target);
 			return(0);
 		}
@@ -3008,7 +3005,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 void give_money(Player* player, cmd* cmnd) {
 	Creature* target=0, *master=0;
 	Monster* mTarget=0;
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 	unsigned long amt = strtoul(&cmnd->str[1][1], 0, 0);
 
 	if(!player->ableToDoCommand()) return;
@@ -3059,7 +3056,7 @@ void give_money(Player* player, cmd* cmnd) {
 		log_immort(true, player, "%s gave %d gold to %s.\n", player->name, amt, master->name);
 
 	player->save(true);
-	mTarget = target->getMonster();
+	mTarget = target->getAsMonster();
 
 	if(mTarget && !mTarget->isPet()) {
 		bstring pay = "$pay " + (bstring)amt;
@@ -3208,7 +3205,7 @@ int cmdCost(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	smithy = player->getRoom()->findMonster(player, cmnd, 2);
+	smithy = player->getParent()->findMonster(player, cmnd, 2);
 	if(!smithy) {
 		player->print("That smithy is not here.\n");
 		return(0);
@@ -3292,7 +3289,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	smithy = player->getRoom()->findMonster(player, cmnd, 2);
+	smithy = player->getParent()->findMonster(player, cmnd, 2);
 	if(!smithy) {
 		player->print("That smithy is not here!\n");
 		return(0);
@@ -3338,7 +3335,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
 
 	gServer->logGold(GOLD_OUT, player, Money(cost, GOLD), object, "Repair");
 
-	broadcast(player->getSock(), player->getRoom(), "%M has %N repair %1P.", player, smithy, object);
+	broadcast(player->getSock(), player->getParent(), "%M has %N repair %1P.", player, smithy, object);
 
 
 	alignDiff = getAlignDiff(player, smithy);
@@ -3347,28 +3344,28 @@ int cmdRepair(Player* player, cmd* cmnd) {
 	switch(alignDiff) {
 	case 2:
 		player->print("%M gives you sidelong glances and is working slow on purpose.", smithy);
-		broadcast(player->getSock(), player->getRoom(),
+		broadcast(player->getSock(), player->getParent(),
 			"%M gives %N sidelong glances as %s works and is working slow on purpose.", smithy, player, smithy->heShe());
 		break;
 
 	case 3:
 		player->print("%M openly glares at you as %s works.\n", smithy, smithy->heShe());
-		broadcast(player->getSock(), player->getRoom(),
+		broadcast(player->getSock(), player->getParent(),
 			"%M openly glares at %N as %s works.\n", smithy, player, smithy->heShe());
 		break;
 	case 4:
 		player->print("%M scowls and curses about you as %s works.\n", smithy, smithy->heShe());
-		broadcast(player->getSock(), player->getRoom(),
+		broadcast(player->getSock(), player->getParent(),
 			"%M scowls and curses about %N as %s works.\n", smithy, player, smithy->heShe());
 		break;
 	case 5:
 		player->print("%M sneers at you in disgust as %s works.\n", smithy, smithy->heShe());
-		broadcast(player->getSock(), player->getRoom(),
+		broadcast(player->getSock(), player->getParent(),
 			"%M sneers at %N in disgust as %s works.\n", smithy, player, smithy->heShe());
 		break;
 	case 6:
 		player->print("As %N works, %s makes no bones about openly despising you.\n", smithy, smithy->heShe());
-		broadcast(player->getSock(), player->getRoom(),
+		broadcast(player->getSock(), player->getParent(),
 			"As %N works, %s makes no bones about openly despising %N.\n", smithy, smithy->heShe(), player);
 		break;
 	}
@@ -3467,7 +3464,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
 	} else {
 
 		player->print("\"Bah!\", %N shouts, \"Broke it. Sorry.\"\n", smithy);
-		broadcast(player->getSock(), player->getRoom(), "Oops! %s broke it.", smithy->heShe());
+		broadcast(player->getSock(), player->getParent(), "Oops! %s broke it.", smithy->heShe());
 
 		if(object->getShotsCur() > 0 && !alignDiff) {
 			player->print("%M says, \"Well, here's your cash back.\"\n", smithy);

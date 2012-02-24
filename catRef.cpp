@@ -39,10 +39,10 @@ void CatRef::setDefault(const Creature* target) {
 	setArea(gConfig->defaultArea);
 
 	if(target) {
-		if(target->parent_rom) {
-			setArea(target->parent_rom->info.area);
-		} else if(target->area_room) {
-			const CatRefInfo* cri = gConfig->getCatRefInfo("area", target->area_room->area->id, true);
+		if(target->inUniqueRoom()) {
+			setArea(target->getConstUniqueRoomParent()->info.area);
+		} else if(target->inAreaRoom()) {
+			const CatRefInfo* cri = gConfig->getCatRefInfo("area", target->getConstAreaRoomParent()->area->id, true);
 			if(cri)
 				setArea(cri->getArea());
 		}

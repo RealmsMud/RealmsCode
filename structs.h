@@ -68,6 +68,7 @@ enum EffectParentType {
 	EFFECT_EXIT
 };
 
+typedef std::list<EffectInfo*> EffectList;
 // this class holds effect information and makes effects portable
 // across multiple objects
 class Effects {
@@ -97,7 +98,7 @@ public:
 
 	void	pulse(time_t t, MudObject* pParent=0);
 
-	std::list<EffectInfo*> list;
+	EffectList effectList;
 };
 
 #include "money.h"
@@ -113,7 +114,7 @@ public:
 };
 
 
-// Object list tags
+// Object effectList tags
 typedef struct obj_tag {
 public:
 	obj_tag() { next_tag = 0; obj = 0; };
@@ -122,16 +123,7 @@ public:
 } otag;
 
 
-// Creature list tags
-typedef struct crt_tag {
-public:
-	crt_tag() { next_tag = 0; crt = 0; };
-	struct crt_tag	*next_tag;
-	Creature* crt;
-} ctag;
-
-
-// UniqueRoom list tags
+// UniqueRoom effectList tags
 typedef struct rom_tag {
 public:
 	rom_tag() { next_tag = 0; rom = 0; };
@@ -140,16 +132,8 @@ public:
 } rtag;
 
 
-// Exit list tags
-typedef struct ext_tag {
-public:
-	ext_tag() { next_tag = 0; ext = 0; };
-	struct ext_tag	*next_tag;
-	Exit* ext;
-} xtag;
-
 // TODO: Rework first_charm and remove this
-// Enemy list tags
+// Enemy effectList tags
 typedef struct enm_tag {
 public:
 	enm_tag() { next_tag = 0; enemy[0] = 0; damage = 0; owner[0] = 0; };
@@ -176,7 +160,7 @@ public:
 } vstat;
 
 
-// Talk list tags
+// Talk effectList tags
 typedef struct tlk_tag {
 public:
 	tlk_tag() { next_tag = 0; key = 0; response = 0; type = 0; action = 0; target = 0; on_cmd = 0; if_cmd = 0;
@@ -276,10 +260,12 @@ class Command;
 class cmd {
 public:
 	cmd() {
+#ifndef PYTHON_CODE_GEN
 	    ret = num = 0;
 	    memset(str, 0, sizeof(str));
 	    memset(val, 0, sizeof(val));
 	    myCommand=0;
+#endif
 	};
 	int			num;
 	bstring     fullstr;

@@ -50,7 +50,7 @@ int cmdBite(Player* player, cmd* cmnd) {
     if(!(target = player->findVictim(cmnd, 1, true, false, "Bite what?\n", "You don't see that here.\n")))
 		return(0);
 
-	pTarget = target->getPlayer();
+	pTarget = target->getAsPlayer();
 
 	if(!player->canAttack(target))
 		return(0);
@@ -69,7 +69,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 		!player->checkStaff("That won't work on the undead.\n")
 	) {
 		if(target->isMonster())
-			target->getMonster()->addEnemy(player);
+			target->getAsMonster()->addEnemy(player);
 		return(0);
 	}
 
@@ -87,7 +87,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 	if(pTarget) {
 
 	} else {
-		target->getMonster()->addEnemy(player);
+		target->getAsMonster()->addEnemy(player);
 		// Activates lag protection.
 		if(player->flagIsSet(P_LAG_PROTECTION_SET))
 			player->setFlag(P_LAG_PROTECTION_ACTIVE);
@@ -113,7 +113,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 		player->print("%s eludes your bite.\n", target->upHeShe());
 		player->checkImprove("bite", false);
 		target->print("%M tried to bite you!\n",player);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M tried to bite %N.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to bite %N.", player, target);
 		return(0);
 	}
 
@@ -141,7 +141,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 
 	target->printColor("%M bites you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), dmgnum);
 	target->stun((mrand(5, 8) + bonus((int) player->strength.getCur())));
-	broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M bites %N!", player, target);
+	broadcast(player->getSock(), target->getSock(), player->getParent(), "%M bites %N!", player, target);
 	broadcastGroup(false, target, "^M%M^x bites ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n",
 		player, target, dmgnum, target->heShe(), target->getStatusStr(dmgnum));
 
@@ -181,7 +181,7 @@ int cmdMist(Player* player, cmd* cmnd) {
 		player->print("You are unable to turn to mist.\n");
 		return(0);
 	}
-	if(player->getRoom()->flagIsSet(R_ETHEREAL_PLANE)) {
+	if(player->getRoomParent()->flagIsSet(R_ETHEREAL_PLANE)) {
 		player->print("That is not possible here.\n");
 		return(0);
 	}
@@ -201,7 +201,7 @@ int cmdMist(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(player->getRoom()->flagIsSet(R_DISPERSE_MIST)) {
+	if(player->getRoomParent()->flagIsSet(R_DISPERSE_MIST)) {
 		player->print("Swirling vapors prevent you from entering mist form.\n");
 		return(0);
 	}
@@ -220,7 +220,7 @@ int cmdMist(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	broadcast(player->getSock(), player->getRoom(), "%M turns to mist.", player);
+	broadcast(player->getSock(), player->getParent(), "%M turns to mist.", player);
 	player->setFlag(P_MISTED);
 	player->print("You turn to mist.\n");
 	//player->checkImprove("mist", true);
@@ -246,7 +246,7 @@ bool Player::canMistNow() const {
 		return(false);
 	// does the room let them mist anyway?
 	// BUG: callin flagIsSet() with possibly invalid getRoom()
-	if(getRoom() && (getRoom()->flagIsSet(R_VAMPIRE_COVEN) || getRoom()->flagIsSet(R_CAN_ALWAYS_MIST)))
+	if(getConstRoomParent() && (getConstRoomParent()->flagIsSet(R_VAMPIRE_COVEN) || getConstRoomParent()->flagIsSet(R_CAN_ALWAYS_MIST)))
 		return(true);
 	// otherwise, not during the day
 	if(isDay())
@@ -313,7 +313,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 		return(0);
 
 	if(target->isMonster()) {
-		if(target->getMonster()->isEnemy(player)) {
+		if(target->getAsMonster()->isEnemy(player)) {
 			player->print("Not while you are already fighting %s.\n", target->himHer());
 			return(0);
 		}
@@ -322,7 +322,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 
 
 	if(	target->isPlayer() &&
-		(	player->vampireCharmed(target->getPlayer()) ||
+		(	player->vampireCharmed(target->getAsPlayer()) ||
 			(target->hasCharm(player->name) && player->flagIsSet(P_CHARMED))
 		)
 	) {
@@ -358,9 +358,9 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 	if(mrand(1, 100) > chance && !player->isCt()) {
 		player->print("You fail to hypnotize %N.\n", target);
 		player->checkImprove("hypnotize", false);
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M attempts to hypnotize %N.",player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M attempts to hypnotize %N.",player, target);
 		if(target->isMonster()) {
-			target->getMonster()->addEnemy(player);
+			target->getAsMonster()->addEnemy(player);
 			if(player->flagIsSet(P_LAG_PROTECTION_SET)) {    // Activates lag protection.
 				player->setFlag(P_LAG_PROTECTION_ACTIVE);
 			}
@@ -389,7 +389,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 
 	player->print("You hypnotize %N.\n", target);
 	player->checkImprove("hypnotize", true);
-	broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M hypnotizes %N!", player, target);
+	broadcast(player->getSock(), target->getSock(), player->getParent(), "%M hypnotizes %N!", player, target);
 	target->print("%M hypnotizes you.\n", player);
 
 
@@ -416,7 +416,6 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 int cmdRegenerate(Player* player, cmd* cmnd) {
 	int		chance=0, xtra=0, pasthalf=0;
 	long	i=0, t=0;
-	ctag	*cp=0;
 
 	if(!player->ableToDoCommand())
 		return(0);
@@ -463,13 +462,11 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
 	if(mrand(1, 100) <= chance) {
 		player->print("You feel the evil in your soul rebuilding.\n");
 		player->checkImprove("regenerate", true);
-		broadcast(player->getSock(), player->getRoom(), "%M regenerates.", player);
+		broadcast(player->getSock(), player->getParent(), "%M regenerates.", player);
 
-		cp = player->getRoom()->first_ply;
-		while(cp) {
-			if(!player->isUndead())
-				cp->crt->print("You shiver from a sudden deathly coldness.\n");
-			cp = cp->next_tag;
+		for(Player* ply : player->getRoomParent()->players) {
+			if(!ply->isUndead())
+				ply->print("You shiver from a sudden deathly coldness.\n");
 		}
 
 		player->hp.increase(mrand(level+4,level*(5/2)+5));
@@ -498,7 +495,7 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
 	} else {
 		player->print("You fail to regenerate.\n");
 		player->checkImprove("regenerate", false);
-		broadcast(player->getSock(), player->getRoom(), "%M tried to regenerate.", player);
+		broadcast(player->getSock(), player->getParent(), "%M tried to regenerate.", player);
 		player->lasttime[LT_REGENERATE].ltime = t;
 		player->lasttime[LT_REGENERATE].interval = 10L;
 	}
@@ -537,7 +534,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
     if(!(target = player->findVictim(cmnd, 1, true, false, "Drain whom?\n", "You don't see that here.\n")))
    		return(0);
 
-	pTarget = target->getPlayer();
+	pTarget = target->getAsPlayer();
 
     player->smashInvis();
 	player->interruptDelayedActions();
@@ -563,7 +560,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 				player->print("Sorry, that creature is lawful.\n");
 				return(0);
 			}
-			if(player->getRoom()->isPkSafe() && !target->getPlayerMaster()->flagIsSet(P_OUTLAW)) {
+			if(player->getRoomParent()->isPkSafe() && !target->getPlayerMaster()->flagIsSet(P_OUTLAW)) {
 				player->print("No killing allowed in this room.\n");
 				return(0);
 			}
@@ -578,7 +575,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 	}
 
 	if(target->isMonster())
-		target->getMonster()->addEnemy(player);
+		target->getAsMonster()->addEnemy(player);
 
 	player->lasttime[LT_DRAIN_LIFE].ltime = t;
 	player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
@@ -596,7 +593,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 		player->print("You failed to drain %N's life.\n", target);
 		player->checkImprove("drain", false);
 
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M tried to drain %N's life.", player, target);
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to drain %N's life.", player, target);
 		target->print("%M tried drain your life!\n", player);
 		return(0);
 	}
@@ -637,7 +634,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 		player->print("%M resisted your drain!\n", target);
 
 	target->printColor("%M drained you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), damage.get());
-	broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M drained %N's life.", player, target);
+	broadcast(player->getSock(), target->getSock(), player->getParent(), "%M drained %N's life.", player, target);
 
 	if(player->doDamage(target, damage.get(), CHECK_DIE)) {
 		if(player->getClass() == CARETAKER && pTarget)

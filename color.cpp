@@ -157,7 +157,7 @@ bstring Config::getCustomColor(CustomColor i, bool caret) const {
 
 const bstring Monster::customColorize(bstring text, bool caret) const {
 	if(getMaster() && getMaster()->isPlayer())
-		text = getMaster()->getConstPlayer()->customColorize(text, caret);
+		text = getMaster()->getAsConstPlayer()->customColorize(text, caret);
 	return(text);
 }
 const bstring Player::customColorize(bstring text, bool caret) const {

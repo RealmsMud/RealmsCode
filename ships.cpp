@@ -79,11 +79,11 @@ void shipBroadcastRange(Ship *ship, ShipStop *stop, bstring message) {
 
 		if(!target->isConnected())
 			continue;
-		if(!target->parent_rom)
+		if(!target->inUniqueRoom())
 			continue;
 
-		if(	ship->belongs(target->parent_rom->info) ||
-			stop->belongs(target->parent_rom->info)
+		if(	ship->belongs(target->getUniqueRoomParent()->info) ||
+			stop->belongs(target->getUniqueRoomParent()->info)
 		)
 			target->print("%s\n", message.c_str());
 	}
@@ -175,7 +175,6 @@ void ShipStop::spawnRaiders() {
 // it also takes care of announcing the ship's arrival
 
 bool ShipExit::createExit() {
-	xtag	*xp=0;
 	BaseRoom* newRoom=0;
 	int		i=0;
 
@@ -188,21 +187,19 @@ bool ShipExit::createExit() {
 
 	link_rom(newRoom, target, name);
 
-	xp = newRoom->first_ext;
-	while(xp) {
-		if(!strcmp(xp->ext->name, name.c_str())) {
-			zero(xp->ext->flags, sizeof(xp->ext->flags));
+	for(Exit* ext : newRoom->exits) {
+		if(!strcmp(ext->name, name.c_str())) {
+			zero(ext->flags, sizeof(ext->flags));
 
 			// TODO: Dom: needs to use getFlags() and setFlags()
-			for(i=sizeof(xp->ext->flags)-1; i>=0; i--)
-				xp->ext->flags[i] = flags[i];
-			xp->ext->setFlag(X_MOVING);
+			for(i=sizeof(ext->flags)-1; i>=0; i--)
+				ext->flags[i] = flags[i];
+			ext->setFlag(X_MOVING);
 
 			if(arrives != "")
 				broadcast(NULL, newRoom, "%s", arrives.c_str());
 			return(true);
 		}
-		xp = xp->next_tag;
 	}
 
 	return(false);
@@ -233,11 +230,8 @@ int shipSetExits(Ship *ship, ShipStop *stop) {
 
 void ShipExit::removeExit() {
 	Monster *raider=0;
-	ctag	*cp=0;
 	BaseRoom* newRoom=0;
 	AreaRoom* aRoom=0;
-	Exit	*xt=0;
-	xtag	*xp=0;
 	int		i=0, n=0;
 
 	newRoom = getRoom(true);
@@ -245,10 +239,9 @@ void ShipExit::removeExit() {
 		return;
 
 	// kill all raiders
-	cp = newRoom->first_mon;
-	while(cp) {
-		raider = cp->crt->getMonster();
-		cp = cp->next_tag;
+	MonsterSet::iterator mIt = newRoom->monsters.begin();
+	while(mIt != newRoom->monsters.end()) {
+		raider = (*mIt++);
 
 		if(raider && raider->flagIsSet(M_RAIDING)) {
 			broadcast(NULL, newRoom, "%1M just %s away.", raider, Move::getString(raider).c_str());
@@ -263,23 +256,22 @@ void ShipExit::removeExit() {
 	if(departs != "")
 		broadcast(NULL, newRoom, "%s", departs.c_str());
 
-	aRoom = newRoom->getAreaRoom();
-	xp = newRoom->first_ext;
-	while(xp) {
-		xt = xp->ext;
-		xp = xp->next_tag;
+	aRoom = newRoom->getAsAreaRoom();
+	ExitList::iterator xit;
+	for(xit = newRoom->exits.begin() ; xit != newRoom->exits.end() ; ) {
+		Exit* ext = (*xit++);
 		// if we're given an exit, delete it
 		// otherwise delete all exits
-		if(xt->flagIsSet(X_MOVING) && !strcmp(xt->name, name.c_str()) ) {
+		if(ext->flagIsSet(X_MOVING) && !strcmp(ext->name, name.c_str()) ) {
 			//oldPrintColor(4, "^rDeleting^w exit %s in room %d.\n", xt->name, room);
 			if(i < 8 && aRoom) {
 				// it's a cardinal direction, clear all flags
 				for(n=0; n<MAX_EXIT_FLAGS; n++)
-					xt->clearFlag(n);
-				xt->target.room.id = 0;
+					ext->clearFlag(n);
+				ext->target.room.id = 0;
 				aRoom->updateExits();
 			} else
-				del_exit(newRoom, xt->name);
+				newRoom->delExit(ext);
 		}
 		i++;
 	}
@@ -314,14 +306,14 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
 					continue;
 				if(ply->isStaff())
 					continue;
-				if(!ply->parent_rom)
+				if(!ply->inUniqueRoom())
 					continue;
 
-				if(!ship->belongs(ply->parent_rom->info))
+				if(!ship->belongs(ply->getUniqueRoomParent()->info))
 					continue;
 
 
-				if(!loadRoom(ply->parent_rom->info, &room))
+				if(!loadRoom(ply->getUniqueRoomParent()->info, &room))
 					continue;
 				if(!room->wander.getTraffic())
 					continue;

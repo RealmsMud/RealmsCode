@@ -668,7 +668,7 @@ void Guild::invite(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 bool shopStaysWithGuild(const UniqueRoom* shop) {
-	return(shop->first_ext && shop->first_ext->ext->target.room.isArea("guild"));
+	return(!shop->exits.empty() && shop->exits.front()->target.room.isArea("guild"));
 }
 
 //*********************************************************************
@@ -706,7 +706,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
 			player->setGuildRank(GUILD_NONE);
 
 			// Kick them out if they don't belong
-			p = gConfig->getProperty(player->room);
+			p = gConfig->getProperty(player->currentLocation.room);
 			if(p && p->getGuild() == guildId)
 				p->expelToExit(player, false);
 		} else {
@@ -768,7 +768,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
 	}
 
 	// Kick them out if they don't belong
-	p = gConfig->getProperty(target->room);
+	p = gConfig->getProperty(target->currentLocation.room);
 	if(p && p->getGuild() == guildId)
 		p->expelToExit(target, !online);
 
@@ -2073,7 +2073,7 @@ bool Config::deleteGuild(int guildId) {
 				UniqueRoom* shop=0;
 				if(loadRoom(cr, &shop)) {
 					// If the shop belongs to the guild, remove and continue
-					if(shop->first_ext && !shopStaysWithGuild(shop)) {
+					if(!shop->exits.empty() && !shopStaysWithGuild(shop)) {
 						shopRemoveGuild(*it, player, shop, 0);
 						it++;
 						continue;

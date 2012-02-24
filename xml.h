@@ -161,7 +161,7 @@ namespace xml {
 	void loadNumArray(xmlNodePtr curNode, Type array[], const char* nodeName, int maxProp) {
 		xmlNodePtr childNode = curNode->children;
 		int i;
-
+#ifndef PYTHON_CODE_GEN
 		while(childNode) {
 			if(NODE_NAME(childNode , nodeName)) {
 				i = xml::getIntProp(childNode, "Num");
@@ -170,6 +170,7 @@ namespace xml {
 			}
 			childNode = childNode->next;
 		}
+#endif
 	}
 
 	xmlNodePtr newBoolChild(xmlNodePtr node, const bstring name, const bool value);
@@ -232,9 +233,8 @@ void loadRanges(xmlNodePtr curNode, Player *pPlayer);
 //int saveObject(Object* pObject);
 
 int saveObjectsXml(xmlNodePtr parentNode, otag* op, int permOnly);
-int saveCreaturesXml(xmlNodePtr parentNode, ctag* cp, int permOnly);
+int saveCreaturesXml(xmlNodePtr parentNode, const std::set<Monster*, MonsterPtrLess>& set, int permOnly);
 //int saveCreatureXml(xmlNodePtr rootNode, Creature * pCreature, int permOnly, LoadType saveType);
-int saveExitsXml(xmlNodePtr curNode, xtag *xp);
 
 Ban *parseBan(xmlNodePtr cur);
 

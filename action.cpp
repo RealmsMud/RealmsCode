@@ -31,9 +31,9 @@ void socialHooks(Creature *creature, MudObject* target, bstring action, bstring 
 }
 
 void socialHooks(Creature *target, bstring action, bstring result) {
-	if(!target->getRoom())
+	if(!target->getRoomParent())
 		return;
-	Hooks::run(target->getRoom()->first_mon, target, "roomSocial", action, result);
+	Hooks::run<Monster*,MonsterPtrLess>(target->getRoomParent()->monsters, target, "roomSocial", action, result);
 }
 
 //*********************************************************************
@@ -160,8 +160,7 @@ int plyAction(Player* player, cmd* cmnd) {
 // if you create a new social and wish to exclude it from the socials helpfile.
 
 int cmdAction(Creature* creature, cmd* cmnd) {
-	BaseRoom* room = creature->getRoom();
-	ctag	*cp=0;
+	BaseRoom* room = creature->getRoomParent();
 	Player	*player=0, *pTarget=0;
 	Creature* target=0;
 	Object	*object=0;
@@ -174,7 +173,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 	ASSERTLOG( cmnd );
 
 	// some actions are creature-only; we will need this variable to use them
-	player = creature->getPlayer();
+	player = creature->getAsPlayer();
 
 	Socket* sock = NULL;
 	if(player)
@@ -201,7 +200,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 	if(cmnd->num == 2) {
 		target = room->findCreature(creature, cmnd->str[1], cmnd->val[1], true, true);
 		if(target)
-			pTarget = target->getPlayer();
+			pTarget = target->getAsPlayer();
 		if( (!target || target == creature) &&
 			str != "point" &&
 			str != "show" &&
@@ -405,20 +404,18 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 		} else {
 			OUT("You let rip a nasty one.\n", "%M lets out a deadly fart.");
 			sock->print("You knock everyone in the room unconscious!\n");
-			cp = room->first_ply;
-			while(cp) {
-				if(	cp->crt != player &&
-					!cp->crt->flagIsSet(P_DM_INVIS) &&
-					!cp->crt->isUnconscious() &&
-					!cp->crt->isDm() &&
-					!cp->crt->inCombat()
+			for(Player* ply : room->players) {
+				if(	ply != player &&
+					!ply->flagIsSet(P_DM_INVIS) &&
+					!ply->isUnconscious() &&
+					!ply->isDm() &&
+					!ply->inCombat()
 				) {
-					cp->crt->print("%M's fart knocks you unconscious!\n", creature);
-					cp->crt->knockUnconscious(30);
-					broadcast(sock, cp->crt->getSock(), room,
-						"%M falls to the ground unconscious.", cp->crt);
+					ply->print("%M's fart knocks you unconscious!\n", creature);
+					ply->knockUnconscious(30);
+					broadcast(sock, ply->getSock(), room,
+						"%M falls to the ground unconscious.", ply);
 				}
-				cp = cp->next_tag;
 			}
 
 		}
@@ -537,10 +534,10 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 			if(object) {
 				if(!(object->flagIsSet(O_NO_PREFIX) && (object->flagIsSet(O_NO_TAKE) || object->flagIsSet(O_SCENERY)))) {
 					sock->printColor("You piss on %P.\n", object);
-					broadcast(player->getSock(), player->getRoom(), "%M pisses on %P.", player, object);
+					broadcast(player->getSock(), player->getParent(), "%M pisses on %P.", player, object);
 				} else {
 					sock->printColor("You piss on the %P.\n", object);
-					broadcast(player->getSock(), player->getRoom(), "%M pisses on the %P.", player, object);
+					broadcast(player->getSock(), player->getParent(), "%M pisses on the %P.", player, object);
 				}
 
 				socialHooks(creature, object, str);
@@ -550,7 +547,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
 				if(exit && !exit->flagIsSet(X_DESCRIPTION_ONLY) && !exit->isConcealed(player)) {
 					sock->printColor("You piss on the %s^x.\n", exit->name);
-					broadcast(player->getSock(), player->getRoom(), "%M pisses on the %s^x.", player, exit->name);
+					broadcast(player->getSock(), player->getParent(), "%M pisses on the %s^x.", player, exit->name);
 
 					socialHooks(creature, exit, str);
 				} else {
@@ -587,7 +584,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
 		if(target) {
 			if(target->isPet() && target->getMaster() == creature) {
-				player->dismissPet(target->getMonster());
+				player->dismissPet(target->getAsMonster());
 			} else {
 				OUT4("You curtly dismiss %N.\n", "%M dismisses you curtly.\n",
 					"%M curtly dismisses %N .");
@@ -761,10 +758,10 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 	}  else if(str == "tnl" && player) {
 
 		if(player->getActualLevel() > player->getLevel()) {
-			broadcast(player->getSock(), player->getRoom(), "%M needs %s experience to relevel.", player, player->expToLevel(false).c_str());
+			broadcast(player->getSock(), player->getParent(), "%M needs %s experience to relevel.", player, player->expToLevel(false).c_str());
 			sock->print("You need %s experience to relevel.\n", player->expToLevel(false).c_str());
 		} else {
-			broadcast(player->getSock(), player->getRoom(), "%M needs %s experience to level.", player, player->expToLevel(false).c_str());
+			broadcast(player->getSock(), player->getParent(), "%M needs %s experience to level.", player, player->expToLevel(false).c_str());
 			sock->print("You need %s experience to level.\n", player->expToLevel(false).c_str());
 		}
 
@@ -926,7 +923,7 @@ bool Player::canDefecate() const {
 //*********************************************************************
 
 void Creature::stand() {
-	Player* player = getPlayer();
+	Player* player = getAsPlayer();
 
 	if(player && player->flagIsSet(P_SITTING)) {
 		player->unhide();
@@ -935,8 +932,8 @@ void Creature::stand() {
 	}
 
 	print("You stand up.\n");
-	if(getRoom()) {
-		broadcast(getSock(), getRoom(), "%M stands up.", this);
+	if(getRoomParent()) {
+		broadcast(getSock(), getRoomParent(), "%M stands up.", this);
 		socialHooks(this, "stand");
 	}
 }
@@ -959,7 +956,7 @@ void Creature::wake(bstring str, bool noise) {
 
 	if(str != "") {
 		printColor("%s\n", str.c_str());
-		broadcast(getSock(), getRoom(), "%M wakes up.", this);
+		broadcast(getSock(), getRoomParent(), "%M wakes up.", this);
 	}
 
 	clearFlag(P_SLEEPING);

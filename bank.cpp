@@ -27,12 +27,12 @@
 // we get the bankteller mob in the room, if there is one
 
 Monster* Bank::teller(const BaseRoom* room) {
-	ctag* cp = room->first_mon;
-	while(cp) {
-		if(!strcmp(cp->crt->name, "bank teller"))
-			return(cp->crt->getMonster());
-		cp = cp->next_tag;
-	}
+    for(Monster* mons : room->monsters ) {
+        if(!strcmp(mons->name, "bank teller"))
+            return(mons);
+
+    }
+
 	return(0);
 }
 
@@ -55,10 +55,10 @@ bool Bank::canSee(const Player* player) {
 		return(true);
 
 	// magic money machines don't need to see people
-	if(player->getRoom()->flagIsSet(R_MAGIC_MONEY_MACHINE))
+	if(player->getConstRoomParent()->flagIsSet(R_MAGIC_MONEY_MACHINE))
 		return(true);
 
-	Monster* teller = Bank::teller(player->getRoom());
+	Monster* teller = Bank::teller(player->getConstRoomParent());
 	if(teller && teller->canSee(player))
 		return(true);
 
@@ -100,9 +100,9 @@ bool Bank::can(Player* player, bool isGuild, Guild** guild) {
 		return(false);
 	}
 
-	if( !player->getRoom()->flagIsSet(R_BANK) &&
-		!player->getRoom()->flagIsSet(R_LIMBO) &&
-		!player->getRoom()->flagIsSet(R_MAGIC_MONEY_MACHINE) &&
+	if( !player->getRoomParent()->flagIsSet(R_BANK) &&
+		!player->getRoomParent()->flagIsSet(R_LIMBO) &&
+		!player->getRoomParent()->flagIsSet(R_MAGIC_MONEY_MACHINE) &&
 		!Bank::canAnywhere(player)
 	) {
 		player->print("You don't see a bank teller anywhere in this room!\n");
@@ -123,7 +123,7 @@ bool Bank::can(Player* player, bool isGuild, Guild** guild) {
 
 		(*guild) = gConfig->getGuild(player->getGuild());
 		if(!*guild) {
-			if(player->getRoom()->flagIsSet(R_BANK))
+			if(player->getRoomParent()->flagIsSet(R_BANK))
 				player->print("The bank teller says, \"Your guild bank account is currently unavaiable. Try back later.\"\n");
 			else
 				player->print("The magic money machine reports that your guild bank account is currently unavaiable.\n");
@@ -139,7 +139,7 @@ bool Bank::can(Player* player, bool isGuild, Guild** guild) {
 //*********************************************************************
 
 void Bank::say(const Player* player, const char* text) {
-	if(player->getRoom()->flagIsSet(R_BANK))
+	if(player->getConstRoomParent()->flagIsSet(R_BANK))
 		player->print("The bank teller says, \"%s\".\n", text);
 	else
 		player->print("The magic money machine tells you, \"%s\".\n", text);
@@ -152,7 +152,7 @@ void Bank::say(const Player* player, const char* text) {
 
 void Bank::balance(Player* player, bool isGuild) {
 	Guild* guild=0;
-	bool isBank = player->getRoom()->flagIsSet(R_BANK);
+	bool isBank = player->getRoomParent()->flagIsSet(R_BANK);
 	
 	// can they use the bank?
 	if(!Bank::can(player, isGuild, &guild))
@@ -253,7 +253,7 @@ void Bank::deposit(Player* player, cmd* cmnd, bool isGuild) {
 	player->save(true);
 
 	Bank::balance(player, isGuild);
-	broadcast(player->getSock(), player->getRoom(), "%s deposits some gold.", player->name);
+	broadcast(player->getSock(), player->getParent(), "%s deposits some gold.", player->name);
 }
 
 //*********************************************************************
@@ -331,7 +331,7 @@ void Bank::withdraw(Player* player, cmd* cmnd, bool isGuild) {
 	player->save(true);
 	
 	Bank::balance(player, isGuild);
-	broadcast(player->getSock(), player->getRoom(), "%s withdrew some gold.", player->name);
+	broadcast(player->getSock(), player->getParent(), "%s withdrew some gold.", player->name);
 }
 
 //*********************************************************************
@@ -470,7 +470,7 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
 		free_crt(target);
 
 	Bank::balance(player, isGuild);
-	broadcast(player->getSock(), player->getRoom(), "%s transfers some gold.", player->name);
+	broadcast(player->getSock(), player->getParent(), "%s transfers some gold.", player->name);
 }
 
 //*********************************************************************
@@ -489,7 +489,7 @@ int cmdTransfer(Player* player, cmd* cmnd) {
 
 void Bank::statement(Player* player, bool isGuild) {
 	char file[80];
-	bool isBank = player->getRoom()->flagIsSet(R_BANK);
+	bool isBank = player->getRoomParent()->flagIsSet(R_BANK);
 
 	// can they use the bank?
 	if(!Bank::can(player, isGuild))

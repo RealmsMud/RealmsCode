@@ -23,10 +23,7 @@
 
 
 BaseRoom::BaseRoom() {
-	first_ext = 0;
 	first_obj = 0;
-	first_mon = 0;
-	first_ply = 0;
 
 	tempNoKillDarkmetal = false;
 	memset(misc, 0, sizeof(misc));
@@ -38,10 +35,9 @@ bstring BaseRoom::getVersion() const { return(version); }
 void BaseRoom::setVersion(bstring v) { version = v; }
 
 
-
 bstring BaseRoom::fullName() const {
-	const UniqueRoom* uRoom = getConstUniqueRoom();
-	const AreaRoom* aRoom = getConstAreaRoom();
+	const UniqueRoom* uRoom = getAsConstUniqueRoom();
+	const AreaRoom* aRoom = getAsConstAreaRoom();
 	std::ostringstream oStr;
 
 	if(uRoom) {
@@ -73,6 +69,14 @@ UniqueRoom::UniqueRoom() {
 
 	memset(lastPly, 0, sizeof(lastPly));
 	memset(lastPlyTime, 0, sizeof(lastPlyTime));
+}
+
+bool UniqueRoom::operator< (const UniqueRoom& t) const {
+    if(this->info.area[0] == t.info.area[0]) {
+        return(this->info.id < t.info.id);
+    } else {
+        return(this->info.area < t.info.area);
+    }
 }
 
 bstring UniqueRoom::getShortDescription() const { return(short_desc); }
@@ -110,20 +114,7 @@ void UniqueRoom::setSize(Size s) { size = s; }
 //*********************************************************************
 
 void BaseRoom::BaseDestroy() {
-	xtag 	*xp = first_ext, *xtemp=0;
-	while(xp) {
-		if(xp->ext->flagIsSet(X_PORTAL)) {
-			BaseRoom* target = xp->ext->target.loadRoom();
-			// BUG: argument 3 is wrong, crash waiting to happen
-			Move::deletePortal(target, xp->ext->getPassPhrase());
-		}
-		xtemp = xp->next_tag;
-		delete xp->ext;
-		delete xp;
-		xp = xtemp;
-	}
-	first_ext = 0;
-
+	clearExits();
 	otag	*op = first_obj, *otemp=0;
 	while(op) {
 		otemp = op->next_tag;
@@ -133,22 +124,14 @@ void BaseRoom::BaseDestroy() {
 	}
 	first_obj = 0;
 
-	ctag	*cp = first_mon, *ctemp=0;
-	while(cp) {
-		ctemp = cp->next_tag;
-		free_crt(cp->crt);
-		delete cp;
-		cp = ctemp;
+	MonsterSet::iterator mIt = monsters.begin();
+	while(mIt != monsters.end()) {
+	    Monster* mons = (*mIt++);
+	    free_crt(mons);
 	}
-	first_mon = 0;
+	monsters.clear();
 
-	cp = first_ply;
-	while(cp) {
-		ctemp = cp->next_tag;
-		delete cp;
-		cp = ctemp;
-	}
-	first_ply = 0;
+	players.clear();
 
 	effects.removeAll();
 	removeEffectsIndex();
@@ -163,24 +146,33 @@ AreaRoom::~AreaRoom() {
 	BaseDestroy();
 	reset();
 }
+bool AreaRoom::operator< (const AreaRoom& t) const {
+    if(this->mapmarker.getX() == t.mapmarker.getX()) {
+        if(this->mapmarker.getY() == t.mapmarker.getY()) {
+            return(this->mapmarker.getZ() < t.mapmarker.getZ());
+        } else {
+            return(this->mapmarker.getY() < t.mapmarker.getY());
+        }
+    } else {
+        return(this->mapmarker.getX() < t.mapmarker.getX());
+    }
+}
 
 //*********************************************************************
 //						reset
 //*********************************************************************
 
 void AreaRoom::reset() {
-	xtag 	*xp = first_ext, *xtemp=0;
-
 	area = 0;
 	decCompass = needsCompass = stayInMemory = false;
 
-	while(xp) {
-		xtemp = xp->next_tag;
-		delete xp->ext;
-		delete xp;
-		xp = xtemp;
+	ExitList::iterator xit;
+	for(xit = exits.begin() ; xit != exits.end(); ) {
+		Exit* exit = (*xit++);
+		delete exit;
 	}
-	first_ext = 0;
+	exits.clear();
+
 }
 
 //*********************************************************************
@@ -319,7 +311,6 @@ const char *exitNameByOrder(int i) {
 //*********************************************************************
 
 bool AreaRoom::canSave() const {
-	xtag	*xp=0;
 	int		i=0;
 
 	if(unique.id)
@@ -328,15 +319,13 @@ bool AreaRoom::canSave() const {
 	if(needsEffectsIndex())
 		return(true);
 
-	if(first_ext) {
-		xp = first_ext;
-		while(xp) {
-			if(strcmp(xp->ext->name, exitNameByOrder(i++)))
+	if(!exits.empty()) {
+		for(Exit* ext : exits) {
+			if(strcmp(ext->name, exitNameByOrder(i++)))
 				return(true);
 			// doesnt check rooms leading to other area rooms
-			if(xp->ext->target.room.id)
+			if(ext->target.room.id)
 				return(true);
-			xp = xp->next_tag;
 		}
 		if(i != 8)
 			return(true);
@@ -380,10 +369,10 @@ WanderInfo* AreaRoom::getRandomWanderInfo() {
 //*********************************************************************
 
 WanderInfo* BaseRoom::getWanderInfo() {
-	UniqueRoom*	uRoom = getUniqueRoom();
+	UniqueRoom*	uRoom = getAsUniqueRoom();
 	if(uRoom)
 		return(&uRoom->wander);
-	AreaRoom* aRoom = getAreaRoom();
+	AreaRoom* aRoom = getAsAreaRoom();
 	if(aRoom)
 		return(aRoom->getRandomWanderInfo());
 	return(0);
@@ -433,7 +422,7 @@ void AreaRoom::save(Player* player) const {
 	mapmarker.save(curNode);
 
 	curNode = xml::newStringChild(rootNode, "Exits");
-	saveExitsXml(curNode, first_ext);
+	saveExitsXml(curNode);
 
 	xml::saveFile(filename, xmlDoc);
 	xmlFreeDoc(xmlDoc);
@@ -442,7 +431,47 @@ void AreaRoom::save(Player* player) const {
 		player->print("Room saved.\n");
 }
 
+//*********************************************************************
+//						delExit
+//*********************************************************************
 
+bool BaseRoom::delExit(Exit *exit) {
+	if(exit) {
+		ExitList::iterator xit = std::find(exits.begin(), exits.end(), exit);
+		if(xit != exits.end()) {
+			exits.erase(xit);
+			delete exit;
+			return(true);
+		}
+	}
+	return(false);
+}
+bool BaseRoom::delExit( bstring dir) {
+    for(Exit* ext : exits) {
+        if(!strcmp(ext->name, dir.c_str())) {
+
+        	exits.remove(ext);
+            delete ext;
+            return(true);
+        }
+    }
+
+    return(false);
+}
+
+
+void BaseRoom::clearExits() {
+	ExitList::iterator xit;
+	for(xit = exits.begin() ; xit != exits.end(); ) {
+		Exit* exit = (*xit++);
+		if(exit->flagIsSet(X_PORTAL)) {
+			BaseRoom* target = exit->target.loadRoom();
+			Move::deletePortal(target, exit->getPassPhrase());
+		}
+		delete exit;
+	}
+	exits.clear();
+}
 //*********************************************************************
 //						load
 //*********************************************************************
@@ -450,16 +479,7 @@ void AreaRoom::save(Player* player) const {
 void AreaRoom::load(xmlNodePtr rootNode) {
 	xmlNodePtr childNode = rootNode->children;
 
-	if(first_ext) {
-		xtag	*prev=0, *xp = first_ext;
-
-		while(xp) {
-			prev = xp;
-			xp = xp->next_tag;
-			delete prev;
-		}
-		first_ext = 0;
-	}
+	clearExits();
 
 	while(childNode) {
 		if(NODE_NAME(childNode, "Exits"))
@@ -487,9 +507,9 @@ bool AreaRoom::canDelete() {
 	// don't delete unique rooms
 	if(stayInMemory || unique.id)
 		return(false);
-	if(first_mon)
+	if(!monsters.empty())
 		return(false);
-	if(first_ply)
+	if(!players.empty())
 		return(false);
 	if(first_obj) {
 		otag	*op = first_obj;
@@ -502,16 +522,14 @@ bool AreaRoom::canDelete() {
 	// any room effects?
 	if(needsEffectsIndex())
 		return(false);
-	if(first_ext) {
+	if(!exits.empty()) {
 		int		i=0;
-		xtag	*xp = first_ext;
-		while(xp) {
-			if(strcmp(xp->ext->name, exitNameByOrder(i++)))
+		for(Exit* ext : exits) {
+			if(strcmp(ext->name, exitNameByOrder(i++)))
 				return(false);
 			// doesnt check rooms leading to other area rooms
-			if(xp->ext->target.room.id)
+			if(ext->target.room.id)
 				return(false);
-			xp = xp->next_tag;
 		}
 		if(i != 8)
 			return(false);
@@ -526,42 +544,47 @@ bool AreaRoom::canDelete() {
 // interest in the room. This is used by cmdScout.
 
 bool AreaRoom::isInteresting(const Player *viewer) const {
-	ctag	*cp=0;
-	xtag	*xp=0;
 	int		i=0;
 
 	if(unique.id)
 		return(true);
 
-	cp = first_ply;
-	while(cp) {
-		if(!cp->crt->flagIsSet(P_HIDDEN) && viewer->canSee(cp->crt))
-			return(true);
-		cp = cp->next_tag;
+	for(Player* ply : players) {
+	    if(!ply->flagIsSet(P_HIDDEN) && viewer->canSee(ply))
+	        return(true);
 	}
-
-	cp = first_mon;
-	while(cp) {
-		if(!cp->crt->flagIsSet(M_HIDDEN) && viewer->canSee(cp->crt))
-			return(true);
-		cp = cp->next_tag;
+	for(Monster* mons : monsters) {
+	    if(!mons->flagIsSet(M_HIDDEN) && viewer->canSee(mons))
+	        return(true);
 	}
-
-	xp = first_ext;
-	for(i=0; i<8; i++) {
-		if(!xp)
+	i = 0;
+	for(Exit* ext : exits) {
+		if(i < 7 && strcmp(ext->name, exitNameByOrder(i)))
 			return(true);
-		if(strcmp(xp->ext->name, exitNameByOrder(i)))
-			return(true);
-		xp = xp->next_tag;
+		if(i >= 8) {
+			if(viewer->showExit(ext))
+				return(true);
+		}
+		i++;
 	}
-
+	// Fewer than 8 exits
+	if( i < 7 )
+		return(true);
+//	xp = first_ext;
+//	for(i=0; i<8; i++) {
+//		if(!xp)
+//			return(true);
+//		if(strcmp(xp->ext->name, exitNameByOrder(i)))
+//			return(true);
+//		xp = xp->next_tag;
+//	}
+//
 	// check out the remaining exits
-	while(xp) {
-		if(viewer->showExit(xp->ext))
-			return(true);
-		xp = xp->next_tag;
-	}
+//	while(xp) {
+//		if(viewer->showExit(xp->ext))
+//			return(true);
+//		xp = xp->next_tag;
+//	}
 
 	return(false);
 }
@@ -572,6 +595,10 @@ bool AreaRoom::flagIsSet(int flag) const {
 	return(area->flagIsSet(flag, &m));
 }
 
+void AreaRoom::setFlag(int flag) {
+	std::cout << "Trying to set a flag on an area room!" << std::endl;
+	return;
+}
 bool UniqueRoom::flagIsSet(int flag) const {
 	return(flags[flag/8] & 1<<(flag%8));
 }
@@ -595,29 +622,24 @@ bool UniqueRoom::toggleFlag(int flag) {
 //*********************************************************************
 
 bool BaseRoom::isMagicDark() const {
-	ctag	*cp=0;
 	otag	*op=0;
 
 	if(flagIsSet(R_MAGIC_DARKNESS))
 		return(true);
 
 	// check for darkness spell
-	cp = first_ply;
-	while(cp) {
+	for(Player* ply : players) {
 		// darkness spell on staff does nothing
-		if(cp->crt->isEffected("darkness") && !cp->crt->isStaff())
+		if(ply->isEffected("darkness") && !ply->isStaff())
 			return(true);
-		if(cp->crt->flagIsSet(P_DARKNESS) && !cp->crt->flagIsSet(P_DM_INVIS))
+		if(ply->flagIsSet(P_DARKNESS) && !ply->flagIsSet(P_DM_INVIS))
 			return(true);
-		cp = cp->next_tag;
 	}
-	cp = first_mon;
-	while(cp) {
-		if(cp->crt->isEffected("darkness"))
+	for(Monster* mons : monsters) {
+		if(mons->isEffected("darkness"))
 			return(true);
-		if(cp->crt->flagIsSet(M_DARKNESS))
+		if(mons->flagIsSet(M_DARKNESS))
 			return(true);
-		cp = cp->next_tag;
 	}
 
 	op = first_obj;
@@ -646,28 +668,9 @@ bool BaseRoom::isNormalDark() const {
 
 
 void BaseRoom::addExit(Exit *ext) {
-	xtag	*xp, *temp, *prev;
-
-	xp = 0;
-	xp = new xtag;
-	if(!xp) merror("addExit", FATAL);
-
-	xp->ext = ext;
-    
     ext->setRoom(this);
 
-	if(!first_ext) {
-		first_ext = xp;
-		return;
-	}
-
-	temp = first_ext;
-
-	while(temp) {
-		prev = temp;
-		temp = temp->next_tag;
-	}
-	prev->next_tag = xp;
+    exits.push_back(ext);
 }
 
 //
@@ -677,26 +680,15 @@ void BaseRoom::addExit(Exit *ext) {
 // re-shut/re-closed.
 //
 void BaseRoom::checkExits() {
-	xtag	*xp=0;
 	long	t = time(0);
 
-	xp = first_ext;
-	while(xp) {
-		if(!xp->ext) {
-			broadcast(isDm, "^G*** Room %s has an exit tag with a null exit!", this->fullName().c_str());
-			xp = xp->next_tag;
-			continue;
-		}
-		if(	xp->ext->flagIsSet(X_LOCKABLE) &&
-			(xp->ext->ltime.ltime + xp->ext->ltime.interval) < t)
+	for(Exit* ext : exits) {
+		if(	ext->flagIsSet(X_LOCKABLE) && (ext->ltime.ltime + ext->ltime.interval) < t)
 		{
-			xp->ext->setFlag(X_LOCKED);
-			xp->ext->setFlag(X_CLOSED);
-		} else if(	xp->ext->flagIsSet(X_CLOSABLE) &&
-					(xp->ext->ltime.ltime + xp->ext->ltime.interval) < t)
-			xp->ext->setFlag(X_CLOSED);
-
-		xp = xp->next_tag;
+			ext->setFlag(X_LOCKED);
+			ext->setFlag(X_CLOSED);
+		} else if(	ext->flagIsSet(X_CLOSABLE) && (ext->ltime.ltime + ext->ltime.interval) < t)
+			ext->setFlag(X_CLOSED);
 	}
 }
 
@@ -766,14 +758,11 @@ bool BaseRoom::isFull() const {
 // room and returns that number.
 
 int BaseRoom::countVisPly() const {
-	ctag	*cp;
 	int		num = 0;
 
-	cp = first_ply;
-	while(cp) {
-		if(!cp->crt->flagIsSet(P_DM_INVIS))
+	for(Player* ply : players) {
+		if(!ply->flagIsSet(P_DM_INVIS))
 			num++;
-		cp = cp->next_tag;
 	}
 
 	return(num);
@@ -787,14 +776,11 @@ int BaseRoom::countVisPly() const {
 // room and returns that number.
 
 int BaseRoom::countCrt() const {
-	ctag	*cp;
 	int	num = 0;
 
-	cp = first_mon;
-	while(cp) {
-		if(!cp->crt->isPet())
+	for(Monster* mons : monsters) {
+		if(!mons->isPet())
 			num++;
-		cp = cp->next_tag;
 	}
 
 	return(num);
@@ -806,24 +792,12 @@ int BaseRoom::countCrt() const {
 //*********************************************************************
 
 int BaseRoom::getMaxMobs() const {
-	const UniqueRoom* room = getConstUniqueRoom();
+	const UniqueRoom* room = getAsConstUniqueRoom();
 	if(!room)
 		return(MAX_MOBS_IN_ROOM);
 	return(room->getMaxMobs() ? room->getMaxMobs() : MAX_MOBS_IN_ROOM);
 }
 
-//*********************************************************************
-//						wake
-//*********************************************************************
-
-void BaseRoom::wake(bstring str, bool noise) const {
-	ctag *cp = first_ply;
-
-	while(cp) {
-		cp->crt->wake(str, noise);
-		cp = cp->next_tag;
-	}
-}
 
 //*********************************************************************
 //						vampCanSleep
@@ -855,20 +829,14 @@ bool BaseRoom::vampCanSleep(Socket* sock) const {
 // checks to see if there is any time of combat going on in this room
 
 bool BaseRoom::isCombat() const {
-	ctag	*cp=0;
 
-	cp = first_ply;
-	while(cp) {
-		if(cp->crt->inCombat(true))
+	for(Player* ply : players) {
+		if(ply->inCombat(true))
 			return(true);
-		cp = cp->next_tag;
 	}
-
-	cp = first_mon;
-	while(cp) {
-		if(cp->crt->inCombat(true))
+	for(Monster* mons : monsters) {
+		if(mons->inCombat(true))
 			return(true);
-		cp = cp->next_tag;
 	}
 
 	return(false);
@@ -898,6 +866,8 @@ bool BaseRoom::isOutdoors() const {
 //*********************************************************************
 
 bool BaseRoom::magicBonus() const {
+	if(!this)
+		return(false);
 	return(flagIsSet(R_MAGIC_BONUS));
 }
 
@@ -963,7 +933,7 @@ CatRef AreaRoom::getUnique(Creature *creature, bool skipDec) {
 bool BaseRoom::isDropDestroy() const {
 	if(!flagIsSet(R_DESTROYS_ITEMS))
 		return(false);
-	const AreaRoom* aRoom = getConstAreaRoom();
+	const AreaRoom* aRoom = getAsConstAreaRoom();
 	if(aRoom && aRoom->area->isRoad(aRoom->mapmarker.getX(), aRoom->mapmarker.getY(), aRoom->mapmarker.getZ(), true))
 		return(false);
 	return(true);
@@ -976,165 +946,12 @@ bool BaseRoom::hasOppositeRealmBonus(Realm realm) const {
 }
 
 
-Monster* BaseRoom::getTollkeeper() {
-	ctag	*cp = first_mon;
-	while(cp) {
-		if(!cp->crt->isPet() && cp->crt->flagIsSet(M_TOLLKEEPER))
-			return(cp->crt->getMonster());
-		cp = cp->next_tag;
+Monster* BaseRoom::getTollkeeper() const {
+    for(Monster* mons : monsters) {
+		if(!mons->isPet() && mons->flagIsSet(M_TOLLKEEPER))
+			return(mons->getAsMonster());
 	}
 	return(0);
-}
-MudObject* BaseRoom::findTarget(Creature* searcher, const cmd* cmnd, int num) {
-	return(findTarget(searcher, cmnd->str[num], cmnd->val[num]));
-}
-
-MudObject* BaseRoom::findTarget(Creature* searcher, const bstring& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch) {
-	int match=0;
-	return(findTarget(searcher, name, num, monFirst, firstAggro, exactMatch, match));
-}
-
-MudObject* BaseRoom::findTarget(Creature* searcher, const bstring& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch, int& match) {
-	MudObject* toReturn = 0;
-
-	if((toReturn = findCreature(searcher, name, num, monFirst, firstAggro, exactMatch, match))) {
-		return(toReturn);
-	}
-	// TODO: Search the room's objects
-	return(toReturn);
-}
-
-
-// Wrapper for the real findCreature to support legacy callers
-Creature* BaseRoom::findCreature(Creature* searcher, const cmd* cmnd, int num) {
-	return(findCreature(searcher, cmnd->str[num], cmnd->val[num]));
-}
-
-Creature* BaseRoom::findCreaturePython(Creature* searcher, const bstring& name, bool monFirst, bool firstAggro, bool exactMatch ) {
-	int ignored=0;
-	int num = 1;
-
-	bstring newName = name;
-	newName.trim();
-	unsigned int sLoc = newName.ReverseFind(" ");
-	if(sLoc != bstring::npos) {
-		num = newName.right(newName.length() - sLoc).toInt();
-		if(num != 0) {
-			newName = newName.left(sLoc);
-		} else {
-			num = 1;
-		}
-	}
-
-	std::cout << "Looking for '" << newName << "' #" << num << "\n";
-
-	return(findCreature(searcher, newName, num, monFirst, firstAggro, exactMatch, ignored));
-}
-
-// Wrapper for the real findCreature for callers that don't care about the value of match
-Creature* BaseRoom::findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch ) {
-	int ignored=0;
-	return(findCreature(searcher, name, num, monFirst, firstAggro, exactMatch, ignored));
-}
-
-// The real findCreature, will take and return the value of match as to allow for findTarget to find the 3rd thing named
-// gold with a monster name goldfish, player named goldmine, and some gold in the room!
-Creature* BaseRoom::findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) {
-
-	if(!searcher || name.empty())
-		return(NULL);
-
-	Creature* target=0;
-	ctag	*cp;
-	//match=0,
-	int		found=0;
-	bool	firstSearchDone=false;
-
-	// check for monsters first
-	if(monFirst) {
-		cp = first_mon;
-	} else {
-		cp = first_ply;
-	}
-
-	// Incase we start off with a null first ply/mon list
-	if(!cp) {
-		firstSearchDone = true;
-		if(monFirst)
-			cp = first_ply;
-		else
-			cp = first_mon;
-	}
-
-	while(cp) {
-		target = cp->crt;
-		cp = cp->next_tag;
-		if(cp == NULL && firstSearchDone == false) {
-			firstSearchDone = true;
-			// We've run to the end of the first search, switch to the next list now
-			if(!monFirst) {
-				// checking for monster now
-				cp = first_mon;
-			} else {
-				// checking for player now
-				cp = first_ply;
-			}
-		}
-		if(!target)
-			continue;
-		if(!searcher->canSee(target))
-			continue;
-
-		if(exactMatch) {
-			if(!strcmp(target->name, name.c_str())) {
-				match++;
-				if(match == num)
-					return(target);
-			}
-
-		} else {
-			if(keyTxtEqual(target, name.c_str())) {
-				match++;
-				if(match == num) {
-					found = 1;
-					break;
-				}
-			}
-		}
-
-	}
-
-	if(firstAggro && found) {
-		if(num < 2 && searcher->pFlagIsSet(P_KILL_AGGROS))
-			return(getFirstAggro(target, searcher));
-		else
-			return(target);
-	} else if(found) {
-		return(target);
-	} else {
-		return(NULL);
-	}
-}
-
-
-Monster* BaseRoom::findMonster(Creature* searcher, const cmd* cmnd, int num) {
-	return(findMonster(searcher, cmnd->str[num], cmnd->val[num]));
-}
-Monster* BaseRoom::findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch) {
-	Creature* creature = findCreature(searcher, name, num, true, firstAggro, exactMatch);
-	if(creature)
-		return(creature->getMonster());
-	return(NULL);
-}
-
-Player* BaseRoom::findPlayer(Creature* searcher, const cmd* cmnd, int num) {
-	return(findPlayer(searcher, cmnd->str[num], cmnd->val[num]));
-}
-Player* BaseRoom::findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch) {
-	Creature* creature = findCreature(searcher, name, num, false, false, exactMatch);
-	if(creature)
-		return(creature->getPlayer());
-	return(NULL);
 }
 
 //*********************************************************************
@@ -1173,7 +990,7 @@ bool BaseRoom::isSunlight() const {
 	if(!isDay() || !isOutdoors() || isMagicDark())
 		return(false);
 
-	const UniqueRoom* uRoom = getConstUniqueRoom();
+	const UniqueRoom* uRoom = getAsConstUniqueRoom();
 	const CatRefInfo* cri=0;
 	if(uRoom)
 		cri = gConfig->getCatRefInfo(uRoom->info.area);
@@ -1217,13 +1034,12 @@ void UniqueRoom::destroy() {
 
 void BaseRoom::expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelStaff) {
 	Player* target=0;
-	ctag*	cp = first_ply;
 	BaseRoom* newRoom=0;
 	UniqueRoom* uRoom=0;
 
 	// allow them to be sent to the room's trap exit
 	if(useTrapExit) {
-		uRoom = getUniqueRoom();
+		uRoom = getAsUniqueRoom();
 		if(uRoom) {
 			CatRef cr = uRoom->getTrapExit();
 			uRoom = 0;
@@ -1232,9 +1048,10 @@ void BaseRoom::expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelS
 		}
 	}
 
-	while(cp) {
-		target = cp->crt->getPlayer();
-		cp = cp->next_tag;
+	PlayerSet::iterator pIt = players.begin();
+	PlayerSet::iterator pEnd = players.end();
+	while(pIt != pEnd) {
+	    target = (*pIt++);
 
 		if(!expelStaff && target->isStaff())
 			continue;
@@ -1272,11 +1089,11 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, bs
 	Location l;
 
 	if(creature) {
-		if(creature->area_room) {
+		if(creature->inAreaRoom()) {
 			l.room.setArea("area");
-			l.room.id = creature->area_room->area->id;
+			l.room.id = creature->getConstAreaRoomParent()->area->id;
 		} else {
-			l.room.setArea(creature->room.area);
+			l.room.setArea(creature->currentLocation.room.area);
 		}
 	}
 	if(area != "")
@@ -1314,7 +1131,7 @@ Location Creature::getLimboRoom() const {
 //*********************************************************************
 
 Location Creature::getRecallRoom() const {
-	const Player* player = getConstPlayer();
+	const Player* player = getAsConstPlayer();
 	if(player && (player->flagIsSet(P_T_TO_BOUND) || player->getClass() == BUILDER))
 		return(player->bound);
 	return(getSpecialArea(&CatRefInfo::recall, this, "", 0));
@@ -1345,20 +1162,13 @@ void BaseRoom::print(Socket* ignore1, Socket* ignore2, const char *fmt, ...) {
 //*********************************************************************
 
 void BaseRoom::doPrint(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const char *fmt, va_list ap) {
-	Player* target=0;
-	ctag	*cp=0;
-
-	cp = first_ply;
-	while(cp) {
-		target = cp->crt->getPlayer();
-		cp = cp->next_tag;
-
-		if(!hearBroadcast(target, ignore1, ignore2, showTo))
+	for(Player* ply : players) {
+		if(!hearBroadcast(ply, ignore1, ignore2, showTo))
 			continue;
-		if(target->flagIsSet(P_UNCONSCIOUS))
+		if(ply->flagIsSet(P_UNCONSCIOUS))
 			continue;
 
-		target->vprint(target->customColorize(fmt).c_str(), ap);
+		ply->vprint(ply->customColorize(fmt).c_str(), ap);
 
 	}
 }

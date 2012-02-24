@@ -36,71 +36,27 @@ const short Creature::OFFGUARD_NOPRINT=2;
 //*********************************************************************
 
 bool Creature::inSameRoom(const Creature *b) const {
-	return(getRoom() == b->getRoom());
-}
-
-//*********************************************************************
-//						find_exact_crt
-//*********************************************************************
-// This function will attempt to locate a given creature within a given
-// list.  The first parameter contains a pointer to the creature doing
-// the search, the second contains a tag pointer to the first tag in
-// the list.  The third contains the match string, and the fourth
-// contains the number of times to match the string.
-
-Creature *find_exact_crt(const Creature* player, ctag *first_ct, char *str, int val) {
-	Creature* target=0;
-	ctag	*cp=0;
-	int		match=0;
-
-	ASSERTLOG( player );
-	ASSERTLOG( str );
-
-	if(!player || !str || !first_ct)
-		return(0);
-
-	cp = first_ct;
-	while(cp) {
-		target = cp->crt;
-		cp = cp->next_tag;
-
-		if(!target)
-			continue;
-		if(!player->canSee(target))
-			continue;
-
-		if(!strcmp(target->name, str)) {
-			match++;
-			if(match == val)
-				return(target);
-		}
-	}
-	return(0);
+	return(getConstRoomParent() == b->getConstRoomParent());
 }
 
 //*********************************************************************
 //						getFirstAggro
 //*********************************************************************
 
-Creature *getFirstAggro(Creature* creature, Creature* player) {
-	ctag		*cp=0;
-	Creature *foundCrt=0;
+Monster *getFirstAggro(Monster* creature, Creature* player) {
+	Monster *foundCrt=0;
 
 	if(creature->isPlayer())
 		return(creature);
 
-	cp = creature->getRoom()->first_mon;
-	while(cp) {
-		if(strcmp(cp->crt->name, creature->name)) {
-			cp = cp->next_tag;
-			continue;
-		}
-		if(cp->crt->getMonster()->isEnemy(player)) {
-			foundCrt = cp->crt;
-			break;
-		}
+	for(Monster* mons : creature->getRoomParent()->monsters) {
+        if(strcmp(mons->name, creature->name))
+            continue;
 
-		cp = cp->next_tag;
+        if(mons->getAsMonster()->isEnemy(player)) {
+            foundCrt = mons;
+            break;
+        }
 	}
 
 	if(foundCrt)
@@ -121,10 +77,10 @@ bool Monster::addEnemy(Creature* target, bool print) {
 
     if(print) {
       if(aggroString[0])
-          broadcast(NULL, getRoom(), "%M says, \"%s.\"", this, aggroString);
+          broadcast(NULL, getRoomParent(), "%M says, \"%s.\"", this, aggroString);
 
       target->printColor("^r%M attacks you.\n", this);
-      broadcast(target->getSock(), getRoom(), "%M attacks %N.", this, target);
+      broadcast(target->getSock(), getRoomParent(), "%M attacks %N.", this, target);
     }
 
     if(target->isPlayer()) {
@@ -154,6 +110,7 @@ long Monster::adjustContribution(Creature* target, long modAmt) {
     return(threatTable->adjustThreat(target, modAmt, 0));
 }
 long Monster::adjustThreat(Creature* target, long modAmt, double threatFactor) {
+	target->checkTarget(this);
     return(threatTable->adjustThreat(target, modAmt, threatFactor));
 }
 long Monster::clearEnemy(Creature* target) {
@@ -174,16 +131,12 @@ Creature* Monster::getTarget(bool sameRoom) {
 //*********************************************************************
 
 bool Monster::nearEnemy() const {
-	ctag	*cp=0;
-
 	if(nearEnmPly())
 		return(true);
 
-	cp = getRoom()->first_mon;
-	while(cp) {
-		if(isEnemy(cp->crt) && !cp->crt->flagIsSet(M_FAST_WANDER))
-			return(true);
-		cp = cp->next_tag;
+	for(Monster* mons : getConstRoomParent()->monsters) {
+        if(isEnemy(mons) && !mons->flagIsSet(M_FAST_WANDER))
+            return(true);
 	}
 
 	return(false);
@@ -194,12 +147,9 @@ bool Monster::nearEnemy() const {
 //*********************************************************************
 
 bool Monster::nearEnmPly() const {
-	ctag	*cp = getRoom()->first_ply;
-
-	while(cp) {
-		if(isEnemy(cp->crt) && !cp->crt->flagIsSet(P_DM_INVIS))
+	for(Player* ply : getConstRoomParent()->players) {
+		if(isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS))
 			return(true);
-		cp = cp->next_tag;
 	}
 
 	return(false);
@@ -211,24 +161,18 @@ bool Monster::nearEnmPly() const {
 // Searches for a near enemy, excluding the current player being attacked.
 
 bool Monster::nearEnemy(const Creature* target) const {
-	ctag	*cp=0;
-	BaseRoom* room = getRoom();
+	const BaseRoom* room = getConstRoomParent();
 
-	cp = room->first_ply;
-	while(cp) {
-		if(	isEnemy(cp->crt) &&
-			!cp->crt->flagIsSet(P_DM_INVIS) &&
-			strcmp(target->name, cp->crt->name)
-		)
-			return(true);
-		cp = cp->next_tag;
+	for(Player* ply : room->players) {
+        if( isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS) && strcmp(target->name, ply->name) )
+            return(true);
+
 	}
 
-	cp = room->first_mon;
-	while(cp) {
-		if(isEnemy(cp->crt) && !cp->crt->flagIsSet(M_FAST_WANDER))
-			return(true);
-		cp = cp->next_tag;
+	for(Monster* mons : room->monsters) {
+        if(isEnemy(mons) && !mons->flagIsSet(M_FAST_WANDER))
+            return(true);
+
 	}
 
 	return(false);
@@ -270,9 +214,9 @@ void Monster::diePermCrt() {
 
 	strcpy(perm,name);
 
-	if(!parent_rom)
+	if(!inUniqueRoom())
 		return;
-	room = parent_rom;
+	room = getUniqueRoomParent();
 
 	for(it = room->permMonsters.begin(); it != room->permMonsters.end() ; it++) {
 		crtm = &(*it).second;
@@ -304,7 +248,7 @@ void Monster::diePermCrt() {
 		if(fd) {
 			n = read(fd,tmp,2048);
 			tmp[n] = 0;
-			broadcast(NULL, getRoom(), "\n%s", tmp);
+			broadcast(NULL, getRoomParent(), "\n%s", tmp);
 		}
 		close(fd);
 	}
@@ -383,7 +327,7 @@ bool Creature::hasCharm(bstring charmed) {
 	if(!this || charmed == "")
 		return(false);
 
-	Player* player = getPlayer();
+	Player* player = getAsPlayer();
 
 	if(!player)
 		return(false);
@@ -485,9 +429,7 @@ bool mobileEnter(Exit* exit) {
 
 int Monster::mobileCrt() {
 	BaseRoom *newRoom=0;
-	UniqueRoom	*uRoom=0;
-	AreaRoom* aRoom=0, *caRoom = area_room;
-	xtag	*xp=0;
+	AreaRoom *caRoom = getAreaRoomParent();
 	int		i=0, num=0, ret=0;
 	bool	mem=false;
 
@@ -501,12 +443,10 @@ int Monster::mobileCrt() {
 	if(nearEnemy())
 		return(0);
 
-	xp = getRoom()->first_ext;
-	while(xp) {
+	for(Exit* exit : getRoomParent()->exits) {
 		// count up exits
-		if(mobileEnter(xp->ext))
+		if(mobileEnter(exit))
 			i += 1;
-		xp = xp->next_tag;
 	}
 
 	if(!i)
@@ -515,22 +455,19 @@ int Monster::mobileCrt() {
 	num = mrand(1, i);
 	i = 0;
 
-	xp = getRoom()->first_ext;
-	while(xp) {
-		if(mobileEnter(xp->ext))
+	for(Exit* exit : getRoomParent()->exits) {
+		if(mobileEnter(exit))
 			i += 1;
 
 		if(i == num) {
 
 			// get us out of this room
-			if(!Move::getRoom(this, xp->ext, &uRoom, &aRoom))
+			if(!Move::getRoom(this, exit, &newRoom))
 				return(0);
-			if(aRoom) {
-				mem = aRoom->getStayInMemory();
-				aRoom->setStayInMemory(true);
-				newRoom = aRoom;
-			} else
-				newRoom = uRoom;
+			if(newRoom->isAreaRoom()) {
+				mem = newRoom->getAsAreaRoom()->getStayInMemory();
+				newRoom->getAsAreaRoom()->setStayInMemory(true);
+			}
 
 			// make sure there are no problems with the new room
 			if(!newRoom)
@@ -539,12 +476,12 @@ int Monster::mobileCrt() {
 				return(0);
 
 			// no wandering between live/construction areas
-			if(newRoom->isConstruction() != getRoom()->isConstruction())
+			if(newRoom->isConstruction() != getRoomParent()->isConstruction())
 				return(0);
 
-			if(xp->ext->flagIsSet(X_CLOSED) && !xp->ext->flagIsSet(X_LOCKED)) {
-				broadcast(NULL, getRoom(), "%M just opened the %s.", this, xp->ext->name);
-				xp->ext->clearFlag(X_CLOSED);
+			if(exit->flagIsSet(X_CLOSED) && !exit->flagIsSet(X_LOCKED)) {
+				broadcast(NULL, getRoomParent(), "%M just opened the %s.", this, exit->name);
+				exit->clearFlag(X_CLOSED);
 			}
 
 			if(flagIsSet(M_WILL_SNEAK) && flagIsSet(M_HIDDEN))
@@ -553,17 +490,17 @@ int Monster::mobileCrt() {
 			if(	flagIsSet(M_SNEAKING) &&
 				mrand (1,100) <= (3+dexterity.getCur())*3)
 			{
-				broadcast(::isStaff, getSock(), getRoom(), "*DM* %M just snuck to the %s.", this,xp->ext->name);
+				broadcast(::isStaff, getSock(), getRoomParent(), "*DM* %M just snuck to the %s.", this,exit->name);
 			} else {
 			    Creature* lookingFor = NULL;
 				if(flagIsSet(M_CHASING_SOMEONE) && hasEnemy() && ((lookingFor = getTarget(false)) != NULL) ) {
 
-					broadcast(NULL, getRoom(), "%M %s to the %s^x, looking for %s.",
-						this, Move::getString(this).c_str(), xp->ext->name, lookingFor->getName());
+					broadcast(NULL, getRoomParent(), "%M %s to the %s^x, looking for %s.",
+						this, Move::getString(this).c_str(), exit->name, lookingFor->getName());
 				}
 				else
-					broadcast(NULL, getRoom(), "%M just %s to the %s^x.",
-						this, Move::getString(this).c_str(), xp->ext->name);
+					broadcast(NULL, getRoomParent(), "%M just %s to the %s^x.",
+						this, Move::getString(this).c_str(), exit->name);
 
 				clearFlag(M_SNEAKING);
 			}
@@ -571,15 +508,14 @@ int Monster::mobileCrt() {
 
 			// see if we can recycle this room
 			deleteFromRoom();
-			if(caRoom && aRoom == caRoom) {
-				aRoom = Move::recycle(aRoom, xp->ext);
-				newRoom = aRoom;
+			if(caRoom && newRoom == caRoom && newRoom->isAreaRoom()) {
+				newRoom = Move::recycle(newRoom->getAsAreaRoom(), exit);
 			}
 			addToRoom(newRoom);
 
 			// reset stayInMemory
-			if(aRoom)
-				aRoom->setStayInMemory(mem);
+			if(newRoom->isAreaRoom())
+				newRoom->getAsAreaRoom()->setStayInMemory(mem);
 
 			lasttime[LT_MON_WANDER].ltime = time(0);
 			lasttime[LT_MON_WANDER].interval = mrand(5,60);
@@ -587,7 +523,6 @@ int Monster::mobileCrt() {
 			ret = 1;
 			break;
 		}
-		xp = xp->next_tag;
 	}
 
 	if(mrand(1,100) > 80)
@@ -602,7 +537,7 @@ int Monster::mobileCrt() {
 // This function should make monsters attack each other
 
 void Monster::monsterCombat(Monster *target) {
-	broadcast(NULL, getRoom(), "%M attacks %N.\n", this, target);
+	broadcast(NULL, getRoomParent(), "%M attacks %N.\n", this, target);
 
 	addEnemy(target);
 }
@@ -745,7 +680,7 @@ void Creature::attackDelay(long delay) {
 	if(delay < 1)
 		return;
 
-	getPlayer()->updateAttackTimer(true, delay*10);
+	getAsPlayer()->updateAttackTimer(true, delay*10);
 }
 
 //*********************************************************************
@@ -823,9 +758,9 @@ int Monster::cleanMobForSaving() {
 	if(flagIsSet(M_DM_FOLLOW)) {
 		clearFlag(M_DM_FOLLOW);
 		Player* master;
-		if(getMaster() != NULL && (master = getMaster()->getPlayer()) != NULL) {
+		if(getMaster() != NULL && (master = getMaster()->getAsPlayer()) != NULL) {
 		    master->clearFlag(P_ALIASING);
-		    master->getPlayer()->setAlias(0);
+		    master->getAsPlayer()->setAlias(0);
 		    master->print("%1M's soul was saved.\n", this);
 			removeFromGroup(false);
 		}
@@ -866,8 +801,8 @@ int Creature::displayFlags() const {
 
 int Player::displayCreature(Creature* target) const {
 	int		percent=0, align=0, rank=0, chance=0, flags = displayFlags();
-	Player	*pTarget = target->getPlayer();
-	Monster	*mTarget = target->getMonster();
+	Player	*pTarget = target->getAsPlayer();
+	Monster	*mTarget = target->getAsMonster();
 	std::ostringstream oStr;
 	bstring str = "";
 	bool space=false;
@@ -1086,42 +1021,6 @@ int Player::displayCreature(Creature* target) const {
 }
 
 //*********************************************************************
-//						findCrt
-//*********************************************************************
-
-int findCrt(Creature * player, ctag *first_ct, int findFlags, char *str, int val, int* match, Creature ** target ) {
-	ctag *cp;
-	int found=0;
-
-	if(!player || !str || !first_ct)
-		return(0);
-
-	cp = first_ct;
-	while(cp) {
-		if(!cp->crt) {
-			cp = cp->next_tag;
-			continue;
-		}
-		if(!player->canSee(cp->crt)) {
-			cp = cp->next_tag;
-			continue;
-		}
-
-		if(keyTxtEqual(cp->crt, str)) {
-			(*match)++;
-			if(*match == val) {
-				*target = cp->crt;
-				found = 1;
-				break;
-			}
-		}
-
-		cp = cp->next_tag;
-	}
-	return(found);
-}
-
-//*********************************************************************
 //						checkSpellWearoff
 //*********************************************************************
 
@@ -1152,7 +1051,6 @@ bool Creature::canFlee() const {
 	bool	crtInRoom=false;
 	long	t=0;
 	int		i=0;
-	ctag*	cp=0;
 
 	if(isMonster()) {
 
@@ -1210,27 +1108,25 @@ bool Creature::canFlee() const {
 
 
 		// players can only flee if someone/something else is in the room
-		cp = getRoom()->first_mon;
-		while(cp && !crtInRoom) {
-			if(!cp->crt->isPet())
-				crtInRoom = true;
-			cp = cp->next_tag;
+		for(Monster* mons : getConstRoomParent()->monsters) {
+		    if(!mons->isPet()) {
+		        crtInRoom = true;
+		        break;
+		    }
 		}
 
-		cp = getRoom()->first_ply;
-		while(cp && !crtInRoom) {
-			if(cp->crt == this) {
-				cp = cp->next_tag;
-				continue;
-			}
-			if(!cp->crt->isStaff())
-				crtInRoom = true;
-			cp = cp->next_tag;
+		if(!crtInRoom) {
+		    for(Player* ply : getConstRoomParent()->players) {
+		        if(ply == this)
+		            continue;
+		        if(!ply->isStaff()) {
+		            crtInRoom = true;
+		            break;
+		        }
+		    }
 		}
 
-		if(	!crtInRoom &&
-			!checkStaff("There's nothing to flee from!\n")
-		)
+		if(	!crtInRoom && !checkStaff("There's nothing to flee from!\n") )
 			return(false);
 	}
 
@@ -1243,7 +1139,7 @@ bool Creature::canFlee() const {
 //*********************************************************************
 
 bool Creature::canFleeToExit(const Exit *exit, bool skipScary, bool blinking) {
-	Player	*pThis = getPlayer();
+	Player	*pThis = getAsPlayer();
 
 	// flags both players and mobs have to obey
 	if(!canEnter(exit, false, blinking) ||
@@ -1265,8 +1161,8 @@ bool Creature::canFleeToExit(const Exit *exit, bool skipScary, bool blinking) {
 	if(pThis) {
 
 		if(
-			((	getRoom()->flagIsSet(R_NO_FLEE) ||
-				getRoom()->flagIsSet(R_LIMBO)
+			((	getRoomParent()->flagIsSet(R_NO_FLEE) ||
+				getRoomParent()->flagIsSet(R_LIMBO)
 			) && inCombat()) ||
 			(exit->flagIsSet(X_DIFFICULT_CLIMB) && !isEffected("levitate")) ||
 			(
@@ -1294,17 +1190,17 @@ bool Creature::canFleeToExit(const Exit *exit, bool skipScary, bool blinking) {
 					// there is a chance we will flee to this exit anyway
 					chance = 65 + bonus((int) dexterity.getCur()) * 5;
 
-					if(getRoom()->flagIsSet(R_DIFFICULT_TO_MOVE) || getRoom()->flagIsSet(R_DIFFICULT_FLEE))
+					if(getRoomParent()->flagIsSet(R_DIFFICULT_TO_MOVE) || getRoomParent()->flagIsSet(R_DIFFICULT_FLEE))
 						chance /=2;
 
 					if(mrand(1,100) < chance)
 						return(false);
 
 					// success; means that the player is now scared of this room
-					if(parent_rom && fd > -1) {
+					if(inUniqueRoom() && fd > -1) {
 						scary = pThis->scared_of;
 						{
-							int roomNum = parent_rom->info.id;
+							int roomNum = getUniqueRoomParent()->info.id;
 							if(scary) {
 								int size = 0;
 								while(*scary) {
@@ -1344,15 +1240,14 @@ bool Creature::canFleeToExit(const Exit *exit, bool skipScary, bool blinking) {
 //*********************************************************************
 
 Exit* Creature::getFleeableExit() {
-	xtag*	xp = getRoom()->first_ext;
 	int		i=0, exit=0;
 	bool	skipScary=false;
 
 	// count exits so we can randomly pick one
-	while(xp) {
-		if(canFleeToExit(xp->ext))
+
+	for(Exit* ext : getRoomParent()->exits) {
+		if(canFleeToExit(ext))
 			i++;
-		xp = xp->next_tag;
 	}
 
 	if(i) {
@@ -1360,14 +1255,12 @@ Exit* Creature::getFleeableExit() {
 		exit = mrand(1, i);
 	} else if(isPlayer()) {
 		// force players to skip the scary list
-		xp = getRoom()->first_ext;
 		skipScary = true;
 		i=0;
 
-		while(xp) {
-			if(canFleeToExit(xp->ext, true))
+		for(Exit* ext : getRoomParent()->exits) {
+			if(canFleeToExit(ext, true))
 				i++;
-			xp = xp->next_tag;
 		}
 		if(i)
 			exit = mrand(1, i);
@@ -1377,13 +1270,11 @@ Exit* Creature::getFleeableExit() {
 		return(0);
 
 	i=0;
-	xp = getRoom()->first_ext;
-	while(xp) {
-		if(canFleeToExit(xp->ext, skipScary))
+	for(Exit* ext : getRoomParent()->exits) {
+		if(canFleeToExit(ext, skipScary))
 			i++;
 		if(i == exit)
-			return(xp->ext);
-		xp = xp->next_tag;
+			return(ext);
 	}
 
 	return(0);
@@ -1395,18 +1286,13 @@ Exit* Creature::getFleeableExit() {
 //*********************************************************************
 
 BaseRoom* Creature::getFleeableRoom(Exit* exit) {
-	AreaRoom* aRoom=0;
-	UniqueRoom*	uRoom=0;
+	BaseRoom* newRoom=0;
 	if(!exit)
 		return(0);
 	// exit flags have already been taken care of above, so
 	// feign teleporting so we don't recycle the room
-	Move::getRoom(this, exit, &uRoom, &aRoom, false, 0, false);
-	if(uRoom)
-		return(uRoom);
-	else if(aRoom)
-		return(aRoom);
-	return(0);
+	Move::getRoom(this, exit, &newRoom, false, 0, false);
+	return(newRoom);
 }
 
 
@@ -1418,11 +1304,11 @@ BaseRoom* Creature::getFleeableRoom(Exit* exit) {
 // visible exits, losing 10% or 1000 experience, whichever is less.
 
 int Creature::flee(bool magicTerror) {
-	Monster* mThis = getMonster();
-	Player* pThis = getPlayer();
-	BaseRoom* oldRoom = getRoom(), *newRoom=0;
+	Monster* mThis = getAsMonster();
+	Player* pThis = getAsPlayer();
+	BaseRoom* oldRoom = getRoomParent(), *newRoom=0;
 	UniqueRoom*	uRoom=0;
-	MapMarker* mapmarker=0;
+//	MapMarker* mapmarker=0;
 	Exit*	exit=0;
 	unsigned int n=0;
 
@@ -1497,9 +1383,7 @@ int Creature::flee(bool magicTerror) {
 		if(magicTerror)
 			printColor("^rYou flee from unnatural fear!\n");
 
-		if(area_room)
-			mapmarker = &(area_room->mapmarker);
-		Move::track(parent_rom, mapmarker, exit, pThis, false);
+		Move::track(getUniqueRoomParent(), &currentLocation.mapmarker, exit, pThis, false);
 
 		if(pThis->flagIsSet(P_ALIASING)) {
 			pThis->getAlias()->deleteFromRoom();
@@ -1532,7 +1416,7 @@ int Creature::flee(bool magicTerror) {
 
 	if(pThis) {
 		pThis->doPetFollow();
-		uRoom = newRoom->getUniqueRoom();
+		uRoom = newRoom->getAsUniqueRoom();
 		if(uRoom)
 			pThis->checkTraps(uRoom);
 

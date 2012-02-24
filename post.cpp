@@ -42,8 +42,8 @@ void Player::hasNewMudmail() const {
 
 bool canPost(Player* player) {
 	if(!player->isStaff()) {
-		if(	!player->getRoom()->flagIsSet(R_POST_OFFICE) &&
-			!player->getRoom()->flagIsSet(R_LIMBO)
+		if(	!player->getRoomParent()->flagIsSet(R_POST_OFFICE) &&
+			!player->getRoomParent()->flagIsSet(R_LIMBO)
 		) {
 			player->print("This is not a post office.\n");
 			return(false);
@@ -511,7 +511,7 @@ int cmdEditHistory(Player* player, cmd* cmnd) {
 	int		ff=0;
 
 
-	if(!player->getRoom()->isPkSafe() && !player->isStaff()) {
+	if(!player->getRoomParent()->isPkSafe() && !player->isStaff()) {
 		player->print("You must be in a no pkill room in order to write your history.\n");
 		return(0);
 	}
@@ -578,7 +578,7 @@ int cmdHistory(Player* player, cmd* cmnd) {
 	bool	self = false;
 
 
-	if(!player->getRoom()->isPkSafe() && !player->isStaff()) {
+	if(!player->getRoomParent()->isPkSafe() && !player->isStaff()) {
 		player->print("You must be in a no pkill room in order to write your history.\n");
 		return(0);
 	}

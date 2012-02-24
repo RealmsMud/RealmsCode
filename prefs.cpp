@@ -375,9 +375,9 @@ int cmdPrefs(Player* player, cmd* cmnd) {
 		if(pref->name == "afk") {
 			// broadcast for going afk
 			if(!player->flagIsSet(P_DM_INVIS))
-				broadcast(player->getSock(), player->getRoom(), "%M has gone afk.", player);
+				broadcast(player->getSock(), player->getParent(), "%M has gone afk.", player);
 			else
-				broadcast(isCt, player->getSock(), player->getRoom(), "*DM* %M has gone afk.", player);
+				broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M has gone afk.", player);
 		}
 		if(pref->name == "wimpy") {
 			player->setWimpy(cmnd->val[1] == 1L ? 10 : cmnd->val[1]);

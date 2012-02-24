@@ -219,7 +219,7 @@ bstring Object::showAlchemyEffects(Creature *creature) {
 //*********************************************************************
 
 int cmdBrew(Player* player, cmd* cmnd) {
-	BaseRoom* room = player->getRoom();
+	BaseRoom* room = player->getRoomParent();
 
 	if(!player->knowsSkill("alchemy")) {
 		player->print("You have no idea how to brew potions!\n");
@@ -355,7 +355,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 			// the first object in the room.  If we have searched the player and the op is NULL
 			// then we've searched everything so we'll just fall through
 			playerSearched = true;
-			op = player->getRoom()->first_obj;
+			op = player->getRoomParent()->first_obj;
 		}
 	}
 	if(retort) {

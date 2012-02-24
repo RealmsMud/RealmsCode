@@ -31,26 +31,18 @@
 // the player's room pointer is updated.
 
 void Player::addToSameRoom(Creature* target) {
-	if(target->parent_rom)
-		addToRoom(target->parent_rom);
-	else
-		addToRoom(target->area_room);
+	if(target->inRoom())
+		addToRoom(target->getRoomParent());
 }
 
 
 
 void Player::finishAddPlayer(BaseRoom* room) {
-	ctag	*cg=0, *cp=0, *temp=0, *prev=0;
 	otag	*op=0, *cop=0;
 
 	wake("You awaken suddenly!");
 	interruptDelayedActions();
 
-	cg = new ctag;
-	if(!cg)
-		merror("add_ply_rom", FATAL);
-	cg->crt = this;
-	cg->next_tag = 0;
 	if(!gServer->isRebooting()) {
 
 		if(!flagIsSet(P_DM_INVIS) && !flagIsSet(P_HIDDEN) && !flagIsSet(P_MISTED) ) {
@@ -59,15 +51,15 @@ void Player::finishAddPlayer(BaseRoom* room) {
 			broadcast(getSock(), room, "A light mist just arrived.");
 		} else {
 			if(isDm())
-				broadcast(::isDm, getSock(), getRoom(), "*DM* %M just arrived.", this);
+				broadcast(::isDm, getSock(), room, "*DM* %M just arrived.", this);
 			if(cClass == CARETAKER)
-				broadcast(::isCt, getSock(), getRoom(), "*DM* %M just arrived.", this);
+				broadcast(::isCt, getSock(), room, "*DM* %M just arrived.", this);
 			if(!isCt())
-				broadcast(::isStaff, getSock(), getRoom(), "*DM* %M just arrived.", this);
+				broadcast(::isStaff, getSock(), room, "*DM* %M just arrived.", this);
 		}
 
 		if(!isStaff()) {
-			if((isEffected("darkness") || flagIsSet(P_DARKNESS)) && !getRoom()->flagIsSet(R_MAGIC_DARKNESS))
+			if((isEffected("darkness") || flagIsSet(P_DARKNESS)) && !room->flagIsSet(R_MAGIC_DARKNESS))
 				broadcast(getSock(), room, "^DA globe of darkness just arrived.");
 		}
 	}
@@ -114,69 +106,39 @@ void Player::finishAddPlayer(BaseRoom* room) {
 		room->checkExits();
 
 
-
-	if(!room->first_ply) {
-		room->first_ply = cg;
-		cp = room->first_mon;
-		Monster *mon;
-		while(cp) {
-			mon = cp->crt->getMonster();
-			gServer->addActive(mon);
-			cp = cp->next_tag;
-		}
-		display_rom(this);
-		Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
-		return;
+	if(room->players.empty()) {
+	    for(Monster* mons : room->monsters) {
+	        gServer->addActive(mons);
+	    }
 	}
 
-	temp = room->first_ply;
-	if(strcmp(temp->crt->name, name) > 0) {
-		cg->next_tag = temp;
-		room->first_ply = cg;
-		display_rom(this);
-		Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
-		return;
-	}
-
-	while(temp) {
-		if(strcmp(temp->crt->name, name) > 0)
-			break;
-		prev = temp;
-		temp = temp->next_tag;
-	}
-	cg->next_tag = prev->next_tag;
-	prev->next_tag = cg;
-
+	addTo(room);
 	display_rom(this);
 
 	Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
 }
 
 void Player::addToRoom(BaseRoom* room) {
-	AreaRoom* aRoom = room->getAreaRoom();
+	AreaRoom* aRoom = room->getAsAreaRoom();
 
 	if(aRoom)
 		addToRoom(aRoom);
 	else
-		addToRoom(room->getUniqueRoom());
+		addToRoom(room->getAsUniqueRoom());
 }
 
 void Player::addToRoom(AreaRoom* aRoom) {
 	Hooks::run(aRoom, "afterAddCreature", this, "afterAddToRoom");
-	area_room = aRoom;
-	room.clear();
-	parent_rom = 0;
+	currentLocation.room.clear();
 	finishAddPlayer(aRoom);
 }
 
 void Player::addToRoom(UniqueRoom* uRoom) {
-	ctag	*cp=0;
 	bool	builderInRoom=false;
 
 	Hooks::run(uRoom, "beforeAddCreature", this, "beforeAddToRoom");
-	parent_rom = uRoom;
-	*&room = uRoom->info;
-	area_room = 0;
+	currentLocation.room = uRoom->info;
+	currentLocation.mapmarker.reset();
 
 	// So we can see an accurate this count.
 	if(!isStaff())
@@ -213,14 +175,12 @@ void Player::addToRoom(UniqueRoom* uRoom) {
 		checkRangeRestrict(uRoom->info))
 	{
 		// only log if another builder is not in the room
-		cp = uRoom->first_ply;
-		while(cp) {
-			if( cp->crt != this &&
-				cp->crt->getClass() == BUILDER
-			) {
+	    for(Player* ply : uRoom->players) {
+			if( ply != this &&
+				ply->getClass() == BUILDER)
+			{
 				builderInRoom = true;
 			}
-			cp = cp->next_tag;
 		}
 		if(!builderInRoom) {
 			checkBuilder(uRoom);
@@ -247,15 +207,15 @@ void Player::addToRoom(UniqueRoom* uRoom) {
 // This function records what room the player was last in
 
 void Creature::setPreviousRoom() {
-	if(parent_rom) {
-		if(!parent_rom->flagIsSet(R_NO_PREVIOUS)) {
-			previousRoom.room = parent_rom->info;
+	if(inUniqueRoom()) {
+		if(!getUniqueRoomParent()->flagIsSet(R_NO_PREVIOUS)) {
+			previousRoom.room = getUniqueRoomParent()->info;
 			previousRoom.mapmarker.reset();
 		}
-	} else if(area_room) {
-		if(!area_room->flagIsSet(R_NO_PREVIOUS)) {
-			previousRoom.room.id = 0;
-			previousRoom.mapmarker = area_room->mapmarker;
+	} else if(inAreaRoom()) {
+		if(!getAreaRoomParent()->flagIsSet(R_NO_PREVIOUS)) {
+			previousRoom.room.clear();
+			previousRoom.mapmarker = getAreaRoomParent()->mapmarker;
 		}
 	}
 }
@@ -266,15 +226,15 @@ void Creature::setPreviousRoom() {
 // This function removes a player from a room's linked list of players.
 
 int Creature::deleteFromRoom(bool delPortal) {
-	Hooks::run(getRoom(), "beforeRemoveCreature", this, "beforeRemoveFromRoom");
+	Hooks::run(getRoomParent(), "beforeRemoveCreature", this, "beforeRemoveFromRoom");
 
 	setPreviousRoom();
 
-	if(parent_rom) {
-		return(doDeleteFromRoom(parent_rom, delPortal));
-	} else if(area_room) {
-		AreaRoom* room = area_room;
-		int i = doDeleteFromRoom(area_room, delPortal);
+	if(inUniqueRoom()) {
+		return(doDeleteFromRoom(getUniqueRoomParent(), delPortal));
+	} else if(inAreaRoom()) {
+		AreaRoom* room = getAreaRoomParent();
+		int i = doDeleteFromRoom(room, delPortal);
 		if(room->canDelete()) {
 			room->area->remove(room);
 			i |= DEL_ROOM_DESTROYED;
@@ -285,18 +245,17 @@ int Creature::deleteFromRoom(bool delPortal) {
 }
 
 int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
-	ctag 	*cp, *temp, *prev;
 	long	t=0;
 	int		i=0;
 
 	t = time(0);
-	if(parent_rom && !isStaff()) {
-		strcpy(parent_rom->lastPly, name);
-		strcpy(parent_rom->lastPlyTime, ctime(&t));
+	if(inUniqueRoom() && !isStaff()) {
+		strcpy(getUniqueRoomParent()->lastPly, name);
+		strcpy(getUniqueRoomParent()->lastPlyTime, ctime(&t));
 	}
 
-	parent_rom = 0;
-	area_room = 0;
+	currentLocation.mapmarker.reset();
+	currentLocation.room.clear();
 
 	if(delPortal && flagIsSet(P_PORTAL) && Move::deletePortal(room, name))
 		i |= DEL_PORTAL_DESTROYED;
@@ -304,55 +263,31 @@ int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 	// when we're removing them from the room - AreaRoom, usually -
 	// but they were never added to the player list. this happens
 	// in dmMove for offline players.
-	if(!room->first_ply) {
+	if(room->players.empty()) {
 		Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
 		return(i);
 	}
 
-	if(room->first_ply->crt == this) {
-		temp = room->first_ply->next_tag;
-		delete room->first_ply;
-		room->first_ply = temp;
+	removeFrom();
 
-		if(!temp) {
-			cp = room->first_mon;
-			while(cp) {
-				/*
-				 * pets and fast wanderers are always active
-				 *
-				if(!cp->crt->flagIsSet(M_FAST_WANDER) && !cp->crt->isPet() && !cp->crt->flagIsSet(M_POISONED) &&
-				!cp->crt->flagIsSet(M_FAST_TICK) && !cp->crt->flagIsSet(M_REGENERATES) && !cp->crt->flagIsSet(M_SLOW) &&
-				!(cp->crt->flagIsSet(M_PERMENANT_MONSTER) && (cp->crt->hp.getCur() < cp->crt->hp.getMax())))
-				*/
-				if(	!cp->crt->flagIsSet(M_FAST_WANDER) &&
-					!cp->crt->isPet() &&
-					!cp->crt->isPoisoned() &&
-					!cp->crt->flagIsSet(M_FAST_TICK) &&
-					!cp->crt->flagIsSet(M_ALWAYS_ACTIVE) &&
-					!cp->crt->flagIsSet(M_REGENERATES) &&
-					!cp->crt->isEffected("slow") &&
-					!cp->crt->flagIsSet(M_PERMENANT_MONSTER) &&
-					!cp->crt->flagIsSet(M_AGGRESSIVE)
-				)
-					gServer->delActive(cp->crt->getMonster());
-				cp = cp->next_tag;
-			}
-		}
-		Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
-		return(i);
-	}
-
-	prev = room->first_ply;
-	temp = prev->next_tag;
-	while(temp) {
-		if(temp->crt == this) {
-			prev->next_tag = temp->next_tag;
-			delete temp;
-		Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
-			return(i);
-		}
-		prev = temp;
-		temp = temp->next_tag;
+	if(room->players.empty()) {
+	    for(Monster* mons : room->monsters) {
+            /*
+             * pets and fast wanderers are always active
+             *
+            */
+            if( !mons->flagIsSet(M_FAST_WANDER) &&
+                !mons->isPet() &&
+                !mons->isPoisoned() &&
+                !mons->flagIsSet(M_FAST_TICK) &&
+                !mons->flagIsSet(M_ALWAYS_ACTIVE) &&
+                !mons->flagIsSet(M_REGENERATES) &&
+                !mons->isEffected("slow") &&
+                !mons->flagIsSet(M_PERMENANT_MONSTER) &&
+                !mons->flagIsSet(M_AGGRESSIVE)
+            )
+                gServer->delActive(mons->getAsMonster());
+	    }
 	}
 
 	Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
@@ -475,30 +410,12 @@ void Object::deleteFromRoom() {
 
 void Monster::addToRoom(BaseRoom* room, int num) {
 	Hooks::run(room, "beforeAddCreature", this, "beforeAddToRoom");
-	addToRoom(room, room->getUniqueRoom(), room->getAreaRoom(), num);
-}
 
-void Monster::addToRoom(BaseRoom* room, UniqueRoom* uRoom, AreaRoom* aRoom, int num) {
-	ctag	*cg=NULL, *temp=NULL, *prev=NULL;
 	char	str[160];
-
 	validateId();
-
-	if(uRoom) {
-		parent_rom = uRoom;
-		*&this->room = *&uRoom->info;
-	} else
-		area_room = aRoom;
 
 	lasttime[LT_AGGRO_ACTION].ltime = time(0);
 	killDarkmetal();
-
-	cg = 0;
-	cg = new ctag;
-	if(!cg)
-		merror("add_crt_rom", FATAL);
-	cg->crt = this;
-	cg->next_tag = 0;
 
 	// Only show if num != 0 and it isn't a perm, otherwise we'll either
 	// show to staff or players
@@ -526,30 +443,8 @@ void Monster::addToRoom(BaseRoom* room, UniqueRoom* uRoom, AreaRoom* aRoom, int 
 			setFlag(M_WILL_BE_AGGRESSIVE);
 	}
 
-
-	if(!room->first_mon) {
-		room->first_mon = cg;
-		Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
-		return;
-	}
-
-	temp = room->first_mon;
-	if(strcmp(temp->crt->name, name) > 0) {
-		cg->next_tag = temp;
-		room->first_mon = cg;
-		Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
-		return;
-	}
-
-	while(temp) {
-		if(strcmp(temp->crt->name, name) > 0)
-			break;
-		prev = temp;
-		temp = temp->next_tag;
-	}
-	cg->next_tag = prev->next_tag;
-	prev->next_tag = cg;
-
+	addTo(room);
+//	room->monsters.insert(this);
 	Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
 }
 
@@ -562,39 +457,14 @@ void Monster::addToRoom(BaseRoom* room, UniqueRoom* uRoom, AreaRoom* aRoom, int 
 // 				 False otherwise
 
 int Monster::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
-	ctag 	*temp, *prev;
 
-	parent_rom = 0;
-	area_room = 0;
-	this->room.clear();
 
 	if(!room)
 		return(0);
-	if(!room->first_mon)
+	if(room->monsters.empty())
 		return(0);
 
-	if(room->first_mon->crt == this) {
-		temp = room->first_mon->next_tag;
-		delete room->first_mon;
-		room->first_mon = temp;
-		Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
-		return(0);
-	}
-
-
-	prev = room->first_mon;
-	temp = prev->next_tag;
-	while(temp) {
-		if(temp->crt == this) {
-			prev->next_tag = temp->next_tag;
-			delete temp;
-			Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
-			return(0);
-		}
-		prev = temp;
-		temp = temp->next_tag;
-	}
-
+	removeFrom();
 	Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
 	return(0);
 }
@@ -611,7 +481,6 @@ void UniqueRoom::addPermCrt() {
 	crlasttime* crtm=0;
 	std::map<int, bool> checklist;
 	Monster	*creature=0;
-	ctag	*cp=0;
 	long	t = time(0);
 	int		j=0, m=0, n=0;
 
@@ -640,14 +509,9 @@ void UniqueRoom::addPermCrt() {
 		if(!loadMonster(crtm->cr, &creature))
 			continue;
 
-		cp = first_mon;
-		m = 0;
-		while(cp) {
-			if(	cp->crt->flagIsSet(M_PERMENANT_MONSTER) &&
-				!strcmp(cp->crt->name, creature->name)
-			)
+		for(Monster* mons : monsters) {
+			if(	mons->flagIsSet(M_PERMENANT_MONSTER) && !strcmp(mons->name, creature->name) )
 				m++;
-			cp = cp->next_tag;
 		}
 
 		free_crt(creature);
@@ -665,7 +529,7 @@ void UniqueRoom::addPermCrt() {
 			creature->validateAc();
 			creature->addToRoom(this, 0);
 
-			if(first_ply)
+			if(!players.empty())
 				gServer->addActive(creature);
 		}
 	}
@@ -763,10 +627,8 @@ bstring roomEffStr(bstring effect, bstring str, const BaseRoom* room, bool detec
 // and all the exits in a room.  That is, unless they are not visible
 // or the room is dark.
 
-void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, const AreaRoom* aRoom, int magicShowHidden) {
+void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 	UniqueRoom *target=0;
-	xtag	*xp=0;
-	ctag	*cp=0;
 	const Player *pCreature=0;
 	const Creature* creature=0;
 	char	name[256];
@@ -775,6 +637,8 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 	bstring str = "";
 	bool	wallOfFire=false, wallOfThorns=false, canSee=false;
 
+	const UniqueRoom* uRoom = room->getAsConstUniqueRoom();
+	const AreaRoom* aRoom = room->getAsConstAreaRoom();
 	strcpy(name, "");
 
 	staff = player->isStaff();
@@ -812,19 +676,18 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 			oStr << "^x\n\n";
 		}
 
-		oStr << aRoom->area->showGrid(player, &aRoom->mapmarker, player->area_room == aRoom);
+		oStr << aRoom->area->showGrid(player, &aRoom->mapmarker, player->getAreaRoomParent() == aRoom);
 	}
 
 	oStr << "^g" << (staff ? "All" : "Obvious") << " exits: ";
 	n=0;
 
 	str = "";
-	xp = room->first_ext;
-	while(xp) {
-		wallOfFire = xp->ext->isWall("wall-of-fire");
-		wallOfThorns = xp->ext->isWall("wall-of-thorns");
+	for(Exit* ext : room->exits) {
+		wallOfFire = ext->isWall("wall-of-fire");
+		wallOfThorns = ext->isWall("wall-of-thorns");
 
-		canSee = player->showExit(xp->ext, magicShowHidden);
+		canSee = player->showExit(ext, magicShowHidden);
 		if(canSee) {
 			if(n)
 				oStr << "^g, ";
@@ -839,9 +702,9 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 			} else if(wallOfThorns) {
 				oStr << "o";
 			} else if(	!player->flagIsSet(P_NO_EXTRA_COLOR) &&
-				(	!player->canEnter(xp->ext) || (
-						xp->ext->target.room.id && (
-							!loadRoom(xp->ext->target.room, &target) ||
+				(	!player->canEnter(ext) || (
+						ext->target.room.id && (
+							!loadRoom(ext->target.room, &target) ||
 							!target ||
 							!player->canEnter(target)
 						)
@@ -852,33 +715,33 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 			} else {
 				oStr << "g";
 			}
-			oStr << xp->ext->name;
+			oStr << ext->name;
 
-			if(xp->ext->flagIsSet(X_CLOSED) || xp->ext->flagIsSet(X_LOCKED)) {
+			if(ext->flagIsSet(X_CLOSED) || ext->flagIsSet(X_LOCKED)) {
 				oStr << "[";
-				if(xp->ext->flagIsSet(X_CLOSED))
+				if(ext->flagIsSet(X_CLOSED))
 					oStr << "c";
-				if(xp->ext->flagIsSet(X_LOCKED))
+				if(ext->flagIsSet(X_LOCKED))
 					oStr << "l";
 				oStr << "]";
 			}
 
 			if(staff) {
-				if(xp->ext->flagIsSet(X_SECRET))
+				if(ext->flagIsSet(X_SECRET))
 					oStr << "(h)";
-				if(xp->ext->flagIsSet(X_CAN_LOOK) || xp->ext->flagIsSet(X_LOOK_ONLY))
+				if(ext->flagIsSet(X_CAN_LOOK) || ext->flagIsSet(X_LOOK_ONLY))
 					oStr << "(look)";
-				if(xp->ext->flagIsSet(X_NO_WANDER))
+				if(ext->flagIsSet(X_NO_WANDER))
 					oStr << "(nw)";
-				if(xp->ext->flagIsSet(X_NO_SEE))
+				if(ext->flagIsSet(X_NO_SEE))
 					oStr << "(dm)";
-				if(xp->ext->flagIsSet(X_INVISIBLE))
+				if(ext->flagIsSet(X_INVISIBLE))
 					oStr << "(*)";
-				if(xp->ext->isConcealed(player))
+				if(ext->isConcealed(player))
 					oStr << "(c)";
-				if(xp->ext->flagIsSet(X_DESCRIPTION_ONLY))
+				if(ext->flagIsSet(X_DESCRIPTION_ONLY))
 					oStr << "(desc)";
-				if(xp->ext->flagIsSet(X_NEEDS_FLY))
+				if(ext->flagIsSet(X_NEEDS_FLY))
 					oStr << "(fly)";
 			}
 
@@ -886,13 +749,12 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 		}
 
 		if(wallOfFire)
-			str += xp->ext->blockedByStr('R', "wall of fire", "wall-of-fire", flags & MAG, canSee);
-		if(xp->ext->isWall("wall-of-force"))
-			str += xp->ext->blockedByStr('s', "wall of force", "wall-of-force", flags & MAG, canSee);
+			str += ext->blockedByStr('R', "wall of fire", "wall-of-fire", flags & MAG, canSee);
+		if(ext->isWall("wall-of-force"))
+			str += ext->blockedByStr('s', "wall of force", "wall-of-force", flags & MAG, canSee);
 		if(wallOfThorns)
-			str += xp->ext->blockedByStr('o', "wall of thorns", "wall-of-thorns", flags & MAG, canSee);
+			str += ext->blockedByStr('o', "wall of thorns", "wall-of-thorns", flags & MAG, canSee);
 
-		xp = xp->next_tag;
 	}
 
 	if(!n)
@@ -916,25 +778,20 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 
 	oStr << str << "^c";
 	str = "";
-
-	cp = room->first_ply;
-	n=0;
-	while(cp) {
-		pCreature = cp->crt->getConstPlayer();
-		cp = cp->next_tag;
-
-		if(pCreature != player && player->canSee(pCreature)) {
+	n = 0;
+	for(const Player* ply : room->players) {
+		if(ply != player && player->canSee(ply)) {
 
 			// other non-vis rules
 			if(!staff) {
-				if(pCreature->flagIsSet(P_HIDDEN)) {
+				if(ply->flagIsSet(P_HIDDEN)) {
 					// if we're using magic to see hidden creatures
 					if(!magicShowHidden)
 						continue;
 					if(pCreature->isEffected("resist-magic")) {
 						// if resisting magic, we use the strength of each spell to
 						// determine if they are seen
-						EffectInfo* effect = pCreature->getEffect("resist-magic");
+						EffectInfo* effect = ply->getEffect("resist-magic");
 						if(effect->getStrength() >= magicShowHidden)
 							continue;
 					}
@@ -947,32 +804,32 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 			else
 				oStr << "You see ";
 
-			oStr << pCreature->fullName();
+			oStr << ply->fullName();
 
-			if(pCreature->isStaff())
-				oStr << " the " << pCreature->getTitle();
+			if(ply->isStaff())
+				oStr << " the " << ply->getTitle();
 
-			if(pCreature->flagIsSet(P_SLEEPING))
+			if(ply->flagIsSet(P_SLEEPING))
 				oStr << "(sleeping)";
-			else if(pCreature->flagIsSet(P_UNCONSCIOUS))
+			else if(ply->flagIsSet(P_UNCONSCIOUS))
 				oStr << "(unconscious)";
-			else if(pCreature->flagIsSet(P_SITTING))
+			else if(ply->flagIsSet(P_SITTING))
 				oStr << "(sitting)";
 
-			if(pCreature->flagIsSet(P_AFK))
+			if(ply->flagIsSet(P_AFK))
 				oStr << "(afk)";
 
-			if(pCreature->isEffected("petrification"))
+			if(ply->isEffected("petrification"))
 				oStr << "(statue)";
 
 			if(staff) {
-				if(pCreature->flagIsSet(P_HIDDEN))
+				if(ply->flagIsSet(P_HIDDEN))
 					oStr << "(h)";
-				if(pCreature->isInvisible())
+				if(ply->isInvisible())
 					oStr << "(*)";
-				if(pCreature->flagIsSet(P_MISTED))
+				if(ply->flagIsSet(P_MISTED))
 					oStr << "(m)";
-				if(pCreature->flagIsSet(P_OUTLAW))
+				if(ply->flagIsSet(P_OUTLAW))
 					oStr << "(o)";
 			}
 			n++;
@@ -983,22 +840,21 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 		oStr << ".\n";
 	oStr << "^m";
 
-	cp = room->first_mon;
 	n=0;
 
-	while(cp) {
-		creature = cp->crt;
-		cp = cp->next_tag;
+	MonsterSet::iterator mIt = room->monsters.begin();
+	while(mIt != room->monsters.end()) {
+		creature = (*mIt++);
 
 		if(staff || (player->canSee(creature) && (!creature->flagIsSet(M_HIDDEN) || magicShowHidden))) {
 			m=1;
-			while(cp) {
-				if(	!strcmp(cp->crt->name, creature->name) &&
-					(staff || (player->canSee(cp->crt) && (!cp->crt->flagIsSet(M_HIDDEN) || magicShowHidden))) &&
-					creature->isInvisible() == cp->crt->isInvisible()
-				) {
+			while(mIt != room->monsters.end()) {
+				if(	!strcmp((*mIt)->name, creature->name) &&
+					(staff || (player->canSee(*mIt) && (!(*mIt)->flagIsSet(M_HIDDEN) || magicShowHidden))) &&
+					creature->isInvisible() == (*mIt)->isInvisible() )
+				{
 					m++;
-					cp = cp->next_tag;
+					mIt++;
 				} else
 					break;
 			}
@@ -1030,19 +886,16 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 
 	*player << ColorOn << oStr.str();
 
-	cp = room->first_mon;
-	while(cp) {
-	    Monster* mons = cp->crt->getMonster();
+	for(Monster* mons : room->monsters) {
         if(mons && mons->hasEnemy()) {
             creature = mons->getTarget();
 
 
 			if(creature == player)
-			    *player << "^r" << setf(CAP) << cp->crt << " is attacking you.\n";
+			    *player << "^r" << setf(CAP) << mons << " is attacking you.\n";
 			else if(creature)
-			    *player << "^r" << setf(CAP) << cp->crt << " is attacking " << setf(CAP) << creature << ".\n";
+			    *player << "^r" << setf(CAP) << mons << " is attacking " << setf(CAP) << creature << ".\n";
 		}
-		cp = cp->next_tag;
 	}
 
 	player->print("^x\n");
@@ -1051,14 +904,11 @@ void displayRoom(Player* player, const BaseRoom* room, const UniqueRoom* uRoom, 
 void display_rom(Player* player, Player *looker, int magicShowHidden) {
 	if(!looker)
 		looker = player;
-	if(player->parent_rom)
-		displayRoom(looker, player->parent_rom, player->parent_rom, 0, magicShowHidden);
-	else
-		displayRoom(looker, player->area_room, 0, player->area_room, magicShowHidden);
+	displayRoom(looker, player->getRoomParent(), magicShowHidden);
 }
 
 void display_rom(Player* player,BaseRoom* room) {
-	displayRoom(player, room, room->getConstUniqueRoom(), room->getConstAreaRoom(), 0);
+	displayRoom(player, room, 0);
 }
 
 
@@ -1089,7 +939,7 @@ int createStorage(CatRef cr, const Player* player) {
 	CatRef sr;
 	sr.id = 2633;
 	link_rom(newRoom, sr, "out");
-	newRoom->first_ext->ext->setFlag(X_TO_PREVIOUS);
+	newRoom->exits.front()->setFlag(X_TO_PREVIOUS);
 
 	// reuse catref
 	cr.id = 1;
@@ -1249,19 +1099,19 @@ BaseRoom *abortFindRoom(Creature* player, const char from[15]) {
 	loge("Error: abortFindRoom called by %s in %s().\n", player->name, from);
 	broadcast(isCt, "^yError: abortFindRoom called by %s in %s().", player->name, from);
 
-	room = player->getRecallRoom().loadRoom(player->getPlayer());
+	room = player->getRecallRoom().loadRoom(player->getAsPlayer());
 	if(room)
 		return(room);
 	broadcast(isCt, "^yError: could not load Recall: %s.", player->getRecallRoom().str().c_str());
 
-	room = player->getLimboRoom().loadRoom(player->getPlayer());
+	room = player->getLimboRoom().loadRoom(player->getAsPlayer());
 	if(room)
 		return(room);
 	broadcast(isCt, "^yError: could not load Limbo: %s.", player->getLimboRoom().str().c_str());
 
 	Player *target=0;
 	if(player)
-		target = player->getPlayer();
+		target = player->getAsPlayer();
 	if(target) {
 		room = target->bound.loadRoom(target);
 		if(room)
@@ -1284,16 +1134,13 @@ BaseRoom *abortFindRoom(Creature* player, const char from[15]) {
 //*********************************************************************
 
 int UniqueRoom::getWeight() {
-	ctag	*cp=0;
 	otag	*op=0;
 	int		i=0;
 
 	// count weight of all players in this
-	cp = first_ply;
-	while(cp) {
-		if(cp->crt->countForWeightTrap())
-			i += cp->crt->getWeight();
-		cp = cp->next_tag;
+	for(Player* ply : players) {
+		if(ply->countForWeightTrap())
+			i += ply->getWeight();
 	}
 
 	// count weight of all objects in this
@@ -1304,16 +1151,10 @@ int UniqueRoom::getWeight() {
 	}
 
 	// count weight of all monsters in this
-	cp = first_mon;
-	while(cp) {
-		if(cp->crt->countForWeightTrap()) {
-			op = cp->crt->first_obj;
-			while(op) {
-				i += op->obj->getWeight();
-				op = op->next_tag;
-			}
+	for(Monster* mons : monsters) {
+		if(mons->countForWeightTrap()) {
+		    i+= mons->getWeight();
 		}
-		cp = cp->next_tag;
 	}
 
 	return(i);
@@ -1324,7 +1165,7 @@ int UniqueRoom::getWeight() {
 //*********************************************************************
 
 bool needUniqueRoom(const Creature* player) {
-	if(!player->parent_rom) {
+	if(!player->inUniqueRoom()) {
 		player->print("You can't do that here.\n");
 		return(false);
 	}

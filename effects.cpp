@@ -230,7 +230,7 @@ bool EffectInfo::updateLastMod(time_t t) {
 
 	if(myApplier) {
 		// for object appliers, keep the duration on the object in-sync with the effect duration
-		Object* object = myApplier->getObject();
+		Object* object = myApplier->getAsObject();
 		if(object)
 			object->setEffectDuration(duration);
 	}
@@ -261,14 +261,14 @@ bool EffectInfo::remove(bool show) {
 	if(myEffect) {
 		success = true;
 		if(show) {
-			Creature* cParent = myParent->getCreature();
+			Creature* cParent = myParent->getAsCreature();
 			if(cParent) {
 				if(!myEffect->getSelfDelStr().empty())
 					cParent->printColor("%s\n", myEffect->getSelfDelStr().c_str());
-				if(!myEffect->getRoomDelStr().empty() && cParent->getRoom())
-					cParent->getRoom()->effectEcho(myEffect->getRoomDelStr(), cParent);
+				if(!myEffect->getRoomDelStr().empty() && cParent->getRoomParent())
+					cParent->getRoomParent()->effectEcho(myEffect->getRoomDelStr(), cParent);
 			}
-			Exit* xParent = myParent->getExit();
+			Exit* xParent = myParent->getAsExit();
 			if(xParent) {
 				if(!myEffect->getRoomDelStr().empty()) {
 					if(xParent->getRoom())
@@ -277,7 +277,7 @@ bool EffectInfo::remove(bool show) {
 						std::cout << "Exit with no parent room!!!\n";
 				}
 			}
-			BaseRoom* rParent = myParent->getRoom();
+			BaseRoom* rParent = myParent->getAsRoom();
 			if(rParent) {
 				if(!myEffect->getRoomDelStr().empty())
 					rParent->effectEcho(myEffect->getRoomDelStr());
@@ -290,10 +290,10 @@ bool EffectInfo::remove(bool show) {
 	if(myApplier) {
 		// If object appliers are being worn when we remove the effect,
 		// the object will be broken and unequipped
-		Object* object = myApplier->getObject();
+		Object* object = myApplier->getAsObject();
 		if(object && object->flagIsSet(O_WORN)) {
 			object->setShotsCur(0);
-			myParent->getPlayer()->breakObject(object, object->getWearflag());
+			myParent->getAsPlayer()->breakObject(object, object->getWearflag());
 		}
 	}
 
@@ -326,7 +326,7 @@ bool EffectInfo::add() {
 	if(!myEffect)
 		return(false);
 
-	Creature* cParent = myParent->getCreature();
+	Creature* cParent = myParent->getAsCreature();
 	if(cParent) {
 
 		//bstring toSend = ply->doReplace(fmt, actor, applier);
@@ -334,10 +334,10 @@ bool EffectInfo::add() {
 			cParent->printColor("%s\n", cParent->doReplace(myEffect->getSelfAddStr().c_str(), cParent, myApplier).c_str());
 
 		// TODO: replace *ACTOR* etc
-		if(!myEffect->getRoomAddStr().empty() && cParent->getRoom())
-			cParent->getRoom()->effectEcho(myEffect->getRoomAddStr(), cParent, myApplier);
+		if(!myEffect->getRoomAddStr().empty() && cParent->getRoomParent())
+			cParent->getRoomParent()->effectEcho(myEffect->getRoomAddStr(), cParent, myApplier);
 	}
-	Exit* xParent = myParent->getExit();
+	Exit* xParent = myParent->getAsExit();
 	if(xParent) {
 		if(!myEffect->getRoomAddStr().empty()) {
 			if(xParent->getRoom())
@@ -346,7 +346,7 @@ bool EffectInfo::add() {
 				std::cout << "Exit with no parent room!!!\n";
 		}
 	}
-	BaseRoom* rParent = myParent->getRoom();
+	BaseRoom* rParent = myParent->getAsRoom();
 	if(rParent) {
 		if(!myEffect->getRoomAddStr().empty())
 			rParent->effectEcho(myEffect->getRoomAddStr());
@@ -456,8 +456,8 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
 
 	if(oldEffect && !newEffect->willOverWrite(oldEffect)) {
 		// The new effect won't overwrite, so don't add it
-		if(pParent->getPlayer() && show)
-			pParent->getPlayer()->print("The effect didn't take hold.\n");
+		if(pParent->getAsPlayer() && show)
+			pParent->getAsPlayer()->print("The effect didn't take hold.\n");
 		delete newEffect;
 		return(NULL);
 	}
@@ -472,11 +472,11 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
 	if(!oldEffect && show)
 		newEffect->add();
 	success &= newEffect->apply();
-	list.push_back(newEffect);
-	if(newEffect->getParent()->getRoom())
-		newEffect->getParent()->getRoom()->addEffectsIndex();
-	else if(newEffect->getParent()->getExit())
-		newEffect->getParent()->getExit()->getRoom()->addEffectsIndex();
+	effectList.push_back(newEffect);
+	if(newEffect->getParent()->getAsRoom())
+		newEffect->getParent()->getAsRoom()->addEffectsIndex();
+	else if(newEffect->getParent()->getAsExit())
+		newEffect->getParent()->getAsExit()->getRoom()->addEffectsIndex();
 
 	// post-apply gets run after everything is done
 	newEffect->postApply(keepApplier);
@@ -519,7 +519,7 @@ bool Effects::removeEffect(EffectInfo* toDel, bool show) {
 	if(!toDel)
 		return(false);
 //	ASSERTLOG(toDel->getParent() == pParent);
-	list.remove(toDel);
+	effectList.remove(toDel);
 	toDel->remove(show);
 	delete toDel;
 	return(true);
@@ -531,9 +531,9 @@ bool Effects::removeEffect(EffectInfo* toDel, bool show) {
 // on suicide, we remove the owner of the effect
 
 void Effects::removeOwner(const Creature* owner) {
-	std::list<EffectInfo*>::iterator it;
+	EffectList::iterator it;
 
-	for(it = list.begin() ; it != list.end() ; it++) {
+	for(it = effectList.begin() ; it != effectList.end() ; it++) {
 		if((*it)->isOwner(owner))
 			(*it)->setOwner(0);
 	}
@@ -567,8 +567,8 @@ bool MudObject::isEffected(EffectInfo* effect) const {
 // of this name
 
 bool Effects::isEffected(const bstring& effect) const {
-	//std::list<EffectInfo*> list;
-	for(EffectInfo* eff : list) {
+	//EffectList list;
+	for(EffectInfo* eff : effectList) {
 		if(eff->getName() == effect || eff->hasBaseEffect(effect))
 			return(true);
 	}
@@ -577,7 +577,7 @@ bool Effects::isEffected(const bstring& effect) const {
 }
 
 bool Effects::isEffected(EffectInfo* effect) const {
-	for(EffectInfo* eff : list) {
+	for(EffectInfo* eff : effectList) {
 		if(eff->getName() == effect->getName() || eff->hasBaseEffect(effect->getName()) || effect->hasBaseEffect(eff->getName()))
 			return(true);
 	}
@@ -618,9 +618,9 @@ EffectInfo* MudObject::getEffect(const bstring& effect) const {
 // the base effect mentioned
 
 EffectInfo* Effects::getEffect(const bstring& effect) const {
-	std::list<EffectInfo*>::const_iterator eIt;
+	EffectList::const_iterator eIt;
 	EffectInfo* toReturn = NULL;
-	for(eIt = list.begin() ; eIt != list.end() ; eIt++) {
+	for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
 		if((*eIt) && ((*eIt)->getName() == effect || (*eIt)->hasBaseEffect(effect))) {
 			if(!toReturn)
 				toReturn = (*eIt);
@@ -645,8 +645,8 @@ EffectInfo* MudObject::getExactEffect(const bstring& effect) const {
 
 // Returns the effect with an exact name match
 EffectInfo* Effects::getExactEffect(const bstring& effect) const {
-	std::list<EffectInfo*>::const_iterator eIt;
-	for(eIt = list.begin() ; eIt != list.end() ; eIt++) {
+	EffectList::const_iterator eIt;
+	for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
 		if((*eIt) && (*eIt)->getName() == effect)
 			return((*eIt));
 	}
@@ -663,9 +663,9 @@ bool Creature::pulseEffects(time_t t) {
 	bool pulsed = true;
 	bool poison = false;
 	EffectInfo* effect=0;
-	std::list<EffectInfo*>::iterator eIt;
+	EffectList::iterator eIt;
 	deathtype = DT_NONE;
-	for(eIt = effects.list.begin() ; eIt != effects.list.end() ;) {
+	for(eIt = effects.effectList.begin() ; eIt != effects.effectList.end() ;) {
 		effect = (*eIt);
 		// Pulse!
 
@@ -678,7 +678,7 @@ bool Creature::pulseEffects(time_t t) {
 			if(poison || effect->isPoison())
 				poison = true;
 			delete effect;
-			eIt = effects.list.erase(eIt);
+			eIt = effects.effectList.erase(eIt);
 		} else
 			eIt++;
 	}
@@ -686,9 +686,9 @@ bool Creature::pulseEffects(time_t t) {
 	// pulse effects might kill them
 	if(deathtype != DT_NONE && hp.getCur() < 1) {
 		if(isPlayer())
-			getPlayer()->die(deathtype);
+			getAsPlayer()->die(deathtype);
 		else
-			getMonster()->mobDeath();
+			getAsMonster()->mobDeath();
 		return(false);
 	}
 
@@ -706,10 +706,8 @@ bool Creature::pulseEffects(time_t t) {
 bool BaseRoom::pulseEffects(time_t t) {
 	effects.pulse(t, this);
 
-	xtag* xp = first_ext;
-	while(xp) {
-		xp->ext->pulseEffects(t);
-		xp = xp->next_tag;
+	for(Exit* exit : exits) {
+		exit->pulseEffects(t);
 	}
 	return(true);
 }
@@ -730,11 +728,11 @@ bool Exit::pulseEffects(time_t t) {
 // they can't die like players can)
 
 void Effects::pulse(time_t t, MudObject* pParent) {
-	std::list<EffectInfo*>::iterator it;
+	EffectList::iterator it;
 	EffectInfo* effect=0;
 	bool pulsed=false;
 
-	for(it = list.begin() ; it != list.end() ;) {
+	for(it = effectList.begin() ; it != effectList.end() ;) {
 		effect = (*it);
 		// Pulse!
 
@@ -745,7 +743,7 @@ void Effects::pulse(time_t t, MudObject* pParent) {
 		if(!pulsed) {
 			effect->remove();
 			delete effect;
-			it = list.erase(it);
+			it = effectList.erase(it);
 		} else
 			it++;
 	}
@@ -757,13 +755,13 @@ void Effects::pulse(time_t t, MudObject* pParent) {
 
 void Effects::removeAll() {
 	EffectInfo* effect=0;
-	std::list<EffectInfo*>::iterator eIt;
-	for(eIt = list.begin() ; eIt != list.end() ; eIt++) {
+	EffectList::iterator eIt;
+	for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
 		effect = (*eIt);
 		delete effect;
 		(*eIt) = NULL;
 	}
-	list.clear();
+	effectList.clear();
 }
 
 //*********************************************************************
@@ -772,12 +770,12 @@ void Effects::removeAll() {
 
 void Effects::copy(const Effects* source, MudObject* pParent) {
 	EffectInfo* effect;
-	std::list<EffectInfo*>::const_iterator eIt;
-	for(eIt = source->list.begin() ; eIt != source->list.end() ; eIt++) {
+	EffectList::const_iterator eIt;
+	for(eIt = source->effectList.begin() ; eIt != source->effectList.end() ; eIt++) {
 		effect = new EffectInfo();
 		(*effect) = *(*eIt);
 		effect->setParent(pParent);
-		list.push_back(effect);
+		effectList.push_back(effect);
 	}
 }
 
@@ -791,7 +789,7 @@ int cmdEffects(Creature* creature, cmd* cmnd) {
 
 	if(creature->isCt()) {
 		if(cmnd->num > 1) {
-			target = creature->getRoom()->findCreature(creature, cmnd);
+			target = creature->getParent()->findCreature(creature, cmnd);
 			cmnd->str[1][0] = up(cmnd->str[1][0]);
 
 			if(!target) {
@@ -805,7 +803,7 @@ int cmdEffects(Creature* creature, cmd* cmnd) {
 		}
 	}
 
-	num = target->effects.list.size();
+	num = target->effects.effectList.size();
 	creature->print("Current Effects for %s:\n", target->name);
 	creature->printColor("%s", target->effects.getEffectsString(creature).c_str());
 	creature->print("\n%d effect%s found.\n", num, num != 1 ? "s" : "");
@@ -824,8 +822,8 @@ bstring Effects::getEffectsList() const {
 
 	int num = 0;
 	const EffectInfo* effect;
-	std::list<EffectInfo*>::const_iterator eIt;
-	for(eIt = list.begin() ; eIt != list.end() ; eIt++) {
+	EffectList::const_iterator eIt;
+	for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
 		effect = (*eIt);
 		if(num != 0)
 			effStr << ", ";
@@ -852,10 +850,7 @@ bstring Effects::getEffectsString(const Creature* viewer) {
 	std::ostringstream effStr;
 	long t = time(0);
 
-	EffectInfo* effect=0;
-	std::list<EffectInfo*>::iterator eIt;
-	for(eIt = list.begin() ; eIt != list.end() ; eIt++) {
-		effect = (*eIt);
+	for(EffectInfo* effect : effectList) {
 		effect->updateLastMod(t);
 		effStr << *effect;
 		if(viewer->isStaff()) {
@@ -880,7 +875,7 @@ bstring Effects::getEffectsString(const Creature* viewer) {
 				}
 			}
 			if(effect->getApplier()) {
-				object = effect->getApplier()->getConstObject();
+				object = effect->getApplier()->getAsConstObject();
 				if(object)
 					effStr << "  ^WApplier:^x " << object->name << "^x";
 			}
@@ -897,8 +892,8 @@ bstring Effects::getEffectsString(const Creature* viewer) {
 // This function will convert flag/lt combos into effects
 
 void Creature::convertOldEffects() {
-	Player* pPlayer = getPlayer();
-	Monster* mMonster = getMonster();
+	Player* pPlayer = getAsPlayer();
+	Monster* mMonster = getAsMonster();
 	if(version < "2.40") {
 		if(mMonster) {
 //			mMonster->convertToEffect("stoneskin", OLD_M_STONESKIN, -1);
@@ -936,7 +931,7 @@ bool Creature::convertToEffect(const bstring& effect, int flag, int lt) {
 	// Assuming that they're already properly under the effect, so just add it to the list
 	// and don't actually add it or compute it.
 	// IE: Strength buff -- they already have +str, so don't give them more str!!
-	effects.list.push_back(newEffect);
+	effects.effectList.push_back(newEffect);
 	return(true);
 }
 
@@ -989,9 +984,9 @@ bool exitEffectDamage(const EffectInfo *effect, Creature* target, Creature* owne
 	target->modifyDamage(0, MAGICAL, damage, realm);
 
 	if(killer && target->isMonster()) {
-		target->getMonster()->addEnemy(killer);
+		target->getAsMonster()->addEnemy(killer);
 		if(online)
-			target->getMonster()->adjustThreat(killer, damage.get());
+			target->getAsMonster()->adjustThreat(killer, damage.get());
 	}
 
 	target->printColor(crtStr, target->customColorize("*CC:DAMAGE*").c_str(), damage.get());
@@ -999,7 +994,7 @@ bool exitEffectDamage(const EffectInfo *effect, Creature* target, Creature* owne
 	target->hp.decrease(damage.get());
 	if(target->hp.getCur() < 1) {
 		target->print(deathStr);
-		broadcast(target->getSock(), target->getRoom(), roomStr, target, target);
+		broadcast(target->getSock(), target->getRoomParent(), roomStr, target, target);
 
 		if(killer) {
 			if(online)
@@ -1010,9 +1005,9 @@ bool exitEffectDamage(const EffectInfo *effect, Creature* target, Creature* owne
 				free_crt(killer);
 		} else {
 			if(target->isPlayer())
-				target->getPlayer()->die(dt);
+				target->getAsPlayer()->die(dt);
 			else
-				target->getMonster()->mobDeath();
+				target->getAsMonster()->mobDeath();
 		}
 		return(true);
 	}
@@ -1060,9 +1055,9 @@ bool Exit::doEffectDamage(Creature* target) {
 //*********************************************************************
 
 bstring Creature::doReplace(bstring fmt, const MudObject* actor, const MudObject* applier) const {
-	const Creature* cActor = actor->getConstCreature();
-	const Exit* xActor = actor->getConstExit();
-	const Creature* cApplier = applier->getConstCreature();
+	const Creature* cActor = actor->getAsConstCreature();
+	const Exit* xActor = actor->getAsConstExit();
+	const Creature* cApplier = applier->getAsConstCreature();
 
 	if(cActor) {
 		fmt.Replace("*ACTOR*", cActor->getCrtStr(this, CAP).c_str());
@@ -1101,14 +1096,10 @@ bstring Creature::doReplace(bstring fmt, const MudObject* actor, const MudObject
 //*********************************************************************
 
 void BaseRoom::effectEcho(bstring fmt, const MudObject* actor, const MudObject* applier, Socket* ignore) {
-	ctag* cp = first_ply;
 	Socket* ignore2 = NULL;
-	if(actor->getConstCreature())
-		ignore2 = actor->getConstCreature()->getSock();
-	while(cp) {
-		const Creature *ply = cp->crt->getConstCreature();
-		cp = cp->next_tag;
-
+	if(actor->getAsConstCreature())
+		ignore2 = actor->getAsConstCreature()->getSock();
+	for(const Player* ply : players) {
 		if(!ply || (ply->getSock() && (ply->getSock() == ignore || ply->getSock() == ignore2)) || ply->isUnconscious())
 			continue;
 
@@ -1269,15 +1260,13 @@ void Server::addEffectsIndex(BaseRoom* room) {
 
 bool BaseRoom::needsEffectsIndex() const {
 	// any room effects?
-	if(effects.list.size())
+	if(effects.effectList.size())
 		return(true);
 
 	// any exit effects?
-	xtag* xp = first_ext;
-	while(xp) {
-		if(xp->ext->effects.list.size())
+	for(Exit* exit : exits) {
+		if(exit->effects.effectList.size())
 			return(true);
-		xp = xp->next_tag;
 	}
 
 	return(false);
@@ -1314,14 +1303,11 @@ void Server::removeEffectsIndex(BaseRoom* room) {
 
 void Server::removeEffectsOwner(const Creature* owner) {
 	std::list<BaseRoom*>::iterator it;
-	xtag* xp=0;
 
 	for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
 		(*it)->effects.removeOwner(owner);
-		xp = (*it)->first_ext;
-		while(xp) {
-			xp->ext->effects.removeOwner(owner);
-			xp = xp->next_tag;
+		for(Exit* exit : (*it)->exits) {
+			exit->effects.removeOwner(owner);
 		}
 	}
 }

@@ -307,21 +307,17 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
 
 int Monster::getNumMobs() const {
 	int		i=0;
-	ctag	*cp=0;
 
 	if(flagIsSet(M_DM_FOLLOW) || flagIsSet(M_WAS_PORTED))
 		return(0);
 
-	cp = getRoom()->first_mon;
-	while(cp) {
-		if(!strcmp(cp->crt->name, name)) {
-			i++;
-			if(cp->crt == this)
-				return(i);
-		}
-		cp = cp->next_tag;
+	for(Monster* mons : getConstRoomParent()->monsters) {
+	    if(!strcmp(mons->name, name)) {
+	        i++;
+	        if(mons == this)
+	            return(i);
+	    }
 	}
-
 	return(0);
 }
 
@@ -330,7 +326,6 @@ int Monster::getNumMobs() const {
 //***********************************************************************
 
 Creature *getRandomMonster(BaseRoom *inRoom) {
-	ctag		*cp=0;
 	Creature *foundCrt=0;
 	int			count=0, roll=0, num=0;
 
@@ -339,18 +334,13 @@ Creature *getRandomMonster(BaseRoom *inRoom) {
 		return(0);
 
 	roll = mrand(1, num);
-	cp = inRoom->first_mon;
-	while(cp) {
-		if(cp->crt->isPet()) {
-			cp = cp->next_tag;
-			continue;
-		}
-		count++;
-		if(count == roll) {
-			foundCrt = cp->crt;
-			break;
-		}
-		cp = cp->next_tag;
+	for(Monster* mons : inRoom->monsters) {
+	    if(mons->isPet())
+	        continue;
+	    if(++count == roll) {
+	        foundCrt = mons;
+	        break;
+	    }
 	}
 
 	if(foundCrt)
@@ -363,7 +353,6 @@ Creature *getRandomMonster(BaseRoom *inRoom) {
 //***********************************************************************
 
 Creature *getRandomPlayer(BaseRoom *inRoom) {
-	ctag		*cp=0;
 	Creature *foundPly=0;
 	int			count=0, roll=0, num=0;
 
@@ -371,18 +360,15 @@ Creature *getRandomPlayer(BaseRoom *inRoom) {
 	if(!num)
 		return(0);
 	roll = mrand(1, num);
-	cp = inRoom->first_ply;
-	while(cp) {
-		if(cp->crt->flagIsSet(P_DM_INVIS)) {
-			cp = cp->next_tag;
+	for(Player* ply : inRoom->players) {
+		if(ply->flagIsSet(P_DM_INVIS)) {
 			continue;
 		}
 		count++;
 		if(count == roll) {
-			foundPly = cp->crt;
+			foundPly = ply;
 			break;
 		}
-		cp = cp->next_tag;
 	}
 
 	if(foundPly)
@@ -410,7 +396,6 @@ void Monster::validateAc() {
 int Monster::doHarmfulAuras() {
 	int			a=0,dmg=0,aura=0, saved=0;
 	long		i=0,t=0;
-	ctag		*cp=0;
 	BaseRoom	*inRoom=0;
 	Creature* player=0;
 
@@ -439,7 +424,7 @@ int Monster::doHarmfulAuras() {
 		lasttime[LT_M_AURA_ATTACK].interval = 20L;
 	}
 
-	inRoom = getRoom();
+	inRoom = getRoomParent();
 	if(!inRoom)
 		return(0);
 
@@ -447,12 +432,10 @@ int Monster::doHarmfulAuras() {
 
 		if(!flagIsSet(M_FIRE_AURA + a))
 			continue;
-
-		cp = inRoom->first_ply;
-		while(cp) {
-			player = cp->crt;
-
-			cp = cp->next_tag;
+		PlayerSet::iterator pIt = inRoom->players.begin();
+		PlayerSet::iterator pEnd = inRoom->players.end();
+		while(pIt != pEnd) {
+			player = (*pIt++);
 
 			if(player->isEffected("petrification") || player->isCt())
 				continue;
@@ -525,17 +508,10 @@ int Monster::doHarmfulAuras() {
 //***********************************************************************
 
 bool isGuardLoot(BaseRoom *inRoom, Creature* player, const char *fmt) {
-	ctag	*cp=0;
-
-	cp = inRoom->first_mon;
-	while(cp) {
-		if(cp->crt->flagIsSet(M_GUARD_TREATURE) &&
-			!player->checkStaff(fmt, cp->crt)) {
-			return(true);
-		}
-		cp = cp->next_tag;
+	for(Monster* mons : inRoom->monsters) {
+	    if(mons->flagIsSet(M_GUARD_TREATURE) && !player->checkStaff(fmt, mons))
+	        return(true);
 	}
-
 	return(false);
 }
 
@@ -544,16 +520,9 @@ bool isGuardLoot(BaseRoom *inRoom, Creature* player, const char *fmt) {
 //***********************************************************************
 
 bool npcPresent(UniqueRoom *inRoom, short trade) {
-	Monster	*monster=0;
-	ctag	*cp=0;
-
-	cp = inRoom->first_mon;
-	while(cp) {
-		monster = cp->crt->getMonster();
-		cp = cp->next_tag;
-
-		if(monster->getMobTrade() == trade)
-			return(true);
+	for(Monster* mons : inRoom->monsters) {
+	    if(mons->getMobTrade() == trade)
+	        return(true);
 	}
 
 	return(false);

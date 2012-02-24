@@ -180,7 +180,7 @@ void Player::score(const Player* viewer) const {
 	viewer->printColor("Total Inventory Assets: %ld gold.\n",
 		getInventoryValue());
 	// if offline, player won't be in a room
-	if(getRoom() && getRoom()->isWinter())
+	if(getConstRoomParent() && getConstRoomParent()->isWinter())
 		viewer->printColor("Winter Protection: ^c%d%%\n", (int)(20 * winterProtection()) * 5);
 
 	viewer->print("\n");
@@ -531,6 +531,9 @@ void Player::information(const Player* viewer, bool online) {
 		oStr << "+                                                             ^W<<\\         _^x +\n";
 
 	txt = name;
+	if(viewer && viewer->isCt()) {
+		txt += "(" + getId() + ")";
+	}
 	txt += " the ";
 	txt += getTitle();
 
@@ -654,10 +657,10 @@ void Player::information(const Player* viewer, bool online) {
 	if(auth) {
 		showAge(viewer);
 		viewer->print("Bank: %-10lu  \n", bank[GOLD]);
-		if(getRoom())
-			viewer->print("Room: %s  \n", getRoom()->fullName().c_str());
+		if(getRoomParent())
+			viewer->print("Room: %s  \n", getRoomParent()->fullName().c_str());
 		else
-			viewer->print("Room: %s  \n", room.str().c_str());
+			viewer->print("Room: %s  \n", currentLocation.room.str().c_str());
 		if(!online)
 			viewer->print("Last login:  \n%s", ctime(&lastLogin));
 		else

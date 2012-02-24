@@ -744,35 +744,6 @@ CatRef Area::getUnique(const MapMarker *mapmarker) const {
 //						move
 //*********************************************************************
 
-//void Area::move(ctag *fp, AreaRoom* room) {
-//	Creature* target=0;
-//	Player*	player=0;
-//	Monster*  monster=0;
-//	ctag	*cp = fp;
-//
-//	while(cp) {
-//		target = cp->crt;
-//		cp = cp->next_tag;
-//		player = target->getPlayer();
-//		monster = target->getMonster();
-//		if(player) {
-//			if(room) {
-//				player->addToRoom(room);
-//			} else {
-//				player->deleteFromRoom();
-//			}
-//		} else {
-//			if(room) {
-//				monster->addToRoom(room);
-//			} else {
-//				monster->deleteFromRoom();
-//			}
-//		}
-//		move(target->first_fol, room);
-//	}
-//}
-
-
 // this function does not check rules for moving
 bool Area::move(Player* player, MapMarker *mapmarker) {
 	bool	mem=false;
@@ -780,7 +751,7 @@ bool Area::move(Player* player, MapMarker *mapmarker) {
 	AreaRoom* room = getRoom(mapmarker);
 
 	if(!room) {
-		room = player->area_room;
+		room = player->getAreaRoomParent();
 
 		if(room && room->canDelete()) {
 			room->setMapMarker(mapmarker);
@@ -796,7 +767,7 @@ bool Area::move(Player* player, MapMarker *mapmarker) {
 	room->setStayInMemory(true);
 
 	// everyone leaves room
-	BaseRoom* old_room = player->getRoom();
+	BaseRoom* old_room = player->getRoomParent();
 	player->deleteFromRoom();
 
 	room->killMortalObjects();
@@ -868,7 +839,7 @@ AreaRoom *Area::getRoom(const MapMarker *mapmarker) {
 // loads the room, including options for recycling, if needed.
 // creature is allowed to be null.
 
-AreaRoom *Area::loadRoom(const Creature* creature, const MapMarker* mapmarker, bool recycle, bool p) {
+AreaRoom *Area::loadRoom(Creature* creature, const MapMarker* mapmarker, bool recycle, bool p) {
 
 	// we only care about this if we have a creature
 	if(creature) {
@@ -887,7 +858,7 @@ AreaRoom *Area::loadRoom(const Creature* creature, const MapMarker* mapmarker, b
 	// because an AreaRoom can only be a candidate for recycling once
 	// it is completely empty, we'll just use this room for now
 	if(!room && creature && recycle)
-		room = creature->area_room;
+		room = creature->getAreaRoomParent();
 	if(!room)
 		room = new AreaRoom(this, mapmarker);
 
@@ -1031,7 +1002,6 @@ TileInfo *Area::getTile(char grid, char seasonFlags, Season season, bool checkSe
 char Area::getTerrain(const Player* player, const MapMarker *mapmarker, short y, short x, short z, bool terOnly) const {
 	std::list<AreaRoom*>::iterator it;
 	AreaRoom* room=0;
-	ctag	*cp=0;
 	bool	staff = player ? player->isStaff() : false;
 	bool	found=false;
 
@@ -1046,28 +1016,26 @@ char Area::getTerrain(const Player* player, const MapMarker *mapmarker, short y,
 		if(rooms.find(m.str()) != rooms.end()) {
 			room = (*rooms.find(m.str())).second;
 
-			if(room->first_ply || room->first_mon) {
+			if(!room->players.empty() || !room->monsters.empty()) {
 				if(!staff && room->isMagicDark())
 					return('#');
 
 				// can they see anybody in the room?
-				cp = room->first_ply;
-				while(!found && cp) {
-					if(	player == cp->crt || (
-							player->canSee(cp->crt) &&
-							(staff || !cp->crt->flagIsSet(P_HIDDEN))
-					) )
-						found = true;
-					cp = cp->next_tag;
+				for(Player* ply : room->players) {
+				    if(player == ply || (player->canSee(ply) && (staff || !ply->flagIsSet(P_HIDDEN)))) {
+				        found = true;
+				        break;
+				    }
 				}
-				cp = room->first_mon;
-				while(!found && cp) {
-					if(	player->canSee(cp->crt) &&
-						(staff || !cp->crt->flagIsSet(M_HIDDEN))
-					)
-						found = true;
-					cp = cp->next_tag;
+				if(!found) {
+				    for(Monster* mons : room->monsters) {
+				        if( player->canSee(mons) && (staff || !mons->flagIsSet(M_HIDDEN))) {
+				            found = true;
+				            break;
+				        }
+				    }
 				}
+
 				// if so, show them the creatue symbol
 				if(found)
 					return('@');
@@ -1766,10 +1734,10 @@ int dmListArea(Player* player, cmd* cmnd) {
 
 		for(rt = area->rooms.begin() ; rt != area->rooms.end() ; rt++) {
 			room = (*rt).second;
-			if(room->first_ply || room->first_mon || room->first_obj || empty) {
+			if(!room->players.empty() || !room->monsters.empty() || room->first_obj || empty) {
 				player->printColor("     %-16s Ply: %s^x  Mon: %s^x  Obj: %s\n",
-					room->fullName().c_str(), room->first_ply ? "^gy" : "^rn",
-					room->first_mon ? "^gy" : "^rn", room->first_obj ? "^gy" : "^rn");
+					room->fullName().c_str(), !room->players.empty() ? "^gy" : "^rn",
+					!room->monsters.empty() ? "^gy" : "^rn", room->first_obj ? "^gy" : "^rn");
 			}
 		}
 		player->print("\n");
@@ -1912,10 +1880,12 @@ void Config::areaInit(Creature* player, xmlNodePtr curNode) {
 
 void Config::areaInit(Creature* player, MapMarker mapmarker) {
 	Area *area = getArea(mapmarker.getArea());
-	AreaRoom* aRoom=0;
 	if(area)
-		aRoom = area->loadRoom(0, &mapmarker, false);
-	player->area_room = aRoom;
+		player->currentLocation.mapmarker = mapmarker;
+//	AreaRoom* aRoom=0;
+//	if(area)
+//		aRoom = area->loadRoom(0, &mapmarker, false);
+//	player->area_room = aRoom;
 }
 
 

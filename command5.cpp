@@ -514,7 +514,7 @@ int cmdSuicide(Player* player, cmd* cmnd) {
 	// Prevents players from suiciding in jail
 	if(player->inJail()) {
 		player->print("You attempt to kill yourself and fail. It sure hurts though!\n");
-		broadcast(player->getSock(), player->getRoom(),"%M tries to kill %sself.", player, player->himHer());
+		broadcast(player->getSock(), player->getParent(),"%M tries to kill %sself.", player, player->himHer());
 		return(0);
 	}
 
@@ -915,7 +915,7 @@ void showAbility(Player* player, const char *skill, const char *display, int lt,
 
 int cmdTime(Player* player, cmd* cmnd) {
 	long	t = time(0), u=0, tmp=0, i=0;
-	const CatRefInfo* cri = gConfig->getCatRefInfo(player->getRoom(), 1);
+	const CatRefInfo* cri = gConfig->getCatRefInfo(player->getRoomParent(), 1);
 	bstring world = "";
 
 	if(cri && cri->getWorldName() != "") {
@@ -1000,8 +1000,8 @@ int cmdTime(Player* player, cmd* cmnd) {
 		}
 
 		if(player->flagIsSet(P_JAILED)) {
-			if(	player->parent_rom &&
-				player->parent_rom->flagIsSet(R_MOB_JAIL)
+			if(	player->inUniqueRoom() &&
+				player->getUniqueRoomParent()->flagIsSet(R_MOB_JAIL)
 			)
 				i = LT(player, LT_MOB_JAILED);
 			else
@@ -1072,8 +1072,8 @@ int cmdSave(Player* player, cmd* cmnd) {
 
 	player->save(true);
 	// Save storage rooms
-	if(player->parent_rom && player->parent_rom->info.isArea("stor"))
-		gConfig->resaveRoom(player->parent_rom->info);
+	if(player->inUniqueRoom() && player->getUniqueRoomParent()->info.isArea("stor"))
+		gConfig->resaveRoom(player->getUniqueRoomParent()->info);
 
 	player->print("Player saved.\n");
 	return(0);

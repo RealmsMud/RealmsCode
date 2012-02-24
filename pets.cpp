@@ -61,36 +61,45 @@ Creature* Monster::getMaster() const {
 
     return(myMaster);
 }
+//
+//template<class Type>
+//Type doFindCreature(std::list<Type>& list, bstring pName, int pNum, bool exactMatch) {
+//    if(pName.empty())
+//        return(NULL);
+//
+//    int match = 0;
+//    for(Type target : list) {
+//        if(exactMatch) {
+//            if(!pName.equals(target->getName())) {
+//                match++;
+//                if(match == pNum) {
+//                    return(target);
+//                }
+//            }
+//        } else {
+//            if(keyTxtEqual(target, pName.c_str())) {
+//                match++;
+//                if(match == pNum) {
+//                    return(target);
+//                }
+//            }
+//        }
+//    }
+//    return(NULL);
+//
+//}
 
-template<class Type>
-Type findCreature(std::list<Type>& list, bstring pName, int pNum, bool exactMatch) {
-    if(pName.empty())
-        return(NULL);
-
-    int match = 0;
-    for(Type target : list) {
-        if(exactMatch) {
-            if(!pName.equals(target->getName())) {
-                match++;
-                if(match == pNum) {
-                    return(target);
-                }
-            }
-        } else {
-            if(keyTxtEqual(target, pName.c_str())) {
-                match++;
-                if(match == pNum) {
-                    return(target);
-                }
+Monster* Creature::findPet(bstring pName, int pNum) {
+	int match = 0;
+    for(Monster* pet : pets) {
+        if(isMatch(this, pet, pName, false, false)) {
+            match++;
+            if(match == pNum) {
+            	return(pet);
             }
         }
     }
     return(NULL);
-
-}
-
-Monster* Creature::findPet(bstring pName, int pNum) {
-    return(findCreature<Monster*>(pets, pName, pNum, false));
 }
 
 //*********************************************************************
@@ -100,7 +109,7 @@ Monster* Creature::findPet(bstring pName, int pNum) {
 bool Creature::isPet() const {
     if(isPlayer())
         return(false);
-    return(flagIsSet(M_PET) && getConstMonster()->getMaster());
+    return(flagIsSet(M_PET) && getAsConstMonster()->getMaster());
 }
 
 void Creature::dismissPet(Monster* pet) {
@@ -108,12 +117,12 @@ void Creature::dismissPet(Monster* pet) {
 		return;
 
 	print("You dismiss %N.\n", pet);
-	broadcast(getSock(), getRoom(), "%M dismisses %N.", this, pet);
+	broadcast(getSock(), getRoomParent(), "%M dismisses %N.", this, pet);
 
 	if(pet->isUndead())
-		broadcast(NULL, getRoom(), "%M wanders away.", pet);
+		broadcast(NULL, getRoomParent(), "%M wanders away.", pet);
 	else
-		broadcast(NULL, getRoom(), "%M fades away.", pet);
+		broadcast(NULL, getRoomParent(), "%M fades away.", pet);
 	pet->die(this);
 
 }

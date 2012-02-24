@@ -40,8 +40,8 @@ void initialBind(Player* player, bstring str) {
 	}
 
 	player->bind(location);
-	player->room = player->bound.room;
-	player->room = player->getRecallRoom().room;
+	player->currentLocation.room = player->bound.room;
+	player->currentLocation.room = player->getRecallRoom().room;
 
 	if(cr.id)
 		Create::addStartingItem(player, cr.area, cr.id, false, true);
@@ -271,7 +271,7 @@ int dmStartLocs(Player* player, cmd* cmnd) {
 
 int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Creature* creature=0;
-	Player*	target=0, *pPlayer = player->getPlayer();
+	Player*	target=0, *pPlayer = player->getAsPlayer();
 	const StartLoc* location=0;
 
 	if(!pPlayer)
@@ -306,9 +306,9 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			cmnd->str[2][0] = up(cmnd->str[2][0]);
 
-			creature = pPlayer->getRoom()->findCreature(pPlayer, cmnd->str[2], cmnd->val[2], false);
+			creature = pPlayer->getParent()->findCreature(pPlayer, cmnd->str[2], cmnd->val[2], false);
 			if(creature)
-				target = creature->getPlayer();
+				target = creature->getAsPlayer();
 
 			if(!target) {
 				pPlayer->print("You don't see that person here.\n");
@@ -321,8 +321,8 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(pPlayer->isCt() && cmnd->num == 4)
 			location = gConfig->getStartLoc(cmnd->str[3]);
-		else if(pPlayer->parent_rom && pPlayer->parent_rom->info.id)
-			location = gConfig->getStartLocByReq(pPlayer->parent_rom->info);
+		else if(pPlayer->inUniqueRoom() && pPlayer->getUniqueRoomParent()->info.id)
+			location = gConfig->getStartLocByReq(pPlayer->getUniqueRoomParent()->info);
 
 		if(	!location ||
 			!location->getRequired().getId() ||
@@ -334,8 +334,8 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		if(!pPlayer->isCt()) {
-			if(	(pPlayer->area_room && pPlayer->area_room->mapmarker != location->getRequired().mapmarker) ||
-				(pPlayer->parent_rom && pPlayer->parent_rom->info != location->getRequired().room)
+			if(	(pPlayer->inAreaRoom() && pPlayer->getAreaRoomParent()->mapmarker != location->getRequired().mapmarker) ||
+				(pPlayer->inUniqueRoom() && pPlayer->getUniqueRoomParent()->info != location->getRequired().room)
 			) {
 				pPlayer->print("To bind to this location, you must be at %s.\n", location->getRequiredName().c_str());
 				return(0);
@@ -349,7 +349,7 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(pPlayer == target) {
 
 			pPlayer->print("Bind spell cast.\nYou are now bound to %s.\n", location->getBindName().c_str());
-			broadcast(pPlayer->getSock(), pPlayer->getRoom(), "%M casts a bind spell on %sself.", pPlayer, pPlayer->himHer());
+			broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts a bind spell on %sself.", pPlayer, pPlayer->himHer());
 
 		} else {
 
@@ -365,7 +365,7 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 				target->name, target->name, location->getBindName().c_str());
 			target->print("%M casts a bind spell on you.\nYou are now bound to %s.\n",
 				pPlayer, location->getBindName().c_str());
-			broadcast(player->getSock(), target->getSock(), pPlayer->getRoom(),
+			broadcast(player->getSock(), target->getSock(), pPlayer->getRoomParent(),
 				"%M casts a bind spell on %N.", pPlayer, target);
 
 		}

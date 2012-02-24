@@ -23,593 +23,512 @@
 #include "pythonHandler.h"
 #include "effects.h"
 #include "msdp.h"
+#include <indexing_suite/container_suite.hpp>
+#include <indexing_suite/set.hpp>
 
 int pythonRand(int a, int b) {
-	return(mrand(a,b));
+	return (mrand(a,b));
 }
 
 namespace bp = boost::python;
 
-struct crt_tag_wrapper : crt_tag, bp::wrapper< crt_tag > {
+struct BaseRoom_wrapper: BaseRoom, bp::wrapper<BaseRoom> {
 
-	crt_tag_wrapper( )
-	: crt_tag( )
-	  , bp::wrapper< crt_tag >(){
-		// null constructor
-	}
-
-	static ::Creature * get_crt(crt_tag const & inst ){
-		return inst.crt;
-	}
-
-	static void set_crt( crt_tag & inst, ::Creature * new_value ){
-		inst.crt = new_value;
-	}
-
-	static ::crt_tag * get_next_tag(crt_tag const & inst ){
-		return inst.next_tag;
-	}
-
-	static void set_next_tag( crt_tag & inst, ::crt_tag * new_value ){
-		inst.next_tag = new_value;
-	}
-
-};
-
-
-struct BaseRoom_wrapper : BaseRoom, bp::wrapper< BaseRoom > {
-
-	BaseRoom_wrapper( )
-	: BaseRoom( )
-	  , bp::wrapper< BaseRoom >(){
+	BaseRoom_wrapper() :
+			BaseRoom(), bp::wrapper<BaseRoom>() {
 		// null constructor
 
 	}
 
-	void BaseDestroy(  ){
-		BaseRoom::BaseDestroy(  );
+	void BaseDestroy() {
+		BaseRoom::BaseDestroy();
 	}
 
-	virtual bool flagIsSet( int flag ) const {
-		bp::override func_flagIsSet = this->get_override( "flagIsSet" );
-		return func_flagIsSet( flag );
+	virtual bool flagIsSet(int flag) const {
+		bp::override func_flagIsSet = this->get_override("flagIsSet");
+		return func_flagIsSet(flag);
 	}
+	virtual void setFlag(int flag) {
+		bp::override func_setFlag = this->get_override("setFlag");
+		func_setFlag(flag);
+		return;
+	}
+
 	virtual Size getSize() const {
-		bp::override func_getSize = this->get_override( "getSize" );
+		bp::override func_getSize = this->get_override("getSize");
 		return func_getSize();
 	}
 
-	virtual ::Fishing const * getFishing(  ) const {
-		bp::override func_getFishing = this->get_override( "getFishing" );
-		return func_getFishing(  );
-	}
-
-	static ::ctag * get_first_ply(BaseRoom const & inst ){
-		return inst.first_ply;
-	}
-	static void set_first_ply( BaseRoom & inst, ::ctag * new_value ){
-		inst.first_ply = new_value;
+	virtual ::Fishing const * getFishing() const {
+		bp::override func_getFishing = this->get_override("getFishing");
+		return func_getFishing();
 	}
 
 };
 
-struct MudObject_wrapper : MudObject, bp::wrapper< MudObject > {
-	virtual bool pulseEffects( ::time_t t ){
-		bp::override func_pulseEffects = this->get_override( "pulseEffects" );
-		return func_pulseEffects( t );
+struct MudObject_wrapper: MudObject, bp::wrapper<MudObject> {
+	virtual bool pulseEffects(::time_t t) {
+		bp::override func_pulseEffects = this->get_override("pulseEffects");
+		return func_pulseEffects(t);
 	}
 
 };
 
+BOOST_PYTHON_MODULE(mud)
+{
 
+    class_<Config>("Config", no_init).def("getVersion", &Config::getVersion).def(
+			"getMudName", &Config::getMudName).def("getMudNameAndVersion",
+			&Config::getMudNameAndVersion);
 
-BOOST_PYTHON_MODULE(mud) {
-	class_<Config>("Config", no_init)
-		.def("getVersion",&Config::getVersion)
-		.def("getMudName", &Config::getMudName)
-		.def("getMudNameAndVersion", &Config::getMudNameAndVersion)
-		;
-
-
-	class_<Server>("Server", no_init)
-   		.def("findPlayer",&Server::findPlayer, return_internal_reference< >())
+	class_<Server>("Server", no_init).def("findPlayer", &Server::findPlayer,
+			return_internal_reference<>())
 
 //		.def("findPlayer",&Server::findPlayer,
 //			return_value_policy<reference_existing_object>())
-	;
+			;
 
- 	{ //::MudObject
-			typedef bp::class_< MudObject_wrapper, boost::noncopyable > MudObject_exposer_t;
-			MudObject_exposer_t MudObject_exposer = MudObject_exposer_t( "MudObject", bp::no_init );
-			bp::scope MudObject_scope( MudObject_exposer );
+	{ //::MudObject
+		typedef bp::class_<MudObject_wrapper, boost::noncopyable> MudObject_exposer_t;
+		MudObject_exposer_t MudObject_exposer = MudObject_exposer_t("MudObject",
+				bp::no_init);
+		bp::scope MudObject_scope(MudObject_exposer);
 
 		{ //::MudObject::getName
-			typedef char const * ( ::MudObject::*getName_function_type )(  ) ;
+			typedef char const * (::MudObject::*getName_function_type)();
 
-			MudObject_exposer.def(
-			  	"getName"
-			  	, getName_function_type( &::MudObject::getName ) );
+			MudObject_exposer.def("getName",
+					getName_function_type(&::MudObject::getName));
 
 		}
 
 		{ //::MudObject::isEffected
 
-			typedef bool ( ::MudObject::*isEffected_function_type )( ::bstring const & ) const;
+			typedef bool (::MudObject::*isEffected_function_type)(
+					::bstring const &) const;
 
-			MudObject_exposer.def(
-				"isEffected"
-				, isEffected_function_type( &::MudObject::isEffected )
-				, ( bp::arg("effect") ) );
+			MudObject_exposer.def("isEffected",
+					isEffected_function_type(&::MudObject::isEffected),
+					(bp::arg("effect")));
 
 		}
 		{ //::MudObject::isEffected
 
-			typedef bool ( ::MudObject::*isEffected_function_type )( ::EffectInfo * ) const;
+			typedef bool (::MudObject::*isEffected_function_type)(
+					::EffectInfo *) const;
 
-			MudObject_exposer.def(
-				"isEffected"
-				, isEffected_function_type( &::MudObject::isEffected )
-				, ( bp::arg("effect") ) );
+			MudObject_exposer.def("isEffected",
+					isEffected_function_type(&::MudObject::isEffected),
+					(bp::arg("effect")));
 
 		}
 		/*
-		{ //::MudObject::isEffected
+		 { //::MudObject::isEffected
 
-			typedef bool ( ::MudObject::*isEffected_function_type )( ::bstring const & ) const;
+		 typedef bool ( ::MudObject::*isEffected_function_type )( ::bstring const & ) const;
 
-			MudObject_exposer.def(
-				"isEffected"
-				, isEffected_function_type( &::MudObject::isEffected )
-				, ( bp::arg("effect") ) );
+		 MudObject_exposer.def(
+		 "isEffected"
+		 , isEffected_function_type( &::MudObject::isEffected )
+		 , ( bp::arg("effect") ) );
 
-		}
-		{ //::MudObject::isEffected
+		 }
+		 { //::MudObject::isEffected
 
-			typedef bool ( ::MudObject::*isEffected_function_type )( ::EffectInfo * ) const;
+		 typedef bool ( ::MudObject::*isEffected_function_type )( ::EffectInfo * ) const;
 
-			MudObject_exposer.def(
-				"isEffected"
-				, isEffected_function_type( &::MudObject::isEffected )
-				, ( bp::arg("effect") ) );
+		 MudObject_exposer.def(
+		 "isEffected"
+		 , isEffected_function_type( &::MudObject::isEffected )
+		 , ( bp::arg("effect") ) );
 
-		}
+		 }
 		 */
-			MudObject_exposer.def("removeOppositeEffect", &::MudObject::removeOppositeEffect )
-			.def("getPlayer", &MudObject::getPlayer, return_value_policy<reference_existing_object>())
-			.def("getMonster", &MudObject::getMonster, return_value_policy<reference_existing_object>())
-			.def("getObject", &MudObject::getObject, return_value_policy<reference_existing_object>())
-			.def("getExit", &MudObject::getExit, return_value_policy<reference_existing_object>())
-			.def("equals", &MudObject::equals)
-			.def("getId", &MudObject::getIdPython)
-			;
+		MudObject_exposer.def("removeOppositeEffect",
+				&::MudObject::removeOppositeEffect).def("getPlayer",
+				&MudObject::getAsPlayer,
+				return_value_policy<reference_existing_object>()).def(
+				"getMonster", &MudObject::getAsMonster,
+				return_value_policy<reference_existing_object>()).def(
+				"getObject", &MudObject::getAsObject,
+				return_value_policy<reference_existing_object>()).def("getExit",
+				&MudObject::getAsExit,
+				return_value_policy<reference_existing_object>()).def("equals",
+				&MudObject::equals).def("getId", &MudObject::getIdPython);
 	}
-
 
 //	class_<MudObject>("MudObject", no_init)
 //		.def("getName", &MudObject::getName)
 //	;
 
-		bp::enum_< crtClasses>("crtClasses")
-		.value("ASSASSIN", ASSASSIN)
-		.value("BERSERKER", BERSERKER)
-		.value("CLERIC", CLERIC)
-		.value("FIGHTER", FIGHTER)
-		.value("MAGE", MAGE)
-		.value("PALADIN", PALADIN)
-		.value("RANGER", RANGER)
-		.value("THIEF", THIEF)
-		.value("VAMPIRE", VAMPIRE)
-		.value("MONK", MONK)
-		.value("DEATHKNIGHT", DEATHKNIGHT)
-		.value("DRUID", DRUID)
-		.value("LICH", LICH)
-		.value("WEREWOLF", WEREWOLF)
-		.value("BARD", BARD)
-		.value("ROGUE", ROGUE)
-		.value("BUILDER", BUILDER)
-		.value("CARETAKER", CARETAKER)
-		.value("DUNGEONMASTER", DUNGEONMASTER)
-		.value("CLASS_COUNT", CLASS_COUNT)
-		.export_values()
-		;
+	bp::enum_<crtClasses>("crtClasses").value("ASSASSIN", ASSASSIN).value(
+			"BERSERKER", BERSERKER).value("CLERIC", CLERIC).value("FIGHTER",
+			FIGHTER).value("MAGE", MAGE).value("PALADIN", PALADIN).value(
+			"RANGER", RANGER).value("THIEF", THIEF).value("VAMPIRE", VAMPIRE).value(
+			"MONK", MONK).value("DEATHKNIGHT", DEATHKNIGHT).value("DRUID",
+			DRUID).value("LICH", LICH).value("WEREWOLF", WEREWOLF).value("BARD",
+			BARD).value("ROGUE", ROGUE).value("BUILDER", BUILDER).value(
+			"CARETAKER", CARETAKER).value("DUNGEONMASTER", DUNGEONMASTER).value(
+			"CLASS_COUNT", CLASS_COUNT).export_values();
 
-		bp::enum_< religions>("religions")
-		.value("ATHEIST", ATHEIST)
-		.value("ARAMON", ARAMON)
-		.value("CERIS", CERIS)
-		.value("ENOCH", ENOCH)
-		.value("GRADIUS", GRADIUS)
-		.value("ARES", ARES)
-		.value("KAMIRA", KAMIRA)
-		.value("LINOTHAN", LINOTHAN)
-		.value("ARACHNUS", ARACHNUS)
-		.value("MARA", MARA)
-		.value("JAKAR", JAKAR)
-		.value("MAX_DEITY", MAX_DEITY)
-		.export_values()
-		;
+	bp::enum_<religions>("religions").value("ATHEIST", ATHEIST).value("ARAMON",
+			ARAMON).value("CERIS", CERIS).value("ENOCH", ENOCH).value("GRADIUS",
+			GRADIUS).value("ARES", ARES).value("KAMIRA", KAMIRA).value(
+			"LINOTHAN", LINOTHAN).value("ARACHNUS", ARACHNUS).value("MARA",
+			MARA).value("JAKAR", JAKAR).value("MAX_DEITY", MAX_DEITY).export_values();
 
-		bp::enum_< DeathType>("DeathType")
-		.value("DT_NONE", DT_NONE)
-		.value("FALL", FALL)
-		.value("POISON_MONSTER", POISON_MONSTER)
-		.value("POISON_GENERAL", POISON_GENERAL)
-		.value("DISEASE", DISEASE)
-		.value("SMOTHER", SMOTHER)
-		.value("FROZE", FROZE)
-		.value("BURNED", BURNED)
-		.value("DROWNED", DROWNED)
-		.value("DRAINED", DRAINED)
-		.value("ZAPPED", ZAPPED)
-		.value("SHOCKED", SHOCKED)
-		.value("WOUNDED", WOUNDED)
-		.value("CREEPING_DOOM", CREEPING_DOOM)
-		.value("SUNLIGHT", SUNLIGHT)
-		.value("PIT", PIT)
-		.value("BLOCK", BLOCK)
-		.value("DART", DART)
-		.value("ARROW", ARROW)
-		.value("SPIKED_PIT", SPIKED_PIT)
-		.value("FIRE_TRAP", FIRE_TRAP)
-		.value("FROST", FROST)
-		.value("ELECTRICITY", ELECTRICITY)
-		.value("ACID", ACID)
-		.value("ROCKS", ROCKS)
-		.value("ICICLE_TRAP", ICICLE_TRAP)
-		.value("SPEAR", SPEAR)
-		.value("CROSSBOW_TRAP", CROSSBOW_TRAP)
-		.value("VINES", VINES)
-		.value("COLDWATER", COLDWATER)
-		.value("EXPLODED", EXPLODED)
-		.value("BOLTS", BOLTS)
-		.value("SPLAT", SPLAT)
-		.value("POISON_PLAYER", POISON_PLAYER)
-		.value("BONES", BONES)
-		.value("EXPLOSION", EXPLOSION)
-		.value("PETRIFIED", PETRIFIED)
-		.value("LIGHTNING", LIGHTNING)
-		.value("WINDBATTERED", WINDBATTERED)
-		.value("PIERCER", PIERCER)
-		.value("ELVEN_ARCHERS", ELVEN_ARCHERS)
-		.value("DEADLY_MOSS", DEADLY_MOSS)
-		.value("THORNS", THORNS)
-		.export_values()
-		;
-
-		bp::class_< crt_tag_wrapper, boost::noncopyable >( "crt_tag", bp::init< >() )
-			.add_property( "crt"
-						, bp::make_function( (::Creature * (*)( ::crt_tag const & ))(&crt_tag_wrapper::get_crt), return_value_policy<reference_existing_object>() )
-						, bp::make_function( (void (*)( ::crt_tag &,::Creature * ))(&crt_tag_wrapper::set_crt), bp::with_custodian_and_ward_postcall< 1, 2 >() ) )
-			.add_property( "next_tag"
-						, bp::make_function( (::crt_tag * (*)( ::crt_tag const & ))(&crt_tag_wrapper::get_next_tag), return_value_policy<reference_existing_object>() )
-						, bp::make_function( (void (*)( ::crt_tag &,::crt_tag * ))(&crt_tag_wrapper::set_next_tag), bp::with_custodian_and_ward_postcall< 1, 2 >() ) );
+	bp::enum_<DeathType>("DeathType").value("DT_NONE", DT_NONE).value("FALL",
+			FALL).value("POISON_MONSTER", POISON_MONSTER).value(
+			"POISON_GENERAL", POISON_GENERAL).value("DISEASE", DISEASE).value(
+			"SMOTHER", SMOTHER).value("FROZE", FROZE).value("BURNED", BURNED).value(
+			"DROWNED", DROWNED).value("DRAINED", DRAINED).value("ZAPPED",
+			ZAPPED).value("SHOCKED", SHOCKED).value("WOUNDED", WOUNDED).value(
+			"CREEPING_DOOM", CREEPING_DOOM).value("SUNLIGHT", SUNLIGHT).value(
+			"PIT", PIT).value("BLOCK", BLOCK).value("DART", DART).value("ARROW",
+			ARROW).value("SPIKED_PIT", SPIKED_PIT).value("FIRE_TRAP", FIRE_TRAP).value(
+			"FROST", FROST).value("ELECTRICITY", ELECTRICITY).value("ACID",
+			ACID).value("ROCKS", ROCKS).value("ICICLE_TRAP", ICICLE_TRAP).value(
+			"SPEAR", SPEAR).value("CROSSBOW_TRAP", CROSSBOW_TRAP).value("VINES",
+			VINES).value("COLDWATER", COLDWATER).value("EXPLODED", EXPLODED).value(
+			"BOLTS", BOLTS).value("SPLAT", SPLAT).value("POISON_PLAYER",
+			POISON_PLAYER).value("BONES", BONES).value("EXPLOSION", EXPLOSION).value(
+			"PETRIFIED", PETRIFIED).value("LIGHTNING", LIGHTNING).value(
+			"WINDBATTERED", WINDBATTERED).value("PIERCER", PIERCER).value(
+			"ELVEN_ARCHERS", ELVEN_ARCHERS).value("DEADLY_MOSS", DEADLY_MOSS).value(
+			"THORNS", THORNS).export_values();
 
 	def("dice", &::dice);
 	def("rand", &::pythonRand);
-	def("spawnObjects",&::spawnObjects);
-	def("isBadSocial",&::isBadSocial);
-	def("isSemiBadSocial",&::isSemiBadSocial);
-	def("isGoodSocial",&::isGoodSocial);
+	def("spawnObjects", &::spawnObjects);
+	def("isBadSocial", &::isBadSocial);
+	def("isSemiBadSocial", &::isSemiBadSocial);
+	def("isGoodSocial", &::isGoodSocial);
 
 }
 
-BOOST_PYTHON_MODULE(MudObjects) {
+BOOST_PYTHON_MODULE(MudObjects)
+{
 
-	bp::class_< Stat, boost::noncopyable >( "Stat", bp::init< >() )
-		.def(
-			"addCur"
-			, (void ( ::Stat::* )( short int ) )( &::Stat::addCur )
+    class_<MonsterSet> ("MonsterSet")
+            .def (indexing::container_suite< MonsterSet >::with_policies(return_internal_reference<>()));
+
+    class_<PlayerSet> ("PlayerSet")
+                .def (indexing::container_suite< PlayerSet >::with_policies(return_internal_reference<>()));
+
+    class_<Containable, boost::noncopyable, bases<MudObject> >("Containable", no_init)
+            .def("addTo", &Containable::addTo);
+
+    class_<Container, boost::noncopyable, bases<MudObject> > ("Container", no_init)
+            .def_readwrite("monsters", &Container::monsters)
+            .def_readwrite("players", &Container::players)
+            .def("wake", &Container::wake);
+
+
+    bp::class_<Stat, boost::noncopyable>("Stat", bp::init<>()).def("addCur",
+			(void(::Stat::*)(short int) )( &::Stat::addCur )
 			, ( bp::arg("a") ) )
-		.def(
-			"addMax"
-			, (void ( ::Stat::* )( short int ) )( &::Stat::addMax )
+			.def(
+					"addMax"
+					, (void ( ::Stat::* )( short int ) )( &::Stat::addMax)
 			, ( bp::arg("a") ) )
-		.def(
+	.def(
 			"adjust"
 			, (int ( ::Stat::* )( int,bool ) )( &::Stat::adjust )
 			, ( bp::arg("amt"), bp::arg("overMaxOk")=(bool)(false) ) )
-		.def(
+	.def(
 			"adjustMax"
 			, (int ( ::Stat::* )( int ) )( &::Stat::adjustMax )
 			, ( bp::arg("amt") ) )
-		.def(
+	.def(
 			"decrease"
 			, (int ( ::Stat::* )( int ) )( &::Stat::decrease )
 			, ( bp::arg("amt") ) )
-		.def(
+	.def(
 			"decreaseMax"
 			, (int ( ::Stat::* )( int ) )( &::Stat::decreaseMax )
 			, ( bp::arg("amt") ) )
-		.def(
+	.def(
 			"getCur"
-			, (short int ( ::Stat::* )(  ) const)( &::Stat::getCur ) )
-		.def(
+			, (short int ( ::Stat::* )( ) const)( &::Stat::getCur ) )
+	.def(
 			"getInitial"
-			, (short int ( ::Stat::* )(  ) const)( &::Stat::getInitial ) )
-		.def(
+			, (short int ( ::Stat::* )( ) const)( &::Stat::getInitial ) )
+	.def(
 			"getMax"
-			, (short int ( ::Stat::* )(  ) const)( &::Stat::getMax ) )
-		.def(
+			, (short int ( ::Stat::* )( ) const)( &::Stat::getMax ) )
+	.def(
 			"increase"
 			, (int ( ::Stat::* )( int,bool ) )( &::Stat::increase )
 			, ( bp::arg("amt"), bp::arg("overMaxOk")=(bool)(false) ) )
-		.def(
+	.def(
 			"increaseMax"
 			, (int ( ::Stat::* )( int ) )( &::Stat::increaseMax )
 			, ( bp::arg("amt") ) )
-		.def(
+	.def(
 			"load"
 			, (bool ( ::Stat::* )( ::xmlNodePtr ) )( &::Stat::load )
 			, ( bp::arg("curNode") ) )
-		.def(
+	.def(
 			"restore"
-			, (int ( ::Stat::* )(  ) )( &::Stat::restore ) )
-		.def(
+			, (int ( ::Stat::* )( ) )( &::Stat::restore ) )
+	.def(
 			"save"
 			, (void ( ::Stat::* )( ::xmlNodePtr,char const * ) const)( &::Stat::save )
 			, ( bp::arg("parentNode"), bp::arg("statName") ) )
-		.def(
+	.def(
 			"setCur"
 			, (int ( ::Stat::* )( short int ) )( &::Stat::setCur )
 			, ( bp::arg("newCur") ) )
-		.def(
+	.def(
 			"setInitial"
 			, (void ( ::Stat::* )( short int ) )( &::Stat::setInitial )
 			, ( bp::arg("i") ) )
-		.def(
+	.def(
 			"setMax"
 			, (int ( ::Stat::* )( short int,bool ) )( &::Stat::setMax )
 			, ( bp::arg("newMax"), bp::arg("allowZero")=(bool)(false) ) )
-		;
-
+	;
 
 	{ //::BaseRoom
-		typedef bp::class_< BaseRoom_wrapper, bp::bases< MudObject >, boost::noncopyable > BaseRoom_exposer_t;
+		typedef bp::class_< BaseRoom_wrapper, bp::bases< Container >, boost::noncopyable > BaseRoom_exposer_t;
 		BaseRoom_exposer_t BaseRoom_exposer = BaseRoom_exposer_t( "BaseRoom", bp::no_init );
 		bp::scope BaseRoom_scope( BaseRoom_exposer );
 		BaseRoom_exposer.def( bp::init< >() );
 		{ //::BaseRoom::BaseDestroy
 
-			typedef void ( BaseRoom_wrapper::*BaseDestroy_function_type )(  ) ;
+			typedef void ( BaseRoom_wrapper::*BaseDestroy_function_type )( );
 
 			BaseRoom_exposer.def(
-				"BaseDestroy"
-				, BaseDestroy_function_type( &BaseRoom_wrapper::BaseDestroy ) );
+					"BaseDestroy"
+					, BaseDestroy_function_type( &BaseRoom_wrapper::BaseDestroy ) );
 
 		}
 		{ //::BaseRoom::findCreature
 
-			typedef ::Creature * ( ::BaseRoom::*findCreature_function_type )( ::Creature *,::bstring const &,bool,bool,bool ) ;
+			typedef ::Creature * ( ::BaseRoom::*findCreature_function_type )( ::Creature *,::bstring const &,bool,bool,bool );
 
 			BaseRoom_exposer.def(
-				"findCreature"
-				, findCreature_function_type( &::BaseRoom::findCreaturePython )
-				, ( bp::arg("searcher"), bp::arg("name"), bp::arg("monFirst")=(bool)(true), bp::arg("firstAggro")=(bool)(false), bp::arg("exactMatch")=(bool)(false) )
+					"findCreature"
+					, findCreature_function_type( &::BaseRoom::findCreaturePython )
+					, ( bp::arg("searcher"), bp::arg("name"), bp::arg("monFirst")=(bool)(true), bp::arg("firstAggro")=(bool)(false), bp::arg("exactMatch")=(bool)(false) )
 					,return_value_policy<reference_existing_object>());
 
 		}
 		{ //::BaseRoom::killMortalObjects
 
-			typedef void ( ::BaseRoom::*killMortalObjects_function_type )( bool ) ;
+			typedef void ( ::BaseRoom::*killMortalObjects_function_type )( bool );
 
 			BaseRoom_exposer.def(
-				"killMortalObjects"
-				, killMortalObjects_function_type( &::BaseRoom::killMortalObjects )
-				, ( bp::arg("floor")=(bool)(true) ) );
+					"killMortalObjects"
+					, killMortalObjects_function_type( &::BaseRoom::killMortalObjects )
+					, ( bp::arg("floor")=(bool)(true) ) );
 
 		}
-		BaseRoom_exposer.add_property( "first_ply"
-					, bp::make_function( (::ctag * (*)( ::BaseRoom const & ))(&BaseRoom_wrapper::get_first_ply), bp::return_internal_reference< >() )
-					, bp::make_function( (void (*)( ::BaseRoom &,::ctag * ))(&BaseRoom_wrapper::set_first_ply), bp::with_custodian_and_ward_postcall< 1, 2 >() ) );
-
 
 		BaseRoom_exposer.def("hasMagicBonus", &::BaseRoom::magicBonus)
-						.def("isForest", &::BaseRoom::isForest)
-						.def("setTempNoKillDarkmetal", &::BaseRoom::setTempNoKillDarkmetal)
+		.def("isForest", &::BaseRoom::isForest)
+		.def("setTempNoKillDarkmetal", &::BaseRoom::setTempNoKillDarkmetal)
 		;
-	 }
+	}
 
 	bp::class_<EffectInfo, boost::noncopyable >( "EffectInfo", bp::no_init )
-		.def("add", &EffectInfo::add )
-		.def("compute", &EffectInfo::compute)
-		.def("pulse", &EffectInfo::pulse)
-		.def("remove", &EffectInfo::remove)
-		.def("runScript", &EffectInfo::runScript, (bp::arg("pyScript"), bp::arg("applier")=0l ) )
-		.def("getDisplayName", &EffectInfo::getDisplayName)
-		.def("getDuration", &EffectInfo::getDuration)
-		.def("getEffect", &EffectInfo::getEffect, return_value_policy<reference_existing_object>())
+	.def("add", &EffectInfo::add )
+	.def("compute", &EffectInfo::compute)
+	.def("pulse", &EffectInfo::pulse)
+	.def("remove", &EffectInfo::remove)
+	.def("runScript", &EffectInfo::runScript, (bp::arg("pyScript"), bp::arg("applier")=0l ) )
+	.def("getDisplayName", &EffectInfo::getDisplayName)
+	.def("getDuration", &EffectInfo::getDuration)
+	.def("getEffect", &EffectInfo::getEffect, return_value_policy<reference_existing_object>())
 
-		.def("getExtra", &EffectInfo::getExtra)
-		.def("getLastMod", &EffectInfo::getLastMod)
-		.def("getName", &EffectInfo::getName)
-		.def("getOwner", &EffectInfo::getOwner)
-		.def("getParent", &EffectInfo::getParent, return_value_policy<reference_existing_object>())
-		.def("getStrength", &EffectInfo::getStrength)
-		.def("isCurse", &EffectInfo::isCurse)
-		.def("isDisease", &EffectInfo::isDisease)
-		.def("isPoison", &EffectInfo::isPoison)
-		.def("isOwner", &EffectInfo::isOwner)
-		.def("isPermanent", &EffectInfo::isPermanent)
-		.def("willOverWrite", &EffectInfo::willOverWrite)
+	.def("getExtra", &EffectInfo::getExtra)
+	.def("getLastMod", &EffectInfo::getLastMod)
+	.def("getName", &EffectInfo::getName)
+	.def("getOwner", &EffectInfo::getOwner)
+	.def("getParent", &EffectInfo::getParent, return_value_policy<reference_existing_object>())
+	.def("getStrength", &EffectInfo::getStrength)
+	.def("isCurse", &EffectInfo::isCurse)
+	.def("isDisease", &EffectInfo::isDisease)
+	.def("isPoison", &EffectInfo::isPoison)
+	.def("isOwner", &EffectInfo::isOwner)
+	.def("isPermanent", &EffectInfo::isPermanent)
+	.def("willOverWrite", &EffectInfo::willOverWrite)
 
-		.def("setDuration", &EffectInfo::setDuration)
-		.def("setExtra", &EffectInfo::setExtra)
-		.def("setOwner", &EffectInfo::setOwner)
-		.def("setParent", &EffectInfo::setParent)
-		.def("setStrength", &EffectInfo::setStrength)
-		.def("updateLastMod", &EffectInfo::updateLastMod)
+	.def("setDuration", &EffectInfo::setDuration)
+	.def("setExtra", &EffectInfo::setExtra)
+	.def("setOwner", &EffectInfo::setOwner)
+	.def("setParent", &EffectInfo::setParent)
+	.def("setStrength", &EffectInfo::setStrength)
+	.def("updateLastMod", &EffectInfo::updateLastMod)
 	;
-
 
 	class_<Exit, boost::noncopyable, bases<MudObject> >("Exit", no_init)
-		.def("getRoom", &Exit::getRoom, return_value_policy<reference_existing_object>())
+	.def("getRoom", &Exit::getRoom, return_value_policy<reference_existing_object>())
 	;
 
-   	class_<Effect, boost::noncopyable >("Effect", no_init)
-		.def("getPulseScript", &Effect::getPulseScript)
-		.def("getUnApplyScript", &Effect::getUnApplyScript)
-		.def("getApplyScript", &Effect::getApplyScript)
-		.def("getPreApplyScript", &Effect::getPreApplyScript)
-		.def("getPostApplyScript", &Effect::getPostApplyScript)
-		.def("getComputeScript", &Effect::getComputeScript)
-		.def("getType", &Effect::getType)
-		.def("getRoomDelStr", &Effect::getRoomDelStr)
-		.def("getRoomAddStr", &Effect::getRoomAddStr)
-		.def("getSelfDelStr", &Effect::getSelfDelStr)
-		.def("getSelfAddStr", &Effect::getSelfAddStr)
-		.def("getOppositeEffect", &Effect::getOppositeEffect)
-		.def("getDisplay", &Effect::getDisplay)
-		.def("getName", &Effect::getName)
+	class_<Effect, boost::noncopyable >("Effect", no_init)
+	.def("getPulseScript", &Effect::getPulseScript)
+	.def("getUnApplyScript", &Effect::getUnApplyScript)
+	.def("getApplyScript", &Effect::getApplyScript)
+	.def("getPreApplyScript", &Effect::getPreApplyScript)
+	.def("getPostApplyScript", &Effect::getPostApplyScript)
+	.def("getComputeScript", &Effect::getComputeScript)
+	.def("getType", &Effect::getType)
+	.def("getRoomDelStr", &Effect::getRoomDelStr)
+	.def("getRoomAddStr", &Effect::getRoomAddStr)
+	.def("getSelfDelStr", &Effect::getSelfDelStr)
+	.def("getSelfAddStr", &Effect::getSelfAddStr)
+	.def("getOppositeEffect", &Effect::getOppositeEffect)
+	.def("getDisplay", &Effect::getDisplay)
+	.def("getName", &Effect::getName)
 
-		.def("getPulseDelay", &Effect::getPulseDelay)
+	.def("getPulseDelay", &Effect::getPulseDelay)
 
-		.def("isPulsed", &Effect::isPulsed)
+	.def("isPulsed", &Effect::isPulsed)
 	;
 
+	class_<Creature, boost::noncopyable, bases<Container> >("Creature", no_init)
+	.def("send", &Creature::bPrint)
+	.def("getCrtStr", &Creature::getCrtStr, ( bp::arg("viewer")=0l, bp::arg("flags")=(int)(0), bp::arg("num")=(int)(0) ))
 
-	class_<Creature, boost::noncopyable, bases<MudObject> >("Creature", no_init)
-		.def("send", &Creature::bPrint)
-		.def("getCrtStr", &Creature::getCrtStr, ( bp::arg("viewer")=0l, bp::arg("flags")=(int)(0), bp::arg("num")=(int)(0) ))
+	.def("getRoom", &Creature::getRoomParent, return_value_policy<reference_existing_object>())
+	.def("getTarget", &Creature::getTarget, return_value_policy<reference_existing_object>())
+	.def("getDeity", &Creature::getDeity)
+	.def("getName", &Creature::getName)
+	.def("getClass", &Creature::getClass)
+	.def("setDeathType", &Creature::setDeathType)
+	.def("poisonedByMonster", &Creature::poisonedByMonster)
+	.def("poisonedByPlayer", &Creature::poisonedByPlayer)
+	.def("getLevel", &Creature::getLevel)
+	.def("getAlignment", &Creature::getAlignment)
+	.def("getArmor", &Creature::getArmor)
+	.def("getDamageReduction", &Creature::getDamageReduction)
+	.def("getExperience", &Creature::getExperience)
+	.def("getPoisonedBy", &Creature::getPoisonedBy)
+	.def("getClan", &Creature::getClan)
+	//.def("getType", &Creature::getType)
+	.def("getRace", &Creature::getRace)
+	.def("getSize", &Creature::getSize)
+	.def("getAttackPower", &Creature::getAttackPower)
+	.def("getDescription", &Creature::getDescription)
+	.def("checkMp", &Creature::checkMp)
+	.def("subMp", &Creature::subMp)
+	.def("smashInvis", &Creature::smashInvis)
+	.def("unhide", &Creature::unhide, (bp::arg("show")=(bool)(true) ))
+	.def("unmist", &Creature::unmist)
+	.def("stun", &Creature::stun)
+	.def("wake", &Creature::wake, ( bp::arg("str")="", bp::arg("noise")=(bool)(false) ))
 
-		.def("getRoom", &Creature::getRoom, return_value_policy<reference_existing_object>())
-		.def("getTarget", &Creature::getTarget, return_value_policy<reference_existing_object>())
-		.def("getDeity", &Creature::getDeity)
-		.def("getName", &Creature::getName)
-		.def("getClass", &Creature::getClass)
-		.def("setDeathType", &Creature::setDeathType)
-		.def("poisonedByMonster", &Creature::poisonedByMonster)
-		.def("poisonedByPlayer", &Creature::poisonedByPlayer)
-		.def("getLevel", &Creature::getLevel)
-		.def("getAlignment", &Creature::getAlignment)
-		.def("getArmor", &Creature::getArmor)
-		.def("getDamageReduction", &Creature::getDamageReduction)
-		.def("getExperience", &Creature::getExperience)
-		.def("getPoisonedBy", &Creature::getPoisonedBy)
-		.def("getClan", &Creature::getClan)
-		//.def("getType", &Creature::getType)
-		.def("getRace", &Creature::getRace)
-		.def("getSize", &Creature::getSize)
-		.def("getAttackPower", &Creature::getAttackPower)
-		.def("getDescription", &Creature::getDescription)
-		.def("checkMp", &Creature::checkMp)
-		.def("subMp", &Creature::subMp)
-		.def("smashInvis", &Creature::smashInvis)
-		.def("unhide", &Creature::unhide, (bp::arg("show")=(bool)(true) ))
-		.def("unmist", &Creature::unmist)
-		.def("stun", &Creature::stun)
-		.def("wake", &Creature::wake,  ( bp::arg("str")="", bp::arg("noise")=(bool)(false) ))
+	.def("addStatModEffect", &Creature::addStatModEffect)
+	.def("remStatModEffect", &Creature::remStatModEffect)
+	.def("unApplyTongues", &Creature::unApplyTongues)
+	.def("unBlind", &Creature::unBlind)
+	.def("unSilence", &Creature::unSilence)
+	.def("changeSize", &Creature::changeSize)
 
-		.def("addStatModEffect", &Creature::addStatModEffect)
-		.def("remStatModEffect", &Creature::remStatModEffect)
-		.def("unApplyTongues", &Creature::unApplyTongues)
-		.def("unBlind", &Creature::unBlind)
-		.def("unSilence", &Creature::unSilence)
-		.def("changeSize", &Creature::changeSize)
+	.def("flagIsSet", &Creature::flagIsSet)
+	.def("setFlag", &Creature::setFlag)
+	.def("clearFlag", &Creature::clearFlag)
+	.def("toggleFlag", &Creature::toggleFlag)
 
-		.def("flagIsSet", &Creature::flagIsSet)
-		.def("setFlag", &Creature::setFlag)
-		.def("clearFlag", &Creature::clearFlag)
-		.def("toggleFlag", &Creature::toggleFlag)
+	.def("isPlayer", &Creature::isPlayer)
+	.def("isMonster", &Creature::isMonster)
 
-		.def("isPlayer", &Creature::isPlayer)
-		.def("isMonster", &Creature::isMonster)
+	.def("learnSpell", &Creature::setFlag)
+	.def("forgetSpell", &Creature::clearFlag)
+	.def("spellIsKnown", &Creature::spellIsKnown)
 
-		.def("learnSpell", &Creature::setFlag)
-		.def("forgetSpell", &Creature::clearFlag)
-		.def("spellIsKnown", &Creature::spellIsKnown)
-
-		.def("learnLanguage", &Creature::learnLanguage)
-		.def("forgetLanguage", &Creature::forgetLanguage)
-		.def("languageIsKnown", &Creature::languageIsKnown)
+	.def("learnLanguage", &Creature::learnLanguage)
+	.def("forgetLanguage", &Creature::forgetLanguage)
+	.def("languageIsKnown", &Creature::languageIsKnown)
 
 //		.def("isEffected", &Creature::isEffected, ( bp::arg("effect")=""))
 //		.def("hasPermEffect", &Creature::hasPermEffect)
 
-		.def("knowsSkill", &Creature::knowsSkill)
-		.def("getSkillLevel", &Creature::getSkillLevel)
-		.def("getSkillGained", &Creature::getSkillGained)
-		.def("addSkill", &Creature::addSkill)
-		.def("remSkill", &Creature::remSkill)
-		.def("setSkill", &Creature::setSkill)
+	.def("knowsSkill", &Creature::knowsSkill)
+	.def("getSkillLevel", &Creature::getSkillLevel)
+	.def("getSkillGained", &Creature::getSkillGained)
+	.def("addSkill", &Creature::addSkill)
+	.def("remSkill", &Creature::remSkill)
+	.def("setSkill", &Creature::setSkill)
 
-		.def("addExperience", &Creature::addExperience)
-		.def("subExperience", &Creature::subExperience)
-		.def("subAlignment", &Creature::subAlignment)
+	.def("addExperience", &Creature::addExperience)
+	.def("subExperience", &Creature::subExperience)
+	.def("subAlignment", &Creature::subAlignment)
 
-		.def("setClass", &Creature::setClass)
-		.def("setClan", &Creature::setClan)
-		.def("setRace", &Creature::setRace)
-		.def("setLevel", &Creature::setLevel)
+	.def("setClass", &Creature::setClass)
+	.def("setClan", &Creature::setClan)
+	.def("setRace", &Creature::setRace)
+	.def("setLevel", &Creature::setLevel)
 
+	.def("subAlignment", &Creature::subAlignment)
+	.def("setSize", &Creature::setSize)
+	.def("getWeight", &Creature::getWeight)
+	.def("maxWeight", &Creature::maxWeight)
 
-		.def("subAlignment", &Creature::subAlignment)
-		.def("setSize", &Creature::setSize)
-		.def("getWeight", &Creature::getWeight)
-		.def("maxWeight", &Creature::maxWeight)
+	.def("isVampire", &Creature::isNewVampire)
+	.def("isWerewolf", &Creature::isNewWerewolf)
+	.def("isUndead", &Creature::isUndead)
+	.def("immuneCriticals", &Creature::immuneCriticals)
+	.def("immuneToPoison", &Creature::immuneToPoison)
+	.def("immuneToDisease", &Creature::immuneToDisease)
 
-		.def("isVampire", &Creature::isNewVampire)
-		.def("isWerewolf", &Creature::isNewWerewolf)
-		.def("isUndead", &Creature::isUndead)
-		.def("immuneCriticals", &Creature::immuneCriticals)
-		.def("immuneToPoison", &Creature::immuneToPoison)
-		.def("immuneToDisease", &Creature::immuneToDisease)
+	.def("isRace", &Creature::isRace)
+	.def("getSex", &Creature::getSex)
 
-		.def("isRace", &Creature::isRace)
-		.def("getSex", &Creature::getSex)
+	.def("isBrittle", &Creature::isBrittle)
+	.def("isBlind", &Creature::isBlind)
+	.def("isUnconscious", &Creature::isUnconscious)
+	.def("isBraindead", &Creature::isBraindead)
 
-		.def("isBrittle", &Creature::isBrittle)
-		.def("isBlind", &Creature::isBlind)
-		.def("isUnconscious", &Creature::isUnconscious)
-		.def("isBraindead", &Creature::isBraindead)
+	.def("isHidden", &Creature::isHidden)
+	.def("isInvisible", &Creature::isInvisible)
 
-		.def("isHidden", &Creature::isHidden)
-		.def("isInvisible", &Creature::isInvisible)
+	.def("isWatcher", &Creature::isWatcher)
+	.def("isStaff", &Creature::isStaff)
+	.def("isCt", &Creature::isCt)
+	.def("isDm", &Creature::isDm)
+	.def("isAdm", &Creature::isAdm)
+	.def("isPet", &Creature::isPet)
+	.def_readonly( "hp", &Creature::hp )
+	.def_readonly( "mp", &Creature::mp )
+	.def_readonly( "strength", &Creature::strength )
+	.def_readonly( "dexterity", &Creature::dexterity )
+	.def_readonly( "constitution", &Creature::constitution )
+	.def_readonly( "intelligence", &Creature::intelligence )
+	.def_readonly( "piety", &Creature::piety )
 
-		.def("isWatcher", &Creature::isWatcher)
-		.def("isStaff", &Creature::isStaff)
-		.def("isCt", &Creature::isCt)
-		.def("isDm", &Creature::isDm)
-		.def("isAdm", &Creature::isAdm)
-		.def("isPet", &Creature::isPet)
-		.def_readonly( "hp", &Creature::hp )
-		.def_readonly( "mp", &Creature::mp )
-		.def_readonly( "strength", &Creature::strength )
-		.def_readonly( "dexterity", &Creature::dexterity )
-		.def_readonly( "constitution", &Creature::constitution )
-		.def_readonly( "intelligence", &Creature::intelligence )
-		.def_readonly( "piety", &Creature::piety )
-
-		.def("delayedAction", &Creature::delayedAction)
-		.def("delayedScript", &Creature::delayedScript)
+	.def("delayedAction", &Creature::delayedAction)
+	.def("delayedScript", &Creature::delayedScript)
 
 	;
 
 	class_<MsdpVariable, boost::noncopyable >("MsdpVariable", no_init)
-			.def("getName", &MsdpVariable::getName)
+	.def("getName", &MsdpVariable::getName)
 	;
 
 	class_<ReportedMsdpVariable, boost::noncopyable, bases<MsdpVariable> >("ReportedMsdpVariable", no_init)
-			.def("getValue", &ReportedMsdpVariable::getValue)
-			.def("setDirty", &ReportedMsdpVariable::setDirty)
-	        .def(
-	            "setValue"
-	            , (void ( ::ReportedMsdpVariable::* )( bstring ) )( &::ReportedMsdpVariable::setValue )
-	            , ( bp::arg("newValue") ) )
-	        .def(
-	            "setValue"
-	            , (void ( ::ReportedMsdpVariable::* )( int ) )( &::ReportedMsdpVariable::setValue )
-	            , ( bp::arg("newValue") ) )
-	        .def(
-	            "setValue"
-	            , (void ( ::ReportedMsdpVariable::* )( long int ) )( &::ReportedMsdpVariable::setValue )
-	            , ( bp::arg("newValue") ) )
+	.def("getValue", &ReportedMsdpVariable::getValue)
+	.def("setDirty", &ReportedMsdpVariable::setDirty)
+	.def(
+			"setValue"
+			, (void ( ::ReportedMsdpVariable::* )( bstring ) )( &::ReportedMsdpVariable::setValue )
+			, ( bp::arg("newValue") ) )
+	.def(
+			"setValue"
+			, (void ( ::ReportedMsdpVariable::* )( int ) )( &::ReportedMsdpVariable::setValue )
+			, ( bp::arg("newValue") ) )
+	.def(
+			"setValue"
+			, (void ( ::ReportedMsdpVariable::* )( long int ) )( &::ReportedMsdpVariable::setValue )
+			, ( bp::arg("newValue") ) )
 	;
 
-   	class_<Socket, boost::noncopyable >("Socket", no_init)
-   		.def("getPlayer", &Socket::getPlayer, return_value_policy<reference_existing_object>())
-   		.def("bprint", &Socket::bprint)
-		.def("msdpSendPair", &Socket::msdpSendPair)
-		.def("msdpSendList", &Socket::msdpSendList)
+	class_<Socket, boost::noncopyable >("Socket", no_init)
+	.def("getPlayer", &Socket::getPlayer, return_value_policy<reference_existing_object>())
+	.def("bprint", &Socket::bprint)
+	.def("msdpSendPair", &Socket::msdpSendPair)
+	.def("msdpSendList", &Socket::msdpSendList)
 	;
 
 //	.def(
@@ -617,32 +536,32 @@ BOOST_PYTHON_MODULE(MudObjects) {
 //		, (short int ( ::Stat::* )(  ) const)( &::Stat::getMax ) )
 
 	class_<Player, boost::noncopyable, bases<Creature> >("Player", no_init)
-		.def("getSock", &Player::getSock, return_value_policy<reference_existing_object>())
-		.def("customColorize", &Player::customColorize, ( bp::arg("text"), bp::arg("caret")=(bool)(true) ))
-		.def("expToLevel", (unsigned long ( ::Player::* )() const)( &Player::expToLevel ) )
-		.def("expForLevel", (bstring ( ::Player::* )( ) const)( &Player::expForLevel ) )
-		.def("getCoinDisplay", &Player::getCoinDisplay)
-		.def("getBankDisplay", &Player::getBankDisplay)
-		.def("getWimpy", &Player::getWimpy)
+	.def("getSock", &Player::getSock, return_value_policy<reference_existing_object>())
+	.def("customColorize", &Player::customColorize, ( bp::arg("text"), bp::arg("caret")=(bool)(true) ))
+	.def("expToLevel", (unsigned long ( ::Player::* )() const)( &Player::expToLevel ) )
+	.def("expForLevel", (bstring ( ::Player::* )( ) const)( &Player::expForLevel ) )
+	.def("getCoinDisplay", &Player::getCoinDisplay)
+	.def("getBankDisplay", &Player::getBankDisplay)
+	.def("getWimpy", &Player::getWimpy)
 
 	;
 
 	class_<Monster, boost::noncopyable, bases<Creature> >("Monster", no_init)
-		.def("addEnemy", &Monster::addEnemy)
-		.def("adjustThreat", &Monster::adjustThreat)
-		.def("customColorize", &Monster::customColorize, ( bp::arg("text"), bp::arg("caret")=(bool)(true) ))
+	.def("addEnemy", &Monster::addEnemy)
+	.def("adjustThreat", &Monster::adjustThreat)
+	.def("customColorize", &Monster::customColorize, ( bp::arg("text"), bp::arg("caret")=(bool)(true) ))
 	;
 
 	class_<Object, bases<MudObject> >("Object", no_init)
-		.def("getType", &Object::getType)
-		.def("getWearflag", &Object::getWearflag)
-		.def("getShotsmax", &Object::getShotsMax)
-		.def("getShotscur", &Object::getShotsCur)
+	.def("getType", &Object::getType)
+	.def("getWearflag", &Object::getWearflag)
+	.def("getShotsmax", &Object::getShotsMax)
+	.def("getShotscur", &Object::getShotsCur)
 
-		.def("flagIsSet", &Object::flagIsSet)
-		.def("setFlag", &Object::setFlag)
-		.def("clearFlag", &Object::clearFlag)
-		.def("toggleFlag", &Object::toggleFlag)
+	.def("flagIsSet", &Object::flagIsSet)
+	.def("setFlag", &Object::setFlag)
+	.def("clearFlag", &Object::clearFlag)
+	.def("toggleFlag", &Object::toggleFlag)
 	;
 
 }
@@ -650,35 +569,34 @@ BOOST_PYTHON_MODULE(MudObjects) {
 // This handles bstring to PythonString conversions
 struct bstringToPythonStr {
 	static PyObject* convert(bstring const& s) {
-		return boost::python::incref(boost::python::object((std::string)(s)).ptr());
+		return boost::python::incref(
+				boost::python::object((std::string) (s)).ptr());
 	}
 };
 
- struct bstringFromPythonStr {
+struct bstringFromPythonStr {
 	bstringFromPythonStr() {
-	  boost::python::converter::registry::push_back(
-		&convertible,
-		&construct,
-		boost::python::type_id<bstring>());
+		boost::python::converter::registry::push_back(&convertible, &construct,
+				boost::python::type_id<bstring>());
 	}
 
-	static void* convertible(PyObject* objPtr)
-	{
-		if(!PyString_Check(objPtr))
+	static void* convertible(PyObject* objPtr) {
+		if (!PyString_Check(objPtr))
 			return 0;
 		return objPtr;
 	}
 
-	static void construct( PyObject* objPtr, boost::python::converter::rvalue_from_python_stage1_data* data)
-	{
-	  const char* value = PyString_AsString(objPtr);
-	  if (value == 0)
-		  boost::python::throw_error_already_set();
-	  void* storage = ((boost::python::converter::rvalue_from_python_storage<bstring>*)data)->storage.bytes;
-	  new (storage) bstring(value);
-	  data->convertible = storage;
+	static void construct(PyObject* objPtr,
+			boost::python::converter::rvalue_from_python_stage1_data* data) {
+		const char* value = PyString_AsString(objPtr);
+		if (value == 0)
+			boost::python::throw_error_already_set();
+		void* storage = ((boost::python::converter::rvalue_from_python_storage<
+				bstring>*) data)->storage.bytes;
+		new (storage) bstring(value);
+		data->convertible = storage;
 	}
-  };
+};
 
 // This will just test python for now
 bool Server::initPython() {
@@ -700,109 +618,108 @@ bool Server::initPython() {
 		// * Module Initializations
 		// *   Put any modules you would like available system wide
 		// *   here, before Python is initialized below
-		PyImport_AppendInittab( "mud", &initmud );
-		PyImport_AppendInittab( "MudObjects", &initMudObjects );
-
+		PyImport_AppendInittab("mud", &initmud);
+		PyImport_AppendInittab("MudObjects", &initMudObjects);
 
 		// Now that we've imported the modules we want, initalize python and setup the main module
 		Py_Initialize();
-		object main_module((handle<>(borrowed(PyImport_AddModule("__main__")))));
-		pythonHandler->mainNamespace  = main_module.attr("__dict__");
+		object main_module(
+				(handle<>(borrowed(PyImport_AddModule("__main__")))));
+		pythonHandler->mainNamespace = main_module.attr("__dict__");
 
-		object cStringIOModule( (handle<>(PyImport_ImportModule("cStringIO"))) );
+		object cStringIOModule((handle<>(PyImport_ImportModule("cStringIO"))));
 		pythonHandler->mainNamespace["cStringIO"] = cStringIOModule;
 
 		// Import sys
-		object sysModule( (handle<>(PyImport_ImportModule("sys"))) );
+		object sysModule((handle<>(PyImport_ImportModule("sys"))));
 		pythonHandler->mainNamespace["sys"] = sysModule;
-		object mudLibModule( (handle<>(PyImport_ImportModule("mudLib"))) );
+		object mudLibModule((handle<>(PyImport_ImportModule("mudLib"))));
 		pythonHandler->mainNamespace["mudLib"] = mudLibModule;
-
 
 //		PyRun_SimpleString("import cStringIO");
 //		PyRun_SimpleString("import sys");
 		PyRun_SimpleString("sys.stderr = cStringIO.StringIO()");
 //
 		// Now import the modules we setup above
-		object mudModule( (handle<>(PyImport_ImportModule("mud"))) );
+		object mudModule((handle<>(PyImport_ImportModule("mud"))));
 		pythonHandler->mainNamespace["mud"] = mudModule;
 
-		object mudObjectsModule( (handle<>(PyImport_ImportModule("MudObjects"))) );
+		object mudObjectsModule(
+				(handle<>(PyImport_ImportModule("MudObjects"))));
 		pythonHandler->mainNamespace["MudObjectsSystem"] = mudObjectsModule;
 
 		// Add in any objects we want
 		scope(mudModule).attr("gConfig") = ptr(gConfig); // Make the gConfig object available
 		scope(mudModule).attr("gServer") = ptr(gServer); // Make the gServer object available
 
-
 		// Run a python test command here
-		runPython("print \"Python Initialized! Running Version \" + mud.gConfig.getVersion()");
+		runPython(
+				"print \"Python Initialized! Running Version \" + mud.gConfig.getVersion()");
 
-	} catch( error_already_set) {
+	} catch (error_already_set) {
 		PyErr_Print();
-	} catch(...) {
+	} catch (...) {
 		PyErr_Print();
 	}
 
-	return(true);
+	return (true);
 }
-
 
 bool Server::cleanUpPython() {
 	Py_Finalize();
 	delete pythonHandler;
-	return(true);
+	return (true);
 }
 
-bool addMudObjectToDictionary(object& dictionary, bstring key, MudObject* myObject) {
+bool addMudObjectToDictionary(object& dictionary, bstring key,
+		MudObject* myObject) {
 	// If null, we still want it!
-	if(!myObject) {
+	if (!myObject) {
 		dictionary[key.c_str()] = ptr(myObject);
-		return(true);
+		return (true);
 	}
 
-	Monster* mPtr = myObject->getMonster();
-	Player* pPtr = myObject->getPlayer();
-	Object* oPtr = myObject->getObject();
-	UniqueRoom* rPtr = myObject->getUniqueRoom();
-	AreaRoom* aPtr = myObject->getAreaRoom();
-	Exit* xPtr = myObject->getExit();
+	Monster* mPtr = myObject->getAsMonster();
+	Player* pPtr = myObject->getAsPlayer();
+	Object* oPtr = myObject->getAsObject();
+	UniqueRoom* rPtr = myObject->getAsUniqueRoom();
+	AreaRoom* aPtr = myObject->getAsAreaRoom();
+	Exit* xPtr = myObject->getAsExit();
 
-	if(mPtr) {
+	if (mPtr) {
 		dictionary[key.c_str()] = ptr(mPtr);
-	} else if(pPtr) {
+	} else if (pPtr) {
 		dictionary[key.c_str()] = ptr(pPtr);
-	} else if(oPtr) {
+	} else if (oPtr) {
 		dictionary[key.c_str()] = ptr(oPtr);
-	} else if(rPtr) {
+	} else if (rPtr) {
 		dictionary[key.c_str()] = ptr(rPtr);
-	} else if(aPtr) {
+	} else if (aPtr) {
 		dictionary[key.c_str()] = ptr(aPtr);
-	} else if(xPtr) {
+	} else if (xPtr) {
 		dictionary[key.c_str()] = ptr(xPtr);
 	} else {
 		dictionary[key.c_str()] = ptr(myObject);
 	}
-	return(true);
+	return (true);
 }
 
 bool Server::runPython(const bstring& pyScript, object& localNamespace) {
 	try {
-	// Run a python test command here
+		// Run a python test command here
 		handle<> ignored((
 
 		PyRun_String( pyScript.c_str(),
 
-			 Py_file_input,
-			 pythonHandler->mainNamespace.ptr(),
-			 localNamespace.ptr() ) ));
+				Py_file_input,
+				pythonHandler->mainNamespace.ptr(),
+				localNamespace.ptr() )));
 
-	}
-	catch( error_already_set) {
+	} catch (error_already_set) {
 		handlePythonError();
-		return(false);
+		return (false);
 	}
-	return(true);
+	return (true);
 }
 
 //==============================================================================
@@ -812,15 +729,16 @@ bool Server::runPython(const bstring& pyScript, object& localNamespace) {
 //	actor: 		The actor of the script.
 //	target: 	The target of the script
 
-bool Server::runPython(const bstring& pyScript, bstring args, MudObject *actor, MudObject *target) {
-	object localNamespace( (handle<>(PyDict_New())));
+bool Server::runPython(const bstring& pyScript, bstring args, MudObject *actor,
+		MudObject *target) {
+	object localNamespace((handle<>(PyDict_New())));
 
 	localNamespace["args"] = args;
 
 	addMudObjectToDictionary(localNamespace, "actor", actor);
 	addMudObjectToDictionary(localNamespace, "target", target);
 
-	return(runPython(pyScript, localNamespace));
+	return (runPython(pyScript, localNamespace));
 }
 //==============================================================================
 // RunPython:
@@ -828,24 +746,26 @@ bool Server::runPython(const bstring& pyScript, bstring args, MudObject *actor, 
 //	pyScript: 	The script to be run
 //	actor: 		The actor of the script.
 //	target: 	The target of the script
-bool Server::runPython(const bstring& pyScript, bstring args, Socket *sock, Player *actor, MsdpVariable* msdpVar) {
-	object localNamespace( (handle<>(PyDict_New())));
+bool Server::runPython(const bstring& pyScript, bstring args, Socket *sock,
+		Player *actor, MsdpVariable* msdpVar) {
+	object localNamespace((handle<>(PyDict_New())));
 
 	localNamespace["args"] = args;
 
-	if(sock != NULL)
+	if (sock != NULL)
 		localNamespace["sock"] = ptr(sock);
-	if(actor != NULL)
+	if (actor != NULL)
 		localNamespace["actor"] = ptr(actor);
 
-	ReportedMsdpVariable* reportedVar = dynamic_cast<ReportedMsdpVariable*>(msdpVar);
+	ReportedMsdpVariable* reportedVar =
+			dynamic_cast<ReportedMsdpVariable*>(msdpVar);
 
-	if(msdpVar != NULL)
+	if (msdpVar != NULL)
 		localNamespace["msdpVar"] = ptr(msdpVar);
-	if(reportedVar != NULL)
+	if (reportedVar != NULL)
 		localNamespace["reportedVar"] = ptr(reportedVar);
 
-	return(runPython(pyScript, localNamespace));
+	return (runPython(pyScript, localNamespace));
 }
 void Server::handlePythonError() {
 	PyErr_Print();

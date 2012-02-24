@@ -248,11 +248,11 @@ void Server::weather(WeatherString w) {
 		) {
 			// if sunrise/sunset, vampires always see it
 		} else {
-			if(!player->getRoom()->isOutdoors())
+			if(!player->getRoomParent()->isOutdoors())
 				continue;
 		}
 
-		weather = gConfig->weatherize(w, player->getRoom());
+		weather = gConfig->weatherize(w, player->getRoomParent());
 		if(weather != "") {
 			player->printColor("^%c%s\n", color, weather.c_str());
 			player->hooks.execute(event, 0, season);
@@ -273,13 +273,13 @@ void Server::weather(WeatherString w) {
 		{
 			// if sunrise/sunset, vampires always see it
 		} else {
-			if(!monster->getRoom()->isOutdoors())
+			if(!monster->getRoomParent()->isOutdoors())
 				continue;
 		}
 
 		// monsters don't need to see the message, but we need to know if there is a message or not
 		// as that will decide whether or not we tell them to execute a hook
-		weather = gConfig->weatherize(w, monster->getRoom());
+		weather = gConfig->weatherize(w, monster->getRoomParent());
 		if(weather != "")
 			monster->hooks.execute(event, 0, season);
 	}
@@ -571,7 +571,6 @@ void Server::updateAction(long t) {
 	Creature* victim=0;
 	Object	*object=0;
 	BaseRoom* room=0;
-	ctag	*vcp=0;
 	ttag	*act=0, *tact=0;
 	int		i=0, on_cmd=0, thresh=0;
 	int		xdir=0, num=0;
@@ -587,7 +586,7 @@ void Server::updateAction(long t) {
 	while(it != activeList.end()) {
 		monster = (*it++);
 		if(monster) {
-			room = monster->getRoom();
+			room = monster->getRoomParent();
 			if(room && monster->flagIsSet(M_LOGIC_MONSTER)) {
 				if(!monster->first_tlk)
 					loadCreature_actions(monster);
@@ -622,27 +621,27 @@ void Server::updateAction(long t) {
 							break;
 						case 'C': // test for a player with class
 						case 'R': // test for a player with race
-							for(vcp = room->first_ply; vcp; vcp = vcp->next_tag) {
+						    for(Player* ply : room->players) {
 								if(act->test_for == 'C')
-									if(vcp->crt->getClass() == act->arg1) {
+									if(ply->getClass() == act->arg1) {
 										if(monster->first_tlk->target)
 											delete[] monster->first_tlk->target;
-										monster->first_tlk->target = new char[strlen(vcp->crt->name)+1];
-										strcpy(monster->first_tlk->target, vcp->crt->name);
+										monster->first_tlk->target = new char[strlen(ply->name)+1];
+										strcpy(monster->first_tlk->target, ply->name);
 										act->success = 1;
 										break;
 									}
 								if(act->test_for == 'R')
-									if(vcp->crt->getRace() == act->arg1) {
+									if(ply->getRace() == act->arg1) {
 										if(monster->first_tlk->target)
 											delete monster->first_tlk->target;
-										monster->first_tlk->target = new char[strlen(vcp->crt->name)+1];
-										strcpy(monster->first_tlk->target, vcp->crt->name);
+										monster->first_tlk->target = new char[strlen(ply->name)+1];
+										strcpy(monster->first_tlk->target, ply->name);
 										act->success = 1;
 										break;
 									}
 							}
-							if(!vcp) {
+							if(!act->success) {
 								if(monster->first_tlk->target)
 									delete monster->first_tlk->target;
 								monster->first_tlk->target = 0;
@@ -725,17 +724,17 @@ void Server::updateAction(long t) {
 						switch(act->do_act) {
 						case 'E': // broadcast response to room
 							if(thresh <= num)
-								broadcast(NULL, monster->getRoom(), "%s", resp);
+								broadcast(NULL, monster->getRoomParent(), "%s", resp);
 
 							break;
 						case 'S': // say to room
 							if(thresh <= num)
-								broadcast(NULL, monster->getRoom(), "%M says, \"%s\"", monster, resp);
+								broadcast(NULL, monster->getRoomParent(), "%M says, \"%s\"", monster, resp);
 							break;
 						case 'T':	// Mob Trash-talk
 							if(mrand(1,100) <= 10) {
 
-								if(countTotalEnemies(monster) > 0 && !monster->getMonster()->nearEnemy()) {
+								if(countTotalEnemies(monster) > 0 && !monster->getAsMonster()->nearEnemy()) {
 									if(monster->daily[DL_BROAD].cur > 0) {
 										broadcast("### %M broadcasted, \"%s\"", monster, resp);
 										subtractMobBroadcast(monster, 0);
@@ -755,11 +754,11 @@ void Server::updateAction(long t) {
 							}
 							break;
 						case 'A': // attack monster in target string
-							if(monster->first_tlk->target && !monster->getMonster()->hasEnemy()) {
+							if(monster->first_tlk->target && !monster->getAsMonster()->hasEnemy()) {
 								victim = room->findMonster(monster, monster->first_tlk->target, 1);
 								if(!victim)
 									return;
-								victim->getMonster()->monsterCombat((Monster*)monster);
+								victim->getAsMonster()->monsterCombat((Monster*)monster);
 								if(monster->first_tlk->target)
 									free(monster->first_tlk->target);
 								monster->first_tlk->target = 0;
@@ -967,7 +966,7 @@ void subtractMobBroadcast(Creature *monster, int num) {
 int countTotalEnemies(Creature *monster) {
 	if(monster->isPlayer())
 		return(0);
-	Monster* mons = monster->getMonster();
+	Monster* mons = monster->getAsMonster();
 	return(mons->threatTable->size());
 }
 
@@ -985,7 +984,7 @@ void Server::clearAsEnemy(Player* player) {
 		// Increment the iterator in case this monster dies during the update and is removed from the active list
 		monster = (*it++);
 
-		if(!(monster->parent_rom && monster->parent_rom->info.id) && !monster->area_room) continue;
+		if(!(monster->inUniqueRoom() && monster->getUniqueRoomParent()->info.id) && !monster->inAreaRoom()) continue;
 
 		monster->clearEnemy(player);
 	}
@@ -999,14 +998,10 @@ void Server::clearAsEnemy(Player* player) {
 // This function will return 1 if anyone is in the room while dmInvis
 
 int BaseRoom::dmInRoom() const {
-	ctag *cp = first_ply;
-
-	while(cp) {
-		if(cp->crt->flagIsSet(P_DM_INVIS))
+    for(Player* ply : players) {
+		if(ply->flagIsSet(P_DM_INVIS))
 			return(1);
-		cp = cp->next_tag;
 	}
-
 	return(0);
 }
 
@@ -1018,13 +1013,11 @@ void Player::checkOutlawAggro() {
 	if(!flagIsSet(P_OUTLAW_WILL_BE_ATTACKED))
 		return;
 
-	ctag *cp = getRoom()->first_mon;
-	while(cp) {
-		if(cp->crt->flagIsSet(M_OUTLAW_AGGRO) && !cp->crt->getMonster()->hasEnemy()) {
-			cp->crt->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
-			cp->crt->getMonster()->addEnemy(this, true);
+	for(Monster* mons : getRoomParent()->monsters) {
+		if(mons->flagIsSet(M_OUTLAW_AGGRO) && !mons->getAsMonster()->hasEnemy()) {
+			mons->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
+			mons->getAsMonster()->addEnemy(this, true);
 		}
-		cp = cp->next_tag;
 	}
 }
 
@@ -1099,7 +1092,7 @@ bstring Server::showActiveList() {
 
 	while(it != activeList.end()) {
 		monster = (*it++);
-		if((!monster->parent_rom || !monster->parent_rom->info.id) && !monster->area_room ) {
+		if((!monster->inUniqueRoom() || !monster->getUniqueRoomParent()->info.id) && !monster->inAreaRoom()) {
 			if(monster->getName())
 				oStr << "Bad Mob " << monster->getName() << ".\n";
 			else
@@ -1107,10 +1100,10 @@ bstring Server::showActiveList() {
 			continue;
 		}
 		if(!monster->getName()) {
-			oStr << "Bad Mb - Room " << monster->getRoom()->fullName() << "\n";
+			oStr << "Bad Mb - Room " << monster->getRoomParent()->fullName() << "\n";
 			continue;
 		}
-		oStr << monster->getName() << " - " << monster->getRoom()->fullName() << "\n";
+		oStr << monster->getName() << " - " << monster->getRoomParent()->fullName() << "\n";
 	}
 	return(oStr.str());
 

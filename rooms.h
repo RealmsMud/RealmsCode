@@ -32,25 +32,30 @@ class Fishing;
 #include "location.h"
 #include "exits.h"
 
-class BaseRoom: public MudObject {
+typedef std::list<Exit*> ExitList;
+
+class BaseRoom: public Container {
 protected:
 	void BaseDestroy();
 	bstring	version;	// What version of the mud this object was saved under
 	bool tempNoKillDarkmetal;
 
 public:
-	xtag	*first_ext;		// Exits
+	//xtag	*first_ext;		// Exits
+	ExitList exits;
 	otag	*first_obj;		// Items
-	ctag	*first_mon;		// Monsters
-	ctag	*first_ply;		// Players
 
 	char	misc[64]; 		// miscellaneous space
 
 public:
 	BaseRoom();
 	virtual ~BaseRoom() {};
+//	virtual bool operator< (const MudObject& t) const = 0;
 
 	void readExitsXml(xmlNodePtr curNode);
+	bool delExit(bstring dir);
+	bool delExit(Exit *exit);
+	void clearExits();
 
 	bool isSunlight() const;
 	// handles darkmetal and unique
@@ -63,24 +68,7 @@ public:
 	bool isCombat() const;
 	bool isConstruction() const;
 
-	Creature* findCreature(Creature* searcher, const cmd* cmnd, int num=1);
-
-	Creature* findCreaturePython(Creature* searcher, const bstring& name, bool monFirst = true, bool firstAggro = false, bool exactMatch = false );
-
-
-	Creature* findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst = true, bool firstAggro = false, bool exactMatch = false);
-	Creature* findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& retVal);
-
-
-
-	Monster* findMonster(Creature* searcher, const cmd* cmnd, int num=1);
-	Monster* findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro = false, bool exactMatch = false);
-	Player* findPlayer(Creature* searcher, const cmd* cmnd, int num=1);
-	Player* findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch = false);
-
-	MudObject* findTarget(Creature* searcher, const cmd* cmnd, int num=1);
-	MudObject* findTarget(Creature* searcher,  const bstring& name, const int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false);
-	MudObject* findTarget(Creature* searcher,  const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& retVal);
+	int saveExitsXml(xmlNodePtr curNode) const;
 
 	void doSocialEcho(bstring str, const Creature* actor, const Creature* target = null);
 
@@ -94,9 +82,8 @@ public:
 	bool isFull() const;
 	int countVisPly() const;
 	int countCrt() const;
-	Monster* getTollkeeper();
+	Monster* getTollkeeper() const;
 
-	void wake(bstring str, bool noise) const;
 	bool isMagicDark() const;
 	bool isNormalDark() const;
 	bool isUnderwater() const;
@@ -115,6 +102,7 @@ public:
 
 
 	virtual bool flagIsSet(int flag) const = 0;
+//	virtual void setFlag(int flag) = 0;
 	virtual Size getSize() const = 0;
 	bool hasRealmBonus(Realm realm) const;
 	bool hasOppositeRealmBonus(Realm realm) const;
@@ -147,6 +135,7 @@ class UniqueRoom: public BaseRoom {
 public:
 	UniqueRoom();
 	~UniqueRoom();
+	bool operator< (const UniqueRoom& t) const;
 
 	void escapeText();
 	int readFromXml(xmlNodePtr rootNode);
@@ -248,6 +237,8 @@ class AreaRoom: public BaseRoom {
 public:
 	AreaRoom(Area *a, const MapMarker *m=0);
 	~AreaRoom();
+	bool operator< (const AreaRoom& t) const;
+
 	void reset();
 	WanderInfo* getRandomWanderInfo();
 	Size getSize() const;
@@ -267,6 +258,7 @@ public:
 	bool	spawnHerbs();
 
 	bool flagIsSet(int flag) const;
+	void setFlag(int flag);
 
 	const Fishing* doGetFishing(short y, short x) const;
 	const Fishing* getFishing() const;

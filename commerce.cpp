@@ -329,16 +329,14 @@ bool canBuildShop(const Player* player, const UniqueRoom* room) {
 	if(	player->getGuild() &&
 		player->getGuildRank() == GUILD_MASTER &&
 		room->flagIsSet(R_GUILD_OPEN_ACCESS) &&
-		room->info.isArea("guild")
-	) {
+		room->info.isArea("guild"))
+	{
 		Property* p = gConfig->getProperty(room->info);
 		if(p->getType() == PROP_GUILDHALL && player->getGuild() == p->getGuild()) {
 			// already hosts a shop?
-			xtag* xp = room->first_ext;
-			while(xp) {
-				if(xp->ext->target.room.isArea("shop"))
+			for(Exit* exit : room->exits) {
+				if(exit->target.room.isArea("shop"))
 					return(false);
-				xp = xp->next_tag;
 			}
 
 			// If we pass these checks, too, then we can build a shop here
@@ -354,7 +352,7 @@ bool canBuildShop(const Player* player, const UniqueRoom* room) {
 //*********************************************************************
 
 int cmdShop(Player* player, cmd* cmnd) {
-	UniqueRoom* room = player->parent_rom, *storage=0;
+	UniqueRoom* room = player->getUniqueRoomParent(), *storage=0;
 	Object	*deed=0;
 	otag	*op;
 	int		action=0;
@@ -388,7 +386,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 	if(!strncmp(cmnd->str[1], "survey", len)) {
 		if(!strcmp(cmnd->str[2], "all")) {
 			player->print("Searching for suitable shop locations in this city.\n");
-			findRoomsWithFlag(player, player->parent_rom->info, R_BUILD_SHOP);
+			findRoomsWithFlag(player, player->getUniqueRoomParent()->info, R_BUILD_SHOP);
 		} else {
 			if(!canBuildShop(player, room))
 				player->print("You are unable to build a shop here.\n");
@@ -419,14 +417,11 @@ int cmdShop(Player* player, cmd* cmnd) {
 		CatRef cr = room->info;
 		// If we're inside a guild, check the out exit instead
 		if(room->info.isArea("guild")) {
-			xtag* xp = room->first_ext;
-
-			while(xp) {
-				if(!xp->ext->target.room.isArea("guild")) {
-					cr = xp->ext->target.room;
+			for(Exit* exit : room->exits) {
+				if(!exit->target.room.isArea("guild")) {
+					cr = exit->target.room;
 					break;
 				}
-				xp = xp->next_tag;
 			}
 		}
 
@@ -568,7 +563,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 		player->print("Congratulations! You are now the owner of a brand new shop.\n");
 		logn("log.shops", "*** %s just built a shop! (%s - %s) (Shop %s).\n",
 			player->name, room->info.str().c_str(), xname.c_str(), shop->info.str().c_str());
-		broadcast(player->getSock(), player->getRoom(), "%M just opened a shop!", player );
+		broadcast(player->getSock(), player->getParent(), "%M just opened a shop!", player );
 		if(!player->flagIsSet(P_DM_INVIS))
 			broadcast("### %s just opened a shop! It's located at: %s.", player->name, room->name);
 
@@ -579,26 +574,26 @@ int cmdShop(Player* player, cmd* cmnd) {
 		delete storage;
 		player->delObj(deed, true);
 		delete deed;
-		player->parent_rom->clearFlag(R_BUILD_SHOP);
-		player->parent_rom->setFlag(R_WAS_BUILD_SHOP);
-		player->parent_rom->saveToFile(0);
+		player->getUniqueRoomParent()->clearFlag(R_BUILD_SHOP);
+		player->getUniqueRoomParent()->setFlag(R_WAS_BUILD_SHOP);
+		player->getUniqueRoomParent()->saveToFile(0);
 		return(0);
 	} else if(action == SHOP_GUILD) {
 		if(!strncmp(cmnd->str[2], "assign", strlen(cmnd->str[2]))) {
-			if(!shopAssignGuild(p, player, guild, player->parent_rom, storage, true))
+			if(!shopAssignGuild(p, player, guild, player->getUniqueRoomParent(), storage, true))
 				return(0);
 		} else if(!strncmp(cmnd->str[2], "remove", strlen(cmnd->str[2]))) {
 			if(!p->getGuild()) {
 				player->print("This property is not assigned to a guild.\n");
 				return(0);
 			}
-			if(shopStaysWithGuild(player->parent_rom)) {
+			if(shopStaysWithGuild(player->getUniqueRoomParent())) {
 				player->print("This property was constructed inside the guild hall.\nIt cannot be removed from the guild.\n");
 				return(0);
 			}
 			broadcastGuild(p->getGuild(), 1, "### %s's shop located at %s is no longer partially run by the guild.",
 				player->name, p->getLocation().c_str());
-			shopRemoveGuild(p, player, player->parent_rom, storage);
+			shopRemoveGuild(p, player, player->getUniqueRoomParent(), storage);
 			player->print("This property is no longer associated with a guild.\n");
 		} else {
 			player->print("Command not understood.\n");
@@ -663,7 +658,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 		obj->addToRoom(storage);
 		p->appendLog(player->name, "%s stocked %s for $%d.", player->name, obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
 		player->printColor("You stock %s in the store for $%d.\n", obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
-		broadcast(player->getSock(), player->getRoom(), "%M just stocked something in this store.", player);
+		broadcast(player->getSock(), player->getParent(), "%M just stocked something in this store.", player);
 		// obj->shopValue
 		if(limited)
 			player->save(true);
@@ -688,7 +683,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 		obj->setShopValue(value);
 		p->appendLog(player->name, "%s set the price for %s to $%d.", player->name, obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
 		player->printColor("You set the price for %s to $%d.\n", obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
-		broadcast(player->getSock(), player->getRoom(), "%M just updated the prices in this store.", player);
+		broadcast(player->getSock(), player->getParent(), "%M just updated the prices in this store.", player);
 	} else if(action == SHOP_REMOVE) {
 		Object *obj = findObject(player, storage->first_obj, cmnd, 2);
 
@@ -717,7 +712,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 		player->addObj(obj);
 		p->appendLog(player->name, "%s removed %s.", player->name, obj->getObjStr(NULL, flags, 1).c_str());
 		player->printColor("You remove %s from your store.\n", obj->getObjStr(NULL, flags, 1).c_str());
-		broadcast(player->getSock(), player->getRoom(), "%M just removed something from this store.", player);
+		broadcast(player->getSock(), player->getParent(), "%M just removed something from this store.", player);
 
 		obj->clearFlag(O_PERM_ITEM);
 		obj->setShopValue(0);
@@ -746,13 +741,13 @@ int cmdShop(Player* player, cmd* cmnd) {
 			}
 		}
 
-		strcpy(player->parent_rom->name, name.c_str());
+		strcpy(player->getUniqueRoomParent()->name, name.c_str());
 		p->setName(name);
-		p->appendLog(player->name, "%s renamed the shop to %s.", player->name, player->parent_rom->name);
+		p->appendLog(player->name, "%s renamed the shop to %s.", player->name, player->getUniqueRoomParent()->name);
 		logn("log.shops", "%s renamed shop %s to %s.\n",
-			player->name, player->parent_rom->info.str().c_str(), player->parent_rom->name);
-		player->print("Shop renamed to '%s'.\n", player->parent_rom->name);
-		player->parent_rom->saveToFile(0);
+			player->name, player->getUniqueRoomParent()->info.str().c_str(), player->getUniqueRoomParent()->name);
+		player->print("Shop renamed to '%s'.\n", player->getUniqueRoomParent()->name);
+		player->getUniqueRoomParent()->saveToFile(0);
 
 		return(0);
 	} else {
@@ -832,7 +827,7 @@ const char* cannotUseMarker(Player* player, Object* object) {
 // shop.
 
 int cmdList(Player* player, cmd* cmnd) {
-	UniqueRoom* room = player->parent_rom, *storage=0;
+	UniqueRoom* room = player->getUniqueRoomParent(), *storage=0;
 	Object* object=0;
 	otag	*op=0;
 	int		n=0;
@@ -875,7 +870,7 @@ int cmdList(Player* player, cmd* cmnd) {
 	if(!p || p->getType() != PROP_SHOP) {
 		Money cost;
 
-		if(!Faction::willDoBusinessWith(player, player->parent_rom->getFaction())) {
+		if(!Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
 			player->print("The shopkeeper refuses to do business with you.\n");
 			return(0);
 		}
@@ -897,7 +892,7 @@ int cmdList(Player* player, cmd* cmnd) {
 				if(!strcmp(object->name, "bail"))
 					object->value = bailCost(player);
 
-				cost = buyAmount(player, player->parent_rom, object, true);
+				cost = buyAmount(player, player->getUniqueRoomParent(), object, true);
 
 				// even if they love you, lottery tickets are the same price
 				if(object->getType() == LOTTERYTICKET) {
@@ -1011,7 +1006,7 @@ int cmdPurchase(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findMonster(player, cmnd, 2);
+	creature = player->getParent()->findMonster(player, cmnd, 2);
 	if(!creature) {
 		player->print("That is not here.\n");
 		return(0);
@@ -1109,7 +1104,7 @@ int cmdPurchase(Player* player, cmd* cmnd) {
 		player->printColor("%M says, \"%sHere is your %s.\"\n", creature,
 			Faction::getAttitude(player->getFactionStanding(creature->getPrimeFaction())) < Faction::INDIFFERENT ? "Hrmph. " : "Thank you very much. ",
 			object->name);
-		broadcast(player->getSock(), player->getRoom(), "%M pays %N %s for %P.\n", player, creature, cost.str().c_str(), object);
+		broadcast(player->getSock(), player->getParent(), "%M pays %N %s for %P.\n", player, creature, cost.str().c_str(), object);
 		player->coins.sub(cost);
 
 		player->doHaggling(creature, object, BUY);
@@ -1151,7 +1146,7 @@ int cmdSelection(Player* player, cmd* cmnd) {
 		return(0);
 
 
-	creature = player->getRoom()->findMonster(player, cmnd);
+	creature = player->getParent()->findMonster(player, cmnd);
 	if(!creature) {
 		player->print("That is not here.\n");
 		return(0);
@@ -1216,7 +1211,7 @@ int cmdSelection(Player* player, cmd* cmnd) {
 // This function allows a player to buy something from a shop.
 
 int cmdBuy(Player* player, cmd* cmnd) {
-	UniqueRoom* room = player->parent_rom, *storage=0;
+	UniqueRoom* room = player->getUniqueRoomParent(), *storage=0;
 	Object	*object=0, *object2=0;
 	otag	*op=0;
 	int		num=0, n=1;
@@ -1334,7 +1329,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
 
 		player->printColor("You buy a %s.\n", object->getObjStr(NULL, flags, 1).c_str());
-		broadcast(player->getSock(), player->getRoom(), "%M just bought %1P.", player, object);
+		broadcast(player->getSock(), player->getParent(), "%M just bought %1P.", player, object);
 		object->clearFlag(O_PERM_INV_ITEM);
 		object->clearFlag(O_PERM_ITEM);
 		object->clearFlag(O_TEMP_PERM);
@@ -1393,7 +1388,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		if(!Faction::willDoBusinessWith(player, player->parent_rom->getFaction())) {
+		if(!Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
 			player->print("The shopkeeper refuses to do business with you.\n");
 			return(0);
 		}
@@ -1414,7 +1409,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 		if(!strcmp(object->name, "bail"))
 			object->value = bailCost(player);
 
-		Money cost = buyAmount(player, player->parent_rom, object, true);
+		Money cost = buyAmount(player, player->getUniqueRoomParent(), object, true);
 
 		// even if they love you, lottery tickets are the same price
 		if(object->getType() == LOTTERYTICKET) {
@@ -1518,8 +1513,8 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			    player->doHaggling(0, object2, BUY);
 
 			// We just did a full priced purchase, we can now haggle again (unless they do another refund)
-			if(player->getRoom() && player->getRoom()->getUniqueRoom())
-			    player->removeRefundedInStore(player->getRoom()->getUniqueRoom()->info);
+			if(player->getRoomParent() && player->getRoomParent()->getAsUniqueRoom())
+			    player->removeRefundedInStore(player->getRoomParent()->getAsUniqueRoom()->info);
 
 			object2->setDroppedBy(room, "StoreBought");
 	        gServer->logGold(GOLD_OUT, player, object2->refund, object2, "StoreBought");
@@ -1537,13 +1532,13 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			if(strcmp(object2->name, "storage room") && strcmp(object2->name, "bail") && object2->getType() != LOTTERYTICKET)
 				object2->setFlag(O_JUST_BOUGHT);
 
-			broadcast(player->getSock(), player->getRoom(), "%M bought %1P.", player, object2);
+			broadcast(player->getSock(), player->getParent(), "%M bought %1P.", player, object2);
 
 			player->bug("%s just bought %s for %s in room %s.\n",
-				player->name, object2->name, cost.str().c_str(), player->getRoom()->fullName().c_str());
+				player->name, object2->name, cost.str().c_str(), player->getRoomParent()->fullName().c_str());
 
 			logn("log.commerce", "%s just bought %s for %s in room %s.\n",
-				player->name, object2->name, cost.str().c_str(), player->getRoom()->fullName().c_str());
+				player->name, object2->name, cost.str().c_str(), player->getRoomParent()->fullName().c_str());
 
 			if(isDeed) {
 				int flag=0;
@@ -1569,7 +1564,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 								continue;
 							if(player->getGuild() != (*it)->getGuild())
 								continue;
-							if(player->parent_rom && !player->parent_rom->info.isArea((*it)->getArea()))
+							if(player->inUniqueRoom() && !player->getUniqueRoomParent()->info.isArea((*it)->getArea()))
 								continue;
 							player->printColor("^YCaution:^x your guild already owns a guildhall in %s.\n", gConfig->catRefName((*it)->getArea()).c_str());
 						}
@@ -1593,7 +1588,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
 			player->print("The shopkeeper says, \"Congratulations, you are now the proud owner of a new storage room. Don't forget, to get in you must also buy a key.\"\n");
 			player->print("You have %s left.\n", player->coins.str().c_str());
-			broadcast(player->getSock(), player->getRoom(), "%M just bought a storage room.", player);
+			broadcast(player->getSock(), player->getParent(), "%M just bought a storage room.", player);
 			logn("log.storage", "%s bought storage room %s.\n",
 				player->name, cr.str().c_str());
 
@@ -1641,7 +1636,7 @@ int cmdSell(Player* player, cmd* cmnd) {
 	if(!player->ableToDoCommand())
 		return(0);
 
-	if(!player->getRoom()->flagIsSet(R_PAWN_SHOP)) {
+	if(!player->getRoomParent()->flagIsSet(R_PAWN_SHOP)) {
 		player->print("This is not a pawn shop.\n");
 		return(0);
 	}
@@ -1669,12 +1664,12 @@ int cmdSell(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(!Faction::willDoBusinessWith(player, player->parent_rom->getFaction())) {
+	if(!Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
 		player->print("The shopkeeper refuses to do business with you.\n");
 		return(0);
 	}
 
-	value = sellAmount(player, player->parent_rom, object, false);
+	value = sellAmount(player, player->getConstUniqueRoomParent(), object, false);
 
 	player->computeLuck();
 	// Luck for sale of items
@@ -1723,16 +1718,16 @@ int cmdSell(Player* player, cmd* cmnd) {
 	}
 
 	player->printColor("The shopkeep gives you %s for %P.\n", value.str().c_str(), object);
-	broadcast(player->getSock(), player->getRoom(), "%M sells %1P.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M sells %1P.", player, object);
 
 	object->refund.zero();
 	object->refund.set(value);
 	player->doHaggling(0, object, SELL);
 	gServer->logGold(GOLD_IN, player, object->refund, object, "Pawn");
 	player->bug("%s sold %s in room %s.\n", player->name, object->name,
-		player->getRoom()->fullName().c_str());
+		player->getRoomParent()->fullName().c_str());
 	logn("log.commerce", "%s sold %s in room %s.\n", player->name, object->name,
-		player->getRoom()->fullName().c_str());
+		player->getRoomParent()->fullName().c_str());
 
 
 	player->coins.add(value);
@@ -1755,7 +1750,7 @@ int cmdValue(Player* player, cmd* cmnd) {
 	if(!player->ableToDoCommand())
 		return(0);
 
-	if(!player->getRoom()->flagIsSet(R_PAWN_SHOP)) {
+	if(!player->getRoomParent()->flagIsSet(R_PAWN_SHOP)) {
 		player->print("You must be in a pawn shop.\n");
 		return(0);
 	}
@@ -1774,16 +1769,16 @@ int cmdValue(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(!Faction::willDoBusinessWith(player, player->parent_rom->getFaction())) {
+	if(!Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
 		player->print("The shopkeeper refuses to do business with you.\n");
 		return(0);
 	}
 
-	value = sellAmount(player, player->parent_rom, object, false);
+	value = sellAmount(player, player->getConstUniqueRoomParent(), object, false);
 
 	player->printColor("The shopkeep says, \"%O's worth %s.\"\n", object, value.str().c_str());
 
-	broadcast(player->getSock(), player->getRoom(), "%M gets %P appraised.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M gets %P appraised.", player, object);
 
 	return(0);
 }
@@ -1804,7 +1799,7 @@ int cmdRefund(Player* player, cmd* cmnd) {
 	if(!player->ableToDoCommand())
 		return(0);
 
-	if(!player->getRoom()->flagIsSet(R_SHOP)) {
+	if(!player->getRoomParent()->flagIsSet(R_SHOP)) {
 		player->print("This is not a shop.\n");
 		return(0);
 	}
@@ -1834,13 +1829,13 @@ int cmdRefund(Player* player, cmd* cmnd) {
 	
 	player->coins.add(object->refund);
 	player->printColor("The shopkeep takes the %s from you and returns %s to you.\n", object->name, object->refund.str().c_str());
-	broadcast(player->getSock(), player->getRoom(), "%M refunds %P.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M refunds %P.", player, object);
 	gServer->logGold(GOLD_IN, player, object->refund, object, "Refund");
 	player->delObj(object, true);
 	// No further haggling allowed in this store until they buy a full priced item and have left the room
 	player->setFlag(P_JUST_REFUNDED);
-	if(player->getRoom() && player->getRoom()->getUniqueRoom()) {
-	    player->addRefundedInStore(player->getRoom()->getUniqueRoom()->info);
+	if(player->getRoomParent() && player->getRoomParent()->getAsUniqueRoom()) {
+	    player->addRefundedInStore(player->getRoomParent()->getAsUniqueRoom()->info);
 	}
 
 	delete object;
@@ -1856,7 +1851,7 @@ void failTrade(const Player* player, const Object* object, const Monster* target
 		player->printColor("%s gives you back %P.\n", target->upHeShe(), object);
 	else
 		player->printColor("%M gives you back %P.\n", target, object);
-	broadcast(player->getSock(), player->getRoom(), "%M tried to trade %P with %N.",
+	broadcast(player->getSock(), player->getParent(), "%M tried to trade %P with %N.",
 		player, object, target);
 	if(trade)
 		delete trade;
@@ -2027,7 +2022,7 @@ int cmdTrade(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findMonster(player, cmnd, 2);
+	creature = player->getParent()->findMonster(player, cmnd, 2);
 	if(!creature) {
 		player->print("That is not here.\n");
 		return(0);
@@ -2172,7 +2167,7 @@ int cmdTrade(Player* player, cmd* cmnd) {
 	player->printColor("%M says, \"Thank you for retrieving %s for me.\n", creature, object->getObjStr(player, flags, numTrade).c_str());
 	player->printColor("For it, I will reward you.\"\n");
 
-	broadcast(player->getSock(), player->getRoom(), "%M trades %P to %N.", player,object,creature);
+	broadcast(player->getSock(), player->getParent(), "%M trades %P to %N.", player,object,creature);
 
 
 	for(oIt = objects.begin(); oIt != objects.end(); oIt++) {
@@ -2316,7 +2311,7 @@ void Player::setLastPawn(Object* object) {
 //*********************************************************************
 
 bool Player::restoreLastPawn() {
-	if(!getRoom()->flagIsSet(R_PAWN_SHOP) || !getRoom()->flagIsSet(R_DUMP_ROOM)) {
+	if(!getRoomParent()->flagIsSet(R_PAWN_SHOP) || !getRoomParent()->flagIsSet(R_DUMP_ROOM)) {
 		print("You must be in a pawn shop to reclaim items.\n");
 		return(false);
 	}
@@ -2402,12 +2397,12 @@ void Creature::doHaggling(Creature *vendor, Object* object, int trans) {
 	// If we've refunded an item in this shop, no haggling until having bought a full priced item again
 
 	if(trans == BUY) {
-	    if(getPlayer() && flagIsSet(P_JUST_REFUNDED))
+	    if(getAsPlayer() && flagIsSet(P_JUST_REFUNDED))
 	        chance = 0;
-	    if(chance > 0 && getRoom() && getRoom()->getUniqueRoom() ) {
-            Player* player = getPlayer();
+	    if(chance > 0 && getRoomParent() && getRoomParent()->getAsUniqueRoom() ) {
+            Player* player = getAsPlayer();
             if( player && !player->storesRefunded.empty()) {
-                if(player->hasRefundedInStore(getRoom()->getUniqueRoom()->info)) {
+                if(player->hasRefundedInStore(getRoomParent()->getAsUniqueRoom()->info)) {
                     chance = 0;
                 }
             }
@@ -2454,7 +2449,7 @@ void Creature::doHaggling(Creature *vendor, Object* object, int trans) {
 
 		if(modAmt) {
 			if(npcVendor)
-				broadcast(getSock(), getRoom(), "%M haggles over prices with %N.", this, vendor);
+				broadcast(getSock(), getRoomParent(), "%M haggles over prices with %N.", this, vendor);
 			switch(trans) {
 			case BUY:
 				printColor("^yYour haggling skills saved you %ld gold coins.\n", modAmt);

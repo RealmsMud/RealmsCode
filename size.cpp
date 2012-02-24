@@ -201,7 +201,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
 			player->print("You cast %s on yourself.\n", spell.c_str());
-			broadcast(player->getSock(), player->getRoom(), "%M casts %s on %sself.",
+			broadcast(player->getSock(), player->getParent(), "%M casts %s on %sself.",
 				player, spell.c_str(), player->himHer());
 		}
 
@@ -211,7 +211,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
-		target = player->getRoom()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 		pos = 3;
 
 		if(!target) {
@@ -231,7 +231,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 		}
 		player->print("You cast %s on %N.\n", spell.c_str(), target);
 		target->print("%M casts %s on you.\n", player, spell.c_str());
-		broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M casts %s on %N.",
+		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts %s on %N.",
 			player, spell.c_str(), target);
 	}
 
@@ -268,7 +268,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 		strength = sizePower(player->getLevel());
 		num = MAX(300, 400 + bonus(player->intelligence.getCur()) * 400) + 20 * player->getLevel();
 
-		if(player->getRoom()->magicBonus()) {
+		if(player->getRoomParent()->magicBonus()) {
 			player->print("The room's magical properties increase the power of your spell.\n");
 			strength++;
 			num += 200;
@@ -344,7 +344,7 @@ bool Creature::changeSize(int oldStrength, int newStrength, bool enlarge) {
 		return(false);
 	size = whatSize(size+change);
 
-	Player *player = getPlayer();
+	Player *player = getAsPlayer();
 	if(player) {
 		wake("You awaken suddenly!");
 		for(int i=0; i<MAXWEAR; i++) {

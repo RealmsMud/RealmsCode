@@ -68,7 +68,7 @@ public:
     void load(xmlNodePtr rootNode);
 };
 
-class Object: public MudObject {
+class Object: public Container, public Containable {
     // Static class functions
 public:
     static Object* getNewPotion();	// Creates a new blank potion object
@@ -79,6 +79,7 @@ public:
     Object& operator=(const Object& o);
     bool operator==(const Object& o) const;
     bool operator!=(const Object& o) const;
+    bool operator< (const Object& t) const;
     void validateId();
 
 protected:

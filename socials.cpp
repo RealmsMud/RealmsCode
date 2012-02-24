@@ -65,14 +65,14 @@ const bstring& SocialCommand::getRoomOnSelf() const {
 }
 
 int cmdSocial(Creature* creature, cmd* cmnd) {
-    BaseRoom* room = creature->getRoom();
+    BaseRoom* room = creature->getRoomParent();
 
     assert(room);
 
     Player  *player=0, *pTarget=0;
     Creature* target=0;
 
-    player = creature->getPlayer();
+    player = creature->getAsPlayer();
     if(!creature->ableToDoCommand(cmnd))
         return(0);
 
@@ -97,7 +97,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
     if(cmnd->num == 2) {
         target = room->findCreature(creature, cmnd->str[1], cmnd->val[1], true, true);
         if(target)
-            pTarget = target->getPlayer();
+            pTarget = target->getAsPlayer();
         if( (!target || target == creature) )
         {
             *creature << "That is not here.\n";
@@ -162,13 +162,7 @@ void BaseRoom::doSocialEcho(bstring str, const Creature* actor, const Creature* 
     str.Replace("*A-HIMHER*", actor->himHer());
     str.Replace("*A-HESHE*", actor->heShe());
 
-    ctag* cp;
-    cp = first_ply;
-    Player *ply;
-    while(cp) {
-        ply = cp->crt->getPlayer();
-        cp = cp->next_tag;
-
+    for(Player* ply : players) {
         if(ply == actor || ply == target) continue;
 
         bstring out = str;

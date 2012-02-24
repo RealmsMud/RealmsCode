@@ -400,8 +400,8 @@ const CatRefInfo* Config::getCatRefInfo(const BaseRoom* room, int shouldGetParen
 	bstring area = "";
 
 	if(room) {
-		uRoom = room->getConstUniqueRoom();
-		aRoom = room->getConstAreaRoom();
+		uRoom = room->getAsConstUniqueRoom();
+		aRoom = room->getAsConstAreaRoom();
 	}
 
 	if(uRoom) {

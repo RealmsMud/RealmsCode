@@ -75,12 +75,12 @@ void lookAtExit(Player* player, Exit* exit) {
 	if(exit->isWall("wall-of-thorns"))
 		player->print("It is blocked by a wall of thorns.\n");
 
-	const Monster* guard = player->getRoom()->getGuardingExit(exit, player);
+	const Monster* guard = player->getRoomParent()->getGuardingExit(exit, player);
 	if(guard && !player->checkStaff("%M %s.\n", guard, guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you look there" : "won't let you look there"))
 		return;
 
 	if(exit->flagIsSet(X_CAN_LOOK) || exit->flagIsSet(X_LOOK_ONLY)) {
-		if(	player->getRoom()->isEffected("dense-fog") &&
+		if(	player->getRoomParent()->isEffected("dense-fog") &&
 			!player->checkStaff("This room is filled with a dense fog.\nYou cannot look to the %s^x effectively.\n", exit->name)
 		)
 			return;
@@ -146,23 +146,18 @@ int cmdLook(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 Monster* BaseRoom::getGuardingExit(const Exit* exit, const Player* player) const {
-	Creature* monster=0;
-
 	if(!exit->flagIsSet(X_PASSIVE_GUARD))
 		return(0);
 
-	ctag* cp = first_mon;
-	while(cp) {
-		monster = cp->crt;
-		cp = cp->next_tag;
+	for(Monster* mons : monsters) {
+        if(!mons->flagIsSet(M_PASSIVE_EXIT_GUARD))
+            continue;
+        if(player && mons->flagIsSet(M_FACTION_NO_GUARD) && Faction::willLetThrough(player, mons->getAsMonster()->getPrimeFaction()))
+            continue;
 
-		if(!monster->flagIsSet(M_PASSIVE_EXIT_GUARD))
-			continue;
-		if(player && monster->flagIsSet(M_FACTION_NO_GUARD) && Faction::willLetThrough(player, monster->getMonster()->getPrimeFaction()))
-			continue;
-		
-		return(monster->getMonster());
+        return(mons);
 	}
+
 	return(0);
 }
 
@@ -177,12 +172,10 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 	Creature* victim=0;
 	const Monster* guard=0;
 	Exit*	exit=0;
-	BaseRoom *room=0;
-	UniqueRoom*	uRoom=0;
-	AreaRoom* aRoom=0;
+	BaseRoom *room=0, *newRoom=0;
 	Property* p=0;
 	otag* op=0;
-	Player* player = creature->getPlayer(), *pVictim=0;
+	Player* player = creature->getAsPlayer(), *pVictim=0;
 
 	if(!creature->ableToDoCommand())
 		return(0);
@@ -194,7 +187,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 	}
 
 	object = findObject(creature, creature->first_obj, cmnd);
-	room = creature->getRoom();
+	room = creature->getRoomParent();
 
 	if(!object) {
 		creature->print("You don't have that in your inventory.\n");
@@ -210,8 +203,8 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 	}
 
 	if(	object->flagIsSet(O_NO_DROP) &&
-		!player->checkStaff("You cannot throw that.\n")
-	) {
+		!player->checkStaff("You cannot throw that.\n"))
+	{
 		return(0);
 	}
 
@@ -237,7 +230,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 	// done with throw checks
 
 
-	exit = findExit(creature, cmnd, 2, room->first_ext);
+	exit = findExit(creature, cmnd, 2, room);
 
 	if(!exit)
 		victim = room->findCreature(creature, cmnd, 2);
@@ -256,12 +249,12 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 		// don't bother getting rooms if exit is closed or guarded
 		bool loadExit = (!exit->flagIsSet(X_CLOSED) && !exit->flagIsSet(X_PORTAL) && !guard);
 		if(loadExit)
-			Move::getRoom(creature, exit, &uRoom, &aRoom, false, &exit->target.mapmarker);
+			Move::getRoom(creature, exit, &newRoom, false, &exit->target.mapmarker);
 
 		room->wake("Loud noises disturb your sleep.", true);
 
 		// closed, or off map, or being guarded
-		if(!loadExit || (!uRoom && !aRoom)) {
+		if(!loadExit || (!newRoom)) {
 			if(guard)
 				broadcast(0, room, "%M knocks %P to the ground.", guard, object);
 			else
@@ -269,24 +262,21 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 					object, exit->name);
 			finishDropObject(object, room, creature);
 		} else {
-			if(aRoom)
-				room = aRoom;
-			else
-				room = uRoom;
+			room = newRoom;
 
 			broadcast(0, room, "%1O comes flying into the room.", object);
 			room->wake("Loud noises disturb your sleep.", true);
 			finishDropObject(object, room, creature, false, false, true);
 
-			if(aRoom && aRoom->canDelete())
-				aRoom->area->remove(aRoom);
+			if(newRoom->isAreaRoom() && newRoom->getAsAreaRoom()->canDelete())
+				newRoom->getAsAreaRoom()->area->remove(newRoom->getAsAreaRoom());
 		}
 
 		creature->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
 
 	} else if(victim) {
 
-		pVictim = victim->getPlayer();
+		pVictim = victim->getAsPlayer();
 		if(!creature->canAttack(victim))
 			return(0);
 
@@ -308,7 +298,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 		creature->delObj(object);
 
 		if(!pVictim)
-			victim->getMonster()->addEnemy(creature);
+			victim->getAsMonster()->addEnemy(creature);
 
 		if(pVictim && victim->flagIsSet(P_MISTED)) {
 			pVictim->statistics.wasMissed();
@@ -400,12 +390,12 @@ int cmdKnock(Creature* creature, cmd* cmnd) {
 		return(0);
 	}
 
-	creature->getRoom()->wake("You awaken suddenly!", true);
+	creature->getParent()->wake("You awaken suddenly!", true);
 	creature->printColor("You knock on the %s^x.\n", exit->name);
-	broadcast(creature->getSock(), creature->getRoom(), "%M knocks on the %s^x.", creature, exit->name);
+	broadcast(creature->getSock(), creature->getRoomParent(), "%M knocks on the %s^x.", creature, exit->name);
 
 	// change the meaning of exit
-	exit = exit->getReturnExit(creature->getRoom(), &targetRoom);
+	exit = exit->getReturnExit(creature->getRoomParent(), &targetRoom);
 	targetRoom->wake("You awaken suddenly!", true);
 
 	if(exit)
@@ -435,7 +425,6 @@ int cmdBreak(Player* player, cmd* cmnd) {
 	CatRef	newloc;
 	int  	chance=0, dmg=0, xpgain=0, splvl=0;
 	float	mtbf=0, shots=0, shotsmax=0;
-	ctag	*cp=0;
 	UniqueRoom *new_rom=0;
 	char	item[80];
 	Object	*object=0;
@@ -477,7 +466,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
 	}
 
 	if((object->getType() == WAND || (object->getType() < 5 && object->flagIsSet(O_WEAPON_CASTS) && object->getMagicpower())) &&
-			player->getRoom()->isPkSafe() && !player->isCt()) {
+			player->getRoomParent()->isPkSafe() && !player->isCt()) {
 		player->print("You really shouldn't do that in here. Someone could get hurt.\n");
 		return(0);
 	}
@@ -533,10 +522,10 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
 		if(!(object->getType() == POISON && player->getClass() == PALADIN)) {
 			player->printColor("You manage to break %P.\n", object);
-			broadcast(player->getSock(), player->getRoom(), "%M breaks %P.", player, object);
+			broadcast(player->getSock(), player->getParent(), "%M breaks %P.", player, object);
 		} else {
 			player->printColor("You dispose of the vile %P.\n", object);
-			broadcast(player->getSock(), player->getRoom(), "%M neatly disposes of the vile %P.", player, object);
+			broadcast(player->getSock(), player->getParent(), "%M neatly disposes of the vile %P.", player, object);
 		}
 
 
@@ -581,20 +570,20 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
 			if(splvl >= 4) {
 				player->printColor("%O explodes in a retributive strike!\n", object);
-				broadcast(player->getSock(), player->getRoom(), "%O explodes in a retributive strike!", object);
+				broadcast(player->getSock(), player->getParent(), "%O explodes in a retributive strike!", object);
 
 				player->delObj(object, true);
 				delete object;
 			} else {
 				player->printColor("%O explodes!\n", object);
-				broadcast(player->getSock(), player->getRoom(), "%O explodes!", object);
-				broadcast(player->getSock(), player->getRoom(), "%M is engulfed by magical energy!", player);
+				broadcast(player->getSock(), player->getParent(), "%O explodes!", object);
+				broadcast(player->getSock(), player->getParent(), "%M is engulfed by magical energy!", player);
 
 				player->delObj(object, true);
 				delete object;
 			}
 
-			broadcast(player->getSock(), player->getRoom(), "%M is engulfed by a magical vortex!", player);
+			broadcast(player->getSock(), player->getParent(), "%M is engulfed by a magical vortex!", player);
 
 			dmg = mrand(1,5);
 			dmg += MAX(5,(mrand(splvl*2, splvl*6)))+((int)mtbf/2);
@@ -605,27 +594,29 @@ int cmdBreak(Player* player, cmd* cmnd) {
 			player->printColor("You take %s%d^x damage from the release of magical energy!\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg);
 
 			if(splvl >= 4) {
-				cp = player->getRoom()->first_ply;
-				while(cp) {
-					if(cp->crt != player && !cp->crt->inCombat()) {
+			    PlayerSet::iterator pIt = player->getRoomParent()->players.begin();
+			    PlayerSet::iterator pEnd = player->getRoomParent()->players.end();
+
+			    Player* ply=0;
+				while(pIt != pEnd) {
+				    ply = (*pIt++);
+					if(ply != player && !ply->inCombat()) {
 						dmg = mrand(splvl*4, splvl*8);
 
-						if(cp->crt->chkSave(BRE, cp->crt, 0))
+						if(ply->chkSave(BRE, ply, 0))
 							dmg /= 2;
 
-						cp->crt->printColor("You take %s%d^x damage from the magical explosion!\n", cp->crt->customColorize("*CC:DAMAGE*").c_str(), dmg);
+						ply->printColor("You take %s%d^x damage from the magical explosion!\n", ply->customColorize("*CC:DAMAGE*").c_str(), dmg);
 
-						if(player->doDamage(cp->crt, dmg, CHECK_DIE)) {
-							cp = cp->next_tag;
+						if(player->doDamage(ply, dmg, CHECK_DIE)) {
 							continue;
 						}
 					}
-					cp = cp->next_tag;
 				}
 			}
 
 			if(splvl >= 3)
-				player->getRoom()->scatterObjects();
+				player->getRoomParent()->scatterObjects();
 
 			player->hp.decrease(dmg);
 			if(player->hp.getCur() < 1) {
@@ -637,15 +628,15 @@ int cmdBreak(Player* player, cmd* cmnd) {
 				if(mrand(1,100) <= 50) {
 					newloc = getEtherealTravelRoom();
 					if(player->inJail())
-						newloc = player->parent_rom->info;
-					else if(player->getRoom()->flagIsSet(R_ETHEREAL_PLANE))
+						newloc = player->getUniqueRoomParent()->info;
+					else if(player->getRoomParent()->flagIsSet(R_ETHEREAL_PLANE))
 						newloc.id = 50;
 
 					if(!loadRoom(newloc, &new_rom))
 						return(0);
 
-					if(!player->getRoom()->flagIsSet(R_ETHEREAL_PLANE)) {
-						broadcast(player->getSock(), player->getRoom(), "%M was blown from this universe by the explosion!", player);
+					if(!player->getRoomParent()->flagIsSet(R_ETHEREAL_PLANE)) {
+						broadcast(player->getSock(), player->getParent(), "%M was blown from this universe by the explosion!", player);
 						player->print("You are blown into an alternate dimension.\n");
 					}
 					player->deleteFromRoom();
@@ -673,10 +664,10 @@ int cmdBreak(Player* player, cmd* cmnd) {
 	} else {
 		if(!(object->getType() == POISON && player->getClass() == PALADIN)) {
 			player->printColor("You were unable to break %P.\n", object);
-			broadcast(player->getSock(), player->getRoom(), "%M tried to break %P.", player, object);
+			broadcast(player->getSock(), player->getParent(), "%M tried to break %P.", player, object);
 		} else {
 			player->printColor("You were unable to properly dispose of the %P.\n", object);
-			broadcast(player->getSock(), player->getRoom(), "%M tried to dispose of the %P.", player, object);
+			broadcast(player->getSock(), player->getParent(), "%M tried to dispose of the %P.", player, object);
 			chance = 30 - (bonus((int)player->dexterity.getCur()));
 
 			if(player->immuneToPoison())
@@ -684,7 +675,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
 			if(mrand(1,100) <= chance) {
 				player->printColor("^r^#You accidentally poisoned yourself!\n");
-				broadcast(player->getSock(), player->getRoom(), "%M accidentally poisoned %sself!",
+				broadcast(player->getSock(), player->getParent(), "%M accidentally poisoned %sself!",
 					player, player->himHer());
 
 				duration = standardPoisonDuration(object->getEffectDuration(), player->constitution.getCur());

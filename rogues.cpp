@@ -62,7 +62,7 @@ int cmdPrepareForTraps(Player* player, cmd* cmnd) {
 	player->lasttime[LT_PREPARE].interval = player->isDm() ? 0:15;
 
 	player->print("You prepare yourself for traps.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M prepares for traps.", player);
+	broadcast(player->getSock(), player->getParent(), "%M prepares for traps.", player);
 	player->setFlag(P_PREPARED);
 	if(player->isBlind())
 		player->clearFlag(P_PREPARED);
@@ -100,7 +100,7 @@ int cmdBribe(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findMonster(player, cmnd);
+	creature = player->getParent()->findMonster(player, cmnd);
 	if(!creature) {
 		player->print("That is not here.\n");
 		return(0);
@@ -133,11 +133,11 @@ int cmdBribe(Player* player, cmd* cmnd) {
 
 	if(amount < cost[GOLD] || creature->flagIsSet(M_PERMENANT_MONSTER)) {
 		player->print("%M takes your money, but stays.\n", creature);
-		broadcast(player->getSock(), player->getRoom(), "%M tried to bribe %N.", player, creature);
+		broadcast(player->getSock(), player->getParent(), "%M tried to bribe %N.", player, creature);
 		creature->coins.add(amount, GOLD);
 	} else {
 		player->print("%M takes your money and leaves.\n", creature);
-		broadcast(player->getSock(), player->getRoom(), "%M bribed %N.", player, creature);
+		broadcast(player->getSock(), player->getParent(), "%M bribed %N.", player, creature);
 
 		log_immort(true, player, "%s bribed %s.\n", player->name, creature->name);
 
@@ -156,7 +156,7 @@ int cmdBribe(Player* player, cmd* cmnd) {
 // Code for people to gamble money
 
 int cmdGamble(Player* player, cmd* cmnd) {
-	if(!player->getRoom()->flagIsSet(R_CASINO) && !player->isCt()) {
+	if(!player->getRoomParent()->flagIsSet(R_CASINO) && !player->isCt()) {
 		player->print("You can't gamble here.\n");
 		return(0);
 	}
@@ -193,10 +193,8 @@ bool canSearch(const Player* player) {
 //*********************************************************************
 
 void doSearch(Player* player, bool immediate) {
-	BaseRoom* room = player->getRoom();
-	xtag	*xp=0;
+	BaseRoom* room = player->getRoomParent();
 	otag	*op=0;
-	ctag	*cp=0;
 	int		chance=0;
 	bool	found=false, detectMagic = player->isEffected("detect-magic");
 
@@ -230,25 +228,23 @@ void doSearch(Player* player, bool immediate) {
 		chance = 100;
 
 	
-	xp = room->first_ext;
-	while(xp) {
-		if(	(xp->ext->flagIsSet(X_SECRET) && mrand(1,100) <= (chance + searchMod(xp->ext->getSize()))) ||
-			(xp->ext->isConcealed(player) && mrand(1,100) <= 5)
-		) {
+	for(Exit* ext : room->exits) {
+		if(	(ext->flagIsSet(X_SECRET) && mrand(1,100) <= (chance + searchMod(ext->getSize()))) ||
+			(ext->isConcealed(player) && mrand(1,100) <= 5))
+		{
 			// canSee doesnt handle DescOnly
-			if(player->canSee(xp->ext) && !xp->ext->flagIsSet(X_DESCRIPTION_ONLY)) {
+			if(player->canSee(ext) && !ext->flagIsSet(X_DESCRIPTION_ONLY)) {
 				found = true;
-				player->printColor("You found an exit: %s^x.\n", xp->ext->name);
+				player->printColor("You found an exit: %s^x.\n", ext->name);
 
-				if(xp->ext->isWall("wall-of-fire"))
-					player->printColor("%s", xp->ext->blockedByStr('R', "wall of fire", "wall-of-fire", detectMagic, true).c_str());
-				if(xp->ext->isWall("wall-of-force"))
-					player->printColor("%s", xp->ext->blockedByStr('s', "wall of force", "wall-of-force", detectMagic, true).c_str());
-				if(xp->ext->isWall("wall-of-thorns"))
-					player->printColor("%s", xp->ext->blockedByStr('o', "wall of thorns", "wall-of-thorns", detectMagic, true).c_str());
+				if(ext->isWall("wall-of-fire"))
+					player->printColor("%s", ext->blockedByStr('R', "wall of fire", "wall-of-fire", detectMagic, true).c_str());
+				if(ext->isWall("wall-of-force"))
+					player->printColor("%s", ext->blockedByStr('s', "wall of force", "wall-of-force", detectMagic, true).c_str());
+				if(ext->isWall("wall-of-thorns"))
+					player->printColor("%s", ext->blockedByStr('o', "wall of thorns", "wall-of-thorns", detectMagic, true).c_str());
 			}
 		}
-		xp = xp->next_tag;
 	}
 
 	op = room->first_obj;
@@ -263,28 +259,24 @@ void doSearch(Player* player, bool immediate) {
 		op = op->next_tag;
 	}
 
-	cp = room->first_ply;
-	while(cp) {
-		if(	cp->crt->flagIsSet(P_HIDDEN) &&
-			player->canSee(cp->crt) &&
-			mrand(1,100) <= (chance + searchMod(cp->crt->getSize()))
-		) {
+	for(Player* ply : room->players) {
+		if(	ply->flagIsSet(P_HIDDEN) &&
+			player->canSee(ply) &&
+			mrand(1,100) <= (chance + searchMod(ply->getSize())))
+		{
 			found = true;
-			player->print("You found %s hiding.\n", cp->crt->name);
+			player->print("You found %s hiding.\n", ply->name);
 		}
-		cp = cp->next_tag;
 	}
 
-	cp = room->first_mon;
-	while(cp) {
-		if(	cp->crt->flagIsSet(M_HIDDEN) &&
-			player->canSee(cp->crt) &&
-			mrand(1,100) <= (chance + searchMod(cp->crt->getSize()))
-		) {
+	for(Monster* mons : room->monsters) {
+		if(	mons->flagIsSet(M_HIDDEN) &&
+			player->canSee(mons) &&
+			mrand(1,100) <= (chance + searchMod(mons->getSize())))
+		{
 			found = true;
-			player->print("You found %1N hiding.\n", cp->crt);
+			player->print("You found %1N hiding.\n", mons);
 		}
-		cp = cp->next_tag;
 	}
 
 	// reuse chance as chance to find herbs
@@ -295,7 +287,7 @@ void doSearch(Player* player, bool immediate) {
 		chance = 100;
 
 	if(chance >= mrand(1,100)) {
-		if(player->area_room && player->area_room->spawnHerbs()) {
+		if(player->inAreaRoom() && player->getAreaRoomParent()->spawnHerbs()) {
 			player->print("You found some herbs!\n");
 			found = true;
 		}
@@ -315,7 +307,7 @@ void doSearch(Player* player, bool immediate) {
 }
 
 void doSearch(const DelayedAction* action) {
-	doSearch(action->target->getPlayer(), false);
+	doSearch(action->target->getAsPlayer(), false);
 }
 
 //*********************************************************************
@@ -355,10 +347,10 @@ int cmdSearch(Player* player, cmd* cmnd) {
 	
 	player->interruptDelayedActions();
 
-	broadcast(player->getSock(), player->getRoom(), "%M searches the room.", player);
+	broadcast(player->getSock(), player->getParent(), "%M searches the room.", player);
 
 	// big rooms take longer to search
-	if(player->getRoom()->getSize() >= SIZE_GARGANTUAN) {
+	if(player->getRoomParent()->getSize() >= SIZE_GARGANTUAN) {
 		// doSearch calls unhide, no need to do it twice
 		player->unhide();
 
@@ -529,12 +521,12 @@ int cmdHide(Player* player, cmd* cmnd) {
 			chance = 101;
 
 
-		if(player->isEffected("camouflage") && player->getRoom()->isOutdoors())
+		if(player->isEffected("camouflage") && player->getRoomParent()->isOutdoors())
 			chance += 20;
 
-		if(	(player->getRoom()->flagIsSet(R_DARK_AT_NIGHT) && !isDay()) ||
-			player->getRoom()->flagIsSet(R_DARK_ALWAYS) ||
-			player->getRoom()->isEffected("dense-fog")
+		if(	(player->getRoomParent()->flagIsSet(R_DARK_AT_NIGHT) && !isDay()) ||
+			player->getRoomParent()->flagIsSet(R_DARK_ALWAYS) ||
+			player->getRoomParent()->isEffected("dense-fog")
 		)
 			chance += 10;
 
@@ -543,7 +535,7 @@ int cmdHide(Player* player, cmd* cmnd) {
 
 		player->print("You attempt to hide in the shadows.\n");
 
-		if((player->getClass() == RANGER || player->getClass() == DRUID) && !player->getRoom()->isOutdoors()) {
+		if((player->getClass() == RANGER || player->getClass() == DRUID) && !player->getRoomParent()->isOutdoors()) {
 			chance /= 2;
 			chance = MAX(25, chance);
 			player->print("You have trouble hiding while inside.\n");
@@ -561,14 +553,14 @@ int cmdHide(Player* player, cmd* cmnd) {
 			player->checkImprove("hide", true);
 		} else {
 			player->unhide();
-			broadcast(player->getSock(), player->getRoom(), "%M tries to hide in the shadows.", player);
+			broadcast(player->getSock(), player->getParent(), "%M tries to hide in the shadows.", player);
 			player->checkImprove("hide", false);
 		}
 
 		return(0);
 	}
 
-	object = findObject(player, player->getRoom()->first_obj, cmnd);
+	object = findObject(player, player->getRoomParent()->first_obj, cmnd);
 
 	if(!object) {
 		player->print("You don't see that here.\n");
@@ -582,7 +574,7 @@ int cmdHide(Player* player, cmd* cmnd) {
 	)
 		return(0);
 
-	if(isGuardLoot(player->getRoom(), player, "%M will not let you hide that.\n"))
+	if(isGuardLoot(player->getRoomParent(), player, "%M will not let you hide that.\n"))
 		return(0);
 
 	if(player->isDm())
@@ -597,7 +589,7 @@ int cmdHide(Player* player, cmd* cmnd) {
 
 
 	player->print("You attempt to hide it.\n");
-	broadcast(player->getSock(), player->getRoom(), "%M attempts to hide %1P.", player, object);
+	broadcast(player->getSock(), player->getParent(), "%M attempts to hide %1P.", player, object);
 
 	if(mrand(1, 100) <= chance) {
 		object->setFlag(O_HIDDEN);
@@ -617,8 +609,6 @@ int cmdHide(Player* player, cmd* cmnd) {
 
 bool doScout(Player* player, const Exit* exit) {
 	BaseRoom *room=0;
-	AreaRoom *aRoom=0;
-	UniqueRoom	*uRoom=0;
 
 
 	if(exit->flagIsSet(X_STAFF_ONLY) && !player->isStaff()) {
@@ -627,12 +617,7 @@ bool doScout(Player* player, const Exit* exit) {
 	}
 
 
-	Move::getRoom(player, exit, &uRoom, &aRoom, true);
-
-	if(aRoom)
-		room = aRoom;
-	else if(uRoom)
-		room = uRoom;
+	Move::getRoom(player, exit, &room, true);
 
 	if(player->getClass() == BUILDER && room && !room->isConstruction()) {
 		player->print("A magical force prevents you from seeing into the room.\n");
@@ -641,8 +626,7 @@ bool doScout(Player* player, const Exit* exit) {
 
 	if(	room &&
 		room->isEffected("dense-fog")&&
-		!player->checkStaff("That room is filled with a dense fog.\n")
-	)
+		!player->checkStaff("That room is filled with a dense fog.\n"))
 		return(false);
 
 	if(!room && exit->target.mapmarker.getArea()) {
@@ -701,7 +685,7 @@ int cmdScout(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(	player->getRoom()->isEffected("dense-fog") &&
+	if(	player->getRoomParent()->isEffected("dense-fog") &&
 		!player->checkStaff("This room is filled with a dense fog.\nYou cannot scout effectively.\n")
 	)
 		return(0);
@@ -719,7 +703,7 @@ int cmdScout(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	exit = findExit(player, Move::formatFindExit(cmnd), cmnd->val[1], player->getRoom()->first_ext);
+	exit = findExit(player, Move::formatFindExit(cmnd), cmnd->val[1], player->getRoomParent());
 
 
 	if(!exit) {
@@ -737,7 +721,7 @@ int cmdScout(Player* player, cmd* cmnd) {
 		!player->checkStaff("You were unable to scout it.\n"))
 		return(0);
 
-	const Monster* guard = player->getRoom()->getGuardingExit(exit, player);
+	const Monster* guard = player->getRoomParent()->getGuardingExit(exit, player);
 	if(guard && !player->checkStaff("%M %s.\n", guard, guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you scout there" : "won't let you scout there"))
 		return(0);
 
@@ -791,11 +775,11 @@ int cmdScout(Player* player, cmd* cmnd) {
 	player->printColor("You scout the %s^x exit.\n", exit->name);
 
 	if(player->isStaff() && player->flagIsSet(P_DM_INVIS))
-		broadcast(isStaff, player->getSock(), player->getRoom(), "%M scouts the %s^x exit.", player, exit->name);
+		broadcast(isStaff, player->getSock(), player->getRoomParent(), "%M scouts the %s^x exit.", player, exit->name);
 	else if(exit->flagIsSet(X_SECRET) || exit->isConcealed() || exit->flagIsSet(X_DESCRIPTION_ONLY))
-		broadcast(player->getSock(), player->getRoom(), "%M scouts the area.", player);
+		broadcast(player->getSock(), player->getParent(), "%M scouts the area.", player);
 	else
-		broadcast(player->getSock(), player->getRoom(), "%M scouts the %s^x exit.", player, exit->name);
+		broadcast(player->getSock(), player->getParent(), "%M scouts the %s^x exit.", player, exit->name);
 
 	doScout(player, exit);
 	return(0);
@@ -871,7 +855,7 @@ int cmdEnvenom(Player* player, cmd* cmnd) {
 
 	player->printColor("You envenom %P with %P.\n", weapon, object);
 	player->checkImprove("envenom", true);
-	broadcast(player->getSock(), player->getRoom(), "%M envenoms %P with %P.", player, weapon, object);
+	broadcast(player->getSock(), player->getParent(), "%M envenoms %P with %P.", player, weapon, object);
 
 
 	// TODO: make poison more powerful with better envenom skill
@@ -906,8 +890,6 @@ bool isValidShop(const UniqueRoom* shop, const UniqueRoom* storage);
 int cmdShoplift(Player* player, cmd* cmnd) {
 	UniqueRoom	*room=0, *storage=0;
 	Object	*object=0, *object2=0;
-	ctag	*cp=0;
-	Monster *tmp_crt=0;
 	int		chance=0, guarded=0;
 
 
@@ -925,7 +907,7 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 	if(player->getClass() == BUILDER)
 		return(0);
 
-	room = player->parent_rom;
+	room = player->getUniqueRoomParent();
 
 	if(!player->isCt() && player->getLevel() < 7 && player->getClass() != THIEF) {
 		player->print("You couldn't possibly succeed. Wait until level 7.\n");
@@ -979,11 +961,9 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 
 	
 	storage->addPermCrt();
-	cp = storage->first_mon;
-	while(cp) {
-		if(cp->crt->getLevel() >= 10 && cp->crt->flagIsSet(M_PERMENANT_MONSTER))
+	for(Monster* mons : storage->monsters) {
+		if(mons->getLevel() >= 10 && mons->flagIsSet(M_PERMENANT_MONSTER))
 			guarded++;
-		cp = cp->next_tag;
 	}
 
 	// This is done in order that a catastrophic building mistake cannot be made.
@@ -998,13 +978,11 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 
 	// This has to be done to prevent baiting.
 	// The mobs will wander after a time.
-	cp = room->first_mon;
-	while(cp) {
-		if(cp->crt->flagIsSet(M_ATTACKING_SHOPLIFTER) && !player->isDm()) {
+	for(Monster* mons : room->monsters) {
+		if(mons->flagIsSet(M_ATTACKING_SHOPLIFTER) && !player->isDm()) {
 			player->print("The shopkeep or shop's guards are too alert right now.\n");
 			return(0);
 		}
-		cp = cp->next_tag;
 	}
 
 
@@ -1105,59 +1083,54 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 		if(player->flagIsSet(P_LAG_PROTECTION_SET))
 			player->setFlag(P_LAG_PROTECTION_ACTIVE);
 
-		cp = room->first_mon;
-		// Any shopkeeper perms will attack.
-		while(cp) {
-			tmp_crt = cp->crt->getMonster();
-			if(tmp_crt->flagIsSet(M_PERMENANT_MONSTER)) {
+		for(Monster* mons : room->monsters) {
+			if(mons->flagIsSet(M_PERMENANT_MONSTER)) {
 
-				gServer->addActive(tmp_crt);
-				tmp_crt->clearFlag(M_DEATH_SCENE);
-				tmp_crt->clearFlag(M_FAST_WANDER);
-				tmp_crt->addPermEffect("detect-invisible");
-				tmp_crt->addPermEffect("true-sight");
-				tmp_crt->setFlag(M_BLOCK_EXIT);
-				tmp_crt->setFlag(M_ATTACKING_SHOPLIFTER);
+				gServer->addActive(mons);
+				mons->clearFlag(M_DEATH_SCENE);
+				mons->clearFlag(M_FAST_WANDER);
+				mons->addPermEffect("detect-invisible");
+				mons->addPermEffect("true-sight");
+				mons->setFlag(M_BLOCK_EXIT);
+				mons->setFlag(M_ATTACKING_SHOPLIFTER);
 
-				tmp_crt->addEnemy(player, true);
-				tmp_crt->diePermCrt();
+				mons->addEnemy(player, true);
+				mons->diePermCrt();
 			}
-			cp = cp->next_tag;
 		}
+		MonsterSet::iterator mIt = storage->monsters.begin();
 
-		cp = storage->first_mon;
-		// All guard mobs permed in storeroom will attack.
-		while(cp) {
-			tmp_crt = cp->crt->getMonster();
-			cp = cp->next_tag;
-			if(tmp_crt->flagIsSet(M_PERMENANT_MONSTER)) {
-				if(storage->first_ply)
-					broadcast(tmp_crt->getSock(), tmp_crt->getRoom(),
-						"%M runs out after a shoplifter.", tmp_crt);
+		while(mIt != storage->monsters.end()) {
+
+		    Monster *mons = (*mIt++);
+			if(mons->flagIsSet(M_PERMENANT_MONSTER)) {
+				if(!storage->players.empty())
+					broadcast(mons->getSock(), mons->getRoomParent(),
+						"%M runs out after a shoplifter.", mons);
 				else
-					gServer->addActive(tmp_crt);
-				tmp_crt->clearFlag(M_PERMENANT_MONSTER);  // This is all done to prevent people from getting
-				tmp_crt->clearFlag(M_FAST_WANDER);  // killed mostly by others baiting these mobs in.
-				tmp_crt->clearFlag(M_DEATH_SCENE);
-				tmp_crt->addPermEffect("detect-invisible");
-				tmp_crt->addPermEffect("true-sight");
-				tmp_crt->setFlag(M_BLOCK_EXIT);
-				tmp_crt->setFlag(M_WILL_ASSIST);
-				tmp_crt->setFlag(M_WILL_BE_ASSISTED);
-				tmp_crt->clearFlag(M_AGGRESSIVE_GOOD);
-				tmp_crt->clearFlag(M_AGGRESSIVE_EVIL);
-				tmp_crt->clearFlag(M_AGGRESSIVE);
+					gServer->addActive(mons);
+				mons->clearFlag(M_PERMENANT_MONSTER);  // This is all done to prevent people from getting
+				mons->clearFlag(M_FAST_WANDER);  // killed mostly by others baiting these mobs in.
+				mons->clearFlag(M_DEATH_SCENE);
+				mons->addPermEffect("detect-invisible");
+				mons->addPermEffect("true-sight");
+				mons->setFlag(M_BLOCK_EXIT);
+				mons->setFlag(M_WILL_ASSIST);
+				mons->setFlag(M_WILL_BE_ASSISTED);
+				mons->clearFlag(M_AGGRESSIVE_GOOD);
+				mons->clearFlag(M_AGGRESSIVE_EVIL);
+				mons->clearFlag(M_AGGRESSIVE);
 
-				tmp_crt->setFlag(M_OUTLAW_AGGRO);
-				tmp_crt->setFlag(M_ATTACKING_SHOPLIFTER);
+				mons->setFlag(M_OUTLAW_AGGRO);
+				mons->setFlag(M_ATTACKING_SHOPLIFTER);
 
-				tmp_crt->setExperience(10);
-				tmp_crt->coins.zero();
+				mons->setExperience(10);
+				mons->coins.zero();
 
-				tmp_crt->addEnemy(player, true);
-				tmp_crt->diePermCrt();
-				tmp_crt->deleteFromRoom();
-				tmp_crt->addToRoom(room);
+				mons->addEnemy(player, true);
+				mons->diePermCrt();
+				mons->deleteFromRoom();
+				mons->addToRoom(room);
 			}
 		}
 
@@ -1180,7 +1153,7 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 
 		player->addObj(object2);
 		player->printColor("You manage to conceal %1P on your person.\n", object2);
-		broadcast(isCt, player->getSock(), player->getRoom(), "*DM* %M just shoplifted %1P.", player, object2);
+		broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M just shoplifted %1P.", player, object2);
 		player->statistics.steal();
 	}
 
@@ -1246,9 +1219,9 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 		return(0);
 
 	if(target)
-		pTarget = target->getPlayer();
+		pTarget = target->getAsPlayer();
 
-	if(!pTarget && target->getMonster()->isEnemy(player)) {
+	if(!pTarget && target->getAsMonster()->isEnemy(player)) {
 		player->print("Not while you're already fighting %s.\n", target->himHer());
 		return(0);
 	}
@@ -1262,13 +1235,13 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 
 	player->print("You attempt to backstab %N.\n", target);
 	target->print("%M attempts to backstab you!\n", player);
-	broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M attempts to backstab %N.", player, target);
+	broadcast(player->getSock(), target->getSock(), player->getParent(), "%M attempts to backstab %N.", player, target);
 
 	if(target->isMonster())
-		target->getMonster()->addEnemy(player);
+		target->getAsMonster()->addEnemy(player);
 
 	if(player->breakObject(player->ready[WIELD-1], WIELD)) {
-		broadcast(player->getSock(), player->getRoom(), "%s backstab failed.", player->upHisHer());
+		broadcast(player->getSock(), player->getParent(), "%s backstab failed.", player->upHisHer());
 		player->setAttackDelay(player->getAttackDelay()*2);
 		return(0);
 	}
@@ -1385,7 +1358,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 		else
 			player->statistics.hit();
 		if(target->isPlayer())
-			target->getPlayer()->statistics.wasHit();
+			target->getAsPlayer()->statistics.wasHit();
 
 
 		disembowel = target->hp.getCur() * 2;
@@ -1427,7 +1400,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 			switch(mrand(1,4)) {
 			case 1:
 				player->printColor("^cYou completely disemboweled %N! %s's dead!\n", target, target->upHeShe());
-				broadcast(player->getSock(), player->getRoom(), "%M completely disembowels %N! %s's dead!",
+				broadcast(player->getSock(), player->getParent(), "%M completely disembowels %N! %s's dead!",
 					player, target, target->upHeShe());
 				if(target->isPlayer())
 					target->print("%M completely disemboweled you! You're dead!\n", player);
@@ -1436,7 +1409,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 			case 2:
 				player->printColor("^cYou impaled %N through %s back! %s's dead!\n",
 					target, target->hisHer(), target->upHeShe());
-				broadcast(player->getSock(), player->getRoom(), "%M impales %N through %s back! %s's dead!",
+				broadcast(player->getSock(), player->getParent(), "%M impales %N through %s back! %s's dead!",
 					player, target, target->hisHer(), target->upHeShe());
 				if(target->isPlayer())
 					target->print("%M impaled you through the back! You're dead!\n", player);
@@ -1446,7 +1419,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 				if(weapon) {
 					player->printColor("^cThe %s went completely through %N! %s's dead!\n",
 						weapon->name, target, target->upHeShe());
-					broadcast(player->getSock(), player->getRoom(), "%M's %s goes completely through %N! %s's dead!",
+					broadcast(player->getSock(), player->getParent(), "%M's %s goes completely through %N! %s's dead!",
 						player, weapon->name, target, target->upHeShe());
 
 					if(target->isPlayer())
@@ -1458,7 +1431,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 			case 4:
 				player->printColor("^cYou cut %N in half from behind! %s's dead!\n",
 					target, target->upHeShe());
-				broadcast(player->getSock(), player->getRoom(), "%M cut %N in half from behind! %s's dead!",
+				broadcast(player->getSock(), player->getParent(), "%M cut %N in half from behind! %s's dead!",
 					player, target, target->upHeShe());
 				if(target->isPlayer())
 					target->print("%M cut you in half from behind! You're dead!\n", player);
@@ -1472,7 +1445,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 		Creature::simultaneousDeath(player, target, false, false);
 
 		// only monsters flee, and not when their attacker was killed
-		if(!wasKilled && !meKilled && target->getMonster()) {
+		if(!wasKilled && !meKilled && target->getAsMonster()) {
 			if(target->flee() == 2)
 				return(0);
 		}
@@ -1480,10 +1453,10 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 	} else if(result == ATTACK_MISS) {
 		player->statistics.miss();
 		if(target->isPlayer())
-			target->getPlayer()->statistics.wasMissed();
+			target->getAsPlayer()->statistics.wasMissed();
 		player->print("You missed.\n");
 		player->checkImprove("backstab", false);
-		broadcast(player->getSock(), player->getRoom(), "%s backstab failed.", player->upHisHer());
+		broadcast(player->getSock(), player->getParent(), "%s backstab failed.", player->upHisHer());
 		player->setAttackDelay(mrand(30,90));
 	} else if(result == ATTACK_DODGE) {
 		target->dodge(player);
@@ -1496,14 +1469,14 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 	} else if(result == ATTACK_FUMBLE) {
 		player->statistics.fumble();
 		player->printColor("^gYou FUMBLED your weapon.\n");
-		broadcast(player->getSock(), player->getRoom(), "^g%M fumbled %s weapon.", player, player->hisHer());
+		broadcast(player->getSock(), player->getParent(), "^g%M fumbled %s weapon.", player, player->hisHer());
 
 		if(weapon->flagIsSet(O_ENVENOMED)) {
 			if(!player->immuneToPoison() &&
-				!player->chkSave(POI, player, -5) && !induel(player, target->getPlayer())
+				!player->chkSave(POI, player, -5) && !induel(player, target->getAsPlayer())
 			) {
 				player->printColor("^G^#You poisoned yourself!!\n");
-				broadcast(player->getSock(), player->getRoom(), "%M poisoned %sself!!",
+				broadcast(player->getSock(), player->getParent(), "%M poisoned %sself!!",
 					player, player->himHer());
 
 				if(weapon->getEffectStrength()) {
@@ -1528,7 +1501,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 
 			} else {
 				player->print("You almost poisoned yourself!\n");
-				broadcast(player->getSock(), player->getRoom(), "%M almost poisoned %sself!", player, player->himHer());
+				broadcast(player->getSock(), player->getParent(), "%M almost poisoned %sself!", player, player->himHer());
 			}
 		}
 
@@ -1569,7 +1542,7 @@ int Player::checkPoison(Creature* target, Object* weapon) {
 		poisonchance = 0;
 
 	// No poisoning people if they're in a duel
-	if(induel(this, target->getPlayer()))
+	if(induel(this, target->getAsPlayer()))
 		poisonchance = 0;
 
 	// If they're already poisoned, don't poison them again
@@ -1591,7 +1564,7 @@ int Player::checkPoison(Creature* target, Object* weapon) {
 
 		printColor("^gYou poisoned %N!\n", target);
 		target->printColor( "^g^#%M poisoned you!!\n", this);
-		broadcast(getSock(), target->getSock(), target->getRoom(), "%M poisoned %N!", this, target);
+		broadcast(getSock(), target->getSock(), target->getRoomParent(), "%M poisoned %N!", this, target);
 
 		unsigned int dur = standardPoisonDuration(weapon->getEffectDuration(), target->constitution.getCur());
 
@@ -1657,9 +1630,9 @@ int cmdAmbush(Player* player, cmd* cmnd) {
 		return(0);
 
     if(creature)
-		pCreature = creature->getPlayer();
+		pCreature = creature->getAsPlayer();
 
-	if(!pCreature && creature->getMonster()->isEnemy(player) && !player->isCt()) {
+	if(!pCreature && creature->getAsMonster()->isEnemy(player) && !player->isCt()) {
 		player->print("Not while you're already fighting %s.\n",
 		      creature->himHer());
 		return(0);
@@ -1671,7 +1644,7 @@ int cmdAmbush(Player* player, cmd* cmnd) {
 	player->smashInvis();
 
 	if(creature->isMonster()) {
-		creature->getMonster()->addEnemy(player);
+		creature->getAsMonster()->addEnemy(player);
 	}
 
 	player->updateAttackTimer();
@@ -1680,7 +1653,7 @@ int cmdAmbush(Player* player, cmd* cmnd) {
 		player->modifyAttackDelay(-10);
 
 	player->print("You ambush %N!\n", creature);
-	broadcast(player->getSock(), creature->getSock(), player->getRoom(), "%M ambushes %N!", player, creature);
+	broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M ambushes %N!", player, creature);
 	creature->print("%M ambushes you!\n", player);
 
 	player->unhide();
@@ -1738,7 +1711,7 @@ int cmdPickLock(Player* player, cmd* cmnd) {
 	}
 
 
-	const Monster* guard = player->getRoom()->getGuardingExit(exit, player);
+	const Monster* guard = player->getRoomParent()->getGuardingExit(exit, player);
 	if(guard && !player->checkStaff("%M %s.\n", guard, guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you pick it" : "won't let you pick it"))
 		return(0);
 
@@ -1795,16 +1768,16 @@ int cmdPickLock(Player* player, cmd* cmnd) {
 	if(player->isCt())
 		chance = 101;
 
-	broadcast(player->getSock(), player->getRoom(), "%M attempts to pick the %s^x.", player, exit->name);
+	broadcast(player->getSock(), player->getParent(), "%M attempts to pick the %s^x.", player, exit->name);
 
 	if(mrand(1,100) <= chance) {
 		log_immort(false, player, "%s picked the %s in room %s.\n", player->name, exit->name,
-			player->getRoom()->fullName().c_str());
+			player->getRoomParent()->fullName().c_str());
 
 		player->print("You successfully picked the lock.\n");
 		player->checkImprove("pick", true);
 		exit->clearFlag(X_LOCKED);
-		broadcast(player->getSock(), player->getRoom(), "%s succeeded.", player->upHeShe());
+		broadcast(player->getSock(), player->getParent(), "%s succeeded.", player->upHeShe());
 
 		Hooks::run(player, "succeedPickExit", exit, "succeedPickByCreature");
 
@@ -1856,13 +1829,13 @@ int cmdPeek(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	creature = player->getRoom()->findCreature(player, cmnd);
+	creature = player->getParent()->findCreature(player, cmnd);
 	if(!creature || creature == player) {
 		player->print("That person is not here.\n");
 		return(0);
 	}
-	mCreature = creature->getMonster();
-	pCreature = creature->getPlayer();
+	mCreature = creature->getAsMonster();
+	pCreature = creature->getAsPlayer();
 
 	if(player->getClass() == BUILDER) {
 		if(pCreature) {
@@ -1871,7 +1844,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
 		}
 	if(!player->canBuildMonsters() && !player->canBuildObjects())
 			return(cmdNoAuth(player));
-		if(!player->checkBuilder(player->parent_rom)) {
+		if(!player->checkBuilder(player->getUniqueRoomParent())) {
 			player->print("Error: Room number not inside any of your alotted ranges.\n");
 			return(0);
 		}
@@ -1944,7 +1917,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
 
 	if(mrand(1,100) > chance && !player->isStaff()) {
 		creature->print("%M peeked at your inventory.\n", player);
-		broadcast(player->getSock(), creature->getSock(), player->getRoom(),
+		broadcast(player->getSock(), creature->getSock(), player->getRoomParent(),
 			"%M peeked at %N's inventory.", player, creature);
 		player->print("%s noticed!\n", creature->upHeShe());
 	} else {
@@ -2021,7 +1994,7 @@ int peek_bag(Player* player, Player* target, cmd* cmnd, int inv) {
 
 			player->print("You manage to peek inside %N's %s.\n", target, container->name);
 			target->print("%M managed to peek in your %s!\n", player, container->name);
-			broadcast(player->getSock(), target->getSock(), player->getRoom(), "%M peeked at %N's inventory.",
+			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M peeked at %N's inventory.",
 				player, target);
 			player->print("%s noticed!\n", target->upHeShe());
 

@@ -22,6 +22,10 @@
 #include "math.h"
 #include "unique.h"
 
+
+bool Monster::operator <(const Monster& t) const {
+    return(strcmp(this->name, t.name) < 0);
+}
 /*
  * mTypes formatted as case for use in functions below
  *
@@ -143,7 +147,7 @@ void Monster::pulseTick(long t) {
 
 	if(flagIsSet(M_PERMENANT_MONSTER) && (hpTickAmt || mpTickAmt)) {
 		broadcast(hearMobTick, "^y*** %M(L%d,R%s) just ticked. [%d/%dH](+%d) [%d/%dM](+%d)",
-			this, level, room.str().c_str(),
+			this, level, currentLocation.room.str().c_str(),
 			MIN(hp.getCur(),hp.getMax()), hp.getMax(), hpTickAmt,
 			MIN(mp.getCur(),mp.getMax()), mp.getMax(), mpTickAmt);
 	}
@@ -152,7 +156,7 @@ void Monster::pulseTick(long t) {
 	if(!nearEnemy(this) && hp.getCur() >= hp.getMax()/4) {
 		if(flagIsSet(M_WAS_HIDDEN))	// Reset mob-hide
 		{
-			broadcast(NULL, getRoom(), "%M hides in shadows.", this);
+			broadcast(NULL, getRoomParent(), "%M hides in shadows.", this);
 			setFlag(M_HIDDEN);
 			clearFlag(M_WAS_HIDDEN);
 		}
@@ -161,7 +165,7 @@ void Monster::pulseTick(long t) {
 	if(!nearEnemy(this) && hp.getCur() == hp.getMax()) {
 		if(flagIsSet(M_BERSERK)) {
 			strength.setCur(strength.getMax());
-			broadcast(NULL, getRoom(), "^r%M's rage diminishes!", this);
+			broadcast(NULL, getRoomParent(), "^r%M's rage diminishes!", this);
 			clearFlag(M_BERSERK);
 			setFlag(M_WILL_BERSERK);
 		}
@@ -178,36 +182,31 @@ void Monster::pulseTick(long t) {
 // clinics and such to make them more interactive. The chance to cast is random.
 
 void Monster::beneficialCaster() {
-	Player	*player=0;
-	ctag	*cp=0;
 	int		chance=0, heal=0;
 
-	cp = getRoom()->first_ply;
 
-	if(!cp || mp.getCur() < 2)
+	if(mp.getCur() < 2)
 		return;
 
-	while(cp) {
-		player = cp->crt->getPlayer();
-		cp = cp->next_tag;
+	for(Player* ply : getRoomParent()->players) {
 
-		if(	player->flagIsSet(P_DM_INVIS) ||
-			player->flagIsSet(P_HIDDEN) ||
-			player->isEffected("petrification") ||
-			!canSee(player)
+		if(	ply->flagIsSet(P_DM_INVIS) ||
+			ply->flagIsSet(P_HIDDEN) ||
+			ply->isEffected("petrification") ||
+			!canSee(ply)
 		)
 			continue;
 
 		// mobs won'twont cast on people in combat
-		if(player->inCombat())
+		if(ply->inCombat())
 			continue;
-		if(!Faction::willBeneCast(player, primeFaction))
+		if(!Faction::willBeneCast(ply, primeFaction))
 			continue;
 
-		if(player->flagIsSet(P_DOCTOR_KILLER)) {
+		if(ply->flagIsSet(P_DOCTOR_KILLER)) {
 			if(mrand(1,100)<=2) {
-				broadcast(player->getSock(), player->getRoom(), "%M spits, \"Doctor killer!\" at %N.", this, player);
-				player->print("%M spits, \"Doctor killer!\" at you.\n", this);
+				broadcast(ply->getSock(), ply->getRoomParent(), "%M spits, \"Doctor killer!\" at %N.", this, ply);
+				ply->print("%M spits, \"Doctor killer!\" at you.\n", this);
 			}
 			continue;
 		}
@@ -215,20 +214,20 @@ void Monster::beneficialCaster() {
 		if(spellIsKnown(S_SLOW_POISON)) {
 
 			chance = mrand(1,100);
-			if((mp.getCur() >= 8) && (chance < 10) && !player->isEffected("slow-poison") && player->isPoisoned()) {
-				if(player->immuneToPoison())
+			if((mp.getCur() >= 8) && (chance < 10) && !ply->isEffected("slow-poison") && ply->isPoisoned()) {
+				if(ply->immuneToPoison())
 					continue;
 
-				if(player->isEffected("slow-poison"))
+				if(ply->isEffected("slow-poison"))
 					continue;
 
 
-				player->print("%M casts a slow-poison spell on you.\n", this);
-				broadcast(player->getSock(), player->getSock(), getRoom(),
-					"%M casts a slow-poison spell on %N.", this, player);
+				ply->print("%M casts a slow-poison spell on you.\n", this);
+				broadcast(ply->getSock(), ply->getSock(), getRoomParent(),
+					"%M casts a slow-poison spell on %N.", this, ply);
 				mp.decrease(8);
 
-				player->addPermEffect("slow-poison");
+				ply->addPermEffect("slow-poison");
 				continue;
 			}
 		}
@@ -236,34 +235,34 @@ void Monster::beneficialCaster() {
 		if(spellIsKnown(S_CURE_DISEASE)) {
 
 			chance = mrand(1,100);
-			if((mp.getCur() >= 12) && (chance < 10) && (player->isDiseased())) {
-				if(player->immuneToDisease())
+			if((mp.getCur() >= 12) && (chance < 10) && (ply->isDiseased())) {
+				if(ply->immuneToDisease())
 					continue;
 
-				player->print("%M casts a cure-disease spell on you.\n", this);
+				ply->print("%M casts a cure-disease spell on you.\n", this);
 
-				broadcast(player->getSock(), player->getSock(), getRoom(), "%M casts a cure-disease spell on %N.",
-					this, player);
+				broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a cure-disease spell on %N.",
+					this, ply);
 				mp.decrease(12);
 
-				player->cureDisease();
+				ply->cureDisease();
 				continue;
 			}
 		}
 
-		if(player->getClass() == LICH)
+		if(ply->getClass() == LICH)
 			continue;
-		if(player->flagIsSet(P_POISONED_BY_PLAYER) && mrand(1,100) >= 3)
+		if(ply->flagIsSet(P_POISONED_BY_PLAYER) && mrand(1,100) >= 3)
 			continue;
 
 		if(spellIsKnown(S_VIGOR)) {
 			chance = mrand(1,100);
-			if((mp.getCur() >= 2) && (chance <= 5) && (player->hp.getCur() < player->hp.getMax())) {
+			if((mp.getCur() >= 2) && (chance <= 5) && (ply->hp.getCur() < ply->hp.getMax())) {
 
-				player->print("%M casts a vigor spell on you.\n", this);
+				ply->print("%M casts a vigor spell on you.\n", this);
 
-				broadcast(player->getSock(), player->getSock(), getRoom(), "%M casts a vigor spell on %N.",
-					this, player);
+				broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a vigor spell on %N.",
+					this, ply);
 				mp.decrease(2);
 				heal = mrand(1,6) + bonus((int) piety.getCur());
 				heal = MAX(1, heal);
@@ -276,7 +275,7 @@ void Monster::beneficialCaster() {
 					(cClass == PALADIN)
 				)
 					heal += mrand(1,4);
-				player->hp.increase(heal);
+				ply->hp.increase(heal);
 				heal = 0;
 				continue;
 			}
@@ -285,12 +284,12 @@ void Monster::beneficialCaster() {
 		if(spellIsKnown(S_MEND_WOUNDS)) {
 
 			chance = mrand(1,100);
-			if((mp.getCur() >= 4) && (chance <= 5) && (player->hp.getCur() < (player->hp.getMax()/2))) {
+			if((mp.getCur() >= 4) && (chance <= 5) && (ply->hp.getCur() < (ply->hp.getMax()/2))) {
 
-				player->print("%M casts a mend-wounds spell on you.\n", this);
+				ply->print("%M casts a mend-wounds spell on you.\n", this);
 
-				broadcast(player->getSock(), player->getSock(), getRoom(), "%M casts a mend-wounds spell on %N.",
-					this, player);
+				broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a mend-wounds spell on %N.",
+					this, ply);
 				mp.decrease(4);
 				heal = mrand(6,9) + bonus((int) piety.getCur());
 				heal = MAX(1, heal);
@@ -302,7 +301,7 @@ void Monster::beneficialCaster() {
 					(cClass == PALADIN)
 				)
 					heal += mrand(1,4);
-				player->hp.increase(heal);
+				ply->hp.increase(heal);
 				heal = 0;
 				continue;
 			}
@@ -312,14 +311,14 @@ void Monster::beneficialCaster() {
 
 			chance = mrand(1,100);
 			if((mp.getCur() >= 25) && (chance < 3) && (cClass == CLERIC && clan != 12) &&
-			        (player->hp.getCur() < (player->hp.getMax()/4)) && (player->getLevel() >= 5)) {
+			        (ply->hp.getCur() < (ply->hp.getMax()/4)) && (ply->getLevel() >= 5)) {
 
-				player->print("%M casts a heal spell on you.\n", this);
+				ply->print("%M casts a heal spell on you.\n", this);
 
-				broadcast(player->getSock(), player->getSock(), getRoom(), "%M casts a heal spell on %N.", this, player);
+				broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a heal spell on %N.", this, ply);
 				mp.decrease(25);
 
-				player->hp.restore();
+				ply->hp.restore();
 				continue;
 			}
 		}
@@ -335,7 +334,6 @@ int Monster::mobDeathScream() {
 	long	i=0, t=0, n=0;
 	int		death=0;
 	Creature* target=0;
-	ctag*	cp=0;
 
 	i = lasttime[LT_BERSERK].ltime;
 	t = time(0);
@@ -353,14 +351,12 @@ int Monster::mobDeathScream() {
 	}
 
 
-	broadcast(NULL, getRoom(), "%M bellows out a deadly ear-splitting scream!!", this);
+	broadcast(NULL, getRoomParent(), "%M bellows out a deadly ear-splitting scream!!", this);
 
-	cp = getRoom()->first_ply;
-	while(cp) {
-//		death=0;
-		target = cp->crt;
-		cp = cp->next_tag;
-
+	PlayerSet::iterator pIt = getRoomParent()->players.begin();
+	PlayerSet::iterator pEnd = getRoomParent()->players.end();
+	while(pIt != pEnd) {
+	    target = (*pIt++);
 		n = mrand(1,15) + level; // Damage done.
 
 		if(target->isEffected("resist-magic"))
@@ -401,7 +397,6 @@ int Monster::mobDeathScream() {
 // designed for fast wandering, hunting mobs....like inquisitors. -- TC
 
 bool Monster::possibleEnemy() {
-	ctag	*cp=0;
 	bool	possible=0, nodetect=0;
 
 	ASSERTLOG(this);
@@ -413,20 +408,19 @@ bool Monster::possibleEnemy() {
 	)
 		return(0);
 
-	cp = getRoom()->first_ply;
-	while(cp) {
+	for(Player* ply : getRoomParent()->players) {
 		if(flagIsSet(M_AGGRESSIVE))
 			possible = true;
 		if(flagIsSet(M_STEAL_ALWAYS))
 			possible = true;
-		if(flagIsSet(M_AGGRESSIVE_GOOD) && cp->crt->getAlignment() > 99)
+		if(flagIsSet(M_AGGRESSIVE_GOOD) && ply->getAlignment() > 99)
 			possible = true;
-		if(flagIsSet(M_AGGRESSIVE_EVIL) && cp->crt->getAlignment() < -99)
+		if(flagIsSet(M_AGGRESSIVE_EVIL) && ply->getAlignment() < -99)
 			possible = true;
 
-		if(cp->crt->flagIsSet(P_HIDDEN))
+		if(ply->flagIsSet(P_HIDDEN))
 			nodetect = true;
-		if(!canSee(cp->crt))
+		if(!canSee(ply))
 			nodetect = true;
 
 		if(nodetect)
@@ -434,7 +428,6 @@ bool Monster::possibleEnemy() {
 
 		if(possible)
 			return(true);
-		cp = cp->next_tag;
 	}
 
 	return(possible);
@@ -536,7 +529,7 @@ int Monster::castSpell(Creature *target) {
 		enemy = target->name;
 		n = 1;
 		do {
-			temp_ptr = getRoom()->findCreature(this, enemy, n, false);
+			temp_ptr = getRoomParent()->findCreature(this, enemy, n, false);
 			if(!temp_ptr) {
 				// something is seriously wrong here
 				return(12);
@@ -596,7 +589,7 @@ bool Monster::petCaster() {
 	if(t < i)
 		return(false);
 
-	if(mp.getCur() < 2 || mrand(1,100) > 33 || getRoom()->flagIsSet(R_NO_MAGIC))
+	if(mp.getCur() < 2 || mrand(1,100) > 33 || getRoomParent()->flagIsSet(R_NO_MAGIC))
 		return(false);
 
 	if(	spellIsKnown(S_HEAL) &&
@@ -607,7 +600,7 @@ bool Monster::petCaster() {
 		mp.decrease(25);
 
 		master->print("%M casts a heal spell on you.\n", this);
-		broadcast(master->getSock(), getRoom(),
+		broadcast(master->getSock(), getRoomParent(),
 			"%M casts a heal spell on %N.", this, master);
 		master->hp.restore();
 		castDelay(PET_CAST_DELAY);
@@ -620,7 +613,7 @@ bool Monster::petCaster() {
 		mrand(1,100) > 25
 	) {
 		master->print("%M casts a mend-wounds spell on you.\n", this);
-		broadcast((Socket*)NULL, master->getSock(), getRoom(),
+		broadcast((Socket*)NULL, master->getSock(), getRoomParent(),
 			"%M casts a mend-wounds spell on %N.", this, master);
 
 		mp.decrease(4);
@@ -646,7 +639,7 @@ bool Monster::petCaster() {
 		mp.getCur() >= 2
 	) {
 		master->print("%M casts a vigor spell on you.\n", this);
-		broadcast((Socket*)NULL, master->getSock(), getRoom(),
+		broadcast((Socket*)NULL, master->getSock(), getRoomParent(),
 			"%M casts a vigor spell on %N.", this, master);
 		mp.decrease(2);
 
@@ -672,7 +665,7 @@ bool Monster::petCaster() {
 		mp.getCur() >= 4 &&
 		mrand(1,100) > 25
 	) {
-		broadcast(NULL, getRoom(), "%M casts a mend-wounds spell on %sself.", this, himHer());
+		broadcast(NULL, getRoomParent(), "%M casts a mend-wounds spell on %sself.", this, himHer());
 		mp.decrease(4);
 
 		heal = MAX(bonus((int) intelligence.getCur()), bonus((int) piety.getCur())) +
@@ -696,7 +689,7 @@ bool Monster::petCaster() {
 		mp.getCur() >= 2
 	) {
 
-		broadcast(NULL, getRoom(), "%M casts a vigor spell on %sself.", this, himHer());
+		broadcast(NULL, getRoomParent(), "%M casts a vigor spell on %sself.", this, himHer());
 		mp.decrease(2);
 
 		heal = MAX(bonus((int) intelligence.getCur()),bonus((int) piety.getCur())) +
@@ -744,16 +737,12 @@ bool Monster::checkAssist() {
 	}
 
 	if(assist) {
-		Monster *toAssist=0;
-		ctag *ap = getRoom()->first_mon;
-		while(ap) {
-			toAssist = ap->crt->getMonster();
-			if(!toAssist || toAssist == this) {
-				ap = ap->next_tag;
+		for(Monster* mons : getRoomParent()->monsters) {
+			if(mons == this)
 				continue;
-			}
-			if(toAssist->hasEnemy() && willAssist(toAssist)) {
-			    crt = toAssist->getTarget(false);
+
+			if(mons->hasEnemy() && willAssist(mons)) {
+			    crt = mons->getTarget(false);
 
 			    crt = enm_in_group(crt);
 
@@ -763,45 +752,38 @@ bool Monster::checkAssist() {
 					addEnemy(crt, true);
 
 					broadcast(hearMobAggro, "^y*** %s(R:%s) added %s to %s attack list (same room).",
-						name, getRoom()->fullName().c_str(), crt->name, hisHer());
+						name, getRoomParent()->fullName().c_str(), crt->name, hisHer());
 
 					setFlag(M_ALWAYS_ACTIVE);
 					crt = 0;
 				}
 			}
-			ap = ap->next_tag;
 		}
 	}
 
 
 	if(flagIsSet(M_WILL_BE_ASSISTED) || primeFaction != "") {
 		Creature* target=0;
-		Monster* assister=0;
-		ctag*	ast;
 		if(hasEnemy()) {
 			target = getTarget();
 			if(target)
-				target = target->getPlayer();
+				target = target->getAsPlayer();
 			if(target) {
-				ast = target->getRoom()->first_mon;
-				while(ast) {
-					assister = ast->crt->getMonster();
-					ast = ast->next_tag;
-
-					if(!assister || assister == this)
+			    for(Monster* mons : target->getRoomParent()->monsters) {
+					if(mons == this)
 						continue;
-					if(assister->hasEnemy() || !assister->canSee(target))
+					if(mons->hasEnemy() || !mons->canSee(target))
 						continue;
 
-					if(	(assister->flagIsSet(M_WILL_ASSIST) && flagIsSet(M_WILL_BE_ASSISTED)) ||
-						(assister->flagIsSet(M_FACTION_ASSIST) && primeFaction == assister->getPrimeFaction()))
+					if(	(mons->flagIsSet(M_WILL_ASSIST) && flagIsSet(M_WILL_BE_ASSISTED)) ||
+						(mons->flagIsSet(M_FACTION_ASSIST) && primeFaction == mons->getPrimeFaction()))
 					{
-						target->printColor("^r%M quickly assists %N!\n", assister, this);
+						target->printColor("^r%M quickly assists %N!\n", mons, this);
 
-						assister->setFlag(M_ALWAYS_ACTIVE);
+						mons->setFlag(M_ALWAYS_ACTIVE);
 
-						assister->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
-						assister->getMonster()->addEnemy(enm_in_group(target), true);
+						mons->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
+						mons->getAsMonster()->addEnemy(enm_in_group(target), true);
 					}
 				}
 			}
@@ -832,7 +814,7 @@ bool Monster::willAssist(const Monster *victim) const {
 //*********************************************************************
 
 void Monster::checkScavange(long t) {
-	BaseRoom* room = getRoom();
+	BaseRoom* room = getRoomParent();
 	Object* object=0;
 	long i=0;
 
@@ -951,7 +933,7 @@ static int Mobilechance = 30;
 
 int Monster::checkWander(long t) {
 	int n=0, wanderchance=0;
-	BaseRoom* room = getRoom();
+	BaseRoom* room = getRoomParent();
 	long i = lasttime[LT_MON_WANDER].ltime;
 
 			// If we're a mobile monster
@@ -1060,7 +1042,7 @@ int Monster::checkWander(long t) {
 		!isPet() && !flagIsSet(M_DM_FOLLOW)))
 	{
 		if(	// If it's time to wander, and we have no enemey
-			(t - i > 60 && (parent_rom && mrand(1, 100) <= parent_rom->wander.getTraffic()) && !hasEnemy()) ||
+			(t - i > 60 && (inUniqueRoom() && mrand(1, 100) <= getUniqueRoomParent()->wander.getTraffic()) && !hasEnemy()) ||
 			// or we fast-wander if enemies are not nearby
 			(flagIsSet(M_FAST_WANDER) && !nearEnemy()))
 		{
@@ -1117,7 +1099,7 @@ int Monster::checkWander(long t) {
 
 bool Monster::checkEnemyMobs() {
 	int i=0, aggroSize=0;
-	BaseRoom* room = getRoom();
+	BaseRoom* room = getRoomParent();
 
 	for(i = 0 ; i<NUM_ENEMY_MOB ;i++) {
 		if(enemy_mob[i].id != 0) {
@@ -1135,17 +1117,13 @@ bool Monster::checkEnemyMobs() {
 	// We know we have some enemies, now lets see if we have any
 	// enemies in the room with us to attack!
 
-	ctag* cp = room->first_mon;
-	Monster* target = 0;
-	while(cp) {
-		target = cp->crt->getMonster();
-		cp = cp->next_tag;
-		if(target != this && isEnemyMob(target)) {
-			broadcast(NULL, room, "%M yells, \"Die!\"\n%M attacks %N!", this, this, target);
-			addEnemy(target);
-			updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
-			return(true);
-		}
+	for(Monster* mons : room->monsters) {
+        if(mons != this && isEnemyMob(mons)) {
+            broadcast(NULL, room, "%M yells, \"Die!\"\n%M attacks %N!", this, this, mons);
+            addEnemy(mons);
+            updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
+            return(true);
+        }
 	}
 
 	return(false);
