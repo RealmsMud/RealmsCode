@@ -527,7 +527,8 @@ Creature* Creature::findMagicVictim(bstring toFind, int num, SpellData* spellDat
 				return(this);
 			} else {
 				victim = getRoomParent()->findCreature(this, toFind.c_str(), num, true, true);
-				pVictim = victim->getAsPlayer();
+				if(victim)
+					pVictim = victim->getAsPlayer();
 
 				if(!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3)
 						|| (!selfOk && victim == this)) {
