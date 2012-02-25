@@ -341,7 +341,7 @@ public:
     bool skillRestrict(const Creature* creature, bool p = false) const;
     bool alignRestrict(const Creature* creature, bool p = false) const;
     bool sexRestrict(const Creature* creature, bool p = false) const;
-    bool strRestrict(const Creature* creature, bool p = false) const;
+    bool strRestrict(Creature* creature, bool p = false) const;
     bool lawchaoRestrict(const Creature* creature, bool p = false) const;
     bool showAsSame(const Player* player, const Object* Object) const;
     bool isHeavyArmor() const;

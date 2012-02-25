@@ -499,6 +499,9 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 
 
 	if(isPlayer()) {
+		if(getVersion() < "2.46l") {
+			pPlayer->upgradeStats();
+		}
 		if(getVersion() < "2.46k" && knowsSkill("endurance")) {
 			remSkill("endurance");
 			#define P_RUNNING_OLD 56
@@ -2284,12 +2287,38 @@ bool Stat::load(xmlNodePtr curNode) {
 		else if(NODE_NAME(childNode, "Max")) xml::copyToNum(max, childNode);
 		else if(NODE_NAME(childNode, "TempMax")) xml::copyToNum(tmpMax, childNode);
 		else if(NODE_NAME(childNode, "Initial")) xml::copyToNum(initial, childNode);
-
+		else if(NODE_NAME(childNode, "Modifiers")) loadModifiers(childNode);
 		childNode = childNode->next;
 	}
 	return(true);
 }
 
+bool Stat::loadModifiers(xmlNodePtr curNode) {
+	xmlNodePtr childNode = curNode->children;
+	while(childNode) {
+		if(NODE_NAME(childNode, "StatModifier")) {
+			StatModifier* mod = new StatModifier(curNode);
+			if(mod->getName().equals("")) {
+				delete mod;
+			} else {
+				modifiers.insert(ModifierMap::value_type(mod->getName(), mod));
+			}
+			childNode = childNode->next;
+		}
+	}
+	return(true);
+}
+StatModifier::StatModifier(xmlNodePtr curNode) {
+	xmlNodePtr childNode = curNode->children;
+
+	while(childNode) {
+		if(NODE_NAME(childNode, "Name")) xml::copyToBString(name, childNode);
+		else if(NODE_NAME(childNode, "ModAmt")) xml::copyToNum(modAmt, childNode);
+		else if(NODE_NAME(childNode, "ModType")) modType = (ModifierType)xml::toNum<unsigned short>(childNode);
+
+		childNode = childNode->next;
+	}
+}
 //*********************************************************************
 //						loadAttacks
 //*********************************************************************

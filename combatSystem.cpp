@@ -1666,7 +1666,7 @@ bool Creature::negAuraRepel() const {
 //						doResistMagic
 //*********************************************************************
 
-int Creature::doResistMagic(int dmg, const Creature* enemy) {
+int Creature::doResistMagic(int dmg, Creature* enemy) {
 	float resist=0;
 	dmg = MAX(1, dmg);
 

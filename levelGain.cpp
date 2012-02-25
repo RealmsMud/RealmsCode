@@ -242,9 +242,9 @@ void Player::upLevel() {
         focus.setMax(100);
 
 	if(level == 1) {
-		hp.setMax(pClass->getBaseHp());
+		hp.setInitial(pClass->getBaseHp());
 		if(cClass != BERSERKER && cClass != LICH)
-			mp.setMax(pClass->getBaseMp());
+			mp.setInitial(pClass->getBaseMp());
 
 		// OCEANCREST: Dom: HC: hardcore characters get double at level 1
 		//if(isHardcore()) {
@@ -277,43 +277,56 @@ void Player::upLevel() {
 		}
 
 	} else {
-		hp.increaseMax(lGain->getHp());
-
-		if(cClass != BERSERKER && cClass != LICH)
-			mp.increaseMax(lGain->getMp());
+		bstring modName = bstring("Level") + level;
 
 		switchNum = lGain->getStat();
 
+		StatModifier* newMod = new StatModifier(modName, 10, MOD_CUR_MAX);
 		switch(switchNum) {
 		case STR:
-			strength.addCur(10);
-			strength.addMax(10);
+			strength.addModifier(newMod);
 			print("You have become stronger.\n");
 			break;
 		case DEX:
-			dexterity.addCur(10);
-			dexterity.addMax(10);
+			dexterity.addModifier(newMod);
 			print("You have become more dextrous.\n");
 			break;
 		case CON:
-			constitution.addCur(10);
-			constitution.addMax(10);
+			constitution.addModifier(newMod);
 			print("You have become healthier.\n");
 			break;
 		case INT:
-			intelligence.addCur(10);
-			intelligence.addMax(10);
+			intelligence.addModifier(newMod);
 			print("You have become more intelligent.\n");
 			break;
 		case PTY:
-			piety.addCur(10);
-			piety.addMax(10);
+			piety.addModifier(newMod);
 			print("You have become more pious.\n");
 			break;
 		}
 
 		switchNum=0;
 
+		int hpAmt = lGain->getHp();
+		// Make constitution actually worth something
+		if(cClass != LICH) {
+			if(cClass == BERSERKER && constitution.getCur() >= 70)
+				hpAmt++;
+			if(constitution.getCur() >= 130)
+				hpAmt++;
+			if(constitution.getCur() >= 210)
+				hpAmt++;
+			if(constitution.getCur() >= 250)
+				hpAmt++;
+		}
+
+		hp.addModifier(modName, hpAmt, MOD_CUR_MAX );
+//		hp.increaseMax(lGain->getHp());
+
+		if(cClass != BERSERKER && cClass != LICH) {
+			mp.addModifier(modName, lGain->getMp(), MOD_CUR_MAX );
+//			mp.increaseMax(lGain->getMp());
+		}
 
 		switchNum = lGain->getSave();
 
@@ -357,17 +370,7 @@ void Player::upLevel() {
 
 	}
 
-	// Make constitution actually worth something
-	if(cClass != LICH) {
-		if(cClass == BERSERKER && constitution.getCur() >= 70)
-			hp.increaseMax(1);
-		if(constitution.getCur() >= 130)
-			hp.increaseMax(1);
-		if(constitution.getCur() >= 210)
-			hp.increaseMax(1);
-		if(constitution.getCur() >= 250)
-			hp.increaseMax(1);
-	}
+
 
 
 	if(!negativeLevels) {

@@ -429,7 +429,7 @@ public:
 	void pleaseWait(long duration) const;
 	void pleaseWait(int duration) const;
 	void pleaseWait(double duration) const;
-	const char* getStatusStr(int dmg=0) const;
+	const char* getStatusStr(int dmg=0);
 	virtual const bstring customColorize(bstring text, bool caret=true) const = 0;
 
 	void bPrint(bstring toPrint) const;
@@ -548,7 +548,7 @@ public:
 	void delObj(Object* object, bool breakUnique=false, bool removeUnique=false, bool darkmetal=true, bool darkness=true, bool keep=false);
 	void finishDelObj(Object* object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep);
 	int getWeight() const;
-	int maxWeight() const;
+	int maxWeight();
 	bool tooBulky(int n) const;
 	int getTotalBulk() const;
 	int getMaxBulk() const;
@@ -686,7 +686,7 @@ public:
 	bool canEnter(const UniqueRoom* room, bool p=false) const;
 	bool willFit(const Object* object) const;
 	bool canWield(const Object* object, int n) const;
-	bool canFlee() const;
+	bool canFlee();
 	bool canFleeToExit(const Exit *exit, bool skipScary=false, bool blinking=false);
 	Exit* getFleeableExit();
 	BaseRoom* getFleeableRoom(Exit* exit);
@@ -708,7 +708,7 @@ protected:
 	virtual int doDeleteFromRoom(BaseRoom* room, bool delPortal) = 0;
 public:
 
-	int doResistMagic(int dmg, const Creature* enemy=0);
+	int doResistMagic(int dmg, Creature* enemy=0);
 	virtual void pulseTick(long t) = 0;
 
 	// New songs
@@ -966,6 +966,7 @@ public:
 	void saveXml(xmlNodePtr curNode) const;
 	void bug(const char *fmt, ...) const;
 	void validateId();
+	void upgradeStats();
 
 protected:
 // Data
@@ -1249,7 +1250,7 @@ public:
 	Recipe* findRecipe(cmd* cmnd, bstring skill, bool* searchRecipes, Size recipeSize=NO_SIZE, int numIngredients=1) const;
 
 // Stats & Ticking
-	long tickInterval(const Stat stat, bool fastTick, bool deathSickness, bool vampAndDay, const bstring& effectName);
+	long tickInterval(Stat& stat, bool fastTick, bool deathSickness, bool vampAndDay, const bstring& effectName);
 	void pulseTick(long t);
 	int getHpTickBonus() const;
 	int getMpTickBonus() const;
@@ -1271,14 +1272,14 @@ public:
 	bstring getWhoString(bool whois=false, bool color=true, bool ignoreIllusion=false) const;
 	bstring getTimePlayed() const;
 	bstring consider(Creature* creature) const;
-	int displayCreature(Creature* target) const;
+	int displayCreature(Creature* target);
 	void sendPrompt();
 	void defineColors();
 	void setSockColors();
 	void vprint(const char *fmt, va_list ap) const;
 	void escapeText();
 	bstring getClassString() const;
-	void score(const Player* viewer) const;
+	void score(const Player* viewer);
 	void information(const Player* viewer=0, bool online=true);
 	void showAge(const Player* viewer) const;
 	const bstring customColorize(bstring text, bool caret=true) const;
@@ -1320,8 +1321,8 @@ public:
 
 	int computeLuck();
 	int getArmorWeight() const;
-	int getFallBonus() const;
-	int getSneakChance() const;
+	int getFallBonus();
+	int getSneakChance();
 	int getLight() const;
 	int getVision() const;
 

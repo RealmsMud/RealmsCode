@@ -41,10 +41,6 @@ class cmd;
 class ReportedMsdpVariable;
 class MsdpVariable;
 
-// Custom comparison operator to sort by the numeric id instead of standard string comparison
-struct idComp : public std::binary_function<const bstring&, const bstring&, bool> {
-  bool operator() (const bstring& lhs, const bstring& rhs) const;
-};
 
 //// Forward Declaration of PyObject
 //struct _object;

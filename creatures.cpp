@@ -502,7 +502,7 @@ int Creature::getWeight() const {
 // This function returns the maximum weight a player can be allowed to
 // hold in their inventory.
 
-int Creature::maxWeight() const {
+int Creature::maxWeight() {
 	int	n = 20 + strength.getCur();
 	if(cClass == BERSERKER || isCt())
 		n += level*10;

@@ -837,7 +837,7 @@ bool Object::sexRestrict(const Creature* creature, bool p) const {
 //							strRestrict
 //*********************************************************************
 
-bool Object::strRestrict(const Creature* creature, bool p) const {
+bool Object::strRestrict(Creature* creature, bool p) const {
 	if(minStrength > creature->strength.getCur()) {
 		if(!p) creature->checkStaff("You are currently not strong enough to use that.\n");
 		if(!creature->isStaff()) return(true);

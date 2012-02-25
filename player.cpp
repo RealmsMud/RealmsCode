@@ -1435,7 +1435,7 @@ int mprofic(const Creature* player, int index) {
 // This function computes a player's bonus (or susceptibility) to falling
 // while climbing.
 
-int Player::getFallBonus() const {
+int Player::getFallBonus()  {
 	int	fall = bonus((int)dexterity.getCur())*5;
 
 	for(int j=0; j<MAXWEAR; j++)
@@ -1638,7 +1638,7 @@ int Player::computeLuck() {
 //*********************************************************************
 // returns a status string that describes the hp condition of the creature
 
-const char* Creature::getStatusStr(int dmg) const {
+const char* Creature::getStatusStr(int dmg) {
 	int health = hp.getCur() - dmg;
 
 	if(health < 1)
@@ -2256,7 +2256,7 @@ int Player::getVision() const {
 //*********************************************************************
 // determines out percentage chance of being able to sneak
 
-int Player::getSneakChance() const {
+int Player::getSneakChance()  {
 	int sLvl = (int)getSkillLevel("sneak");
 
 	if(isStaff())

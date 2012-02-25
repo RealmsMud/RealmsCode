@@ -76,7 +76,7 @@ int cmdScore(Player* player, cmd* cmnd) {
 // This function shows a player their current hit points, magic points,
 // experience, gold and level.
 
-void Player::score(const Player* viewer) const {
+void Player::score(const Player* viewer) {
 	const EffectInfo* eff=0;
 	int		i=0;
 

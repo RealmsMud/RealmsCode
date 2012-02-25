@@ -19,6 +19,197 @@
 #include "mud.h"
 #include "effects.h"
 
+void checkEffect(Player* player, const bstring& effName, int& stat, bool positive)  {
+	EffectInfo* eff = player->getEffect(effName);
+	if(eff) {
+		int str = eff->getStrength();
+		if(!positive)
+			str *= -1;
+		stat += str;
+	}
+}
+void Player::upgradeStats() {
+	std::cout << "Upgrading stats for " << getName() << std::endl;
+	*this << "Upgrading your stats to the new format.\n";
+
+	loseRage();
+	loseFrenzy();
+	losePray();
+
+	int cStr = strength.getCur(false);
+	int cDex = dexterity.getCur(false);
+	int cCon = constitution.getCur(false);
+	int cInt = intelligence.getCur(false);
+	int cPie = piety.getCur(false);
+
+	checkEffect(this, "strength", cStr, true);
+	checkEffect(this, "enfeeblement", cStr, false);
+	checkEffect(this, "haste", cDex, true);
+	checkEffect(this, "slow", cDex, false);
+
+	checkEffect(this, "fortitude", cCon, true);
+	checkEffect(this, "weakness", cCon, false);
+
+	checkEffect(this, "insight", cInt, true);
+	checkEffect(this, "feeblemind", cInt, false);
+
+	checkEffect(this, "prayer", cPie, true);
+	checkEffect(this, "damnation", cPie, false);
+
+	PlayerClass *pClass = gConfig->classes[getClassString()];
+	LevelGain *lGain = 0;
+	hp.setInitial(pClass->getBaseHp());
+	mp.setInitial(pClass->getBaseMp());
+
+
+
+	for(int l = level ; l > 1 ; l--) {
+		lGain = pClass->getLevelGain(l);
+		if(!lGain)
+			continue;
+		bstring modName = bstring("Level") + l;
+		hp.addModifier(modName, lGain->getHp(), MOD_CUR_MAX );
+
+		if(cClass != BERSERKER && cClass != LICH) {
+			mp.addModifier(modName, lGain->getMp(), MOD_CUR_MAX );
+		}
+		int switchNum = lGain->getStat();
+
+		StatModifier* newMod = new StatModifier(modName, 10, MOD_CUR_MAX);
+		switch(switchNum) {
+		case STR:
+			strength.addModifier(newMod);
+			cStr -= 10;
+			break;
+		case DEX:
+			dexterity.addModifier(newMod);
+			cDex -= 10;
+			break;
+		case CON:
+			constitution.addModifier(newMod);
+			cCon -= 10;
+			break;
+		case INT:
+			intelligence.addModifier(newMod);
+			cInt -= 10;
+			break;
+		case PTY:
+			piety.addModifier(newMod);
+			cPie -= 10;
+			break;
+		}
+	}
+
+	strength.setInitial(cStr);
+	dexterity.setInitial(cDex);
+	constitution.setInitial(cCon);
+	intelligence.setInitial(cInt);
+	piety.setInitial(cPie);
+
+
+	std::cout << "Str: O: " << cStr << " N: " << strength.getCur() << "\n";
+	std::cout << "Dex: O: " << cDex << " N: " << dexterity.getCur() << "\n";
+	std::cout << "Con: O: " << cCon << " N: " << constitution.getCur() << "\n";
+	std::cout << "Int: O: " << cInt << " N: " << intelligence.getCur() << "\n";
+	std::cout << "Pie: O: " << cPie << " N: " << piety.getCur() << "\n";
+
+}
+//#####################################################################
+// Stat Modifier
+//#####################################################################
+StatModifier::StatModifier(bstring pName, int pModAmt, ModifierType pModType) {
+	name = pName;
+	modAmt = pModAmt;
+	modType = pModType;
+}
+void StatModifier::adjust(int adjAmount) {
+	modAmt += adjAmount;
+}
+
+bstring StatModifier::getName() {
+	return(name);
+}
+int StatModifier::getModAmt() {
+	return(modAmt);
+}
+ModifierType StatModifier:: getModType() {
+	return(modType);
+}
+
+void Stat::reCalc() {
+	if(!dirty)
+		return;
+
+	cur = initial;
+	max = initial;
+
+	for(ModifierMap::value_type p : modifiers) {
+		StatModifier *mod = p.second;
+		if(!mod)
+			continue;
+		switch(mod->getModType()) {
+		case MOD_MAX:
+			max += mod->getModAmt();
+			break;
+		case MOD_CUR:
+			cur += mod->getModAmt();
+			break;
+		case MOD_CUR_MAX:
+			max += mod->getModAmt();
+			cur += mod->getModAmt();
+			break;
+		default:
+			break;
+		}
+	}
+	dirty = false;
+}
+StatModifier* Stat::getModifier(bstring name) {
+	ModifierMap::iterator it = modifiers.find(name);
+	if(it == modifiers.end())
+		return(NULL);
+	else
+		return(it->second);
+}
+bool Stat::addModifier(StatModifier* toAdd) {
+	if(!toAdd)
+		return(false);
+
+	if(getModifier(toAdd->getName()) != NULL) {
+		delete toAdd;
+		return(false);
+	}
+
+	modifiers.insert(ModifierMap::value_type(toAdd->getName(), toAdd));
+	dirty = true;
+	return(true);
+}
+bool Stat::addModifier(bstring name, int modAmt, ModifierType modType) {
+	if(getModifier(name) != NULL)
+		return(false);
+	StatModifier* mod = new StatModifier(name, modAmt, modType);
+	modifiers.insert(ModifierMap::value_type(name, mod));
+	dirty = true;
+	return(true);
+}
+
+bool Stat::removeModifier(bstring name) {
+	ModifierMap::iterator it = modifiers.find(name);
+	if(it == modifiers.end())
+		return(false);
+
+	modifiers.erase(it);
+	dirty = true;
+	return(true);
+}
+bool Stat::adjustModifier(bstring name, int modAmt) {
+	StatModifier* mod = getModifier(name);
+	if(!mod)
+		return(false);
+	mod->adjust(modAmt);
+	dirty = true;
+	return(true);
+}
 
 //*********************************************************************
 //						Stat
@@ -121,7 +312,11 @@ int Stat::decrease(int amt) {
 //						getCur
 //*********************************************************************
 
-short Stat::getCur() const { return(cur); }
+short Stat::getCur(bool recalc) {
+	if(recalc)
+		reCalc();
+	return(cur);
+}
 
 //*********************************************************************
 //						getMax
@@ -205,37 +400,39 @@ bool Player::statsAddUp() const {
 	if(flagIsSet(P_PTESTER))
 		return(true);
 
-	int has = strength.getCur() +
-		dexterity.getCur() +
-		constitution.getCur() +
-		intelligence.getCur() +
-		piety.getCur(); 
+	return(true);
 
-	int should = 560 + (level - 1) * 10;
-
-	if(flagIsSet(P_PRAYED))
-		should += cClass == DEATHKNIGHT ? 30 : 50;
-	if(flagIsSet(P_FRENZY))
-		should += 50;
-	if(flagIsSet(P_BERSERKED))
-		should += cClass == CLERIC && deity == ARES ? 30 : 50;
-
-	should += modifyStatTotalByEffect(this, "enfeeblement");
-	should += modifyStatTotalByEffect(this, "slow");
-	should += modifyStatTotalByEffect(this, "weakness");
-	should += modifyStatTotalByEffect(this, "feeblemind");
-	should += modifyStatTotalByEffect(this, "damnation");
-
-	should += modifyStatTotalByEffect(this, "strength");
-	should += modifyStatTotalByEffect(this, "haste");
-	should += modifyStatTotalByEffect(this, "fortitude");
-	should += modifyStatTotalByEffect(this, "insight");
-	should += modifyStatTotalByEffect(this, "prayer");
-
-	// goblins with min intelligence should be given a little leeway
-	if(race == GOBLIN && (should + 10) == has)
-		return(true);
-	return(should == has);
+//	int has = strength.getCur() +
+//		dexterity.getCur() +
+//		constitution.getCur() +
+//		intelligence.getCur() +
+//		piety.getCur();
+//
+//	int should = 560 + (level - 1) * 10;
+//
+//	if(flagIsSet(P_PRAYED))
+//		should += cClass == DEATHKNIGHT ? 30 : 50;
+//	if(flagIsSet(P_FRENZY))
+//		should += 50;
+//	if(flagIsSet(P_BERSERKED))
+//		should += cClass == CLERIC && deity == ARES ? 30 : 50;
+//
+//	should += modifyStatTotalByEffect(this, "enfeeblement");
+//	should += modifyStatTotalByEffect(this, "slow");
+//	should += modifyStatTotalByEffect(this, "weakness");
+//	should += modifyStatTotalByEffect(this, "feeblemind");
+//	should += modifyStatTotalByEffect(this, "damnation");
+//
+//	should += modifyStatTotalByEffect(this, "strength");
+//	should += modifyStatTotalByEffect(this, "haste");
+//	should += modifyStatTotalByEffect(this, "fortitude");
+//	should += modifyStatTotalByEffect(this, "insight");
+//	should += modifyStatTotalByEffect(this, "prayer");
+//
+//	// goblins with min intelligence should be given a little leeway
+//	if(race == GOBLIN && (should + 10) == has)
+//		return(true);
+//	return(should == has);
 }
 
 //*********************************************************************
