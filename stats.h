@@ -28,7 +28,7 @@ enum ModifierType {
 };
 class StatModifier {
 public:
-	StatModifier(bstring pName, int pModAmt, ModifierType pModType);
+	StatModifier(bstring pName, int pModAmt, ModifierType pModType, bool pTemporary = true);
 	StatModifier(xmlNodePtr curNode);
 	void save(xmlNodePtr parentNode);
 
@@ -36,15 +36,17 @@ public:
 	bstring getName();
 	int getModAmt();
 	ModifierType getModType();
+	bool isTemporary();
 
 private:
 	bstring 		name;
 	int				modAmt;
 	ModifierType	modType;
+	bool            temporary;
 
 };
 
-typedef std::map<bstring, StatModifier*, idComp> ModifierMap;
+typedef std::map<bstring, StatModifier*, alphanum_less<bstring> > ModifierMap;
 
 class Stat
 {
@@ -65,12 +67,12 @@ public:
 	int adjust(int amt, bool overMaxOk = false);
 	
 	short getCur(bool recalc = true);
-	short getMax() const;
+	short getMax();
 	short getInitial() const;
 
+	short getPermMax() const;
 
-	void addCur(short a);
-	void addMax(short a);
+	void addInitial(short a);
 	int setMax(short newMax, bool allowZero=false);
 	int setCur(short newCur);
 	void setInitial(short i);
@@ -79,10 +81,12 @@ public:
 
 	void reCalc();
 	bool addModifier(StatModifier* toAdd);
-	bool addModifier(bstring name, int modAmt, ModifierType modType);
+	bool addModifier(bstring name, int modAmt, ModifierType modType, bool temporary = true);
 
 	bool removeModifier(bstring name);
 	bool adjustModifier(bstring name, int modAmt);
+
+	void clearModifiers(bool removePermanent = false);
 
 	StatModifier* getModifier(bstring name);
 protected:

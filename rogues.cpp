@@ -924,7 +924,7 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(player->flagIsSet(P_BERSERKED)) {
+	if(player->isEffected("berserk")) {
 		player->print("You can't shoplift while your going berserk! Go break something!\n");
 		return(0);
 	}

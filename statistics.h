@@ -21,6 +21,24 @@
 #define	_STATISTICS_H
 
 
+class LevelInfo {
+public:
+    LevelInfo(int pHp, int pMp, int pStat, int pSave, time_t pTime);
+    int getHpGain();
+    int getMpGain();
+    int getStatUp();
+    int getSaveGain();
+    time_t getLevelTime();
+private:
+    int hpGain;         // Hp gained this level
+    int mpGain;         // Mp gained this level
+    int statUp;         // Stat increased this level
+    int saveGain;           // Save gained this level
+    time_t levelTime;   // When they first gained this level
+};
+
+typedef std::map<int, LevelInfo*> LevelInfoMap;
+
 class StringStatistic {
 public:
 	StringStatistic();
@@ -47,6 +65,8 @@ public:
 	static bstring damageWith(const Player* player, const Object* weapon);
 private:
 	bstring start;
+	LevelInfoMap levelHistory; // New
+
 	// combat
 	unsigned long numSwings;
 	unsigned long numHits;
@@ -69,6 +89,8 @@ private:
 	// death
 	unsigned long numKills;
 	unsigned long numDeaths;
+	unsigned long expLost; // New
+
 	// other
 	unsigned long numThefts;
 	unsigned long numAttemptedThefts;
@@ -79,8 +101,10 @@ private:
 	unsigned long numFishCaught;
 	unsigned long numItemsCrafted;
 	unsigned long numCombosOpened;
+
 	// most
 	unsigned long mostGroup;
+	StringStatistic mostExperience;
 	StringStatistic mostMonster;
 	StringStatistic mostAttackDamage;
 	StringStatistic mostMagicDamage;
@@ -110,6 +134,8 @@ public:
 	// death
 	void kill();
 	void die();
+	void experienceLost(unsigned long amt);
+
 	// other
 	void steal();
 	void attemptSteal();
@@ -120,11 +146,14 @@ public:
 	void fish();
 	void craft();
 	void combo();
+	void setLevelInfo(int level, LevelInfo* levelInfo);
+
 	// most
 	void group(unsigned long num);
 	void monster(const Monster* monster);
 	void attackDamage(unsigned long num, bstring with);
 	void magicDamage(unsigned long num, bstring with);
+	void experience(unsigned long num, bstring with);
 
 	unsigned long pkRank() const;
 	unsigned long getPkin() const;
@@ -133,6 +162,8 @@ public:
 	void setPkin(unsigned long p);
 	void setPkwon(unsigned long p);
 	void setParent(Player* player);
+
+	LevelInfo* getLevelInfo(int level);
 };
 
 

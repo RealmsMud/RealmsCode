@@ -1080,8 +1080,8 @@ bool Creature::canFlee() {
 
 
 		if(	(cClass == BERSERKER || cClass == CLERIC) &&
-			flagIsSet(P_BERSERKED)
-		) {
+			isEffected("berserK") )
+		{
 			printColor("^rYour lust for battle prevents you from fleeing!\n");
 			return(false);
 		}

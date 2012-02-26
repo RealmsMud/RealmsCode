@@ -95,7 +95,7 @@ public:
 
 
 // Effects
-	bool isEffected(const bstring& effect) const;
+	bool isEffected(const bstring& effect, bool exactMatch = false) const;
 	bool isEffected(EffectInfo* effect) const;
 	bool hasPermEffect(const bstring& effect) const;
 	EffectInfo* getEffect(const bstring& effect) const;

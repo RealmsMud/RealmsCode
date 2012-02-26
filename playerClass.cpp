@@ -239,11 +239,11 @@ bool PlayerClass::setDefaultStats(Player* player) {
 	if(!hasDefaultStats() || !player)
 		return(false);
 
-	player->strength.setMax(baseStrength * 10);
-	player->dexterity.setMax(baseDexterity * 10);
-	player->constitution.setMax(baseConstitution * 10);
-	player->intelligence.setMax(baseIntelligence * 10);
-	player->piety.setMax(basePiety * 10);
+	player->strength.setInitial(baseStrength * 10);
+	player->dexterity.setInitial(baseDexterity * 10);
+	player->constitution.setInitial(baseConstitution * 10);
+	player->intelligence.setInitial(baseIntelligence * 10);
+	player->piety.setInitial(basePiety * 10);
 
 	return(true);
 }

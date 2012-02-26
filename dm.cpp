@@ -1795,14 +1795,14 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
 		break;
 	case S_HASTE:
 		if(check) return(true);
-		if(player->isEffected("haste") || player->flagIsSet(P_FRENZY))
+		if(player->isEffected("haste") || player->isEffected("frenzy"))
 			break;
 		player->addEffect("haste", 180, 30);
 		break;
 	case S_SLOW:
 		if(check) return(true);
-		if(player->flagIsSet(P_FRENZY)) {
-			player->lasttime[LT_FRENZY].interval = 0;
+		if(player->isEffected("frenzy")) {
+		    player->removeEffect("frenzy");
 			break;
 		}
 		if(player->isEffected("slow"))
@@ -1810,18 +1810,18 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
 		player->addEffect("slow", 60, 30);
 		break;
 	case S_STRENGTH:
-		if(player->isEffected("strength") || player->flagIsSet(P_BERSERKED) || (player->getClass() == DEATHKNIGHT && player->flagIsSet(P_PRAYED)))
+		if(player->isEffected("strength") || player->isEffected("berserk") || (player->isEffected("dkpray")))
 			break;
 		player->addEffect("strength", 180, 30);
 		break;
 	case S_ENFEEBLEMENT:
 		if(check) return(true);
-		if(player->flagIsSet(P_BERSERKED)) {
-			player->lasttime[LT_BERSERK].interval = 0;
+		if(player->isEffected("berserk")) {
+		    player->removeEffect("berserk");
 			break;
 		}
-		if(player->getClass() == DEATHKNIGHT && player->flagIsSet(P_PRAYED)) {
-			player->lasttime[LT_PRAY].interval = 0;
+		if(player->isEffected("dkpray")) {
+		    player->removeEffect("dkpray");
 			break;
 		}
 		if(player->isEffected("enfeeblement"))
@@ -1846,14 +1846,14 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
 		break;
 	case S_PRAYER:
 		if(check) return(true);
-		if(player->isEffected("prayer") || (player->getClass() != DEATHKNIGHT && player->flagIsSet(P_PRAYED)))
+		if(player->isEffected("prayer") || player->isEffected("pray"))
 			break;
 		player->addEffect("prayer", 180, 30);
 		break;
 	case S_DAMNATION:
 		if(check) return(true);
-		if(player->getClass() != DEATHKNIGHT && player->flagIsSet(P_PRAYED)) {
-			player->lasttime[LT_PRAY].interval = 0;
+		if(player->isEffected("pray")) {
+		    player->removeEffect("pray");
 			break;
 		}
 		if(player->isEffected("damnation"))
@@ -1864,7 +1864,7 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
 		if(check) return(true);
 		if(player->isUndead())
 			break;
-		if(player->isEffected("fortitude") || player->flagIsSet(P_BERSERKED))
+		if(player->isEffected("fortitude") || player->isEffected("berserk"))
 			break;
 		player->addEffect("fortitude", 180, 30);
 		break;
@@ -1872,8 +1872,8 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
 		if(check) return(true);
 		if(player->isUndead())
 			break;
-		if(player->flagIsSet(P_BERSERKED)) {
-			player->lasttime[LT_BERSERK].interval = 0;
+        if(player->isEffected("berserk")) {
+            player->removeEffect("berserk");
 			break;
 		}
 		if(player->isEffected("weakness"))

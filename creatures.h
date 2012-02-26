@@ -668,7 +668,6 @@ public:
 	virtual int getAdjustedAlignment() const=0;
 	bool checkDimensionalAnchor() const;
 	bool checkStaff(const char *failStr, ...) const;
-	bool underStatSpell() const;
 	int smashInvis(); // *
 	bool unhide(bool show = true); // *
 	void unmist(); // *

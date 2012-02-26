@@ -259,15 +259,7 @@ int Monster::updateCombat() {
 	int resultFlags = NO_CRITICAL | NO_FUMBLE;
 	AttackResult result = getAttackResult(target, NULL, resultFlags);
 
-	if(!isPet()) {
-		if(result == ATTACK_BLOCK)
-			target->checkImprove("block", true);
-		else if(result == ATTACK_HIT || result == ATTACK_CRITICAL) {
-			if(target->ready[SHIELD-1])
-				target->checkImprove("block", false);
-			checkImprove("parry", false);
-		}
-	} else {
+	if(isPet()) {
 		// We are a pet, and we're attacking.  Smash invis of our owner.
 		getMaster()->smashInvis();
 	}
@@ -575,12 +567,12 @@ int Monster::steal(Player *victim) {
 void Monster::berserk() {
 	int num = 0;
 
+	// TODO: Change Berserk into an effect
 	if(flagIsSet(M_BERSERK))
 		return;
 	setFlag(M_BERSERK);
 	clearFlag(M_WILL_BERSERK);
-	num = (int)strength.getCur()+50;
-	strength.setCur(MIN(280, num));
+	strength.addModifier("Berserk", 50, MOD_CUR_MAX);
 
 	broadcast(NULL, getRoomParent(), "^R%M goes berserk!", this);
 	return;
@@ -810,7 +802,7 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
 		chance += bonus((int) constitution.getCur());
 		if(hp.getCur() <= hp.getMax()/3)
 			chance /= 2;	// More vulnerable to poison if weakened severely.
-		if(pCreature && pCreature->flagIsSet(P_BERSERKED))
+		if(pCreature && pCreature->isEffected("berserk"))
 			chance += 15;	// Poison doesn't harm berserk players as much.
 
 		break;

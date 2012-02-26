@@ -368,7 +368,7 @@ int Monster::mobDeathScream() {
 			target->stun(mrand(4, 6));
 
 
-		if(target->pFlagIsSet(P_BERSERKED)) {
+		if(target->isEffected("berserk")) {
 			n = n - (n / 5);
 			n = MAX(1, n);
 		}

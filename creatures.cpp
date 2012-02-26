@@ -727,14 +727,6 @@ bool Player::canUse(Object* object, bool all) {
 			printColor("Using %P is awkward due to its size.\n", object);
 	}
 
-/*
-	if(isEffected("lycanthropy") && flagIsSet(P_FRENZY)) {
-		if(!all)
-			print("You cannot do that while frenzied.\n");
-		return(false);
-	}
-*/
-
 	if(object->getShotsCur() < 1 && object->getType() != WAND) {
 		if(!all)
 			print("You can't. It's broken.\n");

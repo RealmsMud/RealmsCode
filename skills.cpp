@@ -144,7 +144,6 @@ void Creature::checkImprove(const bstring& skillName, bool success, int attribut
 	if(!crSkill)
 		return;
 
-
 	int gainType = crSkill->getGainType();
 	// not a skill!
 	if(gainType == NOT_A_SKILL) {

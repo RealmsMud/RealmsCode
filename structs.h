@@ -77,7 +77,7 @@ public:
 	void	save(xmlNodePtr rootNode, const char* name) const;
 	EffectInfo* getEffect(const bstring& effect) const;
 	EffectInfo* getExactEffect(const bstring& effect) const;
-	bool	isEffected(const bstring& effect) const;
+	bool	isEffected(const bstring& effect, bool exactMatch = false) const;
 	bool	isEffected(EffectInfo* effect) const;
 	//EffectInfo* addEffect(const bstring& effect, MudObject* applier, bool show, MudObject* pParent=0, const Creature* onwer=0, bool keepApplier=false);
 	EffectInfo* addEffect(EffectInfo* newEffect, bool show, MudObject* parent=0, bool keepApplier=false);

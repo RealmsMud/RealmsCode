@@ -953,7 +953,7 @@ int cmdTime(Player* player, cmd* cmnd) {
 				TIMEUNTIL("bard song", LT_SING, player->lasttime[LT_SING].interval);
 			}
 			showAbility(player, "barkskin", "barkskin", LT_BARKSKIN, 600);
-			showAbility(player, "berserk", "berserk", LT_BERSERK, 600, P_BERSERKED);
+			showAbility(player, "berserk", "berserk", LT_BERSERK, 600);
 			showAbility(player, "bite", "bite", LT_PLAYER_BITE, player->lasttime[LT_PLAYER_BITE].interval);
 			showAbility(player, "bloodsac", "blood sacrifice", LT_BLOOD_SACRIFICE, 600, P_BLOODSAC);
 			showAbility(player, "commune", "commune", LT_PRAY, 45);
@@ -964,7 +964,7 @@ int cmdTime(Player* player, cmd* cmnd) {
 			showAbility(player, "smother", "earth-smother", LT_SMOTHER, player->lasttime[LT_SMOTHER].interval);
 			showAbility(player, "enthrall", "enthrall", LT_HYPNOTIZE, player->lasttime[LT_HYPNOTIZE].interval);
 			showAbility(player, "focus", "focus", LT_FOCUS, 600, P_FOCUSED);
-			showAbility(player, "frenzy", "frenzy", LT_FRENZY, 600, P_FRENZY);
+			showAbility(player, "frenzy", "frenzy", LT_FRENZY, 600);
 			showAbility(player, "harm", "harm touch", LT_LAY_HANDS, player->lasttime[LT_LAY_HANDS].interval);
 			showAbility(player, "holyword", "holyword", LT_SMOTHER, player->lasttime[LT_SMOTHER].interval);
 			showAbility(player, "howl", "howl", LT_HOWLS, 240);
@@ -979,7 +979,7 @@ int cmdTime(Player* player, cmd* cmnd) {
 			showAbility(player, "meditate", "meditate", LT_MEDITATE, 90);
 			showAbility(player, "mistbane", "mistbane", LT_FOCUS, 600, P_MISTBANE);
 			showAbility(player, "poison", "poison", LT_DRAIN_LIFE, player->lasttime[LT_DRAIN_LIFE].interval);
-			showAbility(player, "pray", "pray", LT_PRAY, 600, P_PRAYED);
+			showAbility(player, "pray", "pray", LT_PRAY, 600);
 			showAbility(player, "regenerate", "regenerate", LT_REGENERATE, player->lasttime[LT_REGENERATE].interval);
 			showAbility(player, "renounce", "renounce", LT_RENOUNCE, player->lasttime[LT_RENOUNCE].interval);
 			showAbility(player, "touch", "touch of death", LT_TOUCH_OF_DEATH, player->lasttime[LT_TOUCH_OF_DEATH].interval);

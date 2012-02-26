@@ -113,10 +113,10 @@ void Monster::adjust(int buffswitch) {
 
 
 		if(!cClass)
-			hp.setMax(level * monType::getHitdice(type));
+			hp.setInitial(level * monType::getHitdice(type));
 		else {
 			crthp = class_stats[(int) cClass].hpstart + (level*class_stats[(int) cClass].hp);
-			hp.setMax(MAX(crthp, (level * monType::getHitdice(type))));
+			hp.setInitial(MAX(crthp, (level * monType::getHitdice(type))));
 		}
 
 		hp.restore();
@@ -133,7 +133,7 @@ void Monster::adjust(int buffswitch) {
 
 	switch(buff) {
 	case 1:			// Mob is weak.
-		hp.setMax( hp.getMax() - hp.getMax()/5);
+		hp.setInitial( hp.getMax() - hp.getMax()/5);
 		hp.restore();
 		coins.set(coins[GOLD] * 4 / 5, GOLD);
 
@@ -143,7 +143,7 @@ void Monster::adjust(int buffswitch) {
 		damage.setPlus(damage.getPlus() * 9 / 10);
 		break;
 	case 2:			// Mob is stronger
-		hp.setMax( hp.getMax() + hp.getMax()/5);
+		hp.setInitial( hp.getMax() + hp.getMax()/5);
 		hp.restore();
 		coins.set(coins[GOLD] * 6 / 5, GOLD);
 

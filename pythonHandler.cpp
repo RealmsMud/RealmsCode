@@ -224,13 +224,8 @@ BOOST_PYTHON_MODULE(MudObjects)
             .def("wake", &Container::wake);
 
 
-    bp::class_<Stat, boost::noncopyable>("Stat", bp::init<>()).def("addCur",
-			(void(::Stat::*)(short int) )( &::Stat::addCur )
-			, ( bp::arg("a") ) )
-			.def(
-					"addMax"
-					, (void ( ::Stat::* )( short int ) )( &::Stat::addMax)
-			, ( bp::arg("a") ) )
+    bp::class_<Stat, boost::noncopyable>("Stat", bp::init<>())
+
 	.def(
 			"adjust"
 			, (int ( ::Stat::* )( int,bool ) )( &::Stat::adjust )

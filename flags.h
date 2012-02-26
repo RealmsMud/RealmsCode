@@ -184,7 +184,7 @@
 #define P_ALIASING                  50       // DM is aliasing
 #define P_BLOODSAC                  51       // Player in blood sacrifice mode
 #define P_NEWLINE_AFTER_PROMPT      52       // Print NL after prompt
-#define P_BERSERKED                 53       // Player is berserked
+#define P_BERSERKED_OLD             53       // Player is berserked
 #define P_LOG_WATCH                 54       // DM is watching the log channel
 #define P_MISTED                    55       // Player is in mist form
 #define P_NO_AUTO_TARGET			56		 // Don't Automatically target anything you attack if you don't already have a target

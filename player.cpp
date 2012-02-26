@@ -376,8 +376,10 @@ void Player::init() {
 	fixLts();
 
 	if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER)) {
-	    mp.setMax(0);
-	    focus.setMax(100);
+	    mp.setInitial(0);
+	    focus.setInitial(100);
+	    focus.clearModifiers(true);
+        focus.addModifier("UnFocused", -100, MOD_CUR, true);
 	}
 
 	if(!gServer->isRebooting())
@@ -665,11 +667,6 @@ void Player::checkEffectsWearingOff() {
 		}
 	}
 
-	if(flagIsSet(P_FRENZY)) {
-		if(t > LT(this, LT_FRENZY)) {
-			loseFrenzy();
-		}
-	}
 	if(flagIsSet(P_FOCUSED) && (cClass == MONK || staff)) {
 		if(t > LT(this, LT_FOCUS)) {
 			printColor("^cYou lose your concentration.\n");
@@ -715,11 +712,7 @@ void Player::checkEffectsWearingOff() {
 			broadcast(getSock(), getRoomParent(), "%M wakes up.", this);
 		}
 	}
-	if(flagIsSet(P_PRAYED)) {
-		if(t > LT(this, LT_PRAY)) {
-			losePray();
-		}
-	}
+
 	if(flagIsSet(P_BLOODSAC)) {
 		if(t > LT(this, LT_BLOOD_SACRIFICE)) {
 			printColor("^mYour demonic power leaves you.\n");
@@ -740,11 +733,6 @@ void Player::checkEffectsWearingOff() {
 		}
 	}
 
-	if(flagIsSet(P_BERSERKED)) {
-		if(t > LT(this, LT_BERSERK) || (LT(this, LT_BERSERK) - t <=0)) {
-			loseRage();
-		}
-	}
 	if(flagIsSet(P_HIDDEN) && !staff) {
 		if(t - lasttime[LT_HIDE].ltime > 300L) {
 			printColor("^cShifting shadows expose you.\n");
@@ -1194,7 +1182,7 @@ void Player::computeAC() {
 
 // TODO: Possibly add in +armor for higher constitution?
 
-	if(flagIsSet(P_BERSERKED))
+	if(isEffected("berserk"))
 		ac -= 100;
 	if(isEffected("fortitude"))
 		ac += 100;

@@ -1610,6 +1610,7 @@ void Player::gainExperience(Monster* victim, Creature* killer, int expAmount, bo
 	adjustFactionStanding(victim->factions);
 	adjustAlignment(victim);
 	updateMobKills(victim);
+	statistics.experience(expAmount, victim->getName());
 
 	addExperience(expAmount + holidayExp);
 

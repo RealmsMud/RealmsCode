@@ -193,7 +193,6 @@ void doTrain(Player* player) {
 // TODO: Make this function use the information loaded from classes.xml for hp/mp/saves etc
 void Player::upLevel() {
 	int	a=0;
-	int	switchNum=0;
 	bool relevel=false;
 
 	if(isStaff()) {
@@ -238,8 +237,10 @@ void Player::upLevel() {
 		checkWeaponSkillGain();
 	}
 
-    if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER))
-        focus.setMax(100);
+    if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER)) {
+        focus.setInitial(100);
+        focus.addModifier("UnFocused", -100, MOD_CUR, false);
+    }
 
 	if(level == 1) {
 		hp.setInitial(pClass->getBaseHp());
@@ -279,10 +280,45 @@ void Player::upLevel() {
 	} else {
 		bstring modName = bstring("Level") + level;
 
-		switchNum = lGain->getStat();
+		// Calculate gains here
+		int statGain = lGain->getStat();
+        int saveGain = lGain->getSave();
+        int hpAmt = lGain->getHp();
+        int mpAmt = 0;
+        if(cClass != BERSERKER && cClass != LICH) {
+            mpAmt = lGain->getMp();
+        }
 
-		StatModifier* newMod = new StatModifier(modName, 10, MOD_CUR_MAX);
-		switch(switchNum) {
+        LevelInfo* levelInfo = statistics.getLevelInfo(level);
+
+        // If we have no level info, it is either a relevel, or we didn't track it
+        // either way, we'll be recalculating it
+        if(!levelInfo) {
+            // Get the permanent max stat and ignore any temporary stat modifiers for the next calculation
+            int cCon = constitution.getPermMax();
+            // Make constitution actually worth something
+            if(cClass != LICH) {
+                if(cClass == BERSERKER && cCon >= 70)
+                    hpAmt++;
+                if(cCon >= 130)
+                    hpAmt++;
+                if(cCon >= 210)
+                    hpAmt++;
+                if(cCon >= 250)
+                    hpAmt++;
+            }
+        } else  {
+            statGain = levelInfo->getStatUp();
+            saveGain = levelInfo->getSaveGain();
+            hpAmt = levelInfo->getHpGain();
+            mpAmt = levelInfo->getMpGain();
+        }
+
+
+
+        // Add gains here
+		StatModifier* newMod = new StatModifier(modName, 10, MOD_CUR_MAX, false);
+		switch(statGain) {
 		case STR:
 			strength.addModifier(newMod);
 			print("You have become stronger.\n");
@@ -305,32 +341,16 @@ void Player::upLevel() {
 			break;
 		}
 
-		switchNum=0;
-
-		int hpAmt = lGain->getHp();
-		// Make constitution actually worth something
-		if(cClass != LICH) {
-			if(cClass == BERSERKER && constitution.getCur() >= 70)
-				hpAmt++;
-			if(constitution.getCur() >= 130)
-				hpAmt++;
-			if(constitution.getCur() >= 210)
-				hpAmt++;
-			if(constitution.getCur() >= 250)
-				hpAmt++;
-		}
 
 		hp.addModifier(modName, hpAmt, MOD_CUR_MAX );
-//		hp.increaseMax(lGain->getHp());
 
-		if(cClass != BERSERKER && cClass != LICH) {
-			mp.addModifier(modName, lGain->getMp(), MOD_CUR_MAX );
-//			mp.increaseMax(lGain->getMp());
-		}
+        if(cClass != BERSERKER && cClass != LICH) {
+            mp.addModifier(modName, mpAmt, MOD_CUR_MAX );
+        }
 
-		switchNum = lGain->getSave();
 
-		switch (switchNum) {
+
+		switch (saveGain) {
 		case POI:
 			saves[POI].chance += 3;
 			print("You are now more resistant to poison.\n");
@@ -354,7 +374,9 @@ void Player::upLevel() {
 		}
 
 		if(!relevel) {
-			// Saving throw bug fix: Spells and mental saving throws will now be
+	        statistics.setLevelInfo(level, new LevelInfo(hpAmt, mpAmt, statGain, saveGain, time(0)));
+
+		    // Saving throw bug fix: Spells and mental saving throws will now be
 			// properly reset so they can increase like the other ones  -Bane
 			for(a=POI; a<= SPL;a++)
 				saves[a].gained = 0;
@@ -450,8 +472,6 @@ void Player::downLevel() {
 	}
 
 
-	int		switchNum=0;
-
 	PlayerClass *pClass = gConfig->classes[getClassString()];
 	LevelGain *lGain = 0;
 
@@ -460,113 +480,47 @@ void Player::downLevel() {
 		print("Error: Can't find your class!\n");
 		if(!isStaff()) {
 			return;
-			//bstring errorStr = "Error: Can't find class: " + getClassString();
-			//merror(errorStr.c_str(), FATAL);
 		}
 		return;
 	} else {
-		//print("Checking Leveling Information for [%s:%d].\n", pClass->getName().c_str(), level);
 		lGain = pClass->getLevelGain(level);
 		if(!lGain) {
 			return;
-			//print("Error: Can't find any information for your level!\n");
-			//bstring errorStr = "Error: Can't find level info for " + getClassString() + level;
-			//merror(errorStr.c_str(), FATAL);
 		}
 	}
 
+	int saveLost = 0;
+    LevelInfo* levelInfo = statistics.getLevelInfo(level);
+    if(!levelInfo) {
+        saveLost = lGain->getSave();
+    } else {
+        saveLost = levelInfo->getSaveGain();
+    }
+
+	bstring toRemove = bstring("Level") + level;
+
+	hp.removeModifier(toRemove);
+	mp.removeModifier(toRemove);
+
+	if(strength.removeModifier(toRemove))
+        *this << "You have lost strength.\n";
+	if(dexterity.removeModifier(toRemove))
+	    *this << "You have lost dexterity.\n";
+	if(constitution.removeModifier(toRemove))
+	    *this << "You have lost constitution.\n";
+	if(intelligence.removeModifier(toRemove))
+	    *this << "You have lost intelligence.\n";
+	if(piety.removeModifier(toRemove))
+	    *this << "You have lost piety.\n";
+
 	level--;
-
-	hp.decreaseMax(lGain->getHp());
-	if(cClass == FIGHTER && flagIsSet(P_PTESTER))
-		focus.decreaseMax(2);
-	else if(cClass != BERSERKER && cClass != LICH)
-		mp.decreaseMax(lGain->getMp());
-
-//	if(!cClass2) {
-//		hp.decreaseMax(class_stats[(int) cClass].hp);
-//
-//		if(cClass == FIGHTER && flagIsSet(P_PTESTER))
-//			focus.decreaseMax(2);
-//		else if(cClass != BERSERKER && cClass != LICH)
-//			mp.decreaseMax(class_stats[(int) cClass].mp);
-//
-//	} else {
-//		hp.decreaseMax(multiHpMpAdj[getMultiClassID(cClass, cClass2)][0]);
-//		mp.decreaseMax(multiHpMpAdj[getMultiClassID(cClass, cClass2)][1]);
-//	}
-//
-//
-//	if(((level % 2) !=0) && cClass == LICH) // liches lose a HP at every odd level.
-//		hp.decreaseMax(1);
-
-	// Make constitution actually worth something
-	if(cClass != LICH) {
-
-		if(cClass == BERSERKER && constitution.getCur() >= 70)
-			hp.decreaseMax(1);
-
-		if(constitution.getCur() >= 130)
-			hp.decreaseMax(1);
-		if(constitution.getCur() >= 210)
-			hp.decreaseMax(1);
-		if(constitution.getCur() >= 250)
-			hp.decreaseMax(1);
-	}
 
 	hp.restore();
 
 	if(cClass != LICH)
 		mp.restore();
 
-
-//	idx = (level - 1) % 10;
-//	if(!cClass2)
-//		switchNum = level_cycle[(int) cClass][idx];
-//	else
-//		switchNum = multiStatCycle[getMultiClassID(cClass, cClass2)][idx];
-
-	switchNum = lGain->getStat();
-
-	switch (switchNum) {
-	case STR:
-		strength.addCur(-10);
-		strength.addMax(-10);
-		print("You have lost strength.\n");
-		break;
-	case DEX:
-		dexterity.addCur(-10);
-		dexterity.addMax(-10);
-		print("You have lost dexterity.\n");
-		break;
-	case CON:
-		constitution.addCur(-10);
-		constitution.addMax(-10);
-		print("You have lost constitution.\n");
-		break;
-	case INT:
-		intelligence.addCur(-10);
-		intelligence.addMax(-10);
-		print("You have lost intelligence.\n");
-		break;
-	case PTY:
-		piety.addCur(-10);
-		piety.addMax(-10);
-		print("You have lost piety.\n");
-		break;
-	}
-
-
-	//	if(isCt() || flagIsSet(P_PTESTER)) {
-//	idx = (level - 1) % 10;
-//	if(!cClass2)
-//		switchNum = saving_throw_cycle[(int) cClass][idx];
-//	else
-//		switchNum = multiSaveCycle[getMultiClassID(cClass, cClass2)][idx];
-
-	switchNum = lGain->getSave();
-
-	switch (switchNum) {
+	switch (saveLost) {
 	case POI:
 		saves[POI].chance -= 3;
 		if(!negativeLevels)
@@ -697,32 +651,6 @@ int cmdTrain(Player* player, cmd* cmnd) {
 		player->print("You just trained! You must leave the room and re-enter.\n");
 		return(0);
 	}
-
-
-	// TODO: Remove the need to do this by making stats keep track of base, every increase, and
-	// items/spells modifying them
-	if(cmnd->num >= 2 && !strcmp(cmnd->str[1], "dispel")) {
-		player->print("Dispelling stat-modifying magic and abilities.\nPlease wait one moment.\n");
-		player->removeEffect("strength");
-		player->removeEffect("haste");
-		player->removeEffect("fortitude");
-		player->removeEffect("insight");
-		player->removeEffect("prayer");
-
-		player->loseRage();
-		player->loseFrenzy();
-		player->losePray();
-
-		return(0);
-	}
-
-	if (player->underStatSpell() || player->flagIsSet(P_BERSERKED) || player->flagIsSet(P_FRENZY)
-            || player->flagIsSet(P_PRAYED)) {
-        player->print("You cannot train while under the effects of stat-modifying magic or abilities.\n");
-        player->print("Type \"train dispel\" to dispel this magic.\n");
-        return (0);
-    }
-
 
 
 	if(!player->flagIsSet(P_FREE_TRAIN)) {

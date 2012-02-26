@@ -334,11 +334,11 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	target->setLevel(MIN(level, skLevel+1));
 	level--;
-	target->strength.setMax(conjureStats[buff][level].str*10);
-	target->dexterity.setMax(conjureStats[buff][level].dex*10);
-	target->constitution.setMax(conjureStats[buff][level].con*10);
-	target->intelligence.setMax(conjureStats[buff][level].intel*10);
-	target->piety.setMax(conjureStats[buff][level].pie*10);
+	target->strength.setInitial(conjureStats[buff][level].str*10);
+	target->dexterity.setInitial(conjureStats[buff][level].dex*10);
+	target->constitution.setInitial(conjureStats[buff][level].con*10);
+	target->intelligence.setInitial(conjureStats[buff][level].intel*10);
+	target->piety.setInitial(conjureStats[buff][level].pie*10);
 
 	target->strength.restore();
 	target->dexterity.restore();
@@ -362,13 +362,13 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	hphigh = conjureStats[buff][level].hp;
 	hplow = (conjureStats[buff][level].hp * hp_percent) / 10;
-	target->hp.setMax(mrand(hplow, hphigh));
+	target->hp.setInitial(mrand(hplow, hphigh));
 	target->hp.restore();
 
 	if(!combatPet) {
 		mphigh = conjureStats[buff][level].mp;
 		mplow = (conjureStats[buff][level].mp * mp_percent) / 10;
-		target->mp.setMax(MAX(10,mrand(mplow, mphigh)));
+		target->mp.setInitial(MAX(10,mrand(mplow, mphigh)));
 		target->mp.restore();
 	}
 

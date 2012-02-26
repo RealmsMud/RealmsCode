@@ -555,8 +555,8 @@ bool Effect::objectCanBestowEffect(const bstring& effect) {
 //						isEffected
 //*********************************************************************
 
-bool MudObject::isEffected(const bstring& effect) const {
-	return(effects.isEffected(effect));
+bool MudObject::isEffected(const bstring& effect, bool exactMatch) const {
+	return(effects.isEffected(effect, exactMatch));
 }
 
 bool MudObject::isEffected(EffectInfo* effect) const {
@@ -566,10 +566,10 @@ bool MudObject::isEffected(EffectInfo* effect) const {
 // We are effected if we have an effect with this name, or an effect with a base effect
 // of this name
 
-bool Effects::isEffected(const bstring& effect) const {
+bool Effects::isEffected(const bstring& effect, bool exactMatch) const {
 	//EffectList list;
 	for(EffectInfo* eff : effectList) {
-		if(eff->getName() == effect || eff->hasBaseEffect(effect))
+		if(eff->getName() == effect || (!exactMatch && eff->hasBaseEffect(effect)))
 			return(true);
 	}
 

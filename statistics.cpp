@@ -20,6 +20,41 @@
 #include "commands.h"
 
 //*********************************************************************
+//                      LevelInfo
+//*********************************************************************
+
+LevelInfo::LevelInfo(int pHp, int pMp, int pStat, int pSave, time_t pTime) {
+    hpGain = pHp;
+    mpGain = pMp;
+    statUp = pStat;
+    saveGain = pSave;
+    levelTime = pTime;
+}
+
+void Statistics::setLevelInfo(int level, LevelInfo* levelInfo) {
+    LevelInfoMap::iterator it = levelHistory.find(level);
+    if(it != levelHistory.end()) {
+        levelHistory.erase(it);
+    }
+
+    levelHistory.insert(LevelInfoMap::value_type(level, levelInfo));
+}
+
+LevelInfo* Statistics::getLevelInfo(int level) {
+    LevelInfoMap::iterator it = levelHistory.find(level);
+    if(it == levelHistory.end())
+        return(NULL);
+
+    return(it->second);
+}
+
+int LevelInfo::getHpGain() { return(hpGain); }
+int LevelInfo::getMpGain() { return(mpGain); }
+int LevelInfo::getStatUp() { return(statUp); }
+int LevelInfo::getSaveGain() { return(saveGain); }
+time_t LevelInfo::getLevelTime() { return(levelTime); }
+
+//*********************************************************************
 //						StringStatistic
 //*********************************************************************
 
@@ -195,13 +230,17 @@ void Statistics::display(const Player* viewer, bool death) {
 	)
 		oStr << "\n^WMost / Largest^x\n";
 	if(mostGroup)
-		oStr << "  Largest group:             ^C" << mostGroup << "^x\n";
+		oStr << "  Largest group:               ^C" << mostGroup << "^x\n";
 	if(mostMonster.value)
-		oStr << "  Toughest monster killed:   ^C" << mostMonster.name << "^x\n";
+		oStr << "  Toughest monster killed:     ^C" << mostMonster.name << "^x\n";
+	if(mostExperience.value)
+	    oStr << "  Highest experience gained:   ^C" << mostExperience.value << " from " << mostExperience.name << "^x\n";
 	if(mostAttackDamage.value)
-		oStr << "  Most damage in one attack: ^C" << mostAttackDamage.value << " with " << mostAttackDamage.name << "^x\n";
+		oStr << "  Most damage in one attack:   ^C" << mostAttackDamage.value << " with " << mostAttackDamage.name << "^x\n";
 	if(mostMagicDamage.value)
-		oStr << "  Most damage in one spell:  ^C" << mostMagicDamage.value << " with " << mostMagicDamage.name << "^x\n";
+		oStr << "  Most damage in one spell:    ^C" << mostMagicDamage.value << " with " << mostMagicDamage.name << "^x\n";
+    if(expLost)
+        oStr << "  Experience Lost:             ^C" << expLost << "^x\n";
 
 
 	int rooms = parent->numDiscoveredRooms();
@@ -483,6 +522,12 @@ void Statistics::kill() { if(track) numKills++; }
 void Statistics::die() { if(track) numDeaths++; }
 
 //*********************************************************************
+//                      experienceLost
+//*********************************************************************
+
+void Statistics::experienceLost(unsigned long amt) { if (track) expLost += amt; }
+
+//*********************************************************************
 //						steal
 //*********************************************************************
 
@@ -568,6 +613,14 @@ void Statistics::monster(const Monster* monster) {
 	if(!track || monster->isPet())
 		return;
 	mostMonster.update(calcToughness(monster), monster->name);
+}
+
+//*********************************************************************
+//                      experience
+//*********************************************************************
+
+void Statistics::experience(unsigned long num, bstring with) {
+    if(track) mostExperience.update(num, with);
 }
 
 //*********************************************************************
