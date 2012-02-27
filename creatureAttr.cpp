@@ -219,6 +219,11 @@ void Creature::setClass(unsigned short c) {
 				getAsPlayer()->makeWerewolf();
 		}
 	}
+	if(c == LICH) {
+	    // Liches don't get hp bonus for con
+	    constitution.setInfluences(NULL);
+	    hp.setInfluencedBy(NULL);
+	}
 
 	cClass = c;
 }
