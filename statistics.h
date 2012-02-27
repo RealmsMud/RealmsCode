@@ -61,7 +61,7 @@ public:
 	bstring getTime();
 	unsigned long pkDemographics() const;
 
-	static unsigned long calcToughness(const Creature* target);
+	static unsigned long calcToughness(Creature* target);
 	static bstring damageWith(const Player* player, const Object* weapon);
 private:
 	bstring start;
@@ -150,7 +150,7 @@ public:
 
 	// most
 	void group(unsigned long num);
-	void monster(const Monster* monster);
+	void monster(Monster* monster);
 	void attackDamage(unsigned long num, bstring with);
 	void magicDamage(unsigned long num, bstring with);
 	void experience(unsigned long num, bstring with);

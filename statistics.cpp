@@ -282,7 +282,7 @@ void Statistics::display(const Player* viewer, bool death) {
 //						calcToughness
 //*********************************************************************
 
-unsigned long Statistics::calcToughness(const Creature* target) {
+unsigned long Statistics::calcToughness(Creature* target) {
 	unsigned long t = 0;
 
 	if(target->isMonster()) {
@@ -609,7 +609,7 @@ void Statistics::group(unsigned long num) { if(track) mostGroup = MAX(num, mostG
 //						monster
 //*********************************************************************
 
-void Statistics::monster(const Monster* monster) {
+void Statistics::monster(Monster* monster) {
 	if(!track || monster->isPet())
 		return;
 	mostMonster.update(calcToughness(monster), monster->name);

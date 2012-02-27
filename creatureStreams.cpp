@@ -81,6 +81,10 @@ Streamable& Streamable::operator<< (const int num) {
 	doPrint(num);
 	return(*this);
 }
+Streamable& Streamable::operator<< (Stat& stat) {
+    doPrint(stat.toString());
+    return(*this);
+}
 void Streamable::setColorOn() {
     streamColor = true;
 }

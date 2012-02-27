@@ -61,17 +61,6 @@ void Player::upgradeStats() {
 
 	int hpAmt = pClass->getBaseHp();
 
-    if(cClass != LICH) {
-        if(cClass == BERSERKER && cCon >= 70)
-            hpAmt++;
-        if(cCon >= 130)
-            hpAmt++;
-        if(cCon >= 210)
-            hpAmt++;
-        if(cCon >= 250)
-            hpAmt++;
-    }
-
 	hp.setInitial(hpAmt);
 	mp.setInitial(pClass->getBaseMp());
 
@@ -83,17 +72,6 @@ void Player::upgradeStats() {
 			continue;
 		bstring modName = bstring("Level") + l;
 		hpAmt = lGain->getHp();
-        // Make constitution actually worth something
-        if(cClass != LICH) {
-            if(cClass == BERSERKER && cCon >= 70)
-                hpAmt++;
-            if(cCon >= 130)
-                hpAmt++;
-            if(cCon >= 210)
-                hpAmt++;
-            if(cCon >= 250)
-                hpAmt++;
-        }
 		hp.addModifier(modName, hpAmt, MOD_CUR_MAX );
 
 		if(cClass != BERSERKER && cClass != LICH) {
@@ -168,6 +146,10 @@ void StatModifier::adjust(int adjAmount) {
 	modAmt += adjAmount;
 }
 
+void StatModifier::set(int newAmt) {
+    modAmt = newAmt;
+}
+
 bstring StatModifier::getName() {
 	return(name);
 }
@@ -181,6 +163,9 @@ ModifierType StatModifier:: getModType() {
 void Stat::reCalc() {
 	if(!dirty)
 		return;
+
+    if(influencedBy && name.equals("Hp"))
+        setModifier("ConBonus", 0);
 
 	cur = initial;
 	max = initial;
@@ -204,6 +189,22 @@ void Stat::reCalc() {
 			break;
 		}
 	}
+
+
+    if(influencedBy && name.equals("Hp")) {
+        const double a = 0.000002102555823;
+        const double b = 0.001366762953;
+        const double c = 0.9826212171;
+        const int x = influencedBy->getCur();
+        double percentage = ((a*x*x)+(b*x)+c);
+        percentage = tMAX<double>(1.0, percentage)-1.0;
+        int conBonus = max * percentage;
+        setModifier("ConBonus", conBonus);
+
+        cur += conBonus;
+        max += conBonus;
+    }
+
 	dirty = false;
 }
 StatModifier* Stat::getModifier(bstring name) {
@@ -213,6 +214,58 @@ StatModifier* Stat::getModifier(bstring name) {
 	else
 		return(it->second);
 }
+Stat* Creature::getStat(bstring statName) {
+    if(statName == "strength") {
+        return(&strength);
+    } else if(statName == "dexterity") {
+        return(&dexterity);
+    } else if(statName == "constitution") {
+        return(&constitution);
+    } else if(statName == "intelligence") {
+        return(&intelligence);
+    } else if(statName == "piety") {
+        return(&piety);
+    } else if(statName == "hp") {
+        return(&hp);
+    } else if(statName == "mp") {
+        return(&mp);
+    } else if(statName == "focus" && isPlayer()) {
+        return(&getAsPlayer()->focus);
+    } else {
+        return(NULL);
+    }
+
+}
+
+bool Creature::addStatModifier(bstring statName, bstring modifierName, int modAmt, ModifierType modType, bool temporary) {
+    return(addStatModifier(statName, new StatModifier(modifierName, modAmt, modType, temporary)));
+}
+bool Creature::addStatModifier(bstring statName, StatModifier* statModifier) {
+    Stat* stat = getStat(statName);
+
+    if(!stat) {
+        delete(statModifier);
+        return(false);
+    }
+
+    stat->addModifier(statModifier);
+    if(statName.equals("constitution"))
+        hp.setDirty();
+    else if(statName.equals("intelligence"))
+        mp.setDirty();
+
+    return(true);
+}
+bool Creature::setStatDirty(bstring statName) {
+    Stat* stat = getStat(statName);
+
+    if(!stat)
+        return(false);
+
+    stat->setDirty();
+    return(true);
+}
+
 bool Stat::addModifier(StatModifier* toAdd) {
 	if(!toAdd)
 		return(false);
@@ -222,18 +275,19 @@ bool Stat::addModifier(StatModifier* toAdd) {
 		delete toAdd;
 		return(false);
 	}
-
 	modifiers.insert(ModifierMap::value_type(toAdd->getName(), toAdd));
-	dirty = true;
+	setDirty();
 	return(true);
+}
+void Stat::setDirty() {
+    dirty = true;
+    if(influences)
+        influences->setDirty();
 }
 bool Stat::addModifier(bstring name, int modAmt, ModifierType modType, bool temporary) {
 	if(getModifier(name) != NULL)
 		return(false);
-	StatModifier* mod = new StatModifier(name, modAmt, modType);
-	modifiers.insert(ModifierMap::value_type(name, mod));
-	dirty = true;
-	return(true);
+	return(addModifier(new StatModifier(name, modAmt, modType, temporary)));
 }
 
 bool Stat::removeModifier(bstring name) {
@@ -242,10 +296,10 @@ bool Stat::removeModifier(bstring name) {
 		return(false);
 
 	modifiers.erase(it);
-	dirty = true;
+	setDirty();
 	return(true);
 }
-void Stat::clearModifiers(bool removePermanent = false) {
+void Stat::clearModifiers(bool removePermanent) {
     ModifierMap::iterator it = modifiers.begin();
 
     while(it != modifiers.end()) {
@@ -262,8 +316,20 @@ bool Stat::adjustModifier(bstring name, int modAmt) {
 		modifiers.insert(ModifierMap::value_type(name, mod));
 	}
 	mod->adjust(modAmt);
-	dirty = true;
+	setDirty();
 	return(true);
+}
+
+bool Stat::setModifier(bstring name, int newAmt) {
+    StatModifier* mod = getModifier(name);
+    if(!mod) {
+        mod = new StatModifier(name, 0, MOD_CUR);
+        modifiers.insert(ModifierMap::value_type(name, mod));
+    }
+    mod->set(newAmt);
+    setDirty();
+    return(true);
+
 }
 
 //*********************************************************************
@@ -271,10 +337,16 @@ bool Stat::adjustModifier(bstring name, int modAmt) {
 //*********************************************************************
 
 Stat::Stat() {
-	 cur = max = tmpMax = initial = 0; 
+	 cur = max = tmpMax = initial = 0;
+	 dirty = true;
+	 influences = influencedBy = 0;
 }
 
 Stat::~Stat() {
+}
+
+void Stat::setName(bstring pName) {
+    name = pName;
 }
 
 //*********************************************************************
@@ -344,7 +416,7 @@ int Stat::increase(int amt, bool overMaxOk) {
 	else
 		increaseAmt = MAX(0, MIN(amt, getMax() - getCur()));
 		
-	adjustModifier("Damage", -increaseAmt);
+	adjustModifier("CurModifier", increaseAmt);
 	
 	return(increaseAmt);
 }
@@ -360,7 +432,7 @@ int Stat::decrease(int amt) {
 	
 	int decreaseAmt = MIN(amt, getCur());
 	
-	adjustModifier("Damage", -decreaseAmt);
+	adjustModifier("CurModifier", -decreaseAmt);
 	
 	return(decreaseAmt);
 }
@@ -434,8 +506,49 @@ int Stat::setMax(short newMax, bool allowZero) {
 int Stat::setCur(short newCur) {
 	newCur = MIN(newCur, max);
 	int modCur = newCur - getCur();
-	adjustModifier("Damage", modCur);
+	adjustModifier("CurModifier", modCur);
 	return(cur);
+}
+
+void Stat::setInfluences(Stat* pInfluences) {
+    influences = pInfluences;
+}
+void Stat::setInfluencedBy(Stat* pInfluencedBy) {
+    influencedBy = pInfluencedBy;
+}
+
+std::ostream& operator<<(std::ostream& out, Stat& stat) {
+    out << stat.toString();
+    return(out);
+}
+
+bstring Stat::toString() {
+    std::ostringstream oStr;
+
+    oStr << "^C" << name << ": ^c" << getCur() << "/" << getMax() << "(" << getInitial() << ")\n";
+    int i = 1;
+    for(ModifierMap::value_type p : modifiers) {
+        StatModifier* mod = p.second;
+        oStr << "\t" << i++ << ") ";
+        oStr << "^C" << mod->getName() << "^c ";
+        switch(mod->getModType()) {
+            case MOD_CUR:
+                oStr << "CUR ";
+                break;
+            case MOD_MAX:
+                oStr << "MAX ";
+                break;
+            case MOD_CUR_MAX:
+                oStr << "CUR+MAX ";
+                break;
+            default:
+                oStr << "UNKNOWN ";
+        }
+        if(mod->getModAmt() >= 0)
+            oStr << "+";
+        oStr << mod->getModAmt() << "\n";
+    }
+    return(oStr.str());
 }
 
 //*********************************************************************
@@ -486,8 +599,6 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 	Stat* stat=0;
 	Player* pThis = getAsPlayer();
 	bool good;
-	int hpMod = 0;
-	int mpMod = 0;
 
 	if(effect->getName() == "strength") {
 		if(pThis) {
@@ -513,11 +624,9 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 		if(pThis && isEffected("confusion"))
 			pThis->removeEffect("confusion");
 		good = true;
-		mpMod = (int)(level * 1.5);
 		stat = &intelligence;
 	} else if(effect->getName() == "feeblemind") {
 		good = false;
-		mpMod = (int)(level * -1.5);
 		stat = &intelligence;
 	} else if(effect->getName() == "prayer") {
 		if(isEffected("pray"))
@@ -529,11 +638,9 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 		stat = &piety;
 	} else if(effect->getName() == "fortitude") {
 		good = true;
-		hpMod = (int)(level * 1.5);
 		stat = &constitution;
 	} else if(effect->getName() == "weakness") {
 		good = false;
-		hpMod = (int)(level * -1.5);
 		stat = &constitution;
 	} else if(effect->getName() == "berserk") {
 	    good = true;
@@ -560,18 +667,10 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 
 	// Can't go outside the range
 	addAmt = tMIN(addAmt, MAX_STAT_NUM - stat->getCur());
-	addAmt = tMAX(addAmt, stat->getCur() - MIN_STAT_NUM);
+	addAmt = tMAX(addAmt, MIN_STAT_NUM - stat->getCur());
 	
 	effect->setStrength(addAmt);
 	stat->addModifier(effect->getName(), addAmt, MOD_CUR_MAX);
-
-	if(hpMod) {
-	    hp.addModifier(effect->getName(), hpMod, MOD_CUR_MAX);
-		effect->setExtra(hpMod);
-	} else if(mpMod) {
-	    mp.addModifier(effect->getName(), mpMod, MOD_CUR_MAX);
-		effect->setExtra(mpMod);
-	}
 
 	if(pThis) {
 		pThis->computeAttackPower();
@@ -587,33 +686,24 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 bool Creature::remStatModEffect(EffectInfo* effect) {
 	Stat* stat=0;
 	Player* pThis = getAsPlayer();
-	int hpMod = 0;
-	int mpMod = 0;
 
 	if(effect->getName() == "strength" || effect->getName() == "enfeeblement") {
 		stat = &strength;
 	} else if(effect->getName() == "haste" || effect->getName() == "slow") {
 		stat = &dexterity;
 	} else if(effect->getName() == "insight" || effect->getName() == "feeblemind") {
-		mpMod = -1 * effect->getExtra();
 		stat = &intelligence;
 	} else if(effect->getName() == "prayer" || effect->getName() == "damnation") {
 		stat = &piety;
 	} else if(effect->getName() == "fortitude" || effect->getName() == "weakness") {
-		hpMod = -1 * effect->getExtra();
 		stat = &constitution;
 	} else {
 		print("Unknown stat effect: %s\n", effect->getName().c_str());
 		return(false);
 	}
 
-	stat->adjust(effect->getStrength() * -1);
+	stat->removeModifier(effect->getName());
 
-	if(hpMod) {
-	    hp.removeModifier(effect->getName());
-	} else if(mpMod) {
-        mp.removeModifier(effect->getName());
-	}
 
 	if(pThis) {
 		pThis->computeAttackPower();
@@ -622,3 +712,4 @@ bool Creature::remStatModEffect(EffectInfo* effect) {
 	}
 	return(true);
 }
+

@@ -120,6 +120,7 @@ void Player::init() {
 		cClass = CARETAKER;
 
 
+
 	/* change this later
 	   strength.getCur() = strength.max;
 	dexterity.getCur() = dexterity.max;
@@ -2144,10 +2145,10 @@ void Creature::checkSkillsGain(std::list<SkillGain*>::const_iterator begin, std:
 //*********************************************************************
 
 void Player::loseRage() {
-	if(!flagIsSet(P_BERSERKED))
+	if(!flagIsSet(P_BERSERKED_OLD))
 		return;
 	printColor("^rYour rage diminishes.^x\n");
-	clearFlag(P_BERSERKED);
+	clearFlag(P_BERSERKED_OLD);
 
 	if(cClass == CLERIC && deity == ARES)
 		strength.decrease(30);

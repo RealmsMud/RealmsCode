@@ -102,26 +102,26 @@ BOOST_PYTHON_MODULE(mud)
 
 		}
 
-		{ //::MudObject::isEffected
+        { //::MudObject::isEffected
 
-			typedef bool (::MudObject::*isEffected_function_type)(
-					::bstring const &) const;
+            typedef bool ( ::MudObject::*isEffected_function_type )( ::bstring const &,bool ) const;
 
-			MudObject_exposer.def("isEffected",
-					isEffected_function_type(&::MudObject::isEffected),
-					(bp::arg("effect")));
+            MudObject_exposer.def(
+                "isEffected"
+                , isEffected_function_type( &::MudObject::isEffected )
+                , ( bp::arg("effect"), bp::arg("exactMatch")=(bool)(false) ) );
 
-		}
-		{ //::MudObject::isEffected
+        }
+        { //::MudObject::isEffected
 
-			typedef bool (::MudObject::*isEffected_function_type)(
-					::EffectInfo *) const;
+            typedef bool ( ::MudObject::*isEffected_function_type )( ::EffectInfo * ) const;
 
-			MudObject_exposer.def("isEffected",
-					isEffected_function_type(&::MudObject::isEffected),
-					(bp::arg("effect")));
+            MudObject_exposer.def(
+                "isEffected"
+                , isEffected_function_type( &::MudObject::isEffected )
+                , ( bp::arg("effect") ) );
 
-		}
+        }
 		/*
 		 { //::MudObject::isEffected
 

@@ -1119,6 +1119,8 @@ void getPermObj(Object* object) {
 	object->setFlag(O_PERM_INV_ITEM);
 	object->clearFlag(O_PERM_ITEM);
 
+	if(!object->parent_room)
+	    return;
 	room = object->parent_room->getAsUniqueRoom();
 	if(!room)
 		return;

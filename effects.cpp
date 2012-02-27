@@ -433,7 +433,11 @@ EffectInfo* Effects::addEffect(const bstring& effect, long duration, int strengt
 		return(null);
 	EffectInfo* newEffect = new EffectInfo(effect, time(0), duration, strength, pParent, owner);
 
-	newEffect->compute(applier);
+	if(!newEffect->compute(applier)) {
+	    delete newEffect;
+	    return(NULL);
+	}
+
 
 	if(strength != -2)
 		newEffect->setStrength(strength);

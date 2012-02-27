@@ -517,7 +517,7 @@ public:
 	bool doesntBreathe() const;
 	bool immuneCriticals() const; // *
 	bool isUndead() const; // *
-	bool hasMp() const;
+	bool hasMp();
 	bool isAntiGradius() const;
 	bool countForWeightTrap() const;
 	bool isRace(int r) const; // *
@@ -675,6 +675,11 @@ public:
 	void fixLts();
 	void doDispelMagic(int num=-1);
 	bool changeSize(int oldStrength, int newStrength, bool enlarge);
+
+	bool addStatModifier(bstring statName, bstring modifierName, int modAmt, ModifierType modType, bool temporary = true);
+	bool addStatModifier(bstring statName, StatModifier* statModifier);
+	bool setStatDirty(bstring statName);
+	Stat* getStat(bstring statName);
 
 	// these handle total invisibility, no concealment (ie, being hidden)
 	bool canSee(const BaseRoom* room, bool p=false) const;

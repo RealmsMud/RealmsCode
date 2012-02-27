@@ -353,4 +353,6 @@ int dmFifo(Player* player, cmd* cmnd);
 int cmdForum(Player* player, cmd* cmnd);
 
 
+int dmStatDetail(Player* player, cmd* cmnd);
+
 #endif /*COMMANDS_H_*/

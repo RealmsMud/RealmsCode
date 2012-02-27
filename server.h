@@ -66,7 +66,9 @@ enum GoldLog {
 
 #include "asynch.h"
 
+#ifndef PYTHON_CODE_GEN
 typedef std::map<bstring, MudObject*,idComp> IdMap;
+#endif
 typedef std::list<Monster*> MonsterList;
 typedef std::list<Group*> GroupList;
 typedef std::list<Socket*> SocketList;
@@ -158,8 +160,9 @@ private:
 	bool valgrind;
 
 	// List of Ids
+#ifndef PYTHON_CODE_GEN
 	IdMap registeredIds;
-
+#endif
 	// List of groups
 	GroupList groups;
 

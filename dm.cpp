@@ -2279,6 +2279,41 @@ int view_log(Socket* sock) {
 	fclose(fn);
 	return(0);
 }
+//*********************************************************************
+//                      dmStatDetail
+//*********************************************************************
+//  This function will allow staff to display detailed stat information
+
+int dmStatDetail(Player* player, cmd* cmnd) {
+    Creature* target = 0;
+
+    if(cmnd->num < 2)
+        target = player;
+    else {
+        target = player->getParent()->findCreature(player, cmnd, 1);
+        cmnd->str[1][0] = up(cmnd->str[1][0]);
+        if(!target)
+            target = gServer->findPlayer(cmnd->str[1]);
+        if(!target) {
+            player->print("Unable to locate.\n");
+            return(0);
+        }
+    }
+    *player << ColorOn << "Detailed stat information for " << target << ":\n";
+    *player << target->hp << "\n";
+    *player << target->mp << "\n";
+    if(target->isPlayer())
+        *player << target->getAsPlayer()->focus << "\n";
+
+    *player << target->strength << "\n";
+    *player << target->dexterity << "\n";
+    *player << target->constitution << "\n";
+    *player << target->intelligence << "\n";
+    *player << target->piety << "\n";
+    *player << ColorOff;
+
+    return(0);
+}
 
 //*********************************************************************
 //						dmStat

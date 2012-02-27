@@ -291,23 +291,8 @@ void Player::upLevel() {
 
         LevelInfo* levelInfo = statistics.getLevelInfo(level);
 
-        // If we have no level info, it is either a relevel, or we didn't track it
-        // either way, we'll be recalculating it
-        if(!levelInfo) {
-            // Get the permanent max stat and ignore any temporary stat modifiers for the next calculation
-            int cCon = constitution.getPermMax();
-            // Make constitution actually worth something
-            if(cClass != LICH) {
-                if(cClass == BERSERKER && cCon >= 70)
-                    hpAmt++;
-                if(cCon >= 130)
-                    hpAmt++;
-                if(cCon >= 210)
-                    hpAmt++;
-                if(cCon >= 250)
-                    hpAmt++;
-            }
-        } else  {
+        // If we have a level info, it's a relevel so use the previous gains!
+        if(levelInfo) {
             statGain = levelInfo->getStatUp();
             saveGain = levelInfo->getSaveGain();
             hpAmt = levelInfo->getHpGain();
@@ -320,32 +305,32 @@ void Player::upLevel() {
 		StatModifier* newMod = new StatModifier(modName, 10, MOD_CUR_MAX, false);
 		switch(statGain) {
 		case STR:
-			strength.addModifier(newMod);
+			addStatModifier("strength", newMod);
 			print("You have become stronger.\n");
 			break;
 		case DEX:
-			dexterity.addModifier(newMod);
+			addStatModifier("dexterity",newMod);
 			print("You have become more dextrous.\n");
 			break;
 		case CON:
-			constitution.addModifier(newMod);
+		    addStatModifier("constitution", newMod);
 			print("You have become healthier.\n");
 			break;
 		case INT:
-			intelligence.addModifier(newMod);
+		    addStatModifier("intelligence", newMod);
 			print("You have become more intelligent.\n");
 			break;
 		case PTY:
-			piety.addModifier(newMod);
+		    addStatModifier("piety", newMod);
 			print("You have become more pious.\n");
 			break;
 		}
 
 
-		hp.addModifier(modName, hpAmt, MOD_CUR_MAX );
+		addStatModifier("hp", modName, hpAmt, MOD_CUR_MAX );
 
         if(cClass != BERSERKER && cClass != LICH) {
-            mp.addModifier(modName, mpAmt, MOD_CUR_MAX );
+            addStatModifier("mp", modName, mpAmt, MOD_CUR_MAX );
         }
 
 

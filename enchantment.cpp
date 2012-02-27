@@ -1096,7 +1096,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(1);
 		}
 
-		if(!mTarget && isEffected("berserk"))
+		if(!mTarget && player->isEffected("berserk"))
 			dur /= 2;
 
 		if(target->isDm() && !player->isDm())

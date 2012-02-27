@@ -435,16 +435,6 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 		else if(NODE_NAME(curNode, "SpecialAttacks")) {
 			loadAttacks(curNode);
 		}
-		else if(NODE_NAME(curNode, "InitialStats")) {
-			// TODO: remove
-			short ist[5];
-			xml::loadNumArray<short>(curNode, ist, "Stat", 5);
-			strength.setInitial(ist[0]);
-			dexterity.setInitial(ist[1]);
-			constitution.setInitial(ist[2]);
-			intelligence.setInitial(ist[3]);
-			piety.setInitial(ist[4]);
-		}
 		else if(NODE_NAME(curNode, "Stats")) {
 			loadStats(curNode);
 		}
@@ -2247,26 +2237,26 @@ void loadRanges(xmlNodePtr curNode, Player *pPlayer) {
 
 void Creature::loadStats(xmlNodePtr curNode) {
 	xmlNodePtr childNode = curNode->children;
-	bstring stat = "";
+	bstring statName = "";
 
 	while(childNode) {
 		if(NODE_NAME(childNode, "Stat")) {
-			stat = xml::getProp(childNode, "Name");
+			statName = xml::getProp(childNode, "Name");
 
-			if(stat == "")
+			if(statName == "")
 				continue;
 
-				 if(stat == "Strength") strength.load(childNode);
-			else if(stat == "Dexterity") dexterity.load(childNode);
-			else if(stat == "Constitution") constitution.load(childNode);
-			else if(stat == "Intelligence") intelligence.load(childNode);
-			else if(stat == "Piety") piety.load(childNode);
-			else if(stat == "Hp") hp.load(childNode);
-			else if(stat == "Mp") mp.load(childNode);
-			else if(stat == "Focus") {
+				 if(statName == "Strength") strength.load(childNode, statName);
+			else if(statName == "Dexterity") dexterity.load(childNode, statName);
+			else if(statName == "Constitution") constitution.load(childNode, statName);
+			else if(statName == "Intelligence") intelligence.load(childNode, statName);
+			else if(statName == "Piety") piety.load(childNode, statName);
+			else if(statName == "Hp") hp.load(childNode, statName);
+			else if(statName == "Mp") mp.load(childNode, statName);
+			else if(statName == "Focus") {
 				Player* player = getAsPlayer();
 				if(player)
-					player->focus.load(childNode);
+					player->focus.load(childNode, statName);
 			}
 		}
 
@@ -2279,9 +2269,9 @@ void Creature::loadStats(xmlNodePtr curNode) {
 //*********************************************************************
 // Loads a single stat into the given stat pointer
 
-bool Stat::load(xmlNodePtr curNode) {
+bool Stat::load(xmlNodePtr curNode, bstring statName) {
 	xmlNodePtr childNode = curNode->children;
-
+	name = statName;
 	while(childNode) {
 		if(NODE_NAME(childNode, "Current")) xml::copyToNum(cur, childNode);
 		else if(NODE_NAME(childNode, "Max")) xml::copyToNum(max, childNode);
@@ -2297,7 +2287,7 @@ bool Stat::loadModifiers(xmlNodePtr curNode) {
 	xmlNodePtr childNode = curNode->children;
 	while(childNode) {
 		if(NODE_NAME(childNode, "StatModifier")) {
-			StatModifier* mod = new StatModifier(curNode);
+			StatModifier* mod = new StatModifier(childNode);
 			if(mod->getName().equals("")) {
 				delete mod;
 			} else {

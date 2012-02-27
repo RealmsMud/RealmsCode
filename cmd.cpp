@@ -295,6 +295,7 @@ bool Config::initCommands() {
 	staffCommands["*md5"] = new PlyCommand("*md5",					100,	dmMd5,				isCt,	"Show md5 of input string.");
 	staffCommands["*ids"] = new PlyCommand("*ids",					100,	dmIds,				isDm,	"Shows registered ids.");
 	staffCommands["*status"] = new PlyCommand("*status",			 80,	dmStat,				0,		"Show info about a room/player/object/monster.");
+	staffCommands["*sd"] = new PlyCommand("*sd",                    100,    dmStatDetail,       isCt,   "Show detailed information about a creature's stats.");
 
 
 	// dmcrt.c

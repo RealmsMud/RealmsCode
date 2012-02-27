@@ -1025,7 +1025,20 @@ void Creature::crtReset() {
 	zero(languages, sizeof(languages));
 	questnum = 0;
 
+	strength.setName("Strength");
+	dexterity.setName("Dexterity");
+	constitution.setName("Constitution");
+	intelligence.setName("Intelligence");
+	piety.setName("Piety");
 
+	hp.setName("Hp");
+	mp.setName("Mp");
+
+	if(getAsPlayer())
+	    getAsPlayer()->focus.setName("Focus");
+
+    constitution.setInfluences(&hp);
+    hp.setInfluencedBy(&constitution);
 
 	for(i=0; i<MAXWEAR; i++)
 		ready[i] = 0;
@@ -2105,7 +2118,7 @@ void Monster::setBaseRealm(Realm toSet) {
 //						hasMp
 //*********************************************************************
 
-bool Creature::hasMp() const {
+bool Creature::hasMp()  {
 	return(mp.getMax() != 0 && cClass != BERSERKER && cClass != LICH);
 }
 

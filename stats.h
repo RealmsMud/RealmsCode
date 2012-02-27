@@ -33,11 +33,13 @@ public:
 	void save(xmlNodePtr parentNode);
 
 	void adjust(int adjAmount);
+	void set(int newAmt);
 	bstring getName();
 	int getModAmt();
 	ModifierType getModType();
 	bool isTemporary();
 
+	bstring toString();
 private:
 	bstring 		name;
 	int				modAmt;
@@ -46,7 +48,9 @@ private:
 
 };
 
+#ifndef PYTHON_CODE_GEN
 typedef std::map<bstring, StatModifier*, alphanum_less<bstring> > ModifierMap;
+#endif
 
 class Stat
 {
@@ -54,7 +58,12 @@ public:
 	Stat();
 	virtual ~Stat();
 	
-	bool load(xmlNodePtr curNode);
+	bstring toString();
+	friend std::ostream& operator<<(std::ostream& out, Stat& stat);
+
+	void setName(bstring pName);
+
+	bool load(xmlNodePtr curNode, bstring statName);
 	bool loadModifiers(xmlNodePtr curNode);
 	void save(xmlNodePtr parentNode, const char* statName) const;
 	
@@ -76,22 +85,30 @@ public:
 	int setMax(short newMax, bool allowZero=false);
 	int setCur(short newCur);
 	void setInitial(short i);
+	void setDirty();
 
+	void setInfluences(Stat* pInfluences);
+	void setInfluencedBy(Stat* pInfluencedBy);
 	int restore(); // Set a stat to it's maximum value
 
 	void reCalc();
+
 	bool addModifier(StatModifier* toAdd);
 	bool addModifier(bstring name, int modAmt, ModifierType modType, bool temporary = true);
 
 	bool removeModifier(bstring name);
 	bool adjustModifier(bstring name, int modAmt);
+	bool setModifier(bstring name, int newAmt);
 
 	void clearModifiers(bool removePermanent = false);
 
 	StatModifier* getModifier(bstring name);
 protected:
 
+	bstring name;
+#ifndef PYTHON_CODE_GEN
 	ModifierMap modifiers;
+#endif
 	bool dirty;
 
 
@@ -99,6 +116,9 @@ protected:
 	short	max;
 	short	tmpMax;
 	short	initial;
+
+	Stat* influences;
+	Stat* influencedBy;
 };
 
 #endif /*STAT_H_*/
