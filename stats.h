@@ -24,7 +24,7 @@ enum ModifierType {
 	MOD_CUR = 1,
 	MOD_MAX = 2,
 	MOD_CUR_MAX = 3,
-	MAX_MOD_TYPE
+	MOD_ALL = MOD_CUR_MAX
 };
 class StatModifier {
 public:
@@ -71,7 +71,7 @@ public:
 	int adjust(int amt);
 	
 	int getCur(bool recalc = true);
-	int getMax();
+	int getMax(bool recalcAll = true);
 	int getInitial() const;
 
 	void addInitial(int a);
@@ -84,7 +84,7 @@ public:
 	void setInfluencedBy(Stat* pInfluencedBy);
 	int restore(); // Set a stat to it's maximum value
 
-	void reCalc();
+	void reCalc(ModifierType modType = MOD_ALL);
 
 	bool addModifier(StatModifier* toAdd);
 	bool addModifier(bstring name, int modAmt, ModifierType modType);

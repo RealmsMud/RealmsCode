@@ -1110,7 +1110,7 @@ int cmdBloodsacrifice(Player* player, cmd* cmnd) {
 	i = player->lasttime[LT_BLOOD_SACRIFICE].ltime;
 	t = time(0);
 
-	if(t - i < 600L) {
+	if(t - i < 600L && !player->isStaff()) {
 		player->pleaseWait(600L-t+i);
 		return(0);
 	}

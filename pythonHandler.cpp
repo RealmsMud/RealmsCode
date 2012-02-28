@@ -1,4 +1,4 @@
-/* 
+/*
  * pythonHandler.h
  *   Class for handling Python <--> mud interactions
  *   ____            _
@@ -227,10 +227,12 @@ BOOST_PYTHON_MODULE(MudObjects)
 
     bp::class_<Stat, boost::noncopyable>("Stat", bp::init<>())
 
+		.def("getModifierAmt", &Stat::getModifierAmt)
+
 	.def(
 			"adjust"
 			, (int ( ::Stat::* )( int,bool ) )( &::Stat::adjust )
-			, ( bp::arg("amt"), bp::arg("overMaxOk")=(bool)(false) ) )
+			, ( bp::arg("amt") ) )
 	.def(
 			"decrease"
 			, (int ( ::Stat::* )( int ) )( &::Stat::decrease )
@@ -271,7 +273,7 @@ BOOST_PYTHON_MODULE(MudObjects)
 			"setMax"
 			, (int ( ::Stat::* )( short int,bool ) )( &::Stat::setMax )
 			, ( bp::arg("newMax"), bp::arg("allowZero")=(bool)(false) ) )
-	.def("getModifierAmt", &Stat::getModifierAmt)
+
 	;
 
 	{ //::BaseRoom

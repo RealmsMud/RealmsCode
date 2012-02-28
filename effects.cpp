@@ -404,25 +404,7 @@ bool EffectInfo::postApply(bool keepApplier) {
 //*********************************************************************
 //						addEffect
 //*********************************************************************
-/*
-EffectInfo* MudObject::addEffect(const bstring& effect, MudObject* applier, bool show, const Creature* owner, bool keepApplier) {
-	return(effects.addEffect(effect, applier, show, this, owner, keepApplier));
-}
 
-EffectInfo* Effects::addEffect(const bstring& effect, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
-	bool success = true;
-	EffectInfo* newEffect = new EffectInfo(effect, time(0), 0, 1, pParent, owner);
-
-    // Compute the effects potency, see if it will overwrite, and then apply & add
-	success = newEffect->compute(applier);
-
-	if(success)
-		return(addEffect(newEffect, show, pParent, keepApplier));
-	else
-		delete newEffect;
-	return(false);
-}
-*/
 
 EffectInfo* MudObject::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, const Creature* owner, bool keepApplier) {
 	return(effects.addEffect(effect, duration, strength, applier, show, this, owner, keepApplier));

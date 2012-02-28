@@ -61,15 +61,18 @@ double getConBonusPercentage(int con) {
     return(percentage);
 
 }
-void Stat::reCalc() {
+void Stat::reCalc(ModifierType modType) {
 	if(!dirty)
 		return;
 
     if(influencedBy && name.equals("Hp"))
-        setModifier("ConBonus", 0, MOD_CUR_MAX);
+        setModifier("ConBonus", 0, MOD_MAX);
 
-	cur = initial;
-	max = initial;
+    if(modType == MOD_ALL || modType == MOD_CUR)
+    	cur = initial;
+
+    if(modType == MOD_ALL || modType == MOD_MAX)
+		max = initial;
 
 	for(ModifierMap::value_type p : modifiers) {
 		StatModifier *mod = p.second;
@@ -77,14 +80,18 @@ void Stat::reCalc() {
 			continue;
 		switch(mod->getModType()) {
 		case MOD_MAX:
-			max += mod->getModAmt();
+			if(modType == MOD_ALL || modType == MOD_MAX)
+				max += mod->getModAmt();
 			break;
 		case MOD_CUR:
-			cur += mod->getModAmt();
+			if(modType == MOD_ALL || modType == MOD_CUR)
+				cur += mod->getModAmt();
 			break;
 		case MOD_CUR_MAX:
-			max += mod->getModAmt();
-			cur += mod->getModAmt();
+			if(modType == MOD_ALL || modType == MOD_MAX)
+				max += mod->getModAmt();
+			if(modType == MOD_ALL || modType == MOD_CUR)
+				cur += mod->getModAmt();
 			break;
 		default:
 			break;
@@ -92,18 +99,23 @@ void Stat::reCalc() {
 	}
 
 
-    if(influencedBy && name.equals("Hp")) {
+    if(influencedBy && name.equals("Hp") && (modType == MOD_MAX || modType == MOD_ALL)) {
     	double percentage = getConBonusPercentage(influencedBy->getCur());
     	int rounding = this->getModifierAmt("Rounding");
         int conBonus = (max-rounding) * percentage;
-        setModifier("ConBonus", conBonus, MOD_CUR_MAX);
+        setModifier("ConBonus", conBonus, MOD_MAX);
 
-        cur += conBonus;
         max += conBonus;
     }
 
-    cur = tMIN(cur, max);
-	dirty = false;
+    if(cur > max && (modType == MOD_CUR || modType == MOD_ALL)) {
+    	adjustModifier("CurModifier", max - cur);
+    	cur -= (cur - max);
+    }
+    //cur = tMIN(cur, max);
+    // We're still "dirty" if we haven't re-calced CUR
+    if(modType == MOD_ALL)
+    	dirty = false;
 }
 StatModifier* Stat::getModifier(bstring name) {
 	ModifierMap::iterator it = modifiers.find(name);
@@ -234,8 +246,9 @@ bool Stat::adjustModifier(bstring name, int modAmt, ModifierType modType) {
 bool Stat::setModifier(bstring name, int newAmt, ModifierType modType) {
     StatModifier* mod = getModifier(name);
     if(newAmt == 0) {
-    	if(!mod)
+    	if(!mod) {
     		return(true);
+    	}
     	else {
     		return(removeModifier(name));
     	}
@@ -326,8 +339,11 @@ int Stat::getCur(bool recalc) {
 //						getMax
 //*********************************************************************
 
-int Stat::getMax() {
-    reCalc();
+int Stat::getMax(bool recalcAll) {
+	if(recalcAll)
+		reCalc(MOD_ALL);
+	else
+		reCalc(MOD_MAX);
     return(max);
 }
 
@@ -354,27 +370,28 @@ void Stat::setMax(int newMax, bool allowZero) {
 	newMax = MAX(allowZero ? 0 : 1, MIN(newMax, 30000));
 
 	int dmSet = getModifierAmt("DmSet");
-	setModifier("Rounding", 0, MOD_CUR_MAX);
 	int rounding = getModifierAmt("Rounding");
 	int adjustment = 0;
 	if(name.equals("Hp") && influencedBy) {
 		double percentage =  getConBonusPercentage(influencedBy->getCur());
 		double targetMax = newMax;
 		double target = targetMax / (1.0+percentage);
-		int curMax = getMax() - getModifierAmt("ConBonus") - dmSet;
+		int curMax = getMax(false) - getModifierAmt("ConBonus") - dmSet - rounding;
 		adjustment = round(target) - curMax;
-		this->setModifier("DmSet", adjustment, MOD_CUR_MAX);
-		int adjMax = getMax() - rounding;
+		this->setModifier("DmSet", adjustment, MOD_MAX);
+		int adjMax = getMax(false) - rounding;
 		// Due to rounding with doubles we might miss the target by 1, this will adjust it
 		if(adjMax != newMax) {
-			setModifier("Rounding", newMax - adjMax, MOD_CUR_MAX);
+			setModifier("Rounding", newMax - adjMax, MOD_MAX);
+		} else {
+			setModifier("Rounding", 0, MOD_MAX);
 		}
 		int newRounding = getModifierAmt("Rounding");
 		std::cout << name << "-" << "NewMax:" << targetMax << " CurMax:" << curMax << " DmSet" << dmSet << " Target:" << target << " Percentage:" << percentage << " Adjustment" << adjustment << " AdjMax:" << adjMax << " RoundingStart:" << rounding << " RoundingEnd:" << newRounding << std::endl;
 	} else {
 		int curMax = getMax() - dmSet;
 		adjustment = newMax - curMax;
-		this->setModifier("DmSet", adjustment, MOD_CUR_MAX);
+		this->setModifier("DmSet", adjustment, MOD_MAX);
 		int adjMax = getMax();
 		std::cout << name << "-" << " Target: " << newMax << " CurMax: " << curMax << " Adjustment: " << adjustment << " AdjMax:" << adjMax << std::endl;
 
@@ -555,8 +572,16 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 		addAmt *= -1;
 
 	// Can't go outside the range
-	addAmt = tMIN(addAmt, MAX_STAT_NUM - stat->getCur());
-	addAmt = tMAX(addAmt, MIN_STAT_NUM - stat->getCur());
+	int statMax = MAX_STAT_NUM;
+	int statMin = MIN_STAT_NUM;
+
+	// Different limits for hp & mp
+	if(stat == &hp || stat == &mp) {
+		statMax = 30000;
+		statMin = 1;
+	}
+	addAmt = tMIN(addAmt, statMax - stat->getCur());
+	addAmt = tMAX(addAmt, statMin - stat->getCur());
 	
 	effect->setStrength(addAmt);
 	stat->addModifier(effect->getName(), addAmt, modType);
