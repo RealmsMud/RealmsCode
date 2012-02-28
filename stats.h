@@ -28,7 +28,7 @@ enum ModifierType {
 };
 class StatModifier {
 public:
-	StatModifier(bstring pName, int pModAmt, ModifierType pModType, bool pTemporary = true);
+	StatModifier(bstring pName, int pModAmt, ModifierType pModType);
 	StatModifier(xmlNodePtr curNode);
 	void save(xmlNodePtr parentNode);
 
@@ -38,14 +38,12 @@ public:
 	bstring getName();
 	int getModAmt();
 	ModifierType getModType();
-	bool isTemporary();
 
 	bstring toString();
 private:
 	bstring 		name;
 	int				modAmt;
 	ModifierType	modType;
-	bool            temporary;
 
 };
 
@@ -76,8 +74,6 @@ public:
 	int getMax();
 	int getInitial() const;
 
-	int getPermMax() const;
-
 	void addInitial(int a);
 	void setMax(int newMax, bool allowZero=false);
 	void setCur(int newCur);
@@ -91,13 +87,13 @@ public:
 	void reCalc();
 
 	bool addModifier(StatModifier* toAdd);
-	bool addModifier(bstring name, int modAmt, ModifierType modType, bool temporary = true);
+	bool addModifier(bstring name, int modAmt, ModifierType modType);
 
 	bool removeModifier(bstring name);
 	bool adjustModifier(bstring name, int modAmt, ModifierType modType = MOD_CUR);
 	bool setModifier(bstring name, int newAmt, ModifierType modType = MOD_CUR);
 
-	void clearModifiers(bool removePermanent = false);
+	void clearModifiers();
 
 	StatModifier* getModifier(bstring name);
 	int getModifierAmt(bstring name);

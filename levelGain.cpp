@@ -239,7 +239,7 @@ void Player::upLevel() {
 
     if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER)) {
         focus.setInitial(100);
-        focus.addModifier("UnFocused", -100, MOD_CUR, false);
+        focus.addModifier("UnFocused", -100, MOD_CUR);
     }
 
 	if(level == 1) {
@@ -296,7 +296,7 @@ void Player::upLevel() {
 
 
         // Add gains here
-		StatModifier* newMod = new StatModifier(modName, 10, MOD_CUR_MAX, false);
+		StatModifier* newMod = new StatModifier(modName, 10, MOD_CUR_MAX);
 		switch(statGain) {
 		case STR:
 			addStatModifier("strength", newMod);

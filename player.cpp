@@ -379,8 +379,8 @@ void Player::init() {
 	if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER)) {
 	    mp.setInitial(0);
 	    focus.setInitial(100);
-	    focus.clearModifiers(true);
-        focus.addModifier("UnFocused", -100, MOD_CUR, true);
+	    focus.clearModifiers();
+        focus.addModifier("UnFocused", -100, MOD_CUR);
 	}
 
 	if(!gServer->isRebooting())

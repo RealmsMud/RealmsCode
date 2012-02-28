@@ -24,16 +24,12 @@
 //#####################################################################
 // Stat Modifier
 //#####################################################################
-StatModifier::StatModifier(bstring pName, int pModAmt, ModifierType pModType, bool pTemporary) {
+StatModifier::StatModifier(bstring pName, int pModAmt, ModifierType pModType) {
 	name = pName;
 	modAmt = pModAmt;
 	modType = pModType;
-	temporary = pTemporary;
 }
 
-bool StatModifier::isTemporary() {
-    return(temporary);
-}
 void StatModifier::adjust(int adjAmount) {
 	modAmt += adjAmount;
 }
@@ -146,8 +142,8 @@ Stat* Creature::getStat(bstring statName) {
 
 }
 
-bool Creature::addStatModifier(bstring statName, bstring modifierName, int modAmt, ModifierType modType, bool temporary) {
-    return(addStatModifier(statName, new StatModifier(modifierName, modAmt, modType, temporary)));
+bool Creature::addStatModifier(bstring statName, bstring modifierName, int modAmt, ModifierType modType) {
+    return(addStatModifier(statName, new StatModifier(modifierName, modAmt, modType)));
 }
 bool Creature::addStatModifier(bstring statName, StatModifier* statModifier) {
     Stat* stat = getStat(statName);
@@ -193,10 +189,10 @@ void Stat::setDirty() {
     if(influences)
         influences->setDirty();
 }
-bool Stat::addModifier(bstring name, int modAmt, ModifierType modType, bool temporary) {
+bool Stat::addModifier(bstring name, int modAmt, ModifierType modType) {
 	if(getModifier(name) != NULL)
 		return(false);
-	return(addModifier(new StatModifier(name, modAmt, modType, temporary)));
+	return(addModifier(new StatModifier(name, modAmt, modType)));
 }
 
 bool Stat::removeModifier(bstring name) {
@@ -208,14 +204,12 @@ bool Stat::removeModifier(bstring name) {
 	setDirty();
 	return(true);
 }
-void Stat::clearModifiers(bool removePermanent) {
+void Stat::clearModifiers() {
     ModifierMap::iterator it = modifiers.begin();
 
     while(it != modifiers.end()) {
-        if(removePermanent || it->second->isTemporary()) {
-            delete it->second;
-            modifiers.erase(it++);
-        }
+		delete it->second;
+		modifiers.erase(it++);
     }
 }
 bool Stat::adjustModifier(bstring name, int modAmt, ModifierType modType) {
@@ -342,25 +336,6 @@ int Stat::getMax() {
     return(max);
 }
 
-int Stat::getPermMax() const {
-    int toReturn = initial;
-
-    for(ModifierMap::value_type p : modifiers) {
-        StatModifier *mod = p.second;
-        // Count only permenant modifiers (leveling)
-        if(!mod || mod->isTemporary())
-            continue;
-        switch(mod->getModType()) {
-        case MOD_MAX:
-        case MOD_CUR_MAX:
-            toReturn += mod->getModAmt();
-            break;
-        default:
-            break;
-        }
-    }
-    return(toReturn);
-}
 //*********************************************************************
 //						getInitial
 //*********************************************************************
@@ -371,7 +346,7 @@ int Stat::getInitial() const { return(initial); }
 //						addInitial
 //*********************************************************************
 
-void Stat::addInitial(int a) { initial = MAX(1, initial + a); }
+void Stat::addInitial(int a) { initial = MAX(1, initial + a); setDirty(); }
 
 //*********************************************************************
 //						setMax
@@ -469,7 +444,7 @@ bstring Stat::toString() {
 //						setInitial
 //*********************************************************************
 
-void Stat::setInitial(int i) { initial = i; }
+void Stat::setInitial(int i) { initial = i; setDirty(); }
 
 //*********************************************************************
 //						restore
@@ -693,7 +668,7 @@ void Player::upgradeStats() {
 		}
 		int switchNum = lGain->getStat();
 
-		StatModifier* newMod = new StatModifier(modName, 10, MOD_CUR_MAX, false);
+		StatModifier* newMod = new StatModifier(modName, 10, MOD_CUR_MAX);
 		switch(switchNum) {
 		case STR:
 			strength.addModifier(newMod);
@@ -723,10 +698,10 @@ void Player::upgradeStats() {
 
     if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER)) {
         focus.setInitial(100);
-        focus.clearModifiers(true);
-        focus.addModifier("UnFocused", -100, MOD_CUR, false);
+        focus.clearModifiers();
+        focus.addModifier("UnFocused", -100, MOD_CUR);
         mp.setInitial(0);
-        mp.clearModifiers(true);
+        mp.clearModifiers();
 
     }
 	strength.setInitial(cStr);

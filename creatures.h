@@ -676,7 +676,7 @@ public:
 	void doDispelMagic(int num=-1);
 	bool changeSize(int oldStrength, int newStrength, bool enlarge);
 
-	bool addStatModifier(bstring statName, bstring modifierName, int modAmt, ModifierType modType, bool temporary = true);
+	bool addStatModifier(bstring statName, bstring modifierName, int modAmt, ModifierType modType);
 	bool addStatModifier(bstring statName, StatModifier* statModifier);
 	bool setStatDirty(bstring statName);
 	Stat* getStat(bstring statName);
