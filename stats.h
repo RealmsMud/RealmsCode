@@ -34,6 +34,7 @@ public:
 
 	void adjust(int adjAmount);
 	void set(int newAmt);
+	void setType(ModifierType newType);
 	bstring getName();
 	int getModAmt();
 	ModifierType getModType();
@@ -67,24 +68,20 @@ public:
 	bool loadModifiers(xmlNodePtr curNode);
 	void save(xmlNodePtr parentNode, const char* statName) const;
 	
-	int increaseMax(int amt);
-	int decreaseMax(int amt);
-	int adjustMax(int amt);
-	
 	int increase(int amt, bool overMaxOk = false);
 	int decrease(int amt);
 	int adjust(int amt, bool overMaxOk = false);
 	
-	short getCur(bool recalc = true);
-	short getMax();
-	short getInitial() const;
+	int getCur(bool recalc = true);
+	int getMax();
+	int getInitial() const;
 
-	short getPermMax() const;
+	int getPermMax() const;
 
-	void addInitial(short a);
-	int setMax(short newMax, bool allowZero=false);
-	int setCur(short newCur);
-	void setInitial(short i);
+	void addInitial(int a);
+	void setMax(int newMax, bool allowZero=false);
+	void setCur(int newCur);
+	void setInitial(int i);
 	void setDirty();
 
 	void setInfluences(Stat* pInfluences);
@@ -97,12 +94,13 @@ public:
 	bool addModifier(bstring name, int modAmt, ModifierType modType, bool temporary = true);
 
 	bool removeModifier(bstring name);
-	bool adjustModifier(bstring name, int modAmt);
-	bool setModifier(bstring name, int newAmt);
+	bool adjustModifier(bstring name, int modAmt, ModifierType modType = MOD_CUR);
+	bool setModifier(bstring name, int newAmt, ModifierType modType = MOD_CUR);
 
 	void clearModifiers(bool removePermanent = false);
 
 	StatModifier* getModifier(bstring name);
+	int getModifierAmt(bstring name);
 protected:
 
 	bstring name;
@@ -112,10 +110,9 @@ protected:
 	bool dirty;
 
 
-	short	cur;
-	short	max;
-	short	tmpMax;
-	short	initial;
+	int	cur;
+	int	max;
+	int	initial;
 
 	Stat* influences;
 	Stat* influencedBy;

@@ -119,13 +119,13 @@ void Player::score(const Player* viewer) {
 		oStr << " ^y*Insight*";
 	if(isEffected("feeblemind", true))
 		oStr << " ^y*Feeblemind*";
-	if(isEffected("fortitude"), true)
+	if(isEffected("fortitude", true))
 		oStr << " ^c*Fortitude*";
-	if(isEffected("weakness"), true)
+	if(isEffected("weakness", true))
 		oStr << " ^g*Weakness*";
-	if(isEffected("prayer"), true)
+	if(isEffected("prayer", true))
 		oStr << " ^y*Prayer*";
-	if(isEffected("damnation"), true)
+	if(isEffected("damnation", true))
 		oStr << " ^y*Damnation*";
 
 

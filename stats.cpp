@@ -19,116 +19,8 @@
 #include "mud.h"
 #include "effects.h"
 
-void checkEffect(Player* player, const bstring& effName, int& stat, bool positive)  {
-	EffectInfo* eff = player->getEffect(effName);
-	if(eff) {
-		int str = eff->getStrength();
-		if(!positive)
-			str *= -1;
-		stat += str;
-	}
-}
-void Player::upgradeStats() {
-	std::cout << "Upgrading stats for " << getName() << std::endl;
-	*this << "Upgrading your stats to the new format.\n";
-
-	loseRage();
-	loseFrenzy();
-	losePray();
-
-	int cStr = strength.getCur(false);
-	int cDex = dexterity.getCur(false);
-	int cCon = constitution.getCur(false);
-	int cInt = intelligence.getCur(false);
-	int cPie = piety.getCur(false);
-
-	checkEffect(this, "strength", cStr, true);
-	checkEffect(this, "enfeeblement", cStr, false);
-	checkEffect(this, "haste", cDex, true);
-	checkEffect(this, "slow", cDex, false);
-
-	checkEffect(this, "fortitude", cCon, true);
-	checkEffect(this, "weakness", cCon, false);
-
-	checkEffect(this, "insight", cInt, true);
-	checkEffect(this, "feeblemind", cInt, false);
-
-	checkEffect(this, "prayer", cPie, true);
-	checkEffect(this, "damnation", cPie, false);
-
-	PlayerClass *pClass = gConfig->classes[getClassString()];
-	LevelGain *lGain = 0;
-
-	int hpAmt = pClass->getBaseHp();
-
-	hp.setInitial(hpAmt);
-	mp.setInitial(pClass->getBaseMp());
 
 
-
-	for(int l = level ; l > 1 ; l--) {
-		lGain = pClass->getLevelGain(l);
-		if(!lGain)
-			continue;
-		bstring modName = bstring("Level") + l;
-		hpAmt = lGain->getHp();
-		hp.addModifier(modName, hpAmt, MOD_CUR_MAX );
-
-		if(cClass != BERSERKER && cClass != LICH) {
-			mp.addModifier(modName, lGain->getMp(), MOD_CUR_MAX );
-		}
-		int switchNum = lGain->getStat();
-
-		StatModifier* newMod = new StatModifier(modName, 10, MOD_CUR_MAX, false);
-		switch(switchNum) {
-		case STR:
-			strength.addModifier(newMod);
-			cStr -= 10;
-			break;
-		case DEX:
-			dexterity.addModifier(newMod);
-			cDex -= 10;
-			break;
-		case CON:
-			constitution.addModifier(newMod);
-			cCon -= 10;
-			break;
-		case INT:
-			intelligence.addModifier(newMod);
-			cInt -= 10;
-			break;
-		case PTY:
-			piety.addModifier(newMod);
-			cPie -= 10;
-			break;
-		}
-		// Track level history
-		statistics.setLevelInfo(l, new LevelInfo(hpAmt, lGain->getMp(), lGain->getStat(), lGain->getSave(), time(0)));
-
-	}
-
-    if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER)) {
-        focus.setInitial(100);
-        focus.clearModifiers(true);
-        focus.addModifier("UnFocused", -100, MOD_CUR, false);
-        mp.setInitial(0);
-        mp.clearModifiers(true);
-
-    }
-	strength.setInitial(cStr);
-	dexterity.setInitial(cDex);
-	constitution.setInitial(cCon);
-	intelligence.setInitial(cInt);
-	piety.setInitial(cPie);
-
-
-	std::cout << "Str: O: " << cStr << " N: " << strength.getCur() << "\n";
-	std::cout << "Dex: O: " << cDex << " N: " << dexterity.getCur() << "\n";
-	std::cout << "Con: O: " << cCon << " N: " << constitution.getCur() << "\n";
-	std::cout << "Int: O: " << cInt << " N: " << intelligence.getCur() << "\n";
-	std::cout << "Pie: O: " << cPie << " N: " << piety.getCur() << "\n";
-
-}
 //#####################################################################
 // Stat Modifier
 //#####################################################################
@@ -149,6 +41,9 @@ void StatModifier::adjust(int adjAmount) {
 void StatModifier::set(int newAmt) {
     modAmt = newAmt;
 }
+void StatModifier::setType(ModifierType newType) {
+	modType = newType;
+}
 
 bstring StatModifier::getName() {
 	return(name);
@@ -160,12 +55,22 @@ ModifierType StatModifier:: getModType() {
 	return(modType);
 }
 
+double getConBonusPercentage(int con) {
+    const double a = 0.000002102555823;
+    const double b = 0.001366762953;
+    const double c = 0.982621217;
+    const int x = con;
+    double percentage = ((a*x*x)+(b*x)+c);
+    percentage = tMAX<double>(1.0, percentage)-1.0;
+    return(percentage);
+
+}
 void Stat::reCalc() {
 	if(!dirty)
 		return;
 
     if(influencedBy && name.equals("Hp"))
-        setModifier("ConBonus", 0);
+        setModifier("ConBonus", 0, MOD_CUR_MAX);
 
 	cur = initial;
 	max = initial;
@@ -192,19 +97,16 @@ void Stat::reCalc() {
 
 
     if(influencedBy && name.equals("Hp")) {
-        const double a = 0.000002102555823;
-        const double b = 0.001366762953;
-        const double c = 0.9826212171;
-        const int x = influencedBy->getCur();
-        double percentage = ((a*x*x)+(b*x)+c);
-        percentage = tMAX<double>(1.0, percentage)-1.0;
-        int conBonus = max * percentage;
-        setModifier("ConBonus", conBonus);
+    	double percentage = getConBonusPercentage(influencedBy->getCur());
+    	int rounding = this->getModifierAmt("Rounding");
+        int conBonus = (max-rounding) * percentage;
+        setModifier("ConBonus", conBonus, MOD_CUR_MAX);
 
         cur += conBonus;
         max += conBonus;
     }
 
+    cur = tMIN(cur, max);
 	dirty = false;
 }
 StatModifier* Stat::getModifier(bstring name) {
@@ -213,6 +115,13 @@ StatModifier* Stat::getModifier(bstring name) {
 		return(NULL);
 	else
 		return(it->second);
+}
+int Stat::getModifierAmt(bstring name) {
+	StatModifier* mod = getModifier(name);
+	if(mod)
+		return(mod->getModAmt());
+	else
+		return(0);
 }
 Stat* Creature::getStat(bstring statName) {
     if(statName == "strength") {
@@ -309,24 +218,40 @@ void Stat::clearModifiers(bool removePermanent) {
         }
     }
 }
-bool Stat::adjustModifier(bstring name, int modAmt) {
+bool Stat::adjustModifier(bstring name, int modAmt, ModifierType modType) {
 	StatModifier* mod = getModifier(name);
 	if(!mod) {
-		mod = new StatModifier(name, 0, MOD_CUR);
+		if(modAmt == 0)
+			return(true);
+		mod = new StatModifier(name, 0, modType);
 		modifiers.insert(ModifierMap::value_type(name, mod));
 	}
 	mod->adjust(modAmt);
+
+	if(mod->getModAmt() == 0) {
+		return(removeModifier(name));
+	}
+	else
+		mod->setType(modType);
 	setDirty();
 	return(true);
 }
 
-bool Stat::setModifier(bstring name, int newAmt) {
+bool Stat::setModifier(bstring name, int newAmt, ModifierType modType) {
     StatModifier* mod = getModifier(name);
+    if(newAmt == 0) {
+    	if(!mod)
+    		return(true);
+    	else {
+    		return(removeModifier(name));
+    	}
+    }
     if(!mod) {
-        mod = new StatModifier(name, 0, MOD_CUR);
+        mod = new StatModifier(name, 0, modType);
         modifiers.insert(ModifierMap::value_type(name, mod));
     }
     mod->set(newAmt);
+    mod->setType(modType);
     setDirty();
     return(true);
 
@@ -337,7 +262,7 @@ bool Stat::setModifier(bstring name, int newAmt) {
 //*********************************************************************
 
 Stat::Stat() {
-	 cur = max = tmpMax = initial = 0;
+	 cur = max = initial = 0;
 	 dirty = true;
 	 influences = influencedBy = 0;
 }
@@ -347,45 +272,6 @@ Stat::~Stat() {
 
 void Stat::setName(bstring pName) {
     name = pName;
-}
-
-//*********************************************************************
-//						adjustMax
-//*********************************************************************
-
-int Stat::adjustMax(int amt) {
-	if(amt > 0)
-		return(increaseMax(amt));
-	else
-		return(-1 * decreaseMax(amt*-1));
-}
-
-//*********************************************************************
-//						increaseMax
-//*********************************************************************
-
-int Stat::increaseMax(int amt) {
-	if(max + amt > 30000)
-		amt = 30000 - max;
-	
-	max += amt;
-	return(amt);
-}
-
-//*********************************************************************
-//						decreaseMax
-//*********************************************************************
-
-int Stat::decreaseMax(int amt) {
-	if(max - amt < 0)
-		amt = 0 - max;
-	
-	max -= amt;
-	
-	if(cur > max)
-		cur = max;
-	
-	return(amt);
 }
 
 //*********************************************************************
@@ -441,7 +327,7 @@ int Stat::decrease(int amt) {
 //						getCur
 //*********************************************************************
 
-short Stat::getCur(bool recalc) {
+int Stat::getCur(bool recalc) {
 	if(recalc)
 		reCalc();
 	return(cur);
@@ -451,12 +337,12 @@ short Stat::getCur(bool recalc) {
 //						getMax
 //*********************************************************************
 
-short Stat::getMax() {
+int Stat::getMax() {
     reCalc();
     return(max);
 }
 
-short Stat::getPermMax() const {
+int Stat::getPermMax() const {
     int toReturn = initial;
 
     for(ModifierMap::value_type p : modifiers) {
@@ -479,35 +365,62 @@ short Stat::getPermMax() const {
 //						getInitial
 //*********************************************************************
 
-short Stat::getInitial() const { return(initial); }
+int Stat::getInitial() const { return(initial); }
 
 //*********************************************************************
 //						addInitial
 //*********************************************************************
 
-void Stat::addInitial(short a) { initial = MAX(1, initial + a); }
+void Stat::addInitial(int a) { initial = MAX(1, initial + a); }
 
 //*********************************************************************
 //						setMax
 //*********************************************************************
+double round(double r) {
+    return (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
+}
 
-int Stat::setMax(short newMax, bool allowZero) {
+void Stat::setMax(int newMax, bool allowZero) {
 	newMax = MAX(allowZero ? 0 : 1, MIN(newMax, 30000));
-	max = newMax;
-	if(cur > max)
-		cur = max;
-	return(max);
+
+	int dmSet = getModifierAmt("DmSet");
+	setModifier("Rounding", 0, MOD_CUR_MAX);
+	int rounding = getModifierAmt("Rounding");
+	int adjustment = 0;
+	if(name.equals("Hp") && influencedBy) {
+		double percentage =  getConBonusPercentage(influencedBy->getCur());
+		double targetMax = newMax;
+		double target = targetMax / (1.0+percentage);
+		int curMax = getMax() - getModifierAmt("ConBonus") - dmSet;
+		adjustment = round(target) - curMax;
+		this->setModifier("DmSet", adjustment, MOD_CUR_MAX);
+		int adjMax = getMax() - rounding;
+		// Due to rounding with doubles we might miss the target by 1, this will adjust it
+		if(adjMax != newMax) {
+			setModifier("Rounding", newMax - adjMax, MOD_CUR_MAX);
+		}
+		int newRounding = getModifierAmt("Rounding");
+		std::cout << name << "-" << "NewMax:" << targetMax << " CurMax:" << curMax << " DmSet" << dmSet << " Target:" << target << " Percentage:" << percentage << " Adjustment" << adjustment << " AdjMax:" << adjMax << " RoundingStart:" << rounding << " RoundingEnd:" << newRounding << std::endl;
+	} else {
+		int curMax = getMax() - dmSet;
+		adjustment = newMax - curMax;
+		this->setModifier("DmSet", adjustment, MOD_CUR_MAX);
+		int adjMax = getMax();
+		std::cout << name << "-" << " Target: " << newMax << " CurMax: " << curMax << " Adjustment: " << adjustment << " AdjMax:" << adjMax << std::endl;
+
+	}
+
+
 }
 
 //*********************************************************************
 //						setCur
 //*********************************************************************
 
-int Stat::setCur(short newCur) {
-	newCur = MIN(newCur, max);
+void Stat::setCur(int newCur) {
+	newCur = MIN(newCur, getMax());
 	int modCur = newCur - getCur();
 	adjustModifier("CurModifier", modCur);
-	return(cur);
 }
 
 void Stat::setInfluences(Stat* pInfluences) {
@@ -543,6 +456,7 @@ bstring Stat::toString() {
                 break;
             default:
                 oStr << "UNKNOWN ";
+                break;
         }
         if(mod->getModAmt() >= 0)
             oStr << "+";
@@ -555,7 +469,7 @@ bstring Stat::toString() {
 //						setInitial
 //*********************************************************************
 
-void Stat::setInitial(short i) { initial = i; }
+void Stat::setInitial(int i) { initial = i; }
 
 //*********************************************************************
 //						restore
@@ -563,7 +477,7 @@ void Stat::setInitial(short i) { initial = i; }
 
 int Stat::restore() {
 	if(cur < max)
-		cur = max;
+		setCur(max);
 	return(cur);
 }
 
@@ -713,3 +627,119 @@ bool Creature::remStatModEffect(EffectInfo* effect) {
 	return(true);
 }
 
+//*********************************************************************
+//						upgradeStats
+//*********************************************************************
+
+// Note: Used for upgradeStats
+void checkEffect(Player* player, const bstring& effName, int& stat, bool positive)  {
+	EffectInfo* eff = player->getEffect(effName);
+	if(eff) {
+		int str = eff->getStrength();
+		if(!positive)
+			str *= -1;
+		stat += str;
+	}
+}
+
+void Player::upgradeStats() {
+	std::cout << "Upgrading stats for " << getName() << std::endl;
+	*this << "Upgrading your stats to the new format.\n";
+
+	loseRage();
+	loseFrenzy();
+	losePray();
+
+	int cStr = strength.getCur(false);
+	int cDex = dexterity.getCur(false);
+	int cCon = constitution.getCur(false);
+	int cInt = intelligence.getCur(false);
+	int cPie = piety.getCur(false);
+
+	checkEffect(this, "strength", cStr, true);
+	checkEffect(this, "enfeeblement", cStr, false);
+	checkEffect(this, "haste", cDex, true);
+	checkEffect(this, "slow", cDex, false);
+
+	checkEffect(this, "fortitude", cCon, true);
+	checkEffect(this, "weakness", cCon, false);
+
+	checkEffect(this, "insight", cInt, true);
+	checkEffect(this, "feeblemind", cInt, false);
+
+	checkEffect(this, "prayer", cPie, true);
+	checkEffect(this, "damnation", cPie, false);
+
+	PlayerClass *pClass = gConfig->classes[getClassString()];
+	LevelGain *lGain = 0;
+
+	int hpAmt = pClass->getBaseHp();
+
+	hp.setInitial(hpAmt);
+	mp.setInitial(pClass->getBaseMp());
+
+
+
+	for(int l = level ; l > 1 ; l--) {
+		lGain = pClass->getLevelGain(l);
+		if(!lGain)
+			continue;
+		bstring modName = bstring("Level") + l;
+		hpAmt = lGain->getHp();
+		hp.addModifier(modName, hpAmt, MOD_CUR_MAX );
+
+		if(cClass != BERSERKER && cClass != LICH) {
+			mp.addModifier(modName, lGain->getMp(), MOD_CUR_MAX );
+		}
+		int switchNum = lGain->getStat();
+
+		StatModifier* newMod = new StatModifier(modName, 10, MOD_CUR_MAX, false);
+		switch(switchNum) {
+		case STR:
+			strength.addModifier(newMod);
+			cStr -= 10;
+			break;
+		case DEX:
+			dexterity.addModifier(newMod);
+			cDex -= 10;
+			break;
+		case CON:
+			constitution.addModifier(newMod);
+			cCon -= 10;
+			break;
+		case INT:
+			intelligence.addModifier(newMod);
+			cInt -= 10;
+			break;
+		case PTY:
+			piety.addModifier(newMod);
+			cPie -= 10;
+			break;
+		}
+		// Track level history
+		statistics.setLevelInfo(l, new LevelInfo(hpAmt, lGain->getMp(), lGain->getStat(), lGain->getSave(), time(0)));
+
+	}
+
+    if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER)) {
+        focus.setInitial(100);
+        focus.clearModifiers(true);
+        focus.addModifier("UnFocused", -100, MOD_CUR, false);
+        mp.setInitial(0);
+        mp.clearModifiers(true);
+
+    }
+	strength.setInitial(cStr);
+	dexterity.setInitial(cDex);
+	constitution.setInitial(cCon);
+	intelligence.setInitial(cInt);
+	piety.setInitial(cPie);
+
+
+	std::cout << "Str: O: " << cStr << " N: " << strength.getCur() << "\n";
+	std::cout << "Dex: O: " << cDex << " N: " << dexterity.getCur() << "\n";
+	std::cout << "Con: O: " << cCon << " N: " << constitution.getCur() << "\n";
+	std::cout << "Int: O: " << cInt << " N: " << intelligence.getCur() << "\n";
+	std::cout << "Pie: O: " << cPie << " N: " << piety.getCur() << "\n";
+
+}

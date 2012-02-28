@@ -231,16 +231,8 @@ BOOST_PYTHON_MODULE(MudObjects)
 			, (int ( ::Stat::* )( int,bool ) )( &::Stat::adjust )
 			, ( bp::arg("amt"), bp::arg("overMaxOk")=(bool)(false) ) )
 	.def(
-			"adjustMax"
-			, (int ( ::Stat::* )( int ) )( &::Stat::adjustMax )
-			, ( bp::arg("amt") ) )
-	.def(
 			"decrease"
 			, (int ( ::Stat::* )( int ) )( &::Stat::decrease )
-			, ( bp::arg("amt") ) )
-	.def(
-			"decreaseMax"
-			, (int ( ::Stat::* )( int ) )( &::Stat::decreaseMax )
 			, ( bp::arg("amt") ) )
 	.def(
 			"getCur"
@@ -255,10 +247,6 @@ BOOST_PYTHON_MODULE(MudObjects)
 			"increase"
 			, (int ( ::Stat::* )( int,bool ) )( &::Stat::increase )
 			, ( bp::arg("amt"), bp::arg("overMaxOk")=(bool)(false) ) )
-	.def(
-			"increaseMax"
-			, (int ( ::Stat::* )( int ) )( &::Stat::increaseMax )
-			, ( bp::arg("amt") ) )
 	.def(
 			"load"
 			, (bool ( ::Stat::* )( ::xmlNodePtr ) )( &::Stat::load )

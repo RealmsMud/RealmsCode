@@ -2275,7 +2275,6 @@ bool Stat::load(xmlNodePtr curNode, bstring statName) {
 	while(childNode) {
 		if(NODE_NAME(childNode, "Current")) xml::copyToNum(cur, childNode);
 		else if(NODE_NAME(childNode, "Max")) xml::copyToNum(max, childNode);
-		else if(NODE_NAME(childNode, "TempMax")) xml::copyToNum(tmpMax, childNode);
 		else if(NODE_NAME(childNode, "Initial")) xml::copyToNum(initial, childNode);
 		else if(NODE_NAME(childNode, "Modifiers")) loadModifiers(childNode);
 		childNode = childNode->next;

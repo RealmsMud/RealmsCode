@@ -247,12 +247,6 @@ void Player::upLevel() {
 		if(cClass != BERSERKER && cClass != LICH)
 			mp.setInitial(pClass->getBaseMp());
 
-		// OCEANCREST: Dom: HC: hardcore characters get double at level 1
-		//if(isHardcore()) {
-		//	hp.setMax(hp.getMax()*2);
-		//	mp.setMax(mp.getMax()*2);
-		//}
-
 		hp.restore();
 		mp.restore();
 		damage = pClass->damage;
