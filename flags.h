@@ -182,7 +182,7 @@
 #define P_SECURITY_CHECK_OK         48       // Player has passed security check
 #define P_AUTHERIZED                49       // No-port that has been authorized
 #define P_ALIASING                  50       // DM is aliasing
-#define P_BLOODSAC                  51       // Player in blood sacrifice mode
+// free                             51
 #define P_NEWLINE_AFTER_PROMPT      52       // Print NL after prompt
 #define P_BERSERKED_OLD             53       // Player is berserked
 #define P_LOG_WATCH                 54       // DM is watching the log channel

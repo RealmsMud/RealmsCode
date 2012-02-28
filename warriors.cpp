@@ -444,11 +444,11 @@ int cmdBerserk(Player* player, cmd* cmnd) {
 		broadcast(player->getSock(), player->getParent(), "%M goes berserk!", player);
 		player->checkImprove("berserk", true);
 		// TODO: SKILLS: Add a modifier based on berserk skill level
-		player->addEffect("berserk", 120L);
+		player->addEffect("berserk", 120L, 30);
 		if(player->getClass() == CLERIC && player->getDeity() == ARES)
-		    player->strength.addModifier("Berserk", 30, MOD_CUR_MAX);
+		    player->addEffect("berserk", 120L, 30);
 		else
-            player->strength.addModifier("Berserk", 50, MOD_CUR_MAX);
+		    player->addEffect("berserk", 120L, 50);
 		player->computeAC();
 		player->computeAttackPower();
 		player->lasttime[LT_BERSERK].ltime = t;
@@ -1102,7 +1102,7 @@ int cmdBloodsacrifice(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(player->flagIsSet(P_BLOODSAC)) {
+	if(player->isEffected("bloodsac")) {
 		player->print("You're haven't finished your last sacrifice!\n");
 		return(0);
 	}
@@ -1129,9 +1129,9 @@ int cmdBloodsacrifice(Player* player, cmd* cmnd) {
 	if(mrand(1, 100) <= chance) {
 		player->print("Your blood sacrifice infuses your body with increased vitality.\n");
 		player->checkImprove("bloodsac", true);
-		player->setFlag(P_BLOODSAC);
+		player->addEffect("bloodsac", 120L + 60L * (int)(level / 5));
 		player->lasttime[LT_BLOOD_SACRIFICE].ltime = t;
-		player->lasttime[LT_BLOOD_SACRIFICE].interval = 120L + 60L * (int)(level / 5);
+		player->lasttime[LT_BLOOD_SACRIFICE].interval = 600L;
 	} else {
 		player->print("Your sacrifice fails.\n");
 		player->checkImprove("bloodsac", false);

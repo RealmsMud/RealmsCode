@@ -332,7 +332,7 @@ int cmdFrenzy(Player* player, cmd* cmnd) {
 	i = player->lasttime[LT_FRENZY].ltime;
 	t = time(0);
 
-	if(t - i < 600L) {
+	if(t - i < 600L && !player->isStaff()) {
 		player->pleaseWait(600L-t+i);
 		return(0);
 	}
@@ -346,7 +346,7 @@ int cmdFrenzy(Player* player, cmd* cmnd) {
 		player->print("You begin to attack in a frenzy.\n");
 		player->checkImprove("frenzy", true);
 		broadcast(player->getSock(), player->getParent(), "%M attacks in a frenzy.", player);
-		player->addEffect("frenzy", 210L);
+		player->addEffect("frenzy", 210L, 50);
 		player->lasttime[LT_FRENZY].ltime = t;
 		player->lasttime[LT_FRENZY].interval = 600 + 210L;
 	} else {

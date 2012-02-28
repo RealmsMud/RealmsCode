@@ -694,7 +694,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 					victim->printColor("^r%M drains %s%d^r hit points from you!\n", this, victim->customColorize("*CC:DAMAGE*").c_str(), drain);
 					attackDamage.add(drain);
 					if(!pVictim)
-						hp.increase(drain, flagIsSet(P_BLOODSAC));
+						hp.increase(drain);
 				}
 
 				if(attackType == ATTACK_BASH) {

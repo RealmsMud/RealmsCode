@@ -89,7 +89,7 @@ void Player::pulseTick(long t) {
 		if(cClass != LICH) {
 			hpTickAmt = MAX(1, 3 + bonus(constitution.getCur()) + (cClass == BERSERKER ? 2:0));
 			if(!ill && !deathSickness) {
-				if(!flagIsSet(P_BLOODSAC)) {
+				if(!isEffected("bloodsac")) {
 					if(flagIsSet(P_SITTING))
 						hpTickAmt += 1;
 					else if(flagIsSet(P_SLEEPING))
@@ -108,9 +108,9 @@ void Player::pulseTick(long t) {
 			}
 		}
 
-		int hpIncrease = hp.increase(hpTickAmt, flagIsSet(P_BLOODSAC));
+		int hpIncrease = hp.increase(hpTickAmt);
 		if(!ill && !deathSickness && !vampAndDay)
-			hpIncrease += hp.increase(getHpTickBonus(), flagIsSet(P_BLOODSAC));
+			hpIncrease += hp.increase(getHpTickBonus());
 
 		lasttime[LT_TICK].ltime = t;
 		lasttime[LT_TICK].interval = tickInterval(constitution, fastTick, deathSickness, vampAndDay, "regeneration");

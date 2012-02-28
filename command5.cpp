@@ -955,7 +955,7 @@ int cmdTime(Player* player, cmd* cmnd) {
 			showAbility(player, "barkskin", "barkskin", LT_BARKSKIN, 600);
 			showAbility(player, "berserk", "berserk", LT_BERSERK, 600);
 			showAbility(player, "bite", "bite", LT_PLAYER_BITE, player->lasttime[LT_PLAYER_BITE].interval);
-			showAbility(player, "bloodsac", "blood sacrifice", LT_BLOOD_SACRIFICE, 600, P_BLOODSAC);
+			showAbility(player, "bloodsac", "blood sacrifice", LT_BLOOD_SACRIFICE, 600);
 			showAbility(player, "commune", "commune", LT_PRAY, 45);
 			showAbility(player, "charm", "charm", LT_HYPNOTIZE, player->lasttime[LT_HYPNOTIZE].interval);
 			showAbility(player, "creeping-doom", "creeping-doom", LT_SMOTHER, player->lasttime[LT_SMOTHER].interval);

@@ -203,6 +203,7 @@ BOOST_PYTHON_MODULE(mud)
 	def("isBadSocial", &::isBadSocial);
 	def("isSemiBadSocial", &::isSemiBadSocial);
 	def("isGoodSocial", &::isGoodSocial);
+	def("getConBonusPercentage", &::getConBonusPercentage);
 
 }
 
@@ -270,6 +271,7 @@ BOOST_PYTHON_MODULE(MudObjects)
 			"setMax"
 			, (int ( ::Stat::* )( short int,bool ) )( &::Stat::setMax )
 			, ( bp::arg("newMax"), bp::arg("allowZero")=(bool)(false) ) )
+	.def("getModifierAmt", &Stat::getModifierAmt)
 	;
 
 	{ //::BaseRoom

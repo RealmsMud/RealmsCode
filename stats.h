@@ -66,9 +66,9 @@ public:
 	bool loadModifiers(xmlNodePtr curNode);
 	void save(xmlNodePtr parentNode, const char* statName) const;
 	
-	int increase(int amt, bool overMaxOk = false);
+	int increase(int amt);
 	int decrease(int amt);
-	int adjust(int amt, bool overMaxOk = false);
+	int adjust(int amt);
 	
 	int getCur(bool recalc = true);
 	int getMax();

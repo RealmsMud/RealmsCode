@@ -714,13 +714,6 @@ void Player::checkEffectsWearingOff() {
 		}
 	}
 
-	if(flagIsSet(P_BLOODSAC)) {
-		if(t > LT(this, LT_BLOOD_SACRIFICE)) {
-			printColor("^mYour demonic power leaves you.\n");
-			clearFlag(P_BLOODSAC);
-			 hp.setCur(hp.getMax());
-		}
-	}
 	if(flagIsSet(P_NO_SUICIDE)) {
 		if(t > LT(this, LT_MOBDEATH)) {
 			printColor("^yYour cooling-off period has ended.\n");

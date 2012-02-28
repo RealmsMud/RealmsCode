@@ -272,9 +272,9 @@ void Stat::setName(bstring pName) {
 //						adjust
 //*********************************************************************
 
-int Stat::adjust(int amt, bool overMaxOk) {
+int Stat::adjust(int amt) {
 	if(amt > 0)
-		return(increase(amt, overMaxOk));
+		return(increase(amt));
 	else
 		return(-1 * decrease(amt*-1));
 }
@@ -284,17 +284,12 @@ int Stat::adjust(int amt, bool overMaxOk) {
 //*********************************************************************
 
 // Legacy for hp.increase()
-int Stat::increase(int amt, bool overMaxOk) {
+int Stat::increase(int amt) {
 	if(amt < 0)
 		return(0);
 		
 	
-	int increaseAmt;
-	// One possibility is we're a DK under blood sacrifice.  Max of 1 1/2 max
-	if(overMaxOk)
-		increaseAmt = MAX(0, MIN(amt, (getMax()*3/2) - getCur()));
-	else
-		increaseAmt = MAX(0, MIN(amt, getMax() - getCur()));
+	int increaseAmt = MAX(0, MIN(amt, getMax() - getCur()));
 		
 	adjustModifier("CurModifier", increaseAmt);
 	
@@ -488,6 +483,7 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 	Stat* stat=0;
 	Player* pThis = getAsPlayer();
 	bool good;
+	ModifierType modType = MOD_CUR_MAX;
 
 	if(effect->getName() == "strength") {
 		if(pThis) {
@@ -543,6 +539,10 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 	} else if(effect->getName() == "dkpray") {
 	    good = true;
 	    stat = &strength;
+	} else if(effect->getName() == "bloodsac") {
+	    modType = MOD_MAX;
+	    good = true;
+	    stat = &hp;
 	}
 
 	else {
@@ -559,7 +559,7 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 	addAmt = tMAX(addAmt, MIN_STAT_NUM - stat->getCur());
 	
 	effect->setStrength(addAmt);
-	stat->addModifier(effect->getName(), addAmt, MOD_CUR_MAX);
+	stat->addModifier(effect->getName(), addAmt, modType);
 
 	if(pThis) {
 		pThis->computeAttackPower();
@@ -586,7 +586,18 @@ bool Creature::remStatModEffect(EffectInfo* effect) {
 		stat = &piety;
 	} else if(effect->getName() == "fortitude" || effect->getName() == "weakness") {
 		stat = &constitution;
-	} else {
+	} else if(effect->getName() == "berserk") {
+        stat = &strength;
+    } else if(effect->getName() == "frenzy") {
+        stat = &dexterity;
+    } else if(effect->getName() == "pray") {
+        stat = &piety;
+    } else if(effect->getName() == "dkpray") {
+        stat = &strength;
+    } else if(effect->getName() == "bloodsac") {
+        stat = &hp;
+    }
+	else {
 		print("Unknown stat effect: %s\n", effect->getName().c_str());
 		return(false);
 	}

@@ -310,7 +310,7 @@ bool EffectInfo::compute(MudObject* applier) {
 		return(false);
 	myApplier = applier;
 	bool retVal = runScript(myEffect->getComputeScript(), applier);
-	// Incase computing results in a non permenant effect that has a negative duration!
+	// Incase computing results in a non permanent effect that has a negative duration!
 	if(this->duration < -1) {
 		duration = 60;
 	}
