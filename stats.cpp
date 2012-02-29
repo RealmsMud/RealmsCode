@@ -61,18 +61,15 @@ double getConBonusPercentage(int con) {
     return(percentage);
 
 }
-void Stat::reCalc(ModifierType modType) {
+void Stat::reCalc() {
 	if(!dirty)
 		return;
 
     if(influencedBy && name.equals("Hp"))
         setModifier("ConBonus", 0, MOD_MAX);
 
-    if(modType == MOD_ALL || modType == MOD_CUR)
-    	cur = initial;
-
-    if(modType == MOD_ALL || modType == MOD_MAX)
-		max = initial;
+	cur = initial;
+	max = initial;
 
 	for(ModifierMap::value_type p : modifiers) {
 		StatModifier *mod = p.second;
@@ -80,18 +77,14 @@ void Stat::reCalc(ModifierType modType) {
 			continue;
 		switch(mod->getModType()) {
 		case MOD_MAX:
-			if(modType == MOD_ALL || modType == MOD_MAX)
-				max += mod->getModAmt();
+			max += mod->getModAmt();
 			break;
 		case MOD_CUR:
-			if(modType == MOD_ALL || modType == MOD_CUR)
-				cur += mod->getModAmt();
+			cur += mod->getModAmt();
 			break;
 		case MOD_CUR_MAX:
-			if(modType == MOD_ALL || modType == MOD_MAX)
-				max += mod->getModAmt();
-			if(modType == MOD_ALL || modType == MOD_CUR)
-				cur += mod->getModAmt();
+			max += mod->getModAmt();
+			cur += mod->getModAmt();
 			break;
 		default:
 			break;
@@ -99,7 +92,7 @@ void Stat::reCalc(ModifierType modType) {
 	}
 
 
-    if(influencedBy && name.equals("Hp") && (modType == MOD_MAX || modType == MOD_ALL)) {
+    if(influencedBy && name.equals("Hp")) {
     	double percentage = getConBonusPercentage(influencedBy->getCur());
     	int rounding = this->getModifierAmt("Rounding");
         int conBonus = (max-rounding) * percentage;
@@ -108,14 +101,11 @@ void Stat::reCalc(ModifierType modType) {
         max += conBonus;
     }
 
-    if(cur > max && (modType == MOD_CUR || modType == MOD_ALL)) {
+    if(cur > max) {
     	adjustModifier("CurModifier", max - cur);
     	cur -= (cur - max);
     }
-    //cur = tMIN(cur, max);
-    // We're still "dirty" if we haven't re-calced CUR
-    if(modType == MOD_ALL)
-    	dirty = false;
+	dirty = false;
 }
 StatModifier* Stat::getModifier(bstring name) {
 	ModifierMap::iterator it = modifiers.find(name);
@@ -339,11 +329,8 @@ int Stat::getCur(bool recalc) {
 //						getMax
 //*********************************************************************
 
-int Stat::getMax(bool recalcAll) {
-	if(recalcAll)
-		reCalc(MOD_ALL);
-	else
-		reCalc(MOD_MAX);
+int Stat::getMax() {
+	reCalc();
     return(max);
 }
 
@@ -376,25 +363,22 @@ void Stat::setMax(int newMax, bool allowZero) {
 		double percentage =  getConBonusPercentage(influencedBy->getCur());
 		double targetMax = newMax;
 		double target = targetMax / (1.0+percentage);
-		int curMax = getMax(false) - getModifierAmt("ConBonus") - dmSet - rounding;
+		int curMax = getMax() - getModifierAmt("ConBonus") - dmSet - rounding;
 		adjustment = round(target) - curMax;
+		int adjMax = (curMax + adjustment) * (1.0+getConBonusPercentage(influencedBy->getCur()));
+
 		this->setModifier("DmSet", adjustment, MOD_MAX);
-		int adjMax = getMax(false) - rounding;
+
 		// Due to rounding with doubles we might miss the target by 1, this will adjust it
 		if(adjMax != newMax) {
 			setModifier("Rounding", newMax - adjMax, MOD_MAX);
 		} else {
 			setModifier("Rounding", 0, MOD_MAX);
 		}
-		int newRounding = getModifierAmt("Rounding");
-		std::cout << name << "-" << "NewMax:" << targetMax << " CurMax:" << curMax << " DmSet" << dmSet << " Target:" << target << " Percentage:" << percentage << " Adjustment" << adjustment << " AdjMax:" << adjMax << " RoundingStart:" << rounding << " RoundingEnd:" << newRounding << std::endl;
 	} else {
 		int curMax = getMax() - dmSet;
 		adjustment = newMax - curMax;
 		this->setModifier("DmSet", adjustment, MOD_MAX);
-		int adjMax = getMax();
-		std::cout << name << "-" << " Target: " << newMax << " CurMax: " << curMax << " Adjustment: " << adjustment << " AdjMax:" << adjMax << std::endl;
-
 	}
 
 

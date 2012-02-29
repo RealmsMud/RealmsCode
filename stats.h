@@ -71,7 +71,7 @@ public:
 	int adjust(int amt);
 	
 	int getCur(bool recalc = true);
-	int getMax(bool recalcAll = true);
+	int getMax();
 	int getInitial() const;
 
 	void addInitial(int a);
@@ -84,7 +84,7 @@ public:
 	void setInfluencedBy(Stat* pInfluencedBy);
 	int restore(); // Set a stat to it's maximum value
 
-	void reCalc(ModifierType modType = MOD_ALL);
+	void reCalc();
 
 	bool addModifier(StatModifier* toAdd);
 	bool addModifier(bstring name, int modAmt, ModifierType modType);
