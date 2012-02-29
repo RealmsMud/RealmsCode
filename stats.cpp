@@ -639,6 +639,7 @@ void checkEffect(Player* player, const bstring& effName, int& stat, bool positiv
 		if(!positive)
 			str *= -1;
 		stat += str;
+		player->removeEffect(eff, false);
 	}
 }
 
