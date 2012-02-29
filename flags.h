@@ -150,10 +150,10 @@
 #define P_AUTO_INVIS                16       // Automatically turn on DM Invis if idle for over 100 minutes
 #define P_UNIQUE_TO_DECAY           17       // Player has a unique that must decay
 #define P_PROMPT                    18       // Display status prompt
-#define P_FRENZY                    19       // Frenzy Flag (For Werewolfs)
+#define P_FRENZY_OLD                19       // Frenzy Flag (For Werewolfs)
 #define P_MXP_ENABLED               20       // Player wants to use MXP
 #define P_MXP_ACTIVE                21       // MXP is active! we need to close it
-#define P_PRAYED                    22       // Prayed
+#define P_PRAYED_OLD                22       // Prayed
 #define P_INVERT_AREA_COLOR         23       // Invert area color
 #define P_PREPARED                  24       // Prepared for trap
 #define P_T_TO_BOUND                25       // *t takes you to bound room

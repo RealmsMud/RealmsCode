@@ -97,6 +97,8 @@ public:
 
 	StatModifier* getModifier(bstring name);
 	int getModifierAmt(bstring name);
+
+	void upgradeSetCur(int newCur);  // Used only in upgrading to new stats
 protected:
 
 	bstring name;

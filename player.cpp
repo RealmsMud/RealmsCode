@@ -2144,9 +2144,9 @@ void Player::loseRage() {
 	clearFlag(P_BERSERKED_OLD);
 
 	if(cClass == CLERIC && deity == ARES)
-		strength.decrease(30);
+		strength.upgradeSetCur(strength.getCur(false) - 30);
 	else
-		strength.decrease(50);
+		strength.upgradeSetCur(strength.getCur(false) - 50);
 	computeAC();
 	computeAttackPower();
 }
@@ -2156,18 +2156,18 @@ void Player::loseRage() {
 //*********************************************************************
 
 void Player::losePray() {
-	if(!flagIsSet(P_PRAYED))
+	if(!flagIsSet(P_PRAYED_OLD))
 		return;
 	if(cClass != DEATHKNIGHT) {
 		printColor("^yYou feel less pious.\n");
-		piety.decrease(50);
+		piety.upgradeSetCur(piety.getCur(false) - 50);
 	} else {
 		printColor("^rYour demonic strength leaves you.\n");
-		strength.decrease(30);
+		strength.upgradeSetCur(strength.getCur(false) - 30);
 		computeAC();
 		computeAttackPower();
 	}
-	clearFlag(P_PRAYED);
+	clearFlag(P_PRAYED_OLD);
 }
 
 //*********************************************************************
@@ -2175,11 +2175,11 @@ void Player::losePray() {
 //*********************************************************************
 
 void Player::loseFrenzy() {
-	if(!flagIsSet(P_FRENZY))
+	if(!flagIsSet(P_FRENZY_OLD))
 		return;
 	printColor("^gYou feel slower.\n");
-	clearFlag(P_FRENZY);
-	dexterity.decrease(50);
+	clearFlag(P_FRENZY_OLD);
+	dexterity.upgradeSetCur(dexterity.getCur(false) - 50);
 }
 
 //*********************************************************************

@@ -626,6 +626,11 @@ bool Creature::remStatModEffect(EffectInfo* effect) {
 //						upgradeStats
 //*********************************************************************
 
+// Only used for upgradeStats
+void Stat::upgradeSetCur(int newCur) {
+	cur = newCur;
+}
+
 // Note: Used for upgradeStats
 void checkEffect(Player* player, const bstring& effName, int& stat, bool positive)  {
 	EffectInfo* eff = player->getEffect(effName);
