@@ -1078,7 +1078,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 				return(0);
 			}
 
-			if(strength < 0 || strength > EFFECT_MAX_STRENGTH) {
+			if((strength < 0 || strength > EFFECT_MAX_STRENGTH) && strength != -1) {
 				player->print("Strength must be between 0 and %d.\n", EFFECT_MAX_STRENGTH);
 				return(0);
 			}

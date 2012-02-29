@@ -53,7 +53,7 @@ int Monster::updateCombat() {
 	char	atk[30];
 	int		n=1, rtn=0, yellchance=0, num=0, breathe=0;
 	int		x=0;
-	bool	monstervmonster=false, casted=false, autoAttack=false;
+	bool	monstervmonster=false, casted=false;
 	bool	resistPet=false, immunePet=false, vulnPet=false;
 	bool	willCast=false, antiMagic=false, isCharmed=false;
 
@@ -97,7 +97,6 @@ int Monster::updateCombat() {
 		return(0);
 
 	monstervmonster = (!pTarget && !target->isPet() && isMonster() && !isPet());
-	autoAttack = (pTarget && !pTarget->flagIsSet(P_NO_AUTO_ATTACK) && pTarget->canAttack(this));
 
 	room->wake("Loud noises disturb your sleep.", true);
 
@@ -409,12 +408,7 @@ int Monster::updateCombat() {
 				pTarget->flee();
 				return(1);
 			}
-		} else if(autoAttack) {
-			//if(target->isDm()) target->printColor(": ^Rcombat.c line %d^w\n", __LINE__);
-			if(pTarget->attackCreature(this))
-				return(1);
 		}
-
 
 		if(target->doLagProtect())
 			return(1);
@@ -447,10 +441,6 @@ int Monster::updateCombat() {
 					return(1);
 				}
 			}
-		}
-		if(autoAttack) {
-			if(pTarget->attackCreature(this))
-				return(1);
 		}
 	} else if(result == ATTACK_DODGE) {
 		if(!isPet())
@@ -679,7 +669,7 @@ int Player::lagProtection() {
 	int		t=0, idle=0;
 
 	// Can't do anything while unconsious!
-	if(flagIsSet(P_UNCONSCIOUS) || !flagIsSet(P_NO_AUTO_ATTACK))
+	if(flagIsSet(P_UNCONSCIOUS))
 		return(0);
 
 	t = time(0);

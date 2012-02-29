@@ -447,7 +447,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 			setAttackDelay( (int)((getAttackDelay()*4.0)/3.0));
 
 
-		if(deathSickness && mrand(1,100) < 50) {
+		if(deathSickness && mrand(1,100) < deathSickness->getStrength()) {
 			printColor("^DYou cough heavily as you attack.\n");
 			modifyAttackDelay(10);
 		}

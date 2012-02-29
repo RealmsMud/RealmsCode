@@ -1687,7 +1687,6 @@ void Create::done(Socket* sock, bstring str, int mode) {
 
 //		player->adjustStats();
 
-		player->setFlag(P_NO_AUTO_ATTACK);
 		player->setFlag(P_LAG_PROTECTION_SET);
 		player->clearFlag(P_NO_AUTO_WEAR);
 
