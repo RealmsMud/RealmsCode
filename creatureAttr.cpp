@@ -1039,11 +1039,15 @@ void Creature::crtReset() {
 	hp.setName("Hp");
 	mp.setName("Mp");
 
-	if(getAsPlayer())
+	if(getAsPlayer()) {
 	    getAsPlayer()->focus.setName("Focus");
 
-    constitution.setInfluences(&hp);
-    hp.setInfluencedBy(&constitution);
+	    constitution.setInfluences(&hp);
+	    hp.setInfluencedBy(&constitution);
+
+	    intelligence.setInfluences(&mp);
+	    mp.setInfluencedBy(&intelligence);
+	}
 
 	for(i=0; i<MAXWEAR; i++)
 		ready[i] = 0;

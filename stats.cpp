@@ -51,16 +51,30 @@ ModifierType StatModifier:: getModType() {
 	return(modType);
 }
 
-double getConBonusPercentage(int con) {
+double getConBonusPercentage(int pCon) {
     const double a = 0.000002102555823;
     const double b = 0.001366762953;
     const double c = 0.982621217;
-    const int x = con;
+    const int x = pCon;
     double percentage = ((a*x*x)+(b*x)+c);
     percentage = tMAX<double>(1.0, percentage)-1.0;
     return(percentage);
 
 }
+
+double getIntBonusPercentage(int pInt) {
+
+	const double a =  0.000004207194636;
+    const double b = -0.0004146634469;
+    const double c =  1.00300606;
+
+    const int x = pInt;
+    double percentage = ((a*x*x)+(b*x)+c);
+    percentage = tMAX<double>(1.0, percentage)-1.0;
+    return(percentage);
+
+}
+
 void Stat::reCalc() {
 	if(!dirty)
 		return;
@@ -99,6 +113,14 @@ void Stat::reCalc() {
         setModifier("ConBonus", conBonus, MOD_MAX);
 
         max += conBonus;
+    }
+    if(influencedBy && name.equals("Mp")) {
+    	double percentage = getIntBonusPercentage(influencedBy->getCur());
+    	int rounding = this->getModifierAmt("Rounding");
+        int intBonus = (max-rounding) * percentage;
+        setModifier("IntBonus", intBonus, MOD_MAX);
+
+        max += intBonus;
     }
 
     if(cur > max) {
@@ -359,13 +381,36 @@ void Stat::setMax(int newMax, bool allowZero) {
 	int dmSet = getModifierAmt("DmSet");
 	int rounding = getModifierAmt("Rounding");
 	int adjustment = 0;
-	if(name.equals("Hp") && influencedBy) {
-		double percentage =  getConBonusPercentage(influencedBy->getCur());
+	bool setHp = false, setMp = false;
+	if(name.equals("Hp"))
+		setHp = true;
+	else if(name.equals("Mp"))
+		setMp = true;
+
+	if((setHp || setMp) && influencedBy) {
+		double percentage =  0;
+		int bonus = 0;
+		if(setHp) {
+			bonus = getModifierAmt("ConBonus");
+			percentage = getConBonusPercentage(influencedBy->getCur());
+		}
+		if(setMp) {
+			bonus = getModifierAmt("IntBonus");
+			percentage = getIntBonusPercentage(influencedBy->getCur());
+		}
+
+		// Target max value we want
 		double targetMax = newMax;
+
+		// Target max value we want before any bonus
 		double target = targetMax / (1.0+percentage);
-		int curMax = getMax() - getModifierAmt("ConBonus") - dmSet - rounding;
+		// Current amount, less bonus and any set amounts
+		int curMax = getMax() - bonus - dmSet - rounding;
+		// Adjustment needed to get to the target value before bonus
 		adjustment = round(target) - curMax;
-		int adjMax = (curMax + adjustment) * (1.0+getConBonusPercentage(influencedBy->getCur()));
+
+		// Calculated max based on new adjustment, without any rounding modifier
+		int adjMax = (curMax + adjustment) * (1.0+percentage);
 
 		this->setModifier("DmSet", adjustment, MOD_MAX);
 
