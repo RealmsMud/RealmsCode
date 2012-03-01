@@ -79,8 +79,12 @@ void Stat::reCalc() {
 	if(!dirty)
 		return;
 
-    if(influencedBy && name.equals("Hp"))
-        setModifier("ConBonus", 0, MOD_MAX);
+	if(influencedBy) {
+		if(name.equals("Hp"))
+			setModifier("ConBonus", 0, MOD_MAX);
+		else if(name.equals("Mp"))
+			setModifier("IntBonus", 0, MOD_MAX);
+	}
 
 	cur = initial;
 	max = initial;
@@ -781,11 +785,11 @@ void Player::upgradeStats() {
 	intelligence.setInitial(cInt);
 	piety.setInitial(cPie);
 
-
-	std::cout << "Str: O: " << cStr << " N: " << strength.getCur() << "\n";
-	std::cout << "Dex: O: " << cDex << " N: " << dexterity.getCur() << "\n";
-	std::cout << "Con: O: " << cCon << " N: " << constitution.getCur() << "\n";
-	std::cout << "Int: O: " << cInt << " N: " << intelligence.getCur() << "\n";
-	std::cout << "Pie: O: " << cPie << " N: " << piety.getCur() << "\n";
+//
+//	std::cout << "Str: O: " << cStr << " N: " << strength.getCur() << "\n";
+//	std::cout << "Dex: O: " << cDex << " N: " << dexterity.getCur() << "\n";
+//	std::cout << "Con: O: " << cCon << " N: " << constitution.getCur() << "\n";
+//	std::cout << "Int: O: " << cInt << " N: " << intelligence.getCur() << "\n";
+//	std::cout << "Pie: O: " << cPie << " N: " << piety.getCur() << "\n";
 
 }
