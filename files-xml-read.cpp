@@ -827,11 +827,13 @@ void Player::readXml(xmlNodePtr curNode) {
 //						load
 //*********************************************************************
 
-bool Skill::load(xmlNodePtr rootNode) {
+Skill::Skill(xmlNodePtr rootNode) {
 	xmlNodePtr curNode = rootNode->children;
+	reset();
+
 	while(curNode) {
 		if(NODE_NAME(curNode, "Name")) {
-			xml::copyToBString(name, curNode);
+			setName(xml::getBString(curNode));
 		} else if(NODE_NAME(curNode, "Gained")) {
 			xml::copyToNum(gained, curNode);
 		} else if(NODE_NAME(curNode, "GainBonus")) {
@@ -840,9 +842,8 @@ bool Skill::load(xmlNodePtr rootNode) {
 		curNode = curNode->next;
 	}
 	if(name == "" || gained == 0) {
-		return(false);
+		throw(new std::exception());
 	}
-	return(true);
 }
 
 
@@ -878,11 +879,11 @@ void Creature::loadSkills(xmlNodePtr rootNode) {
 	xmlNodePtr curNode = rootNode->children;
 	while(curNode) {
 		if(NODE_NAME(curNode, "Skill")) {
-			Skill *skill = new Skill();
-			if(skill->load(curNode)) {
-				skills[skill->getName()] = skill;
-			} else {
-				delete skill;
+			try {
+				Skill *skill = new Skill(curNode);
+				skills.insert(SkillMap::value_type(skill->getName(), skill));
+			} catch(...) {
+				std::cout << "Error loading skill for " << getName() << std::endl;
 			}
 		}
 		curNode = curNode->next;
@@ -1793,6 +1794,7 @@ bool Config::loadSkills() {
 		}
 		cur = cur->next;
 	}
+	updateSkillPointers();
 	xmlFreeDoc(xmlDoc);
 	xmlCleanupParser();
 	return(true);
@@ -1845,13 +1847,12 @@ void Config::loadSkills(xmlNodePtr rootNode) {
 	SkillInfo* skill=0;
 	while(curNode != NULL) {
 		if(NODE_NAME(curNode, "Skill")) {
-			skill = new SkillInfo;
-			if(skill->load(curNode) ) {
-				skills[skill->getName()] = skill;
-			} else {
-				delete skill;
+			try {
+				skill = new SkillInfo(curNode);
+				skills.insert(SkillInfoMap::value_type(skill->getName(), skill));
+			} catch(...) {
+
 			}
-			skill = 0;
 		}
 
 		curNode = curNode->next;
@@ -1862,7 +1863,11 @@ void Config::loadSkills(xmlNodePtr rootNode) {
 //						load
 //*********************************************************************
 
-bool SkillInfo::load(xmlNodePtr rootNode) {
+SkillInfo::SkillInfo(xmlNodePtr rootNode) {
+	gainType = SKILL_NORMAL;
+	knownOnly = false;
+	usesAttackTimer = true;
+
 	xmlNodePtr curNode = rootNode->children;
 	bstring group;
 	bstring description;
@@ -1894,16 +1899,62 @@ bool SkillInfo::load(xmlNodePtr rootNode) {
 			}
 		} else if(NODE_NAME(curNode, "KnownOnly")) {
 			xml::copyToBool(knownOnly, curNode);
+		} else if(NODE_NAME(curNode, "Cooldown")) {
+			xml::copyToNum(cooldown, curNode);
+		} else if(NODE_NAME(curNode, "UsesAttackTimer")) {
+			xml::copyToBool(usesAttackTimer, curNode);
+		} else if(NODE_NAME(curNode, "Cooldown")) {
+			xml::copyToNum(cooldown, curNode);
+		} else if(NODE_NAME(curNode, "FailCooldown")) {
+			xml::copyToNum(failCooldown, curNode);
+		} else if(NODE_NAME(curNode, "Resources")) {
+			loadResources(curNode);
 		}
 		curNode = curNode->next;
 	}
 	if(name == "" || displayName == "") {
-		printf("Invalid skill (Name:%s, DisplayName:%s)", name.c_str(), displayName.c_str());
-		return(false);
+		std::cout << "Invalid skill (Name:" << name << ", DisplayName: " << displayName <<  ")" << std::endl;
+		throw(new std::exception());
 	}
-	return(true);
 }
 
+void SkillInfo::loadResources(xmlNodePtr rootNode) {
+	xmlNodePtr curNode = rootNode->children;
+	while(curNode != NULL) {
+		if(NODE_NAME(curNode, "Resource")) {
+			resources.push_back(SkillCost(curNode));
+		}
+		curNode = curNode->next;
+	}
+}
+
+SkillCost::SkillCost(xmlNodePtr rootNode) {
+	resource = RES_NONE;
+	cost = 0;
+
+	xmlNodePtr curNode = rootNode->children;
+	while(curNode != NULL) {
+		if(NODE_NAME(curNode, "Type")) {
+			bstring resourceStr;
+			xml::copyToBString(resourceStr, curNode);
+			if(resourceStr.equals("Gold", false)) {
+				resource = RES_GOLD;
+			} else if(resourceStr.equals("Mana", false) || resourceStr.equals("Mp")) {
+				resource = RES_MANA;
+			} else if(resourceStr.equals("HitPoints", false) || resourceStr.equals("Hp")) {
+				resource = RES_HIT_POINTS;
+			} else if(resourceStr.equals("Focus", false)) {
+				resource = RES_FOCUS;
+			} else if(resourceStr.equals("Energy", false)) {
+				resource = RES_ENERGY;
+			}
+		} else if(NODE_NAME(curNode, "Cost")) {
+			xml::copyToNum(cost, curNode);
+		}
+		curNode = curNode->next;
+	}
+
+}
 //*********************************************************************
 //						loadCatRefArray
 //*********************************************************************

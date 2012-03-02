@@ -641,12 +641,15 @@ void Server::updateUsers(long t) {
 
 	Player* player=0;
 	for(Socket * sock : sockets) {
+
 		player = sock->getPlayer();
 
 		if(player) {
 			if(player->isDm()) tout = t;
 			else if(player->isStaff()) tout = 1200;
 			else tout = 600;
+		} else {
+			tout = 300;
 		}
 		if(t - sock->ltime > tout) {
 			sock->write("\n\rTimed out.\n\r");

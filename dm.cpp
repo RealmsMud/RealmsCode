@@ -161,7 +161,7 @@ int dmSockets(Player* player, cmd* cmnd) {
 
 	for(Socket* sock : gServer->sockets) {
 		num += 1;
-		player->print("Fd: %-2d   %s\n", sock->getFd(), sock->getHostname().c_str());
+		player->print("Fd: %-2d   %s (%ld)\n", sock->getFd(), sock->getHostname().c_str(), sock->getIdle());
 	}
 	player->print("%d total connection%s.\n", num, num != 1 ? "s" : "");
 	return(PROMPT);
