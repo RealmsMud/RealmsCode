@@ -495,6 +495,7 @@ void UniqueRoom::addPermCrt() {
 			continue;
 
 		n = 1;
+		m = 0;
 		nt = it;
 		nt++;
 		for(; nt != permMonsters.end() ; nt++) {
