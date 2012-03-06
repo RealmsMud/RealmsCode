@@ -773,9 +773,9 @@ void Config::clearSkills() {
 }
 // Updates skill pointers on players
 void Config::updateSkillPointers() {
-	for(Player* ply : gServer->players) {
-		for(SkillMap::value_type p : ply->skills) {
-			p.second->updateParent();
+	for(PlayerMap::value_type pp : gServer->players) {
+		for(SkillMap::value_type sp : pp.second->skills) {
+			sp.second->updateParent();
 		}
 	}
 

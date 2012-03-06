@@ -986,7 +986,6 @@ protected:
 	short barkskin;
 	unsigned short pkin;
 	unsigned short pkwon;
-	unsigned long lostExperience;
 	int wrap;
 	int luck;
 	int ansi;
@@ -1147,7 +1146,6 @@ public:
 	unsigned short getWimpy() const;
 	unsigned short getTickDamage() const;
 	unsigned short getWarnings() const;
-	unsigned long getLostExperience() const;
 	unsigned short getPkin() const;
 	unsigned short getPkwon() const;
 	bstring getBankDisplay() const;

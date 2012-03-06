@@ -353,7 +353,7 @@ void Player::upLevel() {
 		}
 
 		if(!relevel) {
-	        statistics.setLevelInfo(level, new LevelInfo(hpAmt, mpAmt, statGain, saveGain, time(0)));
+	        statistics.setLevelInfo(level, new LevelInfo(level, hpAmt, mpAmt, statGain, saveGain, time(0)));
 
 		    // Saving throw bug fix: Spells and mental saving throws will now be
 			// properly reset so they can increase like the other ones  -Bane

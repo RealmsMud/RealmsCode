@@ -16,6 +16,7 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
 #include "mud.h"
 #include "commands.h"
 
@@ -23,12 +24,51 @@
 //                      LevelInfo
 //*********************************************************************
 
-LevelInfo::LevelInfo(int pHp, int pMp, int pStat, int pSave, time_t pTime) {
+LevelInfo::LevelInfo(int pLevel, int pHp, int pMp, int pStat, int pSave, time_t pTime) {
+    level = pLevel;
     hpGain = pHp;
     mpGain = pMp;
     statUp = pStat;
     saveGain = pSave;
     levelTime = pTime;
+}
+
+LevelInfo::LevelInfo(xmlNodePtr rootNode) {
+
+    level = 0;
+    hpGain = 0;
+    mpGain = 0;
+    statUp = 0;
+    saveGain = 0;
+    levelTime = 0;
+
+    xmlNodePtr childNode = rootNode->children;
+
+    while(childNode) {
+        if(NODE_NAME(childNode, "Level")) xml::copyToNum(level, childNode);
+        else if(NODE_NAME(childNode, "HpGain")) xml::copyToNum(hpGain, childNode);
+        else if(NODE_NAME(childNode, "MpGain")) xml::copyToNum(mpGain, childNode);
+        else if(NODE_NAME(childNode, "StatUp")) xml::copyToNum(statUp, childNode);
+        else if(NODE_NAME(childNode, "SaveGain")) xml::copyToNum(saveGain, childNode);
+        else if(NODE_NAME(childNode, "LevelTime")) xml::copyToNum(levelTime, childNode);
+        childNode = childNode->next;
+    }
+
+    if(level == 0)
+        throw new std::exception();
+
+}
+void LevelInfo::save(xmlNodePtr rootNode) {
+    xmlNodePtr curNode = xml::newStringChild(rootNode, "LevelInfo");
+
+    xml::saveNonZeroNum(curNode, "Level", level);
+    xml::saveNonZeroNum(curNode, "HpGain", hpGain);
+    xml::saveNonZeroNum(curNode, "MpGain", mpGain);
+    xml::saveNonZeroNum(curNode, "StatUp", statUp);
+    xml::saveNonZeroNum(curNode, "SaveGain", saveGain);
+    xml::saveNonZeroNum(curNode, "LevelTime", levelTime);
+
+
 }
 
 void Statistics::setLevelInfo(int level, LevelInfo* levelInfo) {
@@ -48,6 +88,7 @@ LevelInfo* Statistics::getLevelInfo(int level) {
     return(it->second);
 }
 
+int LevelInfo::getLevel() { return(level); }
 int LevelInfo::getHpGain() { return(hpGain); }
 int LevelInfo::getMpGain() { return(mpGain); }
 int LevelInfo::getStatUp() { return(statUp); }
@@ -130,10 +171,11 @@ void Statistics::reset() {
 		numDeaths = numThefts = numAttemptedThefts = numSaves =
 		numAttemptedSaves = numRecalls = numLagouts = numWandsUsed =
 		numPotionsDrank = numItemsCrafted = numFishCaught = numCombosOpened =
-		mostGroup = numPkIn = numPkWon = numTransmutes = 0;
+		mostGroup = numPkIn = numPkWon = numTransmutes = lastExpLoss = expLost = 0;
 	mostMonster.reset();
 	mostAttackDamage.reset();
 	mostMagicDamage.reset();
+	mostExperience.reset();
 	long t = time(0);
 	start = ctime(&t);
 	start = start.trim();
@@ -373,9 +415,16 @@ void Statistics::save(xmlNodePtr rootNode, bstring nodeName) const {
 	xml::saveNonZeroNum(curNode, "NumItemsCrafted", numItemsCrafted);
 	xml::saveNonZeroNum(curNode, "NumCombosOpened", numCombosOpened);
 	xml::saveNonZeroNum(curNode, "MostGroup", mostGroup);
+	xml::saveNonZeroNum(curNode, "ExpLost", expLost);
+	xml::saveNonZeroNum(curNode, "LastExpLoss", lastExpLoss);
 	mostMonster.save(curNode, "MostMonster");
 	mostAttackDamage.save(curNode, "MostAttackDamage");
 	mostMagicDamage.save(curNode, "MostMagicDamage");
+
+	xmlNodePtr historyNode = xml::newStringChild(curNode, "LevelHistory", "");
+	for(LevelInfoMap::value_type p : levelHistory) {
+	    p.second->save(historyNode);
+	}
 }
 
 //*********************************************************************
@@ -420,6 +469,21 @@ void Statistics::load(xmlNodePtr curNode) {
 		else if(NODE_NAME(childNode, "MostMonster")) mostMonster.load(childNode);
 		else if(NODE_NAME(childNode, "MostAttackDamage")) mostAttackDamage.load(childNode);
 		else if(NODE_NAME(childNode, "MostMagicDamage")) mostMagicDamage.load(childNode);
+		else if(NODE_NAME(childNode, "MostExperience")) mostExperience.load(childNode);
+		else if(NODE_NAME(childNode, "ExpLost")) xml::copyToNum(expLost, childNode);
+	    else if(NODE_NAME(childNode, "LastExpLoss")) xml::copyToNum(lastExpLoss, childNode);
+	    else if(NODE_NAME(childNode, "LevelHistory")) {
+	        xmlNodePtr infoNode = curNode->children;
+	        while(infoNode) {
+	            try {
+	                LevelInfo *info = new LevelInfo(infoNode);
+	                levelHistory.insert(LevelInfoMap::value_type(info->getLevel(), info));
+	            } catch (...) {
+
+	            }
+	        }
+	    }
+
 		childNode = childNode->next;
 	}
 }
@@ -525,7 +589,16 @@ void Statistics::die() { if(track) numDeaths++; }
 //                      experienceLost
 //*********************************************************************
 
-void Statistics::experienceLost(unsigned long amt) { if (track) expLost += amt; }
+void Statistics::experienceLost(unsigned long amt) {
+    // We only track the total if they're tracking statistics
+    if (track)
+        expLost += amt;
+    // However, we always track the last exp loss (For resurrect)
+    lastExpLoss = amt;
+}
+void Statistics::setExperienceLost(unsigned long amt) {
+    expLost = amt;
+}
 
 //*********************************************************************
 //						steal
@@ -668,6 +741,19 @@ unsigned long Statistics::getPkin() const { return(numPkIn); }
 //*********************************************************************
 
 unsigned long Statistics::getPkwon() const { return(numPkWon); }
+
+//*********************************************************************
+//                      getLostExperience
+//*********************************************************************
+
+unsigned long Statistics::getLostExperience() const { return(expLost); }
+
+//*********************************************************************
+//                      getLastExperienceLoss
+//*********************************************************************
+
+unsigned long Statistics::getLastExperienceLoss() const { return(lastExpLoss); }
+
 
 //*********************************************************************
 //						setPkin

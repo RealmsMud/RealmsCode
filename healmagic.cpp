@@ -854,7 +854,7 @@ void Creature::removeStatEffects() {
 //						doRessLoss
 //*********************************************************************
 
-int doRessLoss(int curr, int prev, bool full) {
+int doResLoss(int curr, int prev, bool full) {
 	return(MAX(0, (prev - (full ? 0 : (prev - curr) / 5))));
 }
 
@@ -862,17 +862,14 @@ int doRessLoss(int curr, int prev, bool full) {
 //						doRess
 //*********************************************************************
 
-int doRess(Creature* caster, cmd* cmnd, bool ress) {
+int doRes(Creature* caster, cmd* cmnd, bool res) {
 	// if ress=false, it's a bloodfusion
 	Player	*player = caster->getAsPlayer();
 	int		a=0, prevLevel=0;
 	bool	full=false;
 	long	t=0, xploss=0;
-	Player* playerBackup=0, *target=0;
+	Player *target=0;
 	BaseRoom *newRoom=0;
-	char	filename[80];
-
-	strcpy(filename, "");
 
 	if(player && !player->isDm()) {
 		if(player->getNegativeLevels()) {
@@ -891,7 +888,7 @@ int doRess(Creature* caster, cmd* cmnd, bool ress) {
 
 
 	if(cmnd->num < 2) {
-		caster->print("%s?\n", ress ? "Resurrect whom" : "Fuse whom with new blood");
+		caster->print("%s?\n", res ? "Resurrect whom" : "Fuse whom with new blood");
 		return(0);
 	}
 
@@ -909,17 +906,17 @@ int doRess(Creature* caster, cmd* cmnd, bool ress) {
 
 	if(target->isStaff()) {
 		caster->print("Staff characters do not need to be %s.\n",
-			ress ? "resurrected" : "fused with blood");
+			res ? "resurrected" : "fused with blood");
 		return(0);
 	}
 
 	if(checkRefusingMagic(caster, target))
 		return(0);
 
-	if(Move::tooFarAway(caster, target, ress ? "resurrect" : "fuse with new blood"))
+	if(Move::tooFarAway(caster, target, res ? "resurrect" : "fuse with new blood"))
 		return(0);
 
-	if(ress) {
+	if(res) {
 		if(target->isUndead()) {
 			caster->print("Undead players cannot be resurrected.\n");
 			return(0);
@@ -935,31 +932,22 @@ int doRess(Creature* caster, cmd* cmnd, bool ress) {
 	if(!caster->isDm()) {
 		if(target->getLocation() != target->getLimboRoom()) {
 			caster->print("%s is not in limbo! How can you %s %s?\n",
-		      	target->name, ress ? "resurrect" : "bloodfuse", target->himHer());
+		      	target->name, res ? "resurrect" : "bloodfuse", target->himHer());
 			return(0);
 		}
 		if(target->getLevel() < 7) {
 			caster->print("%s is not yet powerful enough to be %s.\n",
-				target->name, ress ? "resurrected" : "fused with blood");
+				target->name, res ? "resurrected" : "fused with blood");
 			return(0);
 		}
 		if(!target->flagIsSet(P_KILLED_BY_MOB)) {
-			caster->print("%s does not need to be %s.\n", target->name, ress ? "resurrected" : "fused with new blood");
+			caster->print("%s does not need to be %s.\n", target->name, res ? "resurrected" : "fused with new blood");
 			return(0);
 		}
 	}
 
 	if(target == caster) {
-		caster->print("You cannot %s.\n", ress ? "resurrect yourself" : "fuse yourself with new blood");
-		return(0);
-	}
-
-	sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, target->name);
-	if(!file_exists(filename)) {
-		caster->print("Error loading player backup!\n");
-		if(caster->isDm())
-			caster->print("File: %s\n", filename);
-		caster->print("Your %s attempt failed.\n", ress ? "resurrection" : "bloodfusion");
+		caster->print("You cannot %s.\n", res ? "resurrect yourself" : "fuse yourself with new blood");
 		return(0);
 	}
 
@@ -969,84 +957,15 @@ int doRess(Creature* caster, cmd* cmnd, bool ress) {
 	}
 
 	if(!caster->isDm() && target->daily[DL_RESURRECT].cur == 0) {
-		caster->print("Players can only be %s once per 24 hours real time.\n", ress ? "resurrected" : "fused with new blood");
+		caster->print("Players can only be %s once per 24 hours real time.\n", res ? "resurrected" : "fused with new blood");
 		return(0);
 	}
 
 
-	caster->print("You cast a %s spell on %N.\n", ress ? "resurrection" : "bloodfusion", target);
+	caster->print("You cast a %s spell on %N.\n", res ? "resurrection" : "bloodfusion", target);
 
 	prevLevel = target->getLevel();
-
-	// load the backed up player
-	if(!loadPlayer(target->name, &playerBackup, LS_BACKUP)) {
-		caster->print("File load failed.\n");
-		caster->print("Your %s attempt failed.\n", ress ? "resurrection" : "bloodfusion");
-		return(0);
-	}
-
-	if(target->getExperience() == playerBackup->getExperience()) {
-		caster->print("Target and backup have the same experience.\n");
-		caster->print("Your %s attempt failed.\n", ress ? "resurrection" : "bloodfusion");
-		free_crt(playerBackup, false);
-		return(0);
-	}
-
-	// Clear any stat-modifying effects from backed up player
-	//normalizeStats(playerBackup);
-	playerBackup->removeStatEffects();
-
-	if(!playerBackup->statsAddUp()) {
-		caster->print("Backup's stats do not add up.\n");
-		caster->print("Your %s attempt failed.\n", ress ? "resurrection" : "bloodfusion");
-		free_crt(playerBackup, false);
-		return(0);
-	}
-
-	target->removeStatEffects();
-
-	// caster loses 30,000 exp or 10% of restored exp, whichever is greater
-	if(caster->isPlayer() && !caster->isStaff()) {
-		xploss = (playerBackup->getExperience() - target->getExperience() ) / 10;
-		xploss = MAX( 30000, xploss );
-		caster->print("The resurrection magic has drained some of your living essence.\n");
- 		caster->print("You %s %d experience.\n", gConfig->isAprilFools() ? "gain" : "lose", xploss);
-		caster->subExperience(xploss);
-	}
-
-	// set target's characteristics back to what they were before
-	target->setExperience(doRessLoss(target->getExperience(), playerBackup->getExperience(), full));
-	target->setLevel(playerBackup->getLevel());
-	target->setActualLevel(playerBackup->getActualLevel());
-
-
-	target->hp.setMax(playerBackup->hp.getMax());
-	target->mp.setMax(playerBackup->mp.getMax());
-	//target->pp.max = playerBackup->pp.max;
-	for(Realm r = MIN_REALM; r<MAX_REALM; r = (Realm)((int)r + 1)) {
-		target->setRealm(doRessLoss(target->getRealm(r), playerBackup->getRealm(r), full), r);
-	}
-
-	for(a=0; a<6; a++) {
-		// don't mess with saves
-		target->saves[a].chance = playerBackup->saves[a].chance;
-		target->saves[a].gained = playerBackup->saves[a].gained;
-	}
-
-	target->strength.setMax(playerBackup->strength.getMax());
-	target->strength.setCur(playerBackup->strength.getCur());
-
-	target->dexterity.setMax(playerBackup->dexterity.getMax());
-	target->dexterity.setCur(playerBackup->dexterity.getCur());
-
-	target->constitution.setMax(playerBackup->constitution.getMax());
-	target->constitution.setCur(playerBackup->constitution.getCur());
-
-	target->intelligence.setMax(playerBackup->intelligence.getMax());
-	target->intelligence.setCur(playerBackup->intelligence.getCur());
-
-	target->piety.setMax(playerBackup->piety.getMax());
-	target->piety.setCur(playerBackup->piety.getCur());
+	long expGain = full ? (target->statistics.getLastExperienceLoss()*4/5) : (target->statistics.getLastExperienceLoss());
 
 	EffectInfo *effect = target->getEffect("death-sickness");
 	if(effect) {
@@ -1066,21 +985,18 @@ int doRess(Creature* caster, cmd* cmnd, bool ress) {
 	target->clearFlag(P_KILLED_BY_MOB);
 	target->setTickDamage(0);
 
-	// Free backed up player pointer from memory
-	free_crt(playerBackup, false);
-
 	if(player)
 		dec_daily(&player->daily[DL_RESURRECT]);
 	dec_daily(&target->daily[DL_RESURRECT]);
 
 
-	broadcast(caster->getSock(), caster->getRoomParent(), "%M casts a %s spell on %N.", caster, ress ? "resurrection" : "bloodfusion", target);
+	broadcast(caster->getSock(), caster->getRoomParent(), "%M casts a %s spell on %N.", caster, res ? "resurrection" : "bloodfusion", target);
 
 	logn("log.resurrect", "%s(L:%d) %s %s(L%d:%d) %s.\n", caster->name, caster->getLevel(),
-		ress ? "resurrected" : "fused", target->name, prevLevel, target->getLevel(),
-		ress ? "from the dead" : "with new blood");
+		res ? "resurrected" : "fused", target->name, prevLevel, target->getLevel(),
+		res ? "from the dead" : "with new blood");
 
-	if(ress)
+	if(res)
 		broadcast("^R### %M just resurrected %s from the dead!", caster, target->name);
 	else
 		broadcast("^R### %M just fused %s with new blood!", caster, target->name);
@@ -1091,7 +1007,7 @@ int doRess(Creature* caster, cmd* cmnd, bool ress) {
 		caster->setFlag(P_NO_TICK_MP);
 		// caster cannot tick MP for 20 mins online time
 		caster->lasttime[LT_NOMPTICK].ltime = t;
-		caster->lasttime[LT_NOMPTICK].interval = 1200L;
+		caster->lasttime[LT_NOMPTICK].interval = 120L;
 
 		broadcast(caster->getSock(), caster->getRoomParent(), "%M collapses from exhaustion.", caster);
 		caster->print("You collapse from exhaustion.\n");
@@ -1107,7 +1023,14 @@ int doRess(Creature* caster, cmd* cmnd, bool ress) {
 		target->doPetFollow();
 	}
 
-	target->print("You have been %s!\n", ress ? "resurrected from the dead" : "fused with new blood");
+	target->print("You have been %s!\n", res ? "resurrected from the dead" : "fused with new blood");
+
+
+	// Gain back 80% of lost experience
+
+	target->addExperience(expGain);
+    // See if we need to relevel
+	target->checkLevel();
 
 	target->hp.restore();
 	target->mp.restore();
@@ -1150,7 +1073,7 @@ int splResurrect(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 	}
 
-	return(doRess(player, cmnd, true));
+	return(doRes(player, cmnd, true));
 }
 
 //*********************************************************************
@@ -1181,7 +1104,7 @@ int splBloodfusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 	}
 
-	return(doRess(player, cmnd, false));
+	return(doRes(player, cmnd, false));
 }
 
 //*********************************************************************

@@ -1128,6 +1128,7 @@ struct idComp : public std::binary_function<const bstring&, const bstring&, bool
 #include "rooms.h"
 #include "objects.h"
 
+#include "timer.h"
 #include "skills.h"
 #include "magic.h"
 #include "fighters.h"

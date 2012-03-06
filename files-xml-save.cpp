@@ -572,7 +572,6 @@ void Player::saveXml(xmlNodePtr curNode) const {
 	}
 
 	xml::saveNonZeroNum(curNode, "NegativeLevels", negativeLevels);
-	xml::saveNonZeroNum(curNode, "LostExperience", lostExperience);
 	xml::saveNonZeroNum(curNode, "LastInterest", lastInterest);
 	xml::saveNonZeroNum(curNode, "TickDmg", tickDmg);
 

@@ -23,17 +23,22 @@
 
 class LevelInfo {
 public:
-    LevelInfo(int pHp, int pMp, int pStat, int pSave, time_t pTime);
+    LevelInfo(int pLevel, int pHp, int pMp, int pStat, int pSave, time_t pTime);
+    LevelInfo(xmlNodePtr rootNode);
+    void save(xmlNodePtr rootNode);
+    int getLevel();
     int getHpGain();
     int getMpGain();
     int getStatUp();
     int getSaveGain();
     time_t getLevelTime();
+
 private:
+    int level;          // What level
     int hpGain;         // Hp gained this level
     int mpGain;         // Mp gained this level
     int statUp;         // Stat increased this level
-    int saveGain;           // Save gained this level
+    int saveGain;       // Save gained this level
     time_t levelTime;   // When they first gained this level
 };
 
@@ -90,6 +95,7 @@ private:
 	unsigned long numKills;
 	unsigned long numDeaths;
 	unsigned long expLost; // New
+	unsigned long lastExpLoss; // New
 
 	// other
 	unsigned long numThefts;
@@ -104,7 +110,7 @@ private:
 
 	// most
 	unsigned long mostGroup;
-	StringStatistic mostExperience;
+	StringStatistic mostExperience; // New
 	StringStatistic mostMonster;
 	StringStatistic mostAttackDamage;
 	StringStatistic mostMagicDamage;
@@ -135,6 +141,7 @@ public:
 	void kill();
 	void die();
 	void experienceLost(unsigned long amt);
+	void setExperienceLost(unsigned long amt);
 
 	// other
 	void steal();
@@ -158,6 +165,10 @@ public:
 	unsigned long pkRank() const;
 	unsigned long getPkin() const;
 	unsigned long getPkwon() const;
+
+	unsigned long getLostExperience() const;
+	unsigned long getLastExperienceLoss() const;
+
 	// remove when all players are up to 2.42i
 	void setPkin(unsigned long p);
 	void setPkwon(unsigned long p);

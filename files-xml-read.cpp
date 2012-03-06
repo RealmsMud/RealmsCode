@@ -702,7 +702,6 @@ void Player::readXml(xmlNodePtr curNode) {
 	else if(NODE_NAME(curNode, "GuildRank")) setGuildRank(xml::toNum<unsigned short>(curNode));
 	else if(NODE_NAME(curNode, "TickDmg")) setTickDamage(xml::toNum<unsigned short>(curNode));
 	else if(NODE_NAME(curNode, "NegativeLevels")) setNegativeLevels(xml::toNum<unsigned short>(curNode));
-	else if(NODE_NAME(curNode, "LostExperience")) setLostExperience(xml::toNum<unsigned long>(curNode));
 	else if(NODE_NAME(curNode, "LastInterest")) setLastInterest(xml::toNum<long>(curNode));
 	else if(NODE_NAME(curNode, "Title")) setTitle(xml::getBString(curNode));
 	else if(NODE_NAME(curNode, "CustomColors")) xml::copyToCString(customColors, curNode);
@@ -820,6 +819,8 @@ void Player::readXml(xmlNodePtr curNode) {
 	else if(getVersion() < "2.42i") {
 			 if(NODE_NAME(curNode, "PkWon")) statistics.setPkwon(xml::toNum<unsigned long>(curNode));
 		else if(NODE_NAME(curNode, "PkIn")) statistics.setPkin(xml::toNum<unsigned long>(curNode));
+	} else if(getVersion() < "2.46l") {
+	    if(NODE_NAME(curNode, "LostExperience")) statistics.setExperienceLost(xml::toNum<unsigned long>(curNode));
 	}
 }
 

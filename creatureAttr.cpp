@@ -184,7 +184,7 @@ void Creature::subExperience(unsigned long e) {
 	int lost = (e > experience ? 0 : e);
 	if(isPlayer()) {
 		getAsPlayer()->checkLevel();
-		getAsPlayer()->statistics.experienceLost(e);
+		getAsPlayer()->statistics.experienceLost(lost);
 	}
 }
 
@@ -571,12 +571,6 @@ unsigned short Player::getTickDamage() const { return(tickDmg); }
 unsigned short Player::getWarnings() const { return(warnings); }
 
 //*********************************************************************
-//						getLostExperience
-//*********************************************************************
-
-unsigned long Player::getLostExperience() const { return(lostExperience); }
-
-//*********************************************************************
 //						getPkin
 //*********************************************************************
 
@@ -811,12 +805,6 @@ void Player::setWeaponTrains(unsigned short t) { weaponTrains = t; }
 //*********************************************************************
 
 void Player::subWeaponTrains(unsigned short t) { setWeaponTrains(t > weaponTrains ? 0 : weaponTrains - t); }
-
-//*********************************************************************
-//						setLostExperience
-//*********************************************************************
-
-void Player::setLostExperience(unsigned long e) { lostExperience = e; }
 
 //*********************************************************************
 //						setLastPassword
@@ -1141,7 +1129,7 @@ void Player::reset() {
 
 	oldCreated = surname = lastCommand = lastCommunicate = password = title = tempTitle = "";
 	lastPassword = afflictedBy = forum = "";
-	tickDmg = lostExperience = pkwon = pkin = lastLogin = lastInterest = uniqueObjId = 0;
+	tickDmg = pkwon = pkin = lastLogin = lastInterest = uniqueObjId = 0;
 
 	memset(songs, 0, sizeof(songs));
 	guild = guildRank = cClass2 = 0;
@@ -1390,7 +1378,6 @@ void Player::doCopy(const Player& cr) {
 	cClass2 = cr.cClass2;
 	wimpy = cr.wimpy;
 	tickDmg = cr.tickDmg;
-	lostExperience = cr.lostExperience;
 	pkwon = cr.pkwon;
 	pkin = cr.pkin;
 	bound = cr.bound;

@@ -1057,14 +1057,12 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
 				oldRoom = NULL;
 		}
 	}
-	if(!group) {
-        for(Monster* pet : creature->pets) {
-            if(oldRoom == pet->getRoomParent())
-                Move::start(pet, cmnd, 0, 0, followers, numPeople, roomPurged);
-            if(roomPurged)
-                oldRoom = NULL;
-        }
-	}
+    for(Monster* pet : creature->pets) {
+        if(oldRoom == pet->getRoomParent())
+            Move::start(pet, cmnd, 0, 0, followers, numPeople, roomPurged);
+        if(roomPurged)
+            oldRoom = NULL;
+    }
 	if(player && !sneaking && !roomPurged && oldRoom)
 		Move::checkFollowed(player, exit, oldRoom, followers);
 

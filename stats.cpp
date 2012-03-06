@@ -767,7 +767,7 @@ void Player::upgradeStats() {
 			break;
 		}
 		// Track level history
-		statistics.setLevelInfo(l, new LevelInfo(hpAmt, lGain->getMp(), lGain->getStat(), lGain->getSave(), time(0)));
+		statistics.setLevelInfo(l, new LevelInfo(l, hpAmt, lGain->getMp(), lGain->getStat(), lGain->getSave(), time(0)));
 
 	}
 

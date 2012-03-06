@@ -41,7 +41,8 @@ typedef enum {
 //**********************************************************************
 
 class SkillCost {
-	SkillCost(xmlNodePtr rootNode);
+public:
+    SkillCost(xmlNodePtr rootNode);
 	ResourceType resource;	// What type of resource
 	int cost;				// How much of the resource
 
@@ -77,6 +78,8 @@ public:
 //**********************************************************************
 // Skill - Keeps track of skill information for a Creature
 //**********************************************************************
+
+
 
 class Skill {
 public:

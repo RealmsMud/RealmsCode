@@ -294,7 +294,7 @@ bstring Creature::statCrt(int statFlags) {
 	if((statFlags & ISCT) && mTarget)
 		crtStr << "Last modified by: " << mTarget->last_mod << "\n";
 	if(pTarget) {
-		crtStr << "Lost Experience: " << pTarget->getLostExperience() << "\n";
+		crtStr << "Lost Experience: " << pTarget->statistics.getLostExperience() << "\n";
 		cDay* b = pTarget->getBirthday();
 		if(b)
 			crtStr << "Birthday:  Day:" << b->getDay() <<
