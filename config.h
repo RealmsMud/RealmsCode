@@ -107,6 +107,8 @@ public:
 	bool loadEffects();
 	void clearEffects();
 	Effect* getEffect(bstring eName);
+	bool effectExists(bstring eName);
+
 // Spells
 	bool loadSpells();
 	bool saveSpells() const;

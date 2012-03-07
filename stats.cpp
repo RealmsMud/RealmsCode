@@ -681,14 +681,14 @@ void Stat::upgradeSetCur(int newCur) {
 }
 
 // Note: Used for upgradeStats
-void checkEffect(Player* player, const bstring& effName, int& stat, bool positive)  {
-	EffectInfo* eff = player->getEffect(effName);
+void checkEffect(Creature* creature, const bstring& effName, int& stat, bool positive)  {
+	EffectInfo* eff = creature->getEffect(effName);
 	if(eff) {
 		int str = eff->getStrength();
 		if(!positive)
 			str *= -1;
 		stat += str;
-		player->removeEffect(eff, false);
+		creature->removeEffect(eff, false);
 	}
 }
 
@@ -791,5 +791,44 @@ void Player::upgradeStats() {
 //	std::cout << "Con: O: " << cCon << " N: " << constitution.getCur() << "\n";
 //	std::cout << "Int: O: " << cInt << " N: " << intelligence.getCur() << "\n";
 //	std::cout << "Pie: O: " << cPie << " N: " << piety.getCur() << "\n";
+
+}
+
+
+void Monster::upgradeStats() {
+	std::cout << "Upgrading stats for " << getName() << std::endl;
+	*this << "Upgrading your stats to the new format.\n";
+
+	int cStr = strength.getCur(false);
+	int cDex = dexterity.getCur(false);
+	int cCon = constitution.getCur(false);
+	int cInt = intelligence.getCur(false);
+	int cPie = piety.getCur(false);
+
+	int cHp = hp.getCur(false);
+	int cMp = mp.getCur(false);
+
+	checkEffect(this, "strength", cStr, true);
+	checkEffect(this, "enfeeblement", cStr, false);
+	checkEffect(this, "haste", cDex, true);
+	checkEffect(this, "slow", cDex, false);
+
+	checkEffect(this, "fortitude", cCon, true);
+	checkEffect(this, "weakness", cCon, false);
+
+	checkEffect(this, "insight", cInt, true);
+	checkEffect(this, "feeblemind", cInt, false);
+
+	checkEffect(this, "prayer", cPie, true);
+	checkEffect(this, "damnation", cPie, false);
+
+	hp.setInitial(cHp);
+	mp.setInitial(cMp);
+
+	strength.setInitial(cStr);
+	dexterity.setInitial(cDex);
+	constitution.setInitial(cCon);
+	intelligence.setInitial(cInt);
+	piety.setInitial(cPie);
 
 }

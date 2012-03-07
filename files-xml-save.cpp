@@ -1305,8 +1305,8 @@ void Stat::save(xmlNodePtr parentNode, const char* statName) const {
 	xmlNodePtr curNode = xml::newStringChild(parentNode, "Stat");
 	xml::newProp(curNode, "Name", statName);
 
-	xml::newNumChild(curNode, "Current", cur);
-	xml::newNumChild(curNode, "Max", max);
+//	xml::newNumChild(curNode, "Current", cur);
+//	xml::newNumChild(curNode, "Max", max);
 	xml::newNumChild(curNode, "Initial", initial);
 	xmlNodePtr modNode = xml::newStringChild(curNode, "Modifiers");
 	for(ModifierMap::value_type p: modifiers) {

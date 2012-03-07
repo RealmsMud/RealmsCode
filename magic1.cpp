@@ -72,6 +72,10 @@ int cmdCast(Creature* creature, cmd* cmnd) {
 	return(0);
 }
 
+
+void doCastPython(MudObject* caster, Creature* target, bstring spell, int strength) {
+	std::cout << caster->getName() << " is casting " << spell << " on " << target->getName() << std::endl;
+}
 //*********************************************************************
 //						cmdCast
 //*********************************************************************

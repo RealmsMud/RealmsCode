@@ -1101,19 +1101,28 @@ int cmdPurchase(Player* player, cmd* cmnd) {
 	} else {
 
 		player->print("You pay %N %s gold pieces.\n", creature, cost.str().c_str());
-		player->printColor("%M says, \"%sHere is your %s.\"\n", creature,
-			Faction::getAttitude(player->getFactionStanding(creature->getPrimeFaction())) < Faction::INDIFFERENT ? "Hrmph. " : "Thank you very much. ",
-			object->name);
 		broadcast(player->getSock(), player->getParent(), "%M pays %N %s for %P.\n", player, creature, cost.str().c_str(), object);
 		player->coins.sub(cost);
 
 		player->doHaggling(creature, object, BUY);
-
-		Limited::addOwner(player, object);
-		object->setDroppedBy(creature, "MobPurchase");
         gServer->logGold(GOLD_OUT, player, object->refund, object, "MobPurchase");
 
-		player->addObj(object);
+        if(object->hooks.executeWithReturn("afterPurchase", player, creature->getId())) {
+        	// A return value of true means the object still exists
+        	player->printColor("%M says, \"%sHere is your %s.\"\n", creature,
+        			Faction::getAttitude(player->getFactionStanding(creature->getPrimeFaction())) < Faction::INDIFFERENT ? "Hrmph. " : "Thank you very much. ",
+        			object->name);
+            Limited::addOwner(player, object);
+    		object->setDroppedBy(creature, "MobPurchase");
+
+    		player->addObj(object);
+
+        } else {
+        	// A return value of false means the object doesn't exist, and as such the spell was cast, so delete it
+        	delete object;
+
+        }
+
 	}
 
 	return(0);

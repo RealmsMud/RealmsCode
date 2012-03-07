@@ -245,7 +245,7 @@ public:
 //	Player* getPlayer();
 //
 
-
+	virtual void upgradeStats() {};
 	virtual Socket* getSock() const;
 	Location getLocation();
 	void delayedAction(bstring action, int delay, MudObject* target=0);
@@ -747,6 +747,7 @@ public:
 	void saveXml(xmlNodePtr curNode) const;
 	int saveToFile();
 	void validateId();
+	void upgradeStats();
 
 protected:
 // Data

@@ -302,6 +302,7 @@ public:
 	// Python
 	bool runPython(const bstring& pyScript, object& dictionary);
 	bool runPython(const bstring& pyScript, bstring args = "", MudObject *actor = NULL, MudObject *target = NULL);
+	bool runPythonWithReturn(const bstring& pyScript, bstring args = "", MudObject *actor = NULL, MudObject *target = NULL);
 	bool runPython(const bstring& pyScript, bstring args, Socket *sock, Player *actor, MsdpVariable* msdpVar = NULL);
 
 	// Setup

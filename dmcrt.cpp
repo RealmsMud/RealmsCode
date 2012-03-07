@@ -1377,7 +1377,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 			if(action == '0')
 				action = 'd';
 
-			if((inv > 10 || inv < 0) && action != 'd') {
+			if((inv > 10 || inv <= 0) && action != 'd') {
 				player->print("Carry slot number invalid.\n");
 				player->print("Must be from 1 to 10.\n");
 				return(0);

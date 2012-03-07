@@ -896,11 +896,11 @@ void doCrash(int sig) {
 	printf("The mud has crashed :(.\n");
 
 	if(sig != -69) {
-		char dbx[160];
-
-		sprintf(dbx, "gstack %d > realms.%d.dump", getpid(), getpid());
-		system(dbx);
-
+//		char dbx[160];
+//
+//		sprintf(dbx, "gstack %d > realms.%d.dump", getpid(), getpid());
+//		system(dbx);
+//
 	//	abort();
 		signal(sig, SIG_DFL);
 		kill(getpid(), sig);

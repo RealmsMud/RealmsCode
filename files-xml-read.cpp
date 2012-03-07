@@ -487,11 +487,12 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 
 	convertOldEffects();
 
+	if(getVersion() < "2.46l") {
+		upgradeStats();
+	}
+
 
 	if(isPlayer()) {
-		if(getVersion() < "2.46l") {
-			pPlayer->upgradeStats();
-		}
 		if(getVersion() < "2.46k" && knowsSkill("endurance")) {
 			remSkill("endurance");
 			#define P_RUNNING_OLD 56

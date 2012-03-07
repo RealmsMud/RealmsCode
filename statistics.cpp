@@ -481,6 +481,7 @@ void Statistics::load(xmlNodePtr curNode) {
 	            } catch (...) {
 
 	            }
+	            infoNode = infoNode->next;
 	        }
 	    }
 

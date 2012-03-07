@@ -1160,19 +1160,6 @@ bool Monster::doTalkAction(Player* target, bstring action) {
 			stripBadChars(cm.fullstr); // removes '.' and '/'
 			lowercize(cm.fullstr, 0);
 			parse(cm.fullstr, &cm);
-			/*
-			//int n = 0;
-			//int (*fn)(Creature *, ::cmd *, int);
-			strcpy(cm.str[0], "cast");
-
-			bstring spellCmd = *it++;
-
-			strncpy(cm.str[1], spellCmd.c_str(),25);
-			strcpy(cm.str[2], target->name);
-			cm.val[0] = cm.val[1] = cm.val[2] = 1;
-			cm.num = 3;
-			sprintf(cm.fullstr, "cast %s %s", spellCmd.c_str(), target->name);
-			*/
 
 			CastResult result = doCast(this, &cm);
 
@@ -1186,45 +1173,6 @@ bool Monster::doTalkAction(Player* target, bstring action) {
 
 			return(true);
 
-			/*
-			int i = 0, splno = 0;
-			do {
-				if(!strcmp(spellCmd.c_str(), get_spell_name(i))) {
-					splno = i;
-					break;
-				}
-				i++;
-			} while(get_spell_num(i) != -1);
-
-			if(splno == -1)
-				return(0);
-			int reqMp = doMpCheck(this, splno);
-			if(!reqMp)
-				return(0);
-			fn = get_spell_function(splno);
-
-			if((int(*)(Creature *, ::cmd*, int, char*, osp_t*))fn == splOffensive) {
-				for(i=0; ospell[i].splno != get_spell_num(splno); i++)
-					if(ospell[i].splno == -1)
-						return(0);
-				n = ((int(*)(Creature *, ::cmd*, int, const char*, osp_t*))*fn)(this, &cm, CAST, get_spell_name(splno), &ospell[i]);
-				// To avoid the apologizing for an offensive spell!
-				if(!n)
-					return(n);
-			} else if(isEnemy(target)) {
-				target->print("%M refuses to cast any spells on you.\n", this);
-				return(0);
-			} else
-				n = ((int(*)(Creature *, ::cmd*, int))*fn)(this, &cm, CAST);
-
-			if(!n)
-				target->print("%M apologizes that %s cannot currently cast that spell on you.\n", this, heShe());
-			// If reqMp is valid, subtract the mp here
-			else if(reqMp != -1)
-				subMp(this, reqMp);
-
-			return(n);
-			*/
 		}
 	} else if(cmd.equals("give", false)) {
 		if(it != tok.end()) {

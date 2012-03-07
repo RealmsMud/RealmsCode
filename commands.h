@@ -355,4 +355,6 @@ int cmdForum(Player* player, cmd* cmnd);
 
 int dmStatDetail(Player* player, cmd* cmnd);
 
+void doCastPython(MudObject* caster, Creature* target, bstring spell, int strength = 130);
+
 #endif /*COMMANDS_H_*/
