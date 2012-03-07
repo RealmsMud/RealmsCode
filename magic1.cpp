@@ -74,7 +74,52 @@ int cmdCast(Creature* creature, cmd* cmnd) {
 
 
 void doCastPython(MudObject* caster, Creature* target, bstring spell, int strength) {
-	std::cout << caster->getName() << " is casting " << spell << " on " << target->getName() << std::endl;
+	if(!caster || !target)
+		return;
+	int c = 0, n = 0;
+	SpellData data;
+	bool found = false, offensive = false;
+
+	do {
+		if(spell == get_spell_name(c)) {
+			data.splno = c;
+			found = true;
+			break;
+		}
+		c++;
+	} while(get_spell_num(c) != -1);
+
+	if(!found)
+		return;
+
+	int		(*fn)(SpellFn);
+
+	cmd cmnd;
+
+	fn = get_spell_function(data.splno);
+	if(caster->isCreature()) {
+		data.set(CAST, get_spell_school(data.splno), get_spell_domain(data.splno), 0, caster->getAsConstCreature());
+		cmnd.fullstr = "cast " + spell + " " + target->getName();
+	}
+	else {
+		data.set(WAND, get_spell_school(data.splno), get_spell_domain(data.splno), caster->getAsObject(), target);
+		cmnd.fullstr = bstring("use spell .");
+		caster = target;
+	}
+
+	parse(cmnd.fullstr, &cmnd);
+
+	offensive = (int(*)(SpellFn, char*, osp_t*))fn == splOffensive ||
+		(int(*)(SpellFn, char*, osp_t*))fn == splMultiOffensive;
+
+	if(offensive) {
+		for(c=0; ospell[c].splno != get_spell_num(data.splno); c++)
+			if(ospell[c].splno == -1)
+				return;
+		n = ((int(*)(SpellFn, const char*, osp_t*))*fn) (caster->getAsCreature(), &cmnd, &data, get_spell_name(data.splno), &ospell[c]);
+	} else {
+		n = ((int(*)(SpellFn))*fn) (caster->getAsCreature(), &cmnd, &data);
+	}
 }
 //*********************************************************************
 //						cmdCast
@@ -209,7 +254,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
 
 
 	if(	player == creature &&
-		player->flagIsSet(P_SITTING) &&
+		player->pFlagIsSet(P_SITTING) &&
 		data.splno != S_VIGOR &&
 		data.splno != S_MEND_WOUNDS &&
 		data.splno != S_BLESS &&

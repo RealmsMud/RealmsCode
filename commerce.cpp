@@ -1509,8 +1509,6 @@ int cmdBuy(Player* player, cmd* cmnd) {
 				return(0);
 			}
 
-			Limited::addOwner(player, object2);
-			player->addObj(object2);
 			player->printColor("You bought %1P.\n", object2);
 
 			object2->refund.zero();
@@ -1524,6 +1522,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			// We just did a full priced purchase, we can now haggle again (unless they do another refund)
 			if(player->getRoomParent() && player->getRoomParent()->getAsUniqueRoom())
 			    player->removeRefundedInStore(player->getRoomParent()->getAsUniqueRoom()->info);
+
 
 			object2->setDroppedBy(room, "StoreBought");
 	        gServer->logGold(GOLD_OUT, player, object2->refund, object2, "StoreBought");
@@ -1583,6 +1582,14 @@ int cmdBuy(Player* player, cmd* cmnd) {
 				if(flag)
 					findRoomsWithFlag(player, object2->deed, flag);
 			}
+
+			if(object->hooks.executeWithReturn("afterPurchase", player)) {
+
+				Limited::addOwner(player, object2);
+				player->addObj(object2);
+	        } else {
+	        	delete object2;
+	        }
 
 		} else if(!strcmp(object->name, "storage room")) {
 

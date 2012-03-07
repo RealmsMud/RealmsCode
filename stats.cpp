@@ -52,9 +52,12 @@ ModifierType StatModifier:: getModType() {
 }
 
 double getConBonusPercentage(int pCon) {
-    const double a = 0.000002102555823;
-    const double b = 0.001366762953;
-    const double c = 0.982621217;
+//    const double a = 0.000002102555823;
+//    const double b = 0.001366762953;
+//    const double c = 0.982621217;
+	const double a = 0.000007672564844;
+	const double b = -0.0004485369366;
+	const double c = 0.9939294404;
     const int x = pCon;
     double percentage = ((a*x*x)+(b*x)+c);
     percentage = tMAX<double>(1.0, percentage)-1.0;

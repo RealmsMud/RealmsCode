@@ -1186,7 +1186,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 		}
 		case 'c':
 			if(pTarget) {
-				pTarget->focus.setMax(MAX(1,MIN(30000,(int)cmnd->val[3])));
+				pTarget->focus.setCur(MAX(1,MIN(30000,(int)cmnd->val[3])));
 				player->print("Current Focus points set.\n");
 				log_immort(true, player, "%s set %s %s's Current Focus Points to %d.\n",
 					player->name, PLYCRT(pTarget), pTarget->name, pTarget->focus.getCur());
@@ -1314,7 +1314,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 				player->name, PLYCRT(target), target->name, target->hp.getMax());
 		} else {
 
-			target->hp.setMax((int)cmnd->val[3]);
+			target->hp.setCur((int)cmnd->val[3]);
 			player->print("Current Hitpoints set.\n");
 			log_immort(true, player, "%s set %s %s's Current Hit Points to %d.\n",
 				player->name, PLYCRT(target), target->name, target->hp.getCur());
@@ -1522,7 +1522,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 				"magic resistance", mTarget->getMagicResistance());
 		} else {
 
-			target->mp.setMax(MAX(0,MIN(30000,(int)cmnd->val[3])));
+			target->mp.setCur(MAX(0,MIN(30000,(int)cmnd->val[3])));
 			player->print("Current Magic Points set.\n");
 			log_immort(true, player, "%s set %s %s's %s to %d.\n",
 				player->name, PLYCRT(target), target->name,
