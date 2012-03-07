@@ -573,14 +573,14 @@ struct bstringFromPythonStr {
 	}
 
 	static void* convertible(PyObject* objPtr) {
-		if (!PyBytes_Check(objPtr))
+		if (!PyUnicode_Check(objPtr))
 			return 0;
 		return objPtr;
 	}
 
 	static void construct(PyObject* objPtr,
 			boost::python::converter::rvalue_from_python_stage1_data* data) {
-		const char* value = PyBytes_AsString(objPtr);
+		const char* value = _PyUnicode_AsString(objPtr);
 		if (value == 0)
 			boost::python::throw_error_already_set();
 		void* storage = ((boost::python::converter::rvalue_from_python_storage<

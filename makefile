@@ -4,10 +4,10 @@ LANG=C
 include compiler
 
 CFLAGS := -g -Wall -I/usr/include/libxml2 -O0 $(COMPILER_CFLAGS) -std=c++0x -I.
-CFLAGS += -I/usr/include/python2.6 
+CFLAGS += -I/usr/include/python3.2 
 
 
-LIBS = -laspell -lxml2 -lz -lc -L./ -L/usr/lib/python2.5/config -lpython2.6 -lboost_python $(COMPILER_LIBS)
+LIBS = -laspell -lxml2 -lz -lc -L./ -lpython3.2mu -lboost_python-py32 $(COMPILER_LIBS)
 
 GENERAL_SOURCE := alphanum.cpp pythonHandler.cpp abjuration.cpp access.cpp action.cpp afflictions.cpp
 GENERAL_SOURCE += alchemy.cpp alignment.cpp anchor.cpp area.cpp attack.cpp asynch.cpp timer.cpp bank.cpp
@@ -34,8 +34,6 @@ GENERAL_SOURCE += watchers.cpp weaponless.cpp web.cpp xml.cpp
 REALMS_SOURCE  := main.cpp
 
 ALL_SOURCE     := $(GENERAL_SOURCE) $(REALMS_SOURCE)
-#CPP_SOURCE := main.cpppp Server.cpppp Socket.cpppp Interpreters.cpppp Timer.cpppp
-#CPP_SOURCE += SignalHandler.cpppp Xml.cpppp Bans.cpppp MudObject.cpppp
 
 GENERAL_OBJ    := $(notdir $(GENERAL_SOURCE:%.cpp=%.o))
 REALMS_OBJ	   := $(GENERAL_OBJ) $(notdir $(REALMS_SOURCE:%.cpp=%.o))

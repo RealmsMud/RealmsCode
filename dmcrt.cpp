@@ -883,7 +883,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
 
 		if(!strcmp(cmnd->str[3], "con")) {
-			target->constitution.setCur(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->constitution.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
 			player->print("Constitution set.\n");
 
 			log_immort(true, player, "%s set %s %s's constitution to %d.\n",
@@ -1022,7 +1022,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
 
 		if(!strcmp(cmnd->str[3], "dex")) {
-			target->dexterity.setCur(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->dexterity.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
 			player->print("Dexterity set.\n");
 			log_immort(true, player, "%s set %s %s's dexterity to %d.\n",
 				player->name, PLYCRT(target), target->name, target->dexterity.getCur());
@@ -1186,7 +1186,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 		}
 		case 'c':
 			if(pTarget) {
-				pTarget->focus.setCur(MAX(1,MIN(30000,(int)cmnd->val[3])));
+				pTarget->focus.setMax(MAX(1,MIN(30000,(int)cmnd->val[3])));
 				player->print("Current Focus points set.\n");
 				log_immort(true, player, "%s set %s %s's Current Focus Points to %d.\n",
 					player->name, PLYCRT(pTarget), pTarget->name, pTarget->focus.getCur());
@@ -1314,7 +1314,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 				player->name, PLYCRT(target), target->name, target->hp.getMax());
 		} else {
 
-			target->hp.setCur((int)cmnd->val[3]);
+			target->hp.setMax((int)cmnd->val[3]);
 			player->print("Current Hitpoints set.\n");
 			log_immort(true, player, "%s set %s %s's Current Hit Points to %d.\n",
 				player->name, PLYCRT(target), target->name, target->hp.getCur());
@@ -1322,7 +1322,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 		break;
 	case 'i':
 		if(!strcmp(cmnd->str[3], "int")) {
-			target->intelligence.setCur(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->intelligence.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
 			player->print("Intelligence set.\n");
 			log_immort(true, player, "%s set %s %s's Intelligence to %d.\n",
 				player->name, PLYCRT(target), target->name, target->intelligence.getCur());
@@ -1522,7 +1522,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 				"magic resistance", mTarget->getMagicResistance());
 		} else {
 
-			target->mp.setCur(MAX(0,MIN(30000,(int)cmnd->val[3])));
+			target->mp.setMax(MAX(0,MIN(30000,(int)cmnd->val[3])));
 			player->print("Current Magic Points set.\n");
 			log_immort(true, player, "%s set %s %s's %s to %d.\n",
 				player->name, PLYCRT(target), target->name,
@@ -1611,7 +1611,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 		}
 		//if(!strcmp(cmnd->str[3], "pie")) {
 
-		target->piety.setCur(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+		target->piety.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
 		player->print("Piety set.\n");
 		log_immort(true, player, "%s set %s %s's %s to %d.\n",
 			player->name, PLYCRT(target), target->name,
@@ -1952,7 +1952,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 			break;
 
 		case 't':
-			target->strength.setCur(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->strength.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
 			player->print("Strength set.\n");
 			log_immort(true, player, "%s set %s %s's %s to %d.\n",
 				player->name, PLYCRT(target), target->name,
@@ -2701,12 +2701,12 @@ int dmAddMob(Player* player, cmd* cmnd) {
 	strcpy(new_mob->key[0], "form");
 	new_mob->setLevel(1);
 	new_mob->setType(MONSTER);
-	new_mob->strength.setCur(100);
-	new_mob->dexterity.setCur(100);
-	new_mob->constitution.setCur(100);
-	new_mob->intelligence.setCur(100);
-	new_mob->piety.setCur(100);
-	new_mob->hp.setMax(12);
+	new_mob->strength.setInitial(100);
+	new_mob->dexterity.setInitial(100);
+	new_mob->constitution.setInitial(100);
+	new_mob->intelligence.setInitial(100);
+	new_mob->piety.setInitial(100);
+	new_mob->hp.setInitial(12);
 	new_mob->hp.restore();
 	new_mob->setArmor(25);
 	new_mob->setDefenseSkill(5);
