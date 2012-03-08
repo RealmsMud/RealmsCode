@@ -28,8 +28,10 @@ enum ModifierType {
 };
 class StatModifier {
 public:
+    StatModifier();
 	StatModifier(bstring pName, int pModAmt, ModifierType pModType);
 	StatModifier(xmlNodePtr curNode);
+	StatModifier(StatModifier &sm);
 	void save(xmlNodePtr parentNode);
 
 	void adjust(int adjAmount);
@@ -55,7 +57,10 @@ class Stat
 {
 public:
 	Stat();
-	virtual ~Stat();
+	Stat& operator=(const Stat& cr);
+	~Stat();
+	void doCopy(const Stat& st);
+
 	
 	bstring toString();
 	friend std::ostream& operator<<(std::ostream& out, Stat& stat);

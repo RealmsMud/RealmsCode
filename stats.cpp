@@ -24,6 +24,12 @@
 //#####################################################################
 // Stat Modifier
 //#####################################################################
+StatModifier::StatModifier() {
+    name = "none";
+    modAmt = 0;
+    modType = MOD_NONE;
+}
+
 StatModifier::StatModifier(bstring pName, int pModAmt, ModifierType pModType) {
 	name = pName;
 	modAmt = pModAmt;
@@ -293,7 +299,37 @@ Stat::Stat() {
 	 influences = influencedBy = 0;
 }
 
+StatModifier::StatModifier(StatModifier &sm) {
+    name = sm.name;
+    modAmt = sm.modAmt;
+    modType = sm.modType;
+}
+
+Stat& Stat::operator=(const Stat& st) {
+    doCopy(st);
+    return(*this);
+}
+void Stat::doCopy(const Stat& st) {
+    StatModifier* mod = 0;
+    for(ModifierMap::value_type p : st.modifiers) {
+        mod = new StatModifier();
+        (*mod) = (*p.second);
+        modifiers.insert(ModifierMap::value_type(mod->getName(), mod));
+    }
+    name = st.name;
+    cur = st.cur;
+    max = st.max;
+    initial = st.initial;
+    dirty = st.dirty;
+    influences = 0;
+    influencedBy = 0;
+}
+
 Stat::~Stat() {
+    for(ModifierMap::value_type p : modifiers) {
+        delete p.second;
+    }
+    modifiers.clear();
 }
 
 void Stat::setName(bstring pName) {
