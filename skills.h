@@ -107,6 +107,7 @@ public:
 	int getGainType() const;
 	int getGained() const;
 	int getGainBonus() const;
+
 	void setName(bstring pName);
 	void updateParent();
 	void setGained(int pGained);

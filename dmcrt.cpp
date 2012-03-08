@@ -884,6 +884,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
 		if(!strcmp(cmnd->str[3], "con")) {
 			target->constitution.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->constitution.restore();
 			player->print("Constitution set.\n");
 
 			log_immort(true, player, "%s set %s %s's constitution to %d.\n",
@@ -1023,6 +1024,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
 		if(!strcmp(cmnd->str[3], "dex")) {
 			target->dexterity.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->dexterity.restore();
 			player->print("Dexterity set.\n");
 			log_immort(true, player, "%s set %s %s's dexterity to %d.\n",
 				player->name, PLYCRT(target), target->name, target->dexterity.getCur());
@@ -1612,6 +1614,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 		//if(!strcmp(cmnd->str[3], "pie")) {
 
 		target->piety.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+		target->piety.restore();
 		player->print("Piety set.\n");
 		log_immort(true, player, "%s set %s %s's %s to %d.\n",
 			player->name, PLYCRT(target), target->name,
@@ -1953,6 +1956,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
 		case 't':
 			target->strength.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->strength.restore();
 			player->print("Strength set.\n");
 			log_immort(true, player, "%s set %s %s's %s to %d.\n",
 				player->name, PLYCRT(target), target->name,
