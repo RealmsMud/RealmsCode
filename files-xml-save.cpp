@@ -170,7 +170,10 @@ int Monster::saveToFile() {
 	xmlDocSetRootElement(xmlDoc, rootNode);
 
 	escapeText();
+	bstring idTemp = id;
+	id = "-1";
 	saveToXml(rootNode, ALLITEMS, LS_FULL);
+	id = idTemp;
 
 	strcpy(filename, monsterPath(info));
 	xml::saveFile(filename, xmlDoc);
