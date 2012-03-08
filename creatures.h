@@ -264,6 +264,8 @@ public:
 	bool isPlayer() const;
 	bool isMonster() const;
 	bool checkMp(int reqMp);
+	bool checkResource(ResourceType resType, int resCost);
+	void subResource(ResourceType resType, int resCost);
 	void subMp(int reqMp);
 
 	Creature* myTarget;
@@ -297,6 +299,8 @@ public:
 
 	long getLTLeft(int myLT, long t = -1); // gets the time left on a LT
 	void setLastTime(int myLT, long t, long interval); // Sets a LT
+
+
 
 public:
 // Data

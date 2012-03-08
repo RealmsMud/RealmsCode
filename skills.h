@@ -48,6 +48,7 @@ public:
 
 };
 class SkillInfo {
+	friend class Skill;
 public:
 	SkillInfo(xmlNodePtr rootNode);
 protected:
@@ -115,6 +116,8 @@ public:
 	void upBonus(int amt=1);	// Increase the gainBonus
 	void clearBonus();			// Clear the bonus (after an increase)
 	void improve(int amt=1);	// Improve the skill
+
+	bool checkResources(Creature* creature);
 };
 
 
