@@ -294,7 +294,7 @@ bstring Creature::statCrt(int statFlags) {
 	if((statFlags & ISCT) && mTarget)
 		crtStr << "Last modified by: " << mTarget->last_mod << "\n";
 	if(pTarget) {
-		crtStr << "Lost Experience: " << pTarget->getLostExperience() << "\n";
+		crtStr << "Lost Experience: " << pTarget->statistics.getLostExperience() << "\n";
 		cDay* b = pTarget->getBirthday();
 		if(b)
 			crtStr << "Birthday:  Day:" << b->getDay() <<
@@ -883,7 +883,8 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
 
 		if(!strcmp(cmnd->str[3], "con")) {
-			target->constitution.setCur(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->constitution.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->constitution.restore();
 			player->print("Constitution set.\n");
 
 			log_immort(true, player, "%s set %s %s's constitution to %d.\n",
@@ -1022,7 +1023,8 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
 
 		if(!strcmp(cmnd->str[3], "dex")) {
-			target->dexterity.setCur(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->dexterity.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->dexterity.restore();
 			player->print("Dexterity set.\n");
 			log_immort(true, player, "%s set %s %s's dexterity to %d.\n",
 				player->name, PLYCRT(target), target->name, target->dexterity.getCur());
@@ -1078,7 +1080,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 				return(0);
 			}
 
-			if(strength < 0 || strength > EFFECT_MAX_STRENGTH) {
+			if((strength < 0 || strength > EFFECT_MAX_STRENGTH) && strength != -1) {
 				player->print("Strength must be between 0 and %d.\n", EFFECT_MAX_STRENGTH);
 				return(0);
 			}
@@ -1322,7 +1324,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 		break;
 	case 'i':
 		if(!strcmp(cmnd->str[3], "int")) {
-			target->intelligence.setCur(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->intelligence.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
 			player->print("Intelligence set.\n");
 			log_immort(true, player, "%s set %s %s's Intelligence to %d.\n",
 				player->name, PLYCRT(target), target->name, target->intelligence.getCur());
@@ -1377,7 +1379,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 			if(action == '0')
 				action = 'd';
 
-			if((inv > 10 || inv < 0) && action != 'd') {
+			if((inv > 10 || inv <= 0) && action != 'd') {
 				player->print("Carry slot number invalid.\n");
 				player->print("Must be from 1 to 10.\n");
 				return(0);
@@ -1611,7 +1613,8 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 		}
 		//if(!strcmp(cmnd->str[3], "pie")) {
 
-		target->piety.setCur(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+		target->piety.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+		target->piety.restore();
 		player->print("Piety set.\n");
 		log_immort(true, player, "%s set %s %s's %s to %d.\n",
 			player->name, PLYCRT(target), target->name,
@@ -1952,7 +1955,8 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 			break;
 
 		case 't':
-			target->strength.setCur(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->strength.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+			target->strength.restore();
 			player->print("Strength set.\n");
 			log_immort(true, player, "%s set %s %s's %s to %d.\n",
 				player->name, PLYCRT(target), target->name,
@@ -2701,12 +2705,12 @@ int dmAddMob(Player* player, cmd* cmnd) {
 	strcpy(new_mob->key[0], "form");
 	new_mob->setLevel(1);
 	new_mob->setType(MONSTER);
-	new_mob->strength.setCur(100);
-	new_mob->dexterity.setCur(100);
-	new_mob->constitution.setCur(100);
-	new_mob->intelligence.setCur(100);
-	new_mob->piety.setCur(100);
-	new_mob->hp.setMax(12);
+	new_mob->strength.setInitial(100);
+	new_mob->dexterity.setInitial(100);
+	new_mob->constitution.setInitial(100);
+	new_mob->intelligence.setInitial(100);
+	new_mob->piety.setInitial(100);
+	new_mob->hp.setInitial(12);
 	new_mob->hp.restore();
 	new_mob->setArmor(25);
 	new_mob->setDefenseSkill(5);

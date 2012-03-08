@@ -245,7 +245,7 @@ public:
 //	Player* getPlayer();
 //
 
-
+	virtual void upgradeStats() {};
 	virtual Socket* getSock() const;
 	Location getLocation();
 	void delayedAction(bstring action, int delay, MudObject* target=0);
@@ -429,7 +429,7 @@ public:
 	void pleaseWait(long duration) const;
 	void pleaseWait(int duration) const;
 	void pleaseWait(double duration) const;
-	const char* getStatusStr(int dmg=0) const;
+	const char* getStatusStr(int dmg=0);
 	virtual const bstring customColorize(bstring text, bool caret=true) const = 0;
 
 	void bPrint(bstring toPrint) const;
@@ -517,7 +517,7 @@ public:
 	bool doesntBreathe() const;
 	bool immuneCriticals() const; // *
 	bool isUndead() const; // *
-	bool hasMp() const;
+	bool hasMp();
 	bool isAntiGradius() const;
 	bool countForWeightTrap() const;
 	bool isRace(int r) const; // *
@@ -548,7 +548,7 @@ public:
 	void delObj(Object* object, bool breakUnique=false, bool removeUnique=false, bool darkmetal=true, bool darkness=true, bool keep=false);
 	void finishDelObj(Object* object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep);
 	int getWeight() const;
-	int maxWeight() const;
+	int maxWeight();
 	bool tooBulky(int n) const;
 	int getTotalBulk() const;
 	int getMaxBulk() const;
@@ -668,7 +668,6 @@ public:
 	virtual int getAdjustedAlignment() const=0;
 	bool checkDimensionalAnchor() const;
 	bool checkStaff(const char *failStr, ...) const;
-	bool underStatSpell() const;
 	int smashInvis(); // *
 	bool unhide(bool show = true); // *
 	void unmist(); // *
@@ -676,6 +675,11 @@ public:
 	void fixLts();
 	void doDispelMagic(int num=-1);
 	bool changeSize(int oldStrength, int newStrength, bool enlarge);
+
+	bool addStatModifier(bstring statName, bstring modifierName, int modAmt, ModifierType modType);
+	bool addStatModifier(bstring statName, StatModifier* statModifier);
+	bool setStatDirty(bstring statName);
+	Stat* getStat(bstring statName);
 
 	// these handle total invisibility, no concealment (ie, being hidden)
 	bool canSee(const BaseRoom* room, bool p=false) const;
@@ -686,7 +690,7 @@ public:
 	bool canEnter(const UniqueRoom* room, bool p=false) const;
 	bool willFit(const Object* object) const;
 	bool canWield(const Object* object, int n) const;
-	bool canFlee() const;
+	bool canFlee();
 	bool canFleeToExit(const Exit *exit, bool skipScary=false, bool blinking=false);
 	Exit* getFleeableExit();
 	BaseRoom* getFleeableRoom(Exit* exit);
@@ -708,7 +712,7 @@ protected:
 	virtual int doDeleteFromRoom(BaseRoom* room, bool delPortal) = 0;
 public:
 
-	int doResistMagic(int dmg, const Creature* enemy=0);
+	int doResistMagic(int dmg, Creature* enemy=0);
 	virtual void pulseTick(long t) = 0;
 
 	// New songs
@@ -743,6 +747,7 @@ public:
 	void saveXml(xmlNodePtr curNode) const;
 	int saveToFile();
 	void validateId();
+	void upgradeStats();
 
 protected:
 // Data
@@ -966,6 +971,7 @@ public:
 	void saveXml(xmlNodePtr curNode) const;
 	void bug(const char *fmt, ...) const;
 	void validateId();
+	void upgradeStats();
 
 protected:
 // Data
@@ -981,7 +987,6 @@ protected:
 	short barkskin;
 	unsigned short pkin;
 	unsigned short pkwon;
-	unsigned long lostExperience;
 	int wrap;
 	int luck;
 	int ansi;
@@ -1142,7 +1147,6 @@ public:
 	unsigned short getWimpy() const;
 	unsigned short getTickDamage() const;
 	unsigned short getWarnings() const;
-	unsigned long getLostExperience() const;
 	unsigned short getPkin() const;
 	unsigned short getPkwon() const;
 	bstring getBankDisplay() const;
@@ -1249,7 +1253,7 @@ public:
 	Recipe* findRecipe(cmd* cmnd, bstring skill, bool* searchRecipes, Size recipeSize=NO_SIZE, int numIngredients=1) const;
 
 // Stats & Ticking
-	long tickInterval(const Stat stat, bool fastTick, bool deathSickness, bool vampAndDay, const bstring& effectName);
+	long tickInterval(Stat& stat, bool fastTick, bool deathSickness, bool vampAndDay, const bstring& effectName);
 	void pulseTick(long t);
 	int getHpTickBonus() const;
 	int getMpTickBonus() const;
@@ -1271,14 +1275,14 @@ public:
 	bstring getWhoString(bool whois=false, bool color=true, bool ignoreIllusion=false) const;
 	bstring getTimePlayed() const;
 	bstring consider(Creature* creature) const;
-	int displayCreature(Creature* target) const;
+	int displayCreature(Creature* target);
 	void sendPrompt();
 	void defineColors();
 	void setSockColors();
 	void vprint(const char *fmt, va_list ap) const;
 	void escapeText();
 	bstring getClassString() const;
-	void score(const Player* viewer) const;
+	void score(const Player* viewer);
 	void information(const Player* viewer=0, bool online=true);
 	void showAge(const Player* viewer) const;
 	const bstring customColorize(bstring text, bool caret=true) const;
@@ -1320,8 +1324,8 @@ public:
 
 	int computeLuck();
 	int getArmorWeight() const;
-	int getFallBonus() const;
-	int getSneakChance() const;
+	int getFallBonus();
+	int getSneakChance();
 	int getLight() const;
 	int getVision() const;
 

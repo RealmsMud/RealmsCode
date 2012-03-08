@@ -29,6 +29,7 @@ public:
 	bstring display() const;
 	void add(const bstring& event, const bstring& code);
 	bool execute(const bstring& event, MudObject* target=0, const bstring& param1="", const bstring& param2="", const bstring& param3="") const;
+	bool executeWithReturn(const bstring& event, MudObject* target=0, const bstring& param1="", const bstring& param2="", const bstring& param3="") const;
 	void setParent(MudObject* target);
 
 	static bool run(MudObject* trigger1, const bstring& event1, MudObject* trigger2, const bstring& event2, const bstring& param1="", const bstring& param2="", const bstring& param3="");

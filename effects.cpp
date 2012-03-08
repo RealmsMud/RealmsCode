@@ -87,6 +87,14 @@ Effect* Config::getEffect(bstring eName) {
 }
 
 //*********************************************************************
+//						effectExists
+//*********************************************************************
+
+bool Config::effectExists(bstring eName) {
+	return(effects.find(eName) != effects.end());
+}
+
+//*********************************************************************
 //						dmEffectList
 //*********************************************************************
 
@@ -310,7 +318,7 @@ bool EffectInfo::compute(MudObject* applier) {
 		return(false);
 	myApplier = applier;
 	bool retVal = runScript(myEffect->getComputeScript(), applier);
-	// Incase computing results in a non permenant effect that has a negative duration!
+	// Incase computing results in a non permanent effect that has a negative duration!
 	if(this->duration < -1) {
 		duration = 60;
 	}
@@ -404,25 +412,7 @@ bool EffectInfo::postApply(bool keepApplier) {
 //*********************************************************************
 //						addEffect
 //*********************************************************************
-/*
-EffectInfo* MudObject::addEffect(const bstring& effect, MudObject* applier, bool show, const Creature* owner, bool keepApplier) {
-	return(effects.addEffect(effect, applier, show, this, owner, keepApplier));
-}
 
-EffectInfo* Effects::addEffect(const bstring& effect, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
-	bool success = true;
-	EffectInfo* newEffect = new EffectInfo(effect, time(0), 0, 1, pParent, owner);
-
-    // Compute the effects potency, see if it will overwrite, and then apply & add
-	success = newEffect->compute(applier);
-
-	if(success)
-		return(addEffect(newEffect, show, pParent, keepApplier));
-	else
-		delete newEffect;
-	return(false);
-}
-*/
 
 EffectInfo* MudObject::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, const Creature* owner, bool keepApplier) {
 	return(effects.addEffect(effect, duration, strength, applier, show, this, owner, keepApplier));
@@ -433,7 +423,11 @@ EffectInfo* Effects::addEffect(const bstring& effect, long duration, int strengt
 		return(null);
 	EffectInfo* newEffect = new EffectInfo(effect, time(0), duration, strength, pParent, owner);
 
-	newEffect->compute(applier);
+	if(!newEffect->compute(applier)) {
+	    delete newEffect;
+	    return(NULL);
+	}
+
 
 	if(strength != -2)
 		newEffect->setStrength(strength);
@@ -555,8 +549,8 @@ bool Effect::objectCanBestowEffect(const bstring& effect) {
 //						isEffected
 //*********************************************************************
 
-bool MudObject::isEffected(const bstring& effect) const {
-	return(effects.isEffected(effect));
+bool MudObject::isEffected(const bstring& effect, bool exactMatch) const {
+	return(effects.isEffected(effect, exactMatch));
 }
 
 bool MudObject::isEffected(EffectInfo* effect) const {
@@ -566,10 +560,10 @@ bool MudObject::isEffected(EffectInfo* effect) const {
 // We are effected if we have an effect with this name, or an effect with a base effect
 // of this name
 
-bool Effects::isEffected(const bstring& effect) const {
+bool Effects::isEffected(const bstring& effect, bool exactMatch) const {
 	//EffectList list;
 	for(EffectInfo* eff : effectList) {
-		if(eff->getName() == effect || eff->hasBaseEffect(effect))
+		if(eff->getName() == effect || (!exactMatch && eff->hasBaseEffect(effect)))
 			return(true);
 	}
 

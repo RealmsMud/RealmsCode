@@ -511,15 +511,15 @@ void viewFile(Socket* sock, bstring str) {
 // prompted to hit return to continue, thus dividing the output into
 // several pages.
 
-#define FBUF	800
+#define FBUF_L	1024
 
 void viewLoginFile(Socket* sock, bstring str, bool showError) {
-	char	buf[FBUF + 1];
+	char	buf[FBUF_L + 1];
 	int		i=0, l=0, n=0, ff=0, line=0;
 	long	offset=0;
 	zero(buf, sizeof(buf));
 
-	buf[FBUF] = 0;
+	buf[FBUF_L] = 0;
 	{
 		offset = 0L;
 		strcpy(sock->tempstr[1], str.c_str());
@@ -533,7 +533,7 @@ void viewLoginFile(Socket* sock, bstring str, bool showError) {
 		}
 		line = 0;
 		while(1) {
-			n = read(ff, buf, FBUF);
+			n = read(ff, buf, FBUF_L);
 			l = 0;
 			for(i=0; i<n; i++) {
 				if(buf[i] == '\n') {
@@ -550,7 +550,7 @@ void viewLoginFile(Socket* sock, bstring str, bool showError) {
 				sock->printColor("%s", &buf[l]);
 				offset += (i - l);
 			}
-			if(n < FBUF) {
+			if(n < FBUF_L) {
 				close(ff);
 				return;
 			}

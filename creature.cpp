@@ -799,7 +799,7 @@ int Creature::displayFlags() const {
 //						displayCreature
 //*********************************************************************
 
-int Player::displayCreature(Creature* target) const {
+int Player::displayCreature(Creature* target)  {
 	int		percent=0, align=0, rank=0, chance=0, flags = displayFlags();
 	Player	*pTarget = target->getAsPlayer();
 	Monster	*mTarget = target->getAsMonster();
@@ -1047,7 +1047,7 @@ void Monster::checkSpellWearoff() {
 //						canFlee
 //*********************************************************************
 
-bool Creature::canFlee() const {
+bool Creature::canFlee() {
 	bool	crtInRoom=false;
 	long	t=0;
 	int		i=0;
@@ -1080,8 +1080,8 @@ bool Creature::canFlee() const {
 
 
 		if(	(cClass == BERSERKER || cClass == CLERIC) &&
-			flagIsSet(P_BERSERKED)
-		) {
+			isEffected("berserK") )
+		{
 			printColor("^rYour lust for battle prevents you from fleeing!\n");
 			return(false);
 		}

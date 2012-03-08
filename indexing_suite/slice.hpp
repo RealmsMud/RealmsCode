@@ -76,7 +76,7 @@ namespace boost { namespace python { namespace indexing {
       : m_slice (sl) // Leave index members uninitialized
     {
         PySlice_GetIndices(
-            reinterpret_cast<PySliceObject *> (m_slice.ptr()),
+            reinterpret_cast<PyObject *> (m_slice.ptr()),
             length,
             &m_start,
             &m_stop,

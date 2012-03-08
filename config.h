@@ -41,7 +41,7 @@ typedef std::pair<bstring, bstring> accountDouble;
 typedef std::map<bstring, MxpElement*> MxpElementMap;
 typedef std::map<bstring, bstring> BstringMap;
 typedef std::map<bstring, SocialCommand*> SocialMap;
-
+typedef std::map<bstring, SkillInfo*> SkillInfoMap;
 
 class LottoTicket {
 public:
@@ -107,6 +107,8 @@ public:
 	bool loadEffects();
 	void clearEffects();
 	Effect* getEffect(bstring eName);
+	bool effectExists(bstring eName);
+
 // Spells
 	bool loadSpells();
 	bool saveSpells() const;
@@ -374,6 +376,7 @@ protected:
 	void loadTickets(xmlNodePtr rootNode);
 
 	void clearSkills();
+	void updateSkillPointers();
 	void loadSkillGroups(xmlNodePtr rootNode);
 	void loadSkillGroup(xmlNodePtr rootNode);
 	void loadSkills(xmlNodePtr rootNode);
@@ -519,7 +522,7 @@ public:
 
 	// Skills
 	std::map<bstring, bstring> skillGroups;
-	std::map<bstring, SkillInfo*> skills;
+	SkillInfoMap skills;
 	std::map<bstring, PlayerClass*> classes;
 	std::map<bstring, StartLoc*> start;
 	std::map<bstring, Fishing> fishing;

@@ -358,7 +358,7 @@ int cmdPray(Player* player, cmd* cmnd) {
 		player->print("You say a quick prayer.\n");
 		return(0);
 	}
-	if(player->flagIsSet(P_PRAYED)) {
+	if(player->isEffected("pray") || player->isEffected("dkpray")) {
 		player->print("You've already prayed.\n");
 		return(0);
 	}
@@ -386,7 +386,7 @@ int cmdPray(Player* player, cmd* cmnd) {
 	i = player->lasttime[LT_PRAY].ltime;
 	t = time(0);
 
-	if(t - i < 600L) {
+	if(t - i < 600L && !player->isStaff()) {
 		player->pleaseWait(600L-t+i);
 		return(0);
 	}
@@ -397,21 +397,20 @@ int cmdPray(Player* player, cmd* cmnd) {
 		chance = MIN(85, (int)(player->getSkillLevel("pray") * 20) + bonus((int) player->piety.getCur()));
 
 	if(mrand(1, 100) <= chance) {
-		player->setFlag(P_PRAYED);
 		player->lasttime[LT_PRAY].ltime = t;
 
 		if(player->getClass() != DEATHKNIGHT) {
 			player->print("You feel extremely pious.\n");
 			broadcast(player->getSock(), player->getParent(), "%M bows %s head in prayer.", player, player->hisHer());
-			player->piety.addCur(50);
-			player->lasttime[LT_PRAY].interval = 450L;
+			player->addEffect("pray", 450L, 50);
+			player->lasttime[LT_PRAY].interval = 600;
 		} else {
 			player->print("The evil in your soul infuses your body with power.\n");
 			broadcast(player->getSock(), player->getParent(), "%M glows with evil.", player);
-			player->strength.addCur(30);
+			player->addEffect("dkpray", 240L, 30);
 			player->computeAC();
 			player->computeAttackPower();
-			player->lasttime[LT_PRAY].interval = 240L;
+			player->lasttime[LT_PRAY].interval = 600L;
 		}
 		player->checkImprove("pray", true);
 	} else {

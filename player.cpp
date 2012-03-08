@@ -120,6 +120,7 @@ void Player::init() {
 		cClass = CARETAKER;
 
 
+
 	/* change this later
 	   strength.getCur() = strength.max;
 	dexterity.getCur() = dexterity.max;
@@ -376,8 +377,10 @@ void Player::init() {
 	fixLts();
 
 	if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER)) {
-	    mp.setMax(0);
-	    focus.setMax(100);
+	    mp.setInitial(0);
+	    focus.setInitial(100);
+	    focus.clearModifiers();
+        focus.addModifier("UnFocused", -100, MOD_CUR);
 	}
 
 	if(!gServer->isRebooting())
@@ -665,11 +668,6 @@ void Player::checkEffectsWearingOff() {
 		}
 	}
 
-	if(flagIsSet(P_FRENZY)) {
-		if(t > LT(this, LT_FRENZY)) {
-			loseFrenzy();
-		}
-	}
 	if(flagIsSet(P_FOCUSED) && (cClass == MONK || staff)) {
 		if(t > LT(this, LT_FOCUS)) {
 			printColor("^cYou lose your concentration.\n");
@@ -715,18 +713,7 @@ void Player::checkEffectsWearingOff() {
 			broadcast(getSock(), getRoomParent(), "%M wakes up.", this);
 		}
 	}
-	if(flagIsSet(P_PRAYED)) {
-		if(t > LT(this, LT_PRAY)) {
-			losePray();
-		}
-	}
-	if(flagIsSet(P_BLOODSAC)) {
-		if(t > LT(this, LT_BLOOD_SACRIFICE)) {
-			printColor("^mYour demonic power leaves you.\n");
-			clearFlag(P_BLOODSAC);
-			 hp.setCur(hp.getMax());
-		}
-	}
+
 	if(flagIsSet(P_NO_SUICIDE)) {
 		if(t > LT(this, LT_MOBDEATH)) {
 			printColor("^yYour cooling-off period has ended.\n");
@@ -740,11 +727,6 @@ void Player::checkEffectsWearingOff() {
 		}
 	}
 
-	if(flagIsSet(P_BERSERKED)) {
-		if(t > LT(this, LT_BERSERK) || (LT(this, LT_BERSERK) - t <=0)) {
-			loseRage();
-		}
-	}
 	if(flagIsSet(P_HIDDEN) && !staff) {
 		if(t - lasttime[LT_HIDE].ltime > 300L) {
 			printColor("^cShifting shadows expose you.\n");
@@ -1194,7 +1176,7 @@ void Player::computeAC() {
 
 // TODO: Possibly add in +armor for higher constitution?
 
-	if(flagIsSet(P_BERSERKED))
+	if(isEffected("berserk"))
 		ac -= 100;
 	if(isEffected("fortitude"))
 		ac += 100;
@@ -1435,7 +1417,7 @@ int mprofic(const Creature* player, int index) {
 // This function computes a player's bonus (or susceptibility) to falling
 // while climbing.
 
-int Player::getFallBonus() const {
+int Player::getFallBonus()  {
 	int	fall = bonus((int)dexterity.getCur())*5;
 
 	for(int j=0; j<MAXWEAR; j++)
@@ -1638,7 +1620,7 @@ int Player::computeLuck() {
 //*********************************************************************
 // returns a status string that describes the hp condition of the creature
 
-const char* Creature::getStatusStr(int dmg) const {
+const char* Creature::getStatusStr(int dmg) {
 	int health = hp.getCur() - dmg;
 
 	if(health < 1)
@@ -2156,15 +2138,15 @@ void Creature::checkSkillsGain(std::list<SkillGain*>::const_iterator begin, std:
 //*********************************************************************
 
 void Player::loseRage() {
-	if(!flagIsSet(P_BERSERKED))
+	if(!flagIsSet(P_BERSERKED_OLD))
 		return;
 	printColor("^rYour rage diminishes.^x\n");
-	clearFlag(P_BERSERKED);
+	clearFlag(P_BERSERKED_OLD);
 
 	if(cClass == CLERIC && deity == ARES)
-		strength.decrease(30);
+		strength.upgradeSetCur(strength.getCur(false) - 30);
 	else
-		strength.decrease(50);
+		strength.upgradeSetCur(strength.getCur(false) - 50);
 	computeAC();
 	computeAttackPower();
 }
@@ -2174,18 +2156,18 @@ void Player::loseRage() {
 //*********************************************************************
 
 void Player::losePray() {
-	if(!flagIsSet(P_PRAYED))
+	if(!flagIsSet(P_PRAYED_OLD))
 		return;
 	if(cClass != DEATHKNIGHT) {
 		printColor("^yYou feel less pious.\n");
-		piety.decrease(50);
+		piety.upgradeSetCur(piety.getCur(false) - 50);
 	} else {
 		printColor("^rYour demonic strength leaves you.\n");
-		strength.decrease(30);
+		strength.upgradeSetCur(strength.getCur(false) - 30);
 		computeAC();
 		computeAttackPower();
 	}
-	clearFlag(P_PRAYED);
+	clearFlag(P_PRAYED_OLD);
 }
 
 //*********************************************************************
@@ -2193,11 +2175,11 @@ void Player::losePray() {
 //*********************************************************************
 
 void Player::loseFrenzy() {
-	if(!flagIsSet(P_FRENZY))
+	if(!flagIsSet(P_FRENZY_OLD))
 		return;
 	printColor("^gYou feel slower.\n");
-	clearFlag(P_FRENZY);
-	dexterity.decrease(50);
+	clearFlag(P_FRENZY_OLD);
+	dexterity.upgradeSetCur(dexterity.getCur(false) - 50);
 }
 
 //*********************************************************************
@@ -2256,7 +2238,7 @@ int Player::getVision() const {
 //*********************************************************************
 // determines out percentage chance of being able to sneak
 
-int Player::getSneakChance() const {
+int Player::getSneakChance()  {
 	int sLvl = (int)getSkillLevel("sneak");
 
 	if(isStaff())

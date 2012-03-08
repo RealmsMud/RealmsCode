@@ -53,7 +53,7 @@ int Monster::updateCombat() {
 	char	atk[30];
 	int		n=1, rtn=0, yellchance=0, num=0, breathe=0;
 	int		x=0;
-	bool	monstervmonster=false, casted=false, autoAttack=false;
+	bool	monstervmonster=false, casted=false;
 	bool	resistPet=false, immunePet=false, vulnPet=false;
 	bool	willCast=false, antiMagic=false, isCharmed=false;
 
@@ -97,7 +97,6 @@ int Monster::updateCombat() {
 		return(0);
 
 	monstervmonster = (!pTarget && !target->isPet() && isMonster() && !isPet());
-	autoAttack = (pTarget && !pTarget->flagIsSet(P_NO_AUTO_ATTACK) && pTarget->canAttack(this));
 
 	room->wake("Loud noises disturb your sleep.", true);
 
@@ -259,15 +258,7 @@ int Monster::updateCombat() {
 	int resultFlags = NO_CRITICAL | NO_FUMBLE;
 	AttackResult result = getAttackResult(target, NULL, resultFlags);
 
-	if(!isPet()) {
-		if(result == ATTACK_BLOCK)
-			target->checkImprove("block", true);
-		else if(result == ATTACK_HIT || result == ATTACK_CRITICAL) {
-			if(target->ready[SHIELD-1])
-				target->checkImprove("block", false);
-			checkImprove("parry", false);
-		}
-	} else {
+	if(isPet()) {
 		// We are a pet, and we're attacking.  Smash invis of our owner.
 		getMaster()->smashInvis();
 	}
@@ -417,12 +408,7 @@ int Monster::updateCombat() {
 				pTarget->flee();
 				return(1);
 			}
-		} else if(autoAttack) {
-			//if(target->isDm()) target->printColor(": ^Rcombat.c line %d^w\n", __LINE__);
-			if(pTarget->attackCreature(this))
-				return(1);
 		}
-
 
 		if(target->doLagProtect())
 			return(1);
@@ -455,10 +441,6 @@ int Monster::updateCombat() {
 					return(1);
 				}
 			}
-		}
-		if(autoAttack) {
-			if(pTarget->attackCreature(this))
-				return(1);
 		}
 	} else if(result == ATTACK_DODGE) {
 		if(!isPet())
@@ -575,12 +557,12 @@ int Monster::steal(Player *victim) {
 void Monster::berserk() {
 	int num = 0;
 
+	// TODO: Change Berserk into an effect
 	if(flagIsSet(M_BERSERK))
 		return;
 	setFlag(M_BERSERK);
 	clearFlag(M_WILL_BERSERK);
-	num = (int)strength.getCur()+50;
-	strength.setCur(MIN(280, num));
+	strength.addModifier("Berserk", 50, MOD_CUR_MAX);
 
 	broadcast(NULL, getRoomParent(), "^R%M goes berserk!", this);
 	return;
@@ -687,7 +669,7 @@ int Player::lagProtection() {
 	int		t=0, idle=0;
 
 	// Can't do anything while unconsious!
-	if(flagIsSet(P_UNCONSCIOUS) || !flagIsSet(P_NO_AUTO_ATTACK))
+	if(flagIsSet(P_UNCONSCIOUS))
 		return(0);
 
 	t = time(0);
@@ -810,7 +792,7 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
 		chance += bonus((int) constitution.getCur());
 		if(hp.getCur() <= hp.getMax()/3)
 			chance /= 2;	// More vulnerable to poison if weakened severely.
-		if(pCreature && pCreature->flagIsSet(P_BERSERKED))
+		if(pCreature && pCreature->isEffected("berserk"))
 			chance += 15;	// Poison doesn't harm berserk players as much.
 
 		break;

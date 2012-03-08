@@ -1177,8 +1177,8 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
 				(cClass == CLERIC && deity == ARES) ||
 				isStaff()
 			) &&
-			flagIsSet(P_BERSERKED)
-		) {
+			isEffected("berserk"))
+		{
 			// Only do a bonus if not a multi weapon, or is a multi weapon and it's the first attack
 			if(weapon && weaponCategory != "ranged")
 				bonusDamage.add((int)(attackDamage.get()/2));
@@ -1187,11 +1187,11 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
 		if(	(	(cClass == DEATHKNIGHT && getAdjustedAlignment() <= REDDISH) ||
 				(cClass == PALADIN && getAdjustedAlignment() == ROYALBLUE)
 			) &&
-			flagIsSet(P_PRAYED)
+			(isEffected("pray") || isEffected("dkpray"))
 		)
 			bonusDamage.add(mrand(1,3));
 
-		if((isEffected("lycanthropy") || isCt()) && flagIsSet(P_FRENZY))
+		if((isEffected("lycanthropy") || isCt()) && isEffected("frenzy"))
 			bonusDamage.add(mrand(3,5));
 
 		if((cClass == MONK || isCt()) && flagIsSet(P_FOCUSED))
@@ -1514,7 +1514,7 @@ int Creature::parry(Creature* target) {
 		result = ATTACK_MISS; // Parry
 
 
-	checkImprove("parry", true);
+	//checkImprove("parry", true);
 
 	// if result == miss || can't hit target, parry
 	if(result == ATTACK_MISS || !canHit(target, weapon, true, false)) {
@@ -1666,7 +1666,7 @@ bool Creature::negAuraRepel() const {
 //						doResistMagic
 //*********************************************************************
 
-int Creature::doResistMagic(int dmg, const Creature* enemy) {
+int Creature::doResistMagic(int dmg, Creature* enemy) {
 	float resist=0;
 	dmg = MAX(1, dmg);
 

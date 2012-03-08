@@ -181,8 +181,11 @@ void Creature::addExperience(unsigned long e) {
 
 void Creature::subExperience(unsigned long e) {
 	setExperience(e > experience ? 0 : experience - e);
-	if(isPlayer())
+	int lost = (e > experience ? 0 : e);
+	if(isPlayer()) {
 		getAsPlayer()->checkLevel();
+		getAsPlayer()->statistics.experienceLost(lost);
+	}
 }
 
 //*********************************************************************
@@ -215,6 +218,11 @@ void Creature::setClass(unsigned short c) {
 			if(isPlayer())
 				getAsPlayer()->makeWerewolf();
 		}
+	}
+	if(c == LICH) {
+	    // Liches don't get hp bonus for con
+	    constitution.setInfluences(NULL);
+	    hp.setInfluencedBy(NULL);
 	}
 
 	cClass = c;
@@ -563,12 +571,6 @@ unsigned short Player::getTickDamage() const { return(tickDmg); }
 unsigned short Player::getWarnings() const { return(warnings); }
 
 //*********************************************************************
-//						getLostExperience
-//*********************************************************************
-
-unsigned long Player::getLostExperience() const { return(lostExperience); }
-
-//*********************************************************************
 //						getPkin
 //*********************************************************************
 
@@ -805,12 +807,6 @@ void Player::setWeaponTrains(unsigned short t) { weaponTrains = t; }
 void Player::subWeaponTrains(unsigned short t) { setWeaponTrains(t > weaponTrains ? 0 : weaponTrains - t); }
 
 //*********************************************************************
-//						setLostExperience
-//*********************************************************************
-
-void Player::setLostExperience(unsigned long e) { lostExperience = e; }
-
-//*********************************************************************
 //						setLastPassword
 //*********************************************************************
 
@@ -1022,7 +1018,24 @@ void Creature::crtReset() {
 	zero(languages, sizeof(languages));
 	questnum = 0;
 
+	strength.setName("Strength");
+	dexterity.setName("Dexterity");
+	constitution.setName("Constitution");
+	intelligence.setName("Intelligence");
+	piety.setName("Piety");
 
+	hp.setName("Hp");
+	mp.setName("Mp");
+
+	if(getAsPlayer()) {
+	    getAsPlayer()->focus.setName("Focus");
+
+	    constitution.setInfluences(&hp);
+	    hp.setInfluencedBy(&constitution);
+
+	    intelligence.setInfluences(&mp);
+	    mp.setInfluencedBy(&intelligence);
+	}
 
 	for(i=0; i<MAXWEAR; i++)
 		ready[i] = 0;
@@ -1116,7 +1129,7 @@ void Player::reset() {
 
 	oldCreated = surname = lastCommand = lastCommunicate = password = title = tempTitle = "";
 	lastPassword = afflictedBy = forum = "";
-	tickDmg = lostExperience = pkwon = pkin = lastLogin = lastInterest = uniqueObjId = 0;
+	tickDmg = pkwon = pkin = lastLogin = lastInterest = uniqueObjId = 0;
 
 	memset(songs, 0, sizeof(songs));
 	guild = guildRank = cClass2 = 0;
@@ -1365,7 +1378,6 @@ void Player::doCopy(const Player& cr) {
 	cClass2 = cr.cClass2;
 	wimpy = cr.wimpy;
 	tickDmg = cr.tickDmg;
-	lostExperience = cr.lostExperience;
 	pkwon = cr.pkwon;
 	pkin = cr.pkin;
 	bound = cr.bound;
@@ -2102,7 +2114,7 @@ void Monster::setBaseRealm(Realm toSet) {
 //						hasMp
 //*********************************************************************
 
-bool Creature::hasMp() const {
+bool Creature::hasMp()  {
 	return(mp.getMax() != 0 && cClass != BERSERKER && cClass != LICH);
 }
 

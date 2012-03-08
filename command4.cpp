@@ -76,7 +76,7 @@ int cmdScore(Player* player, cmd* cmnd) {
 // This function shows a player their current hit points, magic points,
 // experience, gold and level.
 
-void Player::score(const Player* viewer) const {
+void Player::score(const Player* viewer) {
 	const EffectInfo* eff=0;
 	int		i=0;
 
@@ -99,31 +99,33 @@ void Player::score(const Player* viewer) const {
 		oStr << " ^c*Misted*";
 	if(isEffected("armor"))
 		oStr << " ^y*Armor Spell*";
-	if(flagIsSet(P_BERSERKED))
+	if(isEffected("berserk"))
 		oStr << " ^r*Berserked*";
 	if(isPoisoned())
 		oStr << " ^g^#*Poisoned*";
 
 
-	if(isEffected("haste"))
+	if(isEffected("frenzy"))
+	    oStr << " ^c*Frenzied*";
+	if(isEffected("haste", true))
 		oStr << " ^c*Hasted*";
-	if(isEffected("slow"))
+	if(isEffected("slow", true))
 		oStr << " ^g*Slowed*";
-	if(isEffected("strength"))
+	if(isEffected("strength", true))
 		oStr << " ^y*Strength*";
-	if(isEffected("enfeeblement"))
+	if(isEffected("enfeeblement", true))
 		oStr << " ^y*Enfeeblement*";
-	if(isEffected("insight"))
+	if(isEffected("insight", true))
 		oStr << " ^y*Insight*";
-	if(isEffected("feeblemind"))
+	if(isEffected("feeblemind", true))
 		oStr << " ^y*Feeblemind*";
-	if(isEffected("fortitude"))
+	if(isEffected("fortitude", true))
 		oStr << " ^c*Fortitude*";
-	if(isEffected("weakness"))
+	if(isEffected("weakness", true))
 		oStr << " ^g*Weakness*";
-	if(isEffected("prayer"))
+	if(isEffected("prayer", true))
 		oStr << " ^y*Prayer*";
-	if(isEffected("damnation"))
+	if(isEffected("damnation", true))
 		oStr << " ^y*Damnation*";
 
 
@@ -148,7 +150,7 @@ void Player::score(const Player* viewer) const {
 		oStr << " ^c*Petrified*";
 	if(isEffected("hold-person"))
 		oStr << " ^c*Magically Held*";
-	if(flagIsSet(P_PRAYED))
+	if(isEffected("pray") || isEffected("dkpray"))
 		oStr << " ^y*Prayed*";
 	if(flagIsSet(P_UNCONSCIOUS)) {
 		if(flagIsSet(P_SLEEPING))

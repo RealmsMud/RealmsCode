@@ -502,7 +502,7 @@ int Creature::getWeight() const {
 // This function returns the maximum weight a player can be allowed to
 // hold in their inventory.
 
-int Creature::maxWeight() const {
+int Creature::maxWeight() {
 	int	n = 20 + strength.getCur();
 	if(cClass == BERSERKER || isCt())
 		n += level*10;
@@ -726,14 +726,6 @@ bool Player::canUse(Object* object, bool all) {
 		if(!all)
 			printColor("Using %P is awkward due to its size.\n", object);
 	}
-
-/*
-	if(isEffected("lycanthropy") && flagIsSet(P_FRENZY)) {
-		if(!all)
-			print("You cannot do that while frenzied.\n");
-		return(false);
-	}
-*/
 
 	if(object->getShotsCur() < 1 && object->getType() != WAND) {
 		if(!all)

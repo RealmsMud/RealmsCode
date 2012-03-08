@@ -41,10 +41,6 @@ class cmd;
 class ReportedMsdpVariable;
 class MsdpVariable;
 
-// Custom comparison operator to sort by the numeric id instead of standard string comparison
-struct idComp : public std::binary_function<const bstring&, const bstring&, bool> {
-  bool operator() (const bstring& lhs, const bstring& rhs) const;
-};
 
 //// Forward Declaration of PyObject
 //struct _object;
@@ -70,7 +66,9 @@ enum GoldLog {
 
 #include "asynch.h"
 
+#ifndef PYTHON_CODE_GEN
 typedef std::map<bstring, MudObject*,idComp> IdMap;
+#endif
 typedef std::list<Monster*> MonsterList;
 typedef std::list<Group*> GroupList;
 typedef std::list<Socket*> SocketList;
@@ -162,8 +160,9 @@ private:
 	bool valgrind;
 
 	// List of Ids
+#ifndef PYTHON_CODE_GEN
 	IdMap registeredIds;
-
+#endif
 	// List of groups
 	GroupList groups;
 
@@ -303,6 +302,7 @@ public:
 	// Python
 	bool runPython(const bstring& pyScript, object& dictionary);
 	bool runPython(const bstring& pyScript, bstring args = "", MudObject *actor = NULL, MudObject *target = NULL);
+	bool runPythonWithReturn(const bstring& pyScript, bstring args = "", MudObject *actor = NULL, MudObject *target = NULL);
 	bool runPython(const bstring& pyScript, bstring args, Socket *sock, Player *actor, MsdpVariable* msdpVar = NULL);
 
 	// Setup

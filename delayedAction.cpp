@@ -169,6 +169,7 @@ bstring Server::delayedActionStrings(const MudObject* target) {
 					break;
 				case ActionStudy:
 					oStr << " ^Y*Studying*";
+					break;
 				default:
 					break;
 			}

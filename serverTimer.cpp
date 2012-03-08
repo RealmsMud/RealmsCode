@@ -26,31 +26,31 @@
 //							timeZero
 //*********************************************************************
 
-void timeZero(struct timeval* toZero) {
-	toZero->tv_sec = 0;
-	toZero->tv_usec = 0;
+void timeZero(struct timeval& toZero) {
+	toZero.tv_sec = 0;
+	toZero.tv_usec = 0;
 }
 
 //*********************************************************************
 //							timeDiff
 //*********************************************************************
 
-void timeDiff(const struct timeval x, const struct timeval y, struct timeval* result) {
+void timeDiff(const struct timeval& x, const struct timeval& y, struct timeval& result) {
 
 	timeZero(result);
 
 	if(x.tv_sec < y.tv_sec)
 		return;
 	else if(x.tv_sec == y.tv_sec && x.tv_usec > y.tv_usec) {
-		result->tv_sec = 0;
-		result->tv_usec = x.tv_usec - y.tv_usec;
+		result.tv_sec = 0;
+		result.tv_usec = x.tv_usec - y.tv_usec;
 	} else {
-		result->tv_sec = x.tv_sec - y.tv_sec;
+		result.tv_sec = x.tv_sec - y.tv_sec;
 		if(x.tv_usec < y.tv_usec) {
-			result->tv_usec = x.tv_usec + 1000000 - y.tv_usec;
-			result->tv_sec--;
+			result.tv_usec = x.tv_usec + 1000000 - y.tv_usec;
+			result.tv_sec--;
 		} else
-			result->tv_usec = x.tv_usec - y.tv_usec;
+			result.tv_usec = x.tv_usec - y.tv_usec;
 	}
 }
 
@@ -59,9 +59,9 @@ void timeDiff(const struct timeval x, const struct timeval y, struct timeval* re
 //*********************************************************************
 
 void ServerTimer::reset() {
-	timeZero(&timePassed);
-	timeZero(&startTime);
-	timeZero(&endTime);
+	timeZero(timePassed);
+	timeZero(startTime);
+	timeZero(endTime);
 	running = 0;
 }
 
@@ -81,7 +81,7 @@ void ServerTimer::start() {
 
 void ServerTimer::end() {
 	gettimeofday(&endTime, 0);
-	timeDiff(endTime,startTime, &timePassed);
+	timeDiff(endTime,startTime, timePassed);
 	running = 0;
 }
 
@@ -98,7 +98,7 @@ void ServerTimer::sleep() {
 		//Do nothing
 	} else {
 		struct timeval toSleep;
-		timeZero(&toSleep);
+		timeZero(toSleep);
 		toSleep.tv_usec = 100000 - timePassed.tv_usec;
 //		if(toSleep.tv_usec < 50000) {
 //			printf("%ld sec %ld usec\n", timePassed.tv_sec, timePassed.tv_usec);

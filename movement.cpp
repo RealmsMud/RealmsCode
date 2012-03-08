@@ -93,24 +93,24 @@ void Move::broadcast(Creature* player, Container* container, bool ordinal, bstri
 	if(!noShow) {
 		if(player->isMonster() || (player->isPlayer() && !player->flagIsSet(P_MISTED))) {
 			if(hiddenExit)
-				broadcast(player->getSock(), container, "%M slips out of sight.", player);
+				::broadcast(player->getSock(), container, "%M slips out of sight.", player);
 			else
-				broadcast(player->getSock(), container, "%M %s %s^x.", player, strAction.c_str(), exit.c_str());
+				::broadcast(player->getSock(), container, "%M %s %s^x.", player, strAction.c_str(), exit.c_str());
 		} else if(player->flagIsSet(P_MISTED) && !player->flagIsSet(P_DM_INVIS)) {
 			if(hiddenExit)
-				broadcast(player->getSock(), container, "A light mist slips out of sight.");
+				::broadcast(player->getSock(), container, "A light mist slips out of sight.");
 			else
-				broadcast(player->getSock(), container, "A light mist %s %s^x.", strAction.c_str(), exit.c_str());
+				::broadcast(player->getSock(), container, "A light mist %s %s^x.", strAction.c_str(), exit.c_str());
 		}
 	}
 
 	if(noShow || hiddenExit) {
 		if(player->isDm())
-			broadcast(isDm, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
+			::broadcast(isDm, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
 		if(player->getClass() == CARETAKER)
-			broadcast(isCt, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
+			::broadcast(isCt, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
 		if(!player->isCt())
-			broadcast(isStaff, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
+			::broadcast(isStaff, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
 	}
 }
 
@@ -217,11 +217,11 @@ void Move::broadMove(Creature* player, Exit* exit, cmd* cmnd, bool sneaking) {
 		);
 	} else {
 		if(player->isDm())
-			broadcast(isDm, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->name);
+			::broadcast(isDm, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->name);
 		if(player->getClass() == CARETAKER)
-			broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->name);
+			::broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->name);
 		if(!player->isCt())
-			broadcast(isStaff, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->name);
+			::broadcast(isStaff, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->name);
 		player->checkImprove("sneak", true);
 	}
 }
@@ -374,7 +374,7 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
 			int dmg = mrand(5, 15 + fall / 10);
 
 			player->printColor("You fell and hurt yourself for %s%d^x damage.\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg);
-			broadcast(player->getSock(), player->getParent(), "%M fell down.", player);
+			::broadcast(player->getSock(), player->getParent(), "%M fell down.", player);
 			broadcastGroup(false, player, "%M fell and took *CC:DAMAGE*%d^x damage, %s%s\n",
 				player, dmg, player->heShe(), player->getStatusStr(dmg));
 
@@ -382,7 +382,7 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
 			if(player->hp.getCur() <= 0) {
 				player->print("You fell to your death.\n");
 				player->hp.setCur(0);
-				broadcast(player->getSock(), player->getParent(), "%M died from the fall.\n", player);
+				::broadcast(player->getSock(), player->getParent(), "%M died from the fall.\n", player);
 				player->die(FALL);
 				return(false);
 			}
@@ -514,32 +514,47 @@ bool Move::canMove(Player* player, cmd* cmnd) {
 			))
 		{
 			if(player->lasttime[LT_MOVED].misc > moves) {
+				bool wait = false;
 				if(moves == 1) {
 					if(player->getRoomParent()->flagIsSet(R_EARTH_BONUS)) {
 						player->print("You are stuck in the mud!\n");
-						broadcast(player->getSock(), player->getParent(), "%M got stuck in the mud!", player);
+						::broadcast(player->getSock(), player->getParent(), "%M got stuck in the mud!", player);
 					} else if(player->getRoomParent()->flagIsSet(R_AIR_BONUS)) {
 						player->print("The strong wind knocks you from your feet!\n");
-						broadcast(player->getSock(), player->getParent(), "%M got blown over by the wind!", player);
+						::broadcast(player->getSock(), player->getParent(), "%M got blown over by the wind!", player);
 					} else if(player->getRoomParent()->flagIsSet(R_FIRE_BONUS)) {
 						player->print("You are knocked down by heat waves!\n");
-						broadcast(player->getSock(), player->getParent(), "%M got knocked down by heat waves!", player);
+						::broadcast(player->getSock(), player->getParent(), "%M got knocked down by heat waves!", player);
 					} else if(player->getRoomParent()->flagIsSet(R_WATER_BONUS)) {
 						player->print("Strong water currents make you lose balance!\n");
-						broadcast(player->getSock(), player->getParent(), "%M got knocked down by the current!", player);
+						::broadcast(player->getSock(), player->getParent(), "%M got knocked down by the current!", player);
 					} else if(player->getRoomParent()->flagIsSet(R_COLD_BONUS) || player->getRoomParent()->isWinter()) {
 						player->print("You are stuck in the ice and snow!\n");
-						broadcast(player->getSock(), player->getParent(), "%M got stuck in the ice and snow!", player);
+						::broadcast(player->getSock(), player->getParent(), "%M got stuck in the ice and snow!", player);
 					} else if(player->getRoomParent()->flagIsSet(R_ELEC_BONUS)) {
 						player->print("Strong magnetic forces knock you down!\n");
-						broadcast(player->getSock(), player->getParent(), "%M got knocked down by magnetic forces!", player);
+						::broadcast(player->getSock(), player->getParent(), "%M got knocked down by magnetic forces!", player);
 					} else {
 						player->print("You are stuck!!\n");
-						broadcast(player->getSock(), player->getParent(), "%M got stuck!", player);
+						::broadcast(player->getSock(), player->getParent(), "%M got stuck!", player);
+					}
+					wait = true;
+				} else {
+					// Speedwalking is fine as long as there are no aggros in the room; if there are
+					// there's a chance to trip them up
+					for(Monster* monster : player->getParent()->monsters) {
+						if(monster->willAggro(player) || monster->isEnemy(player)) {
+							*player << ColorOn << setf(CAP) << monster << " startles you.\n" << ColorOff;
+							wait = true;
+							break;
+						}
 					}
 				}
-				player->pleaseWait(1);
-				return(0);
+
+				if(wait) {
+					player->pleaseWait(1);
+					return(false);
+				}
 			}
 		} else {
 			player->lasttime[LT_MOVED].ltime = t;
@@ -722,7 +737,7 @@ void Move::checkFollowed(Player* player, Exit* exit, BaseRoom* room, std::list<C
 			continue;
 
 		player->print("%M followed you.\n", target);
-		broadcast(player->getSock(), room, "%M follows %N.", target, player);
+		::broadcast(player->getSock(), room, "%M follows %N.", target, player);
 
 		// prevent players from continuously creating new monsters
 		if(target->flagIsSet(M_PERMENANT_MONSTER))
@@ -1057,14 +1072,12 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
 				oldRoom = NULL;
 		}
 	}
-	if(!group) {
-        for(Monster* pet : creature->pets) {
-            if(oldRoom == pet->getRoomParent())
-                Move::start(pet, cmnd, 0, 0, followers, numPeople, roomPurged);
-            if(roomPurged)
-                oldRoom = NULL;
-        }
-	}
+    for(Monster* pet : creature->pets) {
+        if(oldRoom == pet->getRoomParent())
+            Move::start(pet, cmnd, 0, 0, followers, numPeople, roomPurged);
+        if(roomPurged)
+            oldRoom = NULL;
+    }
 	if(player && !sneaking && !roomPurged && oldRoom)
 		Move::checkFollowed(player, exit, oldRoom, followers);
 

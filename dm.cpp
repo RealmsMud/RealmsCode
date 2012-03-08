@@ -161,7 +161,7 @@ int dmSockets(Player* player, cmd* cmnd) {
 
 	for(Socket* sock : gServer->sockets) {
 		num += 1;
-		player->print("Fd: %-2d   %s\n", sock->getFd(), sock->getHostname().c_str());
+		player->print("Fd: %-2d   %s (%ld)\n", sock->getFd(), sock->getHostname().c_str(), sock->getIdle());
 	}
 	player->print("%d total connection%s.\n", num, num != 1 ? "s" : "");
 	return(PROMPT);
@@ -1795,14 +1795,14 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
 		break;
 	case S_HASTE:
 		if(check) return(true);
-		if(player->isEffected("haste") || player->flagIsSet(P_FRENZY))
+		if(player->isEffected("haste") || player->isEffected("frenzy"))
 			break;
 		player->addEffect("haste", 180, 30);
 		break;
 	case S_SLOW:
 		if(check) return(true);
-		if(player->flagIsSet(P_FRENZY)) {
-			player->lasttime[LT_FRENZY].interval = 0;
+		if(player->isEffected("frenzy")) {
+		    player->removeEffect("frenzy");
 			break;
 		}
 		if(player->isEffected("slow"))
@@ -1810,18 +1810,18 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
 		player->addEffect("slow", 60, 30);
 		break;
 	case S_STRENGTH:
-		if(player->isEffected("strength") || player->flagIsSet(P_BERSERKED) || (player->getClass() == DEATHKNIGHT && player->flagIsSet(P_PRAYED)))
+		if(player->isEffected("strength") || player->isEffected("berserk") || (player->isEffected("dkpray")))
 			break;
 		player->addEffect("strength", 180, 30);
 		break;
 	case S_ENFEEBLEMENT:
 		if(check) return(true);
-		if(player->flagIsSet(P_BERSERKED)) {
-			player->lasttime[LT_BERSERK].interval = 0;
+		if(player->isEffected("berserk")) {
+		    player->removeEffect("berserk");
 			break;
 		}
-		if(player->getClass() == DEATHKNIGHT && player->flagIsSet(P_PRAYED)) {
-			player->lasttime[LT_PRAY].interval = 0;
+		if(player->isEffected("dkpray")) {
+		    player->removeEffect("dkpray");
 			break;
 		}
 		if(player->isEffected("enfeeblement"))
@@ -1846,14 +1846,14 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
 		break;
 	case S_PRAYER:
 		if(check) return(true);
-		if(player->isEffected("prayer") || (player->getClass() != DEATHKNIGHT && player->flagIsSet(P_PRAYED)))
+		if(player->isEffected("prayer") || player->isEffected("pray"))
 			break;
 		player->addEffect("prayer", 180, 30);
 		break;
 	case S_DAMNATION:
 		if(check) return(true);
-		if(player->getClass() != DEATHKNIGHT && player->flagIsSet(P_PRAYED)) {
-			player->lasttime[LT_PRAY].interval = 0;
+		if(player->isEffected("pray")) {
+		    player->removeEffect("pray");
 			break;
 		}
 		if(player->isEffected("damnation"))
@@ -1864,7 +1864,7 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
 		if(check) return(true);
 		if(player->isUndead())
 			break;
-		if(player->isEffected("fortitude") || player->flagIsSet(P_BERSERKED))
+		if(player->isEffected("fortitude") || player->isEffected("berserk"))
 			break;
 		player->addEffect("fortitude", 180, 30);
 		break;
@@ -1872,8 +1872,8 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
 		if(check) return(true);
 		if(player->isUndead())
 			break;
-		if(player->flagIsSet(P_BERSERKED)) {
-			player->lasttime[LT_BERSERK].interval = 0;
+        if(player->isEffected("berserk")) {
+            player->removeEffect("berserk");
 			break;
 		}
 		if(player->isEffected("weakness"))
@@ -2278,6 +2278,41 @@ int view_log(Socket* sock) {
 	}
 	fclose(fn);
 	return(0);
+}
+//*********************************************************************
+//                      dmStatDetail
+//*********************************************************************
+//  This function will allow staff to display detailed stat information
+
+int dmStatDetail(Player* player, cmd* cmnd) {
+    Creature* target = 0;
+
+    if(cmnd->num < 2)
+        target = player;
+    else {
+        target = player->getParent()->findCreature(player, cmnd, 1);
+        cmnd->str[1][0] = up(cmnd->str[1][0]);
+        if(!target)
+            target = gServer->findPlayer(cmnd->str[1]);
+        if(!target) {
+            player->print("Unable to locate.\n");
+            return(0);
+        }
+    }
+    *player << ColorOn << "Detailed stat information for " << target << ":\n";
+    *player << target->hp << "\n";
+    *player << target->mp << "\n";
+    if(target->isPlayer())
+        *player << target->getAsPlayer()->focus << "\n";
+
+    *player << target->strength << "\n";
+    *player << target->dexterity << "\n";
+    *player << target->constitution << "\n";
+    *player << target->intelligence << "\n";
+    *player << target->piety << "\n";
+    *player << ColorOff;
+
+    return(0);
 }
 
 //*********************************************************************

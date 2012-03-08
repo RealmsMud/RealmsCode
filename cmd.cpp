@@ -288,13 +288,14 @@ bool Config::initCommands() {
 	staffCommands["*outlaw"] = new PlyCommand("*outlaw",			100,	dmOutlaw,			isCt,	"Make a player an outlaw.");
 	staffCommands["*broadcast"] = new PlyCommand("*broadcast",		 20,	dmBroadecho,		isCt,	"Broadcast a message to all players.");
 	staffCommands["*gcast"] = new PlyCommand("*gcast",				100,	dmCast,				isCt,	"Cast a spell on all players.");
-	staffCommands["*set"] = new PlyCommand("*set",					100,	dmSet,				0,		"Modify a room/object/exit/player/object/monster.");
+	staffCommands["*set"] = new PlyCommand("*set",					100,	dmS3et,				0,		"Modify a room/object/exit/player/object/monster.");
 	staffCommands["*log"] = new PlyCommand("*log",					100,	dmLog,				isCt,	"");
 	staffCommands["*list"] = new PlyCommand("*list",				100,	dmList,				isCt,	"");
 	staffCommands["*info"] = new PlyCommand("*info",				100,	dmInfo,				isCt,	"Show game info (includes some memory).");
 	staffCommands["*md5"] = new PlyCommand("*md5",					100,	dmMd5,				isCt,	"Show md5 of input string.");
 	staffCommands["*ids"] = new PlyCommand("*ids",					100,	dmIds,				isDm,	"Shows registered ids.");
 	staffCommands["*status"] = new PlyCommand("*status",			 80,	dmStat,				0,		"Show info about a room/player/object/monster.");
+	staffCommands["*sd"] = new PlyCommand("*sd",                    100,    dmStatDetail,       isCt,   "Show detailed information about a creature's stats.");
 
 
 	// dmcrt.c

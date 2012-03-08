@@ -1,6 +1,6 @@
 /*
- * version.h
- *	 Version
+ * CombatQueue.cpp
+ *   Class & Function to handle combat queues
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -11,19 +11,20 @@
  *  Creative Commons - Attribution - Non Commercial - Share Alike 3.0 License
  *    http://creativecommons.org/licenses/by-nc-sa/3.0/
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef VERSION_H
-#define VERSION_H
 
-#define VERSION_MAJOR "2"
-#define VERSION_MINOR "4"
-#define VERSION_SUB "6l"
+#include "combatQueue.h"
 
-#define VERSION	VERSION_MAJOR "." VERSION_MINOR VERSION_SUB
+CombatQueue::CombatQueue() {
+    // TODO Auto-generated constructor stub
 
-#endif
+}
+
+CombatQueue::~CombatQueue() {
+    // TODO Auto-generated destructor stub
+}
 

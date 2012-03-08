@@ -441,13 +441,13 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 		// this results in a 1/3rd reduction in speed, or 2/3rd of normal
 		// This is fine for weapons with 3 delay..but we can have 2, 1, etc delay and
 		// a -1 across the board causes problems, so change it to 2/3rd and 4/3
-		if(flagIsSet(P_FRENZY) || isEffected("haste"))
+		if(isEffected("frenzy") || isEffected("haste"))
 			setAttackDelay( (int)((getAttackDelay()*2.0)/3.0));
-		if(isEffected("slow") && !isEffected("haste") && !flagIsSet(P_FRENZY))
+		if(isEffected("slow") && !isEffected("haste") && !isEffected("frenzy"))
 			setAttackDelay( (int)((getAttackDelay()*4.0)/3.0));
 
 
-		if(deathSickness && mrand(1,100) < 50) {
+		if(deathSickness && mrand(1,100) < deathSickness->getStrength()) {
 			printColor("^DYou cough heavily as you attack.\n");
 			modifyAttackDelay(10);
 		}
@@ -455,7 +455,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 		if(isEffected("lycanthropy")) {
 			if(LT(this, LT_MAUL) <= t) {
 				lasttime[LT_MAUL].ltime = t;
-				if(isEffected("slow") && !isEffected("haste") && !flagIsSet(P_FRENZY))
+				if(isEffected("slow") && !isEffected("haste") && !isEffected("frenzy"))
 					lasttime[LT_MAUL].interval = 4L;
 				else
 					lasttime[LT_MAUL].interval = 3L;
@@ -694,7 +694,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 					victim->printColor("^r%M drains %s%d^r hit points from you!\n", this, victim->customColorize("*CC:DAMAGE*").c_str(), drain);
 					attackDamage.add(drain);
 					if(!pVictim)
-						hp.increase(drain, flagIsSet(P_BLOODSAC));
+						hp.increase(drain);
 				}
 
 				if(attackType == ATTACK_BASH) {
@@ -1098,7 +1098,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
 		//
 		// players take less damage while berserked
 		//
-		if(enemy && pFlagIsSet(P_BERSERKED)) {
+		if(enemy && isEffected("berserk")) {
 			// zerkers: 1/5
 			// everyone else: 1/7
 			attackDamage.set(attackDamage.get() - (attackDamage.get() / (cClass == BERSERKER ? 5 : 7)));

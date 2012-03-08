@@ -302,6 +302,10 @@ bool isMatch(Creature* searcher, Creature* target, const bstring& name, bool exa
     if(checkVisibility && !searcher->canSee(target))
         return(false);
 
+    // ID match is exact, regardless of exactMatch option
+    if(target->getId() == name)
+    	return(true);
+
     if(exactMatch) {
         if(!strcmp(target->name, name.c_str())) {
             return(true);
@@ -347,7 +351,7 @@ Monster* Container::findMonster(Creature* searcher, const bstring& name, const i
 }
 Monster* Container::findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) {
     Monster* target = 0;
-    for(Monster* mons : searcher->getRoomParent()->monsters) {
+    for(Monster* mons : searcher->getParent()->monsters) {
         if(isMatch(searcher, mons, name, exactMatch)) {
             match++;
             if(match == num) {
@@ -378,7 +382,7 @@ Player* Container::findPlayer(Creature* searcher, const bstring& name, const int
     return(findPlayer(searcher, name, num, exactMatch, match));
 }
 Player* Container::findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) {
-    for(Player* ply : searcher->getRoomParent()->players) {
+    for(Player* ply : searcher->getParent()->players) {
         if(isMatch(searcher, ply, name, exactMatch)) {
             match++;
             if(match == num) {

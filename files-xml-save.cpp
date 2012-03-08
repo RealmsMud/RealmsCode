@@ -170,7 +170,10 @@ int Monster::saveToFile() {
 	xmlDocSetRootElement(xmlDoc, rootNode);
 
 	escapeText();
+	bstring idTemp = id;
+	id = "-1";
 	saveToXml(rootNode, ALLITEMS, LS_FULL);
+	id = idTemp;
 
 	strcpy(filename, monsterPath(info));
 	xml::saveFile(filename, xmlDoc);
@@ -572,7 +575,6 @@ void Player::saveXml(xmlNodePtr curNode) const {
 	}
 
 	xml::saveNonZeroNum(curNode, "NegativeLevels", negativeLevels);
-	xml::saveNonZeroNum(curNode, "LostExperience", lostExperience);
 	xml::saveNonZeroNum(curNode, "LastInterest", lastInterest);
 	xml::saveNonZeroNum(curNode, "TickDmg", tickDmg);
 
@@ -1306,12 +1308,21 @@ void Stat::save(xmlNodePtr parentNode, const char* statName) const {
 	xmlNodePtr curNode = xml::newStringChild(parentNode, "Stat");
 	xml::newProp(curNode, "Name", statName);
 
-	xml::newNumChild(curNode, "Current", cur);
-	xml::newNumChild(curNode, "Max", max);
+//	xml::newNumChild(curNode, "Current", cur);
+//	xml::newNumChild(curNode, "Max", max);
 	xml::newNumChild(curNode, "Initial", initial);
-	xml::newNumChild(curNode, "TempMax", tmpMax);
+	xmlNodePtr modNode = xml::newStringChild(curNode, "Modifiers");
+	for(ModifierMap::value_type p: modifiers) {
+		p.second->save(modNode);
+	}
 }
 
+void StatModifier::save(xmlNodePtr parentNode) {
+	xmlNodePtr curNode = xml::newStringChild(parentNode, "StatModifier");
+	xml::newStringChild(curNode, "Name", name);
+	xml::newNumChild(curNode, "ModAmt", modAmt);
+	xml::newNumChild(curNode, "ModType", modType);
+}
 //*********************************************************************
 //						saveDaily
 //*********************************************************************

@@ -24,11 +24,6 @@
 
 #define NOT_A_SKILL -10
 
-SkillInfo::SkillInfo() {
-	gainType = SKILL_NORMAL;
-	knownOnly = false;
-}
-
 int SkillInfo::getGainType() const { return(gainType); }
 int Skill::getGainBonus() const { return(gainBonus); }
 bool SkillInfo::isKnownOnly() const { return(knownOnly); }
@@ -39,22 +34,25 @@ bool Config::isKnownOnly(const bstring& skillName) const {
 	return(false);
 }
 //*****************************************************************
-// CrtSkills - Keeps track of skill information for a Creature
+// Skill - Keeps track of skill information for a Creature
 //*****************************************************************
 
-//--------------------------------------------------------------------
-// Constructors
 Skill::Skill() {
+	reset();
+}
+Skill::Skill(const bstring& pName, int pGained) {
+	reset();
+	setName(pName);
+	gained = pGained;
+}
+
+void Skill::reset() {
 	name = "";
 	gained = 0;
 	gainBonus = 0;
+	skillInfo = 0;
 }
 
-Skill::Skill(const bstring& pName, int pGained) {
-	name = pName;
-	gained = pGained;
-	gainBonus = 0;
-}
 // End constructors
 //--------------------------------------------------------------------
 
@@ -76,10 +74,14 @@ void Skill::setGained(int pGained) {
 	gained = pGained;
 }
 
-void Skill::setName(bstring &pName) {
+void Skill::setName(bstring pName) {
 	name = pName;
+	updateParent();
 }
 
+void Skill::updateParent() {
+	skillInfo = gConfig->getSkill(name);
+}
 // End Get/Set Functions
 //--------------------------------------------------------------------
 
@@ -143,7 +145,6 @@ void Creature::checkImprove(const bstring& skillName, bool success, int attribut
 	Skill* crSkill = getSkill(skillName);
 	if(!crSkill)
 		return;
-
 
 	int gainType = crSkill->getGainType();
 	// not a skill!
@@ -252,8 +253,8 @@ bool Creature::knowsSkill(const bstring& skillName) const {
 Skill* Creature::getSkill(const bstring& skillName) const {
 	if(skillName == "")	return(null);
 
-	std::map<bstring, Skill*>::const_iterator csIt;
-	if( (csIt = skills.find(skillName)) == skills.end())
+	SkillMap::const_iterator csIt = skills.find(skillName);
+	if( csIt == skills.end())
 		return(NULL);
 	else
 		return((*csIt).second);
@@ -769,6 +770,15 @@ void Config::clearSkills() {
 		//skills.erase(sIt);
 	}
 	skills.clear();
+}
+// Updates skill pointers on players
+void Config::updateSkillPointers() {
+	for(PlayerMap::value_type pp : gServer->players) {
+		for(SkillMap::value_type sp : pp.second->skills) {
+			sp.second->updateParent();
+		}
+	}
+
 }
 
 

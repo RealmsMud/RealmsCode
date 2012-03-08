@@ -106,7 +106,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 		}
 
-		if(target->flagIsSet(P_BERSERKED)) {
+		if(target->isEffected("berserk")) {
 			player->print("No one berserk can be held.\nYour spell failed.\n");
 			return(0);
 		}
@@ -236,7 +236,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 		}
 
-		if(player->flagIsSet(P_BERSERKED)) {
+		if(player->isEffected("berserk")) {
 			player->print("You are too enraged to drink that right now.\n");
 			return(0);
 		}
@@ -313,7 +313,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 		}
 
-		if(target->flagIsSet(P_BERSERKED) || target->isUnconscious() || target->isEffected("petrification")) {
+		if(target->isEffected("berserk") || target->isUnconscious() || target->isEffected("petrification")) {
 			player->printColor("^yYour spell failed.\n");
 			return(0);
 		}
@@ -1096,7 +1096,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(1);
 		}
 
-		if(!mTarget && target->flagIsSet(P_BERSERKED))
+		if(!mTarget && player->isEffected("berserk"))
 			dur /= 2;
 
 		if(target->isDm() && !player->isDm())

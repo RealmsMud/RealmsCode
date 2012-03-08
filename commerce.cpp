@@ -1101,19 +1101,28 @@ int cmdPurchase(Player* player, cmd* cmnd) {
 	} else {
 
 		player->print("You pay %N %s gold pieces.\n", creature, cost.str().c_str());
-		player->printColor("%M says, \"%sHere is your %s.\"\n", creature,
-			Faction::getAttitude(player->getFactionStanding(creature->getPrimeFaction())) < Faction::INDIFFERENT ? "Hrmph. " : "Thank you very much. ",
-			object->name);
 		broadcast(player->getSock(), player->getParent(), "%M pays %N %s for %P.\n", player, creature, cost.str().c_str(), object);
 		player->coins.sub(cost);
 
 		player->doHaggling(creature, object, BUY);
-
-		Limited::addOwner(player, object);
-		object->setDroppedBy(creature, "MobPurchase");
         gServer->logGold(GOLD_OUT, player, object->refund, object, "MobPurchase");
 
-		player->addObj(object);
+        if(object->hooks.executeWithReturn("afterPurchase", player, creature->getId())) {
+        	// A return value of true means the object still exists
+        	player->printColor("%M says, \"%sHere is your %s.\"\n", creature,
+        			Faction::getAttitude(player->getFactionStanding(creature->getPrimeFaction())) < Faction::INDIFFERENT ? "Hrmph. " : "Thank you very much. ",
+        			object->name);
+            Limited::addOwner(player, object);
+    		object->setDroppedBy(creature, "MobPurchase");
+
+    		player->addObj(object);
+
+        } else {
+        	// A return value of false means the object doesn't exist, and as such the spell was cast, so delete it
+        	delete object;
+
+        }
+
 	}
 
 	return(0);
@@ -1500,8 +1509,6 @@ int cmdBuy(Player* player, cmd* cmnd) {
 				return(0);
 			}
 
-			Limited::addOwner(player, object2);
-			player->addObj(object2);
 			player->printColor("You bought %1P.\n", object2);
 
 			object2->refund.zero();
@@ -1515,6 +1522,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			// We just did a full priced purchase, we can now haggle again (unless they do another refund)
 			if(player->getRoomParent() && player->getRoomParent()->getAsUniqueRoom())
 			    player->removeRefundedInStore(player->getRoomParent()->getAsUniqueRoom()->info);
+
 
 			object2->setDroppedBy(room, "StoreBought");
 	        gServer->logGold(GOLD_OUT, player, object2->refund, object2, "StoreBought");
@@ -1574,6 +1582,14 @@ int cmdBuy(Player* player, cmd* cmnd) {
 				if(flag)
 					findRoomsWithFlag(player, object2->deed, flag);
 			}
+
+			if(object->hooks.executeWithReturn("afterPurchase", player)) {
+
+				Limited::addOwner(player, object2);
+				player->addObj(object2);
+	        } else {
+	        	delete object2;
+	        }
 
 		} else if(!strcmp(object->name, "storage room")) {
 

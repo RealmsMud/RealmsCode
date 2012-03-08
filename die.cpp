@@ -1348,14 +1348,14 @@ void Player::loseExperience(Monster *killer) {
 	if(level < 10) {
 		// Under level 10, 10% exp loss
 		xploss = ((float)experience / 10.0);
-		lostExperience += (long)xploss;
+		statistics.experienceLost((long)xploss);
 		experience -= (long)xploss;
 
 	} else {
 		// Level 10 and over, 2% exp loss with a minimum of 10k
 		xploss = MAX((long)( (float)experience * 0.02), 10000);
 		print("You have lost %ld experience.\n", (long)xploss);
-		lostExperience += (long)xploss;
+        statistics.experienceLost((long)xploss);
 		experience -= (long)xploss;
 	}
 
@@ -1610,6 +1610,7 @@ void Player::gainExperience(Monster* victim, Creature* killer, int expAmount, bo
 	adjustFactionStanding(victim->factions);
 	adjustAlignment(victim);
 	updateMobKills(victim);
+	statistics.experience(expAmount, victim->getName());
 
 	addExperience(expAmount + holidayExp);
 
@@ -2112,12 +2113,10 @@ void Player::die(DeathType dt) {
 		if(level < 10) {
 			// Under level 10, 10% exp loss
 			xploss = (int)((float)experience / 10.0);
-			lostExperience += (long)xploss;
 		} else {
 			// Level 10 and over, 2% exp loss with a minimum of 10k
 			xploss = MAX((long)( (float)experience * 0.02), 10000);
 			print("You have lost %ld experience.\n", (long)xploss);
-			lostExperience += (long)xploss;
 		}
 		subExperience((long)xploss);
 

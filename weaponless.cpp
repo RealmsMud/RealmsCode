@@ -169,7 +169,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
 	if(creature->mFlagIsSet(M_RESIST_TOUCH) && !player->isCt())
 		chance = 0;
 
-	if(creature->isPlayer() && creature->flagIsSet(P_BERSERKED))
+	if(creature->isPlayer() && creature->isEffected("berserk"))
 		chance /= 2;
 
 	if(mrand(1,100) > chance) {
@@ -262,7 +262,7 @@ int cmdFocus(Player* player, cmd* cmnd) {
 	if(mrand(1, 100) > player->getLuck() + (int)(level * 2))
 		chance = 10;
 
-	if(player->flagIsSet(P_PRAYED))
+	if(player->isEffected("pray"))
 		chance += 10;
 
 	if(mrand(1, 100) <= chance) {
@@ -311,7 +311,7 @@ int cmdFrenzy(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(player->flagIsSet(P_FRENZY)) {
+	if(player->isEffected("frenzy")) {
 		player->print("You're already in a frenzy.\n");
 		return(0);
 	}
@@ -329,19 +329,10 @@ int cmdFrenzy(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-//wwolves can only wield claw weapons now...ok to frenzy with them. - TC
-/*	if(player->ready[WIELD - 1]) {
-		player->print("You cannot frenzy while wielding something.\n");
-		return(0);
-
-	}
-*/
-
-
 	i = player->lasttime[LT_FRENZY].ltime;
 	t = time(0);
 
-	if(t - i < 600L) {
+	if(t - i < 600L && !player->isStaff()) {
 		player->pleaseWait(600L-t+i);
 		return(0);
 	}
@@ -355,10 +346,9 @@ int cmdFrenzy(Player* player, cmd* cmnd) {
 		player->print("You begin to attack in a frenzy.\n");
 		player->checkImprove("frenzy", true);
 		broadcast(player->getSock(), player->getParent(), "%M attacks in a frenzy.", player);
-		player->setFlag(P_FRENZY);
-		player->dexterity.addCur(50);
+		player->addEffect("frenzy", 210L, 50);
 		player->lasttime[LT_FRENZY].ltime = t;
-		player->lasttime[LT_FRENZY].interval = 210L;
+		player->lasttime[LT_FRENZY].interval = 600 + 210L;
 	} else {
 		player->print("Your attempt to frenzy failed.\n");
 		player->checkImprove("frenzy", false);

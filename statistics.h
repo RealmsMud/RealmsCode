@@ -21,6 +21,29 @@
 #define	_STATISTICS_H
 
 
+class LevelInfo {
+public:
+    LevelInfo(int pLevel, int pHp, int pMp, int pStat, int pSave, time_t pTime);
+    LevelInfo(xmlNodePtr rootNode);
+    void save(xmlNodePtr rootNode);
+    int getLevel();
+    int getHpGain();
+    int getMpGain();
+    int getStatUp();
+    int getSaveGain();
+    time_t getLevelTime();
+
+private:
+    int level;          // What level
+    int hpGain;         // Hp gained this level
+    int mpGain;         // Mp gained this level
+    int statUp;         // Stat increased this level
+    int saveGain;       // Save gained this level
+    time_t levelTime;   // When they first gained this level
+};
+
+typedef std::map<int, LevelInfo*> LevelInfoMap;
+
 class StringStatistic {
 public:
 	StringStatistic();
@@ -43,10 +66,12 @@ public:
 	bstring getTime();
 	unsigned long pkDemographics() const;
 
-	static unsigned long calcToughness(const Creature* target);
+	static unsigned long calcToughness(Creature* target);
 	static bstring damageWith(const Player* player, const Object* weapon);
 private:
 	bstring start;
+	LevelInfoMap levelHistory; // New
+
 	// combat
 	unsigned long numSwings;
 	unsigned long numHits;
@@ -69,6 +94,9 @@ private:
 	// death
 	unsigned long numKills;
 	unsigned long numDeaths;
+	unsigned long expLost; // New
+	unsigned long lastExpLoss; // New
+
 	// other
 	unsigned long numThefts;
 	unsigned long numAttemptedThefts;
@@ -79,8 +107,10 @@ private:
 	unsigned long numFishCaught;
 	unsigned long numItemsCrafted;
 	unsigned long numCombosOpened;
+
 	// most
 	unsigned long mostGroup;
+	StringStatistic mostExperience; // New
 	StringStatistic mostMonster;
 	StringStatistic mostAttackDamage;
 	StringStatistic mostMagicDamage;
@@ -110,6 +140,9 @@ public:
 	// death
 	void kill();
 	void die();
+	void experienceLost(unsigned long amt);
+	void setExperienceLost(unsigned long amt);
+
 	// other
 	void steal();
 	void attemptSteal();
@@ -120,19 +153,28 @@ public:
 	void fish();
 	void craft();
 	void combo();
+	void setLevelInfo(int level, LevelInfo* levelInfo);
+
 	// most
 	void group(unsigned long num);
-	void monster(const Monster* monster);
+	void monster(Monster* monster);
 	void attackDamage(unsigned long num, bstring with);
 	void magicDamage(unsigned long num, bstring with);
+	void experience(unsigned long num, bstring with);
 
 	unsigned long pkRank() const;
 	unsigned long getPkin() const;
 	unsigned long getPkwon() const;
+
+	unsigned long getLostExperience() const;
+	unsigned long getLastExperienceLoss() const;
+
 	// remove when all players are up to 2.42i
 	void setPkin(unsigned long p);
 	void setPkwon(unsigned long p);
 	void setParent(Player* player);
+
+	LevelInfo* getLevelInfo(int level);
 };
 
 

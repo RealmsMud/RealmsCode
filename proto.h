@@ -24,6 +24,10 @@
 class Ship;
 class ShipStop;
 
+// Stats
+double getConBonusPercentage(int pCon);
+double getIntBonusPercentage(int pInt);
+
 // Container
 bool isMatch(Creature* searcher, Creature* target, const bstring& name, bool exactMatch, bool checkVisibility = false);
 

@@ -29,6 +29,8 @@ public:
 	Streamable& operator<< (const MudObject* obj);
 	Streamable& operator<< (const MudObject& obj);
 	Streamable& operator<< (const bstring& str);
+	Streamable& operator<< (const int num);
+	Streamable& operator<< (Stat& stat);
 
 	// This is to allow simple function based manipulators (like ColorOn, ColorOff)
 	Streamable& operator <<( Streamable& (*op)(Streamable&));

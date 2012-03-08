@@ -435,16 +435,6 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 		else if(NODE_NAME(curNode, "SpecialAttacks")) {
 			loadAttacks(curNode);
 		}
-		else if(NODE_NAME(curNode, "InitialStats")) {
-			// TODO: remove
-			short ist[5];
-			xml::loadNumArray<short>(curNode, ist, "Stat", 5);
-			strength.setInitial(ist[0]);
-			dexterity.setInitial(ist[1]);
-			constitution.setInitial(ist[2]);
-			intelligence.setInitial(ist[3]);
-			piety.setInitial(ist[4]);
-		}
 		else if(NODE_NAME(curNode, "Stats")) {
 			loadStats(curNode);
 		}
@@ -496,6 +486,10 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 	setClass(c);
 
 	convertOldEffects();
+
+	if(getVersion() < "2.46l") {
+		upgradeStats();
+	}
 
 
 	if(isPlayer()) {
@@ -709,7 +703,6 @@ void Player::readXml(xmlNodePtr curNode) {
 	else if(NODE_NAME(curNode, "GuildRank")) setGuildRank(xml::toNum<unsigned short>(curNode));
 	else if(NODE_NAME(curNode, "TickDmg")) setTickDamage(xml::toNum<unsigned short>(curNode));
 	else if(NODE_NAME(curNode, "NegativeLevels")) setNegativeLevels(xml::toNum<unsigned short>(curNode));
-	else if(NODE_NAME(curNode, "LostExperience")) setLostExperience(xml::toNum<unsigned long>(curNode));
 	else if(NODE_NAME(curNode, "LastInterest")) setLastInterest(xml::toNum<long>(curNode));
 	else if(NODE_NAME(curNode, "Title")) setTitle(xml::getBString(curNode));
 	else if(NODE_NAME(curNode, "CustomColors")) xml::copyToCString(customColors, curNode);
@@ -827,6 +820,8 @@ void Player::readXml(xmlNodePtr curNode) {
 	else if(getVersion() < "2.42i") {
 			 if(NODE_NAME(curNode, "PkWon")) statistics.setPkwon(xml::toNum<unsigned long>(curNode));
 		else if(NODE_NAME(curNode, "PkIn")) statistics.setPkin(xml::toNum<unsigned long>(curNode));
+	} else if(getVersion() < "2.46l") {
+	    if(NODE_NAME(curNode, "LostExperience")) statistics.setExperienceLost(xml::toNum<unsigned long>(curNode));
 	}
 }
 
@@ -834,11 +829,13 @@ void Player::readXml(xmlNodePtr curNode) {
 //						load
 //*********************************************************************
 
-bool Skill::load(xmlNodePtr rootNode) {
+Skill::Skill(xmlNodePtr rootNode) {
 	xmlNodePtr curNode = rootNode->children;
+	reset();
+
 	while(curNode) {
 		if(NODE_NAME(curNode, "Name")) {
-			xml::copyToBString(name, curNode);
+			setName(xml::getBString(curNode));
 		} else if(NODE_NAME(curNode, "Gained")) {
 			xml::copyToNum(gained, curNode);
 		} else if(NODE_NAME(curNode, "GainBonus")) {
@@ -847,9 +844,8 @@ bool Skill::load(xmlNodePtr rootNode) {
 		curNode = curNode->next;
 	}
 	if(name == "" || gained == 0) {
-		return(false);
+		throw(new std::exception());
 	}
-	return(true);
 }
 
 
@@ -885,11 +881,11 @@ void Creature::loadSkills(xmlNodePtr rootNode) {
 	xmlNodePtr curNode = rootNode->children;
 	while(curNode) {
 		if(NODE_NAME(curNode, "Skill")) {
-			Skill *skill = new Skill();
-			if(skill->load(curNode)) {
-				skills[skill->getName()] = skill;
-			} else {
-				delete skill;
+			try {
+				Skill *skill = new Skill(curNode);
+				skills.insert(SkillMap::value_type(skill->getName(), skill));
+			} catch(...) {
+				std::cout << "Error loading skill for " << getName() << std::endl;
 			}
 		}
 		curNode = curNode->next;
@@ -1800,6 +1796,7 @@ bool Config::loadSkills() {
 		}
 		cur = cur->next;
 	}
+	updateSkillPointers();
 	xmlFreeDoc(xmlDoc);
 	xmlCleanupParser();
 	return(true);
@@ -1852,13 +1849,12 @@ void Config::loadSkills(xmlNodePtr rootNode) {
 	SkillInfo* skill=0;
 	while(curNode != NULL) {
 		if(NODE_NAME(curNode, "Skill")) {
-			skill = new SkillInfo;
-			if(skill->load(curNode) ) {
-				skills[skill->getName()] = skill;
-			} else {
-				delete skill;
+			try {
+				skill = new SkillInfo(curNode);
+				skills.insert(SkillInfoMap::value_type(skill->getName(), skill));
+			} catch(...) {
+
 			}
-			skill = 0;
 		}
 
 		curNode = curNode->next;
@@ -1869,7 +1865,11 @@ void Config::loadSkills(xmlNodePtr rootNode) {
 //						load
 //*********************************************************************
 
-bool SkillInfo::load(xmlNodePtr rootNode) {
+SkillInfo::SkillInfo(xmlNodePtr rootNode) {
+	gainType = SKILL_NORMAL;
+	knownOnly = false;
+	usesAttackTimer = true;
+
 	xmlNodePtr curNode = rootNode->children;
 	bstring group;
 	bstring description;
@@ -1901,16 +1901,62 @@ bool SkillInfo::load(xmlNodePtr rootNode) {
 			}
 		} else if(NODE_NAME(curNode, "KnownOnly")) {
 			xml::copyToBool(knownOnly, curNode);
+		} else if(NODE_NAME(curNode, "Cooldown")) {
+			xml::copyToNum(cooldown, curNode);
+		} else if(NODE_NAME(curNode, "UsesAttackTimer")) {
+			xml::copyToBool(usesAttackTimer, curNode);
+		} else if(NODE_NAME(curNode, "Cooldown")) {
+			xml::copyToNum(cooldown, curNode);
+		} else if(NODE_NAME(curNode, "FailCooldown")) {
+			xml::copyToNum(failCooldown, curNode);
+		} else if(NODE_NAME(curNode, "Resources")) {
+			loadResources(curNode);
 		}
 		curNode = curNode->next;
 	}
 	if(name == "" || displayName == "") {
-		printf("Invalid skill (Name:%s, DisplayName:%s)", name.c_str(), displayName.c_str());
-		return(false);
+		std::cout << "Invalid skill (Name:" << name << ", DisplayName: " << displayName <<  ")" << std::endl;
+		throw(new std::exception());
 	}
-	return(true);
 }
 
+void SkillInfo::loadResources(xmlNodePtr rootNode) {
+	xmlNodePtr curNode = rootNode->children;
+	while(curNode != NULL) {
+		if(NODE_NAME(curNode, "Resource")) {
+			resources.push_back(SkillCost(curNode));
+		}
+		curNode = curNode->next;
+	}
+}
+
+SkillCost::SkillCost(xmlNodePtr rootNode) {
+	resource = RES_NONE;
+	cost = 0;
+
+	xmlNodePtr curNode = rootNode->children;
+	while(curNode != NULL) {
+		if(NODE_NAME(curNode, "Type")) {
+			bstring resourceStr;
+			xml::copyToBString(resourceStr, curNode);
+			if(resourceStr.equals("Gold", false)) {
+				resource = RES_GOLD;
+			} else if(resourceStr.equals("Mana", false) || resourceStr.equals("Mp")) {
+				resource = RES_MANA;
+			} else if(resourceStr.equals("HitPoints", false) || resourceStr.equals("Hp")) {
+				resource = RES_HIT_POINTS;
+			} else if(resourceStr.equals("Focus", false)) {
+				resource = RES_FOCUS;
+			} else if(resourceStr.equals("Energy", false)) {
+				resource = RES_ENERGY;
+			}
+		} else if(NODE_NAME(curNode, "Cost")) {
+			xml::copyToNum(cost, curNode);
+		}
+		curNode = curNode->next;
+	}
+
+}
 //*********************************************************************
 //						loadCatRefArray
 //*********************************************************************
@@ -2244,26 +2290,26 @@ void loadRanges(xmlNodePtr curNode, Player *pPlayer) {
 
 void Creature::loadStats(xmlNodePtr curNode) {
 	xmlNodePtr childNode = curNode->children;
-	bstring stat = "";
+	bstring statName = "";
 
 	while(childNode) {
 		if(NODE_NAME(childNode, "Stat")) {
-			stat = xml::getProp(childNode, "Name");
+			statName = xml::getProp(childNode, "Name");
 
-			if(stat == "")
+			if(statName == "")
 				continue;
 
-				 if(stat == "Strength") strength.load(childNode);
-			else if(stat == "Dexterity") dexterity.load(childNode);
-			else if(stat == "Constitution") constitution.load(childNode);
-			else if(stat == "Intelligence") intelligence.load(childNode);
-			else if(stat == "Piety") piety.load(childNode);
-			else if(stat == "Hp") hp.load(childNode);
-			else if(stat == "Mp") mp.load(childNode);
-			else if(stat == "Focus") {
+				 if(statName == "Strength") strength.load(childNode, statName);
+			else if(statName == "Dexterity") dexterity.load(childNode, statName);
+			else if(statName == "Constitution") constitution.load(childNode, statName);
+			else if(statName == "Intelligence") intelligence.load(childNode, statName);
+			else if(statName == "Piety") piety.load(childNode, statName);
+			else if(statName == "Hp") hp.load(childNode, statName);
+			else if(statName == "Mp") mp.load(childNode, statName);
+			else if(statName == "Focus") {
 				Player* player = getAsPlayer();
 				if(player)
-					player->focus.load(childNode);
+					player->focus.load(childNode, statName);
 			}
 		}
 
@@ -2276,20 +2322,45 @@ void Creature::loadStats(xmlNodePtr curNode) {
 //*********************************************************************
 // Loads a single stat into the given stat pointer
 
-bool Stat::load(xmlNodePtr curNode) {
+bool Stat::load(xmlNodePtr curNode, bstring statName) {
 	xmlNodePtr childNode = curNode->children;
-
+	name = statName;
 	while(childNode) {
 		if(NODE_NAME(childNode, "Current")) xml::copyToNum(cur, childNode);
 		else if(NODE_NAME(childNode, "Max")) xml::copyToNum(max, childNode);
-		else if(NODE_NAME(childNode, "TempMax")) xml::copyToNum(tmpMax, childNode);
 		else if(NODE_NAME(childNode, "Initial")) xml::copyToNum(initial, childNode);
-
+		else if(NODE_NAME(childNode, "Modifiers")) loadModifiers(childNode);
 		childNode = childNode->next;
 	}
 	return(true);
 }
 
+bool Stat::loadModifiers(xmlNodePtr curNode) {
+	xmlNodePtr childNode = curNode->children;
+	while(childNode) {
+		if(NODE_NAME(childNode, "StatModifier")) {
+			StatModifier* mod = new StatModifier(childNode);
+			if(mod->getName().equals("")) {
+				delete mod;
+			} else {
+				modifiers.insert(ModifierMap::value_type(mod->getName(), mod));
+			}
+			childNode = childNode->next;
+		}
+	}
+	return(true);
+}
+StatModifier::StatModifier(xmlNodePtr curNode) {
+	xmlNodePtr childNode = curNode->children;
+
+	while(childNode) {
+		if(NODE_NAME(childNode, "Name")) xml::copyToBString(name, childNode);
+		else if(NODE_NAME(childNode, "ModAmt")) xml::copyToNum(modAmt, childNode);
+		else if(NODE_NAME(childNode, "ModType")) modType = (ModifierType)xml::toNum<unsigned short>(childNode);
+
+		childNode = childNode->next;
+	}
+}
 //*********************************************************************
 //						loadAttacks
 //*********************************************************************

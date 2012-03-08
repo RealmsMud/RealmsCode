@@ -576,24 +576,6 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 }
 
 //*********************************************************************
-//						underStatSpell
-//*********************************************************************
-
-bool Creature::underStatSpell() const {
-	return(isEffected("fortitude") ||
-		isEffected("weakness") ||
-		isEffected("strength") ||
-		isEffected("enfeeblement") ||
-		isEffected("insight") ||
-		isEffected("feeblemind") ||
-		isEffected("haste") ||
-		isEffected("slow") ||
-		isEffected("prayer") ||
-		isEffected("damnation")
-	);
-}
-
-//*********************************************************************
 //						splStatChange
 //*********************************************************************
 

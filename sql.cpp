@@ -110,6 +110,9 @@ bool Server::logGoldSql(bstring& pName, bstring& pId, bstring& targetStr, bstrin
         stmt->setString(8, direction);
         stmt->executeUpdate();
 
+        delete stmt;
+        //conn->unregisterStatement(stmt);
+
         return(true);
     } catch (odbc::SQLException &e ) {
 

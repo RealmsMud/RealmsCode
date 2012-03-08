@@ -604,7 +604,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 		damage.set(mrand(1, level));
 
 	// Berserked barbarians have more energy to drain
-	if(pTarget && pTarget->flagIsSet(P_BERSERKED))
+	if(pTarget && pTarget->isEffected("berserk"))
 		damage.set(damage.get() + (damage.get() / 5));
 
 	damage.set(MIN(damage.get(), target->hp.getCur() + 1));

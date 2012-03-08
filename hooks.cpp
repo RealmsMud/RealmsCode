@@ -186,16 +186,36 @@ bool Hooks::execute(const bstring& event, MudObject* target, const bstring& para
 			params.c_str(), it->second.c_str());
 		gServer->runPython(it->second, param1 + "," + param2 + "," + param3, parent, target);
 	}
-	if(!ran && event.equals("postDeath")) {
-		for(std::pair<bstring, bstring> p : hooks ) {
-			if(p.first.equals("postDeath")) {
-				broadcast(seeHooks, "^yDidn't run postDeath but found it on %s.", hookMudObjName(parent).c_str());
-			}
-		}
-	}
 	return(ran);
 }
 
+bool Hooks::executeWithReturn(const bstring& event, MudObject* target, const bstring& param1, const bstring& param2, const bstring& param3) const {
+	bool returnValue = true;
+
+	bstring params = "";
+	if(param1 != "")
+		params += "   param1: " + param1;
+	if(param2 != "")
+		params += "   param2: " + param2;
+	if(param3 != "")
+		params += "   param3: " + param3;
+
+	broadcast(seeAllHooks, "^ochecking hook %s: %s^o on %s^o%s", event.c_str(),
+		hookMudObjName(parent).c_str(), hookMudObjName(target).c_str(),
+		params.c_str());
+
+	std::map<bstring, bstring>::const_iterator it = hooks.find(event);
+
+
+	if(it != hooks.end()) {
+		broadcast(seeHooks, "^orunning hook %s: %s^o on %s^o%s: ^x", event.c_str(),
+			hookMudObjName(parent).c_str(), hookMudObjName(target).c_str(),
+			params.c_str());
+
+		returnValue = gServer->runPythonWithReturn(it->second, param1 + "," + param2 + "," + param3, parent, target);
+	}
+	return(returnValue);
+}
 //*********************************************************************
 //						execute
 //*********************************************************************

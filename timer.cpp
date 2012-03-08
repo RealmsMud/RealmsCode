@@ -40,13 +40,13 @@ void Timer::setDelay(int newDelay) {
 	delay = MAX(1, newDelay);
 }
 void Timer::modifyDelay(int amt) {
-	delay = MAX(1, delay + amt);
+	delay = tMAX(1, delay + amt);
 }
 
 bool Timer::hasExpired() const {
 	return(getTimeLeft() == 0);
 }
-void timeDiff(const struct timeval x, const struct timeval y, struct timeval* result);
+void timeDiff(const struct timeval& x, const struct timeval& y, struct timeval& result);
 
 long Timer::getTimeLeft() const {
 	struct timeval curTime, difference;
@@ -56,12 +56,10 @@ long Timer::getTimeLeft() const {
 	timerclear(&difference);
 	
 	gettimeofday(&curTime, 0);
-	//timeDiff(endTime,startTime, &timePassed);
-	timeDiff(curTime, lastAttacked, &difference);
-	//timersub(&lastAttacked, &curTime, &difference);
+	timeDiff(curTime, lastAttacked, difference);
 	
 	timePassed += MAX(0, difference.tv_sec)*10;
-	timePassed += (long)((difference.tv_usec / 1000000.0)*10);
+	timePassed += (long)((difference.tv_usec / 100000.0));
 
 	if(timePassed >= delay)
 		return(0);

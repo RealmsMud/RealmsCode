@@ -1164,11 +1164,11 @@ bool Create::getStats(Socket* sock, bstring str, int mode) {
 			return(false);
 		}
 
-		sock->getPlayer()->strength.setMax(num[0] * 10);
-		sock->getPlayer()->dexterity.setMax(num[1] * 10);
-		sock->getPlayer()->constitution.setMax(num[2] * 10);
-		sock->getPlayer()->intelligence.setMax(num[3] * 10);
-		sock->getPlayer()->piety.setMax(num[4] * 10);
+		sock->getPlayer()->strength.setInitial(num[0] * 10);
+		sock->getPlayer()->dexterity.setInitial(num[1] * 10);
+		sock->getPlayer()->constitution.setInitial(num[2] * 10);
+		sock->getPlayer()->intelligence.setInitial(num[3] * 10);
+		sock->getPlayer()->piety.setInitial(num[4] * 10);
 
 	}
 	return(true);
@@ -1180,17 +1180,17 @@ bool Create::getStats(Socket* sock, bstring str, int mode) {
 
 void Create::finishStats(Socket* sock) {
 	Player* ply = sock->getPlayer();
-	ply->strength.addMax(gConfig->getRace(ply->getRace())->getStatAdj(STR));
-	ply->dexterity.addMax(gConfig->getRace(ply->getRace())->getStatAdj(DEX));
-	ply->constitution.addMax(gConfig->getRace(ply->getRace())->getStatAdj(CON));
-	ply->intelligence.addMax(gConfig->getRace(ply->getRace())->getStatAdj(INT));
-	ply->piety.addMax(gConfig->getRace(ply->getRace())->getStatAdj(PTY));
+	ply->strength.addInitial( gConfig->getRace(ply->getRace())->getStatAdj(STR));
+	ply->dexterity.addInitial( gConfig->getRace(ply->getRace())->getStatAdj(DEX));
+	ply->constitution.addInitial(  gConfig->getRace(ply->getRace())->getStatAdj(CON));
+	ply->intelligence.addInitial(  gConfig->getRace(ply->getRace())->getStatAdj(INT));
+	ply->piety.addInitial( gConfig->getRace(ply->getRace())->getStatAdj(PTY));
 
-	ply->strength.setMax(MAX(10, ply->strength.getMax()));
-	ply->dexterity.setMax(MAX(10, ply->dexterity.getMax()));
-	ply->constitution.setMax(MAX(10, ply->constitution.getMax()));
-	ply->intelligence.setMax(MAX(10, ply->intelligence.getMax()));
-	ply->piety.setMax(MAX(10, ply->piety.getMax()));
+	ply->strength.setInitial(MAX(10, ply->strength.getInitial()));
+	ply->dexterity.setInitial(MAX(10, ply->dexterity.getInitial()));
+	ply->constitution.setInitial(MAX(10, ply->constitution.getInitial()));
+	ply->intelligence.setInitial(MAX(10, ply->intelligence.getInitial()));
+	ply->piety.setInitial(MAX(10, ply->piety.getInitial()));
 
 	sock->print("Your stats: %d %d %d %d %d\n",
 		ply->strength.getMax(),
@@ -1214,19 +1214,19 @@ bool Create::getBonusStat(Socket* sock, bstring str, int mode) {
 
 		switch(low(str[0])) {
 		case 'a':
-			sock->getPlayer()->strength.addMax(10);
+			sock->getPlayer()->strength.addInitial(10);
 			break;
 		case 'b':
-			sock->getPlayer()->dexterity.addMax(10);
+			sock->getPlayer()->dexterity.addInitial(10);
 			break;
 		case 'c':
-			sock->getPlayer()->constitution.addMax(10);
+			sock->getPlayer()->constitution.addInitial(10);
 			break;
 		case 'd':
-			sock->getPlayer()->intelligence.addMax(10);
+			sock->getPlayer()->intelligence.addInitial(10);
 			break;
 		case 'e':
-			sock->getPlayer()->piety.addMax(10);
+			sock->getPlayer()->piety.addInitial(10);
 			break;
 		default:
 			sock->print("\nChoose one: ");
@@ -1252,19 +1252,19 @@ bool Create::getPenaltyStat(Socket* sock, bstring str, int mode) {
 
 		switch(low(str[0])) {
 		case 'a':
-			sock->getPlayer()->strength.addMax(-10);
+			sock->getPlayer()->strength.addInitial(-10);
 			break;
 		case 'b':
-			sock->getPlayer()->dexterity.addMax(-10);
+			sock->getPlayer()->dexterity.addInitial(-10);
 			break;
 		case 'c':
-			sock->getPlayer()->constitution.addMax(-10);
+			sock->getPlayer()->constitution.addInitial(-10);
 			break;
 		case 'd':
-			sock->getPlayer()->intelligence.addMax(-10);
+			sock->getPlayer()->intelligence.addInitial(-10);
 			break;
 		case 'e':
-			sock->getPlayer()->piety.addMax(-10);
+			sock->getPlayer()->piety.addInitial(-10);
 			break;
 		default:
 			sock->print("\nChoose one: ");
@@ -1687,7 +1687,6 @@ void Create::done(Socket* sock, bstring str, int mode) {
 
 //		player->adjustStats();
 
-		player->setFlag(P_NO_AUTO_ATTACK);
 		player->setFlag(P_LAG_PROTECTION_SET);
 		player->clearFlag(P_NO_AUTO_WEAR);
 

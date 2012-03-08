@@ -45,7 +45,7 @@ bool canFish(const Player* player, const Fishing** list, Object** pole) {
 			player->printColor("You must be in corporeal form to work with items.\n");
 			return(false);
 		}
-		if(player->flagIsSet(P_BERSERKED)) {
+		if(player->isEffected("berserk")) {
 			player->print("You are too angry to go fishing!\n");
 			return(0);
 		}
