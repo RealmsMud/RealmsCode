@@ -1414,7 +1414,7 @@ SocialCommand::SocialCommand(xmlNodePtr rootNode) {
     while(rootNode != NULL)
     {
         if(NODE_NAME(rootNode, "Name")) xml::copyToBString(name, rootNode);
-        else if(NODE_NAME(rootNode, "Description")) xml::copyToBString(desc, rootNode);
+        else if(NODE_NAME(rootNode, "Description")) xml::copyToBString(description, rootNode);
         else if(NODE_NAME(rootNode, "Priority")) xml::copyToNum(priority, rootNode);
         else if(NODE_NAME(rootNode, "Script")) xml::copyToBString(script, rootNode);
         else if(NODE_NAME(rootNode, "SelfNoTarget")) xml::copyToBString(selfNoTarget, rootNode);
@@ -1960,8 +1960,6 @@ bool SkillCommand::readNode(xmlNodePtr curNode) {
 	// Try the base class method first, if they return true, it found something so continue on
 	if(SkillInfo::readNode(curNode)) {
 		retVal = true;
-	} else if(NODE_NAME(curNode, "CommandDesc")) {
-		xml::copyToBString(description, curNode);
 	} else if(NODE_NAME(curNode, "Cooldown")) {
 		xml::copyToNum(cooldown, curNode);
 	} else if(NODE_NAME(curNode, "UsesAttackTimer")) {

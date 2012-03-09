@@ -35,7 +35,7 @@ Spell::Spell(xmlNodePtr rootNode) {
              }
 		else if(NODE_NAME(curNode, "Script")) xml::copyToBString(script, curNode);
 		else if(NODE_NAME(curNode, "Priority")) xml::copyToNum(priority, curNode);
-		else if(NODE_NAME(curNode, "Description")) xml::copyToBString(desc, curNode);
+		else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
 
 		curNode = curNode->next;
 	}
@@ -49,7 +49,7 @@ void Spell::save(xmlNodePtr rootNode) const {
 	xml::saveNonNullString(rootNode, "Name", name);
 	xml::saveNonNullString(rootNode, "Script", script);
     xml::saveNonZeroNum<int>(rootNode, "Priority", priority);
-    xml::saveNonNullString(rootNode,"Description", desc);
+    xml::saveNonNullString(rootNode,"Description", description);
 
 }
 
@@ -75,7 +75,7 @@ int dmSpellList(Player* player, cmd* cmnd) {
     for(std::pair<bstring, Spell*> sp : gConfig->spells) {
 		spell = sp.second;
 		player->printColor("  %s   %d - %s\n    Script: ^y%s^x\n", spell->name.c_str(),
-			spell->priority, spell->desc.c_str(), spell->script.c_str());
+			spell->priority, spell->description.c_str(), spell->script.c_str());
 	}
 
 	return(0);

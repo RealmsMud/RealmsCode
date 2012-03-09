@@ -41,7 +41,7 @@ Song::Song(xmlNodePtr rootNode) {
 		else if(NODE_NAME(curNode, "Type")) xml::copyToBString(type, curNode);
 		else if(NODE_NAME(curNode, "TargetType")) xml::copyToBString(targetType, curNode);
 		else if(NODE_NAME(curNode, "Priority")) xml::copyToNum(priority, curNode);
-		else if(NODE_NAME(curNode, "Description")) xml::copyToBString(desc, curNode);
+		else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
 		else if(NODE_NAME(curNode, "Delay")) xml::copyToNum(delay, curNode);
 		else if(NODE_NAME(curNode, "Duration")) xml::copyToNum(duration, curNode);
 
@@ -61,7 +61,7 @@ void Song::save(xmlNodePtr rootNode) const {
 	xml::saveNonNullString(rootNode, "Type", type);
 	xml::saveNonNullString(rootNode, "TargetType", targetType);
 	xml::saveNonZeroNum<int>(rootNode, "Priority", priority);
-	xml::saveNonNullString(rootNode,"Description", desc);
+	xml::saveNonNullString(rootNode,"Description", description);
 	xml::saveNonZeroNum<int>(rootNode, "Delay", priority);
 	xml::saveNonZeroNum<int>(rootNode, "Duration", priority);
 
@@ -256,7 +256,7 @@ int dmSongList(Player* player, cmd* cmnd) {
 	for(std::pair<bstring, Song*> sp : gConfig->songs) {
 		song = sp.second;
 		player->printColor("  %s   %d - %s\n	Script: ^y%s^x\n", song->name.c_str(),
-			song->priority, song->desc.c_str(), song->script.c_str());
+			song->priority, song->description.c_str(), song->script.c_str());
 	}
 
 	return(0);

@@ -1252,7 +1252,7 @@ bool SocialCommand::saveToXml(xmlNodePtr rootNode) const {
     if(wakeRoom)
         xml::newBoolChild(curNode, "WakeRoom", wakeRoom);
 
-    xml::saveNonNullString(curNode, "Description", desc);
+    xml::saveNonNullString(curNode, "Description", description);
     xml::saveNonZeroNum(curNode, "Priority", priority);
 
     xml::saveNonNullString(curNode, "SelfNoTarget", selfNoTarget);

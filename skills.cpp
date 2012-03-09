@@ -131,10 +131,10 @@ bool SkillInfo::setGroup(bstring &pGroup) {
 	return true;
 }
 
-bstring SkillInfo::getName() const { return(name); }
+//bstring SkillInfo::getName() const { return(name); }
 bstring SkillInfo::getGroup() const { return(group); }
 bstring SkillInfo::getDisplayName() const { return(displayName); }
-bstring SkillInfo::getDescription() const { return(description); }
+//bstring SkillInfo::getDescription() const { return(description); }
 
 //********************************************************************
 //						checkImprove
