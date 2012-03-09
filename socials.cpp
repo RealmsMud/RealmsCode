@@ -65,9 +65,9 @@ const bstring& SocialCommand::getRoomOnSelf() const {
 }
 
 int cmdSocial(Creature* creature, cmd* cmnd) {
-    BaseRoom* room = creature->getRoomParent();
+    Container* parent = creature->getParent();
 
-    assert(room);
+    assert(parent);
 
     Player  *player=0, *pTarget=0;
     Creature* target=0;
@@ -95,7 +95,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
     }
 
     if(cmnd->num == 2) {
-        target = room->findCreature(creature, cmnd->str[1], cmnd->val[1], true, true);
+        target = parent->findCreature(creature, cmnd->str[1], cmnd->val[1], true, true);
         if(target)
             pTarget = target->getAsPlayer();
         if( (!target || target == creature) )
@@ -112,7 +112,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
             pTarget->wake("You wake up.");
     }
     if(social->getWakeRoom())
-        room->wake("You awaken suddenly!", true);
+    	parent->wake("You awaken suddenly!", true);
 
     if(target && !social->getSelfOnTarget().empty()) {
         // Social on Target
@@ -133,7 +133,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
         }
 
         bstring toRoom = social->getRoomOnTarget();
-        room->doSocialEcho(toRoom, creature, target);
+        parent->doSocialEcho(toRoom, creature, target);
 
         socialHooks(creature, target, str);
     } else {
@@ -143,8 +143,8 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
 
         bstring toRoom = social->getRoomNoTarget();
 
-        if(!toRoom.empty() && room) {
-            room->doSocialEcho(toRoom, creature, target);
+        if(!toRoom.empty() && parent) {
+        	parent->doSocialEcho(toRoom, creature, target);
             socialHooks(creature, str);
         }
 
@@ -155,7 +155,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
 }
 
 
-void BaseRoom::doSocialEcho(bstring str, const Creature* actor, const Creature* target) {
+void Container::doSocialEcho(bstring str, const Creature* actor, const Creature* target) {
     if(str.empty() || !actor)
         return;
     str.Replace("*A-HISHER*", actor->hisHer());

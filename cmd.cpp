@@ -39,8 +39,7 @@
 
 
 int dmTest(Player* player, cmd* cmnd) {
-    gConfig->saveSocials();
-    *player << "Socials saved\n";
+    gServer->runPython("print \"This is an error\n\"");
 	return(0);
 }
 
@@ -157,8 +156,7 @@ bool Config::writeSocialFile() const {
 // Updates helpfiles for the various game commands.
 
 template<class Type>
-std::map<bstring,bstring> compileCommandList(int cls, std::map<bstring, Type>& cList) {
-	std::map<bstring,bstring> list;
+std::map<bstring,bstring> compileCommandList(std::map<bstring, bstring>& list, int cls, std::map<bstring, Type>& cList) {
 	char	line[100];
 
 	for(std::pair<bstring, Type> pp : cList) {
@@ -204,15 +202,11 @@ void writeCommandFile(int cls, const char* path, const char* tpl) {
 
 
 	if(cls == DUNGEONMASTER || cls == BUILDER) {
-		list = compileCommandList<PlyCommand*>(cls, gConfig->staffCommands);
+		compileCommandList<PlyCommand*>(list, cls, gConfig->staffCommands);
 	} else {
-		list = compileCommandList<PlyCommand*>(0, gConfig->playerCommands);
-		list2 = compileCommandList<CrtCommand*>(0, gConfig->generalCommands);
-	}
-
-	// combine the lists
-	for(it = list2.begin(); it != list2.end(); it++) {
-		list[(*it).first] = (*it).second;
+		compileCommandList<PlyCommand*>(list, 0, gConfig->playerCommands);
+		compileCommandList<CrtCommand*>(list, 0, gConfig->generalCommands);
+		compileCommandList<SkillCommand*>(list, 0, gConfig->skillCommands);
 	}
 
 	for(it = list.begin(); it != list.end(); it++) {
@@ -871,6 +865,8 @@ void Config::clearCommands() {
 		if(cc.second)
 			delete cc.second;
 
+	// Note: Skill commands are cleared as a part of clearSkills!
+
 	staffCommands.clear();
 	playerCommands.clear();
 	generalCommands.clear();
@@ -984,9 +980,10 @@ void getCommand(Creature *user, cmd* cmnd) {
 	//std::cout << "Looking for a match for '" << str << "'\n";
 
 	examineList<CrtCommand*, Command>(gConfig->generalCommands, str, match, found, cmnd->myCommand);
-
+	if(!found)
+		examineList<SkillCommand*, Command>(gConfig->skillCommands, str, match, found, cmnd->myCommand);
 	// If we're a player, examine a few extra lists
-	if(pUser) {
+	if(!found && pUser) {
 		if(!found) // No exact match so far, check player list
 			examineList<PlyCommand*, Command>(gConfig->playerCommands, str, match, found, cmnd->myCommand);
 		if(!found && pUser->isStaff()) // Still no exact match, check staff commands

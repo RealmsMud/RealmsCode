@@ -68,6 +68,10 @@ public:
     bool add(Containable* toAdd);
     bool checkAntiMagic(Monster* ignore = 0);
 
+    void doSocialEcho(bstring str, const Creature* actor, const Creature* target = null);
+
+	void effectEcho(bstring fmt, const MudObject* actor = NULL, const MudObject* applier = null, Socket* ignore = null);
+
 //    virtual bool flagIsSet(int flag) const = 0;
 //    virtual void setFlag(int flag) = 0;
 //    virtual bool isEffected(const bstring& effect) const = 0;

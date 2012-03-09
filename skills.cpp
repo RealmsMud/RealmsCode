@@ -61,6 +61,14 @@ void Skill::reset() {
 
 //--------------------------------------------------------------------
 // Get/Set Functions
+void SkillInfo::setName(bstring pName) {
+	name = pName;
+}
+
+void SkillCommand::setName(bstring pName) {
+	SkillInfo::name = pName;
+	Command::name = pName;
+}
 bstring Skill::getName() const { return(name); }
 int Skill::getGained() const { return(gained); }
 int Skill::getGainType() const {
@@ -762,7 +770,7 @@ void Config::clearSkills() {
 	skillGroups.clear();
 
 	// Clear & delete skills
-	std::map<bstring, SkillInfo*>::iterator sIt;
+	SkillInfoMap::iterator sIt;
 	SkillInfo* skill;
 	for(sIt = skills.begin() ; sIt != skills.end() ; sIt++) {
 		skill = (*sIt).second;
@@ -770,6 +778,8 @@ void Config::clearSkills() {
 		//skills.erase(sIt);
 	}
 	skills.clear();
+	// Every skill command is in the skills list, so they've already been erased, just clear them
+	skillCommands.clear();
 }
 // Updates skill pointers on players
 void Config::updateSkillPointers() {
@@ -843,21 +853,6 @@ bstring Config::getSkillGroup(const bstring& skillName) const {
 // End Skill Related Functions
 //--------------------------------------------------------------------
 
-//********************************************************************
-//* Check Resources
-//********************************************************************
-// Returns: True  - Sufficient resources
-//          False - Insufficient resources
-
-bool Skill::checkResources(Creature* creature) {
-	if(!skillInfo)
-		return(true);
-	for(SkillCost& res : skillInfo->resources) {
-		if(!creature->checkResource(res.resource, res.cost))
-			return(false);
-	}
-	return(true);
-}
 
 //********************************************************************************
 // CheckResource
@@ -918,4 +913,9 @@ void Creature::subResource(ResourceType resType, int resCost) {
 			// Unknown resource, we don't have it
 			return;
 		}
+}
+
+SkillInfo::SkillInfo() {
+	gainType = SKILL_NORMAL;
+	knownOnly = false;
 }

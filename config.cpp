@@ -237,7 +237,14 @@ bool Config::load() {
 	printf("Loading Bans...%s.\n", loadBans() ? "done" : "*** FAILED ***");
 	printf("Loading Fishing...%s.\n", loadFishing() ? "done" : "*** FAILED ***");
 	printf("Loading Guilds...%s.\n", loadGuilds() ? "done" : "*** FAILED ***");
-	printf("Loading Skills...%s.\n", loadSkills() ? "done" : "*** FAILED ***");
+
+	std::cout << "Loading Skills...";
+	if(loadSkills())
+		std::cout << "done." << std::endl;
+	else {
+		std::cout << "*** FAILED *** " << std::endl;
+		exit(-15);
+	}
 
 	printf("Loading Deities...%s.\n", loadDeities() ? "done" : "*** FAILED ***");
 	printf("Loading Clans...%s.\n", loadClans() ? "done" : "*** FAILED ***");

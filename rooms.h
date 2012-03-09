@@ -70,9 +70,6 @@ public:
 
 	int saveExitsXml(xmlNodePtr curNode) const;
 
-	void doSocialEcho(bstring str, const Creature* actor, const Creature* target = null);
-
-	void effectEcho(bstring fmt, const MudObject* actor = NULL, const MudObject* applier = null, Socket* ignore = null);
 
 	Monster* getGuardingExit(const Exit* exit, const Player* player) const;
 	void addExit(Exit *ext);

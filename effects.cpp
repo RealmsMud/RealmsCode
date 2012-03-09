@@ -1089,7 +1089,7 @@ bstring Creature::doReplace(bstring fmt, const MudObject* actor, const MudObject
 //						effectEcho
 //*********************************************************************
 
-void BaseRoom::effectEcho(bstring fmt, const MudObject* actor, const MudObject* applier, Socket* ignore) {
+void Container::effectEcho(bstring fmt, const MudObject* actor, const MudObject* applier, Socket* ignore) {
 	Socket* ignore2 = NULL;
 	if(actor->getAsConstCreature())
 		ignore2 = actor->getAsConstCreature()->getSock();

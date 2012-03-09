@@ -47,12 +47,17 @@ public:
 	int cost;				// How much of the resource
 
 };
+
+// Generic information for a skill
 class SkillInfo {
 	friend class Skill;
 public:
+	SkillInfo();
 	SkillInfo(xmlNodePtr rootNode);
+	virtual ~SkillInfo() {};
+	virtual void setName(bstring pName);
 protected:
-	void loadResources(xmlNodePtr rootNode);
+	bool readNode(xmlNodePtr rootNode);
 
 	bstring name;       	    	// Name of the skill
 	bstring parentSkill;
@@ -61,10 +66,6 @@ protected:
 	bstring description; 		   	// Description
 	int gainType;        		   	// Adjustments for skills with long timers
 	bool knownOnly;
-	bool usesAttackTimer;			// Delay/cooldown is also affected by the attack timer (True by default)
-	int cooldown;					// Delay/cooldown on this skill * 10.  (10 = 1.0s delay)
-	int failCooldown;				// Delay/cooldown on this skill on failure
-	std::list<SkillCost> resources;	// Resources this skill uses
 
 public:
 	bstring getName() const;
@@ -74,6 +75,30 @@ public:
 	int getGainType() const;
 	bool isKnownOnly() const;
 	bool setGroup(bstring &pGroup);
+};
+
+// A skill that can be performed as a command
+class SkillCommand : public SkillInfo, public Command {
+public:
+	SkillCommand(xmlNodePtr rootNode);
+	int execute(Creature* player, cmd* cmnd);
+
+	void setName(bstring pName);
+protected:
+	bool readNode(xmlNodePtr rootNode);
+	void loadResources(xmlNodePtr rootNode);
+
+
+	bool usesAttackTimer;			// Delay/cooldown is also affected by the attack timer (True by default)
+	int cooldown;					// Delay/cooldown on this skill * 10.  (10 = 1.0s delay)
+	int failCooldown;				// Delay/cooldown on this skill on failure
+	std::list<SkillCost> resources;	// Resources this skill uses
+
+private:
+	int (*fn)(Creature* player, cmd* cmnd);
+
+public:
+	bool checkResources(Creature* creature);
 };
 
 //**********************************************************************
@@ -117,7 +142,6 @@ public:
 	void clearBonus();			// Clear the bonus (after an increase)
 	void improve(int amt=1);	// Improve the skill
 
-	bool checkResources(Creature* creature);
 };
 
 

@@ -788,19 +788,51 @@ bool Server::runPython(const bstring& pyScript, bstring args, Socket *sock,	Play
 
 	return (runPython(pyScript, localNamespace));
 }
-
+namespace py = boost::python;
 void Server::handlePythonError() {
-	PyErr_Print();
 	object sys = pythonHandler->mainNamespace["sys"];
 	object io = pythonHandler->mainNamespace["io"];
 	object err = sys.attr("stderr");
-	std::string errText = "Unknown";
+	std::string errText("Unknown");
 	try {
-		errText = extract<std::string>(err.attr("getvalue")());
+		PyObject *type_ptr = NULL, *value_ptr = NULL, *traceback_ptr = NULL;
+		PyErr_Fetch(&type_ptr, &value_ptr, &traceback_ptr);
+		if(type_ptr != NULL){
+		    py::handle<> h_type(type_ptr);
+		    py::str type_pstr(h_type);
+		    py::extract<std::string> e_type_pstr(type_pstr);
+		    if(e_type_pstr.check())
+		        errText = e_type_pstr();
+		    else
+		        errText = "Unknown exception type";
+		}
+		if(value_ptr != NULL){
+		    py::handle<> h_val(value_ptr);
+		    py::str a(h_val);
+		    py::extract<std::string> returned(a);
+		    if(returned.check())
+		        errText +=  ": " + returned();
+		    else
+		        errText += std::string(": Unparseable Python error: ");
+		}
+		 if(traceback_ptr != NULL){
+			py::handle<> h_tb(traceback_ptr);
+			py::object tb(py::import("traceback"));
+			py::object fmt_tb(tb.attr("format_tb"));
+			py::object tb_list(fmt_tb(h_tb));
+			py::object tb_str(py::str("\n").join(tb_list));
+			py::extract<std::string> returned(tb_str);
+			if(returned.check())
+				errText += ": " + returned();
+			else
+				errText += std::string(": Unparseable Python traceback");
+		    }
 	} catch (...) {
-
+		errText = "Exception getting exception info!";
 	}
 	broadcast(isDm, "^GPython Error: %s", errText.c_str());
-	PyRun_SimpleString("sys.stderr = io.StringIO.StringIO()");
+	PyErr_Print();
+
+//	PyRun_SimpleString("sys.stderr = io.StringIO.StringIO()");
 }
 

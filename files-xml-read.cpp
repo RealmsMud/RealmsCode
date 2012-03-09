@@ -1390,7 +1390,7 @@ bool Config::loadSocials() {
         if(NODE_NAME(curNode, "Social")) {
             SocialCommand* social = new SocialCommand(curNode);
             if(social)
-                socials[social->getName()]  = social;
+                socials.insert(SocialMap::value_type(social->getName(),social));
         }
         curNode = curNode->next;
     }
@@ -1851,8 +1851,18 @@ void Config::loadSkills(xmlNodePtr rootNode) {
 		if(NODE_NAME(curNode, "Skill")) {
 			try {
 				skill = new SkillInfo(curNode);
+				// A SkillInfo is not a SkillCommand, it only goes in the SkillInfo table
 				skills.insert(SkillInfoMap::value_type(skill->getName(), skill));
-			} catch(...) {
+			} catch(std::exception e) {
+
+			}
+		} else if(NODE_NAME(curNode, "SkillCommand")) {
+			try {
+				skill = new SkillCommand(curNode);
+				// All SkillCommands are also SkillInfos, put them in both tables
+				skills.insert(SkillInfoMap::value_type(skill->getName(), skill));
+				skillCommands.insert(SkillCommandMap::value_type(skill->getName(), dynamic_cast<SkillCommand*>(skill)));
+			} catch(std::exception e) {
 
 			}
 		}
@@ -1868,50 +1878,13 @@ void Config::loadSkills(xmlNodePtr rootNode) {
 SkillInfo::SkillInfo(xmlNodePtr rootNode) {
 	gainType = SKILL_NORMAL;
 	knownOnly = false;
-	usesAttackTimer = true;
 
 	xmlNodePtr curNode = rootNode->children;
 	bstring group;
 	bstring description;
 
 	while(curNode != NULL) {
-		if(NODE_NAME(curNode, "Name")) {
-			xml::copyToBString(name, curNode);
-		} else if(NODE_NAME(curNode, "DisplayName")) {
-			xml::copyToBString(displayName, curNode);
-		} else if(NODE_NAME(curNode, "Group")) {
-			xml::copyToBString(group, curNode);
-			if(!setGroup(group)) {
-				printf("Error setting skill '%s' to group '%s'", name.c_str(), group.c_str());
-				abort();
-			}
-		} else if(NODE_NAME(curNode, "Description")) {
-			xml::copyToBString(description, curNode);
-		} else if(NODE_NAME(curNode, "GainType")) {
-			bstring strGainType;
-			xml::copyToBString(strGainType, curNode);
-			if(strGainType == "Medium") {
-				gainType = SKILL_MEDIUM;
-			} else if(strGainType == "Hard") {
-				gainType = SKILL_HARD;
-			} else if(strGainType == "Normal") {
-				gainType = SKILL_NORMAL;
-			} else if(strGainType == "Easy") {
-				gainType = SKILL_EASY;
-			}
-		} else if(NODE_NAME(curNode, "KnownOnly")) {
-			xml::copyToBool(knownOnly, curNode);
-		} else if(NODE_NAME(curNode, "Cooldown")) {
-			xml::copyToNum(cooldown, curNode);
-		} else if(NODE_NAME(curNode, "UsesAttackTimer")) {
-			xml::copyToBool(usesAttackTimer, curNode);
-		} else if(NODE_NAME(curNode, "Cooldown")) {
-			xml::copyToNum(cooldown, curNode);
-		} else if(NODE_NAME(curNode, "FailCooldown")) {
-			xml::copyToNum(failCooldown, curNode);
-		} else if(NODE_NAME(curNode, "Resources")) {
-			loadResources(curNode);
-		}
+		readNode(curNode);
 		curNode = curNode->next;
 	}
 	if(name == "" || displayName == "") {
@@ -1920,7 +1893,91 @@ SkillInfo::SkillInfo(xmlNodePtr rootNode) {
 	}
 }
 
-void SkillInfo::loadResources(xmlNodePtr rootNode) {
+int cmdSkill(Creature* creature, cmd* cmnd);
+
+SkillCommand::SkillCommand(xmlNodePtr rootNode) {
+	gainType = SKILL_NORMAL;
+	knownOnly = false;
+	usesAttackTimer = true;
+
+	xmlNodePtr curNode = rootNode->children;
+    priority = 100;
+    auth = NULL;
+    desc = "";
+    fn = cmdSkill;
+	while(curNode != NULL) {
+		readNode(curNode);
+		curNode = curNode->next;
+	}
+	if(SkillInfo::name == "" || displayName == "") {
+		std::cout << "Invalid skillCommand (Name:" << SkillInfo::name << ", DisplayName: " << displayName <<  ")" << std::endl;
+		throw(new std::exception());
+	} else {
+		std::cout << "Found SkillCommand: " << SkillInfo::name << std::endl;
+	}
+
+}
+
+bool SkillInfo::readNode(xmlNodePtr curNode) {
+	bool retVal = true;
+	bstring tGroup;
+	if(NODE_NAME(curNode, "Name")) {
+		setName(xml::getBString(curNode));
+	} else if(NODE_NAME(curNode, "DisplayName")) {
+		xml::copyToBString(displayName, curNode);
+	} else if(NODE_NAME(curNode, "Group")) {
+		xml::copyToBString(tGroup, curNode);
+		if(!setGroup(tGroup)) {
+			std::cout << "Error setting skill '" << name << "' to group '" << tGroup << "'" << std::endl;
+			abort();
+		}
+	} else if(NODE_NAME(curNode, "Description")) {
+		xml::copyToBString(description, curNode);
+	} else if(NODE_NAME(curNode, "GainType")) {
+		bstring strGainType;
+		xml::copyToBString(strGainType, curNode);
+		if(strGainType == "Medium") {
+			gainType = SKILL_MEDIUM;
+		} else if(strGainType == "Hard") {
+			gainType = SKILL_HARD;
+		} else if(strGainType == "Normal") {
+			gainType = SKILL_NORMAL;
+		} else if(strGainType == "Easy") {
+			gainType = SKILL_EASY;
+		}
+	} else if(NODE_NAME(curNode, "KnownOnly")) {
+		xml::copyToBool(knownOnly, curNode);
+	} else {
+		// Nothing was read
+		retVal = false;
+	}
+
+	return(retVal);
+}
+bool SkillCommand::readNode(xmlNodePtr curNode) {
+	bool retVal = true;
+
+	// Try the base class method first, if they return true, it found something so continue on
+	if(SkillInfo::readNode(curNode)) {
+		retVal = true;
+	} else if(NODE_NAME(curNode, "CommandDesc")) {
+		xml::copyToBString(desc, curNode);
+	} else if(NODE_NAME(curNode, "Cooldown")) {
+		xml::copyToNum(cooldown, curNode);
+	} else if(NODE_NAME(curNode, "UsesAttackTimer")) {
+		xml::copyToBool(usesAttackTimer, curNode);
+	} else if(NODE_NAME(curNode, "Cooldown")) {
+		xml::copyToNum(cooldown, curNode);
+	} else if(NODE_NAME(curNode, "FailCooldown")) {
+		xml::copyToNum(failCooldown, curNode);
+	} else if(NODE_NAME(curNode, "Resources")) {
+		loadResources(curNode);
+	} else {
+		retVal = false;
+	}
+	return(retVal);
+}
+void SkillCommand::loadResources(xmlNodePtr rootNode) {
 	xmlNodePtr curNode = rootNode->children;
 	while(curNode != NULL) {
 		if(NODE_NAME(curNode, "Resource")) {

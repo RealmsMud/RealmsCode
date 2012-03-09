@@ -42,6 +42,12 @@ typedef std::map<bstring, MxpElement*> MxpElementMap;
 typedef std::map<bstring, bstring> BstringMap;
 typedef std::map<bstring, SocialCommand*> SocialMap;
 typedef std::map<bstring, SkillInfo*> SkillInfoMap;
+typedef std::map<bstring, PlyCommand*> PlyCommandMap;
+typedef std::map<bstring, CrtCommand*> CrtCommandMap;
+typedef std::map<bstring, SkillCommand*> SkillCommandMap;
+typedef std::map<bstring, Spell*> SpellMap;
+typedef std::map<bstring, Song*> SongMap;
+typedef std::map<int, MudFlag> MudFlagMap;
 
 class LottoTicket {
 public:
@@ -53,7 +59,6 @@ public:
 	short numbers[6]; // Numbers
 	int lottoCycle; // Lottery Cycle
 };
-
 
 class Config {
 public:
@@ -504,14 +509,18 @@ public:
 	std::map<bstring, Effect*> effects;
 
 	// Commands
-	std::map<bstring, PlyCommand*> staffCommands;
-	std::map<bstring, PlyCommand*> playerCommands;
-	std::map<bstring, CrtCommand*> generalCommands;
+	PlyCommandMap staffCommands;
+	PlyCommandMap playerCommands;
+	CrtCommandMap generalCommands;
 
-	std::map<bstring, Spell*> spells;
-	std::map<bstring, Song*> songs;
+	SpellMap spells;
+	SongMap songs;
 
 	SocialMap socials;
+
+	// All Skill Commands are SkillInfos, but not all SkillInfos are SkillCommands
+	SkillCommandMap skillCommands;
+	SkillInfoMap skills;
 
 	// Guilds
 	std::list<GuildCreation*> guildCreations;
@@ -520,9 +529,7 @@ public:
 	// Factions
 	std::map<bstring, Faction*> factions;
 
-	// Skills
 	std::map<bstring, bstring> skillGroups;
-	SkillInfoMap skills;
 	std::map<bstring, PlayerClass*> classes;
 	std::map<bstring, StartLoc*> start;
 	std::map<bstring, Fishing> fishing;
@@ -536,16 +543,16 @@ public:
 	std::map<int, Clan*> clans;
 	questPtr questTable[MAX_QUEST];
 
-	std::map<int, MudFlag> rflags;
-	std::map<int, MudFlag> xflags;
-	std::map<int, MudFlag> pflags;
-	std::map<int, MudFlag> mflags;
-	std::map<int, MudFlag> oflags;
-	std::map<int, MudFlag> specialFlags;
-	std::map<int, MudFlag> propStorFlags;
-	std::map<int, MudFlag> propShopFlags;
-	std::map<int, MudFlag> propHouseFlags;
-	std::map<int, MudFlag> propGuildFlags;
+	MudFlagMap rflags;
+	MudFlagMap xflags;
+	MudFlagMap pflags;
+	MudFlagMap mflags;
+	MudFlagMap oflags;
+	MudFlagMap specialFlags;
+	MudFlagMap propStorFlags;
+	MudFlagMap propShopFlags;
+	MudFlagMap propHouseFlags;
+	MudFlagMap propGuildFlags;
 
 
 	Calendar	*calendar;
