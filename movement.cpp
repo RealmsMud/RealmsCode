@@ -596,6 +596,9 @@ Exit *Move::getExit(Creature* player, cmd* cmnd) {
 	BaseRoom* room = player->getRoomParent();
 	Exit	*exit=0;
 
+	if(!room)
+	    return(NULL);
+
 	if(player->isPet())
 		player = player->getMaster();
 
@@ -1072,12 +1075,14 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
 				oldRoom = NULL;
 		}
 	}
-    for(Monster* pet : creature->pets) {
-        if(oldRoom == pet->getRoomParent())
-            Move::start(pet, cmnd, 0, 0, followers, numPeople, roomPurged);
-        if(roomPurged)
-            oldRoom = NULL;
-    }
+	if(leader && (!group || creature->getGroupStatus() != GROUP_LEADER)) {
+        for(Monster* pet : creature->pets) {
+            if(oldRoom == pet->getRoomParent())
+                Move::start(pet, cmnd, 0, 0, followers, numPeople, roomPurged);
+            if(roomPurged)
+                oldRoom = NULL;
+        }
+	}
 	if(player && !sneaking && !roomPurged && oldRoom)
 		Move::checkFollowed(player, exit, oldRoom, followers);
 

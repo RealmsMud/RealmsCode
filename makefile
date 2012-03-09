@@ -27,8 +27,8 @@ GENERAL_SOURCE += players.cpp playerClass.cpp playerTitle.cpp post.cpp prefs.cpp
 GENERAL_SOURCE += raceData.cpp range.cpp realms.cpp rogues.cpp room.cpp rooms.cpp sql.cpp security.cpp server.cpp   
 GENERAL_SOURCE += ships.cpp singers.cpp size.cpp skills.cpp skillGain.cpp socket.cpp songs.cpp socials.cpp
 GENERAL_SOURCE += specials.cpp special1.cpp spelling.cpp spells.cpp staff.cpp startlocs.cpp stats.cpp statistics.cpp
-GENERAL_SOURCE += steal.cpp swap.cpp talk.cpp threat.cpp serverTimer.cpp track.cpp translocation.cpp transmutation.cpp
-GENERAL_SOURCE += traps.cpp undead.cpp unique.cpp update.cpp vprint.cpp wanderInfo.cpp warriors.cpp
+GENERAL_SOURCE += skillCommand.cpp steal.cpp swap.cpp talk.cpp threat.cpp serverTimer.cpp track.cpp translocation.cpp
+GENERAL_SOURCE += transmutation.cpp traps.cpp undead.cpp unique.cpp update.cpp vprint.cpp wanderInfo.cpp warriors.cpp
 GENERAL_SOURCE += watchers.cpp weaponless.cpp web.cpp xml.cpp 
 
 REALMS_SOURCE  := main.cpp
