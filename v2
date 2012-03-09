@@ -1,0 +1,2 @@
+#!/bin/sh
+valgrind -v --num-callers=40 --track-fds=yes --gen-suppressions=all --suppressions=valgrind.supp --suppressions=/usr/lib/valgrind/debian.supp --suppressions=/usr/lib/valgrind/python.supp --suppressions=/usr/local/lib/valgrind/default.supp ./realms.exe -v

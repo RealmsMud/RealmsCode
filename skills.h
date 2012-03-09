@@ -49,7 +49,7 @@ public:
 };
 
 // Generic information for a skill
-class SkillInfo {
+class SkillInfo : public virtual Nameable {
 	friend class Skill;
 public:
 	SkillInfo();
@@ -59,26 +59,22 @@ public:
 protected:
 	bool readNode(xmlNodePtr rootNode);
 
-	bstring name;       	    	// Name of the skill
 	bstring parentSkill;
 	bstring group;       	   		// Group the skill belongs to
 	bstring displayName; 	   		// Display name
-	bstring description; 		   	// Description
 	int gainType;        		   	// Adjustments for skills with long timers
 	bool knownOnly;
 
 public:
-	bstring getName() const;
 	bstring getGroup() const;
 	bstring getDisplayName() const;
-	bstring getDescription() const;
 	int getGainType() const;
 	bool isKnownOnly() const;
 	bool setGroup(bstring &pGroup);
 };
 
 // A skill that can be performed as a command
-class SkillCommand : public SkillInfo, public Command {
+class SkillCommand : public virtual SkillInfo, public virtual Command {
 public:
 	SkillCommand(xmlNodePtr rootNode);
 	int execute(Creature* player, cmd* cmnd);

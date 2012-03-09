@@ -163,7 +163,7 @@ std::map<bstring,bstring> compileCommandList(std::map<bstring, bstring>& list, i
 		ASSERTLOG(pp.second);
 		Command* cmd = pp.second;
 		
-		if(cmd->getDesc() == "")
+		if(cmd->getDescription() == "")
 			continue;
 		if(	cls == BUILDER &&
 			cmd->auth &&
@@ -172,7 +172,7 @@ std::map<bstring,bstring> compileCommandList(std::map<bstring, bstring>& list, i
 		)
 			continue;
 
-		sprintf(line, " ^W%-19s^x %s\n", cmd->getName().c_str(), cmd->getDesc().c_str());
+		sprintf(line, " ^W%-19s^x %s\n", cmd->getName().c_str(), cmd->getDescription().c_str());
 		list[cmd->getName()] = line;
 	}
 
@@ -1130,12 +1130,12 @@ int cmdProcess(Creature *user, cmd* cmnd, Creature* pet) {
 	return(cmnd->ret);
 }
 
-bstring MudMethod::getName() const {
+bstring Nameable::getName() const {
 	return(name);
 }
 
-bstring MudMethod::getDesc() const {
-	return(desc);
+bstring Nameable::getDescription() const {
+	return(description);
 }
 
 int PlyCommand::execute(Creature* player, cmd* cmnd) {

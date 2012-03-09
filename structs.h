@@ -33,7 +33,19 @@ class EffectInfo;
 class AlchemyEffect;
 class MudObject;
 
+// A common class that has a name and description to avoid two seperate classes with name/desc (skill & command) being inherited by SkillCommand
+class Nameable {
+public:
+    Nameable() {};
+    virtual ~Nameable() {};
 
+    bstring name;
+    bstring description;
+
+    bstring getName() const;
+    bstring getDescription() const;
+
+};
 
 enum AlcoholState {
 	ALCOHOL_SOBER = 0,
@@ -407,17 +419,13 @@ public:
 //   MudMethod
 // ******************
 // Base class for Command, Spell, Song, etc
-class MudMethod {
+class MudMethod : public virtual Nameable {
 public:
     virtual ~MudMethod() {};
-    bstring name;
-    bstring desc;
     int priority;
 
     bool exactMatch(bstring toMatch); 
     bool partialMatch(bstring toMatch);
-    bstring getName() const;
-    bstring getDesc() const;
 };
 
 // ******************
@@ -457,7 +465,7 @@ public:
 #include "songs.h"
 
 // Base class for Ply/Crt commands
-class Command: public MudMethod {
+class Command: public virtual MudMethod {
 public:
     ~Command() {};
     bool	(*auth)(const Creature *);
@@ -473,7 +481,7 @@ public:
 		name = pCmdStr;
 		priority = pPriority;
 		auth = pAuth;
-		desc = pDesc;
+		description = pDesc;
 	};
 	~CrtCommand() {};
 	int (*fn)(Creature* player, cmd* cmnd);
@@ -487,7 +495,7 @@ public:
 		name = pCmdStr;
 		priority = pPriority;
 		auth = pAuth;
-		desc = pDesc;
+		description = pDesc;
 	};
 	~PlyCommand() {};
 	int (*fn)(Player* player, cmd* cmnd);

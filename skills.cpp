@@ -854,67 +854,6 @@ bstring Config::getSkillGroup(const bstring& skillName) const {
 //--------------------------------------------------------------------
 
 
-//********************************************************************************
-// CheckResource
-//********************************************************************************
-// Checks that the given resource type has sufficient resources left
-
-bool Creature::checkResource(ResourceType resType, int resCost) {
-	switch(resType) {
-	case RES_NONE:
-		return true;
-	case RES_GOLD:
-		return(coins[GOLD] >= resCost);
-	case RES_MANA:
-		return(mp.getCur() >= resCost);
-	case RES_HIT_POINTS:
-		return(hp.getCur() >= resCost);
-	case RES_FOCUS:
-		if(!getAsPlayer())
-			return false;
-		return(getAsPlayer()->focus.getCur() >= resCost);
-	case RES_ENERGY:
-		// no energy for now
-		return(false);
-	default:
-		// Unknown resource, we don't have it
-		return(false);
-	}
-	return(true);
-}
-//********************************************************************************
-// SubResource
-//********************************************************************************
-// Removes resCost of given resource; does not check for sufficient resources,
-// as it assumes that has been checked elsewhere
-void Creature::subResource(ResourceType resType, int resCost) {
-	switch(resType) {
-		case RES_NONE:
-			return;
-		case RES_GOLD:
-			//return(coins[GOLD] >= resCost);
-			coins.sub(resCost, GOLD);
-			return;
-		case RES_MANA:
-			mp.decrease(resCost);
-			return;
-		case RES_HIT_POINTS:
-			hp.decrease(resCost);
-			return;
-		case RES_FOCUS:
-			if(!getAsPlayer())
-				return;
-			getAsPlayer()->focus.decrease(resCost);
-			return;
-		case RES_ENERGY:
-			// no energy for now
-			return;
-		default:
-			// Unknown resource, we don't have it
-			return;
-		}
-}
-
 SkillInfo::SkillInfo() {
 	gainType = SKILL_NORMAL;
 	knownOnly = false;

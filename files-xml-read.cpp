@@ -1404,7 +1404,7 @@ SocialCommand::SocialCommand(xmlNodePtr rootNode) {
     rootNode = rootNode->children;
     priority = 100;
     auth = NULL;
-    desc = "";
+    description = "";
     fn = cmdSocial;
 
     wakeTarget = false;
@@ -1903,7 +1903,7 @@ SkillCommand::SkillCommand(xmlNodePtr rootNode) {
 	xmlNodePtr curNode = rootNode->children;
     priority = 100;
     auth = NULL;
-    desc = "";
+    description = "";
     fn = cmdSkill;
 	while(curNode != NULL) {
 		readNode(curNode);
@@ -1961,7 +1961,7 @@ bool SkillCommand::readNode(xmlNodePtr curNode) {
 	if(SkillInfo::readNode(curNode)) {
 		retVal = true;
 	} else if(NODE_NAME(curNode, "CommandDesc")) {
-		xml::copyToBString(desc, curNode);
+		xml::copyToBString(description, curNode);
 	} else if(NODE_NAME(curNode, "Cooldown")) {
 		xml::copyToNum(cooldown, curNode);
 	} else if(NODE_NAME(curNode, "UsesAttackTimer")) {
