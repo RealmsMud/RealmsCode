@@ -970,7 +970,9 @@ void examineList(std::map<bstring, Type>& myMap, bstring& str, int& match, bool&
 
 void getCommand(Creature *user, cmd* cmnd) {
 	bstring str = "";
+	// Match - Partial matches
 	int		match=0;
+	// Found - Exact match
 	bool	found=false;
 //	int		i=0;
 

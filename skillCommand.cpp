@@ -37,12 +37,14 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
         *creature << "You don't know how to " << cmnd->myCommand->getName() << "\n";
         return(0);
     }
-    if(!skill->checkResources(creature)) {
-        // TODO: Clarify which resource
-        *creature << "You lack the required resources to perform that skill\n";
+    if(!skill->checkResources(creature))
         return(0);
-    }
 
+    MudObject* target = NULL;
+    Container* parent = creature->getParent();
+    if(!skill->getTargetType() != TARGET_NONE) {
+
+    }
     return(0);
 }
 

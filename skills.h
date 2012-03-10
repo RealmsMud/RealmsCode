@@ -73,6 +73,16 @@ public:
 	bool setGroup(bstring &pGroup);
 };
 
+enum TargetType {
+	TARGET_NONE,
+	TARGET_CREATURE,
+	TARGET_MONSTER,
+	TARGET_PLAYER,
+	TARGET_OBJECT,
+	TARGET_EXIT,
+	TARGET_MUDOBJECT
+};
+
 // A skill that can be performed as a command
 class SkillCommand : public virtual SkillInfo, public virtual Command {
 public:
@@ -85,6 +95,9 @@ protected:
 	void loadResources(xmlNodePtr rootNode);
 
 
+	TargetType targetType;			// What sort of target?
+	bool offensive;					// Is this an offensive skill? Default: Yes			// *
+
 	bool usesAttackTimer;			// Delay/cooldown is also affected by the attack timer (True by default)
 	int cooldown;					// Delay/cooldown on this skill * 10.  (10 = 1.0s delay)
 	int failCooldown;				// Delay/cooldown on this skill on failure
@@ -95,6 +108,7 @@ private:
 
 public:
 	bool checkResources(Creature* creature);
+	TargetType getTargetType() const;
 };
 
 //**********************************************************************
