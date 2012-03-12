@@ -461,26 +461,24 @@ bool cantDropInBag(Object* object) {
 //						findObj
 //*********************************************************************
 
-int findObj(const Creature* player, otag *first_ot, int findFlags, char *str, int val, int* match, Object** target ) {
+MudObject* Creature::findObjTarget(otag *first_ot, int findFlags, bstring str, int val, int* match) {
 	otag	*op=0;
 	int		found=0;
 
 	if(!first_ot)
-		return(0);
+		return(NULL);
 
 	op = first_ot;
 	while(op) {
-		if(keyTxtEqual(op->obj, str) && player->canSee(op->obj)) {
+		if(keyTxtEqual(op->obj, str.c_str()) && canSee(op->obj)) {
 			(*match)++;
 			if(*match == val) {
-				*target = op->obj;
-				found = 1;
-				break;
+				return(op->obj);
 			}
 		}
 		op = op->next_tag;
 	}
-	return(found);
+	return(NULL);
 }
 
 //*********************************************************************

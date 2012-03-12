@@ -85,6 +85,7 @@ public:
 	bool isPlayer() const;
 	bool isMonster() const;
 	bool isCreature() const;
+	bool isExit() const;
 
 	const char* getName() const;
 	const bstring& getId() const;

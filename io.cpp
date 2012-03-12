@@ -833,7 +833,8 @@ bool keyTxtEqual(const Creature* target, const char* txt) {
 	if(	keyTxtCompare(target->key[0], txt, len) ||
 		keyTxtCompare(target->key[1], txt, len) ||
 		keyTxtCompare(target->key[2], txt, len) ||
-		keyTxtCompare(target->name, txt, len)
+		keyTxtCompare(target->name, txt, len) ||
+        target->getId() == txt
 	)
 		return(true);
 	return(false);
@@ -844,7 +845,8 @@ bool keyTxtEqual(const Object* target, const char* txt) {
 	if(	keyTxtCompare(target->key[0], txt, len) ||
 		keyTxtCompare(target->key[1], txt, len) ||
 		keyTxtCompare(target->key[2], txt, len) ||
-		keyTxtCompare(target->name, txt, len)
+		keyTxtCompare(target->name, txt, len) ||
+		target->getId() == txt
 	)
 		return(true);
 	return(false);

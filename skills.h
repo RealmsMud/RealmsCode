@@ -79,6 +79,7 @@ enum TargetType {
 	TARGET_MONSTER,
 	TARGET_PLAYER,
 	TARGET_OBJECT,
+	TARGET_OBJECT_CREATURE,
 	TARGET_EXIT,
 	TARGET_MUDOBJECT
 };
@@ -109,6 +110,7 @@ private:
 public:
 	bool checkResources(Creature* creature);
 	TargetType getTargetType() const;
+	bool isOffensive() const;
 };
 
 //**********************************************************************

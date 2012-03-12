@@ -273,5 +273,7 @@ bool MudObject::isCreature() const {
 		   typeid(*this) == typeid(Player) ||
 		   typeid(*this) == typeid(Monster)));
 }
-
+bool MudObject::isExit() const {
+    return(this && typeid(*this) == typeid(Exit));
+}
 

@@ -19,6 +19,25 @@
 
 #include "mud.h"
 
+int getFindWhere(TargetType targetType) {
+    switch(targetType) {
+        case TARGET_MONSTER:
+            return(FIND_MON_ROOM);
+        case TARGET_PLAYER:
+            return(FIND_PLY_ROOM);
+        case TARGET_CREATURE:
+            return(FIND_MON_ROOM | FIND_PLY_ROOM);
+        case TARGET_OBJECT:
+            return(FIND_OBJ_EQUIPMENT | FIND_OBJ_INVENTORY | FIND_OBJ_ROOM);
+        case TARGET_OBJECT_CREATURE:
+            return(FIND_OBJ_EQUIPMENT | FIND_OBJ_INVENTORY | FIND_OBJ_ROOM | FIND_MON_ROOM | FIND_PLY_ROOM);
+        case TARGET_EXIT:
+            return(FIND_EXIT);
+        case TARGET_MUDOBJECT:
+            return(FIND_MON_ROOM | FIND_PLY_ROOM | FIND_OBJ_EQUIPMENT | FIND_OBJ_INVENTORY | FIND_OBJ_ROOM | FIND_EXIT);
+    }
+    return(0);
+}
 int cmdSkill(Creature* creature, cmd* cmnd) {
     Player *player = creature->getAsPlayer();
 
@@ -42,13 +61,35 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
 
     MudObject* target = NULL;
     Container* parent = creature->getParent();
+    TargetType targetType = skill->getTargetType();
+    int findFlags = 0;
+
     if(!skill->getTargetType() != TARGET_NONE) {
+        bstring toFind = cmnd->str[1];
+        int num = cmnd->val[1];
+        target = creature->findTarget(getFindWhere(skill->getTargetType()), 0, toFind, num);
+        if(!target) {
+            *creature << "You can't find '" << toFind << "'.\n";
+            return(0);
+        }
+        if(skill->isOffensive()) {
+            if(target->isCreature()) {
+                if(!creature->canAttack(target->getAsCreature(), false)) {
+                    return(0);
+                }
+            }
+        }
+
+        *creature << "You attempt to " << skill->getName() << " " << target << "\n";
 
     }
     return(0);
 }
+TargetType SkillCommand::getTargetType() const {
+    return(targetType);
+}
 
-
+bool SkillCommand::isOffensive() const { return(offensive); }
 
 //********************************************************************************
 // CheckResource

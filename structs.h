@@ -33,7 +33,7 @@ class EffectInfo;
 class AlchemyEffect;
 class MudObject;
 
-// A common class that has a name and description to avoid two seperate classes with name/desc (skill & command) being inherited by SkillCommand
+// A common class that has a name and description to avoid two separate classes with name/desc (skill & command) being inherited by SkillCommand
 class Nameable {
 public:
     Nameable() {};

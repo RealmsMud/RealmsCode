@@ -432,7 +432,6 @@ int cmdGo(Player* player, cmd* cmnd);
 bstring progressBar(int barLength, float percentFull, bstring text = "", char progressChar = '=', bool enclosed = true);
 
 bool nameIsAllowed(bstring str, Socket* sock);
-bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int val, void** target, int* targetType);
 int bonus(int num);
 int crtWisdom(Creature* creature);
 int crtAwareness(Creature* creature);

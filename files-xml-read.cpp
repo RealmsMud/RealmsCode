@@ -1904,6 +1904,8 @@ SkillCommand::SkillCommand(xmlNodePtr rootNode) {
     priority = 100;
     auth = NULL;
     description = "";
+    targetType = TARGET_NONE;
+
     fn = cmdSkill;
 	while(curNode != NULL) {
 		readNode(curNode);
@@ -1970,6 +1972,22 @@ bool SkillCommand::readNode(xmlNodePtr curNode) {
 		xml::copyToNum(failCooldown, curNode);
 	} else if(NODE_NAME(curNode, "Resources")) {
 		loadResources(curNode);
+	} else if(NODE_NAME(curNode, "Offensive")) {
+	    xml::copyToBool(offensive, curNode);
+	} else if(NODE_NAME(curNode, "TargetType")) {
+	  bstring tType = xml::getBString(curNode);
+	  if(tType == "Creature")
+	      targetType = TARGET_CREATURE;
+	  else if(tType == "Monster")
+	      targetType = TARGET_MONSTER;
+	  else if(tType == "Player")
+	      targetType = TARGET_PLAYER;
+	  else if(tType == "Object")
+	      targetType = TARGET_OBJECT;
+	  else if(tType == "Exit")
+	      targetType = TARGET_EXIT;
+	  else if(tType == "Any" || tType == "All" || tType == "MudObject")
+	      targetType = TARGET_MUDOBJECT;
 	} else {
 		retVal = false;
 	}

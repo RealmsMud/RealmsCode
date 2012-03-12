@@ -95,10 +95,8 @@ void lookAtExit(Player* player, Exit* exit) {
 //*********************************************************************
 
 int cmdLook(Player* player, cmd* cmnd) {
-	void *target=0;
-	int targetType = -1;
+	MudObject* target=0;
 	int flags = player->displayFlags();
-	bool found=false;
 
 	if(!player->ableToDoCommand())
 		return(0);
@@ -112,27 +110,22 @@ int cmdLook(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	found = findTarget(player, FIND_OBJ_INVENTORY | FIND_OBJ_EQUIPMENT | FIND_OBJ_ROOM |
-		FIND_MON_ROOM | FIND_PLY_ROOM | FIND_EXIT, flags, cmnd->str[1], cmnd->val[1], &target, &targetType);
+	target = player->findTarget(FIND_OBJ_INVENTORY | FIND_OBJ_EQUIPMENT | FIND_OBJ_ROOM |
+		FIND_MON_ROOM | FIND_PLY_ROOM | FIND_EXIT, flags, cmnd->str[1], cmnd->val[1]);
 
-	if(found) {
-		switch(targetType) {
-			case PLAYER:
-			case MONSTER:
-				player->displayCreature((Creature *)target);
-				break;
-			case OBJECT:
-				if(cmnd->num == 3 && ((Object*)target)->info.id == STONE_SCROLL_INDEX && ((Object*)target)->info.isArea("misc"))
-					stoneScroll(player, cmnd);
-				else
-					displayObject(player, (Object*)target);
-				break;
-			case EXIT:
-				lookAtExit(player, (Exit*)target);
-				break;
-			default:
-				player->print("You get all confused looking at it.\n");
-				break;
+	if(target) {
+	    if(target->isCreature()) {
+			player->displayCreature(target->getAsCreature());
+	    } else if(target->isObject()) {
+	        Object* obj = dynamic_cast<Object*>(target);
+            if(cmnd->num == 3 && obj->info.id == STONE_SCROLL_INDEX && obj->info.isArea("misc"))
+                stoneScroll(player, cmnd);
+            else
+                displayObject(player, obj);
+	    } else if(target->isExit()) {
+	        lookAtExit(player, target->getAsExit());
+	    } else {
+			player->print("You get all confused looking at it.\n");
 		}
 	} else {
 		player->print("You don't see that here.\n");

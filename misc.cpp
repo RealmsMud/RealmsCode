@@ -125,7 +125,7 @@ int up(char ch) {
 }
 
 int bonus(int num) {
-	return(statBonus[num/10]);
+	return(statBonus[tMIN(num, MAX_STAT_NUM)/10]);
 }
 
 int crtWisdom(Creature* creature) {
@@ -1251,11 +1251,10 @@ char *ltoa(
 //*********************************************************************
 
 template<class Type, class Compare>
-int findCrt(Creature * player, std::set<Type, Compare>& set, int findFlags, char *str, int val, int* match, Creature ** target ) {
-    int found=0;
+MudObject* findCrtTarget(Creature * player, std::set<Type, Compare>& set, int findFlags, const char *str, int val, int* match) {
 
     if(!player || !str || set.empty())
-        return(0);
+        return(NULL);
 
     for(Type crt : set) {
         if(!crt) {
@@ -1268,14 +1267,12 @@ int findCrt(Creature * player, std::set<Type, Compare>& set, int findFlags, char
         if(keyTxtEqual(crt, str)) {
             (*match)++;
             if(*match == val) {
-                *target = crt;
-                found = 1;
-                break;
+                return(crt);
             }
         }
 
     }
-    return(found);
+    return(NULL);
 }
 
 
@@ -1284,13 +1281,13 @@ int findCrt(Creature * player, std::set<Type, Compare>& set, int findFlags, char
 //						findTarget
 //*********************************************************************
 
-bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int val, void** target, int* targetType) {
+MudObject* Creature::findTarget(int findWhere, int findFlags, bstring str, int val) {
 	int	match=0;
 	bool found=false;
+	MudObject* target;
 	do {
 		if(findWhere & FIND_OBJ_INVENTORY) {
-			if(findObj(player, player->first_obj, findFlags, str, val, &match, (Object**)target)) {
-				*targetType = OBJECT;
+			if((target = findObjTarget(first_obj, findFlags, str, val, &match))) {
 				found = true;
 				break;
 			}
@@ -1300,15 +1297,14 @@ bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int 
 		if(findWhere & FIND_OBJ_EQUIPMENT) {
 			int n;
 			for(n=0; n<MAXWEAR; n++) {
-				if(!player->ready[n])
+				if(!ready[n])
 					continue;
-				if(keyTxtEqual(player->ready[n], str))
+				if(keyTxtEqual(ready[n], str.c_str()))
 					match++;
 				else
 					continue;
 				if(val == match) {
-					*targetType = OBJECT;
-					*target = player->ready[n];
+					target = ready[n];
 					found = true;
 					break;
 				}
@@ -1318,41 +1314,35 @@ bool findTarget(Creature * player, int findWhere, int findFlags, char *str, int 
 		}
 
 		if(findWhere & FIND_OBJ_ROOM) {
-			if(findObj(player, player->getRoomParent()->first_obj, findFlags, str, val, &match, (Object**)target)) {
-				*targetType = OBJECT;
+			if((target = findObjTarget(getRoomParent()->first_obj, findFlags, str, val, &match))) {
 				found = true;
 				break;
 			}
 		}
 
 		if(findWhere & FIND_MON_ROOM) {
-			if(findCrt<Monster*, MonsterPtrLess>(player, player->getRoomParent()->monsters, findFlags, str, val, &match, (Creature **)target)) {
-				*targetType = MONSTER;
+			if((target = findCrtTarget<Monster*, MonsterPtrLess>(this, getParent()->monsters, findFlags, str.c_str(), val, &match))) {
 				found = true;
 				break;
 			}
 		}
 
 		if(findWhere & FIND_PLY_ROOM) {
-			if(findCrt<Player*, PlayerPtrLess>(player, player->getRoomParent()->players, findFlags, str, val, &match, (Creature **)target)) {
-				*targetType = PLAYER;
+			if((target = findCrtTarget<Player*, PlayerPtrLess>(this, getParent()->players, findFlags, str.c_str(), val, &match))) {
 				found = true;
 				break;
 			}
 		}
 
 		if(findWhere & FIND_EXIT) {
-			Exit* exit = findExit(player, str, val, player->getRoomParent());
-			if(exit) {
-				*(Exit **)target = exit;
-				*targetType = EXIT;
+			if((target = findExit(this, str, val, getRoomParent()))) {
 				found = true;
 				break;
 			}
 		}
 	} while(0);
 
-	return(found);
+	return(target);
 }
 
 //**********************************************************************

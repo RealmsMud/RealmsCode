@@ -230,8 +230,7 @@ void handleObject(Player* player, cmd* cmnd, HandleObject type) {
 	Object* object=0;
 	long t = time(0);
 	bool found=false;
-	void *target=0;
-	int targetType;
+	MudObject* target=0;
 
 	bstring action;
 	bstring action2;
@@ -260,11 +259,11 @@ void handleObject(Player* player, cmd* cmnd, HandleObject type) {
 	}
 
 	if(cmnd->num > 1) {
-		found = findTarget(player, FIND_OBJ_INVENTORY | FIND_OBJ_EQUIPMENT | FIND_OBJ_ROOM,
-			player->displayFlags(), cmnd->str[1], cmnd->val[1], &target, &targetType);
+		target = player->findTarget(FIND_OBJ_INVENTORY | FIND_OBJ_EQUIPMENT | FIND_OBJ_ROOM,
+			player->displayFlags(), cmnd->str[1], cmnd->val[1]);
 
 		if(found)
-			object = (Object*)target;
+			object = dynamic_cast<Object*>(target);
 	}
 
 	if(!object) {
