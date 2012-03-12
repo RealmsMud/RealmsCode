@@ -317,6 +317,14 @@ BOOST_PYTHON_MODULE(MudObjects)
 		.def("setTempNoKillDarkmetal", &::BaseRoom::setTempNoKillDarkmetal)
 		;
 	}
+	bp::class_<Skill, boost::noncopyable >( "Skill", bp::no_init )
+	    ;
+
+	bp::class_<SkillInfo, boost::noncopyable >( "SkillInfo", bp::no_init )
+	    ;
+
+	bp::class_<SkillCommand, boost::noncopyable, bases<SkillInfo> >( "SkillCommand", bp::no_init )
+        ;
 
 	bp::class_<EffectInfo, boost::noncopyable >( "EffectInfo", bp::no_init )
 	.def("add", &EffectInfo::add )

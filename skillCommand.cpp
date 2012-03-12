@@ -47,32 +47,38 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
         return(0);
 
     bstring str = cmnd->myCommand->getName();
-    SkillCommand* skill = dynamic_cast<SkillCommand*>(cmnd->myCommand);
-    if(!skill) {
+    SkillCommand* skillCmd = dynamic_cast<SkillCommand*>(cmnd->myCommand);
+    if(!skillCmd) {
         *creature << "Invalid skill!\n";
         return(0);
     }
-    if(!creature->knowsSkill(cmnd->myCommand->getName())) {
+    Skill* skill = creature->getSkill(cmnd->myCommand->getName());
+    if(!skill) {
         *creature << "You don't know how to " << cmnd->myCommand->getName() << "\n";
         return(0);
     }
-    if(!skill->checkResources(creature))
+    if(!skillCmd->checkResources(creature))
         return(0);
 
     MudObject* target = NULL;
     Container* parent = creature->getParent();
-    TargetType targetType = skill->getTargetType();
+    TargetType targetType = skillCmd->getTargetType();
     int findFlags = 0;
 
-    if(!skill->getTargetType() != TARGET_NONE) {
+    if(skillCmd->getTargetType() != TARGET_NONE) {
         bstring toFind = cmnd->str[1];
         int num = cmnd->val[1];
-        target = creature->findTarget(getFindWhere(skill->getTargetType()), 0, toFind, num);
+        target = creature->findTarget(getFindWhere(skillCmd->getTargetType()), 0, toFind, num);
+
+        // Assumption: If it's offensive, it's usable on creatures
+        if(!target && skillCmd->isOffensive() && creature->hasAttackableTarget())
+            target = creature->getTarget();
+
         if(!target) {
             *creature << "You can't find '" << toFind << "'.\n";
             return(0);
         }
-        if(skill->isOffensive()) {
+        if(skillCmd->isOffensive()) {
             if(target->isCreature()) {
                 if(!creature->canAttack(target->getAsCreature(), false)) {
                     return(0);
@@ -80,10 +86,43 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
             }
         }
 
-        *creature << "You attempt to " << skill->getName() << " " << target << "\n";
+        *creature << "You attempt to " << skillCmd->getName() << " " << target << "\n";
+
+        skillCmd->runScript(creature, target, skill);
+        // TODO: Track last skill for future combos
 
     }
     return(0);
+}
+
+
+bool SkillCommand::runScript(Creature* actor, MudObject* target, Skill* skill) {
+    try {
+        object localNamespace( (handle<>(PyDict_New())));
+
+        object skillModule( (handle<>(PyImport_ImportModule("skillLib"))) );
+
+        localNamespace["skillLib"] = skillModule;
+
+        localNamespace["skill"] = ptr(skill);
+        localNamespace["skillCmd"] = ptr(this);
+
+        // Default retVal is true
+        localNamespace["retVal"] = true;
+        addMudObjectToDictionary(localNamespace, "actor", actor);
+        addMudObjectToDictionary(localNamespace, "target", target);
+
+
+        gServer->runPython(pyScript, localNamespace);
+
+        bool retVal = extract<bool>(localNamespace["retVal"]);
+        //std::cout << "runScript returning: " << retVal << std::endl;
+        return(retVal);
+    }
+    catch( error_already_set) {
+        gServer->handlePythonError();
+    }
+    return(false);
 }
 TargetType SkillCommand::getTargetType() const {
     return(targetType);

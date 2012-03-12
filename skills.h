@@ -19,6 +19,8 @@
 #ifndef SKILLS_H_
 #define SKILLS_H_
 
+class Skill;
+
 typedef enum {
     SKILL_EASY,
     SKILL_NORMAL,
@@ -35,6 +37,18 @@ typedef enum {
 	RES_ENERGY,
 	RES_MAX
 } ResourceType;
+
+
+enum TargetType {
+    TARGET_NONE,
+    TARGET_CREATURE,
+    TARGET_MONSTER,
+    TARGET_PLAYER,
+    TARGET_OBJECT,
+    TARGET_OBJECT_CREATURE,
+    TARGET_EXIT,
+    TARGET_MUDOBJECT
+};
 
 //**********************************************************************
 // SkillInfo - Class to store base information about skills
@@ -73,18 +87,10 @@ public:
 	bool setGroup(bstring &pGroup);
 };
 
-enum TargetType {
-	TARGET_NONE,
-	TARGET_CREATURE,
-	TARGET_MONSTER,
-	TARGET_PLAYER,
-	TARGET_OBJECT,
-	TARGET_OBJECT_CREATURE,
-	TARGET_EXIT,
-	TARGET_MUDOBJECT
-};
+//**********************************************************************
+// SkillCommand - Subclass of SkillInfo - A skill that is a command
+//**********************************************************************
 
-// A skill that can be performed as a command
 class SkillCommand : public virtual SkillInfo, public virtual Command {
 public:
 	SkillCommand(xmlNodePtr rootNode);
@@ -95,7 +101,6 @@ protected:
 	bool readNode(xmlNodePtr rootNode);
 	void loadResources(xmlNodePtr rootNode);
 
-
 	TargetType targetType;			// What sort of target?
 	bool offensive;					// Is this an offensive skill? Default: Yes			// *
 
@@ -103,6 +108,7 @@ protected:
 	int cooldown;					// Delay/cooldown on this skill * 10.  (10 = 1.0s delay)
 	int failCooldown;				// Delay/cooldown on this skill on failure
 	std::list<SkillCost> resources;	// Resources this skill uses
+	bstring pyScript;                 // Python script for this skillCommand
 
 private:
 	int (*fn)(Creature* player, cmd* cmnd);
@@ -111,6 +117,7 @@ public:
 	bool checkResources(Creature* creature);
 	TargetType getTargetType() const;
 	bool isOffensive() const;
+	bool runScript(Creature* actor, MudObject* target, Skill* skill);
 };
 
 //**********************************************************************
@@ -129,7 +136,9 @@ protected:
 	bstring name;
 	int gained;				// How many points they have gained so far
 	int gainBonus; 			// Used for hard to gain skills, giving them an increased chance to improve
+#ifndef PYTHON_CODE_GEN
 	Timer timer;			// Timer for cooldown
+#endif
 	//std::list<SkillCost> resourceReductions;
 	//int cooldownReduction;
 	//std::list<SkillImprovement> improvements;

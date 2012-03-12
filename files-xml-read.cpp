@@ -1988,6 +1988,8 @@ bool SkillCommand::readNode(xmlNodePtr curNode) {
 	      targetType = TARGET_EXIT;
 	  else if(tType == "Any" || tType == "All" || tType == "MudObject")
 	      targetType = TARGET_MUDOBJECT;
+	} else if(NODE_NAME(curNode, "Script")) {
+	    xml::copyToBString(pyScript, curNode);
 	} else {
 		retVal = false;
 	}
@@ -2463,3 +2465,5 @@ void DroppedBy::load(xmlNodePtr rootNode) {
 		curNode = curNode->next;
 	}
 }
+
+
