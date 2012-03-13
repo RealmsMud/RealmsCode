@@ -35,6 +35,8 @@ int getFindWhere(TargetType targetType) {
             return(FIND_EXIT);
         case TARGET_MUDOBJECT:
             return(FIND_MON_ROOM | FIND_PLY_ROOM | FIND_OBJ_EQUIPMENT | FIND_OBJ_INVENTORY | FIND_OBJ_ROOM | FIND_EXIT);
+        default:
+            break;
     }
     return(0);
 }
@@ -86,13 +88,87 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
             }
         }
 
+        if(skillCmd->hasCooldown()) {
+            if(!skill->checkTimer(creature, true))
+                return(0);
+            skill->updateTimer();
+        }
+
+        if(skillCmd->getUsesAttackTimer()) {
+            if(!creature->checkAttackTimer())
+                return(0);
+
+            creature->updateAttackTimer();
+        }
         *creature << "You attempt to " << skillCmd->getName() << " " << target << "\n";
 
-        skillCmd->runScript(creature, target, skill);
+        bool result = skillCmd->runScript(creature, target, skill);
+
+        if(skillCmd->hasCooldown()) {
+            if(result)
+                skill->modifyDelay(skillCmd->getCooldown());
+            else
+                skill->modifyDelay(skillCmd->getFailCooldown());
+        }
         // TODO: Track last skill for future combos
 
     }
     return(0);
+}
+//*********************************************************************
+//                      checkAttackTimer
+//*********************************************************************
+// Return: true if the attack timer has expired, false if not
+
+bool Skill::checkTimer(Creature* creature, bool displayFail) {
+    long i;
+    if(!((i = timer.getTimeLeft()) == 0)) {
+        if(displayFail)
+            creature->pleaseWait(i/10.0);
+//        if(!creature->isDm())
+            return(false);
+    }
+    return(true);
+}
+//*********************************************************************
+//                      UpdateTimer
+//*********************************************************************
+
+void Skill::updateTimer(bool setDelay, int delay) {
+    if(!setDelay) {
+        timer.update();
+    } else {
+        timer.update(delay);
+    }
+}
+
+//*********************************************************************
+//                      modifyDelay
+//*********************************************************************
+
+void Skill::modifyDelay(int amt) {
+    timer.modifyDelay(amt);
+}
+
+//*********************************************************************
+//                      setAttackDelay
+//*********************************************************************
+
+void Skill::setDelay(int newDelay) {
+    timer.setDelay(newDelay);
+}
+
+bool SkillCommand::getUsesAttackTimer() const {
+    return(usesAttackTimer);
+}
+bool SkillCommand::hasCooldown() const {
+    return(cooldown != 0);
+}
+int SkillCommand::getCooldown() const {
+    return(cooldown);
+}
+int SkillCommand::getFailCooldown() const {
+    return(failCooldown);
 }
 
 
@@ -234,6 +310,11 @@ bool SkillCommand::checkResources(Creature* creature) {
         }
     }
     return(true);
+}
+void SkillCommand::subResources(Creature* creature) {
+    for(SkillCost& res : resources) {
+        creature->subResource(res.resource, res.cost);
+    }
 }
 
 int SkillCommand::execute(Creature* player, cmd* cmnd) {
