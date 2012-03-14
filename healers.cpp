@@ -400,13 +400,10 @@ int cmdPray(Player* player, cmd* cmnd) {
 		player->lasttime[LT_PRAY].ltime = t;
 
 		if(player->getClass() != DEATHKNIGHT) {
-			player->print("You feel extremely pious.\n");
 			broadcast(player->getSock(), player->getParent(), "%M bows %s head in prayer.", player, player->hisHer());
 			player->addEffect("pray", 450L, 50);
 			player->lasttime[LT_PRAY].interval = 600;
 		} else {
-			player->print("The evil in your soul infuses your body with power.\n");
-			broadcast(player->getSock(), player->getParent(), "%M glows with evil.", player);
 			player->addEffect("dkpray", 240L, 30);
 			player->computeAC();
 			player->computeAttackPower();

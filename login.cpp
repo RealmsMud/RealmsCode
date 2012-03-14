@@ -65,6 +65,22 @@ int cmdReconnect(Player* player, cmd* cmnd) {
 	return(0);
 }
 
+bstring::size_type checkProxyLogin(bstring &str) {
+	bstring::size_type x = str.npos;
+	bstring::size_type n = str.Find(" as ");
+	if(n == x)
+		n = str.Find(" for ");
+	return(n);
+}
+// Character used for access
+bstring getProxyChar(bstring& str, unsigned int n) {
+	return(str.substr(0,n));
+}
+// Character being logged in
+bstring getProxiedChar(bstring& str, unsigned int n) {
+	unsigned int m = str.Find(" ", n+1);
+	return(str.substr(m+1, str.length() - m - 1));
+}
 
 //*********************************************************************
 //						login
@@ -76,7 +92,7 @@ int cmdReconnect(Player* player, cmd* cmnd) {
 void login(Socket* sock, bstring str) {
 	char	tempstr[20];
 	Player	*player=0;
-
+	bstring::size_type proxy = 0;
 	if(!sock) {
 		printf("**** ERORR: Null socket in login.\n");
 		return;
@@ -102,6 +118,40 @@ void login(Socket* sock, bstring str) {
 		return;
 		// End LOGIN_GET_LOCKOUT_PASSWORD
 	case LOGIN_GET_NAME:
+
+		proxy = checkProxyLogin(str);
+		if(proxy != str.npos) {
+			bstring proxyChar = getProxyChar(str, proxy);
+			bstring proxiedChar = getProxiedChar(str, proxy);
+			lowercize(proxyChar, 1);
+			lowercize(proxiedChar, 1);
+			sock->println(bstring("Trying to log in ") + proxiedChar + " using " + proxyChar + " as proxy.\n");
+
+			if(!nameIsAllowed(proxyChar, sock) || !nameIsAllowed(proxiedChar, sock)) {
+				sock->askFor("Please enter name: ");
+				return;
+			}
+			if(!Player::exists(proxyChar)) {
+				sock->println(proxyChar + " doesn't exist.");
+				sock->askFor("Please enter name: ");
+				return;
+			}
+			if(!Player::exists(proxiedChar)) {
+				sock->println(proxiedChar + " doesn't exist.");
+				sock->askFor("Please enter name: ");
+				return;
+			}
+			if(!loadPlayer(proxiedChar, &player)) {
+				sock->println(bstring("Error loading ") + proxiedChar + "\n");
+				sock->askFor("Please enter name: ");
+				return;
+			}
+			player->fd = -1;
+			if(gServer->checkDuplicateName(sock, false))
+				return;
+
+			return;
+		}
 		lowercize(str, 1);
 		if(str.length() >= 25)
 			str[25]=0;
