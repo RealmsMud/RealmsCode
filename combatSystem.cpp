@@ -60,6 +60,9 @@ int Player::computeAttackPower() {
 		case MONK:
 			attackPower = strength.getCur() + dexterity.getCur() + (level * 4);
 			break;
+		case DRUID:
+		    attackPower = strength.getCur() + (level * 2);
+		    break;
 		case CLERIC:
 			attackPower = strength.getCur();
 
