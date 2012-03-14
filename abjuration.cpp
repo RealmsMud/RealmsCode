@@ -441,6 +441,9 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 				damage.add(MAX(0, bonus((int) player->piety.getCur())));
 				target->modifyDamage(player, MAGICAL, damage);
 
+				if(target->chkSave(SPL, player,0))
+					damage.set(damage.get() / 2);
+
 				player->printColor("The spell did %s%d^x damage.\n", player->customColorize("*CC:DAMAGE*").c_str(), damage.get());
 				player->print("%M screams in agony as %s soul is ripped apart!\n",
 					target, target->hisHer());
@@ -455,9 +458,6 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 
 				if(spellData->how == CAST && player->isPlayer())
 					player->getAsPlayer()->statistics.offensiveCast();
-
-				if(target->chkSave(SPL, player,0))
-					damage.set(damage.get() / 2);
 
 				player->doDamage(target, damage.get(), NO_CHECK);
 				if(target->hp.getCur() < 1) {
