@@ -151,41 +151,135 @@ BOOST_PYTHON_MODULE(mud)
 //		.def("getName", &MudObject::getName)
 //	;
 
-	bp::enum_<crtClasses>("crtClasses").value("ASSASSIN", ASSASSIN).value(
-			"BERSERKER", BERSERKER).value("CLERIC", CLERIC).value("FIGHTER",
-			FIGHTER).value("MAGE", MAGE).value("PALADIN", PALADIN).value(
-			"RANGER", RANGER).value("THIEF", THIEF).value("VAMPIRE", VAMPIRE).value(
-			"MONK", MONK).value("DEATHKNIGHT", DEATHKNIGHT).value("DRUID",
-			DRUID).value("LICH", LICH).value("WEREWOLF", WEREWOLF).value("BARD",
-			BARD).value("ROGUE", ROGUE).value("BUILDER", BUILDER).value(
-			"CARETAKER", CARETAKER).value("DUNGEONMASTER", DUNGEONMASTER).value(
-			"CLASS_COUNT", CLASS_COUNT).export_values();
 
-	bp::enum_<religions>("religions").value("ATHEIST", ATHEIST).value("ARAMON",
-			ARAMON).value("CERIS", CERIS).value("ENOCH", ENOCH).value("GRADIUS",
-			GRADIUS).value("ARES", ARES).value("KAMIRA", KAMIRA).value(
-			"LINOTHAN", LINOTHAN).value("ARACHNUS", ARACHNUS).value("MARA",
-			MARA).value("JAKAR", JAKAR).value("MAX_DEITY", MAX_DEITY).export_values();
+    bp::enum_< crtClasses>("crtClasses")
+        .value("ASSASSIN", ASSASSIN)
+        .value("BERSERKER", BERSERKER)
+        .value("CLERIC", CLERIC)
+        .value("FIGHTER", FIGHTER)
+        .value("MAGE", MAGE)
+        .value("PALADIN", PALADIN)
+        .value("RANGER", RANGER)
+        .value("THIEF", THIEF)
+        .value("VAMPIRE", VAMPIRE)
+        .value("MONK", MONK)
+        .value("DEATHKNIGHT", DEATHKNIGHT)
+        .value("DRUID", DRUID)
+        .value("LICH", LICH)
+        .value("WEREWOLF", WEREWOLF)
+        .value("BARD", BARD)
+        .value("ROGUE", ROGUE)
+        .value("BUILDER", BUILDER)
+        .value("CARETAKER", CARETAKER)
+        .value("DUNGEONMASTER", DUNGEONMASTER)
+        .value("CLASS_COUNT", CLASS_COUNT)
+        .export_values()
+        ;
 
-	bp::enum_<DeathType>("DeathType").value("DT_NONE", DT_NONE).value("FALL",
-			FALL).value("POISON_MONSTER", POISON_MONSTER).value(
-			"POISON_GENERAL", POISON_GENERAL).value("DISEASE", DISEASE).value(
-			"SMOTHER", SMOTHER).value("FROZE", FROZE).value("BURNED", BURNED).value(
-			"DROWNED", DROWNED).value("DRAINED", DRAINED).value("ZAPPED",
-			ZAPPED).value("SHOCKED", SHOCKED).value("WOUNDED", WOUNDED).value(
-			"CREEPING_DOOM", CREEPING_DOOM).value("SUNLIGHT", SUNLIGHT).value(
-			"PIT", PIT).value("BLOCK", BLOCK).value("DART", DART).value("ARROW",
-			ARROW).value("SPIKED_PIT", SPIKED_PIT).value("FIRE_TRAP", FIRE_TRAP).value(
-			"FROST", FROST).value("ELECTRICITY", ELECTRICITY).value("ACID",
-			ACID).value("ROCKS", ROCKS).value("ICICLE_TRAP", ICICLE_TRAP).value(
-			"SPEAR", SPEAR).value("CROSSBOW_TRAP", CROSSBOW_TRAP).value("VINES",
-			VINES).value("COLDWATER", COLDWATER).value("EXPLODED", EXPLODED).value(
-			"BOLTS", BOLTS).value("SPLAT", SPLAT).value("POISON_PLAYER",
-			POISON_PLAYER).value("BONES", BONES).value("EXPLOSION", EXPLOSION).value(
-			"PETRIFIED", PETRIFIED).value("LIGHTNING", LIGHTNING).value(
-			"WINDBATTERED", WINDBATTERED).value("PIERCER", PIERCER).value(
-			"ELVEN_ARCHERS", ELVEN_ARCHERS).value("DEADLY_MOSS", DEADLY_MOSS).value(
-			"THORNS", THORNS).export_values();
+
+    bp::enum_< religions>("religions")
+        .value("ATHEIST", ATHEIST)
+        .value("ARAMON", ARAMON)
+        .value("CERIS", CERIS)
+        .value("ENOCH", ENOCH)
+        .value("GRADIUS", GRADIUS)
+        .value("ARES", ARES)
+        .value("KAMIRA", KAMIRA)
+        .value("LINOTHAN", LINOTHAN)
+        .value("ARACHNUS", ARACHNUS)
+        .value("MARA", MARA)
+        .value("JAKAR", JAKAR)
+        .value("MAX_DEITY", MAX_DEITY)
+        .export_values()
+        ;
+
+    bp::enum_< DeathType>("DeathType")
+         .value("DT_NONE", DT_NONE)
+         .value("FALL", FALL)
+         .value("POISON_MONSTER", POISON_MONSTER)
+         .value("POISON_GENERAL", POISON_GENERAL)
+         .value("DISEASE", DISEASE)
+         .value("SMOTHER", SMOTHER)
+         .value("FROZE", FROZE)
+         .value("BURNED", BURNED)
+         .value("DROWNED", DROWNED)
+         .value("DRAINED", DRAINED)
+         .value("ZAPPED", ZAPPED)
+         .value("SHOCKED", SHOCKED)
+         .value("WOUNDED", WOUNDED)
+         .value("CREEPING_DOOM", CREEPING_DOOM)
+         .value("SUNLIGHT", SUNLIGHT)
+         .value("PIT", PIT)
+         .value("BLOCK", BLOCK)
+         .value("DART", DART)
+         .value("ARROW", ARROW)
+         .value("SPIKED_PIT", SPIKED_PIT)
+         .value("FIRE_TRAP", FIRE_TRAP)
+         .value("FROST", FROST)
+         .value("ELECTRICITY", ELECTRICITY)
+         .value("ACID", ACID)
+         .value("ROCKS", ROCKS)
+         .value("ICICLE_TRAP", ICICLE_TRAP)
+         .value("SPEAR", SPEAR)
+         .value("CROSSBOW_TRAP", CROSSBOW_TRAP)
+         .value("VINES", VINES)
+         .value("COLDWATER", COLDWATER)
+         .value("EXPLODED", EXPLODED)
+         .value("BOLTS", BOLTS)
+         .value("SPLAT", SPLAT)
+         .value("POISON_PLAYER", POISON_PLAYER)
+         .value("BONES", BONES)
+         .value("EXPLOSION", EXPLOSION)
+         .value("PETRIFIED", PETRIFIED)
+         .value("LIGHTNING", LIGHTNING)
+         .value("WINDBATTERED", WINDBATTERED)
+         .value("PIERCER", PIERCER)
+         .value("ELVEN_ARCHERS", ELVEN_ARCHERS)
+         .value("DEADLY_MOSS", DEADLY_MOSS)
+         .value("THORNS", THORNS)
+         .export_values()
+         ;
+
+	bp::enum_< mType>("mType")
+        .value("INVALID", INVALID)
+        .value("PLAYER", PLAYER)
+        .value("MONSTER", MONSTER)
+        .value("NPC", NPC)
+        .value("HUMANOID", HUMANOID)
+        .value("GOBLINOID", GOBLINOID)
+        .value("MONSTROUSHUM", MONSTROUSHUM)
+        .value("GIANTKIN", GIANTKIN)
+        .value("ANIMAL", ANIMAL)
+        .value("DIREANIMAL", DIREANIMAL)
+        .value("INSECT", INSECT)
+        .value("INSECTOID", INSECTOID)
+        .value("ARACHNID", ARACHNID)
+        .value("REPTILE", REPTILE)
+        .value("DINOSAUR", DINOSAUR)
+        .value("AUTOMATON", AUTOMATON)
+        .value("AVIAN", AVIAN)
+        .value("FISH", FISH)
+        .value("PLANT", PLANT)
+        .value("DEMON", DEMON)
+        .value("DEVIL", DEVIL)
+        .value("DRAGON", DRAGON)
+        .value("BEAST", BEAST)
+        .value("MAGICALBEAST", MAGICALBEAST)
+        .value("GOLEM", GOLEM)
+        .value("ETHEREAL", ETHEREAL)
+        .value("ASTRAL", ASTRAL)
+        .value("GASEOUS", GASEOUS)
+        .value("ENERGY", ENERGY)
+        .value("FAERIE", FAERIE)
+        .value("DEVA", DEVA)
+        .value("ELEMENTAL", ELEMENTAL)
+        .value("PUDDING", PUDDING)
+        .value("SLIME", SLIME)
+        .value("UNDEAD", UNDEAD)
+        .value("MAX_MOB_TYPES", MAX_MOB_TYPES)
+        .export_values()
+        ;
+
 
 	def("dice", &::dice);
 	def("rand", &::pythonRand);

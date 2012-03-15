@@ -1045,80 +1045,6 @@ int splCureBlindness(Creature* player, cmd* cmnd, SpellData* spellData) {
 // these effects can be removed with cure-poison
 bool hearMobTick(Socket* sock);
 
-bool effectPoison(EffectInfo *effect, Creature* target, EffectAction action, void* applier, ApplyFrom aFrom)
-{
-	if(target->immuneToPoison())
-		return(false);
-	if(target->isEffected("slow-poison") && mrand(1,100) > 50)
-		return(true);
-	if(target->isPlayer() && target->flagIsSet(P_POISONED_BY_PLAYER) && target->inCombat())
-		return(true);
-	if(target->isMonster() &&
-		(target->flagIsSet(M_WILL_POISON) || target->isPet()) &&
-		mrand(1,100) > 50
-	)
-		return(true);
-
-	switch(action) {
-	case EFFECT_COMPUTE:
-		break;
-	case EFFECT_APPLY:
-		break;
-	case EFFECT_UNAPPLY:
-		break;
-	case EFFECT_PULSE:
-		if(effect->getName() == "poison") {
-			// generic poison
-			target->wake("Terrible nightmares disturb your sleep!");
-			target->printColor("^r^#Poison courses through your veins.\n");
-			broadcast(target->getSock(), target->getRoom(), "Poison courses through %N's veins.", target);
-
-			int dmg = effect->getStrength() + mrand(1,3);
-			if(target->constitution.getCur() > 120) {
-				// a spread between 400 (50%) and 120 (0%) resistance
-				double percent = 1 - (target->constitution.getCur() - 120) / (680 - 120);
-				percent *= dmg;
-				dmg = (int)percent;
-			}
-
-			if(target->isMonster())
-				broadcast(hearMobTick, "^y*** Poison courses through %N's body (L%d,R%s).", target, target->getLevel(), target->getRoom()->fullName().c_str());
-			dmg = MAX(1,dmg);
-			target->hp.decrease(dmg);
-
-			if(target->isMonster() && target->getPoisonedBy() != "") {
-				const Player* player = gServer->findPlayer(target->getPoisonedBy());
-				if(player) {
-					// everybody but arachnus gets half experience for poison damage
-					int exp = dmg;
-					if(player->getDeity() != ARACHNUS)
-						exp /= 2;
-					target->getMonster()->addEnmDmg(player, exp);
-				}
-			}
-
-			// mark them for death
-			if(target->hp.getCur() < 1) {
-				broadcast(target->getSock(), target->getRoom(), "%M drops dead from poison.", target);
-				target->setDeathType(POISON_GENERAL);
-				if(target->isPlayer()) {
-					if(target->flagIsSet(P_POISONED_BY_PLAYER)) {
-						target->setDeathType(POISON_PLAYER);
-					} else if(target->flagIsSet(P_POISONED_BY_MONSTER)) {
-						target->setDeathType(POISON_MONSTER);
-					}
-				}
-				return(false);
-			}
-		}
-		break;
-	default:
-		break;
-	}
-	return(true);
-}
-*/
-
 //*********************************************************************
 //						effectDisease
 //*********************************************************************
@@ -1288,51 +1214,7 @@ bool effectCurse(EffectInfo *effect, Creature* target, EffectAction action, void
 					effect->setDuration(effect->getDuration() + 20);
 			}
 
-		} else if(effect->getName() == "wounded") {
-
-			target->wake("Terrible nightmares disturb your sleep!");
-
-			int dmg = mrand(1+target->hp.getMax()/30, 1+target->hp.getMax()/20);
-			target->printColor("^RYour wounds fester and bleed for %s%d^R damage.\n",
-				target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-			broadcast(target->getSock(), target->getRoom(), "%M's wounds fester and bleed.", target);
-
-			target->hp.decrease(dmg);
-
-			// mark them for death
-			if(target->hp.getCur() < 1) {
-				broadcast(target->getSock(), target->getRoom(), "%M dies from cursed wounds.", target);
-				target->setDeathType(WOUNDED);
-				return(false);
-			}
-
-		} else if(effect->getName() == "creeping-doom") {
-
-			if(target->isMonster() && target->getMonster()->getType() == ARACHNID)
-				return(true);
-			if(target->getDeity() == ARACHNUS)
-				return(true);
-
-			int dmg = effect->getStrength() / 2 + mrand(1,3);
-			target->printColor("^DCursed spiders crawl all over your body and bite you for %s%d^D damage.\n",
-				target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-			broadcast(target->getSock(), target->getRoom(), "Cursed spiders crawl all over %N.", target);
-
-			target->hp.decrease(dmg);
-
-			// mark them for death
-			if(target->hp.getCur() < 1) {
-				broadcast(target->getSock(), target->getRoom(), "Cursed spiders devour %N!", target);
-				target->setDeathType(CREEPING_DOOM);
-				return(false);
-			}
 		}
-		break;
-	default:
-		break;
-	}
-	return(true);
-}
 */
 
 //*********************************************************************
