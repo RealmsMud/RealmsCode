@@ -409,6 +409,7 @@ BOOST_PYTHON_MODULE(MudObjects)
 		BaseRoom_exposer.def("hasMagicBonus", &::BaseRoom::magicBonus)
 		.def("isForest", &::BaseRoom::isForest)
 		.def("setTempNoKillDarkmetal", &::BaseRoom::setTempNoKillDarkmetal)
+		.def("isSunlight", &::BaseRoom::isSunlight)
 		;
 	}
 	bp::class_<Skill, boost::noncopyable >( "Skill", bp::no_init )
@@ -560,6 +561,7 @@ BOOST_PYTHON_MODULE(MudObjects)
 	.def("isWerewolf", &Creature::isNewWerewolf)
 	.def("isUndead", &Creature::isUndead)
 	.def("willBecomeVampire", &Creature::willBecomeVampire)
+	.def("makeVampire", &Creature::makeVampire)
 	.def("willBecomeWerewolf", &Creature::willBecomeWerewolf)
 	.def("immuneCriticals", &Creature::immuneCriticals)
 	.def("immuneToPoison", &Creature::immuneToPoison)
@@ -635,7 +637,7 @@ BOOST_PYTHON_MODULE(MudObjects)
 	.def("getCoinDisplay", &Player::getCoinDisplay)
 	.def("getBankDisplay", &Player::getBankDisplay)
 	.def("getWimpy", &Player::getWimpy)
-
+	.def("getAfflictedBy", &Player::getAfflictedBy)
 	;
 
 	class_<Monster, boost::noncopyable, bases<Creature> >("Monster", no_init)

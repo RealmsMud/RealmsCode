@@ -129,6 +129,8 @@ int dmEffectList(Player* player, cmd* cmnd) {
 		player->printColor("\tSelfDelStr: %s^x\n", effect->getSelfDelStr().c_str());
 		player->printColor("\tRoomDelStr: %s^x\n", effect->getRoomDelStr().c_str());
 		player->printColor("\tPulsed: %s^x\n", effect->isPulsed() ? "^GPulsed" : "Non-Pulsed");
+		if(effect->isPulsed())
+		    *player << ColorOn << "\tPulse Delay: " << effect->getPulseDelay() << "^x\n" << ColorOff;
 		player->printColor("\tSpell: %s^x\n", effect->isSpell() ? "^GYes" : "^RNo");
 		player->printColor("\tType: %s^x\n", effect->getType().c_str());
 

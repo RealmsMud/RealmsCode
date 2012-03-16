@@ -749,19 +749,6 @@ void Config::loadCalendar() {
 }
 
 //*********************************************************************
-//						loadProxyAccess
-//*********************************************************************
-
-void Config::loadProxyAccess() {
-	if(proxyManager)
-		proxyManager->clear();
-	proxyManager = new ProxyManager;
-}
-
-void Config::saveProxyAccess() {
-	proxyManager->save();
-}
-//*********************************************************************
 //						getCalendar
 //*********************************************************************
 

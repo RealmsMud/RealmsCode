@@ -186,10 +186,9 @@ void login(Socket* sock, bstring str) {
 			sock->setPlayer(player);
 
 			if(gServer->checkDuplicateName(sock, false)) {
-				free_crt(player, false);
+			    // Don't free player here or ask for name again because checkDuplicateName does that
+			    // We only need to worry about freeing proxy
 				free_crt(proxy, false);
-				sock->setPlayer(NULL);
-				sock->askFor("Please enter name: ");
 				return;
 			}
 			sock->println(bstring("Trying to log in ") + player->getName() + " using " + proxy->getName() + " as proxy.");

@@ -208,6 +208,7 @@ void Config::reset(bool reload) {
 
 
 	calendar = NULL;
+	proxyManager = NULL;
 
 	tickets.clear();
 	defaultArea = "misc";
