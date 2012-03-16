@@ -702,7 +702,7 @@ void Player::checkEffectsWearingOff() {
 			) ||
 			(	flagIsSet(P_SLEEPING) && (
 				(hp.getCur() >= hp.getMax() && mp.getCur() >= mp.getMax()) ||
-				(cClass == VAMPIRE && !getRoomParent()->vampCanSleep(getSock()))
+				(cClass == PUREBLOOD && !getRoomParent()->vampCanSleep(getSock()))
 			) )
 		) {
 			printColor("^cYou wake up.\n");
@@ -1352,7 +1352,7 @@ int mprofic(const Creature* player, int index) {
 		break;
 	case PALADIN:
 	case BARD:
-	case VAMPIRE:
+	case PUREBLOOD:
 	case DRUID:
 		prof_array[0] = 0L;
 		prof_array[1] = 1024L;

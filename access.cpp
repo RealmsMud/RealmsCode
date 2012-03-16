@@ -52,7 +52,7 @@ char object_type[][20] = { "error", "error", "error", "instrument", "herb",
 //		class
 //
 char class_str[][16] = { "None", "Assassin", "Berserker", "Cleric", "Fighter", "Mage", "Paladin", "Ranger", "Thief",
-		"Vampire", "Monk", "Death Knight", "Druid", "Lich", "Werewolf", "Bard", "Rogue", "Builder", "Unused",
+		"Pureblood", "Monk", "Death Knight", "Druid", "Lich", "Werewolf", "Bard", "Rogue", "Builder", "Unused",
 		"Caretaker", "Dungeonmaster" };
 
 char class_abbrev[][8] = { "Assn", "Bers", "Cleric", "Ftr", "Mage", "Pal", "Rang", "Thief", "Vamp", "Monk", "Dknght",

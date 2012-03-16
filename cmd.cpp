@@ -39,7 +39,8 @@
 
 
 int dmTest(Player* player, cmd* cmnd) {
-    gServer->runPython("print \"This is an error\n\"");
+    *player << gConfig->getProxyList();
+
 	return(0);
 }
 
@@ -676,6 +677,7 @@ bool Config::initCommands() {
 	playerCommands["suicide"] = new PlyCommand("suicide",			100,	cmdSuicide,			0,		"Delete your character.");
 	playerCommands["convert"] = new PlyCommand("convert",			100,	cmdConvert,			0,		"Convert from chaotic alignment to lawful alignment.");
 	playerCommands["password"] = new PlyCommand("password",			100,	cmdPassword,		0,		"Change your password.");
+	playerCommands["proxy"] = new PlyCommand("proxy",				100,	cmdProxy,			0,		"Allow proxy access to this character.");
 	playerCommands["finger"] = new PlyCommand("finger",				100,	cmdFinger,			0,		"Look up an offline character.");
 	playerCommands["hypnotize"] = new PlyCommand("hypnotize",		100,	cmdHypnotize,		0,		"");
 	playerCommands["bite"] = new PlyCommand("bite",					 60,	cmdBite,			0,		"");

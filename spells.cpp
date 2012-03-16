@@ -167,7 +167,7 @@ MagicType Creature::getCastingType() const {
 		case LICH:
 		// hybrid arcane
 		case BARD:
-		case VAMPIRE:
+		case PUREBLOOD:
 			return(Arcane);
 		// pure divine
 		case CLERIC:
@@ -205,7 +205,7 @@ bool Creature::isHybridCaster() const {
 			cClass == DEATHKNIGHT ||
 			cClass == PALADIN ||
 			cClass == RANGER ||
-			cClass == VAMPIRE ||
+			cClass == PUREBLOOD ||
 			second == MAGE ||
 			(cClass == MAGE && second) ||
 			(cClass == CLERIC && second)

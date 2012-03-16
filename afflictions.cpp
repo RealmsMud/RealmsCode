@@ -508,7 +508,7 @@ bool Creature::isBlind() const {
 // be replaced with isEffected("vampirism") and isEffected("lycanthropy")
 
 bool Creature::isNewVampire() const {
-	if(isPlayer() && cClass == VAMPIRE)
+	if(isPlayer() && cClass == PUREBLOOD)
 		return(false);
 	return(isEffected("vampirism"));
 }
@@ -563,6 +563,9 @@ void Creature::makeVampire() {
 //***********************************************************************
 
 bool Creature::willBecomeVampire() const {
+	if(!pFlagIsSet(P_PTESTER))
+		return(false);
+
 	if(level < 7 || cClass == PALADIN || isEffected("lycanthropy") || isUndead())
 		return(false);
 	// only evil clerics become vampires
@@ -673,9 +676,7 @@ void Creature::clearMinions() {
 //********************************************************************
 
 bool Creature::addPorphyria(Creature *killer, int chance) {
-	// TODO: Dom: disable porphyria until new vamps are tested
-	return(false);
-/*
+
 	const RaceData* rdata = gConfig->getRace(race);
 	if(rdata)
 		chance -= rdata->getPorphyriaResistance();
@@ -695,12 +696,12 @@ bool Creature::addPorphyria(Creature *killer, int chance) {
 	if(killer->isPlayer()) {
 		killer->print("You have infected %N with porphyria.\n", this);
 		if(isPlayer())
-			getPlayer()->setAfflictedBy(killer->name);
+			getAsPlayer()->setAfflictedBy(killer->name);
 	} else if(isPlayer())
-		getPlayer()->setAfflictedBy("");
+		getAsPlayer()->setAfflictedBy("");
 
 	return(true);
-	*/
+
 }
 
 //********************************************************************
@@ -754,6 +755,8 @@ void Creature::makeWerewolf() {
 //***********************************************************************
 
 bool Creature::willBecomeWerewolf() const {
+	if(!pFlagIsSet(P_PTESTER))
+		return(false);
 	if(level < 7 || isEffected("lycanthropy") || isUndead())
 		return(false);
 	if(monType::noLivingVulnerabilities(type))
@@ -766,9 +769,6 @@ bool Creature::willBecomeWerewolf() const {
 //********************************************************************
 
 bool Creature::addLycanthropy(Creature *killer, int chance) {
-	// TODO: Dom: disable lycanthropy until new wolves are tested
-	return(false);
-/*
 	if(mrand(1,100) > chance)
 		return(false);
 	if(!willBecomeWerewolf())
@@ -783,12 +783,11 @@ bool Creature::addLycanthropy(Creature *killer, int chance) {
 	if(killer->isPlayer()) {
 		killer->print("You have infected %N with lycanthropy.\n", this);
 		if(isPlayer())
-			getPlayer()->setAfflictedBy(killer->name);
+			getAsPlayer()->setAfflictedBy(killer->name);
 	} else if(isPlayer())
-		getPlayer()->setAfflictedBy("");
+		getAsPlayer()->setAfflictedBy("");
 
 	return(true);
-	*/
 }
 
 //*********************************************************************
@@ -1035,187 +1034,6 @@ int splCureBlindness(Creature* player, cmd* cmnd, SpellData* spellData) {
 	target->removeEffect("blindness");
 	return(1);
 }
-
-//*********************************************************************
-//						effectPoison
-//*********************************************************************
-/*
- * Handle in python now
- *
-// these effects can be removed with cure-poison
-bool hearMobTick(Socket* sock);
-
-//*********************************************************************
-//						effectDisease
-//*********************************************************************
-/*
- * Handle in python now
- *
-// these effects can be removed with cure-disease
-
-bool effectDisease(EffectInfo *effect, Creature* target, EffectAction action, void* applier, ApplyFrom aFrom)
-{
-	switch(action) {
-	case EFFECT_COMPUTE:
-		break;
-	case EFFECT_APPLY:
-		if(effect->getName() == "lycanthropy") {
-			// can they even be effected by lycanthropy?
-			if(!target->willBecomeWerewolf())
-				return(false);
-			effect->setStrength(1);
-			// 90 minutes until lycanthropy takes effect
-			effect->setDuration(90 * 60);
-		}
-		break;
-	case EFFECT_UNAPPLY:
-		break;
-	case EFFECT_PULSE:
-		if(effect->getName() == "lycanthropy") {
-			// permanent lycanthropy has no pulse effects
-			if(effect->getDuration() == -1)
-				return(true);
-
-			// if they let their disease run too low, it'll become permanent
-			if(effect->getDuration() <= 20)
-				effect->setDuration(-1);
-
-		} else if(effect->getName() == "disease") {
-			// generic disease
-			target->wake("Terrible nightmares disturb your sleep!");
-
-			target->printColor("^#^rFever grips your mind.\n");
-			target->printColor("^bYou feel nauseous.\n");
-			broadcast(target->getSock(), target->getRoom(), "Fever grips %N.", target);
-			target->updateAttackTimer(true, dice(1,6,3));
-
-			int dmg = effect->getStrength() + mrand(1,3);
-			if(target->constitution.getCur() > 120) {
-				// a spread between 400 (50%) and 120 (0%) resistance
-				double percent = 1 - (target->constitution.getCur() - 120) / (680 - 120);
-				percent *= dmg;
-				dmg = (int)percent;
-			}
-			dmg = MAX(1,dmg);
-			target->hp.decrease(dmg);
-
-			// mark them for death
-			if(target->hp.getCur() < 1) {
-				broadcast(target->getSock(), target->getRoom(), "%M dies from disease.", target);
-				target->setDeathType(DISEASE);
-				return(false);
-			}
-		}
-		break;
-	default:
-		break;
-	}
-	return(true);
-}
-*/
-
-//*********************************************************************
-//						effectCurse
-//*********************************************************************
-/*
- * Handle in python now
- *
-// these effects can be removed with remove-curse
-
-bool effectCurse(EffectInfo *effect, Creature* target, EffectAction action, void* applier, ApplyFrom aFrom)
-{
-	// how many minutes until porphyria takes effect
-	int minutes = 90;
-
-	switch(action) {
-	case EFFECT_COMPUTE:
-		break;
-	case EFFECT_APPLY:
-		if(effect->getName() == "porphyria") {
-			// can they even be effected by porphyria?
-			if(!target->willBecomeVampire())
-				return(false);
-			effect->setStrength(1);
-			effect->setDuration(minutes * 60);
-		}
-		break;
-	case EFFECT_UNAPPLY:
-		break;
-	case EFFECT_PULSE:
-		if(effect->getName() == "porphyria") {
-			Player* pTarget = target->getPlayer();
-			bool remove = false;
-			// over 90 minutes, max will get up to about 270, so range is 1-27 at worst
-			int dmg = mrand(1, MAX(2, effect->getStrength()/10));
-
-			target->wake("Terrible nightmares disturb your sleep!");
-
-			// player-inflicted porphyria does less damage
-			if(pTarget && pTarget->getAfflictedBy() != "")
-				dmg /= 2;
-
-			dmg = MAX(1, dmg);
-
-			// pulse once every 20 seconds, base 50% chance to take damage
-			// if a player is the cause, make it happen less often
-			if(mrand(0,1)) {
-				effect->setStrength(effect->getStrength() + 1);
-				switch(mrand(1,4)) {
-				case 1:
-					target->printColor("^rBlood sputters through your veins.\n");
-					break;
-				case 2:
-					target->printColor("^rBlood drains from your head.\n");
-					break;
-				case 3:
-					target->printColor("^rFever grips your mind.\n");
-					break;
-				default:
-					target->printColor("^WA sharp headache strikes you.\n");
-					break;
-				}
-
-				target->printColor("You take %s%d^x damage.\n",
-					target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-				target->hp.decrease(dmg);
-			}
-
-			// 3 pulses every minute
-			// death by porphyria will also trigger
-			if(	(effect->getStrength() > (minutes * 3) && !target->getRoom()->isSunlight()) ||
-				(pTarget && pTarget->hp.getCur() < 1)
-			) {
-				remove = true;
-
-				if(target->willBecomeVampire()) {
-					target->makeVampire();
-					if(pTarget) {
-						pTarget->printColor("^rYour body shudders, your limbs go as cold as ice!\n");
-						pTarget->printColor("^rFangs suddenly grow, replacing your teeth and sending blood running down your throat!\n");
-						pTarget->printColor("^R^#You have been turned into a vampire.\n");
-					}
-					broadcast(target->getSock(), target->getRoom(), "^r%M shudders and convulses!", pTarget);
-					broadcast(target->getSock(), target->getRoom(), "^rFangs grow from %N's teeth!", pTarget);
-				}
-			}
-
-			if(target->hp.getCur() < 1) {
-				broadcast(target->getSock(), target->getRoom(), "%M dies from poyphyria.", target);
-				target->setDeathType(DISEASE);
-				return(false);
-			}
-
-			if(remove)
-				return(false);
-			else {
-				// porphyria should never actually wear off; if they are staying in
-				// the sunlight to avoid becoming a vampire, just prolong it
-				if(effect->getDuration() <= 20)
-					effect->setDuration(effect->getDuration() + 20);
-			}
-
-		}
-*/
 
 //*********************************************************************
 //						isCurse

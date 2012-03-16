@@ -951,6 +951,9 @@ public:
 //*********************************************************************
 
 class Player : public Creature {
+public:
+	static bstring hashPassword(bstring pass);
+
 protected:
 	void doCopy(const Player& cr);
 	void reset();
@@ -961,11 +964,10 @@ protected:
 	void delList(std::list<bstring>* list, bstring name);
 	int doDeleteFromRoom(BaseRoom* room, bool delPortal);
 	void finishAddPlayer(BaseRoom* room);
-	static bstring hashPassword(bstring pass);
 	long getInterest(long principal, double annualRate, long seconds);
 
 public:
-// Constructors, Deconstructors, etc
+	// Constructors, Deconstructors, etc
 	Player();
 	Player(Player& cr);
 	Player(const Player& cr);
@@ -983,6 +985,10 @@ public:
 
 protected:
 // Data
+
+	bstring proxyName;
+	bstring proxyId;
+
 	char customColors[CUSTOM_COLOR_SIZE];
 	unsigned short warnings;
 	unsigned short actual_level;
@@ -1053,7 +1059,17 @@ public:
 	Range	bRange[MAX_BUILDER_RANGE];
 
 
-// Combat & Death
+	bool checkProxyAccess(Player* proxy);
+
+	void setProxy(Player* proxy);
+	void setProxy(bstring pProxyName, bstring pProxyId);
+	void setProxyName(bstring pProxyName);
+	void setProxyId(bstring pProxyId);
+
+	bstring getProxyName() const;
+	bstring getProxyId() const;
+
+	// Combat & Death
 	int computeAttackPower();
 	void dieToPet(Monster *killer);
 	void dieToMonster(Monster *killer);

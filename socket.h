@@ -175,6 +175,8 @@ public:
 	void restoreState();
 	void addToPlayerList();
 
+	void finishLogin();
+
 
 	int write(bstring toWrite, bool pSpy = true);
 	void askFor(const char *str);
@@ -300,6 +302,7 @@ protected:
 // TODO - Retool so they can be moved to protected
 public:
 	char tempstr[4][256];
+	bstring tempbstr;
 
 	int getParam();
 	void setParam(int newParam);

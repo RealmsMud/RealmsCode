@@ -242,7 +242,7 @@ int Player::getHpTickBonus() const {
 	case PALADIN:
 	case DEATHKNIGHT:
 	case BARD:
-	case VAMPIRE:
+	case PUREBLOOD:
 		bonus = (level+4)/10;
 		break;
 	// And then the pure casters
@@ -287,7 +287,7 @@ int Player::getMpTickBonus() const {
 	case PALADIN:
 	case DEATHKNIGHT:
 	case BARD:
-	case VAMPIRE:
+	case PUREBLOOD:
 		bonus = (level+4)/10;
 		break;
 	// And then the pure casters

@@ -261,6 +261,10 @@ bool Config::load() {
 	loadCalendar();
 	printf("done.\n");
 
+	std::cout << "Loading Proxy Access...";
+	loadProxyAccess();
+	std::cout << "done." << std::endl;
+
 	printf("Loading Areas...%s.\n", loadAreas() ? "done" : "*** FAILED ***");
 	if(!listing)
 		printf("Loading Ships...%s.\n", loadShips() ? "done" : "*** FAILED ***");

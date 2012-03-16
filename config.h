@@ -36,6 +36,7 @@ class Effect;
 class MsdpVariable;
 class MxpElement;
 class SocialCommand;
+class ProxyManager;
 
 typedef std::pair<bstring, bstring> accountDouble;
 typedef std::map<bstring, MxpElement*> MxpElementMap;
@@ -77,6 +78,16 @@ public:
 	bool load();
 	bool save() const;
 	void cleanUp();
+
+// Proxy
+	void loadProxyAccess();
+	void saveProxyAccess();
+	bool hasProxyAccess(Player* proxy, Player* proxied);
+	void grantProxyAccess(Player* proxy, Player* proxied);
+	void removeProxyAccess(Player* proxy, Player* proxied);
+	void removeProxyAccess(bstring id, Player* proxied);
+
+	bstring getProxyList(Player* player = NULL);
 
 // MSDP
 	bool loadMsdpVariables();
@@ -482,6 +493,8 @@ private:
 	std::list<Unique*> uniques;
 	std::list<Lore*> lore;
 	std::list<accountDouble> accountDoubleLog;
+
+	ProxyManager* proxyManager;
 
 	// Quests
 public:

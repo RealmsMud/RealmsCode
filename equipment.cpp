@@ -2929,7 +2929,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 
 	if(target->isPlayer()) {
 		if(	target->flagIsSet(P_MISTED) &&
-			!player->checkStaff("How can you give something to a misted vampire?\n")
+			!player->checkStaff("How can you give something to a misted creature?\n")
 		)
 			return(0);
 	} else {

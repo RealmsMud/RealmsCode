@@ -978,6 +978,12 @@ int dmFifo(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdForum(Player* player, cmd* cmnd) {
+
+	if(player->getProxyName() != "") {
+		*player << "You are unable to modify forum accounts of proxied characters.\n";
+		return(0);
+	}
+
 	bstring::size_type pos=0;
 	std::ostringstream url;
 	url << "mud.php?type=forum&char=" << player->name;

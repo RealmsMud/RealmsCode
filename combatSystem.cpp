@@ -50,7 +50,7 @@ int Player::computeAttackPower() {
 			break;
 		case BARD:
 		case WEREWOLF:
-		case VAMPIRE:
+		case PUREBLOOD:
 			attackPower = (strength.getCur() * 2) + (level * 4);
 			break;
 		case RANGER:
@@ -813,7 +813,7 @@ double Creature::getDodgeChance(Creature* attacker, const int& difference) {
 			case PALADIN:
 			case DEATHKNIGHT:
 			case WEREWOLF:
-			case VAMPIRE:
+			case PUREBLOOD:
 			case MONK:
 				chance += (2.0 + (dexterity.getCur() * .05));
 				break;
@@ -894,7 +894,7 @@ double Creature::getMissChance(const int& difference) {
 			case WEREWOLF:
 				chance *= 0.8;
 				break;
-			case VAMPIRE:
+			case PUREBLOOD:
 			case BARD:
 				chance *= 0.9;
 				break;
@@ -985,11 +985,11 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
 					if(weapon) {
 						if(	!weapon->flagIsSet(O_CAN_HIT_MIST) && !flagIsSet(P_MISTBANE) )
 						{
-							if(showFail) printColor("Your cannot hit a misted vampire with your %1P.\n", weapon);
+							if(showFail) printColor("Your cannot hit a misted creature with your %1P.\n", weapon);
 							return(false);
 						}
 					} else if(!flagIsSet(P_MISTBANE)) {
-						if(showFail) print("You cannot physically hit a misted vampire.\n");
+						if(showFail) print("You cannot physically hit a misted creature.\n");
 						return(false);
 					}
 				}

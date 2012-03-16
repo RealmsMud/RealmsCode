@@ -340,7 +340,7 @@ int cmdWho(Player* player, cmd* cmnd) {
 		case 'v':
 			switch (cmnd->str[1][1]) {
 			case 'a':
-				cClass = VAMPIRE;
+				cClass = PUREBLOOD;
 				break;
 			case 'e':
 				cClass = -3;
@@ -506,6 +506,11 @@ int cmdSuicide(Player* player, cmd* cmnd) {
 
 	if(!player->ableToDoCommand())
 		return(0);
+
+	if(player->getProxyName() != "") {
+		player->print("You are unable to suicide a proxied character.\n");
+		return(0);
+	}
 
 	if(player->flagIsSet(P_NO_SUICIDE)) {
 		player->print("You cannot suicide right now. You are in a 24 hour cooling-off period.\n");

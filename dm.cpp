@@ -197,6 +197,7 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
 		loadList.push_back("limited");
 		loadList.push_back("msdp");
 		loadList.push_back("properties");
+		loadList.push_back("proxies");
 		loadList.push_back("quests");
 		loadList.push_back("races");
 		loadList.push_back("recipes");
@@ -212,6 +213,7 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
 		saveList.push_back("guilds");
 		saveList.push_back("limited");
 		saveList.push_back("properties");
+		saveList.push_back("proxies");
 		saveList.push_back("recipes");
         saveList.push_back("socials");
 		saveList.push_back("spells");
@@ -304,6 +306,14 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
 		} else {
 			gConfig->saveProperties();
 			player->print("Properties saved.\n");
+		}
+	} else if(!strcmp(cmnd->str[1], "proxies")) {
+		if(load) {
+			gConfig->loadProxyAccess();
+			player->print("Proxies reloaded.\n");
+		} else {
+			gConfig->saveProxyAccess();
+			player->print("Proxies saved.\n");
 		}
 	} else if(!strcmp(cmnd->str[1], "limited")) {
 		if(load) {
@@ -664,7 +674,10 @@ int dmUsers(Player* player, cmd* cmnd) {
 		else if(user->flagIsSet(P_GLOBAL_GAG))
 			oStr << "^m";
 
-		oStr << std::setw(10) << bstring(user->name).left(10) << "^w ";
+		if(user->getProxyName().empty())
+			oStr << std::setw(10) << bstring(user->name).left(10) << "^w ";
+		else
+			oStr << std::setw(10) << bstring(bstring(user->name) + "(" + user->getProxyName() + ")").left(10) << "^w ";
 
 		if(!sock->isConnected()) {
 			sprintf(str, "connecting (Fd: %d)", sock->getFd());

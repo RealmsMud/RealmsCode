@@ -57,7 +57,7 @@ const char *dmname[] = {
 
 
 char allowedClassesStr[CLASS_COUNT + 4][16] = { "Assassin", "Berserker", "Cleric", "Fighter",
-			"Mage", "Paladin", "Ranger", "Thief", "Vampire", "Monk", "Death Knight",
+			"Mage", "Paladin", "Ranger", "Thief", "Pureblood", "Monk", "Death Knight",
 			"Druid", "Lich", "Werewolf", "Bard", "Rogue", "Figh/Mage", "Figh/Thief",
 			"Cler/Ass", "Mage/Thief", "Thief/Mage", "Cler/Figh", "Mage/Ass" };
 
@@ -72,7 +72,7 @@ class_stats_struct class_stats[CLASS_COUNT] = {
 	{ 19,  3,  6,  3,  1,  4,  0},  // paladin
 	{ 18,  3,  6,  3,  2,  2,  0},  // ranger
 	{ 18,  3,  5,  2,  2,  2,  1},  // thief
-	{ 15,  3,  5,  4,  2,  2,  1},  // vampire
+	{ 15,  3,  5,  4,  2,  2,  1},  // pureblood
 	{ 17,  3,  5,  2,  1,  3,  0},  // monk
 	{ 19,  3,  6,  3,  1,  4,  0},  // death-knight
 	{ 15,  4,  5,  4,  1,  3,  0},  // druid
@@ -110,44 +110,7 @@ short multiHpMpAdj[MAX_MULTICLASS][2] = {
 	{   6,  3	}, // 6: Cleric/Fighter
 	{   5,  3	}  // 7: Mage/Assassin
 };
-//
-//short level_cycle[][10] = {
-//		// 2	3	4	5	6	7	8	9	10   11
-//		{ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0   },
-//		{ CON, PTY, STR, INT, DEX, INT, DEX, PTY, STR, DEX },  // assassin
-//		{ CON, DEX, PTY, CON, STR, CON, PTY, STR, DEX, STR },  // barbarian
-//		{ STR, DEX, CON, PTY, INT, PTY, INT, DEX, CON, INT },  // cleric
-//		{ PTY, INT, DEX, CON, STR, CON, INT, STR, DEX, STR },  // fighter
-//		{ STR, DEX, PTY, CON, INT, CON, INT, DEX, PTY, INT },  // mage
-//		{ DEX, INT, CON, STR, PTY, STR, INT, PTY, CON, PTY },  // paladin
-//		{ PTY, STR, INT, CON, DEX, CON, DEX, STR, INT, DEX },  // ranger
-//		{ INT, CON, PTY, STR, DEX, STR, CON, DEX, PTY, DEX },  // thief
-//		{ CON, PTY, STR, INT, DEX, STR, INT, PTY, STR, DEX },  // vampire
-//		{ PTY, CON, STR, DEX, INT, CON, DEX, PTY, CON, STR },  // monk
-//		{ DEX, INT, CON, STR, PTY, STR, DEX, PTY, CON, STR },  // death-knight
-//		{ STR, DEX, PTY, CON, INT, CON, INT, DEX, PTY, INT },  // druid
-//		{ DEX, CON, PTY, INT, DEX, INT, CON, STR, INT, CON },  // lich
-//		{ PTY, DEX, PTY, CON, STR, CON, INT, STR, DEX, STR },  // werewolf
-//		{ CON, PTY, STR, INT, PTY, INT, DEX, PTY, STR, INT },  // bard
-//		{ PTY, INT, CON, STR, DEX, CON, STR, DEX, INT, DEX },  // rogue
-//		{ STR, DEX, INT, CON, PTY, STR, DEX, INT, CON, PTY },  // builder
-//		{ STR, DEX, INT, CON, PTY, STR, DEX, INT, CON, PTY },  // 	unused
-//		{ STR, DEX, INT, CON, PTY, STR, DEX, INT, CON, PTY },  // caretaker
-//		{ STR, DEX, INT, CON, PTY, STR, DEX, INT, CON, PTY }   // dungeonmaster
-//};
-//
-//short multiStatCycle[MAX_MULTICLASS][10] = {
-//   //  1	2	3	4	5	6	7	8	9   10	   ID  Classes
-//	{ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0   }, // 0: None
-//	{ PTY, INT, DEX, INT, STR, CON, INT, STR, DEX, STR }, // 1: Fighter/Mage
-//	{ PTY, INT, DEX, CON, STR, CON, DEX, STR, DEX, STR }, // 2: Fighter/Thief
-//	{ STR, DEX, CON, PTY, INT, PTY, INT, STR, CON, PTY }, // 3: Cleric/Assassin
-//	{ STR, DEX, PTY, CON, INT, DEX, INT, DEX, PTY, INT }, // 4: Mage/Thief
-//	{ INT, CON, PTY, INT, DEX, STR, CON, DEX, PTY, DEX }, // 5: Thief/Mage
-//	{ STR, DEX, CON, PTY, INT, PTY, INT, DEX, CON, STR }, // 6: Cleric/Fighter
-//	{ STR, DEX, PTY, CON, STR, CON, INT, DEX, PTY, INT }, // 7: Mage/Assassin
-//};
-//
+
 short saving_throw_cycle[][10] = { // POI   DEA   BRE   MEN   SPL
 		// 2	3	4	5	6	7	8	9	10   11
 		{ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0   },
@@ -159,7 +122,7 @@ short saving_throw_cycle[][10] = { // POI   DEA   BRE   MEN   SPL
 		{ BRE, MEN, DEA, POI, SPL, BRE, SPL, POI, BRE, DEA },  // paladin
 		{ SPL, BRE, MEN, POI, DEA, BRE, MEN, DEA, POI, SPL },  // ranger
 		{ POI, MEN, DEA, POI, SPL, DEA, POI, DEA, BRE, POI },  // thief
-		{ SPL, MEN, DEA, SPL, BRE, MEN, SPL, MEN, DEA, POI },  // vampire
+		{ SPL, MEN, DEA, SPL, BRE, MEN, SPL, MEN, DEA, POI },  // pureblood
 		{ POI, MEN, SPL, BRE, DEA, MEN, POI, MEN, SPL, MEN },  // monk
 		{ BRE, MEN, DEA, POI, SPL, BRE, SPL, POI, BRE, DEA },  // death-knight
 		{ POI, SPL, POI, DEA, MEN, BRE, SPL, POI, DEA, POI },  // druid
@@ -172,19 +135,6 @@ short saving_throw_cycle[][10] = { // POI   DEA   BRE   MEN   SPL
 		{ POI, DEA, BRE, MEN, SPL, POI, DEA, BRE, MEN, SPL },  // caretaker
 		{ POI, DEA, BRE, MEN, SPL, POI, DEA, BRE, MEN, SPL }   // dungeonmaster
 };
-//
-//short multiSaveCycle[MAX_MULTICLASS][10] = {
-//   //  1	2	3	4	5	6	7	8	9   10	   ID  Classes
-//	{ 0,   0,   0,   0,   0,   0,   0,   0,   0,   0   }, // 0: None
-//	{ MEN, BRE, MEN, SPL, DEA, BRE, POI, DEA, POI, SPL }, // 1: Fighter/Mage
-//	{ POI, BRE, MEN, SPL, DEA, BRE, POI, DEA, POI, DEA }, // 2: Fighter/Thief
-//	{ POI, MEN, DEA, POI, SPL, BRE, SPL, MEN, BRE, SPL }, // 3: Cleric/Assassin
-//	{ SPL, POI, MEN, SPL, DEA, MEN, DEA, BRE, MEN, SPL }, // 4: Mage/Thief
-//	{ POI, MEN, DEA, POI, SPL, DEA, POI, SPL, BRE, POI }, // 5: Thief/Mage
-//	{ BRE, MEN, DEA, POI, SPL, BRE, SPL, MEN, DEA, SPL }, // 6: Cleric/Fighter
-//	{ SPL, POI, MEN, POI, DEA, MEN, SPL, BRE, MEN, SPL }, // 7: Mage/Assassin
-//};
-
 
 int numBans = 0;
 int numQuests = 0;

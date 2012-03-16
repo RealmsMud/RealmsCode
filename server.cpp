@@ -1588,6 +1588,8 @@ bool Server::saveRebootFile(bool resetShips) {
 			xml::newNumChild(curNode, "Fd", sock->getFd());
 			xml::newStringChild(curNode, "Ip", sock->getIp().c_str());
 			xml::newStringChild(curNode, "HostName", sock->getHostname().c_str());
+			xml::newStringChild(curNode, "ProxyName", player->getProxyName());
+			xml::newStringChild(curNode, "ProxyId", player->getProxyId());
 			sock->saveTelopts(curNode);
 		}
 	}
@@ -1702,6 +1704,12 @@ int Server::finishReboot() {
 					sock->setHostname(host);
 				} else if(NODE_NAME(childNode, "Telopts")) {
 					sock->loadTelopts(childNode);
+				} else if(NODE_NAME(childNode, "ProxyName")) {
+					bstring proxyName = xml::getBString(childNode);
+					player->setProxyName(proxyName);
+				} else if(NODE_NAME(childNode, "ProxyId")) {
+					bstring proxyId = xml::getBString(childNode);
+					player->setProxyId(proxyId);
 				}
 
 				childNode = childNode->next;
@@ -2004,6 +2012,15 @@ Creature* Server::lookupCrtId(const bstring& toLookup) {
         return(NULL);
     else
         return(((*it).second)->getAsCreature());
+
+}
+Player* Server::lookupPlyId(const bstring& toLookup) {
+    IdMap::iterator it = registeredIds.find(toLookup);
+
+    if(it == registeredIds.end())
+        return(NULL);
+    else
+        return(((*it).second)->getAsPlayer());
 
 }
 bstring Server::getRegisteredList() {

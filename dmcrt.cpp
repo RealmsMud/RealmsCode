@@ -954,12 +954,12 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 		target->setClass((short)cmnd->val[3]);
 
 
-		if(cClass == VAMPIRE && target->getClass() != VAMPIRE)
+		if(cClass == PUREBLOOD && target->getClass() != PUREBLOOD)
 			player->printColor("Auto-removing ^rVampirism.\n");
 		else if(cClass == WEREWOLF && target->getClass() != WEREWOLF)
 			player->printColor("Auto-removing ^oLycanthropy.\n");
 
-		if(cClass != VAMPIRE && target->getClass() == VAMPIRE)
+		if(cClass != PUREBLOOD && target->getClass() == PUREBLOOD)
 			player->printColor("Auto-adding ^rVampirism.\n");
 		else if(cClass != WEREWOLF && target->getClass() == WEREWOLF)
 			player->printColor("Auto-adding ^oLycanthropy.\n");

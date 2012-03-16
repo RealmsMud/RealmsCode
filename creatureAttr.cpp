@@ -201,12 +201,12 @@ void Creature::setExperience(unsigned long e) { experience = MIN(2100000000, e);
 void Creature::setClass(unsigned short c) {
 	c = MIN(CLASS_COUNT-1, c);
 
-	if(cClass == VAMPIRE && c != VAMPIRE)
+	if(cClass == PUREBLOOD && c != PUREBLOOD)
 		removeEffect("vampirism");
 	else if(cClass == WEREWOLF && c != WEREWOLF)
 		removeEffect("lycanthropy");
 
-	if(cClass != VAMPIRE && c == VAMPIRE) {
+	if(cClass != PUREBLOOD && c == PUREBLOOD) {
 		if(!isEffected("vampirism")) {
 			addPermEffect("vampirism");
 			if(isPlayer())
@@ -2043,6 +2043,9 @@ bool Creature::isBraindead()  const {
 bstring Creature::fullName() const {
 	const Player *player = getAsConstPlayer();
 	bstring str = name;
+
+	if(player && !player->getProxyName().empty())
+		str += "(" + player->getProxyName() + ")";
 
 	if(player && player->flagIsSet(P_CHOSEN_SURNAME) && player->getSurname() != "") {
 		str += " ";

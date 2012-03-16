@@ -36,6 +36,9 @@ int cmdBrew(Player* player, cmd* cmnd);
 
 int cmdWeapons(Player* player, cmd* cmnd);
 
+// proxy.c
+int cmdProxy(Player* player, cmd* cmnd);
+
 // action.c
 int plyAction(Player* player, cmd* cmnd);
 int cmdAction(Creature* player, cmd* cmnd);

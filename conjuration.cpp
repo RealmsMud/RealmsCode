@@ -308,7 +308,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 				target->setClass(THIEF);
 				break;
 			case 9:
-				target->setClass(VAMPIRE);
+				target->setClass(PUREBLOOD);
 				break;
 			case 10:
 				target->setClass(MONK);

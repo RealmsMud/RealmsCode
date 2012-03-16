@@ -378,7 +378,7 @@ MAGE		=	5,
 PALADIN		=	6,
 RANGER		=	7,
 THIEF		=	8,
-VAMPIRE		=	9,
+PUREBLOOD	=	9,
 MONK		=	10,
 DEATHKNIGHT	=	11,
 DRUID		=	12,
@@ -1150,6 +1150,7 @@ struct idComp : public std::binary_function<const bstring&, const bstring&, bool
 #include "fishing.h"
 
 #include "server.h"
+#include "proxy.h"
 #include "config.h"
 
 #include "mextern.h"

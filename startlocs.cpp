@@ -169,7 +169,7 @@ bool startingChoices(Player* player, bstring str, char* location, bool choose) {
 	case LICH:
 	case THIEF:
 	case DEATHKNIGHT:
-	case VAMPIRE:
+	case PUREBLOOD:
 	case ROGUE:
 	case WEREWOLF:
 		options.remove("sigil");

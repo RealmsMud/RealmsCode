@@ -105,7 +105,7 @@ void steal_gold(Player* player, Creature* creature) {
 	}
 
 	if(	creature->flagIsSet(P_MISTED) && !
-		!player->checkStaff("You cannot steal from a misted vampire.\n") )
+		!player->checkStaff("You cannot steal from a misted creature.\n") )
 		return;
 
 
@@ -250,7 +250,7 @@ int get_steal_chance(Player* player, Creature* target, Object* object) {
 			classmod = 0;
 		break;
 	case LICH:      // Lichs' unnatural aura messes with thief.
-	case VAMPIRE:   // Vampires, rangers, druids, monks, and werewolves
+	case PUREBLOOD:   // Vampires, rangers, druids, monks, and werewolves
 	case RANGER:    // are always more accutely aware of their surroundings
 	case DRUID:     // than any other non-roguish class.
 	case WEREWOLF:

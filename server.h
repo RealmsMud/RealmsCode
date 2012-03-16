@@ -272,6 +272,7 @@ public:
 	bool unRegisterMudObject(MudObject* toUnRegister);
 	bstring getRegisteredList();
 	Creature* lookupCrtId(const bstring& toLookup);
+	Player* lookupPlyId(const bstring& toLookup);
 
 	void loadIds();
 	void saveIds();

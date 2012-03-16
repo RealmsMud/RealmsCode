@@ -82,24 +82,39 @@ bstring getProxiedChar(bstring& str, unsigned int n) {
 	return(str.substr(m+1, str.length() - m - 1));
 }
 
+bool Player::checkProxyAccess(Player* proxy) {
+	if(!proxy)
+		return(false);
+
+	// Only a DM can proxy a DM
+	if(this->isDm() && !proxy->isDm())
+		return(false);
+
+	// A DM can proxy anybody
+	if(proxy->isDm())
+		return(true);
+
+	return(gConfig->hasProxyAccess(proxy, this));
+}
 //*********************************************************************
 //						login
 //*********************************************************************
 // This function is the first function that gets input from a player when
 // they log in. It asks for the player's name and password, and performs
 // the according function calls.
+unsigned const char echo_off[] = {255, 251, 1, 0};
+unsigned const char echo_on[] = {255, 252, 1, 0};
 
 void login(Socket* sock, bstring str) {
 	char	tempstr[20];
 	Player	*player=0;
-	bstring::size_type proxy = 0;
+	bstring::size_type proxyCheck = 0;
 	if(!sock) {
 		printf("**** ERORR: Null socket in login.\n");
 		return;
 	}
 
-    unsigned const char echo_off[] = {255, 251, 1, 0};
-    unsigned const char echo_on[] = {255, 252, 1, 0};
+
 
 	switch(sock->getState()) {
 	case LOGIN_DNS_LOOKUP:
@@ -119,14 +134,16 @@ void login(Socket* sock, bstring str) {
 		// End LOGIN_GET_LOCKOUT_PASSWORD
 	case LOGIN_GET_NAME:
 
-		proxy = checkProxyLogin(str);
-		if(proxy != str.npos) {
-			bstring proxyChar = getProxyChar(str, proxy);
-			bstring proxiedChar = getProxiedChar(str, proxy);
+		proxyCheck = checkProxyLogin(str);
+		if(proxyCheck != str.npos) {
+			bstring proxyChar = getProxyChar(str, proxyCheck);
+			bstring proxiedChar = getProxiedChar(str, proxyCheck);
 			lowercize(proxyChar, 1);
 			lowercize(proxiedChar, 1);
-			sock->println(bstring("Trying to log in ") + proxiedChar + " using " + proxyChar + " as proxy.\n");
-
+			if(proxyChar == proxiedChar) {
+				sock->askFor("That's just Silly.\nPlease enter name: ");
+				return;
+			}
 			if(!nameIsAllowed(proxyChar, sock) || !nameIsAllowed(proxiedChar, sock)) {
 				sock->askFor("Please enter name: ");
 				return;
@@ -147,8 +164,48 @@ void login(Socket* sock, bstring str) {
 				return;
 			}
 			player->fd = -1;
-			if(gServer->checkDuplicateName(sock, false))
+
+			Player* proxy = 0;
+			if(!loadPlayer(proxyChar, &proxy)) {
+				sock->println(bstring("Error loading ") + proxyChar + "\n");
+				free_crt(player, false);
+				sock->askFor("Please enter name: ");
 				return;
+			}
+
+			if(!player->checkProxyAccess(proxy)) {
+				sock->println(bstring(proxy->getName()) + " does not have access to " + player->getName());
+				free_crt(player, false);
+				free_crt(proxy, false);
+				sock->askFor("Please enter name: ");
+				return;
+			}
+
+			player->fd = -1;
+			//gServer->addPlayer(player);
+			sock->setPlayer(player);
+
+			if(gServer->checkDuplicateName(sock, false)) {
+				free_crt(player, false);
+				free_crt(proxy, false);
+				sock->setPlayer(NULL);
+				sock->askFor("Please enter name: ");
+				return;
+			}
+			sock->println(bstring("Trying to log in ") + player->getName() + " using " + proxy->getName() + " as proxy.");
+
+
+
+			sock->print("%s", echo_off);
+			//sock->print("%c%c%c", 255, 251, 1);
+			bstring passwordPrompt = bstring("Please enter password for ") + proxy->getName() + ": ";
+			sock->askFor(passwordPrompt.c_str());
+			sock->tempbstr = proxy->getPassword();
+
+			player->setProxy(proxy);
+
+			free_crt(proxy, false);
+			sock->setState(LOGIN_GET_PROXY_PASSWORD);
 
 			return;
 		}
@@ -202,74 +259,97 @@ void login(Socket* sock, bstring str) {
 			sock->disconnect();
 			return;
 		} else {
-		    sock->print("%s", echo_on);
-			strcpy(tempstr, sock->getPlayer()->name);
-
-			gServer->checkDuplicateName(sock, true);
-			if(gServer->checkDouble(sock)) {
-				gServer->cleanUp();
-				return;
-			}
-			gServer->cleanUp();
-
-			player = sock->getPlayer();
-
-			free_crt(player, false);
-			sock->setPlayer(NULL);
-
-			if(!loadPlayer(tempstr, &player)) {
-				sock->askFor("Player no longer exists!\n\nPlease enter name: ");
-				sock->setState(LOGIN_GET_NAME);
-				return;
-			}
-
-			if(player->flagIsSet(P_HARDCORE)) {
-				const StartLoc *location = gConfig->getStartLoc("highport");
-				player->bind(location);
-				// put them in the docks: hp.100
-				player->currentLocation.room.area = "hp";
-				player->currentLocation.room.id = 100;
-				// remove all their stuff
-				player->coins.zero();
-				otag *obj=0, *op = player->first_obj;
-				while(op) {
-					obj = op;
-					op = op->next_tag;
-					delete obj->obj;
-					delete obj;
-				}
-				player->first_obj = 0;
-			}
-
-			sock->setPlayer(player);
-			player->fd = sock->getFd();
-			player->setSock(sock);
-			player->init();
-
-			gServer->addPlayer(player);
-			sock->setState(CON_PLAYING);
-
-			if(player->flagIsSet(P_HARDCORE)) {
-				player->clearFlag(P_HARDCORE);
-				player->print("\n\n\n");
-				player->print("You wake up on the shores of Derlith, completely naked...\n");
-				player->print("\n\n");
-				player->print("You do not know how long you have been unconscious, or how long you have\n");
-				player->print("been floating at sea. The sounds of the ocean fill the air, interrupted by\n");
-				player->print("the bustling noise of a city street. An occasional bell rings and the\n");
-				player->print("sounds of horse-drawn carriages stumbling over cobblestone soon grow louder\n");
-				player->print("and louder. You look around to find yourself at the docks of Highport.\n");
-				player->print("People stare at you as they pass.\n");
-				player->print("\n\n");
-				player->print("You no longer feel hunted, as you did in Oceancrest. You feel the peaceful\n");
-				player->print("onset of immortality that comes with living in Derlith. You are now free to\n");
-				player->print("continue your adventures in this world...\n");
-				player->print("\n\n\n");
-			}
+			sock->finishLogin();
+			return;
 		}
+		break;
+
+	case LOGIN_GET_PROXY_PASSWORD:
+		if(Player::hashPassword(str) != sock->tempbstr) {
+			sock->write("\255\252\1\n\rIncorrect.\n\r");
+			logn("log.incorrect", "Invalid password(%s) for %s from %s\n", str.c_str(), sock->getPlayer()->name, sock->getHostname().c_str());
+			sock->disconnect();
+			return;
+		} else {
+			sock->tempbstr.clear();
+			sock->finishLogin();
+			return;
+		}
+		break;
 	}
 }
 
+void Socket::finishLogin() {
+	char	charName[25];
+	Player* player = 0;
+
+	print("%s", echo_on);
+	strcpy(charName, getPlayer()->name);
+
+	gServer->checkDuplicateName(this, true);
+	if(gServer->checkDouble(this)) {
+		gServer->cleanUp();
+		return;
+	}
+	gServer->cleanUp();
+
+	player = getPlayer();
+	bstring proxyName = player->getProxyName();
+	bstring proxyId = player->getProxyId();
+	free_crt(player, false);
+	setPlayer(NULL);
+
+	if(!loadPlayer(charName, &player)) {
+		askFor("Player no longer exists!\n\nPlease enter name: ");
+		setState(LOGIN_GET_NAME);
+		return;
+	}
+	player->setProxy(proxyName, proxyId);
+	if(player->flagIsSet(P_HARDCORE)) {
+		const StartLoc *location = gConfig->getStartLoc("highport");
+		player->bind(location);
+		// put them in the docks: hp.100
+		player->currentLocation.room.area = "hp";
+		player->currentLocation.room.id = 100;
+		// remove all their stuff
+		player->coins.zero();
+		otag *obj=0, *op = player->first_obj;
+		while(op) {
+			obj = op;
+			op = op->next_tag;
+			delete obj->obj;
+			delete obj;
+		}
+		player->first_obj = 0;
+	}
+
+	setPlayer(player);
+	player->fd = getFd();
+	player->setSock(this);
+	player->init();
+
+	gServer->addPlayer(player);
+	setState(CON_PLAYING);
+
+	if(player->flagIsSet(P_HARDCORE)) {
+		player->clearFlag(P_HARDCORE);
+		player->print("\n\n\n");
+		player->print("You wake up on the shores of Derlith, completely naked...\n");
+		player->print("\n\n");
+		player->print("You do not know how long you have been unconscious, or how long you have\n");
+		player->print("been floating at sea. The sounds of the ocean fill the air, interrupted by\n");
+		player->print("the bustling noise of a city street. An occasional bell rings and the\n");
+		player->print("sounds of horse-drawn carriages stumbling over cobblestone soon grow louder\n");
+		player->print("and louder. You look around to find yourself at the docks of Highport.\n");
+		player->print("People stare at you as they pass.\n");
+		player->print("\n\n");
+		player->print("You no longer feel hunted, as you did in Oceancrest. You feel the peaceful\n");
+		player->print("onset of immortality that comes with living in Derlith. You are now free to\n");
+		player->print("continue your adventures in this world...\n");
+		player->print("\n\n\n");
+	}
+
+}
 
 // Blah I know its a big hack...fix it later if you don't like it
 
@@ -295,7 +375,7 @@ int setPlyClass(Socket* sock, int cClass) {
 	case RANGER:
 	case ROGUE:
 	case THIEF:
-	case VAMPIRE:
+	case PUREBLOOD:
 	case WEREWOLF:
 		sock->getPlayer()->setClass(cClass);
 		break;
@@ -1658,7 +1738,7 @@ void Create::done(Socket* sock, bstring str, int mode) {
 			case ASSASSIN:
 			case THIEF:
 			case ROGUE:
-			case VAMPIRE:
+			case PUREBLOOD:
 			case DRUID:
 			case CLERIC:
 				player->addSkill("leather", 1);

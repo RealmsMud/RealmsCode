@@ -377,7 +377,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
 		player->lasttime[LT_SPELL].interval = 3;
 		break;
 	case BARD:
-	case VAMPIRE:
+	case PUREBLOOD:
 	case PALADIN:
 	case DRUID:
 		player->lasttime[LT_SPELL].interval = 4;
@@ -1828,7 +1828,7 @@ int spell_fail(Creature* player, int how) {
 	case BERSERKER:
 		chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5);
 		break;
-	case VAMPIRE:
+	case PUREBLOOD:
 		chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 60;
 		break;
 	case CLERIC:

@@ -262,7 +262,7 @@ int Config::classtoNum(bstring str) {
 	if(str == "Paladin") return(PALADIN);
 	if(str == "Ranger") return(RANGER);
 	if(str == "Thief") return(THIEF);
-	if(str == "Vampire") return(VAMPIRE);
+	if(str == "Pureblood") return(PUREBLOOD);
 	if(str == "Monk") return(MONK);
 	if(str == "Deathknight") return(DEATHKNIGHT);
 	if(str == "Druid") return(DRUID);

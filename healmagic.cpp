@@ -182,7 +182,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 
 	case RANGER:
 	case BARD:
-	case VAMPIRE:
+	case PUREBLOOD:
 		statBns = MAX(bonus((int)healer->piety.getCur()), bonus((int)healer->intelligence.getCur()));
 		mod = mrand(1,6);
 		break;

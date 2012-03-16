@@ -691,7 +691,7 @@ void Player::checkWeaponSkillGain() {
 			break;
 		case CLERIC:
 		case DRUID:
-		case VAMPIRE:
+		case PUREBLOOD:
 			if(cClass2) {
 				// Cle/Ass
 				if(level/8)

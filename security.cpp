@@ -120,6 +120,10 @@ int cmdPassword(Player* player, cmd* cmnd) {
 		player->print("You are brain-dead. You can't do that.\n");
 		return(0);
 	}
+	if(player->getProxyName() != "") {
+		player->print("You are unable to change the password of a proxied character.\n");
+		return(0);
+	}
 
 	// do not flash output until player hits return
 	player->setFlag(P_READING_FILE);
