@@ -93,6 +93,12 @@ int cmdProxy(Player* player, cmd* cmnd) {
 			*player << "You cannot give staff proxy access!.\n";
 			return(0);
 		}
+		if(target->getId() == player->getId()) {
+			*player << "That's just silly.\n";
+			if(!online)
+				free_crt(target);
+			return(0);
+		}
 
 		if(gConfig->hasProxyAccess(target, player)) {
 			*player << "You remove " << target->getName() << "'s proxy access to your character.\n";
@@ -358,10 +364,10 @@ void ProxyManager::loadProxies() {
     sprintf(filename, "%s/proxies.xml", Path::PlayerData);
 
     if(!file_exists(filename))
-        merror("Unable to find proxy file", FATAL);
+        return;
 
     if((xmlDoc = xml::loadFile(filename, "Proxies")) == NULL)
-        merror("Unable to read proxy file", FATAL);
+    	return;
 
     rootNode = xmlDocGetRootElement(xmlDoc);
     curNode = rootNode->children;

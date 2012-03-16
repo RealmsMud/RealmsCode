@@ -141,7 +141,7 @@ void login(Socket* sock, bstring str) {
 			lowercize(proxyChar, 1);
 			lowercize(proxiedChar, 1);
 			if(proxyChar == proxiedChar) {
-				sock->askFor("That's just Silly.\nPlease enter name: ");
+				sock->askFor("That's just silly.\nPlease enter name: ");
 				return;
 			}
 			if(!nameIsAllowed(proxyChar, sock) || !nameIsAllowed(proxiedChar, sock)) {
