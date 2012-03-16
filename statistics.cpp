@@ -420,6 +420,7 @@ void Statistics::save(xmlNodePtr rootNode, bstring nodeName) const {
 	mostMonster.save(curNode, "MostMonster");
 	mostAttackDamage.save(curNode, "MostAttackDamage");
 	mostMagicDamage.save(curNode, "MostMagicDamage");
+	mostExperience.save(curNode, "MostExperience");
 
 	xmlNodePtr historyNode = xml::newStringChild(curNode, "LevelHistory", "");
 	for(LevelInfoMap::value_type p : levelHistory) {

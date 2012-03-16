@@ -729,6 +729,7 @@ void EffectInfo::save(xmlNodePtr rootNode) const {
 	xml::newNumChild(effectNode, "Duration", duration);
 	xml::newNumChild(effectNode, "Strength", strength);
 	xml::newNumChild(effectNode, "Extra", extra);
+	xml::newNumChild(effectNode, "PulseModifier", pulseModifier);
 }
 
 //*********************************************************************

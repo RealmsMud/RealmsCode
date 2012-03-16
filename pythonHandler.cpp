@@ -332,8 +332,9 @@ BOOST_PYTHON_MODULE(MudObjects)
 			, (int ( ::Stat::* )( int ) )( &::Stat::decrease )
 			, ( bp::arg("amt") ) )
 	.def(
-			"getCur"
-			, (short int ( ::Stat::* )( ) const)( &::Stat::getCur ) )
+	         "getCur"
+	         , (int (::Stat::* ) ( bool ) const)( &::Stat::getCur )
+	         , ( bp::arg("recalc")=(bool)(true) ) )
 	.def(
 			"getInitial"
 			, (short int ( ::Stat::* )( ) const)( &::Stat::getInitial ) )
@@ -481,7 +482,9 @@ BOOST_PYTHON_MODULE(MudObjects)
 	.def("send", &Creature::bPrint)
 	.def("getCrtStr", &Creature::getCrtStr, ( bp::arg("viewer")=0l, bp::arg("flags")=(int)(0), bp::arg("num")=(int)(0) ))
 	.def("getParent", &Creature::getParent, return_value_policy<reference_existing_object>())
-
+	.def("hisHer", &Creature::hisHer)
+	.def("upHisHer", &Creature::upHisHer)
+	.def("himHer", &Creature::himHer)
 	.def("getRoom", &Creature::getRoomParent, return_value_policy<reference_existing_object>())
 	.def("getTarget", &Creature::getTarget, return_value_policy<reference_existing_object>())
 	.def("getDeity", &Creature::getDeity)
@@ -563,6 +566,7 @@ BOOST_PYTHON_MODULE(MudObjects)
 	.def("willBecomeVampire", &Creature::willBecomeVampire)
 	.def("makeVampire", &Creature::makeVampire)
 	.def("willBecomeWerewolf", &Creature::willBecomeWerewolf)
+	.def("makeWerewolf", &Creature::makeWerewolf)
 	.def("immuneCriticals", &Creature::immuneCriticals)
 	.def("immuneToPoison", &Creature::immuneToPoison)
 	.def("immuneToDisease", &Creature::immuneToDisease)

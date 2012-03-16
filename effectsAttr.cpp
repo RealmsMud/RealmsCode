@@ -250,6 +250,7 @@ EffectInfo::EffectInfo(xmlNodePtr rootNode) {
 		else if(NODE_NAME(curNode, "Duration")) xml::copyToNum(duration, curNode);
 		else if(NODE_NAME(curNode, "Strength")) xml::copyToNum(strength, curNode);
 		else if(NODE_NAME(curNode, "Extra")) xml::copyToNum(extra, curNode);
+		else if(NODE_NAME(curNode, "PulseModifier")) xml::copyToNum(pulseModifier, curNode);
 
 		curNode = curNode->next;
 	}
@@ -271,6 +272,7 @@ void EffectInfo::clear() {
 	myEffect = 0;
 	lastMod = 0;
     lastPulse = 0;
+    pulseModifier = 0;
 	duration = 0;
 	strength = 0;
 	extra = 0;
