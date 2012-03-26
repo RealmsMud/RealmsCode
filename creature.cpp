@@ -95,7 +95,7 @@ bool Monster::addEnemy(Creature* target, bool print) {
         addEnemy(target->getMaster());
     }
 
-    threatTable->adjustThreat(target, 0);
+    adjustThreat(target, 0);
     return(true);
 }
 bool Monster::isEnemy(const Creature* target) const {
