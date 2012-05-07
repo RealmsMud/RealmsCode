@@ -1449,7 +1449,7 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
 		curGroup = (*sgIt).first;
 		curGroupDisplay = (*sgIt).second;
 
-		if(curGroup.left(7) != "weapons")
+		if(curGroup.left(7) != "weapons" || curGroup.length() <= 7)
 			continue;
 
 		if(sock->getPlayer()->getClass() == CLERIC && sock->getPlayer()->getDeity() == CERIS) {
@@ -1485,10 +1485,7 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
 				sock->printColor("[^W%1c^x] %-30s", ++k + 64, curSkill->getDisplayName().c_str());
 			} else {
 				if(i == ++k) {
-					if(sock->getState() == CON_CHOSING_WEAPONS)
-						sock->getPlayer()->setSkill(curSkill->getName(), MAX(1, (sock->getPlayer()->getLevel()-1)*10));
-					else
-						sock->getPlayer()->setSkill(curSkill->getName(), 1);
+				    sock->getPlayer()->addSkill(curSkill->getName(),1);
 					Create::addStartingWeapon(sock->getPlayer(), curSkill->getName());
 					sock->printColor("You have learned how to use ^W%s^x.\n", curSkill->getDisplayName().c_str());
 					return(true);

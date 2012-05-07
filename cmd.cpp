@@ -704,6 +704,7 @@ bool Config::initCommands() {
 	playerCommands["transmute"] = new PlyCommand("transmute",		100,	cmdTransmute,		0,		"");
 	playerCommands["daily"] = new PlyCommand("daily",				100,	cmdDaily,			0,		"See our usage of daily-limited abilities.");
 	playerCommands["description"] = new PlyCommand("description",	100,	cmdDescription,		0,		"Change your character's description.");
+	playerCommands["bsacrifice"] = new PlyCommand("bsacrifice",     100,    cmdBloodsacrifice,  0,      "");
 	playerCommands["bloodsacrifice"] = new PlyCommand("bloodsacrifice",100,	cmdBloodsacrifice,	0,		"");
 	playerCommands["disarm"] = new PlyCommand("disarm",				100,	cmdDisarm,			0,		"Disarm an opponent or remove your wielded weapons.");
 	playerCommands["visible"] = new PlyCommand("visible",			100,	cmdVisible,			0,		"Cancel invisibility.");

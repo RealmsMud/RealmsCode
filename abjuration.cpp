@@ -841,6 +841,7 @@ void Creature::doDispelMagic(int num) {
 	std::list<bstring>::const_iterator it;
 
 	// create a list of possible effects
+	effList.push_back("anchor");
 	effList.push_back("hold-person");
 	effList.push_back("strength");
 	effList.push_back("haste");

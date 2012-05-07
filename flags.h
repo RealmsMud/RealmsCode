@@ -323,7 +323,7 @@
 #define P_PASSWORD_CURRENT          188      // Password is current
 #define P_NO_TICK_MP                189      // Player cannot tick MP
 #define P_NO_TICK_HP                190      // Player cannot tick HP
-#define P_ANCHOR                    191      // Player under anchor spell
+// free		                    191
 #define P_KILLED_BY_MOB             192      // Just killed by mob
 // free                             193
 #define P_DOCTOR_KILLER             194      // Player is a doctor killer

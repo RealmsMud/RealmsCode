@@ -197,11 +197,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 				player->print("You were unable to cast the spell.\n");
 				return(0);
 			}
-			if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
-				player->print("Anchor spell cast.\n");
-				broadcast(player->getSock(), player->getParent(), "%M casts a dimensional-anchor spell on %sself.",
-						player, player->himHer());
-			} else if(spellData->how == POTION)
+			if(spellData->how == POTION)
 				player->print("You feel stable.\n");
 
 		// Cast anchor on another pPlayer
@@ -225,11 +221,6 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 			}
 			if(target->flagIsSet(P_NO_SUMMON) && !player->canAttack(target))
 				return(0);
-
-			player->print("Anchor cast on %s.\n", target->name);
-			target->print("%M casts a dimensional-anchor spell on you.\n", player);
-			broadcast(player->getSock(), target->getSock(), player->getParent(),
-				"%M casts a dimensional-anchor spell on %N.", player, target);
 		}
 
 		if(spellData->how == CAST)
@@ -245,23 +236,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 			}
 		}
 
-		target->print("You feel stable.\n");
-
-		target->setFlag(P_ANCHOR);
-		target->lasttime[LT_ANCHOR].ltime = time(0);
-		if(spellData->how == CAST) {
-			target->lasttime[LT_ANCHOR].interval = MAX(300, 300 +
-				bonus((int) player->intelligence.getCur()) * 300);
-			target->lasttime[LT_ANCHOR].interval += 30 * player->getLevel();
-
-			if(pPlayer->getRoomParent()->magicBonus()) {
-				player->print("The room's magical properties increase the power of your spell.\n");
-				target->lasttime[LT_ANCHOR].interval += 200L;
-			}
-		} else
-			target->lasttime[LT_ANCHOR].interval = 600;
-
-		return(1);
+		return(splGeneric(player, cmnd, spellData, "an", "anchor", "anchor"));
 	}
 	//
 	// end dimensional-anchor effect
@@ -1517,7 +1492,7 @@ int splPlaneShift(Creature* player, cmd* cmnd, SpellData* spellData) {
 bool Creature::checkDimensionalAnchor() const {
 	if(isMonster())
 		return(false);
-	if(!flagIsSet(P_ANCHOR))
+	if(!isEffected("anchor"))
 		return(false);
 
 	if(mrand(1,10)>9)

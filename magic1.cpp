@@ -1467,7 +1467,7 @@ int useRecallPotion(Player* player, int show, int log) {
 	int		i=0;
 	bstring room = player->getRoomParent()->fullName(), name = "";
 
-	if(player->flagIsSet(P_ANCHOR)) {
+	if(player->isEffected("anchor")) {
 		player->print("%s will not work while you are protected by a dimensional anchor.\n",
 			log ? "Automatic recall" : "The recall command");
 		return(0);

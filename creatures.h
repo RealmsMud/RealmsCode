@@ -408,10 +408,10 @@ public:
 
 // Skills
 	bool knowsSkill(const bstring& skillName) const; // *
-	double getSkillLevel(const bstring& skillName) const; // *
-	double getSkillGained(const bstring& skillName) const; // *
-	double getTradeSkillGained(const bstring& skillName) const; // *
-	Skill* getSkill(const bstring& skillName) const;
+	double getSkillLevel(const bstring& skillName, bool useBase = true) const; // *
+	double getSkillGained(const bstring& skillName, bool useBase = true) const; // *
+	double getTradeSkillGained(const bstring& skillName, bool useBase = true) const; // *
+	Skill* getSkill(const bstring& skillName, bool useBase = true) const;
 	void addSkill(const bstring& skillName, int gained); // *
 	void remSkill(const bstring& skillName); // *
 	void checkSkillsGain(std::list<SkillGain*>::const_iterator begin, std::list<SkillGain*>::const_iterator end, bool setToLevel = false);
@@ -1284,6 +1284,8 @@ public:
 	void calcStats(vstat sendStat, vstat *toStat);
 	void changeStats();
 	void changingStats(bstring str);
+
+	bool isPureFighter();
 	void decreaseFocus();
 	void increaseFocus(FocusAction action, int amt = 0, Creature* target = NULL);
 	void clearFocus();

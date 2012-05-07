@@ -705,7 +705,8 @@ bool Player::canUse(Object* object, bool all) {
 		}
 		if(isStaff())
 			return(true);
-		if(!knowsSkill(object->getWeaponType())) {
+//		if(!knowsSkill(object->getWeaponType())) {
+		if(!knowsSkill(object->getWeaponCategory())) {
 			if(!all)
 				print("You are not skilled with %s.\n", gConfig->getSkillDisplayName(object->getWeaponType()).c_str());
 			return(false);
@@ -1244,24 +1245,7 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 	return(toReturn);
 }
 
-//*********************************************************************
-//						setSkill
-//*********************************************************************
 
-bool Creature::setSkill(const bstring skillStr, int gained) {
-	if(!gConfig->skillExists(skillStr))
-		return(false);
-
-	Skill* skill = getSkill(skillStr);
-	if(skill)
-		skill->setGained(gained);
-	else  {
-		skill = new Skill(skillStr, gained);
-		skills[skillStr] = skill;
-	}
-
-	return(true);
-}
 
 //*********************************************************************
 //						inSameRoom

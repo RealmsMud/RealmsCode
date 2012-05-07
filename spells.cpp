@@ -471,8 +471,6 @@ void spellsUnder(const Player* viewer, const Creature* target, bool notSelf) {
 
 	// we want some flags to show up, too
 	if(player) {
-		if(player->flagIsSet(P_ANCHOR))
-			spells.push_back("dimensional-anchor");
 		if(player->flagIsSet(P_FREE_ACTION))
 			spells.push_back("free-action");
 		if(player->flagIsSet(P_STUNNED))

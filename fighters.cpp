@@ -19,6 +19,11 @@
 
 #include "mud.h"
 
+// Used for new fighters, returns true if they're a pure fighter
+// (and for now a ptester)
+bool Player::isPureFighter() {
+    return(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER));
+}
 
 //*********************************************************************
 //                      increaseFocus
@@ -28,7 +33,11 @@ void Player::increaseFocus(FocusAction action, int amt, Creature* target) {
     int focusIncrease = 0;
 
     // Only pure fighters have increased battle focus
-    if(cClass != FIGHTER || cClass2 || !flagIsSet(P_PTESTER))
+    if(!isPureFighter())
+        return;
+
+    // Only tick if we're not unfocused
+    if(isEffected("unfocused"))
         return;
 
     // FactorIn/out = Average Rage Required per Ability / Number of hits to generate that amount
@@ -89,7 +98,7 @@ void Player::increaseFocus(FocusAction action, int amt, Creature* target) {
 // Slowly tick focus down
 void Player::decreaseFocus() {
     // Only pure fighters have increased battle focus
-    if(cClass != FIGHTER || cClass2 || !flagIsSet(P_PTESTER))
+    if(!isPureFighter())
         return;
 
     if(focus.getCur() <= 0)
@@ -111,7 +120,7 @@ void Player::decreaseFocus() {
 // Clear the player's focus
 void Player::clearFocus() {
     // Only pure fighters have increased battle focus
-    if(cClass != FIGHTER || cClass2 || !flagIsSet(P_PTESTER))
+    if(!isPureFighter())
         return;
 
     focus.setCur(0);

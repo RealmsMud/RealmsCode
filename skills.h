@@ -73,7 +73,7 @@ public:
 protected:
 	bool readNode(xmlNodePtr rootNode);
 
-	bstring parentSkill;
+	bstring baseSkill;
 	bstring group;       	   		// Group the skill belongs to
 	bstring displayName; 	   		// Display name
 	int gainType;        		   	// Adjustments for skills with long timers
@@ -81,10 +81,16 @@ protected:
 
 public:
 	bstring getGroup() const;
+	bstring getBaseSkill() const;
 	bstring getDisplayName() const;
 	int getGainType() const;
 	bool isKnownOnly() const;
+	bool hasBaseSkill() const;
+
+
+
 	bool setGroup(bstring &pGroup);
+    bool setBase(bstring &pBase);
 };
 
 //**********************************************************************
@@ -92,6 +98,7 @@ public:
 //**********************************************************************
 
 class SkillCommand : public virtual SkillInfo, public virtual Command {
+    friend class Config;
 public:
 	SkillCommand(xmlNodePtr rootNode);
 	int execute(Creature* player, cmd* cmnd);
@@ -109,6 +116,8 @@ protected:
 	int failCooldown;				// Delay/cooldown on this skill on failure
 	std::list<SkillCost> resources;	// Resources this skill uses
 	bstring pyScript;                 // Python script for this skillCommand
+
+	std::list<bstring> aliases;
 
 private:
 	int (*fn)(Creature* player, cmd* cmnd);
@@ -147,13 +156,12 @@ protected:
 #ifndef PYTHON_CODE_GEN
 	Timer timer;			// Timer for cooldown
 #endif
-	//std::list<SkillCost> resourceReductions;
-	//int cooldownReduction;
-	//std::list<SkillImprovement> improvements;
 	SkillInfo* skillInfo;	// Pointer to parent skill for additional info
 public:
 	void save(xmlNodePtr rootNode) const;
-//	bool load(xmlNodePtr rootNode);
+
+	bool hasBaseSkill() const;
+	bstring getBaseSkill();
 
 
 	bstring getName() const;
@@ -176,6 +184,7 @@ public:
 	void modifyDelay(int amt);
 	void setDelay(int newDelay);
 
+	SkillInfo* getSkillInfo();
 
 };
 

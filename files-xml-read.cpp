@@ -493,6 +493,30 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 
 
 	if(isPlayer()) {
+	    if(getVersion() < "2.47a") {
+	        // Update weapon skills
+	        SkillMap::iterator skIt;
+	        for(skIt = skills.begin() ; skIt != skills.end() ; ) {
+	            Skill* skill = (*skIt++).second;
+	            SkillInfo* parentSkill = skill->getSkillInfo();
+	            if(!parentSkill)
+	                continue;
+	            bstring group = parentSkill->getGroup();
+	            if(group.left(7) == "weapons" && group.length() > 6) {
+	                bstring weaponSkillName = group.right(group.length() - 8);
+	                Skill* weaponSkill = getSkill(weaponSkillName, false);
+	                if(!weaponSkill) {
+	                    addSkill(weaponSkillName, skill->getGained());
+	                } else {
+	                    if(weaponSkill->getGained() < skill->getGained()) {
+	                        weaponSkill->setGained(skill->getGained());
+	                    }
+	                }
+	            }
+
+	        }
+	    }
+
 		if(getVersion() < "2.46k" && knowsSkill("endurance")) {
 			remSkill("endurance");
 			#define P_RUNNING_OLD 56
@@ -1859,9 +1883,14 @@ void Config::loadSkills(xmlNodePtr rootNode) {
 		} else if(NODE_NAME(curNode, "SkillCommand")) {
 			try {
 				skill = new SkillCommand(curNode);
+				SkillCommand* skillCmd = dynamic_cast<SkillCommand*>(skill);
 				// All SkillCommands are also SkillInfos, put them in both tables
 				skills.insert(SkillInfoMap::value_type(skill->getName(), skill));
-				skillCommands.insert(SkillCommandMap::value_type(skill->getName(), dynamic_cast<SkillCommand*>(skill)));
+				skillCommands.insert(SkillCommandMap::value_type(skill->getName(), skillCmd));
+				// Insert any aliases as well
+				for(bstring alias : skillCmd->aliases) {
+				    skillCommands.insert(SkillCommandMap::value_type(alias, skillCmd));
+				}
 			} catch(std::exception e) {
 
 			}
@@ -1927,7 +1956,13 @@ bool SkillInfo::readNode(xmlNodePtr curNode) {
 		setName(xml::getBString(curNode));
 	} else if(NODE_NAME(curNode, "DisplayName")) {
 		xml::copyToBString(displayName, curNode);
-	} else if(NODE_NAME(curNode, "Group")) {
+	} else if(NODE_NAME(curNode, "Base")) {
+        xml::copyToBString(tGroup, curNode);
+        if(!setBase(tGroup)) {
+            std::cout << "Error setting skill '" << name << "' base skill to '" << tGroup << "'" << std::endl;
+            abort();
+        }
+    } else if(NODE_NAME(curNode, "Group")) {
 		xml::copyToBString(tGroup, curNode);
 		if(!setGroup(tGroup)) {
 			std::cout << "Error setting skill '" << name << "' to group '" << tGroup << "'" << std::endl;
@@ -1974,6 +2009,8 @@ bool SkillCommand::readNode(xmlNodePtr curNode) {
 		loadResources(curNode);
 	} else if(NODE_NAME(curNode, "Offensive")) {
 	    xml::copyToBool(offensive, curNode);
+	} else if(NODE_NAME(curNode, "Alias")) {
+	    aliases.push_back(xml::getBString(curNode));
 	} else if(NODE_NAME(curNode, "TargetType")) {
 	  bstring tType = xml::getBString(curNode);
 	  if(tType == "Creature")
@@ -1988,6 +2025,8 @@ bool SkillCommand::readNode(xmlNodePtr curNode) {
 	      targetType = TARGET_EXIT;
 	  else if(tType == "Any" || tType == "All" || tType == "MudObject")
 	      targetType = TARGET_MUDOBJECT;
+	  else if(tType == "Self")
+	      targetType = TARGET_NONE;
 	} else if(NODE_NAME(curNode, "Script")) {
 	    xml::copyToBString(pyScript, curNode);
 	} else {

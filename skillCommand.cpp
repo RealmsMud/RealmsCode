@@ -80,39 +80,42 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
             *creature << "You can't find '" << toFind << "'.\n";
             return(0);
         }
-        if(skillCmd->isOffensive()) {
-            if(target->isCreature()) {
-                if(!creature->canAttack(target->getAsCreature(), false)) {
-                    return(0);
-                }
+    } else {
+        target = creature;
+    }
+
+    if(skillCmd->isOffensive()) {
+        if(target->isCreature()) {
+            if(!creature->canAttack(target->getAsCreature(), false)) {
+                return(0);
             }
         }
-
-        if(skillCmd->hasCooldown()) {
-            if(!skill->checkTimer(creature, true))
-                return(0);
-            skill->updateTimer();
-        }
-
-        if(skillCmd->getUsesAttackTimer()) {
-            if(!creature->checkAttackTimer())
-                return(0);
-
-            creature->updateAttackTimer();
-        }
-        *creature << "You attempt to " << skillCmd->getName() << " " << target << "\n";
-
-        bool result = skillCmd->runScript(creature, target, skill);
-
-        if(skillCmd->hasCooldown()) {
-            if(result)
-                skill->modifyDelay(skillCmd->getCooldown());
-            else
-                skill->modifyDelay(skillCmd->getFailCooldown());
-        }
-        // TODO: Track last skill for future combos
-
     }
+
+    if(skillCmd->hasCooldown()) {
+        if(!skill->checkTimer(creature, true))
+            return(0);
+        skill->updateTimer();
+    }
+
+    if(skillCmd->getUsesAttackTimer()) {
+        if(!creature->checkAttackTimer())
+            return(0);
+
+        creature->updateAttackTimer();
+    }
+    *creature << "You attempt to " << skillCmd->getName() << " " << target << "\n";
+
+    bool result = skillCmd->runScript(creature, target, skill);
+
+    if(skillCmd->hasCooldown()) {
+        if(result)
+            skill->modifyDelay(skillCmd->getCooldown());
+        else
+            skill->modifyDelay(skillCmd->getFailCooldown());
+    }
+    // TODO: Track last skill for future combos
+
     return(0);
 }
 //*********************************************************************

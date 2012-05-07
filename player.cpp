@@ -720,13 +720,6 @@ void Player::checkEffectsWearingOff() {
 			clearFlag(P_NO_SUICIDE);
 		}
 	}
-	if(flagIsSet(P_ANCHOR)) {
-		if(t > LT(this, LT_ANCHOR)) {
-			printColor("^cYou are no longer magically anchored.\n");
-			clearFlag(P_ANCHOR);
-		}
-	}
-
 	if(flagIsSet(P_HIDDEN) && !staff) {
 		if(t - lasttime[LT_HIDE].ltime > 300L) {
 			printColor("^cShifting shadows expose you.\n");
