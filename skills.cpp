@@ -366,7 +366,7 @@ void Creature::addSkill(const bstring& skillName, int gained) {
 
     // Add any base skill we need as well
     SkillInfo* skillInfo = skill->getSkillInfo();
-    if (skillInfo->hasBaseSkill()) {
+    if (skillInfo && skillInfo->hasBaseSkill()) {
         if (!knowsSkill(skillInfo->getBaseSkill())) {
             addSkill(skillInfo->getBaseSkill(), gained);
         }
@@ -423,7 +423,7 @@ char craftSkillLevelStr[][25] = { "Novice", "Apprentice", "Journeyman", "Expert"
 //********************************************************************
 // Show the skills and skill levels of 'player'  to 'sock'
 
-int showSkills(Player* toShow, Creature* player, bool magicOnly = false) {
+int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool showWeapons = false) {
     std::map<bstring, bstring>::iterator sgIt;
     std::map<bstring, Skill*>::iterator sIt;
     Skill* crtSkill = 0;
@@ -445,7 +445,7 @@ int showSkills(Player* toShow, Creature* player, bool magicOnly = false) {
     else
         toShow->printColor("^Y%s's Skills:", player->name);
 
-    if (magicOnly)
+    if (showMagic)
         toShow->printColor(" ^Ytype \"skills\" to show non-magical skills.");
     else if (player->getClass() != BERSERKER)
         toShow->printColor(" ^Ytype \"skills magic\" to show magical skills.");
@@ -454,12 +454,13 @@ int showSkills(Player* toShow, Creature* player, bool magicOnly = false) {
 
     for (sgIt = gConfig->skillGroups.begin(); sgIt != gConfig->skillGroups.end(); sgIt++) {
         if ((*sgIt).first == "arcane" || (*sgIt).first == "divine" || (*sgIt).first == "magic") {
-            if (!magicOnly)
+            if (!showMagic)
                 continue;
         } else {
-            if (magicOnly)
+            if (showMagic)
                 continue;
         }
+
 
         std::ostringstream oStr;
         known = 0;
