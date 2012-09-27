@@ -1,0 +1,16 @@
+
+# /
+/blah.py
+/*.d
+/pushExe
+/*.supp
+/v
+/*.gch
+/.settings*
+/.cproject
+/.project
+/compiler
+/*.exe
+/core.*
+/core
+/*.dump
