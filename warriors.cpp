@@ -327,7 +327,7 @@ int cmdSecond(Player* player, cmd* cmnd) {
 	player->unhide();
 	if(cmnd->num > 1) {
 
-		object = findObject(player, player->first_obj, cmnd);
+		object = player->findObject(player, cmnd, 1);
 		if(!object) {
 			player->print("You don't have that.\n");
 			return(0);
@@ -500,7 +500,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 			return(0);
 
 		if(pTarget) {
-			if(pTarget->flagIsSet(P_MISTED)) {
+			if(pTarget->isEffected("mist")) {
 				player->print("You can't circle a mist?!\n");
 				return(0);
 			}

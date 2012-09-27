@@ -29,7 +29,7 @@ double getConBonusPercentage(int pCon);
 double getIntBonusPercentage(int pInt);
 
 // Container
-bool isMatch(Creature* searcher, Creature* target, const bstring& name, bool exactMatch, bool checkVisibility = false);
+bool isMatch(Creature* searcher, MudObject* target, const bstring& name, bool exactMatch, bool checkVisibility = false);
 
 
 // Socials
@@ -482,13 +482,13 @@ void stripBadChars(bstring str);
 // missile.cpp
 
 // object.cpp
-int findObj(const Creature* player, otag *first_ot, int findFlags, char *str, int val, int* match, Object** target );
+//int findObj(const Creature* player, otag *first_ot, int findFlags, char *str, int val, int* match, Object** target );
 int displayObject(Player* player, Object* target);
 void del_obj_obj(Object* object, Object* container);
-Object* findObject(const Player *player, int id);
-Object* findObject(const Creature *player, otag* first_ot, const cmd* cmnd, int val=1);
-Object* findObject(const Creature* player, otag *first_ot, const char *str, int val);
-bstring listObjects(const Player* player, otag *target, bool showAll, char endColor='x');
+//Object* findObject(const Player *player, int id);
+//Object* findObject(const Creature *player, otag* first_ot, const cmd* cmnd, int val=1);
+//Object* findObject(const Creature* player, otag *first_ot, const char *str, int val);
+bstring listObjects(const Player* player, Container *target, bool showAll, char endColor='x');
 //void randomEnchant(Object* object);
 //int find_obj_num(Object* object);
 //void mageRandomEnchant(Object* object, Creature* player);

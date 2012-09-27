@@ -658,7 +658,7 @@ int dmUsers(Player* player, cmd* cmnd) {
 
 		if(user->flagIsSet(P_DM_INVIS))
 			oStr << "+";
-		else if(user->flagIsSet(P_INCOGNITO))
+		else if(user->isEffected("incognito"))
 			oStr << "g";
 		else if(user->isInvisible())
 			oStr << "*";
@@ -1018,15 +1018,15 @@ int dmInvis(Player* player, cmd* cmnd) {
 
 int dmIncog(Player* player, cmd* cmnd) {
 
-	if(player->flagIsSet(P_INCOGNITO)) {
+	if(player->isEffected("incognito")) {
 		if(!player->isCt()) {
 			player->print("You cannot unlock your presence.\n");
 		} else {
-			player->clearFlag(P_INCOGNITO);
+			player->removeEffect("incognito");
 			player->printColor("^gYou unlock your presence.\n");
 		}
 	} else {
-		player->setFlag(P_INCOGNITO);
+		player->addEffect("incognito", -1);
 		player->printColor("^gYou cloak your pressence.\n");
 	}
 	return(0);
@@ -1540,8 +1540,8 @@ int dmOutlaw(Player* player, cmd* cmnd) {
 	logn("log.outlaw", "*** %s was made an outlaw by %s.\n", target->name, player->name);
 
 
-	if(target->flagIsSet(P_MISTED))
-		target->clearFlag(P_MISTED);
+	if(target->isEffected("mist"))
+		target->removeEffect("mist");
 
 	broadcast("### %s has just been made an outlaw for being a jackass.", target->name);
 	broadcast("### %s can now be killed by anyone at any time.", target->upHeShe());

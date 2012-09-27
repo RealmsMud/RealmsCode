@@ -1209,7 +1209,7 @@ int cmdPrepareObject(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("You don't have that in your inventory.\n");
 		return(0);
@@ -1249,7 +1249,7 @@ int cmdUnprepareObject(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object || !object->flagIsSet(O_BEING_PREPARED)) {
 		player->print("You are not preparing that.\n");
 		return(0);
@@ -1306,11 +1306,11 @@ int cmdCraft(Player* player, cmd* cmnd) {
 			player->printColor("You are too busy to do that now!\n");
 			return(0);
 		}
-		if(player->flagIsSet(P_MISTED)) {
+		if(player->isEffected("mist")) {
 			player->printColor("You must be in corporeal form to work with items.\n");
 			return(0);
 		}
-		if(!player->canSee(player->getRoomParent(), true))
+		if(!player->canSeeRoom(player->getRoomParent(), true))
 			return(0);
 
 		if(!player->checkAttackTimer())

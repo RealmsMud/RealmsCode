@@ -108,7 +108,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 		printColor("^mTrap passed.\n");
 		return(0);
 	}
-	if(flagIsSet(P_MISTED))
+	if(isEffected("mist"))
 		return(0);
 
 
@@ -888,7 +888,7 @@ int Player::checkTraps(UniqueRoom* room, bool self, bool isEnter) {
 bool Creature::countForWeightTrap() const {
 	if(isMonster())
 		return(!isEffected("levitate") && !isEffected("fly"));
-	return(!isStaff() && !flagIsSet(P_MISTED) && !isEffected("levitate") && !isEffected("fly"));
+	return(!isStaff() && !isEffected("mist") && !isEffected("levitate") && !isEffected("fly"));
 }
 
 //*********************************************************************

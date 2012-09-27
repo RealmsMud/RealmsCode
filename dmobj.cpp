@@ -1251,7 +1251,7 @@ int dmObjName(Player* player, cmd* cmnd) {
 	if(isdigit(cmnd->fullstr[i]))
 		cmnd->val[1] = atoi(&cmnd->fullstr[i]);
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object)
 		object = findObject(player, player->getRoomParent()->first_obj, cmnd);
 	if(!object) {

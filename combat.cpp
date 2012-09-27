@@ -500,15 +500,14 @@ void Monster::regenerate() {
 int Monster::steal(Player *victim) {
 	int chance=0, inventory=0, i=0;
 	Object* object=0;
-	otag *op=0;
 
 	ASSERTLOG( victim );
 
 	if(!victim || !canSee(victim) || victim->isStaff())
 		return(0);
-	if(victim->isEffected("petrification") || victim->flagIsSet(P_MISTED))
+	if(victim->isEffected("petrification") || victim->isEffected("mist"))
 		return(0);
-	if(!victim->first_obj)
+	if(victim->objects.empty())
 		return(0);
 
 	lasttime[LT_STEAL].ltime = time(0);
@@ -522,10 +521,13 @@ int Monster::steal(Player *victim) {
 	else
 		inventory = mrand(1, i - 1);
 
-	op = victim->first_obj;
-	for(i=1; i<inventory; i++)
-		op = op->next_tag;
-	object = op->obj;
+	i = 1;
+	for(Object *obj : victim->objects) {
+		if(i++ == inventory) {
+			object = obj;
+			break;
+		}
+	}
 
 	chance = 4 * level + bonus((int) dexterity.getCur()) * 3;
 	if(victim->getLevel() > level)
@@ -555,12 +557,11 @@ int Monster::steal(Player *victim) {
 //*********************************************************************
 
 void Monster::berserk() {
-	int num = 0;
 
 	// TODO: Change Berserk into an effect
-	if(flagIsSet(M_BERSERK))
+	if(isEffected("berserk"))
 		return;
-	setFlag(M_BERSERK);
+	addEffect("berserk", 60, 50);
 	clearFlag(M_WILL_BERSERK);
 	strength.addModifier("Berserk", 50, MOD_CUR_MAX);
 

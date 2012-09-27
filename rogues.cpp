@@ -442,7 +442,7 @@ int cmdHide(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(player->flagIsSet(P_MISTED)) {
+	if(player->isEffected("mist")) {
 		player->print("You are already hidden as a mist.\n");
 		return(0);
 	}
@@ -547,7 +547,7 @@ int cmdHide(Player* player, cmd* cmnd) {
 		if(player->isBlind())
 			chance = MIN(chance, 20);
 
-		if(mrand(1,100) <= chance || player->flagIsSet(P_MISTED)) {
+		if(mrand(1,100) <= chance || player->isEffected("mist")) {
 			player->setFlag(P_HIDDEN);
 			player->print("You slip into the shadows unnoticed.\n");
 			player->checkImprove("hide", true);
@@ -814,7 +814,7 @@ int cmdEnvenom(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	weapon = findObject(player, player->first_obj, cmnd);
+	weapon = player->findObject(player, cmnd, 1);
 
 	if(!weapon) {
 		player->print("You do not have that weapon in your inventory.\n");
@@ -944,7 +944,7 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(player->flagIsSet(P_MISTED)) {
+	if(player->isEffected("mist")) {
 		player->print("You can't shoplift while you are a mist.\n");
 		return(0);
 	}
@@ -1251,7 +1251,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 	AttackResult result = player->getAttackResult(target, weapon, DOUBLE_MISS, skillLevel);
 
 	if(result == ATTACK_HIT || result == ATTACK_CRITICAL || result == ATTACK_BLOCK || result == ATTACK_GLANCING) {
-		if(!player->isHidden() && !player->flagIsSet(P_MISTED))
+		if(!player->isHidden() && !player->isEffected("mist"))
 			result = ATTACK_MISS;
 
 		if(!pTarget && target->flagIsSet(M_NO_BACKSTAB))
@@ -1613,7 +1613,7 @@ int cmdAmbush(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		if(!player->flagIsSet(P_HIDDEN) && !player->flagIsSet(P_MISTED) && !player->isCt()) {
+		if(!player->flagIsSet(P_HIDDEN) && !player->isEffected("mist") && !player->isCt()) {
 			player->print("How do you expect to ambush when you aren't hiding?\n");
 			return(0);
 		}
@@ -1858,7 +1858,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
 		return(dmMobInventory(player, cmnd));
 
 
-	if(pCreature && pCreature->flagIsSet(P_MISTED)) {
+	if(pCreature && pCreature->isEffected("mist")) {
 		player->print("You cannot peek at the inventory of a mist.\n");
 		return(0);
 	}

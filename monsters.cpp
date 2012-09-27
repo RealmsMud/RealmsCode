@@ -163,10 +163,9 @@ void Monster::pulseTick(long t) {
 	}
 	// Mobs shouldn't stay berserk after they tick full
 	if(!nearEnemy(this) && hp.getCur() == hp.getMax()) {
-		if(flagIsSet(M_BERSERK)) {
-			strength.setCur(strength.getMax());
+		if(isEffected("berserk")) {
 			broadcast(NULL, getRoomParent(), "^r%M's rage diminishes!", this);
-			clearFlag(M_BERSERK);
+			removeEffect("berserk");
 			setFlag(M_WILL_BERSERK);
 		}
 	}

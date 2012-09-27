@@ -1108,7 +1108,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
 		//
 		// monsters do more damage while berserked
 		//
-		if(enemy && mFlagIsSet(M_BERSERK))
+		if(enemy && isEffected("berserk"))
 			attackDamage.set(attackDamage.get() * 3 / 2);
 
 		//

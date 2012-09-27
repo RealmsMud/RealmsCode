@@ -90,6 +90,11 @@ public:
 	Player* findPlayer(Creature* searcher, const cmd* cmnd, int num=1);
 	Player* findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch = false);
 	Player* findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match);
+
+	Object* findObject(Creature *searcher, const cmd* cmnd, int val);
+	Object* findObject(Creature* searcher, const bstring& name, const int num, bool exactMatch = false);
+	Object* findObject(Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match);
+
 	MudObject* findTarget(Creature* searcher, const cmd* cmnd, int num=1);
 	MudObject* findTarget(Creature* searcher,  const bstring& name, const int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false);
 	MudObject* findTarget(Creature* searcher,  const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match);

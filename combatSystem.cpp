@@ -981,7 +981,7 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
 
 			// DMs can hit vampires
 			if(!isDm()) {
-				if(pVictim->flagIsSet(P_MISTED)) {
+				if(pVictim->isEffected("mist")) {
 					if(weapon) {
 						if(	!weapon->flagIsSet(O_CAN_HIT_MIST) && !flagIsSet(P_MISTBANE) )
 						{

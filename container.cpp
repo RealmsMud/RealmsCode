@@ -264,6 +264,35 @@ MudObject* Container::findTarget(Creature* searcher, const bstring& name, const 
 	return(toReturn);
 }
 
+// Wrapper for the real findObject to support legacy callers
+Object* Container::findObject(Creature *searcher, const cmd* cmnd, int val) {
+	return(findObject(searcher, cmnd->str[val], cmnd->val[val]));
+}
+Object* Container::findObject(Creature* searcher, const bstring& name, const int num, bool exactMatch ) {
+	int match = 0;
+	return(findObject(searcher, name, num,exactMatch, match));
+}
+Object* Container::findObject(Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) {
+	Object *target = 0;
+	for(Object* obj : searcher->getParent()->objects) {
+        if(isMatch(searcher, obj, name, exactMatch)) {
+            match++;
+            if(match == num) {
+                if(exactMatch)
+                    return(obj);
+                else {
+                    target = obj;
+                    break;
+                }
+
+            }
+        }
+		return(target);
+	}
+
+	return(0);
+}
+
 
 // Wrapper for the real findCreature to support legacy callers
 Creature* Container::findCreature(Creature* searcher, const cmd* cmnd, int num) {
@@ -296,7 +325,7 @@ Creature* Container::findCreature(Creature* searcher, const bstring& name, const
 	int ignored=0;
 	return(findCreature(searcher, name, num, monFirst, firstAggro, exactMatch, ignored));
 }
-bool isMatch(Creature* searcher, Creature* target, const bstring& name, bool exactMatch, bool checkVisibility) {
+bool isMatch(Creature* searcher, MudObject* target, const bstring& name, bool exactMatch, bool checkVisibility) {
     if(!target)
         return(false);
     if(checkVisibility && !searcher->canSee(target))
@@ -312,7 +341,9 @@ bool isMatch(Creature* searcher, Creature* target, const bstring& name, bool exa
         }
 
     } else {
-        if(keyTxtEqual(target, name.c_str())) {
+    	if(target->isCreature() && keyTxtEqual(target->getAsCreature(), name.c_str())) {
+    		return(true);
+    	} else if(target->isObject() && keyTxtEqual(target->getAsObject(), name.c_str())) {
             return(true);
         }
     }

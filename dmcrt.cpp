@@ -1236,10 +1236,6 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 		   return(0);
 		}
 
-		if(ctModBuilder && num == P_INCOGNITO+1 && pTarget && pTarget->flagIsSet(P_INCOGNITO)) {
-			player->print("Error: you cannot unset incognito flag on builders.\n");
-			return(0);
-		}
 		if(num == M_WILL_BE_LOGGED+1 && mTarget) {
 			player->print("Error: you cannot set/clear this flag.\n");
 			return(PROMPT);

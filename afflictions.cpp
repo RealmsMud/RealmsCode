@@ -1083,7 +1083,7 @@ int splCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd, 2);
+	object = player->findObject(player, cmnd, 2);
 
 	if(!object) {
 		player->print("You don't have that in your inventory.\n");
@@ -1110,7 +1110,6 @@ int splCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Creature* target=0;
-	otag*	op=0;
 	int		i=0;
 	bool	equipment=true;
 
@@ -1166,10 +1165,8 @@ int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		if(target->flagIsSet(P_DARKNESS)) {
-			op = target->first_obj;
-			while(op) {
-				op->obj->clearFlag(O_DARKNESS);
-				op = op->next_tag;
+			for(Object* obj : target->objects) {
+				obj->clearFlag(O_DARKNESS);
 			}
 			player->print("The aura of darkness around you dissipates.\n");
 			broadcast(player->getSock(), player->getParent(), "The aura of darkness around %N dissipates.", player);

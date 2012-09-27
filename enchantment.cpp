@@ -50,7 +50,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
 		} else if(player->isEffected("vampirism") && !isDay()) {
 			player->print("Nothing happens.\n");
 			return(0);
-		} else if(player->flagIsSet(P_MISTED)) {
+		} else if(player->isEffected("mist")) {
 			player->print("Nothing happens.\n");
 			return(0);
 		} else {
@@ -112,7 +112,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		if(	target->isPlayer() &&
-			(target->flagIsSet(P_UNCONSCIOUS) || target->isEffected("petrification") || target->flagIsSet(P_MISTED))
+			(target->flagIsSet(P_UNCONSCIOUS) || target->isEffected("petrification") || target->isEffected("mist"))
 		) {
 			player->printColor("^yYour spell failed.\n");
 			return(0);
@@ -881,7 +881,7 @@ int cmdEnchant(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("You don't have that item in your inventory.\n");
 		return(0);

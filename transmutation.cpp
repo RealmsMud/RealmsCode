@@ -59,7 +59,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how != POTION) {
 			player->print("Entangle whom?\n");
 			return(0);
-		} else if(player->flagIsSet(P_MISTED)) {
+		} else if(player->isEffected("mist")) {
 			player->print("Nothing happens.\n");
 			return(0);
 		} else {
@@ -120,7 +120,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 				target->isEffected("petrification") ||
 				(	player->getClass() != RANGER &&
 					player->getClass() != DRUID &&
-					target->flagIsSet(P_MISTED)
+					target->isEffected("mist")
 				)
 			)
 		) {

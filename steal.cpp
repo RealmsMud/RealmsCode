@@ -104,7 +104,7 @@ void steal_gold(Player* player, Creature* creature) {
 		return;
 	}
 
-	if(	creature->flagIsSet(P_MISTED) && !
+	if(	creature->isEffected("mist") && !
 		!player->checkStaff("You cannot steal from a misted creature.\n") )
 		return;
 
@@ -361,7 +361,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 			player->print("You have to stand up first.\n");
 			return(0);
 		}
-		if(player->flagIsSet(P_MISTED)) {
+		if(player->isEffected("mist")) {
 			player->print("You must be in corporeal form to steal!\n");
 			return(0);
 		}
@@ -454,7 +454,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 		}
 
 		// Impossible to steal from an incorpreal mist.
-		if(	pTarget->flagIsSet(P_MISTED) &&
+		if(	pTarget->isEffected("mist") &&
 			!player->checkStaff("You cannot steal from a misted vampire.\n") )
 			return(0);
 
@@ -560,7 +560,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 				continue;
 
 			// Thieves cannot mist, but putting this here for completeness.
-			if(player->flagIsSet(P_MISTED) && !bystander->isEffected("true-sight"))
+			if(player->isEffected("mist") && !bystander->isEffected("true-sight"))
 				continue;
 
 			// If thief is invisible, only those with d-i will possibly see.

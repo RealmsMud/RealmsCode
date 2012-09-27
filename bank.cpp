@@ -46,7 +46,7 @@ bool Bank::canSee(const Player* player) {
 	if(player->isCt())
 		return(true);
 
-	if(player->flagIsSet(P_MISTED)) {
+	if(player->isEffected("mist")) {
 		player->print("You are in mist form and cannot handle physical objects.\n");
 		return(false);
 	}

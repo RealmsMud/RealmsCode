@@ -2588,7 +2588,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 		if(exit) {
 			player->delObj(oInvis, true, false, true, false);
 			delete oInvis;
-			exit->setFlag(X_INVISIBLE);
+			exit->addEffect("invisibility", -1);
 			player->printColor("Exit '%s^x' is now invisible.\n", exit->name);
 		} else {
 			player->print("There was an error making the %s entrance invisible!\n", getTypeStr(propType).c_str());

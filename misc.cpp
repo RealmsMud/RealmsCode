@@ -212,7 +212,7 @@ char *crt_str(const Creature *crt, int num, int flag ) {
 			strcpy(str, "Someone");
 		}
 		// Target is misted, viewer can't detect mist, or isn't staff
-		else if( crt->flagIsSet(P_MISTED) && !(flag & MIST) && !(flag & ISDM) && !(flag & ISCT) && !(flag & ISBD)) {
+		else if( crt->isEffected("mist") && !(flag & MIST) && !(flag & ISDM) && !(flag & ISCT) && !(flag & ISBD)) {
 			strcpy(str, "A light mist");
 		}
 		// Target is invisible and viewer doesn't have detect-invis or isn't staff
@@ -228,7 +228,7 @@ char *crt_str(const Creature *crt, int num, int flag ) {
 			else if(crt->isInvisible())
 				strcat(str, " (*)");
 			// Misted
-			else if(crt->flagIsSet(P_MISTED))
+			else if(crt->isEffected("mist"))
 				strcat(str, " (m)");
 		}
 		return(str);

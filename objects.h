@@ -149,10 +149,9 @@ public:
     Dice damage;
     double getDps();
 
-    otag *first_obj;	// objects contained inside
-    class Object *parent_obj;	// object this is in
-    class BaseRoom *parent_room;	// room this is in
-    class Creature *parent_crt;	// creature this is in
+//    class Object *parent_obj;	// object this is in
+//    class BaseRoom *parent_room;	// room this is in
+//    class Creature *parent_crt;	// creature this is in
 
     CatRef in_bag[3];	// items preloaded inside bags
 

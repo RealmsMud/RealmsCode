@@ -375,9 +375,9 @@ int communicateWith(Player* player, cmd* cmnd) {
 	if(chan->type != COM_SIGN) {
 
 		if(!target->isStaff() &&
-			( ( player->flagIsSet(P_INCOGNITO) && !player->inSameRoom(target) ) ||
+			( ( player->isEffected("incognito") && !player->inSameRoom(target) ) ||
 				( player->isInvisible() && !target->isEffected("detect-invisible") ) ||
-				( player->flagIsSet(P_MISTED) && !target->isEffected("true-sight") ) ||
+				( player->isEffected("mist") && !target->isEffected("true-sight") ) ||
 				player->flagIsSet(P_DM_INVIS) ||
 		    	target->flagIsSet(P_UNCONSCIOUS) ||
 		    	target->isBraindead() ||

@@ -409,7 +409,7 @@ int cmdMaul(Player* player, cmd* cmnd) {
 
 
 	if(!player->isCt() && pCreature) {
-		if(pCreature->flagIsSet(P_MISTED)) {
+		if(pCreature->isEffected("mist")) {
 			player->print("You cannot physically hit a misted creature.\n");
 			return(0);
 		}

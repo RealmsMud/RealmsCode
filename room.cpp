@@ -45,9 +45,9 @@ void Player::finishAddPlayer(BaseRoom* room) {
 
 	if(!gServer->isRebooting()) {
 
-		if(!flagIsSet(P_DM_INVIS) && !flagIsSet(P_HIDDEN) && !flagIsSet(P_MISTED) ) {
+		if(!flagIsSet(P_DM_INVIS) && !flagIsSet(P_HIDDEN) && !isEffected("mist") ) {
 			broadcast(getSock(), room, "%M just arrived.", this);
-		} else if(flagIsSet(P_MISTED) && !flagIsSet(P_SNEAK_WHILE_MISTED)) {
+		} else if(isEffected("mist") && !flagIsSet(P_SNEAK_WHILE_MISTED)) {
 			broadcast(getSock(), room, "A light mist just arrived.");
 		} else {
 			if(isDm())
@@ -651,7 +651,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 	)
 		return;
 
-	if(!player->canSee(room, true))
+	if(!player->canSeeRoom(room, true))
 		return;
 
 	oStr << (!player->flagIsSet(P_NO_EXTRA_COLOR) && room->isSunlight() ? "^C" : "^c");
@@ -736,7 +736,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 					oStr << "(nw)";
 				if(ext->flagIsSet(X_NO_SEE))
 					oStr << "(dm)";
-				if(ext->flagIsSet(X_INVISIBLE))
+				if(ext->isEffected("invisibility"))
 					oStr << "(*)";
 				if(ext->isConcealed(player))
 					oStr << "(c)";
@@ -828,7 +828,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 					oStr << "(h)";
 				if(ply->isInvisible())
 					oStr << "(*)";
-				if(ply->flagIsSet(P_MISTED))
+				if(ply->isEffected("mist"))
 					oStr << "(m)";
 				if(ply->flagIsSet(P_OUTLAW))
 					oStr << "(o)";
@@ -1036,7 +1036,7 @@ void doRoomHarms(BaseRoom *inRoom, Player* target) {
 	if(inRoom->flagIsSet(R_ARCHERS)) {
 		if(	target->flagIsSet(P_HIDDEN) ||
 			target->isInvisible() ||
-			target->flagIsSet(P_MISTED) ||
+			target->isEffected("mist") ||
 			target->flagIsSet(P_DM_INVIS)
 		) {
 			return;

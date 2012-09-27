@@ -426,7 +426,7 @@ int cmdWho(Player* player, cmd* cmnd) {
 		if(cClass > 0)
 			if(target->getClass() != cClass)
 				continue;
-		if(target->flagIsSet(P_MISTED) && !player->isEffected("true-sight") && !player->isCt() )
+		if(target->isEffected("mist") && !player->isEffected("true-sight") && !player->isCt() )
 			continue;
 		if(target->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt() )
 			continue;

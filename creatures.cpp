@@ -34,7 +34,7 @@
 //						canSee
 //********************************************************************
 
-bool Creature::canSee(const BaseRoom* room, bool p) const {
+bool Creature::canSeeRoom(const BaseRoom* room, bool p) const {
 	if(isStaff())
 		return(true);
 	const Player* player = getAsConstPlayer();
@@ -88,118 +88,59 @@ bool Creature::canSee(const BaseRoom* room, bool p) const {
 	return(true);
 }
 
-//********************************************************************
-//						canSee
-//********************************************************************
-// This only handles total invisibility - the creature cannot see the target
-// at all. This does not handle concealment, such as being hidden.
-// This function can be called on an empty creature to check to see if
-// an object can be seen by anyone.
-
-bool Creature::canSee(const Object* object) const {
-
-	if(!object)
-		return(false);
-
-	if(this && isStaff())
-		return(true);
-	if(object->flagIsSet(O_INVISIBLE) && (this && !isEffected("detect-invisible")))
-		return(false);
-
-	return(true);
-}
-
-
-//********************************************************************
-//						canSee
-//********************************************************************
-// This only handles total invisibility - the creature cannot see the target
-// at all. This does not handle concealment, such as being hidden.
-
-bool Creature::canSee(const Exit *exit) const {
-
-	if(!exit)
-		return(false);
-
-	if(isStaff())
-		return(true);
-
-	// handle NoSee right away
-	if(exit->flagIsSet(X_NO_SEE))
-		return(false);
-	if(exit->flagIsSet(X_INVISIBLE) && !isEffected("detect-invisible"))
-		return(false);
-
-	return(true);
-}
-
-
-//********************************************************************
-//						canSee
-//********************************************************************
-// This only handles total invisibility - the creature cannot see the target
-// at all. This does not handle concealment, such as being hidden.
-// The skip boolean skips the invis/mist checks. In effect, it only runs
-// staff invisibility. This is used in group and groupline.
-
-bool Creature::canSee(const Creature* target, bool skip) const {
-
+bool Creature::canSee(const MudObject* target, bool skip) const {
 	if(!target)
 		return(false);
 
-	// we are a player
-	if(isPlayer()) {
-
-		if(target->isPlayer()) {
-			if(target->isDm() && target->flagIsSet(P_DM_INVIS) && !isDm())
+	if(target->isCreature()) {
+		Creature* cTarget = target->getAsConstCreature();
+		if(cTarget->isPlayer()) {
+			if(cTarget->isDm() && cTarget->flagIsSet(P_DM_INVIS) && !isDm())
 				return(false);
-			if(target->isCt() && target->flagIsSet(P_DM_INVIS) && !isCt())
+			if(cTarget->isCt() && cTarget->flagIsSet(P_DM_INVIS) && !isCt())
 				return(false);
-			if(target->isStaff() && target->flagIsSet(P_DM_INVIS) && !isStaff())
+			if(cTarget->isStaff() && cTarget->flagIsSet(P_DM_INVIS) && !isStaff())
 				return(false);
-			if(target->flagIsSet(P_INCOGNITO) && (getClass() < target->getClass()) && getParent() != target->getParent())
+			if(target->isEffected("incognito") && (getClass() < cTarget->getClass()) && getParent() != cTarget->getParent())
 				return(false);
 
 			if(!skip) {
-				if(target->isInvisible() && !isEffected("detect-invisible") && !isStaff())
+				if(cTarget->isInvisible() && !isEffected("detect-invisible") && !isStaff())
 					return(false);
-				if(target->flagIsSet(P_MISTED) && !isEffected("true-sight") && !isStaff())
+				if(target->isEffected("mist") && !isEffected("true-sight") && !isStaff())
 					return(false);
 			}
 
 		} else {
 
 			if(!skip) {
-				if(target->isInvisible() && !isEffected("detect-invisible") && !isStaff())
+				if(cTarget->isInvisible() && !isEffected("detect-invisible") && !isStaff())
 					return(false);
 			}
 
 		}
 
-	// we are a monster
-	} else {
+	} // End Creature
+	if(target->isExit()) {
+		Exit* exit = target->getAsConstExit();
+		if(isStaff())
+			return(true);
 
-		if(target->isPlayer()) {
-			if(target->isStaff() && target->flagIsSet(P_DM_INVIS))
-				return(false);
+		// handle NoSee right away
+		if(exit->flagIsSet(X_NO_SEE))
+			return(false);
+		if(exit->isEffected("invisibility") && !isEffected("detect-invisible"))
+			return(false);
+	}
+	if(target->isObject()) {
+		Object* object = target->getAsConstObject();
 
-			if(!skip) {
-				if(target->isInvisible() && !isEffected("detect-invisible"))
-					return(false);
-				if(target->flagIsSet(P_MISTED) && !isEffected("true-sight"))
-					return(false);
-			}
-		} else {
-
-			if(!skip) {
-				if(target->isInvisible() && !isEffected("detect-invisible"))
-					return(false);
-			}
-
-		}
+		if(isStaff())
+			return(true);
+		if(object->isEffected("invisibility") && (this && !isEffected("detect-invisible")))
+			return(false);
 
 	}
-
 	return(true);
 }
 
@@ -349,12 +290,12 @@ bool Creature::canEnter(const Exit *exit, bool p, bool blinking) const {
 			if(!staff) return(false);
 		}
 
-		if(exit->flagIsSet(X_NO_MIST) && flagIsSet(P_MISTED)) {
+		if(exit->flagIsSet(X_NO_MIST) && isEffected("mist")) {
 			if(p) checkStaff("You may not go that way in mist form.\n");
 			if(!staff) return(false);
 		}
 
-		if(exit->flagIsSet(X_MIST_ONLY) && !flagIsSet(P_MISTED)) {
+		if(exit->flagIsSet(X_MIST_ONLY) && !isEffected("mist")) {
 			if(p) checkStaff(getAsConstPlayer()->canMistNow() ? "You must turn to mist before you can go that way.\n" : "You cannot fit through that exit.\n");
 			if(!staff) return(false);
 		}
@@ -444,7 +385,7 @@ bool Creature::canEnter(const UniqueRoom* room, bool p) const {
 			if(p) checkStaff("That room is full.\n");
 			if(!staff) return(false);
 		}
-		if(room->flagIsSet(R_NO_MIST) && flagIsSet(P_MISTED)) {
+		if(room->flagIsSet(R_NO_MIST) && isEffected("mist")) {
 			if(p) checkStaff("You may not enter there in mist form.\n");
 			if(!staff) return(false);
 		}
@@ -1155,7 +1096,7 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 			crtStr << "Someone";
 		}
 		// Target is misted, viewer can't detect mist, or isn't staff
-		else if( flagIsSet(P_MISTED) && !(flags & MIST) && !(flags & ISDM) && !(flags & ISCT) && !(flags & ISBD)) {
+		else if( isEffected("mist") && !(flags & MIST) && !(flags & ISDM) && !(flags & ISCT) && !(flags & ISBD)) {
 			crtStr << "A light mist";
 		}
 		// Target is invisible and viewer doesn't have detect-invis or isn't staff
@@ -1171,7 +1112,7 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 			else if(isInvisible())
 				crtStr << " (*)";
 			// Misted
-			else if(flagIsSet(P_MISTED))
+			else if(isEffected("mist"))
 				crtStr << " (m)";
 		}
 		toReturn = crtStr.str();

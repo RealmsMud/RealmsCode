@@ -165,27 +165,7 @@ Object* findObject(const Player *player, int id) {
 	return(0);
 }
 
-Object* findObject(const Creature *player, otag* first_ot, const cmd* cmnd, int val) {
-	return(findObject(player, first_ot, cmnd->str[val], cmnd->val[val]));
-}
 
-Object* findObject(const Creature* player, otag* first_ot, const char* str, int val) {
-	otag	*op;
-	int		match=0;
-
-	if(!first_ot)
-		return(0);
-	op = first_ot;
-	while(op) {
-		if(player->canSee(op->obj) && keyTxtEqual(op->obj, str)) {
-			match++;
-			if(match == val)
-				return(op->obj);
-		}
-		op = op->next_tag;
-	}
-	return(0);
-}
 
 //*********************************************************************
 //						listObjects
@@ -393,7 +373,7 @@ void Object::loadContainerContents() {
 //*********************************************************************
 
 int cmdKeep(Player* player, cmd* cmnd) {
-	Object	*object = findObject(player, player->first_obj, cmnd);
+	Object	*object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
 		player->print("You don't have that in your inventory.\n");
@@ -427,7 +407,7 @@ int cmdUnkeep(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("That is not in your inventory.\n");
 		return(0);
@@ -718,7 +698,7 @@ void getDamageString(char atk[50], Creature* player, Object *weapon, bool critic
 bool Object::showAsSame(const Player* player, const Object* object) const {
 	return(	!strcmp(name, object->name) &&
 			flagIsSet(O_KEEP) == object->flagIsSet(O_KEEP) &&
-			flagIsSet(O_INVISIBLE) == object->flagIsSet(O_INVISIBLE) &&
+			isEffected("invisibility") == object->isEffected("invisibility") &&
 			isBroken() == object->isBroken() &&
 			flagIsSet(O_BEING_PREPARED) == object->flagIsSet(O_BEING_PREPARED) &&
 			(	adjustment == object->adjustment ||

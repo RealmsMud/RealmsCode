@@ -597,7 +597,7 @@ int cmdTeach(Player* player, cmd* cmnd) {
 		target->print("%M teaches you the %s spell.\n", player,
 		      get_spell_name(splno));
 		player->print("Spell \"%s\" taught to %N.\n", get_spell_name(splno), target);
-		if(!player->flagIsSet(P_DM_INVIS) && !player->flagIsSet(P_INCOGNITO)) {
+		if(!player->flagIsSet(P_DM_INVIS) && !player->isEffected("incognito")) {
 			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M taught %N the %s spell.", player, target, get_spell_name(splno));
 		}
@@ -629,7 +629,7 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("You don't have that.\n");
 		return(0);
@@ -921,7 +921,7 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 		player->printColor("^CYou're blind!\n");
 		return(0);
 	}
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object || !cmnd->val[1]) {
 		for(n = 0; n < MAXWEAR; n++) {
@@ -1197,7 +1197,7 @@ int cmdConsume(Player* player, cmd* cmnd) {
 	    return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object || !cmnd->val[1]) {
 		for(n = 0; n < MAXWEAR; n++) {
@@ -1250,7 +1250,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object || !cmnd->val[1]) {
 		for(n = 0; n < MAXWEAR; n++) {

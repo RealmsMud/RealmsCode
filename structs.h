@@ -126,15 +126,6 @@ public:
 };
 
 
-// Object effectList tags
-typedef struct obj_tag {
-public:
-	obj_tag() { next_tag = 0; obj = 0; };
-	struct obj_tag 	*next_tag;
-	Object	*obj;
-} otag;
-
-
 // UniqueRoom effectList tags
 typedef struct rom_tag {
 public:

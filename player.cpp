@@ -153,12 +153,12 @@ void Player::init() {
 		initBuilder();
 
 
-	if(flagIsSet(P_MISTED) && !canMistNow())
+	if(isEffected("mist") && !canMistNow())
 		unmist();
 
 	if(!isStaff()) {
 		clearFlag(P_DM_INVIS);
-		clearFlag(P_INCOGNITO);
+		removeEffect("incognito");
 	} else {
 		// staff logs on with dmInvis
 		setFlag(P_DM_INVIS);
@@ -774,7 +774,7 @@ void Player::checkEffectsWearingOff() {
 		}
 	}
 
-	if(flagIsSet(P_MISTED)) {
+	if(isEffected("mist")) {
 		if(isDay() && !staff)
 			unmist();
 	}
@@ -2416,20 +2416,20 @@ bstring Player::getWhoString(bool whois, bool color, bool ignoreIllusion) const 
 
 
 	if(	flagIsSet(P_DM_INVIS) ||
-		flagIsSet(P_INCOGNITO) ||
+		isEffected("incognito") ||
 		isInvisible() ||
-		flagIsSet(P_MISTED) ||
+		isEffected("mist") ||
 		(flagIsSet(P_LINKDEAD) && !isPublicWatcher())
 	) {
 		if(color)
 			whoStr << " ^w";
 		if(flagIsSet(P_DM_INVIS))
 			whoStr << "[+]";
-		if(flagIsSet(P_INCOGNITO) )
+		if(isEffected("incognito") )
 			whoStr << "[g]";
 		if(isInvisible() )
 			whoStr << "[*]";
-		if(flagIsSet(P_MISTED) )
+		if(isEffected("mist") )
 			whoStr << "[m]";
 		if(flagIsSet(P_LINKDEAD) && !isPublicWatcher() )
 			whoStr << "[l]";

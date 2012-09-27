@@ -2062,10 +2062,10 @@ bstring Creature::fullName() const {
 void Creature::unmist() {
 	if(isMonster())
 		return;
-	if(!flagIsSet(P_MISTED))
+	if(!isEffected("mist"))
 		return;
 
-	clearFlag(P_MISTED);
+	removeEffect("mist");
 	clearFlag(P_SNEAK_WHILE_MISTED);
 	unhide();
 

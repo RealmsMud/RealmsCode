@@ -236,23 +236,19 @@ int cmdBrew(Player* player, cmd* cmnd) {
 	}
 
 	Object* mortar=0;	// Our Mortar and Pestle
-	Object* retort=0;
-	Object* alembic=0;
 
 	double retortQuality = 0;
 	double mortarQuality = 0;
 
-	Object* herb=0;		// The herb we're looking at
-
 	// Lets find our mortar.  First check inventory
-	mortar = findObject(player, player->first_obj, cmnd);
+	mortar = player->findObject(player, cmnd, 1);
 
 	// Second check the room
 	if(!mortar)
-		mortar = findObject(player, room->first_obj, cmnd, 1);
+		mortar = room->findObject(player, cmnd, 1);
 
 	if(!mortar) {
-		player->print("You don't have that.\n");
+		player->print("What would you like to brew the contents of?.\n");
 		return(0);
 	}
 
@@ -262,7 +258,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(!mortar->first_obj) {
+	if(!mortar->objects.empty()) {
 		player->print("But it's empty, what do you want to brew?\n");
 		return(0);
 	}
@@ -278,19 +274,16 @@ int cmdBrew(Player* player, cmd* cmnd) {
 
 	// We'll be combining multiple herbs into one potion
 	// Skill level can be 1-100
-	otag* op = 0;
 	std::map<bstring, AlchemyEffect> effects;
 	if(mortar->getShotsCur() >= 2) {
 		std::map<bstring, int> effectCount;
 		int visibleEffects = Alchemy::getVisibleEffects(skillLevel);
 
-		// We want to look at the first 4 herbs in the mortar and get a list of effects and how many occurances of that
-		// effect there are.  For any effect with 2 or more occurances, it'll get added to the final potion
-		// If we have no effects with 2 or more occurances, we have a failed attempt to make a potion.
-		op = mortar->first_obj;
+		// We want to look at the first 4 herbs in the mortar and get a list of effects and how many occurrences of that
+		// effect there are.  For any effect with 2 or more occurrences, it'll get added to the final potion
+		// If we have no effects with 2 or more occurrences, we have a failed attempt to make a potion.
 		int numHerbs = 0;
-		while(op) {
-			herb = op->obj;
+		for(Object *herb : mortar->objects) {
 
 			int used = 0;
 			for(std::pair<int, AlchemyEffect> p : herb->alchemyEffects) {
@@ -311,7 +304,6 @@ int cmdBrew(Player* player, cmd* cmnd) {
 			}
 			if(++numHerbs == 4)
 				break;
-			op = op->next_tag;
 		} // end while
 
 		for(std::pair<bstring, int> effectPair : effectCount) {
@@ -327,45 +319,10 @@ int cmdBrew(Player* player, cmd* cmnd) {
 	// We'll be using just one herb, so it'll be the first effect
 	// To get here, we have to have 100 skill
 	else if(mortar->getShotsCur() == 1) {
-		AlchemyEffect &ae = mortar->first_obj->obj->alchemyEffects[1];
+		AlchemyEffect &ae = (*mortar->objects.begin())->alchemyEffects[1];
 		effects[ae.getEffect()] = ae;
 		player->printColor("Brewing a single effect potion: ^Y%s^x\n", ae.getEffect().c_str());
 		return(0);
-	}
-
-	// We know we're making a potion now, so see if there's an alembic or a retort in the player's inventory
-	// or in the room, use the most powerful one found
-	op = player->first_obj;
-	bool playerSearched = false;
-	while(op) {
-		if(op->obj->getSubType() == "retort") {
-			if(!retort || op->obj->getQuality() > retort->getQuality()) {
-				retort = op->obj;
-			}
-		} else if (op->obj->getSubType() == "alembic") {
-			if(!alembic || op->obj->getQuality() > alembic->getQuality()) {
-				alembic = op->obj;
-			}
-		}
-
-		op = op->next_tag;
-		if(!op && playerSearched == false) {
-			// If we're at the end of the objects, and we haven't finish searching the player
-			// we must have just finished searching the player, so set that to true and goto
-			// the first object in the room.  If we have searched the player and the op is NULL
-			// then we've searched everything so we'll just fall through
-			playerSearched = true;
-			op = player->getRoomParent()->first_obj;
-		}
-	}
-	if(retort) {
-		player->printColor("Using retort: ^Y%s^x\n", retort->getName());
-		retortQuality = retort->getQuality()/10.0;
-		// Modify stuff here based on the retort's quality
-	}
-	if(alembic) {
-		player->printColor("Using alembic: ^Y%s^x\n", alembic->getName());
-		// Modify stuff here based on the alembic's quality
 	}
 
 	// High quality mortars can add up to 25 effective skill

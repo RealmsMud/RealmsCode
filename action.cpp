@@ -321,7 +321,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 				}
 			}
 
-			if(creature->flagIsSet(P_MISTED)) {
+			if(creature->isEffected("mist")) {
 				sock->print("You can't do that while misted.\n");
 				return(0);
 			}
@@ -530,7 +530,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 			OUT4("You piss on %N.\n", "%M pisses on you.\n",
 				"%M pisses on %N.");
 		} else {
-			object = findObject(player, room->first_obj, cmnd);
+			object = room->findObject(player, cmnd, 1);
 			if(object) {
 				if(!(object->flagIsSet(O_NO_PREFIX) && (object->flagIsSet(O_NO_TAKE) || object->flagIsSet(O_SCENERY)))) {
 					sock->printColor("You piss on %P.\n", object);
@@ -606,7 +606,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 				sock->print("You are already sitting!\n");
 				return(0);
 			}
-			if(player->flagIsSet(P_MISTED)) {
+			if(player->isEffected("mist")) {
 				sock->print("How does a mist sit down?\n");
 				return(0);
 			}
@@ -720,7 +720,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 				"%M points at you.\n",
 				"%M points at %N.");
 		} else {
-			object = findObject(creature, room->first_obj, cmnd);
+			object = room->findObject(creature, cmnd, 1);
 			if(object) {
 				if(!(object->flagIsSet(O_NO_PREFIX) && (object->flagIsSet(O_NO_TAKE) || object->flagIsSet(O_SCENERY)))) {
 					sock->printColor("You point at %P.\n", object);
@@ -796,7 +796,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 		}
 
 		target = room->findCreature(creature, cmnd->str[2], cmnd->val[2], false);
-		object = findObject(creature, creature->first_obj, cmnd);
+		object = creature->findObject(creature, cmnd, 1);
 
 		if(target) {
 

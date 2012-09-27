@@ -969,7 +969,7 @@ int Player::displayCreature(Creature* target)  {
 	}
 
 	if(pTarget) {
-		if(pTarget->flagIsSet(P_MISTED)) {
+		if(pTarget->isEffected("mist")) {
 			oStr << pTarget->upHeShe() << "%s is currently in mist form.\n";
 			printColor("%s", oStr.str().c_str());
 			return(0);

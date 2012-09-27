@@ -1074,7 +1074,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 
 	if(cmnd->num == 2) {
 
-		object = findObject(player, player->first_obj, cmnd);
+		object = player->findObject(player, cmnd, 1);
 		if(!object) {
 			player->print("Use what bandages?\n");
 			return(0);

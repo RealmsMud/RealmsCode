@@ -1,4 +1,3 @@
-/*
  * files-xml-read.cpp
  *	 Used to read objects/rooms/creatures etc from xml files
  *   ____            _
@@ -493,6 +492,18 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 
 
 	if(isPlayer()) {
+		if(getVersion() < "2.47b") {
+			#define P_OLD_MISTED                55       // Player is in mist form
+			if(flagIsSet(P_OLD_MISTED)) {
+				addEffect("mist", -1);
+				clearFlag(P_OLD_MISTED);
+			}
+			#define P_OLD_INCOGNITO                 104      // DM/CT is incognito
+			if(flagIsSet(P_OLD_INCOGNITO)) {
+				addEffect("incognito", -1);
+				clearFlag(P_OLD_INCOGNITO);
+			}
+		}
 	    if(getVersion() < "2.47a") {
 	        // Update weapon skills
 	        SkillMap::iterator skIt;
@@ -847,6 +858,7 @@ void Player::readXml(xmlNodePtr curNode) {
 	} else if(getVersion() < "2.46l") {
 	    if(NODE_NAME(curNode, "LostExperience")) statistics.setExperienceLost(xml::toNum<unsigned long>(curNode));
 	}
+
 }
 
 //*********************************************************************
@@ -1083,6 +1095,10 @@ int Object::readFromXml(xmlNodePtr rootNode) {
 	    chargesMax = shotsMax / 3;
 	    chargesCur = shotsCur /3;
 	}
+
+	if(version < "2.47b" && flagIsSet(O_OLD_INVISIBLE)) {
+		addEffect("invisibility", -1);
+	}
 	// make sure uniqueness stays intact
 	setFlag(O_UNIQUE);
 	if(!gConfig->getUnique(this))
@@ -1222,6 +1238,9 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room) {
 		else if(NODE_NAME(curNode, "AreaRoom")) target.mapmarker.load(curNode);
 
 		curNode = curNode->next;
+	}
+	if(parentRoom->getVersion() < "2.47b" && flagIsSet(X_OLD_INVISIBLE)) {
+			addEffect("invisibility", -1);
 	}
 
 	escapeText();

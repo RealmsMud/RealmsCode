@@ -1080,7 +1080,7 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 	if(flags & ISDM) {
 		if(flagIsSet(O_HIDDEN))
 			objStr <<  " (h)";
-		if(flagIsSet(O_INVISIBLE))
+		if(isEffected("invisibility"))
 			objStr << " (*)";
 		if(flagIsSet(O_SCENERY))
 			objStr << " (s)";

@@ -318,7 +318,6 @@ public:
 #define 				NUMHITS quests[0]
 	short questnum; // Quest fulfillment number (M)
 	Object *ready[MAXWEAR];// Worn/readied items
-	otag *first_obj; // List of inventory
 	//etag *first_enm; // List of enemies
 	ttag *first_tlk; // List of talk responses
 
@@ -686,10 +685,9 @@ public:
 	Stat* getStat(bstring statName);
 
 	// these handle total invisibility, no concealment (ie, being hidden)
-	bool canSee(const BaseRoom* room, bool p=false) const;
-	bool canSee(const Object* object) const;
-	bool canSee(const Exit *ext) const;
-	bool canSee(const Creature* target, bool skip=false) const;
+	bool canSee(const MudObject* target, bool skip=false) const;
+
+	bool canSeeRoom(const BaseRoom* room, bool p=false) const;
 	bool canEnter(const Exit *ext, bool p=false, bool blinking=false) const;
 	bool canEnter(const UniqueRoom* room, bool p=false) const;
 	bool willFit(const Object* object) const;
@@ -720,7 +718,7 @@ public:
 	virtual void pulseTick(long t) = 0;
 
 	MudObject* findTarget(int findWhere, int findFlags, bstring str, int val);
-	MudObject* findObjTarget(otag *first_ot, int findFlags, bstring str, int val, int* match);
+//	MudObject* findObjTarget(otag *first_ot, int findFlags, bstring str, int val, int* match);
 	//MudObject* findTarget(cmd* cmnd, TargetType targetType, bool offensive);
 
 	// New songs

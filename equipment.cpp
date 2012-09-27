@@ -40,7 +40,7 @@ int cmdCompare(Player* player, cmd* cmnd) {
     Object* compareTo = 0;
 
     // Attempt to compare to something we're wearing
-    toCompare = findObject(player, player->first_obj, cmnd);
+    toCompare = player->findObject(player, cmnd, 1);
     if(!toCompare) {
         *player << "You don't have that in your inventory.\n";
         return(0);
@@ -261,7 +261,7 @@ int cmdUse(Player* player, cmd* cmnd) {
 	if(!strcmp(cmnd->str[1], "all"))
 		return(cmdWear(player, cmnd));
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
 		object = findObject(player, room->first_obj, cmnd);
@@ -357,7 +357,7 @@ bool doWear(Player* player, cmd* cmnd, int id) {
 	}
 
 	if(cmnd)
-		object = findObject(player, player->first_obj, cmnd);
+		object = player->findObject(player, cmnd, 1);
 	else
 		object = findObject(player, id);
 
@@ -858,7 +858,7 @@ bool doWield(Player* player, cmd* cmnd, int id) {
 	if(!cmnd || cmnd->num > 1) {
 
 		if(cmnd)
-			object = findObject(player, player->first_obj, cmnd);
+			object = player->findObject(player, cmnd, 1);
 		else
 			object = findObject(player, id);
 
@@ -927,7 +927,7 @@ int cmdHold(Player* player, cmd* cmnd) {
 
 	if(cmnd->num > 1) {
 
-		object = findObject(player, player->first_obj, cmnd);
+		object = player->findObject(player, cmnd, 1);
 
 		if(!object) {
 			player->print("You don't have that.\n");
@@ -2928,7 +2928,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 
 
 	if(target->isPlayer()) {
-		if(	target->flagIsSet(P_MISTED) &&
+		if(	target->isEffected("mist") &&
 			!player->checkStaff("How can you give something to a misted creature?\n")
 		)
 			return(0);
@@ -3023,7 +3023,7 @@ void give_money(Player* player, cmd* cmnd) {
 		return;
 	}
 
-	if(target->pFlagIsSet(P_MISTED)) {
+	if(target->pisEffected("mist")) {
 		player->print("How can you give money to a mist?\n");
 		return;
 	}
@@ -3200,7 +3200,7 @@ int cmdCost(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
 		player->print("You don't have that item.\n");
@@ -3285,7 +3285,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("You don't have that.\n");
 		return(0);

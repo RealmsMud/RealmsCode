@@ -210,7 +210,7 @@ int cmdMist(Player* player, cmd* cmnd) {
 		player->print("You can't do that while in a group.\n");
 		return(0);
 	}
-	if(player->flagIsSet(P_MISTED)) {
+	if(player->isEffected("mist")) {
 		player->print("You are already a mist.\n");
 		return(0);
 	}
@@ -221,7 +221,7 @@ int cmdMist(Player* player, cmd* cmnd) {
 	}
 
 	broadcast(player->getSock(), player->getParent(), "%M turns to mist.", player);
-	player->setFlag(P_MISTED);
+	player->addEffect("mist", -1);
 	player->print("You turn to mist.\n");
 	//player->checkImprove("mist", true);
 	player->clearFlag(P_SITTING);
@@ -259,7 +259,7 @@ bool Player::canMistNow() const {
 //*********************************************************************
 
 int cmdUnmist(Player* player, cmd* cmnd) {
-	if(player->flagIsSet(P_MISTED)) {
+	if(player->isEffected("mist")) {
 		player->unmist();
 	} else {
 		if(!player->isEffected("vampirism") && !player->isStaff())

@@ -291,9 +291,8 @@ bstring objShopName(Object* object, int m, int flags, int pad) {
 
 bool tooManyItemsInShop(const Player* player, const UniqueRoom* storage) {
 	int numObjects=0, numLines=0;
-	otag *op = storage->first_obj;
 
-	while(op) {
+	for(Object *obj : storage->objects) {
 		numObjects++;
 		numLines++;
 
@@ -1663,7 +1662,7 @@ int cmdSell(Player* player, cmd* cmnd) {
 	}
 
 	player->unhide();
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
 		player->print("You don't have that.\n");
@@ -1778,7 +1777,7 @@ int cmdValue(Player* player, cmd* cmnd) {
 
 	player->unhide();
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
 		player->print("You don't have that.\n");
@@ -1825,7 +1824,7 @@ int cmdRefund(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("You don't have that in your inventory.\n");
 		return(0);
@@ -2049,7 +2048,7 @@ int cmdTrade(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
 		player->print("You don't have that.\n");
@@ -2221,7 +2220,7 @@ int cmdAuction(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(player->flagIsSet(P_MISTED) || player->isInvisible()) {
+	if(player->isEffected("mist") || player->isInvisible()) {
 		player->print("You must be visible to everyone in order to auction.\n");
 		return(0);
 	}
@@ -2238,7 +2237,7 @@ int cmdAuction(Player* player, cmd* cmnd) {
 	i = 2;
 
 	if(strcmp(cmnd->str[1], "self")) {
-		object = findObject(player, player->first_obj, cmnd);
+		object = player->findObject(player, cmnd, 1);
 		if(!object) {
 			player->print("That object is not in your inventory.\n");
 			return(0);

@@ -59,7 +59,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 		player->print("What do you wish to identify?\n");
 		return(0);
 	}
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
 		player->print("You don't have that object in your inventory.\n");

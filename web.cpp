@@ -563,8 +563,8 @@ bool WebInterface::handleInput() {
 			const Player* player = gServer->findPlayer(tempBuf);
 			if(	!player ||
 				player->flagIsSet(P_DM_INVIS) ||
-				player->flagIsSet(P_INCOGNITO) ||
-				player->flagIsSet(P_MISTED) ||
+				player->isEffected("incognito") ||
+				player->isEffected("mist") ||
 				player->isInvisible()
 			) {
 				outBuf += "That player is not logged on.";
@@ -878,11 +878,11 @@ bstring webwho() {
 
 		if(player->flagIsSet(P_DM_INVIS))
 			continue;
-		if(player->flagIsSet(P_INCOGNITO))
+		if(player->isEffected("incognito"))
 			continue;
 		if(player->isInvisible())
 			continue;
-		if(player->flagIsSet(P_MISTED))
+		if(player->isEffected("mist"))
 			continue;
 
 		bstring cls = getShortClassName(player);

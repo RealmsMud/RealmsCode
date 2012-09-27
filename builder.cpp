@@ -244,7 +244,7 @@ void Player::initBuilder() {
 
 	// builders are always watching each other build
 	setFlag(P_LOG_WATCH);
-	setFlag(P_INCOGNITO);
+	addEffect("incognito", -1);
 }
 
 //*********************************************************************

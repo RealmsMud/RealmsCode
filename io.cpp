@@ -258,12 +258,12 @@ void broadcast_login(Player* player, BaseRoom* inRoom, int login) {
 	// TODO: these are set elsewhere, too... check that out
 	if(!player->isStaff()) {
 		player->clearFlag(P_DM_INVIS);
-		player->clearFlag(P_INCOGNITO);
+		player->removeEffect("incognito");
 	} else if(player->getClass()==BUILDER) {
-		player->setFlag(P_INCOGNITO);
+		player->addEffect("incognito", -1);
 	}
 
-	if(player->flagIsSet(P_DM_INVIS) || player->flagIsSet(P_INCOGNITO)) {
+	if(player->flagIsSet(P_DM_INVIS) || player->isEffected("incognito")) {
 		if(player->isDm())
 			broadcast(isDm, "^g%s", illusion.c_str());
 		else if(player->getClass() == CARETAKER)
@@ -375,7 +375,7 @@ void broadcastGroupMember(bool dropLoot, Creature* player, const Player* listen,
 	if(player->isPlayer() && player->isStaff() && player->getClass() > listen->getClass()) {
 		if(player->flagIsSet(P_DM_INVIS))
 			return;
-		if(player->flagIsSet(P_INCOGNITO) && !player->inSameRoom(listen))
+		if(player->isEffected("incognito") && !player->inSameRoom(listen))
 			return;
 	}
 

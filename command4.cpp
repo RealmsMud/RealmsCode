@@ -95,7 +95,7 @@ void Player::score(const Player* viewer) {
 		oStr << " ^b*Fearful*";
 	if(flagIsSet(P_SITTING))
 		oStr << " ^x*Sitting*";
-	if(flagIsSet(P_MISTED))
+	if(isEffected("mist"))
 		oStr << " ^c*Misted*";
 	if(isEffected("armor"))
 		oStr << " ^y*Armor Spell*";

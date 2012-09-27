@@ -265,7 +265,7 @@ int cmdClaim(Player* player, cmd* cmnd) {
 
 	player->unhide();
 
-	ticket = findObject(player, player->first_obj, cmnd);
+	ticket = player->findObject(player, cmnd, 1);
 
 	if(!ticket) {
 		player->print("You don't have that.\n");

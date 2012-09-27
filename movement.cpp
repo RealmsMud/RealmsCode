@@ -91,12 +91,12 @@ void Move::broadcast(Creature* player, Container* container, bool ordinal, bstri
 	bool noShow = (player->pFlagIsSet(P_DM_INVIS));
 
 	if(!noShow) {
-		if(player->isMonster() || (player->isPlayer() && !player->flagIsSet(P_MISTED))) {
+		if(player->isMonster() || (player->isPlayer() && !player->isEffected("mist"))) {
 			if(hiddenExit)
 				::broadcast(player->getSock(), container, "%M slips out of sight.", player);
 			else
 				::broadcast(player->getSock(), container, "%M %s %s^x.", player, strAction.c_str(), exit.c_str());
-		} else if(player->flagIsSet(P_MISTED) && !player->flagIsSet(P_DM_INVIS)) {
+		} else if(player->isEffected("mist") && !player->flagIsSet(P_DM_INVIS)) {
 			if(hiddenExit)
 				::broadcast(player->getSock(), container, "A light mist slips out of sight.");
 			else
@@ -308,10 +308,10 @@ void Move::track(UniqueRoom* room, MapMarker *mapmarker, Exit* exit, Player *lea
 
 bool Move::sneak(Player* player, bool sneaking) {
 
-	if(sneaking && player->flagIsSet(P_MISTED))
+	if(sneaking && player->isEffected("mist"))
 		player->setFlag(P_SNEAK_WHILE_MISTED);
 
-	if(!player->isStaff() && !player->flagIsSet(P_MISTED)) {
+	if(!player->isStaff() && !player->isEffected("mist")) {
 
 		// see if they failed sneaking or not
 		if(sneaking && (
@@ -366,7 +366,7 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
 
 	if(	(exit->flagIsSet(X_NEEDS_CLIMBING_GEAR) || exit->flagIsSet(X_CLIMBING_GEAR_TO_REPEL)) &&
 	    !player->isEffected("levitate") &&
-		!player->flagIsSet(P_MISTED))
+		!player->isEffected("mist"))
 	{
 		int fall = (exit->flagIsSet(X_DIFFICULT_CLIMB) ? 50 : 0) + 50 - player->getFallBonus();
 
@@ -448,7 +448,7 @@ bool Move::canMove(Player* player, cmd* cmnd) {
 	 		player->print("You don't know how to sneak effectively.\n");
 	 		return(false);
 		}
-	 	if(!player->flagIsSet(P_HIDDEN) && !player->flagIsSet(P_MISTED)) {
+	 	if(!player->flagIsSet(P_HIDDEN) && !player->isEffected("mist")) {
 	 		player->print("You need to hide first.\n");
 	 		return(false);
 	 	}
@@ -495,7 +495,7 @@ bool Move::canMove(Player* player, cmd* cmnd) {
 
 		if(	player->getRoomParent()->flagIsSet(R_DIFFICULT_TO_MOVE) &&
 			!player->isEffected("fly") &&
-			!player->flagIsSet(P_MISTED) &&
+			!player->isEffected("mist") &&
 			!player->flagIsSet(P_FREE_ACTION)
 		)
 			moves = 1;
@@ -509,7 +509,7 @@ bool Move::canMove(Player* player, cmd* cmnd) {
 				player->getRoomParent()->flagIsSet(R_DIFFICULT_TO_MOVE) &&
 				!player->isEffected("fly") &&
 				!player->flagIsSet(P_FREE_ACTION) &&
-				!player->flagIsSet(P_MISTED) &&
+				!player->isEffected("mist") &&
 				mrand(1,100) > chance
 			))
 		{
@@ -661,7 +661,7 @@ bstring Move::getString(Creature* creature, bool ordinal, bstring exit) {
 			str = "swam to the";
 		else if(creature->isEffected("fly"))
 			str = "flew to the";
-		else if(creature->isEffected("levitate") || creature->flagIsSet(P_MISTED))
+		else if(creature->isEffected("levitate") || creature->isEffected("mist"))
 			str = "floats to the";
 		else if(creature->isEffected("confusion") || drunkenStumble(creature->getEffect("drunkenness")))
 			str = "stumbles to the";
@@ -924,7 +924,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
 	// when entering the room, we may have to unmist them
 	if( !justLooking &&
 		player &&
-		player->flagIsSet(P_MISTED) &&
+		player->isEffected("mist") &&
 		!player->isStaff() &&
 		(room->flagIsSet(R_DISPERSE_MIST) || room->flagIsSet(R_ETHEREAL_PLANE) || room->isUnderwater()) )
 	{

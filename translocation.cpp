@@ -121,7 +121,7 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
 		log_immort(true, pPlayer, "%s transports a %s to %s in room %s.\n", pPlayer->name, object->name,
 			target->name, target->getRoomParent()->fullName().c_str());
 
-	if(!pPlayer->flagIsSet(P_DM_INVIS) && (!target->flagIsSet(P_INCOGNITO) || pPlayer->inSameRoom(target))) {
+	if(!pPlayer->flagIsSet(P_DM_INVIS) && (!target->isEffected("incognito") || pPlayer->inSameRoom(target))) {
 		target->wake("You awaken suddenly!");
 		target->printColor("%M magically sends you %1P.\n", pPlayer, object);
 	}
@@ -1249,17 +1249,17 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		if(	target->isEffected("resist-magic") ||
 			target->isEffected("camouflage") ||
-			(target->flagIsSet(P_MISTED) && pPlayer->getLevel() <= target->getLevel()))
+			(target->isEffected("mist") && pPlayer->getLevel() <= target->getLevel()))
 		{
 
 			chance = (50 + (((int)pPlayer->getLevel() - (int)target->getLevel())*10)
 					+ (bonus((int) pPlayer->intelligence.getCur()) - bonus((int) target->intelligence.getCur())));
 
-			if(target->flagIsSet(P_MISTED))
+			if(target->isEffected("mist"))
 				chance -= 35;
 
 			if(mrand(1,100) < chance) {
-				if(target->flagIsSet(P_MISTED))
+				if(target->isEffected("mist"))
 					pPlayer->print("%s's mist form eluded your magic.\n", target->name);
 				else
 					pPlayer->print("%s manages to elude your track.\n", target->name);

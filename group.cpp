@@ -478,7 +478,7 @@ bstring Group::getGroupList(Creature* viewer) {
     std::ostringstream oStr;
 
     for(Creature* target : members) {
-        if(!viewer->isStaff() && (target->pFlagIsSet(P_DM_INVIS) || (target->pFlagIsSet(P_INCOGNITO) && !viewer->inSameRoom(target))))
+        if(!viewer->isStaff() && (target->pFlagIsSet(P_DM_INVIS) || (target->pisEffected("incognito") && !viewer->inSameRoom(target))))
             continue;
         bool isPet = target->isPet();
         oStr << ++i << ") ";

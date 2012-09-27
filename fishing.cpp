@@ -41,7 +41,7 @@ bool canFish(const Player* player, const Fishing** list, Object** pole) {
 			return(false);
 		}
 
-		if(player->flagIsSet(P_MISTED)) {
+		if(player->isEffected("mist")) {
 			player->printColor("You must be in corporeal form to work with items.\n");
 			return(false);
 		}

@@ -167,7 +167,6 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 	Exit*	exit=0;
 	BaseRoom *room=0, *newRoom=0;
 	Property* p=0;
-	otag* op=0;
 	Player* player = creature->getAsPlayer(), *pVictim=0;
 
 	if(!creature->ableToDoCommand())
@@ -179,7 +178,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(creature, creature->first_obj, cmnd);
+	object = creature->findObject(creature, cmnd, 1);
 	room = creature->getRoomParent();
 
 	if(!object) {
@@ -201,14 +200,12 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 		return(0);
 	}
 
-	op = object->first_obj;
-	while(op) {
-		if(	op->obj->flagIsSet(O_NO_DROP) &&
-			!player->checkStaff("You cannot throw that. It contains %P.\n", op->obj)
-		) {
+	for(Object *obj : object->objects) {
+		if(	obj->flagIsSet(O_NO_DROP) &&
+			!player->checkStaff("You cannot throw that. It contains %P.\n", obj) )
+		{
 			return(0);
 		}
-		op = op->next_tag;
 	}
 
 	if(	object->getActualWeight() > creature->strength.getCur()/3 &&
@@ -293,7 +290,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 		if(!pVictim)
 			victim->getAsMonster()->addEnemy(creature);
 
-		if(pVictim && victim->flagIsSet(P_MISTED)) {
+		if(pVictim && victim->isEffected("mist")) {
 			pVictim->statistics.wasMissed();
 			if(player)
 				player->statistics.miss();
@@ -433,7 +430,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
 	if(!player->checkAttackTimer())
 		return(0);
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
 		player->print("You don't have that in your inventory.\n");
@@ -500,7 +497,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
 
 
-	if(object->getType() == CONTAINER && object->first_obj) {
+	if(object->getType() == CONTAINER && !object->objects.empty()) {
 		player->print("You have to dump its contents out first!\n");
 		return(0);
 	}
