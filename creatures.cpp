@@ -93,7 +93,7 @@ bool Creature::canSee(const MudObject* target, bool skip) const {
 		return(false);
 
 	if(target->isCreature()) {
-		Creature* cTarget = target->getAsConstCreature();
+		const Creature* cTarget = target->getAsConstCreature();
 		if(cTarget->isPlayer()) {
 			if(cTarget->isDm() && cTarget->flagIsSet(P_DM_INVIS) && !isDm())
 				return(false);
@@ -122,7 +122,7 @@ bool Creature::canSee(const MudObject* target, bool skip) const {
 
 	} // End Creature
 	if(target->isExit()) {
-		Exit* exit = target->getAsConstExit();
+		const Exit* exit = target->getAsConstExit();
 		if(isStaff())
 			return(true);
 
@@ -133,7 +133,7 @@ bool Creature::canSee(const MudObject* target, bool skip) const {
 			return(false);
 	}
 	if(target->isObject()) {
-		Object* object = target->getAsConstObject();
+		const Object* object = target->getAsConstObject();
 
 		if(isStaff())
 			return(true);
@@ -420,13 +420,9 @@ bool Creature::canEnter(const UniqueRoom* room, bool p) const {
 
 int Creature::getWeight() const {
 	int		i=0, n=0;
-	otag	*op=0;
-
-	op = first_obj;
-	while(op) {
-		if(!op->obj->flagIsSet(O_WEIGHTLESS_CONTAINER))
-			n += op->obj->getActualWeight();
-		op = op->next_tag;
+	for(Object *obj : objects) {
+		if(!obj->flagIsSet(O_WEIGHTLESS_CONTAINER))
+			n += obj->getActualWeight();
 	}
 
 	for(i=0; i<MAXWEAR; i++)
@@ -456,15 +452,12 @@ int Creature::maxWeight() {
 
 bool Creature::tooBulky(int n) const {
 	int		total=0, i=0, max=0;
-	otag	*op=0;
 
 	if(isCt())
 		return(0);
 
-	op = first_obj;
-	while(op) {
-		total += op->obj->getActualBulk();
-		op = op->next_tag;
+	for(Object *obj : objects) {
+		total += obj->getActualBulk();
 	}
 
 	for(i=0; i<MAXWEAR; i++)
@@ -481,13 +474,10 @@ bool Creature::tooBulky(int n) const {
 //********************************************************************
 
 int	Creature::getTotalBulk() const {
-	otag	*op=0;
 	int		n=0, i=0;
 
-	op = first_obj;
-	while(op) {
-		n += op->obj->getActualBulk();
-		op = op->next_tag;
+	for(Object *obj : objects) {
+		n += obj->getActualBulk();
 	}
 
 	for(i=0; i<MAXWEAR; i++)
@@ -815,62 +805,49 @@ bool Creature::canWield(const Object* object, int n) const {
 unsigned long Creature::getInventoryValue() const {
 	int		a=0;
 	long	total=0;
-	otag	*op=0, *cop=0;
-	Object	*object=0, *object2=0, *object3=0;
+	Object	*object3=0;
 
 	if(isMonster())
 		return(0);
 
-	op = first_obj;
-	while(op) {
-		object = op->obj;
+	for(Object *object : objects) {
 
 		if(object->getType() == CONTAINER) {
-			cop = object->first_obj;
-			while(cop) {
-				object2 = cop->obj;
-				if(object2->getType() == SCROLL || object2->getType() == POTION || object2->getType() == SONGSCROLL) {
-					cop = cop->next_tag;
+			for(Object *insideObject : object->objects) {
+				if(insideObject->getType() == SCROLL || insideObject->getType() == POTION || insideObject->getType() == SONGSCROLL) {
 					continue;
 				}
 
-				if(object2->getShotsCur() < 1 || object2->flagIsSet(O_NO_PAWN)) {
-					cop = cop->next_tag;
+				if(insideObject->getShotsCur() < 1 || insideObject->flagIsSet(O_NO_PAWN)) {
 					continue;
 				}
 
-				if(object2->value[GOLD] < 20) {
-					cop = cop->next_tag;
+				if(insideObject->value[GOLD] < 20) {
 					continue;
 				}
 
-				total += MIN(MAXPAWN,object2->value[GOLD]/2);
+				total += MIN(MAXPAWN,insideObject->value[GOLD]/2);
 				total = MAX(0,MIN(2000000000,total));
-				cop = cop->next_tag;
 			}
 		}
 
 		if(object->getType() == SCROLL || object->getType() == POTION || object->getType() == SONGSCROLL) {
-			op = op->next_tag;
 			continue;
 		}
 
 		if(	(object->getShotsCur() < 1 && object->getType() != CONTAINER) ||
-			object->flagIsSet(O_NO_PAWN)
-		) {
-			op = op->next_tag;
+			object->flagIsSet(O_NO_PAWN) )
+		{
 			continue;
 		}
 
 		if(object->value[GOLD] < 20) {
-			op = op->next_tag;
 			continue;
 		}
 
 		total += MIN(MAXPAWN,object->value[GOLD]/2);
 		total = MAX(0,MIN(2000000000,total));
 
-		op = op->next_tag;
 	}
 
 	for(a=0;a<MAXWEAR;a++) {
@@ -880,26 +857,20 @@ unsigned long Creature::getInventoryValue() const {
 
 
 		if(object3->getType() == CONTAINER) {
-			cop = object3->first_obj;
-			while(cop) {
-				object2 = cop->obj;
-				if(cop->obj->getType() == SCROLL || cop->obj->getType() == POTION || cop->obj->getType() == SONGSCROLL) {
-					cop = cop->next_tag;
+			for(Object *insideObject : object3->objects) {
+				if(insideObject->getType() == SCROLL || insideObject->getType() == POTION || insideObject->getType() == SONGSCROLL) {
 					continue;
 				}
-				if(cop->obj->getShotsCur() < 1 || cop->obj->flagIsSet(O_NO_PAWN)) {
-					cop = cop->next_tag;
+				if(insideObject->getShotsCur() < 1 || insideObject->flagIsSet(O_NO_PAWN)) {
 					continue;
 				}
 
-				if(cop->obj->value[GOLD] < 20) {
-					cop = cop->next_tag;
+				if(insideObject->value[GOLD] < 20) {
 					continue;
 				}
 
-				total += MIN(MAXPAWN,cop->obj->value[GOLD]);
+				total += MIN(MAXPAWN,insideObject->value[GOLD]);
 				total = MAX(0,MIN(2000000000,total));
-				cop = cop->next_tag;
 			}
 		}
 

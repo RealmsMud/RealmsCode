@@ -1253,7 +1253,7 @@ int dmObjName(Player* player, cmd* cmnd) {
 
 	object = player->findObject(player, cmnd, 1);
 	if(!object)
-		object = findObject(player, player->getRoomParent()->first_obj, cmnd);
+		object = player->getRoomParent()->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("Item not found.\n");
 		return(0);
@@ -1396,10 +1396,6 @@ int dmAddObj(Player* player, cmd* cmnd) {
 	newObj->setWearflag(HELD);
 	newObj->setType(MISC);
 	newObj->setWeight(1);
-	newObj->first_obj = 0;
-	newObj->parent_obj = 0;
-	newObj->parent_room = 0;
-	newObj->parent_crt = 0;
 
 	newObj->setFlag(O_SAVE_FULL);
 
@@ -1421,9 +1417,9 @@ void dmSaveObj(Player* player, cmd* cmnd, CatRef cr) {
 		return;
 	}
 
-	object = findObject(player, player->first_obj, cmnd->str[2], 1);
+	object = player->findObject(player, cmnd->str[2], 1);
 	if(!object)
-		object = findObject(player, player->getRoomParent()->first_obj, cmnd->str[2], 1);
+		object = player->getRoomParent()->findObject(player, cmnd->str[2], 1);
 	if(!object) {
 		player->print("Object not found.\n");
 		return;
@@ -1461,17 +1457,14 @@ void dmSaveObj(Player* player, cmd* cmnd, CatRef cr) {
 //*********************************************************************
 
 void dmResaveObject(const Player* player, Object* object, bool flush) {
-	BaseRoom *rom = object->parent_room;
-	Object	*po = object->parent_obj;
-	otag	*fo = object->first_obj;
-	Creature *pc = object->parent_crt;
+	Container* cont = object->getParent();
 	int		val = object->getShopValue();
 	DroppedBy droppedBy = object->droppedBy;
 
-	object->parent_room = 0;
-	object->parent_obj = 0;
+	// TODO: Clear out items inside before saving
 	object->first_obj = 0;
-	object->parent_crt = 0;
+
+	object->setParent(0);
 	object->setShopValue(0);
 	object->droppedBy.clear();
 
@@ -1488,10 +1481,7 @@ void dmResaveObject(const Player* player, Object* object, bool flush) {
 		gConfig->replaceObjectInQueue(object->info, object);
 
 	object->droppedBy = droppedBy;
-	object->parent_room = rom;
-	object->parent_obj = po;
-	object->first_obj = fo;
-	object->parent_crt = pc;
+	object->setParent(cont);
 	object->setShopValue(val);
 }
 

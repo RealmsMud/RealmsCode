@@ -61,15 +61,13 @@ void hardcoreDeath(Player* player) {
 
 	BaseRoom* room = player->getRoomParent();
 	Object* object=0;
-	otag *op = player->first_obj,*oprev=0;
-
-	while(op) {
-		oprev = op;
-		op = op->next_tag;
-		object = oprev->obj;
-
-		if(delete_drop_obj(room, object, factionCanRecycle) || !canDrop(player, object, 0) || object->flagIsSet(O_STARTING))
+	ObjectSet::iterator it;
+	for( it = player->objects.begin() ; it != player->objects.end() ; ) {
+		object = (*it++);
+		if(delete_drop_obj(room, object, factionCanRecycle) || !canDrop(player, object, 0) || object->flagIsSet(O_STARTING)) {
+			delete object;
 			continue;
+		}
 
 		player->delObj(object, false, true, true, false);
 		object->addToRoom(room);
@@ -131,7 +129,6 @@ bstring isHoliday() {
 void Monster::dropCorpse(Creature *killer) {
 	BaseRoom* room = getRoomParent();
 	bstring str = "", carry = "";
-	otag		*op=0;
 	Object		*object=0;
 	Player*		player=0;
 	Player*		pMaster = isPet() ? getPlayerMaster() : 0;
@@ -165,12 +162,11 @@ void Monster::dropCorpse(Creature *killer) {
 	// check for player: for mob killing pet, player is null, and then we don't
 	// care about listing items dropped
 	if(!destroy && player)
-		str = listObjects(player, first_obj, true);
+		str = listObjects(player, this, true);
 
-	op = first_obj;
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for( it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 		if(object->flagIsSet(O_JUST_LOADED))
 			object->setDroppedBy(this, "MobDeath");
 

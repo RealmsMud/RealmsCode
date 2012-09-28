@@ -181,7 +181,7 @@ bool listObjectSee(const Player* player, Object* object, bool showAll) {
 	) );
 }
 
-bstring listObjects(const Player* player, otag *target, bool showAll, char endColor) {
+bstring listObjects(const Player* player, Container *target, bool showAll, char endColor) {
 	Object	*object=0;
 	otag	*op=0;
 	int		num=1, n=0, flags = player->displayFlags();

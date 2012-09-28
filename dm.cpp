@@ -74,7 +74,6 @@ int dmReboot(Player* player, cmd* cmnd) {
 int dmMobInventory(Player* player, cmd* cmnd) {
 	Monster	*monster=0;
 	Object	*object;
-	otag	*op=0;
 	char	str[2048];
 	int		count=0, i=0;
 
@@ -121,21 +120,17 @@ int dmMobInventory(Player* player, cmd* cmnd) {
 
 
 	sprintf(str, "%s%s is carrying: ", (monster->flagIsSet(M_NO_PREFIX) ? "":"The "), monster->name);
-
-	op = monster->first_obj;
-	while(op) {
+	for(Object *obj : monster->objects) {
 		count++;
-		strcat(str, op->obj->name);
+		strcat(str, obj->name);
 		strcat(str, "^x");
-		if(op->obj->flagIsSet(O_NOT_PEEKABLE))
+		if(obj->flagIsSet(O_NOT_PEEKABLE))
 			strcat(str, "(NoPeek)");
-		if(op->obj->flagIsSet(O_NO_STEAL))
+		if(obj->flagIsSet(O_NO_STEAL))
 			strcat(str, "(NoSteal)");
-		if(op->obj->flagIsSet(O_BODYPART))
+		if(obj->flagIsSet(O_BODYPART))
 			strcat(str, "(BodyPart)");
 		strcat(str, ", ");
-
-		op = op->next_tag;
 	}
 
 	if(!count)
@@ -884,7 +879,7 @@ int dmPerm(Player* player, cmd* cmnd) {
 		}
 
 
-		object = findObject(player, player->getUniqueRoomParent()->first_obj, cmnd->str[2], 1);
+		object = player->getUniqueRoomParent()->findObject(player, cmnd->str[2], 1);
 
 		if(!object) {
 			player->print("Object not found.\n");
@@ -2449,7 +2444,7 @@ int dmStat(Player* player, cmd* cmnd) {
 	}
 
 	// Give info on object, if found
-	object = findObject(player2, player2->first_obj, cmnd);
+	object = player2->findObject(player2, cmnd, 1);
 	if(!object) {
 		for(i=0,j=0; i<MAXWEAR; i++) {
 			if(player2->ready[i] && keyTxtEqual(player2->ready[i], cmnd->str[1])) {
@@ -2462,7 +2457,7 @@ int dmStat(Player* player, cmd* cmnd) {
 		}
 	}
 	if(!object)
-		object = findObject(player2, player->getRoomParent()->first_obj, cmnd);
+		object = player->getRoomParent()->findObject(player2, cmnd, 1);
 
 	if(object) {
 		stat_obj(player, object);

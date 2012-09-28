@@ -949,10 +949,7 @@ void Creature::addObj(Object* object, bool resetUniqueId) {
 	if(resetUniqueId && pPlayer)
 		pPlayer->setObjectId(object);
 	Hooks::run(this, "beforeAddObject", object, "beforeAddToCreature");
-
-	object->parent_crt = this;
-	object->parent_obj = 0;
-	object->parent_room = 0;
+	object->setParent(this);
 	object->clearFlag(O_JUST_LOADED);
 
 	// players have big inventories; to keep the mud from searching them when it

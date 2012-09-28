@@ -1040,7 +1040,6 @@ void Creature::crtReset() {
 	for(i=0; i<MAXWEAR; i++)
 		ready[i] = 0;
 
-	first_obj = 0;
 	first_tlk = 0;
 
 	currentLocation.mapmarker.reset();
@@ -1242,7 +1241,6 @@ void Creature::CopyCommon(const Creature& cr) {
 
 	group = cr.group;
 	groupStatus = cr.groupStatus;
-	first_obj = cr.first_obj;
 	first_tlk = cr.first_tlk;
 
 	currentLocation.room = cr.currentLocation.room;

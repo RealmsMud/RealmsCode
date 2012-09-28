@@ -1403,7 +1403,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 					player->name, mTarget->name);
 				break;
 			}
-			object = findObject(player, player->first_obj, cmnd->str[4], 1);
+			object = player->findObject(player, cmnd->str[4], 1);
 			if(!object) {
 				player->print("You are not carrying that.\n");
 				return(0);
@@ -2562,7 +2562,6 @@ void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
 	ttag	*tp=0, *tempt=0;
 	char	file[80];
 	int		i=0, x=0;
-	otag	*op=0;
 
 	if(!player->canBuildMonsters()) {
 		cmdNoAuth(player);
@@ -2618,13 +2617,11 @@ void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
 	}
 	target->first_tlk = 0;
 
-	op = target->first_obj;
 	if(!target->flagIsSet(M_TRADES)) {
-		while(op) {
-			x = op->obj->info.id;
+		for(Object* obj : target->objects ) {
+			x = obj->info.id;
 			if(!x) {
 				player->print("Unique object in inventory not saved.\n");
-				op = op->next_tag;
 				continue;
 			}
 			target->carry[i].info.id = x;
@@ -2633,7 +2630,6 @@ void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
 				player->print("Only first 10 objects in inventory saved.\n");
 				break;
 			}
-			op = op->next_tag;
 		}
 	}
 
@@ -2715,7 +2711,6 @@ int dmAddMob(Player* player, cmd* cmnd) {
 	new_mob->damage.setNumber(1);
 	new_mob->damage.setSides(4);
 	new_mob->damage.setPlus(1);
-	new_mob->first_obj = 0;
 	new_mob->first_tlk = 0;
 	new_mob->setParent(NULL);
 

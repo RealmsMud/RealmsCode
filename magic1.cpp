@@ -1268,7 +1268,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 	}
 
 	if(!object) {
-		object = findObject(player, player->getRoomParent()->first_obj, cmnd);
+		object = player->getRoomParent()->findObject(player, cmnd, 1);
 		if(object && !object->flagIsSet(O_CAN_USE_FROM_FLOOR)) {
 			player->print("You don't have that.\n");
 			return(0);

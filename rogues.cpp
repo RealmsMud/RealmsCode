@@ -560,7 +560,7 @@ int cmdHide(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->getRoomParent()->first_obj, cmnd);
+	object = player->getRoomParent()->findObject(player, cmnd, 1);
 
 	if(!object) {
 		player->print("You don't see that here.\n");
