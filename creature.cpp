@@ -43,13 +43,13 @@ bool Creature::inSameRoom(const Creature *b) const {
 //						getFirstAggro
 //*********************************************************************
 
-Monster *getFirstAggro(Monster* creature, Creature* player) {
+Monster *getFirstAggro(Monster* creature, const Creature* player) {
 	Monster *foundCrt=0;
 
 	if(creature->isPlayer())
 		return(creature);
 
-	for(Monster* mons : creature->getRoomParent()->monsters) {
+	for(Monster* mons : creature->getConstRoomParent()->monsters) {
         if(strcmp(mons->name, creature->name))
             continue;
 
@@ -184,14 +184,10 @@ bool Monster::nearEnemy(const Creature* target) const {
 //*********************************************************************
 
 void Object::tempPerm() {
-	otag	*op=0;
-
 	setFlag(O_PERM_INV_ITEM);
 	setFlag(O_TEMP_PERM);
-	op = first_obj;
-	while(op) {
-		op->obj->tempPerm();
-		op = op->next_tag;
+	for(Object* obj : objects) {
+		obj->tempPerm();
 	}
 }
 
@@ -547,50 +543,43 @@ void Monster::monsterCombat(Monster *target) {
 //*********************************************************************
 
 int Monster::mobWield() {
-	otag	*op=0;
-	Object	*object=0;
+	Object	*returnObject=0;
 	int		i=0, found=0;
 
-	if(!first_obj)
+	if(objects.empty())
 		return(0);
 
 	if(ready[WIELD - 1])
 		return(0);
 
-	op = first_obj;
-	while(op) {
+	for(Object* obj : objects) {
 		for(i=0;i<10;i++) {
-			if(carry[i].info == op->obj->info) {
+			if(carry[i].info == obj->info) {
 				found=1;
 				break;
 			}
 		}
 
 		if(!found) {
-			op = op->next_tag;
 			continue;
 		}
 
-		if(op->obj->getWearflag() == WIELD) {
-			if(	(op->obj->damage.getNumber() + op->obj->damage.getSides() + op->obj->damage.getPlus()) <
+		if(obj->getWearflag() == WIELD) {
+			if(	(obj->damage.getNumber() + obj->damage.getSides() + obj->damage.getPlus()) <
 					(damage.getNumber() + damage.getSides() + damage.getPlus())/2 ||
-				(op->obj->getShotsCur() < 1)
-			) {
-				op = op->next_tag;
+				(obj->getShotsCur() < 1) )
+			{
 				continue;
 			}
 
-			object = op->obj;
+			returnObject = obj;
 			break;
 		}
-		op = op->next_tag;
 	}
-	if(!op)
-		return(0);
-	if(!object)
+	if(!returnObject)
 		return(0);
 
-	equip(object, WIELD);
+	equip(returnObject, WIELD);
 	return(1);
 }
 
@@ -723,12 +712,10 @@ void Monster::clearEnemyList() {
 //*********************************************************************
 
 void Monster::clearMobInventory() {
-	otag *op = first_obj;
 	Object* object=0;
-
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for(it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 		this->delObj(object, false, false, true, false);
 		delete object;
 	}
@@ -1007,7 +994,7 @@ int Player::displayCreature(Creature* target)  {
 
 		// pet code
 		if(mTarget->isPet() && mTarget->getMaster() == this) {
-			str = listObjects(this, mTarget->first_obj, true);
+			str = listObjects(this, mTarget, true);
 			oStr << mTarget->upHeShe() << " ";
 			if(str == "")
 				oStr << "isn't holding anything.\n";

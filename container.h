@@ -81,23 +81,23 @@ public:
 
 	// Find routines
 	Creature* findCreaturePython(Creature* searcher, const bstring& name, bool monFirst = true, bool firstAggro = false, bool exactMatch = false );
-    Creature* findCreature(Creature* searcher, const cmd* cmnd, int num=1);
-	Creature* findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst = true, bool firstAggro = false, bool exactMatch = false);
-	Creature* findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match);
-	Monster* findMonster(Creature* searcher, const cmd* cmnd, int num=1);
-	Monster* findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro = false, bool exactMatch = false);
-	Monster* findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match);
-	Player* findPlayer(Creature* searcher, const cmd* cmnd, int num=1);
-	Player* findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch = false);
-	Player* findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match);
+    Creature* findCreature(const Creature* searcher, const cmd* cmnd, int num=1) const;
+	Creature* findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst = true, bool firstAggro = false, bool exactMatch = false) const;
+	Creature* findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const;
+	Monster* findMonster(const Creature* searcher, const cmd* cmnd, int num=1) const;
+	Monster* findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro = false, bool exactMatch = false) const;
+	Monster* findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) const;
+	Player* findPlayer(const Creature* searcher, const cmd* cmnd, int num=1) const;
+	Player* findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch = false) const;
+	Player* findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const;
 
-	Object* findObject(Creature *searcher, const cmd* cmnd, int val);
-	Object* findObject(Creature* searcher, const bstring& name, const int num, bool exactMatch = false);
-	Object* findObject(Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match);
+	Object* findObject(const Creature *searcher, const cmd* cmnd, int val) const;
+	Object* findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch = false) const;
+	Object* findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const;
 
-	MudObject* findTarget(Creature* searcher, const cmd* cmnd, int num=1);
-	MudObject* findTarget(Creature* searcher,  const bstring& name, const int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false);
-	MudObject* findTarget(Creature* searcher,  const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match);
+	MudObject* findTarget(const Creature* searcher, const cmd* cmnd, int num=1) const;
+	MudObject* findTarget(const Creature* searcher,  const bstring& name, const int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false) const;
+	MudObject* findTarget(const Creature* searcher,  const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const;
 
 
 

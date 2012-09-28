@@ -245,16 +245,16 @@ Container* Containable::getParent() const {
     return(parent);
 }
 
-MudObject* Container::findTarget(Creature* searcher, const cmd* cmnd, int num) {
+MudObject* Container::findTarget(const Creature* searcher, const cmd* cmnd, int num) const {
 	return(findTarget(searcher, cmnd->str[num], cmnd->val[num]));
 }
 
-MudObject* Container::findTarget(Creature* searcher, const bstring& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch) {
+MudObject* Container::findTarget(const Creature* searcher, const bstring& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch) const {
 	int match=0;
 	return(findTarget(searcher, name, num, monFirst, firstAggro, exactMatch, match));
 }
 
-MudObject* Container::findTarget(Creature* searcher, const bstring& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch, int& match) {
+MudObject* Container::findTarget(const Creature* searcher, const bstring& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch, int& match) const {
 	MudObject* toReturn = 0;
 
 	if((toReturn = findCreature(searcher, name, num, monFirst, firstAggro, exactMatch, match))) {
@@ -265,14 +265,14 @@ MudObject* Container::findTarget(Creature* searcher, const bstring& name, const 
 }
 
 // Wrapper for the real findObject to support legacy callers
-Object* Container::findObject(Creature *searcher, const cmd* cmnd, int val) {
+Object* Container::findObject(const Creature *searcher, const cmd* cmnd, int val) const {
 	return(findObject(searcher, cmnd->str[val], cmnd->val[val]));
 }
-Object* Container::findObject(Creature* searcher, const bstring& name, const int num, bool exactMatch ) {
+Object* Container::findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch ) const {
 	int match = 0;
 	return(findObject(searcher, name, num,exactMatch, match));
 }
-Object* Container::findObject(Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) {
+Object* Container::findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const {
 	Object *target = 0;
 	for(Object* obj : searcher->getParent()->objects) {
         if(isMatch(searcher, obj, name, exactMatch)) {
@@ -295,7 +295,7 @@ Object* Container::findObject(Creature* searcher, const bstring& name, const int
 
 
 // Wrapper for the real findCreature to support legacy callers
-Creature* Container::findCreature(Creature* searcher, const cmd* cmnd, int num) {
+Creature* Container::findCreature(const Creature* searcher, const cmd* cmnd, int num) const {
 	return(findCreature(searcher, cmnd->str[num], cmnd->val[num]));
 }
 
@@ -321,11 +321,11 @@ Creature* Container::findCreaturePython(Creature* searcher, const bstring& name,
 }
 
 // Wrapper for the real findCreature for callers that don't care about the value of match
-Creature* Container::findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch ) {
+Creature* Container::findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch )  const {
 	int ignored=0;
 	return(findCreature(searcher, name, num, monFirst, firstAggro, exactMatch, ignored));
 }
-bool isMatch(Creature* searcher, MudObject* target, const bstring& name, bool exactMatch, bool checkVisibility) {
+bool isMatch(const Creature* searcher, MudObject* target, const bstring& name, bool exactMatch, bool checkVisibility) {
     if(!target)
         return(false);
     if(checkVisibility && !searcher->canSee(target))
@@ -352,7 +352,7 @@ bool isMatch(Creature* searcher, MudObject* target, const bstring& name, bool ex
 
 // The real findCreature, will take and return the value of match as to allow for findTarget to find the 3rd thing named
 // gold with a monster name goldfish, player named goldmine, and some gold in the room!
-Creature* Container::findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) {
+Creature* Container::findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const {
 
 	if(!searcher || name.empty())
 		return(NULL);
@@ -373,14 +373,14 @@ Creature* Container::findCreature(Creature* searcher, const bstring& name, const
 
 }
 
-Monster* Container::findMonster(Creature* searcher, const cmd* cmnd, int num) {
+Monster* Container::findMonster(const Creature* searcher, const cmd* cmnd, int num) const {
 	return(findMonster(searcher, cmnd->str[num], cmnd->val[num]));
 }
-Monster* Container::findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch) {
+Monster* Container::findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch) const {
     int match = 0;
     return(findMonster(searcher, name, num, firstAggro, exactMatch, match));
 }
-Monster* Container::findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) {
+Monster* Container::findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) const {
     Monster* target = 0;
     for(Monster* mons : searcher->getParent()->monsters) {
         if(isMatch(searcher, mons, name, exactMatch)) {
@@ -405,14 +405,14 @@ Monster* Container::findMonster(Creature* searcher, const bstring& name, const i
         return(target);
     }
 }
-Player* Container::findPlayer(Creature* searcher, const cmd* cmnd, int num) {
+Player* Container::findPlayer(const Creature* searcher, const cmd* cmnd, int num) const {
 	return(findPlayer(searcher, cmnd->str[num], cmnd->val[num]));
 }
-Player* Container::findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch) {
+Player* Container::findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch) const {
     int match = 0;
     return(findPlayer(searcher, name, num, exactMatch, match));
 }
-Player* Container::findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) {
+Player* Container::findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const {
     for(Player* ply : searcher->getParent()->players) {
         if(isMatch(searcher, ply, name, exactMatch)) {
             match++;

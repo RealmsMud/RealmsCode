@@ -762,7 +762,7 @@ int dmTake(Player* player, cmd* cmnd) {
 
 	if(cmnd->num > 3) {
 
-		container = findObject(player, target->first_obj, cmnd, 3);
+		container = target->findObject(player, cmnd, 3);
 
 		if(!container) {
 			player->print("%s doesn't have that container.\n", target->upHeShe());
@@ -949,7 +949,7 @@ int dmPut(Player* player, cmd* cmnd) {
 
 	if(cmnd->num > 3) {
 
-		container = findObject(player, target->first_obj, cmnd, 3);
+		container = target->findObject(player, cmnd, 3);
 
 		if(!container) {
 			player->print("%s doesn't have that container.\n", target->upHeShe());

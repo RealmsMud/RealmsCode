@@ -1576,7 +1576,7 @@ int cmdLock(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd, 2);
+	object = player->findObject(player, cmnd, 2);
 
 	if(!object) {
 		player->print("You don't have that.\n");

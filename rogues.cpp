@@ -836,7 +836,7 @@ int cmdEnvenom(Player* player, cmd* cmnd) {
 		!player->checkStaff("You can only envenom slashing and piercing weapons.\n"))
 		return(0);
 
-	object = findObject(player, player->first_obj, cmnd, 2);
+	object = player->findObject(player, cmnd, 2);
 
 	if(!object) {
 		player->print("You do not have that poison in your inventory.\n");
@@ -1977,7 +1977,7 @@ int peek_bag(Player* player, Player* target, cmd* cmnd, int inv) {
 		}
 	}
 
-	container = findObject(player, target->first_obj, cmnd, 2);
+	container = target->findObject(player, cmnd, 2);
 
 	if(!container) {
 		player->print("%s doesn't have that.\n", target->upHeShe());

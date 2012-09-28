@@ -457,9 +457,9 @@ int dmSetObj(Player* player, cmd* cmnd) {
 		num = cmnd->val[3];
 		dNum = atof(getFullstrText(cmnd->fullstr, 4).c_str());
 
-		object = findObject(player, player->first_obj, cmnd, 2);
+		object = player->findObject(player, cmnd, 2);
 		if(!object)
-			object = findObject(player, room->first_obj, cmnd, 2);
+			object = room->findObject(player, cmnd, 2);
 		if(!object) {
 			player->print("Object not found.\n");
 			return(0);
@@ -483,7 +483,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		object = findObject(player, creature->first_obj, cmnd, 2);
+		object = creature->findObject(player, cmnd, 2);
 		if(!object || !cmnd->val[2]) {
 			for(n = 0; n < MAXWEAR; n++) {
 				if(!creature->ready[n])

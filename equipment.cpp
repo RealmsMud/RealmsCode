@@ -63,7 +63,7 @@ int cmdCompare(Player* player, cmd* cmnd) {
         }
     } else {
         // cmnd > 2
-        compareTo = findObject(player, player->first_obj, cmnd, 2);
+        compareTo = player->findObject(player, cmnd, 2);
         if(!compareTo) {
             *player << "You don't have that in your inventory to compare with!\n";
             return(0);
@@ -1656,9 +1656,9 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 
 	} else {
 
-		container = findObject(player, creature->first_obj, cmnd, 2);
+		container = creature->findObject(player, cmnd, 2);
 		if(!container) {
-			container = findObject(player, room->first_obj, cmnd, 2);
+			container = room->findObject(player, cmnd, 2);
 			if(container) {
 				if(!player->isStaff() && room->flagIsSet(R_SHOP_STORAGE)) {
 					player->print("You cannot get anything here.\n");
@@ -2561,7 +2561,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 		container = findObject(player, is_pet ? creature->first_obj : player->first_obj, cmnd, 2);
 
 		if(!container) {
-			container = findObject(player, room->first_obj, cmnd, 2);
+			container = room->findObject(player, cmnd, 2);
 			if(container) {
 				if(!player->isStaff() && room->flagIsSet(R_SHOP_STORAGE)) {
 					player->print("You cannot drop anything here.\n");

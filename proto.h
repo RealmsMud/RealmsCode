@@ -29,7 +29,7 @@ double getConBonusPercentage(int pCon);
 double getIntBonusPercentage(int pInt);
 
 // Container
-bool isMatch(Creature* searcher, MudObject* target, const bstring& name, bool exactMatch, bool checkVisibility = false);
+bool isMatch(const Creature* searcher, MudObject* target, const bstring& name, bool exactMatch, bool checkVisibility = false);
 
 
 // Socials
@@ -73,7 +73,7 @@ int getPkillInCombatDisabled();
 bool isRace(int subRace, int mainRace);
 bstring getSexName(Sex sex);
 
-Monster *getFirstAggro(Monster* creature, Creature* player);
+Monster *getFirstAggro(Monster* creature, const Creature* player);
 Creature *enm_in_group(Creature *target);
 
 //template<class Type, class Compare>

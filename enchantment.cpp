@@ -820,7 +820,7 @@ int splEnchant(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	object = findObject(pPlayer, pPlayer->first_obj, cmnd, 2);
+	object = pPlayer->findObject(pPlayer, cmnd, 2);
 	if(!object) {
 		pPlayer->print("You don't have that in your inventory.\n");
 		return(0);

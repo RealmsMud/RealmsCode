@@ -1142,7 +1142,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 
 
 
-		object = findObject(player, player->first_obj, cmnd, 2);
+		object = player->findObject(player, cmnd, 2);
 		if(!object) {
 			player->print("You don't have that in your inventory.\n");
 			return(0);

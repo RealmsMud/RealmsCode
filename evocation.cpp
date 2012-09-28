@@ -764,7 +764,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
 		// only enchant objects if a pPlayer
 		} else if(pPlayer && spellData->how == CAST) {
 
-			object = findObject(pPlayer, pPlayer->first_obj, cmnd, 2);
+			object = pPlayer->findObject(pPlayer, cmnd, 2);
 
 			if(object) {
 
