@@ -385,7 +385,6 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 	target->damage.setNumber(conjureStats[buff][level].ndice);
 	target->damage.setSides(conjureStats[buff][level].sdice);
 	target->damage.setPlus(conjureStats[buff][level].pdice);
-	target->first_obj = 0;
 	target->first_tlk = 0;
 	target->setParent(NULL);
 

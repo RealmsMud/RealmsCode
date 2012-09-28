@@ -38,11 +38,9 @@ int numIngredients(Size size);
 
 Object* findHot(const Player* player) {
 	// we can cook from any hot object
-	otag* op = player->getConstRoomParent()->first_obj;
-	while(op) {
-		if(Recipe::goodObject(player, op->obj) && op->obj->flagIsSet(O_HOT))
-			return(op->obj);
-		op = op->next_tag;
+	for(Object* obj : player->getConstRoomParent()->objects) {
+		if(Recipe::goodObject(player, obj) && obj->flagIsSet(O_HOT))
+			return(obj);
 	}
 	return(0);
 }

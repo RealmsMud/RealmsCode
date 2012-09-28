@@ -353,7 +353,7 @@ bstring doGetInventory(const Player* player, Object* object, int loc=-1) {
 	if(loc != -1)
 		oStr << innerDelim << loc;
 
-	if(object->first_obj) {
+	if(!object->objects.empty()) {
 		oStr << startSubDelim
 			 << doGetInventory(player, object->first_obj)
 			 << endSubDelim;

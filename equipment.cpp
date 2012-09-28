@@ -2461,7 +2461,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 		}
 
 		if(object->getType() == CONTAINER && room->flagIsSet(R_DUMP_ROOM) && !cantDropInBag(object)) {
-			if(object->first_obj) {
+			if(!object->objects.empty()) {
 				player->print("You don't want to drop that here!\nThere's something inside it!\n");
 				if(created)
 					delete object;

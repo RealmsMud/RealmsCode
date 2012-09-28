@@ -205,15 +205,15 @@ void shopAssignGuildMessage(Property* p, const Player* player, const Guild* guil
 
 bool shopAssignGuild(Property *p, Player* player, const Guild* guild, UniqueRoom* shop, UniqueRoom* storage, bool showMessage) {
 	if(!player->getGuild()) {
-		player->print("You are not part of a guild.\n");
+		*player << "You are not part of a guild.\n";
 		return(false);
 	}
 	if(p->getGuild() == player->getGuild()) {
-		player->print("This property is already assigned to your guild.\n");
+		*player << "This property is already assigned to your guild.\n";
 		return(false);
 	}
 	if(!guild) {
-		player->print("There was an error loading your guild.\n");
+		*player << "There was an error loading your guild.\n";
 		return(false);
 	}
 
@@ -291,15 +291,18 @@ bstring objShopName(Object* object, int m, int flags, int pad) {
 
 bool tooManyItemsInShop(const Player* player, const UniqueRoom* storage) {
 	int numObjects=0, numLines=0;
-
-	for(Object *obj : storage->objects) {
+	Object *obj;
+	ObjectSet::iterator it;
+	for(it = storage->objects.begin() ; it != storage->objects.end() ; ) {
+		obj = (*it++);
 		numObjects++;
 		numLines++;
 
-		while(op->next_tag) {
-			if(playerShopSame(0, op->obj, op->next_tag->obj)) {
+
+		while(it != storage->objects.end()) {
+			if(playerShopSame(0, obj, (*it))) {
 				numObjects++;
-				op = op->next_tag;
+				it++;
 			} else
 				break;
 		}
@@ -309,7 +312,6 @@ bool tooManyItemsInShop(const Player* player, const UniqueRoom* storage) {
 			player->print("Please remove some before continuing.\n");
 			return(true);
 		}
-		op = op->next_tag;
 	}
 
 	return(false);
@@ -353,7 +355,6 @@ bool canBuildShop(const Player* player, const UniqueRoom* room) {
 int cmdShop(Player* player, cmd* cmnd) {
 	UniqueRoom* room = player->getUniqueRoomParent(), *storage=0;
 	Object	*deed=0;
-	otag	*op;
 	int		action=0;
 	int		flags = 0, len = strlen(cmnd->str[1]);
 	const Guild* guild=0;
@@ -384,13 +385,13 @@ int cmdShop(Player* player, cmd* cmnd) {
 
 	if(!strncmp(cmnd->str[1], "survey", len)) {
 		if(!strcmp(cmnd->str[2], "all")) {
-			player->print("Searching for suitable shop locations in this city.\n");
+			*player << "Searching for suitable shop locations in this city.\n";
 			findRoomsWithFlag(player, player->getUniqueRoomParent()->info, R_BUILD_SHOP);
 		} else {
 			if(!canBuildShop(player, room))
-				player->print("You are unable to build a shop here.\n");
+				*player << "You are unable to build a shop here.\n";
 			else
-				player->print("This site is open for shop construction.\n");
+				*player << "This site is open for shop construction.\n";
 		}
 		return(0);
 	}
@@ -408,7 +409,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 			return(0);
 		}
 		if(!canBuildShop(player, room)) {
-			player->print("This section of town is not zoned for shops.\n");
+			*player << "This section of town is not zoned for shops.\n";
 			return(0);
 		}
 
@@ -424,15 +425,12 @@ int cmdShop(Player* player, cmd* cmnd) {
 			}
 		}
 
-		op = player->first_obj;
-		while(op) {
-			deed = op->obj;
-			if(!strcmp(deed->name, "shop deed"))
-				if(deed->deed.belongs(cr))
+		for(Object* obj : player->objects ) {
+			if(!strcmp(obj->name, "shop deed"))
+				if(obj->deed.belongs(cr)) {
+					deed = obj;
 					break; // We got one!
-
-			op = op->next_tag;
-			deed = 0;
+				}
 		}
 		if(!deed) {
 			player->print("You need a shop deed to build a shop in this town!\nVisit the local real estate office.\n");
@@ -494,7 +492,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 	// see if they have the authorization to do the command they want to do
 	if(po) {
 		if(action == SHOP_NAME || action == SHOP_GUILD) {
-			player->print("Only the owner of this shop may perform that action.\n");
+			*player << "Only the owner of this shop may perform that action.\n";
 			return(0);
 		}
 		if(	(action == SHOP_STOCK && !po->flagIsSet(PROP_SHOP_CAN_STOCK)) ||
@@ -583,19 +581,19 @@ int cmdShop(Player* player, cmd* cmnd) {
 				return(0);
 		} else if(!strncmp(cmnd->str[2], "remove", strlen(cmnd->str[2]))) {
 			if(!p->getGuild()) {
-				player->print("This property is not assigned to a guild.\n");
+				*player << "This property is not assigned to a guild.\n";
 				return(0);
 			}
 			if(shopStaysWithGuild(player->getUniqueRoomParent())) {
-				player->print("This property was constructed inside the guild hall.\nIt cannot be removed from the guild.\n");
+				*player << "This property was constructed inside the guild hall.\nIt cannot be removed from the guild.\n";
 				return(0);
 			}
 			broadcastGuild(p->getGuild(), 1, "### %s's shop located at %s is no longer partially run by the guild.",
 				player->name, p->getLocation().c_str());
 			shopRemoveGuild(p, player, player->getUniqueRoomParent(), storage);
-			player->print("This property is no longer associated with a guild.\n");
+			*player << "This property is no longer associated with a guild.\n";
 		} else {
-			player->print("Command not understood.\n");
+			*player << "Command not understood.\n";
 			player->printColor("You may ^Wassign^x this shop to a guild or ^Wremove^x it from a guild.\n");
 			return(0);
 		}
@@ -603,32 +601,32 @@ int cmdShop(Player* player, cmd* cmnd) {
 		gConfig->saveProperties();
 
 	} else if(action == SHOP_STOCK) {
-		Object *obj = findObject(player, player->first_obj, cmnd, 2);
+		Object *obj = player->findObject(player, cmnd, 2);
 		int value=0;
 
 		if(!obj) {
-			player->print("You don't have any object with that name.\n");
+			*player << "You don't have any object with that name.\n";
 			return(0);
 		}
 
 		if(obj->flagIsSet(O_NO_DROP) || obj->getType() == LOTTERYTICKET) {
-			player->print("That item cannot be stocked.\n");
+			*player << "That item cannot be stocked.\n";
 			return(0);
 		}
 
-		if(obj->first_obj) {
-			player->print("You need to empty it before it can be stocked.\n");
+		if(!obj->objects.empty()) {
+			*player << "You need to empty it before it can be stocked.\n";
 			return(0);
 		}
 
 		if(obj->flagIsSet(O_STARTING)) {
-			player->print("Starting items cannot be stocked.\n");
+			*player << "Starting items cannot be stocked.\n";
 			return(0);
 		}
 
 		limited = Limited::isLimited(obj);
 		if(limited && (!p || !p->isOwner(player->name))) {
-			player->print("You may only handle limited items in shops where you are the primary owner.\n");
+			*player << "You may only handle limited items in shops where you are the primary owner.\n";
 			return(0);
 		}
 
@@ -663,11 +661,11 @@ int cmdShop(Player* player, cmd* cmnd) {
 			player->save(true);
 		storage->saveToFile(0);
 	} else if(action == SHOP_PRICE) {
-		Object *obj = findObject(player, storage->first_obj, cmnd, 2);
+		Object *obj = storage->findObject(player, cmnd, 2);
 		int value=0;
 
 		if(!obj) {
-			player->print("You're not selling anything with that name.\n");
+			*player << "You're not selling anything with that name.\n";
 			return(0);
 		}
 
@@ -684,26 +682,26 @@ int cmdShop(Player* player, cmd* cmnd) {
 		player->printColor("You set the price for %s to $%d.\n", obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
 		broadcast(player->getSock(), player->getParent(), "%M just updated the prices in this store.", player);
 	} else if(action == SHOP_REMOVE) {
-		Object *obj = findObject(player, storage->first_obj, cmnd, 2);
+		Object *obj = storage->findObject(player, cmnd, 2);
 
 		if(!obj) {
-			player->print("You're not selling anything with that name.\n");
+			*player << "You're not selling anything with that name.\n";
 			return(0);
 		}
 
 		if(player->getWeight() + obj->getActualWeight() > player->maxWeight()) {
-			player->print("That'd be too heavy for you to carry right now.\n");
+			*player << "That'd be too heavy for you to carry right now.\n";
 			return(0);
 		}
 
 		if(player->tooBulky(obj->getActualBulk())) {
-			player->print("That would be too bulky for you to carry.\n");
+			*player << "That would be too bulky for you to carry.\n";
 			return(0);
 		}
 
 		limited = Limited::isLimited(obj);
 		if(limited && (!p || !p->isOwner(player->name))) {
-			player->print("You may only handle unique items in shops where you are the primary owner.\n");
+			*player << "You may only handle unique items in shops where you are the primary owner.\n";
 			return(0);
 		}
 
@@ -726,16 +724,16 @@ int cmdShop(Player* player, cmd* cmnd) {
 
 		if(!p->getGuild()) {
 			if(name.find(player->name) == bstring::npos) {
-				player->print("Your shop name must contain your name.\n");
+				*player << "Your shop name must contain your name.\n";
 				return(0);
 			}
 		} else {
 			if(!guild) {
-				player->print("Error loading guild.\n");
+				*player << "Error loading guild.\n";
 				return(0);
 			}
 			if(name.find(guild->getName()) == bstring::npos) {
-				player->print("Your shop name must contain your guild's name.\n");
+				*player << "Your shop name must contain your guild's name.\n";
 				return(0);
 			}
 		}
@@ -828,7 +826,6 @@ const char* cannotUseMarker(Player* player, Object* object) {
 int cmdList(Player* player, cmd* cmnd) {
 	UniqueRoom* room = player->getUniqueRoomParent(), *storage=0;
 	Object* object=0;
-	otag	*op=0;
 	int		n=0;
 	bstring filter = "";
 
@@ -848,18 +845,18 @@ int cmdList(Player* player, cmd* cmnd) {
 		return(0);
 
 	if(!room->flagIsSet(R_SHOP)) {
-		player->print("This is not a shop.\n");
+		*player << "This is not a shop.\n";
 		return(0);
 	}
 
 	if(!loadRoom(shopStorageRoom(room), &storage)) {
-		player->print("Nothing to buy.\n");
+		*player << "Nothing to buy.\n";
 		return(0);
 	}
 
 	// Everything must be set up perfectly
 	if(!isValidShop(room, storage)) {
-		player->print("This is not a shop.\n");
+		*player << "This is not a shop.\n";
 		return(0);
 	}
 
@@ -870,21 +867,19 @@ int cmdList(Player* player, cmd* cmnd) {
 		Money cost;
 
 		if(!Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
-			player->print("The shopkeeper refuses to do business with you.\n");
+			*player << "The shopkeeper refuses to do business with you.\n";
 			return(0);
 		}
 
 		storage->addPermObj();
-		op = storage->first_obj;
-		if(op) {
-			player->print("You may buy:");
+		ObjectSet::iterator it;
+		if(!storage->objects.empty()) {
+			*player << "You may buy:";
 			if(filter != "")
-				player->printColor(" ^Y(filtering on \"%s\")", filter.c_str());
-			player->print("\n");
-			while(op) {
-				object = op->obj;
-				op = op->next_tag;
-
+				*player << ColorOn << " ^Y(filtering on \"" << filter << "\")" << ColorOff;
+			*player << "\n";
+			for(it = storage->objects.begin() ; it != storage->objects.end() ; ) {
+				object = (*it++);
 				if(doFilter(object, filter))
 					continue;
 
@@ -902,10 +897,12 @@ int cmdList(Player* player, cmd* cmnd) {
 				player->printColor("   %s   Cost: %s%s\n",
 					objShopName(object, 1, CAP | (player->isEffected("detect-magic") ? MAG : 0), 52).c_str(),
 					cost.str().c_str(), cannotUseMarker(player, object));
+
 			}
-			player->print("\n");
-		} else
-			player->print("There is nothing for sale.\n");
+			*player << "\n";
+		}  else {
+			*player << "There is nothing for sale.\n";
+		}
 	} else {
 		// We've got a player run shop here...different formating them
 		int num = 0, flags = 0, m=0;
@@ -930,23 +927,20 @@ int cmdList(Player* player, cmd* cmnd) {
 
 		if(filter != "")
 			player->printColor(" ^Y(filtering on \"%s\")", filter.c_str());
-		player->print("\n");
-
-		op = storage->first_obj;
-		while(op) {
+		*player << "\n";
+		ObjectSet::iterator it;
+		for( it = storage->objects.begin() ; it != storage->objects.end() ; ) {
+			object = (*it++);
 			n++;
 			m=1;
 
-			while(op->next_tag) {
-				if(playerShopSame(player, op->obj, op->next_tag->obj)) {
+			while(it != storage->objects.end()) {
+				if(playerShopSame(player, object, (*it))) {
 					m++;
-					op = op->next_tag;
+					object = (*it++);
 				} else
 					break;
 			}
-
-			object = op->obj;
-			op = op->next_tag;
 
 			num++;
 
@@ -961,7 +955,7 @@ int cmdList(Player* player, cmd* cmnd) {
 				cannotUseMarker(player, object));
 			if(owner)
 				player->print(" Profit: %ld", shopProfit(object));
-			player->print("\n");
+			*player << "\n";
 		}
 		if(!n)
 			player->print("Absolutely nothing!\n");
@@ -1007,7 +1001,7 @@ int cmdPurchase(Player* player, cmd* cmnd) {
 
 	creature = player->getParent()->findMonster(player, cmnd, 2);
 	if(!creature) {
-		player->print("That is not here.\n");
+		*player << "That is not here.\n";
 		return(0);
 	}
 
@@ -1062,30 +1056,30 @@ int cmdPurchase(Player* player, cmd* cmnd) {
 	object->init();
 
 	if(player->getWeight() + object->getActualWeight() > player->maxWeight()) {
-		player->print("That would be too much for you to carry.\n");
+		*player << "That would be too much for you to carry.\n";
 		delete object;
 		return(0);
 	}
 
 	if(player->tooBulky(object->getActualBulk())) {
-		player->print("That would be too bulky.\nClean your inventory first.\n");
+		*player << "That would be too bulky.\nClean your inventory first.\n";
 		delete object;
 		return(0);
 	}
 
 
 	if(!Unique::canGet(player, object)) {
-		player->print("You are unable to purchase that limited item at this time.\n");
+		*player << "You are unable to purchase that limited item at this time.\n";
 		delete object;
 		return(0);
 	}
 	if(!Lore::canHave(player, object, false)) {
-		player->print("You cannot purchased that item.\nIt is a limited item of which you cannot carry any more.\n");
+		*player << "You cannot purchased that item.\nIt is a limited item of which you cannot carry any more.\n";
 		delete object;
 		return(0);
 	}
 	if(!Lore::canHave(player, object, true)) {
-		player->print("You cannot purchased that item.\nIt contains a limited item that you cannot carry.\n");
+		*player << "You cannot purchased that item.\nIt contains a limited item that you cannot carry.\n";
 		delete object;
 		return(0);
 	}
@@ -1156,7 +1150,7 @@ int cmdSelection(Player* player, cmd* cmnd) {
 
 	creature = player->getParent()->findMonster(player, cmnd);
 	if(!creature) {
-		player->print("That is not here.\n");
+		*player << "That is not here.\n";
 		return(0);
 	}
 
@@ -1192,7 +1186,7 @@ int cmdSelection(Player* player, cmd* cmnd) {
 	player->print("%M is currently selling:", creature);
 	if(filter != "")
 		player->printColor(" ^Y(filtering on \"%s\")", filter.c_str());
-	player->print("\n");
+	*player << "\n";
 
 	Money cost;
 	for(i=0; i<maxitem; i++) {
@@ -1209,7 +1203,7 @@ int cmdSelection(Player* player, cmd* cmnd) {
 		}
 	}
 
-	player->print("\n");
+	*player << "\n";
 	return(0);
 }
 
@@ -1221,7 +1215,6 @@ int cmdSelection(Player* player, cmd* cmnd) {
 int cmdBuy(Player* player, cmd* cmnd) {
 	UniqueRoom* room = player->getUniqueRoomParent(), *storage=0;
 	Object	*object=0, *object2=0;
-	otag	*op=0;
 	int		num=0, n=1;
 
 	if(cmnd->num == 3)
@@ -1234,12 +1227,12 @@ int cmdBuy(Player* player, cmd* cmnd) {
 	if(!player->ableToDoCommand())
 		return(0);
 	if(player->getClass() == BUILDER) {
-		player->print("You may not buy things from shops.\n");
+		*player << "You may not buy things from shops.\n";
 		return(0);
 	}
 
 	if(!room->flagIsSet(R_SHOP)) {
-		player->print("This is not a shop.\n");
+		*player << "This is not a shop.\n";
 		return(0);
 	}
 
@@ -1249,12 +1242,12 @@ int cmdBuy(Player* player, cmd* cmnd) {
 	}
 
 	if(!loadRoom(shopStorageRoom(room), &storage)) {
-		player->print("Nothing to buy.\n");
+		*player << "Nothing to buy.\n";
 		return(0);
 	}
 
 	if(!isValidShop(room, storage)) {
-		player->print("This is not a shop.\n");
+		*player << "This is not a shop.\n";
 		return(0);
 	}
 
@@ -1280,23 +1273,21 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			return(0);
 		}
 		num = atoi(cmnd->str[1]+1);
-
-		op = storage->first_obj;
-		while(op && num != n) {
-			while(op->next_tag) {
-				if((playerShopSame(player, op->obj, op->next_tag->obj))) {
-					op = op->next_tag;
+		ObjectSet::iterator it;
+		for( it = storage->objects.begin() ; it != storage->objects.end() && num != n; ) {
+			object = (*it++);
+			while(it != storage->objects.end()) {
+				if((playerShopSame(player, object, (*it)))) {
+					object = (*it++);
 				} else
 					break;
+				n++;
 			}
-			n++;
-			op = op->next_tag;
 		}
-		if(!op) {
-			player->print("That isn't being sold here.\n");
+		if(it == storage->objects.end()) {
+			*player << "That isn't being sold here.\n";
 			return(0);
 		}
-		object = op->obj;
 
 		// load the guild a little bit earlier
 		if(p->getGuild())
@@ -1311,26 +1302,26 @@ int cmdBuy(Player* player, cmd* cmnd) {
 		}
 
 		if(player->getWeight() + object->getActualWeight() > player->maxWeight()) {
-			player->print("You couldn't possibly carry anymore.\n");
+			*player << "You couldn't possibly carry anymore.\n";
 			return(0);
 		}
 
 		if(player->tooBulky(object->getActualBulk()) ) {
-			player->print("No more will fit in your inventory right now.\n");
+			*player << "No more will fit in your inventory right now.\n";
 			return(0);
 		}
 
 
 		if(!Unique::canGet(player, object, true)) {
-			player->print("You are unable to purchase that limited item at this time.\n");
+			*player << "You are unable to purchase that limited item at this time.\n";
 			return(0);
 		}
 		if(!Lore::canHave(player, object, false)) {
-			player->print("You cannot purchased that item.\nIt is a limited item of which you cannot carry any more.\n");
+			*player << "You cannot purchased that item.\nIt is a limited item of which you cannot carry any more.\n";
 			return(0);
 		}
 		if(!Lore::canHave(player, object, true)) {
-			player->print("You cannot purchased that item.\nIt contains a limited item that you cannot carry.\n");
+			*player << "You cannot purchased that item.\nIt contains a limited item that you cannot carry.\n";
 			return(0);
 		}
 
@@ -1389,27 +1380,27 @@ int cmdBuy(Player* player, cmd* cmnd) {
 		//*********************************************************************
 	} else {
 		// Not a player run shop
-		object = findObject(player, storage->first_obj, cmnd);
+		object = storage->findObject(player, cmnd, 1);
 
 		if(!object) {
-			player->print("That's not being sold.\n");
+			*player << "That's not being sold.\n";
 			return(0);
 		}
 
 		if(!Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
-			player->print("The shopkeeper refuses to do business with you.\n");
+			*player << "The shopkeeper refuses to do business with you.\n";
 			return(0);
 		}
 
 		if(!strcmp(object->name, "storage room")) {
 			if(!room->flagIsSet(R_STORAGE_ROOM_SALE)) {
-				player->print("You can't buy storage rooms here.\n");
+				*player << "You can't buy storage rooms here.\n";
 				return(0);
 			}
 
 			CatRef	cr = gConfig->getSingleProperty(player, PROP_STORAGE);
 			if(cr.id) {
-				player->print("You are already affiliated with a storage room.\nOnly one is allowed per player.\n");
+				*player << "You are already affiliated with a storage room.\nOnly one is allowed per player.\n";
 				return(0);
 			}
 		}
@@ -1429,13 +1420,13 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			// Depends on level for bail
 			// 2k per lvl to get out
 			if(player->coins[GOLD] < cost[GOLD]) {
-				player->print("You don't have enough gold to post bail.\n");
+				*player << "You don't have enough gold to post bail.\n";
 				return(0);
 			}
 		} else {
 
 			if(player->coins[GOLD] < cost[GOLD]) {
-				player->print("You don't have enough gold.\n");
+				*player << "You don't have enough gold.\n";
 				return(0);
 			}
 
@@ -1444,7 +1435,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 				return(0);
 
 			if(player->tooBulky(object->getActualBulk()) ) {
-				player->print("No more will fit in your inventory right now.\n");
+				*player << "No more will fit in your inventory right now.\n";
 				return(0);
 			}
 
@@ -1480,19 +1471,19 @@ int cmdBuy(Player* player, cmd* cmnd) {
 				object2->init();
 
 			if(!Unique::canGet(player, object)) {
-				player->print("You are unable to purchase that limited item at this time.\n");
+				*player << "You are unable to purchase that limited item at this time.\n";
 				if(object2)
 					delete object2;
 				return(0);
 			}
 			if(!Lore::canHave(player, object, false)) {
-				player->print("You cannot purchased that item.\nIt is a limited item of which you cannot carry any more.\n");
+				*player << "You cannot purchased that item.\nIt is a limited item of which you cannot carry any more.\n";
 				if(object2)
 					delete object2;
 				return(0);
 			}
 			if(!Lore::canHave(player, object, true)) {
-				player->print("You cannot purchased that item.\nIt contains a limited item that you cannot carry.\n");
+				*player << "You cannot purchased that item.\nIt contains a limited item that you cannot carry.\n";
 				if(object2)
 					delete object2;
 				return(0);
@@ -1534,7 +1525,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 				player->print(" Your numbers are %02d %02d %02d %02d %02d  (%02d).", object2->getLotteryNumbers(0),
 						object2->getLotteryNumbers(1), object2->getLotteryNumbers(2),
 						object2->getLotteryNumbers(3), object2->getLotteryNumbers(4), object2->getLotteryNumbers(5));
-			player->print("\n");
+			*player << "\n";
 
 			if(strcmp(object2->name, "storage room") && strcmp(object2->name, "bail") && object2->getType() != LOTTERYTICKET)
 				object2->setFlag(O_JUST_BOUGHT);
@@ -1652,7 +1643,7 @@ int cmdSell(Player* player, cmd* cmnd) {
 		return(0);
 
 	if(!player->getRoomParent()->flagIsSet(R_PAWN_SHOP)) {
-		player->print("This is not a pawn shop.\n");
+		*player << "This is not a pawn shop.\n";
 		return(0);
 	}
 
@@ -1665,7 +1656,7 @@ int cmdSell(Player* player, cmd* cmnd) {
 	object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
-		player->print("You don't have that.\n");
+		*player << "You don't have that.\n";
 		return(0);
 	}
 
@@ -1674,13 +1665,13 @@ int cmdSell(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(object->first_obj) {
+	if(!object->objects.empty()) {
 		player->print("You don't want to sell that!\nThere's something inside it!\n");
 		return(0);
 	}
 
 	if(!Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
-		player->print("The shopkeeper refuses to do business with you.\n");
+		*player << "The shopkeeper refuses to do business with you.\n";
 		return(0);
 	}
 
@@ -1766,7 +1757,7 @@ int cmdValue(Player* player, cmd* cmnd) {
 		return(0);
 
 	if(!player->getRoomParent()->flagIsSet(R_PAWN_SHOP)) {
-		player->print("You must be in a pawn shop.\n");
+		*player << "You must be in a pawn shop.\n";
 		return(0);
 	}
 
@@ -1780,12 +1771,12 @@ int cmdValue(Player* player, cmd* cmnd) {
 	object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
-		player->print("You don't have that.\n");
+		*player << "You don't have that.\n";
 		return(0);
 	}
 
 	if(!Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
-		player->print("The shopkeeper refuses to do business with you.\n");
+		*player << "The shopkeeper refuses to do business with you.\n";
 		return(0);
 	}
 
@@ -1815,7 +1806,7 @@ int cmdRefund(Player* player, cmd* cmnd) {
 		return(0);
 
 	if(!player->getRoomParent()->flagIsSet(R_SHOP)) {
-		player->print("This is not a shop.\n");
+		*player << "This is not a shop.\n";
 		return(0);
 	}
 
@@ -1826,7 +1817,7 @@ int cmdRefund(Player* player, cmd* cmnd) {
 
 	object = player->findObject(player, cmnd, 1);
 	if(!object) {
-		player->print("You don't have that in your inventory.\n");
+		*player << "You don't have that in your inventory.\n";
 		return(0);
 	}
 
@@ -1836,7 +1827,7 @@ int cmdRefund(Player* player, cmd* cmnd) {
 	}
 
 	if(object->getRecipe()) {
-		player->print("You cannot return intellectual property.\n");
+		*player << "You cannot return intellectual property.\n";
 		return(0);
 	}
 
@@ -2039,7 +2030,7 @@ int cmdTrade(Player* player, cmd* cmnd) {
 
 	creature = player->getParent()->findMonster(player, cmnd, 2);
 	if(!creature) {
-		player->print("That is not here.\n");
+		*player << "That is not here.\n";
 		return(0);
 	}
 
@@ -2051,7 +2042,7 @@ int cmdTrade(Player* player, cmd* cmnd) {
 	object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
-		player->print("You don't have that.\n");
+		*player << "You don't have that.\n";
 		return(0);
 	}
 
@@ -2134,41 +2125,46 @@ int cmdTrade(Player* player, cmd* cmnd) {
 
 	// are they trying to trade multiple objects
 	if(numTrade > 1) {
-		otag *marker=0, *op = player->first_obj;
-		Object *toDelete=0;
 		int numObjects=0;
 
-		// find the first occurance of the object
-		while(op && op->obj->info != object->info)
-			op = op->next_tag;
-		if(!op) {
+		ObjectSet toDelSet;
+		ObjectSet::iterator it;
+		Object *obj = 0;
+
+		// find the first occurance of the object in their inventory
+		for( it = player->objects.begin() ; it != player->objects.end() ; ) {
+			obj = (*it);
+			if(obj->info == object->info)
+				break;
+			else
+				it++;
+		}
+
+		if(it == player->objects.end()) {
 			player->print("%M gets confused and cannot trade for that right now.\n", creature);
 			failTrade(player, object, creature, trade);
 			return(0);
 		}
-
-		// save our position to make this faster
-		marker = op;
-		// see if we have enough objects
-		while(op && op->obj->info == object->info && numObjects != numTrade) {
+		while( it != player->objects.end() && numObjects != numTrade && (*it)->info == object->info) {
+			obj = (*it);
 			numObjects++;
-			if(!op->obj->isQuestOwner(player)) {
+			if(!obj->isQuestOwner(player)) {
 				player->print("%M says, \"That doesn't belong to you!\"\n", creature);
 				failTrade(player, object, creature, trade);
 				return(0);
 			}
-			op = op->next_tag;
+			toDelSet.insert(obj);
+			it++;
 		}
+
 		if(numObjects != numTrade) {
-			player->print("You don't have that many items.\n");
+			*player << "You don't have that many items.\n";
 			failTrade(player, object, creature, trade, false);
 			return(0);
 		}
 
-		// if everything is successful, start from the marker and start removing objects
-		while(numObjects) {
-			toDelete = marker->obj;
-			marker = marker->next_tag;
+		// if everything is successful, start removing objects
+		for(Object* toDelete : toDelSet) {
 			player->delObj(toDelete, true);
 			creature->addObj(toDelete);
 			numObjects--;
@@ -2210,7 +2206,7 @@ int cmdAuction(Player* player, cmd* cmnd) {
 	player->clearFlag(P_AFK);
 
 	if(player->getClass() == BUILDER || player->inJail()) {
-		player->print("You cannot do that.\n");
+		*player << "You cannot do that.\n";
 		return(PROMPT);
 	}
 
@@ -2221,11 +2217,11 @@ int cmdAuction(Player* player, cmd* cmnd) {
 	}
 
 	if(player->isEffected("mist") || player->isInvisible()) {
-		player->print("You must be visible to everyone in order to auction.\n");
+		*player << "You must be visible to everyone in order to auction.\n";
 		return(0);
 	}
 	if(player->getLevel() < 7 && !player->isCt()) {
-		player->print("You must be at least level 7 to auction items.\n");
+		*player << "You must be at least level 7 to auction items.\n";
 		return(0);
 	}
 	if(player->flagIsSet(P_CANT_BROADCAST)) {
@@ -2239,7 +2235,7 @@ int cmdAuction(Player* player, cmd* cmnd) {
 	if(strcmp(cmnd->str[1], "self")) {
 		object = player->findObject(player, cmnd, 1);
 		if(!object) {
-			player->print("That object is not in your inventory.\n");
+			*player << "That object is not in your inventory.\n";
 			return(0);
 		}
 
@@ -2249,7 +2245,7 @@ int cmdAuction(Player* player, cmd* cmnd) {
 			batch = atoi(&cmnd->str[2][1]);
 
 			if(batch < 1) {
-				player->print("You must sell at least 1 item.\n");
+				*player << "You must sell at least 1 item.\n";
 				return(0);
 			}
 			if(batch > 100) {
@@ -2272,7 +2268,7 @@ int cmdAuction(Player* player, cmd* cmnd) {
 	amnt = atol(&cmnd->str[i][1]);
 
 	if(amnt <= 0) {
-		player->print("A price must be specified to auction.\n");
+		*player << "A price must be specified to auction.\n";
 		return(0);
 	}
 	if (amnt < 500 && !player->checkStaff("Items must be auctioned for at least 500 gold.\n"))
