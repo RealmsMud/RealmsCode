@@ -778,7 +778,7 @@ int dmTake(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		object = findObject(player, container->first_obj, cmnd);
+		object = container->findObject(player, cmnd, 1);
 		if(!object) {
 			player->print("That is not in that container.\n");
 			if(!online)
@@ -803,7 +803,7 @@ int dmTake(Player* player, cmd* cmnd) {
 	}
 
 
-	object = findObject(player, target->first_obj, cmnd);
+	object = target->findObject(player, cmnd, 1);
 
 	if(!object) {
 		player->print("%s doesn't have that.\n", target->upHeShe());

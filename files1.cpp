@@ -179,14 +179,10 @@ bool Path::checkDirExists(bstring area, char* (*fn)(const CatRef cr)) {
 // If perm_only != 0, then only the permanent objects are counted.
 
 int count_obj(Object* object, char perm_only) {
-	otag	*op;
 	int	total=0;
-
-	op = object->first_obj;
-	while(op) {
-		if(!perm_only || (perm_only && (op->obj->flagIsSet(O_PERM_ITEM))))
+	for(Object* obj : object->objects) {
+		if(!perm_only || (perm_only && (obj->flagIsSet(O_PERM_ITEM))))
 			total++;
-		op = op->next_tag;
 	}
 	return(total);
 }
@@ -199,14 +195,10 @@ int count_obj(Object* object, char perm_only) {
 // will be counted.
 
 int count_inv(Creature* creature, char perm_only) {
-	otag	*op;
 	int	total=0;
-
-	op = creature->first_obj;
-	while(op) {
-		if(!perm_only || (perm_only && (op->obj->flagIsSet(O_PERM_ITEM))))
+	for(Object *obj : creature->objects ) {
+		if(!perm_only || (perm_only && (obj->flagIsSet(O_PERM_ITEM))))
 			total++;
-		op = op->next_tag;
 	}
 	return(MIN(100,total));
 }
@@ -215,15 +207,12 @@ int count_inv(Creature* creature, char perm_only) {
 //						count_bag_inv
 //*********************************************************************
 int count_bag_inv(Creature* creature) {
-	otag	*op;
 	int	total=0;
-	op = creature->first_obj;
-	while(op) {
+	for(Object *obj : creature->objects ) {
 		total++;
-		if(op->obj && op->obj->getType() == CONTAINER) {
-			total += count_obj(op->obj, 0);
+		if(obj && obj->getType() == CONTAINER) {
+			total += count_obj(obj, 0);
 		}
-		op = op->next_tag;
 	}
 	return(total);
 }
@@ -240,7 +229,6 @@ int count_bag_inv(Creature* creature) {
 // memory (but not a monster).
 
 void free_crt(Creature* creature, bool remove) {
-	otag	*op=0, *tempo=0;
 	ttag	*tp=0, *tempt=0;
 	int	i;
 	for(i=0; i<MAXWEAR; i++) {
@@ -248,13 +236,14 @@ void free_crt(Creature* creature, bool remove) {
 			creature->unequip(i+1, UNEQUIP_DELETE, false);
 	}
 
-	op = creature->first_obj;
-	while(op) {
-		tempo = op->next_tag;
-		delete op->obj;
-		delete op;
-		op = tempo;
+	ObjectSet::iterator it;
+	Object* obj;
+	for(it = creature->objects.begin() ; it != creature->objects.end() ; ) {
+		obj = (*it++);
+		delete obj;
 	}
+	creature->objects.clear();
+
 	if(creature->getGroup(false)) {
 	    creature->getGroup(false)->remove(creature);
 	}

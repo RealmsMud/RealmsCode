@@ -588,39 +588,3 @@ int Player::chooseItem() {
 	i = mrand(0, numwear-1);
 	return(checklist[i]);
 }
-
-//**********************************************************************
-//						resetObjectIds
-//**********************************************************************
-
-int doSetObjectIds(otag* op, int id) {
-	while(op) {
-		op->obj->setUniqueId(id++);
-		id = doSetObjectIds(op->obj->first_obj, id);
-		op = op->next_tag;
-	}
-	return(id);
-}
-
-void Player::resetObjectIds() {
-	uniqueObjId = doSetObjectIds(first_obj, 0);
-
-	for(int i=0; i<MAXWEAR; i++) {
-		if(ready[i]) {
-			ready[i]->setUniqueId(uniqueObjId++);
-			uniqueObjId = doSetObjectIds(ready[i]->first_obj, uniqueObjId);
-		}
-	}
-}
-
-//**********************************************************************
-//						setObjectId
-//**********************************************************************
-
-void Player::setObjectId(Object* object) {
-	// don't let unique IDs get out of hand
-	if(uniqueObjId > 1000000)
-		resetObjectIds();
-	object->setUniqueId(uniqueObjId++);
-	uniqueObjId = doSetObjectIds(object->first_obj, uniqueObjId);
-}

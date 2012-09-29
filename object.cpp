@@ -123,49 +123,6 @@ void del_obj_obj(Object	*object, Object* container) {
 	}
 }
 
-//*********************************************************************
-//						findObject
-//*********************************************************************
-// This function is used to search through a room's, creature's or
-// object's inventory in order to look for a particular item. The
-// first parameter contains a pointer to the creature who is doing the
-// search. The second is a pointer to the first object tag in the
-// list to be searched. The third parameter is a string that contains
-// the name of the object being searched for. The last parameter
-// contains the version of the string being searched for.
-
-Object* doFindObject(otag* op, int id) {
-	Object* object=0;
-	while(op) {
-		if(op->obj->getUniqueId() == id)
-			return(op->obj);
-		object = doFindObject(op->obj->first_obj, id);
-		if(object)
-			return(object);
-		op = op->next_tag;
-	}
-	return(0);
-}
-
-Object* findObject(const Player *player, int id) {
-	Object* object = doFindObject(player->first_obj, id);
-	if(object)
-		return(object);
-
-	for(int i=0; i<MAXWEAR; i++) {
-		if(player->ready[i]) {
-			if(player->ready[i]->getUniqueId() == id)
-				return(player->ready[i]);
-			object = doFindObject(player->ready[i]->first_obj, id);
-			if(object)
-				return(object);
-		}
-	}
-
-	return(0);
-}
-
-
 
 //*********************************************************************
 //						listObjects
@@ -956,7 +913,6 @@ short Object::getWeaponDelay() const {
 	return(delay);
 }
 bstring Object::getQuestOwner() const { return(questOwner); }
-int Object::getUniqueId() const { return(uniqueId); }
 
 //*********************************************************************
 //						isQuestOwner

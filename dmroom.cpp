@@ -211,7 +211,6 @@ bstring opposite_exit_name(const bstring& name) {
 // monsters.
 
 int dmPurge(Player* player, cmd* cmnd) {
-	otag	*op=0, *otemp=0;
 	BaseRoom* room = player->getRoomParent();
 
 	if(!player->canBuildMonsters() && !player->canBuildObjects())
@@ -244,15 +243,14 @@ int dmPurge(Player* player, cmd* cmnd) {
         free_crt(mons);
 	}
 
-	op = room->first_obj;
-	room->first_obj = 0;
-	while(op) {
-		otemp = op->next_tag;
-		if(!op->obj->flagIsSet(O_TEMP_PERM)) {
-			delete op->obj;
-			delete op;
+	ObjectSet::iterator it;
+	Object* obj;
+	for(it = room->objects.begin() ; it != room->objects.end() ; ) {
+		obj = (*it++);
+		if(!obj->flagIsSet(O_TEMP_PERM)) {
+			room->objects.erase(obj);
+			delete obj;
 		}
-		op = otemp;
 	}
 
 	player->print("Purged.\n");

@@ -1,4 +1,4 @@
- * files-xml-read.cpp
+/* files-xml-read.cpp
  *	 Used to read objects/rooms/creatures etc from xml files
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___

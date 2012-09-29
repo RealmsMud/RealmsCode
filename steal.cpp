@@ -486,7 +486,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, target->first_obj, cmnd);
+	object = target->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("%s doesn't have that.\n", target->upHeShe());
 		return(0);

@@ -117,8 +117,7 @@ int cmdCompare(Player* player, cmd* cmnd) {
 //					equip
 //*********************************************************************
 
-bool Creature::equip(Object* object, bool showMessage, bool resetUniqueId) {
-	Player* player = getAsPlayer();
+bool Creature::equip(Object* object, bool showMessage) {
 	bool isWeapon = false;
 
 	switch(object->getWearflag()) {
@@ -184,8 +183,6 @@ bool Creature::equip(Object* object, bool showMessage, bool resetUniqueId) {
 	object->setFlag(O_WORN);
 
 	delObj(object, false, false, true, false, true);
-	if(resetUniqueId && player)
-		player->setObjectId(object);
 
 	if(object->flagIsSet(O_EQUIPPING_BESTOWS_EFFECT)) {
 		if(Effect::objectCanBestowEffect(object->getEffect())) {
@@ -264,7 +261,7 @@ int cmdUse(Player* player, cmd* cmnd) {
 	object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
-		object = findObject(player, room->first_obj, cmnd);
+		object = room->findObject(player, cmnd, 1);
 		if(!object && player->ready[HELD-1]) {
 			object = player->ready[HELD-1];
 		} else if(!object || !object->flagIsSet(O_CAN_USE_FROM_FLOOR)) {
@@ -332,7 +329,7 @@ int cmdUse(Player* player, cmd* cmnd) {
 //*********************************************************************
 // actual code to wear object
 
-bool doWear(Player* player, cmd* cmnd, int id) {
+bool doWear(Player* player, cmd* cmnd) {
 	Object	*object=0;
 
 	player->clearFlag(P_AFK);
@@ -358,8 +355,6 @@ bool doWear(Player* player, cmd* cmnd, int id) {
 
 	if(cmnd)
 		object = player->findObject(player, cmnd, 1);
-	else
-		object = findObject(player, id);
 
 	if(!object) {
 		player->print("You don't have that.\n");
@@ -374,44 +369,44 @@ bool doWear(Player* player, cmd* cmnd, int id) {
 
 	object->clearFlag(O_JUST_BOUGHT);
 	// if cmnd is set, we want to pass true to resetUniqueId
-	player->equip(object, true, cmnd);
+	player->equip(object, true);
 	player->computeAC();
 	return(true);
 }
-
-//*********************************************************************
-//						webWear
-//*********************************************************************
-// web interface for wearing objects
-
-bool webWear(Player* player, int id) {
-	return(doWear(player, 0, id));
-}
-
-//*********************************************************************
-//						cmdWear
-//*********************************************************************
-// This function allows the player pointed to by the first parameter
-// to wear an item specified in the pointer to the command structure
-// in the second parameter. That is, if the item is wearable.
-
-int cmdWear(Player* player, cmd* cmnd) {
-	doWear(player, cmnd, 0);
-	return(0);
-}
+//
+////*********************************************************************
+////						webWear
+////*********************************************************************
+//// web interface for wearing objects
+//
+//bool webWear(Player* player, int id) {
+//	return(false);
+//	return(doWear(player, 0, id));
+//}
+//
+////*********************************************************************
+////						cmdWear
+////*********************************************************************
+//// This function allows the player pointed to by the first parameter
+//// to wear an item specified in the pointer to the command structure
+//// in the second parameter. That is, if the item is wearable.
+//
+//int cmdWear(Player* player, cmd* cmnd) {
+//	doWear(player, cmnd, 0);
+//	return(0);
+//}
 
 //*********************************************************************
 //						wearCursed
 //*********************************************************************
 
 void Player::wearCursed() {
+
 	Object	*object=0;
-	otag	*op = first_obj;
+	ObjectSet::iterator it;
 
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
-
+	for( it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 		if(object->flagIsSet(O_CURSED) && object->flagIsSet(O_WORN)) {
 			if(object->getShotsCur() < 1) {
 				object->clearFlag(O_WORN);
@@ -454,8 +449,6 @@ void Player::wearCursed() {
 // they possibly can.
 
 void wearAll(Player* player, bool login) {
-	Object	*object=0;
-	otag	*op=0;
 	char	str[4096], str2[85];
 	bool	found=false;
 	str[0] = 0;
@@ -468,12 +461,11 @@ void wearAll(Player* player, bool login) {
 			return;
 		}
 	}
+	Object	*object=0;
+	ObjectSet::iterator it;
 
-	op = player->first_obj;
-	while(op) {
-
-		object = op->obj;
-		op = op->next_tag;
+	for( it = player->objects.begin() ; it != player->objects.end() ; ) {
+		object = (*it++);
 
 		if(object->getWearflag() && object->getWearflag() != HELD && object->getWearflag() != WIELD) {
 
@@ -521,7 +513,7 @@ void wearAll(Player* player, bool login) {
 //*********************************************************************
 // This function does the heavy lifting of removing objects
 
-bool doRemoveObj(Player* player, cmd* cmnd, int id) {
+bool doRemoveObj(Player* player, cmd* cmnd ) {
 	Object	*object=0, *second=0;
 	int		found=0, match=0, i=0, jumped=0;
 
@@ -561,11 +553,6 @@ bool doRemoveObj(Player* player, cmd* cmnd, int id) {
 						break;
 					}
 				}
-			} else {
-				if(object->getUniqueId() == id) {
-					found = 1;
-					break;
-				}
 			}
 			i++;
 		}
@@ -586,13 +573,13 @@ bool doRemoveObj(Player* player, cmd* cmnd, int id) {
 			if(player->ready[HELD-1] && player->ready[HELD-1]->getType() == WEAPON) {
 				second = player->ready[HELD-1];
 				// if cmnd is set, pass true to resetUniqueId
-				player->addObj(second, cmnd);
+				player->addObj(second);
 				second->clearFlag(O_WORN);
 				player->ready[HELD-1] = 0;
 			}
 		}
 
-		player->doRemove(i, cmnd);
+		player->doRemove(i);
 		player->computeAC();
 		player->computeAttackPower();
 
@@ -635,34 +622,15 @@ bool doRemoveObj(Player* player, cmd* cmnd, int id) {
 	return(true);
 }
 
-//*********************************************************************
-//						webRemove
-//*********************************************************************
-
-bool webRemove(Player* player, int id) {
-	return(doRemoveObj(player, 0, id));
-}
-
-//*********************************************************************
-//						cmdRemoveObj
-//*********************************************************************
-// This function allows the player pointed to by the first parameter to/
-// remove the item specified by the command structure in the second
-// parameter from those things which they are wearing.
-
-int cmdRemoveObj(Player* player, cmd* cmnd) {
-	doRemoveObj(player, cmnd, 0);
-	return(0);
-}
 
 //*********************************************************************
 //						doRemove
 //*********************************************************************
 
-void Player::doRemove(int i, bool resetUniqueId) {
+void Player::doRemove(int i) {
 	i++;
 	Object* object = unequip(i, UNEQUIP_NOTHING);
-	addObj(object, resetUniqueId);
+	addObj(object);
 
 	if(i == FEET) {
 		// Takes some time to remove boots in combat and then kick.
@@ -840,7 +808,7 @@ void Creature::printEquipList(const Player* viewer) {
 // This function allows the player pointed to by the first parameter to
 // ready a weapon specified in the second, if it is a weapon.
 
-bool doWield(Player* player, cmd* cmnd, int id) {
+bool doWield(Player* player, cmd* cmnd) {
 	Object	*object=0;
 
 	player->clearFlag(P_AFK);
@@ -859,8 +827,6 @@ bool doWield(Player* player, cmd* cmnd, int id) {
 
 		if(cmnd)
 			object = player->findObject(player, cmnd, 1);
-		else
-			object = findObject(player, id);
 
 		if(!object) {
 			player->print("You don't have that.\n");
@@ -895,12 +861,9 @@ bool doWield(Player* player, cmd* cmnd, int id) {
 	return(true);
 }
 
-bool webWield(Player* player, int id) {
-	return(doWield(player, 0, id));
-}
 
 int cmdReady(Player* player, cmd* cmnd) {
-	doWield(player, cmnd, 0);
+	doWield(player, cmnd);
 	return(0);
 }
 
@@ -1119,9 +1082,7 @@ void getPermObj(Object* object) {
 	object->setFlag(O_PERM_INV_ITEM);
 	object->clearFlag(O_PERM_ITEM);
 
-	if(!object->parent_room)
-	    return;
-	room = object->parent_room->getAsUniqueRoom();
+	room = object->getUniqueRoomParent();
 	if(!room)
 		return;
 
@@ -1153,7 +1114,6 @@ void getAllObj(Creature* creature, Object *container) {
 	Player	*player = creature->getPlayerMaster();
 	Property *p=0;
 	Object	*object=0, *last_obj=0;
-	otag	*op=0;
 	char	str[2048];
 	const char *str2;
 	int		n=1, found=0, heavy=0;
@@ -1175,18 +1135,14 @@ void getAllObj(Creature* creature, Object *container) {
 	// are they allowed to put objects from this storage room?
 	if(!storageProperty(player, 0, &p))
 		return;
-	doUnique = !container->parent_crt && !p;
+	doUnique = !container->inCreature() && !p;
 
-
-	op = container->first_obj;
-	while(op) {
-		if(	!op->obj->flagIsSet(O_SCENERY) &&
-			!op->obj->flagIsSet(O_NO_TAKE) &&
-			!op->obj->flagIsSet(O_HIDDEN) &&
-			player->canSee(op->obj)
-		) {
-			object = op->obj;
-			op = op->next_tag;
+	ObjectSet::iterator it;
+	for( it = container->objects.begin() ; it != container->objects.end() ; ) {
+		object = (*it++);
+		if(	!object->flagIsSet(O_SCENERY) && !object->flagIsSet(O_NO_TAKE) &&
+			!object->flagIsSet(O_HIDDEN) && player->canSee(object) )
+		{
 			found++;
 
 			if(player->getWeight() + object->getActualWeight() > player->maxWeight()) {
@@ -1205,7 +1161,7 @@ void getAllObj(Creature* creature, Object *container) {
 			}
 
 			// on ground and quest
-			if(!container->parent_crt && object->getQuestnum()) {
+			if(!container->inCreature() && object->getQuestnum()) {
 				if(player->questIsSet(object->getQuestnum()-1)) {
 					heavy++;
 					continue;
@@ -1246,8 +1202,7 @@ void getAllObj(Creature* creature, Object *container) {
 			saveLimited = saveLimited || Limited::is(object);
 			// Ignore quest items
 			doGetObject(object, creature, doUnique, false, true, false, false);
-		} else
-			op = op->next_tag;
+		}
 	}
 
 	if(found && last_obj) {
@@ -1296,7 +1251,6 @@ void get_all_rom(Creature* creature, char *item) {
 	Player	*player = creature->getPlayerMaster();
 	BaseRoom* room = creature->getRoomParent();
 	Object	*object=0, *last_obj=0;
-	otag	*op=0;
 	char	str[2048];
 	const char *str2;
 	int 	n=1, found=0, heavy=0, dogoldmsg=0;
@@ -1331,17 +1285,13 @@ void get_all_rom(Creature* creature, char *item) {
 		}
 	}
 
-
-	op = room->first_obj;
-	while(op && strlen(str)< 2040) {
-		if(	!op->obj->flagIsSet(O_SCENERY) &&
-			!op->obj->flagIsSet(O_NO_TAKE) &&
-			!op->obj->flagIsSet(O_HIDDEN) &&
-			player->canSee(op->obj)
-		) {
+	ObjectSet::iterator it;
+	for( it = room->objects.begin() ; it != room->objects.end() && strlen(str) < 2040 ; ) {
+		object = (*it++);
+		if(	!object->flagIsSet(O_SCENERY) && !object->flagIsSet(O_NO_TAKE) &&
+			!object->flagIsSet(O_HIDDEN) && player->canSee(object) )
+		{
 			found++;
-			object = op->obj;
-			op = op->next_tag;
 
 			if(item && !keyTxtEqual(object, item))
 				continue;
@@ -1398,17 +1348,9 @@ void get_all_rom(Creature* creature, char *item) {
 					strcat(str, str2);
 					strcat(str, ", ");
 				}
-//				if(player->flagIsSet(P_GOLD_SPLIT)) {
-//					if(!player->autosplit(object->value[2]))
-//						player->coins[GOLD] += object->value[2];
-//				} else
-//					player->coins[GOLD] += object->value[2];
-//
-//				delete object;
 				last_obj = 0;
 				dogoldmsg = 1;
 			} else {
-//				player->addObj(object);
 				last_obj = object;
 			}
 
@@ -1421,11 +1363,8 @@ void get_all_rom(Creature* creature, char *item) {
 					player->print("You are interrupted from getting anything else.\n");
 				else
 					player->print("%M was interrupted from getting anything else.\n", creature);
-				op = 0;
 				break;
 			}
-		} else {
-			op = op->next_tag;
 		}
 	}
 
@@ -1477,7 +1416,6 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 	Player	*player = creature->getPlayerMaster();
 	BaseRoom* room = creature->getRoomParent();
 	Object	*object=0, *container=0;
-	otag	*cop=0;
 	int		 n=0, match=0, ground=0;
 	Monster *pet=0;
 	Property* p=0;
@@ -1539,7 +1477,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 			return(0);
 		}
 
-		object = findObject(player, room->first_obj, cmnd);
+		object = room->findObject(player, cmnd, 1);
 
 		if(!object) {
 			player->print("That isn't here.\n");
@@ -1593,12 +1531,10 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 
 
 
-		cop = object->first_obj;
-		while(cop) {
-			if( cop->obj->getQuestnum() && player->questIsSet(cop->obj->getQuestnum()-1) &&
+		for(Object *obj : object->objects) {
+			if( obj->getQuestnum() && player->questIsSet(obj->getQuestnum()-1) &&
 				!player->checkStaff("You may not take that.\nIt contains an item for a quest you have already completed.\n"))
 				return(0);
-			cop = cop->next_tag;
 		}
 
 		if(object->flagIsSet(O_TEMP_PERM)) {
@@ -1695,7 +1631,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 					player->print("%M is not your pet!\n", pet);
 					return(0);
 				}
-				object = findObject(pet, pet->first_obj, cmnd);
+				object = pet->findObject(pet, cmnd, 1);
 				if(!object) {
 					player->print("%M doesn't have %s.\n", pet, mrand(0, 1) ? "that" : "one of those");
 					return(0);
@@ -1729,7 +1665,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 				return(0);
 			}
 
-			object = findObject(player, container->first_obj, cmnd);
+			object = container->findObject(player, cmnd, 1);
 			if(!object) {
 				player->print("That isn't in there.\n");
 				return(0);
@@ -1763,7 +1699,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 		// Weight has already been taken into account if it's in a container in the inventory,
 		// but not if it is in the room or on the pet
 		if( player->getWeight() + object->getActualWeight() > player->maxWeight() &&
-			((container && container->parent_room) || pet) &&
+			((container && container->inRoom()) || pet) &&
 			!player->checkStaff("You can't carry anymore.\n")
 		) return(0);
 
@@ -1816,7 +1752,6 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 
 int cmdInventory(Player* player, cmd* cmnd) {
 	Player	*target = player;
-	otag	*op=0;
 	int		m=0, n=0, flags = player->displayFlags();
 	bool	online=true;
 	std::ostringstream oStr;
@@ -1866,30 +1801,30 @@ int cmdInventory(Player* player, cmd* cmnd) {
 	else
 		oStr << target->name << "'s inventory: ";
 
-	op = target->first_obj;
-
-	while(op) {
-		if(player->canSee(op->obj)) {
+	ObjectSet::iterator it;
+	Object* obj;
+	for( it = target->objects.begin() ; it != target->objects.end() ; ) {
+		obj = (*it++);
+		if(player->canSee(obj)) {
 			m = 1;
-			while(op->next_tag) {
-				if(op->obj->showAsSame(player, op->next_tag->obj)) {
+			while( it != target->objects.end() ) {
+				if(obj->showAsSame(player, (*it))) {
 					m++;
-					op = op->next_tag;
+					it++;
 				} else
 					break;
 			}
 
 			if(n)
 				oStr << ", ";
-			oStr << op->obj->getObjStr(player, flags, m);
+			oStr << obj->getObjStr(player, flags, m);
 
-			if(op->obj->flagIsSet(O_KEEP))
+			if(obj->flagIsSet(O_KEEP))
 				oStr << "(K)";
-			if(op->obj->flagIsSet(O_BEING_PREPARED))
+			if(obj->flagIsSet(O_BEING_PREPARED))
 				oStr << "(P)";
 			n++;
 		}
-		op = op->next_tag;
 	}
 
 
@@ -1902,25 +1837,6 @@ int cmdInventory(Player* player, cmd* cmnd) {
 	if(!online)
 		free_crt(target);
 
-	/*
-		strcpy(prepstr, "");
-		pp = player->first_obj;
-		while(pp)
-		{
-			if(pp->obj->flagIsSet(O_BEING_PREPARED)) {
-				strcat(prepstr, pp->obj->name);
-				strcat(prepstr, ", ");
-				pcount++;
-			}
-			pp = pp->next_tag;
-		}
-		prepstr[strlen(prepstr) - 2] = '.';
-		prepstr[strlen(prepstr) - 1] = 0;
-
-		if(pcount)
-			player->print("\nYou are preparing: %s\n", prepstr);
-			*/
-
 	return(0);
 }
 
@@ -1929,7 +1845,6 @@ int cmdInventory(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 bool canDrop(const Player* player, const Object* object, const Property* p) {
-	otag	*op=0;
 
 	if(!limitedInStorage(player, object, p, false))
 		return(false);
@@ -1937,12 +1852,9 @@ bool canDrop(const Player* player, const Object* object, const Property* p) {
 		return(false);
 	if(object->flagIsSet(O_KEEP))
 		return(false);
-
-	op = object->first_obj;
-	while(op) {
-		if(!canDrop(player, op->obj, p))
+	for(Object* obj : object->objects ) {
+		if(!canDrop(player, obj, p))
 			return(false);
-		op = op->next_tag;
 	}
 	return(true);
 }
@@ -1971,7 +1883,6 @@ bool delete_drop_obj(const BaseRoom* room, const Object* object, bool factionCan
 void dropAllRoom(Creature* creature, Player *player, bool factionCanRecycle) {
 	Player	*pCreature = creature->getAsPlayer();
 	int		money=0, flags=0, m=0, n=0;
-	otag	*op=0, *oprev=0;
 	BaseRoom* room = creature->getRoomParent();
 	Object	*object=0;
 	Property* p=0;
@@ -2003,29 +1914,28 @@ void dropAllRoom(Creature* creature, Player *player, bool factionCanRecycle) {
 		player->print("The shopkeeper refuses to recycle those for you.\n");
 		return;
 	}
-
-	op = creature->first_obj;
-	while(op) {
-		if(!canDrop(player, op->obj, p)) {
-			op = op->next_tag;
+	ObjectSet::iterator it;
+	Object *obj;
+	for( it = creature->objects.begin() ; it != creature->objects.end() ; ) {
+		obj = (*it++);
+		if(!canDrop(player, obj, p)) {
 			continue;
 		}
-		if(player->canSee(op->obj)) {
+		if(player->canSee(obj)) {
 			m=1;
-			while(op->next_tag) {
-				if(op->obj->showAsSame(player, op->next_tag->obj) && canDrop(player, op->obj, p)) {
+			while(it != creature->objects.end()) {
+				if(obj->showAsSame(player, (*it)) && canDrop(player, obj, p)) {
 					m++;
-					op = op->next_tag;
+					(it++);
 				} else
 					break;
 			}
 			if(first)
 				txt += ", ";
 			first = true;
-			txt += op->obj->getObjStr(player, flags, m);
+			txt += obj->getObjStr(player, flags, m);
 			n++;
 		}
-		op = op->next_tag;
 	}
 
 	if(n) {
@@ -2038,12 +1948,8 @@ void dropAllRoom(Creature* creature, Player *player, bool factionCanRecycle) {
 		return;
 	}
 
-
-	op = creature->first_obj;
-	while(op) {
-		oprev = op;
-		op = op->next_tag;
-		object = oprev->obj;
+	for( it = creature->objects.begin() ; it != creature->objects.end() ; ) {
+		object = (*it++);
 
 		if(!canDrop(player, object, p))
 			continue;
@@ -2130,10 +2036,9 @@ void dropAllObj(Creature* creature, Object *container, Property *p) {
 	Player	*player = creature->getPlayerMaster();
 	Object	*object=0, *last=0;
 	BaseRoom* room = creature->getRoomParent();
-	otag	*op=0;
 	int		n=1, found=0, full=0;
 	bstring txt = "";
-	bool	removeUnique = !container->parent_crt && !p;
+	bool	removeUnique = !container->inCreature() && !p;
 
 	// we're being sent either a player or a pet
 	//	- creature will be the one getting the object
@@ -2146,20 +2051,17 @@ void dropAllObj(Creature* creature, Object *container, Property *p) {
 
 	if(!player->ableToDoCommand())
 		return;
+	ObjectSet::iterator it;
+	for( it = creature->objects.begin() ; it != creature->objects.end() ; ) {
+		object = (*it++);
 
-	op = creature->first_obj;
-	while(op) {
-		if(creature->canSee(op->obj) && op->obj != container) {
+		if(creature->canSee(object) && object != container) {
 			found++;
-			object = op->obj;
-			op = op->next_tag;
-
 
 			if(!canDropAllObj(object, container)) {
 				full++;
 				continue;
 			}
-
 
 			container->incShotsCur();
 			creature->delObj(object, false, false, true, false);
@@ -2179,8 +2081,7 @@ void dropAllObj(Creature* creature, Object *container, Property *p) {
 				n = 1;
 			}
 			last = object;
-		} else
-			op = op->next_tag;
+		}
 	}
 	player->checkDarkness();
 
@@ -2202,14 +2103,11 @@ void dropAllObj(Creature* creature, Object *container, Property *p) {
 
 
 	if(container->flagIsSet(O_DEVOURS_ITEMS)) {
-		otag	*cop=0;
-		op = container->first_obj;
-		while(op) {
-			delete op->obj;
-			cop = op;
-			op = op->next_tag;
-			delete cop;
+		for( it = container->objects.begin() ; it != container->objects.end() ; ) {
+			object = (*it++);
+			delete object;
 		}
+		container->objects.clear();
 	}
 
 
@@ -2358,14 +2256,12 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 	Player	*player = creature->getPlayerMaster();
 	BaseRoom* room = creature->getRoomParent();
 	Object	*object=0, *container=0;
-	otag	*op=0;
 	int		n=0, match=0, in_room=0;
 	unsigned long cash=0;
 	bool	dmAlias=false, is_pet=false, factionCanRecycle=true, created=false;
 	Property *p=0;
 
-// TODO: check to see if this extra aliasing check is even needed - won't
-// print handle it?
+// TODO: check to see if this extra aliasing check is even needed - won't  print handle it?
 
 	// we're being sent either a player or a pet
 	//	- creature will be the one getting the object
@@ -2445,8 +2341,12 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 				player->print("You don't have that much!\n");
 				return(0);
 			}
-		} else
-			object = findObject(player, is_pet ? creature->first_obj : player->first_obj, cmnd);
+		} else {
+			if(is_pet)
+				object = creature->findObject(player, cmnd, 1);
+			else
+				object = player->findObject(player, cmnd, 1);
+		}
 
 		if(!object) {
 			player->print("You don't have that.\n");
@@ -2485,17 +2385,14 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 					delete object;
 				return(0);
 			}
-
-			op = object->first_obj;
-			while(op) {
-				if(	op->obj->flagIsSet(O_NO_DROP) &&
-					!player->checkStaff("You cannot drop that. It contains %P.\n", op->obj)
+			for(Object* obj : object->objects) {
+				if(	obj->flagIsSet(O_NO_DROP) &&
+					!player->checkStaff("You cannot drop that. It contains %P.\n", obj)
 				) {
 					if(created)
 						delete object;
 					return(0);
 				}
-				op = op->next_tag;
 			}
 		}
 
@@ -2557,8 +2454,10 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 		}
 
 	} else {
-
-		container = findObject(player, is_pet ? creature->first_obj : player->first_obj, cmnd, 2);
+		if(is_pet)
+			container = creature->findObject(player, cmnd, 2);
+		else
+			container = player->findObject(player, cmnd, 2);
 
 		if(!container) {
 			container = room->findObject(player, cmnd, 2);
@@ -2605,8 +2504,10 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 			dropAllObj(player, container, p);
 			return(0);
 		}
-
-		object = findObject(player, is_pet ? creature->first_obj : player->first_obj, cmnd);
+		if(is_pet)
+			object = creature->findObject(player, cmnd, 1);
+		else
+			object = player->findObject(player, cmnd, 1);
 
 		if(!object) {
 			player->print("You don't have that.\n");
@@ -2635,27 +2536,21 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 
 		// no putting 2 items with the same quest in a bag
 		if(object->getQuestnum()) {
-			op = container->first_obj;
-			while(op) {
-				if(	op->obj->getQuestnum() == object->getQuestnum() &&
-					!player->checkStaff("You cannot put that in there.\nIt already contains %P.\n", op->obj)
+			for(Object *obj : container->objects) {
+				if(	obj->getQuestnum() == object->getQuestnum() &&
+					!player->checkStaff("You cannot put that in there.\nIt already contains %P.\n", obj)
 				)
 					return(0);
-				op = op->next_tag;
 			}
 		}
 
 		if(container->getSubType() == "mortar") {
 			if(object->getType() != HERB && !player->checkStaff("You can only put herbs in there!\n"))
 				return(0);
-
-			op = container->first_obj;
-			while(op) {
-				if(!strcmp(object->name, op->obj->name) &&
+			for(Object *obj : container->objects) {
+				if(!strcmp(object->name, obj->name) &&
 				   !player->checkStaff("You can only put one %s in there.\n", object->name))
 					return(0);
-
-				op = op->next_tag;
 			}
 		}
 		if(	object->flagIsSet(O_NO_DROP) &&
@@ -2742,7 +2637,6 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 
 int canGiveTransport(Creature* creature, Creature* target, Object* object, bool give) {
 	Player	*player=0, *pTarget=0, *pMaster=0;
-	otag	*op=0;
 
 	// we're being sent either a player or a pet
 	//	- creature will be the one getting the object
@@ -2826,15 +2720,11 @@ int canGiveTransport(Creature* creature, Creature* target, Object* object, bool 
 	) return(0);
 
 	if(object->getType() == CONTAINER) {
-		op = object->first_obj;
-		while(op) {
-			if(	op->obj->flagIsSet(O_NO_DROP) &&
-				!player->checkStaff("You must remove %P first.\n", op->obj)
-			)
+		for(Object* obj : object->objects) {
+			if(	obj->flagIsSet(O_NO_DROP) && !player->checkStaff("You must remove %P first.\n", obj) )
 				return(0);
-			if(op->obj->getQuestnum() && !player->checkStaff("You can't %s a quest object.\nYou must remove %P first.\n", give ? "give away" : "transport", op->obj))
+			if( obj->getQuestnum() && !player->checkStaff("You can't %s a quest object.\nYou must remove %P first.\n", give ? "give away" : "transport", obj))
 				return(0);
-			op = op->next_tag;
 		}
 	}
 
@@ -2877,7 +2767,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, creature->first_obj, cmnd);
+	object = creature->findObject(player, cmnd, 1);
 
 	if(!object) {
 		if(player == creature)
@@ -3023,7 +2913,7 @@ void give_money(Player* player, cmd* cmnd) {
 		return;
 	}
 
-	if(target->pisEffected("mist")) {
+	if(target->isEffected("mist")) {
 		player->print("How can you give money to a mist?\n");
 		return;
 	}
@@ -3493,12 +3383,10 @@ void Creature::checkDarkness() {
 			return;
 		}
 	}
-	otag* op = first_obj;
-	while(op) {
-		if(op->obj->flagIsSet(O_DARKNESS)) {
+	for(Object *obj : objects) {
+		if(obj->flagIsSet(O_DARKNESS)) {
 			setFlag(isPlayer() ? P_DARKNESS : M_DARKNESS);
 			return;
 		}
-		op = op->next_tag;
 	}
 }

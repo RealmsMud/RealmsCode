@@ -497,7 +497,6 @@ void Player::init() {
 
 
 	computeInterest(t, true);
-	resetObjectIds();
 }
 
 //*********************************************************************
@@ -940,14 +939,12 @@ void Player::update() {
 // This function adds the object pointer to by the first parameter to
 // the inventory of the player pointed to by the second parameter.
 
-void Creature::addObj(Object* object, bool resetUniqueId) {
+void Creature::addObj(Object* object) {
 	otag	*op=0, *temp=0, *prev=0;
 	Player* pPlayer = getAsPlayer();
 
 	object->validateId();
 
-	if(resetUniqueId && pPlayer)
-		pPlayer->setObjectId(object);
 	Hooks::run(this, "beforeAddObject", object, "beforeAddToCreature");
 	object->setParent(this);
 	object->clearFlag(O_JUST_LOADED);

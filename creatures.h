@@ -547,7 +547,7 @@ public:
 	bool isHybridCaster() const;
 
 // Equipment / Inventory
-	void addObj(Object* object, bool resetUniqueId=true);
+	void addObj(Object* object);
 	void delObj(Object* object, bool breakUnique=false, bool removeUnique=false, bool darkmetal=true, bool darkness=true, bool keep=false);
 	void finishDelObj(Object* object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep);
 	int getWeight() const;
@@ -557,7 +557,7 @@ public:
 	int getMaxBulk() const;
 	unsigned long getInventoryValue() const;
 	void killDarkmetal();
-	bool equip(Object* object, bool showMessage=true, bool resetUniqueId=true);
+	bool equip(Object* object, bool showMessage=true);
 	Object* unequip(int wearloc, UnequipAction action = UNEQUIP_ADD_TO_INVENTORY, bool darkness=true, bool showEffect=true);
 	void printEquipList(const Player* viewer);
 	void checkDarkness();
@@ -1316,7 +1316,7 @@ public:
 	bool swap(Swap s);
 	bool swapIsInteresting(Swap s) const;
 	
-	void doRemove(int i, bool resetUniqueId=true);
+	void doRemove(int i);
 	int getAge() const;
 	unsigned long expToLevel() const;
 	bstring expToLevel(bool addX) const;
@@ -1385,9 +1385,6 @@ public:
 	bool restoreLastPawn();
 	void checkFreeSkills(bstring skill);
 	void computeInterest(long t, bool online);
-
-	void resetObjectIds();
-	void setObjectId(Object* object);
 };
 
 

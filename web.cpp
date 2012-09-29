@@ -390,37 +390,39 @@ bstring getInventory(const Player* player) {
 //						handleInput
 //*********************************************************************
 
-bool webWield(Player* player, int id);
-bool webWear(Player* player, int id);
+bool webWield(Player* player);
+bool webWear(Player* player);
 
 bool webUse(Player* player, int id, int type) {
-	switch(type) {
-	case WEAPON:
-		return(webWield(player, id));
-	case ARMOR:
-		return(webWear(player, id));
-	case POTION:
-		//return(cmdConsume(player, id));
-	case SCROLL:
-		//return(cmdReadScroll(player, id));
-	case WAND:
-		//return(cmdUseWand(player, id));
-	case KEY:
-		//return(cmdUnlock(player, id));
-	case LIGHTSOURCE:
-		//return(cmdHold(player, id));
-	default:
-		player->print("How does one use that?\n");
-		return(false);
-	}
+
+	// Disabled
+	return(false);
+//
+//	switch(type) {
+//	case WEAPON:
+//		return(webWield(player, id));
+//	case ARMOR:
+//		return(webWear(player, id));
+//	case POTION:
+//		//return(cmdConsume(player, id));
+//	case SCROLL:
+//		//return(cmdReadScroll(player, id));
+//	case WAND:
+//		//return(cmdUseWand(player, id));
+//	case KEY:
+//		//return(cmdUnlock(player, id));
+//	case LIGHTSOURCE:
+//		//return(cmdHold(player, id));
+//	default:
+//		player->print("How does one use that?\n");
+//		return(false);
+//	}
 }
 
 //*********************************************************************
 //						handleInput
 //*********************************************************************
 // Uses ETX (End of Text) as abort and EOT (End of Transmission Block) as EOF
-
-bool webRemove(Player* player, int id);
 
 bool WebInterface::handleInput() {
 	if(inBuf.empty())
@@ -507,51 +509,52 @@ bool WebInterface::handleInput() {
 
 		tempBuf.erase(0, pos+1); // Clear out the command
 
-		if(command == "GETINVENTORY" || command == "EQUIP" || command == "UNEQUIP") {
-			pos = tempBuf.Find(' ');
-			int id=0, type=0;
-
-			bstring user = "";
-			if(pos != bstring::npos) {
-				user = tempBuf.left(pos);
-				tempBuf.erase(0, pos+1); // Clear out the user
-				id = atoi(tempBuf.c_str());
-
-				if(command == "EQUIP") {
-					pos = tempBuf.Find(' ');
-					tempBuf.erase(0, pos+1); // Clear out the user
-					type = atoi(tempBuf.c_str());
-				}
-			} else {
-				user = tempBuf;
-				tempBuf = "";
-			}
-
-			Player* player = 0;
-			if(user != "")
-				player = gServer->findPlayer(user);
-			if(!player) {
-				outBuf += EOT;
-				return(true);
-			}
-
-			if(command == "GETINVENTORY") {
-
-				outBuf += getInventory(player);
-
-			} else if(command == "EQUIP") {
-
-				outBuf += webUse(player, id, type) ? "1" : "0";
-
-			} else if(command == "UNEQUIP") {
-
-				outBuf += webRemove(player, id) ? "1" : "0";
-
-			}
-
-			outBuf += EOT;
-			return(true);
-		} else if(command == "WHO") {
+//		if(command == "GETINVENTORY" || command == "EQUIP" || command == "UNEQUIP") {
+//			pos = tempBuf.Find(' ');
+//			int id=0, type=0;
+//
+//			bstring user = "";
+//			if(pos != bstring::npos) {
+//				user = tempBuf.left(pos);
+//				tempBuf.erase(0, pos+1); // Clear out the user
+//				id = atoi(tempBuf.c_str());
+//
+//				if(command == "EQUIP") {
+//					pos = tempBuf.Find(' ');
+//					tempBuf.erase(0, pos+1); // Clear out the user
+//					type = atoi(tempBuf.c_str());
+//				}
+//			} else {
+//				user = tempBuf;
+//				tempBuf = "";
+//			}
+//
+//			Player* player = 0;
+//			if(user != "")
+//				player = gServer->findPlayer(user);
+//			if(!player) {
+//				outBuf += EOT;
+//				return(true);
+//			}
+//
+//			if(command == "GETINVENTORY") {
+//
+//				outBuf += getInventory(player);
+//
+//			} else if(command == "EQUIP") {
+//
+//				outBuf += webUse(player, id, type) ? "1" : "0";
+//
+//			} else if(command == "UNEQUIP") {
+//
+//				outBuf += webRemove(player, id) ? "1" : "0";
+//
+//			}
+//
+//			outBuf += EOT;
+//			return(true);
+//		} else
+		if(command == "WHO") {
 			std::cout << "WebInterface: Checking for users online" << std::endl;
 			outBuf += webwho();
 			outBuf += EOT;

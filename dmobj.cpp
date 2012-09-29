@@ -1457,18 +1457,6 @@ void dmSaveObj(Player* player, cmd* cmnd, CatRef cr) {
 //*********************************************************************
 
 void dmResaveObject(const Player* player, Object* object, bool flush) {
-	Container* cont = object->getParent();
-	int		val = object->getShopValue();
-	DroppedBy droppedBy = object->droppedBy;
-
-	// TODO: Clear out items inside before saving
-	object->first_obj = 0;
-
-	object->setParent(0);
-	object->setShopValue(0);
-	object->droppedBy.clear();
-
-
 	if(object->saveToFile() != 0) {
 		loge("Error saving object in dmResaveObject()");
 		player->print("Error: object was not saved.\n");
@@ -1479,10 +1467,6 @@ void dmResaveObject(const Player* player, Object* object, bool flush) {
 	// swap this new Object if its in the queue
 	if(flush || player->flagIsSet(P_NO_FLUSHCRTOBJ))
 		gConfig->replaceObjectInQueue(object->info, object);
-
-	object->droppedBy = droppedBy;
-	object->setParent(cont);
-	object->setShopValue(val);
 }
 
 //*********************************************************************
@@ -1660,7 +1644,7 @@ int dmClone(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd->str[1], 1);
+	object = player->findObject(player, cmnd->str[1], 1);
 	if(!object) {
 		player->print("Object not found.\n");
 		player->printColor("Syntax: ^c*clone <object> <area.id> <partial desc>\n");

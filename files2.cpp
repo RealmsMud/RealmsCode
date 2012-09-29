@@ -66,7 +66,6 @@ bool Config::reloadRoom(BaseRoom* room) {
 
 int Config::reloadRoom(CatRef cr) {
 	UniqueRoom	*room=0;
-	otag	*op=0;
 
 	bstring str = cr.str();
 	if(roomQueue.find(str) == roomQueue.end())
@@ -90,19 +89,19 @@ int Config::reloadRoom(CatRef cr) {
 		}
 		roomQueue[str].rom->monsters.clear();
 	}
-	if(!room->first_obj) {
-		room->first_obj = roomQueue[str].rom->first_obj;
-		roomQueue[str].rom->first_obj = 0;
+	if(room->objects.empty()) {
+		for(Object* obj : roomQueue[str].rom->objects) {
+			room->objects.insert(obj);
+		}
+		roomQueue[str].rom->objects.clear();
 	}
 
 	delete roomQueue[str].rom;
 	roomQueue[str].rom = room;
 
 	// Make sure we have the right parent set on everyone
-	op = room->first_obj;
-	while(op) {
-		op->obj->parent_room = room;
-		op = op->next_tag;
+	for(Object * obj : room->objects) {
+		obj->setParent(room);
 	}
 	for(Player* ply : room->players) {
 		ply->setParent(room);

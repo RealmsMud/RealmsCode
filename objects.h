@@ -123,7 +123,6 @@ protected:
     short delay;
     short extra;
     bstring questOwner;
-    int uniqueId;
 
 protected:
     void doCopy(const Object& o);
@@ -268,7 +267,6 @@ public:
 
     bool isQuestOwner(const Player* player) const;
     bstring getWearName();
-    int getUniqueId() const;
 
     // Set
     void setKey(unsigned short k);

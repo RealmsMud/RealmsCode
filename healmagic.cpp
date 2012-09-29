@@ -865,9 +865,9 @@ int doResLoss(int curr, int prev, bool full) {
 int doRes(Creature* caster, cmd* cmnd, bool res) {
 	// if ress=false, it's a bloodfusion
 	Player	*player = caster->getAsPlayer();
-	int		a=0, prevLevel=0;
+	int		prevLevel=0;
 	bool	full=false;
-	long	t=0, xploss=0;
+	long	t=0;
 	Player *target=0;
 	BaseRoom *newRoom=0;
 
