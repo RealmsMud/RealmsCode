@@ -274,7 +274,7 @@ Object* Container::findObject(const Creature* searcher, const bstring& name, con
 }
 Object* Container::findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const {
 	Object *target = 0;
-	for(Object* obj : searcher->getParent()->objects) {
+	for(Object* obj : objects) {
         if(isMatch(searcher, obj, name, exactMatch)) {
             match++;
             if(match == num) {
@@ -287,10 +287,9 @@ Object* Container::findObject(const Creature* searcher, const bstring& name, con
 
             }
         }
-		return(target);
 	}
 
-	return(0);
+	return(target);
 }
 
 

@@ -421,8 +421,8 @@ bool Player::doPlayerHarmRooms() {
 		room->flagIsSet(R_DEADLY_VINES) ||
 		room->flagIsSet(R_WINTER_COLD) ||
 		room->flagIsSet(R_DESERT_HARM) ||
-		room->flagIsSet(R_ICY_WATER)
-	) {
+		room->flagIsSet(R_ICY_WATER))
+	{
 
 		if( (	room->flagIsSet(R_FIRE_BONUS) ||
 				(room->flagIsSet(R_DESERT_HARM) && isDay())

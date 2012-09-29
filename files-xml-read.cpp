@@ -1098,6 +1098,7 @@ int Object::readFromXml(xmlNodePtr rootNode) {
 
 	if(version < "2.47b" && flagIsSet(O_OLD_INVISIBLE)) {
 		addEffect("invisibility", -1);
+		clearFlag(O_OLD_INVISIBLE);
 	}
 	// make sure uniqueness stays intact
 	setFlag(O_UNIQUE);
@@ -1239,8 +1240,12 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room) {
 
 		curNode = curNode->next;
 	}
+	#define X_OLD_INVISIBLE             1         // Invisible
+	static int x = 0;
 	if(room->getVersion() < "2.47b" && flagIsSet(X_OLD_INVISIBLE)) {
+		x++;
 			addEffect("invisibility", -1);
+			clearFlag(X_OLD_INVISIBLE);
 	}
 
 	escapeText();

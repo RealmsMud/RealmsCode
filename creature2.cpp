@@ -310,8 +310,12 @@ int Monster::getNumMobs() const {
 
 	if(flagIsSet(M_DM_FOLLOW) || flagIsSet(M_WAS_PORTED))
 		return(0);
-
-	for(Monster* mons : getConstRoomParent()->monsters) {
+	if(!this->inRoom())
+		return(0);
+	const BaseRoom* room = getConstRoomParent();
+	if(!room)
+		return(0);
+	for(Monster* mons : room->monsters) {
 	    if(!strcmp(mons->name, name)) {
 	        i++;
 	        if(mons == this)

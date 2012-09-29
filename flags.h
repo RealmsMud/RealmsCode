@@ -767,7 +767,6 @@
 // Exit flags
 #define X_SECRET                    0         // Secret
 // Free								1
-#define X_OLD_INVISIBLE             1         // Invisible
 #define X_LOCKED                    2         // Locked
 #define X_CLOSED                    3         // Closed
 #define X_LOCKABLE                  4         // Lockable
