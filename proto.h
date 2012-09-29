@@ -484,11 +484,10 @@ void stripBadChars(bstring str);
 // object.cpp
 //int findObj(const Creature* player, otag *first_ot, int findFlags, char *str, int val, int* match, Object** target );
 int displayObject(Player* player, Object* target);
-void del_obj_obj(Object* object, Object* container);
 //Object* findObject(const Player *player, int id);
 //Object* findObject(const Creature *player, otag* first_ot, const cmd* cmnd, int val=1);
 //Object* findObject(const Creature* player, otag *first_ot, const char *str, int val);
-bstring listObjects(const Player* player, Container *target, bool showAll, char endColor='x');
+//bstring listObjects(const Player* player, const Container *target, bool showAll, char endColor='x');
 //void randomEnchant(Object* object);
 //int find_obj_num(Object* object);
 //void mageRandomEnchant(Object* object, Creature* player);
@@ -524,7 +523,7 @@ int cmdVisible(Player* player, cmd* cmnd);
 int cmdDice(Creature* player, cmd* cmnd);
 int cmdChooseAlignment(Player* player, cmd* cmnd);
 void setPlyAlignment(Socket* sock, char *str);
-bool plyHasObj(Creature* player, Object *item);
+//bool plyHasObj(Creature* player, Object *item);
 
 
 // post.cpp

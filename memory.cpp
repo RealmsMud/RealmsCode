@@ -61,7 +61,6 @@ void Config::showMemory(Socket* sock) {
 	//  long total_mem  = 0L;
 	long bt_mem     = 0L;
 	long total=0;
-	otag	*op;
 	ttag	*tlk;
 	UniqueRoom*	r=0;
 
@@ -123,13 +122,8 @@ void Config::showMemory(Socket* sock) {
                 }
             }
 		}
-		for(op = r->first_obj; op; op = op->next_tag) {
-			if(op->obj) {
-				objects++;
-				obj_mem += sizeof(Object);
-				// and contents counting
-			}
-		}
+		objects += r->objects.size();
+		obj_mem += r->objects.size() * sizeof(Object);
 	}
 
 	total = bt_mem + rom_mem + obj_mem + crt_mem + act_mem + talk_mem;

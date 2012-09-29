@@ -2273,49 +2273,47 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 	}
 
 	
-	otag* op = player->first_obj;
 	bstring oName;
-	while(op) {
+	for(Object* obj : player->objects) {
 		// find their property related objects
-		oName = op->obj->name;
+		oName = obj->name;
 		if(	(propType == PROP_GUILDHALL && oName.left(10) == "guildhall ") ||
-			(propType == PROP_HOUSE && oName.left(6) == "house ")
-		) {
+			(propType == PROP_HOUSE && oName.left(6) == "house ") )
+		{
 
 			if(	!deed && (
 					(	propType == PROP_GUILDHALL &&
 						oName.left(14) == "guildhall deed" &&
-						(	(uRoom && op->obj->deed.belongs(uRoom->info)) ||
-							(aRoom && op->obj->deed.isArea("area"))
+						(	(uRoom && obj->deed.belongs(uRoom->info)) ||
+							(aRoom && obj->deed.isArea("area"))
 						)
 					) || (
 						propType == PROP_HOUSE &&
 						oName.left(10) == "house deed"
 					)
-			) ) {
-				deed = op->obj;
+				) )
+			{
+				deed = obj;
 
 			// see if they want the entrance hidden
 			} else if(oName.right(15) == "hidden entrance") {
-				oHidden = op->obj;
+				oHidden = obj;
 
 			// see if they want the entrance concealed
 			} else if(oName.right(18) == "concealed entrance") {
-				oConceal = op->obj;
+				oConceal = obj;
 
 			// see if they want the entrance invisible
 			} else if(oName.right(18) == "invisible entrance") {
-				oInvis = op->obj;
+				oInvis = obj;
 
 			// see if they want a foyer
 			} else if(oName.right(5) == "foyer") {
-				oFoyer = op->obj;
+				oFoyer = obj;
 
 			}
 
 		}
-
-		op = op->next_tag;
 	}
 
 	if(!deed) {
@@ -2616,7 +2614,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 
 void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Property* p, const Guild* guild, int x) {
 	BaseRoom* room = player->getRoomParent();
-	Object* obj = findObject(player, player->first_obj, cmnd, 3-x);
+	Object* obj = player->findObject(player, cmnd, 3-x);
 	CatRef cr;
 
 	bstring xNameType = getTypeStr(propType);

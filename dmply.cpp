@@ -786,7 +786,7 @@ int dmTake(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		del_obj_obj(object, container);
+		container->delObj(object);
 		Limited::deleteOwner(target, object);
 		// don't need to run addUnique on staff
 		player->addObj(object);

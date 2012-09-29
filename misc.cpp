@@ -1250,13 +1250,13 @@ char *ltoa(
 //                      findCrt
 //*********************************************************************
 
-template<class Type, class Compare>
-MudObject* findCrtTarget(Creature * player, std::set<Type, Compare>& set, int findFlags, const char *str, int val, int* match) {
+template<class SetType>
+MudObject* findCrtTarget(Creature * player, SetType& set, int findFlags, const char *str, int val, int* match) {
 
     if(!player || !str || set.empty())
         return(NULL);
 
-    for(Type crt : set) {
+    for(typename SetType::key_type crt : set) {
         if(!crt) {
             continue;
         }
@@ -1287,7 +1287,7 @@ MudObject* Creature::findTarget(int findWhere, int findFlags, bstring str, int v
 	MudObject* target;
 	do {
 		if(findWhere & FIND_OBJ_INVENTORY) {
-			if((target = findObjTarget(first_obj, findFlags, str, val, &match))) {
+			if((target = findObjTarget(objects, findFlags, str, val, &match))) {
 				found = true;
 				break;
 			}
@@ -1314,21 +1314,21 @@ MudObject* Creature::findTarget(int findWhere, int findFlags, bstring str, int v
 		}
 
 		if(findWhere & FIND_OBJ_ROOM) {
-			if((target = findObjTarget(getRoomParent()->first_obj, findFlags, str, val, &match))) {
+			if((target = findObjTarget(getRoomParent()->objects, findFlags, str, val, &match))) {
 				found = true;
 				break;
 			}
 		}
 
 		if(findWhere & FIND_MON_ROOM) {
-			if((target = findCrtTarget<Monster*, MonsterPtrLess>(this, getParent()->monsters, findFlags, str.c_str(), val, &match))) {
+			if((target = findCrtTarget<MonsterSet>(this, getParent()->monsters, findFlags, str.c_str(), val, &match))) {
 				found = true;
 				break;
 			}
 		}
 
 		if(findWhere & FIND_PLY_ROOM) {
-			if((target = findCrtTarget<Player*, PlayerPtrLess>(this, getParent()->players, findFlags, str.c_str(), val, &match))) {
+			if((target = findCrtTarget<PlayerSet>(this, getParent()->players, findFlags, str.c_str(), val, &match))) {
 				found = true;
 				break;
 			}

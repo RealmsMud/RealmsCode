@@ -373,28 +373,19 @@ bool doWear(Player* player, cmd* cmnd) {
 	player->computeAC();
 	return(true);
 }
-//
-////*********************************************************************
-////						webWear
-////*********************************************************************
-//// web interface for wearing objects
-//
-//bool webWear(Player* player, int id) {
-//	return(false);
-//	return(doWear(player, 0, id));
-//}
-//
-////*********************************************************************
-////						cmdWear
-////*********************************************************************
-//// This function allows the player pointed to by the first parameter
-//// to wear an item specified in the pointer to the command structure
-//// in the second parameter. That is, if the item is wearable.
-//
-//int cmdWear(Player* player, cmd* cmnd) {
-//	doWear(player, cmnd, 0);
-//	return(0);
-//}
+
+//*********************************************************************
+//						cmdWear
+//*********************************************************************
+// This function allows the player pointed to by the first parameter
+// to wear an item specified in the pointer to the command structure
+// in the second parameter. That is, if the item is wearable.
+
+int cmdWear(Player* player, cmd* cmnd) {
+	doWear(player, cmnd);
+	return(0);
+}
+
 
 //*********************************************************************
 //						wearCursed
@@ -620,6 +611,19 @@ bool doRemoveObj(Player* player, cmd* cmnd ) {
 	}
 
 	return(true);
+}
+
+
+//*********************************************************************
+//						cmdRemoveObj
+//*********************************************************************
+// This function allows the player pointed to by the first parameter to/
+// remove the item specified by the command structure in the second
+// parameter from those things which they are wearing.
+
+int cmdRemoveObj(Player* player, cmd* cmnd) {
+	doRemoveObj(player, cmnd);
+	return(0);
 }
 
 
@@ -1180,7 +1184,7 @@ void getAllObj(Creature* creature, Object *container) {
 			}
 			if(object->flagIsSet(O_PERM_ITEM))
 				getPermObj(object);
-			del_obj_obj(object, container);
+			container->delObj(object);
 			if(last_obj && last_obj->showAsSame(player, object))
 				n++;
 			else if(last_obj) {
@@ -1727,7 +1731,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 			player->printColor("You get %1P from %N.\n", object, pet);
 			broadcast(player->getSock(), room, "%M gets %1P from %N.", player, object, pet);
 		} else {
-			del_obj_obj(object, container);
+			container->delObj(object);
 			if(player == creature)
 				player->printColor("You get %1P from %1P.\n", object, container);
 			else

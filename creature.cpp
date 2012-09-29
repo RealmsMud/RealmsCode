@@ -994,7 +994,7 @@ int Player::displayCreature(Creature* target)  {
 
 		// pet code
 		if(mTarget->isPet() && mTarget->getMaster() == this) {
-			str = listObjects(this, mTarget, true);
+			str = mTarget->listObjects(this, true);
 			oStr << mTarget->upHeShe() << " ";
 			if(str == "")
 				oStr << "isn't holding anything.\n";

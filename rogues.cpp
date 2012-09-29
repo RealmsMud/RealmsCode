@@ -194,7 +194,6 @@ bool canSearch(const Player* player) {
 
 void doSearch(Player* player, bool immediate) {
 	BaseRoom* room = player->getRoomParent();
-	otag	*op=0;
 	int		chance=0;
 	bool	found=false, detectMagic = player->isEffected("detect-magic");
 
@@ -247,16 +246,14 @@ void doSearch(Player* player, bool immediate) {
 		}
 	}
 
-	op = room->first_obj;
-	while(op) {
-		if(	op->obj->flagIsSet(O_HIDDEN) &&
-			player->canSee(op->obj) &&
-			mrand(1,100) <= (chance + searchMod(op->obj->getSize()))
-		) {
+	for(Object* obj : room->objects) {
+		if(	obj->flagIsSet(O_HIDDEN) &&
+			player->canSee(obj) &&
+			mrand(1,100) <= (chance + searchMod(obj->getSize())) )
+		{
 			found = true;
-			player->printColor("You found %1P.\n", op->obj);
+			player->printColor("You found %1P.\n", obj);
 		}
-		op = op->next_tag;
 	}
 
 	for(Player* ply : room->players) {
@@ -381,7 +378,6 @@ bool AreaRoom::spawnHerbs() {
 
 bool TileInfo::spawnHerbs(BaseRoom* room) const {
 	Object*	object=0;
-	otag*	op = room->first_obj;
 	int		max = herbs.size();
 	short	num = mrand(1,MAX(1,max)), i=0, n=0, k=0;
 	std::list<CatRef>::const_iterator it;
@@ -391,10 +387,9 @@ bool TileInfo::spawnHerbs(BaseRoom* room) const {
 		return(false);
 
 	// don't spawn if there's already herbs here
-	while(op) {
-		if(op->obj->flagIsSet(O_DISPOSABLE))
+	for(Object *obj : room->objects) {
+		if(obj->flagIsSet(O_DISPOSABLE))
 			return(false);
-		op = op->next_tag;
 	}
 
 	for(; i<num; i++) {
@@ -991,7 +986,7 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, storage->first_obj, cmnd);
+	object = storage->findObject(player, cmnd, 1);
 
 	if(!object) {
 		player->print("That item isn't on display.\n");
@@ -1926,7 +1921,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
 	}
 	player->checkImprove("peek", true);
 
-	str = listObjects(player, creature->first_obj, player->isStaff());
+	str = creature->listObjects(player, player->isStaff());
 	if(str != "")
 		player->printColor("%s is carrying: %s.\n", creature->upHeShe(), str.c_str());
 	else
@@ -2006,7 +2001,7 @@ int peek_bag(Player* player, Player* target, cmd* cmnd, int inv) {
 	}
 
 	if(container->getType() == CONTAINER) {
-		str = listObjects(player, container->first_obj, false);
+		str = container->listObjects(player, false);
 		if(str != "")
 			player->printColor("It contains: %s.\n", str.c_str());
 		else

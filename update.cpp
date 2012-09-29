@@ -649,7 +649,7 @@ void Server::updateAction(long t) {
 							}
 							break;
 						case 'O': // test for object in room
-							object = findObject(monster, room->first_obj, act->response, 1);
+							object = room->findObject(monster, act->response, 1);
 
 							if(object) {
 								if(monster->first_tlk->target)

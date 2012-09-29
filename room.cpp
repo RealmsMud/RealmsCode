@@ -38,7 +38,6 @@ void Player::addToSameRoom(Creature* target) {
 
 
 void Player::finishAddPlayer(BaseRoom* room) {
-	otag	*op=0, *cop=0;
 
 	wake("You awaken suddenly!");
 	interruptDelayedActions();
@@ -68,20 +67,17 @@ void Player::finishAddPlayer(BaseRoom* room) {
 		clearFlag(P_SNEAK_WHILE_MISTED);
 	setLastPawn(0);
 
-	op = first_obj;
-	while(op) {
-		if(op->obj->getType() == CONTAINER) {
-			cop = op->obj->first_obj;
-			while(cop) {
-				if(cop->obj->flagIsSet(O_JUST_BOUGHT))
-					cop->obj->clearFlag(O_JUST_BOUGHT);
-				cop=cop->next_tag;
+
+	for(Object* obj : objects) {
+		if(obj->getType() == CONTAINER) {
+			for(Object* subObj : obj->objects) {
+				if(subObj->flagIsSet(O_JUST_BOUGHT))
+					subObj->clearFlag(O_JUST_BOUGHT);
 			}
 		} else {
-			if(op->obj->flagIsSet(O_JUST_BOUGHT))
-				op->obj->clearFlag(O_JUST_BOUGHT);
+			if(obj->flagIsSet(O_JUST_BOUGHT))
+				obj->clearFlag(O_JUST_BOUGHT);
 		}
-		op = op->next_tag;
 	}
 
 	clearFlag(P_JUST_REFUNDED); // Player didn't just refund something (can haggle again)
@@ -302,65 +298,13 @@ int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 // The object is added alphabetically to the room.
 
 void Object::addToRoom(BaseRoom* room) {
-	otag	*op, *temp, *prev;
-
 	ASSERTLOG(room);
 
 	validateId();
 
 	Hooks::run(room, "beforeAddObject", this, "beforeAddToRoom");
-	parent_room = room;
-	parent_obj = 0;
-	parent_crt = 0;
 	clearFlag(O_KEEP);
-
-	op = 0;
-	op = new otag;
-	if(!op)
-		merror("add_obj_rom", FATAL);
-	op->obj = this;
-	op->next_tag = 0;
-
-	if(!room->first_obj) {
-		room->first_obj = op;
-		Hooks::run(room, "afterAddObject", this, "afterAddToRoom");
-		room->killMortalObjects();
-		return;
-	}
-
-	prev = temp = room->first_obj;
-	if(	strcmp(temp->obj->name, name) > 0 ||
-		(	!strcmp(temp->obj->name, name) &&
-			(	temp->obj->adjustment > adjustment ||
-				(	temp->obj->adjustment >= adjustment &&
-					temp->obj->shopValue > shopValue
-				)
-			)
-		)
-	) {
-		op->next_tag = temp;
-		room->first_obj = op;
-		Hooks::run(room, "afterAddObject", this, "afterAddToRoom");
-		room->killMortalObjects();
-		return;
-	}
-
-	while(temp) {
-		if(	strcmp(temp->obj->name, name) > 0 ||
-			(	!strcmp(temp->obj->name, name) &&
-				(	temp->obj->adjustment > adjustment ||
-					(	temp->obj->adjustment >= adjustment &&
-						temp->obj->shopValue > shopValue
-					)
-				)
-			)
-		)
-			break;
-		prev = temp;
-		temp = temp->next_tag;
-	}
-	op->next_tag = prev->next_tag;
-	prev->next_tag = op;
+	room->add(this);
 	Hooks::run(room, "afterAddObject", this, "afterAddToRoom");
 	room->killMortalObjects();
 }
@@ -372,29 +316,12 @@ void Object::addToRoom(BaseRoom* room) {
 // from the room pointed to by the second.
 
 void Object::deleteFromRoom() {
-	if(!parent_room)
+	if(!inRoom())
 		return;
-	BaseRoom* room = parent_room;
+	BaseRoom* room = this->getRoomParent();
 
 	Hooks::run(room, "beforeRemoveObject", this, "beforeRemoveFromRoom");
-
-	otag	*op = room->first_obj, *prev=0;
-	parent_room = 0;
-
-	while(op) {
-		if(op->obj == this) {
-			if(prev)
-				prev->next_tag = op->next_tag;
-			else
-				room->first_obj = op->next_tag;
-
-			delete op;
-			Hooks::run(room, "afterRemoveObject", this, "afterRemoveFromRoom");
-			return;
-		}
-		prev = op;
-		op = op->next_tag;
-	}
+	removeFrom();
 	Hooks::run(room, "afterRemoveObject", this, "afterRemoveFromRoom");
 }
 
@@ -549,7 +476,6 @@ void UniqueRoom::addPermObj() {
 	crlasttime* crtm=0;
 	std::map<int, bool> checklist;
 	Object	*object=0;
-	otag	*op=0;
 	long	t = time(0);
 	int		j=0, m=0, n=0;
 
@@ -568,8 +494,8 @@ void UniqueRoom::addPermObj() {
 		nt++;
 		for(; nt != permObjects.end() ; nt++) {
 			if(	crtm->cr == (*nt).second.cr &&
-				((*nt).second.ltime + (*nt).second.interval) < t
-			) {
+				((*nt).second.ltime + (*nt).second.interval) < t )
+			{
 				n++;
 				checklist[(*nt).first] = 1;
 			}
@@ -578,12 +504,9 @@ void UniqueRoom::addPermObj() {
 		if(!loadObject(crtm->cr, &object))
 			continue;
 
-		op = first_obj;
-		m = 0;
-		while(op) {
-			if(op->obj->flagIsSet(O_PERM_ITEM) && !strcmp(op->obj->name, object->name) && op->obj->info == object->info)
+		for(Object* obj : objects) {
+			if(obj->flagIsSet(O_PERM_ITEM) && !strcmp(obj->name, object->name) && obj->info == object->info)
 				m++;
-			op = op->next_tag;
 		}
 
 		delete object;
@@ -881,7 +804,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 	if(n)
 		oStr << ".\n";
 
-	str = listObjects(player, room->first_obj, false, 'y');
+	str = room->listObjects(player, false, 'y');
 	if(str != "")
 		oStr << "^yYou see " << str << ".^w\n";
 
@@ -1135,7 +1058,6 @@ BaseRoom *abortFindRoom(Creature* player, const char from[15]) {
 //*********************************************************************
 
 int UniqueRoom::getWeight() {
-	otag	*op=0;
 	int		i=0;
 
 	// count weight of all players in this
@@ -1145,10 +1067,8 @@ int UniqueRoom::getWeight() {
 	}
 
 	// count weight of all objects in this
-	op = first_obj;
-	while(op) {
-		i += op->obj->getActualWeight();
-		op = op->next_tag;
+	for(Object* obj : objects ) {
+		i += obj->getActualWeight();
 	}
 
 	// count weight of all monsters in this

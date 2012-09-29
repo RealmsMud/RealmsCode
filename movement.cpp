@@ -1477,7 +1477,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player->getAsConstPlayer(), player->first_obj, cmnd, 2);
+	object = player->findObject(player->getAsConstPlayer(), cmnd, 2);
 
 	if(!object) {
 		player->print("You don't have that.\n");

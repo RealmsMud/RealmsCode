@@ -250,12 +250,6 @@ void Object::setMaterial(Material m) { material = m; }
 void Object::setQuestOwner(const Player* player) { questOwner = player->name; }
 
 //*********************************************************************
-//						setUniqueId
-//*********************************************************************
-
-void Object::setUniqueId(int id) { uniqueId = id; }
-
-//*********************************************************************
 //						clearEffect
 //*********************************************************************
 

@@ -915,13 +915,12 @@ bool resistLose(Object* object) {
 
 void lose_all(Player* player, bool destroyAll, const char* lostTo) {
 	Object* object=0;
-	otag	*op=0;
 	int		i=0;
 
 	// if we send !destroyAll, there are some scenarios where
 	// we don't destroy everything
 
-	// remove all equipted items
+	// remove all equipped items
 	for(i=0; i<MAXWEAR; i++) {
 		if(player->ready[i]) {
 			if(!destroyAll && resistLose(player->ready[i])) {
@@ -940,10 +939,9 @@ void lose_all(Player* player, bool destroyAll, const char* lostTo) {
 	player->computeAttackPower();
 
 	// delete all possessions
-	op = player->first_obj;
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for( it = player->objects.begin() ; it != player->objects.end() ; ) {
+		object = (*it++);
 
 		if(!destroyAll && resistLose(object)) {
 			player->printColor("%O resisted destruction.\n", object);
@@ -1014,7 +1012,6 @@ void Player::dissolveItem(Creature* creature) {
 
 void Player::loseAcid() {
 	Object* object=0;
-	otag    *op=0;
 	int		i=0;
 
 	// Check all equipped items
@@ -1041,13 +1038,12 @@ void Player::loseAcid() {
 	computeAttackPower();
 
 	// Remove and possibly dissolve possessions
-	op = first_obj;
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for( it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 		if( !object->flagIsSet(O_RESIST_DISOLVE) &&
-			(mrand(1,100) <= 5 - abs(object->getAdjustment()))
-		) {
+			(mrand(1,100) <= 5 - abs(object->getAdjustment())))
+		{
 			if(object->flagIsSet(O_NO_PREFIX)) {
 				printColor("^r%s is dissolved by acid!\n", object->name);
 			} else {

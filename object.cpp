@@ -40,51 +40,14 @@ char* Object::cmpName() {
 //*********************************************************************
 // This function adds the object toAdd to the current object
 
-void Object::addObj(Object *toAdd) {
-	otag	*op=0, *temp=0, *prev=0;
-
+void Object::addObj(Object *toAdd, bool incShots) {
 	toAdd->validateId();
 
 	Hooks::run(toAdd, "beforeAddObject", this, "beforeAddToObject");
 
-	toAdd->parent_obj = this;
-	toAdd->parent_crt = 0;
-	toAdd->parent_room = 0;
-
-	op = new otag;
-	if(!op)
-		merror("add_obj_obj", FATAL);
-	op->obj = toAdd;
-	op->next_tag = 0;
-
-	if(!first_obj) {
-		first_obj = op;
-		return;
-	}
-
-	temp = first_obj;
-	if(	strcmp(temp->obj->cmpName(), toAdd->cmpName()) > 0 ||
-		(!strcmp(temp->obj->name, toAdd->name) &&
-		temp->obj->adjustment > toAdd->adjustment)
-	) {
-		op->next_tag = temp;
-		first_obj = op;
-		Hooks::run(toAdd, "afterAddObject", this, "afterAddToObject");
-		return;
-	}
-
-	while(temp) {
-		if(	strcmp(temp->obj->cmpName(), toAdd->cmpName()) > 0 ||
-			(!strcmp(temp->obj->name, toAdd->name) &&
-			toAdd->isBroken() == temp->obj->isBroken() &&
-			temp->obj->adjustment > toAdd->adjustment)
-		)
-			break;
-		prev = temp;
-		temp = temp->next_tag;
-	}
-	op->next_tag = prev->next_tag;
-	prev->next_tag = op;
+	add(toAdd);
+	if(incShots)
+		incShotsCur();
 	Hooks::run(toAdd, "afterAddObject", this, "afterAddToObject");
 }
 
@@ -94,33 +57,12 @@ void Object::addObj(Object *toAdd) {
 // This function removes the object pointed to by the first parameter
 // from the object pointed to by the second.
 
-void del_obj_obj(Object	*object, Object* container) {
-	otag 	*temp=0, *prev=0;
+void Object::delObj(Object	*toDel) {
+	Hooks::run(this, "beforeRemoveObject", toDel, "beforeRemoveFromObject");
 
-	Hooks::run(container, "beforeRemoveObject", object, "beforeRemoveFromObject");
-
-	container->decShotsCur();
-	object->parent_crt = 0;
-	if(container->first_obj->obj == object) {
-		temp = container->first_obj->next_tag;
-		delete container->first_obj;
-		container->first_obj = temp;
-		Hooks::run(container, "afterRemoveObject", object, "afterRemoveFromObject");
-		return;
-	}
-
-	prev = container->first_obj;
-	temp = prev->next_tag;
-	while(temp) {
-		if(temp->obj == object) {
-			prev->next_tag = temp->next_tag;
-			delete temp;
-			Hooks::run(container, "afterRemoveObject", object, "afterRemoveFromObject");
-			return;
-		}
-		prev = temp;
-		temp = temp->next_tag;
-	}
+	decShotsCur();
+	toDel->removeFrom();
+	Hooks::run(this, "afterRemoveObject", toDel, "afterRemoveFromObject");
 }
 
 
@@ -138,26 +80,22 @@ bool listObjectSee(const Player* player, Object* object, bool showAll) {
 	) );
 }
 
-bstring listObjects(const Player* player, Container *target, bool showAll, char endColor) {
+bstring Container::listObjects(const Player* player, bool showAll, char endColor) const {
 	Object	*object=0;
-	otag	*op=0;
 	int		num=1, n=0, flags = player->displayFlags();
 	bstring str = "";
 
-	op = target;
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
-
-		if(object->parent_crt) {
-			if(object->parent_crt->mFlagIsSet(M_TRADES))
+	ObjectSet::iterator it;
+	for( it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
+		if(object->inCreature()) {
+			if(object->getCreatureParent()->mFlagIsSet(M_TRADES))
 				continue;
 
 			if( !showAll && (
 					object->flagIsSet(O_NOT_PEEKABLE) ||
 					Unique::is(object) ||
-					(object->parent_crt->isMonster() && object->flagIsSet(O_BODYPART))
-			) )
+					(object->inMonster() && object->flagIsSet(O_BODYPART)) ) )
 				continue;
 		}
 
@@ -165,10 +103,10 @@ bstring listObjects(const Player* player, Container *target, bool showAll, char 
 			continue;
 
 		num = 1;
-		while(op) {
-			if(object->showAsSame(player, op->obj) && listObjectSee(player, op->obj, showAll)) {
+		while(it != objects.end()) {
+			if(object->showAsSame(player, (*it)) && listObjectSee(player, (*it), showAll)) {
 				num++;
-				op = op->next_tag;
+				it++;
 			} else
 				break;
 		}
@@ -177,7 +115,6 @@ bstring listObjects(const Player* player, Container *target, bool showAll, char 
 		str += object->getObjStr(player, flags, num);
 		str += "^";
 		str += endColor;
-		//str += "^" + endColor;
 		n++;
 	}
 	return(str);
@@ -271,7 +208,6 @@ int new_scroll(int level, Object **new_obj) {
 	(*new_obj)->setWeight(1);
 	(*new_obj)->setShotsMax(1);
 	(*new_obj)->setShotsCur(1);
-	(*new_obj)->first_obj = 0;
 
 	if(lvl >= 4) {
 		lvl -= 4;
@@ -318,7 +254,6 @@ void Object::loadContainerContents() {
 		if(mrand(1,100)<25) {
 			newObj->setDroppedBy(this, "ContainerContents");
 			addObj(newObj);
-			incShotsCur();
 		} else {
 			delete newObj;
 		}
@@ -352,13 +287,10 @@ int cmdKeep(Player* player, cmd* cmnd) {
 
 int cmdUnkeep(Player* player, cmd* cmnd) {
 	Object	*object=0;
-	otag	*op=0;
 
 	if(!strcmp(cmnd->str[1], "all")) {
-		op = player->first_obj;
-		while(op) {
-			op->obj->clearFlag(O_KEEP);
-			op = op->next_tag;
+		for(Object* obj : player->objects ) {
+			obj->clearFlag(O_KEEP);
 		}
 		player->print("All kept objects cleared.\n");
 		return(0);
@@ -385,11 +317,9 @@ int cmdUnkeep(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 bool cantDropInBag(Object* object) {
-	otag	*op = object->first_obj;
-	while(op) {
-		if(op->obj->flagIsSet(O_NO_DROP))
+	for(Object* obj : object->objects) {
+		if(obj->flagIsSet(O_NO_DROP))
 			return(true);
-		op = op->next_tag;
 	}
 	return(false);
 }
@@ -398,22 +328,17 @@ bool cantDropInBag(Object* object) {
 //						findObj
 //*********************************************************************
 
-MudObject* Creature::findObjTarget(otag *first_ot, int findFlags, bstring str, int val, int* match) {
-	otag	*op=0;
-	int		found=0;
-
-	if(!first_ot)
+MudObject* Creature::findObjTarget(ObjectSet &set, int findFlags, bstring str, int val, int* match) {
+	if(set.empty())
 		return(NULL);
 
-	op = first_ot;
-	while(op) {
-		if(keyTxtEqual(op->obj, str.c_str()) && canSee(op->obj)) {
+	for(Object* obj : set) {
+		if(keyTxtEqual(obj, str.c_str()) && canSee(obj)) {
 			(*match)++;
 			if(*match == val) {
-				return(op->obj);
+				return(obj);
 			}
 		}
-		op = op->next_tag;
 	}
 	return(NULL);
 }
@@ -475,7 +400,7 @@ int displayObject(Player* player, Object* target) {
 	}
 
 	if(target->getType() == CONTAINER) {
-		inv = listObjects(player, target->first_obj, true);
+		inv = target->listObjects(player, true);
 		if(inv != "")
 			oStr << "It contains: " << inv << ".\n";
 	}
@@ -686,12 +611,10 @@ void BaseRoom::killMortalObjectsOnFloor() {
 		return;
 
 	Object* object=0;
-	otag*	op = first_obj;
 	bool	sunlight = isSunlight(), isStor = room && room->info.isArea("stor");
-
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for( it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 
 		// if area = stor, don't kill in storage chest
 		if(isStor && object->info.id == 1 && object->info.isArea("stor"))
@@ -737,7 +660,6 @@ void BaseRoom::killMortalObjects(bool floor) {
 
 void Creature::killDarkmetal() {
 	Player	*pTarget = getAsPlayer();
-	otag	*op=0;
 	Object	*object=0;
 	int		i=0;
 	bool	found=false;
@@ -753,10 +675,9 @@ void Creature::killDarkmetal() {
 	}
 
 	// kill anything not in a bag
-	op = first_obj;
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for( it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 		if(object && object->flagIsSet(O_DARKMETAL)) {
 			if(pTarget)
 				printColor("^yYour %s was destroyed by the sunlight!\n", object->name);
@@ -810,11 +731,9 @@ void BaseRoom::setTempNoKillDarkmetal(bool noKillDarkmetal) {
 
 void Monster::killUniques() {
 	Object* object=0;
-	otag*	op = first_obj;
-
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for(it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 
 		if(!Unique::canLoad(object)) {
 			delObj(object);
@@ -825,14 +744,12 @@ void Monster::killUniques() {
 
 void Object::killUniques() {
 	Object* object=0;
-	otag*	op = first_obj;
-
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for(it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 
 		if(!Unique::canLoad(object)) {
-			del_obj_obj(object, this);
+			delObj(object);
 			delete object;
 		}
 	}

@@ -1239,7 +1239,7 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room) {
 
 		curNode = curNode->next;
 	}
-	if(parentRoom->getVersion() < "2.47b" && flagIsSet(X_OLD_INVISIBLE)) {
+	if(room->getVersion() < "2.47b" && flagIsSet(X_OLD_INVISIBLE)) {
 			addEffect("invisibility", -1);
 	}
 
@@ -1307,7 +1307,7 @@ void MudObject::readObjects(xmlNodePtr curNode) {
 				}
 				// Add it to the appropriate parent
 				if(oParent) {
-					oParent->addObj(object2);
+					oParent->addObj(object2, false);
 				} else if(cParent) {
 					cParent->addObj(object2);
 				} else if(rParent) {

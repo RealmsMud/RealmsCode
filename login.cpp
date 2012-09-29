@@ -312,14 +312,14 @@ void Socket::finishLogin() {
 		player->currentLocation.room.id = 100;
 		// remove all their stuff
 		player->coins.zero();
-		otag *obj=0, *op = player->first_obj;
-		while(op) {
-			obj = op;
-			op = op->next_tag;
-			delete obj->obj;
+		ObjectSet::iterator it;
+		Object *obj;
+		for( it = player->objects.begin() ; it != player->objects.end() ; ) {
+			obj = (*it++);
 			delete obj;
 		}
-		player->first_obj = 0;
+		player->objects.clear();
+
 	}
 
 	setPlayer(player);

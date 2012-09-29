@@ -337,14 +337,14 @@ bool WebInterface::messagePlayer(bstring command, bstring tempBuf) {
 //						getInventory
 //*********************************************************************
 
-bstring doGetInventory(const Player* player, otag* op);
+bstring doGetInventory(const Player* player, const ObjectSet &set);
 
 bstring doGetInventory(const Player* player, Object* object, int loc=-1) {
 	std::ostringstream oStr;
 	oStr << itemDelim
 		 << object->name
 		 << innerDelim
-		 << object->getUniqueId()
+		 << object->getId()
 		 << innerDelim
 		 << object->getWearflag()
 		 << innerDelim
@@ -355,18 +355,17 @@ bstring doGetInventory(const Player* player, Object* object, int loc=-1) {
 
 	if(!object->objects.empty()) {
 		oStr << startSubDelim
-			 << doGetInventory(player, object->first_obj)
+			 << doGetInventory(player, object->objects)
 			 << endSubDelim;
 	}
 	return(oStr.str());
 }
 
-bstring doGetInventory(const Player* player, otag* op) {
+bstring doGetInventory(const Player* player, const ObjectSet &set) {
 	bstring inv = "";
-	while(op) {
-		if(player->canSee(op->obj))
-			inv += doGetInventory(player, op->obj);
-		op = op->next_tag;
+	for(Object* obj : set ) {
+		if(player->canSee(obj))
+			inv += doGetInventory(player, obj);
 	}
 	return(inv);
 }
@@ -375,7 +374,7 @@ bstring getInventory(const Player* player) {
 	std::ostringstream oStr;
 
 	oStr << player->getUniqueObjId()
-		 << doGetInventory(player, player->first_obj)
+		 << doGetInventory(player, player->objects)
 		 << equipDelim;
 
 	for(int i=0; i<MAXWEAR; i++) {

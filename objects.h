@@ -206,7 +206,8 @@ public:
     void escapeText();
 
     // Placement of the object etc
-    void addObj(Object *toAdd); // Add an object to this object
+    void addObj(Object *toAdd, bool incShots = true); // Add an object to this object
+    void delObj(Object	*toDel);
     void addToRoom(BaseRoom* room);
     void deleteFromRoom();
     void popBag(Creature* creature, bool quest = true, bool drop = true, bool steal = true,

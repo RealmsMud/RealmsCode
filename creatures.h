@@ -718,7 +718,7 @@ public:
 	virtual void pulseTick(long t) = 0;
 
 	MudObject* findTarget(int findWhere, int findFlags, bstring str, int val);
-//	MudObject* findObjTarget(otag *first_ot, int findFlags, bstring str, int val, int* match);
+	MudObject* findObjTarget(ObjectSet &set, int findFlags, bstring str, int val, int* match);
 	//MudObject* findTarget(cmd* cmnd, TargetType targetType, bool offensive);
 
 	// New songs

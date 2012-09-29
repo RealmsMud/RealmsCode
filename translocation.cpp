@@ -1711,12 +1711,12 @@ void BaseRoom::scatterObjects() {
 	BaseRoom* newRoom=0;
 	Object* object=0;
 	Exit* exit=0;
-	otag* op = first_obj;
-	int pick=0;
 
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	int pick=0;
+	ObjectSet::iterator it;
+
+	for( it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 
 		// 10% chance of not moving this object
 		if(!mrand(0,9))

@@ -588,16 +588,23 @@ void Player::courageous() {
 
 void Player::checkTempEnchant( Object* object) {
 	long i=0, t=0;
-	if(object && object->flagIsSet(O_TEMP_ENCHANT)) {
-		t = time(0);
-		i = LT(object, LT_ENCHA);
-		if(i < t) {
-			object->setArmor(MAX(0, object->getArmor() - object->getAdjustment()));
-			object->setAdjustment(0);
-			object->clearFlag(O_TEMP_ENCHANT);
-			object->clearFlag(O_RANDOM_ENCHANT);
-			if(isEffected("detect-magic"))
-				printColor("The enchantment on your %s fades.\n", object->name);
+	if(object) {
+		if( object->flagIsSet(O_TEMP_ENCHANT)) {
+			t = time(0);
+			i = LT(object, LT_ENCHA);
+			if(i < t) {
+				object->setArmor(MAX(0, object->getArmor() - object->getAdjustment()));
+				object->setAdjustment(0);
+				object->clearFlag(O_TEMP_ENCHANT);
+				object->clearFlag(O_RANDOM_ENCHANT);
+				if(isEffected("detect-magic"))
+					printColor("The enchantment on your %s fades.\n", object->name);
+			}
+		}
+		if(object->getType() == CONTAINER) {
+			for(Object* subObj : objects) {
+				checkTempEnchant(subObj);
+			}
 		}
 	}
 }
@@ -625,29 +632,13 @@ void Player::checkEnvenom( Object* object) {
 // Check inventory for temp enchant or envenom
 
 void Player::checkInventory( ) {
-	otag *op = first_obj, *cop=0;
 	int i=0;
 
 	// Check for temp enchant items carried/inventory/in containers
-	while(op) {
-		if(op->obj->getType() == CONTAINER) {
-			cop=op->obj->first_obj;
-			while(cop) {
-				checkTempEnchant(cop->obj);
-				cop=cop->next_tag;
-			}
-		}
-		checkTempEnchant(op->obj);
-		op=op->next_tag;
+	for(Object* obj : objects) {
+		checkTempEnchant(obj);
 	}
 	for(i=0; i<MAXWEAR; i++) {
-		if(i==(HELD-1) && ready[i] && ready[i]->getType()==CONTAINER) {
-			cop=ready[i]->first_obj;
-			while(cop) {
-				checkTempEnchant(cop->obj);
-				cop=cop->next_tag;
-			}
-		}
 		checkTempEnchant(ready[i]);
 	}
 }
@@ -940,13 +931,11 @@ void Player::update() {
 // the inventory of the player pointed to by the second parameter.
 
 void Creature::addObj(Object* object) {
-	otag	*op=0, *temp=0, *prev=0;
 	Player* pPlayer = getAsPlayer();
 
 	object->validateId();
 
 	Hooks::run(this, "beforeAddObject", object, "beforeAddToCreature");
-	object->setParent(this);
 	object->clearFlag(O_JUST_LOADED);
 
 	// players have big inventories; to keep the mud from searching them when it
@@ -956,44 +945,7 @@ void Creature::addObj(Object* object) {
 	if(object->flagIsSet(O_DARKNESS))
 		setFlag(pPlayer ? P_DARKNESS : M_DARKNESS);
 
-	op = new otag;
-	if(!op)
-		merror("add_obj_crt", FATAL);
-	op->obj = object;
-	op->next_tag = 0;
-
-	if(!first_obj) {
-
-		first_obj = op;
-
-	} else {
-
-		temp = first_obj;
-		if(	strcmp(temp->obj->cmpName(), object->cmpName()) > 0 ||
-			(!strcmp(temp->obj->name, object->name) &&
-			temp->obj->getAdjustment() > object->getAdjustment())
-		) {
-
-			op->next_tag = temp;
-			first_obj = op;
-
-		} else {
-
-			while(temp) {
-				if(	strcmp(temp->obj->cmpName(), object->cmpName()) > 0 ||
-					(!strcmp(temp->obj->name, object->name) &&
-					temp->obj->getAdjustment() > object->getAdjustment() &&
-					object->isBroken() == temp->obj->isBroken())
-				)
-					break;
-				prev = temp;
-				temp = temp->next_tag;
-			}
-			op->next_tag = prev->next_tag;
-			prev->next_tag = op;
-
-		}
-	}
+	add(object);
 
 	if(pPlayer)
 		pPlayer->updateItems(object);
@@ -1040,8 +992,6 @@ void Creature::finishDelObj(Object* object, bool breakUnique, bool removeUnique,
 //*********************************************************************
 
 void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep) {
-	otag 	*temp=0, *prev=0;
-
 	Hooks::run(this, "beforeRemoveObject", object, "beforeRemoveFromCreature");
 
 	// don't run checkDarkness if this isnt a dark item
@@ -1052,7 +1002,7 @@ void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool 
 	object->clearFlag(O_JUST_LOADED);
 
 	// if it doesnt have a parent_crt, it's either being worn or is in a bag
-	if(!object->parent_crt) {
+	if(!object->inCreature()) {
 		// the object is being worn
 		if(object->getWearflag() && ready[object->getWearflag()-1] == object) {
 			unequip(object->getWearflag(), UNEQUIP_NOTHING, false);
@@ -1060,20 +1010,16 @@ void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool 
 		} else {
 			// the object is in a bag somewhere
 			// problem is, we don't know which bag
-			temp = first_obj;
-			while(temp) {
-				if(temp->obj->getType() == CONTAINER) {
-					prev = temp->obj->first_obj;
-					while(prev) {
-						if(prev->obj == object) {
-							del_obj_obj(object, temp->obj);
+			for(Object* obj : objects) {
+				if(obj->getType() == CONTAINER) {
+					for(Object* subObj : obj->objects ) {
+						if(subObj == object) {
+							obj->delObj(object);
 							finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
 							return;
 						}
-						prev = prev->next_tag;
 					}
 				}
-				temp = temp->next_tag;
 			}
 
 			// not in their inventory? they must be wearing a bag
@@ -1081,42 +1027,20 @@ void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool 
 				if(!ready[i])
 					continue;
 				if(ready[i]->getType() == CONTAINER) {
-					prev = ready[i]->first_obj;
-					while(prev) {
-						if(prev->obj == object) {
-							del_obj_obj(object, ready[i]);
+					for(Object* obj : ready[i]->objects) {
+						if(obj == object) {
+							ready[i]->delObj(object);
 							finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
 							return;
 						}
-						prev = prev->next_tag;
 					}
 				}
 			}
 		}
 		return;
 	}
-
-	object->parent_crt = 0;
-	if(first_obj->obj == object) {
-		temp = first_obj->next_tag;
-		delete first_obj;
-		first_obj = temp;
-		finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
-		return;
-	}
-
-	prev = first_obj;
-	temp = prev->next_tag;
-	while(temp) {
-		if(temp->obj == object) {
-			prev->next_tag = temp->next_tag;
-			delete temp;
-			finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
-			return;
-		}
-		prev = temp;
-		temp = temp->next_tag;
-	}
+	removeFrom();
+	finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
 }
 
 //*********************************************************************
@@ -2316,7 +2240,6 @@ bool Player::breakObject(Object* object, int loc) {
 		}
 
 		object->clearFlag(O_WORN);
-		object->parent_crt = this;
 		Limited::remove(this, object);
 
 		if(object->flagIsSet(O_DARKNESS)) {

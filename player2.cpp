@@ -408,88 +408,84 @@ int cmdDice(Creature* player, cmd* cmnd) {
 
 	return(0);
 }
-
-//********************************************************************
-//						plyHasObj
-//********************************************************************
-// This will check to see if a player has a specific object type
-// either in their inventory or in a bag, or in their worn equipment.
-
-bool plyHasObj(Creature* player, Object *item) {
-	int		a=0;
-	Object	*obj=0;
-	UniqueRoom* room=0;
-	otag	*op=0, *cop=0;
-
-
-	//check inventory
-	op = player->first_obj;
-	while(op) {
-
-		obj = op->obj;
-		if(*&obj->info == *&item->info)
-			return(true);
-
-		// if item is a bag, check in bag
-		if(obj->getType() == CONTAINER) {
-			cop = obj->first_obj;
-			while(cop) {
-				if(*&cop->obj->info == *&item->info)
-					return(true);
-				cop = cop->next_tag;
-			}
-		}
-
-		op = op->next_tag;
-
-	}
-	// check worn equipment
-	for(a=0;a<MAXWEAR;a++) {
-
-		if(!player->ready[a])
-			continue;
-
-		obj = player->ready[a];
-		if(*&obj->info == *&item->info && obj != item)
-			return(true);
-
-		// if worn item is a bag, check in bag
-		if(obj->getType() == CONTAINER) {
-			cop = obj->first_obj;
-			while(cop) {
-				if(*&cop->obj->info == *&item->info && cop->obj != item)
-					return(true);
-				cop = cop->next_tag;
-			}
-		}
-
-
-	}
-
-	// check player's storage room, if it exists
-	if(player->isPlayer()) {
-		CatRef	sr = gConfig->getSingleProperty(player->getAsPlayer(), PROP_STORAGE);
-		if(sr.id < 1 || !loadRoom(sr, &room))
-			return(0);
-
-		op = room->first_obj;
-		while(op) {
-			if(op->obj->getType() == CONTAINER) {
-				cop = op->obj->first_obj;
-				while(cop) {
-					if(*&cop->obj->info == *&item->info && cop->obj != item)
-						return(true);
-					cop = cop->next_tag;
-				}
-			}
-
-			if(*&op->obj->info == *&item->info && op->obj != item)
-				return(true);
-			op = op->next_tag;
-		}
-
-	}
-
-	return(false);
-}
-
+//
+////********************************************************************
+////						plyHasObj
+////********************************************************************
+//// This will check to see if a player has a specific object type
+//// either in their inventory or in a bag, or in their worn equipment.
+//
+//bool plyHasObj(Creature* player, Object *item) {
+//	int		a=0;
+//	Object	*obj=0;
+//	UniqueRoom* room=0;
+//
+//
+//	//check inventory
+//	for(Object* obj : player->objects) {
+//		if(obj->info == item->info)
+//			return(true);
+//
+//		// if item is a bag, check in bag
+//		if(obj->getType() == CONTAINER) {
+//			cop = obj->first_obj;
+//			while(cop) {
+//				if(*&cop->obj->info == *&item->info)
+//					return(true);
+//				cop = cop->next_tag;
+//			}
+//		}
+//
+//		op = op->next_tag;
+//
+//	}
+//	// check worn equipment
+//	for(a=0;a<MAXWEAR;a++) {
+//
+//		if(!player->ready[a])
+//			continue;
+//
+//		obj = player->ready[a];
+//		if(*&obj->info == *&item->info && obj != item)
+//			return(true);
+//
+//		// if worn item is a bag, check in bag
+//		if(obj->getType() == CONTAINER) {
+//			cop = obj->first_obj;
+//			while(cop) {
+//				if(*&cop->obj->info == *&item->info && cop->obj != item)
+//					return(true);
+//				cop = cop->next_tag;
+//			}
+//		}
+//
+//
+//	}
+//
+//	// check player's storage room, if it exists
+//	if(player->isPlayer()) {
+//		CatRef	sr = gConfig->getSingleProperty(player->getAsPlayer(), PROP_STORAGE);
+//		if(sr.id < 1 || !loadRoom(sr, &room))
+//			return(0);
+//
+//		op = room->first_obj;
+//		while(op) {
+//			if(op->obj->getType() == CONTAINER) {
+//				cop = op->obj->first_obj;
+//				while(cop) {
+//					if(*&cop->obj->info == *&item->info && cop->obj != item)
+//						return(true);
+//					cop = cop->next_tag;
+//				}
+//			}
+//
+//			if(*&op->obj->info == *&item->info && op->obj != item)
+//				return(true);
+//			op = op->next_tag;
+//		}
+//
+//	}
+//
+//	return(false);
+//}
+//

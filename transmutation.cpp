@@ -445,7 +445,6 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Creature *target=0;
-	otag*	op=0;
 	int	saved=0, bns=0;
 
 	if(spellData->how == CAST && !isMageLich(player)) {
@@ -457,13 +456,6 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 		player->print("You are not powerful enough to cast that spell.\n");
 		return(0);
 	}
-
-
-//
-//	if(	pPlayer && (pPlayer->getSecondClass() == MAGE ||
-//		(pPlayer->getClass() == MAGE && pPlayer->getSecondClass()))
-//	)
-//		multi=1;
 
 
 	if(cmnd->num < 2) {
@@ -559,12 +551,13 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			// goodbye inventory
 			if(target->getAsMonster()) {
-				while(target->first_obj) {
-					op = target->first_obj->next_tag;
-					delete target->first_obj->obj;
-					delete target->first_obj;
-					target->first_obj = op;
+				ObjectSet::iterator it;
+				Object* obj;
+				for( it = target->objects.begin() ; it != target->objects.end() ; ) {
+					obj = (*it++);
+					delete obj;
 				}
+				target->objects.clear();
 				target->coins.zero();
 			}
 			target->die(player);

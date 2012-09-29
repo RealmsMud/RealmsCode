@@ -1423,16 +1423,10 @@ void recallLog(Player* player, bstring name, bstring cname, bstring room) {
 // used from consume doesnt handle deleting it properly
 
 int recallCheckBag(Player* player, Object *cont, cmd* cmnd, int show, int log) {
-	Object	*object=NULL;
-	otag	*cop=0, *prev=0;
-	int		drank=0, first=1;
+	int		drank=0;
 	bstring room = player->getRoomParent()->fullName(), name = "";
 
-	prev = cont->first_obj;
-	cop = cont->first_obj;
-	while(cop) {
-		object = cop->obj;
-		cop = cop->next_tag;
+	for(Object* object : cont->objects) {
 		name = object->name;
 
 		if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == POTION) {
@@ -1447,10 +1441,6 @@ int recallCheckBag(Player* player, Object *cont, cmd* cmnd, int show, int log) {
 			if(show)
 				player->print("Unable to use potion. Continuing search.\n");
 		}
-		// don't move prev if we're at the first object
-		if(!first)
-			prev = prev->next_tag;
-		first=0;
 	}
 	return(0);
 }
@@ -1463,7 +1453,6 @@ int recallCheckBag(Player* player, Object *cont, cmd* cmnd, int show, int log) {
 int useRecallPotion(Player* player, int show, int log) {
 	cmd 	*cmnd;
 	Object	*object=NULL;
-	otag	*op=0;
 	int		i=0;
 	bstring room = player->getRoomParent()->fullName(), name = "";
 
@@ -1504,10 +1493,8 @@ int useRecallPotion(Player* player, int show, int log) {
 	}
 
 	// check through their inventory
-	op = player->first_obj;
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	for(Object* obj : player->objects) {
+		object = obj;
 		name = object->name;
 
 		// is this object it?

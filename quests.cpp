@@ -205,7 +205,7 @@ xmlNodePtr QuestCompletion::save(xmlNodePtr rootNode) const {
 }
 void QuestCompletion::resetParentQuest() {
 	if((parentQuest = gConfig->getQuest(questId)) == NULL) {
-		throw new bstring("Unable to find parent quest - " + questId);
+		throw new bstring("Unable to find parent quest - " + bstring(questId));
 	}
 }
 QuestInfo* QuestCompletion::getParentQuest() const {
@@ -796,26 +796,19 @@ bool Object::isQuestValid() const {
 }
 // Count how many of a given item this player has that are non-broken
 int Player::countItems(const QuestCatRef& obj) {
-	otag	*op;
 	int	total=0;
-	op = first_obj;
-	while(op) {
+	for(Object* object : objects) {
 		// Items only count if they're a bag and have 0 shots, or if
 		// they're not a bag, and don't have 0 shots (unless shotsmax is 0)
-		if(op->obj && op->obj->info == obj && op->obj->isQuestValid())
+		if(object && object->info == obj && object->isQuestValid())
 			total++;
 
-		if(op->obj && op->obj->getType() == CONTAINER) {
-			otag *cop;
-			cop = op->obj->first_obj;
-			while(cop) {
-				if(cop->obj && cop->obj->info == obj  && op->obj->isQuestValid())
+		if(object && object->getType() == CONTAINER) {
+			for(Object* subObj : object->objects) {
+				if(subObj->info == obj  && subObj->isQuestValid())
 					total++;
-
-				cop = cop->next_tag;
 			}
 		}
-		op = op->next_tag;
 	}
 	return(total);
 }
@@ -857,38 +850,33 @@ bool QuestCompletion::complete(Monster* monster) {
 	// First, remove all of the items from the player
 	for(QuestCatRef & obj : parentQuest->itemsToGet) {
 		bstring oName;
-		otag *op;
 		Object *object;
-		op = parentPlayer->first_obj;
+		ObjectSet::iterator it;
 		int num = obj.reqNum;
-		while(op && num > 0) {
-			if(op->obj && op->obj->info == obj && op->obj->isQuestValid()) {
-				object = op->obj;
+
+		for( it = parentPlayer->objects.begin() ; it != parentPlayer->objects.end() && num > 0 ; ) {
+			object = (*it++);
+			if(object->info == obj && object->isQuestValid()) {
 				oName = object->name;
-				op = op->next_tag;
 				parentPlayer->delObj(object, true, false, true, false);
 				delete object;
 				num--;
 				continue;
 			}
-			if(op->obj && op->obj->getType() == CONTAINER) {
-				otag *cop;
-				cop = op->obj->first_obj;
-				while(cop && num > 0) {
-					if(cop->obj && cop->obj->info == obj && op->obj->isQuestValid()) {
-						object = cop->obj;
-						oName = object->name;
-						cop = cop->next_tag;
-						parentPlayer->delObj(object, true, false, true, false);
-						delete object;
+			if(object->getType() == CONTAINER) {
+				Object *subObject;
+				ObjectSet::iterator sIt;
+				for(sIt = object->objects.begin() ; sIt != object->objects.end() && num > 0 ; ) {
+					subObject = (*sIt++);
+					if(subObject->info == obj && subObject->isQuestValid()) {
+						oName = subObject->name;
+						parentPlayer->delObj(subObject, true, false, true, false);
+						delete subObject;
 						num--;
 						continue;
-					} else {
-						cop = cop->next_tag;
 					}
 				}
 			}
-			op = op->next_tag;
 		}
 		if(loadObject(obj, &object)) {
 			parentPlayer->printColor("%M takes ^W%s^x from you.\n", monster,

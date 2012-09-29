@@ -79,6 +79,9 @@ public:
 
 	void wake(bstring str, bool noise) const;
 
+
+	bstring listObjects(const Player* player, bool showAll, char endColor ='x' ) const;
+
 	// Find routines
 	Creature* findCreaturePython(Creature* searcher, const bstring& name, bool monFirst = true, bool firstAggro = false, bool exactMatch = false );
     Creature* findCreature(const Creature* searcher, const cmd* cmnd, int num=1) const;

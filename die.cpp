@@ -162,7 +162,7 @@ void Monster::dropCorpse(Creature *killer) {
 	// check for player: for mob killing pet, player is null, and then we don't
 	// care about listing items dropped
 	if(!destroy && player)
-		str = listObjects(player, this, true);
+		str = this->listObjects(player, true);
 
 	ObjectSet::iterator it;
 	for( it = objects.begin() ; it != objects.end() ; ) {

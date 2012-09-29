@@ -125,11 +125,8 @@ void fulfillQuest(Player* player, Object* object) {
 		if(!player->halftolevel())
 			player->print("%ld experience granted.\n", get_quest_exp(object->getQuestnum()));
 	}
-
-	otag	*cop = object->first_obj;
-	while(cop) {
-		fulfillQuest(player, cop->obj);
-		cop = cop->next_tag;
+	for(Object *obj : object->objects) {
+		fulfillQuest(player, obj);
 	}
 }
 

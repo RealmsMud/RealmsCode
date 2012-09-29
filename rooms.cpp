@@ -23,8 +23,6 @@
 
 
 BaseRoom::BaseRoom() {
-	first_obj = 0;
-
 	tempNoKillDarkmetal = false;
 	memset(misc, 0, sizeof(misc));
 	hooks.setParent(this);
@@ -115,14 +113,13 @@ void UniqueRoom::setSize(Size s) { size = s; }
 
 void BaseRoom::BaseDestroy() {
 	clearExits();
-	otag	*op = first_obj, *otemp=0;
-	while(op) {
-		otemp = op->next_tag;
-		delete op->obj;
-		delete op;
-		op = otemp;
+	ObjectSet::iterator it;
+	Object* obj;
+	for(it = objects.begin() ; it != objects.end() ; ) {
+		obj = (*it++);
+		delete obj;
 	}
-	first_obj = 0;
+	objects.clear();
 
 	MonsterSet::iterator mIt = monsters.begin();
 	while(mIt != monsters.end()) {
@@ -203,15 +200,13 @@ void AreaRoom::setStayInMemory(bool stay) { stayInMemory = stay; }
 //*********************************************************************
 
 void AreaRoom::recycle() {
-	otag*   op = first_obj, *otemp=0;
-
-	while(op) {
-		otemp = op->next_tag;
-		delete op->obj;
-		delete op;
-		op = otemp;
+	ObjectSet::iterator it;
+	Object* obj;
+	for(it = objects.begin() ; it != objects.end() ; ) {
+		obj = (*it++);
+		delete obj;
 	}
-	first_obj = 0;
+	objects.clear();
 
 	updateExits();
 }
@@ -511,13 +506,9 @@ bool AreaRoom::canDelete() {
 		return(false);
 	if(!players.empty())
 		return(false);
-	if(first_obj) {
-		otag	*op = first_obj;
-		while(op) {
-			if(!op->obj->flagIsSet(O_DISPOSABLE))
-				return(false);
-			op = op->next_tag;
-		}
+	for(Object* obj : objects) {
+		if(!obj->flagIsSet(O_DISPOSABLE))
+			return(false);
 	}
 	// any room effects?
 	if(needsEffectsIndex())
@@ -622,8 +613,6 @@ bool UniqueRoom::toggleFlag(int flag) {
 //*********************************************************************
 
 bool BaseRoom::isMagicDark() const {
-	otag	*op=0;
-
 	if(flagIsSet(R_MAGIC_DARKNESS))
 		return(true);
 
@@ -641,12 +630,9 @@ bool BaseRoom::isMagicDark() const {
 		if(mons->flagIsSet(M_DARKNESS))
 			return(true);
 	}
-
-	op = first_obj;
-	while(op) {
-		if(op->obj->flagIsSet(O_DARKNESS))
+	for(Object *obj : objects) {
+		if(obj->flagIsSet(O_DARKNESS))
 			return(true);
-		op = op->next_tag;
 	}
 	return(false);
 }

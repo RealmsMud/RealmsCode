@@ -581,7 +581,7 @@ int Socket::processInput() {
                     tState = NEG_MXP_SECURE_TWO;
                     break;
                 } else {
-                    tmp += "\033" + tmpBuf[i];
+                    tmp += "\033" + bstring(tmpBuf[i]);
                 }
                 tState = NEG_NONE;
                 break;
@@ -590,7 +590,7 @@ int Socket::processInput() {
                     tState = NEG_MXP_SECURE_FINISH;
                     break;
                 } else {
-                    tmp += "\033[" + tmpBuf[i];
+                    tmp += "\033[" + bstring(tmpBuf[i]);
                 }
                 tState = NEG_NONE;
                 break;
@@ -601,7 +601,7 @@ int Socket::processInput() {
                     std::cout << "Client secure MXP mode enabled" << std::endl;
                     break;
                 } else {
-                    tmp += "\033[1" + tmpBuf[i];
+                    tmp += "\033[1" + bstring(tmpBuf[i]);
                 }
                 tState = NEG_NONE;
                 break;

@@ -824,11 +824,11 @@ void Monster::checkScavange(long t) {
 		i = lasttime[LT_MON_SCAVANGE].ltime;
 		if(	t - i > 20 &&
 			mrand(1, 100) <= 15 &&
-			room->first_obj &&
-			canScavange(room->first_obj->obj) &&
-			!(room->first_obj->obj->getType() == WEAPON && flagIsSet(M_WILL_WIELD)))
+			!room->objects.empty() &&
+			canScavange((*room->objects.begin())) &&
+			!((*room->objects.begin())->getType() == WEAPON && flagIsSet(M_WILL_WIELD)))
 		{
-			object = room->first_obj->obj;
+			object = (*room->objects.begin());
 			object->deleteFromRoom();
 
 			setFlag(M_HAS_SCAVANGED);
@@ -849,7 +849,6 @@ void Monster::checkScavange(long t) {
 	if(flagIsSet(M_TAKE_LOOT) || flagIsSet(M_STREET_SWEEPER)) {
 		i = lasttime[LT_MOB_THIEF].ltime;
 		if(t - i > 5) {
-			otag	*op = room->first_obj, *onext;
 			Object	*hide_obj = NULL;
 			char	buf[2048], *s = buf;
 			int		buflen = 0;
@@ -858,24 +857,23 @@ void Monster::checkScavange(long t) {
 
 			lasttime[LT_MOB_THIEF].ltime = t;
 			buf[0] = 0;
-			while(op) {
-				onext = op->next_tag;
+			ObjectSet::iterator it;
+			for(it = room->objects.begin() ; it != room->objects.end() ; ) {
+				object = (*it++);
 				if((flagIsSet(M_STREET_SWEEPER) ||
-					(op->obj->getType() == MONEY || op->obj->value[GOLD] >= 100)) &&
-						canScavange(op->obj)
-				) {
-					object = op->obj;
+					(object->getType() == MONEY || object->value[GOLD] >= 100)) &&
+						canScavange(object) )
+				{
 					if(getWeight() + object->getActualWeight() > maxWeight()) {
 						if(!hide_obj && !flagIsSet(M_STREET_SWEEPER)) {
 							hide_obj = object;
 						}
-						op = onext;
 						continue;
 					}
-					namelen = strlen(op->obj->name);
+					namelen = strlen(object->name);
 					if(buflen + namelen + 2 >= 2048)
 						break;
-					strcpy(s, op->obj->name);
+					strcpy(s, object->name);
 					s += namelen;
 					strcpy(s, "^x, ");
 					s += 4;
@@ -888,7 +886,6 @@ void Monster::checkScavange(long t) {
 						addObj(object);
 					}
 				}
-				op = onext;
 			}
 			if(buflen) {
 				buf[buflen - 2] = 0;
