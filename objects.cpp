@@ -24,7 +24,7 @@
 
 
 bool Object::operator< (const Object& t) const {
-    return(strcmp(this->name, t.name) < 0 && this->adjustment < t.adjustment && this->shopValue < t.shopValue);
+	return(getCompareStr().compare(t.getCompareStr()) < 0);
 }
 
 bstring DroppedBy::getName() const {
@@ -44,6 +44,11 @@ void DroppedBy::clear() {
 	index.clear();
 	id.clear();
 	type.clear();
+}
+
+bstring Object::getCompareStr() const {
+	bstring toReturn = bstring(name) + "-" + bstring(adjustment) + "-" + bstring(shopValue) + "-" + getId();
+	return(toReturn);
 }
 
 //*********************************************************************
@@ -75,12 +80,12 @@ bstring DroppedBy::str() {
 
 // Disabled for now until I figure out a better place to assign ids
 void Object::validateId() {
-//	std::cout << "Validating ID for <" << getName() << ">" << std::endl;
-//	if(id.empty() || id.equals("-1")) {
-//		setId(gServer->getNextObjectId());
-//	} else {
-//		std::cout << "Found ID (" << getId() << ")" << std::endl;
-//	}
+	std::cout << "Validating ID for <" << getName() << ">" << std::endl;
+	if(id.empty() || id.equals("-1")) {
+		setId(gServer->getNextObjectId());
+	} else {
+		std::cout << "Found ID (" << getId() << ")" << std::endl;
+	}
 }
 
 void Object::setDroppedBy(MudObject* dropper, bstring pDropType) {

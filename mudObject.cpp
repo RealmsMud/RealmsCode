@@ -47,7 +47,7 @@ bool MonsterPtrLess::operator()(const Monster* lhs, const Monster* rhs) const {
 }
 
 bool ObjectPtrLess::operator()(const Object* lhs, const Object* rhs) const {
-    return *lhs < *rhs;
+	return *lhs < *rhs;
 }
 
 //***********************************************************************

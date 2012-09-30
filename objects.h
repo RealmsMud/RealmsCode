@@ -77,6 +77,7 @@ public:
     Object();
     ~Object();
     Object& operator=(const Object& o);
+    bstring getCompareStr() const ;
     bool operator==(const Object& o) const;
     bool operator!=(const Object& o) const;
     bool operator< (const Object& t) const;

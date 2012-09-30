@@ -1039,7 +1039,7 @@ void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool 
 		}
 		return;
 	}
-	removeFrom();
+	object->removeFrom();
 	finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
 }
 

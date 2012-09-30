@@ -155,7 +155,7 @@ bool Server::init() {
 	    std::cout << "failed." << std::endl;
 #endif
 
-	gConfig->load();
+	gConfig->loadBeforePython();
 	gConfig->startFlashPolicy();
 	gConfig->setLotteryRunTime();
 
@@ -176,6 +176,10 @@ bool Server::init() {
 	// Python
 	std::cout <<  "Initializing Python...";
 	initPython();
+
+	gConfig->loadAfterPython();
+
+
 
 #ifdef SQL_LOGGER
 	std::cout <<  "Initializing SQL Logger...";
@@ -1622,7 +1626,7 @@ int Server::finishReboot() {
 	unlink(filename);
 
 	if(doc == NULL) {
-		printf("Unable to load reboot file\n");
+		printf("Unable to loadBeforePython reboot file\n");
 		merror("Loading reboot file", FATAL);
 	}
 

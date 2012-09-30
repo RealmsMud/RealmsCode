@@ -471,7 +471,7 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
 	effectList.push_back(newEffect);
 	if(newEffect->getParent()->getAsRoom())
 		newEffect->getParent()->getAsRoom()->addEffectsIndex();
-	else if(newEffect->getParent()->getAsExit())
+	else if(newEffect->getParent()->getAsExit() && newEffect->getParent()->getAsExit()->getRoom())
 		newEffect->getParent()->getAsExit()->getRoom()->addEffectsIndex();
 
 	// post-apply gets run after everything is done

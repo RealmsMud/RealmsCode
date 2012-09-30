@@ -1145,7 +1145,7 @@ int dmGameStatus(Player* player, cmd* cmnd) {
 	char buf[2048];
 
 	if(cmnd->num == 2 && !strcmp(cmnd->str[1], "r")) {
-		gConfig->load();
+		gConfig->loadBeforePython();
 		player->print("Config Reloaded.\n");
 		return(0);
 	} else if(cmnd->num == 2 && !strcmp(cmnd->str[1], "s")) {

@@ -1240,14 +1240,15 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room) {
 
 		curNode = curNode->next;
 	}
-	#define X_OLD_INVISIBLE             1         // Invisible
-	static int x = 0;
-	if(room->getVersion() < "2.47b" && flagIsSet(X_OLD_INVISIBLE)) {
-		x++;
+	if(room) {
+		room->addExit(this);
+
+		#define X_OLD_INVISIBLE             1         // Invisible
+		if(room->getVersion() < "2.47b" && flagIsSet(X_OLD_INVISIBLE)) {
 			addEffect("invisibility", -1);
 			clearFlag(X_OLD_INVISIBLE);
+		}
 	}
-
 	escapeText();
 	return(0);
 }
@@ -1394,11 +1395,9 @@ void BaseRoom::readExitsXml(xmlNodePtr curNode) {
 			if(!ext->flagIsSet(X_PORTAL)) {
 				// moving cardinal exit on the overland?
 				if(ext->flagIsSet(X_MOVING) && aRoom && aRoom->updateExit(ext->name))
-					delete ext;
-				else
-					addExit(ext);
+					delExit(ext);
 			} else
-				delete ext;
+				delExit(ext);
 		}
 		childNode = childNode->next;
 	}

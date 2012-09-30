@@ -1242,6 +1242,7 @@ void Creature::CopyCommon(const Creature& cr) {
 	group = cr.group;
 	groupStatus = cr.groupStatus;
 	first_tlk = cr.first_tlk;
+	objects = cr.objects;
 
 	currentLocation.room = cr.currentLocation.room;
 	currentLocation.mapmarker = cr.currentLocation.mapmarker;

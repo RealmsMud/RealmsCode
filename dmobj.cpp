@@ -79,7 +79,7 @@ bstring Object::statObj(int statFlags) {
 		objStr << "Name:   " << objName << "^x\n"
 			   << "Plural: " << objPlural << "^x\n";
 	}
-
+	objStr << "CompStr: " << this->getCompareStr() << " ";
 	objStr << "Id: " << getId() << "\n";
 	const Unique* unique = gConfig->getUnique(this);
 	if(unique)

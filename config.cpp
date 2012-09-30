@@ -216,7 +216,7 @@ void Config::reset(bool reload) {
 }
 
 
-bool Config::load() {
+bool Config::loadBeforePython() {
 	printf("Checking Directories...%s.\n", Path::checkPaths() ? "done" : "*** FAILED ***");
 	printf("Initializing command table...%s.\n", initCommands() ? "done" : "*** FAILED ***");
 
@@ -266,14 +266,16 @@ bool Config::load() {
 	loadProxyAccess();
 	std::cout << "done." << std::endl;
 
+	return(true);
+}
+
+// These items depend on python so load them after python has been initialized
+bool Config::loadAfterPython() {
 	printf("Loading Areas...%s.\n", loadAreas() ? "done" : "*** FAILED ***");
 	if(!listing)
 		printf("Loading Ships...%s.\n", loadShips() ? "done" : "*** FAILED ***");
 	printf("Loading Properties...%s.\n", loadProperties() ? "done" : "*** FAILED ***");
-
-	return(true);
 }
-
 bool Config::startFlashPolicy() const {
 	return(false);
 	char script[256], policy[256], cmd[256];
