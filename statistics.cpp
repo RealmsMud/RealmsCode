@@ -33,6 +33,15 @@ LevelInfo::LevelInfo(int pLevel, int pHp, int pMp, int pStat, int pSave, time_t 
     levelTime = pTime;
 }
 
+LevelInfo::LevelInfo(const LevelInfo* l) {
+    level = l->level;;
+    hpGain = l->hpGain;
+    mpGain = l->mpGain;
+    statUp = l->statUp;
+    saveGain = l->saveGain;
+    levelTime = l->levelTime;
+
+}
 LevelInfo::LevelInfo(xmlNodePtr rootNode) {
 
     level = 0;
@@ -55,7 +64,7 @@ LevelInfo::LevelInfo(xmlNodePtr rootNode) {
     }
 
     if(level == 0)
-        throw new std::exception();
+        throw std::exception();
 
 }
 void LevelInfo::save(xmlNodePtr rootNode) {
@@ -159,7 +168,79 @@ Statistics::Statistics() {
 	numPkWon = numPkIn = 0;
 	reset();
 }
+Statistics::Statistics(Statistics& cr) {
+	doCopy(cr);
+}
 
+Statistics::Statistics(const Statistics& cr) {
+	doCopy(cr);
+}
+
+Statistics& Statistics::operator=(const Statistics& cr) {
+	doCopy(cr);
+	return(*this);
+}
+
+Statistics::~Statistics() {
+	reset();
+}
+
+void Statistics::doCopy(const Statistics& st) {
+	start = st.start;
+	LevelInfoMap levelHistory; // New
+
+	// combat
+	numSwings = st.numSwings;
+	numHits = st.numHits;
+	numMisses = st.numMisses;
+	numFumbles = st.numFumbles;
+	numDodges = st.numDodges;
+	numCriticals = st.numCriticals;
+	numTimesHit = st.numTimesHit;
+	numTimesMissed = st.numTimesMissed;
+	numTimesFled = st.numTimesFled;
+	numPkIn = st.numPkIn;
+	numPkWon = st.numPkWon;
+	// magic
+	numCasts = st.numCasts;
+	numOffensiveCasts = st.numOffensiveCasts;
+	numHealingCasts = st.numHealingCasts;
+	numWandsUsed = st.numWandsUsed;
+	numTransmutes = st.numTransmutes;
+	numPotionsDrank = st.numPotionsDrank;
+	// death
+	numKills = st.numKills;
+	numDeaths = st.numDeaths;
+	expLost = st.expLost; // New
+	lastExpLoss = st.lastExpLoss; // New
+
+	// other
+	numThefts = st.numThefts;
+	numAttemptedThefts = st.numAttemptedThefts;
+	numSaves = st.numSaves;
+	numAttemptedSaves = st.numAttemptedSaves;
+	numRecalls = st.numRecalls;
+	numLagouts = st.numLagouts;
+	numFishCaught = st.numFishCaught;
+	numItemsCrafted = st.numItemsCrafted;
+	numCombosOpened = st.numCombosOpened;
+
+	// most
+	mostGroup = st.mostGroup;
+	mostExperience = st.mostExperience; // New
+	mostMonster = st.mostMonster;
+	mostAttackDamage = st.mostAttackDamage;
+	mostMagicDamage = st.mostMagicDamage;
+
+	// so we can reference
+	parent = st.parent;
+	LevelInfoMap::const_iterator it;
+	LevelInfo* lInfo;
+	for(it = st.levelHistory.begin() ; it != st.levelHistory.end() ; it++) {
+		lInfo = new LevelInfo((*it).second);
+		levelHistory[(*it).first] = lInfo;
+	}
+}
 //*********************************************************************
 //						reset
 //*********************************************************************
@@ -179,6 +260,12 @@ void Statistics::reset() {
 	long t = time(0);
 	start = ctime(&t);
 	start = start.trim();
+
+	LevelInfoMap::iterator it;
+	for(it = levelHistory.begin() ; it != levelHistory.end() ; ) {
+		delete (*it++).second;
+	}
+	levelHistory.clear();
 }
 
 //*********************************************************************

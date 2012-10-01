@@ -23,6 +23,7 @@
 
 class LevelInfo {
 public:
+	LevelInfo(const LevelInfo* l);
     LevelInfo(int pLevel, int pHp, int pMp, int pStat, int pSave, time_t pTime);
     LevelInfo(xmlNodePtr rootNode);
     void save(xmlNodePtr rootNode);
@@ -59,6 +60,10 @@ public:
 class Statistics {
 public:
 	Statistics();
+	Statistics(Statistics& cr);
+	Statistics(const Statistics& cr);
+	Statistics& operator=(const Statistics& cr);
+	~Statistics();
 	void save(xmlNodePtr rootNode, bstring nodeName) const;
 	void load(xmlNodePtr curNode);
 	void display(const Player* viewer, bool death=false);
@@ -68,6 +73,8 @@ public:
 
 	static unsigned long calcToughness(Creature* target);
 	static bstring damageWith(const Player* player, const Object* weapon);
+protected:
+	void doCopy(const Statistics& cr);
 private:
 	bstring start;
 	LevelInfoMap levelHistory; // New

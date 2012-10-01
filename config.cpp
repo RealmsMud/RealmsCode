@@ -104,9 +104,13 @@ void Config::cleanUp() {
 	clearMxpElements();
 	clearEffects();
 	clearSongs();
+	clearProxyAccess();
 	inUse = false;
 }
-
+void Config::clearProxyAccess() {
+	proxyManager->clear();
+	proxyManager = 0;
+}
 
 //********************************************************************
 // resetConfig
