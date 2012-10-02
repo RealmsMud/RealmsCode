@@ -19,6 +19,7 @@
 
 #include "mud.h"
 #include "commands.h"
+#include <iomanip>
 
 //*********************************************************************
 //                      LevelInfo
@@ -187,7 +188,6 @@ Statistics::~Statistics() {
 
 void Statistics::doCopy(const Statistics& st) {
 	start = st.start;
-	LevelInfoMap levelHistory; // New
 
 	// combat
 	numSwings = st.numSwings;
@@ -224,6 +224,7 @@ void Statistics::doCopy(const Statistics& st) {
 	numFishCaught = st.numFishCaught;
 	numItemsCrafted = st.numItemsCrafted;
 	numCombosOpened = st.numCombosOpened;
+	levelHistoryStart = st.levelHistoryStart;
 
 	// most
 	mostGroup = st.mostGroup;
@@ -253,6 +254,7 @@ void Statistics::reset() {
 		numAttemptedSaves = numRecalls = numLagouts = numWandsUsed =
 		numPotionsDrank = numItemsCrafted = numFishCaught = numCombosOpened =
 		mostGroup = numPkIn = numPkWon = numTransmutes = lastExpLoss = expLost = 0;
+	levelHistoryStart = 0;
 	mostMonster.reset();
 	mostAttackDamage.reset();
 	mostMagicDamage.reset();
@@ -267,6 +269,51 @@ void Statistics::reset() {
 	}
 	levelHistory.clear();
 }
+
+//*********************************************************************
+//						StartLevelHistoryTracking
+//*********************************************************************
+// Timing of level history after this point in time should be accurate
+
+void Statistics::startLevelHistoryTracking() {
+	levelHistoryStart = time(0);
+}
+//*********************************************************************
+//						getLevelHistoryStart
+//*********************************************************************
+
+time_t Statistics::getLevelHistoryStart() {
+	return(levelHistoryStart);
+}
+//*********************************************************************
+//						displayLevelHistory
+//*********************************************************************
+
+void Statistics::displayLevelHistory(const Player* viewer) {
+	bstring padding;
+	std::ostringstream oStr;
+	// set left aligned
+	oStr.setf(std::ios::right, std::ios::adjustfield);
+	oStr.imbue(std::locale(""));
+
+	oStr << "Leveling history times valid since ^C" << ctime(&levelHistoryStart) << "^x\n";
+
+	LevelInfo *lInfo;
+	for(LevelInfoMap::value_type p : levelHistory) {
+	    lInfo = p.second;
+	    time_t levelTime = lInfo->getLevelTime();
+	    bstring levelTimeStr = ctime(&levelTime);
+	    levelTimeStr.Remove('\n');
+
+	    oStr << "Level ^C" << std::setfill('0') << std::setw(2) << lInfo->getLevel() << "^x Date: ^C" << levelTimeStr << "^x";
+	    oStr << " Gains - HP: ^C" << std::setfill('0') << std::setw(2) << lInfo->getHpGain() << "^x MP: ^C";
+	    oStr << std::setfill('0') << std::setw(2) << lInfo->getMpGain() << "^x Stat: ^C";
+	    oStr << getStatName(lInfo->getStatUp()) << "^x Save: ^C" << getSaveName(lInfo->getSaveGain()) << "^x\n";
+	}
+
+	viewer->printColor("%s\n", oStr.str().c_str());
+}
+
 
 //*********************************************************************
 //						display
@@ -509,10 +556,15 @@ void Statistics::save(xmlNodePtr rootNode, bstring nodeName) const {
 	mostMagicDamage.save(curNode, "MostMagicDamage");
 	mostExperience.save(curNode, "MostExperience");
 
+	xml::saveNonZeroNum(curNode, "LevelHistoryStart", levelHistoryStart);
 	xmlNodePtr historyNode = xml::newStringChild(curNode, "LevelHistory", "");
-	for(LevelInfoMap::value_type p : levelHistory) {
-	    p.second->save(historyNode);
+	LevelInfoMap::const_iterator it;
+	for( it = levelHistory.begin() ; it != levelHistory.end() ; it++) {
+		(*it).second->save(historyNode);
 	}
+//	for(LevelInfoMap::value_type p : levelHistory) {
+//	    p.second->save(historyNode);
+//	}
 }
 
 //*********************************************************************
@@ -560,8 +612,9 @@ void Statistics::load(xmlNodePtr curNode) {
 		else if(NODE_NAME(childNode, "MostExperience")) mostExperience.load(childNode);
 		else if(NODE_NAME(childNode, "ExpLost")) xml::copyToNum(expLost, childNode);
 	    else if(NODE_NAME(childNode, "LastExpLoss")) xml::copyToNum(lastExpLoss, childNode);
+	    else if(NODE_NAME(childNode, "LevelHistoryStart")) xml::copyToNum(levelHistoryStart, childNode);
 	    else if(NODE_NAME(childNode, "LevelHistory")) {
-	        xmlNodePtr infoNode = curNode->children;
+	        xmlNodePtr infoNode = childNode->children;
 	        while(infoNode) {
 	            try {
 	                LevelInfo *info = new LevelInfo(infoNode);
@@ -857,6 +910,40 @@ void Statistics::setPkin(unsigned long p) { numPkIn = p; }
 
 void Statistics::setPkwon(unsigned long p) { numPkWon = p; }
 
+
+//*********************************************************************
+//						cmdLevelHistory
+//*********************************************************************
+
+int cmdLevelHistory(Player* player, cmd* cmnd) {
+	Player* target = player;
+	bool online=true;
+
+	if(player->isDm() && cmnd->num > 1) {
+		cmnd->str[1][0] = up(cmnd->str[1][0]);
+		target = gServer->findPlayer(cmnd->str[1]);
+		if(!target) {
+			loadPlayer(cmnd->str[1], &target);
+			online = false;
+			// If the player is offline, init() won't be run and the statistics object won't
+			// get its parent set. Do so now.
+			if(target)
+				target->statistics.setParent(target);
+		}
+		if(!target) {
+			player->print("That player does not exist.\n");
+			return(0);
+		}
+		player->printColor("^W%s's Level History\n", target->name);
+	}
+
+	target->statistics.displayLevelHistory(player);
+
+	if(!online)
+		free_crt(target);
+	return(0);
+}
+
 //*********************************************************************
 //						cmdStatistics
 //*********************************************************************
@@ -893,8 +980,8 @@ int cmdStatistics(Player* player, cmd* cmnd) {
 	target->statistics.display(player);
 
 	if(target == player) {
-		player->printColor("You may type ^Wstats reset^x to reset your statistic counts to zero.\n");
-		player->print("You may use the set, clear, and toggle commands to control tracking of statistics.\n");
+		*player << ColorOn << "You may type ^Wstats reset^x to reset your statistic counts to zero.\n" << ColorOff;
+		*player << "You may use the set, clear, and toggle commands to control tracking of statistics.\n";
 	}
 
 	if(!online)

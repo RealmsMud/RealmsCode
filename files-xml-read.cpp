@@ -487,11 +487,12 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 
 	convertOldEffects();
 
-	if(getVersion() < "2.46l") {
-		upgradeStats();
+
+	if(isPlayer()) {
+		if(getVersion() < "2.47b") {
+			pPlayer->recordLevelInfo();
+		}
 	}
-
-
 	if(isPlayer()) {
 	    if(getVersion() < "2.47a") {
 	        // Update weapon skills
@@ -516,6 +517,9 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 
 	        }
 	    }
+		if(getVersion() < "2.46l") {
+			upgradeStats();
+		}
 
 		if(getVersion() < "2.46k" && knowsSkill("endurance")) {
 			remSkill("endurance");

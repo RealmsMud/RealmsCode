@@ -190,7 +190,6 @@ void doTrain(Player* player) {
 // It raises there hit points and magic points appropriately, and if
 // it is initializing a new character, it sets up the character.
 
-// TODO: Make this function use the information loaded from classes.xml for hp/mp/saves etc
 void Player::upLevel() {
 	int	a=0;
 	bool relevel=false;
@@ -243,6 +242,8 @@ void Player::upLevel() {
     }
 
 	if(level == 1) {
+		statistics.startLevelHistoryTracking();
+
 		hp.setInitial(pClass->getBaseHp());
 		if(cClass != BERSERKER && cClass != LICH)
 			mp.setInitial(pClass->getBaseMp());

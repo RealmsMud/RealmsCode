@@ -67,16 +67,20 @@ public:
 	void save(xmlNodePtr rootNode, bstring nodeName) const;
 	void load(xmlNodePtr curNode);
 	void display(const Player* viewer, bool death=false);
+	void displayLevelHistory(const Player* viewer);
 	void reset();
 	bstring getTime();
 	unsigned long pkDemographics() const;
 
 	static unsigned long calcToughness(Creature* target);
 	static bstring damageWith(const Player* player, const Object* weapon);
+	void startLevelHistoryTracking();
+	time_t getLevelHistoryStart();
 protected:
 	void doCopy(const Statistics& cr);
 private:
 	bstring start;
+	time_t levelHistoryStart; // Time when leveling history started being tracked
 	LevelInfoMap levelHistory; // New
 
 	// combat
