@@ -292,7 +292,6 @@ bool Stat::setModifier(bstring name, int newAmt, ModifierType modType) {
 //*********************************************************************
 //						Stat
 //*********************************************************************
-
 Stat::Stat() {
 	 cur = max = initial = 0;
 	 dirty = true;
