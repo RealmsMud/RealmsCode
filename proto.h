@@ -158,6 +158,8 @@ int checkWinFilename(Socket* sock, const bstring str);
 
 // access.cp
 bstring intToText(int nNumber, bool cap=false);
+char* getStatName(int stat);
+char* getSaveName(int save);
 char *alignmentString(Creature* player);
 char *get_class_string(int nIndex);
 char* get_lang_color(int nIndex);

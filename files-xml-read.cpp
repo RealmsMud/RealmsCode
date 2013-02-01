@@ -490,7 +490,11 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 		upgradeStats();
 	}
 
-
+	if(isPlayer()) {
+		if(getVersion() < "2.47b") {
+			pPlayer->recordLevelInfo();
+		}
+	}
 	if(isPlayer()) {
 		if(getVersion() < "2.47b") {
 			#define P_OLD_MISTED                55       // Player is in mist form
@@ -527,6 +531,7 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 
 	        }
 	    }
+
 
 		if(getVersion() < "2.46k" && knowsSkill("endurance")) {
 			remSkill("endurance");

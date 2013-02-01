@@ -87,6 +87,7 @@ public:
 	void grantProxyAccess(Player* proxy, Player* proxied);
 	bool removeProxyAccess(Player* proxy, Player* proxied);
 	bool removeProxyAccess(bstring id, Player* proxied);
+	void clearProxyAccess();
 
 	bstring getProxyList(Player* player = NULL);
 

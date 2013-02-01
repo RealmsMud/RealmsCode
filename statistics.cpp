@@ -19,6 +19,7 @@
 
 #include "mud.h"
 #include "commands.h"
+#include <iomanip>
 
 //*********************************************************************
 //                      LevelInfo
@@ -33,6 +34,15 @@ LevelInfo::LevelInfo(int pLevel, int pHp, int pMp, int pStat, int pSave, time_t 
     levelTime = pTime;
 }
 
+LevelInfo::LevelInfo(const LevelInfo* l) {
+    level = l->level;;
+    hpGain = l->hpGain;
+    mpGain = l->mpGain;
+    statUp = l->statUp;
+    saveGain = l->saveGain;
+    levelTime = l->levelTime;
+
+}
 LevelInfo::LevelInfo(xmlNodePtr rootNode) {
 
     level = 0;
@@ -55,7 +65,7 @@ LevelInfo::LevelInfo(xmlNodePtr rootNode) {
     }
 
     if(level == 0)
-        throw new std::exception();
+        throw std::exception();
 
 }
 void LevelInfo::save(xmlNodePtr rootNode) {
@@ -159,7 +169,79 @@ Statistics::Statistics() {
 	numPkWon = numPkIn = 0;
 	reset();
 }
+Statistics::Statistics(Statistics& cr) {
+	doCopy(cr);
+}
 
+Statistics::Statistics(const Statistics& cr) {
+	doCopy(cr);
+}
+
+Statistics& Statistics::operator=(const Statistics& cr) {
+	doCopy(cr);
+	return(*this);
+}
+
+Statistics::~Statistics() {
+	reset();
+}
+
+void Statistics::doCopy(const Statistics& st) {
+	start = st.start;
+
+	// combat
+	numSwings = st.numSwings;
+	numHits = st.numHits;
+	numMisses = st.numMisses;
+	numFumbles = st.numFumbles;
+	numDodges = st.numDodges;
+	numCriticals = st.numCriticals;
+	numTimesHit = st.numTimesHit;
+	numTimesMissed = st.numTimesMissed;
+	numTimesFled = st.numTimesFled;
+	numPkIn = st.numPkIn;
+	numPkWon = st.numPkWon;
+	// magic
+	numCasts = st.numCasts;
+	numOffensiveCasts = st.numOffensiveCasts;
+	numHealingCasts = st.numHealingCasts;
+	numWandsUsed = st.numWandsUsed;
+	numTransmutes = st.numTransmutes;
+	numPotionsDrank = st.numPotionsDrank;
+	// death
+	numKills = st.numKills;
+	numDeaths = st.numDeaths;
+	expLost = st.expLost; // New
+	lastExpLoss = st.lastExpLoss; // New
+
+	// other
+	numThefts = st.numThefts;
+	numAttemptedThefts = st.numAttemptedThefts;
+	numSaves = st.numSaves;
+	numAttemptedSaves = st.numAttemptedSaves;
+	numRecalls = st.numRecalls;
+	numLagouts = st.numLagouts;
+	numFishCaught = st.numFishCaught;
+	numItemsCrafted = st.numItemsCrafted;
+	numCombosOpened = st.numCombosOpened;
+	levelHistoryStart = st.levelHistoryStart;
+
+	// most
+	mostGroup = st.mostGroup;
+	mostExperience = st.mostExperience; // New
+	mostMonster = st.mostMonster;
+	mostAttackDamage = st.mostAttackDamage;
+	mostMagicDamage = st.mostMagicDamage;
+
+	// so we can reference
+	parent = st.parent;
+	LevelInfoMap::const_iterator it;
+	LevelInfo* lInfo;
+	for(it = st.levelHistory.begin() ; it != st.levelHistory.end() ; it++) {
+		lInfo = new LevelInfo((*it).second);
+		levelHistory[(*it).first] = lInfo;
+	}
+}
 //*********************************************************************
 //						reset
 //*********************************************************************
@@ -172,6 +254,7 @@ void Statistics::reset() {
 		numAttemptedSaves = numRecalls = numLagouts = numWandsUsed =
 		numPotionsDrank = numItemsCrafted = numFishCaught = numCombosOpened =
 		mostGroup = numPkIn = numPkWon = numTransmutes = lastExpLoss = expLost = 0;
+	levelHistoryStart = 0;
 	mostMonster.reset();
 	mostAttackDamage.reset();
 	mostMagicDamage.reset();
@@ -179,7 +262,58 @@ void Statistics::reset() {
 	long t = time(0);
 	start = ctime(&t);
 	start = start.trim();
+
+	LevelInfoMap::iterator it;
+	for(it = levelHistory.begin() ; it != levelHistory.end() ; ) {
+		delete (*it++).second;
+	}
+	levelHistory.clear();
 }
+
+//*********************************************************************
+//						StartLevelHistoryTracking
+//*********************************************************************
+// Timing of level history after this point in time should be accurate
+
+void Statistics::startLevelHistoryTracking() {
+	levelHistoryStart = time(0);
+}
+//*********************************************************************
+//						getLevelHistoryStart
+//*********************************************************************
+
+time_t Statistics::getLevelHistoryStart() {
+	return(levelHistoryStart);
+}
+//*********************************************************************
+//						displayLevelHistory
+//*********************************************************************
+
+void Statistics::displayLevelHistory(const Player* viewer) {
+	bstring padding;
+	std::ostringstream oStr;
+	// set left aligned
+	oStr.setf(std::ios::right, std::ios::adjustfield);
+	oStr.imbue(std::locale(""));
+
+	oStr << "Leveling history times valid since ^C" << ctime(&levelHistoryStart) << "^x\n";
+
+	LevelInfo *lInfo;
+	for(LevelInfoMap::value_type p : levelHistory) {
+	    lInfo = p.second;
+	    time_t levelTime = lInfo->getLevelTime();
+	    bstring levelTimeStr = ctime(&levelTime);
+	    levelTimeStr.Remove('\n');
+
+	    oStr << "Level ^C" << std::setfill('0') << std::setw(2) << lInfo->getLevel() << "^x Date: ^C" << levelTimeStr << "^x";
+	    oStr << " Gains - HP: ^C" << std::setfill('0') << std::setw(2) << lInfo->getHpGain() << "^x MP: ^C";
+	    oStr << std::setfill('0') << std::setw(2) << lInfo->getMpGain() << "^x Stat: ^C";
+	    oStr << getStatName(lInfo->getStatUp()) << "^x Save: ^C" << getSaveName(lInfo->getSaveGain()) << "^x\n";
+	}
+
+	viewer->printColor("%s\n", oStr.str().c_str());
+}
+
 
 //*********************************************************************
 //						display
@@ -422,10 +556,15 @@ void Statistics::save(xmlNodePtr rootNode, bstring nodeName) const {
 	mostMagicDamage.save(curNode, "MostMagicDamage");
 	mostExperience.save(curNode, "MostExperience");
 
+	xml::saveNonZeroNum(curNode, "LevelHistoryStart", levelHistoryStart);
 	xmlNodePtr historyNode = xml::newStringChild(curNode, "LevelHistory", "");
-	for(LevelInfoMap::value_type p : levelHistory) {
-	    p.second->save(historyNode);
+	LevelInfoMap::const_iterator it;
+	for( it = levelHistory.begin() ; it != levelHistory.end() ; it++) {
+		(*it).second->save(historyNode);
 	}
+//	for(LevelInfoMap::value_type p : levelHistory) {
+//	    p.second->save(historyNode);
+//	}
 }
 
 //*********************************************************************
@@ -473,8 +612,9 @@ void Statistics::load(xmlNodePtr curNode) {
 		else if(NODE_NAME(childNode, "MostExperience")) mostExperience.load(childNode);
 		else if(NODE_NAME(childNode, "ExpLost")) xml::copyToNum(expLost, childNode);
 	    else if(NODE_NAME(childNode, "LastExpLoss")) xml::copyToNum(lastExpLoss, childNode);
+	    else if(NODE_NAME(childNode, "LevelHistoryStart")) xml::copyToNum(levelHistoryStart, childNode);
 	    else if(NODE_NAME(childNode, "LevelHistory")) {
-	        xmlNodePtr infoNode = curNode->children;
+	        xmlNodePtr infoNode = childNode->children;
 	        while(infoNode) {
 	            try {
 	                LevelInfo *info = new LevelInfo(infoNode);
@@ -770,6 +910,40 @@ void Statistics::setPkin(unsigned long p) { numPkIn = p; }
 
 void Statistics::setPkwon(unsigned long p) { numPkWon = p; }
 
+
+//*********************************************************************
+//						cmdLevelHistory
+//*********************************************************************
+
+int cmdLevelHistory(Player* player, cmd* cmnd) {
+	Player* target = player;
+	bool online=true;
+
+	if(player->isDm() && cmnd->num > 1) {
+		cmnd->str[1][0] = up(cmnd->str[1][0]);
+		target = gServer->findPlayer(cmnd->str[1]);
+		if(!target) {
+			loadPlayer(cmnd->str[1], &target);
+			online = false;
+			// If the player is offline, init() won't be run and the statistics object won't
+			// get its parent set. Do so now.
+			if(target)
+				target->statistics.setParent(target);
+		}
+		if(!target) {
+			player->print("That player does not exist.\n");
+			return(0);
+		}
+		player->printColor("^W%s's Level History\n", target->name);
+	}
+
+	target->statistics.displayLevelHistory(player);
+
+	if(!online)
+		free_crt(target);
+	return(0);
+}
+
 //*********************************************************************
 //						cmdStatistics
 //*********************************************************************
@@ -806,8 +980,8 @@ int cmdStatistics(Player* player, cmd* cmnd) {
 	target->statistics.display(player);
 
 	if(target == player) {
-		player->printColor("You may type ^Wstats reset^x to reset your statistic counts to zero.\n");
-		player->print("You may use the set, clear, and toggle commands to control tracking of statistics.\n");
+		*player << ColorOn << "You may type ^Wstats reset^x to reset your statistic counts to zero.\n" << ColorOff;
+		*player << "You may use the set, clear, and toggle commands to control tracking of statistics.\n";
 	}
 
 	if(!online)

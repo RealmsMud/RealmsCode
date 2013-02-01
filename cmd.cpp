@@ -527,6 +527,7 @@ bool Config::initCommands() {
 	playerCommands["health"] = new PlyCommand("health",				100,	cmdScore,			0,		"");
 	playerCommands["score"] = new PlyCommand("score",				 50,	cmdScore,			0,		"Show brief information about your character.");
 	playerCommands["status"] = new PlyCommand("status",				100,	cmdInfo,			0,		"");
+	playerCommands["levelhistory"] = new PlyCommand("levelhistory", 100,	cmdLevelHistory,	0,		"Show character level history.");
 	playerCommands["stats"] = new PlyCommand("stats",				100,	cmdStatistics,		0,		"");
 	playerCommands["statistics"] = new PlyCommand("statistics",		100,	cmdStatistics,		0,		"Show character-related statistics.");
 	playerCommands["information"] = new PlyCommand("information",	 50,	cmdInfo,			0,		"Show extended information about your character.");

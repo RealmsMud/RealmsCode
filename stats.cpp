@@ -292,7 +292,6 @@ bool Stat::setModifier(bstring name, int newAmt, ModifierType modType) {
 //*********************************************************************
 //						Stat
 //*********************************************************************
-
 Stat::Stat() {
 	 cur = max = initial = 0;
 	 dirty = true;
@@ -731,6 +730,26 @@ void checkEffect(Creature* creature, const bstring& effName, int& stat, bool pos
 	}
 }
 
+void Player::recordLevelInfo() {
+	std::cout << "Recording level info for " << getName() << std::endl;
+
+	statistics.startLevelHistoryTracking();
+
+	PlayerClass *pClass = gConfig->classes[getClassString()];
+	LevelGain *lGain = 0;
+	int hpAmt = 0;
+	for(int l = level ; l > 1 ; l--) {
+		lGain = pClass->getLevelGain(l);
+		if(!lGain)
+			continue;
+
+		hpAmt = lGain->getHp();
+
+		// Track level history
+		statistics.setLevelInfo(l, new LevelInfo(l, lGain->getHp(), lGain->getMp(), lGain->getStat(), lGain->getSave(), time(0)));
+
+	}
+}
 void Player::upgradeStats() {
 	std::cout << "Upgrading stats for " << getName() << std::endl;
 	*this << "Upgrading your stats to the new format.\n";
@@ -805,8 +824,6 @@ void Player::upgradeStats() {
 			cPie -= 10;
 			break;
 		}
-		// Track level history
-		statistics.setLevelInfo(l, new LevelInfo(l, hpAmt, lGain->getMp(), lGain->getStat(), lGain->getSave(), time(0)));
 
 	}
 

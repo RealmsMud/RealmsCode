@@ -19,30 +19,27 @@
 #include "mud.h"
 #include "calendar.h"
 
+
+// Stats
+
+char stat_names[][4] = { "STR", "DEX", "CON", "INT", "PTY", "CHA" };
+
+char* getStatName(int stat) {
+	stat = tMIN<int>(tMAX<int>(stat - 1, 0), MAX_STAT);
+	return(stat_names[stat]);
+}
+
+char save_names[][4] = { "LCK", "POI", "DEA", "BRE", "MEN", "SPL" };
+
+char* getSaveName(int save) {
+	save = tMIN<int>(tMAX<int>(save, 0), MAX_SAVE-1);
+	return(save_names[save]);
+}
+
 //
 //		object
 //
 
-//const char weaponTypes[] [25] = {
-//		bare-hand
-//		great-hammer
-//		great-mace
-//		hammer
-//		mace
-//		staff
-//		dagger
-//		polearm
-//		rapier
-//		spear
-//		bow
-//		crossbow
-//		thrown
-//		axe
-//		great-axe
-//		great-sword
-//		sword
-//
-//};
 char object_type[][20] = { "error", "error", "error", "instrument", "herb",
 		"weapon", "piece of armor", "potion", "scroll", "magic wand", "container", "money", "key",
 		"light source", "miscellaneous item", "song scroll", "poison", "bandage", "ammo", "quiver", "lottery ticket",
@@ -60,7 +57,6 @@ char class_abbrev[][8] = { "Assn", "Bers", "Cleric", "Ftr", "Mage", "Pal", "Rang
 
 char shortClassAbbrev[][8] = { "A", "Be", "Cl", "F", "M", "P", "R", "T", "Va", "Mo", "Dk", "Dr", "L", "W", "Bd", "Ro",
 		"Bu", "Cr", "CT", "DM" };
-
 
 
 

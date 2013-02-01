@@ -980,6 +980,7 @@ public:
 	void bug(const char *fmt, ...) const;
 	void validateId();
 	void upgradeStats();
+	void recordLevelInfo();
 
 protected:
 // Data

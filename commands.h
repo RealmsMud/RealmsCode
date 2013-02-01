@@ -85,6 +85,7 @@ int cmdWiki(Player* player, cmd* cmnd);
 int cmdWelcome(Player* player, cmd* cmnd);
 int cmdAge(Player* player, cmd* cmnd);
 int cmdVersion(Player* player, cmd* cmnd);
+int cmdLevelHistory(Player* player, cmd* cmnd);
 int cmdStatistics(Player* player, cmd* cmnd);
 int cmdInfo(Player* player, cmd* cmnd);
 int cmdSpells(Creature* player, cmd* cmnd);
