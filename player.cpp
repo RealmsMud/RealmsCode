@@ -602,7 +602,7 @@ void Player::checkTempEnchant( Object* object) {
 			}
 		}
 		if(object->getType() == CONTAINER) {
-			for(Object* subObj : objects) {
+			for(Object* subObj : object->objects) {
 				checkTempEnchant(subObj);
 			}
 		}
