@@ -2024,6 +2024,7 @@ Object* Server::lookupObjId(const bstring& toLookup) {
 Creature* Server::lookupCrtId(const bstring& toLookup) {
 	if(toLookup[0] != 'M' && toLookup[0] != 'P')
 		return(NULL);
+
 	IdMap::iterator it = registeredIds.find(toLookup);
 
     if(it == registeredIds.end())
