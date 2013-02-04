@@ -73,42 +73,32 @@ int Config::reloadRoom(CatRef cr) {
 	if(!roomQueue[str].rom)
 		return(0);
 
-	// if(read_rom(fd, room) < 0) {
+	roomQueue[str].rom->purge();
+	
 	if(!loadRoomFromFile(cr, &room))
 		return(-1);
 	// Move any current players & monsters into the new room
 	for(Player* ply : roomQueue[str].rom->players) {
 		room->players.insert(ply);
+		ply->setParent(room);
 	}
 	roomQueue[str].rom->players.clear();
 
-	// Only Monsters copy if target room is empty
-	if(room->monsters.empty()) {
-		for(Monster* mons : roomQueue[str].rom->monsters) {
-			room->monsters.insert(mons);
-		}
-		roomQueue[str].rom->monsters.clear();
-	}
-	if(room->objects.empty()) {
-		for(Object* obj : roomQueue[str].rom->objects) {
-			room->objects.insert(obj);
-		}
-		roomQueue[str].rom->objects.clear();
-	}
-
-	delete roomQueue[str].rom;
-	roomQueue[str].rom = room;
-
-	// Make sure we have the right parent set on everyone
-	for(Object * obj : room->objects) {
-		obj->setParent(room);
-	}
-	for(Player* ply : room->players) {
-		ply->setParent(room);
-	}
-	for(Monster* mons : room->monsters) {
+	for(Monster* mons : roomQueue[str].rom->monsters) {
+		room->monsters.insert(mons);
+		roomQueue[str].rom->monsters.erase(mons);
 		mons->setParent(room);
 	}
+
+	for(Object* obj : roomQueue[str].rom->objects) {
+		room->objects.insert(obj);
+		roomQueue[str].rom->objects.erase(obj);
+		obj->setParent(room);
+	}
+
+	
+	delete roomQueue[str].rom;
+	roomQueue[str].rom = room;
 
 	return(0);
 }

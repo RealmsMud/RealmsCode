@@ -1984,8 +1984,7 @@ bool Server::registerMudObject(MudObject* toRegister) {
 		return(false);
 	}
 	registeredIds.insert(IdMap::value_type(toRegister->getId(), toRegister));
-	//registeredIds[toRegister->getId()] = toRegister;
-//	std::cout << "Registered: " << toRegister->getId() << " - " << toRegister->getName() << std::endl;
+	//std::cout << "Registered: " << toRegister->getId() << " - " << toRegister->getName() << std::endl;
 	return(true);
 }
 
@@ -2005,12 +2004,27 @@ bool Server::unRegisterMudObject(MudObject* toUnRegister) {
 		return(false);
 	}
 	registeredIds.erase(it);
-//	std::cout << "Unregistered: " << toUnRegister->getId() << " - " << toUnRegister->getName() << std::endl;
+	//std::cout << "Unregistered: " << toUnRegister->getId() << " - " << toUnRegister->getName() << std::endl;
 	return(true);
 }
 
-Creature* Server::lookupCrtId(const bstring& toLookup) {
+Object* Server::lookupObjId(const bstring& toLookup) {
+	if(toLookup[0] != 'O')
+		return(NULL);
+
     IdMap::iterator it = registeredIds.find(toLookup);
+
+    if(it == registeredIds.end())
+        return(NULL);
+    else
+        return(((*it).second)->getAsObject());
+
+}
+
+Creature* Server::lookupCrtId(const bstring& toLookup) {
+	if(toLookup[0] != 'C')
+		return(NULL);
+	IdMap::iterator it = registeredIds.find(toLookup);
 
     if(it == registeredIds.end())
         return(NULL);
@@ -2019,7 +2033,9 @@ Creature* Server::lookupCrtId(const bstring& toLookup) {
 
 }
 Player* Server::lookupPlyId(const bstring& toLookup) {
-    IdMap::iterator it = registeredIds.find(toLookup);
+	if(toLookup[0] != 'P')
+		return(NULL);
+	IdMap::iterator it = registeredIds.find(toLookup);
 
     if(it == registeredIds.end())
         return(NULL);

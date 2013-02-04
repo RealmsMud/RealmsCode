@@ -220,38 +220,7 @@ int dmPurge(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	MonsterSet::iterator mIt = room->monsters.begin();
-	while(mIt != room->monsters.end()) {
-	    Monster* mons = (*mIt++);
-        if(mons->isPet()) {
-            player->print("Skipping %N.\n", mons);
-            // don't kill pets
-            continue;
-        }
-
-        if(mons->flagIsSet(M_DM_FOLLOW)) {
-            Player* master = mons->getPlayerMaster();
-            if(master) {
-                master->clearFlag(P_ALIASING);
-
-                master->setAlias(0);
-                master->print("%1M's soul was purged.\n", mons);
-                master->delPet(mons->getAsMonster());
-            }
-        }
-        room->monsters.erase(mons);
-        free_crt(mons);
-	}
-
-	ObjectSet::iterator it;
-	Object* obj;
-	for(it = room->objects.begin() ; it != room->objects.end() ; ) {
-		obj = (*it++);
-		if(!obj->flagIsSet(O_TEMP_PERM)) {
-			room->objects.erase(obj);
-			delete obj;
-		}
-	}
+	room->purge(false);
 
 	player->print("Purged.\n");
 
@@ -271,7 +240,7 @@ int dmPurge(Player* player, cmd* cmnd) {
 
 int dmEcho(Player* player, cmd* cmnd) {
 	if(!player->checkBuilder(player->getUniqueRoomParent())) {
-		player->print("Error: room number not in any of your alotted ranges.\n");
+		player->print("Error: room number not in any of your allotted ranges.\n");
 		return(0);
 	}
 

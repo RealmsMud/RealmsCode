@@ -64,6 +64,10 @@ public:
     MonsterSet monsters;
     ObjectSet objects;
 
+    bool purge(bool includePets = false);
+    bool purgeMonsters(bool includePets = false);
+    bool purgeObjects();
+
     bool remove(Containable* toRemove);
     bool add(Containable* toAdd);
     bool checkAntiMagic(Monster* ignore = 0);

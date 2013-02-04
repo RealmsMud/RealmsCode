@@ -78,13 +78,9 @@ bstring DroppedBy::str() {
 	return(oStr.str());
 }
 
-// Disabled for now until I figure out a better place to assign ids
 void Object::validateId() {
-	std::cout << "Validating ID for <" << getName() << ">" << std::endl;
 	if(id.empty() || id.equals("-1")) {
 		setId(gServer->getNextObjectId());
-	} else {
-		std::cout << "Found ID (" << getId() << ")" << std::endl;
 	}
 }
 
@@ -165,6 +161,7 @@ Object::~Object() {
 	}
 	objects.clear();
 	gServer->removeDelayedActions(this);
+	moDestroy();
 }
 
 //*********************************************************************

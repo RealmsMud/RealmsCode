@@ -837,7 +837,6 @@ bool Config::initCommands() {
 	generalCommands["snore"] = new CrtCommand("snore",				100,	cmdAction,				0,		"");
 	generalCommands["tag"] = new CrtCommand("tag",					100,	cmdAction,				0,		"");
 	generalCommands["narrow"] = new CrtCommand("narrow",			100,	cmdAction,				0,		"");
-	generalCommands["fall"] = new CrtCommand("fall",				100,	cmdAction,				0,		"");
 	generalCommands["gnaw"] = new CrtCommand("gnaw",				100,	cmdAction,				0,		"");
 	generalCommands["sneeze"] = new CrtCommand("sneeze",			100,	cmdAction,				0,		"");
 	// wake is a special command that you might be able to

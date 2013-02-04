@@ -118,7 +118,7 @@ void WebInterface::openFifos() {
 	snprintf(filename, 80, "%s/%s", Path::Game, fifoIn);
 	inFd = open(filename, O_RDONLY|O_NONBLOCK);
 	if(inFd == -1)
-		throw new bstring("WebInterface: Unable to open " + bstring(filename) + ":" +strerror(errno));
+		throw(std::runtime_error("WebInterface: Unable to open " + bstring(filename) + ":" +strerror(errno)));
 
 	outFd = -1;
 

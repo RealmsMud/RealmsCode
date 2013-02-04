@@ -205,7 +205,7 @@ xmlNodePtr QuestCompletion::save(xmlNodePtr rootNode) const {
 }
 void QuestCompletion::resetParentQuest() {
 	if((parentQuest = gConfig->getQuest(questId)) == NULL) {
-		throw new bstring("Unable to find parent quest - " + bstring(questId));
+		throw(std::runtime_error("Unable to find parent quest - " + bstring(questId)));
 	}
 }
 QuestInfo* QuestCompletion::getParentQuest() const {

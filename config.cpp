@@ -42,9 +42,9 @@ Config::Config() {
 
 Config::~Config() {
 	if(inUse)
-		throw new bstring("Error, trying to destroy config\n");
+		throw(std::runtime_error("Error, trying to destroy config\n"));
 	else
-		printf("Properly deconstructing Config class");
+		std::cout << "Properly deconstructing Config class";
 }
 
 //--------------------------------------------------------------------

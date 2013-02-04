@@ -30,7 +30,7 @@
 
 Group::Group(Creature* pLeader) {
     //if(pLeader.inGroup())
-    //  throw new bstring("Error: Leader already in another group\n");
+    //  throw(std::runtime_error("Error: Leader already in another group\n"));
     flags = 0;
     add(pLeader);
     leader = pLeader;

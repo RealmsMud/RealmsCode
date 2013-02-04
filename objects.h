@@ -185,12 +185,12 @@ public:
 
     void init(bool selRandom = true);
     // Xml - Loading
-    int readFromXml(xmlNodePtr rootNode);
+    int readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList = 0);
     void loadAlchemyEffects(xmlNodePtr curNode);
 
     // Xml - Saving
     int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType = LS_FULL, int quantity = 1,
-                  bool saveId = true) const;
+                  bool saveId = true, std::list<bstring> *idList = 0) const;
     int saveToFile();
 
     void setDroppedBy(MudObject* dropper, bstring pDropType);

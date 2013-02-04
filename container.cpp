@@ -28,6 +28,59 @@ Container::Container() {
 
 }
 
+
+bool Container::purge(bool includePets) {
+	bool purgedAll = true;
+	purgedAll &= purgeMonsters(includePets);
+	purgedAll &= purgeObjects();
+
+	return(purgedAll);
+}
+
+bool Container::purgeMonsters(bool includePets) {
+	bool purgedAll = true;
+	MonsterSet::iterator mIt, prevIt;
+	Monster *mons = 0;
+	for(mIt = monsters.begin() ; mIt != monsters.end() ; ) {
+		prevIt = mIt;
+		mons = (*mIt++);
+		if(includePets == false && mons->isPet()) {
+			purgedAll = false;
+			continue;
+		}
+        if(mons->flagIsSet(M_DM_FOLLOW)) {
+            Player* master = mons->getPlayerMaster();
+            if(master) {
+                master->clearFlag(P_ALIASING);
+
+                master->setAlias(0);
+                master->print("%1M's soul was purged.\n", mons);
+                master->delPet(mons->getAsMonster());
+            }
+        }
+
+		monsters.erase(prevIt);
+		free_crt(mons);
+	}
+	return(purgedAll);
+}
+bool Container::purgeObjects() {
+	bool purgedAll = true;
+	ObjectSet::iterator oIt, prevIt;
+	Object* obj;
+	for(oIt = objects.begin() ; oIt != objects.end() ; ) {
+		prevIt = oIt;
+		obj = (*oIt++);
+		if(!obj->flagIsSet(O_TEMP_PERM)) {
+			objects.erase(prevIt);
+			delete obj;
+		} else {
+			purgedAll = false;
+		}
+	}
+	return(purgedAll);
+}
+
 bool Container::remove(Containable* toRemove) {
     if(!toRemove)
         return(false);
@@ -47,7 +100,7 @@ bool Container::remove(Containable* toRemove) {
         monsters.erase(remMonster);
         toReturn = true;
     } else {
-        std::cout << "Don't know how to add " << toRemove << std::endl;
+        std::cout << "Don't know how to remove " << toRemove << std::endl;
         toReturn = false;
     }
 

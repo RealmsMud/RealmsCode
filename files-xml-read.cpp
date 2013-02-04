@@ -40,6 +40,8 @@
 #include "mxp.h"
 #include "socials.h"
 
+#include <exception>
+
 extern int objRefSaveFlags[];
 
 // TODO: Make a function that will use an xml reader to only parse the player to find
@@ -885,7 +887,7 @@ Skill::Skill(xmlNodePtr rootNode) {
 		curNode = curNode->next;
 	}
 	if(name == "" || gained == 0) {
-		throw(new std::exception());
+		throw(std::runtime_error("Invalid Skill Xml"));
 	}
 }
 
@@ -961,8 +963,8 @@ void Effects::load(xmlNodePtr rootNode, MudObject* pParent) {
 					newEffect->setParent(pParent);
 					effectList.push_back(newEffect);
 				}
-			} catch(bstring err) {
-				std::cout << "Error adding effect: " << err << std::endl;
+			} catch(std::runtime_error &e) {
+				std::cout << "Error adding effect: " << e.what() << std::endl;
 			}
 		}
 		curNode = curNode->next;
@@ -974,7 +976,7 @@ void Effects::load(xmlNodePtr rootNode, MudObject* pParent) {
 //*********************************************************************
 // Reads an object from the given xml document and root node
 
-int Object::readFromXml(xmlNodePtr rootNode) {
+int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList) {
 	xmlNodePtr curNode, childNode;
 	info.load(rootNode);
 	info.id = xml::getIntProp(rootNode, "Num");
@@ -984,7 +986,16 @@ int Object::readFromXml(xmlNodePtr rootNode) {
 
 	while(curNode) {
 			 if(NODE_NAME(curNode, "Name")) xml::copyToCString(name, curNode);
-//		else if(NODE_NAME(curNode, "Id")) setId(xml::getBString(curNode));
+		else if(NODE_NAME(curNode, "Id")) setId(xml::getBString(curNode));
+		else if(NODE_NAME(curNode, "IdList") && idList != 0) {
+			childNode = curNode->children;
+			while(childNode) {
+				if(NODE_NAME(childNode, "Id")) {
+					idList->push_back(xml::getBString(childNode));
+				}
+				childNode = childNode->next;
+			}
+		}
 		else if(NODE_NAME(curNode, "Plural")) xml::copyToBString(plural, curNode);
 		else if(NODE_NAME(curNode, "DroppedBy")) droppedBy.load(curNode);
 		else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
@@ -1274,57 +1285,79 @@ void MudObject::readObjects(xmlNodePtr curNode) {
 //  Player* pParent = parent->getPlayer();
     UniqueRoom* rParent = getAsUniqueRoom();
     Object* oParent = getAsObject();
-
+    std::list<bstring> *idList;
 
 	while(childNode) {
 		object = 0;
+		object2 = 0;
 		quantity = xml::getIntProp(childNode, "Quantity");
 		if(quantity < 1)
 			quantity = 1;
-		if(NODE_NAME(childNode, "Object")) {
-			// If it's a full object, read it in
-			object = new Object;
-			if(!object)
-				merror("loadObjectsXml", FATAL);
-			object->readFromXml(childNode);
-		} else if(NODE_NAME(childNode, "ObjRef")) {
-			// If it's an object reference, we want to first load the parent object
-			// and then use readObjectXml to update any fields that may have changed
-			cr.load(childNode);
-			cr.id = xml::getIntProp(childNode, "Num");
-			if(!validObjId(cr)) {
-				printf("Invalid object %s\n", cr.str().c_str());
-			} else {
-				if(loadObject(cr, &object)) {
-					// These two flags might be cleared on the reference object, so let
-					// that object set them if it wants to
-					object->clearFlag(O_HIDDEN);
-					object->clearFlag(O_CURSED);
-					object->readFromXml(childNode);
+		if(quantity > 1)
+			idList = new std::list<bstring>;
+		else
+			idList = 0;
+		try {
+			if(NODE_NAME(childNode, "Object")) {
+				// If it's a full object, read it in
+				object = new Object;
+				if(!object)
+					merror("loadObjectsXml", FATAL);
+				object->readFromXml(childNode, idList);
+			} else if(NODE_NAME(childNode, "ObjRef")) {
+				// If it's an object reference, we want to first load the parent object
+				// and then use readObjectXml to update any fields that may have changed
+				cr.load(childNode);
+				cr.id = xml::getIntProp(childNode, "Num");
+				if(!validObjId(cr)) {
+					printf("Invalid object %s\n", cr.str().c_str());
 				} else {
-					//printf("Error loading object %d.\n", num);
+					if(loadObject(cr, &object)) {
+						// These two flags might be cleared on the reference object, so let that object set them if it wants to
+						object->clearFlag(O_HIDDEN);
+						object->clearFlag(O_CURSED);
+						object->readFromXml(childNode, idList);
+					}
 				}
 			}
-		}
+			if(object) {
+				std::list<bstring>::iterator idIt;
+				if(quantity > 1)
+					 idIt = idList->begin();
 
-		// BUG: This messes with object unique ids
-		if(object) {
-			for(i=0; i<quantity; i++) {
-				if(!i) {
-					object2 = object;  // just a reference
-				} else {
-					object2 = new Object;
-					*object2 = *object;
-				}
-				// Add it to the appropriate parent
-				if(oParent) {
-					oParent->addObj(object2, false);
-				} else if(cParent) {
-					cParent->addObj(object2);
-				} else if(rParent) {
-					object2->addToRoom(rParent);
+				for(i=0; i<quantity; i++) {
+					if(!i) {
+						object2 = object;  // just a reference
+					} else {
+						object2 = new Object;
+						*object2 = *object;
+					}
+					try {
+						if(quantity > 1 && idIt != idList->end())
+							object2->setId(*idIt++);
+						// Add it to the appropriate parent
+						if(oParent) {
+							oParent->addObj(object2, false);
+						} else if(cParent) {
+							cParent->addObj(object2);
+						} else if(rParent) {
+							object2->addToRoom(rParent);
+						}
+					} catch(std::runtime_error &e) {
+						std::cout << "Error setting ID: " << e.what() << std::endl;
+						if(object2)
+							delete object2;
+					}
 				}
 			}
+		} catch(std::runtime_error &e) {
+			std::cout << "Error loading object: " << e.what() << std::endl;
+			if(object != 0)
+				delete object;
+		}
+		if(idList) {
+			delete idList;
+			idList = 0;
 		}
 		childNode = childNode->next;
 	}
@@ -1745,7 +1778,7 @@ bool Config::loadGuilds() {
 Guild::Guild(xmlNodePtr curNode) {
 	int guildId = xml::getIntProp(curNode, "ID");
 	if(guildId == 0)
-		throw new bstring("Invalid GuildID");
+		throw(std::runtime_error("Invalid GuildID"));
 
 	num = guildId;
 	gConfig->numGuilds = MAX(gConfig->numGuilds, guildId);
@@ -1946,7 +1979,7 @@ SkillInfo::SkillInfo(xmlNodePtr rootNode) {
 	}
 	if(name == "" || displayName == "") {
 		std::cout << "Invalid skill (Name:" << name << ", DisplayName: " << displayName <<  ")" << std::endl;
-		throw(new std::exception());
+		throw(std::runtime_error("Invalid SkillInfo XML"));
 	}
 }
 
@@ -1970,7 +2003,7 @@ SkillCommand::SkillCommand(xmlNodePtr rootNode) {
 	}
 	if(SkillInfo::name == "" || displayName == "") {
 		std::cout << "Invalid skillCommand (Name:" << SkillInfo::name << ", DisplayName: " << displayName <<  ")" << std::endl;
-		throw(new std::exception());
+		throw(std::runtime_error("Invalid Skill Command Xml"));
 	} else {
 		std::cout << "Found SkillCommand: " << SkillInfo::name << std::endl;
 	}

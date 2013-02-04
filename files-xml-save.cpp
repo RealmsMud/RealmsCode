@@ -775,7 +775,7 @@ int AlchemyEffect::saveToXml(xmlNodePtr rootNode) {
 // in which case it will only save fields that are changed in the
 // ordinary course of the game
 
-int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int quantity, bool saveId) const {
+int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int quantity, bool saveId, std::list<bstring> *idList) const {
 //	xmlNodePtr	rootNode;
 	xmlNodePtr		curNode;
 	xmlNodePtr		childNode;
@@ -802,8 +802,21 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
 	xml::newNumProp(rootNode, "Num", info.id);
 	xml::newProp(rootNode, "Area", info.area);
 	xml::newProp(rootNode, "Version", VERSION);
-	if(quantity > 1)
+	if(quantity > 1) {
 		xml::newNumProp(rootNode, "Quantity", quantity);
+		curNode = xml::newStringChild(rootNode, "IdList");
+		if(idList != 0) {
+			std::list<bstring>::iterator idIt = idList->begin();
+			while(idIt != idList->end()) {
+				xml::newStringChild(curNode, "Id", (*idIt++));
+			}
+		}
+	} else {
+		if(saveId == true)
+			xml::saveNonNullString(rootNode, "Id", getId());
+		else
+			xml::newProp(rootNode, "ID", "-1");
+	}
 
 	// These are saved for full and reference
 	xml::saveNonNullString(rootNode, "Name", name);
@@ -812,10 +825,6 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
 		xml::saveNonZeroNum(rootNode, "ShopValue", shopValue);
 	}
 
-//	if(saveId == true)
-//		xml::saveNonNullString(rootNode, "Id", getId());
-//	else
-//		xml::newProp(rootNode, "ID", "-1");
 
 	xml::saveNonNullString(rootNode, "Plural", plural);
 	xml::saveNonZeroNum(rootNode, "Adjustment", adjustment);
@@ -1118,6 +1127,7 @@ int saveObjectsXml(xmlNodePtr parentNode, const ObjectSet& set, int permOnly) {
 	LoadType lt;
 	ObjectSet::const_iterator it;
 	const Object* obj;
+	std::list<bstring> *idList = 0;
 	for( it = set.begin() ; it != set.end() ; ) {
 		obj = (*it++);
 		if(	obj &&
@@ -1139,11 +1149,17 @@ int saveObjectsXml(xmlNodePtr parentNode, const ObjectSet& set, int permOnly) {
 			// quantity code reduces filesize for player shops, storage rooms, and
 			// inventories (which tend of have a lot of identical items in them)
 			quantity = 1;
+			idList = new std::list<bstring>;
+			idList->push_back(obj->getId());
 			while(it != set.end() && *(*it) == *obj) {
+				idList->push_back((*it)->getId());
 				quantity++;
 				it++;
 			}
-			obj->saveToXml(curNode, permOnly, lt, quantity);
+
+			obj->saveToXml(curNode, permOnly, lt, quantity, true, idList);
+			delete idList;
+			idList = 0;
 		}
 	}
 	return(0);
