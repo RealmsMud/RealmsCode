@@ -89,8 +89,9 @@ bool loadPlayer(const bstring name, Player** player, LoadType loadType) {
 	if(!*player)
 		merror("loadPlayer", FATAL);
 
-//	strcpy((*player)->name, tmpStr);
-	xml::copyPropToCString((*player)->name, rootNode, "Name");
+//	(*player)->setName( tmpStr);
+	(*player)->setName(xml::getProp(rootNode, "Name"));
+	//xml::copyPropToCString((*player)->name, rootNode, "Name");
 	xml::copyPropToBString(pass, rootNode, "Password");
 	(*player)->setPassword(pass);
 	//xml::copyPropToBString((*player)->version, rootNode, "Version");
@@ -357,7 +358,7 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 
 	while(curNode) {
 		// Name will only be loaded for Monsters
-			 if(NODE_NAME(curNode, "Name")) xml::copyToCString(name, curNode);
+			 if(NODE_NAME(curNode, "Name")) setName(xml::getBString(curNode));
 		else if(NODE_NAME(curNode, "Id")) setId(xml::getBString(curNode));
 		else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
 		else if(NODE_NAME(curNode, "Keys")) {
@@ -985,7 +986,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList) {
 	// Start reading stuff in!
 
 	while(curNode) {
-			 if(NODE_NAME(curNode, "Name")) xml::copyToCString(name, curNode);
+			 if(NODE_NAME(curNode, "Name")) setName(xml::getBString(curNode));
 		else if(NODE_NAME(curNode, "Id")) setId(xml::getBString(curNode));
 		else if(NODE_NAME(curNode, "IdList") && idList != 0) {
 			childNode = curNode->children;
@@ -1140,7 +1141,7 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode) {
 	curNode = rootNode->children;
 	// Start reading stuff in!
 	while(curNode) {
-			 if(NODE_NAME(curNode, "Name")) xml::copyToCString(name, curNode);
+			 if(NODE_NAME(curNode, "Name")) setName(xml::getBString(curNode));
 		else if(NODE_NAME(curNode, "ShortDescription")) xml::copyToBString(short_desc, curNode);
 		else if(NODE_NAME(curNode, "LongDescription")) xml::copyToBString(long_desc, curNode);
 		else if(NODE_NAME(curNode, "Fishing")) xml::copyToBString(fishing, curNode);
@@ -1220,12 +1221,13 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode) {
 int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room) {
 	xmlNodePtr curNode;
 
-	xml::copyPropToCString(name, rootNode, "Name");
+	setName(xml::getProp(rootNode, "Name"));
+	//xml::copyPropToCString(name, rootNode, "Name");
 
 	curNode = rootNode->children;
 	// Start reading stuff in!
 	while(curNode) {
-			 if(NODE_NAME(curNode, "Name")) xml::copyToCString(name, curNode);
+			 if(NODE_NAME(curNode, "Name")) setName(xml::getBString(curNode));
 		else if(NODE_NAME(curNode, "Keys")) {
 			loadStringArray(curNode, desc_key, EXIT_KEY_LENGTH, "Key", 3);
 		}
@@ -1432,7 +1434,7 @@ void BaseRoom::readExitsXml(xmlNodePtr curNode) {
 
 			if(!ext->flagIsSet(X_PORTAL)) {
 				// moving cardinal exit on the overland?
-				if(ext->flagIsSet(X_MOVING) && aRoom && aRoom->updateExit(ext->name))
+				if(ext->flagIsSet(X_MOVING) && aRoom && aRoom->updateExit(ext->getName()))
 					delExit(ext);
 			} else
 				delExit(ext);

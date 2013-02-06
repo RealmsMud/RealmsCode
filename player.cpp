@@ -436,7 +436,7 @@ void Player::init() {
 			if(!canSee(ply))
 				continue;
 
-			strcat(watchers, ply->name);
+			strcat(watchers, ply->getCName());
 			strcat(watchers, ", ");
 			watch++;
 		}
@@ -2631,7 +2631,7 @@ void Player::clearWatching() {
 //						renamePlayerFiles
 //*********************************************************************
 
-void renamePlayerFiles(char *old_name, char *new_name) {
+void renamePlayerFiles(const char *old_name, const char *new_name) {
 	char	file[80], file2[80];
 
 	sprintf(file, "%s/%s.xml", Path::Player, old_name);

@@ -41,7 +41,7 @@ void socialHooks(Creature *target, bstring action, bstring result) {
 //*********************************************************************
 
 bool actionShow(Player* pTarget, Creature* creature) {
-	return(pTarget && !pTarget->isGagging(creature->name) && !pTarget->flagIsSet(P_UNCONSCIOUS));
+	return(pTarget && !pTarget->isGagging(creature->getName()) && !pTarget->flagIsSet(P_UNCONSCIOUS));
 }
 
 // prototype for actionFail
@@ -394,7 +394,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 				creature, creature->hisHer(), creature->hisHer());
 			socialHooks(creature, str);
 		}
-	} else if(str == "bfart" && player && !strcmp(creature->name, "Bane")) {
+	} else if(str == "bfart" && player && !creature->getName().equals("Bane")) {
 		if(pTarget) {
 			OUT4("You fart on %N.\n", "%M farts on you.\n",
 				"%M farts on %N.");
@@ -485,8 +485,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
 
 		if(loadObject(SHIT_OBJ, &object)) {
-			sprintf(object->name, "piece of %s's shit",
-				(player->flagIsSet(P_ALIASING) ? player->getAlias()->name : player->name));
+			object->setName(bstring("piece of ") + (player->flagIsSet(P_ALIASING) ? player->getAlias()->getName() : player->getName()) + "'s shit");
 
 			finishDropObject(object, room, player);
 		}
@@ -517,10 +516,9 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
 
 		if(loadObject(42, &object)) {
-			sprintf(object->name, "puddle of %s's piss",
-				(player->flagIsSet(P_ALIASING) ? player->getAlias()->name : player->name));
+			object->setName(bstring("puddle of ") + (player->flagIsSet(P_ALIASING) ? player->getAlias()->getName() : player->getName()) + "'s piss");
 			object->plural = "puddles of ";
-			object->plural += (player->flagIsSet(P_ALIASING) ? player->getAlias()->name : player->name);
+			object->plural += (player->flagIsSet(P_ALIASING) ? player->getAlias()->getName() : player->getName());
 			object->plural += "'s piss";
 			object->addToRoom(room);
 		}
@@ -546,8 +544,8 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 				exit = findExit(creature, cmnd);
 
 				if(exit && !exit->flagIsSet(X_DESCRIPTION_ONLY) && !exit->isConcealed(player)) {
-					sock->printColor("You piss on the %s^x.\n", exit->name);
-					broadcast(player->getSock(), player->getParent(), "%M pisses on the %s^x.", player, exit->name);
+					sock->printColor("You piss on the %s^x.\n", exit->getCName());
+					broadcast(player->getSock(), player->getParent(), "%M pisses on the %s^x.", player, exit->getCName());
 
 					socialHooks(creature, exit, str);
 				} else {
@@ -698,7 +696,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 					pTarget->print("You are no longer lobotomized.\n");
 					sock->print("%M is no longer lobotomized.\n", pTarget);
 					if(!creature->isDm())
-						log_immort(false, player, "%s removes %s's lobotomy in room %s.\n", player->name, target->name,
+						log_immort(false, player, "%s removes %s's lobotomy in room %s.\n", player->getCName(), target->getCName(),
 							room->fullName().c_str());
 					return(0);
 				} else {
@@ -708,7 +706,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 						"%M gives you a lobotomy.\n",
 						"%M just gave %N a frontal lobotomy.");
 					if(!creature->isDm())
-						log_immort(false, player, "%s lobotomizes %s in room %s.\n", player->name, target->name,
+						log_immort(false, player, "%s lobotomizes %s in room %s.\n", player->getCName(), target->getCName(),
 							room->fullName().c_str());
 				}
 			}
@@ -736,8 +734,8 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 				exit = findExit(creature, cmnd);
 
 				if(exit && !exit->flagIsSet(X_DESCRIPTION_ONLY) && !exit->isConcealed(player)) {
-					sock->printColor("You point to the %s^x.\n", exit->name);
-					broadcast(sock, room, "%M points to the %s^x.", creature, exit->name);
+					sock->printColor("You point to the %s^x.\n", exit->getCName());
+					broadcast(sock, room, "%M points to the %s^x.", creature, exit->getCName());
 
 					socialHooks(creature, exit, str);
 				} else {

@@ -72,12 +72,12 @@ int cmdFollow(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(toFollow->isRefusing(player->name)) {
+	if(toFollow->isRefusing(player->getName())) {
 		player->print("%M doesn't allow you to group with %s right now.\n", toFollow, toFollow->himHer());
 		return(0);
 	}
 
-	if(toFollow->isGagging(player->name)) {
+	if(toFollow->isGagging(player->getName())) {
 		*player << "You start following " << toFollow->getName() << ".\n";
 		return(0);
 	}
@@ -96,7 +96,7 @@ int cmdFollow(Player* player, cmd* cmnd) {
             return(0);
         }
         if(toJoin->getGroupType() != GROUP_PUBLIC) {
-            player->print("%s's group is invite only.\n", toFollow->getName());
+            player->print("%s's group is invite only.\n", toFollow->getCName());
             return(0);
         }
 	}

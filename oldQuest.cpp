@@ -271,7 +271,7 @@ void fulfillQuest(Player* player, Object* object) {
 //
 //			if(tt->target && !strcmp(tt->target, "PLAYER")) {
 //				strcat(cm.fullstr, " ");
-//				strcat(cm.fullstr, player->name);
+//				strcat(cm.fullstr, player->getCName());
 //			}
 //
 //			stripBadChars(cm.fullstr); // removes '.' and '/'
@@ -286,10 +286,10 @@ void fulfillQuest(Player* player, Object* object) {
 //		if(tt->action) {
 //			strcpy(cm.str[0], "cast");
 //			strncpy(cm.str[1], tt->action,25);
-//			strcpy(cm.str[2], player->name);
+//			strcpy(cm.str[2], player->getCName());
 //			cm.val[0] = cm.val[1] = cm.val[2] = 1;
 //			cm.num = 3;
-//			sprintf(cm.fullstr, "cast %s %s", tt->action, player->name);
+//			sprintf(cm.fullstr, "cast %s %s", tt->action, player->getCName());
 //
 //			i = 0;
 //			do {

@@ -212,16 +212,16 @@ void Move::broadMove(Creature* player, Exit* exit, cmd* cmnd, bool sneaking) {
 			player,
 			player->getRoomParent(),
 			Move::isOrdinal(cmnd),
-			exit->name,
+			exit->getName(),
 			exit->flagIsSet(X_SECRET) || exit->isConcealed() || exit->flagIsSet(X_DESCRIPTION_ONLY)
 		);
 	} else {
 		if(player->isDm())
-			::broadcast(isDm, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->name);
+			::broadcast(isDm, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->getCName());
 		if(player->getClass() == CARETAKER)
-			::broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->name);
+			::broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->getCName());
 		if(!player->isCt())
-			::broadcast(isStaff, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->name);
+			::broadcast(isStaff, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->getCName());
 		player->checkImprove("sneak", true);
 	}
 }
@@ -272,7 +272,7 @@ bool Move::track(UniqueRoom* room, MapMarker *mapmarker, Exit* exit, Player* pla
 				track->setNum(0);
 				track->setSize(NO_SIZE);
 			}
-			track->setDirection(exit->name);
+			track->setDirection(exit->getName());
 			if(player->getSize() > track->getSize())
 				track->setSize(player->getSize());
 			track->setNum(track->getNum()-1);
@@ -604,7 +604,7 @@ Exit *Move::getExit(Creature* player, cmd* cmnd) {
 
 	if(Move::isOrdinal(cmnd)) {
 		for(Exit* ext : room->exits) {
-			if(	!strcmp(ext->name, cmnd->str[1]) &&
+			if(	ext->getName() == cmnd->str[1] &&
 				player->canSee(ext) &&
 				!(!player->isStaff() && ext->flagIsSet(X_DESCRIPTION_ONLY)))
 			{
@@ -1058,7 +1058,7 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
 			Move::deletePortal(oldRoom, exit, leader ? player : player->getGroupLeader(), followers);
 		// portal owners close once they exit the room
 		if(player && player->flagIsSet(P_PORTAL))
-			Move::deletePortal(oldRoom, player->name, leader ? player : player->getGroupLeader());
+			Move::deletePortal(oldRoom, player->getCName(), leader ? player : player->getGroupLeader());
 		return(newRoom);
 	}
 
@@ -1092,7 +1092,7 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
 
 	// portal owners close once they exit the room, but this means their group can follow
 	if(player && player->flagIsSet(P_PORTAL))
-		Move::deletePortal(oldRoom, player->name, leader ? player : player->getGroupLeader(), followers);
+		Move::deletePortal(oldRoom, player->getCName(), leader ? player : player->getGroupLeader(), followers);
 	return(newRoom);
 }
 
@@ -1278,7 +1278,7 @@ int cmdOpen(Player* player, cmd* cmnd) {
 	}
 
 	if(exit->flagIsSet(X_TOLL_TO_PASS) && player->getRoomParent()->getTollkeeper() && !player->isCt()) {
-		player->printColor("You must pay a toll of %ld gold coins to go through the %s^x.\n", tollcost(player, exit, 0), exit->name);
+		player->printColor("You must pay a toll of %ld gold coins to go through the %s^x.\n", tollcost(player, exit, 0), exit->getCName());
 		return(0);
 	}
 
@@ -1299,7 +1299,7 @@ int cmdOpen(Player* player, cmd* cmnd) {
 	player->unhide();
 
 	if(exit->isWall("wall-of-force")) {
-		player->printColor("The %s^x is blocked by a wall of force.\n", exit->name);
+		player->printColor("The %s^x is blocked by a wall of force.\n", exit->getCName());
 		return(0);
 	}
 	// were they killed by exit effect damage?
@@ -1309,8 +1309,8 @@ int cmdOpen(Player* player, cmd* cmnd) {
 	exit->clearFlag(X_CLOSED);
 	exit->ltime.ltime = time(0);
 
-	player->printColor("You open the %s^x.\n", exit->name);
-	broadcast(player->getSock(), player->getParent(), "%M opens the %s^x.", player, exit->name);
+	player->printColor("You open the %s^x.\n", exit->getCName());
+	broadcast(player->getSock(), player->getParent(), "%M opens the %s^x.", player, exit->getCName());
 
 	Hooks::run(player, "openExit", exit, "openByCreature");
 
@@ -1375,7 +1375,7 @@ int cmdClose(Player* player, cmd* cmnd) {
 	}
 
 	if(exit->isWall("wall-of-force")) {
-		player->printColor("The %s^x is blocked by a wall of force.\n", exit->name);
+		player->printColor("The %s^x is blocked by a wall of force.\n", exit->getCName());
 		return(0);
 	}
 	// were they killed by exit effect damage?
@@ -1387,8 +1387,8 @@ int cmdClose(Player* player, cmd* cmnd) {
 	exit->setFlag(X_CLOSED);
 	Hooks::run(player, "closeExit", exit, "closeByCreature");
 
-	player->printColor("You close the %s^x.\n", exit->name);
-	broadcast(player->getSock(), player->getParent(), "%M closes the %s^x.", player, exit->name);
+	player->printColor("You close the %s^x.\n", exit->getCName());
+	broadcast(player->getSock(), player->getParent(), "%M closes the %s^x.", player, exit->getCName());
 
 	return(0);
 
@@ -1461,13 +1461,13 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 		exit->ltime.ltime = time(0);
 		player->print("Click.\n");
 
-		broadcast(player->getSock(), player->getParent(), "%M unlocks the %s^x.", player, exit->name);
+		broadcast(player->getSock(), player->getParent(), "%M unlocks the %s^x.", player, exit->getCName());
 
 		broadcast(isWatcher, "^C%s unlocked the %s^x exit in room %s.\n",
-			player->name, exit->name, player->getRoomParent()->fullName().c_str());
+			player->getCName(), exit->getCName(), player->getRoomParent()->fullName().c_str());
 
 		logn("log.watchers", "%s unlocked the %s exit in room %s.\n",
-			player->name, exit->name, player->getRoomParent()->fullName().c_str());
+			player->getCName(), exit->getCName(), player->getRoomParent()->fullName().c_str());
 
 		return(0);
 	}
@@ -1498,7 +1498,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 	}
 
 	if(exit->isWall("wall-of-force")) {
-		player->printColor("The %s^x is blocked by a wall of force.\n", exit->name);
+		player->printColor("The %s^x is blocked by a wall of force.\n", exit->getCName());
 		return(0);
 	}
 	// were they killed by exit effect damage?
@@ -1520,7 +1520,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 		player->print("%s\n", object->use_output);
 	else
 		player->print("Click.\n");
-	broadcast(player->getSock(), player->getParent(), "%M unlocks the %s^x.", player, exit->name);
+	broadcast(player->getSock(), player->getParent(), "%M unlocks the %s^x.", player, exit->getCName());
 
 	Hooks::run(player, "unlockExit", exit, "unlockByCreature");
 
@@ -1604,7 +1604,7 @@ int cmdLock(Player* player, cmd* cmnd) {
 	}
 
 	if(exit->isWall("wall-of-force")) {
-		player->printColor("The %s^x is blocked by a wall of force.\n", exit->name);
+		player->printColor("The %s^x is blocked by a wall of force.\n", exit->getCName());
 		return(0);
 	}
 	// were they killed by exit effect damage?
@@ -1620,7 +1620,7 @@ int cmdLock(Player* player, cmd* cmnd) {
 	exit->setFlag(X_LOCKED);
 
 	player->print("Click.\n");
-	broadcast(player->getSock(), player->getParent(), "%M locks the %s^x.", player, exit->name);
+	broadcast(player->getSock(), player->getParent(), "%M locks the %s^x.", player, exit->getCName());
 
 	Hooks::run(player, "lockExit", exit, "lockByCreature");
 

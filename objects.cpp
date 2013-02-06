@@ -27,6 +27,11 @@ bool Object::operator< (const Object& t) const {
 	return(getCompareStr().compare(t.getCompareStr()) < 0);
 }
 
+bstring Object::getCompareStr() const {
+	bstring toReturn = bstring(name) + "-" + bstring(adjustment) + "-" + bstring(shopValue) + "-" + getId();
+	return(toReturn);
+}
+
 bstring DroppedBy::getName() const {
 	return(name);
 }
@@ -44,11 +49,6 @@ void DroppedBy::clear() {
 	index.clear();
 	id.clear();
 	type.clear();
-}
-
-bstring Object::getCompareStr() const {
-	bstring toReturn = bstring(name) + "-" + bstring(adjustment) + "-" + bstring(shopValue) + "-" + getId();
-	return(toReturn);
 }
 
 //*********************************************************************
@@ -191,7 +191,7 @@ Object* Object::getNewPotion() {
 	Object* newPotion = new Object;
 
 	newPotion->type = POTION;
-	strcpy(newPotion->name, "generic potion");
+	newPotion->setName( "generic potion");
 	strcpy(newPotion->key[0], "generic");
 	strcpy(newPotion->key[1], "potion");
 	newPotion->weight = 1;
@@ -1033,7 +1033,7 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 			if(flagIsSet(O_SOME_PREFIX))
 				strcat(tempStr, "sets of ");
 
-			strcat(tempStr, name);
+			strcat(tempStr, getCName());
 			if(!flagIsSet(O_SOME_PREFIX)) {
 				tempStr[strlen(tempStr)+1] = 0;
 				tempStr[strlen(tempStr)+2] = 0;
@@ -1067,6 +1067,13 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 			objStr << " (*)";
 		if(flagIsSet(O_SCENERY))
 			objStr << " (s)";
+		if(flagIsSet(O_NOT_PEEKABLE))
+			objStr << "(NoPeek)";
+		if(flagIsSet(O_NO_STEAL))
+			objStr << "(NoSteal)";
+		if(flagIsSet(O_BODYPART))
+			objStr << "(BodyPart)";
+
 	}
 
 	if(isBroken())

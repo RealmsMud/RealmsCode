@@ -315,7 +315,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 			return(0);
 
 		if(pCaster)
-			log_immort(false, pCaster, "%s cast a %s on %s.\n", pCaster->name, get_spell_name(osp->splno), target->name);
+			log_immort(false, pCaster, "%s cast a %s on %s.\n", pCaster->getCName(), get_spell_name(osp->splno), target->getCName());
 
 		if(pTarget && pCaster) {
 			if(pTarget != pCaster && !pTarget->flagIsSet(P_OUTLAW)) {
@@ -324,7 +324,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 					return(0);
 				}
 			}
-			if(pCaster->vampireCharmed(pTarget) || (pCaster->flagIsSet(P_CHARMED) && pTarget->hasCharm(pCaster->name))) {
+			if(pCaster->vampireCharmed(pTarget) || (pCaster->flagIsSet(P_CHARMED) && pTarget->hasCharm(pCaster->getName()))) {
 				pCaster->print("You just can't bring yourself to do that.\n");
 				return(0);
 			}
@@ -419,7 +419,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 			}
 
 			if(!pTarget) {
-				//if(is_charm_crt(target->name, caster))
+				//if(is_charm_crt(target->getCName(), caster))
 				//del_charm_crt(target, caster);
 
 				// BUGFIX:  Fix the pet casting exp bug here
@@ -796,7 +796,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
 				broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M enchants %1P with darkness.", pPlayer, object);
 
 				if(!pPlayer->isDm())
-					log_immort(true, pPlayer, "%s enchants a %s in room %s.\n", pPlayer->name, object->name,
+					log_immort(true, pPlayer, "%s enchants a %s in room %s.\n", pPlayer->getCName(), object->getCName(),
 						pPlayer->getRoomParent()->fullName().c_str());
 
 				pPlayer->setFlag(P_DARKNESS);

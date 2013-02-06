@@ -254,7 +254,7 @@ void login(Socket* sock, bstring str) {
 
 		if(!sock->getPlayer()->isPassword(str)) {
 			sock->write("\255\252\1\n\rIncorrect.\n\r");
-			logn("log.incorrect", "Invalid password(%s) for %s from %s\n", str.c_str(), sock->getPlayer()->name, sock->getHostname().c_str());
+			logn("log.incorrect", "Invalid password(%s) for %s from %s\n", str.c_str(), sock->getPlayer()->getCName(), sock->getHostname().c_str());
 			sock->disconnect();
 			return;
 		} else {
@@ -266,7 +266,7 @@ void login(Socket* sock, bstring str) {
 	case LOGIN_GET_PROXY_PASSWORD:
 		if(Player::hashPassword(str) != sock->tempbstr) {
 			sock->write("\255\252\1\n\rIncorrect.\n\r");
-			logn("log.incorrect", "Invalid password(%s) for %s from %s\n", str.c_str(), sock->getPlayer()->name, sock->getHostname().c_str());
+			logn("log.incorrect", "Invalid password(%s) for %s from %s\n", str.c_str(), sock->getPlayer()->getCName(), sock->getHostname().c_str());
 			sock->disconnect();
 			return;
 		} else {
@@ -283,7 +283,7 @@ void Socket::finishLogin() {
 	Player* player = 0;
 
 	print("%s", echo_on);
-	strcpy(charName, getPlayer()->name);
+	strcpy(charName, getPlayer()->getCName());
 
 	gServer->checkDuplicateName(this, true);
 	if(gServer->checkDouble(this)) {
@@ -486,7 +486,7 @@ void createPlayer(Socket* sock, bstring str) {
 			Player* target = sock->getPlayer();
 			sock->print("\n");
 			if(target) {
-				gServer->clearPlayer(target->name);
+				gServer->clearPlayer(target->getName());
 				delete target;
 			}
 			target = new Player;
@@ -1676,13 +1676,13 @@ void Create::done(Socket* sock, bstring str, int mode) {
 		player->setBirthday();
 		player->setCreated();
 
-		strcpy(player->name, sock->tempstr[0]);
+		player->setName( sock->tempstr[0]);
 
 		if(gServer->checkDuplicateName(sock, false))
 			return;
 		if(gServer->checkDouble(sock))
 			return;
-		if(Player::exists(player->name)) {
+		if(Player::exists(player->getName())) {
 			sock->printColor("\n\n^ySorry, that player already exists.^x\n\n\n");
 			sock->reconnect();
 			return;

@@ -260,7 +260,7 @@ int dmBan(Player* player, cmd* cmnd) {
 	if(target) {
 		if(target->getClass() > BUILDER) {
 			player->print("You can't ban staff! Dumbass.\n");
-			target->printColor("^r%s tried to siteban you! Kill %s!\n", player->name, player->himHer());
+			target->printColor("^r%s tried to siteban you! Kill %s!\n", player->getCName(), player->himHer());
 			return(0);
 		}
 	}
@@ -297,7 +297,7 @@ int dmBan(Player* player, cmd* cmnd) {
 		newBan->isSuffix = 1;
 
 	// Who set the ban
-	newBan->by = player->name;
+	newBan->by = player->getName();
 	// Set the ban duration
 	newBan->duration = dur;
 	// Set the ban reason
@@ -329,12 +329,12 @@ int dmBan(Player* player, cmd* cmnd) {
 		sprintf(log, "'%s' has been banned", site);
 
 	if(dur > 0)
-		sprintf(log2, " for %d day(s) by %s.", newBan->duration, player->name);
+		sprintf(log2, " for %d day(s) by %s.", newBan->duration, player->getCName());
 	else
 		sprintf(log2, " indefinitely.");
 
 	if(newBan->reason != "")
-		sprintf(log3, " Reason: '%s' by %s.", newBan->reason.c_str(), player->name);
+		sprintf(log3, " Reason: '%s' by %s.", newBan->reason.c_str(), player->getCName());
 
 
 	if(newBan->password != "")
@@ -347,7 +347,7 @@ int dmBan(Player* player, cmd* cmnd) {
 	strcat(log, log4);
 
 	log_immort(true, player, "%s", log);
-	logn("log.bans", "%s: %s", player->name, log);
+	logn("log.bans", "%s: %s", player->getCName(), log);
 
 	gConfig->saveBans();
 	

@@ -1113,12 +1113,12 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
 
 	// is this action even valid?
 	if(assign && p->getPartialOwner(target->name)) {
-		player->print("%s is already a partial owner of this property.\n", target->name);
+		player->print("%s is already a partial owner of this property.\n", target->getCName());
 
 		if(offline) free_crt(target);
 		return;
 	} else if(!assign && !p->getPartialOwner(target->name)) {
-		player->print("%s is not a partial owner of this property.\n", target->name);
+		player->print("%s is not a partial owner of this property.\n", target->getCName());
 
 		if(offline) free_crt(target);
 		return;
@@ -1136,7 +1136,7 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
 		if(p->getType() == PROP_STORAGE) {
 			CatRef	cr = gConfig->getSingleProperty(target, PROP_STORAGE);
 			if(cr.id) {
-				player->print("%s may only be affiliated with one storage room at a time.\n", target->name);
+				player->print("%s may only be affiliated with one storage room at a time.\n", target->getCName());
 
 				if(offline) free_crt(target);
 				return;
@@ -1144,8 +1144,8 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
 		}
 
 		p->assignPartialOwner(target->name);
-		p->appendLog(target->name, "%s is now a partial owner.", target->name);
-		player->print("%s is now a partial owner of this property.\n", target->name);
+		p->appendLog(target->name, "%s is now a partial owner.", target->getCName());
+		player->print("%s is now a partial owner of this property.\n", target->getCName());
 		if(!offline) {
 			target->printColor( "^c%s has appointed you partial owner of %s.\n",
 				player->name, p->getName().c_str());
@@ -1153,8 +1153,8 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
 		}
 	} else {
 		p->unassignPartialOwner(target->name);
-		p->appendLog(target->name, "%s is no longer a partial owner.", target->name);
-		player->print("%s is no longer a partial owner of this property.\n", target->name);
+		p->appendLog(target->name, "%s is no longer a partial owner.", target->getCName());
+		player->print("%s is no longer a partial owner of this property.\n", target->getCName());
 		if(!offline) {
 			target->printColor( "^c%s has removed you as partial owner of %s.\n",
 				player->name, p->getName().c_str());
@@ -1335,7 +1335,7 @@ void propRemove(Player* player, Property *p) {
 	}
 
 	p->unassignPartialOwner(player->name);
-	p->appendLog(player->name, "%s has resigned as partial owner.", player->name);
+	p->appendLog(player->name, "%s has resigned as partial owner.", player->getCName());
 
 	Player* owner = gServer->findPlayer(p->getOwner().c_str());
 	if(owner) {
@@ -1479,7 +1479,7 @@ int cmdProperties(Player* player, cmd* cmnd) {
 			propLog(player, 0, p);
 		} else if(!strcmp(cmnd->str[1], "flags") && p->getType() != PROP_HOUSE) {
 			cmnd->num = 4;
-			strcpy(cmnd->str[2], player->name);
+			strcpy(cmnd->str[2], player->getCName());
 			strcpy(cmnd->str[3], "view");
 			propFlags(player, cmnd, p);
 		} else if(!strcmp(cmnd->str[1], "unassign")) {
@@ -1931,7 +1931,7 @@ void Property::guildRoomSetup(UniqueRoom *room, const Guild* guild, bool outside
 // this sets up the room as a personal house, then deletes it
 
 void Property::houseRoomSetup(UniqueRoom *room, const Player* player, bool outside) {
-	sprintf(room->name, "%s's Personal House", player->name);
+	sprintf(room->name, "%s's Personal House", player->getCName());
 
 	if(!outside) {
 		room->setFlag(R_INDOORS);
@@ -2163,10 +2163,10 @@ void Property::manageDesc(Player* player, cmd* cmnd, PropType propType, int x) {
 
 	switch(propType) {
 	case PROP_GUILDHALL:
-		sprintf(file, "%s/%s_guildhall.txt", Path::Post, player->name);
+		sprintf(file, "%s/%s_guildhall.txt", Path::Post, player->getCName());
 		break;
 	case PROP_HOUSE:
-		sprintf(file, "%s/%s_house.txt", Path::Post, player->name);
+		sprintf(file, "%s/%s_house.txt", Path::Post, player->getCName());
 		break;
 	default:
 		player->print("Error: this property type is not supported.\n");
@@ -2548,7 +2548,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 		player->print("Congratulations! Your guild is now the owner of a brand new guild hall.\n");
 		if(!player->flagIsSet(P_DM_INVIS)) {
 			broadcast(player->getSock(), player->getParent(), "%M just opened a guild hall!", player);
-			broadcast("### %s, leader of %s, just opened a guild hall!", player->name, guild->getName().c_str());
+			broadcast("### %s, leader of %s, just opened a guild hall!", player->getCName(), guild->getName().c_str());
 		}
 
 		if(player->inUniqueRoom())
@@ -2567,7 +2567,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 			player->delObj(oHidden, true, false, true, false);
 			delete oHidden;
 			exit->setFlag(X_SECRET);
-			player->printColor("Exit '%s^x' is now hidden.\n", exit->name);
+			player->printColor("Exit '%s^x' is now hidden.\n", exit->getCName());
 		} else {
 			player->print("There was an error making the %s entrance hidden!\n", getTypeStr(propType).c_str());
 		}
@@ -2577,7 +2577,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 			player->delObj(oConceal, true, false, true, false);
 			delete oConceal;
 			exit->setFlag(X_CONCEALED);
-			player->printColor("Exit '%s^x' is now concealed.\n", exit->name);
+			player->printColor("Exit '%s^x' is now concealed.\n", exit->getCName());
 		} else {
 			player->print("There was an error making the %s entrance concealed!\n", getTypeStr(propType).c_str());
 		}
@@ -2587,7 +2587,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 			player->delObj(oInvis, true, false, true, false);
 			delete oInvis;
 			exit->addEffect("invisibility", -1);
-			player->printColor("Exit '%s^x' is now invisible.\n", exit->name);
+			player->printColor("Exit '%s^x' is now invisible.\n", exit->getCName());
 		} else {
 			player->print("There was an error making the %s entrance invisible!\n", getTypeStr(propType).c_str());
 		}
@@ -2757,7 +2757,7 @@ void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x)
 		return;
 	}
 
-	strcpy(found->name, newExit.c_str());
+	found->setName( newExit.c_str());
 	player->getUniqueRoomParent()->arrangeExits();
 	player->print("Exit renamed to '%s'.\n", newExit.c_str());
 	player->getUniqueRoomParent()->saveToFile(0);

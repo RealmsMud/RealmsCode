@@ -532,11 +532,11 @@ int cmdSuicide(Player* player, cmd* cmnd) {
 	}
 
 	//if(player->getLevel() > 2 && !player->isStaff())
-		broadcast("### %s committed suicide! We'll miss %s dearly.", player->name, player->himHer());
+		broadcast("### %s committed suicide! We'll miss %s dearly.", player->getCName(), player->himHer());
 	//else
-	//	broadcast(isWatcher, "^C### %s committed suicide! We'll miss %s dearly.", player->name, player->himHer());
+	//	broadcast(isWatcher, "^C### %s committed suicide! We'll miss %s dearly.", player->getCName(), player->himHer());
 
-	logn("log.suicide", "%s(%s)-%d (%s)\n", player->name, player->getPassword().c_str(), player->getLevel(), player->getSock()->getHostname().c_str());
+	logn("log.suicide", "%s(%s)-%d (%s)\n", player->getCName(), player->getPassword().c_str(), player->getLevel(), player->getSock()->getHostname().c_str());
 
 	deletePlayer(player);
 	updateRecentActivity();
@@ -553,7 +553,7 @@ void deletePlayer(Player* player) {
 	char	file[80];
 	bool hardcore = player->isHardcore();
 	// cache the name because we will be deleting the player object
- 	bstring name = player->name;
+ 	bstring name = player->getName();
 
  	gConfig->deleteUniques(player);
  	gServer->clearAsEnemy(player);
@@ -692,7 +692,7 @@ void Player::changeStats() {
 		tstat.level = 0;
 
 
-		broadcast(::isCt, "^y### %s is choosing new stats.", name);
+		broadcast(::isCt, "^y### %s is choosing new stats.", getCName());
 		printColor("^yPlease enter a new set of initial stats (56 points):\n");
 		getSock()->setState(CON_CHANGING_STATS);
 	}
@@ -789,7 +789,7 @@ void Player::changingStats(bstring str) {
 		break;
 	case CON_CHANGING_STATS_CONFIRM:
 		if(low(str[0]) == 'y') {
-			broadcast(::isCt, "^y### %s has chosen %s stats.", name, hisHer());
+			broadcast(::isCt, "^y### %s has chosen %s stats.", getCName(), hisHer());
 
 			print("New stats set.\n");
 
@@ -806,7 +806,7 @@ void Player::changingStats(bstring str) {
 			return;
 
 		} else {
-			broadcast(::isCt,"^y### %s aborted choosing new stats.", name);
+			broadcast(::isCt,"^y### %s aborted choosing new stats.", getCName());
 			print("Aborted.\n");
 			getSock()->setState(CON_PLAYING);
 			return;

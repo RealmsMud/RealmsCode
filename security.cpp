@@ -195,7 +195,7 @@ void changePassword(Socket* sock, bstring str) {
 			player->setPassword(str);
 
 			sock->print("Password changed.\n");
-			broadcast(isDm, "^g%s just changed %s password.", player->name, player->hisHer());
+			broadcast(isDm, "^g%s just changed %s password.", player->getCName(), player->hisHer());
 
 			player->clearFlag(P_READING_FILE);
 			player->setFlag(P_PASSWORD_CURRENT);

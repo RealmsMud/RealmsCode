@@ -342,7 +342,7 @@ int Player::getWeaponSkill(const Object* weapon) const {;
 	if(isEffected("bless"))
 		bonus += 10;
 
-//	print("Looking at weapon skill for %s.\n", weapon ? weapon->name : "null object");
+//	print("Looking at weapon skill for %s.\n", weapon ? weapon->getCName() : "null object");
 	bstring weaponType;
 	if(weapon)
 		weaponType = weapon->getWeaponType();
@@ -1015,9 +1015,9 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
 				if(showFail) {
 					if(weapon) {
 						if(weapon->getType() == WEAPON)
-							print("Your %s has no effect on %N.\n", weapon->name, pVictim);
+							print("Your %s has no effect on %N.\n", weapon->getCName(), pVictim);
 						else
-							print("Your %s have no effect on %N.\n", weapon->name, pVictim);
+							print("Your %s have no effect on %N.\n", weapon->getCName(), pVictim);
 					}
 					else
 						print("Your attack has no effect on %N.\n", pVictim);
@@ -1057,9 +1057,9 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
 				) {
 					if(glow && weapon) {
 						if(weapon->getType() == WEAPON)
-							printColor("^WYour %s^W glows with power against %N.\n", weapon->name, victim);
+							printColor("^WYour %s^W glows with power against %N.\n", weapon->getCName(), victim);
 						else
-							printColor("^WYour^W %s glow with power against %N.\n", weapon->name, victim);
+							printColor("^WYour^W %s glow with power against %N.\n", weapon->getCName(), victim);
 					}
 				} else if(isDm()) {
 					if(glow)
@@ -1068,9 +1068,9 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
 					if(showFail) {
 						if(weapon) {
 							if(weapon->getType() == WEAPON)
-								printColor("^cYour %s has no effect on %N.\n", weapon->name, victim);
+								printColor("^cYour %s has no effect on %N.\n", weapon->getCName(), victim);
 							else
-								printColor("^cYour %s have no effect on %N.\n", weapon->name, victim);
+								printColor("^cYour %s have no effect on %N.\n", weapon->getCName(), victim);
 						} else
 							printColor("^cYour attack has no effect on %N.\n", victim);
 					}
@@ -1271,8 +1271,8 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
 				)
 			)
 		) {
-			printColor("^YYour %s shatters.\n", weapon->name);
-			broadcast(getSock(), getRoomParent(),"^Y%s %s shattered.", upHisHer(), weapon->name);
+			printColor("^YYour %s shatters.\n", weapon->getCName());
+			broadcast(getSock(), getRoomParent(),"^Y%s %s shattered.", upHisHer(), weapon->getCName());
 			retVal = 1;
 		}
 	} else if(result == ATTACK_GLANCING) {
@@ -1477,7 +1477,7 @@ int Creature::parry(Creature* target) {
 	Damage attackDamage;
 
 	if(!weapon && isPlayer()) {
-		broadcast(::isDm, "*** Parry error: called with null weapon for %s.\n", name);
+		broadcast(::isDm, "*** Parry error: called with null weapon for %s.\n", getCName());
 		return(0);
 	}
 

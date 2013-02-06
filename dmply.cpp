@@ -88,10 +88,10 @@ int dmForce(Player* player, cmd* cmnd) {
 		}
 	strcpy(str, &cmnd->fullstr[index]);
 	if(target->getClass() >= player->getClass())
-		target->print("%s forces you to \"%s\".\n", player->name, str);
+		target->print("%s forces you to \"%s\".\n", player->getCName(), str);
 
 	bstring txt = escapeColor(str);
-	log_immort(true, player, "%s forced %s to \"%s\".\n", player->name, target->name, txt.c_str());
+	log_immort(true, player, "%s forced %s to \"%s\".\n", player->getCName(), target->getCName(), txt.c_str());
 	command(target->getSock(), str);
 
 	return(0);
@@ -116,7 +116,7 @@ int dmSpy(Player* player, cmd* cmnd) {
 		player->clearFlag(P_SPYING);
 		player->print("Spy mode off.\n");
 		if(!player->isDm())
-			log_immort(false,player, "%s turned spy mode off.\n", player->name);
+			log_immort(false,player, "%s turned spy mode off.\n", player->getCName());
 		return(0);
 	}
 
@@ -139,7 +139,7 @@ int dmSpy(Player* player, cmd* cmnd) {
 	}
 
 	if(player->getClass() <= target->getClass())
-		target->printColor("^r%s is observing you.\n", player->name);
+		target->printColor("^r%s is observing you.\n", player->getCName());
 
 	player->getSock()->setSpying(target->getSock());
 
@@ -148,7 +148,7 @@ int dmSpy(Player* player, cmd* cmnd) {
 
 	player->print("Spy on. Type *spy to turn it off.\n");
 	if(!player->isDm())
-		log_immort(false,player, "%s started spying on %s.\n", player->name, target->name);
+		log_immort(false,player, "%s started spying on %s.\n", player->getCName(), target->getCName());
 	return(0);
 }
 
@@ -182,21 +182,21 @@ int dmSilence(Player* player, cmd* cmnd) {
 
 	if(cmnd->num > 2 && low(cmnd->str[2][0]) == 'r') {
 		if(target->flagIsSet(P_CANT_BROADCAST)) {
-			player->print("%s can now broadcast again.\n", target->name);
+			player->print("%s can now broadcast again.\n", target->getCName());
 			target->clearFlag(P_CANT_BROADCAST);
 		} else {
-			player->print("But %s can already broadcast!\n", target->name);
+			player->print("But %s can already broadcast!\n", target->getCName());
 		}
 	} else {
 		if(cmnd->val[1]) {
 			target->lasttime[LT_NO_BROADCAST].interval = cmnd->val[1] * 60L;
-			player->print("%s silenced for %d minute(s).\n", target->name, cmnd->val[1]);
+			player->print("%s silenced for %d minute(s).\n", target->getCName(), cmnd->val[1]);
 		} else {
-			player->print("%s silenced for 10 minutes.\n", target->name);
+			player->print("%s silenced for 10 minutes.\n", target->getCName());
 			target->lasttime[LT_NO_BROADCAST].interval = 600L;
 		}
 		target->setFlag(P_CANT_BROADCAST);
-		log_immort(true, player, "%s removed %s's ability to broadcast.\n", player->name, target->name);
+		log_immort(true, player, "%s removed %s's ability to broadcast.\n", player->getCName(), target->getCName());
 	}
 	return(0);
 }
@@ -315,7 +315,7 @@ int dmSurname(Player* player, cmd* cmnd) {
 		break;
 	case 2:
 		target->setSurname("");
-		player->print("\n%s's surname command is now locked.\n", target->name);
+		player->print("\n%s's surname command is now locked.\n", target->getCName());
 		target->setFlag(P_NO_SURNAME);
 		break;
 	default:
@@ -401,17 +401,17 @@ int dmDust(Player* player, cmd* cmnd) {
 	}
 
 	if(target->isCt() && !player->isDm()) {
-		target->printColor("^r%s tried to dust you!\n", player->name);
+		target->printColor("^r%s tried to dust you!\n", player->getCName());
 		return(0);
 	}
 
 	if(player->getClass() == CARETAKER && target->isStaff()) {
-		target->printColor("^r%s tried to dust you!\n", player->name);
+		target->printColor("^r%s tried to dust you!\n", player->getCName());
 		return(0);
 	}
 
-	if(isdm(target->name)) {
-		target->printColor("^r%s tried to dust you!\n", player->name);
+	if(isdm(target->getCName())) {
+		target->printColor("^r%s tried to dust you!\n", player->getCName());
 		return(0);
 	}
 
@@ -420,17 +420,17 @@ int dmDust(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	logn("log.dust", "%s was dusted by %s.\n", target->name, player->name);
+	logn("log.dust", "%s was dusted by %s.\n", target->getCName(), player->getCName());
 
 	// TODO: Handle guild creations
 	sprintf(buf, "\n%c[35mLightning comes down from on high! You have angered the gods!%c[35m\n", 27, 27);
 	target->getSock()->write(buf);
 
 	if(!strcmp(cmnd->str[2], "-n")) {
-		broadcast(isCt, "^y### %s has been turned to dust!", target->name);
+		broadcast(isCt, "^y### %s has been turned to dust!", target->getCName());
 	} else {
-		broadcast("### %s has been turned to dust!", target->name);
-		broadcast(target->getSock(), target->getRoomParent(), "A bolt of lightning strikes %s from on high.", target->name);
+		broadcast("### %s has been turned to dust!", target->getCName());
+		broadcast(target->getSock(), target->getRoomParent(), "A bolt of lightning strikes %s from on high.", target->getCName());
 		last_dust_output = time(0) + 15L;
 	}
 
@@ -504,7 +504,7 @@ int dmAward(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	sprintf(temp, "%s", target->name);
+	sprintf(temp, "%s", target->getCName());
 
 	if(!target->getSock()->canForce()) {
 		player->print("You can't award %s right now.\n", cmnd->str[1]);
@@ -528,9 +528,9 @@ int dmAward(Player* player, cmd* cmnd) {
 
 	if(i > t && !player->isDm()) {
 		if(i - t > 3600)
-			player->print("%s cannot be awarded for %02d:%02d:%02d more hours.\n", target->name,(i - t) / 3600L, ((i - t) % 3600L) / 60L, (i - t) % 60L);
+			player->print("%s cannot be awarded for %02d:%02d:%02d more hours.\n", target->getCName(),(i - t) / 3600L, ((i - t) % 3600L) / 60L, (i - t) % 60L);
 		else if((i - t > 60) && (i - t < 3600))
-			player->print("%s cannot be awarded for %d:%02d more minutes.\n", target->name, (i - t) / 60L, (i - t) % 60L);
+			player->print("%s cannot be awarded for %d:%02d more minutes.\n", target->getCName(), (i - t) / 60L, (i - t) % 60L);
 		else
 			player->pleaseWait(i-t);
 		return(0);
@@ -538,7 +538,7 @@ int dmAward(Player* player, cmd* cmnd) {
 
 
 
-	player->print("%d xp awarded to %s for roleplaying.\n", amount, target->name);
+	player->print("%d xp awarded to %s for roleplaying.\n", amount, target->getCName());
 	target->printColor("^yYou have been awarded %d xp for good roleplaying!\n", amount);
 	target->addExperience(amount);
 
@@ -547,17 +547,17 @@ int dmAward(Player* player, cmd* cmnd) {
 	target->lasttime[LT_RP_AWARDED].interval = 500L; // 45 minutes.
 
 	if(!strcmp(cmnd->str[2], "-g")) {
-		player->print("%ld gold awarded to %s for roleplaying.\n", gp, target->name);
+		player->print("%ld gold awarded to %s for roleplaying.\n", gp, target->getCName());
 		target->printColor("^yYou have been awarded %ld gold as well!\nIt was put in your bank account!\n", gp);
 		target->bank.add(gp, GOLD);
-		logn("log.bank", "%s was awarded %ld gold for roleplaying. (Balance=%s)\n",target->name, gp, target->bank.str().c_str());
-		Bank::log(target->name, "ROLEPLAY AWARD: %ld [Balance: %s]\n", gp, target->bank.str().c_str());
+		logn("log.bank", "%s was awarded %ld gold for roleplaying. (Balance=%s)\n",target->getCName(), gp, target->bank.str().c_str());
+		Bank::log(target->getCName(), "ROLEPLAY AWARD: %ld [Balance: %s]\n", gp, target->bank.str().c_str());
 	}
 
-	log_immort(true, player, "%s awarded %s %d xp for roleplaying.\n", player->name, temp, amount);
+	log_immort(true, player, "%s awarded %s %d xp for roleplaying.\n", player->getCName(), temp, amount);
 
 	if(!strcmp(cmnd->str[2], "-g"))
-		log_immort(true, player, "%s was awarded %ld gold for roleplaying. (Balance=%s)\n",target->name, gp, target->bank.str().c_str());
+		log_immort(true, player, "%s was awarded %ld gold for roleplaying. (Balance=%s)\n",target->getCName(), gp, target->bank.str().c_str());
 
 	return(0);
 }
@@ -614,7 +614,7 @@ int dmAdvance(Player* player, cmd* cmnd) {
 	}
 
 	if(target->getNegativeLevels()) {
-		player->print("Clear %s's negative levels first.\n", target->name);
+		player->print("Clear %s's negative levels first.\n", target->getCName());
 		return(0);
 	}
 	if(cmnd->val[1] <= 0 || cmnd->val[1] > MAXALVL) {
@@ -709,11 +709,11 @@ int dmDisconnect(Player* player, cmd* cmnd) {
 		return(0);
 	}
 	if(creature->isCt() && !player->isDm()) {
-		creature->printColor("^r%s tried to disconnect you!\n", player->name);
+		creature->printColor("^r%s tried to disconnect you!\n", player->getCName());
 		return(0);
 	}
 
-	log_immort(true, player, "%s disconnected %s.\n", player->name, creature->name);
+	log_immort(true, player, "%s disconnected %s.\n", player->getCName(), creature->getCName());
 
 	creature->getSock()->disconnect();
 	return(0);
@@ -791,10 +791,10 @@ int dmTake(Player* player, cmd* cmnd) {
 		// don't need to run addUnique on staff
 		player->addObj(object);
 
-		player->printColor("You remove a %P from %N's %s.\n", object, target, container->name);
+		player->printColor("You remove a %P from %N's %s.\n", object, target, container->getCName());
 
 		if(!player->isDm())
-			log_immort(true, player, "%s removed %s from %s's %s.\n", player->name, object->name, target->name, container->name);
+			log_immort(true, player, "%s removed %s from %s's %s.\n", player->getCName(), object->getCName(), target->getCName(), container->getCName());
 
 		target->save(online);
 		if(!online)
@@ -817,7 +817,7 @@ int dmTake(Player* player, cmd* cmnd) {
 	player->printColor("You remove %P from %N's inventory.\n", object, target);
 
 	if(!player->isDm())
-		log_immort(true, player, "%s removed %s from %s's inventory.\n", player->name, object->name, target->name);
+		log_immort(true, player, "%s removed %s from %s's inventory.\n", player->getCName(), object->getCName(), target->getCName());
 
 	target->delObj(object, false, true, true, true, true);
 	// don't need to run addUnique on staff
@@ -900,7 +900,7 @@ int dmRemove(Player* player, cmd* cmnd) {
 	player->printColor("You remove %P from %N's worn equipment.\n", object, target);
 
 	if(!player->isDm())
-		log_immort(true, player, "%s removed %s from %s's worn equipment.\n", player->name, object->name, target->name);
+		log_immort(true, player, "%s removed %s from %s's worn equipment.\n", player->getCName(), object->getCName(), target->getCName());
 
 	player->addObj(object);
 
@@ -975,7 +975,7 @@ int dmPut(Player* player, cmd* cmnd) {
 
 
 		if((container->getShotsCur() + 1) > container->getShotsMax()) {
-			player->printColor("You will exceed the maximum allowed items for %P(%d).\n", container->name, container->getShotsMax());
+			player->printColor("You will exceed the maximum allowed items for %P(%d).\n", container->getCName(), container->getShotsMax());
 			player->print("Aborted.\n");
 			if(!online)
 				free_crt(target);
@@ -987,7 +987,7 @@ int dmPut(Player* player, cmd* cmnd) {
 		container->addObj(object);
 		Limited::addOwner(target, object);
 
-		player->printColor("You put %P into %N's %s.\n", object, target, container->name);
+		player->printColor("You put %P into %N's %s.\n", object, target, container->getCName());
 
 		target->save(online);
 		if(!online)
@@ -1064,7 +1064,7 @@ int dmMove(Player* player, cmd* cmnd) {
 	}
 
 	// put them in their new location
-	log << player->name << " moved player " << creature->name << " from room ";
+	log << player->getName() << " moved player " << creature->getName() << " from room ";
 	// TODO: area_room isn't valid
 	if(creature->currentLocation.mapmarker.getArea() != 0)
 		log << creature->currentLocation.mapmarker.str(false);
@@ -1086,7 +1086,7 @@ int dmMove(Player* player, cmd* cmnd) {
 		creature->currentLocation.mapmarker = mapmarker;
 
 		log << creature->currentLocation.mapmarker.str(false);
-		player->print("Player %s moved to location %s.\n", creature->name, creature->currentLocation.mapmarker.str(false).c_str());
+		player->print("Player %s moved to location %s.\n", creature->getCName(), creature->currentLocation.mapmarker.str(false).c_str());
 	} else {
 		if(!validRoomId(cr)) {
 			player->print("Can only put players in the range of 1-%d.\n", RMAX);
@@ -1095,7 +1095,7 @@ int dmMove(Player* player, cmd* cmnd) {
 		}
 		*&creature->currentLocation.room = *&cr;
 		log << cr.str();
-		player->print("Player %s moved to location %s.\n", creature->name, cr.str().c_str());
+		player->print("Player %s moved to location %s.\n", creature->getCName(), cr.str().c_str());
 	}
 
 	log_immort(true, player, "%s.\n", log.str().c_str());
@@ -1160,7 +1160,7 @@ int dmRename(Player* player, cmd* cmnd) {
 	Player	*target=0;
 	int		i=0;
 	FILE	*fp;
-	char	old_name[25], new_name[25];
+	bstring	oldName, newName;
 	char	file[80];
 
 	if(!player->isStaff() && !player->isWatcher())
@@ -1195,38 +1195,39 @@ int dmRename(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	strcpy(old_name, target->name);
-	strcpy(new_name, cmnd->str[2]);
-	new_name[0] = up(new_name[0]);
+	oldName = target->getName();
+	newName = cmnd->str[2];
+	newName[0] = up(newName[0]);
 
-	if(!strcmp(new_name, old_name)) {
-		player->print("Names are the same: hoose a different name.\n");
+	if(newName == oldName) {
+		player->print("Names are the same: choose a different name.\n");
 		return(0);
 	}
-	if(!strcmp(player->name, old_name)) {
+	if(player->getName() == oldName) {
 		player->print("You can't rename yourself.\n");
 		return(0);
 	}
-	if(!parse_name(new_name)) {
+	if(!parse_name(newName)) {
 		player->print("The new name is not allowed, pick another.\n");
 		return(0);
 	}
-	if(strlen(new_name) >= 20) {
+	bstring::size_type len = newName.length();
+	if(len >= 20) {
 		player->print("The name must be less than 20 characters.\n");
 		return(0);
 	}
-	if(strlen(new_name) < 3) {
+	if(len < 3) {
 		player->print("The name must be more than 3 characters.\n");
 		return(0);
 	}
-	for(i=0; i< (int)strlen(new_name); i++)
-		if(!isalpha(new_name[i]) && (new_name[i] != '\'')) {
+	for(i=0; i< (int)len; i++)
+		if(!isalpha(newName[i]) && (newName[i] != '\'')) {
 			player->print("Name must be alphabetic, pick another.\n");
 			return(0);
 		}
 
 	// See if a player with the new name exists
-	sprintf(file, "%s/%s.xml", Path::Player, new_name);
+	sprintf(file, "%s/%s.xml", Path::Player, newName.c_str());
 	fp = fopen(file, "r");
 	if(fp) {
 		player->print("A player with that name already exists.\n");
@@ -1234,32 +1235,32 @@ int dmRename(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	strcpy(target->name, new_name);
+	target->setName( newName);
 
 	if(target->getGuild()) {
 		Guild* guild = gConfig->getGuild(target->getGuild());
-		guild->renameMember(old_name, new_name);
+		guild->renameMember(oldName, newName);
 	}
-	gConfig->guildCreationsRenameSupporter(old_name, new_name);
+	gConfig->guildCreationsRenameSupporter(oldName, newName);
 	gConfig->saveGuilds();
 
 
-	gConfig->renamePropertyOwner(old_name, target);
-	renamePlayerFiles(old_name, new_name);
-	gServer->clearPlayer(old_name);
+	gConfig->renamePropertyOwner(oldName, target);
+	renamePlayerFiles(oldName.c_str(), newName.c_str());
+	gServer->clearPlayer(oldName);
 	gServer->addPlayer(target);
 
-	player->print("%s has been renamed to %s.\n", old_name, target->name);
-	target->print("You have been renamed to %s.\n", target->name);
-	broadcast(isDm, "^g### %s renamed %s to %s.", player->name, old_name, target->name);
-	logn("log.rename", "%s renamed %s to %s.\n", player->name, old_name, target->name);
+	player->print("%s has been renamed to %s.\n", oldName.c_str(), target->getCName());
+	target->print("You have been renamed to %s.\n", target->getCName());
+	broadcast(isDm, "^g### %s renamed %s to %s.", player->getCName(), oldName.c_str(), target->getCName());
+	logn("log.rename", "%s renamed %s to %s.\n", player->getCName(), oldName.c_str(), target->getCName());
 
 	// unassociate
 	if(target->getForum() != "") {
 		//target->printColor("Your forum account ^C%s^x is no longer unassociated with this character.\n", target->getForum().c_str());
 		//target->print("Use the \"forum\" command to reassociate this character with your forum account.\n");
 		//target->setForum("");
-		callWebserver((bstring)"mud.php?type=forum&char=" + old_name + "&rename=" + new_name);
+		callWebserver((bstring)"mud.php?type=forum&char=" + oldName + "&rename=" + newName);
 	}
 
 	target->save(true);
@@ -1314,8 +1315,8 @@ int dmPassword(Player* player, cmd* cmnd) {
 
 	target->setPassword(pass);
 
-	player->print("%s's password has been changed to %s.\n", target->name, pass.c_str());
-	logn("log.passwd", "### %s changed %s's password to %s.\n", player->name, target->name, pass.c_str());
+	player->print("%s's password has been changed to %s.\n", target->getCName(), pass.c_str());
+	logn("log.passwd", "### %s changed %s's password to %s.\n", player->getCName(), target->getCName(), pass.c_str());
 
 	target->save(online);
 	if(!online)
@@ -1347,7 +1348,7 @@ int dmRestorePlayer(Player* player, cmd* cmnd) {
 		online = true;
 
 	if(target->getNegativeLevels()) {
-		player->print("Clear %s's negative levels first.\n", target->name);
+		player->print("Clear %s's negative levels first.\n", target->getCName());
 		return(0);
 	}
 
@@ -1364,8 +1365,8 @@ int dmRestorePlayer(Player* player, cmd* cmnd) {
 
 	player->print("%M has been restored.\n", target);
 
-	log_immort(true, player, "%s restored %s from %ld to %ld xp.\n", player->name,
-		target->name, old_xp, target->getExperience());
+	log_immort(true, player, "%s restored %s from %ld to %ld xp.\n", player->getCName(),
+		target->getCName(), old_xp, target->getExperience());
 
 	target->save(online);
 	if(!online)
@@ -1417,16 +1418,16 @@ int dmGeneric(Player* player, cmd* cmnd, bstring action, int what) {
 
 	// time to actually do what they want us to do
 	if(what == DM_GEN_BANK)
-		player->print("%s's bank balance is: %ldgp.\n", target->name, target->bank[GOLD]);
+		player->print("%s's bank balance is: %ldgp.\n", target->getCName(), target->bank[GOLD]);
 	else if(what == DM_GEN_INVVAL)
-		player->print("%s's total inventory assets: %ldgp.\n", target->name, target->getInventoryValue());
+		player->print("%s's total inventory assets: %ldgp.\n", target->getCName(), target->getInventoryValue());
 	else if(what == DM_GEN_PROXY) {
 
 		if(!target->flagIsSet(P_ON_PROXY)) {
-			player->print("%s is now allowed to multi-log for proxy purposes.\n", target->name);
+			player->print("%s is now allowed to multi-log for proxy purposes.\n", target->getCName());
 			target->setFlag(P_ON_PROXY);
 		} else {
-			player->print("%s is no longer allowed to multi-log.\n", target->name);
+			player->print("%s is no longer allowed to multi-log.\n", target->getCName());
 			target->clearFlag(P_ON_PROXY);
 		}
 		target->save(online);
@@ -1465,10 +1466,10 @@ int dmGeneric(Player* player, cmd* cmnd, bstring action, int what) {
 					target->print("%M removed one of your warnings. You now have %d.\n", player, target->getWarnings());
 				player->print("One warning removed. %M now has %d warning%s remaining.\n", target, target->getWarnings(), (target->getWarnings()==1 ? "":"s"));
 			}
-			log_immort(false,player, "%s removed a warning from %s.\n", player->name, target->name);
-			logn("log.warn", "%s removed a warning from %s.\n", player->name, target->name);
+			log_immort(false,player, "%s removed a warning from %s.\n", player->getCName(), target->getCName());
+			logn("log.warn", "%s removed a warning from %s.\n", player->getCName(), target->getCName());
 
-			broadcast(isCt, "^y%s removed a warning from %s. New total: %d", player->name, target->name, target->getWarnings());
+			broadcast(isCt, "^y%s removed a warning from %s. New total: %d", player->getCName(), target->getCName(), target->getWarnings());
 		} else if(!strcmp(cmnd->str[2], "-a")) {
 			if(target->getWarnings() > 2) {
 				player->print("%M already has 3 warnings. %s cannot be warned further.\n",
@@ -1483,10 +1484,10 @@ int dmGeneric(Player* player, cmd* cmnd, bstring action, int what) {
 					      player, target->getWarnings(), (target->getWarnings()>1 ? "s":""));
 				player->print("Warning added. %M now has %d total warning%s.\n", target, target->getWarnings(), (target->getWarnings()>1 ? "s":""));
 
-				logn("log.warn", "%s added a warning to %s.\n", player->name, target->name);
-				log_immort(false,player, "%s added a warning to %s.\n", player->name, target->name);
+				logn("log.warn", "%s added a warning to %s.\n", player->getCName(), target->getCName());
+				log_immort(false,player, "%s added a warning to %s.\n", player->getCName(), target->getCName());
 
-				broadcast(isCt, "^y%s added a warning to %s. New total: %d", player->name, target->name, target->getWarnings());
+				broadcast(isCt, "^y%s added a warning to %s. New total: %d", player->getCName(), target->getCName(), target->getWarnings());
 			}
 
 		} else {
@@ -1500,10 +1501,10 @@ int dmGeneric(Player* player, cmd* cmnd, bstring action, int what) {
 	} else if(what == DM_GEN_BUG) {
 
 		if(!target->flagIsSet(P_BUGGED)) {
-			player->print("%s is now bugged for surveillance.\n", target->name);
+			player->print("%s is now bugged for surveillance.\n", target->getCName());
 			target->setFlag(P_BUGGED);
 		} else {
-			player->print("%s is no longer bugged for surveillance.\n", target->name);
+			player->print("%s is no longer bugged for surveillance.\n", target->getCName());
 			target->clearFlag(P_BUGGED);
 		}
 		target->save(online);
@@ -1787,56 +1788,56 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
 	if(victim->getClass() < BUILDER && !silent) {
 		switch(type) {
 		case DM_COMBUST:
-			broadcast(victim->getSock(), victim->getRoomParent(), "^r%s bursts into flames!", victim->name);
-			broadcast("^r### Sadly, %s spontaneously combusted.", victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^r%s bursts into flames!", victim->getCName());
+			broadcast("^r### Sadly, %s spontaneously combusted.", victim->getCName());
 			break;
 		case DM_SLIME:
 			broadcast(victim->getSock(), victim->getRoomParent(),
-				"^gA massive green slime just arrived.\nThe massive green slime attacks %s!", victim->name);
-			broadcast("^g### Sadly, %s was dissolved by a massive green slime.", victim->name);
+				"^gA massive green slime just arrived.\nThe massive green slime attacks %s!", victim->getCName());
+			broadcast("^g### Sadly, %s was dissolved by a massive green slime.", victim->getCName());
 			break;
 		case DM_GNATS:
 			broadcast(victim->getSock(), victim->getRoomParent(),
-				"^mA demonic gnat swarm just arrived.\nThe demonic gnat swarm attacks %s!", victim->name);
-			broadcast("^m### Sadly, %s was eaten by a ravenous demonic gnat swarm!", victim->name);
+				"^mA demonic gnat swarm just arrived.\nThe demonic gnat swarm attacks %s!", victim->getCName());
+			broadcast("^m### Sadly, %s was eaten by a ravenous demonic gnat swarm!", victim->getCName());
 			break;
 		case DM_TRIP:
-			broadcast(victim->getSock(), victim->getRoomParent(), "^m%s slips on an oversized banana peel!", victim->name);
-			broadcast("^m### Sadly, %s tripped and broke %s neck.", victim->name, victim->hisHer());
+			broadcast(victim->getSock(), victim->getRoomParent(), "^m%s slips on an oversized banana peel!", victim->getCName());
+			broadcast("^m### Sadly, %s tripped and broke %s neck.", victim->getCName(), victim->hisHer());
 			break;
 		case DM_BOMB:
-			broadcast(victim->getSock(), victim->getRoomParent(), "^r%s begins to tick!", victim->name);
-			broadcast("^r### Sadly, %s blew %sself up!", victim->name, victim->himHer());
+			broadcast(victim->getSock(), victim->getRoomParent(), "^r%s begins to tick!", victim->getCName());
+			broadcast("^r### Sadly, %s blew %sself up!", victim->getCName(), victim->himHer());
 			break;
 		case DM_NUCLEAR:
-			broadcast(victim->getSock(), victim->getRoomParent(), "^g%s begins to meltdown!", victim->name);
-			broadcast("^g### Sadly, %s was killed in a nuclear explosion.", victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^g%s begins to meltdown!", victim->getCName());
+			broadcast("^g### Sadly, %s was killed in a nuclear explosion.", victim->getCName());
 			break;
 		case DM_KILL:
-			broadcast(victim->getSock(), victim->getRoomParent(), "^rA giant lightning bolt strikes %s!", victim->name);
-			broadcast("^r### Sadly, %s has been incinerated by lightning from the heavens!", victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^rA giant lightning bolt strikes %s!", victim->getCName());
+			broadcast("^r### Sadly, %s has been incinerated by lightning from the heavens!", victim->getCName());
 			break;
 		case DM_RAPE:
-			broadcast(victim->getSock(), victim->getRoomParent(), "^m%s was raped by the gods!", victim->name);
-			broadcast(isStaff, "^m*** %s raped %s.", player->name, victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^m%s was raped by the gods!", victim->getCName());
+			broadcast(isStaff, "^m*** %s raped %s.", player->getCName(), victim->getCName());
 			break;
 		case DM_DRAIN:
-			broadcast(victim->getSock(), victim->getRoomParent(), "^c%s's life force drains away!", victim->name);
-			broadcast(isStaff, "^g*** %s drained %s.", player->name, victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^c%s's life force drains away!", victim->getCName());
+			broadcast(isStaff, "^g*** %s drained %s.", player->getCName(), victim->getCName());
 			break;
 		case DM_CRUSH:
-			broadcast(victim->getSock(), victim->getRoomParent(), "^cA giant stone slab falls on %s!", victim->name);
-			broadcast("^c### Sadly, %s was crushed under a giant stone slab.", victim->name);
+			broadcast(victim->getSock(), victim->getRoomParent(), "^cA giant stone slab falls on %s!", victim->getCName());
+			broadcast("^c### Sadly, %s was crushed under a giant stone slab.", victim->getCName());
 			break;
 		case DM_MISSILE:
 			broadcast(victim->getSock(), victim->getRoomParent(),
-				"^r%s was struck by a cruise missile!\n%s exploded!", victim->name, victim->name);
-			broadcast("^r### Sadly, %s was killed by a precision-strike cruise missile.", victim->name);
+				"^r%s was struck by a cruise missile!\n%s exploded!", victim->getCName(), victim->getCName());
+			broadcast("^r### Sadly, %s was killed by a precision-strike cruise missile.", victim->getCName());
 			break;
 		case DM_NOMNOM:
 			broadcast(victim->getSock(), victim->getRoomParent(),
-				"A fearsome monster leaps out of the shadows!\nIt tears off %s's limbs and greedily devours them!", victim->name);
-			broadcast("### Sadly, %s was devoured by a fearsome monster.", victim->name);
+				"A fearsome monster leaps out of the shadows!\nIt tears off %s's limbs and greedily devours them!", victim->getCName());
+			broadcast("### Sadly, %s was devoured by a fearsome monster.", victim->getCName());
 			break;
 		default:
 			break;
@@ -1844,40 +1845,40 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
 	} else {
 		switch(type) {
 		case DM_COMBUST:
-			broadcast(isStaff, "^G### Sadly, %s spontaneously combusted.", victim->name);
+			broadcast(isStaff, "^G### Sadly, %s spontaneously combusted.", victim->getCName());
 			break;
 		case DM_SLIME:
-			broadcast(isStaff, "^G### Sadly, %s was dissolved by a massive green slime.", victim->name);
+			broadcast(isStaff, "^G### Sadly, %s was dissolved by a massive green slime.", victim->getCName());
 			break;
 		case DM_GNATS:
-			broadcast(isStaff, "^G### Sadly, %s was eaten by a ravenous demonic gnat swarm!", victim->name);
+			broadcast(isStaff, "^G### Sadly, %s was eaten by a ravenous demonic gnat swarm!", victim->getCName());
 			break;
 		case DM_TRIP:
-			broadcast(isStaff, "^G### Sadly, %s tripped and broke %s neck.", victim->name, victim->hisHer());
+			broadcast(isStaff, "^G### Sadly, %s tripped and broke %s neck.", victim->getCName(), victim->hisHer());
 			break;
 		case DM_BOMB:
-			broadcast(isStaff, "^G### Sadly, %s blew %sself up!!", victim->name, victim->himHer());
+			broadcast(isStaff, "^G### Sadly, %s blew %sself up!!", victim->getCName(), victim->himHer());
 			break;
 		case DM_NUCLEAR:
-			broadcast(isStaff, "^G### Sadly, %s was killed in a nuclear explosion.", victim->name);
+			broadcast(isStaff, "^G### Sadly, %s was killed in a nuclear explosion.", victim->getCName());
 			break;
 		case DM_KILL:
-			broadcast(isStaff, "^G### Sadly, %s has been incinerated by lightning from the heavens!", victim->name);
+			broadcast(isStaff, "^G### Sadly, %s has been incinerated by lightning from the heavens!", victim->getCName());
 			break;
 		case DM_RAPE:
-			broadcast(isStaff, "^g*** %s raped %s.", player->name, victim->name);
+			broadcast(isStaff, "^g*** %s raped %s.", player->getCName(), victim->getCName());
 			break;
 		case DM_DRAIN:
-			broadcast(isStaff, "^g*** %s drained %s.", player->name, victim->name);
+			broadcast(isStaff, "^g*** %s drained %s.", player->getCName(), victim->getCName());
 			break;
 		case DM_CRUSH:
-			broadcast(isStaff, "^G### Sadly, %s was crushed under a giant stone slab.", victim->name);
+			broadcast(isStaff, "^G### Sadly, %s was crushed under a giant stone slab.", victim->getCName());
 			break;
 		case DM_MISSILE:
-			broadcast(isStaff, "^G### Sadly, %s was killed by a precision-strike cruise missile.", victim->name);
+			broadcast(isStaff, "^G### Sadly, %s was killed by a precision-strike cruise missile.", victim->getCName());
 			break;
 		case DM_NOMNOM:
-			broadcast(isStaff, "^G### Sadly, %s was devoured by a fearsome monster.", victim->name);
+			broadcast(isStaff, "^G### Sadly, %s was devoured by a fearsome monster.", victim->getCName());
 			break;
 		default:
 			break;
@@ -1898,10 +1899,10 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
 				switch(type) {
 				case DM_NUCLEAR:
 					viewLoginFile(player->getSock(), filename);
-					broadcast("^g### Sadly, %s was killed by %s's radiation.", player->name, victim->name);
+					broadcast("^g### Sadly, %s was killed by %s's radiation.", player->getCName(), victim->getCName());
 					break;
 				default:
-					broadcast("^r### Sadly, %s died in %s's explosion!", player->name, victim->name);
+					broadcast("^r### Sadly, %s died in %s's explosion!", player->getCName(), victim->getCName());
 					break;
 				}
 			}
@@ -2063,14 +2064,14 @@ int dmRepair(Player* player, cmd* cmnd) {
 	}
 
 	if(check)
-		player->print("%s's current armor status:\n", creature->name);
+		player->print("%s's current armor status:\n", creature->getCName());
 
 	for(a=0;a<MAXWEAR;a++) {
 		if(!creature->ready[a])
 			continue;
 
 		if(check) {
-			player->print("%s: [%d/%d](%2f)\n", creature->ready[a]->name,
+			player->print("%s: [%d/%d](%2f)\n", creature->ready[a]->getCName(),
 			      creature->ready[a]->getShotsCur(), creature->ready[a]->getShotsMax(),
 			      ((float)creature->ready[a]->getShotsCur()/(float)creature->ready[a]->getShotsMax()));
 			continue;
@@ -2078,7 +2079,7 @@ int dmRepair(Player* player, cmd* cmnd) {
 		if(creature->ready[a]->getShotsCur() < creature->ready[a]->getShotsMax()) {
 			creature->ready[a]->setShotsCur(creature->ready[a]->getShotsMax());
 
-			player->print("%s's %s repaired to full shots (%d/%d).\n", creature->name, creature->ready[a]->name,
+			player->print("%s's %s repaired to full shots (%d/%d).\n", creature->getCName(), creature->ready[a]->getCName(),
 			      creature->ready[a]->getShotsCur(), creature->ready[a]->getShotsMax());
 			count++;
 
@@ -2088,12 +2089,12 @@ int dmRepair(Player* player, cmd* cmnd) {
 
 
 	if(count) {
-		broadcast(isDm, "^g### %s repaired all of %s's armor.", player->name, creature->name);
-		log_immort(true, player, "%s repaired all of %s's armor.", player->name, creature->name);
+		broadcast(isDm, "^g### %s repaired all of %s's armor.", player->getCName(), creature->getCName());
+		log_immort(true, player, "%s repaired all of %s's armor.", player->getCName(), creature->getCName());
 	}
 
 	if(!count)
-		player->print("%s is wearing nothing that needs to be repaired.\n", creature->name);
+		player->print("%s is wearing nothing that needs to be repaired.\n", creature->getCName());
 
 	return(0);
 }
@@ -2129,7 +2130,7 @@ int dmMax(Player* player, cmd* cmnd) {
 	player->mp.setMax(30000);
 	player->mp.setCur(30000);
 
-	if(!strcmp(player->name, "Bane")) {
+	if(player->getName() == "Bane") {
 		player->setLevel(69);
 		player->setExperience(2100000000);
 	} else {
@@ -2178,7 +2179,7 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
 
 			target = gServer->findPlayer(cmnd->str[1]);
 			if(target) {
-				player->print("%s is currently online.\n%s must be offline for auto-backup restore.\n", target->name, target->upHeShe());
+				player->print("%s is currently online.\n%s must be offline for auto-backup restore.\n", target->getCName(), target->upHeShe());
 				return(0);
 			}
 
@@ -2186,9 +2187,9 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
 				unlink(restoredFile);
 
 			link(filename, restoredFile);
-			broadcast(isDm, "^g*** %s restored %s from auto-backup.", player->name, cmnd->str[1]);
+			broadcast(isDm, "^g*** %s restored %s from auto-backup.", player->getCName(), cmnd->str[1]);
 			player->print("Restoring %s from last auto-backup.\n", cmnd->str[1]);
-			log_immort(false,player, "%s restored %s from auto-backup file.\n", player->name, cmnd->str[1]);
+			log_immort(false,player, "%s restored %s from auto-backup file.\n", player->getCName(), cmnd->str[1]);
 		} else {
 			player->print("Backup file for that player does not exist.\n");
 		}
@@ -2209,15 +2210,15 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
 
 
 	if(cmnd->num > 2 && !strcmp(cmnd->str[2], "-d")) {
-		sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, target->name);
+		sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, target->getCName());
 		if(file_exists(filename)) {
 			unlink(filename);
-			broadcast(isDm, "^g*** %s deleted %s's backup file.", player->name, target->name);
-			player->print("Deleted %s.bak from disk.\n", target->name);
+			broadcast(isDm, "^g*** %s deleted %s's backup file.", player->getCName(), target->getCName());
+			player->print("Deleted %s.bak from disk.\n", target->getCName());
 
-			log_immort(false,player, "%s deleted backup file for player %s.\n", player->name, target->name);
+			log_immort(false,player, "%s deleted backup file for player %s.\n", player->getCName(), target->getCName());
 		} else {
-			player->print("Backup file for player %s does not exist.\n", target->name);
+			player->print("Backup file for player %s does not exist.\n", target->getCName());
 
 		}
 
@@ -2234,10 +2235,10 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	broadcast(isDm, "^g*** %s backed up %s to disk.", player->name, target->name);
-	player->print("%s has been backed up.\n", target->name);
+	broadcast(isDm, "^g*** %s backed up %s to disk.", player->getCName(), target->getCName());
+	player->print("%s has been backed up.\n", target->getCName());
 
-	log_immort(false,player, "%s backed up player %s to disk.\n", player->name, target->name);
+	log_immort(false,player, "%s backed up player %s to disk.\n", player->getCName(), target->getCName());
 
 	if(!online)
 		free_crt(target);
@@ -2272,13 +2273,13 @@ int dmChangeStats(Player* player, cmd* cmnd) {
 
 	if(!target->flagIsSet(P_CAN_CHANGE_STATS)) {
 		target->setFlag(P_CAN_CHANGE_STATS);
-		player->print("%s can now choose new stats.\n", target->name);
+		player->print("%s can now choose new stats.\n", target->getCName());
 	} else {
 		target->clearFlag(P_CAN_CHANGE_STATS);
-		player->print("%s can no longer choose new stats.\n", target->name);
+		player->print("%s can no longer choose new stats.\n", target->getCName());
 	}
 
-	log_immort(false, player, "%s set %s to choose new stats\n", player->name, target->name);
+	log_immort(false, player, "%s set %s to choose new stats\n", player->getCName(), target->getCName());
 
 	return(0);
 }
@@ -2378,7 +2379,7 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(!reason && !strcmp(player->name, "Bane")) {
+	if(!reason && player->getName() != "Bane") {
 		player->print("Use the -r option and enter a reason, assbandit!\n");
 		if(!online)
 			free_crt(target);
@@ -2398,18 +2399,18 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 	target->setFlag(P_JAILED);
 
 
-	//log_immort(true, player, "%s jailed %s for %d minutes.\n", player->name, target->name, tm);
+	//log_immort(true, player, "%s jailed %s for %d minutes.\n", player->getCName(), target->getCName(), tm);
 	if(!reason) {
-		logn("log.jail", "%s jailed %s for %d minutes.%s\n", player->name, target->name, tm);
-		broadcast(isCt, "^y*** %s jailed %s for %d minutes.%s", player->name, target->name, tm);
+		logn("log.jail", "%s jailed %s for %d minutes.%s\n", player->getCName(), target->getCName(), tm);
+		broadcast(isCt, "^y*** %s jailed %s for %d minutes.%s", player->getCName(), target->getCName(), tm);
 	} else {
-		logn("log.jail", "%s jailed %s for %d minutes. Reason: %s\n", player->name, target->name, tm, reason);
-		broadcast(isCt, "^y*** %s jailed %s for %d minutes. Reason: %s", player->name, target->name, tm, reason);
+		logn("log.jail", "%s jailed %s for %d minutes. Reason: %s\n", player->getCName(), target->getCName(), tm, reason);
+		broadcast(isCt, "^y*** %s jailed %s for %d minutes. Reason: %s", player->getCName(), target->getCName(), tm, reason);
 	}
 
 	if(player->isWatcher())
 		logn("log.wjail", "%s jailed %s(%s) for %d minutes. Reason: %s\n",
-			player->name, target->name, target->currentLocation.room.str().c_str(), tm, reason);
+			player->getCName(), target->getCName(), target->currentLocation.room.str().c_str(), tm, reason);
 
 	CatRef	cr;
 	cr.setArea("jail");
@@ -2418,11 +2419,11 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 	if(!online) {
 
 		if(!strcmp(cmnd->str[2], "-b"))
-			broadcast("^R### Cackling demons drag %s to the Dungeon of Despair.", target->name);
+			broadcast("^R### Cackling demons drag %s to the Dungeon of Despair.", target->getCName());
 		target->currentLocation.room = cr;
 		target->currentLocation.mapmarker.reset();
 
-		player->print("%s is now jailed.\n", target->name);
+		player->print("%s is now jailed.\n", target->getCName());
 
 	} else {
 
@@ -2430,9 +2431,9 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 			player->print("Problem loading room %s.\nAborting.\n", cr.str().c_str());
 			return(0);
 		} else {
-			player->print("%s is now jailed.\n", target->name);
+			player->print("%s is now jailed.\n", target->getCName());
 			broadcast(NULL, target->getRoomParent(),
-				"^RA demonic jailer just arrived.\nThe demonic jailer opens a portal to Hell.\nThe demonic jailer drags %s screaming to the Dungeon of Despair.", target->name);
+				"^RA demonic jailer just arrived.\nThe demonic jailer opens a portal to Hell.\nThe demonic jailer drags %s screaming to the Dungeon of Despair.", target->getCName());
 
 			target->printColor("^RThe demonic jailer grips your soul and drags you to the Dungeon of Despair.\n");
 			broadcast(target->getSock(), target->getRoomParent(), "^RThe portal closes with a puff of smoke.");
@@ -2444,7 +2445,7 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 		}
 
 		if(!strcmp(cmnd->str[2], "-b"))
-			broadcast("^R### Cackling demons drag %s to the Dungeon of Despair.", target->name);
+			broadcast("^R### Cackling demons drag %s to the Dungeon of Despair.", target->getCName());
 
 	}
 

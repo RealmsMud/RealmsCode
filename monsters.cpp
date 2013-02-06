@@ -22,9 +22,9 @@
 #include "math.h"
 #include "unique.h"
 
-
+// TODO switch this strcmp to compare
 bool Monster::operator <(const Monster& t) const {
-    return(strcmp(this->name, t.name) < 0);
+    return(strcmp(this->getCName(), t.getCName()) < 0);
 }
 /*
  * mTypes formatted as case for use in functions below
@@ -443,7 +443,7 @@ int Monster::castSpell(Creature *target) {
 	int		i=0, spl=0, c=0;
 	int		known[20], knowctr=0;
 	int		(*fn)(SpellFn);
-	char	*enemy;
+	bstring enemy;
 	int		realm=0, n=0;
 
 	zero(known, sizeof(known));
@@ -525,7 +525,7 @@ int Monster::castSpell(Creature *target) {
 		splNo == S_TOUCH_OF_KESH
 	) {
 		// we have the exact pointer
-		enemy = target->name;
+		enemy = target->getName();
 		n = 1;
 		do {
 			temp_ptr = getRoomParent()->findCreature(this, enemy, n, false);
@@ -544,7 +544,7 @@ int Monster::castSpell(Creature *target) {
 		n--;
 
 		// at this point we know which number is the exact match
-		strcpy(cmnd.str[2], target->name);
+		strcpy(cmnd.str[2], target->getCName());
 		cmnd.val[2] = n;
 		cmnd.num = 3;
 	} else {
@@ -751,7 +751,7 @@ bool Monster::checkAssist() {
 					addEnemy(crt, true);
 
 					broadcast(hearMobAggro, "^y*** %s(R:%s) added %s to %s attack list (same room).",
-						name, getRoomParent()->fullName().c_str(), crt->name, hisHer());
+						getCName(), getRoomParent()->fullName().c_str(), crt->getCName(), hisHer());
 
 					setFlag(M_ALWAYS_ACTIVE);
 					crt = 0;
@@ -870,10 +870,10 @@ void Monster::checkScavange(long t) {
 						}
 						continue;
 					}
-					namelen = strlen(object->name);
+					namelen = object->getName().length();
 					if(buflen + namelen + 2 >= 2048)
 						break;
-					strcpy(s, object->name);
+					strcpy(s, object->getCName());
 					s += namelen;
 					strcpy(s, "^x, ");
 					s += 4;
@@ -1005,7 +1005,7 @@ int Monster::checkWander(long t) {
 		if(flagIsSet(M_CHASING_SOMEONE) && mrand(1,100) < 10) {
 		    Creature* target = getTarget(false);
 		    if(target)
-		        broadcast(NULL, room, "%1M gives up %s search for %s and wanders away.", this, hisHer(), target->getName());
+		        broadcast(NULL, room, "%1M gives up %s search for %s and wanders away.", this, hisHer(), target->getCName());
 		    else
 		        broadcast(NULL, room, "%1M gives up %s search and wanders away.", this, hisHer());
 			return(2);
@@ -1162,7 +1162,7 @@ int Monster::toJail(Player* player) {
 		return(-1);
 	}
 
-	logn("log.jail", "%s was hauled off to jail (%s) by %s.\n", player->name, jailroom.str().c_str(), name);
+	logn("log.jail", "%s was hauled off to jail (%s) by %s.\n", player->getCName(), jailroom.str().c_str(), getCName());
 	player->deleteFromRoom();
 	player->addToRoom(room);
 	player->doPetFollow();
@@ -1201,7 +1201,7 @@ int Monster::grabCoins(Player* player) {
 	coins.add(grab, GOLD);
 	player->coins.sub(grab, GOLD);
 
-	logn("log.mug", "%s was mugged by %s for %d gold.\n", player->name, name, grab);
+	logn("log.mug", "%s was mugged by %s for %d gold.\n", player->getCName(), getCName(), grab);
 
 	if(grab == num) {
 		player->print("%M grabs all your coins!\n", this);

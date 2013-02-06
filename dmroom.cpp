@@ -225,7 +225,7 @@ int dmPurge(Player* player, cmd* cmnd) {
 	player->print("Purged.\n");
 
 	if(!player->isDm())
-		log_immort(false,player, "%s purged room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
+		log_immort(false,player, "%s purged room %s.\n", player->getCName(), player->getRoomParent()->fullName().c_str());
 
 	return(0);
 }
@@ -252,7 +252,7 @@ int dmEcho(Player* player, cmd* cmnd) {
 
 	if(!player->isCt())
 		broadcast(isStaff, "^G*** %s (%s) echoed: %s",
-			player->name, player->getRoomParent()->fullName().c_str(), text.c_str());
+			player->getCName(), player->getRoomParent()->fullName().c_str(), text.c_str());
 
 	broadcast(NULL, player->getRoomParent(), "%s", text.c_str());
 	return(0);
@@ -327,7 +327,7 @@ int dmResetPerms(Player* player, cmd* cmnd) {
 		crtm->ltime = time(0);
 	}
 
-	log_immort(true, player, "%s reset perm timeouts in room %s\n", player->name, player->getRoomParent()->fullName().c_str());
+	log_immort(true, player, "%s reset perm timeouts in room %s\n", player->getCName(), player->getRoomParent()->fullName().c_str());
 
 	if(gConfig->resaveRoom(room->info) < 0)
 		player->print("Room fail saved.\n");
@@ -355,9 +355,9 @@ void stat_rom_exits(Creature* player, BaseRoom* room) {
 	for(Exit* exit : room->exits) {
 
 		if(!exit->getLevel())
-			player->print("  %s: ", exit->name);
+			player->print("  %s: ", exit->getCName());
 		else
-			player->print("  %s(L%d): ", exit->name, exit->getLevel());
+			player->print("  %s(L%d): ", exit->getCName(), exit->getLevel());
 
 		if(!exit->target.mapmarker.getArea())
 			player->printColor("%s ", exit->target.room.str(uRoom ? uRoom->info.area : "", 'y').c_str());
@@ -434,7 +434,7 @@ void stat_rom_exits(Creature* player, BaseRoom* room) {
 				player->print("    Size: %s", getSizeName(exit->getSize()).c_str());
 			if(exit->getDirection()) {
 				player->print("    Direction: %s", getDirName(exit->getDirection()).c_str());
-				if(getDir(exit->name) != NoDirection)
+				if(getDir(exit->getName()) != NoDirection)
 					player->printColor("\n^rThis exit has a direction set, but the exit is a cardinal exit.");
 			}
 			player->print("\n");
@@ -623,7 +623,7 @@ int stat_rom(Player* player, AreaRoom* room) {
 		return(0);
 
 	if(player->getClass() == CARETAKER)
-		log_immort(false,player, "%s statted room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
+		log_immort(false,player, "%s statted room %s.\n", player->getCName(), player->getRoomParent()->fullName().c_str());
 
 	player->print("Room: %s %s\n\n",
 		room->area->name.c_str(), room->fullName().c_str());
@@ -729,7 +729,7 @@ void validateShop(const Player* player, const UniqueRoom* shop, const UniqueRoom
 	} else {
 		const Exit* exit = storage->exits.front();
 		
-		if(	exit->target.room != shop->info || strcmp(exit->getName(), "out"))
+		if(	exit->target.room != shop->info || exit->getName() != "out")
 			player->printColor("^yThe storage room does not have an out exit pointing to the shop.\n");
 		else if(storage->exits.size() > 1)
 			player->printColor("^yThe storage room has more than one exit - it only needs one out exit pointing to the shop.\n");
@@ -752,14 +752,14 @@ int stat_rom(Player* player, UniqueRoom* room) {
 		return(0);
 
 	if(player->getClass() == CARETAKER)
-		log_immort(false,player, "%s statted room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
+		log_immort(false,player, "%s statted room %s.\n", player->getCName(), player->getRoomParent()->fullName().c_str());
 
 	player->printColor("Room: %s", room->info.str("", 'y').c_str());
 	if(gConfig->inSwapQueue(room->info, SwapRoom, true))
 		player->printColor("        ^eThis room is being swapped.");
 
 	player->print("\nTimes People have entered this room: %d\n", room->getBeenHere());
-	player->print("Name: %s\n", room->name);
+	player->print("Name: %s\n", room->getCName());
 
 	Property *p = gConfig->getProperty(room->info);
 	if(p) {
@@ -797,7 +797,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
 		loadObject((*it).second.cr, &object);
 
 		player->printColor("^y%2d) ^x%14s ^y::^x %-30s ^yInterval:^x %-5d", (*it).first+1,
-			crtm->cr.str("", 'y').c_str(), object ? object->name : "", crtm->interval);
+			crtm->cr.str("", 'y').c_str(), object ? object->getCName() : "", crtm->interval);
 
 		if(room->flagIsSet(R_SHOP_STORAGE) && object)
 			player->printColor(" ^yCost:^x %s", object->value.str().c_str());
@@ -821,7 +821,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
 		loadMonster((*it).second.cr, &monster);
 
 		player->printColor("^m%2d) ^x%14s ^m::^x %-30s ^mInterval:^x %d\n", (*it).first+1,
-			crtm->cr.str("", 'm').c_str(), monster ? monster->name : "", crtm->interval);
+			crtm->cr.str("", 'm').c_str(), monster ? monster->getCName() : "", crtm->interval);
 
 		if(monster) {
 			free_crt(monster);
@@ -1055,7 +1055,7 @@ int dmAddRoom(Player* player, cmd* cmnd) {
 		newRoom->info = cr;
 
 		newRoom->setFlag(R_CONSTRUCTION);
-		sprintf(newRoom->name, "New Room");
+		newRoom->setName("New Room");
 
 		if(newRoom->saveToFile(0) < 0) {
 			player->print("Write failed.\n");
@@ -1064,7 +1064,7 @@ int dmAddRoom(Player* player, cmd* cmnd) {
 
 		delete newRoom;
 
-		log_immort(true, player, "%s created room %s.\n", player->name, cr.str().c_str());
+		log_immort(true, player, "%s created room %s.\n", player->getCName(), cr.str().c_str());
 		player->print("Room %s created.\n", cr.str().c_str());
 		checkTeleportRange(player, cr);
 		cr.id++;
@@ -1120,7 +1120,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 		player->printColor("DecCompass toggled, set to %s^x.\n",
 			player->getAreaRoomParent()->getDecCompass() ? "^gYes" : "^rNo");
 
-		log_immort(true, player, "%s set decCompass to %s in room %s.\n", player->name,
+		log_immort(true, player, "%s set decCompass to %s in room %s.\n", player->getCName(),
 			player->getAreaRoomParent()->getDecCompass() ? "true" : "false", room->fullName().c_str());
 
 		break;
@@ -1186,7 +1186,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			player->getUniqueRoomParent()->setRoomExperience(cmnd->val[2]);
 
 			player->print("Room experience set to %d.\n", player->getUniqueRoomParent()->getRoomExperience());
-			log_immort(true, player, "%s set roomExp to %d in room %s.\n", player->name,
+			log_immort(true, player, "%s set roomExp to %d in room %s.\n", player->getCName(),
 				player->getUniqueRoomParent()->getRoomExperience(), room->fullName().c_str());
 		} else {
 			player->print("Invalid option.\n");
@@ -1199,7 +1199,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 				player->getUniqueRoomParent()->setFishing("");
 
 				player->print("Fishing list cleared.\n");
-				log_immort(true, player, "%s cleared fishing list in room %s.\n", player->name,
+				log_immort(true, player, "%s cleared fishing list in room %s.\n", player->getCName(),
 					room->fullName().c_str());
 			} else {
 				const Fishing* list = gConfig->getFishing(cmnd->str[3]);
@@ -1212,7 +1212,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 				player->getUniqueRoomParent()->setFishing(cmnd->str[3]);
 
 				player->print("Fishing list set to %s.\n", player->getUniqueRoomParent()->getFishingStr().c_str());
-				log_immort(true, player, "%s set fishing list to %s in room %s.\n", player->name,
+				log_immort(true, player, "%s set fishing list to %s in room %s.\n", player->getCName(),
 					player->getUniqueRoomParent()->getFishingStr().c_str(), room->fullName().c_str());
 			}
 		} else if(low(cmnd->str[2][1]) == 'a') {
@@ -1227,7 +1227,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			} else if(cmnd->num == 3) {
 				player->getUniqueRoomParent()->setFaction("");
 				player->print("Faction cleared.\n");
-				log_immort(true, player, "%s cleared faction in room %s.\n", player->name,
+				log_immort(true, player, "%s cleared faction in room %s.\n", player->getCName(),
 					room->fullName().c_str());
 				return(0);
 			}
@@ -1246,7 +1246,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			}
 			player->getUniqueRoomParent()->setFaction(faction->getName());
 			player->print("Faction set to %s.\n", player->getUniqueRoomParent()->getFaction().c_str());
-			log_immort(true, player, "%s set faction to %s in room %s.\n", player->name,
+			log_immort(true, player, "%s set faction to %s in room %s.\n", player->getCName(),
 				player->getUniqueRoomParent()->getFaction().c_str(), room->fullName().c_str());
 			break;
 		} else {
@@ -1271,7 +1271,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 
 				player->print("All room flags cleared.\n");
 				log_immort(true, player, "%s cleared all flags in room %s.\n",
-					player->name, room->fullName().c_str());
+					player->getCName(), room->fullName().c_str());
 				break;
 			}
 
@@ -1279,7 +1279,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 				player->getUniqueRoomParent()->clearFlag(num - 1);
 				player->print("Room flag #%d(%s) off.\n", num, get_rflag(num-1));
 
-				log_immort(true, player, "%s cleared flag #%d(%s) in room %s.\n", player->name, num, get_rflag(num-1),
+				log_immort(true, player, "%s cleared flag #%d(%s) in room %s.\n", player->getCName(), num, get_rflag(num-1),
 					room->fullName().c_str());
 			} else {
 	 			if(num >= R_TRAINING_ROOM && num - 4 <= R_TRAINING_ROOM) {
@@ -1292,7 +1292,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 
 	 			player->getUniqueRoomParent()->setFlag(num - 1);
 				player->print("Room flag #%d(%s) on.\n", num, get_rflag(num-1));
-				log_immort(true, player, "%s set flag #%d(%s) in room %s.\n", player->name, num, get_rflag(num-1),
+				log_immort(true, player, "%s set flag #%d(%s) in room %s.\n", player->getCName(), num, get_rflag(num-1),
 					room->fullName().c_str());
 
 				if(num-1 == R_SHOP)
@@ -1303,9 +1303,9 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 
 			// try and be smart
  			if(	num-1 == R_SHOP_STORAGE &&
- 				!strcmp(player->getUniqueRoomParent()->name, "New Room") &&
- 				player->getUniqueRoomParent()->exits.empty()
- 			) {
+ 				player->getUniqueRoomParent()->getName() == "New Room" &&
+ 				player->getUniqueRoomParent()->exits.empty())
+ 			{
  				cr = player->getUniqueRoomParent()->info;
  				UniqueRoom* shop=0;
  				bstring storageName = "Storage: ";
@@ -1322,8 +1322,8 @@ int dmSetRoom(Player* player, cmd* cmnd) {
  						link_rom(player->getUniqueRoomParent(), cr, "out");
  						player->getUniqueRoomParent()->setTrapExit(cr);
  						player->printColor("^y * ^xNaming this room...\n");
- 						storageName += shop->name;
- 						strcpy(player->getUniqueRoomParent()->name, storageName.c_str());
+ 						storageName += shop->getName();
+ 						player->getUniqueRoomParent()->setName(storageName);
  						player->print("Done!\n");
  					}
  				}
@@ -1355,7 +1355,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 		else
 			player->print("Only %d creature%s can now be in here at a time.\n", player->getUniqueRoomParent()->getMaxMobs(), player->getUniqueRoomParent()->getMaxMobs() != 1 ? "s" : "");
 
-		log_immort(true, player, "%s set max %d mobs in room %s.\n", player->name, player->getUniqueRoomParent()->getMaxMobs(),
+		log_immort(true, player, "%s set max %d mobs in room %s.\n", player->getCName(), player->getUniqueRoomParent()->getMaxMobs(),
 			room->fullName().c_str());
 
 		break;
@@ -1372,7 +1372,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 		player->printColor("NeedsCompass toggled, set to %s^x.\n",
 			player->getAreaRoomParent()->getNeedsCompass() ? "^gYes" : "^rNo");
 
-		log_immort(true, player, "%s set needsCompass to %s in room %s.\n", player->name,
+		log_immort(true, player, "%s set needsCompass to %s in room %s.\n", player->getCName(),
 			player->getAreaRoomParent()->getNeedsCompass() ? "true" : "false", room->fullName().c_str());
 
 		break;
@@ -1398,7 +1398,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 		}
 
 		log_immort(false,player, "%s set mob slot %d to mob %s in room %s.\n",
-			player->name, num, cr.str().c_str(),
+			player->getCName(), num, cr.str().c_str(),
 			room->fullName().c_str());
 
 		break;
@@ -1411,7 +1411,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 
 		player->print("Size set to %s.\n", getSizeName(player->getUniqueRoomParent()->getSize()).c_str());
 		log_immort(true, player, "%s set room %s's %s to %s.\n",
-			player->name, room->fullName().c_str(), "Size", getSizeName(player->getUniqueRoomParent()->getSize()).c_str());
+			player->getCName(), room->fullName().c_str(), "Size", getSizeName(player->getUniqueRoomParent()->getSize()).c_str());
 		break;
 	case 't':
 		if(!player->inUniqueRoom()) {
@@ -1419,7 +1419,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			return(0);
 		}
 		player->getUniqueRoomParent()->wander.setTraffic(cmnd->val[2]);
-		log_immort(true, player, "%s set room %s's traffic to %ld.\n", player->name,
+		log_immort(true, player, "%s set room %s's traffic to %ld.\n", player->getCName(),
 			player->getUniqueRoomParent()->info.str().c_str(), player->getUniqueRoomParent()->wander.getTraffic());
 		player->print("Traffic is now %d%%.\n", player->getUniqueRoomParent()->wander.getTraffic());
 
@@ -1438,7 +1438,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			}
 			player->getUniqueRoomParent()->setTrapExit(cr);
 			player->print("Room's trap exit is now %s.\n", player->getUniqueRoomParent()->getTrapExit().str().c_str());
-			log_immort(true, player, "%s set trapexit to %s in room %s.\n", player->name,
+			log_immort(true, player, "%s set trapexit to %s in room %s.\n", player->getCName(),
 				player->getUniqueRoomParent()->getTrapExit().str().c_str(), room->fullName().c_str());
 		} else if(low(cmnd->str[2][1]) == 'w') {
 			num = (int)cmnd->val[2];
@@ -1448,7 +1448,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			}
 			player->getUniqueRoomParent()->setTrapWeight(num);
 			player->print("Room's trap weight is now %d.\n", player->getUniqueRoomParent()->getTrapWeight());
-			log_immort(true, player, "%s set trapweight to %d in room %s.\n", player->name, player->getUniqueRoomParent()->getTrapWeight(),
+			log_immort(true, player, "%s set trapweight to %d in room %s.\n", player->getCName(), player->getUniqueRoomParent()->getTrapWeight(),
 				room->fullName().c_str());
 		} else if(low(cmnd->str[2][1]) == 's') {
 			num = (int)cmnd->val[2];
@@ -1458,12 +1458,12 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			}
 			player->getUniqueRoomParent()->setTrapStrength(num);
 			player->print("Room's trap strength is now %d.\n", player->getUniqueRoomParent()->getTrapStrength());
-			log_immort(true, player, "%s set trapstrength to %d in room %s.\n", player->name, player->getUniqueRoomParent()->getTrapStrength(),
+			log_immort(true, player, "%s set trapstrength to %d in room %s.\n", player->getCName(), player->getUniqueRoomParent()->getTrapStrength(),
 				room->fullName().c_str());
 		} else {
 			player->getUniqueRoomParent()->setTrap(cmnd->val[2]);
 			player->print("Room has trap #%d set.\n", player->getUniqueRoomParent()->getTrap());
-			log_immort(true, player, "%s set trap #%d in room %s.\n", player->name, player->getUniqueRoomParent()->getTrap(),
+			log_immort(true, player, "%s set trap #%d in room %s.\n", player->getCName(), player->getUniqueRoomParent()->getTrap(),
 				room->fullName().c_str());
 		}
 
@@ -1482,7 +1482,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 			player->print("You'll need to use *teleport to get to this room in the future.\n");
 
 		log_immort(true, player, "%s set unique room to %s in room %s.\n",
-			player->name, player->getAreaRoomParent()->unique.str().c_str(),
+			player->getCName(), player->getAreaRoomParent()->unique.str().c_str(),
 			room->fullName().c_str());
 
 		break;
@@ -1534,16 +1534,16 @@ int dmSetExit(Player* player, cmd* cmnd) {
 		{
 			if(cmnd->str[1][2] == 'i') {
 				Direction dir = getDir(cmnd->str[3]);
-				if(getDir(exit->name) != NoDirection && dir != NoDirection) {
+				if(getDir(exit->getName()) != NoDirection && dir != NoDirection) {
 					player->print("This exit does not need a direction set on it.\n");
 					return(0);
 				}
 
 				exit->setDirection(dir);
 
-				player->printColor("%s^x's %s set to %s.\n", exit->name, "Direction", getDirName(exit->getDirection()).c_str());
+				player->printColor("%s^x's %s set to %s.\n", exit->getCName(), "Direction", getDirName(exit->getDirection()).c_str());
 				log_immort(true, player, "%s set %s %s^g's %s to %s.\n",
-					player->name, "exit", exit->name, "Direction", getDirName(exit->getDirection()).c_str());
+					player->getCName(), "exit", exit->getCName(), "Direction", getDirName(exit->getDirection()).c_str());
 			} else if(cmnd->str[1][2] == 'e') {
 
 				bstring desc = getFullstrText(cmnd->fullstr, 3);
@@ -1552,10 +1552,10 @@ int dmSetExit(Player* player, cmd* cmnd) {
 
 				if(exit->getDescription() == "") {
 					player->print("Description cleared.\n");
-					log_immort(true, player, "%s cleared %s^g's %s.\n", player->name, exit->name, "Description");
+					log_immort(true, player, "%s cleared %s^g's %s.\n", player->getCName(), exit->getCName(), "Description");
 				} else {
 					player->print("Description set to \"%s\".\n", exit->getDescription().c_str());
-					log_immort(true, player, "%s set %s^g's %s to \"%s\".\n", player->name, exit->name, "Description", exit->getDescription().c_str());
+					log_immort(true, player, "%s set %s^g's %s to \"%s\".\n", player->getCName(), exit->getCName(), "Description", exit->getDescription().c_str());
 				}
 
 			} else {
@@ -1623,10 +1623,10 @@ int dmSetExit(Player* player, cmd* cmnd) {
 				if(exit->getEnter() == "" || Pueblo::is(exit->getEnter())) {
 					exit->setEnter("");
 					player->print("OnEnter cleared.\n");
-					log_immort(true, player, "%s cleared %s^g's %s.\n", player->name, exit->name, "OnEnter");
+					log_immort(true, player, "%s cleared %s^g's %s.\n", player->getCName(), exit->getCName(), "OnEnter");
 				} else {
 					player->print("OnEnter set to \"%s\".\n", exit->getEnter().c_str());
-					log_immort(true, player, "%s set %s^g's %s to \"%s\".\n", player->name, exit->name, "OnEnter", exit->getEnter().c_str());
+					log_immort(true, player, "%s set %s^g's %s to \"%s\".\n", player->getCName(), exit->getCName(), "OnEnter", exit->getEnter().c_str());
 				}
 			}
 
@@ -1640,14 +1640,14 @@ int dmSetExit(Player* player, cmd* cmnd) {
 
 			if(exit->flagIsSet(num - 1)) {
 			exit->clearFlag(num - 1);
-			player->printColor("%s^x exit flag #%d off.\n", exit->name, num);
+			player->printColor("%s^x exit flag #%d off.\n", exit->getCName(), num);
 
-			log_immort(true, player, "%s cleared %s^g exit flag #%d(%s) in room %s.\n", player->name, exit->name, num, get_xflag(num-1),
+			log_immort(true, player, "%s cleared %s^g exit flag #%d(%s) in room %s.\n", player->getCName(), exit->getCName(), num, get_xflag(num-1),
 				room->fullName().c_str());
 			} else {
 				exit->setFlag(num - 1);
-				player->printColor("%s^x exit flag #%d on.\n", exit->name, num);
-				log_immort(true, player, "%s turned on %s^g exit flag #%d(%s) in room %s.\n", player->name, exit->name, num, get_xflag(num-1),
+				player->printColor("%s^x exit flag #%d on.\n", exit->getCName(), num);
+				log_immort(true, player, "%s turned on %s^g exit flag #%d(%s) in room %s.\n", player->getCName(), exit->getCName(), num, get_xflag(num-1),
 					room->fullName().c_str());
 			}
 			break;
@@ -1657,10 +1657,10 @@ int dmSetExit(Player* player, cmd* cmnd) {
 				exit->setKeyArea(cmnd->str[3]);
 				if(exit->getKeyArea() == "") {
 					player->print("Key Area cleared.\n");
-					log_immort(true, player, "%s cleared %s^g's %s.\n", player->name, exit->name, "Key Area");
+					log_immort(true, player, "%s cleared %s^g's %s.\n", player->getCName(), exit->getCName(), "Key Area");
 				} else {
 					player->print("Key Area set to \"%s\".\n", exit->getKeyArea().c_str());
-					log_immort(true, player, "%s set %s^g's %s to \"%s\".\n", player->name, exit->name, "Key Area", exit->getKeyArea().c_str());
+					log_immort(true, player, "%s set %s^g's %s to \"%s\".\n", player->getCName(), exit->getCName(), "Key Area", exit->getKeyArea().c_str());
 				}
 			} else {
 
@@ -1670,8 +1670,8 @@ int dmSetExit(Player* player, cmd* cmnd) {
 				}
 
 				exit->setKey(cmnd->val[2]);
-				player->printColor("Exit %s^x key set to %d.\n", exit->name, exit->getKey());
-				log_immort(true, player, "%s set %s^g's %s to %ld.\n", player->name, exit->name, "Key", exit->getKey());
+				player->printColor("Exit %s^x key set to %d.\n", exit->getCName(), exit->getKey());
+				log_immort(true, player, "%s set %s^g's %s to %ld.\n", player->getCName(), exit->getCName(), "Key", exit->getKey());
 			}
 			break;
 		case 'l':
@@ -1681,8 +1681,8 @@ int dmSetExit(Player* player, cmd* cmnd) {
 			}
 
 			exit->setLevel(cmnd->val[2]);
-			player->printColor("Exit %s^x's level is now set to %d.\n", exit->name, exit->getLevel());
-			log_immort(true, player, "%s set %s^g's %s to %ld.\n", player->name, exit->name, "Pick Level", exit->getLevel());
+			player->printColor("Exit %s^x's level is now set to %d.\n", exit->getCName(), exit->getLevel());
+			log_immort(true, player, "%s set %s^g's %s to %ld.\n", player->getCName(), exit->getCName(), "Pick Level", exit->getLevel());
 			break;
 		case 'o':
 
@@ -1691,10 +1691,10 @@ int dmSetExit(Player* player, cmd* cmnd) {
 			if(exit->getOpen() == "" || Pueblo::is(exit->getOpen())) {
 				exit->setOpen("");
 				player->print("OnOpen cleared.\n");
-				log_immort(true, player, "%s cleared %s^g's %s.\n", player->name, exit->name, "OnOpen");
+				log_immort(true, player, "%s cleared %s^g's %s.\n", player->getCName(), exit->getCName(), "OnOpen");
 			} else {
 				player->print("OnOpen set to \"%s\".\n", exit->getOpen().c_str());
-				log_immort(true, player, "%s set %s^g's %s to \"%s\".\n", player->name, exit->name, "OnOpen", exit->getOpen().c_str());
+				log_immort(true, player, "%s set %s^g's %s to \"%s\".\n", player->getCName(), exit->getCName(), "OnOpen", exit->getOpen().c_str());
 			}
 
 			break;
@@ -1705,10 +1705,10 @@ int dmSetExit(Player* player, cmd* cmnd) {
 
 				if(exit->getPassPhrase() == "") {
 					player->print("Passphrase cleared.\n");
-					log_immort(true, player, "%s cleared %s^g's %s.\n", player->name, exit->name, "Passphrase");
+					log_immort(true, player, "%s cleared %s^g's %s.\n", player->getCName(), exit->getCName(), "Passphrase");
 				} else {
 					player->print("Passphrase set to \"%s\".\n", exit->getPassPhrase().c_str());
-					log_immort(true, player, "%s set %s^g's %s to \"%s\".\n", player->name, exit->name, "Passphrase", exit->getPassPhrase().c_str());
+					log_immort(true, player, "%s set %s^g's %s to \"%s\".\n", player->getCName(), exit->getCName(), "Passphrase", exit->getPassPhrase().c_str());
 				}
 
 			} else if(low(cmnd->str[1][2]) == 'l') {
@@ -1725,7 +1725,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 				exit->setPassLanguage(n);
 
 				player->print("Pass language %s.\n", n ? "set" : "cleared");
-				log_immort(true, player, "%s set %s^g's %s to %s(%ld).\n", player->name, exit->name, "Passlang", n ? get_language_adj(n) : "Nothing", n+1);
+				log_immort(true, player, "%s set %s^g's %s to %s(%ld).\n", player->getCName(), exit->getCName(), "Passlang", n ? get_language_adj(n) : "Nothing", n+1);
 
 			} else {
 				player->print("Passphrase (xpp) or passlang (xpl)?\n");
@@ -1735,9 +1735,9 @@ int dmSetExit(Player* player, cmd* cmnd) {
 		case 's':
 			exit->setSize(getSize(cmnd->str[3]));
 
-			player->printColor("%s^x's %s set to %s.\n", exit->name, "Size", getSizeName(exit->getSize()).c_str());
+			player->printColor("%s^x's %s set to %s.\n", exit->getCName(), "Size", getSizeName(exit->getSize()).c_str());
 			log_immort(true, player, "%s set %s %s^g's %s to %s.\n",
-				player->name, "exit", exit->name, "Size", getSizeName(exit->getSize()).c_str());
+				player->getCName(), "exit", exit->getCName(), "Size", getSizeName(exit->getSize()).c_str());
 			break;
 		case 't':
 			n = (short)cmnd->val[2];
@@ -1746,8 +1746,8 @@ int dmSetExit(Player* player, cmd* cmnd) {
 				return(0);
 			}
 			exit->setToll(n);
-			player->printColor("Exit %s^x's toll is now set to %d.\n", exit->name, exit->getToll());
-			log_immort(true, player, "%s set %s^g's %s to %ld.\n", player->name, exit->name, "Toll", exit->getToll());
+			player->printColor("Exit %s^x's toll is now set to %d.\n", exit->getCName(), exit->getToll());
+			log_immort(true, player, "%s set %s^g's %s to %ld.\n", player->getCName(), exit->getCName(), "Toll", exit->getToll());
 			break;
 		default:
 			player->print("Invalid syntax.\n");
@@ -1857,7 +1857,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 
 
 		log_immort(true, player, "%s linked room %s to room %s in %s^g direction, both ways.\n",
-			player->name, room->fullName().c_str(), room2->fullName().c_str(), newName.c_str());
+			player->getCName(), room->fullName().c_str(), room2->fullName().c_str(), newName.c_str());
 		player->printColor("Room %s linked to room %s in %s^x direction, both ways.\n",
 			room->fullName().c_str(), room2->fullName().c_str(), newName.c_str());
 
@@ -1872,7 +1872,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 		      room->fullName().c_str(), room2->fullName().c_str(), newName.c_str());
 
 		log_immort(true, player, "%s linked room %s to room %s in %s^g direction.\n",
-			player->name, room->fullName().c_str(), room2->fullName().c_str(), newName.c_str());
+			player->getCName(), room->fullName().c_str(), room2->fullName().c_str(), newName.c_str());
 
 	}
 
@@ -1896,7 +1896,7 @@ int room_track(Creature* player) {
 	if(player->isMonster() || !player->inUniqueRoom())
 		return(0);
 
-	strcpy(player->getUniqueRoomParent()->last_mod, player->name);
+	strcpy(player->getUniqueRoomParent()->last_mod, player->getCName());
 	strcpy(player->getUniqueRoomParent()->lastModTime, ctime(&t));
 	return(0);
 }
@@ -2201,7 +2201,7 @@ int dmDelete(Player* player, cmd* cmnd) {
 
 	} // *del -A
 
-	log_immort(true, player, "%s deleted description in room %s.\n", player->name,
+	log_immort(true, player, "%s deleted description in room %s.\n", player->getCName(),
 		player->getUniqueRoomParent()->info.str().c_str());
 
 	player->print("Deleted.\n");
@@ -2230,8 +2230,8 @@ int dmNameRoom(Player* player, cmd* cmnd) {
 	if(name.getLength() > 79)
 		name = name.left(79);
 
-	strcpy(player->getUniqueRoomParent()->name, name.c_str());
-	log_immort(true, player, "%s renamed room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
+	player->getUniqueRoomParent()->setName(name);
+	log_immort(true, player, "%s renamed room %s.\n", player->getCName(), player->getRoomParent()->fullName().c_str());
 	player->print("Done.\n");
 
 	return(0);
@@ -2306,7 +2306,7 @@ int dmDescription(Player* player, cmd* cmnd, bool append) {
 	}
 
 	player->getUniqueRoomParent()->escapeText();
-	log_immort(true, player, "%s descripted in room %s.\n", player->name,
+	log_immort(true, player, "%s descripted in room %s.\n", player->getCName(),
 		player->getUniqueRoomParent()->info.str().c_str());
 	return(0);
 }
@@ -2392,7 +2392,7 @@ void showMobList(Player* player, WanderInfo *wander, bstring type) {
 				oStr << "^g";
 		}
 
-		oStr << "Slot " << std::setw(2) << (*it).first+1 << ": " << monster->name << " "
+		oStr << "Slot " << std::setw(2) << (*it).first+1 << ": " << monster->getName() << " "
 			 << "[" << monType::getName(monster->getType()) << ":" << monType::getHitdice(monster->getType()) << "HD]\n"
 			 << "         ^x[I:" << monster->info.str() << " L:" << monster->getLevel()
 			 << " X:" << monster->getExperience() << " G:" << monster->coins[GOLD]
@@ -2512,7 +2512,7 @@ int dmWrap(Player* player, cmd* cmnd) {
 
 	player->print("Text wrapped.\n");
 	player->getUniqueRoomParent()->escapeText();
-	log_immort(false, player, "%s wrapped the description in room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
+	log_immort(false, player, "%s wrapped the description in room %s.\n", player->getCName(), player->getRoomParent()->fullName().c_str());
 	return(0);
 }
 
@@ -2537,7 +2537,7 @@ int dmDeleteAllExits(Player* player, cmd* cmnd) {
 
 	player->print("All exits deleted.\n");
 
-	log_immort(true, player, "%s deleted all exits in room %s.\n", player->name, player->getRoomParent()->fullName().c_str());
+	log_immort(true, player, "%s deleted all exits in room %s.\n", player->getCName(), player->getRoomParent()->fullName().c_str());
 	room_track(player);
 	return(0);
 }
@@ -2594,7 +2594,7 @@ int exit_ordering(const char *exit1, const char *exit2) {
 //						dmArrangeExits
 //*********************************************************************
 bool exitCompare( const Exit* left, const Exit* right ){
-	return(exit_ordering(left->name, right->name));
+	return(exit_ordering(left->getCName(), right->getCName()));
 }
 void BaseRoom::arrangeExits(Player* player) {
 
@@ -2629,7 +2629,7 @@ void link_rom(BaseRoom* room, Location l, bstring str) {
 
 	const char* dir = str.c_str();
 	for(Exit* ext : room->exits) {
-		if(!strcmp(ext->name, dir)) {
+		if(ext->getName() == dir) {
 			ext->target = l;
 			return;
 		}
@@ -2639,7 +2639,7 @@ void link_rom(BaseRoom* room, Location l, bstring str) {
 
     exit->setRoom(room);
 
-	strcpy(exit->name, dir);
+	exit->setName( dir);
 	exit->target = l;
 
 	room->exits.push_back(exit);
@@ -2683,17 +2683,18 @@ int dmFix(Player* player, cmd* cmnd, bstring name, char find, char replace) {
 		player->print("You don't see that exit.\n");
 		return(0);
 	}
-
-	for(i=strlen(exit->name); i>0; i--) {
-		if(exit->name[i] == find) {
-			exit->name[i] = replace;
+	bstring newName = exit->getName();
+	for(i=newName.length(); i>0; i--) {
+		if(newName[i] == find) {
+			newName[i] = replace;
 			fixed = true;
 		}
 	}
 
 	if(fixed) {
+		exit->setName(newName);
 		log_immort(true, player, "%s %sed the exit '%s' in room %s.\n",
-			player->name, name.c_str(), exit->name, player->getRoomParent()->fullName().c_str());
+			player->getCName(), name.c_str(), exit->getCName(), player->getRoomParent()->fullName().c_str());
 		player->print("Done.\n");
 	} else
 		player->print("Couldn't find any underscores.\n");
@@ -2748,15 +2749,15 @@ int dmRenameExit(Player* player, cmd* cmnd) {
 	}
 
 
-	player->printColor("Exit \"%s^x\" renamed to \"%s^x\".\n", exit->name, newName.c_str());
+	player->printColor("Exit \"%s^x\" renamed to \"%s^x\".\n", exit->getCName(), newName.c_str());
 	log_immort(false, player, "%s renamed exit %s^g to %s^g in room %s.\n",
-		player->name, exit->name, newName.c_str(), player->getRoomParent()->fullName().c_str());
+		player->getCName(), exit->getCName(), newName.c_str(), player->getRoomParent()->fullName().c_str());
 	room_track(player);
 
 	if(getDir(newName) != NoDirection)
 		exit->setDirection(NoDirection);
 
-	strcpy(exit->name, newName.c_str());
+	exit->setName( newName.c_str());
 	return(0);
 }
 
@@ -2815,7 +2816,7 @@ int dmDestroyRoom(Player* player, cmd* cmnd) {
 	}
 
 	log_immort(true, player, "%s destroyed room %s.\n",
-		player->name, player->getRoomParent()->fullName().c_str());
+		player->getCName(), player->getRoomParent()->fullName().c_str());
 	player->getUniqueRoomParent()->destroy();
 	return(0);
 }

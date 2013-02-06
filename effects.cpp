@@ -800,7 +800,7 @@ int cmdEffects(Creature* creature, cmd* cmnd) {
 	}
 
 	num = target->effects.effectList.size();
-	creature->print("Current Effects for %s:\n", target->name);
+	creature->print("Current Effects for %s:\n", target->getCName());
 	creature->printColor("%s", target->effects.getEffectsString(creature).c_str());
 	creature->print("\n%d effect%s found.\n", num, num != 1 ? "s" : "");
 	return(0);
@@ -873,7 +873,7 @@ bstring Effects::getEffectsString(const Creature* viewer) {
 			if(effect->getApplier()) {
 				object = effect->getApplier()->getAsConstObject();
 				if(object)
-					effStr << "  ^WApplier:^x " << object->name << "^x";
+					effStr << "  ^WApplier:^x " << object->getName() << "^x";
 			}
 		}
 		effStr << "\n";
@@ -1061,8 +1061,8 @@ bstring Creature::doReplace(bstring fmt, const MudObject* actor, const MudObject
 		fmt.Replace("*A-HISHER*", cActor->hisHer());
 		fmt.Replace("*A-UPHISHER*", cActor->upHisHer());
 	} else if(xActor) {
-		fmt.Replace("*ACTOR*", xActor->getName());
-		fmt.Replace("*LOW-ACTOR*", xActor->getName());
+		fmt.Replace("*ACTOR*", xActor->getCName());
+		fmt.Replace("*LOW-ACTOR*", xActor->getCName());
 	}
 
 	if(cApplier) {

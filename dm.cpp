@@ -52,7 +52,7 @@ int dmReboot(Player* player, cmd* cmnd) {
 
 	player->print("Rebooting now!\n");
 	gConfig->swapAbort();
-	logn("log.bane", "Reboot by %s.\n", player->name);
+	logn("log.bane", "Reboot by %s.\n", player->getCName());
 	broadcast("### Going for a reboot, hang onto your seats!");
 	if(resetShips)
 		player->print("Resetting game time to midnight, updating ships...\n");
@@ -74,8 +74,8 @@ int dmReboot(Player* player, cmd* cmnd) {
 int dmMobInventory(Player* player, cmd* cmnd) {
 	Monster	*monster=0;
 	Object	*object;
-	char	str[2048];
-	int		count=0, i=0;
+	//char	str[2048];
+	int		i=0;
 
 	if(!player->canBuildMonsters())
 		return(cmdNoAuth(player));
@@ -95,7 +95,7 @@ int dmMobInventory(Player* player, cmd* cmnd) {
 
 
 	if(!strcmp(cmnd->str[2], "-l") || player->getClass() == BUILDER) {
-		player->print("Items %s will possibly drop:\n", monster->name);
+		player->print("Items %s will possibly drop:\n", monster->getCName());
 		for(i=0;i<10;i++) {
 			if(!monster->carry[i].info.id) {
 				player->print("Carry slot %d: %sNothing.\n", i+1, i < 9 ? " " : "");
@@ -110,37 +110,22 @@ int dmMobInventory(Player* player, cmd* cmnd) {
 			if(player->getClass() == BUILDER && player->checkRangeRestrict(object->info))
 				player->print("Carry slot %d: %sout of range(%s).\n", i+1, i < 9 ? " " : "", object->info.str().c_str());
 			else
-				player->printColor("Carry slot %d: %s%s(%s).\n", i+1, i < 9 ? " " : "", object->name, object->info.str().c_str());
+				player->printColor("Carry slot %d: %s%s(%s).\n", i+1, i < 9 ? " " : "", object->getCName(), object->info.str().c_str());
 
 			delete object;
 		}
 
 		return(0);
 	}
-
-
-	sprintf(str, "%s%s is carrying: ", (monster->flagIsSet(M_NO_PREFIX) ? "":"The "), monster->name);
-	for(Object *obj : monster->objects) {
-		count++;
-		strcat(str, obj->name);
-		strcat(str, "^x");
-		if(obj->flagIsSet(O_NOT_PEEKABLE))
-			strcat(str, "(NoPeek)");
-		if(obj->flagIsSet(O_NO_STEAL))
-			strcat(str, "(NoSteal)");
-		if(obj->flagIsSet(O_BODYPART))
-			strcat(str, "(BodyPart)");
-		strcat(str, ", ");
+	bstring str = monster->listObjects(player, true);
+	bstring prefix =bstring(monster->flagIsSet(M_NO_PREFIX) ? "":"The ") + monster->getName() + " is carrying: ";
+	if(str != "") {
+		str =  prefix + str + ".";
+	} else {
+		str = prefix + "Nothing.";
 	}
 
-	if(!count)
-		strcat(str, "Nothing.");
-	else {
-		str[strlen(str) - 2] = '.';
-		str[strlen(str) - 1] = 0;
-	}
-
-	player->printColor("%s\n", str);
+	*player << ColorOn << str << "\n" << ColorOff;
 
 	return(0);
 }
@@ -443,11 +428,11 @@ void Player::dmPoof(BaseRoom* room, BaseRoom *newRoom) {
 
 	if(flagIsSet(P_DM_INVIS)) {
 		if(isDm())
-			broadcast(::isDm, getSock(), room, "*DM* %s disappears in a puff of smoke.", name);
+			broadcast(::isDm, getSock(), room, "*DM* %s disappears in a puff of smoke.", getCName());
 		if(cClass == CARETAKER)
-			broadcast(::isCt, getSock(), room, "*DM* %s disappears in a puff of smoke.", name);
+			broadcast(::isCt, getSock(), room, "*DM* %s disappears in a puff of smoke.", getCName());
 		if(!isCt())
-			broadcast(::isStaff, getSock(), room, "*DM* %s disappears in a puff of smoke.", name);
+			broadcast(::isStaff, getSock(), room, "*DM* %s disappears in a puff of smoke.", getCName());
 	} else {
 		broadcast(getSock(), room, "%M disappears in a puff of smoke.", this);
 	}
@@ -670,9 +655,9 @@ int dmUsers(Player* player, cmd* cmnd) {
 			oStr << "^m";
 
 		if(user->getProxyName().empty())
-			oStr << std::setw(10) << bstring(user->name).left(10) << "^w ";
+			oStr << std::setw(10) << user->getName().left(10) << "^w ";
 		else
-			oStr << std::setw(10) << bstring(bstring(user->name) + "(" + user->getProxyName() + ")").left(10) << "^w ";
+			oStr << std::setw(10) << bstring(user->getName() + "(" + user->getProxyName() + ")").left(10) << "^w ";
 
 		if(!sock->isConnected()) {
 			sprintf(str, "connecting (Fd: %d)", sock->getFd());
@@ -681,7 +666,7 @@ int dmUsers(Player* player, cmd* cmnd) {
 			oStr << "^m" << std::setw(58) << host.left(58);
 		} else {
 			if(user->inUniqueRoom()) {
-				sprintf(str, "%s: ^b%s", user->getUniqueRoomParent()->info.str(cr, 'b').c_str(), stripColor(user->getUniqueRoomParent()->name).c_str());
+				sprintf(str, "%s: ^b%s", user->getUniqueRoomParent()->info.str(cr, 'b').c_str(), stripColor(user->getUniqueRoomParent()->getCName()).c_str());
 				oStr << std::setw(22 + (str[0] == '^' ? 4 : 0)) << bstring(str).left(22 + (str[0] == '^' ? 4 : 0));
 			} else if(user->inAreaRoom()){
 				//sprintf(str, "%s", user->area_room->mapmarker.str(true).c_str());
@@ -738,7 +723,7 @@ int dmFlushSave(Player* player, cmd* cmnd) {
 int dmShutdown(Player* player, cmd* cmnd) {
 	player->print("Ok.\n");
 
-	log_immort(true, player, "*** Shutdown by %s.\n", player->name);
+	log_immort(true, player, "*** Shutdown by %s.\n", player->getCName());
 
 	Shutdown.ltime = time(0);
 	Shutdown.interval = cmnd->val[0] * 60 + 1;
@@ -903,10 +888,10 @@ int dmPerm(Player* player, cmd* cmnd) {
 		player->getUniqueRoomParent()->permObjects[x].cr = object->info;
 		player->getUniqueRoomParent()->permObjects[x].interval = (long)cmnd->val[2];
 
-		log_immort(true, player, "%s permed %s^g in room %s.\n", player->name,
-			object->name, player->getUniqueRoomParent()->info.str().c_str());
+		log_immort(true, player, "%s permed %s^g in room %s.\n", player->getCName(),
+			object->getCName(), player->getUniqueRoomParent()->info.str().c_str());
 
-		player->printColor("%s^x (%s) permed with timeout of %d.\n", object->name, object->info.str().c_str(), cmnd->val[2]);
+		player->printColor("%s^x (%s) permed with timeout of %d.\n", object->getCName(), object->info.str().c_str(), cmnd->val[2]);
 
 		return(0);
 		// perm Creature
@@ -963,10 +948,10 @@ int dmPerm(Player* player, cmd* cmnd) {
 		player->getUniqueRoomParent()->permMonsters[x].cr = target->info;
 		player->getUniqueRoomParent()->permMonsters[x].interval = (long)cmnd->val[2];
 
-		log_immort(true, player, "%s permed %s in room %s.\n", player->name,
-			target->name, player->getUniqueRoomParent()->info.str().c_str());
+		log_immort(true, player, "%s permed %s in room %s.\n", player->getCName(),
+			target->getCName(), player->getUniqueRoomParent()->info.str().c_str());
 
-		player->print("%s (%s) permed with timeout of %d.\n", target->name, target->info.str().c_str(), cmnd->val[2]);
+		player->print("%s (%s) permed with timeout of %d.\n", target->getCName(), target->info.str().c_str(), cmnd->val[2]);
 
 		return(0);
 		// perm tracks
@@ -1312,7 +1297,7 @@ int dmQuestList(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmBane(Player* player, cmd* cmnd) {
-	if(strcmp(player->name, "Bane") && strcmp(player->name, "Dominus"))
+	if(player->getName() != "Bane" && player->getName() != "Dominus")
 		return(PROMPT);
 
 	crash(-69);
@@ -1463,8 +1448,8 @@ int dmOutlaw(Player* player, cmd* cmnd) {
 
 	if(!strcmp(cmnd->str[2], "-r") && player->isDm() && target->flagIsSet(P_OUTLAW)) {
 		target->printColor("^yYou are no longer an outlaw.\n");
-		player->print("%s's outlaw flag is removed.\n", target->name);
-		logn("log.bane", "*** %s's outlaw flag was removed by %s.\n", target->name, player->name);
+		player->print("%s's outlaw flag is removed.\n", target->getCName());
+		logn("log.bane", "*** %s's outlaw flag was removed by %s.\n", target->getCName(), player->getCName());
 		target->clearFlag(P_OUTLAW);
 		target->clearFlag(P_OUTLAW_WILL_BE_ATTACKED);
 		target->clearFlag(P_OUTLAW_WILL_LOSE_XP);
@@ -1478,12 +1463,12 @@ int dmOutlaw(Player* player, cmd* cmnd) {
 	t = time(0);
 
 	if(!strcmp(cmnd->str[2], "-f") && !target->flagIsSet(P_OUTLAW)) {
-		player->print("%s is not currently an outlaw.\n", target->name);
+		player->print("%s is not currently an outlaw.\n", target->getCName());
 		return(0);
 	}
 
 	if(!strcmp(cmnd->str[2], "-f") && target->flagIsSet(P_OUTLAW)) {
-		player->print("%s's current outlaw flags:\n", target->name);
+		player->print("%s's current outlaw flags:\n", target->getCName());
 		if(target->flagIsSet(P_OUTLAW_WILL_BE_ATTACKED))
 			player->print("--Will be attacked by outlaw aggressive mobs.\n");
 		if(!target->flagIsSet(P_NO_SUMMON))
@@ -1505,13 +1490,13 @@ int dmOutlaw(Player* player, cmd* cmnd) {
 
 	if(target->flagIsSet(P_OUTLAW)) {
 		if(i > t) {
-			player->print("%s is already outlawed. A DM must use the -r switch to cancel it.\n", target->name);
+			player->print("%s is already outlawed. A DM must use the -r switch to cancel it.\n", target->getCName());
 			if(i - t > 3600)
-				player->print("%s is an outlaw for %02d:%02d:%02d more hours.\n", target->name,(i - t) / 3600L, ((i - t) % 3600L) / 60L, (i - t) % 60L);
+				player->print("%s is an outlaw for %02d:%02d:%02d more hours.\n", target->getCName(),(i - t) / 3600L, ((i - t) % 3600L) / 60L, (i - t) % 60L);
 			else if((i - t > 60) && (i - t < 3600))
-				player->print("%s is an outlaw %d:%02d more minutes.\n", target->name, (i - t) / 60L, (i - t) % 60L);
+				player->print("%s is an outlaw %d:%02d more minutes.\n", target->getCName(), (i - t) / 60L, (i - t) % 60L);
 			else
-				player->print("%s is an outlaw for %d more seconds.\n", target->name, i - t);
+				player->print("%s is an outlaw for %d more seconds.\n", target->getCName(), i - t);
 			return(0);
 		}
 	}
@@ -1530,37 +1515,37 @@ int dmOutlaw(Player* player, cmd* cmnd) {
 	target->lasttime[LT_OUTLAW].ltime = time(0);
 	target->lasttime[LT_OUTLAW].interval = (60L * minutes);
 
-	player->print("%s is now an outlaw for %d minutes.\n", target->name, minutes);
+	player->print("%s is now an outlaw for %d minutes.\n", target->getCName(), minutes);
 
-	logn("log.outlaw", "*** %s was made an outlaw by %s.\n", target->name, player->name);
+	logn("log.outlaw", "*** %s was made an outlaw by %s.\n", target->getCName(), player->getCName());
 
 
 	if(target->isEffected("mist"))
 		target->removeEffect("mist");
 
-	broadcast("### %s has just been made an outlaw for being a jackass.", target->name);
+	broadcast("### %s has just been made an outlaw for being a jackass.", target->getCName());
 	broadcast("### %s can now be killed by anyone at any time.", target->upHeShe());
 
 	if(!strcmp(cmnd->str[2], "-a") || !strcmp(cmnd->str[3], "-a") || !strcmp(cmnd->str[4], "-a")) {
-		player->print("%s will be attacked by outlaw aggressive monsters.\n", target->name);
-		logn("log.outlaw", "*** %s was set to be killed by outlaw aggro mobs by %s.\n", target->name, player->name);
+		player->print("%s will be attacked by outlaw aggressive monsters.\n", target->getCName());
+		logn("log.outlaw", "*** %s was set to be killed by outlaw aggro mobs by %s.\n", target->getCName(), player->getCName());
 		target->setFlag(P_OUTLAW_WILL_BE_ATTACKED);
 	}
 
 
 	if(!strcmp(cmnd->str[2], "-s") || !strcmp(cmnd->str[3], "-s") || !strcmp(cmnd->str[4], "-s")) {
-		player->print("%s can be summoned to %s death.\n", target->name, target->hisHer());
-		broadcast("### %s can now be summoned to %s death.\n", target->name, target->hisHer());
-		logn("log.outlaw", "*** %s was set to be summonable to death by %s.\n", target->name, player->name);
+		player->print("%s can be summoned to %s death.\n", target->getCName(), target->hisHer());
+		broadcast("### %s can now be summoned to %s death.\n", target->getCName(), target->hisHer());
+		logn("log.outlaw", "*** %s was set to be summonable to death by %s.\n", target->getCName(), player->getCName());
 		target->clearFlag(P_NO_SUMMON);
 	}
 
 
 	if(!strcmp(cmnd->str[2], "-x") || !strcmp(cmnd->str[3], "-x") || !strcmp(cmnd->str[4], "-x")) {
-		player->print(".\n", target->name, target->hisHer());
-		logn("log.outlaw", "*** %s was set to lose xp from pk loss by %s.\n", target->name, player->name);
-		broadcast("### %s will now give you experience when you kill %s.", target->name, target->himHer());
-		player->print("%s will now lose xp from pkill losses.\n", target->name);
+		player->print(".\n", target->getCName(), target->hisHer());
+		logn("log.outlaw", "*** %s was set to lose xp from pk loss by %s.\n", target->getCName(), player->getCName());
+		broadcast("### %s will now give you experience when you kill %s.", target->getCName(), target->himHer());
+		player->print("%s will now lose xp from pkill losses.\n", target->getCName());
 		target->clearFlag(P_OUTLAW_WILL_LOSE_XP);
 	}
 
@@ -1983,7 +1968,7 @@ int dmCast(Player* player, cmd* cmnd) {
 			broadcast(player->getSock(), player->getParent(),
 				"%M casts %s on everyone in the room.\n", player, get_spell_name(splno));
 
-			log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->name, get_spell_name(splno),
+			log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->getCName(), get_spell_name(splno),
 				player->getRoomParent()->fullName().c_str());
 
 	        PlayerSet::iterator pIt = player->getRoomParent()->players.begin();
@@ -2015,7 +2000,7 @@ int dmCast(Player* player, cmd* cmnd) {
 		broadcast(player->getSock(), player->getParent(), "%M casts %s on everyone in the room.\n",
 			player, get_spell_name(splno));
 
-		log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->name, get_spell_name(splno),
+		log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->getCName(), get_spell_name(splno),
 			player->getRoomParent()->fullName().c_str());
 
 	} else {
@@ -2048,10 +2033,10 @@ int dmCast(Player* player, cmd* cmnd) {
 
 		if(!silent) {
 			broadcast("%M casts %s on everyone.",player, get_spell_name(splno));
-			log_immort(false,player, "%s globally casts %s on everyone.\n", player->name, get_spell_name(splno));
+			log_immort(false,player, "%s globally casts %s on everyone.\n", player->getCName(), get_spell_name(splno));
 		} else {
 			broadcast(isCt, "^y%M silently casts %s on everyone.",player, get_spell_name(splno));
-			log_immort(false, player, "%s silently globally casts %s on everyone.\n", player->name, get_spell_name(splno));
+			log_immort(false, player, "%s silently globally casts %s on everyone.\n", player->getCName(), get_spell_name(splno));
 		}
 
 	}
@@ -2489,7 +2474,7 @@ int dmStat(Player* player, cmd* cmnd) {
 			}
 		}
 		if(mTarget && !player->isDm())
-			log_immort(false, player, "%s statted %s in room %s.\n", player->name, mTarget->name,
+			log_immort(false, player, "%s statted %s in room %s.\n", player->getCName(), mTarget->getCName(),
 				player->getRoomParent()->fullName().c_str());
 		int statFlags = 0;
 		if(player->isDm())

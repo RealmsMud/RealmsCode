@@ -193,7 +193,7 @@ bool Creature::equip(Object* object, bool showMessage) {
 		} else {
 			object->clearFlag(O_EQUIPPING_BESTOWS_EFFECT);
 			if(isStaff())
-				printColor("^MClearing flag EquipEffect flag from %s^M.\n", object->name);
+				printColor("^MClearing flag EquipEffect flag from %s^M.\n", object->getCName());
 		}
 	}
 
@@ -586,13 +586,13 @@ bool doRemoveObj(Player* player, cmd* cmnd ) {
 			player->computeAttackPower();
 
 			if(second->flagIsSet(O_NO_PREFIX)) {
-				player->printColor("%s jumped to your primary hand! It's cursed!\n", second->name);
+				player->printColor("%s jumped to your primary hand! It's cursed!\n", second->getCName());
 				broadcast(player->getSock(), player->getParent(), "%s jumped to %N's primary hand! It's cursed!",
-					second->name, player);
+					second->getCName(), player);
 			} else {
-				player->printColor("The %s jumped to your primary hand! It's cursed!\n", second->name);
+				player->printColor("The %s jumped to your primary hand! It's cursed!\n", second->getCName());
 				broadcast(player->getSock(), player->getParent(), "%M's %s jumped to %s primary hand! It's cursed!", player,
-					second->name, player->hisHer());
+					second->getCName(), player->hisHer());
 			}
 
 			jumped = 1;
@@ -734,7 +734,7 @@ int cmdEquipment(Player* player, cmd* cmnd) {
 				return(0);
 			}
 
-			player->print("%s's worn equipment:\n", target->name);
+			player->print("%s's worn equipment:\n", target->getCName());
 			target->printEquipList(player);
 			return(0);
 		}
@@ -1012,7 +1012,7 @@ int doGetObject(Object* object, Creature* creature, bool doLimited, bool noSplit
 		delete object;
 		if(!noMessage)
 			player->print("You now have %s.\n", player->coins.str().c_str());
-		player->bug("%s now has %s.\n", player->name, player->coins.str().c_str());
+		player->bug("%s now has %s.\n", player->getCName(), player->coins.str().c_str());
 		return(2);
 
 	} else {
@@ -1032,7 +1032,7 @@ bool limitedInStorage(const Player* player, const Object* object, const Property
 	if(	object &&
 		p &&
 		Limited::is(object) &&
-		!p->isOwner(player->name)
+		!p->isOwner(player->getName())
 	) {
 		if(print)
 			player->print("You may only handle limited objects in a storage room if you are the primary owner.\n");
@@ -1056,7 +1056,7 @@ bool storageProperty(const Player* player, const Object* object, Property **p) {
 				(*p) = 0;
 
 			// are they allowed to get anything?
-			else if(!(*p)->isOwner(player->name) && !(*p)->isPartialOwner(player->name) &&
+			else if(!(*p)->isOwner(player->getName()) && !(*p)->isPartialOwner(player->getName()) &&
 				!player->checkStaff("You aren't allowed to do that; this is not your storage room.\n")
 			)
 				return(false);
@@ -1098,7 +1098,7 @@ void getPermObj(Object* object) {
 			continue;
 		if(!loadObject(crtm->cr, &temp_obj))
 			continue;
-		if(!strcmp(temp_obj->name, object->name)) {
+		if(temp_obj->getName() == object->getName()) {
 			crtm->ltime = t;
 			delete temp_obj;
 			break;
@@ -1232,14 +1232,14 @@ void getAllObj(Creature* creature, Object *container) {
 
 	broadcast(player->getSock(), player->getParent(), "%M gets %s from %1P.", creature, str, container);
 
-	player->bug("%s%s gets %s from %s.\n", player->name, player != creature ? "'s pet" : "", str, container->name);
+	player->bug("%s%s gets %s from %s.\n", player->getCName(), player != creature ? "'s pet" : "", str, container->getCName());
 	if(player == creature)
 		player->printColor("You get %s from %1P.\n", str, container);
 	else
 		player->printColor("%M gets %s from %1P.\n", creature, str, container);
 
 	if(p)
-		p->appendLog(player->name, "%s gets %s.", player->name, str);
+		p->appendLog(player->getCName(), "%s gets %s.", player->getCName(), str);
 
 	if(saveLimited)
 		player->save(true);
@@ -1399,7 +1399,7 @@ void get_all_rom(Creature* creature, char *item) {
 
 	broadcast(player->getSock(), room, "%M gets %s.", creature, str);
 
-	player->bug("%s%s gets %s.\n", player->name, player != creature ? "'s pet" : "", str);
+	player->bug("%s%s gets %s.\n", player->getCName(), player != creature ? "'s pet" : "", str);
 
 	if(player == creature)
 		player->printColor("You get %s.\n", str);
@@ -1570,7 +1570,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 		} else
 			player->printColor("%M gets %1P.\n", creature, object);
 
-		player->bug("%s%s gets %s.\n", player->name, player != creature ? "'s pet" : "", object->name);
+		player->bug("%s%s gets %s.\n", player->getCName(), player != creature ? "'s pet" : "", object->getCName());
 
 		if(object->flagIsSet(O_SILVER_OBJECT) && player->isEffected("lycanthropy")) {
 			if(player == creature)
@@ -1582,7 +1582,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 			broadcast(player->getSock(), room, "%M is burned by %P.", creature, object);
 
 			player->bug("%s%s burned %s and %s dropped it.\n",
-				player->name, player != creature ? "'s pet" : "", object->name, creature->heShe());
+				player->getCName(), player != creature ? "'s pet" : "", object->getCName(), creature->heShe());
 			//player->delObj(object, false, true);
 			//object->addToRoom(room);
 			return(0);
@@ -1738,10 +1738,10 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 				player->printColor("%M gets %1P from %1P.\n", creature, object, container);
 			broadcast(player->getSock(), room, "%M gets %1P from %1P.", creature, object, container);
 
-			player->bug("%s%s get's %s from %s.\n", player->name, player != creature ? "'s pet" : "", object->name, container->name);
+			player->bug("%s%s get's %s from %s.\n", player->getCName(), player != creature ? "'s pet" : "", object->getCName(), container->getCName());
 		}
 		if(p)
-			p->appendLog(player->name, "%s gets %s.", player->name, object->getObjStr(player, player->displayFlags(), 1).c_str());
+			p->appendLog(player->getCName(), "%s gets %s.", player->getCName(), object->getObjStr(player, player->displayFlags(), 1).c_str());
 
 		// Don't ignore split, Do ignore quest
 		doGetObject(object, creature, doUnique, false, true);
@@ -1803,7 +1803,7 @@ int cmdInventory(Player* player, cmd* cmnd) {
 	if(player == target)
 		oStr << "You have: ";
 	else
-		oStr << target->name << "'s inventory: ";
+		oStr << target->getName() << "'s inventory: ";
 
 	ObjectSet::iterator it;
 	Object* obj;
@@ -1988,10 +1988,10 @@ void dropAllRoom(Creature* creature, Player *player, bool factionCanRecycle) {
 		gServer->logGold(GOLD_IN, player, Money(money, GOLD), NULL, "RecycleAll");
 	}
 
-	player->bug("%s%s dropped %s.\n", player->name, player != creature ? "'s pet" : "", txt.c_str());
+	player->bug("%s%s dropped %s.\n", player->getCName(), player != creature ? "'s pet" : "", txt.c_str());
 
 	if(!player->isDm()) {
-		log_immort(false, player, "%s%s dropped %s in room %s\n", player->name,
+		log_immort(false, player, "%s%s dropped %s in room %s\n", player->getCName(),
 			player != creature ? "'s pet" : "", txt.c_str(), room->fullName().c_str());
 	}
 
@@ -2119,14 +2119,14 @@ void dropAllObj(Creature* creature, Object *container, Property *p) {
 	broadcast(player->getSock(), room, "%M put %s into %1P.", creature, txt.c_str(), container);
 
 	player->bug("%s%s dropped %s into %s.\n",
-		player->name, player != creature ? "'s pet" : "", txt.c_str(), container->name);
+		player->getCName(), player != creature ? "'s pet" : "", txt.c_str(), container->getCName());
 
 	if(player == creature)
 		player->printColor("You put %s into %1P.\n", txt.c_str(), container);
 	else
 		player->printColor("%M put %s into %1P.\n", creature, txt.c_str(), container);
 	if(p)
-		p->appendLog(player->name, "%s stores %s.", player->name, txt.c_str());
+		p->appendLog(player->getCName(), "%s stores %s.", player->getCName(), txt.c_str());
 
 	if(container->flagIsSet(O_DEVOURS_ITEMS))
 		broadcast(NULL, room, "%O devours everything!", container);
@@ -2427,8 +2427,8 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 		player->bug("%s%s dropped %s.\n", player, is_pet ? "'s pet" : "", object);
 
 		if(!player->isDm())
-			log_immort(false,player, "%s%s dropped %s in room %s\n", player->name,
-				is_pet ? "'s pet" : "", object->name, room->fullName().c_str());
+			log_immort(false,player, "%s%s dropped %s in room %s\n", player->getCName(),
+				is_pet ? "'s pet" : "", object->getCName(), room->fullName().c_str());
 
 		if(!room->flagIsSet(R_DUMP_ROOM)) {
 
@@ -2552,8 +2552,8 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 			if(object->getType() != HERB && !player->checkStaff("You can only put herbs in there!\n"))
 				return(0);
 			for(Object *obj : container->objects) {
-				if(!strcmp(object->name, obj->name) &&
-				   !player->checkStaff("You can only put one %s in there.\n", object->name))
+				if(object->getName() == obj->getName() &&
+				   !player->checkStaff("You can only put one %s in there.\n", object->getCName()))
 					return(0);
 			}
 		}
@@ -2624,10 +2624,10 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 		broadcast(player->getSock(), room, "%M put %1P in %1P.",
 			creature, object, container);
 
-		player->bug("%s%s put %s in %s.\n", player->name, !is_pet ? "'s pet" : "",
-			object->name, container->name);
+		player->bug("%s%s put %s in %s.\n", player->getCName(), !is_pet ? "'s pet" : "",
+			object->getCName(), container->getCName());
 		if(p)
-			p->appendLog(player->name, "%s stores %s.", player->name, object->getObjStr(player, player->displayFlags(), 1).c_str());
+			p->appendLog(player->getCName(), "%s stores %s.", player->getCName(), object->getObjStr(player, player->displayFlags(), 1).c_str());
 	}
 
 	player->save(true);
@@ -2671,23 +2671,23 @@ int canGiveTransport(Creature* creature, Creature* target, Object* object, bool 
 	if(pTarget) {
 
 		if(pTarget->flagIsSet(P_LINKDEAD)) {
-			player->print("%s doesn't want that right now.\n", target->name);
+			player->print("%s doesn't want that right now.\n", target->getCName());
 			return(0);
 		}
 
 		if(pTarget->isEffected("petrification")) {
-			player->print("%s is petrified right now! You can't do that!\n", target->name);
+			player->print("%s is petrified right now! You can't do that!\n", target->getCName());
 			return(0);
 		}
 
-		if(pTarget->isRefusing(player->name)) {
+		if(pTarget->isRefusing(player->getCName())) {
 			player->print("%M is refusing items from you right now.\n", target);
 			return(0);
 		}
 
 		if(!pTarget->isStaff()) {
 			if(pTarget->getWeight() + object->getActualWeight() > pTarget->maxWeight()) {
-				player->print("%s can't hold anymore.\n", pTarget->name);
+				player->print("%s can't hold anymore.\n", pTarget->getCName());
 				return(0);
 			}
 			if(target->tooBulky(object->getActualBulk())) {
@@ -2877,7 +2877,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 	target->addObj(object);
 
 	if(!player->isDm())
-		log_immort(false, player, "%s%s gave %s to %s.\n", player->name, player != creature ? "'s pet" : "", object->name, target->name);
+		log_immort(false, player, "%s%s gave %s to %s.\n", player->getCName(), player != creature ? "'s pet" : "", object->getCName(), target->getCName());
 
 	if(object->flagIsSet(O_SILVER_OBJECT) && target->isEffected("lycanthropy")) {
 		target->printColor("%O burns you and you drop it!\n", object);
@@ -2932,11 +2932,11 @@ void give_money(Player* player, cmd* cmnd) {
 		master = target->getMaster();
 
 	if(master->flagIsSet(P_LINKDEAD)) {
-		player->print("%s doesn't want that right now!\n", target->name);
+		player->print("%s doesn't want that right now!\n", target->getCName());
 		return;
 	}
 	if(master->isEffected("petrification")) {
-		player->print("%s is petrified right now! You can't do that!\n", master->name);
+		player->print("%s is petrified right now! You can't do that!\n", master->getCName());
 		return;
 	}
 
@@ -2949,7 +2949,7 @@ void give_money(Player* player, cmd* cmnd) {
 	broadcast(player->getSock(), target->getSock(), room, "%M gave %N %ld gold pieces.", player, target, amt);
 
 	if(!player->isDm())
-		log_immort(true, player, "%s gave %d gold to %s.\n", player->name, amt, master->name);
+		log_immort(true, player, "%s gave %d gold to %s.\n", player->getCName(), amt, master->getCName());
 
 	player->save(true);
 	mTarget = target->getAsMonster();

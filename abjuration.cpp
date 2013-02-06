@@ -196,7 +196,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(checkRefusingMagic(player, target))
 			return(0);
 
-		player->print("Free-action cast on %s.\n", target->name);
+		player->print("Free-action cast on %s.\n", target->getCName());
 		target->print("%M casts a free-action spell on you.\n%s", player, "You can now move freely.\n");
 		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a free-action spell on %N.",player, target);
 	}
@@ -724,8 +724,8 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 			Exit* exit = findExit(player, cmnd, 2);
 
 			if(exit) {
-				player->printColor("You cast a %s spell on the %s^x.\n", spell, exit->name);
-				broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on the %s^x.", player, spell, exit->name);
+				player->printColor("You cast a %s spell on the %s^x.\n", spell, exit->getCName());
+				broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on the %s^x.", player, spell, exit->getCName());
 
 				if(exit->flagIsSet(X_PORTAL))
 					Move::deletePortal(player->getRoomParent(), exit);
@@ -797,8 +797,8 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 			for(Monster* pet : target->pets) {
 			    if(pet) {
 	                if(player->isCt() || !pet->chkSave(SPL, player, 0)) {
-	                    player->print("Your spell bansished %N's %s!\n", target, pet->name);
-	                    target->print("%M's spell banished your %s!\n%M fades away.\n", player, pet->name, pet);
+	                    player->print("Your spell bansished %N's %s!\n", target, pet->getCName());
+	                    target->print("%M's spell banished your %s!\n%M fades away.\n", player, pet->getCName(), pet);
 	                    gServer->delActive(pet);
 	                    pet->die(pet->getMaster());
 	                }

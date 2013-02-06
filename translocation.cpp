@@ -118,7 +118,7 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
 	pPlayer->printColor("You sucessfully transported %1P to %N.\n", object, target);
 
 	if(!pPlayer->isDm())
-		log_immort(true, pPlayer, "%s transports a %s to %s in room %s.\n", pPlayer->name, object->name,
+		log_immort(true, pPlayer, "%s transports a %s to %s in room %s.\n", pPlayer->name, object->getCName(),
 			target->name, target->getRoomParent()->fullName().c_str());
 
 	if(!pPlayer->flagIsSet(P_DM_INVIS) && (!target->isEffected("incognito") || pPlayer->inSameRoom(target))) {
@@ -461,7 +461,7 @@ void Move::createPortal(BaseRoom* room, BaseRoom* target, const Player* player, 
 
 	// the new portal is always the last exit in the room
 	Exit* ext = room->exits.back();
-	strcpy(ext->name, "^Yportal");
+	ext->setName("^Yportal");
 	ext->setLevel(7);
 	ext->setFlag(X_PORTAL);
 	ext->setFlag(X_NO_WANDER);
@@ -646,7 +646,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 			pPlayer->doPetFollow();
 		} else {
 			player->getAsMonster()->addToRoom(newRoom);
-			broadcast(isCt, "^y%s just teleported %sself to %s.", player->name, player->himHer(),
+			broadcast(isCt, "^y%s just teleported %sself to %s.", player->getCName(), player->himHer(),
 				newRoom->fullName().c_str());
 		}
 		return(1);
@@ -847,10 +847,10 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			logn("log.teleport", "%s(L%dH%dM%dR:%s) was just teleported to room %s by %s(L%d)\n",
 				target->name, target->getLevel(), target->hp.getCur(), target->mp.getCur(), player->getRoomParent()->fullName().c_str(),
-				newRoom->fullName().c_str(), player->name, player->getLevel());
+				newRoom->fullName().c_str(), player->getCName(), player->getLevel());
 			broadcast(isCt, "^y%M(L%dH%dM%dR:%s) was just teleported to room %s by %s(L%d)",
 				target, target->getLevel(), target->hp.getCur(), target->mp.getCur(), player->getRoomParent()->fullName().c_str(),
-				newRoom->fullName().c_str(), player->name, player->getLevel());
+				newRoom->fullName().c_str(), player->getCName(), player->getLevel());
 
 			return(2);
 		}
@@ -957,7 +957,7 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
 			target->flagIsSet(P_NO_SUMMON) && !target->flagIsSet(P_OUTLAW) &&
 			!player->checkStaff("The spell fizzles.\n%M's summon flag is not set.\n", target)  )
 		{
-			target->print("%s tried to send you to the ethereal plane\nIf you wish to be sent, type \"set summon\".\n", player->name);
+			target->print("%s tried to send you to the ethereal plane\nIf you wish to be sent, type \"set summon\".\n", player->getCName());
 			return(0);
 		}
 
@@ -1052,7 +1052,7 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		if(player->inSameRoom(target)) {
-			player->print("%s is already here!\n", target->name);
+			player->print("%s is already here!\n", target->getCName());
 			return(0);
 		}
 		if(checkRefusingMagic(player, target))
@@ -1062,7 +1062,7 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 
 		if(	target->getLevel() == 1 &&
-			!player->checkStaff("%s is too low level to be summoned.\n", target->name)
+			!player->checkStaff("%s is too low level to be summoned.\n", target->getCName())
 		)
 			return(0);
 
@@ -1071,7 +1071,7 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 				target->getRoomParent()->flagIsSet(R_IS_STORAGE_ROOM) ||
 				target->getRoomParent()->flagIsSet(R_LIMBO)
 			) &&
-			!player->checkStaff("The spell fizzles.\nYour magic cannot locate %s.\n", target->name)
+			!player->checkStaff("The spell fizzles.\nYour magic cannot locate %s.\n", target->getCName())
 		)
 			return(0);
 
@@ -1095,7 +1095,7 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 				player->getRoomParent()->flagIsSet(R_SHOP_STORAGE) ||
 				(player->inUniqueRoom() && !target->canEnter(player->getUniqueRoomParent(), false))
 			) &&
-			!player->checkStaff("The spell fizzles.\nYou cannot summon %s to this location at this time.\n", target->name)
+			!player->checkStaff("The spell fizzles.\nYou cannot summon %s to this location at this time.\n", target->getCName())
 		)
 			return(0);
 
@@ -1105,7 +1105,7 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if( (target->getLevel()-3) > player->getLevel() &&
 			player->getLevel() < 15 &&
 			!target->flagIsSet(P_OUTLAW) &&
-			!player->checkStaff("The spell fizzles.\nYou are not powerful enough to summon %s.\n", target->name)
+			!player->checkStaff("The spell fizzles.\nYou are not powerful enough to summon %s.\n", target->getCName())
 		)
 			return(0);
 
@@ -1113,7 +1113,7 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(	target->flagIsSet(P_NO_SUMMON) && !target->flagIsSet(P_OUTLAW) &&
 			!player->checkStaff("The spell fizzles.\n%M's summon flag is not set.\n", target)
 		) {
-			target->print("%s tried to summon you!\nIf you wish to be summoned, type \"set summon\".\n", player->name);
+			target->print("%s tried to summon you!\nIf you wish to be summoned, type \"set summon\".\n", player->getCName());
 			return(0);
 		}
 
@@ -1260,9 +1260,9 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			if(mrand(1,100) < chance) {
 				if(target->isEffected("mist"))
-					pPlayer->print("%s's mist form eluded your magic.\n", target->name);
+					pPlayer->print("%s's mist form eluded your magic.\n", target->getCName());
 				else
-					pPlayer->print("%s manages to elude your track.\n", target->name);
+					pPlayer->print("%s manages to elude your track.\n", target->getCName());
 				return(0);
 			}
 		}
@@ -1604,7 +1604,7 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
 		player->print("You cast a blink spell.\n");
 		broadcast(pPlayer->getSock(), room, "%M casts a blink spell.", player);
 
-		broadcast(0, room, "^YThe %s^Y explodes violently as the dimensional tunnels converge!", exit->name);
+		broadcast(0, room, "^YThe %s^Y explodes violently as the dimensional tunnels converge!", exit->getCName());
 
 		int dmg=0;
 		for(Player* ply : room->players) {
@@ -1643,9 +1643,9 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 	} else{
-		player->printColor("You cast a blink spell. You blink away to the %s^x.\n", exit->name);
+		player->printColor("You cast a blink spell. You blink away to the %s^x.\n", exit->getCName());
 		broadcast(pPlayer->getSock(), room, "%M blinks away!", player);
-		broadcast(isDm, pPlayer->getSock(), room, "*DM* %M blinks to the \"%s^x\" exit.", pPlayer, exit->name);
+		broadcast(isDm, pPlayer->getSock(), room, "*DM* %M blinks to the \"%s^x\" exit.", pPlayer, exit->getCName());
 	}
 
 	if(doMove) {
@@ -1755,7 +1755,7 @@ void BaseRoom::scatterObjects() {
 		if(!newRoom)
 			continue;
 
-		broadcast(0, this, "%1O flies to the %s^x!", object, exit->name);
+		broadcast(0, this, "%1O flies to the %s^x!", object, exit->getCName());
 
 		// send it to exit
 		object->clearFlag(O_HIDDEN);

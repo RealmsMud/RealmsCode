@@ -230,7 +230,7 @@ bool Creature::canEnter(const Exit *exit, bool p, bool blinking) const {
 	if(	getConstRoomParent()->getTollkeeper() &&
 		(exit->flagIsSet(X_TOLL_TO_PASS) || exit->flagIsSet(X_LEVEL_BASED_TOLL))
 	) {
-		if(p) checkStaff("You must pay a toll of %lu gold coins to go through the %s^x.\n", tollcost(this->getAsConstPlayer(), exit, 0), exit->name);
+		if(p) checkStaff("You must pay a toll of %lu gold coins to go through the %s^x.\n", tollcost(this->getAsConstPlayer(), exit, 0), exit->getCName());
 		if(!staff) return(false);
 	}
 
@@ -932,7 +932,7 @@ int Player::save(bool updateTime, LoadType saveType) {
 		}
 	}
 
-	if(!copy->name[0])
+	if(copy->getName().empty())
 		return(1);
 	copy->checkDarkness();
 
@@ -1053,9 +1053,9 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 		// Target is possessing a monster -- Show the monsters name if invis
 		if(flagIsSet(P_ALIASING) && flagIsSet(P_DM_INVIS)) {
 			if(!pThis->getAlias()->flagIsSet(M_NO_PREFIX)) {
-				crtStr << "A " << pThis->getAlias()->name;
+				crtStr << "A " << pThis->getAlias()->getName();
 			} else
-				crtStr << pThis->getAlias()->name;
+				crtStr << pThis->getAlias()->getName();
 		}
 		// Target is a dm, is dm invis, and viewer is not a dm       OR
 		// Target is a ct, is dm invis, and viewer is not a dm or ct OR
@@ -1076,7 +1076,7 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 		}
 		// Can be seen
 		else {
-			crtStr << name;
+			crtStr << getName();
 			if( flagIsSet(P_DM_INVIS ) )
 				crtStr << " (+)";
 			// Invis
@@ -1105,20 +1105,20 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 						crtStr << " ";
 					}
 				}
-				crtStr << name;
+				crtStr << getName();
 			} else
-				crtStr << name;
+				crtStr << getName();
 		} else if(num == 1) {
 			if(flagIsSet(M_NO_PREFIX))
 				crtStr << "";
 			else {
-				ch = low(name[0]);
+				ch = low(getName()[0]);
 				if(ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u')
 					crtStr << "an ";
 				else
 					crtStr << "a ";
 			}
-			crtStr << name;
+			crtStr << getName();
 		} else if(plural != "") {
 			// use new plural code - on monster
 			crtStr << int_to_text(num);
@@ -1128,7 +1128,7 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 			char tempStr[2056];
 			strcpy(tempStr, int_to_text(num));
 			strcat(tempStr, " ");
-			strcat(tempStr, name);
+			strcat(tempStr, getCName());
 
 			tempStr[strlen(tempStr)+1] = 0;
 			tempStr[strlen(tempStr)+2] = 0;

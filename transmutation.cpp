@@ -420,8 +420,8 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
 		chance = 10*((int)player->getLevel() - exit->getLevel()) + (2*bonus((int)player->intelligence.getCur()));
 
 	if(spellData->how == CAST)
-		player->printColor("You cast a knock spell on the \"%s^x\" exit.\n", exit->name);
-	broadcast(player->getSock(), player->getParent(), "%M casts a knock spell at the %s^x.", player, exit->name);
+		player->printColor("You cast a knock spell on the \"%s^x\" exit.\n", exit->getCName());
+	broadcast(player->getSock(), player->getParent(), "%M casts a knock spell at the %s^x.", player, exit->getCName());
 
 
 	if(player->isStaff() || mrand(1,100) <= chance) {
@@ -497,14 +497,14 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 				if(	(effect && !effect->getExtra()) ||
 					exit->flagIsSet(X_PORTAL)
 				) {
-					player->printColor("You cast a disintegration spell on the %s^x.\n", exit->name);
-					broadcast(player->getSock(), player->getParent(), "%M casts a disintegration spell on the %s^x.", player, exit->name);
+					player->printColor("You cast a disintegration spell on the %s^x.\n", exit->getCName());
+					broadcast(player->getSock(), player->getParent(), "%M casts a disintegration spell on the %s^x.", player, exit->getCName());
 
 					if(exit->flagIsSet(X_PORTAL)) {
-						broadcast(0, player->getRoomParent(), "^GAn eerie green light engulfs the %s^x!", exit->name);
+						broadcast(0, player->getRoomParent(), "^GAn eerie green light engulfs the %s^x!", exit->getCName());
 						Move::deletePortal(player->getRoomParent(), exit);
 					} else {
-						broadcast(0, player->getRoomParent(), "^GAn eerie green light engulfs the wall of force blocking the %s^x!", exit->name);
+						broadcast(0, player->getRoomParent(), "^GAn eerie green light engulfs the wall of force blocking the %s^x!", exit->getCName());
 						bringDownTheWall(effect, player->getRoomParent(), exit);
 					}
 					return(0);
@@ -832,7 +832,7 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
-			player->print("Deafness casted on %s.\n", target->name);
+			player->print("Deafness casted on %s.\n", target->getCName());
 			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a deafness spell on %N.", player, target);
 
 			logCast(player, target, "silence");

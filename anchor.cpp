@@ -88,7 +88,7 @@ void Anchor::bind(const Player* player) {
 		bind(player->getConstAreaRoomParent());
 }
 void Anchor::bind(const UniqueRoom* uRoom) {
-	roomName = uRoom->name;
+	roomName = uRoom->getName();
 	room = uRoom->info;
 }
 void Anchor::bind(const AreaRoom* aRoom) {

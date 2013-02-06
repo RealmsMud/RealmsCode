@@ -140,18 +140,19 @@ bstring getCondition(Object* object) {
 //*********************************************************************
 
 void setupShop(Property *p, Player* player, const Guild* guild, UniqueRoom* shop, UniqueRoom* storage) {
+	const char* shopSuffix = "'s Shop of Miscellaneous Wares";
+	const char* shopStorageSuffix = "'s Shop Storage Room";
 	if(guild)
-		sprintf(shop->name, "%s", guild->getName().c_str());
+		shop->setName(guild->getName() + shopSuffix);
 	else
-		sprintf(shop->name, "%s", player->name);
-	strcat(shop->name, "'s Shop of Miscellaneous Wares");
+		shop->setName(player->getName() + shopSuffix);
 
 	// handle shop description
 	shop->setShortDescription("You are in ");
 	if(guild)
 		shop->appendShortDescription(guild->getName());
 	else
-		shop->appendShortDescription(player->name);
+		shop->appendShortDescription(player->getName());
 	shop->appendShortDescription("'s shop of magnificent wonders.");
 
 	// switch to long description
@@ -159,7 +160,7 @@ void setupShop(Property *p, Player* player, const Guild* guild, UniqueRoom* shop
 	if(guild)
 		shop->appendLongDescription(guild->getName());
 	else
-		shop->appendLongDescription(player->name);
+		shop->appendLongDescription(player->getName());
 
 	shop->appendLongDescription("'s shop, you may find many things which you need.\n");
 	if(guild)
@@ -170,22 +171,21 @@ void setupShop(Property *p, Player* player, const Guild* guild, UniqueRoom* shop
 	shop->appendLongDescription(" should be keeping it well stocked in order to maintain\ngood business. Should you have any complaints, you should go to\nthe nearest post office and mudmail the ");
 	if(guild) {
 		shop->appendLongDescription("the guild contact, ");
-		shop->appendLongDescription(player->name);
+		shop->appendLongDescription(player->getName());
 		shop->appendLongDescription(".");
 	} else
 		shop->appendLongDescription("proprietor.");
 
 	if(guild)
-		sprintf(storage->name, "%s", guild->getName().c_str());
+		storage->setName(guild->getName() + shopStorageSuffix);
 	else
-		sprintf(storage->name, "%s", player->name);
-	strcat(storage->name, "'s Shop Storage Room");
+		storage->setName(player->getName() + shopStorageSuffix);
 
 	shop->saveToFile(0);
 	storage->saveToFile(0);
 
 	if(p)
-		p->setName(shop->name);
+		p->setName(shop->getName());
 }
 
 //*********************************************************************
@@ -196,7 +196,7 @@ void shopAssignGuildMessage(Property* p, const Player* player, const Guild* guil
 	player->print("This property is now associated with the guild %s.\n", guild->getName().c_str());
 	p->appendLog("", "This property is now associated with the guild %s.", guild->getName().c_str());
 	broadcastGuild(guild->getNum(), 1, "### %s has assigned the shop located at %s as partially run by the guild.",
-		player->name, p->getLocation().c_str());
+		player->getCName(), p->getLocation().c_str());
 }
 
 //*********************************************************************
@@ -426,7 +426,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 		}
 
 		for(Object* obj : player->objects ) {
-			if(!strcmp(obj->name, "shop deed"))
+			if(obj->getName() == "shop deed")
 				if(obj->deed.belongs(cr)) {
 					deed = obj;
 					break; // We got one!
@@ -458,8 +458,8 @@ int cmdShop(Player* player, cmd* cmnd) {
 		if(	!p ||
 			p->getType() != PROP_SHOP ||
 			(	!player->isDm() &&
-				!p->isOwner(player->name) &&
-				!p->isPartialOwner(player->name)
+				!p->isOwner(player->getName()) &&
+				!p->isPartialOwner(player->getName())
 			)
 		) {
 			player->print("This is not your shop!\n");
@@ -469,8 +469,8 @@ int cmdShop(Player* player, cmd* cmnd) {
 
 	PartialOwner partial;
 	PartialOwner* po=0;
-	if(p && !p->isOwner(player->name)) {
-		po = p->getPartialOwner(player->name);
+	if(p && !p->isOwner(player->getName())) {
+		po = p->getPartialOwner(player->getName());
 		// get default flags if not on the list
 		if(!po) {
 			partial.defaultFlags(p->getType());
@@ -521,7 +521,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		logn("log.shop", "%s just founded a shop! (%s - %s).\n", player->name, xname.c_str(), cr.str().c_str());
+		logn("log.shop", "%s just founded a shop! (%s - %s).\n", player->getCName(), xname.c_str(), cr.str().c_str());
 
 		shop = new UniqueRoom;
 		shop->info = cr;
@@ -559,10 +559,10 @@ int cmdShop(Player* player, cmd* cmnd) {
 
 		player->print("Congratulations! You are now the owner of a brand new shop.\n");
 		logn("log.shops", "*** %s just built a shop! (%s - %s) (Shop %s).\n",
-			player->name, room->info.str().c_str(), xname.c_str(), shop->info.str().c_str());
+			player->getCName(), room->info.str().c_str(), xname.c_str(), shop->info.str().c_str());
 		broadcast(player->getSock(), player->getParent(), "%M just opened a shop!", player );
 		if(!player->flagIsSet(P_DM_INVIS))
-			broadcast("### %s just opened a shop! It's located at: %s.", player->name, room->name);
+			broadcast("### %s just opened a shop! It's located at: %s.", player->getCName(), room->getCName());
 
 		if(room->info.isArea("guild"))
 			shopAssignGuildMessage(p, player, guild);
@@ -589,7 +589,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 				return(0);
 			}
 			broadcastGuild(p->getGuild(), 1, "### %s's shop located at %s is no longer partially run by the guild.",
-				player->name, p->getLocation().c_str());
+				player->getCName(), p->getLocation().c_str());
 			shopRemoveGuild(p, player, player->getUniqueRoomParent(), storage);
 			*player << "This property is no longer associated with a guild.\n";
 		} else {
@@ -625,7 +625,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 		}
 
 		limited = Limited::isLimited(obj);
-		if(limited && (!p || !p->isOwner(player->name))) {
+		if(limited && (!p || !p->isOwner(player->getCName()))) {
 			*player << "You may only handle limited items in shops where you are the primary owner.\n";
 			return(0);
 		}
@@ -653,7 +653,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 
 		player->delObj(obj);
 		obj->addToRoom(storage);
-		p->appendLog(player->name, "%s stocked %s for $%d.", player->name, obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
+		p->appendLog(player->getCName(), "%s stocked %s for $%d.", player->getCName(), obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
 		player->printColor("You stock %s in the store for $%d.\n", obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
 		broadcast(player->getSock(), player->getParent(), "%M just stocked something in this store.", player);
 		// obj->shopValue
@@ -678,7 +678,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 			return(0);
 		}
 		obj->setShopValue(value);
-		p->appendLog(player->name, "%s set the price for %s to $%d.", player->name, obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
+		p->appendLog(player->getCName(), "%s set the price for %s to $%d.", player->getCName(), obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
 		player->printColor("You set the price for %s to $%d.\n", obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
 		broadcast(player->getSock(), player->getParent(), "%M just updated the prices in this store.", player);
 	} else if(action == SHOP_REMOVE) {
@@ -700,14 +700,14 @@ int cmdShop(Player* player, cmd* cmnd) {
 		}
 
 		limited = Limited::isLimited(obj);
-		if(limited && (!p || !p->isOwner(player->name))) {
+		if(limited && (!p || !p->isOwner(player->getName()))) {
 			*player << "You may only handle unique items in shops where you are the primary owner.\n";
 			return(0);
 		}
 
 		obj->deleteFromRoom();
 		player->addObj(obj);
-		p->appendLog(player->name, "%s removed %s.", player->name, obj->getObjStr(NULL, flags, 1).c_str());
+		p->appendLog(player->getCName(), "%s removed %s.", player->getCName(), obj->getObjStr(NULL, flags, 1).c_str());
 		player->printColor("You remove %s from your store.\n", obj->getObjStr(NULL, flags, 1).c_str());
 		broadcast(player->getSock(), player->getParent(), "%M just removed something from this store.", player);
 
@@ -723,7 +723,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 			return(0);
 
 		if(!p->getGuild()) {
-			if(name.find(player->name) == bstring::npos) {
+			if(name.find(player->getName()) == bstring::npos) {
 				*player << "Your shop name must contain your name.\n";
 				return(0);
 			}
@@ -737,13 +737,12 @@ int cmdShop(Player* player, cmd* cmnd) {
 				return(0);
 			}
 		}
-
-		strcpy(player->getUniqueRoomParent()->name, name.c_str());
+		player->getUniqueRoomParent()->setName(name.c_str());
 		p->setName(name);
-		p->appendLog(player->name, "%s renamed the shop to %s.", player->name, player->getUniqueRoomParent()->name);
+		p->appendLog(player->getCName(), "%s renamed the shop to %s.", player->getCName(), player->getUniqueRoomParent()->getCName());
 		logn("log.shops", "%s renamed shop %s to %s.\n",
-			player->name, player->getUniqueRoomParent()->info.str().c_str(), player->getUniqueRoomParent()->name);
-		player->print("Shop renamed to '%s'.\n", player->getUniqueRoomParent()->name);
+			player->getCName(), player->getUniqueRoomParent()->info.str().c_str(), player->getUniqueRoomParent()->getCName());
+		player->print("Shop renamed to '%s'.\n", player->getUniqueRoomParent()->getCName());
 		player->getUniqueRoomParent()->saveToFile(0);
 
 		return(0);
@@ -883,7 +882,7 @@ int cmdList(Player* player, cmd* cmnd) {
 				if(doFilter(object, filter))
 					continue;
 
-				if(!strcmp(object->name, "bail"))
+				if(object->getName() == "bail")
 					object->value = bailCost(player);
 
 				cost = buyAmount(player, player->getUniqueRoomParent(), object, true);
@@ -911,7 +910,7 @@ int cmdList(Player* player, cmd* cmnd) {
 		flags |= CAP;
 		flags |= MAG;
 
-		if(p->isOwner(player->name)) {
+		if(p->isOwner(player->getName())) {
 			player->print("You are selling:");
 			owner = true;
 		} else {
@@ -921,7 +920,7 @@ int cmdList(Player* player, cmd* cmnd) {
 				owner = guild->getName();
 			}
 			player->print("%s is selling:", owner.c_str());
-			if(p->isPartialOwner(player->name))
+			if(p->isPartialOwner(player->getName()))
 				owner = true;
 		}
 
@@ -1104,7 +1103,7 @@ int cmdPurchase(Player* player, cmd* cmnd) {
         	// A return value of true means the object still exists
         	player->printColor("%M says, \"%sHere is your %s.\"\n", creature,
         			Faction::getAttitude(player->getFactionStanding(creature->getPrimeFaction())) < Faction::INDIFFERENT ? "Hrmph. " : "Thank you very much. ",
-        			object->name);
+        			object->getCName());
             Limited::addOwner(player, object);
     		object->setDroppedBy(creature, "MobPurchase");
 
@@ -1262,7 +1261,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 		long	deposit=0;
 		bool	online=false;
 
-		if(p->isOwner(player->name)) {
+		if(p->isOwner(player->getName())) {
 			player->print("Why would you want to buy stuff from your own shop?\n");
 			return(0);
 		}
@@ -1360,16 +1359,16 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
 		if(!guild) {
 			owner->bank.add(deposit, GOLD);
-			Bank::log(owner->name, "PROFIT from sale of %s to %s: %ld [Balance: %s]\n",
-				object->getObjStr(NULL, flags, 1).c_str(), player->name, deposit, owner->bank.str().c_str());
+			Bank::log(owner->getCName(), "PROFIT from sale of %s to %s: %ld [Balance: %s]\n",
+				object->getObjStr(NULL, flags, 1).c_str(), player->getCName(), deposit, owner->bank.str().c_str());
 			if(online && !owner->flagIsSet(P_DONT_SHOW_SHOP_PROFITS))
 				owner->printColor("*** You made $%d profit from the sale of %s^x to %s.\n",
-					deposit, object->getObjStr(NULL, flags, 1).c_str(), player->name);
+					deposit, object->getObjStr(NULL, flags, 1).c_str(), player->getCName());
 			owner->save(online);
 		} else {
 			guild->bank.add(deposit, GOLD);
 			Bank::guildLog(guild->getNum(), "PROFIT from sale of %s to %s: %ld [Balance: %s]\n",
-				object->getObjStr(NULL, flags, 1).c_str(), player->name, deposit, guild->bank.str().c_str());
+				object->getObjStr(NULL, flags, 1).c_str(), player->getCName(), deposit, guild->bank.str().c_str());
 			gConfig->saveGuilds();
 		}
 
@@ -1392,7 +1391,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		if(!strcmp(object->name, "storage room")) {
+		if(object->getName() == "storage room") {
 			if(!room->flagIsSet(R_STORAGE_ROOM_SALE)) {
 				*player << "You can't buy storage rooms here.\n";
 				return(0);
@@ -1405,7 +1404,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			}
 		}
 
-		if(!strcmp(object->name, "bail"))
+		if(object->getName() == "bail")
 			object->value = bailCost(player);
 
 		Money cost = buyAmount(player, player->getUniqueRoomParent(), object, true);
@@ -1416,7 +1415,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			cost = object->value;
 		}
 
-		if(!strcmp(object->name, "bail")) {
+		if(object->getName() ==  "bail") {
 			// Depends on level for bail
 			// 2k per lvl to get out
 			if(player->coins[GOLD] < cost[GOLD]) {
@@ -1442,7 +1441,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 		}
 
 		// Not buying a storage room or bail
-		if(strcmp(object->name, "storage room") && strcmp(object->name, "bail")) {
+		if(object->getName() != "storage room" && object->getName() != "bail") {
 
 			player->unhide();
 			if(object->getType() == LOTTERYTICKET) {
@@ -1451,7 +1450,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 					return(0);
 				}
 
-				if(createLotteryTicket(&object2, player->name) < 0) {
+				if(createLotteryTicket(&object2, player->getCName()) < 0) {
 					player->print("Sorry, lottery tickets are not currently being sold.\n");
 					return(0);
 				}
@@ -1527,21 +1526,21 @@ int cmdBuy(Player* player, cmd* cmnd) {
 						object2->getLotteryNumbers(3), object2->getLotteryNumbers(4), object2->getLotteryNumbers(5));
 			*player << "\n";
 
-			if(strcmp(object2->name, "storage room") && strcmp(object2->name, "bail") && object2->getType() != LOTTERYTICKET)
+			if(object2->getName() != "storage room" && object2->getName() != "bail" && object2->getType() != LOTTERYTICKET)
 				object2->setFlag(O_JUST_BOUGHT);
 
 			broadcast(player->getSock(), player->getParent(), "%M bought %1P.", player, object2);
 
 			player->bug("%s just bought %s for %s in room %s.\n",
-				player->name, object2->name, cost.str().c_str(), player->getRoomParent()->fullName().c_str());
+				player->getCName(), object2->getCName(), cost.str().c_str(), player->getRoomParent()->fullName().c_str());
 
 			logn("log.commerce", "%s just bought %s for %s in room %s.\n",
-				player->name, object2->name, cost.str().c_str(), player->getRoomParent()->fullName().c_str());
+				player->getCName(), object2->getCName(), cost.str().c_str(), player->getRoomParent()->fullName().c_str());
 
 			if(isDeed) {
 				int flag=0;
 				bstring type = "";
-				bstring name = object2->name;
+				bstring name = object2->getName();
 
 				if(name == "shop deed") {
 					type = "shop";
@@ -1581,7 +1580,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 	        	delete object2;
 	        }
 
-		} else if(!strcmp(object->name, "storage room")) {
+		} else if(object->getName() == "storage room") {
 
 			CatRef	cr = gConfig->getAvailableProperty(PROP_STORAGE, 1);
 			if(cr.id < 1) {
@@ -1596,7 +1595,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			player->print("You have %s left.\n", player->coins.str().c_str());
 			broadcast(player->getSock(), player->getParent(), "%M just bought a storage room.", player);
 			logn("log.storage", "%s bought storage room %s.\n",
-				player->name, cr.str().c_str());
+				player->getCName(), cr.str().c_str());
 
 			createStorage(cr, player);
 
@@ -1730,9 +1729,9 @@ int cmdSell(Player* player, cmd* cmnd) {
 	object->refund.set(value);
 	player->doHaggling(0, object, SELL);
 	gServer->logGold(GOLD_IN, player, object->refund, object, "Pawn");
-	player->bug("%s sold %s in room %s.\n", player->name, object->name,
+	player->bug("%s sold %s in room %s.\n", player->getCName(), object->getCName(),
 		player->getRoomParent()->fullName().c_str());
-	logn("log.commerce", "%s sold %s in room %s.\n", player->name, object->name,
+	logn("log.commerce", "%s sold %s in room %s.\n", player->getCName(), object->getCName(),
 		player->getRoomParent()->fullName().c_str());
 
 
@@ -1834,7 +1833,7 @@ int cmdRefund(Player* player, cmd* cmnd) {
 
 	
 	player->coins.add(object->refund);
-	player->printColor("The shopkeep takes the %s from you and returns %s to you.\n", object->name, object->refund.str().c_str());
+	player->printColor("The shopkeep takes the %s from you and returns %s to you.\n", object->getCName(), object->refund.str().c_str());
 	broadcast(player->getSock(), player->getParent(), "%M refunds %P.", player, object);
 	gServer->logGold(GOLD_IN, player, object->refund, object, "Refund");
 	player->delObj(object, true);

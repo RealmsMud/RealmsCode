@@ -91,7 +91,7 @@ void hardcoreDeath(Player* player) {
 	player->print("\n\n");
 	player->statistics.display(player, true);
 	player->print("\n");
-	broadcast("^#^R### %s's soul is lost forever.", player->name);
+	broadcast("^#^R### %s's soul is lost forever.", player->getCName());
 	player->hooks.execute("postHardcoreDeath");
 	deletePlayer(player);
 }
@@ -195,7 +195,7 @@ void Monster::dropCorpse(Creature *killer) {
 			if(player) {
 				if(str != "")
 					str += ", ";
-				str += object->name;
+				str += object->getName();
 			}
 		}
 
@@ -240,7 +240,7 @@ void Creature::die(Creature *killer, bool &freeTarget) {
 		pKiller->statistics.kill();
 		if(mVictim)
 			pKiller->statistics.monster(mVictim);
-		if(pKiller->hasCharm(name))
+		if(pKiller->hasCharm(getName()))
 			pKiller->delCharm(this);
 	}
 
@@ -296,7 +296,7 @@ void Player::dieToMonster(Monster *killer) {
 	// no real penalties for staff dying
 	if(isStaff()) {
 		printColor("^r*** You just died ***\n");
-		broadcast(::isStaff, "^G### Sadly, %s just died.", name);
+		broadcast(::isStaff, "^G### Sadly, %s just died.", getCName());
 
 		clearAsEnemy();
 
@@ -323,7 +323,7 @@ void Player::dieToMonster(Monster *killer) {
 	unsigned long oldxp = experience;
 	unsigned short oldlvl = level;
 
-	broadcast("### Sadly, %s was killed by %1N.", name, killer);
+	broadcast("### Sadly, %s was killed by %1N.", getCName(), killer);
 	killer->clearEnemy(this);
 	clearAsEnemy();
 	gServer->clearAsEnemy(this);
@@ -351,20 +351,20 @@ void Player::dieToPet(Monster *killer) {
 		master = killer->getMaster()->getAsPlayer();
 	else {
 		broadcast(::isCt, "^y*** Pet %s has no master and is trying to kill a player. Room %s",
-			killer->name, killer->currentLocation.room.str().c_str());
+			killer->getCName(), killer->currentLocation.room.str().c_str());
 		return;
 	}
 
 	bool dueling = induel(this, master);
 
 	if(dueling)
-		broadcast("^R### Sadly, %s was killed by %s's %s in a duel.", name, master->name, killer->name);
+		broadcast("^R### Sadly, %s was killed by %s's %s in a duel.", getCName(), master->getCName(), killer->getCName());
 	else {
 		if(level > 2)
-			broadcast("### Sadly, %s was killed by %s's %s.", name, master->name, killer->name);
+			broadcast("### Sadly, %s was killed by %s's %s.", getCName(), master->getCName(), killer->getCName());
 		else {
-			broadcast(::isCt, "^y### Sadly, %s was killed by %s's %s.", name, master->name, killer->name);
-			print("### Sadly, %s was killed by %s's %s.", name, master->name, killer->name);
+			broadcast(::isCt, "^y### Sadly, %s was killed by %s's %s.", getCName(), master->getCName(), killer->getCName());
+			print("### Sadly, %s was killed by %s's %s.", getCName(), master->getCName(), killer->getCName());
 		}
 	}
 
@@ -388,12 +388,12 @@ void Monster::dieToPet(Monster *killer, bool &freeTarget) {
 		pKiller = killer->getMaster()->getAsPlayer();
 	} else {
 		broadcast(::isCt, "^y*** Pet %s has no master and is trying to kill a mob. Room %s",
-			killer->name, killer->currentLocation.room.str().c_str());
+			killer->getCName(), killer->currentLocation.room.str().c_str());
 		return;
 	}
 
 
-	broadcast(NULL, pKiller->getRoomParent(), "%M's %s killed %N.", pKiller, petKiller->name, this);
+	broadcast(NULL, pKiller->getRoomParent(), "%M's %s killed %N.", pKiller, petKiller->getCName(), this);
 
 	mobDeath(pKiller, freeTarget);
 }
@@ -493,9 +493,9 @@ void Player::dieToPlayer(Player *killer) {
 		strcpy(deathstring, "killed");
 
 	if(dueling)
-		broadcast("^R### Sadly, %s was %s by %s in a duel.", name, deathstring, killer->name);
+		broadcast("^R### Sadly, %s was %s by %s in a duel.", getCName(), deathstring, killer->getCName());
 	else// if(level > 2)
-		broadcast("### Sadly, %s was %s by %1N.", name, deathstring, killer);
+		broadcast("### Sadly, %s was %s by %1N.", getCName(), deathstring, killer);
 	//else {
 	//	broadcast(::isWatcher, "^C### Sadly, %s was %s by %1N.", name, deathstring, killer);
 	//	print("### Sadly, %s was %s by %1N.\n", name, deathstring, killer);
@@ -650,7 +650,7 @@ int Player::guildKill(Player *killer) {
 
 		killerGuild->bank.add(coins);
 		Bank::guildLog(killer->getGuild(), "Guild PKILL: %s by %s [Balance: %s]\n",
-			coins.str().c_str(), killer->name, killerGuild->bank.str().c_str());
+			coins.str().c_str(), killer->getCName(), killerGuild->bank.str().c_str());
 		coins.zero();
 		
 		gConfig->saveGuilds();
@@ -782,7 +782,7 @@ int Player::clanKill(Player *killer) {
 		subExperience(expLoss);
 		
 		if(!killer->flagIsSet(P_OUTLAW)) {
-			killer->print("You have vanquished %s.\n", name);
+			killer->print("You have vanquished %s.\n", getCName());
 			killer->print("You %s %d experience for your heroic deed.\n", gConfig->isAprilFools() ? "lose" : "gain", expGain);
 			killer->addExperience(expGain);
 		}
@@ -798,7 +798,7 @@ int Player::clanKill(Player *killer) {
 // Checks for doctor killers
 
 void Creature::checkDoctorKill(Creature *victim) {
-	if(!strcmp(victim->name, "doctor")) {
+	if(victim->getName() == "doctor") {
 		if(	(isPlayer() && !isStaff()) ||
 			(isMonster() && isPet() && !getMaster()->isStaff()))
 		{
@@ -806,7 +806,7 @@ void Creature::checkDoctorKill(Creature *victim) {
 
 			target->setFlag(P_DOCTOR_KILLER);
 			if(!target->flagIsSet(P_DOCTOR_KILLER))
-				broadcast("### %s is a doctor this!", target->name);
+				broadcast("### %s is a doctor this!", target->getCName());
 			target->lasttime[LT_KILL_DOCTOR].ltime = time(0);
 			target->lasttime[LT_KILL_DOCTOR].interval = 72000L;
 		}
@@ -849,9 +849,9 @@ int Player::checkLevel() {
 		}
 		print("You have releveled to level %s!\n", int_to_text(n));
 		logn("log.relevel", "%s just releveled to level %d from level %d in room %s.\n",
-			name, n, level, getRoomParent()->fullName().c_str());
+				getCName(), n, level, getRoomParent()->fullName().c_str());
 		if(!isStaff())
-			broadcast("### %s just releveled to %s!", name, int_to_text(n));
+			broadcast("### %s just releveled to %s!", getCName(), int_to_text(n));
 		while(level < n)
 			upLevel();
 		return(1); // Relevel
@@ -925,7 +925,7 @@ void Player::dropEquipment(bool dropAll, Socket* killerSock) {
 
 				if(dropString != "")
 					dropString += ", ";
-				dropString += ready[i]->name;
+				dropString += ready[i]->getName();
 
 				if(i != WIELD-1 && i != HELD-1) {
 					// I is wearloc-1, so add one to it
@@ -941,7 +941,7 @@ void Player::dropEquipment(bool dropAll, Socket* killerSock) {
 
 			if(dropString != "") {
 				if(killerSock)
-					killerSock->printColor("%s dropped: %s.\n", name, dropString.c_str());
+					killerSock->printColor("%s dropped: %s.\n", getCName(), dropString.c_str());
 
 				print("You dropped your inventory where you died!\n");
 			}
@@ -1050,8 +1050,7 @@ void Player::dropBodyPart(Player *killer) {
 				break;
 			}
 
-			strcpy(partName, name);
-			sprintf(body_part->name, "%s's %s", partName, part);
+			body_part->setName(bstring(getName() + "'s " + part).toLower());
 
 			lowercize(partName, 0);
 			strncpy(body_part->key[0], partName, 20);
@@ -1081,9 +1080,9 @@ void Player::logDeath(Creature *killer) {
 	strcpy(killerName, "");
 
 	if(killer->isPet())
-		sprintf(killerName, "%s's %s.", killer->getMaster()->getName(), killer->name);
+		sprintf(killerName, "%s's %s.", killer->getMaster()->getCName(), killer->getCName());
 	else
-		strcpy(killerName, killer->name);
+		strcpy(killerName, killer->getCName());
 
 	if(pKiller)
 		strcpy(file, "log.pkill");
@@ -1091,14 +1090,14 @@ void Player::logDeath(Creature *killer) {
 		strcpy(file, "log.death");
 
 	if(!(!pKiller && killer->flagIsSet(M_NO_EXP_LOSS))) {
-		logn(file, "%s(%d) was killed by %s(%d) in room %s.\n", name, level,
-		     killer->name, killer->getLevel(), killer->getRoomParent()->fullName().c_str());
+		logn(file, "%s(%d) was killed by %s(%d) in room %s.\n", getCName(), level,
+		     killer->getCName(), killer->getLevel(), killer->getRoomParent()->fullName().c_str());
 
 	}
 
 	if(pKiller && pKiller->isStaff()) {
-		log_immort(false, pKiller, "%s(%d) was killed by %s(%d) in room %s.\n", name, level,
-			pKiller->name, pKiller->getLevel(), pKiller->getRoomParent()->fullName().c_str());
+		log_immort(false, pKiller, "%s(%d) was killed by %s(%d) in room %s.\n", getCName(), level,
+			pKiller->getCName(), pKiller->getLevel(), pKiller->getRoomParent()->fullName().c_str());
 	}
 	
 	updateRecentActivity();
@@ -1128,7 +1127,7 @@ void Player::resetPlayer(Creature *killer) {
 	if(cClass == BUILDER) {
 		same = true;
 		print("*** You died ***\n");
-		broadcast(::isStaff, "^G### Sadly, %s was killed by %s.", name, killer->name);
+		broadcast(::isStaff, "^G### Sadly, %s was killed by %s.", getCName(), killer->getCName());
 	}
 
 	// a hardcore player about to die doesnt need to worry about room movement
@@ -1142,7 +1141,7 @@ void Player::resetPlayer(Creature *killer) {
 		addToRoom(newRoom);
 		doPetFollow();
 	}
-	//doClearPetEnemy(this, killer->name);
+	//doClearPetEnemy(this, killer->getCName());
 
 	curePoison();
 	cureDisease();
@@ -1165,11 +1164,11 @@ void Player::resetPlayer(Creature *killer) {
 	if(duel) {
 		setFlag(P_DIED_IN_DUEL);
 		knockUnconscious(10);
-		broadcast(getSock(), getRoomParent(), "%s is knocked unconscious!", name);
+		broadcast(getSock(), getRoomParent(), "%s is knocked unconscious!", getCName());
 
 		updateAttackTimer(true, 300);
-		pKiller->delDueling(name);
-		delDueling(killer->name);
+		pKiller->delDueling(getName());
+		delDueling(killer->getName());
 	} else if(isHardcore() && !killer->isStaff()) {
 		hardcoreDeath(this);
 		// the player is invalid after this
@@ -1229,10 +1228,10 @@ void Monster::logDeath(Creature *killer) {
 		strcpy(file, "log.perm");
 		logType = 2;
 	} else if(killer->pFlagIsSet(P_BUGGED) ) {
-		sprintf(file, "%s/%s", Path::BugLog, killer->name);
+		sprintf(file, "%s/%s", Path::BugLog, killer->getCName());
 		logType = 3;
 	} else if(killer->pFlagIsSet(P_KILLS_LOGGED) ) {
-		sprintf(file, "%s/%s.kills", Path::BugLog, killer->name);
+		sprintf(file, "%s/%s.kills", Path::BugLog, killer->getCName());
 		logType = 4;
 	} else
 		return; //Mob's death not logged
@@ -1263,21 +1262,21 @@ void Monster::logDeath(Creature *killer) {
 	if(killer->isPet() || leader->hasPet()) {
 		if(leader->pets.size() == 1) {
 			pet = leader->pets.front();
-			sprintf(killerString, "%s and %s %s", leader->name, leader->hisHer(), pet->name);
+			sprintf(killerString, "%s and %s %s", leader->getCName(), leader->hisHer(), pet->getCName());
 		} else {
-			sprintf(killerString, "%s and %s pets", leader->name, leader->hisHer());
+			sprintf(killerString, "%s and %s pets", leader->getCName(), leader->hisHer());
 		}
 	} else {
-		sprintf(killerString, "%s", killer->name);
+		sprintf(killerString, "%s", killer->getCName());
 	}
 
 
 	switch(logType) {
 	case 1:	// unsaved mob
 		sprintf(logStr, "%s(L%d) was killed by %s(L%d) in room %s for %lu experience.",
-		     name, level, killerString, killer->getLevel(), room->fullName().c_str(), experience);
+				getCName(), level, killerString, killer->getLevel(), room->fullName().c_str(), experience);
 		broadcast(hearMobDeath, "^g*** %s(L%d) was killed by %s(L%d) in room %s for %lu experience.",
-			name, level, killerString, killer->getLevel(), room->fullName().c_str(), experience);
+				getCName(), level, killerString, killer->getLevel(), room->fullName().c_str(), experience);
 		break;
 	case 2: // Mob is a perm
         {
@@ -1290,25 +1289,25 @@ void Monster::logDeath(Creature *killer) {
 
             if(!solo)
                 sprintf(logStr, "%s(L%d) was killed by %s(L%d) in %s(L%d)'s group in room %s.",
-                     name, level, killerString, killer->getLevel(),
-                     leader->name, leader->getLevel(), room->fullName().c_str());
+                		getCName(), level, killerString, killer->getLevel(),
+                     leader->getCName(), leader->getLevel(), room->fullName().c_str());
             else
                 sprintf(logStr, "%s(L%d) was killed by %s(L%d) in room %s [SOLO].",
-                     name, level, killerString, killer->getLevel(), room->fullName().c_str());
+                		getCName(), level, killerString, killer->getLevel(), room->fullName().c_str());
 
 
             if(!killer->isStaff() && flagIsSet(M_NO_PREFIX)) {
                 if(!solo)
-                    broadcast(wantsPermDeaths, "^m### Sadly, %s was killed by %s and %s followers.", name, leader->name, leader->hisHer());
+                    broadcast(wantsPermDeaths, "^m### Sadly, %s was killed by %s and %s followers.", getCName(), leader->getCName(), leader->hisHer());
                 else
-                    broadcast(wantsPermDeaths, "^m### Sadly, %s was killed by %s.", name, killerString);
+                    broadcast(wantsPermDeaths, "^m### Sadly, %s was killed by %s.", getCName(), killerString);
             }
         }
 		break;
 	case 3: // bugged player
 	case 4: // all player's kills logged
 		sprintf(logStr, "%s(L%d) was killed by %s(L%d) in room %s for %lu experience%s.",
-		     name, level, killerString, killer->getLevel(),
+				getCName(), level, killerString, killer->getLevel(),
 		     room->fullName().c_str(), experience, solo == 1 ? "[SOLO]" : "");
 		break;
 	}
@@ -1596,7 +1595,7 @@ void Player::gainExperience(Monster* victim, Creature* killer, int expAmount, bo
 		printColor("You %s ^y%d^x %sexperience for the death of %N.\n", af ? "lose" : "gain", expAmount, groupExp ? "group " : "", victim);
 	} else {
 		if(killer->isPet())
-			print("%M's %s %s you %d experience for the death of %N.\n", killer->getMaster(), killer->name, af ? "cost" : "gained", expAmount, victim);
+			print("%M's %s %s you %d experience for the death of %N.\n", killer->getMaster(), killer->getCName(), af ? "cost" : "gained", expAmount, victim);
 		else
 			print("%M %s you %d experience for the death of %N.\n", killer, af ? "cost" : "gained", expAmount, victim);
 	}
@@ -1611,7 +1610,7 @@ void Player::gainExperience(Monster* victim, Creature* killer, int expAmount, bo
 	addExperience(expAmount + holidayExp);
 
 	if(victim->flagIsSet(M_WILL_BE_LOGGED))
-		logn("log.mdeath", "%s was killed by %s, for %d experience.\n", victim->name, name, expAmount);
+		logn("log.mdeath", "%s was killed by %s, for %d experience.\n", victim->getCName(), getCName(), expAmount);
 
 	for(Monster* pet : pets) {
 	    pet->clearEnemy(victim);
@@ -1631,7 +1630,7 @@ void Monster::gainExperience(Monster* victim, Creature* killer, int expAmount, b
 	int holidayExp = 0;
 	adjustExperience(victim, expAmount, holidayExp);
 
-	master->printColor("Your %s %s you ^y%d^x experience for the death of %N.\n", this->name, af ? "cost" : "earned", expAmount, victim);
+	master->printColor("Your %s %s you ^y%d^x experience for the death of %N.\n", this->getCName(), af ? "cost" : "earned", expAmount, victim);
 
 	bstring holidayStr = isHoliday();
 	if(holidayExp > 0)
@@ -1754,7 +1753,7 @@ void Player::die(DeathType dt) {
 
 	if(isStaff()) {
 		printColor("^r*** You just died ***\n");
-		broadcast(::isStaff, "^G### Sadly, %s just died.", name);
+		broadcast(::isStaff, "^G### Sadly, %s just died.", getCName());
 
 		clearAsEnemy();
 
@@ -1781,13 +1780,13 @@ void Player::die(DeathType dt) {
 		// these are player-caused death types
 		switch(dt) {
 		case POISON_PLAYER:
-			sprintf(deathStr, "### Sadly, %s was poisoned to death.", name);
-			logn("log.death", "%s was poisoned to death by %s.\n", name, poisonedBy.c_str());
+			sprintf(deathStr, "### Sadly, %s was poisoned to death.", getCName());
+			logn("log.death", "%s was poisoned to death by %s.\n", getCName(), poisonedBy.c_str());
 			break;
 		case CREEPING_DOOM:
 			removeEffect("creeping-doom", false);
-			sprintf(deathStr, "### Sadly, %s was killed by cursed spiders.", name);
-			logn("log.death", "%s was poisoned to death by %s.\n", name, poisonedBy.c_str());
+			sprintf(deathStr, "### Sadly, %s was killed by cursed spiders.", getCName());
+			logn("log.death", "%s was poisoned to death by %s.\n", getCName(), poisonedBy.c_str());
 			break;
 		default:
 			break;
@@ -1796,10 +1795,10 @@ void Player::die(DeathType dt) {
 		if(poisonedBy != "") {
 			switch(dt) {
 			case POISON_PLAYER:
-				sprintf(deathStr, "### Sadly, %s was poisoned to death by %s.", name, poisonedBy.c_str());
+				sprintf(deathStr, "### Sadly, %s was poisoned to death by %s.", getCName(), poisonedBy.c_str());
 				break;
 			case CREEPING_DOOM:
-				sprintf(deathStr, "### Sadly, %s was killed by %s's cursed spiders.", name, poisonedBy.c_str());
+				sprintf(deathStr, "### Sadly, %s was killed by %s's cursed spiders.", getCName(), poisonedBy.c_str());
 				break;
 			default:
 				break;
@@ -1812,23 +1811,23 @@ void Player::die(DeathType dt) {
 
 		break;
 	case POISON_MONSTER:
-		sprintf(deathStr, "### Sadly, %s was poisoned to death by %s.", name, poisonedBy.c_str());
-		logn("log.death", "%s was poisoned to death by %s.\n", name, poisonedBy.c_str());
+		sprintf(deathStr, "### Sadly, %s was poisoned to death by %s.", getCName(), poisonedBy.c_str());
+		logn("log.death", "%s was poisoned to death by %s.\n", getCName(), poisonedBy.c_str());
 		death = "poison";
 		break;
 	case POISON_GENERAL:
-		sprintf(deathStr, "### Sadly, %s was poisoned to death.", name);
-		logn("log.death", "%s was poisoned to death.\n", name);
+		sprintf(deathStr, "### Sadly, %s was poisoned to death.", getCName());
+		logn("log.death", "%s was poisoned to death.\n", getCName());
 		death = "poison";
 		break;
 	case FALL:
-		sprintf(deathStr, "### Sadly, %s fell to %s death.", name, hisHer());
-		logn("log.death", "%s was killed by a fall.\n", name);
+		sprintf(deathStr, "### Sadly, %s fell to %s death.", getCName(), hisHer());
+		logn("log.death", "%s was killed by a fall.\n", getCName());
 		death = "a fall";
 		break;
 	case PETRIFIED:
 		sprintf(deathStr, "### Sadly, %s was turned to stone.\n### %s statue crumbles and breaks.",
-			name, upHisHer());
+				getCName(), upHisHer());
 
 		// all inventory, equipment, and gold are destroyed
 		lose_all(this, true, "petrification");
@@ -1837,12 +1836,12 @@ void Player::die(DeathType dt) {
 
 		if(level >= 10) {
 			if(loadObject(STATUE_OBJ, &statue)) {
-				sprintf(statue->name, "broken statue of %s", name);
-				statue->description = name;
+				statue->setName("broken statue of " + getName());
+				statue->description = getName();
 				statue->description += " is forever frozen in stone.";
 				strncpy(statue->key[0], "broken", 20);
 				strncpy(statue->key[1], "statue", 20);
-				strncpy(statue->key[2], name, 20);
+				strncpy(statue->key[2], getCName(), 20);
 
 				statue->setWeight(100 + getWeight());
 				statue->setBulk(50);
@@ -1852,194 +1851,194 @@ void Player::die(DeathType dt) {
 			}
 		}
 
-		logn("log.death", "%s died from petrification.\n", name);
+		logn("log.death", "%s died from petrification.\n", getCName());
 		death = "petrification";
 
 		removeEffect("petrification", false);
 
 		break;
 	case DISEASE:
-		sprintf(deathStr, "### Sadly, %s died from disease.", name);
-		logn("log.death", "%s was killed by disease.\n", name);
+		sprintf(deathStr, "### Sadly, %s died from disease.", getCName());
+		logn("log.death", "%s was killed by disease.\n", getCName());
 		death = "disease";
 		break;
 	case WOUNDED:
-		logn("log.death", "%s was killed by festering wounds.\n", name);
-		sprintf(deathStr, "### Sadly, %s has bled to death.", name);
+		logn("log.death", "%s was killed by festering wounds.\n", getCName());
+		sprintf(deathStr, "### Sadly, %s has bled to death.", getCName());
 		death = "festering wounds";
 		break;
 	case ELVEN_ARCHERS:
-		logn("log.death", "%s was shot to death by elven archers.\n", name);
-		sprintf(deathStr, "### Sadly, %s was shot to death by elven archers.", name);
+		logn("log.death", "%s was shot to death by elven archers.\n", getCName());
+		sprintf(deathStr, "### Sadly, %s was shot to death by elven archers.", getCName());
 		death = "elven archers";
 		break;
 	case DEADLY_MOSS:
-		logn("log.death", "%s was choked to death by deadly underdark moss.\n", name);
-		sprintf(deathStr, "### Sadly, %s was choked to death by deadly underdark moss.", name);
+		logn("log.death", "%s was choked to death by deadly underdark moss.\n", getCName());
+		sprintf(deathStr, "### Sadly, %s was choked to death by deadly underdark moss.", getCName());
 		death = "deadly underdark moss";
 	case PIERCER:
-		sprintf(deathStr, "### Sadly, %s was impaled to death by a piercer.", name);
-		logn("log.death", "%s was killed by a piercer.\n", name);
+		sprintf(deathStr, "### Sadly, %s was impaled to death by a piercer.", getCName());
+		logn("log.death", "%s was killed by a piercer.\n", getCName());
 		death = "a piercer";
 		break;
 	case SMOTHER:
-		sprintf(deathStr, "### Sadly, %s was engulfed by the earth.", name);
-		logn("log.death", "%s was killed by an earth damage room.\n", name);
+		sprintf(deathStr, "### Sadly, %s was engulfed by the earth.", getCName());
+		logn("log.death", "%s was killed by an earth damage room.\n", getCName());
 		death = "engulfing earth";
 		break;
 	case FROZE:
-		sprintf(deathStr, "### Sadly, %s froze to death.", name);
-		logn("log.death", "%s was killed by an air damage room.\n", name);
+		sprintf(deathStr, "### Sadly, %s froze to death.", getCName());
+		logn("log.death", "%s was killed by an air damage room.\n", getCName());
 		death = "hypothermia";
 		break;
 	case LIGHTNING:
-		sprintf(deathStr, "### Sadly, %s was blasted to bits by electricity.", name);
-		logn("log.death", "%s was killed by an electricity damage room.\n", name);
+		sprintf(deathStr, "### Sadly, %s was blasted to bits by electricity.", getCName());
+		logn("log.death", "%s was killed by an electricity damage room.\n", getCName());
 		death = "electricity";
 		break;
 	case WINDBATTERED:
-		sprintf(deathStr, "### Sadly, %s was ripped apart by the wind.", name);
-		logn("log.death", "%s was killed by an air damage room.\n", name);
+		sprintf(deathStr, "### Sadly, %s was ripped apart by the wind.", getCName());
+		logn("log.death", "%s was killed by an air damage room.\n", getCName());
 		death = "battering winds";
 		break;
 	case BURNED:
-		sprintf(deathStr, "### Sadly, %s was burned alive.", name);
-		logn("log.death", "%s was killed by a fire damage room or effect.\n", name);
+		sprintf(deathStr, "### Sadly, %s was burned alive.", getCName());
+		logn("log.death", "%s was killed by a fire damage room or effect.\n", getCName());
 		death = "a raging fire";
 		break;
 	case THORNS:
-		sprintf(deathStr, "### Sadly, %s was killed by a wall of thorns.", name);
-		logn("log.death", "%s was killed by a wall of thorns.\n", name);
+		sprintf(deathStr, "### Sadly, %s was killed by a wall of thorns.", getCName());
+		logn("log.death", "%s was killed by a wall of thorns.\n", getCName());
 		death = "a wall of thorns";
 		break;
 	case DROWNED:
-		sprintf(deathStr, "### Sadly, %s drowned.", name);
-		logn("log.death", "%s was killed by drowning.\n", name);
+		sprintf(deathStr, "### Sadly, %s drowned.", getCName());
+		logn("log.death", "%s was killed by drowning.\n", getCName());
 		death = "drowning";
 		break;
 	case DRAINED:
-		sprintf(deathStr, "### Sadly, %s's life force was completely drained.", name);
-		logn("log.death", "%s was killed by a pharm room.\n", name);
+		sprintf(deathStr, "### Sadly, %s's life force was completely drained.", getCName());
+		logn("log.death", "%s was killed by a pharm room.\n", getCName());
 		death = "life-drain";
 		break;
 	case ZAPPED:
-		sprintf(deathStr, "### Sadly, %s was zapped to death.", name);
-		logn("log.death", "%s was killed by a combo lock.\n", name);
+		sprintf(deathStr, "### Sadly, %s was zapped to death.", getCName());
+		logn("log.death", "%s was killed by a combo lock.\n", getCName());
 		death = "a fatal shock";
 		break;
 	case SHOCKED:
-		sprintf(deathStr, "### Sadly, %s was shocked to death.", name);
-		logn("log.death", "%s was killed by shocking.\n", name);
+		sprintf(deathStr, "### Sadly, %s was shocked to death.", getCName());
+		logn("log.death", "%s was killed by shocking.\n", getCName());
 		death = "a fatal shock";
 		break;
 	case PIT:
-		sprintf(deathStr, "### Sadly, %s fell into a pit and died.", name);
-		logn("log.death", "%s was killed by a pit trap.\n", name);
+		sprintf(deathStr, "### Sadly, %s fell into a pit and died.", getCName());
+		logn("log.death", "%s was killed by a pit trap.\n", getCName());
 		death = "a fall";
 		break;
 	case BLOCK:
-		sprintf(deathStr, "### Sadly, %s was crushed to death by a giant stone block.", name);
-		logn("log.death", "%s was killed by a stone block trap.\n", name);
+		sprintf(deathStr, "### Sadly, %s was crushed to death by a giant stone block.", getCName());
+		logn("log.death", "%s was killed by a stone block trap.\n", getCName());
 		death = "a giant stone block";
 		break;
 	case DART:
-		sprintf(deathStr, "### Sadly, %s was killed by a poisoned dart.", name);
-		logn("log.death", "%s was killed by a poison dart trap.\n", name);
+		sprintf(deathStr, "### Sadly, %s was killed by a poisoned dart.", getCName());
+		logn("log.death", "%s was killed by a poison dart trap.\n", getCName());
 		death = "a poisoned dart";
 		break;
 	case ARROW:
-		sprintf(deathStr, "### Sadly, %s was killed by a flight of arrows.", name);
-		logn("log.death", "%s was killed by an arrow trap.\n", name);
+		sprintf(deathStr, "### Sadly, %s was killed by a flight of arrows.", getCName());
+		logn("log.death", "%s was killed by an arrow trap.\n", getCName());
 		death = "a flight of arrows";
 		break;
 	case SPIKED_PIT:
-		sprintf(deathStr, "### Sadly, %s fell into a pit and was impaled by spikes.", name);
-		logn("log.death", "%s was killed by a spiked pit trap.\n", name);
+		sprintf(deathStr, "### Sadly, %s fell into a pit and was impaled by spikes.", getCName());
+		logn("log.death", "%s was killed by a spiked pit trap.\n", getCName());
 		death = "a fall";
 		break;
 	case FIRE_TRAP:
-		sprintf(deathStr, "### Sadly, %s was engulfed by flames and died.", name);
-		logn("log.death", "%s was killed by a fire trap.\n", name);
+		sprintf(deathStr, "### Sadly, %s was engulfed by flames and died.", getCName());
+		logn("log.death", "%s was killed by a fire trap.\n", getCName());
 		death = "a raging fire";
 		break;
 	case FROST:
-		sprintf(deathStr, "### Sadly, %s was frozen alive, and died.", name);
-		logn("log.death", "%s was killed by a frost trap.\n", name);
+		sprintf(deathStr, "### Sadly, %s was frozen alive, and died.", getCName());
+		logn("log.death", "%s was killed by a frost trap.\n", getCName());
 		death = "hypothermia";
 		break;
 	case ELECTRICITY:
-		sprintf(deathStr, "### Sadly, %s was killed by electrocution.", name);
-		logn("log.death", "%s was killed by an electricity trap.\n", name);
+		sprintf(deathStr, "### Sadly, %s was killed by electrocution.", getCName());
+		logn("log.death", "%s was killed by an electricity trap.\n", getCName());
 		death = "electricity";
 		break;
 	case ACID:
-		sprintf(deathStr, "### Sadly, %s was dissolved by acid.", name);
-		logn("log.death", "%s was killed by an acid trap.\n", name);
+		sprintf(deathStr, "### Sadly, %s was dissolved by acid.", getCName());
+		logn("log.death", "%s was killed by an acid trap.\n", getCName());
 		death = "acid";
 		break;
 	case ROCKS:
-		sprintf(deathStr, "### Sadly, %s was crushed to death in a rockslide.", name);
-		logn("log.death", "%s was killed by a rockslide trap.\n", name);
+		sprintf(deathStr, "### Sadly, %s was crushed to death in a rockslide.", getCName());
+		logn("log.death", "%s was killed by a rockslide trap.\n", getCName());
 		death = "a rockslide";
 		break;
 	case ICICLE_TRAP:
-		sprintf(deathStr, "### Sadly, %s was impaled by a giant icicle.", name);
-		logn("log.death", "%s was killed by a falling icicle trap.\n", name);
+		sprintf(deathStr, "### Sadly, %s was impaled by a giant icicle.", getCName());
+		logn("log.death", "%s was killed by a falling icicle trap.\n", getCName());
 		death = "a giant icicle";
 		break;
 	case SPEAR:
-		sprintf(deathStr, "### Sadly, %s was killed by a giant spear.", name);
-		logn("log.death", "%s was killed by a spear trap.\n", name);
+		sprintf(deathStr, "### Sadly, %s was killed by a giant spear.", getCName());
+		logn("log.death", "%s was killed by a spear trap.\n", getCName());
 		death = "a spear";
 		break;
 	case CROSSBOW_TRAP:
-		sprintf(deathStr, "### Sadly, %s was killed by a crossbow trap.", name);
-		logn("log.death", "%s was killed by a crossbow trap.\n", name);
+		sprintf(deathStr, "### Sadly, %s was killed by a crossbow trap.", getCName());
+		logn("log.death", "%s was killed by a crossbow trap.\n", getCName());
 		death = "a crossbow bolt";
 		break;
 	case VINES:
-		sprintf(deathStr, "### Sadly, %s was ripped apart by crawling vines.", name);
-		logn("log.death", "%s was killed by deadly vines.\n", name);
+		sprintf(deathStr, "### Sadly, %s was ripped apart by crawling vines.", getCName());
+		logn("log.death", "%s was killed by deadly vines.\n", getCName());
 		death = "deadly vines";
 		break;
 	case COLDWATER:
-		sprintf(deathStr, "### Sadly, %s died from hypothermia.", name);
-		logn("log.death", "%s was killed from hypothermia.\n", name);
+		sprintf(deathStr, "### Sadly, %s died from hypothermia.", getCName());
+		logn("log.death", "%s was killed from hypothermia.\n", getCName());
 		death = "hypothermia";
 		break;
 	case EXPLODED:
-		sprintf(deathStr, "### Sadly, %s exploded.", name);
-		logn("log.death", "%s was killed by exploding.\n", name);
+		sprintf(deathStr, "### Sadly, %s exploded.", getCName());
+		logn("log.death", "%s was killed by exploding.\n", getCName());
 		death = "self-combustion";
 		break;
 	case SPLAT:
-		sprintf(deathStr, "### Sadly, %s tumbled to %s death. (SPLAT!)", name, hisHer());
-		logn("log.death", "%s tumbled to %s death.\n", name, hisHer());
+		sprintf(deathStr, "### Sadly, %s tumbled to %s death. (SPLAT!)", getCName(), hisHer());
+		logn("log.death", "%s tumbled to %s death.\n", getCName(), hisHer());
 		death = "a fall";
 		break;
 	case BOLTS:
-		sprintf(deathStr, "### Sadly, %s was blasted to death by energy bolts.", name);
-		logn("log.death", "%s was killed by energy bolts.\n", name);
+		sprintf(deathStr, "### Sadly, %s was blasted to death by energy bolts.", getCName());
+		logn("log.death", "%s was killed by energy bolts.\n", getCName());
 		death = "energy bolts";
 		break;
 	case BONES:
-		sprintf(deathStr, "### Sadly, %s was crushed to death under an avalanche of bones.", name);
-		logn("log.death", "%s was killed by a bone avalanche.\n", name);
+		sprintf(deathStr, "### Sadly, %s was crushed to death under an avalanche of bones.", getCName());
+		logn("log.death", "%s was killed by a bone avalanche.\n", getCName());
 		death = "an avalanche of bones";
 		break;
 	case EXPLOSION:
-		sprintf(deathStr, "### Sadly, %s was vaporized in a magical explosion.", name);
-		logn("log.death", "%s was killed by a magical explosion.\n", name);
+		sprintf(deathStr, "### Sadly, %s was vaporized in a magical explosion.", getCName());
+		logn("log.death", "%s was killed by a magical explosion.\n", getCName());
 		death = "a magical explosion";
 		break;
 	case SUNLIGHT:
-		sprintf(deathStr, "### Sadly, %s was disintegrated by sunlight.", name);
-		logn("log.death", "%s was disintegrated by sunlight.\n", name);
+		sprintf(deathStr, "### Sadly, %s was disintegrated by sunlight.", getCName());
+		logn("log.death", "%s was disintegrated by sunlight.\n", getCName());
 		death = "sunlight";
 		break;
 	default:
-		sprintf(deathStr, "### Sadly, %s died.", name);
-		logn("log.death", "%s was killed by %s.\n", name, name);
+		sprintf(deathStr, "### Sadly, %s died.", getCName());
+		logn("log.death", "%s was killed by %s.\n", getCName(), getCName());
 		death = "misfortune";
 		break;
 	}
@@ -2277,7 +2276,7 @@ bool Player::dropWeapons() {
 
 		if(jump)
 			print("%s%s jumped to your primary hand! It's cursed!\n",
-				!ready[WIELD-1]->flagIsSet(O_NO_PREFIX) ? "The " : "", ready[WIELD-1]->name);
+				!ready[WIELD-1]->flagIsSet(O_NO_PREFIX) ? "The " : "", ready[WIELD-1]->getCName());
 
 		// checkDarkness(), computeAttackPower(), computeAC() should be handled outside this function
 		return(true);

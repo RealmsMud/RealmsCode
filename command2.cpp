@@ -54,14 +54,14 @@ bool doScout(Player* player, const Exit* exit);
 void lookAtExit(Player* player, Exit* exit) {
 	// blindness is already handled
 	
-	player->printColor("You look at the %s^x exit.\n", exit->name);
+	player->printColor("You look at the %s^x exit.\n", exit->getCName());
 
 	if(exit->getDescription() != "")
 		player->printColor("%s\n", exit->getDescription().c_str());
 	// the owner of the portal gets more information
-	if(exit->flagIsSet(X_PORTAL) && exit->getPassPhrase() == player->name)
+	if(exit->flagIsSet(X_PORTAL) && exit->getPassPhrase() == player->getName())
 		player->print("%s %s may pass through it.\n", intToText(exit->getKey(), true).c_str(), exit->getKey() == 1 ? "person" : "people");
-	if(getDir(exit->name) == NoDirection && exit->getDirection() != NoDirection)
+	if(getDir(exit->getCName()) == NoDirection && exit->getDirection() != NoDirection)
 		player->print("It leads %s.\n", getDirName(exit->getDirection()).c_str());
 	
 	if(exit->flagIsSet(X_CLOSED))
@@ -81,7 +81,7 @@ void lookAtExit(Player* player, Exit* exit) {
 
 	if(exit->flagIsSet(X_CAN_LOOK) || exit->flagIsSet(X_LOOK_ONLY)) {
 		if(	player->getRoomParent()->isEffected("dense-fog") &&
-			!player->checkStaff("This room is filled with a dense fog.\nYou cannot look to the %s^x effectively.\n", exit->name)
+			!player->checkStaff("This room is filled with a dense fog.\nYou cannot look to the %s^x effectively.\n", exit->getCName())
 		)
 			return;
 
@@ -229,9 +229,9 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 		if(creature->inCombat() && !creature->checkStaff("Not while you are in combat!\n"))
 			return(0);
 
-		creature->printColor("You throw %P to the %s^x.\n", object, exit->name);
+		creature->printColor("You throw %P to the %s^x.\n", object, exit->getCName());
 		broadcast(creature->getSock(), room, "%M throws %P to the %s^x.",
-			creature, object, exit->name);
+			creature, object, exit->getCName());
 		creature->delObj(object);
 
 		guard = room->getGuardingExit(exit, player);
@@ -249,7 +249,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 				broadcast(0, room, "%M knocks %P to the ground.", guard, object);
 			else
 				broadcast(0, room, "%O hits the %s^x and falls to the ground.",
-					object, exit->name);
+					object, exit->getCName());
 			finishDropObject(object, room, creature);
 		} else {
 			room = newRoom;
@@ -270,7 +270,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 		if(!creature->canAttack(victim))
 			return(0);
 
-		if(creature->vampireCharmed(pVictim) || (victim->hasCharm(creature->name) && creature->pFlagIsSet(P_CHARMED))) {
+		if(creature->vampireCharmed(pVictim) || (victim->hasCharm(creature->getCName()) && creature->pFlagIsSet(P_CHARMED))) {
 			creature->print("You like %N too much to do that.\n", victim);
 			return(0);
 		}
@@ -381,8 +381,8 @@ int cmdKnock(Creature* creature, cmd* cmnd) {
 	}
 
 	creature->getParent()->wake("You awaken suddenly!", true);
-	creature->printColor("You knock on the %s^x.\n", exit->name);
-	broadcast(creature->getSock(), creature->getRoomParent(), "%M knocks on the %s^x.", creature, exit->name);
+	creature->printColor("You knock on the %s^x.\n", exit->getCName());
+	broadcast(creature->getSock(), creature->getRoomParent(), "%M knocks on the %s^x.", creature, exit->getCName());
 
 	// change the meaning of exit
 	exit = exit->getReturnExit(creature->getRoomParent(), &targetRoom);
@@ -523,8 +523,8 @@ int cmdBreak(Player* player, cmd* cmnd) {
 			strcpy(item, "used up ");
 		else
 			strcpy(item, "broken ");
-		strcat(item, object->name);
-		sprintf(object->name, "%s", item);
+		object->setName(bstring(item) + object->getName());
+
 		strncpy(object->key[2],"broken",20);
 
 

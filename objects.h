@@ -203,7 +203,7 @@ public:
     void clearFlag(int flag); // *
     bool toggleFlag(int flag); // *
 
-    char* cmpName();
+//    char* cmpName();
     void escapeText();
 
     // Placement of the object etc
@@ -356,6 +356,7 @@ public:
 
     bool swap(Swap s);
     bool swapIsInteresting(Swap s) const;
+
 };
 
 

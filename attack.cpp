@@ -217,8 +217,8 @@ bool Creature::canAttack(Creature* target, bool stealing) {
 		}
 
 		// will charm stop them?
-		if(vampireCharmed(pCheck) || (pCheck->hasCharm(name) && flagIsSet(P_CHARMED))) {
-			print("You like %s too much to do that.\n", pCheck->name);
+		if(vampireCharmed(pCheck) || (pCheck->hasCharm(getName()) && flagIsSet(P_CHARMED))) {
+			print("You like %s too much to do that.\n", pCheck->getCName());
 			return(false);
 		} else {
 			if(target->isPlayer())
@@ -374,7 +374,7 @@ void checkWeapon(Player* player, Object** weapon, bool alwaysRemove, int* loc, i
 		player->unequip(*loc, action);
 	} else {
 		// ::isDm -> Global isDm function, not class local isDm function
-		broadcast(::isDm, "^g>>> Fumble: BadLoc (Loc:%d) %'s %s\n", *loc, player->name, (*weapon)->name);
+		broadcast(::isDm, "^g>>> Fumble: BadLoc (Loc:%d) %'s %s\n", *loc, player->getCName(), (*weapon)->getCName());
 		if(player->ready[WIELD-1] == *weapon) {
 			player->unequip(WIELD);
 		} else if(player->ready[HELD-1] == *weapon) {
@@ -661,7 +661,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 
 				if(showToRoom)
 					broadcast(getSock(), getRoomParent(), "%M %s %N.", this, atk, victim);
-				log_immort(false,this, "%s %s %s for %d damage.\n", name, atk, victim->name, attackDamage.get());
+				log_immort(false,this, "%s %s %s for %d damage.\n", getCName(), atk, victim->getCName(), attackDamage.get());
 				printColor("You %s %N for %s%d^x damage.\n", atk, victim, customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
 				victim->printColor("%M %s you%s for %s%d^x damage!\n", this, atk,
 					victim->isBrittle() ? "r brittle body" : "", victim->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
@@ -874,7 +874,7 @@ int Creature::castWeapon(Creature* target, Object *weapon, bool &meKilled) {
 				(target->flagIsSet(M_NO_LEVEL_TWO) && slvl <= 2) ||
 				(target->flagIsSet(M_NO_LEVEL_ONE) && slvl <= 1))
 			{
-				printColor("^yYour %s's %s spell fails!\n", weapon->name, spellname);
+				printColor("^yYour %s's %s spell fails!\n", weapon->getCName(), spellname);
 				weapon->decShotsCur();
 				return(0);
 			}
@@ -889,12 +889,12 @@ int Creature::castWeapon(Creature* target, Object *weapon, bool &meKilled) {
 		}
 
 
-		printColor("Your %s casts a %s spell on %s for %s%d^x damage.\n", weapon->name,
-			spellname, target->name, customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+		printColor("Your %s casts a %s spell on %s for %s%d^x damage.\n", weapon->getCName(),
+			spellname, target->getCName(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
 
-		broadcast(getSock(), target->getSock(), getRoomParent(), "%M's %s casts a %s spell on %N.", this, weapon->name, spellname, target);
+		broadcast(getSock(), target->getSock(), getRoomParent(), "%M's %s casts a %s spell on %N.", this, weapon->getCName(), spellname, target);
 		target->printColor("^M%M's^x %s casts a %s spell on you for %s%d^x damage.\n",
-			this, weapon->name, spellname, target->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+			this, weapon->getCName(), spellname, target->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
 
 		meKilled = doReflectionDamage(attackDamage, target);
 
@@ -1345,7 +1345,7 @@ Player* Monster::whoToAggro() const {
 	const BaseRoom* myRoom = getConstRoomParent();
 
 	if(!myRoom) {
-		broadcast(::isDm, "^g *** Monster '%s' has no room in whoToAggro!", name);
+		broadcast(::isDm, "^g *** Monster '%s' has no room in whoToAggro!", getCName());
 		return(0);
 	}
 

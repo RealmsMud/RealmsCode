@@ -105,7 +105,7 @@ void Config::showMemory(Socket* sock) {
                             act_mem += strlen(tlk->target);
                     }
                 } else {
-                    sprintf(buf, "%s has a talk and should not.", mons->name);
+                    sprintf(buf, "%s has a talk and should not.", mons->getCName());
                     loge(buf);
                     for(; tlk; tlk = tlk->next_tag) {
                         badtalk++;

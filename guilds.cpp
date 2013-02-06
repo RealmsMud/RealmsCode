@@ -413,7 +413,7 @@ void Guild::create(Player* player, cmd* cmnd) {
 
 	newGuildCreation = new GuildCreation;
 	newGuildCreation->name = guildName;
-	newGuildCreation->leader = player->name;
+	newGuildCreation->leader = player->getName();
 	newGuildCreation->leaderIp = player->getSock()->getIp();
 	newGuildCreation->status = GUILD_NEEDS_SUPPORT;
 	newGuildCreation->numSupporters = 0;
@@ -422,7 +422,7 @@ void Guild::create(Player* player, cmd* cmnd) {
 	player->setFlag(P_CREATING_GUILD);
 	player->printColor("%sYou attempting to create a guild with the name of '%s'.\n", player->customColorize("*CC:GUILD*").c_str(), guildName);
 	player->print("Go find %d people to support your guild now.\n", SUPPORT_REQUIRED);
-	broadcast(isCt, "^y%s is attempting to create the guild '%s'.", player->name, guildName);
+	broadcast(isCt, "^y%s is attempting to create the guild '%s'.", player->getCName(), guildName);
 	gConfig->saveGuilds();
 }
 
@@ -436,7 +436,7 @@ void Guild::cancel(Player* player, cmd* cmnd) {
 		return;
 	}
 	player->clearFlag(P_CREATING_GUILD);
-	bstring guildName = gConfig->removeGuildCreation(player->name);
+	bstring guildName = gConfig->removeGuildCreation(player->getName());
 
 	if(guildName != "") {
 		player->print("You remove your bid to create '%s'.\n", guildName.c_str());
@@ -474,7 +474,7 @@ void Guild::forum(Player* player, cmd* cmnd) {
 
 	bstring action = cmnd->str[2];
 	std::ostringstream url;
-	url << "mud.php?mud_id=" << guild->getNum() << "&char=" << player->name << "&type=";
+	url << "mud.php?mud_id=" << guild->getNum() << "&char=" << player->getName() << "&type=";
 
 	if(action == "-create") {
 		player->printColor("Attempting to create guild forum with you as guildmaster.\n");
@@ -569,7 +569,7 @@ void Guild::support(Player* player, cmd* cmnd) {
 	player->setFlag(P_CREATING_GUILD);
 
 	player->print("You now supporting the creation of the guild '%s'.\n", guildName);
-	broadcast(isCt, "^y%s is supporting the guild '%s'.", player->name, guildName);
+	broadcast(isCt, "^y%s is supporting the guild '%s'.", player->getCName(), guildName);
 	toSupport->addSupporter(player);
 
 	if(toSupport->numSupporters >= SUPPORT_REQUIRED) {
@@ -617,17 +617,17 @@ void Guild::invite(Player* player, cmd* cmnd) {
 
 	if(target->getLevel() < GUILD_JOIN_LEVEL) {
 		player->print("%s does not meet the minimum required level of %d to join a guild!\n",
-			target->name, GUILD_JOIN_LEVEL);
+			target->getCName(), GUILD_JOIN_LEVEL);
 		return;
 	}
 
 	if(target->getGuildRank() >= GUILD_INVITED && target->getGuildRank() < GUILD_PEON) {
-		player->print("%s is currently considering joining a guild already.\n", target->name);
+		player->print("%s is currently considering joining a guild already.\n", target->getCName());
 		return;
 	}
 
 	if(target->getGuild()) {
-		player->print("%s is already in a guild.\n", target->name);
+		player->print("%s is already in a guild.\n", target->getCName());
 		return;
 	}
 
@@ -642,21 +642,21 @@ void Guild::invite(Player* player, cmd* cmnd) {
 
 	if(player->getGuildRank() == GUILD_MASTER) {
 		if(!strncmp(cmnd->str[3], "officer", strlen(cmnd->str[3])) && cmnd->num == 4) {
-			player->print("You invite %s to join your guild as an officer.\n", target->name);
-			target->print("You have been invited to join '%s' as an officer by %s.\n", getGuildName(player->getGuild()), player->name);
+			player->print("You invite %s to join your guild as an officer.\n", target->getCName());
+			target->print("You have been invited to join '%s' as an officer by %s.\n", getGuildName(player->getGuild()), player->getCName());
 			target->setGuildRank(GUILD_INVITED_OFFICER);
 		} else if(!strncmp(cmnd->str[3], "banker", strlen(cmnd->str[3])) && cmnd->num == 4) {
-			player->print("You invite %s to join your guild as a banker.\n", target->name);
-			target->print("You have been invited to join '%s' as a banker by %s.\n", getGuildName(player->getGuild()), player->name);
+			player->print("You invite %s to join your guild as a banker.\n", target->getCName());
+			target->print("You have been invited to join '%s' as a banker by %s.\n", getGuildName(player->getGuild()), player->getCName());
 			target->setGuildRank(GUILD_INVITED_BANKER);
 		} else {
-			player->print("You invite %s to join your guild as a normal member.\n", target->name);
-			target->print("You have been invited to join '%s' by %s.\n", getGuildName(player->getGuild()), player->name);
+			player->print("You invite %s to join your guild as a normal member.\n", target->getCName());
+			target->print("You have been invited to join '%s' by %s.\n", getGuildName(player->getGuild()), player->getCName());
 			target->setGuildRank(GUILD_INVITED);
 		}
 	} else {
-		player->print("You invite %s to join your guild as a normal member.\n", target->name);
-		target->print("You have been invited to join '%s' by %s.\n", getGuildName(player->getGuild()), player->name);
+		player->print("You invite %s to join your guild as a normal member.\n", target->getCName());
+		target->print("You have been invited to join '%s' by %s.\n", getGuildName(player->getGuild()), player->getCName());
 		target->setGuildRank(GUILD_INVITED);
 	}
 
@@ -702,7 +702,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
 			player->print("You remove yourself from your guild (%s).\n", getGuildName(player->getGuild()));
 			
 			player->setGuild(0);
-			broadcastGuild(guildId, 1, "%s has removed %sself from your guild.", player->name, player->himHer());
+			broadcastGuild(guildId, 1, "%s has removed %sself from your guild.", player->getCName(), player->himHer());
 			player->setGuildRank(GUILD_NONE);
 
 			// Kick them out if they don't belong
@@ -727,7 +727,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
 	}
 
 	if(target->getGuild() != guildId) {
-		player->print("%s is not in your guild!\n", target->name);
+		player->print("%s is not in your guild!\n", target->getCName());
 		return;
 	}
 	if(target->getGuildRank() >= player->getGuildRank()) {
@@ -735,7 +735,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
 		return;
 	}
 	if(target->getGuildRank() < GUILD_PEON) {
-		player->print("%s is not in your guild!\n", target->name);
+		player->print("%s is not in your guild!\n", target->getCName());
 		return;
 	}
 	if(!canRemovePlyFromGuild(target)) {
@@ -746,23 +746,23 @@ void Guild::remove(Player* player, cmd* cmnd) {
 	updateGuild(target, GUILD_REMOVE);
 	target->setGuild(0);
 	target->setGuildRank(GUILD_NONE);
-	target->print("You have been removed from your guild by %s.\n", player->name);
-	player->print("You remove %s from your guild.\n", target->name);
-	broadcastGuild(guildId, 1, "%s has been removed from your guild by %s.", target->name, player->name);
+	target->print("You have been removed from your guild by %s.\n", player->getCName());
+	player->print("You remove %s from your guild.\n", target->getCName());
+	broadcastGuild(guildId, 1, "%s has been removed from your guild by %s.", target->getCName(), player->getCName());
 
 	if(target->getForum() != "") {
-		player->printColor("%s is associated with forum account ^C%s^x.\n", target->name, target->getForum().c_str());
+		player->printColor("%s is associated with forum account ^C%s^x.\n", target->getCName(), target->getForum().c_str());
 		player->printColor("You may wish to consider removing this account from the guild forum.\n");
 	}
 
 	std::list<Property*>::iterator pt;
 	for(pt = gConfig->properties.begin(); pt != gConfig->properties.end(); pt++) {
-		if((*pt)->isOwner(target->name) && (*pt)->getGuild() == guildId) {
+		if((*pt)->isOwner(target->getName()) && (*pt)->getGuild() == guildId) {
 			if((*pt)->getType() == PROP_SHOP) {
 				shopRemoveGuild(*pt, target, 0, 0);
 			} else {
 				bstring output = (*pt)->getName();
-				broadcast(isCt, "^r%s was removed from guild %d.\nProperty \"%s\" belongs to the guild, but is not a shop.", target->name, guildId, output.c_str());
+				broadcast(isCt, "^r%s was removed from guild %d.\nProperty \"%s\" belongs to the guild, but is not a shop.", target, guildId, output.c_str());
 			}
 		}
 	}
@@ -801,7 +801,7 @@ void Guild::promote(Player* player, cmd* cmnd) {
 		return;
 	}
 	if(target->getGuild() != player->getGuild() || target->getGuildRank() < GUILD_PEON) {
-		player->print("%s is not in your guild!\n", target->name);
+		player->print("%s is not in your guild!\n", target->getCName());
 		return;
 	}
 	if(cmnd->num == 4) {
@@ -831,9 +831,9 @@ void Guild::promote(Player* player, cmd* cmnd) {
 	}
 
 	target->setGuildRank(newRank);
-	player->print("You promote %s to %s.\n", target->name, rank);
-	target->print("You have been promoted to %s by %s.\n", rank, player->name);
-	broadcastGuild(player->getGuild(), 1, "%s has been promoted to the rank of %s by %s.", target->name, rank, player->name);
+	player->print("You promote %s to %s.\n", target, rank);
+	target->print("You have been promoted to %s by %s.\n", rank, player->getCName());
+	broadcastGuild(player->getGuild(), 1, "%s has been promoted to the rank of %s by %s.", target, rank, player->getCName());
 }
 
 //*********************************************************************
@@ -860,7 +860,7 @@ void Guild::demote(Player* player, cmd* cmnd) {
 		return;
 	}
 	if(target->getGuild() != player->getGuild() || target->getGuildRank() < GUILD_PEON) {
-		player->print("%s is not in your guild!\n", target->name);
+		player->print("%s is not in your guild!\n", target->getCName());
 		return;
 	}
 	if(cmnd->num == 4) {
@@ -888,9 +888,9 @@ void Guild::demote(Player* player, cmd* cmnd) {
 	}
 
 	target->setGuildRank(newRank);
-	player->print("You demote %s to %s.\n", target->name, rank);
-	target->print("You have been demoted to %s rank by %s.\n", rank, player->name);
-	broadcastGuild(player->getGuild(), 1, "%s has been demoted to %s rank by %s.", target->name, rank, player->name);
+	player->print("You demote %s to %s.\n", target, rank);
+	target->print("You have been demoted to %s rank by %s.\n", rank, player->getCName());
+	broadcastGuild(player->getGuild(), 1, "%s has been demoted to %s rank by %s.", target, rank, player->getCName());
 }
 
 //*********************************************************************
@@ -906,7 +906,7 @@ void Guild::abdicate(Player* player, Player* target, bool online) {
 	}
 
 	if(target->getGuild() != player->getGuild() || target->getGuildRank() < GUILD_PEON) {
-		player->print("%s is not in your guild!\n", target->name);
+		player->print("%s is not in your guild!\n", target->getCName());
 		return;
 	}
 
@@ -914,21 +914,21 @@ void Guild::abdicate(Player* player, Player* target, bool online) {
 	target->setGuildRank(GUILD_MASTER);
 	player->setGuildRank(GUILD_BANKER);
 
-	target->print("You have been promoted to guild leader by %s.\n", player->name);
+	target->print("You have been promoted to guild leader by %s.\n", player->getCName());
 	target->print("Use the \"guild\" command to set your forum account as guildmaster of the guild board.\n");
-	player->print("You promote %s to guild leader.\n", target->name);
+	player->print("You promote %s to guild leader.\n", target->getCName());
 
 	std::list<Property*>::iterator pt;
 	bstring pName;
 	for(pt = gConfig->properties.begin(); pt != gConfig->properties.end(); pt++) {
-		if(	(*pt)->isOwner(player->name) &&
+		if(	(*pt)->isOwner(player->getName()) &&
 			(*pt)->getGuild() == guildId
 		) {
 			pName = gConfig->catRefName((*pt)->getArea());
 			if((*pt)->getType() == PROP_GUILDHALL) {
 				// guildhalls are easy - ownership transfers to the new guildmaster
-				(*pt)->setOwner(target->name);
-				player->print("%s assumes ownership of the guildhall in %s.\n", target->name, pName.c_str());
+				(*pt)->setOwner(target->getName());
+				player->print("%s assumes ownership of the guildhall in %s.\n", target->getCName(), pName.c_str());
 				target->print("You assume ownership of the guildhall in %s.\n", pName.c_str());
 			} else if((*pt)->getType() == PROP_SHOP) {
 				// shops located inside the guild transfer ownership to the new guildmaster
@@ -943,8 +943,8 @@ void Guild::abdicate(Player* player, Player* target, bool online) {
 				}
 
 				if(transferOwnership) {
-					(*pt)->setOwner(target->name);
-					player->print("%s assumes ownership of the guild shop in %s.\n", target->name, pName.c_str());
+					(*pt)->setOwner(target->getName());
+					player->print("%s assumes ownership of the guild shop in %s.\n", target->getCName(), pName.c_str());
 					target->print("You assume ownership of the guild shop in %s.\n", pName.c_str());
 				} else {
 					player->print("You retain ownership of the guild shop in %s.\n", pName.c_str());
@@ -953,10 +953,10 @@ void Guild::abdicate(Player* player, Player* target, bool online) {
 		}
 	}
 
-	broadcastGuild(player->getGuild(), 1, "%s has been promoted to guild leader by %s.", target->name, player->name);
+	broadcastGuild(player->getGuild(), 1, "%s has been promoted to guild leader by %s.", target->getCName(), player->getCName());
 	Guild* guild = gConfig->getGuild(guildId);
 
-	guild->setLeader(target->name);
+	guild->setLeader(target->getName());
 	gConfig->saveGuilds();
 	gConfig->saveProperties();
 
@@ -964,7 +964,7 @@ void Guild::abdicate(Player* player, Player* target, bool online) {
 	target->save(online);
 
 	std::ostringstream url;
-	url << "mud.php?type=guildAbdicate&mud_id=" << guild->getNum() << "&char=" << target->name;
+	url << "mud.php?type=guildAbdicate&mud_id=" << guild->getNum() << "&char=" << target->getCName();
 	callWebserver(url.str());
 }
 
@@ -1013,13 +1013,13 @@ void Guild::join(Player* player, cmd *cmnd) {
 	}
 
 	if(player->getGuildRank() == GUILD_INVITED_OFFICER) {
-		broadcastGuild(player->getGuild(), 1, "%s has joined your guild as an officer.", player->name);
+		broadcastGuild(player->getGuild(), 1, "%s has joined your guild as an officer.", player->getCName());
 		player->setGuildRank(GUILD_OFFICER);
 	} else if(player->getGuildRank() == GUILD_INVITED_BANKER) {
 		player->setGuildRank(GUILD_BANKER);
-		broadcastGuild(player->getGuild(), 1, "%s has joined your guild as a banker.", player->name);
+		broadcastGuild(player->getGuild(), 1, "%s has joined your guild as a banker.", player->getCName());
 	} else { // Default to normal member
-		broadcastGuild(player->getGuild(), 1, "%s has joined your guild as a normal member.", player->name);
+		broadcastGuild(player->getGuild(), 1, "%s has joined your guild as a normal member.", player->getCName());
 		player->setGuildRank(GUILD_PEON);
 	}
 
@@ -1028,7 +1028,7 @@ void Guild::join(Player* player, cmd *cmnd) {
 	player->print("You have joined %s.\n", name.c_str());
 
 	if(player->getForum() != "")
-		callWebserver((bstring)"mud.php?type=autoguild&guild=" + name + "&user=" + player->getForum() + "&char=" + player->name);
+		callWebserver((bstring)"mud.php?type=autoguild&guild=" + name + "&user=" + player->getForum() + "&char=" + player->getCName());
 
 }
 
@@ -1065,7 +1065,7 @@ void Guild::disband(Player* player, cmd* cmnd) {
 		player->coins.add(guild->bank);
 	}
 
-	broadcastGuild(guildId, 1, "Your guild has been disbanded by %s.", player->name);
+	broadcastGuild(guildId, 1, "Your guild has been disbanded by %s.", player->getCName());
 	Player* ply;
 	for(std::pair<bstring, Player*> p : gServer->players) {
 		ply = p.second;
@@ -1100,10 +1100,10 @@ void doGuildSend(const Guild *guild, Player* player, bstring txt) {
 	}
 
 	broadcastGuild(guild->getNum(), 1, "### %s sent, \"%s\".",
-		player->name, escapeColor(txt).c_str());
+		player->getCName(), escapeColor(txt).c_str());
 	txt = escapeColor(txt);
 	broadcast(watchingEaves, "^E--- [%s] %s guild sent, \"%s\".",
-		guild->getName().c_str(), player->name, txt.c_str());
+		guild->getName().c_str(), player->getCName(), txt.c_str());
 }
 
 //*********************************************************************
@@ -1188,7 +1188,7 @@ int dmApproveGuild(Player* player, cmd* cmnd) {
 		return(0);
 	}
 	player->print("You approve the guild '%s'.\n", guildName);
-	broadcast(isCt, "^y%s just approved the guild %s", player->name, guildName);
+	broadcast(isCt, "^y%s just approved the guild %s", player->getCName(), guildName);
 
 	gConfig->creationToGuild(toApprove);
 	// saved by above function
@@ -1273,7 +1273,7 @@ int dmRejectGuild(Player* player, cmd* cmnd) {
 		return(0);
 	}
 	player->print("You reject the guild '%s'.\n", guildName);
-	broadcast(isCt, "^y%s just rejected the guild %s", player->name, guildName);
+	broadcast(isCt, "^y%s just rejected the guild %s", player->getCName(), guildName);
 	rejectGuild(toReject, reason);
 	gConfig->saveGuilds();
 	return(0);
@@ -1514,8 +1514,8 @@ bool Config::addGuildCreation(GuildCreation* toAdd) {
 //*********************************************************************
 
 bool GuildCreation::addSupporter(Player* supporter) {
-	if(supporter && supporters.find(supporter->name) == supporters.end()) {
-		supporters[supporter->name] = supporter->getSock()->getIp();
+	if(supporter && supporters.find(supporter->getName()) == supporters.end()) {
+		supporters[supporter->getName()] = supporter->getSock()->getIp();
 		numSupporters++;
 		return(true);
 	}
@@ -1674,8 +1674,8 @@ void updateGuild(Player* player, int what) {
 	if(what == GUILD_JOIN) {
 		guild->incLevel(player->getLevel());
 		guild->incNumMembers();
-		guild->addMember(player->name);
-		url << "mud.php?type=guildAddMember&mud_id=" << guild->getNum() << "&char=" << player->name;
+		guild->addMember(player->getName());
+		url << "mud.php?type=guildAddMember&mud_id=" << guild->getNum() << "&char=" << player->getCName();
 	} else if(what == GUILD_REMOVE) {
 		bool online=false;
 
@@ -1690,7 +1690,7 @@ void updateGuild(Player* player, int what) {
 		}
 
 		guild->incLevel(player->getLevel() * -1);
-		guild->delMember(player->name);
+		guild->delMember(player->getName());
 
 		// the guildmaster is leaving and did not abdicate their position!
 		// find someone to take their place
@@ -1758,7 +1758,7 @@ void updateGuild(Player* player, int what) {
 			}
 
 			if(removeForum)
-				url << "mud.php?type=guildRemoveMember&mud_id=" << guild->getNum() << "&char=" << player->name;
+				url << "mud.php?type=guildRemoveMember&mud_id=" << guild->getNum() << "&char=" << player->getName();
 		}
 
 	} else if(what == GUILD_LEVEL) {
@@ -1803,7 +1803,7 @@ void Config::creationToGuild(GuildCreation* toApprove) {
 	if(!leader->flagIsSet(P_CREATING_GUILD)) {
 		broadcast(isCt, "^yError creating guild '%s': %s is not flagged as creating a guild.\nThis guild is being erased.^",
 			toApprove->name.c_str(), toApprove->leader.c_str());
-		removeGuildCreation(leader->name);
+		removeGuildCreation(leader->getName());
 		if(!online)
 			free_crt(leader);
 		return;
@@ -1849,7 +1849,7 @@ void Config::creationToGuild(GuildCreation* toApprove) {
 	leader->clearFlag(P_CREATING_GUILD);
 	leader->save(online);
 
-	guild->addMember(leader->name);
+	guild->addMember(leader->getName());
 
 	addGuild(guild);
 
@@ -1875,14 +1875,14 @@ void Config::creationToGuild(GuildCreation* toApprove) {
 
 		guild->incNumMembers();
 		guild->incLevel( officer->getLevel());
-		guild->addMember(officer->name);
+		guild->addMember(officer->getName());
 		if(!offOnline)
 			free_crt(officer);
 		else
 			officer->print("You are now an officer of %s.\n", guild->getName().c_str());
 	}
 
-	removeGuildCreation(leader->name);
+	removeGuildCreation(leader->getName());
 	if(!online)
 		free_crt(leader);
 
@@ -1918,13 +1918,13 @@ void rejectGuild(GuildCreation * toReject, char *reason) {
 		online = true;
 
 	if(error == 0) {
-		leaderName = leader->name;
+		leaderName = leader->getName();
 		leader->clearFlag(P_CREATING_GUILD);
 		leader->save(online);
 
 		if(!online) {
 			// Send them a mudmail
-			sprintf(file, "%s/%s.txt", Path::Post, leader->name);
+			sprintf(file, "%s/%s.txt", Path::Post, leader->getCName());
 			ff = open(file, O_CREAT | O_APPEND | O_RDWR, ACC);
 			if(ff > 0) {
 				time(&t);

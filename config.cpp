@@ -279,6 +279,7 @@ bool Config::loadAfterPython() {
 	if(!listing)
 		printf("Loading Ships...%s.\n", loadShips() ? "done" : "*** FAILED ***");
 	printf("Loading Properties...%s.\n", loadProperties() ? "done" : "*** FAILED ***");
+	return (true);
 }
 bool Config::startFlashPolicy() const {
 	return(false);

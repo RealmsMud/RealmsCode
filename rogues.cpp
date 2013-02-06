@@ -139,7 +139,7 @@ int cmdBribe(Player* player, cmd* cmnd) {
 		player->print("%M takes your money and leaves.\n", creature);
 		broadcast(player->getSock(), player->getParent(), "%M bribed %N.", player, creature);
 
-		log_immort(true, player, "%s bribed %s.\n", player->name, creature->name);
+		log_immort(true, player, "%s bribed %s.\n", player->getCName(), creature->name);
 
 		creature->deleteFromRoom();
 		gServer->delActive(creature);
@@ -767,14 +767,14 @@ int cmdScout(Player* player, cmd* cmnd) {
 
 	if(!alwaysSucceed)
 		player->checkImprove("scout", true);
-	player->printColor("You scout the %s^x exit.\n", exit->name);
+	player->printColor("You scout the %s^x exit.\n", exit->getCName());
 
 	if(player->isStaff() && player->flagIsSet(P_DM_INVIS))
-		broadcast(isStaff, player->getSock(), player->getRoomParent(), "%M scouts the %s^x exit.", player, exit->name);
+		broadcast(isStaff, player->getSock(), player->getRoomParent(), "%M scouts the %s^x exit.", player, exit->getCName());
 	else if(exit->flagIsSet(X_SECRET) || exit->isConcealed() || exit->flagIsSet(X_DESCRIPTION_ONLY))
 		broadcast(player->getSock(), player->getParent(), "%M scouts the area.", player);
 	else
-		broadcast(player->getSock(), player->getParent(), "%M scouts the %s^x exit.", player, exit->name);
+		broadcast(player->getSock(), player->getParent(), "%M scouts the %s^x exit.", player, exit->getCName());
 
 	doScout(player, exit);
 	return(0);
@@ -1360,7 +1360,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 
 		player->printColor("You backstabbed %N for %s%d^x damage.\n", target, player->customColorize("*CC:DAMAGE*").c_str(), damage.get());
 		player->checkImprove("backstab", true);
-		log_immort(false,player, "%s backstabbed %s for %d damage.\n", player->name, target->name, damage.get());
+		log_immort(false,player, "%s backstabbed %s for %d damage.\n", player->getCName(), target->getCName(), damage.get());
 
 
 		target->printColor( "^M%M^x backstabbed you%s for %s%d^x damage.\n", player,
@@ -1716,7 +1716,7 @@ int cmdPickLock(Player* player, cmd* cmnd) {
 	}
 
 	if(exit->isWall("wall-of-force")) {
-		player->printColor("The %s^x is blocked by a wall of force.\n", exit->name);
+		player->printColor("The %s^x is blocked by a wall of force.\n", exit->getCName());
 		return(0);
 	}
 	// were they killed by exit effect damage?
@@ -1763,10 +1763,10 @@ int cmdPickLock(Player* player, cmd* cmnd) {
 	if(player->isCt())
 		chance = 101;
 
-	broadcast(player->getSock(), player->getParent(), "%M attempts to pick the %s^x.", player, exit->name);
+	broadcast(player->getSock(), player->getParent(), "%M attempts to pick the %s^x.", player, exit->getCName());
 
 	if(mrand(1,100) <= chance) {
-		log_immort(false, player, "%s picked the %s in room %s.\n", player->name, exit->name,
+		log_immort(false, player, "%s picked the %s in room %s.\n", player->getCName(), exit->name,
 			player->getRoomParent()->fullName().c_str());
 
 		player->print("You successfully picked the lock.\n");

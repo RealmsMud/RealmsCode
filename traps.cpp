@@ -949,7 +949,7 @@ void lose_all(Player* player, bool destroyAll, const char* lostTo) {
 		}
 
 		logn("log.dissolve", "%s(L%d) lost %s to %s in room %s.\n",
-			player->name, player->getLevel(), object->name, lostTo, player->getRoomParent()->fullName().c_str());
+			player->name, player->getLevel(), object->getCName(), lostTo, player->getRoomParent()->fullName().c_str());
 		object->popBag(player, true, false, false, false, true);
 		player->delObj(object, true, false, true, false);
 		delete object;
@@ -1050,7 +1050,7 @@ void Player::loseAcid() {
 				printColor("^rYour %s is dissolved by acid!\n", object->name);
 			}
 			logn("log.dissolve", "%s(L%d) lost %s to acid in room %s.\n",
-				name, level, object->name, getRoomParent()->fullName().c_str());
+				name, level, object->getCName(), getRoomParent()->fullName().c_str());
 			delObj(object, true, false, true, false);
 			delete object;
 		}

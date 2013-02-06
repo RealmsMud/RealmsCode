@@ -54,7 +54,7 @@ int log_immort(int broad, Player* player, const char *fmt,...) {
 	}
 
 	// trick logn to use Path::StaffLog
-	sprintf(name, "staff/%s", player->name);  // Path::StaffLog
+	sprintf(name, "staff/%s", player->getCName());  // Path::StaffLog
 	logn(name, "%s\n", txt.c_str());
 
 	if(broad) {

@@ -145,7 +145,7 @@ void steal_gold(Player* player, Creature* creature) {
 		player->coins.add(amt, GOLD);
 
 		if(creature->isPlayer())
-			log_immort(false,player, "%s stole %d gold from %s.\n", player->name, amt, creature->name);
+			log_immort(false,player, "%s stole %d gold from %s.\n", player->getCName(), amt, creature->name);
 		if(creature->getAsMonster())
 			gServer->logGold(GOLD_IN, player, Money(amt, GOLD), creature, "StealGold");
 
@@ -449,7 +449,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 		// Staff cannot be stolen from by players. Ever.
 		if(pTarget->isStaff() && !player->isDm()) {
 			player->print("Stealing from an immortal is not a good thing for your health.\n");
-			pTarget->print("%s tried to steal stuff from you.\n", player->name);
+			pTarget->print("%s tried to steal stuff from you.\n", player->getCName());
 			return(0);
 		}
 
@@ -533,10 +533,10 @@ int cmdSteal(Player* player, cmd* cmnd) {
 		object->popBag(target);
 
 		log_immort(false, player, "%s stole %s from %s.\n",
-			player->name, object->name, target->name);
+			player->name, object->getCName(), target->getCName());
 
 		logn("log.steal", "%s(L%d) stole %s from %s(L%d) in room %s.\n",
-		     player->name, player->getLevel(), object->name, target->name, target->getLevel(),
+		     player->name, player->getLevel(), object->getCName(), target->getCName(), target->getLevel(),
 		     room->fullName().c_str());
 
 		// Other people in the room will possibly notice what's going on.

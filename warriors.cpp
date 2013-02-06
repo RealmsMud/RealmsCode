@@ -176,7 +176,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
 		return(0);
 	} else {
 		if(player->getClass() == CARETAKER)
-			log_immort(false,player, "%s disarms %s.\n", player->name, creature->name);
+			log_immort(false,player, "%s disarms %s.\n", player->getCName(), creature->name);
 
 		drop = 5 + ((level - creature->getLevel()) - (bonus((int) creature->dexterity.getCur())*2));
 
@@ -570,7 +570,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 
 		player->print("You circle %N.\n", target);
 		player->checkImprove("circle", true);
-		log_immort(false, player, "%s circled %s.\n", player->name, target->name);
+		log_immort(false, player, "%s circled %s.\n", player->getCName(), target->getCName());
 
 		if(mTarget && player->isPlayer()) {
 			if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (mrand(1,100) <= (MAX(15, (mTarget->inUniqueRoom() ? mTarget->getUniqueRoomParent()->wander.getTraffic() : 15)/2)))) {

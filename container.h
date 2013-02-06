@@ -68,7 +68,7 @@ public:
     bool purgeMonsters(bool includePets = false);
     bool purgeObjects();
 
-    bool remove(Containable* toRemove);
+    Container* remove(Containable* toRemove);
     bool add(Containable* toAdd);
     bool checkAntiMagic(Monster* ignore = 0);
 
@@ -106,8 +106,6 @@ public:
 	MudObject* findTarget(const Creature* searcher,  const bstring& name, const int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false) const;
 	MudObject* findTarget(const Creature* searcher,  const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const;
 
-
-
 };
 
 class Containable : public virtual MudObject {
@@ -116,7 +114,7 @@ public:
     virtual ~Containable() {};
 
     bool addTo(Container* container);
-    bool removeFrom(void);
+    Container* removeFrom(void);
 
     void setParent(Container* container);
 
@@ -150,6 +148,12 @@ public:
 
 protected:
     Container* parent;   // Parent Container
+
+    // Last parent is only used in removeFromSet and addToSet and should not be used anywhere else
+    Container* lastParent;
+    void removeFromSet();
+	void addToSet();
+
 };
 
 #endif /* CONTAINER_H_ */

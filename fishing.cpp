@@ -244,7 +244,7 @@ bool doFish(Player* player) {
 			monster->addEnemy(player, true);
 
 			broadcast(hearMobAggro, "^y*** %s(R:%s) added %s to %s attack list (fishing aggro).",
-				monster->name, player->getRoomParent()->fullName().c_str(), player->name, monster->hisHer());
+				monster->getCName(), player->getRoomParent()->fullName().c_str(), player->getCName(), monster->hisHer());
 		}
 	}
 	return(true);
@@ -627,13 +627,13 @@ int dmFishing(Player* player, cmd* cmnd) {
 			if(!item->isMonster()) {
 				// are they catching an object?
 				if(loadObject(item->getFish(), &fish)) {
-					name = fish->name;
+					name = fish->getName();
 					delete fish;
 				}
 			} else {
 				// or a monster?
 				if(loadObject(item->getFish(), &fish)) {
-					name = monster->name;
+					name = monster->getName();
 					delete monster;
 				}
 			}

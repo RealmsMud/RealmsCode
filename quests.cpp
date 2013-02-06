@@ -517,7 +517,7 @@ void QuestCompletion::updateMobKills(Monster* monster) {
 			if(qcr.reqNum != qcr.curNum) {
 				if(++(qcr.curNum) == qcr.reqNum) {
 					parentPlayer->printColor("Quest Update: %s - Required number of ^W%s^x have been killed.\n",
-							parentQuest->getName().c_str(), monster->name);
+							parentQuest->getName().c_str(), monster->getCName());
 				} else {
 					parentPlayer->printColor("Quest Update: %s - Killed ^W %s / %s^x.\n",
 							parentQuest->getName().c_str(), intToText(qcr.curNum).c_str(),
@@ -1142,7 +1142,7 @@ bool Monster::doTalkAction(Player* target, bstring action) {
 			// Need to use global namespace cmd, overriding local variable
 			::cmd cm;
 
-			action.Replace("PLAYER", target->name);
+			action.Replace("PLAYER", target->getCName());
 			cm.fullstr = action;
 
 			stripBadChars(cm.fullstr); // removes '.' and '/'

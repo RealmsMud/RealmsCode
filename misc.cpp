@@ -971,7 +971,7 @@ void Player::bug(const char *fmt, ...) const {
 
 	va_start(ap, fmt);
 
-	sprintf(file, "%s/%s.txt", Path::BugLog, name);
+	sprintf(file, "%s/%s.txt", Path::BugLog, getCName());
 	fd = open(file, O_RDWR | O_APPEND, 0);
 	if(fd < 0) {
 		fd = open(file, O_RDWR | O_CREAT, ACC);

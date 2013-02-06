@@ -76,10 +76,10 @@ int Player::saveToFile(LoadType saveType) {
 	char		filename[256];
 
 	ASSERTLOG( this != NULL );
-	ASSERTLOG( name[0] != '\0' );
+	ASSERTLOG( !getName().empty() );
 	ASSERTLOG( isPlayer() );
 
-	if(name[0] == '\0') {
+	if(getName()[0] == '\0') {
 		printf("Invalid player passed to save\n");
 		return(-1);
 	}
@@ -94,9 +94,9 @@ int Player::saveToFile(LoadType saveType) {
 	saveToXml(rootNode, ALLITEMS, LS_FULL);
 
 	if(saveType == LS_BACKUP) {
-		sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, name);
+		sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, getCName());
 	} else {
-		sprintf(filename, "%s/%s.xml", Path::Player, name);
+		sprintf(filename, "%s/%s.xml", Path::Player, getCName());
 	}
 
 	xml::saveFile(filename, xmlDoc);
@@ -322,20 +322,20 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
 	xmlNodePtr		childNode;
 	int i;
 
-	if(name[0] == '\0' || rootNode == NULL)
+	if(getName()[0] == '\0' || rootNode == NULL)
 		return(-1);
 
 	const Player	*pPlayer = getAsConstPlayer();
 	const Monster	*mMonster = getAsConstMonster();
 
 	if(pPlayer) {
-		xml::newProp(rootNode, "Name", pPlayer->name);
+		xml::newProp(rootNode, "Name", pPlayer->getName());
 		xml::newProp(rootNode, "Password", pPlayer->getPassword());
 		xml::newNumProp(rootNode, "LastLogin", pPlayer->getLastLogin());
 	} else if(mMonster) {
 		// Saved for LS_REF and LS_FULL
 		xml::newNumProp(rootNode, "Num", mMonster->info.id);
-		xml::saveNonNullString(rootNode, "Name", mMonster->name);
+		xml::saveNonNullString(rootNode, "Name", mMonster->getName());
 		xml::newProp(rootNode, "Area", mMonster->info.area);
 	}
 
@@ -547,7 +547,7 @@ void Player::saveXml(xmlNodePtr curNode) const {
 
 	// record people logging off during swap
 	if(gConfig->swapIsInteresting(this))
-		gConfig->swapLog((bstring)"p" + name, false);
+		gConfig->swapLog((bstring)"p" + getName(), false);
 
 	bank.save("Bank", curNode);
 	xml::saveNonZeroNum(curNode, "WeaponTrains", weaponTrains);
@@ -819,7 +819,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
 	}
 
 	// These are saved for full and reference
-	xml::saveNonNullString(rootNode, "Name", name);
+	xml::saveNonNullString(rootNode, "Name", getName());
 	if(saveType != LS_PROTOTYPE) {
 		droppedBy.save(rootNode);
 		xml::saveNonZeroNum(rootNode, "ShopValue", shopValue);
@@ -970,7 +970,7 @@ int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
 	xmlNodePtr		curNode;
 	int i;
 
-	if(!this || name[0] == '\0' || rootNode == NULL)
+	if(!this || getName()[0] == '\0' || rootNode == NULL)
 		return(-1);
 
 	// record rooms saved during swap
@@ -981,7 +981,7 @@ int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
 	xml::newProp(rootNode, "Version", VERSION);
 	xml::newProp(rootNode, "Area", info.area);
 
-	xml::saveNonNullString(rootNode, "Name", name);
+	xml::saveNonNullString(rootNode, "Name", getName());
 	xml::saveNonNullString(rootNode, "ShortDescription", short_desc);
 	xml::saveNonNullString(rootNode, "LongDescription", long_desc);
 	xml::saveNonNullString(rootNode, "Fishing", fishing);
@@ -1073,7 +1073,7 @@ int Exit::saveToXml(xmlNodePtr parentNode) const {
 		return(-1);
 
 	rootNode = xml::newStringChild(parentNode, "Exit");
-	xml::newProp(rootNode, "Name", name);
+	xml::newProp(rootNode, "Name", getName());
 
 	// Exit Keys
 	curNode = xml::newStringChild(rootNode, "Keys");

@@ -1116,7 +1116,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 
 
 		if(object->getShotsCur() < 1)
-			player->printColor("Your %s %s all used up.\n", object->name,
+			player->printColor("Your %s %s all used up.\n", object->getCName(),
 			      (object->flagIsSet(O_SOME_PREFIX) ? "are":"is"));
 
 		broadcast(player->getSock(), player->getParent(), "%M bandages %sself.",
@@ -1203,7 +1203,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 
 
 		if(object->getShotsCur() < 1)
-			player->printColor("Your %s %s all used up.\n", object->name,
+			player->printColor("Your %s %s all used up.\n", object->getCName(),
 			      (object->flagIsSet(O_SOME_PREFIX) ? "are":"is"));
 
 		broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M bandages %N.", player, creature);

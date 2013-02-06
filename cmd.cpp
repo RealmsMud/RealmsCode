@@ -1099,7 +1099,7 @@ int cmdProcess(Creature *user, cmd* cmnd, Creature* pet) {
 	}
 
 	if(player && player->afterProf) {
-		broadcast(isDm, "^RafterProf field set on %s. Last command: %s", player->name, player->getLastCommand().c_str());
+		broadcast(isDm, "^RafterProf field set on %s. Last command: %s", player->getCName(), player->getLastCommand().c_str());
 		broadcast(isDm, "^RResetting afterProf to 0.");
 		player->afterProf = 0;
 	}

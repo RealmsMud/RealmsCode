@@ -588,7 +588,6 @@ public:
 	bool addLycanthropy(Creature *killer, int chance);
 
 // Get
-	const char* getName() const; // *
 	unsigned short getClass() const; // *
 	unsigned short getLevel() const; // *
 	short getAlignment() const; // *

@@ -28,7 +28,7 @@
 
 Monster* Bank::teller(const BaseRoom* room) {
     for(Monster* mons : room->monsters ) {
-        if(!strcmp(mons->name, "bank teller"))
+        if(mons->getName() == "bank teller")
             return(mons);
 
     }
@@ -242,18 +242,18 @@ void Bank::deposit(Player* player, cmd* cmnd, bool isGuild) {
 	if(isGuild) {
 		player->print("You deposit %ld gold coins into your guild's bank account.\n", amt);
 		guild->bank.add(amt, GOLD);
-		Bank::guildLog(player->getGuild(), "DEPOSIT: %ld by %s [Balance: %s]\n", amt, player->name, guild->bank.str().c_str());
+		Bank::guildLog(player->getGuild(), "DEPOSIT: %ld by %s [Balance: %s]\n", amt, player->getCName(), guild->bank.str().c_str());
 		gConfig->saveGuilds();
 	} else {
 		player->print("You deposit %ld gold coins into your bank account.\n", amt);
 		player->bank.add(amt, GOLD);
-		Bank::log(player->name, "DEPOSIT: %lu [Balance: %s]\n", amt, player->bank.str().c_str());
+		Bank::log(player->getCName(), "DEPOSIT: %lu [Balance: %s]\n", amt, player->bank.str().c_str());
 	}
 
 	player->save(true);
 
 	Bank::balance(player, isGuild);
-	broadcast(player->getSock(), player->getParent(), "%s deposits some gold.", player->name);
+	broadcast(player->getSock(), player->getParent(), "%s deposits some gold.", player->getCName());
 }
 
 //*********************************************************************
@@ -320,18 +320,18 @@ void Bank::withdraw(Player* player, cmd* cmnd, bool isGuild) {
 	if(isGuild) {
 		player->print("You withdraw %ld gold coins from your guild's bank account.\n", amt);
 		guild->bank.sub(amt, GOLD);
-		Bank::guildLog(player->getGuild(), "WITHDRAW: %ld by %s [Balance: %s]\n", amt, player->name, guild->bank.str().c_str());
+		Bank::guildLog(player->getGuild(), "WITHDRAW: %ld by %s [Balance: %s]\n", amt, player->getCName(), guild->bank.str().c_str());
 		gConfig->saveGuilds();
 	} else {
 		player->print("You withdraw %ld gold coins from your bank account.\n", amt);
 		player->bank.sub(amt, GOLD);
-		Bank::log(player->name, "WITHDRAW: %ld [Balance: %s]\n", amt, player->bank.str().c_str());
+		Bank::log(player->getCName(), "WITHDRAW: %ld [Balance: %s]\n", amt, player->bank.str().c_str());
 	}
 
 	player->save(true);
 	
 	Bank::balance(player, isGuild);
-	broadcast(player->getSock(), player->getParent(), "%s withdrew some gold.", player->name);
+	broadcast(player->getSock(), player->getParent(), "%s withdrew some gold.", player->getCName());
 }
 
 //*********************************************************************
@@ -424,7 +424,7 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
 		return;
 	}
 
-	if(!isGuild && !strcmp(player->name, target->name)) {
+	if(!isGuild && player->getName() == target->getName()) {
 		Bank::say(player, "You can't transfer money to yourself.");
 		return;
 	}
@@ -444,23 +444,23 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
 
 	if(isGuild) {
 		guild->bank.sub(amt, GOLD);
-		player->print("You transfer %ld gold coins from your guild's account to %s's.\n", amt, target->name);
-		Bank::guildLog(player->getGuild(), "TRANSFER to %s by %s: %ld [Balance: %s]\n", target->name, player->name, amt, guild->bank.str().c_str());
-		Bank::log(target->name, "TRANSFER from %s [GUILD ACCOUNT]: %ld [Balance: %s]\n", player->name, amt, target->bank.str().c_str());
+		player->print("You transfer %ld gold coins from your guild's account to %s's.\n", amt, target->getCName());
+		Bank::guildLog(player->getGuild(), "TRANSFER to %s by %s: %ld [Balance: %s]\n", target->getCName(), player->getCName(), amt, guild->bank.str().c_str());
+		Bank::log(target->getCName(), "TRANSFER from %s [GUILD ACCOUNT]: %ld [Balance: %s]\n", player->getCName(), amt, target->bank.str().c_str());
 		if(online)
-			target->print("*** %s just transferred %ld gold to your account. [GUILD TRANSFER]\n",player->name, amt);
+			target->print("*** %s just transferred %ld gold to your account. [GUILD TRANSFER]\n",player->getCName(), amt);
 		gConfig->saveGuilds();
 	} else {
 		player->bank.sub(amt, GOLD);
-		player->print("You transfer %lu gold coins from your account to %s's.\n", amt, target->name);
-		Bank::log(player->name, "TRANSFER to %s: %ld [Balance: %s]\n", target->name, amt, player->bank.str().c_str());
-		Bank::log(target->name, "TRANSFER from %s: %ld [Balance: %s]\n", player->name, amt, target->bank.str().c_str());
+		player->print("You transfer %lu gold coins from your account to %s's.\n", amt, target->getCName());
+		Bank::log(player->getCName(), "TRANSFER to %s: %ld [Balance: %s]\n", target->getCName(), amt, player->bank.str().c_str());
+		Bank::log(target->getCName(), "TRANSFER from %s: %ld [Balance: %s]\n", player->getCName(), amt, target->bank.str().c_str());
 		if(online)
-			target->print("*** %s just transferred %ld gold to your account.\n", player->name, amt);
+			target->print("*** %s just transferred %ld gold to your account.\n", player->getCName(), amt);
 	}
 
 	if(player->getClass() == CARETAKER)
-		log_immort(true, player, "%s transferred %lu gold to %s. (Balance=%s)(%s)\n", player->name, amt, target->name, player->bank.str().c_str(), target->bank.str().c_str());
+		log_immort(true, player, "%s transferred %lu gold to %s. (Balance=%s)(%s)\n", player->getCName(), amt, target->getCName(), player->bank.str().c_str(), target->bank.str().c_str());
 
 	target->bank.add(amt, GOLD);
 
@@ -470,7 +470,7 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
 		free_crt(target);
 
 	Bank::balance(player, isGuild);
-	broadcast(player->getSock(), player->getParent(), "%s transfers some gold.", player->name);
+	broadcast(player->getSock(), player->getParent(), "%s transfers some gold.", player->getCName());
 }
 
 //*********************************************************************
@@ -513,7 +513,7 @@ void Bank::statement(Player* player, bool isGuild) {
 	if(isGuild)
 		sprintf(file, "%s/%d.txt", Path::GuildBank, player->getGuild());
 	else
-		sprintf(file, "%s/%s.txt", Path::Bank, player->name);
+		sprintf(file, "%s/%s.txt", Path::Bank, player->getCName());
 
 	if(file_exists(file)) {
 		strcpy(player->getSock()->tempstr[3], "\0");
@@ -554,7 +554,7 @@ void Bank::deleteStatement(Player* player, bool isGuild) {
 	if(isGuild)
 		sprintf(file, "%s/%d.txt", Path::GuildBank, player->getGuild());
 	else
-		sprintf(file, "%s/%s.txt", Path::Bank, player->name);
+		sprintf(file, "%s/%s.txt", Path::Bank, player->getCName());
 
 	player->print("Statement deleted.\n");
 	unlink(file);
@@ -640,7 +640,7 @@ void Player::computeInterest(long t, bool online) {
 	bank.add(amt, GOLD);
 	gServer->logGold(GOLD_IN, this, Money(amt, GOLD), NULL, "BankInterest");
 
-	Bank::log(name, "INTEREST for %d day%s at %d%%: %ld [Balance: %s]\n",
+	Bank::log(getCName(), "INTEREST for %d day%s at %d%%: %ld [Balance: %s]\n",
 		interestDays, interestDays != 1 ? "s" : "", (int)(rate*100), amt, bank.str().c_str());
 
 	if(online) {

@@ -98,7 +98,7 @@ void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, 
 		if(showAlso && !showAlso(sock))
 			continue;
 		// No gagging staff!
-		if(player && ply->isGagging(player->name) && !player->isCt())
+		if(player && ply->isGagging(player->getName()) && !player->isCt())
 			continue;
 
 		ply->vprint(ply->customColorize(fmt).c_str(), ap);
@@ -216,7 +216,7 @@ void broadcast_login(Player* player, BaseRoom* inRoom, int login) {
 	int    logoff=0;
 
 	ASSERTLOG( player );
-	ASSERTLOG( player->name );
+	ASSERTLOG( !player->getName().empty() );
 
 	preText << "### " << player->fullName() << " ";
 
@@ -280,7 +280,7 @@ void broadcast_login(Player* player, BaseRoom* inRoom, int login) {
 
 			if(!target->isConnected())
 				continue;
-			if(target->isGagging(player->name))
+			if(target->isGagging(player->getName()))
 				continue;
 			if(target->flagIsSet(P_NO_LOGIN_MESSAGES))
 				continue;
@@ -327,7 +327,7 @@ void broadcast_rom_LangWc(int lang, Socket* ignore, Location currentLocation, co
 		if(	ignore != NULL &&
 			ignore->getPlayer() &&
 			ignore->getPlayer()->inSameRoom(ply) &&
-			ply->isGagging(ignore->getPlayer()->name)
+			ply->isGagging(ignore->getPlayer()->getName())
 		)
 			continue;
 		if(	(	(currentLocation.room.id && ply->currentLocation.room == currentLocation.room) ||
@@ -360,7 +360,7 @@ void broadcastGroupMember(bool dropLoot, Creature* player, const Player* listen,
 
 	// dropLoot broadcasts to all of this
 	if(!dropLoot) {
-		if(listen->isGagging(player->name))
+		if(listen->isGagging(player->getName()))
 			return;
 		if(listen->flagIsSet(P_IGNORE_ALL))
 			return;
@@ -581,8 +581,8 @@ bstring Pueblo::multiline(bstring str) {
 //*********************************************************************
 
 void Monster::escapeText() {
-	if(Pueblo::is(name))
-		strcpy(name, "clay form");
+	if(Pueblo::is(getName()))
+		setName("clay form");
 	description = Pueblo::multiline(description);
 }
 
@@ -592,16 +592,16 @@ void Player::escapeText() {
 }
 
 void Object::escapeText() {
-	if(Pueblo::is(name))
-		strcpy(name, "clay ball");
+	if(Pueblo::is(getName()))
+		setName("clay ball");
 	if(Pueblo::is(use_output))
 		zero(use_output, sizeof(use_output));
 	description = Pueblo::multiline(description);
 }
 
 void UniqueRoom::escapeText() {
-	if(Pueblo::is(name))
-		strcpy(name, "New Room");
+	if(Pueblo::is(getName()))
+		setName("New Room");
 
 	short_desc = Pueblo::multiline(short_desc);
 	long_desc = Pueblo::multiline(long_desc);
@@ -612,8 +612,8 @@ void UniqueRoom::escapeText() {
 }
 
 void Exit::escapeText() {
-	if(Pueblo::is(name))
-		strcpy(name, "exit");
+	if(Pueblo::is(getName()))
+		setName("exit");
 	if(Pueblo::is(enter))
 		enter = "";
 	if(Pueblo::is(open))
@@ -833,7 +833,7 @@ bool keyTxtEqual(const Creature* target, const char* txt) {
 	if(	keyTxtCompare(target->key[0], txt, len) ||
 		keyTxtCompare(target->key[1], txt, len) ||
 		keyTxtCompare(target->key[2], txt, len) ||
-		keyTxtCompare(target->name, txt, len) ||
+		keyTxtCompare(target->getCName(), txt, len) ||
         target->getId() == txt
 	)
 		return(true);
@@ -845,7 +845,7 @@ bool keyTxtEqual(const Object* target, const char* txt) {
 	if(	keyTxtCompare(target->key[0], txt, len) ||
 		keyTxtCompare(target->key[1], txt, len) ||
 		keyTxtCompare(target->key[2], txt, len) ||
-		keyTxtCompare(target->name, txt, len) ||
+		keyTxtCompare(target->getCName(), txt, len) ||
 		target->getId() == txt
 	)
 		return(true);

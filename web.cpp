@@ -326,7 +326,7 @@ bool WebInterface::messagePlayer(bstring command, bstring tempBuf) {
 			txt ? "\"" : "");
 		if(!player->isDm()) {
 			broadcast(watchingEaves, "^E--- %s to %s, \"%s\".",
-				txt ? "Text message" : "System message", player->name, tempBuf.c_str());
+				txt ? "Text message" : "System message", player->getCName(), tempBuf.c_str());
 		}
 	}
 	outBuf += EOT;
@@ -806,7 +806,7 @@ bool WebInterface::handleInput() {
 				Object* object = new Object();
 				object->readFromXml(rootNode);
 				object->saveToFile();
-				broadcast(isDm, "^y*** Object %s - %s^y updated by %s.", object->info.str().c_str(), object->name, object->lastMod.c_str());
+				broadcast(isDm, "^y*** Object %s - %s^y updated by %s.", object->info.str().c_str(), object->getCName(), object->lastMod.c_str());
 				gConfig->replaceObjectInQueue(object->info, object);
 			}
 			else if(type == "ROM") {

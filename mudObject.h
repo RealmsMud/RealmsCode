@@ -46,8 +46,21 @@ class Creature;
 #include "hooks.h"
 
 class MudObject {
+private:
+	bstring name;
+
 public:
-	char name[80];
+	void setName(bstring newName);
+	const bstring& getName() const;
+	const char* getCName() const;
+
+protected:
+	virtual void removeFromSet();
+	virtual void addToSet();
+
+
+public:
+	//char name[80];
 	bstring id;		// Unique identifier
 	Hooks hooks;
 	void moCopy(const MudObject& mo);
@@ -87,7 +100,6 @@ public:
 	bool isCreature() const;
 	bool isExit() const;
 
-	const char* getName() const;
 	const bstring& getId() const;
 	bstring getIdPython() const;
 	virtual void validateId() {};

@@ -843,7 +843,7 @@ void display_rom(Player* player,BaseRoom* room) {
 // putting in a generic description
 
 void storageName(UniqueRoom* room, const Player* player) {
-	sprintf(room->name, "%s's Personal Storage Room", player->name);
+	sprintf(room->name, "%s's Personal Storage Room", player->getCName());
 }
 
 int createStorage(CatRef cr, const Player* player) {
@@ -973,18 +973,18 @@ void doRoomHarms(BaseRoom *inRoom, Player* target) {
 		if(roll >= toHit) {
 			dmg = mrand(1,8) + mrand(1,2);
 			target->printColor("A deadly arrow strikes you from above for %s%d^x damage.\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-			broadcast(target->getSock(), inRoom, "An arrow strikes %s from the trees above!", target->name);
+			broadcast(target->getSock(), inRoom, "An arrow strikes %s from the trees above!", target->getCName());
 
 			target->hp.decrease(dmg);
 			if(target->hp.getCur() < 1) {
 				target->print("The arrow killed you.\n");
-				broadcast(target->getSock(), inRoom, "The arrow killed %s!", target->name);
+				broadcast(target->getSock(), inRoom, "The arrow killed %s!", target->getCName());
 				target->die(ELVEN_ARCHERS);
 				return;
 			}
 		} else {
 			target->print("An arrow whizzes past you from above!\n");
-			broadcast(target->getSock(), inRoom, "An arrow whizzes past %s from above!", target->name);
+			broadcast(target->getSock(), inRoom, "An arrow whizzes past %s from above!", target->getCName());
 		}
 	}
 
@@ -996,12 +996,12 @@ void doRoomHarms(BaseRoom *inRoom, Player* target) {
 
 		dmg = 15 - MIN(bonus((int)target->constitution.getCur()),2) + mrand(1,3);
 		target->printColor("Deadly underdark moss spores envelope you for %s%d^x damage!\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-		broadcast(target->getSock(), inRoom, "Spores from deadly underdark moss envelope %s!", target->name);
+		broadcast(target->getSock(), inRoom, "Spores from deadly underdark moss envelope %s!", target->getCName());
 
 		target->hp.decrease(dmg);
 		if(target->hp.getCur() < 1) {
 			target->print("The spores killed you.\n");
-			broadcast(target->getSock(), inRoom, "The spores killed %s!", target->name);
+			broadcast(target->getSock(), inRoom, "The spores killed %s!", target->getCName());
 			target->die(DEADLY_MOSS);
 		}
 	}
@@ -1020,8 +1020,8 @@ BaseRoom *abortFindRoom(Creature* player, const char from[15]) {
 	UniqueRoom*	newRoom=0;
 
 	player->print("Shifting dimensional forces direct your travel!\n");
-	loge("Error: abortFindRoom called by %s in %s().\n", player->name, from);
-	broadcast(isCt, "^yError: abortFindRoom called by %s in %s().", player->name, from);
+	loge("Error: abortFindRoom called by %s in %s().\n", player->getCName(), from);
+	broadcast(isCt, "^yError: abortFindRoom called by %s in %s().", player->getCName(), from);
 
 	room = player->getRecallRoom().loadRoom(player->getAsPlayer());
 	if(room)

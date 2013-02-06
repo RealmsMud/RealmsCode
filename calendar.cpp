@@ -727,7 +727,7 @@ int checkBirthdays(Player* player, cmd* cmnd) {
 
 		if(gConfig->calendar->isBirthday(target)) {
 			player->printColor("^yToday is %s's birthday! %s is %d years old.\n",
-				target->name, target->upHeShe(), target->getAge());
+				target->getCName(), target->upHeShe(), target->getAge());
 			found = true;
 		}
 	}

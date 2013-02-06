@@ -34,15 +34,26 @@
 //#include <c++/4.3.3/bits/stl_list.h>
 #include <list>
 
+void MudObject::setName(bstring newName) {
+	removeFromSet();
+	name = newName;
+	addToSet();
+}
 
+const bstring& MudObject::getName() const {
+	return(name);
+}
+const char* MudObject::getCName() const {
+	return(name.c_str());
+}
 
 bool PlayerPtrLess::operator()(const Player* lhs, const Player* rhs) const {
     return *lhs < *rhs;
 }
 
 bool MonsterPtrLess::operator()(const Monster* lhs, const Monster* rhs) const {
-    bstring lhsStr = bstring(lhs->name) + lhs->id;
-    bstring rhsStr = bstring(rhs->name) + rhs->id;
+    bstring lhsStr = lhs->getName() + lhs->id;
+    bstring rhsStr = rhs->getName() + rhs->id;
     return(lhsStr.compare(rhsStr) < 0);
 }
 
@@ -56,6 +67,18 @@ bool ObjectPtrLess::operator()(const Object* lhs, const Object* rhs) const {
 
 void MudObject::moReset() {
 	id = "-1";
+	name = "";
+}
+
+//*********************************************************************
+//						moCopy
+//*********************************************************************
+
+void MudObject::moCopy(const MudObject& mo) {
+	setName(mo.getName());
+
+	hooks = mo.hooks;
+	hooks.setParent(this);
 }
 
 //***********************************************************************
@@ -199,14 +222,6 @@ const BaseRoom* MudObject::getAsConstRoom() const {
 
 const Exit* MudObject::getAsConstExit() const {
 	return(dynamic_cast<const Exit*>(this));
-}
-
-//***********************************************************************
-//						getName
-//***********************************************************************
-
-const char* MudObject::getName() const {
-	return(name);
 }
 
 //***********************************************************************

@@ -372,7 +372,7 @@ int loadCreature_actions(Creature* creature);
 
 
 // lottery.cpp
-int createLotteryTicket(Object **object, char *name);
+int createLotteryTicket(Object **object, const char *name);
 int checkPrize(Object *ticket);
 
 // realms.cpp
@@ -512,7 +512,7 @@ int mprofic(const Creature* player, int index);
 Player* lowest_piety(BaseRoom* room, bool invis);
 int getMultiClassID(char cls, char cls2);
 
-void renamePlayerFiles(char *old_name, char *new_name);
+void renamePlayerFiles(const char *old_name, const char *new_name);
 
 
 // player2.cpp

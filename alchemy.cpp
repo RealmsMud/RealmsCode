@@ -352,7 +352,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 	}
 
 	// TODO: Add a mechanism for naming an alchemy potion
-	player->print("You have created %s!\n", potion->getName());
+	player->print("You have created %s!\n", potion->getCName());
 	potion->setDroppedBy(player, "Craft:Alchemy");
 	player->addObj(potion);
 	return(0);

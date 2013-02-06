@@ -50,7 +50,7 @@ Monster *getFirstAggro(Monster* creature, const Creature* player) {
 		return(creature);
 
 	for(Monster* mons : creature->getConstRoomParent()->monsters) {
-        if(strcmp(mons->name, creature->name))
+        if(mons->getName() != creature->getName())
             continue;
 
         if(mons->getAsMonster()->isEnemy(player)) {
@@ -164,7 +164,7 @@ bool Monster::nearEnemy(const Creature* target) const {
 	const BaseRoom* room = getConstRoomParent();
 
 	for(Player* ply : room->players) {
-        if( isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS) && strcmp(target->name, ply->name) )
+        if( isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS) && target->getName() != ply->getName())
             return(true);
 
 	}
@@ -208,7 +208,7 @@ void Monster::diePermCrt() {
 	long	t = time(0);
 	int		i=0;
 
-	strcpy(perm,name);
+	strcpy(perm,getCName());
 
 	if(!inUniqueRoom())
 		return;
@@ -222,7 +222,7 @@ void Monster::diePermCrt() {
 			continue;
 		if(!loadMonster(crtm->cr, &temp_mob))
 			continue;
-		if(!strcmp(temp_mob->name, name)) {
+		if(temp_mob->getName() == getName()) {
 			crtm->ltime = t;
 			free_crt(temp_mob);
 			break;
@@ -234,7 +234,7 @@ void Monster::diePermCrt() {
 		int     fd,n;
 		char    tmp[2048], file[80],pName[80];
 
-		strcpy(pName, name);
+		strcpy(pName, getCName());
 		for(i=0; pName[i]; i++)
 			if(pName[i] == ' ')
 				pName[i] = '_';
@@ -350,7 +350,7 @@ int Player::addCharm(Creature* creature) {
 
 	ASSERTLOG( creature );
 
-	if(hasCharm(creature->name))
+	if(hasCharm(creature->getName()))
 		return(0);
 
 	if(creature && !creature->isDm()) {
@@ -358,7 +358,7 @@ int Player::addCharm(Creature* creature) {
 		if(!cp)
 			merror("add_charm_crt", FATAL);
 
-		strcpy(cp->enemy, creature->name);
+		strcpy(cp->enemy, creature->getCName());
 		cp->next_tag = first_charm;
 		first_charm = cp;
 	}
@@ -376,18 +376,18 @@ int Player::delCharm(Creature* creature) {
 
 	ASSERTLOG( creature );
 
-	if(!hasCharm(creature->name))
+	if(!hasCharm(creature->getName()))
 		return(0);
 
 	cp = first_charm;
 
-	if(!strcmp(cp->enemy, creature->name)) {
+	if(!strcmp(cp->enemy, creature->getCName())) {
 		first_charm = cp->next_tag;
 		delete cp;
 		return(1);
 	} else
 		while(cp) {
-			if(!strcmp(cp->enemy, creature->name)) {
+			if(!strcmp(cp->enemy, creature->getCName())) {
 				prev->next_tag = cp->next_tag;
 				delete cp;
 				return(1);
@@ -476,7 +476,7 @@ int Monster::mobileCrt() {
 				return(0);
 
 			if(exit->flagIsSet(X_CLOSED) && !exit->flagIsSet(X_LOCKED)) {
-				broadcast(NULL, getRoomParent(), "%M just opened the %s.", this, exit->name);
+				broadcast(NULL, getRoomParent(), "%M just opened the %s.", this, exit->getCName());
 				exit->clearFlag(X_CLOSED);
 			}
 
@@ -486,17 +486,17 @@ int Monster::mobileCrt() {
 			if(	flagIsSet(M_SNEAKING) &&
 				mrand (1,100) <= (3+dexterity.getCur())*3)
 			{
-				broadcast(::isStaff, getSock(), getRoomParent(), "*DM* %M just snuck to the %s.", this,exit->name);
+				broadcast(::isStaff, getSock(), getRoomParent(), "*DM* %M just snuck to the %s.", this,exit->getCName());
 			} else {
 			    Creature* lookingFor = NULL;
 				if(flagIsSet(M_CHASING_SOMEONE) && hasEnemy() && ((lookingFor = getTarget(false)) != NULL) ) {
 
 					broadcast(NULL, getRoomParent(), "%M %s to the %s^x, looking for %s.",
-						this, Move::getString(this).c_str(), exit->name, lookingFor->getName());
+						this, Move::getString(this).c_str(), exit->getCName(), lookingFor->getCName());
 				}
 				else
 					broadcast(NULL, getRoomParent(), "%M just %s to the %s^x.",
-						this, Move::getString(this).c_str(), exit->name);
+						this, Move::getString(this).c_str(), exit->getCName());
 
 				clearFlag(M_SNEAKING);
 			}
@@ -817,7 +817,7 @@ int Player::displayCreature(Creature* target)  {
 			 << pTarget->getTitle() << ".\n";
 
 		if(gConfig->getCalendar()->isBirthday(pTarget)) {
-			oStr << "^yToday is " << pTarget->name << "'s birthday! " << pTarget->upHeShe()
+			oStr << "^yToday is " << pTarget->getCName() << "'s birthday! " << pTarget->upHeShe()
 				 << " is " << pTarget->getAge() << " years old.^x\n";
 		}
 
@@ -963,14 +963,14 @@ int Player::displayCreature(Creature* target)  {
 		}
 
 		if(pTarget->flagIsSet(P_UNCONSCIOUS))
-			oStr << pTarget->name << " is "
+			oStr << pTarget->getName() << " is "
 				 << (pTarget->flagIsSet(P_SLEEPING) ? "sleeping" : "unconscious") << ".\n";
 
 		if(pTarget->isEffected("petrification"))
-			oStr << pTarget->name << " is petrified.\n";
+			oStr << pTarget->getName() << " is petrified.\n";
 
 		if(pTarget->isBraindead())
-			oStr << pTarget->name << "%M is currently brain dead.\n";
+			oStr << pTarget->getName() << "%M is currently brain dead.\n";
 	} else {
 		if(mTarget->isEnemy(this))
 			oStr << mTarget->upHeShe() << " looks very angry at you.\n";
@@ -1172,7 +1172,7 @@ bool Creature::canFleeToExit(const Exit *exit, bool skipScary, bool blinking) {
 			scary = pThis->scared_of;
 			while(*scary) {
 				if(exit->target.room.id && *scary == exit->target.room.id) {
-					// oldPrint(fd, "Scared of going %s^x!\n", exit->name);
+					// oldPrint(fd, "Scared of going %s^x!\n", exit->getCName());
 
 					// there is a chance we will flee to this exit anyway
 					chance = 65 + bonus((int) dexterity.getCur()) * 5;
@@ -1355,7 +1355,7 @@ int Creature::flee(bool magicTerror) {
 	}
 
 
-	broadcast(getSock(), oldRoom, "%M flees to the %s^x.", this, exit->name);
+	broadcast(getSock(), oldRoom, "%M flees to the %s^x.", this, exit->getCName());
 	if(mThis) {
 		mThis->diePermCrt();
 		if(exit->doEffectDamage(this))
@@ -1394,7 +1394,7 @@ int Creature::flee(bool magicTerror) {
 
 		for(Monster* pet : pThis->pets) {
 			if(pet && inSameRoom(pThis))
-				broadcast(getSock(), oldRoom, "%M flees to the %s^x with its master.", pet, exit->name);
+				broadcast(getSock(), oldRoom, "%M flees to the %s^x with its master.", pet, exit->getCName());
 		}
 	}
 	exit->checkReLock(this, false);

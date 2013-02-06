@@ -1087,14 +1087,14 @@ void Server::delActive(Monster* monster) {
 
 	if(activeList.empty()) {
 		std::cerr << "Attempting to delete '" << monster->getName() << "' from active list with an empty active list." << std::endl;
-		broadcast(isStaff, "^yAttempting to delete %s from active list with an empty active list.", monster->name);
+		broadcast(isStaff, "^yAttempting to delete %s from active list with an empty active list.", monster->getCName());
 		return;
 	}
 
 	MonsterList::iterator it = std::find(activeList.begin(), activeList.end(), monster);
 	if(it == activeList.end()) {
 		std::cerr << "Attempting to delete '" << monster->getName() << "' from active list but could not find them on the list." << std::endl;
-		broadcast(isStaff, "^yAttempting to delete %s from active list but could not find them on the list.", monster->name);
+		broadcast(isStaff, "^yAttempting to delete %s from active list but could not find them on the list.", monster->getCName());
 		return;
 	}
 
@@ -1588,7 +1588,7 @@ bool Server::saveRebootFile(bool resetShips) {
 		Player*player = sock->getPlayer();
 		if(player && player->fd > -1) {
 			curNode = xmlNewChild(rootNode, NULL, BAD_CAST"Player", NULL);
-			xml::newStringChild(curNode, "Name", player->name);
+			xml::newStringChild(curNode, "Name", player->getCName());
 			xml::newNumChild(curNode, "Fd", sock->getFd());
 			xml::newStringChild(curNode, "Ip", sock->getIp().c_str());
 			xml::newStringChild(curNode, "HostName", sock->getHostname().c_str());

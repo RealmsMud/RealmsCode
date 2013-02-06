@@ -447,7 +447,7 @@ bool Recipe::canUseEquipment(const Player* player, bstring skill) const {
 bool Recipe::canBeEdittedBy(const Player* player) const {
 	if(player->isDm())
 		return(true);
-	return(!strcmp(player->name, creator.c_str()));
+	return(player->getName() == creator.c_str());
 }
 
 //**********************************************************************
@@ -776,7 +776,7 @@ int dmCombine(Player* player, cmd* cmnd) {
 		}
 	} else {
 		recipe = new Recipe;
-		recipe->setCreator(player->name);
+		recipe->setCreator(player->getName());
 		gConfig->addRecipe(recipe);
 		player->printColor("\nNew recipe ^y#%d^x created.\n\n", recipe->getId());
 	}
@@ -842,7 +842,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 
 		player->print("Recipe #%d deleted.\n", recipe->getId());
 		log_immort(true, player, "%s deleted recipe #%d.\n",
-			player->name, recipe->getId());
+			player->getCName(), recipe->getId());
 
 		gConfig->remRecipe(recipe);
 		delete recipe;
@@ -853,7 +853,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 
 		player->print("Recipe #%d's Experience set to %d.\n", recipe->getId(), recipe->getExperience());
 		log_immort(true, player, "%s set recipe #%d's %s to %d.\n",
-			player->name, recipe->getId(), "Experience", recipe->getExperience());
+			player->getCName(), recipe->getId(), "Experience", recipe->getExperience());
 		break;
 	case 'r':
 		if(low(cmnd->str[2][1] == 'e' && low(cmnd->str[2][2]) == 'q')) {
@@ -861,7 +861,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 
 			player->print("Recipe #%d's RequireRecipe set to %s.\n", recipe->getId(), recipe->requiresRecipe() ? "true" : "false");
 			log_immort(true, player, "%s set recipe #%d's %s to %s.\n",
-				player->name, recipe->getId(), "RequireRecipe", recipe->requiresRecipe() ? "true" : "false");
+				player->getCName(), recipe->getId(), "RequireRecipe", recipe->requiresRecipe() ? "true" : "false");
 		} else {
 			if(cmnd->val[2] > 1 && cmnd->val[2] < 20000) {
 				CatRef	cr;
@@ -881,7 +881,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 			}
 			player->print("Recipe #%d's Result set to %s.\n", recipe->getId(), recipe->getResult().str().c_str());
 			log_immort(true, player, "%s set recipe #%d's %s to %s.\n",
-				player->name, recipe->getId(), "Result", recipe->getResult().str().c_str());
+				player->getCName(), recipe->getId(), "Result", recipe->getResult().str().c_str());
 		}
 		break;
 	case 's':
@@ -890,7 +890,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 			recipe->setSizable(cmnd->val[2]);
 			player->print("Recipe #%d's Sizable set to \"%s\".\n", recipe->getId(), recipe->isSizable() ? "true" : "false");
 			log_immort(true, player, "%s set recipe #%d's %s to \"%s\".\n",
-				player->name, recipe->getId(), "Sizable", recipe->isSizable() ? "true" : "false");
+				player->getCName(), recipe->getId(), "Sizable", recipe->isSizable() ? "true" : "false");
 		} else {
 			txt = cmnd->str[3];
 			if(txt != "" && !gConfig->getSkill(txt)) {
@@ -901,7 +901,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 
 			player->print("Recipe #%d's Skill set to \"%s\".\n", recipe->getId(), recipe->getSkill().c_str());
 			log_immort(true, player, "%s set recipe #%d's %s to \"%s\".\n",
-				player->name, recipe->getId(), "Skill", recipe->getSkill().c_str());
+				player->getCName(), recipe->getId(), "Skill", recipe->getSkill().c_str());
 		}
 		break;
 	default:

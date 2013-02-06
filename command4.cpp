@@ -83,7 +83,7 @@ void Player::score(const Player* viewer) {
 	std::ostringstream oStr;
 
 
-	viewer->print("%s the %s (level %d)", name, getTitle().c_str(), getLevel());
+	viewer->print("%s the %s (level %d)", getCName(), getTitle().c_str(), getLevel());
 
 	oStr << gServer->delayedActionStrings(this);
 
@@ -387,7 +387,7 @@ void Player::showAge(const Player* viewer) const {
 			if(viewer == this)
 				viewer->printColor("^yToday is your birthday!\n");
 			else
-				viewer->printColor("^yToday is %s's birthday!\n", name);
+				viewer->printColor("^yToday is %s's birthday!\n", getCName());
 		}
 	} else
 		viewer->printColor("^gAge:^x  unknown\n");
@@ -427,7 +427,7 @@ int cmdAge(Player* player, cmd* cmnd) {
 		}
 	}
 
-	player->print("%s the %s (level %d)\n", target->name, target->getTitle().c_str(), target->getLevel());
+	player->print("%s the %s (level %d)\n", target->getCName(), target->getTitle().c_str(), target->getLevel());
 	player->print("\n");
 
 	target->showAge(player);
@@ -532,7 +532,7 @@ void Player::information(const Player* viewer, bool online) {
 	else
 		oStr << "+                                                             ^W<<\\         _^x +\n";
 
-	txt = name;
+	txt = getName();
 	if(viewer && viewer->isCt()) {
 		txt += "(" + getId() + ")";
 	}
@@ -651,7 +651,7 @@ void Player::information(const Player* viewer, bool online) {
 	}
 	if(!statsAddUp()) {
 		if(viewer)
-			viewer->printColor("^RError:^x %s's stats do not add up.\n", name);
+			viewer->printColor("^RError:^x %s's stats do not add up.\n", getCName());
 		else
 			printColor("^RError:^x Your stats do not add up.\n");
 	}

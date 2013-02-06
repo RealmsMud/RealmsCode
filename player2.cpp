@@ -202,7 +202,7 @@ bool Player::checkConfusion() {
 
 		switch(targetType) {
 		case PLAYER: // Random player in room
-			printColor("^BYou are convinced %s is trying to kill you!\n", target->name);
+			printColor("^BYou are convinced %s is trying to kill you!\n", target->getCName());
 			attackCreature(target);
 			return(true);
 			break;
@@ -255,7 +255,7 @@ bool Player::checkConfusion() {
 				return(false);
 
 			printColor("^BYou think %s is attacking you!\n", target);
-			broadcast(getSock(), room, "%M yells, \"DIE %s!!!\"\n", this, target->name);
+			broadcast(getSock(), room, "%M yells, \"DIE %s!!!\"\n", this, target->getCName());
 			attackCreature(target);
 			return(true);
 			break;

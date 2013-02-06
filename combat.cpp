@@ -103,7 +103,7 @@ int Monster::updateCombat() {
 
 	if(target == this)
 		return(0);
-	if(target->hasCharm(name) && flagIsSet(M_CHARMED))
+	if(target->hasCharm(getName()) && flagIsSet(M_CHARMED))
 		return(0);
 
 	NUMHITS++;
@@ -362,7 +362,7 @@ int Monster::updateCombat() {
 				flagIsSet(M_STEAL_ALWAYS)
 			) &&
 			mrand(1,100) <= 10 && (
-				!pTarget->hasCharm(name) &&
+				!pTarget->hasCharm(getName()) &&
 				flagIsSet(M_CHARMED)
 			)
 		) {
@@ -544,7 +544,7 @@ int Monster::steal(Player *victim) {
 		addObj(object);
 
 		logn("log.msteal", "%s(L%d) stole %s from %s(L%d) in room %s.\n",
-			name, level, object->name, victim->name, victim->getLevel(), getRoomParent()->fullName().c_str());
+			getCName(), level, object->getCName(), victim->getCName(), victim->getLevel(), getRoomParent()->fullName().c_str());
 	} else {
 		broadcast(victim->getSock(), getRoomParent(), "%M tried to steal from %N.", this, victim);
 		victim->printColor("^Y%M tried to steal %P^Y from you.\n", this, object);
@@ -705,7 +705,7 @@ int Player::lagProtection() {
 	if(ready[WIELD-1]) {
 		if(!ready[WIELD-1]->flagIsSet(O_CURSED)) {
 			ready[WIELD-1]->clearFlag(O_WORN);
-			printColor("Removing %s.\n", ready[WIELD-1]->name);
+			printColor("Removing %s.\n", ready[WIELD-1]->getCName());
 			unequip(WIELD);
 		}
 	}
@@ -713,7 +713,7 @@ int Player::lagProtection() {
 	if(ready[HELD-1]) {
 		if(!ready[HELD-1]->flagIsSet(O_CURSED)) {
 			ready[HELD-1]->clearFlag(O_WORN);
-			printColor("Removing %s.\n", ready[HELD-1]->name);
+			printColor("Removing %s.\n", ready[HELD-1]->getCName());
 			unequip(HELD);
 		}
 	}
@@ -728,13 +728,13 @@ int Player::lagProtection() {
 	if(flee()) {
 		if(isStaff()) {
 			broadcast(::isStaff, "^C### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.",
-				name, level, hp.getCur(), hp.getMax(), getRoomParent()->fullName().c_str());
+			getCName(), level, hp.getCur(), hp.getMax(), getRoomParent()->fullName().c_str());
 		} else {
 			broadcast(::isWatcher, "^C### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.",
-				name, level, hp.getCur(), hp.getMax(), getRoomParent()->fullName().c_str());
+			getCName(), level, hp.getCur(), hp.getMax(), getRoomParent()->fullName().c_str());
 		}
 		logn("log.lprotect","### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.\n",
-			name, level, hp.getCur(), hp.getMax(), getRoomParent()->fullName().c_str());
+			getCName(), level, hp.getCur(), hp.getMax(), getRoomParent()->fullName().c_str());
 
 		return(1);
 	}
@@ -984,7 +984,7 @@ void Player::damageArmor(int dmg) {
 
 	// Make armor skill worth something, the higher the skill, the lower the chance it'll take damage
 	if(mrand(1,100) > avoidChance) {
-		printColor("Your ^W%s^x just got a little more scratched.\n", armor->name);
+		printColor("Your ^W%s^x just got a little more scratched.\n", armor->getCName());
 		armor->decShotsCur();
 		if(armorType != "shield")
 			checkImprove(armorType, true);
@@ -1002,12 +1002,12 @@ void Player::checkArmor(int wear) {
 		return;
 
 	if(ready[wear-1]->getShotsCur() < 1) {
-		printColor("Your %s fell apart.\n", ready[wear-1]->name);
+		printColor("Your %s fell apart.\n", ready[wear-1]->getCName());
 		if(ready[wear-1]->flagIsSet(O_CURSED)) {
 			logn("log.curseabuse", "%s's %s fell apart. Room: %s\n",
-				name, ready[wear-1], getRoomParent()->fullName().c_str());
+				getCName(), ready[wear-1], getRoomParent()->fullName().c_str());
 		}
-		broadcast(getSock(), getRoomParent(), "%M's %s fell apart.", this, ready[wear-1]->name);
+		broadcast(getSock(), getRoomParent(), "%M's %s fell apart.", this, ready[wear-1]->getCName());
 
 		Limited::remove(this, ready[wear-1]);
 		unequip(wear, Limited::isLimited(ready[wear-1]) ? UNEQUIP_DELETE : UNEQUIP_ADD_TO_INVENTORY);
@@ -1026,7 +1026,7 @@ Creature *findFirstEnemyCrt(Creature *crt, Creature *pet) {
 	for(Monster* mons : pet->getRoomParent()->monsters) {
 	    if(mons == pet)
 	        continue;
-	    if(mons->getAsMonster()->isEnemy(pet->getMaster()) && !strcmp(mons->name, crt->name))
+	    if(mons->getAsMonster()->isEnemy(pet->getMaster()) && mons->getName() == crt->getName())
 	        return(mons);
 
 	}

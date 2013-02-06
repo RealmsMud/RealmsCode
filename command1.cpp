@@ -91,7 +91,7 @@ void command(Socket* sock, bstring str) {
 
 
 	if(ply->getClass() == CARETAKER && !dmIson() )
-		log_immort(false, ply, "%s-%d (%s): %s\n", ply->name, sock->getFd(),
+		log_immort(false, ply, "%s-%d (%s): %s\n", ply->getCName(), sock->getFd(),
 			ply->getRoomParent()->fullName().c_str(), str.c_str());
 
 	if(str == "!")
@@ -229,7 +229,6 @@ enum HandleObject {
 void handleObject(Player* player, cmd* cmnd, HandleObject type) {
 	Object* object=0;
 	long t = time(0);
-	bool found=false;
 	MudObject* target=0;
 
 	bstring action;
@@ -363,7 +362,7 @@ bstring doFinger(const Player* player, bstring name, unsigned short cls) {
 
 	// cls=0 means we don't want padding
 	if(cls) {
-		oStr << std::setw(25) << target->name << " "
+		oStr << std::setw(25) << target->getName() << " "
 			 << std::setw(15) << gConfig->getRace(target->getDisplayRace())->getName();
 		// will they see through the illusion?
 		if(player && player->willIgnoreIllusion() && target->getDisplayRace() != target->getRace())
@@ -371,7 +370,7 @@ bstring doFinger(const Player* player, bstring name, unsigned short cls) {
 		oStr << " "
 			 << target->getTitle() << "\n";
 	} else {
-		oStr << target->name << " the "
+		oStr << target->getName() << " the "
 			 << gConfig->getRace(target->getDisplayRace())->getAdjective();
 		// will they see through the illusion?
 		if(player && player->willIgnoreIllusion() && target->getDisplayRace() != target->getRace())
@@ -494,18 +493,18 @@ int cmdPayToll(Player* player, cmd* cmnd) {
 	}
 
 	if(amt < tc) {
-		player->printColor("You must pay at least %ld gold coins to pass through the %s^x.\n", tc, exit->name);
+		player->printColor("You must pay at least %ld gold coins to pass through the %s^x.\n", tc, exit->getCName());
 		return(0);
 	}
 
 	if(amt > tc) {
-		player->printColor("That is too much. The cost to pass through %s^x is %ld gold coins.\n", exit->name, tc);
+		player->printColor("That is too much. The cost to pass through %s^x is %ld gold coins.\n", exit->getCName(), tc);
 		return(0);
 	}
 
 	newRoom = exit->target.loadRoom(player);
 	if(!newRoom) {
-		player->printColor("The %s^x appears to be jammed shut.\nPlease try again later.\n", exit->name);
+		player->printColor("The %s^x appears to be jammed shut.\nPlease try again later.\n", exit->getCName());
 		return(0);
 	}
 
@@ -516,8 +515,8 @@ int cmdPayToll(Player* player, cmd* cmnd) {
 	player->coins.sub(amt, GOLD);
 	gServer->logGold(GOLD_OUT, player, Money(amt, GOLD), exit, "Toll");
 
-	player->printColor("%M accepts your toll and ushers you through the %s^x.\n", target, exit->name);
-	broadcast(player->getSock(), player->getParent(), "%M pays %N some coins and goes through the %s^x.", player, target, exit->name);
+	player->printColor("%M accepts your toll and ushers you through the %s^x.\n", target, exit->getCName());
+	broadcast(player->getSock(), player->getParent(), "%M pays %N some coins and goes through the %s^x.", player, target, exit->getCName());
 
 	player->deleteFromRoom();
 	player->addToRoom(newRoom);

@@ -717,7 +717,7 @@ int songsKnown(Socket* sock, Player* player, int test) {
 	int             i=0, j=0;
 
 	if(test)
-		sprintf(str, "\n%s's Songs Known: ", player->name);
+		sprintf(str, "\n%s's Songs Known: ", player->getCName());
 	else
 		strcpy(str, "\nSongs known: ");
 

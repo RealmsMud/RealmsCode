@@ -362,7 +362,7 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 			}
 
 			pPlayer->print("Bind cast on %s.\n%s is now bound to %s.\n",
-				target->name, target->name, location->getBindName().c_str());
+				target->name, target->getCName(), location->getBindName().c_str());
 			target->print("%M casts a bind spell on you.\nYou are now bound to %s.\n",
 				pPlayer, location->getBindName().c_str());
 			broadcast(player->getSock(), target->getSock(), pPlayer->getRoomParent(),

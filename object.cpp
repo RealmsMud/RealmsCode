@@ -28,12 +28,12 @@
 // object starts with a color character - chops off the front color
 // chars
 
-char* Object::cmpName() {
-	int i=0;
-	while(name[i] == '^' && name[i+1] != '^')
-		i += 2;
-	return(&name[i]);
-}
+//char* Object::cmpName() {
+//	int i=0;
+//	while(name[i] == '^' && name[i+1] != '^')
+//		i += 2;
+//	return(&name[i]);
+//}
 
 //*********************************************************************
 //						add_obj_obj
@@ -192,7 +192,7 @@ int new_scroll(int level, Object **new_obj) {
 	strcat(name, " ");
 	num = mrand(1,2);
 	strcat(name, scrollType[lvl-1][num-1]);
-	strcpy((*new_obj)->name, name);
+	(*new_obj)->setName( name);
 	p = strtok(name, delem);
 	if(p)
 		strcpy((*new_obj)->key[0], p);
@@ -358,7 +358,7 @@ int displayObject(Player* player, Object* target) {
 
 	// special 2 is a combo lock, should have normal descriptions
 	if(target->getSpecial() == 1) {
-		strcpy(str, target->name);
+		strcpy(str, target->getCName());
 		for(i=0; i<strlen(str); i++)
 			if(str[i] == ' ')
 				str[i] = '_';

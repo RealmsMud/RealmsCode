@@ -97,10 +97,11 @@ BOOST_PYTHON_MODULE(mud)
 		bp::scope MudObject_scope(MudObject_exposer);
 
 		{ //::MudObject::getName
-			typedef char const * (::MudObject::*getName_function_type)();
+			typedef bstring& (::MudObject::*getName_function_type)();
 
-			MudObject_exposer.def("getName",
-					getName_function_type(&::MudObject::getName));
+			MudObject_exposer.def("getName"
+					, getName_function_type(&::MudObject::getName)
+					, return_value_policy<reference_existing_object>() );
 
 		}
 
@@ -488,7 +489,6 @@ BOOST_PYTHON_MODULE(MudObjects)
 	.def("getRoom", &Creature::getRoomParent, return_value_policy<reference_existing_object>())
 	.def("getTarget", &Creature::getTarget, return_value_policy<reference_existing_object>())
 	.def("getDeity", &Creature::getDeity)
-	.def("getName", &Creature::getName)
 	.def("getClass", &Creature::getClass)
 	.def("setDeathType", &Creature::setDeathType)
 	.def("poisonedByMonster", &Creature::poisonedByMonster)
