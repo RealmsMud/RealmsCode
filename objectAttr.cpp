@@ -24,7 +24,7 @@
 //						track
 //*********************************************************************
 
-void Object::track(Player* player) { lastMod = player->name; }
+void Object::track(Player* player) { lastMod = player->getName(); }
 
 //*********************************************************************
 //						setDelay
@@ -247,7 +247,7 @@ void Object::setMaterial(Material m) { material = m; }
 //						setQuestOwner
 //*********************************************************************
 
-void Object::setQuestOwner(const Player* player) { questOwner = player->name; }
+void Object::setQuestOwner(const Player* player) { questOwner = player->getName(); }
 
 //*********************************************************************
 //						clearEffect

@@ -31,7 +31,7 @@ void Player::hasNewMudmail() const {
 	if(!flagIsSet(P_UNREAD_MAIL))
 		return;
 
-	sprintf(filename, "%s/%s.txt", Path::Post, name);
+	sprintf(filename, "%s/%s.txt", Path::Post, getCName());
 	if(file_exists(filename))
 		print("\n*** You have new mudmail in the post office.\n");
 }
@@ -235,7 +235,7 @@ void postedit(Socket* sock, bstring str) {
 	Player* ply = sock->getPlayer();
 	
 	// use a temp file while we're editting it
-	sprintf(filename, "%s/%s_to_%s.txt", Path::Post, ply->name, sock->tempstr[0]);
+	sprintf(filename, "%s/%s_to_%s.txt", Path::Post, ply->getCName(), sock->tempstr[0]);
 
 	if((str[0] == '.' || str[0] == '*') && !str[1]) {
 		// time to copy the temp file to the real file!
@@ -258,7 +258,7 @@ void postedit(Socket* sock, bstring str) {
 		strcpy(datestr, (char *) ctime(&t));
 		datestr[strlen(datestr) - 1] = 0;
 		sprintf(outcstr, "\n--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--\n\nMail from %s (%s):\n\n",
-			ply->name, datestr);
+			ply->getCName(), datestr);
 		write(ff, outcstr, strlen(outcstr));
 
 		while(!feof(fp)) {
@@ -594,7 +594,7 @@ int cmdHistory(Player* player, cmd* cmnd) {
 		}
 	}
 
-	sprintf(file, "%s/%s.txt", Path::History, self ? player->name : cmnd->str[1]);
+	sprintf(file, "%s/%s.txt", Path::History, self ? player->getCName() : cmnd->str[1]);
 
 	if(!file_exists(file)) {
 		if(self)

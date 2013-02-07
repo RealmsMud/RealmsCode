@@ -1239,7 +1239,7 @@ void getAllObj(Creature* creature, Object *container) {
 		player->printColor("%M gets %s from %1P.\n", creature, str, container);
 
 	if(p)
-		p->appendLog(player->getCName(), "%s gets %s.", player->getCName(), str);
+		p->appendLog(player->getName(), "%s gets %s.", player->getCName(), str);
 
 	if(saveLimited)
 		player->save(true);
@@ -1741,7 +1741,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 			player->bug("%s%s get's %s from %s.\n", player->getCName(), player != creature ? "'s pet" : "", object->getCName(), container->getCName());
 		}
 		if(p)
-			p->appendLog(player->getCName(), "%s gets %s.", player->getCName(), object->getObjStr(player, player->displayFlags(), 1).c_str());
+			p->appendLog(player->getName(), "%s gets %s.", player->getCName(), object->getObjStr(player, player->displayFlags(), 1).c_str());
 
 		// Don't ignore split, Do ignore quest
 		doGetObject(object, creature, doUnique, false, true);
@@ -2126,7 +2126,7 @@ void dropAllObj(Creature* creature, Object *container, Property *p) {
 	else
 		player->printColor("%M put %s into %1P.\n", creature, txt.c_str(), container);
 	if(p)
-		p->appendLog(player->getCName(), "%s stores %s.", player->getCName(), txt.c_str());
+		p->appendLog(player->getName(), "%s stores %s.", player->getCName(), txt.c_str());
 
 	if(container->flagIsSet(O_DEVOURS_ITEMS))
 		broadcast(NULL, room, "%O devours everything!", container);
@@ -2627,7 +2627,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 		player->bug("%s%s put %s in %s.\n", player->getCName(), !is_pet ? "'s pet" : "",
 			object->getCName(), container->getCName());
 		if(p)
-			p->appendLog(player->getCName(), "%s stores %s.", player->getCName(), object->getObjStr(player, player->displayFlags(), 1).c_str());
+			p->appendLog(player->getName(), "%s stores %s.", player->getCName(), object->getObjStr(player, player->displayFlags(), 1).c_str());
 	}
 
 	player->save(true);

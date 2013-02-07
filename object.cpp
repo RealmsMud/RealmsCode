@@ -578,7 +578,7 @@ void getDamageString(char atk[50], Creature* player, Object *weapon, bool critic
 //*********************************************************************
 
 bool Object::showAsSame(const Player* player, const Object* object) const {
-	return(	!strcmp(name, object->name) &&
+	return(	getName() == object->getName() &&
 			flagIsSet(O_KEEP) == object->flagIsSet(O_KEEP) &&
 			isEffected("invisibility") == object->isEffected("invisibility") &&
 			isBroken() == object->isBroken() &&
@@ -596,7 +596,9 @@ bool Object::showAsSame(const Player* player, const Object* object) const {
 //*********************************************************************
 
 void Object::nameCoin(bstring type, unsigned long value) {
-	sprintf(name, "%lu %s coin%s", value, type.c_str(), value != 1 ? "s" : "");
+	char temp[80];
+	snprintf(temp, 80, "%lu %s coin%s", value, type.c_str(), value != 1 ? "s" : "");
+	setName(temp);
 }
 
 //*********************************************************************
@@ -621,11 +623,11 @@ void BaseRoom::killMortalObjectsOnFloor() {
 			continue;
 
 		if(sunlight && object->flagIsSet(O_DARKMETAL)) {
-			broadcast(NULL, this, "^yThe %s^y was destroyed by the sunlight!", object->name);
+			broadcast(NULL, this, "^yThe %s^y was destroyed by the sunlight!", object->getCName());
 			object->deleteFromRoom();
 			delete object;
 		} else if(!Unique::canLoad(object)) {
-			broadcast(NULL, this, "^yThe %s^y vanishes!", object->name);
+			broadcast(NULL, this, "^yThe %s^y vanishes!", object->getCName());
 			object->deleteFromRoom();
 			delete object;
 		} else
@@ -680,9 +682,9 @@ void Creature::killDarkmetal() {
 		object = (*it++);
 		if(object && object->flagIsSet(O_DARKMETAL)) {
 			if(pTarget)
-				printColor("^yYour %s was destroyed by the sunlight!\n", object->name);
+				printColor("^yYour %s was destroyed by the sunlight!\n", object->getCName());
 			else if(isPet())
-				printColor("^y%M's %s was destroyed by the sunlight!\n", this, object->name);
+				printColor("^y%M's %s was destroyed by the sunlight!\n", this, object->getCName());
 			delObj(object, true, false, false, false);
 			delete object;
 			found = true;
@@ -700,7 +702,7 @@ void Creature::killDarkmetal() {
 		if( pTarget->ready[i] &&
 			pTarget->ready[i]->flagIsSet(O_DARKMETAL)
 		) {
-			printColor("^yYour %s was destroyed by the sunlight!\n", pTarget->ready[i]->name);
+			printColor("^yYour %s was destroyed by the sunlight!\n", pTarget->ready[i]->getCName());
 			// i is wearloc-1, so add 1.   Delete it when done
 			pTarget->unequip(i+1, UNEQUIP_DELETE, false);
 			found = true;
@@ -841,7 +843,7 @@ bstring Object::getQuestOwner() const { return(questOwner); }
 bool Object::isQuestOwner(const Player* player) const {
 	if(questOwner == "")
 		return(true);
-	if(questOwner != player->name)
+	if(questOwner != player->getName())
 		return(false);
 	// for sui/remake, a player of the same name will fail this check
 	if(player->getCreated() > getMade())

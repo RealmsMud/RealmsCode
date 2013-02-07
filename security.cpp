@@ -191,7 +191,7 @@ void changePassword(Socket* sock, bstring str) {
 
 			if(!player->isCt())
 				logn("log.passwd", "(%s)\n   %s changed %s password. Old: %s New: %s\n", player->getSock()->getHostname().c_str(),
-				     player->name, player->hisHer(), player->getPassword().c_str(), sock->tempstr[1]);
+				     player->getCName(), player->hisHer(), player->getPassword().c_str(), sock->tempstr[1]);
 			player->setPassword(str);
 
 			sock->print("Password changed.\n");

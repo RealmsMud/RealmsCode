@@ -1451,7 +1451,7 @@ void Lore::reset(Player* player, Creature* creature) {
 	for(it = gConfig->properties.begin() ; it != gConfig->properties.end() ; it++) {
 		p = (*it);
 		if(	!(p->getType() == PROP_SHOP || p->getType() == PROP_STORAGE) ||
-			!p->isOwner(player->name)
+			!p->isOwner(player->getName())
 		)
 			continue;
 

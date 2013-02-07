@@ -28,7 +28,7 @@ bool Object::operator< (const Object& t) const {
 }
 
 bstring Object::getCompareStr() const {
-	bstring toReturn = bstring(name) + "-" + bstring(adjustment) + "-" + bstring(shopValue) + "-" + getId();
+	bstring toReturn = getName() + "-" + bstring(adjustment) + "-" + bstring(shopValue) + "-" + getId();
 	return(toReturn);
 }
 
@@ -118,7 +118,6 @@ Object::Object() {
 
 	id = "-1";
 	version = "0.00";
-	memset(name, 0, sizeof(name));
 	description = effect = "";
 	memset(key, 0, sizeof(key));
 	memset(use_output, 0, sizeof(use_output));
@@ -1003,9 +1002,9 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 		// Either not an irregular plural, or we couldn't find a match in the irregular plural file
 		if(num == 0) {
 			if(!flagIsSet(O_NO_PREFIX)) {
-				objStr << "the " << name;
+				objStr << "the " << getName();
 			} else
-				objStr << name;
+				objStr << getName();
 		}
 		else if(num == 1) {
 			if(flagIsSet(O_NO_PREFIX) || (info.id == 0 && !strcmp(key[0], "gold") && type == MONEY))
@@ -1015,15 +1014,15 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 			else {
 				// handle articles even when the item starts with a color
 				int pos=0;
-				while(name[pos] == '^') pos += 2;
-				ch = low(name[pos]);
+				while(getName()[pos] == '^') pos += 2;
+				ch = low(getName()[pos]);
 
 				if(ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u')
 					objStr << "an ";
 				else
 					objStr << "a ";
 			}
-			objStr << name;
+			objStr << getName();
 		}
 		else {
 			char tempStr[2056];
@@ -1124,7 +1123,7 @@ void Object::popBag(Creature* creature, bool quest, bool drop, bool steal, bool 
 bool Object::isKey(const UniqueRoom* room, const Exit* exit) const {
 	// storage room exist must be a storage room key
 	if(exit->flagIsSet(X_TO_STORAGE_ROOM))
-		return(!strcmp(name, "storage room key"));
+		return(getName() == "storage room key");
 
 	// key numbers must match
 	if(getKey() != exit->getKey())

@@ -162,8 +162,8 @@ bool Player::checkConfusion() {
 			return(false);
 
 		printColor("^BWanderlust overtakes you.\n");
-		printColor("^BYou wander aimlessly to the %s exit.\n", newExit->name);
-		broadcast(getSock(), room, "%M wanders aimlessly to the %s exit.", this, newExit->name);
+		printColor("^BYou wander aimlessly to the %s exit.\n", newExit->getCName());
+		broadcast(getSock(), room, "%M wanders aimlessly to the %s exit.", this, newExit->getCName());
 		deleteFromRoom();
 		addToRoom(bRoom);
 		doPetFollow();
@@ -235,7 +235,7 @@ bool Player::checkConfusion() {
 				hp.setCur(1);
 
 				printColor("^BYou accidentally killed yourself!\n");
-				broadcast("### Sadly, %s accidentally killed %sself.", name, himHer());
+				broadcast("### Sadly, %s accidentally killed %sself.", getCName(), himHer());
 
 				mp.setCur(1);
 

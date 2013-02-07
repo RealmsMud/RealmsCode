@@ -113,7 +113,7 @@ int cmdBribe(Player* player, cmd* cmnd) {
 
 	if(creature->isPet()) {
 		player->print("%M is too loyal to %s for you to bribe %s.\n", creature,
-			creature->getMaster()->getName(), creature->himHer());
+			creature->getMaster()->getCName(), creature->himHer());
 		creature->getMaster()->print("%M tried to bribe %N.\n", player, creature);
 		return(0);
 	}
@@ -139,7 +139,7 @@ int cmdBribe(Player* player, cmd* cmnd) {
 		player->print("%M takes your money and leaves.\n", creature);
 		broadcast(player->getSock(), player->getParent(), "%M bribed %N.", player, creature);
 
-		log_immort(true, player, "%s bribed %s.\n", player->getCName(), creature->name);
+		log_immort(true, player, "%s bribed %s.\n", player->getCName(), creature->getCName());
 
 		creature->deleteFromRoom();
 		gServer->delActive(creature);
@@ -234,7 +234,7 @@ void doSearch(Player* player, bool immediate) {
 			// canSee doesnt handle DescOnly
 			if(player->canSee(ext) && !ext->flagIsSet(X_DESCRIPTION_ONLY)) {
 				found = true;
-				player->printColor("You found an exit: %s^x.\n", ext->name);
+				player->printColor("You found an exit: %s^x.\n", ext->getCName());
 
 				if(ext->isWall("wall-of-fire"))
 					player->printColor("%s", ext->blockedByStr('R', "wall of fire", "wall-of-fire", detectMagic, true).c_str());
@@ -262,7 +262,7 @@ void doSearch(Player* player, bool immediate) {
 			mrand(1,100) <= (chance + searchMod(ply->getSize())))
 		{
 			found = true;
-			player->print("You found %s hiding.\n", ply->name);
+			player->print("You found %s hiding.\n", ply->getCName());
 		}
 	}
 
@@ -992,13 +992,13 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 		player->print("That item isn't on display.\n");
 		return(0);
 	}
-	//	if(!strcmp(object->name, "lottery ticket"))
+	//	if(!strcmp(object->getCName(), "lottery ticket"))
 	//	{
 	//		player->print("Shoplifting a lottery ticket would bring down the wrath of the gods.\n");
 	//		return(0);
 	//	}
 
-	if(!strcmp(object->name, "storage room")) {
+	if(object->getName() == "storage room") {
 		player->print("You can't shoplift that!\n");
 		return(0);
 	}
@@ -1413,13 +1413,13 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 			case 3:
 				if(weapon) {
 					player->printColor("^cThe %s went completely through %N! %s's dead!\n",
-						weapon->name, target, target->upHeShe());
+						weapon->getCName(), target, target->upHeShe());
 					broadcast(player->getSock(), player->getParent(), "%M's %s goes completely through %N! %s's dead!",
-						player, weapon->name, target, target->upHeShe());
+						player, weapon->getCName(), target, target->upHeShe());
 
 					if(target->isPlayer())
 						target->print("%M's %s sticks out of your chest! You're dead!\n",
-							player, weapon->name);
+							player, weapon->getCName());
 				}
 
 				break;
@@ -1766,7 +1766,7 @@ int cmdPickLock(Player* player, cmd* cmnd) {
 	broadcast(player->getSock(), player->getParent(), "%M attempts to pick the %s^x.", player, exit->getCName());
 
 	if(mrand(1,100) <= chance) {
-		log_immort(false, player, "%s picked the %s in room %s.\n", player->getCName(), exit->name,
+		log_immort(false, player, "%s picked the %s in room %s.\n", player->getCName(), exit->getCName(),
 			player->getRoomParent()->fullName().c_str());
 
 		player->print("You successfully picked the lock.\n");
@@ -1987,14 +1987,14 @@ int peek_bag(Player* player, Player* target, cmd* cmnd, int inv) {
 	if(!inv) {
 		if(mrand(1,100) > chance && !player->isStaff()) {
 
-			player->print("You manage to peek inside %N's %s.\n", target, container->name);
-			target->print("%M managed to peek in your %s!\n", player, container->name);
+			player->print("You manage to peek inside %N's %s.\n", target, container->getCName());
+			target->print("%M managed to peek in your %s!\n", player, container->getCName());
 			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M peeked at %N's inventory.",
 				player, target);
 			player->print("%s noticed!\n", target->upHeShe());
 
 		} else {
-			player->print("You manage to peek inside %N's %s.\n", target, container->name);
+			player->print("You manage to peek inside %N's %s.\n", target, container->getCName());
 			player->print("%s's oblivious to your rummaging.\n", target->upHeShe());
 		}
 		player->checkImprove("peek", true);

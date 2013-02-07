@@ -158,7 +158,7 @@ void doTitle(Socket* sock, bstring str) {
 			broadcast("^y%s the %s is now known as %s the %s.", player->getCName(),
 					player->getTitle().c_str(), player->getCName(), player->getTempTitle().c_str());
 
-			sendMail(gConfig->getReviewer(), (bstring)player->name + " has chosen the title " + player->getTempTitle() + ".\n");
+			sendMail(gConfig->getReviewer(), player->getName() + " has chosen the title " + player->getTempTitle() + ".\n");
 		}
 
 		player->setTitle(player->getTempTitle());
@@ -280,10 +280,10 @@ int cmdSurname(Player* player, cmd* cmnd) {
 
 void doSurname(Socket* sock, bstring str) {
 	if(low(str[0]) == 'y') {
-		sock->print("You are now known as %s %s.\n", sock->getPlayer()->getName(), sock->getPlayer()->getSurname().c_str());
+		sock->print("You are now known as %s %s.\n", sock->getPlayer()->getCName(), sock->getPlayer()->getSurname().c_str());
 
 		if(!sock->getPlayer()->isStaff()) {
-			broadcast("### %s is now known as %s %s.", sock->getPlayer()->getName(), sock->getPlayer()->getName(),
+			broadcast("### %s is now known as %s %s.", sock->getPlayer()->getCName(), sock->getPlayer()->getCName(),
 				sock->getPlayer()->getSurname().c_str());
 
 			sendMail(gConfig->getReviewer(), (bstring)sock->getPlayer()->getName() + " has chosen the surname " + sock->getPlayer()->getSurname() + ".\n");

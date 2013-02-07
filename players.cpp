@@ -25,7 +25,7 @@
 #include <sstream>
 
 bool Player::operator <(const Player& t) const {
-    return(strcmp(this->name, t.name) < 0);
+    return(strcmp(this->getCName(), t.getCName()) < 0);
 }
 
 //*********************************************************************

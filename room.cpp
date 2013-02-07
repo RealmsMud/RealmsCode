@@ -182,9 +182,9 @@ void Player::addToRoom(UniqueRoom* uRoom) {
 			checkBuilder(uRoom);
 			printColor("^yYou are illegally out of your assigned area. This has been logged.\n");
 			broadcast(::isCt, "^y### %s is illegally out of %s assigned area. (%s)",
-				name, himHer(), uRoom->info.str().c_str());
-			logn("log.builders", "%s illegally entered room %s - (%s).\n", name,
-				uRoom->info.str().c_str(), uRoom->name);
+				getCName(), himHer(), uRoom->info.str().c_str());
+			logn("log.builders", "%s illegally entered room %s - (%s).\n", getCName(),
+				uRoom->info.str().c_str(), uRoom->getCName());
 		}
 	}
 
@@ -246,14 +246,14 @@ int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 
 	t = time(0);
 	if(inUniqueRoom() && !isStaff()) {
-		strcpy(getUniqueRoomParent()->lastPly, name);
+		strcpy(getUniqueRoomParent()->lastPly, getCName());
 		strcpy(getUniqueRoomParent()->lastPlyTime, ctime(&t));
 	}
 
 	currentLocation.mapmarker.reset();
 	currentLocation.room.clear();
 
-	if(delPortal && flagIsSet(P_PORTAL) && Move::deletePortal(room, name))
+	if(delPortal && flagIsSet(P_PORTAL) && Move::deletePortal(room, getName()))
 		i |= DEL_PORTAL_DESTROYED;
 
 	// when we're removing them from the room - AreaRoom, usually -
@@ -438,7 +438,7 @@ void UniqueRoom::addPermCrt() {
 			continue;
 
 		for(Monster* mons : monsters) {
-			if(	mons->flagIsSet(M_PERMENANT_MONSTER) && !strcmp(mons->name, creature->name) )
+			if(	mons->flagIsSet(M_PERMENANT_MONSTER) && mons->getName() == creature->getName() )
 				m++;
 		}
 
@@ -505,7 +505,7 @@ void UniqueRoom::addPermObj() {
 			continue;
 
 		for(Object* obj : objects) {
-			if(obj->flagIsSet(O_PERM_ITEM) && !strcmp(obj->name, object->name) && obj->info == object->info)
+			if(obj->flagIsSet(O_PERM_ITEM) && obj->getName() == object->getName() && obj->info == object->info)
 				m++;
 		}
 
@@ -583,7 +583,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 
 		if(staff)
 			oStr << uRoom->info.str() << " - ";
-		oStr << uRoom->name << "^x\n\n";
+		oStr << uRoom->getName() << "^x\n\n";
 
 		if(!player->flagIsSet(P_NO_SHORT_DESCRIPTION) && uRoom->getShortDescription() != "")
 			oStr << uRoom->getShortDescription() << "\n";
@@ -639,7 +639,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 			} else {
 				oStr << "g";
 			}
-			oStr << ext->name;
+			oStr << ext->getName();
 
 			if(ext->flagIsSet(X_CLOSED) || ext->flagIsSet(X_LOCKED)) {
 				oStr << "[";
@@ -773,7 +773,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 		if(staff || (player->canSee(creature) && (!creature->flagIsSet(M_HIDDEN) || magicShowHidden))) {
 			m=1;
 			while(mIt != room->monsters.end()) {
-				if(	!strcmp((*mIt)->name, creature->name) &&
+				if(	(*mIt)->getName() == creature->getName() &&
 					(staff || (player->canSee(*mIt) && (!(*mIt)->flagIsSet(M_HIDDEN) || magicShowHidden))) &&
 					creature->isInvisible() == (*mIt)->isInvisible() )
 				{
@@ -843,7 +843,7 @@ void display_rom(Player* player,BaseRoom* room) {
 // putting in a generic description
 
 void storageName(UniqueRoom* room, const Player* player) {
-	sprintf(room->name, "%s's Personal Storage Room", player->getCName());
+	room->setName(player->getName() + "'s Personal Storage Room");
 }
 
 int createStorage(CatRef cr, const Player* player) {
@@ -901,7 +901,7 @@ int createStorage(CatRef cr, const Player* player) {
 	Property *p = new Property;
 	p->found(player, PROP_STORAGE, "any realty office", false);
 
-	p->setName(newRoom->name);
+	p->setName(newRoom->getName());
 	p->addRange(newRoom->info);
 
 	gConfig->addProperty(p);
@@ -927,9 +927,9 @@ void UniqueRoom::validatePerms() {
 		if(crtm->ltime > t) {
 			crtm->ltime = t;
 			logn("log.validate", "Perm #%d(%s) in Room %s (%s): Time has been revalidated.\n",
-				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), name);
+				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), getCName());
 			broadcast(isCt, "^yPerm Mob #%d(%s) in Room %s (%s) has been revalidated",
-				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), name);
+				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), getCName());
 		}
 	}
 	for(it = permObjects.begin(); it != permObjects.end() ; it++) {
@@ -937,10 +937,10 @@ void UniqueRoom::validatePerms() {
 		if(crtm->ltime > t) {
 			crtm->ltime = t;
 			logn("log.validate", "Perm Obj #%d(%s) in Room %s (%s): Time has been revalidated.\n",
-				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), name);
+				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), getCName());
 
 			broadcast(isCt, "^yPerm Obj #%d(%s) in Room %s (%s) has been revalidated.",
-				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), name);
+				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), getCName());
 		}
 	}
 }

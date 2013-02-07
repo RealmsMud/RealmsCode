@@ -653,7 +653,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 
 		player->delObj(obj);
 		obj->addToRoom(storage);
-		p->appendLog(player->getCName(), "%s stocked %s for $%d.", player->getCName(), obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
+		p->appendLog(player->getName(), "%s stocked %s for $%d.", player->getCName(), obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
 		player->printColor("You stock %s in the store for $%d.\n", obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
 		broadcast(player->getSock(), player->getParent(), "%M just stocked something in this store.", player);
 		// obj->shopValue
@@ -678,7 +678,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 			return(0);
 		}
 		obj->setShopValue(value);
-		p->appendLog(player->getCName(), "%s set the price for %s to $%d.", player->getCName(), obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
+		p->appendLog(player->getName(), "%s set the price for %s to $%d.", player->getCName(), obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
 		player->printColor("You set the price for %s to $%d.\n", obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
 		broadcast(player->getSock(), player->getParent(), "%M just updated the prices in this store.", player);
 	} else if(action == SHOP_REMOVE) {
@@ -707,7 +707,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 
 		obj->deleteFromRoom();
 		player->addObj(obj);
-		p->appendLog(player->getCName(), "%s removed %s.", player->getCName(), obj->getObjStr(NULL, flags, 1).c_str());
+		p->appendLog(player->getName(), "%s removed %s.", player->getCName(), obj->getObjStr(NULL, flags, 1).c_str());
 		player->printColor("You remove %s from your store.\n", obj->getObjStr(NULL, flags, 1).c_str());
 		broadcast(player->getSock(), player->getParent(), "%M just removed something from this store.", player);
 
@@ -739,7 +739,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 		}
 		player->getUniqueRoomParent()->setName(name.c_str());
 		p->setName(name);
-		p->appendLog(player->getCName(), "%s renamed the shop to %s.", player->getCName(), player->getUniqueRoomParent()->getCName());
+		p->appendLog(player->getName(), "%s renamed the shop to %s.", player->getCName(), player->getUniqueRoomParent()->getCName());
 		logn("log.shops", "%s renamed shop %s to %s.\n",
 			player->getCName(), player->getUniqueRoomParent()->info.str().c_str(), player->getUniqueRoomParent()->getCName());
 		player->print("Shop renamed to '%s'.\n", player->getUniqueRoomParent()->getCName());
