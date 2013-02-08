@@ -195,7 +195,7 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
 			if(id <= 1)
 				id = 1;
 			player->printColor("^YRS: ^eSwap canceled.\n");
-			if(name != player->name && name != "Someone") {
+			if(name != player->getName() && name != "Someone") {
 				Player* p = gServer->findPlayer(name.c_str());
 				if(p)
 					player->printColor("^RRS: ^eSwap canceled by %s.\n", player->getCName());
@@ -772,7 +772,7 @@ void Config::swap(Player* player, bstring name) {
 		ply = p.second;
 		if(ply->swap(currentSwap))
 			ply->save(true);
-		swapList.remove((bstring)"p" + ply->name);
+		swapList.remove((bstring)"p" + ply->getName());
 	}
 
 	// remove the swapped rooms from the queue

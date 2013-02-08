@@ -355,14 +355,14 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			// nosummon flag
 			if(	target->flagIsSet(P_NO_SUMMON) &&
-				!pPlayer->checkStaff("The spell fizzles.\n%M's summon flag is not set.\n", target)
-			) {
-				target->print("%s tried to bind you to this room!\nIf you wish to be bound, type \"set summon\".\n", pPlayer->name);
+				!pPlayer->checkStaff("The spell fizzles.\n%M's summon flag is not set.\n", target))
+			{
+				target->print("%s tried to bind you to this room!\nIf you wish to be bound, type \"set summon\".\n", pPlayer->getCName());
 				return(0);
 			}
 
 			pPlayer->print("Bind cast on %s.\n%s is now bound to %s.\n",
-				target->name, target->getCName(), location->getBindName().c_str());
+				target->getCName(), target->getCName(), location->getBindName().c_str());
 			target->print("%M casts a bind spell on you.\nYou are now bound to %s.\n",
 				pPlayer, location->getBindName().c_str());
 			broadcast(player->getSock(), target->getSock(), pPlayer->getRoomParent(),

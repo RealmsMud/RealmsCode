@@ -156,7 +156,7 @@ static void check_spelling(Player* player, cmd* cmnd) {
 	if(exit_desc && !player->getUniqueRoomParent()->exits.empty()) {
 		player->print("Checking for misspelled words in exit descriptions...\n");
 		for(Exit* ext : player->getUniqueRoomParent()->exits) {
-			player->print("   %s:\n", ext->name);
+			player->print("   %s:\n", ext->getCName());
 			do_spelling_check(player, mode, ext->getDescription());
 		}
 	}

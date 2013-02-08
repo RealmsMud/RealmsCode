@@ -626,8 +626,8 @@ void Server::updateAction(long t) {
 									if(ply->getClass() == act->arg1) {
 										if(monster->first_tlk->target)
 											delete[] monster->first_tlk->target;
-										monster->first_tlk->target = new char[strlen(ply->name)+1];
-										strcpy(monster->first_tlk->target, ply->name);
+										monster->first_tlk->target = new char[ply->getName().length()+1];
+										strcpy(monster->first_tlk->target, ply->getCName());
 										act->success = 1;
 										break;
 									}
@@ -635,8 +635,8 @@ void Server::updateAction(long t) {
 									if(ply->getRace() == act->arg1) {
 										if(monster->first_tlk->target)
 											delete monster->first_tlk->target;
-										monster->first_tlk->target = new char[strlen(ply->name)+1];
-										strcpy(monster->first_tlk->target, ply->name);
+										monster->first_tlk->target = new char[ply->getName().length()+1];
+										strcpy(monster->first_tlk->target, ply->getCName());
 										act->success = 1;
 										break;
 									}
@@ -865,9 +865,9 @@ void doCrash(int sig) {
 			oStr << ", ";
 
 		if(!sock->isConnected())
-			oStr << player->name << " (connecting)";
+			oStr << player->getName() << " (connecting)";
 		else
-			oStr << player->name << " (^xcmd:" + player->getLastCommand() << ":" << (t-sock->ltime) << "^W)";
+			oStr << player->getName() << " (^xcmd:" + player->getLastCommand() << ":" << (t-sock->ltime) << "^W)";
 	}
 	if(!i)
 		oStr << "No one";
@@ -1093,14 +1093,14 @@ bstring Server::showActiveList() {
 	while(it != activeList.end()) {
 		monster = (*it++);
 		if((!monster->inUniqueRoom() || !monster->getUniqueRoomParent()->info.id) && !monster->inAreaRoom()) {
-			if(monster->getName())
+			if(monster->getName()[0])
 				oStr << "Bad Mob " << monster->getName() << ".\n";
 			else
 				oStr << "Bad Mob\n";
 			continue;
 		}
-		if(!monster->getName()) {
-			oStr << "Bad Mb - Room " << monster->getRoomParent()->fullName() << "\n";
+		if(!monster->getName()[0]) {
+			oStr << "Bad Mob - Room " << monster->getRoomParent()->fullName() << "\n";
 			continue;
 		}
 		oStr << monster->getName() << " - " << monster->getRoomParent()->fullName() << "\n";

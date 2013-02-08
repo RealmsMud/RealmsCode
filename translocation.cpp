@@ -118,8 +118,8 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
 	pPlayer->printColor("You sucessfully transported %1P to %N.\n", object, target);
 
 	if(!pPlayer->isDm())
-		log_immort(true, pPlayer, "%s transports a %s to %s in room %s.\n", pPlayer->name, object->getCName(),
-			target->name, target->getRoomParent()->fullName().c_str());
+		log_immort(true, pPlayer, "%s transports a %s to %s in room %s.\n", pPlayer->getCName(), object->getCName(),
+			target->getCName(), target->getRoomParent()->fullName().c_str());
 
 	if(!pPlayer->flagIsSet(P_DM_INVIS) && (!target->isEffected("incognito") || pPlayer->inSameRoom(target))) {
 		target->wake("You awaken suddenly!");
@@ -467,7 +467,7 @@ void Move::createPortal(BaseRoom* room, BaseRoom* target, const Player* player, 
 	ext->setFlag(X_NO_WANDER);
 	ext->setFlag(X_CAN_LOOK);
 	ext->setEnter("You step through the portal and find yourself in another location.");
-	ext->setPassPhrase(player->name);
+	ext->setPassPhrase(player->getName());
 	ext->setKey(MAX(1, ((int)player->getLevel() - 28) / 2));
 	ext->setDescription("You see a shimmering portal of mystical origin.");
 
@@ -524,18 +524,18 @@ bool Move::deletePortal(BaseRoom* room, bstring name, const Creature* leader, st
 		if(ext->flagIsSet(X_PORTAL) && ext->getPassPhrase() == name) {
 			if(initial) {
 				if(leader && leader->isPlayer())
-					leader->printColor("The %s^x collapses into nothingness.\n", ext->name);
+					leader->printColor("The %s^x collapses into nothingness.\n", ext->getCName());
 				if(followers) {
 					std::list<Creature*>::const_iterator it;
 					for(it = followers->begin(); it != followers->end(); it++) {
 						if(!(*it)->isPlayer())
 							continue;
-						(*it)->printColor("The %s^x collapses into nothingness.\n", ext->name);
+						(*it)->printColor("The %s^x collapses into nothingness.\n", ext->getCName());
 					}
 				}
 			}
 
-			broadcast(0, room, "The %s^x collapses into nothingness.", ext->name);
+			broadcast(0, room, "The %s^x collapses into nothingness.", ext->getCName());
 
 			if(initial) {
 				BaseRoom* target = ext->target.loadRoom();
@@ -846,7 +846,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 			}
 
 			logn("log.teleport", "%s(L%dH%dM%dR:%s) was just teleported to room %s by %s(L%d)\n",
-				target->name, target->getLevel(), target->hp.getCur(), target->mp.getCur(), player->getRoomParent()->fullName().c_str(),
+				target->getCName(), target->getLevel(), target->hp.getCur(), target->mp.getCur(), player->getRoomParent()->fullName().c_str(),
 				newRoom->fullName().c_str(), player->getCName(), player->getLevel());
 			broadcast(isCt, "^y%M(L%dH%dM%dR:%s) was just teleported to room %s by %s(L%d)",
 				target, target->getLevel(), target->hp.getCur(), target->mp.getCur(), player->getRoomParent()->fullName().c_str(),
@@ -1629,7 +1629,7 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			if(ply->hp.getCur() < 1) {
 				// killing the owner of a portal will invalidate the exit
-				if(!portalDestroyed && exit->getPassPhrase() == ply->name)
+				if(!portalDestroyed && exit->getPassPhrase() == ply->getName())
 					portalDestroyed = true;
 				ply->die(EXPLOSION);
 				if(ply == player)
@@ -1650,7 +1650,7 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(doMove) {
 		// if the portal wasn't destroyed yet, this will mark it as so
-		if(!portalDestroyed && isPortal && exit->getPassPhrase() == player->name)
+		if(!portalDestroyed && isPortal && exit->getPassPhrase() == player->getName())
 			portalDestroyed = true;
 
 		i = pPlayer->deleteFromRoom();

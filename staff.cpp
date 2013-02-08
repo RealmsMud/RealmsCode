@@ -159,7 +159,7 @@ bool isDm(Socket* sock) {
 bool isAdm(const Creature* player) {
 	if(player->isMonster())
 		return(false);
-	return((!strcmp(player->name, "Bane") || !strcmp(player->name, "Dominus") || !strcmp(player->name, "Ocelot")));
+	return(player->getName() == "Bane" || player->getName() == "Dominus" || player->getName() == "Ocelot");
 }
 
 bool isAdm(Socket* sock) {

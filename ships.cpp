@@ -116,7 +116,7 @@ void ShipExit::spawnRaiders(ShipRaid* sRaid) {
 	if(!raider->flagIsSet(M_CUSTOM))
 		raider->validateAc();
 
-	if(!raider->name[0] || raider->name[0] == ' ') {
+	if(!raider->getName()[0] || raider->getName()[0] == ' ') {
 		free_crt(raider);
 		return;
 	}
@@ -188,7 +188,7 @@ bool ShipExit::createExit() {
 	link_rom(newRoom, target, name);
 
 	for(Exit* ext : newRoom->exits) {
-		if(!strcmp(ext->name, name.c_str())) {
+		if(ext->getName() == name) {
 			zero(ext->flags, sizeof(ext->flags));
 
 			// TODO: Dom: needs to use getFlags() and setFlags()
@@ -262,7 +262,7 @@ void ShipExit::removeExit() {
 		Exit* ext = (*xit++);
 		// if we're given an exit, delete it
 		// otherwise delete all exits
-		if(ext->flagIsSet(X_MOVING) && !strcmp(ext->name, name.c_str()) ) {
+		if(ext->flagIsSet(X_MOVING) && ext->getName() == name) {
 			//oldPrintColor(4, "^rDeleting^w exit %s in room %d.\n", xt->name, room);
 			if(i < 8 && aRoom) {
 				// it's a cardinal direction, clear all flags

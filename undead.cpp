@@ -323,9 +323,9 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 
 	if(	target->isPlayer() &&
 		(	player->vampireCharmed(target->getAsPlayer()) ||
-			(target->hasCharm(player->name) && player->flagIsSet(P_CHARMED))
-		)
-	) {
+			(target->hasCharm(player->getName()) && player->flagIsSet(P_CHARMED))
+		))
+	{
 		player->print("But they are already your good friend!\n");
 		return(0);
 	}

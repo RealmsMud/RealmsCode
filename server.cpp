@@ -814,7 +814,7 @@ void Server::updateActive(long t) {
 
 		if(!monster->inRoom()) {
 			broadcast(isStaff, "^y%s without a parent/area room on the active list. Info: %s. Deleting.",
-				monster->name, monster->info.str().c_str());
+				monster->getCName(), monster->info.str().c_str());
 			monster->deleteFromRoom();
 			gServer->delActive(monster);
 			free_crt(monster);
@@ -1062,12 +1062,12 @@ void Server::addActive(Monster* monster) {
 		return;
 	// try and guess if the creature is valid
 	{
-		char *p = monster->name;
+		const char *p = monster->getCName();
 		while(*p) {
 			ASSERTLOG(isPrintable((unsigned char)*p));
 			p++;
 		}
-		ASSERTLOG(p - monster->name);
+		ASSERTLOG(p - monster->getCName());
 	}
 
 	monster->validateId();
@@ -1259,7 +1259,7 @@ int Server::processListOutput(childProcess &lister) {
 	Socket *sock;
 	for(sIt = sockets.begin() ; sIt != sockets.end() ; ++sIt ) {
 		sock = *sIt;
-		if(sock->getPlayer() && lister.extra == sock->getPlayer()->name) {
+		if(sock->getPlayer() && lister.extra == sock->getPlayer()->getName()) {
 			found = true;
 			break;
 		}
@@ -1518,7 +1518,7 @@ bool Server::startReboot(bool resetShips) {
 				sock->endCompress();
 			}
 			player->save(true);
-			players[player->name] = 0;
+			players[player->getName()] = 0;
 			player->uninit();
 			free_crt(player);
 			player = 0;
@@ -1799,7 +1799,7 @@ bool Server::clearPlayer(Player* player) {
 bool Server::addPlayer(Player* player) {
 	ASSERTLOG(player);
 	player->validateId();
-	players[player->name] = player;
+	players[player->getName()] = player;
 	player->getSock()->addToPlayerList();
 	registerMudObject(player);
 	return(true);
@@ -1811,7 +1811,7 @@ bool Server::addPlayer(Player* player) {
 
 bool Server::checkDuplicateName(Socket* sock, bool dis) {
 	for(Socket *s : sockets) {
-		if(sock != s && s->getPlayer() && !strcmp(s->getPlayer()->name, sock->getPlayer()->name)) {
+		if(sock != s && s->getPlayer() && s->getPlayer()->getName() ==  sock->getPlayer()->getName()) {
 			if(!dis) {
 				sock->printColor("\n\n^ySorry, that character is already logged in.^x\n\n\n");
 				sock->reconnect();
@@ -1853,7 +1853,7 @@ bool Server::checkDouble(Socket* sock) {
 			continue;
 
 		s->printColor("^Y\n\nAnother character (%s) from your IP address has just logged in.\n\n",
-			sock->getPlayer()->name);
+			sock->getPlayer()->getCName());
 		s->disconnect();
 		return(false);
 	}

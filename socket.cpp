@@ -346,7 +346,7 @@ void Socket::removeSpy(Socket *sock) {
 	spying.remove(sock);
 	if (myPlayer->getClass() >= sock->myPlayer->getClass())
 		sock->printColor("^r%s is no longer observing you.\n",
-				sock->myPlayer->name);
+				sock->myPlayer->getCName());
 }
 
 //********************************************************************

@@ -367,7 +367,7 @@ Creature* Creature::addTarget(Creature* toTarget) {
 
 	Player* ply = getAsPlayer();
 	if(ply) {
-		ply->printColor("You are now targeting %s.\n", myTarget->getName());
+		ply->printColor("You are now targeting %s.\n", myTarget->getCName());
 	}
 
 	return(myTarget);
@@ -383,7 +383,7 @@ void Creature::addTargetingThis(Creature* targeter) {
 
 	Player* ply = getAsPlayer();
 	if(ply) {
-		ply->printColor("%s is now targeting you!\n", targeter->getName());
+		ply->printColor("%s is now targeting you!\n", targeter->getCName());
 	}
 	targetingThis.push_back(targeter);
 }
@@ -398,7 +398,7 @@ void Creature::clearTarget(bool clearTargetsList) {
 
 	Player* ply = getAsPlayer();
 	if(ply) {
-		ply->printColor("You are no longer targeting %s!\n", myTarget->getName());
+		ply->printColor("You are no longer targeting %s!\n", myTarget->getCName());
 	}
 
 	if(clearTargetsList)
@@ -418,7 +418,7 @@ void Creature::clearTargetingThis(Creature* targeter) {
 
 	Player* ply = getAsPlayer();
 	if(ply) {
-		ply->printColor("%s is no longer targeting you!\n", targeter->getName());
+		ply->printColor("%s is no longer targeting you!\n", targeter->getCName());
 	}
 
 	targetingThis.remove(targeter);
@@ -457,7 +457,7 @@ int cmdTarget(Player* player, cmd* cmnd) {
 	if(cmnd->num < 2) {
 		player->print("You are targeting: ");
 		if(player->myTarget)
-			player->print("%s\n", player->myTarget->getName());
+			player->print("%s\n", player->myTarget->getCName());
 		else
 			player->print("No-one!\n");
 
@@ -467,7 +467,7 @@ int cmdTarget(Player* player, cmd* cmnd) {
 			for(Creature* targetter : player->targetingThis) {
 				if(numTargets++ != 0)
 					player->print(", ");
-				player->print("%s", targetter->getName());
+				player->print("%s", targetter->getCName());
 			}
 			if(numTargets == 0)
 				player->print("Nobody!");

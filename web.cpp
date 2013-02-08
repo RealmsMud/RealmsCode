@@ -342,7 +342,7 @@ bstring doGetInventory(const Player* player, const ObjectSet &set);
 bstring doGetInventory(const Player* player, Object* object, int loc=-1) {
 	std::ostringstream oStr;
 	oStr << itemDelim
-		 << object->name
+		 << object->getName()
 		 << innerDelim
 		 << object->getId()
 		 << innerDelim
@@ -676,7 +676,7 @@ bool WebInterface::handleInput() {
 				}
 
 				if(player->getForum() != "")
-					callWebserver((bstring)"mud.php?type=autoguild&guild=" + guild->getName() + "&user=" + player->getForum() + "&char=" + player->name);
+					callWebserver((bstring)"mud.php?type=autoguild&guild=" + guild->getName() + "&user=" + player->getForum() + "&char=" + player->getName());
 
 				if(!online)
 					free_crt(player);
@@ -741,7 +741,7 @@ bool WebInterface::handleInput() {
 				Monster *monster;
 				if(loadMonster(cr, &monster)) {
 					monster->saveToXml(rootNode, ALLITEMS, LS_FULL);
-					std::cout << "Generated xml for " << monster->name << "\n";
+					std::cout << "Generated xml for " << monster->getName() << "\n";
 					free_crt(monster);
 				}
 			}
@@ -752,7 +752,7 @@ bool WebInterface::handleInput() {
 				Object* object;
 				if(loadObject(cr, &object)) {
 					object->saveToXml(rootNode, ALLITEMS, LS_FULL);
-					std::cout << "Generated xml for " << object->name << "\n";
+					std::cout << "Generated xml for " << object->getName() << "\n";
 					delete object;
 				}
 			}
@@ -763,7 +763,7 @@ bool WebInterface::handleInput() {
 				UniqueRoom* room;
 				if(loadRoom(cr, &room)) {
 					room->saveToXml(rootNode, ALLITEMS);
-					std::cout << "Generated xml for " << room->name << "\n";
+					std::cout << "Generated xml for " << room->getName() << "\n";
 				}
 			}
 			// Save the xml document to a character array
@@ -799,7 +799,7 @@ bool WebInterface::handleInput() {
 				Monster* monster = new Monster();
 				monster->readFromXml(rootNode);
 				monster->saveToFile();
-				broadcast(isDm, "^y*** Monster %s - %s^y updated by %s.", monster->info.str().c_str(), monster->name, monster->last_mod);
+				broadcast(isDm, "^y*** Monster %s - %s^y updated by %s.", monster->info.str().c_str(), monster->getCName(), monster->last_mod);
 				gConfig->replaceMonsterInQueue(monster->info, monster);
 			}
 			else if(type == "OBJ") {
@@ -815,7 +815,7 @@ bool WebInterface::handleInput() {
 				room->saveToFile(0);
 
 				gConfig->reloadRoom(room);
-				broadcast(isDm, "^y*** Room %s - %s^y updated by %s.", room->info.str().c_str(), room->name, room->last_mod);
+				broadcast(isDm, "^y*** Room %s - %s^y updated by %s.", room->info.str().c_str(), room->getCName(), room->last_mod);
 			}
 			std::cout << "WebInterface: Saved " << type << " " << cr.str() << "\n";
 		}
@@ -988,7 +988,7 @@ int cmdForum(Player* player, cmd* cmnd) {
 
 	bstring::size_type pos=0;
 	std::ostringstream url;
-	url << "mud.php?type=forum&char=" << player->name;
+	url << "mud.php?type=forum&char=" << player->getName();
 
 	bstring user = cmnd->str[1];
 	bstring pass = getFullstrText(cmnd->fullstr, 2, ' ');
@@ -1002,7 +1002,7 @@ int cmdForum(Player* player, cmd* cmnd) {
 		player->printColor("Attempting to unassociate this character with forum account: ^C%s\n", player->getForum().c_str());
 		player->setForum("");
 		player->save(true);
-		webUnassociate(player->name);
+		webUnassociate(player->getName());
 		return(0);
 
 	} else if(user != "" && pass != "") {
@@ -1088,7 +1088,7 @@ int cmdWiki(Player* player, cmd* cmnd) {
 	}
 
 	player->print("Loading entry...\n");
-	url << "mud.php?type=wiki&char=" << player->name << "&entry=" << entry;
+	url << "mud.php?type=wiki&char=" << player->getName() << "&entry=" << entry;
 	callWebserver(url.str(), true, true);
 	return(0);
 }

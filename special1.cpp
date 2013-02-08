@@ -30,7 +30,7 @@ int Object::doSpecial(Player* player) {
 
 	switch(special) {
 	case SP_MAPSC:
-		strcpy(str, name);
+		strcpy(str, getCName());
 		for(i=0; i<strlen(str); i++)
 			if(str[i] == ' ')
 				str[i] = '_';
@@ -54,7 +54,7 @@ int Object::doSpecial(Player* player) {
 			strcat(sock->tempstr[3], str);
 
 		player->print("Click.\n");
-		if(!strcmp(player->name, "Bane"))
+		if(player->getName() == "Bane")
 			player->print("Combo so far: %s\n", sock->tempstr[3]);
 
 		broadcast(sock, room, "%M presses %P^x.", player, this);
@@ -85,9 +85,9 @@ int Object::doSpecial(Player* player) {
 				if(!toOpen)
 					return(0);
 				player->statistics.combo();
-				player->print("You opened the %s!\n", toOpen->name);
+				player->print("You opened the %s!\n", toOpen->getCName());
 				broadcast(player->getSock(), player->getParent(),
-					"%M opened the %s!", player, toOpen->name);
+					"%M opened the %s!", player, toOpen->getCName());
 				toOpen->clearFlag(X_LOCKED);
 				toOpen->clearFlag(X_CLOSED);
 				toOpen->ltime.ltime = time(0);

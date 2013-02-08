@@ -69,23 +69,23 @@ long UniqueOwner::getTime() const {
 }
 
 bool UniqueOwner::is(const Player* player, const CatRef cr) const {
-	return((!player || owner == player->name) && item == cr);
+	return((!player || owner == player->getName()) && item == cr);
 }
 
 bool UniqueOwner::is(const Player* player, const Object* object) const {
 	if(!object)
-		return(owner == player->name);
+		return(owner == player->getName());
 	return(is(player, object->info));
 }
 
 void UniqueOwner::set(const Player* player, const Object* object) {
 	time = object->getMade() ? object->getMade() : ::time(0);
-	owner = player->name;
+	owner = player->getName();
 	item = object->info;
 }
 
 void UniqueOwner::set(const Player* player) {
-	owner = player->name;
+	owner = player->getName();
 }
 
 
@@ -527,7 +527,7 @@ bool Limited::remove(Player* player, const Object* object, bool save) {
 	Unique* unique = gConfig->getUnique(object);
 	if(unique) {
 		if(!player->isStaff())
-			Unique::broadcastDestruction(player->name, object);
+			Unique::broadcastDestruction(player->getName(), object);
 
 		del = deleteOwner(player, object, save, false) || del;
 	}
@@ -908,7 +908,7 @@ void Config::listLimited(const Player* player) {
 			player->printColor("^cnone\n");
 		else {
 			if(loadObject(cr, &object)) {
-				player->printColor("^c%s\n", object->name);
+				player->printColor("^c%s\n", object->getCName());
 				delete object;
 			} else
 				player->printColor("^c%s\n", cr.str().c_str());
@@ -953,7 +953,7 @@ void Unique::show(const Player* player) {
 		player->printColor("      ^c%s", (*ct).item.str().c_str());
 
 		if(loadObject((*ct).item, &object)) {
-			player->printColor(", ^c%s", object->name);
+			player->printColor(", ^c%s", object->getCName());
 			delete object;
 		}
 
@@ -1611,6 +1611,6 @@ bool UniqueOwner::runDecay(long t, int decay, int max) {
 void Unique::broadcastDestruction(const bstring owner, const Object* object) {
 	Player* player = gServer->findPlayer(owner.c_str());
 	if(player)
-		player->printColor("^yThe %s^y vanishes!\n", object->name);
-	broadcast("^y### Tragically, %s's unique item %s^y just broke!", owner.c_str(), object->name);
+		player->printColor("^yThe %s^y vanishes!\n", object->getCName());
+	broadcast("^y### Tragically, %s's unique item %s^y just broke!", owner.c_str(), object->getCName());
 }

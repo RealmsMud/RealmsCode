@@ -130,14 +130,14 @@ int dmWatcherBroad(Player *admin, cmd* cmnd) {
 		admin->print("No watchers were found to broadcast your message.\n");
 		return(0);
 	}
-	broadcast(isDm, "^g*** %s forced %s to broadcast", admin->name, watcher->name);
+	broadcast(isDm, "^g*** %s forced %s to broadcast", admin->getCName(), watcher->getCName());
 
 	text = "broadcast " + text;
 	strcpy(cmnd->str[0], "broadcast");
 	cmnd->fullstr = text;
 	cmdProcess(watcher, cmnd);
 
-	log_immort(true, admin, "%s made %s broadcast \"%s\"\n", admin->name, watcher->name, text.c_str());
+	log_immort(true, admin, "%s made %s broadcast \"%s\"\n", admin->getCName(), watcher->getCName(), text.c_str());
 	return(0);
 }
 

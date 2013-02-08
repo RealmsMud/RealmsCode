@@ -576,7 +576,7 @@ void SpecialAttack::reset() {
 bstring Creature::getSpecialsFullList() const {
 	std::ostringstream specialsStr;
 
-	specialsStr << "Special Attacks for " << name << ":\n";
+	specialsStr << "Special Attacks for " << getName() << ":\n";
 
 	int num = 0;
 	SpecialAttack* attack;

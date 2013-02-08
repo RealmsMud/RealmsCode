@@ -39,9 +39,9 @@ void Player::disarmSelf() {
 				ready[WIELD-1] = ready[HELD-1];
 				ready[HELD-1] = 0;
 				if(ready[WIELD-1]->flagIsSet(O_NO_PREFIX)) {
-					print("%s jumped to your primary hand! It's cursed!\n", ready[WIELD-1]->name);
+					print("%s jumped to your primary hand! It's cursed!\n", ready[WIELD-1]->getCName());
 				} else {
-					print("The %s jumped to your primary hand! It's cursed!\n", ready[WIELD-1]->name);
+					print("The %s jumped to your primary hand! It's cursed!\n", ready[WIELD-1]->getCName());
 				}
 			}
 		} else {
@@ -176,7 +176,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
 		return(0);
 	} else {
 		if(player->getClass() == CARETAKER)
-			log_immort(false,player, "%s disarms %s.\n", player->getCName(), creature->name);
+			log_immort(false,player, "%s disarms %s.\n", player->getCName(), creature->getCName());
 
 		drop = 5 + ((level - creature->getLevel()) - (bonus((int) creature->dexterity.getCur())*2));
 
@@ -505,7 +505,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 				return(0);
 			}
 
-			if(player->vampireCharmed(pTarget) || (pTarget->hasCharm(player->name) && player->flagIsSet(P_CHARMED))) {
+			if(player->vampireCharmed(pTarget) || (pTarget->hasCharm(player->getName()) && player->flagIsSet(P_CHARMED))) {
 				player->print("You are too fond of %N to do that.\n", pTarget);
 				return(0);
 			}
