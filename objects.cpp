@@ -221,6 +221,8 @@ void Object::doCopy(const Object& o) {
 	weight = o.weight;
 	type = o.type;
 	adjustment = o.adjustment;
+	chargesMax = o.chargesMax;
+	chargesCur = o.chargesCur;
 	shotsMax = o.shotsMax;
 	shotsCur = o.shotsCur;
 	damage = o.damage;

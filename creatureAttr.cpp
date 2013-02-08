@@ -1569,13 +1569,14 @@ Player& Player::operator=(const Player& cr) {
 
 // Things all subclasses must destroy
 void Creature::crtDestroy() {
-	moDestroy();
-
-	clearTarget();
 
 	for(Creature* targeter : targetingThis) {
 		targeter->clearTarget(false);
 	}
+
+	clearTarget();
+
+	moDestroy();
 
 	factions.clear();
 
