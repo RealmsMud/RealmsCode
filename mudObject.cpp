@@ -248,7 +248,9 @@ void MudObject::setId(bstring newId) {
 	    throw error;
 	}
 	if(!newId.equals("")) {
+		removeFromSet();
 		id = newId;
+		addToSet();
 		// Register the ID with the server if we're not a player, handle player registration
 		// when adding the player to the server's list of players
 		if(!getAsPlayer()) {
@@ -257,8 +259,6 @@ void MudObject::setId(bstring newId) {
 				id = gServer->getNextMonsterId();
 				std::cout << "Changing ID for " << this->getName() << " from "<< newId << " to " << id << std::endl;
 			} else if(getAsObject() && gServer->lookupObjId(newId)) {
-//				id = gServer->getNextObjectId();
-//				std::cout << "Changing ID for " << this->getName() << " from "<< newId << " to " << id << std::endl;
 				throw std::runtime_error("Duplicate Object ");
 
 			}
@@ -270,6 +270,7 @@ void MudObject::setId(bstring newId) {
 const bstring& MudObject::getId() const {
     return(id);
 }
+
 // Return for Python which doesn't like bstring&
 bstring MudObject::getIdPython() const {
 	return(id);

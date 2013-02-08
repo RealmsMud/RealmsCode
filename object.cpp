@@ -132,14 +132,14 @@ void Object::randomEnchant(int bonus) {
 	m += bonus;
 
 	if(m > 98)
-		adjustment = 3;
+		setAdjustment(3);
 	else if(m > 90)
-		adjustment = 2;
+		setAdjustment(2);
 	else if(m > 50)
-		adjustment = 1;
+		setAdjustment(1);
 
 	if(flagIsSet(O_CURSED) && adjustment > 0)
-		adjustment *= -1;
+		setAdjustment(adjustment * -1);
 
 	//armor += (int)(adjustment*4.4);
 }

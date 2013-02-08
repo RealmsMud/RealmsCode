@@ -1012,7 +1012,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList) {
 		else if(NODE_NAME(curNode, "Weight")) xml::copyToNum(weight, curNode);
 		else if(NODE_NAME(curNode, "Type")) xml::copyToNum(type, curNode);
 		else if(NODE_NAME(curNode, "SubType")) xml::copyToBString(subType, curNode);
-		else if(NODE_NAME(curNode, "Adjustment")) xml::copyToNum(adjustment, curNode);
+		else if(NODE_NAME(curNode, "Adjustment")) setAdjustment(xml::toNum<short int>(curNode));
 		else if(NODE_NAME(curNode, "ShotsMax")) xml::copyToNum(shotsMax, curNode);
 		else if(NODE_NAME(curNode, "ShotsCur")) xml::copyToNum(shotsCur, curNode);
 		else if(NODE_NAME(curNode, "ChargesMax")) xml::copyToNum(chargesMax, curNode);
@@ -1037,7 +1037,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList) {
 
 		else if(NODE_NAME(curNode, "Deed")) deed.load(curNode);
 
-		else if(NODE_NAME(curNode, "ShopValue")) shopValue = xml::toNum<unsigned long>(curNode);
+		else if(NODE_NAME(curNode, "ShopValue")) setShopValue(xml::toNum<unsigned long>(curNode));
 		else if(NODE_NAME(curNode, "Made")) xml::copyToNum(made, curNode);
 		else if(NODE_NAME(curNode, "KeyVal")) xml::copyToNum(keyVal, curNode);
 		else if(NODE_NAME(curNode, "Material")) material = (Material)xml::toNum<int>(curNode);

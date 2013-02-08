@@ -90,7 +90,11 @@ void Object::setQuality(short q) { quality = q; }
 //						setAdjustment
 //*********************************************************************
 
-void Object::setAdjustment(short a) { adjustment = MAX(-127, MIN(a, 127)); }
+void Object::setAdjustment(short a) {
+	removeFromSet();
+	adjustment = MAX(-127, MIN(a, 127));
+	addToSet();
+}
 
 //*********************************************************************
 //						setNumAttacks
@@ -217,7 +221,11 @@ void Object::setCoinCost(unsigned long c) { coinCost = c; }
 //						setShopValue
 //*********************************************************************
 
-void Object::setShopValue(unsigned long v) { shopValue = MIN(200000000, v); }
+void Object::setShopValue(unsigned long v) {
+	removeFromSet();
+	shopValue = MIN(200000000, v);
+	addToSet();
+}
 
 //*********************************************************************
 //						setLotteryCycle
