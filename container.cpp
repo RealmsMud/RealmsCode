@@ -104,6 +104,8 @@ Container* Container::remove(Containable* toRemove) {
         toReturn = false;
     }
 
+    std::cout << "Removing " << toRemove->getName() << " to " << this->getName() << std::endl;
+
     if(toReturn) {
     	Container* retVal = toRemove->getParent();
         toRemove->setParent(NULL);
@@ -137,6 +139,7 @@ bool Container::add(Containable* toAdd) {
     if(toReturn) {
         toAdd->setParent(this);
     }
+    std::cout << "Adding " << toAdd->getName() << " to " << this->getName() << std::endl;
     return(toReturn);
 }
 

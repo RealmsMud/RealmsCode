@@ -84,7 +84,7 @@ void MudObject::moReset() {
 //*********************************************************************
 
 void MudObject::moCopy(const MudObject& mo) {
-	setName(mo.getName());
+	name = mo.getName();
 
 	hooks = mo.hooks;
 	hooks.setParent(this);
@@ -244,13 +244,16 @@ bool MudObject::equals(MudObject* other) {
 
 void MudObject::setId(bstring newId) {
 	if(!id.equals("-1") && !newId.equals("-1")) {
-	    bstring error = bstring("Error, re-setting ID:") + getName() + ":" + getId() + ":" + newId;
-	    throw error;
+	    throw std::runtime_error(bstring("Error, re-setting ID:") + getName() + ":" + getId() + ":" + newId);
 	}
+	bool handleParentSet = true;
+
+	if(id.equals("-1"))
+		handleParentSet = false;
 	if(!newId.equals("")) {
-		removeFromSet();
+		if(handleParentSet) removeFromSet();
 		id = newId;
-		addToSet();
+		if(handleParentSet) addToSet();
 		// Register the ID with the server if we're not a player, handle player registration
 		// when adding the player to the server's list of players
 		if(!getAsPlayer()) {
