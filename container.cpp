@@ -380,7 +380,6 @@ bool Containable::addTo(Container* container) {
 
 Container* Containable::removeFrom() {
     if(!parent) {
-        std::cout << "No Parent!" << std::endl;
         return(NULL);
     }
 
