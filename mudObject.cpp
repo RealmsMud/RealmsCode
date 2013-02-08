@@ -248,7 +248,7 @@ void MudObject::setId(bstring newId) {
 	}
 	bool handleParentSet = true;
 
-	if(id.equals("-1"))
+	if(newId.equals("-1"))
 		handleParentSet = false;
 	if(!newId.equals("")) {
 		if(handleParentSet) removeFromSet();
