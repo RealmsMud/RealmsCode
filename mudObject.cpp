@@ -34,6 +34,7 @@
 //#include <c++/4.3.3/bits/stl_list.h>
 #include <list>
 
+
 void MudObject::setName(bstring newName) {
 	removeFromSet();
 	name = newName;
@@ -46,6 +47,14 @@ const bstring& MudObject::getName() const {
 const char* MudObject::getCName() const {
 	return(name.c_str());
 }
+
+void MudObject::removeFromSet() {
+
+}
+void MudObject::addToSet() {
+
+}
+
 
 bool PlayerPtrLess::operator()(const Player* lhs, const Player* rhs) const {
     return *lhs < *rhs;
