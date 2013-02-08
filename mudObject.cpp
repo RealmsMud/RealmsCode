@@ -271,7 +271,7 @@ void MudObject::setId(bstring newId) {
 }
 
 const bstring& MudObject::getId() const {
-    return(id);
+    return(id);n
 }
 
 // Return for Python which doesn't like bstring&
