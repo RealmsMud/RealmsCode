@@ -2612,7 +2612,6 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 			player->delObj(object, false, in_room && !p, true, true, !in_room);
 
 		container->addObj(object);
-		container->incShotsCur();
 		container->clearFlag(O_BEING_PREPARED);
 
 		if(!is_pet)
