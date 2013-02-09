@@ -1106,9 +1106,10 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList) {
 		curNode = curNode->next;
 	}
 
-	if(version < "2.46j" && flagIsSet(O_WEAPON_CASTS)) {
+	if(version < "2.47c" && flagIsSet(O_WEAPON_CASTS)) {
 	    // Version 2.46j added charges for casting weapons, versions before that
-	    // used shots.  Initialize charges as 1/3rd of shots
+	    // used shots, items until 2.47c were bugged due to charges not being
+	    // copied in doCopy()  Initialize charges as 1/3rd of shots
 	    chargesMax = shotsMax / 3;
 	    chargesCur = shotsCur /3;
 	}
