@@ -1669,7 +1669,7 @@ bool Creature::isWatcher() const {
 //*********************************************************************
 
 bool Creature::isStaff() const {
-	if(isMonster())
+	if(!this || isMonster())
 		return(false);
 	return(cClass >= BUILDER);
 }

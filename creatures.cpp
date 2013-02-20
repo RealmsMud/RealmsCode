@@ -89,7 +89,7 @@ bool Creature::canSeeRoom(const BaseRoom* room, bool p) const {
 }
 
 bool Creature::canSee(const MudObject* target, bool skip) const {
-	if(!target)
+	if(!this || !target)
 		return(false);
 
 	if(target->isCreature()) {
