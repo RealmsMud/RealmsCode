@@ -96,14 +96,14 @@ BOOST_PYTHON_MODULE(mud)
 				bp::no_init);
 		bp::scope MudObject_scope(MudObject_exposer);
 
-		{ //::MudObject::getName
-			typedef bstring& (::MudObject::*getName_function_type)();
-
-			MudObject_exposer.def("getName"
-					, getName_function_type(&::MudObject::getName)
-					, return_value_policy<reference_existing_object>() );
-
-		}
+//		{ //::MudObject::getName
+//			typedef bstring& (::MudObject::*getName_function_type)();
+//
+//			MudObject_exposer.def("getName"
+//					, getName_function_type(&::MudObject::getName)
+//					, return_value_policy<reference_existing_object>() );
+//
+//		}
 
         { //::MudObject::isEffected
 
@@ -139,6 +139,7 @@ BOOST_PYTHON_MODULE(mud)
 
 
 		MudObject_exposer.def("removeOppositeEffect", &::MudObject::removeOppositeEffect)
+				.def("getName", &MudObject::getName, return_value_policy<reference_existing_object>())
 				.def("getPlayer",&MudObject::getAsPlayer, return_value_policy<reference_existing_object>())
 				.def("getMonster", &MudObject::getAsMonster, return_value_policy<reference_existing_object>())
 				.def("getObject", &MudObject::getAsObject, return_value_policy<reference_existing_object>())
@@ -765,7 +766,8 @@ bool Server::initPython() {
 
 bool Server::cleanUpPython() {
 	Py_Finalize();
-	delete pythonHandler;
+	// Causing a crash for some reason on shutdown
+	//delete pythonHandler;
 	return (true);
 }
 

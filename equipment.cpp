@@ -2067,7 +2067,7 @@ void dropAllObj(Creature* creature, Object *container, Property *p) {
 				continue;
 			}
 
-			container->incShotsCur();
+//			container->incShotsCur();
 			creature->delObj(object, false, false, true, false);
 
 			// broadcast for devouring items

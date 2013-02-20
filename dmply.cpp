@@ -983,7 +983,7 @@ int dmPut(Player* player, cmd* cmnd) {
 		}
 
 		player->delObj(object, false, false, true, true, true);
-		container->incShotsCur();
+		//container->incShotsCur();
 		container->addObj(object);
 		Limited::addOwner(target, object);
 
