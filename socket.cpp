@@ -1382,7 +1382,7 @@ void Socket::printColor(const char* fmt, ...) {
 void Socket::flush() {
 	int n;
 	if(!processed_output.empty()) {
-		write(processed_output, true, false);
+		write(processed_output, false, false);
 		return;
 	}
 
