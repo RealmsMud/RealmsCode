@@ -178,7 +178,7 @@ public:
 	void finishLogin();
 
 
-	int write(bstring toWrite, bool pSpy = true);
+	int write(bstring toWrite, bool pSpy = true, bool process = true);
 	void askFor(const char *str);
 
 	void vprint(const char *fmt, va_list ap);
@@ -322,6 +322,8 @@ protected:
 	bool		watchBrokenClient;
 
 	bstring		output;
+	bstring		processed_output;	// Output that has been processed but not fully sent (in the case of EWOULDBLOCK for example)
+
 	std::queue<bstring> input;		// Processed Input buffer
 
 	// IAC buffer, we make it a vector so it will handle NUL bytes and other characters
@@ -337,10 +339,11 @@ protected:
 	int ansi;
 	unsigned long timeout;
 
-
-// Old items from IOBUF that we might keep
+// For MCCP
 	char		*out_compress_buf;
 	z_stream    *out_compress;
+
+// Old items from IOBUF that we might keep
 
 	void		(*fn)(Socket*, bstring);
 

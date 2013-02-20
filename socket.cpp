@@ -1381,6 +1381,11 @@ void Socket::printColor(const char* fmt, ...) {
 
 void Socket::flush() {
 	int n;
+	if(!processed_output.empty()) {
+		write(processed_output, true, false);
+		return;
+	}
+
 	if ((n = write(output)) == 0)
 		return;
 	output.clear();
@@ -1394,13 +1399,17 @@ void Socket::flush() {
 //********************************************************************
 // Write a string of data to the the socket's file descriptor
 
-int Socket::write(bstring toWrite, bool pSpy) {
+int Socket::write(bstring toWrite, bool pSpy, bool process) {
 	int written = 0;
 	int n = 0;
 	int total = 0;
 
 	// Parse any color, unicode, etc here
-	bstring toOutput = parseForOutput(toWrite);
+	bstring toOutput;
+	if(process)
+		toOutput = parseForOutput(toWrite);
+	else
+		toOutput = toWrite;
 
 	total = toOutput.length();
 	UnCompressedBytes += total;
@@ -1410,10 +1419,21 @@ int Socket::write(bstring toWrite, bool pSpy) {
 	if (!opts.compressing) {
 		do {
 			n = ::write(fd, str + written, total - written);
-			if (n < 0)
-				return (n);
+			if (n < 0) {
+				if(errno != EWOULDBLOCK)
+					return (n);
+				else  {
+					n = 0;
+					if(written < total) {
+						// Save this for the next go around
+						processed_output = (str+written);
+					}
+					break;
+				}
+			}
 			written += n;
 		} while (written < total);
+		processed_output.erase();
 	} else {
 		out_compress->next_in = (unsigned char*) str;
 		out_compress->avail_in = total;
@@ -1691,7 +1711,7 @@ void Socket::ANSI(int color) {
 //********************************************************************
 
 bool Socket::hasOutput(void) const {
-	return (!output.empty());
+	return (!processed_output.empty() || !output.empty());
 }
 
 //********************************************************************
