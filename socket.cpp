@@ -1412,7 +1412,6 @@ int Socket::write(bstring toWrite, bool pSpy, bool process) {
 		toOutput = toWrite;
 
 	total = toOutput.length();
-	UnCompressedBytes += total;
 
 	const char *str = toOutput.c_str();
 	// Write directly to the socket, otherwise compress it and send it
@@ -1433,8 +1432,13 @@ int Socket::write(bstring toWrite, bool pSpy, bool process) {
 			}
 			written += n;
 		} while (written < total);
-		processed_output.erase();
+		UnCompressedBytes += written;
+
+		if(written >= total)
+			processed_output.erase();
 	} else {
+		UnCompressedBytes += total;
+
 		out_compress->next_in = (unsigned char*) str;
 		out_compress->avail_in = total;
 		while (out_compress->avail_in) {
