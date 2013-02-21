@@ -139,7 +139,7 @@ BOOST_PYTHON_MODULE(mud)
 
 
 		MudObject_exposer.def("removeOppositeEffect", &::MudObject::removeOppositeEffect)
-				.def("getName", &MudObject::getName, return_value_policy<reference_existing_object>())
+				.def("getName", &MudObject::getName, return_value_policy<copy_const_reference>())
 				.def("getPlayer",&MudObject::getAsPlayer, return_value_policy<reference_existing_object>())
 				.def("getMonster", &MudObject::getAsMonster, return_value_policy<reference_existing_object>())
 				.def("getObject", &MudObject::getAsObject, return_value_policy<reference_existing_object>())
