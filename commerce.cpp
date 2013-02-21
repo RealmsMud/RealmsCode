@@ -307,10 +307,15 @@ bool tooManyItemsInShop(const Player* player, const UniqueRoom* storage) {
 				break;
 		}
 
-		if(numObjects >= gConfig->getShopNumObjects() || numLines >= gConfig->getShopNumLines()) {
-			player->print("There are too many items in this shop.\n");
+		if(numObjects >= gConfig->getShopNumObjects()) {
+			player->print("There are too many items in this shop (%d/%d).\n", numObjects, gConfig->getShopNumObjects());
 			player->print("Please remove some before continuing.\n");
 			return(true);
+		} else if ( numLines >= gConfig->getShopNumLines()) {
+			player->print("The number of items in your shop take up too many lines: (%d/%d).\n", numLines, gConfig->getShopNumLines());
+			player->print("Please remove some before continuing.\n");
+			return(true);
+
 		}
 	}
 

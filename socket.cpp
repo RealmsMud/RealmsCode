@@ -1382,7 +1382,9 @@ void Socket::printColor(const char* fmt, ...) {
 void Socket::flush() {
 	int n;
 	if(!processed_output.empty()) {
-		write(processed_output, false, false);
+		std::cout << "Processed output to send with size of " << processed_output.length() << "bytes, wrote ";
+		n = write(processed_output, false, false);
+		std::cout << n << " bytes with " << processed_output.length() << " left" << std::endl;
 		return;
 	}
 
@@ -1422,16 +1424,20 @@ int Socket::write(bstring toWrite, bool pSpy, bool process) {
 				if(errno != EWOULDBLOCK)
 					return (n);
 				else  {
+					std::cout << "Would block, wrote " << written << " / " << total << " bytes" << std::endl;
+					// The write would have blocked
 					n = 0;
+					// If we haven't written the total number of bytes planned
+					// Save the remaining string for the next go around
 					if(written < total) {
-						// Save this for the next go around
-						processed_output = (str+written);
+						processed_output = bstring(str+written);
 					}
 					break;
 				}
 			}
 			written += n;
 		} while (written < total);
+
 		UnCompressedBytes += written;
 
 		if(written >= total)
@@ -1455,9 +1461,10 @@ int Socket::write(bstring toWrite, bool pSpy, bool process) {
 		}
 	}
 	int strippedLen = 0;
-	bstring forSpy = Socket::stripTelnet(toWrite, strippedLen);
 
 	if (pSpy && !spying.empty()) {
+		bstring forSpy = Socket::stripTelnet(toWrite, strippedLen);
+
 		forSpy.Replace("\n", "\n<Spy> ");
 		if(!forSpy.empty()) {
 			std::list<Socket*>::iterator it;
