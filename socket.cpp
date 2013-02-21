@@ -1461,9 +1461,10 @@ int Socket::write(bstring toWrite, bool pSpy, bool process) {
 		}
 	}
 	int strippedLen = 0;
+	bstring forSpy = Socket::stripTelnet(toWrite, strippedLen);
 
 	if (pSpy && !spying.empty()) {
-		bstring forSpy = Socket::stripTelnet(toWrite, strippedLen);
+
 
 		forSpy.Replace("\n", "\n<Spy> ");
 		if(!forSpy.empty()) {
