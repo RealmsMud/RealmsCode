@@ -164,19 +164,24 @@ void login(Socket* sock, bstring str) {
 				return;
 			}
 			player->fd = -1;
-
+			bool online = false;
 			Player* proxy = 0;
-			if(!loadPlayer(proxyChar, &proxy)) {
-				sock->println(bstring("Error loading ") + proxyChar + "\n");
-				free_crt(player, false);
-				sock->askFor("Please enter name: ");
-				return;
+			proxy = gServer->findPlayer(proxyChar);
+			if(proxy)
+				online = true;
+			else {
+				if(!loadPlayer(proxyChar, &proxy)) {
+					sock->println(bstring("Error loading ") + proxyChar + "\n");
+					free_crt(player, false);
+					sock->askFor("Please enter name: ");
+					return;
+				}
 			}
-
 			if(!player->checkProxyAccess(proxy)) {
 				sock->println(bstring(proxy->getName()) + " does not have access to " + player->getName());
 				free_crt(player, false);
-				free_crt(proxy, false);
+				if(!online)
+					free_crt(proxy, false);
 				sock->askFor("Please enter name: ");
 				return;
 			}
@@ -188,7 +193,8 @@ void login(Socket* sock, bstring str) {
 			if(gServer->checkDuplicateName(sock, false)) {
 			    // Don't free player here or ask for name again because checkDuplicateName does that
 			    // We only need to worry about freeing proxy
-				free_crt(proxy, false);
+				if(!online)
+					free_crt(proxy, false);
 				return;
 			}
 			sock->println(bstring("Trying to log in ") + player->getName() + " using " + proxy->getName() + " as proxy.");
@@ -201,9 +207,11 @@ void login(Socket* sock, bstring str) {
 			sock->askFor(passwordPrompt.c_str());
 			sock->tempbstr = proxy->getPassword();
 
+
 			player->setProxy(proxy);
 
-			free_crt(proxy, false);
+			if(!online)
+				free_crt(proxy, false);
 			sock->setState(LOGIN_GET_PROXY_PASSWORD);
 
 			return;
