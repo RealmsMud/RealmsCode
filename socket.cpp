@@ -1380,18 +1380,19 @@ void Socket::printColor(const char* fmt, ...) {
 // Flush pending output and send a prompt
 
 void Socket::flush() {
-	int n;
+	int n, len;
 	if(!processed_output.empty()) {
-		std::cout << "Processed output to send with size of " << processed_output.length() << "bytes, wrote ";
-		n = write(processed_output, false, false);
-		std::cout << n << " bytes with " << processed_output.length() << " left" << std::endl;
-		return;
-	}
+		len = processed_output.length();
 
-	if ((n = write(output)) == 0)
-		return;
-	output.clear();
-	// If we only wrote OOB data n is -2, don't send a prompt in that case
+		n = write(processed_output, false, false);
+	} else {
+		len = output.length();
+		if ((n = write(output)) == 0)
+			return;
+		output.clear();
+	}
+	// If we only wrote OOB data or partial data was written because of EWOULDBLOCK,
+	// then n is -2, don't send a prompt in that case
 	if (n != -2 && myPlayer && connState != CON_CHOSING_WEAPONS)
 		myPlayer->sendPrompt();
 }
@@ -1410,8 +1411,9 @@ int Socket::write(bstring toWrite, bool pSpy, bool process) {
 	bstring toOutput;
 	if(process)
 		toOutput = parseForOutput(toWrite);
-	else
+	else {
 		toOutput = toWrite;
+	}
 
 	total = toOutput.length();
 
@@ -1424,13 +1426,12 @@ int Socket::write(bstring toWrite, bool pSpy, bool process) {
 				if(errno != EWOULDBLOCK)
 					return (n);
 				else  {
-					std::cout << "Would block, wrote " << written << " / " << total << " bytes" << std::endl;
 					// The write would have blocked
-					n = 0;
+					n = -2;
 					// If we haven't written the total number of bytes planned
 					// Save the remaining string for the next go around
 					if(written < total) {
-						processed_output = bstring(str+written);
+						processed_output = str+written;
 					}
 					break;
 				}
@@ -1440,8 +1441,12 @@ int Socket::write(bstring toWrite, bool pSpy, bool process) {
 
 		UnCompressedBytes += written;
 
-		if(written >= total)
+		if(n == -2)
+			written = -2;
+
+		if(written >= total && !processed_output.empty() && process == false) {
 			processed_output.erase();
+		}
 	} else {
 		UnCompressedBytes += total;
 
@@ -1482,9 +1487,9 @@ int Socket::write(bstring toWrite, bool pSpy, bool process) {
 	// If stripped len is 0, it means we only wrote OOB data, so adjust the return so
 	// we don't send another prompt
 	if(strippedLen == 0)
-		strippedLen = -2;
+		written = -2;
 
-	return (strippedLen);
+	return (written);
 }
 
 //--------------------------------------------------------------------

@@ -587,7 +587,7 @@ bool Object::showAsSame(const Player* player, const Object* object) const {
 				(!player || !player->isEffected("detect-magic")) ||
 				(flagIsSet(O_NULL_MAGIC) && object->flagIsSet(O_NULL_MAGIC))
 			) &&
-			(player && player->canSee(object))
+			(!player || (player && player->canSee(object)))
 	);
 }
 
