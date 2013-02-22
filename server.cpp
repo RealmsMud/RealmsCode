@@ -1975,20 +1975,34 @@ int Server::getNumPlayers() {
 // Functions that deal with unique IDs
 // *************************************
 
-bool Server::registerMudObject(MudObject* toRegister) {
+bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
 	ASSERT(toRegister != NULL);
 
 	if(toRegister->getId().equals("-1"))
 		return(false);
+
 	IdMap::iterator it =registeredIds.find(toRegister->getId());
 	if(it != registeredIds.end()) {
 		std::ostringstream oStr;
 		oStr << "ERROR: ID: " << toRegister->getId() << " is already registered!";
-		broadcast(isDm, "%s", oStr.str().c_str());
+		if(toRegister->isMonster() || toRegister->isObject()) {
+			// Give them a new id and continue
+			oStr << " Assigning them a new ID";
+			reassignId = true;
+			toRegister->setRegistered();
+			toRegister->setId("-1");
+			toRegister->validateId();
+		}
+		//broadcast(isDm, "%s", oStr.str().c_str());
 		std::cout << oStr.str() << std::endl;
-		return(false);
+		if(!reassignId)
+			return(false);
+		else
+			return(registerMudObject(toRegister, true));
 	}
-	toRegister->setRegistered();
+	if(!reassignId)
+		toRegister->setRegistered();
+
 	registeredIds.insert(IdMap::value_type(toRegister->getId(), toRegister));
 	//std::cout << "Registered: " << toRegister->getId() << " - " << toRegister->getName() << std::endl;
 	return(true);

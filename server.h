@@ -268,7 +268,7 @@ public:
     bool unRegisterGroup(Group* toUnRegister);
     bstring getGroupList();
 
-	bool registerMudObject(MudObject* toRegister);
+	bool registerMudObject(MudObject* toRegister, bool reassignId = false);
 	bool unRegisterMudObject(MudObject* toUnRegister);
 	bstring getRegisteredList();
 	Creature* lookupCrtId(const bstring& toLookup);

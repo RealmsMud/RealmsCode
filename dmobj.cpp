@@ -80,7 +80,7 @@ bstring Object::statObj(int statFlags) {
 			   << "Plural: " << objPlural << "^x\n";
 	}
 	objStr << "CompStr: " << this->getCompareStr() << " ";
-	objStr << "Id: " << getId() << "\n";
+	objStr << "Id: " << getId() << " Registered(Obj/Svr): " << (isRegistered() ? "Y" : "N") << "/" << (gServer->lookupObjId(getId()) != NULL ? "Y" : "N") << "\n";
 	const Unique* unique = gConfig->getUnique(this);
 	if(unique)
 		objStr << "^y - Unique this (In Game: ^Y" << unique->getInGame()

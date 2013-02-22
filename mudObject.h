@@ -86,7 +86,7 @@ public:
 	void moReset();
 	void moDestroy();
 
-	void setId(bstring newId);
+	void setId(bstring newId, bool handleParentSet = true);
 
 	Monster* getAsMonster();
 	Player* getAsPlayer();

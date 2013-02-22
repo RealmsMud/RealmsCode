@@ -291,11 +291,10 @@ bool MudObject::equals(MudObject* other) {
 }
 
 
-void MudObject::setId(bstring newId) {
+void MudObject::setId(bstring newId, bool handleParentSet) {
 	if(!id.equals("-1") && !newId.equals("-1")) {
 	    throw std::runtime_error(bstring("Error, re-setting ID:") + getName() + ":" + getId() + ":" + newId);
 	}
-	bool handleParentSet = true;
 
 	if(newId.equals("-1"))
 		handleParentSet = false;

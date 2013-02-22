@@ -243,7 +243,7 @@ bstring Creature::statCrt(int statFlags) {
 			crtStr << "Max Lvl: " << mTarget->getMaxLevel() << "\n";
 	}
 
-	crtStr << "\nID: <" << getId() << ">\n";
+	crtStr << "\nID: <" << getId() << ">" << " Registered(Slf/Svr): " << (isRegistered() ? "Y" : "N") << "/" << (gServer->lookupCrtId(getId()) != NULL ? "Y" : "N") << "\n"; ;
 
 	crtStr << "Level: " << level;
 	if(pTarget) {

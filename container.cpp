@@ -153,10 +153,14 @@ bool Container::add(Containable* toAdd) {
 
 void Container::registerContainedItems() {
 	// Player registration is handled by the server
-	for(Monster* mons : monsters) {
+	MonsterSet::iterator mIt;
+	for(mIt = monsters.begin() ; mIt != monsters.end() ; ) {
+		Monster* mons = *mIt++;
 		mons->registerMo();
 	}
-	for(Object* obj : objects) {
+	ObjectSet::iterator oIt;
+	for(oIt = objects.begin() ; oIt != objects.end() ; ) {
+		Object* obj = *oIt++;
 		obj->registerMo();
 	}
 }
