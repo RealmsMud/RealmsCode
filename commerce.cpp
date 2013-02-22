@@ -1277,22 +1277,23 @@ int cmdBuy(Player* player, cmd* cmnd) {
 			return(0);
 		}
 		num = atoi(cmnd->str[1]+1);
-		ObjectSet::iterator it;
+		ObjectSet::iterator it, next;
 		for( it = storage->objects.begin() ; it != storage->objects.end() && num != n; ) {
-			object = (*it++);
 			while(it != storage->objects.end()) {
-				if((playerShopSame(player, object, (*it)))) {
-					object = (*it++);
+				if((playerShopSame(player, (*it), *(next = boost::next(it))))) {
+					it = next;
 				} else
 					break;
-				n++;
 			}
+			n++;
+			it++;
 		}
 		if(it == storage->objects.end()) {
 			*player << "That isn't being sold here.\n";
 			return(0);
 		}
-
+		object = (*it);
+		
 		// load the guild a little bit earlier
 		if(p->getGuild())
 			guild = gConfig->getGuild(p->getGuild());
