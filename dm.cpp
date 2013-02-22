@@ -1003,11 +1003,9 @@ int dmIncog(Player* player, cmd* cmnd) {
 			player->print("You cannot unlock your presence.\n");
 		} else {
 			player->removeEffect("incognito");
-			player->printColor("^gYou unlock your presence.\n");
 		}
 	} else {
 		player->addEffect("incognito", -1);
-		player->printColor("^gYou cloak your pressence.\n");
 	}
 	return(0);
 }
