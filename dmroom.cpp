@@ -2899,6 +2899,7 @@ void findRoomsWithFlag(const Player* player, CatRef area, int flag) {
 					oStr << room->getName() << "^x\n";
 					found = true;
 				}
+				// TODO: Memleak (even though it is forked), room is not deleted
 			}
 		}
 

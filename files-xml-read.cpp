@@ -211,6 +211,7 @@ bool loadRoom(const CatRef cr, UniqueRoom **pRoom) {
 		if(!loadRoomFromFile(cr, pRoom))
 			return(false);
 		gConfig->addRoomQueue(cr, pRoom);
+		(*pRoom)->registerMo();
 	}
 	return(true);
 }
@@ -1138,6 +1139,9 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode) {
 
 	info.load(rootNode);
 	info.id = xml::getIntProp(rootNode, "Num");
+
+	setId(bstring("R") + info.rstr());
+
 	xml::copyPropToBString(version, rootNode, "Version");
 	curNode = rootNode->children;
 	// Start reading stuff in!
@@ -1348,15 +1352,19 @@ void MudObject::readObjects(xmlNodePtr curNode) {
 						}
 					} catch(std::runtime_error &e) {
 						std::cout << "Error setting ID: " << e.what() << std::endl;
-						if(object2)
+						if(object2) {
 							delete object2;
+							object2 = 0;
+						}
 					}
 				}
 			}
 		} catch(std::runtime_error &e) {
 			std::cout << "Error loading object: " << e.what() << std::endl;
-			if(object != 0)
+			if(object != 0) {
 				delete object;
+				object = 0;
+			}
 		}
 		if(idList) {
 			delete idList;

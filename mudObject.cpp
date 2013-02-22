@@ -56,6 +56,51 @@ void MudObject::addToSet() {
 }
 
 
+bool MudObject::isRegistered() {
+	return(registered);
+}
+void MudObject::setRegistered() {
+	if(registered)
+		throw std::runtime_error("Already Registered!");
+	registered = true;
+
+}
+void MudObject::setUnRegistered() {
+	registered = false;
+}
+
+
+bool MudObject::registerMo() {
+	if(registered) {
+		//std::cout << "ERROR: Attempting to register a MudObject that thinks it is already registered" << std::endl;
+		return(false);
+	}
+
+	if(gServer->registerMudObject(this)) {
+		registerContainedItems();
+		return(true);
+	}
+
+	return(false);
+}
+
+bool MudObject::unRegisterMo() {
+	if(!registered)
+		return(false);
+	if(gServer->unRegisterMudObject(this)) {
+		unRegisterContainedItems();
+		return(true);
+	}
+	return(false);
+}
+
+void MudObject::registerContainedItems() {
+	return;
+}
+void MudObject::unRegisterContainedItems() {
+	return;
+}
+
 bool PlayerPtrLess::operator()(const Player* lhs, const Player* rhs) const {
     return *lhs < *rhs;
 }
@@ -70,6 +115,14 @@ bool ObjectPtrLess::operator()(const Object* lhs, const Object* rhs) const {
 	return *lhs < *rhs;
 }
 
+MudObject::MudObject() {
+	moReset();
+	registered = false;
+}
+
+MudObject::~MudObject() {
+	unRegisterMo();
+}
 //***********************************************************************
 //						moReset
 //***********************************************************************
@@ -95,11 +148,7 @@ void MudObject::moCopy(const MudObject& mo) {
 //***********************************************************************
 
 void MudObject::moDestroy() {
-	// If it's a valid ID and it's not a player, unregister their ID.  Players
-	// are unregistered by the server
-	if(!id.equals("-1") && !getAsPlayer()) {
-		gServer->unRegisterMudObject(this);
-	}
+	unRegisterMo();
 	moReset();
 }
 
@@ -250,23 +299,26 @@ void MudObject::setId(bstring newId) {
 
 	if(newId.equals("-1"))
 		handleParentSet = false;
+
 	if(!newId.equals("")) {
 		if(handleParentSet) removeFromSet();
 		id = newId;
 		if(handleParentSet) addToSet();
-		// Register the ID with the server if we're not a player, handle player registration
-		// when adding the player to the server's list of players
-		if(!getAsPlayer()) {
-			if(getAsCreature() && gServer->lookupCrtId(newId)) {
-				// We already have a creature with this registered ID, so this creature needs a new ID
-				id = gServer->getNextMonsterId();
-				std::cout << "Changing ID for " << this->getName() << " from "<< newId << " to " << id << std::endl;
-			} else if(getAsObject() && gServer->lookupObjId(newId)) {
-				throw std::runtime_error("Duplicate Object ");
 
-			}
-			gServer->registerMudObject(this);
-		}
+		// Handle registration elsewhere
+//		// Register the ID with the server if we're not a player, handle player registration
+//		// when adding the player to the server's list of players
+//		if(!getAsPlayer()) {
+//			if(getAsCreature() && gServer->lookupCrtId(newId)) {
+//				// We already have a creature with this registered ID, so this creature needs a new ID
+//				id = gServer->getNextMonsterId();
+//				std::cout << "Changing ID for " << this->getName() << " from "<< newId << " to " << id << std::endl;
+//			} else if(getAsObject() && gServer->lookupObjId(newId)) {
+//				throw std::runtime_error("Duplicate Object ");
+//
+//			}
+//			gServer->registerMudObject(this);
+//		}
 	}
 }
 

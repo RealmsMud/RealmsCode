@@ -58,6 +58,20 @@ protected:
 	virtual void removeFromSet();
 	virtual void addToSet();
 
+public:
+	bool isRegistered();
+	void setRegistered();
+	void setUnRegistered();
+
+	bool registerMo();
+	bool unRegisterMo();
+
+	virtual void registerContainedItems();
+	virtual void unRegisterContainedItems();
+
+protected:
+	bool registered;
+
 
 public:
 	//char name[80];
@@ -67,7 +81,8 @@ public:
 
 
 public:
-	virtual ~MudObject() {};
+	MudObject();
+	virtual ~MudObject();
 	void moReset();
 	void moDestroy();
 

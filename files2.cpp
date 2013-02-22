@@ -73,7 +73,7 @@ int Config::reloadRoom(CatRef cr) {
 	if(!roomQueue[str].rom)
 		return(0);
 
-	roomQueue[str].rom->purge();
+//	roomQueue[str].rom->purge();
 	
 	if(!loadRoomFromFile(cr, &room))
 		return(-1);
@@ -84,21 +84,26 @@ int Config::reloadRoom(CatRef cr) {
 	}
 	roomQueue[str].rom->players.clear();
 
-	for(Monster* mons : roomQueue[str].rom->monsters) {
-		room->monsters.insert(mons);
-		roomQueue[str].rom->monsters.erase(mons);
-		mons->setParent(room);
+	if(room->monsters.empty()) {
+		for(Monster* mons : roomQueue[str].rom->monsters) {
+			room->monsters.insert(mons);
+			mons->setParent(room);
+		}
+		roomQueue[str].rom->monsters.clear();
 	}
-
-	for(Object* obj : roomQueue[str].rom->objects) {
-		room->objects.insert(obj);
-		roomQueue[str].rom->objects.erase(obj);
-		obj->setParent(room);
+	if(room->objects.empty()) {
+		for(Object* obj : roomQueue[str].rom->objects) {
+			room->objects.insert(obj);
+			obj->setParent(room);
+		}
+		roomQueue[str].rom->objects.clear();
 	}
 
 	
 	delete roomQueue[str].rom;
 	roomQueue[str].rom = room;
+
+	room->registerMo();
 
 	return(0);
 }

@@ -68,8 +68,15 @@ public:
     bool purgeMonsters(bool includePets = false);
     bool purgeObjects();
 
+
     Container* remove(Containable* toRemove);
     bool add(Containable* toAdd);
+
+
+	void registerContainedItems();
+	void unRegisterContainedItems();
+
+
     bool checkAntiMagic(Monster* ignore = 0);
 
     void doSocialEcho(bstring str, const Creature* actor, const Creature* target = null);

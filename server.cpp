@@ -71,7 +71,12 @@ bool idComp::operator() (const bstring& lhs, const bstring& rhs) const {
 	strR >> charR >> longR;
 
 	if(charL == charR) {
-		return(longL < longR);
+		if(charL == 'R') {
+			// Rooms work a bit differently
+			return(lhs < rhs);
+		}
+		else
+			return(longL < longR);
 	} else {
 		return(charL < charR);
 	}
@@ -1788,7 +1793,7 @@ bool Server::clearPlayer(bstring name) {
 bool Server::clearPlayer(Player* player) {
 	ASSERTLOG(player);
 	players.erase(player->getName());
-	unRegisterMudObject(player);
+	player->unRegisterMo();
 	return(true);
 }
 
@@ -1801,7 +1806,7 @@ bool Server::addPlayer(Player* player) {
 	player->validateId();
 	players[player->getName()] = player;
 	player->getSock()->addToPlayerList();
-	registerMudObject(player);
+	player->registerMo();
 	return(true);
 }
 
@@ -1975,14 +1980,15 @@ bool Server::registerMudObject(MudObject* toRegister) {
 
 	if(toRegister->getId().equals("-1"))
 		return(false);
-
-	if(registeredIds.find(toRegister->getId()) != registeredIds.end()) {
+	IdMap::iterator it =registeredIds.find(toRegister->getId());
+	if(it != registeredIds.end()) {
 		std::ostringstream oStr;
 		oStr << "ERROR: ID: " << toRegister->getId() << " is already registered!";
 		broadcast(isDm, "%s", oStr.str().c_str());
 		std::cout << oStr.str() << std::endl;
 		return(false);
 	}
+	toRegister->setRegistered();
 	registeredIds.insert(IdMap::value_type(toRegister->getId(), toRegister));
 	//std::cout << "Registered: " << toRegister->getId() << " - " << toRegister->getName() << std::endl;
 	return(true);
@@ -1995,14 +2001,39 @@ bool Server::unRegisterMudObject(MudObject* toUnRegister) {
 		return(false);
 
 	IdMap::iterator it = registeredIds.find(toUnRegister->getId());
-
-	if(it == registeredIds.end()) {
+	bool registered = toUnRegister->isRegistered();
+	if(!registered) {
 		std::ostringstream oStr;
-		oStr << "ERROR: ID: " << toUnRegister->getId() << " is not registered!";
+		oStr << "ERROR: ID: " << toUnRegister->getId() << " thinks it is not registered, but is being told to unregister, trying anyway.";
 		broadcast(isDm, "%s", oStr.str().c_str());
 		std::cout << oStr.str() << std::endl;
+
+	}
+	if(it == registeredIds.end()) {
+		if(registered) {
+			std::ostringstream oStr;
+			oStr << "ERROR: ID: " << toUnRegister->getId() << " is not registered!";
+			broadcast(isDm, "%s", oStr.str().c_str());
+			std::cout << oStr.str() << std::endl;
+		}
 		return(false);
 	}
+	if(!registered) {
+		std::ostringstream oStr;
+		if((*it).second == toUnRegister) {
+			oStr << "ERROR: ID: " << toUnRegister->getId() << " thought it wasn't registered, but the server thought it was.";
+			broadcast(isDm, "%s", oStr.str().c_str());
+			std::cout << oStr.str() << std::endl;
+			// Continue on with the unregistering since this object really was registered
+		} else {
+			oStr << "ERROR: ID: " << toUnRegister->getId() << " Server does not have this instance registered.";
+			broadcast(isDm, "%s", oStr.str().c_str());
+			std::cout << oStr.str() << std::endl;
+			// Stop here, don't unregister this ID since the mudObject registered it not the one we're after
+			return(false);
+		}
+	}
+	toUnRegister->setUnRegistered();
 	registeredIds.erase(it);
 	//std::cout << "Unregistered: " << toUnRegister->getId() << " - " << toUnRegister->getName() << std::endl;
 	return(true);

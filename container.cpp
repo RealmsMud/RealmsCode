@@ -136,12 +136,40 @@ bool Container::add(Containable* toAdd) {
         std::cout << "Don't know how to add " << toAdd << std::endl;
         toReturn = false;
     }
+
+    // If we're adding an object or a monster, we're registered and the item we're adding is not,
+    // then register the item
+    if((addObject || addMonster) && isRegistered() && !toAdd->isRegistered()) {
+    	toAdd->registerMo();
+    }
+
     if(toReturn) {
         toAdd->setParent(this);
     }
     //std::cout << "Adding " << toAdd->getName() << " to " << this->getName() << std::endl;
     return(toReturn);
 }
+
+
+void Container::registerContainedItems() {
+	// Player registration is handled by the server
+	for(Monster* mons : monsters) {
+		mons->registerMo();
+	}
+	for(Object* obj : objects) {
+		obj->registerMo();
+	}
+}
+void Container::unRegisterContainedItems() {
+	// Player registration is handled by the server
+	for(Monster* mons : monsters) {
+		mons->unRegisterMo();
+	}
+	for(Object* obj : objects) {
+		obj->unRegisterMo();
+	}
+}
+
 
 //*********************************************************************
 //						wake

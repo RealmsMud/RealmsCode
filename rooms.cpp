@@ -215,11 +215,14 @@ void AreaRoom::recycle() {
 //*********************************************************************
 
 void AreaRoom::setMapMarker(const MapMarker* m) {
+	unRegisterMo();
 	bstring str = mapmarker.str();
 	area->rooms.erase(str);
 	*&mapmarker = *m;
 	str = mapmarker.str();
 	area->rooms[str] = this;
+	setId(bstring("R") + str);
+	registerMo();
 }
 
 //*********************************************************************
