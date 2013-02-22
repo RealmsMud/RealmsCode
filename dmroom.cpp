@@ -747,6 +747,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
 	Monster* monster=0;
 	Object* object=0;
 	UniqueRoom* shop=0;
+	time_t t = time(0);
 
 	if(!player->checkBuilder(room))
 		return(0);
@@ -796,8 +797,8 @@ int stat_rom(Player* player, UniqueRoom* room) {
 		crtm = &(*it).second;
 		loadObject((*it).second.cr, &object);
 
-		player->printColor("^y%2d) ^x%14s ^y::^x %-30s ^yInterval:^x %-5d", (*it).first+1,
-			crtm->cr.str("", 'y').c_str(), object ? object->getCName() : "", crtm->interval);
+		player->printColor("^y%2d) ^x%14s ^y::^x %-30s ^yInterval:^x %-5d  ^yTime Until Spawn:^x %-5d", (*it).first+1,
+			crtm->cr.str("", 'y').c_str(), object ? object->getCName() : "", crtm->interval, tMAX<long>(0, crtm->ltime + crtm->interval-t));
 
 		if(room->flagIsSet(R_SHOP_STORAGE) && object)
 			player->printColor(" ^yCost:^x %s", object->value.str().c_str());
@@ -820,8 +821,8 @@ int stat_rom(Player* player, UniqueRoom* room) {
 		crtm = &(*it).second;
 		loadMonster((*it).second.cr, &monster);
 
-		player->printColor("^m%2d) ^x%14s ^m::^x %-30s ^mInterval:^x %d\n", (*it).first+1,
-			crtm->cr.str("", 'm').c_str(), monster ? monster->getCName() : "", crtm->interval);
+		player->printColor("^m%2d) ^x%14s ^m::^x %-30s ^mInterval:^x %d  ^yTime until Spawn:^x %-5d\n", (*it).first+1,
+			crtm->cr.str("", 'm').c_str(), monster ? monster->getCName() : "", crtm->interval, tMAX<long>(0, crtm->ltime + crtm->interval-t));
 
 		if(monster) {
 			free_crt(monster);
