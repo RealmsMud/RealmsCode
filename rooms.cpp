@@ -216,6 +216,7 @@ void AreaRoom::recycle() {
 
 void AreaRoom::setMapMarker(const MapMarker* m) {
 	unRegisterMo();
+	setId("-1");
 	bstring str = mapmarker.str();
 	area->rooms.erase(str);
 	*&mapmarker = *m;
