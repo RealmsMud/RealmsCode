@@ -1188,7 +1188,9 @@ void getAllObj(Creature* creature, Object *container) {
 			if(last_obj && last_obj->showAsSame(player, object))
 				n++;
 			else if(last_obj) {
-				str2 = last_obj->getObjStr(NULL, 0, n).c_str();
+				// BUGFIX: Assigning the c_str() of a bstring to a char, and it's still being accessed after the bstring goes out of scope (this line)
+				bstring lastObjStr = last_obj->getObjStr(NULL, 0, n);
+				str2 = lastObjStr.c_str();
 				if(strlen(str2)+strlen(str) < 2040) {
 					strcat(str, str2);
 					strcat(str, ", ");
@@ -1210,9 +1212,9 @@ void getAllObj(Creature* creature, Object *container) {
 	}
 
 	if(found && last_obj) {
-		str2 = object->getObjStr(NULL, 0, n).c_str();
-		if(strlen(str2)+strlen(str) < 2040)
-			strcat(str, str2);
+		bstring objStr = object->getObjStr(NULL, 0, n);
+		if(objStr.length() +strlen(str) < 2040)
+			strcat(str, objStr.c_str());
 	} else if(!found) {
 		player->print("There's nothing in it.\n");
 		return;
