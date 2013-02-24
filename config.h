@@ -75,7 +75,8 @@ private:
 public:
 	~Config();
 
-	bool load();
+	bool loadBeforePython();
+	bool loadAfterPython();
 	bool save() const;
 	void cleanUp();
 

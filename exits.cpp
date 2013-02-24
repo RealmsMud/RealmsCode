@@ -25,7 +25,6 @@
 //*********************************************************************
 
 Exit::Exit() {
-	zero(name, sizeof(name));
 
 	level = trap = 0;
 	zero(desc_key, sizeof(desc_key));
@@ -54,7 +53,7 @@ Exit::~Exit() {
 int exit_ordering(const char *exit1, const char *exit2);
 
 bool Exit::operator< (const MudObject& t) const {
-    return(exit_ordering(this->name, t.name));
+    return(exit_ordering(this->getCName(), t.getCName()));
 }
 
 short Exit::getLevel() const { return(level); }
@@ -112,9 +111,9 @@ void Exit::checkReLock(Creature* creature, bool sneaking) {
 		}
 		if(nowClosed || nowLocked) {
 			if(!sneaking) {
-				broadcast(creature->getSock(), parentRoom, "The %s %s.^x", getName(), exitAction.c_str());
+				broadcast(creature->getSock(), parentRoom, "The %s %s.^x", getCName(), exitAction.c_str());
 			} else {
-				 broadcast(isCt, creature->getSock(), parentRoom, "*STAFF* The %s %s^x.", getName(), exitAction.c_str());
+				 broadcast(isCt, creature->getSock(), parentRoom, "*STAFF* The %s %s^x.", getCName(), exitAction.c_str());
 			}
 		}
 	}
@@ -158,7 +157,7 @@ Exit *findExit(Creature* creature, bstring str, int val, BaseRoom* room) {
 			return(NULL);
 
 	for(Exit* exit : room->exits) {
-		bstring name = removeColor(exit->name);
+		bstring name = removeColor(exit->getName());
 		name = name.toLower();
 
 		if(!creature->isStaff()) {
@@ -166,7 +165,7 @@ Exit *findExit(Creature* creature, bstring str, int val, BaseRoom* room) {
 				continue;
 			if(	minThree &&
 				(exit->flagIsSet(X_CONCEALED) || exit->flagIsSet(X_SECRET)) &&
-				strlen(exit->name) > 2
+				exit->getName().length() > 2
 			)
 				continue;
 		}
@@ -400,7 +399,7 @@ bstring Exit::blockedByStr(char color, bstring spell, bstring effectName, bool d
 	std::ostringstream oStr;
 
 	if(canSee)
-		oStr << "^" << color << "The " << name << "^" << color << " is blocked by a " << spell;
+		oStr << "^" << color << "The " << getName() << "^" << color << " is blocked by a " << spell;
 	else
 		oStr << "^" << color << "A " << spell << " stands in the room";
 

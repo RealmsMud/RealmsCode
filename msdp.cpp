@@ -308,7 +308,7 @@ MsdpVariable::MsdpVariable(xmlNodePtr rootNode) {
 		}
 
 	if(name.empty())
-		throw new bstring("No Name for MSDP Variable!\n");
+		throw(std::runtime_error("No Name for MSDP Variable!\n"));
 //	else
 //		std::cout << "New MSDP Variable '" << name << "'" << std::endl;
 }

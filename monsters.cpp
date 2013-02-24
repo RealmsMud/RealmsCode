@@ -22,9 +22,9 @@
 #include "math.h"
 #include "unique.h"
 
-
+// TODO switch this strcmp to compare
 bool Monster::operator <(const Monster& t) const {
-    return(strcmp(this->name, t.name) < 0);
+    return(strcmp(this->getCName(), t.getCName()) < 0);
 }
 /*
  * mTypes formatted as case for use in functions below
@@ -163,10 +163,9 @@ void Monster::pulseTick(long t) {
 	}
 	// Mobs shouldn't stay berserk after they tick full
 	if(!nearEnemy(this) && hp.getCur() == hp.getMax()) {
-		if(flagIsSet(M_BERSERK)) {
-			strength.setCur(strength.getMax());
+		if(isEffected("berserk")) {
 			broadcast(NULL, getRoomParent(), "^r%M's rage diminishes!", this);
-			clearFlag(M_BERSERK);
+			removeEffect("berserk");
 			setFlag(M_WILL_BERSERK);
 		}
 	}
@@ -444,7 +443,7 @@ int Monster::castSpell(Creature *target) {
 	int		i=0, spl=0, c=0;
 	int		known[20], knowctr=0;
 	int		(*fn)(SpellFn);
-	char	*enemy;
+	bstring enemy;
 	int		realm=0, n=0;
 
 	zero(known, sizeof(known));
@@ -526,7 +525,7 @@ int Monster::castSpell(Creature *target) {
 		splNo == S_TOUCH_OF_KESH
 	) {
 		// we have the exact pointer
-		enemy = target->name;
+		enemy = target->getName();
 		n = 1;
 		do {
 			temp_ptr = getRoomParent()->findCreature(this, enemy, n, false);
@@ -545,7 +544,7 @@ int Monster::castSpell(Creature *target) {
 		n--;
 
 		// at this point we know which number is the exact match
-		strcpy(cmnd.str[2], target->name);
+		strcpy(cmnd.str[2], target->getCName());
 		cmnd.val[2] = n;
 		cmnd.num = 3;
 	} else {
@@ -752,7 +751,7 @@ bool Monster::checkAssist() {
 					addEnemy(crt, true);
 
 					broadcast(hearMobAggro, "^y*** %s(R:%s) added %s to %s attack list (same room).",
-						name, getRoomParent()->fullName().c_str(), crt->name, hisHer());
+						getCName(), getRoomParent()->fullName().c_str(), crt->getCName(), hisHer());
 
 					setFlag(M_ALWAYS_ACTIVE);
 					crt = 0;
@@ -825,11 +824,11 @@ void Monster::checkScavange(long t) {
 		i = lasttime[LT_MON_SCAVANGE].ltime;
 		if(	t - i > 20 &&
 			mrand(1, 100) <= 15 &&
-			room->first_obj &&
-			canScavange(room->first_obj->obj) &&
-			!(room->first_obj->obj->getType() == WEAPON && flagIsSet(M_WILL_WIELD)))
+			!room->objects.empty() &&
+			canScavange((*room->objects.begin())) &&
+			!((*room->objects.begin())->getType() == WEAPON && flagIsSet(M_WILL_WIELD)))
 		{
-			object = room->first_obj->obj;
+			object = (*room->objects.begin());
 			object->deleteFromRoom();
 
 			setFlag(M_HAS_SCAVANGED);
@@ -850,7 +849,6 @@ void Monster::checkScavange(long t) {
 	if(flagIsSet(M_TAKE_LOOT) || flagIsSet(M_STREET_SWEEPER)) {
 		i = lasttime[LT_MOB_THIEF].ltime;
 		if(t - i > 5) {
-			otag	*op = room->first_obj, *onext;
 			Object	*hide_obj = NULL;
 			char	buf[2048], *s = buf;
 			int		buflen = 0;
@@ -859,24 +857,23 @@ void Monster::checkScavange(long t) {
 
 			lasttime[LT_MOB_THIEF].ltime = t;
 			buf[0] = 0;
-			while(op) {
-				onext = op->next_tag;
+			ObjectSet::iterator it;
+			for(it = room->objects.begin() ; it != room->objects.end() ; ) {
+				object = (*it++);
 				if((flagIsSet(M_STREET_SWEEPER) ||
-					(op->obj->getType() == MONEY || op->obj->value[GOLD] >= 100)) &&
-						canScavange(op->obj)
-				) {
-					object = op->obj;
+					(object->getType() == MONEY || object->value[GOLD] >= 100)) &&
+						canScavange(object) )
+				{
 					if(getWeight() + object->getActualWeight() > maxWeight()) {
 						if(!hide_obj && !flagIsSet(M_STREET_SWEEPER)) {
 							hide_obj = object;
 						}
-						op = onext;
 						continue;
 					}
-					namelen = strlen(op->obj->name);
+					namelen = object->getName().length();
 					if(buflen + namelen + 2 >= 2048)
 						break;
-					strcpy(s, op->obj->name);
+					strcpy(s, object->getCName());
 					s += namelen;
 					strcpy(s, "^x, ");
 					s += 4;
@@ -889,7 +886,6 @@ void Monster::checkScavange(long t) {
 						addObj(object);
 					}
 				}
-				op = onext;
 			}
 			if(buflen) {
 				buf[buflen - 2] = 0;
@@ -1009,7 +1005,7 @@ int Monster::checkWander(long t) {
 		if(flagIsSet(M_CHASING_SOMEONE) && mrand(1,100) < 10) {
 		    Creature* target = getTarget(false);
 		    if(target)
-		        broadcast(NULL, room, "%1M gives up %s search for %s and wanders away.", this, hisHer(), target->getName());
+		        broadcast(NULL, room, "%1M gives up %s search for %s and wanders away.", this, hisHer(), target->getCName());
 		    else
 		        broadcast(NULL, room, "%1M gives up %s search and wanders away.", this, hisHer());
 			return(2);
@@ -1166,7 +1162,7 @@ int Monster::toJail(Player* player) {
 		return(-1);
 	}
 
-	logn("log.jail", "%s was hauled off to jail (%s) by %s.\n", player->name, jailroom.str().c_str(), name);
+	logn("log.jail", "%s was hauled off to jail (%s) by %s.\n", player->getCName(), jailroom.str().c_str(), getCName());
 	player->deleteFromRoom();
 	player->addToRoom(room);
 	player->doPetFollow();
@@ -1205,7 +1201,7 @@ int Monster::grabCoins(Player* player) {
 	coins.add(grab, GOLD);
 	player->coins.sub(grab, GOLD);
 
-	logn("log.mug", "%s was mugged by %s for %d gold.\n", player->name, name, grab);
+	logn("log.mug", "%s was mugged by %s for %d gold.\n", player->getCName(), getCName(), grab);
 
 	if(grab == num) {
 		player->print("%M grabs all your coins!\n", this);

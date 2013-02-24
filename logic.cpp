@@ -34,7 +34,7 @@ int loadCreature_actions( Creature* creature ) {
 
 
 
-	strcpy(crt_name,creature->name);
+	strcpy(crt_name,creature->getCName());
 	for(i=0;crt_name[i];i++)
 		if(crt_name[i] == ' ')
 			crt_name[i] = '_';

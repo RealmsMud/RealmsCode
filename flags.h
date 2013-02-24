@@ -186,7 +186,7 @@
 #define P_NEWLINE_AFTER_PROMPT      52       // Print NL after prompt
 #define P_BERSERKED_OLD             53       // Player is berserked
 #define P_LOG_WATCH                 54       // DM is watching the log channel
-#define P_MISTED                    55       // Player is in mist form
+// free                             55
 #define P_NO_AUTO_TARGET			56		 // Don't Automatically target anything you attack if you don't already have a target
 // free	 							56       // UNUSED
 #define P_IGNORE_CLASS_SEND         57       // Player is ignoring class sends
@@ -236,7 +236,7 @@
 #define P_OUTLAW_WILL_LOSE_XP       101      // Outlaw will lose experience when killed
 #define P_LINKDEAD                  102      // Player is linkdead (shouldn't be considered 2x-logging)
 #define P_UNCONSCIOUS               103      // Player is unconscious
-#define P_INCOGNITO                 104      // DM/CT is incognito
+// free								104
 #define P_BRAINDEAD                 105      // Player is brain dead -- For jackasses...
 // free                             106
 #define P_CT_CAN_DM_LIST            107      // DM only. Caretaker can use *list command
@@ -566,7 +566,7 @@
 // free                             211
 // free                             212
 #define M_WOUNDING                  213      // Monster has wounding attack
-#define M_BERSERK                   214      // Monster is berserk (DONT SET)
+// free                             214
 #define M_WILL_BERSERK              215      // Monster will berserk
 #define M_WAS_PORTED                216      // Monster was teleported (DO NOT SET)
 // free                             217
@@ -595,7 +595,8 @@
 // Object flags
 #define O_PERM_ITEM                 0      // Permanent item (not yet taken)
 #define O_HIDDEN                    1      // Hidden
-#define O_INVISIBLE                 2      // Invisible
+// free                             2
+#define O_OLD_INVISIBLE             2      // Invisible
 #define O_SOME_PREFIX               3      // "some" prefix
 #define O_PUSH_PULL_SPRINGS_TRAP    4      // Pushing or pulling this object springs the room's trap
 #define O_NO_PREFIX                 5      // No prefix
@@ -765,7 +766,7 @@
 
 // Exit flags
 #define X_SECRET                    0         // Secret
-#define X_INVISIBLE                 1         // Invisible
+// Free								1
 #define X_LOCKED                    2         // Locked
 #define X_CLOSED                    3         // Closed
 #define X_LOCKABLE                  4         // Lockable

@@ -35,7 +35,7 @@ int loadCreature_tlk( Creature* creature ) {
 	if(!creature->flagIsSet(M_TALKS) || creature->first_tlk)
 		return(0);
 
-	strcpy(crt_name, creature->name);
+	strcpy(crt_name, creature->getCName());
 	for(i=0; crt_name[i]; i++)
 		if(crt_name[i] == ' ')
 			crt_name[i] = '_';

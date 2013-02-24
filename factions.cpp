@@ -477,7 +477,7 @@ int listFactions(const Player* viewer, const Creature* target) {
 	if(viewer == target)
 		viewer->print("Faction Standing");
 	else {
-		viewer->print("%s's Faction", target->name);
+		viewer->print("%s's Faction", target->getCName());
 		const Monster* monster = target->getAsConstMonster();
 		if(monster)
 			viewer->printColor(", primeFaction: ^y%s", monster->getPrimeFaction().c_str());
@@ -863,7 +863,7 @@ void Faction::worshipSocial(Monster *monster) {
 		if(getAttitude(player->getFactionStanding(monster->getPrimeFaction())) < WORSHIP)
 			continue;
 
-		strcpy(cmnd.str[1], player->name);
+		strcpy(cmnd.str[1], player->getCName());
 		cmdProcess(monster, &cmnd);
 	}
 }

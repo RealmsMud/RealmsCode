@@ -59,7 +59,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how != POTION) {
 			player->print("Entangle whom?\n");
 			return(0);
-		} else if(player->flagIsSet(P_MISTED)) {
+		} else if(player->isEffected("mist")) {
 			player->print("Nothing happens.\n");
 			return(0);
 		} else {
@@ -120,7 +120,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 				target->isEffected("petrification") ||
 				(	player->getClass() != RANGER &&
 					player->getClass() != DRUID &&
-					target->flagIsSet(P_MISTED)
+					target->isEffected("mist")
 				)
 			)
 		) {
@@ -420,8 +420,8 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
 		chance = 10*((int)player->getLevel() - exit->getLevel()) + (2*bonus((int)player->intelligence.getCur()));
 
 	if(spellData->how == CAST)
-		player->printColor("You cast a knock spell on the \"%s^x\" exit.\n", exit->name);
-	broadcast(player->getSock(), player->getParent(), "%M casts a knock spell at the %s^x.", player, exit->name);
+		player->printColor("You cast a knock spell on the \"%s^x\" exit.\n", exit->getCName());
+	broadcast(player->getSock(), player->getParent(), "%M casts a knock spell at the %s^x.", player, exit->getCName());
 
 
 	if(player->isStaff() || mrand(1,100) <= chance) {
@@ -445,7 +445,6 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Creature *target=0;
-	otag*	op=0;
 	int	saved=0, bns=0;
 
 	if(spellData->how == CAST && !isMageLich(player)) {
@@ -457,13 +456,6 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 		player->print("You are not powerful enough to cast that spell.\n");
 		return(0);
 	}
-
-
-//
-//	if(	pPlayer && (pPlayer->getSecondClass() == MAGE ||
-//		(pPlayer->getClass() == MAGE && pPlayer->getSecondClass()))
-//	)
-//		multi=1;
 
 
 	if(cmnd->num < 2) {
@@ -505,14 +497,14 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 				if(	(effect && !effect->getExtra()) ||
 					exit->flagIsSet(X_PORTAL)
 				) {
-					player->printColor("You cast a disintegration spell on the %s^x.\n", exit->name);
-					broadcast(player->getSock(), player->getParent(), "%M casts a disintegration spell on the %s^x.", player, exit->name);
+					player->printColor("You cast a disintegration spell on the %s^x.\n", exit->getCName());
+					broadcast(player->getSock(), player->getParent(), "%M casts a disintegration spell on the %s^x.", player, exit->getCName());
 
 					if(exit->flagIsSet(X_PORTAL)) {
-						broadcast(0, player->getRoomParent(), "^GAn eerie green light engulfs the %s^x!", exit->name);
+						broadcast(0, player->getRoomParent(), "^GAn eerie green light engulfs the %s^x!", exit->getCName());
 						Move::deletePortal(player->getRoomParent(), exit);
 					} else {
-						broadcast(0, player->getRoomParent(), "^GAn eerie green light engulfs the wall of force blocking the %s^x!", exit->name);
+						broadcast(0, player->getRoomParent(), "^GAn eerie green light engulfs the wall of force blocking the %s^x!", exit->getCName());
 						bringDownTheWall(effect, player->getRoomParent(), exit);
 					}
 					return(0);
@@ -559,12 +551,13 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 			// goodbye inventory
 			if(target->getAsMonster()) {
-				while(target->first_obj) {
-					op = target->first_obj->next_tag;
-					delete target->first_obj->obj;
-					delete target->first_obj;
-					target->first_obj = op;
+				ObjectSet::iterator it;
+				Object* obj;
+				for( it = target->objects.begin() ; it != target->objects.end() ; ) {
+					obj = (*it++);
+					delete obj;
 				}
+				target->objects.clear();
 				target->coins.zero();
 			}
 			target->die(player);
@@ -839,7 +832,7 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
-			player->print("Deafness casted on %s.\n", target->name);
+			player->print("Deafness casted on %s.\n", target->getCName());
 			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a deafness spell on %N.", player, target);
 
 			logCast(player, target, "silence");

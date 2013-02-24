@@ -827,7 +827,7 @@ void Statistics::group(unsigned long num) { if(track) mostGroup = MAX(num, mostG
 void Statistics::monster(Monster* monster) {
 	if(!track || monster->isPet())
 		return;
-	mostMonster.update(calcToughness(monster), monster->name);
+	mostMonster.update(calcToughness(monster), monster->getCName());
 }
 
 //*********************************************************************
@@ -934,7 +934,7 @@ int cmdLevelHistory(Player* player, cmd* cmnd) {
 			player->print("That player does not exist.\n");
 			return(0);
 		}
-		player->printColor("^W%s's Level History\n", target->name);
+		player->printColor("^W%s's Level History\n", target->getCName());
 	}
 
 	target->statistics.displayLevelHistory(player);
@@ -974,7 +974,7 @@ int cmdStatistics(Player* player, cmd* cmnd) {
 			player->print("That player does not exist.\n");
 			return(0);
 		}
-		player->printColor("^W%s's Statistics\n", target->name);
+		player->printColor("^W%s's Statistics\n", target->getCName());
 	}
 
 	target->statistics.display(player);

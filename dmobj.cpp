@@ -41,17 +41,17 @@ int dmCreateObj(Player* player, cmd* cmnd) {
 		player->print("Error (%s)\n", cr.str().c_str());
 		return(0);
 	}
-	if(!object->name[0] || object->name[0] == ' ') {
+	if(!object->getCName()[0] || object->getCName()[0] == ' ') {
 		player->printColor("Error (%s)\n", cr.str().c_str());
 		delete object;
 		return(0);
 	}
 	if(object->flagIsSet(O_RANDOM_ENCHANT))
 		object->randomEnchant();
-	player->printColor("%s^x added to your inventory.\n", object->name);
+	player->printColor("%s^x added to your inventory.\n", object->getCName());
 
 	if(!player->isDm())
-		log_immort(false,player, "%s added %s to %s inventory.\n", player->name, object->name, player->hisHer());
+		log_immort(false,player, "%s added %s to %s inventory.\n", player->getCName(), object->getCName(), player->hisHer());
 
 	object->setDroppedBy(player, "DmCreate");
 	player->addObj(object);
@@ -67,7 +67,7 @@ bstring Object::statObj(int statFlags) {
 	std::ostringstream objStr;
 	Object* object=0;
 	bstring str = "";
-	bstring objName = name;
+	bstring objName = getName();
 	bstring objPlural = plural;
 	
 	objName.Replace("^", "^^");
@@ -79,8 +79,8 @@ bstring Object::statObj(int statFlags) {
 		objStr << "Name:   " << objName << "^x\n"
 			   << "Plural: " << objPlural << "^x\n";
 	}
-
-	objStr << "Id: " << getId() << "\n";
+	objStr << "CompStr: " << this->getCompareStr() << " ";
+	objStr << "Id: " << getId() << " Registered(Obj/Svr): " << (isRegistered() ? "Y" : "N") << "/" << (gServer->lookupObjId(getId()) != NULL ? "Y" : "N") << "\n";
 	const Unique* unique = gConfig->getUnique(this);
 	if(unique)
 		objStr << "^y - Unique this (In Game: ^Y" << unique->getInGame()
@@ -331,7 +331,7 @@ bstring Object::statObj(int statFlags) {
  			loadObject(*it, &object);
 
  			objStr << "    " << std::setw(14) << (*it).str("", 'y') << " ^y::^x "
-				   << (object ? object->name : "") << "\n";
+				   << (object ? object->getCName() : "") << "\n";
 
  			if(object) {
  				delete object;
@@ -392,7 +392,7 @@ int stat_obj(Player* player, Object* object) {
 
 	if(!player->isDm())
 		log_immort(false,player, "%s statted object %s(%s).\n",
-			player->name, object->name, object->info.str().c_str());
+			player->getCName(), object->getCName(), object->info.str().c_str());
 
     int statFlags = 0;
     if(player->isCt())
@@ -457,9 +457,9 @@ int dmSetObj(Player* player, cmd* cmnd) {
 		num = cmnd->val[3];
 		dNum = atof(getFullstrText(cmnd->fullstr, 4).c_str());
 
-		object = findObject(player, player->first_obj, cmnd, 2);
+		object = player->findObject(player, cmnd, 2);
 		if(!object)
-			object = findObject(player, room->first_obj, cmnd, 2);
+			object = room->findObject(player, cmnd, 2);
 		if(!object) {
 			player->print("Object not found.\n");
 			return(0);
@@ -483,7 +483,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 			return(0);
 		}
 
-		object = findObject(player, creature->first_obj, cmnd, 2);
+		object = creature->findObject(player, cmnd, 2);
 		if(!object || !cmnd->val[2]) {
 			for(n = 0; n < MAXWEAR; n++) {
 				if(!creature->ready[n])
@@ -504,19 +504,19 @@ int dmSetObj(Player* player, cmd* cmnd) {
 		}
 
 		if(Unique::isUnique(object)) {
-			player->printColor("^yCannot change object %s^y owned by %s.\n", object->name, creature->name);
+			player->printColor("^yCannot change object %s^y owned by %s.\n", object->getCName(), creature->getCName());
 			player->print("This will remove the object's uniqueness and distort the object count.\n");
 			player->printColor("Use ^W*take^x or ^Wsteal^x to remove the object from their inventory first.\n");
 			return(0);
 		}
 		if(Lore::isLore(object)) {
-			player->printColor("^yCannot change object %s^y owned by %s.\n", object->name, creature->name);
+			player->printColor("^yCannot change object %s^y owned by %s.\n", object->getCName(), creature->getCName());
 			player->print("This will remove the object's loreness and distort the object count.\n");
 			player->printColor("Use ^W*take^x or ^Wsteal^x to remove the object from their inventory first.\n");
 			return(0);
 		}
 
-		sprintf(objname, "%s's ", creature->name);
+		sprintf(objname, "%s's ", creature->getCName());
 	}
 
 	// because float variables suck
@@ -527,7 +527,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 		return(0);
 	}
 	// make the green broadcast stay green
-	strcat(objname, object->name);
+	strcat(objname, object->getCName());
 	if(player->isDm() || player->isCt())
 		strcat(objname, "^g");
 	else
@@ -630,7 +630,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 						delete object->compass;
 						object->compass = 0;
 						log_immort(2, player, "%s cleared %s's %s.\n",
-							player->name, objname, "compass");
+							player->getCName(), objname, "compass");
 					} else
 						player->print("That's not a valid location.\n");
 				} else {
@@ -641,7 +641,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 
 					player->print("Compass set to location %s.\n", mapmarker.str().c_str());
 					log_immort(2, player, "%s set %s's %s to %s.\n",
-						player->name, objname, "compass", mapmarker.str().c_str());
+						player->getCName(), objname, "compass", mapmarker.str().c_str());
 
 				}
 			} else {
@@ -673,7 +673,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 				player->print("Delay set to %.1f.\n", object->getDelay()/10.0);
 
 				log_immort(2, player, "%s set %s's %s to %.1f.\n",
-					player->name, objname, "Delay", object->getDelay()/10.0);
+					player->getCName(), objname, "Delay", object->getDelay()/10.0);
 				if(object->adjustWeapon() != -1)
 					player->print("Weapon has been auto adusted to a mean damage of %.2f.\n", object->damage.getMean());
 			}
@@ -737,14 +737,14 @@ int dmSetObj(Player* player, cmd* cmnd) {
 				player->print("Effect '%s' removed.\n", object->getEffect().c_str());
 				object->clearEffect();
 				log_immort(2, player, "%s cleared %s's effect.\n",
-					player->name, objname);
+					player->getCName(), objname);
 			} else {
 				object->setEffect(effectStr);
 				object->setEffectDuration(duration);
 				object->setEffectStrength(strength);
 				player->print("Effect '%s' added with duration %d and strength %d.\n", effectStr.c_str(), duration, strength);
 				log_immort(2, player, "%s set %s's effect to %s with duration %d and strength %d.\n",
-					player->name, objname, effectStr.c_str(), duration, strength);
+					player->getCName(), objname, effectStr.c_str(), duration, strength);
 			}
 		}
 		break;
@@ -781,7 +781,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 				test=1;
 			}
 			log_immort(2, player, "%s turned %s's flag %ld(%s) %s.\n",
-				player->name, objname, num, get_oflag(num-1), test == 1 ? "On" : "Off");
+				player->getCName(), objname, num, get_oflag(num-1), test == 1 ? "On" : "Off");
 		} else {
 			return(setWhich(player, "flag"));
 		}
@@ -885,16 +885,16 @@ int dmSetObj(Player* player, cmd* cmnd) {
 				if(object->getType() == SONGSCROLL) {
 					player->print("Magic power set to %d - (Song of %s).\n", num, get_song_name(num-1));
 					log_immort(2, player, "%s set %s's %s to %ld - (Song of %s).\n",
-							player->name, objname, "Song", num, get_song_name(num-1));
+							player->getCName(), objname, "Song", num, get_song_name(num-1));
 				} else {
 					player->print("Magic power set to %d - (%s).\n",num, get_spell_name(num-1));
 					log_immort(2, player, "%s set %s's %s to %ld - (%s).\n",
-							player->name, objname, "Spell", num,get_spell_name(num-1));
+							player->getCName(), objname, "Spell", num,get_spell_name(num-1));
 				}
 			} else {
 					player->print("Magic power cleared.\n");
 					log_immort(2, player, "%s cleared %s's %s.\n",
-							player->name, objname, "Spell");
+							player->getCName(), objname, "Spell");
 			}
 		} else {
 			return(setWhich(player, "material, maxbulk, magic"));
@@ -937,7 +937,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 			player->print("Loadable container object %s set to item number %s.\n",
 				object->info.str().c_str(), object->in_bag[num-1].str().c_str());
 			log_immort(2, player, "%s set container %s(%s) to load object %s.\n",
-				player->name, objname, object->info.str().c_str(), object->in_bag[num-1].str().c_str());
+				player->getCName(), objname, object->info.str().c_str(), object->in_bag[num-1].str().c_str());
 
 		} else {
 			return(setWhich(player, "objects"));
@@ -961,7 +961,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 			object->setQuality(dNum*10.0);
 			player->print("Quality set to %.1f.\n", dNum);
 
-			log_immort(2, player, "%s set %s's %s to %.1f.\n", player->name, objname, "Quality", dNum);
+			log_immort(2, player, "%s set %s's %s to %.1f.\n", player->getCName(), objname, "Quality", dNum);
 			if(object->adjustArmor() != -1)
 				player->print("Armor has been auto adusted to %d.\n", object->getArmor());
 			if(object->adjustWeapon() != -1)
@@ -994,7 +994,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 			object->deed.low.setArea(cmnd->str[4]);
 			player->print("Deed Area: %s\n", object->deed.low.area.c_str());
 			log_immort(2, player, "%s set %s's %s to %s.\n",
-				player->name, objname, "Deed Area", object->deed.low.area.c_str());
+				player->getCName(), objname, "Deed Area", object->deed.low.area.c_str());
 		} else if(low(cmnd->str[3][1]) == 'e') {
 			Recipe* recipe = gConfig->getRecipe((int)cmnd->val[3]);
 			if(!recipe) {
@@ -1020,7 +1020,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 
 			player->print("Size set to %s.\n", getSizeName(object->getSize()).c_str());
 			log_immort(2, player, "%s set %s's %s to %s.\n",
-				player->name, objname, "Size", getSizeName(object->getSize()).c_str());
+				player->getCName(), objname, "Size", getSizeName(object->getSize()).c_str());
 		} else if(flags[1] == 'm') {
 			num = MAX(0, MIN(num,5000));
 			
@@ -1052,12 +1052,12 @@ int dmSetObj(Player* player, cmd* cmnd) {
 			}
 			player->print("Object subtype set to %s.\n", object->getSubType().c_str());
 			log_immort(2, player, "%s set %s's %s to %s.\n",
-				player->name, objname, "Subtype", object->getSubType().c_str());
+				player->getCName(), objname, "Subtype", object->getSubType().c_str());
 		} else if(flags[1] == 'h' || flags[1] == 'v') {
 			object->setShopValue(num);
 			player->print("Shop value set.\n");
 			log_immort(2, player, "%s set %s's %s to %ld.\n",
-				player->name, objname, "shopValue", object->getShopValue());
+				player->getCName(), objname, "shopValue", object->getShopValue());
 		} else if(flags[1] == 'k') {
 			if(num < 0 || num > MAXALVL*10) {
 				player->print("Error: required skill out of range.\n");
@@ -1178,24 +1178,24 @@ int dmSetObj(Player* player, cmd* cmnd) {
 		if(resultTxt != "") {
 			player->printColor("%s set to %ld(%s).\n", setType.c_str(), result, resultTxt.c_str());
 			log_immort(2, player, "%s set %s's %s to %ld(%s^g).\n",
-				player->name, objname, setType.c_str(), result, resultTxt.c_str());
+				player->getCName(), objname, setType.c_str(), result, resultTxt.c_str());
 		} else {
 			player->print("%s set to %ld.\n", setType.c_str(), result);
 			log_immort(2, player, "%s set %s's %s to %ld.\n",
-				player->name, objname, setType.c_str(), result);
+				player->getCName(), objname, setType.c_str(), result);
 		}
 	}
 
 
 	if(Unique::isUnique(object)) {
-		player->printColor("^yUnique status of %s^y has been removed.\n", object->name);
+		player->printColor("^yUnique status of %s^y has been removed.\n", object->getCName());
 		player->print("If the object is saved to a new index, the unique flag will be removed.\n");
 		player->print("If the object is resaved to the unique range, it will become unique again.\n");
 		object->clearFlag(O_UNIQUE);
 	}
 
 	if(Lore::isLore(object)) {
-		player->printColor("^yLore status of %s^y has been removed.\n", object->name);
+		player->printColor("^yLore status of %s^y has been removed.\n", object->getCName());
 		player->print("If the object is resaved to any index, it will become lore again.\n");
 	}
 
@@ -1251,9 +1251,9 @@ int dmObjName(Player* player, cmd* cmnd) {
 	if(isdigit(cmnd->fullstr[i]))
 		cmnd->val[1] = atoi(&cmnd->fullstr[i]);
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object)
-		object = findObject(player, player->getRoomParent()->first_obj, cmnd);
+		object = player->getRoomParent()->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("Item not found.\n");
 		return(0);
@@ -1303,7 +1303,7 @@ int dmObjName(Player* player, cmd* cmnd) {
 			player->print("That object name is not allowed.\n");
 			return(0);
 		}
-		strcpy(object->name, text.c_str());
+		object->setName( text.c_str());
 		player->print("\nName ");
 		break;
 	case 1:
@@ -1388,18 +1388,14 @@ int dmAddObj(Player* player, cmd* cmnd) {
 		player->print("Cannot allocate object.\n");
 		return(0);
 	}
-	log_immort(true, player, "%s made a new Object!\n", player->name);
+	log_immort(true, player, "%s made a new Object!\n", player->getCName());
 
-	strcpy(newObj->name, "small clay ball");
+	newObj->setName( "small clay ball");
 	strcpy(newObj->key[0], "ball");
 	strcpy(newObj->key[1], "clay");
 	newObj->setWearflag(HELD);
 	newObj->setType(MISC);
 	newObj->setWeight(1);
-	newObj->first_obj = 0;
-	newObj->parent_obj = 0;
-	newObj->parent_room = 0;
-	newObj->parent_crt = 0;
 
 	newObj->setFlag(O_SAVE_FULL);
 
@@ -1421,9 +1417,9 @@ void dmSaveObj(Player* player, cmd* cmnd, CatRef cr) {
 		return;
 	}
 
-	object = findObject(player, player->first_obj, cmnd->str[2], 1);
+	object = player->findObject(player, cmnd->str[2], 1);
 	if(!object)
-		object = findObject(player, player->getRoomParent()->first_obj, cmnd->str[2], 1);
+		object = player->getRoomParent()->findObject(player, cmnd->str[2], 1);
 	if(!object) {
 		player->print("Object not found.\n");
 		return;
@@ -1445,7 +1441,7 @@ void dmSaveObj(Player* player, cmd* cmnd, CatRef cr) {
 
 	object->clearFlag(O_BEING_PREPARED);
 	object->clearFlag(O_SAVE_FULL);
-	logn("log.bane", "%s saved %s to %s.\n", player->name, object->name, cr.str().c_str());
+	logn("log.bane", "%s saved %s to %s.\n", player->getCName(), object->getCName(), cr.str().c_str());
 
 	object->info = cr;
 
@@ -1461,21 +1457,6 @@ void dmSaveObj(Player* player, cmd* cmnd, CatRef cr) {
 //*********************************************************************
 
 void dmResaveObject(const Player* player, Object* object, bool flush) {
-	BaseRoom *rom = object->parent_room;
-	Object	*po = object->parent_obj;
-	otag	*fo = object->first_obj;
-	Creature *pc = object->parent_crt;
-	int		val = object->getShopValue();
-	DroppedBy droppedBy = object->droppedBy;
-
-	object->parent_room = 0;
-	object->parent_obj = 0;
-	object->first_obj = 0;
-	object->parent_crt = 0;
-	object->setShopValue(0);
-	object->droppedBy.clear();
-
-
 	if(object->saveToFile() != 0) {
 		loge("Error saving object in dmResaveObject()");
 		player->print("Error: object was not saved.\n");
@@ -1486,13 +1467,6 @@ void dmResaveObject(const Player* player, Object* object, bool flush) {
 	// swap this new Object if its in the queue
 	if(flush || player->flagIsSet(P_NO_FLUSHCRTOBJ))
 		gConfig->replaceObjectInQueue(object->info, object);
-
-	object->droppedBy = droppedBy;
-	object->parent_room = rom;
-	object->parent_obj = po;
-	object->first_obj = fo;
-	object->parent_crt = pc;
-	object->setShopValue(val);
 }
 
 //*********************************************************************
@@ -1538,10 +1512,12 @@ void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, cons
 
 	if(!newObj->key[2][0]) {
 		strcpy(newObj->key[1], sub.c_str());
-		sprintf(newObj->name, "%s %s", newObj->key[0], sub.c_str());
+		newObj->setName(bstring(newObj->key[0]) + sub);
+		//sprintf(newObj->name, "%s %s", newObj->key[0], sub.c_str());
 	} else {
 		strcpy(newObj->key[2], sub.c_str());
-		sprintf(newObj->name, "%s %s %s", newObj->key[0], newObj->key[1], sub.c_str());
+		newObj->setName(bstring(newObj->key[0]) + newObj->key[1] + sub);
+		//sprintf(newObj->name, "%s %s %s", newObj->key[0], newObj->key[1], sub.c_str());
 	}
 
 	newObj->setWeight(MAX(1, weight));
@@ -1572,10 +1548,10 @@ void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, cons
 	else
 		newObj->clearFlag(O_TWO_HANDED);
 
-	player->printColor("Saving %s to %s... ", newObj->name, cr->str("", 'W').c_str());
+	player->printColor("Saving %s to %s... ", newObj->getCName(), cr->str("", 'W').c_str());
 	dmResaveObject(player, newObj);
 	log_immort(2, player, "%s cloned %s into %s.\n",
-		player->name, newObj->name, cr->str().c_str());
+		player->getCName(), newObj->getCName(), cr->str().c_str());
 
 	if(addToInventory)
 		player->addObj(newObj);
@@ -1609,10 +1585,12 @@ void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int w
 
 	if(!newObj->key[2][0]) {
 		strcpy(newObj->key[1], base.c_str());
-		sprintf(newObj->name, "%s %s", newObj->key[0], base.c_str());
+		newObj->setName(bstring(newObj->key[0]) + base);
+		//sprintf(newObj->name, "%s %s", newObj->key[0], base.c_str());
 	} else {
 		strcpy(newObj->key[2], base.c_str());
-		sprintf(newObj->name, "%s %s %s", newObj->key[0], newObj->key[1], base.c_str());
+		newObj->setName(bstring(newObj->key[0]) + newObj->key[1] + base);
+		//sprintf(newObj->name, "%s %s %s", newObj->key[0], newObj->key[1], base.c_str());
 	}
 
 	if(somePrefix)
@@ -1639,10 +1617,10 @@ void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int w
 	newObj->info = *cr;
 	random->randomObjects.push_back(newObj->info);
 
-	player->printColor("Saving %s to %s... ", newObj->name, cr->str("", 'W').c_str());
+	player->printColor("Saving %s to %s... ", newObj->getCName(), cr->str("", 'W').c_str());
 	dmResaveObject(player, newObj);
 	log_immort(2, player, "%s cloned %s into %s.\n",
-		player->name, newObj->name, cr->str().c_str());
+		player->getCName(), newObj->getCName(), cr->str().c_str());
 
 	if(addToInventory)
 		player->addObj(newObj);
@@ -1670,14 +1648,14 @@ int dmClone(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd->str[1], 1);
+	object = player->findObject(player, cmnd->str[1], 1);
 	if(!object) {
 		player->print("Object not found.\n");
 		player->printColor("Syntax: ^c*clone <object> <area.id> <partial desc>\n");
 		return(0);
 	}
 
-	player->printColor("^yCloning %s.\n", object->name);
+	player->printColor("^yCloning %s.\n", object->getCName());
 
 	if(object->info.id && !player->checkBuilder(object->info, false)) {
 		player->print("Error: %s out of your allowed range.\n", object->info.str().c_str());
@@ -1732,13 +1710,15 @@ int dmClone(Player* player, cmd* cmnd) {
 	strcpy(random->key[1], object->key[0]);
 
 	if(!object->key[2][0] && !isWeapon) {
-		sprintf(random->name, "random %s", random->key[1]);
+		random->setName(bstring("random ") + random->key[1]);
+		//sprintf(random->name, "random %s", random->key[1]);
 	} else {
 		if(!object->key[2][0])
 			strcpy(random->key[2], "weapon");
 		else
 			strcpy(random->key[2], object->key[1]);
-		sprintf(random->name, "random %s %s", random->key[1], random->key[2]);
+		random->setName(bstring("random ") + random->key[1] + random->key[2]);
+		//sprintf(random->name, "random %s %s", random->key[1], random->key[2]);
 	}
 
 
@@ -1862,10 +1842,10 @@ int dmClone(Player* player, cmd* cmnd) {
 	random->setType(MISC);
 	random->setAdjustment(object->getAdjustment());
 
-	player->printColor("Saving %s to %s... ", random->name, cr.str("", 'W').c_str());
+	player->printColor("Saving %s to %s... ", random->getCName(), cr.str("", 'W').c_str());
 	dmResaveObject(player, random);
 	log_immort(2, player, "%s cloned %s into %s.\n",
-		player->name, random->name, cr.str().c_str());
+		player->getCName(), random->getCName(), cr.str().c_str());
 
 	player->addObj(random);
 

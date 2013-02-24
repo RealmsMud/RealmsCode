@@ -199,7 +199,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
 		player->print("You fatally wound %N.\n", creature);
 		player->checkImprove("touch", true);
 		if(!player->isDm())
-			log_immort(false,player, "%s fatally wounds %s.\n", player->name, creature->name);
+			log_immort(false,player, "%s fatally wounds %s.\n", player->getCName(), creature->getCName());
 
 		broadcast(player->getSock(), player->getParent(), "%M fatally wounds %N.", player, creature);
 		if(creature->isMonster())
@@ -218,10 +218,10 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
 		player->checkImprove("touch", true);
 		broadcast(player->getSock(), player->getParent(), "%M uses the touch of death on %N.", player, creature);
 		if(player->getClass() == CARETAKER)
-			log_immort(false,player, "%s uses the touch of death on %s.\n", player->name, creature->name);
+			log_immort(false,player, "%s uses the touch of death on %s.\n", player->getCName(), creature->getCName());
 		if(player->doDamage(creature, damage.get(), CHECK_DIE)) {
 			if(player->getClass() == CARETAKER)
-				log_immort(false,player, "%s killed %s with touch of death.\n", player->name, creature->name);
+				log_immort(false,player, "%s killed %s with touch of death.\n", player->getCName(), creature->getCName());
 		}
 	}
 
@@ -409,12 +409,12 @@ int cmdMaul(Player* player, cmd* cmnd) {
 
 
 	if(!player->isCt() && pCreature) {
-		if(pCreature->flagIsSet(P_MISTED)) {
+		if(pCreature->isEffected("mist")) {
 			player->print("You cannot physically hit a misted creature.\n");
 			return(0);
 		}
 
-		if(player->vampireCharmed(pCreature) || (pCreature->hasCharm(player->name) && player->flagIsSet(P_CHARMED))) {
+		if(player->vampireCharmed(pCreature) || (pCreature->hasCharm(player->getName()) && player->flagIsSet(P_CHARMED))) {
 			player->print("You like %N too much to do that.\n", pCreature);
 			return(0);
 		}

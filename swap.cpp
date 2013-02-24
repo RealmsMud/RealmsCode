@@ -195,10 +195,10 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
 			if(id <= 1)
 				id = 1;
 			player->printColor("^YRS: ^eSwap canceled.\n");
-			if(name != player->name && name != "Someone") {
+			if(name != player->getName() && name != "Someone") {
 				Player* p = gServer->findPlayer(name.c_str());
 				if(p)
-					player->printColor("^RRS: ^eSwap canceled by %s.\n", player->name);
+					player->printColor("^RRS: ^eSwap canceled by %s.\n", player->getCName());
 			}
 			if(id==1)
 				gServer->endSwap();
@@ -488,7 +488,7 @@ void Server::finishSwap(Player* player, bool online, CatRef origin, CatRef targe
 		return;
 	}
 
-	log_immort(true, player, "%s has begun swapping %s with %s.\n", player->name, origin.str().c_str(), target.str().c_str());
+	log_immort(true, player, "%s has begun swapping %s with %s.\n", player->getCName(), origin.str().c_str(), target.str().c_str());
 
 
 	Async async;
@@ -542,7 +542,7 @@ void Config::offlineSwap() {
 				continue;
 
 			if(player->swap(currentSwap))
-				printf("p%s%s", player->name, sepType);
+				printf("p%s%s", player->getCName(), sepType);
 
 			free_crt(player);
 		}
@@ -563,7 +563,7 @@ void Config::offlineSwap() {
 				continue;
 
 			if(player->swap(currentSwap))
-				printf("b%s%s", player->name, sepType);
+				printf("b%s%s", player->getCName(), sepType);
 
 			free_crt(player);
 		}
@@ -772,7 +772,7 @@ void Config::swap(Player* player, bstring name) {
 		ply = p.second;
 		if(ply->swap(currentSwap))
 			ply->save(true);
-		swapList.remove((bstring)"p" + ply->name);
+		swapList.remove((bstring)"p" + ply->getName());
 	}
 
 	// remove the swapped rooms from the queue

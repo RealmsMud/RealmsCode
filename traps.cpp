@@ -108,7 +108,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 		printColor("^mTrap passed.\n");
 		return(0);
 	}
-	if(flagIsSet(P_MISTED))
+	if(isEffected("mist"))
 		return(0);
 
 
@@ -888,7 +888,7 @@ int Player::checkTraps(UniqueRoom* room, bool self, bool isEnter) {
 bool Creature::countForWeightTrap() const {
 	if(isMonster())
 		return(!isEffected("levitate") && !isEffected("fly"));
-	return(!isStaff() && !flagIsSet(P_MISTED) && !isEffected("levitate") && !isEffected("fly"));
+	return(!isStaff() && !isEffected("mist") && !isEffected("levitate") && !isEffected("fly"));
 }
 
 //*********************************************************************
@@ -915,13 +915,12 @@ bool resistLose(Object* object) {
 
 void lose_all(Player* player, bool destroyAll, const char* lostTo) {
 	Object* object=0;
-	otag	*op=0;
 	int		i=0;
 
 	// if we send !destroyAll, there are some scenarios where
 	// we don't destroy everything
 
-	// remove all equipted items
+	// remove all equipped items
 	for(i=0; i<MAXWEAR; i++) {
 		if(player->ready[i]) {
 			if(!destroyAll && resistLose(player->ready[i])) {
@@ -930,7 +929,7 @@ void lose_all(Player* player, bool destroyAll, const char* lostTo) {
 			}
 
 			logn("log.dissolve", "%s(L%d) lost %s to %s in room %s.\n",
-				player->name, player->getLevel(), player->ready[i]->name, lostTo, player->getRoomParent()->fullName().c_str());
+				player->getCName(), player->getLevel(), player->ready[i]->getCName(), lostTo, player->getRoomParent()->fullName().c_str());
 			player->ready[i]->popBag(player, true, false, false, false, true);
 			player->unequip(i+1, UNEQUIP_DELETE);
 		}
@@ -940,10 +939,9 @@ void lose_all(Player* player, bool destroyAll, const char* lostTo) {
 	player->computeAttackPower();
 
 	// delete all possessions
-	op = player->first_obj;
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for( it = player->objects.begin() ; it != player->objects.end() ; ) {
+		object = (*it++);
 
 		if(!destroyAll && resistLose(object)) {
 			player->printColor("%O resisted destruction.\n", object);
@@ -951,7 +949,7 @@ void lose_all(Player* player, bool destroyAll, const char* lostTo) {
 		}
 
 		logn("log.dissolve", "%s(L%d) lost %s to %s in room %s.\n",
-			player->name, player->getLevel(), object->name, lostTo, player->getRoomParent()->fullName().c_str());
+			player->getCName(), player->getLevel(), object->getCName(), lostTo, player->getRoomParent()->fullName().c_str());
 		object->popBag(player, true, false, false, false, true);
 		player->delObj(object, true, false, true, false);
 		delete object;
@@ -987,7 +985,7 @@ void Player::dissolveItem(Creature* creature) {
 	if(n) {
 		if(ready[n-1]) {
 			if(ready[n - 1]->flagIsSet(O_RESIST_DISOLVE)) {
-				printColor("%M tried to dissolve your %s.\n", creature, ready[n-1]->name);
+				printColor("%M tried to dissolve your %s.\n", creature, ready[n-1]->getCName());
 				n = 0;
 				return;
 			}
@@ -996,10 +994,10 @@ void Player::dissolveItem(Creature* creature) {
 
 
 	if(n) {
-		broadcast(getSock(), getRoomParent(),"%M destroys %N's %s.", creature, this, ready[n-1]->name);
-		printColor("%M destroys your %s.\n",creature, ready[n-1]->name);
+		broadcast(getSock(), getRoomParent(),"%M destroys %N's %s.", creature, this, ready[n-1]->getCName());
+		printColor("%M destroys your %s.\n",creature, ready[n-1]->getCName());
 		logn("log.dissolve", "%s(L%d) lost %s to acid in room %s.\n",
-			name, level, ready[n-1]->name, getRoomParent()->fullName().c_str());
+				getCName(), level, ready[n-1]->getCName(), getRoomParent()->fullName().c_str());
 		// Unequip it and don't add it to the inventory, delete it
 		unequip(n, UNEQUIP_DELETE);
 		computeAC();
@@ -1014,7 +1012,6 @@ void Player::dissolveItem(Creature* creature) {
 
 void Player::loseAcid() {
 	Object* object=0;
-	otag    *op=0;
 	int		i=0;
 
 	// Check all equipped items
@@ -1024,13 +1021,13 @@ void Player::loseAcid() {
 				(mrand(1,100) <= 5 - abs(ready[i]->getAdjustment()))
 			) {
 				if(ready[i]->flagIsSet(O_NO_PREFIX)) {
-					printColor("^r%s was dissolved by acid!\n", ready[i]->name);
+					printColor("^r%s was dissolved by acid!\n", ready[i]->getCName());
 				} else {
-					printColor("^rYour %s was dissolved by acid!\n", ready[i]->name);
+					printColor("^rYour %s was dissolved by acid!\n", ready[i]->getCName());
 				}
 
 				logn("log.dissolve", "%s(L%d) lost %s to acid in room %s.\n",
-					name, level, ready[i]->name, getRoomParent()->fullName().c_str());
+						getCName(), level, ready[i]->getCName(), getRoomParent()->fullName().c_str());
 				unequip(i+1, UNEQUIP_DELETE);
 			}
 		}
@@ -1041,20 +1038,19 @@ void Player::loseAcid() {
 	computeAttackPower();
 
 	// Remove and possibly dissolve possessions
-	op = first_obj;
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for( it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 		if( !object->flagIsSet(O_RESIST_DISOLVE) &&
-			(mrand(1,100) <= 5 - abs(object->getAdjustment()))
-		) {
+			(mrand(1,100) <= 5 - abs(object->getAdjustment())))
+		{
 			if(object->flagIsSet(O_NO_PREFIX)) {
-				printColor("^r%s is dissolved by acid!\n", object->name);
+				printColor("^r%s is dissolved by acid!\n", object->getCName());
 			} else {
-				printColor("^rYour %s is dissolved by acid!\n", object->name);
+				printColor("^rYour %s is dissolved by acid!\n", object->getCName());
 			}
 			logn("log.dissolve", "%s(L%d) lost %s to acid in room %s.\n",
-				name, level, object->name, getRoomParent()->fullName().c_str());
+					getCName(), level, object->getCName(), getRoomParent()->fullName().c_str());
 			delObj(object, true, false, true, false);
 			delete object;
 		}

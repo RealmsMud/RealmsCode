@@ -137,7 +137,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 	}
 
 	if(player->getClass() == CARETAKER)
-		log_immort(false,player, "%s bites %s.\n", player->name, target->name);
+		log_immort(false,player, "%s bites %s.\n", player->getCName(), target->getCName());
 
 	target->printColor("%M bites you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), dmgnum);
 	target->stun((mrand(5, 8) + bonus((int) player->strength.getCur())));
@@ -149,7 +149,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 
 	if(player->doDamage(target, damage.get(), CHECK_DIE)) {
 		if(player->getClass() == CARETAKER)
-			log_immort(true, player, "%s killed %s with a bite.\n", player->name, target->name);
+			log_immort(true, player, "%s killed %s with a bite.\n", player->getCName(), target->getCName());
 	} else {
 		if(!induel(player, pTarget)) {
 			// 5% chance to get porphyria when bitten by a vampire
@@ -210,7 +210,7 @@ int cmdMist(Player* player, cmd* cmnd) {
 		player->print("You can't do that while in a group.\n");
 		return(0);
 	}
-	if(player->flagIsSet(P_MISTED)) {
+	if(player->isEffected("mist")) {
 		player->print("You are already a mist.\n");
 		return(0);
 	}
@@ -221,7 +221,7 @@ int cmdMist(Player* player, cmd* cmnd) {
 	}
 
 	broadcast(player->getSock(), player->getParent(), "%M turns to mist.", player);
-	player->setFlag(P_MISTED);
+	player->addEffect("mist", -1);
 	player->print("You turn to mist.\n");
 	//player->checkImprove("mist", true);
 	player->clearFlag(P_SITTING);
@@ -259,7 +259,7 @@ bool Player::canMistNow() const {
 //*********************************************************************
 
 int cmdUnmist(Player* player, cmd* cmnd) {
-	if(player->flagIsSet(P_MISTED)) {
+	if(player->isEffected("mist")) {
 		player->unmist();
 	} else {
 		if(!player->isEffected("vampirism") && !player->isStaff())
@@ -323,9 +323,9 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 
 	if(	target->isPlayer() &&
 		(	player->vampireCharmed(target->getAsPlayer()) ||
-			(target->hasCharm(player->name) && player->flagIsSet(P_CHARMED))
-		)
-	) {
+			(target->hasCharm(player->getName()) && player->flagIsSet(P_CHARMED))
+		))
+	{
 		player->print("But they are already your good friend!\n");
 		return(0);
 	}
@@ -380,12 +380,12 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 		if(target->chkSave(MEN, player,0)) {
 			player->print("%M avoided your hypnotizing gaze.\n", target);
 			player->checkImprove("hypnotize", false);
-			target->print("You avoided %s's hypnotizing gaze.\n", player->name);
+			target->print("You avoided %s's hypnotizing gaze.\n", player->getCName());
 			return(0);
 		}
 	}
 
-	log_immort(false,player, "%s hypnotizes %s.\n", player->name, target->name);
+	log_immort(false,player, "%s hypnotizes %s.\n", player->getCName(), target->getCName());
 
 	player->print("You hypnotize %N.\n", target);
 	player->checkImprove("hypnotize", true);
@@ -638,7 +638,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 
 	if(player->doDamage(target, damage.get(), CHECK_DIE)) {
 		if(player->getClass() == CARETAKER && pTarget)
-			log_immort(true, player, "%s killed %s with the drain.\n", player->name, target->name);
+			log_immort(true, player, "%s killed %s with the drain.\n", player->getCName(), target->getCName());
 	}
 
 	return(0);

@@ -104,7 +104,7 @@ void steal_gold(Player* player, Creature* creature) {
 		return;
 	}
 
-	if(	creature->flagIsSet(P_MISTED) && !
+	if(	creature->isEffected("mist") && !
 		!player->checkStaff("You cannot steal from a misted creature.\n") )
 		return;
 
@@ -145,7 +145,7 @@ void steal_gold(Player* player, Creature* creature) {
 		player->coins.add(amt, GOLD);
 
 		if(creature->isPlayer())
-			log_immort(false,player, "%s stole %d gold from %s.\n", player->name, amt, creature->name);
+			log_immort(false,player, "%s stole %d gold from %s.\n", player->getCName(), amt, creature->getCName());
 		if(creature->getAsMonster())
 			gServer->logGold(GOLD_IN, player, Money(amt, GOLD), creature, "StealGold");
 
@@ -361,7 +361,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 			player->print("You have to stand up first.\n");
 			return(0);
 		}
-		if(player->flagIsSet(P_MISTED)) {
+		if(player->isEffected("mist")) {
 			player->print("You must be in corporeal form to steal!\n");
 			return(0);
 		}
@@ -449,12 +449,12 @@ int cmdSteal(Player* player, cmd* cmnd) {
 		// Staff cannot be stolen from by players. Ever.
 		if(pTarget->isStaff() && !player->isDm()) {
 			player->print("Stealing from an immortal is not a good thing for your health.\n");
-			pTarget->print("%s tried to steal stuff from you.\n", player->name);
+			pTarget->print("%s tried to steal stuff from you.\n", player->getCName());
 			return(0);
 		}
 
 		// Impossible to steal from an incorpreal mist.
-		if(	pTarget->flagIsSet(P_MISTED) &&
+		if(	pTarget->isEffected("mist") &&
 			!player->checkStaff("You cannot steal from a misted vampire.\n") )
 			return(0);
 
@@ -486,7 +486,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, target->first_obj, cmnd);
+	object = target->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("%s doesn't have that.\n", target->upHeShe());
 		return(0);
@@ -533,10 +533,10 @@ int cmdSteal(Player* player, cmd* cmnd) {
 		object->popBag(target);
 
 		log_immort(false, player, "%s stole %s from %s.\n",
-			player->name, object->name, target->name);
+			player->getCName(), object->getCName(), target->getCName());
 
 		logn("log.steal", "%s(L%d) stole %s from %s(L%d) in room %s.\n",
-		     player->name, player->getLevel(), object->name, target->name, target->getLevel(),
+		     player->getCName(), player->getLevel(), object->getCName(), target->getCName(), target->getLevel(),
 		     room->fullName().c_str());
 
 		// Other people in the room will possibly notice what's going on.
@@ -560,7 +560,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 				continue;
 
 			// Thieves cannot mist, but putting this here for completeness.
-			if(player->flagIsSet(P_MISTED) && !bystander->isEffected("true-sight"))
+			if(player->isEffected("mist") && !bystander->isEffected("true-sight"))
 				continue;
 
 			// If thief is invisible, only those with d-i will possibly see.

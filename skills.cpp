@@ -443,7 +443,7 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
     if (toShow->getAsPlayer() == player)
         toShow->printColor("^YYour Skills:");
     else
-        toShow->printColor("^Y%s's Skills:", player->name);
+        toShow->printColor("^Y%s's Skills:", player->getCName());
 
     if (showMagic)
         toShow->printColor(" ^Ytype \"skills\" to show non-magical skills.");
@@ -671,7 +671,7 @@ int dmSkills(Player* player, cmd* cmnd) {
             player->print("Target not found.\n");
             return (0);
         }
-        player->print("Skills for: %s\n", target->name);
+        player->print("Skills for: %s\n", target->getCName());
         showSkills(player, target, true);
     }
     return (0);
@@ -711,7 +711,7 @@ int dmSetSkills(Player *admin, cmd* cmnd) {
                 }
             }
         }
-        admin->print("%s's skills have been set for %s level.\n", target->name, target->hisHer());
+        admin->print("%s's skills have been set for %s level.\n", target->getCName(), target->hisHer());
     } else {
         admin->print("Unable to find class %s.\n", target->getClassString().c_str());
     }

@@ -27,13 +27,3 @@
 #include <iostream>
 #include <fstream>
 
-//*********************************************************************
-//						moCopy
-//*********************************************************************
-
-void MudObject::moCopy(const MudObject& mo) {
-	strcpy(name, mo.name);
-
-	hooks = mo.hooks;
-	hooks.setParent(this);
-}

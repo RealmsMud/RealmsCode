@@ -25,7 +25,7 @@
 //*********************************************************************
 
 bool induel(const Player* player, const Player* target) {
-	return(player && target && player->isDueling(target->name) && target->isDueling(player->name));
+	return(player && target && player->isDueling(target->getName()) && target->isDueling(player->getName()));
 }
 
 
@@ -72,11 +72,11 @@ int cmdDuel(Player* player, cmd* cmnd) {
 
 	if(creature && player->canSee(creature)) {
 
-		if(player->isDueling(creature->name)) {
-			player->delDueling(creature->name);
-			player->printColor("^R%s is now removed from your duel list.\n", creature->name);
+		if(player->isDueling(creature->getName())) {
+			player->delDueling(creature->getName());
+			player->printColor("^R%s is now removed from your duel list.\n", creature->getCName());
 			creature->printColor("^R%s has removed you from %s duel list.\n",
-			      player->name, player->hisHer());
+			      player->getCName(), player->hisHer());
 
 			player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
 			player->lasttime[LT_SPELL].ltime = time(0);
@@ -106,13 +106,13 @@ int cmdDuel(Player* player, cmd* cmnd) {
 
 
 
-	if(player->isDueling(creature->name)) {
-		player->printColor("^R%s is now removed from your duel list.\n", creature->name);
+	if(player->isDueling(creature->getName())) {
+		player->printColor("^R%s is now removed from your duel list.\n", creature->getCName());
 		creature->printColor("^R%s has removed you from %s duel list.\n",
-		      player->name, player->hisHer());
+		      player->getCName(), player->hisHer());
 		logn("log.duel", "%s removed %s from %s duel list.\n",
-		     player->name, creature->name, player->hisHer());
-		player->delDueling(creature->name);
+		     player->getCName(), creature->getCName(), player->hisHer());
+		player->delDueling(creature->getName());
 		player->updateAttackTimer(true, 30);
 		player->lasttime[LT_SPELL].ltime = time(0);
 		player->lasttime[LT_SPELL].interval = 30L;
@@ -129,17 +129,17 @@ int cmdDuel(Player* player, cmd* cmnd) {
 			player->print("Your opponent must be at least level 4.\n");
 			return(0);
 		}
-		player->printColor("^R%s is now added to your duel list.\n", creature->name);
+		player->printColor("^R%s is now added to your duel list.\n", creature->getCName());
 		creature->printColor("^R%s has added you to %s duel list.\n",
-		      player->name, player->hisHer());
+		      player->getCName(), player->hisHer());
 		logn("log.duel", "%s added %s to %s duel list.\n",
-		     player->name, creature->name, player->hisHer());
-		player->addDueling(creature->name);
+		     player->getCName(), creature->getCName(), player->hisHer());
+		player->addDueling(creature->getName());
 
-		if(creature->isDueling(player->name)) {
+		if(creature->isDueling(player->getName())) {
 
 			broadcast(wantsDuelMessages, "### %s and %s have entered a duel to the death!",
-				player->name, creature->name);
+				player->getCName(), creature->getCName());
 			
 		}
 	}

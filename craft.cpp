@@ -26,7 +26,6 @@
 #include <sstream>
 #include <iomanip>
 #include <locale>
-
 #define RECIPE_WIDTH	37
 
 int numIngredients(Size size);
@@ -38,11 +37,9 @@ int numIngredients(Size size);
 
 Object* findHot(const Player* player) {
 	// we can cook from any hot object
-	otag* op = player->getConstRoomParent()->first_obj;
-	while(op) {
-		if(Recipe::goodObject(player, op->obj) && op->obj->flagIsSet(O_HOT))
-			return(op->obj);
-		op = op->next_tag;
+	for(Object* obj : player->getConstRoomParent()->objects) {
+		if(Recipe::goodObject(player, obj) && obj->flagIsSet(O_HOT))
+			return(obj);
 	}
 	return(0);
 }
@@ -219,44 +216,48 @@ bool Recipe::goodObject(const Player* player, const Object* object, const CatRef
 
 bool Recipe::check(const Player* player, const std::list<CatRef>* list, bstring type, int numIngredients) const {
 	Object* object=0;
-	otag*	op=0, *first = (type == "equipment" ? player->getConstRoomParent()->first_obj : player->first_obj);
-	std::list<CatRef>::const_iterator it;
+	const ObjectSet *set;
+	if(type == "equipment")
+		set = &player->getConstRoomParent()->objects;
+	else
+		set = &player->objects;
+	ObjectSet::iterator oIt;
+	std::list<CatRef>::const_iterator lIt;
 	int has=0;
 	if(!isSizable())
 		numIngredients = 1;
 
-	for(it = list->begin(); it != list->end() ; it++) {
-		op = first;
-		while(op) {
+	for(lIt = list->begin(); lIt != list->end() ; lIt++) {
+		for( oIt = set->begin() ; oIt != set->end() ; ) {
 			// do they have this ingredient?
-			object = op->obj;
+			object = (*oIt);
 			has = 0;
-			if(!object->flagIsSet(O_BEING_PREPARED) && Recipe::goodObject(player, object, &(*it))) {
+			if(!object->flagIsSet(O_BEING_PREPARED) && Recipe::goodObject(player, object, &(*lIt))) {
 				player->printColor("You prepare %1P.\n", object);
 				if(type != "equipment")
 					object->setFlag(O_BEING_PREPARED);
 
 				has++;
-				while(has < numIngredients && op->next_tag) {
-					if(Recipe::goodObject(player, op->next_tag->obj, &(*it))) {
-						if(!op->next_tag->obj->flagIsSet(O_BEING_PREPARED)) {
-							player->printColor("You prepare %1P.\n", op->next_tag->obj);
+				while(has < numIngredients && (oIt++) != set->end() ) {
+					object = (*oIt);
+					if(Recipe::goodObject(player, object, &(*lIt))) {
+						if(!object->flagIsSet(O_BEING_PREPARED)) {
+							player->printColor("You prepare %1P.\n", object);
 							if(type != "equipment")
-								op->next_tag->obj->setFlag(O_BEING_PREPARED);
+								object->setFlag(O_BEING_PREPARED);
 						}
 
 						has++;
 						if(has == numIngredients)
 							break;
 					}
-					op = op->next_tag;
 				}
 				if(has == numIngredients)
 					break;
 			}
-			op = op->next_tag;
+			oIt++;
 		}
-		if(!op) {
+		if(oIt == set->end()) {
 			player->unprepareAllObjects();
 			player->print("You lack the necessary %s listed in this recipe.\n", type.c_str());
 			return(false);
@@ -446,7 +447,7 @@ bool Recipe::canUseEquipment(const Player* player, bstring skill) const {
 bool Recipe::canBeEdittedBy(const Player* player) const {
 	if(player->isDm())
 		return(true);
-	return(!strcmp(player->name, creator.c_str()));
+	return(player->getName() == creator.c_str());
 }
 
 //**********************************************************************
@@ -487,7 +488,6 @@ Recipe* Config::searchRecipes(const Player* player, bstring skill, Size recipeSi
 	std::map<int, Recipe*>::iterator rIt;
 	Object* hot=0;
 	Recipe*	recipe=0;
-	otag*	op = player->first_obj;
 	int		flags = player->displayFlags();
 	unsigned int num=0;
 	bstring	str = "";
@@ -502,12 +502,11 @@ Recipe* Config::searchRecipes(const Player* player, bstring skill, Size recipeSi
 		}
 	} else {
 		// make our life easier and just make a list of objects
-		while(op) {
-			if(Recipe::goodObject(player, op->obj) && op->obj->flagIsSet(O_BEING_PREPARED)) {
-				list.push_back(op->obj->info);
-				tList.push_back(op->obj->info);
+		for( Object* obj : player->objects) {
+			if(Recipe::goodObject(player, obj) && obj->flagIsSet(O_BEING_PREPARED)) {
+				list.push_back(obj->info);
+				tList.push_back(obj->info);
 			}
-			op = op->next_tag;
 		}
 	}
 
@@ -555,18 +554,20 @@ Recipe* Config::searchRecipes(const Player* player, bstring skill, Size recipeSi
 				} else
 					hasEquipment = false;
 			} else {
+				ObjectSet::iterator oIt;
 				for(iIt = recipe->equipment.begin(); iIt != recipe->equipment.end() ; iIt++) {
-					op = player->getConstRoomParent()->first_obj;
-					while(op) {
-						if(Recipe::goodObject(player, op->obj, &(*iIt))) {
+
+					for( oIt = player->getConstRoomParent()->objects.begin() ; oIt != player->getConstRoomParent()->objects.end() ; ) {
+						Object *obj = (*oIt);
+						if(Recipe::goodObject(player, obj, &(*iIt))) {
 							str += "You prepare ";
-							str += op->obj->getObjStr(NULL, flags, 1);
+							str += obj->getObjStr(NULL, flags, 1);
 							str += ".\n";
 							break;
 						}
-						op = op->next_tag;
+						oIt++;
 					}
-					if(!op) {
+					if(oIt == player->getConstRoomParent()->objects.end()) {
 						hasEquipment = false;
 						break;
 					}
@@ -721,7 +722,7 @@ Recipe* Player::findRecipe(cmd* cmnd, bstring skill, bool* searchRecipes, Size r
 		print("You don't know that recipe.\n");
 	} else {
 		Recipe* recipe = 0;
-		Object* object = findObject(this, first_obj, cmnd);
+		Object* object = this->findObject(this, cmnd, 1);
 		if(object) {
 			// if the object they're using is a recipe
 			if(object->getRecipe()) {
@@ -757,7 +758,6 @@ int dmCombine(Player* player, cmd* cmnd) {
 	Recipe *recipe=0;
 	std::list<CatRef> objects;
 	std::list<CatRef>* list;
-	otag* op = player->first_obj;
 	bstring txt = "";
 
 	if(!player->canBuildObjects())
@@ -776,7 +776,7 @@ int dmCombine(Player* player, cmd* cmnd) {
 		}
 	} else {
 		recipe = new Recipe;
-		recipe->setCreator(player->name);
+		recipe->setCreator(player->getName());
 		gConfig->addRecipe(recipe);
 		player->printColor("\nNew recipe ^y#%d^x created.\n\n", recipe->getId());
 	}
@@ -795,16 +795,15 @@ int dmCombine(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	while(op) {
-		if(!op->obj->info.id)
-			player->printColor("Skipping %P, no index found.\n", op->obj);
-		else if(op->obj->flagIsSet(O_BEING_PREPARED)) {
-			if(!Recipe::goodObject(player, op->obj))
-				player->printColor("Skipping %P, it failed goodObject check.\n", op->obj);
+	for(Object* obj : player->objects) {
+		if(!obj->info.id)
+			player->printColor("Skipping %P, no index found.\n", obj);
+		else if(obj->flagIsSet(O_BEING_PREPARED)) {
+			if(!Recipe::goodObject(player, obj))
+				player->printColor("Skipping %P, it failed goodObject check.\n", obj);
 			else
-				objects.push_back(op->obj->info);
+				objects.push_back(obj->info);
 		}
-		op = op->next_tag;
 	}
 
 	// supply the new list
@@ -843,7 +842,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 
 		player->print("Recipe #%d deleted.\n", recipe->getId());
 		log_immort(true, player, "%s deleted recipe #%d.\n",
-			player->name, recipe->getId());
+			player->getCName(), recipe->getId());
 
 		gConfig->remRecipe(recipe);
 		delete recipe;
@@ -854,7 +853,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 
 		player->print("Recipe #%d's Experience set to %d.\n", recipe->getId(), recipe->getExperience());
 		log_immort(true, player, "%s set recipe #%d's %s to %d.\n",
-			player->name, recipe->getId(), "Experience", recipe->getExperience());
+			player->getCName(), recipe->getId(), "Experience", recipe->getExperience());
 		break;
 	case 'r':
 		if(low(cmnd->str[2][1] == 'e' && low(cmnd->str[2][2]) == 'q')) {
@@ -862,14 +861,14 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 
 			player->print("Recipe #%d's RequireRecipe set to %s.\n", recipe->getId(), recipe->requiresRecipe() ? "true" : "false");
 			log_immort(true, player, "%s set recipe #%d's %s to %s.\n",
-				player->name, recipe->getId(), "RequireRecipe", recipe->requiresRecipe() ? "true" : "false");
+				player->getCName(), recipe->getId(), "RequireRecipe", recipe->requiresRecipe() ? "true" : "false");
 		} else {
 			if(cmnd->val[2] > 1 && cmnd->val[2] < 20000) {
 				CatRef	cr;
 				cr.id = cmnd->val[2];
 				recipe->setResult(cr);
 		} else {
-				Object* object = findObject(player, player->first_obj, cmnd, 3);
+				Object* object = player->findObject(player, cmnd, 3);
 				if(!object) {
 					player->print("Set result to what object?\n");
 					return(0);
@@ -882,7 +881,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 			}
 			player->print("Recipe #%d's Result set to %s.\n", recipe->getId(), recipe->getResult().str().c_str());
 			log_immort(true, player, "%s set recipe #%d's %s to %s.\n",
-				player->name, recipe->getId(), "Result", recipe->getResult().str().c_str());
+				player->getCName(), recipe->getId(), "Result", recipe->getResult().str().c_str());
 		}
 		break;
 	case 's':
@@ -891,7 +890,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 			recipe->setSizable(cmnd->val[2]);
 			player->print("Recipe #%d's Sizable set to \"%s\".\n", recipe->getId(), recipe->isSizable() ? "true" : "false");
 			log_immort(true, player, "%s set recipe #%d's %s to \"%s\".\n",
-				player->name, recipe->getId(), "Sizable", recipe->isSizable() ? "true" : "false");
+				player->getCName(), recipe->getId(), "Sizable", recipe->isSizable() ? "true" : "false");
 		} else {
 			txt = cmnd->str[3];
 			if(txt != "" && !gConfig->getSkill(txt)) {
@@ -902,7 +901,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 
 			player->print("Recipe #%d's Skill set to \"%s\".\n", recipe->getId(), recipe->getSkill().c_str());
 			log_immort(true, player, "%s set recipe #%d's %s to \"%s\".\n",
-				player->name, recipe->getId(), "Skill", recipe->getSkill().c_str());
+				player->getCName(), recipe->getId(), "Skill", recipe->getSkill().c_str());
 		}
 		break;
 	default:
@@ -1162,10 +1161,8 @@ Recipe* Config::getRecipe(int id) {
 //**********************************************************************
 
 void Player::unprepareAllObjects() const {
-	otag* op = first_obj;
-	while(op) {
-		op->obj->clearFlag(O_BEING_PREPARED);
-		op = op->next_tag;
+	for(Object* obj : objects) {
+		obj->clearFlag(O_BEING_PREPARED);
 	}
 }
 
@@ -1175,19 +1172,16 @@ void Player::unprepareAllObjects() const {
 
 void Player::removeItems(const std::list<CatRef>* list, int numIngredients) {
 	std::list<CatRef>::const_iterator it;
-	otag* op=0;
 	int num=0;
 
 	for(it = list->begin(); it != list->end() ; it++) {
 		num = 0;
 		while(num < numIngredients) {
-			op = first_obj;
-			while(op) {
-				if(Recipe::goodObject(this, op->obj, &(*it)) && op->obj->flagIsSet(O_BEING_PREPARED)) {
-					delObj(op->obj, true, false, true, false);
+			for(Object *obj : objects) {
+				if(Recipe::goodObject(this, obj, &(*it)) && obj->flagIsSet(O_BEING_PREPARED)) {
+					delObj(obj, true, false, true, false);
 					break;
 				}
-				op = op->next_tag;
 			}
 			// updating here is safer, rather than conditionally inside the loop
 			num++;
@@ -1209,13 +1203,13 @@ int cmdPrepareObject(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("You don't have that in your inventory.\n");
 		return(0);
 	}
 
-	if(object->getType() == CONTAINER && object->first_obj) {
+	if(object->getType() == CONTAINER && !object->objects.empty()) {
 		player->printColor("You need to empty %P in order to prepare it.\n", object);
 		return(0);
 	}
@@ -1249,7 +1243,7 @@ int cmdUnprepareObject(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object || !object->flagIsSet(O_BEING_PREPARED)) {
 		player->print("You are not preparing that.\n");
 		return(0);
@@ -1306,11 +1300,11 @@ int cmdCraft(Player* player, cmd* cmnd) {
 			player->printColor("You are too busy to do that now!\n");
 			return(0);
 		}
-		if(player->flagIsSet(P_MISTED)) {
+		if(player->isEffected("mist")) {
 			player->printColor("You must be in corporeal form to work with items.\n");
 			return(0);
 		}
-		if(!player->canSee(player->getRoomParent(), true))
+		if(!player->canSeeRoom(player->getRoomParent(), true))
 			return(0);
 
 		if(!player->checkAttackTimer())

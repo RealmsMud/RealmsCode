@@ -59,7 +59,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 		player->print("What do you wish to identify?\n");
 		return(0);
 	}
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
 		player->print("You don't have that object in your inventory.\n");
@@ -529,14 +529,14 @@ int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) 
 			if(mons->isPet() && mons->getMaster() == player) {
 				continue;
 			}
-			if(lastname[0] && !strncmp(mons->name, lastname, 79)) {
+			if(lastname[0] && mons->getName() ==  lastname) {
 				count++;
 			} else {
 				count = 1;
 			}
-			strncpy(cmnd->str[2], mons->name, 25);
+			strncpy(cmnd->str[2], mons->getCName(), 25);
 			cmnd->val[2] = count;
-			strncpy(lastname, mons->name, 79);
+			strncpy(lastname, mons->getCName(), 79);
 			ret = songOffensive(player, cmnd, songname, oso);
 			if(ret == 0)
 				return(found_something);
@@ -557,14 +557,14 @@ int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) 
 			if(ply == player) {
 				continue;
 			}
-			if(lastname[0] && !strncmp(ply->name, lastname, 79)) {
+			if(lastname[0] && ply->getName() == lastname) {
 				count++;
 			} else {
 				count = 1;
 			}
-			strncpy(cmnd->str[2], ply->name, 25);
+			strncpy(cmnd->str[2], ply->getCName(), 25);
 			cmnd->val[2] = count;
-			strncpy(lastname, ply->name, 79);
+			strncpy(lastname, ply->getCName(), 79);
 			ret = songOffensive(player, cmnd, songname, oso);
 			if(ret == 0)
 				return(found_something);
@@ -640,7 +640,7 @@ int songOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) {
 			return(0);
 
 		if(pCreature) {
-			if(player->vampireCharmed(pCreature) || (pCreature->hasCharm(player->name) && player->flagIsSet(P_CHARMED))) {
+			if(player->vampireCharmed(pCreature) || (pCreature->hasCharm(player->getName()) && player->flagIsSet(P_CHARMED))) {
 				player->print("You just can't bring yourself to do that.\n");
 				return(0);
 			}
@@ -670,7 +670,7 @@ int songOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) {
 		player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
 		player->statistics.magicDamage(dmg, (bstring)"a song of " + songname);
 
-		player->print("You sing a song of %s to %s.\n", songname, creature->name);
+		player->print("You sing a song of %s to %s.\n", songname, creature->getCName());
 		player->printColor("Your song inflicted %s%d^x damage.\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg);
 		broadcast(player->getSock(), creature->getSock(), room, "%M sings a song of %s to %N.", player, songname, creature);
 		creature->printColor("%M sings a song of %s to you.\n%M's song inflicted %s%d^x damage on you.\n",
@@ -717,7 +717,7 @@ int songsKnown(Socket* sock, Player* player, int test) {
 	int             i=0, j=0;
 
 	if(test)
-		sprintf(str, "\n%s's Songs Known: ", player->name);
+		sprintf(str, "\n%s's Songs Known: ", player->getCName());
 	else
 		strcpy(str, "\nSongs known: ");
 
@@ -1109,9 +1109,9 @@ int cmdCharm(Player* player, cmd* cmnd) {
 
 	if(	creature->isPlayer() &&
 		(	player->vampireCharmed(creature->getAsPlayer()) ||
-			(creature->hasCharm(player->name) && player->flagIsSet(P_CHARMED))
-		)
-	) {
+			(creature->hasCharm(player->getName()) && player->flagIsSet(P_CHARMED))
+		))
+	{
 		player->print("But they are already your good friend!\n");
 		return(0);
 	}

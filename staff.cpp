@@ -54,7 +54,7 @@ int log_immort(int broad, Player* player, const char *fmt,...) {
 	}
 
 	// trick logn to use Path::StaffLog
-	sprintf(name, "staff/%s", player->name);  // Path::StaffLog
+	sprintf(name, "staff/%s", player->getCName());  // Path::StaffLog
 	logn(name, "%s\n", txt.c_str());
 
 	if(broad) {
@@ -159,7 +159,7 @@ bool isDm(Socket* sock) {
 bool isAdm(const Creature* player) {
 	if(player->isMonster())
 		return(false);
-	return((!strcmp(player->name, "Bane") || !strcmp(player->name, "Dominus") || !strcmp(player->name, "Ocelot")));
+	return(player->getName() == "Bane" || player->getName() == "Dominus" || player->getName() == "Ocelot");
 }
 
 bool isAdm(Socket* sock) {

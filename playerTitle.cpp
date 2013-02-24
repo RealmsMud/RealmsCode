@@ -153,12 +153,12 @@ void doTitle(Socket* sock, bstring str) {
 	Player* player = sock->getPlayer();
 
 	if(low(str[0]) == 'y') {
-		player->print("You are now known as %s the %s.\n", player->name, player->getTempTitle().c_str());
+		player->print("You are now known as %s the %s.\n", player->getCName(), player->getTempTitle().c_str());
 		if(!player->isStaff()) {
-			broadcast("^y%s the %s is now known as %s the %s.", player->name,
-					player->getTitle().c_str(), player->name, player->getTempTitle().c_str());
+			broadcast("^y%s the %s is now known as %s the %s.", player->getCName(),
+					player->getTitle().c_str(), player->getCName(), player->getTempTitle().c_str());
 
-			sendMail(gConfig->getReviewer(), (bstring)player->name + " has chosen the title " + player->getTempTitle() + ".\n");
+			sendMail(gConfig->getReviewer(), player->getName() + " has chosen the title " + player->getTempTitle() + ".\n");
 		}
 
 		player->setTitle(player->getTempTitle());
@@ -267,7 +267,7 @@ int cmdSurname(Player* player, cmd* cmnd) {
 
 	player->printColor("^WNote that profane or otherwise idiotic surnames, as well as\n");
 	player->printColor("idiotic combinations of name and surname, will not be tolerated.^x\n\n");
-	player->print("Your full name will be %s %s.\n", player->name, player->getSurname().c_str());
+	player->print("Your full name will be %s %s.\n", player->getCName(), player->getSurname().c_str());
 	player->print("Is this acceptable?(Y/N)?\n");
 
 	player->getSock()->setState(CON_CONFIRM_SURNAME);
@@ -280,10 +280,10 @@ int cmdSurname(Player* player, cmd* cmnd) {
 
 void doSurname(Socket* sock, bstring str) {
 	if(low(str[0]) == 'y') {
-		sock->print("You are now known as %s %s.\n", sock->getPlayer()->getName(), sock->getPlayer()->getSurname().c_str());
+		sock->print("You are now known as %s %s.\n", sock->getPlayer()->getCName(), sock->getPlayer()->getSurname().c_str());
 
 		if(!sock->getPlayer()->isStaff()) {
-			broadcast("### %s is now known as %s %s.", sock->getPlayer()->getName(), sock->getPlayer()->getName(),
+			broadcast("### %s is now known as %s %s.", sock->getPlayer()->getCName(), sock->getPlayer()->getCName(),
 				sock->getPlayer()->getSurname().c_str());
 
 			sendMail(gConfig->getReviewer(), (bstring)sock->getPlayer()->getName() + " has chosen the surname " + sock->getPlayer()->getSurname() + ".\n");

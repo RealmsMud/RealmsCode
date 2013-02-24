@@ -996,7 +996,6 @@ void Creature::crtReset() {
 	// Clear out any skills/factions/etc
 	crtDestroy();
 
-	zero(name, sizeof(name));
 	zero(key, sizeof(key));
 
 	poisonedBy = description = "";
@@ -1040,7 +1039,6 @@ void Creature::crtReset() {
 	for(i=0; i<MAXWEAR; i++)
 		ready[i] = 0;
 
-	first_obj = 0;
 	first_tlk = 0;
 
 	currentLocation.mapmarker.reset();
@@ -1242,8 +1240,8 @@ void Creature::CopyCommon(const Creature& cr) {
 
 	group = cr.group;
 	groupStatus = cr.groupStatus;
-	first_obj = cr.first_obj;
 	first_tlk = cr.first_tlk;
+	objects = cr.objects;
 
 	currentLocation.room = cr.currentLocation.room;
 	currentLocation.mapmarker = cr.currentLocation.mapmarker;
@@ -1571,13 +1569,14 @@ Player& Player::operator=(const Player& cr) {
 
 // Things all subclasses must destroy
 void Creature::crtDestroy() {
-	moDestroy();
-
-	clearTarget();
 
 	for(Creature* targeter : targetingThis) {
 		targeter->clearTarget(false);
 	}
+
+	clearTarget();
+
+	moDestroy();
 
 	factions.clear();
 
@@ -1670,7 +1669,7 @@ bool Creature::isWatcher() const {
 //*********************************************************************
 
 bool Creature::isStaff() const {
-	if(isMonster())
+	if(!this || isMonster())
 		return(false);
 	return(cClass >= BUILDER);
 }
@@ -1702,7 +1701,7 @@ bool Creature::isDm() const {
 bool Creature::isAdm() const {
 	if(isMonster())
 		return(false);
-	return((!strcmp(name, "Bane") || !strcmp(name, "Dominus") || !strcmp(name, "Ocelot")));
+	return(getName() == "Bane" || getName() == "Dominus" || getName() == "Ocelot");
 }
 
 //*********************************************************************
@@ -1810,7 +1809,7 @@ extern int spllist_size;
 
 void Creature::learnSpell(int spell) {
 	if(spell > spllist_size) {
-		broadcast(::isDm, "^G*** Trying to set invalid spell %d on %s.  Spell List Size: %d\n", spell, name, spllist_size);
+		broadcast(::isDm, "^G*** Trying to set invalid spell %d on %s.  Spell List Size: %d\n", spell, getCName(), spllist_size);
 		return;
 	}
 	spells[spell/8] |= 1<<(spell%8);
@@ -2042,7 +2041,7 @@ bool Creature::isBraindead()  const {
 
 bstring Creature::fullName() const {
 	const Player *player = getAsConstPlayer();
-	bstring str = name;
+	bstring str = getName();
 
 	if(player && !player->getProxyName().empty())
 		str += "(" + player->getProxyName() + ")";
@@ -2062,10 +2061,10 @@ bstring Creature::fullName() const {
 void Creature::unmist() {
 	if(isMonster())
 		return;
-	if(!flagIsSet(P_MISTED))
+	if(!isEffected("mist"))
 		return;
 
-	clearFlag(P_MISTED);
+	removeEffect("mist");
 	clearFlag(P_SNEAK_WHILE_MISTED);
 	unhide();
 
@@ -2137,14 +2136,6 @@ bool Creature::doesntBreathe() const {
 
 bool Creature::immuneCriticals() const {
 	return(monType::immuneCriticals(type));
-}
-
-//*********************************************************************
-//						getName
-//*********************************************************************
-
-const char* Creature::getName() const {
-	return(name);
 }
 
 //*********************************************************************

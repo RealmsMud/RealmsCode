@@ -238,10 +238,9 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
 				continue;
 			object->init(!prototype);
 			if(	object->flagIsSet(O_ALWAYS_DROPPED) &&
-				object->name[0] &&
-				object->name[0] != ' ' &&
-				object->name[0] != '\0'
-			) {
+				!object->getName().empty() &&
+				object->getName()[0] != ' ' )
+			{
 				addObj(object);
 				object->setFlag(O_JUST_LOADED);
 			} else {
@@ -268,9 +267,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
 			if(carry[whichDrop].info.id && !flagIsSet(M_TRADES)) {
 				if(!loadObject(carry[whichDrop].info, &object))
 					continue;
-				if(	!object->name[0] ||
-					object->name[0] == ' ' ||
-					object->name[0] == '\0' )
+				if(	object->getName().empty() || object->getName()[0] == ' ')
 				{
 					delete object;
 					continue;
@@ -310,9 +307,13 @@ int Monster::getNumMobs() const {
 
 	if(flagIsSet(M_DM_FOLLOW) || flagIsSet(M_WAS_PORTED))
 		return(0);
-
-	for(Monster* mons : getConstRoomParent()->monsters) {
-	    if(!strcmp(mons->name, name)) {
+	if(!this->inRoom())
+		return(0);
+	const BaseRoom* room = getConstRoomParent();
+	if(!room)
+		return(0);
+	for(Monster* mons : room->monsters) {
+	    if(mons->getName() == getName()) {
 	        i++;
 	        if(mons == this)
 	            return(i);

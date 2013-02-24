@@ -151,7 +151,7 @@ int dmLottery(Player* player, cmd* cmnd) {
 	return(0);
 }
 
-int createLotteryTicket(Object **object, char *name) {
+int createLotteryTicket(Object **object, const char *name) {
 	int numbers[6];
 	int go=1, x=0, j=0, reCalc=0;
 	char desc[80];
@@ -265,7 +265,7 @@ int cmdClaim(Player* player, cmd* cmnd) {
 
 	player->unhide();
 
-	ticket = findObject(player, player->first_obj, cmnd);
+	ticket = player->findObject(player, cmnd, 1);
 
 	if(!ticket) {
 		player->print("You don't have that.\n");
@@ -304,10 +304,10 @@ int cmdClaim(Player* player, cmd* cmnd) {
 		player->print("Sorry, this ticket isn't worth anything.\n");
 		return(0);
 	}
-	logn("log.prizes", "%s just won %ld.\n", player->name, prize);
+	logn("log.prizes", "%s just won %ld.\n", player->getCName(), prize);
 	gConfig->addLotteryWinnings(prize);
 
-	broadcast(player->getSock(), player->getParent(), "%s claims a Powerbone ticket.", player->name);
+	broadcast(player->getSock(), player->getParent(), "%s claims a Powerbone ticket.", player->getCName());
 
 	if(prize != gConfig->getLotteryJackpot()) { // Didn't win the big pot
 		player->print("Sorry you didn't win the jackpot this time, but you did win $%ld today!\n", prize);
@@ -316,7 +316,7 @@ int cmdClaim(Player* player, cmd* cmnd) {
 		gServer->logGold(GOLD_IN, player, Money(prize, GOLD), NULL, "Lottery");
 		return(0);
 	} else { // Big winner
-		broadcast("### %s just won the Highport Powerbones' Jackpot of %ld gold coin%s!", player->name, prize, prize != 1 ? "s" : "");
+		broadcast("### %s just won the Highport Powerbones' Jackpot of %ld gold coin%s!", player->getCName(), prize, prize != 1 ? "s" : "");
 		// Reset the pot!
 		player->print("The lottery official hands you %ld gold coin%s.\n", prize, prize != 1 ? "s" : "");
 		player->coins.add(prize, GOLD);

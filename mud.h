@@ -66,6 +66,7 @@ enum LoadType {
 	LS_CONVERT,
 
 	LS_FULL,
+	LS_PROTOTYPE,
 	LS_REF
 };
 

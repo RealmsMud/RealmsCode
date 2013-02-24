@@ -114,7 +114,7 @@ void Player::init() {
 
 	setFlag(P_SECURITY_CHECK_OK);
 
-	if(isdm(name))
+	if(isdm(getName()))
 		cClass = DUNGEONMASTER;
 	else if(isDm())
 		cClass = CARETAKER;
@@ -153,12 +153,12 @@ void Player::init() {
 		initBuilder();
 
 
-	if(flagIsSet(P_MISTED) && !canMistNow())
+	if(isEffected("mist") && !canMistNow())
 		unmist();
 
 	if(!isStaff()) {
 		clearFlag(P_DM_INVIS);
-		clearFlag(P_INCOGNITO);
+		removeEffect("incognito");
 	} else {
 		// staff logs on with dmInvis
 		setFlag(P_DM_INVIS);
@@ -262,8 +262,8 @@ void Player::init() {
 		Property *p = gConfig->getProperty(currentLocation.room);
 		if(	p &&
 			p->getType() == PROP_STORAGE &&
-			!p->isOwner(name) &&
-			!p->isPartialOwner(name) )
+			!p->isOwner(getName()) &&
+			!p->isPartialOwner(getName()) )
 		{
 			// default to bound location
 			Location l = bound;
@@ -289,10 +289,10 @@ void Player::init() {
 	if(!newRoom) {
 		UniqueRoom	*uRoom=0;
 		if(!loadRoom(currentLocation.room, &uRoom)) {
-			loge("%s: %s (%s) Attempted logon to bad or missing room!\n", name,
+			loge("%s: %s (%s) Attempted logon to bad or missing room!\n", getCName(),
 				getSock()->getHostname().c_str(), currentLocation.room.str().c_str());
 			// NOTE: Using ::isCt to use the global function, not the local function
-			broadcast(::isCt, "^y%s: %s (%s) Attempted logon to bad or missing room (normal)!", name,
+			broadcast(::isCt, "^y%s: %s (%s) Attempted logon to bad or missing room (normal)!", getCName(),
 				getSock()->getHostname().c_str(), currentLocation.room.str().c_str());
 			newRoom = abortFindRoom(this, "init_ply");
 			uRoom = newRoom->getAsUniqueRoom();
@@ -307,7 +307,7 @@ void Player::init() {
 				uRoom->getTrapExit().id &&
 				!loadRoom(uRoom->getTrapExit(), &uRoom)
 			) {
-				broadcast(::isCt, "^y%s: %s (%s) Attempted logon to bad or missing room!", name,
+				broadcast(::isCt, "^y%s: %s (%s) Attempted logon to bad or missing room!", getCName(),
 			    	getSock()->getHostname().c_str(), uRoom->getTrapExit().str().c_str());
 				newRoom = abortFindRoom(this, "init_ply");
 				uRoom = newRoom->getAsUniqueRoom();
@@ -322,7 +322,7 @@ void Player::init() {
 			) {
 				newRoom = getRecallRoom().loadRoom(this);
 				if(!newRoom) {
-					broadcast(::isCt, "^y%s: %s (%s) Attempted logon to bad or missing room!", name,
+					broadcast(::isCt, "^y%s: %s (%s) Attempted logon to bad or missing room!", getCName(),
 						getSock()->getHostname().c_str(), getRecallRoom().str().c_str());
 					newRoom = abortFindRoom(this, "init_ply");
 				}
@@ -338,13 +338,13 @@ void Player::init() {
 
 	//	str[0] = 0;
 	if(!isDm()) {
-		loge("%s(L:%d) (%s) %s. Room - %s (Port-%d)\n", name, level,
+		loge("%s(L:%d) (%s) %s. Room - %s (Port-%d)\n", getCName(), level,
 		     getSock()->getHostname().c_str(), gServer->isRebooting() ? "reloaded" : "logged on",
 		    		 newRoom->fullName().c_str(), Port);
 	}
 	if(isStaff())
 		logn("log.imm", "%s  (%s) %s.\n",
-		     name, getSock()->getHostname().c_str(),
+				getCName(), getSock()->getHostname().c_str(),
 		     gServer->isRebooting() ? "reloaded" : "logged on");
 
 
@@ -384,7 +384,7 @@ void Player::init() {
 	}
 
 	if(!gServer->isRebooting())
-		bug("%s logged into room %s.\n", name, getRoomParent()->fullName().c_str());
+		bug("%s logged into room %s.\n", getCName(), getRoomParent()->fullName().c_str());
 
 
 	wearCursed();
@@ -407,7 +407,7 @@ void Player::init() {
 			sprintf(file, "%s/news.txt", Path::DMHelp);
 			viewLoginFile(sock, file);
 		}
-		if(isStaff() && strcmp(name, "Bane")) {
+		if(isStaff() && getName() != "Bane") {
 			sprintf(file, "%s/news.txt", Path::BuilderHelp);
 			viewLoginFile(sock, file);
 		}
@@ -436,7 +436,7 @@ void Player::init() {
 			if(!canSee(ply))
 				continue;
 
-			strcat(watchers, ply->name);
+			strcat(watchers, ply->getCName());
 			strcat(watchers, ", ");
 			watch++;
 		}
@@ -469,8 +469,8 @@ void Player::init() {
 		if(lasttime[LT_AGE].ltime > time(0) ) {
 			lasttime[LT_AGE].ltime = time(0);
 			lasttime[LT_AGE].interval = 0;
-			broadcast(::isCt, "^yPlayer %s had negative age and is now validated.\n", name);
-			logn("log.validate", "Player %s had negative age and is now validated.\n", name);
+			broadcast(::isCt, "^yPlayer %s had negative age and is now validated.\n", getCName());
+			logn("log.validate", "Player %s had negative age and is now validated.\n", getCName());
 		}
 
 	}
@@ -481,7 +481,7 @@ void Player::init() {
 			if(guildRank >= GUILD_PEON)
 				print("You are now guildless because your guild has been disbanded.\n");
 			guild = guildRank = 0;
-		} else if(!gConfig->getGuild(guild)->isMember(name)) {
+		} else if(!gConfig->getGuild(guild)->isMember(getName())) {
 			guild = guildRank = 0;
 		}
 	}
@@ -497,7 +497,6 @@ void Player::init() {
 
 
 	computeInterest(t, true);
-	resetObjectIds();
 }
 
 //*********************************************************************
@@ -550,7 +549,7 @@ void Player::uninit() {
 	strcpy(str, (char *)ctime(&t));
 	str[strlen(str)-1] = 0;
 	if(!isDm() && !gServer->isRebooting())
-		loge("%s logged off.\n", name);
+		loge("%s logged off.\n", getCName());
 
 	// Clean up the old "Extra" struct
 	etag	*crm, *ctemp;
@@ -589,16 +588,23 @@ void Player::courageous() {
 
 void Player::checkTempEnchant( Object* object) {
 	long i=0, t=0;
-	if(object && object->flagIsSet(O_TEMP_ENCHANT)) {
-		t = time(0);
-		i = LT(object, LT_ENCHA);
-		if(i < t) {
-			object->setArmor(MAX(0, object->getArmor() - object->getAdjustment()));
-			object->setAdjustment(0);
-			object->clearFlag(O_TEMP_ENCHANT);
-			object->clearFlag(O_RANDOM_ENCHANT);
-			if(isEffected("detect-magic"))
-				printColor("The enchantment on your %s fades.\n", object->name);
+	if(object) {
+		if( object->flagIsSet(O_TEMP_ENCHANT)) {
+			t = time(0);
+			i = LT(object, LT_ENCHA);
+			if(i < t) {
+				object->setArmor(MAX(0, object->getArmor() - object->getAdjustment()));
+				object->setAdjustment(0);
+				object->clearFlag(O_TEMP_ENCHANT);
+				object->clearFlag(O_RANDOM_ENCHANT);
+				if(isEffected("detect-magic"))
+					printColor("The enchantment on your %s fades.\n", object->getCName());
+			}
+		}
+		if(object->getType() == CONTAINER) {
+			for(Object* subObj : object->objects) {
+				checkTempEnchant(subObj);
+			}
 		}
 	}
 }
@@ -615,7 +621,7 @@ void Player::checkEnvenom( Object* object) {
 		if(i < t) {
 			object->clearFlag(O_ENVENOMED);
 			object->clearEffect();
-			printColor("The poison on your %s deludes.\n", object->name);
+			printColor("The poison on your %s deludes.\n", object->getCName());
 		}
 	}
 }
@@ -626,29 +632,13 @@ void Player::checkEnvenom( Object* object) {
 // Check inventory for temp enchant or envenom
 
 void Player::checkInventory( ) {
-	otag *op = first_obj, *cop=0;
 	int i=0;
 
 	// Check for temp enchant items carried/inventory/in containers
-	while(op) {
-		if(op->obj->getType() == CONTAINER) {
-			cop=op->obj->first_obj;
-			while(cop) {
-				checkTempEnchant(cop->obj);
-				cop=cop->next_tag;
-			}
-		}
-		checkTempEnchant(op->obj);
-		op=op->next_tag;
+	for(Object* obj : objects) {
+		checkTempEnchant(obj);
 	}
 	for(i=0; i<MAXWEAR; i++) {
-		if(i==(HELD-1) && ready[i] && ready[i]->getType()==CONTAINER) {
-			cop=ready[i]->first_obj;
-			while(cop) {
-				checkTempEnchant(cop->obj);
-				cop=cop->next_tag;
-			}
-		}
 		checkTempEnchant(ready[i]);
 	}
 }
@@ -774,7 +764,7 @@ void Player::checkEffectsWearingOff() {
 		}
 	}
 
-	if(flagIsSet(P_MISTED)) {
+	if(isEffected("mist")) {
 		if(isDay() && !staff)
 			unmist();
 	}
@@ -811,9 +801,9 @@ void Player::checkEffectsWearingOff() {
 		printColor("The demonic jailer says, \"You have been released from your torment.\"\n");
 		printColor("The demonic jailer casts word of recall on you.\n");
 
-		broadcast(getSock(), getRoomParent(), "A demonic jailer just arrived.\nThe demonic jailer casts word of recall on %s.", name);
+		broadcast(getSock(), getRoomParent(), "A demonic jailer just arrived.\nThe demonic jailer casts word of recall on %s.", getCName());
 		broadcast(getSock(), getRoomParent(), "The demonic jailer sneers evilly and spits on you.\nThe demonic jailer vanishes.");
-		broadcast("^R### Cackling demons shove %s from the Dungeon of Despair.", name);
+		broadcast("^R### Cackling demons shove %s from the Dungeon of Despair.", getCName());
 		doRecall();
 
 		clearFlag(P_JAILED);
@@ -917,8 +907,8 @@ void Player::update() {
 		if(ready[item-1]->getType() == LIGHTSOURCE) {
 			ready[item-1]->decShotsCur();
 			if(ready[item-1]->getShotsCur() < 1) {
-				print("Your %s died out.\n", ready[item-1]->name);
-				broadcast(getSock(), room, "%M's %s died out.", this, ready[item-1]->name);
+				print("Your %s died out.\n", ready[item-1]->getCName());
+				broadcast(getSock(), room, "%M's %s died out.", this, ready[item-1]->getCName());
 			}
 		}
 	}
@@ -940,19 +930,12 @@ void Player::update() {
 // This function adds the object pointer to by the first parameter to
 // the inventory of the player pointed to by the second parameter.
 
-void Creature::addObj(Object* object, bool resetUniqueId) {
-	otag	*op=0, *temp=0, *prev=0;
+void Creature::addObj(Object* object) {
 	Player* pPlayer = getAsPlayer();
 
 	object->validateId();
 
-	if(resetUniqueId && pPlayer)
-		pPlayer->setObjectId(object);
 	Hooks::run(this, "beforeAddObject", object, "beforeAddToCreature");
-
-	object->parent_crt = this;
-	object->parent_obj = 0;
-	object->parent_room = 0;
 	object->clearFlag(O_JUST_LOADED);
 
 	// players have big inventories; to keep the mud from searching them when it
@@ -962,44 +945,7 @@ void Creature::addObj(Object* object, bool resetUniqueId) {
 	if(object->flagIsSet(O_DARKNESS))
 		setFlag(pPlayer ? P_DARKNESS : M_DARKNESS);
 
-	op = new otag;
-	if(!op)
-		merror("add_obj_crt", FATAL);
-	op->obj = object;
-	op->next_tag = 0;
-
-	if(!first_obj) {
-
-		first_obj = op;
-
-	} else {
-
-		temp = first_obj;
-		if(	strcmp(temp->obj->cmpName(), object->cmpName()) > 0 ||
-			(!strcmp(temp->obj->name, object->name) &&
-			temp->obj->getAdjustment() > object->getAdjustment())
-		) {
-
-			op->next_tag = temp;
-			first_obj = op;
-
-		} else {
-
-			while(temp) {
-				if(	strcmp(temp->obj->cmpName(), object->cmpName()) > 0 ||
-					(!strcmp(temp->obj->name, object->name) &&
-					temp->obj->getAdjustment() > object->getAdjustment() &&
-					object->isBroken() == temp->obj->isBroken())
-				)
-					break;
-				prev = temp;
-				temp = temp->next_tag;
-			}
-			op->next_tag = prev->next_tag;
-			prev->next_tag = op;
-
-		}
-	}
+	add(object);
 
 	if(pPlayer)
 		pPlayer->updateItems(object);
@@ -1046,8 +992,6 @@ void Creature::finishDelObj(Object* object, bool breakUnique, bool removeUnique,
 //*********************************************************************
 
 void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep) {
-	otag 	*temp=0, *prev=0;
-
 	Hooks::run(this, "beforeRemoveObject", object, "beforeRemoveFromCreature");
 
 	// don't run checkDarkness if this isnt a dark item
@@ -1058,7 +1002,7 @@ void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool 
 	object->clearFlag(O_JUST_LOADED);
 
 	// if it doesnt have a parent_crt, it's either being worn or is in a bag
-	if(!object->parent_crt) {
+	if(!object->inCreature()) {
 		// the object is being worn
 		if(object->getWearflag() && ready[object->getWearflag()-1] == object) {
 			unequip(object->getWearflag(), UNEQUIP_NOTHING, false);
@@ -1066,20 +1010,16 @@ void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool 
 		} else {
 			// the object is in a bag somewhere
 			// problem is, we don't know which bag
-			temp = first_obj;
-			while(temp) {
-				if(temp->obj->getType() == CONTAINER) {
-					prev = temp->obj->first_obj;
-					while(prev) {
-						if(prev->obj == object) {
-							del_obj_obj(object, temp->obj);
+			for(Object* obj : objects) {
+				if(obj->getType() == CONTAINER) {
+					for(Object* subObj : obj->objects ) {
+						if(subObj == object) {
+							obj->delObj(object);
 							finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
 							return;
 						}
-						prev = prev->next_tag;
 					}
 				}
-				temp = temp->next_tag;
 			}
 
 			// not in their inventory? they must be wearing a bag
@@ -1087,42 +1027,20 @@ void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool 
 				if(!ready[i])
 					continue;
 				if(ready[i]->getType() == CONTAINER) {
-					prev = ready[i]->first_obj;
-					while(prev) {
-						if(prev->obj == object) {
-							del_obj_obj(object, ready[i]);
+					for(Object* obj : ready[i]->objects) {
+						if(obj == object) {
+							ready[i]->delObj(object);
 							finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
 							return;
 						}
-						prev = prev->next_tag;
 					}
 				}
 			}
 		}
 		return;
 	}
-
-	object->parent_crt = 0;
-	if(first_obj->obj == object) {
-		temp = first_obj->next_tag;
-		delete first_obj;
-		first_obj = temp;
-		finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
-		return;
-	}
-
-	prev = first_obj;
-	temp = prev->next_tag;
-	while(temp) {
-		if(temp->obj == object) {
-			prev->next_tag = temp->next_tag;
-			delete temp;
-			finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
-			return;
-		}
-		prev = temp;
-		temp = temp->next_tag;
-	}
+	object->removeFrom();
+	finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
 }
 
 //*********************************************************************
@@ -1700,7 +1618,7 @@ void Player::silenceSpammer() {
 		addEffect("silence", 120, 1);
 
 		printColor("^rYou have been silenced for 2 minutes for spamming!\n");
-		broadcast(getSock(), getRoomParent(), "%s has been silenced for spamming!\n",name);
+		broadcast(getSock(), getRoomParent(), "%s has been silenced for spamming!\n",getCName());
 	}
 }
 
@@ -2313,8 +2231,8 @@ bool Player::breakObject(Object* object, int loc) {
 		return(false);
 
 	if(object->getShotsCur() < 1) {
-		printColor("Your %s is broken.\n", object->name);
-		broadcast(getSock(), getRoomParent(), "%M broke %s %s.", this, hisHer(), object->name);
+		printColor("Your %s is broken.\n", object->getCName());
+		broadcast(getSock(), getRoomParent(), "%M broke %s %s.", this, hisHer(), object->getCName());
 
 		if(object->compass) {
 			delete object->compass;
@@ -2322,7 +2240,6 @@ bool Player::breakObject(Object* object, int loc) {
 		}
 
 		object->clearFlag(O_WORN);
-		object->parent_crt = this;
 		Limited::remove(this, object);
 
 		if(object->flagIsSet(O_DARKNESS)) {
@@ -2355,7 +2272,7 @@ bool Player::breakObject(Object* object, int loc) {
 		if(loc != -1) {
 			unequip(loc);
 		} else {
-			broadcast(::isDm, "^g>>> BreakObject: BadLoc (Loc:%d) %'s %s", loc, name, object->name);
+			broadcast(::isDm, "^g>>> BreakObject: BadLoc (Loc:%d) %'s %s", loc, getCName(), object->getCName());
 			if(ready[WIELD-1] == object) {
 				unequip(WIELD);
 			} else if(ready[HELD-1] == object) {
@@ -2378,7 +2295,7 @@ bstring Player::getWhoString(bool whois, bool color, bool ignoreIllusion) const 
 	std::ostringstream whoStr;
 
 	if(whois) {
-		whoStr << "^bWhois for [" << name << "]\n";
+		whoStr << "^bWhois for [" << getName() << "]\n";
 		whoStr << "----------------------------------------------------------------------------------\n";
 	}
 
@@ -2416,20 +2333,20 @@ bstring Player::getWhoString(bool whois, bool color, bool ignoreIllusion) const 
 
 
 	if(	flagIsSet(P_DM_INVIS) ||
-		flagIsSet(P_INCOGNITO) ||
+		isEffected("incognito") ||
 		isInvisible() ||
-		flagIsSet(P_MISTED) ||
+		isEffected("mist") ||
 		(flagIsSet(P_LINKDEAD) && !isPublicWatcher())
 	) {
 		if(color)
 			whoStr << " ^w";
 		if(flagIsSet(P_DM_INVIS))
 			whoStr << "[+]";
-		if(flagIsSet(P_INCOGNITO) )
+		if(isEffected("incognito") )
 			whoStr << "[g]";
 		if(isInvisible() )
 			whoStr << "[*]";
-		if(flagIsSet(P_MISTED) )
+		if(isEffected("mist") )
 			whoStr << "[m]";
 		if(flagIsSet(P_LINKDEAD) && !isPublicWatcher() )
 			whoStr << "[l]";
@@ -2634,7 +2551,7 @@ void Player::addDueling(bstring name) {
 	// if they aren't dueling us, add us to their maybe dueling list
 	Player* player = gServer->findPlayer(name);
 	if(player && !player->isDueling(name))
-		player->addMaybeDueling(this->name);
+		player->addMaybeDueling(getName());
 
 	addList(&dueling, name);
 }
@@ -2701,7 +2618,7 @@ void Player::clearMaybeDueling() {
 		player = gServer->findPlayer(*it);
 		if(!player)
 			continue;
-		player->delDueling(name);
+		player->delDueling(getName());
 	}
 
 	maybeDueling.clear();
@@ -2714,7 +2631,7 @@ void Player::clearWatching() {
 //						renamePlayerFiles
 //*********************************************************************
 
-void renamePlayerFiles(char *old_name, char *new_name) {
+void renamePlayerFiles(const char *old_name, const char *new_name) {
 	char	file[80], file2[80];
 
 	sprintf(file, "%s/%s.xml", Path::Player, old_name);

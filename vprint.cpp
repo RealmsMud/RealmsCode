@@ -145,7 +145,7 @@ int print_objcrt(FILE *stream, const struct printf_info *info, const void *const
 	}
 	else if(info->spec == 'R') {
 		const Creature *crt = *((const Creature **) (args[0]));
-		len = asprintf(&buffer, "%s", crt->name);
+		len = asprintf(&buffer, "%s", crt->getCName());
 		if(len == -1)
 			return(-1);
 	}

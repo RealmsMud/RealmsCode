@@ -111,12 +111,12 @@ int restore(Player* player, cmd* cmnd) {
 	target->currentLocation.room.id = 1;
 	target->clearFlag(P_WATCHER);
 
-	strcpy(target->name, cmnd->str[3]);
+	target->setName( cmnd->str[3]);
 	//strcpy(target->password, cmnd->str[2]);
 	target->saveToFile();
 	free_crt(target);
 	player->print("%s sucessfully restored to %s!\n", cmnd->str[1], cmnd->str[3]);
-	logn("log.import", "%s restored %s to %s.\n", player->name, cmnd->str[1], cmnd->str[3]);
+	logn("log.import", "%s restored %s to %s.\n", player->getCName(), cmnd->str[1], cmnd->str[3]);
 	
 	// Rename the character to prevent multi-restoring of characters
 	char oldName[200], newName[200];

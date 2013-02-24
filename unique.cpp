@@ -69,23 +69,23 @@ long UniqueOwner::getTime() const {
 }
 
 bool UniqueOwner::is(const Player* player, const CatRef cr) const {
-	return((!player || owner == player->name) && item == cr);
+	return((!player || owner == player->getName()) && item == cr);
 }
 
 bool UniqueOwner::is(const Player* player, const Object* object) const {
 	if(!object)
-		return(owner == player->name);
+		return(owner == player->getName());
 	return(is(player, object->info));
 }
 
 void UniqueOwner::set(const Player* player, const Object* object) {
 	time = object->getMade() ? object->getMade() : ::time(0);
-	owner = player->name;
+	owner = player->getName();
 	item = object->info;
 }
 
 void UniqueOwner::set(const Player* player) {
-	owner = player->name;
+	owner = player->getName();
 }
 
 
@@ -141,11 +141,11 @@ void UniqueOwner::doRemove(Player* player, Object* parent, Object* object, bool 
 		if(player)
 			player->delObj(object);
 		else if(parent)
-			del_obj_obj(object, parent);
+			parent->delObj(object);
 
 		UniqueRoom* uRoom=0;
-		if(object->parent_room)
-		    uRoom = object->parent_room->getAsUniqueRoom();
+		if(object->inUniqueRoom())
+		    uRoom = object->getUniqueRoomParent();
 		object->deleteFromRoom();
 		if(uRoom)
 			uRoom->saveToFile(0);
@@ -166,38 +166,39 @@ void UniqueOwner::doRemove(Player* player, Object* parent, Object* object, bool 
 
 void UniqueOwner::removeUnique(bool destroy) {
 	Player* player = gServer->findPlayer(owner.c_str());
-	otag	*cop=0, *op=0;
 	bool online=true;
 
 	if(!player && loadPlayer(owner.c_str(), &player))
 		online = false;
 
 	if(player) {
-		op = player->first_obj;
-
-		while(op) {
-			if(Unique::isUnique(op->obj) && op->obj->info == item) {
-				doRemove(player, 0, op->obj, online, destroy);
+		for(Object* obj : player->objects) {
+			if(Unique::isUnique(obj) && obj->info == item) {
+				doRemove(player, 0, obj, online, destroy);
 				return;
 			}
-			cop = op->obj->first_obj;
-			while(cop) {
-				if(Unique::isUnique(cop->obj) && cop->obj->info == item) {
-					doRemove(player, op->obj, cop->obj, online, destroy);
+			for(Object *subObj : obj->objects) {
+				if(Unique::isUnique(subObj) && subObj->info == item) {
+					doRemove(player, obj, subObj, online, destroy);
 					return;
 				}
-				cop = cop->next_tag;
 			}
-			op = op->next_tag;
 		}
 
 		for(int i=0; i<MAXWEAR; i++) {
-			if(	player->ready[i] &&
-				Unique::isUnique(player->ready[i]) &&
-				player->ready[i]->info == item
-			) {
-				doRemove(player, 0, player->ready[i], online, destroy);
-				return;
+			if(	player->ready[i]) {
+				if(	Unique::isUnique(player->ready[i]) &&
+					player->ready[i]->info == item)
+				{
+					doRemove(player, 0, player->ready[i], online, destroy);
+					return;
+				}
+				for(Object* obj : player->ready[i]->objects) {
+					if(Unique::isUnique(obj) && obj->info == item) {
+						doRemove(player, player->ready[i], obj, online, destroy);
+						return;
+					}
+				}
 			}
 		}
 
@@ -225,24 +226,18 @@ void UniqueOwner::removeUnique(bool destroy) {
 
 				if(!loadRoom(cr, &uRoom))
 					continue;
-
-				op = uRoom->first_obj;
-				while(op) {
-					if(Unique::isUnique(op->obj) && op->obj->info == item) {
-						doRemove(0, 0, op->obj, online, destroy);
+				for(Object* obj : uRoom->objects) {
+					if(Unique::isUnique(obj) && obj->info == item) {
+						doRemove(0, 0, obj, online, destroy);
 						return;
 					}
-					cop = op->obj->first_obj;
-					while(cop) {
-						if(Unique::isUnique(cop->obj) && cop->obj->info == item) {
-							doRemove(0, op->obj, cop->obj, online, destroy);
+					for(Object* subObj : obj->objects) {
+						if(Unique::isUnique(subObj) && subObj->info == item) {
+							doRemove(0, obj, subObj, online, destroy);
 							return;
 						}
-						cop = cop->next_tag;
 					}
-					op = op->next_tag;
 				}
-
 			}
 		}
 	}
@@ -483,11 +478,9 @@ bool Unique::canGet(const Player* player, const Object* object, bool transfer) {
 	if(!player || (unique && !unique->canGet(player, object->info, transfer)))
 		return(false);
 
-	otag*	op = object->first_obj;
-	while(op) {
-		if(!canGet(player, op->obj, transfer))
+	for(Object* obj : object->objects) {
+		if(!canGet(player, obj, transfer))
 			return(false);
-		op = op->next_tag;
 	}
 	return(true);
 }
@@ -513,12 +506,9 @@ bool Unique::isUnique(const Object* object) {
 //*********************************************************************
 
 bool Unique::hasUnique(const Object* object) {
-	otag	*op = object->first_obj;
-
-	while(op) {
-		if(isUnique(op->obj))
+	for(Object* obj : object->objects) {
+		if(isUnique(obj))
 			return(true);
-		op = op->next_tag;
 	}
 	return(false);
 }
@@ -537,7 +527,7 @@ bool Limited::remove(Player* player, const Object* object, bool save) {
 	Unique* unique = gConfig->getUnique(object);
 	if(unique) {
 		if(!player->isStaff())
-			Unique::broadcastDestruction(player->name, object);
+			Unique::broadcastDestruction(player->getName(), object);
 
 		del = deleteOwner(player, object, save, false) || del;
 	}
@@ -566,12 +556,9 @@ bool Limited::isLimited(const Object* object) {
 //*********************************************************************
 
 bool Limited::hasLimited(const Object* object) {
-	otag	*op = object->first_obj;
-
-	while(op) {
-		if(Limited::isLimited(object))
+	for(Object* obj : object->objects) {
+		if(Limited::isLimited(obj))
 			return(true);
-		op = op->next_tag;
 	}
 	return(false);
 }
@@ -581,12 +568,11 @@ bool Limited::hasLimited(const Object* object) {
 //*********************************************************************
 
 void Config::deleteUniques(Player* player) {
-	otag*	op = player->first_obj;
 	Object* object=0;
 
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for( it = player->objects.begin() ; it != player->objects.end() ; ) {
+		object = (*it++);
 
 		if(Limited::remove(player, object, false)) {
 			player->delObj(object, false, false, true, false);
@@ -596,9 +582,9 @@ void Config::deleteUniques(Player* player) {
 	player->checkDarkness();
 
 	// verification, for objects in shop and storage and such
-	std::list<Unique*>::iterator it;
-	for(it = gConfig->uniques.begin() ; it != uniques.end() ; it++)
-		(*it)->remove(player);
+	std::list<Unique*>::iterator uIt;
+	for(uIt = gConfig->uniques.begin() ; uIt != uniques.end() ; uIt++)
+		(*uIt)->remove(player);
 
 	gConfig->saveLimited();
 }
@@ -614,21 +600,19 @@ void Config::deleteUniques(Player* player) {
 // adding lore items won't return anything
 
 int Limited::addOwner(Player* player, const Object* object) {
-	otag*	op = object->first_obj;
 	int		added=0;
 	Unique* unique=0;
 
-	while(op) {
-		unique = gConfig->getUnique(op->obj);
+	for(Object* obj : object->objects) {
+		unique = gConfig->getUnique(obj);
 		if(unique) {
 			if(!added)
 				added = 1;
-			if(unique->addOwner(player, op->obj))
+			if(unique->addOwner(player, obj))
 				added = 2;
 		}
 
-		Lore::add(player, op->obj, true);
-		op = op->next_tag;
+		Lore::add(player, obj, true);
 	}
 
 	unique = gConfig->getUnique(object);
@@ -677,17 +661,18 @@ bool Limited::deleteOwner(Player* player, const Object* object, bool save, bool 
 	if(!player)
 		return(false);
 
-	otag*	op = object->first_obj;
 	bool	del=false;
 	Unique* unique=0;
 
-	while(op) {
-		unique = gConfig->getUnique(op->obj);
+	Object* obj;
+	ObjectSet::iterator it;
+	for(it = object->objects.begin() ; it != object->objects.end() ; ) {
+		obj = (*it++);
+		unique = gConfig->getUnique(obj);
 		if(unique)
-			del = unique->deleteOwner(player, op->obj) || del;
+			del = unique->deleteOwner(player, obj) || del;
 		if(lore)
-			del = Lore::remove(player, op->obj, true) || del;
-		op = op->next_tag;
+			del = Lore::remove(player, obj, true) || del;
 	}
 
 	unique = gConfig->getUnique(object);
@@ -923,7 +908,7 @@ void Config::listLimited(const Player* player) {
 			player->printColor("^cnone\n");
 		else {
 			if(loadObject(cr, &object)) {
-				player->printColor("^c%s\n", object->name);
+				player->printColor("^c%s\n", object->getCName());
 				delete object;
 			} else
 				player->printColor("^c%s\n", cr.str().c_str());
@@ -968,7 +953,7 @@ void Unique::show(const Player* player) {
 		player->printColor("      ^c%s", (*ct).item.str().c_str());
 
 		if(loadObject((*ct).item, &object)) {
-			player->printColor(", ^c%s", object->name);
+			player->printColor(", ^c%s", object->getCName());
 			delete object;
 		}
 
@@ -1186,7 +1171,7 @@ int dmUnique(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("You don't have that object.\n");
 		return(0);
@@ -1330,12 +1315,9 @@ bool Lore::isLore(const Object* object) {
 //*********************************************************************
 
 bool Lore::hasLore(const Object* object) {
-	otag	*op = object->first_obj;
-
-	while(op) {
-		if(isLore(op->obj))
+	for(Object* obj : object->objects ) {
+		if(isLore(obj))
 			return(true);
-		op = op->next_tag;
 	}
 	return(false);
 }
@@ -1376,12 +1358,9 @@ bool Lore::canHave(const Player* player, const Object* object, bool checkBagOnly
 			return(false);
 
 	} else {
-
-		otag*	op = object->first_obj;
-		while(op) {
-			if(isLore(op->obj) && !canHave(player, op->obj->info))
+		for(Object* obj : object->objects) {
+			if(isLore(obj) && !canHave(player, obj->info))
 				return(false);
-			op = op->next_tag;
 		}
 
 	}
@@ -1400,10 +1379,8 @@ void Lore::add(Player* player, const Object* object, bool subObjects) {
 	if(!player)
 		return;
 	if(subObjects) {
-		otag*	op = object->first_obj;
-		while(op) {
-			add(player, op->obj, true);
-			op = op->next_tag;
+		for(Object* obj : object->objects) {
+			add(player, obj, true);
 		}
 	}
 	if(isLore(object)) {
@@ -1422,10 +1399,8 @@ bool Lore::remove(Player* player, const Object* object, bool subObjects) {
 	bool del=false;
 
 	if(subObjects) {
-		otag*	op = object->first_obj;
-		while(op) {
-			del = remove(player, op->obj, true) || del;
-			op = op->next_tag;
+		for(Object* obj : object->objects) {
+			del = remove(player, obj, true) || del;
 		}
 	}
 
@@ -1454,11 +1429,8 @@ void Lore::reset(Player* player, Creature* creature) {
 		player->lore.clear();
 		creature = player;
 	}
-
-	otag	*op = creature->first_obj;
-	while(op) {
-		Lore::add(player, op->obj, true);
-		op = op->next_tag;
+	for(Object* obj : creature->objects) {
+		Lore::add(player, obj, true);
 	}
 
 	for(int i=0; i<MAXWEAR; i++) {
@@ -1479,7 +1451,7 @@ void Lore::reset(Player* player, Creature* creature) {
 	for(it = gConfig->properties.begin() ; it != gConfig->properties.end() ; it++) {
 		p = (*it);
 		if(	!(p->getType() == PROP_SHOP || p->getType() == PROP_STORAGE) ||
-			!p->isOwner(player->name)
+			!p->isOwner(player->getName())
 		)
 			continue;
 
@@ -1494,13 +1466,10 @@ void Lore::reset(Player* player, Creature* creature) {
 				// don't include objects in main shop room
 				if(p->getType() == PROP_SHOP && uRoom->flagIsSet(R_SHOP))
 					continue;
-
-				op = uRoom->first_obj;
-				while(op) {
+				for(Object* obj : uRoom->objects) {
 					// don't include objects on floor of storage room (chests only)
-					if(p->getType() != PROP_STORAGE || op->obj->info.isArea("stor"))
-						Lore::add(player, op->obj, true);
-					op = op->next_tag;
+					if(p->getType() != PROP_STORAGE || obj->info.isArea("stor"))
+						Lore::add(player, obj, true);
 				}
 			}
 
@@ -1642,6 +1611,6 @@ bool UniqueOwner::runDecay(long t, int decay, int max) {
 void Unique::broadcastDestruction(const bstring owner, const Object* object) {
 	Player* player = gServer->findPlayer(owner.c_str());
 	if(player)
-		player->printColor("^yThe %s^y vanishes!\n", object->name);
-	broadcast("^y### Tragically, %s's unique item %s^y just broke!", owner.c_str(), object->name);
+		player->printColor("^yThe %s^y vanishes!\n", object->getCName());
+	broadcast("^y### Tragically, %s's unique item %s^y just broke!", owner.c_str(), object->getCName());
 }

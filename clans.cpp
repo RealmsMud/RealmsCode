@@ -259,11 +259,11 @@ int cmdPledge(Player* player, cmd* cmnd) {
 	player->print("You are now a member of the %s.\n", clan->getName().c_str());
 	player->print("You %s %d experience and %d gold!\n", gConfig->isAprilFools() ? "lose" : "gain", clan->getJoin(), clan->getJoin() * 5);
 
-	broadcast("### %s has just pledged %s allegiance to the %s!", player->name,
+	broadcast("### %s has just pledged %s allegiance to the %s!", player->getCName(),
 		player->hisHer(), clan->getName().c_str());
 
 	logn("log.pledge", "%s(L%d) pledges allegiance to %d-%s.\n",
-		 player->name, player->getLevel(), clan->getId(), clan->getName().c_str());
+		 player->getCName(), player->getLevel(), clan->getId(), clan->getName().c_str());
 
 	if(!player->halftolevel())
 		player->addExperience(clan->getJoin());
@@ -353,11 +353,11 @@ int cmdRescind(Player* player, cmd* cmnd) {
 		creature);*/
 	player->print("You are no longer a member of the %s.\n", clan->getName().c_str());
 
-	broadcast("### %s has just rescinded %s allegiance to the %s!", player->name,
+	broadcast("### %s has just rescinded %s allegiance to the %s!", player->getCName(),
 		player->hisHer(), clan->getName().c_str());
 
 	logn("log.pledge", "%s(L%d) rescinds allegiance to %d-%s.\n",
-		 player->name, player->getLevel(), clan->getId(), clan->getName().c_str());
+		 player->getCName(), player->getLevel(), clan->getId(), clan->getName().c_str());
 
 
 	amte = MIN(clan->getRescind(), player->getExperience());

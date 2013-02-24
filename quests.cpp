@@ -205,7 +205,7 @@ xmlNodePtr QuestCompletion::save(xmlNodePtr rootNode) const {
 }
 void QuestCompletion::resetParentQuest() {
 	if((parentQuest = gConfig->getQuest(questId)) == NULL) {
-		throw new bstring("Unable to find parent quest - " + questId);
+		throw(std::runtime_error("Unable to find parent quest - " + bstring(questId)));
 	}
 }
 QuestInfo* QuestCompletion::getParentQuest() const {
@@ -309,7 +309,7 @@ bstring QuestInfo::getDisplayString() const {
 	Monster* endMonster = 0;
 	displayStr << "^RTurn in Monster:^x ";
 	if(loadMonster(turnInMob, &endMonster)) {
-		 displayStr << endMonster->name;
+		 displayStr << endMonster->getName();
 		 delete endMonster;
 	} else {
 		displayStr << "ERROR: Monster doesn't exit!";
@@ -324,7 +324,7 @@ bstring QuestInfo::getDisplayString() const {
 		for(const QuestCatRef & obj : initialItems) {
 			displayStr << "\t\t^W" << i++ << ")^x #" << obj.str() << " - ";
 			if(loadObject(obj, &object)) {
-				 displayStr << object->name;
+				 displayStr << object->getName();
 				 delete object;
 			} else {
 				displayStr << "ERROR: Object doesn't exist!";
@@ -341,7 +341,7 @@ bstring QuestInfo::getDisplayString() const {
 		for(const QuestCatRef & mob : mobsToKill) {
 			displayStr << "\t\t^W" << i++ << ")^x #" << mob.str() << " - ";
 			if(loadMonster(mob, &monster)) {
-				displayStr << monster->name;
+				displayStr << monster->getName();
 				delete monster;
 			} else {
 				displayStr << "ERROR: Monster doesn't exist!";
@@ -356,7 +356,7 @@ bstring QuestInfo::getDisplayString() const {
 		for(const QuestCatRef & obj : itemsToGet) {
 			displayStr << "\t\t^W" << i++ << ")^x #" << obj.str() << " - ";
 			if(loadObject(obj, &object)) {
-				 displayStr << object->name;
+				 displayStr << object->getName();
 				 delete object;
 			} else {
 				displayStr << "ERROR: Object doesn't exist!";
@@ -371,7 +371,7 @@ bstring QuestInfo::getDisplayString() const {
 		for(const QuestCatRef & rom : roomsToVisit) {
 			displayStr << "\t\t^W" << i++ << ")^x #" << rom.str() << " - ";
 			if(loadRoom(rom, &room)) {
-				displayStr << room->name << std::endl;
+				displayStr << room->getName() << std::endl;
 			} else {
 				 displayStr << "ERROR: Room doesn't exist!" << std::endl;
 			}
@@ -391,7 +391,7 @@ bstring QuestInfo::getDisplayString() const {
 		for(const QuestCatRef & obj : itemRewards) {
 			displayStr << "\t\t\t^W" << i++ << ")^x #" << obj.str() << " - ";
 			if(loadObject(obj, &object)) {
-				 displayStr << object->name;
+				 displayStr << object->getName();
 				 delete object;
 			} else {
 				displayStr << "ERROR: Object doesn't exist!";
@@ -517,7 +517,7 @@ void QuestCompletion::updateMobKills(Monster* monster) {
 			if(qcr.reqNum != qcr.curNum) {
 				if(++(qcr.curNum) == qcr.reqNum) {
 					parentPlayer->printColor("Quest Update: %s - Required number of ^W%s^x have been killed.\n",
-							parentQuest->getName().c_str(), monster->name);
+							parentQuest->getName().c_str(), monster->getCName());
 				} else {
 					parentPlayer->printColor("Quest Update: %s - Killed ^W %s / %s^x.\n",
 							parentQuest->getName().c_str(), intToText(qcr.curNum).c_str(),
@@ -539,7 +539,7 @@ void QuestCompletion::updateItems(Object* object) {
 				itemsCompleted = false;
 				if(++curNum == qcr.reqNum) {
 					parentPlayer->printColor("Quest Update: %s - Required number of ^W%s^x have been obtained.\n",
-						parentQuest->getName().c_str(), object->name);
+						parentQuest->getName().c_str(), object->getCName());
 				} else {
 					parentPlayer->printColor("Quest Update: %s - Obtained ^W%s / %s^x.\n",
 						parentQuest->getName().c_str(), intToText(curNum).c_str(),
@@ -559,7 +559,7 @@ void QuestCompletion::updateRooms(UniqueRoom* room) {
 				if(++qcr.curNum == 1) {
 					// ReqNum should always be one
 					parentPlayer->printColor("Quest Update: %s - Visited ^W%s^x.\n",
-							parentQuest->getName().c_str(), room->name);
+							parentQuest->getName().c_str(), room->getCName());
 				}
 			}
 		}
@@ -603,7 +603,7 @@ bool QuestCompletion::checkQuestCompletion(bool showMessage) {
 
 			parentPlayer->printColor("You have fufilled all of the requirements for ^W%s^x!\n", parentQuest->getName().c_str());
 			if(loadMonster(parentQuest->turnInMob, &endMonster)) {
-				parentPlayer->printColor("Return to ^W%s^x to claim your reward.\n", endMonster->name);
+				parentPlayer->printColor("Return to ^W%s^x to claim your reward.\n", endMonster->getCName());
 				delete endMonster;
 			}
 		}
@@ -660,7 +660,7 @@ bstring QuestCompletion::getStatusDisplay() {
 	Monster* endMonster = 0;
 	displayStr << "^RWhen finished, return to: ^x";
 	if(loadMonster(parentQuest->turnInMob, &endMonster)) {
-		 displayStr << endMonster->name;
+		 displayStr << endMonster->getName();
 		 delete endMonster;
 	} else {
 		displayStr << "ERROR: Monster doesn't exit!";
@@ -685,7 +685,7 @@ bstring QuestCompletion::getStatusDisplay() {
 
 			displayStr << i++ << ") ";
 			if(loadMonster(mob, &monster)) {
-				displayStr << monster->name;
+				displayStr << monster->getName();
 				delete monster;
 			} else {
 				displayStr << "ERROR: Unable to load monster";
@@ -715,7 +715,7 @@ bstring QuestCompletion::getStatusDisplay() {
 
 			displayStr << i++ << ") ";
 			if(loadObject(obj, &object)) {
-				displayStr << object->name;
+				displayStr << object->getName();
 				delete object;
 			} else {
 				displayStr << "ERROR: Unable to load object";
@@ -742,7 +742,7 @@ bstring QuestCompletion::getStatusDisplay() {
 
 			displayStr << i++ << ") ";
 			if(loadRoom(rom, &room)) {
-				displayStr << room->name;
+				displayStr << room->getName();
 			} else {
 				displayStr << "ERROR: Unable to load room";
 			}
@@ -764,7 +764,7 @@ bstring QuestCompletion::getStatusDisplay() {
 				continue;
 			displayStr << "          ^W" << i++ << ")^x ";
 			if(loadObject(obj, &object)) {
-				 displayStr << object->name;
+				 displayStr << object->getName();
 				 delete object;
 			} else {
 				displayStr << "ERROR: Object doesn't exist!";
@@ -796,26 +796,19 @@ bool Object::isQuestValid() const {
 }
 // Count how many of a given item this player has that are non-broken
 int Player::countItems(const QuestCatRef& obj) {
-	otag	*op;
 	int	total=0;
-	op = first_obj;
-	while(op) {
+	for(Object* object : objects) {
 		// Items only count if they're a bag and have 0 shots, or if
 		// they're not a bag, and don't have 0 shots (unless shotsmax is 0)
-		if(op->obj && op->obj->info == obj && op->obj->isQuestValid())
+		if(object && object->info == obj && object->isQuestValid())
 			total++;
 
-		if(op->obj && op->obj->getType() == CONTAINER) {
-			otag *cop;
-			cop = op->obj->first_obj;
-			while(cop) {
-				if(cop->obj && cop->obj->info == obj  && op->obj->isQuestValid())
+		if(object && object->getType() == CONTAINER) {
+			for(Object* subObj : object->objects) {
+				if(subObj->info == obj  && subObj->isQuestValid())
 					total++;
-
-				cop = cop->next_tag;
 			}
 		}
-		op = op->next_tag;
 	}
 	return(total);
 }
@@ -857,38 +850,33 @@ bool QuestCompletion::complete(Monster* monster) {
 	// First, remove all of the items from the player
 	for(QuestCatRef & obj : parentQuest->itemsToGet) {
 		bstring oName;
-		otag *op;
 		Object *object;
-		op = parentPlayer->first_obj;
+		ObjectSet::iterator it;
 		int num = obj.reqNum;
-		while(op && num > 0) {
-			if(op->obj && op->obj->info == obj && op->obj->isQuestValid()) {
-				object = op->obj;
-				oName = object->name;
-				op = op->next_tag;
+
+		for( it = parentPlayer->objects.begin() ; it != parentPlayer->objects.end() && num > 0 ; ) {
+			object = (*it++);
+			if(object->info == obj && object->isQuestValid()) {
+				oName = object->getName();
 				parentPlayer->delObj(object, true, false, true, false);
 				delete object;
 				num--;
 				continue;
 			}
-			if(op->obj && op->obj->getType() == CONTAINER) {
-				otag *cop;
-				cop = op->obj->first_obj;
-				while(cop && num > 0) {
-					if(cop->obj && cop->obj->info == obj && op->obj->isQuestValid()) {
-						object = cop->obj;
-						oName = object->name;
-						cop = cop->next_tag;
-						parentPlayer->delObj(object, true, false, true, false);
-						delete object;
+			if(object->getType() == CONTAINER) {
+				Object *subObject;
+				ObjectSet::iterator sIt;
+				for(sIt = object->objects.begin() ; sIt != object->objects.end() && num > 0 ; ) {
+					subObject = (*sIt++);
+					if(subObject->info == obj && subObject->isQuestValid()) {
+						oName = subObject->getName();
+						parentPlayer->delObj(subObject, true, false, true, false);
+						delete subObject;
 						num--;
 						continue;
-					} else {
-						cop = cop->next_tag;
 					}
 				}
 			}
-			op = op->next_tag;
 		}
 		if(loadObject(obj, &object)) {
 			parentPlayer->printColor("%M takes ^W%s^x from you.\n", monster,
@@ -1154,7 +1142,7 @@ bool Monster::doTalkAction(Player* target, bstring action) {
 			// Need to use global namespace cmd, overriding local variable
 			::cmd cm;
 
-			action.Replace("PLAYER", target->name);
+			action.Replace("PLAYER", target->getCName());
 			cm.fullstr = action;
 
 			stripBadChars(cm.fullstr); // removes '.' and '/'

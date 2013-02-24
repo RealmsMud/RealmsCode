@@ -30,7 +30,7 @@
 
 Group::Group(Creature* pLeader) {
     //if(pLeader.inGroup())
-    //  throw new bstring("Error: Leader already in another group\n");
+    //  throw(std::runtime_error("Error: Leader already in another group\n"));
     flags = 0;
     add(pLeader);
     leader = pLeader;
@@ -478,7 +478,7 @@ bstring Group::getGroupList(Creature* viewer) {
     std::ostringstream oStr;
 
     for(Creature* target : members) {
-        if(!viewer->isStaff() && (target->pFlagIsSet(P_DM_INVIS) || (target->pFlagIsSet(P_INCOGNITO) && !viewer->inSameRoom(target))))
+        if(!viewer->isStaff() && (target->pFlagIsSet(P_DM_INVIS) || (target->isEffected("incognito") && !viewer->inSameRoom(target))))
             continue;
         bool isPet = target->isPet();
         oStr << ++i << ") ";

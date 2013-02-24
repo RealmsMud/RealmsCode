@@ -164,19 +164,24 @@ void login(Socket* sock, bstring str) {
 				return;
 			}
 			player->fd = -1;
-
+			bool online = false;
 			Player* proxy = 0;
-			if(!loadPlayer(proxyChar, &proxy)) {
-				sock->println(bstring("Error loading ") + proxyChar + "\n");
-				free_crt(player, false);
-				sock->askFor("Please enter name: ");
-				return;
+			proxy = gServer->findPlayer(proxyChar);
+			if(proxy)
+				online = true;
+			else {
+				if(!loadPlayer(proxyChar, &proxy)) {
+					sock->println(bstring("Error loading ") + proxyChar + "\n");
+					free_crt(player, false);
+					sock->askFor("Please enter name: ");
+					return;
+				}
 			}
-
 			if(!player->checkProxyAccess(proxy)) {
 				sock->println(bstring(proxy->getName()) + " does not have access to " + player->getName());
 				free_crt(player, false);
-				free_crt(proxy, false);
+				if(!online)
+					free_crt(proxy, false);
 				sock->askFor("Please enter name: ");
 				return;
 			}
@@ -188,7 +193,8 @@ void login(Socket* sock, bstring str) {
 			if(gServer->checkDuplicateName(sock, false)) {
 			    // Don't free player here or ask for name again because checkDuplicateName does that
 			    // We only need to worry about freeing proxy
-				free_crt(proxy, false);
+				if(!online)
+					free_crt(proxy, false);
 				return;
 			}
 			sock->println(bstring("Trying to log in ") + player->getName() + " using " + proxy->getName() + " as proxy.");
@@ -201,9 +207,11 @@ void login(Socket* sock, bstring str) {
 			sock->askFor(passwordPrompt.c_str());
 			sock->tempbstr = proxy->getPassword();
 
+
 			player->setProxy(proxy);
 
-			free_crt(proxy, false);
+			if(!online)
+				free_crt(proxy, false);
 			sock->setState(LOGIN_GET_PROXY_PASSWORD);
 
 			return;
@@ -254,7 +262,7 @@ void login(Socket* sock, bstring str) {
 
 		if(!sock->getPlayer()->isPassword(str)) {
 			sock->write("\255\252\1\n\rIncorrect.\n\r");
-			logn("log.incorrect", "Invalid password(%s) for %s from %s\n", str.c_str(), sock->getPlayer()->name, sock->getHostname().c_str());
+			logn("log.incorrect", "Invalid password(%s) for %s from %s\n", str.c_str(), sock->getPlayer()->getCName(), sock->getHostname().c_str());
 			sock->disconnect();
 			return;
 		} else {
@@ -266,7 +274,7 @@ void login(Socket* sock, bstring str) {
 	case LOGIN_GET_PROXY_PASSWORD:
 		if(Player::hashPassword(str) != sock->tempbstr) {
 			sock->write("\255\252\1\n\rIncorrect.\n\r");
-			logn("log.incorrect", "Invalid password(%s) for %s from %s\n", str.c_str(), sock->getPlayer()->name, sock->getHostname().c_str());
+			logn("log.incorrect", "Invalid password(%s) for %s from %s\n", str.c_str(), sock->getPlayer()->getCName(), sock->getHostname().c_str());
 			sock->disconnect();
 			return;
 		} else {
@@ -283,7 +291,7 @@ void Socket::finishLogin() {
 	Player* player = 0;
 
 	print("%s", echo_on);
-	strcpy(charName, getPlayer()->name);
+	strcpy(charName, getPlayer()->getCName());
 
 	gServer->checkDuplicateName(this, true);
 	if(gServer->checkDouble(this)) {
@@ -312,14 +320,14 @@ void Socket::finishLogin() {
 		player->currentLocation.room.id = 100;
 		// remove all their stuff
 		player->coins.zero();
-		otag *obj=0, *op = player->first_obj;
-		while(op) {
-			obj = op;
-			op = op->next_tag;
-			delete obj->obj;
+		ObjectSet::iterator it;
+		Object *obj;
+		for( it = player->objects.begin() ; it != player->objects.end() ; ) {
+			obj = (*it++);
 			delete obj;
 		}
-		player->first_obj = 0;
+		player->objects.clear();
+
 	}
 
 	setPlayer(player);
@@ -486,7 +494,7 @@ void createPlayer(Socket* sock, bstring str) {
 			Player* target = sock->getPlayer();
 			sock->print("\n");
 			if(target) {
-				gServer->clearPlayer(target->name);
+				gServer->clearPlayer(target->getName());
 				delete target;
 			}
 			target = new Player;
@@ -1676,13 +1684,13 @@ void Create::done(Socket* sock, bstring str, int mode) {
 		player->setBirthday();
 		player->setCreated();
 
-		strcpy(player->name, sock->tempstr[0]);
+		player->setName( sock->tempstr[0]);
 
 		if(gServer->checkDuplicateName(sock, false))
 			return;
 		if(gServer->checkDouble(sock))
 			return;
-		if(Player::exists(player->name)) {
+		if(Player::exists(player->getName())) {
 			sock->printColor("\n\n^ySorry, that player already exists.^x\n\n\n");
 			sock->reconnect();
 			return;

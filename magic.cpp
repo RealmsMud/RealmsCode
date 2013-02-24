@@ -571,7 +571,7 @@ bool checkRefusingMagic(Creature* player, Creature* target, bool healing, bool p
 			player->print("%M doesn't want that cast on them right now.\n", target);
 		return(0);
 	}
-	if(target->getAsPlayer()->isRefusing(player->name)) {
+	if(target->getAsPlayer()->isRefusing(player->getName())) {
 		if(print)
 			player->print("%M is refusing your magical services.\n", target);
 		return(true);

@@ -31,7 +31,7 @@ void Player::hasNewMudmail() const {
 	if(!flagIsSet(P_UNREAD_MAIL))
 		return;
 
-	sprintf(filename, "%s/%s.txt", Path::Post, name);
+	sprintf(filename, "%s/%s.txt", Path::Post, getCName());
 	if(file_exists(filename))
 		print("\n*** You have new mudmail in the post office.\n");
 }
@@ -131,7 +131,7 @@ int cmdSendMail(Player* player, cmd* cmnd) {
 	}
 
 	if(!player->isDm() && !target->isDm())
-		broadcast(isDm, "^g### %s is sending mudmail to %s.", player->name, target->name);
+		broadcast(isDm, "^g### %s is sending mudmail to %s.", player->getCName(), target->getCName());
 
 	target->setFlag(P_UNREAD_MAIL);
 	target->save(online);
@@ -141,7 +141,7 @@ int cmdSendMail(Player* player, cmd* cmnd) {
 	player->print("Enter your message now. Type '.' or '*' on a line by itself to finish or '\\' to\ncancel. Each line should be NO LONGER THAN 80 CHARACTERS.\n-: ");
 	sprintf(player->getSock()->tempstr[0], "%s", cmnd->str[1]);
 
-	sprintf(file, "%s/%s_to_%s.txt", Path::Post, player->name, player->getSock()->tempstr[0]);
+	sprintf(file, "%s/%s_to_%s.txt", Path::Post, player->getCName(), player->getSock()->tempstr[0]);
 	unlink(file);
 
 	player->setFlag(P_READING_FILE);
@@ -162,7 +162,7 @@ int cmdSendMail(Player* player, cmd* cmnd) {
 				)
 			)
 		) {
-			target->printColor("^c### You are receiving new mudmail from %s.\n", player->name);
+			target->printColor("^c### You are receiving new mudmail from %s.\n", player->getCName());
 		}
 	}
 
@@ -235,7 +235,7 @@ void postedit(Socket* sock, bstring str) {
 	Player* ply = sock->getPlayer();
 	
 	// use a temp file while we're editting it
-	sprintf(filename, "%s/%s_to_%s.txt", Path::Post, ply->name, sock->tempstr[0]);
+	sprintf(filename, "%s/%s_to_%s.txt", Path::Post, ply->getCName(), sock->tempstr[0]);
 
 	if((str[0] == '.' || str[0] == '*') && !str[1]) {
 		// time to copy the temp file to the real file!
@@ -258,7 +258,7 @@ void postedit(Socket* sock, bstring str) {
 		strcpy(datestr, (char *) ctime(&t));
 		datestr[strlen(datestr) - 1] = 0;
 		sprintf(outcstr, "\n--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--\n\nMail from %s (%s):\n\n",
-			ply->name, datestr);
+			ply->getCName(), datestr);
 		write(ff, outcstr, strlen(outcstr));
 
 		while(!feof(fp)) {
@@ -310,7 +310,7 @@ int cmdReadMail(Player* player, cmd* cmnd) {
 		return(0);
 
 	player->clearFlag(P_UNREAD_MAIL);
-	sprintf(filename, "%s/%s.txt", Path::Post, player->name);
+	sprintf(filename, "%s/%s.txt", Path::Post, player->getCName());
 
 	if(open(filename, O_RDONLY, 0) < 0) {
 		player->print("You have no mail.\n");
@@ -361,7 +361,7 @@ int cmdDeleteMail(Player* player, cmd* cmnd) {
 	if(!canPost(player))
 		return(0);
 
-	sprintf(file, "%s/%s.txt", Path::Post, player->name);
+	sprintf(file, "%s/%s.txt", Path::Post, player->getCName());
 	unlink(file);
 	player->print("Mail deleted.\n");
 
@@ -428,7 +428,7 @@ int notepad(Player* player, cmd* cmnd) {
 		sprintf(file, "%s/all_pad.txt", Path::Post);
 		cmnd->num = 2;
 	} else {
-		sprintf(file, "%s/%s_pad.txt", Path::Post, player->name);
+		sprintf(file, "%s/%s_pad.txt", Path::Post, player->getCName());
 	}
 
 	if(cmnd->num == 2) {
@@ -516,18 +516,18 @@ int cmdEditHistory(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	sprintf(file, "%s/%s.txt", Path::History, player->name);
+	sprintf(file, "%s/%s.txt", Path::History, player->getCName());
 
 	ff = open(file, O_RDONLY, 0);
 	close(ff);
 
 	if(file_exists(file)) {
-		player->print("%s's history so far:\n\n", player->name);
+		player->print("%s's history so far:\n\n", player->getCName());
 		viewLoginFile(player->getSock(), file);
 		player->print("\n\n");
 	}
 
-	broadcast(isCt, "^y### %s is editing %s character history.", player->name, player->hisHer());
+	broadcast(isCt, "^y### %s is editing %s character history.", player->getCName(), player->hisHer());
 
 	player->print("You may append your character's history now.\nType '.' or '*' on a line by itself to finish.\nEach line should be NO LONGER THAN 80 CHARACTERS.\n-: ");
 
@@ -594,7 +594,7 @@ int cmdHistory(Player* player, cmd* cmnd) {
 		}
 	}
 
-	sprintf(file, "%s/%s.txt", Path::History, self ? player->name : cmnd->str[1]);
+	sprintf(file, "%s/%s.txt", Path::History, self ? player->getCName() : cmnd->str[1]);
 
 	if(!file_exists(file)) {
 		if(self)
@@ -621,11 +621,11 @@ int cmdHistory(Player* player, cmd* cmnd) {
 int cmdDeleteHistory(Player* player, cmd* cmnd) {
 	char	file[80];
 
-	sprintf(file, "%s/%s.txt", Path::History, player->name);
+	sprintf(file, "%s/%s.txt", Path::History, player->getCName());
 	unlink(file);
 	player->print("History deleted.\n");
 
-	broadcast(isCt, "^y%s just deleted %s history.", player->name, player->hisHer());
+	broadcast(isCt, "^y%s just deleted %s history.", player->getCName(), player->hisHer());
 	return(0);
 }
 

@@ -162,8 +162,8 @@ bool Player::checkConfusion() {
 			return(false);
 
 		printColor("^BWanderlust overtakes you.\n");
-		printColor("^BYou wander aimlessly to the %s exit.\n", newExit->name);
-		broadcast(getSock(), room, "%M wanders aimlessly to the %s exit.", this, newExit->name);
+		printColor("^BYou wander aimlessly to the %s exit.\n", newExit->getCName());
+		broadcast(getSock(), room, "%M wanders aimlessly to the %s exit.", this, newExit->getCName());
 		deleteFromRoom();
 		addToRoom(bRoom);
 		doPetFollow();
@@ -202,7 +202,7 @@ bool Player::checkConfusion() {
 
 		switch(targetType) {
 		case PLAYER: // Random player in room
-			printColor("^BYou are convinced %s is trying to kill you!\n", target->name);
+			printColor("^BYou are convinced %s is trying to kill you!\n", target->getCName());
 			attackCreature(target);
 			return(true);
 			break;
@@ -235,7 +235,7 @@ bool Player::checkConfusion() {
 				hp.setCur(1);
 
 				printColor("^BYou accidentally killed yourself!\n");
-				broadcast("### Sadly, %s accidentally killed %sself.", name, himHer());
+				broadcast("### Sadly, %s accidentally killed %sself.", getCName(), himHer());
 
 				mp.setCur(1);
 
@@ -255,7 +255,7 @@ bool Player::checkConfusion() {
 				return(false);
 
 			printColor("^BYou think %s is attacking you!\n", target);
-			broadcast(getSock(), room, "%M yells, \"DIE %s!!!\"\n", this, target->name);
+			broadcast(getSock(), room, "%M yells, \"DIE %s!!!\"\n", this, target->getCName());
 			attackCreature(target);
 			return(true);
 			break;
@@ -408,88 +408,84 @@ int cmdDice(Creature* player, cmd* cmnd) {
 
 	return(0);
 }
-
-//********************************************************************
-//						plyHasObj
-//********************************************************************
-// This will check to see if a player has a specific object type
-// either in their inventory or in a bag, or in their worn equipment.
-
-bool plyHasObj(Creature* player, Object *item) {
-	int		a=0;
-	Object	*obj=0;
-	UniqueRoom* room=0;
-	otag	*op=0, *cop=0;
-
-
-	//check inventory
-	op = player->first_obj;
-	while(op) {
-
-		obj = op->obj;
-		if(*&obj->info == *&item->info)
-			return(true);
-
-		// if item is a bag, check in bag
-		if(obj->getType() == CONTAINER) {
-			cop = obj->first_obj;
-			while(cop) {
-				if(*&cop->obj->info == *&item->info)
-					return(true);
-				cop = cop->next_tag;
-			}
-		}
-
-		op = op->next_tag;
-
-	}
-	// check worn equipment
-	for(a=0;a<MAXWEAR;a++) {
-
-		if(!player->ready[a])
-			continue;
-
-		obj = player->ready[a];
-		if(*&obj->info == *&item->info && obj != item)
-			return(true);
-
-		// if worn item is a bag, check in bag
-		if(obj->getType() == CONTAINER) {
-			cop = obj->first_obj;
-			while(cop) {
-				if(*&cop->obj->info == *&item->info && cop->obj != item)
-					return(true);
-				cop = cop->next_tag;
-			}
-		}
-
-
-	}
-
-	// check player's storage room, if it exists
-	if(player->isPlayer()) {
-		CatRef	sr = gConfig->getSingleProperty(player->getAsPlayer(), PROP_STORAGE);
-		if(sr.id < 1 || !loadRoom(sr, &room))
-			return(0);
-
-		op = room->first_obj;
-		while(op) {
-			if(op->obj->getType() == CONTAINER) {
-				cop = op->obj->first_obj;
-				while(cop) {
-					if(*&cop->obj->info == *&item->info && cop->obj != item)
-						return(true);
-					cop = cop->next_tag;
-				}
-			}
-
-			if(*&op->obj->info == *&item->info && op->obj != item)
-				return(true);
-			op = op->next_tag;
-		}
-
-	}
-
-	return(false);
-}
-
+//
+////********************************************************************
+////						plyHasObj
+////********************************************************************
+//// This will check to see if a player has a specific object type
+//// either in their inventory or in a bag, or in their worn equipment.
+//
+//bool plyHasObj(Creature* player, Object *item) {
+//	int		a=0;
+//	Object	*obj=0;
+//	UniqueRoom* room=0;
+//
+//
+//	//check inventory
+//	for(Object* obj : player->objects) {
+//		if(obj->info == item->info)
+//			return(true);
+//
+//		// if item is a bag, check in bag
+//		if(obj->getType() == CONTAINER) {
+//			cop = obj->first_obj;
+//			while(cop) {
+//				if(*&cop->obj->info == *&item->info)
+//					return(true);
+//				cop = cop->next_tag;
+//			}
+//		}
+//
+//		op = op->next_tag;
+//
+//	}
+//	// check worn equipment
+//	for(a=0;a<MAXWEAR;a++) {
+//
+//		if(!player->ready[a])
+//			continue;
+//
+//		obj = player->ready[a];
+//		if(*&obj->info == *&item->info && obj != item)
+//			return(true);
+//
+//		// if worn item is a bag, check in bag
+//		if(obj->getType() == CONTAINER) {
+//			cop = obj->first_obj;
+//			while(cop) {
+//				if(*&cop->obj->info == *&item->info && cop->obj != item)
+//					return(true);
+//				cop = cop->next_tag;
+//			}
+//		}
+//
+//
+//	}
+//
+//	// check player's storage room, if it exists
+//	if(player->isPlayer()) {
+//		CatRef	sr = gConfig->getSingleProperty(player->getAsPlayer(), PROP_STORAGE);
+//		if(sr.id < 1 || !loadRoom(sr, &room))
+//			return(0);
+//
+//		op = room->first_obj;
+//		while(op) {
+//			if(op->obj->getType() == CONTAINER) {
+//				cop = op->obj->first_obj;
+//				while(cop) {
+//					if(*&cop->obj->info == *&item->info && cop->obj != item)
+//						return(true);
+//					cop = cop->next_tag;
+//				}
+//			}
+//
+//			if(*&op->obj->info == *&item->info && op->obj != item)
+//				return(true);
+//			op = op->next_tag;
+//		}
+//
+//	}
+//
+//	return(false);
+//}
+//

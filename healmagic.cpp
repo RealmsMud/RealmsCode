@@ -865,9 +865,9 @@ int doResLoss(int curr, int prev, bool full) {
 int doRes(Creature* caster, cmd* cmnd, bool res) {
 	// if ress=false, it's a bloodfusion
 	Player	*player = caster->getAsPlayer();
-	int		a=0, prevLevel=0;
+	int		prevLevel=0;
 	bool	full=false;
-	long	t=0, xploss=0;
+	long	t=0;
 	Player *target=0;
 	BaseRoom *newRoom=0;
 
@@ -932,16 +932,16 @@ int doRes(Creature* caster, cmd* cmnd, bool res) {
 	if(!caster->isDm()) {
 		if(target->getLocation() != target->getLimboRoom()) {
 			caster->print("%s is not in limbo! How can you %s %s?\n",
-		      	target->name, res ? "resurrect" : "bloodfuse", target->himHer());
+		      	target->getCName(), res ? "resurrect" : "bloodfuse", target->himHer());
 			return(0);
 		}
 		if(target->getLevel() < 7) {
 			caster->print("%s is not yet powerful enough to be %s.\n",
-				target->name, res ? "resurrected" : "fused with blood");
+				target->getCName(), res ? "resurrected" : "fused with blood");
 			return(0);
 		}
 		if(!target->flagIsSet(P_KILLED_BY_MOB)) {
-			caster->print("%s does not need to be %s.\n", target->name, res ? "resurrected" : "fused with new blood");
+			caster->print("%s does not need to be %s.\n", target->getCName(), res ? "resurrected" : "fused with new blood");
 			return(0);
 		}
 	}
@@ -992,14 +992,14 @@ int doRes(Creature* caster, cmd* cmnd, bool res) {
 
 	broadcast(caster->getSock(), caster->getRoomParent(), "%M casts a %s spell on %N.", caster, res ? "resurrection" : "bloodfusion", target);
 
-	logn("log.resurrect", "%s(L:%d) %s %s(L%d:%d) %s.\n", caster->name, caster->getLevel(),
-		res ? "resurrected" : "fused", target->name, prevLevel, target->getLevel(),
+	logn("log.resurrect", "%s(L:%d) %s %s(L%d:%d) %s.\n", caster->getCName(), caster->getLevel(),
+		res ? "resurrected" : "fused", target->getCName(), prevLevel, target->getLevel(),
 		res ? "from the dead" : "with new blood");
 
 	if(res)
-		broadcast("^R### %M just resurrected %s from the dead!", caster, target->name);
+		broadcast("^R### %M just resurrected %s from the dead!", caster, target->getCName());
 	else
-		broadcast("^R### %M just fused %s with new blood!", caster, target->name);
+		broadcast("^R### %M just fused %s with new blood!", caster, target->getCName());
 
 
 	if(player && !player->isDm()) {

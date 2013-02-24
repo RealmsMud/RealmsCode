@@ -1,5 +1,4 @@
-/*
- * files-xml-read.cpp
+/* files-xml-read.cpp
  *	 Used to read objects/rooms/creatures etc from xml files
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
@@ -40,6 +39,8 @@
 #include "alchemy.h"
 #include "mxp.h"
 #include "socials.h"
+
+#include <exception>
 
 extern int objRefSaveFlags[];
 
@@ -88,8 +89,9 @@ bool loadPlayer(const bstring name, Player** player, LoadType loadType) {
 	if(!*player)
 		merror("loadPlayer", FATAL);
 
-//	strcpy((*player)->name, tmpStr);
-	xml::copyPropToCString((*player)->name, rootNode, "Name");
+//	(*player)->setName( tmpStr);
+	(*player)->setName(xml::getProp(rootNode, "Name"));
+	//xml::copyPropToCString((*player)->name, rootNode, "Name");
 	xml::copyPropToBString(pass, rootNode, "Password");
 	(*player)->setPassword(pass);
 	//xml::copyPropToBString((*player)->version, rootNode, "Version");
@@ -209,6 +211,7 @@ bool loadRoom(const CatRef cr, UniqueRoom **pRoom) {
 		if(!loadRoomFromFile(cr, pRoom))
 			return(false);
 		gConfig->addRoomQueue(cr, pRoom);
+		(*pRoom)->registerMo();
 	}
 	return(true);
 }
@@ -356,7 +359,7 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 
 	while(curNode) {
 		// Name will only be loaded for Monsters
-			 if(NODE_NAME(curNode, "Name")) xml::copyToCString(name, curNode);
+			 if(NODE_NAME(curNode, "Name")) setName(xml::getBString(curNode));
 		else if(NODE_NAME(curNode, "Id")) setId(xml::getBString(curNode));
 		else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
 		else if(NODE_NAME(curNode, "Keys")) {
@@ -497,6 +500,18 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 		}
 	}
 	if(isPlayer()) {
+		if(getVersion() < "2.47b") {
+			#define P_OLD_MISTED                55       // Player is in mist form
+			if(flagIsSet(P_OLD_MISTED)) {
+				addEffect("mist", -1);
+				clearFlag(P_OLD_MISTED);
+			}
+			#define P_OLD_INCOGNITO                 104      // DM/CT is incognito
+			if(flagIsSet(P_OLD_INCOGNITO)) {
+				addEffect("incognito", -1);
+				clearFlag(P_OLD_INCOGNITO);
+			}
+		}
 	    if(getVersion() < "2.47a") {
 	        // Update weapon skills
 	        SkillMap::iterator skIt;
@@ -852,6 +867,7 @@ void Player::readXml(xmlNodePtr curNode) {
 	} else if(getVersion() < "2.46l") {
 	    if(NODE_NAME(curNode, "LostExperience")) statistics.setExperienceLost(xml::toNum<unsigned long>(curNode));
 	}
+
 }
 
 //*********************************************************************
@@ -873,7 +889,7 @@ Skill::Skill(xmlNodePtr rootNode) {
 		curNode = curNode->next;
 	}
 	if(name == "" || gained == 0) {
-		throw(new std::exception());
+		throw(std::runtime_error("Invalid Skill Xml"));
 	}
 }
 
@@ -949,8 +965,8 @@ void Effects::load(xmlNodePtr rootNode, MudObject* pParent) {
 					newEffect->setParent(pParent);
 					effectList.push_back(newEffect);
 				}
-			} catch(bstring err) {
-				std::cout << "Error adding effect: " << err << std::endl;
+			} catch(std::runtime_error &e) {
+				std::cout << "Error adding effect: " << e.what() << std::endl;
 			}
 		}
 		curNode = curNode->next;
@@ -962,7 +978,7 @@ void Effects::load(xmlNodePtr rootNode, MudObject* pParent) {
 //*********************************************************************
 // Reads an object from the given xml document and root node
 
-int Object::readFromXml(xmlNodePtr rootNode) {
+int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList) {
 	xmlNodePtr curNode, childNode;
 	info.load(rootNode);
 	info.id = xml::getIntProp(rootNode, "Num");
@@ -971,8 +987,17 @@ int Object::readFromXml(xmlNodePtr rootNode) {
 	// Start reading stuff in!
 
 	while(curNode) {
-			 if(NODE_NAME(curNode, "Name")) xml::copyToCString(name, curNode);
-//		else if(NODE_NAME(curNode, "Id")) setId(xml::getBString(curNode));
+			 if(NODE_NAME(curNode, "Name")) setName(xml::getBString(curNode));
+		else if(NODE_NAME(curNode, "Id")) setId(xml::getBString(curNode));
+		else if(NODE_NAME(curNode, "IdList") && idList != 0) {
+			childNode = curNode->children;
+			while(childNode) {
+				if(NODE_NAME(childNode, "Id")) {
+					idList->push_back(xml::getBString(childNode));
+				}
+				childNode = childNode->next;
+			}
+		}
 		else if(NODE_NAME(curNode, "Plural")) xml::copyToBString(plural, curNode);
 		else if(NODE_NAME(curNode, "DroppedBy")) droppedBy.load(curNode);
 		else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
@@ -988,7 +1013,7 @@ int Object::readFromXml(xmlNodePtr rootNode) {
 		else if(NODE_NAME(curNode, "Weight")) xml::copyToNum(weight, curNode);
 		else if(NODE_NAME(curNode, "Type")) xml::copyToNum(type, curNode);
 		else if(NODE_NAME(curNode, "SubType")) xml::copyToBString(subType, curNode);
-		else if(NODE_NAME(curNode, "Adjustment")) xml::copyToNum(adjustment, curNode);
+		else if(NODE_NAME(curNode, "Adjustment")) setAdjustment(xml::toNum<short int>(curNode));
 		else if(NODE_NAME(curNode, "ShotsMax")) xml::copyToNum(shotsMax, curNode);
 		else if(NODE_NAME(curNode, "ShotsCur")) xml::copyToNum(shotsCur, curNode);
 		else if(NODE_NAME(curNode, "ChargesMax")) xml::copyToNum(chargesMax, curNode);
@@ -1013,7 +1038,7 @@ int Object::readFromXml(xmlNodePtr rootNode) {
 
 		else if(NODE_NAME(curNode, "Deed")) deed.load(curNode);
 
-		else if(NODE_NAME(curNode, "ShopValue")) shopValue = xml::toNum<unsigned long>(curNode);
+		else if(NODE_NAME(curNode, "ShopValue")) setShopValue(xml::toNum<unsigned long>(curNode));
 		else if(NODE_NAME(curNode, "Made")) xml::copyToNum(made, curNode);
 		else if(NODE_NAME(curNode, "KeyVal")) xml::copyToNum(keyVal, curNode);
 		else if(NODE_NAME(curNode, "Material")) material = (Material)xml::toNum<int>(curNode);
@@ -1082,11 +1107,17 @@ int Object::readFromXml(xmlNodePtr rootNode) {
 		curNode = curNode->next;
 	}
 
-	if(version < "2.46j" && flagIsSet(O_WEAPON_CASTS)) {
+	if(version < "2.47c" && flagIsSet(O_WEAPON_CASTS)) {
 	    // Version 2.46j added charges for casting weapons, versions before that
-	    // used shots.  Initialize charges as 1/3rd of shots
+	    // used shots, items until 2.47c were bugged due to charges not being
+	    // copied in doCopy()  Initialize charges as 1/3rd of shots
 	    chargesMax = shotsMax / 3;
 	    chargesCur = shotsCur /3;
+	}
+
+	if(version < "2.47b" && flagIsSet(O_OLD_INVISIBLE)) {
+		addEffect("invisibility", -1);
+		clearFlag(O_OLD_INVISIBLE);
 	}
 	// make sure uniqueness stays intact
 	setFlag(O_UNIQUE);
@@ -1108,11 +1139,14 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode) {
 
 	info.load(rootNode);
 	info.id = xml::getIntProp(rootNode, "Num");
+
+	setId(bstring("R") + info.rstr());
+
 	xml::copyPropToBString(version, rootNode, "Version");
 	curNode = rootNode->children;
 	// Start reading stuff in!
 	while(curNode) {
-			 if(NODE_NAME(curNode, "Name")) xml::copyToCString(name, curNode);
+			 if(NODE_NAME(curNode, "Name")) setName(xml::getBString(curNode));
 		else if(NODE_NAME(curNode, "ShortDescription")) xml::copyToBString(short_desc, curNode);
 		else if(NODE_NAME(curNode, "LongDescription")) xml::copyToBString(long_desc, curNode);
 		else if(NODE_NAME(curNode, "Fishing")) xml::copyToBString(fishing, curNode);
@@ -1192,12 +1226,13 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode) {
 int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room) {
 	xmlNodePtr curNode;
 
-	xml::copyPropToCString(name, rootNode, "Name");
+	setName(xml::getProp(rootNode, "Name"));
+	//xml::copyPropToCString(name, rootNode, "Name");
 
 	curNode = rootNode->children;
 	// Start reading stuff in!
 	while(curNode) {
-			 if(NODE_NAME(curNode, "Name")) xml::copyToCString(name, curNode);
+			 if(NODE_NAME(curNode, "Name")) setName(xml::getBString(curNode));
 		else if(NODE_NAME(curNode, "Keys")) {
 			loadStringArray(curNode, desc_key, EXIT_KEY_LENGTH, "Key", 3);
 		}
@@ -1228,7 +1263,15 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room) {
 
 		curNode = curNode->next;
 	}
+	if(room) {
+		room->addExit(this);
 
+		#define X_OLD_INVISIBLE             1         // Invisible
+		if(room->getVersion() < "2.47b" && flagIsSet(X_OLD_INVISIBLE)) {
+			addEffect("invisibility", -1);
+			clearFlag(X_OLD_INVISIBLE);
+		}
+	}
 	escapeText();
 	return(0);
 }
@@ -1249,57 +1292,83 @@ void MudObject::readObjects(xmlNodePtr curNode) {
 //  Player* pParent = parent->getPlayer();
     UniqueRoom* rParent = getAsUniqueRoom();
     Object* oParent = getAsObject();
-
+    std::list<bstring> *idList;
 
 	while(childNode) {
 		object = 0;
+		object2 = 0;
 		quantity = xml::getIntProp(childNode, "Quantity");
 		if(quantity < 1)
 			quantity = 1;
-		if(NODE_NAME(childNode, "Object")) {
-			// If it's a full object, read it in
-			object = new Object;
-			if(!object)
-				merror("loadObjectsXml", FATAL);
-			object->readFromXml(childNode);
-		} else if(NODE_NAME(childNode, "ObjRef")) {
-			// If it's an object reference, we want to first load the parent object
-			// and then use readObjectXml to update any fields that may have changed
-			cr.load(childNode);
-			cr.id = xml::getIntProp(childNode, "Num");
-			if(!validObjId(cr)) {
-				printf("Invalid object %s\n", cr.str().c_str());
-			} else {
-				if(loadObject(cr, &object)) {
-					// These two flags might be cleared on the reference object, so let
-					// that object set them if it wants to
-					object->clearFlag(O_HIDDEN);
-					object->clearFlag(O_CURSED);
-					object->readFromXml(childNode);
+		if(quantity > 1)
+			idList = new std::list<bstring>;
+		else
+			idList = 0;
+		try {
+			if(NODE_NAME(childNode, "Object")) {
+				// If it's a full object, read it in
+				object = new Object;
+				if(!object)
+					merror("loadObjectsXml", FATAL);
+				object->readFromXml(childNode, idList);
+			} else if(NODE_NAME(childNode, "ObjRef")) {
+				// If it's an object reference, we want to first load the parent object
+				// and then use readObjectXml to update any fields that may have changed
+				cr.load(childNode);
+				cr.id = xml::getIntProp(childNode, "Num");
+				if(!validObjId(cr)) {
+					printf("Invalid object %s\n", cr.str().c_str());
 				} else {
-					//printf("Error loading object %d.\n", num);
+					if(loadObject(cr, &object)) {
+						// These two flags might be cleared on the reference object, so let that object set them if it wants to
+						object->clearFlag(O_HIDDEN);
+						object->clearFlag(O_CURSED);
+						object->readFromXml(childNode, idList);
+					}
 				}
+			}
+			if(object) {
+				std::list<bstring>::iterator idIt;
+				if(quantity > 1)
+					 idIt = idList->begin();
+
+				for(i=0; i<quantity; i++) {
+					if(!i) {
+						object2 = object;  // just a reference
+					} else {
+						object2 = new Object;
+						*object2 = *object;
+					}
+					try {
+						if(quantity > 1 && idIt != idList->end())
+							object2->setId(*idIt++);
+						// Add it to the appropriate parent
+						if(oParent) {
+							oParent->addObj(object2, false);
+						} else if(cParent) {
+							cParent->addObj(object2);
+						} else if(rParent) {
+							object2->addToRoom(rParent);
+						}
+					} catch(std::runtime_error &e) {
+						std::cout << "Error setting ID: " << e.what() << std::endl;
+						if(object2) {
+							delete object2;
+							object2 = 0;
+						}
+					}
+				}
+			}
+		} catch(std::runtime_error &e) {
+			std::cout << "Error loading object: " << e.what() << std::endl;
+			if(object != 0) {
+				delete object;
+				object = 0;
 			}
 		}
-
-		// BUG: This messes with object unique ids
-		if(object) {
-			for(i=0; i<quantity; i++) {
-				if(!i) {
-					object2 = object;  // just a reference
-				} else {
-					object2 = new Object;
-					*object2 = *object;
-				}
-				// Add it to the appropriate parent
-				if(oParent) {
-					oParent->addObj(object2);
-				} else if(cParent) {
-					cParent->addObj(object2);
-				} else if(rParent) {
-					object2->addToRoom(rParent);
-				}
-			}
+		if(idList) {
+			delete idList;
+			idList = 0;
 		}
 		childNode = childNode->next;
 	}
@@ -1374,12 +1443,10 @@ void BaseRoom::readExitsXml(xmlNodePtr curNode) {
 
 			if(!ext->flagIsSet(X_PORTAL)) {
 				// moving cardinal exit on the overland?
-				if(ext->flagIsSet(X_MOVING) && aRoom && aRoom->updateExit(ext->name))
-					delete ext;
-				else
-					addExit(ext);
+				if(ext->flagIsSet(X_MOVING) && aRoom && aRoom->updateExit(ext->getName()))
+					delExit(ext);
 			} else
-				delete ext;
+				delExit(ext);
 		}
 		childNode = childNode->next;
 	}
@@ -1722,7 +1789,7 @@ bool Config::loadGuilds() {
 Guild::Guild(xmlNodePtr curNode) {
 	int guildId = xml::getIntProp(curNode, "ID");
 	if(guildId == 0)
-		throw new bstring("Invalid GuildID");
+		throw(std::runtime_error("Invalid GuildID"));
 
 	num = guildId;
 	gConfig->numGuilds = MAX(gConfig->numGuilds, guildId);
@@ -1923,7 +1990,7 @@ SkillInfo::SkillInfo(xmlNodePtr rootNode) {
 	}
 	if(name == "" || displayName == "") {
 		std::cout << "Invalid skill (Name:" << name << ", DisplayName: " << displayName <<  ")" << std::endl;
-		throw(new std::exception());
+		throw(std::runtime_error("Invalid SkillInfo XML"));
 	}
 }
 
@@ -1947,7 +2014,7 @@ SkillCommand::SkillCommand(xmlNodePtr rootNode) {
 	}
 	if(SkillInfo::name == "" || displayName == "") {
 		std::cout << "Invalid skillCommand (Name:" << SkillInfo::name << ", DisplayName: " << displayName <<  ")" << std::endl;
-		throw(new std::exception());
+		throw(std::runtime_error("Invalid Skill Command Xml"));
 	} else {
 		std::cout << "Found SkillCommand: " << SkillInfo::name << std::endl;
 	}

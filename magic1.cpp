@@ -571,11 +571,11 @@ int cmdTeach(Player* player, cmd* cmnd) {
 	player->unhide();
 
 	if(target->spellIsKnown(get_spell_num(splno)) && target->isMonster() && player->isStaff()) {
-		logn("log.teach", "%s caused %s to forget %s.\n", player->name, target->name, get_spell_name(splno));
+		logn("log.teach", "%s caused %s to forget %s.\n", player->getCName(), target->getCName(), get_spell_name(splno));
 		player->print("Spell \"%s\" removed from %N's memory.\n", get_spell_name(splno), target);
 		target->forgetSpell(get_spell_num(splno));
 	} else if(target->spellIsKnown(get_spell_num(splno)) && target->isPlayer() && player->isDm()) {
-		logn("log.teach", "%s caused %s to forget %s.\n", player->name, target->name, get_spell_name(splno));
+		logn("log.teach", "%s caused %s to forget %s.\n", player->getCName(), target->getCName(), get_spell_name(splno));
 		player->print("Spell \"%s\" removed from %N's memory.\n", get_spell_name(splno), target);
 		target->forgetSpell(get_spell_num(splno));
 	} else {
@@ -597,7 +597,7 @@ int cmdTeach(Player* player, cmd* cmnd) {
 		target->print("%M teaches you the %s spell.\n", player,
 		      get_spell_name(splno));
 		player->print("Spell \"%s\" taught to %N.\n", get_spell_name(splno), target);
-		if(!player->flagIsSet(P_DM_INVIS) && !player->flagIsSet(P_INCOGNITO)) {
+		if(!player->flagIsSet(P_DM_INVIS) && !player->isEffected("incognito")) {
 			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M taught %N the %s spell.", player, target, get_spell_name(splno));
 		}
@@ -629,7 +629,7 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("You don't have that.\n");
 		return(0);
@@ -703,8 +703,8 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
 
 		if(!recipe) {
 			player->print("Error: Bad Recipe.\n");
-			broadcast(isCt, "^y%s has a bad recipe!^x\n", player->name);
-			loge("Study: %s has a bad recipe.\n", player->name);
+			broadcast(isCt, "^y%s has a bad recipe!^x\n", player->getCName());
+			loge("Study: %s has a bad recipe.\n", player->getCName());
 			return(0);
 		}
 		
@@ -722,8 +722,8 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
 
 		if(object->getMagicpower() - 1 < 0 || object->getMagicpower() - 1 > MAXSPELL) {
 			player->print("%O is unintelligible.\n", object);
-			broadcast(isCt, "^y%s has a bad scroll: %s.\n", player->name, object->getName());
-			loge("Study: %s has a bad scroll: %s.\n", player->name, object->getName());
+			broadcast(isCt, "^y%s has a bad scroll: %s.\n", player->getCName(), object->getCName());
+			loge("Study: %s has a bad scroll: %s.\n", player->getCName(), object->getCName());
 			return(0);
 		}
 
@@ -921,7 +921,7 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 		player->printColor("^CYou're blind!\n");
 		return(0);
 	}
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object || !cmnd->val[1]) {
 		for(n = 0; n < MAXWEAR; n++) {
@@ -991,8 +991,8 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 
 	if(object->getMagicpower() - 1 < 0 || object->getMagicpower() - 1 > MAXSPELL) {
 		player->print("Error: Bad Scroll.\n");
-		broadcast(isCt, "^y%s has a bad scroll!\n", player->name);
-		loge("Readscroll: %s has a bad scroll.\n", player->name);
+		broadcast(isCt, "^y%s has a bad scroll!\n", player->getCName());
+		loge("Readscroll: %s has a bad scroll.\n", player->getCName());
 		return(0);
 	}
 
@@ -1140,8 +1140,8 @@ int consume(Player* player, Object* object, cmd* cmnd) {
 
 	if(object->getMagicpower() - 1 < 0 || object->getMagicpower() - 1 > MAXSPELL) {
 		player->print("Error: Bad Potion.\n");
-		broadcast(isCt, "^y%s has a bad potion!\n", player->name);
-		loge("Quaff: %s has a bad potion.\n", player->name);
+		broadcast(isCt, "^y%s has a bad potion!\n", player->getCName());
+		loge("Quaff: %s has a bad potion.\n", player->getCName());
 		return(0);
 	}
 	splno = object->getMagicpower() - 1;
@@ -1197,7 +1197,7 @@ int cmdConsume(Player* player, cmd* cmnd) {
 	    return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object || !cmnd->val[1]) {
 		for(n = 0; n < MAXWEAR; n++) {
@@ -1250,7 +1250,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 
 	if(!object || !cmnd->val[1]) {
 		for(n = 0; n < MAXWEAR; n++) {
@@ -1268,7 +1268,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 	}
 
 	if(!object) {
-		object = findObject(player, player->getRoomParent()->first_obj, cmnd);
+		object = player->getRoomParent()->findObject(player, cmnd, 1);
 		if(object && !object->flagIsSet(O_CAN_USE_FROM_FLOOR)) {
 			player->print("You don't have that.\n");
 			return(0);
@@ -1318,8 +1318,8 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 	data.splno = object->getMagicpower() - 1;
 	if(data.splno < 0 || data.splno > MAXSPELL) {
 		player->print("Error: Bad Wand.\n");
-		broadcast(isCt, "^y%s has a bad wand!\n", player->name);
-		loge("Study: %s has a bad wand.\n", player->name);
+		broadcast(isCt, "^y%s has a bad wand!\n", player->getCName());
+		loge("Study: %s has a bad wand.\n", player->getCName());
 		return(0);
 	}
 
@@ -1405,7 +1405,7 @@ int cmdRecall(Player* player, cmd* cmnd) {
 void recallLog(Player* player, bstring name, bstring cname, bstring room) {
 	std::ostringstream log;
 
-	log << "### " << player->name << "(L" << player->getLevel() << ") hazied (" << name << ") ";
+	log << "### " << player->getName() << "(L" << player->getLevel() << ") hazied (" << name << ") ";
 	if(cname != "")
 		log << "(out of bag: " << cname << ") ";
 	log << "due to lag protection. HP: " << player->hp.getCur() << "/" << player->hp.getMax()
@@ -1423,34 +1423,24 @@ void recallLog(Player* player, bstring name, bstring cname, bstring room) {
 // used from consume doesnt handle deleting it properly
 
 int recallCheckBag(Player* player, Object *cont, cmd* cmnd, int show, int log) {
-	Object	*object=NULL;
-	otag	*cop=0, *prev=0;
-	int		drank=0, first=1;
+	int		drank=0;
 	bstring room = player->getRoomParent()->fullName(), name = "";
 
-	prev = cont->first_obj;
-	cop = cont->first_obj;
-	while(cop) {
-		object = cop->obj;
-		cop = cop->next_tag;
-		name = object->name;
+	for(Object* object : cont->objects) {
+		name = object->getName();
 
 		if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == POTION) {
 			if(show)
-				player->printColor("Recall potion found in %s: %s. Initiating auto-recall.\n", cont->name, name.c_str());
+				player->printColor("Recall potion found in %s: %s. Initiating auto-recall.\n", cont->getCName(), name.c_str());
 			drank = consume(player, object, cmnd);
 			if(drank) {
 				if(log)
-					recallLog(player, name, cont->name, room);
+					recallLog(player, name, cont->getCName(), room);
 				return(1);
 			}
 			if(show)
 				player->print("Unable to use potion. Continuing search.\n");
 		}
-		// don't move prev if we're at the first object
-		if(!first)
-			prev = prev->next_tag;
-		first=0;
 	}
 	return(0);
 }
@@ -1463,7 +1453,6 @@ int recallCheckBag(Player* player, Object *cont, cmd* cmnd, int show, int log) {
 int useRecallPotion(Player* player, int show, int log) {
 	cmd 	*cmnd;
 	Object	*object=NULL;
-	otag	*op=0;
 	int		i=0;
 	bstring room = player->getRoomParent()->fullName(), name = "";
 
@@ -1484,7 +1473,7 @@ int useRecallPotion(Player* player, int show, int log) {
 	for(i=0; i<MAXWEAR; i++) {
 		object = player->ready[i];
 		if(object) {
-			name = object->name;
+			name = object->getName();
 			if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == POTION) {
 				if(show)
 					player->printColor("Recall potion found: %s. Initiating auto-recall.\n", name.c_str());
@@ -1504,11 +1493,9 @@ int useRecallPotion(Player* player, int show, int log) {
 	}
 
 	// check through their inventory
-	op = player->first_obj;
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
-		name = object->name;
+	for(Object* obj : player->objects) {
+		object = obj;
+		name = object->getName();
 
 		// is this object it?
 		if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == POTION) {
@@ -1543,7 +1530,7 @@ void logCast(Creature* caster, Creature* target, bstring spell, bool dmToo) {
 	if(!pCaster || !pCaster->isStaff() || (!dmToo && pCaster->isDm()))
 		return;
 	log_immort(true, pCaster, "%s cast an %s spell on %s in room %s.\n",
-		caster->name, spell.c_str(), target ? target->name : "self",
+		caster->getCName(), spell.c_str(), target ? target->getCName() : "self",
 		caster->getRoomParent()->fullName().c_str());
 }
 
@@ -1701,7 +1688,7 @@ int cmdTransmute(Player* player, cmd* cmnd) {
 	if(spell_fail(player, CAST)) {
 		int dmg = 0;
 		player->print("The wand glows bright red and explodes!\n");
-		broadcast(player->getSock(), player->getParent(), "A wand explodes in %s's hand!\n", player->name);
+		broadcast(player->getSock(), player->getParent(), "A wand explodes in %s's hand!\n", player->getCName());
 
 		if(player->chkSave(SPL, player, -1)) {
 			dmg = mrand(5, 10);
@@ -1718,7 +1705,7 @@ int cmdTransmute(Player* player, cmd* cmnd) {
 
 	// success!
 	object->setShotsCur(object->getShotsMax());
-	player->printColor("You successfully recharge the %s.\n", object->name);
+	player->printColor("You successfully recharge the %s.\n", object->getCName());
 	player->checkImprove("transmute", true);
 	player->statistics.transmute();
 	return(0);
@@ -1776,7 +1763,7 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
-			player->print("Blindness spell cast on %s.\n", target->name);
+			player->print("Blindness spell cast on %s.\n", target->getCName());
 			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a blindness spell on %N.", player, target);
 			target->print("%M casts a blindness spell on you.\n", player);
 		}
@@ -2068,7 +2055,7 @@ int cmdCommune(Player *player, cmd *cmnd) {
 
 			if(!first_exit)
 				player->print("\n");
-			player->print("%s:\n", ext->name);
+			player->print("%s:\n", ext->getCName());
 			first_exit = 0;
 
 			if(!Move::getRoom(player, ext, &newRoom, true)) {
@@ -2113,7 +2100,7 @@ int cmdCommune(Player *player, cmd *cmnd) {
 				if(mons->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt())
 					continue;
 
-				player->print("   %s\n", mons->name);
+				player->print("   %s\n", mons->getCName());
 			}
 		}
 		player->checkImprove("commune", true);

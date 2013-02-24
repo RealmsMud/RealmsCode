@@ -71,7 +71,12 @@ bool idComp::operator() (const bstring& lhs, const bstring& rhs) const {
 	strR >> charR >> longR;
 
 	if(charL == charR) {
-		return(longL < longR);
+		if(charL == 'R') {
+			// Rooms work a bit differently
+			return(lhs < rhs);
+		}
+		else
+			return(longL < longR);
 	} else {
 		return(charL < charR);
 	}
@@ -155,7 +160,7 @@ bool Server::init() {
 	    std::cout << "failed." << std::endl;
 #endif
 
-	gConfig->load();
+	gConfig->loadBeforePython();
 	gConfig->startFlashPolicy();
 	gConfig->setLotteryRunTime();
 
@@ -176,6 +181,10 @@ bool Server::init() {
 	// Python
 	std::cout <<  "Initializing Python...";
 	initPython();
+
+	gConfig->loadAfterPython();
+
+
 
 #ifdef SQL_LOGGER
 	std::cout <<  "Initializing SQL Logger...";
@@ -810,7 +819,7 @@ void Server::updateActive(long t) {
 
 		if(!monster->inRoom()) {
 			broadcast(isStaff, "^y%s without a parent/area room on the active list. Info: %s. Deleting.",
-				monster->name, monster->info.str().c_str());
+				monster->getCName(), monster->info.str().c_str());
 			monster->deleteFromRoom();
 			gServer->delActive(monster);
 			free_crt(monster);
@@ -1058,12 +1067,12 @@ void Server::addActive(Monster* monster) {
 		return;
 	// try and guess if the creature is valid
 	{
-		char *p = monster->name;
+		const char *p = monster->getCName();
 		while(*p) {
 			ASSERTLOG(isPrintable((unsigned char)*p));
 			p++;
 		}
-		ASSERTLOG(p - monster->name);
+		ASSERTLOG(p - monster->getCName());
 	}
 
 	monster->validateId();
@@ -1083,14 +1092,14 @@ void Server::delActive(Monster* monster) {
 
 	if(activeList.empty()) {
 		std::cerr << "Attempting to delete '" << monster->getName() << "' from active list with an empty active list." << std::endl;
-		broadcast(isStaff, "^yAttempting to delete %s from active list with an empty active list.", monster->name);
+		broadcast(isStaff, "^yAttempting to delete %s from active list with an empty active list.", monster->getCName());
 		return;
 	}
 
 	MonsterList::iterator it = std::find(activeList.begin(), activeList.end(), monster);
 	if(it == activeList.end()) {
 		std::cerr << "Attempting to delete '" << monster->getName() << "' from active list but could not find them on the list." << std::endl;
-		broadcast(isStaff, "^yAttempting to delete %s from active list but could not find them on the list.", monster->name);
+		broadcast(isStaff, "^yAttempting to delete %s from active list but could not find them on the list.", monster->getCName());
 		return;
 	}
 
@@ -1255,7 +1264,7 @@ int Server::processListOutput(childProcess &lister) {
 	Socket *sock;
 	for(sIt = sockets.begin() ; sIt != sockets.end() ; ++sIt ) {
 		sock = *sIt;
-		if(sock->getPlayer() && lister.extra == sock->getPlayer()->name) {
+		if(sock->getPlayer() && lister.extra == sock->getPlayer()->getName()) {
 			found = true;
 			break;
 		}
@@ -1514,7 +1523,7 @@ bool Server::startReboot(bool resetShips) {
 				sock->endCompress();
 			}
 			player->save(true);
-			players[player->name] = 0;
+			players[player->getName()] = 0;
 			player->uninit();
 			free_crt(player);
 			player = 0;
@@ -1584,7 +1593,7 @@ bool Server::saveRebootFile(bool resetShips) {
 		Player*player = sock->getPlayer();
 		if(player && player->fd > -1) {
 			curNode = xmlNewChild(rootNode, NULL, BAD_CAST"Player", NULL);
-			xml::newStringChild(curNode, "Name", player->name);
+			xml::newStringChild(curNode, "Name", player->getCName());
 			xml::newNumChild(curNode, "Fd", sock->getFd());
 			xml::newStringChild(curNode, "Ip", sock->getIp().c_str());
 			xml::newStringChild(curNode, "HostName", sock->getHostname().c_str());
@@ -1622,7 +1631,7 @@ int Server::finishReboot() {
 	unlink(filename);
 
 	if(doc == NULL) {
-		printf("Unable to load reboot file\n");
+		printf("Unable to loadBeforePython reboot file\n");
 		merror("Loading reboot file", FATAL);
 	}
 
@@ -1784,7 +1793,7 @@ bool Server::clearPlayer(bstring name) {
 bool Server::clearPlayer(Player* player) {
 	ASSERTLOG(player);
 	players.erase(player->getName());
-	unRegisterMudObject(player);
+	player->unRegisterMo();
 	return(true);
 }
 
@@ -1795,9 +1804,9 @@ bool Server::clearPlayer(Player* player) {
 bool Server::addPlayer(Player* player) {
 	ASSERTLOG(player);
 	player->validateId();
-	players[player->name] = player;
+	players[player->getName()] = player;
 	player->getSock()->addToPlayerList();
-	registerMudObject(player);
+	player->registerMo();
 	return(true);
 }
 
@@ -1807,7 +1816,7 @@ bool Server::addPlayer(Player* player) {
 
 bool Server::checkDuplicateName(Socket* sock, bool dis) {
 	for(Socket *s : sockets) {
-		if(sock != s && s->getPlayer() && !strcmp(s->getPlayer()->name, sock->getPlayer()->name)) {
+		if(sock != s && s->getPlayer() && s->getPlayer()->getName() ==  sock->getPlayer()->getName()) {
 			if(!dis) {
 				sock->printColor("\n\n^ySorry, that character is already logged in.^x\n\n\n");
 				sock->reconnect();
@@ -1849,7 +1858,7 @@ bool Server::checkDouble(Socket* sock) {
 			continue;
 
 		s->printColor("^Y\n\nAnother character (%s) from your IP address has just logged in.\n\n",
-			sock->getPlayer()->name);
+			sock->getPlayer()->getCName());
 		s->disconnect();
 		return(false);
 	}
@@ -1966,22 +1975,36 @@ int Server::getNumPlayers() {
 // Functions that deal with unique IDs
 // *************************************
 
-bool Server::registerMudObject(MudObject* toRegister) {
+bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
 	ASSERT(toRegister != NULL);
 
 	if(toRegister->getId().equals("-1"))
 		return(false);
 
-	if(registeredIds.find(toRegister->getId()) != registeredIds.end()) {
+	IdMap::iterator it =registeredIds.find(toRegister->getId());
+	if(it != registeredIds.end()) {
 		std::ostringstream oStr;
 		oStr << "ERROR: ID: " << toRegister->getId() << " is already registered!";
-		broadcast(isDm, "%s", oStr.str().c_str());
+		if(toRegister->isMonster() || toRegister->isObject()) {
+			// Give them a new id and continue
+			oStr << " Assigning them a new ID";
+			reassignId = true;
+			toRegister->setRegistered();
+			toRegister->setId("-1");
+			toRegister->validateId();
+		}
+		//broadcast(isDm, "%s", oStr.str().c_str());
 		std::cout << oStr.str() << std::endl;
-		return(false);
+		if(!reassignId)
+			return(false);
+		else
+			return(registerMudObject(toRegister, true));
 	}
+	if(!reassignId)
+		toRegister->setRegistered();
+
 	registeredIds.insert(IdMap::value_type(toRegister->getId(), toRegister));
-	//registeredIds[toRegister->getId()] = toRegister;
-//	std::cout << "Registered: " << toRegister->getId() << " - " << toRegister->getName() << std::endl;
+	//std::cout << "Registered: " << toRegister->getId() << " - " << toRegister->getName() << std::endl;
 	return(true);
 }
 
@@ -1992,21 +2015,62 @@ bool Server::unRegisterMudObject(MudObject* toUnRegister) {
 		return(false);
 
 	IdMap::iterator it = registeredIds.find(toUnRegister->getId());
-
-	if(it == registeredIds.end()) {
+	bool registered = toUnRegister->isRegistered();
+	if(!registered) {
 		std::ostringstream oStr;
-		oStr << "ERROR: ID: " << toUnRegister->getId() << " is not registered!";
+		oStr << "ERROR: ID: " << toUnRegister->getId() << " thinks it is not registered, but is being told to unregister, trying anyway.";
 		broadcast(isDm, "%s", oStr.str().c_str());
 		std::cout << oStr.str() << std::endl;
+
+	}
+	if(it == registeredIds.end()) {
+		if(registered) {
+			std::ostringstream oStr;
+			oStr << "ERROR: ID: " << toUnRegister->getId() << " is not registered!";
+			broadcast(isDm, "%s", oStr.str().c_str());
+			std::cout << oStr.str() << std::endl;
+		}
 		return(false);
 	}
+	if(!registered) {
+		std::ostringstream oStr;
+		if((*it).second == toUnRegister) {
+			oStr << "ERROR: ID: " << toUnRegister->getId() << " thought it wasn't registered, but the server thought it was.";
+			broadcast(isDm, "%s", oStr.str().c_str());
+			std::cout << oStr.str() << std::endl;
+			// Continue on with the unregistering since this object really was registered
+		} else {
+			oStr << "ERROR: ID: " << toUnRegister->getId() << " Server does not have this instance registered.";
+			broadcast(isDm, "%s", oStr.str().c_str());
+			std::cout << oStr.str() << std::endl;
+			// Stop here, don't unregister this ID since the mudObject registered it not the one we're after
+			return(false);
+		}
+	}
+	toUnRegister->setUnRegistered();
 	registeredIds.erase(it);
-//	std::cout << "Unregistered: " << toUnRegister->getId() << " - " << toUnRegister->getName() << std::endl;
+	//std::cout << "Unregistered: " << toUnRegister->getId() << " - " << toUnRegister->getName() << std::endl;
 	return(true);
 }
 
-Creature* Server::lookupCrtId(const bstring& toLookup) {
+Object* Server::lookupObjId(const bstring& toLookup) {
+	if(toLookup[0] != 'O')
+		return(NULL);
+
     IdMap::iterator it = registeredIds.find(toLookup);
+
+    if(it == registeredIds.end())
+        return(NULL);
+    else
+        return(((*it).second)->getAsObject());
+
+}
+
+Creature* Server::lookupCrtId(const bstring& toLookup) {
+	if(toLookup[0] != 'M' && toLookup[0] != 'P')
+		return(NULL);
+
+	IdMap::iterator it = registeredIds.find(toLookup);
 
     if(it == registeredIds.end())
         return(NULL);
@@ -2015,7 +2079,9 @@ Creature* Server::lookupCrtId(const bstring& toLookup) {
 
 }
 Player* Server::lookupPlyId(const bstring& toLookup) {
-    IdMap::iterator it = registeredIds.find(toLookup);
+	if(toLookup[0] != 'P')
+		return(NULL);
+	IdMap::iterator it = registeredIds.find(toLookup);
 
     if(it == registeredIds.end())
         return(NULL);

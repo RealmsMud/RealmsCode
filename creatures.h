@@ -318,7 +318,6 @@ public:
 #define 				NUMHITS quests[0]
 	short questnum; // Quest fulfillment number (M)
 	Object *ready[MAXWEAR];// Worn/readied items
-	otag *first_obj; // List of inventory
 	//etag *first_enm; // List of enemies
 	ttag *first_tlk; // List of talk responses
 
@@ -548,7 +547,7 @@ public:
 	bool isHybridCaster() const;
 
 // Equipment / Inventory
-	void addObj(Object* object, bool resetUniqueId=true);
+	void addObj(Object* object);
 	void delObj(Object* object, bool breakUnique=false, bool removeUnique=false, bool darkmetal=true, bool darkness=true, bool keep=false);
 	void finishDelObj(Object* object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep);
 	int getWeight() const;
@@ -558,7 +557,7 @@ public:
 	int getMaxBulk() const;
 	unsigned long getInventoryValue() const;
 	void killDarkmetal();
-	bool equip(Object* object, bool showMessage=true, bool resetUniqueId=true);
+	bool equip(Object* object, bool showMessage=true);
 	Object* unequip(int wearloc, UnequipAction action = UNEQUIP_ADD_TO_INVENTORY, bool darkness=true, bool showEffect=true);
 	void printEquipList(const Player* viewer);
 	void checkDarkness();
@@ -589,7 +588,6 @@ public:
 	bool addLycanthropy(Creature *killer, int chance);
 
 // Get
-	const char* getName() const; // *
 	unsigned short getClass() const; // *
 	unsigned short getLevel() const; // *
 	short getAlignment() const; // *
@@ -686,10 +684,9 @@ public:
 	Stat* getStat(bstring statName);
 
 	// these handle total invisibility, no concealment (ie, being hidden)
-	bool canSee(const BaseRoom* room, bool p=false) const;
-	bool canSee(const Object* object) const;
-	bool canSee(const Exit *ext) const;
-	bool canSee(const Creature* target, bool skip=false) const;
+	bool canSee(const MudObject* target, bool skip=false) const;
+
+	bool canSeeRoom(const BaseRoom* room, bool p=false) const;
 	bool canEnter(const Exit *ext, bool p=false, bool blinking=false) const;
 	bool canEnter(const UniqueRoom* room, bool p=false) const;
 	bool willFit(const Object* object) const;
@@ -720,7 +717,7 @@ public:
 	virtual void pulseTick(long t) = 0;
 
 	MudObject* findTarget(int findWhere, int findFlags, bstring str, int val);
-	MudObject* findObjTarget(otag *first_ot, int findFlags, bstring str, int val, int* match);
+	MudObject* findObjTarget(ObjectSet &set, int findFlags, bstring str, int val, int* match);
 	//MudObject* findTarget(cmd* cmnd, TargetType targetType, bool offensive);
 
 	// New songs
@@ -1319,7 +1316,7 @@ public:
 	bool swap(Swap s);
 	bool swapIsInteresting(Swap s) const;
 	
-	void doRemove(int i, bool resetUniqueId=true);
+	void doRemove(int i);
 	int getAge() const;
 	unsigned long expToLevel() const;
 	bstring expToLevel(bool addX) const;
@@ -1388,9 +1385,6 @@ public:
 	bool restoreLastPawn();
 	void checkFreeSkills(bstring skill);
 	void computeInterest(long t, bool online);
-
-	void resetObjectIds();
-	void setObjectId(Object* object);
 };
 
 

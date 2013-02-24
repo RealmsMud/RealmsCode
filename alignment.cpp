@@ -132,11 +132,11 @@ int cmdChooseAlignment(Player* player, cmd* cmnd) {
 		if(player->getRace() == TIEFLING) {
 			player->print("Tieflings are required to be chaotic.\n\n");
 		} else {
-			broadcast("^B### %s chooses to adhere to the order of LAW!", player->getName());
+			broadcast("^B### %s chooses to adhere to the order of LAW!", player->getCName());
 			player->setFlag(P_CHOSEN_ALIGNMENT);
 		}
 	} else if(!strcasecmp(cmnd->str[1], "chaotic")) {
-		broadcast("^R### %s chooses to embrace the whims of CHAOS!", player->getName());
+		broadcast("^R### %s chooses to embrace the whims of CHAOS!", player->getCName());
 		player->setFlag(P_CHAOTIC);
 		player->setFlag(P_CHOSEN_ALIGNMENT);
 	} else {
@@ -310,10 +310,10 @@ int cmdConvert(Player* player, cmd* cmnd) {
 	}
 
 	if(player->getClass() == BUILDER) {
-		broadcast(isStaff, "^G### %s just converted to lawful alignment.", player->getName());
-		logn("log.convert","%s converted to lawful.", player->getName());
+		broadcast(isStaff, "^G### %s just converted to lawful alignment.", player->getCName());
+		logn("log.convert","%s converted to lawful.", player->getCName());
 	} else
-		broadcast("^G### %s just converted to lawful alignment.", player->getName());
+		broadcast("^G### %s just converted to lawful alignment.", player->getCName());
 	player->clearFlag(P_CHAOTIC);
 
 	if(player->getClass() == CLERIC)

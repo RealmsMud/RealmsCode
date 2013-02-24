@@ -346,7 +346,7 @@ void Socket::removeSpy(Socket *sock) {
 	spying.remove(sock);
 	if (myPlayer->getClass() >= sock->myPlayer->getClass())
 		sock->printColor("^r%s is no longer observing you.\n",
-				sock->myPlayer->name);
+				sock->myPlayer->getCName());
 }
 
 //********************************************************************
@@ -581,7 +581,7 @@ int Socket::processInput() {
                     tState = NEG_MXP_SECURE_TWO;
                     break;
                 } else {
-                    tmp += "\033" + tmpBuf[i];
+                    tmp += "\033" + bstring(tmpBuf[i]);
                 }
                 tState = NEG_NONE;
                 break;
@@ -590,7 +590,7 @@ int Socket::processInput() {
                     tState = NEG_MXP_SECURE_FINISH;
                     break;
                 } else {
-                    tmp += "\033[" + tmpBuf[i];
+                    tmp += "\033[" + bstring(tmpBuf[i]);
                 }
                 tState = NEG_NONE;
                 break;
@@ -601,7 +601,7 @@ int Socket::processInput() {
                     std::cout << "Client secure MXP mode enabled" << std::endl;
                     break;
                 } else {
-                    tmp += "\033[1" + tmpBuf[i];
+                    tmp += "\033[1" + bstring(tmpBuf[i]);
                 }
                 tState = NEG_NONE;
                 break;
@@ -1380,11 +1380,19 @@ void Socket::printColor(const char* fmt, ...) {
 // Flush pending output and send a prompt
 
 void Socket::flush() {
-	int n;
-	if ((n = write(output)) == 0)
-		return;
-	output.clear();
-	// If we only wrote OOB data n is -2, don't send a prompt in that case
+	int n, len;
+	if(!processed_output.empty()) {
+		len = processed_output.length();
+
+		n = write(processed_output, false, false);
+	} else {
+		len = output.length();
+		if ((n = write(output)) == 0)
+			return;
+		output.clear();
+	}
+	// If we only wrote OOB data or partial data was written because of EWOULDBLOCK,
+	// then n is -2, don't send a prompt in that case
 	if (n != -2 && myPlayer && connState != CON_CHOSING_WEAPONS)
 		myPlayer->sendPrompt();
 }
@@ -1394,27 +1402,54 @@ void Socket::flush() {
 //********************************************************************
 // Write a string of data to the the socket's file descriptor
 
-int Socket::write(bstring toWrite, bool pSpy) {
+int Socket::write(bstring toWrite, bool pSpy, bool process) {
 	int written = 0;
 	int n = 0;
 	int total = 0;
 
 	// Parse any color, unicode, etc here
-	bstring toOutput = parseForOutput(toWrite);
+	bstring toOutput;
+	if(process)
+		toOutput = parseForOutput(toWrite);
+	else {
+		toOutput = toWrite;
+	}
 
 	total = toOutput.length();
-	UnCompressedBytes += total;
 
 	const char *str = toOutput.c_str();
 	// Write directly to the socket, otherwise compress it and send it
 	if (!opts.compressing) {
 		do {
 			n = ::write(fd, str + written, total - written);
-			if (n < 0)
-				return (n);
+			if (n < 0) {
+				if(errno != EWOULDBLOCK)
+					return (n);
+				else  {
+					// The write would have blocked
+					n = -2;
+					// If we haven't written the total number of bytes planned
+					// Save the remaining string for the next go around
+					if(written < total) {
+						processed_output = str+written;
+					}
+					break;
+				}
+			}
 			written += n;
 		} while (written < total);
+
+		UnCompressedBytes += written;
+
+		if(n == -2)
+			written = -2;
+
+		if(written >= total && !processed_output.empty() && process == false) {
+			processed_output.erase();
+		}
 	} else {
+		UnCompressedBytes += total;
+
 		out_compress->next_in = (unsigned char*) str;
 		out_compress->avail_in = total;
 		while (out_compress->avail_in) {
@@ -1434,6 +1469,8 @@ int Socket::write(bstring toWrite, bool pSpy) {
 	bstring forSpy = Socket::stripTelnet(toWrite, strippedLen);
 
 	if (pSpy && !spying.empty()) {
+
+
 		forSpy.Replace("\n", "\n<Spy> ");
 		if(!forSpy.empty()) {
 			std::list<Socket*>::iterator it;
@@ -1450,9 +1487,9 @@ int Socket::write(bstring toWrite, bool pSpy) {
 	// If stripped len is 0, it means we only wrote OOB data, so adjust the return so
 	// we don't send another prompt
 	if(strippedLen == 0)
-		strippedLen = -2;
+		written = -2;
 
-	return (strippedLen);
+	return (written);
 }
 
 //--------------------------------------------------------------------
@@ -1691,7 +1728,7 @@ void Socket::ANSI(int color) {
 //********************************************************************
 
 bool Socket::hasOutput(void) const {
-	return (!output.empty());
+	return (!processed_output.empty() || !output.empty());
 }
 
 //********************************************************************

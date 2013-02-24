@@ -1074,7 +1074,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 
 	if(cmnd->num == 2) {
 
-		object = findObject(player, player->first_obj, cmnd);
+		object = player->findObject(player, cmnd, 1);
 		if(!object) {
 			player->print("Use what bandages?\n");
 			return(0);
@@ -1116,7 +1116,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 
 
 		if(object->getShotsCur() < 1)
-			player->printColor("Your %s %s all used up.\n", object->name,
+			player->printColor("Your %s %s all used up.\n", object->getCName(),
 			      (object->flagIsSet(O_SOME_PREFIX) ? "are":"is"));
 
 		broadcast(player->getSock(), player->getParent(), "%M bandages %sself.",
@@ -1142,7 +1142,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 
 
 
-		object = findObject(player, player->first_obj, cmnd, 2);
+		object = player->findObject(player, cmnd, 2);
 		if(!object) {
 			player->print("You don't have that in your inventory.\n");
 			return(0);
@@ -1203,7 +1203,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 
 
 		if(object->getShotsCur() < 1)
-			player->printColor("Your %s %s all used up.\n", object->name,
+			player->printColor("Your %s %s all used up.\n", object->getCName(),
 			      (object->flagIsSet(O_SOME_PREFIX) ? "are":"is"));
 
 		broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M bandages %N.", player, creature);

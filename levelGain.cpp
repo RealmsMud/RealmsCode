@@ -169,7 +169,7 @@ int LevelGain::getMp() { return(mp); }
 void doTrain(Player* player) {
 	player->upLevel();
 	player->setFlag(P_JUST_TRAINED);
-	broadcast("### %s just made a level!", player->name);
+	broadcast("### %s just made a level!", player->getCName());
 	player->print("Congratulations, you made a level!\n\n");
 
 	if(player->canChooseCustomTitle()) {
@@ -179,7 +179,7 @@ void doTrain(Player* player) {
 	}
 
 	logn("log.train", "%s just trained to level %d in room %s.\n",
-		player->name, player->getLevel(), player->getRoomParent()->fullName().c_str());
+		player->getCName(), player->getLevel(), player->getRoomParent()->fullName().c_str());
 	updateRecentActivity();
 }
 
@@ -639,7 +639,7 @@ int cmdTrain(Player* player, cmd* cmnd) {
 			player->coins.set(0, GOLD);
 			player->bank.sub(bankneeded, GOLD);
 			player->print("You use %ld gold coins from your bank account.\n", bankneeded);
-			Bank::log(player->name, "WITHDRAW (train) %ld [Balance: %ld]\n",
+			Bank::log(player->getCName(), "WITHDRAW (train) %ld [Balance: %ld]\n",
 				bankneeded, player->bank[GOLD]);
 		} else
 			player->coins.sub(goldneeded, GOLD);

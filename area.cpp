@@ -1734,10 +1734,10 @@ int dmListArea(Player* player, cmd* cmnd) {
 
 		for(rt = area->rooms.begin() ; rt != area->rooms.end() ; rt++) {
 			room = (*rt).second;
-			if(!room->players.empty() || !room->monsters.empty() || room->first_obj || empty) {
+			if(!room->players.empty() || !room->monsters.empty() || !room->objects.empty() || empty) {
 				player->printColor("     %-16s Ply: %s^x  Mon: %s^x  Obj: %s\n",
 					room->fullName().c_str(), !room->players.empty() ? "^gy" : "^rn",
-					!room->monsters.empty() ? "^gy" : "^rn", room->first_obj ? "^gy" : "^rn");
+					!room->monsters.empty() ? "^gy" : "^rn", !room->objects.empty() ? "^gy" : "^rn");
 			}
 		}
 		player->print("\n");

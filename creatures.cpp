@@ -34,7 +34,7 @@
 //						canSee
 //********************************************************************
 
-bool Creature::canSee(const BaseRoom* room, bool p) const {
+bool Creature::canSeeRoom(const BaseRoom* room, bool p) const {
 	if(isStaff())
 		return(true);
 	const Player* player = getAsConstPlayer();
@@ -88,118 +88,59 @@ bool Creature::canSee(const BaseRoom* room, bool p) const {
 	return(true);
 }
 
-//********************************************************************
-//						canSee
-//********************************************************************
-// This only handles total invisibility - the creature cannot see the target
-// at all. This does not handle concealment, such as being hidden.
-// This function can be called on an empty creature to check to see if
-// an object can be seen by anyone.
-
-bool Creature::canSee(const Object* object) const {
-
-	if(!object)
+bool Creature::canSee(const MudObject* target, bool skip) const {
+	if(!this || !target)
 		return(false);
 
-	if(this && isStaff())
-		return(true);
-	if(object->flagIsSet(O_INVISIBLE) && (this && !isEffected("detect-invisible")))
-		return(false);
-
-	return(true);
-}
-
-
-//********************************************************************
-//						canSee
-//********************************************************************
-// This only handles total invisibility - the creature cannot see the target
-// at all. This does not handle concealment, such as being hidden.
-
-bool Creature::canSee(const Exit *exit) const {
-
-	if(!exit)
-		return(false);
-
-	if(isStaff())
-		return(true);
-
-	// handle NoSee right away
-	if(exit->flagIsSet(X_NO_SEE))
-		return(false);
-	if(exit->flagIsSet(X_INVISIBLE) && !isEffected("detect-invisible"))
-		return(false);
-
-	return(true);
-}
-
-
-//********************************************************************
-//						canSee
-//********************************************************************
-// This only handles total invisibility - the creature cannot see the target
-// at all. This does not handle concealment, such as being hidden.
-// The skip boolean skips the invis/mist checks. In effect, it only runs
-// staff invisibility. This is used in group and groupline.
-
-bool Creature::canSee(const Creature* target, bool skip) const {
-
-	if(!target)
-		return(false);
-
-	// we are a player
-	if(isPlayer()) {
-
-		if(target->isPlayer()) {
-			if(target->isDm() && target->flagIsSet(P_DM_INVIS) && !isDm())
+	if(target->isCreature()) {
+		const Creature* cTarget = target->getAsConstCreature();
+		if(cTarget->isPlayer()) {
+			if(cTarget->isDm() && cTarget->flagIsSet(P_DM_INVIS) && !isDm())
 				return(false);
-			if(target->isCt() && target->flagIsSet(P_DM_INVIS) && !isCt())
+			if(cTarget->isCt() && cTarget->flagIsSet(P_DM_INVIS) && !isCt())
 				return(false);
-			if(target->isStaff() && target->flagIsSet(P_DM_INVIS) && !isStaff())
+			if(cTarget->isStaff() && cTarget->flagIsSet(P_DM_INVIS) && !isStaff())
 				return(false);
-			if(target->flagIsSet(P_INCOGNITO) && (getClass() < target->getClass()) && getParent() != target->getParent())
+			if(target->isEffected("incognito") && (getClass() < cTarget->getClass()) && getParent() != cTarget->getParent())
 				return(false);
 
 			if(!skip) {
-				if(target->isInvisible() && !isEffected("detect-invisible") && !isStaff())
+				if(cTarget->isInvisible() && !isEffected("detect-invisible") && !isStaff())
 					return(false);
-				if(target->flagIsSet(P_MISTED) && !isEffected("true-sight") && !isStaff())
+				if(target->isEffected("mist") && !isEffected("true-sight") && !isStaff())
 					return(false);
 			}
 
 		} else {
 
 			if(!skip) {
-				if(target->isInvisible() && !isEffected("detect-invisible") && !isStaff())
+				if(cTarget->isInvisible() && !isEffected("detect-invisible") && !isStaff())
 					return(false);
 			}
 
 		}
 
-	// we are a monster
-	} else {
+	} // End Creature
+	if(target->isExit()) {
+		const Exit* exit = target->getAsConstExit();
+		if(isStaff())
+			return(true);
 
-		if(target->isPlayer()) {
-			if(target->isStaff() && target->flagIsSet(P_DM_INVIS))
-				return(false);
+		// handle NoSee right away
+		if(exit->flagIsSet(X_NO_SEE))
+			return(false);
+		if(exit->isEffected("invisibility") && !isEffected("detect-invisible"))
+			return(false);
+	}
+	if(target->isObject()) {
+		const Object* object = target->getAsConstObject();
 
-			if(!skip) {
-				if(target->isInvisible() && !isEffected("detect-invisible"))
-					return(false);
-				if(target->flagIsSet(P_MISTED) && !isEffected("true-sight"))
-					return(false);
-			}
-		} else {
-
-			if(!skip) {
-				if(target->isInvisible() && !isEffected("detect-invisible"))
-					return(false);
-			}
-
-		}
+		if(isStaff())
+			return(true);
+		if(object->isEffected("invisibility") && (this && !isEffected("detect-invisible")))
+			return(false);
 
 	}
-
 	return(true);
 }
 
@@ -289,7 +230,7 @@ bool Creature::canEnter(const Exit *exit, bool p, bool blinking) const {
 	if(	getConstRoomParent()->getTollkeeper() &&
 		(exit->flagIsSet(X_TOLL_TO_PASS) || exit->flagIsSet(X_LEVEL_BASED_TOLL))
 	) {
-		if(p) checkStaff("You must pay a toll of %lu gold coins to go through the %s^x.\n", tollcost(this->getAsConstPlayer(), exit, 0), exit->name);
+		if(p) checkStaff("You must pay a toll of %lu gold coins to go through the %s^x.\n", tollcost(this->getAsConstPlayer(), exit, 0), exit->getCName());
 		if(!staff) return(false);
 	}
 
@@ -349,12 +290,12 @@ bool Creature::canEnter(const Exit *exit, bool p, bool blinking) const {
 			if(!staff) return(false);
 		}
 
-		if(exit->flagIsSet(X_NO_MIST) && flagIsSet(P_MISTED)) {
+		if(exit->flagIsSet(X_NO_MIST) && isEffected("mist")) {
 			if(p) checkStaff("You may not go that way in mist form.\n");
 			if(!staff) return(false);
 		}
 
-		if(exit->flagIsSet(X_MIST_ONLY) && !flagIsSet(P_MISTED)) {
+		if(exit->flagIsSet(X_MIST_ONLY) && !isEffected("mist")) {
 			if(p) checkStaff(getAsConstPlayer()->canMistNow() ? "You must turn to mist before you can go that way.\n" : "You cannot fit through that exit.\n");
 			if(!staff) return(false);
 		}
@@ -444,7 +385,7 @@ bool Creature::canEnter(const UniqueRoom* room, bool p) const {
 			if(p) checkStaff("That room is full.\n");
 			if(!staff) return(false);
 		}
-		if(room->flagIsSet(R_NO_MIST) && flagIsSet(P_MISTED)) {
+		if(room->flagIsSet(R_NO_MIST) && isEffected("mist")) {
 			if(p) checkStaff("You may not enter there in mist form.\n");
 			if(!staff) return(false);
 		}
@@ -479,13 +420,9 @@ bool Creature::canEnter(const UniqueRoom* room, bool p) const {
 
 int Creature::getWeight() const {
 	int		i=0, n=0;
-	otag	*op=0;
-
-	op = first_obj;
-	while(op) {
-		if(!op->obj->flagIsSet(O_WEIGHTLESS_CONTAINER))
-			n += op->obj->getActualWeight();
-		op = op->next_tag;
+	for(Object *obj : objects) {
+		if(!obj->flagIsSet(O_WEIGHTLESS_CONTAINER))
+			n += obj->getActualWeight();
 	}
 
 	for(i=0; i<MAXWEAR; i++)
@@ -515,15 +452,12 @@ int Creature::maxWeight() {
 
 bool Creature::tooBulky(int n) const {
 	int		total=0, i=0, max=0;
-	otag	*op=0;
 
 	if(isCt())
 		return(0);
 
-	op = first_obj;
-	while(op) {
-		total += op->obj->getActualBulk();
-		op = op->next_tag;
+	for(Object *obj : objects) {
+		total += obj->getActualBulk();
 	}
 
 	for(i=0; i<MAXWEAR; i++)
@@ -540,13 +474,10 @@ bool Creature::tooBulky(int n) const {
 //********************************************************************
 
 int	Creature::getTotalBulk() const {
-	otag	*op=0;
 	int		n=0, i=0;
 
-	op = first_obj;
-	while(op) {
-		n += op->obj->getActualBulk();
-		op = op->next_tag;
+	for(Object *obj : objects) {
+		n += obj->getActualBulk();
 	}
 
 	for(i=0; i<MAXWEAR; i++)
@@ -874,62 +805,49 @@ bool Creature::canWield(const Object* object, int n) const {
 unsigned long Creature::getInventoryValue() const {
 	int		a=0;
 	long	total=0;
-	otag	*op=0, *cop=0;
-	Object	*object=0, *object2=0, *object3=0;
+	Object	*object3=0;
 
 	if(isMonster())
 		return(0);
 
-	op = first_obj;
-	while(op) {
-		object = op->obj;
+	for(Object *object : objects) {
 
 		if(object->getType() == CONTAINER) {
-			cop = object->first_obj;
-			while(cop) {
-				object2 = cop->obj;
-				if(object2->getType() == SCROLL || object2->getType() == POTION || object2->getType() == SONGSCROLL) {
-					cop = cop->next_tag;
+			for(Object *insideObject : object->objects) {
+				if(insideObject->getType() == SCROLL || insideObject->getType() == POTION || insideObject->getType() == SONGSCROLL) {
 					continue;
 				}
 
-				if(object2->getShotsCur() < 1 || object2->flagIsSet(O_NO_PAWN)) {
-					cop = cop->next_tag;
+				if(insideObject->getShotsCur() < 1 || insideObject->flagIsSet(O_NO_PAWN)) {
 					continue;
 				}
 
-				if(object2->value[GOLD] < 20) {
-					cop = cop->next_tag;
+				if(insideObject->value[GOLD] < 20) {
 					continue;
 				}
 
-				total += MIN(MAXPAWN,object2->value[GOLD]/2);
+				total += MIN(MAXPAWN,insideObject->value[GOLD]/2);
 				total = MAX(0,MIN(2000000000,total));
-				cop = cop->next_tag;
 			}
 		}
 
 		if(object->getType() == SCROLL || object->getType() == POTION || object->getType() == SONGSCROLL) {
-			op = op->next_tag;
 			continue;
 		}
 
 		if(	(object->getShotsCur() < 1 && object->getType() != CONTAINER) ||
-			object->flagIsSet(O_NO_PAWN)
-		) {
-			op = op->next_tag;
+			object->flagIsSet(O_NO_PAWN) )
+		{
 			continue;
 		}
 
 		if(object->value[GOLD] < 20) {
-			op = op->next_tag;
 			continue;
 		}
 
 		total += MIN(MAXPAWN,object->value[GOLD]/2);
 		total = MAX(0,MIN(2000000000,total));
 
-		op = op->next_tag;
 	}
 
 	for(a=0;a<MAXWEAR;a++) {
@@ -939,26 +857,20 @@ unsigned long Creature::getInventoryValue() const {
 
 
 		if(object3->getType() == CONTAINER) {
-			cop = object3->first_obj;
-			while(cop) {
-				object2 = cop->obj;
-				if(cop->obj->getType() == SCROLL || cop->obj->getType() == POTION || cop->obj->getType() == SONGSCROLL) {
-					cop = cop->next_tag;
+			for(Object *insideObject : object3->objects) {
+				if(insideObject->getType() == SCROLL || insideObject->getType() == POTION || insideObject->getType() == SONGSCROLL) {
 					continue;
 				}
-				if(cop->obj->getShotsCur() < 1 || cop->obj->flagIsSet(O_NO_PAWN)) {
-					cop = cop->next_tag;
+				if(insideObject->getShotsCur() < 1 || insideObject->flagIsSet(O_NO_PAWN)) {
 					continue;
 				}
 
-				if(cop->obj->value[GOLD] < 20) {
-					cop = cop->next_tag;
+				if(insideObject->value[GOLD] < 20) {
 					continue;
 				}
 
-				total += MIN(MAXPAWN,cop->obj->value[GOLD]);
+				total += MIN(MAXPAWN,insideObject->value[GOLD]);
 				total = MAX(0,MIN(2000000000,total));
-				cop = cop->next_tag;
 			}
 		}
 
@@ -1020,7 +932,7 @@ int Player::save(bool updateTime, LoadType saveType) {
 		}
 	}
 
-	if(!copy->name[0])
+	if(copy->getName().empty())
 		return(1);
 	copy->checkDarkness();
 
@@ -1141,9 +1053,9 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 		// Target is possessing a monster -- Show the monsters name if invis
 		if(flagIsSet(P_ALIASING) && flagIsSet(P_DM_INVIS)) {
 			if(!pThis->getAlias()->flagIsSet(M_NO_PREFIX)) {
-				crtStr << "A " << pThis->getAlias()->name;
+				crtStr << "A " << pThis->getAlias()->getName();
 			} else
-				crtStr << pThis->getAlias()->name;
+				crtStr << pThis->getAlias()->getName();
 		}
 		// Target is a dm, is dm invis, and viewer is not a dm       OR
 		// Target is a ct, is dm invis, and viewer is not a dm or ct OR
@@ -1155,7 +1067,7 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 			crtStr << "Someone";
 		}
 		// Target is misted, viewer can't detect mist, or isn't staff
-		else if( flagIsSet(P_MISTED) && !(flags & MIST) && !(flags & ISDM) && !(flags & ISCT) && !(flags & ISBD)) {
+		else if( isEffected("mist") && !(flags & MIST) && !(flags & ISDM) && !(flags & ISCT) && !(flags & ISBD)) {
 			crtStr << "A light mist";
 		}
 		// Target is invisible and viewer doesn't have detect-invis or isn't staff
@@ -1164,14 +1076,14 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 		}
 		// Can be seen
 		else {
-			crtStr << name;
+			crtStr << getName();
 			if( flagIsSet(P_DM_INVIS ) )
 				crtStr << " (+)";
 			// Invis
 			else if(isInvisible())
 				crtStr << " (*)";
 			// Misted
-			else if(flagIsSet(P_MISTED))
+			else if(isEffected("mist"))
 				crtStr << " (m)";
 		}
 		toReturn = crtStr.str();
@@ -1193,20 +1105,20 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 						crtStr << " ";
 					}
 				}
-				crtStr << name;
+				crtStr << getName();
 			} else
-				crtStr << name;
+				crtStr << getName();
 		} else if(num == 1) {
 			if(flagIsSet(M_NO_PREFIX))
 				crtStr << "";
 			else {
-				ch = low(name[0]);
+				ch = low(getName()[0]);
 				if(ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u')
 					crtStr << "an ";
 				else
 					crtStr << "a ";
 			}
-			crtStr << name;
+			crtStr << getName();
 		} else if(plural != "") {
 			// use new plural code - on monster
 			crtStr << int_to_text(num);
@@ -1216,7 +1128,7 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 			char tempStr[2056];
 			strcpy(tempStr, int_to_text(num));
 			strcat(tempStr, " ");
-			strcat(tempStr, name);
+			strcat(tempStr, getCName());
 
 			tempStr[strlen(tempStr)+1] = 0;
 			tempStr[strlen(tempStr)+2] = 0;

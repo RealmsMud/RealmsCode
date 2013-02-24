@@ -247,11 +247,11 @@ int communicateWith(Player* player, cmd* cmnd) {
 				continue;
 		if(!player->canSee(ply))
 			continue;
-		if(!strcmp(ply->name, cmnd->str[1])) {
+		if(ply->getName() == cmnd->str[1]) {
 			target = ply;
 			break;
 		}
-		if(!strncmp(ply->name, cmnd->str[1], strlen(cmnd->str[1]))) {
+		if(!strncmp(ply->getCName(), cmnd->str[1], strlen(cmnd->str[1]))) {
 			target = ply;
 			found++;
 		}
@@ -283,26 +283,26 @@ int communicateWith(Player* player, cmd* cmnd) {
 	// polite ignore message for watchers
 	if(!player->isCt() && target->flagIsSet(P_NO_TELLS)) {
 		if(target->isPublicWatcher())
-			player->print("%s is busy at the moment. Please mudmail %s.\n", target->name, target->himHer());
+			player->print("%s is busy at the moment. Please mudmail %s.\n", target->getCName(), target->himHer());
 		else
-			player->print("%s is ignoring everyone.\n", target->name);
+			player->print("%s is ignoring everyone.\n", target->getCName());
 		return(0);
 	}
 
 
 	// staff can always message AFK people
 	if(	target->flagIsSet(P_AFK) &&
-		!player->checkStaff("%s is currently afk.\n", target->name))
+		!player->checkStaff("%s is currently afk.\n", target->getCName()))
 		return(0);
 
 	if(chan->type != COM_SIGN && target->isEffected("deafness") && !player->isStaff()) {
-		player->print("%s is deaf and cannot hear anything.\n", target->name);
+		player->print("%s is deaf and cannot hear anything.\n", target->getCName());
 		return(0);
 	}
 
 
-	if(	target->isIgnoring(player->name) &&
-		!target->checkStaff("%s is ignoring you.\n", target->name)
+	if(	target->isIgnoring(player->getName()) &&
+		!target->checkStaff("%s is ignoring you.\n", target->getCName())
 	)
 		return(0);
 
@@ -320,7 +320,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 				return(0);
 			}
 			if(player->isInvisible() && !target->isEffected("detect-invisible")) {
-				player->print("You are invisible! %s cannot see what you are signing.\n", target->name);
+				player->print("You are invisible! %s cannot see what you are signing.\n", target->getCName());
 				return(0);
 			}
 		}
@@ -356,7 +356,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M whispers something to %N.", player, target);
 
 
-	if(!target->isGagging(player->name)) {
+	if(!target->isGagging(player->getName())) {
 		target->printColor("%s%s%M %s%s, \"%s%s\".\n",
 			target->customColorize("*CC:TELL*").c_str(),
 			chan->type == COM_WHISPER || chan->type == COM_SIGN ? "" : "### ",
@@ -367,7 +367,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 	} else {
 		if(!player->isDm() && !target->isDm())
 			broadcast(watchingEaves, "^E--- %s TRIED sending to %s, \"%s\".",
-				player->name, target->name, text.c_str());
+				player->getCName(), target->getCName(), text.c_str());
 	}
 
 
@@ -375,9 +375,9 @@ int communicateWith(Player* player, cmd* cmnd) {
 	if(chan->type != COM_SIGN) {
 
 		if(!target->isStaff() &&
-			( ( player->flagIsSet(P_INCOGNITO) && !player->inSameRoom(target) ) ||
+			( ( player->isEffected("incognito") && !player->inSameRoom(target) ) ||
 				( player->isInvisible() && !target->isEffected("detect-invisible") ) ||
-				( player->flagIsSet(P_MISTED) && !target->isEffected("true-sight") ) ||
+				( player->isEffected("mist") && !target->isEffected("true-sight") ) ||
 				player->flagIsSet(P_DM_INVIS) ||
 		    	target->flagIsSet(P_UNCONSCIOUS) ||
 		    	target->isBraindead() ||
@@ -390,7 +390,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 			player->print("\n");
 
 			if(player->flagIsSet(P_ALIASING))
-				player->print("Sent from: %s.\n", player->getAlias()->name);
+				player->print("Sent from: %s.\n", player->getAlias()->getCName());
 		} else if(player->flagIsSet(P_IGNORE_ALL)) {
 			player->print("You are ignoring all, as such they will be unable to respond.\n");
 		}
@@ -412,16 +412,16 @@ int communicateWith(Player* player, cmd* cmnd) {
 	if(player->isDm() || target->isDm())
 		return(0);
 
-	broadcast(watchingEaves, "^E--- %s %s to %s, \"%s%s\".", player->name,
-		com_text[chan->type], target->name, ooc_str, text.c_str());
+	broadcast(watchingEaves, "^E--- %s %s to %s, \"%s%s\".", player->getCName(),
+		com_text[chan->type], target->getCName(), ooc_str, text.c_str());
 
-	player->bug("%s %s, \"%s%s\" to %s.\n", player->name,
-		com_text[chan->type], ooc_str, text.c_str(), target->name);
-	target->bug("%s %s, \"%s%s\" to %s.\n", player->name,
-		com_text[chan->type], ooc_str, text.c_str(), target->name);
+	player->bug("%s %s, \"%s%s\" to %s.\n", player->getCName(),
+		com_text[chan->type], ooc_str, text.c_str(), target->getCName());
+	target->bug("%s %s, \"%s%s\" to %s.\n", player->getCName(),
+		com_text[chan->type], ooc_str, text.c_str(), target->getCName());
 
 	if(chan->type != COM_SIGN)
-		target->setLastCommunicate(player->name);
+		target->setLastCommunicate(player->getName());
 	return(0);
 }
 
@@ -444,7 +444,7 @@ void commTarget(Creature* player, Player* target, int type, bool ooc, char lang,
 
 	if(type == COM_EMOTE) {
 		out << player->getCrtStr(target, CAP) << " " << text << "\n";
-		target->bug("%s emoted: %s.\n", player->name, text.c_str());
+		target->bug("%s emoted: %s.\n", player->getCName(), text.c_str());
 
 	} else if( ooc ||
 		target->languageIsKnown(LUNKNOWN+lang) ||
@@ -472,7 +472,7 @@ void commTarget(Creature* player, Player* target, int type, bool ooc, char lang,
 		out << ooc_str << text;
 		out << "\".\n";
 
-		target->bug("%s %s in %s, \"%s%s.\"\n", player->name, com_text[type],
+		target->bug("%s %s in %s, \"%s%s.\"\n", player->getCName(), com_text[type],
 			get_language_adj(lang), ooc_str, text.c_str());
 
 	} else {
@@ -480,7 +480,7 @@ void commTarget(Creature* player, Player* target, int type, bool ooc, char lang,
 		else	 out << player->getCrtStr(target, CAP);
 
 		out << " " << speak << " something in " << get_language_adj(lang) << ".\n";
-		target->bug("%s %s something in %s.\n", player->name, speak.c_str(), get_language_adj(lang));
+		target->bug("%s %s something in %s.\n", player->getCName(), speak.c_str(), get_language_adj(lang));
 	}
 	*target << ColorOn << out.str() << ColorOff;
 //	target->printColor("%s", out.str().c_str());
@@ -574,7 +574,7 @@ int communicate(Creature* creature, cmd* cmnd) {
 	            if(pTarget == creature && chan->type != COM_GT)
 	                continue;
 
-	            if(pTarget->isGagging(creature->isPet() ? creature->getMaster()->name : creature->name))
+	            if(pTarget->isGagging(creature->isPet() ? creature->getMaster()->getCName() : creature->getCName()))
 	                continue;
 
 	            if(pTarget->getGroupStatus() < GROUP_MEMBER) continue;
@@ -592,7 +592,7 @@ int communicate(Creature* creature, cmd* cmnd) {
         if(chan->type == COM_EMOTE) {
 
             creature->printColor("You emote: %s.\n", text.c_str());
-            player->bug("%s emoted: %s.\n", creature->name, text.c_str());
+            player->bug("%s emoted: %s.\n", creature->getCName(), text.c_str());
 
         } else {
             char intro[2046];
@@ -603,7 +603,7 @@ int communicate(Creature* creature, cmd* cmnd) {
 
             creature->printColor("%s%s \"%s%s\".\n^x", ((!chan->ooc && creature->flagIsSet(P_LANGUAGE_COLORS)) ? get_lang_color(lang) : ""),
             		intro, ooc_str, text.c_str());
-            player->bug("%s %s in %s, \"%s%s.\"\n", creature->name, com_text[chan->type],
+            player->bug("%s %s in %s, \"%s%s.\"\n", creature->getCName(), com_text[chan->type],
                 get_language_adj(lang), ooc_str, text.c_str());
 
         }
@@ -616,7 +616,7 @@ int communicate(Creature* creature, cmd* cmnd) {
             if(ply == creature && chan->type != COM_GT)
                 continue;
 
-            if(ply->isGagging(creature->isPet() ? creature->getMaster()->name : creature->name))
+            if(ply->isGagging(creature->isPet() ? creature->getMaster()->getName() : creature->getName()))
                 continue;
 
             commTarget(creature, ply, chan->type, chan->ooc, lang, text, speak, ooc_str, false);
@@ -659,7 +659,7 @@ int communicate(Creature* creature, cmd* cmnd) {
                         continue;
 
                     pTarget->wake("Loud noises disturb your sleep.", true);
-                    if(pTarget->isGagging(creature->name))
+                    if(pTarget->isGagging(creature->getName()))
                         continue;
 
                     // have they already heard us yell?
@@ -690,7 +690,7 @@ int communicate(Creature* creature, cmd* cmnd) {
                     if(!exit->getPassLanguage() || lang == exit->getPassLanguage()) {
                         // even needs to be open?
                         if(exit->flagIsSet(X_LOCKED)) {
-                            broadcast(NULL, creature->getRoomParent(), "The %s opens!", exit->name);
+                            broadcast(NULL, creature->getRoomParent(), "The %s opens!", exit->getCName());
                             exit->clearFlag(X_LOCKED);
                             exit->clearFlag(X_CLOSED);
 
@@ -715,11 +715,9 @@ int communicate(Creature* creature, cmd* cmnd) {
 
 
 	if(creature->isPet()) {
-		name = creature->getMaster()->name;
-		name += "'s ";
-		name += creature->name;
+		name = creature->getMaster()->getName() + "'s " + creature->getName();
 	} else
-		name = creature->name;
+		name = creature->getName();
 
 	if(chan->type == COM_EMOTE)
 		broadcast(watchingSuperEaves, "^E--- %s %s.", name.c_str(), text.c_str());
@@ -906,7 +904,7 @@ int channel(Player* player, cmd* cmnd) {
 	} else {
 
 		std::ostringstream eaves;
-		eaves << "--- " << extra << player->name << " ";
+		eaves << "--- " << extra << player->getName() << " ";
 		if(chan->type == COM_CLASS)
 			eaves << "class";
 		else if(chan->type == COM_RACE)
@@ -930,7 +928,7 @@ int channel(Player* player, cmd* cmnd) {
 				continue;
 
 			// no gagging staff!
-			if(player && ply->isGagging(player->name) && !player->isCt())
+			if(player && ply->isGagging(player->getName()) && !player->isCt())
 				continue;
 			// deaf people can always hear staff and themselves
 			if(ply->isEffected("deafness") && !player->isStaff() && ply != player)
@@ -1387,7 +1385,7 @@ int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun,
 		}
 
 		(player->*add)(cmnd->str[1]);
-		player->print("%s added to your %s list.\n", target->name, noun);
+		player->print("%s added to your %s list.\n", target->getCName(), noun);
 		if(!online)
 			free_crt(target);
 	}
@@ -1458,23 +1456,23 @@ int dmGag(Player* player, cmd* cmnd) {
 	}
 
 	if(target->flagIsSet(P_GLOBAL_GAG)) {
-		player->print("%s is no longer globally gagged.\n", target->name);
-		broadcast(isWatcher, "^C*** %s is no longer globally gagged.", target->name);
-		broadcast(isDm, "^g*** %s turned off %s's global gag.", player->name, target->name);
+		player->print("%s is no longer globally gagged.\n", target->getCName());
+		broadcast(isWatcher, "^C*** %s is no longer globally gagged.", target->getCName());
+		broadcast(isDm, "^g*** %s turned off %s's global gag.", player->getCName(), target->getCName());
 		target->clearFlag(P_GLOBAL_GAG);
 		return(0);
 	}
 
 	if(target->isCt()) {
-		target->printColor("^R%s tried to gag you!\n", player->name);
+		target->printColor("^R%s tried to gag you!\n", player->getCName());
 		player->print("You can't globally gag a DM or CT.\n");
 		return(0);
 	}
 
-	logn("log.gag", "%s was globally gagged by %s.\n", target->name, player->name);
+	logn("log.gag", "%s was globally gagged by %s.\n", target->getCName(), player->getCName());
 	target->setFlag(P_GLOBAL_GAG);
 
-	broadcast(isWatcher, "^C*** %s has been globally gagged.", target->name);
-	broadcast(isDm, "^g*** %s globally gagged %s.", player->name, target->name);
+	broadcast(isWatcher, "^C*** %s has been globally gagged.", target->getCName());
+	broadcast(isDm, "^g*** %s globally gagged %s.", player->getCName(), target->getCName());
 	return(0);
 }

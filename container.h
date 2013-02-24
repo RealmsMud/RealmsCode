@@ -64,8 +64,19 @@ public:
     MonsterSet monsters;
     ObjectSet objects;
 
-    bool remove(Containable* toRemove);
+    bool purge(bool includePets = false);
+    bool purgeMonsters(bool includePets = false);
+    bool purgeObjects();
+
+
+    Container* remove(Containable* toRemove);
     bool add(Containable* toAdd);
+
+
+	void registerContainedItems();
+	void unRegisterContainedItems();
+
+
     bool checkAntiMagic(Monster* ignore = 0);
 
     void doSocialEcho(bstring str, const Creature* actor, const Creature* target = null);
@@ -79,22 +90,28 @@ public:
 
 	void wake(bstring str, bool noise) const;
 
+
+	bstring listObjects(const Player* player, bool showAll, char endColor ='x' ) const;
+
 	// Find routines
 	Creature* findCreaturePython(Creature* searcher, const bstring& name, bool monFirst = true, bool firstAggro = false, bool exactMatch = false );
-    Creature* findCreature(Creature* searcher, const cmd* cmnd, int num=1);
-	Creature* findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst = true, bool firstAggro = false, bool exactMatch = false);
-	Creature* findCreature(Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match);
-	Monster* findMonster(Creature* searcher, const cmd* cmnd, int num=1);
-	Monster* findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro = false, bool exactMatch = false);
-	Monster* findMonster(Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match);
-	Player* findPlayer(Creature* searcher, const cmd* cmnd, int num=1);
-	Player* findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch = false);
-	Player* findPlayer(Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match);
-	MudObject* findTarget(Creature* searcher, const cmd* cmnd, int num=1);
-	MudObject* findTarget(Creature* searcher,  const bstring& name, const int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false);
-	MudObject* findTarget(Creature* searcher,  const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match);
+    Creature* findCreature(const Creature* searcher, const cmd* cmnd, int num=1) const;
+	Creature* findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst = true, bool firstAggro = false, bool exactMatch = false) const;
+	Creature* findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const;
+	Monster* findMonster(const Creature* searcher, const cmd* cmnd, int num=1) const;
+	Monster* findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro = false, bool exactMatch = false) const;
+	Monster* findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) const;
+	Player* findPlayer(const Creature* searcher, const cmd* cmnd, int num=1) const;
+	Player* findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch = false) const;
+	Player* findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const;
 
+	Object* findObject(const Creature *searcher, const cmd* cmnd, int val) const;
+	Object* findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch = false) const;
+	Object* findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const;
 
+	MudObject* findTarget(const Creature* searcher, const cmd* cmnd, int num=1) const;
+	MudObject* findTarget(const Creature* searcher,  const bstring& name, const int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false) const;
+	MudObject* findTarget(const Creature* searcher,  const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const;
 
 };
 
@@ -104,7 +121,7 @@ public:
     virtual ~Containable() {};
 
     bool addTo(Container* container);
-    bool removeFrom(void);
+    Container* removeFrom(void);
 
     void setParent(Container* container);
 
@@ -138,6 +155,12 @@ public:
 
 protected:
     Container* parent;   // Parent Container
+
+    // Last parent is only used in removeFromSet and addToSet and should not be used anywhere else
+    Container* lastParent;
+    void removeFromSet();
+	void addToSet();
+
 };
 
 #endif /* CONTAINER_H_ */

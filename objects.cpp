@@ -24,7 +24,12 @@
 
 
 bool Object::operator< (const Object& t) const {
-    return(strcmp(this->name, t.name) < 0 && this->adjustment < t.adjustment && this->shopValue < t.shopValue);
+	return(getCompareStr().compare(t.getCompareStr()) < 0);
+}
+
+bstring Object::getCompareStr() const {
+	bstring toReturn = getName() + "-" + bstring(adjustment) + "-" + bstring(shopValue) + "-" + getId();
+	return(toReturn);
 }
 
 bstring DroppedBy::getName() const {
@@ -73,14 +78,10 @@ bstring DroppedBy::str() {
 	return(oStr.str());
 }
 
-// Disabled for now until I figure out a better place to assign ids
 void Object::validateId() {
-//	std::cout << "Validating ID for <" << getName() << ">" << std::endl;
-//	if(id.empty() || id.equals("-1")) {
-//		setId(gServer->getNextObjectId());
-//	} else {
-//		std::cout << "Found ID (" << getId() << ")" << std::endl;
-//	}
+	if(id.empty() || id.equals("-1")) {
+		setId(gServer->getNextObjectId());
+	}
 }
 
 void Object::setDroppedBy(MudObject* dropper, bstring pDropType) {
@@ -117,7 +118,6 @@ Object::Object() {
 
 	id = "-1";
 	version = "0.00";
-	memset(name, 0, sizeof(name));
 	description = effect = "";
 	memset(key, 0, sizeof(key));
 	memset(use_output, 0, sizeof(use_output));
@@ -127,10 +127,7 @@ Object::Object() {
 		special = delay = quality = effectStrength = effectDuration = chargesCur = chargesMax = 0;
 	memset(flags, 0, sizeof(flags));
 	questnum = 0;
-	first_obj = 0;
-	parent_obj = 0;	parent_room = 0;
-	parent_crt = 0;
-	numAttacks = bulk = maxbulk = lotteryCycle = uniqueId = 0;
+	numAttacks = bulk = maxbulk = lotteryCycle = 0;
 	coinCost = shopValue = 0;
 	size = NO_SIZE;
 
@@ -149,21 +146,21 @@ Object::Object() {
 }
 
 Object::~Object() {
-	otag	*op = first_obj, *temp=0;
 	if(compass)
 		delete compass;
 	if(increase)
 		delete increase;
 	alchemyEffects.clear();
 	compass = 0;
-	while(op) {
-		temp = op->next_tag;
-		delete op->obj;
-		delete op;
-		op = temp;
+	ObjectSet::iterator it;
+	Object* obj;
+	for(it = objects.begin() ; it != objects.end() ; ) {
+		obj = (*it++);
+		delete obj;
 	}
-	
+	objects.clear();
 	gServer->removeDelayedActions(this);
+	moDestroy();
 }
 
 //*********************************************************************
@@ -193,7 +190,7 @@ Object* Object::getNewPotion() {
 	Object* newPotion = new Object;
 
 	newPotion->type = POTION;
-	strcpy(newPotion->name, "generic potion");
+	newPotion->setName( "generic potion");
 	strcpy(newPotion->key[0], "generic");
 	strcpy(newPotion->key[1], "potion");
 	newPotion->weight = 1;
@@ -208,7 +205,6 @@ Object* Object::getNewPotion() {
 
 void Object::doCopy(const Object& o) {
 	int		i=0;
-	otag	*op=0, *fp=0, *prev=0;
 
 	moCopy(o);
 
@@ -225,6 +221,8 @@ void Object::doCopy(const Object& o) {
 	weight = o.weight;
 	type = o.type;
 	adjustment = o.adjustment;
+	chargesMax = o.chargesMax;
+	chargesCur = o.chargesCur;
 	shotsMax = o.shotsMax;
 	shotsCur = o.shotsCur;
 	damage = o.damage;
@@ -240,15 +238,13 @@ void Object::doCopy(const Object& o) {
 	for(i=0; i<OBJ_FLAG_ARRAY_SIZE; i++)
 		flags[i] = o.flags[i];
 	questnum = o.questnum;
-	parent_obj = o.parent_obj;
+	parent = o.parent;
 	for(i=0; i<4; i++)
 		lasttime[i] = o.lasttime[i];
 
 	for(i=0; i<3; i++)
 		in_bag[i] = o.in_bag[i];
 
-	parent_room = o.parent_room;
-	parent_crt = o.parent_crt;
 	lastMod = o.lastMod;
 
 	bulk = o.bulk;
@@ -296,22 +292,12 @@ void Object::doCopy(const Object& o) {
 	effectStrength = o.effectStrength;
 
 	// copy everything contained inside this object
-	fp = first_obj;
-	op = o.first_obj;
-	while(op) {
-		fp = new otag;
-		fp->obj = new Object;
-		*fp->obj = *op->obj;
-		fp->obj->parent_obj = this;
-
-		if(prev)
-			prev->next_tag = fp;
-
-		prev = fp;
-		fp = fp->next_tag;
-		op = op->next_tag;
+	Object *newObj;
+	for(Object* obj : o.objects) {
+		newObj = new Object;
+		*newObj = *obj;
+		addObj(newObj, false);
 	}
-	;
 	for(std::pair<int, AlchemyEffect> p : o.alchemyEffects) {
 		alchemyEffects[p.first] = p.second;
 	}
@@ -381,8 +367,8 @@ bool Object::operator==(const Object& o) const {
 		subType != o.subType ||
 		randomObjects.size() != o.randomObjects.size() ||
 		alchemyEffects.size() != o.alchemyEffects.size() ||
-		first_obj ||
-		o.first_obj ||
+		!objects.empty() ||
+		!o.objects.empty() ||
 		strcmp(use_output, o.use_output) ||
 		strcmp(use_attack, o.use_attack) ||
 		value != o.value ||
@@ -445,14 +431,12 @@ bool Object::operator!=(const Object& o) const {
 
 int Object::getActualWeight() const {
 	int		n=0;
-	otag	*op=0;
 
 	n = weight;
-	op = first_obj;
-	while(op) {
-		if(!op->obj->flagIsSet(O_WEIGHTLESS_CONTAINER))
-			n += op->obj->getActualWeight();
-		op = op->next_tag;
+
+	for(Object* obj : objects) {
+		if(!obj->flagIsSet(O_WEIGHTLESS_CONTAINER))
+			n += obj->getActualWeight();
 	}
 
 	return(n);
@@ -1020,9 +1004,9 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 		// Either not an irregular plural, or we couldn't find a match in the irregular plural file
 		if(num == 0) {
 			if(!flagIsSet(O_NO_PREFIX)) {
-				objStr << "the " << name;
+				objStr << "the " << getName();
 			} else
-				objStr << name;
+				objStr << getName();
 		}
 		else if(num == 1) {
 			if(flagIsSet(O_NO_PREFIX) || (info.id == 0 && !strcmp(key[0], "gold") && type == MONEY))
@@ -1032,15 +1016,15 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 			else {
 				// handle articles even when the item starts with a color
 				int pos=0;
-				while(name[pos] == '^') pos += 2;
-				ch = low(name[pos]);
+				while(getName()[pos] == '^') pos += 2;
+				ch = low(getName()[pos]);
 
 				if(ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u')
 					objStr << "an ";
 				else
 					objStr << "a ";
 			}
-			objStr << name;
+			objStr << getName();
 		}
 		else {
 			char tempStr[2056];
@@ -1050,7 +1034,7 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 			if(flagIsSet(O_SOME_PREFIX))
 				strcat(tempStr, "sets of ");
 
-			strcat(tempStr, name);
+			strcat(tempStr, getCName());
 			if(!flagIsSet(O_SOME_PREFIX)) {
 				tempStr[strlen(tempStr)+1] = 0;
 				tempStr[strlen(tempStr)+2] = 0;
@@ -1080,10 +1064,17 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 	if(flags & ISDM) {
 		if(flagIsSet(O_HIDDEN))
 			objStr <<  " (h)";
-		if(flagIsSet(O_INVISIBLE))
+		if(isEffected("invisibility"))
 			objStr << " (*)";
 		if(flagIsSet(O_SCENERY))
 			objStr << " (s)";
+		if(flagIsSet(O_NOT_PEEKABLE))
+			objStr << "(NoPeek)";
+		if(flagIsSet(O_NO_STEAL))
+			objStr << "(NoSteal)";
+		if(flagIsSet(O_BODYPART))
+			objStr << "(BodyPart)";
+
 	}
 
 	if(isBroken())
@@ -1110,10 +1101,10 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 
 void Object::popBag(Creature* creature, bool quest, bool drop, bool steal, bool bodypart, bool dissolve) {
 	Object* object=0;
-	otag* op = first_obj;
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+
+	ObjectSet::iterator it;
+	for(it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 
 		if(	(quest && object->questnum) ||
 			(dissolve && object->flagIsSet(O_RESIST_DISOLVE)) ||
@@ -1121,7 +1112,7 @@ void Object::popBag(Creature* creature, bool quest, bool drop, bool steal, bool 
 			(steal && object->flagIsSet(O_NO_STEAL)) ||
 			(bodypart && object->flagIsSet(O_BODYPART))
 		) {
-			del_obj_obj(object, this);
+			this->delObj(object);
 			creature->addObj(object);
 		}
 	}
@@ -1134,7 +1125,7 @@ void Object::popBag(Creature* creature, bool quest, bool drop, bool steal, bool 
 bool Object::isKey(const UniqueRoom* room, const Exit* exit) const {
 	// storage room exist must be a storage room key
 	if(exit->flagIsSet(X_TO_STORAGE_ROOM))
-		return(!strcmp(name, "storage room key"));
+		return(getName() == "storage room key");
 
 	// key numbers must match
 	if(getKey() != exit->getKey())
@@ -1164,7 +1155,6 @@ void spawnObjects(const bstring& room, const bstring& objects) {
 	UniqueRoom *dest = 0;
 	Object* object=0;
 	CatRef	cr;
-	otag* op=0;
 
 	getCatRef(room, &cr, 0);
 
@@ -1176,17 +1166,15 @@ void spawnObjects(const bstring& room, const bstring& objects) {
 	dest->expelPlayers(true, false, false);
 
 	// make sure any existing objects of this type are removed
-	if(dest->first_obj) {
+	if(!dest->objects.empty()) {
 		do {
 			obj = getFullstrTextTrun(objects, i++);
 			if(obj != "")
 			{
 				getCatRef(obj, &cr, 0);
-				op = dest->first_obj;
-
-				while(op) {
-					object = op->obj;
-					op = op->next_tag;
+				ObjectSet::iterator it;
+				for( it = dest->objects.begin() ; it != dest->objects.end() ; ) {
+					object = (*it++);
 
 					if(object->info == cr) {
 						object->deleteFromRoom();

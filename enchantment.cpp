@@ -50,7 +50,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
 		} else if(player->isEffected("vampirism") && !isDay()) {
 			player->print("Nothing happens.\n");
 			return(0);
-		} else if(player->flagIsSet(P_MISTED)) {
+		} else if(player->isEffected("mist")) {
 			player->print("Nothing happens.\n");
 			return(0);
 		} else {
@@ -112,7 +112,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		if(	target->isPlayer() &&
-			(target->flagIsSet(P_UNCONSCIOUS) || target->isEffected("petrification") || target->flagIsSet(P_MISTED))
+			(target->flagIsSet(P_UNCONSCIOUS) || target->isEffected("petrification") || target->isEffected("mist"))
 		) {
 			player->printColor("^yYour spell failed.\n");
 			return(0);
@@ -332,7 +332,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		// Pets are immune.
 		if(target->isPet()) {
-			player->print("%M's %s is too loyal to be magically scared.\n", target->getMaster(), target->name);
+			player->print("%M's %s is too loyal to be magically scared.\n", target->getMaster(), target->getCName());
 			return(0);
 		}
 
@@ -444,7 +444,7 @@ int splCourage(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(checkRefusingMagic(player, target))
 			return(0);
 
-		player->print("Courage cast on %s.\n", target->name);
+		player->print("Courage cast on %s.\n", target->getCName());
 		target->print("%M casts a courage spell on you.\n", player);
 		broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a courage spell on %N.", player, target);
 	}
@@ -562,7 +562,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 		target->wake("Terrible nightmares disturb your sleep!");
 
 		if(target->isPlayer() && target->getClass() == PALADIN) {
-			player->print("Fear spell cast on %s.\n", target->name);
+			player->print("Fear spell cast on %s.\n", target->getCName());
 			player->print("It doesn't do anything noticeable.\n");
 			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts fear on %N.",
 				player, target);
@@ -579,7 +579,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
-			player->print("Fear spell cast on %s.\n", target->name);
+			player->print("Fear spell cast on %s.\n", target->getCName());
 			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts fear on %N.",
 				player, target);
 			target->print("%M casts a fear spell on you.\n", player);
@@ -721,7 +721,7 @@ int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
-			player->print("Silence casted on %s.\n", target->name);
+			player->print("Silence casted on %s.\n", target->getCName());
 			broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a silence spell on %N.", player, target);
 
 			logCast(player, target, "silence");
@@ -820,7 +820,7 @@ int splEnchant(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	object = findObject(pPlayer, pPlayer->first_obj, cmnd, 2);
+	object = pPlayer->findObject(pPlayer, cmnd, 2);
 	if(!object) {
 		pPlayer->print("You don't have that in your inventory.\n");
 		return(0);
@@ -847,7 +847,7 @@ int splEnchant(Creature* player, cmd* cmnd, SpellData* spellData) {
 	broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M enchants %1P.", pPlayer, object);
 
 	if(!pPlayer->isDm())
-		log_immort(true, pPlayer, "%s enchants a %s^g in room %s.\n", pPlayer->name, object->name,
+		log_immort(true, pPlayer, "%s enchants a %s^g in room %s.\n", pPlayer->getCName(), object->getCName(),
 			pPlayer->getRoomParent()->fullName().c_str());
 
 	return(1);
@@ -881,7 +881,7 @@ int cmdEnchant(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("You don't have that item in your inventory.\n");
 		return(0);
@@ -908,7 +908,7 @@ int cmdEnchant(Player* player, cmd* cmnd) {
 	broadcast(player->getSock(), player->getParent(), "%M enchants %1P.", player, object);
 	player->checkImprove("enchant", true);
 	if(!player->isDm())
-		log_immort(true, player, "%s temp_enchants a %s in room %s.\n", player->name, object->name,
+		log_immort(true, player, "%s temp_enchants a %s in room %s.\n", player->getCName(), object->getCName(),
 			player->getRoomParent()->fullName().c_str());
 
 	object->setFlag(O_TEMP_ENCHANT);
@@ -1103,7 +1103,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 			dur = 0;
 
 		if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
-			player->print("Stun cast on %s.\n", target->name);
+			player->print("Stun cast on %s.\n", target->getCName());
 			broadcast(player->getSock(), target->getSock(), player->getParent(),
 				"%M casts stun on %N.", player, target);
 

@@ -209,9 +209,9 @@ int splIllusoryWall(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	player->printColor("You cast an illusory wall spell on the %s^x.\n", exit->name);
+	player->printColor("You cast an illusory wall spell on the %s^x.\n", exit->getCName());
 	broadcast(player->getSock(), player->getParent(), "%M casts an illusory wall spell on the %s^x.",
-		player, exit->name);
+		player, exit->getCName());
 
 	if(exit->flagIsSet(X_CONCEALED) || exit->hasPermEffect("illusory-wall")) {
 		player->print("The spell didn't take hold.\n");

@@ -50,7 +50,7 @@ int	dmCheckStats(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	player->print("%s's Initial Stats:\n", target->name);
+	player->print("%s's Initial Stats:\n", target->getCName());
 	player->print("STR.....%d\n", target->strength.getInitial());
 	player->print("DEX.....%d\n", target->dexterity.getInitial());
 	player->print("CON.....%d\n", target->constitution.getInitial());
@@ -91,7 +91,7 @@ int	dmLocatePlayer(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	player->print("%s is in the following room: %s\n", target->name, target->getRoomParent()->fullName().c_str());
+	player->print("%s is in the following room: %s\n", target->getCName(), target->getRoomParent()->fullName().c_str());
 	return(0);
 }
 
@@ -130,14 +130,14 @@ int dmWatcherBroad(Player *admin, cmd* cmnd) {
 		admin->print("No watchers were found to broadcast your message.\n");
 		return(0);
 	}
-	broadcast(isDm, "^g*** %s forced %s to broadcast", admin->name, watcher->name);
+	broadcast(isDm, "^g*** %s forced %s to broadcast", admin->getCName(), watcher->getCName());
 
 	text = "broadcast " + text;
 	strcpy(cmnd->str[0], "broadcast");
 	cmnd->fullstr = text;
 	cmdProcess(watcher, cmnd);
 
-	log_immort(true, admin, "%s made %s broadcast \"%s\"\n", admin->name, watcher->name, text.c_str());
+	log_immort(true, admin, "%s made %s broadcast \"%s\"\n", admin->getCName(), watcher->getCName(), text.c_str());
 	return(0);
 }
 
@@ -162,7 +162,7 @@ int reportTypo(Player* player, cmd* cmnd) {
 	} else {
 		player->getUniqueRoomParent()->setFlag(R_TYPO);
 		player->printColor("^YTypo reported!\n");
-		broadcast(isCt, "^Y*** %s reported a typo in room %s.", player->name, player->getRoomParent()->fullName().c_str());
+		broadcast(isCt, "^Y*** %s reported a typo in room %s.", player->getCName(), player->getRoomParent()->fullName().c_str());
 	}
 	return(0);
 }

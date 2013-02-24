@@ -38,16 +38,15 @@ void Player::addToSameRoom(Creature* target) {
 
 
 void Player::finishAddPlayer(BaseRoom* room) {
-	otag	*op=0, *cop=0;
 
 	wake("You awaken suddenly!");
 	interruptDelayedActions();
 
 	if(!gServer->isRebooting()) {
 
-		if(!flagIsSet(P_DM_INVIS) && !flagIsSet(P_HIDDEN) && !flagIsSet(P_MISTED) ) {
+		if(!flagIsSet(P_DM_INVIS) && !flagIsSet(P_HIDDEN) && !isEffected("mist") ) {
 			broadcast(getSock(), room, "%M just arrived.", this);
-		} else if(flagIsSet(P_MISTED) && !flagIsSet(P_SNEAK_WHILE_MISTED)) {
+		} else if(isEffected("mist") && !flagIsSet(P_SNEAK_WHILE_MISTED)) {
 			broadcast(getSock(), room, "A light mist just arrived.");
 		} else {
 			if(isDm())
@@ -68,20 +67,17 @@ void Player::finishAddPlayer(BaseRoom* room) {
 		clearFlag(P_SNEAK_WHILE_MISTED);
 	setLastPawn(0);
 
-	op = first_obj;
-	while(op) {
-		if(op->obj->getType() == CONTAINER) {
-			cop = op->obj->first_obj;
-			while(cop) {
-				if(cop->obj->flagIsSet(O_JUST_BOUGHT))
-					cop->obj->clearFlag(O_JUST_BOUGHT);
-				cop=cop->next_tag;
+
+	for(Object* obj : objects) {
+		if(obj->getType() == CONTAINER) {
+			for(Object* subObj : obj->objects) {
+				if(subObj->flagIsSet(O_JUST_BOUGHT))
+					subObj->clearFlag(O_JUST_BOUGHT);
 			}
 		} else {
-			if(op->obj->flagIsSet(O_JUST_BOUGHT))
-				op->obj->clearFlag(O_JUST_BOUGHT);
+			if(obj->flagIsSet(O_JUST_BOUGHT))
+				obj->clearFlag(O_JUST_BOUGHT);
 		}
-		op = op->next_tag;
 	}
 
 	clearFlag(P_JUST_REFUNDED); // Player didn't just refund something (can haggle again)
@@ -186,9 +182,9 @@ void Player::addToRoom(UniqueRoom* uRoom) {
 			checkBuilder(uRoom);
 			printColor("^yYou are illegally out of your assigned area. This has been logged.\n");
 			broadcast(::isCt, "^y### %s is illegally out of %s assigned area. (%s)",
-				name, himHer(), uRoom->info.str().c_str());
-			logn("log.builders", "%s illegally entered room %s - (%s).\n", name,
-				uRoom->info.str().c_str(), uRoom->name);
+				getCName(), himHer(), uRoom->info.str().c_str());
+			logn("log.builders", "%s illegally entered room %s - (%s).\n", getCName(),
+				uRoom->info.str().c_str(), uRoom->getCName());
 		}
 	}
 
@@ -250,14 +246,14 @@ int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 
 	t = time(0);
 	if(inUniqueRoom() && !isStaff()) {
-		strcpy(getUniqueRoomParent()->lastPly, name);
+		strcpy(getUniqueRoomParent()->lastPly, getCName());
 		strcpy(getUniqueRoomParent()->lastPlyTime, ctime(&t));
 	}
 
 	currentLocation.mapmarker.reset();
 	currentLocation.room.clear();
 
-	if(delPortal && flagIsSet(P_PORTAL) && Move::deletePortal(room, name))
+	if(delPortal && flagIsSet(P_PORTAL) && Move::deletePortal(room, getName()))
 		i |= DEL_PORTAL_DESTROYED;
 
 	// when we're removing them from the room - AreaRoom, usually -
@@ -302,65 +298,13 @@ int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 // The object is added alphabetically to the room.
 
 void Object::addToRoom(BaseRoom* room) {
-	otag	*op, *temp, *prev;
-
 	ASSERTLOG(room);
 
 	validateId();
 
 	Hooks::run(room, "beforeAddObject", this, "beforeAddToRoom");
-	parent_room = room;
-	parent_obj = 0;
-	parent_crt = 0;
 	clearFlag(O_KEEP);
-
-	op = 0;
-	op = new otag;
-	if(!op)
-		merror("add_obj_rom", FATAL);
-	op->obj = this;
-	op->next_tag = 0;
-
-	if(!room->first_obj) {
-		room->first_obj = op;
-		Hooks::run(room, "afterAddObject", this, "afterAddToRoom");
-		room->killMortalObjects();
-		return;
-	}
-
-	prev = temp = room->first_obj;
-	if(	strcmp(temp->obj->name, name) > 0 ||
-		(	!strcmp(temp->obj->name, name) &&
-			(	temp->obj->adjustment > adjustment ||
-				(	temp->obj->adjustment >= adjustment &&
-					temp->obj->shopValue > shopValue
-				)
-			)
-		)
-	) {
-		op->next_tag = temp;
-		room->first_obj = op;
-		Hooks::run(room, "afterAddObject", this, "afterAddToRoom");
-		room->killMortalObjects();
-		return;
-	}
-
-	while(temp) {
-		if(	strcmp(temp->obj->name, name) > 0 ||
-			(	!strcmp(temp->obj->name, name) &&
-				(	temp->obj->adjustment > adjustment ||
-					(	temp->obj->adjustment >= adjustment &&
-						temp->obj->shopValue > shopValue
-					)
-				)
-			)
-		)
-			break;
-		prev = temp;
-		temp = temp->next_tag;
-	}
-	op->next_tag = prev->next_tag;
-	prev->next_tag = op;
+	room->add(this);
 	Hooks::run(room, "afterAddObject", this, "afterAddToRoom");
 	room->killMortalObjects();
 }
@@ -372,29 +316,12 @@ void Object::addToRoom(BaseRoom* room) {
 // from the room pointed to by the second.
 
 void Object::deleteFromRoom() {
-	if(!parent_room)
+	if(!inRoom())
 		return;
-	BaseRoom* room = parent_room;
+	BaseRoom* room = this->getRoomParent();
 
 	Hooks::run(room, "beforeRemoveObject", this, "beforeRemoveFromRoom");
-
-	otag	*op = room->first_obj, *prev=0;
-	parent_room = 0;
-
-	while(op) {
-		if(op->obj == this) {
-			if(prev)
-				prev->next_tag = op->next_tag;
-			else
-				room->first_obj = op->next_tag;
-
-			delete op;
-			Hooks::run(room, "afterRemoveObject", this, "afterRemoveFromRoom");
-			return;
-		}
-		prev = op;
-		op = op->next_tag;
-	}
+	removeFrom();
 	Hooks::run(room, "afterRemoveObject", this, "afterRemoveFromRoom");
 }
 
@@ -511,7 +438,7 @@ void UniqueRoom::addPermCrt() {
 			continue;
 
 		for(Monster* mons : monsters) {
-			if(	mons->flagIsSet(M_PERMENANT_MONSTER) && !strcmp(mons->name, creature->name) )
+			if(	mons->flagIsSet(M_PERMENANT_MONSTER) && mons->getName() == creature->getName() )
 				m++;
 		}
 
@@ -549,7 +476,6 @@ void UniqueRoom::addPermObj() {
 	crlasttime* crtm=0;
 	std::map<int, bool> checklist;
 	Object	*object=0;
-	otag	*op=0;
 	long	t = time(0);
 	int		j=0, m=0, n=0;
 
@@ -568,8 +494,8 @@ void UniqueRoom::addPermObj() {
 		nt++;
 		for(; nt != permObjects.end() ; nt++) {
 			if(	crtm->cr == (*nt).second.cr &&
-				((*nt).second.ltime + (*nt).second.interval) < t
-			) {
+				((*nt).second.ltime + (*nt).second.interval) < t )
+			{
 				n++;
 				checklist[(*nt).first] = 1;
 			}
@@ -578,12 +504,9 @@ void UniqueRoom::addPermObj() {
 		if(!loadObject(crtm->cr, &object))
 			continue;
 
-		op = first_obj;
-		m = 0;
-		while(op) {
-			if(op->obj->flagIsSet(O_PERM_ITEM) && !strcmp(op->obj->name, object->name) && op->obj->info == object->info)
+		for(Object* obj : objects) {
+			if(obj->flagIsSet(O_PERM_ITEM) && obj->getName() == object->getName() && obj->info == object->info)
 				m++;
-			op = op->next_tag;
 		}
 
 		delete object;
@@ -651,7 +574,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 	)
 		return;
 
-	if(!player->canSee(room, true))
+	if(!player->canSeeRoom(room, true))
 		return;
 
 	oStr << (!player->flagIsSet(P_NO_EXTRA_COLOR) && room->isSunlight() ? "^C" : "^c");
@@ -660,7 +583,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 
 		if(staff)
 			oStr << uRoom->info.str() << " - ";
-		oStr << uRoom->name << "^x\n\n";
+		oStr << uRoom->getName() << "^x\n\n";
 
 		if(!player->flagIsSet(P_NO_SHORT_DESCRIPTION) && uRoom->getShortDescription() != "")
 			oStr << uRoom->getShortDescription() << "\n";
@@ -716,7 +639,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 			} else {
 				oStr << "g";
 			}
-			oStr << ext->name;
+			oStr << ext->getName();
 
 			if(ext->flagIsSet(X_CLOSED) || ext->flagIsSet(X_LOCKED)) {
 				oStr << "[";
@@ -736,7 +659,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 					oStr << "(nw)";
 				if(ext->flagIsSet(X_NO_SEE))
 					oStr << "(dm)";
-				if(ext->flagIsSet(X_INVISIBLE))
+				if(ext->isEffected("invisibility"))
 					oStr << "(*)";
 				if(ext->isConcealed(player))
 					oStr << "(c)";
@@ -828,7 +751,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 					oStr << "(h)";
 				if(ply->isInvisible())
 					oStr << "(*)";
-				if(ply->flagIsSet(P_MISTED))
+				if(ply->isEffected("mist"))
 					oStr << "(m)";
 				if(ply->flagIsSet(P_OUTLAW))
 					oStr << "(o)";
@@ -850,7 +773,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 		if(staff || (player->canSee(creature) && (!creature->flagIsSet(M_HIDDEN) || magicShowHidden))) {
 			m=1;
 			while(mIt != room->monsters.end()) {
-				if(	!strcmp((*mIt)->name, creature->name) &&
+				if(	(*mIt)->getName() == creature->getName() &&
 					(staff || (player->canSee(*mIt) && (!(*mIt)->flagIsSet(M_HIDDEN) || magicShowHidden))) &&
 					creature->isInvisible() == (*mIt)->isInvisible() )
 				{
@@ -881,7 +804,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 	if(n)
 		oStr << ".\n";
 
-	str = listObjects(player, room->first_obj, false, 'y');
+	str = room->listObjects(player, false, 'y');
 	if(str != "")
 		oStr << "^yYou see " << str << ".^w\n";
 
@@ -920,7 +843,7 @@ void display_rom(Player* player,BaseRoom* room) {
 // putting in a generic description
 
 void storageName(UniqueRoom* room, const Player* player) {
-	sprintf(room->name, "%s's Personal Storage Room", player->name);
+	room->setName(player->getName() + "'s Personal Storage Room");
 }
 
 int createStorage(CatRef cr, const Player* player) {
@@ -978,7 +901,7 @@ int createStorage(CatRef cr, const Player* player) {
 	Property *p = new Property;
 	p->found(player, PROP_STORAGE, "any realty office", false);
 
-	p->setName(newRoom->name);
+	p->setName(newRoom->getName());
 	p->addRange(newRoom->info);
 
 	gConfig->addProperty(p);
@@ -1004,9 +927,9 @@ void UniqueRoom::validatePerms() {
 		if(crtm->ltime > t) {
 			crtm->ltime = t;
 			logn("log.validate", "Perm #%d(%s) in Room %s (%s): Time has been revalidated.\n",
-				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), name);
+				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), getCName());
 			broadcast(isCt, "^yPerm Mob #%d(%s) in Room %s (%s) has been revalidated",
-				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), name);
+				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), getCName());
 		}
 	}
 	for(it = permObjects.begin(); it != permObjects.end() ; it++) {
@@ -1014,10 +937,10 @@ void UniqueRoom::validatePerms() {
 		if(crtm->ltime > t) {
 			crtm->ltime = t;
 			logn("log.validate", "Perm Obj #%d(%s) in Room %s (%s): Time has been revalidated.\n",
-				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), name);
+				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), getCName());
 
 			broadcast(isCt, "^yPerm Obj #%d(%s) in Room %s (%s) has been revalidated.",
-				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), name);
+				(*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), getCName());
 		}
 	}
 }
@@ -1036,7 +959,7 @@ void doRoomHarms(BaseRoom *inRoom, Player* target) {
 	if(inRoom->flagIsSet(R_ARCHERS)) {
 		if(	target->flagIsSet(P_HIDDEN) ||
 			target->isInvisible() ||
-			target->flagIsSet(P_MISTED) ||
+			target->isEffected("mist") ||
 			target->flagIsSet(P_DM_INVIS)
 		) {
 			return;
@@ -1050,18 +973,18 @@ void doRoomHarms(BaseRoom *inRoom, Player* target) {
 		if(roll >= toHit) {
 			dmg = mrand(1,8) + mrand(1,2);
 			target->printColor("A deadly arrow strikes you from above for %s%d^x damage.\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-			broadcast(target->getSock(), inRoom, "An arrow strikes %s from the trees above!", target->name);
+			broadcast(target->getSock(), inRoom, "An arrow strikes %s from the trees above!", target->getCName());
 
 			target->hp.decrease(dmg);
 			if(target->hp.getCur() < 1) {
 				target->print("The arrow killed you.\n");
-				broadcast(target->getSock(), inRoom, "The arrow killed %s!", target->name);
+				broadcast(target->getSock(), inRoom, "The arrow killed %s!", target->getCName());
 				target->die(ELVEN_ARCHERS);
 				return;
 			}
 		} else {
 			target->print("An arrow whizzes past you from above!\n");
-			broadcast(target->getSock(), inRoom, "An arrow whizzes past %s from above!", target->name);
+			broadcast(target->getSock(), inRoom, "An arrow whizzes past %s from above!", target->getCName());
 		}
 	}
 
@@ -1073,12 +996,12 @@ void doRoomHarms(BaseRoom *inRoom, Player* target) {
 
 		dmg = 15 - MIN(bonus((int)target->constitution.getCur()),2) + mrand(1,3);
 		target->printColor("Deadly underdark moss spores envelope you for %s%d^x damage!\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-		broadcast(target->getSock(), inRoom, "Spores from deadly underdark moss envelope %s!", target->name);
+		broadcast(target->getSock(), inRoom, "Spores from deadly underdark moss envelope %s!", target->getCName());
 
 		target->hp.decrease(dmg);
 		if(target->hp.getCur() < 1) {
 			target->print("The spores killed you.\n");
-			broadcast(target->getSock(), inRoom, "The spores killed %s!", target->name);
+			broadcast(target->getSock(), inRoom, "The spores killed %s!", target->getCName());
 			target->die(DEADLY_MOSS);
 		}
 	}
@@ -1097,8 +1020,8 @@ BaseRoom *abortFindRoom(Creature* player, const char from[15]) {
 	UniqueRoom*	newRoom=0;
 
 	player->print("Shifting dimensional forces direct your travel!\n");
-	loge("Error: abortFindRoom called by %s in %s().\n", player->name, from);
-	broadcast(isCt, "^yError: abortFindRoom called by %s in %s().", player->name, from);
+	loge("Error: abortFindRoom called by %s in %s().\n", player->getCName(), from);
+	broadcast(isCt, "^yError: abortFindRoom called by %s in %s().", player->getCName(), from);
 
 	room = player->getRecallRoom().loadRoom(player->getAsPlayer());
 	if(room)
@@ -1135,7 +1058,6 @@ BaseRoom *abortFindRoom(Creature* player, const char from[15]) {
 //*********************************************************************
 
 int UniqueRoom::getWeight() {
-	otag	*op=0;
 	int		i=0;
 
 	// count weight of all players in this
@@ -1145,10 +1067,8 @@ int UniqueRoom::getWeight() {
 	}
 
 	// count weight of all objects in this
-	op = first_obj;
-	while(op) {
-		i += op->obj->getActualWeight();
-		op = op->next_tag;
+	for(Object* obj : objects ) {
+		i += obj->getActualWeight();
 	}
 
 	// count weight of all monsters in this

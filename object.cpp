@@ -28,63 +28,26 @@
 // object starts with a color character - chops off the front color
 // chars
 
-char* Object::cmpName() {
-	int i=0;
-	while(name[i] == '^' && name[i+1] != '^')
-		i += 2;
-	return(&name[i]);
-}
+//char* Object::cmpName() {
+//	int i=0;
+//	while(name[i] == '^' && name[i+1] != '^')
+//		i += 2;
+//	return(&name[i]);
+//}
 
 //*********************************************************************
 //						add_obj_obj
 //*********************************************************************
 // This function adds the object toAdd to the current object
 
-void Object::addObj(Object *toAdd) {
-	otag	*op=0, *temp=0, *prev=0;
-
+void Object::addObj(Object *toAdd, bool incShots) {
 	toAdd->validateId();
 
 	Hooks::run(toAdd, "beforeAddObject", this, "beforeAddToObject");
 
-	toAdd->parent_obj = this;
-	toAdd->parent_crt = 0;
-	toAdd->parent_room = 0;
-
-	op = new otag;
-	if(!op)
-		merror("add_obj_obj", FATAL);
-	op->obj = toAdd;
-	op->next_tag = 0;
-
-	if(!first_obj) {
-		first_obj = op;
-		return;
-	}
-
-	temp = first_obj;
-	if(	strcmp(temp->obj->cmpName(), toAdd->cmpName()) > 0 ||
-		(!strcmp(temp->obj->name, toAdd->name) &&
-		temp->obj->adjustment > toAdd->adjustment)
-	) {
-		op->next_tag = temp;
-		first_obj = op;
-		Hooks::run(toAdd, "afterAddObject", this, "afterAddToObject");
-		return;
-	}
-
-	while(temp) {
-		if(	strcmp(temp->obj->cmpName(), toAdd->cmpName()) > 0 ||
-			(!strcmp(temp->obj->name, toAdd->name) &&
-			toAdd->isBroken() == temp->obj->isBroken() &&
-			temp->obj->adjustment > toAdd->adjustment)
-		)
-			break;
-		prev = temp;
-		temp = temp->next_tag;
-	}
-	op->next_tag = prev->next_tag;
-	prev->next_tag = op;
+	add(toAdd);
+	if(incShots)
+		incShotsCur();
 	Hooks::run(toAdd, "afterAddObject", this, "afterAddToObject");
 }
 
@@ -94,98 +57,14 @@ void Object::addObj(Object *toAdd) {
 // This function removes the object pointed to by the first parameter
 // from the object pointed to by the second.
 
-void del_obj_obj(Object	*object, Object* container) {
-	otag 	*temp=0, *prev=0;
+void Object::delObj(Object	*toDel) {
+	Hooks::run(this, "beforeRemoveObject", toDel, "beforeRemoveFromObject");
 
-	Hooks::run(container, "beforeRemoveObject", object, "beforeRemoveFromObject");
-
-	container->decShotsCur();
-	object->parent_crt = 0;
-	if(container->first_obj->obj == object) {
-		temp = container->first_obj->next_tag;
-		delete container->first_obj;
-		container->first_obj = temp;
-		Hooks::run(container, "afterRemoveObject", object, "afterRemoveFromObject");
-		return;
-	}
-
-	prev = container->first_obj;
-	temp = prev->next_tag;
-	while(temp) {
-		if(temp->obj == object) {
-			prev->next_tag = temp->next_tag;
-			delete temp;
-			Hooks::run(container, "afterRemoveObject", object, "afterRemoveFromObject");
-			return;
-		}
-		prev = temp;
-		temp = temp->next_tag;
-	}
+	decShotsCur();
+	toDel->removeFrom();
+	Hooks::run(this, "afterRemoveObject", toDel, "afterRemoveFromObject");
 }
 
-//*********************************************************************
-//						findObject
-//*********************************************************************
-// This function is used to search through a room's, creature's or
-// object's inventory in order to look for a particular item. The
-// first parameter contains a pointer to the creature who is doing the
-// search. The second is a pointer to the first object tag in the
-// list to be searched. The third parameter is a string that contains
-// the name of the object being searched for. The last parameter
-// contains the version of the string being searched for.
-
-Object* doFindObject(otag* op, int id) {
-	Object* object=0;
-	while(op) {
-		if(op->obj->getUniqueId() == id)
-			return(op->obj);
-		object = doFindObject(op->obj->first_obj, id);
-		if(object)
-			return(object);
-		op = op->next_tag;
-	}
-	return(0);
-}
-
-Object* findObject(const Player *player, int id) {
-	Object* object = doFindObject(player->first_obj, id);
-	if(object)
-		return(object);
-
-	for(int i=0; i<MAXWEAR; i++) {
-		if(player->ready[i]) {
-			if(player->ready[i]->getUniqueId() == id)
-				return(player->ready[i]);
-			object = doFindObject(player->ready[i]->first_obj, id);
-			if(object)
-				return(object);
-		}
-	}
-
-	return(0);
-}
-
-Object* findObject(const Creature *player, otag* first_ot, const cmd* cmnd, int val) {
-	return(findObject(player, first_ot, cmnd->str[val], cmnd->val[val]));
-}
-
-Object* findObject(const Creature* player, otag* first_ot, const char* str, int val) {
-	otag	*op;
-	int		match=0;
-
-	if(!first_ot)
-		return(0);
-	op = first_ot;
-	while(op) {
-		if(player->canSee(op->obj) && keyTxtEqual(op->obj, str)) {
-			match++;
-			if(match == val)
-				return(op->obj);
-		}
-		op = op->next_tag;
-	}
-	return(0);
-}
 
 //*********************************************************************
 //						listObjects
@@ -201,26 +80,22 @@ bool listObjectSee(const Player* player, Object* object, bool showAll) {
 	) );
 }
 
-bstring listObjects(const Player* player, otag *target, bool showAll, char endColor) {
+bstring Container::listObjects(const Player* player, bool showAll, char endColor) const {
 	Object	*object=0;
-	otag	*op=0;
 	int		num=1, n=0, flags = player->displayFlags();
 	bstring str = "";
 
-	op = target;
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
-
-		if(object->parent_crt) {
-			if(object->parent_crt->mFlagIsSet(M_TRADES))
+	ObjectSet::iterator it;
+	for( it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
+		if(object->inCreature()) {
+			if(object->getCreatureParent()->mFlagIsSet(M_TRADES))
 				continue;
 
 			if( !showAll && (
 					object->flagIsSet(O_NOT_PEEKABLE) ||
 					Unique::is(object) ||
-					(object->parent_crt->isMonster() && object->flagIsSet(O_BODYPART))
-			) )
+					(object->inMonster() && object->flagIsSet(O_BODYPART)) ) )
 				continue;
 		}
 
@@ -228,10 +103,10 @@ bstring listObjects(const Player* player, otag *target, bool showAll, char endCo
 			continue;
 
 		num = 1;
-		while(op) {
-			if(object->showAsSame(player, op->obj) && listObjectSee(player, op->obj, showAll)) {
+		while(it != objects.end()) {
+			if(object->showAsSame(player, (*it)) && listObjectSee(player, (*it), showAll)) {
 				num++;
-				op = op->next_tag;
+				it++;
 			} else
 				break;
 		}
@@ -240,7 +115,6 @@ bstring listObjects(const Player* player, otag *target, bool showAll, char endCo
 		str += object->getObjStr(player, flags, num);
 		str += "^";
 		str += endColor;
-		//str += "^" + endColor;
 		n++;
 	}
 	return(str);
@@ -258,14 +132,14 @@ void Object::randomEnchant(int bonus) {
 	m += bonus;
 
 	if(m > 98)
-		adjustment = 3;
+		setAdjustment(3);
 	else if(m > 90)
-		adjustment = 2;
+		setAdjustment(2);
 	else if(m > 50)
-		adjustment = 1;
+		setAdjustment(1);
 
 	if(flagIsSet(O_CURSED) && adjustment > 0)
-		adjustment *= -1;
+		setAdjustment(adjustment * -1);
 
 	//armor += (int)(adjustment*4.4);
 }
@@ -318,7 +192,7 @@ int new_scroll(int level, Object **new_obj) {
 	strcat(name, " ");
 	num = mrand(1,2);
 	strcat(name, scrollType[lvl-1][num-1]);
-	strcpy((*new_obj)->name, name);
+	(*new_obj)->setName( name);
 	p = strtok(name, delem);
 	if(p)
 		strcpy((*new_obj)->key[0], p);
@@ -334,7 +208,6 @@ int new_scroll(int level, Object **new_obj) {
 	(*new_obj)->setWeight(1);
 	(*new_obj)->setShotsMax(1);
 	(*new_obj)->setShotsCur(1);
-	(*new_obj)->first_obj = 0;
 
 	if(lvl >= 4) {
 		lvl -= 4;
@@ -381,7 +254,6 @@ void Object::loadContainerContents() {
 		if(mrand(1,100)<25) {
 			newObj->setDroppedBy(this, "ContainerContents");
 			addObj(newObj);
-			incShotsCur();
 		} else {
 			delete newObj;
 		}
@@ -393,7 +265,7 @@ void Object::loadContainerContents() {
 //*********************************************************************
 
 int cmdKeep(Player* player, cmd* cmnd) {
-	Object	*object = findObject(player, player->first_obj, cmnd);
+	Object	*object = player->findObject(player, cmnd, 1);
 
 	if(!object) {
 		player->print("You don't have that in your inventory.\n");
@@ -415,19 +287,16 @@ int cmdKeep(Player* player, cmd* cmnd) {
 
 int cmdUnkeep(Player* player, cmd* cmnd) {
 	Object	*object=0;
-	otag	*op=0;
 
 	if(!strcmp(cmnd->str[1], "all")) {
-		op = player->first_obj;
-		while(op) {
-			op->obj->clearFlag(O_KEEP);
-			op = op->next_tag;
+		for(Object* obj : player->objects ) {
+			obj->clearFlag(O_KEEP);
 		}
 		player->print("All kept objects cleared.\n");
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd);
+	object = player->findObject(player, cmnd, 1);
 	if(!object) {
 		player->print("That is not in your inventory.\n");
 		return(0);
@@ -448,11 +317,9 @@ int cmdUnkeep(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 bool cantDropInBag(Object* object) {
-	otag	*op = object->first_obj;
-	while(op) {
-		if(op->obj->flagIsSet(O_NO_DROP))
+	for(Object* obj : object->objects) {
+		if(obj->flagIsSet(O_NO_DROP))
 			return(true);
-		op = op->next_tag;
 	}
 	return(false);
 }
@@ -461,22 +328,17 @@ bool cantDropInBag(Object* object) {
 //						findObj
 //*********************************************************************
 
-MudObject* Creature::findObjTarget(otag *first_ot, int findFlags, bstring str, int val, int* match) {
-	otag	*op=0;
-	int		found=0;
-
-	if(!first_ot)
+MudObject* Creature::findObjTarget(ObjectSet &set, int findFlags, bstring str, int val, int* match) {
+	if(set.empty())
 		return(NULL);
 
-	op = first_ot;
-	while(op) {
-		if(keyTxtEqual(op->obj, str.c_str()) && canSee(op->obj)) {
+	for(Object* obj : set) {
+		if(keyTxtEqual(obj, str.c_str()) && canSee(obj)) {
 			(*match)++;
 			if(*match == val) {
-				return(op->obj);
+				return(obj);
 			}
 		}
-		op = op->next_tag;
 	}
 	return(NULL);
 }
@@ -496,7 +358,7 @@ int displayObject(Player* player, Object* target) {
 
 	// special 2 is a combo lock, should have normal descriptions
 	if(target->getSpecial() == 1) {
-		strcpy(str, target->name);
+		strcpy(str, target->getCName());
 		for(i=0; i<strlen(str); i++)
 			if(str[i] == ' ')
 				str[i] = '_';
@@ -538,7 +400,7 @@ int displayObject(Player* player, Object* target) {
 	}
 
 	if(target->getType() == CONTAINER) {
-		inv = listObjects(player, target->first_obj, true);
+		inv = target->listObjects(player, true);
 		if(inv != "")
 			oStr << "It contains: " << inv << ".\n";
 	}
@@ -716,16 +578,16 @@ void getDamageString(char atk[50], Creature* player, Object *weapon, bool critic
 //*********************************************************************
 
 bool Object::showAsSame(const Player* player, const Object* object) const {
-	return(	!strcmp(name, object->name) &&
+	return(	getName() == object->getName() &&
 			flagIsSet(O_KEEP) == object->flagIsSet(O_KEEP) &&
-			flagIsSet(O_INVISIBLE) == object->flagIsSet(O_INVISIBLE) &&
+			isEffected("invisibility") == object->isEffected("invisibility") &&
 			isBroken() == object->isBroken() &&
 			flagIsSet(O_BEING_PREPARED) == object->flagIsSet(O_BEING_PREPARED) &&
 			(	adjustment == object->adjustment ||
 				(!player || !player->isEffected("detect-magic")) ||
 				(flagIsSet(O_NULL_MAGIC) && object->flagIsSet(O_NULL_MAGIC))
 			) &&
-			player->canSee(object)
+			(!player || (player && player->canSee(object)))
 	);
 }
 
@@ -734,7 +596,9 @@ bool Object::showAsSame(const Player* player, const Object* object) const {
 //*********************************************************************
 
 void Object::nameCoin(bstring type, unsigned long value) {
-	sprintf(name, "%lu %s coin%s", value, type.c_str(), value != 1 ? "s" : "");
+	char temp[80];
+	snprintf(temp, 80, "%lu %s coin%s", value, type.c_str(), value != 1 ? "s" : "");
+	setName(temp);
 }
 
 //*********************************************************************
@@ -749,23 +613,21 @@ void BaseRoom::killMortalObjectsOnFloor() {
 		return;
 
 	Object* object=0;
-	otag*	op = first_obj;
 	bool	sunlight = isSunlight(), isStor = room && room->info.isArea("stor");
-
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for( it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 
 		// if area = stor, don't kill in storage chest
 		if(isStor && object->info.id == 1 && object->info.isArea("stor"))
 			continue;
 
 		if(sunlight && object->flagIsSet(O_DARKMETAL)) {
-			broadcast(NULL, this, "^yThe %s^y was destroyed by the sunlight!", object->name);
+			broadcast(NULL, this, "^yThe %s^y was destroyed by the sunlight!", object->getCName());
 			object->deleteFromRoom();
 			delete object;
 		} else if(!Unique::canLoad(object)) {
-			broadcast(NULL, this, "^yThe %s^y vanishes!", object->name);
+			broadcast(NULL, this, "^yThe %s^y vanishes!", object->getCName());
 			object->deleteFromRoom();
 			delete object;
 		} else
@@ -800,7 +662,6 @@ void BaseRoom::killMortalObjects(bool floor) {
 
 void Creature::killDarkmetal() {
 	Player	*pTarget = getAsPlayer();
-	otag	*op=0;
 	Object	*object=0;
 	int		i=0;
 	bool	found=false;
@@ -816,15 +677,14 @@ void Creature::killDarkmetal() {
 	}
 
 	// kill anything not in a bag
-	op = first_obj;
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for( it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 		if(object && object->flagIsSet(O_DARKMETAL)) {
 			if(pTarget)
-				printColor("^yYour %s was destroyed by the sunlight!\n", object->name);
+				printColor("^yYour %s was destroyed by the sunlight!\n", object->getCName());
 			else if(isPet())
-				printColor("^y%M's %s was destroyed by the sunlight!\n", this, object->name);
+				printColor("^y%M's %s was destroyed by the sunlight!\n", this, object->getCName());
 			delObj(object, true, false, false, false);
 			delete object;
 			found = true;
@@ -842,7 +702,7 @@ void Creature::killDarkmetal() {
 		if( pTarget->ready[i] &&
 			pTarget->ready[i]->flagIsSet(O_DARKMETAL)
 		) {
-			printColor("^yYour %s was destroyed by the sunlight!\n", pTarget->ready[i]->name);
+			printColor("^yYour %s was destroyed by the sunlight!\n", pTarget->ready[i]->getCName());
 			// i is wearloc-1, so add 1.   Delete it when done
 			pTarget->unequip(i+1, UNEQUIP_DELETE, false);
 			found = true;
@@ -873,11 +733,9 @@ void BaseRoom::setTempNoKillDarkmetal(bool noKillDarkmetal) {
 
 void Monster::killUniques() {
 	Object* object=0;
-	otag*	op = first_obj;
-
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for(it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 
 		if(!Unique::canLoad(object)) {
 			delObj(object);
@@ -888,14 +746,12 @@ void Monster::killUniques() {
 
 void Object::killUniques() {
 	Object* object=0;
-	otag*	op = first_obj;
-
-	while(op) {
-		object = op->obj;
-		op = op->next_tag;
+	ObjectSet::iterator it;
+	for(it = objects.begin() ; it != objects.end() ; ) {
+		object = (*it++);
 
 		if(!Unique::canLoad(object)) {
-			del_obj_obj(object, this);
+			delObj(object);
 			delete object;
 		}
 	}
@@ -976,7 +832,6 @@ short Object::getWeaponDelay() const {
 	return(delay);
 }
 bstring Object::getQuestOwner() const { return(questOwner); }
-int Object::getUniqueId() const { return(uniqueId); }
 
 //*********************************************************************
 //						isQuestOwner
@@ -988,7 +843,7 @@ int Object::getUniqueId() const { return(uniqueId); }
 bool Object::isQuestOwner(const Player* player) const {
 	if(questOwner == "")
 		return(true);
-	if(questOwner != player->name)
+	if(questOwner != player->getName())
 		return(false);
 	// for sui/remake, a player of the same name will fail this check
 	if(player->getCreated() > getMade())

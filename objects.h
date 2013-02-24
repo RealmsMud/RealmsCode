@@ -77,6 +77,7 @@ public:
     Object();
     ~Object();
     Object& operator=(const Object& o);
+    bstring getCompareStr() const ;
     bool operator==(const Object& o) const;
     bool operator!=(const Object& o) const;
     bool operator< (const Object& t) const;
@@ -123,7 +124,6 @@ protected:
     short delay;
     short extra;
     bstring questOwner;
-    int uniqueId;
 
 protected:
     void doCopy(const Object& o);
@@ -149,10 +149,6 @@ public:
     Dice damage;
     double getDps();
 
-    otag *first_obj;	// objects contained inside
-    class Object *parent_obj;	// object this is in
-    class BaseRoom *parent_room;	// room this is in
-    class Creature *parent_crt;	// creature this is in
 
     CatRef in_bag[3];	// items preloaded inside bags
 
@@ -186,12 +182,12 @@ public:
 
     void init(bool selRandom = true);
     // Xml - Loading
-    int readFromXml(xmlNodePtr rootNode);
+    int readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList = 0);
     void loadAlchemyEffects(xmlNodePtr curNode);
 
     // Xml - Saving
     int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType = LS_FULL, int quantity = 1,
-                  bool saveId = true) const;
+                  bool saveId = true, std::list<bstring> *idList = 0) const;
     int saveToFile();
 
     void setDroppedBy(MudObject* dropper, bstring pDropType);
@@ -204,11 +200,12 @@ public:
     void clearFlag(int flag); // *
     bool toggleFlag(int flag); // *
 
-    char* cmpName();
+//    char* cmpName();
     void escapeText();
 
     // Placement of the object etc
-    void addObj(Object *toAdd); // Add an object to this object
+    void addObj(Object *toAdd, bool incShots = true); // Add an object to this object
+    void delObj(Object	*toDel);
     void addToRoom(BaseRoom* room);
     void deleteFromRoom();
     void popBag(Creature* creature, bool quest = true, bool drop = true, bool steal = true,
@@ -269,7 +266,6 @@ public:
 
     bool isQuestOwner(const Player* player) const;
     bstring getWearName();
-    int getUniqueId() const;
 
     // Set
     void setKey(unsigned short k);
@@ -357,6 +353,7 @@ public:
 
     bool swap(Swap s);
     bool swapIsInteresting(Swap s) const;
+
 };
 
 

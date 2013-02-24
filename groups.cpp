@@ -72,17 +72,17 @@ int cmdFollow(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(toFollow->isRefusing(player->name)) {
+	if(toFollow->isRefusing(player->getName())) {
 		player->print("%M doesn't allow you to group with %s right now.\n", toFollow, toFollow->himHer());
 		return(0);
 	}
 
-	if(toFollow->isGagging(player->name)) {
+	if(toFollow->isGagging(player->getName())) {
 		*player << "You start following " << toFollow->getName() << ".\n";
 		return(0);
 	}
 
-	if(toFollow->flagIsSet(P_MISTED) && !player->isCt()) {
+	if(toFollow->isEffected("mist") && !player->isCt()) {
         player->print("How can you group with a mist?\n");
         return(0);
     }
@@ -96,7 +96,7 @@ int cmdFollow(Player* player, cmd* cmnd) {
             return(0);
         }
         if(toJoin->getGroupType() != GROUP_PUBLIC) {
-            player->print("%s's group is invite only.\n", toFollow->getName());
+            player->print("%s's group is invite only.\n", toFollow->getCName());
             return(0);
         }
 	}
@@ -157,7 +157,7 @@ bool Creature::removeFromGroup(bool announce) {
     if(group) {
         if(groupStatus == GROUP_INVITED) {
         	if(announce) {
-        		if(!pFlagIsSet(P_DM_INVIS) && !pFlagIsSet(P_INCOGNITO))
+        		if(!pFlagIsSet(P_DM_INVIS) && !isEffected("incognito"))
         			group->sendToAll(getCrtStr(NULL, CAP) + " rejects the invitation to join your group.\n");
             	*this << ColorOn << "^gYou reject the invitation to join \"" << group->getName() << "\".\n^x" << ColorOff;
         	}
@@ -165,7 +165,7 @@ bool Creature::removeFromGroup(bool announce) {
             group = null;
         } else {
         	if(announce) {
-        		if(!pFlagIsSet(P_DM_INVIS) && !pFlagIsSet(P_INCOGNITO))
+        		if(!pFlagIsSet(P_DM_INVIS) && !isEffected("incognito"))
         			group->sendToAll(getCrtStr(NULL, CAP) + " leaves the group.\n", this);
         		if(group->getLeader() == this)
         			*this << ColorOn << "^gYou leave your group.^x\n" << ColorOff;
@@ -696,7 +696,7 @@ bool Creature::getsGroupExperience(Monster* target) {
 		// No invis players
 		!flagIsSet(P_HIDDEN) &&
 		// No mists either
-		!flagIsSet(P_MISTED) &&
+		!isEffected("mist") &&
 		// no self-declared AFK people
 		!flagIsSet(P_AFK) &&
 		// no unconscious people

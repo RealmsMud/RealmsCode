@@ -24,7 +24,7 @@
 //*********************************************************************
 
 void petTalkDesc(Monster* pet, Creature* owner) {
-	bstring name = owner->name, desc = "";
+	bstring name = owner->getName(), desc = "";
 
 	if(owner->flagIsSet(P_DM_INVIS))
 		name = "Someone";
@@ -220,16 +220,15 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 	// Only level 30 titles
 	int titleIdx = MIN(29, title);
 	if(realm == CONJUREBARD) {
-		strncpy(target->name, bardConjureTitles[buff][titleIdx-1],79);
+		target->setName(bardConjureTitles[buff][titleIdx-1]);
 		strncpy(name,  bardConjureTitles[buff][titleIdx-1], 79);
 	} else if(realm == CONJUREMAGE) {
-		strncpy(target->name, mageConjureTitles[buff][titleIdx-1], 79);
+		target->setName(mageConjureTitles[buff][titleIdx-1]);
 		strncpy(name,  mageConjureTitles[buff][titleIdx-1], 79);
 	} else {
-		strncpy(target->name, conjureTitles[realm-1][buff][titleIdx-1], 79);
+		target->setName(conjureTitles[realm-1][buff][titleIdx-1]);
 		strncpy(name, conjureTitles[realm-1][buff][titleIdx-1], 79);
 	}
-	target->name[79] = '\0';
 	name[79] = '\0';
 
 	if(spellData->object) {
@@ -385,7 +384,6 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 	target->damage.setNumber(conjureStats[buff][level].ndice);
 	target->damage.setSides(conjureStats[buff][level].sdice);
 	target->damage.setPlus(conjureStats[buff][level].pdice);
-	target->first_obj = 0;
 	target->first_tlk = 0;
 	target->setParent(NULL);
 
@@ -580,9 +578,9 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 	}
 
-	player->print("You conjure a %s.\n", target->name);
+	player->print("You conjure a %s.\n", target->getCName());
 	player->checkImprove("conjure", true);
-	broadcast(player->getSock(), player->getParent(), "%M conjures a %s.", player, target->name);
+	broadcast(player->getSock(), player->getParent(), "%M conjures a %s.", player, target->getCName());
 
 
 	if(!combatPet) {
@@ -742,9 +740,9 @@ int splWallOfFire(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	player->printColor("You cast a wall of fire spell on the %s^x.\n", exit->name);
+	player->printColor("You cast a wall of fire spell on the %s^x.\n", exit->getCName());
 	broadcast(player->getSock(), player->getParent(), "%M casts a wall of fire spell on the %s^x.",
-		player, exit->name);
+		player, exit->getCName());
 
 	if(exit->hasPermEffect("wall-of-fire")) {
 		player->print("The spell didn't take hold.\n");
@@ -779,9 +777,9 @@ int splWallOfForce(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	player->printColor("You cast a wall of force spell on the %s^x.\n", exit->name);
+	player->printColor("You cast a wall of force spell on the %s^x.\n", exit->getCName());
 	broadcast(player->getSock(), player->getParent(), "%M casts a wall of force spell on the %s^x.",
-		player, exit->name);
+		player, exit->getCName());
 
 	if(exit->hasPermEffect("wall-of-force")) {
 		player->print("The spell didn't take hold.\n");
@@ -821,9 +819,9 @@ int splWallOfThorns(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	player->printColor("You cast a wall of thorns spell on the %s^x.\n", exit->name);
+	player->printColor("You cast a wall of thorns spell on the %s^x.\n", exit->getCName());
 	broadcast(player->getSock(), player->getParent(), "%M casts a wall of thorns spell on the %s^x.",
-		player, exit->name);
+		player, exit->getCName());
 
 	if(exit->hasPermEffect("wall-of-thorns")) {
 		player->print("The spell didn't take hold.\n");

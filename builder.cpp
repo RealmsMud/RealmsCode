@@ -40,11 +40,11 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
 	}
 
 	if(target->isStaff()) {
-		player->print("%s is already a member of the staff.\n", target->name);
+		player->print("%s is already a member of the staff.\n", target->getCName());
 		return(0);
 	}
 	if(target->getExperience()) {
-		player->print("%s must have 0 experience to become a builder.\n", target->name);
+		player->print("%s must have 0 experience to become a builder.\n", target->getCName());
 		return(0);
 	}
 
@@ -57,8 +57,8 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
 	lose_all(target, true, "builder-promotion");
 
 	target->printColor("\n\n^yYou are now a building member of the staff.\n\n");
-	player->print("%s is now a builder.\n", target->name);
-	log_immort(true, player, "%s made %s a builder.\n", player->name, target->name);
+	player->print("%s is now a builder.\n", target->getCName());
+	log_immort(true, player, "%s made %s a builder.\n", player->getCName(), target->getCName());
 
 	if(	!target->inUniqueRoom() ||
 		!target->getUniqueRoomParent()->info.isArea("test") ||
@@ -165,7 +165,7 @@ void Player::listRanges(const Player* viewer) const {
 	if(viewer->fd == fd)
 		viewer->print("Your assigned number ranges:\n\n");
 	else
-		viewer->print("Assigned number ranges for %s:\n\n", name);
+		viewer->print("Assigned number ranges for %s:\n\n", getCName());
 
 	viewer->printColor("Perm:       ^ytest^x:  entire area\n");
 
@@ -244,7 +244,7 @@ void Player::initBuilder() {
 
 	// builders are always watching each other build
 	setFlag(P_LOG_WATCH);
-	setFlag(P_INCOGNITO);
+	addEffect("incognito", -1);
 }
 
 //*********************************************************************

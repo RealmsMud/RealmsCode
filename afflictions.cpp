@@ -255,24 +255,24 @@ void Creature::poison(Creature *enemy, unsigned int damagePerPulse, unsigned int
 			}
 
 			if(enemy->isPet())
-				setPoisonedBy(enemy->getMaster()->name);
+				setPoisonedBy(enemy->getMaster()->getName());
 			else if(enemy->isMonster() && !enemy->flagIsSet(M_NO_PREFIX))
-				setPoisonedBy((bstring)"a " + enemy->name);
+				setPoisonedBy((bstring)"a " + enemy->getName());
 			else if(this == enemy)
 				setPoisonedBy((bstring)himHer() + "self");
 			else
-				setPoisonedBy(enemy->name);
+				setPoisonedBy(enemy->getName());
 
 		} else {
 
 			if(enemy->isPlayer())
-				setPoisonedBy(enemy->name);
+				setPoisonedBy(enemy->getName());
 			else if(enemy->isPet())
-				setPoisonedBy(enemy->getMaster()->name);
+				setPoisonedBy(enemy->getMaster()->getName());
 			else if(enemy->isMonster() && !enemy->flagIsSet(M_NO_PREFIX))
-				setPoisonedBy((bstring)"a " + enemy->name);
+				setPoisonedBy((bstring)"a " + enemy->getName());
 			else
-				setPoisonedBy(enemy->name);
+				setPoisonedBy(enemy->getName());
 
 		}
 	}
@@ -542,7 +542,7 @@ void Creature::makeVampire() {
 			if(!master || !master->isEffected("vampirism"))
 				player->setAfflictedBy("");
 			else {
-				master->minions.push_back(name);
+				master->minions.push_back(getName());
 				master->save(online);
 			}
 
@@ -600,14 +600,14 @@ bool Creature::vampireCharmed(Player* master) {
 
 	if(charmed && (!isEffected("vampirism") || !master->isEffected("vampirism")))
 		charmed = false;
-	if(charmed && player->getAfflictedBy() != master->name)
+	if(charmed && player->getAfflictedBy() != master->getName())
 		charmed = false;
 
 	if(charmed) {
 		bool found = false;
 		std::list<bstring>::iterator mIt;
 		for(mIt = master->minions.begin() ; mIt != master->minions.end() && !found ; mIt++) {
-			if(*mIt == (bstring)player->name)
+			if(*mIt == player->getName())
 				found = true;
 		}
 		if(!found)
@@ -616,9 +616,9 @@ bool Creature::vampireCharmed(Player* master) {
 
 	// if they're not charmed, clean up these lists
 	if(!charmed) {
-		if(player->getAfflictedBy() == master->name)
+		if(player->getAfflictedBy() == master->getName())
 			player->setAfflictedBy("");
-		master->minions.remove(player->name);
+		master->minions.remove(player->getName());
 	}
 	return(charmed);
 }
@@ -643,7 +643,7 @@ void Creature::clearMinions() {
 		}
 
 		if(target) {
-			target->minions.remove(player->name);
+			target->minions.remove(player->getName());
 			target->save(online);
 		}
 		if(!online)
@@ -661,7 +661,7 @@ void Creature::clearMinions() {
 		}
 
 		if(target) {
-			if(target->getAfflictedBy() == (bstring)player->name) {
+			if(target->getAfflictedBy() == player->getName()) {
 				target->setAfflictedBy("");
 				target->save(online);
 			}
@@ -696,7 +696,7 @@ bool Creature::addPorphyria(Creature *killer, int chance) {
 	if(killer->isPlayer()) {
 		killer->print("You have infected %N with porphyria.\n", this);
 		if(isPlayer())
-			getAsPlayer()->setAfflictedBy(killer->name);
+			getAsPlayer()->setAfflictedBy(killer->getName());
 	} else if(isPlayer())
 		getAsPlayer()->setAfflictedBy("");
 
@@ -783,7 +783,7 @@ bool Creature::addLycanthropy(Creature *killer, int chance) {
 	if(killer->isPlayer()) {
 		killer->print("You have infected %N with lycanthropy.\n", this);
 		if(isPlayer())
-			getAsPlayer()->setAfflictedBy(killer->name);
+			getAsPlayer()->setAfflictedBy(killer->getName());
 	} else if(isPlayer())
 		getAsPlayer()->setAfflictedBy("");
 
@@ -1083,7 +1083,7 @@ int splCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	object = findObject(player, player->first_obj, cmnd, 2);
+	object = player->findObject(player, cmnd, 2);
 
 	if(!object) {
 		player->print("You don't have that in your inventory.\n");
@@ -1110,7 +1110,6 @@ int splCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Creature* target=0;
-	otag*	op=0;
 	int		i=0;
 	bool	equipment=true;
 
@@ -1166,10 +1165,8 @@ int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 		if(target->flagIsSet(P_DARKNESS)) {
-			op = target->first_obj;
-			while(op) {
-				op->obj->clearFlag(O_DARKNESS);
-				op = op->next_tag;
+			for(Object* obj : target->objects) {
+				obj->clearFlag(O_DARKNESS);
 			}
 			player->print("The aura of darkness around you dissipates.\n");
 			broadcast(player->getSock(), player->getParent(), "The aura of darkness around %N dissipates.", player);

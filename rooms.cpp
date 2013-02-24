@@ -23,8 +23,6 @@
 
 
 BaseRoom::BaseRoom() {
-	first_obj = 0;
-
 	tempNoKillDarkmetal = false;
 	memset(misc, 0, sizeof(misc));
 	hooks.setParent(this);
@@ -41,7 +39,7 @@ bstring BaseRoom::fullName() const {
 	std::ostringstream oStr;
 
 	if(uRoom) {
-		oStr << uRoom->info.str() << "(" << uRoom->name << ")";
+		oStr << uRoom->info.str() << "(" << uRoom->getName() << ")";
 	} else if(aRoom) {
 		oStr << aRoom->mapmarker.str();
 	} else
@@ -55,7 +53,6 @@ bstring BaseRoom::fullName() const {
 //*********************************************************************
 
 UniqueRoom::UniqueRoom() {
-	memset(name, 0, sizeof(name));
 	short_desc = "";
 	long_desc = "";
 	lowLevel = highLevel = maxmobs = trap = trapweight = trapstrength = 0;
@@ -115,14 +112,13 @@ void UniqueRoom::setSize(Size s) { size = s; }
 
 void BaseRoom::BaseDestroy() {
 	clearExits();
-	otag	*op = first_obj, *otemp=0;
-	while(op) {
-		otemp = op->next_tag;
-		delete op->obj;
-		delete op;
-		op = otemp;
+	ObjectSet::iterator it;
+	Object* obj;
+	for(it = objects.begin() ; it != objects.end() ; ) {
+		obj = (*it++);
+		delete obj;
 	}
-	first_obj = 0;
+	objects.clear();
 
 	MonsterSet::iterator mIt = monsters.begin();
 	while(mIt != monsters.end()) {
@@ -203,15 +199,13 @@ void AreaRoom::setStayInMemory(bool stay) { stayInMemory = stay; }
 //*********************************************************************
 
 void AreaRoom::recycle() {
-	otag*   op = first_obj, *otemp=0;
-
-	while(op) {
-		otemp = op->next_tag;
-		delete op->obj;
-		delete op;
-		op = otemp;
+	ObjectSet::iterator it;
+	Object* obj;
+	for(it = objects.begin() ; it != objects.end() ; ) {
+		obj = (*it++);
+		delete obj;
 	}
-	first_obj = 0;
+	objects.clear();
 
 	updateExits();
 }
@@ -221,11 +215,15 @@ void AreaRoom::recycle() {
 //*********************************************************************
 
 void AreaRoom::setMapMarker(const MapMarker* m) {
+	unRegisterMo();
+	setId("-1");
 	bstring str = mapmarker.str();
 	area->rooms.erase(str);
 	*&mapmarker = *m;
 	str = mapmarker.str();
 	area->rooms[str] = this;
+	setId(bstring("R") + str);
+	registerMo();
 }
 
 //*********************************************************************
@@ -321,7 +319,7 @@ bool AreaRoom::canSave() const {
 
 	if(!exits.empty()) {
 		for(Exit* ext : exits) {
-			if(strcmp(ext->name, exitNameByOrder(i++)))
+			if(ext->getName() != exitNameByOrder(i++))
 				return(true);
 			// doesnt check rooms leading to other area rooms
 			if(ext->target.room.id)
@@ -448,7 +446,7 @@ bool BaseRoom::delExit(Exit *exit) {
 }
 bool BaseRoom::delExit( bstring dir) {
     for(Exit* ext : exits) {
-        if(!strcmp(ext->name, dir.c_str())) {
+        if(ext->getName() == dir.c_str()) {
 
         	exits.remove(ext);
             delete ext;
@@ -511,13 +509,9 @@ bool AreaRoom::canDelete() {
 		return(false);
 	if(!players.empty())
 		return(false);
-	if(first_obj) {
-		otag	*op = first_obj;
-		while(op) {
-			if(!op->obj->flagIsSet(O_DISPOSABLE))
-				return(false);
-			op = op->next_tag;
-		}
+	for(Object* obj : objects) {
+		if(!obj->flagIsSet(O_DISPOSABLE))
+			return(false);
 	}
 	// any room effects?
 	if(needsEffectsIndex())
@@ -525,7 +519,7 @@ bool AreaRoom::canDelete() {
 	if(!exits.empty()) {
 		int		i=0;
 		for(Exit* ext : exits) {
-			if(strcmp(ext->name, exitNameByOrder(i++)))
+			if(ext->getName() != exitNameByOrder(i++))
 				return(false);
 			// doesnt check rooms leading to other area rooms
 			if(ext->target.room.id)
@@ -559,7 +553,7 @@ bool AreaRoom::isInteresting(const Player *viewer) const {
 	}
 	i = 0;
 	for(Exit* ext : exits) {
-		if(i < 7 && strcmp(ext->name, exitNameByOrder(i)))
+		if(i < 7 && ext->getName() != exitNameByOrder(i))
 			return(true);
 		if(i >= 8) {
 			if(viewer->showExit(ext))
@@ -622,8 +616,6 @@ bool UniqueRoom::toggleFlag(int flag) {
 //*********************************************************************
 
 bool BaseRoom::isMagicDark() const {
-	otag	*op=0;
-
 	if(flagIsSet(R_MAGIC_DARKNESS))
 		return(true);
 
@@ -641,12 +633,9 @@ bool BaseRoom::isMagicDark() const {
 		if(mons->flagIsSet(M_DARKNESS))
 			return(true);
 	}
-
-	op = first_obj;
-	while(op) {
-		if(op->obj->flagIsSet(O_DARKNESS))
+	for(Object *obj : objects) {
+		if(obj->flagIsSet(O_DARKNESS))
 			return(true);
-		op = op->next_tag;
 	}
 	return(false);
 }

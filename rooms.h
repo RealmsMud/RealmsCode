@@ -43,7 +43,6 @@ protected:
 public:
 	//xtag	*first_ext;		// Exits
 	ExitList exits;
-	otag	*first_obj;		// Items
 
 	char	misc[64]; 		// miscellaneous space
 

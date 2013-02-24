@@ -324,7 +324,7 @@ const bstring EffectInfo::getOwner() const {
 
 bool EffectInfo::isOwner(const Creature* owner) const {
 	// currently, only players can own effects
-	return(owner && owner->isPlayer() && pOwner == owner->name);
+	return(owner && owner->isPlayer() && pOwner == owner->getName());
 }
 
 //*********************************************************************
@@ -389,7 +389,7 @@ MudObject* EffectInfo::getApplier() const {
 
 void EffectInfo::setOwner(const Creature* owner) {
 	if(owner)
-		pOwner = owner->name;
+		pOwner = owner->getName();
 	else
 		pOwner = "";
 }

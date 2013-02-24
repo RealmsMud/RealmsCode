@@ -46,19 +46,47 @@ class Creature;
 #include "hooks.h"
 
 class MudObject {
+private:
+	bstring name;
+
 public:
-	char name[80];
+	void setName(bstring newName);
+	const bstring& getName() const;
+	const char* getCName() const;
+
+protected:
+	virtual void removeFromSet();
+	virtual void addToSet();
+
+public:
+	bool isRegistered();
+	void setRegistered();
+	void setUnRegistered();
+
+	bool registerMo();
+	bool unRegisterMo();
+
+	virtual void registerContainedItems();
+	virtual void unRegisterContainedItems();
+
+protected:
+	bool registered;
+
+
+public:
+	//char name[80];
 	bstring id;		// Unique identifier
 	Hooks hooks;
 	void moCopy(const MudObject& mo);
 
 
 public:
-	virtual ~MudObject() {};
+	MudObject();
+	virtual ~MudObject();
 	void moReset();
 	void moDestroy();
 
-	void setId(bstring newId);
+	void setId(bstring newId, bool handleParentSet = true);
 
 	Monster* getAsMonster();
 	Player* getAsPlayer();
@@ -87,7 +115,6 @@ public:
 	bool isCreature() const;
 	bool isExit() const;
 
-	const char* getName() const;
 	const bstring& getId() const;
 	bstring getIdPython() const;
 	virtual void validateId() {};

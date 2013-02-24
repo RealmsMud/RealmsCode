@@ -44,7 +44,7 @@ Async::Async() {
 //*********************************************************************
 
 AsyncResult Async::branch(const Player* player, childType type) {
-	bstring user = (player ? player->name : "Someone");
+	bstring user = (player ? player->getName() : "Someone");
 	if(pipe(fds) == -1) {
 		printf("Error with pipe!\n");
 		abort();

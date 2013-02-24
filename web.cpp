@@ -118,7 +118,7 @@ void WebInterface::openFifos() {
 	snprintf(filename, 80, "%s/%s", Path::Game, fifoIn);
 	inFd = open(filename, O_RDONLY|O_NONBLOCK);
 	if(inFd == -1)
-		throw new bstring("WebInterface: Unable to open " + bstring(filename) + ":" +strerror(errno));
+		throw(std::runtime_error("WebInterface: Unable to open " + bstring(filename) + ":" +strerror(errno)));
 
 	outFd = -1;
 
@@ -326,7 +326,7 @@ bool WebInterface::messagePlayer(bstring command, bstring tempBuf) {
 			txt ? "\"" : "");
 		if(!player->isDm()) {
 			broadcast(watchingEaves, "^E--- %s to %s, \"%s\".",
-				txt ? "Text message" : "System message", player->name, tempBuf.c_str());
+				txt ? "Text message" : "System message", player->getCName(), tempBuf.c_str());
 		}
 	}
 	outBuf += EOT;
@@ -337,14 +337,14 @@ bool WebInterface::messagePlayer(bstring command, bstring tempBuf) {
 //						getInventory
 //*********************************************************************
 
-bstring doGetInventory(const Player* player, otag* op);
+bstring doGetInventory(const Player* player, const ObjectSet &set);
 
 bstring doGetInventory(const Player* player, Object* object, int loc=-1) {
 	std::ostringstream oStr;
 	oStr << itemDelim
-		 << object->name
+		 << object->getName()
 		 << innerDelim
-		 << object->getUniqueId()
+		 << object->getId()
 		 << innerDelim
 		 << object->getWearflag()
 		 << innerDelim
@@ -353,20 +353,19 @@ bstring doGetInventory(const Player* player, Object* object, int loc=-1) {
 	if(loc != -1)
 		oStr << innerDelim << loc;
 
-	if(object->first_obj) {
+	if(!object->objects.empty()) {
 		oStr << startSubDelim
-			 << doGetInventory(player, object->first_obj)
+			 << doGetInventory(player, object->objects)
 			 << endSubDelim;
 	}
 	return(oStr.str());
 }
 
-bstring doGetInventory(const Player* player, otag* op) {
+bstring doGetInventory(const Player* player, const ObjectSet &set) {
 	bstring inv = "";
-	while(op) {
-		if(player->canSee(op->obj))
-			inv += doGetInventory(player, op->obj);
-		op = op->next_tag;
+	for(Object* obj : set ) {
+		if(player->canSee(obj))
+			inv += doGetInventory(player, obj);
 	}
 	return(inv);
 }
@@ -375,7 +374,7 @@ bstring getInventory(const Player* player) {
 	std::ostringstream oStr;
 
 	oStr << player->getUniqueObjId()
-		 << doGetInventory(player, player->first_obj)
+		 << doGetInventory(player, player->objects)
 		 << equipDelim;
 
 	for(int i=0; i<MAXWEAR; i++) {
@@ -390,37 +389,39 @@ bstring getInventory(const Player* player) {
 //						handleInput
 //*********************************************************************
 
-bool webWield(Player* player, int id);
-bool webWear(Player* player, int id);
+bool webWield(Player* player);
+bool webWear(Player* player);
 
 bool webUse(Player* player, int id, int type) {
-	switch(type) {
-	case WEAPON:
-		return(webWield(player, id));
-	case ARMOR:
-		return(webWear(player, id));
-	case POTION:
-		//return(cmdConsume(player, id));
-	case SCROLL:
-		//return(cmdReadScroll(player, id));
-	case WAND:
-		//return(cmdUseWand(player, id));
-	case KEY:
-		//return(cmdUnlock(player, id));
-	case LIGHTSOURCE:
-		//return(cmdHold(player, id));
-	default:
-		player->print("How does one use that?\n");
-		return(false);
-	}
+
+	// Disabled
+	return(false);
+//
+//	switch(type) {
+//	case WEAPON:
+//		return(webWield(player, id));
+//	case ARMOR:
+//		return(webWear(player, id));
+//	case POTION:
+//		//return(cmdConsume(player, id));
+//	case SCROLL:
+//		//return(cmdReadScroll(player, id));
+//	case WAND:
+//		//return(cmdUseWand(player, id));
+//	case KEY:
+//		//return(cmdUnlock(player, id));
+//	case LIGHTSOURCE:
+//		//return(cmdHold(player, id));
+//	default:
+//		player->print("How does one use that?\n");
+//		return(false);
+//	}
 }
 
 //*********************************************************************
 //						handleInput
 //*********************************************************************
 // Uses ETX (End of Text) as abort and EOT (End of Transmission Block) as EOF
-
-bool webRemove(Player* player, int id);
 
 bool WebInterface::handleInput() {
 	if(inBuf.empty())
@@ -507,51 +508,52 @@ bool WebInterface::handleInput() {
 
 		tempBuf.erase(0, pos+1); // Clear out the command
 
-		if(command == "GETINVENTORY" || command == "EQUIP" || command == "UNEQUIP") {
-			pos = tempBuf.Find(' ');
-			int id=0, type=0;
-
-			bstring user = "";
-			if(pos != bstring::npos) {
-				user = tempBuf.left(pos);
-				tempBuf.erase(0, pos+1); // Clear out the user
-				id = atoi(tempBuf.c_str());
-
-				if(command == "EQUIP") {
-					pos = tempBuf.Find(' ');
-					tempBuf.erase(0, pos+1); // Clear out the user
-					type = atoi(tempBuf.c_str());
-				}
-			} else {
-				user = tempBuf;
-				tempBuf = "";
-			}
-
-			Player* player = 0;
-			if(user != "")
-				player = gServer->findPlayer(user);
-			if(!player) {
-				outBuf += EOT;
-				return(true);
-			}
-
-			if(command == "GETINVENTORY") {
-
-				outBuf += getInventory(player);
-
-			} else if(command == "EQUIP") {
-
-				outBuf += webUse(player, id, type) ? "1" : "0";
-
-			} else if(command == "UNEQUIP") {
-
-				outBuf += webRemove(player, id) ? "1" : "0";
-
-			}
-
-			outBuf += EOT;
-			return(true);
-		} else if(command == "WHO") {
+//		if(command == "GETINVENTORY" || command == "EQUIP" || command == "UNEQUIP") {
+//			pos = tempBuf.Find(' ');
+//			int id=0, type=0;
+//
+//			bstring user = "";
+//			if(pos != bstring::npos) {
+//				user = tempBuf.left(pos);
+//				tempBuf.erase(0, pos+1); // Clear out the user
+//				id = atoi(tempBuf.c_str());
+//
+//				if(command == "EQUIP") {
+//					pos = tempBuf.Find(' ');
+//					tempBuf.erase(0, pos+1); // Clear out the user
+//					type = atoi(tempBuf.c_str());
+//				}
+//			} else {
+//				user = tempBuf;
+//				tempBuf = "";
+//			}
+//
+//			Player* player = 0;
+//			if(user != "")
+//				player = gServer->findPlayer(user);
+//			if(!player) {
+//				outBuf += EOT;
+//				return(true);
+//			}
+//
+//			if(command == "GETINVENTORY") {
+//
+//				outBuf += getInventory(player);
+//
+//			} else if(command == "EQUIP") {
+//
+//				outBuf += webUse(player, id, type) ? "1" : "0";
+//
+//			} else if(command == "UNEQUIP") {
+//
+//				outBuf += webRemove(player, id) ? "1" : "0";
+//
+//			}
+//
+//			outBuf += EOT;
+//			return(true);
+//		} else
+		if(command == "WHO") {
 			std::cout << "WebInterface: Checking for users online" << std::endl;
 			outBuf += webwho();
 			outBuf += EOT;
@@ -563,8 +565,8 @@ bool WebInterface::handleInput() {
 			const Player* player = gServer->findPlayer(tempBuf);
 			if(	!player ||
 				player->flagIsSet(P_DM_INVIS) ||
-				player->flagIsSet(P_INCOGNITO) ||
-				player->flagIsSet(P_MISTED) ||
+				player->isEffected("incognito") ||
+				player->isEffected("mist") ||
 				player->isInvisible()
 			) {
 				outBuf += "That player is not logged on.";
@@ -674,7 +676,7 @@ bool WebInterface::handleInput() {
 				}
 
 				if(player->getForum() != "")
-					callWebserver((bstring)"mud.php?type=autoguild&guild=" + guild->getName() + "&user=" + player->getForum() + "&char=" + player->name);
+					callWebserver((bstring)"mud.php?type=autoguild&guild=" + guild->getName() + "&user=" + player->getForum() + "&char=" + player->getName());
 
 				if(!online)
 					free_crt(player);
@@ -739,7 +741,7 @@ bool WebInterface::handleInput() {
 				Monster *monster;
 				if(loadMonster(cr, &monster)) {
 					monster->saveToXml(rootNode, ALLITEMS, LS_FULL);
-					std::cout << "Generated xml for " << monster->name << "\n";
+					std::cout << "Generated xml for " << monster->getName() << "\n";
 					free_crt(monster);
 				}
 			}
@@ -750,7 +752,7 @@ bool WebInterface::handleInput() {
 				Object* object;
 				if(loadObject(cr, &object)) {
 					object->saveToXml(rootNode, ALLITEMS, LS_FULL);
-					std::cout << "Generated xml for " << object->name << "\n";
+					std::cout << "Generated xml for " << object->getName() << "\n";
 					delete object;
 				}
 			}
@@ -761,7 +763,7 @@ bool WebInterface::handleInput() {
 				UniqueRoom* room;
 				if(loadRoom(cr, &room)) {
 					room->saveToXml(rootNode, ALLITEMS);
-					std::cout << "Generated xml for " << room->name << "\n";
+					std::cout << "Generated xml for " << room->getName() << "\n";
 				}
 			}
 			// Save the xml document to a character array
@@ -797,14 +799,14 @@ bool WebInterface::handleInput() {
 				Monster* monster = new Monster();
 				monster->readFromXml(rootNode);
 				monster->saveToFile();
-				broadcast(isDm, "^y*** Monster %s - %s^y updated by %s.", monster->info.str().c_str(), monster->name, monster->last_mod);
+				broadcast(isDm, "^y*** Monster %s - %s^y updated by %s.", monster->info.str().c_str(), monster->getCName(), monster->last_mod);
 				gConfig->replaceMonsterInQueue(monster->info, monster);
 			}
 			else if(type == "OBJ") {
 				Object* object = new Object();
 				object->readFromXml(rootNode);
 				object->saveToFile();
-				broadcast(isDm, "^y*** Object %s - %s^y updated by %s.", object->info.str().c_str(), object->name, object->lastMod.c_str());
+				broadcast(isDm, "^y*** Object %s - %s^y updated by %s.", object->info.str().c_str(), object->getCName(), object->lastMod.c_str());
 				gConfig->replaceObjectInQueue(object->info, object);
 			}
 			else if(type == "ROM") {
@@ -813,7 +815,7 @@ bool WebInterface::handleInput() {
 				room->saveToFile(0);
 
 				gConfig->reloadRoom(room);
-				broadcast(isDm, "^y*** Room %s - %s^y updated by %s.", room->info.str().c_str(), room->name, room->last_mod);
+				broadcast(isDm, "^y*** Room %s - %s^y updated by %s.", room->info.str().c_str(), room->getCName(), room->last_mod);
 			}
 			std::cout << "WebInterface: Saved " << type << " " << cr.str() << "\n";
 		}
@@ -878,11 +880,11 @@ bstring webwho() {
 
 		if(player->flagIsSet(P_DM_INVIS))
 			continue;
-		if(player->flagIsSet(P_INCOGNITO))
+		if(player->isEffected("incognito"))
 			continue;
 		if(player->isInvisible())
 			continue;
-		if(player->flagIsSet(P_MISTED))
+		if(player->isEffected("mist"))
 			continue;
 
 		bstring cls = getShortClassName(player);
@@ -986,7 +988,7 @@ int cmdForum(Player* player, cmd* cmnd) {
 
 	bstring::size_type pos=0;
 	std::ostringstream url;
-	url << "mud.php?type=forum&char=" << player->name;
+	url << "mud.php?type=forum&char=" << player->getName();
 
 	bstring user = cmnd->str[1];
 	bstring pass = getFullstrText(cmnd->fullstr, 2, ' ');
@@ -1000,7 +1002,7 @@ int cmdForum(Player* player, cmd* cmnd) {
 		player->printColor("Attempting to unassociate this character with forum account: ^C%s\n", player->getForum().c_str());
 		player->setForum("");
 		player->save(true);
-		webUnassociate(player->name);
+		webUnassociate(player->getName());
 		return(0);
 
 	} else if(user != "" && pass != "") {
@@ -1086,7 +1088,7 @@ int cmdWiki(Player* player, cmd* cmnd) {
 	}
 
 	player->print("Loading entry...\n");
-	url << "mud.php?type=wiki&char=" << player->name << "&entry=" << entry;
+	url << "mud.php?type=wiki&char=" << player->getName() << "&entry=" << entry;
 	callWebserver(url.str(), true, true);
 	return(0);
 }
