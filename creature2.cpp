@@ -560,7 +560,7 @@ bool Monster::isClassAggro(int x, bool checkInvert) const {
 	bool set = (cClassAggro[x/8] & 1<<(x%8));
 	if(!checkInvert)
 		return(set);
-	return(set ? !flagIsSet(M_RACE_AGGRO_INVERT) : flagIsSet(M_RACE_AGGRO_INVERT));
+	return(set ? !flagIsSet(M_CLASS_AGGRO_INVERT) : flagIsSet(M_CLASS_AGGRO_INVERT));
 }
 void Monster::setClassAggro(int x) {
 	x--;
@@ -581,7 +581,7 @@ bool Monster::isDeityAggro(int x, bool checkInvert) const {
 	bool set = (deityAggro[x/8] & 1<<(x%8));
 	if(!checkInvert)
 		return(set);
-	return(set ? !flagIsSet(M_RACE_AGGRO_INVERT) : flagIsSet(M_RACE_AGGRO_INVERT));
+	return(set ? !flagIsSet(M_DEITY_AGGRO_INVERT) : flagIsSet(M_DEITY_AGGRO_INVERT));
 }
 void Monster::setDeityAggro(int x) {
 	x--;

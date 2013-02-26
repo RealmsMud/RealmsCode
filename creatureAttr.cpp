@@ -1887,7 +1887,7 @@ unsigned short Creature::getDisplayRace() const {
 // lets us determine race equality with the presence of subraces
 
 bool isRace(int subRace, int mainRace) {
-	return(mainRace == subRace || gConfig->getRace(subRace)->getParentRace() == mainRace);
+    return(mainRace == subRace || (mainRace != 0 && gConfig->getRace(subRace)->getParentRace() == mainRace));
 }
 
 bool Creature::isRace(int r) const {
