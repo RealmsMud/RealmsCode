@@ -490,6 +490,7 @@ void UniqueRoom::addPermObj() {
 			continue;
 
 		n = 1;
+		m = 0;
 		nt = it;
 		nt++;
 		for(; nt != permObjects.end() ; nt++) {
