@@ -88,6 +88,7 @@ public:
 
 	void setId(bstring newId, bool handleParentSet = true);
 
+	MudObject* getAsMudObject();
 	Monster* getAsMonster();
 	Player* getAsPlayer();
 	Creature* getAsCreature();

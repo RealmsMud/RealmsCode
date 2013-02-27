@@ -152,6 +152,9 @@ void MudObject::moDestroy() {
 	moReset();
 }
 
+MudObject* MudObject::getAsMudObject() {
+    return(dynamic_cast<MudObject*>(this));
+}
 
 
 //***********************************************************************

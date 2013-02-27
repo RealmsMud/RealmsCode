@@ -945,7 +945,8 @@ void Creature::addObj(Object* object) {
 	if(object->flagIsSet(O_DARKNESS))
 		setFlag(pPlayer ? P_DARKNESS : M_DARKNESS);
 
-	add(object);
+	object->addTo(this);
+	//add(object);
 
 	if(pPlayer)
 		pPlayer->updateItems(object);

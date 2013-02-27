@@ -238,7 +238,7 @@ void Object::doCopy(const Object& o) {
 	for(i=0; i<OBJ_FLAG_ARRAY_SIZE; i++)
 		flags[i] = o.flags[i];
 	questnum = o.questnum;
-	parent = o.parent;
+//	parent = o.parent;
 	for(i=0; i<4; i++)
 		lasttime[i] = o.lasttime[i];
 

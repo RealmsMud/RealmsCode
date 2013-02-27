@@ -122,6 +122,14 @@ bool Container::add(Containable* toAdd) {
     Object* addObject = dynamic_cast<Object*>(toAdd);
     Player* addPlayer = dynamic_cast<Player*>(toAdd);
     Monster* addMonster = dynamic_cast<Monster*>(toAdd);
+
+    // If we're adding an object or a monster, we're registered and the item we're adding is not,
+    // then register the item
+    if((addObject || addMonster) && isRegistered() && !toAdd->isRegistered()) {
+    	toAdd->registerMo();
+    }
+
+
     bool toReturn = false;
     if(addObject) {
         std::pair<ObjectSet::iterator, bool> p = objects.insert(addObject);
@@ -135,12 +143,6 @@ bool Container::add(Containable* toAdd) {
     } else {
         std::cout << "Don't know how to add " << toAdd << std::endl;
         toReturn = false;
-    }
-
-    // If we're adding an object or a monster, we're registered and the item we're adding is not,
-    // then register the item
-    if((addObject || addMonster) && isRegistered() && !toAdd->isRegistered()) {
-    	toAdd->registerMo();
     }
 
     if(toReturn) {
@@ -395,7 +397,7 @@ void Containable::addToSet() {
 }
 
 bool Containable::addTo(Container* container) {
-    if(this->parent != NULL) {
+    if(this->parent != NULL && parent->getAsMudObject() != container->getAsMudObject()) {
         std::cout << "Non Null Parent" << std::endl;
         return(0);
     }

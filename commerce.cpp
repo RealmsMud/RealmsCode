@@ -1467,6 +1467,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 					merror("buy", FATAL);
 
 				*object2 = *object;
+//				object2->setParent(NULL);
 				object2->clearFlag(O_PERM_INV_ITEM);
 				object2->clearFlag(O_PERM_ITEM);
 				object2->clearFlag(O_TEMP_PERM);
