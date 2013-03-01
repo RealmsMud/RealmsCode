@@ -1201,18 +1201,25 @@ bool Socket::parseMXPSecure() {
         //toParse.assign(&cmdInBuf[0], cmdInBuf.size());
         std::cout << toParse << std::endl;
         bstring version = getMxpTag("VERSION=", toParse);
-        if(!version.empty())
+        if(!version.empty()) {
             term.version = version;
-        if(term.type.equals("mushclient", false)) {
-            if(version >= "4.02")
-                opts.xterm256 = true;
-        } else if (term.type.equals("cmud", false)) {
-            if(version >=  "3.04")
-                opts.xterm256 = true;
-        } else if (term.type.equals("atlantis", false)) {
-            // Any version of atlantis with MXP supports xterm256
+			if(term.type.equals("mushclient", false)) {
+				if(version >= "4.02")
+					opts.xterm256 = true;
+			} else if (term.type.equals("cmud", false)) {
+				if(version >=  "3.04")
+					opts.xterm256 = true;
+			} else if (term.type.equals("atlantis", false)) {
+				// Any version of atlantis with MXP supports xterm256
             opts.xterm256 = true;
+			}
         }
+
+        bstring supports = getMxpTag("SUPPORT=", toParse);
+        if(!supports.empty()) {
+        	std::cout << "Got <SUPPORT='" << supports << "'>" << std::endl;
+        }
+
     }
     clearMxpClientSecure();
     cmdInBuf.clear();

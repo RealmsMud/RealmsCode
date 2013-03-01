@@ -951,12 +951,13 @@ int channel(Player* player, cmd* cmnd) {
 				bstring oocName = player->getName();
 
 				if(ply->canSee(player)) {
-				    icName = mxpTag(bstring("player ") + player->getName()) + icName + mxpTag("/player");
-				    oocName = mxpTag(bstring("player ") + player->getName()) + oocName + mxpTag("/player");
+				    icName = mxpTag(bstring("player name='") + player->getName() + "' PROMPT" ) + icName + mxpTag("/player");
+				    oocName = mxpTag(bstring("player name='") + player->getName()  + "' PROMPT") + oocName + mxpTag("/player");
 				}
 
 				toPrint.Replace("*IC-NAME*", icName.c_str());
 				toPrint.Replace("*OOC-NAME*", oocName.c_str());
+				std::cout << "ToPrint: " << toPrint << std::endl;
 
 				if(ply->isStaff() || (player->current_language && ply->isEffected("comprehend-languages"))
 				        || ply->languageIsKnown(player->current_language))

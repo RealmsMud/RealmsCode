@@ -38,7 +38,9 @@ void Socket::defineMxp() {
     if(!this || !getMxp())
         return;
     bprint(MXP_BEG "VERSION" MXP_END);
+    bprint(MXP_BEG "SUPPORT" MXP_END);
     for(MxpElementMap::value_type p : gConfig->mxpElements) {
+    	std::cout << p.second->getDefineString() << std::endl;
         bprint(p.second->getDefineString());
     }
 
@@ -67,16 +69,16 @@ bstring MxpElement::getDefineString() {
         oStr << "send href='";
     oStr << command;
     if(mxpType == "send")
-        oStr << "' ";
+        oStr << "'";
     if(!hint.empty())
-        oStr << "hint='" << hint << "' ";
-    if(prompt)
-        oStr << "prompt ";
+        oStr << " hint='" << hint << "'";
     if(!expire.empty())
-        oStr << "expire='" << expire << "' ";
+        oStr << " expire='" << expire << "'";
+    if(prompt)
+        oStr << " PROMPT";
     oStr << ">\"";
     if(!attributes.empty())
-        oStr << " ATT='" << attributes << "' ";
+        oStr << " ATT='" << attributes << "'";
     oStr << MXP_END;
 
     return(oStr.str());
