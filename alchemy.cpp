@@ -77,26 +77,16 @@ const AlchemyInfo *Config::getAlchemyInfo(bstring effect) const {
 //*********************************************************************
 
 namespace Alchemy {
-	int getVisibleEffects(int alchemySkill) {
-		int visibleEffects = 0;
-		
-		if(alchemySkill >= 75)
-			visibleEffects = 4;
-		else if(alchemySkill >= 50)
-			visibleEffects = 3;
-		else if(alchemySkill >= 25)
-			visibleEffects = 2;
-		else if(alchemySkill >= 1)
-			visibleEffects = 1;
-		else
-			visibleEffects = 0;
-		
-		return(visibleEffects);		
-	}
 	long MAX_ALCHEMY_DURATION = 3900;
 	long getMaximumDuration() {
 		return(MAX_ALCHEMY_DURATION);
 	}
+	bstring getEffectString(Object* obj, const bstring& effect) {
+		if(!obj || effect.empty())
+			return("*invalid*");
+		return(obj->info.rstr() + "-" + effect);
+	}
+
 }
 
 //*********************************************************************
@@ -105,7 +95,7 @@ namespace Alchemy {
 
 AlchemyEffect::AlchemyEffect() {
 	duration = strength = 0;
-	quality = 1;
+	quality = 100;
 }
 
 AlchemyEffect::AlchemyEffect(const AlchemyEffect &ae) {
@@ -165,45 +155,77 @@ void AlchemyEffect::combineWith(const AlchemyEffect& ae) {
 }
 
 
+
+//*********************************************************************
+//						alchemyEffectVisible
+//*********************************************************************
+
+bool Player::alchemyEffectVisible(Object* obj, const bstring effect) {
+	if(!obj || effect.empty())
+		return(false);
+
+	// Staff can see any effects
+	if(isCt())
+		return(true);
+
+	// Anyone can see potion effects
+	if(obj->getType() == POTION)
+		return(true);
+
+	// Potions have been handled above, if we get here needs to be an herb
+	if(obj->getType() != HERB)
+		return(false);
+
+	bstring effectStr = Alchemy::getEffectString(obj, effect);
+
+
+	std::cout << "EffectStr: " << effectStr << std::endl;
+
+	return((knownAlchemyEffects.find(effectStr) != knownAlchemyEffects.end()));
+
+}
+
+bool Player::learnAlchemyEffect(Object* obj, const bstring effect) {
+	if(!obj || effect.empty())
+		return(false);
+
+	bstring effectStr = Alchemy::getEffectString(obj, effect);
+	if(knownAlchemyEffects.find(effectStr) == knownAlchemyEffects.end()) {
+		*this << ColorOn << "You have discovered a new alchemy effect: ^W" << obj->getName() << "^x has the effect: ^W" << effect << "^x\n" << ColorOff;
+		knownAlchemyEffects[effectStr] = true;
+		return(true);
+	}
+
+	return(false);
+}
+
 //*********************************************************************
 //						showAlchemyEffects
 //*********************************************************************
 // NOTE: A null creature is perfectly valid, so handle it properly
 
-bstring Object::showAlchemyEffects(Creature *creature) {
+bstring Object::showAlchemyEffects(Player *player) {
 	bstring toReturn;
 
-	if(!alchemyEffects.empty() && (!creature || creature->isCt() || creature->knowsSkill("alchemy"))) {
+	if(!alchemyEffects.empty() && (!player || player->isCt() || player->knowsSkill("alchemy"))) {
 		// Find out how many effects to show this person
-		int skillLevel = 0, visibleEffects = 1, shown = 0;
-
-
-		if(!creature || creature->isCt())
-			skillLevel = 100;
-		else
-			skillLevel = (int)(creature->getSkillGained("alchemy")/3);
-
-		visibleEffects = Alchemy::getVisibleEffects(skillLevel);
-
 		std::ostringstream outStr;
 
 		outStr << "Alchemy Effects:\n";
 		for(std::pair<int, AlchemyEffect> p : alchemyEffects) {
+
+			if(player && ! player->alchemyEffectVisible(this, p.second.getEffect()))
+				continue;
+
 			outStr << p.first << ") " << p.second.getEffect();
-			if(!creature || creature->isDm()) {
+			if(!player || player->isDm()) {
 				// Potions have duration/strength, herbs have quality
 				if(type == POTION)
 					outStr << " D: " << p.second.getDuration() << " S: " << p.second.getStrength();
 				else
 					outStr << " Q: " << p.second.getQuality();
 			}
-
-
 			outStr << "\n";
-
-			// Have we shown enough effects yet?
-			if(type != POTION && ++shown == visibleEffects)
-				break;
 		}
 
 		toReturn = outStr.str();
@@ -237,9 +259,6 @@ int cmdBrew(Player* player, cmd* cmnd) {
 
 	Object* mortar=0;	// Our Mortar and Pestle
 
-	double retortQuality = 0;
-	double mortarQuality = 0;
-
 	// Lets find our mortar.  First check inventory
 	mortar = player->findObject(player, cmnd, 1);
 
@@ -270,14 +289,12 @@ int cmdBrew(Player* player, cmd* cmnd) {
 		player->print("You need at least two herbs to brew something.");
 		return(0);
 	}
-	mortarQuality = mortar->getQuality()/10.0;
 
 	// We'll be combining multiple herbs into one potion
 	// Skill level can be 1-100
 	std::map<bstring, AlchemyEffect> effects;
 	if(mortar->getShotsCur() >= 2) {
 		std::map<bstring, int> effectCount;
-		int visibleEffects = Alchemy::getVisibleEffects(skillLevel);
 
 		// We want to look at the first 4 herbs in the mortar and get a list of effects and how many occurrences of that
 		// effect there are.  For any effect with 2 or more occurrences, it'll get added to the final potion
@@ -285,7 +302,6 @@ int cmdBrew(Player* player, cmd* cmnd) {
 		int numHerbs = 0;
 		for(Object *herb : mortar->objects) {
 
-			int used = 0;
 			for(std::pair<int, AlchemyEffect> p : herb->alchemyEffects) {
 
 				bstring effect = p.second.getEffect();
@@ -296,11 +312,10 @@ int cmdBrew(Player* player, cmd* cmnd) {
 				} else {
 					// The effect is based on the minimum strength in the herbs
 					effects[effect].combineWith(p.second);
+					// TODO: Learn the effect here!
+					player->learnAlchemyEffect(herb, effect);
 				}
 
-				// We can only use visible effects
-				if(++used == visibleEffects)
-					break;
 			}
 			if(++numHerbs == 4)
 				break;
@@ -319,21 +334,20 @@ int cmdBrew(Player* player, cmd* cmnd) {
 	// We'll be using just one herb, so it'll be the first effect
 	// To get here, we have to have 100 skill
 	else if(mortar->getShotsCur() == 1) {
-		AlchemyEffect &ae = (*mortar->objects.begin())->alchemyEffects[1];
+		Object* herb = *mortar->objects.begin();
+
+		AlchemyEffect &ae = herb->alchemyEffects[1];
 		effects[ae.getEffect()] = ae;
 		player->printColor("Brewing a single effect potion: ^Y%s^x\n", ae.getEffect().c_str());
-		return(0);
+		player->learnAlchemyEffect(herb, ae.getEffect());
 	}
 
-	// High quality mortars can add up to 25 effective skill
-	skillLevel += (mortarQuality/4);
 
 
-
-	long baseDur = (5.95387755 + (retortQuality*0.0612245))*skillLevel;
+	long baseDur = (5.95387755 *skillLevel);
 
 	Object* potion = Object::getNewPotion();
-	;
+
 	int i = 1;
 	// Copy the alchemy effects to the potion
 	for(std::pair<bstring, AlchemyEffect> aep : effects) {

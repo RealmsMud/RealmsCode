@@ -346,7 +346,7 @@ public:
     bool needsTwoHands() const;
     bool isQuestValid() const; // Is this object valid for a quest?
 
-    bstring showAlchemyEffects(Creature *creature = NULL);
+    bstring showAlchemyEffects(Player *player = NULL);
     bstring statObj(int statFlags);
     double winterProtection() const;
     bool isKey(const UniqueRoom* room, const Exit* exit) const;

@@ -562,6 +562,7 @@ public:
 	void printEquipList(const Player* viewer);
 	void checkDarkness();
 
+
 // Afflictions
 	void poison(Creature* enemy, unsigned int damagePerPulse, unsigned int duration);
 	bool immuneToPoison() const; // *
@@ -1034,6 +1035,8 @@ protected:
 	unsigned short thirst;
 	Object* lastPawn;
 	int uniqueObjId;
+	typedef std::map<bstring, bool> KnownAlchemyEffectsMap;
+	KnownAlchemyEffectsMap knownAlchemyEffects;
 public:
 // Data
 	std::list<CatRef> storesRefunded;   // Shops the player has refunded an item in
@@ -1273,6 +1276,10 @@ public:
 	bool knowsRecipe(int id) const;
 	bool knowsRecipe(Recipe* recipe) const;
 	Recipe* findRecipe(cmd* cmnd, bstring skill, bool* searchRecipes, Size recipeSize=NO_SIZE, int numIngredients=1) const;
+
+	// Alchemy
+	bool alchemyEffectVisible(Object* obj, const bstring effect);
+	bool learnAlchemyEffect(Object* obj, const bstring effect);
 
 // Stats & Ticking
 	long tickInterval(Stat& stat, bool fastTick, bool deathSickness, bool vampAndDay, const bstring& effectName);

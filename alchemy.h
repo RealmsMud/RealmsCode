@@ -22,6 +22,10 @@
 
 //class XmlNodePtr;
 
+namespace Alchemy {
+	bstring getEffectString(Object* obj, const bstring& effect);
+};
+
 class AlchemyInfo {
 public:
     AlchemyInfo(xmlNodePtr rootNode);
