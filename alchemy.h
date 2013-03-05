@@ -22,6 +22,9 @@
 
 //class XmlNodePtr;
 
+typedef std::vector<Object*> HerbVector;
+typedef std::map<bstring, HerbVector > HerbMap;
+
 namespace Alchemy {
 	bstring getEffectString(Object* obj, const bstring& effect);
 };

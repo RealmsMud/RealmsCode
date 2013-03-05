@@ -277,7 +277,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(!mortar->objects.empty()) {
+	if(mortar->objects.empty()) {
 		player->print("But it's empty, what do you want to brew?\n");
 		return(0);
 	}
@@ -294,7 +294,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 	// Skill level can be 1-100
 	std::map<bstring, AlchemyEffect> effects;
 	if(mortar->getShotsCur() >= 2) {
-		std::map<bstring, int> effectCount;
+		HerbMap effectCount;
 
 		// We want to look at the first 4 herbs in the mortar and get a list of effects and how many occurrences of that
 		// effect there are.  For any effect with 2 or more occurrences, it'll get added to the final potion
@@ -305,15 +305,13 @@ int cmdBrew(Player* player, cmd* cmnd) {
 			for(std::pair<int, AlchemyEffect> p : herb->alchemyEffects) {
 
 				bstring effect = p.second.getEffect();
-				effectCount[effect]++;
+				effectCount[effect].push_back(herb);
 
 				if(effects.find(effect) == effects.end()) {
 					effects[effect] = p.second;
 				} else {
 					// The effect is based on the minimum strength in the herbs
 					effects[effect].combineWith(p.second);
-					// TODO: Learn the effect here!
-					player->learnAlchemyEffect(herb, effect);
 				}
 
 			}
@@ -321,9 +319,14 @@ int cmdBrew(Player* player, cmd* cmnd) {
 				break;
 		} // end while
 
-		for(std::pair<bstring, int> effectPair : effectCount) {
-			if(effectPair.second > 1) {
+
+
+		for( HerbMap::value_type effectPair : effectCount) {
+			if(effectPair.second.size() > 1) {
 				player->printColor("Using effect: ^Y%s^x.\n", effectPair.first.c_str());
+				for(Object* herb : effectPair.second) {
+					player->learnAlchemyEffect(herb, effectPair.first);
+				}
 			}
 			else {
 				effects.erase(effectPair.first);
