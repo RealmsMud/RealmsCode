@@ -949,10 +949,14 @@ int channel(Player* player, cmd* cmnd) {
 				bstring toPrint = chan->displayFmt;
 				bstring icName = player->getCrtStr(ply, ply->displayFlags() | CAP);
 				bstring oocName = player->getName();
+				bstring prompt = "";
+
+				if(ply->getSock()->getTermType().toUpper().find("MUDLET") != bstring::npos)
+					prompt = " PROMPT";
 
 				if(ply->canSee(player)) {
-				    icName = mxpTag(bstring("player name='") + player->getName() + "' PROMPT" ) + icName + mxpTag("/player");
-				    oocName = mxpTag(bstring("player name='") + player->getName()  + "' PROMPT") + oocName + mxpTag("/player");
+				    icName = mxpTag(bstring("player name='") + player->getName() + "'" + prompt ) + icName + mxpTag("/player");
+				    oocName = mxpTag(bstring("player name='") + player->getName()  + "'" + prompt) + oocName + mxpTag("/player");
 				}
 
 				toPrint.Replace("*IC-NAME*", icName.c_str());
