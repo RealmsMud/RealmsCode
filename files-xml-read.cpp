@@ -1579,6 +1579,11 @@ AlchemyInfo::AlchemyInfo(xmlNodePtr rootNode) {
 		else if(NODE_NAME(rootNode, "PythonScript")) xml::copyToBString(pythonScript, rootNode);
 		else if(NODE_NAME(rootNode, "Positive")) xml::copyToBool(positive, rootNode);
 		else if(NODE_NAME(rootNode, "Throwable")) xml::copyToBool(throwable, rootNode);
+		else if(NODE_NAME(rootNode, "PotionDisplayName")) xml::copyToBString(potionDisplayName, rootNode);
+		else if(NODE_NAME(rootNode, "PotionPrefix")) xml::copyToBString(potionPrefix, rootNode);
+		else if(NODE_NAME(rootNode, "Positive")) xml::copyToBool(positive, rootNode);
+		else if(NODE_NAME(rootNode, "BaseDuration")) xml::copyToNum(baseDuration, rootNode);
+		else if(NODE_NAME(rootNode, "BaseStrength")) xml::copyToNum(baseStrength, rootNode);
 
 		rootNode = rootNode->next;
 	}

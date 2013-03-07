@@ -68,6 +68,8 @@ public:
     void load(xmlNodePtr rootNode);
 };
 
+typedef std::map<int, AlchemyEffect> AlchemyEffectMap;
+
 class Object: public Container, public Containable {
     // Static class functions
 public:
@@ -175,7 +177,7 @@ public:
     bool addAlchemyEffect(int num, const AlchemyEffect &ae);
 
     // Map of effects that are on this item for alchemy purposes, used for herbs and potions objects
-    std::map<int, AlchemyEffect> alchemyEffects;
+    AlchemyEffectMap alchemyEffects;
 
 // Functions
 public:
@@ -266,6 +268,9 @@ public:
 
     bool isQuestOwner(const Player* player) const;
     bstring getWearName();
+
+
+    void nameAlchemyPotion(bool potion = true);
 
     // Set
     void setKey(unsigned short k);

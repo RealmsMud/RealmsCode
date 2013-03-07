@@ -46,6 +46,38 @@ bstring AlchemyInfo::getDisplayString() {
 	return(displayStr.str());
 }
 
+
+
+const bstring& AlchemyInfo::getName() const {
+	return(name);
+}
+const bstring& AlchemyInfo::getAction() const {
+	return(action);
+}
+const bstring& AlchemyInfo::getPythonScript() const {
+	return(pythonScript);
+}
+const bstring& AlchemyInfo::getPotionPrefix() const {
+	return(potionPrefix);
+}
+const bstring& AlchemyInfo::getPotionDisplayName() const {
+	return(potionDisplayName);
+}
+
+long AlchemyInfo::getBaseDuration() const {
+	return(baseDuration);
+}
+short AlchemyInfo::getBaseStrength() const {
+	return(baseStrength);
+}
+bool AlchemyInfo::isThrowable() const {
+	return(throwable);
+}
+bool AlchemyInfo::isPositive() const {
+	return(positive);
+}
+
+
 //*********************************************************************
 //						clearAlchemy
 //*********************************************************************
@@ -66,7 +98,7 @@ bool Config::clearAlchemy() {
 
 const AlchemyInfo *Config::getAlchemyInfo(bstring effect) const {
 	for(AlchemyInfo* alcInfo : alchemy) {
-		if(alcInfo && alcInfo->name == effect)
+		if(alcInfo && alcInfo->getName() == effect)
 			return alcInfo;
 	}
 	return(NULL);
@@ -290,9 +322,9 @@ int cmdBrew(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	// We'll be combining multiple herbs into one potion
-	// Skill level can be 1-100
+	// Effects on the final potion
 	std::map<bstring, AlchemyEffect> effects;
+
 	if(mortar->getShotsCur() >= 2) {
 		HerbMap effectCount;
 
@@ -312,6 +344,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 				} else {
 					// The effect is based on the minimum strength in the herbs
 					effects[effect].combineWith(p.second);
+
 				}
 
 			}
@@ -330,10 +363,10 @@ int cmdBrew(Player* player, cmd* cmnd) {
 			}
 			else {
 				effects.erase(effectPair.first);
-				//player->print("Skipping effect: %s\n", effectPair.first.c_str());
 			}
 		} // end foreach
 	}  // end if
+
 	// We'll be using just one herb, so it'll be the first effect
 	// To get here, we have to have 100 skill
 	else if(mortar->getShotsCur() == 1) {
@@ -346,7 +379,11 @@ int cmdBrew(Player* player, cmd* cmnd) {
 	}
 
 
+	// If there's any positive effects then it's not a poison, default to poison
+	bool isPotion = false;
 
+
+	// TODO: Modify
 	long baseDur = (5.95387755 *skillLevel);
 
 	Object* potion = Object::getNewPotion();
@@ -360,19 +397,54 @@ int cmdBrew(Player* player, cmd* cmnd) {
 		const AlchemyInfo* alc = gConfig->getAlchemyInfo(eff.getEffect());
 		if(alc) {
 			// Adjust things based on the alchemy info
-			//player->print("Found an alchemy Info!\n");
-			//duration = alc->baseDuration;
+			player->print("Found an alchemy Info!\n");
+			duration = alc->getBaseDuration();
+			if(alc->isPositive())
+				isPotion = true;
 		}
 		eff.setDuration(duration);
 		player->print("Effect: %s Duration: %d\n", eff.getEffect().c_str(), eff.getDuration());
 		potion->addAlchemyEffect(i++, eff);
 	}
 
-	// TODO: Add a mechanism for naming an alchemy potion
+	potion->nameAlchemyPotion(isPotion);
+
 	player->print("You have created %s!\n", potion->getCName());
 	potion->setDroppedBy(player, "Craft:Alchemy");
 	player->addObj(potion);
 	return(0);
+}
+
+void Object::nameAlchemyPotion(bool potion) {
+	std::ostringstream prefix;
+	std::ostringstream suffix;
+
+	if(potion)
+		suffix << "potion of";
+	else
+		suffix << "poison of";
+	bool valid = false;
+
+	for(AlchemyEffectMap::value_type p : alchemyEffects) {
+		const AlchemyInfo* alc = gConfig->getAlchemyInfo(p.second.getEffect());
+
+		if(alc) {
+			if(alc->potionNameHasPrefix()) {
+				prefix << alc->getPotionPrefix() << " ";
+			} else {
+				suffix << " " << alc->getPotionDisplayName();
+			}
+		} else {
+			suffix << " " << p.second.getEffect();
+		}
+		valid = true;
+	}
+
+	if(valid)
+		setName(prefix.str() + suffix.str());
+	else
+		setName("murky potion");
+
 }
 
 //*********************************************************************
@@ -395,6 +467,10 @@ bool Object::isAlchemyPotion() {
 	return(type == POTION && alchemyEffects.size() > 0);
 }
 
+bool AlchemyInfo::potionNameHasPrefix() const {
+	return(!potionPrefix.empty());
+}
+
 //*********************************************************************
 //						consumeAlchemyPotion
 //*********************************************************************
@@ -403,23 +479,24 @@ bool Object::isAlchemyPotion() {
 bool Object::consumeAlchemyPotion(Creature* consumer) {
 	if(!isAlchemyPotion() || !consumer)
 		return false;
+	// TODO: Verify we're not in a no potion room
 
 	bool consumed = false;
 
 	for(std::pair<int, AlchemyEffect> ae : alchemyEffects) {
 		AlchemyEffect &eff = ae.second;
 		const AlchemyInfo* alc = gConfig->getAlchemyInfo(eff.getEffect());
-		if(!alc || alc->action == "effect") {
+		if(!alc || alc->getAction() == "effect") {
 			// If one of the effects takes hold, the potion was consumed
 			if(eff.apply(consumer))
 				consumed = true;
 		}
-		else if(alc->action == "python") {
-			if(gServer->runPython(alc->pythonScript, "", consumer, this))
+		else if(alc->getAction()== "python") {
+			if(gServer->runPython(alc->getPythonScript(), "", consumer, this))
 				consumed = true;
 		}
 		else
-			consumer->print("Unknown action: %s\n", alc->action.c_str());
+			consumer->print("Unknown action: %s\n", alc->getAction().c_str());
 	}
 
 	return(consumed);

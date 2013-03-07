@@ -33,8 +33,24 @@ class AlchemyInfo {
 public:
     AlchemyInfo(xmlNodePtr rootNode);
     bstring getDisplayString();
-    
-    bstring name;
+
+    const bstring& getName() const;
+    const bstring& getPotionPrefix() const;
+    const bstring& getPotionDisplayName() const;
+    const bstring& getAction() const;
+    const bstring& getPythonScript() const;
+	long getBaseDuration() const;
+	short getBaseStrength() const;
+	bool potionNameHasPrefix() const;
+	bool isThrowable() const;
+	bool isPositive() const;
+
+
+protected:
+
+	bstring name;
+    bstring potionDisplayName;
+    bstring potionPrefix;
     bool positive;
 
     // Standard duration and strength for this effect - will be modified by alchemy skill,

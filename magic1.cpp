@@ -1051,10 +1051,11 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 // lagprot means we can bypass
 
 int endConsume(Object* object, Player* player, bool forceDelete=false) {
-	if(object->flagIsSet(O_EATABLE)) {
-		player->print("Food eaten.\n");
+	if(object->flagIsSet(O_EATABLE) || object->getType() == HERB) {
+		player->print("You eat %P.\n", object);
 		broadcast(player->getSock(), player->getParent(), "%M eats %1P.", player, object);
-	} else {
+	}
+	else {
 		player->print("Potion drank.\n");
 		broadcast(player->getSock(), player->getParent(), "%M drinks %1P.", player, object);
 	}
@@ -1062,7 +1063,7 @@ int endConsume(Object* object, Player* player, bool forceDelete=false) {
 	if(!forceDelete)
 		object->decShotsCur();
 	if(forceDelete || object->getShotsCur() < 1) {
-		if(object->flagIsSet(O_EATABLE))
+		if(object->flagIsSet(O_EATABLE) || object->getType() == HERB)
 			player->printColor("You ate all of %P.\n", object);
 		else
 			player->printColor("You drank all of %P.\n", object);
@@ -1078,7 +1079,7 @@ int consume(Player* player, Object* object, cmd* cmnd) {
 	int		c=0, splno=0, n=0;
 	int		(*fn)(SpellFn);
 	bool	dimensionalFailure=false;
-	bool	eat = object->flagIsSet(O_EATABLE), drink=object->flagIsSet(O_DRINKABLE) || object->getType() == POTION;
+	bool	eat = (object->flagIsSet(O_EATABLE) || object->getType() == HERB), drink=object->flagIsSet(O_DRINKABLE) || object->getType() == POTION;
 	//const bstring& effect = object->getEffect();
 	fn = 0;
 
@@ -1103,19 +1104,12 @@ int consume(Player* player, Object* object, cmd* cmnd) {
 	if(object->doRestrict(player, true))
 		return(0);
 
-	// Handle Alchemy Potions
-	if(object->isAlchemyPotion()) {
-		if(object->consumeAlchemyPotion(player))
-			return(endConsume(object,player));
-		else
-			return(0);
-	}
 
 	// they are eating a non-potion object
 	if(	object->getShotsCur() < 1 ||
 		(object->getMagicpower() - 1 < 0) ||
-		object->getType() != POTION
-	) {
+		object->getType() != POTION)
+	{
 		player->unhide();
 
 		if(object->use_output[0])
@@ -1129,14 +1123,22 @@ int consume(Player* player, Object* object, cmd* cmnd) {
 	}
 
 	if(	player->getRoomParent()->flagIsSet(R_NO_POTION) ||
-		player->getRoomParent()->flagIsSet(R_LIMBO)
-	) {
+		player->getRoomParent()->flagIsSet(R_LIMBO))
+	{
 		if(!player->checkStaff("%O starts to %s before you %s it.\n",
 			object, eat ? "get moldy" : "evaporate", eat ? "eat" : "drink"))
 			return(0);
 	}
 
 	player->unhide();
+
+	// Handle Alchemy Potions
+	if(object->isAlchemyPotion()) {
+		if(object->consumeAlchemyPotion(player))
+			return(endConsume(object,player));
+		else
+			return(0);
+	}
 
 	if(object->getMagicpower() - 1 < 0 || object->getMagicpower() - 1 > MAXSPELL) {
 		player->print("Error: Bad Potion.\n");
@@ -1158,8 +1160,8 @@ int consume(Player* player, Object* object, cmd* cmnd) {
 		data.set(POTION, get_spell_school(data.splno), get_spell_domain(data.splno), object, player);
 
 		if(	(int(*)(SpellFn, char*, osp_t*))fn == splOffensive ||
-			(int(*)(SpellFn, char*, osp_t*))fn == splMultiOffensive
-		) {
+			(int(*)(SpellFn, char*, osp_t*))fn == splMultiOffensive)
+		{
 			for(c = 0; ospell[c].splno != get_spell_num(data.splno); c++)
 				if(ospell[c].splno == -1)
 					return(0);
