@@ -192,14 +192,14 @@ void Creature::subExperience(unsigned long e) {
 //						setExperience
 //*********************************************************************
 
-void Creature::setExperience(unsigned long e) { experience = MIN(2100000000, e); }
+void Creature::setExperience(unsigned long e) { experience = tMIN<unsigned long>(2100000000, e); }
 
 //*********************************************************************
 //						setClass
 //*********************************************************************
 
 void Creature::setClass(unsigned short c) {
-	c = MIN(CLASS_COUNT-1, c);
+	c = tMIN<unsigned short>(CLASS_COUNT-1, c);
 
 	if(cClass == PUREBLOOD && c != PUREBLOOD)
 		removeEffect("vampirism");
@@ -238,13 +238,13 @@ void Creature::setClan(unsigned short c) { clan = c; }
 //						setLevel
 //*********************************************************************
 
-void Creature::setLevel(unsigned short l, bool isDm) { level = MAX(1, MIN(l, isDm ? 127 : MAXALVL)); }
+void Creature::setLevel(unsigned short l, bool isDm) { level = tMAX(1, tMIN<int>(l, isDm ? 127 : MAXALVL)); }
 
 //*********************************************************************
 //						setAlignment
 //*********************************************************************
 
-void Creature::setAlignment(short a) { alignment = MAX(-1000, MIN(1000, a)); }
+void Creature::setAlignment(short a) { alignment = tMAX<short>(-1000, tMIN<short>(1000, a)); }
 
 //*********************************************************************
 //						subAlignment
@@ -256,37 +256,37 @@ void Creature::subAlignment(unsigned short a) { setAlignment(alignment - a); }
 //						setArmor
 //*********************************************************************
 
-void Creature::setArmor(unsigned int a) { armor = MAX(MIN(a, MAX_ARMOR), 0); }
+void Creature::setArmor(unsigned int a) { armor = tMAX<unsigned int>(tMIN(a, MAX_ARMOR), 0); }
 
 //*********************************************************************
 //						setAttackPower
 //*********************************************************************
 
-void Creature::setAttackPower(unsigned int a) { attackPower = MIN(1500, a); }
+void Creature::setAttackPower(unsigned int a) { attackPower = tMIN<unsigned int>(1500, a); }
 
 //*********************************************************************
 //						setDeity
 //*********************************************************************
 
-void Creature::setDeity(unsigned short d) { deity = MIN(d, DEITY_COUNT-1); }
+void Creature::setDeity(unsigned short d) { deity = tMIN<unsigned short>(d, DEITY_COUNT-1); }
 
 //*********************************************************************
 //						setRace
 //*********************************************************************
 
-void Creature::setRace(unsigned short r) { race = MIN(gConfig->raceCount()-1, r); }
+void Creature::setRace(unsigned short r) { race = tMIN<unsigned short>(gConfig->raceCount()-1, r); }
 
 //*********************************************************************
 //						setSize
 //*********************************************************************
 
-void Creature::setSize(Size s) { size = MAX(NO_SIZE, MIN(MAX_SIZE, s)); }
+void Creature::setSize(Size s) { size = tMAX(NO_SIZE, tMIN(MAX_SIZE, s)); }
 
 //*********************************************************************
 //						setType
 //*********************************************************************
 
-void Creature::setType(unsigned short t) { type = (mType)MIN(MAX_MOB_TYPES-1, t); }
+void Creature::setType(unsigned short t) { type = (mType)tMIN<short>(MAX_MOB_TYPES-1, t); }
 
 //*********************************************************************
 //						setType
@@ -382,7 +382,7 @@ void Creature::setDeathType(DeathType d) { deathtype = d; }
 //						setRealm
 //*********************************************************************
 
-void Creature::setRealm(unsigned long num, Realm r) { realm[r-1] = MIN(10000000, num); }
+void Creature::setRealm(unsigned long num, Realm r) { realm[r-1] = tMIN<unsigned long>(10000000, num); }
 
 //*********************************************************************
 //						addRealm
@@ -466,49 +466,49 @@ bstring Monster::getTalk() const { return(talk); }
 //						setMaxLevel
 //*********************************************************************
 
-void Monster::setMaxLevel(unsigned short l) { maxLevel = MAX(0, MIN(l, MAXALVL)); }
+void Monster::setMaxLevel(unsigned short l) { maxLevel = tMAX<unsigned short>(0, tMIN<unsigned short>(l, MAXALVL)); }
 
 //*********************************************************************
 //						setCastChance
 //*********************************************************************
 
-void Monster::setCastChance(unsigned short c) { cast = MAX(0, MIN(c, 100)); }
+void Monster::setCastChance(unsigned short c) { cast = tMAX<unsigned short>(0, tMIN<unsigned short>(c, 100)); }
 
 //*********************************************************************
 //						setMagicResistance
 //*********************************************************************
 
-void Monster::setMagicResistance(unsigned short m) { magicResistance = MAX(0, MIN(100, m)); }
+void Monster::setMagicResistance(unsigned short m) { magicResistance = tMAX<unsigned short>(0, tMIN<unsigned short>(100, m)); }
 
 //*********************************************************************
 //						setLoadAggro
 //*********************************************************************
 
-void Monster::setLoadAggro(unsigned short a) { loadAggro = MAX(0, MIN(a, 99)); }
+void Monster::setLoadAggro(unsigned short a) { loadAggro = tMAX<unsigned short>(0, tMIN<unsigned short>(a, 99)); }
 
 //*********************************************************************
 //						setUpdateAggro
 //*********************************************************************
 
-void Monster::setUpdateAggro(unsigned short a) { updateAggro = MAX(1, MIN(a, 99)); }
+void Monster::setUpdateAggro(unsigned short a) { updateAggro = tMAX<unsigned short>(1, tMIN<unsigned short>(a, 99)); }
 
 //*********************************************************************
 //						setNumWander
 //*********************************************************************
 
-void Monster::setNumWander(unsigned short n) { numwander = MAX(0, MIN(6, n)); }
+void Monster::setNumWander(unsigned short n) { numwander = tMAX<unsigned short>(0, tMIN<unsigned short>(6, n)); }
 
 //*********************************************************************
 //						setSkillLevel
 //*********************************************************************
 
-void Monster::setSkillLevel(int l) { skillLevel = MAX(0, MIN(100, l)); }
+void Monster::setSkillLevel(int l) { skillLevel = tMAX(0, tMIN(100, l)); }
 
 //*********************************************************************
 //						setMobTrade
 //*********************************************************************
 
-void Monster::setMobTrade(unsigned short t) { mobTrade = MAX(0, MIN(MOBTRADE_COUNT-1, t)); }
+void Monster::setMobTrade(unsigned short t) { mobTrade = tMAX<unsigned short>(0,tMIN<unsigned short>(MOBTRADE_COUNT-1, t)); }
 
 //*********************************************************************
 //						setPrimeFaction
@@ -762,13 +762,13 @@ void Player::setWimpy(unsigned short w) { wimpy = w; }
 //						setActualLevel
 //*********************************************************************
 
-void Player::setActualLevel(unsigned short l) { actual_level = MAX(1, MIN(l, MAXALVL)); }
+void Player::setActualLevel(unsigned short l) { actual_level = tMAX<unsigned short>(1, tMIN<unsigned short>(l, MAXALVL)); }
 
 //*********************************************************************
 //						setSecondClass
 //*********************************************************************
 
-void Player::setSecondClass(unsigned short c) { cClass2 = MAX(0, MIN(CLASS_COUNT - 1, c)); }
+void Player::setSecondClass(unsigned short c) { cClass2 = tMAX<unsigned short>(0, tMIN<unsigned short>(CLASS_COUNT - 1, c)); }
 
 //*********************************************************************
 //						setGuild
@@ -786,7 +786,7 @@ void Player::setGuildRank(unsigned short g) { guildRank = g; }
 //						setNegativeLevels
 //*********************************************************************
 
-void Player::setNegativeLevels(unsigned short l) { negativeLevels = MAX(0, MIN(exp_to_lev(experience), l)); }
+void Player::setNegativeLevels(unsigned short l) { negativeLevels = tMAX<unsigned short>(0, tMIN<unsigned short>(exp_to_lev(experience), l)); }
 
 //*********************************************************************
 //						setLuck
@@ -822,13 +822,13 @@ void Player::setAfflictedBy(bstring a) { afflictedBy = a; }
 //						setLastLogin
 //*********************************************************************
 
-void Player::setLastLogin(long l) { lastLogin = MAX(0, l); }
+void Player::setLastLogin(long l) { lastLogin = tMAX<long>(0, l); }
 
 //*********************************************************************
 //						setLastInterest
 //*********************************************************************
 
-void Player::setLastInterest(long l) { lastInterest = MAX(0, l); }
+void Player::setLastInterest(long l) { lastInterest = tMAX<long>(0, l); }
 
 //*********************************************************************
 //						setLastCommunicate

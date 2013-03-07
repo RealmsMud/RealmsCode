@@ -826,8 +826,8 @@ unsigned long Creature::getInventoryValue() const {
 					continue;
 				}
 
-				total += MIN(MAXPAWN,insideObject->value[GOLD]/2);
-				total = MAX(0,MIN(2000000000,total));
+				total += tMIN<unsigned long>(MAXPAWN,insideObject->value[GOLD]/2);
+				total = tMAX<long>(0,tMIN<long>(2000000000,total));
 			}
 		}
 
@@ -845,8 +845,8 @@ unsigned long Creature::getInventoryValue() const {
 			continue;
 		}
 
-		total += MIN(MAXPAWN,object->value[GOLD]/2);
-		total = MAX(0,MIN(2000000000,total));
+		total += tMIN<unsigned long>(MAXPAWN,object->value[GOLD]/2);
+		total = tMAX<long>(0,tMIN<long>(2000000000,total));
 
 	}
 
@@ -869,8 +869,8 @@ unsigned long Creature::getInventoryValue() const {
 					continue;
 				}
 
-				total += MIN(MAXPAWN,insideObject->value[GOLD]);
-				total = MAX(0,MIN(2000000000,total));
+				total += tMIN<unsigned long>(MAXPAWN,insideObject->value[GOLD]);
+				total = tMAX<long>(0,tMIN<long>(2000000000,total));
 			}
 		}
 
@@ -884,8 +884,8 @@ unsigned long Creature::getInventoryValue() const {
 		if(object3->value[GOLD] < 20)
 			continue;
 
-		total+=MIN(MAXPAWN,object3->value[GOLD]/2);
-		total = MAX(0,MIN(2000000000,total));
+		total+=tMIN<unsigned long>(MAXPAWN,object3->value[GOLD]/2);
+		total = tMAX<long>(0,tMIN<long>(2000000000,total));
 	}
 
 	return(total);

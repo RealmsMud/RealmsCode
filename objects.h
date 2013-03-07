@@ -213,6 +213,7 @@ public:
     void popBag(Creature* creature, bool quest = true, bool drop = true, bool steal = true,
                 bool bodypart = true, bool dissolve = false);
     int doSpecial(Player* player);
+    int countObj(bool permOnly = false);
 
     // Get
     short getDelay() const;

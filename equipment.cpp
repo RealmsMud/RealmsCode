@@ -3395,3 +3395,37 @@ void Creature::checkDarkness() {
 		}
 	}
 }
+
+
+
+
+//*********************************************************************
+//						count_inv
+//*********************************************************************
+// Returns the number of objects a creature has in their inventory.
+// If perm_only != false then only those objects which are permanent
+// will be counted.
+
+int Creature::countInv(bool permOnly) {
+	int	total=0;
+	for(Object *obj : objects ) {
+		if(!permOnly || (permOnly && (obj->flagIsSet(O_PERM_ITEM))))
+			total++;
+	}
+	return(MIN(100,total));
+}
+
+
+//*********************************************************************
+//						countBagInv
+//*********************************************************************
+int Creature::countBagInv() {
+	int	total=0;
+	for(Object *obj : objects ) {
+		total++;
+		if(obj && obj->getType() == CONTAINER) {
+			total += obj->countObj();
+		}
+	}
+	return(total);
+}

@@ -367,7 +367,7 @@ void update_shutdown(long t) {
 		// run swapAbort before rooms/players get saved
 		gConfig->swapAbort();
 		gConfig->resaveAllRooms(1);
-		save_all_ply();
+		gServer->saveAllPly();
 		disconnect_all_ply();
 		gConfig->save();
 		cleanUpMemory();
@@ -884,7 +884,7 @@ void doCrash(int sig) {
 // Turning this off because of the xp->ext = NULL bug which is erasing exits
 //	gConfig->resaveAllRooms(1);
 #endif
-	save_all_ply();
+	gServer->saveAllPly();
 
 	cleanUpMemory();
 

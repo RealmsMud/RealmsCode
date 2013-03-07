@@ -1413,3 +1413,72 @@ int Creature::flee(bool magicTerror) {
 
 	return(1);
 }
+
+
+
+//*********************************************************************
+//						free_crt
+//*********************************************************************
+// This function releases the creature pointed to by the first parameter
+// from memory. All items that creature has readied or carries will
+// also be released. *ASSUMPTION*: This function will only be called
+// from delete room. If it is called from somewhere else, unresolved
+// links may remain and cause a game crash. *EXCEPTION*: This function
+// can be called independently to free a player's information from
+// memory (but not a monster).
+
+void free_crt(Creature* creature, bool remove) {
+	ttag	*tp=0, *tempt=0;
+	int	i;
+	for(i=0; i<MAXWEAR; i++) {
+		if(creature->ready[i])
+			creature->unequip(i+1, UNEQUIP_DELETE, false);
+	}
+
+	ObjectSet::iterator it;
+	Object* obj;
+	for(it = creature->objects.begin() ; it != creature->objects.end() ; ) {
+		obj = (*it++);
+		delete obj;
+	}
+	creature->objects.clear();
+
+	if(creature->getGroup(false)) {
+	    creature->getGroup(false)->remove(creature);
+	}
+	for(Monster* mons : creature->pets) {
+	    if(mons->isPet()) {
+	        free_crt(mons);
+	    } else {
+	    	mons->setMaster(NULL);
+	    }
+	}
+	creature->pets.clear();
+
+	tp = creature->first_tlk;
+	creature->first_tlk = 0;
+	while(tp) {
+		tempt = tp->next_tag;
+		if(tp->key)
+			delete[] tp->key;
+		if(tp->response)
+			delete[] tp->response;
+		if(tp->action)
+			delete[] tp->action;
+		if(tp->target)
+			delete[] tp->target;
+		delete tp;
+		tp = tempt;
+	}
+
+
+	gServer->removeDelayedActions(creature);
+
+	if(creature->isMonster()) {
+		if(gServer->isActive(creature->getAsMonster()))
+			gServer->delActive(creature->getAsMonster());
+	}
+	else if(remove)
+		gServer->clearPlayer(creature->getAsPlayer());
+	delete creature;
+}

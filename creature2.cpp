@@ -159,7 +159,7 @@ void Monster::adjust(int buffswitch) {
 		break;
 	}
 
-	armor = MAX(MIN(armor, MAX_ARMOR), 0);
+	armor = tMAX<unsigned int>(tMIN(armor, MAX_ARMOR), 0);
 
 	if(level >= 7)
 		setFlag(M_BLOCK_EXIT);

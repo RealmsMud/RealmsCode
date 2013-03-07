@@ -18,7 +18,9 @@
  */
 
 //#include "attackTimer.h"
-#include "mud.h"
+#include "timer.h"
+#include "utils.h"
+#include "global.h"
 
 Timer::Timer() {
 	delay = DEFAULT_WEAPON_DELAY;
@@ -37,7 +39,7 @@ void Timer::update(int newDelay) {
 }
 
 void Timer::setDelay(int newDelay) {
-	delay = MAX(1, newDelay);
+	delay = tMAX(1, newDelay);
 }
 void Timer::modifyDelay(int amt) {
 	delay = tMAX(1, delay + amt);
@@ -58,7 +60,7 @@ long Timer::getTimeLeft() const {
 	gettimeofday(&curTime, 0);
 	timeDiff(curTime, lastAttacked, difference);
 	
-	timePassed += MAX(0, difference.tv_sec)*10;
+	timePassed += tMAX<long>(0, difference.tv_sec)*10;
 	timePassed += (long)((difference.tv_usec / 100000.0));
 
 	if(timePassed >= delay)

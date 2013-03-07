@@ -338,6 +338,7 @@ public:
 	bool clearPlayer(Player* player);
 	Player* findPlayer(bstring name);
 	bool clearPlayer(bstring name);
+	void saveAllPly();
 	int getNumPlayers();
 
 	// Sockets

@@ -498,7 +498,7 @@ void shutdown_now(int sig) {
 	gServer->processOutput();
 	loge("--- Game shutdown with SIGINT\n");
 	gConfig->resaveAllRooms(1);
-	save_all_ply();
+	gServer->saveAllPly();
 
 	printf("Goodbye.\n");
 	kill(getpid(), 9);

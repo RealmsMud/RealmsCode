@@ -561,7 +561,8 @@ public:
 	Object* unequip(int wearloc, UnequipAction action = UNEQUIP_ADD_TO_INVENTORY, bool darkness=true, bool showEffect=true);
 	void printEquipList(const Player* viewer);
 	void checkDarkness();
-
+	int countBagInv();
+	int countInv(bool permOnly = false);
 
 // Afflictions
 	void poison(Creature* enemy, unsigned int damagePerPulse, unsigned int duration);

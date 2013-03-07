@@ -896,3 +896,17 @@ bstring Object::getWearName() {
 	}
 }
 
+//*********************************************************************
+//						count_obj
+//*********************************************************************
+// Return the total number of objects contained within an object.
+// If perm_only != 0, then only the permanent objects are counted.
+
+int Object::countObj(bool permOnly) {
+	int	total=0;
+	for(Object* obj : objects) {
+		if(!permOnly || (permOnly && (obj->flagIsSet(O_PERM_ITEM))))
+			total++;
+	}
+	return(total);
+}

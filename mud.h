@@ -27,6 +27,7 @@
 #endif
 
 #include "bstring.h"
+#include "global.h"
 
 #ifndef READCFG
 #define READCFG
@@ -40,13 +41,6 @@
 #define TRUE	 	(!FALSE)
 #endif
 
-// Size of exp array, also highest you can train
-#define MAXALVL 	40
-#define MAX_ARMOR	2000
-// I/O buffer sizes
-#define IBUFSIZE	1024
-#define OBUFSIZE	8192
-
 // File permissions
 //#define S_IWRITE	00660
 //#define S_IREAD	00006
@@ -56,474 +50,8 @@
 #endif
 #define ACC		00666
 
-// merror() error types
-#define FATAL		1
-#define NONFATAL	0
 
-enum LoadType {
-	LS_NORMAL,
-	LS_BACKUP,
-	LS_CONVERT,
 
-	LS_FULL,
-	LS_PROTOTYPE,
-	LS_REF
-};
-
-#define CUSTOM_COLOR_DEFAULT		'#'
-#define CUSTOM_COLOR_SIZE		20
-
-// positions in the color array
-enum CustomColor {
-	CUSTOM_COLOR_BROADCAST		= 0,
-
-	CUSTOM_COLOR_GOSSIP		= 1,
-	CUSTOM_COLOR_PTEST		= 2,
-	CUSTOM_COLOR_NEWBIE		= 3,
-
-	CUSTOM_COLOR_DM			= 4,
-	CUSTOM_COLOR_ADMIN		= 5,
-	CUSTOM_COLOR_SEND		= 6,
-	CUSTOM_COLOR_MESSAGE		= 7,
-	CUSTOM_COLOR_WATCHER		= 8,
-
-	CUSTOM_COLOR_CLASS		= 9,
-	CUSTOM_COLOR_RACE		= 10,
-	CUSTOM_COLOR_CLAN		= 11,
-	CUSTOM_COLOR_TELL		= 12,
-	CUSTOM_COLOR_GROUP		= 13,
-	CUSTOM_COLOR_DAMAGE		= 14,
-	CUSTOM_COLOR_SELF		= 15,
-	CUSTOM_COLOR_GUILD		= 16,
-	MAX_CUSTOM_COLOR
-};
-
-enum WeatherString {
-	WEATHER_SUNRISE,
-	WEATHER_SUNSET,
-
-	WEATHER_EARTH_TREMBLES,
-	WEATHER_HEAVY_FOG,
-
-	WEATHER_BEAUTIFUL_DAY,
-	WEATHER_BRIGHT_SUN,
-	WEATHER_GLARING_SUN,
-	WEATHER_HEAT,
-
-	WEATHER_STILL,
-	WEATHER_LIGHT_BREEZE,
-	WEATHER_STRONG_WIND,
-	WEATHER_WIND_GUSTS,
-	WEATHER_GALE_FORCE,
-
-	WEATHER_CLEAR_SKIES,
-	WEATHER_LIGHT_CLOUDS,
-	WEATHER_THUNDERHEADS,
-
-	WEATHER_LIGHT_RAIN,
-	WEATHER_HEAVY_RAIN,
-	WEATHER_SHEETS_RAIN,
-	WEATHER_TORRENT_RAIN,
-
-	WEATHER_NO_MOON,
-	WEATHER_SLIVER_MOON,
-	WEATHER_HALF_MOON,
-	WEATHER_WAXING_MOON,
-	WEATHER_FULL_MOON
-};
-
-
-// base monster number for various types of summoned monsters
-#define BASE_ELEMENTAL	801
-#define BASE_UNDEAD	550
-#define SLOWTICK
-
-#define COMMANDMAX	6
-
-// Monster and object files sizes (in terms of monsters or objects)
-#define MFILESIZE	100
-#define OFILESIZE	100
-
-// memory limits
-
-#define RMAX		20000	// Max number of these allowed to be created
-#define MMAX		20000
-#define OMAX		20000
-#define PMAX		1024
-
-#define RQMAX		600	 // Max number of these allowed in memory
-#define MQMAX		200	 // at any one time
-#define OQMAX		200
-
-
-// make sure these stay updated with calendar.xml!
-enum Season {
-	NO_SEASON =	0,
-	SPRING =	1,
-	SUMMER =	2,
-	AUTUMN =	3,
-	WINTER =	4
-};
-
-// for bit flags, take (season-1)^2
-//   spring flag (1) = overflowing river
-//   summer flag (2) = ?
-//   autumn flag (4) = ?
-//   winter flag (8) = cold damage, no herbs
-
-
-#define BROADLOG		1
-
-#define MAX_MULTICLASS		8
-// how often (in seconds) players get saved
-#define SAVEINTERVAL		1200
-
-#define MAXTIMEOUT		14400
-
-#define MAXPAWN			25000
-
-#define MAX_QUEST		128
-
-#define MAX_FACTION		32
-#define MAX_DUELS		10
-#define MAX_BUILDER_RANGE	10
-
-// Save flags
-#define PERMONLY	1
-#define ALLITEMS	0
-
-// Command status returns
-#define DISCONNECT	1
-#define PROMPT		2
-#define DOPROMPT	3
-
-
-
-#define WIELDOBJ	1
-#define SECONDOBJ	2
-#define HOLDOBJ		3
-#define SHIELDOBJ	4
-
-
-
-// NPC Trades
-
-#define NOTRADE		0
-#define SMITHY		1
-#define BANKER		2
-#define ARMOROR		3
-#define WEAPONSMITH	4
-#define MERCHANT	5
-#define TRAINING_PERM	6
-
-
-
-#define MOBTRADE_COUNT	7
-
-// Monetary transaction types
-#define BUY		0
-#define SELL		1
-
-// Creature stats
-#define STR		1
-#define DEX		2
-#define CON		3
-#define INT		4
-#define PTY		5
-#define CHA		6
-#define MAX_STAT	PTY
-
-#define MIN_STAT_NUM	10
-#define MAX_STAT_NUM	MAXALVL*10
-
-// Saving throw types
-#define LCK			0  // Luck
-#define POI			1  // Poison
-#define DEA			2  // Death
-#define BRE			3  // Breath Weapons
-#define MEN			4  // Mental
-#define SPL			5  // Spells
-
-#define MAX_SAVE		6
-#define MAX_SAVE_COLOR		11
-
-// Religions
-enum religions {
-ATHEIST		=	0,
-ARAMON		=	1,
-CERIS		=	2,
-ENOCH		=	3,
-GRADIUS		=	4,
-ARES		=	5,
-KAMIRA		=	6,
-LINOTHAN	=	7,
-ARACHNUS	=	8,
-MARA		=	9,
-JAKAR		=	10,
-MAX_DEITY
-};
-#define DEITY_COUNT		MARA+1
-
-//#define ATHEIST		0
-//#define ARAMON		1
-//#define CERIS			2
-//#define ENOCH			3
-//#define GRADIUS		4
-//#define ARES			5
-//#define KAMIRA		6
-//#define LINOTHAN		7
-//#define ARACHNUS		8
-//#define MARA			9
-//#define JAKAR			10
-//
-//#define DEITY_COUNT		MARA+1
-
-// Alignments
-#define BLOODRED	-3
-#define REDDISH		-2
-#define PINKISH		-1
-#define NEUTRAL		0
-#define LIGHTBLUE	1
-#define BLUISH		2
-#define ROYALBLUE	3
-
-// Attack types
-#define PHYSICAL		1
-#define MAGICAL			2
-#define MENTAL			3
-#define NEGATIVE_ENERGY		4
-#define ABILITY			5
-#define MAGICAL_NEGATIVE	6
-
-// Modifier List
-#define MSTR		0
-#define MDEX		1
-#define MCON		2
-#define MINT		3
-#define MPIE		4
-#define MCHA		5
-#define MHP		6
-#define MMP		7
-#define MLCK		8
-#define MPOI		9
-#define MDEA		10
-#define MBRE		11
-#define MMEN		12
-#define MSPL		13
-#define MARMOR		14
-#define MTHAC		15
-#define MDMG		16
-#define MSPLDMG		17
-#define MABSORB		18
-#define MALIGN		19
-
-#define MAX_MOD		20 // change when add more - up to 30
-
-// Language Defines
-
-#define LUNKNOWN	0
-#define LDWARVEN	1
-#define LELVEN	  	2
-#define LHALFLING   	3
-#define LCOMMON	 	4
-#define LORCISH	 	5
-#define LGIANTKIN   	6
-#define LGNOMISH	7
-#define LTROLL	  	8
-#define LOGRISH	 	9
-#define LDARKELVEN  	10
-#define LGOBLINOID  	11
-#define LMINOTAUR   	12
-#define LCELESTIAL  	13
-#define LKOBOLD	 	14
-#define LINFERNAL   	15
-#define LBARBARIAN	16
-#define LKATARAN	17
-#define LDRUIDIC	18
-#define LWOLFEN	 	19
-#define LTHIEFCANT  	20
-#define LARCANIC	21
-#define LABYSSAL	22
-#define LTIEFLING	23
-
-#define LANGUAGE_COUNT	24
-
-
-//// Object Material Types
-//#define CLOTH		0
-//#define GLASS		1
-//#define LEATHER	2
-//#define IRON		3
-//#define PAPER		4
-//#define STONE		5
-//#define WOOD		6
-//#define LIQUID	7
-//#define VOLATILE	8
-//#define BONE		9
-//#define GEMS		10
-//#define DIAMOND	11
-//#define JEWELS	12
-//#define STEEL		13
-//#define MALLEABLE	14
-//#define MITHRIL	15
-//#define ADAMANTIUM	16
-//#define SCALE		17
-//#define DRAGONSCALE	18
-
-enum crtClasses {
-ASSASSIN	=	1,
-BERSERKER	=	2,
-CLERIC		=	3,
-FIGHTER		=	4,
-MAGE		=	5,
-PALADIN		=	6,
-RANGER		=	7,
-THIEF		=	8,
-PUREBLOOD	=	9,
-MONK		=	10,
-DEATHKNIGHT	=	11,
-DRUID		=	12,
-LICH		=	13,
-WEREWOLF	=	14,
-BARD		=	15,
-ROGUE		=	16,
-BUILDER		=	17,
-CARETAKER	=	19,
-DUNGEONMASTER	=	20,
-CLASS_COUNT
-};
-
-// Character classes
-//#define ASSASSIN		1
-//#define BERSERKER		2
-//#define CLERIC		3
-//#define FIGHTER		4
-//#define MAGE			5
-//#define PALADIN		6
-//#define RANGER		7
-//#define THIEF			8
-//#define VAMPIRE		9
-//#define MONK			10
-//#define DEATHKNIGHT		11
-//#define DRUID			12
-//#define LICH			13
-//#define WEREWOLF		14
-//#define BARD			15
-//#define ROGUE			16
-//#define BUILDER		17
-////#define CREATOR		18
-//#define CARETAKER		19
-//#define DUNGEONMASTER		20
-
-// start of the staff
-#define STAFF			(BUILDER)
-
-#define MULTI_BASE		(BUILDER)
-//#define CLASS_COUNT		(DUNGEONMASTER + 1)
-#define CLASS_COUNT_MULT	(MULTI_BASE + 7)
-
-
-// races
-#define UNKNOWN			0
-
-// playable races
-#define DWARF	  		1
-#define ELF			2
-#define HALFELF			3
-#define HALFLING	 	4
-#define HUMAN	  		5
-#define ORC			6
-#define HALFGIANT		7
-#define GNOME			8
-#define TROLL			9
-#define HALFORC			10
-#define OGRE			11
-#define DARKELF			12
-#define GOBLIN			13
-#define MINOTAUR		14
-#define SERAPH			15
-#define KOBOLD			16
-#define CAMBION			17
-#define BARBARIAN		18
-#define KATARAN			19
-#define TIEFLING		20
-
-
-#define MAX_PLAYABLE_RACE	TIEFLING + 1
-
-// non-playable
-#define LIZARDMAN		21
-#define CENTAUR			22
-
-// subraces, currently non-playable
-#define HALFFROSTGIANT		23
-#define HALFFIREGIANT		24
-#define GREYELF			25
-#define WILDELF			26
-#define AQUATICELF		27
-#define DUERGAR			28
-#define HILLDWARF		29
-
-// non-playable
-#define GNOLL			30
-#define BUGBEAR			31
-#define HOBGOBLIN		32
-#define WEMIC			33
-#define HYBSIL			34
-#define RAKSHASA		35
-#define BROWNIE			36
-#define FIRBOLG			37
-#define SATYR			38
-
-#define RACE_COUNT		SATYR + 1
-
-// Actual value doesn't matter, just needs to be different than PLAYER & MONSTER
-#define OBJECT			2
-#define EXIT			3
-
-
-// Proficiencies
-//#define SHARP			0
-//#define THRUST		1
-//#define BLUNT			2
-//#define POLE			3
-//#define MISSILE		4
-//#define CLEAVE		5
-
-// Bard Instrument
-#define INSTRUMENT      3
-// Item is a herb!  Subtype if needed in subtype
-#define HERB			4
-
-#define WEAPON			5
-// object types
-#define ARMOR			6
-#define POTION			7
-#define SCROLL			8
-#define WAND			9
-#define CONTAINER		10
-
-#define MONEY			11
-#define KEY			    12
-#define LIGHTSOURCE		13
-#define MISC			14
-#define SONGSCROLL		15
-#define POISON			16
-#define BANDAGE			17
-#define AMMO			18
-#define QUIVER			19
-#define LOTTERYTICKET	20
-
-#define MAX_OBJ_TYPE	21
-
-#define DEFAULT_WEAPON_DELAY	30 // 3 seconds
-
-// Spell Realms
-
-
-#define CONJUREMAGE		7
-#define CONJUREBARD		8
-#define CONJUREANIM		9
 
 // Daily use variables
 #define DL_BROAD		0	// Daily broadcasts
@@ -744,32 +272,6 @@ CLASS_COUNT
 #define OLD_LT_STONESKIN	LT_MON_WANDER
 
 
-// Maximum number of items that can be worn/readied
-#define MAXWEAR		20
-
-// Wear locations
-#define BODY		1
-#define ARMS		2
-#define LEGS		3
-#define NECK		4
-#define BELT		5
-#define HANDS		6
-#define HEAD		7
-#define FEET		8
-#define FINGER		9
-#define FINGER1		9
-#define FINGER2		10
-#define FINGER3		11
-#define FINGER4		12
-#define FINGER5		13
-#define FINGER6		14
-#define FINGER7		15
-#define FINGER8		16
-#define HELD		17
-#define SHIELD		18
-#define FACE		19
-#define WIELD		20
-
 
 // Song flags
 #define SONG_HEAL		0	// Healing
@@ -784,75 +286,8 @@ CLASS_COUNT
 #define SONG_SAFETY		9	// Song of Safety
 
 
-//#define MAXSONG		10
-
-#define MAX_AURAS		6	// Max mob aura attacks
-
-// Spell casting types
-#define CAST			0
-#define SKILL			1	// Druid summon-elemental
-
-enum DeathType {
-	DT_NONE,
-	// Death types
-	FALL,
-	POISON_MONSTER,
-	POISON_GENERAL,
-	DISEASE,
-	SMOTHER,
-	FROZE,
-	BURNED,
-	DROWNED,
-	DRAINED,
-	ZAPPED,
-	SHOCKED,
-	WOUNDED,
-	CREEPING_DOOM,
-	SUNLIGHT,
-
-	// Trap death types
-	PIT,
-	BLOCK,
-	DART,
-	ARROW,
-	SPIKED_PIT,
-	FIRE_TRAP,
-	FROST,
-	ELECTRICITY,
-	ACID,
-	ROCKS,
-	ICICLE_TRAP,
-	SPEAR,
-	CROSSBOW_TRAP,
-	VINES,
-	COLDWATER,
-	EXPLODED,
-	BOLTS,
-	SPLAT,
-	POISON_PLAYER,
-	BONES,
-	EXPLOSION,
-	PETRIFIED,
-	LIGHTNING,
-	WINDBATTERED,
-	PIERCER,
-	ELVEN_ARCHERS,
-	DEADLY_MOSS,
-	THORNS
-};
 
 #include "flags.h"
-
-// Weather
-#define WSUNNY		1	// Sunny outside
-#define WWINDY		2	// Rainy outside
-#define WSTORM		3	// Storm
-#define WMOONF		4	// Full Moon
-
-// specials
-#define SP_MAPSC	1		// Map or scroll
-#define SP_COMBO	2		// Combination lock
-#define MAX_SP		3
 
 
 #define RETURN(a,b,c)   Ply[a].io->fn = b; Ply[a].io->fnparam = c; return
@@ -889,89 +324,6 @@ enum DeathType {
 #define PLYCRT(p)	((p)->isPlayer() ? "Player" : "Monster")
 
 #define AC(p)		((int)((p)->getArmor()) / 10)
-
-#define BIT0		(1<<0)
-#define BIT1		(1<<1)
-#define BIT2		(1<<2)
-#define BIT3		(1<<3)
-#define BIT4		(1<<4)
-#define BIT5		(1<<5)
-#define BIT6		(1<<6)
-#define BIT7		(1<<7)
-#define BIT8		(1<<8)
-#define BIT9		(1<<9)
-#define BIT10		(1<<10)
-#define BIT11		(1<<11)
-#define BIT12		(1<<12)
-
-enum Color {
-	NOCOLOR		= 0,
-	BLACK 		= BIT0,
-	RED 		= BIT1,
-	GREEN		= BIT2,
-	YELLOW		= BIT3,
-	BLUE		= BIT4,
-	MAGENTA		= BIT5,
-	CYAN		= BIT6,
-	WHITE		= BIT7,
-	BOLD		= BIT8,
-	NORMAL		= BIT9,
-	BLINK		= BIT10,
-	UNDERLINE	= BIT11,
-	MAX_COLOR
-};
-
-enum AttackResultFlags {
-	NO_FLAG		= 0,
-	NO_DODGE	= BIT0,
-	NO_PARRY	= BIT1,
-	NO_BLOCK	= BIT2,
-	NO_CRITICAL	= BIT3,
-	NO_FUMBLE	= BIT4,
-	NO_GLANCING	= BIT5,
-	DOUBLE_MISS	= BIT6,
-	USE_LEVEL	= BIT7,
-
-	MAX_ATTACK_FLAG
-};
-// findTarget search places
-#define FIND_OBJ_EQUIPMENT	BIT0
-#define FIND_OBJ_INVENTORY	BIT1
-#define FIND_OBJ_ROOM		BIT2
-#define FIND_MON_ROOM		BIT3
-#define FIND_PLY_ROOM		BIT4
-#define FIND_EXIT			BIT5
-
-// obj_str and crt_str flags
-#define CAP		BIT0
-#define INV		BIT1
-#define MAG		BIT2
-#define ISDM		BIT3
-#define MIST		BIT4
-#define ISBD		BIT5
-#define ISCT		BIT6
-#define NONUM		BIT7
-#define USEANSI		BIT8
-#define USEMIRC		BIT9
-
-#define COLOR_BLACK	0
-#define COLOR_RED	1
-#define COLOR_GREEN	2
-#define COLOR_YELLOW	3
-#define COLOR_BLUE	4
-#define COLOR_MAGENTA	5
-#define COLOR_CYAN	6
-#define COLOR_WHITE	7
-#define COLOR_BOLD	8
-#define COLOR_NORMAL	9
-#define COLOR_BLINK	10
-
-//#define BOLD		8
-//#define NORMAL	9
-//#define BLINK		10
-//#define UNDERLINE	11
-
-
 
 //*********************************************************************
 //	Below this line are customizable options for the mud
@@ -1027,73 +379,6 @@ enum AttackResultFlags {
 //// lucky dying.
 //#define LUCKY_DEATHS		2
 //#define LUCKY_DEATH_HOURS	24
-
-// Enums for effects
-// Where is this effect being applied from?
-enum ApplyFrom {
-	FROM_NOWHERE,
-
-	FROM_CREATURE,
-	FROM_MONSTER,
-	FROM_PLAYER,
-	FROM_OBJECT,
-	FROM_POTION,
-	FROM_WAND,
-	FROM_ROOM,
-
-	MAX_FROM
-};
-
-// Actions to be taken by the effect function
-enum EffectAction {
-	NO_ACTION,
-
-	EFFECT_COMPUTE, // Compute strength, duration, etc -- DO THIS BEFORE ADDING!!!!
-	EFFECT_APPLY,	// Apply any bonuses
-	EFFECT_UNAPPLY,	// Unapply any bonuses
-	EFFECT_PULSE,
-
-	MAX_ACTION
-};
-
-
-enum Realm {
-	NO_REALM =	0,
-	MIN_REALM =	1,
-	EARTH =		1,
-	WIND =		2,
-	FIRE =		3,
-	WATER = 	4,
-	ELEC =		5,
-	COLD =		6,
-
-	MAX_REALM
-};
-
-
-enum PropType {
-	PROP_NONE =		0,
-	PROP_STORAGE =		1,
-	PROP_SHOP =		2,
-	PROP_GUILDHALL =	3,
-	PROP_HOUSE =		4,
-
-	PROP_END =		5
-};
-
-enum UnequipAction {
-	UNEQUIP_ADD_TO_INVENTORY,
-	UNEQUIP_DELETE,
-	UNEQUIP_NOTHING
-};
-
-
-enum CastResult {
-	CAST_RESULT_FAILURE,			// failure, unlikely it will succeed
-	CAST_RESULT_CURRENT_FAILURE,	// failure, it may succeed in the future
-	CAST_RESULT_SPELL_FAILURE,		// failure, the spell didn't work
-	CAST_RESULT_SUCCESS
-};
 
 // C includes
 #ifndef PYTHON_CODE_GEN
@@ -1154,7 +439,100 @@ struct idComp : public std::binary_function<const bstring&, const bstring&, bool
 #include "proxy.h"
 #include "config.h"
 
-#include "mextern.h"
+// Pointer to config and server objects
+extern Config *gConfig;
+extern Server *gServer;
+
+
+extern int    bHavePort;
+
+typedef int (*SONGFN)();
+
+#ifndef MIGNORE
+extern int Crash;
+/* configurable */
+
+
+extern int	PORTNUM;
+
+extern char		auth_questions_email[80];
+extern char		questions_to_email[80];
+extern char		register_questions_email[80];
+
+extern const int	GUILD_NONE, GUILD_INVITED, GUILD_INVITED_OFFICER, GUILD_INVITED_BANKER,
+	GUILD_PEON,	GUILD_OFFICER, GUILD_BANKER, GUILD_MASTER;
+
+extern const int   GUILD_JOIN, GUILD_REMOVE, GUILD_LEVEL, GUILD_DIE;
+
+
+extern int		Tablesize;
+extern int		Cmdnum;
+extern long		StartTime;
+extern struct lasttime	Shutdown;
+extern struct lasttime  Weather[5];
+extern int		Numlockedout;
+
+//extern plystruct Ply[PMAX];
+extern class_stats_struct class_stats[CLASS_COUNT];
+extern char allowedClassesStr[CLASS_COUNT + 4][16];
+
+
+
+
+
+extern char   conjureTitles[][3][10][30];
+extern char bardConjureTitles[][10][35];
+extern char mageConjureTitles[][10][35];
+extern creatureStats conjureStats[3][40];
+extern short multiHpMpAdj[MAX_MULTICLASS][2];
+extern short multiStatCycle[MAX_MULTICLASS][10];
+extern short multiSaveCycle[MAX_MULTICLASS][10];
+
+
+extern char scrollDesc [][10][20];
+extern char scrollType [][2][20];
+
+
+//Ansi/Mirc Settings
+extern int Ansi[12];
+extern int Mirc[9];
+
+//extern int MAX_QUEST;
+
+
+
+
+extern struct osp_t ospell[];
+
+//extern short	level_cycle[][10];
+extern short	saving_throw_cycle[][10];
+//extern short	thaco_list[][30];
+extern int		statBonus[40];
+extern char		lev_title[][10][20];
+extern char 	article[][10];
+extern long		needed_exp[];
+extern long		last_dust_output;
+
+
+extern Dice	monk_dice[41];
+extern Dice wolf_dice[41];
+
+extern int numQuests;
+
+extern char	*dmname[];
+
+extern int numBans;
+//extern int maxGuild;
+extern int SUPPORT_REQUIRED;
+extern unsigned short Port;
+
+extern struct osong_t osong[];
+
+#endif
+
+#include "proto.h"
+
+#include "help.h"
 
 #include "paths.h"
 

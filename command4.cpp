@@ -586,7 +586,7 @@ void Player::information(const Player* viewer, bool online) {
 	for(i=0; i<MAXWEAR; i++)
 		if(ready[i])
 			numItems++;
-	numItems += count_bag_inv(this);
+	numItems += countBagInv();
 
 
 	oStr << " " << std::setw(13) << txt << "^W| \\_|^x Total Experience : " << std::setw(11) << experience << "^W|^x  +\n"

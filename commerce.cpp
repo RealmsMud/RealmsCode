@@ -50,7 +50,7 @@ Money buyAmount(const Player* player, const UniqueRoom *room, const Object* obje
 
 Money sellAmount(const Player* player, const UniqueRoom *room, const Object* object, bool sell) {
 	Money value = Faction::adjustPrice(player, room->getFaction(), object->value, sell);
-	value.set(MIN(value[GOLD] / 2, MAXPAWN), GOLD);
+	value.set(tMIN<unsigned long>(value[GOLD] / 2, MAXPAWN), GOLD);
 	return(value);
 }
 
@@ -2426,7 +2426,7 @@ void Creature::doHaggling(Creature *vendor, Object* object, int trans) {
 	    }
 	}
 	if(trans == SELL)
-		val = MIN(MAXPAWN,object->value[GOLD]/2);
+		val = tMIN<unsigned long>(MAXPAWN,object->value[GOLD]/2);
 	else
 		val = object->value[GOLD]/2;
 

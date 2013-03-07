@@ -17,6 +17,7 @@
  *
  */
 #include "mud.h"
+#include "help.h"
 
 #include <sstream>
 #include <iomanip>
@@ -256,7 +257,7 @@ void writeSchoolDomainFiles(MagicType type, int min, int max, const char* seeAls
 		out.setf(std::ios::left, std::ios::adjustfield);
 		out.imbue(std::locale(""));
 
-		out << loadHelpTemplate(skill.c_str());
+		out << Help::loadHelpTemplate(skill.c_str());
 
 		// append all the spells for this school/domain to the helpfile
 		out << "^WSpells:^x\n";

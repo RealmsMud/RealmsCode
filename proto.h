@@ -279,11 +279,7 @@ char* monsterPath(const CatRef cr);
 char* roomPath(const CatRef cr);
 char* roomBackupPath(const CatRef cr);
 
-int count_obj(Object* object, char perm_only);
-int count_inv(Creature* creature, char perm_only);
-int count_bag_inv(Creature* creature);
 void free_crt(Creature* creature, bool remove=true);
-bstring loadHelpTemplate(const char* filename);
 
 // files2.cpp
 void save_all_ply(void);

@@ -19,6 +19,7 @@
 #include "mud.h"
 #include "bstring.h"
 #include "import.h"
+#include "help.h"
 #include "commands.h"
 #include "dm.h"
 #include <dirent.h>
@@ -125,7 +126,7 @@ bool Config::writeSocialFile() const {
 	out.setf(std::ios::left, std::ios::adjustfield);
 	out.imbue(std::locale(""));
 
-	out << loadHelpTemplate("socials");
+	out << Help::loadHelpTemplate("socials");
 
 
 	compileSocialList<PlyCommand*>(list, playerCommands);
@@ -144,7 +145,7 @@ bool Config::writeSocialFile() const {
 	out << "\n";
 	
 
-	out << loadHelpTemplate("socials.post");
+	out << Help::loadHelpTemplate("socials.post");
 
 	out.close();
 	link(file, fileLink);
@@ -199,7 +200,7 @@ void writeCommandFile(int cls, const char* path, const char* tpl) {
 	out.setf(std::ios::left, std::ios::adjustfield);
 	out.imbue(std::locale(""));
 
-	out << loadHelpTemplate(tpl);
+	out << Help::loadHelpTemplate(tpl);
 
 
 	if(cls == DUNGEONMASTER || cls == BUILDER) {

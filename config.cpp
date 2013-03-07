@@ -651,3 +651,328 @@ bool Config::loadSongs() {
 }
 
 
+//**********************************************************************
+//						writeHelpFiles
+//**********************************************************************
+// commands are written in initCommands
+// socials are written in initCommands
+// flags are written in loadFlags
+
+bool Config::writeHelpFiles() const {
+	bool success = true;
+
+	success &= writeSpellFiles();
+	success &= writeSocialFile();
+
+
+	return(success);
+}
+
+namespace Path {
+	const char* Bin = "/home/realms/realms/bin/";
+	const char* Log = "/home/realms/realms/log/";
+	const char* BugLog = "/home/realms/realms/log/bug/";
+	const char* StaffLog = "/home/realms/realms/log/staff/";
+	const char* BankLog = "/home/realms/realms/log/bank/";
+	const char* GuildBankLog = "/home/realms/realms/log/guildbank/";
+
+	const char* UniqueRoom = "/home/realms/realms/rooms/";
+	const char* AreaRoom = "/home/realms/realms/rooms/area/";
+	const char* Monster = "/home/realms/realms/monsters/";
+	const char* Object = "/home/realms/realms/objects/";
+	const char* Player = "/home/realms/realms/player/";
+	const char* PlayerBackup = "/home/realms/realms/player/backup/";
+
+	const char* Config = "/home/realms/realms/config/";
+
+	const char* Code = "/home/realms/realms/config/code/";
+	const char* Python = "/home/realms/realms/config/code/python/";
+	const char* Game = "/home/realms/realms/config/game/";
+	const char* AreaData = "/home/realms/realms/config/game/area/";
+	const char* Talk = "/home/realms/realms/config/game/talk/";
+	const char* Desc = "/home/realms/realms/config/game/ddesc/";
+	const char* Sign = "/home/realms/realms/config/game/signs/";
+
+	const char* PlayerData = "/home/realms/realms/config/player/";
+	const char* Bank = "/home/realms/realms/config/player/bank/";
+	const char* GuildBank = "/home/realms/realms/config/player/guildbank/";
+	const char* History = "/home/realms/realms/config/player/history/";
+	const char* Post = "/home/realms/realms/config/player/post/";
+
+	const char* BaseHelp = "/home/realms/realms/help/";
+	const char* Help = "/home/realms/realms/help/help/";
+	const char* CreateHelp = "/home/realms/realms/help/create/";
+	const char* Wiki = "/home/realms/realms/help/wiki/";
+	const char* DMHelp = "/home/realms/realms/help/dmhelp/";
+	const char* BuilderHelp = "/home/realms/realms/help/bhelp/";
+	const char* HelpTemplate = "/home/realms/realms/help/template/";
+}
+//*********************************************************************
+//						path functions
+//*********************************************************************
+
+char* objectPath(const CatRef cr) {
+	static char filename[256];
+	if(cr.id < 0)
+		sprintf(filename, "%s/%s/", Path::Object, cr.area.c_str());
+	else
+		sprintf(filename, "%s/%s/o%05d.xml", Path::Object, cr.area.c_str(), cr.id);
+	return(filename);
+}
+char* monsterPath(const CatRef cr) {
+	static char filename[256];
+	if(cr.id < 0)
+		sprintf(filename, "%s/%s/", Path::Monster, cr.area.c_str());
+	else
+		sprintf(filename, "%s/%s/m%05d.xml", Path::Monster, cr.area.c_str(), cr.id);
+	return(filename);
+}
+char* roomPath(const CatRef cr) {
+	static char filename[256];
+	if(cr.id < 0)
+		sprintf(filename, "%s/%s/", Path::UniqueRoom, cr.area.c_str());
+	else
+		sprintf(filename, "%s/%s/r%05d.xml", Path::UniqueRoom, cr.area.c_str(), cr.id);
+	return(filename);
+}
+char* roomBackupPath(const CatRef cr) {
+	static char filename[256];
+	if(cr.id < 0)
+		sprintf(filename, "%s/%s/backup/", Path::UniqueRoom, cr.area.c_str());
+	else
+		sprintf(filename, "%s/%s/backup/r%05d.xml", Path::UniqueRoom, cr.area.c_str(), cr.id);
+	return(filename);
+}
+
+//*********************************************************************
+//						checkPaths
+//*********************************************************************
+
+bool Path::checkPaths() {
+	bool ok = true;
+
+	ok = Path::checkDirExists(Path::Bin) && ok;
+	ok = Path::checkDirExists(Path::Log) && ok;
+	ok = Path::checkDirExists(Path::BugLog) && ok;
+	ok = Path::checkDirExists(Path::StaffLog) && ok;
+	ok = Path::checkDirExists(Path::BankLog) && ok;
+	ok = Path::checkDirExists(Path::GuildBankLog) && ok;
+
+	ok = Path::checkDirExists(Path::UniqueRoom) && ok;
+	ok = Path::checkDirExists(Path::AreaRoom) && ok;
+	ok = Path::checkDirExists(Path::Monster) && ok;
+	ok = Path::checkDirExists(Path::Object) && ok;
+	ok = Path::checkDirExists(Path::Player) && ok;
+	ok = Path::checkDirExists(Path::PlayerBackup) && ok;
+
+	ok = Path::checkDirExists(Path::Config) && ok;
+
+	ok = Path::checkDirExists(Path::Code) && ok;
+	ok = Path::checkDirExists(Path::Python) && ok;
+	ok = Path::checkDirExists(Path::Game) && ok;
+	ok = Path::checkDirExists(Path::AreaData) && ok;
+	ok = Path::checkDirExists(Path::Talk) && ok;
+	ok = Path::checkDirExists(Path::Desc) && ok;
+	ok = Path::checkDirExists(Path::Sign) && ok;
+
+	ok = Path::checkDirExists(Path::PlayerData) && ok;
+	ok = Path::checkDirExists(Path::Bank) && ok;
+	ok = Path::checkDirExists(Path::GuildBank) && ok;
+	ok = Path::checkDirExists(Path::History) && ok;
+	ok = Path::checkDirExists(Path::Post) && ok;
+
+	ok = Path::checkDirExists(Path::BaseHelp) && ok;
+	ok = Path::checkDirExists(Path::Help) && ok;
+	ok = Path::checkDirExists(Path::Wiki) && ok;
+	ok = Path::checkDirExists(Path::DMHelp) && ok;
+	ok = Path::checkDirExists(Path::BuilderHelp) && ok;
+	ok = Path::checkDirExists(Path::HelpTemplate) && ok;
+
+	return(ok);
+}
+
+//*********************************************************************
+//						checkDirExists
+//*********************************************************************
+
+bool Path::checkDirExists(const char* filename) {
+	struct stat     f_stat;
+	if(stat(filename, &f_stat)) {
+		return(!mkdir(filename, 0755));
+	}
+	return(true);
+}
+
+bool Path::checkDirExists(bstring area, char* (*fn)(const CatRef cr)) {
+	char	filename[256];
+	CatRef	cr;
+
+	// this will trigger the dir-only mode
+	cr.setArea(area.c_str());
+	cr.id = -1;
+	strcpy(filename, (*fn)(cr));
+
+	return(checkDirExists(filename));
+}
+
+
+
+
+//*********************************************************************
+//						reloadRoom
+//*********************************************************************
+// This function reloads a room from disk, if it's already loaded. This
+// allows you to make changes to a room, and then reload it, even if it's
+// already in the memory room queue.
+
+bool Config::reloadRoom(BaseRoom* room) {
+	UniqueRoom*	uRoom = room->getAsUniqueRoom();
+
+	if(uRoom) {
+		bstring str = uRoom->info.str();
+		if(	roomQueue.find(str) != roomQueue.end() &&
+			roomQueue[str].rom &&
+			reloadRoom(uRoom->info) >= 0
+		) {
+			roomQueue[str].rom->addPermCrt();
+			return(true);
+		}
+	} else {
+
+		AreaRoom* aRoom = room->getAsAreaRoom();
+		char	filename[256];
+		sprintf(filename, "%s/%d/%s", Path::AreaRoom, aRoom->area->id,
+			aRoom->mapmarker.filename().c_str());
+
+		if(file_exists(filename)) {
+			xmlDocPtr	xmlDoc;
+			xmlNodePtr	rootNode;
+
+			if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == NULL)
+				merror("Unable to read arearoom file", FATAL);
+
+			rootNode = xmlDocGetRootElement(xmlDoc);
+
+			Area *area = aRoom->area;
+			aRoom->reset();
+			aRoom->area = area;
+			aRoom->load(rootNode);
+			return(true);
+		}
+	}
+	return(false);
+}
+
+int Config::reloadRoom(CatRef cr) {
+	UniqueRoom	*room=0;
+
+	bstring str = cr.str();
+	if(roomQueue.find(str) == roomQueue.end())
+		return(0);
+	if(!roomQueue[str].rom)
+		return(0);
+
+//	roomQueue[str].rom->purge();
+
+	if(!loadRoomFromFile(cr, &room))
+		return(-1);
+	// Move any current players & monsters into the new room
+	for(Player* ply : roomQueue[str].rom->players) {
+		room->players.insert(ply);
+		ply->setParent(room);
+	}
+	roomQueue[str].rom->players.clear();
+
+	if(room->monsters.empty()) {
+		for(Monster* mons : roomQueue[str].rom->monsters) {
+			room->monsters.insert(mons);
+			mons->setParent(room);
+		}
+		roomQueue[str].rom->monsters.clear();
+	}
+	if(room->objects.empty()) {
+		for(Object* obj : roomQueue[str].rom->objects) {
+			room->objects.insert(obj);
+			obj->setParent(room);
+		}
+		roomQueue[str].rom->objects.clear();
+	}
+
+
+	delete roomQueue[str].rom;
+	roomQueue[str].rom = room;
+
+	room->registerMo();
+
+	return(0);
+}
+
+//*********************************************************************
+//						resaveRoom
+//*********************************************************************
+// This function saves an already-loaded room back to memory without
+// altering its position on the queue.
+
+int saveRoomToFile(UniqueRoom* pRoom, int permOnly);
+
+int Config::resaveRoom(CatRef cr) {
+	bstring str = cr.str();
+	if(roomQueue[str].rom)
+		roomQueue[str].rom->saveToFile(ALLITEMS);
+	return(0);
+}
+
+
+int Config::saveStorage(UniqueRoom* uRoom) {
+	if(uRoom->flagIsSet(R_SHOP))
+		saveStorage(shopStorageRoom(uRoom));
+	return(saveStorage(uRoom->info));
+}
+int Config::saveStorage(CatRef cr) {
+	bstring str = cr.str();
+	if(!roomQueue[str].rom)
+		return(0);
+
+	if(roomQueue[str].rom->saveToFile(ALLITEMS) < 0)
+		return(-1);
+
+	return(0);
+}
+
+//********************************************************************
+//						resaveAllRooms
+//********************************************************************
+// This function saves all memory-resident rooms back to disk.  If the
+// permonly parameter is non-zero, then only permanent items in those
+// rooms are saved back.
+
+void Config::resaveAllRooms(char permonly) {
+	qtag 	*qt = roomHead;
+	while(qt) {
+		if(roomQueue[qt->str].rom) {
+			if(roomQueue[qt->str].rom->saveToFile(permonly) < 0)
+				return;
+		}
+		qt = qt->next;
+	}
+}
+
+//*********************************************************************
+//						replaceMonsterInQueue
+//*********************************************************************
+void Config::replaceMonsterInQueue(CatRef cr, Monster *monster) {
+	if(this->monsterInQueue(cr))
+		*monsterQueue[cr.str()].mob = *monster;
+	else
+		addMonsterQueue(cr, &monster);
+}
+
+//*********************************************************************
+//						replaceObjectInQueue
+//*********************************************************************
+void Config::replaceObjectInQueue(CatRef cr, Object* object) {
+	if(objectInQueue(cr))
+		*objectQueue[cr.str()].obj = *object;
+	else
+		addObjectQueue(cr, &object);
+}

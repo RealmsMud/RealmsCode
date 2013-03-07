@@ -1782,6 +1782,20 @@ Player* Server::findPlayer(bstring name) {
 }
 
 //*********************************************************************
+//						saveAllPly
+//*********************************************************************
+// This function saves all players currently in memory.
+
+void Server::saveAllPly() {
+	for(std::pair<bstring, Player*> p : players) {
+		if(!p.second->isConnected())
+			continue;
+		p.second->save(true);
+	}
+}
+
+
+//*********************************************************************
 //						clearPlayer
 //*********************************************************************
 // This will NOT free up the player, it will just remove them from the list
@@ -2219,3 +2233,5 @@ void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, 
 	logGoldSql(pName, pId, targetStr, source, room, logType, amt.get(GOLD), direction);
 #endif // SQL_LOGGER
 }
+
+

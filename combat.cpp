@@ -512,7 +512,7 @@ int Monster::steal(Player *victim) {
 
 	lasttime[LT_STEAL].ltime = time(0);
 
-	i = count_inv(victim, 0);
+	i = victim->countInv();
 	if(i < 1)
 		return(0);
 

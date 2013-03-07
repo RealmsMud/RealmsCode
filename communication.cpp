@@ -431,7 +431,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 //*********************************************************************
 // function that does the actual printing of message for below
 
-void commTarget(Creature* player, Player* target, int type, bool ooc, char lang, bstring text, bstring speak, char *ooc_str, bool anon) {
+void commTarget(Creature* player, Player* target, int type, bool ooc, int lang, bstring text, bstring speak, char *ooc_str, bool anon) {
 	std::ostringstream out;
 
 	if(!target || target->flagIsSet(P_UNCONSCIOUS))
@@ -503,8 +503,8 @@ int communicate(Creature* creature, cmd* cmnd) {
 	Player*	pTarget=0;
 	BaseRoom* room=0;
 
-	int		i=0;
-	char	speak[35], lang, ooc_str[10];
+	int		i=0, lang;
+	char	speak[35], ooc_str[10];
 	if(creature->isPet())
 		owner = creature->getMaster();
 	else
