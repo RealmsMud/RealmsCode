@@ -74,7 +74,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Cast entangle on another player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -264,7 +264,7 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		if(spellData->how == CAST && !player->checkMp(10))
@@ -447,7 +447,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 	Creature *target=0;
 	int	saved=0, bns=0;
 
-	if(spellData->how == CAST && !isMageLich(player)) {
+	if(spellData->how == CAST && !player->isMageLich()) {
 		player->print("The arcane nature of that spell eludes you.\n");
 		return(0);
 	}
@@ -479,7 +479,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 			}
 		}
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -595,7 +595,7 @@ int splStatChange(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 		}
 	// cast on another
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -696,7 +696,7 @@ int splStoneToFlesh(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 
-	if(noPotion(player, spellData))
+	if(player->noPotion( spellData))
 		return(0);
 
 	cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -762,7 +762,7 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
 
-	if(spell_fail(player, spellData->how))
+	if(player->spellFail( spellData->how))
 		return(0);
 
 	// silence on self
@@ -778,7 +778,7 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// silence a monster or player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);

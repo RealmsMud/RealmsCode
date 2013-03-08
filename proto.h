@@ -393,14 +393,9 @@ void doStatCancel(Creature* target, Player *pTarget, int stat, bool good);
 void doStatChange(Creature* target, Player *pTarget, int stat, bool good);
 
 // magic
-int doMpCheck(Creature* target, int splno);
-int consume(Player* player, Object* object, cmd* cmnd);
 int cmdRecall(Player* player, cmd* cmnd);
-int useRecallPotion(Player* player, int show, int log);
-int getTurnChance(Creature* player, Creature* target);
 bool hinderedByDimensionalAnchor(int splno);
 
-int spell_fail(Creature* player, int how);
 
 void logCast(Creature* caster, Creature* target, bstring spell, bool dmToo=false);
 
@@ -410,12 +405,6 @@ void startup_mordor(void);
 void usage(char *szName);
 void handle_args(int argc, char *argv[]);
 void mvc_log(void);
-
-// mccp.cpp
-//int write_to_socket(int fd, const char *txt, unsigned int nLen, int bSpy );
-//int compressStart(Socket* sock);
-//int compressEnd(Socket* sock);
-//int processCompressed(Socket* sock);
 
 // memory.cpp
 

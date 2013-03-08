@@ -132,7 +132,7 @@ int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -324,7 +324,7 @@ int splDetectHidden(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 
 	if(spellData->how == CAST) {
-		if(!isMageLich(player))
+		if(!player->isMageLich())
 			return(0);
 		player->print("You cast a detect-hidden spell.\n");
 		broadcast(player->getSock(), player->getParent(), "%M casts a detect-hidden spell.", player);

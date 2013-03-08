@@ -44,18 +44,18 @@ void spellShortcut(char *spell) {
 //						doMpCheck
 //*********************************************************************
 
-int doMpCheck(Creature* target, int splno) {
+int Creature::doMpCheck(int splno) {
 	// If required MP is set to -1, the spell function is reponsible for verifying
 	// the caster has enough MP, otherwise it is checked here
 	int reqMp = getSpellMp(splno);
 
 	if(reqMp != -1) {
-		if(!target->checkMp(reqMp))
+		if(!checkMp(reqMp))
 			return(0);
 		// Handle spell fail here now if the spell doesn't handle mp on it's own
-		if(!(splno == S_VIGOR || splno == S_MEND_WOUNDS) && spell_fail(target, CAST)) {
+		if(!(splno == S_VIGOR || splno == S_MEND_WOUNDS) && spellFail(CAST)) {
 			// Reduced spell fails to half mp
-			target->subMp(MAX(1,reqMp/2));
+			subMp(MAX(1,reqMp/2));
 			return(0);
 		}
 	}
@@ -313,7 +313,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
 	    }
 	}
 
-	reqMp = doMpCheck(creature, data.splno);
+	reqMp = creature->doMpCheck(data.splno);
 	if(!reqMp)
 		return(CAST_RESULT_CURRENT_FAILURE);
 	fn = get_spell_function(data.splno);
@@ -996,7 +996,7 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(spell_fail(player, SCROLL)) {
+	if(player->spellFail( SCROLL)) {
 		player->printColor("%O disintegrates.\n", object);
 		player->delObj(object, true);
 		delete object;
@@ -1050,32 +1050,32 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 // return 0 on failure, 1 on drink, 2 on deleted object
 // lagprot means we can bypass
 
-int endConsume(Object* object, Player* player, bool forceDelete=false) {
+int Player::endConsume(Object* object, bool forceDelete) {
 	if(object->flagIsSet(O_EATABLE) || object->getType() == HERB) {
-		player->print("You eat %P.\n", object);
-		broadcast(player->getSock(), player->getParent(), "%M eats %1P.", player, object);
+		print("You eat %P.\n", object);
+		broadcast(getSock(), getParent(), "%M eats %1P.", this, object);
 	}
 	else {
-		player->print("Potion drank.\n");
-		broadcast(player->getSock(), player->getParent(), "%M drinks %1P.", player, object);
+		print("Potion drank.\n");
+		broadcast(getSock(), getParent(), "%M drinks %1P.", this, object);
 	}
 
 	if(!forceDelete)
 		object->decShotsCur();
 	if(forceDelete || object->getShotsCur() < 1) {
 		if(object->flagIsSet(O_EATABLE) || object->getType() == HERB)
-			player->printColor("You ate all of %P.\n", object);
+			printColor("You ate all of %P.\n", object);
 		else
-			player->printColor("You drank all of %P.\n", object);
+			printColor("You drank all of %P.\n", object);
 
-		player->delObj(object, true);
+		delObj(object, true);
 		delete object;
 		return(2);
 	}
 	return(1);
 }
 
-int consume(Player* player, Object* object, cmd* cmnd) {
+int Player::consume(Object* object, cmd* cmnd) {
 	int		c=0, splno=0, n=0;
 	int		(*fn)(SpellFn);
 	bool	dimensionalFailure=false;
@@ -1083,25 +1083,25 @@ int consume(Player* player, Object* object, cmd* cmnd) {
 	//const bstring& effect = object->getEffect();
 	fn = 0;
 
-	if(player->isStaff() && object->getType() != POTION && !strcmp(cmnd->str[0], "eat")) {
-		broadcast(player->getSock(), player->getParent(), "%M eats %1P.", player, object);
-		player->printColor("You ate %P.\n", object);
+	if(isStaff() && object->getType() != POTION && !strcmp(cmnd->str[0], "eat")) {
+		broadcast(getSock(), getParent(), "%M eats %1P.", this, object);
+		printColor("You ate %P.\n", object);
 
-		player->delObj(object);
+		delObj(object);
 		delete object;
 		return(0);
 	}
 
 	if(!strcmp(cmnd->str[0], "eat")) {
-		if(!eat && !player->checkStaff("You may not eat that.\n"))
+		if(!eat && !checkStaff("You may not eat that.\n"))
 			return(0);
 	} else {
-		if(!drink && !player->checkStaff("You may not drink that.\n"))
+		if(!drink && !checkStaff("You may not drink that.\n"))
 			return(0);
 	}
 
 
-	if(object->doRestrict(player, true))
+	if(object->doRestrict(this, true))
 		return(0);
 
 
@@ -1110,54 +1110,54 @@ int consume(Player* player, Object* object, cmd* cmnd) {
 		(object->getMagicpower() - 1 < 0) ||
 		object->getType() != POTION)
 	{
-		player->unhide();
+		unhide();
 
 		if(object->use_output[0])
-			player->printColor("%s\n", object->use_output);
+			printColor("%s\n", object->use_output);
 
 		// some food can heal you
-		if(object->flagIsSet(O_CONSUME_HEAL) && !player->isUndead())
-			player->hp.increase(object->damage.roll());
+		if(object->flagIsSet(O_CONSUME_HEAL) && !isUndead())
+			hp.increase(object->damage.roll());
 
-		return(endConsume(object, player, true));
+		return(endConsume(object, true));
 	}
 
-	if(	player->getRoomParent()->flagIsSet(R_NO_POTION) ||
-		player->getRoomParent()->flagIsSet(R_LIMBO))
+	if(	getRoomParent()->flagIsSet(R_NO_POTION) ||
+		getRoomParent()->flagIsSet(R_LIMBO))
 	{
-		if(!player->checkStaff("%O starts to %s before you %s it.\n",
+		if(!checkStaff("%O starts to %s before you %s it.\n",
 			object, eat ? "get moldy" : "evaporate", eat ? "eat" : "drink"))
 			return(0);
 	}
 
-	player->unhide();
+	unhide();
 
 	// Handle Alchemy Potions
 	if(object->isAlchemyPotion()) {
-		if(object->consumeAlchemyPotion(player))
-			return(endConsume(object,player));
+		if(object->consumeAlchemyPotion(this))
+			return(endConsume(object,this));
 		else
 			return(0);
 	}
 
 	if(object->getMagicpower() - 1 < 0 || object->getMagicpower() - 1 > MAXSPELL) {
-		player->print("Error: Bad Potion.\n");
-		broadcast(isCt, "^y%s has a bad potion!\n", player->getCName());
-		loge("Quaff: %s has a bad potion.\n", player->getCName());
+		print("Error: Bad Potion.\n");
+		broadcast(::isCt, "^y%s has a bad potion!\n", getCName());
+		loge("Quaff: %s has a bad potion.\n", getCName());
 		return(0);
 	}
 	splno = object->getMagicpower() - 1;
 	fn = get_spell_function(splno);
 
 	// check for dimensional anchor
-	if(hinderedByDimensionalAnchor(splno) && player->checkDimensionalAnchor())
+	if(hinderedByDimensionalAnchor(splno) && checkDimensionalAnchor())
 		dimensionalFailure = true;
 
 	// if the spell failed due to dimensional anchor, don't even run this
 	if(!dimensionalFailure) {
 		SpellData data;
 		data.splno = splno;
-		data.set(POTION, get_spell_school(data.splno), get_spell_domain(data.splno), object, player);
+		data.set(POTION, get_spell_school(data.splno), get_spell_domain(data.splno), object, this);
 
 		if(	(int(*)(SpellFn, char*, osp_t*))fn == splOffensive ||
 			(int(*)(SpellFn, char*, osp_t*))fn == splMultiOffensive)
@@ -1166,17 +1166,17 @@ int consume(Player* player, Object* object, cmd* cmnd) {
 				if(ospell[c].splno == -1)
 					return(0);
 			n = ((int(*)(SpellFn, const char*, osp_t*))*fn)
-			(player, cmnd, &data, get_spell_name(data.splno), &ospell[c]);
+			(this, cmnd, &data, get_spell_name(data.splno), &ospell[c]);
 		} else {
-			n = ((int(*)(SpellFn))*fn) (player, cmnd, &data);
+			n = ((int(*)(SpellFn))*fn) (this, cmnd, &data);
 		}
 	}
 
 	if(n || dimensionalFailure) {
-		player->statistics.potion();
+		statistics.potion();
 		if(object->use_output[0] && !dimensionalFailure)
-			player->printColor("%s\n", object->use_output);
-		return(endConsume(object, player));
+			printColor("%s\n", object->use_output);
+		return(endConsume(object));
 	}
 	return(0);
 }
@@ -1221,7 +1221,7 @@ int cmdConsume(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	consume(player, object, cmnd);
+	player->consume(object, cmnd);
 	return(0);
 }
 
@@ -1333,7 +1333,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 	player->lasttime[LT_SPELL].interval = 3;
 	player->statistics.wand();
 
-	if(spell_fail(player, WAND)) {
+	if(player->spellFail( WAND)) {
 		if(!object->flagIsSet(O_CAN_USE_FROM_FLOOR))
 			object->decShotsCur();
 		if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
@@ -1393,7 +1393,7 @@ int cmdRecall(Player* player, cmd* cmnd) {
 	if((player->getLevel() <= 7 && !player->inCombat()) || player->isStaff())
 		player->doRecall();
     else
-		useRecallPotion(player, 1, 0);
+		player->useRecallPotion(1, 0);
 
 	return(0);
 }
@@ -1404,16 +1404,16 @@ int cmdRecall(Player* player, cmd* cmnd) {
 
 // does the logging for a lag-protect hazy
 
-void recallLog(Player* player, bstring name, bstring cname, bstring room) {
+void Player::recallLog(bstring name, bstring cname, bstring room) {
 	std::ostringstream log;
 
-	log << "### " << player->getName() << "(L" << player->getLevel() << ") hazied (" << name << ") ";
+	log << "### " << getName() << "(L" << getLevel() << ") hazied (" << name << ") ";
 	if(cname != "")
 		log << "(out of bag: " << cname << ") ";
-	log << "due to lag protection. HP: " << player->hp.getCur() << "/" << player->hp.getMax()
-		<< ". Room: " << room << " to " << player->getRoomParent()->fullName() << ".";
+	log << "due to lag protection. HP: " << hp.getCur() << "/" << hp.getMax()
+		<< ". Room: " << room << " to " << getRoomParent()->fullName() << ".";
 
-	broadcast(isWatcher, "^C%s", log.str().c_str());
+	broadcast(::isWatcher, "^C%s", log.str().c_str());
 	logn("log.lprotect", "%s", log.str().c_str());
 }
 
@@ -1424,24 +1424,24 @@ void recallLog(Player* player, bstring name, bstring cname, bstring room) {
 // inside a bag means we need to reduce its shots. Plus, del_obj_crt
 // used from consume doesnt handle deleting it properly
 
-int recallCheckBag(Player* player, Object *cont, cmd* cmnd, int show, int log) {
+int Player::recallCheckBag(Object *cont, cmd* cmnd, int show, int log) {
 	int		drank=0;
-	bstring room = player->getRoomParent()->fullName(), name = "";
+	bstring room = getRoomParent()->fullName(), name = "";
 
 	for(Object* object : cont->objects) {
 		name = object->getName();
 
 		if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == POTION) {
 			if(show)
-				player->printColor("Recall potion found in %s: %s. Initiating auto-recall.\n", cont->getCName(), name.c_str());
-			drank = consume(player, object, cmnd);
+				printColor("Recall potion found in %s: %s. Initiating auto-recall.\n", cont->getCName(), name.c_str());
+			drank = consume(object, cmnd);
 			if(drank) {
 				if(log)
-					recallLog(player, name, cont->getCName(), room);
+					recallLog(name, cont->getCName(), room);
 				return(1);
 			}
 			if(show)
-				player->print("Unable to use potion. Continuing search.\n");
+				print("Unable to use potion. Continuing search.\n");
 		}
 	}
 	return(0);
@@ -1452,14 +1452,14 @@ int recallCheckBag(Player* player, Object *cont, cmd* cmnd, int show, int log) {
 //*********************************************************************
 // used for recall command and lagprotect
 
-int useRecallPotion(Player* player, int show, int log) {
+int Player::useRecallPotion(int show, int log) {
 	cmd 	*cmnd;
 	Object	*object=NULL;
 	int		i=0;
-	bstring room = player->getRoomParent()->fullName(), name = "";
+	bstring room = getRoomParent()->fullName(), name = "";
 
-	if(player->isEffected("anchor")) {
-		player->print("%s will not work while you are protected by a dimensional anchor.\n",
+	if(isEffected("anchor")) {
+		print("%s will not work while you are protected by a dimensional anchor.\n",
 			log ? "Automatic recall" : "The recall command");
 		return(0);
 	}
@@ -1469,57 +1469,57 @@ int useRecallPotion(Player* player, int show, int log) {
 	cmnd = new cmd;
 	cmnd->num = 2;
 
-	player->print("Beginning recall sequence.\n");
+	print("Beginning recall sequence.\n");
 
 	// do they have anything on their person?
 	for(i=0; i<MAXWEAR; i++) {
-		object = player->ready[i];
+		object = ready[i];
 		if(object) {
 			name = object->getName();
 			if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == POTION) {
 				if(show)
-					player->printColor("Recall potion found: %s. Initiating auto-recall.\n", name.c_str());
-				if(consume(player, object, cmnd)) {
+					printColor("Recall potion found: %s. Initiating auto-recall.\n", name.c_str());
+				if(consume(object, cmnd)) {
 					if(log)
-						recallLog(player, name, "", room);
+						recallLog(name, "", room);
 					return(1);
 				}
 				if(show)
-					player->print("Unable to use potion. Continuing search.\n");
+					print("Unable to use potion. Continuing search.\n");
 			}
 
 			if(object->getType() == CONTAINER)
-				if(recallCheckBag(player, object, cmnd, show, log))
+				if(recallCheckBag(object, cmnd, show, log))
 					return(1);
 		}
 	}
 
 	// check through their inventory
-	for(Object* obj : player->objects) {
+	for(Object* obj : objects) {
 		object = obj;
 		name = object->getName();
 
 		// is this object it?
 		if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == POTION) {
 			if(show)
-				player->printColor("Recall potion found: %s. Initiating auto-recall.\n", name.c_str());
-			if(consume(player, object, cmnd)) {
+				printColor("Recall potion found: %s. Initiating auto-recall.\n", name.c_str());
+			if(consume(object, cmnd)) {
 				if(log)
-					recallLog(player, name, "", room);
+					recallLog(name, "", room);
 				return(1);
 			}
 			if(show)
-				player->print("Unable to use potion. Continuing search.\n");
+				print("Unable to use potion. Continuing search.\n");
 		}
 
 		// in a container?
 		if(object->getType() == CONTAINER) {
-			if(recallCheckBag(player, object, cmnd, show, log))
+			if(recallCheckBag(object, cmnd, show, log))
 				return(1);
 		}
 	}
 
-	player->print("No recall potions found!\n");
+	print("No recall potions found!\n");
 	return(0);
 }
 
@@ -1565,7 +1565,7 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
 			broadcast(player->getSock(), player->getParent(), "%M casts %s %s spell.", player, article, spell);
 		}
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -1687,7 +1687,7 @@ int cmdTransmute(Player* player, cmd* cmnd) {
 		return(0);
 	}
 
-	if(spell_fail(player, CAST)) {
+	if(player->spellFail(CAST)) {
 		int dmg = 0;
 		player->print("The wand glows bright red and explodes!\n");
 		broadcast(player->getSock(), player->getParent(), "A wand explodes in %s's hand!\n", player->getCName());
@@ -1741,7 +1741,7 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// blind a monster or player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
@@ -1795,8 +1795,8 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function returns 1 if the casting of a spell fails, and 0 if it is
 // sucessful.
 
-int spell_fail(Creature* player, int how) {
-	Player	*pPlayer = player->getAsPlayer();
+int Creature::spellFail(int how) {
+	Player	*pPlayer = getAsPlayer();
 	int		chance=0, n=0;
 
 	if(how == POTION)
@@ -1860,7 +1860,7 @@ int spell_fail(Creature* player, int how) {
 	}
 	chance = chance * (pPlayer->getLuck() / 30);
 	if(n > chance) {
-		player->printColor("^yYour spell fails.\n");
+		printColor("^yYour spell fails.\n");
 		return(1);
 	} else
 		return(0);
@@ -1907,7 +1907,7 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 	// Cast word of judgement on another player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -2122,13 +2122,13 @@ int cmdCommune(Player *player, cmd *cmnd) {
 //						isMageLich
 //*********************************************************************
 
-bool isMageLich(const Creature* creature) {
-	if(	creature->getClass() != MAGE &&
-		(creature->isPlayer() && creature->getAsConstPlayer()->getSecondClass() != MAGE) &&
-		creature->getClass() != LICH &&
-		!creature->isCt()
-	) {
-		creature->print("The arcane nature of that spell eludes you.\n");
+bool Creature::isMageLich() {
+	if(	getClass() != MAGE &&
+		(isPlayer() && getAsConstPlayer()->getSecondClass() != MAGE) &&
+		getClass() != LICH &&
+		!isCt())
+	{
+		print("The arcane nature of that spell eludes you.\n");
 		return(false);
 	}
 	return(true);
@@ -2138,9 +2138,9 @@ bool isMageLich(const Creature* creature) {
 //						noPotion
 //*********************************************************************
 
-bool noPotion(Creature* player, SpellData* spellData) {
+bool Creature::noPotion(SpellData* spellData) {
 	if(spellData->how == POTION) {
-		player->print("You can only use a potion on yourself.\n");
+		print("You can only use a potion on yourself.\n");
 		return(1);
 	}
 	return(0);

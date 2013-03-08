@@ -64,7 +64,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -270,7 +270,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Cast scare on another player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -429,7 +429,7 @@ int splCourage(Creature* player, cmd* cmnd, SpellData* spellData) {
 			player->print("You feel unnaturally brave.\n");
 
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -491,7 +491,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if(spellData->how == POTION)
 		dur = mrand(1,120) + 180L;
 
-	if(spell_fail(player, spellData->how))
+	if(player->spellFail( spellData->how))
 		return(0);
 
 	// fear on self
@@ -514,7 +514,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// fear a monster or player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
@@ -645,7 +645,7 @@ int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
 
-	if(spell_fail(player, spellData->how))
+	if(player->spellFail( spellData->how))
 		return(0);
 
 	// silence on self
@@ -664,7 +664,7 @@ int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// silence a monster or player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
@@ -1199,7 +1199,7 @@ int splGlobeOfSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 	int strength = 1;
 	long duration = 600;
 
-	if(noPotion(player, spellData))
+	if(player->noPotion( spellData))
 		return(0);
 
 	if(player->getRoomParent()->isPkSafe() && !player->isCt()) {

@@ -502,6 +502,13 @@ public:
 	static void simultaneousDeath(Creature* attacker, Creature* target, bool freeAttacker, bool freeTarget);
 	bool canBeDrained() const;
 
+
+	int spellFail(int how);
+	bool isMageLich();
+	bool noPotion(SpellData* spellData);
+	int doMpCheck(int splno);
+	int getTurnChance(Creature* target);
+
 // Special Attacks
 	bstring getSpecialsFullList() const;
 	bool useSpecial(const bstring& special, Creature* victim);
@@ -1281,6 +1288,12 @@ public:
 	// Alchemy
 	bool alchemyEffectVisible(Object* obj, const bstring effect);
 	bool learnAlchemyEffect(Object* obj, const bstring effect);
+	int endConsume(Object* object, bool forceDelete=false);
+	int consume(Object* object, cmd* cmnd);
+	void recallLog(bstring name, bstring cname, bstring room);
+	int recallCheckBag(Object *cont, cmd* cmnd, int show, int log);
+	int useRecallPotion(int show, int log);
+
 
 // Stats & Ticking
 	long tickInterval(Stat& stat, bool fastTick, bool deathSickness, bool vampAndDay, const bstring& effectName);

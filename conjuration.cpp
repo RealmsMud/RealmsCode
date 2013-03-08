@@ -98,7 +98,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if(!player->ableToDoCommand())
 		return(0);
 
-	if(noPotion(player, spellData))
+	if(player->noPotion( spellData))
 		return(0);
 
 	if(spellData->how == SKILL && !player->knowsSkill("conjure")) {
@@ -156,7 +156,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 			return(0);
 		}
 		if(spellData->how == CAST) {
-			if(spell_fail(player, spellData->how)) {
+			if(player->spellFail( spellData->how)) {
 				player->subMp(mp);
 				return(0);
 			}
@@ -644,7 +644,7 @@ int splDenseFog(Creature* player, cmd* cmnd, SpellData* spellData) {
 	int strength = 10;
 	long duration = 600;
 
-	if(noPotion(player, spellData))
+	if(player->noPotion( spellData))
 		return(0);
 
 	if(!player->isCt()) {
@@ -679,7 +679,7 @@ int splToxicCloud(Creature* player, cmd* cmnd, SpellData* spellData) {
 	int strength = spellData->level;
 	long duration = 600;
 
-	if(noPotion(player, spellData))
+	if(player->noPotion( spellData))
 		return(0);
 
 	if(!player->isCt()) {
@@ -719,7 +719,7 @@ int splWallOfFire(Creature* player, cmd* cmnd, SpellData* spellData) {
 	int strength = spellData->level;
 	long duration = 300;
 
-	if(noPotion(player, spellData))
+	if(player->noPotion( spellData))
 		return(0);
 
 	if(!player->isCt()) {
@@ -767,7 +767,7 @@ int splWallOfForce(Creature* player, cmd* cmnd, SpellData* spellData) {
 	int strength = spellData->level;
 	long duration = 300;
 
-	if(noPotion(player, spellData))
+	if(player->noPotion( spellData))
 		return(0);
 
 	if(cmnd->num > 2)
@@ -804,7 +804,7 @@ int splWallOfThorns(Creature* player, cmd* cmnd, SpellData* spellData) {
 	int strength = spellData->level;
 	long duration = 300;
 
-	if(noPotion(player, spellData))
+	if(player->noPotion( spellData))
 		return(0);
 
 	if(player->getRoomParent()->isPkSafe() && !player->isCt()) {

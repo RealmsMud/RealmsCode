@@ -476,7 +476,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
 
 	// Cast vigor on another player or monster
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -612,7 +612,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Cast rejuvenate on another player or monster
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -731,7 +731,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Cast heal on another player or monster
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		creature = player->getParent()->findCreature(player,  cmnd->str[2], cmnd->val[2], false);
@@ -1134,7 +1134,7 @@ int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Cast restore on another player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);

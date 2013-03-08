@@ -207,7 +207,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
 
 		// Cast the spell on another player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);

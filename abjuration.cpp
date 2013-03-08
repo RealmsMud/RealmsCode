@@ -107,7 +107,7 @@ int splDrainShield(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int addReflectMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, int strength, unsigned int level) {
 	if(spellData->how == CAST) {
-		if(!isMageLich(player))
+		if(!player->isMageLich())
 			return(0);
 		if(spellData->level < level) {
 			player->print("You are not powerful enough to cast this spell.\n");
@@ -181,7 +181,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
 			player->print("You can now move freely.\n");
 
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -252,7 +252,7 @@ int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 			player->print("Nothing happens.\n");
 
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -303,7 +303,7 @@ int splRemoveSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -393,7 +393,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 		}
 
 	} else {
-		if(spell_fail(player, spellData->how))
+		if(player->spellFail( spellData->how))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -563,7 +563,7 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
 		multi=1;
 	}
 
-	if(spell_fail(pPlayer, spellData->how)) {
+	if(pPlayer->spellFail( spellData->how)) {
 		if(spellData->how == CAST)
 			pPlayer->subMp(mpNeeded);
 		return(0);
@@ -644,7 +644,7 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
 		multi=1;
 	}
 
-	if(spell_fail(player, spellData->how) && spellData->how != POTION) {
+	if(player->spellFail( spellData->how) && spellData->how != POTION) {
 		if(spellData->how == CAST)
 			player->subMp(mpNeeded);
 		return(0);
@@ -713,7 +713,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 
 		player->doDispelMagic(numDispel);
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -958,7 +958,7 @@ void Exit::doDispelMagic(BaseRoom* parent) {
 
 int addFireShield(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, int strength) {
 	if(spellData->how == CAST) {
-		if(!isMageLich(player))
+		if(!player->isMageLich())
 			return(0);
 		if(spellData->level < pow(strength, 2)) {
 			player->print("You are not powerful enough to cast this spell.\n");

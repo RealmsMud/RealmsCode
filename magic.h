@@ -410,8 +410,6 @@ bool decEnchant(Player* player, int how);
 
 int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, bstring effect, int strength=-2, long duration=-2);
 
-bool isMageLich(const Creature* creature);
-bool noPotion(Creature* player, SpellData* spellData);
 bool checkRefusingMagic(Creature* player, Creature* target, bool healing=false, bool print=true);
 
 #endif /*MAGIC_H_*/

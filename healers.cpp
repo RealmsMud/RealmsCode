@@ -444,23 +444,23 @@ bool Creature::kamiraLuck(Creature *attacker) {
 
 
 
-int getTurnChance(Creature* player, Creature* target) {
+int Creature::getTurnChance(Creature* target) {
 	double	level = 0.0;
 	int		chance=0, bns=0;
 
 
-	level = player->getSkillLevel("turn");
+	level = getSkillLevel("turn");
 
-	switch (player->getDeity()) {
+	switch (getDeity()) {
 	case CERIS:
-		if(player->getAdjustedAlignment() == NEUTRAL)
+		if(getAdjustedAlignment() == NEUTRAL)
 			level+=2;
-		if(player->getAdjustedAlignment() == ROYALBLUE || player->getAdjustedAlignment() == BLOODRED)
+		if(getAdjustedAlignment() == ROYALBLUE || getAdjustedAlignment() == BLOODRED)
 			level-=2;
 		break;
 	case LINOTHAN:
 	case ENOCH:
-		if(player->getAdjustedAlignment() < NEUTRAL)
+		if(getAdjustedAlignment() < NEUTRAL)
 			level -=4;
 		break;
 	default:
@@ -470,14 +470,14 @@ int getTurnChance(Creature* player, Creature* target) {
 	level = MAX(1,level);
 
 
-	bns = bonus((int)player->piety.getCur());
+	bns = bonus((int)piety.getCur());
 
 	chance = (int)((level - target->getLevel())*20) +
-			bns*5 + (player->getClass() == PALADIN ? 15:25);
+			bns*5 + (getClass() == PALADIN ? 15:25);
 	chance = MIN(chance, 80);
 
 	if(target->isPlayer()) {
-		if(player->isDm())
+		if(isDm())
 			chance = 101;
 	} else {
 		if(target->flagIsSet(M_SPECIAL_UNDEAD))
@@ -592,7 +592,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
 		break;
 	}
 
-	chance = getTurnChance(player, target);
+	chance = player->getTurnChance(target);
 
 	roll = mrand(1,100);
 
@@ -1221,7 +1221,7 @@ int splHallow(Creature* player, cmd* cmnd, SpellData* spellData) {
 	int strength = 10;
 	long duration = 600;
 
-	if(noPotion(player, spellData))
+	if(player->noPotion( spellData))
 		return(0);
 
 	if(spellData->how == CAST) {
@@ -1255,7 +1255,7 @@ int splUnhallow(Creature* player, cmd* cmnd, SpellData* spellData) {
 	int strength = 10;
 	long duration = 600;
 
-	if(noPotion(player, spellData))
+	if(player->noPotion( spellData))
 		return(0);
 
 	if(spellData->how == CAST) {

@@ -826,7 +826,7 @@ int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Cure a monster or player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -880,7 +880,7 @@ int splSlowPoison(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Cure a monster or player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -944,7 +944,7 @@ int splCureDisease(Creature* player, cmd* cmnd, SpellData* spellData) {
 		else if(spellData->how == POTION)
 			player->print("Nothing happens.\n");
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -989,7 +989,7 @@ int splCureBlindness(Creature* player, cmd* cmnd, SpellData* spellData) {
 		}
 
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -1125,7 +1125,7 @@ int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Cast remove-curse on another player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);

@@ -46,7 +46,7 @@ int splInvisibility(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splGreaterInvisibility(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if(!player->isStaff()) {
-		if(!isMageLich(player))
+		if(!player->isMageLich())
 			return(0);
 		if(player->getLevel() < 20 && spellData->how == CAST) {
 			player->print("You are not experienced enough to cast that spell.\n");
@@ -90,7 +90,7 @@ int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	if(spellData->how == CAST) {
 		// if the spell was cast
-		if(!isMageLich(pPlayer))
+		if(!pPlayer->isMageLich())
 			return(0);
 
 		txt = getFullstrText(cmnd->fullstr, cmnd->num == 3 ? 2 : 3);
@@ -128,7 +128,7 @@ int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 			broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts an illusion spell.", pPlayer);
 		}
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -199,7 +199,7 @@ int splIllusoryWall(Creature* player, cmd* cmnd, SpellData* spellData) {
 	int strength = spellData->level;
 	long duration = 300;
 
-	if(noPotion(player, spellData))
+	if(player->noPotion( spellData))
 		return(0);
 
 	if(cmnd->num > 2)

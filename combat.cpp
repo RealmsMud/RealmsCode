@@ -690,7 +690,7 @@ int Player::lagProtection() {
 
 		setFlag(P_LAG_PROTECTION_OPERATING);
 
-		if(useRecallPotion(this, 1, 1))
+		if(useRecallPotion(1, 1))
 			return(1);
 	}
 

@@ -335,7 +335,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 		else if(spellData->how == CAST && caster->getClass() == LICH)
 			caster->hp.decrease(osp->mp);
 
-		if(spell_fail(caster, spellData->how))
+		if(caster->spellFail(spellData->how))
 			return(0);
 
 		if(mTarget) {
@@ -686,7 +686,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	player->smashInvis();
 
-	if(spell_fail(player, spellData->how))
+	if(player->spellFail( spellData->how))
 		return(0);
 
 	if(cmnd->num == 2) {
@@ -701,7 +701,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
 			player->subMp(15);
 
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		if(spellData->how == CAST && !player->checkMp(20))

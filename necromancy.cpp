@@ -81,7 +81,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Cast harm on another player or monster
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
@@ -220,7 +220,7 @@ int drain_exp(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	} else {
 		// energy drain a monster or player
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		loss = dice(player->getLevel(), player->getLevel(), 1);
@@ -281,7 +281,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if(!strncmp(cmnd->str[0], "animate", strlen(cmnd->str[0])))
 		spellData->how = SKILL;
 
-	if(noPotion(player, spellData))
+	if(player->noPotion( spellData))
 		return(0);
 
 	if(spellData->how == SKILL && !player->knowsSkill("animate")) {
@@ -355,7 +355,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 		return(0);
 	}
 	if(spellData->how == CAST) {
-		if(spell_fail(player, spellData->how)) {
+		if(player->spellFail( spellData->how)) {
 			player->subMp(mp);
 			return(0);
 		}

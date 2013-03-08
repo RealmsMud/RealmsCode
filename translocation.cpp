@@ -104,7 +104,7 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
 		pPlayer->subMp(cost);
 	}
 
-	if(spell_fail(pPlayer, spellData->how))
+	if(pPlayer->spellFail( spellData->how))
 		return(0);
 
 	object->clearFlag(O_JUST_BOUGHT);
@@ -184,7 +184,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 		if(spellData->how == CAST && !player->checkMp(30))
 			return(0);
 
-		if(spell_fail(pPlayer, spellData->how)) {
+		if(pPlayer->spellFail( spellData->how)) {
 			if(spellData->how == CAST)
 				pPlayer->subMp(30);
 			return(0);
@@ -202,7 +202,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 		// Cast anchor on another pPlayer
 		} else {
-			if(noPotion(player, spellData))
+			if(player->noPotion( spellData))
 				return(0);
 
 			cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -284,7 +284,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if(spellData->how == CAST && !pPlayer->checkMp(destroy ? 10 : 50))
 		return(0);
 
-	if(spell_fail(pPlayer, spellData->how)) {
+	if(pPlayer->spellFail( spellData->how)) {
 		if(spellData->how == CAST)
 			pPlayer->subMp(destroy ? 10 : 50);
 		return(0);
@@ -653,7 +653,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Cast teleport on another person
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -926,7 +926,7 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Cast e-travel on another player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		if(player->getLevel() < 13 && !player->isCt()) {
@@ -1040,7 +1040,7 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 		player->print("You may not use that on yourself.\n");
 		return(0);
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
@@ -1183,7 +1183,7 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 	if(pPlayer->checkHeavyRestrict("track someone"))
 		return(0);
 		
-	if(noPotion(player, spellData))
+	if(player->noPotion( spellData))
 		return(0);
 
 	if(!pPlayer->isStaff() && pPlayer->checkDimensionalAnchor()) {
@@ -1387,7 +1387,7 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 	// Cast word of recall on another player
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);

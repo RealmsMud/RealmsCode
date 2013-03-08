@@ -205,7 +205,7 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
 			player->print("You cast a resist-%s spell.\n", name.c_str());
 		}
 	} else {
-		if(noPotion(player, spellData))
+		if(player->noPotion( spellData))
 			return(0);
 
 		cmnd->str[2][0] = up(cmnd->str[2][0]);
