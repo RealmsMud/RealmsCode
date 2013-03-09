@@ -580,7 +580,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 			}
 
 			if(mTarget->flagIsSet(M_WILL_YELL_FOR_HELP) && !mTarget->flagIsSet(M_YELLED_FOR_HELP)) {
-				check_for_yell(mTarget, player);
+				mTarget->checkForYell(player);
 			}
 		}
 

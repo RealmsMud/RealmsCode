@@ -54,11 +54,6 @@ int reloadCalendar(Player* player);
 bstring stripColor(bstring color);
 bstring escapeColor(bstring color);
 
-// combat.cpp
-int check_for_yell(Monster *monster, Creature *target);
-int check_absorb(Creature* target, Player* player, int wear, int dmg);
-void check_armor(Creature* target, Player* player, int wear);
-Creature *findFirstEnemyCrt(Creature *crt, Creature *pet);
 
 
 // commerce.cpp

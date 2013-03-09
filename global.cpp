@@ -47,9 +47,7 @@ int		Cmdnum;
 long	StartTime;
 struct  lasttime	Shutdown;
 struct  lasttime	Weather[5];
-int		Spy[PMAX];
 int		Numlockedout;
-//plystruct Ply[PMAX];
 
 const char *dmname[] = {
 	"Bane", "Dominus", "Ocelot", "Kriona", "Dmtest", NULL

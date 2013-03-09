@@ -441,6 +441,7 @@ public:
 	virtual void vprint(const char *fmt, va_list ap) const {};
 
 // Combat & Death
+	Creature *findFirstEnemyCrt(Creature *pet);
 	bool checkDie(Creature *killer); // *
 	bool checkDie(Creature *killer, bool &freeTarget); // *
 	int checkDieRobJail(Monster *killer); // *
@@ -816,7 +817,7 @@ public:
     long adjustThreat(Creature* target, long modAmt, double threatFactor = 1.0);
     long adjustContribution(Creature* target, long modAmt);
     void clearEnemyList();
-
+    int checkForYell(Creature* target);
 
     Creature* getTarget(bool sameRoom=true);
 	bool nearEnemy(const Creature* target) const;

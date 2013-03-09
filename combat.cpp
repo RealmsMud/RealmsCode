@@ -192,7 +192,7 @@ int Monster::updateCombat() {
 			if(	pet->isPet() && getMaster() != pTarget && pet->getMaster() == pTarget &&
 				!pet->isEnemy(this) && pet != this )
 			{
-				pet->addEnemy(findFirstEnemyCrt(this, pet));
+				pet->addEnemy(findFirstEnemyCrt(pet));
 				pTarget->print("%M jumps to your aid!!\n", pet);
 				break;
 			}
@@ -632,28 +632,28 @@ int Monster::summonMobs(Creature *victim) {
 //						check_for_yell
 //*********************************************************************
 
-int check_for_yell(Monster *monster, Creature* target) {
+int Monster::checkForYell(Creature* target) {
 	int	yellchance=0;
 
-	if(!(monster->flagIsSet(M_WILL_YELL_FOR_HELP) || monster->flagIsSet(M_YELLED_FOR_HELP)))
+	if(!(flagIsSet(M_WILL_YELL_FOR_HELP) || flagIsSet(M_YELLED_FOR_HELP)))
 		return(0);
 
-	if(!monster->canSpeak())
+	if(!canSpeak())
 		return(0);
 
 
-	if(monster->flagIsSet(M_YELLED_FOR_HELP))
-		yellchance = 35+(2*bonus((int) monster->intelligence.getCur()));
+	if(flagIsSet(M_YELLED_FOR_HELP))
+		yellchance = 35+(2*bonus((int) intelligence.getCur()));
 	else
-		yellchance = 50+(2*bonus((int) monster->intelligence.getCur()));
+		yellchance = 50+(2*bonus((int) intelligence.getCur()));
 
 
-	if(monster->flagIsSet(M_WILL_YELL_FOR_HELP) && ((mrand(1,100) < yellchance) || (monster->hp.getCur() <= monster->hp.getCur()/5))) {
-		if(!monster->flagIsSet(M_WILL_BE_HELPED))
-			broadcast(monster->getSock(), target->getRoomParent(), "%M yells for help!", monster);
-		monster->setFlag(M_YELLED_FOR_HELP);
-		monster->setFlag(M_WILL_BE_ASSISTED);
-		monster->clearFlag(M_WILL_YELL_FOR_HELP);
+	if(flagIsSet(M_WILL_YELL_FOR_HELP) && ((mrand(1,100) < yellchance) || (hp.getCur() <= hp.getCur()/5))) {
+		if(!flagIsSet(M_WILL_BE_HELPED))
+			broadcast(getSock(), target->getRoomParent(), "%M yells for help!", this);
+		setFlag(M_YELLED_FOR_HELP);
+		setFlag(M_WILL_BE_ASSISTED);
+		clearFlag(M_WILL_YELL_FOR_HELP);
 		return(1);  // Monster yells
 	}
 
@@ -1019,19 +1019,19 @@ void Player::checkArmor(int wear) {
 //						findFirstEnemyCrt
 //*********************************************************************
 
-Creature *findFirstEnemyCrt(Creature *crt, Creature *pet) {
+Creature *Creature::findFirstEnemyCrt(Creature *pet) {
 	if(!pet->getMaster())
-		return(crt);
+		return(this);
 
 	for(Monster* mons : pet->getRoomParent()->monsters) {
 	    if(mons == pet)
 	        continue;
-	    if(mons->getAsMonster()->isEnemy(pet->getMaster()) && mons->getName() == crt->getName())
+	    if(mons->getAsMonster()->isEnemy(pet->getMaster()) && mons->getName() == getName())
 	        return(mons);
 
 	}
 
-	return(crt);
+	return(this);
 }
 
 

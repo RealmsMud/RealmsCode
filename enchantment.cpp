@@ -1117,7 +1117,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 				}
 
 				if(mTarget->flagIsSet(M_WILL_YELL_FOR_HELP) && !mTarget->flagIsSet(M_YELLED_FOR_HELP)) {
-					check_for_yell(mTarget, player);
+					mTarget->checkForYell(player);
 				}
 
 				if(mTarget->flagIsSet(M_LEVEL_BASED_STUN) && (((int)mTarget->getLevel() - (int)spellData->level) > ((player->getClass() == LICH || player->getClass() == MAGE) ? 6:4))) {
