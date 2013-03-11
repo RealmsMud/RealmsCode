@@ -315,6 +315,7 @@ bool loadRoomFromFile(const CatRef cr, UniqueRoom **pRoom, bstring filename) {
 
 	rootNode = xmlDocGetRootElement(xmlDoc);
 	num = xml::getIntProp(rootNode, "Num");
+	bool toReturn = false;
 
 	if(cr.id == -1 || num == cr.id) {
 		*pRoom = new UniqueRoom;
@@ -323,10 +324,11 @@ bool loadRoomFromFile(const CatRef cr, UniqueRoom **pRoom, bstring filename) {
 		(*pRoom)->setVersion(xml::getProp(rootNode, "Version"));
 
 		(*pRoom)->readFromXml(rootNode);
+		toReturn = true;
 	}
 	xmlFreeDoc(xmlDoc);
 	xmlCleanupParser();
-	return(true);
+	return(toReturn);
 }
 
 //*********************************************************************
@@ -1571,6 +1573,8 @@ bool Config::loadAlchemy() {
 }
 
 AlchemyInfo::AlchemyInfo(xmlNodePtr rootNode) {
+	init();
+
 	rootNode = rootNode->children;
 	while(rootNode != NULL)
 	{
