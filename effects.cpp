@@ -339,7 +339,6 @@ bool EffectInfo::add() {
 	Creature* cParent = myParent->getAsCreature();
 	if(cParent) {
 
-		//bstring toSend = ply->doReplace(fmt, actor, applier);
 		if(!myEffect->getSelfAddStr().empty())
 			cParent->printColor("%s\n", cParent->doReplace(myEffect->getSelfAddStr().c_str(), cParent, myApplier).c_str());
 
@@ -514,7 +513,7 @@ bool MudObject::removeEffect(EffectInfo* toDel, bool show) {
 bool Effects::removeEffect(EffectInfo* toDel, bool show) {
 	if(!toDel)
 		return(false);
-//	ASSERTLOG(toDel->getParent() == pParent);
+
 	effectList.remove(toDel);
 	toDel->remove(show);
 	delete toDel;
@@ -1306,4 +1305,389 @@ void Server::removeEffectsOwner(const Creature* owner) {
 			exit->effects.removeOwner(owner);
 		}
 	}
+}
+
+
+//*********************************************************************
+//						Effect
+//*********************************************************************
+
+Effect::Effect(xmlNodePtr rootNode) {
+	xmlNodePtr curNode = rootNode->children;
+
+    pulsed = isSpellEffect = usesStr = false;
+    pulseDelay = 5;
+
+	while(curNode) {
+			 if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
+		else if(NODE_NAME(curNode, "BaseEffect")) baseEffects.push_back(xml::getBString(curNode));
+		else if(NODE_NAME(curNode, "Display")) xml::copyToBString(display, curNode);
+		else if(NODE_NAME(curNode, "OppositeEffect")) xml::copyToBString(oppositeEffect, curNode);
+		else if(NODE_NAME(curNode, "SelfAddStr")) xml::copyToBString(selfAddStr, curNode);
+		else if(NODE_NAME(curNode, "SelfDelStr")) xml::copyToBString(selfDelStr, curNode);
+		else if(NODE_NAME(curNode, "RoomAddStr")) xml::copyToBString(roomAddStr, curNode);
+		else if(NODE_NAME(curNode, "RoomDelStr")) xml::copyToBString(roomDelStr, curNode);
+		else if(NODE_NAME(curNode, "Pulsed")) xml::copyToBool(pulsed, curNode);
+		else if(NODE_NAME(curNode, "PulseDelay")) xml::copyToNum(pulseDelay, curNode);
+		else if(NODE_NAME(curNode, "Type")) xml::copyToBString(type, curNode);
+		else if(NODE_NAME(curNode, "ComputeScript")) xml::copyToBString(computeScript, curNode);
+		else if(NODE_NAME(curNode, "ApplyScript")) xml::copyToBString(applyScript, curNode);
+		else if(NODE_NAME(curNode, "PreApplyScript")) xml::copyToBString(preApplyScript, curNode);
+		else if(NODE_NAME(curNode, "PostApplyScript")) xml::copyToBString(postApplyScript, curNode);
+		else if(NODE_NAME(curNode, "UnApplyScript")) xml::copyToBString(unApplyScript, curNode);
+		else if(NODE_NAME(curNode, "PulseScript")) xml::copyToBString(pulseScript, curNode);
+		else if(NODE_NAME(curNode, "Spell")) xml::copyToBool(isSpellEffect, curNode);
+		else if(NODE_NAME(curNode, "UsesStrength")) xml::copyToBool(usesStr, curNode);
+
+		curNode = curNode->next;
+	}
+}
+
+//*********************************************************************
+//						getPulseScript
+//*********************************************************************
+
+bstring Effect::getPulseScript() const {
+    return(pulseScript);
+}
+
+//*********************************************************************
+//						getUnApplyScript
+//*********************************************************************
+
+bstring Effect::getUnApplyScript() const {
+    return(unApplyScript);
+}
+
+//*********************************************************************
+//						getApplyScript
+//*********************************************************************
+
+bstring Effect::getApplyScript() const {
+    return(applyScript);
+}
+
+//*********************************************************************
+//						getPreApplyScript
+//*********************************************************************
+
+bstring Effect::getPreApplyScript() const {
+    return(preApplyScript);
+}
+
+//*********************************************************************
+//						getPostApplyScript
+//*********************************************************************
+
+bstring Effect::getPostApplyScript() const {
+    return(postApplyScript);
+}
+
+//*********************************************************************
+//						getComputeScript
+//*********************************************************************
+
+bstring Effect::getComputeScript() const {
+    return(computeScript);
+}
+
+//*********************************************************************
+//						getType
+//*********************************************************************
+
+bstring Effect::getType() const {
+    return(type);
+}
+
+//*********************************************************************
+//						isPulsed
+//*********************************************************************
+
+bool Effect::isPulsed() const {
+    return(pulsed);
+}
+
+//*********************************************************************
+//						isSpell
+//*********************************************************************
+
+bool Effect::isSpell() const {
+    return(isSpellEffect);
+}
+
+//*********************************************************************
+//						isSpell
+//*********************************************************************
+
+bool Effect::usesStrength() const {
+    return(usesStr);
+}
+
+//*********************************************************************
+//						getRoomDelStr
+//*********************************************************************
+
+bstring Effect::getRoomDelStr() const {
+    return(roomDelStr);
+}
+
+//*********************************************************************
+//						getRoomAddStr
+//*********************************************************************
+
+bstring Effect::getRoomAddStr() const {
+    return(roomAddStr);
+}
+
+//*********************************************************************
+//						getSelfDelStr
+//*********************************************************************
+
+bstring Effect::getSelfDelStr() const {
+    return(selfDelStr);
+}
+
+//*********************************************************************
+//						getSelfAddStr
+//*********************************************************************
+
+bstring Effect::getSelfAddStr() const {
+    return(selfAddStr);
+}
+
+//*********************************************************************
+//						getOppositeEffect
+//*********************************************************************
+
+bstring Effect::getOppositeEffect() const {
+    return(oppositeEffect);
+}
+
+//*********************************************************************
+//						getDisplay
+//*********************************************************************
+
+bstring Effect::getDisplay() const {
+    return(display);
+}
+
+//*********************************************************************
+//						hasBaseEffect
+//*********************************************************************
+
+bool EffectInfo::hasBaseEffect(const bstring& effect) const {
+	return(myEffect->hasBaseEffect(effect));
+}
+
+//*********************************************************************
+//						hasBaseEffect
+//*********************************************************************
+
+bool Effect::hasBaseEffect(const bstring& effect) const {
+	for(const bstring& be : baseEffects) {
+		if(be == effect)
+			return(true);
+	}
+	return(false);
+}
+
+//*********************************************************************
+//						getName
+//*********************************************************************
+
+bstring Effect::getName() const {
+    return(name);
+}
+
+//*********************************************************************
+//						EffectInfo
+//*********************************************************************
+// TODO: Add applier here
+
+EffectInfo::EffectInfo(bstring pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent, const Creature* owner):
+		name(pName), lastMod(pLastMod), lastPulse(pLastMod), duration(pDuration), strength(pStrength), myParent(pParent)
+{
+	myEffect = gConfig->getEffect(pName);
+	if(!myEffect)
+		throw bstring("Can't find effect " + pName);
+	setOwner(owner);
+}
+
+//*********************************************************************
+//						EffectInfo
+//*********************************************************************
+
+EffectInfo::EffectInfo()
+{
+
+}
+
+//*********************************************************************
+//						EffectInfo
+//*********************************************************************
+
+EffectInfo::EffectInfo(xmlNodePtr rootNode) {
+	xmlNodePtr curNode = rootNode->children;
+
+	while(curNode) {
+			if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
+		else if(NODE_NAME(curNode, "Duration")) xml::copyToNum(duration, curNode);
+		else if(NODE_NAME(curNode, "Strength")) xml::copyToNum(strength, curNode);
+		else if(NODE_NAME(curNode, "Extra")) xml::copyToNum(extra, curNode);
+		else if(NODE_NAME(curNode, "PulseModifier")) xml::copyToNum(pulseModifier, curNode);
+
+		curNode = curNode->next;
+	}
+
+	lastPulse = lastMod = time(0);
+	myEffect = gConfig->getEffect(name);
+
+	if(!myEffect) {
+		throw bstring("Can't find effect listing " + name);
+	}
+}
+
+//*********************************************************************
+//						EffectInfo
+//*********************************************************************
+
+EffectInfo::~EffectInfo() {
+}
+
+//*********************************************************************
+//						setParent
+//*********************************************************************
+
+void EffectInfo::setParent(MudObject* pParent) {
+	myParent = pParent;
+}
+
+//*********************************************************************
+//						getEffect
+//*********************************************************************
+
+Effect* EffectInfo::getEffect() const {
+    return(myEffect);
+}
+
+//*********************************************************************
+//						getName
+//*********************************************************************
+
+const bstring EffectInfo::getName() const {
+    return(name);
+}
+
+//*********************************************************************
+//						getOwner
+//*********************************************************************
+
+const bstring EffectInfo::getOwner() const {
+    return(pOwner);
+}
+
+//*********************************************************************
+//						isOwner
+//*********************************************************************
+
+bool EffectInfo::isOwner(const Creature* owner) const {
+	// currently, only players can own effects
+	return(owner && owner->isPlayer() && pOwner == owner->getName());
+}
+
+//*********************************************************************
+//						getLastMod
+//*********************************************************************
+
+time_t EffectInfo::getLastMod() const {
+    return(lastMod);
+}
+
+//*********************************************************************
+//						getDuration
+//*********************************************************************
+
+long EffectInfo::getDuration() const {
+    return(duration);
+}
+
+//*********************************************************************
+//						getStrength
+//*********************************************************************
+
+int EffectInfo::getStrength() const {
+    return(strength);
+}
+
+//*********************************************************************
+//						getExtra
+//*********************************************************************
+
+int EffectInfo::getExtra() const {
+    return(extra);
+}
+
+//*********************************************************************
+//						isPermanent
+//*********************************************************************
+
+bool EffectInfo::isPermanent() const {
+    return(duration == -1);
+}
+
+//*********************************************************************
+//						getParent
+//*********************************************************************
+
+MudObject* EffectInfo::getParent() const {
+    return(myParent);
+}
+
+//*********************************************************************
+//						getApplier
+//*********************************************************************
+
+MudObject* EffectInfo::getApplier() const {
+    return(myApplier);
+}
+
+//*********************************************************************
+//						setOwner
+//*********************************************************************
+
+void EffectInfo::setOwner(const Creature* owner) {
+	if(owner)
+		pOwner = owner->getName();
+	else
+		pOwner = "";
+}
+
+//*********************************************************************
+//						setStrength
+//*********************************************************************
+
+void EffectInfo::setStrength(int pStrength) {
+	if(!this)
+		return;
+	strength = pStrength;
+}
+
+//*********************************************************************
+//						setExtra
+//*********************************************************************
+
+void EffectInfo::setExtra(int pExtra) {
+	if(!this)
+		return;
+	extra = pExtra;
+}
+
+//*********************************************************************
+//						setDuration
+//*********************************************************************
+
+void EffectInfo::setDuration(long pDuration) {
+	if(!this)
+		return;
+	duration = pDuration;
 }

@@ -28,6 +28,10 @@
 #include <iomanip>
 #include <locale>
 
+//########################################################################
+//# AlchemyInfo
+//########################################################################
+
 
 //*********************************************************************
 //						getDisplayString
@@ -109,7 +113,7 @@ const AlchemyInfo *Config::getAlchemyInfo(bstring effect) const {
 //*********************************************************************
 
 namespace Alchemy {
-	long MAX_ALCHEMY_DURATION = 3900;
+	const long MAX_ALCHEMY_DURATION = 3900;
 	long getMaximumDuration() {
 		return(MAX_ALCHEMY_DURATION);
 	}
@@ -121,14 +125,16 @@ namespace Alchemy {
 
 }
 
-//*********************************************************************
-//						AlchemyEffect
-//*********************************************************************
+
+//########################################################################
+//# AlchemyEffect
+//########################################################################
 
 AlchemyEffect::AlchemyEffect() {
-	duration = strength = 0;
-	quality = 100;
+        duration = strength = 0;
+        quality = 100;
 }
+
 
 AlchemyEffect::AlchemyEffect(const AlchemyEffect &ae) {
 	effect = ae.effect;
@@ -217,6 +223,10 @@ bool Player::alchemyEffectVisible(Object* obj, const bstring effect) {
 
 }
 
+//*********************************************************************
+//						learnAlchemyEffect
+//*********************************************************************
+
 bool Player::learnAlchemyEffect(Object* obj, const bstring effect) {
 	if(!obj || effect.empty())
 		return(false);
@@ -234,7 +244,7 @@ bool Player::learnAlchemyEffect(Object* obj, const bstring effect) {
 //*********************************************************************
 //						showAlchemyEffects
 //*********************************************************************
-// NOTE: A null creature is perfectly valid, so handle it properly
+// NOTE: A null player is perfectly valid, so handle it properly
 
 bstring Object::showAlchemyEffects(Player *player) {
 	bstring toReturn;
@@ -383,25 +393,27 @@ int cmdBrew(Player* player, cmd* cmnd) {
 	bool isPotion = false;
 
 
-	// TODO: Modify
-	long baseDur = (5.95387755 *skillLevel);
 
 	Object* potion = Object::getNewPotion();
+
+	float alchemySkillModifier = player->getSkillGained("alchemy");
 
 	int i = 1;
 	// Copy the alchemy effects to the potion
 	for(std::pair<bstring, AlchemyEffect> aep : effects) {
 		AlchemyEffect eff = aep.second;
-		long duration = baseDur;
+		long duration = 10;
 
 		const AlchemyInfo* alc = gConfig->getAlchemyInfo(eff.getEffect());
 		if(alc) {
 			// Adjust things based on the alchemy info
 			player->print("Found an alchemy Info!\n");
 			duration = alc->getBaseDuration();
+			duration = (long)((eff.getQuality() / 100.0) * duration);
 			if(alc->isPositive())
 				isPotion = true;
 		}
+
 		eff.setDuration(duration);
 		player->print("Effect: %s Duration: %d\n", eff.getEffect().c_str(), eff.getDuration());
 		potion->addAlchemyEffect(i++, eff);

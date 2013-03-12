@@ -17,3 +17,5 @@
 /*.o
 /*~
 /.ptp-sync
+.objs/
+.deps/

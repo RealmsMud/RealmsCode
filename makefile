@@ -3,7 +3,9 @@ LANG=C
 # so we can modify the makefile and not worry about changing g++/icc
 include compiler
 
-CFLAGS := -g -Wall -I/usr/include/libxml2 $(COMPILER_CFLAGS) -std=c++0x -I.
+PROGRAM = realms.exe
+
+CFLAGS := -g -Wall -I/usr/include/libxml2 $(COMPILER_CFLAGS) -std=c++11 -I.
 CFLAGS += -I/usr/include/python3.2 
 
 
@@ -16,7 +18,7 @@ GENERAL_SOURCE += combat.cpp combatSystem.cpp command1.cpp command2.cpp command4
 GENERAL_SOURCE += commerce.cpp communication.cpp config.cpp conjuration.cpp cmd.cpp creatureStreams.cpp craft.cpp 
 GENERAL_SOURCE += creature.cpp creature2.cpp creatures.cpp creatureAttr.cpp damage.cpp data.cpp delayedAction.cpp
 GENERAL_SOURCE += demographics.cpp deityData.cpp die.cpp dice.cpp divination.cpp dm.cpp dmcrt.cpp dmobj.cpp dmply.cpp 
-GENERAL_SOURCE += dmroom.cpp duel.cpp effects.cpp effectsAttr.cpp enchantment.cpp equipment.cpp errors.cpp evocation.cpp
+GENERAL_SOURCE += dmroom.cpp duel.cpp effects.cpp enchantment.cpp equipment.cpp errors.cpp evocation.cpp
 GENERAL_SOURCE += exits.cpp factions.cpp files-xml-read.cpp fighters.cpp files-xml-save.cpp
 GENERAL_SOURCE += fishing.cpp flags.cpp global.cpp gods.cpp group.cpp groups.cpp guilds.cpp healers.cpp healmagic.cpp 
 GENERAL_SOURCE += help.cpp hooks.cpp illusion.cpp io.cpp import.cpp levelGain.cpp location.cpp log.cpp logic.cpp login.cpp 
@@ -35,21 +37,71 @@ REALMS_SOURCE  := main.cpp
 
 ALL_SOURCE     := $(GENERAL_SOURCE) $(REALMS_SOURCE)
 
-GENERAL_OBJ    := $(notdir $(GENERAL_SOURCE:%.cpp=%.o))
-REALMS_OBJ	   := $(GENERAL_OBJ) $(notdir $(REALMS_SOURCE:%.cpp=%.o))
+DEPSDIR = .deps/$(PROGRAM)
+OBJSDIR = .objs/$(PROGRAM)
+
+GENERAL_OBJ    := $(GENERAL_SOURCE:%.cpp=$(OBJSDIR)/%.o)
+REALMS_OBJ	   := $(GENERAL_OBJ) $(REALMS_SOURCE:%.cpp=$(OBJSDIR)/%.o)
 
 ALLOBJ         := $(REALMS_OBJ)
 
-BINS := realms.exe list.exe convert.exe
+DEPSPRECOMP = $(PRE_COMPILED_HEADER:%.h=$(DEPSDIR)/%.d)
+OBJSPRECOMP = $(PRE_COMPILED_HEADER:%.h=%.h.gch)
+
+BINS := realms.exe
+
 
 default:
 	@echo 'Using $(CC) as a compiler' 
 	$(MAKE) all
 
-DEPS := $(notdir $(ALL_SOURCE:%.cpp=%.d)) mud.h.d
--include $(DEPS)
 
-all: realms.exe 
+DEPS = $(ALL_SOURCE:%.cpp=$(DEPSDIR)/%.d)
+
+#Linkage
+$(PROGRAM): $(DEPSPRECOMP) $(DEPS) $(OBJSPRECOMP) $(REALMS_OBJ)
+	@echo 'Building target: $@'
+	@$(CC) -o $@ $(CFLAGS) $(REALMS_OBJ) $(LIBS) 
+	@echo 'Done making: $@'
+	
+#cleaning
+.PHONY: clean
+clean:
+	@echo 'Removing all binaries, dependancies, and object files.'
+	@rm -rf $(OBJSDIR)
+	@rm -f $(BINS)
+	@rm -rf $(DEPSDIR)
+	@rm -f *.pchi
+	@rm -f *.gch
+	@rm -f *.d
+	@rm -f *~
+	
+	
+#creating the dependencies of the %.c files
+$(DEPSDIR)/%.d: %.cpp
+	@echo "Making dependencies for $<"
+	@dirname $@ | xargs mkdir -p 2>/dev/null || echo "$@ already exists" >/dev/null
+	@$(CC) -MM $(CFLAGS) $< 2>/dev/null | sed 's#.*:# $@ :#1' > $@
+	
+#creating the dependencies of the %.h files, for the precompiled header
+$(DEPSDIR)/%.d: %.h
+	@echo "Making dependencies for precompiled header $<"
+	@dirname $@ | xargs mkdir -p 2>/dev/null || echo "$@ already exists" >/dev/null
+	@$(CC) -MM $(CFLAGS) $< 2>/dev/null | sed 's#.*:# $@ :#1' > $@
+	
+#compiling the precompiled header
+%.h.gch:%.h $(DEPSPRECOMP)
+	@echo "Precompiling header $@..."
+	@$(CC) $(CFLAGS) -o $@ -c $< || echo "error. Disabling precompiled header"
+	@echo "...Done"
+	
+#compiling source files
+$(OBJSDIR)/%.o: %.cpp $(DEPSDIR)/%.d $(OBJSPRECOMP)
+	@echo -e 'Compiling $<'
+	@dirname $@ | xargs mkdir -p 2>/dev/null || echo "$@ already exists" >/dev/null
+	@$(CC) $(CFLAGS) $(ICCFLAGS) -c $< -o $@
+	
+all: $(PROGRAM)
 		
 #all: $(BINS)
 
@@ -57,46 +109,16 @@ copy:
 	@echo 'Copying binary to bin dir.'
 	@cp -f realms.exe ../bin/
 	
-clean:
-	@echo 'Removing all binaries, dependancies, and object files.'
-	@rm -f $(ALLOBJ)
-	@rm -f $(BINS)
-	@rm -f $(DEPS)
-	@rm -f *.pchi
-	@rm -f *.gch
-	@rm -f *.d
-	@rm -f *~
-
-mud.h.gch: mud.h
-	@echo 'Precompiling mud.h'
-	@g++ -x c++-header mud.h -o mud.h.gch $(CFLAGS) && \
-	g++ -MM -MG -MT mud.h.gch $(CFLAGS) mud.h > mud.h.d
-
-convert.exe: $(CONVERT_OBJ)
-	@echo 'Building target: $@'
-	@$(CC) -o $@ $(CFLAGS) $(CONVERT_OBJ) $(LIBS) 
-	@echo 'Done making: $@'
-	
-list.exe: $(LIST_OBJ)
-	@echo 'Building target: $@'
-	@$(CC) -o $@ $(CFLAGS) $(LIST_OBJ) $(LIBS) 
-	@echo 'Done making: $@'
-	
-realms.exe: $(PRE_COMPILED_HEADER) $(REALMS_OBJ)
-	@echo 'Building target: $@'
-	@$(CC) -o $@ $(CFLAGS) $(REALMS_OBJ) $(LIBS) 
-	@echo 'Done making: $@'
-
-threat.exe:  $(PRE_COMPILED_HEADER) $(THREAT_OBJ)
-	@echo 'Building target: $@'
-	@$(CC) -o $@ $(CFLAGS) $(THREAT_OBJ) $(LIBS)  
-	@echo 'Done making: $@'
-
 compiler:
 	@cp compiler.default compiler
+
+#include the dependencies, (if we are not actually performing a mere <make clean>)
+ifneq ($(strip $(MAKECMDGOALS)),clean)
+ifneq ($(strip $(DEPSPRECOMP)),)
+-include $(DEPSPRECOMP)
+endif
+ifneq ($(strip $(DEPS)),)
+-include $(DEPS)
+endif
+endif
 	
-# General compilation commands
-%.o : %.cpp
-	@echo -e 'Compiling $<'
-	@$(CC) $(CFLAGS) $(ICCFLAGS) -c $< -o$@ && \
-	g++ -MM -MG $(CFLAGS) $< > $(@:%.o=%.d)

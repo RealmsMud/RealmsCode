@@ -19,4 +19,4 @@ CC = g++
 #  ########  UNCOMMENT FOR CYGWIN  ########
 #COMPILER_CFLAGS = -I/usr/include/boost-1_33_1 -I./
 
-PRE_COMPILED_HEADER = mud.h.gch
+PRE_COMPILED_HEADER = mud.h

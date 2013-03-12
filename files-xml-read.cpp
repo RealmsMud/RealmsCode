@@ -1573,7 +1573,6 @@ bool Config::loadAlchemy() {
 }
 
 AlchemyInfo::AlchemyInfo(xmlNodePtr rootNode) {
-	init();
 
 	rootNode = rootNode->children;
 	while(rootNode != NULL)

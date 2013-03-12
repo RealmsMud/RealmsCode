@@ -117,7 +117,6 @@ public:
 	EffectInfo(bstring pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent=0, const Creature* owner=0);
 	EffectInfo(xmlNodePtr rootNode);
 	virtual ~EffectInfo();
-	void		clear();
 
 	bool		compute(MudObject* applier);
 	bool		add();
@@ -165,23 +164,23 @@ protected:
 	EffectInfo();
 
 private:
-	bstring		name;			// Which effect is this
-	bstring		pOwner;			// Who cast this effect (player)
-	time_t		lastMod;		// When did we last update duration
-	time_t		lastPulse;		// Last Pulsed time
-	int			pulseModifier;	// Adjustment to base pulse timer
-	long		duration;		// How much longer will this effect last
-	int			strength;		// How strong is this effect (for overwriting effects)
-	int			extra;			// Extra info
-	Effect*		myEffect;		// Pointer to the effect listing
+	bstring		name;				// Which effect is this
+	bstring		pOwner;				// Who cast this effect (player)
+	time_t		lastMod = 0;		// When did we last update duration
+	time_t		lastPulse  = 0;		// Last Pulsed time
+	int			pulseModifier = 0;	// Adjustment to base pulse timer
+	long		duration = 0;		// How much longer will this effect last
+	int			strength = 0;		// How strong is this effect (for overwriting effects)
+	int			extra = 0;			// Extra info
+	Effect*		myEffect = 0;		// Pointer to the effect listing
 
-	MudObject*	myParent;		// Pointer to parent MudObject
+	MudObject*	myParent = 0;		// Pointer to parent MudObject
 
 	// MudObject applying this effect; only valid during application unless otherwise
 	// specified. And if you DO specify otherwise, be sure you know what you're doing!
 	// The effect will keep a pointer to the applier, and if the applier is removed
 	// from memory, you'll get an invalid pointer that might crash the game.
-	MudObject*	myApplier;
+	MudObject*	myApplier = 0;
 
 };
 

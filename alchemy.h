@@ -29,9 +29,14 @@ namespace Alchemy {
 	bstring getEffectString(Object* obj, const bstring& effect);
 };
 
+//########################################################################
+//# AlchemyInfo
+//########################################################################
+
 class AlchemyInfo {
 public:
     AlchemyInfo(xmlNodePtr rootNode);
+
     bstring getDisplayString();
 
     const bstring& getName() const;
@@ -47,24 +52,28 @@ public:
 
 
 protected:
-
+	void init();
 	bstring name;
     bstring potionDisplayName;
     bstring potionPrefix;
-    bool positive;
+    bool positive = false;
 
     // Standard duration and strength for this effect - will be modified by alchemy skill,
     // equipment quality, and herb quality
-    long baseDuration;
-    short baseStrength;
+    long baseDuration = 10;
+    short baseStrength = 1;
 
     bstring action; // effect, python
-    bool throwable; // Can this be thrown at a door/creature/etc
+    bool throwable = false; // Can this be thrown at a door/creature/etc
     bstring pythonScript; // if action == python, or if throwable, needs to handle both
 };
 
+//########################################################################
+//# AlchemyEffect
+//########################################################################
+
 class AlchemyEffect {
-private:
+protected:
     bstring     effect;
     short       quality;
 
