@@ -290,6 +290,7 @@ public:
 	Creature* findMagicVictim(bstring toFind, int num, SpellData* spellData, bool aggressive=true, bool selfOk=false, bstring noVictim="", bstring notFound="");
 
 	bool hasAttackableTarget();
+	bool isAttackingTarget();
 	Creature* getTarget();
 	Creature* addTarget(Creature* toTarget);
 	void checkTarget(Creature* toTarget);
@@ -597,6 +598,7 @@ public:
 	bool willBecomeWerewolf() const;
 	bool addLycanthropy(Creature *killer, int chance);
 
+
 // Get
 	unsigned short getClass() const; // *
 	unsigned short getLevel() const; // *
@@ -701,11 +703,14 @@ public:
 	bool canEnter(const UniqueRoom* room, bool p=false) const;
 	bool willFit(const Object* object) const;
 	bool canWield(const Object* object, int n) const;
-	bool canFlee();
+	bool canFlee(bool displayFail = false, bool checkTimer = true);
 	bool canFleeToExit(const Exit *exit, bool skipScary=false, bool blinking=false);
 	Exit* getFleeableExit();
 	BaseRoom* getFleeableRoom(Exit* exit);
-	int flee(bool magicTerror=false);
+	int flee(bool magicTerror=false, bool wimpyFlee = false);
+	bool doFlee(bool magicTerror=false);
+
+	bool isSitting();
 
 	bool ableToDoCommand(const cmd* cmnd=NULL) const;
 	void wake(bstring str = "", bool noise=false);
@@ -1046,6 +1051,9 @@ protected:
 	int uniqueObjId;
 	typedef std::map<bstring, bool> KnownAlchemyEffectsMap;
 	KnownAlchemyEffectsMap knownAlchemyEffects;
+
+	bool fleeing = false;
+
 public:
 // Data
 	std::list<CatRef> storesRefunded;   // Shops the player has refunded an item in
@@ -1124,6 +1132,9 @@ public:
 	double winterProtection() const;
 	bool isHardcore() const;
 	bool canMistNow() const;
+	bool autoAttackEnabled() const;
+	bool isFleeing() const;
+	void setFleeing(bool pFleeing);
 
 // Lists
 	bool isIgnoring(bstring name) const;

@@ -70,7 +70,7 @@ private:
 	bstring		roomAddStr;
 	bstring		roomDelStr;
 	bool		pulsed;		 // Does this effect need to be pulsed?
-	int		pulseDelay;	 // Time between pulses
+	int			pulseDelay;	 // Time between pulses
 
 	bstring		type;
 
@@ -83,6 +83,11 @@ private:
 
 	bool		isSpellEffect;	// Decides if the effect will show up under "spells under"
 	bool		usesStr;
+
+	int			baseDuration;		// Base duration of the effect
+	float		potionMultiplyer;	// Multiplier of duration for potion
+	int			magicRoomBonus;		// Bonus in +magic room
+
 };
 
 

@@ -6,10 +6,10 @@ include compiler
 PROGRAM = realms.exe
 
 CFLAGS := -g -Wall -I/usr/include/libxml2 $(COMPILER_CFLAGS) -std=c++11 -I.
-CFLAGS += -I/usr/include/python3.2 
+CFLAGS += -I/usr/include/python3.3m -I/usr/include/x86_64-linux-gnu/python3.3m
 
 
-LIBS = -laspell -lxml2 -lz -lc -L./ -lpython3.2mu -lboost_python-py32 $(COMPILER_LIBS)
+LIBS = -laspell -lxml2 -lz -lc -L./ -lpython3.3m -lboost_python-py33  $(COMPILER_LIBS) 
 
 GENERAL_SOURCE := alphanum.cpp pythonHandler.cpp abjuration.cpp access.cpp action.cpp afflictions.cpp
 GENERAL_SOURCE += alchemy.cpp alignment.cpp anchor.cpp area.cpp attack.cpp asynch.cpp timer.cpp bank.cpp
@@ -76,6 +76,10 @@ clean:
 	@rm -f *.d
 	@rm -f *~
 	
+.PHONY: objclean
+objclean:
+	@echo 'Removing object files'
+	@rm -rf $(OBJSDIR)
 	
 #creating the dependencies of the %.c files
 $(DEPSDIR)/%.d: %.cpp
@@ -92,14 +96,14 @@ $(DEPSDIR)/%.d: %.h
 #compiling the precompiled header
 %.h.gch:%.h $(DEPSPRECOMP)
 	@echo "Precompiling header $@..."
-	@$(CC) $(CFLAGS) -o $@ -c $< || echo "error. Disabling precompiled header"
+	@$(CC) $(CFLAGS)  -x c++-header -o $@ -c $< || echo "error. Disabling precompiled header"
 	@echo "...Done"
 	
 #compiling source files
 $(OBJSDIR)/%.o: %.cpp $(DEPSDIR)/%.d $(OBJSPRECOMP)
 	@echo -e 'Compiling $<'
 	@dirname $@ | xargs mkdir -p 2>/dev/null || echo "$@ already exists" >/dev/null
-	@$(CC) $(CFLAGS) $(ICCFLAGS) -c $< -o $@
+	@$(CC) $(SRCSPRECOMP:%.h=-include %.h) $(CFLAGS) $(ICCFLAGS) -c $< -o $@
 	
 all: $(PROGRAM)
 		
@@ -114,6 +118,7 @@ compiler:
 
 #include the dependencies, (if we are not actually performing a mere <make clean>)
 ifneq ($(strip $(MAKECMDGOALS)),clean)
+ifneq ($(strip $(MAKECMDGOALS)),objclean)
 ifneq ($(strip $(DEPSPRECOMP)),)
 -include $(DEPSPRECOMP)
 endif
@@ -121,4 +126,4 @@ ifneq ($(strip $(DEPS)),)
 -include $(DEPS)
 endif
 endif
-	
+endif

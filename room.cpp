@@ -39,6 +39,8 @@ void Player::addToSameRoom(Creature* target) {
 
 void Player::finishAddPlayer(BaseRoom* room) {
 
+	setFleeing(false);
+
 	wake("You awaken suddenly!");
 	interruptDelayedActions();
 

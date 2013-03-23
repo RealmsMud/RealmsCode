@@ -509,3 +509,22 @@ Creature* Creature::getTarget() {
 bool Creature::hasAttackableTarget() {
 	return(getTarget() && getTarget() != this && inSameRoom(getTarget()) && canSee(getTarget()));
 }
+
+
+//*********************************************************************
+//							isAttackingTarget
+//*********************************************************************
+
+bool Creature::isAttackingTarget() {
+	Creature* target = getTarget();
+	if(!target)
+		return(false);
+
+	Monster* mTarget = target->getAsMonster();
+
+	// Player auto combat only works vs monsters!
+	if(!mTarget)
+		return(false);
+
+	return(mTarget->isEnemy(this));
+}

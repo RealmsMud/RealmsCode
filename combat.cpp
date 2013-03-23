@@ -106,6 +106,9 @@ int Monster::updateCombat() {
 	if(target->hasCharm(getName()) && flagIsSet(M_CHARMED))
 		return(0);
 
+
+	target->checkTarget(this);
+
 	NUMHITS++;
 	n = 20;
 	if(flagIsSet(M_CAST_PRECENT))
@@ -178,7 +181,7 @@ int Monster::updateCombat() {
 			casted = true;
 			if(pTarget && pTarget->flagIsSet(P_WIMPY) && !pTarget->flagIsSet(P_LAG_PROTECTION_OPERATING)) {
 				if(pTarget->hp.getCur() <= pTarget->getWimpy()) {
-					pTarget->flee();
+					pTarget->flee(false, true);
 					return(1);
 				}
 			}
@@ -335,6 +338,7 @@ int Monster::updateCombat() {
 		}
 
 
+
 		if(flagIsSet(M_WILL_POISON))
 			tryToPoison(target);
 		if(flagIsSet(M_CAN_STONE))
@@ -395,7 +399,7 @@ int Monster::updateCombat() {
 			!pTarget->flagIsSet(P_LAG_PROTECTION_ACTIVE))
 		{
 			if(pTarget->hp.getCur() <= pTarget->getWimpy()) {
-				pTarget->flee();
+				pTarget->flee(false, true);
 				return(1);
 			}
 		} else if(pTarget && pTarget->isEffected("fear")) {
@@ -405,7 +409,7 @@ int Monster::updateCombat() {
 				((pTarget->getClass() == PALADIN ||
 						 pTarget->getClass() == DEATHKNIGHT) ? -10 : 0);
 			if(ff < mrand(1,100)) {
-				pTarget->flee();
+				pTarget->flee(true);
 				return(1);
 			}
 		}
@@ -437,7 +441,7 @@ int Monster::updateCombat() {
 				!pTarget->flagIsSet(P_LAG_PROTECTION_OPERATING)
 			) {
 				if(pTarget->hp.getCur() <= pTarget->getWimpy()) {
-					pTarget->flee();
+					pTarget->flee(false, true);
 					return(1);
 				}
 			}
@@ -683,6 +687,10 @@ int Player::lagProtection() {
 		return(0);
 	}
 
+	// Only lag protect below wimpy if auto attack is on
+	if(autoAttackEnabled() && hp.getCur() > getWimpy())
+		return(0);
+
 
 	printColor("^cPossible lagout detected.\n");
 	statistics.lagout();
@@ -725,7 +733,7 @@ int Player::lagProtection() {
 	}
 
 	setFlag(P_LAG_PROTECTION_OPERATING);
-	if(flee()) {
+	if(flee(false, true)) {
 		if(isStaff()) {
 			broadcast(::isStaff, "^C### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.",
 			getCName(), level, hp.getCur(), hp.getMax(), getRoomParent()->fullName().c_str());

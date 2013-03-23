@@ -206,6 +206,7 @@ private:
 	int checkNew(void); // Accept new connections
 	int processInput(void); // Process input from users
 	int processCommands(void); // Process commands from users
+	int updatePlayerCombat(void); // Handle player auto attacks etc
 	int processChildren(void);
 	int processListOutput(childProcess &lister);
 

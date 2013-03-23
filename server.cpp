@@ -297,6 +297,9 @@ int Server::run(void) {
 		processInput();
 
 		processCommands();
+
+		updatePlayerCombat();
+
 		// Update game here
 		updateGame();
 
@@ -505,6 +508,28 @@ int Server::processCommands() {
 }
 
 //********************************************************************
+//						updatePlayerCombat
+//********************************************************************
+
+int Server::updatePlayerCombat() {
+	for(Socket * sock : *vSockets) {
+    	Player* player=sock->getPlayer();
+    	if(player) {
+    		if(player->isFleeing() && player->canFlee(false)) {
+    			player->doFlee();
+    		} else if(player->autoAttackEnabled() && !player->isFleeing() && player->hasAttackableTarget() && player->isAttackingTarget()) {
+				if(!player->checkAttackTimer(false))
+					continue;
+
+				player->attackCreature(player->getTarget(), ATTACK_NORMAL);
+			}
+        }
+	}
+	return(0);
+}
+
+
+//********************************************************************
 //						processOutput
 //********************************************************************
 
@@ -629,8 +654,8 @@ void Server::pruneDns() {
 void Server::pulseTicks(long t) {
 
     for(Socket* sock : *vSockets) {
-	Player* player=sock->getPlayer();
-	if(player) {
+    	Player* player=sock->getPlayer();
+		if(player) {
             player->pulseTick(t);
             if(player->isPlaying())
                 player->pulseSong(t);              
@@ -693,7 +718,7 @@ void Server::updateRandom(long t) {
 	lastRandomUpdate = t;
 
 	Player* player;
-	for(Socket * sock : sockets) {
+	for(Socket * sock : *vSockets) {
 		player = sock->getPlayer();
 
 		if(!player || !player->getRoomParent())

@@ -184,6 +184,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
 			attack->used++;
 	}
 
+	victim->checkTarget(this);
 	if(attack->type == SPECIAL_WEAPON) {
 		// General attack, so compute an attack result
 		int resultFlags = NO_CRITICAL | NO_FUMBLE; // We'll be nice for now...no critical backstabs on mobs :)

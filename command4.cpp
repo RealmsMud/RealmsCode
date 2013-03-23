@@ -87,6 +87,8 @@ void Player::score(const Player* viewer) {
 
 	oStr << gServer->delayedActionStrings(this);
 
+	if(isFleeing())
+		oStr << " ^r*Fleeing*";
 	if(flagIsSet(P_HIDDEN))
 		oStr << " ^c*Hidden*";
 	if(isEffected("courage"))

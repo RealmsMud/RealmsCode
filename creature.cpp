@@ -1030,11 +1030,15 @@ void Monster::checkSpellWearoff() {
 }
 
 
+bool Creature::isSitting() {
+	return(pFlagIsSet(P_SITTING));
+}
+
 //*********************************************************************
 //						canFlee
 //*********************************************************************
 
-bool Creature::canFlee() {
+bool Creature::canFlee(bool displayFail, bool checkTimer) {
 	bool	crtInRoom=false;
 	long	t=0;
 	int		i=0;
@@ -1056,12 +1060,14 @@ bool Creature::canFlee() {
 			return(false);
 
 		if(flagIsSet(P_SITTING)) {
-			print("You have to stand up first.\n");
+			if(displayFail)
+				print("You have to stand up first.\n");
 			return(false);
 		}
 
 		if(isEffected("hold-person")) {
-			print("You are unable to move right now.\n");
+			if(displayFail)
+				print("You are unable to move right now.\n");
 			return(false);
 		}
 
@@ -1069,22 +1075,17 @@ bool Creature::canFlee() {
 		if(	(cClass == BERSERKER || cClass == CLERIC) &&
 			isEffected("berserK") )
 		{
-			printColor("^rYour lust for battle prevents you from fleeing!\n");
+			if(displayFail)
+				printColor("^rYour lust for battle prevents you from fleeing!\n");
 			return(false);
 		}
 
-		if(!isEffected("fear") && !isStaff()) {
-//			// Check attack timer first
-//			pThis->modifyAttackDelay(30);
-//			bool result = pThis->checkAttackTimer();
-//			pThis->modifyAttackDelay(-30); // Set the timer back to whwere it was before
-//			if(result == false)
-//				return(false);
-
+		if(checkTimer && !isEffected("fear") && !isStaff()) {
 			t = time(0);
 			i = MAX(getLTAttack(), MAX(lasttime[LT_SPELL].ltime,lasttime[LT_READ_SCROLL].ltime)) + 3L;
 			if(t < i) {
-				pleaseWait(i-t);
+				if(displayFail)
+					pleaseWait(i-t);
 				return(false);
 			}
 		}
@@ -1113,8 +1114,10 @@ bool Creature::canFlee() {
 		    }
 		}
 
-		if(	!crtInRoom && !checkStaff("There's nothing to flee from!\n") )
+		if(	!crtInRoom && !checkStaff("There's nothing to flee from!\n") ) {
+			getAsPlayer()->setFleeing(false);
 			return(false);
+		}
 	}
 
 	return(true);
@@ -1286,28 +1289,45 @@ BaseRoom* Creature::getFleeableRoom(Exit* exit) {
 //*********************************************************************
 //						flee
 //*********************************************************************
-// This function allows a player to flee from an enemy. If successful
-// the player will drop their readied weapon and run through one of the
-// visible exits, losing 10% or 1000 experience, whichever is less.
+// This function allows a creature to flee from an enemy. If it's a monster,
+// fear induced or because of wimpy, it will try to flee immediately, otherwise it will set
+// the player as fleeing and try to flee during the combat update
 
-int Creature::flee(bool magicTerror) {
+int Creature::flee(bool magicTerror, bool wimpyFlee) {
+	Monster* mThis = getAsMonster();
+	Player* pThis = getAsPlayer();
+
+	if(!magicTerror && !canFlee(true, false))
+		return(0);
+
+	if(mThis || magicTerror || wimpyFlee) {
+		if(wimpyFlee && pThis)
+			pThis->setFleeing(true);
+		doFlee(magicTerror);
+	} else {
+		*this << "You frantically look around for someplace to flee to!\n";
+		pThis->setFleeing(true);
+	}
+	return(1);
+}
+
+bool Creature::doFlee(bool magicTerror) {
 	Monster* mThis = getAsMonster();
 	Player* pThis = getAsPlayer();
 	BaseRoom* oldRoom = getRoomParent(), *newRoom=0;
 	UniqueRoom*	uRoom=0;
-//	MapMarker* mapmarker=0;
+
 	Exit*	exit=0;
 	unsigned int n=0;
-
-	if(!magicTerror && !canFlee())
-		return(0);
 
 	if(isEffected("fear"))
 		magicTerror = true;
 
 	exit = getFleeableExit();
 	if(!exit) {
-		printColor("You failed to escape!\n");
+		printColor("You couldn't find any place to run to!\n");
+		if(pThis)
+			pThis->setFleeing(false);
 		return(0);
 	}
 
@@ -1402,10 +1422,12 @@ int Creature::flee(bool magicTerror) {
 	broadcast(getSock(), newRoom, "%M just fled rapidly into the room.", this);
 
 	if(pThis) {
+
 		pThis->doPetFollow();
 		uRoom = newRoom->getAsUniqueRoom();
 		if(uRoom)
 			pThis->checkTraps(uRoom);
+
 
 		if(Move::usePortal(pThis, oldRoom, exit))
 			Move::deletePortal(oldRoom, exit);
