@@ -282,8 +282,13 @@ int Server::run(void) {
 
 	while(running) {
 		if(Deadchildren) reapChildren();
+
 		processChildren();
 		timer.start(); // Start the timer
+
+		vSockets = new SocketVector(sockets.size());
+		std::copy(sockets.begin(), sockets.end(), vSockets->begin());
+		random_shuffle(vSockets->begin(), vSockets->end());
 
 		poll();
 
@@ -304,7 +309,10 @@ int Server::run(void) {
 		pulse++;
 
 		checkWebInterface();
-
+		
+		delete vSockets;
+		vSockets = 0;
+		
 		timer.end(); // End the timer
 		timer.sleep();
 	}
@@ -485,7 +493,7 @@ int Server::processInput() {
 //********************************************************************
 
 int Server::processCommands() {
-	for(Socket * sock : sockets) {
+	for(Socket * sock : *vSockets) {
 		if(sock->hasCommand() && sock->getState() != CON_DISCONNECTING) {
 			if(sock->processOneCommand() == -1) {
 				sock->setState(CON_DISCONNECTING);
@@ -501,7 +509,7 @@ int Server::processCommands() {
 //********************************************************************
 
 int Server::processOutput() {
-	for(Socket * sock : sockets) {
+	for(Socket * sock : *vSockets) {
 		if(FD_ISSET(sock->getFd(), &outSet) && sock->hasOutput()) {
 			sock->flush();
 		}
@@ -619,23 +627,15 @@ void Server::pruneDns() {
 //********************************************************************
 
 void Server::pulseTicks(long t) {
-	std::list<Socket*>::iterator it;
-	Player* player=0;
 
-	for(it = sockets.begin() ; it != sockets.end() ; ) {
-		player = (*it)->getPlayer();
-		if(player) {
-			player->pulseTick(t);
-			if(!player) {
-				it = sockets.erase(it);
-				continue;
-			}
-			if(player->isPlaying()) {
-				player->pulseSong(t);
-			}
-		}
-		it++;
-	}
+    for(Socket* sock : *vSockets) {
+	Player* player=sock->getPlayer();
+	if(player) {
+            player->pulseTick(t);
+            if(player->isPlaying())
+                player->pulseSong(t);              
+        }
+    }
 }
 
 
@@ -648,10 +648,9 @@ void Server::updateUsers(long t) {
 	int tout = 300;
 	lastUserUpdate = t;
 
-	Player* player=0;
-	for(Socket * sock : sockets) {
+    for(Socket* sock : *vSockets) {
 
-		player = sock->getPlayer();
+	    Player* player= sock->getPlayer();
 
 		if(player) {
 			if(player->isDm()) tout = t;
@@ -1647,7 +1646,8 @@ int Server::finishReboot() {
 	}
 
 	Numplayers = 0;
-
+	StartTime = time(0);
+ 
 	while(curNode != NULL) {
 		if(NODE_NAME(curNode, "Server")) {
 			childNode = curNode->children;
@@ -1748,7 +1748,6 @@ int Server::finishReboot() {
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
 
-	StartTime = time(0);
 	if(resetShips)
 		gConfig->calendar->resetToMidnight();
 	else

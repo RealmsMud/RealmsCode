@@ -72,6 +72,7 @@ typedef std::map<bstring, MudObject*,idComp> IdMap;
 typedef std::list<Monster*> MonsterList;
 typedef std::list<Group*> GroupList;
 typedef std::list<Socket*> SocketList;
+typedef std::vector<Socket*> SocketVector;
 typedef std::map<bstring, Player*> PlayerMap;
 class Server
 {
@@ -136,6 +137,7 @@ public:
 public:
 	PlayerMap players; // Map of all players
 	SocketList sockets; // List of all connected sockets
+	SocketVector* vSockets = 0;
 	void handlePythonError();
 	
 // ******************

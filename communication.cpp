@@ -961,7 +961,7 @@ int channel(Player* player, cmd* cmnd) {
 
 				toPrint.Replace("*IC-NAME*", icName.c_str());
 				toPrint.Replace("*OOC-NAME*", oocName.c_str());
-				std::cout << "ToPrint: " << toPrint << std::endl;
+				//std::cout << "ToPrint: " << toPrint << std::endl;
 
 				if(ply->isStaff() || (player->current_language && ply->isEffected("comprehend-languages"))
 				        || ply->languageIsKnown(player->current_language))
