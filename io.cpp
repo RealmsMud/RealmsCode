@@ -477,18 +477,6 @@ void broadcastGuild(int guildNum, int showName, const char *fmt,...) {
 
 }
 
-//********************************************************************
-//						disconnect_all_ply
-//********************************************************************
-// This function disconnects all players.
-
-void disconnect_all_ply() {
-	for(Socket* sock : gServer->sockets) {
-		sock->disconnect();
-	}
-	gServer->cleanUp();
-}
-
 //*********************************************************************
 //						shutdown_now
 //*********************************************************************

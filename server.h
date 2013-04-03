@@ -238,6 +238,7 @@ private:
 	int installPrintfHandlers();
 	void installSignalHandlers();
 
+	void populateVSockets();
 
 	// Delayed Actions
 protected:
@@ -347,7 +348,6 @@ public:
 	// Sockets
 	int deleteSocket(Socket* sock);
 	void disconnectAll(void);
-	int cleanUp(void); // Kick out any disconnectors and other general cleanup
 	int processOutput(void); // Send any buffered output
 
 	// Web Interface
@@ -388,6 +388,10 @@ public:
 	void removeEffectsIndex(BaseRoom* room);
 	void removeEffectsOwner(const Creature* owner);
 	void showEffectsIndex(const Player* player);
+
+protected:
+	int cleanUp(void); // Kick out any disconnectors and other general cleanup
+
 };
 
 #endif /*SERVER_H_*/

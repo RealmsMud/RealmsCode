@@ -295,10 +295,10 @@ void Socket::finishLogin() {
 
 	gServer->checkDuplicateName(this, true);
 	if(gServer->checkDouble(this)) {
-		gServer->cleanUp();
+//		gServer->cleanUp();
 		return;
 	}
-	gServer->cleanUp();
+//	gServer->cleanUp();
 
 	player = getPlayer();
 	bstring proxyName = player->getProxyName();

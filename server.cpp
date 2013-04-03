@@ -268,6 +268,16 @@ void Server::destroyInstance() {
 //--------------------------------------------------------------------
 
 
+
+void Server::populateVSockets() {
+    if(vSockets)
+        return;
+    vSockets = new SocketVector(sockets.size());
+    std::copy(sockets.begin(), sockets.end(), vSockets->begin());
+    random_shuffle(vSockets->begin(), vSockets->end());
+}
+                                                
+
 //********************************************************************
 //						run
 //********************************************************************
@@ -286,10 +296,8 @@ int Server::run(void) {
 		processChildren();
 		timer.start(); // Start the timer
 
-		vSockets = new SocketVector(sockets.size());
-		std::copy(sockets.begin(), sockets.end(), vSockets->begin());
-		random_shuffle(vSockets->begin(), vSockets->end());
-
+		populateVSockets();
+		
 		poll();
 
 		checkNew();
@@ -534,6 +542,8 @@ int Server::updatePlayerCombat() {
 //********************************************************************
 
 int Server::processOutput() {
+    // This can be called outside of the normal server loop so verify VSockets is populated
+    populateVSockets();
 	for(Socket * sock : *vSockets) {
 		if(FD_ISSET(sock->getFd(), &outSet) && sock->hasOutput()) {
 			sock->flush();

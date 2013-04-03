@@ -167,6 +167,7 @@ public:
 	Socket(int pFd, sockaddr_in pAddr, bool &dnsDone);
 	~Socket();
 
+	void cleanUp();
 	void reset();
 
 	void startTelnetNeg();

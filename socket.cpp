@@ -158,7 +158,7 @@ void zlib_free(void *opaque, void *address) {
 //********************************************************************
 
 void Socket::reset() {
-	fd = 0;
+	fd = -1;
 
 	opts.mccp = 0;
 	opts.dumb = true;
@@ -250,14 +250,10 @@ Socket::Socket(int pFd, sockaddr_in pAddr, bool &dnsDone) {
 }
 
 //********************************************************************
-//						~Socket
+//						closeFd
 //********************************************************************
-
-Socket::~Socket() {
-	std::cout << "Deconstructing socket with fd of " << fd << ", ";
-	NumSockets--;
-	std::cout << "Num sockets: " << NumSockets << std::endl;
-
+// Disconnect the underlying file descriptor
+void Socket::cleanUp() {
 	clearSpying();
 	clearSpiedOn();
 	msdpClearReporting();
@@ -269,9 +265,22 @@ Socket::~Socket() {
 		}
 		freePlayer();
 	}
-
 	endCompress();
-	close(fd);
+	if(fd > -1) {
+		close(fd);
+		fd = -1;
+	}
+
+}
+//********************************************************************
+//						~Socket
+//********************************************************************
+
+Socket::~Socket() {
+	std::cout << "Deconstructing socket , ";
+	NumSockets--;
+	std::cout << "Num sockets: " << NumSockets << std::endl;
+	cleanUp();
 }
 
 //********************************************************************
@@ -365,6 +374,8 @@ void Socket::addSpy(Socket *sock) {
 void Socket::disconnect() {
 	// TODO: Perhaps remove player from the world right here.
 	setState(CON_DISCONNECTING);
+	flush();
+	cleanUp();
 }
 
 //********************************************************************

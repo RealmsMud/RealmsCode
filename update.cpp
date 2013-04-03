@@ -368,7 +368,7 @@ void update_shutdown(long t) {
 		gConfig->swapAbort();
 		gConfig->resaveAllRooms(1);
 		gServer->saveAllPly();
-		disconnect_all_ply();
+		gServer->disconnectAll();
 		gConfig->save();
 		cleanUpMemory();
 

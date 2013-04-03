@@ -350,7 +350,6 @@ void broadcastGroup(bool dropLoot, Creature* player, const char *fmt, ...);
 void child_died(int sig);
 void quick_shutdown(int sig);
 void broadcastGuild(int guildNum, int showName, const char *fmt,...);
-void disconnect_all_ply(void);
 void shutdown_now(int sig);
 int check_flood(Socket* sock);
 
