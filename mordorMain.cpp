@@ -47,6 +47,8 @@ void startup_mordor(void) {
 	printf("Starting RoH Server" VERSION " compiled on " __DATE__ " at " __TIME__ " ");
 	#ifdef __CYGWIN__
 		printf("(CYGWIN)\n");
+	#elif defined(__MACOS)
+		printf("(MACOSX)\n");
 	#else
 		printf("(LINUX)\n");
 	#endif

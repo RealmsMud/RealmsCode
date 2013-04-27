@@ -19,6 +19,7 @@
 #include "mud.h"
 #include "login.h"
 #include "vprint.h"
+#define __CYGWIN__
 #include <stdarg.h>
 
 // Function Prototypes
@@ -75,7 +76,7 @@ void Player::vprint(const char *fmt, va_list ap) const {
 }
 
 
-#ifndef __CYGWIN__
+#if !defined(__CYGWIN__) && !defined(__MACOS__)
 // vprint, called by print and other variable argument print functions
 // absolutely not thread safe ;)
 
@@ -207,8 +208,6 @@ int Server::installPrintfHandlers() {
 #else
 
 
-char *obj_str(const Object *obj, int num, int flag );
-
 // vprint, only used on cygwin
 //
 void Socket::vprint(const char *fmt, va_list ap) {
@@ -216,7 +215,7 @@ void Socket::vprint(const char *fmt, va_list ap) {
 	char	*fmt2;
 	int		i = 0, j = 0, k;
 	int		num, loc, ind = -1, len, flags = 0;
-	int		arg[14];
+	void*		arg[14];
 	char	type;
 
 
@@ -228,20 +227,20 @@ void Socket::vprint(const char *fmt, va_list ap) {
 	if(!fmt2)
 		merror("print", FATAL);
 
-	arg[0] = va_arg(ap, int);
-	arg[1] = va_arg(ap, int);
-	arg[2] = va_arg(ap, int);
-	arg[3] = va_arg(ap, int);
-	arg[4] = va_arg(ap, int);
-	arg[5] = va_arg(ap, int);
-	arg[6] = va_arg(ap, int);
-	arg[7] = va_arg(ap, int);
-	arg[8] = va_arg(ap, int);
-	arg[9] = va_arg(ap, int);
-	arg[10] = va_arg(ap, int);
-	arg[11] = va_arg(ap, int);
-	arg[12] = va_arg(ap, int);
-	arg[13] = va_arg(ap, int);
+	arg[0] = va_arg(ap, void*);
+	arg[1] = va_arg(ap, void*);
+	arg[2] = va_arg(ap, void*);
+	arg[3] = va_arg(ap, void*);
+	arg[4] = va_arg(ap, void*);
+	arg[5] = va_arg(ap, void*);
+	arg[6] = va_arg(ap, void*);
+	arg[7] = va_arg(ap, void*);
+	arg[8] = va_arg(ap, void*);
+	arg[9] = va_arg(ap, void*);
+	arg[10] = va_arg(ap, void*);
+	arg[11] = va_arg(ap, void*);
+	arg[12] = va_arg(ap, void*);
+	arg[13] = va_arg(ap, void*);
 
 
 	// Check for special handlers and modify arguments as necessary
@@ -288,25 +287,25 @@ void Socket::vprint(const char *fmt, va_list ap) {
 
 			switch (type) {
 			case 'B':
-				arg[ind] = (int) ((bstring *) arg[ind])->c_str();
+				arg[ind] = (void*) ((bstring *) arg[ind])->c_str();
 				continue;
 			case 'T':
-				arg[ind] = (int) ((std::ostringstream *) arg[ind])->str().c_str();
+				arg[ind] = (void*) ((std::ostringstream *) arg[ind])->str().c_str();
 				continue;
 			case 'N':
-				arg[ind] = (int) crt_str((Creature *) arg[ind], num, flags);
+				arg[ind] = (void*) ((Creature *)arg[ind])->getCrtStr(NULL, flags, num).c_str();
 				continue;
 			case 'M':
-				arg[ind] = (int) crt_str((Creature *) arg[ind], num, flags | CAP);
+				arg[ind] = (void*) ((Creature *) arg[ind])->getCrtStr(NULL, flags | CAP, num).c_str();
 				continue;
 			case 'P':
-				arg[ind] = (int) obj_str((Object *) arg[ind], num, flags);
+				arg[ind] = (void*) ((Object *) arg[ind])->getObjStr(NULL, flags, num).c_str();
 				continue;
 			case 'O':
-				arg[ind] = (int) obj_str((Object *) arg[ind], num, flags | CAP);
+				arg[ind] = (void*) ((Object *) arg[ind])->getObjStr(NULL, flags | CAP, num).c_str();
 				continue;
 			case 'R':
-				arg[ind] = (int) (((Creature *)arg[ind])->name);
+				arg[ind] = (void*) (((Creature *)arg[ind])->getName().c_str());
 				continue;
 			}
 		}

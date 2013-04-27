@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifndef __CYGWIN__
+#if !defined(__CYGWIN__) && !defined(__MACOS__)
 
 #include <printf.h>
 // Function prototypes

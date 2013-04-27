@@ -422,9 +422,6 @@ void lowercize(char* str, int flag);
 int low(char ch);
 int up(char ch);
 void zero(void *ptr, int size);
-#ifdef CYGWIN
-char *crt_str(const Creature *crt, int num, int flag);
-#endif
 void viewFile(Socket* sock, bstring str);
 void viewLoginFile(Socket* sock, bstring str, bool showError=true);
 void viewFileReverse(Socket* sock, bstring str);
