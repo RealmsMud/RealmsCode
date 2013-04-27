@@ -19,7 +19,6 @@
 #include "mud.h"
 #include "login.h"
 #include "vprint.h"
-#define __CYGWIN__
 #include <stdarg.h>
 
 // Function Prototypes
