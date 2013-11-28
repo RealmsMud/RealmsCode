@@ -9,7 +9,7 @@ CFLAGS := -g -Wall -I/usr/include/libxml2 $(COMPILER_CFLAGS) -std=c++11 -I.
 CFLAGS += -I/usr/include/python3.3m -I/usr/include/x86_64-linux-gnu/python3.3m
 
 
-LIBS = -laspell -lxml2 -lz -lc -L./ -lpython3.3m -lboost_python-py33  $(COMPILER_LIBS) 
+LIBS = -laspell -lxml2 -lz -lc -L./ -lpython3.3m -lboost_python-py33 $(COMPILER_LIBS) 
 
 GENERAL_SOURCE := alphanum.cpp pythonHandler.cpp abjuration.cpp access.cpp action.cpp afflictions.cpp
 GENERAL_SOURCE += alchemy.cpp alignment.cpp anchor.cpp area.cpp attack.cpp asynch.cpp timer.cpp bank.cpp
