@@ -2262,12 +2262,12 @@ bool Player::breakObject(Object* object, int loc) {
 			object->clearFlag(O_TEMP_ENCHANT);
 			object->clearFlag(O_RANDOM_ENCHANT);
 			if(isEffected("detect-magic"))
-				print("The enchantment on your %s fades.\n", object);
+				print("The enchantment on your %s fades.\n", object->getCName());
 		}
 		if(object->flagIsSet(O_ENVENOMED)) {
 			object->clearFlag(O_ENVENOMED);
 			object->clearEffect();
-			print("The poison on your %s becomes useless.\n", object);
+			print("The poison on your %s becomes useless.\n", object->getCName());
 		}
 
 		if(loc != -1) {
