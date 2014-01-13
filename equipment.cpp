@@ -3354,7 +3354,8 @@ int cmdRepair(Player* player, cmd* cmnd) {
 
 		object->setShotsMax(object->getShotsMax() * 9 / 10);
 		object->setShotsCur(object->getShotsMax());
-
+        object->setChargesMax(object->getChargesMax() * 9 / 10);
+        object->setChargesCur(object->getChargesMax());
 
 		player->printColor("%M hands %P back to you, almost good as new.\n", smithy, object);
 
