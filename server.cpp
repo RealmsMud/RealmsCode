@@ -151,7 +151,6 @@ bool Server::init() {
 	std::cout << "Installing unique IDs...";
 	loadIds();
 	std::cout << "done." << std::endl;
-#define __CYGWIN__
 #if !defined(__CYGWIN__) && !defined(__MACOS__)
 	std::cout << "Installing custom printf handlers...";
 	if(installPrintfHandlers() == 0)

@@ -19,3 +19,4 @@
 /.ptp-sync
 .objs/
 .deps/
+/nbproject/
