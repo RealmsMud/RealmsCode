@@ -8,8 +8,7 @@
  *  |_| \_\___|\__,_|_|_| |_| |_|___/
  *
  * This software is distributed in accordance with the
- *  Creative Commons - Attribution - Non Commercial - Share Alike 3.0 License
- *    http://creativecommons.org/licenses/by-nc-sa/3.0/
+ *  GNU Affero General Public License v3 or later
  *
  * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
  * 	   Contributions by Tim Callahan, Jonathan Hseu
