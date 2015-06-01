@@ -186,8 +186,8 @@
 #define P_BERSERKED_OLD             53       // Player is berserked
 #define P_LOG_WATCH                 54       // DM is watching the log channel
 // free                             55
-#define P_NO_AUTO_TARGET			56		 // Don't Automatically target anything you attack if you don't already have a target
-// free	 							56       // UNUSED
+#define P_NO_AUTO_TARGET            56       // Don't Automatically target anything you attack if you don't already have a target
+// free                             56       // UNUSED
 #define P_IGNORE_CLASS_SEND         57       // Player is ignoring class sends
 #define P_IGNORE_GROUP_BROADCAST    58       // Player is ignoring group broadcasts
 #define P_ENCHANT_ONLY              59       // Player resists-hands
@@ -235,7 +235,7 @@
 #define P_OUTLAW_WILL_LOSE_XP       101      // Outlaw will lose experience when killed
 #define P_LINKDEAD                  102      // Player is linkdead (shouldn't be considered 2x-logging)
 #define P_UNCONSCIOUS               103      // Player is unconscious
-// free								104
+// free                             104
 #define P_BRAINDEAD                 105      // Player is brain dead -- For jackasses...
 // free                             106
 #define P_CT_CAN_DM_LIST            107      // DM only. Caretaker can use *list command
@@ -322,7 +322,7 @@
 #define P_PASSWORD_CURRENT          188      // Password is current
 #define P_NO_TICK_MP                189      // Player cannot tick MP
 #define P_NO_TICK_HP                190      // Player cannot tick HP
-// free		                    191
+// free                         191
 #define P_KILLED_BY_MOB             192      // Just killed by mob
 // free                             193
 #define P_DOCTOR_KILLER             194      // Player is a doctor killer
@@ -765,7 +765,7 @@
 
 // Exit flags
 #define X_SECRET                    0         // Secret
-// Free								1
+// Free                             1
 #define X_LOCKED                    2         // Locked
 #define X_CLOSED                    3         // Closed
 #define X_LOCKABLE                  4         // Lockable

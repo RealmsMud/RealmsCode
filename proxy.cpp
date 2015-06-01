@@ -1,6 +1,6 @@
 /*
  * proxy.cpp
- *	 Source file for proxy access
+ *   Source file for proxy access
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -34,91 +34,91 @@
 
 int cmdProxy(Player* player, cmd* cmnd) {
 
-	if(cmnd->num == 1) {
-		bstring proxyList = gConfig->getProxyList(player);
-		if(proxyList.empty())
-			*player << "No proxy access currently allowed.\n";
-		else
-			*player << proxyList;
-		return(0);
-	}
-	if(player->getProxyName() != "") {
-		*player << "You cannot change the proxy access of a proxied character.\n";
-		return(0);
-	}
-	if(player->isStaff()) {
-		*player << "You cannot allow proxy access to a staff character!\n";
-		return(0);
-	}
-	bool online=true;
+    if(cmnd->num == 1) {
+        bstring proxyList = gConfig->getProxyList(player);
+        if(proxyList.empty())
+            *player << "No proxy access currently allowed.\n";
+        else
+            *player << proxyList;
+        return(0);
+    }
+    if(player->getProxyName() != "") {
+        *player << "You cannot change the proxy access of a proxied character.\n";
+        return(0);
+    }
+    if(player->isStaff()) {
+        *player << "You cannot allow proxy access to a staff character!\n";
+        return(0);
+    }
+    bool online=true;
 
-	Player*	target=0;
-	bstring name =  cmnd->str[1];
+    Player* target=0;
+    bstring name =  cmnd->str[1];
 
-	if(name.length() > 1 && name.getAt(0) == 'p' && isdigit(name.getAt(1))) {
-		target = gServer->lookupPlyId(name);
-	}
+    if(name.length() > 1 && name.getAt(0) == 'p' && isdigit(name.getAt(1))) {
+        target = gServer->lookupPlyId(name);
+    }
 
-	if(!target && name.length() > 1 && name.getAt(0) == 'p' && isdigit(name.getAt(1))) {
-		// Dealing with an ID
-		name.setAt(0, up(name.getAt(0)));
-		// TODO: Print success/failure
+    if(!target && name.length() > 1 && name.getAt(0) == 'p' && isdigit(name.getAt(1))) {
+        // Dealing with an ID
+        name.setAt(0, up(name.getAt(0)));
+        // TODO: Print success/failure
 
-		if(gConfig->removeProxyAccess(name, player) )
-		    *player << "Proxy access removed for PlayerID: " << name << "\n";
-		else
-		    *player << "PlayerID: " << name << " does not have proxy access to your character.\n";
-		return(0);
-	}
-	else {
-		// We're dealing with a player
-		if(!target) {
-			name = name.toLower();
-			name.setAt(0, up(name.getAt(0)));
-			target = gServer->findPlayer(name);
-		}
+        if(gConfig->removeProxyAccess(name, player) )
+            *player << "Proxy access removed for PlayerID: " << name << "\n";
+        else
+            *player << "PlayerID: " << name << " does not have proxy access to your character.\n";
+        return(0);
+    }
+    else {
+        // We're dealing with a player
+        if(!target) {
+            name = name.toLower();
+            name.setAt(0, up(name.getAt(0)));
+            target = gServer->findPlayer(name);
+        }
 
-		if(!target) {
-			if(!loadPlayer(name.c_str(), &target)) {
-				*player << "Player does not exist.\n";
-				return(0);
-			}
+        if(!target) {
+            if(!loadPlayer(name.c_str(), &target)) {
+                *player << "Player does not exist.\n";
+                return(0);
+            }
 
-			online = false;
-		}
-		if(target->isStaff()) {
-			if(!online)
-				free_crt(target);
-			*player << "You cannot give staff proxy access!.\n";
-			return(0);
-		}
-		if(target->getId() == player->getId()) {
-			*player << "That's just silly.\n";
-			if(!online)
-				free_crt(target);
-			return(0);
-		}
+            online = false;
+        }
+        if(target->isStaff()) {
+            if(!online)
+                free_crt(target);
+            *player << "You cannot give staff proxy access!.\n";
+            return(0);
+        }
+        if(target->getId() == player->getId()) {
+            *player << "That's just silly.\n";
+            if(!online)
+                free_crt(target);
+            return(0);
+        }
 
-		if(gConfig->hasProxyAccess(target, player)) {
-			*player << "You remove " << target->getName() << "'s proxy access to your character.\n";
+        if(gConfig->hasProxyAccess(target, player)) {
+            *player << "You remove " << target->getName() << "'s proxy access to your character.\n";
 
-			gConfig->removeProxyAccess(target, player);
-			if(online)
-				*target << "Your proxy access to " << player->getName() << " has been revoked.\n";
-			else
-				free_crt(target);
-		} else {
-			*player << "You grant " << target->getName() << " proxy access to your character.\n";
+            gConfig->removeProxyAccess(target, player);
+            if(online)
+                *target << "Your proxy access to " << player->getName() << " has been revoked.\n";
+            else
+                free_crt(target);
+        } else {
+            *player << "You grant " << target->getName() << " proxy access to your character.\n";
 
-			gConfig->grantProxyAccess(target, player);
-			if(online)
-				*target << "Your now have been granted proxy access to " << player->getName() << ".\n";
-			else
-				free_crt(target);
+            gConfig->grantProxyAccess(target, player);
+            if(online)
+                *target << "Your now have been granted proxy access to " << player->getName() << ".\n";
+            else
+                free_crt(target);
 
-		}
-	}
-	return(0);
+        }
+    }
+    return(0);
 }
 
 //*********************************************************************
@@ -225,8 +225,8 @@ void Config::saveProxyAccess() {
 // Set's player as the current proxy user
 
 void Player::setProxy(Player* proxy) {
-	proxyName = proxy->getName();
-	proxyId = proxy->getId();
+    proxyName = proxy->getName();
+    proxyId = proxy->getId();
 }
 
 //*********************************************************************
@@ -235,8 +235,8 @@ void Player::setProxy(Player* proxy) {
 // Set's proxyName & proxyId as the current proxy user & ID
 
 void Player::setProxy(bstring pProxyName, bstring pProxyId) {
-	proxyName = pProxyName;
-	proxyId = pProxyId;
+    proxyName = pProxyName;
+    proxyId = pProxyId;
 }
 
 //*********************************************************************
@@ -245,7 +245,7 @@ void Player::setProxy(bstring pProxyName, bstring pProxyId) {
 // Set's proxyName as the current proxy user
 
 void Player::setProxyName(bstring pProxyName) {
-	proxyName = pProxyName;
+    proxyName = pProxyName;
 }
 
 //*********************************************************************
@@ -254,7 +254,7 @@ void Player::setProxyName(bstring pProxyName) {
 // Set's proxyId as the current proxy ID
 
 void Player::setProxyId(bstring pProxyId) {
-	proxyId = pProxyId;
+    proxyId = pProxyId;
 }
 
 
@@ -335,23 +335,23 @@ bool ProxyManager::hasProxyAccess(Player* proxy, Player* proxied) {
 
 
 void ProxyManager::save() {
-	xmlDocPtr	xmlDoc;
-	xmlNodePtr		rootNode;
-	char			filename[80];
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr      rootNode;
+    char            filename[80];
 
 
-	xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-	rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Proxies", NULL);
-	xmlDocSetRootElement(xmlDoc, rootNode);
+    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
+    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Proxies", NULL);
+    xmlDocSetRootElement(xmlDoc, rootNode);
 
-	for(ProxyMultiMap::value_type p : proxies) {
-		p.second.save(rootNode);
-	}
+    for(ProxyMultiMap::value_type p : proxies) {
+        p.second.save(rootNode);
+    }
 
-	sprintf(filename, "%s/proxies.xml", Path::PlayerData);
+    sprintf(filename, "%s/proxies.xml", Path::PlayerData);
 
-	xml::saveFile(filename, xmlDoc);
-	xmlFreeDoc(xmlDoc);
+    xml::saveFile(filename, xmlDoc);
+    xmlFreeDoc(xmlDoc);
 }
 
 void ProxyManager::loadProxies() {
@@ -366,7 +366,7 @@ void ProxyManager::loadProxies() {
         return;
 
     if((xmlDoc = xml::loadFile(filename, "Proxies")) == NULL)
-    	return;
+        return;
 
     rootNode = xmlDocGetRootElement(xmlDoc);
     curNode = rootNode->children;
@@ -391,21 +391,21 @@ void ProxyManager::loadProxies() {
 
 
 ProxyAccess::ProxyAccess(xmlNodePtr rootNode) {
-	xmlNodePtr curNode = rootNode->children;
-	while(curNode) {
-		     if(NODE_NAME(curNode, "ProxyId")) xml::copyToBString(proxyId, curNode);
-		else if (NODE_NAME(curNode, "ProxyName")) xml::copyToBString(proxyName, curNode);
-		else if (NODE_NAME(curNode, "ProxiedId")) xml::copyToBString(proxiedId, curNode);
-		else if (NODE_NAME(curNode, "ProxiedName")) xml::copyToBString(proxiedName, curNode);
+    xmlNodePtr curNode = rootNode->children;
+    while(curNode) {
+             if(NODE_NAME(curNode, "ProxyId")) xml::copyToBString(proxyId, curNode);
+        else if (NODE_NAME(curNode, "ProxyName")) xml::copyToBString(proxyName, curNode);
+        else if (NODE_NAME(curNode, "ProxiedId")) xml::copyToBString(proxiedId, curNode);
+        else if (NODE_NAME(curNode, "ProxiedName")) xml::copyToBString(proxiedName, curNode);
 
-		curNode = curNode->next;
-	}
+        curNode = curNode->next;
+    }
 }
 ProxyAccess::ProxyAccess(Player* proxy, Player* proxied) {
-	proxyName = proxy->getName();
-	proxyId = proxy->getId();
-	proxiedName = proxied->getName();
-	proxiedId = proxied->getId();
+    proxyName = proxy->getName();
+    proxyId = proxy->getId();
+    proxiedName = proxied->getName();
+    proxiedId = proxied->getId();
 }
 
 void ProxyAccess::save(xmlNodePtr rootNode) {
@@ -423,10 +423,10 @@ void ProxyAccess::save(xmlNodePtr rootNode) {
 // True if (proxy) has proxy access to (proxied)
 
 bool ProxyAccess::hasProxyAccess(Player* proxy, Player* proxied) {
-	if(proxiedId == proxied->getId() && proxiedName == proxied->getName() &&
-			proxyId == proxy->getId() && proxyName == proxy->getName())
-		return(true);
-	return(false);
+    if(proxiedId == proxied->getId() && proxiedName == proxied->getName() &&
+            proxyId == proxy->getId() && proxyName == proxy->getName())
+        return(true);
+    return(false);
 }
 bstring ProxyAccess::getProxiedId() const { return proxiedId; }
 bstring ProxyAccess::getProxiedName() const { return proxiedName; }

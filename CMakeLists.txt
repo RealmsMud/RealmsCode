@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.1)
 project(RealmsCode)
 
 set(Python_ADDITIONAL_VERSIONS 3.4)

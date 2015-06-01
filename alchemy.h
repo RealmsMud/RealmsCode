@@ -10,14 +10,14 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 
 #ifndef _ALCHEMY_H
-#define	_ALCHEMY_H
+#define _ALCHEMY_H
 
 //class XmlNodePtr;
 
@@ -25,7 +25,7 @@ typedef std::vector<Object*> HerbVector;
 typedef std::map<bstring, HerbVector > HerbMap;
 
 namespace Alchemy {
-	bstring getEffectString(Object* obj, const bstring& effect);
+    bstring getEffectString(Object* obj, const bstring& effect);
 };
 
 //########################################################################
@@ -43,16 +43,16 @@ public:
     const bstring& getPotionDisplayName() const;
     const bstring& getAction() const;
     const bstring& getPythonScript() const;
-	long getBaseDuration() const;
-	short getBaseStrength() const;
-	bool potionNameHasPrefix() const;
-	bool isThrowable() const;
-	bool isPositive() const;
+    long getBaseDuration() const;
+    short getBaseStrength() const;
+    bool potionNameHasPrefix() const;
+    bool isThrowable() const;
+    bool isPositive() const;
 
 
 protected:
-	void init();
-	bstring name;
+    void init();
+    bstring name;
     bstring potionDisplayName;
     bstring potionPrefix;
     bool positive = false;
@@ -76,8 +76,8 @@ protected:
     bstring     effect;
     short       quality;
 
-    long	duration;
-    short	strength;
+    long    duration;
+    short   strength;
 
 public:
     AlchemyEffect();
@@ -102,6 +102,6 @@ public:
 };
 
 
-#endif	/* _ALCHEMY_H */
+#endif  /* _ALCHEMY_H */
 
 

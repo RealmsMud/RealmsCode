@@ -1,6 +1,6 @@
 /*
  * clans.h
- *	 Header file for clans
+ *   Header file for clans
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -20,24 +20,24 @@
 
 class Clan {
 public:
-	Clan();
-	void load(xmlNodePtr curNode);
+    Clan();
+    void load(xmlNodePtr curNode);
 
-	unsigned int getId() const;
-	unsigned int getJoin() const;
-	unsigned int getRescind() const;
-	unsigned int getDeity() const;
-	bstring getName() const;
-	short	getSkillBonus(bstring skill) const;
+    unsigned int getId() const;
+    unsigned int getJoin() const;
+    unsigned int getRescind() const;
+    unsigned int getDeity() const;
+    bstring getName() const;
+    short   getSkillBonus(bstring skill) const;
 protected:
-	unsigned int id;
-	unsigned int join;
-	unsigned int rescind;
-	unsigned int deity;
-	bstring name;
+    unsigned int id;
+    unsigned int join;
+    unsigned int rescind;
+    unsigned int deity;
+    bstring name;
 public:
-	// only to make iteration easy
-	std::map<bstring, short> skillBonus;
+    // only to make iteration easy
+    std::map<bstring, short> skillBonus;
 };
 
 #endif /*CLAN_H_*/

@@ -1,6 +1,6 @@
 /*
  * error.cpp
- *	 Code to handle errors.
+ *   Code to handle errors.
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___ 
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *  
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -27,16 +27,16 @@
 //*********************************************************************
 
 void _assertlog(const char *strExp, const char *strFile, unsigned int nLine ) {
-	char buffer[2048];
-	
-	sprintf(buffer, "--- Assertion (%s) failed at file \'%s\' line %u ---\nAborting Process\n",
-		strExp, strFile, nLine );
-	broadcast(isDm, "^g%s", buffer);
-	gServer->processOutput();
-	
-	logn("assert.log", buffer); 
+    char buffer[2048];
+    
+    sprintf(buffer, "--- Assertion (%s) failed at file \'%s\' line %u ---\nAborting Process\n",
+        strExp, strFile, nLine );
+    broadcast(isDm, "^g%s", buffer);
+    gServer->processOutput();
+    
+    logn("assert.log", buffer); 
 
-	abort();
-	
-	return;
+    abort();
+    
+    return;
 }

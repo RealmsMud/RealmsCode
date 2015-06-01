@@ -72,45 +72,45 @@ public:
     bool add(Containable* toAdd);
 
 
-	void registerContainedItems();
-	void unRegisterContainedItems();
+    void registerContainedItems();
+    void unRegisterContainedItems();
 
 
     bool checkAntiMagic(Monster* ignore = 0);
 
     void doSocialEcho(bstring str, const Creature* actor, const Creature* target = null);
 
-	void effectEcho(bstring fmt, const MudObject* actor = NULL, const MudObject* applier = null, Socket* ignore = null);
+    void effectEcho(bstring fmt, const MudObject* actor = NULL, const MudObject* applier = null, Socket* ignore = null);
 
 //    virtual bool flagIsSet(int flag) const = 0;
 //    virtual void setFlag(int flag) = 0;
 //    virtual bool isEffected(const bstring& effect) const = 0;
 //    virtual bool isEffected(EffectInfo*) const = 0;
 
-	void wake(bstring str, bool noise) const;
+    void wake(bstring str, bool noise) const;
 
 
-	bstring listObjects(const Player* player, bool showAll, char endColor ='x' ) const;
+    bstring listObjects(const Player* player, bool showAll, char endColor ='x' ) const;
 
-	// Find routines
-	Creature* findCreaturePython(Creature* searcher, const bstring& name, bool monFirst = true, bool firstAggro = false, bool exactMatch = false );
+    // Find routines
+    Creature* findCreaturePython(Creature* searcher, const bstring& name, bool monFirst = true, bool firstAggro = false, bool exactMatch = false );
     Creature* findCreature(const Creature* searcher, const cmd* cmnd, int num=1) const;
-	Creature* findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst = true, bool firstAggro = false, bool exactMatch = false) const;
-	Creature* findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const;
-	Monster* findMonster(const Creature* searcher, const cmd* cmnd, int num=1) const;
-	Monster* findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro = false, bool exactMatch = false) const;
-	Monster* findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) const;
-	Player* findPlayer(const Creature* searcher, const cmd* cmnd, int num=1) const;
-	Player* findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch = false) const;
-	Player* findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const;
+    Creature* findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst = true, bool firstAggro = false, bool exactMatch = false) const;
+    Creature* findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const;
+    Monster* findMonster(const Creature* searcher, const cmd* cmnd, int num=1) const;
+    Monster* findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro = false, bool exactMatch = false) const;
+    Monster* findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) const;
+    Player* findPlayer(const Creature* searcher, const cmd* cmnd, int num=1) const;
+    Player* findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch = false) const;
+    Player* findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const;
 
-	Object* findObject(const Creature *searcher, const cmd* cmnd, int val) const;
-	Object* findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch = false) const;
-	Object* findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const;
+    Object* findObject(const Creature *searcher, const cmd* cmnd, int val) const;
+    Object* findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch = false) const;
+    Object* findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const;
 
-	MudObject* findTarget(const Creature* searcher, const cmd* cmnd, int num=1) const;
-	MudObject* findTarget(const Creature* searcher,  const bstring& name, const int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false) const;
-	MudObject* findTarget(const Creature* searcher,  const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const;
+    MudObject* findTarget(const Creature* searcher, const cmd* cmnd, int num=1) const;
+    MudObject* findTarget(const Creature* searcher,  const bstring& name, const int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false) const;
+    MudObject* findTarget(const Creature* searcher,  const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const;
 
 };
 
@@ -127,30 +127,30 @@ public:
     Container* getParent() const;
 
 
-	// What type of parent are we contained in?
-	bool inRoom() const;
-	bool inUniqueRoom() const;
-	bool inAreaRoom() const;
-	bool inObject() const;
-	bool inPlayer() const;
-	bool inMonster() const;
-	bool inCreature() const;
+    // What type of parent are we contained in?
+    bool inRoom() const;
+    bool inUniqueRoom() const;
+    bool inAreaRoom() const;
+    bool inObject() const;
+    bool inPlayer() const;
+    bool inMonster() const;
+    bool inCreature() const;
 
-	BaseRoom* getRoomParent();
-	UniqueRoom* getUniqueRoomParent();
-	AreaRoom* getAreaRoomParent();
-	Object* getObjectParent();
-	Player* getPlayerParent();
-	Monster* getMonsterParent();
-	Creature* getCreatureParent();
+    BaseRoom* getRoomParent();
+    UniqueRoom* getUniqueRoomParent();
+    AreaRoom* getAreaRoomParent();
+    Object* getObjectParent();
+    Player* getPlayerParent();
+    Monster* getMonsterParent();
+    Creature* getCreatureParent();
 
-	const BaseRoom* getConstRoomParent() const;
-	const UniqueRoom* getConstUniqueRoomParent() const;
-	const AreaRoom* getConstAreaRoomParent() const;
-	const Object* getConstObjectParent() const;
-	const Player* getConstPlayerParent() const;
-	const Monster* getConstMonsterParent() const;
-	const Creature* getConstCreatureParent() const;
+    const BaseRoom* getConstRoomParent() const;
+    const UniqueRoom* getConstUniqueRoomParent() const;
+    const AreaRoom* getConstAreaRoomParent() const;
+    const Object* getConstObjectParent() const;
+    const Player* getConstPlayerParent() const;
+    const Monster* getConstMonsterParent() const;
+    const Creature* getConstCreatureParent() const;
 
 protected:
     Container* parent;   // Parent Container
@@ -158,7 +158,7 @@ protected:
     // Last parent is only used in removeFromSet and addToSet and should not be used anywhere else
     Container* lastParent;
     void removeFromSet();
-	void addToSet();
+    void addToSet();
 
 };
 

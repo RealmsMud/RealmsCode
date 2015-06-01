@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -53,8 +53,8 @@ std::ostream& operator<<(std::ostream& out, const ThreatTable& table) {
 }
 
 ThreatTable::ThreatTable(Creature* pParent) {
-	setParent(pParent);
-	totalThreat = 0;
+    setParent(pParent);
+    totalThreat = 0;
 }
 
 ThreatTable::~ThreatTable() {
@@ -77,15 +77,15 @@ ThreatMap::size_type ThreatTable::size() {
 }
 
 long ThreatTable::getTotalThreat() {
-	return(totalThreat);
+    return(totalThreat);
 }
 
 long ThreatTable::getThreat(Creature* target) {
     ThreatMap::iterator it = threatMap.find(target->getId());
-	if(it != threatMap.end()) {
-		return((*it).second->getThreatValue());
-	}
-	return(0);
+    if(it != threatMap.end()) {
+        return((*it).second->getThreatValue());
+    }
+    return(0);
 }
 
 //*********************************************************************
@@ -97,55 +97,55 @@ long ThreatTable::getThreat(Creature* target) {
 // Maintains a map of threat sorted by ID and a multiset sorted by threat amount
 
 long ThreatTable::adjustThreat(Creature* target, long modAmt, double threatFactor) {
-	if(target->getId() == myParent->getId()) {
-		std::cout << "Attempted to add " << target->getName()  << " to their own threat list!" << std::endl;
-		return(0);
-	}
-	bool newThreat = false;
-	ThreatEntry* threat;
+    if(target->getId() == myParent->getId()) {
+        std::cout << "Attempted to add " << target->getName()  << " to their own threat list!" << std::endl;
+        return(0);
+    }
+    bool newThreat = false;
+    ThreatEntry* threat;
 
-	ThreatSet::iterator it;
+    ThreatSet::iterator it;
 
-	// Find the place in the threat list it is, or would be
-	ThreatMap::iterator mLb = threatMap.lower_bound(target->getId());
+    // Find the place in the threat list it is, or would be
+    ThreatMap::iterator mLb = threatMap.lower_bound(target->getId());
 
-	// If it's there, update it
-	if(mLb != threatMap.end() && !(threatMap.key_comp()(target->getId(), mLb->first))) {
-	    threat = mLb->second;
-	    it = removeFromSet(threat);
-	} else {
-	    // Otherwise make a new one and insert it into the position we just found
-	    threat = new ThreatEntry(target->getId());
-	    threatMap.insert(mLb, ThreatMap::value_type(target->getId(), threat));
-	    newThreat = true;
-	}
+    // If it's there, update it
+    if(mLb != threatMap.end() && !(threatMap.key_comp()(target->getId(), mLb->first))) {
+        threat = mLb->second;
+        it = removeFromSet(threat);
+    } else {
+        // Otherwise make a new one and insert it into the position we just found
+        threat = new ThreatEntry(target->getId());
+        threatMap.insert(mLb, ThreatMap::value_type(target->getId(), threat));
+        newThreat = true;
+    }
 
-	// Adjust the threat
-	long endThreat = threat->adjustThreat((long)(modAmt*threatFactor));
-	threat->adjustContribution(modAmt);
+    // Adjust the threat
+    long endThreat = threat->adjustThreat((long)(modAmt*threatFactor));
+    threat->adjustContribution(modAmt);
 
-	//std::cout << "Added Threat: " << ((long)(modAmt*threatFactor)) << " and Contribution: " << modAmt << std::endl;
-	// Insert the threat into the set, if it's not a new threat use the hint from above
-	if(newThreat)
+    //std::cout << "Added Threat: " << ((long)(modAmt*threatFactor)) << " and Contribution: " << modAmt << std::endl;
+    // Insert the threat into the set, if it's not a new threat use the hint from above
+    if(newThreat)
         threatSet.insert(threat);
     else
         threatSet.insert(it, threat);
 
-	return(endThreat);
+    return(endThreat);
 }
 
 bool ThreatTable::isEnemy(const Creature *target) {
-	if(!target) {
-		return(false);
-	}
-	ThreatMap::iterator it = threatMap.find(target->getId());
+    if(!target) {
+        return(false);
+    }
+    ThreatMap::iterator it = threatMap.find(target->getId());
 
-	if(it == threatMap.end()) {
-		return(false);
-	}
-	else {
-		return(true);
-	}
+    if(it == threatMap.end()) {
+        return(false);
+    }
+    else {
+        return(true);
+    }
 }
 bool ThreatTable::hasEnemy() const {
     return(!threatMap.empty());
@@ -220,14 +220,14 @@ Creature* ThreatTable::getTarget(bool sameRoom) {
 
     ThreatSet::reverse_iterator it;
     for(it = threatSet.rbegin() ; it != threatSet.rend() ; ) {
-	    bstring uId = (*it++)->getUid();
+        bstring uId = (*it++)->getUid();
         crt = gServer->lookupCrtId(uId);
         if(!crt && uId.at(0) == 'M') {
-        	// If we're a monster and the server hasn't heard of them, they're either a pet
-        	// who has logged off, or a dead monster, either way remove them.
-        	removeThreat(uId);
-        	it = threatSet.rbegin();
-        	continue;
+            // If we're a monster and the server hasn't heard of them, they're either a pet
+            // who has logged off, or a dead monster, either way remove them.
+            removeThreat(uId);
+            it = threatSet.rbegin();
+            continue;
         }
         // If we're looking for someone who isn't in the same room, we don't care if we can see them
         // however if we want the target in the current room, we must be able to see them!
@@ -242,7 +242,7 @@ Creature* ThreatTable::getTarget(bool sameRoom) {
 }
 
 void ThreatTable::setParent(Creature* pParent) {
-	myParent = pParent;
+    myParent = pParent;
 }
 
 //################################################################################
@@ -263,7 +263,7 @@ std::ostream& operator<<(std::ostream& out, const ThreatEntry& threat) {
     if(mo)
         out << " (" << mo->getName() << ")";
     else
-    	out << " (Unknown Target)";
+        out << " (Unknown Target)";
 
     out << " T: " << threat.threatValue << " C: " << threat.contributionValue;
     return(out);
@@ -277,16 +277,16 @@ std::ostream& operator<<(std::ostream& out, const ThreatEntry* threat) {
 }
 
 long ThreatEntry::getThreatValue() {
-	return threatValue;
+    return threatValue;
 }
 long ThreatEntry::getContributionValue() {
     return contributionValue;
 }
 
 long ThreatEntry::adjustThreat(long modAmt) {
-	threatValue += modAmt;
-	lastMod = time(0);
-	return(threatValue);
+    threatValue += modAmt;
+    lastMod = time(0);
+    return(threatValue);
 }
 long ThreatEntry::adjustContribution(long modAmt) {
     contributionValue += modAmt;
@@ -306,13 +306,13 @@ const bstring& ThreatEntry::getUid() const {
     return(uId);
 }
 //*********************************************************************
-//							doHeal
+//                          doHeal
 //*********************************************************************
 // Heal a target and dish out threat as needed!
 
 int Creature::doHeal(Creature* target, int amt, double threatFactor) {
     if(threatFactor < 0.0)
-		threatFactor = 1.0;
+        threatFactor = 1.0;
 
     int healed = target->hp.increase(amt);
 
@@ -329,7 +329,7 @@ int Creature::doHeal(Creature* target, int amt, double threatFactor) {
                 // Add the amount of healing threat done to effort done
                 mons->adjustThreat(this, healed, threatFactor);
             }
-		}
+        }
     }
     return(healed);
 }
@@ -342,188 +342,188 @@ int Creature::doHeal(Creature* target, int amt, double threatFactor) {
 //################################################################################
 
 void Creature::checkTarget(Creature* toTarget) {
-	if(isPlayer() && !flagIsSet(P_NO_AUTO_TARGET) && getTarget() == NULL) {
-		addTarget(toTarget);
-	}
+    if(isPlayer() && !flagIsSet(P_NO_AUTO_TARGET) && getTarget() == NULL) {
+        addTarget(toTarget);
+    }
 }
 
 //*********************************************************************
-//							addTarget
+//                          addTarget
 //*********************************************************************
 
 Creature* Creature::addTarget(Creature* toTarget) {
-	if(!toTarget)
-		return(NULL);
+    if(!toTarget)
+        return(NULL);
 
-	// We've already got them targetted!
-	if(toTarget == myTarget)
-		return(myTarget);
+    // We've already got them targetted!
+    if(toTarget == myTarget)
+        return(myTarget);
 
-	clearTarget();
+    clearTarget();
 
-	toTarget->addTargetingThis(this);
-	myTarget = toTarget;
+    toTarget->addTargetingThis(this);
+    myTarget = toTarget;
 
-	Player* ply = getAsPlayer();
-	if(ply) {
-		ply->printColor("You are now targeting %s.\n", myTarget->getCName());
-	}
+    Player* ply = getAsPlayer();
+    if(ply) {
+        ply->printColor("You are now targeting %s.\n", myTarget->getCName());
+    }
 
-	return(myTarget);
+    return(myTarget);
 
 }
 
 //*********************************************************************
-//							addTargetingThis
+//                          addTargetingThis
 //*********************************************************************
 
 void Creature::addTargetingThis(Creature* targeter) {
-	ASSERTLOG(targeter);
+    ASSERTLOG(targeter);
 
-	Player* ply = getAsPlayer();
-	if(ply) {
-		ply->printColor("%s is now targeting you!\n", targeter->getCName());
-	}
-	targetingThis.push_back(targeter);
+    Player* ply = getAsPlayer();
+    if(ply) {
+        ply->printColor("%s is now targeting you!\n", targeter->getCName());
+    }
+    targetingThis.push_back(targeter);
 }
 
 //*********************************************************************
-//							clearTarget
+//                          clearTarget
 //*********************************************************************
 
 void Creature::clearTarget(bool clearTargetsList) {
-	if(!myTarget)
-		return;
+    if(!myTarget)
+        return;
 
-	Player* ply = getAsPlayer();
-	if(ply) {
-		ply->printColor("You are no longer targeting %s!\n", myTarget->getCName());
-	}
+    Player* ply = getAsPlayer();
+    if(ply) {
+        ply->printColor("You are no longer targeting %s!\n", myTarget->getCName());
+    }
 
-	if(clearTargetsList)
-		myTarget->clearTargetingThis(this);
+    if(clearTargetsList)
+        myTarget->clearTargetingThis(this);
 
-	myTarget = NULL;
+    myTarget = NULL;
 
-	return;
+    return;
 }
 
 //*********************************************************************
-//							clearTargetingThis
+//                          clearTargetingThis
 //*********************************************************************
 
 void Creature::clearTargetingThis(Creature* targeter) {
-	ASSERTLOG(targeter);
+    ASSERTLOG(targeter);
 
-	Player* ply = getAsPlayer();
-	if(ply) {
-		ply->printColor("%s is no longer targeting you!\n", targeter->getCName());
-	}
+    Player* ply = getAsPlayer();
+    if(ply) {
+        ply->printColor("%s is no longer targeting you!\n", targeter->getCName());
+    }
 
-	targetingThis.remove(targeter);
+    targetingThis.remove(targeter);
 }
 
 //*********************************************************************
-//							cmdAssist
+//                          cmdAssist
 //*********************************************************************
 
 int cmdAssist(Player* player, cmd* cmnd) {
     if(cmnd->num < 2) {
-		player->print("Who would you like to assist?\n");
+        player->print("Who would you like to assist?\n");
 
     }
     Player* toAssist = player->getParent()->findPlayer(player, cmnd);
-	if(!toAssist) {
-		player->print("You don't see that person here.\n");
-		return(0);
-	}
+    if(!toAssist) {
+        player->print("You don't see that person here.\n");
+        return(0);
+    }
     player->print("You assist %M!\n", toAssist);
 
     if(!toAssist->flagIsSet(P_COMPACT))
-		toAssist->print("%M just assisted you!\n", player);
+        toAssist->print("%M just assisted you!\n", player);
     
     player->clearTarget();
-	player->addTarget(toAssist->getTarget());
+    player->addTarget(toAssist->getTarget());
 
     return(0);
 }
 
 //*********************************************************************
-//							cmdTarget
+//                          cmdTarget
 //*********************************************************************
 
 int cmdTarget(Player* player, cmd* cmnd) {
-	if(cmnd->num < 2) {
-		player->print("You are targeting: ");
-		if(player->myTarget)
-			player->print("%s\n", player->myTarget->getCName());
-		else
-			player->print("No-one!\n");
+    if(cmnd->num < 2) {
+        player->print("You are targeting: ");
+        if(player->myTarget)
+            player->print("%s\n", player->myTarget->getCName());
+        else
+            player->print("No-one!\n");
 
-		if(player->isCt()) {
-			player->print("People targeting you: ");
-			int numTargets = 0;
-			for(Creature* targetter : player->targetingThis) {
-				if(numTargets++ != 0)
-					player->print(", ");
-				player->print("%s", targetter->getCName());
-			}
-			if(numTargets == 0)
-				player->print("Nobody!");
-			player->print("\n");
-		}
-		return(0);
-	}
+        if(player->isCt()) {
+            player->print("People targeting you: ");
+            int numTargets = 0;
+            for(Creature* targetter : player->targetingThis) {
+                if(numTargets++ != 0)
+                    player->print(", ");
+                player->print("%s", targetter->getCName());
+            }
+            if(numTargets == 0)
+                player->print("Nobody!");
+            player->print("\n");
+        }
+        return(0);
+    }
 
-	if(!strcasecmp(cmnd->str[1], "-c")) {
-		player->print("Clearing target.\n");
-		player->clearTarget();
-		return(0);
-	}
+    if(!strcasecmp(cmnd->str[1], "-c")) {
+        player->print("Clearing target.\n");
+        player->clearTarget();
+        return(0);
+    }
 
-	lowercize(cmnd->str[1], 1);
+    lowercize(cmnd->str[1], 1);
 
-	Creature* toTarget = player->getParent()->findCreature(player, cmnd);
-	if(!toTarget) {
-		player->print("You don't see that here.\n");
-		return(0);
-	}
-	player->addTarget(toTarget);
+    Creature* toTarget = player->getParent()->findCreature(player, cmnd);
+    if(!toTarget) {
+        player->print("You don't see that here.\n");
+        return(0);
+    }
+    player->addTarget(toTarget);
 
-	return(0);
+    return(0);
 }
 
 //*********************************************************************
-//							getTarget
+//                          getTarget
 //*********************************************************************
 
 Creature* Creature::getTarget() {
-	return(myTarget);
+    return(myTarget);
 }
 
 //*********************************************************************
-//							hasAttackableTarget
+//                          hasAttackableTarget
 //*********************************************************************
 
 bool Creature::hasAttackableTarget() {
-	return(getTarget() && getTarget() != this && inSameRoom(getTarget()) && canSee(getTarget()));
+    return(getTarget() && getTarget() != this && inSameRoom(getTarget()) && canSee(getTarget()));
 }
 
 
 //*********************************************************************
-//							isAttackingTarget
+//                          isAttackingTarget
 //*********************************************************************
 
 bool Creature::isAttackingTarget() {
-	Creature* target = getTarget();
-	if(!target)
-		return(false);
+    Creature* target = getTarget();
+    if(!target)
+        return(false);
 
-	Monster* mTarget = target->getAsMonster();
+    Monster* mTarget = target->getAsMonster();
 
-	// Player auto combat only works vs monsters!
-	if(!mTarget)
-		return(false);
+    // Player auto combat only works vs monsters!
+    if(!mTarget)
+        return(false);
 
-	return(mTarget->isEnemy(this));
+    return(mTarget->isEnemy(this));
 }

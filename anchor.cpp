@@ -10,167 +10,167 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 #include "mud.h"
 
 //*********************************************************************
-//						Anchor
+//                      Anchor
 //*********************************************************************
 
 Anchor::Anchor() {
-	reset();
+    reset();
 }
 
 Anchor::Anchor(bstring a, const Player* player) {
-	reset();
-	alias = a;
-	bind(player);
+    reset();
+    alias = a;
+    bind(player);
 }
 
 Anchor::~Anchor() {
-	if(mapmarker)
-		delete mapmarker;
+    if(mapmarker)
+        delete mapmarker;
 }
 
 //*********************************************************************
-//						getRoom
+//                      getRoom
 //*********************************************************************
 
 CatRef Anchor::getRoom() const { return(room); }
 
 //*********************************************************************
-//						setRoom
+//                      setRoom
 //*********************************************************************
 
 void Anchor::setRoom(CatRef r) { room = r; }
 
 //*********************************************************************
-//						getMapMarker
+//                      getMapMarker
 //*********************************************************************
 
 const MapMarker* Anchor::getMapMarker() const { return(mapmarker); }
 
 //*********************************************************************
-//						getAlias
+//                      getAlias
 //*********************************************************************
 
 bstring Anchor::getAlias() const { return(alias); }
 
 //*********************************************************************
-//						getRoomName
+//                      getRoomName
 //*********************************************************************
 
 bstring Anchor::getRoomName() const { return(roomName); }
 
 //*********************************************************************
-//						reset
+//                      reset
 //*********************************************************************
 
 void Anchor::reset() {
-	alias = roomName = "";
-	mapmarker = 0;
+    alias = roomName = "";
+    mapmarker = 0;
 }
 
 //*********************************************************************
-//						bind
+//                      bind
 //*********************************************************************
 
 void Anchor::bind(const Player* player) {
 
-	if(player->inUniqueRoom())
-		bind(player->getConstUniqueRoomParent());
-	else
-		bind(player->getConstAreaRoomParent());
+    if(player->inUniqueRoom())
+        bind(player->getConstUniqueRoomParent());
+    else
+        bind(player->getConstAreaRoomParent());
 }
 void Anchor::bind(const UniqueRoom* uRoom) {
-	roomName = uRoom->getName();
-	room = uRoom->info;
+    roomName = uRoom->getName();
+    room = uRoom->info;
 }
 void Anchor::bind(const AreaRoom* aRoom) {
-	roomName = aRoom->area->getTile(
-			aRoom->area->getTerrain(0, &aRoom->mapmarker, 0, 0, 0, true), false
-		)->getName().c_str();
-	if(mapmarker)
-		delete mapmarker;
-	mapmarker = new MapMarker;
-	*mapmarker = *&aRoom->mapmarker;
+    roomName = aRoom->area->getTile(
+            aRoom->area->getTerrain(0, &aRoom->mapmarker, 0, 0, 0, true), false
+        )->getName().c_str();
+    if(mapmarker)
+        delete mapmarker;
+    mapmarker = new MapMarker;
+    *mapmarker = *&aRoom->mapmarker;
 }
 
 //*********************************************************************
-//						is
+//                      is
 //*********************************************************************
 
 bool Anchor::is(const BaseRoom* room) const {
-	const UniqueRoom* uRoom = room->getAsConstUniqueRoom();
-	if(uRoom)
-		return(is(uRoom));
-	else
-		return(is(room->getAsConstAreaRoom()));
+    const UniqueRoom* uRoom = room->getAsConstUniqueRoom();
+    if(uRoom)
+        return(is(uRoom));
+    else
+        return(is(room->getAsConstAreaRoom()));
 }
 bool Anchor::is(const Player* player) const {
-	if(player->inUniqueRoom())
-		return(is(player->getConstUniqueRoomParent()));
-	else
-		return(is(player->getConstAreaRoomParent()));
+    if(player->inUniqueRoom())
+        return(is(player->getConstUniqueRoomParent()));
+    else
+        return(is(player->getConstAreaRoomParent()));
 }
 bool Anchor::is(const UniqueRoom* uRoom) const {
-	return(room.id && room == uRoom->info);
+    return(room.id && room == uRoom->info);
 }
 bool Anchor::is(const AreaRoom* aRoom) const {
-	return(mapmarker && *mapmarker == *&aRoom->mapmarker);
+    return(mapmarker && *mapmarker == *&aRoom->mapmarker);
 }
 
 //*********************************************************************
-//						operator=
+//                      operator=
 //*********************************************************************
 
 Anchor& Anchor::operator=(const Anchor& a) {
-	alias = a.alias;
-	roomName = a.roomName;
-	room = a.room;
-	if(a.mapmarker) {
-		if(mapmarker)
-			delete mapmarker;
-		mapmarker = new MapMarker;
-		*mapmarker = *a.mapmarker;
-	}
-	return(*this);
+    alias = a.alias;
+    roomName = a.roomName;
+    room = a.room;
+    if(a.mapmarker) {
+        if(mapmarker)
+            delete mapmarker;
+        mapmarker = new MapMarker;
+        *mapmarker = *a.mapmarker;
+    }
+    return(*this);
 }
 
 //*********************************************************************
-//						load
+//                      load
 //*********************************************************************
 
 void Anchor::load(xmlNodePtr curNode) {
-	xmlNodePtr childNode = curNode->children;
+    xmlNodePtr childNode = curNode->children;
 
-	while(childNode) {
-		if(NODE_NAME(childNode, "Alias")) xml::copyToBString(alias, childNode);
-		else if(NODE_NAME(childNode, "RoomName")) xml::copyToBString(roomName, childNode);
-		else if(NODE_NAME(childNode, "Room")) room.load(childNode);
-		else if(NODE_NAME(childNode, "MapMarker")) {
-			mapmarker = new MapMarker;
-			mapmarker->load(childNode);
-		}
+    while(childNode) {
+        if(NODE_NAME(childNode, "Alias")) xml::copyToBString(alias, childNode);
+        else if(NODE_NAME(childNode, "RoomName")) xml::copyToBString(roomName, childNode);
+        else if(NODE_NAME(childNode, "Room")) room.load(childNode);
+        else if(NODE_NAME(childNode, "MapMarker")) {
+            mapmarker = new MapMarker;
+            mapmarker->load(childNode);
+        }
 
-		childNode = childNode->next;
-	}
+        childNode = childNode->next;
+    }
 }
 
 //*********************************************************************
-//						save
+//                      save
 //*********************************************************************
 
 void Anchor::save(xmlNodePtr curNode) const {
-	xml::newStringChild(curNode, "Alias", alias);
-	xml::newStringChild(curNode, "RoomName", roomName);
-	room.save(curNode, "Room", false);
-	if(mapmarker) {
-		xmlNodePtr childNode = xml::newStringChild(curNode, "MapMarker");
-		mapmarker->save(childNode);
-	}
+    xml::newStringChild(curNode, "Alias", alias);
+    xml::newStringChild(curNode, "RoomName", roomName);
+    room.save(curNode, "Room", false);
+    if(mapmarker) {
+        xmlNodePtr childNode = xml::newStringChild(curNode, "MapMarker");
+        mapmarker->save(childNode);
+    }
 }

@@ -1,6 +1,6 @@
 /*
  * memory.cpp
- *	 Memory added by Charles Marchant for Mordor 3.x
+ *   Memory added by Charles Marchant for Mordor 3.x
  *   ____            _               
  *  |  _ \ ___  __ _| |_ __ ___  ___ 
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,68 +10,68 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *  
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 #include "mud.h"
 
 //*********************************************************************
-//						sizeInfo
+//                      sizeInfo
 //*********************************************************************
 
 bstring sizeInfo(long size) {
-	int i=0;
-	for(; size > 1024 && i < 4; i++)
-		size /= 1024;
+    int i=0;
+    for(; size > 1024 && i < 4; i++)
+        size /= 1024;
 
-	switch(i) {
-	case 0:
-		return((bstring)size + " bytes");
-	case 1:
-		return((bstring)size + "kb");
-	case 2:
-		return((bstring)size + "mb");
-	case 3:
-		return((bstring)size + "gb");
-	default:
-		return((bstring)size + "tb");
-	}
+    switch(i) {
+    case 0:
+        return((bstring)size + " bytes");
+    case 1:
+        return((bstring)size + "kb");
+    case 2:
+        return((bstring)size + "mb");
+    case 3:
+        return((bstring)size + "gb");
+    default:
+        return((bstring)size + "tb");
+    }
 }
 
 //*********************************************************************
-//						showMemory
+//                      showMemory
 //*********************************************************************
 
 void Config::showMemory(Socket* sock) {
-	char buf[80];
-	int  crts    = 0;
-	int  rooms   = 0;
-	int  objects = 0;
-	int  talks   = 0;
-	int  actions  = 0;
-	int  badtalk  = 0;
-	long crt_mem    = 0L;
-	long rom_mem    = 0L;
-	long obj_mem    = 0L;
-	long talk_mem   = 0L;
-	long act_mem    = 0L;
-	//  long total_mem  = 0L;
-	long bt_mem     = 0L;
-	long total=0;
-	ttag	*tlk;
-	UniqueRoom*	r=0;
+    char buf[80];
+    int  crts    = 0;
+    int  rooms   = 0;
+    int  objects = 0;
+    int  talks   = 0;
+    int  actions  = 0;
+    int  badtalk  = 0;
+    long crt_mem    = 0L;
+    long rom_mem    = 0L;
+    long obj_mem    = 0L;
+    long talk_mem   = 0L;
+    long act_mem    = 0L;
+    //  long total_mem  = 0L;
+    long bt_mem     = 0L;
+    long total=0;
+    ttag    *tlk;
+    UniqueRoom* r=0;
 
-	std::map<bstring, rsparse>::iterator it;
+    std::map<bstring, rsparse>::iterator it;
 
-	for(it = roomQueue.begin(); it != roomQueue.end() ; it++) {
-		r = (*it).second.rom;
-		if(!r)
-			continue;
-		rooms++;
-		rom_mem += sizeof(UniqueRoom);
-		for(Monster* mons : r->monsters) {
+    for(it = roomQueue.begin(); it != roomQueue.end() ; it++) {
+        r = (*it).second.rom;
+        if(!r)
+            continue;
+        rooms++;
+        rom_mem += sizeof(UniqueRoom);
+        for(Monster* mons : r->monsters) {
             crts++;
             crt_mem += sizeof(Monster);
             // add object counting on crts
@@ -120,34 +120,34 @@ void Config::showMemory(Socket* sock) {
                     }
                 }
             }
-		}
-		objects += r->objects.size();
-		obj_mem += r->objects.size() * sizeof(Object);
-	}
+        }
+        objects += r->objects.size();
+        obj_mem += r->objects.size() * sizeof(Object);
+    }
 
-	total = bt_mem + rom_mem + obj_mem + crt_mem + act_mem + talk_mem;
+    total = bt_mem + rom_mem + obj_mem + crt_mem + act_mem + talk_mem;
 
-	sock->print("Memory Status:\n");
-	sock->print("Total Rooms  :   %-5d", rooms);
-	sock->print("  %ld -> Total memory\n", rom_mem);
-	sock->print("Total Objects:   %-5d", objects);
-	sock->print("  %ld -> Total memory\n", obj_mem);
-	sock->print("Total Creatures: %-5d", crts);
-	sock->print("  %ld -> Total memory\n", crt_mem);
-	sock->print("Total Actions:   %-5d", actions);
-	sock->print("  %ld -> Total memory\n", act_mem);
-	sock->print("Total Bad Talks: %-5d", badtalk);
-	sock->print("  %ld -> Total memory\n", bt_mem);
-	sock->print("Total Talks:     %-5d", talks);
-	sock->print("  %ld -> Total memory\n", talk_mem);
-	sock->print("Total Memory:    %ld  (%s)\n\n", total, sizeInfo(total).c_str());
+    sock->print("Memory Status:\n");
+    sock->print("Total Rooms  :   %-5d", rooms);
+    sock->print("  %ld -> Total memory\n", rom_mem);
+    sock->print("Total Objects:   %-5d", objects);
+    sock->print("  %ld -> Total memory\n", obj_mem);
+    sock->print("Total Creatures: %-5d", crts);
+    sock->print("  %ld -> Total memory\n", crt_mem);
+    sock->print("Total Actions:   %-5d", actions);
+    sock->print("  %ld -> Total memory\n", act_mem);
+    sock->print("Total Bad Talks: %-5d", badtalk);
+    sock->print("  %ld -> Total memory\n", bt_mem);
+    sock->print("Total Talks:     %-5d", talks);
+    sock->print("  %ld -> Total memory\n", talk_mem);
+    sock->print("Total Memory:    %ld  (%s)\n\n", total, sizeInfo(total).c_str());
 }
 
 //*********************************************************************
-//						dmMemory
+//                      dmMemory
 //*********************************************************************
 
 int dmMemory(Player* player, cmd* cmnd) {
-	gConfig->showMemory(player->getSock());
-	return(0);
+    gConfig->showMemory(player->getSock());
+    return(0);
 }

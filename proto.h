@@ -1,6 +1,6 @@
 /*
  * proto.h
- *	 Function prototypes.
+ *   Function prototypes.
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -88,10 +88,10 @@ bstring unxsc(const bstring& txt);
 bstring unxsc(const char* txt);
 
 namespace Pueblo {
-	static bstring activation = "this world is pueblo ";
+    static bstring activation = "this world is pueblo ";
 
-	bstring multiline(bstring str);
-	bool is(bstring txt);
+    bstring multiline(bstring str);
+    bool is(bstring txt);
 }
 
 char keyTxtConvert(unsigned char c);
@@ -444,8 +444,8 @@ long exp_split(Creature* creature, long amount);
 int strPrefix(const char *haystack, const char *needle);
 int strSuffix(const char *haystack, const char *needle);
 int pkillPercent(int pkillsWon, int pkillsIn);
-int	numEnemyMonInRoom(Creature* player);
-int	getLastDigit(int n, int digits);
+int numEnemyMonInRoom(Creature* player);
+int getLastDigit(int n, int digits);
 
 char *stripLineFeeds(char *str);
 

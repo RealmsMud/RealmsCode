@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -35,16 +35,16 @@
 
 
 void MudObject::setName(bstring newName) {
-	removeFromSet();
-	name = newName;
-	addToSet();
+    removeFromSet();
+    name = newName;
+    addToSet();
 }
 
 const bstring& MudObject::getName() const {
-	return(name);
+    return(name);
 }
 const char* MudObject::getCName() const {
-	return(name.c_str());
+    return(name.c_str());
 }
 
 void MudObject::removeFromSet() {
@@ -56,48 +56,48 @@ void MudObject::addToSet() {
 
 
 bool MudObject::isRegistered() {
-	return(registered);
+    return(registered);
 }
 void MudObject::setRegistered() {
-	if(registered)
-		throw std::runtime_error("Already Registered!");
-	registered = true;
+    if(registered)
+        throw std::runtime_error("Already Registered!");
+    registered = true;
 
 }
 void MudObject::setUnRegistered() {
-	registered = false;
+    registered = false;
 }
 
 
 bool MudObject::registerMo() {
-	if(registered) {
-		//std::cout << "ERROR: Attempting to register a MudObject that thinks it is already registered" << std::endl;
-		return(false);
-	}
+    if(registered) {
+        //std::cout << "ERROR: Attempting to register a MudObject that thinks it is already registered" << std::endl;
+        return(false);
+    }
 
-	if(gServer->registerMudObject(this)) {
-		registerContainedItems();
-		return(true);
-	}
+    if(gServer->registerMudObject(this)) {
+        registerContainedItems();
+        return(true);
+    }
 
-	return(false);
+    return(false);
 }
 
 bool MudObject::unRegisterMo() {
-	if(!registered)
-		return(false);
-	if(gServer->unRegisterMudObject(this)) {
-		unRegisterContainedItems();
-		return(true);
-	}
-	return(false);
+    if(!registered)
+        return(false);
+    if(gServer->unRegisterMudObject(this)) {
+        unRegisterContainedItems();
+        return(true);
+    }
+    return(false);
 }
 
 void MudObject::registerContainedItems() {
-	return;
+    return;
 }
 void MudObject::unRegisterContainedItems() {
-	return;
+    return;
 }
 
 bool PlayerPtrLess::operator()(const Player* lhs, const Player* rhs) const {
@@ -111,44 +111,44 @@ bool MonsterPtrLess::operator()(const Monster* lhs, const Monster* rhs) const {
 }
 
 bool ObjectPtrLess::operator()(const Object* lhs, const Object* rhs) const {
-	return *lhs < *rhs;
+    return *lhs < *rhs;
 }
 
 MudObject::MudObject() {
-	moReset();
-	registered = false;
+    moReset();
+    registered = false;
 }
 
 MudObject::~MudObject() {
-	unRegisterMo();
+    unRegisterMo();
 }
 //***********************************************************************
-//						moReset
+//                      moReset
 //***********************************************************************
 
 void MudObject::moReset() {
-	id = "-1";
-	name = "";
+    id = "-1";
+    name = "";
 }
 
 //*********************************************************************
-//						moCopy
+//                      moCopy
 //*********************************************************************
 
 void MudObject::moCopy(const MudObject& mo) {
-	name = mo.getName();
+    name = mo.getName();
 
-	hooks = mo.hooks;
-	hooks.setParent(this);
+    hooks = mo.hooks;
+    hooks.setParent(this);
 }
 
 //***********************************************************************
-//						moDestroy
+//                      moDestroy
 //***********************************************************************
 
 void MudObject::moDestroy() {
-	unRegisterMo();
-	moReset();
+    unRegisterMo();
+    moReset();
 }
 
 MudObject* MudObject::getAsMudObject() {
@@ -157,7 +157,7 @@ MudObject* MudObject::getAsMudObject() {
 
 
 //***********************************************************************
-//						getMonster
+//                      getMonster
 //***********************************************************************
 
 Monster* MudObject::getAsMonster() {
@@ -165,7 +165,7 @@ Monster* MudObject::getAsMonster() {
 }
 
 //***********************************************************************
-//						getCreature
+//                      getCreature
 //***********************************************************************
 
 Creature* MudObject::getAsCreature() {
@@ -173,119 +173,119 @@ Creature* MudObject::getAsCreature() {
 }
 
 //***********************************************************************
-//						getPlayer
+//                      getPlayer
 //***********************************************************************
 
 Player* MudObject::getAsPlayer() {
-	return(dynamic_cast<Player*>(this));
+    return(dynamic_cast<Player*>(this));
 }
 
 //***********************************************************************
-//						getObject
+//                      getObject
 //***********************************************************************
 
 Object* MudObject::getAsObject() {
-	return(dynamic_cast<Object*>(this));
+    return(dynamic_cast<Object*>(this));
 }
 
 //***********************************************************************
-//						getUniqueRoom
+//                      getUniqueRoom
 //***********************************************************************
 
 UniqueRoom* MudObject::getAsUniqueRoom() {
-	return(dynamic_cast<UniqueRoom*>(this));
+    return(dynamic_cast<UniqueRoom*>(this));
 }
 
 //***********************************************************************
-//						getAreaRoom
+//                      getAreaRoom
 //***********************************************************************
 
 AreaRoom* MudObject::getAsAreaRoom() {
-	return(dynamic_cast<AreaRoom*>(this));
+    return(dynamic_cast<AreaRoom*>(this));
 }
 
 //***********************************************************************
-//						getRoom
+//                      getRoom
 //***********************************************************************
 
 BaseRoom* MudObject::getAsRoom() {
-	return(dynamic_cast<BaseRoom*>(this));
+    return(dynamic_cast<BaseRoom*>(this));
 }
 
 //***********************************************************************
-//						getExit
+//                      getExit
 //***********************************************************************
 
 Exit* MudObject::getAsExit() {
-	return(dynamic_cast<Exit*>(this));
+    return(dynamic_cast<Exit*>(this));
 }
 
 //***********************************************************************
-//						getConstMonster
+//                      getConstMonster
 //***********************************************************************
 
 const Monster* MudObject::getAsConstMonster() const {
-	return(dynamic_cast<const Monster*>(this));
+    return(dynamic_cast<const Monster*>(this));
 }
 
 //***********************************************************************
-//						getConstPlayer
+//                      getConstPlayer
 //***********************************************************************
 
 const Player* MudObject::getAsConstPlayer() const {
-	return(dynamic_cast<const Player*>(this));
+    return(dynamic_cast<const Player*>(this));
 }
 
 //***********************************************************************
-//						getConstCreature
+//                      getConstCreature
 //***********************************************************************
 
 const Creature* MudObject::getAsConstCreature() const {
-	return(dynamic_cast<const Creature*>(this));
+    return(dynamic_cast<const Creature*>(this));
 }
 
 //***********************************************************************
-//						getConstObject
+//                      getConstObject
 //***********************************************************************
 
 const Object* MudObject::getAsConstObject() const {
-	return(dynamic_cast<const Object*>(this));
+    return(dynamic_cast<const Object*>(this));
 }
 
 //***********************************************************************
-//						getConstUniqueRoom
+//                      getConstUniqueRoom
 //***********************************************************************
 
 const UniqueRoom* MudObject::getAsConstUniqueRoom() const {
-	return(dynamic_cast<const UniqueRoom*>(this));
+    return(dynamic_cast<const UniqueRoom*>(this));
 }
 
 //***********************************************************************
-//						getConstAreaRoom
+//                      getConstAreaRoom
 //***********************************************************************
 
 const AreaRoom* MudObject::getAsConstAreaRoom() const {
-	return(dynamic_cast<const AreaRoom*>(this));
+    return(dynamic_cast<const AreaRoom*>(this));
 }
 
 //***********************************************************************
-//						getConstRoom
+//                      getConstRoom
 //***********************************************************************
 
 const BaseRoom* MudObject::getAsConstRoom() const {
-	return(dynamic_cast<const BaseRoom*>(this));
+    return(dynamic_cast<const BaseRoom*>(this));
 }
 
 //***********************************************************************
-//						getConstExit
+//                      getConstExit
 //***********************************************************************
 
 const Exit* MudObject::getAsConstExit() const {
-	return(dynamic_cast<const Exit*>(this));
+    return(dynamic_cast<const Exit*>(this));
 }
 
 //***********************************************************************
-//						equals
+//                      equals
 //***********************************************************************
 
 bool MudObject::equals(MudObject* other) {
@@ -294,33 +294,33 @@ bool MudObject::equals(MudObject* other) {
 
 
 void MudObject::setId(bstring newId, bool handleParentSet) {
-	if(!id.equals("-1") && !newId.equals("-1")) {
-	    throw std::runtime_error(bstring("Error, re-setting ID:") + getName() + ":" + getId() + ":" + newId);
-	}
+    if(!id.equals("-1") && !newId.equals("-1")) {
+        throw std::runtime_error(bstring("Error, re-setting ID:") + getName() + ":" + getId() + ":" + newId);
+    }
 
-	if(newId.equals("-1"))
-		handleParentSet = false;
+    if(newId.equals("-1"))
+        handleParentSet = false;
 
-	if(!newId.equals("")) {
-		if(handleParentSet) removeFromSet();
-		id = newId;
-		if(handleParentSet) addToSet();
+    if(!newId.equals("")) {
+        if(handleParentSet) removeFromSet();
+        id = newId;
+        if(handleParentSet) addToSet();
 
-		// Handle registration elsewhere
-//		// Register the ID with the server if we're not a player, handle player registration
-//		// when adding the player to the server's list of players
-//		if(!getAsPlayer()) {
-//			if(getAsCreature() && gServer->lookupCrtId(newId)) {
-//				// We already have a creature with this registered ID, so this creature needs a new ID
-//				id = gServer->getNextMonsterId();
-//				std::cout << "Changing ID for " << this->getName() << " from "<< newId << " to " << id << std::endl;
-//			} else if(getAsObject() && gServer->lookupObjId(newId)) {
-//				throw std::runtime_error("Duplicate Object ");
+        // Handle registration elsewhere
+//      // Register the ID with the server if we're not a player, handle player registration
+//      // when adding the player to the server's list of players
+//      if(!getAsPlayer()) {
+//          if(getAsCreature() && gServer->lookupCrtId(newId)) {
+//              // We already have a creature with this registered ID, so this creature needs a new ID
+//              id = gServer->getNextMonsterId();
+//              std::cout << "Changing ID for " << this->getName() << " from "<< newId << " to " << id << std::endl;
+//          } else if(getAsObject() && gServer->lookupObjId(newId)) {
+//              throw std::runtime_error("Duplicate Object ");
 //
-//			}
-//			gServer->registerMudObject(this);
-//		}
-	}
+//          }
+//          gServer->registerMudObject(this);
+//      }
+    }
 }
 
 const bstring& MudObject::getId() const {
@@ -329,35 +329,35 @@ const bstring& MudObject::getId() const {
 
 // Return for Python which doesn't like bstring&
 bstring MudObject::getIdPython() const {
-	return(id);
+    return(id);
 }
 
 bool MudObject::isRoom() const {
-	return(this &&
-	  	  (typeid(*this) == typeid(BaseRoom) ||
-		   typeid(*this) == typeid(UniqueRoom) ||
-		   typeid(*this) == typeid(AreaRoom)));
+    return(this &&
+          (typeid(*this) == typeid(BaseRoom) ||
+           typeid(*this) == typeid(UniqueRoom) ||
+           typeid(*this) == typeid(AreaRoom)));
 }
 bool MudObject::isUniqueRoom() const {
-	return(this && typeid(*this) == typeid(UniqueRoom));
+    return(this && typeid(*this) == typeid(UniqueRoom));
 }
 bool MudObject::isAreaRoom() const {
-	return(this && typeid(*this) == typeid(AreaRoom));
+    return(this && typeid(*this) == typeid(AreaRoom));
 }
 bool MudObject::isObject() const {
-	return(this && typeid(*this) == typeid(Object));
+    return(this && typeid(*this) == typeid(Object));
 }
 bool MudObject::isPlayer() const {
-	return(this && typeid(*this) == typeid(Player));
+    return(this && typeid(*this) == typeid(Player));
 }
 bool MudObject::isMonster() const {
-	return(this && typeid(*this) == typeid(Monster));
+    return(this && typeid(*this) == typeid(Monster));
 }
 bool MudObject::isCreature() const {
-	return(this &&
-		  (typeid(*this) == typeid(Creature) ||
-		   typeid(*this) == typeid(Player) ||
-		   typeid(*this) == typeid(Monster)));
+    return(this &&
+          (typeid(*this) == typeid(Creature) ||
+           typeid(*this) == typeid(Player) ||
+           typeid(*this) == typeid(Monster)));
 }
 bool MudObject::isExit() const {
     return(this && typeid(*this) == typeid(Exit));

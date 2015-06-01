@@ -1,6 +1,6 @@
 /*
  * carry.cpp
- *	 Carried objects file
+ *   Carried objects file
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,62 +10,62 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 #include "mud.h"
 
 //*********************************************************************
-//						Carry
+//                      Carry
 //*********************************************************************
 
 Carry::Carry() {
-	numTrade = 0;
+    numTrade = 0;
 }
 
 Carry& Carry::operator=(const Carry& cry) {
-	info = cry.info;
-	numTrade = cry.numTrade;
-	return(*this);
+    info = cry.info;
+    numTrade = cry.numTrade;
+    return(*this);
 }
 
 bool Carry::operator==(const Carry& cry) const {
-	return(info == cry.info && numTrade == cry.numTrade);
+    return(info == cry.info && numTrade == cry.numTrade);
 }
 bool Carry::operator!=(const Carry& cry) const {
-	return(!(*this == cry));
+    return(!(*this == cry));
 }
 //*********************************************************************
-//						load
+//                      load
 //*********************************************************************
 
 void Carry::load(xmlNodePtr curNode) {
-	info.load(curNode);
-	numTrade = xml::getIntProp(curNode, "NumTrade");
+    info.load(curNode);
+    numTrade = xml::getIntProp(curNode, "NumTrade");
 }
 
 //*********************************************************************
-//						save
+//                      save
 //*********************************************************************
 
 xmlNodePtr Carry::save(xmlNodePtr curNode, const char* childName, bool saveNonZero, int pos) const {
-	curNode = info.save(curNode, childName, saveNonZero, pos);
-	if(curNode && numTrade)
-		xml::newNumProp(curNode, "NumTrade", numTrade);
-	return(curNode);
+    curNode = info.save(curNode, childName, saveNonZero, pos);
+    if(curNode && numTrade)
+        xml::newNumProp(curNode, "NumTrade", numTrade);
+    return(curNode);
 }
 
 //*********************************************************************
-//						str
+//                      str
 //*********************************************************************
 
 bstring Carry::str(bstring current, char color) const {
-	std::ostringstream oStr;
-	oStr << info.str(current, color);
-	if(numTrade)
-		oStr << " (" << numTrade << ")";
-	return(oStr.str());
+    std::ostringstream oStr;
+    oStr << info.str(current, color);
+    if(numTrade)
+        oStr << " (" << numTrade << ")";
+    return(oStr.str());
 }
 

@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -46,16 +46,16 @@ class MsdpVariable;
 //typedef _object PyObject;
 
 enum childType {
-	CHILD_START,
+    CHILD_START,
 
-	CHILD_DNS_RESOLVER,
-	CHILD_LISTER,
-	CHILD_DEMOGRAPHICS,
-	CHILD_SWAP_FIND,
-	CHILD_SWAP_FINISH,
-	CHILD_PRINT,
+    CHILD_DNS_RESOLVER,
+    CHILD_LISTER,
+    CHILD_DEMOGRAPHICS,
+    CHILD_SWAP_FIND,
+    CHILD_SWAP_FINISH,
+    CHILD_PRINT,
 
-	CHILD_END
+    CHILD_END
 };
 enum GoldLog {
     GOLD_IN,
@@ -79,176 +79,176 @@ class Server
 // **************
 // Static Methods
 public:
-	static Server* getInstance();
-	static void destroyInstance();
+    static Server* getInstance();
+    static void destroyInstance();
 
-	~Server();
+    ~Server();
 // Instance
 private:
-	static Server* myInstance;
+    static Server* myInstance;
 protected:
-	Server();
+    Server();
 
 
 // *****************
 // Public Structures
 public:
-	struct controlSock {
-		int port;
-		int control;
-		controlSock(int port, int control) {
-			this->port = port;
-			this->control = control;
-		}
-	};
-	struct childProcess {
-		int pid;
-		childType type;
-		int fd; // Fd if any we should watch
-		bstring extra;
-		childProcess() {
-			pid = 0;
-			fd = -1;
-			extra = "";
-		}
-		childProcess(int p, childType t, int f = -1, bstring e = "") {
-			pid = p;
-			type = t;
-			fd = f;
-			extra = e;
-		}
-	};
-	struct dnsCache {
-		bstring ip;
-		bstring hostName;
-		time_t time;
-		dnsCache(bstring pIp, bstring pHostName, time_t pTime) {
-			ip = pIp;
-			hostName = pHostName;
-			time = pTime;
-		}
-		bool operator==(const dnsCache& o) {
-			return(ip == o.ip && hostName == o.hostName);
-		}
-	};
+    struct controlSock {
+        int port;
+        int control;
+        controlSock(int port, int control) {
+            this->port = port;
+            this->control = control;
+        }
+    };
+    struct childProcess {
+        int pid;
+        childType type;
+        int fd; // Fd if any we should watch
+        bstring extra;
+        childProcess() {
+            pid = 0;
+            fd = -1;
+            extra = "";
+        }
+        childProcess(int p, childType t, int f = -1, bstring e = "") {
+            pid = p;
+            type = t;
+            fd = f;
+            extra = e;
+        }
+    };
+    struct dnsCache {
+        bstring ip;
+        bstring hostName;
+        time_t time;
+        dnsCache(bstring pIp, bstring pHostName, time_t pTime) {
+            ip = pIp;
+            hostName = pHostName;
+            time = pTime;
+        }
+        bool operator==(const dnsCache& o) {
+            return(ip == o.ip && hostName == o.hostName);
+        }
+    };
 
-	// Temp public
+    // Temp public
 public:
-	PlayerMap players; // Map of all players
-	SocketList sockets; // List of all connected sockets
-	SocketVector* vSockets = 0;
-	void handlePythonError();
-	
+    PlayerMap players; // Map of all players
+    SocketList sockets; // List of all connected sockets
+    SocketVector* vSockets = 0;
+    void handlePythonError();
+    
 // ******************
 // Internal Variables
 private:
 
-	std::list<DelayedAction> delayedActionQueue;
-	
-	PythonHandler* pythonHandler;
+    std::list<DelayedAction> delayedActionQueue;
+    
+    PythonHandler* pythonHandler;
 
-	std::list<BaseRoom*> effectsIndex;
+    std::list<BaseRoom*> effectsIndex;
 
-	fd_set inSet;
-	fd_set outSet;
-	fd_set excSet;
+    fd_set inSet;
+    fd_set outSet;
+    fd_set excSet;
 
-	bool running; // True while the game is up and bound to a port
-	long pulse; // Current pulse
+    bool running; // True while the game is up and bound to a port
+    long pulse; // Current pulse
 
-	bool rebooting;
-	bool GDB;
-	bool valgrind;
+    bool rebooting;
+    bool GDB;
+    bool valgrind;
 
-	// List of Ids
+    // List of Ids
 #ifndef PYTHON_CODE_GEN
-	IdMap registeredIds;
+    IdMap registeredIds;
 #endif
-	// List of groups
-	GroupList groups;
+    // List of groups
+    GroupList groups;
 
-	// Maximum Ids
-	long maxPlayerId;
-	long maxMonsterId;
-	long maxObjectId;
-	bool idDirty;
+    // Maximum Ids
+    long maxPlayerId;
+    long maxMonsterId;
+    long maxObjectId;
+    bool idDirty;
 
-	std::list<childProcess> children; // List of child processes
-	std::list<controlSock> controlSocks; // List of control fds
-	std::list<dnsCache> cachedDns; // Cache of DNS lookups
-	WebInterface* webInterface;
+    std::list<childProcess> children; // List of child processes
+    std::list<controlSock> controlSocks; // List of control fds
+    std::list<dnsCache> cachedDns; // Cache of DNS lookups
+    WebInterface* webInterface;
 
-	// Game Updates
-	MonsterList activeList; // The new active list
+    // Game Updates
+    MonsterList activeList; // The new active list
 
-	long lastDnsPrune;
-	long lastUserUpdate;
-	long lastRoomPulseUpdate;
-	long lastRandomUpdate;
-	long lastActiveUpdate;
+    long lastDnsPrune;
+    long lastUserUpdate;
+    long lastRoomPulseUpdate;
+    long lastRandomUpdate;
+    long lastActiveUpdate;
 
-	int Deadchildren;
+    int Deadchildren;
 
 
 // ****************
 // Internal Methods
 private:
-	// Python
-	bool initPython();
-	bool cleanUpPython();
+    // Python
+    bool initPython();
+    bool cleanUpPython();
 
-	int getNumSockets(void); // Get number of sockets in the sockets list
+    int getNumSockets(void); // Get number of sockets in the sockets list
 
-	// Game & Socket methods
-	int handleNewConnection(controlSock& control);
-	int poll(void); // Poll all descriptors for input
-	int checkNew(void); // Accept new connections
-	int processInput(void); // Process input from users
-	int processCommands(void); // Process commands from users
-	int updatePlayerCombat(void); // Handle player auto attacks etc
-	int processChildren(void);
-	int processListOutput(childProcess &lister);
+    // Game & Socket methods
+    int handleNewConnection(controlSock& control);
+    int poll(void); // Poll all descriptors for input
+    int checkNew(void); // Accept new connections
+    int processInput(void); // Process input from users
+    int processCommands(void); // Process commands from users
+    int updatePlayerCombat(void); // Handle player auto attacks etc
+    int processChildren(void);
+    int processListOutput(childProcess &lister);
 
-	// Child processes
-	int reapChildren(void); // Clean up after any dead children
+    // Child processes
+    int reapChildren(void); // Clean up after any dead children
 
-	// Reboot
-	bool saveRebootFile(bool resetShips = false);
+    // Reboot
+    bool saveRebootFile(bool resetShips = false);
 
-	// Updates
-	void updateGame(void);
-	void processMsdp(void);
-	void pulseTicks(long t);
-	void pulseCreatureEffects(long t);
-	void pulseRoomEffects(long t);
-	void updateUsers(long t);
-	void updateRandom(long t);
-	void updateActive(long t);
+    // Updates
+    void updateGame(void);
+    void processMsdp(void);
+    void pulseTicks(long t);
+    void pulseCreatureEffects(long t);
+    void pulseRoomEffects(long t);
+    void updateUsers(long t);
+    void updateRandom(long t);
+    void updateActive(long t);
 
-	// TODO: Get rid of this and switch all old "logic" creatures over to python scripts
-	void updateAction(long t);
+    // TODO: Get rid of this and switch all old "logic" creatures over to python scripts
+    void updateAction(long t);
 
-	// DNS
-	void addCache(bstring ip, bstring hostName, time_t t = -1);
-	void saveDnsCache();
-	void loadDnsCache();
-	void pruneDns();
+    // DNS
+    void addCache(bstring ip, bstring hostName, time_t t = -1);
+    void saveDnsCache();
+    void loadDnsCache();
+    void pruneDns();
 
-	int installPrintfHandlers();
-	void installSignalHandlers();
+    int installPrintfHandlers();
+    void installSignalHandlers();
 
-	void populateVSockets();
+    void populateVSockets();
 
-	// Delayed Actions
+    // Delayed Actions
 protected:
-	void parseDelayedActions(long t);
+    void parseDelayedActions(long t);
 
 
 #ifdef SQL_LOGGER
 
 protected:
-	odbc::Connection* conn;
-	bool connActive;
+    odbc::Connection* conn;
+    bool connActive;
     void cleanUpSql();
     bool initSql();
     bool logGoldSql(bstring& pName, bstring& pId, bstring& targetStr, bstring& source, bstring& room,
@@ -265,131 +265,131 @@ public:
     void clearAsEnemy(Player* player);
     bstring showActiveList();
 
-	void logGold(GoldLog dir, Player* player, Money amt, MudObject* target, bstring logType);
+    void logGold(GoldLog dir, Player* player, Money amt, MudObject* target, bstring logType);
 
     bool registerGroup(Group* toRegister);
     bool unRegisterGroup(Group* toUnRegister);
     bstring getGroupList();
 
-	bool registerMudObject(MudObject* toRegister, bool reassignId = false);
-	bool unRegisterMudObject(MudObject* toUnRegister);
-	bstring getRegisteredList();
-	Creature* lookupCrtId(const bstring& toLookup);
-	Object* lookupObjId(const bstring& toLookup);
-	Player* lookupPlyId(const bstring& toLookup);
+    bool registerMudObject(MudObject* toRegister, bool reassignId = false);
+    bool unRegisterMudObject(MudObject* toUnRegister);
+    bstring getRegisteredList();
+    Creature* lookupCrtId(const bstring& toLookup);
+    Object* lookupObjId(const bstring& toLookup);
+    Player* lookupPlyId(const bstring& toLookup);
 
-	void loadIds();
-	void saveIds();
+    void loadIds();
+    void saveIds();
 
-	bstring getNextMonsterId();
-	bstring getNextPlayerId();
-	bstring getNextObjectId();
+    bstring getNextMonsterId();
+    bstring getNextPlayerId();
+    bstring getNextObjectId();
 
-	long getMaxMonsterId();
-	long getMaxPlayerId();
-	long getMaxObjectId();
+    long getMaxMonsterId();
+    long getMaxPlayerId();
+    long getMaxObjectId();
 
-	bool removeDelayedActions(MudObject* target, bool interruptOnly=false);
-	void addDelayedAction(void (*callback)(DelayedActionFn), MudObject* target, cmd* cmnd, DelayedActionType type, long howLong, bool canInterrupt=true);
-	void addDelayedScript(void (*callback)(DelayedActionFn), MudObject* target, bstring script, long howLong, bool canInterrupt=true);
-	bool hasAction(const MudObject* target, DelayedActionType type);
-	bstring delayedActionStrings(const MudObject* target);
+    bool removeDelayedActions(MudObject* target, bool interruptOnly=false);
+    void addDelayedAction(void (*callback)(DelayedActionFn), MudObject* target, cmd* cmnd, DelayedActionType type, long howLong, bool canInterrupt=true);
+    void addDelayedScript(void (*callback)(DelayedActionFn), MudObject* target, bstring script, long howLong, bool canInterrupt=true);
+    bool hasAction(const MudObject* target, DelayedActionType type);
+    bstring delayedActionStrings(const MudObject* target);
 
-	void weather(WeatherString w);
-	void updateWeather(long t);
+    void weather(WeatherString w);
+    void updateWeather(long t);
 // *******************************
 // Public methods for server class
 public:
 
-	// Child processes
-	void addChild(int pid, childType pType, int pFd = -1, bstring pExtra = "");
+    // Child processes
+    void addChild(int pid, childType pType, int pFd = -1, bstring pExtra = "");
 
-	// Python
-	bool runPython(const bstring& pyScript, object& dictionary);
-	bool runPython(const bstring& pyScript, bstring args = "", MudObject *actor = NULL, MudObject *target = NULL);
-	bool runPythonWithReturn(const bstring& pyScript, bstring args = "", MudObject *actor = NULL, MudObject *target = NULL);
-	bool runPython(const bstring& pyScript, bstring args, Socket *sock, Player *actor, MsdpVariable* msdpVar = NULL);
+    // Python
+    bool runPython(const bstring& pyScript, object& dictionary);
+    bool runPython(const bstring& pyScript, bstring args = "", MudObject *actor = NULL, MudObject *target = NULL);
+    bool runPythonWithReturn(const bstring& pyScript, bstring args = "", MudObject *actor = NULL, MudObject *target = NULL);
+    bool runPython(const bstring& pyScript, bstring args, Socket *sock, Player *actor, MsdpVariable* msdpVar = NULL);
 
-	// Setup
-	bool init();	// Setup the server
+    // Setup
+    bool init();    // Setup the server
 
-	void setGDB();
-	void setRebooting();
-	void setValgrind();
+    void setGDB();
+    void setRebooting();
+    void setValgrind();
 
-	int run(void); // Run the server
-	int addListenPort(int); // Add a new port to listen to
+    int run(void); // Run the server
+    int addListenPort(int); // Add a new port to listen to
 
-	// Status
-	void sendCrash();
+    // Status
+    void sendCrash();
 
-	bool isRebooting();
-	bool isGDB();
-	bool isValgrind();
+    bool isRebooting();
+    bool isGDB();
+    bool isValgrind();
 
-	// Reboot
-	bool startReboot(bool resetShips = false);
-	int finishReboot(void); // Bring the mud back up from a reboot
+    // Reboot
+    bool startReboot(bool resetShips = false);
+    int finishReboot(void); // Bring the mud back up from a reboot
 
-	// DNS
-	bstring getDnsCacheString();
-	bool getDnsCache(bstring &ip, bstring &hostName);
-	int startDnsLookup(Socket* sock, sockaddr_in pAddr); // Start dns lookup on a socket
+    // DNS
+    bstring getDnsCacheString();
+    bool getDnsCache(bstring &ip, bstring &hostName);
+    int startDnsLookup(Socket* sock, sockaddr_in pAddr); // Start dns lookup on a socket
 
-	// Players
-	bool addPlayer(Player* player);
-	bool clearPlayer(Player* player);
-	Player* findPlayer(bstring name);
-	bool clearPlayer(bstring name);
-	void saveAllPly();
-	int getNumPlayers();
+    // Players
+    bool addPlayer(Player* player);
+    bool clearPlayer(Player* player);
+    Player* findPlayer(bstring name);
+    bool clearPlayer(bstring name);
+    void saveAllPly();
+    int getNumPlayers();
 
-	// Sockets
-	int deleteSocket(Socket* sock);
-	void disconnectAll(void);
-	int processOutput(void); // Send any buffered output
+    // Sockets
+    int deleteSocket(Socket* sock);
+    void disconnectAll(void);
+    int processOutput(void); // Send any buffered output
 
-	// Web Interface
-	bool initWebInterface();
-	bool checkWebInterface();
-	void recreateFifos();
+    // Web Interface
+    bool initWebInterface();
+    bool checkWebInterface();
+    void recreateFifos();
 
-	// Active list functions
-	void addActive(Monster* monster);
-	void delActive(Monster* monster);
-	bool isActive(Monster* monster);
+    // Active list functions
+    void addActive(Monster* monster);
+    void delActive(Monster* monster);
+    bool isActive(Monster* monster);
 
-	// Child Processes
-	void childDied();
-	int getDeadChildren() const;
-	int runList(Socket* sock, cmd* cmnd);
-	bstring simpleChildRead(Server::childProcess &child);
+    // Child Processes
+    void childDied();
+    int getDeadChildren() const;
+    int runList(Socket* sock, cmd* cmnd);
+    bstring simpleChildRead(Server::childProcess &child);
 
-	// Swap functions - use children
-	bstring swapName();
-	void finishSwap(Player* player, bool online, CatRef origin, CatRef target);
-	bool swap(Swap s);
-	void endSwap();
-	void swapInfo(const Player* player);
+    // Swap functions - use children
+    bstring swapName();
+    void finishSwap(Player* player, bool online, CatRef origin, CatRef target);
+    bool swap(Swap s);
+    void endSwap();
+    void swapInfo(const Player* player);
 
-	// Queries
-	bool checkDuplicateName(Socket* sock, bool dis);
-	bool checkDouble(Socket* sock);
+    // Queries
+    bool checkDuplicateName(Socket* sock, bool dis);
+    bool checkDouble(Socket* sock);
 
-	// Bans
-	void checkBans();
+    // Bans
+    void checkBans();
 
-	// Broadcasts
-	bstring getTimeZone();
+    // Broadcasts
+    bstring getTimeZone();
 
-	// Effects
-	void addEffectsIndex(BaseRoom* room);
-	void removeEffectsIndex(BaseRoom* room);
-	void removeEffectsOwner(const Creature* owner);
-	void showEffectsIndex(const Player* player);
+    // Effects
+    void addEffectsIndex(BaseRoom* room);
+    void removeEffectsIndex(BaseRoom* room);
+    void removeEffectsOwner(const Creature* owner);
+    void showEffectsIndex(const Player* player);
 
 protected:
-	int cleanUp(void); // Kick out any disconnectors and other general cleanup
+    int cleanUp(void); // Kick out any disconnectors and other general cleanup
 
 };
 

@@ -103,19 +103,19 @@ bool Group::remove(Creature* toRemove) {
 
         // See if the group should be disbanded
         if(this->getSize(false, false) <= 1)
-        	return(disband());
+            return(disband());
 
         // We've already checked for a disband, now check for a leadership change
         if(toRemove == leader) {
-        	leader = this->getMember(1, false);
+            leader = this->getMember(1, false);
 
-        	// Something's wrong here
-        	if(!leader) {
-        		std::cout << "Couldn't find a replacement leader.\n";
-        		return(disband());
-        	}
+            // Something's wrong here
+            if(!leader) {
+                std::cout << "Couldn't find a replacement leader.\n";
+                return(disband());
+            }
 
-        	leader->setGroupStatus(GROUP_LEADER);
+            leader->setGroupStatus(GROUP_LEADER);
             leader->print("You are now the group leader.\n");
             sendToAll(bstring(leader->getName()) + " is now the group leader.\n", leader);
         }
@@ -169,12 +169,12 @@ int Group::size() {
 //             membersOnly  - Should we count only members, or include invited people as well
 // Returns: The number of players in the group
 int Group::getSize(bool countDmInvis, bool membersOnly) {
-	int count=0;
-	for(Creature* crt : members) {
-		if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer() && (crt->getGroupStatus() >= GROUP_MEMBER || ! membersOnly))
-			count++;
-	}
-	return(count);
+    int count=0;
+    for(Creature* crt : members) {
+        if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer() && (crt->getGroupStatus() >= GROUP_MEMBER || ! membersOnly))
+            count++;
+    }
+    return(count);
 
 }
 //********************************************************************************
@@ -182,12 +182,12 @@ int Group::getSize(bool countDmInvis, bool membersOnly) {
 //********************************************************************************
 // Returns the number of group members in the same room as the target
 int Group::getNumInSameRoom(Creature* target) {
-	int count=0;
-	for(Creature* crt : members) {
-		if(crt != target && target->inSameRoom(crt))
-			count++;
-	}
-	return(count);
+    int count=0;
+    for(Creature* crt : members) {
+        if(crt != target && target->inSameRoom(crt))
+            count++;
+    }
+    return(count);
 }
 //********************************************************************************
 //* getNumPlyInSameRoup
@@ -195,12 +195,12 @@ int Group::getNumInSameRoom(Creature* target) {
 // Returns the number of group members (players) in the same room as the target
 
 int Group::getNumPlyInSameRoom(Creature* target) {
-	int count=0;
-	for(Creature* crt : members) {
-		if(crt != target && crt->isPlayer() && target->inSameRoom(crt))
-			count++;
-	}
-	return(count);
+    int count=0;
+    for(Creature* crt : members) {
+        if(crt != target && crt->isPlayer() && target->inSameRoom(crt))
+            count++;
+    }
+    return(count);
 }
 
 //********************************************************************************
@@ -222,24 +222,24 @@ Creature* Group::getMember(int num, bool countDmInvis) {
 //********************************************************************************
 //* getMember
 //********************************************************************************
-// Parameters: 	name 		- Name (possibly partial) of the match we're looking for
-//			   	num			- Number in the list for a match
-//				Searcher	- The creature doing the search (allows nulls)
-//				includePets - Include pets in the search
+// Parameters:  name        - Name (possibly partial) of the match we're looking for
+//              num         - Number in the list for a match
+//              Searcher    - The creature doing the search (allows nulls)
+//              includePets - Include pets in the search
 // Returns: A pointer to the creature, if found
 Creature* Group::getMember(bstring name, int num, Creature* searcher, bool includePets) {
-	int match = 0;
-	for(Creature* crt : members) {
-		if(!crt->isPlayer() && !includePets) continue;
-		if(crt->getGroupStatus() < GROUP_MEMBER) continue;
-		if(!searcher || !searcher->canSee(crt)) continue;
-		if(keyTxtEqual(crt, name.c_str())) {
-			if(++match == num) {
-				return(crt);
-			}
-		}
-	}
-	return(NULL);
+    int match = 0;
+    for(Creature* crt : members) {
+        if(!crt->isPlayer() && !includePets) continue;
+        if(crt->getGroupStatus() < GROUP_MEMBER) continue;
+        if(!searcher || !searcher->canSee(crt)) continue;
+        if(keyTxtEqual(crt, name.c_str())) {
+            if(++match == num) {
+                return(crt);
+            }
+        }
+    }
+    return(NULL);
 }
 
 
@@ -371,16 +371,16 @@ GroupStatus Creature::getGroupStatus() {
 //* InSameGroup
 //********************************************************************************
 bool Creature::inSameGroup(Creature* target) {
-	if(!target) return(false);
-	return(getGroup() == target->getGroup());
+    if(!target) return(false);
+    return(getGroup() == target->getGroup());
 }
 //********************************************************************************
 //* GetGroupLeader
 //********************************************************************************
 Creature* Creature::getGroupLeader() {
-	group = getGroup();
-	if(!group) return(NULL);
-	return(group->getLeader());
+    group = getGroup();
+    if(!group) return(NULL);
+    return(group->getLeader());
 }
 
 //********************************************************************************

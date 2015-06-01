@@ -1,6 +1,6 @@
 /*
  * skills.cpp
- *	 Skill manipulation functions.
+ *   Skill manipulation functions.
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -133,12 +133,12 @@ void Skill::improve(int amt) {
 //--------------------------------------------------------------------
 
 //*****************************************************************
-//						Skill
+//                      Skill
 //*****************************************************************
 // Class to store base information about skills
 
 //********************************************************************
-//						setGroup
+//                      setGroup
 //********************************************************************
 // Sets group, aborts if not valid
 
@@ -175,14 +175,14 @@ bstring SkillInfo::getDisplayName() const {
 //bstring SkillInfo::getDescription() const { return(description); }
 
 //********************************************************************
-//						checkImprove
+//                      checkImprove
 //********************************************************************
 // Check for an increase to the given skill; if there's a base skill, check
 // that instead
 //  Parameters: skillName - What skill are we checking for improvement
-//				success - Was the skill sucessfull
-//				attribute - What attribute will be helpful in raising the skill? (default: INT)
-//				bns - Any bonus to the improve calculation (default: 0)
+//              success - Was the skill sucessfull
+//              attribute - What attribute will be helpful in raising the skill? (default: INT)
+//              bns - Any bonus to the improve calculation (default: 0)
 
 void Creature::checkImprove(const bstring& skillName, bool success, int attribute, int bns) {
     if (isMonster())
@@ -279,7 +279,7 @@ void Creature::checkImprove(const bstring& skillName, bool success, int attribut
 }
 
 //********************************************************************
-//						knowsSkill
+//                      knowsSkill
 //********************************************************************
 
 bool Creature::knowsSkill(const bstring& skillName) const {
@@ -298,7 +298,7 @@ bool Creature::knowsSkill(const bstring& skillName) const {
 }
 
 //********************************************************************
-//						getSkill
+//                      getSkill
 //********************************************************************
 // Returns the requested skill if it can be found on the creature
 
@@ -352,7 +352,7 @@ bool Creature::setSkill(const bstring skillStr, int gained) {
 }
 
 //********************************************************************
-//						addSkill
+//                      addSkill
 //********************************************************************
 // Add a new skill of 'skillName' at 'gained' level
 
@@ -373,7 +373,7 @@ void Creature::addSkill(const bstring& skillName, int gained) {
 }
 
 //********************************************************************
-//						remSkill
+//                      remSkill
 //********************************************************************
 
 void Creature::remSkill(const bstring& skillName) {
@@ -390,35 +390,35 @@ void Creature::remSkill(const bstring& skillName) {
     skills.erase(skillName);
 }
 
-#define SKILL_CHART_SIZE		21
-char skillLevelStr[][SKILL_CHART_SIZE] = { "^rHorrible^x",			// 0-24
-        "^rPoor^x",				// 25-49
-        "^rFair^x",				// 50-74
-        "^mMediocre^x",			// 75-99
-        "^mDecent^x",			// 100-124
-        "^mBelow Average^x",	// 125-149
-        "^wCompetent^x",		// 150-174
-        "^wAverage^x",			// 175-199
-        "^wAbove Average^x",	// 200-224
-        "^cProficient^x",		// 225-249
-        "^cSkilled^x",			// 250-274
-        "^cTalented^x",			// 275-299
-        "^bVery Good^x",		// 300-324
-        "^bAdept^x",			// 325-349
-        "^bSuperb^x",			// 350-374
-        "^gExceptional^x",		// 375-399
-        "^gExpert^x",			// 400-424
-        "^gMaster^x",			// 425-449
-        "^ySuperior Master^x",	// 450-474
-        "^yGrand Master^x",		// 474-499
-        "^yGodlike^x"			// 500
+#define SKILL_CHART_SIZE        21
+char skillLevelStr[][SKILL_CHART_SIZE] = { "^rHorrible^x",          // 0-24
+        "^rPoor^x",             // 25-49
+        "^rFair^x",             // 50-74
+        "^mMediocre^x",         // 75-99
+        "^mDecent^x",           // 100-124
+        "^mBelow Average^x",    // 125-149
+        "^wCompetent^x",        // 150-174
+        "^wAverage^x",          // 175-199
+        "^wAbove Average^x",    // 200-224
+        "^cProficient^x",       // 225-249
+        "^cSkilled^x",          // 250-274
+        "^cTalented^x",         // 275-299
+        "^bVery Good^x",        // 300-324
+        "^bAdept^x",            // 325-349
+        "^bSuperb^x",           // 350-374
+        "^gExceptional^x",      // 375-399
+        "^gExpert^x",           // 400-424
+        "^gMaster^x",           // 425-449
+        "^ySuperior Master^x",  // 450-474
+        "^yGrand Master^x",     // 474-499
+        "^yGodlike^x"           // 500
         };
 
 char craftSkillLevelStr[][25] = { "Novice", "Apprentice", "Journeyman", "Expert", "Artisian",
         "Master", "Grand Master" };
 
 //********************************************************************
-//						showSkills
+//                      showSkills
 //********************************************************************
 // Show the skills and skill levels of 'player'  to 'sock'
 
@@ -475,8 +475,8 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
                 int curSkill = 0;
                 float maxSkill = 0;
                 //if(isCraft) {
-                //	maxSkill = MIN(player->getLevel()*10, 100);
-                //	curSkill = MIN(crtSkill->getGained(), (int)maxSkill);
+                //  maxSkill = MIN(player->getLevel()*10, 100);
+                //  curSkill = MIN(crtSkill->getGained(), (int)maxSkill);
                 //} else {
                 maxSkill = MIN(player->getLevel()*10.0, MAXALVL*10.0);
                 curSkill = MIN(crtSkill->getGained(), maxSkill);
@@ -511,12 +511,12 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
                     continue;
                 }
                 //if(!isCraft) {
-                //	// Not a crafting skill
+                //  // Not a crafting skill
                 oStr << skillLevelStr[displayNum];
                 //} else {
-                //	// Crafting Skill
-                //	int disp = (curSkill/maxSkill)*6;
-                //	oStr << craftSkillLevelStr[disp];
+                //  // Crafting Skill
+                //  int disp = (curSkill/maxSkill)*6;
+                //  oStr << craftSkillLevelStr[disp];
                 //}
                 if (showDigits)
                     oStr << " (" << curSkill << ")";
@@ -530,7 +530,7 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
                     oStr << " (Protection: 10)";
 
                 if (toShow->isCt()) {  // && !isCraft)
-//					oStr << " (" << crtSkill->getGained() << ")";
+//                  oStr << " (" << crtSkill->getGained() << ")";
                     oStr << " [" << player->getSkillLevel(crtSkill->getName()) << "]";
                 }
                 oStr << "\n";
@@ -543,7 +543,7 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
 }
 
 //********************************************************************
-//						getSkillLevel
+//                      getSkillLevel
 //********************************************************************
 // Return the player level equilvalent of the given skill
 
@@ -578,7 +578,7 @@ double Creature::getSkillLevel(const bstring& skillName, bool useBase) const {
 }
 
 //********************************************************************
-//						getSkillGained
+//                      getSkillGained
 //********************************************************************
 
 double Creature::getSkillGained(const bstring& skillName, bool useBase) const {
@@ -620,7 +620,7 @@ double Creature::getTradeSkillGained(const bstring& skillName, bool useBase) con
 }
 
 //********************************************************************
-//						dmSkills
+//                      dmSkills
 //********************************************************************
 // List the skill table, or optionally a player's known skills
 
@@ -677,7 +677,7 @@ int dmSkills(Player* player, cmd* cmnd) {
 }
 
 //********************************************************************
-//						dmSetSkills
+//                      dmSetSkills
 //********************************************************************
 
 int dmSetSkills(Player *admin, cmd* cmnd) {
@@ -719,7 +719,7 @@ int dmSetSkills(Player *admin, cmd* cmnd) {
 }
 
 //********************************************************************
-//						cmdSkills
+//                      cmdSkills
 //********************************************************************
 // Display all skills a player knows and their level
 
@@ -822,7 +822,7 @@ SONGFN get_song_function(int nIndex) {
 }
 
 //**********************************************************************
-//						getMaxSong
+//                      getMaxSong
 //**********************************************************************
 
 int Config::getMaxSong() {
@@ -857,7 +857,7 @@ void Config::updateSkillPointers() {
 }
 
 //********************************************************************
-//						skillExists
+//                      skillExists
 //********************************************************************
 // True if the skill exists
 
@@ -867,7 +867,7 @@ bool Config::skillExists(const bstring& skillName) const {
 }
 
 //********************************************************************
-//						getSkill
+//                      getSkill
 //********************************************************************
 // Returns the given skill skill
 
@@ -879,7 +879,7 @@ SkillInfo* Config::getSkill(const bstring& skillName) const {
 }
 
 //********************************************************************
-//						getSkillDisplayName
+//                      getSkillDisplayName
 //********************************************************************
 // Get the display name of the skill
 
@@ -891,7 +891,7 @@ bstring Config::getSkillDisplayName(const bstring& skillName) const {
 }
 
 //********************************************************************
-//						getSkillGroupDisplayName
+//                      getSkillGroupDisplayName
 //********************************************************************
 // Get the group display name of the skill
 
@@ -903,7 +903,7 @@ bstring Config::getSkillGroupDisplayName(const bstring& groupName) const {
 }
 
 //********************************************************************
-//						getSkillGroup
+//                      getSkillGroup
 //********************************************************************
 // Get the skill group of the skill
 

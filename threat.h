@@ -1,6 +1,6 @@
 /*
  * threat.h
- *	 Classes for threat
+ *   Classes for threat
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -29,22 +29,22 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const ThreatEntry* threat);
 
 public:
-	ThreatEntry(bstring pUid);
+    ThreatEntry(bstring pUid);
 
-	long getThreatValue();
-	long getContributionValue();
-	long adjustThreat(long modAmt);
-	long adjustContribution(long modAmt);
+    long getThreatValue();
+    long getContributionValue();
+    long adjustThreat(long modAmt);
+    long adjustContribution(long modAmt);
 //protected:
 public:
-	bstring uId;        // ID of the target this monster is mad at
+    bstring uId;        // ID of the target this monster is mad at
 
-	time_t lastMod;     // When was this threat entry last updated
+    time_t lastMod;     // When was this threat entry last updated
 
-	long threatValue;       // How mad they are at this target
-	long contributionValue; // How much this target has contributed to killing this monster
-	bool operator< (const ThreatEntry& t) const;
-	const bstring& getUid() const;
+    long threatValue;       // How mad they are at this target
+    long contributionValue; // How much this target has contributed to killing this monster
+    bool operator< (const ThreatEntry& t) const;
+    const bstring& getUid() const;
 };
 
 struct ThreatPtrLess : public std::binary_function<const ThreatEntry*, const ThreatEntry*, bool> {
@@ -61,31 +61,31 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const ThreatTable& table);
     friend std::ostream& operator<<(std::ostream& out, const ThreatTable* table);
 public:
-	ThreatTable(Creature* parent);
-	~ThreatTable();
+    ThreatTable(Creature* parent);
+    ~ThreatTable();
 
-	bool isEnemy(const Creature* target);
-	long getTotalThreat();
-	long getThreat(Creature* target);
-	long adjustThreat(Creature* target, long modAmt, double threatFactor = 1.0);
-	long removeThreat(const bstring& pUid);
-	long removeThreat(Creature* target);
-	void setParent(Creature* pParent);
-	bool hasEnemy() const;
+    bool isEnemy(const Creature* target);
+    long getTotalThreat();
+    long getThreat(Creature* target);
+    long adjustThreat(Creature* target, long modAmt, double threatFactor = 1.0);
+    long removeThreat(const bstring& pUid);
+    long removeThreat(Creature* target);
+    void setParent(Creature* pParent);
+    bool hasEnemy() const;
 
-	ThreatMap::size_type size();
-	void clear();
+    ThreatMap::size_type size();
+    void clear();
 
-	Creature* getTarget(bool sameRoom=true);
+    Creature* getTarget(bool sameRoom=true);
 
 protected:
-	ThreatSet::iterator removeFromSet(ThreatEntry* threat);
+    ThreatSet::iterator removeFromSet(ThreatEntry* threat);
 
 public:
-	ThreatMap threatMap;
-	ThreatSet threatSet;
+    ThreatMap threatMap;
+    ThreatSet threatSet;
 
-	long totalThreat;
+    long totalThreat;
     Creature* myParent;
 };
 

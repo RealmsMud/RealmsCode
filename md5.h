@@ -1,11 +1,11 @@
 /*
- *	This is the C++ implementation of the MD5 Message-Digest
- *	Algorithm desrcipted in RFC 1321.
- *	I translated the C code from this RFC to C++.
- *	There is now warranty.
+ *  This is the C++ implementation of the MD5 Message-Digest
+ *  Algorithm desrcipted in RFC 1321.
+ *  I translated the C code from this RFC to C++.
+ *  There is now warranty.
  *
- *	Feb. 12. 2005
- *	Benjamin Grüdelbach
+ *  Feb. 12. 2005
+ *  Benjamin Grüdelbach
  */
 
 /*
@@ -50,9 +50,9 @@ typedef unsigned char *POINTER;
  */
 typedef struct 
 {
-	unsigned long int state[4];   	      /* state (ABCD) */
-	unsigned long int count[2]; 	      /* number of bits, modulo 2^64 (lsb first) */
-	unsigned char buffer[64];	      /* input buffer */
+    unsigned long int state[4];           /* state (ABCD) */
+    unsigned long int count[2];           /* number of bits, modulo 2^64 (lsb first) */
+    unsigned char buffer[64];         /* input buffer */
 } MD5_CTX;
 
 /*
@@ -61,60 +61,60 @@ typedef struct
 class MD5
 {
 
-	private:
+    private:
 
-		void MD5Transform (unsigned long int state[4], unsigned char block[64]);
-		void Encode (unsigned char*, unsigned long int*, unsigned int);
-		void Decode (unsigned long int*, unsigned char*, unsigned int);
-		void MD5_memcpy (POINTER, POINTER, unsigned int);
-		void MD5_memset (POINTER, int, unsigned int);
+        void MD5Transform (unsigned long int state[4], unsigned char block[64]);
+        void Encode (unsigned char*, unsigned long int*, unsigned int);
+        void Decode (unsigned long int*, unsigned char*, unsigned int);
+        void MD5_memcpy (POINTER, POINTER, unsigned int);
+        void MD5_memset (POINTER, int, unsigned int);
 
-	public:
-	
-		void MD5Init (MD5_CTX*);
-		void MD5Update (MD5_CTX*, unsigned char*, unsigned int);
-		void MD5Final (unsigned char [16], MD5_CTX*);
+    public:
+    
+        void MD5Init (MD5_CTX*);
+        void MD5Update (MD5_CTX*, unsigned char*, unsigned int);
+        void MD5Final (unsigned char [16], MD5_CTX*);
 
-	MD5(){};
+    MD5(){};
 };
 
 
 class md5wrapper
 {
-	private:
-		MD5 *md5;
-	
-		/*
-		 * internal hash function, calling
-		 * the basic methods from md5.h
-		 */	
-		bstring hashit(bstring text);
+    private:
+        MD5 *md5;
+    
+        /*
+         * internal hash function, calling
+         * the basic methods from md5.h
+         */ 
+        bstring hashit(bstring text);
 
-		/*
-		 * converts the numeric giets to
-		 * a valid std::string
-		 */
-		bstring convToString(unsigned char *bytes);
-	public:
-		//constructor
-		md5wrapper();
+        /*
+         * converts the numeric giets to
+         * a valid std::string
+         */
+        bstring convToString(unsigned char *bytes);
+    public:
+        //constructor
+        md5wrapper();
 
-		//destructor
-		~md5wrapper();
-		
-		/*
-		 * creates a MD5 hash from
-		 * "text" and returns it as
-		 * string
-		 */	
-		bstring getHashFromString(bstring text);
+        //destructor
+        ~md5wrapper();
+        
+        /*
+         * creates a MD5 hash from
+         * "text" and returns it as
+         * string
+         */ 
+        bstring getHashFromString(bstring text);
 
-		/*
-		 * creates a MD5 hash from
-		 * a file specified in "filename" and 
-		 * returns it as string
-		 */	
-		bstring getHashFromFile(bstring filename);
+        /*
+         * creates a MD5 hash from
+         * a file specified in "filename" and 
+         * returns it as string
+         */ 
+        bstring getHashFromFile(bstring filename);
 };
 
 //---------------------------------------------------------------------- 

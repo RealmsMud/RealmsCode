@@ -10,190 +10,190 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 #include "mud.h"
 
 //*********************************************************************
-//						Dice
+//                      Dice
 //*********************************************************************
 
 Dice::Dice() {
-	clear();
+    clear();
 }
 Dice::Dice(unsigned short n, unsigned short s, short p) {
-	clear();
-	setNumber(n);
-	setSides(s);
-	setPlus(p);
+    clear();
+    setNumber(n);
+    setSides(s);
+    setPlus(p);
 }
 
 //*********************************************************************
-//						clear
+//                      clear
 //*********************************************************************
 
 void Dice::clear() {
-	number = sides = plus = 0;
-	mean = 0.0;
+    number = sides = plus = 0;
+    mean = 0.0;
 }
 
 //*********************************************************************
-//						operators
+//                      operators
 //*********************************************************************
 
 bool Dice::operator==(const Dice& d) const {
-	if(	number != d.getNumber() ||
-		plus != d.getPlus() ||
-		sides != d.getSides() ||
-		mean != d.getMean()
-	)
-		return(false);
-	return(true);
+    if( number != d.getNumber() ||
+        plus != d.getPlus() ||
+        sides != d.getSides() ||
+        mean != d.getMean()
+    )
+        return(false);
+    return(true);
 }
 
 bool Dice::operator!=(const Dice& d) const {
-	return(!(*this==d));
+    return(!(*this==d));
 }
 
 //*********************************************************************
-//						load
+//                      load
 //*********************************************************************
 
 void Dice::load(xmlNodePtr curNode) {
-	xmlNodePtr childNode = curNode->children;
-	clear();
+    xmlNodePtr childNode = curNode->children;
+    clear();
 
-	while(childNode) {
-		if(NODE_NAME(childNode, "Number")) setNumber(xml::toNum<unsigned short>(childNode));
-		else if(NODE_NAME(childNode, "Sides")) setSides(xml::toNum<unsigned short>(childNode));
-		else if(NODE_NAME(childNode, "Plus")) setPlus(xml::toNum<short>(childNode));
-		else if(NODE_NAME(childNode, "Mean")) setMean(xml::toNum<double>(childNode));
+    while(childNode) {
+        if(NODE_NAME(childNode, "Number")) setNumber(xml::toNum<unsigned short>(childNode));
+        else if(NODE_NAME(childNode, "Sides")) setSides(xml::toNum<unsigned short>(childNode));
+        else if(NODE_NAME(childNode, "Plus")) setPlus(xml::toNum<short>(childNode));
+        else if(NODE_NAME(childNode, "Mean")) setMean(xml::toNum<double>(childNode));
 
-		childNode = childNode->next;
-	}
+        childNode = childNode->next;
+    }
 }
 
 //*********************************************************************
-//						save
+//                      save
 //*********************************************************************
 
 void Dice::save(xmlNodePtr curNode, const char* name) const {
-	if(!number && !sides && !plus && !mean)
-		return;
-	xmlNodePtr childNode = xml::newStringChild(curNode, name);
+    if(!number && !sides && !plus && !mean)
+        return;
+    xmlNodePtr childNode = xml::newStringChild(curNode, name);
 
-	xml::saveNonZeroNum(childNode, "Number", number);
-	xml::saveNonZeroNum(childNode, "Sides", sides);
-	xml::saveNonZeroNum(childNode, "Plus", plus);
-	xml::saveNonZeroNum(childNode, "Mean", mean);
+    xml::saveNonZeroNum(childNode, "Number", number);
+    xml::saveNonZeroNum(childNode, "Sides", sides);
+    xml::saveNonZeroNum(childNode, "Plus", plus);
+    xml::saveNonZeroNum(childNode, "Mean", mean);
 }
 
 //*********************************************************************
-//						roll
+//                      roll
 //*********************************************************************
 
 int Dice::roll() const {
-	if(mean)
-		return(mrand(low(), high()));
-	return(dice(number, sides, plus));
+    if(mean)
+        return(mrand(low(), high()));
+    return(dice(number, sides, plus));
 }
 
 //*********************************************************************
-//						average
+//                      average
 //*********************************************************************
 
 int Dice::average() const {
-	if(mean)
-		return((high() - low())/2 + low());
-	return((number + number * sides) / 2 + plus);
+    if(mean)
+        return((high() - low())/2 + low());
+    return((number + number * sides) / 2 + plus);
 }
 
 //*********************************************************************
-//						low
+//                      low
 //*********************************************************************
 
 int Dice::low() const {
-	if(mean)
-		return(MAX(1,mean*2/3));
-	return(number + plus);
+    if(mean)
+        return(MAX(1,mean*2/3));
+    return(number + plus);
 }
 
 //*********************************************************************
-//						high
+//                      high
 //*********************************************************************
 
 int Dice::high() const {
-	if(mean)
-		return(MAX(1,mean*1.35));
-	return(number * sides + plus);
+    if(mean)
+        return(MAX(1,mean*1.35));
+    return(number * sides + plus);
 }
 
 //*********************************************************************
-//						str
+//                      str
 //*********************************************************************
 
 bstring Dice::str() const {
-	std::ostringstream oStr;
-	if(mean)
-	{
-		oStr << low() << "-" << high();
-	}
-	else
-	{
-		oStr << number << "d" << sides;
-		if(plus)
-			oStr << (plus > 0 ? "+" : "-") << plus;
-	}
-	return(oStr.str());
+    std::ostringstream oStr;
+    if(mean)
+    {
+        oStr << low() << "-" << high();
+    }
+    else
+    {
+        oStr << number << "d" << sides;
+        if(plus)
+            oStr << (plus > 0 ? "+" : "-") << plus;
+    }
+    return(oStr.str());
 }
 
 //*********************************************************************
-//						getMean
+//                      getMean
 //*********************************************************************
 
 double Dice::getMean() const { return(mean); }
 
 //*********************************************************************
-//						getNumber
+//                      getNumber
 //*********************************************************************
 
 unsigned short Dice::getNumber() const { return(number); }
 
 //*********************************************************************
-//						getSides
+//                      getSides
 //*********************************************************************
 
 unsigned short Dice::getSides() const { return(sides); }
 
 //*********************************************************************
-//						getPlus
+//                      getPlus
 //*********************************************************************
 
 short Dice::getPlus() const { return(plus); }
 
 //*********************************************************************
-//						setMean
+//                      setMean
 //*********************************************************************
 
 void Dice::setMean(double m) { mean = m; }
 
 //*********************************************************************
-//						setNumber
+//                      setNumber
 //*********************************************************************
 
 void Dice::setNumber(unsigned short n) { number = n; }
 
 //*********************************************************************
-//						setSides
+//                      setSides
 //*********************************************************************
 
 void Dice::setSides(unsigned short s) { sides = s; }
 
 //*********************************************************************
-//						setPlus
+//                      setPlus
 //*********************************************************************
 
 void Dice::setPlus(short p) { plus = p; }

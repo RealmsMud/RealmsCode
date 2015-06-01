@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -25,561 +25,561 @@
 #include <locale>
 
 //*********************************************************************
-//						getDisplayName
+//                      getDisplayName
 //*********************************************************************
 
 bstring EffectInfo::getDisplayName() const {
-	bstring displayName = myEffect->getDisplay();
-	if(myEffect->getName() != "drunkenness")
-		return(displayName);
+    bstring displayName = myEffect->getDisplay();
+    if(myEffect->getName() != "drunkenness")
+        return(displayName);
 
-	// drunkenness has a different name based on strength
-	AlcoholState state = getAlcoholState(this);
-	if(state == ALCOHOL_SOBER)
-		displayName += "Sober";  // this state should never happen
-	else if(state == ALCOHOL_TIPSY)
-		displayName += "Tipsy";
-	else if(state == ALCOHOL_DRUNK)
-		displayName += "Drunk";
-	else if(state == ALCOHOL_INEBRIATED)
-		displayName += "Inebriated";
+    // drunkenness has a different name based on strength
+    AlcoholState state = getAlcoholState(this);
+    if(state == ALCOHOL_SOBER)
+        displayName += "Sober";  // this state should never happen
+    else if(state == ALCOHOL_TIPSY)
+        displayName += "Tipsy";
+    else if(state == ALCOHOL_DRUNK)
+        displayName += "Drunk";
+    else if(state == ALCOHOL_INEBRIATED)
+        displayName += "Inebriated";
 
-	displayName += "^x";
-	return(displayName);
+    displayName += "^x";
+    return(displayName);
 }
 
 //*********************************************************************
-//						getAlcoholState
+//                      getAlcoholState
 //*********************************************************************
 
 AlcoholState getAlcoholState(const EffectInfo* effect) {
-	if(!effect || effect->getStrength() < 1)
-		return(ALCOHOL_SOBER);
-	if(effect->getStrength() < 20)
-		return(ALCOHOL_TIPSY);
-	if(effect->getStrength() < 66)
-		return(ALCOHOL_DRUNK);
-	return(ALCOHOL_INEBRIATED);
+    if(!effect || effect->getStrength() < 1)
+        return(ALCOHOL_SOBER);
+    if(effect->getStrength() < 20)
+        return(ALCOHOL_TIPSY);
+    if(effect->getStrength() < 66)
+        return(ALCOHOL_DRUNK);
+    return(ALCOHOL_INEBRIATED);
 }
 
 //*********************************************************************
-//						clearEffects
+//                      clearEffects
 //*********************************************************************
 
 void Config::clearEffects() {
-	for(std::pair<bstring, Effect*> ep : effects) {
-		delete ep.second;
-	}
-	effects.clear();
+    for(std::pair<bstring, Effect*> ep : effects) {
+        delete ep.second;
+    }
+    effects.clear();
 }
 
 //*********************************************************************
-//						getEffect
+//                      getEffect
 //*********************************************************************
 
 Effect* Config::getEffect(bstring eName) {
-	std::map<bstring, Effect*>::const_iterator eIt;
-	if( (eIt = effects.find(eName)) == effects.end())
-		return(NULL);
-	else
-		return((*eIt).second);
+    std::map<bstring, Effect*>::const_iterator eIt;
+    if( (eIt = effects.find(eName)) == effects.end())
+        return(NULL);
+    else
+        return((*eIt).second);
 }
 
 //*********************************************************************
-//						effectExists
+//                      effectExists
 //*********************************************************************
 
 bool Config::effectExists(bstring eName) {
-	return(effects.find(eName) != effects.end());
+    return(effects.find(eName) != effects.end());
 }
 
 //*********************************************************************
-//						dmEffectList
+//                      dmEffectList
 //*********************************************************************
 
 int dmEffectList(Player* player, cmd* cmnd) {
-	Effect* effect=0;
-	bstring command = getFullstrText(cmnd->fullstr, 1);
+    Effect* effect=0;
+    bstring command = getFullstrText(cmnd->fullstr, 1);
 
-	bool all = (command == "all");
-	int id = command.toInt();
+    bool all = (command == "all");
+    int id = command.toInt();
 
-	player->printColor("^YEffects\n");
-	player->printColor("Type ^y*effects all^x to see all effects or ^y*effects [num]^x to see a specific effect.\n");
+    player->printColor("^YEffects\n");
+    player->printColor("Type ^y*effects all^x to see all effects or ^y*effects [num]^x to see a specific effect.\n");
 
     int i = 0;
     for(std::pair<bstring, Effect*> sp : gConfig->effects) {
-    	effect = sp.second;
-		i++;
+        effect = sp.second;
+        i++;
 
-		if(id != 0 && i != id)
-			continue;
+        if(id != 0 && i != id)
+            continue;
 
-		player->printColor("%d)\tName: ^W%-20s^x   Use Str: %s^x    Display: %s\n", i,
-			effect->getName().c_str(), effect->usesStrength() ? "^gY" : "^rN",
-			effect->getDisplay().c_str());
+        player->printColor("%d)\tName: ^W%-20s^x   Use Str: %s^x    Display: %s\n", i,
+            effect->getName().c_str(), effect->usesStrength() ? "^gY" : "^rN",
+            effect->getDisplay().c_str());
 
-		if(!all && i != id)
-			continue;
+        if(!all && i != id)
+            continue;
 
-		player->printColor("\tOpposite Effect: %s\n", effect->getOppositeEffect().c_str());
-		player->printColor("\tSelfAddStr: %s^x\n", effect->getSelfAddStr().c_str());
-		player->printColor("\tRoomAddStr: %s^x\n", effect->getRoomAddStr().c_str());
-		player->printColor("\tSelfDelStr: %s^x\n", effect->getSelfDelStr().c_str());
-		player->printColor("\tRoomDelStr: %s^x\n", effect->getRoomDelStr().c_str());
-		player->printColor("\tPulsed: %s^x\n", effect->isPulsed() ? "^GPulsed" : "Non-Pulsed");
-		if(effect->isPulsed())
-		    *player << ColorOn << "\tPulse Delay: " << effect->getPulseDelay() << "^x\n" << ColorOff;
-		player->printColor("\tSpell: %s^x\n", effect->isSpell() ? "^GYes" : "^RNo");
-		player->printColor("\tType: %s^x\n", effect->getType().c_str());
+        player->printColor("\tOpposite Effect: %s\n", effect->getOppositeEffect().c_str());
+        player->printColor("\tSelfAddStr: %s^x\n", effect->getSelfAddStr().c_str());
+        player->printColor("\tRoomAddStr: %s^x\n", effect->getRoomAddStr().c_str());
+        player->printColor("\tSelfDelStr: %s^x\n", effect->getSelfDelStr().c_str());
+        player->printColor("\tRoomDelStr: %s^x\n", effect->getRoomDelStr().c_str());
+        player->printColor("\tPulsed: %s^x\n", effect->isPulsed() ? "^GPulsed" : "Non-Pulsed");
+        if(effect->isPulsed())
+            *player << ColorOn << "\tPulse Delay: " << effect->getPulseDelay() << "^x\n" << ColorOff;
+        player->printColor("\tSpell: %s^x\n", effect->isSpell() ? "^GYes" : "^RNo");
+        player->printColor("\tType: %s^x\n", effect->getType().c_str());
 
-		if(!effect->getApplyScript().empty())
-			player->printColor("\tApply Script: %s\n", effect->getApplyScript().c_str());
-		if(!effect->getPreApplyScript().empty())
-			player->printColor("\tPre-Apply Script: %s\n", effect->getPreApplyScript().c_str());
-		if(!effect->getPostApplyScript().empty())
-			player->printColor("\tPost-Apply Script: %s\n", effect->getPostApplyScript().c_str());
-   		if(!effect->getComputeScript().empty())
-			player->printColor("\tCompute Script: %s\n", effect->getComputeScript().c_str());
-   		if(!effect->getPulseScript().empty())
-			player->printColor("\tPulse Script: %s\n", effect->getPulseScript().c_str());
+        if(!effect->getApplyScript().empty())
+            player->printColor("\tApply Script: %s\n", effect->getApplyScript().c_str());
+        if(!effect->getPreApplyScript().empty())
+            player->printColor("\tPre-Apply Script: %s\n", effect->getPreApplyScript().c_str());
+        if(!effect->getPostApplyScript().empty())
+            player->printColor("\tPost-Apply Script: %s\n", effect->getPostApplyScript().c_str());
+        if(!effect->getComputeScript().empty())
+            player->printColor("\tCompute Script: %s\n", effect->getComputeScript().c_str());
+        if(!effect->getPulseScript().empty())
+            player->printColor("\tPulse Script: %s\n", effect->getPulseScript().c_str());
 
-   		if(!effect->getUnApplyScript().empty())
-			player->printColor("\tUnApplyScript: %s\n", effect->getUnApplyScript().c_str());
-	}
+        if(!effect->getUnApplyScript().empty())
+            player->printColor("\tUnApplyScript: %s\n", effect->getUnApplyScript().c_str());
+    }
 
-	return(0);
+    return(0);
 }
 
 //*********************************************************************
-//						willOverWrite
+//                      willOverWrite
 //*********************************************************************
 // Will the given effect overwrite the existing effect?
 
 bool EffectInfo::willOverWrite(EffectInfo* existingEffect) const {
-	// No effect, it'll overwrite :-P
-	if(!existingEffect)
-		return(true);
+    // No effect, it'll overwrite :-P
+    if(!existingEffect)
+        return(true);
 
-	// If the existing effect is due to an applier (currently only worn objects),
-	// there's no way to override that effect.
-	if(existingEffect->getApplier())
-		return(false);
+    // If the existing effect is due to an applier (currently only worn objects),
+    // there's no way to override that effect.
+    if(existingEffect->getApplier())
+        return(false);
 
-	// Perm effects take presedence
-	if(duration == -1 && existingEffect->duration != -1)
-		return(true);
+    // Perm effects take presedence
+    if(duration == -1 && existingEffect->duration != -1)
+        return(true);
 
-	if(strength < existingEffect->strength)
-		return(false);
+    if(strength < existingEffect->strength)
+        return(false);
 
-	// Don't overwrite perm effects with non perm
-	if(existingEffect->duration == -1 && duration != -1)
-		return(false);
+    // Don't overwrite perm effects with non perm
+    if(existingEffect->duration == -1 && duration != -1)
+        return(false);
 
-	return(true);
+    return(true);
 }
 
 //*********************************************************************
-//						operator<<
+//                      operator<<
 //*********************************************************************
 
 std::ostream& operator<<(std::ostream& out, const EffectInfo& eff) {
-	out.setf(std::ios::right, std::ios::adjustfield);
-	bstring display = eff.getDisplayName();
+    out.setf(std::ios::right, std::ios::adjustfield);
+    bstring display = eff.getDisplayName();
 
-	short count=0;
-	int len = display.getLength();
-	for(int i=0; i<len; i++) {
-		if(display.getAt(i) == '^') {
-			count += 2;
-			i++;
-		}
-	}
-	out << std::setw(38+count) << display << " - ";
+    short count=0;
+    int len = display.getLength();
+    for(int i=0; i<len; i++) {
+        if(display.getAt(i) == '^') {
+            count += 2;
+            i++;
+        }
+    }
+    out << std::setw(38+count) << display << " - ";
 
-	if(eff.duration == -1)
-		out << "Permanent!";
-	else
-		out << timeStr(eff.duration);
+    if(eff.duration == -1)
+        out << "Permanent!";
+    else
+        out << timeStr(eff.duration);
 
-	return(out);
+    return(out);
 }
 
 //*********************************************************************
-//						pulse
+//                      pulse
 //*********************************************************************
 // True on a sucessful pulse
 // False if it's time to wear off
 
 bool EffectInfo::pulse(time_t t) {
-	ASSERTLOG(myParent);
+    ASSERTLOG(myParent);
 
-	bool wearOff = updateLastMod(t);
-	if(wearOff)
-		return(false);
+    bool wearOff = updateLastMod(t);
+    if(wearOff)
+        return(false);
 
-	if(myEffect->isPulsed()) {
-		if(timeForPulse(t))
-			return(runScript(myEffect->getPulseScript()));
-	 }
-	return(true);
+    if(myEffect->isPulsed()) {
+        if(timeForPulse(t))
+            return(runScript(myEffect->getPulseScript()));
+     }
+    return(true);
 }
 
 //*********************************************************************
-//						updateLastMod
+//                      updateLastMod
 //*********************************************************************
 // True if it's time for this effect to wear off
 
 bool EffectInfo::updateLastMod(time_t t) {
-	time_t diff = t - lastMod;
-	lastMod = t;
-	diff = MIN(MAX(0, duration), diff);
-	duration -= diff;
+    time_t diff = t - lastMod;
+    lastMod = t;
+    diff = MIN(MAX(0, duration), diff);
+    duration -= diff;
 
-	if(myApplier) {
-		// for object appliers, keep the duration on the object in-sync with the effect duration
-		Object* object = myApplier->getAsObject();
-		if(object)
-			object->setEffectDuration(duration);
-	}
+    if(myApplier) {
+        // for object appliers, keep the duration on the object in-sync with the effect duration
+        Object* object = myApplier->getAsObject();
+        if(object)
+            object->setEffectDuration(duration);
+    }
 
-	return(duration == 0);
+    return(duration == 0);
 }
 
 //*********************************************************************
-//						timeForPulse
+//                      timeForPulse
 //*********************************************************************
 
 bool EffectInfo::timeForPulse(time_t t) {
-	time_t diff = t - lastPulse;
-	if(diff < myEffect->getPulseDelay())
-		return(false);
+    time_t diff = t - lastPulse;
+    if(diff < myEffect->getPulseDelay())
+        return(false);
 
-	lastPulse = t;
-	return(true);
+    lastPulse = t;
+    return(true);
 }
 //*********************************************************************
-//						remove
+//                      remove
 //*********************************************************************
 
 bool EffectInfo::remove(bool show) {
-	bool success = false;
-	ASSERTLOG(myParent);
+    bool success = false;
+    ASSERTLOG(myParent);
 
-	if(myEffect) {
-		success = true;
-		if(show) {
-			Creature* cParent = myParent->getAsCreature();
-			if(cParent) {
-				if(!myEffect->getSelfDelStr().empty())
-					cParent->printColor("%s\n", myEffect->getSelfDelStr().c_str());
-				if(!myEffect->getRoomDelStr().empty() && cParent->getRoomParent())
-					cParent->getRoomParent()->effectEcho(myEffect->getRoomDelStr(), cParent);
-			}
-			Exit* xParent = myParent->getAsExit();
-			if(xParent) {
-				if(!myEffect->getRoomDelStr().empty()) {
-					if(xParent->getRoom())
-						xParent->getRoom()->effectEcho(myEffect->getRoomDelStr(), xParent);
-					else
-						std::cout << "Exit with no parent room!!!\n";
-				}
-			}
-			BaseRoom* rParent = myParent->getAsRoom();
-			if(rParent) {
-				if(!myEffect->getRoomDelStr().empty())
-					rParent->effectEcho(myEffect->getRoomDelStr());
-			}
-		}
-		success &= runScript(myEffect->getUnApplyScript());
-	}
+    if(myEffect) {
+        success = true;
+        if(show) {
+            Creature* cParent = myParent->getAsCreature();
+            if(cParent) {
+                if(!myEffect->getSelfDelStr().empty())
+                    cParent->printColor("%s\n", myEffect->getSelfDelStr().c_str());
+                if(!myEffect->getRoomDelStr().empty() && cParent->getRoomParent())
+                    cParent->getRoomParent()->effectEcho(myEffect->getRoomDelStr(), cParent);
+            }
+            Exit* xParent = myParent->getAsExit();
+            if(xParent) {
+                if(!myEffect->getRoomDelStr().empty()) {
+                    if(xParent->getRoom())
+                        xParent->getRoom()->effectEcho(myEffect->getRoomDelStr(), xParent);
+                    else
+                        std::cout << "Exit with no parent room!!!\n";
+                }
+            }
+            BaseRoom* rParent = myParent->getAsRoom();
+            if(rParent) {
+                if(!myEffect->getRoomDelStr().empty())
+                    rParent->effectEcho(myEffect->getRoomDelStr());
+            }
+        }
+        success &= runScript(myEffect->getUnApplyScript());
+    }
 
 
-	if(myApplier) {
-		// If object appliers are being worn when we remove the effect,
-		// the object will be broken and unequipped
-		Object* object = myApplier->getAsObject();
-		if(object && object->flagIsSet(O_WORN)) {
-			object->setShotsCur(0);
-			myParent->getAsPlayer()->breakObject(object, object->getWearflag());
-		}
-	}
+    if(myApplier) {
+        // If object appliers are being worn when we remove the effect,
+        // the object will be broken and unequipped
+        Object* object = myApplier->getAsObject();
+        if(object && object->flagIsSet(O_WORN)) {
+            object->setShotsCur(0);
+            myParent->getAsPlayer()->breakObject(object, object->getWearflag());
+        }
+    }
 
-	return(success);
+    return(success);
 }
 
 //*********************************************************************
-//						compute
+//                      compute
 //*********************************************************************
 
 bool EffectInfo::compute(MudObject* applier) {
-	ASSERTLOG(myParent);
-	if(!myEffect)
-		return(false);
-	myApplier = applier;
-	bool retVal = runScript(myEffect->getComputeScript(), applier);
-	// Incase computing results in a non permanent effect that has a negative duration!
-	if(this->duration < -1) {
-		duration = 60;
-	}
-	return(retVal);
+    ASSERTLOG(myParent);
+    if(!myEffect)
+        return(false);
+    myApplier = applier;
+    bool retVal = runScript(myEffect->getComputeScript(), applier);
+    // Incase computing results in a non permanent effect that has a negative duration!
+    if(this->duration < -1) {
+        duration = 60;
+    }
+    return(retVal);
 }
 
 //*********************************************************************
-//						add
+//                      add
 //*********************************************************************
 
 bool EffectInfo::add() {
-	ASSERTLOG(myParent);
-	if(!myEffect)
-		return(false);
+    ASSERTLOG(myParent);
+    if(!myEffect)
+        return(false);
 
-	Creature* cParent = myParent->getAsCreature();
-	if(cParent) {
+    Creature* cParent = myParent->getAsCreature();
+    if(cParent) {
 
-		if(!myEffect->getSelfAddStr().empty())
-			cParent->printColor("%s\n", cParent->doReplace(myEffect->getSelfAddStr().c_str(), cParent, myApplier).c_str());
+        if(!myEffect->getSelfAddStr().empty())
+            cParent->printColor("%s\n", cParent->doReplace(myEffect->getSelfAddStr().c_str(), cParent, myApplier).c_str());
 
-		// TODO: replace *ACTOR* etc
-		if(!myEffect->getRoomAddStr().empty() && cParent->getRoomParent())
-			cParent->getRoomParent()->effectEcho(myEffect->getRoomAddStr(), cParent, myApplier);
-	}
-	Exit* xParent = myParent->getAsExit();
-	if(xParent) {
-		if(!myEffect->getRoomAddStr().empty()) {
-			if(xParent->getRoom())
-				xParent->getRoom()->effectEcho(myEffect->getRoomAddStr(), xParent);
-			else
-				std::cout << "Exit with no parent room!!!\n";
-		}
-	}
-	BaseRoom* rParent = myParent->getAsRoom();
-	if(rParent) {
-		if(!myEffect->getRoomAddStr().empty())
-			rParent->effectEcho(myEffect->getRoomAddStr());
-	}
+        // TODO: replace *ACTOR* etc
+        if(!myEffect->getRoomAddStr().empty() && cParent->getRoomParent())
+            cParent->getRoomParent()->effectEcho(myEffect->getRoomAddStr(), cParent, myApplier);
+    }
+    Exit* xParent = myParent->getAsExit();
+    if(xParent) {
+        if(!myEffect->getRoomAddStr().empty()) {
+            if(xParent->getRoom())
+                xParent->getRoom()->effectEcho(myEffect->getRoomAddStr(), xParent);
+            else
+                std::cout << "Exit with no parent room!!!\n";
+        }
+    }
+    BaseRoom* rParent = myParent->getAsRoom();
+    if(rParent) {
+        if(!myEffect->getRoomAddStr().empty())
+            rParent->effectEcho(myEffect->getRoomAddStr());
+    }
 
-	return(true);
+    return(true);
 }
 
 //*********************************************************************
-//						apply
+//                      apply
 //*********************************************************************
 
 bool EffectInfo::apply() {
-	ASSERTLOG(myParent);
-	if(!myEffect)
-		return(false);
-	return(runScript(myEffect->getApplyScript()));
+    ASSERTLOG(myParent);
+    if(!myEffect)
+        return(false);
+    return(runScript(myEffect->getApplyScript()));
 }
 
 //*********************************************************************
-//						preApply
+//                      preApply
 //*********************************************************************
 
 bool EffectInfo::preApply() {
-	ASSERTLOG(myParent);
-	if(!myEffect)
-		return(false);
-	return(runScript(myEffect->getPreApplyScript()));
+    ASSERTLOG(myParent);
+    if(!myEffect)
+        return(false);
+    return(runScript(myEffect->getPreApplyScript()));
 }
 
 //*********************************************************************
-//						postApply
+//                      postApply
 //*********************************************************************
 
 bool EffectInfo::postApply(bool keepApplier) {
-	bool success = false;
-	ASSERTLOG(myParent);
-	if(myEffect)
-		success = runScript(myEffect->getPostApplyScript());
+    bool success = false;
+    ASSERTLOG(myParent);
+    if(myEffect)
+        success = runScript(myEffect->getPostApplyScript());
 
-	// If you're passing in keepApplier = true, be sure you know what you're doing!
-	// The effect will keep a pointer to the applier, and if the applier is removed
-	// from memory (the monster is killed, the object is pawned), you'll get an
-	// invalid pointer that might crash the game. Currently only equipped object
-	// appliers are supported for passing in keepApplier = true.
-	if(!keepApplier)
-		myApplier = 0;
+    // If you're passing in keepApplier = true, be sure you know what you're doing!
+    // The effect will keep a pointer to the applier, and if the applier is removed
+    // from memory (the monster is killed, the object is pawned), you'll get an
+    // invalid pointer that might crash the game. Currently only equipped object
+    // appliers are supported for passing in keepApplier = true.
+    if(!keepApplier)
+        myApplier = 0;
 
-	return(success);
+    return(success);
 }
 
 // End - EffectInfo functions
 
 
 //*********************************************************************
-//						addEffect
+//                      addEffect
 //*********************************************************************
 
 
 EffectInfo* MudObject::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, const Creature* owner, bool keepApplier) {
-	return(effects.addEffect(effect, duration, strength, applier, show, this, owner, keepApplier));
+    return(effects.addEffect(effect, duration, strength, applier, show, this, owner, keepApplier));
 }
 
 EffectInfo* Effects::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
-	if(!gConfig->getEffect(effect))
-		return(null);
-	EffectInfo* newEffect = new EffectInfo(effect, time(0), duration, strength, pParent, owner);
+    if(!gConfig->getEffect(effect))
+        return(null);
+    EffectInfo* newEffect = new EffectInfo(effect, time(0), duration, strength, pParent, owner);
 
-	if(!newEffect->compute(applier)) {
-	    delete newEffect;
-	    return(NULL);
-	}
+    if(!newEffect->compute(applier)) {
+        delete newEffect;
+        return(NULL);
+    }
 
 
-	if(strength != -2)
-		newEffect->setStrength(strength);
-	if(duration != -2)
-		newEffect->setDuration(duration);
+    if(strength != -2)
+        newEffect->setStrength(strength);
+    if(duration != -2)
+        newEffect->setDuration(duration);
 
-	return(addEffect(newEffect, show, 0, keepApplier));
+    return(addEffect(newEffect, show, 0, keepApplier));
 }
 
 EffectInfo* MudObject::addEffect(EffectInfo* newEffect, bool show, bool keepApplier) {
-	return(effects.addEffect(newEffect, show, this, keepApplier));
+    return(effects.addEffect(newEffect, show, this, keepApplier));
 }
 
 EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pParent, bool keepApplier) {
-	if(pParent)
-		newEffect->setParent(pParent);
+    if(pParent)
+        newEffect->setParent(pParent);
 
-	EffectInfo* oldEffect = getExactEffect(newEffect->getName());
-	bool success = true;
+    EffectInfo* oldEffect = getExactEffect(newEffect->getName());
+    bool success = true;
 
-	if(oldEffect && !newEffect->willOverWrite(oldEffect)) {
-		// The new effect won't overwrite, so don't add it
-		if(pParent->getAsPlayer() && show)
-			pParent->getAsPlayer()->print("The effect didn't take hold.\n");
-		delete newEffect;
-		return(NULL);
-	}
+    if(oldEffect && !newEffect->willOverWrite(oldEffect)) {
+        // The new effect won't overwrite, so don't add it
+        if(pParent->getAsPlayer() && show)
+            pParent->getAsPlayer()->print("The effect didn't take hold.\n");
+        delete newEffect;
+        return(NULL);
+    }
 
-	// pre-apply gets called BEFORE the replaced effect gets removed
-	newEffect->preApply();
+    // pre-apply gets called BEFORE the replaced effect gets removed
+    newEffect->preApply();
 
-	// If no existing effect, or this one will overwrite remove the old one, and add the new one
-	removeEffect(newEffect->getName(), false, true);		// Don't show the removal
+    // If no existing effect, or this one will overwrite remove the old one, and add the new one
+    removeEffect(newEffect->getName(), false, true);        // Don't show the removal
 
-	// Only show if we're not overwriting an effect
-	if(!oldEffect && show)
-		newEffect->add();
-	success &= newEffect->apply();
-	effectList.push_back(newEffect);
-	if(newEffect->getParent()->getAsRoom())
-		newEffect->getParent()->getAsRoom()->addEffectsIndex();
-	else if(newEffect->getParent()->getAsExit() && newEffect->getParent()->getAsExit()->getRoom())
-		newEffect->getParent()->getAsExit()->getRoom()->addEffectsIndex();
+    // Only show if we're not overwriting an effect
+    if(!oldEffect && show)
+        newEffect->add();
+    success &= newEffect->apply();
+    effectList.push_back(newEffect);
+    if(newEffect->getParent()->getAsRoom())
+        newEffect->getParent()->getAsRoom()->addEffectsIndex();
+    else if(newEffect->getParent()->getAsExit() && newEffect->getParent()->getAsExit()->getRoom())
+        newEffect->getParent()->getAsExit()->getRoom()->addEffectsIndex();
 
-	// post-apply gets run after everything is done
-	newEffect->postApply(keepApplier);
+    // post-apply gets run after everything is done
+    newEffect->postApply(keepApplier);
 
-	return(newEffect);
+    return(newEffect);
 }
 
 //*********************************************************************
-//						addPermEffect
+//                      addPermEffect
 //*********************************************************************
 
 EffectInfo* MudObject::addPermEffect(const bstring& effect, int strength, bool show) {
-	return(effects.addEffect(effect, -1, strength, NULL, show, this));
+    return(effects.addEffect(effect, -1, strength, NULL, show, this));
 }
 
 //*********************************************************************
-//						removeEffect
+//                      removeEffect
 //*********************************************************************
 // Remove the effect (Won't remove permanent effects if remPerm is false)
 
 bool MudObject::removeEffect(const bstring& effect, bool show, bool remPerm, MudObject* fromApplier) {
-	return(effects.removeEffect(effect, show, remPerm, fromApplier));
+    return(effects.removeEffect(effect, show, remPerm, fromApplier));
 }
 
 bool Effects::removeEffect(const bstring& effect, bool show, bool remPerm, MudObject* fromApplier) {
-	EffectInfo* toDel = getExactEffect(effect);
-	if(	toDel &&
-		(toDel->getDuration() != -1 || (toDel->getDuration() == -1 && remPerm)) &&
-		(!fromApplier || fromApplier == toDel->getApplier())
-	)
-		return(removeEffect(toDel, show));
-	return(false);
+    EffectInfo* toDel = getExactEffect(effect);
+    if( toDel &&
+        (toDel->getDuration() != -1 || (toDel->getDuration() == -1 && remPerm)) &&
+        (!fromApplier || fromApplier == toDel->getApplier())
+    )
+        return(removeEffect(toDel, show));
+    return(false);
 }
 
 bool MudObject::removeEffect(EffectInfo* toDel, bool show) {
-	return(effects.removeEffect(toDel, show));
+    return(effects.removeEffect(toDel, show));
 }
 
 bool Effects::removeEffect(EffectInfo* toDel, bool show) {
-	if(!toDel)
-		return(false);
+    if(!toDel)
+        return(false);
 
-	effectList.remove(toDel);
-	toDel->remove(show);
-	delete toDel;
-	return(true);
+    effectList.remove(toDel);
+    toDel->remove(show);
+    delete toDel;
+    return(true);
 }
 
 //*********************************************************************
-//						removeOwner
+//                      removeOwner
 //*********************************************************************
 // on suicide, we remove the owner of the effect
 
 void Effects::removeOwner(const Creature* owner) {
-	EffectList::iterator it;
+    EffectList::iterator it;
 
-	for(it = effectList.begin() ; it != effectList.end() ; it++) {
-		if((*it)->isOwner(owner))
-			(*it)->setOwner(0);
-	}
+    for(it = effectList.begin() ; it != effectList.end() ; it++) {
+        if((*it)->isOwner(owner))
+            (*it)->setOwner(0);
+    }
 }
 
 //*********************************************************************
-//						objectCanBestowEffect
+//                      objectCanBestowEffect
 //*********************************************************************
 
 bool Effect::objectCanBestowEffect(const bstring& effect) {
-	return(	effect != "" &&
-			effect != "vampirism" &&
-			effect != "porphyria" &&
-			effect != "lycanthropy"
-	);
+    return( effect != "" &&
+            effect != "vampirism" &&
+            effect != "porphyria" &&
+            effect != "lycanthropy"
+    );
 }
 
 //*********************************************************************
-//						isEffected
+//                      isEffected
 //*********************************************************************
 
 bool MudObject::isEffected(const bstring& effect, bool exactMatch) const {
-	return(effects.isEffected(effect, exactMatch));
+    return(effects.isEffected(effect, exactMatch));
 }
 
 bool MudObject::isEffected(EffectInfo* effect) const {
-	return(effects.isEffected(effect));
+    return(effects.isEffected(effect));
 }
 
 // We are effected if we have an effect with this name, or an effect with a base effect
 // of this name
 
 bool Effects::isEffected(const bstring& effect, bool exactMatch) const {
-	//EffectList list;
-	for(EffectInfo* eff : effectList) {
-		if(eff->getName() == effect || (!exactMatch && eff->hasBaseEffect(effect)))
-			return(true);
-	}
+    //EffectList list;
+    for(EffectInfo* eff : effectList) {
+        if(eff->getName() == effect || (!exactMatch && eff->hasBaseEffect(effect)))
+            return(true);
+    }
 
-	return(false);
+    return(false);
 }
 
 bool Effects::isEffected(EffectInfo* effect) const {
-	for(EffectInfo* eff : effectList) {
-		if(eff->getName() == effect->getName() || eff->hasBaseEffect(effect->getName()) || effect->hasBaseEffect(eff->getName()))
-			return(true);
-	}
-	return(false);
+    for(EffectInfo* eff : effectList) {
+        if(eff->getName() == effect->getName() || eff->hasBaseEffect(effect->getName()) || effect->hasBaseEffect(eff->getName()))
+            return(true);
+    }
+    return(false);
 }
 
 //*********************************************************************
-//						getBaseEffects
+//                      getBaseEffects
 //*********************************************************************
 
 const std::list<bstring>& Effect::getBaseEffects() {
@@ -593,517 +593,517 @@ const std::list<bstring>& Effect::getBaseEffects() {
 // Effect Some Jackass's Flying Song.  Base effect = fly, levitate
 
 //*********************************************************************
-//						hasPermEffect
+//                      hasPermEffect
 //*********************************************************************
 
 bool MudObject::hasPermEffect(const bstring& effect) const {
-	EffectInfo* toCheck = effects.getEffect(effect);
-	return(toCheck && toCheck->getDuration() == -1);
+    EffectInfo* toCheck = effects.getEffect(effect);
+    return(toCheck && toCheck->getDuration() == -1);
 }
 
 //*********************************************************************
-//						getEffect
+//                      getEffect
 //*********************************************************************
 
 EffectInfo* MudObject::getEffect(const bstring& effect) const {
-	return(effects.getEffect(effect));
+    return(effects.getEffect(effect));
 }
 // Returns the effect if we find one that the name matches or has
 // the base effect mentioned
 
 EffectInfo* Effects::getEffect(const bstring& effect) const {
-	EffectList::const_iterator eIt;
-	EffectInfo* toReturn = NULL;
-	for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
-		if((*eIt) && ((*eIt)->getName() == effect || (*eIt)->hasBaseEffect(effect))) {
-			if(!toReturn)
-				toReturn = (*eIt);
-			else {
-				// If we have something to return, compare it, we'll return the
-				// effect with the highest strength
-				if((*eIt)->getStrength() > toReturn->getStrength())
-					toReturn = (*eIt);
-			}
-		}
-	}
-	return(toReturn);
+    EffectList::const_iterator eIt;
+    EffectInfo* toReturn = NULL;
+    for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
+        if((*eIt) && ((*eIt)->getName() == effect || (*eIt)->hasBaseEffect(effect))) {
+            if(!toReturn)
+                toReturn = (*eIt);
+            else {
+                // If we have something to return, compare it, we'll return the
+                // effect with the highest strength
+                if((*eIt)->getStrength() > toReturn->getStrength())
+                    toReturn = (*eIt);
+            }
+        }
+    }
+    return(toReturn);
 }
 
 //*********************************************************************
-//						getExactEffect
+//                      getExactEffect
 //*********************************************************************
 
 EffectInfo* MudObject::getExactEffect(const bstring& effect) const {
-	return(effects.getExactEffect(effect));
+    return(effects.getExactEffect(effect));
 }
 
 // Returns the effect with an exact name match
 EffectInfo* Effects::getExactEffect(const bstring& effect) const {
-	EffectList::const_iterator eIt;
-	for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
-		if((*eIt) && (*eIt)->getName() == effect)
-			return((*eIt));
-	}
-	return(NULL);
+    EffectList::const_iterator eIt;
+    for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
+        if((*eIt) && (*eIt)->getName() == effect)
+            return((*eIt));
+    }
+    return(NULL);
 }
 
 //*********************************************************************
-//						pulseEffects
+//                      pulseEffects
 //*********************************************************************
 // Pulse all effects on this creature
 // return false if creature died because of this
 
 bool Creature::pulseEffects(time_t t) {
-	bool pulsed = true;
-	bool poison = false;
-	EffectInfo* effect=0;
-	EffectList::iterator eIt;
-	deathtype = DT_NONE;
-	for(eIt = effects.effectList.begin() ; eIt != effects.effectList.end() ;) {
-		effect = (*eIt);
-		// Pulse!
+    bool pulsed = true;
+    bool poison = false;
+    EffectInfo* effect=0;
+    EffectList::iterator eIt;
+    deathtype = DT_NONE;
+    for(eIt = effects.effectList.begin() ; eIt != effects.effectList.end() ;) {
+        effect = (*eIt);
+        // Pulse!
 
-		ASSERTLOG(effect->getParent() == this);
-		pulsed = effect->pulse(t);
+        ASSERTLOG(effect->getParent() == this);
+        pulsed = effect->pulse(t);
 
-		// If pulse returns false, purge this effect
-		if(!pulsed) {
-			effect->remove();
-			if(poison || effect->isPoison())
-				poison = true;
-			delete effect;
-			eIt = effects.effectList.erase(eIt);
-		} else
-			eIt++;
-	}
+        // If pulse returns false, purge this effect
+        if(!pulsed) {
+            effect->remove();
+            if(poison || effect->isPoison())
+                poison = true;
+            delete effect;
+            eIt = effects.effectList.erase(eIt);
+        } else
+            eIt++;
+    }
 
-	// pulse effects might kill them
-	if(deathtype != DT_NONE && hp.getCur() < 1) {
-		if(isPlayer())
-			getAsPlayer()->die(deathtype);
-		else
-			getAsMonster()->mobDeath();
-		return(false);
-	}
+    // pulse effects might kill them
+    if(deathtype != DT_NONE && hp.getCur() < 1) {
+        if(isPlayer())
+            getAsPlayer()->die(deathtype);
+        else
+            getAsMonster()->mobDeath();
+        return(false);
+    }
 
-	// if they're not poisoned anymore, clear poison
-	if(poison && !isPoisoned())
-		curePoison();
+    // if they're not poisoned anymore, clear poison
+    if(poison && !isPoisoned())
+        curePoison();
 
-	return(true);
+    return(true);
 }
 
 //*********************************************************************
-//						pulseEffects
+//                      pulseEffects
 //*********************************************************************
 
 bool BaseRoom::pulseEffects(time_t t) {
-	effects.pulse(t, this);
+    effects.pulse(t, this);
 
-	for(Exit* exit : exits) {
-		exit->pulseEffects(t);
-	}
-	return(true);
+    for(Exit* exit : exits) {
+        exit->pulseEffects(t);
+    }
+    return(true);
 }
 
 //*********************************************************************
-//						pulseEffects
+//                      pulseEffects
 //*********************************************************************
 
 bool Exit::pulseEffects(time_t t) {
-	effects.pulse(t, this);
-	return(true);
+    effects.pulse(t, this);
+    return(true);
 }
 
 //*********************************************************************
-//						pulse
+//                      pulse
 //*********************************************************************
 // generic pulse function that can be used on rooms and exits (because
 // they can't die like players can)
 
 void Effects::pulse(time_t t, MudObject* pParent) {
-	EffectList::iterator it;
-	EffectInfo* effect=0;
-	bool pulsed=false;
+    EffectList::iterator it;
+    EffectInfo* effect=0;
+    bool pulsed=false;
 
-	for(it = effectList.begin() ; it != effectList.end() ;) {
-		effect = (*it);
-		// Pulse!
+    for(it = effectList.begin() ; it != effectList.end() ;) {
+        effect = (*it);
+        // Pulse!
 
-		ASSERTLOG(effect->getParent() == pParent);
-		pulsed = effect->pulse(t);
+        ASSERTLOG(effect->getParent() == pParent);
+        pulsed = effect->pulse(t);
 
-		// If pulse returns false, purge this effect
-		if(!pulsed) {
-			effect->remove();
-			delete effect;
-			it = effectList.erase(it);
-		} else
-			it++;
-	}
+        // If pulse returns false, purge this effect
+        if(!pulsed) {
+            effect->remove();
+            delete effect;
+            it = effectList.erase(it);
+        } else
+            it++;
+    }
 }
 
 //*********************************************************************
-//						removeAll
+//                      removeAll
 //*********************************************************************
 
 void Effects::removeAll() {
-	EffectInfo* effect=0;
-	EffectList::iterator eIt;
-	for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
-		effect = (*eIt);
-		delete effect;
-		(*eIt) = NULL;
-	}
-	effectList.clear();
+    EffectInfo* effect=0;
+    EffectList::iterator eIt;
+    for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
+        effect = (*eIt);
+        delete effect;
+        (*eIt) = NULL;
+    }
+    effectList.clear();
 }
 
 //*********************************************************************
-//						copy
+//                      copy
 //*********************************************************************
 
 void Effects::copy(const Effects* source, MudObject* pParent) {
-	EffectInfo* effect;
-	EffectList::const_iterator eIt;
-	for(eIt = source->effectList.begin() ; eIt != source->effectList.end() ; eIt++) {
-		effect = new EffectInfo();
-		(*effect) = *(*eIt);
-		effect->setParent(pParent);
-		effectList.push_back(effect);
-	}
+    EffectInfo* effect;
+    EffectList::const_iterator eIt;
+    for(eIt = source->effectList.begin() ; eIt != source->effectList.end() ; eIt++) {
+        effect = new EffectInfo();
+        (*effect) = *(*eIt);
+        effect->setParent(pParent);
+        effectList.push_back(effect);
+    }
 }
 
 //*********************************************************************
-//						cmdEffects
+//                      cmdEffects
 //*********************************************************************
 
 int cmdEffects(Creature* creature, cmd* cmnd) {
-	Creature* target = creature;
-	int num=0;
+    Creature* target = creature;
+    int num=0;
 
-	if(creature->isCt()) {
-		if(cmnd->num > 1) {
-			target = creature->getParent()->findCreature(creature, cmnd);
-			cmnd->str[1][0] = up(cmnd->str[1][0]);
+    if(creature->isCt()) {
+        if(cmnd->num > 1) {
+            target = creature->getParent()->findCreature(creature, cmnd);
+            cmnd->str[1][0] = up(cmnd->str[1][0]);
 
-			if(!target) {
-				target = gServer->findPlayer(cmnd->str[1]);
+            if(!target) {
+                target = gServer->findPlayer(cmnd->str[1]);
 
-				if(!target || !creature->canSee(target)) {
-					creature->print("Target not found.\n");
-					return(0);
-				}
-			}
-		}
-	}
+                if(!target || !creature->canSee(target)) {
+                    creature->print("Target not found.\n");
+                    return(0);
+                }
+            }
+        }
+    }
 
-	num = target->effects.effectList.size();
-	creature->print("Current Effects for %s:\n", target->getCName());
-	creature->printColor("%s", target->effects.getEffectsString(creature).c_str());
-	creature->print("\n%d effect%s found.\n", num, num != 1 ? "s" : "");
-	return(0);
+    num = target->effects.effectList.size();
+    creature->print("Current Effects for %s:\n", target->getCName());
+    creature->printColor("%s", target->effects.getEffectsString(creature).c_str());
+    creature->print("\n%d effect%s found.\n", num, num != 1 ? "s" : "");
+    return(0);
 }
 
 //*********************************************************************
-//						getEffectsList
+//                      getEffectsList
 //*********************************************************************
 // Return a list of effects
 
 bstring Effects::getEffectsList() const {
-	std::ostringstream effStr;
+    std::ostringstream effStr;
 
-	effStr << "Effects: ";
+    effStr << "Effects: ";
 
-	int num = 0;
-	const EffectInfo* effect;
-	EffectList::const_iterator eIt;
-	for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
-		effect = (*eIt);
-		if(num != 0)
-			effStr << ", ";
-		effStr << effect->getName();
-		num++;
-	}
+    int num = 0;
+    const EffectInfo* effect;
+    EffectList::const_iterator eIt;
+    for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
+        effect = (*eIt);
+        if(num != 0)
+            effStr << ", ";
+        effStr << effect->getName();
+        num++;
+    }
 
-	if(num == 0)
-		effStr << "None";
-	effStr << ".\n";
+    if(num == 0)
+        effStr << "None";
+    effStr << ".\n";
 
-	bstring toPrint = effStr.str();
+    bstring toPrint = effStr.str();
 
-	return(toPrint);
+    return(toPrint);
 }
 
 //*********************************************************************
-//						getEffectsString
+//                      getEffectsString
 //*********************************************************************
 // Used to print out what effects a creature is under
 
 bstring Effects::getEffectsString(const Creature* viewer) {
-	const Object* object=0;
-	std::ostringstream effStr;
-	long t = time(0);
+    const Object* object=0;
+    std::ostringstream effStr;
+    long t = time(0);
 
-	for(EffectInfo* effect : effectList) {
-		effect->updateLastMod(t);
-		effStr << *effect;
-		if(viewer->isStaff()) {
-//			if(!effect->getBaseEffect().empty())
-//				effStr << " Base(" << effect->getBaseEffect() << ")";
-			effStr << "  ^WStrength:^x " << effect->getStrength();
-			if(effect->getExtra()) {
-				effStr << "  ^WExtra:^x " << effect->getExtra();
-				
-				// extra information
-				if(effect->getName() == "illusion") {
-					const RaceData* race = gConfig->getRace(effect->getExtra());
-					if(race)
-						effStr << " (" << race->getName() << ")";
-				} else if(	(effect->getDuration() == -1) && (
-					effect->getName() == "wall-of-force" ||
-					effect->getName() == "wall-of-fire" ||
-					effect->getName() == "wall-of-thorns"
-				) ) {
-					// permanent walls are only down for a little bit
-					effStr << " (# pulses until reinstantiate)";
-				}
-			}
-			if(effect->getApplier()) {
-				object = effect->getApplier()->getAsConstObject();
-				if(object)
-					effStr << "  ^WApplier:^x " << object->getName() << "^x";
-			}
-		}
-		effStr << "\n";
-	}
+    for(EffectInfo* effect : effectList) {
+        effect->updateLastMod(t);
+        effStr << *effect;
+        if(viewer->isStaff()) {
+//          if(!effect->getBaseEffect().empty())
+//              effStr << " Base(" << effect->getBaseEffect() << ")";
+            effStr << "  ^WStrength:^x " << effect->getStrength();
+            if(effect->getExtra()) {
+                effStr << "  ^WExtra:^x " << effect->getExtra();
+                
+                // extra information
+                if(effect->getName() == "illusion") {
+                    const RaceData* race = gConfig->getRace(effect->getExtra());
+                    if(race)
+                        effStr << " (" << race->getName() << ")";
+                } else if(  (effect->getDuration() == -1) && (
+                    effect->getName() == "wall-of-force" ||
+                    effect->getName() == "wall-of-fire" ||
+                    effect->getName() == "wall-of-thorns"
+                ) ) {
+                    // permanent walls are only down for a little bit
+                    effStr << " (# pulses until reinstantiate)";
+                }
+            }
+            if(effect->getApplier()) {
+                object = effect->getApplier()->getAsConstObject();
+                if(object)
+                    effStr << "  ^WApplier:^x " << object->getName() << "^x";
+            }
+        }
+        effStr << "\n";
+    }
 
-	return(effStr.str());
+    return(effStr.str());
 }
 
 //*********************************************************************
-//						convertOldEffects
+//                      convertOldEffects
 //*********************************************************************
 // This function will convert flag/lt combos into effects
 
 void Creature::convertOldEffects() {
-	Player* pPlayer = getAsPlayer();
-	Monster* mMonster = getAsMonster();
-	if(version < "2.40") {
-		if(mMonster) {
-//			mMonster->convertToEffect("stoneskin", OLD_M_STONESKIN, -1);
-//			mMonster->convertToEffect("invisibility", OLD_M_INVISIBLE, OLD_LT_INVISIBILITY);
-		} else if(pPlayer) {
+    Player* pPlayer = getAsPlayer();
+    Monster* mMonster = getAsMonster();
+    if(version < "2.40") {
+        if(mMonster) {
+//          mMonster->convertToEffect("stoneskin", OLD_M_STONESKIN, -1);
+//          mMonster->convertToEffect("invisibility", OLD_M_INVISIBLE, OLD_LT_INVISIBILITY);
+        } else if(pPlayer) {
 
-		}
-	}
+        }
+    }
 }
 
 //*********************************************************************
-//						convertToEffect
+//                      convertToEffect
 //*********************************************************************
 // Convert the given effect from a flag/lt to an effect
 
 bool Creature::convertToEffect(const bstring& effect, int flag, int lt) {
-	if(!flagIsSet(flag))
-		return(false);
+    if(!flagIsSet(flag))
+        return(false);
 
-	clearFlag(flag);
+    clearFlag(flag);
 
 
-	long duration = 0;
-	if(lt != -1 && lasttime[lt].interval != 0)
-		duration = lasttime[lt].interval;
-	else
-		duration = -1;
+    long duration = 0;
+    if(lt != -1 && lasttime[lt].interval != 0)
+        duration = lasttime[lt].interval;
+    else
+        duration = -1;
 
-	EffectInfo* newEffect = new EffectInfo(effect, time(0), duration, 1, this);
+    EffectInfo* newEffect = new EffectInfo(effect, time(0), duration, 1, this);
 
-//	if(lt != -1 && (effect == "armor" || effect == "stoneskin")) {
-//		newEffect->setStrength(lasttime[lt].misc);
-//	}
+//  if(lt != -1 && (effect == "armor" || effect == "stoneskin")) {
+//      newEffect->setStrength(lasttime[lt].misc);
+//  }
 
-	// Assuming that they're already properly under the effect, so just add it to the list
-	// and don't actually add it or compute it.
-	// IE: Strength buff -- they already have +str, so don't give them more str!!
-	effects.effectList.push_back(newEffect);
-	return(true);
+    // Assuming that they're already properly under the effect, so just add it to the list
+    // and don't actually add it or compute it.
+    // IE: Strength buff -- they already have +str, so don't give them more str!!
+    effects.effectList.push_back(newEffect);
+    return(true);
 }
 
 //*********************************************************************
-//						removeOppositeEffect
+//                      removeOppositeEffect
 //*********************************************************************
 
 bool MudObject::removeOppositeEffect(const EffectInfo *effect) {
-	return(effects.removeOppositeEffect(effect));
+    return(effects.removeOppositeEffect(effect));
 }
 
 bool Effects::removeOppositeEffect(const EffectInfo *effect) {
-	Effect* parentEffect = effect->getEffect();
+    Effect* parentEffect = effect->getEffect();
 
     if(!parentEffect)
-		return(false);
+        return(false);
 
-	if(parentEffect->getOppositeEffect().empty())
-		return(false);
+    if(parentEffect->getOppositeEffect().empty())
+        return(false);
 
-	return(removeEffect(parentEffect->getOppositeEffect(), true, true));
+    return(removeEffect(parentEffect->getOppositeEffect(), true, true));
 }
 
 //*********************************************************************
-//						exitEffectDamage
+//                      exitEffectDamage
 //*********************************************************************
 // Wrapper to actually do the damage to the target
 // Return: true if they were killed
 
 bool exitEffectDamage(const EffectInfo *effect, Creature* target, Creature* owner, Realm realm, DeathType dt, const char* crtStr, const char* deathStr, const char* roomStr, const char* killerStr) {
-	Damage damage;
+    Damage damage;
 
-	if(!effect || effect->getExtra() || effect->isOwner(owner))
-		return(false);
+    if(!effect || effect->getExtra() || effect->isOwner(owner))
+        return(false);
 
-	Player* killer=0;
-	bool online = true;
+    Player* killer=0;
+    bool online = true;
 
-	if(effect->getOwner() != "") {
-		killer = gServer->findPlayer(effect->getOwner());
-		if(!killer) {
-			if(loadPlayer(effect->getOwner().c_str(), &killer))
-				online = false;
-			else
-				killer = 0;
-		}
-	}
+    if(effect->getOwner() != "") {
+        killer = gServer->findPlayer(effect->getOwner());
+        if(!killer) {
+            if(loadPlayer(effect->getOwner().c_str(), &killer))
+                online = false;
+            else
+                killer = 0;
+        }
+    }
 
-	damage.set(mrand(effect->getStrength() / 2, effect->getStrength() * 3 / 2));
-	target->modifyDamage(0, MAGICAL, damage, realm);
+    damage.set(mrand(effect->getStrength() / 2, effect->getStrength() * 3 / 2));
+    target->modifyDamage(0, MAGICAL, damage, realm);
 
-	if(killer && target->isMonster()) {
-		target->getAsMonster()->addEnemy(killer);
-		if(online)
-			target->getAsMonster()->adjustThreat(killer, damage.get());
-	}
+    if(killer && target->isMonster()) {
+        target->getAsMonster()->addEnemy(killer);
+        if(online)
+            target->getAsMonster()->adjustThreat(killer, damage.get());
+    }
 
-	target->printColor(crtStr, target->customColorize("*CC:DAMAGE*").c_str(), damage.get());
+    target->printColor(crtStr, target->customColorize("*CC:DAMAGE*").c_str(), damage.get());
 
-	target->hp.decrease(damage.get());
-	if(target->hp.getCur() < 1) {
-		target->print(deathStr);
-		broadcast(target->getSock(), target->getRoomParent(), roomStr, target, target);
+    target->hp.decrease(damage.get());
+    if(target->hp.getCur() < 1) {
+        target->print(deathStr);
+        broadcast(target->getSock(), target->getRoomParent(), roomStr, target, target);
 
-		if(killer) {
-			if(online)
-				killer->print(killerStr, target);
-			target->die(killer);
-			killer->save(online);
-			if(!online)
-				free_crt(killer);
-		} else {
-			if(target->isPlayer())
-				target->getAsPlayer()->die(dt);
-			else
-				target->getAsMonster()->mobDeath();
-		}
-		return(true);
-	}
-	if(killer && !online)
-		free_crt(killer);
-	return(false);
+        if(killer) {
+            if(online)
+                killer->print(killerStr, target);
+            target->die(killer);
+            killer->save(online);
+            if(!online)
+                free_crt(killer);
+        } else {
+            if(target->isPlayer())
+                target->getAsPlayer()->die(dt);
+            else
+                target->getAsMonster()->mobDeath();
+        }
+        return(true);
+    }
+    if(killer && !online)
+        free_crt(killer);
+    return(false);
 }
 
 //*********************************************************************
-//						doEffectDamage
+//                      doEffectDamage
 //*********************************************************************
 // Return: true if they were killed
 
 bool Exit::doEffectDamage(Creature* target) {
-	Creature *owner = target;
+    Creature *owner = target;
 
-	if(target->isPet())
-		owner = target->getMaster();
+    if(target->isPet())
+        owner = target->getMaster();
 
-	if(	exitEffectDamage(
-			getEffect("wall-of-fire"),
-			target, owner, FIRE, BURNED,
-			"The wall of fire burns you for %s%d^x damage.\n",
-			"You are burned to death!\n",
-			"%1M is engulfed by the wall of fire.\n%M burns to death!",
-			"%M is engulfed by your wall of fire and is incinerated!\n"
-	) )
-		return(true);
+    if( exitEffectDamage(
+            getEffect("wall-of-fire"),
+            target, owner, FIRE, BURNED,
+            "The wall of fire burns you for %s%d^x damage.\n",
+            "You are burned to death!\n",
+            "%1M is engulfed by the wall of fire.\n%M burns to death!",
+            "%M is engulfed by your wall of fire and is incinerated!\n"
+    ) )
+        return(true);
 
-	if(	exitEffectDamage(
-			getEffect("wall-of-thorns"),
-			target, owner, EARTH, THORNS,
-			"The wall of thorns stabs you for %s%d^x damage.\n",
-			"You are stabbed to death!\n",
-			"%1M is engulfed by a wall of thorns.\n%M is stabbed to death!",
-			"%M is engulfed by your wall of thorns and is stabbed to death!\n"
-	) )
-		return(true);
+    if( exitEffectDamage(
+            getEffect("wall-of-thorns"),
+            target, owner, EARTH, THORNS,
+            "The wall of thorns stabs you for %s%d^x damage.\n",
+            "You are stabbed to death!\n",
+            "%1M is engulfed by a wall of thorns.\n%M is stabbed to death!",
+            "%M is engulfed by your wall of thorns and is stabbed to death!\n"
+    ) )
+        return(true);
 
-	return(false);
+    return(false);
 }
 
 //*********************************************************************
-//						doReplace
+//                      doReplace
 //*********************************************************************
 
 bstring Creature::doReplace(bstring fmt, const MudObject* actor, const MudObject* applier) const {
-	const Creature* cActor = actor->getAsConstCreature();
-	const Exit* xActor = actor->getAsConstExit();
-	const Creature* cApplier = applier->getAsConstCreature();
+    const Creature* cActor = actor->getAsConstCreature();
+    const Exit* xActor = actor->getAsConstExit();
+    const Creature* cApplier = applier->getAsConstCreature();
 
-	if(cActor) {
-		fmt.Replace("*ACTOR*", cActor->getCrtStr(this, CAP).c_str());
-		fmt.Replace("*LOW-ACTOR*", cActor->getCrtStr(this).c_str());
-		fmt.Replace("*A-HISHER*", cActor->hisHer());
-		fmt.Replace("*A-UPHISHER*", cActor->upHisHer());
-	} else if(xActor) {
-		fmt.Replace("*ACTOR*", xActor->getCName());
-		fmt.Replace("*LOW-ACTOR*", xActor->getCName());
-	}
+    if(cActor) {
+        fmt.Replace("*ACTOR*", cActor->getCrtStr(this, CAP).c_str());
+        fmt.Replace("*LOW-ACTOR*", cActor->getCrtStr(this).c_str());
+        fmt.Replace("*A-HISHER*", cActor->hisHer());
+        fmt.Replace("*A-UPHISHER*", cActor->upHisHer());
+    } else if(xActor) {
+        fmt.Replace("*ACTOR*", xActor->getCName());
+        fmt.Replace("*LOW-ACTOR*", xActor->getCName());
+    }
 
-	if(cApplier) {
-		// Applier Possessive
-		if(cActor == cApplier) {
-			fmt.Replace("*APPLIER-POS*", cApplier->upHisHer());
-			fmt.Replace("*LOW-APPLIER-POS*", cApplier->hisHer());
-			fmt.Replace("*APPLIER-SELF-POS*", "Your");
-			fmt.Replace("*LOW-APPLIER-SELF-POS*", "your");
-		} else {
-			fmt.Replace("*APPLIER-POS*", bstring(cApplier->getCrtStr(this, CAP) + "'s").c_str());
-			fmt.Replace("*LOW-APPLIER-POS*", bstring(cApplier->getCrtStr(this) + "'s").c_str());
-			fmt.Replace("*APPLIER-SELF-POS*", bstring(cApplier->getCrtStr(this, CAP) + "'s").c_str());
-			fmt.Replace("*LOW-APPLIER-SELF-POS*", bstring(cApplier->getCrtStr(this) + "'s").c_str());
-		}
+    if(cApplier) {
+        // Applier Possessive
+        if(cActor == cApplier) {
+            fmt.Replace("*APPLIER-POS*", cApplier->upHisHer());
+            fmt.Replace("*LOW-APPLIER-POS*", cApplier->hisHer());
+            fmt.Replace("*APPLIER-SELF-POS*", "Your");
+            fmt.Replace("*LOW-APPLIER-SELF-POS*", "your");
+        } else {
+            fmt.Replace("*APPLIER-POS*", bstring(cApplier->getCrtStr(this, CAP) + "'s").c_str());
+            fmt.Replace("*LOW-APPLIER-POS*", bstring(cApplier->getCrtStr(this) + "'s").c_str());
+            fmt.Replace("*APPLIER-SELF-POS*", bstring(cApplier->getCrtStr(this, CAP) + "'s").c_str());
+            fmt.Replace("*LOW-APPLIER-SELF-POS*", bstring(cApplier->getCrtStr(this) + "'s").c_str());
+        }
 
-		fmt.Replace("*APPLIER*", cApplier->getCrtStr(this, CAP).c_str());
-		fmt.Replace("*LOW-APPLIER*", cApplier->getCrtStr(this).c_str());
-		fmt.Replace("*AP-HISHER*", cApplier->hisHer());
-		fmt.Replace("*AP-UPHISHER*", cApplier->upHisHer());
-	}
-	return(fmt);
+        fmt.Replace("*APPLIER*", cApplier->getCrtStr(this, CAP).c_str());
+        fmt.Replace("*LOW-APPLIER*", cApplier->getCrtStr(this).c_str());
+        fmt.Replace("*AP-HISHER*", cApplier->hisHer());
+        fmt.Replace("*AP-UPHISHER*", cApplier->upHisHer());
+    }
+    return(fmt);
 }
 
 //*********************************************************************
-//						effectEcho
+//                      effectEcho
 //*********************************************************************
 
 void Container::effectEcho(bstring fmt, const MudObject* actor, const MudObject* applier, Socket* ignore) {
-	Socket* ignore2 = NULL;
-	if(actor->getAsConstCreature())
-		ignore2 = actor->getAsConstCreature()->getSock();
-	for(const Player* ply : players) {
-		if(!ply || (ply->getSock() && (ply->getSock() == ignore || ply->getSock() == ignore2)) || ply->isUnconscious())
-			continue;
+    Socket* ignore2 = NULL;
+    if(actor->getAsConstCreature())
+        ignore2 = actor->getAsConstCreature()->getSock();
+    for(const Player* ply : players) {
+        if(!ply || (ply->getSock() && (ply->getSock() == ignore || ply->getSock() == ignore2)) || ply->isUnconscious())
+            continue;
 
-		bstring toSend = ply->doReplace(fmt, actor, applier);
-		ply->bPrint(toSend + "\n");
-	}
+        bstring toSend = ply->doReplace(fmt, actor, applier);
+        ply->bPrint(toSend + "\n");
+    }
 }
 
 //*********************************************************************
-//						getPulseDelay
+//                      getPulseDelay
 //*********************************************************************
 
 int Effect::getPulseDelay() const {
@@ -1111,239 +1111,239 @@ int Effect::getPulseDelay() const {
 }
 
 //*********************************************************************
-//						runScript
+//                      runScript
 //*********************************************************************
 
 bool EffectInfo::runScript(const bstring& pyScript, MudObject* applier) {
 
-	// Legacy: Default action is return true, so play along with that
-	if(pyScript.empty())
-		return(true);
+    // Legacy: Default action is return true, so play along with that
+    if(pyScript.empty())
+        return(true);
 
-	try {
+    try {
 
-	   object localNamespace( (handle<>(PyDict_New())));
+       object localNamespace( (handle<>(PyDict_New())));
 
-		object effectModule( (handle<>(PyImport_ImportModule("effectLib"))) );
+        object effectModule( (handle<>(PyImport_ImportModule("effectLib"))) );
 
-		localNamespace["effectLib"] = effectModule;
+        localNamespace["effectLib"] = effectModule;
 
-		localNamespace["effect"] = ptr(this);
+        localNamespace["effect"] = ptr(this);
 
-		// Default retVal is true
-		localNamespace["retVal"] = true;
-		addMudObjectToDictionary(localNamespace, "actor", myParent);
-		addMudObjectToDictionary(localNamespace, "applier", applier);
+        // Default retVal is true
+        localNamespace["retVal"] = true;
+        addMudObjectToDictionary(localNamespace, "actor", myParent);
+        addMudObjectToDictionary(localNamespace, "applier", applier);
 
 
 
-		gServer->runPython(pyScript, localNamespace);
+        gServer->runPython(pyScript, localNamespace);
 
-		bool retVal = extract<bool>(localNamespace["retVal"]);
+        bool retVal = extract<bool>(localNamespace["retVal"]);
         //std::cout << "runScript returning: " << retVal << std::endl;
-		return(retVal);
-	}
-	catch( error_already_set) {
-		gServer->handlePythonError();
-	}
+        return(retVal);
+    }
+    catch( error_already_set) {
+        gServer->handlePythonError();
+    }
 
-	return(false);
+    return(false);
 }
 
 
 //*********************************************************************
-//						pulseCreatureEffects
+//                      pulseCreatureEffects
 //*********************************************************************
 // lastUserUpdate is set in updateUsers
 
 void Server::pulseCreatureEffects(long t) {
-	Monster	*monster=0;
-	const Socket *sock=0;
-	Player* player=0;
-	std::list<Socket*>::const_iterator it;
+    Monster *monster=0;
+    const Socket *sock=0;
+    Player* player=0;
+    std::list<Socket*>::const_iterator it;
 
-	for(it = sockets.begin(); it != sockets.end() ; ) {
-		sock = *it;
-		it++;
-		if(!sock->isConnected())
-			continue;
-		player = sock->getPlayer();
-		if(player)
-			player->pulseEffects(t);
-	}
+    for(it = sockets.begin(); it != sockets.end() ; ) {
+        sock = *it;
+        it++;
+        if(!sock->isConnected())
+            continue;
+        player = sock->getPlayer();
+        if(player)
+            player->pulseEffects(t);
+    }
 
-	MonsterList::iterator mIt = activeList.begin();
-	while(mIt != activeList.end()) {
-		// Increment the iterator in case this monster dies during the update and is removed from the active list
-		monster = (*mIt++);
-		monster->pulseEffects(t);
-	}
+    MonsterList::iterator mIt = activeList.begin();
+    while(mIt != activeList.end()) {
+        // Increment the iterator in case this monster dies during the update and is removed from the active list
+        monster = (*mIt++);
+        monster->pulseEffects(t);
+    }
 }
 
 //*********************************************************************
-//						pulseRoomEffects
+//                      pulseRoomEffects
 //*********************************************************************
 
 void Server::pulseRoomEffects(long t) {
-	std::list<BaseRoom*>::iterator it;
+    std::list<BaseRoom*>::iterator it;
 
-	for(it = effectsIndex.begin() ; it != effectsIndex.end() ; ) {
-		(*it)->pulseEffects(t);
+    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; ) {
+        (*it)->pulseEffects(t);
 
-		if(!(*it)->needsEffectsIndex())
-			it = effectsIndex.erase(it);
-		else
-			it++;
-	}
+        if(!(*it)->needsEffectsIndex())
+            it = effectsIndex.erase(it);
+        else
+            it++;
+    }
 
-	lastRoomPulseUpdate = t;
+    lastRoomPulseUpdate = t;
 }
 
 //*********************************************************************
-//						showEffectsIndex
+//                      showEffectsIndex
 //*********************************************************************
 
 void Server::showEffectsIndex(const Player* player) {
-	std::list<BaseRoom*>::const_iterator it;
-	int i=0;
+    std::list<BaseRoom*>::const_iterator it;
+    int i=0;
 
-	player->printColor("^YRoom Effects Index\n");
+    player->printColor("^YRoom Effects Index\n");
 
-	for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
-		player->print("%s\n", (*it)->fullName().c_str());
-		i++;
-	}
+    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
+        player->print("%s\n", (*it)->fullName().c_str());
+        i++;
+    }
 
-	player->print("%d room%s in effects index.\n", i, i==1 ? "" : "s");
+    player->print("%d room%s in effects index.\n", i, i==1 ? "" : "s");
 }
 
 //*********************************************************************
-//						dmShowEffectsIndex
+//                      dmShowEffectsIndex
 //*********************************************************************
 
 int dmShowEffectsIndex(Player* player, cmd* cmnd) {
-	gServer->showEffectsIndex(player);
-	return(0);
+    gServer->showEffectsIndex(player);
+    return(0);
 }
 //*********************************************************************
-//						addEffectsIndex
+//                      addEffectsIndex
 //*********************************************************************
 
 void BaseRoom::addEffectsIndex() {
-	if(!needsEffectsIndex())
-		return;
-	gServer->addEffectsIndex(this);
+    if(!needsEffectsIndex())
+        return;
+    gServer->addEffectsIndex(this);
 }
 
 void Server::addEffectsIndex(BaseRoom* room) {
-	if(!this)
-		return;
-	// you can only be in the list once!
-	std::list<BaseRoom*>::const_iterator it;
-	for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
-		if((*it) == room)
-			return;
-	}
+    if(!this)
+        return;
+    // you can only be in the list once!
+    std::list<BaseRoom*>::const_iterator it;
+    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
+        if((*it) == room)
+            return;
+    }
 
-	effectsIndex.push_back(room);
+    effectsIndex.push_back(room);
 }
 
 //*********************************************************************
-//						needsEffectsIndex
+//                      needsEffectsIndex
 //*********************************************************************
 
 bool BaseRoom::needsEffectsIndex() const {
-	// any room effects?
-	if(effects.effectList.size())
-		return(true);
+    // any room effects?
+    if(effects.effectList.size())
+        return(true);
 
-	// any exit effects?
-	for(Exit* exit : exits) {
-		if(exit->effects.effectList.size())
-			return(true);
-	}
+    // any exit effects?
+    for(Exit* exit : exits) {
+        if(exit->effects.effectList.size())
+            return(true);
+    }
 
-	return(false);
+    return(false);
 }
 
 //*********************************************************************
-//						removeEffectsIndex
+//                      removeEffectsIndex
 //*********************************************************************
 
 bool BaseRoom::removeEffectsIndex() {
-	if(needsEffectsIndex())
-		return(false);
-	gServer->removeEffectsIndex(this);
-	return(true);
+    if(needsEffectsIndex())
+        return(false);
+    gServer->removeEffectsIndex(this);
+    return(true);
 }
 
 void Server::removeEffectsIndex(BaseRoom* room) {
-	if(!this)
-		return;
+    if(!this)
+        return;
 
-	std::list<BaseRoom*>::iterator it;
-	for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
-		if((*it) == room) {
-			effectsIndex.erase(it);
-			return;
-		}
-	}
+    std::list<BaseRoom*>::iterator it;
+    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
+        if((*it) == room) {
+            effectsIndex.erase(it);
+            return;
+        }
+    }
 }
 
 //*********************************************************************
-//						removeEffectsOwner
+//                      removeEffectsOwner
 //*********************************************************************
 // on suicide, we remove the owner of the effect
 
 void Server::removeEffectsOwner(const Creature* owner) {
-	std::list<BaseRoom*>::iterator it;
+    std::list<BaseRoom*>::iterator it;
 
-	for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
-		(*it)->effects.removeOwner(owner);
-		for(Exit* exit : (*it)->exits) {
-			exit->effects.removeOwner(owner);
-		}
-	}
+    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
+        (*it)->effects.removeOwner(owner);
+        for(Exit* exit : (*it)->exits) {
+            exit->effects.removeOwner(owner);
+        }
+    }
 }
 
 
 //*********************************************************************
-//						Effect
+//                      Effect
 //*********************************************************************
 
 Effect::Effect(xmlNodePtr rootNode) {
-	xmlNodePtr curNode = rootNode->children;
+    xmlNodePtr curNode = rootNode->children;
 
     pulsed = isSpellEffect = usesStr = false;
     pulseDelay = 5;
 
-	while(curNode) {
-			 if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
-		else if(NODE_NAME(curNode, "BaseEffect")) baseEffects.push_back(xml::getBString(curNode));
-		else if(NODE_NAME(curNode, "Display")) xml::copyToBString(display, curNode);
-		else if(NODE_NAME(curNode, "OppositeEffect")) xml::copyToBString(oppositeEffect, curNode);
-		else if(NODE_NAME(curNode, "SelfAddStr")) xml::copyToBString(selfAddStr, curNode);
-		else if(NODE_NAME(curNode, "SelfDelStr")) xml::copyToBString(selfDelStr, curNode);
-		else if(NODE_NAME(curNode, "RoomAddStr")) xml::copyToBString(roomAddStr, curNode);
-		else if(NODE_NAME(curNode, "RoomDelStr")) xml::copyToBString(roomDelStr, curNode);
-		else if(NODE_NAME(curNode, "Pulsed")) xml::copyToBool(pulsed, curNode);
-		else if(NODE_NAME(curNode, "PulseDelay")) xml::copyToNum(pulseDelay, curNode);
-		else if(NODE_NAME(curNode, "Type")) xml::copyToBString(type, curNode);
-		else if(NODE_NAME(curNode, "ComputeScript")) xml::copyToBString(computeScript, curNode);
-		else if(NODE_NAME(curNode, "ApplyScript")) xml::copyToBString(applyScript, curNode);
-		else if(NODE_NAME(curNode, "PreApplyScript")) xml::copyToBString(preApplyScript, curNode);
-		else if(NODE_NAME(curNode, "PostApplyScript")) xml::copyToBString(postApplyScript, curNode);
-		else if(NODE_NAME(curNode, "UnApplyScript")) xml::copyToBString(unApplyScript, curNode);
-		else if(NODE_NAME(curNode, "PulseScript")) xml::copyToBString(pulseScript, curNode);
-		else if(NODE_NAME(curNode, "Spell")) xml::copyToBool(isSpellEffect, curNode);
-		else if(NODE_NAME(curNode, "UsesStrength")) xml::copyToBool(usesStr, curNode);
+    while(curNode) {
+             if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
+        else if(NODE_NAME(curNode, "BaseEffect")) baseEffects.push_back(xml::getBString(curNode));
+        else if(NODE_NAME(curNode, "Display")) xml::copyToBString(display, curNode);
+        else if(NODE_NAME(curNode, "OppositeEffect")) xml::copyToBString(oppositeEffect, curNode);
+        else if(NODE_NAME(curNode, "SelfAddStr")) xml::copyToBString(selfAddStr, curNode);
+        else if(NODE_NAME(curNode, "SelfDelStr")) xml::copyToBString(selfDelStr, curNode);
+        else if(NODE_NAME(curNode, "RoomAddStr")) xml::copyToBString(roomAddStr, curNode);
+        else if(NODE_NAME(curNode, "RoomDelStr")) xml::copyToBString(roomDelStr, curNode);
+        else if(NODE_NAME(curNode, "Pulsed")) xml::copyToBool(pulsed, curNode);
+        else if(NODE_NAME(curNode, "PulseDelay")) xml::copyToNum(pulseDelay, curNode);
+        else if(NODE_NAME(curNode, "Type")) xml::copyToBString(type, curNode);
+        else if(NODE_NAME(curNode, "ComputeScript")) xml::copyToBString(computeScript, curNode);
+        else if(NODE_NAME(curNode, "ApplyScript")) xml::copyToBString(applyScript, curNode);
+        else if(NODE_NAME(curNode, "PreApplyScript")) xml::copyToBString(preApplyScript, curNode);
+        else if(NODE_NAME(curNode, "PostApplyScript")) xml::copyToBString(postApplyScript, curNode);
+        else if(NODE_NAME(curNode, "UnApplyScript")) xml::copyToBString(unApplyScript, curNode);
+        else if(NODE_NAME(curNode, "PulseScript")) xml::copyToBString(pulseScript, curNode);
+        else if(NODE_NAME(curNode, "Spell")) xml::copyToBool(isSpellEffect, curNode);
+        else if(NODE_NAME(curNode, "UsesStrength")) xml::copyToBool(usesStr, curNode);
 
-		curNode = curNode->next;
-	}
+        curNode = curNode->next;
+    }
 }
 
 //*********************************************************************
-//						getPulseScript
+//                      getPulseScript
 //*********************************************************************
 
 bstring Effect::getPulseScript() const {
@@ -1351,7 +1351,7 @@ bstring Effect::getPulseScript() const {
 }
 
 //*********************************************************************
-//						getUnApplyScript
+//                      getUnApplyScript
 //*********************************************************************
 
 bstring Effect::getUnApplyScript() const {
@@ -1359,7 +1359,7 @@ bstring Effect::getUnApplyScript() const {
 }
 
 //*********************************************************************
-//						getApplyScript
+//                      getApplyScript
 //*********************************************************************
 
 bstring Effect::getApplyScript() const {
@@ -1367,7 +1367,7 @@ bstring Effect::getApplyScript() const {
 }
 
 //*********************************************************************
-//						getPreApplyScript
+//                      getPreApplyScript
 //*********************************************************************
 
 bstring Effect::getPreApplyScript() const {
@@ -1375,7 +1375,7 @@ bstring Effect::getPreApplyScript() const {
 }
 
 //*********************************************************************
-//						getPostApplyScript
+//                      getPostApplyScript
 //*********************************************************************
 
 bstring Effect::getPostApplyScript() const {
@@ -1383,7 +1383,7 @@ bstring Effect::getPostApplyScript() const {
 }
 
 //*********************************************************************
-//						getComputeScript
+//                      getComputeScript
 //*********************************************************************
 
 bstring Effect::getComputeScript() const {
@@ -1391,7 +1391,7 @@ bstring Effect::getComputeScript() const {
 }
 
 //*********************************************************************
-//						getType
+//                      getType
 //*********************************************************************
 
 bstring Effect::getType() const {
@@ -1399,7 +1399,7 @@ bstring Effect::getType() const {
 }
 
 //*********************************************************************
-//						isPulsed
+//                      isPulsed
 //*********************************************************************
 
 bool Effect::isPulsed() const {
@@ -1407,7 +1407,7 @@ bool Effect::isPulsed() const {
 }
 
 //*********************************************************************
-//						isSpell
+//                      isSpell
 //*********************************************************************
 
 bool Effect::isSpell() const {
@@ -1415,7 +1415,7 @@ bool Effect::isSpell() const {
 }
 
 //*********************************************************************
-//						isSpell
+//                      isSpell
 //*********************************************************************
 
 bool Effect::usesStrength() const {
@@ -1423,7 +1423,7 @@ bool Effect::usesStrength() const {
 }
 
 //*********************************************************************
-//						getRoomDelStr
+//                      getRoomDelStr
 //*********************************************************************
 
 bstring Effect::getRoomDelStr() const {
@@ -1431,7 +1431,7 @@ bstring Effect::getRoomDelStr() const {
 }
 
 //*********************************************************************
-//						getRoomAddStr
+//                      getRoomAddStr
 //*********************************************************************
 
 bstring Effect::getRoomAddStr() const {
@@ -1439,7 +1439,7 @@ bstring Effect::getRoomAddStr() const {
 }
 
 //*********************************************************************
-//						getSelfDelStr
+//                      getSelfDelStr
 //*********************************************************************
 
 bstring Effect::getSelfDelStr() const {
@@ -1447,7 +1447,7 @@ bstring Effect::getSelfDelStr() const {
 }
 
 //*********************************************************************
-//						getSelfAddStr
+//                      getSelfAddStr
 //*********************************************************************
 
 bstring Effect::getSelfAddStr() const {
@@ -1455,7 +1455,7 @@ bstring Effect::getSelfAddStr() const {
 }
 
 //*********************************************************************
-//						getOppositeEffect
+//                      getOppositeEffect
 //*********************************************************************
 
 bstring Effect::getOppositeEffect() const {
@@ -1463,7 +1463,7 @@ bstring Effect::getOppositeEffect() const {
 }
 
 //*********************************************************************
-//						getDisplay
+//                      getDisplay
 //*********************************************************************
 
 bstring Effect::getDisplay() const {
@@ -1471,27 +1471,27 @@ bstring Effect::getDisplay() const {
 }
 
 //*********************************************************************
-//						hasBaseEffect
+//                      hasBaseEffect
 //*********************************************************************
 
 bool EffectInfo::hasBaseEffect(const bstring& effect) const {
-	return(myEffect->hasBaseEffect(effect));
+    return(myEffect->hasBaseEffect(effect));
 }
 
 //*********************************************************************
-//						hasBaseEffect
+//                      hasBaseEffect
 //*********************************************************************
 
 bool Effect::hasBaseEffect(const bstring& effect) const {
-	for(const bstring& be : baseEffects) {
-		if(be == effect)
-			return(true);
-	}
-	return(false);
+    for(const bstring& be : baseEffects) {
+        if(be == effect)
+            return(true);
+    }
+    return(false);
 }
 
 //*********************************************************************
-//						getName
+//                      getName
 //*********************************************************************
 
 bstring Effect::getName() const {
@@ -1499,21 +1499,21 @@ bstring Effect::getName() const {
 }
 
 //*********************************************************************
-//						EffectInfo
+//                      EffectInfo
 //*********************************************************************
 // TODO: Add applier here
 
 EffectInfo::EffectInfo(bstring pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent, const Creature* owner):
-		name(pName), lastMod(pLastMod), lastPulse(pLastMod), duration(pDuration), strength(pStrength), myParent(pParent)
+        name(pName), lastMod(pLastMod), lastPulse(pLastMod), duration(pDuration), strength(pStrength), myParent(pParent)
 {
-	myEffect = gConfig->getEffect(pName);
-	if(!myEffect)
-		throw bstring("Can't find effect " + pName);
-	setOwner(owner);
+    myEffect = gConfig->getEffect(pName);
+    if(!myEffect)
+        throw bstring("Can't find effect " + pName);
+    setOwner(owner);
 }
 
 //*********************************************************************
-//						EffectInfo
+//                      EffectInfo
 //*********************************************************************
 
 EffectInfo::EffectInfo()
@@ -1522,47 +1522,47 @@ EffectInfo::EffectInfo()
 }
 
 //*********************************************************************
-//						EffectInfo
+//                      EffectInfo
 //*********************************************************************
 
 EffectInfo::EffectInfo(xmlNodePtr rootNode) {
-	xmlNodePtr curNode = rootNode->children;
+    xmlNodePtr curNode = rootNode->children;
 
-	while(curNode) {
-			if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
-		else if(NODE_NAME(curNode, "Duration")) xml::copyToNum(duration, curNode);
-		else if(NODE_NAME(curNode, "Strength")) xml::copyToNum(strength, curNode);
-		else if(NODE_NAME(curNode, "Extra")) xml::copyToNum(extra, curNode);
-		else if(NODE_NAME(curNode, "PulseModifier")) xml::copyToNum(pulseModifier, curNode);
+    while(curNode) {
+            if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
+        else if(NODE_NAME(curNode, "Duration")) xml::copyToNum(duration, curNode);
+        else if(NODE_NAME(curNode, "Strength")) xml::copyToNum(strength, curNode);
+        else if(NODE_NAME(curNode, "Extra")) xml::copyToNum(extra, curNode);
+        else if(NODE_NAME(curNode, "PulseModifier")) xml::copyToNum(pulseModifier, curNode);
 
-		curNode = curNode->next;
-	}
+        curNode = curNode->next;
+    }
 
-	lastPulse = lastMod = time(0);
-	myEffect = gConfig->getEffect(name);
+    lastPulse = lastMod = time(0);
+    myEffect = gConfig->getEffect(name);
 
-	if(!myEffect) {
-		throw bstring("Can't find effect listing " + name);
-	}
+    if(!myEffect) {
+        throw bstring("Can't find effect listing " + name);
+    }
 }
 
 //*********************************************************************
-//						EffectInfo
+//                      EffectInfo
 //*********************************************************************
 
 EffectInfo::~EffectInfo() {
 }
 
 //*********************************************************************
-//						setParent
+//                      setParent
 //*********************************************************************
 
 void EffectInfo::setParent(MudObject* pParent) {
-	myParent = pParent;
+    myParent = pParent;
 }
 
 //*********************************************************************
-//						getEffect
+//                      getEffect
 //*********************************************************************
 
 Effect* EffectInfo::getEffect() const {
@@ -1570,7 +1570,7 @@ Effect* EffectInfo::getEffect() const {
 }
 
 //*********************************************************************
-//						getName
+//                      getName
 //*********************************************************************
 
 const bstring EffectInfo::getName() const {
@@ -1578,7 +1578,7 @@ const bstring EffectInfo::getName() const {
 }
 
 //*********************************************************************
-//						getOwner
+//                      getOwner
 //*********************************************************************
 
 const bstring EffectInfo::getOwner() const {
@@ -1586,16 +1586,16 @@ const bstring EffectInfo::getOwner() const {
 }
 
 //*********************************************************************
-//						isOwner
+//                      isOwner
 //*********************************************************************
 
 bool EffectInfo::isOwner(const Creature* owner) const {
-	// currently, only players can own effects
-	return(owner && owner->isPlayer() && pOwner == owner->getName());
+    // currently, only players can own effects
+    return(owner && owner->isPlayer() && pOwner == owner->getName());
 }
 
 //*********************************************************************
-//						getLastMod
+//                      getLastMod
 //*********************************************************************
 
 time_t EffectInfo::getLastMod() const {
@@ -1603,7 +1603,7 @@ time_t EffectInfo::getLastMod() const {
 }
 
 //*********************************************************************
-//						getDuration
+//                      getDuration
 //*********************************************************************
 
 long EffectInfo::getDuration() const {
@@ -1611,7 +1611,7 @@ long EffectInfo::getDuration() const {
 }
 
 //*********************************************************************
-//						getStrength
+//                      getStrength
 //*********************************************************************
 
 int EffectInfo::getStrength() const {
@@ -1619,7 +1619,7 @@ int EffectInfo::getStrength() const {
 }
 
 //*********************************************************************
-//						getExtra
+//                      getExtra
 //*********************************************************************
 
 int EffectInfo::getExtra() const {
@@ -1627,7 +1627,7 @@ int EffectInfo::getExtra() const {
 }
 
 //*********************************************************************
-//						isPermanent
+//                      isPermanent
 //*********************************************************************
 
 bool EffectInfo::isPermanent() const {
@@ -1635,7 +1635,7 @@ bool EffectInfo::isPermanent() const {
 }
 
 //*********************************************************************
-//						getParent
+//                      getParent
 //*********************************************************************
 
 MudObject* EffectInfo::getParent() const {
@@ -1643,7 +1643,7 @@ MudObject* EffectInfo::getParent() const {
 }
 
 //*********************************************************************
-//						getApplier
+//                      getApplier
 //*********************************************************************
 
 MudObject* EffectInfo::getApplier() const {
@@ -1651,42 +1651,42 @@ MudObject* EffectInfo::getApplier() const {
 }
 
 //*********************************************************************
-//						setOwner
+//                      setOwner
 //*********************************************************************
 
 void EffectInfo::setOwner(const Creature* owner) {
-	if(owner)
-		pOwner = owner->getName();
-	else
-		pOwner = "";
+    if(owner)
+        pOwner = owner->getName();
+    else
+        pOwner = "";
 }
 
 //*********************************************************************
-//						setStrength
+//                      setStrength
 //*********************************************************************
 
 void EffectInfo::setStrength(int pStrength) {
-	if(!this)
-		return;
-	strength = pStrength;
+    if(!this)
+        return;
+    strength = pStrength;
 }
 
 //*********************************************************************
-//						setExtra
+//                      setExtra
 //*********************************************************************
 
 void EffectInfo::setExtra(int pExtra) {
-	if(!this)
-		return;
-	extra = pExtra;
+    if(!this)
+        return;
+    extra = pExtra;
 }
 
 //*********************************************************************
-//						setDuration
+//                      setDuration
 //*********************************************************************
 
 void EffectInfo::setDuration(long pDuration) {
-	if(!this)
-		return;
-	duration = pDuration;
+    if(!this)
+        return;
+    duration = pDuration;
 }

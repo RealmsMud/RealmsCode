@@ -1,6 +1,6 @@
 /*
  * web.h
- *	 web-based functions
+ *   web-based functions
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -28,42 +28,42 @@ void webCrash(bstring msg);
 
 
 // Ascii characters we'll need
-//#define	ETX		3
-//#define	EOT		4
-//#define	ETB		23
+//#define   ETX     3
+//#define   EOT     4
+//#define   ETB     23
 
 class WebInterface {
 public:
-	static const char* fifoIn;
-	static const char* fifoOut;
-	static WebInterface* getInstance();
-	static void destroyInstance();
+    static const char* fifoIn;
+    static const char* fifoOut;
+    static WebInterface* getInstance();
+    static void destroyInstance();
 
 private:
-	// Singleton, only one instance allowed of this class
-	static WebInterface* myInstance;
-	WebInterface();
-	~WebInterface();
-	void openFifos();
-	void closeFifos();
-	bool checkFifo(const char* fifoFile);
+    // Singleton, only one instance allowed of this class
+    static WebInterface* myInstance;
+    WebInterface();
+    ~WebInterface();
+    void openFifos();
+    void closeFifos();
+    bool checkFifo(const char* fifoFile);
 
-	bool checkInput();
-	bool handleInput();
-	bool sendOutput();
-	bool messagePlayer(bstring command, bstring tempBuf);
-	bool wiki(bstring command, bstring tempBuf);
+    bool checkInput();
+    bool handleInput();
+    bool sendOutput();
+    bool messagePlayer(bstring command, bstring tempBuf);
+    bool wiki(bstring command, bstring tempBuf);
 
 private:
-	int inFd;
-	int outFd;
-	bstring	inBuf;  // Input Buffer
-	bstring outBuf; // Output Buffer
+    int inFd;
+    int outFd;
+    bstring inBuf;  // Input Buffer
+    bstring outBuf; // Output Buffer
 
 
 public:
-	bool handleRequests();
-	void recreateFifos();
+    bool handleRequests();
+    void recreateFifos();
 
 };
 #endif /*WEB_H_*/

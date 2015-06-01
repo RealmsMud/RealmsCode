@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -23,53 +23,53 @@
 
 class MsdpVariable {
 protected:
-	void			init();
+    void            init();
 
-	bstring			name;				// Name of this variable
-	bstring			sendScript;			// Python script to send this variable
-	bstring			updateScript;		// Python script to update this variable
-	bool			requiresPlayer;		// Variable requires a player attached to the socket
-	bool			configurable;		// Can it be configured by the client?
-	bool			writeOnce;			// Can only set this variable once
-	int				updateInterval;		// Update interval (in 10ths of a second)
+    bstring         name;               // Name of this variable
+    bstring         sendScript;         // Python script to send this variable
+    bstring         updateScript;       // Python script to update this variable
+    bool            requiresPlayer;     // Variable requires a player attached to the socket
+    bool            configurable;       // Can it be configured by the client?
+    bool            writeOnce;          // Can only set this variable once
+    int             updateInterval;     // Update interval (in 10ths of a second)
 public:
-	MsdpVariable(xmlNodePtr rootNode);
-	MsdpVariable();
-	// Todo: Make this have the server erase all reported variables of this type
-	virtual ~MsdpVariable() { };
+    MsdpVariable(xmlNodePtr rootNode);
+    MsdpVariable();
+    // Todo: Make this have the server erase all reported variables of this type
+    virtual ~MsdpVariable() { };
 
-	bstring			getName() const;
-	bstring			getSendScript() const;
-	bool			hasSendScript() const;
-	bstring			getUpdateScript() const;
-	bool			hasUpdateScript() const;
-	bool			isConfigurable() const;
-	bool			isWriteOnce() const;
-	bool			getRequiresPlayer() const;
-	int				getUpdateInterval() const;
+    bstring         getName() const;
+    bstring         getSendScript() const;
+    bool            hasSendScript() const;
+    bstring         getUpdateScript() const;
+    bool            hasUpdateScript() const;
+    bool            isConfigurable() const;
+    bool            isWriteOnce() const;
+    bool            getRequiresPlayer() const;
+    int             getUpdateInterval() const;
 
 };
 
 class ReportedMsdpVariable : public MsdpVariable {
 protected:
-	bstring			value;
-	bool			dirty;
-	Socket			*parentSock; // Parent Socket
+    bstring         value;
+    bool            dirty;
+    Socket          *parentSock; // Parent Socket
 
-	Timer			timer;
+    Timer           timer;
 
 public:
-	ReportedMsdpVariable(const MsdpVariable* mv, Socket *sock);
+    ReportedMsdpVariable(const MsdpVariable* mv, Socket *sock);
 
-	bstring			getValue() const;
-	void			setValue(bstring newValue);
-	void			setValue(int newValue);
-	void			setValue(long newValue);
-	bool			checkTimer();		// True = ok to send, False = timer hasn't expired yet
+    bstring         getValue() const;
+    void            setValue(bstring newValue);
+    void            setValue(int newValue);
+    void            setValue(long newValue);
+    bool            checkTimer();       // True = ok to send, False = timer hasn't expired yet
 
-	bool			isDirty() const;
-	void			update();
-	void			setDirty(bool pDirty = true);
+    bool            isDirty() const;
+    void            update();
+    void            setDirty(bool pDirty = true);
 };
 
 

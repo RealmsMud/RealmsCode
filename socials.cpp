@@ -111,7 +111,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
             pTarget->wake("You wake up.");
     }
     if(social->getWakeRoom())
-    	parent->wake("You awaken suddenly!", true);
+        parent->wake("You awaken suddenly!", true);
 
     if(target && !social->getSelfOnTarget().empty()) {
         // Social on Target
@@ -143,7 +143,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
         bstring toRoom = social->getRoomNoTarget();
 
         if(!toRoom.empty() && parent) {
-        	parent->doSocialEcho(toRoom, creature, target);
+            parent->doSocialEcho(toRoom, creature, target);
             socialHooks(creature, str);
         }
 

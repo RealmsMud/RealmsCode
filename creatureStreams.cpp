@@ -51,7 +51,7 @@ void Streamable::initStreamable() {
 
 
 Streamable& Streamable::operator<< ( const MudObject& mo) {
-	Player* player = dynamic_cast<Player*>(this);
+    Player* player = dynamic_cast<Player*>(this);
     if(player && player->getSock()) {
         const Creature* creature = mo.getAsConstCreature();
         const Object* object = mo.getAsConstObject();
@@ -77,8 +77,8 @@ Streamable& Streamable::operator<< (const bstring& str) {
     return(*this);
 }
 Streamable& Streamable::operator<< (const int num) {
-	doPrint(num);
-	return(*this);
+    doPrint(num);
+    return(*this);
 }
 Streamable& Streamable::operator<< (Stat& stat) {
     doPrint(stat.toString());

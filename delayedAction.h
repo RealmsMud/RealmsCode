@@ -10,59 +10,59 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 
 #ifndef _DELAYEDACTION_H
-#define	_DELAYEDACTION_H
+#define _DELAYEDACTION_H
 
 
 enum DelayedActionType {
-	UnknownAction,
-	ActionFish,
-	ActionSearch,
-	ActionTrack,
-	ActionStudy,
-	ActionScript
+    UnknownAction,
+    ActionFish,
+    ActionSearch,
+    ActionTrack,
+    ActionStudy,
+    ActionScript
 };
 
-#define DelayedActionFn	const DelayedAction*
+#define DelayedActionFn const DelayedAction*
 struct DelayedAction {
-	// This points to a function that accepts DelayedAction* as a parameter.
-	// It will be called when the action is complete.
-	void (*callback)(const DelayedAction*);
+    // This points to a function that accepts DelayedAction* as a parameter.
+    // It will be called when the action is complete.
+    void (*callback)(const DelayedAction*);
 
-	MudObject* target;
-	DelayedActionType type;
-	long whenFinished;
-	bool canInterrupt;
-	cmd cmnd;
-	bstring script;
+    MudObject* target;
+    DelayedActionType type;
+    long whenFinished;
+    bool canInterrupt;
+    cmd cmnd;
+    bstring script;
 
-	DelayedAction(void (*callback)(DelayedActionFn), MudObject* target, cmd* cmnd, DelayedActionType type, long whenFinished, bool canInterrupt) {
-		this->callback = callback;
-		this->target = target;
-		this->type = type;
-		this->whenFinished = whenFinished;
-		this->canInterrupt = canInterrupt;
-		if(cmnd)
-		    this->cmnd = *(cmnd);
-		this->script = "";
-	}
+    DelayedAction(void (*callback)(DelayedActionFn), MudObject* target, cmd* cmnd, DelayedActionType type, long whenFinished, bool canInterrupt) {
+        this->callback = callback;
+        this->target = target;
+        this->type = type;
+        this->whenFinished = whenFinished;
+        this->canInterrupt = canInterrupt;
+        if(cmnd)
+            this->cmnd = *(cmnd);
+        this->script = "";
+    }
 
-	DelayedAction(void (*callback)(DelayedActionFn), MudObject* target, bstring script, long whenFinished, bool canInterrupt) {
-		this->callback = callback;
-		this->target = target;
-		this->type = ActionScript;
-		this->whenFinished = whenFinished;
-		this->canInterrupt = canInterrupt;
-		this->script = script;
-	}
+    DelayedAction(void (*callback)(DelayedActionFn), MudObject* target, bstring script, long whenFinished, bool canInterrupt) {
+        this->callback = callback;
+        this->target = target;
+        this->type = ActionScript;
+        this->whenFinished = whenFinished;
+        this->canInterrupt = canInterrupt;
+        this->script = script;
+    }
 };
 
 
-#endif	/* _DELAYEDACTION_H */
+#endif  /* _DELAYEDACTION_H */
 

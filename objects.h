@@ -1,7 +1,7 @@
 /*
  * objects.h
- *	 Header file for objects
- *   ____			_
+ *   Header file for objects
+ *   ____           _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
  *  |  _ <  __/ (_| | | | | | | \__ \
@@ -10,16 +10,16 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 #ifndef OBJECTS_H_
 #define OBJECTS_H_
 
-#define OBJ_KEY_LENGTH			20
-#define OBJ_FLAG_ARRAY_SIZE		32
+#define OBJ_KEY_LENGTH          20
+#define OBJ_FLAG_ARRAY_SIZE     32
 
 #include "alchemy.h"
 
@@ -72,7 +72,7 @@ typedef std::map<int, AlchemyEffect> AlchemyEffectMap;
 class Object: public Container, public Containable {
     // Static class functions
 public:
-    static Object* getNewPotion();	// Creates a new blank potion object
+    static Object* getNewPotion();  // Creates a new blank potion object
 
 public:
     Object();
@@ -86,16 +86,16 @@ public:
 
 protected:
     short           weight;
-    short           bulk;		    // item bulk rating.
+    short           bulk;           // item bulk rating.
     short           maxbulk;
     Size            size;
     short           type;
-    short           wearflag;	    // Where/if it can be worn
-    short           armor;		    // AC adjustment
-    short           quality;	    // Quality of the item (1-400) for auto adjustment of AC
+    short           wearflag;       // Where/if it can be worn
+    short           armor;          // AC adjustment
+    short           quality;        // Quality of the item (1-400) for auto adjustment of AC
     short           adjustment;
     short           numAttacks;     // Number of attacks this weapon offers (IE: cat'o nine tails)
-    short           shotsMax;	    // Shots before breakage
+    short           shotsMax;       // Shots before breakage
     short           shotsCur;
     short           chargesMax;     // Maximum charges (Currently only used for casting weapons)
     short           chargesCur;
@@ -105,21 +105,21 @@ protected:
     short           minStrength;
     short           clan;
     short           special;
-    short           questnum;		// Quest fulfillment number
+    short           questnum;       // Quest fulfillment number
     bstring         effect;
     long            effectDuration;
     short           effectStrength;
     unsigned long   coinCost;
     unsigned long   shopValue;
-    long            made;		    // the time this object was created
-    short           keyVal;			// key # value to match exit
+    long            made;           // the time this object was created
+    short           keyVal;         // key # value to match exit
     int             lotteryCycle;
     short           lotteryNumbers[6];
     int             recipe;
     Material        material;
-    // SubType:	For Armor - The type of armor it is, ie: cloth, leather, chain, plate, etc
-    //			For Weapons - The weapon class it is, sword, dagger, etc
-    //			For Alchemy - The type of device it is, mortar and pestle, etc
+    // SubType: For Armor - The type of armor it is, ie: cloth, leather, chain, plate, etc
+    //          For Weapons - The weapon class it is, sword, dagger, etc
+    //          For Alchemy - The type of device it is, mortar and pestle, etc
     bstring subType;
     char flags[OBJ_FLAG_ARRAY_SIZE];  // Max object flags - 256
     short delay;
@@ -137,35 +137,35 @@ public:
 
     // Strings
     bstring description;
-    bstring version;	// What version of the mud this object was saved under
-    bstring lastMod;	// Last staff member to modify object.
+    bstring version;    // What version of the mud this object was saved under
+    bstring lastMod;    // Last staff member to modify object.
 
     // Information about where this object came from
     DroppedBy droppedBy;
 
-    char key[3][OBJ_KEY_LENGTH];	// key 3 hold object index
-    char use_output[80];	// String output by successful use
+    char key[3][OBJ_KEY_LENGTH];    // key 3 hold object index
+    char use_output[80];    // String output by successful use
     char use_attack[50];
 
     Dice damage;
     double getDps();
 
 
-    CatRef in_bag[3];	// items preloaded inside bags
+    CatRef in_bag[3];   // items preloaded inside bags
 
     struct lasttime lasttime[4];// Last-time-used variables - Used for envenom and enchant right now
 
     Range deed;
-    Money value;	   	// coin value
+    Money value;        // coin value
 
     // where we store refund information - this never needs to be loaded
     // or saved from file because if they log, they can't refund!
     Money refund;
-    MapMarker *compass;	// for compass objects
+    MapMarker *compass; // for compass objects
     bstring plural;
 
     // List of effects that are conferred by this item.  Name, duration, and strength.
-    //	std::list<ConferredEffect*> conferredEffects;
+    //  std::list<ConferredEffect*> conferredEffects;
 
     bool pulseEffects(long t) { return (false); };
 
@@ -206,7 +206,7 @@ public:
 
     // Placement of the object etc
     void addObj(Object *toAdd, bool incShots = true); // Add an object to this object
-    void delObj(Object	*toDel);
+    void delObj(Object  *toDel);
     void addToRoom(BaseRoom* room);
     void deleteFromRoom();
     void popBag(Creature* creature, bool quest = true, bool drop = true, bool steal = true,

@@ -1,6 +1,6 @@
 /*
  * calendar.h
- *	 Header file for calendar
+ *   Header file for calendar
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___ 
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *  
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -20,172 +20,172 @@
 
 // __..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..
 //
-//			cWeather
+//          cWeather
 //
 // --..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..
 
 class cWeather {
 protected:
-	bstring sunrise;
-	bstring sunset;
-	bstring earthTrembles;
-	bstring heavyFog;
-	bstring beautifulDay;
-	bstring brightSun;
-	bstring glaringSun;
-	bstring heat;
-	bstring still;
-	bstring lightBreeze;
-	bstring strongWind;
-	bstring windGusts;
-	bstring galeForce;
-	bstring clearSkies;
-	bstring lightClouds;
-	bstring thunderheads;
-	bstring lightRain;
-	bstring heavyRain;
-	bstring sheetsRain;
-	bstring torrentRain;
-	bstring noMoon;
-	bstring sliverMoon;
-	bstring halfMoon;
-	bstring waxingMoon;
-	bstring fullMoon;
+    bstring sunrise;
+    bstring sunset;
+    bstring earthTrembles;
+    bstring heavyFog;
+    bstring beautifulDay;
+    bstring brightSun;
+    bstring glaringSun;
+    bstring heat;
+    bstring still;
+    bstring lightBreeze;
+    bstring strongWind;
+    bstring windGusts;
+    bstring galeForce;
+    bstring clearSkies;
+    bstring lightClouds;
+    bstring thunderheads;
+    bstring lightRain;
+    bstring heavyRain;
+    bstring sheetsRain;
+    bstring torrentRain;
+    bstring noMoon;
+    bstring sliverMoon;
+    bstring halfMoon;
+    bstring waxingMoon;
+    bstring fullMoon;
 
-public:	
-	cWeather();
-	void load(xmlNodePtr curNode);
-	void save(xmlNodePtr curNode) const;
-	bstring get(WeatherString w) const;
+public: 
+    cWeather();
+    void load(xmlNodePtr curNode);
+    void save(xmlNodePtr curNode) const;
+    bstring get(WeatherString w) const;
 };
 
 // __..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..
 //
-//			cDay
+//          cDay
 //
 // --..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..
 
 class cDay {
 protected:
-	short		month;
-	short		day;
-	int			year;
+    short       month;
+    short       day;
+    int         year;
 
 public:
-	cDay();
+    cDay();
 
-	void load(xmlNodePtr curNode);
-	void save(xmlNodePtr curNode) const;
+    void load(xmlNodePtr curNode);
+    void save(xmlNodePtr curNode) const;
 
-	short getMonth() const;
-	short getDay() const;
-	int getYear() const;
+    short getMonth() const;
+    short getDay() const;
+    int getYear() const;
 
-	void setMonth(short m);
-	void setDay(short d);
-	void setYear(int y);
+    void setMonth(short m);
+    void setDay(short d);
+    void setYear(int y);
 };
 
 // __..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..
 //
-//			cSeason
+//          cSeason
 //
 // --..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..
 
 class cSeason {
 protected:
-	Season		id;
-	bstring		name;
-	short		month;
-	short		day;
+    Season      id;
+    bstring     name;
+    short       month;
+    short       day;
 
-	cWeather	weather;
+    cWeather    weather;
 
 public:
-	cSeason();
+    cSeason();
 
-	void load(xmlNodePtr curNode);
-	void save(xmlNodePtr curNode) const;
+    void load(xmlNodePtr curNode);
+    void save(xmlNodePtr curNode) const;
 
-	Season getId() const;
-	bstring getName() const;
-	short getMonth() const;
-	short getDay() const;
+    Season getId() const;
+    bstring getName() const;
+    short getMonth() const;
+    short getDay() const;
 
-	cWeather *getWeather();
+    cWeather *getWeather();
 };
 
 // __..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..
 //
-//			cMonth
+//          cMonth
 //
 // --..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..
 
 class cMonth {
 protected:
-	short		id;
-	bstring		name;
-	short		days;
+    short       id;
+    bstring     name;
+    short       days;
 
 public:
-	cMonth();
+    cMonth();
 
-	void load(xmlNodePtr curNode);
-	void save(xmlNodePtr curNode) const;
+    void load(xmlNodePtr curNode);
+    void save(xmlNodePtr curNode) const;
 
-	short getId() const;
-	bstring getName() const;
-	short getDays() const;
+    short getId() const;
+    bstring getName() const;
+    short getDays() const;
 };
 
 // __..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..
 //
-//			Calendar
+//          Calendar
 //
 // --..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..
 
 class Calendar {
 protected:
-	int		totalDays;
-	int		curYear;
-	short	curMonth;
-	short	curDay;
-	short	adjHour;
-	bstring lastPirate;
+    int     totalDays;
+    int     curYear;
+    short   curMonth;
+    short   curDay;
+    short   adjHour;
+    bstring lastPirate;
 
-	cSeason	*curSeason;
-	std::list<cSeason*> seasons;
-	std::list<cMonth*> months;
-	void	advanceMonth();
+    cSeason *curSeason;
+    std::list<cSeason*> seasons;
+    std::list<cMonth*> months;
+    void    advanceMonth();
 
 public:
-	Calendar();
-	int		shipUpdates;
+    Calendar();
+    int     shipUpdates;
 
-	void clear();
-	Season	whatSeason() const;
-	cMonth* getMonth(short id) const;
-	void	setSeason();
-	void	advance();
-	void	printtime(const Player* player) const;
-	bool	isBirthday(const Player* target) const;
-	bstring getLastPirate() const;
-	void	setLastPirate(bstring name);
-	void	resetToMidnight();
+    void clear();
+    Season  whatSeason() const;
+    cMonth* getMonth(short id) const;
+    void    setSeason();
+    void    advance();
+    void    printtime(const Player* player) const;
+    bool    isBirthday(const Player* target) const;
+    bstring getLastPirate() const;
+    void    setLastPirate(bstring name);
+    void    resetToMidnight();
 
-	void	load();
-	void	save() const;
-	void	loadMonths(xmlNodePtr curNode);
-	void	loadSeasons(xmlNodePtr curNode);
-	void	loadCurrent(xmlNodePtr curNode);
+    void    load();
+    void    save() const;
+    void    loadMonths(xmlNodePtr curNode);
+    void    loadSeasons(xmlNodePtr curNode);
+    void    loadCurrent(xmlNodePtr curNode);
 
-	int		getTotalDays() const;
-	int		getCurYear() const;
-	short	getCurMonth() const;
-	short	getCurDay() const;
-	short	getAdjHour() const;
+    int     getTotalDays() const;
+    int     getCurYear() const;
+    short   getCurMonth() const;
+    short   getCurDay() const;
+    short   getAdjHour() const;
 
-	cSeason	*getCurSeason() const;
+    cSeason *getCurSeason() const;
 };
 
 

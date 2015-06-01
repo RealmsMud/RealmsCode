@@ -30,7 +30,7 @@ void Creature::addPet(Monster* newPet, bool setPetFlag) {
     newPet->setMaster(this);
     pets.push_back(newPet);
     if(getGroup())
-    	getGroup()->add(newPet);
+        getGroup()->add(newPet);
 }
 void Creature::delPet(Monster* toDel) {
     PetList::iterator it = std::find(pets.begin(), pets.end(), toDel);
@@ -89,12 +89,12 @@ Creature* Monster::getMaster() const {
 //}
 
 Monster* Creature::findPet(bstring pName, int pNum) {
-	int match = 0;
+    int match = 0;
     for(Monster* pet : pets) {
         if(isMatch(this, pet, pName, false, false)) {
             match++;
             if(match == pNum) {
-            	return(pet);
+                return(pet);
             }
         }
     }
@@ -112,26 +112,26 @@ bool Creature::isPet() const {
 }
 
 void Creature::dismissPet(Monster* pet) {
-	if(pet->getMaster() != this)
-		return;
+    if(pet->getMaster() != this)
+        return;
 
-	print("You dismiss %N.\n", pet);
-	broadcast(getSock(), getRoomParent(), "%M dismisses %N.", this, pet);
+    print("You dismiss %N.\n", pet);
+    broadcast(getSock(), getRoomParent(), "%M dismisses %N.", this, pet);
 
-	if(pet->isUndead())
-		broadcast(NULL, getRoomParent(), "%M wanders away.", pet);
-	else
-		broadcast(NULL, getRoomParent(), "%M fades away.", pet);
-	pet->die(this);
+    if(pet->isUndead())
+        broadcast(NULL, getRoomParent(), "%M wanders away.", pet);
+    else
+        broadcast(NULL, getRoomParent(), "%M fades away.", pet);
+    pet->die(this);
 
 }
 void Creature::dismissAll() {
-	// We use this instead of for() because dismissPet will remove it from the list and invalidate the iterators
-	PetList::iterator it;
-	for(it = pets.begin() ; it != pets.end() ; ) {
-		Monster* pet = (*it++);
-		dismissPet(pet);
-	}
+    // We use this instead of for() because dismissPet will remove it from the list and invalidate the iterators
+    PetList::iterator it;
+    for(it = pets.begin() ; it != pets.end() ; ) {
+        Monster* pet = (*it++);
+        dismissPet(pet);
+    }
 }
 void Creature::displayPets() {
     std::ostringstream oStr;

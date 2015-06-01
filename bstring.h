@@ -1,6 +1,6 @@
 /*
  * bstring.h
- *	 Extension to basic_string<char>
+ *   Extension to basic_string<char>
  *   ____            _               
  *  |  _ \ ___  __ _| |_ __ ___  ___ 
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *  
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -124,9 +124,9 @@ inline void strAdd(std::string& dst, const char* src) {
 }
 
 inline void strAdd(std::string& dst, int val) {
-	std::stringstream ss;
-	ss << val;
-	strAdd(dst, ss.str());
+    std::stringstream ss;
+    ss << val;
+    strAdd(dst, ss.str());
 }
 
 // -----------------------------------------------------------------
@@ -179,7 +179,7 @@ inline int ssicoll(const char* sz1, int nLen1, const char* sz2, int nLen2)
 inline int strCaseCmp(const char* s1, const char* s2)
 {
     std::locale loc;
-	const std::ctype<char>& ct = std::use_facet< std::ctype<char> >(std::locale());
+    const std::ctype<char>& ct = std::use_facet< std::ctype<char> >(std::locale());
     char f;
     char l;
 
@@ -220,16 +220,16 @@ public:
     typedef my_base::value_type         my_value_type; 
     typedef my_base::allocator_type     my_allocator_type;
 
-	// Constructors!
+    // Constructors!
     bstring()  { }
-	
-//	bstring(const XMLCh* const str) {
-//		char* tmp = XMLString::transcode(str);
-//		*this = tmp;
-//		XMLString::release(&tmp);
-//	}
-	
-	bstring(const bstring& str): my_base(str)  { }
+    
+//  bstring(const XMLCh* const str) {
+//      char* tmp = XMLString::transcode(str);
+//      *this = tmp;
+//      XMLString::release(&tmp);
+//  }
+    
+    bstring(const bstring& str): my_base(str)  { }
 
     bstring(const std::string& str) {
         assignStr(*this, str);
@@ -239,27 +239,27 @@ public:
         *this = str;
     }
     bstring(const unsigned char* uStr) {
-    	*this = reinterpret_cast<const char*>(uStr);
+        *this = reinterpret_cast<const char*>(uStr);
     }
     
-	bstring(int val) {
+    bstring(int val) {
         std::stringstream ss;
         ss << val;
         *this = ss.str();
     }
 
-	bstring(my_const_pointer str, my_size_type n) : my_base(str, n) { }
+    bstring(my_const_pointer str, my_size_type n) : my_base(str, n) { }
 
-	bstring(my_const_iterator first, my_const_iterator last) : my_base(first, last) {  }
+    bstring(my_const_iterator first, my_const_iterator last) : my_base(first, last) {  }
 
     bstring(my_size_type size, my_value_type ch, const my_allocator_type& al = my_allocator_type()) : my_base(size, ch, al) { }
-	
-	int toInt() {
-		if(empty())	return(0);
-		return(atoi(getBuf()));
-	}
-	
-	// -----------------------------------------------
+    
+    int toInt() {
+        if(empty()) return(0);
+        return(atoi(getBuf()));
+    }
+    
+    // -----------------------------------------------
     // Case changing functions
     // -----------------------------------------------
 
@@ -402,112 +402,112 @@ public:
         }
         return numReplaced;
     } 
-	int Replace(my_const_pointer szOld, my_const_pointer szNew) {
-		int nReplaced				= 0;
-		my_size_type nIdx			= 0;
-		my_size_type nOldLen		= strLen(szOld);
+    int Replace(my_const_pointer szOld, my_const_pointer szNew) {
+        int nReplaced               = 0;
+        my_size_type nIdx           = 0;
+        my_size_type nOldLen        = strLen(szOld);
 
-		if( nOldLen != 0 ) {
-			// If the replacement string is longer than the one it replaces, this
-			// string is going to have to grow in size,  Figure out how much
-			// and grow it all the way now, rather than incrementally
+        if( nOldLen != 0 ) {
+            // If the replacement string is longer than the one it replaces, this
+            // string is going to have to grow in size,  Figure out how much
+            // and grow it all the way now, rather than incrementally
 
-			my_size_type nNewLen = strLen(szNew);
-			if( nNewLen > nOldLen ) {
-				int nFound= 0;
-				while( nIdx < this->length() && (nIdx=this->find(szOld, nIdx)) != my_base::npos ) {
-					nFound++;
-					nIdx += nOldLen;
-				}
-				this->reserve(this->size() + nFound * (nNewLen - nOldLen));
-			}
-			static const char ch = char(0);
-			my_const_pointer szRealNew = szNew == 0 ? &ch : szNew;
-			nIdx = 0;
-			while( nIdx < this->length() && (nIdx=this->find(szOld, nIdx)) != my_base::npos ) {
-				this->replace(this->begin()+nIdx, this->begin()+nIdx+nOldLen, szRealNew);
+            my_size_type nNewLen = strLen(szNew);
+            if( nNewLen > nOldLen ) {
+                int nFound= 0;
+                while( nIdx < this->length() && (nIdx=this->find(szOld, nIdx)) != my_base::npos ) {
+                    nFound++;
+                    nIdx += nOldLen;
+                }
+                this->reserve(this->size() + nFound * (nNewLen - nOldLen));
+            }
+            static const char ch = char(0);
+            my_const_pointer szRealNew = szNew == 0 ? &ch : szNew;
+            nIdx = 0;
+            while( nIdx < this->length() && (nIdx=this->find(szOld, nIdx)) != my_base::npos ) {
+                this->replace(this->begin()+nIdx, this->begin()+nIdx+nOldLen, szRealNew);
 
-				nReplaced++;
-				nIdx += nNewLen;
-			}
-		}
+                nReplaced++;
+                nIdx += nNewLen;
+            }
+        }
 
-		return nReplaced;
-	}
+        return nReplaced;
+    }
     
     int Find(char ch) const
-	{
-    	return(find_first_of(ch));
-//		my_size_type nIdx = this->find_first_of(ch);
-//		if(nIdx == my_base::npos)
-//        	return(-1);
-//       	else
-//      		return(nIdx);
+    {
+        return(find_first_of(ch));
+//      my_size_type nIdx = this->find_first_of(ch);
+//      if(nIdx == my_base::npos)
+//          return(-1);
+//          else
+//              return(nIdx);
 
-	}
+    }
 
-	int Find(my_const_pointer szSub) const
-	{
-		return(find(szSub));
-//		my_base::size_type nIdx	= this->find(szSub);
-//		if(nIdx == my_base::npos)
-//        	return(-1);
-//       	else
-//      		return(nIdx);
+    int Find(my_const_pointer szSub) const
+    {
+        return(find(szSub));
+//      my_base::size_type nIdx = this->find(szSub);
+//      if(nIdx == my_base::npos)
+//          return(-1);
+//          else
+//              return(nIdx);
 //
-	}
+    }
 
-	int Find(char ch, int nStart) const
-	{
-		return(find_first_of(ch, static_cast<my_base::size_type>(nStart)));
-//		my_base::size_type nIdx	= this->find_first_of(ch, static_cast<my_base::size_type>(nStart));
-//		if(nIdx == my_base::npos)
-//        	return(-1);
-//       	else
-//      		return(nIdx);
+    int Find(char ch, int nStart) const
+    {
+        return(find_first_of(ch, static_cast<my_base::size_type>(nStart)));
+//      my_base::size_type nIdx = this->find_first_of(ch, static_cast<my_base::size_type>(nStart));
+//      if(nIdx == my_base::npos)
+//          return(-1);
+//          else
+//              return(nIdx);
 //
-	}
+    }
 
-	int Find(my_const_pointer szSub, int nStart) const
-	{
-		return(find(szSub, static_cast<my_base::size_type>(nStart)));
-//		my_base::size_type nIdx	= this->find(szSub, static_cast<my_base::size_type>(nStart));
-//		if(nIdx == my_base::npos)
-//        	return(-1);
-//       	else
-//      		return(nIdx);
+    int Find(my_const_pointer szSub, int nStart) const
+    {
+        return(find(szSub, static_cast<my_base::size_type>(nStart)));
+//      my_base::size_type nIdx = this->find(szSub, static_cast<my_base::size_type>(nStart));
+//      if(nIdx == my_base::npos)
+//          return(-1);
+//          else
+//              return(nIdx);
 
-	}
+    }
 
-	int FindOneOf(my_const_pointer szCharSet) const
-	{
-		return(find_first_of(szCharSet));
-//		my_base::size_type nIdx = this->find_first_of(szCharSet);
-//		if(nIdx == my_base::npos)
-//        	return(-1);
-//       	else
-//      		return(nIdx);
+    int FindOneOf(my_const_pointer szCharSet) const
+    {
+        return(find_first_of(szCharSet));
+//      my_base::size_type nIdx = this->find_first_of(szCharSet);
+//      if(nIdx == my_base::npos)
+//          return(-1);
+//          else
+//              return(nIdx);
 //
-	}
+    }
     
     int ReverseFind(char ch) const {
         my_size_type idx = this->find_last_of(ch);
         return(idx);
 //        if(idx == my_base::npos)
-//        	return(-1);
-//       	else
-//      		return(idx);
+//          return(-1);
+//          else
+//              return(idx);
 //        return static_cast<int>(my_base::npos == idx ? -1 : idx);
     }
 
     int ReverseFind(my_const_pointer szFind, my_size_type pos=my_base::npos) const {
-    	return(rfind(0 == szFind ? bstring() : szFind, pos));
+        return(rfind(0 == szFind ? bstring() : szFind, pos));
 //        my_size_type idx    = this->rfind(0 == szFind ? bstring() : szFind, pos);
 //        if(idx == my_base::npos)
-//        	return(-1);
-//       	else
-//      		return(idx);
-		//return static_cast<int>(my_base::npos == idx ? -1 : idx);
+//          return(-1);
+//          else
+//              return(idx);
+        //return static_cast<int>(my_base::npos == idx ? -1 : idx);
     }
 
     void setAt(int nIndex, char ch) {
@@ -647,9 +647,9 @@ public:
         this->erase();
     }
 
-/*	bool operator==(const bstring& str) {
-		return(this->equals(str.c_str(),false));
-	}*/
+/*  bool operator==(const bstring& str) {
+        return(this->equals(str.c_str(),false));
+    }*/
     // -----------------------------------------------
     // Assignment operators
     // -----------------------------------------------
@@ -673,7 +673,7 @@ public:
         return *this;
     }
     // -----------------------------------------------
-	// Array-indexing operators.
+    // Array-indexing operators.
     // -----------------------------------------------
     char& operator[](size_type idx) {
         return my_base::operator[](static_cast<my_size_type>(idx));
@@ -718,28 +718,28 @@ public:
     }
 
     bstring& operator+=(const char ch) {
-		append(1, ch);
+        append(1, ch);
         return *this;
     }
-	// addition operators -- global friend functions.
+    // addition operators -- global friend functions.
 
-    friend bstring operator+(const bstring& s1,		const bstring& s2);
+    friend bstring operator+(const bstring& s1,     const bstring& s2);
 
-    friend bstring operator+(const bstring& s1,		const char* s2);
-	friend bstring operator+(const bstring& s,		char ch);
-	friend bstring operator+(const bstring& s,		int val);
+    friend bstring operator+(const bstring& s1,     const char* s2);
+    friend bstring operator+(const bstring& s,      char ch);
+    friend bstring operator+(const bstring& s,      int val);
 
-	friend bstring operator+(const char*s1,			const bstring& s2);
-	friend bstring operator+(const char ch,			const bstring& s);
-	friend bstring operator+(int val,				const bstring& s);
+    friend bstring operator+(const char*s1,         const bstring& s2);
+    friend bstring operator+(const char ch,         const bstring& s);
+    friend bstring operator+(int val,               const bstring& s);
 
 
 }; // end bstring
 
 inline bstring operator+(const bstring& s1, const bstring& s2) {
-	bstring strRet(s1);
-	strRet.append(s2);
-	return strRet;
+    bstring strRet(s1);
+    strRet.append(s2);
+    return strRet;
 }
 
 
@@ -749,15 +749,15 @@ inline bstring operator+(const bstring& s1, const char* s2) {
 
 inline bstring operator+(const bstring& s, char ch)
 {
-	bstring strRet(s);
-	strRet.append(1, ch);
-	return strRet;
+    bstring strRet(s);
+    strRet.append(1, ch);
+    return strRet;
 }
 inline bstring operator+(const bstring& s, int val)
 {
-	bstring strRet(s);
-	strAdd(strRet, val);
-	return(strRet);
+    bstring strRet(s);
+    strAdd(strRet, val);
+    return(strRet);
 }
 inline bstring operator+(const char* s1, const bstring& s2) {
     bstring strRet(s1);
@@ -766,14 +766,14 @@ inline bstring operator+(const char* s1, const bstring& s2) {
 }
 
 inline bstring operator+(const char ch, const bstring& s) {
-	bstring strRet(ch);
-	strRet.append(s);
-	return strRet;
+    bstring strRet(ch);
+    strRet.append(s);
+    return strRet;
 }
 inline bstring operator+(int val, const bstring& s) {
-	bstring strRet(val);
-	strRet.append(s);
-	return strRet;
+    bstring strRet(val);
+    strRet.append(s);
+    return strRet;
 }
 
 struct bstringLessNoCase : public std::binary_function<bstring, bstring, bool>

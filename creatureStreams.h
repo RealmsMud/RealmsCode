@@ -22,17 +22,17 @@
 
 class Streamable {
 public:
-	virtual ~Streamable() {};
-	void initStreamable();
+    virtual ~Streamable() {};
+    void initStreamable();
     // Stream operators
-	Streamable& operator<< (const MudObject* obj);
-	Streamable& operator<< (const MudObject& obj);
-	Streamable& operator<< (const bstring& str);
-	Streamable& operator<< (const int num);
-	Streamable& operator<< (Stat& stat);
+    Streamable& operator<< (const MudObject* obj);
+    Streamable& operator<< (const MudObject& obj);
+    Streamable& operator<< (const bstring& str);
+    Streamable& operator<< (const int num);
+    Streamable& operator<< (Stat& stat);
 
-	// This is to allow simple function based manipulators (like ColorOn, ColorOff)
-	Streamable& operator <<( Streamable& (*op)(Streamable&));
+    // This is to allow simple function based manipulators (like ColorOn, ColorOff)
+    Streamable& operator <<( Streamable& (*op)(Streamable&));
 
     void setManipFlags(int flags);
     void setManipNum(int num);

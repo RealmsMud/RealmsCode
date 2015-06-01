@@ -1,6 +1,6 @@
 /*
  * xml.h
- *	 Prototypes and anything global needed to read/write xml files
+ *   Prototypes and anything global needed to read/write xml files
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -41,151 +41,151 @@ class Creature;
 //  Defines Section
 //**********************
 
-#define OBJ		1
-#define PLY		2
-#define CRT		3
-#define ROOM	4
+#define OBJ     1
+#define PLY     2
+#define CRT     3
+#define ROOM    4
 
 #define BIT_ISSET(p,f)    ((p)[(f)/8] & 1<<((f)%8))
 #define BIT_SET(p,f)      ((p)[(f)/8] |= 1<<((f)%8))
 #define BIT_CLEAR(p,f)      ((p)[(f)/8] &= ~(1<<((f)%8)))
 
-#define NODE_NAME(pNode, pName)			(!strcmp((char *)(pNode)->name, (pName) ))
+#define NODE_NAME(pNode, pName)         (!strcmp((char *)(pNode)->name, (pName) ))
 
 namespace xml {
-	// copyToBString - will make store the string into a temp cstr, set the string
-	// and then free the temp cstr
-	void copyToBString(bstring &to, xmlNodePtr node);
+    // copyToBString - will make store the string into a temp cstr, set the string
+    // and then free the temp cstr
+    void copyToBString(bstring &to, xmlNodePtr node);
 
-	bstring getBString(xmlNodePtr node);
+    bstring getBString(xmlNodePtr node);
 
-	// getProp -- You MUST free the return value
-	bstring getProp(xmlNodePtr node, const char *name);
+    // getProp -- You MUST free the return value
+    bstring getProp(xmlNodePtr node, const char *name);
 
-	// getIntProp -- Properly frees the return valueusing toInt
-	int getIntProp(xmlNodePtr node, const char *name);
+    // getIntProp -- Properly frees the return valueusing toInt
+    int getIntProp(xmlNodePtr node, const char *name);
 
-	// getCString -- You MUST free the return value
-	char* getCString(xmlNodePtr node);
+    // getCString -- You MUST free the return value
+    char* getCString(xmlNodePtr node);
 
-	//***************************************************************************************
-	// XML_COPY_* - These functions will copy the given type to the variable 'to'
-	//***************************************************************************************
+    //***************************************************************************************
+    // XML_COPY_* - These functions will copy the given type to the variable 'to'
+    //***************************************************************************************
 
-	// copyPropToCString -- This will properly free the return value using doStrCpy
-	void copyPropToCString(char* to, xmlNodePtr node, bstring name);
-	//#define copyPropToCString(to, node, name)	doStrCpy( (to) , getProp( (node) , (name) ))
+    // copyPropToCString -- This will properly free the return value using doStrCpy
+    void copyPropToCString(char* to, xmlNodePtr node, bstring name);
+    //#define copyPropToCString(to, node, name) doStrCpy( (to) , getProp( (node) , (name) ))
 
-	// copyPropToBString -- This will properly free the value
-	void copyPropToBString(bstring& to, xmlNodePtr node, bstring name);
+    // copyPropToBString -- This will properly free the value
+    void copyPropToBString(bstring& to, xmlNodePtr node, bstring name);
 
-	// copyToCString -- Properly frees the return value using doStrCpy
-	void copyToCString(char* to, xmlNodePtr node);
-	//#define copyToCString(to, node)	doStrCpy( (to), getCString( (node) ))
+    // copyToCString -- Properly frees the return value using doStrCpy
+    void copyToCString(char* to, xmlNodePtr node);
+    //#define copyToCString(to, node)   doStrCpy( (to), getCString( (node) ))
 
-	// XML_DUP_STRING_CHILD -- Will return strdup of a string -- you MUST free it
-	void dupeToCString(char* to, xmlNodePtr node);
+    // XML_DUP_STRING_CHILD -- Will return strdup of a string -- you MUST free it
+    void dupeToCString(char* to, xmlNodePtr node);
 
-		// copyToBool -- Properly frees the return value using toBoolean
-	void copyToBool(bool& to, xmlNodePtr node);
+        // copyToBool -- Properly frees the return value using toBoolean
+    void copyToBool(bool& to, xmlNodePtr node);
 
-	// copyToColor -- Properly frees the return value using toColor
-	void copyToColor(Color& to, xmlNodePtr node);
+    // copyToColor -- Properly frees the return value using toColor
+    void copyToColor(Color& to, xmlNodePtr node);
 
 
-	//*******************************************************************************
-	// XML_NEW_* will always save (even if blank or 0) and will still let you
-	// get the return value from xmlNewChild
-	// ###  IMPORTANT  ### -- Name and Value must NOT include any bad xml characters
-	// like &, <, >, etc.
-	//********************************************************************************
+    //*******************************************************************************
+    // XML_NEW_* will always save (even if blank or 0) and will still let you
+    // get the return value from xmlNewChild
+    // ###  IMPORTANT  ### -- Name and Value must NOT include any bad xml characters
+    // like &, <, >, etc.
+    //********************************************************************************
 
-	xmlAttrPtr newProp(xmlNodePtr node, bstring name, const bstring value);
+    xmlAttrPtr newProp(xmlNodePtr node, bstring name, const bstring value);
 
-	template <class Type>
-	bstring numToStr(const Type& value) {
-		std::ostringstream str;
-		str << value;
-		return(str.str());
-	}
+    template <class Type>
+    bstring numToStr(const Type& value) {
+        std::ostringstream str;
+        str << value;
+        return(str.str());
+    }
 
-	template <class Type>
-	xmlAttrPtr newNumProp(xmlNodePtr node, bstring name, const Type& value) {
-		return( xmlNewProp( node, BAD_CAST (name.c_str()), BAD_CAST(numToStr(value).c_str())));
-	}
+    template <class Type>
+    xmlAttrPtr newNumProp(xmlNodePtr node, bstring name, const Type& value) {
+        return( xmlNewProp( node, BAD_CAST (name.c_str()), BAD_CAST(numToStr(value).c_str())));
+    }
 
-	template <class Type>
-	xmlNodePtr newNumChild(xmlNodePtr node, bstring name, const Type& value) {
-		return(xmlNewChild( node, NULL, BAD_CAST (name.c_str()), BAD_CAST numToStr(value).c_str()));
-	}
+    template <class Type>
+    xmlNodePtr newNumChild(xmlNodePtr node, bstring name, const Type& value) {
+        return(xmlNewChild( node, NULL, BAD_CAST (name.c_str()), BAD_CAST numToStr(value).c_str()));
+    }
 
-	template <class Type>
-	xmlNodePtr saveNonZeroNum(xmlNodePtr node, bstring name, const Type& value) {
-		xmlNodePtr toReturn = NULL;
-		// precision for floats
-		if((int)(value*10000)) {
-			toReturn = xmlNewChild( (node), NULL, BAD_CAST (name.c_str()), BAD_CAST numToStr(value).c_str());
-		}
-		return(toReturn);
-	}
+    template <class Type>
+    xmlNodePtr saveNonZeroNum(xmlNodePtr node, bstring name, const Type& value) {
+        xmlNodePtr toReturn = NULL;
+        // precision for floats
+        if((int)(value*10000)) {
+            toReturn = xmlNewChild( (node), NULL, BAD_CAST (name.c_str()), BAD_CAST numToStr(value).c_str());
+        }
+        return(toReturn);
+    }
 
-	template <class Type>
-	Type toNum(char *fromStr) {
-		Type toReturn = 0;
-		if(!fromStr)
-			return(toReturn);
+    template <class Type>
+    Type toNum(char *fromStr) {
+        Type toReturn = 0;
+        if(!fromStr)
+            return(toReturn);
 
-		try {
-			toReturn = lexical_cast<Type>(fromStr);
-		} catch (bad_lexical_cast &) {
-			toReturn = 0;
+        try {
+            toReturn = lexical_cast<Type>(fromStr);
+        } catch (bad_lexical_cast &) {
+            toReturn = 0;
 
-		}
+        }
 
-		free(fromStr);
-		return (toReturn);
-	}
+        free(fromStr);
+        return (toReturn);
+    }
 
-	template <class Type>
-	Type toNum(xmlNodePtr node) {
-		return(toNum<Type>(getCString(node)));
-	}
+    template <class Type>
+    Type toNum(xmlNodePtr node) {
+        return(toNum<Type>(getCString(node)));
+    }
 
-	template <class Type>
-	void copyToNum(Type& to, xmlNodePtr node) {
-		to = toNum<Type>(getCString(node));
-	}
+    template <class Type>
+    void copyToNum(Type& to, xmlNodePtr node) {
+        to = toNum<Type>(getCString(node));
+    }
 
-	template <class Type>
-	void loadNumArray(xmlNodePtr curNode, Type array[], const char* nodeName, int maxProp) {
-		xmlNodePtr childNode = curNode->children;
-		int i;
+    template <class Type>
+    void loadNumArray(xmlNodePtr curNode, Type array[], const char* nodeName, int maxProp) {
+        xmlNodePtr childNode = curNode->children;
+        int i;
 #ifndef PYTHON_CODE_GEN
-		while(childNode) {
-			if(NODE_NAME(childNode , nodeName)) {
-				i = xml::getIntProp(childNode, "Num");
-				if(i < maxProp)
-					array[i] = xml::toNum<Type>(childNode);
-			}
-			childNode = childNode->next;
-		}
+        while(childNode) {
+            if(NODE_NAME(childNode , nodeName)) {
+                i = xml::getIntProp(childNode, "Num");
+                if(i < maxProp)
+                    array[i] = xml::toNum<Type>(childNode);
+            }
+            childNode = childNode->next;
+        }
 #endif
-	}
+    }
 
-	xmlNodePtr newBoolChild(xmlNodePtr node, const bstring name, const bool value);
-	xmlNodePtr newStringChild(xmlNodePtr node, const bstring name, const bstring value = "");
+    xmlNodePtr newBoolChild(xmlNodePtr node, const bstring name, const bool value);
+    xmlNodePtr newStringChild(xmlNodePtr node, const bstring name, const bstring value = "");
 
-	//***************************************************************************************
-	// saveNonZero/Null will only save if it is non 0 and also escape any bad XML characters
-	//***************************************************************************************
+    //***************************************************************************************
+    // saveNonZero/Null will only save if it is non 0 and also escape any bad XML characters
+    //***************************************************************************************
 
-	xmlNodePtr saveNonNullString(xmlNodePtr node, bstring name, const bstring value);
+    xmlNodePtr saveNonNullString(xmlNodePtr node, bstring name, const bstring value);
 
-	xmlChar* ConvertInput(const char *in, const char *encoding);
-	char *doStrCpy(char *dest, char *src);
-	char *doStrDup(char *src);
-	xmlDocPtr loadFile(const char *filename, const char *expectedRoot);
-	int	saveFile(const char * filename, xmlDocPtr cur);
+    xmlChar* ConvertInput(const char *in, const char *encoding);
+    char *doStrCpy(char *dest, char *src);
+    char *doStrDup(char *src);
+    xmlDocPtr loadFile(const char *filename, const char *expectedRoot);
+    int saveFile(const char * filename, xmlDocPtr cur);
 
 } // End xml namespace
 

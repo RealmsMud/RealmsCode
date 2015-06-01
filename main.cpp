@@ -1,6 +1,6 @@
 /*
  * main.cpp
- *	 This files contains the main() function which initiates the game.
+ *   This files contains the main() function which initiates the game.
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___ 
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *  
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -35,14 +35,14 @@ void startup_mordor(void);
 
 
 int main(int argc, char *argv[]) {
-	// Get our instance variables
-	gConfig = Config::getInstance();
-	gServer = Server::getInstance();
-	
-	handle_args(argc, argv);
-	startup_mordor();
+    // Get our instance variables
+    gConfig = Config::getInstance();
+    gServer = Server::getInstance();
+    
+    handle_args(argc, argv);
+    startup_mordor();
 
-	return(0);
+    return(0);
 }
 
 

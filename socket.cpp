@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -30,9 +30,9 @@
 
 // C Includes
 #include <arpa/telnet.h>
-#include <fcntl.h>		// Needs: fnctl
-#include <netdb.h>		// Needs: gethostbyaddr
-#include <sys/socket.h>	// Needs: AF_INET
+#include <fcntl.h>      // Needs: fnctl
+#include <netdb.h>      // Needs: gethostbyaddr
+#include <sys/socket.h> // Needs: AF_INET
 #include <errno.h>
 #include <stdlib.h>
 
@@ -41,45 +41,45 @@ const int Socket::COMPRESSED_OUTBUF_SIZE = 8192;
 int Socket::NumSockets = 0;
 
 enum telnetNegotiation {
-	NEG_NONE,
-	NEG_IAC,
-	NEG_WILL,
-	NEG_WONT,
-	NEG_DO,
-	NEG_DONT,
+    NEG_NONE,
+    NEG_IAC,
+    NEG_WILL,
+    NEG_WONT,
+    NEG_DO,
+    NEG_DONT,
 
-	NEG_SB,
-	NEG_START_NAWS,
-	NEG_SB_NAWS_COL_HIGH,
-	NEG_SB_NAWS_COL_LOW,
-	NEG_SB_NAWS_ROW_HIGH,
-	NEG_SB_NAWS_ROW_LOW,
-	NEG_END_NAWS,
+    NEG_SB,
+    NEG_START_NAWS,
+    NEG_SB_NAWS_COL_HIGH,
+    NEG_SB_NAWS_COL_LOW,
+    NEG_SB_NAWS_ROW_HIGH,
+    NEG_SB_NAWS_ROW_LOW,
+    NEG_END_NAWS,
 
-	NEG_SB_TTYPE,
-	NEG_SB_TTYPE_END,
+    NEG_SB_TTYPE,
+    NEG_SB_TTYPE_END,
 
-	NEG_SB_MSDP,
-	NEG_SB_MSDP_END,
+    NEG_SB_MSDP,
+    NEG_SB_MSDP_END,
 
-	NEG_SB_ATCP,
-	NEG_SB_ATCP_END,
+    NEG_SB_ATCP,
+    NEG_SB_ATCP_END,
 
-	NEG_SB_CHARSET,
-	NEG_SB_CHARSET_LOOK_FOR_IAC,
-	NEG_SB_CHARSET_END,
+    NEG_SB_CHARSET,
+    NEG_SB_CHARSET_LOOK_FOR_IAC,
+    NEG_SB_CHARSET_END,
 
-	NEG_MXP_SECURE,
-	NEG_MXP_SECURE_TWO,
-	NEG_MXP_SECURE_THREE,
-	NEG_MXP_SECURE_FINISH,
-	NEG_MXP_SECURE_CONSUME,
+    NEG_MXP_SECURE,
+    NEG_MXP_SECURE_TWO,
+    NEG_MXP_SECURE_THREE,
+    NEG_MXP_SECURE_FINISH,
+    NEG_MXP_SECURE_CONSUME,
 
-	NEG_UNUSED
+    NEG_UNUSED
 };
 
 //********************************************************************
-//						telnet namespace
+//                      telnet namespace
 //********************************************************************
 
 namespace telnet {
@@ -129,11 +129,11 @@ unsigned const char do_ttype[] = { IAC, DO, TELOPT_TTYPE, '\0' };
 // Charset
 unsigned const char do_charset[] = { IAC, DO, TELOPT_CHARSET, '\0' };
 unsigned const char charset_utf8[] = { IAC, SB, TELOPT_CHARSET, 1, ' ', 'U',
-		'T', 'F', '-', '8', IAC, SE, '\0' };
+        'T', 'F', '-', '8', IAC, SE, '\0' };
 
 // Start sub negotiation for terminal type
 unsigned const char query_ttype[] = { IAC, SB, TELOPT_TTYPE, TELQUAL_SEND, IAC,
-		SE, '\0' };
+        SE, '\0' };
 // Window size negotation NAWS
 unsigned const char do_naws[] = { IAC, DO, TELOPT_NAWS, '\0' };
 
@@ -142,10 +142,10 @@ unsigned const char eor_str[] = { IAC, EOR, '\0' };
 
 // MCCP Hooks
 void *zlib_alloc(void *opaque, unsigned int items, unsigned int size) {
-	return calloc(items, size);
+    return calloc(items, size);
 }
 void zlib_free(void *opaque, void *address) {
-	free(address);
+    free(address);
 }
 }
 
@@ -153,405 +153,405 @@ void zlib_free(void *opaque, void *address) {
 // Constructors, Destructors, etc
 
 //********************************************************************
-//						reset
+//                      reset
 //********************************************************************
 
 void Socket::reset() {
-	fd = -1;
+    fd = -1;
 
-	opts.mccp = 0;
-	opts.dumb = true;
-	opts.mxp = false;
-	opts.msp = false;
-	opts.eor = false;
-	opts.msdp = false;
-	opts.atcp = false;
-	opts.charset = false;
-	opts.UTF8 = false;
-	opts.mxpClientSecure = false;
+    opts.mccp = 0;
+    opts.dumb = true;
+    opts.mxp = false;
+    opts.msp = false;
+    opts.eor = false;
+    opts.msdp = false;
+    opts.atcp = false;
+    opts.charset = false;
+    opts.UTF8 = false;
+    opts.mxpClientSecure = false;
     opts.color = NO_COLOR;
     opts.xterm256 = false;
     opts.lastColor = '\0';
 
-	opts.compressing = false;
-	inPlayerList = false;
+    opts.compressing = false;
+    inPlayerList = false;
 
-	out_compress_buf = NULL;
-	out_compress = NULL;
-	myPlayer = NULL;
+    out_compress_buf = NULL;
+    out_compress = NULL;
+    myPlayer = NULL;
 
-	tState = NEG_NONE;
-	oneIAC = watchBrokenClient = false;
+    tState = NEG_NONE;
+    oneIAC = watchBrokenClient = false;
 
-	term.type = "dumb";
-	term.cols = 82;
-	term.rows = 40;
+    term.type = "dumb";
+    term.cols = 82;
+    term.rows = 40;
 
-	ltime = time(0);
-	intrpt = 0;
+    ltime = time(0);
+    intrpt = 0;
 
-	fn = 0;
-	timeout = 0;
-	ansi = 0;
-	tState = NEG_NONE;
-	connState = LOGIN_START;
-	lastState = LOGIN_START;
+    fn = 0;
+    timeout = 0;
+    ansi = 0;
+    tState = NEG_NONE;
+    connState = LOGIN_START;
+    lastState = LOGIN_START;
 
-	zero(tempstr, sizeof(tempstr));
-	inBuf = "";
-//	cmdInBuf = "";
-	spyingOn = 0;
+    zero(tempstr, sizeof(tempstr));
+    inBuf = "";
+//  cmdInBuf = "";
+    spyingOn = 0;
 }
 
 //********************************************************************
-//						Socket
+//                      Socket
 //********************************************************************
 
 Socket::Socket(int pFd) {
-	reset();
-	fd = pFd;
-	NumSockets++;
+    reset();
+    fd = pFd;
+    NumSockets++;
 }
 
 Socket::Socket(int pFd, sockaddr_in pAddr, bool &dnsDone) {
-	reset();
+    reset();
 
-	struct linger ling;
-	fd = pFd;
+    struct linger ling;
+    fd = pFd;
 
-	resolveIp(pAddr, host.ip);
-	resolveIp(pAddr, host.hostName); // Start off with the hostname as the ip, then do
-									 // an asyncronous lookup
+    resolveIp(pAddr, host.ip);
+    resolveIp(pAddr, host.hostName); // Start off with the hostname as the ip, then do
+                                     // an asyncronous lookup
 
 // Make this socket non blocking
-	nonBlock(fd);
+    nonBlock(fd);
 
 // Set Linger behavior
-	ling.l_onoff = ling.l_linger = 0;
-	setsockopt(fd, SOL_SOCKET, SO_LINGER, (char *) &ling,
-			sizeof(struct linger));
+    ling.l_onoff = ling.l_linger = 0;
+    setsockopt(fd, SOL_SOCKET, SO_LINGER, (char *) &ling,
+            sizeof(struct linger));
 
-	NumSockets++;
-	std::cout << "Constructing socket (" << fd << ") from " << host.ip
-			<< " Socket #" << NumSockets << std::endl;
+    NumSockets++;
+    std::cout << "Constructing socket (" << fd << ") from " << host.ip
+            << " Socket #" << NumSockets << std::endl;
 
-	// If we're running under valgrind, we don't resolve dns.  The child
-	// process tends to mess with proper memory leak detection
-	if (gServer->getDnsCache(host.ip, host.hostName) || gServer->isValgrind()) {
-		dnsDone = true;
-	} else {
-		dnsDone = false;
-		setState(LOGIN_DNS_LOOKUP);
-		gServer->startDnsLookup(this, pAddr);
-	}
+    // If we're running under valgrind, we don't resolve dns.  The child
+    // process tends to mess with proper memory leak detection
+    if (gServer->getDnsCache(host.ip, host.hostName) || gServer->isValgrind()) {
+        dnsDone = true;
+    } else {
+        dnsDone = false;
+        setState(LOGIN_DNS_LOOKUP);
+        gServer->startDnsLookup(this, pAddr);
+    }
 
-	startTelnetNeg();
+    startTelnetNeg();
 }
 
 //********************************************************************
-//						closeFd
+//                      closeFd
 //********************************************************************
 // Disconnect the underlying file descriptor
 void Socket::cleanUp() {
-	clearSpying();
-	clearSpiedOn();
-	msdpClearReporting();
+    clearSpying();
+    clearSpiedOn();
+    msdpClearReporting();
 
-	if (myPlayer) {
-		if (myPlayer->fd > -1) {
-			myPlayer->save(true);
-			myPlayer->uninit();
-		}
-		freePlayer();
-	}
-	endCompress();
-	if(fd > -1) {
-		close(fd);
-		fd = -1;
-	}
+    if (myPlayer) {
+        if (myPlayer->fd > -1) {
+            myPlayer->save(true);
+            myPlayer->uninit();
+        }
+        freePlayer();
+    }
+    endCompress();
+    if(fd > -1) {
+        close(fd);
+        fd = -1;
+    }
 
 }
 //********************************************************************
-//						~Socket
+//                      ~Socket
 //********************************************************************
 
 Socket::~Socket() {
-	std::cout << "Deconstructing socket , ";
-	NumSockets--;
-	std::cout << "Num sockets: " << NumSockets << std::endl;
-	cleanUp();
+    std::cout << "Deconstructing socket , ";
+    NumSockets--;
+    std::cout << "Num sockets: " << NumSockets << std::endl;
+    cleanUp();
 }
 
 //********************************************************************
-//						addToPlayerList
+//                      addToPlayerList
 //********************************************************************
 
 void Socket::addToPlayerList() {
-	inPlayerList = true;
+    inPlayerList = true;
 }
 
 //********************************************************************
-//						freePlayer
+//                      freePlayer
 //********************************************************************
 
 void Socket::freePlayer() {
-	if (myPlayer)
-		free_crt(myPlayer, inPlayerList);
-	myPlayer = 0;
-	inPlayerList = false;
+    if (myPlayer)
+        free_crt(myPlayer, inPlayerList);
+    myPlayer = 0;
+    inPlayerList = false;
 }
 
 // End - Constructors, Destructors, etc
 //--------------------------------------------------------------------
 
 //********************************************************************
-//						clearSpying
+//                      clearSpying
 //********************************************************************
 
 void Socket::clearSpying() {
-	if (spyingOn) {
-		spyingOn->removeSpy(this);
-		spyingOn = 0;
-	}
+    if (spyingOn) {
+        spyingOn->removeSpy(this);
+        spyingOn = 0;
+    }
 }
 
 //********************************************************************
-//						clearSpiedOn
+//                      clearSpiedOn
 //********************************************************************
 
 void Socket::clearSpiedOn() {
-	std::list<Socket*>::iterator it;
-	for (it = spying.begin(); it != spying.end(); it++) {
-		Socket *sock = *it;
-		if (sock)
-			sock->setSpying(NULL);
-	}
-	spying.clear();
+    std::list<Socket*>::iterator it;
+    for (it = spying.begin(); it != spying.end(); it++) {
+        Socket *sock = *it;
+        if (sock)
+            sock->setSpying(NULL);
+    }
+    spying.clear();
 }
 
 //********************************************************************
-//						setSpying
+//                      setSpying
 //********************************************************************
 
 void Socket::setSpying(Socket *sock) {
-	if (sock)
-		clearSpying();
-	spyingOn = sock;
+    if (sock)
+        clearSpying();
+    spyingOn = sock;
 
-	if (sock)
-		sock->addSpy(this);
-	if (!sock) {
-		if (myPlayer)
-			myPlayer->clearFlag(P_SPYING);
-	}
+    if (sock)
+        sock->addSpy(this);
+    if (!sock) {
+        if (myPlayer)
+            myPlayer->clearFlag(P_SPYING);
+    }
 }
 
 //********************************************************************
-//						removeSpy
+//                      removeSpy
 //********************************************************************
 
 void Socket::removeSpy(Socket *sock) {
-	spying.remove(sock);
-	if (myPlayer->getClass() >= sock->myPlayer->getClass())
-		sock->printColor("^r%s is no longer observing you.\n",
-				sock->myPlayer->getCName());
+    spying.remove(sock);
+    if (myPlayer->getClass() >= sock->myPlayer->getClass())
+        sock->printColor("^r%s is no longer observing you.\n",
+                sock->myPlayer->getCName());
 }
 
 //********************************************************************
-//						addSpy
+//                      addSpy
 //********************************************************************
 
 void Socket::addSpy(Socket *sock) {
-	spying.push_back(sock);
+    spying.push_back(sock);
 }
 
 //********************************************************************
-//						disconnect
+//                      disconnect
 //********************************************************************
 // Set this socket for removal on the next cleanup
 
 void Socket::disconnect() {
-	// TODO: Perhaps remove player from the world right here.
-	setState(CON_DISCONNECTING);
-	flush();
-	cleanUp();
+    // TODO: Perhaps remove player from the world right here.
+    setState(CON_DISCONNECTING);
+    flush();
+    cleanUp();
 }
 
 //********************************************************************
-//						resolveIp
+//                      resolveIp
 //********************************************************************
 
 void Socket::resolveIp(const sockaddr_in &addr, bstring& ip) {
-	std::ostringstream tmp;
-	long i = htonl(addr.sin_addr.s_addr);
-	tmp << ((i >> 24) & 0xff) << "." << ((i >> 16) & 0xff) << "."
-			<< ((i >> 8) & 0xff) << "." << (i & 0xff);
-	ip = tmp.str();
+    std::ostringstream tmp;
+    long i = htonl(addr.sin_addr.s_addr);
+    tmp << ((i >> 24) & 0xff) << "." << ((i >> 16) & 0xff) << "."
+            << ((i >> 8) & 0xff) << "." << (i & 0xff);
+    ip = tmp.str();
 }
 
 bstring Socket::parseForOutput(bstring& outBuf) {
-	int i = 0, n = outBuf.size();
-	std::ostringstream oStr;
-	bool inTag = false, inEntity = false;
-	unsigned char ch = 0;
-	while(i < n) {
-	    ch = outBuf[i++];
-	    if(inTag) {
-	        if(ch == CH_MXP_END) {
-	            inTag = false;
-	            if(opts.mxp)
-	                oStr << ">" << MXP_LOCK_CLOSE;
-	        } else if(opts.mxp)
-	            oStr << ch;
+    int i = 0, n = outBuf.size();
+    std::ostringstream oStr;
+    bool inTag = false, inEntity = false;
+    unsigned char ch = 0;
+    while(i < n) {
+        ch = outBuf[i++];
+        if(inTag) {
+            if(ch == CH_MXP_END) {
+                inTag = false;
+                if(opts.mxp)
+                    oStr << ">" << MXP_LOCK_CLOSE;
+            } else if(opts.mxp)
+                oStr << ch;
 
             continue;
-	    } else if(inEntity) {
-	        if(opts.mxp)
-	            oStr << ch;
-	        if(ch == ';')
-	            inEntity = false;
-	        continue;
-	    } else {
-	        if(ch == CH_MXP_BEG) {
-	            inTag = true;
-	            if(opts.mxp)
-	                oStr << MXP_SECURE_OPEN << "<";
-	            continue;
-	        } else {
+        } else if(inEntity) {
+            if(opts.mxp)
+                oStr << ch;
+            if(ch == ';')
+                inEntity = false;
+            continue;
+        } else {
+            if(ch == CH_MXP_BEG) {
+                inTag = true;
+                if(opts.mxp)
+                    oStr << MXP_SECURE_OPEN << "<";
+                continue;
+            } else {
                 if(ch == '^') {
                     ch = outBuf[i++];
                     oStr << getColorCode(ch);
                 } else if(ch == '\n') {
-                	oStr << "\r\n";
+                    oStr << "\r\n";
                 } else {
                     oStr << ch;
                 }
                 continue;
-	        }
-	    }
-	}
-	return(oStr.str());
+            }
+        }
+    }
+    return(oStr.str());
 
 }
 bstring Socket::stripTelnet(bstring& inStr, int& newLen) {
-	int i = 0, n = inStr.size();
-	std::ostringstream oStr;
+    int i = 0, n = inStr.size();
+    std::ostringstream oStr;
 
-	while(i < n) {
-		if((unsigned char)inStr[i] == IAC) {
-			switch((unsigned char)inStr[i+1]) {
-			case WILL:
-			case WONT:
-			case DO:
-				// Skip 3
-				i+=3;
-				continue;
-			case EOR:
-				// Skip 2
-				i+=2;
-				continue;
-			case SB:
-				// Skip until we find IAC SE
-				while(i < n) {
-					if((unsigned char)inStr[i] == IAC && (unsigned char)inStr[i+1] == SE) {
-						// Skip two more
-						i += 2;
-						break;
-					}
-					i++;
-				}
-				continue;
-			}
-		}
-		oStr << inStr[i++];
-		newLen++;
-	}
-	return(oStr.str());
+    while(i < n) {
+        if((unsigned char)inStr[i] == IAC) {
+            switch((unsigned char)inStr[i+1]) {
+            case WILL:
+            case WONT:
+            case DO:
+                // Skip 3
+                i+=3;
+                continue;
+            case EOR:
+                // Skip 2
+                i+=2;
+                continue;
+            case SB:
+                // Skip until we find IAC SE
+                while(i < n) {
+                    if((unsigned char)inStr[i] == IAC && (unsigned char)inStr[i+1] == SE) {
+                        // Skip two more
+                        i += 2;
+                        break;
+                    }
+                    i++;
+                }
+                continue;
+            }
+        }
+        oStr << inStr[i++];
+        newLen++;
+    }
+    return(oStr.str());
 }
 
 //********************************************************************
-//						checkLockOut
+//                      checkLockOut
 //********************************************************************
 
 void Socket::checkLockOut() {
-	int lockStatus = gConfig->isLockedOut(this);
-	if (lockStatus == 0) {
-		askFor("\n\nPlease enter name: ");
-		setState(LOGIN_GET_NAME);
-	} else if (lockStatus == 2) {
-		print("\n\nA password is required to play from your site: ");
-		setState(LOGIN_GET_LOCKOUT_PASSWORD);
-	} else if (lockStatus == 1) {
-		print("\n\nYou are not wanted here. Begone.\n");
-		setState(CON_DISCONNECTING);
-	}
+    int lockStatus = gConfig->isLockedOut(this);
+    if (lockStatus == 0) {
+        askFor("\n\nPlease enter name: ");
+        setState(LOGIN_GET_NAME);
+    } else if (lockStatus == 2) {
+        print("\n\nA password is required to play from your site: ");
+        setState(LOGIN_GET_LOCKOUT_PASSWORD);
+    } else if (lockStatus == 1) {
+        print("\n\nYou are not wanted here. Begone.\n");
+        setState(CON_DISCONNECTING);
+    }
 }
 
 //********************************************************************
-//						startTelnetNeg
+//                      startTelnetNeg
 //********************************************************************
 
 void Socket::startTelnetNeg() {
-	// As noted from KaVir -
-	// Some clients (such as GMud) don't properly handle negotiation, and simply
-	// display every printable character to the screen.  However TTYPE isn't a
-	// printable character, so we negotiate for it first, and only negotiate for
-	// other protocols if the client responds with IAC WILL TTYPE or IAC WONT
-	// TTYPE.  Thanks go to Donky on MudBytes for the suggestion.
+    // As noted from KaVir -
+    // Some clients (such as GMud) don't properly handle negotiation, and simply
+    // display every printable character to the screen.  However TTYPE isn't a
+    // printable character, so we negotiate for it first, and only negotiate for
+    // other protocols if the client responds with IAC WILL TTYPE or IAC WONT
+    // TTYPE.  Thanks go to Donky on MudBytes for the suggestion.
 
-	write(telnet::do_ttype, false);
+    write(telnet::do_ttype, false);
 
 }
 void Socket::continueTelnetNeg(bool queryTType) {
-	if (queryTType)
-		write(telnet::query_ttype, false);
+    if (queryTType)
+        write(telnet::query_ttype, false);
 
-	// Not a dumb client if we've gotten a response
-	opts.dumb = false;
-	write(telnet::will_comp2, false);
-	write(telnet::will_comp1, false);
-	write(telnet::do_naws, false);
-	write(telnet::will_msdp, false);
-	write(telnet::do_atcp, false);
-	write(telnet::will_mxp, false);
-	write(telnet::will_mssp, false);
-	write(telnet::will_msp, false);
-	write(telnet::do_charset, false);
-	//write(telnet::will_echo);
-	write(telnet::will_eor, false);
+    // Not a dumb client if we've gotten a response
+    opts.dumb = false;
+    write(telnet::will_comp2, false);
+    write(telnet::will_comp1, false);
+    write(telnet::do_naws, false);
+    write(telnet::will_msdp, false);
+    write(telnet::do_atcp, false);
+    write(telnet::will_mxp, false);
+    write(telnet::will_mssp, false);
+    write(telnet::will_msp, false);
+    write(telnet::do_charset, false);
+    //write(telnet::will_echo);
+    write(telnet::will_eor, false);
 }
 
 //********************************************************************
-//						processInput
+//                      processInput
 //********************************************************************
 
 int Socket::processInput() {
-	unsigned char tmpBuf[1024];
-	int n;
-	unsigned int i = 0;
-	bstring tmp = "";
+    unsigned char tmpBuf[1024];
+    int n;
+    unsigned int i = 0;
+    bstring tmp = "";
 
-	// Attempt to read from the socket
-	n = read(getFd(), tmpBuf, 1023);
-	if (n <= 0) {
-		if (errno != EWOULDBLOCK)
-			return (-1);
-		else
-			return (0);
-	}
+    // Attempt to read from the socket
+    n = read(getFd(), tmpBuf, 1023);
+    if (n <= 0) {
+        if (errno != EWOULDBLOCK)
+            return (-1);
+        else
+            return (0);
+    }
 
-	tmp.reserve(n);
+    tmp.reserve(n);
 
-	InBytes += n;
+    InBytes += n;
 
-	tmpBuf[n] = '\0';
-	// If we have any full strings, copy it over to the queue to be interpreted
+    tmpBuf[n] = '\0';
+    // If we have any full strings, copy it over to the queue to be interpreted
 
-	// Look for any IAC commands using a finite state machine
-	for (i = 0; i < (unsigned) n; i++) {
+    // Look for any IAC commands using a finite state machine
+    for (i = 0; i < (unsigned) n; i++) {
 
 // For debugging
-//		std::cout << "DEBUG:" << (unsigned int)tmpBuf[i] << "'" << (unsigned char)tmpBuf[i] << "'" << "\n";
+//      std::cout << "DEBUG:" << (unsigned int)tmpBuf[i] << "'" << (unsigned char)tmpBuf[i] << "'" << "\n";
 
         // Try to handle zMud, cMud & tintin++ which don't seem to double the IAC for NAWS
         // during my limited testing -JM
@@ -785,7 +785,7 @@ int Socket::processInput() {
                     std::cout << "Found term type: " << term.type << std::endl;
                     if (term.type == "Mudlet 2.0.1") {
                     // Mudlet doesn't seem to like MXP color, so turn it off
-//					opts.color = ANSI_COLOR;
+//                  opts.color = ANSI_COLOR;
                     }
                 } else if (tmpBuf[i] == IAC) {
                     // I doubt this will happen
@@ -852,325 +852,325 @@ int Socket::processInput() {
         }
     }
 
-	bstring::size_type idx = 0;
-	while ((idx = inBuf.find("\n", 0)) != bstring::npos) {
-		bstring tmpr = inBuf.substr(0, idx); // Don't copy the \n
-		idx += 1; // Consume the \n
-		if (inBuf[idx] == '\n')
-			idx += 1; // Consume the extra \n if applicable
+    bstring::size_type idx = 0;
+    while ((idx = inBuf.find("\n", 0)) != bstring::npos) {
+        bstring tmpr = inBuf.substr(0, idx); // Don't copy the \n
+        idx += 1; // Consume the \n
+        if (inBuf[idx] == '\n')
+            idx += 1; // Consume the extra \n if applicable
 
-		inBuf.erase(0, idx);
-		if(opts.mxpClientSecure) {
-		    if(inBuf.left(8).equals("<version", false)) {
+        inBuf.erase(0, idx);
+        if(opts.mxpClientSecure) {
+            if(inBuf.left(8).equals("<version", false)) {
 
-		    } else if(inBuf.left(9).equals("<supports", false)) {
+            } else if(inBuf.left(9).equals("<supports", false)) {
 
-		    }
-		}
-		input.push(tmpr);
-	}
-	ltime = time(0);
-	return (0);
+            }
+        }
+        input.push(tmpr);
+    }
+    ltime = time(0);
+    return (0);
 }
 
 bool Socket::negotiate(unsigned char ch) {
 
-	switch (ch) {
-	case TELOPT_CHARSET:
-		if (tState == NEG_WILL) {
-			opts.charset = true;
-			write(telnet::charset_utf8, false);
-			std::cout << "Charset On" << std::endl;
-		} else if (tState == NEG_WONT) {
-			opts.charset = false;
-			std::cout << "Charset Off" << std::endl;
-		}
-		tState = NEG_NONE;
-		break;
-	case TELOPT_TTYPE:
-		// If we've gotten this far, we're fairly confident they support ANSI color
-		// so enable that
-		opts.color = ANSI_COLOR;
+    switch (ch) {
+    case TELOPT_CHARSET:
+        if (tState == NEG_WILL) {
+            opts.charset = true;
+            write(telnet::charset_utf8, false);
+            std::cout << "Charset On" << std::endl;
+        } else if (tState == NEG_WONT) {
+            opts.charset = false;
+            std::cout << "Charset Off" << std::endl;
+        }
+        tState = NEG_NONE;
+        break;
+    case TELOPT_TTYPE:
+        // If we've gotten this far, we're fairly confident they support ANSI color
+        // so enable that
+        opts.color = ANSI_COLOR;
 
-		if (tState == NEG_WILL) {
-			// Continue and query the rest of the options, including term type
-			continueTelnetNeg(true);
-		} else if (tState == NEG_WONT) {
-			// If they respond to something here they know how to negotiate,
-			// so continue and ask for the rest of the options, except term type
-			// which they have just indicated they won't do
-			continueTelnetNeg(false);
+        if (tState == NEG_WILL) {
+            // Continue and query the rest of the options, including term type
+            continueTelnetNeg(true);
+        } else if (tState == NEG_WONT) {
+            // If they respond to something here they know how to negotiate,
+            // so continue and ask for the rest of the options, except term type
+            // which they have just indicated they won't do
+            continueTelnetNeg(false);
 
-		}
-		tState = NEG_NONE;
-		break;
-	case TELOPT_MXP:
-		if (tState == NEG_WILL || tState == NEG_DO) {
-			write(telnet::start_mxp);
-			// Start off in MXP LOCKED CLOSED
-			write(MXP_LOCK_CLOSE);
-			//TODO: send elements we're using for mxp
-			opts.mxp = true;
-			// Assume if they have MXP enabled, they want mxp colors
-			opts.color = MXP_COLOR;
-			std::cout << "Enabled MXP" << std::endl;
-			defineMxp();
-		} else if (tState == NEG_WONT || tState == NEG_DONT) {
-			opts.mxp = false;
-			std::cout << "Disabled MXP" << std::endl;
-		}
-		tState = NEG_NONE;
-		break;
-	case TELOPT_COMPRESS2:
-		if (tState == NEG_WILL || tState == NEG_DO) {
-			opts.mccp = 2;
-			startCompress();
-		} else if (tState == NEG_WONT || tState == NEG_DONT) {
-			if (opts.mccp == 2) {
-				opts.mccp = 0;
-				endCompress();
-			}
-		}
-		tState = NEG_NONE;
-		break;
-	case TELOPT_COMPRESS:
-		if (tState == NEG_WILL || tState == NEG_DO) {
-			opts.mccp = 1;
-			startCompress();
-		} else if (tState == NEG_WONT || tState == NEG_DONT) {
-			if (opts.mccp == 1) {
-				opts.mccp = 0;
-				endCompress();
-			}
-		}
-		tState = NEG_NONE;
-		break;
-	case TELOPT_EOR:
-		if (tState == NEG_WILL || tState == NEG_DO) {
-			opts.eor = true;
-			printf("Activating EOR\n");
-		} else if (tState == NEG_WONT || tState == NEG_DONT) {
-			opts.eor = false;
-			printf("Deactivating EOR\n");
-		}
-		tState = NEG_NONE;
-		break;
-	case TELOPT_NAWS:
-		if (tState == NEG_WILL) {
-			opts.naws = true;
-		} else {
-			opts.naws = false;
-		}
-		tState = NEG_NONE;
-		break;
-	case TELOPT_ECHO:
-	case TELOPT_NEW_ENVIRON:
-		// TODO: Echo/New Environ
-		tState = NEG_NONE;
-		break;
-	case TELOPT_MSSP:
-		if (tState == NEG_DO) {
-			sendMSSP();
-		}
-		tState = NEG_NONE;
-		break;
-	case TELOPT_MSP:
-		if (tState == NEG_WILL || tState == NEG_DO) {
-			opts.msp = true;
-		} else if (tState == NEG_WONT || tState == NEG_DONT) {
-			opts.msp = false;
-		}
+        }
+        tState = NEG_NONE;
+        break;
+    case TELOPT_MXP:
+        if (tState == NEG_WILL || tState == NEG_DO) {
+            write(telnet::start_mxp);
+            // Start off in MXP LOCKED CLOSED
+            write(MXP_LOCK_CLOSE);
+            //TODO: send elements we're using for mxp
+            opts.mxp = true;
+            // Assume if they have MXP enabled, they want mxp colors
+            opts.color = MXP_COLOR;
+            std::cout << "Enabled MXP" << std::endl;
+            defineMxp();
+        } else if (tState == NEG_WONT || tState == NEG_DONT) {
+            opts.mxp = false;
+            std::cout << "Disabled MXP" << std::endl;
+        }
+        tState = NEG_NONE;
+        break;
+    case TELOPT_COMPRESS2:
+        if (tState == NEG_WILL || tState == NEG_DO) {
+            opts.mccp = 2;
+            startCompress();
+        } else if (tState == NEG_WONT || tState == NEG_DONT) {
+            if (opts.mccp == 2) {
+                opts.mccp = 0;
+                endCompress();
+            }
+        }
+        tState = NEG_NONE;
+        break;
+    case TELOPT_COMPRESS:
+        if (tState == NEG_WILL || tState == NEG_DO) {
+            opts.mccp = 1;
+            startCompress();
+        } else if (tState == NEG_WONT || tState == NEG_DONT) {
+            if (opts.mccp == 1) {
+                opts.mccp = 0;
+                endCompress();
+            }
+        }
+        tState = NEG_NONE;
+        break;
+    case TELOPT_EOR:
+        if (tState == NEG_WILL || tState == NEG_DO) {
+            opts.eor = true;
+            printf("Activating EOR\n");
+        } else if (tState == NEG_WONT || tState == NEG_DONT) {
+            opts.eor = false;
+            printf("Deactivating EOR\n");
+        }
+        tState = NEG_NONE;
+        break;
+    case TELOPT_NAWS:
+        if (tState == NEG_WILL) {
+            opts.naws = true;
+        } else {
+            opts.naws = false;
+        }
+        tState = NEG_NONE;
+        break;
+    case TELOPT_ECHO:
+    case TELOPT_NEW_ENVIRON:
+        // TODO: Echo/New Environ
+        tState = NEG_NONE;
+        break;
+    case TELOPT_MSSP:
+        if (tState == NEG_DO) {
+            sendMSSP();
+        }
+        tState = NEG_NONE;
+        break;
+    case TELOPT_MSP:
+        if (tState == NEG_WILL || tState == NEG_DO) {
+            opts.msp = true;
+        } else if (tState == NEG_WONT || tState == NEG_DONT) {
+            opts.msp = false;
+        }
 
-		tState = NEG_NONE;
-		break;
-	case TELOPT_MSDP:
-		if (tState == NEG_DO) {
-			opts.msdp = true;
-			msdpSend("SERVER_ID");
+        tState = NEG_NONE;
+        break;
+    case TELOPT_MSDP:
+        if (tState == NEG_DO) {
+            opts.msdp = true;
+            msdpSend("SERVER_ID");
 
-			std::cout << "Enabled MSDP" << std::endl;
-		} else {
-			std::cout << "Disabled MSDP" << std::endl;
-			opts.msdp = false;
-		}
-		tState = NEG_NONE;
-		break;
-	case TELOPT_ATCP:
-		if (tState == NEG_WILL || tState == NEG_DO) {
-			opts.atcp = true;
-			std::cout << "Enabled ATCP" << std::endl;
-			msdpSend("SERVER_ID");
-//			msdpSendPair("SERVER_ID", "The Realms of Hell v" VERSION);
-		} else {
-			std::cout << "Disabled ATCP" << std::endl;
-			opts.atcp = false;
-		}
-		tState = NEG_NONE;
-		break;
-	default:
-		tState = NEG_NONE;
-		break;
-	}
-	return (true);
+            std::cout << "Enabled MSDP" << std::endl;
+        } else {
+            std::cout << "Disabled MSDP" << std::endl;
+            opts.msdp = false;
+        }
+        tState = NEG_NONE;
+        break;
+    case TELOPT_ATCP:
+        if (tState == NEG_WILL || tState == NEG_DO) {
+            opts.atcp = true;
+            std::cout << "Enabled ATCP" << std::endl;
+            msdpSend("SERVER_ID");
+//          msdpSendPair("SERVER_ID", "The Realms of Hell v" VERSION);
+        } else {
+            std::cout << "Disabled ATCP" << std::endl;
+            opts.atcp = false;
+        }
+        tState = NEG_NONE;
+        break;
+    default:
+        tState = NEG_NONE;
+        break;
+    }
+    return (true);
 }
 
 //********************************************************************
-//						handleNaws
+//                      handleNaws
 //********************************************************************
 // Return true if a state should be changed
 
 bool Socket::handleNaws(int& colRow, unsigned char& chr, bool high) {
-	// If we get an IAC here, we need a double IAC
-	if (chr == IAC) {
-		if (!oneIAC) {
-//			std::cout << "NAWS: Got ONE IAC, checking for two.\n";
-			oneIAC = true;
-			return (false);
-		} else {
-//			std::cout << "NAWS: Got second IAC.\n";
-			oneIAC = false;
-		}
-	} else if (oneIAC && chr != IAC) {
-		// Error!
-		std::cout << "NAWS: BUG - Expecting a doubled IAC, got "
-				<< (unsigned int) chr << "\n";
-		oneIAC = false;
-	}
+    // If we get an IAC here, we need a double IAC
+    if (chr == IAC) {
+        if (!oneIAC) {
+//          std::cout << "NAWS: Got ONE IAC, checking for two.\n";
+            oneIAC = true;
+            return (false);
+        } else {
+//          std::cout << "NAWS: Got second IAC.\n";
+            oneIAC = false;
+        }
+    } else if (oneIAC && chr != IAC) {
+        // Error!
+        std::cout << "NAWS: BUG - Expecting a doubled IAC, got "
+                << (unsigned int) chr << "\n";
+        oneIAC = false;
+    }
 
-	if (high)
-		colRow = chr << 8;
-	else
-		colRow += chr;
+    if (high)
+        colRow = chr << 8;
+    else
+        colRow += chr;
 
-	return (true);
+    return (true);
 }
 
 //********************************************************************
-//						processOneCommand
+//                      processOneCommand
 //********************************************************************
 // Aka interpreter
 
 int Socket::processOneCommand(void) {
-	bstring cmd = input.front();
-	input.pop();
+    bstring cmd = input.front();
+    input.pop();
 
-	// Send the command to the people we're spying on
-	if (!spying.empty()) {
-		std::list<Socket*>::iterator it;
-		for (it = spying.begin(); it != spying.end(); it++) {
-			Socket *sock = *it;
-			if (sock)
-				sock->write("[" + cmd + "]\n", false);
-		}
-	}
+    // Send the command to the people we're spying on
+    if (!spying.empty()) {
+        std::list<Socket*>::iterator it;
+        for (it = spying.begin(); it != spying.end(); it++) {
+            Socket *sock = *it;
+            if (sock)
+                sock->write("[" + cmd + "]\n", false);
+        }
+    }
 
-	((void(*)(Socket*, bstring)) (fn))(this, cmd);
+    ((void(*)(Socket*, bstring)) (fn))(this, cmd);
 
-	return (1);
+    return (1);
 }
 
 //********************************************************************
-//						restoreState
+//                      restoreState
 //********************************************************************
 // Returns a fd to it's previous state
 
 void Socket::restoreState() {
-	setState(lastState);
-	createPlayer(this, "");
-	return;
+    setState(lastState);
+    createPlayer(this, "");
+    return;
 }
 
 int restoreState(Socket* sock) {
-	sock->restoreState();
-	return (0);
+    sock->restoreState();
+    return (0);
 }
 
 //*********************************************************************
-//						pauseScreen
+//                      pauseScreen
 //*********************************************************************
 
 void pauseScreen(Socket* sock, bstring str) {
     if(str.equals("quit"))
-		sock->disconnect();
-	else
-		sock->reconnect();
+        sock->disconnect();
+    else
+        sock->reconnect();
 }
 
 //*********************************************************************
-//						reconnect
+//                      reconnect
 //*********************************************************************
 
 void Socket::reconnect(bool pauseScreen) {
-	clearSpying();
-	clearSpiedOn();
-	msdpClearReporting();
+    clearSpying();
+    clearSpiedOn();
+    msdpClearReporting();
 
-	freePlayer();
+    freePlayer();
 
-	if (pauseScreen) {
-		setState(LOGIN_PAUSE_SCREEN);
-		printColor(
-				"\nPress ^W[RETURN]^x to reconnect or type ^Wquit^x to disconnect.\n: ");
-	} else {
-		setState(LOGIN_GET_NAME);
-		showLoginScreen();
-	}
+    if (pauseScreen) {
+        setState(LOGIN_PAUSE_SCREEN);
+        printColor(
+                "\nPress ^W[RETURN]^x to reconnect or type ^Wquit^x to disconnect.\n: ");
+    } else {
+        setState(LOGIN_GET_NAME);
+        showLoginScreen();
+    }
 }
 
 //*********************************************************************
-//						setState
+//                      setState
 //*********************************************************************
 // Sets a fd's state and changes the interpreter to the appropriate function
 
 void convertNewWeaponSkills(Socket* sock, bstring str);
 
 void Socket::setState(int pState, int pFnParam) {
-	// Only store the last state if we're changing states, used mainly in the viewing file states
-	if (pState != connState)
-		lastState = connState;
-	connState = pState;
+    // Only store the last state if we're changing states, used mainly in the viewing file states
+    if (pState != connState)
+        lastState = connState;
+    connState = pState;
 
-	if (pState == LOGIN_PAUSE_SCREEN)
-		fn = pauseScreen;
-	else if (pState > LOGIN_START && pState < LOGIN_END)
-		fn = login;
-	else if (pState > CREATE_START && pState < CREATE_END)
-		fn = createPlayer;
-	else if (pState > CON_START && pState < CON_END)
-		fn = command;
-	else if (pState > CON_STATS_START && pState < CON_STATS_END)
-		fn = changingStats;
-	else if (pState == CON_CONFIRM_SURNAME)
-		fn = doSurname;
-	else if (pState == CON_CONFIRM_TITLE)
-		fn = doTitle;
-	else if (pState == CON_VIEWING_FILE)
-		fn = viewFile;
-	else if (pState == CON_SENDING_MAIL)
-		fn = postedit;
-	else if (pState == CON_EDIT_NOTE)
-		fn = noteedit;
-	else if (pState == CON_EDIT_HISTORY)
-		fn = histedit;
-	else if (pState == CON_EDIT_PROPERTY)
-		fn = Property::descEdit;
-	else if (pState == CON_VIEWING_FILE_REVERSE)
-		fn = viewFileReverse;
-	else if (pState > CON_PASSWORD_START && pState < CON_PASSWORD_END)
-		fn = changePassword;
-	else if (pState == CON_CHOSING_WEAPONS)
-		fn = convertNewWeaponSkills;
-	else {
-		printf("Unknown connected state!\n");
-		fn = login;
-	}
+    if (pState == LOGIN_PAUSE_SCREEN)
+        fn = pauseScreen;
+    else if (pState > LOGIN_START && pState < LOGIN_END)
+        fn = login;
+    else if (pState > CREATE_START && pState < CREATE_END)
+        fn = createPlayer;
+    else if (pState > CON_START && pState < CON_END)
+        fn = command;
+    else if (pState > CON_STATS_START && pState < CON_STATS_END)
+        fn = changingStats;
+    else if (pState == CON_CONFIRM_SURNAME)
+        fn = doSurname;
+    else if (pState == CON_CONFIRM_TITLE)
+        fn = doTitle;
+    else if (pState == CON_VIEWING_FILE)
+        fn = viewFile;
+    else if (pState == CON_SENDING_MAIL)
+        fn = postedit;
+    else if (pState == CON_EDIT_NOTE)
+        fn = noteedit;
+    else if (pState == CON_EDIT_HISTORY)
+        fn = histedit;
+    else if (pState == CON_EDIT_PROPERTY)
+        fn = Property::descEdit;
+    else if (pState == CON_VIEWING_FILE_REVERSE)
+        fn = viewFileReverse;
+    else if (pState > CON_PASSWORD_START && pState < CON_PASSWORD_END)
+        fn = changePassword;
+    else if (pState == CON_CHOSING_WEAPONS)
+        fn = convertNewWeaponSkills;
+    else {
+        printf("Unknown connected state!\n");
+        fn = login;
+    }
 
-	fnparam = pFnParam;
+    fnparam = pFnParam;
 }
 
 int setState(Socket* sock, int state, int pFnParam) {
-	sock->setState(state, pFnParam);
-	return (0);
+    sock->setState(state, pFnParam);
+    return (0);
 }
 
 bstring getMxpTag( bstring tag, bstring text ) {
@@ -1213,21 +1213,21 @@ bool Socket::parseMXPSecure() {
         bstring version = getMxpTag("VERSION=", toParse);
         if(!version.empty()) {
             term.version = version;
-			if(term.type.equals("mushclient", false)) {
-				if(version >= "4.02")
-					opts.xterm256 = true;
-			} else if (term.type.equals("cmud", false)) {
-				if(version >=  "3.04")
-					opts.xterm256 = true;
-			} else if (term.type.equals("atlantis", false)) {
-				// Any version of atlantis with MXP supports xterm256
+            if(term.type.equals("mushclient", false)) {
+                if(version >= "4.02")
+                    opts.xterm256 = true;
+            } else if (term.type.equals("cmud", false)) {
+                if(version >=  "3.04")
+                    opts.xterm256 = true;
+            } else if (term.type.equals("atlantis", false)) {
+                // Any version of atlantis with MXP supports xterm256
             opts.xterm256 = true;
-			}
+            }
         }
 
         bstring supports = getMxpTag("SUPPORT=", toParse);
         if(!supports.empty()) {
-        	std::cout << "Got <SUPPORT='" << supports << "'>" << std::endl;
+            std::cout << "Got <SUPPORT='" << supports << "'>" << std::endl;
         }
 
     }
@@ -1237,96 +1237,96 @@ bool Socket::parseMXPSecure() {
 }
 
 bool Socket::parseMsdp() {
-	if(getMsdp()) {
-		bstring var, val;
-		int nest = 0;
+    if(getMsdp()) {
+        bstring var, val;
+        int nest = 0;
 
-		var.reserve(15);
-		val.reserve(30);
-		int i = 0, n = cmdInBuf.size();
-		while (i < n && cmdInBuf[i] != SE) {
-			switch (cmdInBuf[i]) {
-			case MSDP_VAR:
-				i++;
-				while (i < n && cmdInBuf[i] != MSDP_VAL) {
-					var += cmdInBuf[i++];
-				}
-				break;
-			case MSDP_VAL:
-				i++;
-				val.erase();
-				while (i < n && cmdInBuf[i] != IAC) {
-					if (cmdInBuf[i] == MSDP_TABLE_OPEN
-							|| cmdInBuf[i] == MSDP_ARRAY_OPEN)
-						nest++;
-					else if (cmdInBuf[i] == MSDP_TABLE_CLOSE
-							|| cmdInBuf[i] == MSDP_ARRAY_CLOSE)
-						nest--;
-					else if (nest == 0
-							&& (cmdInBuf[i] == MSDP_VAR || cmdInBuf[i] == MSDP_VAL))
-						break;
-					val += cmdInBuf[i++];
-				}
-				if (nest == 0)
-					processMsdpVarVal(var, val);
+        var.reserve(15);
+        val.reserve(30);
+        int i = 0, n = cmdInBuf.size();
+        while (i < n && cmdInBuf[i] != SE) {
+            switch (cmdInBuf[i]) {
+            case MSDP_VAR:
+                i++;
+                while (i < n && cmdInBuf[i] != MSDP_VAL) {
+                    var += cmdInBuf[i++];
+                }
+                break;
+            case MSDP_VAL:
+                i++;
+                val.erase();
+                while (i < n && cmdInBuf[i] != IAC) {
+                    if (cmdInBuf[i] == MSDP_TABLE_OPEN
+                            || cmdInBuf[i] == MSDP_ARRAY_OPEN)
+                        nest++;
+                    else if (cmdInBuf[i] == MSDP_TABLE_CLOSE
+                            || cmdInBuf[i] == MSDP_ARRAY_CLOSE)
+                        nest--;
+                    else if (nest == 0
+                            && (cmdInBuf[i] == MSDP_VAR || cmdInBuf[i] == MSDP_VAL))
+                        break;
+                    val += cmdInBuf[i++];
+                }
+                if (nest == 0)
+                    processMsdpVarVal(var, val);
 
-				break;
-			default:
-				i++;
-				break;
-			}
-		}
-	}
-	cmdInBuf.clear();
+                break;
+            default:
+                i++;
+                break;
+            }
+        }
+    }
+    cmdInBuf.clear();
 
-	return (true);
+    return (true);
 }
 
 bool Socket::parseAtcp() {
-	if(getAtcp()) {
-		bstring var, val;
+    if(getAtcp()) {
+        bstring var, val;
 
-		var.reserve(15);
-		val.reserve(30);
-		int i = 0, n = cmdInBuf.size();
-		while (i < n && cmdInBuf[i] != SE) {
-			switch (cmdInBuf[i]) {
-			case '@':
-				i++;
-				var.erase();
-				while (i < n && cmdInBuf[i] != ' ') {
-					var += cmdInBuf[i++];
-				}
-				break;
-			case ' ':
-				i++;
-				val.erase();
-				while (i < n && cmdInBuf[i] != '@' && cmdInBuf[i] != ' ') {
-					val += cmdInBuf[i++];
-				}
-				processMsdpVarVal(var, val);
+        var.reserve(15);
+        val.reserve(30);
+        int i = 0, n = cmdInBuf.size();
+        while (i < n && cmdInBuf[i] != SE) {
+            switch (cmdInBuf[i]) {
+            case '@':
+                i++;
+                var.erase();
+                while (i < n && cmdInBuf[i] != ' ') {
+                    var += cmdInBuf[i++];
+                }
+                break;
+            case ' ':
+                i++;
+                val.erase();
+                while (i < n && cmdInBuf[i] != '@' && cmdInBuf[i] != ' ') {
+                    val += cmdInBuf[i++];
+                }
+                processMsdpVarVal(var, val);
 
-				break;
-			default:
-				i++;
-				break;
-			}
-		}
-	}
-	cmdInBuf.clear();
+                break;
+            default:
+                i++;
+                break;
+            }
+        }
+    }
+    cmdInBuf.clear();
 
-	return (true);
+    return (true);
 }
 
 
 //********************************************************************
-//						bprint
+//                      bprint
 //********************************************************************
 // Append a string to the socket's output queue
 
 void Socket::bprint(bstring toPrint) {
-	if (!toPrint.empty())
-		output += toPrint;
+    if (!toPrint.empty())
+        output += toPrint;
 }
 
 //********************************************************************
@@ -1355,437 +1355,437 @@ void Socket::bprintNoColor(bstring toPrint) {
 
 }
 //********************************************************************
-//						println
+//                      println
 //********************************************************************
 // Append a string to the socket's output queue with a \n
 
 void Socket::println(bstring toPrint) {
-	bprint(toPrint + "\n");
-	return;
+    bprint(toPrint + "\n");
+    return;
 }
 
 //********************************************************************
-//						print
+//                      print
 //********************************************************************
 
 void Socket::print(const char* fmt, ...) {
-	if (!this)
-		return;
-	va_list ap;
-	va_start(ap, fmt);
-	bstring newFmt = stripColor(fmt);
-	vprint( newFmt.c_str(), ap);
-	va_end(ap);
+    if (!this)
+        return;
+    va_list ap;
+    va_start(ap, fmt);
+    bstring newFmt = stripColor(fmt);
+    vprint( newFmt.c_str(), ap);
+    va_end(ap);
 }
 
 //********************************************************************
-//						printColor
+//                      printColor
 //********************************************************************
 
 void Socket::printColor(const char* fmt, ...) {
-	if (!this)
-		return;
-	va_list ap;
-	va_start(ap, fmt);
-	vprint(fmt, ap);
-	va_end(ap);
+    if (!this)
+        return;
+    va_list ap;
+    va_start(ap, fmt);
+    vprint(fmt, ap);
+    va_end(ap);
 }
 
 //********************************************************************
-//						flush
+//                      flush
 //********************************************************************
 // Flush pending output and send a prompt
 
 void Socket::flush() {
-	int n, len;
-	if(!processed_output.empty()) {
-		len = processed_output.length();
+    int n, len;
+    if(!processed_output.empty()) {
+        len = processed_output.length();
 
-		n = write(processed_output, false, false);
-	} else {
-		len = output.length();
-		if ((n = write(output)) == 0)
-			return;
-		output.clear();
-	}
-	// If we only wrote OOB data or partial data was written because of EWOULDBLOCK,
-	// then n is -2, don't send a prompt in that case
-	if (n != -2 && myPlayer && connState != CON_CHOSING_WEAPONS)
-		myPlayer->sendPrompt();
+        n = write(processed_output, false, false);
+    } else {
+        len = output.length();
+        if ((n = write(output)) == 0)
+            return;
+        output.clear();
+    }
+    // If we only wrote OOB data or partial data was written because of EWOULDBLOCK,
+    // then n is -2, don't send a prompt in that case
+    if (n != -2 && myPlayer && connState != CON_CHOSING_WEAPONS)
+        myPlayer->sendPrompt();
 }
 
 //********************************************************************
-//						write
+//                      write
 //********************************************************************
 // Write a string of data to the the socket's file descriptor
 
 int Socket::write(bstring toWrite, bool pSpy, bool process) {
-	int written = 0;
-	int n = 0;
-	int total = 0;
+    int written = 0;
+    int n = 0;
+    int total = 0;
 
-	// Parse any color, unicode, etc here
-	bstring toOutput;
-	if(process)
-		toOutput = parseForOutput(toWrite);
-	else {
-		toOutput = toWrite;
-	}
+    // Parse any color, unicode, etc here
+    bstring toOutput;
+    if(process)
+        toOutput = parseForOutput(toWrite);
+    else {
+        toOutput = toWrite;
+    }
 
-	total = toOutput.length();
+    total = toOutput.length();
 
-	const char *str = toOutput.c_str();
-	// Write directly to the socket, otherwise compress it and send it
-	if (!opts.compressing) {
-		do {
-			n = ::write(fd, str + written, total - written);
-			if (n < 0) {
-				if(errno != EWOULDBLOCK)
-					return (n);
-				else  {
-					// The write would have blocked
-					n = -2;
-					// If we haven't written the total number of bytes planned
-					// Save the remaining string for the next go around
-					if(written < total) {
-						processed_output = str+written;
-					}
-					break;
-				}
-			}
-			written += n;
-		} while (written < total);
+    const char *str = toOutput.c_str();
+    // Write directly to the socket, otherwise compress it and send it
+    if (!opts.compressing) {
+        do {
+            n = ::write(fd, str + written, total - written);
+            if (n < 0) {
+                if(errno != EWOULDBLOCK)
+                    return (n);
+                else  {
+                    // The write would have blocked
+                    n = -2;
+                    // If we haven't written the total number of bytes planned
+                    // Save the remaining string for the next go around
+                    if(written < total) {
+                        processed_output = str+written;
+                    }
+                    break;
+                }
+            }
+            written += n;
+        } while (written < total);
 
-		UnCompressedBytes += written;
+        UnCompressedBytes += written;
 
-		if(n == -2)
-			written = -2;
+        if(n == -2)
+            written = -2;
 
-		if(written >= total && !processed_output.empty() && process == false) {
-			processed_output.erase();
-		}
-	} else {
-		UnCompressedBytes += total;
+        if(written >= total && !processed_output.empty() && process == false) {
+            processed_output.erase();
+        }
+    } else {
+        UnCompressedBytes += total;
 
-		out_compress->next_in = (unsigned char*) str;
-		out_compress->avail_in = total;
-		while (out_compress->avail_in) {
-			out_compress->avail_out =
-					COMPRESSED_OUTBUF_SIZE
-							- ((char*) out_compress->next_out
-									- (char*) out_compress_buf);
-			if (deflate(out_compress, Z_SYNC_FLUSH) != Z_OK) {
-				return (0);
-			}
-			written += processCompressed();
-			if (written == 0)
-				break;
-		}
-	}
-	int strippedLen = 0;
-	bstring forSpy = Socket::stripTelnet(toWrite, strippedLen);
+        out_compress->next_in = (unsigned char*) str;
+        out_compress->avail_in = total;
+        while (out_compress->avail_in) {
+            out_compress->avail_out =
+                    COMPRESSED_OUTBUF_SIZE
+                            - ((char*) out_compress->next_out
+                                    - (char*) out_compress_buf);
+            if (deflate(out_compress, Z_SYNC_FLUSH) != Z_OK) {
+                return (0);
+            }
+            written += processCompressed();
+            if (written == 0)
+                break;
+        }
+    }
+    int strippedLen = 0;
+    bstring forSpy = Socket::stripTelnet(toWrite, strippedLen);
 
-	if (pSpy && !spying.empty()) {
+    if (pSpy && !spying.empty()) {
 
 
-		forSpy.Replace("\n", "\n<Spy> ");
-		if(!forSpy.empty()) {
-			std::list<Socket*>::iterator it;
-			for (it = spying.begin(); it != spying.end(); it++) {
-				Socket *sock = *it;
-				if (sock)
-					sock->write("<Spy> " + forSpy, false);
-			}
-		}
-	}
-	// Keep track of total outbytes
-	OutBytes += written;
+        forSpy.Replace("\n", "\n<Spy> ");
+        if(!forSpy.empty()) {
+            std::list<Socket*>::iterator it;
+            for (it = spying.begin(); it != spying.end(); it++) {
+                Socket *sock = *it;
+                if (sock)
+                    sock->write("<Spy> " + forSpy, false);
+            }
+        }
+    }
+    // Keep track of total outbytes
+    OutBytes += written;
 
-	// If stripped len is 0, it means we only wrote OOB data, so adjust the return so
-	// we don't send another prompt
-	if(strippedLen == 0)
-		written = -2;
+    // If stripped len is 0, it means we only wrote OOB data, so adjust the return so
+    // we don't send another prompt
+    if(strippedLen == 0)
+        written = -2;
 
-	return (written);
+    return (written);
 }
 
 //--------------------------------------------------------------------
 // MCCP
 
 //********************************************************************
-//						startCompress
+//                      startCompress
 //********************************************************************
 
 int Socket::startCompress(bool silent) {
-	if (!opts.mccp)
-		return (-1);
+    if (!opts.mccp)
+        return (-1);
 
-	if (opts.compressing)
-		return (-1);
+    if (opts.compressing)
+        return (-1);
 
-	out_compress_buf = new char[COMPRESSED_OUTBUF_SIZE];
-	//out_compress = new z_stream;
-	out_compress = (z_stream *) malloc(sizeof(*out_compress));
-	out_compress->zalloc = telnet::zlib_alloc;
-	out_compress->zfree = telnet::zlib_free;
-	out_compress->opaque = NULL;
-	out_compress->next_in = NULL;
-	out_compress->avail_in = 0;
-	out_compress->next_out = (Bytef*) out_compress_buf;
-	out_compress->avail_out = COMPRESSED_OUTBUF_SIZE;
+    out_compress_buf = new char[COMPRESSED_OUTBUF_SIZE];
+    //out_compress = new z_stream;
+    out_compress = (z_stream *) malloc(sizeof(*out_compress));
+    out_compress->zalloc = telnet::zlib_alloc;
+    out_compress->zfree = telnet::zlib_free;
+    out_compress->opaque = NULL;
+    out_compress->next_in = NULL;
+    out_compress->avail_in = 0;
+    out_compress->next_out = (Bytef*) out_compress_buf;
+    out_compress->avail_out = COMPRESSED_OUTBUF_SIZE;
 
-	if (deflateInit(out_compress, 9) != Z_OK) {
-		// Problem with zlib, try to clean up
-		delete out_compress_buf;
-		free(out_compress);
-		return (-1);
-	}
+    if (deflateInit(out_compress, 9) != Z_OK) {
+        // Problem with zlib, try to clean up
+        delete out_compress_buf;
+        free(out_compress);
+        return (-1);
+    }
 
-	if (!silent) {
-		if (opts.mccp == 2)
-			write(telnet::start_mccp2, false);
-		else
-			write(telnet::start_mccp, false);
-	}
-	// We're compressing now
-	opts.compressing = true;
+    if (!silent) {
+        if (opts.mccp == 2)
+            write(telnet::start_mccp2, false);
+        else
+            write(telnet::start_mccp, false);
+    }
+    // We're compressing now
+    opts.compressing = true;
 
-	return (0);
+    return (0);
 }
 
 //********************************************************************
-//						endCompress
+//                      endCompress
 //********************************************************************
 
 int Socket::endCompress() {
-	if (out_compress && opts.compressing) {
-		unsigned char dummy[1] = { 0 };
-		out_compress->avail_in = 0;
-		out_compress->next_in = dummy;
-		// process any remaining output first?
-		if (deflate(out_compress, Z_FINISH) != Z_STREAM_END) {
-			std::cout << "Error with deflate Z_FINISH\n";
-			return (-1);
-		}
+    if (out_compress && opts.compressing) {
+        unsigned char dummy[1] = { 0 };
+        out_compress->avail_in = 0;
+        out_compress->next_in = dummy;
+        // process any remaining output first?
+        if (deflate(out_compress, Z_FINISH) != Z_STREAM_END) {
+            std::cout << "Error with deflate Z_FINISH\n";
+            return (-1);
+        }
 
-		// Send any residual data
-		if (processCompressed() < 0)
-			return (-1);
+        // Send any residual data
+        if (processCompressed() < 0)
+            return (-1);
 
-		deflateEnd(out_compress);
+        deflateEnd(out_compress);
 
-		delete[] out_compress_buf;
+        delete[] out_compress_buf;
 
-		out_compress = null;
-		out_compress_buf = null;
+        out_compress = null;
+        out_compress_buf = null;
 
-		opts.mccp = 0;
-		opts.compressing = false;
-	}
-	return (-1);
+        opts.mccp = 0;
+        opts.compressing = false;
+    }
+    return (-1);
 }
 
 //********************************************************************
-//						processCompressed
+//                      processCompressed
 //********************************************************************
 
 int Socket::processCompressed() {
-	int len = (int) ((char*) out_compress->next_out - (char*) out_compress_buf);
-	int written = 0;
-	int block;
-	int n, i;
+    int len = (int) ((char*) out_compress->next_out - (char*) out_compress_buf);
+    int written = 0;
+    int block;
+    int n, i;
 
-	if (len > 0) {
-		for (i = 0, n = 0; i < len; i += n) {
-			block = tMIN<int>(len - i, 4096);
-			if ((n = ::write(fd, out_compress_buf + i, block)) < 0)
-				return (-1);
-			written += n;
-			if (n == 0)
-				break;
-		}
-		if (i) {
-			if (i < len)
-				memmove(out_compress_buf, out_compress_buf + i, len - i);
+    if (len > 0) {
+        for (i = 0, n = 0; i < len; i += n) {
+            block = tMIN<int>(len - i, 4096);
+            if ((n = ::write(fd, out_compress_buf + i, block)) < 0)
+                return (-1);
+            written += n;
+            if (n == 0)
+                break;
+        }
+        if (i) {
+            if (i < len)
+                memmove(out_compress_buf, out_compress_buf + i, len - i);
 
-			out_compress->next_out = (Bytef*) out_compress_buf + len - i;
-		}
-	}
-	return (written);
+            out_compress->next_out = (Bytef*) out_compress_buf + len - i;
+        }
+    }
+    return (written);
 }
 // End - MCCP
 //--------------------------------------------------------------------
 
 // "Telopts"
 bool Socket::saveTelopts(xmlNodePtr rootNode) {
-	rootNode = xml::newStringChild(rootNode, "Telopts");
-	xml::newNumChild(rootNode, "MCCP", getMccp());
-	xml::newNumChild(rootNode, "MSDP", getMsdp());
-	xml::newNumChild(rootNode, "ATCP", getAtcp());
-	xml::newBoolChild(rootNode, "MXP", getMxp());
-	xml::newBoolChild(rootNode, "DumbClient", isDumbClient());
-	xml::newStringChild(rootNode, "Term", getTermType());
-	xml::newNumChild(rootNode, "Color", getColorOpt());
-	xml::newNumChild(rootNode, "TermCols", getTermCols());
-	xml::newNumChild(rootNode, "TermRows", getTermRows());
-	xml::newBoolChild(rootNode, "EOR", getEor());
-	xml::newBoolChild(rootNode, "Charset", getCharset());
-	xml::newBoolChild(rootNode, "UTF8", getUtf8());
+    rootNode = xml::newStringChild(rootNode, "Telopts");
+    xml::newNumChild(rootNode, "MCCP", getMccp());
+    xml::newNumChild(rootNode, "MSDP", getMsdp());
+    xml::newNumChild(rootNode, "ATCP", getAtcp());
+    xml::newBoolChild(rootNode, "MXP", getMxp());
+    xml::newBoolChild(rootNode, "DumbClient", isDumbClient());
+    xml::newStringChild(rootNode, "Term", getTermType());
+    xml::newNumChild(rootNode, "Color", getColorOpt());
+    xml::newNumChild(rootNode, "TermCols", getTermCols());
+    xml::newNumChild(rootNode, "TermRows", getTermRows());
+    xml::newBoolChild(rootNode, "EOR", getEor());
+    xml::newBoolChild(rootNode, "Charset", getCharset());
+    xml::newBoolChild(rootNode, "UTF8", getUtf8());
 
-	return (true);
+    return (true);
 }
 bool Socket::loadTelopts(xmlNodePtr rootNode) {
-	xmlNodePtr curNode = rootNode->children;
+    xmlNodePtr curNode = rootNode->children;
 
-	while (curNode) {
-		if (NODE_NAME(curNode, "MCCP")) {
-			int mccp = 0;
-			xml::copyToNum(mccp, curNode);
-			if (mccp) {
-				write(telnet::will_comp2, false);
-			}
-		}
-		else if (NODE_NAME(curNode, "MXP")) xml::copyToBool(opts.mxp, curNode);
-		else if (NODE_NAME(curNode, "Color")) xml::copyToNum(opts.color, curNode);
-		else if (NODE_NAME(curNode, "MSDP"))  xml::copyToBool(opts.msdp, curNode);
-		else if (NODE_NAME(curNode, "ATCP")) {
-			xml::copyToBool(opts.atcp, curNode);
-			if (opts.atcp) {
-				if (opts.msdp) {
-					opts.atcp = false;
-				}
-			}
-		}
-		else if (NODE_NAME(curNode, "Term")) xml::copyToBString(term.type, curNode);
-		else if (NODE_NAME(curNode, "DumbClient")) xml::copyToBool(opts.dumb, curNode);
-		else if (NODE_NAME(curNode, "TermCols")) xml::copyToNum(term.cols, curNode);
-		else if (NODE_NAME(curNode, "TermRows")) xml::copyToNum(term.rows, curNode);
-		else if (NODE_NAME(curNode, "EOR")) xml::copyToBool(opts.eor, curNode);
-		else if (NODE_NAME(curNode, "Charset"))	xml::copyToBool(opts.charset, curNode);
-		else if (NODE_NAME(curNode, "UTF8")) xml::copyToBool(opts.UTF8, curNode);
+    while (curNode) {
+        if (NODE_NAME(curNode, "MCCP")) {
+            int mccp = 0;
+            xml::copyToNum(mccp, curNode);
+            if (mccp) {
+                write(telnet::will_comp2, false);
+            }
+        }
+        else if (NODE_NAME(curNode, "MXP")) xml::copyToBool(opts.mxp, curNode);
+        else if (NODE_NAME(curNode, "Color")) xml::copyToNum(opts.color, curNode);
+        else if (NODE_NAME(curNode, "MSDP"))  xml::copyToBool(opts.msdp, curNode);
+        else if (NODE_NAME(curNode, "ATCP")) {
+            xml::copyToBool(opts.atcp, curNode);
+            if (opts.atcp) {
+                if (opts.msdp) {
+                    opts.atcp = false;
+                }
+            }
+        }
+        else if (NODE_NAME(curNode, "Term")) xml::copyToBString(term.type, curNode);
+        else if (NODE_NAME(curNode, "DumbClient")) xml::copyToBool(opts.dumb, curNode);
+        else if (NODE_NAME(curNode, "TermCols")) xml::copyToNum(term.cols, curNode);
+        else if (NODE_NAME(curNode, "TermRows")) xml::copyToNum(term.rows, curNode);
+        else if (NODE_NAME(curNode, "EOR")) xml::copyToBool(opts.eor, curNode);
+        else if (NODE_NAME(curNode, "Charset")) xml::copyToBool(opts.charset, curNode);
+        else if (NODE_NAME(curNode, "UTF8")) xml::copyToBool(opts.UTF8, curNode);
 
-		curNode = curNode->next;
-	}
+        curNode = curNode->next;
+    }
 
-	// We can only have one of these enabled, MSDP trumps
-	if (opts.msdp) {
-		// Re-negotiate MSDP after a reboot
-		write(telnet::will_msdp, false);
-	} else if (opts.atcp) {
-		// Re-negotiate ATCP after a reboot
-		write(telnet::do_atcp, false);
+    // We can only have one of these enabled, MSDP trumps
+    if (opts.msdp) {
+        // Re-negotiate MSDP after a reboot
+        write(telnet::will_msdp, false);
+    } else if (opts.atcp) {
+        // Re-negotiate ATCP after a reboot
+        write(telnet::do_atcp, false);
 
-	}
+    }
 
-	return (true);
+    return (true);
 }
 
 //********************************************************************
-//						ANSI
+//                      ANSI
 //********************************************************************
 
 void Socket::ANSI(int color) {
-	if (fd > -1 && myPlayer) {
-		if (myPlayer->flagIsSet(P_ANSI_COLOR)) {
-			if (color & BOLD)
-				print("%c[%dm", 27, Ansi[COLOR_BOLD]);
-			if (color & BLINK)
-				print("%c[%dm", 27, Ansi[COLOR_BLINK]);
-			if (color & NORMAL)
-				print("%c[%dm", 27, Ansi[COLOR_NORMAL]);
+    if (fd > -1 && myPlayer) {
+        if (myPlayer->flagIsSet(P_ANSI_COLOR)) {
+            if (color & BOLD)
+                print("%c[%dm", 27, Ansi[COLOR_BOLD]);
+            if (color & BLINK)
+                print("%c[%dm", 27, Ansi[COLOR_BLINK]);
+            if (color & NORMAL)
+                print("%c[%dm", 27, Ansi[COLOR_NORMAL]);
 
-			if (color & RED)
-				print("%c[%dm", 27, Ansi[COLOR_RED]);
-			else if (color & GREEN)
-				print("%c[%dm", 27, Ansi[COLOR_GREEN]);
-			else if (color & YELLOW)
-				print("%c[%dm", 27, Ansi[COLOR_YELLOW]);
-			else if (color & BLUE)
-				print("%c[%dm", 27, Ansi[COLOR_BLUE]);
-			else if (color & MAGENTA)
-				print("%c[%dm", 27, Ansi[COLOR_MAGENTA]);
-			else if (color & CYAN)
-				print("%c[%dm", 27, Ansi[COLOR_CYAN]);
-			else if (color & BLACK)
-				print("%c[%dm", 27, Ansi[COLOR_BLACK]);
-			else if (color & WHITE)
-				print("%c[%dm", 27, Ansi[COLOR_WHITE]);
+            if (color & RED)
+                print("%c[%dm", 27, Ansi[COLOR_RED]);
+            else if (color & GREEN)
+                print("%c[%dm", 27, Ansi[COLOR_GREEN]);
+            else if (color & YELLOW)
+                print("%c[%dm", 27, Ansi[COLOR_YELLOW]);
+            else if (color & BLUE)
+                print("%c[%dm", 27, Ansi[COLOR_BLUE]);
+            else if (color & MAGENTA)
+                print("%c[%dm", 27, Ansi[COLOR_MAGENTA]);
+            else if (color & CYAN)
+                print("%c[%dm", 27, Ansi[COLOR_CYAN]);
+            else if (color & BLACK)
+                print("%c[%dm", 27, Ansi[COLOR_BLACK]);
+            else if (color & WHITE)
+                print("%c[%dm", 27, Ansi[COLOR_WHITE]);
 
-		} else if (myPlayer->flagIsSet(P_MIRC) && color != BLINK) {
-			if (color & BOLD)
-				print("%c", 2);
-			if (color & UNDERLINE)
-				print("%c", 31);
-			if (color & NORMAL)
-				print("%c%c", 3, 3);
+        } else if (myPlayer->flagIsSet(P_MIRC) && color != BLINK) {
+            if (color & BOLD)
+                print("%c", 2);
+            if (color & UNDERLINE)
+                print("%c", 31);
+            if (color & NORMAL)
+                print("%c%c", 3, 3);
 
-			if (color & RED)
-				print("%c%d", 3, Mirc[COLOR_RED]);
-			else if (color & GREEN)
-				print("%c%d", 3, Mirc[COLOR_GREEN]);
-			else if (color & YELLOW)
-				print("%c%d", 3, Mirc[COLOR_YELLOW]);
-			else if (color & BLUE)
-				print("%c%d", 3, Mirc[COLOR_BLUE]);
-			else if (color & MAGENTA)
-				print("%c%d", 3, Mirc[COLOR_MAGENTA]);
-			else if (color & CYAN)
-				print("%c%d", 3, Mirc[COLOR_CYAN]);
-			else if (color & BLACK)
-				print("%c%d", 3, Mirc[COLOR_BLACK]);
-			else if (color & WHITE)
-				print("%c%d", 3, Mirc[COLOR_WHITE]);
+            if (color & RED)
+                print("%c%d", 3, Mirc[COLOR_RED]);
+            else if (color & GREEN)
+                print("%c%d", 3, Mirc[COLOR_GREEN]);
+            else if (color & YELLOW)
+                print("%c%d", 3, Mirc[COLOR_YELLOW]);
+            else if (color & BLUE)
+                print("%c%d", 3, Mirc[COLOR_BLUE]);
+            else if (color & MAGENTA)
+                print("%c%d", 3, Mirc[COLOR_MAGENTA]);
+            else if (color & CYAN)
+                print("%c%d", 3, Mirc[COLOR_CYAN]);
+            else if (color & BLACK)
+                print("%c%d", 3, Mirc[COLOR_BLACK]);
+            else if (color & WHITE)
+                print("%c%d", 3, Mirc[COLOR_WHITE]);
 
-		}
-	}
+        }
+    }
 }
 
 //********************************************************************
-//						hasOutput
+//                      hasOutput
 //********************************************************************
 
 bool Socket::hasOutput(void) const {
-	return (!processed_output.empty() || !output.empty());
+    return (!processed_output.empty() || !output.empty());
 }
 
 //********************************************************************
-//						hasCommand
+//                      hasCommand
 //********************************************************************
 
 bool Socket::hasCommand(void) const {
-	return (!input.empty());
+    return (!input.empty());
 }
 
 //********************************************************************
-//						canForce
+//                      canForce
 //********************************************************************
 // True if the socket is playing (ie: fn is command and fnparam is 1)
 
 bool Socket::canForce(void) const {
-	return (fn == (void(*)(Socket*, bstring)) ::command && fnparam == 1);
+    return (fn == (void(*)(Socket*, bstring)) ::command && fnparam == 1);
 }
 
 //********************************************************************
-//						get
+//                      get
 //********************************************************************
 
 int Socket::getState(void) const {
-	if (!this)
-		return (UNUSED_STATE);
-	return (connState);
+    if (!this)
+        return (UNUSED_STATE);
+    return (connState);
 }
 bool Socket::isConnected() const {
-	return (connState < LOGIN_START && connState != CON_DISCONNECTING);
+    return (connState < LOGIN_START && connState != CON_DISCONNECTING);
 }
 bool Player::isConnected() const {
-	return (getSock()->isConnected());
+    return (getSock()->isConnected());
 }
 
 int Socket::getFd(void) const {
-	return (fd);
+    return (fd);
 }
 bool Socket::getMxp(void) const {
-	return (opts.mxp);
+    return (opts.mxp);
 }
 bool Socket::getMxpClientSecure() const {
     return(opts.mxpClientSecure);
@@ -1794,47 +1794,47 @@ void Socket::clearMxpClientSecure() {
     opts.mxpClientSecure = false;
 }
 int Socket::getMccp(void) const {
-	return (opts.mccp);
+    return (opts.mccp);
 }
 bool Socket::getMsdp() const {
-	return (opts.msdp);
+    return (opts.msdp);
 }
 ;
 bool Socket::getAtcp() const {
-	return (opts.atcp);
+    return (opts.atcp);
 }
 ;
 bool Socket::getMsp() const {
-	return (opts.msp);
+    return (opts.msp);
 }
 ;
 bool Socket::getCharset() const {
-	return (opts.charset);
+    return (opts.charset);
 }
 ;
 bool Socket::getUtf8() const {
-	return (opts.UTF8);
+    return (opts.UTF8);
 }
 bool Socket::getEor(void) const {
-	return (opts.eor);
+    return (opts.eor);
 }
 bool Socket::isDumbClient(void) const {
-	return(opts.dumb);
+    return(opts.dumb);
 }
 bool Socket::getNaws(void) const {
-	return (opts.naws);
+    return (opts.naws);
 }
 long Socket::getIdle(void) const {
-	return (time(0) - ltime);
+    return (time(0) - ltime);
 }
 const bstring& Socket::getIp(void) const {
-	return (host.ip);
+    return (host.ip);
 }
 const bstring& Socket::getHostname(void) const {
-	return (host.hostName);
+    return (host.hostName);
 }
 bstring Socket::getTermType() const {
-	return (term.type);
+    return (term.type);
 }
 int Socket::getColorOpt() const {
     return(opts.color);
@@ -1843,282 +1843,282 @@ void Socket::setColorOpt(int opt) {
     opts.color = opt;
 }
 int Socket::getTermCols() const {
-	return (term.cols);
+    return (term.cols);
 }
 int Socket::getTermRows() const {
-	return (term.rows);
+    return (term.rows);
 }
 
 int Socket::getParam() {
-	return (fnparam);
+    return (fnparam);
 }
 void Socket::setParam(int newParam) {
-	fnparam = newParam;
+    fnparam = newParam;
 }
 
 void Socket::setHostname(bstring pName) {
-	host.hostName = pName;
+    host.hostName = pName;
 }
 void Socket::setIp(bstring pIp) {
-	host.ip = pIp;
+    host.ip = pIp;
 }
 void Socket::setPlayer(Player* ply) {
-	myPlayer = ply;
+    myPlayer = ply;
 }
 
 Player* Socket::getPlayer() const {
-	if (!this)
-		return (NULL);
-	return (myPlayer);
+    if (!this)
+        return (NULL);
+    return (myPlayer);
 }
 
 // MCCP Hooks
 void *zlib_alloc(void *opaque, unsigned int items, unsigned int size) {
-	return calloc(items, size);
+    return calloc(items, size);
 }
 void zlib_free(void *opaque, void *address) {
-	free(address);
+    free(address);
 }
 
 //********************************************************************
-//						nonBlock
+//                      nonBlock
 //********************************************************************
 
 int nonBlock(int pFd) {
-	int flags;
-	flags = fcntl(pFd, F_GETFL, 0);
-	flags |= O_NONBLOCK;
-	if (fcntl(pFd, F_SETFL, flags) < 0)
-		return (-1);
-	return (0);
+    int flags;
+    flags = fcntl(pFd, F_GETFL, 0);
+    flags |= O_NONBLOCK;
+    if (fcntl(pFd, F_SETFL, flags) < 0)
+        return (-1);
+    return (0);
 }
 
 //*********************************************************************
-//						showLoginScreen
+//                      showLoginScreen
 //*********************************************************************
 
 void Socket::showLoginScreen(bool dnsDone) {
-	//*********************************************************************
-	// As a part of the copyright agreement this section must be left intact
-	//*********************************************************************
-	print(
-			"The Realms of Hell (RoH beta v" VERSION ")\n\tBased on Mordor by Brett Vickers, Brooke Paul.\n");
-	print("Programmed by: Jason Mitchell, Randi Mitchell and Tim Callahan.\n");
-	print("Contributions by: Jonathan Hseu.");
+    //*********************************************************************
+    // As a part of the copyright agreement this section must be left intact
+    //*********************************************************************
+    print(
+            "The Realms of Hell (RoH beta v" VERSION ")\n\tBased on Mordor by Brett Vickers, Brooke Paul.\n");
+    print("Programmed by: Jason Mitchell, Randi Mitchell and Tim Callahan.\n");
+    print("Contributions by: Jonathan Hseu.");
 
-	char file[80];
-	sprintf(file, "%s/login_screen.txt", Path::Config);
-	viewLoginFile(this, file);
+    char file[80];
+    sprintf(file, "%s/login_screen.txt", Path::Config);
+    viewLoginFile(this, file);
 
-	if (dnsDone)
-		checkLockOut();
-	flush();
+    if (dnsDone)
+        checkLockOut();
+    flush();
 }
 
 //********************************************************************
-//						askFor
+//                      askFor
 //********************************************************************
 
 void Socket::askFor(const char *str) {
-	ASSERTLOG( str);
-	if (getEor() == 1) {
-		char eor_str[] = { (char) IAC, (char) EOR, '\0' };
-		printColor(str);
-		print(eor_str);
-	} else {
-		char ga_str[] = { (char) IAC, (char) GA, '\0' };
-		printColor(str);
-		print(ga_str);
-	}
+    ASSERTLOG( str);
+    if (getEor() == 1) {
+        char eor_str[] = { (char) IAC, (char) EOR, '\0' };
+        printColor(str);
+        print(eor_str);
+    } else {
+        char ga_str[] = { (char) IAC, (char) GA, '\0' };
+        printColor(str);
+        print(ga_str);
+    }
 }
 
 unsigned const char mssp_val[] = { MSSP_VAL, '\0' };
 unsigned const char mssp_var[] = { MSSP_VAR, '\0' };
 
 void addMSSPVar(std::ostringstream& msspStr, bstring var) {
-	msspStr << mssp_var << var;
+    msspStr << mssp_var << var;
 }
 
 template<class T>
 void addMSSPVal(std::ostringstream& msspStr, T val) {
-	msspStr << mssp_val << val;
+    msspStr << mssp_val << val;
 }
 
 int Socket::sendMSSP() {
-	std::cout << "Sending MSSP string\n";
+    std::cout << "Sending MSSP string\n";
 
-	std::ostringstream msspStr;
+    std::ostringstream msspStr;
 
-	msspStr << telnet::sb_mssp_start;
-	addMSSPVar(msspStr, "NAME");
-	addMSSPVal<bstring>(msspStr, "The Realms of Hell");
+    msspStr << telnet::sb_mssp_start;
+    addMSSPVar(msspStr, "NAME");
+    addMSSPVal<bstring>(msspStr, "The Realms of Hell");
 
-	addMSSPVar(msspStr, "PLAYERS");
-	addMSSPVal<int>(msspStr, gServer->getNumPlayers());
+    addMSSPVar(msspStr, "PLAYERS");
+    addMSSPVal<int>(msspStr, gServer->getNumPlayers());
 
-	addMSSPVar(msspStr, "UPTIME");
-	addMSSPVal<long>(msspStr, StartTime);
+    addMSSPVar(msspStr, "UPTIME");
+    addMSSPVal<long>(msspStr, StartTime);
 
-	addMSSPVar(msspStr, "HOSTNAME");
-	addMSSPVal<bstring>(msspStr, "mud.rohonline.net");
+    addMSSPVar(msspStr, "HOSTNAME");
+    addMSSPVal<bstring>(msspStr, "mud.rohonline.net");
 
-	addMSSPVar(msspStr, "PORT");
-	addMSSPVal<bstring>(msspStr, "23");
-	addMSSPVal<bstring>(msspStr, "3333");
+    addMSSPVar(msspStr, "PORT");
+    addMSSPVal<bstring>(msspStr, "23");
+    addMSSPVal<bstring>(msspStr, "3333");
 
-	addMSSPVar(msspStr, "CODEBASE");
-	addMSSPVal<bstring>(msspStr, "RoH beta v" VERSION);
+    addMSSPVar(msspStr, "CODEBASE");
+    addMSSPVal<bstring>(msspStr, "RoH beta v" VERSION);
 
-	addMSSPVar(msspStr, "VERSION");
-	addMSSPVal<bstring>(msspStr, "RoH beta v" VERSION);
+    addMSSPVar(msspStr, "VERSION");
+    addMSSPVal<bstring>(msspStr, "RoH beta v" VERSION);
 
-	addMSSPVar(msspStr, "CREATED");
-	addMSSPVal<bstring>(msspStr, "1998");
+    addMSSPVar(msspStr, "CREATED");
+    addMSSPVal<bstring>(msspStr, "1998");
 
-	addMSSPVar(msspStr, "LANGUAGE");
-	addMSSPVal<bstring>(msspStr, "English");
+    addMSSPVar(msspStr, "LANGUAGE");
+    addMSSPVal<bstring>(msspStr, "English");
 
-	addMSSPVar(msspStr, "LOCATION");
-	addMSSPVal<bstring>(msspStr, "United States");
+    addMSSPVar(msspStr, "LOCATION");
+    addMSSPVal<bstring>(msspStr, "United States");
 
-	addMSSPVar(msspStr, "WEBSITE");
-	addMSSPVal<bstring>(msspStr, "http://www.rohonline.net");
+    addMSSPVar(msspStr, "WEBSITE");
+    addMSSPVal<bstring>(msspStr, "http://www.rohonline.net");
 
-	addMSSPVar(msspStr, "FAMILY");
-	addMSSPVal<bstring>(msspStr, "Mordor");
+    addMSSPVar(msspStr, "FAMILY");
+    addMSSPVal<bstring>(msspStr, "Mordor");
 
-	addMSSPVar(msspStr, "GENRE");
-	addMSSPVal<bstring>(msspStr, "Fantasy");
+    addMSSPVar(msspStr, "GENRE");
+    addMSSPVal<bstring>(msspStr, "Fantasy");
 
-	addMSSPVar(msspStr, "GAMEPLAY");
-	addMSSPVal<bstring>(msspStr, "Roleplaying");
-	addMSSPVal<bstring>(msspStr, "Hack and Slash");
-	addMSSPVal<bstring>(msspStr, "Adventure");
+    addMSSPVar(msspStr, "GAMEPLAY");
+    addMSSPVal<bstring>(msspStr, "Roleplaying");
+    addMSSPVal<bstring>(msspStr, "Hack and Slash");
+    addMSSPVal<bstring>(msspStr, "Adventure");
 
-	addMSSPVar(msspStr, "STATUS");
-	addMSSPVal<bstring>(msspStr, "Live");
+    addMSSPVar(msspStr, "STATUS");
+    addMSSPVal<bstring>(msspStr, "Live");
 
-	addMSSPVar(msspStr, "GAMESYSTEM");
-	addMSSPVal<bstring>(msspStr, "Custom");
+    addMSSPVar(msspStr, "GAMESYSTEM");
+    addMSSPVal<bstring>(msspStr, "Custom");
 
-	addMSSPVar(msspStr, "AREAS");
-	addMSSPVal<int>(msspStr, -1);
+    addMSSPVar(msspStr, "AREAS");
+    addMSSPVal<int>(msspStr, -1);
 
-	addMSSPVar(msspStr, "HELPFILES");
-	addMSSPVal<int>(msspStr, 1000);
+    addMSSPVar(msspStr, "HELPFILES");
+    addMSSPVal<int>(msspStr, 1000);
 
-	addMSSPVar(msspStr, "MOBILES");
-	addMSSPVal<int>(msspStr, 5100);
+    addMSSPVar(msspStr, "MOBILES");
+    addMSSPVal<int>(msspStr, 5100);
 
-	addMSSPVar(msspStr, "OBJECTS");
-	addMSSPVal<int>(msspStr, 7500);
+    addMSSPVar(msspStr, "OBJECTS");
+    addMSSPVal<int>(msspStr, 7500);
 
-	addMSSPVar(msspStr, "ROOMS");
-	addMSSPVal<int>(msspStr, 15000);
+    addMSSPVar(msspStr, "ROOMS");
+    addMSSPVal<int>(msspStr, 15000);
 
-	addMSSPVar(msspStr, "CLASSES");
-	addMSSPVal<int>(msspStr, gConfig->classes.size());
+    addMSSPVar(msspStr, "CLASSES");
+    addMSSPVal<int>(msspStr, gConfig->classes.size());
 
-	addMSSPVar(msspStr, "LEVELS");
-	addMSSPVal<int>(msspStr, MAXALVL);
+    addMSSPVar(msspStr, "LEVELS");
+    addMSSPVal<int>(msspStr, MAXALVL);
 
-	addMSSPVar(msspStr, "RACES");
-	addMSSPVal<int>(msspStr, gConfig->getPlayableRaceCount());
+    addMSSPVar(msspStr, "RACES");
+    addMSSPVal<int>(msspStr, gConfig->getPlayableRaceCount());
 
-	addMSSPVar(msspStr, "SKILLS");
-	addMSSPVal<int>(msspStr, gConfig->skills.size());
+    addMSSPVar(msspStr, "SKILLS");
+    addMSSPVal<int>(msspStr, gConfig->skills.size());
 
-	addMSSPVar(msspStr, "GMCP");
-	addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVar(msspStr, "GMCP");
+    addMSSPVal<bstring>(msspStr, "0");
 
-	addMSSPVar(msspStr, "ATCP");
-	addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVar(msspStr, "ATCP");
+    addMSSPVal<bstring>(msspStr, "1");
 
-	addMSSPVar(msspStr, "SSL");
-	addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVar(msspStr, "SSL");
+    addMSSPVal<bstring>(msspStr, "0");
 
-	addMSSPVar(msspStr, "ZMP");
-	addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVar(msspStr, "ZMP");
+    addMSSPVal<bstring>(msspStr, "0");
 
-	addMSSPVar(msspStr, "PUEBLO");
-	addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVar(msspStr, "PUEBLO");
+    addMSSPVal<bstring>(msspStr, "0");
 
-	addMSSPVar(msspStr, "MSDP");
-	addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVar(msspStr, "MSDP");
+    addMSSPVal<bstring>(msspStr, "1");
 
-	addMSSPVar(msspStr, "MSP");
-	addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVar(msspStr, "MSP");
+    addMSSPVal<bstring>(msspStr, "1");
 
-	// TODO: UTF-8: Change to 1
-	addMSSPVar(msspStr, "UTF-8");
-	addMSSPVal<bstring>(msspStr, "0");
+    // TODO: UTF-8: Change to 1
+    addMSSPVar(msspStr, "UTF-8");
+    addMSSPVal<bstring>(msspStr, "0");
 
-	addMSSPVar(msspStr, "VT100");
-	addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVar(msspStr, "VT100");
+    addMSSPVal<bstring>(msspStr, "0");
 
-	// TODO: XTERM 256: Change to 1
-	addMSSPVar(msspStr, "XTERM 256 COLORS");
-	addMSSPVal<bstring>(msspStr, "0");
+    // TODO: XTERM 256: Change to 1
+    addMSSPVar(msspStr, "XTERM 256 COLORS");
+    addMSSPVal<bstring>(msspStr, "0");
 
-	addMSSPVar(msspStr, "ANSI");
-	addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVar(msspStr, "ANSI");
+    addMSSPVal<bstring>(msspStr, "1");
 
-	addMSSPVar(msspStr, "MCCP");
-	addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVar(msspStr, "MCCP");
+    addMSSPVal<bstring>(msspStr, "1");
 
-	addMSSPVar(msspStr, "MXP");
-	addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVar(msspStr, "MXP");
+    addMSSPVal<bstring>(msspStr, "1");
 
-	addMSSPVar(msspStr, "PAY TO PLAY");
-	addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVar(msspStr, "PAY TO PLAY");
+    addMSSPVal<bstring>(msspStr, "0");
 
-	addMSSPVar(msspStr, "PAY FOR PERKS");
-	addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVar(msspStr, "PAY FOR PERKS");
+    addMSSPVal<bstring>(msspStr, "0");
 
-	addMSSPVar(msspStr, "HIRING BUILDERS");
-	addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVar(msspStr, "HIRING BUILDERS");
+    addMSSPVal<bstring>(msspStr, "1");
 
-	addMSSPVar(msspStr, "HIRING CODERS");
-	addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVar(msspStr, "HIRING CODERS");
+    addMSSPVal<bstring>(msspStr, "1");
 
-	addMSSPVar(msspStr, "MULTICLASSING");
-	addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVar(msspStr, "MULTICLASSING");
+    addMSSPVal<bstring>(msspStr, "1");
 
-	addMSSPVar(msspStr, "NEWBIE FRIENDLY");
-	addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVar(msspStr, "NEWBIE FRIENDLY");
+    addMSSPVal<bstring>(msspStr, "1");
 
-	addMSSPVar(msspStr, "PLAYER CLANS");
-	addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVar(msspStr, "PLAYER CLANS");
+    addMSSPVal<bstring>(msspStr, "0");
 
-	addMSSPVar(msspStr, "PLAYER CRAFTING");
-	addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVar(msspStr, "PLAYER CRAFTING");
+    addMSSPVal<bstring>(msspStr, "1");
 
-	addMSSPVar(msspStr, "PLAYER GUILDS");
-	addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVar(msspStr, "PLAYER GUILDS");
+    addMSSPVal<bstring>(msspStr, "1");
 
-	addMSSPVar(msspStr, "EQUIPMENT SYSTEM");
-	addMSSPVal<bstring>(msspStr, "Both");
+    addMSSPVar(msspStr, "EQUIPMENT SYSTEM");
+    addMSSPVal<bstring>(msspStr, "Both");
 
-	addMSSPVar(msspStr, "MULTIPLAYING");
-	addMSSPVal<bstring>(msspStr, "Restricted");
+    addMSSPVar(msspStr, "MULTIPLAYING");
+    addMSSPVal<bstring>(msspStr, "Restricted");
 
-	addMSSPVar(msspStr, "PLAYERKILLING");
-	addMSSPVal<bstring>(msspStr, "Restricted");
+    addMSSPVar(msspStr, "PLAYERKILLING");
+    addMSSPVal<bstring>(msspStr, "Restricted");
 
-	addMSSPVar(msspStr, "QUEST SYSTEM");
-	addMSSPVal<bstring>(msspStr, "Integrated");
+    addMSSPVar(msspStr, "QUEST SYSTEM");
+    addMSSPVal<bstring>(msspStr, "Integrated");
 
-	addMSSPVar(msspStr, "ROLEPLAYING");
-	addMSSPVal<bstring>(msspStr, "Encouraged");
+    addMSSPVar(msspStr, "ROLEPLAYING");
+    addMSSPVal<bstring>(msspStr, "Encouraged");
 
-	addMSSPVar(msspStr, "TRAINING SYSTEM");
-	addMSSPVal<bstring>(msspStr, "Both");
+    addMSSPVar(msspStr, "TRAINING SYSTEM");
+    addMSSPVal<bstring>(msspStr, "Both");
 
-	addMSSPVar(msspStr, "WORLD ORIGINALITY");
-	addMSSPVal<bstring>(msspStr, "All Original");
+    addMSSPVar(msspStr, "WORLD ORIGINALITY");
+    addMSSPVal<bstring>(msspStr, "All Original");
 
-	msspStr << telnet::sb_mssp_end;
+    msspStr << telnet::sb_mssp_end;
 
-	return (write(msspStr.str()));
+    return (write(msspStr.str()));
 }
 

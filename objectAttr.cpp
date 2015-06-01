@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -20,107 +20,107 @@
 
 
 //*********************************************************************
-//						track
+//                      track
 //*********************************************************************
 
 void Object::track(Player* player) { lastMod = player->getName(); }
 
 //*********************************************************************
-//						setDelay
+//                      setDelay
 //*********************************************************************
 
 void Object::setDelay(int newDelay) { delay = newDelay; }
 
 //*********************************************************************
-//						setExtra
+//                      setExtra
 //*********************************************************************
 
 void Object::setExtra(int x) { extra = x; }
 
 //*********************************************************************
-//						setWeight
+//                      setWeight
 //*********************************************************************
 
 void Object::setWeight(short w) { weight = w; }
 
 //*********************************************************************
-//						setBulk
+//                      setBulk
 //*********************************************************************
 
 void Object::setBulk(short b) { bulk = MAX(0, b); }
 
 //*********************************************************************
-//						setMaxbulk
+//                      setMaxbulk
 //*********************************************************************
 
 void Object::setMaxbulk(short b) { maxbulk = b; }
 
 //*********************************************************************
-//						setSize
+//                      setSize
 //*********************************************************************
 
 void Object::setSize(Size s) { size = s; }
 
 //*********************************************************************
-//						setType
+//                      setType
 //*********************************************************************
 
 void Object::setType(short t) { type = t; }
 
 //*********************************************************************
-//						setWearflag
+//                      setWearflag
 //*********************************************************************
 
 void Object::setWearflag(short w) { wearflag = w; }
 
 //*********************************************************************
-//						setArmor
+//                      setArmor
 //*********************************************************************
 
 void Object::setArmor(short a) { armor = MAX(0, MIN(a, 1000)); }
 
 //*********************************************************************
-//						setQuality
+//                      setQuality
 //*********************************************************************
 
 void Object::setQuality(short q) { quality = q; }
 
 //*********************************************************************
-//						setAdjustment
+//                      setAdjustment
 //*********************************************************************
 
 void Object::setAdjustment(short a) {
-	removeFromSet();
-	adjustment = MAX(-127, MIN(a, 127));
-	addToSet();
+    removeFromSet();
+    adjustment = MAX(-127, MIN(a, 127));
+    addToSet();
 }
 
 //*********************************************************************
-//						setNumAttacks
+//                      setNumAttacks
 //*********************************************************************
 
 void Object::setNumAttacks(short n) { numAttacks = n; }
 
 //*********************************************************************
-//						setShotsmax
+//                      setShotsmax
 //*********************************************************************
 
 void Object::setShotsMax(short s) { shotsMax = s; }
 
 //*********************************************************************
-//						setShotscur
+//                      setShotscur
 //*********************************************************************
 
 void Object::setShotsCur(short s) { shotsCur = s; }
 
 //*********************************************************************
-//						decShotscur
+//                      decShotscur
 //*********************************************************************
 
 void Object::decShotsCur(short s) { shotsCur -= s; }
 
 //*********************************************************************
-//						incShotscur
+//                      incShotscur
 //*********************************************************************
 
 void Object::incShotsCur(short s) { shotsCur += s; }
@@ -151,202 +151,202 @@ void Object::incChargesCur(short s) { chargesCur += s; }
 
 
 //*********************************************************************
-//						setMagicpower
+//                      setMagicpower
 //*********************************************************************
 
 void Object::setMagicpower(short m) { magicpower = m; }
 
 //*********************************************************************
-//						setLevel
+//                      setLevel
 //*********************************************************************
 
 void Object::setLevel(short l) { level = l; }
 
 //*********************************************************************
-//						setRequiredSkill
+//                      setRequiredSkill
 //*********************************************************************
 
 void Object::setRequiredSkill(int s) { requiredSkill = s; }
 
 //*********************************************************************
-//						setMinStrength
+//                      setMinStrength
 //*********************************************************************
 
 void Object::setMinStrength(short s) { minStrength = s; }
 
 //*********************************************************************
-//						setClan
+//                      setClan
 //*********************************************************************
 
 void Object::setClan(short c) { clan = c; }
 
 //*********************************************************************
-//						setSpecial
+//                      setSpecial
 //*********************************************************************
 
 void Object::setSpecial(short s) { special = s; }
 
 //*********************************************************************
-//						setQuestnum
+//                      setQuestnum
 //*********************************************************************
 
 void Object::setQuestnum(short q) { questnum = q; }
 
 //*********************************************************************
-//						setEffect
+//                      setEffect
 //*********************************************************************
 
 void Object::setEffect(bstring e) { effect = e; }
 
 //*********************************************************************
-//						setEffectDuration
+//                      setEffectDuration
 //*********************************************************************
 
 void Object::setEffectDuration(long d) { effectDuration = MAX(-1, MIN(d, EFFECT_MAX_DURATION)); }
 
 //*********************************************************************
-//						setEffectStrength
+//                      setEffectStrength
 //*********************************************************************
 
 void Object::setEffectStrength(short s) { effectStrength = MAX(0, MIN(s, EFFECT_MAX_STRENGTH)); }
 
 //*********************************************************************
-//						setCoinCost
+//                      setCoinCost
 //*********************************************************************
 
 void Object::setCoinCost(unsigned long c) { coinCost = c; }
 
 //*********************************************************************
-//						setShopValue
+//                      setShopValue
 //*********************************************************************
 
 void Object::setShopValue(unsigned long v) {
-	removeFromSet();
-	shopValue = MIN(200000000, v);
-	addToSet();
+    removeFromSet();
+    shopValue = MIN(200000000, v);
+    addToSet();
 }
 
 //*********************************************************************
-//						setLotteryCycle
+//                      setLotteryCycle
 //*********************************************************************
 
 void Object::setLotteryCycle(int c) { lotteryCycle = c; }
 
 //*********************************************************************
-//						setLotteryNumbers
+//                      setLotteryNumbers
 //*********************************************************************
 
 void Object::setLotteryNumbers(short i, short n) { lotteryNumbers[i] = n; }
 
 //*********************************************************************
-//						setRecipe
+//                      setRecipe
 //*********************************************************************
 
 void Object::setRecipe(int r) { recipe = r; }
 
 //*********************************************************************
-//						setMaterial
+//                      setMaterial
 //*********************************************************************
 
 void Object::setMaterial(Material m) { material = m; }
 
 //*********************************************************************
-//						setQuestOwner
+//                      setQuestOwner
 //*********************************************************************
 
 void Object::setQuestOwner(const Player* player) { questOwner = player->getName(); }
 
 //*********************************************************************
-//						clearEffect
+//                      clearEffect
 //*********************************************************************
 
 void Object::clearEffect() {
-	setEffect("");
-	setEffectDuration(0);
-	setEffectStrength(0);
+    setEffect("");
+    setEffectDuration(0);
+    setEffectStrength(0);
 }
 
 //*********************************************************************
-//						flagIsSet
+//                      flagIsSet
 //*********************************************************************
 
 bool Object::flagIsSet(int flag) const {
-	return(flags[flag/8] & 1<<(flag%8));
+    return(flags[flag/8] & 1<<(flag%8));
 }
 
 //*********************************************************************
-//						setFlag
+//                      setFlag
 //*********************************************************************
 
 void Object::setFlag(int flag) {
-	flags[flag/8] |= 1<<(flag%8);
+    flags[flag/8] |= 1<<(flag%8);
 }
 
 //*********************************************************************
-//						clearFlag
+//                      clearFlag
 //*********************************************************************
 
 void Object::clearFlag(int flag) {
-	flags[flag/8] &= ~(1<<(flag%8));
+    flags[flag/8] &= ~(1<<(flag%8));
 }
 
 //*********************************************************************
-//						toggleFlag
+//                      toggleFlag
 //*********************************************************************
 
 bool Object::toggleFlag(int flag) {
-	if(flagIsSet(flag))
-		clearFlag(flag);
-	else
-		setFlag(flag);
-	return(flagIsSet(flag));
+    if(flagIsSet(flag))
+        clearFlag(flag);
+    else
+        setFlag(flag);
+    return(flagIsSet(flag));
 }
 
 //*********************************************************************
-//						getVersion
+//                      getVersion
 //*********************************************************************
 
 bstring Object::getVersion() const {
-	return(version);
+    return(version);
 }
 
 //*********************************************************************
-//						setMade
+//                      setMade
 //*********************************************************************
 
 void Object::setMade() {
-	made = time(0);
+    made = time(0);
 }
 
 //*********************************************************************
-//						isHeavyArmor
+//                      isHeavyArmor
 //*********************************************************************
 
 bool Object::isHeavyArmor() const {
-//	return(type == ARMOR && (subType == "chain" || subType == "plate"));
-	return(type == ARMOR && subType == "plate");
+//  return(type == ARMOR && (subType == "chain" || subType == "plate"));
+    return(type == ARMOR && subType == "plate");
 }
 
 //*********************************************************************
-//						isMediumArmor
+//                      isMediumArmor
 //*********************************************************************
 
 bool Object::isMediumArmor() const {
-	return(type == ARMOR && subType == "chain");
+    return(type == ARMOR && subType == "chain");
 }
 
 //*********************************************************************
-//						isLightArmor
+//                      isLightArmor
 //*********************************************************************
 
 bool Object::isLightArmor() const {
-	return(type == ARMOR && (subType == "cloth" || subType == "leather"));
+    return(type == ARMOR && (subType == "cloth" || subType == "leather"));
 }
 
 //*********************************************************************
-//						isBroken
+//                      isBroken
 //*********************************************************************
 
 bool Object::isBroken() const {
-	return(shotsCur == 0 && shotsMax >= 0 && (type == ARMOR || type == KEY || type == WEAPON));
+    return(shotsCur == 0 && shotsMax >= 0 && (type == ARMOR || type == KEY || type == WEAPON));
 }

@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -21,29 +21,29 @@
 
 namespace Help {
 //**********************************************************************
-//						loadHelpTemplate
+//                      loadHelpTemplate
 //**********************************************************************
 
 bstring loadHelpTemplate(const char* filename) {
-	char	file[80], line[200];
-	bstring str;
+    char    file[80], line[200];
+    bstring str;
 
-	sprintf(file, "%s%s.txt", Path::HelpTemplate, filename);
-	std::ifstream in(file);
+    sprintf(file, "%s%s.txt", Path::HelpTemplate, filename);
+    std::ifstream in(file);
 
-	// if there isn't a template
-	if(!in)
-		return("");
+    // if there isn't a template
+    if(!in)
+        return("");
 
-	// read all the information from the template in
-	while(!in.eof()) {
-		in.getline(line, 200, '\n');
-		str += line;
-		str += "\n";
-	}
-	in.close();
+    // read all the information from the template in
+    while(!in.eof()) {
+        in.getline(line, 200, '\n');
+        str += line;
+        str += "\n";
+    }
+    in.close();
 
-	return(str);
+    return(str);
 }
 
 }

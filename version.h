@@ -1,6 +1,6 @@
 /*
  * version.h
- *	 Version
+ *   Version
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -10,8 +10,8 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- * 	Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
- * 	   Contributions by Tim Callahan, Jonathan Hseu
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
@@ -22,7 +22,7 @@
 #define VERSION_MINOR "4"
 #define VERSION_SUB "7e"
 
-#define VERSION	VERSION_MAJOR "." VERSION_MINOR VERSION_SUB
+#define VERSION VERSION_MAJOR "." VERSION_MINOR VERSION_SUB
 
 #endif
 
