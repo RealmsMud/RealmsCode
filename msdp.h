@@ -28,6 +28,7 @@ protected:
     bstring         name;               // Name of this variable
     bstring         sendScript;         // Python script to send this variable
     bstring         updateScript;       // Python script to update this variable
+    bool            reportable;         // This variable is reportable
     bool            requiresPlayer;     // Variable requires a player attached to the socket
     bool            configurable;       // Can it be configured by the client?
     bool            writeOnce;          // Can only set this variable once
@@ -44,6 +45,7 @@ public:
     bstring         getUpdateScript() const;
     bool            hasUpdateScript() const;
     bool            isConfigurable() const;
+    bool            isReportable() const;
     bool            isWriteOnce() const;
     bool            getRequiresPlayer() const;
     int             getUpdateInterval() const;

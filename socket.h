@@ -56,6 +56,7 @@ namespace telnet {
     #define TELOPT_MSP          90
     #define TELOPT_MXP          91
     #define TELOPT_ATCP         200
+    #define TELOPT_GMCP         201
 
     #define SEND                1
     #define ACCEPTED            2
@@ -90,6 +91,9 @@ namespace telnet {
     extern unsigned const char will_msdp[];     // Mud Server Data Protocol support
     extern unsigned const char wont_msdp[];     // Stop MSDP support
 
+    extern unsigned const char will_msdp[];     // Generic Mud Communication Protocol
+    extern unsigned const char wont_msdp[];     // Stop GMCP support
+
     extern unsigned const char do_atcp[];       // ATCP support
     extern unsigned const char wont_atcp[];     // Stop ATCP support
 
@@ -110,6 +114,7 @@ namespace telnet {
     extern unsigned const char sb_mssp_end[];   // End MSSP String
 
     extern unsigned const char do_ttype[];      // Terminal type negotation
+    extern unsigned const char wont_ttype[];    // Terminal type negotation
     extern unsigned const char query_ttype[];   // Begin terminal type subnegotiations
 
     extern unsigned const char do_naws[];       // Window size negotation NAWS
@@ -178,7 +183,7 @@ public:
     void finishLogin();
 
 
-    int write(bstring toWrite, bool pSpy = true, bool process = true);
+    ssize_t write(bstring toWrite, bool pSpy = true, bool process = true);
     void askFor(const char *str);
 
     void vprint(const char *fmt, va_list ap);

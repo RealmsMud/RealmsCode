@@ -98,12 +98,18 @@ bool Socket::msdpList(bstring& value) {
                 "COMMANDS LISTS CONFIGURABLE_VARIABLES REPORTABLE_VARIABLES REPORTED_VARIABLES SENDABLE_VARIABLES";
         msdpSendList(value, MsdpLists);
         return (true);
-    } else if (value.equals("SENDABLE_VARIABLES")
-            || value.equals("REPORTABLE_VARIABLES")) {
-        // Same list for now
+    } else if (value.equals("SENDABLE_VARIABLES")) {
         std::ostringstream oStr;
         for (std::pair<bstring, MsdpVariable*> p : gConfig->msdpVariables) {
             oStr << " " << p.second->getName();
+        }
+        msdpSendList(value, bstring(oStr.str()).trim());
+        return (true);
+    } else if (value.equals("REPORTABLE_VARIABLES")) {
+        std::ostringstream oStr;
+        for (std::pair<bstring, MsdpVariable*> p : gConfig->msdpVariables) {
+            if(p.second->isReportable())
+                oStr << " " << p.second->getName();
         }
         msdpSendList(value, bstring(oStr.str()).trim());
         return (true);
@@ -128,7 +134,7 @@ bool Socket::msdpList(bstring& value) {
         for (std::pair<bstring, MsdpVariable*> p : gConfig->msdpVariables) {
             oStr << " " << p.second->getName();
         }
-        msdpSendList("REPORTABLE_VARIABLES", bstring(oStr.str()).trim());
+        msdpSendList("SENDABLE_VARIABLES", bstring(oStr.str()).trim());
         return (true);
     }
 
@@ -153,7 +159,7 @@ bool Socket::isReporting(bstring& value) {
 
 bool Socket::msdpReport(bstring& value) {
     MsdpVariable* msdpVar = gConfig->getMsdpVariable(value);
-    if (!msdpVar || msdpVar->getName() != value)
+    if (!msdpVar || msdpVar->getName() != value || !msdpVar->isReportable())
         return (false);
 
     if (isReporting(value)) {
@@ -201,23 +207,17 @@ bool Socket::msdpSend(bstring value) {
     }
 }
 bool Socket::msdpSend(ReportedMsdpVariable* reportedVar) {
-    if(reportedVar == NULL)
-        return(false);
-
-    if(reportedVar->getRequiresPlayer() == true && getPlayer() == NULL)
-        return(false);
-
-    // Send scripts will trump locally set value
-    if(reportedVar->hasSendScript())
-        gServer->runPython(reportedVar->getSendScript(), "", this, getPlayer(), reportedVar);
-    else {
-        if(reportedVar == NULL)
-            msdpSendPair(reportedVar->getName(), "N/A");
-        else
+    if(!reportedVar || (reportedVar->getRequiresPlayer() && !getPlayer())) {
+        msdpSendPair(reportedVar->getName(), "N/A");
+    } else {
+        // Send scripts will trump locally set value
+        if(reportedVar->hasSendScript())
+            gServer->runPython(reportedVar->getSendScript(), "", this, getPlayer(), reportedVar);
+        else {
             msdpSendPair(reportedVar->getName(), reportedVar->getValue());
+        }
     }
     return(true);
-
 }
 bool Socket::msdpUnReport(bstring& value) {
     std::map<bstring, ReportedMsdpVariable*>::iterator it = msdpReporting.find(value);
@@ -232,7 +232,6 @@ bool Socket::msdpUnReport(bstring& value) {
         msdpReporting.erase(it);
         return (true);
     }
-    return (false);
 }
 void Socket::msdpSendList(bstring variable, bstring value) {
     std::ostringstream oStr;
@@ -251,7 +250,7 @@ void Socket::msdpSendList(bstring variable, bstring value) {
                 << (unsigned char) IAC << (unsigned char) SE;
     }
 
-    bprint(oStr.str());
+    write(oStr.str());
 
 }
 void Socket::msdpSendPair(bstring variable, bstring value) {
@@ -273,7 +272,7 @@ void Socket::msdpSendPair(bstring variable, bstring value) {
                 << (unsigned char) IAC << (unsigned char) SE;
     }
 
-    bprint(oStr.str());
+    write(oStr.str());
 }
 
 
@@ -288,6 +287,7 @@ MsdpVariable* Config::getMsdpVariable(bstring& name) {
 void MsdpVariable::init() {
     configurable = writeOnce = false;
     requiresPlayer = true; // Defaults to true, manually disable via xml
+    reportable = false; // Not reportable by default, only sendable
     updateInterval = 1;
     name ="unknown";
 }
@@ -301,6 +301,7 @@ MsdpVariable::MsdpVariable(xmlNodePtr rootNode) {
             else if(NODE_NAME(curNode, "UpdateScript")) xml::copyToBString(updateScript, curNode);
             else if(NODE_NAME(curNode, "RequiresPlayer")) xml::copyToBool(requiresPlayer, curNode);
             else if(NODE_NAME(curNode, "Configurable")) xml::copyToBool(configurable, curNode);
+            else if(NODE_NAME(curNode, "Reportable")) xml::copyToBool(reportable, curNode);
             else if(NODE_NAME(curNode, "WriteOnce")) xml::copyToBool(writeOnce, curNode);
             else if(NODE_NAME(curNode, "UpdateInterval")) xml::copyToNum(updateInterval, curNode);
             curNode = curNode->next;
@@ -323,6 +324,7 @@ ReportedMsdpVariable::ReportedMsdpVariable(const MsdpVariable* mv, Socket* sock)
     sendScript = mv->getSendScript();
     updateScript = mv->getUpdateScript();
     updateInterval = mv->getUpdateInterval();
+    reportable = mv->isReportable();
     timer.setDelay(updateInterval);
 
     dirty = true;
@@ -343,6 +345,10 @@ bstring MsdpVariable::getUpdateScript() const {
 
 bool MsdpVariable::isConfigurable() const {
     return(configurable);
+}
+
+bool MsdpVariable::isReportable() const {
+    return(reportable);
 }
 
 bool MsdpVariable::isWriteOnce() const {
@@ -390,12 +396,14 @@ bool ReportedMsdpVariable::isDirty() const {
 }
 
 void ReportedMsdpVariable::update() {
-    if(!hasUpdateScript())
-        return;
-    if(!parentSock)
-        return;
+    if(!hasUpdateScript()) return;
+    if(!parentSock) return;
 
+    bstring oldValue = value;
     gServer->runPython(getUpdateScript(), "", parentSock, parentSock->getPlayer(), this);
+    if(value != oldValue) {
+        setDirty(true);
+    }
 }
 
 void ReportedMsdpVariable::setDirty(bool pDirty) {

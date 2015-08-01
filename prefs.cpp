@@ -337,18 +337,14 @@ int cmdPrefs(Player* player, cmd* cmnd) {
 
         if(pref->flag == P_MXP_ENABLED) {
             if(!player->getSock()->getMxp()) {
-                player->print("Your client does not support MXP!\nYou will not be able to view extra colors.\n");
+                player->print("Your client does not support MXP!\n");
                 return(0);
             }
             player->getSock()->defineMxp();
-            player->getSock()->setColorOpt(MXP_COLOR);
         }
 
         if(pref->name == "ansi") {
-            if(player->flagIsSet(P_MXP_ENABLED))
-                player->getSock()->setColorOpt(MXP_COLOR);
-            else
-                player->getSock()->setColorOpt(ANSI_COLOR);
+            player->getSock()->setColorOpt(ANSI_COLOR);
         }
 
         if(pref->name == "ignore") {

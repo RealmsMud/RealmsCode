@@ -108,8 +108,7 @@ typedef enum {
 
 typedef enum {
     NO_COLOR = 0,
-    ANSI_COLOR,
-    MXP_COLOR
+    ANSI_COLOR
 } colorTypes;
 
 

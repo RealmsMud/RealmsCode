@@ -65,6 +65,9 @@ enum telnetNegotiation {
     NEG_SB_ATCP,
     NEG_SB_ATCP_END,
 
+    NEG_SB_GMCP,
+    NEG_SB_GMCP_END,
+
     NEG_SB_CHARSET,
     NEG_SB_CHARSET_LOOK_FOR_IAC,
     NEG_SB_CHARSET_END,
@@ -86,6 +89,10 @@ namespace telnet {
 // MSDP Support
 unsigned const char will_msdp[] = { IAC, WILL, TELOPT_MSDP, '\0' };
 unsigned const char wont_msdp[] = { IAC, WONT, TELOPT_MSDP, '\0' };
+
+// GMCP Support
+unsigned const char will_gmcp[] = { IAC, WILL, TELOPT_GMCP, '\0' };
+unsigned const char wont_gmcp[] = { IAC, WONT, TELOPT_GMCP, '\0' };
 
 // ATCP Support
 unsigned const char do_atcp[] = { IAC, DO, TELOPT_ATCP, '\0' };
@@ -125,6 +132,7 @@ unsigned const char sb_mssp_end[] = { IAC, SE, '\0' };
 
 // Terminal type negotation
 unsigned const char do_ttype[] = { IAC, DO, TELOPT_TTYPE, '\0' };
+unsigned const char wont_ttype[] = { IAC, WONT, TELOPT_TTYPE, '\0' };
 
 // Charset
 unsigned const char do_charset[] = { IAC, DO, TELOPT_CHARSET, '\0' };
@@ -132,8 +140,7 @@ unsigned const char charset_utf8[] = { IAC, SB, TELOPT_CHARSET, 1, ' ', 'U',
         'T', 'F', '-', '8', IAC, SE, '\0' };
 
 // Start sub negotiation for terminal type
-unsigned const char query_ttype[] = { IAC, SB, TELOPT_TTYPE, TELQUAL_SEND, IAC,
-        SE, '\0' };
+unsigned const char query_ttype[] = { IAC, SB, TELOPT_TTYPE, TELQUAL_SEND, IAC, SE, '\0' };
 // Window size negotation NAWS
 unsigned const char do_naws[] = { IAC, DO, TELOPT_NAWS, '\0' };
 
@@ -390,7 +397,8 @@ void Socket::resolveIp(const sockaddr_in &addr, bstring& ip) {
 }
 
 bstring Socket::parseForOutput(bstring& outBuf) {
-    int i = 0, n = outBuf.size();
+    int i = 0;
+    ssize_t n = outBuf.size();
     std::ostringstream oStr;
     bool inTag = false, inEntity = false;
     unsigned char ch = 0;
@@ -434,7 +442,8 @@ bstring Socket::parseForOutput(bstring& outBuf) {
 
 }
 bstring Socket::stripTelnet(bstring& inStr, int& newLen) {
-    int i = 0, n = inStr.size();
+    int i = 0;
+    ssize_t n = inStr.size();
     std::ostringstream oStr;
 
     while(i < n) {
@@ -510,14 +519,15 @@ void Socket::continueTelnetNeg(bool queryTType) {
     opts.dumb = false;
     write(telnet::will_comp2, false);
     write(telnet::will_comp1, false);
+
     write(telnet::do_naws, false);
+//  write(telnet::will_gmcp, false);
     write(telnet::will_msdp, false);
     write(telnet::do_atcp, false);
-    write(telnet::will_mxp, false);
     write(telnet::will_mssp, false);
     write(telnet::will_msp, false);
-    write(telnet::do_charset, false);
-    //write(telnet::will_echo);
+//  write(telnet::do_charset, false);  // Not implemented yet
+    write(telnet::will_mxp, false);
     write(telnet::will_eor, false);
 }
 
@@ -527,8 +537,8 @@ void Socket::continueTelnetNeg(bool queryTType) {
 
 int Socket::processInput() {
     unsigned char tmpBuf[1024];
-    int n;
-    unsigned int i = 0;
+    ssize_t n;
+    ssize_t i = 0;
     bstring tmp = "";
 
     // Attempt to read from the socket
@@ -548,7 +558,7 @@ int Socket::processInput() {
     // If we have any full strings, copy it over to the queue to be interpreted
 
     // Look for any IAC commands using a finite state machine
-    for (i = 0; i < (unsigned) n; i++) {
+    for (i = 0; i < n; i++) {
 
 // For debugging
 //      std::cout << "DEBUG:" << (unsigned int)tmpBuf[i] << "'" << (unsigned char)tmpBuf[i] << "'" << "\n";
@@ -685,8 +695,11 @@ int Socket::processInput() {
                     case ATCP:
                         tState = NEG_SB_ATCP;
                         break;
+                    case TELOPT_GMCP:
+                        tState = NEG_SB_GMCP;
+                        break;
                     default:
-                        std::cout << "Unknown Sub Negotiation" << std::endl;
+                        std::cout << "Unknown Sub Negotiation: " << (int)tmpBuf[i] << std::endl;
                         tState = NEG_NONE;
                         break;
                 }
@@ -709,6 +722,25 @@ int Socket::processInput() {
                     // onto the inbuf and keep going
                     cmdInBuf.push_back(tmpBuf[i]);
                     tState = NEG_SB_MSDP;
+                    break;
+                }
+                break;
+            case NEG_SB_GMCP:
+                // We don't handle this right now, but ignoring it because Mudlet likes to send it anyway
+                if(tmpBuf[i] == IAC) {
+                    tState = NEG_SB_GMCP_END;
+                    break;
+                }
+                break;
+            case NEG_SB_GMCP_END:
+                if (tmpBuf[i] == SE) {
+                    // We should have a full GMCP command now, let's ignore it
+                    tState = NEG_NONE;
+                    break;
+                } else {
+                    // Not an SE: The last input was an IAC, so keep going
+                    cmdInBuf.push_back(tmpBuf[i]);
+                    tState = NEG_SB_GMCP;
                     break;
                 }
                 break;
@@ -770,6 +802,7 @@ int Socket::processInput() {
             case NEG_SB_TTYPE:
                 // Grab the terminal type
                 if (tmpBuf[i] == TELQUAL_IS) {
+                    term.lastType = term.type;
                     term.type.erase();
                     term.type = "";
                 } else if (tmpBuf[i] == IAC) {
@@ -782,11 +815,31 @@ int Socket::processInput() {
                 break;
             case NEG_SB_TTYPE_END:
                 if (tmpBuf[i] == SE) {
+                    // TODO: Save the first one and once we get the last one, either:
+                    // 1) turn off ttype and turn it back on once to get the first reported type
+                    // 2) request it one more time to get the first time
                     std::cout << "Found term type: " << term.type << std::endl;
-                    if (term.type == "Mudlet 2.0.1") {
-                    // Mudlet doesn't seem to like MXP color, so turn it off
-//                  opts.color = ANSI_COLOR;
+                    // No previous term type
+                    // Or the current term type isn't the same as the last
+                    if (term.lastType.empty() ||  (term.type != term.lastType)) {
+                        term.lastType = "";
+                        // Look for 256 color support
+                        if (term.type.find("-256color") != bstring::npos) {
+                            // Works for tintin++, wintin++ and blowtorch
+                            opts.xterm256 = true;
+                        }
+
+                        // Request another!
+                        write(telnet::query_ttype, false);
                     }
+
+                    if (term.type.find("Mudlet") != bstring::npos and term.type > "Mudlet 1.1") {
+                        opts.xterm256 = true;
+                    } else if(term.type.equals("EMACS-RINZAI", false) ||
+                              term.type.find("DecafMUD") != bstring::npos) {
+                        opts.xterm256 = true;
+                    }
+
                 } else if (tmpBuf[i] == IAC) {
                     // I doubt this will happen
                     std::cout << "NEG_SB_TTYPE: Found double IAC" << std::endl;
@@ -862,9 +915,9 @@ int Socket::processInput() {
         inBuf.erase(0, idx);
         if(opts.mxpClientSecure) {
             if(inBuf.left(8).equals("<version", false)) {
-
+                std::cout << "Got msxp version\n";
             } else if(inBuf.left(9).equals("<supports", false)) {
-
+                std::cout << "Got msxp supports\n";
             }
         }
         input.push(tmpr);
@@ -876,140 +929,143 @@ int Socket::processInput() {
 bool Socket::negotiate(unsigned char ch) {
 
     switch (ch) {
-    case TELOPT_CHARSET:
-        if (tState == NEG_WILL) {
-            opts.charset = true;
-            write(telnet::charset_utf8, false);
-            std::cout << "Charset On" << std::endl;
-        } else if (tState == NEG_WONT) {
-            opts.charset = false;
-            std::cout << "Charset Off" << std::endl;
-        }
-        tState = NEG_NONE;
-        break;
-    case TELOPT_TTYPE:
-        // If we've gotten this far, we're fairly confident they support ANSI color
-        // so enable that
-        opts.color = ANSI_COLOR;
-
-        if (tState == NEG_WILL) {
-            // Continue and query the rest of the options, including term type
-            continueTelnetNeg(true);
-        } else if (tState == NEG_WONT) {
-            // If they respond to something here they know how to negotiate,
-            // so continue and ask for the rest of the options, except term type
-            // which they have just indicated they won't do
-            continueTelnetNeg(false);
-
-        }
-        tState = NEG_NONE;
-        break;
-    case TELOPT_MXP:
-        if (tState == NEG_WILL || tState == NEG_DO) {
-            write(telnet::start_mxp);
-            // Start off in MXP LOCKED CLOSED
-            write(MXP_LOCK_CLOSE);
-            //TODO: send elements we're using for mxp
-            opts.mxp = true;
-            // Assume if they have MXP enabled, they want mxp colors
-            opts.color = MXP_COLOR;
-            std::cout << "Enabled MXP" << std::endl;
-            defineMxp();
-        } else if (tState == NEG_WONT || tState == NEG_DONT) {
-            opts.mxp = false;
-            std::cout << "Disabled MXP" << std::endl;
-        }
-        tState = NEG_NONE;
-        break;
-    case TELOPT_COMPRESS2:
-        if (tState == NEG_WILL || tState == NEG_DO) {
-            opts.mccp = 2;
-            startCompress();
-        } else if (tState == NEG_WONT || tState == NEG_DONT) {
-            if (opts.mccp == 2) {
-                opts.mccp = 0;
-                endCompress();
+        case TELOPT_CHARSET:
+            if (tState == NEG_WILL) {
+                opts.charset = true;
+                write(telnet::charset_utf8, false);
+                std::cout << "Charset On" << std::endl;
+            } else if (tState == NEG_WONT) {
+                opts.charset = false;
+                std::cout << "Charset Off" << std::endl;
             }
-        }
-        tState = NEG_NONE;
-        break;
-    case TELOPT_COMPRESS:
-        if (tState == NEG_WILL || tState == NEG_DO) {
-            opts.mccp = 1;
-            startCompress();
-        } else if (tState == NEG_WONT || tState == NEG_DONT) {
-            if (opts.mccp == 1) {
-                opts.mccp = 0;
-                endCompress();
+            tState = NEG_NONE;
+            break;
+        case TELOPT_TTYPE:
+            // If we've gotten this far, we're fairly confident they support ANSI color
+            // so enable that
+            opts.color = ANSI_COLOR;
+
+            // If we get here it's clearly not a dumb terminal, however if
+            // dumb is still set, it means we haven't negotiated, so let's negotiate now
+            if (opts.dumb) {
+                if (tState == NEG_WILL) {
+                    // Continue and query the rest of the options, including term type
+                    std::cout << "Continuing telnet negotiation\n";
+                    continueTelnetNeg(true);
+                } else if (tState == NEG_WONT) {
+                    // If they respond to something here they know how to negotiate,
+                    // so continue and ask for the rest of the options, except term type
+                    // which they have just indicated they won't do
+                    write(telnet::wont_ttype);
+                    continueTelnetNeg(false);
+
+                }
             }
-        }
-        tState = NEG_NONE;
-        break;
-    case TELOPT_EOR:
-        if (tState == NEG_WILL || tState == NEG_DO) {
-            opts.eor = true;
-            printf("Activating EOR\n");
-        } else if (tState == NEG_WONT || tState == NEG_DONT) {
-            opts.eor = false;
-            printf("Deactivating EOR\n");
-        }
-        tState = NEG_NONE;
-        break;
-    case TELOPT_NAWS:
-        if (tState == NEG_WILL) {
-            opts.naws = true;
-        } else {
-            opts.naws = false;
-        }
-        tState = NEG_NONE;
-        break;
-    case TELOPT_ECHO:
-    case TELOPT_NEW_ENVIRON:
-        // TODO: Echo/New Environ
-        tState = NEG_NONE;
-        break;
-    case TELOPT_MSSP:
-        if (tState == NEG_DO) {
-            sendMSSP();
-        }
-        tState = NEG_NONE;
-        break;
-    case TELOPT_MSP:
-        if (tState == NEG_WILL || tState == NEG_DO) {
-            opts.msp = true;
-        } else if (tState == NEG_WONT || tState == NEG_DONT) {
-            opts.msp = false;
-        }
+            tState = NEG_NONE;
+            break;
+        case TELOPT_MXP:
+            if (tState == NEG_WILL || tState == NEG_DO) {
+                write(telnet::start_mxp);
+                // Start off in MXP LOCKED CLOSED
+                //TODO: send elements we're using for mxp
+                opts.mxp = true;
+                std::cout << "Enabled MXP" << std::endl;
+                defineMxp();
+            } else if (tState == NEG_WONT || tState == NEG_DONT) {
+                opts.mxp = false;
+                std::cout << "Disabled MXP" << std::endl;
+            }
+            tState = NEG_NONE;
+            break;
+        case TELOPT_COMPRESS2:
+            if (tState == NEG_WILL || tState == NEG_DO) {
+                opts.mccp = 2;
+                startCompress();
+            } else if (tState == NEG_WONT || tState == NEG_DONT) {
+                if (opts.mccp == 2) {
+                    opts.mccp = 0;
+                    endCompress();
+                }
+            }
+            tState = NEG_NONE;
+            break;
+        case TELOPT_COMPRESS:
+            if (tState == NEG_WILL || tState == NEG_DO) {
+                opts.mccp = 1;
+                startCompress();
+            } else if (tState == NEG_WONT || tState == NEG_DONT) {
+                if (opts.mccp == 1) {
+                    opts.mccp = 0;
+                    endCompress();
+                }
+            }
+            tState = NEG_NONE;
+            break;
+        case TELOPT_EOR:
+            if (tState == NEG_WILL || tState == NEG_DO) {
+                opts.eor = true;
+                printf("Activating EOR\n");
+            } else if (tState == NEG_WONT || tState == NEG_DONT) {
+                opts.eor = false;
+                printf("Deactivating EOR\n");
+            }
+            tState = NEG_NONE;
+            break;
+        case TELOPT_NAWS:
+            if (tState == NEG_WILL) {
+                opts.naws = true;
+            } else {
+                opts.naws = false;
+            }
+            tState = NEG_NONE;
+            break;
+        case TELOPT_ECHO:
+        case TELOPT_NEW_ENVIRON:
+            // TODO: Echo/New Environ
+            tState = NEG_NONE;
+            break;
+        case TELOPT_MSSP:
+            if (tState == NEG_DO) {
+                sendMSSP();
+            }
+            tState = NEG_NONE;
+            break;
+        case TELOPT_MSP:
+            if (tState == NEG_WILL || tState == NEG_DO) {
+                opts.msp = true;
+            } else if (tState == NEG_WONT || tState == NEG_DONT) {
+                opts.msp = false;
+            }
 
-        tState = NEG_NONE;
-        break;
-    case TELOPT_MSDP:
-        if (tState == NEG_DO) {
-            opts.msdp = true;
-            msdpSend("SERVER_ID");
+            tState = NEG_NONE;
+            break;
+        case TELOPT_MSDP:
+            if (tState == NEG_DO) {
+                opts.msdp = true;
+                msdpSend("SERVER_ID");
 
-            std::cout << "Enabled MSDP" << std::endl;
-        } else {
-            std::cout << "Disabled MSDP" << std::endl;
-            opts.msdp = false;
-        }
-        tState = NEG_NONE;
-        break;
-    case TELOPT_ATCP:
-        if (tState == NEG_WILL || tState == NEG_DO) {
-            opts.atcp = true;
-            std::cout << "Enabled ATCP" << std::endl;
-            msdpSend("SERVER_ID");
-//          msdpSendPair("SERVER_ID", "The Realms of Hell v" VERSION);
-        } else {
-            std::cout << "Disabled ATCP" << std::endl;
-            opts.atcp = false;
-        }
-        tState = NEG_NONE;
-        break;
-    default:
-        tState = NEG_NONE;
-        break;
+                std::cout << "Enabled MSDP" << std::endl;
+            } else {
+                std::cout << "Disabled MSDP" << std::endl;
+                opts.msdp = false;
+            }
+            tState = NEG_NONE;
+            break;
+        case TELOPT_ATCP:
+            if (tState == NEG_WILL || tState == NEG_DO) {
+                opts.atcp = true;
+                std::cout << "Enabled ATCP" << std::endl;
+                msdpSend("SERVER_ID");
+    //          msdpSendPair("SERVER_ID", "The Realms of Hell v" VERSION);
+            } else {
+                std::cout << "Disabled ATCP" << std::endl;
+                opts.atcp = false;
+            }
+            tState = NEG_NONE;
+            break;
+        default:
+            tState = NEG_NONE;
+            break;
     }
     return (true);
 }
@@ -1032,8 +1088,7 @@ bool Socket::handleNaws(int& colRow, unsigned char& chr, bool high) {
         }
     } else if (oneIAC && chr != IAC) {
         // Error!
-        std::cout << "NAWS: BUG - Expecting a doubled IAC, got "
-                << (unsigned int) chr << "\n";
+        std::cout << "NAWS: BUG - Expecting a doubled IAC, got " << (unsigned int) chr << "\n";
         oneIAC = false;
     }
 
@@ -1204,24 +1259,30 @@ char caster_from_unsigned( unsigned char ch )
 bool Socket::parseMXPSecure() {
     if(getMxp()) {
         bstring toParse(reinterpret_cast<char*>(&cmdInBuf[0]), cmdInBuf.size());
-        //bstring toParse(cmdInBuf.begin(), cmdInBuf.end());
-        //bstring toParse;
-        //toParse.reserve(cmdInBuf.size());
-        //std::transform( cmdInBuf.begin(), cmdInBuf.end(), back_inserter( toParse ), caster_from_unsigned );
-        //toParse.assign(&cmdInBuf[0], cmdInBuf.size());
         std::cout << toParse << std::endl;
+
+        bstring client = getMxpTag("CLIENT=", toParse);
+        if (!client.empty()) {
+            // Overwrite the previous client name - this is harder to fake
+            term.type = client;
+        }
+
         bstring version = getMxpTag("VERSION=", toParse);
         if(!version.empty()) {
             term.version = version;
             if(term.type.equals("mushclient", false)) {
                 if(version >= "4.02")
                     opts.xterm256 = true;
+                else
+                    opts.xterm256 = false;
             } else if (term.type.equals("cmud", false)) {
                 if(version >=  "3.04")
                     opts.xterm256 = true;
+                else
+                    opts.xterm256 = false;
             } else if (term.type.equals("atlantis", false)) {
                 // Any version of atlantis with MXP supports xterm256
-            opts.xterm256 = true;
+                opts.xterm256 = true;
             }
         }
 
@@ -1243,7 +1304,7 @@ bool Socket::parseMsdp() {
 
         var.reserve(15);
         val.reserve(30);
-        int i = 0, n = cmdInBuf.size();
+        ssize_t i = 0, n = cmdInBuf.size();
         while (i < n && cmdInBuf[i] != SE) {
             switch (cmdInBuf[i]) {
             case MSDP_VAR:
@@ -1288,7 +1349,7 @@ bool Socket::parseAtcp() {
 
         var.reserve(15);
         val.reserve(30);
-        int i = 0, n = cmdInBuf.size();
+        ssize_t i = 0, n = cmdInBuf.size();
         while (i < n && cmdInBuf[i] != SE) {
             switch (cmdInBuf[i]) {
             case '@':
@@ -1369,8 +1430,6 @@ void Socket::println(bstring toPrint) {
 //********************************************************************
 
 void Socket::print(const char* fmt, ...) {
-    if (!this)
-        return;
     va_list ap;
     va_start(ap, fmt);
     bstring newFmt = stripColor(fmt);
@@ -1383,8 +1442,6 @@ void Socket::print(const char* fmt, ...) {
 //********************************************************************
 
 void Socket::printColor(const char* fmt, ...) {
-    if (!this)
-        return;
     va_list ap;
     va_start(ap, fmt);
     vprint(fmt, ap);
@@ -1397,7 +1454,7 @@ void Socket::printColor(const char* fmt, ...) {
 // Flush pending output and send a prompt
 
 void Socket::flush() {
-    int n, len;
+    ssize_t n, len;
     if(!processed_output.empty()) {
         len = processed_output.length();
 
@@ -1419,10 +1476,10 @@ void Socket::flush() {
 //********************************************************************
 // Write a string of data to the the socket's file descriptor
 
-int Socket::write(bstring toWrite, bool pSpy, bool process) {
-    int written = 0;
-    int n = 0;
-    int total = 0;
+ssize_t Socket::write(bstring toWrite, bool pSpy, bool process) {
+    ssize_t written = 0;
+    ssize_t n = 0;
+    size_t total = 0;
 
     // Parse any color, unicode, etc here
     bstring toOutput;
@@ -1461,7 +1518,7 @@ int Socket::write(bstring toWrite, bool pSpy, bool process) {
         if(n == -2)
             written = -2;
 
-        if(written >= total && !processed_output.empty() && process == false) {
+        if(written >= total && !processed_output.empty() && !process) {
             processed_output.erase();
         }
     } else {
@@ -1590,14 +1647,14 @@ int Socket::endCompress() {
 //********************************************************************
 
 int Socket::processCompressed() {
-    int len = (int) ((char*) out_compress->next_out - (char*) out_compress_buf);
+    size_t len = (size_t) ((char*) out_compress->next_out - (char*) out_compress_buf);
     int written = 0;
-    int block;
-    int n, i;
+    size_t block;
+    ssize_t n, i;
 
     if (len > 0) {
         for (i = 0, n = 0; i < len; i += n) {
-            block = tMIN<int>(len - i, 4096);
+            block = tMIN<size_t>(len - i, 4096);
             if ((n = ::write(fd, out_compress_buf + i, block)) < 0)
                 return (-1);
             written += n;
@@ -1770,8 +1827,6 @@ bool Socket::canForce(void) const {
 //********************************************************************
 
 int Socket::getState(void) const {
-    if (!this)
-        return (UNUSED_STATE);
     return (connState);
 }
 bool Socket::isConnected() const {
@@ -1867,8 +1922,6 @@ void Socket::setPlayer(Player* ply) {
 }
 
 Player* Socket::getPlayer() const {
-    if (!this)
-        return (NULL);
     return (myPlayer);
 }
 

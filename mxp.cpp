@@ -34,8 +34,8 @@ bool MxpElement::isColor() {
 //***********************************************************************
 // TODO: Put this in a lookup table
 void Socket::defineMxp() {
-    if(!this || !getMxp())
-        return;
+    if(!getMxp()) return;
+
     bprint(MXP_BEG "VERSION" MXP_END);
     bprint(MXP_BEG "SUPPORT" MXP_END);
     for(MxpElementMap::value_type p : gConfig->mxpElements) {
