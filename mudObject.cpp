@@ -333,33 +333,30 @@ bstring MudObject::getIdPython() const {
 }
 
 bool MudObject::isRoom() const {
-    return(this &&
-          (typeid(*this) == typeid(BaseRoom) ||
+    return(typeid(*this) == typeid(BaseRoom) ||
            typeid(*this) == typeid(UniqueRoom) ||
-           typeid(*this) == typeid(AreaRoom)));
+           typeid(*this) == typeid(AreaRoom));
 }
 bool MudObject::isUniqueRoom() const {
-    return(this && typeid(*this) == typeid(UniqueRoom));
+    return(typeid(*this) == typeid(UniqueRoom));
 }
 bool MudObject::isAreaRoom() const {
-    return(this && typeid(*this) == typeid(AreaRoom));
+    return(typeid(*this) == typeid(AreaRoom));
 }
 bool MudObject::isObject() const {
-    return(this && typeid(*this) == typeid(Object));
+    return(typeid(*this) == typeid(Object));
 }
 bool MudObject::isPlayer() const {
-    return(this && typeid(*this) == typeid(Player));
+    return(typeid(*this) == typeid(Player));
 }
 bool MudObject::isMonster() const {
-    return(this && typeid(*this) == typeid(Monster));
+    return(typeid(*this) == typeid(Monster));
 }
 bool MudObject::isCreature() const {
-    return(this &&
-          (typeid(*this) == typeid(Creature) ||
+    return(typeid(*this) == typeid(Creature) ||
            typeid(*this) == typeid(Player) ||
-           typeid(*this) == typeid(Monster)));
+           typeid(*this) == typeid(Monster));
 }
 bool MudObject::isExit() const {
-    return(this && typeid(*this) == typeid(Exit));
+    return(typeid(*this) == typeid(Exit));
 }
-

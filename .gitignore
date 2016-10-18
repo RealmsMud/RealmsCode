@@ -16,6 +16,15 @@
 /.ptp-sync
 .objs/
 .deps/
+build/
+.tags*
+*.pyc
+
+# Cmake
+CMakeCache.txt
+CMakeFiles/
+*.cmake
+Makefile
 
 # Project files
 /nbproject/

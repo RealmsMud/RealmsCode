@@ -1348,7 +1348,7 @@ void Player::doCopy(const Player& cr) {
             storesRefunded.push_back(*it);
         }
     }
-    
+
     if(!cr.roomExp.empty()) {
         for(it = cr.roomExp.begin() ; it != cr.roomExp.end() ; it++) {
             roomExp.push_back(*it);
@@ -1668,7 +1668,7 @@ bool Creature::isWatcher() const {
 //*********************************************************************
 
 bool Creature::isStaff() const {
-    if(!this || isMonster())
+    if(isMonster())
         return(false);
     return(cClass >= BUILDER);
 }
@@ -2150,8 +2150,6 @@ Socket* Creature::getSock() const {
 //*********************************************************************
 
 Socket* Player::getSock() const {
-    if(!this)
-        return(null);
     return(mySock);
 }
 

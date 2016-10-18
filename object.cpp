@@ -826,7 +826,7 @@ const bstring Object::getSubType() const { return(subType); }
 short Object::getDelay() const { return(delay); }
 short Object::getExtra() const { return(extra); }
 short Object::getWeaponDelay() const {
-    if(!this || !delay)
+    if(!delay)
         return(DEFAULT_WEAPON_DELAY);
     return(delay);
 }

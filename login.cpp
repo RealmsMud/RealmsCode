@@ -105,7 +105,6 @@ unsigned const char echo_off[] = {255, 251, 1, 0};
 unsigned const char echo_on[] = {255, 252, 1, 0};
 
 void login(Socket* sock, bstring str) {
-    char    tempstr[20];
     Player  *player=0;
     bstring::size_type proxyCheck = 0;
     if(!sock) {

@@ -982,9 +982,6 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
     bstring toReturn = "";
     char ch;
 
-    if(!this)
-        return("(NULL OBJ)");
-
     if(flagIsSet(O_DARKNESS))
         objStr << "^D";
 
@@ -1088,7 +1085,7 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
         while(toReturn[pos] == '^') pos += 2;
         toReturn[pos] = up(toReturn[pos]);
     }
-    
+
     return(toReturn);
 }
 

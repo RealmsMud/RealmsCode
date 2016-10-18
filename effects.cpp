@@ -853,7 +853,7 @@ bstring Effects::getEffectsString(const Creature* viewer) {
             effStr << "  ^WStrength:^x " << effect->getStrength();
             if(effect->getExtra()) {
                 effStr << "  ^WExtra:^x " << effect->getExtra();
-                
+
                 // extra information
                 if(effect->getName() == "illusion") {
                     const RaceData* race = gConfig->getRace(effect->getExtra());
@@ -1236,8 +1236,6 @@ void BaseRoom::addEffectsIndex() {
 }
 
 void Server::addEffectsIndex(BaseRoom* room) {
-    if(!this)
-        return;
     // you can only be in the list once!
     std::list<BaseRoom*>::const_iterator it;
     for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
@@ -1278,9 +1276,6 @@ bool BaseRoom::removeEffectsIndex() {
 }
 
 void Server::removeEffectsIndex(BaseRoom* room) {
-    if(!this)
-        return;
-
     std::list<BaseRoom*>::iterator it;
     for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
         if((*it) == room) {
@@ -1666,8 +1661,6 @@ void EffectInfo::setOwner(const Creature* owner) {
 //*********************************************************************
 
 void EffectInfo::setStrength(int pStrength) {
-    if(!this)
-        return;
     strength = pStrength;
 }
 
@@ -1676,8 +1669,6 @@ void EffectInfo::setStrength(int pStrength) {
 //*********************************************************************
 
 void EffectInfo::setExtra(int pExtra) {
-    if(!this)
-        return;
     extra = pExtra;
 }
 
@@ -1686,7 +1677,5 @@ void EffectInfo::setExtra(int pExtra) {
 //*********************************************************************
 
 void EffectInfo::setDuration(long pDuration) {
-    if(!this)
-        return;
     duration = pDuration;
 }

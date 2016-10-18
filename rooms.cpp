@@ -312,7 +312,7 @@ bool AreaRoom::canSave() const {
 
     if(unique.id)
         return(true);
-    
+
     if(needsEffectsIndex())
         return(true);
 
@@ -854,8 +854,6 @@ bool BaseRoom::isOutdoors() const {
 //*********************************************************************
 
 bool BaseRoom::magicBonus() const {
-    if(!this)
-        return(false);
     return(flagIsSet(R_MAGIC_BONUS));
 }
 

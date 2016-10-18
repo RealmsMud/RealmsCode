@@ -203,7 +203,7 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
 
         // run through the lists and display them
         player->print("*dmload / *dmsave supports the following options:\n");
-        
+
         player->printColor("^yLOAD:\n");
         bool leftColumn = true;
         for(it = loadList.begin() ; it != loadList.end() ; it++) {
@@ -1330,7 +1330,7 @@ int dmHelp(Player* player, cmd* cmnd) {
         player->print("You may not use backslashes.\n");
         return(0);
     }
-    
+
     sprintf(file, "%s/%s.txt", Path::DMHelp, cmnd->str[1]);
     viewFile(player->getSock(), file);
     return(DOPROMPT);
@@ -1611,7 +1611,7 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
         return(false);
 
     long    t = time(0);
-    
+
     switch(splno) {
     case S_VIGOR:
         if(check) return(true);
@@ -1931,7 +1931,7 @@ int dmCast(Player* player, cmd* cmnd) {
             return(PROMPT);
         }
         sp = cmnd->str[2];
-    } else if(cmnd->num == 2)
+    } else 
         sp = cmnd->str[1];
 
     do {

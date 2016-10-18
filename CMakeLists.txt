@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.1)
 project(RealmsCode)
 
-set(Python_ADDITIONAL_VERSIONS 3.4)
+set(CMAKE_C_COMPILER "/usr/bin/clang")
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+
+set(Python_ADDITIONAL_VERSIONS 3.5)
 
 find_package(LibXml2 REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -9,7 +12,7 @@ find_package(PythonLibs 3.4 REQUIRED)
 find_package(ASPELL REQUIRED)
 find_package(PythonInterp)
 find_package(PythonLibs)
-find_package(Boost COMPONENTS python-py34 REQUIRED)
+find_package(Boost COMPONENTS python REQUIRED)
 
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
@@ -21,9 +24,8 @@ include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR})
 
 # For indexing_suite and such
 include_directories(.)
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
-set (CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
+set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
 
 set(SOURCE_FILES
     abjuration.cpp

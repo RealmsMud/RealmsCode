@@ -651,27 +651,27 @@ int Player::guildKill(Player *killer) {
         Bank::guildLog(killer->getGuild(), "Guild PKILL: %s by %s [Balance: %s]\n",
             coins.str().c_str(), killer->getCName(), killerGuild->bank.str().c_str());
         coins.zero();
-        
+
         gConfig->saveGuilds();
     }
 
 
     if(!same) {
         killer->printColor("^gYou have defeated a member of a rival guild!\n");
-        killer->print("Your guild honors you with %d experience.\n", abs(total));
+        killer->print("Your guild honors you with %d experience.\n", std::abs(total));
         if(coins[GOLD])
             killer->printColor("You grab %N's coins and put them in your guild bank.^x\n", this);
 
         printColor("^gYou have been defeated by a member of a rival guild!\n");
-        print("Your guild shames you by taking %d experience.\n", abs(penalty));
+        print("Your guild shames you by taking %d experience.\n", std::abs(penalty));
         if(coins[GOLD])
             printColor("%M grabs all of your coins!\n", killer);
     } else {
         killer->printColor("^gYou have shamelessly defeated a member of your own guild!\n");
-        killer->printColor("Your guild penalizes you for %d experience.\n", abs(total));
+        killer->printColor("Your guild penalizes you for %d experience.\n", std::abs(total));
 
         printColor("^gYou have been defeated during senseless guild infighting!\n");
-        printColor("Your guild penalizes you for %d experience.\n", abs(penalty));
+        printColor("Your guild penalizes you for %d experience.\n", std::abs(penalty));
     }
 
     killer->addExperience(total);
@@ -731,16 +731,16 @@ int Player::godKill(Player *killer) {
 
     if(!same) {
         killer->printColor("^cYou have defeated a member of an enemy religion!\n");
-        killer->printColor("Your order honors you with %d experience.\n", abs(total));
+        killer->printColor("Your order honors you with %d experience.\n", std::abs(total));
 
         printColor("^cYou have been defeated by a member of a rival religion!\n");
-        printColor("Your order shames you by taking %d experience.\n", abs(penalty));
+        printColor("Your order shames you by taking %d experience.\n", std::abs(penalty));
     } else {
         killer->printColor("^cYou have shamelessly defeated a member of your own religion!\n");
-        killer->printColor("Your order penalizes you for %d experience.\n", abs(total));
+        killer->printColor("Your order penalizes you for %d experience.\n", std::abs(total));
 
         printColor("^cYou have been defeated during senseless religious infighting!\n");
-        printColor("Your order penalizes you for %d experience.\n", abs(penalty));
+        printColor("Your order penalizes you for %d experience.\n", std::abs(penalty));
     }
 
     killer->addExperience(total);
@@ -779,7 +779,7 @@ int Player::clanKill(Player *killer) {
 
         print("You have been bested!\nYou lose %d experience.\n", expLoss);
         subExperience(expLoss);
-        
+
         if(!killer->flagIsSet(P_OUTLAW)) {
             killer->print("You have vanquished %s.\n", getCName());
             killer->print("You %s %d experience for your heroic deed.\n", gConfig->isAprilFools() ? "lose" : "gain", expGain);
@@ -1098,7 +1098,7 @@ void Player::logDeath(Creature *killer) {
         log_immort(false, pKiller, "%s(%d) was killed by %s(%d) in room %s.\n", getCName(), level,
             pKiller->getCName(), pKiller->getLevel(), pKiller->getRoomParent()->fullName().c_str());
     }
-    
+
     updateRecentActivity();
 }
 

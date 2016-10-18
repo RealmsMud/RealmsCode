@@ -55,9 +55,6 @@ void Monster::setMaster(Creature* pMaster) {
 }
 
 Creature* Monster::getMaster() const {
-    if(!this)
-        return(NULL);
-
     return(myMaster);
 }
 //

@@ -86,8 +86,6 @@ void Exit::setRoom(BaseRoom* room) { parentRoom = room; }
 // Checks if the exit is flagged to relock after being used, and do as such
 
 void Exit::checkReLock(Creature* creature, bool sneaking) {
-    if(!this)
-        return;
     if(flagIsSet(X_LOCK_AFTER_USAGE) && !creature->isCt()) {
         bool nowLocked = false;
         bool nowClosed = false;

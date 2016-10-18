@@ -969,7 +969,7 @@ int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
     xmlNodePtr      curNode;
     int i;
 
-    if(!this || getName()[0] == '\0' || rootNode == NULL)
+    if(getName()[0] == '\0' || rootNode == NULL)
         return(-1);
 
     // record rooms saved during swap
@@ -1068,7 +1068,7 @@ int Exit::saveToXml(xmlNodePtr parentNode) const {
 
     int i;
 
-    if(this == NULL || parentNode == NULL || flagIsSet(X_PORTAL))
+    if(parentNode == NULL || flagIsSet(X_PORTAL))
         return(-1);
 
     rootNode = xml::newStringChild(parentNode, "Exit");

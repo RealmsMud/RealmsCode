@@ -104,13 +104,13 @@ enum EffectType {
 // Forward Delcaration
 class Creature;
 
-// Effects that are conferred from spells or items
-class ConferredEffect {
-private:
-    bstring name;       // Name of the effect
-    int strength;   // Strength of the effect
-    int duration;   // How long this effect will last
-};
+// // Effects that are conferred from spells or items
+// class ConferredEffect {
+// private:
+//     bstring name;       // Name of the effect
+//     int strength;   // Strength of the effect
+//     int duration;   // How long this effect will last
+// };
 
 // Information about an effect on a creature
 class EffectInfo

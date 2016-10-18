@@ -319,7 +319,7 @@ bstring Player::consider(Creature* creature) const {
 bool Creature::hasCharm(bstring charmed) {
     etag    *cp=0;
 
-    if(!this || charmed == "")
+    if(charmed == "")
         return(false);
 
     Player* player = getAsPlayer();

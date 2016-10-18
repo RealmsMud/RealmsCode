@@ -423,7 +423,7 @@ void showRegard(const Player* viewer, bstring type, const FactionRegard* regard)
     oStr << regard->clanDisplay();
     if(regard->getOverallRegard())
         oStr << "Overall: " << regard->getOverallRegard();
-    
+
     if(oStr.str() != "")
         viewer->printColor("    ^y%s:^x %s\n", type.c_str(), oStr.str().c_str());
 }
@@ -812,7 +812,7 @@ void Player::adjustFactionStanding(const std::map<bstring, long>& factionList) {
             << (regard > 0 ? " has gotten worse." : " has improved.");
 
         if(isDm())
-            oStr << " (" << abs(regard) << ")";
+            oStr << " (" << std::abs(regard) << ")";
 
         oStr << "\n";
         factions[faction->getName()] -= regard;

@@ -88,7 +88,7 @@ bool Creature::canSeeRoom(const BaseRoom* room, bool p) const {
 }
 
 bool Creature::canSee(const MudObject* target, bool skip) const {
-    if(!this || !target)
+    if(!target)
         return(false);
 
     if(target->isCreature()) {
@@ -136,7 +136,7 @@ bool Creature::canSee(const MudObject* target, bool skip) const {
 
         if(isStaff())
             return(true);
-        if(object->isEffected("invisibility") && (this && !isEffected("detect-invisible")))
+        if(object->isEffected("invisibility") && !isEffected("detect-invisible"))
             return(false);
 
     }
@@ -1040,9 +1040,6 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
     int mobNum=0;
     //  char    *str;
 
-    if(!this)
-        return("(ERROR: NULL CRT)");
-
     if(viewer)
         flags |= viewer->displayFlags();
 
@@ -1152,7 +1149,7 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
         while(toReturn[pos] == '^') pos += 2;
         toReturn[pos] = up(toReturn[pos]);
     }
-    
+
     return(toReturn);
 }
 

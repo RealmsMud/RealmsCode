@@ -257,7 +257,7 @@ Creature* Container::findCreaturePython(Creature* searcher, const bstring& name,
 
     bstring newName = name;
     newName.trim();
-    unsigned int sLoc = newName.ReverseFind(" ");
+    bstring::size_type sLoc = newName.ReverseFind(" ");
     if(sLoc != bstring::npos) {
         num = newName.right(newName.length() - sLoc).toInt();
         if(num != 0) {
@@ -528,5 +528,3 @@ const Creature* Containable::getConstCreatureParent() const {
         return(NULL);
     return(parent->getAsConstCreature());
 }
-
-

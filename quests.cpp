@@ -249,8 +249,6 @@ const QuestCatRef& QuestInfo::getTurnInMob() const {
     return(turnInMob);
 }
 bstring QuestInfo::getName() const {
-    if(!this)
-        return("** NULL QUEST**");
     return(name);
 }
 int QuestInfo::getId() const {
@@ -1018,7 +1016,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
         for(TalkResponse * talkResponse : target->responses) {
             for(const bstring& keyWrd : talkResponse->keywords) {
                 keyword = keyTxtConvert(keyWrd).toLower();
-                
+
                 if(keyword[0] == '@') {
                     // We're looking for an exact match of the entire string
                     const bstring& toMatch = keyword.substr(1);

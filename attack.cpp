@@ -473,7 +473,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
         if(flagIsSet(P_LAG_PROTECTION_SET))
             setFlag(P_LAG_PROTECTION_ACTIVE);
 
-        if(mVictim->addEnemy(this) < 0 && attackType == ATTACK_NORMAL) {
+        if(mVictim->addEnemy(this) && attackType == ATTACK_NORMAL) {
             print("You attack %N.\n", mVictim);
             broadcast(getSock(), getRoomParent(), "%M attacks %N.", this, mVictim);
         }
@@ -607,7 +607,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 
                 bool computeBonus = (!multiWeapon || (multiWeapon && attacked==1));
                 attackDamage.reset();
-                
+
                 // Return of 1 means the weapon was shattered or otherwise rendered unsuable
                 if(computeDamage(victim, weapon, attackType, result, attackDamage, computeBonus, drain, multiplier) == 1)
                     checkWeapon(this, &weapon, true, &loc, &attacks, &wielding, multiWeapon, UNEQUIP_DELETE);
@@ -810,7 +810,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
             }
 
         } while(0); // End DO
-        
+
         // If duel wielding, weapon is now second weapon, go on for the next attack
         if(attacked == 1 && duelWield) {
             weapon = ready[HELD-1];

@@ -130,7 +130,7 @@ float Creature::getDamageReduction(const Creature* target) const {
 //**********************************************************************
 
 const bstring Object::getWeaponType() const {
-    if(!this || type != WEAPON)
+    if(type != WEAPON)
         return("none");
     else
         return(subType);
@@ -141,7 +141,7 @@ const bstring Object::getWeaponType() const {
 //**********************************************************************
 
 const bstring Object::getArmorType() const {
-    if(!this || type != ARMOR)
+    if(type != ARMOR)
         return("none");
     else
         return(subType);
@@ -152,9 +152,6 @@ const bstring Object::getArmorType() const {
 //**********************************************************************
 
 const bstring Object::getWeaponCategory() const {
-    if(!this)
-        return("none");
-
     SkillInfo* weaponSkill = gConfig->getSkill(subType);
 
     if(type != WEAPON || !weaponSkill)

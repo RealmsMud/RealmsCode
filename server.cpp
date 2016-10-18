@@ -274,7 +274,7 @@ void Server::populateVSockets() {
     std::copy(sockets.begin(), sockets.end(), vSockets->begin());
     random_shuffle(vSockets->begin(), vSockets->end());
 }
-                                                
+
 
 //********************************************************************
 //                      run
@@ -295,7 +295,7 @@ int Server::run(void) {
         timer.start(); // Start the timer
 
         populateVSockets();
-        
+
         poll();
 
         checkNew();
@@ -318,10 +318,10 @@ int Server::run(void) {
         pulse++;
 
         checkWebInterface();
-        
+
         delete vSockets;
         vSockets = 0;
-        
+
         timer.end(); // End the timer
         timer.sleep();
     }
@@ -383,7 +383,7 @@ int Server::addListenPort(int port) {
 //********************************************************************
 
 int Server::poll() {
-    if(!this || controlSocks.empty()) {
+    if(controlSocks.empty()) {
         printf("Not bound to any ports, nothing to poll.\n");
         exit(0);
     }
@@ -666,7 +666,7 @@ void Server::pulseTicks(long t) {
         if(player) {
             player->pulseTick(t);
             if(player->isPlaying())
-                player->pulseSong(t);              
+                player->pulseSong(t);
         }
     }
 }
@@ -1119,9 +1119,6 @@ void Server::addActive(Monster* monster) {
 // parameter contains a pointer to the monster which is to be removed
 
 void Server::delActive(Monster* monster) {
-    if(!this)
-        return;
-
     if(activeList.empty()) {
         std::cerr << "Attempting to delete '" << monster->getName() << "' from active list with an empty active list." << std::endl;
         broadcast(isStaff, "^yAttempting to delete %s from active list with an empty active list.", monster->getCName());
@@ -1680,7 +1677,7 @@ int Server::finishReboot() {
 
     Numplayers = 0;
     StartTime = time(0);
- 
+
     while(curNode != NULL) {
         if(NODE_NAME(curNode, "Server")) {
             childNode = curNode->children;
@@ -2265,5 +2262,3 @@ void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, 
     logGoldSql(pName, pId, targetStr, source, room, logType, amt.get(GOLD), direction);
 #endif // SQL_LOGGER
 }
-
-
