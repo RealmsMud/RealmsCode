@@ -723,12 +723,12 @@ void Server::updateAction(long t) {
                         switch(act->do_act) {
                         case 'E': // broadcast response to room
                             if(thresh <= num)
-                                broadcast(NULL, monster->getRoomParent(), "%s", resp);
+                                broadcast(nullptr, monster->getRoomParent(), "%s", resp);
 
                             break;
                         case 'S': // say to room
                             if(thresh <= num)
-                                broadcast(NULL, monster->getRoomParent(), "%M says, \"%s\"", monster, resp);
+                                broadcast(nullptr, monster->getRoomParent(), "%M says, \"%s\"", monster, resp);
                             break;
                         case 'T':   // Mob Trash-talk
                             if(mrand(1,100) <= 10) {

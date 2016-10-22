@@ -260,7 +260,7 @@ void handleObject(Player* player, cmd* cmnd, HandleObject type) {
         target = player->findTarget(FIND_OBJ_INVENTORY | FIND_OBJ_EQUIPMENT | FIND_OBJ_ROOM,
             player->displayFlags(), cmnd->str[1], cmnd->val[1]);
 
-        if(target != NULL)
+        if(target != nullptr)
             object = dynamic_cast<Object*>(target);
     }
 

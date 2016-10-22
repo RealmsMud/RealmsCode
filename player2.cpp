@@ -357,14 +357,14 @@ int cmdDice(Creature* player, cmd* cmnd) {
     }
     diceNum = atoi(tok);
 
-    tok = strtok(NULL, "+");
+    tok = strtok(nullptr, "+");
     if(!tok) {
         player->print(Syntax);
         return(0);
     }
     diceSides = atoi(tok);
 
-    tok = strtok(NULL, "+");
+    tok = strtok(nullptr, "+");
 
     if(tok)
         diceAdd = atoi(tok);

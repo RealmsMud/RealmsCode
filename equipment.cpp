@@ -475,7 +475,7 @@ void wearAll(Player* player, bool login) {
 
             object->clearFlag(O_JUST_BOUGHT);
             if(!login) {
-                sprintf(str2, "%s, ", object->getObjStr(NULL, 0, 1).c_str());
+                sprintf(str2, "%s, ", object->getObjStr(nullptr, 0, 1).c_str());
                 strcat(str, str2);
             }
             player->equip(object, false);
@@ -672,7 +672,7 @@ void remove_all(Player* player) {
 
     for(i=0; i<MAXWEAR; i++) {
         if(player->ready[i] && (!(player->ready[i]->flagIsSet(O_CURSED) && player->ready[i]->getShotsCur() > 0))) {
-            sprintf(str2,"%s, ", player->ready[i]->getObjStr(NULL, 0, 1).c_str());
+            sprintf(str2,"%s, ", player->ready[i]->getObjStr(nullptr, 0, 1).c_str());
             strcat(str, str2);
             player->ready[i]->clearFlag(O_WORN);
             player->doRemove(i);
@@ -1188,7 +1188,7 @@ void getAllObj(Creature* creature, Object *container) {
                 n++;
             else if(last_obj) {
                 // BUGFIX: Assigning the c_str() of a bstring to a char, and it's still being accessed after the bstring goes out of scope (this line)
-                bstring lastObjStr = last_obj->getObjStr(NULL, 0, n);
+                bstring lastObjStr = last_obj->getObjStr(nullptr, 0, n);
                 str2 = lastObjStr.c_str();
                 if(strlen(str2)+strlen(str) < 2040) {
                     strcat(str, str2);
@@ -1211,7 +1211,7 @@ void getAllObj(Creature* creature, Object *container) {
     }
 
     if(found && last_obj) {
-        bstring objStr = object->getObjStr(NULL, 0, n);
+        bstring objStr = object->getObjStr(nullptr, 0, n);
         if(objStr.length() +strlen(str) < 2040)
             strcat(str, objStr.c_str());
     } else if(!found) {
@@ -1338,7 +1338,7 @@ void get_all_rom(Creature* creature, char *item) {
             if(last_obj && last_obj->showAsSame(player, object))
                 n++;
             else if(last_obj) {
-                bstring oStr = last_obj->getObjStr(NULL, 0, n);
+                bstring oStr = last_obj->getObjStr(nullptr, 0, n);
                 str2 = oStr.c_str();
                 if(strlen(str2)+strlen(str) < 2040) {
                     strcat(str, str2);
@@ -1347,7 +1347,7 @@ void get_all_rom(Creature* creature, char *item) {
                 }
             }
             if(object->getType() == MONEY) {
-                bstring strtmp = object->getObjStr(NULL, 0, 1);
+                bstring strtmp = object->getObjStr(nullptr, 0, 1);
                 str2 = strtmp.c_str();
                 if(strlen(str2)+strlen(str) < 2040) {
                     strcat(str, str2);
@@ -1374,7 +1374,7 @@ void get_all_rom(Creature* creature, char *item) {
     }
 
     if(found && last_obj) {
-        bstring objStr = last_obj->getObjStr(NULL, 0, n);
+        bstring objStr = last_obj->getObjStr(nullptr, 0, n);
         str2 = objStr.c_str();
         if(strlen(str2)+strlen(str) < 2040)
             strcat(str, str2);
@@ -1874,7 +1874,7 @@ bool delete_drop_obj(const BaseRoom* room, const Object* object, bool factionCan
         return(true);
 
     if(object->flagIsSet(O_BREAK_ON_DROP)) {
-        broadcast(NULL, room, "%O shattered and turned to dust!", object);
+        broadcast(nullptr, room, "%O shattered and turned to dust!", object);
         return(true);
     }
 
@@ -1986,7 +1986,7 @@ void dropAllRoom(Creature* creature, Player *player, bool factionCanRecycle) {
     if(money) {
         player->coins.add(money, GOLD);
         player->print("Thank you for recycling!\nYou now have %s.\n", player->coins.str().c_str());
-        gServer->logGold(GOLD_IN, player, Money(money, GOLD), NULL, "RecycleAll");
+        gServer->logGold(GOLD_IN, player, Money(money, GOLD), nullptr, "RecycleAll");
     }
 
     player->bug("%s%s dropped %s.\n", player->getCName(), player != creature ? "'s pet" : "", txt.c_str());
@@ -2130,7 +2130,7 @@ void dropAllObj(Creature* creature, Object *container, Property *p) {
         p->appendLog(player->getName(), "%s stores %s.", player->getCName(), txt.c_str());
 
     if(container->flagIsSet(O_DEVOURS_ITEMS))
-        broadcast(NULL, room, "%O devours everything!", container);
+        broadcast(nullptr, room, "%O devours everything!", container);
 
     player->save(true);
 }
@@ -2245,8 +2245,8 @@ void containerOutput(const Player* player, const Object* container, const Object
         return;
     bstring output = container->use_output;
 
-    output.Replace("*OBJECT-UPPER*", object->getObjStr(NULL, CAP, 0).c_str());
-    output.Replace("*OBJECT*", object->getObjStr(NULL, 0, 0).c_str());
+    output.Replace("*OBJECT-UPPER*", object->getObjStr(nullptr, CAP, 0).c_str());
+    output.Replace("*OBJECT*", object->getObjStr(nullptr, 0, 0).c_str());
 
     player->printColor("%s\n", output.c_str());
 }
@@ -2339,7 +2339,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
                 object->nameCoin("gold", cash);
                 object->value.set(cash, GOLD);
                 player->coins.sub(cash, GOLD);
-                gServer->logGold(GOLD_OUT, player, Money(cash, GOLD), NULL, "DropGold");
+                gServer->logGold(GOLD_OUT, player, Money(cash, GOLD), nullptr, "DropGold");
                 object->setDroppedBy(player, "DropGold");
                 created = true;
             } else {
@@ -2572,7 +2572,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
             broadcast(player->getSock(), room, "%M put %1P in %1P.", creature, object, container);
 
             if(container->info.id == 2636 && container->info.isArea("misc"))
-                broadcast(NULL, room, "Flush!");
+                broadcast(nullptr, room, "Flush!");
 
 
             if( object->flagIsSet(O_NO_DROP) &&

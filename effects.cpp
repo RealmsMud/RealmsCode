@@ -80,7 +80,7 @@ void Config::clearEffects() {
 Effect* Config::getEffect(bstring eName) {
     std::map<bstring, Effect*>::const_iterator eIt;
     if( (eIt = effects.find(eName)) == effects.end())
-        return(NULL);
+        return(nullptr);
     else
         return((*eIt).second);
 }
@@ -420,12 +420,12 @@ EffectInfo* MudObject::addEffect(const bstring& effect, long duration, int stren
 
 EffectInfo* Effects::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
     if(!gConfig->getEffect(effect))
-        return(null);
+        return(nullptr);
     EffectInfo* newEffect = new EffectInfo(effect, time(0), duration, strength, pParent, owner);
 
     if(!newEffect->compute(applier)) {
         delete newEffect;
-        return(NULL);
+        return(nullptr);
     }
 
 
@@ -453,7 +453,7 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
         if(pParent->getAsPlayer() && show)
             pParent->getAsPlayer()->print("The effect didn't take hold.\n");
         delete newEffect;
-        return(NULL);
+        return(nullptr);
     }
 
     // pre-apply gets called BEFORE the replaced effect gets removed
@@ -483,7 +483,7 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
 //*********************************************************************
 
 EffectInfo* MudObject::addPermEffect(const bstring& effect, int strength, bool show) {
-    return(effects.addEffect(effect, -1, strength, NULL, show, this));
+    return(effects.addEffect(effect, -1, strength, nullptr, show, this));
 }
 
 //*********************************************************************
@@ -613,7 +613,7 @@ EffectInfo* MudObject::getEffect(const bstring& effect) const {
 
 EffectInfo* Effects::getEffect(const bstring& effect) const {
     EffectList::const_iterator eIt;
-    EffectInfo* toReturn = NULL;
+    EffectInfo* toReturn = nullptr;
     for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
         if((*eIt) && ((*eIt)->getName() == effect || (*eIt)->hasBaseEffect(effect))) {
             if(!toReturn)
@@ -644,7 +644,7 @@ EffectInfo* Effects::getExactEffect(const bstring& effect) const {
         if((*eIt) && (*eIt)->getName() == effect)
             return((*eIt));
     }
-    return(NULL);
+    return(nullptr);
 }
 
 //*********************************************************************
@@ -753,7 +753,7 @@ void Effects::removeAll() {
     for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
         effect = (*eIt);
         delete effect;
-        (*eIt) = NULL;
+        (*eIt) = nullptr;
     }
     effectList.clear();
 }
@@ -1090,7 +1090,7 @@ bstring Creature::doReplace(bstring fmt, const MudObject* actor, const MudObject
 //*********************************************************************
 
 void Container::effectEcho(bstring fmt, const MudObject* actor, const MudObject* applier, Socket* ignore) {
-    Socket* ignore2 = NULL;
+    Socket* ignore2 = nullptr;
     if(actor->getAsConstCreature())
         ignore2 = actor->getAsConstCreature()->getSock();
     for(const Player* ply : players) {

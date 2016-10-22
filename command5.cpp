@@ -596,7 +596,7 @@ void deletePlayer(Player* player) {
     player->uninit();
     free_crt(player,true);
     //gServer->clearPlayer(name);
-    sock->setPlayer(NULL);
+    sock->setPlayer(nullptr);
 
     // get rid of any files the player was using
     sprintf(file, "%s/%s.xml", Path::Player, name.c_str());

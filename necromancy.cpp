@@ -502,7 +502,7 @@ int splNecroDrain(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == NULL)
+    if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == nullptr)
         return(0);
 
     return(doOffensive(player, target, spellData, spell.c_str(), &osp));

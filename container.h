@@ -78,9 +78,9 @@ public:
 
     bool checkAntiMagic(Monster* ignore = 0);
 
-    void doSocialEcho(bstring str, const Creature* actor, const Creature* target = null);
+    void doSocialEcho(bstring str, const Creature* actor, const Creature* target = nullptr);
 
-    void effectEcho(bstring fmt, const MudObject* actor = NULL, const MudObject* applier = null, Socket* ignore = null);
+    void effectEcho(bstring fmt, const MudObject* actor = nullptr, const MudObject* applier = nullptr, Socket* ignore = nullptr);
 
 //    virtual bool flagIsSet(int flag) const = 0;
 //    virtual void setFlag(int flag) = 0;

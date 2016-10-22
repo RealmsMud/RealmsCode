@@ -116,15 +116,15 @@ namespace xml {
 
     template <class Type>
     xmlNodePtr newNumChild(xmlNodePtr node, bstring name, const Type& value) {
-        return(xmlNewChild( node, NULL, BAD_CAST (name.c_str()), BAD_CAST numToStr(value).c_str()));
+        return(xmlNewChild( node, nullptr, BAD_CAST (name.c_str()), BAD_CAST numToStr(value).c_str()));
     }
 
     template <class Type>
     xmlNodePtr saveNonZeroNum(xmlNodePtr node, bstring name, const Type& value) {
-        xmlNodePtr toReturn = NULL;
+        xmlNodePtr toReturn = nullptr;
         // precision for floats
         if((int)(value*10000)) {
-            toReturn = xmlNewChild( (node), NULL, BAD_CAST (name.c_str()), BAD_CAST numToStr(value).c_str());
+            toReturn = xmlNewChild( (node), nullptr, BAD_CAST (name.c_str()), BAD_CAST numToStr(value).c_str());
         }
         return(toReturn);
     }

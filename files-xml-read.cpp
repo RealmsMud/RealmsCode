@@ -58,7 +58,7 @@ bool loadPlayer(const bstring name, Player** player, LoadType loadType) {
     char        filename[256];
     bstring     pass = "", loadName = "";
 
-    if(!checkWinFilename(NULL, name)) {
+    if(!checkWinFilename(nullptr, name)) {
         printf("Failed lookup on player %s due to checkWinFilename.\n", name.c_str());
         return(false);
     }
@@ -72,7 +72,7 @@ bool loadPlayer(const bstring name, Player** player, LoadType loadType) {
 
     //printf("Attempting to load player %s from file %s.\n", name, filename);
 
-    if((xmlDoc = xml::loadFile(filename, "Player")) == NULL)
+    if((xmlDoc = xml::loadFile(filename, "Player")) == nullptr)
         return(false);
 
     rootNode = xmlDocGetRootElement(xmlDoc);
@@ -228,10 +228,10 @@ bool loadMonsterFromFile(const CatRef cr, Monster **pMonster, bstring filename) 
         filename = monsterPath(cr);
     //printf("Attempting to load creature %d from %s\n", index, filename);
 
-    if((xmlDoc = xml::loadFile(filename.c_str(), "Creature")) == NULL)
+    if((xmlDoc = xml::loadFile(filename.c_str(), "Creature")) == nullptr)
         return(false);
 
-    if(xmlDoc == NULL) {
+    if(xmlDoc == nullptr) {
         printf("Error parsing file %s\n", filename.c_str());
         return(false);
     }
@@ -270,10 +270,10 @@ bool loadObjectFromFile(const CatRef cr, Object** pObject) {
 
     //printf("Attempting to load object %d from %s\n", index, filename);
 
-    if((xmlDoc = xml::loadFile(filename, "Object")) == NULL)
+    if((xmlDoc = xml::loadFile(filename, "Object")) == nullptr)
         return(false);
 
-    if(xmlDoc == NULL) {
+    if(xmlDoc == nullptr) {
         printf("Error parsing file %s\n", filename);
         return(false);
     }
@@ -309,7 +309,7 @@ bool loadRoomFromFile(const CatRef cr, UniqueRoom **pRoom, bstring filename) {
         filename = roomPath(cr);
 
     //printf("Attempting to load room %d from file %s.\n", index, filename);
-    if((xmlDoc = xml::loadFile(filename.c_str(), "Room")) == NULL)
+    if((xmlDoc = xml::loadFile(filename.c_str(), "Room")) == nullptr)
         return(false);
 
     rootNode = xmlDocGetRootElement(xmlDoc);
@@ -657,7 +657,7 @@ void Monster::readXml(xmlNodePtr curNode) {
         TalkResponse* newTalk;
         while(childNode) {
             if(NODE_NAME(childNode, "TalkResponse")) {
-                if((newTalk = new TalkResponse(childNode)) != NULL) {
+                if((newTalk = new TalkResponse(childNode)) != nullptr) {
                     responses.push_back(newTalk);
                 }
             }
@@ -1392,7 +1392,7 @@ void MudObject::readCreatures(xmlNodePtr curNode) {
     Object* oParent = getAsObject();
 
     while(childNode) {
-        mob = NULL;
+        mob = nullptr;
         if(NODE_NAME( childNode , "Creature")) {
             // If it's a full creature, read it in
             mob = new Monster;
@@ -1411,7 +1411,7 @@ void MudObject::readCreatures(xmlNodePtr curNode) {
                 //printf("Unable to load creature %d\n", num);
             }
         }
-        if(mob != NULL) {
+        if(mob != nullptr) {
             // Add it to the appropriate parent
             if(cParent) {
                 // If we have a creature parent, we must be a pet
@@ -1467,7 +1467,7 @@ bool Config::loadSocials() {
     sprintf(filename, "%s/socials.xml", Path::Code);
 
     xmlDoc = xml::loadFile(filename, "Socials");
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -1483,7 +1483,7 @@ bool Config::loadSocials() {
     }
 
     clearAlchemy();
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Social")) {
             SocialCommand* social = new SocialCommand(curNode);
             if(social)
@@ -1500,7 +1500,7 @@ int cmdSocial(Creature* creature, cmd* cmnd);
 SocialCommand::SocialCommand(xmlNodePtr rootNode) {
     rootNode = rootNode->children;
     priority = 100;
-    auth = NULL;
+    auth = nullptr;
     description = "";
     fn = cmdSocial;
 
@@ -1508,7 +1508,7 @@ SocialCommand::SocialCommand(xmlNodePtr rootNode) {
     rudeWakeTarget = false;
     wakeRoom = false;
 
-    while(rootNode != NULL)
+    while(rootNode != nullptr)
     {
         if(NODE_NAME(rootNode, "Name")) xml::copyToBString(name, rootNode);
         else if(NODE_NAME(rootNode, "Description")) xml::copyToBString(description, rootNode);
@@ -1542,7 +1542,7 @@ bool Config::loadAlchemy() {
     sprintf(filename, "%s/alchemy.xml", Path::Code);
 
     xmlDoc = xml::loadFile(filename, "Alchemy");
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -1558,7 +1558,7 @@ bool Config::loadAlchemy() {
     }
 
     clearAlchemy();
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "AlchemyInfo")) {
             AlchemyInfo* alcInfo = new AlchemyInfo(curNode);
             if(alcInfo)
@@ -1574,7 +1574,7 @@ bool Config::loadAlchemy() {
 AlchemyInfo::AlchemyInfo(xmlNodePtr rootNode) {
 
     rootNode = rootNode->children;
-    while(rootNode != NULL)
+    while(rootNode != nullptr)
     {
         if(NODE_NAME(rootNode, "Name")) xml::copyToBString(name, rootNode);
         else if(NODE_NAME(rootNode, "Action")) xml::copyToBString(action, rootNode);
@@ -1604,7 +1604,7 @@ bool Config::loadMxpElements() {
     sprintf(filename, "%s/mxp.xml", Path::Code);
 
     xmlDoc = xml::loadFile(filename, "Mxp");
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -1620,7 +1620,7 @@ bool Config::loadMxpElements() {
     }
 
     clearAlchemy();
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "MxpElement")) {
             MxpElement* mxpElement = new MxpElement(curNode);
             if(mxpElement) {
@@ -1646,7 +1646,7 @@ bool Config::loadMxpElements() {
 MxpElement::MxpElement(xmlNodePtr rootNode) {
     rootNode = rootNode->children;
     prompt = false;
-    while(rootNode != NULL)
+    while(rootNode != nullptr)
     {
         if(NODE_NAME(rootNode, "Name")) xml::copyToBString(name, rootNode);
         else if(NODE_NAME(rootNode, "Command")) xml::copyToBString(command, rootNode);
@@ -1674,7 +1674,7 @@ bool Config::loadBans() {
     snprintf(filename, 80, "%s/bans.xml", Path::Config);
     xmlDoc = xml::loadFile(filename, "Bans");
 
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     cur = xmlDocGetRootElement(xmlDoc);
@@ -1694,10 +1694,10 @@ bool Config::loadBans() {
     }
 
     clearBanList();
-    while(cur != NULL) {
+    while(cur != nullptr) {
         if((!strcmp((char*) cur->name, "Ban"))) {
             curBan = new Ban(cur);
-            if(curBan != NULL)
+            if(curBan != nullptr)
                 bans.push_back(curBan);
         }
         cur = cur->next;
@@ -1714,7 +1714,7 @@ bool Config::loadBans() {
 Ban::Ban(xmlNodePtr curNode) {
 
     curNode = curNode->children;
-    while(curNode != NULL)
+    while(curNode != nullptr)
     {
         if(NODE_NAME(curNode, "Site")) xml::copyToBString(site, curNode);
         else if(NODE_NAME(curNode, "Duration")) xml::copyToNum(duration, curNode);
@@ -1746,7 +1746,7 @@ bool Config::loadGuilds() {
     sprintf(filename, "%s/guilds.xml", Path::PlayerData);
 
     xmlDoc = xml::loadFile(filename, "Guilds");
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     cur = xmlDocGetRootElement(xmlDoc);
@@ -1770,7 +1770,7 @@ bool Config::loadGuilds() {
 
     clearGuildList();
     Guild* guild;
-    while(cur != NULL) {
+    while(cur != nullptr) {
         if(!strcmp((char *)cur->name, "Guild")) {
             guild = new Guild(cur);
             if(guild)
@@ -1778,7 +1778,7 @@ bool Config::loadGuilds() {
         }
         if(!strcmp((char *)cur->name, "GuildCreation")) {
             curCreation = parseGuildCreation(cur);
-            if(curCreation != NULL)
+            if(curCreation != nullptr)
                 addGuildCreation(curCreation);
         }
         cur = cur->next;
@@ -1801,7 +1801,7 @@ Guild::Guild(xmlNodePtr curNode) {
     num = guildId;
     gConfig->numGuilds = MAX(gConfig->numGuilds, guildId);
     curNode = curNode->children;
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
              if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
         else if(NODE_NAME(curNode, "Leader")) xml::copyToBString(leader, curNode);
         else if(NODE_NAME(curNode, "Level")) xml::copyToNum(level, curNode);
@@ -1823,14 +1823,14 @@ Guild::Guild(xmlNodePtr curNode) {
 
 GuildCreation * parseGuildCreation(xmlNodePtr cur) {
     GuildCreation* gc = new GuildCreation;
-    if(gc == NULL) {
+    if(gc == nullptr) {
         loge("Guild_Load: out of memory\n");
-        return(NULL);
+        return(nullptr);
     }
 
     bstring temp = "";
     cur = cur->children;
-    while(cur != NULL) {
+    while(cur != nullptr) {
              if(NODE_NAME(cur, "Name")) xml::copyToBString(gc->name, cur);
         else if(NODE_NAME(cur, "Leader")) xml::copyToBString(gc->leader, cur);
         else if(NODE_NAME(cur, "LeaderIp")) xml::copyToBString(gc->leaderIp, cur);
@@ -1851,7 +1851,7 @@ GuildCreation * parseGuildCreation(xmlNodePtr cur) {
 
 void Guild::parseGuildMembers(xmlNodePtr cur) {
     cur = cur->children;
-    while(cur != NULL) {
+    while(cur != nullptr) {
         if(NODE_NAME(cur, "Member")) {
             char *tmp = xml::getCString(cur);
             addMember(tmp);
@@ -1875,7 +1875,7 @@ bool Config::loadSkills() {
     sprintf(filename, "%s/skills.xml", Path::Code);
 
     xmlDoc = xml::loadFile(filename, "Skills");
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     cur = xmlDocGetRootElement(xmlDoc);
@@ -1891,7 +1891,7 @@ bool Config::loadSkills() {
     }
 
     clearSkills();
-    while(cur != NULL) {
+    while(cur != nullptr) {
         if(NODE_NAME(cur, "SkillGroups")) {
             loadSkillGroups(cur);
         } else if(NODE_NAME(cur, "Skills")) {
@@ -1912,7 +1912,7 @@ bool Config::loadSkills() {
 
 void Config::loadSkillGroups(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "SkillGroup")) {
             loadSkillGroup(curNode);
         }
@@ -1929,7 +1929,7 @@ void Config::loadSkillGroup(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
     bstring name;
     bstring displayName;
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Name")) {
             xml::copyToBString(name, curNode);
         } else if(NODE_NAME(curNode, "DisplayName")) {
@@ -1950,7 +1950,7 @@ void Config::loadSkillGroup(xmlNodePtr rootNode) {
 void Config::loadSkills(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
     SkillInfo* skill=0;
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Skill")) {
             try {
                 skill = new SkillInfo(curNode);
@@ -1991,7 +1991,7 @@ SkillInfo::SkillInfo(xmlNodePtr rootNode) {
     bstring group;
     bstring description;
 
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         readNode(curNode);
         curNode = curNode->next;
     }
@@ -2010,12 +2010,12 @@ SkillCommand::SkillCommand(xmlNodePtr rootNode) {
 
     xmlNodePtr curNode = rootNode->children;
     priority = 100;
-    auth = NULL;
+    auth = nullptr;
     description = "";
     targetType = TARGET_NONE;
 
     fn = cmdSkill;
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         readNode(curNode);
         curNode = curNode->next;
     }
@@ -2115,7 +2115,7 @@ bool SkillCommand::readNode(xmlNodePtr curNode) {
 }
 void SkillCommand::loadResources(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Resource")) {
             resources.push_back(SkillCost(curNode));
         }
@@ -2128,7 +2128,7 @@ SkillCost::SkillCost(xmlNodePtr rootNode) {
     cost = 0;
 
     xmlNodePtr curNode = rootNode->children;
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Type")) {
             bstring resourceStr;
             xml::copyToBString(resourceStr, curNode);

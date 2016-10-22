@@ -144,7 +144,7 @@ bstring Recipe::getResultName(bool appendCr) {
     Object* object=0;
     if(resultName == "" || resultName == "<unknown item>") {
         if(object || loadObject(result, &object)) {
-            resultName = object->getObjStr(NULL, INV | MAG, 1);
+            resultName = object->getObjStr(nullptr, INV | MAG, 1);
             delete object;
         } else
             resultName = "<unknown item>";
@@ -323,7 +323,7 @@ bstring Recipe::listIngredients(const std::list<CatRef>* list) const {
 
         oStr << "   |   " << std::setw(RECIPE_WIDTH);
         if(loadObject(lastObject, &object)) {
-            oStr << object->getObjStr(NULL, INV | MAG, num);
+            oStr << object->getObjStr(nullptr, INV | MAG, num);
             delete object;
         } else {
             oStr << "<unknown item>";
@@ -337,7 +337,7 @@ bstring Recipe::listIngredients(const std::list<CatRef>* list) const {
     // we offset by one, so do the last one now
     oStr << "   |   " << std::setw(RECIPE_WIDTH);
     if(loadObject(lastObject, &object)) {
-        oStr << object->getObjStr(NULL, INV | MAG, num);
+        oStr << object->getObjStr(nullptr, INV | MAG, num);
         delete object;
     } else {
         oStr << "<unknown item>";
@@ -548,7 +548,7 @@ Recipe* Config::searchRecipes(const Player* player, bstring skill, Size recipeSi
                 hot = findHot(player);
                 if(hot) {
                     str += "You prepare ";
-                    str += hot->getObjStr(NULL, flags, 1);
+                    str += hot->getObjStr(nullptr, flags, 1);
                     str += ".\n";
                 } else
                     hasEquipment = false;
@@ -560,7 +560,7 @@ Recipe* Config::searchRecipes(const Player* player, bstring skill, Size recipeSi
                         Object *obj = (*oIt);
                         if(Recipe::goodObject(player, obj, &(*iIt))) {
                             str += "You prepare ";
-                            str += obj->getObjStr(NULL, flags, 1);
+                            str += obj->getObjStr(nullptr, flags, 1);
                             str += ".\n";
                             break;
                         }
@@ -1074,7 +1074,7 @@ bool Config::loadRecipes() {
     snprintf(filename, 80, "%s/recipes.xml", Path::Game);
     xmlDoc = xml::loadFile(filename, "Recipes");
 
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -1089,7 +1089,7 @@ bool Config::loadRecipes() {
     }
 
     clearRecipes();
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Recipe")) {
             i = xml::getIntProp(curNode, "Id");
 
@@ -1117,7 +1117,7 @@ bool Config::saveRecipes() const {
     char            filename[80];
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Recipes", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Recipes", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     for(it = recipes.begin() ; it != recipes.end() ; it++)

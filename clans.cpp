@@ -138,7 +138,7 @@ bool Config::loadClans() {
     snprintf(filename, 80, "%s/clans.xml", Path::Game);
     xmlDoc = xml::loadFile(filename, "Clans");
 
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -153,7 +153,7 @@ bool Config::loadClans() {
     }
 
     clearClans();
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Clan")) {
             i = xml::getIntProp(curNode, "Id");
 
@@ -268,7 +268,7 @@ int cmdPledge(Player* player, cmd* cmnd) {
         player->addExperience(clan->getJoin());
 
     player->coins.add(clan->getJoin() * 5, GOLD);
-    gServer->logGold(GOLD_IN, player, Money(clan->getJoin() * 5, GOLD), NULL, "ClanPledge");
+    gServer->logGold(GOLD_IN, player, Money(clan->getJoin() * 5, GOLD), nullptr, "ClanPledge");
     player->hp.restore();
     player->mp.restore();
 
@@ -363,7 +363,7 @@ int cmdRescind(Player* player, cmd* cmnd) {
     player->print("You lose %d experience and %d gold!\n", amte, clan->getRescind() * 2);
     player->subExperience(amte);
     player->coins.sub(clan->getRescind(), GOLD);
-    gServer->logGold(GOLD_OUT, player, Money(clan->getRescind(), GOLD), NULL, "Rescind");
+    gServer->logGold(GOLD_OUT, player, Money(clan->getRescind(), GOLD), nullptr, "Rescind");
     player->hp.setCur(player->hp.getMax() / 3);
     player->mp.setCur(0);
 

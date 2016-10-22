@@ -561,7 +561,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
                         continue;
                     } else {
                         Monster* mon = target->getAsMonster();
-                        broadcast(NULL,  room, "%M was killed!", mon);
+                        broadcast(nullptr,  room, "%M was killed!", mon);
                         if(mon->flagIsSet(M_PERMENANT_MONSTER))
                             mon->diePermCrt();
                         mon->deleteFromRoom();

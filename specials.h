@@ -195,7 +195,7 @@ public:
     bool flagIsSet(int flag) const;
 
     void printFailStrings(Creature* attacker, Creature* target);
-    void printRoomString(Creature* attacker, Creature* target = NULL);
+    void printRoomString(Creature* attacker, Creature* target = nullptr);
     void printTargetString(Creature* attacker, Creature* target, int dmg = -1);
 
     void printRoomSaveString(Creature* attacker, Creature* target);

@@ -77,7 +77,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
         player->print("Magic-missile must be cast on a target creature.\n");
         return(0);
     }
-    if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == NULL)
+    if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == nullptr)
         return(0);
 
 //  target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], true, true);
@@ -512,14 +512,14 @@ Creature* Creature::findMagicVictim(bstring toFind, int num, SpellData* spellDat
                 }
                 if(!noVictim.empty())
                     bPrint(noVictim);
-                return(NULL);
+                return(nullptr);
             } else {
                 return(this);
             }
         } else {
             if(spellData->how == POTION) {
                 bPrint("You can only use a potion on yourself.\n");
-                return(NULL);
+                return(nullptr);
             }
             if(toFind == ".") {
                 // Cast offensive spell on self
@@ -533,7 +533,7 @@ Creature* Creature::findMagicVictim(bstring toFind, int num, SpellData* spellDat
                         || (!selfOk && victim == this)) {
                     if(!notFound.empty())
                         bPrint(notFound);
-                    return(NULL);
+                    return(nullptr);
                 }
                 if(isMonster()) {
                     if(victim == this) {
@@ -541,7 +541,7 @@ Creature* Creature::findMagicVictim(bstring toFind, int num, SpellData* spellDat
                         victim = getRoomParent()->findCreature(this, toFind.c_str(), 2, true, true);
                         // look for second creature with same name
                         if(!victim || victim == this)
-                            return(NULL);
+                            return(nullptr);
                     }
                 }
                 return(victim);
@@ -551,7 +551,7 @@ Creature* Creature::findMagicVictim(bstring toFind, int num, SpellData* spellDat
 int splOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *spellname, osp_t *osp) {
     Creature* target=0;
 
-    if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == NULL)
+    if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == nullptr)
         return(0);
 
     return(doOffensive(player, target, spellData, spellname, osp));

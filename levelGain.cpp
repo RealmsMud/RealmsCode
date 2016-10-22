@@ -643,7 +643,7 @@ int cmdTrain(Player* player, cmd* cmnd) {
         } else
             player->coins.sub(goldneeded, GOLD);
     }
-    gServer->logGold(GOLD_OUT, player, Money(goldneeded, GOLD), NULL, "Training");
+    gServer->logGold(GOLD_OUT, player, Money(goldneeded, GOLD), nullptr, "Training");
 
     doTrain(player);
 

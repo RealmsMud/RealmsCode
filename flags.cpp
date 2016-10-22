@@ -169,7 +169,7 @@ bool Config::loadFlags() {
     snprintf(filename, 80, "%s/flags.xml", Path::Code);
     xmlDoc = xml::loadFile(filename, "Flags");
 
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -184,7 +184,7 @@ bool Config::loadFlags() {
     }
 
     clearFlags();
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         childNode = curNode->children;
         while(childNode) {
             if(NODE_NAME(childNode, "Flag")) {

@@ -1453,7 +1453,7 @@ int Player::recallCheckBag(Object *cont, cmd* cmnd, int show, int log) {
 
 int Player::useRecallPotion(int show, int log) {
     cmd     *cmnd;
-    Object  *object=NULL;
+    Object  *object=nullptr;
     int     i=0;
     bstring room = getRoomParent()->fullName(), name = "";
 
@@ -1618,7 +1618,7 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
         if(!target->addEffect(effect, duration, strength, player, true))
             return(0);
     } else {
-        target->addEffect(effect, duration, strength, NULL, true);
+        target->addEffect(effect, duration, strength, nullptr, true);
     }
 
     return(1);

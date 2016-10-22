@@ -130,7 +130,7 @@ public:
     EffectInfo* getExactEffect(const bstring& effect) const;
     //EffectInfo* addEffect(const bstring& effect, MudObject* applier = NULL, bool show = true, const Creature* owner=0, bool keepApplier=false);
     EffectInfo* addEffect(EffectInfo* newEffect, bool show = true, bool keepApplier=false);
-    EffectInfo* addEffect(const bstring& effect, long duration = -2, int strength = -2, MudObject* applier = NULL, bool show = true, const Creature* owner=0, bool keepApplier=false);
+    EffectInfo* addEffect(const bstring& effect, long duration = -2, int strength = -2, MudObject* applier = nullptr, bool show = true, const Creature* owner=0, bool keepApplier=false);
     EffectInfo* addPermEffect(const bstring& effect, int strength = 1, bool show = true);
     bool removeEffect(const bstring& effect, bool show = true, bool remPerm = true, MudObject* fromApplier=0);
     bool removeEffect(EffectInfo* toDel, bool show = true);

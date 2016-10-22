@@ -195,7 +195,7 @@ int cmdTelOpts(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdPrefs(Player* player, cmd* cmnd) {
-    prefPtr pref = NULL;
+    prefPtr pref = nullptr;
     int     i=0, match=0, len=strlen(cmnd->str[1]);
     bool    set = cmnd->str[0][0]=='s';
     bool    toggle = cmnd->str[0][0]=='t' || cmnd->str[0][0]=='p';

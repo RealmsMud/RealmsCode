@@ -92,7 +92,7 @@ public:
     bool    isEffected(EffectInfo* effect) const;
     //EffectInfo* addEffect(const bstring& effect, MudObject* applier, bool show, MudObject* pParent=0, const Creature* onwer=0, bool keepApplier=false);
     EffectInfo* addEffect(EffectInfo* newEffect, bool show, MudObject* parent=0, bool keepApplier=false);
-    EffectInfo* addEffect(const bstring& effect, long duration, int strength, MudObject* applier = NULL, bool show = true, MudObject* pParent=0, const Creature* onwer=0, bool keepApplier=false);
+    EffectInfo* addEffect(const bstring& effect, long duration, int strength, MudObject* applier = nullptr, bool show = true, MudObject* pParent=0, const Creature* onwer=0, bool keepApplier=false);
     bool    removeEffect(const bstring& effect, bool show, bool remPerm, MudObject* fromApplier=0);
     bool    removeEffect(EffectInfo* toDel, bool show);
     bool    removeOppositeEffect(const EffectInfo *effect);

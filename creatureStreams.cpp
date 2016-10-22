@@ -118,8 +118,8 @@ int Streamable::getManipNum() {
 void Streamable::doPrint(const bstring& toPrint) {
     const Player* player = dynamic_cast<Player*>(this);
     const Monster* monster = dynamic_cast<Monster*>(this);
-    const Player* master = null;
-    Socket* sock = null;
+    const Player* master = nullptr;
+    Socket* sock = nullptr;
 
     if(player)
         sock = player->getSock();

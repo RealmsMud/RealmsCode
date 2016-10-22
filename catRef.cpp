@@ -139,7 +139,7 @@ void CatRef::load(xmlNodePtr curNode) {
 
 xmlNodePtr CatRef::save(xmlNodePtr curNode, const char* childName, bool saveNonZero, int pos) const {
     if(!saveNonZero && !id)
-        return(NULL);
+        return(nullptr);
     curNode = xml::newNumChild(curNode, childName, id);
     xml::newProp(curNode, "Area", area.c_str());
     if(pos)

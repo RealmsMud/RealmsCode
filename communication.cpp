@@ -167,8 +167,8 @@ int communicateWith(Player* player, cmd* cmnd) {
     text = cmnd->myCommand->getName();
 
     // get us a channel to use!
-    commPtr chan = NULL;
-    while(commList[i].name != NULL) {
+    commPtr chan = nullptr;
+    while(commList[i].name != nullptr) {
         if(!strcmp(text.c_str(), commList[i].name)) {
             chan = &commList[i];
             break;
@@ -514,8 +514,8 @@ int communicate(Creature* creature, cmd* cmnd) {
     text = cmnd->myCommand->getName();
 
     // get us a channel to use!
-    sayPtr chan = NULL;
-    while(sayList[i].name != NULL) {
+    sayPtr chan = nullptr;
+    while(sayList[i].name != nullptr) {
         if(!strcmp(text.c_str(), sayList[i].name)) {
             chan = &sayList[i];
             break;
@@ -689,7 +689,7 @@ int communicate(Creature* creature, cmd* cmnd) {
                     if(!exit->getPassLanguage() || lang == exit->getPassLanguage()) {
                         // even needs to be open?
                         if(exit->flagIsSet(X_LOCKED)) {
-                            broadcast(NULL, creature->getRoomParent(), "The %s opens!", exit->getCName());
+                            broadcast(nullptr, creature->getRoomParent(), "The %s opens!", exit->getCName());
                             exit->clearFlag(X_LOCKED);
                             exit->clearFlag(X_CLOSED);
 
@@ -819,9 +819,9 @@ int channel(Player* player, cmd* cmnd) {
 
 
     // get us a channel to use!
-    channelPtr chan = NULL;
+    channelPtr chan = nullptr;
     i = 0;
-    while(channelList[i].channelName != NULL) {
+    while(channelList[i].channelName != nullptr) {
         if( !strcmp(chanStr.c_str(), channelList[i].channelName) &&
             (!channelList[i].canSee || channelList[i].canSee(player))
         ) {

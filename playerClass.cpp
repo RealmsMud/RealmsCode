@@ -267,7 +267,7 @@ bool Config::loadClasses() {
     snprintf(filename, 80, "%s/classes.xml", Path::Game);
     xmlDoc = xml::loadFile(filename, "Classes");
 
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -283,7 +283,7 @@ bool Config::loadClasses() {
 
     clearClasses();
     bstring className = "";
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Class")) {
             xml::copyPropToBString( className, curNode, "Name");
             if(className != "") {

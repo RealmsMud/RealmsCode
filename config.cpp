@@ -29,10 +29,10 @@
 extern bool listing;
 
 // Globals
-Config *gConfig = NULL;
+Config *gConfig = nullptr;
 
 // Static initialization
-Config* Config::myInstance = NULL;
+Config* Config::myInstance = nullptr;
 
 Config::Config() {
     reset();
@@ -53,7 +53,7 @@ Config::~Config() {
 // Get Instance - Return the static instance of config
 //********************************************************************
 Config* Config::getInstance() {
-    if(myInstance == NULL)
+    if(myInstance == nullptr)
         myInstance = new Config;
     return(myInstance);
 }
@@ -61,11 +61,11 @@ Config* Config::getInstance() {
 // Destroy Instance - Destroy the static instance
 //********************************************************************
 void Config::destroyInstance() {
-    if(myInstance != NULL) {
+    if(myInstance != nullptr) {
         myInstance->cleanUp();
         delete myInstance;
     }
-    myInstance = NULL;
+    myInstance = nullptr;
 }
 
 // End - Instance Functions
@@ -210,8 +210,8 @@ void Config::reset(bool reload) {
     numGuilds = 0;
 
 
-    calendar = NULL;
-    proxyManager = NULL;
+    calendar = nullptr;
+    proxyManager = nullptr;
 
     tickets.clear();
     defaultArea = "misc";
@@ -324,7 +324,7 @@ bool Config::loadConfig(bool reload) {
     if(!file_exists(filename))
         return(false);
 
-    if((xmlDoc = xml::loadFile(filename, "Config")) == NULL)
+    if((xmlDoc = xml::loadFile(filename, "Config")) == nullptr)
         return(false);
 
     rootNode = xmlDocGetRootElement(xmlDoc);
@@ -415,7 +415,7 @@ void Config::loadTickets(xmlNodePtr rootNode) {
 
     while(curNode) {
         if(NODE_NAME(curNode, "Ticket")) {
-             if((ticket = new LottoTicket(curNode)) != NULL) {
+             if((ticket = new LottoTicket(curNode)) != nullptr) {
                  tickets.push_back(ticket);
              }
         }
@@ -436,11 +436,11 @@ bool Config::saveConfig() const {
     char            filename[256];
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Config", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Config", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     // Make general section
-    curNode = xmlNewChild(rootNode, NULL, BAD_CAST "General", NULL);
+    curNode = xmlNewChild(rootNode, nullptr, BAD_CAST "General", nullptr);
     if(!bHavePort)
         xml::saveNonZeroNum(curNode, "Port", portNum);
 
@@ -475,7 +475,7 @@ bool Config::saveConfig() const {
     xml::saveNonZeroNum(curNode, "ShopNumLines", shopNumLines);
 
     // Lottery Section
-    curNode = xmlNewChild(rootNode, NULL, BAD_CAST "Lottery", NULL);
+    curNode = xmlNewChild(rootNode, nullptr, BAD_CAST "Lottery", nullptr);
     xml::saveNonZeroNum(curNode, "CurrentCycle", lotteryCycle);
     xml::saveNonZeroNum(curNode, "CurrentJackpot", lotteryJackpot);
     xml::newBoolChild(curNode, "Enabled", BAD_CAST iToYesNo(lotteryEnabled));
@@ -572,7 +572,7 @@ bool saveList(bstring xmlDocName, bstring fName, const std::map<bstring, Type*>&
     char        filename[80];
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST xmlDocName.c_str(), NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST xmlDocName.c_str(), nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     for(std::pair<bstring, Type*> sp : sMap) {
@@ -607,7 +607,7 @@ bool loadList(bstring xmlDocName, bstring xmlNodeName, bstring fName, std::map<b
     char filename[80];
     snprintf(filename, 80, "%s/%s", Path::Code, fName.c_str());
     xmlDoc = xml::loadFile(filename, xmlDocName.c_str());
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -621,7 +621,7 @@ bool loadList(bstring xmlDocName, bstring xmlNodeName, bstring fName, std::map<b
         return(false);
     }
 
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, xmlNodeName.c_str())) {
             Type* curItem = new Type(curNode);
             sMap[curItem->getName()] = curItem;
@@ -847,7 +847,7 @@ bool Config::reloadRoom(BaseRoom* room) {
             xmlDocPtr   xmlDoc;
             xmlNodePtr  rootNode;
 
-            if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == NULL)
+            if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == nullptr)
                 merror("Unable to read arearoom file", FATAL);
 
             rootNode = xmlDocGetRootElement(xmlDoc);

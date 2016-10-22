@@ -65,7 +65,7 @@ void Range::load(xmlNodePtr curNode) {
 
 xmlNodePtr Range::save(xmlNodePtr rootNode, const char* childName, int pos) const {
     if(!low.id && !high)
-        return(NULL);
+        return(nullptr);
     xmlNodePtr curNode = xml::newStringChild(rootNode, childName);
     if(pos)
         xml::newNumProp(curNode, "Num", pos);

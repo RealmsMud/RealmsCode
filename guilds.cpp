@@ -535,7 +535,7 @@ void Guild::support(Player* player, cmd* cmnd) {
 
     strcpy(guildName, &cmnd->fullstr[i+1]);
     toSupport = gConfig->findGuildCreation(guildName);
-    if(toSupport == NULL) {
+    if(toSupport == nullptr) {
         player->print("'%s' is not currently up for creation.\n", guildName);
         return;
     }
@@ -1178,7 +1178,7 @@ int dmApproveGuild(Player* player, cmd* cmnd) {
 
     strcpy(guildName, &cmnd->fullstr[i+1]);
     toApprove = gConfig->findGuildCreation(guildName);
-    if(toApprove == NULL) {
+    if(toApprove == nullptr) {
         player->print("'%s' is not currently up for creation.\n", guildName);
         return(0);
     }
@@ -1267,7 +1267,7 @@ int dmRejectGuild(Player* player, cmd* cmnd) {
         player->print("Reason '%s'\n", reason);
     }
     toReject = gConfig->findGuildCreation(guildName);
-    if(toReject == NULL) {
+    if(toReject == nullptr) {
         player->print("'%s' is not currently up for creation.\n", guildName);
         return(0);
     }
@@ -1561,7 +1561,7 @@ GuildCreation* Config::findGuildCreation(bstring creationName) {
         if(gcp->name == creationName)
             return(gcp);
     }
-    return(NULL);
+    return(nullptr);
 }
 
 //*********************************************************************
@@ -1994,7 +1994,7 @@ Guild* Config::getGuild(const bstring& name) {
         if(guild->getName() == name)
             return(guild);
     }
-    return (NULL);
+    return (nullptr);
 }
 
 Guild* Config::getGuild(int guildId) {

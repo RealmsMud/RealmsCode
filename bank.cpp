@@ -637,7 +637,7 @@ void Player::computeInterest(long t, bool online) {
         return;
 
     bank.add(amt, GOLD);
-    gServer->logGold(GOLD_IN, this, Money(amt, GOLD), NULL, "BankInterest");
+    gServer->logGold(GOLD_IN, this, Money(amt, GOLD), nullptr, "BankInterest");
 
     Bank::log(getCName(), "INTEREST for %d day%s at %d%%: %ld [Balance: %s]\n",
         interestDays, interestDays != 1 ? "s" : "", (int)(rate*100), amt, bank.str().c_str());

@@ -60,19 +60,19 @@ namespace xml {
 
 
     xmlNodePtr newBoolChild(xmlNodePtr node, const bstring name, const bool value) {
-        return(xmlNewChild( node, NULL, BAD_CAST (name.c_str()), BAD_CAST iToYesNo(value)));
+        return(xmlNewChild( node, nullptr, BAD_CAST (name.c_str()), BAD_CAST iToYesNo(value)));
     }
 
     // XSC: yes
     xmlNodePtr newStringChild(xmlNodePtr node, const bstring name, const bstring value) {
-        return(xmlNewTextChild( node, NULL, BAD_CAST (name.c_str()), BAD_CAST (xsc(value).c_str()) ));
+        return(xmlNewTextChild( node, nullptr, BAD_CAST (name.c_str()), BAD_CAST (xsc(value).c_str()) ));
     }
 
     // XSC: yes
     xmlNodePtr saveNonNullString(xmlNodePtr node, bstring name, const bstring value) {
         if(value == "")
-            return(NULL);
-        return(xmlNewTextChild( (node), NULL, BAD_CAST (name.c_str()), BAD_CAST (xsc(value).c_str()) ));
+            return(nullptr);
+        return(xmlNewTextChild( (node), nullptr, BAD_CAST (name.c_str()), BAD_CAST (xsc(value).c_str()) ));
     }
 
     // unXSC: yes
@@ -150,22 +150,22 @@ namespace xml {
         xmlDocPtr doc;
         xmlNodePtr cur;
 
-        doc = xmlReadFile(filename, NULL, XML_PARSE_NOERROR|XML_PARSE_NOWARNING|XML_PARSE_NOBLANKS );
+        doc = xmlReadFile(filename, nullptr, XML_PARSE_NOERROR|XML_PARSE_NOWARNING|XML_PARSE_NOBLANKS );
 
-        if(doc == NULL)
-            return(NULL);
+        if(doc == nullptr)
+            return(nullptr);
 
         // Check the document is of the right kind
         cur = xmlDocGetRootElement(doc);
-        if(cur == NULL) {
+        if(cur == nullptr) {
             loge("%s_Load: empty document\n", expectedRoot);
             xmlFreeDoc(doc);
-            return(NULL);
+            return(nullptr);
         }
         if(strcmp((char*)cur->name, expectedRoot)) {
             loge("%s_Load: document of the wrong type: Got: [%s] Expected: [%s]\n", expectedRoot, cur->name, expectedRoot);
             xmlFreeDoc(doc);
-            return(NULL);
+            return(nullptr);
         }
 
         return(doc);

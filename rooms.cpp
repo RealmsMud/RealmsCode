@@ -406,7 +406,7 @@ void AreaRoom::save(Player* player) const {
     xmlNodePtr      rootNode, curNode;
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "AreaRoom", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "AreaRoom", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     unique.save(rootNode, "Unique", false);
@@ -1133,7 +1133,7 @@ bool hearBroadcast(Creature* target, Socket* ignore1, Socket* ignore2, bool show
 void BaseRoom::print(Socket* ignore, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    doPrint(0, ignore, NULL, fmt, ap);
+    doPrint(0, ignore, nullptr, fmt, ap);
     va_end(ap);
 }
 void BaseRoom::print(Socket* ignore1, Socket* ignore2, const char *fmt, ...) {

@@ -104,7 +104,7 @@ const AlchemyInfo *Config::getAlchemyInfo(bstring effect) const {
         if(alcInfo && alcInfo->getName() == effect)
             return alcInfo;
     }
-    return(NULL);
+    return(nullptr);
 }
 
 //*********************************************************************

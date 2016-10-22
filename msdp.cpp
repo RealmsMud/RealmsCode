@@ -144,7 +144,7 @@ ReportedMsdpVariable* Socket::getReportedMsdpVariable(bstring& value) {
     std::map<bstring, ReportedMsdpVariable*>::iterator it = msdpReporting.find(value);
 
     if (it == msdpReporting.end())
-        return (NULL);
+        return (nullptr);
     else
         return (it->second);
 }
@@ -193,7 +193,7 @@ void Socket::msdpClearReporting() {
 }
 bool Socket::msdpSend(bstring value) {
     MsdpVariable *msdpVar = gConfig->getMsdpVariable(value);
-    if(msdpVar == NULL) {
+    if(msdpVar == nullptr) {
 #ifdef MSDP_DEBUG
         std::cout << "Unknown variable to send: '" << value << "'" << std::endl;
 #endif
@@ -280,7 +280,7 @@ void Socket::msdpSendPair(bstring variable, bstring value) {
 MsdpVariable* Config::getMsdpVariable(bstring& name) {
     std::map<bstring, MsdpVariable*>::iterator it = msdpVariables.find(name);
     if(it == msdpVariables.end())
-        return(NULL);
+        return(nullptr);
     else
         return(it->second);
 }
@@ -425,7 +425,7 @@ bool Config::loadMsdpVariables() {
     sprintf(filename, "%s/msdp.xml", Path::Code);
 
     xmlDoc = xml::loadFile(filename, "MsdpVariables");
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -441,7 +441,7 @@ bool Config::loadMsdpVariables() {
     }
 
     clearMsdpVariables();
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "MsdpVariable")) {
             MsdpVariable* msdpVar = new MsdpVariable(curNode);
             if(msdpVar)

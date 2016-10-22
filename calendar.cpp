@@ -470,7 +470,7 @@ void Calendar::save() const {
         return;
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Calendar", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Calendar", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     xml::saveNonZeroNum(rootNode, "TotalDays", totalDays);
@@ -622,7 +622,7 @@ void Calendar::load() {
     if(!file_exists(filename))
         merror("Unable to find calendar file", FATAL);
 
-    if((xmlDoc = xml::loadFile(filename, "Calendar")) == NULL)
+    if((xmlDoc = xml::loadFile(filename, "Calendar")) == nullptr)
         merror("Unable to read calendar file", FATAL);
 
     rootNode = xmlDocGetRootElement(xmlDoc);

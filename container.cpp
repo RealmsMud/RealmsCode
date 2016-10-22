@@ -82,7 +82,7 @@ bool Container::purgeObjects() {
 
 Container* Container::remove(Containable* toRemove) {
     if(!toRemove)
-        return(NULL);
+        return(nullptr);
 
     Object* remObject = dynamic_cast<Object*>(toRemove);
     Player* remPlayer = dynamic_cast<Player*>(toRemove);
@@ -107,11 +107,11 @@ Container* Container::remove(Containable* toRemove) {
 
     if(toReturn) {
         Container* retVal = toRemove->getParent();
-        toRemove->setParent(NULL);
+        toRemove->setParent(nullptr);
         return(retVal);
     }
 
-    return(NULL);
+    return(nullptr);
 }
 
 bool Container::add(Containable* toAdd) {
@@ -191,7 +191,7 @@ bool Container::checkAntiMagic(Monster* ignore) {
         if(mons == ignore)
             continue;
         if(mons->flagIsSet(M_ANTI_MAGIC_AURA)) {
-            broadcast(NULL,  this, "^B%M glows bright blue.", mons);
+            broadcast(nullptr,  this, "^B%M glows bright blue.", mons);
             return(true);
         }
     }
@@ -307,7 +307,7 @@ bool isMatch(const Creature* searcher, MudObject* target, const bstring& name, b
 Creature* Container::findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const {
 
     if(!searcher || name.empty())
-        return(NULL);
+        return(nullptr);
 
     Creature* target=0;
     for(int i = 1 ; i <= 2 ; i++) {
@@ -373,7 +373,7 @@ Player* Container::findPlayer(const Creature* searcher, const bstring& name, con
             }
         }
     }
-    return(NULL);
+    return(nullptr);
 }
 
 
@@ -396,12 +396,12 @@ void Containable::addToSet() {
 }
 
 bool Containable::addTo(Container* container) {
-    if(this->parent != NULL && parent->getAsMudObject() != container->getAsMudObject()) {
+    if(this->parent != nullptr && parent->getAsMudObject() != container->getAsMudObject()) {
         std::cout << "Non Null Parent" << std::endl;
         return(0);
     }
 
-    if(container == NULL)
+    if(container == nullptr)
         return(removeFrom());
 
     if(this->isCreature()) {
@@ -416,7 +416,7 @@ bool Containable::addTo(Container* container) {
 
 Container* Containable::removeFrom() {
     if(!parent) {
-        return(NULL);
+        return(nullptr);
     }
 
     if(isCreature()) {
@@ -458,73 +458,73 @@ bool Containable::inCreature() const {
 
 BaseRoom* Containable::getRoomParent() {
     if(!parent)
-        return(NULL);
+        return(nullptr);
     return(parent->getAsRoom());
 }
 UniqueRoom* Containable::getUniqueRoomParent() {
     if(!parent)
-            return(NULL);
+            return(nullptr);
     return(parent->getAsUniqueRoom());
 }
 AreaRoom* Containable::getAreaRoomParent() {
     if(!parent)
-        return(NULL);
+        return(nullptr);
     return(parent->getAsAreaRoom());
 }
 Object* Containable::getObjectParent() {
     if(!parent)
-        return(NULL);
+        return(nullptr);
     return(parent->getAsObject());
 }
 Player* Containable::getPlayerParent() {
     if(!parent)
-        return(NULL);
+        return(nullptr);
     return(parent->getAsPlayer());
 }
 Monster* Containable::getMonsterParent() {
     if(!parent)
-        return(NULL);
+        return(nullptr);
     return(parent->getAsMonster());
 }
 Creature* Containable::getCreatureParent() {
     if(!parent)
-        return(NULL);
+        return(nullptr);
     return(parent->getAsCreature());
 }
 
 const BaseRoom* Containable::getConstRoomParent() const {
     if(!parent)
-        return(NULL);
+        return(nullptr);
     return(parent->getAsConstRoom());
 }
 const UniqueRoom* Containable::getConstUniqueRoomParent() const {
     if(!parent)
-        return(NULL);
+        return(nullptr);
     return(parent->getAsConstUniqueRoom());
 }
 const AreaRoom* Containable::getConstAreaRoomParent() const {
     if(!parent)
-        return(NULL);
+        return(nullptr);
     return(parent->getAsConstAreaRoom());
 }
 const Object* Containable::getConstObjectParent() const {
     if(!parent)
-        return(NULL);
+        return(nullptr);
     return(parent->getAsConstObject());
 }
 const Player* Containable::getConstPlayerParent() const {
     if(!parent)
-        return(NULL);
+        return(nullptr);
     return(parent->getAsConstPlayer());
 }
 const Monster* Containable::getConstMonsterParent() const {
     if(!parent)
-        return(NULL);
+        return(nullptr);
     return(parent->getAsConstMonster());
 }
 
 const Creature* Containable::getConstCreatureParent() const {
     if(!parent)
-        return(NULL);
+        return(nullptr);
     return(parent->getAsConstCreature());
 }

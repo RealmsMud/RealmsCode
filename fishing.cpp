@@ -503,7 +503,7 @@ bool Config::loadFishing() {
     char filename[80];
     snprintf(filename, 80, "%s/fishing.xml", Path::Game);
     xmlDoc = xml::loadFile(filename, "Fishing");
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -519,7 +519,7 @@ bool Config::loadFishing() {
 
     clearFishing();
     bstring id = "";
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "List")) {
             xml::copyPropToBString(id, curNode, "id");
             if(id != "") {

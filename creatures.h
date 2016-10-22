@@ -274,7 +274,7 @@ public:
     MagicType getCastingType() const;
     int doHeal(Creature* target, int amt, double threatFactor = 0.5);
 
-    bstring doReplace(bstring fmt, const MudObject* actor=NULL, const MudObject* applier=NULL) const;
+    bstring doReplace(bstring fmt, const MudObject* actor=nullptr, const MudObject* applier=nullptr) const;
 
     void unApplyTongues();
     void unSilence();
@@ -419,7 +419,7 @@ public:
 
 // Formatting
     virtual void escapeText() {};
-    bstring getCrtStr(const Creature* viewer = NULL, int flags = 0, int num = 0) const;
+    bstring getCrtStr(const Creature* viewer = nullptr, int flags = 0, int num = 0) const;
     bstring statCrt(int statFlags);
     int displayFlags() const;
     bstring alignColor() const;
@@ -476,7 +476,7 @@ public:
     int getAttackDelay() const;
     unsigned int getBaseDamage() const;
     float getDamageReduction(const Creature* target) const; // How much is our damage reduced attacking the target
-    AttackResult getAttackResult(Creature* victim, const Object* weapon = NULL, int resultFlags = 0, int altSkillLevel = -1);
+    AttackResult getAttackResult(Creature* victim, const Object* weapon = nullptr, int resultFlags = 0, int altSkillLevel = -1);
     bool kamiraLuck(Creature *attacker);
     virtual int computeDamage(Creature* victim, Object* weapon,
             AttackType attackType, AttackResult& result, Damage& attackDamage,
@@ -493,12 +493,12 @@ public:
     double getParryChance(Creature* attacker, const int& difference);
     double getDodgeChance(Creature* attacker, const int& difference);
     double getMissChance(const int& difference);
-    virtual int getWeaponSkill(const Object* weapon = NULL) const = 0;
+    virtual int getWeaponSkill(const Object* weapon = nullptr) const = 0;
     virtual int getDefenseSkill() const = 0;
     int adjustChance(const int &difference);
     int computeBlock(int dmg);
     bool getsGroupExperience(Monster* target);
-    bool canHit(Creature* target, Object* weapon = NULL, bool glow = true, bool showFail = true);
+    bool canHit(Creature* target, Object* weapon = nullptr, bool glow = true, bool showFail = true);
     bool doReflectionDamage(Damage damage, Creature* target, ReflectedDamageType printZero=REFLECTED_NONE);
     static void simultaneousDeath(Creature* attacker, Creature* target, bool freeAttacker, bool freeTarget);
     bool canBeDrained() const;
@@ -711,7 +711,7 @@ public:
 
     bool isSitting();
 
-    bool ableToDoCommand(const cmd* cmnd=NULL) const;
+    bool ableToDoCommand(const cmd* cmnd=nullptr) const;
     void wake(bstring str = "", bool noise=false);
     void modifyDamage(Creature* enemy, int atype, Damage& damage, Realm realm=NO_REALM, Object* weapon=0, int saveBonus=0, short offguard=OFFGUARD_REMOVE, bool computingBonus=false);
     bool checkResistPet(Creature *pet, bool& resistPet, bool& immunePet, bool& vulnPet);
@@ -853,12 +853,12 @@ public:
     bool checkAssist();
     bool willAssist(const Monster *victim) const;
     void adjust(int buffswitch);
-    bool tryToDisease(Creature* target, SpecialAttack* attack = NULL);
-    bool tryToStone(Creature* target, SpecialAttack* attack = NULL);
-    bool tryToPoison(Creature* target, SpecialAttack* attack = NULL);
-    bool tryToBlind(Creature* target, SpecialAttack* attack = NULL);
-    bool tryToConfuse(Creature* target, SpecialAttack* attack = NULL);
-    int zapMp(Creature *victim, SpecialAttack* attack = NULL);
+    bool tryToDisease(Creature* target, SpecialAttack* attack = nullptr);
+    bool tryToStone(Creature* target, SpecialAttack* attack = nullptr);
+    bool tryToPoison(Creature* target, SpecialAttack* attack = nullptr);
+    bool tryToBlind(Creature* target, SpecialAttack* attack = nullptr);
+    bool tryToConfuse(Creature* target, SpecialAttack* attack = nullptr);
+    int zapMp(Creature *victim, SpecialAttack* attack = nullptr);
     int petrify(Player *victim);
     void regenerate();
     int steal(Player *victim);
@@ -881,7 +881,7 @@ public:
     void clearDeityAggro(int x);
     void gainExperience(Monster* victim, Creature* killer, int expAmount,
         bool groupExp = false);
-    int powerEnergyDrain(Creature *victim, SpecialAttack* attack = NULL);
+    int powerEnergyDrain(Creature *victim, SpecialAttack* attack = nullptr);
     int computeDamage(Creature* victim, Object* weapon, AttackType attackType,
         AttackResult& result, Damage& attackDamage, bool computeBonus,
         int& drain, float multiplier = 1.0);
@@ -902,7 +902,7 @@ public:
     unsigned short getMagicResistance() const;
     bstring getPrimeFaction() const;
     bstring getTalk() const;
-    int getWeaponSkill(const Object* weapon = NULL) const;
+    int getWeaponSkill(const Object* weapon = nullptr) const;
     int getDefenseSkill() const;
 
 // Set
@@ -1092,7 +1092,7 @@ public:
     void dieToMonster(Monster *killer);
     void dieToPlayer(Player *killer);
     void loseExperience(Monster *killer);
-    void dropEquipment(bool dropAll=false, Socket* killSock = NULL);
+    void dropEquipment(bool dropAll=false, Socket* killSock = nullptr);
     void dropBodyPart(Player *killer);
     bool isGuildKill(const Player *killer) const;
     bool isClanKill(const Player *killer) const;
@@ -1117,7 +1117,7 @@ public:
         AttackResult& result, Damage& attackDamage, bool computeBonus,
         int& drain, float multiplier = 1.0);
     int packBonus();
-    int getWeaponSkill(const Object* weapon = NULL) const;
+    int getWeaponSkill(const Object* weapon = nullptr) const;
     int getDefenseSkill() const;
     void damageArmor(int dmg);
     void checkArmor(int wear);
@@ -1317,7 +1317,7 @@ public:
 
     bool isPureFighter();
     void decreaseFocus();
-    void increaseFocus(FocusAction action, int amt = 0, Creature* target = NULL);
+    void increaseFocus(FocusAction action, int amt = 0, Creature* target = nullptr);
     void clearFocus();
     bool doPlayerHarmRooms();
     bool doDoTs();

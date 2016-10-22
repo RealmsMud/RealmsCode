@@ -67,7 +67,7 @@ void startup_mordor(void) {
     // record the process ID
     sprintf(buf, "%s/mordor%d.pid", Path::Log, Port);
     out = fopen(buf, "w");
-    if(out != NULL) {
+    if(out != nullptr) {
         fprintf(out, "%d", getpid());
         fclose(out);
     } else {

@@ -61,7 +61,7 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
     if(!skillCmd->checkResources(creature))
         return(0);
 
-    MudObject* target = NULL;
+    MudObject* target = nullptr;
     Container* parent = creature->getParent();
     TargetType targetType = skillCmd->getTargetType();
     int findFlags = 0;

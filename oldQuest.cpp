@@ -34,7 +34,7 @@ bool Config::loadQuestTable() {
     // build an XML tree from a the file
     sprintf(filename, "%s/questTable.xml", Path::Game);
     doc = xml::loadFile(filename, "Quests");
-    if(doc == NULL)
+    if(doc == nullptr)
         return(false);
 
     cur = xmlDocGetRootElement(doc);
@@ -53,12 +53,12 @@ bool Config::loadQuestTable() {
 
     clearQuestTable();
     // Go through the nodes and grab off all Quests
-    while(cur != NULL) {
+    while(cur != nullptr) {
         if((!strcmp((char *)cur->name, "Quest"))) {
             // Parse the quest
             curquest = parseQuest(doc, cur);
             // If we parsed a valid quest, add it to the table
-            if(curquest != NULL)
+            if(curquest != nullptr)
                 questTable[numQuests++] = curquest;
             // No more than 128 quests currently allowed
             if(numQuests >= 128)
@@ -72,18 +72,18 @@ bool Config::loadQuestTable() {
 }
 
 static questPtr parseQuest(xmlDocPtr doc, xmlNodePtr cur) {
-    questPtr ret = NULL;
+    questPtr ret = nullptr;
     ret = new quest;
-    if(ret == NULL) {
+    if(ret == nullptr) {
         loge("Quest_Load: out of memory\n");
-        return(NULL);
+        return(nullptr);
     }
 
     cur = cur->children;
     // Note: (char *)xmlNodeListGetString returns a string which MUST be freed
     //       thus we can't use atoi...use toInt or toLong
 
-    while(cur != NULL) {
+    while(cur != nullptr) {
         if((!strcmp((char *)cur->name, "ID")))
             ret->num = xml::toNum<int>((char *)xmlNodeListGetString(doc, cur->children, 1));
         if((!strcmp((char *)cur->name, "name")))

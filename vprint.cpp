@@ -132,11 +132,11 @@ int print_objcrt(FILE *stream, const struct printf_info *info, const void *const
     else if(info->spec == 'M' || info->spec == 'N') {
         const Creature *crt = *((const Creature **) (args[0]));
         if(info->spec == 'M') {
-            bstring tmp = crt->getCrtStr(NULL, VPRINT_flags | CAP, info->width);
+            bstring tmp = crt->getCrtStr(nullptr, VPRINT_flags | CAP, info->width);
             len = asprintf(&buffer, "%s", tmp.c_str());
         }
         else {
-            bstring tmp = crt->getCrtStr(NULL, VPRINT_flags, info->width);
+            bstring tmp = crt->getCrtStr(nullptr, VPRINT_flags, info->width);
             len = asprintf(&buffer, "%s", tmp.c_str());
         }
         if(len == -1)
@@ -152,11 +152,11 @@ int print_objcrt(FILE *stream, const struct printf_info *info, const void *const
     else if(info->spec == 'O' || info->spec == 'P') {
         const Object *obj = *((const Object **) (args[0]));
         if(info->spec == 'O') {
-            bstring tmp = obj->getObjStr(NULL, VPRINT_flags | CAP, info->width);
+            bstring tmp = obj->getObjStr(nullptr, VPRINT_flags | CAP, info->width);
             len = asprintf(&buffer, "%s", tmp.c_str());
         }
         else {
-            bstring tmp = obj->getObjStr(NULL, VPRINT_flags, info->width);
+            bstring tmp = obj->getObjStr(nullptr, VPRINT_flags, info->width);
             len = asprintf(&buffer, "%s", tmp.c_str());
         }
 
@@ -291,16 +291,16 @@ void Socket::vprint(const char *fmt, va_list ap) {
                 arg[ind] = (void*) ((std::ostringstream *) arg[ind])->str().c_str();
                 continue;
             case 'N':
-                arg[ind] = (void*) ((Creature *)arg[ind])->getCrtStr(NULL, flags, num).c_str();
+                arg[ind] = (void*) ((Creature *)arg[ind])->getCrtStr(nullptr, flags, num).c_str();
                 continue;
             case 'M':
-                arg[ind] = (void*) ((Creature *) arg[ind])->getCrtStr(NULL, flags | CAP, num).c_str();
+                arg[ind] = (void*) ((Creature *) arg[ind])->getCrtStr(nullptr, flags | CAP, num).c_str();
                 continue;
             case 'P':
-                arg[ind] = (void*) ((Object *) arg[ind])->getObjStr(NULL, flags, num).c_str();
+                arg[ind] = (void*) ((Object *) arg[ind])->getObjStr(nullptr, flags, num).c_str();
                 continue;
             case 'O':
-                arg[ind] = (void*) ((Object *) arg[ind])->getObjStr(NULL, flags | CAP, num).c_str();
+                arg[ind] = (void*) ((Object *) arg[ind])->getObjStr(nullptr, flags | CAP, num).c_str();
                 continue;
             case 'R':
                 arg[ind] = (void*) (((Creature *)arg[ind])->getName().c_str());

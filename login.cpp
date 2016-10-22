@@ -302,7 +302,7 @@ void Socket::finishLogin() {
     bstring proxyName = player->getProxyName();
     bstring proxyId = player->getProxyId();
     free_crt(player, false);
-    setPlayer(NULL);
+    setPlayer(nullptr);
 
     if(!loadPlayer(charName, &player)) {
         askFor("Player no longer exists!\n\nPlease enter name: ");
@@ -463,7 +463,7 @@ void doCreateHelp(Socket* sock, bstring str) {
     if(!checkWinFilename(sock, cmnd.str[1]))
         return;
 
-    if(strchr(cmnd.str[1], '/')!=NULL) {
+    if(strchr(cmnd.str[1], '/')!=nullptr) {
         sock->print("You may not use backslashes.\n");
         return;
     }
@@ -2353,7 +2353,7 @@ bool Config::loadDoubleLog() {
     snprintf(filename, 80, "%s/doubleLog.xml", Path::Config);
     xmlDoc = xml::loadFile(filename, "DoubleLog");
 
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -2367,7 +2367,7 @@ bool Config::loadDoubleLog() {
     }
 
     accountDoubleLog.clear();
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Accounts")) {
             childNode = curNode->children;
             account = "";
@@ -2403,7 +2403,7 @@ void Config::saveDoubleLog() const {
     char            filename[80];
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "DoubleLog", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "DoubleLog", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     for(it = accountDoubleLog.begin(); it != accountDoubleLog.end() ; it++) {

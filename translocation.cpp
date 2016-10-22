@@ -742,7 +742,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
             broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%s vanishes in a puff of swirling smoke.",
                 pPlayer->upHeShe());
             if(!pPlayer->flagIsSet(P_DM_INVIS))
-                broadcast(NULL, newRoom, "POOF!");
+                broadcast(nullptr, newRoom, "POOF!");
 
 
             pPlayer->deleteFromRoom();
@@ -836,12 +836,12 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
                 pTarget->doPetFollow();
             } else {
                 mTarget->setFlag(M_WAS_PORTED);
-                broadcast(NULL, player->getRoomParent(), "%M vanishes!", mTarget);
+                broadcast(nullptr, player->getRoomParent(), "%M vanishes!", mTarget);
                 // being ported pisses mobs off! haha
                 mTarget->addEnemy(player);
                 mTarget->deleteFromRoom();
                 mTarget->addToRoom(newRoom);
-                broadcast(NULL, mTarget->getRoomParent(), "%M was thrown from %N's dimensional rift!", mTarget, player);
+                broadcast(nullptr, mTarget->getRoomParent(), "%M was thrown from %N's dimensional rift!", mTarget, player);
             }
 
             logn("log.teleport", "%s(L%dH%dM%dR:%s) was just teleported to room %s by %s(L%d)\n",

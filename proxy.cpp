@@ -341,7 +341,7 @@ void ProxyManager::save() {
 
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Proxies", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Proxies", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     for(ProxyMultiMap::value_type p : proxies) {
@@ -365,7 +365,7 @@ void ProxyManager::loadProxies() {
     if(!file_exists(filename))
         return;
 
-    if((xmlDoc = xml::loadFile(filename, "Proxies")) == NULL)
+    if((xmlDoc = xml::loadFile(filename, "Proxies")) == nullptr)
         return;
 
     rootNode = xmlDocGetRootElement(xmlDoc);

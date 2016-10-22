@@ -246,7 +246,7 @@ bstring Creature::statCrt(int statFlags) {
             crtStr << "Max Lvl: " << mTarget->getMaxLevel() << "\n";
     }
 
-    crtStr << "\nID: <" << getId() << ">" << " Registered(Slf/Svr): " << (isRegistered() ? "Y" : "N") << "/" << (gServer->lookupCrtId(getId()) != NULL ? "Y" : "N") << "\n"; ;
+    crtStr << "\nID: <" << getId() << ">" << " Registered(Slf/Svr): " << (isRegistered() ? "Y" : "N") << "/" << (gServer->lookupCrtId(getId()) != nullptr ? "Y" : "N") << "\n"; ;
 
     crtStr << "Level: " << level;
     if(pTarget) {
@@ -1108,7 +1108,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                 // No existing effect, add a new one
                 if(strength == -1)
                     strength = 1;
-                if(target->addEffect(effectStr, duration, strength, 0, true) != NULL) {
+                if(target->addEffect(effectStr, duration, strength, 0, true) != nullptr) {
                     player->print("Effect '%s' (creature) added with duration %d and strength %d.\n", effectStr.c_str(), duration, strength);
                 } else {
                     player->print("Unable to add effect '%s' (creature)\n", effectStr.c_str());
@@ -2380,7 +2380,7 @@ int dmAlias(Player* player, cmd* cmnd) {
     // make sure we are invis at this point
     if(!player->flagIsSet(P_DM_INVIS)) {
         // dmInvis does not use the second param
-        dmInvis(player, NULL);
+        dmInvis(player, nullptr);
     }
 
     log_immort(false,player, "%s possesses %s in room %s.\n", player->getCName(), monster->getCName(),
@@ -2715,7 +2715,7 @@ int dmAddMob(Player* player, cmd* cmnd) {
     new_mob->damage.setSides(4);
     new_mob->damage.setPlus(1);
     new_mob->first_tlk = 0;
-    new_mob->setParent(NULL);
+    new_mob->setParent(nullptr);
 
     for(n=0; n<20; n++)
         new_mob->ready[n] = 0;
@@ -2780,7 +2780,7 @@ int dmForceWander(Player* player, cmd* cmnd) {
     }
 
     strcpy(name, monster->getCName());
-    broadcast(NULL, player->getRoomParent(), "%1M just %s away.", monster, Move::getString(monster).c_str());
+    broadcast(nullptr, player->getRoomParent(), "%1M just %s away.", monster, Move::getString(monster).c_str());
 
     monster->deleteFromRoom();
     free_crt(monster);
