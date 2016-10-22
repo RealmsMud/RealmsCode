@@ -62,7 +62,7 @@ bool Group::add(Creature* newMember, bool addPets) {
     Group* oldGroup = newMember->getGroup(false);
     if(oldGroup && oldGroup != this) {
         oldGroup->remove(newMember);
-        oldGroup = NULL;
+        oldGroup = nullptr;
     }
 
     // No adding someone twice
@@ -90,7 +90,7 @@ bool Group::add(Creature* newMember, bool addPets) {
 bool Group::remove(Creature* toRemove) {
     CreatureList::iterator it = std::find(members.begin(), members.end(), toRemove);
     if(it != members.end()) {
-        toRemove->setGroup(NULL);
+        toRemove->setGroup(nullptr);
         toRemove->setGroupStatus(GROUP_NO_STATUS);
 
         // Iterator is invalid now, do not try to access it after this
@@ -142,7 +142,7 @@ bool Group::disband() {
 // Removes all players from a group (but does not delete it)
 void Group::removeAll() {
     for(Creature* crt : members) {
-        crt->setGroup(NULL);
+        crt->setGroup(nullptr);
         crt->setGroupStatus(GROUP_NO_STATUS);
     }
     members.clear();
@@ -217,7 +217,7 @@ Creature* Group::getMember(int num, bool countDmInvis) {
         if(count == num)
             return(crt);
     }
-    return(NULL);
+    return(nullptr);
 }
 //********************************************************************************
 //* getMember
@@ -239,7 +239,7 @@ Creature* Group::getMember(bstring name, int num, Creature* searcher, bool inclu
             }
         }
     }
-    return(NULL);
+    return(nullptr);
 }
 
 
@@ -338,7 +338,7 @@ bstring& Group::getDescription() {
 //                           false - return the group if they're an invitee as well
 Group* Creature::getGroup(bool inGroup) {
     if(inGroup && groupStatus < GROUP_MEMBER)
-        return(NULL);
+        return(nullptr);
 
     return(group);
 }
@@ -347,7 +347,7 @@ Group* Creature::getGroup(bool inGroup) {
 //********************************************************************************
 void Creature::setGroup(Group* newGroup) {
     // Remove from existing group (Shouldn't happen)
-    if(group && newGroup != NULL) {
+    if(group && newGroup != nullptr) {
         std::cout << "Setting group for " << getName() << " but they already have a group." << std::endl;
     }
 
@@ -379,7 +379,7 @@ bool Creature::inSameGroup(Creature* target) {
 //********************************************************************************
 Creature* Creature::getGroupLeader() {
     group = getGroup();
-    if(!group) return(NULL);
+    if(!group) return(nullptr);
     return(group->getLeader());
 }
 

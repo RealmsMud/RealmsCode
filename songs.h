@@ -34,7 +34,7 @@ public:
     const bstring& getEffect() const;
     const bstring& getType() const;
     const bstring& getTargetType() const;
-    bool runScript(MudObject* singer, MudObject* target = NULL);
+    bool runScript(MudObject* singer, MudObject* target = nullptr);
 
     int getDelay();
     int getDuration();

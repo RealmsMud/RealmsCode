@@ -144,7 +144,7 @@ void Stat::reCalc() {
 StatModifier* Stat::getModifier(bstring name) {
     ModifierMap::iterator it = modifiers.find(name);
     if(it == modifiers.end())
-        return(NULL);
+        return(nullptr);
     else
         return(it->second);
 }
@@ -173,7 +173,7 @@ Stat* Creature::getStat(bstring statName) {
     } else if(statName == "focus" && isPlayer()) {
         return(&getAsPlayer()->focus);
     } else {
-        return(NULL);
+        return(nullptr);
     }
 
 }
@@ -211,7 +211,7 @@ bool Stat::addModifier(StatModifier* toAdd) {
     if(!toAdd)
         return(false);
 
-    if(getModifier(toAdd->getName()) != NULL) {
+    if(getModifier(toAdd->getName()) != nullptr) {
         std::cout << "Not adding modifer " << toAdd->getName() << std::endl;
         delete toAdd;
         return(false);
@@ -226,7 +226,7 @@ void Stat::setDirty() {
         influences->setDirty();
 }
 bool Stat::addModifier(bstring name, int modAmt, ModifierType modType) {
-    if(getModifier(name) != NULL)
+    if(getModifier(name) != nullptr)
         return(false);
     return(addModifier(new StatModifier(name, modAmt, modType)));
 }

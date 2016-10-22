@@ -667,7 +667,7 @@ void Property::destroy() {
                                 for(xit = outside->exits.begin() ; xit != outside->exits.end() ; ) {
                                     Exit* oExit = (*xit++);
                                     if(oExit->target.room == room->info) {
-                                        broadcast(NULL, outside, "%s closes its doors.", name.c_str());
+                                        broadcast(nullptr, outside, "%s closes its doors.", name.c_str());
                                         outside->delExit(oExit);
                                     }
                                 }
@@ -691,7 +691,7 @@ void Property::destroy() {
                     }
                 }
 
-                broadcast(NULL, room, "%s closes its doors.", name.c_str());
+                broadcast(nullptr, room, "%s closes its doors.", name.c_str());
                 room->destroy();
             }
         }
@@ -814,7 +814,7 @@ bool Config::loadProperties() {
     snprintf(filename, 80, "%s/properties.xml", Path::PlayerData);
     xmlDoc = xml::loadFile(filename, "Properties");
 
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -829,7 +829,7 @@ bool Config::loadProperties() {
     }
 
     clearProperties();
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Property")) {
             p = new Property;
             p->load(curNode);
@@ -854,7 +854,7 @@ bool Config::saveProperties() const {
     char            filename[80];
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Properties", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Properties", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     for(it = properties.begin() ; it != properties.end() ; it++) {

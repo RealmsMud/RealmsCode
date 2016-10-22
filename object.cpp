@@ -195,10 +195,10 @@ int new_scroll(int level, Object **new_obj) {
     p = strtok(name, delem);
     if(p)
         strcpy((*new_obj)->key[0], p);
-    p = strtok(NULL, delem);
+    p = strtok(nullptr, delem);
     if(p)
         strcpy((*new_obj)->key[1], p);
-    p = strtok(NULL, delem);
+    p = strtok(nullptr, delem);
     if(p)
         strcpy((*new_obj)->key[2], p);
 
@@ -329,7 +329,7 @@ bool cantDropInBag(Object* object) {
 
 MudObject* Creature::findObjTarget(ObjectSet &set, int findFlags, bstring str, int val, int* match) {
     if(set.empty())
-        return(NULL);
+        return(nullptr);
 
     for(Object* obj : set) {
         if(keyTxtEqual(obj, str.c_str()) && canSee(obj)) {
@@ -339,7 +339,7 @@ MudObject* Creature::findObjTarget(ObjectSet &set, int findFlags, bstring str, i
             }
         }
     }
-    return(NULL);
+    return(nullptr);
 }
 
 //*********************************************************************
@@ -405,20 +405,20 @@ int displayObject(Player* player, Object* target) {
     }
 
     if(target->getType() == ARMOR)
-        oStr << target->getObjStr(NULL, flags | CAP, 1) << " is considered ^W" << target->getArmorType() << "^x armor.\n";
+        oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is considered ^W" << target->getArmorType() << "^x armor.\n";
 
     if(target->getType() == WEAPON) {
-        oStr << target->getObjStr(NULL, flags | CAP, 1) << " is a " << obj_type(target->getType()) << "(" <<  target->getWeaponType() <<").\n";
+        oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is a " << obj_type(target->getType()) << "(" <<  target->getWeaponType() <<").\n";
 
         if(target->flagIsSet(O_SILVER_OBJECT))
             oStr << "It is alloyed with pure silver.\n";
     }
 
     if(target->flagIsSet(O_NO_DROP))
-        oStr << target->getObjStr(NULL, flags | CAP, 1) << " cannot be dropped.\n";
+        oStr << target->getObjStr(nullptr, flags | CAP, 1) << " cannot be dropped.\n";
 
     if(Lore::isLore(target))
-        oStr << target->getObjStr(NULL, flags | CAP, 1) << " is an object of lore.\n";
+        oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is an object of lore.\n";
 
     if(target->flagIsSet(O_DARKMETAL))
         oStr << "^yIt is vulnerable to sunlight.\n";
@@ -427,7 +427,7 @@ int displayObject(Player* player, Object* target) {
         oStr << "^DIt is engulfed by an aura of darkness.\n";
 
     if(Unique::isUnique(target))
-        oStr << target->getObjStr(NULL, flags | CAP, 1) << " is a unique or limited object.\n";
+        oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is a unique or limited object.\n";
 
 
     if(target->getType() == WEAPON && target->flagIsSet(O_ENVENOMED)) {
@@ -439,10 +439,10 @@ int displayObject(Player* player, Object* target) {
     }
 
     if( target->getType() == POISON && ((player->getClass() == ASSASSIN && player->getLevel() >= 10) || player->isCt()))
-        oStr << target->getObjStr(NULL, flags | CAP, 1) << " is a poison.\n";
+        oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is a poison.\n";
 
     if(target->flagIsSet(O_COIN_OPERATED_OBJECT))
-        oStr << target->getObjStr(NULL, flags | CAP, 1) << " costs " << target->getCoinCost() << "gold coins per use.\n";
+        oStr << target->getObjStr(nullptr, flags | CAP, 1) << " costs " << target->getCoinCost() << "gold coins per use.\n";
 
     if(target->getShotsCur() > 0)
         percent = (100 * (target->getShotsCur())) / (MAX(target->getShotsMax(),1));
@@ -510,9 +510,9 @@ int displayObject(Player* player, Object* target) {
 
     if(target->getQuestOwner() != "") {
         if(target->isQuestOwner(player))
-            oStr << "You own "<< target->getObjStr(NULL, flags, 1) << ".\n";
+            oStr << "You own "<< target->getObjStr(nullptr, flags, 1) << ".\n";
         else
-            oStr << "You do not own "<< target->getObjStr(NULL, flags, 1) << ".\n";
+            oStr << "You do not own "<< target->getObjStr(nullptr, flags, 1) << ".\n";
     }
 
     if(target->getType() == POTION || target->getType() == HERB) {
@@ -622,11 +622,11 @@ void BaseRoom::killMortalObjectsOnFloor() {
             continue;
 
         if(sunlight && object->flagIsSet(O_DARKMETAL)) {
-            broadcast(NULL, this, "^yThe %s^y was destroyed by the sunlight!", object->getCName());
+            broadcast(nullptr, this, "^yThe %s^y was destroyed by the sunlight!", object->getCName());
             object->deleteFromRoom();
             delete object;
         } else if(!Unique::canLoad(object)) {
-            broadcast(NULL, this, "^yThe %s^y vanishes!", object->getCName());
+            broadcast(nullptr, this, "^yThe %s^y vanishes!", object->getCName());
             object->deleteFromRoom();
             delete object;
         } else
@@ -669,7 +669,7 @@ void Creature::killDarkmetal() {
         return;
 
     if(pTarget) {
-        if( pTarget->getSock() == NULL ||
+        if( pTarget->getSock() == nullptr ||
             pTarget->isStaff() ||
             !pTarget->flagIsSet(P_DARKMETAL))
             return;

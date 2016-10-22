@@ -174,7 +174,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
     // some actions are creature-only; we will need this variable to use them
     player = creature->getAsPlayer();
 
-    Socket* sock = NULL;
+    Socket* sock = nullptr;
     if(player)
         sock = player->getSock();
 

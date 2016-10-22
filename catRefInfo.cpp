@@ -260,7 +260,7 @@ bool Config::loadCatRefInfo() {
     snprintf(filename, 80, "%s/catRefInfo.xml", Path::Game);
     xmlDoc = xml::loadFile(filename, "CatRefInfo");
 
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -280,7 +280,7 @@ bool Config::loadCatRefInfo() {
     }
 
     clearCatRefInfo();
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Info")) {
             cri = new CatRefInfo;
             cri->load(curNode);
@@ -353,7 +353,7 @@ void Config::saveCatRefInfo() const {
     char            filename[80];
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "CatRefInfo", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "CatRefInfo", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
     xml::newProp(rootNode, "default", defaultArea.c_str());
 

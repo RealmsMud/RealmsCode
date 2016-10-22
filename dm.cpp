@@ -236,7 +236,7 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
         if(load) {
             gConfig->loadBans();
             player->print("Bans reloaded.\n");
-            dmListbans(player, NULL);
+            dmListbans(player, nullptr);
         } else {
             gConfig->saveBans();
             player->print("Bans saved.\n");
@@ -1326,7 +1326,7 @@ int dmHelp(Player* player, cmd* cmnd) {
         viewFile(player->getSock(), file);
         return(DOPROMPT);
     }
-    if(strchr(cmnd->str[1], '/')!=NULL) {
+    if(strchr(cmnd->str[1], '/')!=nullptr) {
         player->print("You may not use backslashes.\n");
         return(0);
     }
@@ -1351,7 +1351,7 @@ int bhHelp(Player* player, cmd* cmnd) {
         viewFile(player->getSock(), file);
         return(DOPROMPT);
     }
-    if(strchr(cmnd->str[1], '/')!=NULL) {
+    if(strchr(cmnd->str[1], '/')!=nullptr) {
         player->print("You may not use backslashes.\n");
         return(0);
     }

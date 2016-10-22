@@ -74,7 +74,7 @@ int Player::saveToFile(LoadType saveType) {
     xmlNodePtr  rootNode;
     char        filename[256];
 
-    ASSERTLOG( this != NULL );
+    ASSERTLOG( this != nullptr );
     ASSERTLOG( !getName().empty() );
     ASSERTLOG( isPlayer() );
 
@@ -86,7 +86,7 @@ int Player::saveToFile(LoadType saveType) {
     gServer->saveIds();
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Player", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Player", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     escapeText();
@@ -114,7 +114,7 @@ int UniqueRoom::saveToFile(int permOnly, LoadType saveType) {
     xmlNodePtr  rootNode;
     char        filename[256];
 
-    ASSERTLOG( this != NULL );
+    ASSERTLOG( this != nullptr );
     ASSERTLOG( info.id >= 0 );
     if(saveType == LS_BACKUP)
         Path::checkDirExists(info.area, roomBackupPath);
@@ -124,7 +124,7 @@ int UniqueRoom::saveToFile(int permOnly, LoadType saveType) {
     gServer->saveIds();
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Room", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Room", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     escapeText();
@@ -165,7 +165,7 @@ int Monster::saveToFile() {
     gServer->saveIds();
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Creature", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Creature", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     escapeText();
@@ -204,7 +204,7 @@ int Object::saveToFile() {
     gServer->saveIds();
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Object", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Object", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     // make sure uniqueness stays intact
@@ -234,7 +234,7 @@ bool Config::saveGuilds() const {
     char        filename[80];
     //int i;
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Guilds", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Guilds", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
     xml::newNumProp(rootNode, "NextGuildId", nextGuildId);
 
@@ -271,7 +271,7 @@ bool Config::saveBans() const {
     char        filename[80];
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL,BAD_CAST "Bans", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr,BAD_CAST "Bans", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     std::list<Ban*>::const_iterator it;
@@ -281,9 +281,9 @@ bool Config::saveBans() const {
         found++;
         ban = (*it);
 
-        curNode = xmlNewChild(rootNode, NULL, BAD_CAST "Ban", NULL);
+        curNode = xmlNewChild(rootNode, nullptr, BAD_CAST "Ban", nullptr);
         // Site
-        xmlNewChild(curNode, NULL, BAD_CAST "Site", BAD_CAST ban->site.c_str());
+        xmlNewChild(curNode, nullptr, BAD_CAST "Site", BAD_CAST ban->site.c_str());
         // Duration
         //sprintf(buf, "%d", ban->duration);
         xml::newNumChild(curNode, "Duration", ban->duration);
@@ -291,17 +291,17 @@ bool Config::saveBans() const {
         //sprintf(buf, "%ld", ban->unbanTime);
         xml::newNumChild(curNode, "UnbanTime", ban->unbanTime);
         // Banned By
-        xmlNewChild(curNode, NULL, BAD_CAST "BannedBy", BAD_CAST ban->by.c_str());
+        xmlNewChild(curNode, nullptr, BAD_CAST "BannedBy", BAD_CAST ban->by.c_str());
         // Ban Time
-        xmlNewChild(curNode, NULL, BAD_CAST "BanTime", BAD_CAST ban->time.c_str());
+        xmlNewChild(curNode, nullptr, BAD_CAST "BanTime", BAD_CAST ban->time.c_str());
         // Reason
-        xmlNewChild(curNode, NULL, BAD_CAST "Reason", BAD_CAST ban->reason.c_str());
+        xmlNewChild(curNode, nullptr, BAD_CAST "Reason", BAD_CAST ban->reason.c_str());
         // Password
-        xmlNewChild(curNode, NULL, BAD_CAST "Password", BAD_CAST ban->password.c_str());
+        xmlNewChild(curNode, nullptr, BAD_CAST "Password", BAD_CAST ban->password.c_str());
         // Suffix
-        xmlNewChild(curNode, NULL, BAD_CAST "Suffix", BAD_CAST iToYesNo(ban->isSuffix));
+        xmlNewChild(curNode, nullptr, BAD_CAST "Suffix", BAD_CAST iToYesNo(ban->isSuffix));
         // Prefix
-        xmlNewChild(curNode, NULL, BAD_CAST "Prefix", BAD_CAST iToYesNo(ban->isPrefix));
+        xmlNewChild(curNode, nullptr, BAD_CAST "Prefix", BAD_CAST iToYesNo(ban->isPrefix));
     }
     sprintf(filename, "%s/bans.xml", Path::Config);
     xml::saveFile(filename, xmlDoc);
@@ -321,7 +321,7 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
     xmlNodePtr      childNode;
     int i;
 
-    if(getName()[0] == '\0' || rootNode == NULL)
+    if(getName()[0] == '\0' || rootNode == nullptr)
         return(-1);
 
     const Player    *pPlayer = getAsConstPlayer();
@@ -756,7 +756,7 @@ void Skill::save(xmlNodePtr rootNode) const {
 
 
 int AlchemyEffect::saveToXml(xmlNodePtr rootNode) {
-    if(rootNode == NULL)
+    if(rootNode == nullptr)
         return(-1);
     xml::newStringChild(rootNode, "Effect", effect);
     xml::newNumChild(rootNode, "Duration", duration);
@@ -781,7 +781,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
 
     int i=0;
 
-    if(rootNode == NULL)
+    if(rootNode == nullptr)
         return(-1);
 
     ASSERTLOG( info.id >= 0 );
@@ -969,7 +969,7 @@ int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
     xmlNodePtr      curNode;
     int i;
 
-    if(getName()[0] == '\0' || rootNode == NULL)
+    if(getName()[0] == '\0' || rootNode == nullptr)
         return(-1);
 
     // record rooms saved during swap
@@ -1068,7 +1068,7 @@ int Exit::saveToXml(xmlNodePtr parentNode) const {
 
     int i;
 
-    if(parentNode == NULL || flagIsSet(X_PORTAL))
+    if(parentNode == nullptr || flagIsSet(X_PORTAL))
         return(-1);
 
     rootNode = xml::newStringChild(parentNode, "Exit");
@@ -1244,7 +1244,7 @@ bool Config::saveSocials() {
     xmlNodePtr  rootNode;
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Socials", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Socials", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     for(SocialMap::value_type p : socials) {
@@ -1348,7 +1348,7 @@ void StatModifier::save(xmlNodePtr parentNode) {
 xmlNodePtr saveDaily(xmlNodePtr parentNode, int i, struct daily pDaily) {
     // Avoid writing un-used daily timers
     if(pDaily.max == 0 && pDaily.cur == 0 && pDaily.ltime == 0)
-        return(NULL);
+        return(nullptr);
 
     xmlNodePtr curNode = xml::newStringChild(parentNode, "Daily");
     xml::newNumProp(curNode, "Num", i);
@@ -1366,10 +1366,10 @@ xmlNodePtr saveDaily(xmlNodePtr parentNode, int i, struct daily pDaily) {
 xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, struct crlasttime pCrLastTime) {
     // Avoid writing un-used last times
     if(!pCrLastTime.interval && !pCrLastTime.ltime && !pCrLastTime.cr.id)
-        return(NULL);
+        return(nullptr);
 
     if(i < 0 || i >= NUM_PERM_SLOTS)
-        return(NULL);
+        return(nullptr);
 
     xmlNodePtr curNode = xml::newStringChild(parentNode, "LastTime");
     xml::newNumProp(curNode, "Num", i);
@@ -1387,7 +1387,7 @@ xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, struct crlasttime pCrLas
 xmlNodePtr saveLastTime(xmlNodePtr parentNode, int i, struct lasttime pLastTime) {
     // Avoid writing un-used last times
     if(!pLastTime.interval && !pLastTime.ltime && !pLastTime.misc)
-        return(NULL);
+        return(nullptr);
 
     xmlNodePtr curNode = xml::newStringChild(parentNode, "LastTime");
     xml::newNumProp(curNode, "Num", i);
@@ -1417,7 +1417,7 @@ xmlNodePtr saveSavingThrow(xmlNodePtr parentNode, int i, struct saves pSavingThr
 //*********************************************************************
 
 xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits) {
-    xmlNodePtr curNode=NULL;
+    xmlNodePtr curNode=nullptr;
     // this nested loop means we won't create an xml node if we don't have to
     for(int i=0; objRefSaveFlags[i] != -1; i++) {
         if(BIT_ISSET(bits, objRefSaveFlags[i])) {
@@ -1437,7 +1437,7 @@ xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, 
 //*********************************************************************
 
 xmlNodePtr saveBits(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits) {
-    xmlNodePtr curNode=NULL;
+    xmlNodePtr curNode=nullptr;
     // this nested loop means we won't create an xml node if we don't have to
     for(int i=0; i<maxBit; i++) {
         if(BIT_ISSET(bits, i)) {
@@ -1469,7 +1469,7 @@ xmlNodePtr saveBit(xmlNodePtr parentNode, int bit) {
 //*********************************************************************
 
 xmlNodePtr saveLongArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const long array[], int arraySize) {
-    xmlNodePtr childNode, curNode=NULL;
+    xmlNodePtr childNode, curNode=nullptr;
     // this nested loop means we won't create an xml node if we don't have to
     for(int i=0; i<arraySize; i++) {
         if(!array[i]) {
@@ -1491,7 +1491,7 @@ xmlNodePtr saveLongArray(xmlNodePtr parentNode, const char* rootName, const char
 //*********************************************************************
 
 xmlNodePtr saveULongArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const unsigned long array[], int arraySize) {
-    xmlNodePtr childNode, curNode=NULL;
+    xmlNodePtr childNode, curNode=nullptr;
     // this nested loop means we won't create an xml node if we don't have to
     for(int i=0; i<arraySize; i++) {
         if(array[i]) {
@@ -1513,7 +1513,7 @@ xmlNodePtr saveULongArray(xmlNodePtr parentNode, const char* rootName, const cha
 //*********************************************************************
 
 xmlNodePtr saveCatRefArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const std::map<int, CatRef>& array, int arraySize) {
-    xmlNodePtr curNode=NULL;
+    xmlNodePtr curNode=nullptr;
     std::map<int, CatRef>::const_iterator it;
 
     // this nested loop means we won't create an xml node if we don't have to
@@ -1535,7 +1535,7 @@ xmlNodePtr saveCatRefArray(xmlNodePtr parentNode, const char* rootName, const ch
 //*********************************************************************
 
 xmlNodePtr saveCatRefArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const CatRef array[], int arraySize) {
-    xmlNodePtr curNode=NULL;
+    xmlNodePtr curNode=nullptr;
     // this nested loop means we won't create an xml node if we don't have to
     for(int i=0; i<arraySize; i++) {
         if(array[i].id) {
@@ -1555,7 +1555,7 @@ xmlNodePtr saveCatRefArray(xmlNodePtr parentNode, const char* rootName, const ch
 //*********************************************************************
 
 xmlNodePtr saveCarryArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const Carry array[], int arraySize) {
-    xmlNodePtr curNode=NULL;
+    xmlNodePtr curNode=nullptr;
     // this nested loop means we won't create an xml node if we don't have to
     for(int i=0; i<arraySize; i++) {
         if(array[i].info.id) {
@@ -1574,7 +1574,7 @@ xmlNodePtr saveCarryArray(xmlNodePtr parentNode, const char* rootName, const cha
 //*********************************************************************
 
 xmlNodePtr saveShortIntArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const short array[], int arraySize) {
-    xmlNodePtr childNode, curNode=NULL;
+    xmlNodePtr childNode, curNode=nullptr;
     // this nested loop means we won't create an xml node if we don't have to
     for(int i=0; i<arraySize; i++) {
         if(array[i]) {

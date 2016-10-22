@@ -91,7 +91,7 @@ public:
     int getNumInSameRoom(Creature* target);
     int getNumPlyInSameRoom(Creature* target);
     Creature* getMember(int num, bool countDmInvis = false);
-    Creature* getMember(bstring name, int num, Creature* searcher = NULL, bool includePets = false);
+    Creature* getMember(bstring name, int num, Creature* searcher = nullptr, bool includePets = false);
     GroupType getGroupType();
     bstring getGroupTypeStr();
     bstring getFlagsDisplay();
@@ -100,7 +100,7 @@ public:
     bstring getGroupList(Creature* viewer);
 
 
-    void sendToAll(bstring msg, Creature* ignore = NULL, bool sendToInvited = false);
+    void sendToAll(bstring msg, Creature* ignore = nullptr, bool sendToInvited = false);
 
 
 public:

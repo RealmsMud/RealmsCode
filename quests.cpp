@@ -203,7 +203,7 @@ xmlNodePtr QuestCompletion::save(xmlNodePtr rootNode) const {
     return(curNode);
 }
 void QuestCompletion::resetParentQuest() {
-    if((parentQuest = gConfig->getQuest(questId)) == NULL) {
+    if((parentQuest = gConfig->getQuest(questId)) == nullptr) {
         throw(std::runtime_error("Unable to find parent quest - " + bstring(questId)));
     }
 }
@@ -439,7 +439,7 @@ bool Config::loadQuests() {
     char filename[256];
 
     sprintf(filename, "%s/quests.xml", Path::Game);
-    if((xmlDoc = xml::loadFile(filename, "Quests")) == NULL)
+    if((xmlDoc = xml::loadFile(filename, "Quests")) == nullptr)
         return(false);
 
     xmlNodePtr rootNode = xmlDocGetRootElement(xmlDoc);
@@ -450,7 +450,7 @@ bool Config::loadQuests() {
     while(curNode) {
         if(NODE_NAME(curNode, "QuestInfo")) {
             questId = xml::getIntProp(curNode, "Num");
-            if(questId > 0 && quests[questId] == NULL)
+            if(questId > 0 && quests[questId] == nullptr)
                 quests[questId] = new QuestInfo(curNode);
         }
 
@@ -465,7 +465,7 @@ QuestInfo* Config::getQuest(int questNum) {
     if(quests.find(questNum) != quests.end())
         return(quests[questNum]);
     else
-        return(NULL);
+        return(nullptr);
 
 }
 
@@ -898,7 +898,7 @@ bool QuestCompletion::complete(Monster* monster) {
 
     if(!parentQuest->cashReward.isZero()) {
         parentPlayer->coins.add(parentQuest->cashReward);
-        gServer->logGold(GOLD_IN, parentPlayer, parentQuest->cashReward, NULL, "QuestCompletion");
+        gServer->logGold(GOLD_IN, parentPlayer, parentQuest->cashReward, nullptr, "QuestCompletion");
         parentPlayer->printColor("%M gives you ^C%s^x. You now have %s.\n",
             monster, parentQuest->cashReward.str().c_str(), parentPlayer->coins.str().c_str());
     }
@@ -1074,7 +1074,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
         }
 
         if(response == "" && action == "") {
-            broadcast(NULL, player->getRoomParent(), "%M shrugs.", target);
+            broadcast(nullptr, player->getRoomParent(), "%M shrugs.", target);
             return(0);
         }
     }
@@ -1087,7 +1087,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
         target->doTalkAction(player, action);
 
     if(response == "" && action == "")
-        broadcast(NULL, player->getRoomParent(), "%M doesn't say anything.", target);
+        broadcast(nullptr, player->getRoomParent(), "%M doesn't say anything.", target);
 
     return(0);
 }

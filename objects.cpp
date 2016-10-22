@@ -985,7 +985,7 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
     if(flagIsSet(O_DARKNESS))
         objStr << "^D";
 
-    if(viewer != NULL)
+    if(viewer != nullptr)
         flags |= viewer->displayFlags();
     bool irrPlural = false;
 

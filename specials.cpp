@@ -44,7 +44,7 @@ SpecialAttack* Creature::getSpecial(const bstring& special) {
         if((*eIt) && (*eIt)->name == special)
             return((*eIt));
     }
-    return(NULL);
+    return(nullptr);
 
 }
 bool Creature::useSpecial(const bstring& special, Creature* victim) {
@@ -194,7 +194,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
         if(attack->flagIsSet(SA_NO_BLOCK))
             resultFlags |= NO_BLOCK;
 
-        AttackResult result = getAttackResult(victim, NULL, resultFlags);
+        AttackResult result = getAttackResult(victim, nullptr, resultFlags);
         switch(result) {
             case ATTACK_DODGE:
                 attack->printFailStrings(this, victim);

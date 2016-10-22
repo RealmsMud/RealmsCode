@@ -88,7 +88,7 @@ public:
     bool removeProxyAccess(bstring id, Player* proxied);
     void clearProxyAccess();
 
-    bstring getProxyList(Player* player = NULL);
+    bstring getProxyList(Player* player = nullptr);
 
 // MSDP
     bool loadMsdpVariables();

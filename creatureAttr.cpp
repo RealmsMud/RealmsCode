@@ -220,8 +220,8 @@ void Creature::setClass(unsigned short c) {
     }
     if(c == LICH) {
         // Liches don't get hp bonus for con
-        constitution.setInfluences(NULL);
-        hp.setInfluencedBy(NULL);
+        constitution.setInfluences(nullptr);
+        hp.setInfluencedBy(nullptr);
     }
 
     cClass = c;
@@ -943,7 +943,7 @@ const Creature* Creature::getConstMaster() const {
 
 Player* Creature::getPlayerMaster() {
     if(!getMaster())
-        return(NULL);
+        return(nullptr);
     return(getMaster()->getAsPlayer());
 }
 
@@ -953,7 +953,7 @@ Player* Creature::getPlayerMaster() {
 
 const Player* Creature::getConstPlayerMaster() const {
     if(!getConstMaster())
-        return(NULL);
+        return(nullptr);
     return(getConstMaster()->getAsConstPlayer());
 }
 
@@ -985,8 +985,8 @@ void Creature::crtReset() {
 
     // Reset other related
     moReset();
-    playing = NULL;
-    myTarget = NULL;
+    playing = nullptr;
+    myTarget = nullptr;
 
     for(Creature* targeter : targetingThis) {
         targeter->clearTarget(false);
@@ -1137,7 +1137,7 @@ void Player::reset() {
         anchor[i] = 0;
 
     negativeLevels = 0;
-    birthday = NULL;
+    birthday = nullptr;
     first_charm = 0;
 
     luck = 0;
@@ -1540,7 +1540,7 @@ Monster& Monster::operator=(const Monster& cr) {
 
 Player::Player() {
     reset();
-    mySock = NULL;
+    mySock = nullptr;
     // initial flags for new characters
     setFlag(P_NO_AUTO_WEAR);
 }
@@ -1595,7 +1595,7 @@ void Creature::crtDestroy() {
     for(sIt = specials.begin() ; sIt != specials.end() ; sIt++) {
         attack = (*sIt);
         delete attack;
-        (*sIt) = NULL;
+        (*sIt) = nullptr;
     }
     specials.clear();
 }
@@ -1622,7 +1622,7 @@ Player::~Player() {
 
     if(birthday) {
         delete birthday;
-        birthday = NULL;
+        birthday = nullptr;
     }
 
     for(i=0; i<MAX_DIMEN_ANCHORS; i++) {
@@ -2142,7 +2142,7 @@ bool Creature::immuneCriticals() const {
 //*********************************************************************
 
 Socket* Creature::getSock() const {
-    return(NULL);
+    return(nullptr);
 }
 
 //*********************************************************************

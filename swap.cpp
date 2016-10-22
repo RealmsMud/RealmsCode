@@ -527,9 +527,9 @@ void Config::offlineSwap() {
     placeholder.id = -1;
 
     // get a list of all players that need updating
-    if((dir = opendir(Path::Player)) != NULL) {
+    if((dir = opendir(Path::Player)) != nullptr) {
 
-        while((dirp = readdir(dir)) != NULL) {
+        while((dirp = readdir(dir)) != nullptr) {
             if(dirp->d_name[0] == '.')
                 continue;
             if(!isupper(dirp->d_name[0]))
@@ -548,9 +548,9 @@ void Config::offlineSwap() {
     }
 
     // check player backups
-    if((dir = opendir(Path::PlayerBackup)) != NULL) {
+    if((dir = opendir(Path::PlayerBackup)) != nullptr) {
 
-        while((dirp = readdir(dir)) != NULL) {
+        while((dirp = readdir(dir)) != nullptr) {
             if(dirp->d_name[0] == '.')
                 continue;
             if(!isupper(dirp->d_name[0]))
@@ -569,9 +569,9 @@ void Config::offlineSwap() {
     }
 
     // get a list of all unique rooms
-    if((dir = opendir(Path::UniqueRoom)) != NULL) {
+    if((dir = opendir(Path::UniqueRoom)) != nullptr) {
 
-        while((dirp = readdir(dir)) != NULL) {
+        while((dirp = readdir(dir)) != nullptr) {
             if(dirp->d_name[0] == '.')
                 continue;
 
@@ -579,8 +579,8 @@ void Config::offlineSwap() {
             filename += dirp->d_name;
             filename += "/";
 
-            if((subdir = opendir(filename.c_str())) != NULL) {
-                while((dirq = readdir(subdir)) != NULL) {
+            if((subdir = opendir(filename.c_str())) != nullptr) {
+                while((dirq = readdir(subdir)) != nullptr) {
                     if(dirq->d_name[0] != 'r')
                         continue;
 
@@ -607,9 +607,9 @@ void Config::offlineSwap() {
     }
 
     // get a list of all monsters
-    if((dir = opendir(Path::Monster)) != NULL) {
+    if((dir = opendir(Path::Monster)) != nullptr) {
 
-        while((dirp = readdir(dir)) != NULL) {
+        while((dirp = readdir(dir)) != nullptr) {
             if(dirp->d_name[0] == '.')
                 continue;
 
@@ -617,8 +617,8 @@ void Config::offlineSwap() {
             filename += dirp->d_name;
             filename += "/";
 
-            if((subdir = opendir(filename.c_str())) != NULL) {
-                while((dirq = readdir(subdir)) != NULL) {
+            if((subdir = opendir(filename.c_str())) != nullptr) {
+                while((dirq = readdir(subdir)) != nullptr) {
                     if(dirq->d_name[0] != 'r')
                         continue;
 

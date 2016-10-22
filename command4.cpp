@@ -319,7 +319,7 @@ int cmdHelp(Player* player, cmd* cmnd) {
     }
     if(!checkWinFilename(player->getSock(), cmnd->str[1]))
         return(0);
-    if(strchr(cmnd->str[1], '/')!=NULL) {
+    if(strchr(cmnd->str[1], '/')!=nullptr) {
         player->print("You may not use backslashes.\n");
         return(0);
     }

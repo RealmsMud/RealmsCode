@@ -884,17 +884,17 @@ bool Server::runPython(const bstring& pyScript, bstring args, Socket *sock, Play
 
     localNamespace["args"] = args;
 
-    if (sock != NULL)
+    if (sock != nullptr)
         localNamespace["sock"] = ptr(sock);
-    if (actor != NULL)
+    if (actor != nullptr)
         localNamespace["actor"] = ptr(actor);
 
     ReportedMsdpVariable* reportedVar =
             dynamic_cast<ReportedMsdpVariable*>(msdpVar);
 
-    if (msdpVar != NULL)
+    if (msdpVar != nullptr)
         localNamespace["msdpVar"] = ptr(msdpVar);
-    if (reportedVar != NULL)
+    if (reportedVar != nullptr)
         localNamespace["reportedVar"] = ptr(reportedVar);
 
     return (runPython(pyScript, localNamespace));
@@ -906,9 +906,9 @@ void Server::handlePythonError() {
     object err = sys.attr("stderr");
     std::string errText("Unknown");
     try {
-        PyObject *type_ptr = NULL, *value_ptr = NULL, *traceback_ptr = NULL;
+        PyObject *type_ptr = nullptr, *value_ptr = nullptr, *traceback_ptr = nullptr;
         PyErr_Fetch(&type_ptr, &value_ptr, &traceback_ptr);
-        if(type_ptr != NULL){
+        if(type_ptr != nullptr){
             py::handle<> h_type(type_ptr);
             py::str type_pstr(h_type);
             py::extract<std::string> e_type_pstr(type_pstr);
@@ -917,7 +917,7 @@ void Server::handlePythonError() {
             else
                 errText = "Unknown exception type";
         }
-        if(value_ptr != NULL){
+        if(value_ptr != nullptr){
             py::handle<> h_val(value_ptr);
             py::str a(h_val);
             py::extract<std::string> returned(a);
@@ -926,7 +926,7 @@ void Server::handlePythonError() {
             else
                 errText += std::string(": Unparseable Python error: ");
         }
-         if(traceback_ptr != NULL){
+         if(traceback_ptr != nullptr){
             py::handle<> h_tb(traceback_ptr);
             py::object tb(py::import("traceback"));
             py::object fmt_tb(tb.attr("format_tb"));

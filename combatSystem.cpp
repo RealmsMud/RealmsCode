@@ -1331,7 +1331,7 @@ int Monster::computeDamage(Creature* victim, Object* weapon, AttackType attackTy
     attackDamage.add(::bonus(strength.getCur()));
 
     if(result == ATTACK_CRITICAL) {
-        broadcast(NULL, getRoomParent(), "%M made a critical hit.", this);
+        broadcast(nullptr, getRoomParent(), "%M made a critical hit.", this);
         int mult = mrand(2, 5);
         attackDamage.set(attackDamage.get() * mult);
         drain *= mult;

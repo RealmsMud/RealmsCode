@@ -56,7 +56,7 @@ void logn(const char *name, const char *fmt, ...) {
     sprintf(filename, "%s/%s.txt", Path::Log, name);
     fp = fopen(filename, "a");
     
-    if(fp == NULL) {
+    if(fp == nullptr) {
         printf("Unable to open '%s'\n", filename);
         return;
     }

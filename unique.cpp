@@ -807,7 +807,7 @@ bool Config::loadLimited() {
     clearLimited();
 
     xmlDoc = xml::loadFile(filename, "Limited");
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     cur = xmlDocGetRootElement(xmlDoc);
@@ -825,7 +825,7 @@ bool Config::loadLimited() {
 
     Unique* unique;
     Lore* l;
-    while(cur != NULL) {
+    while(cur != nullptr) {
         if(NODE_NAME(cur, "Unique")) {
             unique = new Unique;
             unique->load(cur);
@@ -855,7 +855,7 @@ void Config::saveLimited() const {
     char            filename[80];
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Limited", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Limited", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     for(it = uniques.begin() ; it != uniques.end() ; it++) {

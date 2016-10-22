@@ -431,7 +431,7 @@ void viewFileReverseReal(Socket* sock, bstring str) {
     case 1:
 
         strcpy(sock->tempstr[1], str.c_str());
-        if((ff = fopen(str.c_str(), "r")) == NULL) {
+        if((ff = fopen(str.c_str(), "r")) == nullptr) {
             sock->print("error opening file\n");
             sock->restoreState();
             return;
@@ -457,7 +457,7 @@ void viewFileReverseReal(Socket* sock, bstring str) {
             return;
         }
 
-        if((ff = fopen(sock->tempstr[1], "r")) == NULL) {
+        if((ff = fopen(sock->tempstr[1], "r")) == nullptr) {
             sock->print("error opening file\n");
             sock->getPlayer()->clearFlag(P_READING_FILE);
             sock->restoreState();
@@ -1099,7 +1099,7 @@ template<class SetType>
 MudObject* findCrtTarget(Creature * player, SetType& set, int findFlags, const char *str, int val, int* match) {
 
     if(!player || !str || set.empty())
-        return(NULL);
+        return(nullptr);
 
     for(typename SetType::key_type crt : set) {
         if(!crt) {
@@ -1117,7 +1117,7 @@ MudObject* findCrtTarget(Creature * player, SetType& set, int findFlags, const c
         }
 
     }
-    return(NULL);
+    return(nullptr);
 }
 
 

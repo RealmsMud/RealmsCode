@@ -33,7 +33,7 @@ Creature* Creature::findVictim(bstring toFind, int num, bool aggressive, bool se
         }
         if(!noVictim.empty())
             bPrint(noVictim);
-        return(NULL);
+        return(nullptr);
     } else {
         victim = getRoomParent()->findCreature(this, toFind.c_str(), num, true, true);
 
@@ -44,7 +44,7 @@ Creature* Creature::findVictim(bstring toFind, int num, bool aggressive, bool se
                 || (!selfOk && victim == this)) {
             if(!notFound.empty())
                 bPrint(notFound);
-            return(NULL);
+            return(nullptr);
         }
         return(victim);
     }
@@ -495,7 +495,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
             ready[HANDS - 1])
         {
             //enchant = abs(ready[HANDS-1]->adjustment);
-            weapon = NULL;
+            weapon = nullptr;
             wielding = false;
             loc = HANDS;
         } else if (ready[WIELD - 1]) {
@@ -543,7 +543,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
             checkWeapon(this, &weapon, false, &loc, &attacks, &wielding, multiWeapon);
             if(wielding) {
                 if(breakObject(weapon, loc)) {
-                    weapon = NULL;
+                    weapon = nullptr;
                     wielding = false;
                     loc = -1;
                     if(multiWeapon)
@@ -840,9 +840,9 @@ int Creature::castWeapon(Creature* target, Object *weapon, bool &meKilled) {
     int     (*fn)(SpellFn), c=0;
     int     splno=0, slvl=0;
 
-    if(weapon == NULL)
+    if(weapon == nullptr)
         weapon = ready[WIELD-1];
-    if(weapon == NULL)
+    if(weapon == nullptr)
         return(0);
 
     if(getRoomParent()->flagIsSet(R_NO_MAGIC) || weapon->getMagicpower() < 1)

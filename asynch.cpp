@@ -90,7 +90,7 @@ int Server::runList(Socket* sock, cmd* cmnd) {
         lister += "list.exe";
         std::cout << "Running <" << lister << ">\n";
 
-        execl(lister.c_str(), lister.c_str(), cmnd->str[1], cmnd->str[2], cmnd->str[3], cmnd->str[4], NULL);
+        execl(lister.c_str(), lister.c_str(), cmnd->str[1], cmnd->str[2], cmnd->str[3], cmnd->str[4], nullptr);
         printf("Error!");
 
         exit(0);

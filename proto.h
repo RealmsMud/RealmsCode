@@ -331,7 +331,7 @@ void broadcast(bool showTo(Socket*), Socket*, const Container* container, const 
 bool yes(Socket* sock);
 bool yes(Creature* player);
 bool wantsPermDeaths(Socket* sock);
-void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, va_list ap, Creature* player = NULL);
+void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, va_list ap, Creature* player = nullptr);
 void broadcast(const char *fmt, ...);
 void broadcast(int color, const char *fmt,...);
 void broadcast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt,...);

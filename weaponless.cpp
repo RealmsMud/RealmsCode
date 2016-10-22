@@ -602,7 +602,7 @@ int cmdHowl(Creature* player, cmd* cmnd) {
 
         stunTime = mrand(5, MAX(6, player->getLevel()/2));
         monster->stun(stunTime);
-        broadcast(NULL, room, "^b%M is frozen in terror!", monster);
+        broadcast(nullptr, room, "^b%M is frozen in terror!", monster);
     }
 
     return(0);

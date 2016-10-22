@@ -33,10 +33,10 @@ PspellCanHaveError  *ret;
 PspellManager       *manager;
 PspellConfig        *config;
 int          sp_initialized = 0;
-char            *sp_language = NULL;
-char            *sp_spelling = NULL;
-char            *sp_jargon = NULL;
-char            *sp_module = NULL;
+char            *sp_language = nullptr;
+char            *sp_spelling = nullptr;
+char            *sp_jargon = nullptr;
+char            *sp_module = nullptr;
 const char          *sp_delimiters = " !.,:;-\n\t";
 const char          *sp_ignores = "'";
 
@@ -50,13 +50,13 @@ void cleanup_spelling(void) {
 }
 void init_spelling(void) {
     config = new_pspell_config();
-    if(sp_language != NULL)
+    if(sp_language != nullptr)
         pspell_config_replace(config,"language-tag",sp_language);
-    if(sp_spelling != NULL)
+    if(sp_spelling != nullptr)
         pspell_config_replace(config,"spelling",sp_spelling);
-    if(sp_jargon != NULL)
+    if(sp_jargon != nullptr)
         pspell_config_replace(config,"jargon",sp_jargon);
-    if(sp_module != NULL)
+    if(sp_module != nullptr)
         pspell_config_replace(config,"module",sp_module);
     ret = new_pspell_manager(config);
     delete_pspell_config(config);
@@ -216,17 +216,17 @@ static void do_spelling_check(Player* player, int mode, bstring str) {
     int  wordlen;
     int  i;
 
-    if(str.c_str() != NULL) {
-        if((tmp = strdup(str.c_str())) == NULL)
+    if(str.c_str() != nullptr) {
+        if((tmp = strdup(str.c_str())) == nullptr)
             return;
 
         tok = strtok_r(tmp, sp_delimiters, &buf);
 
-        while(tok != NULL) {
+        while(tok != nullptr) {
             wordlen = strcspn(tok, sp_ignores);
             word = (char *)malloc((wordlen+1) * sizeof(char));
 
-            if(word != NULL) {
+            if(word != nullptr) {
                 for(i = 0; i <= wordlen; i++)
                     word[i] = '\0';
                 strncpy(word, tok, wordlen);
@@ -252,7 +252,7 @@ static void do_spelling_check(Player* player, int mode, bstring str) {
                 free(word);
             }
 
-            tok = strtok_r(NULL,sp_delimiters,&buf);
+            tok = strtok_r(nullptr,sp_delimiters,&buf);
         }
 
         free(tmp);

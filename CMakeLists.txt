@@ -12,7 +12,7 @@ find_package(PythonLibs 3.4 REQUIRED)
 find_package(ASPELL REQUIRED)
 find_package(PythonInterp)
 find_package(PythonLibs)
-find_package(Boost COMPONENTS python REQUIRED)
+find_package(Boost COMPONENTS python-py35 REQUIRED)
 
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")

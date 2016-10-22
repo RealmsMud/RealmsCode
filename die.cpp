@@ -80,7 +80,7 @@ void hardcoreDeath(Player* player) {
         object->setDroppedBy(player, "HardcoreDeath");
         object->value.set(player->coins[GOLD], GOLD);
         player->coins.sub(player->coins[GOLD], GOLD);
-        gServer->logGold(GOLD_OUT, player, object->value, NULL, "HardcoreDeath");
+        gServer->logGold(GOLD_OUT, player, object->value, nullptr, "HardcoreDeath");
 
         object->addToRoom(room);
     }
@@ -392,7 +392,7 @@ void Monster::dieToPet(Monster *killer, bool &freeTarget) {
     }
 
 
-    broadcast(NULL, pKiller->getRoomParent(), "%M's %s killed %N.", pKiller, petKiller->getCName(), this);
+    broadcast(nullptr, pKiller->getRoomParent(), "%M's %s killed %N.", pKiller, petKiller->getCName(), this);
 
     mobDeath(pKiller, freeTarget);
 }
@@ -407,7 +407,7 @@ void Monster::dieToPet(Monster *killer, bool &freeTarget) {
 // Handles monsters killing monsters
 void Monster::dieToMonster(Monster *killer, bool &freeTarget) {
     if(this != killer)
-        broadcast(NULL, killer->getRoomParent(), "%M killed %N.", killer, this);
+        broadcast(nullptr, killer->getRoomParent(), "%M killed %N.", killer, this);
     mobDeath(killer, freeTarget);
 }
 
@@ -1395,7 +1395,7 @@ void Monster::distributeExperience(Creature *killer) {
         diePermCrt();
 
     if(killer) {
-        Group* group = NULL;
+        Group* group = nullptr;
         if(killer->isPet())
             player = killer->getMaster()->getAsPlayer();
         else

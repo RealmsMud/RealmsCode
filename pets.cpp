@@ -43,7 +43,7 @@ Monster* Creature::findPet(Monster* toFind) {
     PetList::iterator it = std::find(pets.begin(), pets.end(), toFind);
     if(it != pets.end())
         return((*it));
-    return(NULL);
+    return(nullptr);
 }
 
 bool Creature::hasPet() const {
@@ -95,7 +95,7 @@ Monster* Creature::findPet(bstring pName, int pNum) {
             }
         }
     }
-    return(NULL);
+    return(nullptr);
 }
 
 //*********************************************************************
@@ -116,9 +116,9 @@ void Creature::dismissPet(Monster* pet) {
     broadcast(getSock(), getRoomParent(), "%M dismisses %N.", this, pet);
 
     if(pet->isUndead())
-        broadcast(NULL, getRoomParent(), "%M wanders away.", pet);
+        broadcast(nullptr, getRoomParent(), "%M wanders away.", pet);
     else
-        broadcast(NULL, getRoomParent(), "%M fades away.", pet);
+        broadcast(nullptr, getRoomParent(), "%M fades away.", pet);
     pet->die(this);
 
 }

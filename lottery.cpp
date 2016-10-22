@@ -312,14 +312,14 @@ int cmdClaim(Player* player, cmd* cmnd) {
         player->print("Sorry you didn't win the jackpot this time, but you did win $%ld today!\n", prize);
         player->print("The lottery official hands you %ld gold coin%s.\n", prize, prize != 1 ? "s" : "");
         player->coins.add(prize, GOLD);
-        gServer->logGold(GOLD_IN, player, Money(prize, GOLD), NULL, "Lottery");
+        gServer->logGold(GOLD_IN, player, Money(prize, GOLD), nullptr, "Lottery");
         return(0);
     } else { // Big winner
         broadcast("### %s just won the Highport Powerbones' Jackpot of %ld gold coin%s!", player->getCName(), prize, prize != 1 ? "s" : "");
         // Reset the pot!
         player->print("The lottery official hands you %ld gold coin%s.\n", prize, prize != 1 ? "s" : "");
         player->coins.add(prize, GOLD);
-        gServer->logGold(GOLD_IN, player, Money(prize, GOLD), NULL, "LotteryJackpot");
+        gServer->logGold(GOLD_IN, player, Money(prize, GOLD), nullptr, "LotteryJackpot");
         gConfig->winLottery();
         return(0);
     }

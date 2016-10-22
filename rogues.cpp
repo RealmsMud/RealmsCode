@@ -1335,7 +1335,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
         bool wasKilled = false, meKilled = false;
         if(player->computeDamage(target, weapon, ATTACK_BACKSTAB, result, damage, true, drain, stabMod) == 1) {
             player->unequip(WIELD, UNEQUIP_DELETE);
-            weapon = NULL;
+            weapon = nullptr;
             player->computeAttackPower();
         }
         damage.includeBonus();

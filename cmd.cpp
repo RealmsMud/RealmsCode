@@ -64,7 +64,7 @@ int pcast(Player* player, cmd* cmnd) {
     }
 
     bstring args = getFullstrText(cmnd->fullstr, 2);
-    MudObject *target = NULL;
+    MudObject *target = nullptr;
 
     //target = player->getParent()->findTarget(cmnd->fullstr);
 

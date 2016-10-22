@@ -15,6 +15,7 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+#include <stdlib.h>
 #include "mud.h"
 //#include "string.h"
 typedef struct {
@@ -212,9 +213,9 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
             if(alnum == 1)
                 alignment = 0;
             else if(alnum < 51)
-                alignment = mrand(1,abs(alignment)) * -1;
+                alignment = mrand((short)1, (short)std::abs(alignment)) * -1;
             else
-                alignment = mrand(1,abs(alignment));
+                alignment = mrand((short)1, (short)std::abs(alignment));
         }
 
         if(!flagIsSet(M_NO_RANDOM_GOLD) && coins[GOLD])

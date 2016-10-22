@@ -987,7 +987,7 @@ bool Config::loadFactions() {
     sprintf(filename, "%s/factions.xml", Path::Game);
 
     xmlDoc = xml::loadFile(filename, "Factions");
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     cur = xmlDocGetRootElement(xmlDoc);
@@ -1005,7 +1005,7 @@ bool Config::loadFactions() {
 
     clearFactionList();
     Faction* faction;
-    while(cur != NULL) {
+    while(cur != nullptr) {
         if(NODE_NAME(cur, "Faction")) {
             faction = new Faction;
             faction->load(cur);

@@ -76,7 +76,7 @@ bool Monster::addEnemy(Creature* target, bool print) {
 
     if(print) {
       if(aggroString[0])
-          broadcast(NULL, getRoomParent(), "%M says, \"%s.\"", this, aggroString);
+          broadcast(nullptr, getRoomParent(), "%M says, \"%s.\"", this, aggroString);
 
       target->printColor("^r%M attacks you.\n", this);
       broadcast(target->getSock(), getRoomParent(), "%M attacks %N.", this, target);
@@ -243,7 +243,7 @@ void Monster::diePermCrt() {
         if(fd) {
             n = read(fd,tmp,2048);
             tmp[n] = 0;
-            broadcast(NULL, getRoomParent(), "\n%s", tmp);
+            broadcast(nullptr, getRoomParent(), "\n%s", tmp);
         }
         close(fd);
     }
@@ -475,7 +475,7 @@ int Monster::mobileCrt() {
                 return(0);
 
             if(exit->flagIsSet(X_CLOSED) && !exit->flagIsSet(X_LOCKED)) {
-                broadcast(NULL, getRoomParent(), "%M just opened the %s.", this, exit->getCName());
+                broadcast(nullptr, getRoomParent(), "%M just opened the %s.", this, exit->getCName());
                 exit->clearFlag(X_CLOSED);
             }
 
@@ -487,14 +487,14 @@ int Monster::mobileCrt() {
             {
                 broadcast(::isStaff, getSock(), getRoomParent(), "*DM* %M just snuck to the %s.", this,exit->getCName());
             } else {
-                Creature* lookingFor = NULL;
-                if(flagIsSet(M_CHASING_SOMEONE) && hasEnemy() && ((lookingFor = getTarget(false)) != NULL) ) {
+                Creature* lookingFor = nullptr;
+                if(flagIsSet(M_CHASING_SOMEONE) && hasEnemy() && ((lookingFor = getTarget(false)) != nullptr) ) {
 
-                    broadcast(NULL, getRoomParent(), "%M %s to the %s^x, looking for %s.",
+                    broadcast(nullptr, getRoomParent(), "%M %s to the %s^x, looking for %s.",
                         this, Move::getString(this).c_str(), exit->getCName(), lookingFor->getCName());
                 }
                 else
-                    broadcast(NULL, getRoomParent(), "%M just %s to the %s^x.",
+                    broadcast(nullptr, getRoomParent(), "%M just %s to the %s^x.",
                         this, Move::getString(this).c_str(), exit->getCName());
 
                 clearFlag(M_SNEAKING);
@@ -532,7 +532,7 @@ int Monster::mobileCrt() {
 // This function should make monsters attack each other
 
 void Monster::monsterCombat(Monster *target) {
-    broadcast(NULL, getRoomParent(), "%M attacks %N.\n", this, target);
+    broadcast(nullptr, getRoomParent(), "%M attacks %N.\n", this, target);
 
     addEnemy(target);
 }
@@ -744,7 +744,7 @@ int Monster::cleanMobForSaving() {
     if(flagIsSet(M_DM_FOLLOW)) {
         clearFlag(M_DM_FOLLOW);
         Player* master;
-        if(getMaster() != NULL && (master = getMaster()->getAsPlayer()) != NULL) {
+        if(getMaster() != nullptr && (master = getMaster()->getAsPlayer()) != nullptr) {
             master->clearFlag(P_ALIASING);
             master->getAsPlayer()->setAlias(0);
             master->print("%1M's soul was saved.\n", this);
@@ -976,8 +976,8 @@ int Player::displayCreature(Creature* target)  {
         else if(mTarget->getPrimeFaction() != "")
             oStr << mTarget->upHeShe() << " " << getFactionMessage(mTarget->getPrimeFaction()) << ".\n";
 
-        Creature* firstEnm = NULL;
-        if((firstEnm = mTarget->getTarget(false)) != NULL) {
+        Creature* firstEnm = nullptr;
+        if((firstEnm = mTarget->getTarget(false)) != nullptr) {
             if(firstEnm == this) {
                 if(  !mTarget->flagIsSet(M_HIDDEN) &&
                     !(mTarget->isInvisible() && isEffected("detect-invisible")))
@@ -1471,7 +1471,7 @@ void free_crt(Creature* creature, bool remove) {
         if(mons->isPet()) {
             free_crt(mons);
         } else {
-            mons->setMaster(NULL);
+            mons->setMaster(nullptr);
         }
     }
     creature->pets.clear();

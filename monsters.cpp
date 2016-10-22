@@ -155,7 +155,7 @@ void Monster::pulseTick(long t) {
     if(!nearEnemy(this) && hp.getCur() >= hp.getMax()/4) {
         if(flagIsSet(M_WAS_HIDDEN)) // Reset mob-hide
         {
-            broadcast(NULL, getRoomParent(), "%M hides in shadows.", this);
+            broadcast(nullptr, getRoomParent(), "%M hides in shadows.", this);
             setFlag(M_HIDDEN);
             clearFlag(M_WAS_HIDDEN);
         }
@@ -163,7 +163,7 @@ void Monster::pulseTick(long t) {
     // Mobs shouldn't stay berserk after they tick full
     if(!nearEnemy(this) && hp.getCur() == hp.getMax()) {
         if(isEffected("berserk")) {
-            broadcast(NULL, getRoomParent(), "^r%M's rage diminishes!", this);
+            broadcast(nullptr, getRoomParent(), "^r%M's rage diminishes!", this);
             removeEffect("berserk");
             setFlag(M_WILL_BERSERK);
         }
@@ -349,7 +349,7 @@ int Monster::mobDeathScream() {
     }
 
 
-    broadcast(NULL, getRoomParent(), "%M bellows out a deadly ear-splitting scream!!", this);
+    broadcast(nullptr, getRoomParent(), "%M bellows out a deadly ear-splitting scream!!", this);
 
     PlayerSet::iterator pIt = getRoomParent()->players.begin();
     PlayerSet::iterator pEnd = getRoomParent()->players.end();
@@ -611,7 +611,7 @@ bool Monster::petCaster() {
         mrand(1,100) > 25
     ) {
         master->print("%M casts a mend-wounds spell on you.\n", this);
-        broadcast((Socket*)NULL, master->getSock(), getRoomParent(),
+        broadcast((Socket*)nullptr, master->getSock(), getRoomParent(),
             "%M casts a mend-wounds spell on %N.", this, master);
 
         mp.decrease(4);
@@ -637,7 +637,7 @@ bool Monster::petCaster() {
         mp.getCur() >= 2
     ) {
         master->print("%M casts a vigor spell on you.\n", this);
-        broadcast((Socket*)NULL, master->getSock(), getRoomParent(),
+        broadcast((Socket*)nullptr, master->getSock(), getRoomParent(),
             "%M casts a vigor spell on %N.", this, master);
         mp.decrease(2);
 
@@ -663,7 +663,7 @@ bool Monster::petCaster() {
         mp.getCur() >= 4 &&
         mrand(1,100) > 25
     ) {
-        broadcast(NULL, getRoomParent(), "%M casts a mend-wounds spell on %sself.", this, himHer());
+        broadcast(nullptr, getRoomParent(), "%M casts a mend-wounds spell on %sself.", this, himHer());
         mp.decrease(4);
 
         heal = MAX(bonus((int) intelligence.getCur()), bonus((int) piety.getCur())) +
@@ -687,7 +687,7 @@ bool Monster::petCaster() {
         mp.getCur() >= 2
     ) {
 
-        broadcast(NULL, getRoomParent(), "%M casts a vigor spell on %sself.", this, himHer());
+        broadcast(nullptr, getRoomParent(), "%M casts a vigor spell on %sself.", this, himHer());
         mp.decrease(2);
 
         heal = MAX(bonus((int) intelligence.getCur()),bonus((int) piety.getCur())) +
@@ -831,7 +831,7 @@ void Monster::checkScavange(long t) {
             object->deleteFromRoom();
 
             setFlag(M_HAS_SCAVANGED);
-            broadcast(NULL, room, "%M picked up %1P.", this, object);
+            broadcast(nullptr, room, "%M picked up %1P.", this, object);
 
             // Object is gold
             if(!object->info.id) {
@@ -848,7 +848,7 @@ void Monster::checkScavange(long t) {
     if(flagIsSet(M_TAKE_LOOT) || flagIsSet(M_STREET_SWEEPER)) {
         i = lasttime[LT_MOB_THIEF].ltime;
         if(t - i > 5) {
-            Object  *hide_obj = NULL;
+            Object  *hide_obj = nullptr;
             char    buf[2048], *s = buf;
             int     buflen = 0;
             int     namelen;
@@ -888,7 +888,7 @@ void Monster::checkScavange(long t) {
             }
             if(buflen) {
                 buf[buflen - 2] = 0;
-                broadcast(NULL, room, "%M picked up %s.", this, buf);
+                broadcast(nullptr, room, "%M picked up %s.", this, buf);
             }
             if(hide_obj) {
                 object = hide_obj;
@@ -982,7 +982,7 @@ int Monster::checkWander(long t) {
             // Then we might start chasing them or let our guard down
 
             if(!flagIsSet(M_PERMENANT_MONSTER)) {
-                broadcast(NULL, room, "%1M mutters obscenities under %s breath.", this, hisHer());
+                broadcast(nullptr, room, "%1M mutters obscenities under %s breath.", this, hisHer());
                 // If we're not a perm, become a fast wander and go looking for the guy
                 setFlag(M_FAST_WANDER);
                 // Clear any aggressive flags so we don't go hit someone who
@@ -994,7 +994,7 @@ int Monster::checkWander(long t) {
                 setFlag(M_CHASING_SOMEONE);
                 setFlag(M_OUTLAW_AGGRO);
             } else if(flagIsSet(M_ATTACKING_SHOPLIFTER)) {
-                broadcast(NULL, room, "%1M lets down %s guard.", this, hisHer());
+                broadcast(nullptr, room, "%1M lets down %s guard.", this, hisHer());
                 clearFlag(M_ATTACKING_SHOPLIFTER);
                 clearEnemyList();
             }
@@ -1004,9 +1004,9 @@ int Monster::checkWander(long t) {
         if(flagIsSet(M_CHASING_SOMEONE) && mrand(1,100) < 10) {
             Creature* target = getTarget(false);
             if(target)
-                broadcast(NULL, room, "%1M gives up %s search for %s and wanders away.", this, hisHer(), target->getCName());
+                broadcast(nullptr, room, "%1M gives up %s search for %s and wanders away.", this, hisHer(), target->getCName());
             else
-                broadcast(NULL, room, "%1M gives up %s search and wanders away.", this, hisHer());
+                broadcast(nullptr, room, "%1M gives up %s search and wanders away.", this, hisHer());
             return(2);
         }
     }
@@ -1020,9 +1020,9 @@ int Monster::checkWander(long t) {
         // Then we've got a chance to wander away
         if(mrand(1, 100) < 5) {
             if(race || monType::isIntelligent(type))
-                broadcast(NULL, room, "%1M %s away in search of someone to bully.", this, Move::getString(this).c_str());
+                broadcast(nullptr, room, "%1M %s away in search of someone to bully.", this, Move::getString(this).c_str());
             else
-                broadcast(NULL, room, "%1M just %s away.", this, Move::getString(this).c_str());
+                broadcast(nullptr, room, "%1M just %s away.", this, Move::getString(this).c_str());
             return(2);
         }
     }
@@ -1060,7 +1060,7 @@ int Monster::checkWander(long t) {
                     // and we've got a wander chance
                     (mrand(1,100) <= wanderchance)
                 ) {
-                    broadcast(NULL, room, "%1M just %s away.", this, Move::getString(this).c_str());
+                    broadcast(nullptr, room, "%1M just %s away.", this, Move::getString(this).c_str());
                     return(2);
                 }
             }
@@ -1076,7 +1076,7 @@ int Monster::checkWander(long t) {
                 // dm invis person in the room, we can wander away
                 else if(!room->dmInRoom() && !hasEnemy() && !flagIsSet(M_PERMENANT_MONSTER)) {
                     // Time to wander away
-                    broadcast(NULL, room, "%1M just %s away.", this, Move::getString(this).c_str());
+                    broadcast(nullptr, room, "%1M just %s away.", this, Move::getString(this).c_str());
                     return(2);
                 }
             }
@@ -1114,7 +1114,7 @@ bool Monster::checkEnemyMobs() {
 
     for(Monster* mons : room->monsters) {
         if(mons != this && isEnemyMob(mons)) {
-            broadcast(NULL, room, "%M yells, \"Die!\"\n%M attacks %N!", this, this, mons);
+            broadcast(nullptr, room, "%M yells, \"Die!\"\n%M attacks %N!", this, this, mons);
             addEnemy(mons);
             updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
             return(true);

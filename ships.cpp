@@ -196,7 +196,7 @@ bool ShipExit::createExit() {
             ext->setFlag(X_MOVING);
 
             if(arrives != "")
-                broadcast(NULL, newRoom, "%s", arrives.c_str());
+                broadcast(nullptr, newRoom, "%s", arrives.c_str());
             return(true);
         }
     }
@@ -243,7 +243,7 @@ void ShipExit::removeExit() {
         raider = (*mIt++);
 
         if(raider && raider->flagIsSet(M_RAIDING)) {
-            broadcast(NULL, newRoom, "%1M just %s away.", raider, Move::getString(raider).c_str());
+            broadcast(nullptr, newRoom, "%1M just %s away.", raider, Move::getString(raider).c_str());
             gServer->delActive(raider);
             raider->deleteFromRoom();
             raider->clearAsEnemy();
@@ -253,7 +253,7 @@ void ShipExit::removeExit() {
 
 
     if(departs != "")
-        broadcast(NULL, newRoom, "%s", departs.c_str());
+        broadcast(nullptr, newRoom, "%s", departs.c_str());
 
     aRoom = newRoom->getAsAreaRoom();
     ExitList::iterator xit;
@@ -320,7 +320,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                 found = 1;
 
 
-                ply->bPrint(raider->getCrtStr(NULL, CAP, 1) + " just arrived\n");
+                ply->bPrint(raider->getCrtStr(nullptr, CAP, 1) + " just arrived\n");
                 ply->sendPrompt();
 
                 // you can't see me!
@@ -331,7 +331,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                 if(found && ply->flagIsSet(P_HIDDEN)) {
                     found = 0;
 
-                    ply->bPrint(raider->getCrtStr(NULL, CAP | NONUM, 0) + " searches the room.\n");
+                    ply->bPrint(raider->getCrtStr(nullptr, CAP | NONUM, 0) + " searches the room.\n");
 
                     if(mrand(1,100) <= SHIP_SEARCH_CHANCE) {
                         found = 1;
@@ -344,7 +344,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                 }
 
                 if(!found) {
-                    ply->bPrint(raider->getCrtStr(NULL, CAP|NONUM, 0) + " wanders away.\n");
+                    ply->bPrint(raider->getCrtStr(nullptr, CAP|NONUM, 0) + " wanders away.\n");
                     ply->sendPrompt();
                     continue;
                 }
@@ -358,13 +358,13 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
 
 
                     if(stop->raid->getDumpTalk() != "") {
-                        ply->bPrint(raider->getCrtStr(NULL, CAP|NONUM, 0) + " says to you, \"" + stop->raid->getDumpTalk() + "\".\n");
+                        ply->bPrint(raider->getCrtStr(nullptr, CAP|NONUM, 0) + " says to you, \"" + stop->raid->getDumpTalk() + "\".\n");
                     }
                     if(stop->raid->getDumpAction() != "") {
                         if(stop->raid->getDumpTalk() != "")
                             ply->sendPrompt();
                         bstring tmp = stop->raid->getDumpAction();
-                        bstring tmp2 = raider->getCrtStr(NULL, CAP|NONUM, 0);
+                        bstring tmp2 = raider->getCrtStr(nullptr, CAP|NONUM, 0);
                         tmp.Replace("*ACTOR*", tmp2.c_str());
                         ply->bPrint(tmp + "\n");
                     }
@@ -377,13 +377,13 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                 ) {
 
                     if(stop->raid->getPrisonTalk() != "") {
-                        ply->bPrint(raider->getCrtStr(NULL, CAP|NONUM, 0) + "says to you \"" + stop->raid->getPrisonTalk() + "\".\n");
+                        ply->bPrint(raider->getCrtStr(nullptr, CAP|NONUM, 0) + "says to you \"" + stop->raid->getPrisonTalk() + "\".\n");
                     }
                     if(stop->raid->getPrisonAction() != "") {
                         if(stop->raid->getPrisonTalk() != "")
                             ply->sendPrompt();
                         bstring tmp = stop->raid->getPrisonAction();
-                        bstring tmp2 = raider->getCrtStr(NULL, CAP|NONUM, 0);
+                        bstring tmp2 = raider->getCrtStr(nullptr, CAP|NONUM, 0);
                         tmp.Replace("*ACTOR*", tmp2.c_str());
                         ply->bPrint(tmp + "\n");
                     }
@@ -392,7 +392,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                     ply->doPetFollow();
                 }
 
-                broadcast(NULL, room, "%M was hauled off by %N.", ply, raider);
+                broadcast(nullptr, room, "%M was hauled off by %N.", ply, raider);
             }
             free_crt(raider);
         }
@@ -1047,7 +1047,7 @@ void Config::saveShips() const {
         return;
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Ships", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Ships", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     for(it = ships.begin() ; it != ships.end() ; it++)
@@ -1076,7 +1076,7 @@ bool Config::loadShips() {
     if(!file_exists(filename))
         return(false);
 
-    if((xmlDoc = xml::loadFile(filename, "Ships")) == NULL)
+    if((xmlDoc = xml::loadFile(filename, "Ships")) == nullptr)
         return(false);
 
     rootNode = xmlDocGetRootElement(xmlDoc);

@@ -155,7 +155,7 @@ bool SkillInfo::setGroup(bstring &pGroup) {
 bool SkillInfo::setBase(bstring &pBase) {
     ASSERTLOG(pBase != "");
     SkillInfo* skInfo = gConfig->getSkill(pBase);
-    if (skInfo == NULL || skInfo == this || pBase == name) {
+    if (skInfo == nullptr || skInfo == this || pBase == name) {
         return (false);
     }
     baseSkill = pBase;
@@ -304,11 +304,11 @@ bool Creature::knowsSkill(const bstring& skillName) const {
 
 Skill* Creature::getSkill(const bstring& skillName, bool useBase) const {
     if (skillName == "")
-        return (null);
+        return (nullptr);
 
     SkillMap::const_iterator csIt = skills.find(skillName);
     if (csIt == skills.end())
-        return (NULL);
+        return (nullptr);
     else {
         Skill* toReturn = (*csIt).second;
         if (useBase) {
@@ -357,7 +357,7 @@ bool Creature::setSkill(const bstring skillStr, int gained) {
 // Add a new skill of 'skillName' at 'gained' level
 
 void Creature::addSkill(const bstring& skillName, int gained) {
-    if (skillName == "" || getSkill(skillName, false) != NULL)
+    if (skillName == "" || getSkill(skillName, false) != nullptr)
         return;
 
     Skill* skill = new Skill(skillName, gained);
@@ -584,7 +584,7 @@ double Creature::getSkillLevel(const bstring& skillName, bool useBase) const {
 double Creature::getSkillGained(const bstring& skillName, bool useBase) const {
     Skill* skill = getSkill(skillName, useBase);
 
-    if (skill == NULL) {
+    if (skill == nullptr) {
         if (isCt())
             return (MAXALVL * 10);
         else
@@ -600,7 +600,7 @@ double Creature::getSkillGained(const bstring& skillName, bool useBase) const {
 
 double Creature::getTradeSkillGained(const bstring& skillName, bool useBase) const {
     Skill* skill = getSkill(skillName, useBase);
-    if (skill == NULL) {
+    if (skill == nullptr) {
         if (isCt())
             return (MAXALVL * 10);
         else

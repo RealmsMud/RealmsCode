@@ -144,7 +144,7 @@ public:
     MudObject*  getParent() const;
     Effect*     getEffect() const;
     bool        hasBaseEffect(const bstring& effect) const;
-    bool        runScript(const bstring& pyScript, MudObject* applier = NULL);
+    bool        runScript(const bstring& pyScript, MudObject* applier = nullptr);
 
     bool        updateLastMod(time_t t);    // True if it's time to wear off
     bool        timeForPulse(time_t t);  // True if it's time to pulse

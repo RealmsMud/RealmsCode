@@ -36,9 +36,6 @@
 #endif
 #endif
 
-#ifndef null
-#define null 0
-#endif
 
 #include "utils.h"
 
@@ -72,7 +69,7 @@ inline void assignStr(std::string& dst, const std::string& src) {
 }
 inline void assignStr(std::string& dst, const char* src) {
     // Watch out for nulls
-    if(src == null)
+    if(src == nullptr)
     {
         dst.erase();
     }

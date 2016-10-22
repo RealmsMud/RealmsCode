@@ -31,7 +31,7 @@ bool Config::loadDeities() {
     snprintf(filename, 80, "%s/deities.xml", Path::Game);
     xmlDoc = xml::loadFile(filename, "Deities");
 
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -46,7 +46,7 @@ bool Config::loadDeities() {
     }
 
     clearDeities();
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Deity")) {
             i = xml::getIntProp(curNode, "id");
 

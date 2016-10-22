@@ -521,7 +521,7 @@ bool Config::loadStartLoc() {
     snprintf(filename, 80, "%s/start.xml", Path::Game);
     xmlDoc = xml::loadFile(filename, "Locations");
 
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -537,7 +537,7 @@ bool Config::loadStartLoc() {
 
     clearStartLoc();
     bstring loc = "";
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Location")) {
             xml::copyPropToBString(loc, curNode, "Name");
             if(loc != "" && start.find(loc) == start.end()) {
@@ -568,7 +568,7 @@ void Config::saveStartLocs() const {
     char            filename[80];
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Locations", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Locations", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     for(it = start.begin() ; it != start.end() ; it++)

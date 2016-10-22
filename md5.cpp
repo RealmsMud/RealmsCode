@@ -422,7 +422,7 @@ bstring md5wrapper::getHashFromFile(bstring filename)
     unsigned char buffer[1024], digest[16];
 
     //open file
-    if ((file = fopen (filename.c_str(), "rb")) == NULL)
+    if ((file = fopen (filename.c_str(), "rb")) == nullptr)
     {
         return "-1";
     }

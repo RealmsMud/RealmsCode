@@ -62,7 +62,7 @@ commInfo commList[] =
     { "sign",   COM_SIGN,   2,  false },
     { "whisper",COM_WHISPER,2,  false },
 
-    { NULL, 0, 0, 0 }   
+    { nullptr, 0, 0, 0 }
 };
 
 
@@ -95,7 +95,7 @@ sayInfo sayList[] =
     { "gt",     0,      0,      0,      COM_GT },
     { "gtoc",   true,   0,      0,      COM_GT },
 
-    { NULL, 0, 0, 0, 0 }    
+    { nullptr, 0, 0, 0, 0 }
 };
 
 
@@ -155,7 +155,7 @@ channelInfo channelList[] =
 
     { "clansend",   true,   "*CC:CLAN*",        "### *OOC-NAME* sent, \"*TEXT*\".",                 -1, -1, true,   0,          canCommunicate,     0,          0,      P_IGNORE_CLAN,          COM_CLAN },
 
-    { NULL,         false,  "",                 NULL,                                               0,  0,  false,  0,          0,                  0,          0,      0,                      0 }
+    { nullptr,         false,  "",                 nullptr,                                               0,  0,  false,  0,          0,                  0,          0,      0,                      0 }
 };
 
 

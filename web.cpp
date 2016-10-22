@@ -34,7 +34,7 @@ struct stat lm_check;
 // Static initialization
 const char* WebInterface::fifoIn = "webInterface.in";
 const char* WebInterface::fifoOut = "webInterface.out";
-WebInterface* WebInterface::myInstance = NULL;
+WebInterface* WebInterface::myInstance = nullptr;
 
 static char ETX = 3;
 static char EOT = 4;
@@ -213,7 +213,7 @@ bool WebInterface::checkFifo(const char* fifoFile) {
 //*********************************************************************
 
 WebInterface* WebInterface::getInstance() {
-    if(myInstance == NULL)
+    if(myInstance == nullptr)
         myInstance = new WebInterface;
     return(myInstance);
 }
@@ -223,9 +223,9 @@ WebInterface* WebInterface::getInstance() {
 //*********************************************************************
 
 void WebInterface::destroyInstance() {
-    if(myInstance != NULL)
+    if(myInstance != nullptr)
         delete myInstance;
-    myInstance = NULL;
+    myInstance = nullptr;
 }
 
 //*********************************************************************
@@ -693,7 +693,7 @@ bool WebInterface::handleInput() {
 
         if(command == "LATESTPOST") {
             const unsigned char* latestBuffer = (unsigned char*)dataBuf.c_str();
-            if((xmlDoc = xmlParseDoc(latestBuffer)) == NULL) {
+            if((xmlDoc = xmlParseDoc(latestBuffer)) == nullptr) {
                 std::cout << "WebInterface: LatestPost - Error parsing xml\n";
                 return(false);
             }
@@ -734,7 +734,7 @@ bool WebInterface::handleInput() {
             xmlDoc = xmlNewDoc(BAD_CAST "1.0");
 
             if(type == "CRT") {
-                rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Creature", NULL);
+                rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Creature", nullptr);
                 xmlDocSetRootElement(xmlDoc, rootNode);
 
                 Monster *monster;
@@ -745,7 +745,7 @@ bool WebInterface::handleInput() {
                 }
             }
             else if(type == "OBJ") {
-                rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Object", NULL);
+                rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Object", nullptr);
                 xmlDocSetRootElement(xmlDoc, rootNode);
 
                 Object* object;
@@ -756,7 +756,7 @@ bool WebInterface::handleInput() {
                 }
             }
             else if(type == "ROM") {
-                rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Room", NULL);
+                rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Room", nullptr);
                 xmlDocSetRootElement(xmlDoc, rootNode);
 
                 UniqueRoom* room;
@@ -767,7 +767,7 @@ bool WebInterface::handleInput() {
             }
             // Save the xml document to a character array
             int len=0;
-            unsigned char* tmp = NULL;
+            unsigned char* tmp = nullptr;
             xmlDocDumpFormatMemory(xmlDoc, &tmp,&len,1);
             xmlFreeDoc(xmlDoc);
             // Send the xml document to the output buffer and append an EOT so they
@@ -782,7 +782,7 @@ bool WebInterface::handleInput() {
             // update the queue with
 
             const unsigned char* saveBuffer = (unsigned char*)dataBuf.c_str();
-            if((xmlDoc = xmlParseDoc(saveBuffer)) == NULL) {
+            if((xmlDoc = xmlParseDoc(saveBuffer)) == nullptr) {
                 std::cout << "WebInterface: Save - Error parsing xml\n";
                 return(false);
             }
@@ -1125,7 +1125,7 @@ bool WebInterface::wiki(bstring command, bstring tempBuf) {
 
 
     if( tempBuf == "" ||
-        strchr(tempBuf.c_str(), '/') != NULL ||
+        strchr(tempBuf.c_str(), '/') != nullptr ||
         !checkWinFilename(0, tempBuf.c_str())
     ) {
         std::cout << "WebInterface: Wiki help failed; invalid data" << std::endl;

@@ -257,7 +257,7 @@ public:
     bstring getCompass(const Creature* creature, bool useName);
     bstring getVersion() const;
     bstring getQuestOwner() const;
-    bstring getObjStr(const Creature* viewer = NULL, int flags = 0, int num = 0) const;
+    bstring getObjStr(const Creature* viewer = nullptr, int flags = 0, int num = 0) const;
     const bstring getSubType() const;
     const bstring getWeaponType() const;
     const bstring getArmorType() const;
@@ -351,7 +351,7 @@ public:
     bool needsTwoHands() const;
     bool isQuestValid() const; // Is this object valid for a quest?
 
-    bstring showAlchemyEffects(Player *player = NULL);
+    bstring showAlchemyEffects(Player *player = nullptr);
     bstring statObj(int statFlags);
     double winterProtection() const;
     bool isKey(const UniqueRoom* room, const Exit* exit) const;

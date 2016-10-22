@@ -207,16 +207,16 @@ long ThreatTable::removeThreat(Creature* target) {
 
 Creature* ThreatTable::getTarget(bool sameRoom) {
     if(threatSet.empty()) {
-        return(NULL);
+        return(nullptr);
     }
 
-    if(myParent == NULL) {
+    if(myParent == nullptr) {
         std::cerr << "Error: Null parent in ThreatTable::getTarget()" << std::endl;
-        return(NULL);
+        return(nullptr);
     }
 
-    Creature* toReturn = NULL;
-    Creature* crt = NULL;
+    Creature* toReturn = nullptr;
+    Creature* crt = nullptr;
 
     ThreatSet::reverse_iterator it;
     for(it = threatSet.rbegin() ; it != threatSet.rend() ; ) {
@@ -342,7 +342,7 @@ int Creature::doHeal(Creature* target, int amt, double threatFactor) {
 //################################################################################
 
 void Creature::checkTarget(Creature* toTarget) {
-    if(isPlayer() && !flagIsSet(P_NO_AUTO_TARGET) && getTarget() == NULL) {
+    if(isPlayer() && !flagIsSet(P_NO_AUTO_TARGET) && getTarget() == nullptr) {
         addTarget(toTarget);
     }
 }
@@ -353,7 +353,7 @@ void Creature::checkTarget(Creature* toTarget) {
 
 Creature* Creature::addTarget(Creature* toTarget) {
     if(!toTarget)
-        return(NULL);
+        return(nullptr);
 
     // We've already got them targetted!
     if(toTarget == myTarget)
@@ -403,7 +403,7 @@ void Creature::clearTarget(bool clearTargetsList) {
     if(clearTargetsList)
         myTarget->clearTargetingThis(this);
 
-    myTarget = NULL;
+    myTarget = nullptr;
 
     return;
 }

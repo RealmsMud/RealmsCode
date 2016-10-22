@@ -297,7 +297,7 @@ bool Config::writeSpellFiles() const {
     sprintf(bhfileLink, "%s/sflag.txt", Path::BuilderHelp);
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Spells", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Spells", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     // set left aligned

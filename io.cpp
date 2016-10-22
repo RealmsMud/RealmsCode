@@ -67,12 +67,12 @@ bool hearBroadcast(Creature* target, Socket* ignore1, Socket* ignore2, bool show
 
     Player* pTarget = target->getAsPlayer();
     if(pTarget) {
-        if( ignore1 != NULL &&
+        if( ignore1 != nullptr &&
             ignore1->getPlayer() &&
             pTarget->isGagging(ignore1->getPlayer()->getName())
         )
             return(false);
-        if( ignore2 != NULL &&
+        if( ignore2 != nullptr &&
             ignore2->getPlayer() &&
             pTarget->isGagging(ignore2->getPlayer()->getName())
         )
@@ -128,7 +128,7 @@ void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const C
 void broadcast(Socket* ignore, const Container* container, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    doBroadcast(0, ignore, NULL, container, fmt, ap);
+    doBroadcast(0, ignore, nullptr, container, fmt, ap);
     va_end(ap);
 }
 
@@ -144,7 +144,7 @@ void broadcast(Socket* ignore1, Socket* ignore2, const Container* container, con
 void broadcast(bool showTo(Socket*), Socket* ignore, const Container* container, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    doBroadcast(showTo, ignore, NULL, container, fmt, ap);
+    doBroadcast(showTo, ignore, nullptr, container, fmt, ap);
     va_end(ap);
 }
 
@@ -178,7 +178,7 @@ void broadcast(Creature* player, bool showTo(Socket*), int color, const char *fm
     ASSERTLOG(showTo);
     va_list ap;
     va_start(ap, fmt);
-    doBroadCast(showTo, (bool(*)(Socket*))NULL, fmt, ap, player);
+    doBroadCast(showTo, (bool(*)(Socket*))nullptr, fmt, ap, player);
     va_end(ap);
 }
 
@@ -323,7 +323,7 @@ void broadcast_rom_LangWc(int lang, Socket* ignore, Location currentLocation, co
 
         if(!sock->isConnected())
             continue;
-        if( ignore != NULL &&
+        if( ignore != nullptr &&
             ignore->getPlayer() &&
             ignore->getPlayer()->inSameRoom(ply) &&
             ply->isGagging(ignore->getPlayer()->getName())

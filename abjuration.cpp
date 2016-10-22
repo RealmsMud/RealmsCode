@@ -353,7 +353,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
     Damage damage;
 
 
-    if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == NULL)
+    if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == nullptr)
         return(0);
 
     if(player == target) {

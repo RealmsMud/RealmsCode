@@ -253,10 +253,10 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     p = strtok(name, delem);
     if(p)
         strncpy(target->key[0], p, 19);
-    p = strtok(NULL, delem);
+    p = strtok(nullptr, delem);
     if(p)
         strncpy(target->key[1], p, 19);
-    p = strtok(NULL, delem);
+    p = strtok(nullptr, delem);
     if(p)
         strncpy(target->key[2], p, 19);
 
@@ -384,7 +384,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     target->damage.setSides(conjureStats[buff][level].sdice);
     target->damage.setPlus(conjureStats[buff][level].pdice);
     target->first_tlk = 0;
-    target->setParent(NULL);
+    target->setParent(nullptr);
 
     for(n=0; n<20; n++)
         target->ready[n] = 0;

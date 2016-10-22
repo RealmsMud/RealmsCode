@@ -306,9 +306,9 @@ public:
 
     // Python
     bool runPython(const bstring& pyScript, object& dictionary);
-    bool runPython(const bstring& pyScript, bstring args = "", MudObject *actor = NULL, MudObject *target = NULL);
-    bool runPythonWithReturn(const bstring& pyScript, bstring args = "", MudObject *actor = NULL, MudObject *target = NULL);
-    bool runPython(const bstring& pyScript, bstring args, Socket *sock, Player *actor, MsdpVariable* msdpVar = NULL);
+    bool runPython(const bstring& pyScript, bstring args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
+    bool runPythonWithReturn(const bstring& pyScript, bstring args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
+    bool runPython(const bstring& pyScript, bstring args, Socket *sock, Player *actor, MsdpVariable* msdpVar = nullptr);
 
     // Setup
     bool init();    // Setup the server

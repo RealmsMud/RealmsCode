@@ -253,7 +253,7 @@ int dmEcho(Player* player, cmd* cmnd) {
         broadcast(isStaff, "^G*** %s (%s) echoed: %s",
             player->getCName(), player->getRoomParent()->fullName().c_str(), text.c_str());
 
-    broadcast(NULL, player->getRoomParent(), "%s", text.c_str());
+    broadcast(nullptr, player->getRoomParent(), "%s", text.c_str());
     return(0);
 }
 
@@ -1171,7 +1171,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
                 // No existing effect, add a new one
                 if(strength == -1)
                     strength = 1;
-                if(room->addEffect(effectStr, duration, strength, 0, true) != NULL){
+                if(room->addEffect(effectStr, duration, strength, 0, true) != nullptr){
                     player->print("Effect '%s' (room) added with duration %d and strength %d.\n", effectStr.c_str(), duration, strength);
                 } else {
                     player->print("Unable to add effect '%s' (room)\n", effectStr.c_str());
@@ -1610,7 +1610,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
                     // No existing effect, add a new one
                     if(strength == -1)
                         strength = 1;
-                    if(exit->addEffect(effectStr, duration, strength, 0, true) != NULL) {
+                    if(exit->addEffect(effectStr, duration, strength, 0, true) != nullptr) {
                         player->print("Effect '%s' (exit) added with duration %d and strength %d.\n", effectStr.c_str(), duration, strength);
                     } else {
                         player->print("Unable to add effect '%s' (exit)\n", effectStr.c_str());
@@ -2883,8 +2883,8 @@ void findRoomsWithFlag(const Player* player, CatRef area, int flag) {
         area.id = -1;
         bstring path = roomPath(area);
 
-        if((dir = opendir(path.c_str())) != NULL) {
-            while((dirp = readdir(dir)) != NULL) {
+        if((dir = opendir(path.c_str())) != nullptr) {
+            while((dirp = readdir(dir)) != nullptr) {
                 // is this a room file?
                 if(dirp->d_name[0] == '.')
                     continue;

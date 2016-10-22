@@ -320,7 +320,7 @@ bool Config::loadRaces() {
     snprintf(filename, 80, "%s/races.xml", Path::Game);
     xmlDoc = xml::loadFile(filename, "Races");
 
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return(false);
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -335,7 +335,7 @@ bool Config::loadRaces() {
     }
 
     clearRaces();
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Race")) {
             i = xml::getIntProp(curNode, "id");
 

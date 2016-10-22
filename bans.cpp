@@ -179,7 +179,7 @@ int dmBan(Player* player, cmd* cmnd) {
 
     len = strlen(&cmnd->fullstr[i]);
     if(!len) {
-        dmListbans(player, NULL);
+        dmListbans(player, nullptr);
         //player->print("Syntax: *ban <player/site> [dur] [comment] [-p [password]]\n");
         return(0);
     }

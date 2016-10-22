@@ -814,7 +814,7 @@ AreaRoom *Area::getRoom(const MapMarker *mapmarker) {
         xmlDocPtr   xmlDoc;
         xmlNodePtr  rootNode;
 
-        if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == NULL)
+        if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == nullptr)
             merror("Unable to read arearoom file", FATAL);
 
         rootNode = xmlDocGetRootElement(xmlDoc);
@@ -1609,17 +1609,17 @@ void Area::loadRooms() {
 
     sprintf(filename, "%s/%d", Path::AreaRoom, id);
 
-    if((dir = opendir(filename)) == NULL)
+    if((dir = opendir(filename)) == nullptr)
         return;
 
-    while((dirp = readdir(dir)) != NULL){
+    while((dirp = readdir(dir)) != nullptr){
         // is this a player file?
         if(dirp->d_name[0] == '.')
             continue;
 
         sprintf(filename, "%s/%d/%s", Path::AreaRoom, id, dirp->d_name);
 
-        if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == NULL)
+        if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == nullptr)
             continue;
 
         rootNode = xmlDocGetRootElement(xmlDoc);
@@ -1905,7 +1905,7 @@ bool Config::loadAreas() {
     if(!file_exists(filename))
         return(false);
 
-    if((xmlDoc = xml::loadFile(filename, "Areas")) == NULL)
+    if((xmlDoc = xml::loadFile(filename, "Areas")) == nullptr)
         return(false);
 
     rootNode = xmlDocGetRootElement(xmlDoc);
@@ -2097,7 +2097,7 @@ void Config::saveAreas(bool saveRooms) const {
     char            filename[80];
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Areas", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Areas", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     for(it = areas.begin() ; it != areas.end() ; it++) {

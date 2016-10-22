@@ -145,7 +145,7 @@ void Config::clearSongs() {
 //*********************************************************************
 
 bool Creature::isPlaying() {
-    return(playing != NULL);
+    return(playing != nullptr);
 }
 
 //*********************************************************************
@@ -184,7 +184,7 @@ bool Creature::stopPlaying(bool echo) {
         print("You stop playing \"%s\"\n", getPlaying()->getName().c_str());
         getRoomParent()->print(getSock(), "%M stops playing %s\n", this, getPlaying()->getName().c_str());
     }
-    playing = NULL;
+    playing = nullptr;
     return(true);
 }
 
@@ -211,7 +211,7 @@ bool Creature::pulseSong(long t) {
         if(targetType.equals("self",false) || targetType.equals("group", false)) {
             addEffect(playing->getEffect(), -2, -2, this)->setDuration(playing->getDuration());
         }
-        if(targetType.equals("group", false) && (getGroup() != NULL)) {
+        if(targetType.equals("group", false) && (getGroup() != nullptr)) {
             Group* group = getGroup();
             for(Creature* crt : group->members) {
                 if(inSameRoom(crt))
@@ -227,7 +227,7 @@ bool Creature::pulseSong(long t) {
         }
     } else if(playing->getType() == "script") {
         print("Running script for song \"%s\"\n", playing->getName().c_str());
-        MudObject *target = NULL;
+        MudObject *target = nullptr;
 
         // Find the target here, if any
         if(targetType.equals("target", false)) {

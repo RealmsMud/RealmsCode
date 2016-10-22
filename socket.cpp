@@ -183,9 +183,9 @@ void Socket::reset() {
     opts.compressing = false;
     inPlayerList = false;
 
-    out_compress_buf = NULL;
-    out_compress = NULL;
-    myPlayer = NULL;
+    out_compress_buf = nullptr;
+    out_compress = nullptr;
+    myPlayer = nullptr;
 
     tState = NEG_NONE;
     oneIAC = watchBrokenClient = false;
@@ -331,7 +331,7 @@ void Socket::clearSpiedOn() {
     for (it = spying.begin(); it != spying.end(); it++) {
         Socket *sock = *it;
         if (sock)
-            sock->setSpying(NULL);
+            sock->setSpying(nullptr);
     }
     spying.clear();
 }
@@ -1585,8 +1585,8 @@ int Socket::startCompress(bool silent) {
     out_compress = (z_stream *) malloc(sizeof(*out_compress));
     out_compress->zalloc = telnet::zlib_alloc;
     out_compress->zfree = telnet::zlib_free;
-    out_compress->opaque = NULL;
-    out_compress->next_in = NULL;
+    out_compress->opaque = nullptr;
+    out_compress->next_in = nullptr;
     out_compress->avail_in = 0;
     out_compress->next_out = (Bytef*) out_compress_buf;
     out_compress->avail_out = COMPRESSED_OUTBUF_SIZE;
@@ -1633,8 +1633,8 @@ int Socket::endCompress() {
 
         delete[] out_compress_buf;
 
-        out_compress = null;
-        out_compress_buf = null;
+        out_compress = nullptr;
+        out_compress_buf = nullptr;
 
         opts.mccp = 0;
         opts.compressing = false;

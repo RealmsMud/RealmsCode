@@ -49,7 +49,7 @@ struct  lasttime    Weather[5];
 int     Numlockedout;
 
 const char *dmname[] = {
-    "Bane", "Dominus", "Ocelot", "Kriona", "Dmtest", NULL
+    "Bane", "Dominus", "Ocelot", "Kriona", "Dmtest", nullptr
 };
 
 

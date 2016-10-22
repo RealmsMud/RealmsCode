@@ -53,10 +53,10 @@ char *inetname(struct in_addr in );
 void initSpellList(); // TODO: Move spelling stuff into server
 
 // Global server pointer
-Server* gServer = NULL;
+Server* gServer = nullptr;
 
 // Static initialization
-Server* Server::myInstance = NULL;
+Server* Server::myInstance = nullptr;
 
 // Custom comparison operator to sort by the numeric id instead of standard string comparison
 bool idComp::operator() (const bstring& lhs, const bstring& rhs) const {
@@ -249,7 +249,7 @@ int Server::getNumSockets() { return(sockets.size()); }
 // Get Instance - Return the static instance of config
 //********************************************************************
 Server* Server::getInstance() {
-    if(myInstance == NULL)
+    if(myInstance == nullptr)
         myInstance = new Server;
     return(myInstance);
 }
@@ -257,9 +257,9 @@ Server* Server::getInstance() {
 // Destroy Instance - Destroy the static instance
 //********************************************************************
 void Server::destroyInstance() {
-    if(myInstance != NULL)
+    if(myInstance != nullptr)
         delete myInstance;
-    myInstance = NULL;
+    myInstance = nullptr;
 }
 
 // End - Instance Functions
@@ -878,7 +878,7 @@ void Server::updateActive(long t) {
             }
             if(!immort) {
                 timetowander=1;
-                broadcast(NULL, monster->getRoomParent(), "%M wanders slowly away.", monster);
+                broadcast(nullptr, monster->getRoomParent(), "%M wanders slowly away.", monster);
                 monster->deleteFromRoom();
                 gServer->delActive(monster);
                 free_crt(monster);
@@ -944,7 +944,7 @@ void Server::updateActive(long t) {
                 monster->mp.getCur() >=6 &&
                 (mrand(1,100) < (30+monster->intelligence.getCur()/10)))
             {
-                broadcast(NULL, monster->getRoomParent(), "%M casts a curepoison spell on %sself.", monster, monster->himHer());
+                broadcast(nullptr, monster->getRoomParent(), "%M casts a curepoison spell on %sself.", monster, monster->himHer());
                 monster->mp.decrease(6);
                 monster->curePoison();
                 continue;
@@ -983,9 +983,9 @@ void Server::updateActive(long t) {
             (t > LT(monster, LT_INVOKE) || t > LT(monster, LT_ANIMATE)))
         {
             if(monster->isUndead())
-                broadcast(NULL, room, "%1M wanders away.", monster);
+                broadcast(nullptr, room, "%1M wanders away.", monster);
             else
-                broadcast(NULL, room, "%1M fades away.", monster);
+                broadcast(nullptr, room, "%1M fades away.", monster);
 
             monster->die(monster->getMaster());
             it = activeList.begin();
@@ -1369,7 +1369,7 @@ int Server::startDnsLookup(Socket* sock, struct sockaddr_in addr) {
         while(tries < 5 && tries >= 0) {
             he = gethostbyaddr((char *)&addr.sin_addr.s_addr, sizeof(addr.sin_addr.s_addr), AF_INET);
 
-            if(he == NULL) {
+            if(he == nullptr) {
                 switch(h_errno) {
                 case HOST_NOT_FOUND:
                     printf("DNS Error: Host not found for %s.\n", sock->getIp().c_str());
@@ -1441,12 +1441,12 @@ void Server::saveDnsCache() {
     char            filename[80];
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "DnsCache", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "DnsCache", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     std::list<dnsCache>::iterator it;
     for( it = cachedDns.begin(); it != cachedDns.end() ; it++) {
-        curNode = xmlNewChild(rootNode, NULL, BAD_CAST"Dns", NULL);
+        curNode = xmlNewChild(rootNode, nullptr, BAD_CAST"Dns", nullptr);
         xml::newStringChild(curNode, "Ip", (*it).ip.c_str());
         xml::newStringChild(curNode, "HostName", (*it).hostName.c_str());
         xml::newNumChild(curNode, "Time", (long)(*it).time);
@@ -1469,7 +1469,7 @@ void Server::loadDnsCache() {
     snprintf(filename, 80, "%s/dns.xml", Path::Config);
     xmlDoc = xml::loadFile(filename, "DnsCache");
 
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return;
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -1482,12 +1482,12 @@ void Server::loadDnsCache() {
         xmlFreeDoc(xmlDoc);
         return;
     }
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Dns")) {
             bstring ip, hostname;
             long time=0;
             childNode = curNode->children;
-            while(childNode != NULL) {
+            while(childNode != nullptr) {
                 if(NODE_NAME(childNode, "Ip")) {
                     xml::copyToBString(ip, childNode);
                 } else if(NODE_NAME(childNode, "HostName")) {
@@ -1574,7 +1574,7 @@ bool Server::startReboot(bool resetShips) {
     sprintf(port, "%d", Port);
     strcpy(path, gConfig->cmdline);
 
-    execl(path, path, "-r", port, (char *)NULL);
+    execl(path, path, "-r", port, (char *)nullptr);
 
     char filename[80];
     snprintf(filename, 80, "%s/config.xml", Path::Config);
@@ -1595,16 +1595,16 @@ bool Server::saveRebootFile(bool resetShips) {
     xmlNodePtr      curNode;
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Reboot", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Reboot", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     // Save server information
-    serverNode = xmlNewChild(rootNode, NULL, BAD_CAST"Server", NULL);
+    serverNode = xmlNewChild(rootNode, nullptr, BAD_CAST"Server", nullptr);
 
     // Dump control socket information
     std::list<controlSock>::const_iterator it1;
     for( it1 = controlSocks.begin(); it1 != controlSocks.end(); it1++ ) {
-        curNode = xmlNewChild(serverNode, NULL, BAD_CAST"ControlSock", NULL);
+        curNode = xmlNewChild(serverNode, nullptr, BAD_CAST"ControlSock", nullptr);
         xml::newNumProp(curNode, "Port", (*it1).port);
         xml::newNumProp(curNode, "Control", (*it1).control);
     }
@@ -1621,7 +1621,7 @@ bool Server::saveRebootFile(bool resetShips) {
     for(Socket *sock : sockets) {
         Player*player = sock->getPlayer();
         if(player && player->fd > -1) {
-            curNode = xmlNewChild(rootNode, NULL, BAD_CAST"Player", NULL);
+            curNode = xmlNewChild(rootNode, nullptr, BAD_CAST"Player", nullptr);
             xml::newStringChild(curNode, "Name", player->getCName());
             xml::newNumChild(curNode, "Fd", sock->getFd());
             xml::newStringChild(curNode, "Ip", sock->getIp().c_str());
@@ -1659,7 +1659,7 @@ int Server::finishReboot() {
     doc = xml::loadFile(filename, "Reboot");
     unlink(filename);
 
-    if(doc == NULL) {
+    if(doc == nullptr) {
         printf("Unable to loadBeforePython reboot file\n");
         merror("Loading reboot file", FATAL);
     }
@@ -1678,10 +1678,10 @@ int Server::finishReboot() {
     Numplayers = 0;
     StartTime = time(0);
 
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Server")) {
             childNode = curNode->children;
-            while(childNode != NULL) {
+            while(childNode != nullptr) {
                 if(NODE_NAME(childNode, "ControlSock")) {
                     int port = xml::getIntProp(childNode, "Port");
                     int control = xml::getIntProp(childNode, "Control");
@@ -1711,7 +1711,7 @@ int Server::finishReboot() {
             childNode = curNode->children;
             Player* player=0;
             Socket* sock=0;
-            while(childNode != NULL) {
+            while(childNode != nullptr) {
                 if(NODE_NAME(childNode, "Name")) {
                     bstring name;
                     xml::copyToBString(name, childNode);
@@ -2019,7 +2019,7 @@ int Server::getNumPlayers() {
 // *************************************
 
 bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
-    ASSERT(toRegister != NULL);
+    ASSERT(toRegister != nullptr);
 
     if(toRegister->getId().equals("-1"))
         return(false);
@@ -2052,7 +2052,7 @@ bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
 }
 
 bool Server::unRegisterMudObject(MudObject* toUnRegister) {
-    ASSERT(toUnRegister != NULL);
+    ASSERT(toUnRegister != nullptr);
 
     if(toUnRegister->getId().equals("-1"))
         return(false);
@@ -2098,12 +2098,12 @@ bool Server::unRegisterMudObject(MudObject* toUnRegister) {
 
 Object* Server::lookupObjId(const bstring& toLookup) {
     if(toLookup[0] != 'O')
-        return(NULL);
+        return(nullptr);
 
     IdMap::iterator it = registeredIds.find(toLookup);
 
     if(it == registeredIds.end())
-        return(NULL);
+        return(nullptr);
     else
         return(((*it).second)->getAsObject());
 
@@ -2111,23 +2111,23 @@ Object* Server::lookupObjId(const bstring& toLookup) {
 
 Creature* Server::lookupCrtId(const bstring& toLookup) {
     if(toLookup[0] != 'M' && toLookup[0] != 'P')
-        return(NULL);
+        return(nullptr);
 
     IdMap::iterator it = registeredIds.find(toLookup);
 
     if(it == registeredIds.end())
-        return(NULL);
+        return(nullptr);
     else
         return(((*it).second)->getAsCreature());
 
 }
 Player* Server::lookupPlyId(const bstring& toLookup) {
     if(toLookup[0] != 'P')
-        return(NULL);
+        return(nullptr);
     IdMap::iterator it = registeredIds.find(toLookup);
 
     if(it == registeredIds.end())
-        return(NULL);
+        return(nullptr);
     else
         return(((*it).second)->getAsPlayer());
 
@@ -2182,7 +2182,7 @@ void Server::loadIds() {
     snprintf(filename, 80, "%s/ids.xml", Path::Game);
     xmlDoc = xml::loadFile(filename, "Ids");
 
-    if(xmlDoc == NULL)
+    if(xmlDoc == nullptr)
         return;
 
     curNode = xmlDocGetRootElement(xmlDoc);
@@ -2195,7 +2195,7 @@ void Server::loadIds() {
         xmlFreeDoc(xmlDoc);
         return;
     }
-    while(curNode != NULL) {
+    while(curNode != nullptr) {
              if(NODE_NAME(curNode, "MaxMonsterId")) xml::copyToNum(maxMonsterId, curNode);
         else if(NODE_NAME(curNode, "MaxPlayerId")) xml::copyToNum(maxPlayerId, curNode);
         else if(NODE_NAME(curNode, "MaxObjectId")) xml::copyToNum(maxObjectId, curNode);
@@ -2215,7 +2215,7 @@ void Server::saveIds() {
         return;
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, NULL, BAD_CAST "Ids", NULL);
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Ids", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     xml::newNumChild(rootNode, "MaxMonsterId", maxMonsterId);

@@ -150,8 +150,8 @@ Exit *findExit(Creature* creature, bstring str, int val, BaseRoom* room) {
     str = removeColor(str);
 
     if(!room)
-        if((room = creature->getRoomParent()) == NULL)
-            return(NULL);
+        if((room = creature->getRoomParent()) == nullptr)
+            return(nullptr);
 
     for(Exit* exit : room->exits) {
         bstring name = removeColor(exit->getName());
@@ -434,11 +434,11 @@ bool Player::showExit(const Exit* exit, int magicShowHidden) const {
 void Exit::addEffectReturnExit(bstring effect, long duration, int strength, const Creature* owner) {
     BaseRoom *targetRoom=0;
 
-    addEffect(effect, duration, strength, NULL, true, owner);
+    addEffect(effect, duration, strength, nullptr, true, owner);
     // switch the meaning of exit
     Exit* exit = getReturnExit(owner->getConstRoomParent(), &targetRoom);
     if(exit)
-        exit->addEffect(effect, duration, strength, NULL, true, owner);
+        exit->addEffect(effect, duration, strength, nullptr, true, owner);
 }
 
 //*********************************************************************

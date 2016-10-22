@@ -2435,7 +2435,7 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
             return(0);
         } else {
             player->print("%s is now jailed.\n", target->getCName());
-            broadcast(NULL, target->getRoomParent(),
+            broadcast(nullptr, target->getRoomParent(),
                 "^RA demonic jailer just arrived.\nThe demonic jailer opens a portal to Hell.\nThe demonic jailer drags %s screaming to the Dungeon of Despair.", target->getCName());
 
             target->printColor("^RThe demonic jailer grips your soul and drags you to the Dungeon of Despair.\n");
@@ -2474,7 +2474,7 @@ int dmLts(Player* player, cmd* cmnd) {
     }
     cmnd->str[1][0] = up(cmnd->str[1][0]);
     target = gServer->findPlayer(cmnd->str[1]);
-    if(target == NULL) {
+    if(target == nullptr) {
         player->print("%s is not on.\n", cmnd->str[1]);
         return(0);
     }

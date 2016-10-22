@@ -157,22 +157,22 @@ bool Creature::removeFromGroup(bool announce) {
         if(groupStatus == GROUP_INVITED) {
             if(announce) {
                 if(!pFlagIsSet(P_DM_INVIS) && !isEffected("incognito"))
-                    group->sendToAll(getCrtStr(NULL, CAP) + " rejects the invitation to join your group.\n");
+                    group->sendToAll(getCrtStr(nullptr, CAP) + " rejects the invitation to join your group.\n");
                 *this << ColorOn << "^gYou reject the invitation to join \"" << group->getName() << "\".\n^x" << ColorOff;
             }
             group->remove(this);
-            group = null;
+            group = nullptr;
         } else {
             if(announce) {
                 if(!pFlagIsSet(P_DM_INVIS) && !isEffected("incognito"))
-                    group->sendToAll(getCrtStr(NULL, CAP) + " leaves the group.\n", this);
+                    group->sendToAll(getCrtStr(nullptr, CAP) + " leaves the group.\n", this);
                 if(group->getLeader() == this)
                     *this << ColorOn << "^gYou leave your group.^x\n" << ColorOff;
                 else
                     *this << ColorOn << "^gYou leave \"" << group->getName() << "\".\n^x" << ColorOff;
             }
             group->remove(this);
-            group = null;
+            group = nullptr;
         }
         groupStatus = GROUP_NO_STATUS;
         return(true);

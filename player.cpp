@@ -524,7 +524,7 @@ void Player::uninit() {
             pet->deleteFromRoom();
             free_crt(pet);
         } else {
-            pet->setMaster(NULL);
+            pet->setMaster(nullptr);
         }
     }
     pets.clear();
@@ -577,7 +577,7 @@ void Player::courageous() {
     scared = &(scared_of);
     if(*scared) {
         free(*scared);
-        *scared = NULL;
+        *scared = nullptr;
     }
 }
 

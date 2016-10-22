@@ -596,7 +596,7 @@ Exit *Move::getExit(Creature* player, cmd* cmnd) {
     Exit    *exit=0;
 
     if(!room)
-        return(NULL);
+        return(nullptr);
 
     if(player->isPet())
         player = player->getMaster();
@@ -958,7 +958,7 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
 
     if(player) {
         if(!Move::canMove(player, cmnd))
-            return(NULL);
+            return(nullptr);
         // only players sneak
         sneaking = wasSneaking = Move::isSneaking(cmnd);
 
@@ -971,19 +971,19 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
         creature->print("You don't see that exit.\n");
         if(monster && monster->getMaster())
             monster->getMaster()->print("Your pet doesn't see that exit.\n");
-        return(NULL);
+        return(nullptr);
     }
 
 
     if(player && !Move::canEnter(player, exit, leader))
-        return(NULL);
+        return(nullptr);
 
     if(!Move::getRoom(creature, exit, &newRoom))
-        return(NULL);
+        return(nullptr);
 
     // Rangers and F/T can't sneak with heavy armor on!
     if(sneaking && player && player->checkHeavyRestrict("sneak"))
-        return(NULL);
+        return(nullptr);
 
     if(newRoom->isAreaRoom()) {
         mem = newRoom->getAsAreaRoom()->getStayInMemory();
@@ -998,13 +998,13 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
             // reset stayInMemory
             if(newRoom->isAreaRoom())
                 newRoom->getAsAreaRoom()->setStayInMemory(mem);
-            return(NULL);
+            return(nullptr);
         }
     }
 
     // were they killed by exit effect damage?
     if(exit->doEffectDamage(creature))
-        return(NULL);
+        return(nullptr);
 
     // save a copy of the exit for the track function
     if(leader) {
@@ -1071,7 +1071,7 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
             if(oldRoom == follower->getRoomParent())
                 Move::start(follower, cmnd, 0, 0, followers, numPeople, roomPurged);
             if(roomPurged)
-                oldRoom = NULL;
+                oldRoom = nullptr;
         }
     }
     if(leader && (!group || creature->getGroupStatus() != GROUP_LEADER)) {
@@ -1079,7 +1079,7 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
             if(oldRoom == pet->getRoomParent())
                 Move::start(pet, cmnd, 0, 0, followers, numPeople, roomPurged);
             if(roomPurged)
-                oldRoom = NULL;
+                oldRoom = nullptr;
         }
     }
     if(player && !sneaking && !roomPurged && oldRoom)

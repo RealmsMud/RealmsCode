@@ -141,7 +141,7 @@ void doDemographics() {
 
     // load the directory all the players are stored in
     printf("Opening %s...", Path::Player);
-    if((dir = opendir(Path::Player)) == NULL) {
+    if((dir = opendir(Path::Player)) == nullptr) {
         printf("Directory could not be opened.\n");
         return;
     }
@@ -175,7 +175,7 @@ void doDemographics() {
 
 
     printf("Reading player directory...");
-    while((dirp = readdir(dir)) != NULL) {
+    while((dirp = readdir(dir)) != nullptr) {
         // is this a player file?
         if(dirp->d_name[0] == '.')
             continue;
@@ -184,7 +184,7 @@ void doDemographics() {
 
         // is this a readable player file?
         sprintf(name, "%s/%s", Path::Player, dirp->d_name);
-        if((xmlDoc = xml::loadFile(name, "Player")) == NULL)
+        if((xmlDoc = xml::loadFile(name, "Player")) == nullptr)
             continue;
 
         // get the information we need

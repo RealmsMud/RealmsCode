@@ -92,7 +92,7 @@ void Statistics::setLevelInfo(int level, LevelInfo* levelInfo) {
 LevelInfo* Statistics::getLevelInfo(int level) {
     LevelInfoMap::iterator it = levelHistory.find(level);
     if(it == levelHistory.end())
-        return(NULL);
+        return(nullptr);
 
     return(it->second);
 }
@@ -487,7 +487,7 @@ unsigned long Statistics::calcToughness(Creature* target) {
 
 bstring Statistics::damageWith(const Player* player, const Object* weapon) {
     if(weapon)
-        return(weapon->getObjStr(NULL, INV | MAG, 1));
+        return(weapon->getObjStr(nullptr, INV | MAG, 1));
     return((bstring)"your " + player->getUnarmedWeaponSkill() + "s");
 }
 

@@ -277,7 +277,7 @@ bool playerShopSame(Player* player, Object* obj1, Object* obj2) {
 //*********************************************************************
 
 bstring objShopName(Object* object, int m, int flags, int pad) {
-    bstring name = object->getObjStr(NULL, flags, m);
+    bstring name = object->getObjStr(nullptr, flags, m);
     pad -= stripColor(name).getLength();
     for(int i=0; i<pad; i++)
         name += " ";
@@ -657,8 +657,8 @@ int cmdShop(Player* player, cmd* cmnd) {
 
         player->delObj(obj);
         obj->addToRoom(storage);
-        p->appendLog(player->getName(), "%s stocked %s for $%d.", player->getCName(), obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
-        player->printColor("You stock %s in the store for $%d.\n", obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
+        p->appendLog(player->getName(), "%s stocked %s for $%d.", player->getCName(), obj->getObjStr(nullptr, flags, 1).c_str(), obj->getShopValue());
+        player->printColor("You stock %s in the store for $%d.\n", obj->getObjStr(nullptr, flags, 1).c_str(), obj->getShopValue());
         broadcast(player->getSock(), player->getParent(), "%M just stocked something in this store.", player);
         // obj->shopValue
         if(limited)
@@ -682,8 +682,8 @@ int cmdShop(Player* player, cmd* cmnd) {
             return(0);
         }
         obj->setShopValue(value);
-        p->appendLog(player->getName(), "%s set the price for %s to $%d.", player->getCName(), obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
-        player->printColor("You set the price for %s to $%d.\n", obj->getObjStr(NULL, flags, 1).c_str(), obj->getShopValue());
+        p->appendLog(player->getName(), "%s set the price for %s to $%d.", player->getCName(), obj->getObjStr(nullptr, flags, 1).c_str(), obj->getShopValue());
+        player->printColor("You set the price for %s to $%d.\n", obj->getObjStr(nullptr, flags, 1).c_str(), obj->getShopValue());
         broadcast(player->getSock(), player->getParent(), "%M just updated the prices in this store.", player);
     } else if(action == SHOP_REMOVE) {
         Object *obj = storage->findObject(player, cmnd, 2);
@@ -711,8 +711,8 @@ int cmdShop(Player* player, cmd* cmnd) {
 
         obj->deleteFromRoom();
         player->addObj(obj);
-        p->appendLog(player->getName(), "%s removed %s.", player->getCName(), obj->getObjStr(NULL, flags, 1).c_str());
-        player->printColor("You remove %s from your store.\n", obj->getObjStr(NULL, flags, 1).c_str());
+        p->appendLog(player->getName(), "%s removed %s.", player->getCName(), obj->getObjStr(nullptr, flags, 1).c_str());
+        player->printColor("You remove %s from your store.\n", obj->getObjStr(nullptr, flags, 1).c_str());
         broadcast(player->getSock(), player->getParent(), "%M just removed something from this store.", player);
 
         obj->clearFlag(O_PERM_ITEM);
@@ -1331,7 +1331,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
 
 
-        player->printColor("You buy a %s.\n", object->getObjStr(NULL, flags, 1).c_str());
+        player->printColor("You buy a %s.\n", object->getObjStr(nullptr, flags, 1).c_str());
         broadcast(player->getSock(), player->getParent(), "%M just bought %1P.", player, object);
         object->clearFlag(O_PERM_INV_ITEM);
         object->clearFlag(O_PERM_ITEM);
@@ -1365,15 +1365,15 @@ int cmdBuy(Player* player, cmd* cmnd) {
         if(!guild) {
             owner->bank.add(deposit, GOLD);
             Bank::log(owner->getCName(), "PROFIT from sale of %s to %s: %ld [Balance: %s]\n",
-                object->getObjStr(NULL, flags, 1).c_str(), player->getCName(), deposit, owner->bank.str().c_str());
+                object->getObjStr(nullptr, flags, 1).c_str(), player->getCName(), deposit, owner->bank.str().c_str());
             if(online && !owner->flagIsSet(P_DONT_SHOW_SHOP_PROFITS))
                 owner->printColor("*** You made $%d profit from the sale of %s^x to %s.\n",
-                    deposit, object->getObjStr(NULL, flags, 1).c_str(), player->getCName());
+                    deposit, object->getObjStr(nullptr, flags, 1).c_str(), player->getCName());
             owner->save(online);
         } else {
             guild->bank.add(deposit, GOLD);
             Bank::guildLog(guild->getNum(), "PROFIT from sale of %s to %s: %ld [Balance: %s]\n",
-                object->getObjStr(NULL, flags, 1).c_str(), player->getCName(), deposit, guild->bank.str().c_str());
+                object->getObjStr(nullptr, flags, 1).c_str(), player->getCName(), deposit, guild->bank.str().c_str());
             gConfig->saveGuilds();
         }
 
@@ -1595,7 +1595,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
             }
 
             player->coins.sub(cost);
-            gServer->logGold(GOLD_OUT, player, cost, NULL, "PurchaseStorage");
+            gServer->logGold(GOLD_OUT, player, cost, nullptr, "PurchaseStorage");
 
             player->print("The shopkeeper says, \"Congratulations, you are now the proud owner of a new storage room. Don't forget, to get in you must also buy a key.\"\n");
             player->print("You have %s left.\n", player->coins.str().c_str());
@@ -2299,7 +2299,7 @@ int cmdAuction(Player* player, cmd* cmnd) {
             continue;
         }
         target->printColor("*** %M is auctioning %s for %ldgp%s.\n",
-            player, object->getObjStr(NULL, flags, batch).c_str(), amnt, each ? each==1 ? " each" : " total" : "");
+            player, object->getObjStr(nullptr, flags, batch).c_str(), amnt, each ? each==1 ? " each" : " total" : "");
     }
 
     return(0);

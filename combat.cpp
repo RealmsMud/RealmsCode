@@ -258,7 +258,7 @@ int Monster::updateCombat() {
     }
     // We'll be nice for now...no critical hits from mobs :)
     int resultFlags = NO_CRITICAL | NO_FUMBLE;
-    AttackResult result = getAttackResult(target, NULL, resultFlags);
+    AttackResult result = getAttackResult(target, nullptr, resultFlags);
 
     if(isPet()) {
         // We are a pet, and we're attacking.  Smash invis of our owner.
@@ -568,7 +568,7 @@ void Monster::berserk() {
     clearFlag(M_WILL_BERSERK);
     strength.addModifier("Berserk", 50, MOD_CUR_MAX);
 
-    broadcast(NULL, getRoomParent(), "^R%M goes berserk!", this);
+    broadcast(nullptr, getRoomParent(), "^R%M goes berserk!", this);
     return;
 }
 
@@ -1117,11 +1117,11 @@ void Creature::simultaneousDeath(Creature* attacker, Creature* target, bool free
     // clean up anything that might still need cleaning
     if(freeTarget && target->isMonster()) {
         target->getAsMonster()->finishMobDeath(attacker);
-        target = null;
+        target = nullptr;
     }
     if(freeAttacker && attacker->isMonster()) {
         attacker->getAsMonster()->finishMobDeath(target);
-        attacker = null;
+        attacker = nullptr;
     }
 }
 
@@ -1215,7 +1215,7 @@ bool Monster::tryToStone(Creature* target, SpecialAttack* attack) {
         broadcast(getSock(), getRoomParent(), "%M tried to petrify %N!", this, pTarget);
         target->printColor("^c%M tried to petrify you!^x\n", this);
     } else {
-        pTarget->addEffect("petrification", 0, 0, NULL, true, this);
+        pTarget->addEffect("petrification", 0, 0, nullptr, true, this);
         broadcast(target->getSock(), getRoomParent(), "%M turned %N to stone!", this, pTarget);
         target->printColor("^D%M turned you to stone!^x\n", this);
         pTarget->clearAsEnemy();

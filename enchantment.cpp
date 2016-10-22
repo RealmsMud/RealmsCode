@@ -934,7 +934,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
          player->isCt())
         mageStunBns = mrand(1,5);
 
-    if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == NULL)
+    if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == nullptr)
         return(0);
 
     // stun self
