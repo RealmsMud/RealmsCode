@@ -203,7 +203,7 @@ long ThreatTable::removeThreat(Creature* target) {
 //* GetTarget
 //*********************************************************************
 // Returns the Creature to attack based on threat and intelligent of
-// the parent.  Returns NULL if it's not mad at anybody.
+// the parent.  Returns null if it's not mad at anybody.
 
 Creature* ThreatTable::getTarget(bool sameRoom) {
     if(threatSet.empty()) {

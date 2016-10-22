@@ -1486,7 +1486,7 @@ void Monster::distributeExperience(Creature *killer) {
     for(std::pair<Player*, int> p : expList) {
         Player* ply = p.first;
         if(!ply) {
-            std::cout << "Distribute Experience: NULL Player found" << std::endl;
+            std::cout << "Distribute Experience: null Player found" << std::endl;
             continue;
         }
         int effort = p.second;

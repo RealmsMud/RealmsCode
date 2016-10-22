@@ -129,26 +129,6 @@ int dmListbans(Player* player, cmd* cmnd) {
     return(0);
 }
 
-/*
- * Unused, apparently.
- * 
-int dmLoadbans(Creature* player, cmd* cmnd) {
-    if(!player->isDm())
-        return(PROMPT);
-    gConfig->loadBans();
-    player->print("Bans reloaded.\n");
-    dmListbans(player, NULL);
-    return(0);
-
-}
-
-int dmSavebans(Creature* player, cmd* cmnd) {
-    gConfig->saveBans();
-    player->print("Bans saved.\n");
-    return(0);
-}
-*/
-
 int dmBan(Player* player, cmd* cmnd) {
     Player* target=0;
     int     i=0, j=0, strLen, len, dur, iTmp = 0;

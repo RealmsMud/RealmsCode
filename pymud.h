@@ -1159,7 +1159,6 @@ void broadcast(Socket* ignore1, Socket* ignore2, BaseRoom* room, const char *fmt
 void broadcast(bool showTo(Socket*), Socket*, BaseRoom* room, const char *fmt, ...);
 
 
-//void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, va_list ap, Creature* player = NULL);
 void broadcast(const char *fmt, ...);
 void broadcast(int color, const char *fmt,...);
 void broadcast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt,...);

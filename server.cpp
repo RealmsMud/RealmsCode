@@ -1092,7 +1092,7 @@ void Server::updateActive(long t) {
 void Server::addActive(Monster* monster) {
 
     if(!monster) {
-        loga("add_active: tried to activate a NULL crt!\n");
+        loga("add_active: tried to activate a null crt!\n");
         return;
     }
     if(isActive(monster))

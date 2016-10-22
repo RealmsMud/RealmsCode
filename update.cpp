@@ -880,7 +880,7 @@ void doCrash(int sig) {
     loge("--- !CRASH! Game closed ---\n");
 // for some reason, on cygwin this will (sometimes) corrupt room files
 #ifndef __CYGWIN__
-// Turning this off because of the xp->ext = NULL bug which is erasing exits
+// Turning this off because of the xp->ext = nullptr bug which is erasing exits
 //  gConfig->resaveAllRooms(1);
 #endif
     gServer->saveAllPly();
