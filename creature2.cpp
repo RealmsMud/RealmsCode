@@ -112,7 +112,7 @@ void Monster::adjust(int buffswitch) {
         }
 
 
-        if(!cClass)
+        if(cClass == CreatureClass::NONE)
             hp.setInitial(level * monType::getHitdice(type));
         else {
             crthp = class_stats[(int) cClass].hpstart + (level*class_stats[(int) cClass].hp);

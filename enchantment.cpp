@@ -27,10 +27,10 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
     Creature* target=0;
 
 
-    if( player->getClass() != CLERIC &&
-        player->getClass() != MAGE &&
-        player->getClass() != LICH &&
-        player->getClass() != PALADIN &&
+    if( player->getClass() !=  CreatureClass::CLERIC &&
+        player->getClass() !=  CreatureClass::MAGE &&
+        player->getClass() !=  CreatureClass::LICH &&
+        player->getClass() !=  CreatureClass::PALADIN &&
         !player->isCt() &&
         spellData->how == CastType::CAST
     ) {
@@ -43,7 +43,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(spellData->how != CastType::POTION) {
             player->print("Hold whom?\n");
             return(0);
-        } else if(player->getClass() == LICH) {
+        } else if(player->getClass() == CreatureClass::LICH) {
             player->print("Nothing happens.\n");
             return(0);
         } else if(player->isEffected("vampirism") && !isDay()) {
@@ -95,7 +95,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
         broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a hold-person spell on %N.", player, target);
 
 
-        if(target->getClass() == LICH) {
+        if(target->getClass() == CreatureClass::LICH) {
             player->printColor("Liches cannot be held.\n^yYour spell failed.\n");
             return(0);
         }
@@ -130,7 +130,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(spellData->how == CastType::CAST)
             bns = 5*(spellData->level - target->getLevel()) + 2*crtWisdom(target) - 2*bonus((int)player->intelligence.getCur());
 
-        if(target->isPlayer() && target->getClass() == CLERIC && target->getDeity() == ARES)
+        if(target->isPlayer() && target->getClass() == CreatureClass::CLERIC && target->getDeity() == ARES)
             bns += 25;
 
         if(target->isMonster()) {
@@ -144,7 +144,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
                 nohold = 1;
 
             if( target->flagIsSet(M_LEVEL_BASED_STUN) &&
-                (((int)target->getLevel() - (int)spellData->level) > ((player->getClass() == LICH || player->getClass() == MAGE) ? 6:4))
+                (((int)target->getLevel() - (int)spellData->level) > ((player->getClass() == CreatureClass::LICH || player->getClass() == CreatureClass::MAGE) ? 6:4))
             )
                 nohold = 1;
         }
@@ -212,16 +212,16 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
     Object  *weapon=0, *weapon2=0;
 
     if(spellData->how == CastType::POTION &&
-        player->getClass() == PALADIN &&
+        player->getClass() == CreatureClass::PALADIN &&
         (player->getDeity() == ENOCH || player->getDeity() == LINOTHAN)
     ) {
         player->print("Your deity forbids such dishonorable actions!\n");
         return(0);
     }
 
-    if(player->getClass() != CLERIC && player->getClass() != MAGE &&
-        player->getClass() != LICH && player->getClass() != DEATHKNIGHT &&
-        player->getClass() != BARD && !player->isEffected("vampirism") &&
+    if(player->getClass() !=  CreatureClass::CLERIC && player->getClass() !=  CreatureClass::MAGE &&
+        player->getClass() !=  CreatureClass::LICH && player->getClass() !=  CreatureClass::DEATHKNIGHT &&
+        player->getClass() !=  CreatureClass::BARD && !player->isEffected("vampirism") &&
         !player->isCt() && spellData->how == CastType::CAST
     ) {
         player->print("You are unable to cast that spell.\n");
@@ -307,7 +307,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
         broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a scare spell on %N.", player, target);
 
 
-        if(target->getClass() == PALADIN) {
+        if(target->getClass() == CreatureClass::PALADIN) {
             player->printColor("Paladins are immune to magical fear.\n^yYour spell failed.\n");
             return(0);
         }
@@ -394,12 +394,12 @@ int splCourage(Creature* player, cmd* cmnd, SpellData* spellData) {
     int     noCast=0;
 
     if(spellData->how != CastType::POTION) {
-        if(!player->isCt() && player->getClass() != PALADIN && player->getClass() != CLERIC) {
+        if(!player->isCt() && player->getClass() !=  CreatureClass::PALADIN && player->getClass() !=  CreatureClass::CLERIC) {
             player->print("Your class is unable to cast that spell.\n");
             return(0);
         }
 
-        if(player->getClass() == CLERIC) {
+        if(player->getClass() == CreatureClass::CLERIC) {
             switch(player->getDeity()) {
             case CERIS:
             case ARAMON:
@@ -505,7 +505,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(spellData->how == CastType::POTION && player->getClass() == PALADIN) {
+        if(spellData->how == CastType::POTION && player->getClass() == CreatureClass::PALADIN) {
             player->print("You feel a jitter, then shrug it off.\n");
             return(0);
         } else if(spellData->how == CastType::POTION)
@@ -538,7 +538,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
         if( (target->mFlagIsSet(M_PERMENANT_MONSTER)) ||
-            (target->getClass() == PALADIN && target->isMonster())
+            (target->getClass() == CreatureClass::PALADIN && target->isMonster())
         ) {
             player->print("%M seems unaffected by fear.\n", target);
             broadcast(player->getSock(), target->getSock(), player->getParent(),
@@ -560,7 +560,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
         player->smashInvis();
         target->wake("Terrible nightmares disturb your sleep!");
 
-        if(target->isPlayer() && target->getClass() == PALADIN) {
+        if(target->isPlayer() && target->getClass() == CreatureClass::PALADIN) {
             player->print("Fear spell cast on %s.\n", target->getCName());
             player->print("It doesn't do anything noticeable.\n");
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts fear on %N.",
@@ -608,14 +608,14 @@ int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
     long    dur=0;
 
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot cast this spell.\n");
         return(0);
     }
 
-    if( player->getClass() == LICH ||
-        player->getClass() == MAGE ||
-        player->getClass() == CLERIC ||
+    if( player->getClass() == CreatureClass::LICH ||
+        player->getClass() == CreatureClass::MAGE ||
+        player->getClass() == CreatureClass::CLERIC ||
         player->isCt()
     )
         canCast = 1;
@@ -625,7 +625,7 @@ int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(player->getClass() == MAGE || player->getClass() == LICH)
+    if(player->getClass() == CreatureClass::MAGE || player->getClass() == CreatureClass::LICH)
         mpCost = 35;
     else
         mpCost = 20;
@@ -748,11 +748,11 @@ int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 bool canEnchant(Player* player, SpellData* spellData) {
     if(!player->isStaff()) {
-        if(spellData->how == CastType::CAST && player->getClass() != MAGE && player->getClass() != LICH) {
+        if(spellData->how == CastType::CAST && player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::LICH) {
             player->print("Only mages may enchant objects.\n");
             return(false);
         }
-        if(spellData->how == CastType::CAST && player->getClass() == MAGE && player->getSecondClass()) {
+        if(spellData->how == CastType::CAST && player->getClass() == CreatureClass::MAGE && player->hasSecondClass()) {
             player->print("Only pure mages may enchant objects.\n");
             return(false);
         }
@@ -831,7 +831,7 @@ int splEnchant(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!decEnchant(pPlayer, spellData->how))
         return(0);
 
-    if((pPlayer->getClass() == MAGE || pPlayer->isStaff()) && spellData->how == CastType::CAST)
+    if((pPlayer->getClass() == CreatureClass::MAGE || pPlayer->isStaff()) && spellData->how == CastType::CAST)
         adj = MIN(4, (spellData->level / 5));
 
     object->setAdjustment(MAX(adj, object->getAdjustment()));
@@ -866,7 +866,7 @@ int cmdEnchant(Player* player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(!player->knowsSkill("enchant") || player->getSecondClass()) {
+    if(!player->knowsSkill("enchant") || player->hasSecondClass()) {
         player->print("You lack the training to enchant objects.\n");
         return(0);
     }
@@ -929,8 +929,8 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     player->smashInvis();
 
-    if( player->getClass() == LICH ||
-         (pPlayer && pPlayer->getClass() == MAGE && !pPlayer->getSecondClass()) ||
+    if( player->getClass() == CreatureClass::LICH ||
+         (pPlayer && pPlayer->getClass() == CreatureClass::MAGE && !pPlayer->hasSecondClass()) ||
          player->isCt())
         mageStunBns = mrand(1,5);
 
@@ -1025,7 +1025,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         if(mTarget) {
 
-            if(mTarget->flagIsSet(M_MAGE_LICH_STUN_ONLY) && player->getClass() != MAGE && player->getClass() != LICH && !player->isStaff()) {
+            if(mTarget->flagIsSet(M_MAGE_LICH_STUN_ONLY) && player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::LICH && !player->isStaff()) {
                 player->print("Your training in magic is insufficient to properly stun %N!\n", mTarget);
                 if(spellData->how != CastType::CAST)
                 dur = 0;
@@ -1038,7 +1038,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
                 !mTarget->flagIsSet(M_RESIST_STUN_SPELL) &&
                 mTarget->flagIsSet(M_LEVEL_BASED_STUN)
             ) {
-                if(((int)mTarget->getLevel() - (int)spellData->level) > ((player->getClass() == LICH || player->getClass() == MAGE) ? 6:4))
+                if(((int)mTarget->getLevel() - (int)spellData->level) > ((player->getClass() == CreatureClass::LICH || player->getClass() == CreatureClass::MAGE) ? 6:4))
                     dur = MAX(3, bonus((int) player->intelligence.getCur()));
                 else
                     dur = MAX(5, dur);
@@ -1119,7 +1119,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
                     mTarget->checkForYell(player);
                 }
 
-                if(mTarget->flagIsSet(M_LEVEL_BASED_STUN) && (((int)mTarget->getLevel() - (int)spellData->level) > ((player->getClass() == LICH || player->getClass() == MAGE) ? 6:4))) {
+                if(mTarget->flagIsSet(M_LEVEL_BASED_STUN) && (((int)mTarget->getLevel() - (int)spellData->level) > ((player->getClass() == CreatureClass::LICH || player->getClass() == CreatureClass::MAGE) ? 6:4))) {
                     player->printColor("^yYour magic is currently too weak to fully stun %N!\n", mTarget);
 
                     switch(mrand(1,9)) {
@@ -1167,7 +1167,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
                 if(mTarget && mTarget->flagIsSet(M_PERMENANT_MONSTER))
                     bns = 10;
 
-                if(!mTarget && target->getClass() == CLERIC && target->getDeity() == ARES)
+                if(!mTarget && target->getClass() == CreatureClass::CLERIC && target->getDeity() == ARES)
                     bns += 25;
 
                 if(target->chkSave(SPL, player, bns)) {

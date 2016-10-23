@@ -260,7 +260,7 @@ bstring Creature::statCrt(int statFlags) {
         crtStr << gConfig->getRace(race)->getName();
     crtStr << "(" << race << ")\n";
 
-    crtStr << "Class: " << std::setw(20) << get_class_string(cClass);
+    crtStr << "Class: " << std::setw(20) << get_class_string(static_cast<int>(cClass));
     crtStr << "  Alignment: ";
     if(pTarget) {
         if(pTarget->flagIsSet(P_CHAOTIC))
@@ -270,8 +270,8 @@ bstring Creature::statCrt(int statFlags) {
     }
     crtStr << alignment << "\n";
 
-    if(pTarget && pTarget->getSecondClass())
-        crtStr << "Second Class: " << get_class_string(pTarget->getSecondClass()) << "\n";
+    if(pTarget && pTarget->hasSecondClass())
+        crtStr << "Second Class: " << get_class_string(static_cast<int>(pTarget->getSecondClass())) << "\n";
     if(deity)
         crtStr << "Deity: " << gConfig->getDeity(deity)->getName() << "(" << deity << ")\n";
 
@@ -518,7 +518,7 @@ bstring Creature::statCrt(int statFlags) {
 
     str = "";
     if(mTarget) {
-        for(i=1; i<STAFF; i++) {
+        for(i=1; i<static_cast<int>(STAFF); i++) {
             if(mTarget->isClassAggro(i, false)) {
                 str += getClassAbbrev(i);
                 sprintf(tmp, "(%d), ", i);
@@ -650,7 +650,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
     Object  *object=0;
     bool    ctModBuilder=false;
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         if(!player->canBuildMonsters())
             return(cmdNoAuth(player));
         if(!player->checkBuilder(player->getUniqueRoomParent())) {
@@ -682,7 +682,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
     // trying to modify a player?
     if(pTarget && !player->isDm()) {
-        if(player->getClass() <= BUILDER) {
+        if(player->getClass() <= CreatureClass::BUILDER) {
             player->print("You are not allowed to do that.\n");
             return(0);
         }
@@ -858,13 +858,13 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             num = cmnd->val[3];
 
             if(!strcmp(cmnd->str[4], "del")) {
-                for(a=1; a<STAFF; a++)
+                for(a=1; a<static_cast<int>(STAFF); a++)
                     mTarget->clearClassAggro(a);
                 player->print("All %s's class aggros now cleared.\n");
                 return(0);
             }
 
-            if(num < 1 || num >= STAFF) {
+            if(num < 1 || num >= static_cast<int>(STAFF)) {
                 player->print("Error: class aggro out of range.\n");
                 return(0);
             }
@@ -919,7 +919,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                 return(0);
             }
 
-            pTarget->setSecondClass((int)cmnd->val[3]);
+            pTarget->setSecondClass(static_cast<CreatureClass>(cmnd->val[3]));
             player->print("Player's 2nd class set.\n");
             log_immort(true, player, "%s set %s %s's 2nd class to %d.\n",
                 player->getCName(), PLYCRT(pTarget), pTarget->getCName(), pTarget->getSecondClass());
@@ -953,25 +953,21 @@ int dmSetCrt(Player* player, cmd* cmnd) {
         if(!player->isDm() && pTarget)
             return(PROMPT);
         {
-        unsigned short cClass = target->getClass();
-        target->setClass((short)cmnd->val[3]);
+        CreatureClass cClass = target->getClass();
+        target->setClass(static_cast<CreatureClass>(cmnd->val[3]));
 
 
-        if(cClass == PUREBLOOD && target->getClass() != PUREBLOOD)
+        if(cClass == CreatureClass::PUREBLOOD && target->getClass() !=  CreatureClass::PUREBLOOD)
             player->printColor("Auto-removing ^rVampirism.\n");
-        else if(cClass == WEREWOLF && target->getClass() != WEREWOLF)
+        else if(cClass == CreatureClass::WEREWOLF && target->getClass() !=  CreatureClass::WEREWOLF)
             player->printColor("Auto-removing ^oLycanthropy.\n");
 
-        if(cClass != PUREBLOOD && target->getClass() == PUREBLOOD)
+        if(cClass != CreatureClass::PUREBLOOD && target->getClass() == CreatureClass::PUREBLOOD)
             player->printColor("Auto-adding ^rVampirism.\n");
-        else if(cClass != WEREWOLF && target->getClass() == WEREWOLF)
+        else if(cClass != CreatureClass::WEREWOLF && target->getClass() == CreatureClass::WEREWOLF)
             player->printColor("Auto-adding ^oLycanthropy.\n");
 
 
-
-        //if(target->isPlayer() && cmnd->val[3] == DUNGEONMASTER)
-        //  if(!isdm(target->getCName()))
-        //      target->getClass() = CARETAKER;
         player->print("Class set.\n");
         log_immort(true, player, "%s set %s %s's class to %d.\n",
             player->getCName(), PLYCRT(target), target->getCName(), target->getClass());

@@ -360,57 +360,57 @@ void Socket::finishLogin() {
 
 int setPlyClass(Socket* sock, int cClass) {
     // Make sure they both start off at 0
-    sock->getPlayer()->setClass(0);
-    sock->getPlayer()->setSecondClass(0);
+    sock->getPlayer()->setClass(CreatureClass::NONE);
+    sock->getPlayer()->setSecondClass(CreatureClass::NONE);
     // Define's BASE as first # to interpret as multi class
     // Increment this when a class is added
 
     switch(cClass) {
-    case ASSASSIN:
-    case BARD:
-    case BERSERKER:
-    case CLERIC:
-    case DEATHKNIGHT:
-    case DRUID:
-    case FIGHTER:
-    case LICH:
-    case MAGE:
-    case MONK:
-    case PALADIN:
-    case RANGER:
-    case ROGUE:
-    case THIEF:
-    case PUREBLOOD:
-    case WEREWOLF:
-        sock->getPlayer()->setClass(cClass);
+    case static_cast<int>(CreatureClass::ASSASSIN):
+    case static_cast<int>(CreatureClass::BARD):
+    case static_cast<int>(CreatureClass::BERSERKER):
+    case static_cast<int>(CreatureClass::CLERIC):
+    case static_cast<int>(CreatureClass::DEATHKNIGHT):
+    case static_cast<int>(CreatureClass::DRUID):
+    case static_cast<int>(CreatureClass::FIGHTER):
+    case static_cast<int>(CreatureClass::LICH):
+    case static_cast<int>(CreatureClass::MAGE):
+    case static_cast<int>(CreatureClass::MONK):
+    case static_cast<int>(CreatureClass::PALADIN):
+    case static_cast<int>(CreatureClass::RANGER):
+    case static_cast<int>(CreatureClass::ROGUE):
+    case static_cast<int>(CreatureClass::THIEF):
+    case static_cast<int>(CreatureClass::PUREBLOOD):
+    case static_cast<int>(CreatureClass::WEREWOLF):
+        sock->getPlayer()->setClass(static_cast<CreatureClass>(cClass));
         break;
     case MULTI_BASE + 0:
-        sock->getPlayer()->setClass(FIGHTER);
-        sock->getPlayer()->setSecondClass(MAGE);
+        sock->getPlayer()->setClass(CreatureClass::FIGHTER);
+        sock->getPlayer()->setSecondClass(CreatureClass::MAGE);
         break;
     case MULTI_BASE + 1:
-        sock->getPlayer()->setClass(FIGHTER);
-        sock->getPlayer()->setSecondClass(THIEF);
+        sock->getPlayer()->setClass(CreatureClass::FIGHTER);
+        sock->getPlayer()->setSecondClass(CreatureClass::THIEF);
         break;
     case MULTI_BASE + 2:
-        sock->getPlayer()->setClass(CLERIC);
-        sock->getPlayer()->setSecondClass(ASSASSIN);
+        sock->getPlayer()->setClass(CreatureClass::CLERIC);
+        sock->getPlayer()->setSecondClass(CreatureClass::ASSASSIN);
         break;
     case MULTI_BASE + 3:
-        sock->getPlayer()->setClass(MAGE);
-        sock->getPlayer()->setSecondClass(THIEF);
+        sock->getPlayer()->setClass(CreatureClass::MAGE);
+        sock->getPlayer()->setSecondClass(CreatureClass::THIEF);
         break;
     case MULTI_BASE + 4:
-        sock->getPlayer()->setClass(THIEF);
-        sock->getPlayer()->setSecondClass(MAGE);
+        sock->getPlayer()->setClass(CreatureClass::THIEF);
+        sock->getPlayer()->setSecondClass(CreatureClass::MAGE);
         break;
     case MULTI_BASE + 5:
-        sock->getPlayer()->setClass(CLERIC);
-        sock->getPlayer()->setSecondClass(FIGHTER);
+        sock->getPlayer()->setClass(CreatureClass::CLERIC);
+        sock->getPlayer()->setSecondClass(CreatureClass::FIGHTER);
         break;
     case MULTI_BASE + 6:
-        sock->getPlayer()->setClass(MAGE);
-        sock->getPlayer()->setSecondClass(ASSASSIN);
+        sock->getPlayer()->setClass(CreatureClass::MAGE);
+        sock->getPlayer()->setSecondClass(CreatureClass::ASSASSIN);
         break;
     default:
         break;
@@ -561,7 +561,7 @@ no_pass:
         if(!Create::getClass(sock, str, Create::doWork))
             return;
 
-        if(gConfig->classes[get_class_string(sock->getPlayer()->getClass())]->needsDeity())
+        if(gConfig->classes[get_class_string(static_cast<int>(sock->getPlayer()->getClass()))]->needsDeity())
             Create::getDeity(sock, str, Create::doPrint);
         else if(Create::getLocation(sock, str, Create::doPrint))
             Create::getStatsChoice(sock, str, Create::doPrint);
@@ -627,7 +627,7 @@ no_pass:
 
         if(!Create::getProf(sock, str, Create::doWork))
             return;
-        if(gConfig->classes[get_class_string(sock->getPlayer()->getClass())]->numProfs()==2)
+        if(gConfig->classes[get_class_string(static_cast<int>(sock->getPlayer()->getClass()))]->numProfs()==2)
             Create::getSecondProf(sock, str, Create::doPrint);
         else
             Create::getPassword(sock, str, Create::doPrint);
@@ -1054,13 +1054,14 @@ bool Create::getClass(Socket* sock, bstring str, int mode) {
                     setPlyClass(sock, l);
             }
         }
-        if(sock->getPlayer()->getClass()) {
-            if(sock->getPlayer()->getSecondClass())
-                sock->printColor("Your chosen class: ^W%s/%s\n", get_class_string(sock->getPlayer()->getClass()), get_class_string(sock->getPlayer()->getSecondClass()));
+        if(sock->getPlayer()->getClass() != CreatureClass::NONE) {
+            if(sock->getPlayer()->hasSecondClass())
+                sock->printColor("Your chosen class: ^W%s/%s\n", get_class_string(static_cast<int>(sock->getPlayer()->getClass())),
+                                 get_class_string(static_cast<int>(sock->getPlayer()->getSecondClass())));
             else
-                sock->printColor("Your chosen class: ^W%s\n", get_class_string(sock->getPlayer()->getClass()));
+                sock->printColor("Your chosen class: ^W%s\n", get_class_string(static_cast<int>(sock->getPlayer()->getClass())));
         }
-        if(!sock->getPlayer()->getClass()) {
+        if(sock->getPlayer()->getClass() == CreatureClass::NONE) {
             sock->printColor("Invalid selection: ^W%s\n", str.c_str());
             Create::getClass(sock, "", Create::doPrint);
 
@@ -1102,9 +1103,10 @@ bool Create::getDeity(Socket* sock, bstring str, int mode) {
         else
             i = (int)(up(str[0]) - 64);
 
-        for(l=1, k=0; l < CLASS_COUNT+4; l++) {
+        for(l=1, k=0; l < static_cast<int>(CreatureClass::CLASS_COUNT)+4; l++) {
 
-            if(race->allowedDeity(sock->getPlayer()->getClass(), sock->getPlayer()->getSecondClass(), l)) {
+            if(race->allowedDeity(sock->getPlayer()->getClass(),
+                                  sock->getPlayer()->getSecondClass(), l)) {
                 k++;
                 if(k == i)
                     setPlyDeity(sock, l);
@@ -1423,21 +1425,21 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
         i = (int)(up(ch) - 64);
 
     if(mode == Create::doPrint) {
-        if(sock->getPlayer()->getClass() == WEREWOLF) {
+        if(sock->getPlayer()->getClass() == CreatureClass::WEREWOLF) {
             sock->printColor("\n\n^WSlashing Weapons^x\n     [^WA^x] Claws\n");
             return(true);
-        } else if(sock->getPlayer()->getClass() == MONK) {
+        } else if(sock->getPlayer()->getClass() == CreatureClass::MONK) {
             sock->printColor("\n\n^WCrushing Weapons^x\n     [^WA^x] Bare-Handed\n");
             return(true);
         }
     } else {
-        if(sock->getPlayer()->getClass() == WEREWOLF && low(ch) == 'a') {
+        if(sock->getPlayer()->getClass() == CreatureClass::WEREWOLF && low(ch) == 'a') {
             sock->getPlayer()->setSkill("claw", 1);
             return(true);
-        } else if(sock->getPlayer()->getClass() == MONK && low(ch) == 'a') {
+        } else if(sock->getPlayer()->getClass() == CreatureClass::MONK && low(ch) == 'a') {
             sock->getPlayer()->setSkill("bare-hand", 1);
             return(true);
-        } else if(sock->getPlayer()->getClass() == MONK || sock->getPlayer()->getClass() == WEREWOLF) {
+        } else if(sock->getPlayer()->getClass() == CreatureClass::MONK || sock->getPlayer()->getClass() == CreatureClass::WEREWOLF) {
             sock->print("Choose a weapon skill:\n");
             sock->setState(CREATE_GET_PROF);
             return(false);
@@ -1458,7 +1460,7 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
         if(curGroup.left(7) != "weapons" || curGroup.length() <= 7)
             continue;
 
-        if(sock->getPlayer()->getClass() == CLERIC && sock->getPlayer()->getDeity() == CERIS) {
+        if(sock->getPlayer()->getClass() == CreatureClass::CLERIC && sock->getPlayer()->getDeity() == CERIS) {
             if(curGroup.Find("slashing") != -1 || curGroup.Find("piercing") != -1)
                 continue;
         }
@@ -1477,7 +1479,7 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
             if(curSkill->getName() == "claw")
                 continue;
 
-            if(sock->getPlayer()->getClass() == CLERIC && sock->getPlayer()->getDeity() == CERIS)
+            if(sock->getPlayer()->getClass() == CreatureClass::CLERIC && sock->getPlayer()->getDeity() == CERIS)
                 if(curSkill->getName() == "whip")
                     continue;
 
@@ -1572,8 +1574,8 @@ void convertNewWeaponSkills(Socket* sock, bstring str) {
 bool Create::getProf(Socket* sock, bstring str, int mode) {
 
     if(mode == Create::doPrint) {
-        if(gConfig->classes[get_class_string(sock->getPlayer()->getClass())]->numProfs() > 1) {
-            sock->print("\nPick %d weapon skills:", gConfig->classes[get_class_string(sock->getPlayer()->getClass())]->numProfs());
+        if(gConfig->classes[get_class_string(sock->getPlayer()->getClassInt())]->numProfs() > 1) {
+            sock->print("\nPick %d weapon skills:", gConfig->classes[get_class_string(sock->getPlayer()->getClassInt())]->numProfs());
         } else {
             sock->print("\nChoose a weapon skill:");
         }
@@ -1708,19 +1710,19 @@ void Create::done(Socket* sock, bstring str, int mode) {
         // Give out parry & block
         switch(player->getClass()) {
         // These classes get block + parry
-            case ASSASSIN:
-            case BARD:
-            case FIGHTER:
-            case RANGER:
-            case ROGUE:
-            case PALADIN:
-            case DEATHKNIGHT:
+            case CreatureClass::ASSASSIN:
+            case CreatureClass::BARD:
+            case CreatureClass::FIGHTER:
+            case CreatureClass::RANGER:
+            case CreatureClass::ROGUE:
+            case CreatureClass::PALADIN:
+            case CreatureClass::DEATHKNIGHT:
                 player->addSkill("block", 1);
                 // fall through for parry
-            case THIEF:
+            case CreatureClass::THIEF:
                 player->addSkill("parry", 1);
                 break;
-            case BERSERKER:
+            case CreatureClass::BERSERKER:
                 player->addSkill("block", 1);
                 // Zerkers are more brute force than finnese...no parry
                 break;
@@ -1729,32 +1731,32 @@ void Create::done(Socket* sock, bstring str, int mode) {
         }
         // Give out armor skills here
         switch(player->getClass()) {
-            case BARD:
-            case BERSERKER:
-            case FIGHTER:
-            case PALADIN:
-            case DEATHKNIGHT:
-            case RANGER:
+            case CreatureClass::BARD:
+            case CreatureClass::BERSERKER:
+            case CreatureClass::FIGHTER:
+            case CreatureClass::PALADIN:
+            case CreatureClass::DEATHKNIGHT:
+            case CreatureClass::RANGER:
                 player->addSkill("plate", 1);
                 player->addSkill("chain", 1);
-            case ASSASSIN:
-            case THIEF:
-            case ROGUE:
-            case PUREBLOOD:
-            case DRUID:
-            case CLERIC:
+            case CreatureClass::ASSASSIN:
+            case CreatureClass::THIEF:
+            case CreatureClass::ROGUE:
+            case CreatureClass::PUREBLOOD:
+            case CreatureClass::DRUID:
+            case CreatureClass::CLERIC:
                 player->addSkill("leather", 1);
-            case MAGE:
-            case MONK:
-            case LICH:
-            case WEREWOLF:
+            case CreatureClass::MAGE:
+            case CreatureClass::MONK:
+            case CreatureClass::LICH:
+            case CreatureClass::WEREWOLF:
             default:
                 player->addSkill("cloth", 1);
                 break;
         }
 
         // A few clerics get plate
-        if(player->getClass() == CLERIC && !player->getSecondClass()) {
+        if(player->getClass() == CreatureClass::CLERIC && !player->hasSecondClass()) {
             if(player->getDeity() == ENOCH || player->getDeity() == ARES || player->getDeity() == GRADIUS) {
                 player->addSkill("plate", 1);
                 player->addSkill("chain", 1);
@@ -1762,7 +1764,7 @@ void Create::done(Socket* sock, bstring str, int mode) {
         }
 
         // TODO: Dom: make this mage only
-        if(player->getClass() != BERSERKER) {
+        if(player->getClass() !=  CreatureClass::BERSERKER) {
             if(player->getCastingType() == Divine) {
                 player->addSkill("healing", 1);
                 player->addSkill("destruction", 1);
@@ -1795,7 +1797,7 @@ void Create::done(Socket* sock, bstring str, int mode) {
             player->addSkill("electric", 1);
         }
 
-        if(player->getClass() == LICH)
+        if(player->getClass() == CreatureClass::LICH)
             player->learnSpell(S_SAP_LIFE);
 
         Create::addStartingItem(player, "tut", 32);
@@ -1822,7 +1824,7 @@ void Create::done(Socket* sock, bstring str, int mode) {
         player->setFlag(P_LAG_PROTECTION_SET);
         player->clearFlag(P_NO_AUTO_WEAR);
 
-        if(player->getClass() == BARD)
+        if(player->getClass() == CreatureClass::BARD)
             player->learnSong(SONG_HEAL);
 
         player->save(true);
@@ -1866,7 +1868,7 @@ void Creature::adjustStats() {
         }
     }
 
-    if(cClass == LICH)
+    if(cClass == CreatureClass::LICH)
         alignment = -100;
 }
 

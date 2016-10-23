@@ -408,7 +408,7 @@ int dmDust(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->getClass() == CARETAKER && target->isStaff()) {
+    if(player->getClass() == CreatureClass::CARETAKER && target->isStaff()) {
         target->printColor("^r%s tried to dust you!\n", player->getCName());
         return(0);
     }
@@ -418,7 +418,7 @@ int dmDust(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->getClass() == CARETAKER && target->getLevel() > 10) {
+    if(player->getClass() == CreatureClass::CARETAKER && target->getLevel() > 10) {
         player->print("You are only able to dust people levels 10 and below.\n");
         return(0);
     }
@@ -1788,7 +1788,7 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
         break;
     }
 
-    if(victim->getClass() < BUILDER && !silent) {
+    if(victim->getClass() < CreatureClass::BUILDER && !silent) {
         switch(type) {
         case DM_COMBUST:
             broadcast(victim->getSock(), victim->getRoomParent(), "^r%s bursts into flames!", victim->getCName());
@@ -2146,7 +2146,7 @@ int dmMax(Player* player, cmd* cmnd) {
     for(i=0; i<gConfig->getMaxSong(); i++)
         player->learnSong(i);
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->forgetSpell(S_PLANE_SHIFT);
         player->forgetSpell(S_JUDGEMENT);
         player->forgetSpell(S_ANIMIATE_DEAD);

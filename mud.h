@@ -471,8 +471,8 @@ extern struct lasttime  Shutdown;
 extern struct lasttime  Weather[5];
 extern int      Numlockedout;
 
-extern class_stats_struct class_stats[CLASS_COUNT];
-extern char allowedClassesStr[CLASS_COUNT + 4][16];
+extern class_stats_struct class_stats[static_cast<int>(CreatureClass::CLASS_COUNT)];
+extern char allowedClassesStr[static_cast<int>(CreatureClass::CLASS_COUNT) + 4][16];
 
 
 

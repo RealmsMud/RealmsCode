@@ -253,22 +253,22 @@ int Config::savetoNum(bstring str) {
 //*********************************************************************
 
 int Config::classtoNum(bstring str) {
-    if(str == "Assassin") return(ASSASSIN);
-    if(str == "Berserker") return(BERSERKER);
-    if(str == "Cleric") return(CLERIC);
-    if(str == "Fighter") return(FIGHTER);
-    if(str == "Mage") return(MAGE);
-    if(str == "Paladin") return(PALADIN);
-    if(str == "Ranger") return(RANGER);
-    if(str == "Thief") return(THIEF);
-    if(str == "Pureblood") return(PUREBLOOD);
-    if(str == "Monk") return(MONK);
-    if(str == "Deathknight") return(DEATHKNIGHT);
-    if(str == "Druid") return(DRUID);
-    if(str == "Lich") return(LICH);
-    if(str == "Werewolf") return(WEREWOLF);
-    if(str == "Bard") return(BARD);
-    if(str == "Rogue") return(ROGUE);
+    if(str == "Assassin") return(static_cast<int>(CreatureClass::ASSASSIN));
+    if(str == "Berserker") return(static_cast<int>(CreatureClass::BERSERKER));
+    if(str == "Cleric") return(static_cast<int>(CreatureClass::CLERIC));
+    if(str == "Fighter") return(static_cast<int>(CreatureClass::FIGHTER));
+    if(str == "Mage") return(static_cast<int>(CreatureClass::MAGE));
+    if(str == "Paladin") return(static_cast<int>(CreatureClass::PALADIN));
+    if(str == "Ranger") return(static_cast<int>(CreatureClass::RANGER));
+    if(str == "Thief") return(static_cast<int>(CreatureClass::THIEF));
+    if(str == "Pureblood") return(static_cast<int>(CreatureClass::PUREBLOOD));
+    if(str == "Monk") return(static_cast<int>(CreatureClass::MONK));
+    if(str == "Deathknight") return(static_cast<int>(CreatureClass::DEATHKNIGHT));
+    if(str == "Druid") return(static_cast<int>(CreatureClass::DRUID));
+    if(str == "Lich") return(static_cast<int>(CreatureClass::LICH));
+    if(str == "Werewolf") return(static_cast<int>(CreatureClass::WEREWOLF));
+    if(str == "Bard") return(static_cast<int>(CreatureClass::BARD));
+    if(str == "Rogue") return(static_cast<int>(CreatureClass::ROGUE));
     if(str == "Fighter/Mage") return(MULTI_BASE+0);
     if(str == "Fighter/Thief") return(MULTI_BASE+1);
     if(str == "Cleric/Assassin") return(MULTI_BASE+2);
@@ -560,11 +560,11 @@ bool RaceData::allowedClass(int cls) const { return(classes[cls]); }
 //                      allowedDeity
 //*********************************************************************
 
-bool RaceData::allowedDeity(int cls, int cls2, int dty) const {
-    return( (cls == CLERIC && !cls2 && allowedClericDeity(dty)) ||
-            (cls == PALADIN && !cls2 && allowedPaladinDeity(dty)) ||
-            (cls == DEATHKNIGHT && !cls2 && allowedDeathknightDeity(dty)) ||
-            (cls == CLERIC && cls2 && allowedMultiClericDeity(dty))
+bool RaceData::allowedDeity(CreatureClass cls, CreatureClass cls2, int dty) const {
+    return( (cls == CreatureClass::CLERIC && cls2 == CreatureClass::NONE && allowedClericDeity(dty)) ||
+            (cls == CreatureClass::PALADIN && cls2 == CreatureClass::NONE && allowedPaladinDeity(dty)) ||
+            (cls == CreatureClass::DEATHKNIGHT && cls2 == CreatureClass::NONE && allowedDeathknightDeity(dty)) ||
+            (cls == CreatureClass::CLERIC && cls2 != CreatureClass::NONE && allowedMultiClericDeity(dty))
     );
 }
 

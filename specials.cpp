@@ -167,11 +167,11 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
         return(false);
 
     if(attack->flagIsSet(SA_HOLY_WAR)) {
-        if(cClass != PALADIN && cClass != DEATHKNIGHT)
+        if(cClass != CreatureClass::PALADIN && cClass != CreatureClass::DEATHKNIGHT)
             return(false);
 
-        if((cClass == PALADIN && victim->getClass() != DEATHKNIGHT) ||
-           (cClass == DEATHKNIGHT && victim->getClass() != PALADIN))
+        if((cClass == CreatureClass::PALADIN && victim->getClass() !=  CreatureClass::DEATHKNIGHT) ||
+           (cClass == CreatureClass::DEATHKNIGHT && victim->getClass() !=  CreatureClass::PALADIN))
             return(false);
     }
 
@@ -596,13 +596,13 @@ int dmSpecials(Player* player, cmd* cmnd) {
     Creature* target=0;
     Monster* mTarget=0;
 
-    if(player->getClass() == BUILDER && !player->canBuildMonsters())
+    if(player->getClass() == CreatureClass::BUILDER && !player->canBuildMonsters())
         return(cmdNoAuth(player));
 
     if(cmnd->num > 1) {
         target = player->getParent()->findCreature(player, cmnd);
 
-        if(target && player->getClass() == BUILDER) {
+        if(target && player->getClass() == CreatureClass::BUILDER) {
             mTarget = target->getAsMonster();
             if(mTarget) {
                 if(mTarget->info.id && !player->checkBuilder(mTarget->info)) {
@@ -927,7 +927,7 @@ SpecialAttack* Creature::addSpecial(const bstring specialName) {
         attack->setFlag(SA_SAVE_NO_DAMAGE);
         attack->damage.setNumber(2);
         attack->damage.setSides(3);
-        attack->damage.setPlus(bonus(strength.getCur()) + cClass == FIGHTER ? level / 4 : 0);
+        attack->damage.setPlus(bonus(strength.getCur()) + (cClass == CreatureClass::FIGHTER ? level / 4 : 0));
 
 //      if(flagIsSet(OLD_M_TRAMPLE)) {
 //          attack->dice[0] *= 2;

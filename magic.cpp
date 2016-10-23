@@ -522,19 +522,19 @@ int getSpellMp(int spellNum) {
 //               <false> - Doesn't have enough mp
 
 bool Creature::checkMp(int reqMp) {
-    if(getClass() != LICH && mp.getCur() < reqMp) {
+    if(getClass() !=  CreatureClass::LICH && mp.getCur() < reqMp) {
         if(!isPet())
             print("You need %d magic points to cast that spell.\n", reqMp);
         else
             print("%M needs %d magic points to cast that spell.\n", this, reqMp);
         return(false);
-    } else if(getClass() == LICH && hp.getMax() <= reqMp) {
+    } else if(getClass() == CreatureClass::LICH && hp.getMax() <= reqMp) {
         if(!isPet())
             print("You are not experienced enough to cast that spell.\n");
         else
             print("%M is not experienced enough to cast that spell.\n", this);
         return(false);
-    } else if(getClass() == LICH && hp.getCur() <= reqMp) {
+    } else if(getClass() == CreatureClass::LICH && hp.getCur() <= reqMp) {
         if(!isPet())
             print("Sure, and kill yourself in the process?\n");
         else
@@ -551,7 +551,7 @@ bool Creature::checkMp(int reqMp) {
 //              <reqMp>  The amount of mp to deduct
 
 void Creature::subMp(int reqMp) {
-    if(getClass() == LICH) {
+    if(getClass() == CreatureClass::LICH) {
         hp.decrease(reqMp);
     } else {
         mp.decrease(reqMp);

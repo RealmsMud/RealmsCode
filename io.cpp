@@ -258,16 +258,16 @@ void broadcast_login(Player* player, BaseRoom* inRoom, int login) {
     if(!player->isStaff()) {
         player->clearFlag(P_DM_INVIS);
         player->removeEffect("incognito");
-    } else if(player->getClass()==BUILDER) {
+    } else if(player->getClass() == CreatureClass::BUILDER) {
         player->addEffect("incognito", -1);
     }
 
     if(player->flagIsSet(P_DM_INVIS) || player->isEffected("incognito")) {
         if(player->isDm())
             broadcast(isDm, "^g%s", illusion.c_str());
-        else if(player->getClass() == CARETAKER)
+        else if(player->getClass() == CreatureClass::CARETAKER)
             broadcast(isCt, "^Y%s", illusion.c_str());
-        else if(player->getClass() == BUILDER) {
+        else if(player->getClass() == CreatureClass::BUILDER) {
             broadcast(isStaff, "^G%s", illusion.c_str());
         }
     } else {
@@ -284,12 +284,12 @@ void broadcast_login(Player* player, BaseRoom* inRoom, int login) {
             if(target->flagIsSet(P_NO_LOGIN_MESSAGES))
                 continue;
 
-            if(target->getClass() <= BUILDER && !target->isWatcher()) {
+            if(target->getClass() <= CreatureClass::BUILDER && !target->isWatcher()) {
                 if( !player->isStaff() &&
-                    !(logoff && target->getClass() == BUILDER)
+                    !(logoff && target->getClass() == CreatureClass::BUILDER)
                 )
                     target->print("%s\n", player->willIgnoreIllusion() ? illusion.c_str() : text.c_str());
-            } else if((target->isCt() || target->isWatcher()) && player->getClass() != BUILDER) {
+            } else if((target->isCt() || target->isWatcher()) && player->getClass() !=  CreatureClass::BUILDER) {
                 target->print("%s%s\n", player->willIgnoreIllusion() ? illusion.c_str() : text.c_str(), room.str().c_str());
                 if(login && target->isCt())
                     target->print("%s\n", extra.str().c_str());

@@ -89,7 +89,7 @@ void command(Socket* sock, bstring str) {
     //zero(&cmnd, sizeof(cmd));
 
 
-    if(ply->getClass() == CARETAKER && !dmIson() )
+    if(ply->getClass() == CreatureClass::CARETAKER && !dmIson() )
         log_immort(false, ply, "%s-%d (%s): %s\n", ply->getCName(), sock->getFd(),
             ply->getRoomParent()->fullName().c_str(), str.c_str());
 
@@ -328,7 +328,7 @@ int cmdPress(Player* player, cmd* cmnd) {
 //*********************************************************************
 // sending 0 to cls means we're not a player and we want reduced padding
 
-bstring doFinger(const Player* player, bstring name, unsigned short cls) {
+bstring doFinger(const Player* player, bstring name, CreatureClass cls) {
     struct stat f_stat;
     char    tmp[80];
     Player* target=0;
@@ -359,8 +359,8 @@ bstring doFinger(const Player* player, bstring name, unsigned short cls) {
         return("You are currently unable to finger that player.\n");
     }
 
-    // cls=0 means we don't want padding
-    if(cls) {
+    // cls=CreatureClass::NONE means we don't want padding
+    if(cls == CreatureClass::NONE) {
         oStr << std::setw(25) << target->getName() << " "
              << std::setw(15) << gConfig->getRace(target->getDisplayRace())->getName();
         // will they see through the illusion?

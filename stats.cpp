@@ -795,7 +795,7 @@ void Player::upgradeStats() {
         hpAmt = lGain->getHp();
         hp.addModifier(modName, hpAmt, MOD_CUR_MAX );
 
-        if(cClass != BERSERKER && cClass != LICH) {
+        if(cClass != CreatureClass::BERSERKER && cClass != CreatureClass::LICH) {
             mp.addModifier(modName, lGain->getMp(), MOD_CUR_MAX );
         }
         int switchNum = lGain->getStat();
@@ -826,7 +826,7 @@ void Player::upgradeStats() {
 
     }
 
-    if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER)) {
+    if(cClass == CreatureClass::FIGHTER && !hasSecondClass() && flagIsSet(P_PTESTER)) {
         focus.setInitial(100);
         focus.clearModifiers();
         focus.addModifier("UnFocused", -100, MOD_CUR);

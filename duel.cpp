@@ -49,7 +49,7 @@ int cmdDuel(Player* player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You are not allowed to do that.\n");
         return(0);
     }

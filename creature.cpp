@@ -589,10 +589,10 @@ int Monster::mobWield() {
 void Monster::getMobSave() {
     int     lvl=0, cls=0, index=0;
 
-    if(cClass == 0)
+    if(cClass == CreatureClass::NONE)
         cls = 4;    // All mobs default save as fighters.
     else
-        cls = cClass;
+        cls = static_cast<int>(cClass);
 
     if((saves[POI].chance +
          saves[DEA].chance +
@@ -769,9 +769,9 @@ int Creature::displayFlags() const {
     if(isEffected("true-sight"))
         flags |= MIST;
     if(isPlayer()) {
-        if(cClass == BUILDER)
+        if(cClass == CreatureClass::BUILDER)
             flags |= ISBD;
-        if(cClass == CARETAKER)
+        if(cClass == CreatureClass::CARETAKER)
             flags |= ISCT;
         if(isDm())
             flags |= ISDM;
@@ -871,12 +871,12 @@ int Player::displayCreature(Creature* target)  {
         oStr << target->upHeShe() << " is moving unnaturally quick.\n";
 
 
-    if((cClass == CLERIC && deity == JAKAR && level >=7) || isCt())
+    if((cClass == CreatureClass::CLERIC && deity == JAKAR && level >=7) || isCt())
         oStr << "^y" << target->getCrtStr(this, flags | CAP, 0 ) << " is carrying "
              << target->coins[GOLD] << " gold coin"
              << (target->coins[GOLD] != 1 ? "s" : "") << ".^x\n";
 
-    if(isEffected("know-aura") || cClass==PALADIN) {
+    if(isEffected("know-aura") || cClass==CreatureClass::PALADIN) {
         space = true;
         oStr << target->getCrtStr(this, flags | CAP, 0) << " ";
 
@@ -1071,7 +1071,7 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
         }
 
 
-        if( (cClass == BERSERKER || cClass == CLERIC) &&
+        if( (cClass == CreatureClass::BERSERKER || cClass == CreatureClass::CLERIC) &&
             isEffected("berserK") )
         {
             if(displayFail)
@@ -1399,7 +1399,7 @@ bool Creature::doFlee(bool magicTerror) {
         Move::update(pThis);
         pThis->statistics.flee();
 
-        if(cClass == PALADIN && deity != GRADIUS && !magicTerror && level >= 10) {
+        if(cClass == CreatureClass::PALADIN && deity != GRADIUS && !magicTerror && level >= 10) {
             n = level * 8;
             n = MIN(experience, n);
             print("You lose %d experience for your cowardly retreat.\n", n);

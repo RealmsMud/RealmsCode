@@ -21,7 +21,7 @@
 // Used for new fighters, returns true if they're a pure fighter
 // (and for now a ptester)
 bool Player::isPureFighter() {
-    return(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER));
+    return(cClass == CreatureClass::FIGHTER && !hasSecondClass() && flagIsSet(P_PTESTER));
 }
 
 //*********************************************************************

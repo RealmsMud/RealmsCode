@@ -45,7 +45,7 @@ int checkGodKill(Player *killer, Player *victim) {
 
     if(killer->halftolevel())
         total = 0;
-    if(killer->getSecondClass())
+    if(killer->hasSecondClass())
         total = total * 3 / 4;
 
     penalty = MIN(mrand(1000,1500), (bns*3)/2);

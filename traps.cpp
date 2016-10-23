@@ -68,7 +68,7 @@ void rock_slide(Player* player) {
 
         dmg = mrand(10, 20);
 
-        if(target->getClass() == LICH)
+        if(target->getClass() == CreatureClass::LICH)
             dmg *= 2;
 
         if(target->chkSave(LCK, target, 0))
@@ -162,7 +162,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         break;
 
     case TRAP_DISP:
-        if(cClass == MAGE || cClass == LICH || cClass == CLERIC || cClass == DRUID) {
+        if(cClass == CreatureClass::MAGE || cClass == CreatureClass::LICH || cClass == CreatureClass::CLERIC || cClass == CreatureClass::DRUID) {
             if(flagIsSet(P_PREPARED) && mrand(1,30) < ((intelligence.getCur()/10 + piety.getCur()/10)/2)) {
                 clearFlag(P_PREPARED);
                 return(0);

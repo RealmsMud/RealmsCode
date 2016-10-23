@@ -659,11 +659,11 @@ bool Object::classRestrict(const Creature* creature) const {
     bool pass = false;
     const Player* player = creature->getAsConstPlayer();
 
-    int cClass = creature->getClass();
-    if(player && player->getClass() == MAGE && (player->getSecondClass() == ASSASSIN || player->getSecondClass() == THIEF))
+    CreatureClass cClass = creature->getClass();
+    if(player && player->getClass() == CreatureClass::MAGE && (player->getSecondClass() == CreatureClass::ASSASSIN || player->getSecondClass() == CreatureClass::THIEF))
         cClass = player->getSecondClass();
 
-    if(flagIsSet(O_NO_MAGE) && (cClass == MAGE || cClass == LICH))
+    if(flagIsSet(O_NO_MAGE) && (cClass == CreatureClass::MAGE || cClass == CreatureClass::LICH))
         return(true);
 
     // if no flags are set
@@ -688,23 +688,23 @@ bool Object::classRestrict(const Creature* creature) const {
         // we need to do some special rules before we say they can use the item
 
         // only blunts for monks
-        if(wearflag == WIELD && cClass == MONK && getWeaponCategory() != "crushing")
+        if(wearflag == WIELD && cClass == CreatureClass::MONK && getWeaponCategory() != "crushing")
             return(true);
 
         // only sharps for wolves
         if(wearflag == WIELD && creature->isEffected("lycanthropy") && getWeaponCategory() != "slashing")
             return(true);
 
-        if(type == ObjectType::ARMOR && (cClass == MONK || creature->isEffected("lycanthropy")))
+        if(type == ObjectType::ARMOR && (cClass == CreatureClass::MONK || creature->isEffected("lycanthropy")))
             return(true);
 
         // no rings or shields for monk/wolf/lich
         if( (   wearflag == FINGER ||
                 wearflag == SHIELD
             ) &&
-            (   cClass == MONK ||
+            (   cClass == CreatureClass::MONK ||
                 creature->isEffected("lycanthropy") ||
-                cClass == LICH
+                cClass == CreatureClass::LICH
             )
         )
             return(true);
@@ -714,22 +714,22 @@ bool Object::classRestrict(const Creature* creature) const {
 
     // if the class flag is set and they match, they pass
     pass = (
-        (flagIsSet(O_SEL_ASSASSIN) && cClass == ASSASSIN) ||
-        (flagIsSet(O_SEL_BERSERKER) && cClass == BERSERKER) ||
-        (flagIsSet(O_SEL_CLERIC) && cClass == CLERIC) ||
-        (flagIsSet(O_SEL_FIGHTER) && cClass == FIGHTER) ||
-        (flagIsSet(O_SEL_MAGE) && cClass == MAGE) ||
-        (flagIsSet(O_SEL_PALADIN) && cClass == PALADIN) ||
-        (flagIsSet(O_SEL_RANGER) && cClass == RANGER) ||
-        (flagIsSet(O_SEL_THIEF) && cClass == THIEF) ||
+        (flagIsSet(O_SEL_ASSASSIN) && cClass == CreatureClass::ASSASSIN) ||
+        (flagIsSet(O_SEL_BERSERKER) && cClass == CreatureClass::BERSERKER) ||
+        (flagIsSet(O_SEL_CLERIC) && cClass == CreatureClass::CLERIC) ||
+        (flagIsSet(O_SEL_FIGHTER) && cClass == CreatureClass::FIGHTER) ||
+        (flagIsSet(O_SEL_MAGE) && cClass == CreatureClass::MAGE) ||
+        (flagIsSet(O_SEL_PALADIN) && cClass == CreatureClass::PALADIN) ||
+        (flagIsSet(O_SEL_RANGER) && cClass == CreatureClass::RANGER) ||
+        (flagIsSet(O_SEL_THIEF) && cClass == CreatureClass::THIEF) ||
         (flagIsSet(O_SEL_VAMPIRE) && creature->isEffected("vampirism")) ||
-        (flagIsSet(O_SEL_MONK) && cClass == MONK) ||
-        (flagIsSet(O_SEL_DEATHKNIGHT) && cClass == DEATHKNIGHT) ||
-        (flagIsSet(O_SEL_DRUID) && cClass == DRUID) ||
-        (flagIsSet(O_SEL_LICH) && cClass == LICH) ||
+        (flagIsSet(O_SEL_MONK) && cClass == CreatureClass::MONK) ||
+        (flagIsSet(O_SEL_DEATHKNIGHT) && cClass == CreatureClass::DEATHKNIGHT) ||
+        (flagIsSet(O_SEL_DRUID) && cClass == CreatureClass::DRUID) ||
+        (flagIsSet(O_SEL_LICH) && cClass == CreatureClass::LICH) ||
         (flagIsSet(O_SEL_WEREWOLF) && creature->isEffected("lycanthropy")) ||
-        (flagIsSet(O_SEL_BARD) && cClass == BARD) ||
-        (flagIsSet(O_SEL_ROGUE) && cClass == ROGUE)
+        (flagIsSet(O_SEL_BARD) && cClass == CreatureClass::BARD) ||
+        (flagIsSet(O_SEL_ROGUE) && cClass == CreatureClass::ROGUE)
     );
 
     if(flagIsSet(O_CSEL_INVERT)) pass = !pass;

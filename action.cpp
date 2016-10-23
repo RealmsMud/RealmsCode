@@ -447,7 +447,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
             OUT_HISHER("You roll over in your sleep.\n", "%M rolls over in %s sleep.");
         }
     } else if(str == "hum") {
-        if(mrand(0,10) || player->getClass() == BARD || player->isStaff()) {
+        if(mrand(0,10) || player->getClass() == CreatureClass::BARD || player->isStaff()) {
             OUT("You hum a little tune.\n", "%M hums a little tune.");
         } else {
             OUT("You hum off-key.\n", "%M hums off-key.");
@@ -467,7 +467,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
         if( !dec_daily(&player->daily[DL_DEFEC]) ||
             player->getLevel() < 4 ||
-            player->getClass() == BUILDER
+            player->getClass() == CreatureClass::BUILDER
         ) {
             sock->print("You don't have to go.\n");
             return(0);
@@ -627,7 +627,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
     } else if(str == "flip") {
         bstring result = (mrand(0,1) ? "heads" : "tails");
 
-        if(creature->getClass() == CLERIC && creature->getDeity() == KAMIRA) {
+        if(creature->getClass() == CreatureClass::CLERIC && creature->getDeity() == KAMIRA) {
             sock->print("You flip a coin. It lands on its side!\n");
             broadcast(sock, room, "%M flips a coin. It lands on its side!", creature);
             socialHooks(creature, str, "side");
@@ -672,7 +672,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
             num = ((num1 + num2));
 
-            if(creature->getClass() == CLERIC && creature->getDeity() == KAMIRA)
+            if(creature->getClass() == CreatureClass::CLERIC && creature->getDeity() == KAMIRA)
                 num = (mrand(0,1) ? 2 : 12);
 
             sock->print("You roll 2d6\n: %d\n", num);

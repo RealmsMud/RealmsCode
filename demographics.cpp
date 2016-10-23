@@ -32,7 +32,7 @@
  */
 
 #define CLASS_START     0
-#define CLASS_END   (CLASS_START+STAFF-1)
+#define CLASS_END   (CLASS_START+static_cast<int>(STAFF)-1)
 
 #define MULTI_START         CLASS_END
 #define M_FM                MULTI_START
@@ -66,17 +66,17 @@
 
 
 int get_multi_id(int cClass, int cClass2) {
-    if(cClass==FIGHTER && cClass2==MAGE)
+    if(static_cast<CreatureClass>(cClass) ==CreatureClass::FIGHTER && static_cast<CreatureClass>(cClass2)==CreatureClass::MAGE)
         return(M_FM);
-    else if(cClass==FIGHTER && cClass2==THIEF)
+    else if(static_cast<CreatureClass>(cClass)==CreatureClass::FIGHTER && static_cast<CreatureClass>(cClass2)==CreatureClass::THIEF)
         return(M_FT);
-    else if(cClass==CLERIC && cClass2==ASSASSIN)
+    else if(static_cast<CreatureClass>(cClass)==CreatureClass::CLERIC && static_cast<CreatureClass>(cClass2)==CreatureClass::ASSASSIN)
         return(M_CLA);
-    else if(cClass==MAGE && cClass2==THIEF)
+    else if(static_cast<CreatureClass>(cClass)==CreatureClass::MAGE && static_cast<CreatureClass>(cClass2)==CreatureClass::THIEF)
         return(M_MT);
-    else if(cClass==THIEF && cClass2==MAGE)
+    else if(static_cast<CreatureClass>(cClass)==CreatureClass::THIEF && static_cast<CreatureClass>(cClass2)==CreatureClass::MAGE)
         return(M_TM);
-    else if(cClass==MAGE && cClass2==ASSASSIN)
+    else if(static_cast<CreatureClass>(cClass)==CreatureClass::MAGE && static_cast<CreatureClass>(cClass2)==CreatureClass::ASSASSIN)
         return(M_MA);
     return(0);
 }
@@ -249,7 +249,7 @@ void doDemographics() {
         }
 
         // don't do staff!
-        if(cClass >= STAFF)
+        if(cClass >= static_cast<int>(STAFF))
             continue;
         if(level < MINIMUM_LEVEL)
             continue;

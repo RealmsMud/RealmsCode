@@ -144,12 +144,12 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
             return(CAST_RESULT_FAILURE);
     }
 
-    if(creature->getClass() == BERSERKER) {
+    if(creature->getClass() == CreatureClass::BERSERKER) {
         listen->print("Cast? BAH! Magic is for the weak! Bash and cut instead!\n");
         return(CAST_RESULT_FAILURE);
     }
 
-    if(player && player->getClass() == FIGHTER && !player->getSecondClass() && player->flagIsSet(P_PTESTER)) {
+    if(player && player->getClass() == CreatureClass::FIGHTER && !player->hasSecondClass() && player->flagIsSet(P_PTESTER)) {
         listen->print("You lack training in the arcane arts.\n");
         return(CAST_RESULT_FAILURE);
     }
@@ -361,34 +361,34 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
     }
 
     switch(player->getClass()) {
-    case DUNGEONMASTER:
-    case CARETAKER:
+    case CreatureClass::DUNGEONMASTER:
+    case CreatureClass::CARETAKER:
         player->lasttime[LT_SPELL].interval = 0;
         break;
-    case MAGE:
-        if(player->getSecondClass() == THIEF || player->getSecondClass() == ASSASSIN)
+    case CreatureClass::MAGE:
+        if(player->getSecondClass() == CreatureClass::THIEF || player->getSecondClass() == CreatureClass::ASSASSIN)
             player->lasttime[LT_SPELL].interval = 4;
         else
             player->lasttime[LT_SPELL].interval = 3;
         break;
-    case BUILDER:
-    case LICH:
+    case CreatureClass::BUILDER:
+    case CreatureClass::LICH:
         player->lasttime[LT_SPELL].interval = 3;
         break;
-    case BARD:
-    case PUREBLOOD:
-    case PALADIN:
-    case DRUID:
+    case CreatureClass::BARD:
+    case CreatureClass::PUREBLOOD:
+    case CreatureClass::PALADIN:
+    case CreatureClass::DRUID:
         player->lasttime[LT_SPELL].interval = 4;
         break;
-    case CLERIC:
-        if(player->getSecondClass() == ASSASSIN)
+    case CreatureClass::CLERIC:
+        if(player->getSecondClass() == CreatureClass::ASSASSIN)
             player->lasttime[LT_SPELL].interval = 5;
         else
             player->lasttime[LT_SPELL].interval = 4;
         break;
-    case FIGHTER:
-        if(player->getSecondClass() == MAGE) {
+    case CreatureClass::FIGHTER:
+        if(player->getSecondClass() == CreatureClass::MAGE) {
             bool heavy = false;
             for(int z = 0 ; z < MAXWEAR ; z++) {
                 if(player->ready[z] && (player->ready[z]->isHeavyArmor() || player->ready[z]->isMediumArmor())) {
@@ -405,8 +405,8 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
         else
             player->lasttime[LT_SPELL].interval = 5;
         break;
-    case THIEF:
-        if(player->getSecondClass() == MAGE)
+    case CreatureClass::THIEF:
+        if(player->getSecondClass() == CreatureClass::MAGE)
             player->lasttime[LT_SPELL].interval = 4;
         else
             player->lasttime[LT_SPELL].interval = 5;
@@ -464,15 +464,15 @@ int cmdTeach(Player* player, cmd* cmnd) {
     }
 
     if(!player->isStaff()) {
-        if((player->getClass() != MAGE && player->getClass() != CLERIC)) {
+        if((player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::CLERIC)) {
             player->print("Only mages and clerics may teach spells.\n");
             return(0);
         }
-        if(player->getSecondClass()) {
+        if(player->hasSecondClass()) {
             player->print("Only true mages and clerics are able to teach.\n");
             return(0);
         }
-    } else if(player->getClass() == BUILDER) {
+    } else if(player->getClass() == CreatureClass::BUILDER) {
         if(!player->canBuildMonsters())
             return(cmdNoAuth(player));
         if(!player->checkBuilder(player->getUniqueRoomParent())) {
@@ -525,15 +525,15 @@ int cmdTeach(Player* player, cmd* cmnd) {
 
 
     if(!player->isStaff()) {
-        if(player->getClass() == CLERIC && get_spell_num(splno) != 0 && get_spell_num(splno) != 3 && get_spell_num(splno) != 4) {
+        if(player->getClass() == CreatureClass::CLERIC && get_spell_num(splno) != 0 && get_spell_num(splno) != 3 && get_spell_num(splno) != 4) {
             player->print("You may not teach that spell to anyone.\n");
             return(0);
         }
-        if(player->getClass() == CLERIC && (get_spell_num(splno) == 3) && target->getClass() != CLERIC && target->getClass() != PALADIN) {
+        if(player->getClass() == CreatureClass::CLERIC && (get_spell_num(splno) == 3) && target->getClass() !=  CreatureClass::CLERIC && target->getClass() !=  CreatureClass::PALADIN) {
             player->print("You may only teach that spell to clerics and paladins.\n");
             return(0);
         }
-        if( player->getClass() == MAGE &&
+        if( player->getClass() == CreatureClass::MAGE &&
             get_spell_num(splno) != 2 &&
             get_spell_num(splno) != 5 &&
             get_spell_num(splno) != 27 &&
@@ -546,7 +546,7 @@ int cmdTeach(Player* player, cmd* cmnd) {
             player->print("You may not teach spells to monsters.\n");
             return(0);
         }
-    } else if(player->getClass() == BUILDER) {
+    } else if(player->getClass() == CreatureClass::BUILDER) {
         if(target->isPlayer()) {
             player->print("You may not teach spells to players.\n");
             return(0);
@@ -1723,7 +1723,7 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
     Creature* target=0;
 
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot cast this spell.\n");
         return(0);
     }
@@ -1810,48 +1810,48 @@ int Creature::spellFail(CastType how) {
 
     switch (pPlayer->getClass()) {
 
-    case ASSASSIN:
+    case CreatureClass::ASSASSIN:
         chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 30;
         break;
-    case BERSERKER:
+    case CreatureClass::BERSERKER:
         chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5);
         break;
-    case PUREBLOOD:
+    case CreatureClass::PUREBLOOD:
         chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 60;
         break;
-    case CLERIC:
-    case DRUID:
-    case BARD:
+    case CreatureClass::CLERIC:
+    case CreatureClass::DRUID:
+    case CreatureClass::BARD:
         chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 65;
         break;
-    case FIGHTER:
-        if(pPlayer->getSecondClass() == MAGE)
+    case CreatureClass::FIGHTER:
+        if(pPlayer->getSecondClass() == CreatureClass::MAGE)
             chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 75;
         else
             chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 10;
         break;
-    case MAGE:
-    case LICH:
+    case CreatureClass::MAGE:
+    case CreatureClass::LICH:
         chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 75;
         break;
-    case MONK:
-    case WEREWOLF:
+    case CreatureClass::MONK:
+    case CreatureClass::WEREWOLF:
         chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 6) + 25;
         break;
-    case PALADIN:
-    case DEATHKNIGHT:
+    case CreatureClass::PALADIN:
+    case CreatureClass::DEATHKNIGHT:
         chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 50;
         break;
-    case RANGER:
+    case CreatureClass::RANGER:
         chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 4) + 56;
         break;
-    case THIEF:
-        if(pPlayer->getSecondClass() == MAGE)
+    case CreatureClass::THIEF:
+        if(pPlayer->getSecondClass() == CreatureClass::MAGE)
             chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 75;
         else
             chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 6) + 22;
         break;
-    case ROGUE:
+    case CreatureClass::ROGUE:
         chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 6) + 22;
         break;
     default:
@@ -2122,9 +2122,9 @@ int cmdCommune(Player *player, cmd *cmnd) {
 //*********************************************************************
 
 bool Creature::isMageLich() {
-    if( getClass() != MAGE &&
-        (isPlayer() && getAsConstPlayer()->getSecondClass() != MAGE) &&
-        getClass() != LICH &&
+    if( getClass() !=  CreatureClass::MAGE &&
+        (isPlayer() && getAsConstPlayer()->getSecondClass() != CreatureClass::MAGE) &&
+        getClass() !=  CreatureClass::LICH &&
         !isCt())
     {
         print("The arcane nature of that spell eludes you.\n");

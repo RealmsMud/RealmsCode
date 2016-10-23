@@ -35,7 +35,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 
     if(!player->ableToDoCommand())
         return(0);
-    if(player->getClass() == BUILDER && !player->canBuildObjects())
+    if(player->getClass() == CreatureClass::BUILDER && !player->canBuildObjects())
         return(cmdNoAuth(player));
 
     player->clearFlag(P_AFK);
@@ -46,7 +46,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        if(player->getClass() == CLERIC && player->getDeity() == JAKAR)
+        if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == JAKAR)
             jakar=1;
         if(player->isBlind()) {
             player->printColor("^CYou're blind!\n");
@@ -406,7 +406,7 @@ int cmdSing(Creature* creature, cmd* cmnd) {
     if(player && !player->ableToDoCommand())
         return(0);
 
-    if(!player || (player->getClass() != BARD && !player->isCt())) {
+    if(!player || (player->getClass() !=  CreatureClass::BARD && !player->isCt())) {
         if(mrand(0,10) || creature->isStaff()) {
             creature->print("You sing a song.\n");
             broadcast(creature->getSock(), creature->getRoomParent(), "%M sings a song.", creature);
@@ -775,7 +775,7 @@ int songHeal(Player* player, cmd* cmnd) {
     }
 
     for(Player* ply : player->getRoomParent()->players) {
-        if(ply->getClass() != LICH) {
+        if(ply->getClass() !=  CreatureClass::LICH) {
             if(ply != player)
                 ply->print("%M's song rejuvinates you.\n", player);
             player->doHeal(ply, heal);
@@ -783,7 +783,7 @@ int songHeal(Player* player, cmd* cmnd) {
     }
 
     for(Monster* mons : player->getRoomParent()->monsters) {
-        if(mons->getClass() != LICH && mons->isPet()) {
+        if(mons->getClass() !=  CreatureClass::LICH && mons->isPet()) {
             mons->print("%M's song rejuvinates you.\n", player);
             player->doHeal(mons, heal);
         }
@@ -842,7 +842,7 @@ int songRestore(Player* player, cmd* cmnd) {
         heal += mrand(5, 10);
     }
     for(Player* ply : player->getRoomParent()->players) {
-        if(ply->getClass() != LICH) {
+        if(ply->getClass() !=  CreatureClass::LICH) {
             if(ply != player)
                 ply->print("%M's song restores your spirits.\n", player);
             player->doHeal(ply, heal);
@@ -850,7 +850,7 @@ int songRestore(Player* player, cmd* cmnd) {
         }
     }
     for(Monster* mons : player->getRoomParent()->monsters) {
-        if(mons->getClass() != LICH && mons->isPet()) {
+        if(mons->getClass() !=  CreatureClass::LICH && mons->isPet()) {
             mons->print("%M's song restores your spirits.\n", player);
             player->doHeal(mons, heal);
             mons->mp.increase(heal/2);

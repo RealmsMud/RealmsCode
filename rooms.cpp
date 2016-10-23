@@ -1118,7 +1118,7 @@ Location Creature::getLimboRoom() const {
 
 Location Creature::getRecallRoom() const {
     const Player* player = getAsConstPlayer();
-    if(player && (player->flagIsSet(P_T_TO_BOUND) || player->getClass() == BUILDER))
+    if(player && (player->flagIsSet(P_T_TO_BOUND) || player->getClass() == CreatureClass::BUILDER))
         return(player->bound);
     return(getSpecialArea(&CatRefInfo::recall, this, "", 0));
 }
@@ -1168,7 +1168,7 @@ bool BaseRoom::isOutlawSafe() const {
     return( flagIsSet(R_OUTLAW_SAFE) ||
             flagIsSet(R_VAMPIRE_COVEN) ||
             flagIsSet(R_LIMBO) ||
-            whatTraining()
+            hasTraining()
     );
 }
 

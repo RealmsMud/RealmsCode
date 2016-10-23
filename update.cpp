@@ -622,7 +622,7 @@ void Server::updateAction(long t) {
                         case 'R': // test for a player with race
                             for(Player* ply : room->players) {
                                 if(act->test_for == 'C')
-                                    if(ply->getClass() == act->arg1) {
+                                    if(static_cast<int>(ply->getClass()) == act->arg1) {
                                         if(monster->first_tlk->target)
                                             delete[] monster->first_tlk->target;
                                         monster->first_tlk->target = new char[ply->getName().length()+1];

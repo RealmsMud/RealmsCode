@@ -344,7 +344,7 @@ int convertProf(Creature* player, Realm realm) {
 int Creature::readFromXml(xmlNodePtr rootNode) {
     xmlNodePtr curNode;
     int i;
-    unsigned short c = 0;
+    CreatureClass c = CreatureClass::NONE;
 
     Player *pPlayer = getAsPlayer();
     Monster *mMonster = getAsMonster();
@@ -375,7 +375,7 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "Room")) currentLocation.room.load(curNode);
 
         else if(NODE_NAME(curNode, "Race")) setRace(xml::toNum<unsigned short>(curNode));
-        else if(NODE_NAME(curNode, "Class")) c = xml::toNum<unsigned short>(curNode);
+        else if(NODE_NAME(curNode, "Class")) c = xml::toNum<CreatureClass>(curNode);
         else if(NODE_NAME(curNode, "AttackPower")) setAttackPower(xml::toNum<unsigned int>(curNode));
         else if(NODE_NAME(curNode, "DefenseSkill")) {
             if(mMonster) {
@@ -389,7 +389,7 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
         }
         else if(NODE_NAME(curNode, "Class2")) {
             if(pPlayer) {
-                pPlayer->setSecondClass(xml::toNum<unsigned short>(curNode));
+                pPlayer->setSecondClass(xml::toNum<CreatureClass>(curNode));
             } else if(mMonster) {
                 // TODO: Dom: for compatability, remove when possible
                 mMonster->setMobTrade(xml::toNum<unsigned short>(curNode));
@@ -544,7 +544,7 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
             clearFlag(P_RUNNING_OLD);
         }
 
-        if(getVersion() < "2.43" && getClass() != BERSERKER) {
+        if(getVersion() < "2.43" && getClass() !=  CreatureClass::BERSERKER) {
             int skill = level;
             if(isPureCaster() || isHybridCaster() || isStaff()) {
                 skill *= 10;
@@ -603,7 +603,7 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
             remSkill("translocation");
             remSkill("transmutation");
         }
-        if(getClass() == LICH && getVersion() < "2.43b" && !spellIsKnown(S_SAP_LIFE))
+        if(getClass() == CreatureClass::LICH && getVersion() < "2.43b" && !spellIsKnown(S_SAP_LIFE))
             learnSpell(S_SAP_LIFE);
     }
 

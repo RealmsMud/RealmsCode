@@ -86,7 +86,7 @@ int cmdBribe(Player* player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot do that.\n");
         return(0);
     }
@@ -209,14 +209,14 @@ void doSearch(Player* player, bool immediate) {
     // TODO: SKILLS: tweak the formula
     chance = 15 + 5*bonus((int)player->piety.getCur()) + level*2;
     chance = MIN(chance, 90);
-    if(player->getClass() == RANGER)
+    if(player->getClass() == CreatureClass::RANGER)
         chance += level*8;
-    if(player->getClass() == WEREWOLF)
+    if(player->getClass() == CreatureClass::WEREWOLF)
         chance += level*7;
-    if(player->getClass() == DRUID)
+    if(player->getClass() == CreatureClass::DRUID)
         chance += level*6;
 
-    if(player->getClass() == CLERIC && (
+    if(player->getClass() == CreatureClass::CLERIC && (
         (player->getDeity() == KAMIRA && player->getAdjustedAlignment() >= NEUTRAL) ||
         (player->getDeity() == ARACHNUS && player->alignInOrder())
     ) )
@@ -334,9 +334,9 @@ int cmdSearch(Player* player, cmd* cmnd) {
     player->lasttime[LT_SEARCH].ltime = t;
     if( player->isDm() )
         player->lasttime[LT_SEARCH].interval = 0;
-    else if(player->getClass() == RANGER || player->getClass() == WEREWOLF)
+    else if(player->getClass() == CreatureClass::RANGER || player->getClass() == CreatureClass::WEREWOLF)
         player->lasttime[LT_SEARCH].interval = 3;
-    else if((player->getClass() == CLERIC && player->getDeity() == KAMIRA && player->getAdjustedAlignment() >= NEUTRAL) || player->getClass() == THIEF || player->getClass() == ROGUE)
+    else if((player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA && player->getAdjustedAlignment() >= NEUTRAL) || player->getClass() == CreatureClass::THIEF || player->getClass() == CreatureClass::ROGUE)
         player->lasttime[LT_SEARCH].interval = 5;
     else
         player->lasttime[LT_SEARCH].interval = 7;
@@ -447,48 +447,48 @@ int cmdHide(Player* player, cmd* cmnd) {
     }
 
     player->lasttime[LT_HIDE].ltime = t;
-    if( player->getClass() == THIEF ||
-        player->getClass() == ASSASSIN ||
-        player->getClass() == ROGUE ||
-        player->getClass() == RANGER
+    if( player->getClass() == CreatureClass::THIEF ||
+        player->getClass() == CreatureClass::ASSASSIN ||
+        player->getClass() == CreatureClass::ROGUE ||
+        player->getClass() == CreatureClass::RANGER
     )
         player->lasttime[LT_HIDE].interval = 5;
     else
         player->lasttime[LT_HIDE].interval = 15;
 
 
-    if(player->getSecondClass() == THIEF || player->getSecondClass() == ASSASSIN || (player->getClass() == CLERIC && player->getDeity() == KAMIRA))
+    if(player->getSecondClass() == CreatureClass::THIEF || player->getSecondClass() == CreatureClass::ASSASSIN || (player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA))
         player->lasttime[LT_HIDE].interval = 6L;
 
     int level = (int)player->getSkillLevel("hide");
     if(cmnd->num == 1) {
         switch(player->getClass()) {
-        case THIEF:
-            if(player->getSecondClass() == MAGE) {
+        case CreatureClass::THIEF:
+            if(player->getSecondClass() == CreatureClass::MAGE) {
                 chance = MIN(90, 5 + 4*level + 3*bonus((int) player->dexterity.getCur()));
                 player->lasttime[LT_HIDE].interval = 8;
             } else
                 chance = MIN(90, 5 + 6*level + 3*bonus((int) player->dexterity.getCur()));
             break;
-        case ASSASSIN:
+        case CreatureClass::ASSASSIN:
             chance = MIN(90, 5 + 6*level + 3*bonus((int) player->dexterity.getCur()));
             break;
-        case FIGHTER:
-            if(player->getSecondClass() == THIEF)
+        case CreatureClass::FIGHTER:
+            if(player->getSecondClass() == CreatureClass::THIEF)
                 chance = MIN(90, 5 + 4*level + 3*bonus((int) player->dexterity.getCur()));
             else
                 chance = MIN(90, 5 + 2*level + 3*bonus((int) player->dexterity.getCur()));
             break;
-        case MAGE:
-            if(player->getSecondClass() == ASSASSIN || player->getSecondClass() == THIEF) {
+        case CreatureClass::MAGE:
+            if(player->getSecondClass() == CreatureClass::ASSASSIN || player->getSecondClass() == CreatureClass::THIEF) {
                 chance = MIN(90, 5 + 4*level + 3*bonus((int) player->dexterity.getCur()));
                 player->lasttime[LT_HIDE].interval = 8;
             } else
                 chance = MIN(90, 5 + 2*level +
                         3*bonus((int) player->dexterity.getCur()));
             break;
-        case CLERIC:
-            if(player->getSecondClass() == ASSASSIN) {
+        case CreatureClass::CLERIC:
+            if(player->getSecondClass() == CreatureClass::ASSASSIN) {
                 chance = MIN(90, 5 + 5*level + 3*bonus((int) player->dexterity.getCur()));
             } else if( (player->getDeity() == KAMIRA && player->getAdjustedAlignment() >= NEUTRAL) ||
                 (player->getDeity() == ARACHNUS && player->alignInOrder())
@@ -498,11 +498,11 @@ int cmdHide(Player* player, cmd* cmnd) {
                 chance = MIN(90, 5 + 2*level + 3*bonus((int) player->dexterity.getCur()));
 
             break;
-        case RANGER:
-        case DRUID:
+        case CreatureClass::RANGER:
+        case CreatureClass::DRUID:
             chance = 5 + 10*level + 3*bonus((int) player->dexterity.getCur());
             break;
-        case ROGUE:
+        case CreatureClass::ROGUE:
             chance = MIN(90, 5 + 5*level + 3*bonus((int) player->dexterity.getCur()));
             break;
         default:
@@ -524,12 +524,12 @@ int cmdHide(Player* player, cmd* cmnd) {
         )
             chance += 10;
 
-        if(player->dexterity.getCur()/10 < 9 && !(player->getClass() == CLERIC && player->getDeity() == KAMIRA))
+        if(player->dexterity.getCur()/10 < 9 && !(player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA))
             chance -= 10*(9 - player->dexterity.getCur()/10); // Having less then average dex
 
         player->print("You attempt to hide in the shadows.\n");
 
-        if((player->getClass() == RANGER || player->getClass() == DRUID) && !player->getRoomParent()->isOutdoors()) {
+        if((player->getClass() == CreatureClass::RANGER || player->getClass() == CreatureClass::DRUID) && !player->getRoomParent()->isOutdoors()) {
             chance /= 2;
             chance = MAX(25, chance);
             player->print("You have trouble hiding while inside.\n");
@@ -573,9 +573,9 @@ int cmdHide(Player* player, cmd* cmnd) {
 
     if(player->isDm())
         chance = 100;
-    else if(player->getClass() == THIEF || player->getClass() == ASSASSIN || player->getClass() == ROGUE)
+    else if(player->getClass() == CreatureClass::THIEF || player->getClass() == CreatureClass::ASSASSIN || player->getClass() == CreatureClass::ROGUE)
         chance = MIN(90, 10 + 5*level + 5*bonus((int) player->dexterity.getCur()));
-    else if(player->getClass() == RANGER || player->getClass() == DRUID)
+    else if(player->getClass() == CreatureClass::RANGER || player->getClass() == CreatureClass::DRUID)
         chance = 5 + 9*level + 3*bonus((int) player->dexterity.getCur());
     else
         chance = MIN(90, 5 + 3*level + 3*bonus((int) player->dexterity.getCur()));
@@ -613,7 +613,7 @@ bool doScout(Player* player, const Exit* exit) {
 
     Move::getRoom(player, exit, &room, true);
 
-    if(player->getClass() == BUILDER && room && !room->isConstruction()) {
+    if(player->getClass() == CreatureClass::BUILDER && room && !room->isConstruction()) {
         player->print("A magical force prevents you from seeing into the room.\n");
         return(false);
     }
@@ -898,22 +898,22 @@ int cmdShoplift(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->getClass() == BUILDER)
+    if(player->getClass() == CreatureClass::BUILDER)
         return(0);
 
     room = player->getUniqueRoomParent();
 
-    if(!player->isCt() && player->getLevel() < 7 && player->getClass() != THIEF) {
+    if(!player->isCt() && player->getLevel() < 7 && player->getClass() !=  CreatureClass::THIEF) {
         player->print("You couldn't possibly succeed. Wait until level 7.\n");
         return(0);
     }
 
-    if(player->getClass() == THIEF && player->getLevel() < 4) {
+    if(player->getClass() == CreatureClass::THIEF && player->getLevel() < 4) {
         player->print("You couldn't possibly succeed. Wait until level 4.\n");
         return(0);
     }
 
-    if(player->getClass() == PALADIN) {
+    if(player->getClass() == CreatureClass::PALADIN) {
         player->print("Paladins do not allow themselves to fall to the level of petty theft.\n");
         return(0);
     }
@@ -1020,25 +1020,25 @@ int cmdShoplift(Player* player, cmd* cmnd) {
     player->unhide();
 
     switch (player->getClass()) {
-    case THIEF:
-    case CARETAKER:
-    case DUNGEONMASTER:
+    case CreatureClass::THIEF:
+    case CreatureClass::CARETAKER:
+    case CreatureClass::DUNGEONMASTER:
         chance = ((player->getLevel()+35 - (2*object->getActualWeight())) - (object->value[GOLD]/1500))
                 + (bonus((int) player->dexterity.getCur())*2);
         break;
 
-    case ASSASSIN:
-    case BARD:
-    case ROGUE:
+    case CreatureClass::ASSASSIN:
+    case CreatureClass::BARD:
+    case CreatureClass::ROGUE:
         chance = ((player->getLevel()+20 - (2*object->getActualWeight())) - (object->value[GOLD]/1500))
                 + (bonus((int) player->dexterity.getCur())*2);
         break;
 
     // Casting classes just aren't cut out for it.
-    case MAGE:
-    case LICH:
-    case DRUID:
-    case CLERIC:
+    case CreatureClass::MAGE:
+    case CreatureClass::LICH:
+    case CreatureClass::DRUID:
+    case CreatureClass::CLERIC:
         chance = (((int)player->getLevel() - (2*object->getActualWeight())) - (object->value[GOLD]/1500))
                 + (bonus((int) player->dexterity.getCur())*2);
     default:
@@ -1267,7 +1267,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 //      int dmg = 0;
 
         // Progressive backstab code for thieves and assassins....
-        if(player->getClass() == THIEF || player->getSecondClass() == THIEF) {
+        if(player->getClass() == CreatureClass::THIEF || player->getSecondClass() == CreatureClass::THIEF) {
             if(level < 10)
                 stabMod = 2.75;
             else if(level < 16)
@@ -1282,7 +1282,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
                 stabMod = 5.5;
             else
                 stabMod = 5.75;
-        } else if(player->getClass() == ASSASSIN || player->getSecondClass() == ASSASSIN) {
+        } else if(player->getClass() == CreatureClass::ASSASSIN || player->getSecondClass() == CreatureClass::ASSASSIN) {
             if(level < 10)
                 stabMod = 3.25;
             else if(level < 13)
@@ -1310,14 +1310,14 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 
 
 
-        if( player->getSecondClass() == THIEF &&
-            (player->getClass() == FIGHTER || player->getClass() == MAGE)
+        if( player->getSecondClass() == CreatureClass::THIEF &&
+            (player->getClass() == CreatureClass::FIGHTER || player->getClass() == CreatureClass::MAGE)
         ) {
             cap = 3.0;
         }
 
-        if( player->getSecondClass() == ASSASSIN ||
-            (player->getClass() == MAGE && player->getSecondClass() == THIEF)
+        if( player->getSecondClass() == CreatureClass::ASSASSIN ||
+            (player->getClass() == CreatureClass::MAGE && player->getSecondClass() == CreatureClass::THIEF)
         ) {
             cap = 4.0;
         }
@@ -1378,7 +1378,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
         }
 
         if( weapon &&
-            (   (weapon->flagIsSet(O_ENVENOMED) && player->getClass() == ASSASSIN && level >=7) ||
+            (   (weapon->flagIsSet(O_ENVENOMED) && player->getClass() == CreatureClass::ASSASSIN && level >=7) ||
                 (weapon->flagIsSet(O_ENVENOMED) && player->isCt())
             )
         )
@@ -1735,15 +1735,15 @@ int cmdPickLock(Player* player, cmd* cmnd) {
         }
 
         player->lasttime[LT_PICKLOCK].ltime = t;
-        player->lasttime[LT_PICKLOCK].interval = (player->getClass() == ROGUE ? 20 : 10);
+        player->lasttime[LT_PICKLOCK].interval = (player->getClass() == CreatureClass::ROGUE ? 20 : 10);
 
     }
     int level = (int)player->getSkillLevel("pick");
-    if(player->getClass() == THIEF)
+    if(player->getClass() == CreatureClass::THIEF)
         chance = 10*(level - exit->getLevel()) + (2*bonus((int)player->dexterity.getCur()));
-    else if(player->getSecondClass() == THIEF && (player->getClass() == MAGE || player->getClass() == FIGHTER) )
+    else if(player->getSecondClass() == CreatureClass::THIEF && (player->getClass() == CreatureClass::MAGE || player->getClass() == CreatureClass::FIGHTER) )
         chance = 5*(level - exit->getLevel()) + (2*bonus((int)player->dexterity.getCur()));
-    else if(player->getClass() == ROGUE || (player->getClass() == THIEF && player->getSecondClass() == MAGE))
+    else if(player->getClass() == CreatureClass::ROGUE || (player->getClass() == CreatureClass::THIEF && player->getSecondClass() == CreatureClass::MAGE))
         chance = 7*(level - exit->getLevel()) + (2*bonus((int)player->dexterity.getCur()));
     else
         chance = 2*(level - exit->getLevel()) + (2*bonus((int)player->dexterity.getCur()));
@@ -1831,7 +1831,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
     mCreature = creature->getAsMonster();
     pCreature = creature->getAsPlayer();
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         if(pCreature) {
             player->print("You cannot peek players.\n");
             return(0);
@@ -1881,12 +1881,12 @@ int cmdPeek(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(cmnd->num > 2 && pCreature && (player->getClass() == THIEF || player->isCt())) {
+    if(cmnd->num > 2 && pCreature && (player->getClass() == CreatureClass::THIEF || player->isCt())) {
         peek_bag(player, pCreature, cmnd, 0);
         return(0);
     }
 
-    if(!ok && (player->getClass() == THIEF || player->isStaff()))
+    if(!ok && (player->getClass() == CreatureClass::THIEF || player->isStaff()))
         chance = (25 + level*10)-(creature->getLevel()*5);
     else
         chance = (level*10)-(creature->getLevel()*5);
@@ -1907,7 +1907,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    chance = MIN(90, (player->getClass() == ASSASSIN ? (level*4):(15 + level*5)));
+    chance = MIN(90, (player->getClass() == CreatureClass::ASSASSIN ? (level*4):(15 + level*5)));
 
     if(mrand(1,100) > chance && !player->isStaff()) {
         creature->print("%M peeked at your inventory.\n", player);

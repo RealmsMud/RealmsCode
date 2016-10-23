@@ -46,7 +46,7 @@ int dmReboot(Player* player, cmd* cmnd) {
 
     if( !player->isDm() &&
         !(player->flagIsSet(P_CAN_REBOOT) &&
-        player->getClass() == CARETAKER)
+        player->getClass() == CreatureClass::CARETAKER)
     )
         return(cmdNoAuth(player));
 
@@ -97,7 +97,7 @@ int dmMobInventory(Player* player, cmd* cmnd) {
 
 
 
-    if(!strcmp(cmnd->str[2], "-l") || player->getClass() == BUILDER) {
+    if(!strcmp(cmnd->str[2], "-l") || player->getClass() == CreatureClass::BUILDER) {
         player->print("Items %s will possibly drop:\n", monster->getCName());
         for(i=0;i<10;i++) {
             if(!monster->carry[i].info.id) {
@@ -110,7 +110,7 @@ int dmMobInventory(Player* player, cmd* cmnd) {
             if(!object)
                 continue;
 
-            if(player->getClass() == BUILDER && player->checkRangeRestrict(object->info))
+            if(player->getClass() == CreatureClass::BUILDER && player->checkRangeRestrict(object->info))
                 player->print("Carry slot %d: %sout of range(%s).\n", i+1, i < 9 ? " " : "", object->info.str().c_str());
             else
                 player->printColor("Carry slot %d: %s%s(%s).\n", i+1, i < 9 ? " " : "", object->getCName(), object->info.str().c_str());
@@ -432,7 +432,7 @@ void Player::dmPoof(BaseRoom* room, BaseRoom *newRoom) {
     if(flagIsSet(P_DM_INVIS)) {
         if(isDm())
             broadcast(::isDm, getSock(), room, "*DM* %s disappears in a puff of smoke.", getCName());
-        if(cClass == CARETAKER)
+        if(cClass == CreatureClass::CARETAKER)
             broadcast(::isCt, getSock(), room, "*DM* %s disappears in a puff of smoke.", getCName());
         if(!isCt())
             broadcast(::isStaff, getSock(), room, "*DM* %s disappears in a puff of smoke.", getCName());
@@ -470,7 +470,7 @@ int dmTeleport(Player* player, cmd* cmnd) {
 
         getDestination(str, &l, player);
 
-        if(player->getClass() != BUILDER && l.mapmarker.getArea()) {
+        if(player->getClass() !=  CreatureClass::BUILDER && l.mapmarker.getArea()) {
             if(player->inAreaRoom() && l.mapmarker == player->currentLocation.mapmarker) {
                 player->print("You are already there!\n");
                 return(0);
@@ -515,7 +515,7 @@ int dmTeleport(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        if(player->getClass() == BUILDER && creature->getClass() != BUILDER) {
+        if(player->getClass() == CreatureClass::BUILDER && creature->getClass() !=  CreatureClass::BUILDER) {
             player->print("You are only allowed to teleport to other builder.\n");
             return(0);
         }
@@ -1315,7 +1315,7 @@ int dmBane(Player* player, cmd* cmnd) {
 int dmHelp(Player* player, cmd* cmnd) {
     char    file[80];
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You must use the builder help file system.\n");
         player->print("Type *bhelp or *bh to see a list of files.\n");
         return(0);
@@ -1615,12 +1615,12 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
     switch(splno) {
     case S_VIGOR:
         if(check) return(true);
-        if(player->getClass() != LICH)
+        if(player->getClass() !=  CreatureClass::LICH)
             player->hp.increase(mrand(1,6) + 4 + 2);
         break;
     case S_MEND_WOUNDS:
         if(check) return(true);
-        if(player->getClass() != LICH)
+        if(player->getClass() !=  CreatureClass::LICH)
             player->hp.increase(mrand(2,10) + 4 + 4);
         break;
     case S_RESTORE:
@@ -1630,7 +1630,7 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
         break;
     case S_HEAL:
         if(check) return(true);
-        if(player->getClass() != LICH)
+        if(player->getClass() !=  CreatureClass::LICH)
             player->hp.restore();
         break;
     case S_BLESS:
@@ -2357,7 +2357,7 @@ int dmStat(Player* player, cmd* cmnd) {
 
         }
 
-        if(player->getClass() != BUILDER && (mapmarker.getArea() || aRoom)) {
+        if(player->getClass() !=  CreatureClass::BUILDER && (mapmarker.getArea() || aRoom)) {
 
             if(!aRoom) {
                 area = gConfig->getArea(mapmarker.getArea());
@@ -2413,7 +2413,7 @@ int dmStat(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        if(player->getClass() == BUILDER) {
+        if(player->getClass() == CreatureClass::BUILDER) {
             if(!player->canBuildMonsters()) {
                 player->print("Error: you do not have authorization to modify monsters.\n");
                 return(PROMPT);
@@ -2461,7 +2461,7 @@ int dmStat(Player* player, cmd* cmnd) {
         Player  *pTarget = target->getAsPlayer();
         mTarget = target->getAsMonster();
 
-        if(player->getClass() == BUILDER) {
+        if(player->getClass() == CreatureClass::BUILDER) {
             if(!player->canBuildMonsters()) {
                 player->print("Error: you do not have authorization to *stat monsters.\n");
                 return(PROMPT);

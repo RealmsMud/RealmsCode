@@ -106,7 +106,7 @@ void Move::broadcast(Creature* player, Container* container, bool ordinal, bstri
     if(noShow || hiddenExit) {
         if(player->isDm())
             ::broadcast(isDm, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
-        if(player->getClass() == CARETAKER)
+        if(player->getClass() == CreatureClass::CARETAKER)
             ::broadcast(isCt, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
         if(!player->isCt())
             ::broadcast(isStaff, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
@@ -217,7 +217,7 @@ void Move::broadMove(Creature* player, Exit* exit, cmd* cmnd, bool sneaking) {
     } else {
         if(player->isDm())
             ::broadcast(isDm, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->getCName());
-        if(player->getClass() == CARETAKER)
+        if(player->getClass() == CreatureClass::CARETAKER)
             ::broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->getCName());
         if(!player->isCt())
             ::broadcast(isStaff, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->getCName());
@@ -487,7 +487,7 @@ bool Move::canMove(Player* player, cmd* cmnd) {
     } else {
         chance = MAX(1, ((5+(player->dexterity.getCur()/10)*3) - player->getArmorWeight() + player->strength.getCur()));
 
-        if(player->getClass() == RANGER || player->getClass() == DRUID)
+        if(player->getClass() == CreatureClass::RANGER || player->getClass() == CreatureClass::DRUID)
             chance += 5;
         if(player->isEffected("levitate"))
             chance += 5;

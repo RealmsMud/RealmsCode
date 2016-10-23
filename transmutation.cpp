@@ -37,8 +37,8 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
     int     bns=0, nohold=0, dur=0, statmod=0;
     Creature* target=0;
 
-    if( player->getClass() != DRUID &&
-        player->getClass() != RANGER &&
+    if( player->getClass() !=  CreatureClass::DRUID &&
+        player->getClass() !=  CreatureClass::RANGER &&
         !player->isCt() && spellData->how == CastType::CAST
     ) {
         player->print("You are unable to cast that spell.\n");
@@ -117,8 +117,8 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
         if( target->isPlayer() &&
             (   target->flagIsSet(P_UNCONSCIOUS) ||
                 target->isEffected("petrification") ||
-                (   player->getClass() != RANGER &&
-                    player->getClass() != DRUID &&
+                (   player->getClass() !=  CreatureClass::RANGER &&
+                    player->getClass() !=  CreatureClass::DRUID &&
                     target->isEffected("mist")
                 )
             )
@@ -145,7 +145,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
                 nohold = 1;
 
             if( target->flagIsSet(M_LEVEL_BASED_STUN) &&
-                (((int)target->getLevel() - (int)player->getLevel()) > ((player->getClass() == LICH || player->getClass() == MAGE) ? 6:4))
+                (((int)target->getLevel() - (int)player->getLevel()) > ((player->getClass() == CreatureClass::LICH || player->getClass() == CreatureClass::MAGE) ? 6:4))
             )
                 nohold = 1;
         }
@@ -217,8 +217,8 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 int splPassWithoutTrace(Creature* player, cmd* cmnd, SpellData* spellData) {
     if( spellData->how == CastType::CAST &&
         !player->isStaff() &&
-        player->getClass() != DRUID &&
-        player->getClass() != RANGER &&
+        player->getClass() !=  CreatureClass::DRUID &&
+        player->getClass() !=  CreatureClass::RANGER &&
         player->getDeity() != LINOTHAN
     ) {
         player->print("Only druids, rangers, and followers of Linothan may cast this spell.\n");
@@ -270,11 +270,11 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
 
         if( spellData->how == CastType::CAST &&
-            player->getClass() != MAGE &&
-            player->getClass() != LICH &&
-            player->getClass() != BARD &&
-            player->getClass() != CLERIC &&
-            player->getClass() != DRUID &&
+            player->getClass() !=  CreatureClass::MAGE &&
+            player->getClass() !=  CreatureClass::LICH &&
+            player->getClass() !=  CreatureClass::BARD &&
+            player->getClass() !=  CreatureClass::CLERIC &&
+            player->getClass() !=  CreatureClass::DRUID &&
             !player->isStaff()
         ) {
             player->print("Your class is unable to cast that spell upon others.\n");
@@ -333,14 +333,14 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
     Exit        *exit=0;
 
     if(spellData->how == CastType::CAST) {
-        if( player->getClass() == MAGE ||
-            player->getClass() == LICH ||
-            player->getClass() == BARD ||
-            (!pPlayer || pPlayer->getSecondClass() == MAGE) ||
+        if( player->getClass() == CreatureClass::MAGE ||
+            player->getClass() == CreatureClass::LICH ||
+            player->getClass() == CreatureClass::BARD ||
+            (!pPlayer || pPlayer->getSecondClass() == CreatureClass::MAGE) ||
             player->isStaff()
         )
             canCast=1;
-        if(player->getClass() == CLERIC && player->getDeity() == KAMIRA)
+        if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA)
             canCast=1;
         if(!player->spellIsKnown(S_KNOCK)) {
             player->print("You do not know that spell.\n");
@@ -391,14 +391,14 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(spellData->how == CastType::CAST) {
         mpNeeded = 10 + exit->getLevel();
         if( pPlayer &&
-            pPlayer->getClass() != MAGE &&
-            pPlayer->getSecondClass() != MAGE &&
-            pPlayer->getClass() != LICH &&
+            pPlayer->getClass() !=  CreatureClass::MAGE &&
+            pPlayer->getSecondClass() != CreatureClass::MAGE &&
+            pPlayer->getClass() !=  CreatureClass::LICH &&
             !pPlayer->isStaff()
         )
             mpNeeded *=2;
 
-        if(player->getClass() != LICH) {
+        if(player->getClass() !=  CreatureClass::LICH) {
             if(player->mp.getCur() < mpNeeded) {
                 player->print("You need %d magic points to cast that spell.\n", mpNeeded);
                 return(0);
@@ -413,7 +413,7 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
     }
 
-    if(player->getClass() == CLERIC && player->getDeity() == KAMIRA)
+    if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA)
         chance = 10*((int)player->getLevel() - exit->getLevel()) + (2*bonus((int)player->piety.getCur()));
     else
         chance = 10*((int)player->getLevel() - exit->getLevel()) + (2*bonus((int)player->intelligence.getCur()));
@@ -574,10 +574,10 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 int splStatChange(Creature* player, cmd* cmnd, SpellData* spellData, bstring effect, bool good) {
     Creature* target=0;
     if( spellData->how == CastType::CAST &&
-        player->getClass() != MAGE &&
-        player->getClass() != LICH &&
-        player->getClass() != DRUID &&
-        player->getClass() != CLERIC &&
+        player->getClass() !=  CreatureClass::MAGE &&
+        player->getClass() !=  CreatureClass::LICH &&
+        player->getClass() !=  CreatureClass::DRUID &&
+        player->getClass() !=  CreatureClass::CLERIC &&
         !player->isCt()
     ) {
         player->print( "You cannot cast that spell.\n");
@@ -681,14 +681,14 @@ int splStoneToFlesh(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     if( spellData->how == CastType::CAST &&
-        player->getClass() != MAGE &&
-        player->getClass() != LICH &&
-        player->getClass() != DRUID &&
-        player->getClass() != CLERIC &&
-        player->getClass() != BARD &&
-        player->getClass() != PALADIN &&
-        player->getClass() != DEATHKNIGHT &&
-        player->getClass() != RANGER &&
+        player->getClass() !=  CreatureClass::MAGE &&
+        player->getClass() !=  CreatureClass::LICH &&
+        player->getClass() !=  CreatureClass::DRUID &&
+        player->getClass() !=  CreatureClass::CLERIC &&
+        player->getClass() !=  CreatureClass::BARD &&
+        player->getClass() !=  CreatureClass::PALADIN &&
+        player->getClass() !=  CreatureClass::DEATHKNIGHT &&
+        player->getClass() !=  CreatureClass::RANGER &&
         !player->isCt()
     ) {
         player->print("You are unable to cast that spell.\n");
@@ -731,14 +731,14 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
     int     bns=0, canCast=0, mpCost=0;
     long    dur=0;
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot cast this spell.\n");
         return(0);
     }
 
-    if( player->getClass() == LICH ||
-        player->getClass() == MAGE ||
-        player->getClass() == CLERIC ||
+    if( player->getClass() == CreatureClass::LICH ||
+        player->getClass() == CreatureClass::MAGE ||
+        player->getClass() == CreatureClass::CLERIC ||
         player->isCt()
     )
         canCast = 1;
@@ -858,8 +858,8 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
 int splRegeneration(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(spellData->how != CastType::POTION && player->isPlayer() && !player->isStaff()) {
         switch(player->getClass()) {
-            case CLERIC:
-            case DRUID:
+            case CreatureClass::CLERIC:
+            case CreatureClass::DRUID:
                 break;
             default:
                 player->print("Only clerics and druids may cast this spell.\n");

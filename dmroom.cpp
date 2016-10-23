@@ -476,11 +476,15 @@ int whatTraining(const BaseRoom* room, const TileInfo *tile, const AreaZone *zon
     if(R_TRAINING_ROOM + 3 == extra || trainingFlagSet(room, tile, zone, R_TRAINING_ROOM + 3))
         i += 1;
 
-    return(i > CLASS_COUNT - 1 ? 0 : i);
+    return(i > static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ? 0 : i);
 }
 
-int BaseRoom::whatTraining(int extra) const {
-    return(::whatTraining(this, (const TileInfo*)0, (const AreaZone*)0, extra));
+bool BaseRoom::hasTraining() const {
+    return(whatTraining() != CreatureClass::NONE);
+}
+
+CreatureClass BaseRoom::whatTraining(int extra) const {
+    return(static_cast<CreatureClass>(::whatTraining(this, (const TileInfo*)0, (const AreaZone*)0, extra)));
 }
 
 
@@ -520,14 +524,14 @@ void showRoomFlags(const Player* player, const BaseRoom* room, const TileInfo *t
 
     // inform user of redundant flags
     if(room && room->getAsConstUniqueRoom()) {
-        int whatTraining = room->whatTraining();
+        bool hasTraining = room->hasTraining();
         bool limboOrCoven = room->flagIsSet(R_LIMBO) || room->flagIsSet(R_VAMPIRE_COVEN);
 
         if(room->flagIsSet(R_NO_TELEPORT)) {
             if( limboOrCoven ||
                 room->flagIsSet(R_JAIL) ||
                 room->flagIsSet(R_ETHEREAL_PLANE) ||
-                whatTraining
+                    hasTraining
             )
                 player->printColor("^rThis room does not need flag 13-No Teleport set.\n");
         }
@@ -541,7 +545,7 @@ void showRoomFlags(const Player* player, const BaseRoom* room, const TileInfo *t
 
         if(room->flagIsSet(R_NO_LOGIN)) {
             if( room->flagIsSet(R_LOG_INTO_TRAP_ROOM) ||
-                whatTraining
+                    hasTraining
             )
                 player->printColor("^rThis room does not need flag 34-No Log set.\n");
         }
@@ -555,7 +559,7 @@ void showRoomFlags(const Player* player, const BaseRoom* room, const TileInfo *t
             if( limboOrCoven ||
                 room->flagIsSet(R_IS_STORAGE_ROOM) ||
                 room->flagIsSet(R_NO_TELEPORT) ||
-                room->whatTraining()
+                hasTraining
             )
                 player->printColor("^rThis room does not need flag 52-No Track To set.\n");
         }
@@ -564,7 +568,7 @@ void showRoomFlags(const Player* player, const BaseRoom* room, const TileInfo *t
             if( limboOrCoven ||
                 room->flagIsSet(R_NO_TELEPORT) ||
                 room->flagIsSet(R_ONE_PERSON_ONLY) ||
-                whatTraining
+                hasTraining
             )
                 player->printColor("^rThis room does not need flag 54-No Summon To set.\n");
         }
@@ -578,13 +582,13 @@ void showRoomFlags(const Player* player, const BaseRoom* room, const TileInfo *t
 
         if(room->flagIsSet(R_OUTLAW_SAFE)) {
             if( limboOrCoven ||
-                whatTraining
+                hasTraining
             )
                 player->printColor("^rThis room does not need flag 57-Outlaw Safe set.\n");
         }
 
         if(room->flagIsSet(R_LOG_INTO_TRAP_ROOM)) {
-            if(whatTraining)
+            if(hasTraining)
                 player->printColor("^rThis room does not need flag 63-Log To Trap Exit set.\n");
         }
 
@@ -621,7 +625,7 @@ int stat_rom(Player* player, AreaRoom* room) {
     if(!player->checkBuilder(0))
         return(0);
 
-    if(player->getClass() == CARETAKER)
+    if(player->getClass() == CreatureClass::CARETAKER)
         log_immort(false,player, "%s statted room %s.\n", player->getCName(), player->getRoomParent()->fullName().c_str());
 
     player->print("Room: %s %s\n\n",
@@ -751,7 +755,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
     if(!player->checkBuilder(room))
         return(0);
 
-    if(player->getClass() == CARETAKER)
+    if(player->getClass() == CreatureClass::CARETAKER)
         log_immort(false,player, "%s statted room %s.\n", player->getCName(), player->getRoomParent()->fullName().c_str());
 
     player->printColor("Room: %s", room->info.str("", 'y').c_str());
@@ -844,7 +848,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
 
     if( room->flagIsSet(R_LOG_INTO_TRAP_ROOM) ||
         room->flagIsSet(R_SHOP_STORAGE) ||
-        room->whatTraining()
+        room->hasTraining()
     ) {
         if(room->getTrapExit().id)
             player->print("Players will relog into room %s from here.\n", room->getTrapExit().str(room->info.area).c_str());
@@ -1284,7 +1288,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
             } else {
                 if(num >= R_TRAINING_ROOM && num - 4 <= R_TRAINING_ROOM) {
                     // setting a training flag - do we let them?
-                    if(!player->getUniqueRoomParent()->whatTraining(num-1)) {
+                    if(player->getUniqueRoomParent()->whatTraining(num-1) == CreatureClass::NONE) {
                         player->print("You are setting training for a class that does not exist.\n");
                         return(0);
                     }
@@ -1804,7 +1808,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 
         room2 = uRoom;
     } else {
-        if(player->getClass() == BUILDER) {
+        if(player->getClass() == CreatureClass::BUILDER) {
             player->print("Sorry, builders cannot link exits to the overland.\n");
             return(0);
         }
@@ -2368,7 +2372,7 @@ void showMobList(Player* player, WanderInfo *wander, bstring type) {
             }
 
             if(!maybeAggro) {
-                for(int n=1; n<STAFF; n++) {
+                for(int n=1; n<static_cast<int>(STAFF); n++) {
                     if(monster->isClassAggro(n, false)) {
                         maybeAggro = true;
                         break;

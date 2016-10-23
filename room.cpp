@@ -52,7 +52,7 @@ void Player::finishAddPlayer(BaseRoom* room) {
         } else {
             if(isDm())
                 broadcast(::isDm, getSock(), room, "*DM* %M just arrived.", this);
-            if(cClass == CARETAKER)
+            if(cClass == CreatureClass::CARETAKER)
                 broadcast(::isCt, getSock(), room, "*DM* %M just arrived.", this);
             if(!isCt())
                 broadcast(::isStaff, getSock(), room, "*DM* %M just arrived.", this);
@@ -166,7 +166,7 @@ void Player::addToRoom(UniqueRoom* uRoom) {
 
     // Builders cannot leave their areas unless escorted by a DM.
     // Any other time they leave their areas it will be logged.
-    if( cClass==BUILDER &&
+    if( cClass== CreatureClass::BUILDER &&
         (   !getGroupLeader() ||
             (getGroupLeader() && getGroupLeader()->isDm()) ) &&
         checkRangeRestrict(uRoom->info))
@@ -174,7 +174,7 @@ void Player::addToRoom(UniqueRoom* uRoom) {
         // only log if another builder is not in the room
         for(Player* ply : uRoom->players) {
             if( ply != this &&
-                ply->getClass() == BUILDER)
+                ply->getClass() == CreatureClass::BUILDER)
             {
                 builderInRoom = true;
             }
@@ -993,7 +993,7 @@ void doRoomHarms(BaseRoom *inRoom, Player* target) {
 
     // deadly moss
     if(inRoom->flagIsSet(R_DEADLY_MOSS)) {
-        if(target->flagIsSet(P_DM_INVIS) || target->getClass() == LICH)
+        if(target->flagIsSet(P_DM_INVIS) || target->getClass() == CreatureClass::LICH)
             return;
 
         dmg = 15 - MIN(bonus((int)target->constitution.getCur()),2) + mrand(1,3);

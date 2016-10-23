@@ -99,7 +99,7 @@ void Player::init() {
     clearFlag(P_DIED_IN_DUEL);
     clearFlag(P_VIEW_ZONES);
 
-    if(cClass == CLERIC && level >= 7 && flagIsSet(P_CHAOTIC))
+    if(cClass == CreatureClass::CLERIC && level >= 7 && flagIsSet(P_CHAOTIC))
         setFlag(P_PLEDGED);
 
     if(level <= ALIGNMENT_LEVEL && !flagIsSet(P_CHOSEN_ALIGNMENT))
@@ -108,15 +108,15 @@ void Player::init() {
     if(level > ALIGNMENT_LEVEL)
         setFlag(P_CHOSEN_ALIGNMENT);
 
-    if((cClass == CLERIC && level < 7) || (cClass == CLERIC && !flagIsSet(P_CHAOTIC)))
+    if((cClass == CreatureClass::CLERIC && level < 7) || (cClass == CreatureClass::CLERIC && !flagIsSet(P_CHAOTIC)))
         clearFlag(P_PLEDGED);
 
     setFlag(P_SECURITY_CHECK_OK);
 
     if(isdm(getName()))
-        cClass = DUNGEONMASTER;
+        cClass = CreatureClass::DUNGEONMASTER;
     else if(isDm())
-        cClass = CARETAKER;
+        cClass = CreatureClass::CARETAKER;
 
 
 
@@ -182,29 +182,29 @@ void Player::init() {
 
 
     //  Paladins get auto know-aur
-    if(cClass==PALADIN)
+    if(cClass==CreatureClass::PALADIN)
         addPermEffect("know-aura");
     //  Mages get auto d-m
-    if( (   cClass==MAGE ||
-            cClass2 == MAGE
+    if( (   cClass==CreatureClass::MAGE ||
+            cClass2 == CreatureClass::MAGE
         ) &&
-        !(  cClass == MAGE &&
-            cClass2 == ASSASSIN
+        !(  cClass == CreatureClass::MAGE &&
+            cClass2 == CreatureClass::ASSASSIN
         ))
     {
         addPermEffect("detect-magic");
     }
 
-    if(cClass == DRUID && level >= 7)
+    if(cClass == CreatureClass::DRUID && level >= 7)
         addPermEffect("pass-without-trace");
 
-    if(cClass == THIEF && cClass2 == MAGE)
+    if(cClass == CreatureClass::THIEF && cClass2 == CreatureClass::MAGE)
         addPermEffect("detect-magic");
 
-    if((cClass == MAGE || cClass2 == MAGE) && level >= 7)
+    if((cClass == CreatureClass::MAGE || cClass2 == CreatureClass::MAGE) && level >= 7)
         learnSpell(S_ARMOR);
 
-    if(cClass == CLERIC && deity == CERIS && level >= 13)
+    if(cClass == CreatureClass::CLERIC && deity == CERIS && level >= 13)
         learnSpell(S_REJUVENATE);
 
 
@@ -213,7 +213,7 @@ void Player::init() {
         addPermEffect("detect-invisible");
 
     //  Rangers level 13+ can detect misted vampires.
-    if(cClass == RANGER && level >= 13)
+    if(cClass == CreatureClass::RANGER && level >= 13)
         addPermEffect("true-sight");
 
     // clear ignore flags
@@ -301,7 +301,7 @@ void Player::init() {
         if(uRoom && !isStaff() && !gServer->isRebooting()) {
             if( (   uRoom->flagIsSet(R_LOG_INTO_TRAP_ROOM) ||
                     uRoom->flagIsSet(R_SHOP_STORAGE) ||
-                    uRoom->whatTraining()
+                    uRoom->hasTraining()
                 ) &&
                 uRoom->getTrapExit().id &&
                 !loadRoom(uRoom->getTrapExit(), &uRoom)
@@ -375,7 +375,7 @@ void Player::init() {
 
     fixLts();
 
-    if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER)) {
+    if(cClass == CreatureClass::FIGHTER && !hasSecondClass() && flagIsSet(P_PTESTER)) {
         mp.setInitial(0);
         focus.setInitial(100);
         focus.clearModifiers();
@@ -657,7 +657,7 @@ void Player::checkEffectsWearingOff() {
         }
     }
 
-    if(flagIsSet(P_FOCUSED) && (cClass == MONK || staff)) {
+    if(flagIsSet(P_FOCUSED) && (cClass == CreatureClass::MONK || staff)) {
         if(t > LT(this, LT_FOCUS)) {
             printColor("^cYou lose your concentration.\n");
             clearFlag(P_FOCUSED);
@@ -691,7 +691,7 @@ void Player::checkEffectsWearingOff() {
             ) ||
             (   flagIsSet(P_SLEEPING) && (
                 (hp.getCur() >= hp.getMax() && mp.getCur() >= mp.getMax()) ||
-                (cClass == PUREBLOOD && !getRoomParent()->vampCanSleep(getSock()))
+                (cClass == CreatureClass::PUREBLOOD && !getRoomParent()->vampCanSleep(getSock()))
             ) )
         ) {
             printColor("^cYou wake up.\n");
@@ -1054,7 +1054,7 @@ void Player::computeAC() {
 
     // Monks are a little more impervious to damage than other classes due to
     // their practice in meditation
-    if(cClass == MONK)
+    if(cClass == CreatureClass::MONK)
         ac += level * 10;
 
     // Wolves have a tough skin that grows tougher as they level up
@@ -1077,7 +1077,7 @@ void Player::computeAC() {
         }
     }
 
-    if((cClass == DRUID || isCt()) && isEffected("barkskin")) {
+    if((cClass == CreatureClass::DRUID || isCt()) && isEffected("barkskin")) {
         EffectInfo* barkskin = getEffect("barkskin");
         ac += (int)(((level+bonus(constitution.getCur())) * barkskin->getStrength())*4.4);
     }
@@ -1129,8 +1129,8 @@ int mprofic(const Creature* player, int index) {
     int i=0, n=0, prof=0;
 
     switch(player->getClass()) {
-    case MAGE:
-        if(pPlayer && (pPlayer->getSecondClass() == ASSASSIN || pPlayer->getSecondClass() == THIEF)) {
+    case CreatureClass::MAGE:
+        if(pPlayer && (pPlayer->getSecondClass() == CreatureClass::ASSASSIN || pPlayer->getSecondClass() == CreatureClass::THIEF)) {
             prof_array[0] = 0L;
             prof_array[1] = 1024L;
             prof_array[2] = 4092L;
@@ -1159,7 +1159,7 @@ int mprofic(const Creature* player, int index) {
 
         }
         break;
-    case LICH:
+    case CreatureClass::LICH:
         prof_array[0] = 0L;
         prof_array[1] = 1024L;
         prof_array[2] = 2048L;
@@ -1173,8 +1173,8 @@ int mprofic(const Creature* player, int index) {
         prof_array[10] = 2073306L;
         prof_array[11] = 500000000L;
         break;
-    case CLERIC:
-        if(pPlayer && (pPlayer->getSecondClass() == ASSASSIN || pPlayer->getSecondClass() == FIGHTER)) {
+    case CreatureClass::CLERIC:
+        if(pPlayer && (pPlayer->getSecondClass() == CreatureClass::ASSASSIN || pPlayer->getSecondClass() == CreatureClass::FIGHTER)) {
             prof_array[0] = 0L;
             prof_array[1] = 1024L;
             prof_array[2] = 8192L;
@@ -1202,8 +1202,8 @@ int mprofic(const Creature* player, int index) {
             prof_array[11] = 500000000L;
         }
         break;
-    case THIEF:
-        if(pPlayer && pPlayer->getSecondClass() == MAGE) {
+    case CreatureClass::THIEF:
+        if(pPlayer && pPlayer->getSecondClass() == CreatureClass::MAGE) {
             prof_array[0] = 0L;
             prof_array[1] = 1024L;
             prof_array[2] = 8192L;
@@ -1232,8 +1232,8 @@ int mprofic(const Creature* player, int index) {
         }
         break;
 
-    case FIGHTER:
-        if(pPlayer && pPlayer->getSecondClass() == MAGE) {
+    case CreatureClass::FIGHTER:
+        if(pPlayer && pPlayer->getSecondClass() == CreatureClass::MAGE) {
             prof_array[0] = 0L;
             prof_array[1] = 1024L;
             prof_array[2] = 8192L;
@@ -1261,10 +1261,10 @@ int mprofic(const Creature* player, int index) {
             prof_array[11] = 500000000L;
         }
         break;
-    case PALADIN:
-    case BARD:
-    case PUREBLOOD:
-    case DRUID:
+    case CreatureClass::PALADIN:
+    case CreatureClass::BARD:
+    case CreatureClass::PUREBLOOD:
+    case CreatureClass::DRUID:
         prof_array[0] = 0L;
         prof_array[1] = 1024L;
         prof_array[2] = 4092L;
@@ -1278,9 +1278,9 @@ int mprofic(const Creature* player, int index) {
         prof_array[10] = 2973307L;
         prof_array[11] = 500000000L;
         break;
-    case DEATHKNIGHT:
-    case MONK:
-    case RANGER:
+    case CreatureClass::DEATHKNIGHT:
+    case CreatureClass::MONK:
+    case CreatureClass::RANGER:
         prof_array[0] = 0L;
         prof_array[1] = 1024L;
         prof_array[2] = 8192L;
@@ -1443,10 +1443,10 @@ void Player::sendPrompt() {
             promptStr << "(" << alias_crt->hp.getCur() << " H " << alias_crt->mp.getCur() << " M): ";
         } else {
             promptStr << "(" << hp.getCur() << " H";
-            if(cClass != LICH && cClass != BERSERKER
-                    && (cClass != FIGHTER || !flagIsSet(P_PTESTER)))
+            if(cClass != CreatureClass::LICH && cClass != CreatureClass::BERSERKER
+                    && (cClass != CreatureClass::FIGHTER || !flagIsSet(P_PTESTER)))
                 promptStr << " " << mp.getCur() << " M";
-            else if(cClass == FIGHTER && flagIsSet(P_PTESTER))
+            else if(cClass == CreatureClass::FIGHTER && flagIsSet(P_PTESTER))
                 promptStr << " " << focus.getCur() << " F";
 
             if(flagIsSet(P_SHOW_XP_IN_PROMPT))
@@ -1490,20 +1490,20 @@ int Player::computeLuck() {
 
 
     // alignment only matters for these classes
-    if(cClass != PALADIN && cClass != CLERIC && cClass != DEATHKNIGHT && cClass != LICH)
+    if(cClass != CreatureClass::PALADIN && cClass != CreatureClass::CLERIC && cClass != CreatureClass::DEATHKNIGHT && cClass != CreatureClass::LICH)
         alg = 0;
 
 
     if( !alg ||
-        (cClass == PALADIN && deity != GRADIUS && getAdjustedAlignment() > NEUTRAL) ||
-        (cClass == DEATHKNIGHT && getAdjustedAlignment() < NEUTRAL) ||
-        (cClass == LICH && alignment <= -500) ||
-        (cClass == CLERIC && (deity == ENOCH || deity == LINOTHAN || deity == KAMIRA) && getAdjustedAlignment() >= LIGHTBLUE) ||
-        (cClass == CLERIC && (deity == ARAMON || deity == ARACHNUS) && getAdjustedAlignment() <= PINKISH)
+        (cClass == CreatureClass::PALADIN && deity != GRADIUS && getAdjustedAlignment() > NEUTRAL) ||
+        (cClass == CreatureClass::DEATHKNIGHT && getAdjustedAlignment() < NEUTRAL) ||
+        (cClass == CreatureClass::LICH && alignment <= -500) ||
+        (cClass == CreatureClass::CLERIC && (deity == ENOCH || deity == LINOTHAN || deity == KAMIRA) && getAdjustedAlignment() >= LIGHTBLUE) ||
+        (cClass == CreatureClass::CLERIC && (deity == ARAMON || deity == ARACHNUS) && getAdjustedAlignment() <= PINKISH)
     )
         alg = 1;
 
-    if(cClass != LICH)  // Balances mages with liches for luck.
+    if(cClass != CreatureClass::LICH)  // Balances mages with liches for luck.
         con = constitution.getCur()/10;
     else
         con = piety.getCur()/10;
@@ -1630,74 +1630,74 @@ void Player::setMonkDice() {
     int nLevel = MAX(0, MIN(level, MAXALVL));
 
     // reset monk dice?
-    if(cClass == MONK) {
+    if(cClass == CreatureClass::MONK) {
         damage = monk_dice[nLevel];
-    } else if(cClass == WEREWOLF) {
+    } else if(cClass == CreatureClass::WEREWOLF) {
         damage = wolf_dice[nLevel];
     }
 }
 
-//*********************************************************************
-//                      getMultiClassID
-//*********************************************************************
-
-int getMultiClassID(char cls, char cls2) {
-    int     id=0;
-
-    if(!cls2)
-        return(0);
-
-    switch(cls) {
-    case FIGHTER:
-        switch(cls2) {
-        case MAGE:
-            id = 1;
-            break;
-        case THIEF:
-            id = 2;
-            break;
-        }
-        break;
-
-    case CLERIC:
-        switch(cls2) {
-        case ASSASSIN:
-            id = 3;
-            break;
-        case FIGHTER:
-            id = 6;
-            break;
-        }
-        break;
-
-    case MAGE:
-        switch(cls2) {
-        case ASSASSIN:
-            id = 7;
-            break;
-        case THIEF:
-            id = 4;
-            break;
-        }
-        break;
-
-    case THIEF:
-        id = 5;  // thief/mage is only thief-first combo
-        break;
-    }
-
-    return(id);
-}
-
-//*********************************************************************
-//                      isOutdoors
-//*********************************************************************
-
-bool isOutdoors(Socket* sock) {
-    if(sock && sock->getPlayer())
-        return(sock->getPlayer()->getRoomParent()->isOutdoors());
-    return(false);
-}
+////*********************************************************************
+////                      getMultiClassID
+////*********************************************************************
+//
+//int getMultiClassID(char cls, char cls2) {
+//    int     id=0;
+//
+//    if(!cls2)
+//        return(0);
+//
+//    switch(cls) {
+//    case CreatureClass::FIGHTER:
+//        switch(cls2) {
+//        case CreatureClass::MAGE:
+//            id = 1;
+//            break;
+//        case CreatureClass::THIEF:
+//            id = 2;
+//            break;
+//        }
+//        break;
+//
+//    case CreatureClass::CLERIC:
+//        switch(cls2) {
+//        case CreatureClass::ASSASSIN:
+//            id = 3;
+//            break;
+//        case CreatureClass::FIGHTER:
+//            id = 6;
+//            break;
+//        }
+//        break;
+//
+//    case CreatureClass::MAGE:
+//        switch(cls2) {
+//        case CreatureClass::ASSASSIN:
+//            id = 7;
+//            break;
+//        case CreatureClass::THIEF:
+//            id = 4;
+//            break;
+//        }
+//        break;
+//
+//    case CreatureClass::THIEF:
+//        id = 5;  // thief/mage is only thief-first combo
+//        break;
+//    }
+//
+//    return(id);
+//}
+//
+////*********************************************************************
+////                      isOutdoors
+////*********************************************************************
+//
+//bool isOutdoors(Socket* sock) {
+//    if(sock && sock->getPlayer())
+//        return(sock->getPlayer()->getRoomParent()->isOutdoors());
+//    return(false);
+//}
 
 //*********************************************************************
 //                      initLanguages
@@ -1706,141 +1706,143 @@ bool isOutdoors(Socket* sock) {
 void Player::initLanguages() {
 
     switch(race) {
-    case DWARF:
-        learnLanguage(LDWARVEN);
-        learnLanguage(LGNOMISH);
-        learnLanguage(LKOBOLD);
-        learnLanguage(LGOBLINOID);
-        learnLanguage(LORCISH);
-        break;
-    case ELF:
-        learnLanguage(LELVEN);
-        learnLanguage(LGNOMISH);
-        learnLanguage(LORCISH);
-        break;
-    case HALFELF:
-        learnLanguage(LELVEN);
-        learnLanguage(LHALFLING);
-        break;
-    case HALFLING:
-        learnLanguage(LHALFLING);
-        learnLanguage(LGNOMISH);
-        break;
-    case ORC:
-        learnLanguage(LORCISH);
-        learnLanguage(LGIANTKIN);
-        break;
-    case HALFGIANT:
-        learnLanguage(LGIANTKIN);
-        learnLanguage(LOGRISH);
-        learnLanguage(LTROLL);
-        break;
-    case GNOME:
-        learnLanguage(LGNOMISH);
-        learnLanguage(LDWARVEN);
-        learnLanguage(LGOBLINOID);
-        learnLanguage(LKOBOLD);
-        break;
-    case TROLL:
-        learnLanguage(LTROLL);
-        break;
-    case HALFORC:
-        learnLanguage(LORCISH);
-        break;
-    case OGRE:
-        learnLanguage(LOGRISH);
-        learnLanguage(LGIANTKIN);
-        break;
-    case DARKELF:
-        learnLanguage(LDARKELVEN);
-        learnLanguage(LORCISH);
-        learnLanguage(LELVEN);
-        learnLanguage(LDWARVEN);
-        learnLanguage(LGNOMISH);
-        learnLanguage(LKOBOLD);
-        learnLanguage(LGOBLINOID);
-        break;
-    case GOBLIN:
-        learnLanguage(LGOBLINOID);
-        learnLanguage(LORCISH);
-        break;
-    case MINOTAUR:
-        learnLanguage(LMINOTAUR);
-        break;
-    case SERAPH:
-        learnLanguage(LELVEN);
-        learnLanguage(LCELESTIAL);
-        learnLanguage(LINFERNAL);
-        learnLanguage(LGNOMISH);
-        learnLanguage(LHALFLING);
-        learnLanguage(LABYSSAL);
-        break;
-    case KOBOLD:
-        learnLanguage(LKOBOLD);
-        learnLanguage(LGNOMISH);
-        learnLanguage(LDARKELVEN);
-        learnLanguage(LOGRISH);
-        learnLanguage(LGIANTKIN);
-        break;
-    case CAMBION:
-        learnLanguage(LINFERNAL);
-        learnLanguage(LDARKELVEN);
-        learnLanguage(LELVEN);
-        learnLanguage(LCELESTIAL);
-        learnLanguage(LORCISH);
-        learnLanguage(LGIANTKIN);
-        learnLanguage(LGOBLINOID);
-        break;
-    case BARBARIAN:
-        learnLanguage(LBARBARIAN);
-        break;
-    case KATARAN:
-        learnLanguage(LKATARAN);
-        break;
-    case TIEFLING:
-        learnLanguage(LHALFLING);
-        learnLanguage(LINFERNAL);
-        learnLanguage(LABYSSAL);
-        learnLanguage(LORCISH);
-        learnLanguage(LGOBLINOID);
-        learnLanguage(LTIEFLING);
-        break;
+        case DWARF:
+            learnLanguage(LDWARVEN);
+            learnLanguage(LGNOMISH);
+            learnLanguage(LKOBOLD);
+            learnLanguage(LGOBLINOID);
+            learnLanguage(LORCISH);
+            break;
+        case ELF:
+            learnLanguage(LELVEN);
+            learnLanguage(LGNOMISH);
+            learnLanguage(LORCISH);
+            break;
+        case HALFELF:
+            learnLanguage(LELVEN);
+            learnLanguage(LHALFLING);
+            break;
+        case HALFLING:
+            learnLanguage(LHALFLING);
+            learnLanguage(LGNOMISH);
+            break;
+        case ORC:
+            learnLanguage(LORCISH);
+            learnLanguage(LGIANTKIN);
+            break;
+        case HALFGIANT:
+            learnLanguage(LGIANTKIN);
+            learnLanguage(LOGRISH);
+            learnLanguage(LTROLL);
+            break;
+        case GNOME:
+            learnLanguage(LGNOMISH);
+            learnLanguage(LDWARVEN);
+            learnLanguage(LGOBLINOID);
+            learnLanguage(LKOBOLD);
+            break;
+        case TROLL:
+            learnLanguage(LTROLL);
+            break;
+        case HALFORC:
+            learnLanguage(LORCISH);
+            break;
+        case OGRE:
+            learnLanguage(LOGRISH);
+            learnLanguage(LGIANTKIN);
+            break;
+        case DARKELF:
+            learnLanguage(LDARKELVEN);
+            learnLanguage(LORCISH);
+            learnLanguage(LELVEN);
+            learnLanguage(LDWARVEN);
+            learnLanguage(LGNOMISH);
+            learnLanguage(LKOBOLD);
+            learnLanguage(LGOBLINOID);
+            break;
+        case GOBLIN:
+            learnLanguage(LGOBLINOID);
+            learnLanguage(LORCISH);
+            break;
+        case MINOTAUR:
+            learnLanguage(LMINOTAUR);
+            break;
+        case SERAPH:
+            learnLanguage(LELVEN);
+            learnLanguage(LCELESTIAL);
+            learnLanguage(LINFERNAL);
+            learnLanguage(LGNOMISH);
+            learnLanguage(LHALFLING);
+            learnLanguage(LABYSSAL);
+            break;
+        case KOBOLD:
+            learnLanguage(LKOBOLD);
+            learnLanguage(LGNOMISH);
+            learnLanguage(LDARKELVEN);
+            learnLanguage(LOGRISH);
+            learnLanguage(LGIANTKIN);
+            break;
+        case CAMBION:
+            learnLanguage(LINFERNAL);
+            learnLanguage(LDARKELVEN);
+            learnLanguage(LELVEN);
+            learnLanguage(LCELESTIAL);
+            learnLanguage(LORCISH);
+            learnLanguage(LGIANTKIN);
+            learnLanguage(LGOBLINOID);
+            break;
+        case BARBARIAN:
+            learnLanguage(LBARBARIAN);
+            break;
+        case KATARAN:
+            learnLanguage(LKATARAN);
+            break;
+        case TIEFLING:
+            learnLanguage(LHALFLING);
+            learnLanguage(LINFERNAL);
+            learnLanguage(LABYSSAL);
+            learnLanguage(LORCISH);
+            learnLanguage(LGOBLINOID);
+            learnLanguage(LTIEFLING);
+            break;
     } // End switch.
 
     switch(cClass) {
-    case THIEF:
-    case ASSASSIN:
-    case BARD:
-    case ROGUE:
-        learnLanguage(LTHIEFCANT);
-        break;
-    case DRUID:
-    case RANGER:
-        learnLanguage(LDRUIDIC);
-        break;
-    case WEREWOLF:
-        learnLanguage(LWOLFEN);
-        break;
-    case MAGE:
-    case LICH:
-        learnLanguage(LARCANIC);
-        break;
-    case CLERIC:
-        switch(deity) {
-        case ARAMON:
-            learnLanguage(LINFERNAL);
-            break;
-        case ENOCH:
-            learnLanguage(LCELESTIAL);
-            break;
-        case ARES:
-            learnLanguage(LBARBARIAN);
-            break;
-        case KAMIRA:
+        case CreatureClass::THIEF:
+        case CreatureClass::ASSASSIN:
+        case CreatureClass::BARD:
+        case CreatureClass::ROGUE:
             learnLanguage(LTHIEFCANT);
             break;
-        }
-        break;
+        case CreatureClass::DRUID:
+        case CreatureClass::RANGER:
+            learnLanguage(LDRUIDIC);
+            break;
+        case CreatureClass::WEREWOLF:
+            learnLanguage(LWOLFEN);
+            break;
+        case CreatureClass::MAGE:
+        case CreatureClass::LICH:
+            learnLanguage(LARCANIC);
+            break;
+        case CreatureClass::CLERIC:
+            switch(deity) {
+            case ARAMON:
+                learnLanguage(LINFERNAL);
+                break;
+            case ENOCH:
+                learnLanguage(LCELESTIAL);
+                break;
+            case ARES:
+                learnLanguage(LBARBARIAN);
+                break;
+            case KAMIRA:
+                learnLanguage(LTHIEFCANT);
+                break;
+            }
+            break;
+        default:
+            break;
     }
     return;
 }
@@ -1878,7 +1880,7 @@ void Player::doRecall(int roomNum) {
 BaseRoom* Creature::recallWhere() {
     // A builder should never get this far, but let's not chance it.
     // Only continue if they can't load the perm_low_room.
-    if(cClass == BUILDER) {
+    if(cClass == CreatureClass::BUILDER) {
         UniqueRoom* uRoom=0;
         CatRef cr;
         cr.setArea("test");
@@ -1919,7 +1921,7 @@ BaseRoom* Creature::teleportWhere() {
 
     // A builder should never get this far, but let's not chance it.
     // Only continue if they can't load the perm_low_room.
-    if(cClass == BUILDER) {
+    if(cClass == CreatureClass::BUILDER) {
         CatRef cr;
         cr.setArea("test");
         cr.id = 1;
@@ -2005,7 +2007,7 @@ bool UniqueRoom::canPortHere(const Creature* creature) const {
         flagIsSet(R_IS_STORAGE_ROOM) ||
         flagIsSet(R_ETHEREAL_PLANE) ||
         isConstruction() ||
-        whatTraining()
+        hasTraining()
     )
         return(false);
     if(isFull())
@@ -2054,7 +2056,7 @@ void Player::loseRage() {
     printColor("^rYour rage diminishes.^x\n");
     clearFlag(P_BERSERKED_OLD);
 
-    if(cClass == CLERIC && deity == ARES)
+    if(cClass == CreatureClass::CLERIC && deity == ARES)
         strength.upgradeSetCur(strength.getCur(false) - 30);
     else
         strength.upgradeSetCur(strength.getCur(false) - 50);
@@ -2069,7 +2071,7 @@ void Player::loseRage() {
 void Player::losePray() {
     if(!flagIsSet(P_PRAYED_OLD))
         return;
-    if(cClass != DEATHKNIGHT) {
+    if(cClass != CreatureClass::DEATHKNIGHT) {
         printColor("^yYou feel less pious.\n");
         piety.upgradeSetCur(piety.getCur(false) - 50);
     } else {
@@ -2159,45 +2161,45 @@ int Player::getSneakChance()  {
     int chance = MIN(70, 5 + 2 * sLvl + 3 * bonus((int) dexterity.getCur()));
 
     switch(cClass) {
-    case THIEF:
-        if(cClass2 == MAGE)
+    case CreatureClass::THIEF:
+        if(cClass2 == CreatureClass::MAGE)
             chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
         else
             chance = tMIN(90, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
 
         break;
-    case ASSASSIN:
+    case CreatureClass::ASSASSIN:
         chance = MIN(90, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
         break;
-    case CLERIC:
-        if(cClass2 == ASSASSIN)
+    case CreatureClass::CLERIC:
+        if(cClass2 == CreatureClass::ASSASSIN)
             chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
         else if(deity == KAMIRA || deity == ARACHNUS)
             chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) piety.getCur()));
 
         break;
-    case FIGHTER:
-        if(cClass2 == THIEF)
+    case CreatureClass::FIGHTER:
+        if(cClass2 == CreatureClass::THIEF)
             chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
 
         break;
-    case MAGE:
-        if(cClass2 == THIEF || cClass2 == ASSASSIN)
+    case CreatureClass::MAGE:
+        if(cClass2 == CreatureClass::THIEF || cClass2 == CreatureClass::ASSASSIN)
             chance = tMIN(90, 5 + 8 * MAX(1,sLvl-3) + 3 * bonus((int) dexterity.getCur()));
 
         break;
-    case DRUID:
+    case CreatureClass::DRUID:
         if(getConstRoomParent()->isForest())
             chance = tMIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
 
         break;
-    case RANGER:
+    case CreatureClass::RANGER:
         if(getConstRoomParent()->isForest())
             chance = tMIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
         else
             chance = tMIN(83, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
         break;
-    case ROGUE:
+    case CreatureClass::ROGUE:
         chance = tMIN(85, 5 + 7 * sLvl + 3 * bonus((int) dexterity.getCur()));
         break;
     default:
@@ -2210,7 +2212,7 @@ int Player::getSneakChance()  {
     if(isEffected("camouflage")) {
         if(getConstRoomParent()->isOutdoors())
             chance += 15;
-        if(cClass == DRUID && getConstRoomParent()->isForest())
+        if(cClass == CreatureClass::DRUID && getConstRoomParent()->isForest())
             chance += 5;
     }
 
@@ -2309,7 +2311,7 @@ bstring Player::getWhoString(bool whois, bool color, bool ignoreIllusion) const 
         whoStr << (color ? "^r" : "") << "O ";
     else if( (flagIsSet(P_NO_PKILL) || flagIsSet(P_DIED_IN_DUEL) ||
             getConstRoomParent()->isPkSafe()) &&
-            (flagIsSet(P_CHAOTIC) || clan || cClass == CLERIC) )
+            (flagIsSet(P_CHAOTIC) || clan || cClass == CreatureClass::CLERIC) )
         whoStr << (color ? "^y" : "") << "N ";
     else if(flagIsSet(P_CHAOTIC)) // Chaotic
         whoStr << (color ? "^y" : "") << "C ";
@@ -2657,8 +2659,8 @@ void renamePlayerFiles(const char *old_name, const char *new_name) {
 bool Player::checkHeavyRestrict(const bstring& skill) const {
     // If we aren't one of the classes that can use heavy armor, but with restrictions
     // immediately return false
-    if(! ((getClass() == FIGHTER && getSecondClass() == THIEF) ||
-          (getClass() == RANGER)) )
+    if(! ((getClass() == CreatureClass::FIGHTER && getSecondClass() == CreatureClass::THIEF) ||
+          (getClass() == CreatureClass::RANGER)) )
           return(false);
 
     // Allows us to do a blank check and see if the player's class is one of the heavy armor
@@ -2667,7 +2669,7 @@ bool Player::checkHeavyRestrict(const bstring& skill) const {
         return(true);
 
 
-    bool mediumOK = (getClass() == RANGER);
+    bool mediumOK = (getClass() == CreatureClass::RANGER);
 
     for(int i = 0 ; i < MAXWEAR ; i++) {
         if( ready[i] &&

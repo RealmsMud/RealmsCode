@@ -135,7 +135,7 @@ int cmdBite(Player* player, cmd* cmnd) {
         player->hp.increase(damage.getDrain());
     }
 
-    if(player->getClass() == CARETAKER)
+    if(player->getClass() == CreatureClass::CARETAKER)
         log_immort(false,player, "%s bites %s.\n", player->getCName(), target->getCName());
 
     target->printColor("%M bites you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), dmgnum);
@@ -147,7 +147,7 @@ int cmdBite(Player* player, cmd* cmnd) {
     player->statistics.attackDamage(dmgnum, "bite");
 
     if(player->doDamage(target, damage.get(), CHECK_DIE)) {
-        if(player->getClass() == CARETAKER)
+        if(player->getClass() == CreatureClass::CARETAKER)
             log_immort(true, player, "%s killed %s with a bite.\n", player->getCName(), target->getCName());
     } else {
         if(!induel(player, pTarget)) {
@@ -329,7 +329,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(target->isPlayer() && target->getClass() == RANGER && target->getLevel() > player->getLevel()) {
+    if(target->isPlayer() && target->getClass() == CreatureClass::RANGER && target->getLevel() > player->getLevel()) {
         player->print("%M is immune to your hypnotizing gaze.\n", target);
         return(0);
     }
@@ -636,7 +636,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
     broadcast(player->getSock(), target->getSock(), player->getParent(), "%M drained %N's life.", player, target);
 
     if(player->doDamage(target, damage.get(), CHECK_DIE)) {
-        if(player->getClass() == CARETAKER && pTarget)
+        if(player->getClass() == CreatureClass::CARETAKER && pTarget)
             log_immort(true, player, "%s killed %s with the drain.\n", player->getCName(), target->getCName());
     }
 

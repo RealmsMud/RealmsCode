@@ -248,7 +248,7 @@ void Monster::beneficialCaster() {
             }
         }
 
-        if(ply->getClass() == LICH)
+        if(ply->getClass() == CreatureClass::LICH)
             continue;
         if(ply->flagIsSet(P_POISONED_BY_PLAYER) && mrand(1,100) >= 3)
             continue;
@@ -265,12 +265,12 @@ void Monster::beneficialCaster() {
                 heal = mrand(1,6) + bonus((int) piety.getCur());
                 heal = MAX(1, heal);
 
-                if(cClass == CLERIC && clan != 12) {
+                if(cClass == CreatureClass::CLERIC && clan != 12) {
                     heal *= 2;
                     heal += (level / 2);
                 }
-                if( (cClass == CLERIC && clan == 11) ||
-                    (cClass == PALADIN)
+                if( (cClass == CreatureClass::CLERIC && clan == 11) ||
+                    (cClass == CreatureClass::PALADIN)
                 )
                     heal += mrand(1,4);
                 ply->hp.increase(heal);
@@ -291,12 +291,12 @@ void Monster::beneficialCaster() {
                 mp.decrease(4);
                 heal = mrand(6,9) + bonus((int) piety.getCur());
                 heal = MAX(1, heal);
-                if(cClass == CLERIC && clan != 12) {
+                if(cClass == CreatureClass::CLERIC && clan != 12) {
                     heal *= 2;
                     heal += (level / 2);
                 }
-                if( (cClass == CLERIC && clan == 11) ||
-                    (cClass == PALADIN)
+                if( (cClass == CreatureClass::CLERIC && clan == 11) ||
+                    (cClass == CreatureClass::PALADIN)
                 )
                     heal += mrand(1,4);
                 ply->hp.increase(heal);
@@ -308,7 +308,7 @@ void Monster::beneficialCaster() {
         if(spellIsKnown(S_HEAL)) {
 
             chance = mrand(1,100);
-            if((mp.getCur() >= 25) && (chance < 3) && (cClass == CLERIC && clan != 12) &&
+            if((mp.getCur() >= 25) && (chance < 3) && (cClass == CreatureClass::CLERIC && clan != 12) &&
                     (ply->hp.getCur() < (ply->hp.getMax()/4)) && (ply->getLevel() >= 5)) {
 
                 ply->print("%M casts a heal spell on you.\n", this);
@@ -509,7 +509,7 @@ int Monster::castSpell(Creature *target) {
         splNo == S_DAMNATION ||
         splNo == S_FEEBLEMIND ||
         splNo == S_ENFEEBLEMENT ||
-        (splNo == S_HEAL && target->getClass() == LICH) ||
+        (splNo == S_HEAL && target->getClass() == CreatureClass::LICH) ||
         (splNo == S_DISPEL_EVIL && target->getAdjustedAlignment() < NEUTRAL) ||
         (splNo == S_DISPEL_GOOD && target->getAdjustedAlignment() > NEUTRAL) ||
         splNo == S_JUDGEMENT ||
@@ -617,13 +617,13 @@ bool Monster::petCaster() {
         mp.decrease(4);
 
         heal = MAX(bonus((int) intelligence.getCur()), bonus((int) piety.getCur())) +
-               ((cClass == CLERIC) ?
+               ((cClass == CreatureClass::CLERIC) ?
                 level + mrand(1, 1 + level / 2) : 0) +
-               (cClass == PALADIN ?
+               (cClass == CreatureClass::PALADIN ?
                 level / 2 + mrand(1, 1 + level / 3) : 0) +
-               ((isEffected("vampirism") || cClass == BARD || cClass == DEATHKNIGHT) ?
+               ((isEffected("vampirism") || cClass == CreatureClass::BARD || cClass == CreatureClass::DEATHKNIGHT) ?
                 mrand(1, 1 + level / 5) + 2 : 0) +
-               ((isEffected("lycanthropy") || cClass == MONK) ? level / 5 +
+               ((isEffected("lycanthropy") || cClass == CreatureClass::MONK) ? level / 5 +
                 mrand(1, 1 + level / 7) + 2 : 0) +
                dice(2, 7, 0);
 
@@ -642,13 +642,13 @@ bool Monster::petCaster() {
         mp.decrease(2);
 
         heal = MAX(bonus((int) intelligence.getCur()),bonus((int) piety.getCur())) +
-               ((cClass == CLERIC) ? level / 2 +
+               ((cClass == CreatureClass::CLERIC) ? level / 2 +
                 mrand(1, 1 + level / 2) : 0) +
-               (cClass == PALADIN ?
+               (cClass == CreatureClass::PALADIN ?
                 level / 3 + mrand(1, 1 + level / 4) : 0) +
-               ((isEffected("vampirism") || cClass == BARD || cClass == DEATHKNIGHT) ?
+               ((isEffected("vampirism") || cClass == CreatureClass::BARD || cClass == CreatureClass::DEATHKNIGHT) ?
                 mrand(1, 1 + level / 5) : 0) +
-               ((isEffected("lycanthropy") || cClass == MONK) ? level/5 +
+               ((isEffected("lycanthropy") || cClass == CreatureClass::MONK) ? level/5 +
                 mrand(1,1+level/7) : 0)
                + mrand(1, 8);
 
@@ -667,13 +667,13 @@ bool Monster::petCaster() {
         mp.decrease(4);
 
         heal = MAX(bonus((int) intelligence.getCur()), bonus((int) piety.getCur())) +
-               ((cClass == CLERIC) ?
+               ((cClass == CreatureClass::CLERIC) ?
                 level + mrand(1, 1 + level / 2) : 0) +
-               (cClass == PALADIN ?
+               (cClass == CreatureClass::PALADIN ?
                 level / 2 + mrand(1, 1 + level / 3) : 0) +
-               ((isEffected("vampirism") || cClass == BARD || cClass == DEATHKNIGHT) ?
+               ((isEffected("vampirism") || cClass == CreatureClass::BARD || cClass == CreatureClass::DEATHKNIGHT) ?
                 mrand(1, 1 + level / 5) + 2 : 0) +
-               ((isEffected("lycanthropy") || cClass == MONK) ? level / 5 +
+               ((isEffected("lycanthropy") || cClass == CreatureClass::MONK) ? level / 5 +
                 mrand(1, 1 + level / 7) + 2 : 0) +
                dice(2, 7, 0);
 
@@ -691,13 +691,13 @@ bool Monster::petCaster() {
         mp.decrease(2);
 
         heal = MAX(bonus((int) intelligence.getCur()),bonus((int) piety.getCur())) +
-               ((cClass == CLERIC) ? level / 2 +
+               ((cClass == CreatureClass::CLERIC) ? level / 2 +
                 mrand(1, 1 + level / 2) : 0) +
-               (cClass == PALADIN ?
+               (cClass == CreatureClass::PALADIN ?
                 level / 3 + mrand(1, 1 + level / 4) : 0) +
-               ((isEffected("vampirism") || cClass == BARD || cClass == DEATHKNIGHT) ?
+               ((isEffected("vampirism") || cClass == CreatureClass::BARD || cClass == CreatureClass::DEATHKNIGHT) ?
                 mrand(1, 1 + level / 5) : 0) +
-               ((isEffected("lycanthropy") || cClass == MONK) ? level/5 +
+               ((isEffected("lycanthropy") || cClass == CreatureClass::MONK) ? level/5 +
                 mrand(1,1+level/7) : 0)
                + mrand(1, 8);
 

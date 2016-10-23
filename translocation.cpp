@@ -33,7 +33,7 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
     Object  *object=0;
     int     cost;
 
-    if(pPlayer->getClass() == BUILDER) {
+    if(pPlayer->getClass() == CreatureClass::BUILDER) {
         pPlayer->print("You cannot cast this spell.\n");
         return(0);
     }
@@ -43,7 +43,7 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(pPlayer->getClass() != MAGE && pPlayer->getClass() != LICH && !pPlayer->isCt() && spellData->how == CastType::CAST) {
+    if(pPlayer->getClass() !=  CreatureClass::MAGE && pPlayer->getClass() !=  CreatureClass::LICH && !pPlayer->isCt() && spellData->how == CastType::CAST) {
         pPlayer->print("Only mages and liches may cast that spell.\n");
         return(0);
     }
@@ -159,12 +159,12 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
     bool    destroy=false;
 
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot cast this spell.\n");
         return(0);
     }
 
-    if(player->getClass() != MAGE && player->getClass() != LICH && !player->isCt()) {
+    if(player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::LICH && !player->isCt()) {
         player->print("Your class is not arcanely attuned enough to cast that spell.\n");
         return(0);
     }
@@ -367,7 +367,7 @@ int splPortal(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     if(!player->isCt()) {
-        if(player->getClass() != MAGE && player->getClass() != LICH) {
+        if(player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::LICH) {
             pPlayer->print("Your class is unable to cast that spell.\n");
             return(0);
         }
@@ -576,9 +576,9 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(spellData->how == CastType::CAST) {
         if( !player->isCt() &&
-            player->getClass() != MAGE &&
-            player->getClass() != LICH &&
-            player->getClass() != BARD
+            player->getClass() !=  CreatureClass::MAGE &&
+            player->getClass() !=  CreatureClass::LICH &&
+            player->getClass() !=  CreatureClass::BARD
         ) {
             player->print("Your class is unable to cast that spell.\n");
             return(0);
@@ -885,7 +885,7 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
     UniqueRoom  *new_rom=0;
     CatRef  cr;
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot cast this spell.\n");
         return(0);
     }
@@ -1013,7 +1013,7 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
 int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *target=0;
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot cast this spell.\n");
         return(0);
     }
@@ -1021,9 +1021,9 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!player->isCt()) {
         // wizard/lich/cleric can cast at level 7
         // everyone else can cast at 10
-        if( player->getClass() == MAGE ||
-            player->getClass() == LICH ||
-            player->getClass() == CLERIC
+        if( player->getClass() == CreatureClass::MAGE ||
+            player->getClass() == CreatureClass::LICH ||
+            player->getClass() == CreatureClass::CLERIC
         ) {
             if(player->getLevel() < 7) {
                 player->print("You must atleast level 7 to cast this spell.\n");
@@ -1083,7 +1083,7 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
                 player->getRoomParent()->flagIsSet(R_SHOP_STORAGE) ||
                 player->flagIsSet(P_NO_CAST_SUMMON) ||
                 player->getRoomParent()->flagIsSet(R_ONE_PERSON_ONLY) ||
-                player->getRoomParent()->whatTraining()
+                player->getRoomParent()->hasTraining()
             ) &&
             !player->checkStaff("The spell fizzles.\nYou cannot summon anyone to this location.\n")
         )
@@ -1158,15 +1158,15 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!pPlayer)
         return(0);
     oldRoom = pPlayer->getRoomParent();
-    bool groupTrack = (pPlayer->getClass() == RANGER || pPlayer->getClass() == DRUID) && pPlayer->getLevel() >= 16;
+    bool groupTrack = (pPlayer->getClass() == CreatureClass::RANGER || pPlayer->getClass() == CreatureClass::DRUID) && pPlayer->getLevel() >= 16;
 
-    if(pPlayer->getClass() == BUILDER) {
+    if(pPlayer->getClass() == CreatureClass::BUILDER) {
         pPlayer->print("You cannot cast this spell.\n");
         return(0);
     }
 
-    if( pPlayer->getClass() != RANGER &&
-        pPlayer->getClass() != DRUID &&
+    if( pPlayer->getClass() !=  CreatureClass::RANGER &&
+        pPlayer->getClass() !=  CreatureClass::DRUID &&
         !pPlayer->isCt() &&
         spellData->how == CastType::CAST
     ) {
@@ -1215,7 +1215,7 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
                 target->getRoomParent()->flagIsSet(R_LIMBO) ||
                 target->getRoomParent()->isFull() ||
                 target->getRoomParent()->isConstruction() ||
-                target->getRoomParent()->whatTraining()
+                target->getRoomParent()->hasTraining()
             ) || (
                 pPlayer->getRoomParent()->flagIsSet(R_NO_TRACK_OUT) ||
                 pPlayer->getRoomParent()->flagIsSet(R_LIMBO) ||
@@ -1341,13 +1341,13 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *caster = player->getAsPlayer();
     Player  *target=0;
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot cast this spell.\n");
         return(0);
     }
 
-    if( player->getClass() != CLERIC &&
-        player->getClass() != PALADIN &&
+    if( player->getClass() !=  CreatureClass::CLERIC &&
+        player->getClass() !=  CreatureClass::PALADIN &&
         player->getType()== PLAYER &&
         !player->isCt() && spellData->how == CastType::CAST
     ) {
@@ -1517,9 +1517,9 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!pPlayer)
         return(0);
 
-    if( pPlayer->getClass() == MAGE ||
-        pPlayer->getClass() == LICH ||
-        pPlayer->getSecondClass() == MAGE ||
+    if( pPlayer->getClass() == CreatureClass::MAGE ||
+        pPlayer->getClass() == CreatureClass::LICH ||
+        pPlayer->getSecondClass() == CreatureClass::MAGE ||
         pPlayer->isStaff()
     )
         canCast = true;

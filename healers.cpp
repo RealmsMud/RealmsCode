@@ -300,7 +300,7 @@ int cmdLayHands(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        if(creature->pFlagIsSet(P_LINKDEAD) && creature->getClass() != LICH) {
+        if(creature->pFlagIsSet(P_LINKDEAD) && creature->getClass() !=  CreatureClass::LICH) {
             player->print("That won't work on %N right now.\n", creature);
             return(0);
         }
@@ -362,7 +362,7 @@ int cmdPray(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->getClass() == DEATHKNIGHT) {
+    if(player->getClass() == CreatureClass::DEATHKNIGHT) {
         if(player->isEffected("strength")) {
             player->print("Your magically enhanced strength prevents you from praying.\n");
             return(0);
@@ -390,7 +390,7 @@ int cmdPray(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->getClass()==DEATHKNIGHT)
+    if(player->getClass()==CreatureClass::DEATHKNIGHT)
         chance = MIN(85, (int)(player->getSkillLevel("pray") * 10) + (bonus((int) player->strength.getCur()) * 5));
     else
         chance = MIN(85, (int)(player->getSkillLevel("pray") * 20) + bonus((int) player->piety.getCur()));
@@ -398,7 +398,7 @@ int cmdPray(Player* player, cmd* cmnd) {
     if(mrand(1, 100) <= chance) {
         player->lasttime[LT_PRAY].ltime = t;
 
-        if(player->getClass() != DEATHKNIGHT) {
+        if(player->getClass() !=  CreatureClass::DEATHKNIGHT) {
             broadcast(player->getSock(), player->getParent(), "%M bows %s head in prayer.", player, player->hisHer());
             player->addEffect("pray", 450L, 50);
             player->lasttime[LT_PRAY].interval = 600;
@@ -410,7 +410,7 @@ int cmdPray(Player* player, cmd* cmnd) {
         }
         player->checkImprove("pray", true);
     } else {
-        if(player->getClass() != DEATHKNIGHT) {
+        if(player->getClass() !=  CreatureClass::DEATHKNIGHT) {
             player->print("Your prayers were not answered.\n");
         } else {
             player->print("The evil in your soul fails to aid you.\n");
@@ -427,7 +427,7 @@ int cmdPray(Player* player, cmd* cmnd) {
 bool Creature::kamiraLuck(Creature *attacker) {
     int chance=0;
 
-    if(!(cClass == CLERIC && deity == KAMIRA) && !isCt())
+    if(!(cClass == CreatureClass::CLERIC && deity == KAMIRA) && !isCt())
         return(false);
 
     chance = (level / 10)+3;
@@ -472,7 +472,7 @@ int Creature::getTurnChance(Creature* target) {
     bns = bonus((int)piety.getCur());
 
     chance = (int)((level - target->getLevel())*20) +
-            bns*5 + (getClass() == PALADIN ? 15:25);
+            bns*5 + (getClass() == CreatureClass::PALADIN ? 15:25);
     chance = MIN(chance, 80);
 
     if(target->isPlayer()) {
@@ -665,8 +665,8 @@ int cmdRenounce(Player* player, cmd* cmnd) {
     if(target->isMonster()) {
         Monster* mTarget = target->getAsMonster();
         if( (!player->isCt()) &&
-            (((player->getClass() == PALADIN) && (target->getClass() != DEATHKNIGHT)) ||
-            ((player->getClass() == DEATHKNIGHT) && (target->getClass() != PALADIN)))
+            (((player->getClass() == CreatureClass::PALADIN) && (target->getClass() !=  CreatureClass::DEATHKNIGHT)) ||
+            ((player->getClass() == CreatureClass::DEATHKNIGHT) && (target->getClass() !=  CreatureClass::PALADIN)))
         ) {
             player->print("%s is not of your opposing class.\n", target->upHeShe());
             return(0);
@@ -748,8 +748,8 @@ int cmdRenounce(Player* player, cmd* cmnd) {
         return(0);
     } else {
         if( (!player->isCt()) &&
-            (((player->getClass() == PALADIN) && (target->getClass() != DEATHKNIGHT)) ||
-            ((player->getClass() == DEATHKNIGHT) && (target->getClass() != PALADIN)))
+            (((player->getClass() == CreatureClass::PALADIN) && (target->getClass() !=  CreatureClass::DEATHKNIGHT)) ||
+            ((player->getClass() == CreatureClass::DEATHKNIGHT) && (target->getClass() !=  CreatureClass::PALADIN)))
         ) {
             player->print("%s is not of your opposing class.\n", target->upHeShe());
             return(0);
@@ -1051,7 +1051,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         if(!player->canBuildObjects()) {
             player->print("You are not allowed to use items.\n");
             return(0);
@@ -1079,7 +1079,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        if(player->getClass() == LICH) {
+        if(player->getClass() == CreatureClass::LICH) {
             player->print("Liches don't bleed. Stop wasting your time and regenerate!\n");
             object->decShotsCur();
             return(0);
@@ -1163,7 +1163,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        if(creature->getClass() == LICH) {
+        if(creature->getClass() == CreatureClass::LICH) {
             player->print("The aura of death around %N causes bandaging to fail.\n",creature);
             object->decShotsCur();
             return(0);
@@ -1224,7 +1224,7 @@ int splHallow(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
 
     if(spellData->how == CastType::CAST) {
-        if(player->getClass() != CLERIC && !player->isCt()) {
+        if(player->getClass() !=  CreatureClass::CLERIC && !player->isCt()) {
             player->print("Only clerics may cast that spell.\n");
             return(0);
         }
@@ -1258,7 +1258,7 @@ int splUnhallow(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
 
     if(spellData->how == CastType::CAST) {
-        if(player->getClass() != CLERIC && !player->isCt()) {
+        if(player->getClass() !=  CreatureClass::CLERIC && !player->isCt()) {
             player->print("Only clerics may cast that spell.\n");
             return(0);
         }

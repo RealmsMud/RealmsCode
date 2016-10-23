@@ -486,7 +486,7 @@ void Player::dieToPlayer(Player *killer) {
 
     if(killer->isEffected("lycanthropy") && killer->getLevel() >= 13)
         strcpy(deathstring, "eaten");
-    else if(killer->getClass() == ASSASSIN && killer->getLevel() >= 13)
+    else if(killer->getClass() == CreatureClass::ASSASSIN && killer->getLevel() >= 13)
         strcpy(deathstring, "assassinated");
     else
         strcpy(deathstring, "killed");
@@ -583,13 +583,13 @@ bool Player::isClanKill(const Player *killer) const {
 
 
     // Dk vs Paly, Paly vs Dk, or Dk vs Dk
-    if( (killer->getClass() == DEATHKNIGHT && cClass == PALADIN) ||
-        (killer->getClass() == DEATHKNIGHT && (cClass == PALADIN || cClass == DEATHKNIGHT))
+    if( (killer->getClass() == CreatureClass::DEATHKNIGHT && cClass == CreatureClass::PALADIN) ||
+        (killer->getClass() == CreatureClass::DEATHKNIGHT && (cClass == CreatureClass::PALADIN || cClass == CreatureClass::DEATHKNIGHT))
     )
         return(true);
 
-    if( ((killer->getClass() == CLERIC && killer->flagIsSet(P_CHAOTIC) && killer->getLevel() >= 7) && flagIsSet(P_PLEDGED)) ||
-        ((cClass == CLERIC && flagIsSet(P_CHAOTIC) && level >= 7) && killer->flagIsSet(P_PLEDGED))
+    if( ((killer->getClass() == CreatureClass::CLERIC && killer->flagIsSet(P_CHAOTIC) && killer->getLevel() >= 7) && flagIsSet(P_PLEDGED)) ||
+        ((cClass == CreatureClass::CLERIC && flagIsSet(P_CHAOTIC) && level >= 7) && killer->flagIsSet(P_PLEDGED))
     )
         return(true);
 
@@ -630,7 +630,7 @@ int Player::guildKill(Player *killer) {
     if(killer->halftolevel())
         total = 0;
 
-    if(killer->getSecondClass())
+    if(killer->hasSecondClass())
         total = total * 3 / 4;
 
     penalty = MIN(mrand(1000,1500), (bns*3)/2);
@@ -707,7 +707,7 @@ int Player::godKill(Player *killer) {
     if(killer->halftolevel())
         total = 0;
 
-    if(killer->getSecondClass())
+    if(killer->hasSecondClass())
         total = total * 3 / 4;
 
     penalty = MIN(mrand(1000,1500), (bns*3)/2);
@@ -758,7 +758,7 @@ int Player::clanKill(Player *killer) {
     int expGain = 0, expLoss = 0;
 
     // Paly's shouldn't be killing each other
-    if(cClass == PALADIN && killer->getClass() == PALADIN && deity == killer->getDeity())
+    if(cClass == CreatureClass::PALADIN && killer->getClass() == CreatureClass::PALADIN && deity == killer->getDeity())
         penalty = true;
     // Clan members should not be killing members of their own clan
     if(clan == killer->getClan())
@@ -774,7 +774,7 @@ int Player::clanKill(Player *killer) {
 
         if(killer->halftolevel())
             expGain = 0;
-        if(killer->getSecondClass())
+        if(killer->hasSecondClass())
             expGain = expGain * 3 / 4;
 
         print("You have been bested!\nYou lose %d experience.\n", expLoss);
@@ -1123,7 +1123,7 @@ void Player::resetPlayer(Creature *killer) {
     )
         same = true;
 
-    if(cClass == BUILDER) {
+    if(cClass == CreatureClass::BUILDER) {
         same = true;
         print("*** You died ***\n");
         broadcast(::isStaff, "^G### Sadly, %s was killed by %s.", getCName(), killer->getCName());
@@ -1525,7 +1525,7 @@ void Creature::adjustExperience(Monster* victim, int& expAmount, int& holidayExp
     if(player->getRace() == HUMAN && expAmount)
         expAmount += MAX(mrand(4,6),expAmount/3/10);
 
-        if(player->getSecondClass()) {
+        if(player->hasSecondClass()) {
             // Penalty is 12.5% at level 30 and above
             if(player->level >= 30)
                 expAmount = (expAmount*7)/8;
@@ -1533,7 +1533,7 @@ void Creature::adjustExperience(Monster* victim, int& expAmount, int& holidayExp
                 expAmount = (expAmount*3)/4;
         }
 //  // All experience is multiplied by 3/4 for a multi-classed player
-//  if(player->getSecondClass())
+//  if(player->hasSecondClass())
 //      expAmount = (expAmount*3)/4;
 
     int levelDiff = abs((int)player->getLevel() - (int)victim->getLevel());

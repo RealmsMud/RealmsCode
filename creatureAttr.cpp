@@ -26,7 +26,9 @@
 //                      getClass
 //*********************************************************************
 
-unsigned short Creature::getClass() const { return(cClass); }
+CreatureClass Creature::getClass() const { return(cClass); }
+
+int Creature::getClassInt() const { return(static_cast<int>(cClass)); }
 
 
 //*********************************************************************
@@ -197,28 +199,26 @@ void Creature::setExperience(unsigned long e) { experience = tMIN<unsigned long>
 //                      setClass
 //*********************************************************************
 
-void Creature::setClass(unsigned short c) {
-    c = tMIN<unsigned short>(CLASS_COUNT-1, c);
-
-    if(cClass == PUREBLOOD && c != PUREBLOOD)
+void Creature::setClass(CreatureClass c) {
+    if(cClass == CreatureClass::PUREBLOOD && c != CreatureClass::PUREBLOOD)
         removeEffect("vampirism");
-    else if(cClass == WEREWOLF && c != WEREWOLF)
+    else if(cClass == CreatureClass::WEREWOLF && c != CreatureClass::WEREWOLF)
         removeEffect("lycanthropy");
 
-    if(cClass != PUREBLOOD && c == PUREBLOOD) {
+    if(cClass != CreatureClass::PUREBLOOD && c == CreatureClass::PUREBLOOD) {
         if(!isEffected("vampirism")) {
             addPermEffect("vampirism");
             if(isPlayer())
                 getAsPlayer()->makeVampire();
         }
-    } else if(cClass != WEREWOLF && c == WEREWOLF) {
+    } else if(cClass != CreatureClass::WEREWOLF && c == CreatureClass::WEREWOLF) {
         if(!isEffected("lycanthropy")) {
             addPermEffect("lycanthropy");
             if(isPlayer())
                 getAsPlayer()->makeWerewolf();
         }
     }
-    if(c == LICH) {
+    if(c == CreatureClass::LICH) {
         // Liches don't get hp bonus for con
         constitution.setInfluences(nullptr);
         hp.setInfluencedBy(nullptr);
@@ -525,7 +525,8 @@ void Monster::setTalk(bstring t) { talk = t; talk.Replace("*CR*", "\n"); }
 //                      getSecondClass
 //*********************************************************************
 
-unsigned short Player::getSecondClass() const { return(cClass2); }
+CreatureClass Player::getSecondClass() const { return(cClass2); }
+bool Player::hasSecondClass() const { return(cClass2 != CreatureClass::NONE); }
 
 //*********************************************************************
 //                      getGuild
@@ -767,7 +768,7 @@ void Player::setActualLevel(unsigned short l) { actual_level = tMAX<unsigned sho
 //                      setSecondClass
 //*********************************************************************
 
-void Player::setSecondClass(unsigned short c) { cClass2 = tMAX<unsigned short>(0, tMIN<unsigned short>(CLASS_COUNT - 1, c)); }
+void Player::setSecondClass(CreatureClass c) { cClass2 = c; }
 
 //*********************************************************************
 //                      setGuild
@@ -1001,7 +1002,8 @@ void Creature::crtReset() {
     version = "0.00";
 
     fd = -1;
-    level = cClass = race = alignment = experience =
+    cClass = CreatureClass::NONE;
+    level = race = alignment = experience =
         temp_experience = clan = 0;
     size = NO_SIZE;
     type = PLAYER;
@@ -1118,7 +1120,8 @@ void Player::reset() {
     crtReset();
     //playing = NULL;
     wrap = -1;
-    cClass2 = wimpy = 0;
+    cClass2 = CreatureClass::NONE;
+    wimpy = 0;
     barkskin = 0;
     weaponTrains = 0;
     bank.zero();
@@ -1129,7 +1132,8 @@ void Player::reset() {
     tickDmg = pkwon = pkin = lastLogin = lastInterest = uniqueObjId = 0;
 
     memset(songs, 0, sizeof(songs));
-    guild = guildRank = cClass2 = 0;
+    guild = guildRank = 0;
+    cClass2 = CreatureClass::NONE;
 
     int i;
     actual_level = warnings = 0;
@@ -1670,7 +1674,7 @@ bool Creature::isWatcher() const {
 bool Creature::isStaff() const {
     if(isMonster())
         return(false);
-    return(cClass >= BUILDER);
+    return(cClass >= CreatureClass::BUILDER);
 }
 
 //*********************************************************************
@@ -1680,7 +1684,7 @@ bool Creature::isStaff() const {
 bool Creature::isCt() const {
     if(isMonster())
         return(false);
-    return(cClass >= CARETAKER);
+    return(cClass >= CreatureClass::CARETAKER);
 }
 
 //*********************************************************************
@@ -1690,7 +1694,7 @@ bool Creature::isCt() const {
 bool Creature::isDm() const {
     if(isMonster())
         return(false);
-    return(cClass == DUNGEONMASTER);
+    return(cClass == CreatureClass::DUNGEONMASTER);
 }
 
 //*********************************************************************
@@ -1964,9 +1968,9 @@ const char *Creature::upHeShe() const {
 
 bstring Player::getClassString() const {
     std::ostringstream cStr;
-    cStr << get_class_string(cClass);
-    if(cClass2)
-        cStr << "/" << get_class_string(cClass2);
+    cStr << get_class_string(static_cast<int>(cClass));
+    if(hasSecondClass())
+        cStr << "/" << get_class_string(static_cast<int>(cClass2));
     return(cStr.str());
 }
 
@@ -1975,7 +1979,7 @@ bstring Player::getClassString() const {
 //********************************************************************
 
 bool Creature::isBrittle() const {
-    return(isPlayer() && cClass == LICH);
+    return(isPlayer() && cClass == CreatureClass::LICH);
 }
 
 //********************************************************************
@@ -1983,7 +1987,7 @@ bool Creature::isBrittle() const {
 //********************************************************************
 
 bool Creature::isUndead() const {
-    if(cClass == LICH)
+    if(cClass == CreatureClass::LICH)
         return(true);
     if(isEffected("vampirism"))
         return(true);
@@ -2116,7 +2120,7 @@ void Monster::setBaseRealm(Realm toSet) {
 //*********************************************************************
 
 bool Creature::hasMp()  {
-    return(mp.getMax() != 0 && cClass != BERSERKER && cClass != LICH);
+    return(mp.getMax() != 0 && cClass != CreatureClass::BERSERKER && cClass != CreatureClass::LICH);
 }
 
 //*********************************************************************

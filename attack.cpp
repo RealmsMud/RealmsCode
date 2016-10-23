@@ -171,7 +171,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
         return(false);
 
     // builders got restricted attacks
-    if(cClass == BUILDER) {
+    if(cClass == CreatureClass::BUILDER) {
         if(pCheck) {
             print("You are not allowed to %s players.\n", verb.c_str());
             return(false);
@@ -258,8 +258,8 @@ bool Creature::canAttack(Creature* target, bool stealing) {
 
                 // Paladins-DKs and Enoch-Aramon are always at war
                 holy_war =
-                    ((pCheck->getClass() == DEATHKNIGHT && cClass == PALADIN) ||
-                    (cClass == DEATHKNIGHT && pCheck->getClass() == PALADIN) ||
+                    ((pCheck->getClass() == CreatureClass::DEATHKNIGHT && cClass == CreatureClass::PALADIN) ||
+                    (cClass == CreatureClass::DEATHKNIGHT && pCheck->getClass() == CreatureClass::PALADIN) ||
                     (deity == LINOTHAN && pCheck->getDeity() == ARACHNUS) ||
                     (deity == ARACHNUS && pCheck->getDeity() == LINOTHAN) ||
                     (deity == ENOCH && pCheck->getDeity() == ARAMON) ||
@@ -489,7 +489,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 
     if(attackType != ATTACK_KICK && attackType != ATTACK_MAUL) {
         // A monk that has no weapon, no holding item, but is wearing gloves gets to use the enchant off of them
-        if (cClass == MONK &&
+        if (cClass == CreatureClass::MONK &&
             !ready[WIELD - 1] &&
             !ready[HELD - 1] &&
             ready[HANDS - 1])
@@ -595,7 +595,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
                 if(attackType == ATTACK_AMBUSH)
                     multiplier = 1.5;
                 else if(attackType == ATTACK_BASH) {
-                    if(cClass == BERSERKER)
+                    if(cClass == CreatureClass::BERSERKER)
                         multiplier = .75;
                     else
                         multiplier = 0.5;
@@ -1100,7 +1100,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         if(enemy && isEffected("berserk")) {
             // zerkers: 1/5
             // everyone else: 1/7
-            attackDamage.set(attackDamage.get() - (attackDamage.get() / (cClass == BERSERKER ? 5 : 7)));
+            attackDamage.set(attackDamage.get() - (attackDamage.get() / (cClass == CreatureClass::BERSERKER ? 5 : 7)));
             attackDamage.set(MAX(1, attackDamage.get()));
         }
 
@@ -1200,7 +1200,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
 
             // liches can't use drain damage as their HP is their MP
             // they can do more damage instead
-            if(enemy && enemy->getClass() == LICH) {
+            if(enemy && enemy->getClass() == CreatureClass::LICH) {
                 attackDamage.add(attackDamage.getDrain());
                 attackDamage.setDrain(0);
             }
@@ -1282,14 +1282,14 @@ bool Monster::willAggro(const Player *player) const {
     if(isUndead()) {
         if(player->isUndead())
             return(false);
-        if(player->getClass() == CLERIC && player->getDeity() == ARAMON)
+        if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == ARAMON)
             return(false);
     }
     if(player->getClan() && clan && player->getClan() == clan)
         return(false);
     if(player->isEffected("lycanthropy") && isEffected("lycanthropy"))
         return(false);
-    if(type == ARACHNID && player->getClass() == CLERIC && player->getDeity() == ARAMON)
+    if(type == ARACHNID && player->getClass() == CreatureClass::CLERIC && player->getDeity() == ARAMON)
         return(false);
     if(player->isEffected("vampirism") && isEffected("vampirism"))
         return(false);
@@ -1314,8 +1314,8 @@ bool Monster::willAggro(const Player *player) const {
     }
 
     // will they aggro anyone based on their class?
-    for(int i=1; i<STAFF; i++) {
-        if((player->getClass() == i || player->getSecondClass() == i) && isClassAggro(i, true))
+    for(int i=1; i<static_cast<int>(STAFF); i++) {
+        if((player->getClass() == static_cast<CreatureClass>(i) || player->getSecondClass() == static_cast<CreatureClass>(i)) && isClassAggro(i, true))
             return(true);
     }
 

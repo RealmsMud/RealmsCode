@@ -26,9 +26,10 @@
 
 void Player::calcStats(vstat sendStat, vstat *toStat) {
     int         i=0, levels = 0, switchNum=0;
-    int         cls=0, cls2=0, lvl=0, r=0;
+    int         lvl=0, r=0;
     int         hptemp=0,mptemp=0;
 
+    CreatureClass cls=CreatureClass::NONE, cls2=CreatureClass::NONE;
     // stats are 1 based, the array is 0 based, so give us extra room
     int     num[MAX_STAT+1];
 
@@ -39,12 +40,12 @@ void Player::calcStats(vstat sendStat, vstat *toStat) {
     else
         r = race;
 
-    if(sendStat.cls)
+    if(sendStat.cls != CreatureClass::NONE)
         cls = tstat.cls;
     else
         cls = cClass;
 
-    if(sendStat.cls2)
+    if(sendStat.cls2 != CreatureClass::NONE)
         cls2 = tstat.cls2;
     else
         cls2 = cClass2;
@@ -78,7 +79,7 @@ void Player::calcStats(vstat sendStat, vstat *toStat) {
 
     // Now to adjust hit points accordingly
     hptemp = pClass->getBaseHp();
-    if(cClass != BERSERKER && cClass != LICH)
+    if(cClass != CreatureClass::BERSERKER && cClass != CreatureClass::LICH)
         mptemp = pClass->getBaseMp();
 
 
@@ -99,11 +100,11 @@ void Player::calcStats(vstat sendStat, vstat *toStat) {
         // Now to adjust hit points accordingly
         hptemp += lGain->getHp();
 
-        if(cClass != BERSERKER && cClass != LICH)
+        if(cClass != CreatureClass::BERSERKER && cClass != CreatureClass::LICH)
             mptemp += lGain->getMp();
 
-        if(cls != LICH) {
-            if(cls == BERSERKER && num[CON] >= 70)
+        if(cls != CreatureClass::LICH) {
+            if(cls == CreatureClass::BERSERKER && num[CON] >= 70)
                 hptemp++;
             if(num[CON] >= 130)
                 hptemp++;
@@ -114,7 +115,7 @@ void Player::calcStats(vstat sendStat, vstat *toStat) {
         }
 
         // liches gain an extra HP at every even level.
-        if(levels % 2 == 0 && cls == LICH)
+        if(levels % 2 == 0 && cls == CreatureClass::LICH)
             hptemp++;
     }
 
@@ -213,7 +214,7 @@ bool Player::checkConfusion() {
                 printColor("^BYou frantically swing your weapon at imaginary enemies.\n");
             } else {
                 printColor("^BYou madly flail around at imaginary enemies.\n");
-                if(cClass == MONK) {
+                if(cClass == CreatureClass::MONK) {
                     dmg = mrand(1,2) + level/3 + mrand(1,(1+level)/2);
                     if(strength.getCur() < 90) {
                         dmg -= (90-strength.getCur())/10;

@@ -149,15 +149,15 @@ public:
 typedef struct vstat {
 public:
     vstat() { num[0] = num[1] = num[2] = num[3] = num[4] = 0;
-            hp = mp = pp = 0; level = cls = cls2 = race = 0; };
+            hp = mp = pp = 0; level = race = 0; cls = cls2 = CreatureClass::NONE; };
     int     num[5];
     int     hp;
     int     mp;
     int     pp;
     int     rp;
     char    level;
-    char    cls;
-    char    cls2;
+    CreatureClass    cls;
+    CreatureClass    cls2;
     char    race;
 } vstat;
 

@@ -167,7 +167,7 @@ void Player::score(const Player* viewer) {
     viewer->printColor(oStr.str().c_str());
 
     viewer->printColor("\n ^g%3d/%3d Hit Points", hp.getCur(), hp.getMax());
-    if(getClass() == FIGHTER && flagIsSet(P_PTESTER))
+    if(getClass() == CreatureClass::FIGHTER && flagIsSet(P_PTESTER))
         viewer->printColor("  ^g%3d/%3d Focus Points", focus.getCur(), focus.getMax());
     else if(hasMp())
         viewer->printColor("  ^g%3d/%3d Magic Points", mp.getCur(), mp.getMax());
@@ -253,33 +253,33 @@ int cmdDaily(Player* player, cmd* cmnd) {
     player->print("Daily actions remaining:\n\n");
 
     player->print("Broadcasts:     %d of %d remaining.\n", target->daily[DL_BROAD].cur, target->daily[DL_BROAD].max);
-    if( target->isCt() || ((target->getClass() == CLERIC || target->getClass() == PALADIN) && target->spellIsKnown(S_HEAL)) ) {
+    if( target->isCt() || ((target->getClass() == CreatureClass::CLERIC || target->getClass() == CreatureClass::PALADIN) && target->spellIsKnown(S_HEAL)) ) {
         player->print("Heals:          %d of %d remaining.\n", target->daily[DL_FHEAL].cur, target->daily[DL_FHEAL].max);
     }
-    if( target->isCt() || ((target->getClass() == RANGER || target->getClass() == DRUID) && target->spellIsKnown(S_TRACK))  ) {
+    if( target->isCt() || ((target->getClass() == CreatureClass::RANGER || target->getClass() == CreatureClass::DRUID) && target->spellIsKnown(S_TRACK))  ) {
         player->print("Tracks:         %d of %d remaining.\n", target->daily[DL_TRACK].cur,target->daily[DL_TRACK].max);
     }
-    if( target->isCt() || ((target->getClass() == LICH || (target->getClass() == MAGE && !target->getSecondClass())) && target->getLevel() >= 10) ) {
+    if( target->isCt() || ((target->getClass() == CreatureClass::LICH || (target->getClass() == CreatureClass::MAGE && !target->hasSecondClass())) && target->getLevel() >= 10) ) {
         player->print("Enchants:       %d of %d remaining.\n", target->daily[DL_ENCHA].cur, target->daily[DL_ENCHA].max);
     }
-    if( target->isCt() || (target->getClass() == MAGE && target->getLevel() >= 10)) {
+    if( target->isCt() || (target->getClass() == CreatureClass::MAGE && target->getLevel() >= 10)) {
         player->print("Transmutes:     %d of %d remaining.\n", target->daily[DL_RCHRG].cur, target->daily[DL_RCHRG].max);
     }
     if( target->isCt() || (target->getLevel() >= 9 && target->spellIsKnown(S_TELEPORT))) {
         player->print("Teleports:      %d of %d remaining.\n", target->daily[DL_TELEP].cur, target->daily[DL_TELEP].max);
     }
-    if( target->isCt() || (target->getLevel() >= 16 && target->getClass() == PALADIN)) {
+    if( target->isCt() || (target->getLevel() >= 16 && target->getClass() == CreatureClass::PALADIN)) {
         player->print("Lay on Hands:   %d of %d remaining.\n", target->daily[DL_HANDS].cur, target->daily[DL_HANDS].max);
     }
 
-    if( target->isCt() || (target->getLevel() >= 16 && target->getClass() == DEATHKNIGHT)) {
+    if( target->isCt() || (target->getLevel() >= 16 && target->getClass() == CreatureClass::DEATHKNIGHT)) {
         player->print("Harm touches:   %d of %d remaining.\n", target->daily[DL_HANDS].cur, target->daily[DL_HANDS].max);
     }
 
-    if( target->isDm() || (target->getLevel() >= 22 && target->getClass() == CLERIC && target->getDeity() == ARAMON && !target->getSecondClass())) {
+    if( target->isDm() || (target->getLevel() >= 22 && target->getClass() == CreatureClass::CLERIC && target->getDeity() == ARAMON && !target->hasSecondClass())) {
         player->print("Bloodfusions:   %d of %d remaining.\n", target->daily[DL_RESURRECT].cur, target->daily[DL_RESURRECT].max);
     }
-    if( target->isDm() || (target->getLevel() >= 19 && target->getClass() == CLERIC && target->getDeity() == CERIS)) {
+    if( target->isDm() || (target->getLevel() >= 19 && target->getClass() == CreatureClass::CLERIC && target->getDeity() == CERIS)) {
         player->print("Resurrections:  %d of %d remaining.\n", target->daily[DL_RESURRECT].cur, target->daily[DL_RESURRECT].max);
     }
 
@@ -565,7 +565,7 @@ void Player::information(const Player* viewer, bool online) {
         << "+^W\\_|^x Level: " << std::setw(2) << level << "    Race: " << std::setw(13)
             << gConfig->getRace(race)->getName(12) << "^W|  _________________________________^x   +\n";
 
-    txt = !cClass2 ? get_class_string(cClass) : getClassName(this);
+    txt = !hasSecondClass() ? get_class_string(static_cast<int>(cClass)) : getClassName(this);
     if(deity) {
         txt += ", ";
         txt += gConfig->getDeity(deity)->getName();
@@ -611,7 +611,7 @@ void Player::information(const Player* viewer, bool online) {
         << "       ^W|   ____________________________|_^x +\n"
         << "|       ";
 
-    if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER))
+    if(cClass == CreatureClass::FIGHTER && !hasSecondClass() && flagIsSet(P_PTESTER))
         oStr << "Focus Points : " << std::setw(5) << focus.getCur() << "/" << std::setw(5) << focus.getMax();
     else if(hasMp())
         oStr << "Magic Points : " << std::setw(5) << mp.getCur() << "/" << std::setw(5) << mp.getMax();

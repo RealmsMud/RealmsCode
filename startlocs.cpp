@@ -75,7 +75,7 @@ bool startingChoices(Player* player, bstring str, char* location, bool choose) {
     if(r && r->getParentRace())
         race = r->getParentRace();
 
-    if(player->getClass() == DRUID) {
+    if(player->getClass() == CreatureClass::DRUID) {
 
         // druidic order overrides all other starting locations
         options.push_back("druidwood");
@@ -90,7 +90,7 @@ bool startingChoices(Player* player, bstring str, char* location, bool choose) {
         // religious states
         options.push_back("caladon");
 
-    } else if(race == HUMAN && player->getClass() == CLERIC) {
+    } else if(race == HUMAN && player->getClass() == CreatureClass::CLERIC) {
 
         // all other human clerics have to start in HP because
         // Sigil and Caladon are very religious
@@ -160,17 +160,17 @@ bool startingChoices(Player* player, bstring str, char* location, bool choose) {
     }
 
     switch(player->getClass()) {
-    case RANGER:
+    case CreatureClass::RANGER:
         options.push_back("druidwood");
         break;
     // even seraphs of these classes cannot start in Sigil
-    case ASSASSIN:
-    case LICH:
-    case THIEF:
-    case DEATHKNIGHT:
-    case PUREBLOOD:
-    case ROGUE:
-    case WEREWOLF:
+    case CreatureClass::ASSASSIN:
+    case CreatureClass::LICH:
+    case CreatureClass::THIEF:
+    case CreatureClass::DEATHKNIGHT:
+    case CreatureClass::PUREBLOOD:
+    case CreatureClass::ROGUE:
+    case CreatureClass::WEREWOLF:
         options.remove("sigil");
         break;
     default:
@@ -279,10 +279,10 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(spellData->how == CastType::CAST) {
 
         if(!pPlayer->isCt()) {
-            if( pPlayer->getClass() != MAGE &&
-                pPlayer->getClass() != LICH &&
-                pPlayer->getClass() != CLERIC &&
-                pPlayer->getClass() != DRUID
+            if( pPlayer->getClass() !=  CreatureClass::MAGE &&
+                pPlayer->getClass() !=  CreatureClass::LICH &&
+                pPlayer->getClass() !=  CreatureClass::CLERIC &&
+                pPlayer->getClass() !=  CreatureClass::DRUID
             ) {
                 pPlayer->print("Your class prevents you from casting that spell.\n");
                 return(0);

@@ -61,10 +61,10 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     if( spellData->how == CastType::CAST &&
-        (   player->getClass() == MAGE ||
-            player->getClass() == LICH ||
+        (   player->getClass() == CreatureClass::MAGE ||
+            player->getClass() == CreatureClass::LICH ||
             player->isStaff() ||
-            (!pPlayer || pPlayer->getSecondClass() == MAGE) ) )
+            (!pPlayer || pPlayer->getSecondClass() == CreatureClass::MAGE) ) )
         canCast=1;
 
 
@@ -118,7 +118,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     }
 
-    if(player->getClass() != LICH) {
+    if(player->getClass() !=  CreatureClass::LICH) {
         if(mpNeeded > player->mp.getCur()) {
             player->print("Not enough magic points.\n");
             return(0);
@@ -129,7 +129,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     if(spellData->how == CastType::CAST) {
-        if(player->getClass() != LICH)
+        if(player->getClass() !=  CreatureClass::LICH)
             player->mp.decrease(mpNeeded);
         else
             player->hp.decrease(mpNeeded);
@@ -203,7 +203,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
     }
 
     if(!caster->isStaff()) {
-        if(caster->getClass() != LICH) {
+        if(caster->getClass() !=  CreatureClass::LICH) {
             if(caster->mp.getCur() < osp->mp && spellData->how == CastType::CAST) {
                 caster->print("Not enough magic points.\n");
                 return(0);
@@ -230,7 +230,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 
     if(osp->bonus_type) {
         bns = bonus((int) caster->intelligence.getCur());
-        if(caster->getClass() == MAGE || caster->getClass() == LICH || caster->isStaff())
+        if(caster->getClass() == CreatureClass::MAGE || caster->getClass() == CreatureClass::LICH || caster->isStaff())
             bns = (bns * 3)/2;
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::WAND || spellData->how == CastType::SCROLL) {
@@ -270,9 +270,9 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
         caster->modifyDamage(caster, dmgType, damage);
         caster->hp.decrease(damage.get());
 
-        if(spellData->how == CastType::CAST && caster->getClass() != LICH)
+        if(spellData->how == CastType::CAST && caster->getClass() !=  CreatureClass::LICH)
             caster->mp.decrease(osp->mp);
-        else if(spellData->how == CastType::CAST && caster->getClass() == LICH)
+        else if(spellData->how == CastType::CAST && caster->getClass() == CreatureClass::LICH)
             caster->hp.decrease(osp->mp);
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
@@ -329,9 +329,9 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
             }
         }
 
-        if(spellData->how == CastType::CAST && caster->getClass() != LICH)
+        if(spellData->how == CastType::CAST && caster->getClass() !=  CreatureClass::LICH)
             caster->mp.decrease(osp->mp);
-        else if(spellData->how == CastType::CAST && caster->getClass() == LICH)
+        else if(spellData->how == CastType::CAST && caster->getClass() == CreatureClass::LICH)
             caster->hp.decrease(osp->mp);
 
         if(caster->spellFail(spellData->how))
@@ -358,7 +358,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
                 broadcast(isCt, caster->getSock(), room,
                     "*DM* %M tried to cast a %s spell on %N.",
                     caster, get_spell_name(osp->splno), target);
-                if(caster->getClass() != LICH) {
+                if(caster->getClass() !=  CreatureClass::LICH) {
                     caster->mp.increase(osp->mp);
                 } else {
                     caster->hp.increase(osp->mp);
@@ -436,7 +436,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
             broadcastGroup(false, target, "%M cast a %s spell on ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n",
                 caster, spellname, target, damage.get(), target->heShe(), target->getStatusStr());
 
-            if(caster->getClass() != LICH && caster->hp.getCur() < caster->hp.getMax() && damage.getDrain()) {
+            if(caster->getClass() !=  CreatureClass::LICH && caster->hp.getCur() < caster->hp.getMax() && damage.getDrain()) {
                 caster->print("%M's life force revitalizes your strength.\n", target);
                 caster->hp.increase(damage.getDrain());
             }
@@ -661,7 +661,7 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
     }
 
     if(!found_something && spellData->how == CastType::CAST) {
-        if(player->getClass() == LICH)
+        if(player->getClass() == CreatureClass::LICH)
             player->hp.increase(5);
         else
             player->mp.increase(5);
@@ -707,11 +707,11 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
 
         if( spellData->how == CastType::CAST &&
-            player->getClass() != MAGE &&
-            player->getClass() != LICH &&
-            player->getClass() != BARD &&
-            player->getClass() != CLERIC &&
-            player->getClass() != DRUID &&
+            player->getClass() !=  CreatureClass::MAGE &&
+            player->getClass() !=  CreatureClass::LICH &&
+            player->getClass() !=  CreatureClass::BARD &&
+            player->getClass() !=  CreatureClass::CLERIC &&
+            player->getClass() !=  CreatureClass::DRUID &&
             !player->isCt())
         {
             player->print("Your class is unable to cast that spell upon others.\n");

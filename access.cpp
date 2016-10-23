@@ -302,9 +302,9 @@ int get_perm_ac(int nIndex) {
 char *get_class_string(int nIndex) {
     // do bounds checking
     ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < CLASS_COUNT );
+    ASSERTLOG( nIndex < static_cast<int>(CreatureClass::CLASS_COUNT) );
 
-    nIndex = MAX( 0, MIN(nIndex, CLASS_COUNT - 1 ) );
+    nIndex = MAX( 0, MIN(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
 
     return(class_str[nIndex]);
 }
@@ -452,9 +452,9 @@ const char *get_oflag(int nIndex) {
 char *getClassAbbrev(int nIndex) {
     // do bounds checking
     ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < CLASS_COUNT );
+    ASSERTLOG( nIndex < static_cast<int>(CreatureClass::CLASS_COUNT) );
 
-    nIndex = MAX( 0, MIN(nIndex, CLASS_COUNT - 1 ) );
+    nIndex = MAX( 0, MIN(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
 
     return(class_abbrev[nIndex-1] );
 }
@@ -462,13 +462,13 @@ char *getClassAbbrev(int nIndex) {
 char *getClassName(Player* player) {
     static char classname[1024];
 
-    if(!player->getSecondClass())
-        return(get_class_string( player->getClass()));
+    if(!player->hasSecondClass())
+        return(get_class_string( static_cast<int>(player->getClass())));
 
     strcpy(classname, "");
-    strcpy(classname, getShortClassAbbrev( player->getClass() ) );
+    strcpy(classname, getShortClassAbbrev( static_cast<int>(player->getClass()) ) );
     strcat(classname, "/");
-    strcat(classname, getShortClassAbbrev( player->getSecondClass() ) );
+    strcat(classname, getShortClassAbbrev( static_cast<int>(player->hasSecondClass()) ) );
 
     return(classname);
 }
@@ -477,9 +477,9 @@ char *getClassName(Player* player) {
 char *getShortClassAbbrev(int nIndex) {
     // do bounds checking
     ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < CLASS_COUNT );
+    ASSERTLOG( nIndex < static_cast<int>(CreatureClass::CLASS_COUNT) );
 
-    nIndex = MAX( 0, MIN(nIndex, CLASS_COUNT - 1 ) );
+    nIndex = MAX( 0, MIN(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
 
     return(shortClassAbbrev[nIndex-1] );
 }
@@ -487,13 +487,13 @@ char *getShortClassAbbrev(int nIndex) {
 char *getShortClassName(const Player* player) {
     static char classname[1024];
 
-    if(!player->getSecondClass())
-        return(get_class_string(player->getClass()));
+    if(!player->hasSecondClass())
+        return(get_class_string(static_cast<int>(player->getClass())));
 
     strcpy(classname, "");
-    strcpy(classname, getShortClassAbbrev(player->getClass()));
+    strcpy(classname, getShortClassAbbrev(static_cast<int>(player->getClass())));
     strcat(classname, "/");
-    strcat(classname, getShortClassAbbrev(player->getSecondClass()));
+    strcat(classname, getShortClassAbbrev(static_cast<int>(player->hasSecondClass())));
 
     return(classname);
 }
@@ -515,18 +515,18 @@ bstring Player::getTitle() const {
         if(titlnum > 9)
             titlnum = 9;
 
-        if(cClass == CLERIC)
+        if(cClass == CreatureClass::CLERIC)
             titleStr << gConfig->getDeity(deity)->getTitle(level, getSex() == SEX_MALE);
         else
-            titleStr << gConfig->classes[get_class_string(cClass)]->getTitle(level, getSex() == SEX_MALE);
+            titleStr << gConfig->classes[get_class_string(static_cast<int>(cClass))]->getTitle(level, getSex() == SEX_MALE);
 
-        if(cClass2) {
+        if(hasSecondClass()) {
             titleStr <<  "/";
 
-            if(cClass2 == CLERIC)
+            if(cClass2 == CreatureClass::CLERIC)
                 titleStr << gConfig->getDeity(deity)->getTitle(level, getSex() == SEX_MALE);
             else
-                titleStr << gConfig->classes[get_class_string(cClass2)]->getTitle(level, getSex() == SEX_MALE);
+                titleStr << gConfig->classes[get_class_string(static_cast<int>(cClass2))]->getTitle(level, getSex() == SEX_MALE);
         }
 
         return(titleStr.str());
@@ -544,10 +544,10 @@ bool Player::canChooseCustomTitle() const {
     std::map<int, PlayerTitle*>::const_iterator it;
     const PlayerTitle* title=0;
 
-    if(cClass == CLERIC)
+    if(cClass == CreatureClass::CLERIC)
         titles = &(gConfig->getDeity(deity)->titles);
     else
-        titles = &(gConfig->classes[get_class_string(cClass)]->titles);
+        titles = &(gConfig->classes[get_class_string(static_cast<int>(cClass))]->titles);
 
     it = titles->find(level);
     if(it == titles->end())
@@ -731,7 +731,7 @@ bool isTitle(bstring str) {
 }
 
 bool isClass(char str[80]) {
-    for(int i=1; i<CLASS_COUNT; i++) {
+    for(int i=1; i<static_cast<int>(CreatureClass::CLASS_COUNT); i++) {
         if(!strcmp(class_str[i], str) || !strcmp(class_abbrev[i], str))
             return(true);
     }

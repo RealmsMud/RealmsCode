@@ -308,7 +308,7 @@ bool WebInterface::messagePlayer(bstring command, bstring tempBuf) {
     } else {
         bool txt = (command == "TXT");
         if(txt && (
-            player->getClass() == BUILDER ||
+            player->getClass() == CreatureClass::BUILDER ||
             player->flagIsSet(P_IGNORE_ALL) ||
             player->flagIsSet(P_IGNORE_SMS)
         )) {
@@ -576,7 +576,7 @@ bool WebInterface::handleInput() {
             return(true);
         } else if(command == "FINGER") {
             std::cout << "WebInterface: Fingering user " << tempBuf << std::endl;
-            outBuf += doFinger(0, tempBuf, 0);
+            outBuf += doFinger(0, tempBuf, CreatureClass::NONE);
             outBuf += EOT;
             return(true);
         } else if(command == "WIKI") {
@@ -874,7 +874,7 @@ bstring webwho() {
 
         if(!player->isConnected())
             continue;
-        if(player->getClass() == BUILDER)
+        if(player->getClass() == CreatureClass::BUILDER)
             continue;
 
         if(player->flagIsSet(P_DM_INVIS))
