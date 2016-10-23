@@ -39,7 +39,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if( player->getClass() != DRUID &&
         player->getClass() != RANGER &&
-        !player->isCt() && spellData->how == CAST
+        !player->isCt() && spellData->how == CastType::CAST
     ) {
         player->print("You are unable to cast that spell.\n");
         return(0);
@@ -55,7 +55,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     // Cast entangle
     if(cmnd->num == 2) {
-        if(spellData->how != POTION) {
+        if(spellData->how != CastType::POTION) {
             player->print("Entangle whom?\n");
             return(0);
         } else if(player->isEffected("mist")) {
@@ -132,7 +132,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(spellData->how == CAST)
+        if(spellData->how == CastType::CAST)
             bns = 5*((int)player->getLevel() - (int)target->getLevel()) + 2*crtWisdom(target) - 2*bonus((int)player->intelligence.getCur());
 
         if(target->isMonster()) {
@@ -154,7 +154,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
             player->smashInvis();
             if((!target->chkSave(SPL, player, bns) && !nohold) || player->isCt()) {
 
-                if(spellData->how == CAST)
+                if(spellData->how == CastType::CAST)
                     dur = mrand(9,18) + 2*bonus((int)player->intelligence.getCur()) - statmod;
                 else
                     dur = mrand(9,12);
@@ -187,7 +187,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 
                 broadcast(target->getSock(), player->getRoomParent(), "%M becomes entangled in vines and weeds!", target);
 
-                if(spellData->how == CAST)
+                if(spellData->how == CastType::CAST)
                     dur = mrand(12,18) + 2*bonus((int)player->intelligence.getCur()) - statmod;
                 else
                     dur = mrand(9,12);
@@ -215,7 +215,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
 // leaving a trace
 
 int splPassWithoutTrace(Creature* player, cmd* cmnd, SpellData* spellData) {
-    if( spellData->how == CAST &&
+    if( spellData->how == CastType::CAST &&
         !player->isStaff() &&
         player->getClass() != DRUID &&
         player->getClass() != RANGER &&
@@ -250,13 +250,13 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(cmnd->num == 2) {
         target = player;
-        if(spellData->how == CAST && !player->checkMp(5))
+        if(spellData->how == CastType::CAST && !player->checkMp(5))
             return(0);
 
         player->print("You cast an infravision spell.\n");
         broadcast(player->getSock(), player->getParent(), "%M casts an infravision spell.", player);
 
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
             player->subMp(5);
             if(player->getRoomParent()->magicBonus())
                 player->print("The room's magical properties increase the power of your spell.\n");
@@ -266,10 +266,10 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(player->noPotion( spellData))
             return(0);
 
-        if(spellData->how == CAST && !player->checkMp(10))
+        if(spellData->how == CastType::CAST && !player->checkMp(10))
             return(0);
 
-        if( spellData->how == CAST &&
+        if( spellData->how == CastType::CAST &&
             player->getClass() != MAGE &&
             player->getClass() != LICH &&
             player->getClass() != BARD &&
@@ -297,7 +297,7 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
             player->subMp(10);
             if(player->getRoomParent()->magicBonus())
                 player->print("The room's magical properties increase the power of your spell.\n");
@@ -312,7 +312,7 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(target->inCombat(false))
         player->smashInvis();
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
             player->print("The room's magical properties increase the power of your spell.\n");
         target->addEffect("infravision", -2, -2, player, true, player);
@@ -332,7 +332,7 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
     int         chance=0, canCast=0, mpNeeded=0;
     Exit        *exit=0;
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if( player->getClass() == MAGE ||
             player->getClass() == LICH ||
             player->getClass() == BARD ||
@@ -361,7 +361,7 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
     }
 
-    //if(!canCast && spellData->how != CAST) {
+    //if(!canCast && spellData->how != CastType::CAST) {
     //  player->print("The magic will not work for you.\n");
     //  return(0);
     //}
@@ -375,7 +375,7 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     const Monster* guard = player->getRoomParent()->getGuardingExit(exit, player->getAsConstPlayer());
-    if(guard && !player->checkStaff("%M %s %s that.\n", guard, guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you" : "won't let you", spellData->how == CAST ? "cast" : "do"))
+    if(guard && !player->checkStaff("%M %s %s that.\n", guard, guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you" : "won't let you", spellData->how == CastType::CAST ? "cast" : "do"))
         return(0);
 
 
@@ -388,7 +388,7 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         mpNeeded = 10 + exit->getLevel();
         if( pPlayer &&
             pPlayer->getClass() != MAGE &&
@@ -418,14 +418,14 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
     else
         chance = 10*((int)player->getLevel() - exit->getLevel()) + (2*bonus((int)player->intelligence.getCur()));
 
-    if(spellData->how == CAST)
+    if(spellData->how == CastType::CAST)
         player->printColor("You cast a knock spell on the \"%s^x\" exit.\n", exit->getCName());
     broadcast(player->getSock(), player->getParent(), "%M casts a knock spell at the %s^x.", player, exit->getCName());
 
 
     if(player->isStaff() || mrand(1,100) <= chance) {
         player->print("Click!");
-        if(spellData->how == CAST)
+        if(spellData->how == CastType::CAST)
             player->print(" Your knock spell was successful!");
         player->print("\n");
         broadcast(player->getSock(), player->getParent(), "%M's knock spell was successful.", player);
@@ -446,7 +446,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
     Creature *target=0;
     int saved=0, bns=0;
 
-    if(spellData->how == CAST && !player->isMageLich()) {
+    if(spellData->how == CastType::CAST && !player->isMageLich()) {
         player->print("The arcane nature of that spell eludes you.\n");
         return(0);
     }
@@ -458,10 +458,10 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
     if(cmnd->num < 2) {
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
             player->print("Casting a disintegrate spell on yourself would not be very smart.\n");
             return(0);
-        } else if(spellData->how == WAND) {
+        } else if(spellData->how == CastType::WAND) {
             player->print("Nothing happens.\n");
             return(0);
         } else {
@@ -529,7 +529,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(target->isPlayer() && target->isEffected("resist-magic"))
             bns += MIN(30, target->saves[DEA].chance);
 
-        if(spellData->how == CAST && player->isPlayer())
+        if(spellData->how == CastType::CAST && player->isPlayer())
             player->getAsPlayer()->statistics.offensiveCast();
 
         saved = target->chkSave(DEA, player, bns);
@@ -573,7 +573,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splStatChange(Creature* player, cmd* cmnd, SpellData* spellData, bstring effect, bool good) {
     Creature* target=0;
-    if( spellData->how == CAST &&
+    if( spellData->how == CastType::CAST &&
         player->getClass() != MAGE &&
         player->getClass() != LICH &&
         player->getClass() != DRUID &&
@@ -588,7 +588,7 @@ int splStatChange(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
     if(cmnd->num == 2) {
         target = player;
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("You cast %s on yourself.\n", effect.c_str());
             broadcast(player->getSock(), player->getParent(), "%M casts %s on %sself.", player, effect.c_str(), player->himHer());
         }
@@ -622,7 +622,7 @@ int splStatChange(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
         return(1);
     }
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
             player->print( "The room's magical properties increase the power of your spell.\n");
         target->addEffect(effect, -2, -2, player, true, player);
@@ -680,7 +680,7 @@ int splStoneToFlesh(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if( spellData->how == CAST &&
+    if( spellData->how == CastType::CAST &&
         player->getClass() != MAGE &&
         player->getClass() != LICH &&
         player->getClass() != DRUID &&
@@ -708,7 +708,7 @@ int splStoneToFlesh(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(checkRefusingMagic(player, target))
         return(0);
 
-    if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+    if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
         player->print("You cast stone-to-flesh on %N.\n", target);
         broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts stone-to-flesh on %N.", player, target);
         target->print("%M casts stone-to-flesh on you.\n", player);
@@ -743,18 +743,18 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
     )
         canCast = 1;
 
-    if(!canCast && player->isPlayer() && spellData->how == CAST) {
+    if(!canCast && player->isPlayer() && spellData->how == CastType::CAST) {
         player->print("You are unable to cast that spell.\n");
         return(0);
     }
 
     player->smashInvis();
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         dur = mrand(180,300) + 3*bonus((int) player->intelligence.getCur());
 
         player->subMp(mpCost);
-    } else if(spellData->how == SCROLL)
+    } else if(spellData->how == CastType::SCROLL)
         dur = mrand(30,120) + bonus((int) player->intelligence.getCur());
     else
         dur = mrand(30,60);
@@ -770,9 +770,9 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(player->isEffected("resist-magic"))
             dur /= 2;
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             broadcast(player->getSock(), player->getParent(), "%M casts deafness on %sself.", player, player->himHer());
-        } else if(spellData->how == POTION)
+        } else if(spellData->how == CastType::POTION)
             player->print("Your throat goes dry and you cannot speak.\n");
 
     // silence a monster or player
@@ -830,7 +830,7 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
 
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Deafness casted on %s.\n", target->getCName());
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a deafness spell on %N.", player, target);
 
@@ -845,7 +845,7 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     target->addEffect("deafness", dur, player->getLevel());
 
-    if(spellData->how == CAST && player->isPlayer())
+    if(spellData->how == CastType::CAST && player->isPlayer())
         player->getAsPlayer()->statistics.offensiveCast();
 
     return(1);
@@ -856,7 +856,7 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splRegeneration(Creature* player, cmd* cmnd, SpellData* spellData) {
-    if(spellData->how != POTION && player->isPlayer() && !player->isStaff()) {
+    if(spellData->how != CastType::POTION && player->isPlayer() && !player->isStaff()) {
         switch(player->getClass()) {
             case CLERIC:
             case DRUID:

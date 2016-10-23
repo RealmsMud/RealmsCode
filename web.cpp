@@ -347,7 +347,7 @@ bstring doGetInventory(const Player* player, Object* object, int loc=-1) {
          << innerDelim
          << object->getWearflag()
          << innerDelim
-         << object->getType();
+         << static_cast<int>(object->getType());
 
     if(loc != -1)
         oStr << innerDelim << loc;
@@ -397,9 +397,9 @@ bool webUse(Player* player, int id, int type) {
     return(false);
 //
 //  switch(type) {
-//  case WEAPON:
+//  case ObjectType::WEAPON:
 //      return(webWield(player, id));
-//  case ARMOR:
+//  case ObjectType::ARMOR:
 //      return(webWear(player, id));
 //  case POTION:
 //      //return(cmdConsume(player, id));

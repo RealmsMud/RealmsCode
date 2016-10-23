@@ -555,7 +555,7 @@ int Monster::castSpell(Creature *target) {
     target->printColor("^r");
 
     SpellData data;
-    data.set(CAST, get_spell_school(spl), get_spell_domain(spl), 0, this);
+    data.set(CastType::CAST, get_spell_school(spl), get_spell_domain(spl), 0, this);
     data.splno = spl;
 
     if((int(*)(SpellFn, char*, osp_t*))fn == splOffensive) {
@@ -825,7 +825,7 @@ void Monster::checkScavange(long t) {
             mrand(1, 100) <= 15 &&
             !room->objects.empty() &&
             canScavange((*room->objects.begin())) &&
-            !((*room->objects.begin())->getType() == WEAPON && flagIsSet(M_WILL_WIELD)))
+            !((*room->objects.begin())->getType() == ObjectType::WEAPON && flagIsSet(M_WILL_WIELD)))
         {
             object = (*room->objects.begin());
             object->deleteFromRoom();
@@ -860,7 +860,7 @@ void Monster::checkScavange(long t) {
             for(it = room->objects.begin() ; it != room->objects.end() ; ) {
                 object = (*it++);
                 if((flagIsSet(M_STREET_SWEEPER) ||
-                    (object->getType() == MONEY || object->value[GOLD] >= 100)) &&
+                    (object->getType() == ObjectType::MONEY || object->value[GOLD] >= 100)) &&
                         canScavange(object) )
                 {
                     if(getWeight() + object->getActualWeight() > maxWeight()) {
@@ -878,7 +878,7 @@ void Monster::checkScavange(long t) {
                     s += 4;
                     buflen += namelen + 4;
                     object->deleteFromRoom();
-                    if(object->getType() == MONEY || !object->info.id) {
+                    if(object->getType() == ObjectType::MONEY || !object->info.id) {
                         coins.add(object->value);
                         delete object;
                     } else {

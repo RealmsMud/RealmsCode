@@ -65,7 +65,7 @@ void Object::setSize(Size s) { size = s; }
 //                      setType
 //*********************************************************************
 
-void Object::setType(short t) { type = t; }
+void Object::setType(ObjectType t) { type = t; }
 
 //*********************************************************************
 //                      setWearflag
@@ -323,8 +323,8 @@ void Object::setMade() {
 //*********************************************************************
 
 bool Object::isHeavyArmor() const {
-//  return(type == ARMOR && (subType == "chain" || subType == "plate"));
-    return(type == ARMOR && subType == "plate");
+//  return(type == ObjectType::ARMOR && (subType == "chain" || subType == "plate"));
+    return(type == ObjectType::ARMOR && subType == "plate");
 }
 
 //*********************************************************************
@@ -332,7 +332,7 @@ bool Object::isHeavyArmor() const {
 //*********************************************************************
 
 bool Object::isMediumArmor() const {
-    return(type == ARMOR && subType == "chain");
+    return(type == ObjectType::ARMOR && subType == "chain");
 }
 
 //*********************************************************************
@@ -340,7 +340,7 @@ bool Object::isMediumArmor() const {
 //*********************************************************************
 
 bool Object::isLightArmor() const {
-    return(type == ARMOR && (subType == "cloth" || subType == "leather"));
+    return(type == ObjectType::ARMOR && (subType == "cloth" || subType == "leather"));
 }
 
 //*********************************************************************
@@ -348,5 +348,5 @@ bool Object::isLightArmor() const {
 //*********************************************************************
 
 bool Object::isBroken() const {
-    return(shotsCur == 0 && shotsMax >= 0 && (type == ARMOR || type == KEY || type == WEAPON));
+    return(shotsCur == 0 && shotsMax >= 0 && (type == ObjectType::ARMOR || type == ObjectType::KEY || type == ObjectType::WEAPON));
 }

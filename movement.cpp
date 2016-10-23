@@ -1484,9 +1484,9 @@ int cmdUnlock(Player* player, cmd* cmnd) {
     }
 
 
-    if(object->getType() == WAND && object->getMagicpower() == S_KNOCK)
+    if(object->getType() == ObjectType::WAND && object->getMagicpower() == S_KNOCK)
         return(cmdUseWand(player, cmnd));
-    if(object->getType() != KEY) {
+    if(object->getType() != ObjectType::KEY) {
         player->print("That's not a key.\n");
         return(0);
     }
@@ -1582,7 +1582,7 @@ int cmdLock(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(object->getType() != KEY) {
+    if(object->getType() != ObjectType::KEY) {
         player->printColor("%O is not a key.\n", object);
         return(0);
     }

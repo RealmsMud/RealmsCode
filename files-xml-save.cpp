@@ -74,7 +74,6 @@ int Player::saveToFile(LoadType saveType) {
     xmlNodePtr  rootNode;
     char        filename[256];
 
-    ASSERTLOG( this != nullptr );
     ASSERTLOG( !getName().empty() );
     ASSERTLOG( isPlayer() );
 
@@ -114,7 +113,6 @@ int UniqueRoom::saveToFile(int permOnly, LoadType saveType) {
     xmlNodePtr  rootNode;
     char        filename[256];
 
-    ASSERTLOG( this != nullptr );
     ASSERTLOG( info.id >= 0 );
     if(saveType == LS_BACKUP)
         Path::checkDirExists(info.area, roomBackupPath);
@@ -640,14 +638,6 @@ void Player::saveXml(xmlNodePtr curNode) const {
         birthday->save(childNode);
     }
 
-//          childNode = xml::newStringChild(curNode, "Deaths", NULL);
-//          for(i=0; i<LUCKY_DEATHS; i++) {
-//              if(lastDeath[i]) {
-//                  subNode = xml::newStringChild(childNode, "Death", NULL);
-//                  xml::saveNonZeroInt(subNode, "Time", lastDeath[i]);
-//                  xml::saveNonNullString(subNode, "Text", killedBy[i]);
-//              }
-//          }
     xml::saveNonNullString(curNode, "LastPassword", lastPassword);
     xml::saveNonNullString(curNode, "PoisonedBy", poisonedBy);
     xml::saveNonNullString(curNode, "AfflictedBy", afflictedBy);
@@ -839,7 +829,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
     xml::saveNonZeroNum(rootNode, "Extra", extra);
     xml::saveNonZeroNum(rootNode, "LotteryCycle", lotteryCycle);
 
-    if(type == LOTTERYTICKET) {
+    if(type == ObjectType::LOTTERYTICKET) {
         // Lottery tickets have a custom description so be sure to save it
         xml::saveNonNullString(rootNode, "Description", description);
         saveShortIntArray(rootNode, "LotteryNumbers", "LotteryNum", lotteryNumbers, 6);
@@ -884,7 +874,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
     if(saveType == LS_FULL || saveType == LS_PROTOTYPE) {
         saveBits(rootNode, "Flags", MAX_OBJECT_FLAGS, flags);
         // These are only saved for full objects
-        if(type != LOTTERYTICKET)
+        if(type != ObjectType::LOTTERYTICKET)
             xml::saveNonNullString(rootNode, "Description", description);
 
 
@@ -902,7 +892,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
         xml::saveNonNullString(rootNode, "LastMod", lastMod);
 
         xml::saveNonZeroNum(rootNode, "Weight", weight);
-        xml::saveNonZeroNum(rootNode, "Type", type);
+        xml::saveNonZeroNum(rootNode, "Type", static_cast<int>(type));
         xml::saveNonNullString(rootNode, "SubType", subType);
 
         xml::saveNonZeroNum(rootNode, "WearFlag", wearflag);
@@ -953,7 +943,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
     if(saveType != LS_PROTOTYPE && !objects.empty()) {
         curNode = xml::newStringChild(rootNode, "SubItems");
         // If we're a permenant container, always save the items inside of it
-        if(type == CONTAINER && flagIsSet(O_PERM_ITEM))
+        if(type == ObjectType::CONTAINER && flagIsSet(O_PERM_ITEM))
             permOnly = ALLITEMS;
         saveObjectsXml(curNode, objects, permOnly);
     }

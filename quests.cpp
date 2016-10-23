@@ -787,8 +787,8 @@ int cmdQuestStatus(Player* player, cmd* cmnd) {
     return(1);
 }
 bool Object::isQuestValid() const {
-    return((type == CONTAINER && shotsCur == 0) ||
-     (type != CONTAINER && (shotsCur != 0 || shotsMax == 0)) );
+    return((type == ObjectType::CONTAINER && shotsCur == 0) ||
+     (type != ObjectType::CONTAINER && (shotsCur != 0 || shotsMax == 0)) );
 
 }
 // Count how many of a given item this player has that are non-broken
@@ -800,7 +800,7 @@ int Player::countItems(const QuestCatRef& obj) {
         if(object && object->info == obj && object->isQuestValid())
             total++;
 
-        if(object && object->getType() == CONTAINER) {
+        if(object && object->getType() == ObjectType::CONTAINER) {
             for(Object* subObj : object->objects) {
                 if(subObj->info == obj  && subObj->isQuestValid())
                     total++;
@@ -860,7 +860,7 @@ bool QuestCompletion::complete(Monster* monster) {
                 num--;
                 continue;
             }
-            if(object->getType() == CONTAINER) {
+            if(object->getType() == ObjectType::CONTAINER) {
                 Object *subObject;
                 ObjectSet::iterator sIt;
                 for(sIt = object->objects.begin() ; sIt != object->objects.end() && num > 0 ; ) {

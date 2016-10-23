@@ -174,7 +174,7 @@ const char* get_song_name(int nIndex);
 const char* get_quest_name(int nIndex);
 int get_song_num(int nIndex);
 SONGFN get_song_function(int nIndex);
-char *obj_type(int nType);
+const char *obj_type(ObjectType type);
 
 const char* get_rflag(int nIndex);
 const char* get_xflag(int nIndex);
@@ -377,7 +377,7 @@ Realm getOppositeRealm(Realm realm);
 
 // healmagic.cpp
 int getHeal(Creature *healer, Creature* target, int spell);
-void niceExp(Creature* creature, int heal, int how);
+void niceExp(Creature* creature, int heal, CastType how);
 
 
 // magic.cpp

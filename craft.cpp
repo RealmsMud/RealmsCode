@@ -203,7 +203,7 @@ bool Recipe::goodObject(const Player* player, const Object* object, const CatRef
             (   (   object->getShotsCur() > 0 &&
                     object->getShotsCur() == object->getShotsMax()
                 ) || (
-                    object->getType() == CONTAINER &&
+                    object->getType() == ObjectType::CONTAINER &&
                     object->getShotsCur() == 0
             ) )
     );
@@ -1208,7 +1208,7 @@ int cmdPrepareObject(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(object->getType() == CONTAINER && !object->objects.empty()) {
+    if(object->getType() == ObjectType::CONTAINER && !object->objects.empty()) {
         player->printColor("You need to empty %P in order to prepare it.\n", object);
         return(0);
     }

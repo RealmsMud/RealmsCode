@@ -183,7 +183,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
     else
         spell = "a reduce spell";
 
-    if(spellData->how == CAST && player->getClass() != MAGE && player->getClass() != LICH && !player->isStaff()) {
+    if(spellData->how == CastType::CAST && player->getClass() != MAGE && player->getClass() != LICH && !player->isStaff()) {
         player->print("You cannot cast that spell.\n");
         return(0);
     }
@@ -198,7 +198,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
             return(0);
         }
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("You cast %s on yourself.\n", spell.c_str());
             broadcast(player->getSock(), player->getParent(), "%M casts %s on %sself.",
                 player, spell.c_str(), player->himHer());
@@ -263,7 +263,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
         return(1);
     }
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         strength = sizePower(player->getLevel());
         num = MAX(300, 400 + bonus(player->intelligence.getCur()) * 400) + 20 * player->getLevel();
 

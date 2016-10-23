@@ -67,7 +67,7 @@ enum DomainOfMagic {
 class SpellData {
 public:
     SpellData();
-    int how;
+    CastType how;
     int splno;
     unsigned int level;
     Object* object;
@@ -75,7 +75,7 @@ public:
     DomainOfMagic domain;
     bstring skill;
 
-    void set(int h, SchoolOfMagic s, DomainOfMagic d, Object* obj, const Creature* caster);
+    void set(CastType h, SchoolOfMagic s, DomainOfMagic d, Object* obj, const Creature* caster);
     bool check(const Creature* player, bool skipKnowCheck=false) const;
 };
 
@@ -400,12 +400,12 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData);
 int drain_exp(Creature* player, cmd* cmnd, SpellData* spellData);
 
 
-int getPetTitle(int how, int skLevel, bool weaker, bool undead);
+int getPetTitle(CastType how, int skLevel, bool weaker, bool undead);
 void petTalkDesc(Monster* pet, Creature* owner);
 
 bool canEnchant(Player* player, SpellData* spellData);
 bool canEnchant(Creature* player, Object* object);
-bool decEnchant(Player* player, int how);
+bool decEnchant(Player* player, CastType how);
 
 int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, bstring effect, int strength=-2, long duration=-2);
 

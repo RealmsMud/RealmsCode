@@ -791,7 +791,7 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
     chance += ringbonus*5;
 
     if( ready[HELD-1] && ready[HELD-1]->flagIsSet(O_LUCKY) &&
-        ready[HELD-1]->getType() > 4 && ready[HELD-1]->getAdjustment() > 0
+        ready[HELD-1]->getType() != ObjectType::WEAPON && ready[HELD-1]->getAdjustment() > 0
     )
         chance += ready[HELD-1]->getAdjustment()*5;
 
@@ -981,7 +981,7 @@ void Player::damageArmor(int dmg) {
     if(armor->getWearflag() >= FINGER && armor->getWearflag() <= FINGER8)
         return;
 
-    if(armor->getType() != ARMOR)
+    if(armor->getType() != ObjectType::ARMOR)
         return;
 
     bstring armorType = armor->getArmorType();

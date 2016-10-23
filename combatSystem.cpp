@@ -130,7 +130,7 @@ float Creature::getDamageReduction(const Creature* target) const {
 //**********************************************************************
 
 const bstring Object::getWeaponType() const {
-    if(type != WEAPON)
+    if(type != ObjectType::WEAPON)
         return("none");
     else
         return(subType);
@@ -141,7 +141,7 @@ const bstring Object::getWeaponType() const {
 //**********************************************************************
 
 const bstring Object::getArmorType() const {
-    if(type != ARMOR)
+    if(type != ObjectType::ARMOR)
         return("none");
     else
         return(subType);
@@ -154,7 +154,7 @@ const bstring Object::getArmorType() const {
 const bstring Object::getWeaponCategory() const {
     SkillInfo* weaponSkill = gConfig->getSkill(subType);
 
-    if(type != WEAPON || !weaponSkill)
+    if(type != ObjectType::WEAPON || !weaponSkill)
         return("none");
 
     bstring category = weaponSkill->getGroup();
@@ -312,7 +312,7 @@ bool Object::setArmorType(const bstring& newType) {
 
 bool Object::setSubType(const bstring& newType) {
     // These must be set with the appropriate function
-    if(type == ARMOR || type == WEAPON)
+    if(type == ObjectType::ARMOR || type == ObjectType::WEAPON)
         return(false);
 
     subType = newType;
@@ -1011,7 +1011,7 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
             ) {
                 if(showFail) {
                     if(weapon) {
-                        if(weapon->getType() == WEAPON)
+                        if(weapon->getType() == ObjectType::WEAPON)
                             print("Your %s has no effect on %N.\n", weapon->getCName(), pVictim);
                         else
                             print("Your %s have no effect on %N.\n", weapon->getCName(), pVictim);
@@ -1053,7 +1053,7 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
                     )
                 ) {
                     if(glow && weapon) {
-                        if(weapon->getType() == WEAPON)
+                        if(weapon->getType() == ObjectType::WEAPON)
                             printColor("^WYour %s^W glows with power against %N.\n", weapon->getCName(), victim);
                         else
                             printColor("^WYour^W %s glow with power against %N.\n", weapon->getCName(), victim);
@@ -1064,7 +1064,7 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
                 } else {
                     if(showFail) {
                         if(weapon) {
-                            if(weapon->getType() == WEAPON)
+                            if(weapon->getType() == ObjectType::WEAPON)
                                 printColor("^cYour %s has no effect on %N.\n", weapon->getCName(), victim);
                             else
                                 printColor("^cYour %s have no effect on %N.\n", weapon->getCName(), victim);
@@ -1882,7 +1882,7 @@ float Object::getLocationModifier() const {
 //*********************************************************************
 
 int Object::adjustArmor() {
-    if(type != ARMOR || quality <= 0 || wearflag == WIELD || wearflag == FINGER)
+    if(type != ObjectType::ARMOR || quality <= 0 || wearflag == WIELD || wearflag == FINGER)
         return(-1);
 
     return(armor = (short)(getTypeModifier() * ((quality/10.0) + 2.3525) * getLocationModifier()));
@@ -1893,7 +1893,7 @@ int Object::adjustArmor() {
 //*********************************************************************
 
 int Object::adjustWeapon() {
-    if(type != WEAPON || quality <= 0 || wearflag != WIELD) {
+    if(type != ObjectType::WEAPON || quality <= 0 || wearflag != WIELD) {
         damage.setMean(0);
         return(-1);
     }

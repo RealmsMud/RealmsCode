@@ -203,7 +203,7 @@ int new_scroll(int level, Object **new_obj) {
         strcpy((*new_obj)->key[2], p);
 
     (*new_obj)->setWearflag(HELD);
-    (*new_obj)->setType(SCROLL);
+    (*new_obj)->setType(ObjectType::SCROLL);
     (*new_obj)->setWeight(1);
     (*new_obj)->setShotsMax(1);
     (*new_obj)->setShotsCur(1);
@@ -234,7 +234,7 @@ void Object::loadContainerContents() {
     int     count=0, a=0;
     Object  *newObj=0;
 
-    if(type != CONTAINER)
+    if(type != ObjectType::CONTAINER)
         return;
 
     for(a=0; a<3; a++)
@@ -388,7 +388,7 @@ int displayObject(Player* player, Object* target) {
     if(target->compass)
         oStr << target->getCompass(player, false);
 
-    if(target->getType() == LOTTERYTICKET)
+    if(target->getType() == ObjectType::LOTTERYTICKET)
         oStr << "It is good for powerbone cycle #" << target->getLotteryCycle() << ".\n";
 
     if(player->isEffected("know-aura") || player->getClass() == PALADIN || player->isCt()) {
@@ -398,16 +398,16 @@ int displayObject(Player* player, Object* target) {
             oStr << "It has a red aura.\n";
     }
 
-    if(target->getType() == CONTAINER) {
+    if(target->getType() == ObjectType::CONTAINER) {
         inv = target->listObjects(player, true);
         if(inv != "")
             oStr << "It contains: " << inv << ".\n";
     }
 
-    if(target->getType() == ARMOR)
+    if(target->getType() == ObjectType::ARMOR)
         oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is considered ^W" << target->getArmorType() << "^x armor.\n";
 
-    if(target->getType() == WEAPON) {
+    if(target->getType() == ObjectType::WEAPON) {
         oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is a " << obj_type(target->getType()) << "(" <<  target->getWeaponType() <<").\n";
 
         if(target->flagIsSet(O_SILVER_OBJECT))
@@ -430,7 +430,7 @@ int displayObject(Player* player, Object* target) {
         oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is a unique or limited object.\n";
 
 
-    if(target->getType() == WEAPON && target->flagIsSet(O_ENVENOMED)) {
+    if(target->getType() == ObjectType::WEAPON && target->flagIsSet(O_ENVENOMED)) {
         oStr << "^gIt drips with poison.\n";
         if((player->getClass() == ASSASSIN && player->getLevel() >= 10) || player->isCt()) {
             oStr << "^gTime remaining before poison deludes: " <<
@@ -438,7 +438,7 @@ int displayObject(Player* player, Object* target) {
         }
     }
 
-    if( target->getType() == POISON && ((player->getClass() == ASSASSIN && player->getLevel() >= 10) || player->isCt()))
+    if( target->getType() == ObjectType::POISON && ((player->getClass() == ASSASSIN && player->getLevel() >= 10) || player->isCt()))
         oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is a poison.\n";
 
     if(target->flagIsSet(O_COIN_OPERATED_OBJECT))
@@ -450,13 +450,13 @@ int displayObject(Player* player, Object* target) {
         percent = -1;
 
     if(player->isCt() || !Unique::isUnique(target)) {
-        if( target->getType() == WEAPON ||
-            target->getType() == ARMOR ||
-            target->getType() == LIGHTSOURCE ||
-            target->getType() == WAND ||
-            target->getType() == KEY ||
-            target->getType() == POISON ||
-            target->getType() == BANDAGE
+        if( target->getType() == ObjectType::WEAPON ||
+            target->getType() == ObjectType::ARMOR ||
+            target->getType() == ObjectType::LIGHTSOURCE ||
+            target->getType() == ObjectType::WAND ||
+            target->getType() == ObjectType::KEY ||
+            target->getType() == ObjectType::POISON ||
+            target->getType() == ObjectType::BANDAGE
         ) {
             if(percent >= 90)
                 oStr << "It is in pristine condition.\n";
@@ -515,7 +515,7 @@ int displayObject(Player* player, Object* target) {
             oStr << "You do not own "<< target->getObjStr(nullptr, flags, 1) << ".\n";
     }
 
-    if(target->getType() == POTION || target->getType() == HERB) {
+    if(target->getType() == ObjectType::POTION || target->getType() == ObjectType::HERB) {
         oStr << target->showAlchemyEffects(player) << "\n";
     }
 
@@ -795,7 +795,7 @@ short Object::getWeight() const { return(weight); }
 short Object::getBulk() const { return(bulk); }
 short Object::getMaxbulk() const { return(maxbulk); }
 Size Object::getSize() const { return(size); }
-short Object::getType() const { return(type); }
+ObjectType Object::getType() const { return(type); }
 short Object::getWearflag() const { return(wearflag); }
 short Object::getArmor() const { return(armor); }
 short Object::getQuality() const { return(quality); }

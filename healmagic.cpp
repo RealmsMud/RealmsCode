@@ -346,11 +346,11 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 }
 
 
-void niceExp(Creature *healer, Creature *creature, int heal, int how) {
+void niceExp(Creature *healer, Creature *creature, int heal, CastType how) {
     Player  *player=0, *target=0;
     int     exp=0;
 
-    if(how != CAST)
+    if(how != CastType::CAST)
         return;
 
     // only players are allowed to use this function! It's called from creature-spells
@@ -452,7 +452,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
             !player->checkStaff("You are already at full health right now.\n") )
             return(0);
 
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
 
             if(player->isPlayer())
                 player->getAsPlayer()->statistics.healingCast();
@@ -463,7 +463,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
 
         player->doHeal(player, heal);
 
-        if(spellData->how == CAST || spellData->how == SCROLL) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL) {
             player->print("%s spell cast.\n", capSpellName);
             broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on %sself.",
                 player, spellName, player->himHer());
@@ -491,7 +491,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
         if(target->inCombat(false))
             player->smashInvis();
 
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
             if(player->isPlayer())
                 player->getAsPlayer()->statistics.healingCast();
             heal = getHeal(player, target, flag);
@@ -501,7 +501,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
 
         player->doHeal(target, heal);
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("%s spell cast on %N.\n", capSpellName, target);
             target->print("%M casts a %s spell on you.\n",  player, spellName);
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.",
@@ -547,7 +547,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
     Creature* target=0;
     int     heal=0, mpHeal=0;
 
-    if(!(player->getClass() == CLERIC && player->getDeity() == CERIS) && spellData->how == CAST && !player->isCt()) {
+    if(!(player->getClass() == CLERIC && player->getDeity() == CERIS) && spellData->how == CastType::CAST && !player->isCt()) {
         player->print("%s does not grant you the power to cast that spell.\n", gConfig->getDeity(player->getDeity())->getName().c_str());
         return(0);
     }
@@ -559,7 +559,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(player->mp.getCur() < 8 && spellData->how == CAST) {
+    if(player->mp.getCur() < 8 && spellData->how == CastType::CAST) {
         player->print("Not enough magic points.\n");
         return(0);
     }
@@ -578,7 +578,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
             !player->checkStaff("You are already at full health and magic right now.\n") )
             return(0);
 
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
 
             if(player->isPlayer())
                 player->getAsPlayer()->statistics.healingCast();
@@ -599,7 +599,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
         player->doHeal(player, heal);
         player->mp.increase(mpHeal);
 
-        if(spellData->how == CAST || spellData->how == SCROLL) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL) {
 
             player->print("Rejuvenate spell cast.\n");
             broadcast(player->getSock(), player->getParent(), "%M casts a rejuvenate spell on %sself.",
@@ -637,13 +637,13 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(target->inCombat(false))
             player->smashInvis();
 
-        if(spellData->how == CAST && !player->isCt()) {
+        if(spellData->how == CastType::CAST && !player->isCt()) {
             player->lasttime[LT_SPELL].ltime = time(0);
             player->lasttime[LT_SPELL].interval = 24L;
         }
 
 
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
             if(player->isPlayer())
                 player->getAsPlayer()->statistics.healingCast();
             player->mp.decrease(8);
@@ -658,7 +658,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
         player->doHeal(target, heal);
         target->mp.increase(mpHeal);
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
             player->print("Rejuvenate spell cast on %N.\n", target);
             target->print("%M casts a rejuvenate spell on you.\n", player);
@@ -683,7 +683,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
     Creature* creature=0;
 
 
-    if(spellData->how == CAST && !player->isStaff()) {
+    if(spellData->how == CastType::CAST && !player->isStaff()) {
         if(player->getClass() != CLERIC && player->getClass() != PALADIN && !player->isCt()) {
             player->print("Your class prohibits you from casting that spell.\n");
             return(0);
@@ -707,7 +707,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
     // Heal self
     if(cmnd->num == 2) {
 
-        if(!dec_daily(&player->daily[DL_FHEAL]) && spellData->how == CAST && !player->isCt() && player->isPlayer()) {
+        if(!dec_daily(&player->daily[DL_FHEAL]) && spellData->how == CastType::CAST && !player->isCt() && player->isPlayer()) {
             player->print("You have been granted that spell enough today.\n");
             return(0);
         }
@@ -716,7 +716,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
         player->doHeal(player, (player->hp.getMax() - player->hp.getCur()));
         //player->hp.restore();
 
-        if(spellData->how == CAST || spellData->how == SCROLL) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL) {
             if(player->isPlayer())
                 player->getAsPlayer()->statistics.healingCast();
             player->print("Heal spell cast.\n");
@@ -741,7 +741,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
 
         if( !dec_daily(&player->daily[DL_FHEAL]) &&
-            spellData->how == CAST &&
+            spellData->how == CastType::CAST &&
             !player->isCt() &&
             player->isPlayer()
         ) {
@@ -749,7 +749,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
             if(!canCastHealing(player, creature, false, true))
                 return(0);
@@ -769,7 +769,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
                 }
                 if(creature->isEffected("resist-magic")) {
                     player->print("Your spell fizzles.\n");
-                    if(spellData->how == CAST)
+                    if(spellData->how == CastType::CAST)
                         player->subMp(20);
                     return(0);
                 }
@@ -777,7 +777,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 
                 if(creature->isEffected("resist-magic")) {
                     player->print("Your spell fizzles.\n");
-                    if(spellData->how == CAST)
+                    if(spellData->how == CastType::CAST)
                         player->subMp(20);
                     return(0);
                 }
@@ -1050,7 +1050,7 @@ int doRes(Creature* caster, cmd* cmnd, bool res) {
 
 int splResurrect(Creature* player, cmd* cmnd, SpellData* spellData) {
 
-    if(spellData->how != CAST)
+    if(spellData->how != CastType::CAST)
         return(0);
 
     if(!player->isDm()) {
@@ -1081,7 +1081,7 @@ int splResurrect(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splBloodfusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 
-    if(spellData->how != CAST)
+    if(spellData->how != CastType::CAST)
         return(0);
 
     if(!player->isDm()) {
@@ -1116,7 +1116,7 @@ int splBloodfusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
     Creature* target=0;
 
-    if(spellData->how == CAST && player->isPlayer() && !player->isStaff()) {
+    if(spellData->how == CastType::CAST && player->isPlayer() && !player->isStaff()) {
         player->print("You may not cast that spell.\n");
         return(0);
     }
@@ -1125,10 +1125,10 @@ int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(cmnd->num == 2) {
         target = player;
 
-        if(spellData->how == CAST || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::WAND) {
             player->print("Restore spell cast.\n");
             broadcast(player->getSock(), player->getParent(), "%M casts restore on %sself.", player, player->himHer());
-        } else if(spellData->how == POTION)
+        } else if(spellData->how == CastType::POTION)
             player->print("You feel restored.\n");
 
     // Cast restore on another player
@@ -1172,7 +1172,7 @@ int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
 int splRoomVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
     int      heal=0;
 
-    if(spellData->how == POTION) {
+    if(spellData->how == CastType::POTION) {
         player->print("The spell fizzles.\n");
         return(0);
     }

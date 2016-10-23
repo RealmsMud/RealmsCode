@@ -273,10 +273,7 @@ bool Player::isGuildKill(const Player *killer) const {
 // Player command used to do various guild functions
 
 int cmdGuild(Player* player, cmd* cmnd) {
-    //Creature* target = NULL;
     int     len=0;
-    //int len,i=0,j=0;
-    //guildCreationPtr newGuildCreation;
 
     if(cmnd->num < 2) {
         printGuildSyntax(player);

@@ -121,7 +121,8 @@ Object::Object() {
     memset(key, 0, sizeof(key));
     memset(use_output, 0, sizeof(use_output));
     memset(use_attack, 0, sizeof(use_attack));
-    weight = type = adjustment = shotsMax = shotsCur = armor =
+    type = ObjectType::MISC;
+    weight = adjustment = shotsMax = shotsCur = armor =
         wearflag = magicpower = level = requiredSkill = clan =
         special = delay = quality = effectStrength = effectDuration = chargesCur = chargesMax = 0;
     memset(flags, 0, sizeof(flags));
@@ -188,7 +189,7 @@ void Object::init(bool selRandom) {
 Object* Object::getNewPotion() {
     Object* newPotion = new Object;
 
-    newPotion->type = POTION;
+    newPotion->type = ObjectType::POTION;
     newPotion->setName( "generic potion");
     strcpy(newPotion->key[0], "generic");
     strcpy(newPotion->key[1], "potion");
@@ -453,7 +454,7 @@ int Object::getActualBulk() const {
 
     if(bulk <= 0) {
         switch(type) {
-        case    WEAPON:
+        case    ObjectType::WEAPON:
             {
                 bstring category = getWeaponCategory();
                 if(category == "crushing")
@@ -470,12 +471,12 @@ int Object::getActualBulk() const {
                     n = 4;
             }
             break;
-        case    MONEY:
-        case    POISON:
-        case    POTION:
+        case    ObjectType::MONEY:
+        case    ObjectType::POISON:
+        case    ObjectType::POTION:
             n = 4;
             break;
-        case ARMOR:
+        case ObjectType::ARMOR:
             switch(wearflag) {
             case BODY:
                 n = 20;
@@ -516,20 +517,20 @@ int Object::getActualBulk() const {
                 break;
             }
             break;
-        case SCROLL:
-        case WAND:
-        case SONGSCROLL:
-        case MISC:
+        case ObjectType::SCROLL:
+        case ObjectType::WAND:
+        case ObjectType::SONGSCROLL:
+        case ObjectType::MISC:
             n = 3;
             break;
-        case KEY:
+        case ObjectType::KEY:
             n = 1;
             break;
-        case CONTAINER:
+        case ObjectType::CONTAINER:
             n = 5;
             break;
-        case LIGHTSOURCE:
-        case BANDAGE:
+        case ObjectType::LIGHTSOURCE:
+        case ObjectType::BANDAGE:
             n = 2;
             break;
         }
@@ -694,7 +695,7 @@ bool Object::classRestrict(const Creature* creature) const {
         if(wearflag == WIELD && creature->isEffected("lycanthropy") && getWeaponCategory() != "slashing")
             return(true);
 
-        if(type == ARMOR && (cClass == MONK || creature->isEffected("lycanthropy")))
+        if(type == ObjectType::ARMOR && (cClass == MONK || creature->isEffected("lycanthropy")))
             return(true);
 
         // no rings or shields for monk/wolf/lich
@@ -754,11 +755,11 @@ bool Object::skillRestrict(const Creature* creature, bool p) const {
 
     bstring skill = "";
 
-    if(type == ARMOR) {
+    if(type == ObjectType::ARMOR) {
         skill = getArmorType();
         if(skill == "shield" || skill == "ring")
             skill = "";
-    } else if(type == WEAPON) {
+    } else if(type == ObjectType::WEAPON) {
         skill = getWeaponType();
     } else if(flagIsSet(O_FISHING)) {
         skill = "fishing";
@@ -766,7 +767,7 @@ bool Object::skillRestrict(const Creature* creature, bool p) const {
     if(skill != "") {
         skillLevel = (int)creature->getSkillGained(skill);
         if(requiredSkill > skillLevel) {
-            if(p) creature->checkStaff("You do not have enough training in ^W%s%s^x to use that!\n", skill.c_str(), type == ARMOR ? " armor" : "");
+            if(p) creature->checkStaff("You do not have enough training in ^W%s%s^x to use that!\n", skill.c_str(), type == ObjectType::ARMOR ? " armor" : "");
             if(!creature->isStaff()) return(true);
         }
     }
@@ -1005,7 +1006,7 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
                 objStr << getName();
         }
         else if(num == 1) {
-            if(flagIsSet(O_NO_PREFIX) || (info.id == 0 && !strcmp(key[0], "gold") && type == MONEY))
+            if(flagIsSet(O_NO_PREFIX) || (info.id == 0 && !strcmp(key[0], "gold") && type == ObjectType::MONEY))
                 objStr <<  "";
             else if(flagIsSet(O_SOME_PREFIX))
                 objStr << "some ";

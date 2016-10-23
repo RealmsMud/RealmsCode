@@ -107,12 +107,12 @@ bstring getCondition(Object* object) {
     if(object->getShotsCur() > 0 && object->getShotsMax() > 0)
         percent = 100 * object->getShotsCur() / object->getShotsMax();
 
-    if( object->getType() == WEAPON ||
-        object->getType() == ARMOR ||
-        object->getType() == LIGHTSOURCE ||
-        object->getType() == WAND ||
-        object->getType() == KEY ||
-        object->getType() == POISON
+    if( object->getType() == ObjectType::WEAPON ||
+        object->getType() == ObjectType::ARMOR ||
+        object->getType() == ObjectType::LIGHTSOURCE ||
+        object->getType() == ObjectType::WAND ||
+        object->getType() == ObjectType::KEY ||
+        object->getType() == ObjectType::POISON
     ) {
         if(percent >= 90)
             return("Pristine");
@@ -613,7 +613,7 @@ int cmdShop(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        if(obj->flagIsSet(O_NO_DROP) || obj->getType() == LOTTERYTICKET) {
+        if(obj->flagIsSet(O_NO_DROP) || obj->getType() == ObjectType::LOTTERYTICKET) {
             *player << "That item cannot be stocked.\n";
             return(0);
         }
@@ -638,7 +638,7 @@ int cmdShop(Player* player, cmd* cmnd) {
             player->print("Why would you want to sell second hand trash?\n");
             return(0);
         }
-        if(obj->getShotsCur() < 1 && obj->getShotsCur() != obj->getShotsMax() && obj->getType() != CONTAINER) {
+        if(obj->getShotsCur() < 1 && obj->getShotsCur() != obj->getShotsMax() && obj->getType() != ObjectType::CONTAINER) {
             player->print("Why would you want to sell such trash in your shop?\n");
             return(0);
         }
@@ -764,23 +764,27 @@ int cmdShop(Player* player, cmd* cmnd) {
 bool doFilter(const Object* object, const bstring& filter) {
     if(filter == "")
         return(false);
+
     if(filter == object->getSubType())
         return(false);
-    if( (filter == "weapon" && object->getType() == WEAPON) ||
-        (filter == "armor" && object->getType() == ARMOR) ||
-        (filter == "potion" && object->getType() == POTION) ||
-        (filter == "scroll" && object->getType() == SCROLL) ||
-        (filter == "wand" && object->getType() == WAND) ||
-        (filter == "container" && object->getType() == CONTAINER) ||
-        (filter == "key" && object->getType() == KEY) ||
-        ((filter == "light" || filter == "lightsource") && object->getType() == LIGHTSOURCE) ||
-        (filter == "song" && object->getType() == SONGSCROLL) ||
-        (filter == "poison" && object->getType() == POISON) ||
-        (filter == "bandage" && object->getType() == BANDAGE)
+
+    if( (filter == "weapon" && object->getType() == ObjectType::WEAPON) ||
+        (filter == "armor" && object->getType() == ObjectType::ARMOR) ||
+        (filter == "potion" && object->getType() == ObjectType::POTION) ||
+        (filter == "scroll" && object->getType() == ObjectType::SCROLL) ||
+        (filter == "wand" && object->getType() == ObjectType::WAND) ||
+        (filter == "container" && object->getType() == ObjectType::CONTAINER) ||
+        (filter == "key" && object->getType() == ObjectType::KEY) ||
+        ((filter == "light" || filter == "lightsource") && object->getType() == ObjectType::LIGHTSOURCE) ||
+        (filter == "song" && object->getType() == ObjectType::SONGSCROLL) ||
+        (filter == "poison" && object->getType() == ObjectType::POISON) ||
+        (filter == "bandage" && object->getType() == ObjectType::BANDAGE)
     )
         return(false);
+
     if(filter != "none" && filter == object->getWeaponCategory())
         return(false);
+
     return(true);
 }
 
@@ -793,14 +797,18 @@ bool isValidShop(const UniqueRoom* shop, const UniqueRoom* storage) {
     // both rooms must exist
     if(!shop || !storage)
         return(false);
+
     // flags must be set properly
     if(!shop->flagIsSet(R_SHOP))
         return(false);
+
     if(!storage->flagIsSet(R_SHOP_STORAGE))
         return(false);
+
     // cannot be itself
     if(shop->info == storage->info)
         return(false);
+
     // shop must point to storage room
     if(shopStorageRoom(shop) != storage->info)
         return(false);
@@ -813,7 +821,7 @@ bool isValidShop(const UniqueRoom* shop, const UniqueRoom* storage) {
 //*********************************************************************
 
 const char* cannotUseMarker(Player* player, Object* object) {
-    if(object->getType() == WEAPON || object->getType() == ARMOR) {
+    if(object->getType() == ObjectType::WEAPON || object->getType() == ObjectType::ARMOR) {
         if(!player->canUse(object, true))
             return(" ^r(x)^x");
     }
@@ -892,7 +900,7 @@ int cmdList(Player* player, cmd* cmnd) {
                 cost = buyAmount(player, player->getUniqueRoomParent(), object, true);
 
                 // even if they love you, lottery tickets are the same price
-                if(object->getType() == LOTTERYTICKET) {
+                if(object->getType() == ObjectType::LOTTERYTICKET) {
                     object->value.set(gConfig->getLotteryTicketPrice(), GOLD);
                     cost = object->value;
                 }
@@ -1339,7 +1347,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
         player->coins.sub(object->getShopValue(), GOLD);
 
-        if(object->getType() == LOTTERYTICKET || object->getType() == BANDAGE)
+        if(object->getType() == ObjectType::LOTTERYTICKET || object->getType() == ObjectType::BANDAGE)
             object->setShopValue(0);
 
 
@@ -1415,7 +1423,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
         Money cost = buyAmount(player, player->getUniqueRoomParent(), object, true);
 
         // even if they love you, lottery tickets are the same price
-        if(object->getType() == LOTTERYTICKET) {
+        if(object->getType() == ObjectType::LOTTERYTICKET) {
             object->value.set(gConfig->getLotteryTicketPrice(), GOLD);
             cost = object->value;
         }
@@ -1449,7 +1457,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
         if(object->getName() != "storage room" && object->getName() != "bail") {
 
             player->unhide();
-            if(object->getType() == LOTTERYTICKET) {
+            if(object->getType() == ObjectType::LOTTERYTICKET) {
                 if(gConfig->getLotteryEnabled() == 0) {
                     player->print("Sorry, lottery tickets are not currently being sold.\n");
                     return(0);
@@ -1466,7 +1474,6 @@ int cmdBuy(Player* player, cmd* cmnd) {
                     merror("buy", FATAL);
 
                 *object2 = *object;
-//              object2->setParent(NULL);
                 object2->clearFlag(O_PERM_INV_ITEM);
                 object2->clearFlag(O_PERM_ITEM);
                 object2->clearFlag(O_TEMP_PERM);
@@ -1522,17 +1529,17 @@ int cmdBuy(Player* player, cmd* cmnd) {
             object2->setDroppedBy(room, "StoreBought");
             gServer->logGold(GOLD_OUT, player, object2->refund, object2, "StoreBought");
 
-            if(object2->getType() == LOTTERYTICKET || object2->getType() == BANDAGE)
+            if(object2->getType() == ObjectType::LOTTERYTICKET || object2->getType() == ObjectType::BANDAGE)
                 object2->value.zero();
 
             player->print("You have %ld gold left.", player->coins[GOLD]);
-            if(object2->getType() == LOTTERYTICKET)
+            if(object2->getType() == ObjectType::LOTTERYTICKET)
                 player->print(" Your numbers are %02d %02d %02d %02d %02d  (%02d).", object2->getLotteryNumbers(0),
                         object2->getLotteryNumbers(1), object2->getLotteryNumbers(2),
                         object2->getLotteryNumbers(3), object2->getLotteryNumbers(4), object2->getLotteryNumbers(5));
             *player << "\n";
 
-            if(object2->getName() != "storage room" && object2->getName() != "bail" && object2->getType() != LOTTERYTICKET)
+            if(object2->getName() != "storage room" && object2->getName() != "bail" && object2->getType() != ObjectType::LOTTERYTICKET)
                 object2->setFlag(O_JUST_BOUGHT);
 
             broadcast(player->getSock(), player->getParent(), "%M bought %1P.", player, object2);
@@ -1686,16 +1693,16 @@ int cmdSell(Player* player, cmd* cmnd) {
     // Luck for sale of items
     //  gold = ((Ply[fd].extr->getLuck()*gold)/100);
 
-    if((object->getType() == WEAPON || object->getType() == ARMOR) && object->getShotsCur() <= object->getShotsMax()/8)
+    if((object->getType() == ObjectType::WEAPON || object->getType() == ObjectType::ARMOR) && object->getShotsCur() <= object->getShotsMax()/8)
         poorquality = true;
 
-    if((object->getType() == WAND || object->getType() > MISC || object->getType() == KEY) && object->getShotsCur() < 1)
+    if((object->getType() == ObjectType::WAND || object->getType() > ObjectType::MISC || object->getType() == ObjectType::KEY) && object->getShotsCur() < 1)
         poorquality = true;
 
-    if (value[GOLD] < 20 || poorquality || object->getType() == SCROLL ||
+    if (value[GOLD] < 20 || poorquality || object->getType() == ObjectType::SCROLL ||
     // objects flagged as eatable/drinkable can be sold
-            (object->getType() == POTION && !object->flagIsSet(O_EATABLE)
-                    && !object->flagIsSet(O_DRINKABLE)) || object->getType() == SONGSCROLL
+            (object->getType() == ObjectType::POTION && !object->flagIsSet(O_EATABLE)
+                    && !object->flagIsSet(O_DRINKABLE)) || object->getType() == ObjectType::SONGSCROLL
             || object->flagIsSet(O_STARTING)) {
         switch(mrand(1,5)) {
             case 1:
@@ -2091,7 +2098,7 @@ int cmdTrade(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(!found || !object->info.id || ((object->getShotsCur() <= object->getShotsMax()/10) && object->getType() != MISC)) {
+    if(!found || !object->info.id || ((object->getShotsCur() <= object->getShotsMax()/10) && object->getType() != ObjectType::MISC)) {
         player->print("%M says, \"I don't want that!\"\n", creature);
         failTrade(player, object, creature);
         return(0);

@@ -504,7 +504,7 @@ public:
     bool canBeDrained() const;
 
 
-    int spellFail(int how);
+    int spellFail(CastType how);
     bool isMageLich();
     bool noPotion(SpellData* spellData);
     int doMpCheck(int splno);

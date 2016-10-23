@@ -38,12 +38,12 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(!pPlayer->spellIsKnown(S_TRANSPORT) && spellData->how == CAST) {
+    if(!pPlayer->spellIsKnown(S_TRANSPORT) && spellData->how == CastType::CAST) {
         pPlayer->print("You don't know that spell.\n");
         return(0);
     }
 
-    if(pPlayer->getClass() != MAGE && pPlayer->getClass() != LICH && !pPlayer->isCt() && spellData->how == CAST) {
+    if(pPlayer->getClass() != MAGE && pPlayer->getClass() != LICH && !pPlayer->isCt() && spellData->how == CastType::CAST) {
         pPlayer->print("Only mages and liches may cast that spell.\n");
         return(0);
     }
@@ -97,7 +97,7 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     cost = 8 + (object->getActualWeight()) / 4;
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(!pPlayer->checkMp(cost))
             return(0);
         pPlayer->subMp(cost);
@@ -178,13 +178,13 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
     //
     // cast dimesional-anchor effect
     //
-    if(cmnd->num <= 3 || spellData->how != CAST) {
+    if(cmnd->num <= 3 || spellData->how != CastType::CAST) {
 
-        if(spellData->how == CAST && !player->checkMp(30))
+        if(spellData->how == CastType::CAST && !player->checkMp(30))
             return(0);
 
         if(pPlayer->spellFail( spellData->how)) {
-            if(spellData->how == CAST)
+            if(spellData->how == CastType::CAST)
                 pPlayer->subMp(30);
             return(0);
         }
@@ -196,7 +196,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
                 player->print("You were unable to cast the spell.\n");
                 return(0);
             }
-            if(spellData->how == POTION)
+            if(spellData->how == CastType::POTION)
                 player->print("You feel stable.\n");
 
         // Cast anchor on another pPlayer
@@ -222,7 +222,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
                 return(0);
         }
 
-        if(spellData->how == CAST)
+        if(spellData->how == CastType::CAST)
             player->subMp(30);
 
         if(target != pPlayer) {
@@ -280,11 +280,11 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
 
-    if(spellData->how == CAST && !pPlayer->checkMp(destroy ? 10 : 50))
+    if(spellData->how == CastType::CAST && !pPlayer->checkMp(destroy ? 10 : 50))
         return(0);
 
     if(pPlayer->spellFail( spellData->how)) {
-        if(spellData->how == CAST)
+        if(spellData->how == CastType::CAST)
             pPlayer->subMp(destroy ? 10 : 50);
         return(0);
     }
@@ -311,7 +311,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
             pPlayer->delAnchor(i);
 
-            if(spellData->how == CAST)
+            if(spellData->how == CastType::CAST)
                 pPlayer->subMp(10);
             return(0);
         }
@@ -335,7 +335,7 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
     broadcast(isCt, "^y%M forms a dimensional anchor in room %s.",
             pPlayer, pPlayer->getRoomParent()->fullName().c_str());
 
-    if(spellData->how == CAST)
+    if(spellData->how == CastType::CAST)
         pPlayer->subMp(50);
 
     return(1);
@@ -356,7 +356,7 @@ int splPortal(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(!pPlayer)
         return(0);
-    if(spellData->how != CAST) {
+    if(spellData->how != CastType::CAST) {
         pPlayer->print("Nothing happens.\n");
         return(0);
     }
@@ -571,10 +571,10 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     strcpy(dest, "");
 
-    if(spellData->how == CAST && !player->checkMp(50))
+    if(spellData->how == CastType::CAST && !player->checkMp(50))
         return(0);
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if( !player->isCt() &&
             player->getClass() != MAGE &&
             player->getClass() != LICH &&
@@ -596,7 +596,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
         ) {
             player->print("The spell fizzles.\n");
             player->print("You cannot cast that spell in this room.\n");
-            if(spellData->how == CAST)
+            if(spellData->how == CastType::CAST)
                 player->subMp(50);
             return(0);
         }
@@ -617,23 +617,23 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
 
 
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
             if(!player->checkMp(30))
                 return(0);
             player->subMp(30);
         }
 
-        if(spellData->how == CAST || spellData->how == SCROLL)
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL)
             player->print("You cast a teleport spell on yourself.\n");
 
-        if(spellData->how == CAST && !player->isStaff() && player->checkDimensionalAnchor()) {
+        if(spellData->how == CastType::CAST && !player->isStaff() && player->checkDimensionalAnchor()) {
             player->printColor("^yYour dimensional-anchor causes your spell to fizzle!^w\n");
             return(1);
         }
 
         broadcast(player->getSock(), player->getParent(), "%M disappears.", player);
 
-        if(spellData->how != CAST && spellData->how != SCROLL)
+        if(spellData->how != CastType::CAST && spellData->how != CastType::SCROLL)
             player->print("You become disoriented and find yourself in another place.\n");
 
 
@@ -675,7 +675,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
         if(pPlayer && destination) {
-            if(spellData->how != CAST) {
+            if(spellData->how != CastType::CAST) {
                 player->print("Nothing happens.\n");
                 return(0);
             }
@@ -720,7 +720,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
             }
 
             // Directed teleports use more MP.
-            if(spellData->how == CAST) {
+            if(spellData->how == CastType::CAST) {
                 if(!pPlayer->checkMp(60))
                     return(0);
                 pPlayer->subMp(60);
@@ -731,7 +731,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
             broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts a teleport spell on %sself.",
                 pPlayer, pPlayer->himHer());
 
-            if(spellData->how == CAST && !player->isStaff() && player->checkDimensionalAnchor()) {
+            if(spellData->how == CastType::CAST && !player->isStaff() && player->checkDimensionalAnchor()) {
                 player->printColor("^yYour dimensional-anchor causes your spell to fizzle!^w\n");
                 return(1);
             }
@@ -789,7 +789,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
                     player->print("Not while %N is in combat.\n", pTarget);
                     return(0);
                 }
-                if(spellData->how == CAST && pTarget->checkDimensionalAnchor()) {
+                if(spellData->how == CastType::CAST && pTarget->checkDimensionalAnchor()) {
                     player->printColor("^y%M's dimensional-anchor causes your spell to fizzle!^w\n", target);
                     pTarget->printColor("^yYour dimensional-anchor protects you from %N's teleport spell!^w\n", pPlayer);
                     return(1);
@@ -809,7 +809,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
                 player->print("Your magic is too weak to teleport %N.\n", target);
                 if(target->getSock())
                     target->print("%M tried to teleport you.\n", player);
-                if(spellData->how == CAST)
+                if(spellData->how == CastType::CAST)
                     player->subMp(50);
                 return(1);
             }
@@ -817,7 +817,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Teleport cast on %N.\n", target);
             target->print("%M casts a teleport spell on you.\n", player);
 
@@ -827,7 +827,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
             logCast(player, target, "teleport");
 
             newRoom = player->teleportWhere();
-            if(spellData->how == CAST)
+            if(spellData->how == CastType::CAST)
                 player->subMp(50);
 
             if(pTarget) {
@@ -893,18 +893,18 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
     // Cast e-travel on self
     if(pCaster && cmnd->num == 2) {
 
-        if(spellData->how == CAST && !pCaster->isStaff() && pCaster->checkDimensionalAnchor()) {
+        if(spellData->how == CastType::CAST && !pCaster->isStaff() && pCaster->checkDimensionalAnchor()) {
             player->printColor("^yYour dimensional-anchor causes your spell to fizzle!^w\n");
             return(1);
         }
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Ethereal-travel spell cast.\n");
             player->print("You turn translucent and fade away.\n");
             player->print("You have been transported to the ethereal plane.\n");
             broadcast(pCaster->getSock(), pCaster->getRoomParent(), "%M casts ethereal-travel on %sself.",
                 pCaster, pCaster->himHer());
-        } else if(spellData->how == POTION) {
+        } else if(spellData->how == CastType::POTION) {
             player->print("You turn translucent and fade away.\n");
             player->print("You have been transported to the ethereal plane.\n");
             broadcast(pCaster->getSock(), pCaster->getRoomParent(), "%M turns translucent and fades away.", player);
@@ -968,9 +968,9 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
             }
         }
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
-            if(spellData->how == CAST && !player->isStaff() && target->checkDimensionalAnchor()) {
+            if(spellData->how == CastType::CAST && !player->isStaff() && target->checkDimensionalAnchor()) {
                 player->printColor("^y%M's dimensional-anchor causes your spell to fizzle!^w\n", target);
                 target->printColor("^yYour dimensional-anchor protects you from %N's ethereal-travel spell!^w\n", player);
                 return(1);
@@ -1116,9 +1116,9 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
-            if(spellData->how == CAST && !player->isStaff() && target->checkDimensionalAnchor()) {
+            if(spellData->how == CastType::CAST && !player->isStaff() && target->checkDimensionalAnchor()) {
                 player->printColor("^y%M's dimensional-anchor causes your spell to fizzle!^w\n", target);
                 target->printColor("^yYour dimensional-anchor protects you from %N's summon spell!^w\n", player);
                 return(1);
@@ -1168,7 +1168,7 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
     if( pPlayer->getClass() != RANGER &&
         pPlayer->getClass() != DRUID &&
         !pPlayer->isCt() &&
-        spellData->how == CAST
+        spellData->how == CastType::CAST
     ) {
         pPlayer->print("Only druids and rangers may cast that spell.\n");
         return(0);
@@ -1235,7 +1235,7 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(Move::tooFarAway(pPlayer, target, "track"))
             return(0);
 
-        if(!dec_daily(&pPlayer->daily[DL_TRACK]) && spellData->how == CAST) {
+        if(!dec_daily(&pPlayer->daily[DL_TRACK]) && spellData->how == CastType::CAST) {
             pPlayer->print("You have tracked enough today.\n");
             return(0);
         }
@@ -1349,7 +1349,7 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
     if( player->getClass() != CLERIC &&
         player->getClass() != PALADIN &&
         player->getType()== PLAYER &&
-        !player->isCt() && spellData->how == CAST
+        !player->isCt() && spellData->how == CastType::CAST
     ) {
         player->print("Only clerics and paladins may cast that spell.\n");
         return(0);
@@ -1364,18 +1364,18 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
     // Cast recall on self
     if(caster && cmnd->num <= 2) {
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Word of recall spell cast.\n");
             broadcast(player->getSock(), player->getParent(), "%M casts word of recall on %sself.",
                 caster, caster->himHer());
         }
 
-        if(spellData->how == CAST && !caster->isStaff() && caster->checkDimensionalAnchor()) {
+        if(spellData->how == CastType::CAST && !caster->isStaff() && caster->checkDimensionalAnchor()) {
             player->printColor("^yYour dimensional-anchor causes your spell to fizzle!^w\n");
             return(1);
         }
 
-        if(spellData->how == POTION) {
+        if(spellData->how == CastType::POTION) {
             player->print("You phase in and out of existence.\n");
             broadcast(player->getSock(), caster->getRoomParent(), "%M disappears.", caster);
         }
@@ -1401,14 +1401,14 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
             player->print("Word of recall cast on %N.\n", target);
             target->print("%M casts a word of recall spell on you.\n", player);
             broadcast(player->getSock(), target->getSock(), player->getParent(),
                 "%M casts word of recall on %N.", player, target);
 
-            if(spellData->how == CAST && !player->isStaff() && target->checkDimensionalAnchor()) {
+            if(spellData->how == CastType::CAST && !player->isStaff() && target->checkDimensionalAnchor()) {
                 player->printColor("^y%M's dimensional-anchor causes your spell to fizzle!^w\n", target);
                 target->printColor("^yYour dimensional-anchor protects you from %N's word-of-recall spell!^w\n", player);
                 return(1);
@@ -1461,7 +1461,7 @@ int splPlaneShift(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             pPlayer->print("You cast plane-shift on %N.\n", target);
             target->print("%M casts plane-shift on you.\n", pPlayer);
             broadcast(pPlayer->getSock(), target->getSock(), pPlayer->getRoomParent(), "%M casts plane-shift on %N.", pPlayer, target);
@@ -1530,12 +1530,12 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(!canCast && spellData->how == CAST) {
+    if(!canCast && spellData->how == CastType::CAST) {
         player->print("You cannot cast that spell.\n");
         return(0);
     }
 
-    if(!canCast && spellData->how != CAST) {
+    if(!canCast && spellData->how != CastType::CAST) {
         player->print("The magic will not work for you.\n");
         return(0);
     }
@@ -1568,7 +1568,7 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(spellData->how == CAST && !pPlayer->isStaff() && pPlayer->checkDimensionalAnchor()) {
+    if(spellData->how == CastType::CAST && !pPlayer->isStaff() && pPlayer->checkDimensionalAnchor()) {
         player->printColor("^yYour dimensional-anchor causes your spell to fizzle!^w\n");
         return(1);
     }

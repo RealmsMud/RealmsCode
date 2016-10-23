@@ -44,9 +44,9 @@ void petTalkDesc(Monster* pet, Creature* owner) {
 //                      getPetTitle
 //*********************************************************************
 
-int getPetTitle(int how, int skLevel, bool weaker, bool undead) {
+int getPetTitle(CastType how, int skLevel, bool weaker, bool undead) {
     int title=0, num=0;
-    if(how == CAST || how == SKILL || how == WAND) {
+    if(how == CastType::CAST || how == CastType::SKILL || how == CastType::WAND) {
         title = (skLevel + 2) / 3;
         if(weaker) {
             num = skLevel / 2;
@@ -71,7 +71,7 @@ int getPetTitle(int how, int skLevel, bool weaker, bool undead) {
 //*********************************************************************
 int conjureCmd(Player* player, cmd* cmnd) {
     SpellData data;
-    data.set(SKILL, CONJURATION, NO_DOMAIN, 0, player);
+    data.set(CastType::SKILL, CONJURATION, NO_DOMAIN, 0, player);
     if(!data.check(player))
         return(0);
     return(conjure(player, cmnd, &data));
@@ -100,13 +100,13 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(player->noPotion( spellData))
         return(0);
 
-    if(spellData->how == SKILL && !player->knowsSkill("conjure")) {
+    if(spellData->how == CastType::SKILL && !player->knowsSkill("conjure")) {
         player->print("The conjuring of elementals escapes you.\n");
         return(0);
     }
 
     /*
-    if(spellData->how == SKILL) {
+    if(spellData->how == CastType::SKILL) {
         skLevel = (int)player->getSkillLevel("conjure");
     } else {
         skLevel = player->getLevel();
@@ -116,7 +116,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     // has been fixed
     skLevel = player->getLevel();
 
-    if( spellData->how == SKILL &&
+    if( spellData->how == CastType::SKILL &&
         player->getClass() == CLERIC &&
         player->getDeity() == GRADIUS &&
         (   player->getAdjustedAlignment() == BLOODRED ||
@@ -141,20 +141,20 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
         level = skLevel;
     }
 
-    title = getPetTitle(spellData->how, level, spellData->how == WAND && player->getClass() != DRUID && !(player->getClass() == CLERIC && player->getDeity() == GRADIUS), false);
+    title = getPetTitle(spellData->how, level, spellData->how == CastType::WAND && player->getClass() != DRUID && !(player->getClass() == CLERIC && player->getDeity() == GRADIUS), false);
     mp = 4 * title;
 
-    if(spellData->how == CAST && !player->checkMp(mp))
+    if(spellData->how == CastType::CAST && !player->checkMp(mp))
         return(0);
 
     t = time(0);
     i = LT(player, LT_INVOKE);
     if(!player->isCt()) {
-        if( (i > t) && (spellData->how != WAND) ) {
+        if( (i > t) && (spellData->how != CastType::WAND) ) {
             player->pleaseWait(i-t);
             return(0);
         }
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
             if(player->spellFail( spellData->how)) {
                 player->subMp(mp);
                 return(0);
@@ -163,17 +163,17 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     if( player->getClass() == DRUID ||
-        (spellData->how == SKILL && !(player->getClass() == CLERIC && player->getDeity() == GRADIUS)) ||
+        (spellData->how == CastType::SKILL && !(player->getClass() == CLERIC && player->getDeity() == GRADIUS)) ||
         player->isDm() )
     {
 
-        if( (cmnd->num < 3 && (spellData->how == CAST || spellData->how == WAND)) ||
-            (cmnd->num < 2 && spellData->how == SKILL)
+        if( (cmnd->num < 3 && (spellData->how == CastType::CAST || spellData->how == CastType::WAND)) ||
+            (cmnd->num < 2 && spellData->how == CastType::SKILL)
         ) {
             player->print("Conjure what kind of elemental (earth, air, water, fire, electricity, cold)?\n");
             return(0);
         }
-        s = cmnd->str[spellData->how == SKILL ? 1 : 2];
+        s = cmnd->str[spellData->how == CastType::SKILL ? 1 : 2];
         len = strlen(s);
 
         if(!strncasecmp(s, "earth", len))
@@ -626,10 +626,10 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(player->isCt())
         player->lasttime[LT_INVOKE].interval = 6L;
 
-    if(spellData->how == CAST)
+    if(spellData->how == CastType::CAST)
         player->mp.decrease(mp);
 
-    if(spellData->how == SKILL)
+    if(spellData->how == CastType::SKILL)
         return(PROMPT);
     else
         return(1);
@@ -661,7 +661,7 @@ int splDenseFog(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
             player->print("The room's magical properties increase the power of your spell.\n");
     }
@@ -700,7 +700,7 @@ int splToxicCloud(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
             player->print("The room's magical properties increase the power of your spell.\n");
     }
@@ -748,7 +748,7 @@ int splWallOfFire(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
             player->print("The room's magical properties increase the power of your spell.\n");
     }
@@ -785,7 +785,7 @@ int splWallOfForce(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
             player->print("The room's magical properties increase the power of your spell.\n");
     }
@@ -827,7 +827,7 @@ int splWallOfThorns(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
             player->print("The room's magical properties increase the power of your spell.\n");
     }

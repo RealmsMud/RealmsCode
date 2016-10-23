@@ -774,7 +774,7 @@ int dmTake(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        if(container->getType() != CONTAINER) {
+        if(container->getType() != ObjectType::CONTAINER) {
             player->print("That isn't a container.\n");
             if(!online)
                 free_crt(target);
@@ -877,7 +877,7 @@ int dmRemove(Player* player, cmd* cmnd) {
             j++;
             if(j == cmnd->val[1]) {
                 object = target->ready[i];
-                if(target->inCombat() && object->getType() <=4) {
+                if(target->inCombat() && object->getType() == ObjectType::WEAPON) {
                     player->print("Not while %s is in combat.\n", target->upHeShe());
                     return(0);
                 }
@@ -961,7 +961,7 @@ int dmPut(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        if(container->getType() != CONTAINER) {
+        if(container->getType() != ObjectType::CONTAINER) {
             player->print("That isn't a container.\n");
             if(!online)
                 free_crt(target);

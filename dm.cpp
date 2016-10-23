@@ -1242,8 +1242,8 @@ int dmAlchemyList(Player* player, cmd* cmnd) {
 
     player->printColor("^B%25s - %3s - %-15s^x\n", "Name", "Pos", "Action");
 
-    for(AlchemyInfo* alc : gConfig->alchemy) {
-        player->printColor("%s\n", alc->getDisplayString().c_str());
+    for(auto& it: gConfig->alchemy) {
+        player->printColor("%s\n", it.second->getDisplayString().c_str());
     }
     return(0);
 }

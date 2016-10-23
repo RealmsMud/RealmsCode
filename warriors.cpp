@@ -25,14 +25,14 @@
 
 void Player::disarmSelf() {
     bool removed = false;
-    if(ready[WIELD-1] && ready[WIELD-1]->getType() == WEAPON && !ready[WIELD-1]->flagIsSet(O_CURSED)) {
+    if(ready[WIELD-1] && ready[WIELD-1]->getType() == ObjectType::WEAPON && !ready[WIELD-1]->flagIsSet(O_CURSED)) {
         printColor("You removed %1P\n", ready[WIELD-1]);
         broadcast(getSock(),  getRoomParent(), "%M removed %1P.", this, ready[WIELD-1]);
         unequip(WIELD);
         removed = true;
     }
 
-    if(ready[HELD-1] && ready[HELD-1]->getType() == WEAPON) {
+    if(ready[HELD-1] && ready[HELD-1]->getType() == ObjectType::WEAPON) {
         if(ready[HELD-1]->flagIsSet(O_CURSED)) {
             if(!ready[WIELD-1]) {
                 ready[WIELD-1] = ready[HELD-1];

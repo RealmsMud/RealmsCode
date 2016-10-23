@@ -138,7 +138,7 @@ bool Config::hasProxyAccess(Player* proxy, Player* proxied) {
 // getProxyList
 //*********************************************************************
 // Returns a bstring showing proxy access for the given player
-// or all players if player is NULL
+// or all players if player is null
 
 bstring Config::getProxyList(Player* player) {
     std::ostringstream oStr;

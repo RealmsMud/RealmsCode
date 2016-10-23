@@ -49,7 +49,7 @@ struct  lasttime    Weather[5];
 int     Numlockedout;
 
 const char *dmname[] = {
-    "Bane", "Dominus", "Ocelot", "Kriona", "Dmtest", nullptr
+    "Bane", "Dominus", "Ocelot", "Kriona", nullptr
 };
 
 
@@ -485,4 +485,5 @@ creatureStats conjureStats[3][40]  =
         {264,240,1080,-21,15,4,80,30,30,30,30,30,860000}
     }
 };
+
 
