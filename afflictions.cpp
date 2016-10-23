@@ -142,7 +142,7 @@ int cmdPoison(Player* player, cmd* cmnd) {
 
     if(!player->isCt()) {
         if(!player->knowsSkill("poison")) {
-            if(player->getClass() == ASSASSIN || player->getSecondClass() == ASSASSIN) {
+            if(player->getClass() == CreatureClass::ASSASSIN || player->getSecondClass() == CreatureClass::ASSASSIN) {
                 player->print("Assassins must use envenom to poison people.\n");
             } else {
                 player->print("You lack the ability to poison people.\n");
@@ -507,13 +507,13 @@ bool Creature::isBlind() const {
 // be replaced with isEffected("vampirism") and isEffected("lycanthropy")
 
 bool Creature::isNewVampire() const {
-    if(isPlayer() && cClass == PUREBLOOD)
+    if(isPlayer() && cClass == CreatureClass::PUREBLOOD)
         return(false);
     return(isEffected("vampirism"));
 }
 
 bool Creature::isNewWerewolf() const {
-    if(isPlayer() && cClass == WEREWOLF)
+    if(isPlayer() && cClass == CreatureClass::WEREWOLF)
         return(false);
     return(isEffected("lycanthropy"));
 }
@@ -565,10 +565,10 @@ bool Creature::willBecomeVampire() const {
     if(!pFlagIsSet(P_PTESTER))
         return(false);
 
-    if(level < 7 || cClass == PALADIN || isEffected("lycanthropy") || isUndead())
+    if(level < 7 || cClass == CreatureClass::PALADIN || isEffected("lycanthropy") || isUndead())
         return(false);
     // only evil clerics become vampires
-    if(cClass == CLERIC && !(deity == ARAMON || deity == ARACHNUS))
+    if(cClass == CreatureClass::CLERIC && !(deity == ARAMON || deity == ARACHNUS))
         return(false);
     if(monType::noLivingVulnerabilities(type))
         return(false);
@@ -801,8 +801,8 @@ int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
     Creature* target=0;
 
     if( player->isPlayer() &&
-        player->getClass() != CLERIC &&
-        player->getClass() != PALADIN &&
+        player->getClass() !=  CreatureClass::CLERIC &&
+        player->getClass() !=  CreatureClass::PALADIN &&
         !player->isCt() &&
         spellData->how == CastType::CAST
     ) {
@@ -922,8 +922,8 @@ int splSlowPoison(Creature* player, cmd* cmnd, SpellData* spellData) {
 int splCureDisease(Creature* player, cmd* cmnd, SpellData* spellData) {
     Creature* target=0;
 
-    if(player->getClass() != CLERIC &&
-        player->getClass() != PALADIN &&
+    if(player->getClass() !=  CreatureClass::CLERIC &&
+        player->getClass() !=  CreatureClass::PALADIN &&
         !player->isStaff() &&
         spellData->how == CastType::CAST)
     {
@@ -1073,7 +1073,7 @@ bool EffectInfo::isPoison() const {
 int splCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
     Object  *object=0;
 
-    if(spellData->how == CastType::CAST && player->getClass() != MAGE && player->getClass() != LICH && !player->isStaff()) {
+    if(spellData->how == CastType::CAST && player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::LICH && !player->isStaff()) {
         player->print("Only mages and liches can curse.\n");
         return(0);
     }

@@ -1237,7 +1237,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
     if(!player->ableToDoCommand())
         return(0);
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         *player << "You may not buy things from shops.\n";
         return(0);
     }
@@ -1648,7 +1648,7 @@ int cmdSell(Player* player, cmd* cmnd) {
     Money value;
 
 
-    if(player->getClass() == BUILDER)
+    if(player->getClass() == CreatureClass::BUILDER)
         return(0);
 
     if(!player->ableToDoCommand())
@@ -1811,7 +1811,7 @@ int cmdRefund(Player* player, cmd* cmnd) {
     Object  *object=0;
 
 
-    if(player->getClass() == BUILDER)
+    if(player->getClass() == CreatureClass::BUILDER)
         return(0);
 
     if(!player->ableToDoCommand())
@@ -2217,7 +2217,7 @@ int cmdAuction(Player* player, cmd* cmnd) {
 
     player->clearFlag(P_AFK);
 
-    if(player->getClass() == BUILDER || player->inJail()) {
+    if(player->getClass() == CreatureClass::BUILDER || player->inJail()) {
         *player << "You cannot do that.\n";
         return(PROMPT);
     }
@@ -2396,8 +2396,8 @@ void Creature::doHaggling(Creature *vendor, Object* object, int trans) {
 
     /* Remove this to allow all players to haggle */
     if( !(  isCt() ||
-            getClass() == BARD ||
-            (getClass() == CLERIC && getDeity() == JAKAR) ) )
+            getClass() == CreatureClass::BARD ||
+            (getClass() == CreatureClass::CLERIC && getDeity() == JAKAR) ) )
         return;
 
     if(chkSave(LCK, 0, -1))

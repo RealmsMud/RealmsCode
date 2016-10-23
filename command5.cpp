@@ -30,7 +30,10 @@
 // logged into the game.
 
 int cmdWho(Player* player, cmd* cmnd) {
-    int     cClass=0, chaos=0, clan=0, pledge=0;
+    CreatureClass cClass = CreatureClass::NONE;
+
+    int     special=0;
+    int     chaos=0, clan=0, pledge=0;
     int     race=0, cls=0, law=0, guild=0;
     bool    found=false;
 
@@ -56,10 +59,10 @@ int cmdWho(Player* player, cmd* cmnd) {
             switch (cmnd->str[1][1]) {
 
             case 'd':
-                cClass = -2;
+                special = -2;
                 break;
             case 's':
-                cClass = ASSASSIN;
+                cClass = CreatureClass::ASSASSIN;
                 break;
             default:
                 player->print("Parameter not unique.\n");
@@ -74,10 +77,10 @@ int cmdWho(Player* player, cmd* cmnd) {
                 race = BARBARIAN;
                 break;
             case 's':
-                cClass = BERSERKER;
+                cClass = CreatureClass::BERSERKER;
                 break;
             case 'd':
-                cClass = BARD;
+                cClass = CreatureClass::BARD;
                 break;
             default:
                 player->print("Parameter not unique.\n");
@@ -97,7 +100,7 @@ int cmdWho(Player* player, cmd* cmnd) {
                         player->print("You do not currently have that privilege.\n");
                         return(0);
                     } else
-                        cClass = CARETAKER;
+                        cClass = CreatureClass::CARETAKER;
                     break;
                 default:
                     player->print("Parameter not unique.\n");
@@ -111,7 +114,7 @@ int cmdWho(Player* player, cmd* cmnd) {
             case 'l':
                 switch (cmnd->str[1][2]) {
                 case 'e':
-                    cClass = CLERIC;
+                    cClass = CreatureClass::CLERIC;
                     break;
                 case 'a':
                     switch(cmnd->str[1][3]) {
@@ -143,10 +146,10 @@ int cmdWho(Player* player, cmd* cmnd) {
                 race = DARKELF;
                 break;
             case 'e':
-                cClass = DEATHKNIGHT;
+                cClass = CreatureClass::DEATHKNIGHT;
                 break;
             case 'r':
-                cClass = DRUID;
+                cClass = CreatureClass::DRUID;
                 break;
             case 'w':
                 race = DWARF;
@@ -156,7 +159,7 @@ int cmdWho(Player* player, cmd* cmnd) {
                     player->print("You do not currently have that privilege.\n");
                     return(0);
                 } else
-                    cClass = DUNGEONMASTER;
+                    cClass = CreatureClass::DUNGEONMASTER;
                 break;
             default:
                 player->print("Parameter not unique.\n");
@@ -169,7 +172,7 @@ int cmdWho(Player* player, cmd* cmnd) {
             race = ELF;
             break;
         case 'f':
-            cClass = FIGHTER;
+            cClass = CreatureClass::FIGHTER;
             break;
         case 'g':
             switch(cmnd->str[1][1]) {
@@ -242,7 +245,7 @@ int cmdWho(Player* player, cmd* cmnd) {
                 law = 1;
                 break;
             case 'i':
-                cClass = LICH;
+                cClass = CreatureClass::LICH;
                 break;
             default:
                 player->print("Parameter not unique.\n");
@@ -255,13 +258,13 @@ int cmdWho(Player* player, cmd* cmnd) {
         case 'm':
             switch(cmnd->str[1][1]) {
             case 'a':
-                cClass = MAGE;
+                cClass = CreatureClass::MAGE;
                 break;
             case 'i':
                 race = MINOTAUR;
                 break;
             case 'o':
-                cClass = MONK;
+                cClass = CreatureClass::MONK;
                 break;
             default:
                 player->print("Unknown parameter.\n");
@@ -288,7 +291,7 @@ int cmdWho(Player* player, cmd* cmnd) {
         case 'p':
             switch(cmnd->str[1][1]) {
             case 'a':
-                cClass = PALADIN;
+                cClass = CreatureClass::PALADIN;
                 break;
             case 'l':
                 pledge = 1;
@@ -303,10 +306,10 @@ int cmdWho(Player* player, cmd* cmnd) {
         case 'r':
             switch(cmnd->str[1][1]) {
             case 'a':
-                cClass = RANGER;
+                cClass = CreatureClass::RANGER;
                 break;
             case 'o':
-                cClass = ROGUE;
+                cClass = CreatureClass::ROGUE;
                 break;
             default:
                 player->print("Parameter not unique.\n");
@@ -321,7 +324,7 @@ int cmdWho(Player* player, cmd* cmnd) {
         case 't':
             switch(cmnd->str[1][1]) {
             case 'h':
-                cClass = THIEF;
+                cClass = CreatureClass::THIEF;
                 break;
             case 'r':
                 race = TROLL;
@@ -339,10 +342,10 @@ int cmdWho(Player* player, cmd* cmnd) {
         case 'v':
             switch (cmnd->str[1][1]) {
             case 'a':
-                cClass = PUREBLOOD;
+                cClass = CreatureClass::PUREBLOOD;
                 break;
             case 'e':
-                cClass = -3;
+                special = -3;
                 break;
             default:
                 player->print("Parameter not unique.\n");
@@ -354,10 +357,10 @@ int cmdWho(Player* player, cmd* cmnd) {
         case 'w':
             switch(cmnd->str[1][1]) {
             case 'a':
-                cClass = -1;
+                special = -1;
                 break;
             case 'e':
-                cClass = WEREWOLF;
+                cClass = CreatureClass::WEREWOLF;
                 break;
             default:
                 player->print("Parameter not unique.\n");
@@ -393,7 +396,7 @@ int cmdWho(Player* player, cmd* cmnd) {
             continue;
 
         if(cls == 1)
-            if(target->getClass() != player->getClass())
+            if(target->getClass() !=  player->getClass())
                 continue;
         if(clan == 1)
             if(!target->getClan())
@@ -413,16 +416,16 @@ int cmdWho(Player* player, cmd* cmnd) {
         if(race > 0)
             if((player->willIgnoreIllusion() ? target->getRace() : target->getDisplayRace()) != race)
                 continue;
-        if(cClass == -1)
+        if(special == -1)
             if(!target->isPublicWatcher())
                 continue;
-        if(cClass == -2)
+        if(special == -2)
             if(!target->flagIsSet(P_ADULT))
                 continue;
-        if(cClass == -3)
+        if(special == -3)
             if(!target->flagIsSet(P_VETERAN))
                 continue;
-        if(cClass > 0)
+        if(cClass != CreatureClass::NONE)
             if(target->getClass() != cClass)
                 continue;
         if(target->isEffected("mist") && !player->isEffected("true-sight") && !player->isCt() )
@@ -686,8 +689,8 @@ void Player::changeStats() {
         tstat.pp = 0;
         tstat.rp = 0;
         tstat.race = 0;
-        tstat.cls = 0;
-        tstat.cls2 = 0;
+        tstat.cls = CreatureClass::NONE;
+        tstat.cls2 = CreatureClass::NONE;
         tstat.level = 0;
 
 
@@ -955,7 +958,7 @@ int cmdTime(Player* player, cmd* cmnd) {
 
         // CT+ doesn't need to see all this info
         if(!player->isCt()) {
-            if(player->getClass() == BARD && player->getLevel() >= 4) {
+            if(player->getClass() == CreatureClass::BARD && player->getLevel() >= 4) {
                 TIMEUNTIL("bard song", LT_SING, player->lasttime[LT_SING].interval);
             }
             showAbility(player, "barkskin", "barkskin", LT_BARKSKIN, 600);
@@ -1042,12 +1045,12 @@ int cmdTime(Player* player, cmd* cmnd) {
 
         // only show how long until next if they don't have a pet already
         if(!i) {
-            if( player->getClass() == DRUID ||
-                (player->getClass() == CLERIC && player->getDeity() == GRADIUS))
+            if( player->getClass() == CreatureClass::DRUID ||
+                (player->getClass() == CreatureClass::CLERIC && player->getDeity() == GRADIUS))
             {
                 TIMEUNTIL("conjure", LT_INVOKE, player->lasttime[LT_INVOKE].interval);
             }
-            if( player->getClass() == CLERIC &&
+            if( player->getClass() == CreatureClass::CLERIC &&
                 player->getDeity() == ARAMON &&
                 player->getAdjustedAlignment() <= REDDISH)
             {

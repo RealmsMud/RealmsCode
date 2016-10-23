@@ -53,13 +53,13 @@ const char *dmname[] = {
 };
 
 
-char allowedClassesStr[CLASS_COUNT + 4][16] = { "Assassin", "Berserker", "Cleric", "Fighter",
+char allowedClassesStr[static_cast<int>(CreatureClass::CLASS_COUNT) + 4][16] = { "Assassin", "Berserker", "Cleric", "Fighter",
             "Mage", "Paladin", "Ranger", "Thief", "Pureblood", "Monk", "Death Knight",
             "Druid", "Lich", "Werewolf", "Bard", "Rogue", "Figh/Mage", "Figh/Thief",
             "Cler/Ass", "Mage/Thief", "Thief/Mage", "Cler/Figh", "Mage/Ass" };
 
 
-class_stats_struct class_stats[CLASS_COUNT] = {
+class_stats_struct class_stats[static_cast<int>(CreatureClass::CLASS_COUNT)] = {
     {  0,  0,  0,  0,  0,  0,  0},
     { 19,  2,  6,  2,  1,  6,  0},  // assassin
     { 24,  0,  8,  1,  1,  3,  1},  // barbarian

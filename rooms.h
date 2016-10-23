@@ -107,7 +107,8 @@ public:
     bstring fullName() const;
     bstring getVersion() const;
     void setVersion(bstring v);
-    int whatTraining(int extra=0) const;
+    bool hasTraining() const;
+    CreatureClass whatTraining(int extra=0) const;
 
     virtual const Fishing* getFishing() const = 0;
 

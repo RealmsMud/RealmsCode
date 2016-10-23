@@ -2780,7 +2780,7 @@ void Property::manage(Player* player, cmd* cmnd, PropType propType, int x) {
     int len = strlen(cmnd->str[2-x]);
     const char *syntax;
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("Builders have no need to manage property.");
         return;
     }

@@ -216,10 +216,10 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
         player->printColor("You touched %N for %s%d^x damage.\n", creature, player->customColorize("*CC:DAMAGE*").c_str(), damage.get());
         player->checkImprove("touch", true);
         broadcast(player->getSock(), player->getParent(), "%M uses the touch of death on %N.", player, creature);
-        if(player->getClass() == CARETAKER)
+        if(player->getClass() == CreatureClass::CARETAKER)
             log_immort(false,player, "%s uses the touch of death on %s.\n", player->getCName(), creature->getCName());
         if(player->doDamage(creature, damage.get(), CHECK_DIE)) {
-            if(player->getClass() == CARETAKER)
+            if(player->getClass() == CreatureClass::CARETAKER)
                 log_immort(false,player, "%s killed %s with touch of death.\n", player->getCName(), creature->getCName());
         }
     }
@@ -572,7 +572,7 @@ int cmdHowl(Creature* player, cmd* cmnd) {
             continue;
         if((int)level - monster->getLevel() < 6)
             continue;
-        if(monster->isPet() || monster->getClass() == PALADIN)
+        if(monster->isPet() || monster->getClass() == CreatureClass::PALADIN)
             continue;
 
         numEffected++;

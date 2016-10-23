@@ -78,7 +78,7 @@ int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     Player  *pPlayer = player->getAsPlayer();
 
-    if(player->getClass() != BARD && !player->isCt()) {
+    if(player->getClass() !=  CreatureClass::BARD && !player->isCt()) {
         player->print("Only bards may cast that spell.\n");
         return(0);
     }
@@ -203,7 +203,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *target=0;
     int     chance=0;
 
-    if(pPlayer->getClass() == BUILDER) {
+    if(pPlayer->getClass() == CreatureClass::BUILDER) {
         pPlayer->print("You cannot cast this spell.\n");
         return(0);
     }
@@ -231,7 +231,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
     chance = 50 + (spellData->level - target->getLevel()) * 5 +
             (bonus((int) pPlayer->intelligence.getCur()) - bonus((int) target->intelligence.getCur())) * 5;
 
-    chance += (pPlayer->getClass() == MAGE) ? 5 : 0;
+    chance += (pPlayer->getClass() == CreatureClass::MAGE) ? 5 : 0;
     chance = MIN(85, chance);
 
     if(target->isStaff())
@@ -246,12 +246,12 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(pPlayer->isStaff() || mrand(1, 100) < chance) {
 
-        chance += (target->getClass() == MAGE) ? 5 : 0;
+        chance += (target->getClass() == CreatureClass::MAGE) ? 5 : 0;
         chance = MIN(85, chance);
 
         chance = 60 + ((int)target->getLevel() - (int)spellData->level) * 5 +
             (bonus((int) target->intelligence.getCur()) - bonus((int) pPlayer->intelligence.getCur())) * 5;
-        chance += (target->getClass() == MAGE) ? 5 : 0;
+        chance += (target->getClass() == CreatureClass::MAGE) ? 5 : 0;
         chance = MIN(85, chance);
 
         if(!pPlayer->isStaff()) {
@@ -293,7 +293,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splComprehendLanguages(Creature* player, cmd* cmnd, SpellData* spellData) {
-    if(spellData->how == CastType::CAST && player->getClass() != MAGE && player->getClass() != BARD && !player->isStaff()) {
+    if(spellData->how == CastType::CAST && player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::BARD && !player->isStaff()) {
         player->print("Only mages and bards may cast that spell.\n");
         return(0);
     }
@@ -306,7 +306,7 @@ int splComprehendLanguages(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splTongues(Creature* player, cmd* cmnd, SpellData* spellData) {
-    if(spellData->how == CastType::CAST && player->getClass() != MAGE && player->getClass() != BARD && !player->isStaff()) {
+    if(spellData->how == CastType::CAST && player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::BARD && !player->isStaff()) {
         player->print("Only mages and bards may cast that spell.\n");
         return(0);
     }

@@ -32,14 +32,14 @@ void steal_gold(Player* player, Creature* creature) {
         player->print("You'd surely be caught if you tried stealing something.\n");
         return;
     }
-    if( player->getSecondClass() == THIEF &&
-        (player->getClass() == FIGHTER || player->getClass() == MAGE) )
+    if( player->getSecondClass() == CreatureClass::THIEF &&
+        (player->getClass() == CreatureClass::FIGHTER || player->getClass() == CreatureClass::MAGE) )
     {
         player->print("Only pure thieves and thief/mages are able attempt to steal gold.\n");
         return;
     }
 
-    if(player->getClass() != THIEF && !player->isCt()) {
+    if(player->getClass() !=  CreatureClass::THIEF && !player->isCt()) {
         player->print("Only thieves are skilled enough to steal gold.\n");
         return;
     }
@@ -203,19 +203,19 @@ int get_steal_chance(Player* player, Creature* target, Object* object) {
 
     // Level modifications for multi-classed thieves
     level = (int)player->getSkillLevel("steal");
-    if(player->getSecondClass() == THIEF && player->getClass() == FIGHTER)
+    if(player->getSecondClass() == CreatureClass::THIEF && player->getClass() == CreatureClass::FIGHTER)
         level = MAX(1, level-3);
-    if(player->getSecondClass() == THIEF && player->getClass() == MAGE)
+    if(player->getSecondClass() == CreatureClass::THIEF && player->getClass() == CreatureClass::MAGE)
         level = MAX(1, level-3);
-    if(player->getClass() == THIEF && player->getSecondClass() == MAGE)
+    if(player->getClass() == CreatureClass::THIEF && player->getSecondClass() == CreatureClass::MAGE)
         level = MAX(1, level-3);
-    if(player->getClass() == CLERIC && player->getDeity() == KAMIRA)
+    if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA)
         level = MAX(1, level-3);
 
     // Base success % chance set here
-    chance = (player->getClass() == THIEF) ? 4*level : 3*level;
+    chance = (player->getClass() == CreatureClass::THIEF) ? 4*level : 3*level;
 
-    if(player->getClass() == CLERIC && player->getDeity() == KAMIRA)
+    if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA)
         chance += bonus((int)player->piety.getCur())*4;
     else
         chance += bonus((int)player->dexterity.getCur())*4;
@@ -225,35 +225,35 @@ int get_steal_chance(Player* player, Creature* target, Object* object) {
     // Modify chance based on class of target.
     //*******************************************
     switch(target->getClass()) {
-    case THIEF:     // A thief knows their trade and how to protect themself.
-        if(pTarget && pTarget->getSecondClass() == MAGE)
+    case CreatureClass::THIEF:     // A thief knows their trade and how to protect themself.
+        if(pTarget && pTarget->getSecondClass() == CreatureClass::MAGE)
             classmod = target->getLevel();
         else
             classmod= 3 * target->getLevel();
         break;
-    case ASSASSIN:  // Roguish classes always are aware of their belongings,
-    case ROGUE:     // thus they are always more aware.
-    case BARD:
+    case CreatureClass::ASSASSIN:  // Roguish classes always are aware of their belongings,
+    case CreatureClass::ROGUE:     // thus they are always more aware.
+    case CreatureClass::BARD:
         classmod = 2 * target->getLevel();
         break;
-    case MAGE:
-        if(pTarget && (pTarget->getSecondClass() == THIEF || pTarget->getSecondClass() == ASSASSIN))
+    case CreatureClass::MAGE:
+        if(pTarget && (pTarget->getSecondClass() == CreatureClass::THIEF || pTarget->getSecondClass() == CreatureClass::ASSASSIN))
             classmod = target->getLevel();
         else
             classmod = 0;
         break;
-    case FIGHTER:
-        if(pTarget && pTarget->getSecondClass() == THIEF)
+    case CreatureClass::FIGHTER:
+        if(pTarget && pTarget->getSecondClass() == CreatureClass::THIEF)
             classmod = target->getLevel();
         else
             classmod = 0;
         break;
-    case LICH:      // Lichs' unnatural aura messes with thief.
-    case PUREBLOOD:   // Vampires, rangers, druids, monks, and werewolves
-    case RANGER:    // are always more accutely aware of their surroundings
-    case DRUID:     // than any other non-roguish class.
-    case WEREWOLF:
-    case MONK:
+    case CreatureClass::LICH:      // Lichs' unnatural aura messes with thief.
+    case CreatureClass::PUREBLOOD:   // Vampires, rangers, druids, monks, and werewolves
+    case CreatureClass::RANGER:    // are always more accutely aware of their surroundings
+    case CreatureClass::DRUID:     // than any other non-roguish class.
+    case CreatureClass::WEREWOLF:
+    case CreatureClass::MONK:
         classmod = target->getLevel();
         break;
     default:
@@ -459,7 +459,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 
         // Stealing out of bags will be re-written later.
         /*
-            if((player->isCt() || player->getClass() == THIEF) && cmnd->num > 3) {
+            if((player->isCt() || player->getClass() == CreatureClass::THIEF) && cmnd->num > 3) {
                 return(steal_bag, cmnd);
             } */
 

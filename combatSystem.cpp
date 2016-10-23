@@ -31,42 +31,42 @@ int Player::computeAttackPower() {
     attackPower = 0;
 
     switch(cClass) {
-        case FIGHTER:
-        case DUNGEONMASTER:
-            if(cClass2 == MAGE)
+        case CreatureClass::FIGHTER:
+        case CreatureClass::DUNGEONMASTER:
+            if(cClass2 == CreatureClass::MAGE)
                 attackPower = (strength.getCur() * 2) + (level);
-            else if(cClass2 == THIEF)
+            else if(cClass2 == CreatureClass::THIEF)
                 attackPower = (strength.getCur() * 2) + (level * 4);
             else
                 attackPower = (strength.getCur() * 2) + (level * 8);
             break;
-        case BERSERKER:
+        case CreatureClass::BERSERKER:
             attackPower = (strength.getCur() * 2) + (level * 8);
             break;
-        case PALADIN:
-        case DEATHKNIGHT:
+        case CreatureClass::PALADIN:
+        case CreatureClass::DEATHKNIGHT:
             // TODO: This might need some tweaking with pray
             attackPower = strength.getCur() + piety.getCur() + (level * 4);
             break;
-        case BARD:
-        case WEREWOLF:
-        case PUREBLOOD:
+        case CreatureClass::BARD:
+        case CreatureClass::WEREWOLF:
+        case CreatureClass::PUREBLOOD:
             attackPower = (strength.getCur() * 2) + (level * 4);
             break;
-        case RANGER:
-        case THIEF:
-        case ASSASSIN:
-        case ROGUE:
-        case MONK:
+        case CreatureClass::RANGER:
+        case CreatureClass::THIEF:
+        case CreatureClass::ASSASSIN:
+        case CreatureClass::ROGUE:
+        case CreatureClass::MONK:
             attackPower = strength.getCur() + dexterity.getCur() + (level * 4);
             break;
-        case DRUID:
+        case CreatureClass::DRUID:
             attackPower = strength.getCur() + (level * 2);
             break;
-        case CLERIC:
+        case CreatureClass::CLERIC:
             attackPower = strength.getCur();
 
-            if(cClass2 == ASSASSIN)
+            if(cClass2 == CreatureClass::ASSASSIN)
                 attackPower += dexterity.getCur();
 
             switch(deity) {
@@ -85,10 +85,10 @@ int Player::computeAttackPower() {
                     break;
             }
             break;
-        case LICH:
-        case MAGE:
+        case CreatureClass::LICH:
+        case CreatureClass::MAGE:
             attackPower = strength.getCur();
-            if(cClass2 == THIEF || cClass2 == ASSASSIN)
+            if(cClass2 == CreatureClass::THIEF || cClass2 == CreatureClass::ASSASSIN)
                 attackPower += dexterity.getCur() + (level*2);
             break;
         default:
@@ -787,35 +787,35 @@ double Creature::getDodgeChance(Creature* attacker, const int& difference) {
     // Find the base chance
     if(pPlayer) {
         switch(cClass) {
-            case RANGER:
+            case CreatureClass::RANGER:
                 chance += (dexterity.getCur() * .06);
                 break;
-            case THIEF:
+            case CreatureClass::THIEF:
                 chance += (dexterity.getCur() * .075);
                 break;
-            case ASSASSIN:
+            case CreatureClass::ASSASSIN:
                 chance += (dexterity.getCur() * .06);
                 break;
-            case ROGUE:
+            case CreatureClass::ROGUE:
                 chance += (dexterity.getCur() * .08);
                 break;
-            case FIGHTER:
-            case BERSERKER:
-                if(pPlayer->getSecondClass() == THIEF || pPlayer->getSecondClass() == ASSASSIN)
+            case CreatureClass::FIGHTER:
+            case CreatureClass::BERSERKER:
+                if(pPlayer->getSecondClass() == CreatureClass::THIEF || pPlayer->getSecondClass() == CreatureClass::ASSASSIN)
                     chance += (dexterity.getCur() * .07);
                 else
                     chance += (1.0 + (dexterity.getCur() * .045));
                 break;
-            case BARD:
-            case PALADIN:
-            case DEATHKNIGHT:
-            case WEREWOLF:
-            case PUREBLOOD:
-            case MONK:
+            case CreatureClass::BARD:
+            case CreatureClass::PALADIN:
+            case CreatureClass::DEATHKNIGHT:
+            case CreatureClass::WEREWOLF:
+            case CreatureClass::PUREBLOOD:
+            case CreatureClass::MONK:
                 chance += (2.0 + (dexterity.getCur() * .05));
                 break;
-            case CLERIC:
-                if(pPlayer->getSecondClass() == ASSASSIN) {
+            case CreatureClass::CLERIC:
+                if(pPlayer->getSecondClass() == CreatureClass::ASSASSIN) {
                     chance += (dexterity.getCur() * .06);
                     break;
                 }
@@ -833,9 +833,9 @@ double Creature::getDodgeChance(Creature* attacker, const int& difference) {
                         break;
                 }
                 break;
-            case LICH:
-            case MAGE:
-                if(pPlayer->getSecondClass() == THIEF || pPlayer->getSecondClass() == ASSASSIN)
+            case CreatureClass::LICH:
+            case CreatureClass::MAGE:
+                if(pPlayer->getSecondClass() == CreatureClass::THIEF || pPlayer->getSecondClass() == CreatureClass::ASSASSIN)
                     chance += (dexterity.getCur() * .07);
                 else
                     chance += (1.0 + dexterity.getCur() * .06);
@@ -875,27 +875,27 @@ double Creature::getMissChance(const int& difference) {
     // Class modification for miss
     if(pPlayer) {
         switch(cClass) {
-            case RANGER:
-            case THIEF:
-            case ASSASSIN:
-            case ROGUE:
+            case CreatureClass::RANGER:
+            case CreatureClass::THIEF:
+            case CreatureClass::ASSASSIN:
+            case CreatureClass::ROGUE:
                 chance *= 1.0;
                 break;
-            case FIGHTER:
-            case BERSERKER:
+            case CreatureClass::FIGHTER:
+            case CreatureClass::BERSERKER:
                 chance *= 0.7;
                 break;
-            case MONK:
-            case PALADIN:
-            case DEATHKNIGHT:
-            case WEREWOLF:
+            case CreatureClass::MONK:
+            case CreatureClass::PALADIN:
+            case CreatureClass::DEATHKNIGHT:
+            case CreatureClass::WEREWOLF:
                 chance *= 0.8;
                 break;
-            case PUREBLOOD:
-            case BARD:
+            case CreatureClass::PUREBLOOD:
+            case CreatureClass::BARD:
                 chance *= 0.9;
                 break;
-            case CLERIC:
+            case CreatureClass::CLERIC:
                 switch(deity) {
                     case ARES:
                         chance *= 0.8;
@@ -911,14 +911,15 @@ double Creature::getMissChance(const int& difference) {
                         break;
                 }
                 break;
-            case LICH:
-            case MAGE:
-                if(pPlayer->getSecondClass() == THIEF || pPlayer->getSecondClass() == ASSASSIN)
+            case CreatureClass::LICH:
+            case CreatureClass::MAGE:
+                if(pPlayer->getSecondClass() == CreatureClass::THIEF || pPlayer->getSecondClass() == CreatureClass::ASSASSIN)
                     chance *= 0.8;
                 else
                     chance *= 1.0;
                 break;
-
+            default:
+                break;
         }
     } else {
         // Not a player
@@ -961,10 +962,10 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
         bool focused = false;
         int enchant = 0;
 
-        if(cClass == MONK && !weapon && flagIsSet(P_FOCUSED))
+        if(cClass == CreatureClass::MONK && !weapon && flagIsSet(P_FOCUSED))
             focused = true;
 
-        if(cClass == MONK && !weapon && !ready[HELD-1] && ready[HANDS-1]) {
+        if(cClass == CreatureClass::MONK && !weapon && !ready[HELD-1] && ready[HANDS-1]) {
             enchant = abs(ready[HANDS-1]->getAdjustment());
             weapon = ready[HANDS-1];
         } else if(weapon) {
@@ -996,7 +997,7 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
                 (// pVictim is a werewolf and higher than 10 and no silver
                 (pVictim->isEffected("lycanthropy") && pVictim->getLevel() >=10 && !silver) ||
                 // or pVictim is a lich and higher than 7
-                (pVictim->getClass() == LICH && pVictim->getLevel() >=7 ) ||
+                (pVictim->getClass() == CreatureClass::LICH && pVictim->getLevel() >=7 ) ||
                 // or they have enchant only flag set
                 pVictim->flagIsSet(P_ENCHANT_ONLY)
             )
@@ -1038,7 +1039,7 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
                 ) {
                     if(glow) printColor("^WYour claws glow radiantly in the night against %N.\n", victim);
                 }
-                else if(cClass == MONK &&
+                else if(cClass == CreatureClass::MONK &&
                     flagIsSet(P_FOCUSED) &&
                     ( (level >= 16 && victim->flagIsSet(M_ENCHANTED_WEAPONS_ONLY)) ||
                             (level >= 16 && victim->flagIsSet(M_PLUS_TWO))
@@ -1095,7 +1096,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
         if(computeBonus)
             bonusDamage.set(getBaseDamage()/2);
         attackDamage.set(mrand(2,6) + ::bonus(strength.getCur()));
-        if((cClass == FIGHTER || cClass == MONK) && !cClass2) {
+        if((cClass == CreatureClass::FIGHTER || cClass == CreatureClass::MONK) && !hasSecondClass()) {
             attackDamage.add((int)(getSkillLevel("kick") / 4));
         }
     } else if(attackType == ATTACK_MAUL) {
@@ -1109,7 +1110,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
             bonusDamage.set(getBaseDamage());
 
          if(!weapon) {
-            if(cClass == MONK) {
+            if(cClass == CreatureClass::MONK) {
                 attackDamage.set(mrand(1,2) + level/3 + mrand((1+level/4),(1+level)/2));
                 if(strength.getCur() < 90) {
                     attackDamage.set(attackDamage.get() - (90-strength.getCur())/10);
@@ -1132,7 +1133,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
     attackDamage.set(MAX(1, attackDamage.get()));
 
     // Damage reduction on every hit
-    if(cClass == PALADIN) {
+    if(cClass == CreatureClass::PALADIN) {
         if(deity == GRADIUS) {
             if(getAdjustedAlignment() < PINKISH || getAdjustedAlignment() > BLUISH) {
                 multiplier /= 2;
@@ -1145,7 +1146,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
             }
         }
     }
-    if(cClass == DEATHKNIGHT) {
+    if(cClass == CreatureClass::DEATHKNIGHT) {
         if(getAdjustedAlignment() > NEUTRAL) {
             multiplier /= 2;
             print("Your goodness reduces your damage.\n");
@@ -1154,7 +1155,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
 
     // Bonus spread out over entire series of attack for multi attack weapons
     if(computeBonus) {
-        if(cClass == PALADIN) {
+        if(cClass == CreatureClass::PALADIN) {
             int goodDmg = mrand(1, 1 + level / 3);
             if(deity == GRADIUS) {
                 if(alignInOrder() && victim->getRace() != DWARF && victim->getDeity() != GRADIUS) {
@@ -1168,13 +1169,13 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
                 }
             }
         }
-        if(cClass == DEATHKNIGHT) {
+        if(cClass == CreatureClass::DEATHKNIGHT) {
             // Only drain on 1st attack if a multi weapon
             if(getAdjustedAlignment() <= REDDISH && victim->getAdjustedAlignment() >= NEUTRAL)
                 drain = mrand(1, 1 + level / 3);
         }
-        if( (   cClass == BERSERKER ||
-                (cClass == CLERIC && deity == ARES) ||
+        if( (   cClass == CreatureClass::BERSERKER ||
+                (cClass == CreatureClass::CLERIC && deity == ARES) ||
                 isStaff()
             ) &&
             isEffected("berserk"))
@@ -1184,8 +1185,8 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
                 bonusDamage.add((int)(attackDamage.get()/2));
         }
 
-        if( (   (cClass == DEATHKNIGHT && getAdjustedAlignment() <= REDDISH) ||
-                (cClass == PALADIN && getAdjustedAlignment() == ROYALBLUE)
+        if( (   (cClass == CreatureClass::DEATHKNIGHT && getAdjustedAlignment() <= REDDISH) ||
+                (cClass == CreatureClass::PALADIN && getAdjustedAlignment() == ROYALBLUE)
             ) &&
             (isEffected("pray") || isEffected("dkpray"))
         )
@@ -1194,7 +1195,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
         if((isEffected("lycanthropy") || isCt()) && isEffected("frenzy"))
             bonusDamage.add(mrand(3,5));
 
-        if((cClass == MONK || isCt()) && flagIsSet(P_FOCUSED))
+        if((cClass == CreatureClass::MONK || isCt()) && flagIsSet(P_FOCUSED))
             bonusDamage.add(mrand(1,3));
     }
 
@@ -1204,16 +1205,16 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
     // Or this is a werewolf, and we're not wielding a werewolf weapon or a claw weapon****
     //  **** Although I'm pretty sure werewolves can only use claw weapons now...but put here
     //      in case this changes in the future
-    if(attackType != ATTACK_KICK && (cClass == MONK || isEffected("lycanthropy"))) {
+    if(attackType != ATTACK_KICK && (cClass == CreatureClass::MONK || isEffected("lycanthropy"))) {
         if( weapon && (
-                (cClass == MONK && !weapon->flagIsSet(O_SEL_MONK)) ||
+                (cClass == CreatureClass::MONK && !weapon->flagIsSet(O_SEL_MONK)) ||
                 (isEffected("lycanthropy") && (
                     !weapon->flagIsSet(O_SEL_WEREWOLF) ||
                     weapon->getWeaponType() != "claw")
                 )
             )
         ) {
-            if(cClass == MONK)
+            if(cClass == CreatureClass::MONK)
                 print("How can you attack well with your hands full?\n");
             else
                 print("How can you attack well with your paws full?\n");
@@ -1452,11 +1453,11 @@ bool Creature::canRiposte() const {
     if(flagIsSet(M_CAN_RIPOSTE))
         return(true);
     return(level >= 15 && (
-        cClass == FIGHTER ||
-        cClass == BERSERKER ||
-        cClass == ASSASSIN ||
-        cClass == THIEF ||
-        cClass == ROGUE
+        cClass == CreatureClass::FIGHTER ||
+        cClass == CreatureClass::BERSERKER ||
+        cClass == CreatureClass::ASSASSIN ||
+        cClass == CreatureClass::THIEF ||
+        cClass == CreatureClass::ROGUE
     ));
 }
 
@@ -1486,15 +1487,15 @@ int Creature::parry(Creature* target) {
         lasttime[LT_RIPOSTE].ltime = t;
 
         switch(cClass) {
-        case THIEF:
-        case ASSASSIN:
-        case FIGHTER:
-            lasttime[LT_RIPOSTE].interval = 9L;
-            break;
+            case CreatureClass::THIEF:
+            case CreatureClass::ASSASSIN:
+            case CreatureClass::FIGHTER:
+                lasttime[LT_RIPOSTE].interval = 9L;
+                break;
 
-        default:
-            lasttime[LT_RIPOSTE].interval = 6L;
-            break;
+            default:
+                lasttime[LT_RIPOSTE].interval = 6L;
+                break;
         }
     }
     if(isMonster()) {
@@ -1683,7 +1684,7 @@ bool Creature::isHidden() const {
 //*********************************************************************
 
 bool Creature::negAuraRepel() const {
-    return(cClass == LICH && !isEffected("resist-magic"));
+    return(cClass == CreatureClass::LICH && !isEffected("resist-magic"));
 }
 
 //*********************************************************************
@@ -1713,6 +1714,15 @@ int Creature::doResistMagic(int dmg, Creature* enemy) {
     return(MAX(0, dmg));
 }
 
+int Creature::getPrimaryDelay() {
+    return (ready[WIELD-1] ? ready[WIELD-1]->getWeaponDelay() : DEFAULT_WEAPON_DELAY);
+}
+
+int Creature::getSecondaryDelay() {
+    return ((ready[HELD-1] && ready[HELD-1]->getWearflag() == WIELD) ?
+                          ready[HELD-1]->getWeaponDelay() : DEFAULT_WEAPON_DELAY);
+}
+
 //*********************************************************************
 //                      updateAttackTimer
 //*********************************************************************
@@ -1721,14 +1731,13 @@ void Creature::updateAttackTimer(bool setDelay, int delay) {
     if(!setDelay) {
         attackTimer.update();
     } else {
-        if(delay != 0)
-            attackTimer.update(delay);
-        else {
-            if(ready[HELD-1] && ready[HELD-1]->getWearflag() == WIELD)
-                attackTimer.update(MAX(ready[WIELD-1]->getWeaponDelay(), ready[HELD-1]->getWeaponDelay()));
+        if(delay == 0) {
+            if (ready[HELD-1] && ready[HELD-1]->getWearflag() == WIELD)
+                delay = tMAX(getPrimaryDelay(), getSecondaryDelay());
             else
-                attackTimer.update(ready[WIELD-1]->getWeaponDelay());
+                delay = getPrimaryDelay();
         }
+        attackTimer.update(delay);
     }
 }
 

@@ -547,7 +547,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
     else
         strcat(objname, "^G");
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         if(creature) {
             if(!player->canBuildMonsters()) {
                 player->print("Error: you do not have authorization to modify monsters.\n");
@@ -773,14 +773,14 @@ int dmSetObj(Player* player, cmd* cmnd) {
                 return(PROMPT);
             }
             if(num-1 == O_UNIQUE) {
-                if(player->getClass() == BUILDER)
+                if(player->getClass() == CreatureClass::BUILDER)
                     player->printColor("You will need to get a CT to set this object as unique using the ^y*unique^x command.\n");
                 else
                     player->printColor("Use the ^y*unique^x command to modify the uniqueness of this object.\n");
                 return(0);
             }
             if(num-1 == O_LORE) {
-                if(player->getClass() == BUILDER)
+                if(player->getClass() == CreatureClass::BUILDER)
                     player->printColor("You may have a CT use ^y*set o [object] lore #^x to specify how many of this object may be in game.\n");
                 else
                     player->printColor("You may use ^y*set o [object] lore #^x to specify how many of this object may be in game.\n");

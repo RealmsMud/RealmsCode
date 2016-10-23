@@ -440,7 +440,7 @@ int Creature::getWeight() const {
 
 int Creature::maxWeight() {
     int n = 20 + strength.getCur();
-    if(cClass == BERSERKER || isCt())
+    if(cClass == CreatureClass::BERSERKER || isCt())
         n += level*10;
     return(n);
 }
@@ -721,7 +721,7 @@ bool Creature::canWield(const Object* object, int n) const {
             return(false);
         }
 
-        if(cClass == CLERIC) {
+        if(cClass == CreatureClass::CLERIC) {
             bstring objCategory = object->getWeaponCategory();
             bstring objType = object->getWeaponType();
             switch(deity) {
@@ -763,7 +763,7 @@ bool Creature::canWield(const Object* object, int n) const {
             printColor("You're using both hands to wield %P!\n", ready[WIELD-1]);
             return(false);
         }
-        if(cClass == RANGER) {
+        if(cClass == CreatureClass::RANGER) {
             if(ready[BODY-1] && !ready[BODY-1]->isLightArmor()) {
                 printColor("You must remove %P to wield a second weapon.\nIt is too heavy.\n", ready[BODY-1]);
                 return(false);
@@ -1056,8 +1056,8 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
         // Target is a dm, is dm invis, and viewer is not a dm       OR
         // Target is a ct, is dm invis, and viewer is not a dm or ct OR
         // Target is staff less than a ct and is dm invis, viewier is less than a builder
-        else if((cClass == DUNGEONMASTER && flagIsSet(P_DM_INVIS) && !(flags & ISDM) ) ||
-                 (cClass == CARETAKER && (flagIsSet(P_DM_INVIS) && !(flags & ISDM) && !(flags & ISCT))) ||
+        else if((cClass == CreatureClass::DUNGEONMASTER && flagIsSet(P_DM_INVIS) && !(flags & ISDM) ) ||
+                 (cClass == CreatureClass::CARETAKER && (flagIsSet(P_DM_INVIS) && !(flags & ISDM) && !(flags & ISCT))) ||
                  (flagIsSet(P_DM_INVIS) && !(flags & ISDM) && !(flags & ISCT) && !(flags & ISBD))  )
         {
             crtStr << "Someone";

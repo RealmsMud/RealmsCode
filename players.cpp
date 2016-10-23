@@ -85,8 +85,8 @@ void Player::pulseTick(long t) {
     // ****** Main Tick ******
     if(mainTick < t && !flagIsSet(P_NO_TICK_HP) && !noTick) {
         int hpTickAmt = 0;
-        if(cClass != LICH) {
-            hpTickAmt = MAX(1, 3 + bonus(constitution.getCur()) + (cClass == BERSERKER ? 2:0));
+        if(cClass != CreatureClass::LICH) {
+            hpTickAmt = MAX(1, 3 + bonus(constitution.getCur()) + (cClass == CreatureClass::BERSERKER ? 2:0));
             if(!ill && !deathSickness) {
                 if(!isEffected("bloodsac")) {
                     if(flagIsSet(P_SITTING))
@@ -97,7 +97,7 @@ void Player::pulseTick(long t) {
                 if(fastTick)
                     hpTickAmt += 3;
             }
-        } else if(cClass == LICH && !flagIsSet(P_NO_TICK_MP)) {
+        } else if(cClass == CreatureClass::LICH && !flagIsSet(P_NO_TICK_MP)) {
             hpTickAmt = MAX(1, 4+(constitution.getCur() > 170 ? 1:0));
             if(!ill && !deathSickness) {
                 if(flagIsSet(P_SITTING))
@@ -124,13 +124,13 @@ void Player::pulseTick(long t) {
     // ****** Secondary Tick ******
     // It's time to tick and (they don't have NO_MP_TICK set OR they're a pure fighter) and they're not a lich
     if(secTick < t) {
-        if(!flagIsSet(P_NO_TICK_MP) && cClass != LICH && !noTick &&
-                !(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER)))
+        if(!flagIsSet(P_NO_TICK_MP) && cClass != CreatureClass::LICH && !noTick &&
+                !(cClass == CreatureClass::FIGHTER && !hasSecondClass() && flagIsSet(P_PTESTER)))
         {
             // Non fighters handle here
             int mpTickAmt = 0;
-            if(cClass == MAGE ||
-                (cClass2 == MAGE && (cClass == FIGHTER || cClass == THIEF)) )
+            if(cClass == CreatureClass::MAGE ||
+                (cClass2 == CreatureClass::MAGE && (cClass == CreatureClass::FIGHTER || cClass == CreatureClass::THIEF)) )
                 mpTickAmt += 2;
 
             mpTickAmt += MAX(1, 2+(intelligence.getCur() > 170 ? 1:0));
@@ -154,7 +154,7 @@ void Player::pulseTick(long t) {
             if(flagIsSet(P_SHOW_TICK) && mpIncrease)
                 print("TICK: MP - %d(+%d)\n", mp.getCur(), mpIncrease);
 
-        } else if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER)) {
+        } else if(cClass == CreatureClass::FIGHTER && !hasSecondClass() && flagIsSet(P_PTESTER)) {
             // Pure fighters handled here
             if(!inCombat())
                 decreaseFocus();
@@ -192,7 +192,7 @@ void Player::pulseTick(long t) {
             lasttime[LT_TICK_HARMFUL].interval = 20;
         } else {
             // If you have higher piety, you get hurt less often
-            if(cClass != LICH)
+            if(cClass != CreatureClass::LICH)
                 lasttime[LT_TICK_HARMFUL].interval = 45 + 5*bonus((int)piety.getCur());
             else
                 lasttime[LT_TICK_HARMFUL].interval = 45 + 5*bonus((int)constitution.getCur());
@@ -223,35 +223,35 @@ void Player::pulseTick(long t) {
 int Player::getHpTickBonus() const {
     int bonus = 0;
     switch(cClass) {
-    case FIGHTER:
-        if(!cClass2 || cClass2 == THIEF)
+    case CreatureClass::FIGHTER:
+        if(!hasSecondClass() || cClass2 == CreatureClass::THIEF)
             bonus = level/6;
         break;
     // More or less pure fighter classes - fall through cases
-    case ASSASSIN:
-    case BERSERKER:
-    case WEREWOLF:
-    case ROGUE:
-    case MONK:
-    case THIEF:
+    case CreatureClass::ASSASSIN:
+    case CreatureClass::BERSERKER:
+    case CreatureClass::WEREWOLF:
+    case CreatureClass::ROGUE:
+    case CreatureClass::MONK:
+    case CreatureClass::THIEF:
         bonus = level/6;
         break;
     // Now handle the hybrids
-    case RANGER:
-    case PALADIN:
-    case DEATHKNIGHT:
-    case BARD:
-    case PUREBLOOD:
+    case CreatureClass::RANGER:
+    case CreatureClass::PALADIN:
+    case CreatureClass::DEATHKNIGHT:
+    case CreatureClass::BARD:
+    case CreatureClass::PUREBLOOD:
         bonus = (level+4)/10;
         break;
     // And then the pure casters
-    case MAGE:
-    case CLERIC:
-    case DRUID:
+    case CreatureClass::MAGE:
+    case CreatureClass::CLERIC:
+    case CreatureClass::DRUID:
         bonus = 0;
         break;
     // Lich is a special case, using hp as mp...so give them a bonus here
-    case LICH:
+    case CreatureClass::LICH:
         bonus = level/6;
         break;
     default:
@@ -268,35 +268,35 @@ int Player::getHpTickBonus() const {
 int Player::getMpTickBonus() const {
     int bonus = 0;
     switch(cClass) {
-    case FIGHTER:
-        if(cClass2 && cClass2 == MAGE)
+    case CreatureClass::FIGHTER:
+        if(hasSecondClass() && cClass2 == CreatureClass::MAGE)
             bonus = level/6;
         break;
     // More or less pure fighter classes - fall through cases
-    case ASSASSIN:
-    case BERSERKER:
-    case WEREWOLF:
-    case ROGUE:
-    case MONK:
-    case THIEF:
+    case CreatureClass::ASSASSIN:
+    case CreatureClass::BERSERKER:
+    case CreatureClass::WEREWOLF:
+    case CreatureClass::ROGUE:
+    case CreatureClass::MONK:
+    case CreatureClass::THIEF:
         bonus = 0;
         break;
     // Now handle the hybrids
-    case RANGER:
-    case PALADIN:
-    case DEATHKNIGHT:
-    case BARD:
-    case PUREBLOOD:
+    case CreatureClass::RANGER:
+    case CreatureClass::PALADIN:
+    case CreatureClass::DEATHKNIGHT:
+    case CreatureClass::BARD:
+    case CreatureClass::PUREBLOOD:
         bonus = (level+4)/10;
         break;
     // And then the pure casters
-    case MAGE:
-    case CLERIC:
-    case DRUID:
+    case CreatureClass::MAGE:
+    case CreatureClass::CLERIC:
+    case CreatureClass::DRUID:
         bonus = level/6;
         break;
     // Lich is a special case, using hp as mp...so no bonus here
-    case LICH:
+    case CreatureClass::LICH:
         bonus = 0;
         break;
     default:
@@ -358,7 +358,7 @@ double Player::winterProtection() const {
     double  percent = 0;
     int     i=0;
 
-    if(cClass == LICH || isEffected("lycantrhopy") || race == MINOTAUR)
+    if(cClass == CreatureClass::LICH || isEffected("lycantrhopy") || race == MINOTAUR)
         return(1);
 
     // how much protection do this person's equipment provide them?
@@ -405,10 +405,10 @@ bool Player::doPlayerHarmRooms() {
     // Mp Drain rooms
     if(room->flagIsSet(R_DRAIN_MANA) && !isStaff()) {
         wake("Terrible nightmares disturb your sleep!");
-        if(cClass != LICH)
+        if(cClass != CreatureClass::LICH)
             mp.decrease(MIN(mp.getCur(),6));
 
-        if(cClass == LICH) {
+        if(cClass == CreatureClass::LICH) {
             hp.decrease(MIN(hp.getCur(), 6));
             if(hp.getCur() < 1)
                 die(DRAINED);
@@ -443,7 +443,7 @@ bool Player::doPlayerHarmRooms() {
             printColor("^bWater fills your lungs.\n");
             dt = DROWNED;
             prot = false;
-        } else if(room->flagIsSet(R_ICY_WATER) && cClass != LICH && !isEffected("warmth") && !isEffected("alwayscold")) {
+        } else if(room->flagIsSet(R_ICY_WATER) && cClass != CreatureClass::LICH && !isEffected("warmth") && !isEffected("alwayscold")) {
             wake("You awaken suddenly!");
             printColor("^CThe ice cold water freezes your blood.\n");
             dt = COLDWATER;
@@ -464,8 +464,8 @@ bool Player::doPlayerHarmRooms() {
             dt = WINDBATTERED;
             prot = false;
         } else if( ( room->flagIsSet(R_COLD_BONUS) ||
-                    (room->flagIsSet(R_DESERT_HARM) && !isDay() && cClass != LICH) ||
-                    (room->isWinter() && cClass != LICH)
+                    (room->flagIsSet(R_DESERT_HARM) && !isDay() && cClass != CreatureClass::LICH) ||
+                    (room->isWinter() && cClass != CreatureClass::LICH)
                 ) &&
                 !isEffected("warmth") &&
                 !isEffected("alwayscold")
@@ -488,7 +488,7 @@ bool Player::doPlayerHarmRooms() {
             }
 
         } else if(room->flagIsSet(R_DEADLY_VINES)) {
-            if(cClass != DRUID && !isStaff() && deity != LINOTHAN && !isEffected("pass-without-trace")) {
+            if(cClass != CreatureClass::DRUID && !isStaff() && deity != LINOTHAN && !isEffected("pass-without-trace")) {
                 wake("You awaken suddenly!");
                 printColor("^gLiving vines reach out and crush the air from your lungs.\n");
                 dt = VINES;

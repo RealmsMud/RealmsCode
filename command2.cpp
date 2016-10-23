@@ -509,7 +509,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
             object->compass = 0;
         }
 
-        if(!(object->getType() == ObjectType::POISON && player->getClass() == PALADIN)) {
+        if(!(object->getType() == ObjectType::POISON && player->getClass() == CreatureClass::PALADIN)) {
             player->printColor("You manage to break %P.\n", object);
             broadcast(player->getSock(), player->getParent(), "%M breaks %P.", player, object);
         } else {
@@ -537,7 +537,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
         player->updateAttackTimer(true, 60);
 
 
-        if( (player->getClass() == BERSERKER || player->isCt()) && object->getType() != ObjectType::WEAPON &&
+        if( (player->getClass() == CreatureClass::BERSERKER || player->isCt()) && object->getType() != ObjectType::WEAPON &&
             (shots > 0.0) && object->value[GOLD] > 100
         ) {
             xpgain = (int)mtbf+(object->getAdjustment()*10)+mrand(1,50);
@@ -638,7 +638,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
         }
 
 
-        if(object->getType() == ObjectType::POISON && (player->getClass() == PALADIN || player->isCt())) {
+        if(object->getType() == ObjectType::POISON && (player->getClass() == CreatureClass::PALADIN || player->isCt())) {
             xpgain = object->getEffectStrength()*15;
             // no super fast leveling by breaking poison over and over.
             if(player->getLevel() < 9)
@@ -651,7 +651,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
         }
 
     } else {
-        if(!(object->getType() == ObjectType::POISON && player->getClass() == PALADIN)) {
+        if(!(object->getType() == ObjectType::POISON && player->getClass() == CreatureClass::PALADIN)) {
             player->printColor("You were unable to break %P.\n", object);
             broadcast(player->getSock(), player->getParent(), "%M tried to break %P.", player, object);
         } else {

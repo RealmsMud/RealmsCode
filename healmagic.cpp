@@ -72,9 +72,9 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 
     level = healer->getLevel();
     if( pHealer &&
-        pHealer->getClass() == CLERIC &&
-        (   pHealer->getSecondClass() == FIGHTER ||
-            pHealer->getSecondClass() == ASSASSIN
+        pHealer->getClass() == CreatureClass::CLERIC &&
+        (   pHealer->getSecondClass() == CreatureClass::FIGHTER ||
+            pHealer->getSecondClass() == CreatureClass::ASSASSIN
         )
     )
         level /= 2;
@@ -95,7 +95,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
     }
 
     switch(healer->getClass()) {
-    case CLERIC:
+    case CreatureClass::CLERIC:
         statBns = bonus((int)healer->piety.getCur());
 
         switch(healer->getDeity()) {
@@ -160,38 +160,38 @@ int getHeal(Creature *healer, Creature* target, int spell) {
         }// end deity switch
         break;
 
-    case DRUID:
+    case CreatureClass::DRUID:
         statBns = MAX(bonus((int)healer->intelligence.getCur()), bonus((int)healer->constitution.getCur()));
         mod = level/4 + mrand(1, 1 + level / 5);
         break;
-    case THIEF:
-    case ASSASSIN:
-    case ROGUE:
-    case FIGHTER:
-    case BERSERKER:
+    case CreatureClass::THIEF:
+    case CreatureClass::ASSASSIN:
+    case CreatureClass::ROGUE:
+    case CreatureClass::FIGHTER:
+    case CreatureClass::BERSERKER:
 
-    case WEREWOLF:
+    case CreatureClass::WEREWOLF:
         statBns = bonus((int)healer->constitution.getCur());
         mod = 0;
         break;
-    case MONK:
+    case CreatureClass::MONK:
         statBns = bonus((int)healer->constitution.getCur());
         mod = mrand(1,6);
         break;
 
-    case RANGER:
-    case BARD:
-    case PUREBLOOD:
+    case CreatureClass::RANGER:
+    case CreatureClass::BARD:
+    case CreatureClass::PUREBLOOD:
         statBns = MAX(bonus((int)healer->piety.getCur()), bonus((int)healer->intelligence.getCur()));
         mod = mrand(1,6);
         break;
-    case MAGE:
+    case CreatureClass::MAGE:
         statBns = MAX(bonus((int)healer->piety.getCur()), bonus((int)healer->intelligence.getCur()));
         mod = 0;
         break;
 
-    case CARETAKER:
-    case DUNGEONMASTER:
+    case CreatureClass::CARETAKER:
+    case CreatureClass::DUNGEONMASTER:
         statBns = MAX(bonus((int)healer->piety.getCur()), bonus((int)healer->intelligence.getCur()));
         mod = mrand(level/2, level);
         break;
@@ -221,7 +221,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
             mod /= 2;
         }
 
-        if(healer->getClass() == CLERIC) {
+        if(healer->getClass() == CreatureClass::CLERIC) {
             mod = level / 2 + mrand(1, 1 + level / 2);
             if(spell == S_MEND_WOUNDS)
                 mod += level / 2;
@@ -248,7 +248,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
             mod /= 2;
         }
 
-        if(healer->getClass() == CLERIC) {
+        if(healer->getClass() == CreatureClass::CLERIC) {
             mod = level / 2 + mrand(1, 1 + level / 2);
             if(spell == S_MEND_WOUNDS)
                 mod += level / 2;
@@ -297,7 +297,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 
         } else {
 
-            if(healer->getClass() == CLERIC) {
+            if(healer->getClass() == CreatureClass::CLERIC) {
                 mod = level / 2 + mrand(1, 1 + level / 2);
                 if(spell == S_MEND_WOUNDS)
                     mod += level / 2;
@@ -401,10 +401,10 @@ bool canCastHealing(Creature* player, Creature* target, bool rej=false, bool hea
     }
 
     // for a lich, a heal spell is offensive magic
-    if(target->getClass() == LICH && healSpell)
+    if(target->getClass() == CreatureClass::LICH && healSpell)
         return(true);
 
-    if(target->getClass() == LICH) {
+    if(target->getClass() == CreatureClass::LICH) {
         if(print)
             player->print("The aura of death around %N nullifies your %s magic.\n", target, rej ? "healing" : "rejuvinating");
         return(false);
@@ -439,7 +439,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
     strcpy(capSpellName, spellName);
     capSpellName[0] = toupper(capSpellName[0]);
 
-    if(player->getClass() == LICH) {
+    if(player->getClass() == CreatureClass::LICH) {
         player->print("Your class prevents you from casting that spell.\n");
         return(0);
     }
@@ -547,7 +547,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
     Creature* target=0;
     int     heal=0, mpHeal=0;
 
-    if(!(player->getClass() == CLERIC && player->getDeity() == CERIS) && spellData->how == CastType::CAST && !player->isCt()) {
+    if(!(player->getClass() == CreatureClass::CLERIC && player->getDeity() == CERIS) && spellData->how == CastType::CAST && !player->isCt()) {
         player->print("%s does not grant you the power to cast that spell.\n", gConfig->getDeity(player->getDeity())->getName().c_str());
         return(0);
     }
@@ -684,7 +684,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
     if(spellData->how == CastType::CAST && !player->isStaff()) {
-        if(player->getClass() != CLERIC && player->getClass() != PALADIN && !player->isCt()) {
+        if(player->getClass() !=  CreatureClass::CLERIC && player->getClass() !=  CreatureClass::PALADIN && !player->isCt()) {
             player->print("Your class prohibits you from casting that spell.\n");
             return(0);
         }
@@ -757,7 +757,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
             //      addhp(creature, creature->hp.getMax());
 
 
-            if(creature->isPlayer() && creature->getClass() == LICH) {
+            if(creature->isPlayer() && creature->getClass() == CreatureClass::LICH) {
 
                 if(!player->canAttack(creature))
                     return(0);
@@ -773,7 +773,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
                         player->subMp(20);
                     return(0);
                 }
-            } else if(creature->isMonster() && creature->getClass() == LICH) {
+            } else if(creature->isMonster() && creature->getClass() == CreatureClass::LICH) {
 
                 if(creature->isEffected("resist-magic")) {
                     player->print("Your spell fizzles.\n");
@@ -782,7 +782,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
                     return(0);
                 }
             }
-            if(creature->getClass() == LICH) {
+            if(creature->getClass() == CreatureClass::LICH) {
                 int dmg;
                 if(creature->hp.getCur() >= 4)
                     dmg = creature->hp.getCur() - mrand(2,4);
@@ -1054,7 +1054,7 @@ int splResurrect(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
 
     if(!player->isDm()) {
-        if(player->getClass() != CLERIC && player->getDeity() != CERIS) {
+        if(player->getClass() !=  CreatureClass::CLERIC && player->getDeity() != CERIS) {
             player->print("You cannot cast that spell.\n");
             return(0);
         }
@@ -1085,7 +1085,7 @@ int splBloodfusion(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
 
     if(!player->isDm()) {
-        if(player->getClass() != CLERIC && player->getDeity() != ARAMON) {
+        if(player->getClass() !=  CreatureClass::CLERIC && player->getDeity() != ARAMON) {
             player->print("You cannot cast that spell.\n");
             return(0);
         }
@@ -1177,7 +1177,7 @@ int splRoomVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(player->getClass() != CLERIC && !player->isCt()) {
+    if(player->getClass() !=  CreatureClass::CLERIC && !player->isCt()) {
         player->print("Only clerics may cast that spell.\n");
         return(0);
     }

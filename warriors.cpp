@@ -146,7 +146,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
     int level = (int)player->getSkillLevel("disarm");
     chance = 30 + (level - creature->getLevel()) * 10
             + bonus((int) player->dexterity.getCur()) * 5;
-    if(player->getClass() == ROGUE)
+    if(player->getClass() == CreatureClass::ROGUE)
         chance += 10;
     chance = MIN(chance, 85);
 
@@ -174,7 +174,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
             creature->getAsMonster()->addEnemy(player);
         return(0);
     } else {
-        if(player->getClass() == CARETAKER)
+        if(player->getClass() == CreatureClass::CARETAKER)
             log_immort(false,player, "%s disarms %s.\n", player->getCName(), creature->getCName());
 
         drop = 5 + ((level - creature->getLevel()) - (bonus((int) creature->dexterity.getCur())*2));
@@ -216,7 +216,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
             broadcast(player->getSock(),  creature->getSock(), room, "%M attempts to disarm %N.", player, creature);
             broadcast(player->getSock(),  creature->getSock(), room, "%M fumbles %s weapon!", creature, creature->hisHer());
 
-            if(creature->ready[HELD-1] && creature->getClass() == RANGER)
+            if(creature->ready[HELD-1] && creature->getClass() == CreatureClass::RANGER)
                 creature->printColor("^gYou FUMBLE your primary weapon.\n");
             else
                 creature->printColor("^gYou FUMBLE your weapon.\n");
@@ -391,7 +391,7 @@ int cmdBerserk(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if( player->getClass() == CLERIC &&
+    if( player->getClass() == CreatureClass::CLERIC &&
         player->getDeity() == ARES &&
         (player->getAdjustedAlignment() < PINKISH || player->getAdjustedAlignment() > LIGHTBLUE)
     ) {
@@ -444,7 +444,7 @@ int cmdBerserk(Player* player, cmd* cmnd) {
         player->checkImprove("berserk", true);
         // TODO: SKILLS: Add a modifier based on berserk skill level
         player->addEffect("berserk", 120L, 30);
-        if(player->getClass() == CLERIC && player->getDeity() == ARES)
+        if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == ARES)
             player->addEffect("berserk", 120L, 30);
         else
             player->addEffect("berserk", 120L, 50);
@@ -520,11 +520,11 @@ int cmdCircle(Player* player, cmd* cmnd) {
 
 
     level = player->getSkillLevel("circle");
-    if( player->getClass() == FIGHTER &&
-        (player->getSecondClass() == THIEF || player->getSecondClass() == MAGE)
+    if( player->getClass() == CreatureClass::FIGHTER &&
+        (player->getSecondClass() == CreatureClass::THIEF || player->getSecondClass() == CreatureClass::MAGE)
     )
         level = MAX(1, (int)level-2);
-    if(player->getClass() == CLERIC && player->getSecondClass() == FIGHTER)
+    if(player->getClass() == CreatureClass::CLERIC && player->getSecondClass() == CreatureClass::FIGHTER)
         level = MAX(1, (int)level-2);
 
     chance = 50 + (int)((level-target->getLevel())*20) +
@@ -663,9 +663,9 @@ int cmdBash(Player* player, cmd* cmnd) {
 
     player->updateAttackTimer();
     player->lasttime[LT_KICK].ltime = t;
-    player->lasttime[LT_KICK].interval = (player->ready[WIELD-1]->getWeaponDelay()/10);
+    player->lasttime[LT_KICK].interval = (player->getPrimaryDelay()/10);
 
-    if(player->getClass() == CLERIC && player->getDeity() == ARES) {
+    if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == ARES) {
         player->lasttime[LT_SPELL].ltime = t;
         player->lasttime[LT_SPELL].interval = 3L;
     }
@@ -685,18 +685,18 @@ int cmdBash(Player* player, cmd* cmnd) {
 
     level = player->getSkillLevel("bash");
 
-    if(player->getClass() == CLERIC && player->getSecondClass() == FIGHTER)
+    if(player->getClass() == CreatureClass::CLERIC && player->getSecondClass() == CreatureClass::FIGHTER)
         level = MAX(1, (int)level-2);
-    else if(player->getClass() == CLERIC && player->getDeity() == ARES)
+    else if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == ARES)
         level = MAX(1, (int)level-3);
 
 
     chance = 50 + (int)((level-creature->getLevel())*10) +
             bonus((int) player->strength.getCur())*3 +
             (bonus((int) player->dexterity.getCur()) -bonus((int) creature->dexterity.getCur()))*2;
-    chance += player->getClass()==BERSERKER ? 10:0;
+    chance += player->getClass() == CreatureClass::BERSERKER ? 10:0;
 
-    chance = player->getClass()==BERSERKER ? MIN(90, chance) : MIN(85, chance);
+    chance = player->getClass() == CreatureClass::BERSERKER ? MIN(90, chance) : MIN(85, chance);
 
     if(player->isBlind())
         chance = MIN(20, chance);
@@ -763,13 +763,13 @@ int cmdKick(Player* player, cmd* cmnd) {
 
     // Kick
     player->lasttime[LT_KICK].ltime = t;
-    if(player->getClass() == FIGHTER || player->getClass() == MONK)
+    if(player->getClass() == CreatureClass::FIGHTER || player->getClass() == CreatureClass::MONK)
         player->lasttime[LT_KICK].interval = 12L;
     else
         player->lasttime[LT_KICK].interval = 15L;
 
 
-    if(player->getClass() != MONK) {
+    if(player->getClass() !=  CreatureClass::MONK) {
         player->lasttime[LT_DISARM].ltime = t;
         player->lasttime[LT_DISARM].interval = 6;
     }
@@ -788,7 +788,7 @@ int cmdKick(Player* player, cmd* cmnd) {
     chance = 40 + (int)((player->getSkillLevel("kick") - creature->getLevel())*10) +
             (3*bonus((int) player->dexterity.getCur()) - bonus((int) creature->dexterity.getCur()))*2;
 
-    if(player->getClass() == ROGUE)
+    if(player->getClass() == CreatureClass::ROGUE)
         chance -= (15 - (bonus((int) player->dexterity.getCur()) - bonus((int) creature->dexterity.getCur())));
 
 
@@ -826,7 +826,7 @@ int cmdKick(Player* player, cmd* cmnd) {
 // determines if this player finds tracks by smell or by sight
 
 bool scentTrack(const Player* player) {
-    return(player->getClass() == WEREWOLF || player->getRace() == MINOTAUR);
+    return(player->getClass() == CreatureClass::WEREWOLF || player->getRace() == MINOTAUR);
 }
 
 //*********************************************************************
@@ -1033,7 +1033,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
     if(player->isCt())
         chance = 100;
 
-    //  if(((creature->getClass() == LICH && creature->getLevel() >= 7) ||
+    //  if(((creature->getClass() == CreatureClass::LICH && creature->getLevel() >= 7) ||
     //      (creature->isEffected("lycanthropy") && creature->getClass() >=10)) && !player->isCt())
     //      chance = 0;
     if(creature->isMonster())
@@ -1049,7 +1049,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
 
         player->statistics.attackDamage(num, "harm touch");
 
-        if(creature->getClass() == LICH) {
+        if(creature->getClass() == CreatureClass::LICH) {
             player->doHeal(creature, num);
             player->print("Your darkness heals %N!\n", creature);
             creature->print("You are healed by %N's evil touch.\n", player);

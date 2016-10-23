@@ -121,7 +121,7 @@ bool isWatcher(Socket* sock) {
 bool isStaff(const Creature* player) {
     if(player->isMonster())
         return(false);
-    return(player->getClass() >= BUILDER);
+    return(player->getClass() >= CreatureClass::BUILDER);
 }
 
 bool isStaff(Socket* sock) {
@@ -133,7 +133,7 @@ bool isStaff(Socket* sock) {
 bool isCt(const Creature* player) {
     if(player->isMonster())
         return(false);
-    return(player->getClass() >= CARETAKER);
+    return(player->getClass() >= CreatureClass::CARETAKER);
 }
 
 bool isCt(Socket* sock) {
@@ -146,7 +146,7 @@ bool isCt(Socket* sock) {
 bool isDm(const Creature* player) {
     if(player->isMonster())
         return(false);
-    return(player->getClass() == DUNGEONMASTER);
+    return(player->getClass() == CreatureClass::DUNGEONMASTER);
 }
 
 bool isDm(Socket* sock) {

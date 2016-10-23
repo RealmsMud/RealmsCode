@@ -63,7 +63,7 @@ int splProtection(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splUndeadWard(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!player->isCt() && spellData->how == CastType::CAST) {
-        if(player->getClass() != CLERIC && player->getClass() != PALADIN ) {
+        if(player->getClass() !=  CreatureClass::CLERIC && player->getClass() !=  CreatureClass::PALADIN ) {
             player->print("Only clerics and paladins may cast that spell.\n");
             return(0);
         }
@@ -136,8 +136,8 @@ int splResistMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
     int strength=0;
 
     if(spellData->how == CastType::CAST && !player->isStaff()) {
-        if( player->getClass() != MAGE &&
-            player->getClass() != LICH
+        if( player->getClass() !=  CreatureClass::MAGE &&
+            player->getClass() !=  CreatureClass::LICH
         ) {
             player->print("Only mages and liches may cast this spell.\n");
             return(0);
@@ -164,7 +164,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *pTarget=0;
     long    t = time(0);
 
-    if(spellData->how != CastType::POTION && !player->isCt() && player->getClass() != DRUID && player->getClass() != CLERIC) {
+    if(spellData->how != CastType::POTION && !player->isCt() && player->getClass() !=  CreatureClass::DRUID && player->getClass() !=  CreatureClass::CLERIC) {
         player->print("Your class is unable to cast that spell.\n");
         return(0);
     }
@@ -482,11 +482,11 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 int splDispelEvil(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(spellData->how != CastType::POTION && !player->isStaff()) {
-        if(player->getClass() != CLERIC && player->getClass() != PALADIN && player->isPlayer()) {
+        if(player->getClass() !=  CreatureClass::CLERIC && player->getClass() !=  CreatureClass::PALADIN && player->isPlayer()) {
             player->print("Your class is unable to cast that spell.\n");
             return(0);
         }
-        if(player->getClass() == CLERIC && player->getDeity() != ENOCH && player->getDeity() != LINOTHAN) {
+        if(player->getClass() == CreatureClass::CLERIC && player->getDeity() != ENOCH && player->getDeity() != LINOTHAN) {
             player->print("%s will not allow you to cast that spell.\n", gConfig->getDeity(player->getDeity())->getName().c_str());
             return(0);
         }
@@ -506,11 +506,11 @@ int splDispelEvil(Creature* player, cmd* cmnd, SpellData* spellData) {
 int splDispelGood(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(spellData->how != CastType::POTION && !player->isStaff()) {
-        if(player->getClass() != CLERIC && player->getClass() != DEATHKNIGHT && player->isPlayer()) {
+        if(player->getClass() !=  CreatureClass::CLERIC && player->getClass() !=  CreatureClass::DEATHKNIGHT && player->isPlayer()) {
             player->print("Your class is unable to cast that spell.\n");
             return(0);
         }
-        if(player->getClass() == CLERIC && player->getDeity() != ARAMON && player->getDeity() != ARACHNUS) {
+        if(player->getClass() == CreatureClass::CLERIC && player->getDeity() != ARAMON && player->getDeity() != ARACHNUS) {
             player->print("Your deity will not allow you to cast that vile spell.\n");
             return(0);
         }
@@ -544,7 +544,7 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
 
     if(!pPlayer->isCt()) {
-        if(pPlayer->getClass() != MAGE && pPlayer->getSecondClass() != MAGE) {
+        if(pPlayer->getClass() !=  CreatureClass::MAGE && pPlayer->getSecondClass() != CreatureClass::MAGE) {
             if(spellData->how == CastType::CAST) {
                 player->print("The arcane nature of that spell eludes you.\n");
                 return(0);
@@ -556,8 +556,8 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
 
-    if( pPlayer->getSecondClass() == MAGE ||
-        (pPlayer->getClass() == MAGE && pPlayer->getSecondClass() != MAGE)
+    if( pPlayer->getSecondClass() == CreatureClass::MAGE ||
+        (pPlayer->getClass() == CreatureClass::MAGE && pPlayer->getSecondClass() != CreatureClass::MAGE)
     ) {
         multi=1;
     }
@@ -612,7 +612,7 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *pPlayer = player->getAsPlayer();
     int     mpNeeded=0, multi=0;
 
-    if(player->getClass() != LICH)
+    if(player->getClass() !=  CreatureClass::LICH)
         mpNeeded = player->mp.getMax()/2;
     else
         mpNeeded = player->hp.getMax()/2;
@@ -621,7 +621,7 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
 
     if(!player->isCt()) {
-        if(player->getClass() != LICH && player->getClass() != MAGE && (!pPlayer || pPlayer->getSecondClass() != MAGE)) {
+        if(player->getClass() !=  CreatureClass::LICH && player->getClass() !=  CreatureClass::MAGE && (!pPlayer || pPlayer->getSecondClass() != CreatureClass::MAGE)) {
             if(spellData->how == CastType::CAST) {
                 player->print("The arcane nature of that spell eludes you.\n");
                 return(0);
@@ -637,8 +637,8 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
 
-    if( pPlayer && (pPlayer->getSecondClass() == MAGE ||
-        (pPlayer->getClass() == MAGE && pPlayer->getSecondClass()))
+    if( pPlayer && (pPlayer->getSecondClass() == CreatureClass::MAGE ||
+        (pPlayer->getClass() == CreatureClass::MAGE && pPlayer->hasSecondClass()))
     ) {
         multi=1;
     }
@@ -691,10 +691,10 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
     int     chance=0;
 
     if(spellData->how == CastType::CAST &&
-        player->getClass() != MAGE &&
-        player->getClass() != LICH &&
-        player->getClass() != CLERIC &&
-        player->getClass() != DRUID &&
+        player->getClass() !=  CreatureClass::MAGE &&
+        player->getClass() !=  CreatureClass::LICH &&
+        player->getClass() !=  CreatureClass::CLERIC &&
+        player->getClass() !=  CreatureClass::DRUID &&
         !player->isStaff()
     ) {
         player->print("Only mages, liches, clerics, and druids may cast that spell.\n");

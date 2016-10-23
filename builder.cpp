@@ -47,8 +47,8 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    target->setClass(BUILDER);
-    target->setSecondClass(0);
+    target->setClass(CreatureClass::BUILDER);
+    target->setSecondClass(CreatureClass::NONE);
     target->setDeity(0);
     target->initBuilder();
     target->setFlag(P_DM_INVIS);
@@ -96,7 +96,7 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
 bool Player::checkRangeRestrict(CatRef cr, bool reading) const {
     int     i=0;
 
-    if(cClass != BUILDER)
+    if(cClass != CreatureClass::BUILDER)
         return(false);
 
     // 0 gets set in the ranges, but they can't modify that room
@@ -131,7 +131,7 @@ bool Player::checkRangeRestrict(CatRef cr, bool reading) const {
 // false if illegal.
 
 bool Player::checkBuilder(UniqueRoom* room, bool reading) const {
-    if(cClass != BUILDER)
+    if(cClass != CreatureClass::BUILDER)
         return(true);
     if(!room || !room->info.id)
         return(false);
@@ -139,7 +139,7 @@ bool Player::checkBuilder(UniqueRoom* room, bool reading) const {
 }
 
 bool Player::checkBuilder(CatRef cr, bool reading) const {
-    if(cClass != BUILDER)
+    if(cClass != CreatureClass::BUILDER)
         return(true);
 
     if(checkRangeRestrict(cr, reading)) {
@@ -189,7 +189,7 @@ int dmRange(Player* player, cmd* cmnd) {
     Player  *target=0;
     int     offline=0;
 
-    if(player->getClass() == BUILDER || cmnd->num == 1) {
+    if(player->getClass() == CreatureClass::BUILDER || cmnd->num == 1) {
         player->listRanges(player);
         return(0);
     }
@@ -225,13 +225,13 @@ int dmRange(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 void Player::initBuilder() {
-    if(cClass != BUILDER)
+    if(cClass != CreatureClass::BUILDER)
         return;
 
     bound.room.setArea("test");
     bound.room.id = 1;
     bound.mapmarker.reset();
-    cClass2 = 0;
+    cClass2 = CreatureClass::NONE;
 
     doDispelMagic();
 
@@ -269,7 +269,7 @@ bool builderMob(const Creature* player) {
 bool Creature::canBuildObjects() const {
     if(!isStaff())
         return(false);
-    if(cClass == BUILDER && !flagIsSet(P_BUILDER_OBJS))
+    if(cClass == CreatureClass::BUILDER && !flagIsSet(P_BUILDER_OBJS))
         return(false);
     return(true);
 }
@@ -281,7 +281,7 @@ bool Creature::canBuildObjects() const {
 bool Creature::canBuildMonsters() const {
     if(!isStaff())
         return(false);
-    if(cClass == BUILDER && !flagIsSet(P_BUILDER_MOBS))
+    if(cClass == CreatureClass::BUILDER && !flagIsSet(P_BUILDER_MOBS))
         return(false);
     return(true);
 }
@@ -291,7 +291,7 @@ bool Creature::canBuildMonsters() const {
 //*********************************************************************
 
 bool Player::builderCanEditRoom(bstring action) {
-    if(cClass == BUILDER && !getRoomParent()->isConstruction()) {
+    if(cClass == CreatureClass::BUILDER && !getRoomParent()->isConstruction()) {
         print("You cannot %s while you are in a room that is not under construction.\n", action.c_str());
         return(false);
     }

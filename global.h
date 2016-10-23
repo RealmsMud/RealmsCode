@@ -333,34 +333,35 @@ enum religions {
 
 const int DEITY_COUNT = MARA+1;
 
-enum crtClasses {
-    ASSASSIN    =   1,
-    BERSERKER   =   2,
-    CLERIC      =   3,
-    FIGHTER     =   4,
-    MAGE        =   5,
-    PALADIN     =   6,
-    RANGER      =   7,
-    THIEF       =   8,
-    PUREBLOOD   =   9,
-    MONK        =   10,
-    DEATHKNIGHT =   11,
-    DRUID       =   12,
-    LICH        =   13,
-    WEREWOLF    =   14,
-    BARD        =   15,
-    ROGUE       =   16,
-    BUILDER     =   17,
-    CARETAKER   =   19,
+enum class CreatureClass {
+    NONE            =   0,
+    ASSASSIN        =   1,
+    BERSERKER       =   2,
+    CLERIC          =   3,
+    FIGHTER         =   4,
+    MAGE            =   5,
+    PALADIN         =   6,
+    RANGER          =   7,
+    THIEF           =   8,
+    PUREBLOOD       =   9,
+    MONK            =   10,
+    DEATHKNIGHT     =   11,
+    DRUID           =   12,
+    LICH            =   13,
+    WEREWOLF        =   14,
+    BARD            =   15,
+    ROGUE           =   16,
+    BUILDER         =   17,
+    CARETAKER       =   19,
     DUNGEONMASTER   =   20,
-    CLASS_COUNT
+    CLASS_COUNT,
 };
 
 // start of the staff
-const int STAFF = (BUILDER);
+const CreatureClass STAFF = (CreatureClass::BUILDER);
 
 
-const int MULTI_BASE = (BUILDER);
+const int MULTI_BASE = static_cast<int>(CreatureClass::BUILDER);
 
 const int CLASS_COUNT_MULT = (MULTI_BASE + 7);
 

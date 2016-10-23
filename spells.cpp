@@ -147,34 +147,34 @@ bstring spellSkill(DomainOfMagic domain) {
 //*********************************************************************
 
 MagicType Creature::getCastingType() const {
-    int cls = getClass();
+    CreatureClass cls = getClass();
 
     if(isPlayer()) {
-        if(getAsConstPlayer()->getSecondClass() == MAGE)
-            cls = MAGE;
-        else if(getAsConstPlayer()->getSecondClass() == CLERIC)
-            cls = CLERIC;
+        if(getAsConstPlayer()->getSecondClass() == CreatureClass::MAGE)
+            cls = CreatureClass::MAGE;
+        else if(getAsConstPlayer()->getSecondClass() == CreatureClass::CLERIC)
+            cls = CreatureClass::CLERIC;
     }
 
     switch(cls) {
-        case DUNGEONMASTER:
-        case CARETAKER:
-        case BUILDER:
+        case CreatureClass::DUNGEONMASTER:
+        case CreatureClass::CARETAKER:
+        case CreatureClass::BUILDER:
 
         // pure arcane
-        case MAGE:
-        case LICH:
+        case CreatureClass::MAGE:
+        case CreatureClass::LICH:
         // hybrid arcane
-        case BARD:
-        case PUREBLOOD:
+        case CreatureClass::BARD:
+        case CreatureClass::PUREBLOOD:
             return(Arcane);
         // pure divine
-        case CLERIC:
-        case DRUID:
+        case CreatureClass::CLERIC:
+        case CreatureClass::DRUID:
         // hybrid divine
-        case PALADIN:
-        case RANGER:
-        case DEATHKNIGHT:
+        case CreatureClass::PALADIN:
+        case CreatureClass::RANGER:
+        case CreatureClass::DEATHKNIGHT:
             return(Divine);
         default:
             return(NO_MAGIC_TYPE);
@@ -186,11 +186,11 @@ MagicType Creature::getCastingType() const {
 //*********************************************************************
 
 bool Creature::isPureCaster() const {
-    int second = isPlayer() ? getAsConstPlayer()->getSecondClass() : 0;
-    return( (cClass == MAGE && !second) ||
-            cClass == LICH ||
-            (cClass == CLERIC && !second) ||
-            cClass == DRUID
+    int second = isPlayer() ? getAsConstPlayer()->hasSecondClass() : 0;
+    return( (cClass == CreatureClass::MAGE && !second) ||
+            cClass == CreatureClass::LICH ||
+            (cClass == CreatureClass::CLERIC && !second) ||
+            cClass == CreatureClass::DRUID
     );
 }
 
@@ -199,15 +199,15 @@ bool Creature::isPureCaster() const {
 //*********************************************************************
 
 bool Creature::isHybridCaster() const {
-    int second = isPlayer() ? getAsConstPlayer()->getSecondClass() : 0;
-    return( cClass == BARD ||
-            cClass == DEATHKNIGHT ||
-            cClass == PALADIN ||
-            cClass == RANGER ||
-            cClass == PUREBLOOD ||
-            second == MAGE ||
-            (cClass == MAGE && second) ||
-            (cClass == CLERIC && second)
+    CreatureClass second = isPlayer() ? getAsConstPlayer()->getSecondClass() : CreatureClass::NONE;
+    return( cClass == CreatureClass::BARD ||
+            cClass == CreatureClass::DEATHKNIGHT ||
+            cClass == CreatureClass::PALADIN ||
+            cClass == CreatureClass::RANGER ||
+            cClass == CreatureClass::PUREBLOOD ||
+            second == CreatureClass::MAGE ||
+            (cClass == CreatureClass::MAGE && second != CreatureClass::NONE) ||
+            (cClass == CreatureClass::CLERIC && second != CreatureClass::NONE)
     );
 }
 
@@ -264,7 +264,7 @@ bool SpellData::check(const Creature* player, bool skipKnowCheck) const {
     )
         return(false);
     if( (skill == "necromancy" || skill == "evil") &&
-        player->getAdjustedAlignment() > (player->getClass() == LICH ? PINKISH : REDDISH) &&
+        player->getAdjustedAlignment() > (player->getClass() == CreatureClass::LICH ? PINKISH : REDDISH) &&
         !player->checkStaff("You must be evil to cast %s spells.\n", gConfig->getSkillDisplayName(skill).c_str())
     )
         return(false);

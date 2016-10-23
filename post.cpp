@@ -107,14 +107,14 @@ int cmdSendMail(Player* player, cmd* cmnd) {
     } else
         online = true;
 
-    if(!target->isStaff() && player->getClass() == BUILDER) {
+    if(!target->isStaff() && player->getClass() == CreatureClass::BUILDER) {
         player->print("You may not mudmail players at this time.\n");
         if(!online)
             free_crt(target, false);
         return(0);
     }
 
-    if(!player->isStaff() && target->getClass() == BUILDER) {
+    if(!player->isStaff() && target->getClass() == CreatureClass::BUILDER) {
         player->print("You may not mudmail that character at this time.\n");
         if(!online)
             free_crt(target, false);

@@ -37,7 +37,7 @@ public:
     FactionRegard();
     void load(xmlNodePtr rootNode);
 
-    long getClassRegard(int i) const;
+    long getClassRegard(CreatureClass i) const;
     long getRaceRegard(int i) const;
     long getDeityRegard(int i) const;
     long getVampirismRegard() const;
@@ -49,7 +49,7 @@ public:
     bstring guildDisplay() const;
     bstring clanDisplay() const;
 protected:
-    long classRegard[CLASS_COUNT];
+    long classRegard[static_cast<int>(CreatureClass::CLASS_COUNT)];
     long raceRegard[RACE_COUNT];
     long deityRegard[DEITY_COUNT];
     long vampirismRegard;
@@ -71,7 +71,7 @@ public:
     bstring getGroup() const;
     bstring getSocial() const;
     long getBaseRegard() const;
-    long getClassRegard(int i) const;
+    long getClassRegard(CreatureClass i) const;
     long getRaceRegard(int i) const;
     long getDeityRegard(int i) const;
     long getVampirismRegard() const;

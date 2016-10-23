@@ -122,7 +122,7 @@ int cmdBreak(Player* player, cmd* cmnd);
 
 
 // command11.c
-bstring doFinger(const Player* player, bstring name, unsigned short cls);
+bstring doFinger(const Player* player, bstring name, CreatureClass cls);
 int cmdFinger(Player* player, cmd* cmnd);
 int cmdPayToll(Player* player, cmd* cmnd);
 unsigned long tollcost(const Player* player, const Exit *exit, Monster* keeper);

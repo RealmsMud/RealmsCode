@@ -1040,9 +1040,9 @@ void Config::swapLog(const bstring log, bool external) {
 
         // are they allowed to see this?
         if(type == 'p' || type == 'b') {
-            if(player->getClass() == BUILDER)
+            if(player->getClass() == CreatureClass::BUILDER)
                 return;
-            if(player->getClass() == CARETAKER && isdm(mvName))
+            if(player->getClass() == CreatureClass::CARETAKER && isdm(mvName))
                 return;
         }
 
@@ -1131,9 +1131,9 @@ void Config::swapInfo(const Player* player) {
         mvName = (*bIt).right((*bIt).getLength()-1);
 
         if(type == 'p' || type == 'b') {
-            if(player->getClass() == BUILDER)
+            if(player->getClass() == CreatureClass::BUILDER)
                 canSee = false;
-            if(player->getClass() == CARETAKER && isdm(mvName))
+            if(player->getClass() == CreatureClass::CARETAKER && isdm(mvName))
                 canSee = false;
         }
 

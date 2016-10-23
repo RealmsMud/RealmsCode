@@ -73,7 +73,7 @@ public:
     short getPorphyriaResistance() const;
 
     bool allowedClass(int cls) const;
-    bool allowedDeity(int cls, int cls2, int dty) const;
+    bool allowedDeity(CreatureClass cls, CreatureClass cls2, int dty) const;
     bool allowedMultiClericDeity(int dty) const;
     bool allowedClericDeity(int dty) const;
     bool allowedPaladinDeity(int dty) const;

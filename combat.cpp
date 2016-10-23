@@ -346,7 +346,7 @@ int Monster::updateCombat() {
             tryToDisease(target);
 
         if( (flagIsSet(M_WOUNDING) && x <= 15) &&
-            (target->getClass() != LICH) &&
+            (target->getClass() !=  CreatureClass::LICH) &&
             !target->isEffected("stoneskin")
         ) {
             if(!target->chkSave(DEA,this,0)) {
@@ -405,8 +405,8 @@ int Monster::updateCombat() {
             int ff;
             ff = 40 + (1- (pTarget->hp.getCur()/pTarget->hp.getMax()))*40 +
                 ::bonus((int)pTarget->constitution.getCur())*3 +
-                ((pTarget->getClass() == PALADIN ||
-                         pTarget->getClass() == DEATHKNIGHT) ? -10 : 0);
+                ((pTarget->getClass() == CreatureClass::PALADIN ||
+                         pTarget->getClass() == CreatureClass::DEATHKNIGHT) ? -10 : 0);
             if(ff < mrand(1,100)) {
                 pTarget->flee(true);
                 return(1);
@@ -843,7 +843,7 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
 
     chance += bns;
 
-    if(pCreature && pCreature->getClass() == CLERIC && pCreature->getDeity() == KAMIRA)
+    if(pCreature && pCreature->getClass() == CreatureClass::CLERIC && pCreature->getDeity() == KAMIRA)
         chance += 5;
 
     chance = MAX(1,MIN(95, chance));
@@ -1075,12 +1075,12 @@ int Creature::doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, Dam
 
     if(this != target) {
         // If we're a player and a fighter, give them some focus
-        if(pThis && pThis->getClass() == FIGHTER && !pThis->getSecondClass()) {
+        if(pThis && pThis->getClass() == CreatureClass::FIGHTER && !pThis->hasSecondClass()) {
             // Increase battle focus here
             pThis->increaseFocus(FOCUS_DAMAGE_OUT, dmg, target);
         }
         // If the target is a player and isn't dead give them some focus
-        if(pTarget && pTarget->hp.getCur() > 0 && pTarget->getClass() == FIGHTER && !pTarget->getSecondClass()) {
+        if(pTarget && pTarget->hp.getCur() > 0 && pTarget->getClass() == CreatureClass::FIGHTER && !pTarget->hasSecondClass()) {
             // Increase battle focus here
             pTarget->increaseFocus(FOCUS_DAMAGE_IN, dmg);
         }

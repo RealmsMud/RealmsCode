@@ -356,9 +356,9 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
 
     // Saved for LS_REF and LS_FULL
     xml::saveNonZeroNum(rootNode, "Race", race);
-    xml::saveNonZeroNum(rootNode, "Class", cClass);
+    xml::saveNonZeroNum(rootNode, "Class", static_cast<int>(cClass));
     if(pPlayer) {
-        xml::saveNonZeroNum(rootNode, "Class2", pPlayer->getSecondClass());
+        xml::saveNonZeroNum(rootNode, "Class2", static_cast<int>(pPlayer->getSecondClass()));
     } else if(mMonster) {
         // TODO: Dom: for compatability, remove when possible
         xml::saveNonZeroNum(rootNode, "Class2", mMonster->getMobTrade());

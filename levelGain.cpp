@@ -235,7 +235,7 @@ void Player::upLevel() {
         checkWeaponSkillGain();
     }
 
-    if(cClass == FIGHTER && !cClass2 && flagIsSet(P_PTESTER)) {
+    if(cClass == CreatureClass::FIGHTER && !hasSecondClass() && flagIsSet(P_PTESTER)) {
         focus.setInitial(100);
         focus.addModifier("UnFocused", -100, MOD_CUR);
     }
@@ -244,7 +244,7 @@ void Player::upLevel() {
         statistics.startLevelHistoryTracking();
 
         hp.setInitial(pClass->getBaseHp());
-        if(cClass != BERSERKER && cClass != LICH)
+        if(cClass != CreatureClass::BERSERKER && cClass != CreatureClass::LICH)
             mp.setInitial(pClass->getBaseMp());
 
         hp.restore();
@@ -279,7 +279,7 @@ void Player::upLevel() {
         int saveGain = lGain->getSave();
         int hpAmt = lGain->getHp();
         int mpAmt = 0;
-        if(cClass != BERSERKER && cClass != LICH) {
+        if(cClass != CreatureClass::BERSERKER && cClass != CreatureClass::LICH) {
             mpAmt = lGain->getMp();
         }
 
@@ -323,7 +323,7 @@ void Player::upLevel() {
 
         addStatModifier("hp", modName, hpAmt, MOD_CUR_MAX );
 
-        if(cClass != BERSERKER && cClass != LICH) {
+        if(cClass != CreatureClass::BERSERKER && cClass != CreatureClass::LICH) {
             addStatModifier("mp", modName, mpAmt, MOD_CUR_MAX );
         }
 
@@ -379,7 +379,7 @@ void Player::upLevel() {
         mp.restore();
     }
 
-    if(cClass == LICH && !relevel) {
+    if(cClass == CreatureClass::LICH && !relevel) {
         if(level == 7)
             print("Your body has deteriorated slightly.\n");
         if(level == 13)
@@ -391,12 +391,12 @@ void Player::upLevel() {
     }
 
 
-    if((cClass == MAGE || cClass2 == MAGE) && level == 7 && !relevel) {
+    if((cClass == CreatureClass::MAGE || cClass2 == CreatureClass::MAGE) && level == 7 && !relevel) {
         print("You have learned the armor spell.\n");
         learnSpell(S_ARMOR);
     }
 
-    if( cClass == CLERIC &&
+    if( cClass == CreatureClass::CLERIC &&
         level >= 13 &&
         deity == CERIS &&
         !spellIsKnown(S_REJUVENATE)
@@ -406,7 +406,7 @@ void Player::upLevel() {
     }
 
 
-    if( cClass == CLERIC &&
+    if( cClass == CreatureClass::CLERIC &&
         level >= 19 &&
         deity == CERIS &&
         !spellIsKnown(S_RESURRECT)
@@ -415,8 +415,8 @@ void Player::upLevel() {
         learnSpell(S_RESURRECT);
     }
 
-    if( cClass == CLERIC &&
-        !cClass2 &&
+    if( cClass == CreatureClass::CLERIC &&
+        !hasSecondClass() &&
         level >= 22 &&
         deity == ARAMON &&
         !spellIsKnown(S_BLOODFUSION)
@@ -433,7 +433,7 @@ void Player::upLevel() {
     if(!relevel) {
 
     }
-    /*  if(cClass == BARD)
+    /*  if(cClass == CreatureClass::BARD)
     pick_song(player);*/
 }
 
@@ -496,7 +496,7 @@ void Player::downLevel() {
 
     hp.restore();
 
-    if(cClass != LICH)
+    if(cClass != CreatureClass::LICH)
         mp.restore();
 
     switch (saveLost) {
@@ -548,7 +548,7 @@ void Player::downLevel() {
 int cmdTrain(Player* player, cmd* cmnd) {
     unsigned long goldneeded=0, expneeded=0, bankneeded=0, maxgold=0;
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You don't need to do that!\n");
         return(0);
     }
@@ -665,8 +665,8 @@ void Player::checkWeaponSkillGain() {
     if(((level+2)%3) == 0)
         numWeapons ++;
     switch(cClass) {
-        case FIGHTER:
-            if(!cClass2) {
+        case CreatureClass::FIGHTER:
+            if(!hasSecondClass()) {
                 if(level%4 == 0)
                     numWeapons++;
             } else {
@@ -675,24 +675,24 @@ void Player::checkWeaponSkillGain() {
                     numWeapons++;
             }
             break;
-        case BERSERKER:
+        case CreatureClass::BERSERKER:
             if(level%6)
                 numWeapons++;
             break;
-        case THIEF:
-        case RANGER:
-        case ROGUE:
-        case BARD:
-        case PALADIN:
-        case DEATHKNIGHT:
-        case ASSASSIN:
+        case CreatureClass::THIEF:
+        case CreatureClass::RANGER:
+        case CreatureClass::ROGUE:
+        case CreatureClass::BARD:
+        case CreatureClass::PALADIN:
+        case CreatureClass::DEATHKNIGHT:
+        case CreatureClass::ASSASSIN:
             if(level/8)
                 numWeapons++;
             break;
-        case CLERIC:
-        case DRUID:
-        case PUREBLOOD:
-            if(cClass2) {
+        case CreatureClass::CLERIC:
+        case CreatureClass::DRUID:
+        case CreatureClass::PUREBLOOD:
+            if(hasSecondClass()) {
                 // Cle/Ass
                 if(level/8)
                     numWeapons++;
@@ -701,8 +701,8 @@ void Player::checkWeaponSkillGain() {
                     numWeapons++;
             }
             break;
-        case MAGE:
-            if(cClass2) {
+        case CreatureClass::MAGE:
+            if(hasSecondClass()) {
                 if(level/12)
                     numWeapons++;
             }

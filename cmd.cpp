@@ -157,7 +157,7 @@ bool Config::writeSocialFile() const {
 // Updates helpfiles for the various game commands.
 
 template<class Type>
-std::map<bstring,bstring> compileCommandList(std::map<bstring, bstring>& list, int cls, std::map<bstring, Type>& cList) {
+std::map<bstring,bstring> compileCommandList(std::map<bstring, bstring>& list, CreatureClass cls, std::map<bstring, Type>& cList) {
     char    line[100];
 
     for(std::pair<bstring, Type> pp : cList) {
@@ -166,7 +166,7 @@ std::map<bstring,bstring> compileCommandList(std::map<bstring, bstring>& list, i
         
         if(cmd->getDescription() == "")
             continue;
-        if( cls == BUILDER &&
+        if( cls == CreatureClass::BUILDER &&
             cmd->auth &&
             (bool(*)(const Creature*))cmd->auth != builderMob &&
             (bool(*)(const Creature*))cmd->auth != builderObj
@@ -185,7 +185,7 @@ std::map<bstring,bstring> compileCommandList(std::map<bstring, bstring>& list, i
 //**********************************************************************
 // Updates helpfiles for the various game commands.
 
-void writeCommandFile(int cls, const char* path, const char* tpl) {
+void writeCommandFile(CreatureClass cls, const char* path, const char* tpl) {
     char    file[100], fileLink[100];
     std::map<bstring,bstring> list;
     std::map<bstring,bstring> list2;
@@ -202,12 +202,12 @@ void writeCommandFile(int cls, const char* path, const char* tpl) {
     out << Help::loadHelpTemplate(tpl);
 
 
-    if(cls == DUNGEONMASTER || cls == BUILDER) {
+    if(cls == CreatureClass::DUNGEONMASTER || cls == CreatureClass::BUILDER) {
         compileCommandList<PlyCommand*>(list, cls, gConfig->staffCommands);
     } else {
-        compileCommandList<PlyCommand*>(list, 0, gConfig->playerCommands);
-        compileCommandList<CrtCommand*>(list, 0, gConfig->generalCommands);
-        compileCommandList<SkillCommand*>(list, 0, gConfig->skillCommands);
+        compileCommandList<PlyCommand*>(list, CreatureClass::NONE, gConfig->playerCommands);
+        compileCommandList<CrtCommand*>(list, CreatureClass::NONE, gConfig->generalCommands);
+        compileCommandList<SkillCommand*>(list, CreatureClass::NONE, gConfig->skillCommands);
     }
 
     for(it = list.begin(); it != list.end(); it++) {
@@ -847,9 +847,9 @@ bool Config::initCommands() {
 
     
     // Once we've built the command tables, write their help files to the help directory
-    writeCommandFile(0, Path::Help, "commands");
-    writeCommandFile(DUNGEONMASTER, Path::DMHelp, "dmcommands");
-    writeCommandFile(BUILDER, Path::BuilderHelp, "bhcommands");
+    writeCommandFile(CreatureClass::NONE, Path::Help, "commands");
+    writeCommandFile(CreatureClass::DUNGEONMASTER, Path::DMHelp, "dmcommands");
+    writeCommandFile(CreatureClass::BUILDER, Path::BuilderHelp, "bhcommands");
 
     return(true);
 }

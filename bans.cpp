@@ -237,7 +237,7 @@ int dmBan(Player* player, cmd* cmnd) {
         len--;
     comment[len] = '\0';
     if(target) {
-        if(target->getClass() > BUILDER) {
+        if(target->getClass() > CreatureClass::BUILDER) {
             player->print("You can't ban staff! Dumbass.\n");
             target->printColor("^r%s tried to siteban you! Kill %s!\n", player->getCName(), player->himHer());
             return(0);
@@ -347,7 +347,7 @@ void Server::checkBans() {
     for(Socket* sock : sockets) {
         if(sock->getPlayer() && (gConfig->isBanned(sock->getIp().c_str()) || 
             gConfig->isBanned(sock->getHostname().c_str()))) {
-            if(sock->getPlayer()->getClass() <= BUILDER) {
+            if(sock->getPlayer()->getClass() <= CreatureClass::BUILDER) {
                 sock->write(banString);
                 sock->disconnect();
             }

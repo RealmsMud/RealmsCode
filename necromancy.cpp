@@ -28,12 +28,12 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
     int wrongdiety=0, multi=0, roll=0, dmg=0, bns=0, saved=0;
 
 
-    if(player->getClass() != CLERIC && !player->isCt() && spellData->how == CastType::CAST) {
+    if(player->getClass() !=  CreatureClass::CLERIC && !player->isCt() && spellData->how == CastType::CAST) {
         player->print("Your class prohibits you from casting that spell.\n");
         return(0);
     }
 
-    if(pPlayer && pPlayer->getSecondClass())
+    if(pPlayer && pPlayer->hasSecondClass())
         multi=1;
 
     switch(player->getDeity()) {
@@ -49,7 +49,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     if( (wrongdiety || multi) &&
-        player->getClass() == CLERIC &&
+        player->getClass() == CreatureClass::CLERIC &&
         !player->isStaff() &&
         spellData->how != CastType::POTION
     ) {
@@ -104,7 +104,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(target->pFlagIsSet(P_LINKDEAD) && target->getClass() != LICH) {
+        if(target->pFlagIsSet(P_LINKDEAD) && target->getClass() !=  CreatureClass::LICH) {
             player->print("%M is immune to that right now.\n", target);
             return(0);
         }
@@ -118,7 +118,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(target->isPlayer() && target->getClass() != LICH)
+        if(target->isPlayer() && target->getClass() !=  CreatureClass::LICH)
             target->wake("Terrible nightmares disturb your sleep!");
         player->print("You cast a harm spell on %N.\n", target);
         target->print("%M casts a harm spell on you!\n", player);
@@ -129,7 +129,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(spellData->how == CastType::CAST && player->isPlayer())
             player->getAsPlayer()->statistics.offensiveCast();
 
-        if(target->isPlayer() && target->getClass() == LICH) {
+        if(target->isPlayer() && target->getClass() == CreatureClass::LICH) {
             target->hp.restore();
 
             player->print("Your harm spell completely heals %s.\n", target->getCName());
@@ -289,7 +289,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     if(spellData->how == CastType::CAST) {
-        if(!(player->getClass() == CLERIC && player->getDeity() == ARAMON) &&
+        if(!(player->getClass() == CreatureClass::CLERIC && player->getDeity() == ARAMON) &&
             !player->isCt())
         {
             player->print("Only Clerics of %s may cast that spell.\n", gConfig->getDeity(ARAMON)->getName().c_str());
@@ -331,7 +331,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
     skLevel = player->getLevel();
 
 
-    if(player->getClass() == CLERIC && pPlayer->getSecondClass() == ASSASSIN)
+    if(player->getClass() == CreatureClass::CLERIC && pPlayer->getSecondClass() == CreatureClass::ASSASSIN)
         skLevel = MAX(1, skLevel-3);
 
     if(spellData->object) {
@@ -341,7 +341,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
 
-    title = getPetTitle(spellData->how, level, spellData->how == CastType::WAND && player->getClass() != CLERIC && player->getDeity() != ARAMON, true);
+    title = getPetTitle(spellData->how, level, spellData->how == CastType::WAND && player->getClass() !=  CreatureClass::CLERIC && player->getDeity() != ARAMON, true);
     mp = 4 * title;
 
     if(spellData->how == CastType::CAST && !player->checkMp(mp))

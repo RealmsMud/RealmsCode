@@ -446,7 +446,7 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
 
     if (showMagic)
         toShow->printColor(" ^Ytype \"skills\" to show non-magical skills.");
-    else if (player->getClass() != BERSERKER)
+    else if (player->getClass() !=  CreatureClass::BERSERKER)
         toShow->printColor(" ^Ytype \"skills magic\" to show magical skills.");
 
     toShow->print("\n");

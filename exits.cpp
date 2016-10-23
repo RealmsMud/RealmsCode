@@ -271,22 +271,22 @@ bool Exit::classRestrict(const Creature* creature) const {
 
     // if the class flag is set and they match, they pass
     pass = (
-        (flagIsSet(X_SEL_ASSASSIN) && creature->getClass() == ASSASSIN) ||
-        (flagIsSet(X_SEL_BERSERKER) && creature->getClass() == BERSERKER) ||
-        (flagIsSet(X_SEL_CLERIC) && creature->getClass() == CLERIC) ||
-        (flagIsSet(X_SEL_FIGHTER) && creature->getClass() == FIGHTER) ||
-        (flagIsSet(X_SEL_MAGE) && creature->getClass() == MAGE) ||
-        (flagIsSet(X_SEL_PALADIN) && creature->getClass() == PALADIN) ||
-        (flagIsSet(X_SEL_RANGER) && creature->getClass() == RANGER) ||
-        (flagIsSet(X_SEL_THIEF) && creature->getClass() == THIEF) ||
+        (flagIsSet(X_SEL_ASSASSIN) && creature->getClass() == CreatureClass::ASSASSIN) ||
+        (flagIsSet(X_SEL_BERSERKER) && creature->getClass() == CreatureClass::BERSERKER) ||
+        (flagIsSet(X_SEL_CLERIC) && creature->getClass() == CreatureClass::CLERIC) ||
+        (flagIsSet(X_SEL_FIGHTER) && creature->getClass() == CreatureClass::FIGHTER) ||
+        (flagIsSet(X_SEL_MAGE) && creature->getClass() == CreatureClass::MAGE) ||
+        (flagIsSet(X_SEL_PALADIN) && creature->getClass() == CreatureClass::PALADIN) ||
+        (flagIsSet(X_SEL_RANGER) && creature->getClass() == CreatureClass::RANGER) ||
+        (flagIsSet(X_SEL_THIEF) && creature->getClass() == CreatureClass::THIEF) ||
         (flagIsSet(X_SEL_VAMPIRE) && creature->isEffected("vampirism")) ||
-        (flagIsSet(X_SEL_MONK) && creature->getClass() == MONK) ||
-        (flagIsSet(X_SEL_DEATHKNIGHT) && creature->getClass() == DEATHKNIGHT) ||
-        (flagIsSet(X_SEL_DRUID) && creature->getClass() == DRUID) ||
-        (flagIsSet(X_SEL_LICH) && creature->getClass() == LICH) ||
+        (flagIsSet(X_SEL_MONK) && creature->getClass() == CreatureClass::MONK) ||
+        (flagIsSet(X_SEL_DEATHKNIGHT) && creature->getClass() == CreatureClass::DEATHKNIGHT) ||
+        (flagIsSet(X_SEL_DRUID) && creature->getClass() == CreatureClass::DRUID) ||
+        (flagIsSet(X_SEL_LICH) && creature->getClass() == CreatureClass::LICH) ||
         (flagIsSet(X_SEL_WEREWOLF) && creature->isEffected("lycanthropy")) ||
-        (flagIsSet(X_SEL_BARD) && creature->getClass() == BARD) ||
-        (flagIsSet(X_SEL_ROGUE) && creature->getClass() == ROGUE)
+        (flagIsSet(X_SEL_BARD) && creature->getClass() == CreatureClass::BARD) ||
+        (flagIsSet(X_SEL_ROGUE) && creature->getClass() == CreatureClass::ROGUE)
     );
 
     if(flagIsSet(X_CSEL_INVERT)) pass = !pass;

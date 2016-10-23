@@ -154,7 +154,7 @@ int cmdChooseAlignment(Player* player, cmd* cmnd) {
 // be applied to any class by altering the function. -TC
 
 void Player::alignAdjustAcThaco() {
-    if(cClass != MONK && cClass != WEREWOLF)
+    if(cClass != CreatureClass::MONK && cClass != CreatureClass::WEREWOLF)
         return;
 
     computeAC();
@@ -256,7 +256,7 @@ void Player::adjustAlignment(Monster *victim) {
         if(deity == GRADIUS) {
             if(victim->isAntiGradius())
                 adjust = 0;
-            if(cClass == PALADIN && victim->getClass() == DEATHKNIGHT)
+            if(cClass == CreatureClass::PALADIN && victim->getClass() == CreatureClass::DEATHKNIGHT)
                 adjust = 0;
         }
         // werewolves and vampires can always kill each other
@@ -271,9 +271,9 @@ void Player::adjustAlignment(Monster *victim) {
     // paladin / deathknight war
     // gradius paladins are taken care of above
     if(deity != GRADIUS) {
-        if(cClass == PALADIN && victim->getClass() == DEATHKNIGHT && toEvil)
+        if(cClass == CreatureClass::PALADIN && victim->getClass() == CreatureClass::DEATHKNIGHT && toEvil)
             adjust = 0;
-        if(cClass == DEATHKNIGHT && victim->getClass() == PALADIN && toGood)
+        if(cClass == CreatureClass::DEATHKNIGHT && victim->getClass() == CreatureClass::PALADIN && toGood)
             adjust = 0;
     }
 
@@ -308,14 +308,14 @@ int cmdConvert(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         broadcast(isStaff, "^G### %s just converted to lawful alignment.", player->getCName());
         logn("log.convert","%s converted to lawful.", player->getCName());
     } else
         broadcast("^G### %s just converted to lawful alignment.", player->getCName());
     player->clearFlag(P_CHAOTIC);
 
-    if(player->getClass() == CLERIC)
+    if(player->getClass() == CreatureClass::CLERIC)
         player->clearFlag(P_PLEDGED);
 
     return(0);

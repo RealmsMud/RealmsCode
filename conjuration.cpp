@@ -117,7 +117,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     skLevel = player->getLevel();
 
     if( spellData->how == CastType::SKILL &&
-        player->getClass() == CLERIC &&
+        player->getClass() == CreatureClass::CLERIC &&
         player->getDeity() == GRADIUS &&
         (   player->getAdjustedAlignment() == BLOODRED ||
             player->getAdjustedAlignment() == ROYALBLUE
@@ -127,7 +127,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot conjure pets.\n");
         return(0);
     }
@@ -141,7 +141,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
         level = skLevel;
     }
 
-    title = getPetTitle(spellData->how, level, spellData->how == CastType::WAND && player->getClass() != DRUID && !(player->getClass() == CLERIC && player->getDeity() == GRADIUS), false);
+    title = getPetTitle(spellData->how, level, spellData->how == CastType::WAND && player->getClass() !=  CreatureClass::DRUID && !(player->getClass() == CreatureClass::CLERIC && player->getDeity() == GRADIUS), false);
     mp = 4 * title;
 
     if(spellData->how == CastType::CAST && !player->checkMp(mp))
@@ -162,8 +162,8 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
     }
 
-    if( player->getClass() == DRUID ||
-        (spellData->how == CastType::SKILL && !(player->getClass() == CLERIC && player->getDeity() == GRADIUS)) ||
+    if( player->getClass() == CreatureClass::DRUID ||
+        (spellData->how == CastType::SKILL && !(player->getClass() == CreatureClass::CLERIC && player->getDeity() == GRADIUS)) ||
         player->isDm() )
     {
 
@@ -198,9 +198,9 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
     } else {
-        if(player->getClass() == CLERIC && player->getDeity() == GRADIUS)
+        if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == GRADIUS)
             realm = EARTH;
-        else if(player->getClass() == BARD)
+        else if(player->getClass() == CreatureClass::BARD)
             realm = CONJUREBARD;
         else
             realm = CONJUREMAGE;
@@ -280,52 +280,52 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(cClass) {
             switch(cClass)  {
             case 1:
-                target->setClass(ASSASSIN);
+                target->setClass(CreatureClass::ASSASSIN);
                 break;
             case 2:
-                target->setClass(BERSERKER);
+                target->setClass(CreatureClass::BERSERKER);
                 combatPet = true;
                 break;
             case 3:
-                target->setClass(CLERIC);
+                target->setClass(CreatureClass::CLERIC);
                 break;
             case 4:
-                target->setClass(FIGHTER);
+                target->setClass(CreatureClass::FIGHTER);
                 combatPet = true;
                 break;
             case 5:
-                target->setClass(MAGE);
+                target->setClass(CreatureClass::MAGE);
                 break;
             case 6:
-                target->setClass(PALADIN);
+                target->setClass(CreatureClass::PALADIN);
                 break;
             case 7:
-                target->setClass(RANGER);
+                target->setClass(CreatureClass::RANGER);
                 break;
             case 8:
-                target->setClass(THIEF);
+                target->setClass(CreatureClass::THIEF);
                 break;
             case 9:
-                target->setClass(PUREBLOOD);
+                target->setClass(CreatureClass::PUREBLOOD);
                 break;
             case 10:
-                target->setClass(MONK);
+                target->setClass(CreatureClass::MONK);
                 break;
             case 11:
-                target->setClass(DEATHKNIGHT);
+                target->setClass(CreatureClass::DEATHKNIGHT);
                 break;
             case 12:
-                target->setClass(WEREWOLF);
+                target->setClass(CreatureClass::WEREWOLF);
                 break;
             case 13:
-                target->setClass(ROGUE);
+                target->setClass(CreatureClass::ROGUE);
                 break;
             }
         }
-        //if(target->getClass() == CLERIC && mrand(1,100) > 50)
+        //if(target->getClass() == CreatureClass::CLERIC && mrand(1,100) > 50)
         //  target->learnSpell(S_HEAL);
 
-        if(target->getClass() == MAGE && mrand(1,100) > 50)
+        if(target->getClass() == CreatureClass::MAGE && mrand(1,100) > 50)
             target->learnSpell(S_RESIST_MAGIC);
     }
 
@@ -350,7 +350,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     // There are as many variations of elementals on the elemental
     // planes as there are people on the Prime Material. Therefore,
     // the elementals summoned have varying hp and mp stats. -TC
-    if(player->getClass() == CLERIC && player->getDeity() == GRADIUS) {
+    if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == GRADIUS) {
         hp_percent = 8;
         mp_percent = 4;
     } else {
@@ -417,7 +417,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
         target->learnSpell(S_VIGOR);
         if(target->getLevel() > 10 && player->getDeity() != GRADIUS)
             target->learnSpell(S_MEND_WOUNDS);
-        if(target->getLevel() > 7 && player->getDeity() != GRADIUS && player->getClass() != DRUID)
+        if(target->getLevel() > 7 && player->getDeity() != GRADIUS && player->getClass() !=  CreatureClass::DRUID)
             target->learnSpell(S_CURE_POISON);
 
 
@@ -609,7 +609,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     // find out how long it's going to last and create all the timeouts
     x = player->piety.getCur();
-    if(player->getClass() == DRUID && player->constitution.getCur() > player->piety.getCur())
+    if(player->getClass() == CreatureClass::DRUID && player->constitution.getCur() > player->piety.getCur())
         x = player->constitution.getCur();
     x = bonus((int) x)*60L;
 

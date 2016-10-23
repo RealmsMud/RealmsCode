@@ -202,7 +202,7 @@ protected:
 protected:
 // Data
     unsigned short level;
-    unsigned short cClass;
+    CreatureClass cClass;
     unsigned short race;
     short alignment;
     mType type; // creature type
@@ -470,6 +470,8 @@ public:
     void clearAsEnemy();
     bool checkAttackTimer(bool displayFail = true);
     void updateAttackTimer(bool setDelay = true, int delay = 0);
+    int getPrimaryDelay();
+    int getSecondaryDelay();
     time_t getLTAttack() const;
     void modifyAttackDelay(int amt);
     void setAttackDelay(int newDelay);
@@ -599,7 +601,8 @@ public:
 
 
 // Get
-    unsigned short getClass() const; // *
+    CreatureClass getClass() const; // *
+    int getClassInt() const;
     unsigned short getLevel() const; // *
     short getAlignment() const; // *
     unsigned int getArmor() const; // *
@@ -622,7 +625,7 @@ public:
     bool inJail() const;
 
 // Set
-    void setClass(unsigned short c); // *
+    void setClass(CreatureClass c); // *
     void setClan(unsigned short c); // *
     void setRace(unsigned short r); // *
     void addExperience(unsigned long e); // *
@@ -1008,7 +1011,7 @@ protected:
     unsigned short negativeLevels;
     unsigned short guild; // Guild this player is in
     unsigned short guildRank; // Rank this player holds in their guild
-    unsigned short cClass2;
+    CreatureClass cClass2;
     unsigned short wimpy;
     short barkskin;
     unsigned short pkin;
@@ -1183,7 +1186,8 @@ public:
     void clearQuest(int quest);
 
 // Get
-    unsigned short getSecondClass() const;
+    bool hasSecondClass() const;
+    CreatureClass getSecondClass() const;
     unsigned short getGuild() const;
     unsigned short getGuildRank() const;
     unsigned short getActualLevel() const;
@@ -1231,7 +1235,7 @@ public:
     void subWarnings(unsigned short w);
     void setWimpy(unsigned short w);
     void setActualLevel(unsigned short l);
-    void setSecondClass(unsigned short c);
+    void setSecondClass(CreatureClass c);
     void setGuild(unsigned short g);
     void setGuildRank(unsigned short g);
     void setNegativeLevels(unsigned short l);

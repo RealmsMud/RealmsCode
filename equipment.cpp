@@ -639,10 +639,10 @@ void Player::doRemove(int i) {
         // Takes some time to remove boots in combat and then kick.
         if(inCombat()) {
             lasttime[LT_KICK].ltime = time(0);
-            lasttime[LT_KICK].interval = (cClass == FIGHTER ? 12L:15L);
+            lasttime[LT_KICK].interval = (cClass == CreatureClass::FIGHTER ? 12L:15L);
         }
     }
-    if(cClass == FIGHTER && cClass2 == THIEF && object->isHeavyArmor()) {
+    if(cClass == CreatureClass::FIGHTER && cClass2 == CreatureClass::THIEF && object->isHeavyArmor()) {
         updateAttackTimer(true, 70);
         lasttime[LT_STEAL].ltime = time(0);
         lasttime[LT_STEAL].interval = 30;
@@ -1439,7 +1439,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 
     player->clearFlag(P_AFK);
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         if(!player->canBuildObjects()) {
             player->print("You are not allowed get items.\n");
             return(0);
@@ -2288,7 +2288,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
         return(0);
     }
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         if(!player->canBuildObjects()) {
             player->print("You are not allowed drop items.\n");
             return(0);
@@ -2795,7 +2795,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
     }
 
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         // can they give their item away?
         if(!player->canBuildObjects() && !target->isCt()) {
             player->print("You are not allowed to give items to anyone.\n");
@@ -2811,7 +2811,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
         }
 
         // they can give it, but can the builder *st/modify it?
-        if( target->getClass()==BUILDER &&
+        if( target->getClass() == CreatureClass::BUILDER &&
             target->getAsPlayer()->checkRangeRestrict(object->info)
         ) {
             player->printColor("That item is outside their range. Please save to the ^ytest^x range.\n");
@@ -3169,7 +3169,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    /*if((player->getClass() == CLERIC && player->getDeity() == JAKAR))
+    /*if((player->getClass() == CreatureClass::CLERIC && player->getDeity() == JAKAR))
     {
         return(jakarRepair(player, cmnd));
     }*/

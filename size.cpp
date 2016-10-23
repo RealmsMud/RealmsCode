@@ -183,7 +183,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
     else
         spell = "a reduce spell";
 
-    if(spellData->how == CastType::CAST && player->getClass() != MAGE && player->getClass() != LICH && !player->isStaff()) {
+    if(spellData->how == CastType::CAST && player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::LICH && !player->isStaff()) {
         player->print("You cannot cast that spell.\n");
         return(0);
     }

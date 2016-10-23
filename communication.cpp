@@ -274,7 +274,7 @@ int communicateWith(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->getClass() == BUILDER && !target->isStaff()) {
+    if(player->getClass() == CreatureClass::BUILDER && !target->isStaff()) {
         player->print("You may only communicate with staff!\n");
         return(0);
     }
@@ -310,7 +310,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 
     if(chan->type == COM_SIGN) {
         if(!target->isStaff()) {
-            if(target->getRace() != DARKELF && target->getClass() < BUILDER) {
+            if(target->getRace() != DARKELF && target->getClass() < CreatureClass::BUILDER) {
                 player->print("%s doesn't understand dark elven sign language.\n", target->upHeShe());
                 return(0);
             }
@@ -745,6 +745,8 @@ int channel(Player* player, cmd* cmnd) {
     int     i=0, check=0, skip=1;
     const Guild* guild=0;
 
+    const int max_class = static_cast<int>(CreatureClass::CLASS_COUNT)-1;
+
     player->clearFlag(P_AFK);
     chanStr = cmnd->myCommand->getName();
     i = strlen(cmnd->str[1]);
@@ -756,15 +758,15 @@ int channel(Player* player, cmd* cmnd) {
         chanStr = "classsend";
         skip = 2;
 
-        for(check=1; check<CLASS_COUNT-1; check++)
+        for(check=1; check < max_class; check++)
             if(!strncasecmp(get_class_string(check), cmnd->str[1], i))
                 break;
 
         // these checks are overkill, but it never hurts to be safe:
         // this will force them to use their own class
-        if(check == DUNGEONMASTER && !player->isDm())
+        if(check == static_cast<int>(CreatureClass::DUNGEONMASTER) && !player->isDm())
             check = 0;
-        if(check == CARETAKER && !player->isCt())
+        if(check == static_cast<int>(CreatureClass::CARETAKER) && !player->isCt())
             check = 0;
 
     } else if(chanStr == "dmrace") {
@@ -839,7 +841,7 @@ int channel(Player* player, cmd* cmnd) {
     if(chan->type == COM_CLASS) {
 
         if(!check)
-            check = player->getClass();
+            check = static_cast<int>(player->getClass());
         extra = "(";
         extra += get_class_string(check);
         if(player->getDeity() && gConfig->classes[get_class_string(check)]->needsDeity()) {
@@ -938,7 +940,7 @@ int channel(Player* player, cmd* cmnd) {
                     (!chan->flag || ply->flagIsSet(chan->flag)) &&
                     (!chan->not_flag || !ply->flagIsSet(chan->not_flag)) )
                 && ( // they must also satisfy any special conditions here
-                    (chan->type != COM_CLASS || ply->getClass() == check) &&
+                    (chan->type != COM_CLASS || static_cast<int>(ply->getClass()) == check) &&
                     (chan->type != COM_RACE || ply->getDisplayRace() == check) &&
                     (chan->type != COM_CLAN || (ply->getDeity() ? ply->getDeityClan() : ply->getClan()) == check) ) )
             {
@@ -983,7 +985,7 @@ int channel(Player* player, cmd* cmnd) {
             // even if they fail the check, it might still show up on eaves
             if( chan->eaves &&
                 watchingEaves(sock) &&
-                !(chan->type == COM_CLASS && check == DUNGEONMASTER)
+                !(chan->type == COM_CLASS && check == static_cast<int>(CreatureClass::DUNGEONMASTER))
             ) {
                 ply->printColor("^E%s", etxt.c_str());
             }
@@ -1291,7 +1293,7 @@ void Monster::sayTo(const Player* player, const bstring& message) {
 //*********************************************************************
 
 bool canCommunicate(Player* player) {
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You are not allowed to broadcast.\n");
         return(false);
     }

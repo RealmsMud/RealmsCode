@@ -69,8 +69,8 @@ void FactionRegard::load(xmlNodePtr rootNode) {
     }
 }
 
-long FactionRegard::getClassRegard(int i) const {
-    return(classRegard[i]);
+long FactionRegard::getClassRegard(CreatureClass i) const {
+    return(classRegard[static_cast<int>(i)]);
 }
 long FactionRegard::getRaceRegard(int i) const {
     return(raceRegard[i]);
@@ -187,7 +187,7 @@ bstring Faction::getSocial() const {
 long Faction::getBaseRegard() const {
     return(baseRegard);
 }
-long Faction::getClassRegard(int i) const {
+long Faction::getClassRegard(CreatureClass i) const {
     return(initial.getClassRegard(i));
 }
 long Faction::getRaceRegard(int i) const {
@@ -393,11 +393,11 @@ void showRegard(const Player* viewer, bstring type, const FactionRegard* regard)
     int a;
     std::ostringstream oStr;
 
-    for(a=0; a < CLASS_COUNT; a++) {
-        if(regard->getClassRegard(a)) {
+    for(a=0; a < static_cast<int>(CreatureClass::CLASS_COUNT); a++) {
+        if(regard->getClassRegard(static_cast<CreatureClass>(a))) {
             oStr << getClassAbbrev(a) << ":"
-                << Faction::getColor(regard->getClassRegard(a))
-                << regard->getClassRegard(a) << "^X ";
+                << Faction::getColor(regard->getClassRegard( static_cast<CreatureClass>(a) ))
+                << regard->getClassRegard(static_cast<CreatureClass>(a)) << "^X ";
         }
     }
     for(a=0; a < RACE_COUNT; a++) {
@@ -539,7 +539,7 @@ int dmShowFactions(Player *player, cmd* cmnd) {
     if(cmnd->num < 2 || all)
         listFactions(player, all);
     else {
-        if(player->getClass() == BUILDER) {
+        if(player->getClass() == CreatureClass::BUILDER) {
             if(!player->canBuildMonsters())
                 return(cmdNoAuth(player));
             if(!player->checkBuilder(player->getUniqueRoomParent())) {
@@ -557,7 +557,7 @@ int dmShowFactions(Player *player, cmd* cmnd) {
                 target = gServer->findPlayer(cmnd->str[1]);
         }
         if(target) {
-            if(player->getClass() == BUILDER) {
+            if(player->getClass() == CreatureClass::BUILDER) {
                 mTarget = target->getAsMonster();
                 if(mTarget && !player->checkBuilder(mTarget->info)) {
                     player->print("Error: monster index not in any of your alotted ranges.\n");

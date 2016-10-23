@@ -221,8 +221,8 @@ int Monster::checkScrollDrop() {
     if( intelligence.getCur() >= 120 ||
         flagIsSet(M_CAN_CAST) ||
         flagIsSet(M_CAST_PRECENT) ||
-        cClass == MAGE ||
-        cClass == LICH
+        cClass == CreatureClass::MAGE ||
+        cClass == CreatureClass::LICH
     ) {
         if(mrand(1,100) <= 4 && !isPet())
             return(1);
@@ -391,7 +391,7 @@ int displayObject(Player* player, Object* target) {
     if(target->getType() == ObjectType::LOTTERYTICKET)
         oStr << "It is good for powerbone cycle #" << target->getLotteryCycle() << ".\n";
 
-    if(player->isEffected("know-aura") || player->getClass() == PALADIN || player->isCt()) {
+    if(player->isEffected("know-aura") || player->getClass() == CreatureClass::PALADIN || player->isCt()) {
         if(target->flagIsSet(O_GOOD_ALIGN_ONLY))
             oStr << "It has a blue aura.\n";
         if(target->flagIsSet(O_EVIL_ALIGN_ONLY))
@@ -432,13 +432,13 @@ int displayObject(Player* player, Object* target) {
 
     if(target->getType() == ObjectType::WEAPON && target->flagIsSet(O_ENVENOMED)) {
         oStr << "^gIt drips with poison.\n";
-        if((player->getClass() == ASSASSIN && player->getLevel() >= 10) || player->isCt()) {
+        if((player->getClass() == CreatureClass::ASSASSIN && player->getLevel() >= 10) || player->isCt()) {
             oStr << "^gTime remaining before poison deludes: " <<
                timestr(MAX(0,(target->lasttime[LT_ENVEN].ltime+target->lasttime[LT_ENVEN].interval-time(0)))) << ".\n";
         }
     }
 
-    if( target->getType() == ObjectType::POISON && ((player->getClass() == ASSASSIN && player->getLevel() >= 10) || player->isCt()))
+    if( target->getType() == ObjectType::POISON && ((player->getClass() == CreatureClass::ASSASSIN && player->getLevel() >= 10) || player->isCt()))
         oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is a poison.\n";
 
     if(target->flagIsSet(O_COIN_OPERATED_OBJECT))
@@ -476,7 +476,7 @@ int displayObject(Player* player, Object* target) {
                 oStr << "It is broken or used up.\n";
         }
 
-        if(target->flagIsSet(O_TEMP_ENCHANT) && (player->getClass() == MAGE
+        if(target->flagIsSet(O_TEMP_ENCHANT) && (player->getClass() == CreatureClass::MAGE
                 || player->isCt() || player->isEffected("detect-magic")))
             oStr << "It is weakly enchanted.\n";
 
@@ -531,7 +531,7 @@ void getDamageString(char atk[50], Creature* player, Object *weapon, bool critic
     if(!weapon) {
         strcpy(atk, "^Rpunched^x");
 
-        if(player->getClass() == MONK) {
+        if(player->getClass() == CreatureClass::MONK) {
             switch(critical ? mrand(10,12) : mrand(1,9)) {
             case 1: strcpy(atk, "punched");             break;
             case 2: strcpy(atk, "backhanded");          break;

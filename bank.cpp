@@ -73,7 +73,7 @@ bool Bank::canSee(const Player* player) {
 
 bool Bank::canAnywhere(const Player* player) {
     return(
-        (player->getClass() == CLERIC && player->getDeity() == JAKAR) ||
+        (player->getClass() == CreatureClass::CLERIC && player->getDeity() == JAKAR) ||
         player->isCt()
     );
 }
@@ -94,7 +94,7 @@ bool Bank::can(Player* player, bool isGuild, Guild** guild) {
     if(!player->ableToDoCommand())
         return(false);
 
-    if(player->getClass() == BUILDER) {
+    if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You do not have a bank account.\n");
         return(false);
     }
@@ -416,7 +416,7 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
     } else
         online = true;
 
-    if(target->getClass() == BUILDER) {
+    if(target->getClass() == CreatureClass::BUILDER) {
         Bank::say(player, "I don't know who that is.");
         if(!online)
             free_crt(target);
@@ -458,7 +458,7 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
             target->print("*** %s just transferred %ld gold to your account.\n", player->getCName(), amt);
     }
 
-    if(player->getClass() == CARETAKER)
+    if(player->getClass() == CreatureClass::CARETAKER)
         log_immort(true, player, "%s transferred %lu gold to %s. (Balance=%s)(%s)\n", player->getCName(), amt, target->getCName(), player->bank.str().c_str(), target->bank.str().c_str());
 
     target->bank.add(amt, GOLD);
