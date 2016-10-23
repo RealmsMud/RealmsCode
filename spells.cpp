@@ -216,7 +216,8 @@ bool Creature::isHybridCaster() const {
 //*********************************************************************
 
 SpellData::SpellData() {
-    splno = how = 0;
+    how = CastType::CAST;
+    splno = 0;
     level = 0;
     object = 0;
     school = NO_SCHOOL;
@@ -227,7 +228,7 @@ SpellData::SpellData() {
 //                      set
 //*********************************************************************
 
-void SpellData::set(int h, SchoolOfMagic s, DomainOfMagic d, Object* obj, const Creature* caster) {
+void SpellData::set(CastType h, SchoolOfMagic s, DomainOfMagic d, Object* obj, const Creature* caster) {
     how = h;
     school = s;
     domain = d;

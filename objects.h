@@ -89,7 +89,7 @@ protected:
     short           bulk;           // item bulk rating.
     short           maxbulk;
     Size            size;
-    short           type;
+    ObjectType      type;
     short           wearflag;       // Where/if it can be worn
     short           armor;          // AC adjustment
     short           quality;        // Quality of the item (1-400) for auto adjustment of AC
@@ -227,7 +227,7 @@ public:
     float getTypeModifier() const;
     unsigned short getKey() const;
     Size getSize() const;
-    short getType() const; // *
+    ObjectType getType() const; // *
     short getWearflag() const; // *
     short getArmor() const;
     short getQuality() const;
@@ -284,7 +284,7 @@ public:
     void setBulk(short b);
     void setMaxbulk(short b);
     void setSize(Size s);
-    void setType(short t);
+    void setType(ObjectType t);
     void setWearflag(short w);
     void setArmor(short a);
     void setQuality(short q);

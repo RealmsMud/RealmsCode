@@ -487,32 +487,32 @@ CLASS_COUNT
 //#define POLE          3
 //#define MISSILE       4
 //#define CLEAVE        5
-
-// Bard Instrument
-#define INSTRUMENT      3
-// Item is a herb!  Subtype if needed in subtype
-#define HERB            4
-
-#define WEAPON          5
-// object types
-#define ARMOR           6
-#define POTION          7
-#define SCROLL          8
-#define WAND            9
-#define CONTAINER       10
-
-#define MONEY           11
-#define KEY             12
-#define LIGHTSOURCE     13
-#define MISC            14
-#define SONGSCROLL      15
-#define POISON          16
-#define BANDAGE         17
-#define AMMO            18
-#define QUIVER          19
-#define LOTTERYTICKET   20
-
-#define MAX_OBJ_TYPE    21
+//
+//// Bard Instrument
+//#define INSTRUMENT      3
+//// Item is a herb!  Subtype if needed in subtype
+//#define HERB            4
+//
+//#define WEAPON          5
+//// object types
+//#define ARMOR           6
+//#define POTION          7
+//#define SCROLL          8
+//#define WAND            9
+//#define CONTAINER       10
+//
+//#define MONEY           11
+//#define KEY             12
+//#define LIGHTSOURCE     13
+//#define MISC            14
+//#define SONGSCROLL      15
+//#define POISON          16
+//#define BANDAGE         17
+//#define AMMO            18
+//#define QUIVER          19
+//#define LOTTERYTICKET   20
+//
+//#define MAX_OBJ_TYPE    21
 
 #define DEFAULT_WEAPON_DELAY    30 // 3 seconds
 

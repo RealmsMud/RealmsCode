@@ -47,6 +47,7 @@ typedef std::map<bstring, CrtCommand*> CrtCommandMap;
 typedef std::map<bstring, SkillCommand*> SkillCommandMap;
 typedef std::map<bstring, Spell*> SpellMap;
 typedef std::map<bstring, Song*> SongMap;
+typedef std::map<bstring, AlchemyInfo*> AlchemyMap;
 typedef std::map<int, MudFlag> MudFlagMap;
 
 class LottoTicket {
@@ -335,8 +336,8 @@ public:
     bstring getVersion();
     bstring getMudName();
     bstring getMudNameAndVersion();
-    int getPortNum() const;
-    void setPortNum(int pPort);
+    short getPortNum() const;
+    void setPortNum(short pPort);
     bstring weatherize(WeatherString w, const BaseRoom* room) const;
     bstring getMonthDay() const;
     bool isAprilFools() const;
@@ -514,7 +515,7 @@ public:
 
 
     // Alchemy
-    std::list<AlchemyInfo*> alchemy;
+    AlchemyMap alchemy;
 
     // Bans
     std::list<Ban*> bans;

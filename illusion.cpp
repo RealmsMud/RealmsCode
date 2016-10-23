@@ -47,7 +47,7 @@ int splGreaterInvisibility(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!player->isStaff()) {
         if(!player->isMageLich())
             return(0);
-        if(player->getLevel() < 20 && spellData->how == CAST) {
+        if(player->getLevel() < 20 && spellData->how == CastType::CAST) {
             player->print("You are not experienced enough to cast that spell.\n");
             return(0);
         }
@@ -87,7 +87,7 @@ int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     pPlayer = player->getAsPlayer();
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         // if the spell was cast
         if(!pPlayer->isMageLich())
             return(0);
@@ -119,10 +119,10 @@ int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
 
-    if(cmnd->num == 3 || (cmnd->num == 2 && spellData->how == POTION)) {
+    if(cmnd->num == 3 || (cmnd->num == 2 && spellData->how == CastType::POTION)) {
         target = pPlayer;
 
-        if(spellData->how != POTION) {
+        if(spellData->how != CastType::POTION) {
             pPlayer->print("You cast an illusion spell.\n");
             broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts an illusion spell.", pPlayer);
         }
@@ -183,7 +183,7 @@ bool Creature::willIgnoreIllusion() const {
 int splBlur(Creature* player, cmd* cmnd, SpellData* spellData) {
     // this number is the % miss chance
     int strength = 7;
-    if(spellData->how == CAST)
+    if(spellData->how == CastType::CAST)
         strength += player->getLevel()/10;
     return(splGeneric(player, cmnd, spellData, "a", "blur", "blur", strength));
 }
@@ -217,7 +217,7 @@ int splIllusoryWall(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
             player->print("The room's magical properties increase the power of your spell.\n");
     }

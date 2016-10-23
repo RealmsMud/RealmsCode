@@ -131,15 +131,14 @@ namespace xml {
 
     template <class Type>
     Type toNum(char *fromStr) {
-        Type toReturn = 0;
+        Type toReturn = static_cast<Type>(0);
         if(!fromStr)
             return(toReturn);
 
         try {
-            toReturn = lexical_cast<Type>(fromStr);
+            toReturn = static_cast<Type>(lexical_cast<int>(fromStr));
         } catch (bad_lexical_cast &) {
-            toReturn = 0;
-
+            // And do nothing
         }
 
         free(fromStr);

@@ -96,8 +96,8 @@ const int SHIELDOBJ = 4;
 const int MAX_AURAS = 6;    // Max mob aura attacks
 
 // Spell casting types
-const int CAST = 0;
-const int SKILL = 1;    // Druid summon-elemental
+//const int CAST = 0;
+//const int SKILL = 1;    // Druid summon-elemental
 
 
 // NPC Trades
@@ -436,7 +436,8 @@ const int EXIT = 3;
 //const int POLE = 3;
 //const int MISSILE = 4;
 //const int CLEAVE = 5;
-enum ObjectTypes {
+
+enum class ObjectType {
     // 0,1,2 open
 
     INSTRUMENT = 3, // Bard Instrument
@@ -462,9 +463,17 @@ enum ObjectTypes {
     QUIVER = 19,
     LOTTERYTICKET = 20,
 
-    MAX_OBJ_TYPE
+    MAX_OBJECT_TYPE,
 };
 
+
+enum class CastType {
+    POTION,
+    SCROLL,
+    WAND,
+    CAST,
+    SKILL,
+};
 
 // Spell Realms
 

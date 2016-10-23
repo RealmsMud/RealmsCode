@@ -276,7 +276,7 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!pPlayer)
         return(0);
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
 
         if(!pPlayer->isCt()) {
             if( pPlayer->getClass() != MAGE &&
@@ -373,7 +373,7 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     } else {
 
-        if(spellData->how != WAND) {
+        if(spellData->how != CastType::WAND) {
             pPlayer->print("Nothing happens.\n");
             return(0);
         } else {

@@ -52,7 +52,7 @@ int Creature::doMpCheck(int splno) {
         if(!checkMp(reqMp))
             return(0);
         // Handle spell fail here now if the spell doesn't handle mp on it's own
-        if(!(splno == S_VIGOR || splno == S_MEND_WOUNDS) && spellFail(CAST)) {
+        if(!(splno == S_VIGOR || splno == S_MEND_WOUNDS) && spellFail(CastType::CAST)) {
             // Reduced spell fails to half mp
             subMp(MAX(1,reqMp/2));
             return(0);
@@ -97,11 +97,11 @@ void doCastPython(MudObject* caster, Creature* target, bstring spell, int streng
 
     fn = get_spell_function(data.splno);
     if(caster->isCreature()) {
-        data.set(CAST, get_spell_school(data.splno), get_spell_domain(data.splno), 0, caster->getAsConstCreature());
+        data.set(CastType::CAST, get_spell_school(data.splno), get_spell_domain(data.splno), 0, caster->getAsConstCreature());
         cmnd.fullstr = "cast " + spell + " " + target->getName();
     }
     else {
-        data.set(WAND, get_spell_school(data.splno), get_spell_domain(data.splno), caster->getAsObject(), target);
+        data.set(CastType::WAND, get_spell_school(data.splno), get_spell_domain(data.splno), caster->getAsObject(), target);
         cmnd.fullstr = bstring("use spell .");
         caster = target;
     }
@@ -318,7 +318,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
     fn = get_spell_function(data.splno);
 
 
-    data.set(CAST, get_spell_school(data.splno), get_spell_domain(data.splno), 0, creature);
+    data.set(CastType::CAST, get_spell_school(data.splno), get_spell_domain(data.splno), 0, creature);
     if(!data.check(creature))
         return(CAST_RESULT_FAILURE);
 
@@ -713,7 +713,7 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
             return(0);
         }
 
-    } else if(object->getType() == SCROLL) {
+    } else if(object->getType() == ObjectType::SCROLL) {
 
         //
         // If this object can teach the player a spell
@@ -737,7 +737,7 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
             return(0);
         }
         
-    } else if(object->getType() == SONGSCROLL) {
+    } else if(object->getType() == ObjectType::SONGSCROLL) {
 
         //
         // If this object can teach the player a song
@@ -808,7 +808,7 @@ void doStudy(Player* player, Object* object, bool immediate) {
         player->printColor("You learn the art of making ^W%s^x.\n", recipe->getResultName().c_str());
         player->learnRecipe(recipe);
 
-    } else if(object->getType() == SCROLL) {
+    } else if(object->getType() == ObjectType::SCROLL) {
 
         //
         // If this object can teach the player a spell
@@ -817,7 +817,7 @@ void doStudy(Player* player, Object* object, bool immediate) {
         player->printColor("You learn the ^W%s^x spell.\n", get_spell_name(object->getMagicpower() - 1));
         player->learnSpell(object->getMagicpower() - 1);
 
-    } else if(object->getType() == SONGSCROLL) {
+    } else if(object->getType() == ObjectType::SONGSCROLL) {
 
         //
         // If this object can teach the player a song
@@ -948,7 +948,7 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
             return(MAX(0, n));
     }
 
-    if(object->getType() != SCROLL) {
+    if(object->getType() != ObjectType::SCROLL) {
         player->print("That's not a scroll.\n");
         return(0);
     }
@@ -995,7 +995,7 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->spellFail( SCROLL)) {
+    if(player->spellFail( CastType::SCROLL)) {
         player->printColor("%O disintegrates.\n", object);
         player->delObj(object, true);
         delete object;
@@ -1005,7 +1005,7 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
     data.splno = object->getMagicpower() - 1;
     fn = get_spell_function(data.splno);
 
-    data.set(SCROLL, get_spell_school(data.splno), get_spell_domain(data.splno), object, player);
+    data.set(CastType::SCROLL, get_spell_school(data.splno), get_spell_domain(data.splno), object, player);
     if(!data.check(player))
         return(0);
 
@@ -1050,7 +1050,7 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 // lagprot means we can bypass
 
 int Player::endConsume(Object* object, bool forceDelete) {
-    if(object->flagIsSet(O_EATABLE) || object->getType() == HERB) {
+    if(object->flagIsSet(O_EATABLE) || object->getType() == ObjectType::HERB) {
         print("You eat %P.\n", object);
         broadcast(getSock(), getParent(), "%M eats %1P.", this, object);
     }
@@ -1062,7 +1062,7 @@ int Player::endConsume(Object* object, bool forceDelete) {
     if(!forceDelete)
         object->decShotsCur();
     if(forceDelete || object->getShotsCur() < 1) {
-        if(object->flagIsSet(O_EATABLE) || object->getType() == HERB)
+        if(object->flagIsSet(O_EATABLE) || object->getType() == ObjectType::HERB)
             printColor("You ate all of %P.\n", object);
         else
             printColor("You drank all of %P.\n", object);
@@ -1078,11 +1078,11 @@ int Player::consume(Object* object, cmd* cmnd) {
     int     c=0, splno=0, n=0;
     int     (*fn)(SpellFn);
     bool    dimensionalFailure=false;
-    bool    eat = (object->flagIsSet(O_EATABLE) || object->getType() == HERB), drink=object->flagIsSet(O_DRINKABLE) || object->getType() == POTION;
+    bool    eat = (object->flagIsSet(O_EATABLE) || object->getType() == ObjectType::HERB), drink=object->flagIsSet(O_DRINKABLE) || object->getType() == ObjectType::POTION;
     //const bstring& effect = object->getEffect();
     fn = 0;
 
-    if(isStaff() && object->getType() != POTION && !strcmp(cmnd->str[0], "eat")) {
+    if(isStaff() && object->getType() != ObjectType::POTION && !strcmp(cmnd->str[0], "eat")) {
         broadcast(getSock(), getParent(), "%M eats %1P.", this, object);
         printColor("You ate %P.\n", object);
 
@@ -1107,7 +1107,7 @@ int Player::consume(Object* object, cmd* cmnd) {
     // they are eating a non-potion object
     if( object->getShotsCur() < 1 ||
         (object->getMagicpower() - 1 < 0) ||
-        object->getType() != POTION)
+        object->getType() != ObjectType::POTION)
     {
         unhide();
 
@@ -1156,7 +1156,7 @@ int Player::consume(Object* object, cmd* cmnd) {
     if(!dimensionalFailure) {
         SpellData data;
         data.splno = splno;
-        data.set(POTION, get_spell_school(data.splno), get_spell_domain(data.splno), object, this);
+        data.set(CastType::POTION, get_spell_school(data.splno), get_spell_domain(data.splno), object, this);
 
         if( (int(*)(SpellFn, char*, osp_t*))fn == splOffensive ||
             (int(*)(SpellFn, char*, osp_t*))fn == splMultiOffensive)
@@ -1281,7 +1281,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(object->getType() != WAND) {
+    if(object->getType() != ObjectType::WAND) {
         player->print("That's not a wand or staff.\n");
         return(0);
     }
@@ -1324,7 +1324,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    data.set(WAND, get_spell_school(data.splno), get_spell_domain(data.splno), object, player);
+    data.set(CastType::WAND, get_spell_school(data.splno), get_spell_domain(data.splno), object, player);
     if(!data.check(player, true))
         return(0);
 
@@ -1332,7 +1332,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
     player->lasttime[LT_SPELL].interval = 3;
     player->statistics.wand();
 
-    if(player->spellFail( WAND)) {
+    if(player->spellFail( CastType::WAND)) {
         if(!object->flagIsSet(O_CAN_USE_FROM_FLOOR))
             object->decShotsCur();
         if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
@@ -1430,7 +1430,7 @@ int Player::recallCheckBag(Object *cont, cmd* cmnd, int show, int log) {
     for(Object* object : cont->objects) {
         name = object->getName();
 
-        if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == POTION) {
+        if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == ObjectType::POTION) {
             if(show)
                 printColor("Recall potion found in %s: %s. Initiating auto-recall.\n", cont->getCName(), name.c_str());
             drank = consume(object, cmnd);
@@ -1475,7 +1475,7 @@ int Player::useRecallPotion(int show, int log) {
         object = ready[i];
         if(object) {
             name = object->getName();
-            if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == POTION) {
+            if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == ObjectType::POTION) {
                 if(show)
                     printColor("Recall potion found: %s. Initiating auto-recall.\n", name.c_str());
                 if(consume(object, cmnd)) {
@@ -1487,7 +1487,7 @@ int Player::useRecallPotion(int show, int log) {
                     print("Unable to use potion. Continuing search.\n");
             }
 
-            if(object->getType() == CONTAINER)
+            if(object->getType() == ObjectType::CONTAINER)
                 if(recallCheckBag(object, cmnd, show, log))
                     return(1);
         }
@@ -1499,7 +1499,7 @@ int Player::useRecallPotion(int show, int log) {
         name = object->getName();
 
         // is this object it?
-        if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == POTION) {
+        if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == ObjectType::POTION) {
             if(show)
                 printColor("Recall potion found: %s. Initiating auto-recall.\n", name.c_str());
             if(consume(object, cmnd)) {
@@ -1512,7 +1512,7 @@ int Player::useRecallPotion(int show, int log) {
         }
 
         // in a container?
-        if(object->getType() == CONTAINER) {
+        if(object->getType() == ObjectType::CONTAINER) {
             if(recallCheckBag(object, cmnd, show, log))
                 return(1);
         }
@@ -1559,7 +1559,7 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
         )
             return(0);
 
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
             player->print("You cast %s %s spell.\n", article, spell);
             broadcast(player->getSock(), player->getParent(), "%M casts %s %s spell.", player, article, spell);
         }
@@ -1612,7 +1612,7 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
 
 
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
             player->print("The room's magical properties increase the power of your spell.\n");
         if(!target->addEffect(effect, duration, strength, player, true))
@@ -1650,7 +1650,7 @@ int cmdTransmute(Player* player, cmd* cmnd) {
             return(0);
         }
     }
-    if(!player->ready[HELD-1] || player->ready[HELD-1]->getType() != WAND) {
+    if(!player->ready[HELD-1] || player->ready[HELD-1]->getType() != ObjectType::WAND) {
         player->print("You must hold the wand you wish to recharge.\n");
         return(0);
     }
@@ -1686,7 +1686,7 @@ int cmdTransmute(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->spellFail(CAST)) {
+    if(player->spellFail(CastType::CAST)) {
         int dmg = 0;
         player->print("The wand glows bright red and explodes!\n");
         broadcast(player->getSock(), player->getParent(), "A wand explodes in %s's hand!\n", player->getCName());
@@ -1732,10 +1732,10 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(cmnd->num == 2) {
 
         target = player;
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("You are blind and can no longer see.\n");
             broadcast(player->getSock(), player->getParent(), "%M casts blindness on %sself.", player, player->himHer());
-        } else if(spellData->how == POTION)
+        } else if(spellData->how == CastType::POTION)
             player->print("Everything goes dark.\n");
 
     // blind a monster or player
@@ -1763,7 +1763,7 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Blindness spell cast on %s.\n", target->getCName());
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a blindness spell on %N.", player, target);
             target->print("%M casts a blindness spell on you.\n", player);
@@ -1777,7 +1777,7 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(player->isCt())
             target->setFlag(P_DM_BLINDED);
     }
-    if(spellData->how == CAST && player->isPlayer())
+    if(spellData->how == CastType::CAST && player->isPlayer())
         player->getAsPlayer()->statistics.offensiveCast();
     if(!player->isCt())
         target->addEffect("blindness", 180 - (target->constitution.getCur()/10), 1, player, true, player);
@@ -1794,11 +1794,11 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function returns 1 if the casting of a spell fails, and 0 if it is
 // sucessful.
 
-int Creature::spellFail(int how) {
+int Creature::spellFail(CastType how) {
     Player  *pPlayer = getAsPlayer();
     int     chance=0, n=0;
 
-    if(how == POTION)
+    if(how == CastType::POTION)
         return(0);
 
     if(!pPlayer)
@@ -1876,12 +1876,12 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *target=0;
     UniqueRoom  *new_rom=0;
 
-    if(!player->isPlayer() || (!player->isCt() && spellData->how == CAST)) {
+    if(!player->isPlayer() || (!player->isCt() && spellData->how == CastType::CAST)) {
         player->print("That spell does not exist.\n");
         return(0);
     }
 
-    if(!player->spellIsKnown(S_JUDGEMENT) && spellData->how == CAST) {
+    if(!player->spellIsKnown(S_JUDGEMENT) && spellData->how == CastType::CAST) {
         player->print("You are unable to pass judgement at this time.\n");
         return(0);
     }
@@ -1897,10 +1897,10 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
     // Cast judgement on yourself
     if(cmnd->num == 2) {
         target = player->getAsPlayer();
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("You pass judgement upon yourself.\n");
             broadcast(player->getSock(), player->getParent(), "%M casts word of Judgement on %sself.", player, player->himHer());
-        } else if(spellData->how == POTION) {
+        } else if(spellData->how == CastType::POTION) {
             player->print("You find yourself elsewhere.\n");
             broadcast(player->getSock(), player->getParent(), "%M drinks a potion of judgement and disapears.", player, player->himHer());
         }
@@ -1917,7 +1917,7 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
 
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("You pass judgemet on %N.\n", target);
             target->print("%M passes judgement on you.\nYou have been judged.\n", player);
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M passes judgement on %N.", player, target);
@@ -2138,7 +2138,7 @@ bool Creature::isMageLich() {
 //*********************************************************************
 
 bool Creature::noPotion(SpellData* spellData) {
-    if(spellData->how == POTION) {
+    if(spellData->how == CastType::POTION) {
         print("You can only use a potion on yourself.\n");
         return(1);
     }

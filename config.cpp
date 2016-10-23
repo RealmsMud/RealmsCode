@@ -497,10 +497,10 @@ bool Config::saveConfig() const {
     return(true);
 }
 
-int Config::getPortNum() const {
+short Config::getPortNum() const {
     return(portNum);
 }
-void Config::setPortNum(int pPort) {
+void Config::setPortNum(short pPort) {
     portNum = pPort;
 }
 int getPkillInCombatDisabled() {

@@ -1085,7 +1085,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        if(object->getType() != BANDAGE) {
+        if(object->getType() != ObjectType::BANDAGE) {
             player->print("You cannot bandage yourself with that.\n");
             return(0);
         }
@@ -1147,7 +1147,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        if(object->getType() != BANDAGE) {
+        if(object->getType() != ObjectType::BANDAGE) {
             player->print("You cannot bandage %N with that.\n", creature);
             return(0);
         }
@@ -1223,7 +1223,7 @@ int splHallow(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(player->noPotion( spellData))
         return(0);
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getClass() != CLERIC && !player->isCt()) {
             player->print("Only clerics may cast that spell.\n");
             return(0);
@@ -1237,7 +1237,7 @@ int splHallow(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
             player->print("The room's magical properties increase the power of your spell.\n");
     }
@@ -1257,7 +1257,7 @@ int splUnhallow(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(player->noPotion( spellData))
         return(0);
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getClass() != CLERIC && !player->isCt()) {
             player->print("Only clerics may cast that spell.\n");
             return(0);
@@ -1271,7 +1271,7 @@ int splUnhallow(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
             player->print("The room's magical properties increase the power of your spell.\n");
     }

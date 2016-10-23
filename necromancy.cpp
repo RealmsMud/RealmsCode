@@ -28,7 +28,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
     int wrongdiety=0, multi=0, roll=0, dmg=0, bns=0, saved=0;
 
 
-    if(player->getClass() != CLERIC && !player->isCt() && spellData->how == CAST) {
+    if(player->getClass() != CLERIC && !player->isCt() && spellData->how == CastType::CAST) {
         player->print("Your class prohibits you from casting that spell.\n");
         return(0);
     }
@@ -51,7 +51,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
     if( (wrongdiety || multi) &&
         player->getClass() == CLERIC &&
         !player->isStaff() &&
-        spellData->how != POTION
+        spellData->how != CastType::POTION
     ) {
         player->print("You are not allowed to cast that spell.\n");
         if(wrongdiety)
@@ -67,11 +67,11 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
     // Harm self
     if(cmnd->num == 2) {
 
-        if(spellData->how != POTION) {
+        if(spellData->how != CastType::POTION) {
             player->print("You can't do that!\n");
             return(0);
         } else {
-            if(spellData->how == CAST && player->isPlayer())
+            if(spellData->how == CastType::CAST && player->isPlayer())
                 player->getAsPlayer()->statistics.offensiveCast();
             player->hp.setCur(MIN(player->hp.getCur(), mrand(1,10)));
             player->print("Your lifeforce is nearly sucked away by deadly magic.\n");
@@ -90,7 +90,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(spellData->how != CAST && spellData->how != SCROLL && spellData->how != WAND) {
+        if(spellData->how != CastType::CAST && spellData->how != CastType::SCROLL && spellData->how != CastType::WAND) {
             player->print("Nothing happens.\n");
             return(0);
         }
@@ -110,7 +110,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
 
         if( !dec_daily(&player->daily[DL_HARM]) &&
-            spellData->how == CAST &&
+            spellData->how == CastType::CAST &&
             !player->isCt() &&
             player->isPlayer()
         ) {
@@ -126,7 +126,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(target->isMonster())
             target->getAsMonster()->addEnemy(player);
 
-        if(spellData->how == CAST && player->isPlayer())
+        if(spellData->how == CastType::CAST && player->isPlayer())
             player->getAsPlayer()->statistics.offensiveCast();
 
         if(target->isPlayer() && target->getClass() == LICH) {
@@ -186,12 +186,12 @@ int drain_exp(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     unsigned long loss=0;
 
-    if(spellData->how == CAST && !player->isCt()) {
+    if(spellData->how == CastType::CAST && !player->isCt()) {
         player->print("You may not cast that spell.\n");
         return(0);
     }
 
-    if(spellData->how == SCROLL) {
+    if(spellData->how == CastType::SCROLL) {
         player->print("You may not cast that spell.\n");
         return(0);
     }
@@ -199,19 +199,19 @@ int drain_exp(Creature* player, cmd* cmnd, SpellData* spellData) {
     // drain exp on self
     if(cmnd->num == 2) {
 
-        if(spellData->how == POTION || spellData->how == WAND)
+        if(spellData->how == CastType::POTION || spellData->how == CastType::WAND)
             loss = dice(player->getLevel(), player->getLevel(), (player->getLevel()) * 10);
 
-        else if(spellData->how == CAST)
+        else if(spellData->how == CastType::CAST)
             loss = dice(player->getLevel(), player->getLevel(), 1);
 
         loss = MIN(loss, player->getExperience());
 
-        if(spellData->how == CAST || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::WAND) {
             player->print("You cast an energy drain spell on yourself.\n");
             player->print("You lose %d experience.\n", loss);
             broadcast(player->getSock(), player->getParent(), "%M casts energy drain on %sself.", player, player->himHer());
-        } else if(spellData->how == POTION) {
+        } else if(spellData->how == CastType::POTION) {
             player->print("You feel your experience slipping away.\n");
             player->print("You lose %d experience.\n", loss);
         }
@@ -234,7 +234,7 @@ int drain_exp(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
         loss = MIN(loss, target->getExperience());
-        if(spellData->how == CAST || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::WAND) {
             player->print("You cast energy drain on %N.\n", target);
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts energy drain on %N.", player, target);
             target->print(
@@ -257,7 +257,7 @@ int drain_exp(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int animateDeadCmd(Player* player, cmd* cmnd) {
     SpellData data;
-    data.set(SKILL, NECROMANCY, EVIL, 0, player);
+    data.set(CastType::SKILL, NECROMANCY, EVIL, 0, player);
     if(!data.check(player))
         return(0);
     return(animate_dead(player, cmnd, &data));
@@ -278,17 +278,17 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
 
     if(!strncmp(cmnd->str[0], "animate", strlen(cmnd->str[0])))
-        spellData->how = SKILL;
+        spellData->how = CastType::SKILL;
 
     if(player->noPotion( spellData))
         return(0);
 
-    if(spellData->how == SKILL && !player->knowsSkill("animate")) {
+    if(spellData->how == CastType::SKILL && !player->knowsSkill("animate")) {
         player->print("You lack the ability to call forth the dead.\n");
         return(0);
     }
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(!(player->getClass() == CLERIC && player->getDeity() == ARAMON) &&
             !player->isCt())
         {
@@ -300,7 +300,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
     if(!player->isCt() &&
-        (spellData->how == CAST || spellData->how == SKILL) &&
+        (spellData->how == CastType::CAST || spellData->how == CastType::SKILL) &&
         player->getAdjustedAlignment() > REDDISH)
     {
         player->print("You are not evil enough to do that!\n");
@@ -320,7 +320,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
 
     /*
-    if(spellData->how == SKILL) {
+    if(spellData->how == CastType::SKILL) {
         skLevel=(int)player->getSkillLevel("animate");
     } else {
         skLevel = player->getLevel();
@@ -341,19 +341,19 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
 
-    title = getPetTitle(spellData->how, level, spellData->how == WAND && player->getClass() != CLERIC && player->getDeity() != ARAMON, true);
+    title = getPetTitle(spellData->how, level, spellData->how == CastType::WAND && player->getClass() != CLERIC && player->getDeity() != ARAMON, true);
     mp = 4 * title;
 
-    if(spellData->how == CAST && !player->checkMp(mp))
+    if(spellData->how == CastType::CAST && !player->checkMp(mp))
         return(0);
 
     t = time(0);
     i = LT(player, LT_ANIMATE);
-    if(i > t && !player->isCt() && spellData->how != WAND) {
+    if(i > t && !player->isCt() && spellData->how != CastType::WAND) {
         player->pleaseWait(i-t);
         return(0);
     }
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->spellFail( spellData->how)) {
             player->subMp(mp);
             return(0);
@@ -441,10 +441,10 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(player->isCt())
         player->lasttime[LT_ANIMATE].interval = 6L;
 
-    if(spellData->how == CAST)
+    if(spellData->how == CastType::CAST)
         player->mp.decrease(mp);
 
-    if(spellData->how == SKILL)
+    if(spellData->how == CastType::SKILL)
         return(PROMPT);
     return(1);
 }

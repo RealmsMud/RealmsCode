@@ -438,10 +438,10 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
     if( object->flagIsSet(O_BROKEN_BY_CMD) ||
         object->flagIsSet(O_NO_BREAK) ||
-        object->getType() == KEY ||
+        object->getType() == ObjectType::KEY ||
         object->getSpecial() ||
-        object->getType() == MONEY ||
-        (object->getShotsCur() < 1 && object->getType() != CONTAINER)
+        object->getType() == ObjectType::MONEY ||
+        (object->getShotsCur() < 1 && object->getType() != ObjectType::CONTAINER)
     ) {
         player->print("You can't break that.\n");
         return(0);
@@ -449,12 +449,12 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
 
 
-    if(object->getType() == CONTAINER && object->getShotsMax() < 1) {
+    if(object->getType() == ObjectType::CONTAINER && object->getShotsMax() < 1) {
         player->print("You can't break that.\n");
         return(0);
     }
 
-    if((object->getType() == WAND || (object->getType() < 5 && object->flagIsSet(O_WEAPON_CASTS) && object->getMagicpower())) &&
+    if((object->getType() == ObjectType::WAND || (object->getType() == ObjectType::WEAPON && object->flagIsSet(O_WEAPON_CASTS) && object->getMagicpower())) &&
             player->getRoomParent()->isPkSafe() && !player->isCt()) {
         player->print("You really shouldn't do that in here. Someone could get hurt.\n");
         return(0);
@@ -496,7 +496,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
 
 
-    if(object->getType() == CONTAINER && !object->objects.empty()) {
+    if(object->getType() == ObjectType::CONTAINER && !object->objects.empty()) {
         player->print("You have to dump its contents out first!\n");
         return(0);
     }
@@ -509,7 +509,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
             object->compass = 0;
         }
 
-        if(!(object->getType() == POISON && player->getClass() == PALADIN)) {
+        if(!(object->getType() == ObjectType::POISON && player->getClass() == PALADIN)) {
             player->printColor("You manage to break %P.\n", object);
             broadcast(player->getSock(), player->getParent(), "%M breaks %P.", player, object);
         } else {
@@ -518,7 +518,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
         }
 
 
-        if(object->getType() == POISON || object->getType() == POTION)
+        if(object->getType() == ObjectType::POISON || object->getType() == ObjectType::POTION)
             strcpy(item, "used up ");
         else
             strcpy(item, "broken ");
@@ -527,9 +527,9 @@ int cmdBreak(Player* player, cmd* cmnd) {
         strncpy(object->key[2],"broken",20);
 
 
-        if(object->getType() == CONTAINER) {
+        if(object->getType() == ObjectType::CONTAINER) {
             object->setShotsMax(0);
-            object->setType(MISC);
+            object->setType(ObjectType::MISC);
         }
 
         object->setShotsCur(0);
@@ -537,11 +537,11 @@ int cmdBreak(Player* player, cmd* cmnd) {
         player->updateAttackTimer(true, 60);
 
 
-        if( (player->getClass() == BERSERKER || player->isCt()) && object->getType() > 5 &&
+        if( (player->getClass() == BERSERKER || player->isCt()) && object->getType() != ObjectType::WEAPON &&
             (shots > 0.0) && object->value[GOLD] > 100
         ) {
             xpgain = (int)mtbf+(object->getAdjustment()*10)+mrand(1,50);
-            if(object->getType() == WAND)
+            if(object->getType() == ObjectType::WAND)
                 xpgain *= 3;
 
             if(!player->halftolevel()) {
@@ -550,7 +550,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
             }
         }
 
-        if( (object->getType() == WAND || (object->getType() < 5 && object->flagIsSet(O_WEAPON_CASTS) && object->getMagicpower())) &&
+        if( (object->getType() == ObjectType::WAND || (object->getType() == ObjectType::WEAPON && object->flagIsSet(O_WEAPON_CASTS) && object->getMagicpower())) &&
             (shots > 0.0) && (mrand(1,100) <= 50)
         ) {
             splvl = get_spell_lvl(object->getMagicpower()-1);
@@ -638,7 +638,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
         }
 
 
-        if(object->getType() == POISON && (player->getClass() == PALADIN || player->isCt())) {
+        if(object->getType() == ObjectType::POISON && (player->getClass() == PALADIN || player->isCt())) {
             xpgain = object->getEffectStrength()*15;
             // no super fast leveling by breaking poison over and over.
             if(player->getLevel() < 9)
@@ -651,7 +651,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
         }
 
     } else {
-        if(!(object->getType() == POISON && player->getClass() == PALADIN)) {
+        if(!(object->getType() == ObjectType::POISON && player->getClass() == PALADIN)) {
             player->printColor("You were unable to break %P.\n", object);
             broadcast(player->getSock(), player->getParent(), "%M tried to break %P.", player, object);
         } else {

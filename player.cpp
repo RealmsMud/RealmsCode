@@ -600,7 +600,7 @@ void Player::checkTempEnchant( Object* object) {
                     printColor("The enchantment on your %s fades.\n", object->getCName());
             }
         }
-        if(object->getType() == CONTAINER) {
+        if(object->getType() == ObjectType::CONTAINER) {
             for(Object* subObj : object->objects) {
                 checkTempEnchant(subObj);
             }
@@ -903,7 +903,7 @@ void Player::update() {
 
     item = getLight();
     if(item && item != MAXWEAR+1) {
-        if(ready[item-1]->getType() == LIGHTSOURCE) {
+        if(ready[item-1]->getType() == ObjectType::LIGHTSOURCE) {
             ready[item-1]->decShotsCur();
             if(ready[item-1]->getShotsCur() < 1) {
                 print("Your %s died out.\n", ready[item-1]->getCName());
@@ -1011,7 +1011,7 @@ void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool 
             // the object is in a bag somewhere
             // problem is, we don't know which bag
             for(Object* obj : objects) {
-                if(obj->getType() == CONTAINER) {
+                if(obj->getType() == ObjectType::CONTAINER) {
                     for(Object* subObj : obj->objects ) {
                         if(subObj == object) {
                             obj->delObj(object);
@@ -1026,7 +1026,7 @@ void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool 
             for(int i=0; i < MAXWEAR; i++) {
                 if(!ready[i])
                     continue;
-                if(ready[i]->getType() == CONTAINER) {
+                if(ready[i]->getType() == ObjectType::CONTAINER) {
                     for(Object* obj : ready[i]->objects) {
                         if(obj == object) {
                             ready[i]->delObj(object);
@@ -1067,7 +1067,7 @@ void Player::computeAC() {
 
 
     for(i=0; i<MAXWEAR; i++) {
-        if(ready[i] && ready[i]->getType() == ARMOR) {
+        if(ready[i] && ready[i]->getType() == ObjectType::ARMOR) {
             ac += ready[i]->getArmor();
             // penalty for wearing armor of the wrong size
             if(size && ready[i]->getSize() && size != ready[i]->getSize())
@@ -1106,7 +1106,7 @@ int Player::getArmorWeight() const {
     int weight=0;
 
     for(int i=0; i<MAXWEAR; i++) {
-        if( ready[i] && ready[i]->getType() == ARMOR &&
+        if( ready[i] && ready[i]->getType() == ObjectType::ARMOR &&
             (   (ready[i]->getWearflag() < FINGER) ||
                 (ready[i]->getWearflag() > HELD)
             )
@@ -1404,9 +1404,9 @@ int Player::getLight() const {
         if (!ready[i])
             continue;
         if (ready[i]->flagIsSet(O_LIGHT_SOURCE)) {
-            if ((ready[i]->getType() == LIGHTSOURCE &&
+            if ((ready[i]->getType() == ObjectType::LIGHTSOURCE &&
                 ready[i]->getShotsCur() > 0) ||
-                ready[i]->getType() != LIGHTSOURCE) {
+                ready[i]->getType() != ObjectType::LIGHTSOURCE) {
                 light = 1;
                 break;
             }

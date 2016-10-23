@@ -497,7 +497,7 @@ bool Unique::is(const Object* object) {
 //*********************************************************************
 
 bool Unique::isUnique(const Object* object) {
-    return(object->getType() != MONEY && object->flagIsSet(O_UNIQUE));
+    return(object->getType() != ObjectType::MONEY && object->flagIsSet(O_UNIQUE));
 }
 
 //*********************************************************************
@@ -1306,7 +1306,7 @@ void Lore::save(xmlNodePtr curNode) const {
 //*********************************************************************
 
 bool Lore::isLore(const Object* object) {
-    return(object->info.id && object->getType() != MONEY && object->flagIsSet(O_LORE));
+    return(object->info.id && object->getType() != ObjectType::MONEY && object->flagIsSet(O_LORE));
 }
 
 //*********************************************************************

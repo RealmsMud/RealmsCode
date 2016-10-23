@@ -86,7 +86,8 @@ bool AlchemyInfo::isPositive() const {
 //*********************************************************************
 
 bool Config::clearAlchemy() {
-    for(AlchemyInfo* alcInfo : alchemy) {
+    for(std::pair<bstring, AlchemyInfo*> p : alchemy) {
+        AlchemyInfo* alcInfo = p.second;
         if(alcInfo)
             delete alcInfo;
     }
@@ -100,11 +101,12 @@ bool Config::clearAlchemy() {
 //*********************************************************************
 
 const AlchemyInfo *Config::getAlchemyInfo(bstring effect) const {
-    for(AlchemyInfo* alcInfo : alchemy) {
-        if(alcInfo && alcInfo->getName() == effect)
-            return alcInfo;
-    }
-    return(nullptr);
+    AlchemyMap::const_iterator it = alchemy.find(effect);
+
+    if(it != alchemy.end())
+        return it->second;
+    else
+        return(nullptr);
 }
 
 //*********************************************************************
@@ -188,7 +190,7 @@ void AlchemyEffect::setDuration(const long newDuration) {
 // Adjusts to the average of the two effects, used to form a potion
 
 void AlchemyEffect::combineWith(const AlchemyEffect& ae) {
-    quality = (int)(((float)(ae.quality + quality))/2.0);
+    quality = (short)(((float)(ae.quality + quality))/2.0);
 }
 
 
@@ -206,11 +208,11 @@ bool Player::alchemyEffectVisible(Object* obj, const bstring effect) {
         return(true);
 
     // Anyone can see potion effects
-    if(obj->getType() == POTION)
+    if(obj->getType() == ObjectType::POTION)
         return(true);
 
     // Potions have been handled above, if we get here needs to be an herb
-    if(obj->getType() != HERB)
+    if(obj->getType() != ObjectType::HERB)
         return(false);
 
     bstring effectStr = Alchemy::getEffectString(obj, effect);
@@ -261,7 +263,7 @@ bstring Object::showAlchemyEffects(Player *player) {
             outStr << p.first << ") " << p.second.getEffect();
             if(!player || player->isDm()) {
                 // Potions have duration/strength, herbs have quality
-                if(type == POTION)
+                if(type == ObjectType::POTION)
                     outStr << " D: " << p.second.getDuration() << " S: " << p.second.getStrength();
                 else
                     outStr << " Q: " << p.second.getQuality();
@@ -313,7 +315,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
     }
 
 
-    if(mortar->getType() != CONTAINER || mortar->getSubType() != "mortar") {
+    if(mortar->getType() != ObjectType::CONTAINER || mortar->getSubType() != "mortar") {
         player->print("That isn't a mortar and pestle!\n");
         return(0);
     }
@@ -395,7 +397,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 
     Object* potion = Object::getNewPotion();
 
-    float alchemySkillModifier = player->getSkillGained("alchemy");
+    double alchemySkillModifier = player->getSkillGained("alchemy");
 
     int i = 1;
     // Copy the alchemy effects to the potion
@@ -475,7 +477,7 @@ bool Object::addAlchemyEffect(int num, const AlchemyEffect &ae) {
 //*********************************************************************
 
 bool Object::isAlchemyPotion() {
-    return(type == POTION && alchemyEffects.size() > 0);
+    return(type == ObjectType::POTION && alchemyEffects.size() > 0);
 }
 
 bool AlchemyInfo::potionNameHasPrefix() const {
@@ -529,7 +531,7 @@ bool AlchemyEffect::apply(Creature* target) {
         add = false;
 
     if(add)
-        return(target->addEffect(effect, duration, strength));
+        return(target->addEffect(effect, duration, strength) != nullptr);
 
     return(false);
 }

@@ -86,7 +86,7 @@ int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(cmnd->num == 2) {
 
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Fortune spell cast on yourself.\n");
             luk = pPlayer->getLuck() / 10;
             luk = MAX(luk, 1);
@@ -126,7 +126,7 @@ int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
             }
 
             broadcast(player->getSock(), player->getParent(), "%M reads %s fortune.", player, player->hisHer());
-        } else if(spellData->how == POTION)
+        } else if(spellData->how == CastType::POTION)
             player->print("Nothing happens.\n");
 
 
@@ -225,7 +225,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
 
     broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts clairvoyance.", pPlayer);
-    if(spellData->how == CAST)
+    if(spellData->how == CastType::CAST)
         pPlayer->print("You attempt to focus on %N.\n", target);
 
     chance = 50 + (spellData->level - target->getLevel()) * 5 +
@@ -293,7 +293,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splComprehendLanguages(Creature* player, cmd* cmnd, SpellData* spellData) {
-    if(spellData->how == CAST && player->getClass() != MAGE && player->getClass() != BARD && !player->isStaff()) {
+    if(spellData->how == CastType::CAST && player->getClass() != MAGE && player->getClass() != BARD && !player->isStaff()) {
         player->print("Only mages and bards may cast that spell.\n");
         return(0);
     }
@@ -306,7 +306,7 @@ int splComprehendLanguages(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splTongues(Creature* player, cmd* cmnd, SpellData* spellData) {
-    if(spellData->how == CAST && player->getClass() != MAGE && player->getClass() != BARD && !player->isStaff()) {
+    if(spellData->how == CastType::CAST && player->getClass() != MAGE && player->getClass() != BARD && !player->isStaff()) {
         player->print("Only mages and bards may cast that spell.\n");
         return(0);
     }
@@ -322,7 +322,7 @@ int splDetectHidden(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!player->isPlayer())
         return(0);
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(!player->isMageLich())
             return(0);
         player->print("You cast a detect-hidden spell.\n");

@@ -40,8 +40,6 @@ int getFindWhere(TargetType targetType) {
     return(0);
 }
 int cmdSkill(Creature* creature, cmd* cmnd) {
-    Player *player = creature->getAsPlayer();
-
     *creature << "Attempting to use the " << cmnd->myCommand->getName() << " skill\n";
 
     if(!creature->ableToDoCommand(cmnd))
@@ -62,10 +60,6 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
         return(0);
 
     MudObject* target = nullptr;
-    Container* parent = creature->getParent();
-    TargetType targetType = skillCmd->getTargetType();
-    int findFlags = 0;
-
     if(skillCmd->getTargetType() != TARGET_NONE) {
         bstring toFind = cmnd->str[1];
         int num = cmnd->val[1];

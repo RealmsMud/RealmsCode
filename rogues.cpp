@@ -837,7 +837,7 @@ int cmdEnvenom(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(object->getType() != POISON) {
+    if(object->getType() != ObjectType::POISON) {
         player->print("That is not poison.\n");
         return(0);
     }
@@ -1048,7 +1048,7 @@ int cmdShoplift(Player* player, cmd* cmnd) {
     }
 
     // Armor makes a lot of noise
-    if(object->getType() == ARMOR && object->getWearflag() != FINGER)
+    if(object->getType() == ObjectType::ARMOR && object->getWearflag() != FINGER)
         chance -= 10;
 
     // An invisible person would have it easier.
@@ -1601,7 +1601,7 @@ int cmdAmbush(Player* player, cmd* cmnd) {
     if(!player->isCt()) {
         if( !player->ready[WIELD-1] ||
             !player->ready[HELD-1] ||
-            player->ready[HELD-1]->getType() != WEAPON
+            player->ready[HELD-1]->getType() != ObjectType::WEAPON
         ) {
             player->print("You must have two weapons wielded to properly ambush.\n");
             return(0);
@@ -1978,7 +1978,7 @@ int peek_bag(Player* player, Player* target, cmd* cmnd, int inv) {
         return(0);
     }
 
-    if(container->getType() != CONTAINER) {
+    if(container->getType() != ObjectType::CONTAINER) {
         player->print("That isn't a container.\n");
         return(0);
     }
@@ -1999,7 +1999,7 @@ int peek_bag(Player* player, Player* target, cmd* cmnd, int inv) {
         player->checkImprove("peek", true);
     }
 
-    if(container->getType() == CONTAINER) {
+    if(container->getType() == ObjectType::CONTAINER) {
         str = container->listObjects(player, false);
         if(str != "")
             player->printColor("It contains: %s.\n", str.c_str());

@@ -531,13 +531,13 @@ bool Creature::willFit(const Object* object) const {
             return(false);
 
         // weapons and shields can be +- 1 category
-        if( (   object->getType() == WEAPON ||
-                (object->getType() == ARMOR && object->getWearflag() == SHIELD) ) &&
+        if( (   object->getType() == ObjectType::WEAPON ||
+                (object->getType() == ObjectType::ARMOR && object->getWearflag() == SHIELD) ) &&
             abs(size - object->getSize()) == 1 )
             return(true);
 
         // other armor can only be larger
-        if(object->getType() == ARMOR && size - object->getSize() == -1)
+        if(object->getType() == ObjectType::ARMOR && size - object->getSize() == -1)
             return(true);
 
         // if its wrong size, it can't be used
@@ -561,7 +561,7 @@ bool Player::canWear(const Object* object, bool all) const {
     }
 
     bstring armorType = object->getArmorType();
-    if( (   object->getType() == ARMOR &&
+    if( (   object->getType() == ObjectType::ARMOR &&
             !object->isLightArmor() &&
             (   object->getWearflag() == BODY ||
                 object->getWearflag() == ARMS ||
@@ -569,7 +569,7 @@ bool Player::canWear(const Object* object, bool all) const {
             )
         ) &&
         (   ready[HELD-1] &&
-            ready[HELD-1]->getType() < 6
+            ready[HELD-1]->getType() == ObjectType ::WEAPON
         )
     ) {
         printColor("You can't wear %P and also use a second weapon.\n", object);
@@ -579,7 +579,7 @@ bool Player::canWear(const Object* object, bool all) const {
 
     if( object->getWearflag() != FINGER &&
         object->getWearflag() != SHIELD &&
-        object->getType() == ARMOR &&
+        object->getType() == ObjectType::ARMOR &&
         !isStaff() &&
         !knowsSkill(armorType)
     ) {
@@ -627,7 +627,7 @@ bool Player::canWear(const Object* object, bool all) const {
 bool Player::canUse(Object* object, bool all) {
     ASSERTLOG(object);
 
-    if(object->getType() == WEAPON) {
+    if(object->getType() == ObjectType::WEAPON) {
         if(object->getWeaponType() == "none") {
             if(!all)
                 printColor("You lack the skills to wield %P.\n", object);
@@ -658,7 +658,7 @@ bool Player::canUse(Object* object, bool all) {
             printColor("Using %P is awkward due to its size.\n", object);
     }
 
-    if(object->getShotsCur() < 1 && object->getType() != WAND) {
+    if(object->getShotsCur() < 1 && object->getType() != ObjectType::WAND) {
         if(!all)
             print("You can't. It's broken.\n");
         return(false);
@@ -681,7 +681,7 @@ bool Creature::canWield(const Object* object, int n) const {
         wielding = 1;
     if(ready[HELD-1])
         holding = 1;
-    if(ready[HELD-1] && ready[HELD-1]->getType() < ARMOR)
+    if(ready[HELD-1] && ready[HELD-1]->getType() < ObjectType::ARMOR)
         second = 1;
     if(ready[SHIELD-1])
         shield = 1;
@@ -811,9 +811,9 @@ unsigned long Creature::getInventoryValue() const {
 
     for(Object *object : objects) {
 
-        if(object->getType() == CONTAINER) {
+        if(object->getType() == ObjectType::CONTAINER) {
             for(Object *insideObject : object->objects) {
-                if(insideObject->getType() == SCROLL || insideObject->getType() == POTION || insideObject->getType() == SONGSCROLL) {
+                if(insideObject->getType() == ObjectType::SCROLL || insideObject->getType() == ObjectType::POTION || insideObject->getType() == ObjectType::SONGSCROLL) {
                     continue;
                 }
 
@@ -830,11 +830,11 @@ unsigned long Creature::getInventoryValue() const {
             }
         }
 
-        if(object->getType() == SCROLL || object->getType() == POTION || object->getType() == SONGSCROLL) {
+        if(object->getType() == ObjectType::SCROLL || object->getType() == ObjectType::POTION || object->getType() == ObjectType::SONGSCROLL) {
             continue;
         }
 
-        if( (object->getShotsCur() < 1 && object->getType() != CONTAINER) ||
+        if( (object->getShotsCur() < 1 && object->getType() != ObjectType::CONTAINER) ||
             object->flagIsSet(O_NO_PAWN) )
         {
             continue;
@@ -855,9 +855,9 @@ unsigned long Creature::getInventoryValue() const {
         object3 = ready[a];
 
 
-        if(object3->getType() == CONTAINER) {
+        if(object3->getType() == ObjectType::CONTAINER) {
             for(Object *insideObject : object3->objects) {
-                if(insideObject->getType() == SCROLL || insideObject->getType() == POTION || insideObject->getType() == SONGSCROLL) {
+                if(insideObject->getType() == ObjectType::SCROLL || insideObject->getType() == ObjectType::POTION || insideObject->getType() == ObjectType::SONGSCROLL) {
                     continue;
                 }
                 if(insideObject->getShotsCur() < 1 || insideObject->flagIsSet(O_NO_PAWN)) {
@@ -873,9 +873,9 @@ unsigned long Creature::getInventoryValue() const {
             }
         }
 
-        if(object3->getType() == SCROLL || object3->getType()== POTION || object3->getType() == SONGSCROLL)
+        if(object3->getType() == ObjectType::SCROLL || object3->getType()== ObjectType::POTION || object3->getType() == ObjectType::SONGSCROLL)
             continue;
-        if( (object3->getShotsCur() < 1 && object3->getType() != CONTAINER) ||
+        if( (object3->getShotsCur() < 1 && object3->getType() != ObjectType::CONTAINER) ||
             object3->flagIsSet(O_NO_DROP) ||
             object3->flagIsSet(O_NO_PAWN)
         )

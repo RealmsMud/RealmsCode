@@ -70,7 +70,7 @@ void Player::finishAddPlayer(BaseRoom* room) {
 
 
     for(Object* obj : objects) {
-        if(obj->getType() == CONTAINER) {
+        if(obj->getType() == ObjectType::CONTAINER) {
             for(Object* subObj : obj->objects) {
                 if(subObj->flagIsSet(O_JUST_BOUGHT))
                     subObj->clearFlag(O_JUST_BOUGHT);

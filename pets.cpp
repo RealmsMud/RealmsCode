@@ -57,33 +57,6 @@ void Monster::setMaster(Creature* pMaster) {
 Creature* Monster::getMaster() const {
     return(myMaster);
 }
-//
-//template<class Type>
-//Type doFindCreature(std::list<Type>& list, bstring pName, int pNum, bool exactMatch) {
-//    if(pName.empty())
-//        return(NULL);
-//
-//    int match = 0;
-//    for(Type target : list) {
-//        if(exactMatch) {
-//            if(!pName.equals(target->getName())) {
-//                match++;
-//                if(match == pNum) {
-//                    return(target);
-//                }
-//            }
-//        } else {
-//            if(keyTxtEqual(target, pName.c_str())) {
-//                match++;
-//                if(match == pNum) {
-//                    return(target);
-//                }
-//            }
-//        }
-//    }
-//    return(NULL);
-//
-//}
 
 Monster* Creature::findPet(bstring pName, int pNum) {
     int match = 0;

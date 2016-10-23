@@ -55,12 +55,12 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
     Creature *target=0;
     Monster *mTarget=0;
 
-    if(!player->spellIsKnown(S_MAGIC_MISSILE) && spellData->how == CAST) {
+    if(!player->spellIsKnown(S_MAGIC_MISSILE) && spellData->how == CastType::CAST) {
         player->print("You do not know that spell.\n");
         return(0);
     }
 
-    if( spellData->how == CAST &&
+    if( spellData->how == CastType::CAST &&
         (   player->getClass() == MAGE ||
             player->getClass() == LICH ||
             player->isStaff() ||
@@ -68,7 +68,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
         canCast=1;
 
 
-    if(spellData->how == CAST && !canCast) {
+    if(spellData->how == CastType::CAST && !canCast) {
         player->print("You are unable to cast that spell.\n");
         return(0);
     }
@@ -92,7 +92,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!player->canAttack(target))
         return(0);
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         maxMissiles = spellData->level / 2;
     } else {
         maxMissiles = mrand(2,4);
@@ -102,7 +102,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
     num = MAX(1,maxMissiles);
     mpNeeded = 2*num;
 
-    if(cmnd->num > 3 && spellData->how == CAST) {
+    if(cmnd->num > 3 && spellData->how == CastType::CAST) {
         if(cmnd->str[3][0] != 'n') {
             player->print("Syntax: cast magic-missile (target) n #\n");
             return(0);
@@ -128,7 +128,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getClass() != LICH)
             player->mp.decrease(mpNeeded);
         else
@@ -142,7 +142,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(mTarget)
         mTarget->addEnemy(player);
 
-    if(spellData->how == CAST && player->isPlayer())
+    if(spellData->how == CastType::CAST && player->isPlayer())
         player->getAsPlayer()->statistics.offensiveCast();
 
     if(mTarget && mrand(1,100) <= mTarget->getMagicResistance()) {
@@ -204,23 +204,23 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 
     if(!caster->isStaff()) {
         if(caster->getClass() != LICH) {
-            if(caster->mp.getCur() < osp->mp && spellData->how == CAST) {
+            if(caster->mp.getCur() < osp->mp && spellData->how == CastType::CAST) {
                 caster->print("Not enough magic points.\n");
                 return(0);
             }
         } else {
-            if(caster->hp.getCur() <= osp->mp && spellData->how == CAST) {
+            if(caster->hp.getCur() <= osp->mp && spellData->how == CastType::CAST) {
                 caster->print("Sure, and die in the process?\n");
                 return(0);
             }
-            if(osp->mp > (int)spellData->level*5 && spellData->how == CAST) {
+            if(osp->mp > (int)spellData->level*5 && spellData->how == CastType::CAST) {
                 caster->print("You are not experienced enough to cast that spell.\n");
                 return(0);
             }
         }
     }
 
-    if(!caster->spellIsKnown(osp->splno) && spellData->how == CAST) {
+    if(!caster->spellIsKnown(osp->splno) && spellData->how == CastType::CAST) {
         caster->print("You don't know that spell.\n");
         return(0);
     }
@@ -233,7 +233,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
         if(caster->getClass() == MAGE || caster->getClass() == LICH || caster->isStaff())
             bns = (bns * 3)/2;
 
-        if(spellData->how == CAST || spellData->how == WAND || spellData->how == SCROLL) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::WAND || spellData->how == CastType::SCROLL) {
             skillPercent = (int)caster->getSkillLevel(skill) * 100 / MAXALVL;
 
             switch(osp->bonus_type) {
@@ -251,7 +251,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
             }
         }
 
-        if(spellData->how == WAND || spellData->how == SCROLL)
+        if(spellData->how == CastType::WAND || spellData->how == CastType::SCROLL)
             bns /= 2;
 
         if( (room->flagIsSet(R_ROOM_REALM_BONUS) && room->hasRealmBonus(osp->realm)) ||
@@ -270,15 +270,15 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
         caster->modifyDamage(caster, dmgType, damage);
         caster->hp.decrease(damage.get());
 
-        if(spellData->how == CAST && caster->getClass() != LICH)
+        if(spellData->how == CastType::CAST && caster->getClass() != LICH)
             caster->mp.decrease(osp->mp);
-        else if(spellData->how == CAST && caster->getClass() == LICH)
+        else if(spellData->how == CastType::CAST && caster->getClass() == LICH)
             caster->hp.decrease(osp->mp);
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             caster->print("You cast a %s spell on yourself.\n", spellname);
 
-            if(!multi && spellData->how == CAST && caster->isPlayer())
+            if(!multi && spellData->how == CastType::CAST && caster->isPlayer())
                 caster->getAsPlayer()->statistics.offensiveCast();
             if(caster->negAuraRepel())
                 caster->printColor("^cYour negative aura repelled some of the damage.\n");
@@ -290,7 +290,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
                 caster, spellname, caster->himHer());
             broadcastGroup(false, caster, "%M cast a %s spell on %sself for *CC:DAMAGE*%d^x damage, %s%s\n",
                 caster, spellname, caster->himHer(), damage.get(), caster->heShe(), caster->getStatusStr());
-        } else if(spellData->how == POTION) {
+        } else if(spellData->how == CastType::POTION) {
             caster->print("Yuck! That's terrible!\n");
             caster->print("%d hit points removed.\n", damage.get());
         }
@@ -329,9 +329,9 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
             }
         }
 
-        if(spellData->how == CAST && caster->getClass() != LICH)
+        if(spellData->how == CastType::CAST && caster->getClass() != LICH)
             caster->mp.decrease(osp->mp);
-        else if(spellData->how == CAST && caster->getClass() == LICH)
+        else if(spellData->how == CastType::CAST && caster->getClass() == LICH)
             caster->hp.decrease(osp->mp);
 
         if(caster->spellFail(spellData->how))
@@ -391,10 +391,10 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
         //if(mTarget && !mTarget->isPet())
         //  caster->addRealm(addrealm, osp->realm);
 
-        if(spellData->how == CAST && pCaster && osp->realm != NO_REALM)
+        if(spellData->how == CastType::CAST && pCaster && osp->realm != NO_REALM)
             pCaster->checkImprove(skill, true);
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
             caster->print("You cast a %s spell on %N.\n", spellname, target);
             if(target->negAuraRepel()) {
@@ -402,7 +402,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
                 target->printColor("^cYour negative aura repelled some of the damage.\n");
             }
 
-            if(!multi && spellData->how == CAST && caster->isPlayer())
+            if(!multi && spellData->how == CastType::CAST && caster->isPlayer())
                 caster->getAsPlayer()->statistics.offensiveCast();
             if(caster->isPlayer())
                 caster->getAsPlayer()->statistics.magicDamage(damage.get(), (bstring)"a " + spellname + " spell");
@@ -506,7 +506,7 @@ Creature* Creature::findMagicVictim(bstring toFind, int num, SpellData* spellDat
     Creature* victim=0;
         Player  *pVictim=0;
         if(toFind == "") {
-            if(spellData->how != POTION) {
+            if(spellData->how != CastType::POTION) {
                 if(hasAttackableTarget()) {
                     return(getTarget());
                 }
@@ -517,7 +517,7 @@ Creature* Creature::findMagicVictim(bstring toFind, int num, SpellData* spellDat
                 return(this);
             }
         } else {
-            if(spellData->how == POTION) {
+            if(spellData->how == CastType::POTION) {
                 bPrint("You can only use a potion on yourself.\n");
                 return(nullptr);
             }
@@ -598,7 +598,7 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
     if(player->isMonster())
         return(0);
 
-    if(spellData->how == CAST && !player->checkMp(5))
+    if(spellData->how == CastType::CAST && !player->checkMp(5))
         return(0);
 
     if(cmnd->num == 2)
@@ -619,7 +619,7 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
     }
 
     cmnd->num = 3;
-    if(spellData->how == CAST)
+    if(spellData->how == CastType::CAST)
         player->subMp(5);
 
     if(monsters) {
@@ -660,7 +660,7 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
         }
     }
 
-    if(!found_something && spellData->how == CAST) {
+    if(!found_something && spellData->how == CastType::CAST) {
         if(player->getClass() == LICH)
             player->hp.increase(5);
         else
@@ -668,7 +668,7 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
         player->print("You don't see anything here to cast it on!\n");
     }
 
-    if(found_something && spellData->how == CAST && player->isPlayer())
+    if(found_something && spellData->how == CastType::CAST && player->isPlayer())
         player->getAsPlayer()->statistics.offensiveCast();
     return(found_something + something_died);
 }
@@ -690,23 +690,23 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(cmnd->num == 2) {
         target = player;
-        if(spellData->how == CAST && !player->checkMp(15))
+        if(spellData->how == CastType::CAST && !player->checkMp(15))
             return(0);
 
         player->print("You cast a darkness spell.\n");
         broadcast(player->getSock(), player->getParent(), "%M casts a darkness spell.", player);
 
-        if(spellData->how == CAST)
+        if(spellData->how == CastType::CAST)
             player->subMp(15);
 
     } else {
         if(player->noPotion( spellData))
             return(0);
 
-        if(spellData->how == CAST && !player->checkMp(20))
+        if(spellData->how == CastType::CAST && !player->checkMp(20))
             return(0);
 
-        if( spellData->how == CAST &&
+        if( spellData->how == CastType::CAST &&
             player->getClass() != MAGE &&
             player->getClass() != LICH &&
             player->getClass() != BARD &&
@@ -749,7 +749,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a darkness spell on %N.", player, target);
             target->print("%M casts a darkness spell on you.\n", player);
 
-            if(spellData->how == CAST)
+            if(spellData->how == CastType::CAST)
                 player->subMp(20);
 
             if(!player->isStaff() || target->isStaff()) {
@@ -761,13 +761,13 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
             }
 
         // only enchant objects if a pPlayer
-        } else if(pPlayer && spellData->how == CAST) {
+        } else if(pPlayer && spellData->how == CastType::CAST) {
 
             object = pPlayer->findObject(pPlayer, cmnd, 2);
 
             if(object) {
 
-                if(spellData->how == CAST && !player->checkMp(25))
+                if(spellData->how == CastType::CAST && !player->checkMp(25))
                     return(0);
 
                 if(!canEnchant(pPlayer, spellData))
@@ -786,7 +786,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
                 if(!decEnchant(pPlayer, spellData->how))
                     return(0);
 
-                if(spellData->how == CAST)
+                if(spellData->how == CastType::CAST)
                     player->subMp(25);
 
                 object->setFlag(O_DARKNESS);
@@ -814,7 +814,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     // final routines for creatures only
     if(target) {
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
             if(player->getRoomParent()->magicBonus()) {
                 player->print("The room's magical properties increase the power of your spell.\n");
             }

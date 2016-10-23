@@ -62,7 +62,7 @@ int splProtection(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splUndeadWard(Creature* player, cmd* cmnd, SpellData* spellData) {
-    if(!player->isCt() && spellData->how == CAST) {
+    if(!player->isCt() && spellData->how == CastType::CAST) {
         if(player->getClass() != CLERIC && player->getClass() != PALADIN ) {
             player->print("Only clerics and paladins may cast that spell.\n");
             return(0);
@@ -105,7 +105,7 @@ int splDrainShield(Creature* player, cmd* cmnd, SpellData* spellData) {
 // The strength of the spell is the chance to reflect
 
 int addReflectMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, int strength, unsigned int level) {
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(!player->isMageLich())
             return(0);
         if(spellData->level < level) {
@@ -135,7 +135,7 @@ int splReflectMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
 int splResistMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
     int strength=0;
 
-    if(spellData->how == CAST && !player->isStaff()) {
+    if(spellData->how == CastType::CAST && !player->isStaff()) {
         if( player->getClass() != MAGE &&
             player->getClass() != LICH
         ) {
@@ -148,7 +148,7 @@ int splResistMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
     }
 
-    if(spellData->how == CAST)
+    if(spellData->how == CastType::CAST)
         strength = spellData->level;
 
     return(splGeneric(player, cmnd, spellData, "a", "resist-magic", "resist-magic", strength));
@@ -164,7 +164,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *pTarget=0;
     long    t = time(0);
 
-    if(spellData->how != POTION && !player->isCt() && player->getClass() != DRUID && player->getClass() != CLERIC) {
+    if(spellData->how != CastType::POTION && !player->isCt() && player->getClass() != DRUID && player->getClass() != CLERIC) {
         player->print("Your class is unable to cast that spell.\n");
         return(0);
     }
@@ -173,10 +173,10 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(cmnd->num == 2) {
         target = player;
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Free-action spell cast.\nYou can now move freely.\n");
             broadcast(player->getSock(), player->getParent(), "%M casts a free-action spell on %sself.", player, player->himHer());
-        } else if(spellData->how == POTION)
+        } else if(spellData->how == CastType::POTION)
             player->print("You can now move freely.\n");
 
     } else {
@@ -206,7 +206,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
         pTarget->setFlag(P_FREE_ACTION);
 
         pTarget->lasttime[LT_FREE_ACTION].ltime = t;
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
             pTarget->lasttime[LT_FREE_ACTION].interval = MAX(300, 900 +
                 bonus((int) player->intelligence.getCur()) * 300);
 
@@ -237,7 +237,7 @@ int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(cmnd->num == 2) {
         target = player;
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
             player->print("You cast remove-fear on yourself.\n");
             if(player->isEffected("fear"))
@@ -245,9 +245,9 @@ int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
             else
                 player->print("Nothing happens.\n");
             broadcast(player->getSock(), player->getParent(), "%M casts remove-fear on %sself.", player, player->himHer());
-        } else if(spellData->how == POTION && player->isEffected("fear"))
+        } else if(spellData->how == CastType::POTION && player->isEffected("fear"))
             player->print("You feel brave again.\n");
-        else if(spellData->how == POTION)
+        else if(spellData->how == CastType::POTION)
             player->print("Nothing happens.\n");
 
     } else {
@@ -266,7 +266,7 @@ int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
 
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("You cast remove-fear on %N.\n", target);
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts remove-fear on %N.", player, target);
             if(target->isPlayer()) {
@@ -294,7 +294,7 @@ int splRemoveSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(cmnd->num == 2) {
         target = player;
-        if(spellData->how == POTION && player->isEffected("silence") && !player->flagIsSet(P_DM_SILENCED))
+        if(spellData->how == CastType::POTION && player->isEffected("silence") && !player->flagIsSet(P_DM_SILENCED))
             player->print("You can speak again.\n");
         else {
             player->print("Nothing happens.\n");
@@ -316,7 +316,7 @@ int splRemoveSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(checkRefusingMagic(player, target))
             return(0);
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("You cast remove-silence on %N.\n", target);
             broadcast(player->getSock(), target->getSock(), player->getParent(),
                 "%M casts remove-silence on %N.", player, target);
@@ -368,11 +368,11 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
         else
             align = player->getAlignment() >= align;
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND)
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND)
             player->print("You cannot cast that spell on yourself.\n");
-        else if(spellData->how == POTION && !align)
+        else if(spellData->how == CastType::POTION && !align)
             player->print("Nothing happens.\n");
-        else if(spellData->how == POTION && align) {
+        else if(spellData->how == CastType::POTION && align) {
             player->smashInvis();
 
             damage.set(mrand(spellData->level * 2, spellData->level * 4));
@@ -423,7 +423,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 
 
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("You cast %s on %N.\n", spell, target);
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.", player, spell, target);
 
@@ -455,7 +455,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
                 // if the target is reflecting magic, force printing a message (it will say 0 damage)
                 player->doReflectionDamage(damage, target, target->isEffected("reflect-magic") ? REFLECTED_MAGIC : REFLECTED_NONE);
 
-                if(spellData->how == CAST && player->isPlayer())
+                if(spellData->how == CastType::CAST && player->isPlayer())
                     player->getAsPlayer()->statistics.offensiveCast();
 
                 player->doDamage(target, damage.get(), NO_CHECK);
@@ -481,7 +481,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 
 int splDispelEvil(Creature* player, cmd* cmnd, SpellData* spellData) {
 
-    if(spellData->how != POTION && !player->isStaff()) {
+    if(spellData->how != CastType::POTION && !player->isStaff()) {
         if(player->getClass() != CLERIC && player->getClass() != PALADIN && player->isPlayer()) {
             player->print("Your class is unable to cast that spell.\n");
             return(0);
@@ -505,7 +505,7 @@ int splDispelEvil(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splDispelGood(Creature* player, cmd* cmnd, SpellData* spellData) {
 
-    if(spellData->how != POTION && !player->isStaff()) {
+    if(spellData->how != CastType::POTION && !player->isStaff()) {
         if(player->getClass() != CLERIC && player->getClass() != DEATHKNIGHT && player->isPlayer()) {
             player->print("Your class is unable to cast that spell.\n");
             return(0);
@@ -540,12 +540,12 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     mpNeeded = spellData->level;
 
-    if(spellData->how == CAST && !pPlayer->checkMp(mpNeeded))
+    if(spellData->how == CastType::CAST && !pPlayer->checkMp(mpNeeded))
         return(0);
 
     if(!pPlayer->isCt()) {
         if(pPlayer->getClass() != MAGE && pPlayer->getSecondClass() != MAGE) {
-            if(spellData->how == CAST) {
+            if(spellData->how == CastType::CAST) {
                 player->print("The arcane nature of that spell eludes you.\n");
                 return(0);
             } else {
@@ -563,7 +563,7 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     if(pPlayer->spellFail( spellData->how)) {
-        if(spellData->how == CAST)
+        if(spellData->how == CastType::CAST)
             pPlayer->subMp(mpNeeded);
         return(0);
     }
@@ -572,10 +572,10 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     int strength = 0;
     int duration = 0;
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         duration = 1800 + bonus((int)pPlayer->intelligence.getCur());
 
-        if(spellData->how == CAST)
+        if(spellData->how == CastType::CAST)
             pPlayer->subMp(mpNeeded);
         if(pPlayer->getRoomParent()->magicBonus()) {
             player->print("The room's magical properties increase the power of your spell.\n");
@@ -594,7 +594,7 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
     pPlayer->addEffect("armor", duration, strength, player, true, player);
     pPlayer->computeAC();
 
-    if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+    if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
         player->print("Armor spell cast.\n");
         broadcast(pPlayer->getSock(), pPlayer->getRoomParent(),"%M casts an armor spell on %sself.", pPlayer, pPlayer->himHer());
     }
@@ -617,12 +617,12 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
     else
         mpNeeded = player->hp.getMax()/2;
 
-    if(spellData->how == CAST && !player->checkMp(mpNeeded))
+    if(spellData->how == CastType::CAST && !player->checkMp(mpNeeded))
         return(0);
 
     if(!player->isCt()) {
         if(player->getClass() != LICH && player->getClass() != MAGE && (!pPlayer || pPlayer->getSecondClass() != MAGE)) {
-            if(spellData->how == CAST) {
+            if(spellData->how == CastType::CAST) {
                 player->print("The arcane nature of that spell eludes you.\n");
                 return(0);
             } else {
@@ -630,7 +630,7 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
                 return(0);
             }
         }
-        if(spellData->how == CAST && spellData->level < 13) {
+        if(spellData->how == CastType::CAST && spellData->level < 13) {
             player->print("You are not powerful enough to cast this spell.\n");
             return(0);
         }
@@ -643,8 +643,8 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
         multi=1;
     }
 
-    if(player->spellFail( spellData->how) && spellData->how != POTION) {
-        if(spellData->how == CAST)
+    if(player->spellFail( spellData->how) && spellData->how != CastType::POTION) {
+        if(spellData->how == CastType::CAST)
             player->subMp(mpNeeded);
         return(0);
     }
@@ -652,9 +652,9 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
     int duration = 0;
     int strength = 0;
     // Cast stoneskin on self
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         duration = 240 + 10*bonus((int)player->intelligence.getCur());
-        if(spellData->how == CAST)
+        if(spellData->how == CastType::CAST)
             player->subMp(mpNeeded);
         if(player->getRoomParent()->magicBonus()) {
             player->print("The room's magical properties increase the power of your spell.\n");
@@ -672,11 +672,11 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     player->addEffect("stoneskin", duration, strength, player, true, player);
 
-    if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+    if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
         player->print("Stoneskin spell cast.\nYou feel impervious.\n");
         broadcast(player->getSock(), player->getParent(),"%M casts a stoneskin spell on %sself.", player,
             player->himHer());
-    } else if(spellData->how == POTION)
+    } else if(spellData->how == CastType::POTION)
         player->print("You feel impervious.\n");
 
     return(1);
@@ -690,7 +690,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
     Creature* target=0;
     int     chance=0;
 
-    if(spellData->how == CAST &&
+    if(spellData->how == CastType::CAST &&
         player->getClass() != MAGE &&
         player->getClass() != LICH &&
         player->getClass() != CLERIC &&
@@ -956,7 +956,7 @@ void Exit::doDispelMagic(BaseRoom* parent) {
 //  1=1, 2=4, 3=9, 4=16
 
 int addFireShield(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, int strength) {
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(!player->isMageLich())
             return(0);
         if(spellData->level < pow(strength, 2)) {

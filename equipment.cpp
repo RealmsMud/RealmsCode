@@ -78,7 +78,7 @@ int cmdCompare(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(toCompare->getType() == WEAPON) {
+    if(toCompare->getType() == ObjectType::WEAPON) {
         *player << ColorOn << setf(CAP) << toCompare << " seems ";
         if(toCompare->getDps() > compareTo->getDps()) {
             *player << ColorOn << "^gbetter^x than ";
@@ -88,7 +88,7 @@ int cmdCompare(Player* player, cmd* cmnd) {
             *player << "about the same as " << ColorOff;
         }
         *player << compareTo << ".\n";
-    } else if(toCompare->getType() == ARMOR) {
+    } else if(toCompare->getType() == ObjectType::ARMOR) {
         *player << ColorOn << setf(CAP) << toCompare << " seems ";
         if(toCompare->getArmor() > compareTo->getArmor()) {
             *player << ColorOn << "^gbetter^x than ";
@@ -176,7 +176,7 @@ bool Creature::equip(Object* object, bool showMessage) {
     }
 
 
-    if(showMessage && object->getType() != CONTAINER && object->use_output[0])
+    if(showMessage && object->getType() != ObjectType::CONTAINER && object->use_output[0])
         printColor("%s\n", object->use_output);
 
     object->setFlag(O_WORN);
@@ -303,19 +303,19 @@ int cmdUse(Player* player, cmd* cmnd) {
         return(cmdConsume(player, cmnd));
 
     switch(object->getType()) {
-    case WEAPON:
+    case ObjectType::WEAPON:
         return(cmdReady(player, cmnd));
-    case ARMOR:
+    case ObjectType::ARMOR:
         return(cmdWear(player, cmnd));
-    case POTION:
+    case ObjectType::POTION:
         return(cmdConsume(player, cmnd));
-    case SCROLL:
+    case ObjectType::SCROLL:
         return(cmdReadScroll(player, cmnd));
-    case WAND:
+    case ObjectType::WAND:
         return(cmdUseWand(player, cmnd));
-    case KEY:
+    case ObjectType::KEY:
         return(cmdUnlock(player, cmnd));
-    case LIGHTSOURCE:
+    case ObjectType::LIGHTSOURCE:
         return(cmdHold(player, cmnd));
     default:
         player->print("How does one use that?\n");
@@ -403,7 +403,7 @@ void Player::wearCursed() {
             } else {
 
                 if( ready[WIELD-1] &&
-                    object->getType() == WEAPON &&
+                    object->getType() == ObjectType::WEAPON &&
                     object->flagIsSet(O_CURSED)
                 ) {
 
@@ -470,7 +470,7 @@ void wearAll(Player* player, bool login) {
             if(object->getWearflag() == SHIELD && !player->canWield(object, SHIELDOBJ))
                 continue;
 
-            if(!login && object->use_output[0] && object->getType() != CONTAINER && object->getWearflag() != FINGER)
+            if(!login && object->use_output[0] && object->getType() != ObjectType::CONTAINER && object->getWearflag() != FINGER)
                 player->printColor("%s\n", object->use_output);
 
             object->clearFlag(O_JUST_BOUGHT);
@@ -560,7 +560,7 @@ bool doRemoveObj(Player* player, cmd* cmnd ) {
 
 
         if(i == (WIELD-1)) {
-            if(player->ready[HELD-1] && player->ready[HELD-1]->getType() == WEAPON) {
+            if(player->ready[HELD-1] && player->ready[HELD-1]->getType() == ObjectType::WEAPON) {
                 second = player->ready[HELD-1];
                 // if cmnd is set, pass true to resetUniqueId
                 player->addObj(second);
@@ -923,7 +923,7 @@ int cmdHold(Player* player, cmd* cmnd) {
 
         player->printColor("You hold %1P.\n", object);
         broadcast(player->getSock(), player->getParent(), "%M holds %1P.", player, object);
-        if(object->use_output[0] && object->getType() != POTION && object->getType() != CONTAINER && object->getType() != WAND)
+        if(object->use_output[0] && object->getType() != ObjectType::POTION && object->getType() != ObjectType::CONTAINER && object->getType() != ObjectType::WAND)
             player->printColor("%s\n", object->use_output);
 
         object->setFlag(O_WORN);
@@ -995,7 +995,7 @@ int doGetObject(Object* object, Creature* creature, bool doLimited, bool noSplit
     if(!noQuest)
         fulfillQuest(player, object);
 
-    if(object->getType() == MONEY) {
+    if(object->getType() == ObjectType::MONEY) {
         Group* group = player->getGroup(true);
 
         if(group && group->flagIsSet(GROUP_SPLIT_GOLD) && !noSplit) {
@@ -1197,7 +1197,7 @@ void getAllObj(Creature* creature, Object *container) {
                 }
             }
 
-            if(object->getType() == MONEY) {
+            if(object->getType() == ObjectType::MONEY) {
                 last_obj = 0;
             } else {
                 last_obj = object;
@@ -1346,7 +1346,7 @@ void get_all_rom(Creature* creature, char *item) {
                     n=1;
                 }
             }
-            if(object->getType() == MONEY) {
+            if(object->getType() == ObjectType::MONEY) {
                 bstring strtmp = object->getObjStr(nullptr, 0, 1);
                 str2 = strtmp.c_str();
                 if(strlen(str2)+strlen(str) < 2040) {
@@ -1651,7 +1651,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
                 return(0);
             }
 
-            if(container->getType() != CONTAINER) {
+            if(container->getType() != ObjectType::CONTAINER) {
                 player->print("That isn't a container.\n");
                 return(0);
             }
@@ -2014,7 +2014,7 @@ bool canDropAllObj(Object* object, Object* container) {
         }
     }
 
-    if(object->getType() == CONTAINER)
+    if(object->getType() == ObjectType::CONTAINER)
         return(false);
 
     if(object->getSize() && container->getSize() && object->getSize() > container->getSize())
@@ -2365,7 +2365,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
             return(0);
         }
 
-        if(object->getType() == CONTAINER && room->flagIsSet(R_DUMP_ROOM) && !cantDropInBag(object)) {
+        if(object->getType() == ObjectType::CONTAINER && room->flagIsSet(R_DUMP_ROOM) && !cantDropInBag(object)) {
             if(!object->objects.empty()) {
                 player->print("You don't want to drop that here!\nThere's something inside it!\n");
                 if(created)
@@ -2439,7 +2439,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
             object->refund.zero();
             // can't pawn starting objects for money
             if(!object->flagIsSet(O_STARTING)) {
-                if(created || object->flagIsSet(O_NO_PAWN) || (object->flagIsSet(O_BREAK_ON_DROP) && object->getType() != BANDAGE && object->getType() != LOTTERYTICKET)) {
+                if(created || object->flagIsSet(O_NO_PAWN) || (object->flagIsSet(O_BREAK_ON_DROP) && object->getType() != ObjectType::BANDAGE && object->getType() != ObjectType::LOTTERYTICKET)) {
                     player->coins.add(object->value);
                     gServer->logGold(GOLD_IN, player, object->value, object, "Recycle");
                     object->refund = object->value;
@@ -2498,7 +2498,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
             return(0);
         }
 
-        if(container->getType() != CONTAINER) {
+        if(container->getType() != ObjectType::CONTAINER) {
             player->print("That isn't a container.\n");
             return(0);
         }
@@ -2534,7 +2534,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
             return(0);
         }
 
-        if(object->getType() == CONTAINER) {
+        if(object->getType() == ObjectType::CONTAINER) {
             player->print("You can't put containers into containers.\n");
             return(0);
         }
@@ -2550,7 +2550,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
         }
 
         if(container->getSubType() == "mortar") {
-            if(object->getType() != HERB && !player->checkStaff("You can only put herbs in there!\n"))
+            if(object->getType() != ObjectType::HERB && !player->checkStaff("You can only put herbs in there!\n"))
                 return(0);
             for(Object *obj : container->objects) {
                 if(object->getName() == obj->getName() &&
@@ -2723,7 +2723,7 @@ int canGiveTransport(Creature* creature, Creature* target, Object* object, bool 
         !player->checkStaff("You cannot %s that object.\n", give ? "give away" : "transport")
     ) return(0);
 
-    if(object->getType() == CONTAINER) {
+    if(object->getType() == ObjectType::CONTAINER) {
         for(Object* obj : object->objects) {
             if( obj->flagIsSet(O_NO_DROP) && !player->checkStaff("You must remove %P first.\n", obj) )
                 return(0);
@@ -2827,7 +2827,7 @@ int cmdGive(Creature* creature, cmd* cmnd) {
         )
             return(0);
     } else {
-        if(target->flagIsSet(M_WILL_WIELD) && object->getType() <= 5) {
+        if(target->flagIsSet(M_WILL_WIELD) && object->getType() == ObjectType::WEAPON) {
             player->print("%M doesn't want that.\n", target);
             return(0);
         }
@@ -3208,7 +3208,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(object->getType() != WEAPON && object->getType() != ARMOR) {
+    if(object->getType() != ObjectType::WEAPON && object->getType() != ObjectType::ARMOR) {
         player->print("%M says, \"Sorry, I just can't fix that!\"\n", smithy);
         return(0);
     }
@@ -3423,7 +3423,7 @@ int Creature::countBagInv() {
     int total=0;
     for(Object *obj : objects ) {
         total++;
-        if(obj && obj->getType() == CONTAINER) {
+        if(obj && obj->getType() == ObjectType::CONTAINER) {
             total += obj->countObj();
         }
     }

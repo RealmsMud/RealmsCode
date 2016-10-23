@@ -99,9 +99,9 @@ bstring Object::statObj(int statFlags) {
 
     objStr << "Desc: " << description.c_str() << "\n";
 
-    if(type == WEAPON)
+    if(type == ObjectType::WEAPON)
         objStr << "Weapon type: " << getWeaponType().c_str() << "\n";
-    else if(type == ARMOR)
+    else if(type == ObjectType::ARMOR)
         objStr << "Armor type: " << getArmorType().c_str() << "\n";
 
     objStr << "Use:  " << use_output << "\n";
@@ -113,7 +113,7 @@ bstring Object::statObj(int statFlags) {
     if(deed.high || deed.low.id)
         objStr << "Deed Room Range: " << deed.str() << "\n";
 
-    if(type != BANDAGE)
+    if(type != ObjectType::BANDAGE)
         objStr << "Hit: " << damage.str();
     else
         objStr << "Heals: " << damage.str() << " hit points";
@@ -126,15 +126,15 @@ bstring Object::statObj(int statFlags) {
     } else
         objStr << "\n";
 
-    if(type == WEAPON || (type == ARMOR && wearflag == FEET) || type == BANDAGE) {
-        if(type != BANDAGE)
+    if(type == ObjectType::WEAPON || (type == ObjectType::ARMOR && wearflag == FEET) || type == ObjectType::BANDAGE) {
+        if(type != ObjectType::BANDAGE)
             objStr << "Damage: ";
         else
             objStr << "Healing: ";
 
         objStr << "low " << damage.low() << ", high " << damage.high()
                 << "  average: " << damage.average() << "\n";
-        if(type == WEAPON) {
+        if(type == ObjectType::WEAPON) {
             short num = numAttacks;
             if(numAttacks)
                 objStr << "NumAttacks: " << numAttacks << "\n";
@@ -158,7 +158,7 @@ bstring Object::statObj(int statFlags) {
         objStr << " Charges: " << chargesCur << "/" << chargesMax;
     objStr << "\n";
 
-    if(type == LIGHTSOURCE)
+    if(type == ObjectType::LIGHTSOURCE)
         objStr << "^WThis light source will last for approximately " << (MAX(1, shotsCur) * 20 - 10) << " seconds.^x\n";
 
     if(compass)
@@ -171,16 +171,16 @@ bstring Object::statObj(int statFlags) {
 
     objStr << "Type: " << obj_type(type) << "    ";
 
-    if(type == WEAPON) {
+    if(type == ObjectType::WEAPON) {
         if(magicpower > 0 && magicpower < MAXSPELL && flagIsSet(O_WEAPON_CASTS))
             objStr << "Casts: " << magicpower << "(" << get_spell_name(magicpower - 1) << ")\n";
     } else {
         switch (type) {
-        case ARMOR:
+        case ObjectType::ARMOR:
             break;
-        case POTION:
-        case SCROLL:
-        case WAND:
+        case ObjectType::POTION:
+        case ObjectType::SCROLL:
+        case ObjectType::WAND:
             if(magicpower > 0 && magicpower <= MAXSPELL) {
                 objStr << "Spell: " << magicpower << "(" << get_spell_name(magicpower - 1) << ")";
                 if(magicpower-1 == S_ILLUSION) {
@@ -195,39 +195,39 @@ bstring Object::statObj(int statFlags) {
                 objStr << "\n";
             }
             break;
-        case CONTAINER:
+        case ObjectType::CONTAINER:
             objStr << "    MaxBulk: ";
             if(maxbulk != 0)
                 objStr << maxbulk;
             else objStr << bulk;
             objStr << "\n";
             break;
-        case KEY:
+        case ObjectType::KEY:
             objStr << " (" << getKey() << ")\n";
             break;
-        case LIGHTSOURCE:
-        case MISC:
-        case POISON:
-        case BANDAGE:
+        case ObjectType::LIGHTSOURCE:
+        case ObjectType::MISC:
+        case ObjectType::POISON:
+        case ObjectType::BANDAGE:
             objStr << "\n";
             break;
-        case LOTTERYTICKET:
+        case ObjectType::LOTTERYTICKET:
             objStr << "Lottery Cycle: " << lotteryCycle << "  Ticket Info: " <<
                   lotteryNumbers[0] << " " << lotteryNumbers[1] << " " << lotteryNumbers[2] << " " <<
                   lotteryNumbers[3] << " " << lotteryNumbers[4] << "  " << lotteryNumbers[5] << "\n";
             break;
-        case SONGSCROLL:
+        case ObjectType::SONGSCROLL:
             if(magicpower > 0 && magicpower < gConfig->getMaxSong())
                 objStr << "Song #" << magicpower << "(Song of " << get_song_name(magicpower-1) << ")\n";
             break;
         }
     }
 
-    if(type == ARMOR || type == WEAPON) {
+    if(type == ObjectType::ARMOR || type == ObjectType::WEAPON) {
         objStr << "Wear location: " << getWearName() << "(" << wearflag << ").\n";
-        if(type == WEAPON && wearflag != WIELD)
+        if(type == ObjectType::WEAPON && wearflag != WIELD)
             objStr << "^rThis object is a weapon and is not wieldable.^x\n";
-        if(type == ARMOR && (!wearflag || wearflag == HELD || wearflag == WIELD))
+        if(type == ObjectType::ARMOR && (!wearflag || wearflag == HELD || wearflag == WIELD))
             objStr << "^rThis object is a armor and is not wearable.^x\n";
     }
 
@@ -236,7 +236,7 @@ bstring Object::statObj(int statFlags) {
     if(material)
         objStr << "Material: ^g" << getMaterialName(material) << "^x\n";
 
-    if(type == ARMOR)
+    if(type == ObjectType::ARMOR)
         objStr << "AC: " << armor;
 
 
@@ -244,7 +244,7 @@ bstring Object::statObj(int statFlags) {
     objStr << "   Weight: " << weight;
     objStr << "   Bulk: " << bulk << " (" << getActualBulk() << ")";
 
-    if(type == CONTAINER) {
+    if(type == ObjectType::CONTAINER) {
         objStr << "\nLoadable inside: [" << in_bag[0].str() << "] [" << in_bag[1].str()
                 << "] [" << in_bag[2].str() << "]\n";
     }
@@ -424,6 +424,17 @@ int setWhich(const Player* player, bstring options) {
 //*********************************************************************
 
 int dmSetObj(Player* player, cmd* cmnd) {
+    /*
+     *
+     * I hate this function.
+     *
+     * That is all.
+     *
+     *      -Bane
+     *
+     */
+
+
     Creature* creature=0;
     Monster* mTarget=0;
     BaseRoom* room = player->getRoomParent();
@@ -573,7 +584,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
             setType = "Adjustment";
             break;
         case 'r':
-            if(object->getType() != ARMOR) {
+            if(object->getType() != ObjectType::ARMOR) {
                 player->printColor("Please set %P to type 6(armor) first.\n", object);
                 return(PROMPT);
             }
@@ -791,7 +802,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
         break;
     case 'k':
         if(flags[1] == 'e' || !flags[1]) {
-            if(object->getType() != KEY) {
+            if(object->getType() != ObjectType::KEY) {
                 player->print("Object is not a key. *set to object type 12.\n");
                 return(PROMPT);
             }
@@ -816,7 +827,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
                 return(PROMPT);
             }
             
-            if(num > 0 && (object->getType() == ARMOR || object->getType() == WEAPON))
+            if(num > 0 && (object->getType() == ObjectType::ARMOR || object->getType() == ObjectType::WEAPON))
                 player->printColor("^yConsider using a minimum-skill requirement instead of a level requirement.\n");
 
             object->setLevel(num);
@@ -885,7 +896,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 
             object->setMagicpower(num);
             if(object->getMagicpower()) {
-                if(object->getType() == SONGSCROLL) {
+                if(object->getType() == ObjectType::SONGSCROLL) {
                     player->print("Magic power set to %d - (Song of %s).\n", num, get_song_name(num-1));
                     log_immort(2, player, "%s set %s's %s to %ld - (Song of %s).\n",
                             player->getCName(), objname, "Song", num, get_song_name(num-1));
@@ -906,7 +917,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
         break;
     case 'n':
         if(flags[1] == 'u' || !flags[1]) {
-            if(object->getType() != WEAPON) {
+            if(object->getType() != ObjectType::WEAPON) {
                 player->print("Error: numAttacks can only be set on weapons.\n");
                 return(PROMPT);
             }
@@ -928,7 +939,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
         break;
     case 'o':
         if(flags[1] == 'b' || !flags[1]) {
-            if(object->getType() != CONTAINER) {
+            if(object->getType() != ObjectType::CONTAINER) {
                 player->print("Object must be a container.\n");
                 return(0);
             }
@@ -949,7 +960,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 
     case 'q':
         if(flags[1] == 'u' && flags[2] == 'a') {
-            if(object->getType() == ARMOR || object->getType() == WEAPON) {
+            if(object->getType() == ObjectType::ARMOR || object->getType() == ObjectType::WEAPON) {
                 if(dNum < 0.0 || dNum > MAXALVL+0.0001) {
                     player->print("Error: quality out of range. (0-%d)\n", MAXALVL);
                     return(PROMPT);
@@ -1044,9 +1055,9 @@ int dmSetObj(Player* player, cmd* cmnd) {
             setType = "MinStrength";
         } else if(flags[1] == 'u') {
             bstring subType = cmnd->str[4];
-            if(object->getType() == WEAPON)
+            if(object->getType() == ObjectType::WEAPON)
                 object->setWeaponType(subType);
-            else if(object->getType() == ARMOR) {
+            else if(object->getType() == ObjectType::ARMOR) {
                 object->setArmorType(subType);
                 if(object->adjustArmor() != -1)
                     player->print("Armor has been auto adusted to %d.\n", object->getArmor());
@@ -1083,17 +1094,16 @@ int dmSetObj(Player* player, cmd* cmnd) {
         break;
     case 't':
         if(flags[1] == 'y' || !flags[1]) {
-            if((num < 0 || num > MAX_OBJ_TYPE) && !player->isDm())
+            if((num < 0 || num > static_cast<int>(ObjectType::MAX_OBJECT_TYPE))) {
+                *player << "Invalid Type.\n";
                 return(PROMPT);
-
-            if(num > MAX_OBJ_TYPE) {
-                object->setType(MISC);
-            } else {
-                object->setType(num);
             }
+            ObjectType newType = static_cast<ObjectType>(num);
+            object->setType(newType);
 
-            result = object->getType();
-            resultTxt = obj_type(num);
+
+//            result = object->getType();
+            resultTxt = obj_type(newType);
             setType = "Type";
         } else {
             return(setWhich(player, "type"));
@@ -1397,7 +1407,7 @@ int dmAddObj(Player* player, cmd* cmnd) {
     strcpy(newObj->key[0], "ball");
     strcpy(newObj->key[1], "clay");
     newObj->setWearflag(HELD);
-    newObj->setType(MISC);
+    newObj->setType(ObjectType::MISC);
     newObj->setWeight(1);
 
     newObj->setFlag(O_SAVE_FULL);
@@ -1842,7 +1852,7 @@ int dmClone(Player* player, cmd* cmnd) {
     }
 
     random->info = cr;
-    random->setType(MISC);
+    random->setType(ObjectType::MISC);
     random->setAdjustment(object->getAdjustment());
 
     player->printColor("Saving %s to %s... ", random->getCName(), cr.str("", 'W').c_str());

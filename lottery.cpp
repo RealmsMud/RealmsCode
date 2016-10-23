@@ -186,7 +186,7 @@ int createLotteryTicket(Object **object, const char *name) {
             numbers[5]);
     (*object)->description = desc;
 
-    (*object)->setType(LOTTERYTICKET);
+    (*object)->setType(ObjectType::LOTTERYTICKET);
     // Not valid untill next week
     (*object)->setLotteryCycle(gConfig->getCurrentLotteryCycle() + 1);
     gConfig->increaseJackpot(gConfig->getLotteryTicketPrice()/2);
@@ -270,7 +270,7 @@ int cmdClaim(Player* player, cmd* cmnd) {
         player->print("You don't have that.\n");
         return(0);
     }
-    if(ticket->getType() != LOTTERYTICKET) {
+    if(ticket->getType() != ObjectType::LOTTERYTICKET) {
         player->print("That isn't a lottery ticket!\n");
         return(0);
     }
@@ -342,7 +342,7 @@ int checkPrize(Object *ticket) {
     short numbers[6];
     int matches=0, pb=0, i=0, j=0;
 
-    if( ticket->getType() != LOTTERYTICKET ||
+    if( ticket->getType() != ObjectType::LOTTERYTICKET ||
         ticket->getLotteryCycle() != gConfig->getCurrentLotteryCycle()
     )
         return(0);

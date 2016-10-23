@@ -200,7 +200,7 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
         pTarget = player->getAsPlayer();
         broadcast(player->getSock(), player->getParent(), "%M casts resist-%s.", player, name.c_str());
 
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
             player->print("You cast a resist-%s spell.\n", name.c_str());
         }
     } else {
@@ -221,7 +221,7 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
         broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a resist-%s spell on %N.", player, name.c_str(), target);
         target->print("%M casts resist-%s on you.\n", player, name.c_str());
 
-        if(spellData->how == CAST) {
+        if(spellData->how == CastType::CAST) {
             player->print("You cast a resist-%s spell on %N.\n", name.c_str(), target);
 
             if(player->getRoomParent()->magicBonus()) {
@@ -238,7 +238,7 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
     }
 
 
-    if(spellData->how == CAST) {
+    if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus()) {
             player->print("The room's magical properties increase the power of your spell.\n");
         }

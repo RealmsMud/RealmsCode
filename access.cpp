@@ -18,8 +18,33 @@
 #include "mud.h"
 #include "calendar.h"
 
+#include <boost/assign/list_of.hpp>
+#include <boost/unordered_map.hpp>
+
+using boost::assign::map_list_of;
 
 // Stats
+const std::map<ObjectType,const char*> objTypeToString = map_list_of
+    (ObjectType::WEAPON, "weapon")
+    (ObjectType::INSTRUMENT, "instrument")
+    (ObjectType::HERB, "herb")
+    (ObjectType::ARMOR, "armor")
+    (ObjectType::POTION, "potion")
+    (ObjectType::SCROLL, "scroll")
+    (ObjectType::WAND, "wand")
+    (ObjectType::CONTAINER, "container")
+    (ObjectType::MONEY, "money")
+    (ObjectType::KEY, "key")
+    (ObjectType::LIGHTSOURCE , "lightsource")
+    (ObjectType::MISC, "misc")
+    (ObjectType::SONGSCROLL, "song scroll")
+    (ObjectType::POISON, "poison")
+    (ObjectType::BANDAGE, "bandage")
+    (ObjectType::AMMO, "ammo")
+    (ObjectType::QUIVER, "quiver")
+    (ObjectType::LOTTERYTICKET, "lottery ticket")
+;
+
 
 char stat_names[][4] = { "STR", "DEX", "CON", "INT", "PTY", "CHA" };
 
@@ -587,12 +612,8 @@ const char *get_quest_name(int nIndex) {
 //*********************************************************************
 //                      obj_type
 //*********************************************************************
-char *obj_type(int nType) {
-    if(nType < 0)
-        nType = 0;
-    if(nType > MAX_OBJ_TYPE)
-        nType = MAX_OBJ_TYPE;
-    return(object_type[nType]);
+const char *obj_type(ObjectType type) {
+    return objTypeToString.at(type);
 }
 
 char conjureTitles[][3][10][30] = {

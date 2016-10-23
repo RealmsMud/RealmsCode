@@ -140,14 +140,14 @@ int cmdIdentify(Player* player, cmd* cmnd) {
                 player->printColor("^rThe increase type set on this object is not a valid increase type.\n");
             }
 
-        } else if(object->getType() == WEAPON) {
+        } else if(object->getType() == ObjectType::WEAPON) {
             player->printColor("%O is a %s, with an average damage of %d.\n", object, obj_type(object->getType()),
                   MAX(1, object->damage.average() + object->getAdjustment()));
-        } else if(object->getType() == POISON) {
+        } else if(object->getType() == ObjectType::POISON) {
             player->printColor("%O is a poison.\n", object);
             player->print("It has a maximum duration of %d seconds.\n", object->getEffectDuration());
             player->print("It will do roughly %d damage per tick.\n", object->getEffectStrength());
-        } else if(object->getType() == ARMOR && object->getWearflag() != HELD && object->getWearflag() != WIELD) {
+        } else if(object->getType() == ObjectType::ARMOR && object->getWearflag() != HELD && object->getWearflag() != WIELD) {
             ac = object->getArmor();
             wear = object->getWearflag();
 
@@ -341,24 +341,24 @@ int cmdIdentify(Player* player, cmd* cmnd) {
             player->printColor("%O is a %s.\n", object, obj_type(object->getType()));
             if(desc[0])
                 player->printColor("It will offer %s protection for where it's worn.\n", desc);
-        } else if(object->getType() == SONGSCROLL) {
+        } else if(object->getType() == ObjectType::SONGSCROLL) {
             player->printColor("%O is a %s, enscribed with the Song of %s.\n",
                 object, obj_type(object->getType()), get_song_name(object->getMagicpower()-1));
-        } else if(object->getType() == WAND || object->getType() == SCROLL || object->getType() == POTION) {
+        } else if(object->getType() == ObjectType::WAND || object->getType() == ObjectType::SCROLL || object->getType() == ObjectType::POTION) {
             player->printColor("%O is a %s, with the %s spell.\n", object, obj_type(object->getType()),
                 get_spell_name(object->getMagicpower()-1));
-        } else if(object->getType() == KEY) {
+        } else if(object->getType() == ObjectType::KEY) {
             player->printColor("%O is a %s %s.\n", object,
                   (object->getShotsCur() < 1 ? "broken" : (object->getShotsCur() > 2 ? "sturdy" : "weak")),
                   obj_type(object->getType()));
-        } else if(object->getType() == MONEY) {
+        } else if(object->getType() == ObjectType::MONEY) {
             player->printColor("%O is a %s.\n", object, obj_type(object->getType()));
-        } else if(object->getType() == CONTAINER) {
+        } else if(object->getType() == ObjectType::CONTAINER) {
             player->printColor("%O is a %s.\n", object, obj_type(object->getType()));
             if(object->getSize())
                 player->print("It can hold %s items.\n", getSizeName(object->getSize()).c_str());
         } else {
-            player->printColor("%O is a %s.\n", object, obj_type(MISC));
+            player->printColor("%O is a %s.\n", object, obj_type(ObjectType::MISC));
         }
 
         if(object->flagIsSet(O_EQUIPPING_BESTOWS_EFFECT) && Effect::objectCanBestowEffect(object->getEffect())) {
@@ -369,7 +369,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 
         output = object->value.str();
         player->print("It is worth %s", output.c_str());
-        if(object->getType() != CONTAINER && object->getType() != MONEY) {
+        if(object->getType() != ObjectType::CONTAINER && object->getType() != ObjectType::MONEY) {
             player->print(", and is ", object);
             if(object->getShotsCur() >= object->getShotsMax() * .99)
                 player->print("brand new");

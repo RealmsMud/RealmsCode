@@ -180,7 +180,7 @@ bool loadObject(const CatRef cr, Object** pObject) {
             (*pObject)->setFlag(O_NO_DROP);
         }
         // cannot steal scrolls
-        if((*pObject)->getType() == SCROLL) {
+        if((*pObject)->getType() == ObjectType::SCROLL) {
             (*pObject)->setFlag(O_NO_STEAL);
         }
     }
@@ -1012,7 +1012,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList) {
             loadStringArray(curNode, key, OBJ_KEY_LENGTH, "Key", 3);
         }
         else if(NODE_NAME(curNode, "Weight")) xml::copyToNum(weight, curNode);
-        else if(NODE_NAME(curNode, "Type")) xml::copyToNum(type, curNode);
+        else if(NODE_NAME(curNode, "Type")) xml::copyToNum<ObjectType>(type, curNode);
         else if(NODE_NAME(curNode, "SubType")) xml::copyToBString(subType, curNode);
         else if(NODE_NAME(curNode, "Adjustment")) setAdjustment(xml::toNum<short int>(curNode));
         else if(NODE_NAME(curNode, "ShotsMax")) xml::copyToNum(shotsMax, curNode);
@@ -1562,7 +1562,7 @@ bool Config::loadAlchemy() {
         if(NODE_NAME(curNode, "AlchemyInfo")) {
             AlchemyInfo* alcInfo = new AlchemyInfo(curNode);
             if(alcInfo)
-                alchemy.push_back(alcInfo);
+                alchemy.insert(std::make_pair(alcInfo->getName(), alcInfo));
         }
         curNode = curNode->next;
     }

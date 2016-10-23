@@ -804,7 +804,7 @@ int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
         player->getClass() != CLERIC &&
         player->getClass() != PALADIN &&
         !player->isCt() &&
-        spellData->how == CAST
+        spellData->how == CastType::CAST
     ) {
         player->print("Your class may not cast that spell.\n");
         return(0);
@@ -813,14 +813,14 @@ int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
     // Curepoison self
     if(cmnd->num == 2) {
         target = player;
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Cure-poison spell cast on yourself.\n");
             player->print("You feel much better.\n");
             broadcast(player->getSock(), player->getParent(), "%M casts cure-poison on %sself.",
                 player, player->himHer());
-        } else if(spellData->how == POTION && player->isPoisoned())
+        } else if(spellData->how == CastType::POTION && player->isPoisoned())
             player->print("You feel the poison subside.\n");
-        else if(spellData->how == POTION)
+        else if(spellData->how == CastType::POTION)
             player->print("Nothing happens.\n");
 
     // Cure a monster or player
@@ -839,7 +839,7 @@ int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(checkRefusingMagic(player, target))
             return(0);
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Cure-poison cast on %N.\n", target);
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts cure-poison on %N.", player, target);
             target->print("%M casts cure-poison on you.\nYou feel much better.\n", player);
@@ -863,7 +863,7 @@ int splSlowPoison(Creature* player, cmd* cmnd, SpellData* spellData) {
     // slow_poison self
     if(cmnd->num == 2) {
         target = player;
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Slow-poison spell cast on yourself.\n");
             broadcast(player->getSock(), player->getParent(), "%M casts slow-poison on %sself.",
                 player, player->himHer());
@@ -872,9 +872,9 @@ int splSlowPoison(Creature* player, cmd* cmnd, SpellData* spellData) {
                 return(0);
             }
             player->print("You feel the poison subside somewhat.\n");
-        } else if(spellData->how == POTION && player->isPoisoned())
+        } else if(spellData->how == CastType::POTION && player->isPoisoned())
             player->print("You feel the poison subside somewhat.\n");
-        else if(spellData->how == POTION)
+        else if(spellData->how == CastType::POTION)
             player->print("Nothing happens.\n");
 
     // Cure a monster or player
@@ -925,7 +925,7 @@ int splCureDisease(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(player->getClass() != CLERIC &&
         player->getClass() != PALADIN &&
         !player->isStaff() &&
-        spellData->how == CAST)
+        spellData->how == CastType::CAST)
     {
         player->print("Only clerics and paladins may cast that spell.\n");
         return(0);
@@ -934,13 +934,13 @@ int splCureDisease(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(cmnd->num == 2) {
         target = player;
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Cure-disease spell cast on yourself.\n");
             player->print("Your fever subsides.\n");
             broadcast(player->getSock(), player->getParent(), "%M casts cure-disease on %sself.", player, player->himHer());
-        } else if(spellData->how == POTION && player->isDiseased())
+        } else if(spellData->how == CastType::POTION && player->isDiseased())
             player->print("You feel your fever subside.\n");
-        else if(spellData->how == POTION)
+        else if(spellData->how == CastType::POTION)
             player->print("Nothing happens.\n");
     } else {
         if(player->noPotion( spellData))
@@ -980,7 +980,7 @@ int splCureBlindness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         target = player;
         if(!player->isStaff()) {
-            if( spellData->how != POTION ||
+            if( spellData->how != CastType::POTION ||
                 !player->isEffected("blindness") ||
                 player->flagIsSet(P_DM_BLINDED)
             )
@@ -1004,7 +1004,7 @@ int splCureBlindness(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
 
 
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("You cast cure blindess on %N.\n", target);
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts cure blindness on %N.",
                 player, target);
@@ -1073,7 +1073,7 @@ bool EffectInfo::isPoison() const {
 int splCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
     Object  *object=0;
 
-    if(spellData->how == CAST && player->getClass() != MAGE && player->getClass() != LICH && !player->isStaff()) {
+    if(spellData->how == CastType::CAST && player->getClass() != MAGE && player->getClass() != LICH && !player->isStaff()) {
         player->print("Only mages and liches can curse.\n");
         return(0);
     }
@@ -1116,10 +1116,10 @@ int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(cmnd->num == 2) {
 
         target = player;
-        if(spellData->how == CAST || spellData->how == SCROLL || spellData->how == WAND) {
+        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Remove-curse spell cast.\n");
             broadcast(player->getSock(), player->getParent(), "%M casts remove-curse on %sself.", player, player->himHer());
-        } else if(spellData->how == POTION)
+        } else if(spellData->how == CastType::POTION)
             player->print("You feel relieved of burdens.\n");
 
     // Cast remove-curse on another player
