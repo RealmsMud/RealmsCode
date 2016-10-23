@@ -257,11 +257,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
                 "%M stabs %N in the eye.");
             pTarget->addEffect("blindness", 120, 1, player, true, player);
         } else {
-            if( player &&
-                (   !player->ready[WIELD-1] ||
-                    player->ready[WIELD-1]->getWeaponCategory() != "piercing"
-                )
-            ) {
+            if( player && player->getPrimaryWeaponCategory() != "piercing" ) {
                 creature->print("You must be wielding a piercing weapon in order to stab yourself.\n");
             } else {
                 OUT_HIMHER("You stab yourself in the eye. OUCH!\n", "%M stabs %sself in the eye.");
@@ -274,10 +270,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
         }
     } else if(str == "vangogh") {
 
-        if( player &&
-            (   !player->ready[WIELD-1] ||
-                !(player->ready[WIELD-1]->getWeaponCategory() == "slashing" || player->ready[WIELD-1]->getWeaponCategory() == "chopping")
-            ) )
+        if( player && !(player->getPrimaryWeaponCategory() == "slashing" || player->getPrimaryWeaponCategory() == "chopping") )
         {
             creature->print("You must be wielding a slashing or chopping weapon in order to cut yourself.\n");
         } else {

@@ -106,7 +106,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
     )
         return(0);
 
-    if( player->ready[WIELD-1]->getWeaponCategory() == "ranged" &&
+    if( player->getPrimaryWeaponCategory() == "ranged" &&
         !player->checkStaff("Ranged weapons may not be used to disarm.\n")
     )
         return(0);
@@ -635,7 +635,7 @@ int cmdBash(Player* player, cmd* cmnd) {
             player->print("You are too small to bash without a weapon.\n");
             return(0);
         }
-        if(player->ready[WIELD-1] && player->ready[WIELD-1]->getWeaponCategory() == "ranged") {
+        if(player->getPrimaryWeaponCategory() == "ranged") {
             player->print("You can't use a ranged weapon to bash someone!\n");
             return(0);
         }

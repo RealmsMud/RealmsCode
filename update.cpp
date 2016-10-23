@@ -601,6 +601,7 @@ void Server::updateAction(long t) {
                         }
                     on_cmd+=2; // set for next command, can be altered later
                     // proccess commands based on a higharcy
+                    if(act)
                     if(act->test_for) {
                         switch(act->test_for) {
                         case 'P': // test for player
