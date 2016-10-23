@@ -466,9 +466,9 @@ char *getClassName(Player* player) {
         return(get_class_string( static_cast<int>(player->getClass())));
 
     strcpy(classname, "");
-    strcpy(classname, getShortClassAbbrev( static_cast<int>(player->getClass()) ) );
+    strcpy(classname, getShortClassAbbrev( player->getClassInt() ) );
     strcat(classname, "/");
-    strcat(classname, getShortClassAbbrev( static_cast<int>(player->hasSecondClass()) ) );
+    strcat(classname, getShortClassAbbrev( player->getSecondClassInt() ) );
 
     return(classname);
 }
@@ -491,9 +491,9 @@ char *getShortClassName(const Player* player) {
         return(get_class_string(static_cast<int>(player->getClass())));
 
     strcpy(classname, "");
-    strcpy(classname, getShortClassAbbrev(static_cast<int>(player->getClass())));
+    strcpy(classname, getShortClassAbbrev(player->getClassInt()));
     strcat(classname, "/");
-    strcat(classname, getShortClassAbbrev(static_cast<int>(player->hasSecondClass())));
+    strcat(classname, getShortClassAbbrev(player->getSecondClassInt()));
 
     return(classname);
 }

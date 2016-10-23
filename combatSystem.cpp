@@ -680,7 +680,7 @@ bool Creature::canParry(Creature* attacker) {
     if(!ready[WIELD - 1])
         return(false);          // must have a weapon wielded in order to riposte.
 
-    bstring weaponCategory = ready[WIELD - 1]->getWeaponCategory();
+    bstring weaponCategory = getPrimaryWeaponCategory();
     bstring weaponType = ready[WIELD - 1]->getWeaponType();
     if((weaponCategory != "piercing" && weaponCategory != "slashing") || weaponType == "polearm")
         return(false);          // must use a piercing or slashing weapon to riposte
@@ -1089,7 +1089,7 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
 int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackType, AttackResult& result, Damage& attackDamage, bool computeBonus, int& drain, float multiplier) {
     int retVal = 0;
     Damage bonusDamage;
-    bstring weaponCategory = weapon->getWeaponCategory();
+    bstring weaponCategory = weapon ? weapon->getWeaponCategory() : "none";
     drain = 0;
 
     if(attackType == ATTACK_KICK) {
@@ -1300,7 +1300,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
     if(computeBonus) {
         // Make bonus proportional to weapon speed, otherwise it's too much with fast weapons, and
         // too little with slow weapons.  (Bonus / 3) * weapon speed
-        bonusDamage.set((int)(((float)bonusDamage.get()/(float)DEFAULT_WEAPON_DELAY) * weapon->getWeaponDelay()));
+        bonusDamage.set((int)(((float)bonusDamage.get()/(float)DEFAULT_WEAPON_DELAY) * (weapon ? weapon->getWeaponDelay() : DEFAULT_WEAPON_DELAY)));
 
         victim->modifyDamage(this, PHYSICAL, bonusDamage, NO_REALM, weapon, 0, OFFGUARD_NOPRINT, true);
         attackDamage.setBonus(bonusDamage);
@@ -1722,6 +1722,21 @@ int Creature::getSecondaryDelay() {
     return ((ready[HELD-1] && ready[HELD-1]->getWearflag() == WIELD) ?
                           ready[HELD-1]->getWeaponDelay() : DEFAULT_WEAPON_DELAY);
 }
+
+const bstring Creature::getPrimaryWeaponCategory() const {
+    if(ready[WIELD-1])
+        return(ready[WIELD-1]->getWeaponCategory());
+    else
+        return("none");
+}
+
+const bstring Creature::getSecondaryWeaponCategory() const {
+    if(ready[HELD-1] && ready[HELD-1]->getWearflag() == WIELD)
+        return(ready[HELD-1]->getWeaponCategory());
+    else
+        return("none");
+}
+
 
 //*********************************************************************
 //                      updateAttackTimer

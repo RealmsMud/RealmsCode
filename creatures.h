@@ -470,8 +470,12 @@ public:
     void clearAsEnemy();
     bool checkAttackTimer(bool displayFail = true);
     void updateAttackTimer(bool setDelay = true, int delay = 0);
+
     int getPrimaryDelay();
     int getSecondaryDelay();
+    const bstring getPrimaryWeaponCategory() const;
+    const bstring getSecondaryWeaponCategory() const;
+
     time_t getLTAttack() const;
     void modifyAttackDelay(int amt);
     void setAttackDelay(int newDelay);
@@ -603,6 +607,7 @@ public:
 // Get
     CreatureClass getClass() const; // *
     int getClassInt() const;
+    int getSecondClassInt() const;
     unsigned short getLevel() const; // *
     short getAlignment() const; // *
     unsigned int getArmor() const; // *

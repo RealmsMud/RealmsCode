@@ -30,6 +30,15 @@ CreatureClass Creature::getClass() const { return(cClass); }
 
 int Creature::getClassInt() const { return(static_cast<int>(cClass)); }
 
+int Creature::getSecondClassInt() const {
+    const Player* pThis = getAsConstPlayer();
+
+    if(pThis)
+        return(static_cast<int>(pThis->getSecondClass()));
+    else
+        return (static_cast<int>(CreatureClass::NONE));
+}
+
 
 //*********************************************************************
 //                      getLevel
