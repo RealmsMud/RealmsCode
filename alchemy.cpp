@@ -284,9 +284,8 @@ bstring Object::showAlchemyEffects(Player *player) {
             outStr << p.first << ") ";
 
             if(n > numVisible && !isct)
-                continue;
-
-            if(player && player->alchemyEffectVisible(this, p.second.getEffect()))
+                known = false;
+            else if(player && player->alchemyEffectVisible(this, p.second.getEffect()))
                 known = true;
 
             if(!known && isct) outStr << "(*) ";
