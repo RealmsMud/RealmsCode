@@ -312,6 +312,9 @@ bool Config::saveBans() const {
 //*********************************************************************
 // This will save the entire creature with anything non zero to the given
 // node which should be a creature or player node
+//
+// Keep in mind, we're saving a copy of the creature - so make sure the Copy
+// constructor has copied whatever you're expecting to save
 
 int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bool saveID) const {
 //  xmlNodePtr  rootNode;
@@ -558,9 +561,12 @@ void Player::saveXml(xmlNodePtr curNode) const {
     xml::saveNonZeroNum(curNode, "Created", created);
     xml::saveNonNullString(curNode, "OldCreated", oldCreated);
     xml::saveNonZeroNum(curNode, "Guild", guild);
+
     if(title != " ")
         xml::saveNonNullString(curNode, "Title", title);
+
     xml::saveNonZeroNum(curNode, "GuildRank", guildRank);
+
     if(isStaff()) {
         childNode = xml::newStringChild(curNode, "Ranges");
         for(i=0; i<MAX_BUILDER_RANGE; i++) {
@@ -641,6 +647,15 @@ void Player::saveXml(xmlNodePtr curNode) const {
     xml::saveNonNullString(curNode, "LastPassword", lastPassword);
     xml::saveNonNullString(curNode, "PoisonedBy", poisonedBy);
     xml::saveNonNullString(curNode, "AfflictedBy", afflictedBy);
+
+    xmlNodePtr alchemyNode = xml::newStringChild(curNode, "Alchemy");
+    childNode = xml::newStringChild(alchemyNode, "KnownAlchemyEffects");
+    for(std::pair<bstring, bool> p : knownAlchemyEffects) {
+        if(p.second) {
+            xml::newStringChild(childNode, "ObjectEffect", p.first);
+        }
+    }
+
 }
 
 //*********************************************************************

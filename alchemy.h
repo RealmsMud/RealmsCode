@@ -26,6 +26,7 @@ typedef std::map<bstring, HerbVector > HerbMap;
 
 namespace Alchemy {
     bstring getEffectString(Object* obj, const bstring& effect);
+    int numEffectsVisisble(const int skillLevel);
 };
 
 //########################################################################

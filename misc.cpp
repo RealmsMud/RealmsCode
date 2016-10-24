@@ -1128,12 +1128,10 @@ MudObject* findCrtTarget(Creature * player, SetType& set, int findFlags, const c
 
 MudObject* Creature::findTarget(int findWhere, int findFlags, bstring str, int val) {
     int match=0;
-    bool found=false;
     MudObject* target;
     do {
         if(findWhere & FIND_OBJ_INVENTORY) {
             if((target = findObjTarget(objects, findFlags, str, val, &match))) {
-                found = true;
                 break;
             }
         }
@@ -1141,6 +1139,7 @@ MudObject* Creature::findTarget(int findWhere, int findFlags, bstring str, int v
         // -- Do this after looking for the object in their inventory
         if(findWhere & FIND_OBJ_EQUIPMENT) {
             int n;
+            bool found=false;
             for(n=0; n<MAXWEAR; n++) {
                 if(!ready[n])
                     continue;
@@ -1160,28 +1159,24 @@ MudObject* Creature::findTarget(int findWhere, int findFlags, bstring str, int v
 
         if(findWhere & FIND_OBJ_ROOM) {
             if((target = findObjTarget(getRoomParent()->objects, findFlags, str, val, &match))) {
-                found = true;
                 break;
             }
         }
 
         if(findWhere & FIND_MON_ROOM) {
             if((target = findCrtTarget<MonsterSet>(this, getParent()->monsters, findFlags, str.c_str(), val, &match))) {
-                found = true;
                 break;
             }
         }
 
         if(findWhere & FIND_PLY_ROOM) {
             if((target = findCrtTarget<PlayerSet>(this, getParent()->players, findFlags, str.c_str(), val, &match))) {
-                found = true;
                 break;
             }
         }
 
         if(findWhere & FIND_EXIT) {
             if((target = findExit(this, str, val, getRoomParent()))) {
-                found = true;
                 break;
             }
         }
