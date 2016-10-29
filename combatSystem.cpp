@@ -168,7 +168,16 @@ const bstring Object::getWeaponCategory() const {
 //                      getWeaponVerb
 //**********************************************************************
 
-const bstring  Object::getWeaponVerb() const {
+
+const bstring  Creature::getWeaponVerb() const {
+    if(ready[WIELD-1])
+        return(ready[WIELD-1]->getWeaponVerb());
+    else
+        return("thwacks");
+
+}
+
+const bstring Object::getWeaponVerb() const {
     const bstring category = getWeaponCategory();
 
     if(category == "crushing")
@@ -188,6 +197,15 @@ const bstring  Object::getWeaponVerb() const {
 //**********************************************************************
 //                      getWeaponVerbPlural
 //**********************************************************************
+
+
+const bstring Creature::getWeaponVerbPlural() const {
+    if(ready[WIELD-1])
+        return(ready[WIELD-1]->getWeaponVerbPlural());
+    else
+        return("thwacks");
+
+}
 
 const bstring  Object::getWeaponVerbPlural() const {
     const bstring category = getWeaponCategory();
@@ -1528,8 +1546,8 @@ int Creature::parry(Creature* target) {
         }
     } else {
         // We have a riposte, calculate damage and such
-        bstring verb = weapon->getWeaponVerb();
-        bstring verbPlural = weapon->getWeaponVerbPlural();
+        bstring verb = getWeaponVerb();
+        bstring verbPlural = getWeaponVerbPlural();
         int drain=0;
         bool wasKilled = false, freeTarget = false, meKilled = false;
         //int enchant = 0;

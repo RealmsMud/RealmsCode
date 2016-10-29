@@ -476,6 +476,9 @@ public:
     const bstring getPrimaryWeaponCategory() const;
     const bstring getSecondaryWeaponCategory() const;
 
+    const bstring getWeaponVerb() const;
+    const bstring getWeaponVerbPlural() const;
+
     time_t getLTAttack() const;
     void modifyAttackDelay(int amt);
     void setAttackDelay(int newDelay);
