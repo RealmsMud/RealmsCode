@@ -377,10 +377,7 @@ void niceExp(Creature *healer, Creature *creature, int heal, CastType how) {
         exp = 0;
 
 
-    if( exp &&
-        (target->hp.getCur() < target->hp.getMax()) &&
-        !player->halftolevel()
-    ) {
+    if( exp && heal >= 1 && !player->halftolevel() ) {
         player->addExperience(exp);
         healer->print("You %s %d experience for your deed.\n", gConfig->isAprilFools() ? "lose" : "gain", exp);
     }
