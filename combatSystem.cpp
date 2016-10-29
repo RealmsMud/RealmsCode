@@ -173,7 +173,7 @@ const bstring  Creature::getWeaponVerb() const {
     if(ready[WIELD-1])
         return(ready[WIELD-1]->getWeaponVerb());
     else
-        return("thwacks");
+        return("thwack");
 
 }
 
