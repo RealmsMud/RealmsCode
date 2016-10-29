@@ -656,7 +656,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
 
         heal = player->doHeal(target, heal);
-        mpheal = target->mp.increase(mpHeal);
+        mpHeal = target->mp.increase(mpHeal);
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
