@@ -211,7 +211,10 @@ int Object::saveToFile() {
         clearFlag(O_UNIQUE);
 
     escapeText();
+    bstring idTemp = id;
+    id = "-1";
     saveToXml(rootNode, ALLITEMS, LS_PROTOTYPE, false);
+    id = idTemp;
 
     strcpy(filename, objectPath(info));
     xml::saveFile(filename, xmlDoc);

@@ -249,6 +249,8 @@ void Config::addObjectQueue(const CatRef cr, Object** pObject) {
     qt->str = cr.str();
     objectQueue[qt->str].obj = new Object;
     *objectQueue[qt->str].obj = **pObject;
+    objectQueue[qt->str].obj->id = "-1";
+
     objectQueue[qt->str].q_obj = qt;
     putQueue(&qt, &objectHead, &objectTail);
     
