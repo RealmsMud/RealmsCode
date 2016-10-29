@@ -245,6 +245,8 @@ bool loadMonsterFromFile(const CatRef cr, Monster **pMonster, bstring filename) 
         (*pMonster)->setVersion(rootNode);
 
         (*pMonster)->readFromXml(rootNode);
+        (*pMonster)->setId("-1");
+
         if((*pMonster)->flagIsSet(M_TALKS)) {
             loadCreature_tlk((*pMonster));
             (*pMonster)->convertOldTalks();
@@ -288,6 +290,7 @@ bool loadObjectFromFile(const CatRef cr, Object** pObject) {
         xml::copyPropToBString((*pObject)->version, rootNode, "Version");
 
         (*pObject)->readFromXml(rootNode);
+        (*pObject)->setId("-1");
     }
 
     xmlFreeDoc(xmlDoc);

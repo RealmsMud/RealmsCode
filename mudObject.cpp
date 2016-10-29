@@ -305,21 +305,6 @@ void MudObject::setId(bstring newId, bool handleParentSet) {
         if(handleParentSet) removeFromSet();
         id = newId;
         if(handleParentSet) addToSet();
-
-        // Handle registration elsewhere
-//      // Register the ID with the server if we're not a player, handle player registration
-//      // when adding the player to the server's list of players
-//      if(!getAsPlayer()) {
-//          if(getAsCreature() && gServer->lookupCrtId(newId)) {
-//              // We already have a creature with this registered ID, so this creature needs a new ID
-//              id = gServer->getNextMonsterId();
-//              std::cout << "Changing ID for " << this->getName() << " from "<< newId << " to " << id << std::endl;
-//          } else if(getAsObject() && gServer->lookupObjId(newId)) {
-//              throw std::runtime_error("Duplicate Object ");
-//
-//          }
-//          gServer->registerMudObject(this);
-//      }
     }
 }
 
