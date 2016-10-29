@@ -379,7 +379,7 @@ void niceExp(Creature *healer, Creature *creature, int heal, CastType how) {
 
     if( exp &&
         (target->hp.getCur() < target->hp.getMax()) &&
-        player->halftolevel()
+        !player->halftolevel()
     ) {
         player->addExperience(exp);
         healer->print("You %s %d experience for your deed.\n", gConfig->isAprilFools() ? "lose" : "gain", exp);
@@ -499,7 +499,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
             heal = defaultAmount;
         }
 
-        player->doHeal(target, heal);
+        heal = player->doHeal(target, heal);
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("%s spell cast on %N.\n", capSpellName, target);
@@ -655,8 +655,8 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
             mpHeal = mrand(1,8);
         }
 
-        player->doHeal(target, heal);
-        target->mp.increase(mpHeal);
+        heal = player->doHeal(target, heal);
+        mpheal = target->mp.increase(mpHeal);
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
