@@ -495,6 +495,8 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     // fear on self
     if(cmnd->num == 2) {
+        target = player;
+
         if(player->isEffected("resist-magic"))
             dur /= 2;
 
