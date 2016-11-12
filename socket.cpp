@@ -892,7 +892,7 @@ int Socket::processInput() {
     // handle backspaces
     n = inBuf.getLength();
 
-    for (i = n - tmp.getLength(); i < (unsigned) n; i++) {
+    for (i = tMAX<int>(n - tmp.getLength(), 0); i < (unsigned) n; i++) {
         if (inBuf.getAt(i) == '\b' || inBuf.getAt(i) == 127) {
             if (n < 2) {
                 inBuf = "";
