@@ -384,7 +384,7 @@ int Monster::updateCombat() {
         if(pTarget && flagIsSet(M_DISOLVES_ITEMS) && mrand(1,100) <= 15)
             pTarget->dissolveItem(this);
 
-        if( doDamage(target, attackDamage.get(), CHECK_DIE, PHYSICAL_DMG, freeTarget) ||
+        if( doDamage(target, attackDamage.get(), CHECK_DIE_ROB, PHYSICAL_DMG, freeTarget) ||
             wasKilled ||
             meKilled
         ) {
