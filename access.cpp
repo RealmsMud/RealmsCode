@@ -18,32 +18,28 @@
 #include "mud.h"
 #include "calendar.h"
 
-#include <boost/assign/list_of.hpp>
-#include <boost/unordered_map.hpp>
-
-using boost::assign::map_list_of;
 
 // Stats
-const std::map<ObjectType,const char*> objTypeToString = map_list_of
-    (ObjectType::WEAPON, "weapon")
-    (ObjectType::INSTRUMENT, "instrument")
-    (ObjectType::HERB, "herb")
-    (ObjectType::ARMOR, "armor")
-    (ObjectType::POTION, "potion")
-    (ObjectType::SCROLL, "scroll")
-    (ObjectType::WAND, "wand")
-    (ObjectType::CONTAINER, "container")
-    (ObjectType::MONEY, "money")
-    (ObjectType::KEY, "key")
-    (ObjectType::LIGHTSOURCE , "lightsource")
-    (ObjectType::MISC, "misc")
-    (ObjectType::SONGSCROLL, "song scroll")
-    (ObjectType::POISON, "poison")
-    (ObjectType::BANDAGE, "bandage")
-    (ObjectType::AMMO, "ammo")
-    (ObjectType::QUIVER, "quiver")
-    (ObjectType::LOTTERYTICKET, "lottery ticket")
-;
+const std::map<ObjectType,const char*> objTypeToString = {
+    {ObjectType::WEAPON, "weapon"},
+    {ObjectType::INSTRUMENT, "instrument"},
+    {ObjectType::HERB, "herb"},
+    {ObjectType::ARMOR, "armor"},
+    {ObjectType::POTION, "potion"},
+    {ObjectType::SCROLL, "scroll"},
+    {ObjectType::WAND, "wand"},
+    {ObjectType::CONTAINER, "container"},
+    {ObjectType::MONEY, "money"},
+    {ObjectType::KEY, "key"},
+    {ObjectType::LIGHTSOURCE , "lightsource"},
+    {ObjectType::MISC, "misc"},
+    {ObjectType::SONGSCROLL, "song scroll"},
+    {ObjectType::POISON, "poison"},
+    {ObjectType::BANDAGE, "bandage"},
+    {ObjectType::AMMO, "ammo"},
+    {ObjectType::QUIVER, "quiver"},
+    {ObjectType::LOTTERYTICKET, "lottery ticket"},
+};
 
 
 char stat_names[][4] = { "STR", "DEX", "CON", "INT", "PTY", "CHA" };

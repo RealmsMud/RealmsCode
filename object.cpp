@@ -516,7 +516,7 @@ int displayObject(Player* player, Object* target) {
     }
 
     if(target->getType() == ObjectType::POTION || target->getType() == ObjectType::HERB) {
-        oStr << target->showAlchemyEffects(player) << "\n";
+        oStr << target->showAlchemyEffects(player);
     }
 
     player->printColor("%s", oStr.str().c_str());

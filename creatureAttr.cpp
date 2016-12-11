@@ -1445,6 +1445,10 @@ void Player::doCopy(const Player& cr) {
     for(std::pair<int, int> qc : cr.questsCompleted) {
         questsCompleted.insert(qc);
     }
+
+    for(auto& p : cr.knownAlchemyEffects) {
+        knownAlchemyEffects.insert(p);
+    }
 }
 
 //*********************************************************************

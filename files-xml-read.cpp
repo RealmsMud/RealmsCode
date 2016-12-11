@@ -847,7 +847,7 @@ void Player::readXml(xmlNodePtr curNode) {
                             numCompletions = xml::toNum<int>(subNode);
                         }
                         if(questNum != -1) {
-                            questsCompleted.insert(std::pair<int,int>(questNum,numCompletions));
+                            questsCompleted.insert(std::make_pair(questNum,numCompletions));
                         }
                         subNode = subNode->next;
                     }
@@ -861,6 +861,22 @@ void Player::readXml(xmlNodePtr curNode) {
         while(childNode) {
             if(NODE_NAME(childNode, "Minion")) {
                 minions.push_back(xml::getBString(childNode));
+            }
+            childNode = childNode->next;
+        }
+    }
+    else if(NODE_NAME(curNode, "Alchemy")) {
+        xmlNodePtr subNode;
+        childNode = curNode->children;
+        while(childNode) {
+            if(NODE_NAME(childNode, "KnownAlchemyEffects")) {
+                subNode = childNode->children;
+                while(subNode) {
+                    if(NODE_NAME(subNode, "ObjectEffect")) {
+                        knownAlchemyEffects.insert(std::make_pair(xml::getBString(subNode), true));
+                    }
+                    subNode = subNode->next;
+                }
             }
             childNode = childNode->next;
         }
