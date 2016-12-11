@@ -18,6 +18,8 @@
 #ifndef _TRACK_H
 #define _TRACK_H
 
+#include "common.h"
+#include "size.h"
 
 class Track {
 public:

@@ -18,6 +18,10 @@
 #ifndef AREA_H
 #define AREA_H
 
+#include "common.h"
+#include "track.h"
+#include "wanderInfo.h"
+
 #define RADIAN 57.2957795
 
 // max vision is defined because of the output functions - if it's any higher
@@ -26,9 +30,8 @@
 // we don't let too many AreaTrack objects hang around
 #define MAX_AREA_TRACK  100
 
-//#include <list>
-//#include <vector>
 #include <map>
+
 // forward declaration
 class Area;
 class AreaData;

@@ -19,6 +19,9 @@
 #ifndef _WANDERINFO_H
 #define _WANDERINFO_H
 
+#include "common.h"
+
+#include <map>
 
 class WanderInfo {
 public:

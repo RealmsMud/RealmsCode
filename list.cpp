@@ -4,9 +4,16 @@
 
 #include <boost/filesystem.hpp>
 #include <iostream>
+#include "common.h"
+#include "rooms.h"
+#include "xml.h"
+
 namespace fs = boost::filesystem;
 
 int list_rooms() {
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr  rootNode;
+
     const char* room_path = "/home/realms/realms/rooms/";
     std::vector<fs::path> areas;
     fs::directory_iterator areas_end, areas_start(room_path);
@@ -23,7 +30,16 @@ int list_rooms() {
             std::sort(rooms.begin(), rooms.end());
             for (fs::path room : rooms) {
                 if (fs::is_regular_file(room)) {
-                    std::cout << room << "\n";
+                    UniqueRoom *lRoom = new UniqueRoom();
+
+                    if((xmlDoc = xml::loadFile(filename.c_str(), "Room")) == nullptr) {
+                        std::cout << "Error loading: " << room << "\n";
+                        continue;
+                    }
+                    rootNode = xmlDocGetRootElement(xmlDoc);
+                    lRoom->readFromXml(rootNode);
+
+                    std::cout << "Processed " << room << "\n";
                 }
             }
         }

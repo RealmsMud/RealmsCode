@@ -19,9 +19,11 @@
 #ifndef _LOCATION_H
 #define _LOCATION_H
 
-
+#include "common.h"
 #include "area.h"
 
+class Player;
+class BaseRoom;
 
 class Location {
 public:

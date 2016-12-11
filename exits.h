@@ -19,6 +19,10 @@
 #ifndef _EXITS_H
 #define _EXITS_H
 
+#include "common.h"
+#include "area.h"
+#include "location.h"
+
 enum Direction {
     NoDirection = 0,
     North =     1,

@@ -26,10 +26,11 @@ class UniqueRoom;
 class AreaRoom;
 class Fishing;
 
+#include "exits.h"
+#include "location.h"
+#include "size.h"
 #include "track.h"
 #include "wanderInfo.h"
-#include "location.h"
-#include "exits.h"
 
 typedef std::list<Exit*> ExitList;
 
