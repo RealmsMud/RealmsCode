@@ -1,0 +1,2 @@
+#!/bin/sh
+docker run -d -v /home/realms/realms/:/home/realms/realms/ --name realms realms-image
