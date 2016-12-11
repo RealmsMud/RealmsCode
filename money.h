@@ -19,6 +19,21 @@
 #ifndef _MONEY_H
 #define _MONEY_H
 
+#include "common.h"
+
+enum Coin {
+    MIN_COINS = 0,
+
+    COPPER =    0,
+    SILVER =    1,
+    GOLD =      2,
+    PLATINUM =  3,
+    ALANTHIUM = 4,
+
+    MAX_COINS = 4
+};
+
+
 
 class Money {
 public:

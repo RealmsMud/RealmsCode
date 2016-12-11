@@ -17,22 +17,18 @@
  */
 
 
-#include "mud.h"
+//#include "mud.h"
+#include "config.h"
+#include "server.h"
 
-#include <sys/stat.h>
-#include <sys/signal.h>
-#include <unistd.h>
-#include <time.h>
-#include <libxml/xmlmemory.h>
-#include <libxml/parser.h>
-
-#include "commands.h"
-
+// Used to avoid loading some things if we're running a list instead of the server
 bool listing = false;
 
 void handle_args(int argc, char *argv[]);
 void startup_mordor(void);
 
+extern Config *gConfig;
+extern Server *gServer;
 
 int main(int argc, char *argv[]) {
     // Get our instance variables

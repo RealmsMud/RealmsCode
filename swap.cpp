@@ -334,7 +334,7 @@ bool Server::swap(Swap s) {
 //                          simpleChildRead
 //*********************************************************************
 
-bstring Server::simpleChildRead(Server::childProcess &child) {
+bstring Server::simpleChildRead(childProcess &child) {
     char tmpBuf[4096];
     bstring toProcess;
     int n;
@@ -354,7 +354,7 @@ bstring Server::simpleChildRead(Server::childProcess &child) {
 //*********************************************************************
 // gets output from findNextEmpty
 
-void Config::findNextEmpty(Server::childProcess &child, bool onReap) {
+void Config::findNextEmpty(childProcess &child, bool onReap) {
     if(!isSwapping())
         return;
 
@@ -655,7 +655,7 @@ void Config::offlineSwap() {
 }
 
 // gets output from offlineSwap
-void Config::offlineSwap(Server::childProcess &child, bool onReap) {
+void Config::offlineSwap(childProcess &child, bool onReap) {
     if(!isSwapping())
         return;
     Player* player = gServer->findPlayer(child.extra.c_str());

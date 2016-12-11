@@ -281,7 +281,7 @@ int cmdPlay(Player* player, cmd* cmnd) {
     Song* song = gConfig->getSong(cmnd->str[1], retVal);
 
     if(retVal == CMD_NOT_FOUND) {
-        player->print("Alas, there exists no song by that name.\n");
+        player->print("Alas, there exists no song by that name (%s).\n", cmnd->str[1]);
         return(0);
     } else if(retVal == CMD_NOT_UNIQUE ) {
         player->print("Alas, there exists many songs by that name, please be more specific!\n");

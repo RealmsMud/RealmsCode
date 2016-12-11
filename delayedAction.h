@@ -19,6 +19,9 @@
 #ifndef _DELAYEDACTION_H
 #define _DELAYEDACTION_H
 
+#include "cmd.h"
+
+class MudObject;
 
 enum DelayedActionType {
     UnknownAction,

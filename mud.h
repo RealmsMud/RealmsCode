@@ -393,11 +393,6 @@
 // Mud Includes
 #include "os.h"
 
-// Custom comparison operator to sort by the numeric id instead of standard string comparison
-struct idComp : public std::binary_function<const bstring&, const bstring&, bool> {
-  bool operator() (const bstring& lhs, const bstring& rhs) const;
-};
-
 #include "alphanum.hpp"
 #include "catRef.h"
 #include "swap.h"

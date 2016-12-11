@@ -19,6 +19,8 @@
 #ifndef _CATREF_H
 #define _CATREF_H
 
+#include "common.h"
+
 class Creature;
 
 class CatRef {

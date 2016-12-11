@@ -67,7 +67,6 @@ const int DOPROMPT = 3;
 // base monster number for various types of summoned monsters
 const int BASE_ELEMENTAL = 801;
 const int BASE_UNDEAD = 550;
-const int COMMANDMAX = 6;
 
 // Monster and object files sizes (in terms of monsters or objects)
 const int MFILESIZE = 100;

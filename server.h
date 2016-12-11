@@ -31,6 +31,8 @@ namespace odbc {
 #include "pythonHandler.h"
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
 
+#include "proc.h"
+
 class Player;
 class Group;
 class PythonHandler;
@@ -45,18 +47,6 @@ class MsdpVariable;
 //struct _object;
 //typedef _object PyObject;
 
-enum childType {
-    CHILD_START,
-
-    CHILD_DNS_RESOLVER,
-    CHILD_LISTER,
-    CHILD_DEMOGRAPHICS,
-    CHILD_SWAP_FIND,
-    CHILD_SWAP_FINISH,
-    CHILD_PRINT,
-
-    CHILD_END
-};
 enum GoldLog {
     GOLD_IN,
     GOLD_OUT
@@ -101,23 +91,7 @@ public:
             this->control = control;
         }
     };
-    struct childProcess {
-        int pid;
-        childType type;
-        int fd; // Fd if any we should watch
-        bstring extra;
-        childProcess() {
-            pid = 0;
-            fd = -1;
-            extra = "";
-        }
-        childProcess(int p, childType t, int f = -1, bstring e = "") {
-            pid = p;
-            type = t;
-            fd = f;
-            extra = e;
-        }
-    };
+
     struct dnsCache {
         bstring ip;
         bstring hostName;
@@ -363,7 +337,7 @@ public:
     void childDied();
     int getDeadChildren() const;
     int runList(Socket* sock, cmd* cmnd);
-    bstring simpleChildRead(Server::childProcess &child);
+    bstring simpleChildRead(childProcess &child);
 
     // Swap functions - use children
     bstring swapName();

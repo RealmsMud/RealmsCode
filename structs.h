@@ -59,18 +59,6 @@ enum Sex {
     SEX_MALE = 2
 };
 
-enum Coin {
-    MIN_COINS = 0,
-
-    COPPER =    0,
-    SILVER =    1,
-    GOLD =      2,
-    PLATINUM =  3,
-    ALANTHIUM = 4,
-
-    MAX_COINS = 4
-};
-
 
 enum EffectParentType {
     EFFECT_NO_PARENT,
@@ -247,38 +235,6 @@ public:
 } lockout;
 
 
-// we need this forward declaration so command list pointers can
-// be stored inside the cmd class
-class cmdReturn;
-
-#define CMD_NOT_FOUND   -1
-#define CMD_NOT_UNIQUE  -2
-#define CMD_NOT_AUTH    -3
-
-#define MAX_TOKEN_SIZE  50
-
-class Command;
-
-class cmd {
-public:
-    cmd() {
-#ifndef PYTHON_CODE_GEN
-        ret = num = 0;
-        memset(str, 0, sizeof(str));
-        memset(val, 0, sizeof(val));
-        myCommand=0;
-#endif
-    };
-    int         num;
-    bstring     fullstr;
-    //char      fullstr[256];
-    char        str[COMMANDMAX][MAX_TOKEN_SIZE];
-    long        val[COMMANDMAX];
-
-    int         ret;
-    Command *myCommand;
-};
-
 
 #include "delayedAction.h"
 
@@ -312,44 +268,6 @@ public:
 
 // These are special defines to reuse creature structure while still
 // making the code readable.
-
-
-// moved here to accomodate global use throughout mordor
-// General queue tag data struct
-typedef struct queue_tag {
-public:
-    queue_tag() { next = prev = 0; };
-    bstring             str;
-    struct queue_tag    *next;
-    struct queue_tag    *prev;
-} qtag;
-
-
-// Sparse pointer array for rooms
-typedef struct rsparse {
-public:
-    rsparse() { rom = 0; q_rom = 0; };
-    UniqueRoom *rom;
-    qtag            *q_rom;
-} rsparse;
-
-
-// Sparse pointer array for creatures
-typedef struct msparse {
-public:
-    msparse() { mob = 0; q_mob = 0; };
-    Monster *mob;
-    qtag            *q_mob;
-} msparse;
-
-
-// Sparse pointer array for objects
-typedef struct osparse {
-public:
-    osparse() {obj = 0; q_obj = 0; };
-    Object          *obj;
-    qtag            *q_obj;
-} osparse;
 
 
 typedef struct tagPlayer {
@@ -396,14 +314,6 @@ typedef struct {
     long    realms;
 } creatureStats;
 
-
-typedef struct quest {
-public:
-    quest() { num = exp = 0; name = 0; };
-    int     num;
-    int     exp;
-    char    *name;
-} quest, *questPtr;
 
 // ******************
 //   MudMethod

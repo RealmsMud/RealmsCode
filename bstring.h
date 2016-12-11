@@ -43,11 +43,8 @@
 #include <stdio.h>
 
 #include <string>       // basic_string
-//#include <algorithm>   // for_each, etc.
-//#include <functional> // for StdStringLessNoCase, et al
-//#include <locale>    // for various facets
 #include <sstream>  // for stringstream
-//#include <iosfwd>  //
+
 // ------------------------------------------------------------
 // strLen: strlen
 // ------------------------------------------------------------
@@ -219,12 +216,6 @@ public:
 
     // Constructors!
     bstring()  { }
-    
-//  bstring(const XMLCh* const str) {
-//      char* tmp = XMLString::transcode(str);
-//      *this = tmp;
-//      XMLString::release(&tmp);
-//  }
     
     bstring(const bstring& str): my_base(str)  { }
 
@@ -435,76 +426,35 @@ public:
     int Find(char ch) const
     {
         return(find_first_of(ch));
-//      my_size_type nIdx = this->find_first_of(ch);
-//      if(nIdx == my_base::npos)
-//          return(-1);
-//          else
-//              return(nIdx);
-
     }
 
     int Find(my_const_pointer szSub) const
     {
         return(find(szSub));
-//      my_base::size_type nIdx = this->find(szSub);
-//      if(nIdx == my_base::npos)
-//          return(-1);
-//          else
-//              return(nIdx);
-//
     }
 
     int Find(char ch, int nStart) const
     {
         return(find_first_of(ch, static_cast<my_base::size_type>(nStart)));
-//      my_base::size_type nIdx = this->find_first_of(ch, static_cast<my_base::size_type>(nStart));
-//      if(nIdx == my_base::npos)
-//          return(-1);
-//          else
-//              return(nIdx);
-//
     }
 
     int Find(my_const_pointer szSub, int nStart) const
     {
         return(find(szSub, static_cast<my_base::size_type>(nStart)));
-//      my_base::size_type nIdx = this->find(szSub, static_cast<my_base::size_type>(nStart));
-//      if(nIdx == my_base::npos)
-//          return(-1);
-//          else
-//              return(nIdx);
-
     }
 
     int FindOneOf(my_const_pointer szCharSet) const
     {
         return(find_first_of(szCharSet));
-//      my_base::size_type nIdx = this->find_first_of(szCharSet);
-//      if(nIdx == my_base::npos)
-//          return(-1);
-//          else
-//              return(nIdx);
-//
     }
     
     int ReverseFind(char ch) const {
         my_size_type idx = this->find_last_of(ch);
         return(idx);
-//        if(idx == my_base::npos)
-//          return(-1);
-//          else
-//              return(idx);
-//        return static_cast<int>(my_base::npos == idx ? -1 : idx);
     }
 
     int ReverseFind(my_const_pointer szFind, my_size_type pos=my_base::npos) const {
         return(rfind(0 == szFind ? bstring() : szFind, pos));
-//        my_size_type idx    = this->rfind(0 == szFind ? bstring() : szFind, pos);
-//        if(idx == my_base::npos)
-//          return(-1);
-//          else
-//              return(idx);
-        //return static_cast<int>(my_base::npos == idx ? -1 : idx);
     }
 
     void setAt(int nIndex, char ch) {
@@ -581,10 +531,6 @@ public:
         va_end(argList);
     }
 
-#define MAX_FMT_TRIES       5    // #of times we try 
-#define FMT_BLOCK_SIZE      2048 // # of bytes to increment per try
-#define BUFSIZE_1ST         256
-#define BUFSIZE_2ND         512
 #define STD_BUF_SIZE        1024
 
     // an efficient way to add formatted characters to the string.  You may only
@@ -792,19 +738,12 @@ namespace std
     }
 }
 
-/*#include <ext/hash_map>
-namespace __gnu_cxx
-{
-        template<> struct hash< bstring >
-        {
-                size_t operator()( const bstring& x ) const
-                {
-                        return hash< const char* >()( x.c_str() );
-                }
-        };
-}*/
-
-
 typedef bstring Status;
+
+// Custom comparison operator to sort by the numeric id instead of standard string comparison
+struct idComp : public std::binary_function<const bstring&, const bstring&, bool> {
+    bool operator() (const bstring& lhs, const bstring& rhs) const;
+};
+
 
 #endif /*BSTRING_H_*/
