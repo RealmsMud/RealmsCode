@@ -1,6 +1,20 @@
-//
-// Created by jason on 12/10/16.
-//
+/*
+ * list.cpp
+ *   Class for listing thing
+ *   ____            _
+ *  |  _ \ ___  __ _| |_ __ ___  ___
+ *  | |_) / _ \/ _` | | '_ ` _ \/ __|
+ *  |  _ <  __/ (_| | | | | | | \__ \
+ *  |_| \_\___|\__,_|_|_| |_| |_|___/
+ *
+ * Permission to use, modify and distribute is granted via the
+ *  GNU Affero General Public License v3 or later
+ *
+ *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
+ *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
+ *
+ */
 
 #include <boost/filesystem.hpp>
 #include <iostream>
@@ -9,6 +23,12 @@
 #include "xml.h"
 
 namespace fs = boost::filesystem;
+
+#include "config.h"
+#include "server.h"
+
+extern Config *gConfig;
+extern Server *gServer;
 
 int list_rooms() {
     xmlDocPtr   xmlDoc;
@@ -31,15 +51,14 @@ int list_rooms() {
             for (fs::path room : rooms) {
                 if (fs::is_regular_file(room)) {
                     UniqueRoom *lRoom = new UniqueRoom();
-
-                    if((xmlDoc = xml::loadFile(filename.c_str(), "Room")) == nullptr) {
-                        std::cout << "Error loading: " << room << "\n";
+                    const char *filename = room.string().c_str();
+                    if((xmlDoc = xml::loadFile(filename, "Room")) == nullptr) {
+                        std::cout << "Error loading: " << filename << "\n";
                         continue;
                     }
                     rootNode = xmlDocGetRootElement(xmlDoc);
-                    lRoom->readFromXml(rootNode);
-
-                    std::cout << "Processed " << room << "\n";
+                    lRoom->readFromXml(rootNode, true);
+                    std::cout << lRoom->info.rstr() << " " << lRoom->getCName() << "\n";
                 }
             }
         }
@@ -64,6 +83,11 @@ int list_players() {
 }
 
 int main(int argc, char *argv[]) {
+    gConfig = Config::getInstance();
+    gServer = Server::getInstance();
+
+    gConfig->setListing(true);
+    gServer->init();
     list_rooms();
     return 1;
 }
