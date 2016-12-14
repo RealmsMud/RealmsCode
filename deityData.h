@@ -19,6 +19,10 @@
 #ifndef _DEITYDATA_H
 #define _DEITYDATA_H
 
+#include <map>
+
+#include "common.h"
+
 class PlayerTitle;
 
 class DeityData {

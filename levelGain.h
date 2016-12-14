@@ -18,6 +18,11 @@
 #ifndef _LEVELGAIN_H
 #define _LEVELGAIN_H
 
+#include <list>
+
+#include "common.h"
+
+class SkillGain;
 
 // Class to describe what is gained at each level
 class LevelGain {

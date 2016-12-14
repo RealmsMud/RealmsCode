@@ -26,8 +26,11 @@ class UniqueRoom;
 class AreaRoom;
 class Fishing;
 
+#include "container.h"
 #include "exits.h"
+#include "global.h"
 #include "location.h"
+#include "realm.h"
 #include "size.h"
 #include "track.h"
 #include "wanderInfo.h"
@@ -51,7 +54,7 @@ public:
     virtual ~BaseRoom() {};
 //  virtual bool operator< (const MudObject& t) const = 0;
 
-    void readExitsXml(xmlNodePtr curNode);
+    void readExitsXml(xmlNodePtr curNode, bool offline=false);
     bool delExit(bstring dir);
     bool delExit(Exit *exit);
     void clearExits();
@@ -135,7 +138,7 @@ public:
     bool operator< (const UniqueRoom& t) const;
 
     void escapeText();
-    int readFromXml(xmlNodePtr rootNode);
+    int readFromXml(xmlNodePtr rootNode, bool offline=false);
     int saveToXml(xmlNodePtr rootNode, int permOnly) const;
     int saveToFile(int permOnly, LoadType saveType=LS_NORMAL);
 

@@ -19,6 +19,8 @@
 #ifndef _RANGE_H
 #define _RANGE_H
 
+#include "catRef.h"
+#include "common.h"
 
 class Range {
 public:

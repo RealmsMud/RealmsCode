@@ -18,6 +18,16 @@
 #ifndef DMH_H
 #define DMH_H
 
+#include "catref.h"
+#include "common.h"
+#include "range.h"
+
+class cmd;
+class AreaRoom;
+class Creature;
+class Object;
+class Player;
+class UniqueRoom;
 
 int dmAlchemyList(Player* player, cmd* cmnd);
 

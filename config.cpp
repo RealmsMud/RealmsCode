@@ -26,8 +26,6 @@
 
 //#include "config.h"
 
-extern bool listing;
-
 // Globals
 Config *gConfig = nullptr;
 
@@ -37,6 +35,7 @@ Config* Config::myInstance = nullptr;
 Config::Config() {
     reset();
     inUse = true;
+    listing = false;
 }
 
 Config::~Config() {
@@ -105,6 +104,7 @@ void Config::cleanUp() {
     clearSongs();
     clearProxyAccess();
     inUse = false;
+    listing = false;
 }
 void Config::clearProxyAccess() {
     proxyManager->clear();
@@ -118,6 +118,7 @@ void Config::clearProxyAccess() {
 
 void Config::reset(bool reload) {
     mudName = "Default Mud Name";
+
     saveOnDrop = true;
     checkDouble = true;
     getHostByName = true;
@@ -208,7 +209,6 @@ void Config::reset(bool reload) {
     minBroadcastLevel = 2;
     //maxGuilds = 8;
     numGuilds = 0;
-
 
     calendar = nullptr;
     proxyManager = nullptr;
@@ -974,4 +974,12 @@ void Config::replaceObjectInQueue(CatRef cr, Object* object) {
         *objectQueue[cr.str()].obj = *object;
     else
         addObjectQueue(cr, &object);
+}
+
+void Config::setListing(bool isListing) {
+    listing = isListing;
+}
+
+bool Config::isListing() {
+    return listing;
 }

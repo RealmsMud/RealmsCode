@@ -18,7 +18,19 @@
 #ifndef SHIPS_H_
 #define SHIPS_H_
 
+#include <list>
+
+#include "catRef.h"
+#include "common.h"
+#include "location.h"
+#include "range.h"
+#include "swap.h"
+
 #define SHIP_SEARCH_CHANCE  75
+
+class cmd;
+class BaseRoom;
+class Player;
 
 class ShipRaid {
 protected:

@@ -20,6 +20,13 @@
 #ifndef CREATURE_STREAMS_H
 #define CREATURE_STREAMS_H
 
+#include <map>
+
+#include "common.h"
+#include "stats.h"
+
+class MudObject;
+
 class Streamable {
 public:
     virtual ~Streamable() {};

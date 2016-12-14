@@ -19,6 +19,9 @@
 #ifndef _SKILLGAIN_H
 #define _SKILLGAIN_H
 
+#include <map>
+
+#include "common.h"
 
 // Describes the skill gained and who gets it
 class SkillGain {

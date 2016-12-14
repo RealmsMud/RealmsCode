@@ -19,6 +19,8 @@
 #ifndef SERVERTIMER_H_
 #define SERVERTIMER_H_
 
+#include <sys/time.h>
+
 class ServerTimer {
 protected:
     struct timeval timePassed; // How much time passed

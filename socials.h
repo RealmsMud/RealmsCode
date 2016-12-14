@@ -19,6 +19,12 @@
 #ifndef SOCIAL_H_
 #define SOCIAL_H_
 
+#include <list>
+
+#include "common.h"
+#include "global.h"
+#include "structs.h"
+
 class SocialCommand: public Command {
 public:
     SocialCommand(xmlNodePtr rootNode);

@@ -19,6 +19,15 @@
 #ifndef _RACEDATA_H
 #define _RACEDATA_H
 
+#include <list>
+#include <map>
+
+#include "common.h"
+#include "global.h"
+#include "size.h"
+#include "structs.h"
+
+class SkillGain;
 
 class RaceData {
 protected:

@@ -19,9 +19,22 @@
 #ifndef PROPERTY_H_
 #define PROPERTY_H_
 
-class Guild;
+#include <list>
+#include <map>
 
-// PropType enum in mud.h
+#include "catRef.h"
+#include "common.h"
+#include "global.h"
+#include "range.h"
+
+class cmd;
+class AreaRoom;
+class BaseRoom;
+class Guild;
+class MudFlag;
+class Player;
+class Socket;
+class UniqueRoom;
 
 enum PropLog {
     LOG_PARTIAL =   0,

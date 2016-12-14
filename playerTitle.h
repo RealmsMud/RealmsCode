@@ -19,6 +19,7 @@
 #ifndef _PLAYERTITLE_H
 #define _PLAYERTITLE_H
 
+#include "common.h"
 
 class PlayerTitle {
 public:

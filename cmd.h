@@ -9,6 +9,9 @@
 
 #include <string.h>  // memset
 
+typedef int (*SONGFN)();
+
+
 // we need this forward declaration so command list pointers can
 // be stored inside the cmd class
 class cmdReturn;

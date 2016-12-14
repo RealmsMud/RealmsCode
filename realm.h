@@ -1,6 +1,6 @@
 /*
- * asynch.h
- *   Asynchronous communication
+ * realm.h
+ *   Realms
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -16,27 +16,21 @@
  *
  */
 
-#ifndef _ASYNCH_H
-#define _ASYNCH_H
+#ifndef REALMSCODE_REALM_H
+#define REALMSCODE_REALM_H
 
-#include "proc.h"
+enum Realm {
+    NO_REALM =  0,
+    MIN_REALM = 1,
+    EARTH =     1,
+    WIND =      2,
+    FIRE =      3,
+    WATER =     4,
+    ELEC =      5,
+    COLD =      6,
 
-class Player;
-
-enum AsyncResult {
-    AsyncExternal,
-    AsyncLocal
+    MAX_REALM
 };
 
 
-class Async {
-protected:
-    int fds[2];
-public:
-    Async();
-    AsyncResult branch(const Player* player, childType type);
-};
-
-
-#endif  /* _ASYNCH_H */
-
+#endif //REALMSCODE_REALM_H

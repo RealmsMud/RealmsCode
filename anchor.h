@@ -19,9 +19,14 @@
 #ifndef _ANCHOR_H
 #define _ANCHOR_H
 
+#include "common.h"
+#include "catRef.h"
 
 class AreaRoom;
 class BaseRoom;
+class MapMarker;
+class Player;
+class UniqueRoom;
 
 class Anchor {
 public:

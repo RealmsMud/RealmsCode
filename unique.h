@@ -19,7 +19,14 @@
 #ifndef UNIQUE_H_
 #define UNIQUE_H_
 
+#include <list>
 
+#include "catRef.h"
+#include "common.h"
+
+class Creature;
+class Object;
+class Player;
 
 class Lore {
 protected:

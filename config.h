@@ -31,6 +31,7 @@
 #include "size.h"
 #include "swap.h"
 #include "queue.h"
+#include "weather.h"
 
 #include "oldquest.h"
 
@@ -523,12 +524,15 @@ public:
     bstring logDbDatabase;
 //#endif
 
-    // Lottery
 private:
+    bool listing;
+
+    // Swap
     std::list<bstring> swapList;
     std::list<Swap> swapQueue;
     Swap    currentSwap;
-    
+
+    // Lottery
     std::list<LottoTicket*> tickets;
     bool    lotteryEnabled;
     int lotteryCycle;
@@ -666,6 +670,9 @@ public:
     int roomQueueSize();
     int monsterQueueSize();
     int objectQueueSize();
+
+    void setListing(bool isListing);
+    bool isListing(void);
 
 protected:
     void putQueue(qtag **qt, qtag **headptr, qtag **tailptr);

@@ -19,9 +19,12 @@
 #ifndef _WANDERINFO_H
 #define _WANDERINFO_H
 
+#include <map>
+
 #include "common.h"
 
-#include <map>
+class CatRef;
+class Player;
 
 class WanderInfo {
 public:

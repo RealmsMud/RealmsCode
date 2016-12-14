@@ -18,6 +18,14 @@
 #ifndef CALENDAR_H_
 #define CALENDAR_H_
 
+#include <list>
+
+#include "common.h"
+#include "season.h"
+#include "weather.h"
+
+class Player;
+
 // __..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..
 //
 //          cWeather

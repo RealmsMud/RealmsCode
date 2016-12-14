@@ -26,6 +26,9 @@
 #include <Python.h>
 #include <boost/python.hpp>
 
+#include "common.h"
+
+class MudObject;
 
 // Use the boost::python namespace
 using namespace boost::python;

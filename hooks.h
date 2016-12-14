@@ -18,6 +18,13 @@
 #ifndef _HOOKS_H
 #define _HOOKS_H
 
+#include <map>
+#include <set>
+
+class MudObject;
+
+#include "swap.h"
+
 class Hooks {
 public:
     Hooks();

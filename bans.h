@@ -18,6 +18,7 @@
 #ifndef BANS_H_
 #define BANS_H_
 
+#include "common.h"
 
 class Ban {
 public:

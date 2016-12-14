@@ -18,6 +18,11 @@
 #ifndef STAT_H_
 #define STAT_H_
 
+#include <map>
+
+#include "alphanum.hpp"
+#include "common.h"
+
 enum ModifierType {
     MOD_NONE = 0,
     MOD_CUR = 1,

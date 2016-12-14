@@ -27,20 +27,33 @@ namespace odbc {
 
 #endif //SQL_LOGGER
 
+#include <list>
+#include <map>
+
 // C Includes
 #include "pythonHandler.h"
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
 
+#include "catRef.h"
+#include "delayedAction.h"
+#include "money.h"
 #include "proc.h"
+#include "swap.h"
+#include "weather.h"
+//#include "money.h"
 
-class Player;
-class Group;
-class PythonHandler;
-class WebInterface;
-class Socket;
 class cmd;
-class ReportedMsdpVariable;
+class BaseRoom;
+class Creature;
+class Group;
+class Monster;
 class MsdpVariable;
+class Object;
+class Player;
+class PythonHandler;
+class ReportedMsdpVariable;
+class Socket;
+class WebInterface;
 
 
 //// Forward Declaration of PyObject

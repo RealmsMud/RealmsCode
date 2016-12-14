@@ -18,7 +18,10 @@
 #ifndef AREA_H
 #define AREA_H
 
+#include "catRef.h"
 #include "common.h"
+#include "swap.h"
+#include "season.h"
 #include "track.h"
 #include "wanderInfo.h"
 
@@ -30,12 +33,14 @@
 // we don't let too many AreaTrack objects hang around
 #define MAX_AREA_TRACK  100
 
+#include <list>
 #include <map>
 
 // forward declaration
 class Area;
 class AreaData;
 class AreaRoom;
+class BaseRoom;
 class Player;
 
 

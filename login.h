@@ -18,6 +18,11 @@
 #ifndef LOGIN_H
 #define LOGIN_H
 
+#include "common.h"
+
+class Player;
+class Socket;
+
 #define PASSWORD_MIN_LENGTH     5
 #define PASSWORD_MAX_LENGTH     35
 

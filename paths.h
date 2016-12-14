@@ -18,6 +18,9 @@
 #ifndef PATHS_H_
 #define PATHS_H_
 
+#include "bstring.h"
+#include "catRef.h"
+
 namespace Path {
     extern const char* Bin;
     extern const char* Log;

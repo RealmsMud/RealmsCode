@@ -19,8 +19,13 @@
 #ifndef MUDOBJECTS_H
 #define MUDOBJECTS_H
 
+#include <list>
 #include <map>
 #include <set>
+
+#include "delayedAction.h"
+#include "hooks.h"
+#include "effects.h"
 //#include <boost/unordered_map.hpp> // Gnu gcc specific, switch to <map>
 //#include <unordered_map>
 
@@ -34,15 +39,18 @@
 //}
 
 //typedef std::unordered_map<bstring, bstring> MultiMap;  // change to std::map
-class MudObject;
-class Player;
-class Monster;
-class UniqueRoom;
-class Object;
-class EffectInfo;
+class AreaRoom;
+class BaseRoom;
 class Creature;
+class EffectInfo;
+class Exit;
+class MudObject;
+class Monster;
+class Object;
+class Player;
+class UniqueRoom;
 
-#include "hooks.h"
+
 
 class MudObject {
 private:
@@ -138,8 +146,8 @@ public:
 
     bool equals(MudObject* other);
 
-    void readCreatures(xmlNodePtr curNode);
-    void readObjects(xmlNodePtr curNode);
+    void readCreatures(xmlNodePtr curNode, bool offline=false);
+    void readObjects(xmlNodePtr curNode, bool offline=false);
 
 // Delayed Actions
 protected:

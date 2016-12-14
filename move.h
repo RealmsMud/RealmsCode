@@ -16,6 +16,23 @@
  *
  */
 
+#ifndef REALMS_MOVE_H
+#define REALMS_MOVE_H
+
+#include <list>
+
+#include "bstring.h"
+
+class cmd;
+class AreaRoom;
+class BaseRoom;
+class Creature;
+class Container;
+class Exit;
+class MapMarker;
+class Player;
+class UniqueRoom;
+
 namespace Move {
     bool tooFarAway(BaseRoom* pRoom, BaseRoom* tRoom, bool track);
     bool tooFarAway(Creature *player, BaseRoom* room);
@@ -45,3 +62,5 @@ namespace Move {
     bool deletePortal(BaseRoom* room, Exit* exit, const Creature* leader=0, std::list<Creature*> *followers=0, bool initial=true);
     bool deletePortal(BaseRoom* room, bstring name, const Creature* leader=0, std::list<Creature*> *followers=0, bool initial=true);
 }
+
+#endif

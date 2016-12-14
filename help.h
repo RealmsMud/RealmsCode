@@ -19,6 +19,8 @@
 #ifndef HELP_H_
 #define HELP_H_
 
+#include "bstring.h"
+
 namespace Help {
      bstring loadHelpTemplate(const char* filename);
  }

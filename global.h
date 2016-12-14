@@ -19,6 +19,8 @@
 #ifndef GLOBAL_H_
 #define GLOBAL_H_
 
+#define MAX_DIMEN_ANCHORS   3
+
 // Size of exp array, also highest you can train
 const int MAXALVL = 40;
 const unsigned int MAX_ARMOR = 2000;
@@ -260,58 +262,6 @@ enum CustomColor {
     CUSTOM_COLOR_GUILD      = 16,
     MAX_CUSTOM_COLOR
 };
-
-enum WeatherString {
-    WEATHER_SUNRISE,
-    WEATHER_SUNSET,
-
-    WEATHER_EARTH_TREMBLES,
-    WEATHER_HEAVY_FOG,
-
-    WEATHER_BEAUTIFUL_DAY,
-    WEATHER_BRIGHT_SUN,
-    WEATHER_GLARING_SUN,
-    WEATHER_HEAT,
-
-    WEATHER_STILL,
-    WEATHER_LIGHT_BREEZE,
-    WEATHER_STRONG_WIND,
-    WEATHER_WIND_GUSTS,
-    WEATHER_GALE_FORCE,
-
-    WEATHER_CLEAR_SKIES,
-    WEATHER_LIGHT_CLOUDS,
-    WEATHER_THUNDERHEADS,
-
-    WEATHER_LIGHT_RAIN,
-    WEATHER_HEAVY_RAIN,
-    WEATHER_SHEETS_RAIN,
-    WEATHER_TORRENT_RAIN,
-
-    WEATHER_NO_MOON,
-    WEATHER_SLIVER_MOON,
-    WEATHER_HALF_MOON,
-    WEATHER_WAXING_MOON,
-    WEATHER_FULL_MOON
-};
-
-
-
-// make sure these stay updated with calendar.xml!
-enum Season {
-    NO_SEASON = 0,
-    SPRING =    1,
-    SUMMER =    2,
-    AUTUMN =    3,
-    WINTER =    4
-};
-
-// for bit flags, take (season-1)^2
-//   spring flag (1) = overflowing river
-//   summer flag (2) = ?
-//   autumn flag (4) = ?
-//   winter flag (8) = cold damage, no herbs
-
 
 
 // Religions
@@ -690,21 +640,6 @@ enum EffectAction {
 
     MAX_ACTION
 };
-
-
-enum Realm {
-    NO_REALM =  0,
-    MIN_REALM = 1,
-    EARTH =     1,
-    WIND =      2,
-    FIRE =      3,
-    WATER =     4,
-    ELEC =      5,
-    COLD =      6,
-
-    MAX_REALM
-};
-
 
 enum PropType {
     PROP_NONE = 0,

@@ -25,11 +25,13 @@
 
 //class sockaddr_in;
 // C++ Includes
+#include <list>
+#include <map>
 #include <queue>
 #include <string>
-#include <list>
 
 // Mud Includes
+#include "common.h"
 
 // Defines needed
 #define TELOPTS

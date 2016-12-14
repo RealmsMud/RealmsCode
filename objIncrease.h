@@ -19,6 +19,7 @@
 #ifndef _OBJINCREASE_H
 #define _OBJINCREASE_H
 
+#include "common.h"
 
 enum IncreaseType {
     UnknownIncrease =     0,

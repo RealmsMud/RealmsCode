@@ -18,6 +18,16 @@
 #ifndef MSTRUCT_H
 #define MSTRUCT_H
 
+#include <list>
+
+#include "anchor.h"
+#include "delayedAction.h"
+#include "dice.h"
+#include "global.h"
+#include "money.h"
+#include "realm.h"
+
+
 class Object;
 class Creature;
 class Player;
@@ -67,41 +77,7 @@ enum EffectParentType {
     EFFECT_EXIT
 };
 
-typedef std::list<EffectInfo*> EffectList;
-// this class holds effect information and makes effects portable
-// across multiple objects
-class Effects {
-public:
-    void    load(xmlNodePtr rootNode, MudObject* pParent=0);
-    void    save(xmlNodePtr rootNode, const char* name) const;
-    EffectInfo* getEffect(const bstring& effect) const;
-    EffectInfo* getExactEffect(const bstring& effect) const;
-    bool    isEffected(const bstring& effect, bool exactMatch = false) const;
-    bool    isEffected(EffectInfo* effect) const;
-    //EffectInfo* addEffect(const bstring& effect, MudObject* applier, bool show, MudObject* pParent=0, const Creature* onwer=0, bool keepApplier=false);
-    EffectInfo* addEffect(EffectInfo* newEffect, bool show, MudObject* parent=0, bool keepApplier=false);
-    EffectInfo* addEffect(const bstring& effect, long duration, int strength, MudObject* applier = nullptr, bool show = true, MudObject* pParent=0, const Creature* onwer=0, bool keepApplier=false);
-    bool    removeEffect(const bstring& effect, bool show, bool remPerm, MudObject* fromApplier=0);
-    bool    removeEffect(EffectInfo* toDel, bool show);
-    bool    removeOppositeEffect(const EffectInfo *effect);
-    void    removeAll();
-    void    removeOwner(const Creature* owner);
-    void    copy(const Effects* source, MudObject* pParent=0);
-    bool    hasPoison() const;
-    bool    removePoison();
-    bool    hasDisease() const;
-    bool    removeDisease();
-    bool    removeCurse();
-    bstring getEffectsString(const Creature* viewer);
-    bstring getEffectsList() const;
 
-    void    pulse(time_t t, MudObject* pParent=0);
-
-    EffectList effectList;
-};
-
-#include "money.h"
-#include "dice.h"
 
 class MudFlag {
 public:
@@ -208,23 +184,6 @@ public:
 } daily;
 
 
-// Timed operation struct
-typedef struct lasttime {
-public:
-    lasttime() { interval = ltime = misc = 0; };
-    long        interval;
-    long        ltime;
-    short       misc;
-} lasttime;
-typedef struct crlasttime {
-public:
-    crlasttime() { interval = ltime = 0; };
-    long        interval;
-    long        ltime;
-    CatRef      cr;
-} crlasttime;
-
-
 
 typedef struct lockout {
 public:
@@ -233,10 +192,6 @@ public:
     char        password[20];
     char        userid[9];
 } lockout;
-
-
-
-#include "delayedAction.h"
 
 
 typedef struct osp_t {
@@ -264,7 +219,6 @@ public:
 } saves;
 
 
-#include "anchor.h"
 
 // These are special defines to reuse creature structure while still
 // making the code readable.

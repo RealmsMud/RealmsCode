@@ -18,6 +18,10 @@
 #ifndef CLAN_H_
 #define CLAN_H_
 
+#include <map>
+
+#include "common.h"
+
 class Clan {
 public:
     Clan();

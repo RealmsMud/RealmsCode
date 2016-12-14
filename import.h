@@ -18,6 +18,9 @@
 #ifndef IMPORT_H_
 #define IMPORT_H_
 
+class cmd;
+class Player;
+
 // Function Prototypes
 int lookup(Player* player, cmd* cmnd);
 int restore(Player* player, cmd* cmnd);

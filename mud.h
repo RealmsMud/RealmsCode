@@ -352,8 +352,6 @@
  */
 
 
-#define MAX_DIMEN_ANCHORS   3
-
 // toll to charge in case none is set on exit
 #define DEFAULT_TOLL        100
 
@@ -439,8 +437,6 @@ extern Server *gServer;
 
 
 extern int    bHavePort;
-
-typedef int (*SONGFN)();
 
 #ifndef MIGNORE
 extern int Crash;

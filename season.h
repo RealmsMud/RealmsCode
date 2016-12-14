@@ -1,6 +1,6 @@
 /*
- * asynch.h
- *   Asynchronous communication
+ * season.h.h
+ *   Season
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -16,27 +16,24 @@
  *
  */
 
-#ifndef _ASYNCH_H
-#define _ASYNCH_H
+#ifndef REALMSCODE_SEASON_H
+#define REALMSCODE_SEASON_H
 
-#include "proc.h"
-
-class Player;
-
-enum AsyncResult {
-    AsyncExternal,
-    AsyncLocal
+// make sure these stay updated with calendar.xml!
+enum Season {
+    NO_SEASON = 0,
+    SPRING =    1,
+    SUMMER =    2,
+    AUTUMN =    3,
+    WINTER =    4
 };
 
-
-class Async {
-protected:
-    int fds[2];
-public:
-    Async();
-    AsyncResult branch(const Player* player, childType type);
-};
+// for bit flags, take (season-1)^2
+//   spring flag (1) = overflowing river
+//   summer flag (2) = ?
+//   autumn flag (4) = ?
+//   winter flag (8) = cold damage, no herbs
 
 
-#endif  /* _ASYNCH_H */
 
+#endif //REALMSCODE_SEASON_H

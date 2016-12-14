@@ -12,8 +12,26 @@ CMD ["/sbin/my_init"]
 
 # ...put your own build instructions here...
 RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold"
-RUN apt-get install -y clang libxml2-dev cmake make libboost-python-dev libboost-filesystem-dev zlib1g-dev \
-                             python3-dev libaspell-dev libpspell-dev gdb
+RUN apt-get install -y --no-install-recommends install \
+    bash-completion \
+    build-essential \
+    cmake \
+    cmake-curses-gui \
+    coreutils \
+    clang \
+    gcc \
+    g++ \
+    gdb \
+    git \
+    libxml2-dev \
+    libboost-python-dev \
+    libboost-filesystem-dev \
+    make \
+    python3 \
+    python3-dev \
+    libaspell-dev \
+    libpspell-dev \
+    zlib1g-dev \
 
 #sudo apt-get update && sudo apt-get install c
 

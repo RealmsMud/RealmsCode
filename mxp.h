@@ -19,6 +19,7 @@
 #ifndef MXP_H
 #define MXP_H
 
+#include "common.h"
 
 class MxpElement {
 public:

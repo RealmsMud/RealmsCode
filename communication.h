@@ -18,6 +18,15 @@
 #ifndef COMM_H
 #define COMM_H
 
+#include "commands.h"
+#include "common.h"
+#include "flags.h"
+#include "proto.h"
+
+class Creature;
+class Player;
+class Socket;
+
 // these are the types of communication - each has its own set of traits
 
 // the following defines are used in communicateWith

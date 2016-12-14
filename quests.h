@@ -19,6 +19,16 @@
 #ifndef QUESTS_H_
 #define QUESTS_H_
 
+#include <list>
+#include <map>
+
+#include "catRef.h"
+#include "money.h"
+
+class Player;
+class Monster;
+class Object;
+class UniqueRoom;
 
 class QuestCatRef : public CatRef {
 public:

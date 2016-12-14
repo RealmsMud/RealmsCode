@@ -19,6 +19,15 @@
 #ifndef _STATISTICS_H
 #define _STATISTICS_H
 
+#include <map>
+
+#include "common.h"
+
+class Creature;
+class Monster;
+class Object;
+class Player;
+
 
 class LevelInfo {
 public:

@@ -19,7 +19,11 @@
 #ifndef _BANK_H
 #define _BANK_H
 
+class BaseRoom;
+class cmd;
 class Guild;
+class Monster;
+class Player;
 
 namespace Bank {
     bool canSee(const Player* player);

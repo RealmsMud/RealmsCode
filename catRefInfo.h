@@ -19,6 +19,11 @@
 #ifndef _CATREFINFO_H
 #define _CATREFINFO_H
 
+#include <map>
+
+#include "common.h"
+#include "season.h"
+#include "swap.h"
 
 class cWeather;
 class cSeason;

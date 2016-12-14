@@ -18,52 +18,31 @@
 #ifndef CREATURES_H_
 #define CREATURES_H_
 
-#include "damage.h"
-#include "threat.h"
-#include "group.h"
+#include <map>
+
+#include "carry.h"
+#include "container.h"
+#include "common.h"
 #include "creatureStreams.h"
+#include "damage.h"
+#include "fighters.h"
+#include "global.h"
+#include "group.h"
+#include "lasttime.h"
+#include "location.h"
+#include "magic.h"
+#include "mudObject.h"
+#include "skills.h"
+#include "structs.h"
+#include "range.h"
+#include "realm.h"
+#include "threat.h"
 
-enum mType {
-    INVALID        = -1,
-    PLAYER          = 0,
-    MONSTER         = 1,
-
-    NPC             = 2,
-    HUMANOID        = 2,
-
-    GOBLINOID       = 3,
-    MONSTROUSHUM    = 4,
-    GIANTKIN        = 5,
-    ANIMAL          = 6,
-    DIREANIMAL      = 7,
-    INSECT          = 8,
-    INSECTOID       = 9,
-    ARACHNID        = 10,
-    REPTILE         = 11,
-    DINOSAUR        = 12,
-    AUTOMATON       = 13,
-    AVIAN           = 14,
-    FISH            = 15,
-    PLANT           = 16,
-    DEMON           = 17,
-    DEVIL           = 18,
-    DRAGON          = 19,
-    BEAST           = 20,
-    MAGICALBEAST    = 21,
-    GOLEM           = 22,
-    ETHEREAL        = 23,
-    ASTRAL          = 24,
-    GASEOUS         = 25,
-    ENERGY          = 26,
-    FAERIE          = 27,
-    DEVA            = 28,
-    ELEMENTAL       = 29,
-    PUDDING         = 30,
-    SLIME           = 31,
-    UNDEAD          = 32,
-
-    MAX_MOB_TYPES
-};
+class cmd;
+class Object;
+class Skill;
+class Socket;
+class Song;
 
 #include "monType.h"
 
@@ -386,7 +365,7 @@ public:
     void saveSkills(xmlNodePtr rootNode) const;
     void saveFactions(xmlNodePtr rootNode) const;
     void saveAttacks(xmlNodePtr rootNode) const;
-    int readFromXml(xmlNodePtr rootNode);
+    int readFromXml(xmlNodePtr rootNode, bool offline=false);
     void loadAttacks(xmlNodePtr rootNode);
     void loadFactions(xmlNodePtr rootNode);
     bool loadFaction(xmlNodePtr rootNode);
@@ -773,7 +752,7 @@ public:
     Monster& operator=(const Monster& cr);
     bool operator< (const Monster& t) const;
     ~Monster();
-    void readXml(xmlNodePtr curNode);
+    void readXml(xmlNodePtr curNode, bool offline=false);
     void saveXml(xmlNodePtr curNode) const;
     int saveToFile();
     void validateId();
@@ -999,7 +978,7 @@ public:
     int save(bool updateTime=false, LoadType saveType=LS_NORMAL);
     int saveToFile(LoadType saveType=LS_NORMAL);
     void loadAnchors(xmlNodePtr curNode);
-    void readXml(xmlNodePtr curNode);
+    void readXml(xmlNodePtr curNode, bool offline=false);
     void saveXml(xmlNodePtr curNode) const;
     void bug(const char *fmt, ...) const;
     void validateId();

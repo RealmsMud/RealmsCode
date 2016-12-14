@@ -19,6 +19,10 @@
 #ifndef _FISHING_H
 #define _FISHING_H
 
+#include <list>
+
+#include "catRef.h"
+#include "common.h"
 
 class FishingItem {
 public:

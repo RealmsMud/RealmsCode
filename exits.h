@@ -19,9 +19,13 @@
 #ifndef _EXITS_H
 #define _EXITS_H
 
-#include "common.h"
 #include "area.h"
+#include "common.h"
+#include "effects.h"
+#include "lasttime.h"
 #include "location.h"
+#include "mudObject.h"
+#include "swap.h"
 
 enum Direction {
     NoDirection = 0,
@@ -45,7 +49,7 @@ public:
     ~Exit();
     bool operator< (const MudObject& t) const;
 
-    int readFromXml(xmlNodePtr rootNode, BaseRoom* room);
+    int readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline=false);
     int saveToXml(xmlNodePtr parentNode) const;
 
     void escapeText();

@@ -19,6 +19,8 @@
 #ifndef _CARRY_H
 #define _CARRY_H
 
+#include "catRef.h"
+#include "common.h"
 
 class Carry {
 public:

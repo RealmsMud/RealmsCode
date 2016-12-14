@@ -12,7 +12,11 @@ find_package(PythonLibs 3.4 REQUIRED)
 find_package(ASPELL REQUIRED)
 find_package(PythonInterp)
 find_package(PythonLibs)
-find_package(Boost COMPONENTS python-py35 system filesystem REQUIRED)
+IF(APPLE)
+    find_package(Boost COMPONENTS python system filesystem REQUIRED)
+ELSE()
+    find_package(Boost COMPONENTS python-py35 system filesystem REQUIRED)
+ENDIF()
 
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
@@ -80,6 +84,7 @@ set(COMMON_SOURCE_FILES
     command5.cpp
     commands.h
     commerce.cpp
+    common.h
     communication.cpp
     communication.h
     config.cpp
@@ -152,6 +157,7 @@ set(COMMON_SOURCE_FILES
     import.cpp
     import.h
     io.cpp
+    lasttime.h
     levelGain.cpp
     levelGain.h
     location.cpp
@@ -205,6 +211,7 @@ set(COMMON_SOURCE_FILES
     playerTitle.h
     post.cpp
     prefs.cpp
+    proc.h
     property.cpp
     property.h
     proto.h
@@ -220,11 +227,13 @@ set(COMMON_SOURCE_FILES
     raceData.h
     range.cpp
     range.h
+    realm.h
     realms.cpp
     rogues.cpp
     room.cpp
     rooms.cpp
     rooms.h
+    season.h
     security.cpp
     server.cpp
     server.h
@@ -287,6 +296,7 @@ set(COMMON_SOURCE_FILES
     wanderInfo.h
     warriors.cpp
     watchers.cpp
+    weather.h
     weaponless.cpp
     web.cpp
     web.h

@@ -18,6 +18,12 @@
 #ifndef SKILLS_H_
 #define SKILLS_H_
 
+#include <list>
+
+#include "global.h"
+#include "structs.h"
+#include "timer.h"
+
 class Skill;
 
 typedef enum {

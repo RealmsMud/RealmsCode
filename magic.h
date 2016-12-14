@@ -18,6 +18,12 @@
 #ifndef MAGIC_H_
 #define MAGIC_H_
 
+#include <list>
+
+#include "global.h"
+#include "realm.h"
+#include "structs.h"
+
 enum MagicType {
     Arcane,
     Divine,

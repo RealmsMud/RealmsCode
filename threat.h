@@ -19,9 +19,13 @@
 #ifndef THREAT_H_
 #define THREAT_H_
 
-#include <set>
 #include <functional>
+#include <map>
+#include <set>
 
+#include "common.h"
+
+class Creature;
 
 class ThreatEntry {
 public:

@@ -20,8 +20,28 @@
 
 #include <stdarg.h>
 
+class cmd;
+
+class AreaRoom;
+class AreaZone;
+class BaseRoom;
+class CatRefInfo;
+class Creature;
+class GuildCreation;
+class Location;
+class MapMarker;
+class MudObject;
+class Object;
+class Player;
 class Ship;
 class ShipStop;
+class Socket;
+class TileInfo;
+
+#include "objects.h"
+#include "oldquest.h"
+#include "structs.h"
+
 
 // Stats
 double getConBonusPercentage(int pCon);

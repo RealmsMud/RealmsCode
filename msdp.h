@@ -21,6 +21,11 @@
 
 #include <sys/time.h>
 
+#include "common.h"
+#include "timer.h"
+
+class Socket;
+
 class MsdpVariable {
 protected:
     void            init();

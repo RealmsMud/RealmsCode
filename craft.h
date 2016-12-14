@@ -19,6 +19,16 @@
 #ifndef CRAFT_H_
 #define CRAFT_H_
 
+#include <list>
+
+#include "catRef.h"
+#include "common.h"
+#include "size.h"
+
+class Player;
+class Object;
+
+
 class Recipe {
 public:
     Recipe();

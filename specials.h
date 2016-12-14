@@ -30,6 +30,14 @@
 #ifndef SPECIALS_H_
 #define SPECIALS_H_
 
+#include "common.h"
+#include "dice.h"
+#include "lasttime.h"
+#include "realm.h"
+
+class BaseRoom;
+class Creature;
+
 enum SpecialType {
     SPECIAL_NO_TYPE     = 0,
     SPECIAL_EARTH       = EARTH,    // 1 - Realm based breath weapons

@@ -19,6 +19,13 @@
 #ifndef _SONGS_H
 #define _SONGS_H
 
+#include <list>
+
+#include "common.h"
+#include "global.h"
+#include "structs.h"
+
+class MudObject;
 
 // ******************
 //   Song

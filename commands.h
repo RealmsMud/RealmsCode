@@ -19,6 +19,20 @@
 #ifndef COMMANDS_H_
 #define COMMANDS_H_
 
+#include "common.h"
+#include "global.h"
+
+class BaseRoom;
+class Creature;
+class cmd;
+class Exit;
+class Guild;
+class Monster;
+class MudObject;
+class Object;
+class Player;
+class Socket;
+
 int orderPet(Player* player, cmd* cmnd);
 
 

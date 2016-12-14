@@ -19,7 +19,13 @@
 #ifndef _ALCHEMY_H
 #define _ALCHEMY_H
 
-//class XmlNodePtr;
+#include <map>
+#include <vector>
+
+#include "common.h"
+
+class Creature;
+class Object;
 
 typedef std::vector<Object*> HerbVector;
 typedef std::map<bstring, HerbVector > HerbMap;

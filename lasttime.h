@@ -1,6 +1,6 @@
 /*
- * asynch.h
- *   Asynchronous communication
+ * lasttime.h
+ *   Lasttime
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -16,27 +16,28 @@
  *
  */
 
-#ifndef _ASYNCH_H
-#define _ASYNCH_H
+#ifndef REALMSCODE_LASTTIME_H
+#define REALMSCODE_LASTTIME_H
 
-#include "proc.h"
+#include "catRef.h"
 
-class Player;
-
-enum AsyncResult {
-    AsyncExternal,
-    AsyncLocal
-};
-
-
-class Async {
-protected:
-    int fds[2];
+// Timed operation struct
+typedef struct lasttime {
 public:
-    Async();
-    AsyncResult branch(const Player* player, childType type);
-};
+    lasttime() { interval = ltime = misc = 0; };
+    long        interval;
+    long        ltime;
+    short       misc;
+} lasttime;
+
+typedef struct crlasttime {
+public:
+    crlasttime() { interval = ltime = 0; };
+    long        interval;
+    long        ltime;
+    CatRef      cr;
+} crlasttime;
 
 
-#endif  /* _ASYNCH_H */
 
+#endif //REALMSCODE_LASTTIME_H

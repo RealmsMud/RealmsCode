@@ -197,7 +197,7 @@ bool Server::init() {
     if(rebooting) {
         printf("Doing a reboot.\n");
         finishReboot();
-    } else {
+    } else if (!gConfig->isListing()) {
         addListenPort(Port);
         char filename[80];
         snprintf(filename, 80, "%s/reboot.xml", Path::Config);
@@ -211,12 +211,16 @@ bool Server::init() {
 //********************************************************************
 
 void Server::installSignalHandlers() {
-    signal(SIGABRT, crash); // abnormal termination triggered by abort call
-    printf(".");
-    signal(SIGFPE, crash);  // floating point exception
-    printf(".");
-    signal(SIGSEGV, crash); // segment violation
-    printf(".");
+    if (!gConfig->isListing()) {
+        signal(SIGABRT, crash); // abnormal termination triggered by abort call
+        printf(".");
+        signal(SIGFPE, crash);  // floating point exception
+        printf(".");
+        signal(SIGSEGV, crash); // segment violation
+        printf(".");
+    } else {
+        printf("Ignoring crash handlers");
+    }
     signal(SIGPIPE, SIG_IGN);
     printf(".");
     signal(SIGTERM, SIG_IGN);

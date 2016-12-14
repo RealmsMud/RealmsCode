@@ -24,12 +24,21 @@
 // with negative initial faction to reach 1250 because this will give them the
 // equivalent of 1k. This also applies to initial positive faction.
 
+#include <map>
 
-class CrtFaction {
-public:
-    bstring name;
-    int     value;
-};
+#include "common.h"
+#include "global.h"
+#include "money.h"
+
+class BaseRoom;
+class Monster;
+class Player;
+
+//class CrtFaction {
+//public:
+//    bstring name;
+//    int     value;
+//};
 
 
 class FactionRegard {

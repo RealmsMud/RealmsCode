@@ -23,16 +23,18 @@
 
 #include <set>
 
-class Player;
-class Monster;
-class Object;
+class AreaRoom;
+class BaseRoom;
 class Containable;
 class Container;
-class MudObject;
-class BaseRoom;
-class AreaRoom;
-class UniqueRoom;
 class EffectInfo;
+class Monster;
+class MudObject;
+class Object;
+class Player;
+class Socket;
+class UniqueRoom;
+
 class cmd;
 
 struct PlayerPtrLess : public std::binary_function<const Player*, const Player*, bool> {

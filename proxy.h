@@ -19,6 +19,11 @@
 #ifndef PROXY_H_
 #define PROXY_H_
 
+#include <map>
+
+#include "common.h"
+
+class Player;
 class ProxyAccess;
 
 typedef std::multimap<bstring, ProxyAccess> ProxyMultiMap;

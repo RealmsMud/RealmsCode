@@ -18,7 +18,14 @@
 #ifndef GUILDS_H_
 #define GUILDS_H_
 
+#include <map>
+#include <list>
 
+#include "common.h"
+#include "money.h"
+
+class cmd;
+class Player;
 class Property;
 class UniqueRoom;
 

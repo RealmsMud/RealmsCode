@@ -19,6 +19,7 @@
 #ifndef WEB_H_
 #define WEB_H_
 
+#include "bstring.h"
 
 bstring webwho();
 void updateRecentActivity();

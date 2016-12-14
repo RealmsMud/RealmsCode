@@ -19,6 +19,16 @@
 #ifndef _PLAYERCLASS_H
 #define _PLAYERCLASS_H
 
+#include <list>
+#include <map>
+
+#include "common.h"
+#include "dice.h"
+
+class LevelGain;
+class Player;
+class PlayerTitle;
+class SkillGain;
 
 // Information about a player class
 class PlayerClass {

@@ -21,9 +21,6 @@
 #include "config.h"
 #include "server.h"
 
-// Used to avoid loading some things if we're running a list instead of the server
-bool listing = false;
-
 void handle_args(int argc, char *argv[]);
 void startup_mordor(void);
 

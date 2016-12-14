@@ -19,6 +19,15 @@
 #ifndef GROUP_H_
 #define GROUP_H_
 
+#include <list>
+
+class cmd;
+class Creature;
+class Player;
+
+#include "common.h"
+#include "size.h"
+
 enum GroupStatus {
     GROUP_NO_STATUS,
     GROUP_INVITED,

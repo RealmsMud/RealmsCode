@@ -108,13 +108,13 @@ bool loadPlayer(const bstring name, Player** player, LoadType loadType) {
 //                      loadMonster
 //*********************************************************************
 
-bool loadMonster(int index, Monster ** pMonster) {
+bool loadMonster(int index, Monster ** pMonster, bool offline) {
     CatRef cr;
     cr.id = index;
-    return(loadMonster(cr, pMonster));
+    return(loadMonster(cr, pMonster, offline));
 }
 
-bool loadMonster(const CatRef cr, Monster ** pMonster) {
+bool loadMonster(const CatRef cr, Monster ** pMonster, bool offline) {
     if(!validMobId(cr))
         return(false);
 
@@ -126,7 +126,7 @@ bool loadMonster(const CatRef cr, Monster ** pMonster) {
     } else {
         // Otherwise load the monster and return a pointer to the newly loaded monster
         // Load the creature from it's file
-        if(!loadMonsterFromFile(cr, pMonster))
+        if(!loadMonsterFromFile(cr, pMonster, offline))
             return(false);
         gConfig->addMonsterQueue(cr, pMonster);
     }
@@ -148,13 +148,13 @@ bool loadMonster(const CatRef cr, Monster ** pMonster) {
 //                      loadObject
 //*********************************************************************
 
-bool loadObject(int index, Object** pObject) {
+bool loadObject(int index, Object** pObject, bool offline) {
     CatRef cr;
     cr.id = index;
-    return(loadObject(cr, pObject));
+    return(loadObject(cr, pObject, offline));
 }
 
-bool loadObject(const CatRef cr, Object** pObject) {
+bool loadObject(const CatRef cr, Object** pObject, bool offline) {
     if(!validObjId(cr))
         return(false);
 
@@ -168,7 +168,7 @@ bool loadObject(const CatRef cr, Object** pObject) {
     // Otherwise load the object and return a pointer to the newly loaded object
     else {
         // Load the object from it's file
-        if(!loadObjectFromFile(cr, pObject))
+        if(!loadObjectFromFile(cr, pObject, offline))
             return(false);
         gConfig->addObjectQueue(cr, pObject);
     }
@@ -191,13 +191,13 @@ bool loadObject(const CatRef cr, Object** pObject) {
 //                      loadRoom
 //*********************************************************************
 
-bool loadRoom(int index, UniqueRoom **pRoom) {
+bool loadRoom(int index, UniqueRoom **pRoom, bool offline) {
     CatRef  cr;
     cr.id = index;
-    return(loadRoom(cr, pRoom));
+    return(loadRoom(cr, pRoom, offline));
 }
 
-bool loadRoom(const CatRef cr, UniqueRoom **pRoom) {
+bool loadRoom(const CatRef cr, UniqueRoom **pRoom, bool offline) {
     if(!validRoomId(cr))
         return(false);
 
@@ -207,10 +207,13 @@ bool loadRoom(const CatRef cr, UniqueRoom **pRoom) {
         gConfig->getRoomQueue(cr, pRoom);
     } else {
         // Otherwise load the room and return it
-        if(!loadRoomFromFile(cr, pRoom))
+        if(!loadRoomFromFile(cr, pRoom, offline))
             return(false);
         gConfig->addRoomQueue(cr, pRoom);
-        (*pRoom)->registerMo();
+
+        if(offline == false) {
+            (*pRoom)->registerMo();
+        }
     }
     return(true);
 }
@@ -219,7 +222,7 @@ bool loadRoom(const CatRef cr, UniqueRoom **pRoom) {
 //                      loadMonsterFromFile
 //*********************************************************************
 
-bool loadMonsterFromFile(const CatRef cr, Monster **pMonster, bstring filename) {
+bool loadMonsterFromFile(const CatRef cr, Monster **pMonster, bstring filename, bool offline) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     int     num=0;
@@ -244,7 +247,7 @@ bool loadMonsterFromFile(const CatRef cr, Monster **pMonster, bstring filename) 
             merror("loadMonsterFromFile", FATAL);
         (*pMonster)->setVersion(rootNode);
 
-        (*pMonster)->readFromXml(rootNode);
+        (*pMonster)->readFromXml(rootNode, offline);
         (*pMonster)->setId("-1");
 
         if((*pMonster)->flagIsSet(M_TALKS)) {
@@ -262,7 +265,7 @@ bool loadMonsterFromFile(const CatRef cr, Monster **pMonster, bstring filename) 
 //                      loadObjectFromFile
 //*********************************************************************
 
-bool loadObjectFromFile(const CatRef cr, Object** pObject) {
+bool loadObjectFromFile(const CatRef cr, Object** pObject, bool offline) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     int         num;
@@ -289,7 +292,7 @@ bool loadObjectFromFile(const CatRef cr, Object** pObject) {
             merror("loadObjectFile", FATAL);
         xml::copyPropToBString((*pObject)->version, rootNode, "Version");
 
-        (*pObject)->readFromXml(rootNode);
+        (*pObject)->readFromXml(rootNode, 0, offline);
         (*pObject)->setId("-1");
     }
 
@@ -303,7 +306,7 @@ bool loadObjectFromFile(const CatRef cr, Object** pObject) {
 //*********************************************************************
 // if we're loading only from a filename, get CatRef from file
 
-bool loadRoomFromFile(const CatRef cr, UniqueRoom **pRoom, bstring filename) {
+bool loadRoomFromFile(const CatRef cr, UniqueRoom **pRoom, bstring filename, bool offline) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     int         num;
@@ -325,7 +328,7 @@ bool loadRoomFromFile(const CatRef cr, UniqueRoom **pRoom, bstring filename) {
             merror("loadRoomFromFile", FATAL);
         (*pRoom)->setVersion(xml::getProp(rootNode, "Version"));
 
-        (*pRoom)->readFromXml(rootNode);
+        (*pRoom)->readFromXml(rootNode, offline);
         toReturn = true;
     }
     xmlFreeDoc(xmlDoc);
@@ -344,7 +347,7 @@ int convertProf(Creature* player, Realm realm) {
     return(skill);
 }
 
-int Creature::readFromXml(xmlNodePtr rootNode) {
+int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
     xmlNodePtr curNode;
     int i;
     CreatureClass c = CreatureClass::NONE;
@@ -470,10 +473,10 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
             loadSavingThrows(curNode, saves);
         }
         else if(NODE_NAME(curNode, "Inventory")) {
-            readObjects(curNode);
+            readObjects(curNode, offline);
         }
         else if(NODE_NAME(curNode, "Pets")) {
-            readCreatures(curNode);
+            readCreatures(curNode, offline);
         }
         else if(NODE_NAME(curNode, "AreaRoom")) gConfig->areaInit(this, curNode);
         else if(NODE_NAME(curNode, "Size")) setSize(whatSize(xml::toNum<int>(curNode)));
@@ -481,10 +484,10 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 
 
         // code for only players
-        else if(pPlayer) pPlayer->readXml(curNode);
+        else if(pPlayer) pPlayer->readXml(curNode, offline);
 
         // code for only monsters
-        else if(mMonster) mMonster->readXml(curNode);
+        else if(mMonster) mMonster->readXml(curNode, offline);
 
         curNode = curNode->next;
     }
@@ -624,7 +627,7 @@ int Creature::readFromXml(xmlNodePtr rootNode) {
 //                      readXml
 //*********************************************************************
 
-void Monster::readXml(xmlNodePtr curNode) {
+void Monster::readXml(xmlNodePtr curNode, bool offline) {
     xmlNodePtr childNode;
 
     if(NODE_NAME(curNode, "Plural")) xml::copyToBString(plural, curNode);
@@ -704,7 +707,7 @@ void Monster::readXml(xmlNodePtr curNode) {
 //                      readXml
 //*********************************************************************
 
-void Player::readXml(xmlNodePtr curNode) {
+void Player::readXml(xmlNodePtr curNode, bool offline) {
     xmlNodePtr childNode;
 
     if(NODE_NAME(curNode, "Birthday")) {
@@ -998,7 +1001,7 @@ void Effects::load(xmlNodePtr rootNode, MudObject* pParent) {
 //*********************************************************************
 // Reads an object from the given xml document and root node
 
-int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList) {
+int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList, bool offline) {
     xmlNodePtr curNode, childNode;
     info.load(rootNode);
     info.id = xml::getIntProp(rootNode, "Num");
@@ -1079,7 +1082,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList) {
             loadLastTimes(curNode, lasttime);
         }
         else if(NODE_NAME(curNode, "SubItems")) {
-            readObjects(curNode);
+            readObjects(curNode, offline);
         }
         else if(NODE_NAME(curNode, "Compass")) {
             if(!compass)
@@ -1153,7 +1156,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList) {
 //*********************************************************************
 // Reads a room from the given xml document and root node
 
-int UniqueRoom::readFromXml(xmlNodePtr rootNode) {
+int UniqueRoom::readFromXml(xmlNodePtr rootNode, bool offline) {
     xmlNodePtr curNode;
 //  xmlNodePtr childNode;
 
@@ -1201,13 +1204,13 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode) {
             loadLastTimes(curNode, lasttime);
         }
         else if(NODE_NAME(curNode, "Objects")) {
-            readObjects(curNode);
+            readObjects(curNode, offline);
         }
         else if(NODE_NAME(curNode, "Creatures")) {
-            readCreatures(curNode);
+            readCreatures(curNode, offline);
         }
         else if(NODE_NAME(curNode, "Exits")) {
-            readExitsXml(curNode);
+            readExitsXml(curNode, offline);
         }
         else if(NODE_NAME(curNode, "Effects")) effects.load(curNode, this);
         else if(NODE_NAME(curNode, "Size")) size = whatSize(xml::toNum<int>(curNode));
@@ -1234,7 +1237,10 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode) {
     }
 
     escapeText();
-    addEffectsIndex();
+
+    if(offline == false)
+        addEffectsIndex();
+
     return(0);
 }
 
@@ -1243,7 +1249,7 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode) {
 //*********************************************************************
 // Reads a exit from the given xml document and root node
 
-int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room) {
+int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline) {
     xmlNodePtr curNode;
 
     setName(xml::getProp(rootNode, "Name"));
@@ -1301,7 +1307,7 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room) {
 //*********************************************************************
 // Reads in objects and objrefs and adds them to the parent
 
-void MudObject::readObjects(xmlNodePtr curNode) {
+void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
     xmlNodePtr childNode = curNode->children;
     Object* object=0, *object2=0;
     CatRef  cr;
@@ -1343,7 +1349,7 @@ void MudObject::readObjects(xmlNodePtr curNode) {
                         // These two flags might be cleared on the reference object, so let that object set them if it wants to
                         object->clearFlag(O_HIDDEN);
                         object->clearFlag(O_CURSED);
-                        object->readFromXml(childNode, idList);
+                        object->readFromXml(childNode, idList, offline);
                     }
                 }
             }
@@ -1399,7 +1405,7 @@ void MudObject::readObjects(xmlNodePtr curNode) {
 //*********************************************************************
 // Reads in creatures and crts refs and adds them to the parent
 
-void MudObject::readCreatures(xmlNodePtr curNode) {
+void MudObject::readCreatures(xmlNodePtr curNode, bool offline) {
     xmlNodePtr childNode = curNode->children;
     Monster *mob=0;
     CatRef  cr;
@@ -1449,7 +1455,7 @@ void MudObject::readCreatures(xmlNodePtr curNode) {
 //                      readExitsXml
 //*********************************************************************
 
-void BaseRoom::readExitsXml(xmlNodePtr curNode) {
+void BaseRoom::readExitsXml(xmlNodePtr curNode, bool offline) {
     xmlNodePtr childNode = curNode->children;
     Exit* ext=0;
     AreaRoom* aRoom = getAsAreaRoom();
@@ -1459,7 +1465,7 @@ void BaseRoom::readExitsXml(xmlNodePtr curNode) {
             ext = new Exit;
             if(!ext)
                 merror("loadExitsXml", FATAL);
-            ext->readFromXml(childNode, this);
+            ext->readFromXml(childNode, this, offline);
 
             if(!ext->flagIsSet(X_PORTAL)) {
                 // moving cardinal exit on the overland?
