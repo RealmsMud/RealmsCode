@@ -17,6 +17,8 @@
  */
 
 // C Includes
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
 #include <sys/socket.h> // Needs: bind, std::listen, socket, AF_INET
 #include <fcntl.h>      // Needs: fnctl

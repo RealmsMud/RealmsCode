@@ -7,6 +7,8 @@
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
+#include <math.h>
+
 #include "bstring.h"
 
 #endif //REALMSCODE_COMMON_H

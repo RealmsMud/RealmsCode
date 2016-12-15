@@ -1130,13 +1130,13 @@ bool EffectInfo::runScript(const bstring& pyScript, MudObject* applier) {
 
     try {
 
-       object localNamespace( (handle<>(PyDict_New())));
+        boost::python::object localNamespace( (boost::python::handle<>(PyDict_New())));
 
-        object effectModule( (handle<>(PyImport_ImportModule("effectLib"))) );
+        boost::python::object effectModule( (boost::python::handle<>(PyImport_ImportModule("effectLib"))) );
 
         localNamespace["effectLib"] = effectModule;
 
-        localNamespace["effect"] = ptr(this);
+        localNamespace["effect"] = boost::python::ptr(this);
 
         // Default retVal is true
         localNamespace["retVal"] = true;
@@ -1147,11 +1147,11 @@ bool EffectInfo::runScript(const bstring& pyScript, MudObject* applier) {
 
         gServer->runPython(pyScript, localNamespace);
 
-        bool retVal = extract<bool>(localNamespace["retVal"]);
+        bool retVal = boost::python::extract<bool>(localNamespace["retVal"]);
         //std::cout << "runScript returning: " << retVal << std::endl;
         return(retVal);
     }
-    catch( error_already_set) {
+    catch( boost::python::error_already_set) {
         gServer->handlePythonError();
     }
 

@@ -20,6 +20,7 @@
 #include "creatures.h"
 #include "effects.h"
 #include "mud.h"
+#include "pythonHandler.h"
 #include "rooms.h"
 #include "server.h"
 #include "songs.h"
@@ -105,12 +106,12 @@ bool Song::runScript(MudObject* singer, MudObject* target) {
         return(false);
 
     try {
-        object localNamespace( (handle<>(PyDict_New())));
+        bp::object localNamespace( (bp::handle<>(PyDict_New())));
 
-        object effectModule( (handle<>(PyImport_ImportModule("songLib"))) );
+        bp::object effectModule( (bp::handle<>(PyImport_ImportModule("songLib"))) );
         localNamespace["songLib"] = effectModule;
 
-        localNamespace["song"] = ptr(this);
+        localNamespace["song"] = bp::ptr(this);
 
         // Default retVal is true
         localNamespace["retVal"] = true;
@@ -119,10 +120,10 @@ bool Song::runScript(MudObject* singer, MudObject* target) {
 
         gServer->runPython(script, localNamespace);
 
-        bool retVal = extract<bool>(localNamespace["retVal"]);
+        bool retVal = bp::extract<bool>(localNamespace["retVal"]);
         return(retVal);
     }
-    catch( error_already_set) {
+    catch( bp::error_already_set) {
         gServer->handlePythonError();
     }
 

@@ -30,17 +30,15 @@
 
 class MudObject;
 
-// Use the boost::python namespace
-using namespace boost::python;
+namespace bp = boost::python;
 
-
-bool addMudObjectToDictionary(object& dictionary, bstring key, MudObject* myObject);
+bool addMudObjectToDictionary(bp::object& dictionary, bstring key, MudObject* myObject);
 
 class PythonHandler {
     friend class Server;
 private:
     // Our main namespace for python
-    object mainNamespace;
+    bp::object mainNamespace;
     
 };
 

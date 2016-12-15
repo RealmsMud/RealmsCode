@@ -18,8 +18,7 @@
 
 #include "creatures.h"
 #include "mud.h"
-#include "objects.h"
-#include "skills.h"
+#include "pythonHandler.h"
 #include "server.h"
 
 int getFindWhere(TargetType targetType) {
@@ -174,14 +173,14 @@ int SkillCommand::getFailCooldown() const {
 
 bool SkillCommand::runScript(Creature* actor, MudObject* target, Skill* skill) {
     try {
-        object localNamespace( (handle<>(PyDict_New())));
+        bp::object localNamespace( (bp::handle<>(PyDict_New())));
 
-        object skillModule( (handle<>(PyImport_ImportModule("skillLib"))) );
+        bp::object skillModule( (bp::handle<>(PyImport_ImportModule("skillLib"))) );
 
         localNamespace["skillLib"] = skillModule;
 
-        localNamespace["skill"] = ptr(skill);
-        localNamespace["skillCmd"] = ptr(this);
+        localNamespace["skill"] = bp::ptr(skill);
+        localNamespace["skillCmd"] = bp::ptr(this);
 
         // Default retVal is true
         localNamespace["retVal"] = true;
@@ -191,11 +190,11 @@ bool SkillCommand::runScript(Creature* actor, MudObject* target, Skill* skill) {
 
         gServer->runPython(pyScript, localNamespace);
 
-        bool retVal = extract<bool>(localNamespace["retVal"]);
+        bool retVal = bp::extract<bool>(localNamespace["retVal"]);
         //std::cout << "runScript returning: " << retVal << std::endl;
         return(retVal);
     }
-    catch( error_already_set) {
+    catch( bp::error_already_set) {
         gServer->handlePythonError();
     }
     return(false);

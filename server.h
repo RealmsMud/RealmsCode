@@ -32,7 +32,7 @@ namespace odbc {
 #include <vector>
 
 // C Includes
-#include "pythonHandler.h"
+//#include "pythonHandler.h"
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
 
 #include "catRef.h"
@@ -57,14 +57,18 @@ class Socket;
 class WebInterface;
 
 
-//// Forward Declaration of PyObject
-//struct _object;
-//typedef _object PyObject;
-
 enum GoldLog {
     GOLD_IN,
     GOLD_OUT
 };
+
+namespace boost { namespace python {
+        namespace api
+        {
+            class object;
+        }
+        using api::object;
+    }} // namespace boost::python
 
 
 #include "asynch.h"
@@ -293,7 +297,7 @@ public:
     void addChild(int pid, childType pType, int pFd = -1, bstring pExtra = "");
 
     // Python
-    bool runPython(const bstring& pyScript, object& dictionary);
+    bool runPython(const bstring& pyScript, boost::python::object& dictionary);
     bool runPython(const bstring& pyScript, bstring args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
     bool runPythonWithReturn(const bstring& pyScript, bstring args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
     bool runPython(const bstring& pyScript, bstring args, Socket *sock, Player *actor, MsdpVariable* msdpVar = nullptr);
