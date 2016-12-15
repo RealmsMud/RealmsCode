@@ -212,7 +212,7 @@ bool loadRoom(const CatRef cr, UniqueRoom **pRoom, bool offline) {
         gConfig->getRoomQueue(cr, pRoom);
     } else {
         // Otherwise load the room and return it
-        if(!loadRoomFromFile(cr, pRoom, offline))
+        if(!loadRoomFromFile(cr, pRoom, "", offline))
             return(false);
         gConfig->addRoomQueue(cr, pRoom);
 
