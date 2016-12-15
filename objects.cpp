@@ -15,11 +15,18 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "commands.h"
-#include "objects.h"
-#include "clans.h"
 #include "alchemy.h"
+#include "area.h"
+#include "catRef.h"
+#include "clans.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "mud.h"
+#include "objects.h"
+#include "rooms.h"
+#include "server.h"
+#include "xml.h"
 
 
 bool Object::operator< (const Object& t) const {

@@ -15,12 +15,16 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "version.h"
 #include "calendar.h"
+#include "config.h"
+#include "creatures.h"
+#include "mud.h"
+#include "raceData.h"
+#include "rooms.h"
 #include "specials.h"
 #include "quests.h"
-#include "effects.h"
+#include "version.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      getClass

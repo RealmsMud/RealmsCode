@@ -28,8 +28,12 @@
 
 
 // Mud Includes
-#include "mud.h"
+#include "config.h"
+#include "creatures.h"
 #include "bans.h"
+#include "mud.h"
+#include "server.h"
+#include "socket.h"
 
 Ban::Ban() {
     reset(); 

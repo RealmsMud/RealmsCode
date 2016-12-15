@@ -15,23 +15,26 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-// Mud Includes
-#include "mud.h"
-#include "version.h"
-#include "commands.h"
-#include "effects.h"
-#include "specials.h"
-#include "calendar.h"
-#include "quests.h"
-#include "guilds.h"
-#include "property.h"
 
 // C++ includes
 #include <sstream>
 #include <iomanip>
-#include <locale>
-//#include <c++/4.3.3/bits/stl_list.h>
 #include <list>
+
+// Mud Includes
+#include "calendar.h"
+#include "commands.h"
+#include "creatures.h"
+#include "effects.h"
+#include "guilds.h"
+#include "mud.h"
+#include "property.h"
+#include "quests.h"
+#include "rooms.h"
+#include "server.h"
+#include "specials.h"
+#include "version.h"
+
 
 
 void MudObject::setName(bstring newName) {

@@ -15,15 +15,22 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "factions.h"
-#include "commands.h"
-#include "property.h"
-#include "unique.h"
-#include "calendar.h"
-#include "quests.h"
-#include "effects.h"
+
 #include <sstream>
+
+#include "calendar.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "effects.h"
+#include "factions.h"
+#include "mud.h"
+#include "property.h"
+#include "rooms.h"
+#include "server.h"
+#include "unique.h"
+#include "quests.h"
+#include "xml.h"
 
 
 int cmdCompare(Player* player, cmd* cmnd) {

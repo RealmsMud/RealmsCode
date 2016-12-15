@@ -15,10 +15,16 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
 #include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
 #include "effects.h"
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
 #include "specials.h"
+#include "xml.h"
 
 bool Creature::runSpecialAttacks(Creature* victim) {
     if(specials.empty())

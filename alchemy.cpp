@@ -16,12 +16,15 @@
  *
  */
 
-#include "mud.h"
-#include "craft.h"
-#include "factions.h"
-#include "commands.h"
-#include "unique.h"
 #include "alchemy.h"
+#include "commands.h"
+#include "config.h"
+#include "craft.h"
+#include "creatures.h"
+#include "factions.h"
+#include "mud.h"
+#include "server.h"
+#include "unique.h"
 
 #include <sstream>
 #include <iomanip>

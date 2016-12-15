@@ -16,17 +16,23 @@
  *
  */
 // Mud Includes
-#include "mud.h"
-#include "version.h"
-#include "commands.h"
-#include "calendar.h"
-#include "guilds.h"
-#include "property.h"
 
 // C++ includes
 #include <sstream>
 #include <iomanip>
 #include <locale>
+
+#include "calendar.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "guilds.h"
+#include "mud.h"
+#include "property.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "version.h"
 
 
 //********************************************************************

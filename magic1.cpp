@@ -15,13 +15,19 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
+#include "alchemy.h"
+#include "commands.h"
+#include "config.h"
+#include "craft.h"
+#include "creatures.h"
+#include "effects.h"
 #include "mud.h"
 #include "move.h"
-#include "commands.h"
-#include "craft.h"
+#include "rooms.h"
+#include "server.h"
 #include "unique.h"
-#include "effects.h"
-#include "alchemy.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      spellShortcut

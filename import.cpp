@@ -15,9 +15,11 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "import.h"
 #include "commands.h"
+#include "creatures.h"
+#include "import.h"
+#include "mud.h"
+#include "xml.h"
 
 int lookup(Player* player, cmd* cmnd) {
     Player  *target=0;

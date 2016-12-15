@@ -15,13 +15,20 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "commands.h"
-#include "dm.h"
-#include "craft.h"
-#include "unique.h"
-#include "effects.h"
 #include <iomanip>
+
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "craft.h"
+#include "dm.h"
+#include "effects.h"
+#include "mud.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "server.h"
+#include "unique.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      dmCreateObj

@@ -16,6 +16,7 @@
  *
  */
 
+#include "creatures.h"
 #include "mud.h"
 
 // Used for new fighters, returns true if they're a pure fighter

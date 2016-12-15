@@ -16,23 +16,35 @@
  *
  */
 
-// Mud includes
-#include <arpa/telnet.h>
-#include "mud.h"
-#include "guilds.h"
-#include "login.h"
-#include "commands.h"
-#include "move.h"
-#include "effects.h"
-#include "clans.h"
-#include "property.h"
-#include "unique.h"
-
 // C includes
+#include <arpa/telnet.h>
 #include <math.h>
 
 #include <iomanip>
 #include <locale>
+
+// Mud includes
+#include "catRefInfo.h"
+#include "clans.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "effects.h"
+#include "guilds.h"
+#include "login.h"
+#include "mud.h"
+#include "move.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "property.h"
+#include "skillGain.h"
+#include "server.h"
+#include "socket.h"
+#include "startlocs.h"
+#include "unique.h"
+#include "xml.h"
+
 
 //********************************************************************
 //              fixLts

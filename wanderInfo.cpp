@@ -15,7 +15,13 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
+
+#include "creatures.h"
 #include "mud.h"
+#include "rooms.h"
+#include "wanderInfo.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      WanderInfo

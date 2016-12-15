@@ -16,16 +16,6 @@
  *
  */
 
-// Mud Includes
-#include "mud.h"
-#include "serverTimer.h"
-#include "login.h"
-#include "version.h"
-#include "factions.h"
-#include "web.h"
-#include "calendar.h"
-#include "dm.h"
-
 // C Includes
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
 #include <sys/socket.h> // Needs: bind, std::listen, socket, AF_INET
@@ -41,6 +31,22 @@
 #include <sstream>
 #include <iomanip>
 #include <locale>
+
+// Mud Includes
+#include "calendar.h"
+#include "config.h"
+#include "creatures.h"
+#include "dm.h"
+#include "login.h"
+#include "factions.h"
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
+#include "serverTimer.h"
+#include "socket.h"
+#include "version.h"
+#include "web.h"
+#include "xml.h"
 
 
 // External declarations

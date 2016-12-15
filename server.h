@@ -29,6 +29,7 @@ namespace odbc {
 
 #include <list>
 #include <map>
+#include <vector>
 
 // C Includes
 #include "pythonHandler.h"
@@ -379,5 +380,7 @@ protected:
     int cleanUp(void); // Kick out any disconnectors and other general cleanup
 
 };
+
+extern Server *gServer;
 
 #endif /*SERVER_H_*/

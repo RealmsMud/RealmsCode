@@ -15,17 +15,24 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "property.h"
-#include "commands.h"
-#include "guilds.h"
-#include "dm.h"
-#include "login.h"
-#include "move.h"
+
 #include <sstream>
 #include <iomanip>
-#include <locale>
 
+#include "catRefInfo.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "dm.h"
+#include "guilds.h"
+#include "login.h"
+#include "move.h"
+#include "mud.h"
+#include "rooms.h"
+#include "property.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      PartialOwner

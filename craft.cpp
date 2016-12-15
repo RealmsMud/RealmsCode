@@ -15,16 +15,19 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "craft.h"
-#include "factions.h"
-#include "commands.h"
-#include "unique.h"
-#include "math.h"
-
 #include <sstream>
 #include <iomanip>
-#include <locale>
+
+#include "craft.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "factions.h"
+#include "mud.h"
+#include "rooms.h"
+#include "unique.h"
+#include "xml.h"
+
 #define RECIPE_WIDTH    37
 
 int numIngredients(Size size);

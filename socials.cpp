@@ -16,8 +16,10 @@
  *
  */
 
-#include "mud.h"
 #include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "mud.h"
 #include "socials.h"
 
 

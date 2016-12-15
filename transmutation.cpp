@@ -15,9 +15,11 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
+#include "creatures.h"
 #include "mud.h"
-#include "effects.h"
 #include "move.h"
+#include "rooms.h"
 
 //*********************************************************************
 //                      splLevitate

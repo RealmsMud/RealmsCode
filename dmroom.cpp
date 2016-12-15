@@ -15,19 +15,29 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "commands.h"
-#include "dm.h"
-#include "factions.h"
-#include "property.h"
-#include "ships.h"
-#include "tokenizer.h"
-#include "effects.h"
-#include "traps.h"
 
 #include <signal.h>
 #include <dirent.h>
 #include <iomanip>
+
+#include "asynch.h"
+#include "catRefInfo.h"
+#include "commands.h"
+#include "creatures.h"
+#include "config.h"
+#include "deityData.h"
+#include "effects.h"
+#include "dm.h"
+#include "factions.h"
+#include "mud.h"
+#include "property.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "ships.h"
+#include "startlocs.h"
+#include "tokenizer.h"
+#include "traps.h"
+#include "xml.h"
 
 
 //*********************************************************************

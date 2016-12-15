@@ -15,12 +15,19 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
+#include <sstream>
+
+#include "calendar.h"
+#include "config.h"
+#include "creatures.h"
+#include "commands.h"
 #include "mud.h"
 #include "move.h"
+#include "rooms.h"
+#include "server.h"
 #include "ships.h"
-#include "calendar.h"
-#include "commands.h"
-#include <sstream>
+#include "xml.h"
 
 
 #define PIRATE_QUEST 54 - 1

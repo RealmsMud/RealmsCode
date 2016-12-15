@@ -15,12 +15,17 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "commands.h"
 #include <sstream>
-#include "property.h"
-#include "effects.h"
+
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "mud.h"
 #include "move.h"
+#include "property.h"
+#include "rooms.h"
+#include "server.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      addToSameRoom
@@ -183,7 +188,7 @@ void Player::addToRoom(UniqueRoom* uRoom) {
             checkBuilder(uRoom);
             printColor("^yYou are illegally out of your assigned area. This has been logged.\n");
             broadcast(::isCt, "^y### %s is illegally out of %s assigned area. (%s)",
-                getCName(), himHer(), uRoom->info.str().c_str());
+                getCName(), hisHer(), uRoom->info.str().c_str());
             logn("log.builders", "%s illegally entered room %s - (%s).\n", getCName(),
                 uRoom->info.str().c_str(), uRoom->getCName());
         }

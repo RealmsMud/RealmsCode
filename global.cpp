@@ -17,9 +17,10 @@
  */
 
 #define MIGNORE
+
+#include "creatures.h"
+#include "magic.h"
 #include "mud.h"
-#include "import.h"
-#include "commands.h"
 
 /*
  *

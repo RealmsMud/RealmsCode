@@ -15,16 +15,23 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-//#include "os.h"
-#include "mud.h"
-#include "bans.h"
-#include "factions.h"
-#include "guilds.h"
-#include "calendar.h"
-#include "effects.h"
-#include "msdp.h"
 
-//#include "config.h"
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include "calendar.h"
+#include "config.h"
+#include "creatures.h"
+#include "factions.h"
+#include "fishing.h"
+#include "guilds.h"
+#include "mud.h"
+#include "msdp.h"
+#include "proxy.h"
+#include "rooms.h"
+#include "xml.h"
 
 // Globals
 Config *gConfig = nullptr;

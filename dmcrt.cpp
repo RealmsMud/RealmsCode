@@ -15,20 +15,27 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-
-#include "mud.h"
-#include "commands.h"
-#include "dm.h"
-#include "move.h"
-#include "factions.h"
-#include "effects.h"
-#include "clans.h"
-#include "calendar.h"
-#include "unique.h"
-
 #include <sstream>
 #include <iomanip>
 #include <locale>
+
+#include "calendar.h"
+#include "clans.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "dm.h"
+#include "effects.h"
+#include "factions.h"
+#include "move.h"
+#include "mud.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
+#include "unique.h"
+#include "xml.h"
 
 
 //*********************************************************************

@@ -18,7 +18,7 @@
 #ifndef DMH_H
 #define DMH_H
 
-#include "catref.h"
+#include "catRef.h"
 #include "common.h"
 #include "range.h"
 

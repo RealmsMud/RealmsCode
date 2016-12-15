@@ -15,12 +15,16 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "xml.h"
-#include "quests.h"
 #include "commands.h"
+#include "config.h"
+#include "creatures.h"
 #include "factions.h"
+#include "mud.h"
+#include "quests.h"
+#include "rooms.h"
+#include "server.h"
 #include "tokenizer.h"
+#include "xml.h"
 
 QuestCatRef::QuestCatRef() {
     area = gConfig->defaultArea;

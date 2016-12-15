@@ -15,11 +15,16 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+#include "creatures.h"
 #include "mud.h"
 #include "factions.h"
 #include "move.h"
 #include "math.h"
+#include "rooms.h"
 #include "unique.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
 
 // TODO switch this strcmp to compare
 bool Monster::operator <(const Monster& t) const {

@@ -15,7 +15,16 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
+#include "config.h"
+#include "creatures.h"
+#include "levelGain.h"
 #include "mud.h"
+#include "playerClass.h"
+#include "playerTitle.h"
+#include "server.h"
+#include "skillGain.h"
+#include "xml.h"
 
 
 //*********************************************************************

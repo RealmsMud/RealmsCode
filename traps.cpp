@@ -15,9 +15,13 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
+#include "creatures.h"
 #include "commands.h"
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
 #include "traps.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      teleport_trap

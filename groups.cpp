@@ -17,9 +17,13 @@
  */
 
 // Mud includes
+#include "commands.h"
+#include "creatures.h"
 #include "mud.h"
 #include "move.h"
-#include "commands.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
 
 // C++ Includes
 #include <sstream>

@@ -16,7 +16,13 @@
  *
  */
 #include <stdlib.h>
+
+#include "creatures.h"
 #include "mud.h"
+#include "rooms.h"
+#include "xml.h"
+
+
 //#include "string.h"
 typedef struct {
     unsigned short  armor;

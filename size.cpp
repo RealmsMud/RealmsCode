@@ -15,9 +15,10 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
 #include "commands.h"
-#include "effects.h"
+#include "creatures.h"
+#include "mud.h"
+#include "rooms.h"
 
 //*********************************************************************
 //                      getSize

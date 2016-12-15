@@ -15,15 +15,24 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "login.h"
-#include "commands.h"
-#include "factions.h"
-#include "calendar.h"
+
 #include <sys/stat.h>
 #include <sstream>
 #include <iomanip>
 #include <locale>
+
+#include "calendar.h"
+#include "creatures.h"
+#include "commands.h"
+#include "config.h"
+#include "factions.h"
+#include "login.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "mud.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
 
 //static int    newline;
 //static int    color;

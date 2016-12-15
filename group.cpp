@@ -17,8 +17,10 @@
  */
 
 // Mud includes
-#include "mud.h"
+#include "creatures.h"
 #include "group.h"
+#include "mud.h"
+#include "server.h"
 
 // C++ Includes
 #include <iomanip>

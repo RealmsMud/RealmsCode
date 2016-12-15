@@ -15,10 +15,15 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "commands.h"
-#include "login.h"
 #include "boost/format.hpp"
+
+#include "commands.h"
+#include "creatures.h"
+#include "login.h"
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
 
 // having a pref that starts with a hyphen (-) is instead a category
 typedef struct prefInfo {

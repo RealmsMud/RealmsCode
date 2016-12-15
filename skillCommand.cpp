@@ -16,7 +16,11 @@
  *
  */
 
+#include "creatures.h"
 #include "mud.h"
+#include "objects.h"
+#include "skills.h"
+#include "server.h"
 
 int getFindWhere(TargetType targetType) {
     switch(targetType) {

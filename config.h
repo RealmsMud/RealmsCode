@@ -695,5 +695,6 @@ protected:
     std::map<bstring, msparse>  monsterQueue;
 };
 
+extern Config *gConfig;
 
 #endif

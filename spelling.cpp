@@ -16,7 +16,9 @@
  *
  */
 #include <pspell/pspell.h>
+#include "creatures.h"
 #include "mud.h"
+#include "rooms.h"
 
 #define SP_MODE_LIST        1
 #define SP_MODE_ADVISE      2

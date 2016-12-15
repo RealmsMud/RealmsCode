@@ -15,10 +15,14 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
 #include "commands.h"
+#include "creatures.h"
 #include "login.h"
-
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      hasNewMudmail

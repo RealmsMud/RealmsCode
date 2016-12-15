@@ -17,9 +17,12 @@
  */
 
 
-#include "mud.h"
-
 #include <iomanip>
+
+#include "creatures.h"
+#include "mud.h"
+#include "rooms.h"
+#include "socket.h"
 
 void Creature::addPet(Monster* newPet, bool setPetFlag) {
     if(newPet->getMaster())

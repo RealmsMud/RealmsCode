@@ -16,18 +16,23 @@
  *
  */
 
-
-#include "mud.h"
-#include "login.h"
-#include "commands.h"
-#include "move.h"
-#include "factions.h"
-#include "ships.h"
-#include "calendar.h"
-#include "web.h"
-
 #include <sys/signal.h>
-#include <libxml/parser.h> // xmlCleanupParser
+
+#include "catRefInfo.h"
+#include "calendar.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "factions.h"
+#include "login.h"
+#include "mud.h"
+#include "move.h"
+#include "rooms.h"
+#include "server.h"
+#include "ships.h"
+#include "socket.h"
+#include "web.h"
+#include "xml.h"
 
 bool            firstLoop=true;
 long            last_track_update=0;

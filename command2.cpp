@@ -15,11 +15,18 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
 #include "commands.h"
-#include "move.h"
+#include "config.h"
+#include "creatures.h"
+#include "exits.h"
 #include "factions.h"
+#include "move.h"
+#include "mud.h"
+#include "property.h"
+#include "rooms.h"
 #include "unique.h"
+#include "socket.h"
+#include "xml.h"
 
 #define STONE_SCROLL_INDEX      10
 

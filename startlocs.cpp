@@ -15,9 +15,16 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "login.h"
 #include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "location.h"
+#include "login.h"
+#include "mud.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "startlocs.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      initialBind

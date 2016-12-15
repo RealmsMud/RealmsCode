@@ -16,15 +16,18 @@
  *
  */
 
-
-#include "mud.h"
-#include "commands.h"
-#include "effects.h"
-#include "calendar.h"
-
-//#include <time.h>
 #include <fcntl.h>
+
+#include "calendar.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "mud.h"
 #include "move.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "server.h"
+#include "xml.h"
 
 const short Creature::OFFGUARD_REMOVE=0;
 const short Creature::OFFGUARD_NOREMOVE=1;

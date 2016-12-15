@@ -16,14 +16,23 @@
  *
  */
 
-// Mud Includes
-#include "mud.h"
-#include "commands.h"
-#include "pythonHandler.h"
-#include "effects.h"
-#include "msdp.h"
 #include <indexing_suite/container_suite.hpp>
 #include <indexing_suite/set.hpp>
+
+// Mud Includes
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "effects.h"
+#include "fishing.h"
+#include "mud.h"
+#include "mudObject.h"
+#include "msdp.h"
+#include "pythonHandler.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
 
 int pythonRand(int a, int b) {
     return (mrand(a,b));

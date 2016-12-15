@@ -16,8 +16,10 @@
  *
  */
 
+#include "creatures.h"
+#include "config.h"
 #include "mud.h"
-//#include "xml.h"
+#include "rooms.h"
 
 
 //*********************************************************************

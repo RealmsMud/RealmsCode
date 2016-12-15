@@ -16,7 +16,6 @@
  *
  */
 #include <arpa/telnet.h>
-#include "mud.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -33,11 +32,18 @@
 #include <unistd.h>
 
 
-
+#include "clans.h"
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "flags.h"
 #include "login.h"
+#include "mud.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "server.h"
 #include "socket.h"
 #include "timer.h"
-#include "clans.h"
 
 #include <sstream>
 

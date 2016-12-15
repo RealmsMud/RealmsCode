@@ -15,10 +15,18 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "math.h"
-#include "guilds.h"
+
+#include <math.h>
+
 #include "bank.h"
+#include "config.h"
+#include "creatures.h"
+#include "guilds.h"
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      teller

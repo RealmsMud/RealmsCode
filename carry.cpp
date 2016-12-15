@@ -15,7 +15,9 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+#include "carry.h"
 #include "mud.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      Carry

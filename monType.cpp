@@ -15,7 +15,9 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
 #include "mud.h"
+#include "monType.h"
 
 char mobtype_name[MAX_MOB_TYPES][20] = { "Player", "Monster", "Humanoid", "Goblinoid", "Monstrous Humanoid",
         "Giantkin", "Animal", "Dire Animal", "Insect", "Insectoid", "Arachnid", "Reptile", "Dinosaur", "Automaton",

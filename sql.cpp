@@ -18,7 +18,6 @@
 
 #ifdef SQL_LOGGER
 
-#include "mud.h"
 #include <sstream>
 
 #include <odbc++/drivermanager.h>
@@ -26,6 +25,10 @@
 #include <odbc++/resultset.h>
 #include <odbc++/resultsetmetadata.h>
 #include <odbc++/preparedstatement.h>
+
+#include "config.h"
+#include "mud.h"
+#include "server.h"
 
 //################################################################################
 //#    Config::getDbConnectionStriong()

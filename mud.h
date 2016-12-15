@@ -21,12 +21,70 @@
 // Other includes are at the end of the file to make sure all defines and such in this
 // file are visible
 
-#ifndef PYTHON_CODE_GEN
-#include <Python.h> // Python!
-#endif
+//#ifndef PYTHON_CODE_GEN
+//#include <Python.h> // Python!
+//#endif
 
 #include "bstring.h"
+#include "flags.h"
 #include "global.h"
+
+
+
+#include "proto.h"
+#include "help.h"
+#include "paths.h"
+
+
+
+// C includes
+#ifndef PYTHON_CODE_GEN
+#include <fcntl.h>
+#endif
+
+// Mud Includes
+#include "os.h"
+//
+//#include "alphanum.hpp"
+//#include "catRef.h"
+//#include "swap.h"
+//#include "structs.h"
+//#include "range.h"
+//#include "carry.h"
+//#include "container.h"
+//#include "xml.h"
+//
+//#include "size.h"
+//#include "socket.h"
+//#include "stats.h"
+//#include "rooms.h"
+//#include "objects.h"
+//
+//#include "timer.h"
+//#include "skills.h"
+//#include "magic.h"
+//#include "fighters.h"
+//#include "creatures.h"
+//
+////#include "bans.h"
+////#include "guilds.h"
+////#include "factions.h"
+//
+//#include "catRefInfo.h"
+//#include "startlocs.h"
+//#include "raceData.h"
+//#include "deityData.h"
+//
+//#include "playerTitle.h"
+//#include "skillGain.h"
+//#include "levelGain.h"
+//#include "playerClass.h"
+//#include "fishing.h"
+//
+//#include "server.h"
+//#include "proxy.h"
+//#include "config.h"
+
 
 #ifndef READCFG
 #define READCFG
@@ -284,11 +342,6 @@
 #define SONG_RECALL     8   // Song of Recall
 #define SONG_SAFETY     9   // Song of Safety
 
-
-
-#include "flags.h"
-
-
 #define RETURN(a,b,c)   Ply[a].io->fn = b; Ply[a].io->fnparam = c; return
 
 #define BOOL(a)     ((a) ? 1 : 0)
@@ -377,64 +430,6 @@
 //#define LUCKY_DEATHS      2
 //#define LUCKY_DEATH_HOURS 24
 
-// C includes
-#ifndef PYTHON_CODE_GEN
-    #include <fcntl.h>
-#endif
-
-#include <libxml/xmlmemory.h>
-#include <libxml/parser.h>
-
-// C++ Includes
-#include <list>
-
-// Mud Includes
-#include "os.h"
-
-#include "alphanum.hpp"
-#include "catRef.h"
-#include "swap.h"
-#include "structs.h"
-#include "range.h"
-#include "carry.h"
-#include "container.h"
-#include "xml.h"
-
-#include "size.h"
-#include "socket.h"
-#include "stats.h"
-#include "rooms.h"
-#include "objects.h"
-
-#include "timer.h"
-#include "skills.h"
-#include "magic.h"
-#include "fighters.h"
-#include "creatures.h"
-
-//#include "bans.h"
-//#include "guilds.h"
-//#include "factions.h"
-
-#include "catRefInfo.h"
-#include "startlocs.h"
-#include "raceData.h"
-#include "deityData.h"
-
-#include "playerTitle.h"
-#include "skillGain.h"
-#include "levelGain.h"
-#include "playerClass.h"
-#include "fishing.h"
-
-#include "server.h"
-#include "proxy.h"
-#include "config.h"
-
-// Pointer to config and server objects
-extern Config *gConfig;
-extern Server *gServer;
-
 
 extern int    bHavePort;
 
@@ -518,13 +513,6 @@ extern unsigned short Port;
 extern struct osong_t osong[];
 
 #endif
-
-#include "proto.h"
-
-#include "help.h"
-
-#include "paths.h"
-
 
 
 #ifdef PYTHON_CODE_GEN

@@ -16,9 +16,14 @@
  *
  */
 
-#include "mud.h"
+#include "config.h"
+#include "creatures.h"
 #include "factions.h"
-#include <fcntl.h>
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
+#include "xml.h"
+
 
 // Max lottery #
 #define MAXBONE 25

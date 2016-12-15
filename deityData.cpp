@@ -15,8 +15,13 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
 
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "mud.h"
+#include "playerTitle.h"
+#include "xml.h"
 
 //**********************************************************************
 //                      loadDeities

@@ -15,14 +15,22 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-// Mud includes
-#include "mud.h"
-#include "factions.h"
-#include "commands.h"
-#include "effects.h"
 
 // C includes
 #include <math.h>
+
+// Mud includes
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "factions.h"
+#include "mud.h"
+#include "playerClass.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "socket.h"
+
 
 Creature* Creature::findVictim(bstring toFind, int num, bool aggressive, bool selfOk, bstring noVictim, bstring notFound) {
     Creature* victim=0;

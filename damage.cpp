@@ -15,7 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
+
+#include "damage.h"
 
 //*********************************************************************
 //                      Damage

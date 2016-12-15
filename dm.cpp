@@ -16,21 +16,25 @@
  *
  */
 
-
-// Mud Includes
-#include "mud.h"
-#include "commands.h"
-#include "dm.h"
-//#include "socket.h"
-#include "effects.h"
-#include "quests.h"
-
 // C++ includes
 #include <sstream>
 #include <iomanip>
 #include <locale>
 
-extern int  controlSock;
+// Mud Includes
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "dm.h"
+#include "effects.h"
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
+#include "quests.h"
+#include "xml.h"
+
+
 long        last_dust_output;
 extern long last_weather_update;
 

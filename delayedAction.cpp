@@ -17,6 +17,8 @@
  */
 #include "mud.h"
 #include "commands.h"
+#include "creatures.h"
+#include "server.h"
 
 
 //*********************************************************************

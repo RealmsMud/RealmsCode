@@ -16,8 +16,11 @@
  *
  */
 
+#include "common.h"
+#include "config.h"
 #include "mud.h"
 #include "mxp.h"
+#include "socket.h"
 
 bstring MxpElement::getName() {
     return(name);

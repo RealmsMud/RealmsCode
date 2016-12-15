@@ -16,11 +16,14 @@
  *
  */
 
-#include "mud.h"
 #include <sstream>
+
 #include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "mud.h"
+#include "rooms.h"
 #include "specials.h"
-#include "effects.h"
 
 
 //**********************************************************************

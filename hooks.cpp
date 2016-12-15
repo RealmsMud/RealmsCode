@@ -15,12 +15,20 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
 
 #include <unordered_map>
 #include <sstream>
 #include <iomanip>
 #include <locale>
+
+
+#include "creatures.h"
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
+
 
 //*********************************************************************
 //                      Hook

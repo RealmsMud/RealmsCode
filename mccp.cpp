@@ -18,7 +18,9 @@
 // Copyright (c) 1999, Oliver Jowett <icecube@ihug.co.nz>.
 // This code may be freely distributed and used if this copyright notice is retained intact.
 
+#include "creatures.h"
 #include "mud.h"
+#include "socket.h"
 
 int mccp(Player* player, cmd* cmnd) {
     if(!player)

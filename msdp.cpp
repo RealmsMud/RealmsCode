@@ -20,9 +20,13 @@
 #include <arpa/telnet.h>
 
 // Mud Includes
+#include "config.h"
 #include "mud.h"
 #include "msdp.h"
 #include "login.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
 
 #define MSDP_DEBUG
 

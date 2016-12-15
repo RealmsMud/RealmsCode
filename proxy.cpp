@@ -16,15 +16,18 @@
  *
  */
 
-#include "mud.h"
 
-#include <sstream>
 #include <iomanip>
-#include <locale>
-#include <iostream>
 #include <fstream>
 
 #include "boost/format.hpp"
+
+#include "config.h"
+#include "creatures.h"
+#include "mud.h"
+#include "proxy.h"
+#include "server.h"
+#include "xml.h"
 
 //*********************************************************************
 // CmdProxy

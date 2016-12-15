@@ -17,9 +17,12 @@
  */
 #include "mud.h"
 #include "commands.h"
+#include "config.h"
+#include "creatures.h"
 #include "factions.h"
 #include "quests.h"
 #include "tokenizer.h"
+#include "xml.h"
 
 // Function prototypes
 static questPtr parseQuest(xmlDocPtr doc, xmlNodePtr cur);

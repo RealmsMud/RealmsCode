@@ -16,13 +16,6 @@
  *
  */
 
-// Mud Includes
-#include "mud.h"
-#include "login.h"
-#include "commands.h"
-#include "property.h"
-#include "version.h"
-#include "msdp.h"
 
 // C++ Includes
 #include <iostream>
@@ -35,6 +28,19 @@
 #include <sys/socket.h> // Needs: AF_INET
 #include <errno.h>
 #include <stdlib.h>
+
+// Mud Includes
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "msdp.h"
+#include "mud.h"
+#include "login.h"
+#include "property.h"
+#include "server.h"
+#include "socket.h"
+#include "version.h"
+#include "xml.h"
 
 // Static initialization
 const int Socket::COMPRESSED_OUTBUF_SIZE = 8192;

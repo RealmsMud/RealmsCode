@@ -16,7 +16,10 @@
  *
  */
 
+#include "creatures.h"
+#include "creatureStreams.h"
 #include "mud.h"
+#include "socket.h"
 
 Streamable& Streamable::operator << ( Streamable& (*op)(Streamable&)) {
     // call the function passed as parameter with this stream as the argument

@@ -15,15 +15,12 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include <sys/stat.h>
-#include <sys/signal.h>
 #include <unistd.h>
-#include <errno.h>
 
+#include "config.h"
+#include "mud.h"
 #include "version.h"
-#include "vprint.h"
-#include "commands.h"
+#include "server.h"
 
 void handle_args(int argc, char *argv[]);
 void startup_mordor(void);

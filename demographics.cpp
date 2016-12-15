@@ -15,11 +15,19 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "calendar.h"
-
 #include <dirent.h>
 #include <fcntl.h>
+#include <unistd.h>
+
+#include "calendar.h"
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "mud.h"
+#include "raceData.h"
+#include "server.h"
+#include "statistics.h"
+#include "xml.h"
 
 #define MINIMUM_LEVEL   3
 

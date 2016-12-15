@@ -15,11 +15,17 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "skills.h"
-#include "commands.h"
-#include "clans.h"
 #include <sstream>
+
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "clans.h"
+#include "levelGain.h"
+#include "mud.h"
+#include "playerClass.h"
+#include "server.h"
+#include "xml.h"
 
 #define NOT_A_SKILL -10
 

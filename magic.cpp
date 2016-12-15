@@ -15,14 +15,17 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "help.h"
-
 #include <sstream>
 #include <iomanip>
-#include <locale>
 #include <iostream>
 #include <fstream>
+
+#include "config.h"
+#include "creatures.h"
+#include "magic.h"
+#include "mud.h"
+#include "xml.h"
+
 
 // Spells with -1 mp will not check mp and will leave it up to
 // the spell function to do this check.

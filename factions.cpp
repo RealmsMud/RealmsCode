@@ -15,12 +15,21 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "factions.h"
-#include "guilds.h"
+
+#include <iomanip>
+
 #include "clans.h"
 #include "commands.h"
-#include <iomanip>
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "factions.h"
+#include "guilds.h"
+#include "mud.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "server.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      FactionRegard

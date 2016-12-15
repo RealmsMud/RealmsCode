@@ -26,18 +26,22 @@
  *      If you change anything here, make sure the changes are reflected in the web
  *      editor! Either edit the PHP yourself or tell Dominus to make the changes.
  */
-#include "mud.h"
-#include "version.h"
-#include "effects.h"
+#include "alchemy.h"
 #include "bans.h"
-#include "guilds.h"
-#include "factions.h"
-#include "specials.h"
 #include "calendar.h"
+#include "config.h"
+#include "creatures.h"
+#include "factions.h"
+#include "guilds.h"
+#include "mud.h"
+#include "specials.h"
 #include "quests.h"
 #include "unique.h"
-#include "alchemy.h"
+#include "rooms.h"
+#include "server.h"
 #include "socials.h"
+#include "version.h"
+#include "xml.h"
 
 xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits);
 // Object flags to be saved for object refs

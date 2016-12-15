@@ -15,7 +15,11 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+#include "asynch.h"
+#include "creatures.h"
 #include "mud.h"
+#include "server.h"
+#include "socket.h"
 
 //*********************************************************************
 //                      Async

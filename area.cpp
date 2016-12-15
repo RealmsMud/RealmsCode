@@ -15,14 +15,21 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "commands.h"
-#include "dm.h"
-#include "effects.h"
-#include "calendar.h"
-#include <math.h>
 #include <dirent.h>
 #include <fstream>
+#include <math.h>
+#include <sys/stat.h>
+
+#include "area.h"
+#include "calendar.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "dm.h"
+#include "mud.h"
+#include "rooms.h"
+#include "socket.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      AreaTrack

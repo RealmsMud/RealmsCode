@@ -15,13 +15,16 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "effects.h"
-#include "calendar.h"
-//#include <libxml/xmlmemory.h>
-//#include <libxml/parser.h>
 
-#include <sstream>
+#include "calendar.h"
+#include "creatures.h"
+#include "effects.h"
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
+
 
 bool Player::operator <(const Player& t) const {
     return(strcmp(this->getCName(), t.getCName()) < 0);

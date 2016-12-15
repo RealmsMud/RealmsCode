@@ -15,10 +15,14 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+#include <stdarg.h>
+
+#include "creatures.h"
 #include "mud.h"
 #include "login.h"
+#include "server.h"
+#include "socket.h"
 #include "vprint.h"
-#include <stdarg.h>
 
 // Function Prototypes
 bstring delimit(const char *str, int wrap);

@@ -18,6 +18,10 @@
 #ifndef AREA_H
 #define AREA_H
 
+#include <list>
+#include <map>
+#include <vector>
+
 #include "catRef.h"
 #include "common.h"
 #include "swap.h"
@@ -32,9 +36,6 @@
 #define MAX_VISION      18
 // we don't let too many AreaTrack objects hang around
 #define MAX_AREA_TRACK  100
-
-#include <list>
-#include <map>
 
 // forward declaration
 class Area;

@@ -15,17 +15,25 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-
-#include "mud.h"
-#include "web.h"
-#include "clans.h"
-#include "commands.h"
-#include "guilds.h"
-
 // C includes
 #include <errno.h>
 #include <string.h>
 #include <sys/stat.h>
+
+#include "clans.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "guilds.h"
+#include "mud.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
+#include "web.h"
+#include "xml.h"
+
 
 int lastmod = 0;
 struct stat lm_check;

@@ -15,10 +15,17 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
 #include "area.h"
-#include "unique.h"
 #include "calendar.h"
+#include "catRefInfo.h"
+#include "config.h"
+#include "creatures.h"
+#include "fishing.h"
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
+#include "unique.h"
+#include "xml.h"
 
 //**********************************************************************
 //                      canFish

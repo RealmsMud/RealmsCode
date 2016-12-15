@@ -16,9 +16,14 @@
  *
  */
 
-#include "mud.h"
-#include "commands.h"
 #include <iomanip>
+
+#include "commands.h"
+#include "creatures.h"
+#include "mud.h"
+#include "server.h"
+#include "statistics.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      LevelInfo

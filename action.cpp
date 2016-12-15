@@ -16,9 +16,11 @@
  *
  */
 #include "mud.h"
-//#include "structs.h"
-//#include "mextern.h"
+#include "creatures.h"
 #include "commands.h"
+#include "rooms.h"
+#include "socket.h"
+#include "xml.h"
 
 
 //*********************************************************************

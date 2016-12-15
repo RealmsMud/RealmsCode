@@ -15,8 +15,9 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+#include <unistd.h>
+
 #include "mud.h"
-#include <fcntl.h>
 
 // TODO: Rework these to avoid redundant code
 

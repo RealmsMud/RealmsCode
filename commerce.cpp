@@ -15,14 +15,19 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "commands.h"
-#include "factions.h"
-#include "property.h"
-#include "guilds.h"
 #include "bank.h"
-#include "unique.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
 #include "dm.h"
+#include "factions.h"
+#include "guilds.h"
+#include "mud.h"
+#include "property.h"
+#include "rooms.h"
+#include "server.h"
+#include "unique.h"
+#include "xml.h"
 
 #define TAX .06
 

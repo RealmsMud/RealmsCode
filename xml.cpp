@@ -18,11 +18,7 @@
 
 // Mud includes
 #include "mud.h"
-// C++ includes
-#include <sstream>
-#include <iostream>
-
-
+#include "xml.h"
 
 namespace xml {
 

@@ -15,14 +15,22 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "effects.h"
-#include "commands.h"
-#include "pythonHandler.h"
 
 // C++ includes
 #include <iomanip>
 #include <locale>
+
+#include "commands.h"
+#include "creatures.h"
+#include "config.h"
+#include "effects.h"
+#include "mud.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
+#include "pythonHandler.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      getDisplayName

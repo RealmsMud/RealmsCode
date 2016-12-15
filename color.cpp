@@ -15,10 +15,15 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "login.h"
-#include "commands.h"
+
 #include <sstream>
+
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "login.h"
+#include "mud.h"
+#include "socket.h"
 
 #define CLEAR       "\033[0m"       // Resets color
 #define C_BLACK     "\033[0;30m"    // Normal colors
