@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -19,6 +19,16 @@
 #ifndef _PLAYERCLASS_H
 #define _PLAYERCLASS_H
 
+#include <list>
+#include <map>
+
+#include "common.h"
+#include "dice.h"
+
+class LevelGain;
+class Player;
+class PlayerTitle;
+class SkillGain;
 
 // Information about a player class
 class PlayerClass {

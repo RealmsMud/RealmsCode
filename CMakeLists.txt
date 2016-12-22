@@ -12,7 +12,11 @@ find_package(PythonLibs 3.4 REQUIRED)
 find_package(ASPELL REQUIRED)
 find_package(PythonInterp)
 find_package(PythonLibs)
-find_package(Boost COMPONENTS python-py35 REQUIRED)
+IF(APPLE)
+    find_package(Boost COMPONENTS python system filesystem REQUIRED)
+ELSE()
+    find_package(Boost COMPONENTS python-py35 system filesystem REQUIRED)
+ENDIF()
 
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
@@ -24,12 +28,20 @@ include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR})
 
 # For indexing_suite and such
 include_directories(.)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -g -D_GLIBCXX_DEBUG ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14 -g -D_GLIBCXX_DEBUG ")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
 
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -g" )
 
-set(SOURCE_FILES
+SET(REALMS_SOURCE_FILES
+    main.cpp
+)
+
+set(LIST_SOURCE_FILES
+        list.cpp
+)
+
+set(COMMON_SOURCE_FILES
     abjuration.cpp
     access.cpp
     action.cpp
@@ -72,6 +84,7 @@ set(SOURCE_FILES
     command5.cpp
     commands.h
     commerce.cpp
+    common.h
     communication.cpp
     communication.h
     config.cpp
@@ -144,6 +157,7 @@ set(SOURCE_FILES
     import.cpp
     import.h
     io.cpp
+    lasttime.h
     levelGain.cpp
     levelGain.h
     location.cpp
@@ -156,7 +170,6 @@ set(SOURCE_FILES
     magic.cpp
     magic.h
     magic1.cpp
-    main.cpp
     mccp.cpp
     md5.cpp
     md5.h
@@ -198,6 +211,7 @@ set(SOURCE_FILES
     playerTitle.h
     post.cpp
     prefs.cpp
+    proc.h
     property.cpp
     property.h
     proto.h
@@ -213,11 +227,13 @@ set(SOURCE_FILES
     raceData.h
     range.cpp
     range.h
+    realm.h
     realms.cpp
     rogues.cpp
     room.cpp
     rooms.cpp
     rooms.h
+    season.h
     security.cpp
     server.cpp
     server.h
@@ -280,11 +296,19 @@ set(SOURCE_FILES
     wanderInfo.h
     warriors.cpp
     watchers.cpp
+    weather.h
     weaponless.cpp
     web.cpp
     web.h
     xml.cpp
-    xml.h)
+    xml.h
+        )
 
-add_executable(RealmsCode ${SOURCE_FILES})
-target_link_libraries(RealmsCode ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES})
+add_library(RealmsLib ${COMMON_SOURCE_FILES})
+target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES})
+
+add_executable(RealmsCode ${REALMS_SOURCE_FILES})
+target_link_libraries(RealmsCode RealmsLib)
+
+add_executable(List ${LIST_SOURCE_FILES})
+target_link_libraries(List RealmsLib)

@@ -10,23 +10,29 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 // Mud Includes
-#include "mud.h"
-#include "version.h"
-#include "commands.h"
-#include "calendar.h"
-#include "guilds.h"
-#include "property.h"
 
 // C++ includes
 #include <sstream>
 #include <iomanip>
 #include <locale>
+
+#include "calendar.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "guilds.h"
+#include "mud.h"
+#include "property.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "version.h"
 
 
 //********************************************************************

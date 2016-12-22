@@ -10,19 +10,27 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "effects.h"
-#include "commands.h"
-#include "pythonHandler.h"
 
 // C++ includes
 #include <iomanip>
 #include <locale>
+
+#include "commands.h"
+#include "creatures.h"
+#include "config.h"
+#include "effects.h"
+#include "mud.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
+#include "pythonHandler.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      getDisplayName
@@ -1122,13 +1130,13 @@ bool EffectInfo::runScript(const bstring& pyScript, MudObject* applier) {
 
     try {
 
-       object localNamespace( (handle<>(PyDict_New())));
+        boost::python::object localNamespace( (boost::python::handle<>(PyDict_New())));
 
-        object effectModule( (handle<>(PyImport_ImportModule("effectLib"))) );
+        boost::python::object effectModule( (boost::python::handle<>(PyImport_ImportModule("effectLib"))) );
 
         localNamespace["effectLib"] = effectModule;
 
-        localNamespace["effect"] = ptr(this);
+        localNamespace["effect"] = boost::python::ptr(this);
 
         // Default retVal is true
         localNamespace["retVal"] = true;
@@ -1139,11 +1147,11 @@ bool EffectInfo::runScript(const bstring& pyScript, MudObject* applier) {
 
         gServer->runPython(pyScript, localNamespace);
 
-        bool retVal = extract<bool>(localNamespace["retVal"]);
+        bool retVal = boost::python::extract<bool>(localNamespace["retVal"]);
         //std::cout << "runScript returning: " << retVal << std::endl;
         return(retVal);
     }
-    catch( error_already_set) {
+    catch( boost::python::error_already_set) {
         gServer->handlePythonError();
     }
 

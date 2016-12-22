@@ -10,19 +10,27 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-// Mud includes
-#include "mud.h"
-#include "factions.h"
-#include "commands.h"
-#include "effects.h"
 
 // C includes
 #include <math.h>
+
+// Mud includes
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "factions.h"
+#include "mud.h"
+#include "playerClass.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "socket.h"
+
 
 Creature* Creature::findVictim(bstring toFind, int num, bool aggressive, bool selfOk, bstring noVictim, bstring notFound) {
     Creature* victim=0;

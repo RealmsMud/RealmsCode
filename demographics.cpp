@@ -10,16 +10,24 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "calendar.h"
-
 #include <dirent.h>
 #include <fcntl.h>
+#include <unistd.h>
+
+#include "calendar.h"
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "mud.h"
+#include "raceData.h"
+#include "server.h"
+#include "statistics.h"
+#include "xml.h"
 
 #define MINIMUM_LEVEL   3
 

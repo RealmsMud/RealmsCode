@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -21,7 +21,20 @@
 #define OBJ_KEY_LENGTH          20
 #define OBJ_FLAG_ARRAY_SIZE     32
 
+#include <list>
+
 #include "alchemy.h"
+#include "catRef.h"
+#include "common.h"
+#include "container.h"
+#include "dice.h"
+#include "global.h"
+#include "lasttime.h"
+#include "money.h"
+#include "range.h"
+#include "size.h"
+
+class MapMarker;
 
 enum Material {
     NO_MATERIAL = 0,
@@ -183,7 +196,7 @@ public:
 
     void init(bool selRandom = true);
     // Xml - Loading
-    int readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList = 0);
+    int readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList = 0, bool offline=false);
     void loadAlchemyEffects(xmlNodePtr curNode);
 
     // Xml - Saving

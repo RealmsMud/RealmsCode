@@ -10,13 +10,19 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 #ifndef SKILLS_H_
 #define SKILLS_H_
+
+#include <list>
+
+#include "global.h"
+#include "structs.h"
+#include "timer.h"
 
 class Skill;
 

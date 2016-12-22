@@ -10,19 +10,24 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "commands.h"
-#include <string>
-#include "guilds.h"
-#include "property.h"
-#include "move.h"
-#include "unique.h"
 #include "calendar.h"
+#include "catRefInfo.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "guilds.h"
+#include "move.h"
+#include "mud.h"
+#include "property.h"
+#include "rooms.h"
+#include "server.h"
+#include "unique.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      tooFarAway

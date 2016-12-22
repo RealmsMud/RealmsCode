@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -20,8 +20,28 @@
 
 #include <stdarg.h>
 
+class cmd;
+
+class AreaRoom;
+class AreaZone;
+class BaseRoom;
+class CatRefInfo;
+class Creature;
+class GuildCreation;
+class Location;
+class MapMarker;
+class MudObject;
+class Object;
+class Player;
 class Ship;
 class ShipStop;
+class Socket;
+class TileInfo;
+
+#include "objects.h"
+#include "oldquest.h"
+#include "structs.h"
+
 
 // Stats
 double getConBonusPercentage(int pCon);

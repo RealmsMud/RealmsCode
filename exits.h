@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -18,6 +18,14 @@
 
 #ifndef _EXITS_H
 #define _EXITS_H
+
+#include "area.h"
+#include "common.h"
+#include "effects.h"
+#include "lasttime.h"
+#include "location.h"
+#include "mudObject.h"
+#include "swap.h"
 
 enum Direction {
     NoDirection = 0,
@@ -41,7 +49,7 @@ public:
     ~Exit();
     bool operator< (const MudObject& t) const;
 
-    int readFromXml(xmlNodePtr rootNode, BaseRoom* room);
+    int readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline=false);
     int saveToXml(xmlNodePtr parentNode) const;
 
     void escapeText();

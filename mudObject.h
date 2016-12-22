@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -19,8 +19,13 @@
 #ifndef MUDOBJECTS_H
 #define MUDOBJECTS_H
 
+#include <list>
 #include <map>
 #include <set>
+
+#include "delayedAction.h"
+#include "hooks.h"
+#include "effects.h"
 //#include <boost/unordered_map.hpp> // Gnu gcc specific, switch to <map>
 //#include <unordered_map>
 
@@ -34,15 +39,18 @@
 //}
 
 //typedef std::unordered_map<bstring, bstring> MultiMap;  // change to std::map
-class MudObject;
-class Player;
-class Monster;
-class UniqueRoom;
-class Object;
-class EffectInfo;
+class AreaRoom;
+class BaseRoom;
 class Creature;
+class EffectInfo;
+class Exit;
+class MudObject;
+class Monster;
+class Object;
+class Player;
+class UniqueRoom;
 
-#include "hooks.h"
+
 
 class MudObject {
 private:
@@ -138,8 +146,8 @@ public:
 
     bool equals(MudObject* other);
 
-    void readCreatures(xmlNodePtr curNode);
-    void readObjects(xmlNodePtr curNode);
+    void readCreatures(xmlNodePtr curNode, bool offline=false);
+    void readObjects(xmlNodePtr curNode, bool offline=false);
 
 // Delayed Actions
 protected:

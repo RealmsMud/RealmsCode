@@ -10,18 +10,25 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "commands.h"
-#include "dm.h"
-#include "craft.h"
-#include "unique.h"
-#include "effects.h"
 #include <iomanip>
+
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "craft.h"
+#include "dm.h"
+#include "effects.h"
+#include "mud.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "server.h"
+#include "unique.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      dmCreateObj

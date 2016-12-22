@@ -10,27 +10,31 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-
-
-// Mud Includes
-#include "mud.h"
-#include "commands.h"
-#include "dm.h"
-//#include "socket.h"
-#include "effects.h"
-#include "quests.h"
 
 // C++ includes
 #include <sstream>
 #include <iomanip>
 #include <locale>
 
-extern int  controlSock;
+// Mud Includes
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "dm.h"
+#include "effects.h"
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
+#include "quests.h"
+#include "xml.h"
+
+
 long        last_dust_output;
 extern long last_weather_update;
 

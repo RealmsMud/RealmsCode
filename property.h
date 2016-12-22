@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *  
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -19,9 +19,22 @@
 #ifndef PROPERTY_H_
 #define PROPERTY_H_
 
-class Guild;
+#include <list>
+#include <map>
 
-// PropType enum in mud.h
+#include "catRef.h"
+#include "common.h"
+#include "global.h"
+#include "range.h"
+
+class cmd;
+class AreaRoom;
+class BaseRoom;
+class Guild;
+class MudFlag;
+class Player;
+class Socket;
+class UniqueRoom;
 
 enum PropLog {
     LOG_PARTIAL =   0,

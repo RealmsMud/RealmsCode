@@ -10,13 +10,24 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
 
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 #ifndef AREA_H
 #define AREA_H
+
+#include <list>
+#include <map>
+#include <vector>
+
+#include "catRef.h"
+#include "common.h"
+#include "swap.h"
+#include "season.h"
+#include "track.h"
+#include "wanderInfo.h"
 
 #define RADIAN 57.2957795
 
@@ -26,13 +37,11 @@
 // we don't let too many AreaTrack objects hang around
 #define MAX_AREA_TRACK  100
 
-//#include <list>
-//#include <vector>
-#include <map>
 // forward declaration
 class Area;
 class AreaData;
 class AreaRoom;
+class BaseRoom;
 class Player;
 
 

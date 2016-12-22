@@ -10,18 +10,21 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "effects.h"
-#include "calendar.h"
-//#include <libxml/xmlmemory.h>
-//#include <libxml/parser.h>
 
-#include <sstream>
+#include "calendar.h"
+#include "creatures.h"
+#include "effects.h"
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
+
 
 bool Player::operator <(const Player& t) const {
     return(strcmp(this->getCName(), t.getCName()) < 0);

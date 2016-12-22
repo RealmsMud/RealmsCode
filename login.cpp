@@ -10,24 +10,28 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "login.h"
-#include "commands.h"
-#include "guilds.h"
-#include "skills.h"
-#include "calendar.h"
-
 #include <sstream>
 #include <iomanip>
-#include <locale>
-//#include <arpa/telnet.h>
 
-
+#include "calendar.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "guilds.h"
+#include "login.h"
+#include "mud.h"
+#include "playerClass.h"
+#include "raceData.h"
+#include "skills.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
 
 /*
  * Generic get function, copy for future use

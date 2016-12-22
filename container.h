@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -23,16 +23,18 @@
 
 #include <set>
 
-class Player;
-class Monster;
-class Object;
+class AreaRoom;
+class BaseRoom;
 class Containable;
 class Container;
-class MudObject;
-class BaseRoom;
-class AreaRoom;
-class UniqueRoom;
 class EffectInfo;
+class Monster;
+class MudObject;
+class Object;
+class Player;
+class Socket;
+class UniqueRoom;
+
 class cmd;
 
 struct PlayerPtrLess : public std::binary_function<const Player*, const Player*, bool> {

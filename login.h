@@ -10,13 +10,18 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 #ifndef LOGIN_H
 #define LOGIN_H
+
+#include "common.h"
+
+class Player;
+class Socket;
 
 #define PASSWORD_MIN_LENGTH     5
 #define PASSWORD_MAX_LENGTH     35

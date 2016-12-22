@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -18,6 +18,8 @@
 
 #ifndef GLOBAL_H_
 #define GLOBAL_H_
+
+#define MAX_DIMEN_ANCHORS   3
 
 // Size of exp array, also highest you can train
 const int MAXALVL = 40;
@@ -67,7 +69,6 @@ const int DOPROMPT = 3;
 // base monster number for various types of summoned monsters
 const int BASE_ELEMENTAL = 801;
 const int BASE_UNDEAD = 550;
-const int COMMANDMAX = 6;
 
 // Monster and object files sizes (in terms of monsters or objects)
 const int MFILESIZE = 100;
@@ -261,58 +262,6 @@ enum CustomColor {
     CUSTOM_COLOR_GUILD      = 16,
     MAX_CUSTOM_COLOR
 };
-
-enum WeatherString {
-    WEATHER_SUNRISE,
-    WEATHER_SUNSET,
-
-    WEATHER_EARTH_TREMBLES,
-    WEATHER_HEAVY_FOG,
-
-    WEATHER_BEAUTIFUL_DAY,
-    WEATHER_BRIGHT_SUN,
-    WEATHER_GLARING_SUN,
-    WEATHER_HEAT,
-
-    WEATHER_STILL,
-    WEATHER_LIGHT_BREEZE,
-    WEATHER_STRONG_WIND,
-    WEATHER_WIND_GUSTS,
-    WEATHER_GALE_FORCE,
-
-    WEATHER_CLEAR_SKIES,
-    WEATHER_LIGHT_CLOUDS,
-    WEATHER_THUNDERHEADS,
-
-    WEATHER_LIGHT_RAIN,
-    WEATHER_HEAVY_RAIN,
-    WEATHER_SHEETS_RAIN,
-    WEATHER_TORRENT_RAIN,
-
-    WEATHER_NO_MOON,
-    WEATHER_SLIVER_MOON,
-    WEATHER_HALF_MOON,
-    WEATHER_WAXING_MOON,
-    WEATHER_FULL_MOON
-};
-
-
-
-// make sure these stay updated with calendar.xml!
-enum Season {
-    NO_SEASON = 0,
-    SPRING =    1,
-    SUMMER =    2,
-    AUTUMN =    3,
-    WINTER =    4
-};
-
-// for bit flags, take (season-1)^2
-//   spring flag (1) = overflowing river
-//   summer flag (2) = ?
-//   autumn flag (4) = ?
-//   winter flag (8) = cold damage, no herbs
-
 
 
 // Religions
@@ -691,21 +640,6 @@ enum EffectAction {
 
     MAX_ACTION
 };
-
-
-enum Realm {
-    NO_REALM =  0,
-    MIN_REALM = 1,
-    EARTH =     1,
-    WIND =      2,
-    FIRE =      3,
-    WATER =     4,
-    ELEC =      5,
-    COLD =      6,
-
-    MAX_REALM
-};
-
 
 enum PropType {
     PROP_NONE = 0,

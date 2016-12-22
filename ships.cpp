@@ -10,17 +10,24 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
+#include <sstream>
+
+#include "calendar.h"
+#include "config.h"
+#include "creatures.h"
+#include "commands.h"
 #include "mud.h"
 #include "move.h"
+#include "rooms.h"
+#include "server.h"
 #include "ships.h"
-#include "calendar.h"
-#include "commands.h"
-#include <sstream>
+#include "xml.h"
 
 
 #define PIRATE_QUEST 54 - 1

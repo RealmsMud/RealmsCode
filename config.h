@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -18,24 +18,82 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <list>
+#include <map>
+#include <utility>
+#include <vector>
+
+#include "common.h"
+#include "delayedAction.h"
+#include "global.h"
+#include "money.h"
+#include "proc.h"
+#include "size.h"
+#include "swap.h"
+#include "queue.h"
+#include "weather.h"
+
+#include "oldquest.h"
+
+class SkillInfo;
+class AlchemyInfo;
+class CatRefInfo;
+class QuestInfo;
+class MudFlag;
+class cWeather;
+
 class Lore;
 class Unique;
 class PlayerClass;
-class SkillInfo;
 class GuildCreation;
 class Ban;
-class Clan;
 class Property;
-class CatRefInfo;
 class Ship;
-class QuestInfo;
-class Calendar;
-class Fishing;
 class Effect;
+class Calendar;
+
+class ProxyManager;
+
 class MsdpVariable;
 class MxpElement;
+
+class Area;
+class CatRef;
+class MapMarker;
+class StartLoc;
+
+class Server;
+class Socket;
+
+class Guild;
+class Faction;
+class Clan;
+
+class BaseRoom;
+class Creature;
+class Monster;
+class MudObject;
+class Object;
+class Player;
+class UniqueRoom;
+
+class Spell;
+class Song;
+
+class PlyCommand;
+class CrtCommand;
+class SkillCommand;
 class SocialCommand;
-class ProxyManager;
+
+class Fishing;
+class Recipe;
+
+class ClassData;
+class DeityData;
+class RaceData;
+
+class Swap;
+
 
 typedef std::pair<bstring, bstring> accountDouble;
 typedef std::map<bstring, MxpElement*> MxpElementMap;
@@ -297,9 +355,9 @@ public:
     void swapLog(const bstring log, bool external=true);
     void swap(Player* player, bstring name);
     void swap(bstring str);
-    void offlineSwap(Server::childProcess &child, bool onReap);
+    void offlineSwap(childProcess &child, bool onReap);
     void offlineSwap();
-    void findNextEmpty(Server::childProcess &child, bool onReap);
+    void findNextEmpty(childProcess &child, bool onReap);
     void finishSwap(bstring mover);
     void endSwap(int id=1);
     bool moveRoomRestrictedArea(bstring area) const;
@@ -466,12 +524,15 @@ public:
     bstring logDbDatabase;
 //#endif
 
-    // Lottery
 private:
+    bool listing;
+
+    // Swap
     std::list<bstring> swapList;
     std::list<Swap> swapQueue;
     Swap    currentSwap;
-    
+
+    // Lottery
     std::list<LottoTicket*> tickets;
     bool    lotteryEnabled;
     int lotteryCycle;
@@ -610,6 +671,9 @@ public:
     int monsterQueueSize();
     int objectQueueSize();
 
+    void setListing(bool isListing);
+    bool isListing(void);
+
 protected:
     void putQueue(qtag **qt, qtag **headptr, qtag **tailptr);
     void pullQueue(qtag **qt, qtag **headptr, qtag **tailptr);
@@ -631,5 +695,6 @@ protected:
     std::map<bstring, msparse>  monsterQueue;
 };
 
+extern Config *gConfig;
 
 #endif

@@ -10,22 +10,29 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "property.h"
-#include "commands.h"
-#include "guilds.h"
-#include "dm.h"
-#include "login.h"
-#include "move.h"
+
 #include <sstream>
 #include <iomanip>
-#include <locale>
 
+#include "catRefInfo.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "dm.h"
+#include "guilds.h"
+#include "login.h"
+#include "move.h"
+#include "mud.h"
+#include "rooms.h"
+#include "property.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      PartialOwner

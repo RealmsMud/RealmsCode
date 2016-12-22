@@ -10,13 +10,16 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 
+#include "creatures.h"
+#include "creatureStreams.h"
 #include "mud.h"
+#include "socket.h"
 
 Streamable& Streamable::operator << ( Streamable& (*op)(Streamable&)) {
     // call the function passed as parameter with this stream as the argument

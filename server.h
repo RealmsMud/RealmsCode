@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -27,40 +27,48 @@ namespace odbc {
 
 #endif //SQL_LOGGER
 
+#include <list>
+#include <map>
+#include <vector>
+
 // C Includes
-#include "pythonHandler.h"
+//#include "pythonHandler.h"
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
 
-class Player;
-class Group;
-class PythonHandler;
-class WebInterface;
-class Socket;
+#include "catRef.h"
+#include "delayedAction.h"
+#include "money.h"
+#include "proc.h"
+#include "swap.h"
+#include "weather.h"
+//#include "money.h"
+
 class cmd;
-class ReportedMsdpVariable;
+class BaseRoom;
+class Creature;
+class Group;
+class Monster;
 class MsdpVariable;
+class Object;
+class Player;
+class PythonHandler;
+class ReportedMsdpVariable;
+class Socket;
+class WebInterface;
 
 
-//// Forward Declaration of PyObject
-//struct _object;
-//typedef _object PyObject;
-
-enum childType {
-    CHILD_START,
-
-    CHILD_DNS_RESOLVER,
-    CHILD_LISTER,
-    CHILD_DEMOGRAPHICS,
-    CHILD_SWAP_FIND,
-    CHILD_SWAP_FINISH,
-    CHILD_PRINT,
-
-    CHILD_END
-};
 enum GoldLog {
     GOLD_IN,
     GOLD_OUT
 };
+
+namespace boost { namespace python {
+        namespace api
+        {
+            class object;
+        }
+        using api::object;
+    }} // namespace boost::python
 
 
 #include "asynch.h"
@@ -101,23 +109,7 @@ public:
             this->control = control;
         }
     };
-    struct childProcess {
-        int pid;
-        childType type;
-        int fd; // Fd if any we should watch
-        bstring extra;
-        childProcess() {
-            pid = 0;
-            fd = -1;
-            extra = "";
-        }
-        childProcess(int p, childType t, int f = -1, bstring e = "") {
-            pid = p;
-            type = t;
-            fd = f;
-            extra = e;
-        }
-    };
+
     struct dnsCache {
         bstring ip;
         bstring hostName;
@@ -305,7 +297,7 @@ public:
     void addChild(int pid, childType pType, int pFd = -1, bstring pExtra = "");
 
     // Python
-    bool runPython(const bstring& pyScript, object& dictionary);
+    bool runPython(const bstring& pyScript, boost::python::object& dictionary);
     bool runPython(const bstring& pyScript, bstring args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
     bool runPythonWithReturn(const bstring& pyScript, bstring args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
     bool runPython(const bstring& pyScript, bstring args, Socket *sock, Player *actor, MsdpVariable* msdpVar = nullptr);
@@ -363,7 +355,7 @@ public:
     void childDied();
     int getDeadChildren() const;
     int runList(Socket* sock, cmd* cmnd);
-    bstring simpleChildRead(Server::childProcess &child);
+    bstring simpleChildRead(childProcess &child);
 
     // Swap functions - use children
     bstring swapName();
@@ -392,5 +384,7 @@ protected:
     int cleanUp(void); // Kick out any disconnectors and other general cleanup
 
 };
+
+extern Server *gServer;
 
 #endif /*SERVER_H_*/

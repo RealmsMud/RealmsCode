@@ -10,23 +10,15 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 
-// Mud Includes
-#include "mud.h"
-#include "serverTimer.h"
-#include "login.h"
-#include "version.h"
-#include "factions.h"
-#include "web.h"
-#include "calendar.h"
-#include "dm.h"
-
 // C Includes
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
 #include <sys/socket.h> // Needs: bind, std::listen, socket, AF_INET
 #include <fcntl.h>      // Needs: fnctl
@@ -41,6 +33,22 @@
 #include <sstream>
 #include <iomanip>
 #include <locale>
+
+// Mud Includes
+#include "calendar.h"
+#include "config.h"
+#include "creatures.h"
+#include "dm.h"
+#include "login.h"
+#include "factions.h"
+#include "mud.h"
+#include "rooms.h"
+#include "server.h"
+#include "serverTimer.h"
+#include "socket.h"
+#include "version.h"
+#include "web.h"
+#include "xml.h"
 
 
 // External declarations
@@ -197,7 +205,7 @@ bool Server::init() {
     if(rebooting) {
         printf("Doing a reboot.\n");
         finishReboot();
-    } else {
+    } else if (!gConfig->isListing()) {
         addListenPort(Port);
         char filename[80];
         snprintf(filename, 80, "%s/reboot.xml", Path::Config);
@@ -211,12 +219,16 @@ bool Server::init() {
 //********************************************************************
 
 void Server::installSignalHandlers() {
-    signal(SIGABRT, crash); // abnormal termination triggered by abort call
-    printf(".");
-    signal(SIGFPE, crash);  // floating point exception
-    printf(".");
-    signal(SIGSEGV, crash); // segment violation
-    printf(".");
+    if (!gConfig->isListing()) {
+        signal(SIGABRT, crash); // abnormal termination triggered by abort call
+        printf(".");
+        signal(SIGFPE, crash);  // floating point exception
+        printf(".");
+        signal(SIGSEGV, crash); // segment violation
+        printf(".");
+    } else {
+        printf("Ignoring crash handlers");
+    }
     signal(SIGPIPE, SIG_IGN);
     printf(".");
     signal(SIGTERM, SIG_IGN);

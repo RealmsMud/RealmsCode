@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -20,9 +20,13 @@
 #include <arpa/telnet.h>
 
 // Mud Includes
+#include "config.h"
 #include "mud.h"
 #include "msdp.h"
 #include "login.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
 
 #define MSDP_DEBUG
 

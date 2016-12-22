@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *  
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -24,12 +24,21 @@
 // with negative initial faction to reach 1250 because this will give them the
 // equivalent of 1k. This also applies to initial positive faction.
 
+#include <map>
 
-class CrtFaction {
-public:
-    bstring name;
-    int     value;
-};
+#include "common.h"
+#include "global.h"
+#include "money.h"
+
+class BaseRoom;
+class Monster;
+class Player;
+
+//class CrtFaction {
+//public:
+//    bstring name;
+//    int     value;
+//};
 
 
 class FactionRegard {

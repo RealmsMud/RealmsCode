@@ -10,26 +10,33 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *  
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 
-// Mud Includes
-#include "mud.h"
-#include "commands.h"
-#include "pythonHandler.h"
-#include "effects.h"
-#include "msdp.h"
 #include <indexing_suite/container_suite.hpp>
 #include <indexing_suite/set.hpp>
+
+// Mud Includes
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "effects.h"
+#include "fishing.h"
+#include "mud.h"
+#include "mudObject.h"
+#include "msdp.h"
+#include "pythonHandler.h"
+#include "rooms.h"
+#include "server.h"
+#include "socket.h"
+#include "xml.h"
 
 int pythonRand(int a, int b) {
     return (mrand(a,b));
 }
-
-namespace bp = boost::python;
 
 struct BaseRoom_wrapper: BaseRoom, bp::wrapper<BaseRoom> {
 
@@ -76,17 +83,17 @@ struct MudObject_wrapper: MudObject, bp::wrapper<MudObject> {
 BOOST_PYTHON_MODULE(mud)
 {
 
-    class_<Config>("Config", no_init).def("getVersion", &Config::getVersion)
+    bp::class_<Config>("Config", bp::no_init).def("getVersion", &Config::getVersion)
             .def("getMudName", &Config::getMudName)
             .def("getMudNameAndVersion",&Config::getMudNameAndVersion)
             .def("effectExists", &Config::effectExists)
             ;
 
-    class_<Server>("Server", no_init).def("findPlayer", &Server::findPlayer,
-            return_internal_reference<>())
+    bp::class_<Server>("Server", bp::no_init).def("findPlayer", &Server::findPlayer,
+                                                  bp::return_internal_reference<>())
 
 //      .def("findPlayer",&Server::findPlayer,
-//          return_value_policy<reference_existing_object>())
+//          return_value_policy <bp::reference_existing_object>())
             ;
 
     { //::MudObject
@@ -100,7 +107,7 @@ BOOST_PYTHON_MODULE(mud)
 //
 //          MudObject_exposer.def("getName"
 //                  , getName_function_type(&::MudObject::getName)
-//                  , return_value_policy<reference_existing_object>() );
+//                  , return_value_policy <bp::reference_existing_object>() );
 //
 //      }
 
@@ -132,23 +139,23 @@ BOOST_PYTHON_MODULE(mud)
                 "addEffect"
                 , addEffect_function_type( &::MudObject::addEffect )
                 , ( bp::arg("effect"), bp::arg("duration")=(long int)(-0x00000000000000002), bp::arg("strength")=(int)(-0x00000000000000002), bp::arg("applier")=0l, bp::arg("show")=(bool)(true), bp::arg("owner")=bp::object(), bp::arg("keepApplier")=(bool)(false) )
-                ,return_value_policy<reference_existing_object>() );
+                 ,bp::return_value_policy <bp::reference_existing_object>() );
 
         }
 
 
         MudObject_exposer.def("removeOppositeEffect", &::MudObject::removeOppositeEffect)
-                .def("getName", &MudObject::getName, return_value_policy<copy_const_reference>())
-                .def("getPlayer",&MudObject::getAsPlayer, return_value_policy<reference_existing_object>())
-                .def("getMonster", &MudObject::getAsMonster, return_value_policy<reference_existing_object>())
-                .def("getObject", &MudObject::getAsObject, return_value_policy<reference_existing_object>())
-                .def("getExit",&MudObject::getAsExit, return_value_policy<reference_existing_object>())
+                .def("getName", &MudObject::getName, bp::return_value_policy<bp::copy_const_reference>())
+                .def("getPlayer",&MudObject::getAsPlayer, bp::return_value_policy <bp::reference_existing_object>())
+                .def("getMonster", &MudObject::getAsMonster, bp::return_value_policy <bp::reference_existing_object>())
+                .def("getObject", &MudObject::getAsObject, bp::return_value_policy <bp::reference_existing_object>())
+                .def("getExit",&MudObject::getAsExit, bp::return_value_policy <bp::reference_existing_object>())
                 .def("equals", &MudObject::equals)
                 .def("getId", &MudObject::getIdPython)
                 ;
     }
 
-//  class_<MudObject>("MudObject", no_init)
+//  class_<MudObject>("MudObject", bp::no_init)
 //      .def("getName", &MudObject::getName)
 //  ;
 
@@ -282,33 +289,33 @@ BOOST_PYTHON_MODULE(mud)
         ;
 
 
-    def("dice", &::dice);
-    def("rand", &::pythonRand);
-    def("spawnObjects", &::spawnObjects);
-    def("isBadSocial", &::isBadSocial);
-    def("isSemiBadSocial", &::isSemiBadSocial);
-    def("isGoodSocial", &::isGoodSocial);
-    def("getConBonusPercentage", &::getConBonusPercentage);
+    bp::def("dice", &::dice);
+    bp::def("rand", &::pythonRand);
+    bp::def("spawnObjects", &::spawnObjects);
+    bp::def("isBadSocial", &::isBadSocial);
+    bp::def("isSemiBadSocial", &::isSemiBadSocial);
+    bp::def("isGoodSocial", &::isGoodSocial);
+    bp::def("getConBonusPercentage", &::getConBonusPercentage);
     //void doCastPython(MudObject* caster, Creature* target, bstring spell, int strength)
-    def("doCast", &::doCastPython, ( bp::arg("caster"), bp::arg("target"), bp::arg("spell"), bp::arg("strength")=(int)(130) ) );
+    bp::def("doCast", &::doCastPython, ( bp::arg("caster"), bp::arg("target"), bp::arg("spell"), bp::arg("strength")=(int)(130) ) );
 }
 
 BOOST_PYTHON_MODULE(MudObjects)
 {
 
-    class_<MonsterSet> ("MonsterSet")
-            .def (indexing::container_suite< MonsterSet >::with_policies(return_internal_reference<>()));
+    bp::class_<MonsterSet> ("MonsterSet")
+            .def (bp::indexing::container_suite< MonsterSet >::with_policies(bp::return_internal_reference<>()));
 
-    class_<PlayerSet> ("PlayerSet")
-                .def (indexing::container_suite< PlayerSet >::with_policies(return_internal_reference<>()));
+    bp::class_<PlayerSet> ("PlayerSet")
+                .def (bp::indexing::container_suite< PlayerSet >::with_policies(bp::return_internal_reference<>()));
 
-    class_<Containable, boost::noncopyable, bases<MudObject> >("Containable", no_init)
-            .def("getParent", &Containable::getParent, return_value_policy<reference_existing_object>())
+    bp::class_<Containable, boost::noncopyable, bp::bases<MudObject> >("Containable", bp::no_init)
+            .def("getParent", &Containable::getParent, bp::return_value_policy<bp::reference_existing_object>())
             .def("addTo", &Containable::addTo);
 
     typedef ::Container * ( ::Container::*findCreature_function_type )( ::Creature *,::bstring const &,bool,bool,bool );
 
-    class_<Container, boost::noncopyable, bases<MudObject> > ("Container", no_init)
+    bp::class_<Container, boost::noncopyable, bp::bases<MudObject> > ("Container", bp::no_init)
             .def_readwrite("monsters", &Container::monsters)
             .def_readwrite("players", &Container::players)
             .def("wake", &Container::wake)
@@ -316,7 +323,7 @@ BOOST_PYTHON_MODULE(MudObjects)
                     "findCreature"
                     , findCreature_function_type( &::Container::findCreaturePython )
                     , ( bp::arg("searcher"), bp::arg("name"), bp::arg("monFirst")=(bool)(true), bp::arg("firstAggro")=(bool)(false), bp::arg("exactMatch")=(bool)(false) )
-                    ,return_value_policy<reference_existing_object>())
+                    ,bp::return_value_policy<bp::reference_existing_object>())
             ;
 
 
@@ -394,7 +401,7 @@ BOOST_PYTHON_MODULE(MudObjects)
                     "findCreature"
                     , findCreature_function_type( &::BaseRoom::findCreaturePython )
                     , ( bp::arg("searcher"), bp::arg("name"), bp::arg("monFirst")=(bool)(true), bp::arg("firstAggro")=(bool)(false), bp::arg("exactMatch")=(bool)(false) )
-                    ,return_value_policy<reference_existing_object>());
+                     ,bp::return_value_policy <bp::reference_existing_object>());
 
         }
         { //::BaseRoom::killMortalObjects
@@ -420,7 +427,7 @@ BOOST_PYTHON_MODULE(MudObjects)
     bp::class_<SkillInfo, boost::noncopyable >( "SkillInfo", bp::no_init )
         ;
 
-    bp::class_<SkillCommand, boost::noncopyable, bases<SkillInfo> >( "SkillCommand", bp::no_init )
+    bp::class_<SkillCommand, boost::noncopyable, bp::bases<SkillInfo> >( "SkillCommand", bp::no_init )
         ;
 
     bp::class_<EffectInfo, boost::noncopyable >( "EffectInfo", bp::no_init )
@@ -431,13 +438,13 @@ BOOST_PYTHON_MODULE(MudObjects)
     .def("runScript", &EffectInfo::runScript, (bp::arg("pyScript"), bp::arg("applier")=0l ) )
     .def("getDisplayName", &EffectInfo::getDisplayName)
     .def("getDuration", &EffectInfo::getDuration)
-    .def("getEffect", &EffectInfo::getEffect, return_value_policy<reference_existing_object>())
+    .def("getEffect", &EffectInfo::getEffect, bp::return_value_policy <bp::reference_existing_object>())
 
     .def("getExtra", &EffectInfo::getExtra)
     .def("getLastMod", &EffectInfo::getLastMod)
     .def("getName", &EffectInfo::getName)
     .def("getOwner", &EffectInfo::getOwner)
-    .def("getParent", &EffectInfo::getParent, return_value_policy<reference_existing_object>())
+    .def("getParent", &EffectInfo::getParent, bp::return_value_policy <bp::reference_existing_object>())
     .def("getStrength", &EffectInfo::getStrength)
     .def("isCurse", &EffectInfo::isCurse)
     .def("isDisease", &EffectInfo::isDisease)
@@ -454,11 +461,11 @@ BOOST_PYTHON_MODULE(MudObjects)
     .def("updateLastMod", &EffectInfo::updateLastMod)
     ;
 
-    class_<Exit, boost::noncopyable, bases<MudObject> >("Exit", no_init)
-    .def("getRoom", &Exit::getRoom, return_value_policy<reference_existing_object>())
+    bp::class_<Exit, boost::noncopyable, bp::bases<MudObject> >("Exit", bp::no_init)
+    .def("getRoom", &Exit::getRoom, bp::return_value_policy <bp::reference_existing_object>())
     ;
 
-    class_<Effect, boost::noncopyable >("Effect", no_init)
+    bp::class_<Effect, boost::noncopyable >("Effect", bp::no_init)
     .def("getPulseScript", &Effect::getPulseScript)
     .def("getUnApplyScript", &Effect::getUnApplyScript)
     .def("getApplyScript", &Effect::getApplyScript)
@@ -479,15 +486,15 @@ BOOST_PYTHON_MODULE(MudObjects)
     .def("isPulsed", &Effect::isPulsed)
     ;
 
-    class_<Creature, boost::noncopyable, bases<Container>, bases<Containable> >("Creature", no_init)
+    bp::class_<Creature, boost::noncopyable, bp::bases<Container>, bp::bases<Containable> >("Creature", bp::no_init)
     .def("send", &Creature::bPrint)
     .def("getCrtStr", &Creature::getCrtStr, ( bp::arg("viewer")=0l, bp::arg("flags")=(int)(0), bp::arg("num")=(int)(0) ))
-    .def("getParent", &Creature::getParent, return_value_policy<reference_existing_object>())
+    .def("getParent", &Creature::getParent, bp::return_value_policy <bp::reference_existing_object>())
     .def("hisHer", &Creature::hisHer)
     .def("upHisHer", &Creature::upHisHer)
     .def("himHer", &Creature::himHer)
-    .def("getRoom", &Creature::getRoomParent, return_value_policy<reference_existing_object>())
-    .def("getTarget", &Creature::getTarget, return_value_policy<reference_existing_object>())
+    .def("getRoom", &Creature::getRoomParent, bp::return_value_policy <bp::reference_existing_object>())
+    .def("getTarget", &Creature::getTarget, bp::return_value_policy <bp::reference_existing_object>())
     .def("getDeity", &Creature::getDeity)
     .def("getClass", &Creature::getClass)
     .def("setDeathType", &Creature::setDeathType)
@@ -601,11 +608,11 @@ BOOST_PYTHON_MODULE(MudObjects)
 
     ;
 
-    class_<MsdpVariable, boost::noncopyable >("MsdpVariable", no_init)
+    bp::class_<MsdpVariable, boost::noncopyable >("MsdpVariable", bp::no_init)
     .def("getName", &MsdpVariable::getName)
     ;
 
-    class_<ReportedMsdpVariable, boost::noncopyable, bases<MsdpVariable> >("ReportedMsdpVariable", no_init)
+    bp::class_<ReportedMsdpVariable, boost::noncopyable, bp::bases<MsdpVariable> >("ReportedMsdpVariable", bp::no_init)
     .def("getValue", &ReportedMsdpVariable::getValue)
     .def("setDirty", &ReportedMsdpVariable::setDirty)
     .def(
@@ -622,8 +629,8 @@ BOOST_PYTHON_MODULE(MudObjects)
             , ( bp::arg("newValue") ) )
     ;
 
-    class_<Socket, boost::noncopyable >("Socket", no_init)
-    .def("getPlayer", &Socket::getPlayer, return_value_policy<reference_existing_object>())
+    bp::class_<Socket, boost::noncopyable >("Socket", bp::no_init)
+    .def("getPlayer", &Socket::getPlayer, bp::return_value_policy <bp::reference_existing_object>())
     .def("bprint", &Socket::bprint)
     .def("msdpSendPair", &Socket::msdpSendPair)
     .def("msdpSendList", &Socket::msdpSendList)
@@ -633,8 +640,8 @@ BOOST_PYTHON_MODULE(MudObjects)
 //      "getMax"
 //      , (short int ( ::Stat::* )(  ) const)( &::Stat::getMax ) )
 
-    class_<Player, boost::noncopyable, bases<Creature> >("Player", no_init)
-    .def("getSock", &Player::getSock, return_value_policy<reference_existing_object>())
+    bp::class_<Player, boost::noncopyable, bp::bases<Creature> >("Player", bp::no_init)
+    .def("getSock", &Player::getSock, bp::return_value_policy <bp::reference_existing_object>())
     .def("customColorize", &Player::customColorize, ( bp::arg("text"), bp::arg("caret")=(bool)(true) ))
     .def("expToLevel", (unsigned long ( ::Player::* )() const)( &Player::expToLevel ) )
     .def("expForLevel", (bstring ( ::Player::* )( ) const)( &Player::expForLevel ) )
@@ -644,13 +651,13 @@ BOOST_PYTHON_MODULE(MudObjects)
     .def("getAfflictedBy", &Player::getAfflictedBy)
     ;
 
-    class_<Monster, boost::noncopyable, bases<Creature> >("Monster", no_init)
+    bp::class_<Monster, boost::noncopyable, bp::bases<Creature> >("Monster", bp::no_init)
     .def("addEnemy", &Monster::addEnemy)
     .def("adjustThreat", &Monster::adjustThreat)
     .def("customColorize", &Monster::customColorize, ( bp::arg("text"), bp::arg("caret")=(bool)(true) ))
     ;
 
-    class_<Object, bases<MudObject> >("Object", no_init)
+    bp::class_<Object, bp::bases<MudObject> >("Object", bp::no_init)
     .def("getType", &Object::getType)
     .def("getWearflag", &Object::getWearflag)
     .def("getShotsmax", &Object::getShotsMax)
@@ -725,36 +732,36 @@ bool Server::initPython() {
 
         // Now that we've imported the modules we want, initalize python and setup the main module
         Py_Initialize();
-        object main_module(
-                (handle<>(borrowed(PyImport_AddModule("__main__")))));
+        bp::object main_module(
+                (bp::handle<>(bp::borrowed(PyImport_AddModule("__main__")))));
         pythonHandler->mainNamespace = main_module.attr("__dict__");
 
-        object IOModule((handle<>(PyImport_ImportModule("io"))));
+        bp::object IOModule((bp::handle<>(PyImport_ImportModule("io"))));
         pythonHandler->mainNamespace["io"] = IOModule;
 
         // Import sys
-        object sysModule((handle<>(PyImport_ImportModule("sys"))));
+        bp::object sysModule((bp::handle<>(PyImport_ImportModule("sys"))));
         pythonHandler->mainNamespace["sys"] = sysModule;
-        object mudLibModule((handle<>(PyImport_ImportModule("mudLib"))));
+        bp::object mudLibModule((bp::handle<>(PyImport_ImportModule("mudLib"))));
         pythonHandler->mainNamespace["mudLib"] = mudLibModule;
 
         // Now import the modules we setup above
-        object mudModule((handle<>(PyImport_ImportModule("mud"))));
+        bp::object mudModule((bp::handle<>(PyImport_ImportModule("mud"))));
         pythonHandler->mainNamespace["mud"] = mudModule;
 
-        object mudObjectsModule(
-                (handle<>(PyImport_ImportModule("MudObjects"))));
+        bp::object mudObjectsModule(
+                (bp::handle<>(PyImport_ImportModule("MudObjects"))));
         pythonHandler->mainNamespace["MudObjectsSystem"] = mudObjectsModule;
 
         // Add in any objects we want
-        scope(mudModule).attr("gConfig") = ptr(gConfig); // Make the gConfig object available
-        scope(mudModule).attr("gServer") = ptr(gServer); // Make the gServer object available
+        bp::scope(mudModule).attr("gConfig") = bp::ptr(gConfig); // Make the gConfig object available
+        bp::scope(mudModule).attr("gServer") = bp::ptr(gServer); // Make the gServer object available
 
         // Run a python test command here
         runPython(
                 "print(\"Python Initialized! Running Version \" + mud.gConfig.getVersion())");
 
-    } catch (error_already_set) {
+    } catch (bp::error_already_set) {
         PyErr_Print();
     } catch (...) {
         PyErr_Print();
@@ -770,11 +777,11 @@ bool Server::cleanUpPython() {
     return (true);
 }
 
-bool addMudObjectToDictionary(object& dictionary, bstring key,
+bool addMudObjectToDictionary(bp::object& dictionary, bstring key,
         MudObject* myObject) {
     // If null, we still want it!
     if (!myObject) {
-        dictionary[key.c_str()] = ptr(myObject);
+        dictionary[key.c_str()] = bp::ptr(myObject);
         return (true);
     }
 
@@ -786,27 +793,27 @@ bool addMudObjectToDictionary(object& dictionary, bstring key,
     Exit* xPtr = myObject->getAsExit();
 
     if (mPtr) {
-        dictionary[key.c_str()] = ptr(mPtr);
+        dictionary[key.c_str()] = bp::ptr(mPtr);
     } else if (pPtr) {
-        dictionary[key.c_str()] = ptr(pPtr);
+        dictionary[key.c_str()] = bp::ptr(pPtr);
     } else if (oPtr) {
-        dictionary[key.c_str()] = ptr(oPtr);
+        dictionary[key.c_str()] = bp::ptr(oPtr);
     } else if (rPtr) {
-        dictionary[key.c_str()] = ptr(rPtr);
+        dictionary[key.c_str()] = bp::ptr(rPtr);
     } else if (aPtr) {
-        dictionary[key.c_str()] = ptr(aPtr);
+        dictionary[key.c_str()] = bp::ptr(aPtr);
     } else if (xPtr) {
-        dictionary[key.c_str()] = ptr(xPtr);
+        dictionary[key.c_str()] = bp::ptr(xPtr);
     } else {
-        dictionary[key.c_str()] = ptr(myObject);
+        dictionary[key.c_str()] = bp::ptr(myObject);
     }
     return (true);
 }
 
-bool Server::runPython(const bstring& pyScript, object& localNamespace) {
+bool Server::runPython(const bstring& pyScript, bp::object& localNamespace) {
     try {
         // Run a python test command here
-        handle<> ignored((
+        bp::handle<> ignored((
 
         PyRun_String( pyScript.c_str(),
 
@@ -814,7 +821,7 @@ bool Server::runPython(const bstring& pyScript, object& localNamespace) {
                 pythonHandler->mainNamespace.ptr(),
                 localNamespace.ptr() )));
 
-    } catch (error_already_set) {
+    } catch (bp::error_already_set) {
         handlePythonError();
         return (false);
     }
@@ -829,7 +836,7 @@ bool Server::runPython(const bstring& pyScript, object& localNamespace) {
 //  target:     The target of the script
 
 bool Server::runPython(const bstring& pyScript, bstring args, MudObject *actor, MudObject *target) {
-    object localNamespace((handle<>(PyDict_New())));
+    bp::object localNamespace((bp::handle<>(PyDict_New())));
 
     localNamespace["args"] = args;
 
@@ -849,7 +856,7 @@ bool Server::runPythonWithReturn(const bstring& pyScript, bstring args, MudObjec
 
     try {
 
-        object localNamespace((handle<>(PyDict_New())));
+        bp::object localNamespace((bp::handle<>(PyDict_New())));
 
         localNamespace["args"] = args;
 
@@ -862,11 +869,11 @@ bool Server::runPythonWithReturn(const bstring& pyScript, bstring args, MudObjec
 
         gServer->runPython(pyScript, localNamespace);
 
-        bool retVal = extract<bool>(localNamespace["retVal"]);
+        bool retVal = bp::extract<bool>(localNamespace["retVal"]);
 
         return(retVal);
     }
-    catch( error_already_set) {
+    catch( bp::error_already_set) {
         gServer->handlePythonError();
     }
 
@@ -880,59 +887,59 @@ bool Server::runPythonWithReturn(const bstring& pyScript, bstring args, MudObjec
 //  actor:      The actor of the script.
 //  target:     The target of the script
 bool Server::runPython(const bstring& pyScript, bstring args, Socket *sock, Player *actor, MsdpVariable* msdpVar) {
-    object localNamespace((handle<>(PyDict_New())));
+    bp::object localNamespace((bp::handle<>(PyDict_New())));
 
     localNamespace["args"] = args;
 
     if (sock != nullptr)
-        localNamespace["sock"] = ptr(sock);
+        localNamespace["sock"] = bp::ptr(sock);
     if (actor != nullptr)
-        localNamespace["actor"] = ptr(actor);
+        localNamespace["actor"] = bp::ptr(actor);
 
     ReportedMsdpVariable* reportedVar =
             dynamic_cast<ReportedMsdpVariable*>(msdpVar);
 
     if (msdpVar != nullptr)
-        localNamespace["msdpVar"] = ptr(msdpVar);
+        localNamespace["msdpVar"] = bp::ptr(msdpVar);
     if (reportedVar != nullptr)
-        localNamespace["reportedVar"] = ptr(reportedVar);
+        localNamespace["reportedVar"] = bp::ptr(reportedVar);
 
     return (runPython(pyScript, localNamespace));
 }
-namespace py = boost::python;
+
 void Server::handlePythonError() {
-    object sys = pythonHandler->mainNamespace["sys"];
-    object io = pythonHandler->mainNamespace["io"];
-    object err = sys.attr("stderr");
+    bp::object sys = pythonHandler->mainNamespace["sys"];
+    bp::object io = pythonHandler->mainNamespace["io"];
+    bp::object err = sys.attr("stderr");
     std::string errText("Unknown");
     try {
         PyObject *type_ptr = nullptr, *value_ptr = nullptr, *traceback_ptr = nullptr;
         PyErr_Fetch(&type_ptr, &value_ptr, &traceback_ptr);
         if(type_ptr != nullptr){
-            py::handle<> h_type(type_ptr);
-            py::str type_pstr(h_type);
-            py::extract<std::string> e_type_pstr(type_pstr);
+            bp::handle<> h_type(type_ptr);
+            bp::str type_pstr(h_type);
+            bp::extract<std::string> e_type_pstr(type_pstr);
             if(e_type_pstr.check())
                 errText = e_type_pstr();
             else
                 errText = "Unknown exception type";
         }
         if(value_ptr != nullptr){
-            py::handle<> h_val(value_ptr);
-            py::str a(h_val);
-            py::extract<std::string> returned(a);
+            bp::handle<> h_val(value_ptr);
+            bp::str a(h_val);
+            bp::extract<std::string> returned(a);
             if(returned.check())
                 errText +=  ": " + returned();
             else
                 errText += std::string(": Unparseable Python error: ");
         }
          if(traceback_ptr != nullptr){
-            py::handle<> h_tb(traceback_ptr);
-            py::object tb(py::import("traceback"));
-            py::object fmt_tb(tb.attr("format_tb"));
-            py::object tb_list(fmt_tb(h_tb));
-            py::object tb_str(py::str("\n").join(tb_list));
-            py::extract<std::string> returned(tb_str);
+            bp::handle<> h_tb(traceback_ptr);
+            bp::object tb(bp::import("traceback"));
+            bp::object fmt_tb(tb.attr("format_tb"));
+            bp::object tb_list(fmt_tb(h_tb));
+            bp::object tb_str(bp::str("\n").join(tb_list));
+            bp::extract<std::string> returned(tb_str);
             if(returned.check())
                 errText += ": " + returned();
             else

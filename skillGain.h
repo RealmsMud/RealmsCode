@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -19,6 +19,9 @@
 #ifndef _SKILLGAIN_H
 #define _SKILLGAIN_H
 
+#include <map>
+
+#include "common.h"
 
 // Describes the skill gained and who gets it
 class SkillGain {

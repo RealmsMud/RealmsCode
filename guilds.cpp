@@ -10,20 +10,28 @@
  * Permission to use, modify and distribute ics granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
-#include "commands.h"
-#include "move.h"
-#include "guilds.h"
-#include "bank.h"
-#include "property.h"
-#include "dm.h"
-#include "web.h"
+
 #include <fcntl.h>
+
+#include "bank.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "dm.h"
+#include "guilds.h"
+#include "move.h"
+#include "mud.h"
+#include "rooms.h"
+#include "property.h"
+#include "server.h"
+#include "socket.h"
+#include "web.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      Guild

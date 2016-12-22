@@ -10,29 +10,21 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *  
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 
 
-#include "mud.h"
-
-#include <sys/stat.h>
-#include <sys/signal.h>
-#include <unistd.h>
-#include <time.h>
-#include <libxml/xmlmemory.h>
-#include <libxml/parser.h>
-
-#include "commands.h"
-
-bool listing = false;
+#include "config.h"
+#include "server.h"
 
 void handle_args(int argc, char *argv[]);
 void startup_mordor(void);
 
+extern Config *gConfig;
+extern Server *gServer;
 
 int main(int argc, char *argv[]) {
     // Get our instance variables

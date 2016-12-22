@@ -10,13 +10,16 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 
+#include "creatures.h"
 #include "mud.h"
+#include "pythonHandler.h"
+#include "server.h"
 
 int getFindWhere(TargetType targetType) {
     switch(targetType) {
@@ -170,14 +173,14 @@ int SkillCommand::getFailCooldown() const {
 
 bool SkillCommand::runScript(Creature* actor, MudObject* target, Skill* skill) {
     try {
-        object localNamespace( (handle<>(PyDict_New())));
+        bp::object localNamespace( (bp::handle<>(PyDict_New())));
 
-        object skillModule( (handle<>(PyImport_ImportModule("skillLib"))) );
+        bp::object skillModule( (bp::handle<>(PyImport_ImportModule("skillLib"))) );
 
         localNamespace["skillLib"] = skillModule;
 
-        localNamespace["skill"] = ptr(skill);
-        localNamespace["skillCmd"] = ptr(this);
+        localNamespace["skill"] = bp::ptr(skill);
+        localNamespace["skillCmd"] = bp::ptr(this);
 
         // Default retVal is true
         localNamespace["retVal"] = true;
@@ -187,11 +190,11 @@ bool SkillCommand::runScript(Creature* actor, MudObject* target, Skill* skill) {
 
         gServer->runPython(pyScript, localNamespace);
 
-        bool retVal = extract<bool>(localNamespace["retVal"]);
+        bool retVal = bp::extract<bool>(localNamespace["retVal"]);
         //std::cout << "runScript returning: " << retVal << std::endl;
         return(retVal);
     }
-    catch( error_already_set) {
+    catch( bp::error_already_set) {
         gServer->handlePythonError();
     }
     return(false);

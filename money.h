@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -18,6 +18,21 @@
 
 #ifndef _MONEY_H
 #define _MONEY_H
+
+#include "common.h"
+
+enum Coin {
+    MIN_COINS = 0,
+
+    COPPER =    0,
+    SILVER =    1,
+    GOLD =      2,
+    PLATINUM =  3,
+    ALANTHIUM = 4,
+
+    MAX_COINS = 4
+};
+
 
 
 class Money {

@@ -10,15 +10,21 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.h"
 #include "commands.h"
+#include "config.h"
+#include "creatures.h"
 #include "effects.h"
+#include "mud.h"
+#include "pythonHandler.h"
+#include "rooms.h"
+#include "server.h"
 #include "songs.h"
+#include "xml.h"
 
 //*********************************************************************
 //                      Song
@@ -100,12 +106,12 @@ bool Song::runScript(MudObject* singer, MudObject* target) {
         return(false);
 
     try {
-        object localNamespace( (handle<>(PyDict_New())));
+        bp::object localNamespace( (bp::handle<>(PyDict_New())));
 
-        object effectModule( (handle<>(PyImport_ImportModule("songLib"))) );
+        bp::object effectModule( (bp::handle<>(PyImport_ImportModule("songLib"))) );
         localNamespace["songLib"] = effectModule;
 
-        localNamespace["song"] = ptr(this);
+        localNamespace["song"] = bp::ptr(this);
 
         // Default retVal is true
         localNamespace["retVal"] = true;
@@ -114,10 +120,10 @@ bool Song::runScript(MudObject* singer, MudObject* target) {
 
         gServer->runPython(script, localNamespace);
 
-        bool retVal = extract<bool>(localNamespace["retVal"]);
+        bool retVal = bp::extract<bool>(localNamespace["retVal"]);
         return(retVal);
     }
-    catch( error_already_set) {
+    catch( bp::error_already_set) {
         gServer->handlePythonError();
     }
 
@@ -281,7 +287,7 @@ int cmdPlay(Player* player, cmd* cmnd) {
     Song* song = gConfig->getSong(cmnd->str[1], retVal);
 
     if(retVal == CMD_NOT_FOUND) {
-        player->print("Alas, there exists no song by that name.\n");
+        player->print("Alas, there exists no song by that name (%s).\n", cmnd->str[1]);
         return(0);
     } else if(retVal == CMD_NOT_UNIQUE ) {
         player->print("Alas, there exists many songs by that name, please be more specific!\n");

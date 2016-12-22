@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -22,6 +22,9 @@
 #include <map>
 
 #include "boost/lexical_cast.hpp"
+
+#include "carry.h"
+
 using boost::lexical_cast;
 using boost::bad_lexical_cast;
 
@@ -194,15 +197,15 @@ namespace xml {
 //  Load Section
 //******************
 
-bool loadMonster(int index, Monster** pMonster);
-bool loadMonster(const CatRef cr, Monster** pMonster);
-bool loadMonsterFromFile(const CatRef cr, Monster **pMonster, bstring filename="");
-bool loadObject(int index, Object** pObject);
-bool loadObject(const CatRef cr, Object** pObject);
-bool loadObjectFromFile(const CatRef cr, Object** pObject);
-bool loadRoom(int index, UniqueRoom **pRoom);
-bool loadRoom(const CatRef cr, UniqueRoom **pRoom);
-bool loadRoomFromFile(const CatRef cr, UniqueRoom **pRoom, bstring filename="");
+bool loadMonster(int index, Monster** pMonster, bool offline=false);
+bool loadMonster(const CatRef cr, Monster** pMonster, bool offline=false);
+bool loadMonsterFromFile(const CatRef cr, Monster **pMonster, bstring filename="", bool offline=false);
+bool loadObject(int index, Object** pObject, bool offline=false);
+bool loadObject(const CatRef cr, Object** pObject, bool offline=false);
+bool loadObjectFromFile(const CatRef cr, Object** pObject, bool offline=false);
+bool loadRoom(int index, UniqueRoom **pRoom, bool offline=false);
+bool loadRoom(const CatRef cr, UniqueRoom **pRoom, bool offline=false);
+bool loadRoomFromFile(const CatRef cr, UniqueRoom **pRoom, bstring filename="", bool offline=false);
 
 bool loadPlayer(const bstring name, Player** player, LoadType loadType=LS_NORMAL);
 

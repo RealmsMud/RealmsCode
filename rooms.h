@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -26,10 +26,14 @@ class UniqueRoom;
 class AreaRoom;
 class Fishing;
 
+#include "container.h"
+#include "exits.h"
+#include "global.h"
+#include "location.h"
+#include "realm.h"
+#include "size.h"
 #include "track.h"
 #include "wanderInfo.h"
-#include "location.h"
-#include "exits.h"
 
 typedef std::list<Exit*> ExitList;
 
@@ -50,7 +54,7 @@ public:
     virtual ~BaseRoom() {};
 //  virtual bool operator< (const MudObject& t) const = 0;
 
-    void readExitsXml(xmlNodePtr curNode);
+    void readExitsXml(xmlNodePtr curNode, bool offline=false);
     bool delExit(bstring dir);
     bool delExit(Exit *exit);
     void clearExits();
@@ -134,7 +138,7 @@ public:
     bool operator< (const UniqueRoom& t) const;
 
     void escapeText();
-    int readFromXml(xmlNodePtr rootNode);
+    int readFromXml(xmlNodePtr rootNode, bool offline=false);
     int saveToXml(xmlNodePtr rootNode, int permOnly) const;
     int saveToFile(int permOnly, LoadType saveType=LS_NORMAL);
 

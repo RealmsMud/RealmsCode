@@ -10,29 +10,41 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 
-// Mud includes
-#include <arpa/telnet.h>
-#include "mud.h"
-#include "guilds.h"
-#include "login.h"
-#include "commands.h"
-#include "move.h"
-#include "effects.h"
-#include "clans.h"
-#include "property.h"
-#include "unique.h"
-
 // C includes
+#include <arpa/telnet.h>
 #include <math.h>
 
 #include <iomanip>
 #include <locale>
+
+// Mud includes
+#include "catRefInfo.h"
+#include "clans.h"
+#include "commands.h"
+#include "config.h"
+#include "creatures.h"
+#include "deityData.h"
+#include "effects.h"
+#include "guilds.h"
+#include "login.h"
+#include "mud.h"
+#include "move.h"
+#include "raceData.h"
+#include "rooms.h"
+#include "property.h"
+#include "skillGain.h"
+#include "server.h"
+#include "socket.h"
+#include "startlocs.h"
+#include "unique.h"
+#include "xml.h"
+
 
 //********************************************************************
 //              fixLts

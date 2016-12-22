@@ -10,23 +10,28 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-//#include "os.h"
-#include "mud.h"
-#include "bans.h"
-#include "factions.h"
-#include "guilds.h"
+
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include "calendar.h"
-#include "effects.h"
+#include "config.h"
+#include "creatures.h"
+#include "factions.h"
+#include "fishing.h"
+#include "guilds.h"
+#include "mud.h"
 #include "msdp.h"
-
-//#include "config.h"
-
-extern bool listing;
+#include "proxy.h"
+#include "rooms.h"
+#include "xml.h"
 
 // Globals
 Config *gConfig = nullptr;
@@ -37,6 +42,7 @@ Config* Config::myInstance = nullptr;
 Config::Config() {
     reset();
     inUse = true;
+    listing = false;
 }
 
 Config::~Config() {
@@ -105,6 +111,7 @@ void Config::cleanUp() {
     clearSongs();
     clearProxyAccess();
     inUse = false;
+    listing = false;
 }
 void Config::clearProxyAccess() {
     proxyManager->clear();
@@ -118,6 +125,7 @@ void Config::clearProxyAccess() {
 
 void Config::reset(bool reload) {
     mudName = "Default Mud Name";
+
     saveOnDrop = true;
     checkDouble = true;
     getHostByName = true;
@@ -208,7 +216,6 @@ void Config::reset(bool reload) {
     minBroadcastLevel = 2;
     //maxGuilds = 8;
     numGuilds = 0;
-
 
     calendar = nullptr;
     proxyManager = nullptr;
@@ -974,4 +981,12 @@ void Config::replaceObjectInQueue(CatRef cr, Object* object) {
         *objectQueue[cr.str()].obj = *object;
     else
         addObjectQueue(cr, &object);
+}
+
+void Config::setListing(bool isListing) {
+    listing = isListing;
+}
+
+bool Config::isListing() {
+    return listing;
 }

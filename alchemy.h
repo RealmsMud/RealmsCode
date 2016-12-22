@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -19,7 +19,13 @@
 #ifndef _ALCHEMY_H
 #define _ALCHEMY_H
 
-//class XmlNodePtr;
+#include <map>
+#include <vector>
+
+#include "common.h"
+
+class Creature;
+class Object;
 
 typedef std::vector<Object*> HerbVector;
 typedef std::map<bstring, HerbVector > HerbMap;

@@ -10,13 +10,23 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 #ifndef MSTRUCT_H
 #define MSTRUCT_H
+
+#include <list>
+
+#include "anchor.h"
+#include "delayedAction.h"
+#include "dice.h"
+#include "global.h"
+#include "money.h"
+#include "realm.h"
+
 
 class Object;
 class Creature;
@@ -59,18 +69,6 @@ enum Sex {
     SEX_MALE = 2
 };
 
-enum Coin {
-    MIN_COINS = 0,
-
-    COPPER =    0,
-    SILVER =    1,
-    GOLD =      2,
-    PLATINUM =  3,
-    ALANTHIUM = 4,
-
-    MAX_COINS = 4
-};
-
 
 enum EffectParentType {
     EFFECT_NO_PARENT,
@@ -79,41 +77,7 @@ enum EffectParentType {
     EFFECT_EXIT
 };
 
-typedef std::list<EffectInfo*> EffectList;
-// this class holds effect information and makes effects portable
-// across multiple objects
-class Effects {
-public:
-    void    load(xmlNodePtr rootNode, MudObject* pParent=0);
-    void    save(xmlNodePtr rootNode, const char* name) const;
-    EffectInfo* getEffect(const bstring& effect) const;
-    EffectInfo* getExactEffect(const bstring& effect) const;
-    bool    isEffected(const bstring& effect, bool exactMatch = false) const;
-    bool    isEffected(EffectInfo* effect) const;
-    //EffectInfo* addEffect(const bstring& effect, MudObject* applier, bool show, MudObject* pParent=0, const Creature* onwer=0, bool keepApplier=false);
-    EffectInfo* addEffect(EffectInfo* newEffect, bool show, MudObject* parent=0, bool keepApplier=false);
-    EffectInfo* addEffect(const bstring& effect, long duration, int strength, MudObject* applier = nullptr, bool show = true, MudObject* pParent=0, const Creature* onwer=0, bool keepApplier=false);
-    bool    removeEffect(const bstring& effect, bool show, bool remPerm, MudObject* fromApplier=0);
-    bool    removeEffect(EffectInfo* toDel, bool show);
-    bool    removeOppositeEffect(const EffectInfo *effect);
-    void    removeAll();
-    void    removeOwner(const Creature* owner);
-    void    copy(const Effects* source, MudObject* pParent=0);
-    bool    hasPoison() const;
-    bool    removePoison();
-    bool    hasDisease() const;
-    bool    removeDisease();
-    bool    removeCurse();
-    bstring getEffectsString(const Creature* viewer);
-    bstring getEffectsList() const;
 
-    void    pulse(time_t t, MudObject* pParent=0);
-
-    EffectList effectList;
-};
-
-#include "money.h"
-#include "dice.h"
 
 class MudFlag {
 public:
@@ -220,23 +184,6 @@ public:
 } daily;
 
 
-// Timed operation struct
-typedef struct lasttime {
-public:
-    lasttime() { interval = ltime = misc = 0; };
-    long        interval;
-    long        ltime;
-    short       misc;
-} lasttime;
-typedef struct crlasttime {
-public:
-    crlasttime() { interval = ltime = 0; };
-    long        interval;
-    long        ltime;
-    CatRef      cr;
-} crlasttime;
-
-
 
 typedef struct lockout {
 public:
@@ -245,42 +192,6 @@ public:
     char        password[20];
     char        userid[9];
 } lockout;
-
-
-// we need this forward declaration so command list pointers can
-// be stored inside the cmd class
-class cmdReturn;
-
-#define CMD_NOT_FOUND   -1
-#define CMD_NOT_UNIQUE  -2
-#define CMD_NOT_AUTH    -3
-
-#define MAX_TOKEN_SIZE  50
-
-class Command;
-
-class cmd {
-public:
-    cmd() {
-#ifndef PYTHON_CODE_GEN
-        ret = num = 0;
-        memset(str, 0, sizeof(str));
-        memset(val, 0, sizeof(val));
-        myCommand=0;
-#endif
-    };
-    int         num;
-    bstring     fullstr;
-    //char      fullstr[256];
-    char        str[COMMANDMAX][MAX_TOKEN_SIZE];
-    long        val[COMMANDMAX];
-
-    int         ret;
-    Command *myCommand;
-};
-
-
-#include "delayedAction.h"
 
 
 typedef struct osp_t {
@@ -308,48 +219,9 @@ public:
 } saves;
 
 
-#include "anchor.h"
 
 // These are special defines to reuse creature structure while still
 // making the code readable.
-
-
-// moved here to accomodate global use throughout mordor
-// General queue tag data struct
-typedef struct queue_tag {
-public:
-    queue_tag() { next = prev = 0; };
-    bstring             str;
-    struct queue_tag    *next;
-    struct queue_tag    *prev;
-} qtag;
-
-
-// Sparse pointer array for rooms
-typedef struct rsparse {
-public:
-    rsparse() { rom = 0; q_rom = 0; };
-    UniqueRoom *rom;
-    qtag            *q_rom;
-} rsparse;
-
-
-// Sparse pointer array for creatures
-typedef struct msparse {
-public:
-    msparse() { mob = 0; q_mob = 0; };
-    Monster *mob;
-    qtag            *q_mob;
-} msparse;
-
-
-// Sparse pointer array for objects
-typedef struct osparse {
-public:
-    osparse() {obj = 0; q_obj = 0; };
-    Object          *obj;
-    qtag            *q_obj;
-} osparse;
 
 
 typedef struct tagPlayer {
@@ -396,14 +268,6 @@ typedef struct {
     long    realms;
 } creatureStats;
 
-
-typedef struct quest {
-public:
-    quest() { num = exp = 0; name = 0; };
-    int     num;
-    int     exp;
-    char    *name;
-} quest, *questPtr;
 
 // ******************
 //   MudMethod

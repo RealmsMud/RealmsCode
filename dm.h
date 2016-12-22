@@ -10,7 +10,7 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2012 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2016 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
@@ -18,6 +18,16 @@
 #ifndef DMH_H
 #define DMH_H
 
+#include "catRef.h"
+#include "common.h"
+#include "range.h"
+
+class cmd;
+class AreaRoom;
+class Creature;
+class Object;
+class Player;
+class UniqueRoom;
 
 int dmAlchemyList(Player* player, cmd* cmnd);
 
