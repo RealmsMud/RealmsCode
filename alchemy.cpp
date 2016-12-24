@@ -244,7 +244,6 @@ bool Player::learnAlchemyEffect(Object* obj, const bstring effect) {
     if(knownAlchemyEffects.find(effectStr) == knownAlchemyEffects.end()) {
         *this << ColorOn << "You have discovered a new alchemy effect: ^W" << obj->getName() << "^x has the effect: ^W" << effect << "^x\n" << ColorOff;
         knownAlchemyEffects[effectStr] = true;
-        std::cout << effectStr << std::endl;
         return(true);
     }
 
@@ -314,6 +313,22 @@ bstring Object::showAlchemyEffects(Player *player) {
 
     return(toReturn);
 }
+
+//**********************************************************************
+//                      display
+//**********************************************************************
+std::ostream& operator<<(std::ostream& out, AlchemyEffect& effect) {
+    out << effect.getEffect();
+    return(out);
+}
+
+std::ostream& operator<<(std::ostream& out, AlchemyEffect* effect) {
+    if (effect)
+        out << *effect;
+
+    return (out);
+}
+
 
 
 //*********************************************************************

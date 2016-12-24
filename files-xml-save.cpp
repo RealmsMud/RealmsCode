@@ -82,7 +82,7 @@ int Player::saveToFile(LoadType saveType) {
     ASSERTLOG( isPlayer() );
 
     if(getName()[0] == '\0') {
-        printf("Invalid player passed to save\n");
+        std::clog << "Invalid player passed to save\n";
         return(-1);
     }
 
@@ -802,7 +802,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
     // If the object's index is 0, then we have to do a full save
     if(!info.id && saveType != LS_FULL && saveType != LS_PROTOTYPE) {
         // We should never get here...if it's a 0 index, should have O_SAVE_FULL set
-        printf("ERROR: Forcing full save.\n");
+        std::clog << "ERROR: Forcing full save.\n";
         saveType = LS_FULL;
     }
 

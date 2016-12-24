@@ -245,7 +245,7 @@ Socket::Socket(int pFd, sockaddr_in pAddr, bool &dnsDone) {
             sizeof(struct linger));
 
     NumSockets++;
-    std::cout << "Constructing socket (" << fd << ") from " << host.ip
+    std::clog << "Constructing socket (" << fd << ") from " << host.ip
             << " Socket #" << NumSockets << std::endl;
 
     // If we're running under valgrind, we don't resolve dns.  The child
@@ -289,9 +289,9 @@ void Socket::cleanUp() {
 //********************************************************************
 
 Socket::~Socket() {
-    std::cout << "Deconstructing socket , ";
+    std::clog << "Deconstructing socket , ";
     NumSockets--;
-    std::cout << "Num sockets: " << NumSockets << std::endl;
+    std::clog << "Num sockets: " << NumSockets << std::endl;
     cleanUp();
 }
 
@@ -567,20 +567,20 @@ int Socket::processInput() {
     for (i = 0; i < n; i++) {
 
 // For debugging
-//      std::cout << "DEBUG:" << (unsigned int)tmpBuf[i] << "'" << (unsigned char)tmpBuf[i] << "'" << "\n";
+//      std::clog << "DEBUG:" << (unsigned int)tmpBuf[i] << "'" << (unsigned char)tmpBuf[i] << "'" << "\n";
 
         // Try to handle zMud, cMud & tintin++ which don't seem to double the IAC for NAWS
         // during my limited testing -JM
         if (oneIAC && tState > NEG_START_NAWS && tState < NEG_END_NAWS && tmpBuf[i] != IAC) {
             // Broken Client
-            std::cout << "NAWS: BUG - Broken Client: Non-doubled IAC\n";
+            std::clog << "NAWS: BUG - Broken Client: Non-doubled IAC\n";
             i--;
         }
         if (watchBrokenClient) {
             // If we just finished NAWS with a 255 height...keep an eye out for the next
             // character to be a stray SE
             if (tState == NEG_NONE && (unsigned char) tmpBuf[i] == SE) {
-                std::cout << "NAWS: BUG - Stray SE\n";
+                std::clog << "NAWS: BUG - Stray SE\n";
                 // Set the tState to NEG_IAC as it should have been, and carry gracefully on
                 tState = NEG_IAC;
             }
@@ -624,7 +624,7 @@ int Socket::processInput() {
                 if(tmpBuf[i] == 'z') {
                     opts.mxpClientSecure = true;
                     tState = NEG_MXP_SECURE_CONSUME;
-                    std::cout << "Client secure MXP mode enabled" << std::endl;
+                    std::clog << "Client secure MXP mode enabled" << std::endl;
                     break;
                 } else {
                     tmp += "\033[1" + bstring(tmpBuf[i]);
@@ -705,7 +705,7 @@ int Socket::processInput() {
                         tState = NEG_SB_GMCP;
                         break;
                     default:
-                        std::cout << "Unknown Sub Negotiation: " << (int)tmpBuf[i] << std::endl;
+                        std::clog << "Unknown Sub Negotiation: " << (int)tmpBuf[i] << std::endl;
                         tState = NEG_NONE;
                         break;
                 }
@@ -777,7 +777,7 @@ int Socket::processInput() {
                 //
                 // Any other sub-negotiations (such as TTABLE-*) are not handled
                 if (tmpBuf[i] == ACCEPTED) {
-                    std::cout << "Enabled UTF8" << std::endl;
+                    std::clog << "Enabled UTF8" << std::endl;
                     opts.UTF8 = true;
                     tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
                 } else if (tmpBuf[i] == REJECTED) {
@@ -800,7 +800,7 @@ int Socket::processInput() {
                 } else if (tmpBuf[i] == SE) {
                     // Found what we were looking for
                 } else {
-                    std::cout << "NEG_SB_CHARSET_END Error: Expected SE, got '" << (int) tmpBuf[i]
+                    std::clog << "NEG_SB_CHARSET_END Error: Expected SE, got '" << (int) tmpBuf[i]
                             << "'" << std::endl;
                 }
                 tState = NEG_NONE;
@@ -824,7 +824,7 @@ int Socket::processInput() {
                     // TODO: Save the first one and once we get the last one, either:
                     // 1) turn off ttype and turn it back on once to get the first reported type
                     // 2) request it one more time to get the first time
-                    std::cout << "Found term type: " << term.type << std::endl;
+                    std::clog << "Found term type: " << term.type << std::endl;
                     // No previous term type
                     // Or the current term type isn't the same as the last
                     if (term.lastType.empty() ||  (term.type != term.lastType)) {
@@ -848,12 +848,12 @@ int Socket::processInput() {
 
                 } else if (tmpBuf[i] == IAC) {
                     // I doubt this will happen
-                    std::cout << "NEG_SB_TTYPE: Found double IAC" << std::endl;
+                    std::clog << "NEG_SB_TTYPE: Found double IAC" << std::endl;
                     term.type += tmpBuf[i];
                     tState = NEG_SB_TTYPE;
                     break;
                 } else {
-                    std::cout << "NEG_SB_TTYPE_END Error: Expected SE, got '" << (int) tmpBuf[i]
+                    std::clog << "NEG_SB_TTYPE_END Error: Expected SE, got '" << (int) tmpBuf[i]
                             << "'" << std::endl;
                 }
 
@@ -873,7 +873,7 @@ int Socket::processInput() {
                 break;
             case NEG_SB_NAWS_ROW_LOW:
                 if (handleNaws(term.rows, tmpBuf[i], false)) {
-                    std::cout << "New term size: " << term.cols << " x " << term.rows << std::endl;
+                    std::clog << "New term size: " << term.cols << " x " << term.rows << std::endl;
                     // Some clients (tintin++, cmud, possibly zmud) don't seem to double an IAC(255) when it's
                     // sent as data, if this happens in the cols...we should be able to gracefully catch it
                     // but if it happens in the rows...it'll eat the IAC from IAC SE and cause problems,
@@ -884,7 +884,7 @@ int Socket::processInput() {
                 }
                 break;
             default:
-                std::cout << "Unhandled state" << std::endl;
+                std::clog << "Unhandled state" << std::endl;
                 tState = NEG_NONE;
                 break;
         }
@@ -921,9 +921,9 @@ int Socket::processInput() {
         inBuf.erase(0, idx);
         if(opts.mxpClientSecure) {
             if(inBuf.left(8).equals("<version", false)) {
-                std::cout << "Got msxp version\n";
+                std::clog << "Got msxp version\n";
             } else if(inBuf.left(9).equals("<supports", false)) {
-                std::cout << "Got msxp supports\n";
+                std::clog << "Got msxp supports\n";
             }
         }
         input.push(tmpr);
@@ -939,10 +939,10 @@ bool Socket::negotiate(unsigned char ch) {
             if (tState == NEG_WILL) {
                 opts.charset = true;
                 write(telnet::charset_utf8, false);
-                std::cout << "Charset On" << std::endl;
+                std::clog << "Charset On" << std::endl;
             } else if (tState == NEG_WONT) {
                 opts.charset = false;
-                std::cout << "Charset Off" << std::endl;
+                std::clog << "Charset Off" << std::endl;
             }
             tState = NEG_NONE;
             break;
@@ -956,7 +956,7 @@ bool Socket::negotiate(unsigned char ch) {
             if (opts.dumb) {
                 if (tState == NEG_WILL) {
                     // Continue and query the rest of the options, including term type
-                    std::cout << "Continuing telnet negotiation\n";
+                    std::clog << "Continuing telnet negotiation\n";
                     continueTelnetNeg(true);
                 } else if (tState == NEG_WONT) {
                     // If they respond to something here they know how to negotiate,
@@ -975,11 +975,11 @@ bool Socket::negotiate(unsigned char ch) {
                 // Start off in MXP LOCKED CLOSED
                 //TODO: send elements we're using for mxp
                 opts.mxp = true;
-                std::cout << "Enabled MXP" << std::endl;
+                std::clog << "Enabled MXP" << std::endl;
                 defineMxp();
             } else if (tState == NEG_WONT || tState == NEG_DONT) {
                 opts.mxp = false;
-                std::cout << "Disabled MXP" << std::endl;
+                std::clog << "Disabled MXP" << std::endl;
             }
             tState = NEG_NONE;
             break;
@@ -1010,10 +1010,10 @@ bool Socket::negotiate(unsigned char ch) {
         case TELOPT_EOR:
             if (tState == NEG_WILL || tState == NEG_DO) {
                 opts.eor = true;
-                printf("Activating EOR\n");
+                std::clog << "Activating EOR\n";
             } else if (tState == NEG_WONT || tState == NEG_DONT) {
                 opts.eor = false;
-                printf("Deactivating EOR\n");
+                std::clog << "Deactivating EOR\n";
             }
             tState = NEG_NONE;
             break;
@@ -1050,9 +1050,9 @@ bool Socket::negotiate(unsigned char ch) {
                 opts.msdp = true;
                 msdpSend("SERVER_ID");
 
-                std::cout << "Enabled MSDP" << std::endl;
+                std::clog << "Enabled MSDP" << std::endl;
             } else {
-                std::cout << "Disabled MSDP" << std::endl;
+                std::clog << "Disabled MSDP" << std::endl;
                 opts.msdp = false;
             }
             tState = NEG_NONE;
@@ -1060,11 +1060,11 @@ bool Socket::negotiate(unsigned char ch) {
         case TELOPT_ATCP:
             if (tState == NEG_WILL || tState == NEG_DO) {
                 opts.atcp = true;
-                std::cout << "Enabled ATCP" << std::endl;
+                std::clog << "Enabled ATCP" << std::endl;
                 msdpSend("SERVER_ID");
     //          msdpSendPair("SERVER_ID", "The Realms of Hell v" VERSION);
             } else {
-                std::cout << "Disabled ATCP" << std::endl;
+                std::clog << "Disabled ATCP" << std::endl;
                 opts.atcp = false;
             }
             tState = NEG_NONE;
@@ -1085,16 +1085,16 @@ bool Socket::handleNaws(int& colRow, unsigned char& chr, bool high) {
     // If we get an IAC here, we need a double IAC
     if (chr == IAC) {
         if (!oneIAC) {
-//          std::cout << "NAWS: Got ONE IAC, checking for two.\n";
+//          std::clog << "NAWS: Got ONE IAC, checking for two.\n";
             oneIAC = true;
             return (false);
         } else {
-//          std::cout << "NAWS: Got second IAC.\n";
+//          std::clog << "NAWS: Got second IAC.\n";
             oneIAC = false;
         }
     } else if (oneIAC && chr != IAC) {
         // Error!
-        std::cout << "NAWS: BUG - Expecting a doubled IAC, got " << (unsigned int) chr << "\n";
+        std::clog << "NAWS: BUG - Expecting a doubled IAC, got " << (unsigned int) chr << "\n";
         oneIAC = false;
     }
 
@@ -1222,7 +1222,7 @@ void Socket::setState(int pState, int pFnParam) {
     else if (pState == CON_CHOSING_WEAPONS)
         fn = convertNewWeaponSkills;
     else {
-        printf("Unknown connected state!\n");
+        std::clog << "Unknown connected state!\n";
         fn = login;
     }
 
@@ -1265,7 +1265,7 @@ char caster_from_unsigned( unsigned char ch )
 bool Socket::parseMXPSecure() {
     if(getMxp()) {
         bstring toParse(reinterpret_cast<char*>(&cmdInBuf[0]), cmdInBuf.size());
-        std::cout << toParse << std::endl;
+        std::clog << toParse << std::endl;
 
         bstring client = getMxpTag("CLIENT=", toParse);
         if (!client.empty()) {
@@ -1294,7 +1294,7 @@ bool Socket::parseMXPSecure() {
 
         bstring supports = getMxpTag("SUPPORT=", toParse);
         if(!supports.empty()) {
-            std::cout << "Got <SUPPORT='" << supports << "'>" << std::endl;
+            std::clog << "Got <SUPPORT='" << supports << "'>" << std::endl;
         }
 
     }
@@ -1627,7 +1627,7 @@ int Socket::endCompress() {
         out_compress->next_in = dummy;
         // process any remaining output first?
         if (deflate(out_compress, Z_FINISH) != Z_STREAM_END) {
-            std::cout << "Error with deflate Z_FINISH\n";
+            std::clog << "Error with deflate Z_FINISH\n";
             return (-1);
         }
 
@@ -2004,7 +2004,7 @@ void addMSSPVal(std::ostringstream& msspStr, T val) {
 }
 
 int Socket::sendMSSP() {
-    std::cout << "Sending MSSP string\n";
+    std::clog << "Sending MSSP string\n";
 
     std::ostringstream msspStr;
 

@@ -112,7 +112,7 @@ void login(Socket* sock, bstring str) {
     Player  *player=0;
     bstring::size_type proxyCheck = 0;
     if(!sock) {
-        printf("**** ERORR: Null socket in login.\n");
+        std::clog << "**** ERORR: Null socket in login.\n";
         return;
     }
 
@@ -1453,7 +1453,7 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
         sock->getPlayer()->addSkill("bare-hand", 1);
 
     std::map<bstring, bstring>::const_iterator sgIt;
-    std::map<bstring, SkillInfo*>::const_iterator sIt;
+    SkillInfoMap::const_iterator sIt;
     int k = 0, n = 0;
     bstring curGroup, curGroupDisplay;
     SkillInfo* curSkill;

@@ -376,7 +376,7 @@ void update_shutdown(long t) {
         gConfig->save();
         cleanUpMemory();
 
-        printf("Goodbye.\n");
+        std::clog << "Goodbye.\n";
         exit(0);
         //kill(getpid(), 9);
     }
@@ -802,7 +802,7 @@ void Server::updateAction(long t) {
                             xdir = act->do_act - '0';
                             strcpy(cmnd.str[0], xits[xdir]);
                             // TODO: Dom: fix update
-                            printf("action move\n");
+                                std::clog << "action move\n";
                             //move(creature, &cmnd);
                             break;
                         }
@@ -898,7 +898,7 @@ void doCrash(int sig) {
     //delimit(who);
     logn("log.crash", oStr.str().c_str());
 
-    printf("The mud has crashed :(.\n");
+    std::clog << "The mud has crashed :(.\n";
 
     if(sig != -69) {
 //      char dbx[160];
@@ -948,7 +948,7 @@ void cleanUpMemory() {
     cleanup_spelling();
     // TODO: Clean up spelling memory
 
-    printf("Memory cleaned up.\n");
+    std::clog << "Memory cleaned up.\n";
 }
 
 //*********************************************************************

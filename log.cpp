@@ -58,11 +58,11 @@ void logn(const char *name, const char *fmt, ...) {
     fp = fopen(filename, "a");
     
     if(fp == nullptr) {
-        printf("Unable to open '%s'\n", filename);
+        std::clog << "Unable to open '" << filename << "'\n";
         return;
     }
     if(vasprintf(&str, fmt, ap) == -1) {
-        printf("Error in logn\n");
+        std::clog << "Error in logn\n";
         return; 
     }
     va_end(ap);

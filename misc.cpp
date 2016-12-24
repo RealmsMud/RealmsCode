@@ -1192,7 +1192,7 @@ MudObject* Creature::findTarget(int findWhere, int findFlags, bstring str, int v
 // log file.  If the error is fatal, then the program is aborted
 
 void new_merror(const char *str, char errtype, const char *file, const int line) {
-    printf("\nError: %s @ %s %d.\n", str, file, line);
+    std::clog << "\nError: " << str << " @ " << file << " " << line << ".\n";
     logn("error.log", "Error occured in %s in file %s line %d\n", str, file, line);
     if(errtype == FATAL) {
         abort();

@@ -279,7 +279,7 @@ public:
     long getLTLeft(int myLT, long t = -1); // gets the time left on a LT
     void setLastTime(int myLT, long t, long interval); // Sets a LT
 
-
+    bstring getClassString() const;
 
 public:
 // Data
@@ -758,6 +758,8 @@ public:
     void validateId();
     void upgradeStats();
 
+    bstring getFlagList(bstring sep=", ") const;
+
 protected:
 // Data
     unsigned short updateAggro;
@@ -1044,6 +1046,8 @@ protected:
     bool fleeing = false;
 
 public:
+    bstring getFlagList(bstring sep=", ") const;
+
 // Data
     std::list<CatRef> storesRefunded;   // Shops the player has refunded an item in
                                         // (No haggling allowed until a full priced purchase has been made)

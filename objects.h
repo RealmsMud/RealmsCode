@@ -75,6 +75,7 @@ public:
     bstring getId() const;
     bstring getType() const;
 
+
     void clear();
     void save(xmlNodePtr rootNode) const;
     void load(xmlNodePtr rootNode);
@@ -217,6 +218,8 @@ public:
 //    char* cmpName();
     void escapeText();
 
+    bstring getFlagList(bstring sep=", ") const;
+
     // Placement of the object etc
     void addObj(Object *toAdd, bool incShots = true); // Add an object to this object
     void delObj(Object  *toDel);
@@ -240,7 +243,9 @@ public:
     float getTypeModifier() const;
     unsigned short getKey() const;
     Size getSize() const;
+    bstring getSizeStr() const;
     ObjectType getType() const; // *
+    bstring getTypeStr() const;
     short getWearflag() const; // *
     short getArmor() const;
     short getQuality() const;
@@ -267,6 +272,7 @@ public:
     short getLotteryNumbers(short i) const;
     int getRecipe() const;
     Material getMaterial() const;
+    bstring getMaterialStr() const;
     bstring getCompass(const Creature* creature, bool useName);
     bstring getVersion() const;
     bstring getQuestOwner() const;

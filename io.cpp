@@ -435,7 +435,7 @@ char *inetname(struct in_addr in) {
 
 void child_died(int sig) {
     gServer->childDied();
-    std::cout << "Child died: " << gServer->getDeadChildren() << " children dead now.\n";
+    std::clog << "Child died: " << gServer->getDeadChildren() << " children dead now.\n";
     signal(SIGCHLD, child_died);
 }
 //**********************************************************************
@@ -493,7 +493,7 @@ void shutdown_now(int sig) {
     gConfig->resaveAllRooms(1);
     gServer->saveAllPly();
 
-    printf("Goodbye.\n");
+    std::clog << "Goodbye.\n";
     kill(getpid(), 9);
 }
 

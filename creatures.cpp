@@ -942,7 +942,7 @@ int Player::save(bool updateTime, LoadType saveType) {
     copy->checkDarkness();
 
     if(copy->saveToFile(saveType) < 0)
-        printf("*** ERROR: saveXml!\n");
+        std::clog << "*** ERROR: saveXml!\n";
 
     for(i=0; i<n; i++)
         copy->delObj(obj[i], false, false, true, false);

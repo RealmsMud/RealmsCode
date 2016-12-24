@@ -1881,7 +1881,7 @@ void Property::appendLog(bstring user, const char *fmt, ...) {
 
     va_start(ap, fmt);
     if(vasprintf(&str, fmt, ap) == -1) {
-        printf("Error in Property::appendLog\n");
+        std::clog << "Error in Property::appendLog\n";
         return;
     }
     va_end(ap);

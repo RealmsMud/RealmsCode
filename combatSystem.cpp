@@ -297,7 +297,7 @@ bool Object::setWeaponType(const bstring& newType) {
     }
 
     if(!weaponSkill || category != "weapon") {
-        printf("Invalid weapon type: %s!\n", newType.c_str());
+        std::clog << "Invalid weapon type: " << newType.c_str() << std::endl;
         return(false);
     }
     subType = newType;
@@ -319,7 +319,7 @@ bool Object::setArmorType(const bstring& newType) {
         }
 
         if(!weaponSkill || category != "armor") {
-            printf("Invalid armor type: %s!\n", newType.c_str());
+            std::clog << "Invalid armor type: " << newType << std::endl;
             return(false);
         }
     }

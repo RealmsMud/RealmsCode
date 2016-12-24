@@ -42,7 +42,7 @@ void Socket::defineMxp() {
     bprint(MXP_BEG "VERSION" MXP_END);
     bprint(MXP_BEG "SUPPORT" MXP_END);
     for(MxpElementMap::value_type p : gConfig->mxpElements) {
-        std::cout << p.second->getDefineString() << std::endl;
+        std::clog << p.second->getDefineString() << std::endl;
         bprint(p.second->getDefineString());
     }
 

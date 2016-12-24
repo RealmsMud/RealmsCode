@@ -129,7 +129,7 @@ void WebInterface::openFifos() {
 
     outFd = -1;
 
-    std::cout << "WebInterface: monitoring " << fifoIn << std::endl;
+    std::clog << "WebInterface: monitoring " << fifoIn << std::endl;
 }
 
 //*********************************************************************
@@ -262,7 +262,7 @@ bool WebInterface::checkInput() {
         // Attempt to read from the socket
         n = read(inFd, tmpBuf, 1023);
         if(n <= 0) {
-            //std::cout << "WebInterface: Unable to read - " << strerror(errno) << "\n";
+            //std::clog << "WebInterface: Unable to read - " << strerror(errno) << "\n";
             break;
         }
         tmpBuf[n] = '\0';
@@ -298,7 +298,7 @@ bool WebInterface::messagePlayer(bstring command, bstring tempBuf) {
 
     pos = tempBuf.Find(' ');
     if(pos == bstring::npos) {
-        std::cout << "WebInterface: Messaging failed; not enough data!" << std::endl;
+        std::clog << "WebInterface: Messaging failed; not enough data!" << std::endl;
         return("");
     }
 
@@ -309,7 +309,7 @@ bool WebInterface::messagePlayer(bstring command, bstring tempBuf) {
     tempBuf.erase(0, pos+1); // Clear out the user
     tempBuf = tempBuf.trim();
 
-    std::cout << "WebInterface: Messaging user " << user << std::endl;
+    std::clog << "WebInterface: Messaging user " << user << std::endl;
     const Player* player = gServer->findPlayer(user);
     if(!player) {
         outBuf += "That player is not logged on.";
@@ -320,7 +320,7 @@ bool WebInterface::messagePlayer(bstring command, bstring tempBuf) {
             player->flagIsSet(P_IGNORE_ALL) ||
             player->flagIsSet(P_IGNORE_SMS)
         )) {
-            std::cout << "WebInterface: Messaging failed; user does not want text messages." << std::endl;
+            std::clog << "WebInterface: Messaging failed; user does not want text messages." << std::endl;
             return(false);
         }
         if(command != "SYSMSG")
@@ -561,12 +561,12 @@ bool WebInterface::handleInput() {
 //          return(true);
 //      } else
         if(command == "WHO") {
-            std::cout << "WebInterface: Checking for users online" << std::endl;
+            std::clog << "WebInterface: Checking for users online" << std::endl;
             outBuf += webwho();
             outBuf += EOT;
             return(true);
         } else if(command == "WHOIS") {
-            std::cout << "WebInterface: Whois for user " << tempBuf << std::endl;
+            std::clog << "WebInterface: Whois for user " << tempBuf << std::endl;
             tempBuf = tempBuf.toLower();
             tempBuf.setAt(0, up(tempBuf.getAt(0)));
             const Player* player = gServer->findPlayer(tempBuf);
@@ -583,7 +583,7 @@ bool WebInterface::handleInput() {
             outBuf += EOT;
             return(true);
         } else if(command == "FINGER") {
-            std::cout << "WebInterface: Fingering user " << tempBuf << std::endl;
+            std::clog << "WebInterface: Fingering user " << tempBuf << std::endl;
             outBuf += doFinger(0, tempBuf, CreatureClass::NONE);
             outBuf += EOT;
             return(true);
@@ -594,14 +594,14 @@ bool WebInterface::handleInput() {
         } else if(command == "FORUM") {
             pos = tempBuf.Find(' ');
             if(pos == bstring::npos) {
-                std::cout << "WebInterface: Forum association failed; not enough data!" << std::endl;
+                std::clog << "WebInterface: Forum association failed; not enough data!" << std::endl;
                 return(false);
             }
 
             bstring user = tempBuf.left(pos);
 
             tempBuf.erase(0, pos+1); // Clear out the user
-            std::cout << "WebInterface: Forum association for user " << user << std::endl;
+            std::clog << "WebInterface: Forum association for user " << user << std::endl;
 
             Player* player = gServer->findPlayer(user);
             if(player) {
@@ -623,10 +623,10 @@ bool WebInterface::handleInput() {
             outBuf += EOT;
             return(true);
         } else if(command == "UNFORUM") {
-            std::cout << "WebInterface: Forum unassociation for user " << tempBuf << std::endl;
+            std::clog << "WebInterface: Forum unassociation for user " << tempBuf << std::endl;
 
             if(tempBuf == "") {
-                std::cout << "WebInterface: Forum unassociation failed; not enough data!" << std::endl;
+                std::clog << "WebInterface: Forum unassociation failed; not enough data!" << std::endl;
                 return(false);
             }
 
@@ -656,7 +656,7 @@ bool WebInterface::handleInput() {
             return(true);
         } else if(command == "AUTOGUILD") {
             if(tempBuf == "") {
-                std::cout << "WebInterface: Autoguild failed; not enough data!" << std::endl;
+                std::clog << "WebInterface: Autoguild failed; not enough data!" << std::endl;
                 return(false);
             }
 
@@ -664,7 +664,7 @@ bool WebInterface::handleInput() {
             if(tempBuf.getLength() <= 40)
                 guild = gConfig->getGuild(tempBuf);
             if(!guild) {
-                std::cout << "WebInterface: Autoguild failed; guild " << tempBuf << " not found!" << std::endl;
+                std::clog << "WebInterface: Autoguild failed; guild " << tempBuf << " not found!" << std::endl;
                 return(false);
             }
 
@@ -702,7 +702,7 @@ bool WebInterface::handleInput() {
         if(command == "LATESTPOST") {
             const unsigned char* latestBuffer = (unsigned char*)dataBuf.c_str();
             if((xmlDoc = xmlParseDoc(latestBuffer)) == nullptr) {
-                std::cout << "WebInterface: LatestPost - Error parsing xml\n";
+                std::clog << "WebInterface: LatestPost - Error parsing xml\n";
                 return(false);
             }
             rootNode = xmlDocGetRootElement(xmlDoc);
@@ -733,7 +733,7 @@ bool WebInterface::handleInput() {
         // Now we need to find what area/index we're working on.  If no area is found we assume misc
         getCatRef(tempBuf, &cr, 0);
 
-        std::cout << "WebInterface: Found command: " << command << " " << type << " " << cr.area << "." << cr.id << std::endl;
+        std::clog << "WebInterface: Found command: " << command << " " << type << " " << cr.area << "." << cr.id << std::endl;
 
 
         if(command == "LOAD") {
@@ -748,7 +748,7 @@ bool WebInterface::handleInput() {
                 Monster *monster;
                 if(loadMonster(cr, &monster)) {
                     monster->saveToXml(rootNode, ALLITEMS, LS_FULL);
-                    std::cout << "Generated xml for " << monster->getName() << "\n";
+                    std::clog << "Generated xml for " << monster->getName() << "\n";
                     free_crt(monster);
                 }
             }
@@ -759,7 +759,7 @@ bool WebInterface::handleInput() {
                 Object* object;
                 if(loadObject(cr, &object)) {
                     object->saveToXml(rootNode, ALLITEMS, LS_FULL);
-                    std::cout << "Generated xml for " << object->getName() << "\n";
+                    std::clog << "Generated xml for " << object->getName() << "\n";
                     delete object;
                 }
             }
@@ -770,7 +770,7 @@ bool WebInterface::handleInput() {
                 UniqueRoom* room;
                 if(loadRoom(cr, &room)) {
                     room->saveToXml(rootNode, ALLITEMS);
-                    std::cout << "Generated xml for " << room->getName() << "\n";
+                    std::clog << "Generated xml for " << room->getName() << "\n";
                 }
             }
             // Save the xml document to a character array
@@ -791,7 +791,7 @@ bool WebInterface::handleInput() {
 
             const unsigned char* saveBuffer = (unsigned char*)dataBuf.c_str();
             if((xmlDoc = xmlParseDoc(saveBuffer)) == nullptr) {
-                std::cout << "WebInterface: Save - Error parsing xml\n";
+                std::clog << "WebInterface: Save - Error parsing xml\n";
                 return(false);
             }
             rootNode = xmlDocGetRootElement(xmlDoc);
@@ -799,7 +799,7 @@ bool WebInterface::handleInput() {
             bstring newArea = xml::getProp(rootNode, "Area");
             // Make sure they're sending us the proper index!
             if(num != cr.id || newArea != cr.area) {
-                std::cout << "WebInterface: MisMatched save - Got " << num << " - " << newArea << " Expected " << cr.str() << "\n";
+                std::clog << "WebInterface: MisMatched save - Got " << num << " - " << newArea << " Expected " << cr.str() << "\n";
                 return(false);
             }
             if(type == "CRT") {
@@ -824,7 +824,7 @@ bool WebInterface::handleInput() {
                 gConfig->reloadRoom(room);
                 broadcast(isDm, "^y*** Room %s - %s^y updated by %s.", room->info.str().c_str(), room->getCName(), room->last_mod);
             }
-            std::cout << "WebInterface: Saved " << type << " " << cr.str() << "\n";
+            std::clog << "WebInterface: Saved " << type << " " << cr.str() << "\n";
         }
     }
 
@@ -850,7 +850,7 @@ bool WebInterface::sendOutput() {
         outFd = open(filename, O_WRONLY|O_NONBLOCK);
 
     if(outFd == -1) {
-//      std::cout << "WebInterface: Unable to open " << fifoOut << ":" << strerror(errno);
+//      std::clog << "WebInterface: Unable to open " << fifoOut << ":" << strerror(errno);
         return(false);
     }
 
@@ -858,7 +858,7 @@ bool WebInterface::sendOutput() {
     do {
         n = write(outFd, outBuf.c_str(), outBuf.length());
         if(n < 0) {
-            //std::cout << "WebInterface: sendOutput " << strerror(errno) << std::endl;
+            //std::clog << "WebInterface: sendOutput " << strerror(errno) << std::endl;
             return(false);
         }
         outBuf.erase(0, n);
@@ -1120,7 +1120,7 @@ bool WebInterface::wiki(bstring command, bstring tempBuf) {
 
     pos = tempBuf.Find(' ');
     if(pos == bstring::npos) {
-        std::cout << "WebInterface: Wiki help failed; not enough data!" << std::endl;
+        std::clog << "WebInterface: Wiki help failed; not enough data!" << std::endl;
         return(false);
     }
 
@@ -1136,11 +1136,11 @@ bool WebInterface::wiki(bstring command, bstring tempBuf) {
         strchr(tempBuf.c_str(), '/') != nullptr ||
         !checkWinFilename(0, tempBuf.c_str())
     ) {
-        std::cout << "WebInterface: Wiki help failed; invalid data" << std::endl;
+        std::clog << "WebInterface: Wiki help failed; invalid data" << std::endl;
         return(false);
     }
 
-    std::cout << "WebInterface: Wiki help for user " << user << std::endl;
+    std::clog << "WebInterface: Wiki help for user " << user << std::endl;
     const Player* player = gServer->findPlayer(user);
     if(!player) {
         outBuf += "That player is not logged on.";

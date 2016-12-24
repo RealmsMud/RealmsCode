@@ -67,6 +67,10 @@ CatRef WanderInfo::getRandom() const {
     return(cr);
 }
 
+unsigned long WanderInfo::getRandomCount() const {
+    return random.size();
+}
+
 //*********************************************************************
 //                      load
 //*********************************************************************

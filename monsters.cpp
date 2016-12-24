@@ -72,7 +72,7 @@ bool Monster::operator <(const Monster& t) const {
 // monster
 
 void Monster::validateId() {
-//  std::cout << "Validating ID for <" << getName() << ">" << std::endl;
+//  std::clog << "Validating ID for <" << getName() << ">" << std::endl;
     if(id.empty() || id.equals("-1")) {
         setId(gServer->getNextMonsterId());
     }

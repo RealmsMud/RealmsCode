@@ -49,7 +49,7 @@ Async::Async() {
 AsyncResult Async::branch(const Player* player, childType type) {
     bstring user = (player ? player->getName() : "Someone");
     if(pipe(fds) == -1) {
-        printf("Error with pipe!\n");
+        std::clog << "Error with pipe!\n";
         abort();
     }
 
@@ -61,7 +61,7 @@ AsyncResult Async::branch(const Player* player, childType type) {
         // Remap stdout to fds[1] so cout will print to fds[1] and we can
         // read it in from the mud
         if(dup2(fds[1], STDOUT_FILENO) != STDOUT_FILENO) {
-            printf("Error with dup2.\n");
+            std::clog << "Error with dup2.\n";
             abort();
         }
 
@@ -72,8 +72,7 @@ AsyncResult Async::branch(const Player* player, childType type) {
         close(fds[1]);
         nonBlock(fds[0]);
 
-        printf("Watching Child %d for (%s) running with pid %d reading from fd %d.",
-            (int)type, user.c_str(), pid, fds[0]);
+        std::clog << "Watching Child " << (int)type << " for (" << user << ") running with pid " << pid << " reading from fd " << fds[0] << ".";
 
         // Let the server know we're monitoring this child process
         gServer->addChild(pid, type, fds[0], user);
@@ -92,10 +91,10 @@ int Server::runList(Socket* sock, cmd* cmnd) {
     if(async.branch(sock->getPlayer(), CHILD_LISTER) == AsyncExternal) {
         bstring lister = Path::UniqueRoom;
         lister += "list.exe";
-        std::cout << "Running <" << lister << ">\n";
+        std::clog << "Running <" << lister << ">\n";
 
         execl(lister.c_str(), lister.c_str(), cmnd->str[1], cmnd->str[2], cmnd->str[3], cmnd->str[4], nullptr);
-        printf("Error!");
+        std::clog << "Error!";
 
         exit(0);
     }

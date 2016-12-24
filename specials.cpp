@@ -1425,7 +1425,7 @@ SpecialAttack* Creature::addSpecial(const bstring specialName) {
         attack->chance = intelligence.getCur()/5;
         specials.push_back(attack);
     } else {
-        std::cout << "Unknown special name - " << specialName << "." << std::endl;
+        std::clog << "Unknown special name - " << specialName << "." << std::endl;
     }
 
     return(attack);

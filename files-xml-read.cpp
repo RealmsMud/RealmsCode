@@ -64,7 +64,7 @@ bool loadPlayer(const bstring name, Player** player, LoadType loadType) {
     bstring     pass = "", loadName = "";
 
     if(!checkWinFilename(nullptr, name)) {
-        printf("Failed lookup on player %s due to checkWinFilename.\n", name.c_str());
+        std::clog << "Failed lookup on player " << name << " due to checkWinFilename.\n";
         return(false);
     }
 
@@ -75,15 +75,13 @@ bool loadPlayer(const bstring name, Player** player, LoadType loadType) {
     else // LS_NORMAL
         sprintf(filename, "%s/%s.xml", Path::Player, name.c_str());
 
-    //printf("Attempting to load player %s from file %s.\n", name, filename);
-
     if((xmlDoc = xml::loadFile(filename, "Player")) == nullptr)
         return(false);
 
     rootNode = xmlDocGetRootElement(xmlDoc);
     loadName = xml::getProp(rootNode, "Name");
     if(loadName != name) {
-        printf("Error loading %s, found %s instead!\n", name.c_str(), loadName.c_str());
+        std::clog << "Error loading " << name << ", found " << loadName << " instead!\n";
         xmlFreeDoc(xmlDoc);
         xmlCleanupParser();
         return(false);
@@ -234,13 +232,12 @@ bool loadMonsterFromFile(const CatRef cr, Monster **pMonster, bstring filename, 
 
     if(filename == "")
         filename = monsterPath(cr);
-    //printf("Attempting to load creature %d from %s\n", index, filename);
 
     if((xmlDoc = xml::loadFile(filename.c_str(), "Creature")) == nullptr)
         return(false);
 
     if(xmlDoc == nullptr) {
-        printf("Error parsing file %s\n", filename.c_str());
+        std::clog << "Error parsing file " << filename;
         return(false);
     }
     rootNode = xmlDocGetRootElement(xmlDoc);
@@ -278,13 +275,11 @@ bool loadObjectFromFile(const CatRef cr, Object** pObject, bool offline) {
 
     sprintf(filename, "%s", objectPath(cr));
 
-    //printf("Attempting to load object %d from %s\n", index, filename);
-
     if((xmlDoc = xml::loadFile(filename, "Object")) == nullptr)
         return(false);
 
     if(xmlDoc == nullptr) {
-        printf("Error parsing file %s\n", filename);
+        std::clog << "Error parsing file " << filename << std::endl;
         return(false);
     }
     rootNode = xmlDocGetRootElement(xmlDoc);
@@ -319,7 +314,6 @@ bool loadRoomFromFile(const CatRef cr, UniqueRoom **pRoom, bstring filename, boo
     if(filename == "")
         filename = roomPath(cr);
 
-    //printf("Attempting to load room %d from file %s.\n", index, filename);
     if((xmlDoc = xml::loadFile(filename.c_str(), "Room")) == nullptr)
         return(false);
 
@@ -701,7 +695,7 @@ void Monster::readXml(xmlNodePtr curNode, bool offline) {
     // Now handle version changes
 
     else if(getVersion() < "2.21") {
-        //std::cout << "Loading mob pre version 2.21" << std::endl;
+        //std::clog << "Loading mob pre version 2.21" << std::endl;
         // Title was changed to AggroString as of 2.21
         if(NODE_NAME(curNode, "Title")) xml::copyToCString(aggroString, curNode);
     }
@@ -958,7 +952,7 @@ void Creature::loadSkills(xmlNodePtr rootNode) {
                 Skill *skill = new Skill(curNode);
                 skills.insert(SkillMap::value_type(skill->getName(), skill));
             } catch(...) {
-                std::cout << "Error loading skill for " << getName() << std::endl;
+                std::clog << "Error loading skill for " << getName() << std::endl;
             }
         }
         curNode = curNode->next;
@@ -994,7 +988,7 @@ void Effects::load(xmlNodePtr rootNode, MudObject* pParent) {
                     effectList.push_back(newEffect);
                 }
             } catch(std::runtime_error &e) {
-                std::cout << "Error adding effect: " << e.what() << std::endl;
+                std::clog << "Error adding effect: " << e.what() << std::endl;
             }
         }
         curNode = curNode->next;
@@ -1348,7 +1342,7 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
                 cr.load(childNode);
                 cr.id = xml::getIntProp(childNode, "Num");
                 if(!validObjId(cr)) {
-                    printf("Invalid object %s\n", cr.str().c_str());
+                    std::clog <<  "Invalid object " << cr.str() << std::endl;
                 } else {
                     if(loadObject(cr, &object)) {
                         // These two flags might be cleared on the reference object, so let that object set them if it wants to
@@ -1382,7 +1376,7 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
                             object2->addToRoom(rParent);
                         }
                     } catch(std::runtime_error &e) {
-                        std::cout << "Error setting ID: " << e.what() << std::endl;
+                        std::clog << "Error setting ID: " << e.what() << std::endl;
                         if(object2) {
                             delete object2;
                             object2 = 0;
@@ -1391,7 +1385,7 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
                 }
             }
         } catch(std::runtime_error &e) {
-            std::cout << "Error loading object: " << e.what() << std::endl;
+            std::clog << "Error loading object: " << e.what() << std::endl;
             if(object != 0) {
                 delete object;
                 object = 0;
@@ -2026,7 +2020,7 @@ SkillInfo::SkillInfo(xmlNodePtr rootNode) {
         curNode = curNode->next;
     }
     if(name == "" || displayName == "") {
-        std::cout << "Invalid skill (Name:" << name << ", DisplayName: " << displayName <<  ")" << std::endl;
+        std::clog << "Invalid skill (Name:" << name << ", DisplayName: " << displayName <<  ")" << std::endl;
         throw(std::runtime_error("Invalid SkillInfo XML"));
     }
 }
@@ -2050,10 +2044,10 @@ SkillCommand::SkillCommand(xmlNodePtr rootNode) {
         curNode = curNode->next;
     }
     if(SkillInfo::name == "" || displayName == "") {
-        std::cout << "Invalid skillCommand (Name:" << SkillInfo::name << ", DisplayName: " << displayName <<  ")" << std::endl;
+        std::clog << "Invalid skillCommand (Name:" << SkillInfo::name << ", DisplayName: " << displayName <<  ")" << std::endl;
         throw(std::runtime_error("Invalid Skill Command Xml"));
     } else {
-        std::cout << "Found SkillCommand: " << SkillInfo::name << std::endl;
+        std::clog << "Found SkillCommand: " << SkillInfo::name << std::endl;
     }
 
 }
@@ -2068,13 +2062,13 @@ bool SkillInfo::readNode(xmlNodePtr curNode) {
     } else if(NODE_NAME(curNode, "Base")) {
         xml::copyToBString(tGroup, curNode);
         if(!setBase(tGroup)) {
-            std::cout << "Error setting skill '" << name << "' base skill to '" << tGroup << "'" << std::endl;
+            std::clog << "Error setting skill '" << name << "' base skill to '" << tGroup << "'" << std::endl;
             abort();
         }
     } else if(NODE_NAME(curNode, "Group")) {
         xml::copyToBString(tGroup, curNode);
         if(!setGroup(tGroup)) {
-            std::cout << "Error setting skill '" << name << "' to group '" << tGroup << "'" << std::endl;
+            std::clog << "Error setting skill '" << name << "' to group '" << tGroup << "'" << std::endl;
             abort();
         }
     } else if(NODE_NAME(curNode, "Description")) {

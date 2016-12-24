@@ -90,7 +90,9 @@ public:
     AlchemyEffect();
     AlchemyEffect(xmlNodePtr curNode);
     AlchemyEffect(const AlchemyEffect &ae);
-    
+    friend std::ostream& operator<<(std::ostream& out, AlchemyEffect& effect);
+    friend std::ostream& operator<<(std::ostream& out, AlchemyEffect* effect);
+
     int saveToXml(xmlNodePtr rootNode);
 
     // Combine with another effect and caculate the average quality of the two

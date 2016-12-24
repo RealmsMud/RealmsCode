@@ -94,19 +94,27 @@ class RaceData;
 
 class Swap;
 
+struct comp {
+    bool operator() (const std::string& lhs, const std::string& rhs) const {
+        return strcasecmp(lhs.c_str(), rhs.c_str()) < 0;
+    }
+};
 
 typedef std::pair<bstring, bstring> accountDouble;
-typedef std::map<bstring, MxpElement*> MxpElementMap;
-typedef std::map<bstring, bstring> BstringMap;
-typedef std::map<bstring, SocialCommand*> SocialMap;
-typedef std::map<bstring, SkillInfo*> SkillInfoMap;
-typedef std::map<bstring, PlyCommand*> PlyCommandMap;
-typedef std::map<bstring, CrtCommand*> CrtCommandMap;
-typedef std::map<bstring, SkillCommand*> SkillCommandMap;
-typedef std::map<bstring, Spell*> SpellMap;
-typedef std::map<bstring, Song*> SongMap;
-typedef std::map<bstring, AlchemyInfo*> AlchemyMap;
+typedef std::map<bstring, MxpElement*, comp> MxpElementMap;
+typedef std::map<bstring, bstring, comp> BstringMap;
+typedef std::map<bstring, SocialCommand*, comp> SocialMap;
+typedef std::map<bstring, SkillInfo*, comp> SkillInfoMap;
+typedef std::map<bstring, Effect*, comp> EffectMap;
+typedef std::map<bstring, PlyCommand*, comp> PlyCommandMap;
+typedef std::map<bstring, CrtCommand*, comp> CrtCommandMap;
+typedef std::map<bstring, SkillCommand*, comp> SkillCommandMap;
+typedef std::map<bstring, Spell*, comp> SpellMap;
+typedef std::map<bstring, Song*, comp> SongMap;
+typedef std::map<bstring, AlchemyInfo*, comp> AlchemyMap;
 typedef std::map<int, MudFlag> MudFlagMap;
+
+// Case insensitive
 
 class LottoTicket {
 public:
@@ -582,7 +590,7 @@ public:
     std::list<Ban*> bans;
 
     // Effects
-    std::map<bstring, Effect*> effects;
+    std::map<bstring, Effect*, comp> effects;
 
     // Commands
     PlyCommandMap staffCommands;

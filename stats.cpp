@@ -220,7 +220,7 @@ bool Stat::addModifier(StatModifier* toAdd) {
         return(false);
 
     if(getModifier(toAdd->getName()) != nullptr) {
-        std::cout << "Not adding modifer " << toAdd->getName() << std::endl;
+        std::clog << "Not adding modifer " << toAdd->getName() << std::endl;
         delete toAdd;
         return(false);
     }
@@ -738,7 +738,7 @@ void checkEffect(Creature* creature, const bstring& effName, int& stat, bool pos
 }
 
 void Player::recordLevelInfo() {
-    std::cout << "Recording level info for " << getName() << std::endl;
+    std::clog << "Recording level info for " << getName() << std::endl;
 
     statistics.startLevelHistoryTracking();
 
@@ -758,7 +758,7 @@ void Player::recordLevelInfo() {
     }
 }
 void Player::upgradeStats() {
-    std::cout << "Upgrading stats for " << getName() << std::endl;
+    std::clog << "Upgrading stats for " << getName() << std::endl;
     *this << "Upgrading your stats to the new format.\n";
 
     loseRage();
@@ -849,17 +849,17 @@ void Player::upgradeStats() {
     piety.setInitial(cPie);
 
 //
-//  std::cout << "Str: O: " << cStr << " N: " << strength.getCur() << "\n";
-//  std::cout << "Dex: O: " << cDex << " N: " << dexterity.getCur() << "\n";
-//  std::cout << "Con: O: " << cCon << " N: " << constitution.getCur() << "\n";
-//  std::cout << "Int: O: " << cInt << " N: " << intelligence.getCur() << "\n";
-//  std::cout << "Pie: O: " << cPie << " N: " << piety.getCur() << "\n";
+//  std::clog << "Str: O: " << cStr << " N: " << strength.getCur() << "\n";
+//  std::clog << "Dex: O: " << cDex << " N: " << dexterity.getCur() << "\n";
+//  std::clog << "Con: O: " << cCon << " N: " << constitution.getCur() << "\n";
+//  std::clog << "Int: O: " << cInt << " N: " << intelligence.getCur() << "\n";
+//  std::clog << "Pie: O: " << cPie << " N: " << piety.getCur() << "\n";
 
 }
 
 
 void Monster::upgradeStats() {
-    std::cout << "Upgrading stats for " << getName() << std::endl;
+    std::clog << "Upgrading stats for " << getName() << std::endl;
     *this << "Upgrading your stats to the new format.\n";
 
     int cStr = strength.getCur(false);

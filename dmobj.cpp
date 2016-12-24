@@ -239,9 +239,9 @@ bstring Object::statObj(int statFlags) {
     }
 
     if(size)
-        objStr << "Size: ^y" << getSizeName(size) << "^x\n";
+        objStr << "Size: ^y" << getSizeStr() << "^x\n";
     if(material)
-        objStr << "Material: ^g" << getMaterialName(material) << "^x\n";
+        objStr << "Material: ^g" << getMaterialStr() << "^x\n";
 
     if(type == ObjectType::ARMOR)
         objStr << "AC: " << armor;
@@ -299,7 +299,7 @@ bstring Object::statObj(int statFlags) {
                << "  Duration: ";
 
         if(effect == "poison" && !effectDuration)
-            objStr << "Standard poison duratin.\n";
+            objStr << "Standard poison duration.\n";
         else
             objStr << effectDuration << " seconds.\n";
 

@@ -298,14 +298,14 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring eff
             }
         }
         if(effect == "enlarge") {
-            std::cout << "O:" << strength;
+            std::clog << "O:" << strength;
             strength = MIN(strength, MAX_SIZE - target->getSize());
-            std::cout << " N:" << strength << std::endl;
+            std::clog << " N:" << strength << std::endl;
         }
         else {
-            std::cout << "O:" << strength;
+            std::clog << "O:" << strength;
             strength = MIN(strength, target->getSize() - NO_SIZE - 1);
-            std::cout << " N:" << strength << std::endl;
+            std::clog << " N:" << strength << std::endl;
         }
 
         target->addEffect(effect, num, strength, player, true, player);

@@ -89,7 +89,7 @@ void Socket::vprint(const char *fmt, va_list ap) {
     va_list aq;
 
     if(!this) {
-        std::cout << "vprint(): called with null this! :(\n";
+        std::clog << "vprint(): called with null this! :(\n";
         return;
     }
 
@@ -103,7 +103,7 @@ void Socket::vprint(const char *fmt, va_list ap) {
     va_end(aq);
 
     if(n == -1) {
-        std::cout << "Problem with vasprintf in vprint!" << std::endl;
+        std::clog << "Problem with vasprintf in vprint!" << std::endl;
         return;
     }
     bstring toPrint;

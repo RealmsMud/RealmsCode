@@ -1490,7 +1490,7 @@ void Area::checkFileSize(int& size, const char* filename) const {
         return;
     }
     if(size != f_stat.st_size) {
-        printf("Area file sizes are not the same. Aborting.\n");
+        std::clog << "Area file sizes are not the same. Aborting.\n";
         crash(-1);
     }
 }

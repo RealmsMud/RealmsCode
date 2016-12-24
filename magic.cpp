@@ -342,7 +342,7 @@ void initSpellList() {
     for(int i=0 ; i<spllist_size; i++) {
         if(spllist[i].splno != i) {
             if(spllist[i].splno != -1) {
-                printf("Error: Spell list mismatch: %d != %d\n", i, spllist[i].splno);
+                std::clog << "Error: Spell list mismatch: " << i << " != " << spllist[i].splno << std::endl;
                 abort();
             }
         }

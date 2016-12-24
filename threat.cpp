@@ -94,7 +94,7 @@ long ThreatTable::getThreat(Creature* target) {
 
 long ThreatTable::adjustThreat(Creature* target, long modAmt, double threatFactor) {
     if(target->getId() == myParent->getId()) {
-        std::cout << "Attempted to add " << target->getName()  << " to their own threat list!" << std::endl;
+        std::clog << "Attempted to add " << target->getName()  << " to their own threat list!" << std::endl;
         return(0);
     }
     bool newThreat = false;
@@ -120,7 +120,7 @@ long ThreatTable::adjustThreat(Creature* target, long modAmt, double threatFacto
     long endThreat = threat->adjustThreat((long)(modAmt*threatFactor));
     threat->adjustContribution(modAmt);
 
-    //std::cout << "Added Threat: " << ((long)(modAmt*threatFactor)) << " and Contribution: " << modAmt << std::endl;
+    //std::clog << "Added Threat: " << ((long)(modAmt*threatFactor)) << " and Contribution: " << modAmt << std::endl;
     // Insert the threat into the set, if it's not a new threat use the hint from above
     if(newThreat)
         threatSet.insert(threat);

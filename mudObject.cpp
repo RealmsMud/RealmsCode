@@ -74,7 +74,7 @@ void MudObject::setUnRegistered() {
 
 bool MudObject::registerMo() {
     if(registered) {
-        //std::cout << "ERROR: Attempting to register a MudObject that thinks it is already registered" << std::endl;
+        //std::clog << "ERROR: Attempting to register a MudObject that thinks it is already registered" << std::endl;
         return(false);
     }
 
@@ -347,4 +347,8 @@ bool MudObject::isCreature() const {
 }
 bool MudObject::isExit() const {
     return(typeid(*this) == typeid(Exit));
+}
+
+bstring MudObject::getFlagList(bstring sep) const {
+    return "";
 }
