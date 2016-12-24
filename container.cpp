@@ -101,11 +101,11 @@ Container* Container::remove(Containable* toRemove) {
         monsters.erase(remMonster);
         toReturn = true;
     } else {
-        std::cout << "Don't know how to remove " << toRemove << std::endl;
+        std::clog << "Don't know how to remove " << toRemove << std::endl;
         toReturn = false;
     }
 
-    //std::cout << "Removing " << toRemove->getName() << " from " << this->getName() << std::endl;
+    //std::clog << "Removing " << toRemove->getName() << " from " << this->getName() << std::endl;
 
     if(toReturn) {
         Container* retVal = toRemove->getParent();
@@ -142,14 +142,14 @@ bool Container::add(Containable* toAdd) {
         std::pair<MonsterSet::iterator, bool> p = monsters.insert(addMonster);
         toReturn = p.second;
     } else {
-        std::cout << "Don't know how to add " << toAdd << std::endl;
+        std::clog << "Don't know how to add " << toAdd << std::endl;
         toReturn = false;
     }
 
     if(toReturn) {
         toAdd->setParent(this);
     }
-    //std::cout << "Adding " << toAdd->getName() << " to " << this->getName() << std::endl;
+    //std::clog << "Adding " << toAdd->getName() << " to " << this->getName() << std::endl;
     return(toReturn);
 }
 
@@ -269,7 +269,7 @@ Creature* Container::findCreaturePython(Creature* searcher, const bstring& name,
         }
     }
 
-    std::cout << "Looking for '" << newName << "' #" << num << "\n";
+    std::clog << "Looking for '" << newName << "' #" << num << "\n";
 
     return(findCreature(searcher, newName, num, monFirst, firstAggro, exactMatch, ignored));
 }
@@ -399,7 +399,7 @@ void Containable::addToSet() {
 
 bool Containable::addTo(Container* container) {
     if(this->parent != nullptr && parent->getAsMudObject() != container->getAsMudObject()) {
-        std::cout << "Non Null Parent" << std::endl;
+        std::clog << "Non Null Parent" << std::endl;
         return(0);
     }
 

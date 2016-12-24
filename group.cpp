@@ -113,7 +113,7 @@ bool Group::remove(Creature* toRemove) {
 
             // Something's wrong here
             if(!leader) {
-                std::cout << "Couldn't find a replacement leader.\n";
+                std::clog << "Couldn't find a replacement leader.\n";
                 return(disband());
             }
 
@@ -350,7 +350,7 @@ Group* Creature::getGroup(bool inGroup) {
 void Creature::setGroup(Group* newGroup) {
     // Remove from existing group (Shouldn't happen)
     if(group && newGroup != nullptr) {
-        std::cout << "Setting group for " << getName() << " but they already have a group." << std::endl;
+        std::clog << "Setting group for " << getName() << " but they already have a group." << std::endl;
     }
 
     group = newGroup;
@@ -408,13 +408,13 @@ bool Group::flagIsSet(int flag) {
 //################################################################################
 
 bool Server::registerGroup(Group* toRegister) {
-    std::cout << "Registering " << toRegister->getName() << std::endl;
+    std::clog << "Registering " << toRegister->getName() << std::endl;
     groups.push_back(toRegister);
     return(true);
 }
 
 bool Server::unRegisterGroup(Group* toUnRegister) {
-    std::cout << "Unregistering " << toUnRegister->getName() << std::endl;
+    std::clog << "Unregistering " << toUnRegister->getName() << std::endl;
     groups.remove(toUnRegister);
     return(true);
 }

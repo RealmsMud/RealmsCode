@@ -1219,3 +1219,23 @@ double Object::getDps() {
 
     return(( (damage.average() + adjustment) * (1+num) / 2) / (getWeaponDelay()/10.0));
 }
+
+
+bstring Object::getFlagList(bstring sep) const {
+    std::ostringstream ostr;
+    bool found = false;
+    for(int i=0; i<MAX_OBJECT_FLAGS; i++) {
+        if(flagIsSet(i)) {
+            if(found)
+                ostr << sep;
+
+            ostr << get_oflag(i) << "(" << i+1 << ")";
+            found = true;
+        }
+    }
+
+    if(!found)
+        return("None");
+    else
+        return ostr.str();
+}

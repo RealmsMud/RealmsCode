@@ -40,7 +40,7 @@ int log_immort(int broad, Player* player, const char *fmt,...) {
 
     va_start(ap, fmt);
     if(vasprintf(&str, fmt, ap) == -1) {
-        printf("Error in log_immort\n");
+        std::clog << "Error in log_immort\n";
         return(0);
     }
     va_end(ap);

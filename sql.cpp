@@ -85,7 +85,7 @@ bool Server::initSql() {
 void Server::cleanUpSql() {
     if(!connActive)
         return;
-    std::cout << "Cleaning up SQL." << std::endl;
+    std::clog << "Cleaning up SQL." << std::endl;
 
     delete conn;
     odbc::DriverManager::shutdown();

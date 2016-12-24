@@ -38,28 +38,28 @@ void startup_mordor(void) {
 
     StartTime = time(0);
 
-    
 
-    printf("Starting RoH Server" VERSION " compiled on " __DATE__ " at " __TIME__ " ");
+
+    std::clog << "Starting RoH Server " << VERSION " compiled on " << __DATE__ << " at " << __TIME__ << " ";
     #ifdef __CYGWIN__
-        printf("(CYGWIN)\n");
+    std::clog << "(CYGWIN)\n";
     #elif defined(__MACOS)
-        printf("(MACOSX)\n");
+    std::clog << "(MACOSX)\n";
     #else
-        printf("(LINUX)\n");
+    std::clog << "(LINUX)\n";
     #endif
     
 #ifdef NODEMOGRAPHICS
-        printf("Demographics disabled\n");
+    std::clog << "Demographics disabled\n";
 #endif
         
     if(gServer->isValgrind())
-        printf("Running under valgrind\n");
+        std::clog << "Running under valgrind\n";
 
 
     gServer->init();
-    
-    printf("--- Game Up: %d --- [%s]\n", Port, VERSION);
+
+    std::clog << "--- Game Up: " << Port << " --- [" << VERSION << "]\n";
     loge("--- Game Up: %d --- [%s]\n", Port, VERSION);
     // record the process ID
     sprintf(buf, "%s/mordor%d.pid", Path::Log, Port);
@@ -71,7 +71,7 @@ void startup_mordor(void) {
         loge("couldn't create pid file %s: %s\n", buf, strerror(errno));
     }
 
-    std::cout << "Starting Sock Loop\n";
+    std::clog << "Starting Sock Loop\n";
     gServer->run();
 
     return;
@@ -108,7 +108,7 @@ void handle_args(int argc, char *argv[]) {
                 gServer->setValgrind();
                 break;
             default:
-                printf("Unknown option.\n");
+                std::clog << "Unknown option.\n";
                 usage(argv[0]);
                 break;
             }
@@ -118,7 +118,7 @@ void handle_args(int argc, char *argv[]) {
                 gConfig->portNum = (unsigned short)atoi(argv[i]);
                 bHavePort = 1;
             } else {
-                printf("Unknown option\n");
+                std::clog << "Unknown option\n";
                 usage(argv[0]);
             }
         }

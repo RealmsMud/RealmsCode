@@ -144,16 +144,16 @@ void doDemographics() {
     Statistics statistics;
 
     t = time(0);
-    printf("Begining demographics routine.\n");
+    std::clog << "Begining demographics routine.\n";
 
 
     // load the directory all the players are stored in
-    printf("Opening %s...", Path::Player);
+    std::clog << "Opening %s..." << Path::Player;
     if((dir = opendir(Path::Player)) == nullptr) {
-        printf("Directory could not be opened.\n");
+        std::clog << "Directory could not be opened.\n";
         return;
     }
-    printf("done.\n");
+    std::clog << "done.\n";
 
     zero(highest, sizeof(highest));
     zero(highnum, sizeof(highnum));
@@ -182,7 +182,7 @@ void doDemographics() {
     */
 
 
-    printf("Reading player directory...");
+    std::clog << "Reading player directory...";
     while((dirp = readdir(dir)) != nullptr) {
         // is this a player file?
         if(dirp->d_name[0] == '.')
@@ -356,19 +356,19 @@ void doDemographics() {
         delete birthday;
         birthday=0;
     }
-    printf("done.\n");
+    std::clog << "done.\n";
     closedir(dir);
     xmlFreeDoc(xmlDoc);
     xmlCleanupParser();
 
-    printf("Formatting stone scrolls...");
+    std::clog << "Formatting stone scrolls...";
 
     // load the file we will be printing to
     sprintf(name, "%s/stone_scroll.txt", Path::Sign);
     unlink(name);
     ff = open(name, O_CREAT | O_RDWR, ACC);
     if(ff < 0) {
-        printf("Couldn't open stone scroll: %s!\n", name);
+        std::clog << "Couldn't open stone scroll: " << name;
         close(ff);
         return;
     }
@@ -444,7 +444,7 @@ void doDemographics() {
     unlink(name);
     ff = open(name, O_CREAT | O_RDWR, ACC);
     if(ff < 0) {
-        printf("Couldn't open stone scroll: %s!\n", name);
+        std::clog << "Couldn't open stone scroll: " << name;
         close(ff);
         return;
     }
@@ -476,7 +476,7 @@ void doDemographics() {
     unlink(name);
     ff = open(name, O_CREAT | O_RDWR, ACC);
     if(ff < 0) {
-        printf("Couldn't open stone scroll: %s!\n", name);
+        std::clog << "Couldn't open stone scroll: " << name << std::endl;
         close(ff);
         return;
     }
@@ -502,7 +502,7 @@ void doDemographics() {
     unlink(name);
     ff = open(name, O_CREAT | O_RDWR, ACC);
     if(ff < 0) {
-        printf("Couldn't open stone scroll: %s!\n", name);
+        std::clog << "Couldn't open stone scroll: " << name << std::endl;
         close(ff);
         return;
     }
@@ -527,7 +527,7 @@ void doDemographics() {
     unlink(name);
     ff = open(name, O_CREAT | O_RDWR, ACC);
     if(ff < 0) {
-        printf("Couldn't open stone scroll: %s!\n", name);
+        std::clog << "Couldn't open stone scroll: " << name << std::endl;
         close(ff);
         return;
     }
@@ -624,7 +624,7 @@ void doDemographics() {
     write(ff, outstr, strlen(outstr));
     close(ff);
 
-    printf("done.\nDone.\n");
+    std::clog << "done.\nDone.\n";
 #endif
 }
 

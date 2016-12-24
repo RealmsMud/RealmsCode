@@ -43,7 +43,7 @@ bool SkillInfo::hasBaseSkill() const {
 }
 
 bool Config::isKnownOnly(const bstring& skillName) const {
-    std::map<bstring, SkillInfo*>::const_iterator it = skills.find(skillName);
+    SkillInfoMap::const_iterator it = skills.find(skillName);
     if (it != skills.end())
         return (((*it).second)->isKnownOnly());
     return (false);
@@ -634,7 +634,7 @@ int dmSkills(Player* player, cmd* cmnd) {
 
     if (cmnd->num < 2) {
         std::map<bstring, bstring>::iterator sgIt;
-        std::map<bstring, SkillInfo*>::iterator sIt;
+        SkillInfoMap::iterator sIt;
         player->printColor(
                 "^xSkill Groups\n%-20s - %40s\n---------------------------------------------------------------\n",
                 "Name", "DisplayName");
@@ -868,7 +868,7 @@ void Config::updateSkillPointers() {
 // True if the skill exists
 
 bool Config::skillExists(const bstring& skillName) const {
-    std::map<bstring, SkillInfo*>::const_iterator it = skills.find(skillName);
+    SkillInfoMap::const_iterator it = skills.find(skillName);
     return (it != skills.end());
 }
 
@@ -878,7 +878,7 @@ bool Config::skillExists(const bstring& skillName) const {
 // Returns the given skill skill
 
 SkillInfo* Config::getSkill(const bstring& skillName) const {
-    std::map<bstring, SkillInfo*>::const_iterator it = skills.find(skillName);
+    SkillInfoMap::const_iterator it = skills.find(skillName);
     if (it != skills.end())
         return ((*it).second);
     return (0);
@@ -890,7 +890,7 @@ SkillInfo* Config::getSkill(const bstring& skillName) const {
 // Get the display name of the skill
 
 bstring Config::getSkillDisplayName(const bstring& skillName) const {
-    std::map<bstring, SkillInfo*>::const_iterator it = skills.find(skillName);
+    SkillInfoMap::const_iterator it = skills.find(skillName);
     if (it != skills.end())
         return (((*it).second)->getDisplayName());
     return ("");
@@ -914,7 +914,7 @@ bstring Config::getSkillGroupDisplayName(const bstring& groupName) const {
 // Get the skill group of the skill
 
 bstring Config::getSkillGroup(const bstring& skillName) const {
-    std::map<bstring, SkillInfo*>::const_iterator it = skills.find(skillName);
+    SkillInfoMap::const_iterator it = skills.find(skillName);
     if (it != skills.end())
         return (((*it).second)->getGroup());
     return ("");

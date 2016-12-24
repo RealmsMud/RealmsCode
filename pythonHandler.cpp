@@ -713,7 +713,7 @@ bool Server::initPython() {
         // Add in our python lib to the python path for importing modules
         setenv("PYTHONPATH", Path::Python, 1);
 
-        std::cout << " ====> PythonPath: " << getenv("PYTHONPATH") << std::endl;
+        std::clog << " ====> PythonPath: " << getenv("PYTHONPATH") << std::endl;
 
         pythonHandler = new PythonHandler();
 

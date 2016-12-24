@@ -128,6 +128,8 @@ public:
     virtual void validateId() {};
     Effects effects;
 
+    virtual bstring getFlagList(bstring sep=", ") const;
+
 
 
 // Effects

@@ -651,6 +651,10 @@ void Monster::getMobSave() {
     }
 }
 
+bstring Creature::getClassString() const {
+    return get_class_string(static_cast<int>(cClass));
+}
+
 //*********************************************************************
 //                      castDelay
 //*********************************************************************
@@ -1505,4 +1509,43 @@ void free_crt(Creature* creature, bool remove) {
     else if(remove)
         gServer->clearPlayer(creature->getAsPlayer());
     delete creature;
+}
+
+
+bstring Monster::getFlagList(bstring sep) const {
+    std::ostringstream ostr;
+    bool found = false;
+    for(int i=0; i<MAX_MONSTER_FLAGS; i++) {
+        if(flagIsSet(i)) {
+            if(found)
+                ostr << sep;
+
+            ostr << get_mflag(i) << "(" << i+1 << ")";
+            found = true;
+        }
+    }
+
+    if(!found)
+        return("None");
+    else
+        return ostr.str();
+}
+
+bstring Player::getFlagList(bstring sep) const {
+    std::ostringstream ostr;
+    bool found = false;
+    for(int i=0; i<MAX_PLAYER_FLAGS; i++) {
+        if(flagIsSet(i)) {
+            if(found)
+                ostr << sep;
+
+            ostr << get_pflag(i) << "(" << i+1 << ")";
+            found = true;
+        }
+    }
+
+    if(!found)
+        return("None");
+    else
+        return ostr.str();
 }

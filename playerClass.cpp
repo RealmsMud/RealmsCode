@@ -260,7 +260,7 @@ bool PlayerClass::setDefaultStats(Player* player) {
 //*********************************************************************
 void PlayerClass::checkAutomaticStats() {
     if(baseStrength != -1 && baseDexterity != -1 && baseConstitution != -1 && baseIntelligence != -1 && basePiety != -1) {
-        std::cout << "Automatic stats registered for " << this->getName() << std::endl;
+        std::clog << "Automatic stats registered for " << this->getName() << std::endl;
         hasAutomaticStats = true;
     }
 }
@@ -300,7 +300,7 @@ bool Config::loadClasses() {
                     //printf("\n\tLoaded %s", className.c_str());
                     classes[className] = new PlayerClass(curNode);
                 } else {
-                    printf("Error: Duplicate class: %s\n", className.c_str());
+                    std::clog << "Error: Duplicate class: " << className.c_str() << std::endl;
                 }
             }
         }

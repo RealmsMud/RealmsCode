@@ -2871,12 +2871,11 @@ void findRoomsWithFlag(const Player* player, Range range, int flag) {
             }
         }
 
-        printf("^YLocations found:^x\n");
+        std::cout << "^YLocations found:^x\n";
         if(!found) {
-            printf("No available locations were found.");
+            std::cout << "No available locations were found.";
         } else {
-            bstring output = oStr.str();
-            printf("%s", output.c_str());
+            std::cout << oStr.str();
         }
         exit(0);
     }
@@ -2917,12 +2916,11 @@ void findRoomsWithFlag(const Player* player, CatRef area, int flag) {
             }
         }
 
-        printf("^YLocations found:^x\n");
+        std::cout << "^YLocations found:^x\n";
         if(!found) {
-            printf("No available locations were found.");
+            std::cout << "No available locations were found.";
         } else {
-            bstring output = oStr.str();
-            printf("%s", output.c_str());
+            std::cout << oStr.str();
         }
         exit(0);
     }
@@ -2975,12 +2973,11 @@ int dmFind(Player* player, cmd* cmnd) {
     if(async.branch(player, CHILD_PRINT) == AsyncExternal) {
         cr = findNextEmpty(type, cr.area);
 
-        printf("^YNext available %s in area %s:^x\n", type.c_str(), cr.area.c_str());
+        std::cout << "^YNext available " << type << " in area " << cr.area << "^x\n";
         if(cr.id == -1)
-            printf("No empty %ss found.", type.c_str());
+            std::cout << "No empty %ss found.", type.c_str();
         else {
-            bstring output = cr.rstr();
-            printf("%s", output.c_str());
+            std::cout << cr.rstr();
         }
         exit(0);
     } else {

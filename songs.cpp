@@ -284,13 +284,14 @@ int cmdPlay(Player* player, cmd* cmnd) {
     }
 
     int retVal = 0;
-    Song* song = gConfig->getSong(cmnd->str[1], retVal);
+    bstring songStr = getFullstrText(cmnd->fullstr, 1);
+    Song* song = gConfig->getSong(songStr, retVal);
 
     if(retVal == CMD_NOT_FOUND) {
-        player->print("Alas, there exists no song by that name (%s).\n", cmnd->str[1]);
+        *player << "Alas, there exists no song by that name (" << songStr << ")\n";
         return(0);
     } else if(retVal == CMD_NOT_UNIQUE ) {
-        player->print("Alas, there exists many songs by that name, please be more specific!\n");
+        *player << "Alas, there exists many songs by that name, please be more specific!\n";
         return(0);
     }
 

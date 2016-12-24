@@ -20,6 +20,9 @@
 #include <iomanip>
 #include <locale>
 
+
+#include "join.hpp"
+
 #include "commands.h"
 #include "creatures.h"
 #include "config.h"
@@ -86,7 +89,7 @@ void Config::clearEffects() {
 //*********************************************************************
 
 Effect* Config::getEffect(bstring eName) {
-    std::map<bstring, Effect*>::const_iterator eIt;
+    EffectMap::const_iterator eIt;
     if( (eIt = effects.find(eName)) == effects.end())
         return(nullptr);
     else
@@ -291,7 +294,7 @@ bool EffectInfo::remove(bool show) {
                     if(xParent->getRoom())
                         xParent->getRoom()->effectEcho(myEffect->getRoomDelStr(), xParent);
                     else
-                        std::cout << "Exit with no parent room!!!\n";
+                        std::clog << "Exit with no parent room!!!\n";
                 }
             }
             BaseRoom* rParent = myParent->getAsRoom();
@@ -359,7 +362,7 @@ bool EffectInfo::add() {
             if(xParent->getRoom())
                 xParent->getRoom()->effectEcho(myEffect->getRoomAddStr(), xParent);
             else
-                std::cout << "Exit with no parent room!!!\n";
+                std::clog << "Exit with no parent room!!!\n";
         }
     }
     BaseRoom* rParent = myParent->getAsRoom();
@@ -812,6 +815,22 @@ int cmdEffects(Creature* creature, cmd* cmnd) {
     return(0);
 }
 
+//**********************************************************************
+//                      display
+//**********************************************************************
+std::ostream& operator<<(std::ostream& out, EffectInfo& effectinfo) {
+    out << effectinfo.getName();
+    return(out);
+}
+
+std::ostream& operator<<(std::ostream& out, EffectInfo* effectinfo) {
+    if (effectinfo)
+        out << *effectinfo;
+
+    return (out);
+}
+
+
 //*********************************************************************
 //                      getEffectsList
 //*********************************************************************
@@ -822,19 +841,12 @@ bstring Effects::getEffectsList() const {
 
     effStr << "Effects: ";
 
-    int num = 0;
-    const EffectInfo* effect;
-    EffectList::const_iterator eIt;
-    for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
-        effect = (*eIt);
-        if(num != 0)
-            effStr << ", ";
-        effStr << effect->getName();
-        num++;
+    if(effectList.size() == 0) {
+        effStr << "None";
+    } else {
+        effStr << join(effectList, ", ");
     }
 
-    if(num == 0)
-        effStr << "None";
     effStr << ".\n";
 
     bstring toPrint = effStr.str();
@@ -1148,7 +1160,7 @@ bool EffectInfo::runScript(const bstring& pyScript, MudObject* applier) {
         gServer->runPython(pyScript, localNamespace);
 
         bool retVal = boost::python::extract<bool>(localNamespace["retVal"]);
-        //std::cout << "runScript returning: " << retVal << std::endl;
+        //std::clog << "runScript returning: " << retVal << std::endl;
         return(retVal);
     }
     catch( boost::python::error_already_set) {

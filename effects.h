@@ -126,6 +126,8 @@ public:
     EffectInfo(bstring pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent=0, const Creature* owner=0);
     EffectInfo(xmlNodePtr rootNode);
     virtual ~EffectInfo();
+    friend std::ostream& operator<<(std::ostream& out, EffectInfo& effectinfo);
+    friend std::ostream& operator<<(std::ostream& out, EffectInfo* effectinfo);
 
     bool        compute(MudObject* applier);
     bool        add();

@@ -80,7 +80,7 @@ int pcast(Player* player, cmd* cmnd) {
 //**********************************************************************
 
 template<class Type>
-void compileSocialList(std::map<bstring, bstring>& list, const std::map<bstring, Type>& cList) {
+void compileSocialList(std::map<bstring, bstring>& list, const std::map<bstring, Type, comp>& cList) {
     bstring name = "";
 
     for(std::pair<bstring, Type> pp : cList) {
@@ -157,8 +157,9 @@ bool Config::writeSocialFile() const {
 // Updates helpfiles for the various game commands.
 
 template<class Type>
-std::map<bstring,bstring> compileCommandList(std::map<bstring, bstring>& list, CreatureClass cls, std::map<bstring, Type>& cList) {
+std::map<bstring,bstring> compileCommandList(std::map<bstring, bstring>& list, CreatureClass cls, std::map<bstring, Type, comp>& cList) {
     char    line[100];
+    line[99] = '\0';
 
     for(std::pair<bstring, Type> pp : cList) {
         ASSERTLOG(pp.second);
@@ -173,7 +174,7 @@ std::map<bstring,bstring> compileCommandList(std::map<bstring, bstring>& list, C
         )
             continue;
 
-        sprintf(line, " ^W%-19s^x %s\n", cmd->getName().c_str(), cmd->getDescription().c_str());
+        snprintf(line, 99, " ^W%-19s^x %s\n", cmd->getName().c_str(), cmd->getDescription().c_str());
         list[cmd->getName()] = line;
     }
 
@@ -187,12 +188,14 @@ std::map<bstring,bstring> compileCommandList(std::map<bstring, bstring>& list, C
 
 void writeCommandFile(CreatureClass cls, const char* path, const char* tpl) {
     char    file[100], fileLink[100];
+    file[99] = fileLink[99] = '\0';
+
     std::map<bstring,bstring> list;
     std::map<bstring,bstring> list2;
     std::map<bstring,bstring>::iterator it;
 
-    sprintf(file, "%s/commands.txt", path);
-    sprintf(fileLink, "%s/command.txt", path);
+    snprintf(file, 99, "%s/commands.txt", path);
+    snprintf(fileLink, 99, "%s/command.txt", path);
 
     // prepare to write the help file
     std::ofstream out(file);
@@ -888,12 +891,8 @@ bool MysticMethod::exactMatch(bstring toMatch) {
 }
 
 bool MysticMethod::partialMatch(bstring toMatch) {
-    for(bstring str : nameParts) {
-        if(!strncasecmp(str.c_str(), toMatch.c_str(), toMatch.length())) 
-            return true;
-    }
-    return(false);
-}      
+    return(!strncasecmp(name.c_str(), toMatch.c_str(), toMatch.length()));
+}
 
 void MysticMethod::parseName() {
     boost::char_separator<char> sep(" ");
@@ -910,13 +909,13 @@ void MysticMethod::parseName() {
 
 // bestMethod is a reference to a pointer
 template<class Type, class Type2>
-void examineList(std::map<bstring, Type>& myMap, bstring& str, int& match, bool& found, Type2*& bestMethod) {
+void examineList(std::map<bstring, Type, comp>& myMap, bstring& str, int& match, bool& found, Type2*& bestMethod) {
 
     Type2* curMethod = 0;
 
     // Narrow down the range of the map we'll be looking at
-    typename std::map<bstring, Type>::iterator it = myMap.lower_bound(str);
-    typename std::map<bstring, Type>::iterator endIt = myMap.upper_bound(bstring(1,char(str.at(0)+1)));
+    typename std::map<bstring, Type, comp>::iterator it = myMap.lower_bound(str);
+    typename std::map<bstring, Type, comp>::iterator endIt = myMap.upper_bound(bstring(1,char(str.at(0)+1)));
 
     while(it != endIt) {
         std::pair<bstring, Type> cp = (*it++);
@@ -929,7 +928,7 @@ void examineList(std::map<bstring, Type>& myMap, bstring& str, int& match, bool&
             bestMethod = curMethod;
             found = true;
             match = 1;
-            //std::cout << "Found an exact match!\n";
+            //std::clog << "Found an exact match!\n";
             break;
         } else if(curMethod->partialMatch(str)) {
             // Partial Match, see how good of a match
@@ -937,7 +936,7 @@ void examineList(std::map<bstring, Type>& myMap, bstring& str, int& match, bool&
                 // No best match yet, this is our new best match
                 bestMethod = curMethod;
                 match = 1;
-                //std::cout << "First Match: " << bestMethod->getStr() << "'\n";
+                //std::clog << "First Match: " << bestMethod->getStr() << "'\n";
             } else {
                 // Already have a best match, compare it to this to see which is better
 
@@ -946,7 +945,7 @@ void examineList(std::map<bstring, Type>& myMap, bstring& str, int& match, bool&
                     // New winner
                     bestMethod = curMethod;
                     match = 1;
-                    //std::cout << "New Best Match: " << bestMethod->getStr() << "'\n";
+                    //std::clog << "New Best Match: " << bestMethod->getStr() << "'\n";
                 } else if(curMethod->priority == bestMethod->priority) {
                     // Same priority, check % of match
                     int curLen = curMethod->name.length();
@@ -955,13 +954,13 @@ void examineList(std::map<bstring, Type>& myMap, bstring& str, int& match, bool&
                     if(curLen < bestLen) {
                         // Current command's length is lower, so we match a higher percentage of it.
                         // It is the new winner
-                        //std::cout << "New Best Match: " << bestMethod->getStr() << "'\n";
+                        //std::clog << "New Best Match: " << bestMethod->getStr() << "'\n";
                         bestMethod = curMethod;
                         match = 1;
                     } else if(curLen == bestLen) {
                         // Drats we have a tie
                         match++;
-                        //std::cout << "Tied!\n";
+                        //std::clog << "Tied!\n";
                     } else {
                         // Best command still wins, do nothing
                     }
@@ -982,7 +981,7 @@ void getCommand(Creature *user, cmd* cmnd) {
     Player* pUser = user->getAsPlayer();
     str = cmnd->str[0];
 
-    //std::cout << "Looking for a match for '" << str << "'\n";
+    //std::clog << "Looking for a match for '" << str << "'\n";
 
     examineList<CrtCommand*, Command>(gConfig->generalCommands, str, match, found, cmnd->myCommand);
     if(!found)
@@ -1104,7 +1103,7 @@ int cmdProcess(Creature *user, cmd* cmnd, Creature* pet) {
         player->afterProf = 0;
     }
     if(!user) {
-        printf("invalid creature trying to use cmdProcess.\n");
+        std::clog << "invalid creature trying to use cmdProcess.\n";
         return(0);
     }
 

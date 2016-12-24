@@ -267,7 +267,7 @@ bstring Creature::statCrt(int statFlags) {
         crtStr << gConfig->getRace(race)->getName();
     crtStr << "(" << race << ")\n";
 
-    crtStr << "Class: " << std::setw(20) << get_class_string(static_cast<int>(cClass));
+    crtStr << "Class: " << std::setw(20) << getClassString();
     crtStr << "  Alignment: ";
     if(pTarget) {
         if(pTarget->flagIsSet(P_CHAOTIC))
@@ -502,23 +502,7 @@ bstring Creature::statCrt(int statFlags) {
         }
     }
 
-
-    str = "";
-    for(i=0; i<(pTarget ? MAX_PLAYER_FLAGS : MAX_MONSTER_FLAGS); i++) {
-        if(pTarget && !(statFlags & ISDM) && i == P_BUGGED)
-            continue;
-        if(flagIsSet(i)) {
-            str += (!pTarget ? get_mflag(i) : get_pflag(i));
-            sprintf(tmp, "(%d), ", i+1);
-            str += tmp;
-        }
-    }
-
-    if(str == "")
-        str = "None";
-    else
-        str = str.substr(0, str.length() - 2);
-    crtStr << "Flags set: " << str << "\n";
+    crtStr << "Flags set: " << getFlagList(", ") << "\n";
 
     crtStr << effects.getEffectsList();
     crtStr << getSpecialsList();

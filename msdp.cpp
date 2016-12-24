@@ -50,7 +50,7 @@ void Server::processMsdp(void) {
 
 bool Socket::processMsdpVarVal(bstring& variable, bstring& value) {
 #ifdef MSDP_DEBUG
-    std::cout << "Found Var: '" << variable << "' Val: '" << value << "'"
+    std::clog << "Found Var: '" << variable << "' Val: '" << value << "'"
             << std::endl;
 #endif
     if (variable.equals("LIST")) {
@@ -80,13 +80,13 @@ bool Socket::processMsdpVarVal(bstring& variable, bstring& value) {
                     return(false);
                 reportedVar->setValue(value);
 #ifdef MSDP_DEBUG
-                std::cout << "processMsdpVarVal: Set configurable variable '" << variable << "' to '" << value << "'" << std::endl;
+                std::clog << "processMsdpVarVal: Set configurable variable '" << variable << "' to '" << value << "'" << std::endl;
 #endif
                 return(true);
             }
         }
 #ifdef MSDP_DEBUG
-        std::cout << "processMsdpVarVal: Unknown variable '" << variable << "'"
+        std::clog << "processMsdpVarVal: Unknown variable '" << variable << "'"
                 << std::endl;
 #endif
     }
@@ -168,7 +168,7 @@ bool Socket::msdpReport(bstring& value) {
 
     if (isReporting(value)) {
 #ifdef MSDP_DEBUG
-        std::cout << "MsdpHandleReport: Already Reporting '" << value << "'"
+        std::clog << "MsdpHandleReport: Already Reporting '" << value << "'"
                 << std::endl;
 #endif
         return (true);
@@ -176,7 +176,7 @@ bool Socket::msdpReport(bstring& value) {
 
     msdpReporting[msdpVar->getName()] = new ReportedMsdpVariable(msdpVar, this);
 #ifdef MSDP_DEBUG
-    std::cout << "MsdpHandleReport: Now Reporting '" << msdpVar->getName()
+    std::clog << "MsdpHandleReport: Now Reporting '" << msdpVar->getName()
             << "'" << std::endl;
 #endif
     return (true);
@@ -199,7 +199,7 @@ bool Socket::msdpSend(bstring value) {
     MsdpVariable *msdpVar = gConfig->getMsdpVariable(value);
     if(msdpVar == nullptr) {
 #ifdef MSDP_DEBUG
-        std::cout << "Unknown variable to send: '" << value << "'" << std::endl;
+        std::clog << "Unknown variable to send: '" << value << "'" << std::endl;
 #endif
         return (false);
     }
@@ -230,7 +230,7 @@ bool Socket::msdpUnReport(bstring& value) {
         return (false);
     else {
 #ifdef MSDP_DEBUG
-        std::cout << "MsdpHandleUnReport: No longer reporting '" << value << "'" << std::endl;
+        std::clog << "MsdpHandleUnReport: No longer reporting '" << value << "'" << std::endl;
 #endif
         delete it->second;
         msdpReporting.erase(it);
@@ -314,7 +314,7 @@ MsdpVariable::MsdpVariable(xmlNodePtr rootNode) {
     if(name.empty())
         throw(std::runtime_error("No Name for MSDP Variable!\n"));
 //  else
-//      std::cout << "New MSDP Variable '" << name << "'" << std::endl;
+//      std::clog << "New MSDP Variable '" << name << "'" << std::endl;
 }
 MsdpVariable::MsdpVariable() {
     init();

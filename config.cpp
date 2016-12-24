@@ -49,7 +49,7 @@ Config::~Config() {
     if(inUse)
         throw(std::runtime_error("Error, trying to destroy config\n"));
     else
-        std::cout << "Properly deconstructing Config class";
+        std::clog << "Properly deconstructing Config class";
 }
 
 //--------------------------------------------------------------------
@@ -227,64 +227,64 @@ void Config::reset(bool reload) {
 
 
 bool Config::loadBeforePython() {
-    printf("Checking Directories...%s.\n", Path::checkPaths() ? "done" : "*** FAILED ***");
-    printf("Initializing command table...%s.\n", initCommands() ? "done" : "*** FAILED ***");
+    std::clog << "Checking Directories..." << (Path::checkPaths() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Initializing command table..." << (initCommands() ? "done" : "*** FAILED ***") << std::endl;
 
-    printf("Loading Config...%s.\n", loadConfig() ? "done" : "*** FAILED ***");
+    std::clog << "Loading Config..." << (loadConfig() ? "done" : "*** FAILED ***")<< std::endl;
 
-    printf("Loading Socials...%s.\n", loadSocials() ? "done" : "*** FAILED ***");
+    std::clog << "Loading Socials..." << (loadSocials() ? "done" : "*** FAILED ***") << std::endl;
     
-    printf("Loading Recipes...%s.\n", loadRecipes() ? "done" : "*** FAILED ***");
-    printf("Loading Flags...%s.\n", loadFlags() ? "done" : "*** FAILED ***");
-    printf("Loading Effects...%s\n", loadEffects() ? "done" : "*** FAILED ***");
-    printf("Writing Help Files...%s.\n", writeHelpFiles() ? "done" : "*** FAILED ***");
-    printf("Loading Spell List...%s.\n", loadSpells() ? "done" : "*** FAILED ***");
-    printf("Loading Song List...%s.\n", loadSongs() ? "done" : "*** FAILED ***");
-    printf("Loading Quest Table...%s.\n", loadQuestTable() ? "done" : "*** FAILED ***");
-    printf("Loading New Quests...%s.\n", loadQuests() ? "done" : "*** FAILED ***");
-    printf("Loading StartLocs...%s.\n", loadStartLoc() ? "done" : "*** FAILED ***");
-    printf("Loading CatRefInfo...%s.\n", loadCatRefInfo() ? "done" : "*** FAILED ***");
+    std::clog << "Loading Recipes..." << (loadRecipes() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Flags..." << (loadFlags() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Effects..." << (loadEffects() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Writing Help Files..." << (writeHelpFiles() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Spell List..." << (loadSpells() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Song List..." << (loadSongs() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Quest Table..." << (loadQuestTable() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading New Quests..." << (loadQuests() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading StartLocs..." << (loadStartLoc() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading CatRefInfo..." << (loadCatRefInfo() ? "done" : "*** FAILED ***") << std::endl;
 
-    printf("Loading Bans...%s.\n", loadBans() ? "done" : "*** FAILED ***");
-    printf("Loading Fishing...%s.\n", loadFishing() ? "done" : "*** FAILED ***");
-    printf("Loading Guilds...%s.\n", loadGuilds() ? "done" : "*** FAILED ***");
+    std::clog << "Loading Bans..." << (loadBans() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Fishing..." << (loadFishing() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Guilds..." << (loadGuilds() ? "done" : "*** FAILED ***") << std::endl;
 
-    std::cout << "Loading Skills...";
+    std::clog << "Loading Skills...";
     if(loadSkills())
-        std::cout << "done." << std::endl;
+        std::clog << "done." << std::endl;
     else {
-        std::cout << "*** FAILED *** " << std::endl;
+        std::clog << "*** FAILED *** " << std::endl;
         exit(-15);
     }
 
-    printf("Loading Deities...%s.\n", loadDeities() ? "done" : "*** FAILED ***");
-    printf("Loading Clans...%s.\n", loadClans() ? "done" : "*** FAILED ***");
-    printf("Loading Classes...%s.\n", loadClasses() ? "done" : "*** FAILED ***");
-    printf("Loading Races...%s.\n", loadRaces() ? "done" : "*** FAILED ***");
-    printf("Loading Factions...%s.\n", loadFactions() ? "done" : "*** FAILED ***");
-    printf("Loading Alchemy...%s.\n", loadAlchemy() ? "done" : "*** FAILED ***");
-    printf("Loading MSDP Variables...%s.\n", loadMsdpVariables() ? "done" : "*** FAILED ***");
-    printf("Loading MXP Elements...%s.\n", loadMxpElements() ? "done" : "*** FAILED ***");
-    printf("Loading Limited Items...%s.\n", loadLimited() ? "done" : "*** FAILED ***");
-    printf("Loading Double Log Info...%s.\n", loadDoubleLog() ? "done" : "*** FAILED ***");
+    std::clog << "Loading Deities..." << (loadDeities() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Clans..." << (loadClans() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Classes..." << (loadClasses() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Races..." << (loadRaces() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Factions..." << (loadFactions() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Alchemy..." << (loadAlchemy() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading MSDP Variables..." << (loadMsdpVariables() ? "done" : "*** FAILED ***" )<< std::endl;
+    std::clog << "Loading MXP Elements..." << (loadMxpElements() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Limited Items..." << (loadLimited() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Double Log Info..." << (loadDoubleLog() ? "done" : "*** FAILED ***") << std::endl;
 
-    printf("Loading Calendar...");
+    std::clog << "Loading Calendar...";
     loadCalendar();
-    printf("done.\n");
+    std::clog << "done.\n";
 
-    std::cout << "Loading Proxy Access...";
+    std::clog << "Loading Proxy Access...";
     loadProxyAccess();
-    std::cout << "done." << std::endl;
+    std::clog << "done." << std::endl;
 
     return(true);
 }
 
 // These items depend on python so load them after python has been initialized
 bool Config::loadAfterPython() {
-    printf("Loading Areas...%s.\n", loadAreas() ? "done" : "*** FAILED ***");
+    std::clog << "Loading Areas..." << (loadAreas() ? "done" : "*** FAILED ***") << std::endl;
     if(!listing)
-        printf("Loading Ships...%s.\n", loadShips() ? "done" : "*** FAILED ***");
-    printf("Loading Properties...%s.\n", loadProperties() ? "done" : "*** FAILED ***");
+        std::clog << "Loading Ships..." << (loadShips() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Loading Properties..." << (loadProperties() ? "done" : "*** FAILED ***") << std::endl;
     return (true);
 }
 bool Config::startFlashPolicy() const {
@@ -378,7 +378,7 @@ void Config::loadGeneral(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "MudName")) xml::copyToBString(mudName, curNode);
         else if(NODE_NAME(curNode, "Webserver")) xml::copyToBString(webserver, curNode);
         else if(NODE_NAME(curNode, "QS")) { xml::copyToBString(qs, curNode);
-            std::cout << "Loaded QS: " << qs << std::endl;
+            std::clog << "Loaded QS: " << qs << std::endl;
         }
         else if(NODE_NAME(curNode, "UserAgent")) xml::copyToBString(userAgent, curNode);
         else if(NODE_NAME(curNode, "Reviewer")) xml::copyToBString(reviewer, curNode);
@@ -573,7 +573,7 @@ bstring Config::getMudNameAndVersion() {
 // **************
 
 template<class Type>
-bool saveList(bstring xmlDocName, bstring fName, const std::map<bstring, Type*>& sMap) {
+bool saveList(bstring xmlDocName, bstring fName, const std::map<bstring, Type*, comp>& sMap) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     char        filename[80];
@@ -607,7 +607,7 @@ bool Config::saveSongs() const {
 // **************
 
 template<class Type>
-bool loadList(bstring xmlDocName, bstring xmlNodeName, bstring fName, std::map<bstring, Type*>& sMap) {
+bool loadList(bstring xmlDocName, bstring xmlNodeName, bstring fName, std::map<bstring, Type*, comp>& sMap) {
     xmlDocPtr xmlDoc;
     xmlNodePtr curNode;
 

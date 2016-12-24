@@ -846,7 +846,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 
     if(!player->isCt()) {
         if(!player->knowsSkill("holyword")) {
-            printf("You haven't learned how to pronounce a holy word.\n");
+            player->print("You haven't learned how to pronounce a holy word.\n");
             return(0);
         }
         // Must be VERY good to pronounce a holy word.

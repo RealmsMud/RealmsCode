@@ -38,6 +38,7 @@ public:
 
     short getTraffic() const;
     void setTraffic(short t);
+    unsigned long getRandomCount() const;
 protected:
     short   traffic;
 };

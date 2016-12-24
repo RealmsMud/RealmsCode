@@ -187,7 +187,7 @@ int cmdTelOpts(Player* player, cmd* cmnd) {
         oStr << formatWithDesc % "MSP" % "Mud Sound Protocol" % ((sock->getMsp() == true) ? "^gon^x" : "^roff^x");
         oStr << formatWithDesc % "EOR" % "End of Record" % ((sock->getEor() == true) ? "^gon^x" : "^roff^x");
     } catch (std::exception &e) {
-        std::cout << e.what() << std::endl;
+        std::clog << e.what() << std::endl;
     }
 
     player->printColor("%s", oStr.str().c_str());

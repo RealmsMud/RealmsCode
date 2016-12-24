@@ -191,7 +191,7 @@ bool SkillCommand::runScript(Creature* actor, MudObject* target, Skill* skill) {
         gServer->runPython(pyScript, localNamespace);
 
         bool retVal = bp::extract<bool>(localNamespace["retVal"]);
-        //std::cout << "runScript returning: " << retVal << std::endl;
+        //std::clog << "runScript returning: " << retVal << std::endl;
         return(retVal);
     }
     catch( bp::error_already_set) {

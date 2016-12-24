@@ -838,6 +838,16 @@ short Object::getWeaponDelay() const {
 }
 bstring Object::getQuestOwner() const { return(questOwner); }
 
+bstring Object::getTypeStr() const {
+    return obj_type(type);
+}
+bstring Object::getMaterialStr() const {
+    return(getMaterialName(material));
+}
+bstring Object::getSizeStr() const{
+    return(getSizeName(size));
+}
+
 //*********************************************************************
 //                      isQuestOwner
 //*********************************************************************

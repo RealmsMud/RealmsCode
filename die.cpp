@@ -1450,7 +1450,7 @@ void Monster::distributeExperience(Creature *killer) {
             // any extra experience.
 
             int averageEffort = totalGroupDamage / tMAX<int>(expList.size(), 1);
-            std::cout << "GROUP EXP: TGD:" << totalGroupDamage << " Num:" << expList.size() << " AVG EFF:" << averageEffort << std::endl;
+            std::clog << "GROUP EXP: TGD:" << totalGroupDamage << " Num:" << expList.size() << " AVG EFF:" << averageEffort << std::endl;
             for(std::pair<Player*, int> p : expList) {
                 Player* ply = p.first;
                 int effort = p.second;
@@ -1491,7 +1491,7 @@ void Monster::distributeExperience(Creature *killer) {
     for(std::pair<Player*, int> p : expList) {
         Player* ply = p.first;
         if(!ply) {
-            std::cout << "Distribute Experience: null Player found" << std::endl;
+            std::clog << "Distribute Experience: null Player found" << std::endl;
             continue;
         }
         int effort = p.second;

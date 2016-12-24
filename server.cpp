@@ -123,7 +123,7 @@ Server::Server() {
 //********************************************************************
 
 Server::~Server() {
-    std::cout << "Server destructor called!\n";
+    std::clog << "Server destructor called!\n";
     if(running) {
         // Do shutdown here
     }
@@ -142,28 +142,28 @@ Server::~Server() {
 
 bool Server::init() {
 
-    std::cout << "Initializing Server.\n";
+    std::clog << "Initializing Server.\n";
 
-    std::cout << "Setting RLIMIT...";
+    std::clog << "Setting RLIMIT...";
     struct rlimit lim;
     lim.rlim_cur = RLIM_INFINITY;
     lim.rlim_max = RLIM_INFINITY;
     setrlimit(RLIMIT_CORE, &lim);
-    std::cout << "done\n";
+    std::clog << "done\n";
 
-    std::cout << "Installing signal handlers.";
+    std::clog << "Installing signal handlers.";
     installSignalHandlers();
-    std::cout << "done." << std::endl;
+    std::clog << "done." << std::endl;
 
-    std::cout << "Installing unique IDs...";
+    std::clog << "Installing unique IDs...";
     loadIds();
-    std::cout << "done." << std::endl;
+    std::clog << "done." << std::endl;
 #if !defined(__CYGWIN__) && !defined(__MACOS__)
-    std::cout << "Installing custom printf handlers...";
+    std::clog << "Installing custom printf handlers...";
     if(installPrintfHandlers() == 0)
-        std::cout << "done." << std::endl;
+        std::clog << "done." << std::endl;
     else
-        std::cout << "failed." << std::endl;
+        std::clog << "failed." << std::endl;
 #endif
 
     gConfig->loadBeforePython();
@@ -174,18 +174,18 @@ bool Server::init() {
     Tablesize = getdtablesize();
 
 
-    std::cout << "Initializing Spelling...";
+    std::clog << "Initializing Spelling...";
     init_spelling();
-    std::cout << "done." << std::endl;
+    std::clog << "done." << std::endl;
 
     initWebInterface();
 
-    std::cout <<  "Initializing Spelling List...";
+    std::clog <<  "Initializing Spelling List...";
     initSpellList();
-    std::cout << "done." << std::endl;
+    std::clog << "done." << std::endl;
 
     // Python
-    std::cout <<  "Initializing Python...";
+    std::clog <<  "Initializing Python...";
     initPython();
 
     gConfig->loadAfterPython();
@@ -193,17 +193,17 @@ bool Server::init() {
 
 
 #ifdef SQL_LOGGER
-    std::cout <<  "Initializing SQL Logger...";
+    std::clog <<  "Initializing SQL Logger...";
     if(initSql())
-        std::cout << "done." << std::endl;
+        std::clog << "done." << std::endl;
     else
-        std::cout << "failed." << std::endl;
+        std::clog << "failed." << std::endl;
 #endif // SQL_LOGGER
 
     umask(000);
     srand(getpid() + time(0));
     if(rebooting) {
-        printf("Doing a reboot.\n");
+        std::clog << "Doing a reboot.\n";
         finishReboot();
     } else if (!gConfig->isListing()) {
         addListenPort(Port);
@@ -221,24 +221,24 @@ bool Server::init() {
 void Server::installSignalHandlers() {
     if (!gConfig->isListing()) {
         signal(SIGABRT, crash); // abnormal termination triggered by abort call
-        printf(".");
+        std::clog << ".";
         signal(SIGFPE, crash);  // floating point exception
-        printf(".");
+        std::clog << ".";
         signal(SIGSEGV, crash); // segment violation
-        printf(".");
+        std::clog << ".";
     } else {
-        printf("Ignoring crash handlers");
+        std::clog << "Ignoring crash handlers";
     }
     signal(SIGPIPE, SIG_IGN);
-    printf(".");
+    std::clog << ".";
     signal(SIGTERM, SIG_IGN);
-    printf(".");
+    std::clog << ".";
     signal(SIGCHLD, child_died);
-    printf(".");
+    std::clog << ".";
     signal(SIGHUP, quick_shutdown);
-    printf(".");
+    std::clog << ".";
     signal(SIGINT, shutdown_now);
-    printf(".");
+    std::clog << ".";
 }
 
 
@@ -356,32 +356,32 @@ int Server::addListenPort(int port) {
     sa.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if((control = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        printf("Error with socket\n");
+        std::clog << "Error with socket\n";
         return(-1);
     }
 
     if(setsockopt(control, SOL_SOCKET, SO_REUSEADDR, (char *)&optval, sizeof(optval)) < 0) {
-        printf("Error with setSockOpt\n");
+        std::clog << "Error with setSockOpt\n";
         return(-1);
     }
 
     if(bind(control, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
         close(control);
-        printf("Unable to bind to port(%d)\n", port);
+        std::clog << "Unable to bind to port " << port << std::endl;
         return(-1);
     }
 
     if(nonBlock(control) != 0) {
-        printf("Error with nonBlock\n");
+        std::clog << "Error with nonBlock\n";
         return(-1);
     }
 
     if(listen(control, 100) != 0) {
-        printf("Error with listen\n");
+        std::clog << "Error with listen\n";
         return(-1);
     }
 
-    std::cout << "Mud is now listening on port " << port << std::endl;
+    std::clog << "Mud is now listening on port " << port << std::endl;
 
     // TODO: Leaky, make sure to erase these when the server shuts down
     controlSocks.push_back(controlSock(port, control));
@@ -396,7 +396,7 @@ int Server::addListenPort(int port) {
 
 int Server::poll() {
     if(controlSocks.empty()) {
-        printf("Not bound to any ports, nothing to poll.\n");
+        std::clog << "Not bound to any ports, nothing to poll.\n";
         exit(0);
     }
 
@@ -437,7 +437,7 @@ int Server::poll() {
 int Server::checkNew() {
     for(controlSock & cs : controlSocks) {
         if(FD_ISSET(cs.control, &inSet)) { // We have a new connection waiting
-            std::cout << "Got a new connection on port " << cs.port << ", control sock " << cs.control << std::endl;
+            std::clog << "Got a new connection on port " << cs.port << ", control sock " << cs.control << std::endl;
             handleNewConnection(cs);
         }
     }
@@ -493,14 +493,14 @@ int Server::processInput() {
             FD_CLR(sock->getFd(), &inSet);
             FD_CLR(sock->getFd(), &outSet);
             sock->setState(CON_DISCONNECTING);
-            printf("Exception found\n");
+            std::clog << "Exception found\n";
             continue;
         }
         // Try to read something
         if(FD_ISSET(sock->getFd(), &inSet)) {
             if(sock->processInput() != 0) {
                 FD_CLR(sock->getFd(), &outSet);
-                std::cout << "Error reading from socket " << sock->getFd() << std::endl;
+                std::clog << "Error reading from socket " << sock->getFd() << std::endl;
                 sock->setState(CON_DISCONNECTING);
                 continue;
             }
@@ -639,7 +639,7 @@ bool Server::getDnsCache(bstring &ip, bstring &hostName) {
         if(dns.ip == ip) {
             // Got a match
             hostName = dns.hostName;
-            printf("DNS: Found %s in dns cache\n", ip.c_str());
+            std::clog << "DNS: Found " << ip << " in dns cache\n";
             return(true);
         }
     }
@@ -656,7 +656,7 @@ void Server::pruneDns() {
     std::list<dnsCache>::iterator it;
     std::list<dnsCache>::iterator oldIt;
 
-    std::cout << "Pruning DNS\n";
+    std::clog << "Pruning DNS\n";
     for( it = cachedDns.begin(); it != cachedDns.end() ; ) {
         oldIt = it++;
         if(currentTime - (*oldIt).time >= fifteenDays) {
@@ -1222,9 +1222,9 @@ int Server::reapChildren() {
                     // If we have an error reading, just use the ip address then
                     if( n <= 0 ) {
                         if(errno == EWOULDBLOCK)
-                            printf("DNS ReapChildren: Error would block\n");
+                            std::clog << "DNS ReapChildren: Error would block\n";
                         else
-                            printf("DNS ReapChildren: Error\n");
+                            std::clog << "DNS ReapChildren: Error\n";
                         strcpy(tmpBuf, (*it).extra.c_str());
                     }
 
@@ -1240,23 +1240,23 @@ int Server::reapChildren() {
                             sock->checkLockOut();
                         }
                     }
-                    printf("Reaped DNS child (%d-%s).\n", pid, tmpBuf);
+                    std::clog << "Reaped DNS child (" << pid << "-" << tmpBuf << ")\n";
                 } else if((*it).type == CHILD_LISTER) {
-                    printf("Reaping LISTER child (%d-%s)\n", pid, (*it).extra.c_str());
+                    std::clog << "Reaping LISTER child (" << pid << "-" << (*it).extra << ")" << std::endl;
                     processListOutput(*it);
                     // Don't forget to close the pipe!
                     close((*it).fd);
                 } else if((*it).type == CHILD_SWAP_FINISH) {
-                    printf("Reaping MoveRoom Finish child (%d-%s)\n", pid, (*it).extra.c_str());
+                    std::clog << "Reaping MoveRoom Finish child (" << pid << "-" << (*it).extra << ")" << std::endl;
                     c = *it;
                     found = true;
                 } else if((*it).type == CHILD_PRINT) {
                     //broadcast(isDm, "Reaping Print Child (%d-%s)",pid, (*it).extra.c_str());
-                    printf("Reaping Print child (%d-%s)\n", pid, (*it).extra.c_str());
+                    std::clog << "Reaping Print child (" << pid << "-" << (*it).extra << ")" << std::endl;
                     c = *it;
                     found = true;
                 } else {
-                    printf("ReapChildren: Unknown child type %d\n", (*it).type);
+                    std::clog << "ReapChildren: Unknown child type " << (*it).type << std::endl;
                 }
 //              // Child was processed, reduce number of children
 //              Deadchildren--;
@@ -1350,7 +1350,7 @@ int Server::processChildren(void) {
             if(player && output != "")
                 player->printColor("%s\n", output.c_str());
         } else {
-            printf("processChildren: Unknown child type %d\n", child.type);
+            std::clog << "processChildren: Unknown child type " << child.type << std::endl;
         }
     }
     return(1);
@@ -1368,7 +1368,7 @@ int Server::startDnsLookup(Socket* sock, struct sockaddr_in addr) {
     // We're going to make a pipe here.
     // The child process will write the
     if(pipe(fds) == -1) {
-        printf("DNS: Error with pipe!\n");
+        std::clog << "DNS: Error with pipe!\n";
         abort();
     }
     pid = fork();
@@ -1384,22 +1384,22 @@ int Server::startDnsLookup(Socket* sock, struct sockaddr_in addr) {
             if(he == nullptr) {
                 switch(h_errno) {
                 case HOST_NOT_FOUND:
-                    printf("DNS Error: Host not found for %s.\n", sock->getIp().c_str());
+                    std::clog << "DNS Error: Host not found for " << sock->getIp() << std::endl;
                     tries = -1;
                     break;
                 case NO_RECOVERY:
-                    printf("DNS Error: Unrecoverable error for %s.\n", sock->getIp().c_str());
+                    std::clog << "DNS Error: Unrecoverable error for " << sock->getIp() << std::endl;
                     tries = -1;
                     break;
                 case TRY_AGAIN:
-                    printf("DNS Error: Try again for %s.\n", sock->getIp().c_str());
+                    std::clog << "DNS Error: Try again for " << sock->getIp() << std::endl;
                     tries++;
                     break;
                 }
             } else
                 break;
         }
-        printf("DNS: Resolver finished for %s(%s).\n", sock->getIp().c_str(), he ? he->h_name : sock->getIp().c_str());
+        std::clog << "DNS: Resolver finished for " << sock->getIp() << "(" << (he ? he->h_name : sock->getIp()) << ")" << std::endl;
         if(he) {
             // Found a hostname so print it
             write(fds[1], he->h_name, strlen(he->h_name));
@@ -1412,7 +1412,7 @@ int Server::startDnsLookup(Socket* sock, struct sockaddr_in addr) {
         // Parent Process
         // Close the writing end, we'll only be reading
         close(fds[1]);
-        std::cout << "Watching Child DNS Resolver for(" << sock->getIp() << ") running with pid " << pid
+        std::clog << "Watching Child DNS Resolver for(" << sock->getIp() << ") running with pid " << pid
                   << " reading from fd " << fds[0] << std::endl;
         // Let the server know we're monitoring this child process
         addChild(pid, CHILD_DNS_RESOLVER, fds[0], sock->getIp());
@@ -1435,7 +1435,7 @@ void Server::addCache(bstring ip, bstring hostName, time_t t) {
 //********************************************************************
 
 void Server::addChild(int pid, childType pType, int pFd, bstring pExtra) {
-    printf("Adding pid %d as child type %d, watching fd %d\n", pid, pType, pFd);
+    std::clog << "Adding pid " << pid << " as child type " << pType << ", watching " << pFd << "\n";
     children.push_back(childProcess(pid, pType, pFd, pExtra));
 }
 
@@ -1660,7 +1660,7 @@ int Server::finishReboot() {
     xmlNodePtr curNode;
     xmlNodePtr childNode;
     bool resetShips = false;
-    std::cout << "Running finishReboot()" << std::endl;
+    std::clog << "Running finishReboot()" << std::endl;
 
     // We are rebooting
     rebooting = true;
@@ -1672,7 +1672,7 @@ int Server::finishReboot() {
     unlink(filename);
 
     if(doc == nullptr) {
-        printf("Unable to loadBeforePython reboot file\n");
+        std::clog << "Unable to loadBeforePython reboot file\n";
         merror("Loading reboot file", FATAL);
     }
 
@@ -2049,7 +2049,7 @@ bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
             toRegister->validateId();
         }
         //broadcast(isDm, "%s", oStr.str().c_str());
-        std::cout << oStr.str() << std::endl;
+        std::clog << oStr.str() << std::endl;
         if(!reassignId)
             return(false);
         else
@@ -2059,7 +2059,7 @@ bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
         toRegister->setRegistered();
 
     registeredIds.insert(IdMap::value_type(toRegister->getId(), toRegister));
-    //std::cout << "Registered: " << toRegister->getId() << " - " << toRegister->getName() << std::endl;
+    //std::clog << "Registered: " << toRegister->getId() << " - " << toRegister->getName() << std::endl;
     return(true);
 }
 
@@ -2075,7 +2075,7 @@ bool Server::unRegisterMudObject(MudObject* toUnRegister) {
         std::ostringstream oStr;
         oStr << "ERROR: ID: " << toUnRegister->getId() << " thinks it is not registered, but is being told to unregister, trying anyway.";
         broadcast(isDm, "%s", oStr.str().c_str());
-        std::cout << oStr.str() << std::endl;
+        std::clog << oStr.str() << std::endl;
 
     }
     if(it == registeredIds.end()) {
@@ -2083,7 +2083,7 @@ bool Server::unRegisterMudObject(MudObject* toUnRegister) {
             std::ostringstream oStr;
             oStr << "ERROR: ID: " << toUnRegister->getId() << " is not registered!";
             broadcast(isDm, "%s", oStr.str().c_str());
-            std::cout << oStr.str() << std::endl;
+            std::clog << oStr.str() << std::endl;
         }
         return(false);
     }
@@ -2092,19 +2092,19 @@ bool Server::unRegisterMudObject(MudObject* toUnRegister) {
         if((*it).second == toUnRegister) {
             oStr << "ERROR: ID: " << toUnRegister->getId() << " thought it wasn't registered, but the server thought it was.";
             broadcast(isDm, "%s", oStr.str().c_str());
-            std::cout << oStr.str() << std::endl;
+            std::clog << oStr.str() << std::endl;
             // Continue on with the unregistering since this object really was registered
         } else {
             oStr << "ERROR: ID: " << toUnRegister->getId() << " Server does not have this instance registered.";
             broadcast(isDm, "%s", oStr.str().c_str());
-            std::cout << oStr.str() << std::endl;
+            std::clog << oStr.str() << std::endl;
             // Stop here, don't unregister this ID since the mudObject registered it not the one we're after
             return(false);
         }
     }
     toUnRegister->setUnRegistered();
     registeredIds.erase(it);
-    //std::cout << "Unregistered: " << toUnRegister->getId() << " - " << toUnRegister->getName() << std::endl;
+    //std::clog << "Unregistered: " << toUnRegister->getId() << " - " << toUnRegister->getName() << std::endl;
     return(true);
 }
 
@@ -2268,7 +2268,7 @@ void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, 
     }
     // logType
     bstring direction = (dir == GOLD_IN ? "In" : "Out");
-    std::cout << direction << ": P:" << pName << " I:" << pId << " T: " << targetStr << " S:" << source << " R: " << room << " Type:" << logType << " G:" << amt.get(GOLD) << std::endl;
+    std::clog << direction << ": P:" << pName << " I:" << pId << " T: " << targetStr << " S:" << source << " R: " << room << " Type:" << logType << " G:" << amt.get(GOLD) << std::endl;
 
 #ifdef SQL_LOGGER
     logGoldSql(pName, pId, targetStr, source, room, logType, amt.get(GOLD), direction);
