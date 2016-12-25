@@ -313,8 +313,26 @@ int main(int argc, char *argv[]) {
 
     gConfig->setListing(true);
     gServer->init();
-//    list_rooms();
-//    list_monsters();
-    list_objects();
+
+    switch(argv[1][0]) {
+        case 'm':
+            list_monsters();
+            break;
+        case 'o':
+            list_objects();
+            break;
+        case 'r':
+            list_rooms();
+            break;
+        case 'a':
+            list_objects();
+            list_monsters();
+            list_rooms();
+            break;
+        default:
+            break;
+    }
+
+
     return 1;
 }
