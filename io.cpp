@@ -46,6 +46,7 @@
 #include "timer.h"
 
 #include <sstream>
+#include <stdlib.h>
 
 #define TELOPT_COMPRESS2       86
 #define buflen(a,b,c)   (a-b + (a<b ? c:0))
@@ -624,32 +625,32 @@ void Exit::escapeText() {
 // on old clients, so this should only be run when saving the string.
 
 bstring xsc(const bstring& txt) {
-    bstring ret = "";
+    std::ostringstream ret;
     unsigned char c=0;
     int t = txt.getLength();
     for(int i=0; i<t; i++) {
         c = txt.getAt(i);
         // beyond 127 we get into the unsupported character range
         if(c > 127)
-            ret += (bstring)"&#"+c+";";
+            ret << "&#" << c << ";";
         else
-            ret += (char)c;
+            ret << (char)c;
     }
-    return(ret);
+    return(ret.str());
 }
 
 //*********************************************************************
 //                      unxsc
 //*********************************************************************
-// Reverse of xsc - attempts to turn &#252; into �. We do thhis when we load from file.
+// Reverse of xsc - attempts to turn &#252; into �. We do this when we load from file.
 
 bstring unxsc(const bstring& txt) {
     return(unxsc(txt.c_str()));
 }
 bstring unxsc(const char* txt) {
-    bstring ret = "";
-    int c=0, len = strlen(txt);
-    for(int i=0; i<len; i++) {
+    std::ostringstream ret;
+    size_t c=0, len = strlen(txt);
+    for(size_t i=0; i<len; i++) {
         c = txt[i];
 
         if(c == '&' && txt[i+1] == '#') {
@@ -664,9 +665,9 @@ bstring unxsc(const char* txt) {
             }
         }
 
-        ret += (char)c;
+        ret << (char)c;
     }
-    return(ret);
+    return(ret.str());
 }
 
 //*********************************************************************
@@ -755,11 +756,11 @@ char keyTxtConvert(unsigned char c) {
 //*********************************************************************
 
 bstring keyTxtConvert(const bstring& txt) {
-    bstring ret = "";
+    std::ostringstream ret;
     for(int i=0; i<txt.getLength(); i++) {
-        ret += keyTxtConvert(txt.getAt(i));
+        ret << keyTxtConvert(txt.getAt(i));
     }
-    return(ret);
+    return(ret.str());
 }
 
 //*********************************************************************

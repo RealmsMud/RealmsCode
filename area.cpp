@@ -1509,6 +1509,7 @@ void Area::loadTerrain(int minDepth) {
         sprintf(filename, "%s/%s.%d.ter", Path::AreaData, dataFile, k);
         if(!file_exists(filename))
             return;
+
         checkFileSize(size, filename);
         std::fstream t(filename, std::ios::in);
         i=0;
@@ -1518,6 +1519,7 @@ void Area::loadTerrain(int minDepth) {
 
             t.getline(storage, width+1);
             len = strlen(storage);
+            v.reserve(len);
 
             for(n=0; n<len; n++)
                 v.push_back(storage[n]);
@@ -1538,6 +1540,7 @@ void Area::loadTerrain(int minDepth) {
 
                 m.getline(storage, width+1);
                 len = strlen(storage);
+                v.reserve(len);
 
                 for(n=0; n<len; n++) {
                     if(storage[n] == '*') {
@@ -1560,6 +1563,8 @@ void Area::loadTerrain(int minDepth) {
             // if we don't get a file, fill with emptyness
             for(i=0; i<height; i++) {
                 std::vector<char> v;
+                v.reserve(width);
+
                 for(n=0; n<width; n++)
                     v.push_back(' ');
                 vMap.push_back(v);
@@ -1578,6 +1583,7 @@ void Area::loadTerrain(int minDepth) {
 
                 s.getline(storage, width+1);
                 len = strlen(storage);
+                v.reserve(len);
 
                 // convert from ascii numbers to actual numbers
                 for(n=0; n<len; n++)
@@ -1590,6 +1596,8 @@ void Area::loadTerrain(int minDepth) {
             // if we don't get a file, fill with emptyness
             for(i=0; i<height; i++) {
                 std::vector<char> v;
+                v.reserve(width);
+
                 for(n=0; n<width; n++)
                     v.push_back(0);
                 vSn.push_back(v);
