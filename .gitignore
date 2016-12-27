@@ -58,3 +58,7 @@ Makefile
 *.exe
 *.out
 *.app
+
+# Config files
+docker/web/conf/*
+

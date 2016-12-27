@@ -1,18 +1,14 @@
 FROM phusion/baseimage
 
-# Set correct environment variables.
-
-EXPOSE 3333
-
-ENV HOME /home/realms/
-RUN useradd jason
-
 # Use baseimage-docker's init process.
-CMD ["/sbin/my_init"]
+ENTRYPOINT ["/sbin/my_init"]
+
+# Update
+RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" &&
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # ...put your own build instructions here...
-RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold"
-RUN apt-get install -y --no-install-recommends install \
+RUN apt-get install -y --no-install-recommends \
     bash-completion \
     build-essential \
     cmake \
@@ -31,12 +27,15 @@ RUN apt-get install -y --no-install-recommends install \
     python3-dev \
     libaspell-dev \
     libpspell-dev \
-    zlib1g-dev \
+    zlib1g-dev && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* &&
 
-#sudo apt-get update && sudo apt-get install c
+# Set correct environment variables.
+EXPOSE 3333
 
-# Clean up APT when done.
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+ENV HOME /home/realms/
+
+RUN useradd jason
 
 
 
