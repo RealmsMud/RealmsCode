@@ -16,6 +16,8 @@
  *
  */
 // C includes
+#include <stdexcept>
+
 #include <errno.h>
 #include <string.h>
 #include <sys/stat.h>

@@ -20,6 +20,7 @@
 #include <sstream>
 #include <iomanip>
 #include <list>
+#include <stdexcept>
 
 // Mud Includes
 #include "calendar.h"

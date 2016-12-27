@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdexcept>
 
 #include "calendar.h"
 #include "config.h"

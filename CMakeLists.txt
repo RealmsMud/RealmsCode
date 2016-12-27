@@ -1,21 +1,22 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 2.8)
+
 project(RealmsCode)
 
-set(CMAKE_C_COMPILER "/usr/bin/clang")
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+set(CMAKE_C_COMPILER "/usr/bin/gcc")
+set(CMAKE_CXX_COMPILER "/usr/bin/g++")
 
-set(Python_ADDITIONAL_VERSIONS 3.5)
+set(Python_ADDITIONAL_VERSIONS 3.2mu)
 
 find_package(LibXml2 REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(PythonLibs 3.4 REQUIRED)
+find_package(PythonLibs 3.2 REQUIRED)
 find_package(ASPELL REQUIRED)
 find_package(PythonInterp)
 find_package(PythonLibs)
 IF(APPLE)
     find_package(Boost COMPONENTS python system filesystem REQUIRED)
 ELSE()
-    find_package(Boost COMPONENTS python-py35 system filesystem REQUIRED)
+    find_package(Boost COMPONENTS python3 system filesystem REQUIRED)
 ENDIF()
 
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
@@ -28,7 +29,7 @@ include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR})
 
 # For indexing_suite and such
 include_directories(.)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14 -g -D_GLIBCXX_DEBUG ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -g -D_GLIBCXX_DEBUG ")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
 
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -g" )

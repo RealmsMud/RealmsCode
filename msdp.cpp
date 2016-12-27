@@ -18,6 +18,7 @@
 
 // C Includes
 #include <arpa/telnet.h>
+#include <stdexcept>
 
 // Mud Includes
 #include "config.h"

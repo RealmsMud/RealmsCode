@@ -15,6 +15,7 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+#include <boost/utility.hpp>
 #include "bank.h"
 #include "commands.h"
 #include "config.h"

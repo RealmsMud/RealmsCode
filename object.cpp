@@ -16,6 +16,8 @@
  *
  */
 
+#include <stdexcept>
+
 #include "commands.h"
 #include "container.h"
 #include "config.h"

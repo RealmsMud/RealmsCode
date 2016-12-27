@@ -25,6 +25,7 @@
  *      If you change anything here, make sure the changes are reflected in the web
  *      editor! Either edit the PHP yourself or tell Dominus to make the changes.
  */
+#include <stdexcept>
 #include "alchemy.h"
 #include "bans.h"
 #include "calendar.h"
