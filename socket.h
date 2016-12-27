@@ -166,7 +166,8 @@ class Socket {
 public:
     // Static Methods
     static void resolveIp(const sockaddr_in &addr, bstring& ip);
-    static bstring stripTelnet(bstring& inStr, int& newLen);
+    static bstring stripTelnet(bstring& inStr);
+    static bool needsPrompt(bstring& inStr);
 
 public:
     Socket(int pFd);

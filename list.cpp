@@ -48,7 +48,9 @@ int list_rooms() {
 
     std::cout << "Room" << ","
               << "Name" << ","
+              << "CntPermCrt" << ","
               << "PermCrt" << ","
+              << "CntPermObj" << ","
               << "PermObj" << ","
               << "Traffic" << ","
               << "RandomCrt" << std::endl;
@@ -74,7 +76,9 @@ int list_rooms() {
                     std::cout << lRoom->info.rstr() << ","
                               << "\"" << lRoom->getName() << "\"" << ","
                               << lRoom->permMonsters.size() << ","
+                              << mjoin(lRoom->permMonsters, "|") << ","
                               << lRoom->permObjects.size() << ","
+                              << mjoin(lRoom->permObjects, "|") << ","
                               << lRoom->wander.getTraffic() << ","
                               << lRoom->wander.getRandomCount() << std::endl;
                 }
@@ -220,6 +224,7 @@ int list_monsters() {
 
     std::cout << "Monster" << ","
               << "Name" << ","
+              << "Level" << ","
               << "Class" << ","
               << "Toughness" << ","
               << "Experience" << ","
@@ -267,6 +272,7 @@ int list_monsters() {
 
                     std::cout << lMonster->info.rstr() << ","
                               << "\"" << lMonster->getName() << "\"" << ","
+                              << lMonster->getLevel() << ","
                               << lMonster->getClassString() << ","
                               << Statistics::calcToughness(lMonster) << ","
 

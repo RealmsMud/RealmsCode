@@ -447,7 +447,43 @@ bstring Socket::parseForOutput(bstring& outBuf) {
     return(oStr.str());
 
 }
-bstring Socket::stripTelnet(bstring& inStr, int& newLen) {
+
+bool Socket::needsPrompt(bstring& inStr) {
+    int i = 0;
+    ssize_t n = inStr.size();
+
+    while(i < n) {
+        if((unsigned char)inStr[i] == IAC) {
+            switch((unsigned char)inStr[i+1]) {
+                case WILL:
+                case WONT:
+                case DO:
+                    // Skip 3
+                    i+=3;
+                    continue;
+                case EOR:
+                    // Skip 2
+                    i+=2;
+                    continue;
+                case SB:
+                    // Skip until we find IAC SE
+                    while(i < n) {
+                        if((unsigned char)inStr[i] == IAC && (unsigned char)inStr[i+1] == SE) {
+                            // Skip two more
+                            i += 2;
+                            break;
+                        }
+                        i++;
+                    }
+                    continue;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+bstring Socket::stripTelnet(bstring& inStr) {
     int i = 0;
     ssize_t n = inStr.size();
     std::ostringstream oStr;
@@ -479,7 +515,6 @@ bstring Socket::stripTelnet(bstring& inStr, int& newLen) {
             }
         }
         oStr << inStr[i++];
-        newLen++;
     }
     return(oStr.str());
 }
@@ -1545,11 +1580,9 @@ ssize_t Socket::write(bstring toWrite, bool pSpy, bool process) {
                 break;
         }
     }
-    int strippedLen = 0;
-    bstring forSpy = Socket::stripTelnet(toWrite, strippedLen);
 
     if (pSpy && !spying.empty()) {
-
+        bstring forSpy = Socket::stripTelnet(toWrite);
 
         forSpy.Replace("\n", "\n<Spy> ");
         if(!forSpy.empty()) {
@@ -1566,7 +1599,7 @@ ssize_t Socket::write(bstring toWrite, bool pSpy, bool process) {
 
     // If stripped len is 0, it means we only wrote OOB data, so adjust the return so
     // we don't send another prompt
-    if(strippedLen == 0)
+    if(!needsPrompt(toWrite))
         written = -2;
 
     return (written);

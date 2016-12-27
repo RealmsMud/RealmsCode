@@ -32,12 +32,12 @@ public:
 
 typedef struct crlasttime {
 public:
+    friend std::ostream& operator<<(std::ostream& out, const crlasttime& crl);
     crlasttime() { interval = ltime = 0; };
     long        interval;
     long        ltime;
     CatRef      cr;
 } crlasttime;
-
 
 
 #endif //REALMSCODE_LASTTIME_H
