@@ -25,6 +25,7 @@
 
 #include "commands.h"
 #include "creatures.h"
+#include "creatureStreams.h"
 #include "config.h"
 #include "effects.h"
 #include "mud.h"
@@ -191,31 +192,6 @@ bool EffectInfo::willOverWrite(EffectInfo* existingEffect) const {
     return(true);
 }
 
-//*********************************************************************
-//                      operator<<
-//*********************************************************************
-
-std::ostream& operator<<(std::ostream& out, const EffectInfo& eff) {
-    out.setf(std::ios::right, std::ios::adjustfield);
-    bstring display = eff.getDisplayName();
-
-    short count=0;
-    int len = display.getLength();
-    for(int i=0; i<len; i++) {
-        if(display.getAt(i) == '^') {
-            count += 2;
-            i++;
-        }
-    }
-    out << std::setw(38+count) << display << " - ";
-
-    if(eff.duration == -1)
-        out << "Permanent!";
-    else
-        out << timeStr(eff.duration);
-
-    return(out);
-}
 
 //*********************************************************************
 //                      pulse
@@ -815,11 +791,12 @@ int cmdEffects(Creature* creature, cmd* cmnd) {
     return(0);
 }
 
-//**********************************************************************
-//                      display
-//**********************************************************************
-std::ostream& operator<<(std::ostream& out, EffectInfo& effectinfo) {
-    out << effectinfo.getName();
+//*********************************************************************
+//                      operator<<
+//*********************************************************************
+
+std::ostream& operator<<(std::ostream& out, const EffectInfo& effectInfo) {
+    out << effectInfo.getName();
     return(out);
 }
 
@@ -864,32 +841,50 @@ bstring Effects::getEffectsString(const Creature* viewer) {
     std::ostringstream effStr;
     long t = time(0);
 
-    for(EffectInfo* effect : effectList) {
-        effect->updateLastMod(t);
-        effStr << *effect;
+    for(EffectInfo* effectInfo : effectList) {
+        effectInfo->updateLastMod(t);
+
+        effStr.setf(std::ios::right, std::ios::adjustfield);
+        bstring display = effectInfo->getDisplayName();
+
+        short count=0;
+        int len = display.getLength();
+        for(int i=0; i<len; i++) {
+            if(display.getAt(i) == '^') {
+                count += 2;
+                i++;
+            }
+        }
+        effStr << std::setw(38+count) << display << " - ";
+
+        if(effectInfo->duration == -1)
+            effStr << "Permanent!";
+        else
+            effStr << timeStr(effectInfo->duration);
+
         if(viewer->isStaff()) {
-//          if(!effect->getBaseEffect().empty())
-//              effStr << " Base(" << effect->getBaseEffect() << ")";
-            effStr << "  ^WStrength:^x " << effect->getStrength();
-            if(effect->getExtra()) {
-                effStr << "  ^WExtra:^x " << effect->getExtra();
+//          if(!effectInfo->getBaseEffect().empty())
+//              effStr << " Base(" << effectInfo->getBaseEffect() << ")";
+            effStr << "  ^WStrength:^x " << effectInfo->getStrength();
+            if(effectInfo->getExtra()) {
+                effStr << "  ^WExtra:^x " << effectInfo->getExtra();
 
                 // extra information
-                if(effect->getName() == "illusion") {
-                    const RaceData* race = gConfig->getRace(effect->getExtra());
+                if(effectInfo->getName() == "illusion") {
+                    const RaceData* race = gConfig->getRace(effectInfo->getExtra());
                     if(race)
                         effStr << " (" << race->getName() << ")";
-                } else if(  (effect->getDuration() == -1) && (
-                    effect->getName() == "wall-of-force" ||
-                    effect->getName() == "wall-of-fire" ||
-                    effect->getName() == "wall-of-thorns"
+                } else if(  (effectInfo->getDuration() == -1) && (
+                    effectInfo->getName() == "wall-of-force" ||
+                    effectInfo->getName() == "wall-of-fire" ||
+                    effectInfo->getName() == "wall-of-thorns"
                 ) ) {
                     // permanent walls are only down for a little bit
                     effStr << " (# pulses until reinstantiate)";
                 }
             }
-            if(effect->getApplier()) {
-                object = effect->getApplier()->getAsConstObject();
+            if(effectInfo->getApplier()) {
+                object = effectInfo->getApplier()->getAsConstObject();
                 if(object)
                     effStr << "  ^WApplier:^x " << object->getName() << "^x";
             }

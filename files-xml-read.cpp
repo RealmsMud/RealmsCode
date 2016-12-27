@@ -129,7 +129,7 @@ bool loadMonster(const CatRef cr, Monster ** pMonster, bool offline) {
     } else {
         // Otherwise load the monster and return a pointer to the newly loaded monster
         // Load the creature from it's file
-        if(!loadMonsterFromFile(cr, pMonster, offline))
+        if(!loadMonsterFromFile(cr, pMonster, "", offline))
             return(false);
         gConfig->addMonsterQueue(cr, pMonster);
     }

@@ -120,13 +120,13 @@ class Creature;
 // Information about an effect on a creature
 class EffectInfo
 {
-friend std::ostream& operator<<(std::ostream& out, const EffectInfo& eff);
+
 friend class Effects;
 public:
     EffectInfo(bstring pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent=0, const Creature* owner=0);
     EffectInfo(xmlNodePtr rootNode);
     virtual ~EffectInfo();
-    friend std::ostream& operator<<(std::ostream& out, EffectInfo& effectinfo);
+    friend std::ostream& operator<<(std::ostream& out, const EffectInfo& effectinfo);
     friend std::ostream& operator<<(std::ostream& out, EffectInfo* effectinfo);
 
     bool        compute(MudObject* applier);

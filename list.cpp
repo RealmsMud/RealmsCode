@@ -36,6 +36,7 @@ namespace fs = boost::filesystem;
 extern Config *gConfig;
 extern Server *gServer;
 
+
 int list_rooms() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
