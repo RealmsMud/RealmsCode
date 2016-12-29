@@ -1195,7 +1195,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
     if(!weapon && !player->checkStaff("Backstabing requires a weapon.\n"))
         return(0);
 
-    bstring category = weapon->getWeaponCategory();
+    bstring category = player->getPrimaryWeaponCategory();
 
     if( category != "slashing" && category != "piercing" &&
         !player->checkStaff("Backstabing requires a slashing or piercing weapon.\n")
