@@ -1579,7 +1579,6 @@ int dmBroadecho(Player* player, cmd* cmnd) {
         if(found==1)
             break;
     }
-    cmnd->fullstr[255] = 0;
 
     len = strlen(&cmnd->fullstr[i+1]);
     if(found < 1 || len < 1) {
