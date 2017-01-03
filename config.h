@@ -112,6 +112,7 @@ typedef std::map<bstring, SkillCommand*, comp> SkillCommandMap;
 typedef std::map<bstring, Spell*, comp> SpellMap;
 typedef std::map<bstring, Song*, comp> SongMap;
 typedef std::map<bstring, AlchemyInfo*, comp> AlchemyMap;
+typedef std::map<bstring, MsdpVariable*> MsdpVarMap;
 typedef std::map<int, MudFlag> MudFlagMap;
 
 // Case insensitive
@@ -158,9 +159,7 @@ public:
     bstring getProxyList(Player* player = nullptr);
 
 // MSDP
-    bool loadMsdpVariables();
-    void clearMsdpVariables();
-
+    bool initMsdp();
 
 // Ships
     // these functions deal with time and ships
@@ -579,7 +578,7 @@ public:
     char        cmdline[256];
 
     // MSDP
-    std::map<bstring, MsdpVariable*> msdpVariables;
+    MsdpVarMap msdpVariables;
     MsdpVariable* getMsdpVariable(bstring& name);
 
 

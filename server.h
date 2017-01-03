@@ -300,7 +300,6 @@ public:
     bool runPython(const bstring& pyScript, boost::python::object& dictionary);
     bool runPython(const bstring& pyScript, bstring args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
     bool runPythonWithReturn(const bstring& pyScript, bstring args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
-    bool runPython(const bstring& pyScript, bstring args, Socket *sock, Player *actor, MsdpVariable* msdpVar = nullptr);
 
     // Setup
     bool init();    // Setup the server
@@ -373,6 +372,7 @@ public:
 
     // Broadcasts
     bstring getTimeZone();
+    bstring getServerTime();
 
     // Effects
     void addEffectsIndex(BaseRoom* room);

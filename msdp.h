@@ -26,34 +26,80 @@
 
 class Socket;
 
+enum class MSDPVar {
+    SERVER_ID,
+    SERVER_TIME,
+    CHARACTER_NAME,
+    HEALTH,
+    HEALTH_MAX,
+    MANA,
+    MANA_MAX,
+    EXPERIENCE,
+    EXPERIENCE_MAX,
+    EXPERIENCE_TNL,
+    EXPERIENCE_TNL_MAX,
+    WIMPY,
+    MONEY,
+    BANK,
+    ARMOR,
+    ARMOR_ABSORB,
+    GROUP,
+    TARGET,
+    TARGET_ID,
+    TARGET_HEALTH,
+    TARGET_HEALTH_MAX,
+    TARGET_STRENGTH,
+    ROOM,
+    CLIENT_ID,
+    CLIENT_VERSION,
+    PLUGIN_ID,
+    ANSI_COLORS,
+    XTERM_256_COLORS,
+    UTF_8,
+    SOUND,
+    MXP,
+
+    UNKNOWN,
+};
+
+
 class MsdpVariable {
+    friend class ReportedMsdpVariable;
+public:
+    static bstring getValue(MSDPVar var, Socket* sock, Player* player);
+
 protected:
     void            init();
 
     bstring         name;               // Name of this variable
-    bstring         sendScript;         // Python script to send this variable
-    bstring         updateScript;       // Python script to update this variable
+    MSDPVar         varId;
     bool            reportable;         // This variable is reportable
     bool            requiresPlayer;     // Variable requires a player attached to the socket
     bool            configurable;       // Can it be configured by the client?
     bool            writeOnce;          // Can only set this variable once
     int             updateInterval;     // Update interval (in 10ths of a second)
+    bool            sendFn;             // Does this have a send function?
+    bool            updateFn;           // Does this have an update function?
+
+
 public:
-    MsdpVariable(xmlNodePtr rootNode);
     MsdpVariable();
+    MsdpVariable(bstring pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
+                 bool pWriteOnce, int pUpdateInterval, bool pSendFn = false, bool pUpdateFn = false);
     // Todo: Make this have the server erase all reported variables of this type
     virtual ~MsdpVariable() { };
 
     bstring         getName() const;
-    bstring         getSendScript() const;
-    bool            hasSendScript() const;
-    bstring         getUpdateScript() const;
-    bool            hasUpdateScript() const;
+    MSDPVar         getId() const;
+    bool            hasSendFn() const;
+    bool            hasUpdateFn() const;
     bool            isConfigurable() const;
     bool            isReportable() const;
     bool            isWriteOnce() const;
     bool            getRequiresPlayer() const;
     int             getUpdateInterval() const;
+
+    bool            send(Socket* sock) const;
 
 };
 

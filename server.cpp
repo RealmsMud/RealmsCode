@@ -2007,6 +2007,16 @@ bstring Server::getTimeZone() {
     }
 }
 
+bstring Server::getServerTime() {
+    time_t t = time(0);
+    char* str = ctime(&t);
+    str[strlen(str) - 1] = 0;
+    std::ostringstream oStr;
+    oStr << str << "(" << getTimeZone() << ")";
+
+    return (oStr.str());
+}
+
 //*********************************************************************
 //                      getNumPlayers
 //*********************************************************************

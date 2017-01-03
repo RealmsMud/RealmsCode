@@ -575,7 +575,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
         }
     }
 
-    short result = 0;
+    long result = 0;
     bstring resultTxt = "";
     bstring setType = "";
 

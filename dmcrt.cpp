@@ -1401,7 +1401,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
             mTarget->carry[inv-1].info = object->info;
             player->print("Carry slot %d set to object %s.\n", inv, object->info.str().c_str());
-            log_immort(true, player, "%s set %s %s's carry slot %ld to %s.\n",
+            log_immort(true, player, "%s set %s %s's carry slot %d to %s.\n",
                 player->getCName(), PLYCRT(mTarget), mTarget->getCName(), inv, object->info.str().c_str());
             break;
         }

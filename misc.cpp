@@ -112,15 +112,14 @@ void lowercize(char *str, int flag ) {
 // If the character passed in as the first parameter is an uppercase
 // alphabetic character, then it is converted to lowercase and returned
 // Otherwise, it is unchanged.
-
-int low(char ch) {
+char low(char ch) {
     if(ch >= 'A' && ch <= 'Z')
         return(ch+32);
     else
         return(ch);
 }
 
-int up(char ch) {
+char up(char ch) {
     if(ch >= 'a' && ch <= 'z')
         return(ch-32);
     else

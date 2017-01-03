@@ -28,6 +28,7 @@
 #include <list>
 #include <map>
 #include <queue>
+#include <vector>
 #include <string>
 
 // Mud Includes
@@ -79,8 +80,8 @@ namespace telnet {
     #define UNICODE_FEMALE      9792
     #define UNICODE_NEUTER      9791
 
-    #define MXP_BEG             "\x03"
-    #define CH_MXP_BEG          '\x03'
+    #define MXP_BEG             "\x16"
+    #define CH_MXP_BEG          '\x16'
     #define MXP_END             "\x04"
     #define CH_MXP_END          '\x04'
     #define MXP_AMP             "\x06"
@@ -279,9 +280,11 @@ public:
     void defineMxp();
 
     // MSDP Support Functions
-    void msdpSendPair(bstring variable, bstring value);
-    void msdpSendList(bstring variable, bstring value);
+    ReportedMsdpVariable *getReportedMsdpVariable(const bstring& value);
+    bool msdpSendPair(bstring variable, bstring value);
+    void msdpSendList(bstring variable, std::vector<bstring> values);
     void msdpClearReporting();
+    bstring getMsdpReporting();
 
 protected:
     // Telopt related
@@ -296,16 +299,11 @@ protected:
     bool parseMsdp();
     bool processMsdpVarVal(bstring& variable, bstring& value);
     bool parseAtcp();
-    bool msdpSend(bstring value);
-    bool msdpSend(ReportedMsdpVariable* reportedVar);
+    bool msdpSend(bstring variable);
     bool msdpList(bstring& value);
-    bool msdpReport(bstring& value);
+    ReportedMsdpVariable* msdpReport(bstring& value);
     bool msdpReset(bstring& value);
     bool msdpUnReport(bstring& value);
-
-    ReportedMsdpVariable *getReportedMsdpVariable(bstring& value);
-    bool isReporting(bstring& value);
-    //const char MsdpCommandList[] = "LIST REPORT RESET SEND UNREPORT";
 
 // TODO - Retool so they can be moved to protected
 public:
@@ -323,7 +321,6 @@ protected:
 
     int         lastState;
     int         connState;
-
 
     int         tState;
     bool        oneIAC;

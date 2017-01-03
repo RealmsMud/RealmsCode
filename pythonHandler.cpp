@@ -27,7 +27,6 @@
 #include "fishing.h"
 #include "mud.h"
 #include "mudObject.h"
-#include "msdp.h"
 #include "pythonHandler.h"
 #include "rooms.h"
 #include "server.h"
@@ -608,32 +607,9 @@ BOOST_PYTHON_MODULE(MudObjects)
 
     ;
 
-    bp::class_<MsdpVariable, boost::noncopyable >("MsdpVariable", bp::no_init)
-    .def("getName", &MsdpVariable::getName)
-    ;
-
-    bp::class_<ReportedMsdpVariable, boost::noncopyable, bp::bases<MsdpVariable> >("ReportedMsdpVariable", bp::no_init)
-    .def("getValue", &ReportedMsdpVariable::getValue)
-    .def("setDirty", &ReportedMsdpVariable::setDirty)
-    .def(
-            "setValue"
-            , (void ( ::ReportedMsdpVariable::* )( bstring ) )( &::ReportedMsdpVariable::setValue )
-            , ( bp::arg("newValue") ) )
-    .def(
-            "setValue"
-            , (void ( ::ReportedMsdpVariable::* )( int ) )( &::ReportedMsdpVariable::setValue )
-            , ( bp::arg("newValue") ) )
-    .def(
-            "setValue"
-            , (void ( ::ReportedMsdpVariable::* )( long int ) )( &::ReportedMsdpVariable::setValue )
-            , ( bp::arg("newValue") ) )
-    ;
-
     bp::class_<Socket, boost::noncopyable >("Socket", bp::no_init)
     .def("getPlayer", &Socket::getPlayer, bp::return_value_policy <bp::reference_existing_object>())
     .def("bprint", &Socket::bprint)
-    .def("msdpSendPair", &Socket::msdpSendPair)
-    .def("msdpSendList", &Socket::msdpSendList)
     ;
 
 //  .def(
@@ -878,33 +854,6 @@ bool Server::runPythonWithReturn(const bstring& pyScript, bstring args, MudObjec
     }
 
     return(true);
-}
-
-//==============================================================================
-// RunPython:
-//==============================================================================
-//  pyScript:   The script to be run
-//  actor:      The actor of the script.
-//  target:     The target of the script
-bool Server::runPython(const bstring& pyScript, bstring args, Socket *sock, Player *actor, MsdpVariable* msdpVar) {
-    bp::object localNamespace((bp::handle<>(PyDict_New())));
-
-    localNamespace["args"] = args;
-
-    if (sock != nullptr)
-        localNamespace["sock"] = bp::ptr(sock);
-    if (actor != nullptr)
-        localNamespace["actor"] = bp::ptr(actor);
-
-    ReportedMsdpVariable* reportedVar =
-            dynamic_cast<ReportedMsdpVariable*>(msdpVar);
-
-    if (msdpVar != nullptr)
-        localNamespace["msdpVar"] = bp::ptr(msdpVar);
-    if (reportedVar != nullptr)
-        localNamespace["reportedVar"] = bp::ptr(reportedVar);
-
-    return (runPython(pyScript, localNamespace));
 }
 
 void Server::handlePythonError() {

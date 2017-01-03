@@ -182,7 +182,6 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
         loadList.push_back("flags");
         loadList.push_back("guilds");
         loadList.push_back("limited");
-        loadList.push_back("msdp");
         loadList.push_back("properties");
         loadList.push_back("proxies");
         loadList.push_back("quests");
@@ -349,17 +348,6 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
     else if(!strcmp(cmnd->str[1], "clans") && load) {
         gConfig->loadClans();
         player->print("Clans reloaded.\n");
-    } else if(!strcmp(cmnd->str[1], "msdp") && load) {
-        gConfig->loadMsdpVariables();
-        player->print("MSDP Variables reloaded.\n");
-        // We've now cleared all reportable variables, have clients re-send what they want now
-        for(Socket* sock : gServer->sockets) {
-            if (sock->getMsdp()) {
-                sock->bprint(telnet::will_msdp);
-            } else if (sock->getAtcp()) {
-                sock->bprint(telnet::do_atcp);
-            }
-        }
     } else if(!strcmp(cmnd->str[1], "classes") && load) {
         gConfig->loadClasses();
         player->print("Classes reloaded.\n");

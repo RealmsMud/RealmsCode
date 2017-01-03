@@ -598,10 +598,8 @@ int infoGamestat(Player* player, cmd* cmnd) {
     if(player->isCt())
         player->printColor("^gThe mud has been running for %d game days.\n", gConfig->calendar->getTotalDays());
 
-    str = ctime(&t);
-    str[strlen(str) - 1] = 0;
 
-    player->printColor("^MReal-Time: %s (%s).\n", str, gServer->getTimeZone().c_str());
+    player->printColor("^MReal-Time: %s.\n", gServer->getServerTime().c_str());
 
     if(!days)
         player->printColor("^RRealms Uptime: %02ld:%02ld:%02ld\n", hours, minutes, (t - StartTime) % 60L);
