@@ -2,21 +2,21 @@ cmake_minimum_required(VERSION 2.8)
 
 project(RealmsCode)
 
-set(CMAKE_C_COMPILER "/usr/bin/gcc")
-set(CMAKE_CXX_COMPILER "/usr/bin/g++")
+set(CMAKE_C_COMPILER "/usr/bin/clang")
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
-set(Python_ADDITIONAL_VERSIONS 3.2mu)
+set(Python_ADDITIONAL_VERSIONS 3.5)
 
 find_package(LibXml2 REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(PythonLibs 3.2 REQUIRED)
+find_package(PythonLibs 3.4 REQUIRED)
 find_package(ASPELL REQUIRED)
 find_package(PythonInterp)
 find_package(PythonLibs)
 IF(APPLE)
     find_package(Boost COMPONENTS python system filesystem REQUIRED)
 ELSE()
-    find_package(Boost COMPONENTS python3 system filesystem REQUIRED)
+    find_package(Boost COMPONENTS python-py35 system filesystem REQUIRED)
 ENDIF()
 
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
