@@ -1057,6 +1057,7 @@ int Creature::doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, Dam
     bool freeTarget=true;
     return(doDamage(target, dmg, shouldCheckDie, dmgType, freeTarget));
 }
+
 int Creature::doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget) {
     ASSERTLOG( target );
 

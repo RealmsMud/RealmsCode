@@ -106,7 +106,6 @@ void Config::cleanUp() {
     clearCommands();
     clearSocials();
     clearSpells();
-    clearMsdpVariables();
     clearMxpElements();
     clearEffects();
     clearSongs();
@@ -230,6 +229,7 @@ void Config::reset(bool reload) {
 bool Config::loadBeforePython() {
     std::clog << "Checking Directories..." << (Path::checkPaths() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Initializing command table..." << (initCommands() ? "done" : "*** FAILED ***") << std::endl;
+    std::clog << "Initializing MSDP..." << (initMsdp() ? "done" : "*** FAILED ***") << std::endl;
 
     std::clog << "Loading Config..." << (loadConfig() ? "done" : "*** FAILED ***")<< std::endl;
 
@@ -264,7 +264,6 @@ bool Config::loadBeforePython() {
     std::clog << "Loading Races..." << (loadRaces() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading Factions..." << (loadFactions() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading Alchemy..." << (loadAlchemy() ? "done" : "*** FAILED ***") << std::endl;
-    std::clog << "Loading MSDP Variables..." << (loadMsdpVariables() ? "done" : "*** FAILED ***" )<< std::endl;
     std::clog << "Loading MXP Elements..." << (loadMxpElements() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading Limited Items..." << (loadLimited() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading Double Log Info..." << (loadDoubleLog() ? "done" : "*** FAILED ***") << std::endl;

@@ -230,7 +230,7 @@ public:
         *this = reinterpret_cast<const char*>(uStr);
     }
     
-    bstring(int val) {
+    bstring(long val) {
         std::stringstream ss;
         ss << val;
         *this = ss.str();
