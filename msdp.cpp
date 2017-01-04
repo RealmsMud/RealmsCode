@@ -52,6 +52,7 @@ bool Config::initMsdp() {
     NEW_MSDP_VARIABLE(MANA_MAX,               true,  true, false, false, 1,  true,  true);
     NEW_MSDP_VARIABLE(EXPERIENCE,             true,  true, false, false, 1,  true,  true);
     NEW_MSDP_VARIABLE(EXPERIENCE_MAX,         true,  true, false, false, 1,  true,  true);
+    NEW_MSDP_VARIABLE(EXPERIENCE_TNL,         true,  true, false, false, 1,  true,  true);
     NEW_MSDP_VARIABLE(EXPERIENCE_TNL_MAX,     true,  true, false, false, 1,  true,  true);
     NEW_MSDP_VARIABLE(WIMPY,                  true,  true, false, false, 1,  true,  true);
     NEW_MSDP_VARIABLE(MONEY,                  true,  true, false, false, 1,  true,  true);
