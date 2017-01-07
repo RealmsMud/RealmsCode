@@ -2608,7 +2608,7 @@ int exit_ordering(const char *exit1, const char *exit2) {
 //                      dmArrangeExits
 //*********************************************************************
 bool exitCompare( const Exit* left, const Exit* right ){
-    return(exit_ordering(left->getCName(), right->getCName()));
+    return(!exit_ordering(left->getCName(), right->getCName()));
 }
 void BaseRoom::arrangeExits(Player* player) {
 

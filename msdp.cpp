@@ -735,18 +735,27 @@ bstring MsdpVariable::getValue(MSDPVar var, Socket* sock, Player* player) {
             break;
 
         case MSDPVar::TARGET:
-            if (player) return (player->getArmor());
+            if (player) {
+                Creature *target = player->getTarget();
+                if (target)
+                    return (target->getName());
+                else
+                    return "none";
+            }
             break;
         case MSDPVar::TARGET_ID:
             if (player) {
                 Creature *target = player->getTarget();
-                if (target) return (target->getId());
+                if (target)
+                    return (target->getId());
+                else
+                    return "none";
             }
             break;
         case MSDPVar::TARGET_HEALTH:
             if (player) {
                 Creature* target = player->getTarget();
-                if (target) return (round((target->hp.getCur()*100.0) / (target->hp.getMax()*1.0))/100);
+                if (target) return (round((target->hp.getCur()*10000.0) / (target->hp.getMax()*1.0))/100);
             }
             break;
         case MSDPVar::TARGET_HEALTH_MAX:
