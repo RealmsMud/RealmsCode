@@ -613,7 +613,11 @@ void Player::checkTempEnchant( Object* object) {
             }
         }
         if(object->getType() == ObjectType::CONTAINER) {
-            for(Object* subObj : object->objects) {
+            auto it = object->objects.begin();
+            auto end = object->objects.end();
+            while(it != end) {
+                Object* subObj = *it;
+                ++it;
                 checkTempEnchant(subObj);
             }
         }
@@ -646,7 +650,11 @@ void Player::checkInventory( ) {
     int i=0;
 
     // Check for temp enchant items carried/inventory/in containers
-    for(Object* obj : objects) {
+    auto it = objects.begin();
+    auto end = objects.end();
+    while(it != end) {
+        Object* obj = *it;
+        ++it;
         checkTempEnchant(obj);
     }
     for(i=0; i<MAXWEAR; i++) {
