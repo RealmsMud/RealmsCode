@@ -1106,12 +1106,18 @@ int dmSetObj(Player* player, cmd* cmnd) {
                 return(PROMPT);
             }
             ObjectType newType = static_cast<ObjectType>(num);
-            object->setType(newType);
+            try {
+                resultTxt = obj_type(newType);
+                object->setType(newType);
+                setType = "Type";
+            } catch(std::out_of_range e) {
+                    *player << "Invalid Type.\n";
+                    return(PROMPT);
+
+            }
 
 
 //            result = object->getType();
-            resultTxt = obj_type(newType);
-            setType = "Type";
         } else {
             return(setWhich(player, "type"));
         }
