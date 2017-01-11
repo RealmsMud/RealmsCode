@@ -657,7 +657,11 @@ AreaData::AreaData() {
 }
 
 char AreaData::get(short x, short y, short z) const {
-    return(data[z][y][x]);
+    try {
+        return (data.at(z).at(y).at(x));
+    } catch(std::out_of_range e) {
+        return (area->errorTerrain);
+    }
 }
 
 void AreaData::setArea(Area* a) { area = a; }
@@ -671,7 +675,7 @@ Area::Area() {
     id = 0;
     width = height = depth = minDepth = 0;
     name = "";
-    defaultTerrain = 0;
+    defaultTerrain = errorTerrain = 0;
     critical_x = critical_y = critical_z = 0;
     zero_offset_x = zero_offset_y = zero_offset_z = 0;
     flightPower = 0;
@@ -1386,6 +1390,7 @@ void Area::save(xmlNodePtr curNode, bool saveRooms) const {
 
     xml::saveNonZeroNum(curNode, "FlightPower", flightPower);
     xml::saveNonNullString(curNode, "DefaultTerrain", defaultTerrain);
+    xml::saveNonNullString(curNode, "ErrorTerrain", errorTerrain);
 
     std::list<AreaZone*>::const_iterator zIt;
     childNode = xml::newStringChild(curNode, "Zones");
@@ -1445,6 +1450,10 @@ void Area::load(xmlNodePtr curNode) {
         else if(NODE_NAME(childNode, "DefaultTerrain")) {
             xml::copyToCString(temp, childNode);
             defaultTerrain = temp[0];
+        }
+        else if(NODE_NAME(childNode, "ErrorTerrain")) {
+            xml::copyToCString(temp, childNode);
+            errorTerrain = temp[0];
         }
         else if(NODE_NAME(childNode, "Zones")) loadZones(childNode);
 
@@ -1735,7 +1744,7 @@ int dmListArea(Player* player, cmd* cmnd) {
         player->printColor("  Critical Cycle X: ^c%d^x, Y: ^c%d^x, Z: ^c%d\n", area->critical_x, area->critical_y, area->critical_z);
         player->printColor("  Zero Coord Offset X: ^c%d^x, Y: ^c%d^x, Z: ^c%d\n", area->zero_offset_x, area->zero_offset_y, area->zero_offset_z);
         player->printColor("  Height: ^c%d^x, Width: ^c%d^x, Depth: ^c%d\n", area->height, area->width, area->depth);
-        player->printColor("  DefaultTerrain: %c  FlightPower: ^c%d\n", area->defaultTerrain, area->flightPower);
+        player->printColor("  DefaultTerrain: %c  ErrorTerrain: %c  FlightPower: ^c%d\n", area->defaultTerrain, area->errorTerrain, area->flightPower);
 
         player->printColor("  Rooms Available: ^c%d\n", area->height * area->width);
         player->printColor("  Rooms In Memory: ^c%d\n", area->rooms.size());
