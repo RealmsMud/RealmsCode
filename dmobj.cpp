@@ -16,6 +16,7 @@
  *
  */
 #include <iomanip>
+#include <stdexcept>
 
 #include "commands.h"
 #include "config.h"

@@ -19,6 +19,7 @@
 #include <fstream>
 #include <math.h>
 #include <sys/stat.h>
+#include <stdexcept>
 
 #include "area.h"
 #include "calendar.h"
