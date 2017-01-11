@@ -185,7 +185,7 @@ public:
     AreaData();
 
     char get(short x, short y, short z) const;
-    std::vector< std::vector< std::vector<char> > > data;
+    std::vector< std::vector< std::vector<char>>> data;
 
     void setArea(Area* a);
     void setTerrain(bool t);
@@ -274,6 +274,7 @@ public:
     char        dataFile[20];
 
     char        defaultTerrain;
+    char        errorTerrain;
     AreaData    aTerrain;
     AreaData    aMap;
     AreaData    aSeason;
