@@ -512,7 +512,8 @@ bool AreaZone::flagIsSet(int flag) const {
 //*********************************************************************
 
 TileInfo::TileInfo() {
-    id = style = display = 0;
+    display = '#';
+    id = style = 0;
     name = description = fishing = "";
     trackDur = cost = fly = 0;
     vision = 0.0;
@@ -1028,8 +1029,9 @@ char Area::getTerrain(const Player* player, const MapMarker *mapmarker, short y,
             room = (*rooms.find(m.str())).second;
 
             if(!room->players.empty() || !room->monsters.empty()) {
-                if(!staff && room->isMagicDark())
-                    return('#');
+                if(!staff && room->isMagicDark()) {
+                    return ('*');
+                }
 
                 // can they see anybody in the room?
                 for(Player* ply : room->players) {
@@ -1047,7 +1049,7 @@ char Area::getTerrain(const Player* player, const MapMarker *mapmarker, short y,
                     }
                 }
 
-                // if so, show them the creatue symbol
+                // if so, show them the creature symbol
                 if(found)
                     return('@');
             }
@@ -1222,7 +1224,7 @@ bstring Area::showGrid(const Player* player, const MapMarker *mapmarker, bool co
                 tile = getTile(getTerrain(player, mapmarker, y, x, 0, false), seasonFlags, season, false);
 
                 if(!tile)
-                    grid << " ";
+                    grid << " " ;
                 else {
                     grid << "^";
 
