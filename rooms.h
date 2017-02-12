@@ -126,7 +126,7 @@ public:
     void print(Socket* ignore, const char *fmt, ...);
     void print(Socket* ignore1, Socket* ignore2, const char *fmt, ...);
 
-    virtual bstring getMsdp() const { return ""; };
+    virtual bstring getMsdp(bool showExits = true) const { return ""; };
     bstring getExitsMsdp() const;
 private:
     void doPrint(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const char *fmt, va_list ap);
@@ -180,7 +180,7 @@ public:
     bool swap(Swap s);
     bool swapIsInteresting(Swap s) const;
 
-    bstring getMsdp() const;
+    bstring getMsdp(bool showExits = true) const;
 protected:
     char    flags[16];  // Max flags - 128
     bstring fishing;
@@ -285,7 +285,7 @@ public:
     bool swap(Swap s);
     bool swapIsInteresting(Swap s) const;
 
-    bstring getMsdp() const;
+    bstring getMsdp(bool showExits = true) const;
 protected:
     bool    needsCompass;
     bool    decCompass;

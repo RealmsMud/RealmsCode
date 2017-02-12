@@ -1027,7 +1027,7 @@ void Creature::crtReset() {
     zero(realm, sizeof(realm));
     zero(flags, sizeof(flags));
     zero(spells, sizeof(spells));
-    zero(quests, sizeof(quests));
+    zero(old_quests, sizeof(old_quests));
     zero(languages, sizeof(languages));
     questnum = 0;
 
@@ -1270,7 +1270,7 @@ void Creature::CopyCommon(const Creature& cr) {
         languages[i] = cr.languages[i];
     for(i=0; i<32; i++) {
         spells[i] = cr.spells[i];
-        quests[i] = cr.quests[i];
+        old_quests[i] = cr.old_quests[i];
     }
 
     coins.set(cr.coins);
@@ -1436,18 +1436,12 @@ void Player::doCopy(const Player& cr) {
     weaponTrains = cr.weaponTrains;
     attackTimer = cr.attackTimer;
 
-    // TODO: Look at this and make sure it's doing what i want it to do
-    QuestCompletion *oldQuest;
-    QuestCompletion *newQuest;
-    for(std::pair<int, QuestCompletion*> p : cr.questsInProgress) {
-        oldQuest = p.second;
-        newQuest = new QuestCompletion(*(oldQuest));
-        //*(newQuest) = *(oldQuest);
-        questsInProgress[p.first] = newQuest;
+    for(auto p : cr.questsInProgress) {
+        questsInProgress[p.first] = new QuestCompletion(*(p.second));
     }
 
-    for(std::pair<int, int> qc : cr.questsCompleted) {
-        questsCompleted.insert(qc);
+    for(auto qc : cr.questsCompleted) {
+        questsCompleted.insert(std::make_pair(qc.first, new QuestCompleted(*qc.second)));
     }
 
     for(auto& p : cr.knownAlchemyEffects) {
@@ -1526,6 +1520,9 @@ void Monster::doCopy(const Monster& cr) {
 
     for(TalkResponse* response : cr.responses) {
         responses.push_back(new TalkResponse(*response));
+    }
+    for(QuestInfo* quest : cr.quests) {
+        quests.push_back(quest);
     }
 }
 
@@ -1848,7 +1845,7 @@ void Creature::forgetSpell(int spell) {
 //*********************************************************************
 
 bool Player::questIsSet(int quest) const {
-    return(quests[quest/8] & 1<<(quest%8));
+    return(old_quests[quest/8] & 1<<(quest%8));
 }
 
 //*********************************************************************
@@ -1856,7 +1853,7 @@ bool Player::questIsSet(int quest) const {
 //*********************************************************************
 
 void Player::setQuest(int quest) {
-    quests[quest/8] |= 1<<(quest%8);
+    old_quests[quest/8] |= 1<<(quest%8);
 }
 
 //*********************************************************************
@@ -1864,7 +1861,7 @@ void Player::setQuest(int quest) {
 //*********************************************************************
 
 void Player::clearQuest(int quest) {
-    quests[quest/8] &= ~(1<<(quest%8));
+    old_quests[quest/8] &= ~(1<<(quest%8));
 }
 
 //*********************************************************************

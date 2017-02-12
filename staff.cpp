@@ -87,14 +87,12 @@ bool Creature::checkStaff(const char *failStr,...) const {
 
     va_start(ap, failStr);
     if(!isStaff()) {
-        vprint(failStr, ap);
         ret = false;
     } else {
         print("*STAFF* ");
-        vprint(failStr, ap);
         ret = true;
     }
-
+    vprint(failStr, ap);
     va_end(ap);
     return(ret);
 }

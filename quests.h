@@ -41,6 +41,27 @@ public:
     int reqNum;     // How many
 };
 
+enum class QuestRepeatFrequency {
+    REPEAT_NEVER = 0,
+    REPEAT_UNLIMITED = 1,
+    REPEAT_DAILY = 2,
+    REPEAT_WEEKLY = 3,
+};
+
+enum class QuestEligibility {
+    INELIGIBLE = 0,
+    INELIGIBLE_HAS_QUEST = 1,
+    INELIGIBLE_NOT_REPETABLE = 2,
+    INELIGIBLE_DAILY_NOT_EXPIRED = 3,
+    INELIGIBLE_WEEKLY_NOT_EXPIRED = 4,
+    INELIGIBLE_UNCOMPLETED_PREREQUISITES = 5,
+    INELIGIBLE_FACTION = 6,
+    INELIGIBLE_LEVEL = 7,
+    ELIGIBLE = 8,
+    ELIGIBLE_DAILY = 9,
+    ELIGIBLE_WEEKLY = 10,
+};
+
 // Descriptive information about a quest
 class QuestInfo {
 public:
@@ -52,6 +73,7 @@ public:
     bstring getDisplayString() const;
     bool isRepeatable() const;
     int getTimesRepetable() const;
+    QuestEligibility getEligibility(const Player *player, const Monster *giver) const;
     bool canGetQuest(const Player* player, const Monster* giver) const;
     void printReceiveString(const Player* player, const Monster* giver) const;
     void printCompletionString(const Player* player, const Monster* giver) const;
@@ -69,6 +91,7 @@ private:
                 // to them
 
     bool repeatable;    // Can this quest be repeated multiple times?
+    QuestRepeatFrequency repeatFrequency;  // How often can this quest be repeated
     int timesRepetable;     // Number of times the quest can be repeated.  0 for infinite
     bool sharable;      // Can this quest be shared with other players?
     int minLevel;       // Minimum required level to get this quest
@@ -133,6 +156,25 @@ public:
     bool complete(Monster* monster);
 };
 
+class QuestCompleted {
+private:
+    int times;
+    time_t lastCompleted;
+    void init();
+public:
+    QuestCompleted(xmlNodePtr rootNode);
+    QuestCompleted(int pTimes);  // Legacy
+    QuestCompleted(const QuestCompleted &qc);
+    QuestCompleted();
+
+    xmlNodePtr save(xmlNodePtr rootNode, int id) const;
+
+    void complete();
+
+    time_t getLastCompleted();
+    int getTimesCompleted();
+};
+
 
 class TalkResponse {
 public:
@@ -143,7 +185,13 @@ public:
     std::list<bstring> keywords; // Multiple keywords!
     bstring response; // What he'll respond with, ^C type colors allowed
     bstring action; // Cast on a player, flip them off, give them an item, give them a quest....etc
+    QuestInfo* quest; // Link to associated quest (if any)
+private:
+    void parseQuest();
 };
+
+time_t getDailyReset();
+time_t getWeeklyReset();
 
 #endif /*QUESTS_H_*/
 

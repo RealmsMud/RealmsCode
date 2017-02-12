@@ -34,6 +34,7 @@
 #include "mudObject.h"
 #include "skills.h"
 #include "structs.h"
+#include "quests.h"
 #include "range.h"
 #include "realm.h"
 #include "threat.h"
@@ -70,7 +71,6 @@ enum AttackResult {
     ATTACK_MAX
 };
 
-// prototype because calendar.h hasnt been called yet
 class cDay;
 class StartLoc;
 class Monster;
@@ -78,6 +78,7 @@ class Recipe;
 class TalkResponse;
 class QuestInfo;
 class QuestCompletion;
+class QuestCompleted;
 class QuestCatRef;
 class SpellData;
 
@@ -199,7 +200,7 @@ protected:
     char flags[CRT_FLAG_ARRAY_SIZE]; // Max flags - 256
     unsigned long realm[MAX_REALM-1]; // Magic Spell realms
     char spells[32]; // more spells
-    char quests[32]; // more quests
+    char old_quests[32]; // more quests
     static const short OFFGUARD_REMOVE;
     static const short OFFGUARD_NOREMOVE;
     static const short OFFGUARD_NOPRINT;
@@ -294,7 +295,7 @@ public:
     Dice damage;
     Money coins;
     //CatRef room;
-#define                 NUMHITS quests[0]
+#define                 NUMHITS old_quests[0]
     short questnum; // Quest fulfillment number (M)
     Object *ready[MAXWEAR];// Worn/readied items
     //etag *first_enm; // List of enemies
@@ -779,6 +780,8 @@ protected:
 
     Creature* myMaster;
 
+    std::list<QuestInfo*> quests;
+
 public:
 // Data
     char last_mod[25]; // last staff member to modify creature.
@@ -926,7 +929,7 @@ public:
     int checkWander(long t);
     bool canScavange(Object* object);
 
-    bool doTalkAction(Player* target, bstring action);
+    bool doTalkAction(Player* target, bstring action, QuestInfo* quest = nullptr);
     void sayTo(const Player* player, const bstring& message);
     void pulseTick(long t);
     void beneficialCaster();
@@ -941,6 +944,9 @@ public:
     Realm getBaseRealm() const;
     void setBaseRealm(Realm toSet);
     const bstring customColorize(bstring text, bool caret=true) const;
+
+    bool hasQuests() const;
+    QuestEligibility getEligibleQuestDisplay(const Creature* viewer) const;
 };
 
 //--------------------------------------------------------------------------------
@@ -1059,8 +1065,11 @@ public:
 
     std::list<CatRef> lore;
     std::list<int> recipes;
-    std::map<int, QuestCompletion*> questsInProgress;
-    std::map<int,int> questsCompleted;    // List of all quests we've finished and how many times
+    typedef std::map<int, QuestCompletion*> QuestCompletionMap;
+    typedef std::map<int, QuestCompleted*> QuestCompletedMap;
+
+    QuestCompletionMap questsInProgress;
+    QuestCompletedMap questsCompleted;    // List of all quests we've finished and how many times
 
     Money bank;
     Stat focus; // Battle focus points for fighters
@@ -1167,6 +1176,7 @@ public:
     bool hasQuest(int questId) const;
     bool hasQuest(const QuestInfo *quest) const;
     bool hasDoneQuest(int questId) const;
+    QuestCompleted* getQuestCompleted(const int questId) const;
     void updateMobKills(Monster* monster);
     int countItems(const QuestCatRef& obj);
     void updateItems(Object* object);

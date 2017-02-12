@@ -66,6 +66,7 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
     questId = xml::getIntProp(rootNode, "Num");
     repeatable = sharable = false;
     expReward = minLevel = minFaction = level = 0;
+    repeatFrequency = QuestRepeatFrequency::REPEAT_NEVER;
 
     xmlNodePtr curNode = rootNode->children;
     while(curNode) {
@@ -74,8 +75,8 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
         else if(NODE_NAME(curNode, "ReceiveString")) xml::copyToBString(receiveString, curNode);
         else if(NODE_NAME(curNode, "CompletionString")) xml::copyToBString(completionString, curNode);
-        else if(NODE_NAME(curNode, "Repeatable")) xml::copyToBool(repeatable, curNode);
         else if(NODE_NAME(curNode, "TimesRepetable")) xml::copyToNum(timesRepetable, curNode);
+        else if(NODE_NAME(curNode, "RepeatFrequency")) xml::copyToNum<QuestRepeatFrequency>(repeatFrequency, curNode);
         else if(NODE_NAME(curNode, "Sharable")) xml::copyToBool(sharable, curNode);
         else if(NODE_NAME(curNode, "TurnIn")) turnInMob = QuestCatRef(curNode);
         else if(NODE_NAME(curNode, "Level")) xml::copyToNum(level, curNode);
@@ -95,7 +96,7 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "Initial")) {
             xmlNodePtr childNode = curNode->children;
             while(childNode) {
-                    if(NODE_NAME(childNode, "Object")) initialItems.push_back(QuestCatRef(childNode));
+                if(NODE_NAME(childNode, "Object")) initialItems.push_back(QuestCatRef(childNode));
 
                 childNode = childNode->next;
             }
@@ -127,6 +128,10 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
         }
         curNode = curNode->next;
     }
+
+    if (repeatFrequency != QuestRepeatFrequency::REPEAT_NEVER)
+        repeatable = true;
+
 }
 
 
@@ -184,6 +189,7 @@ QuestCompletion::QuestCompletion(xmlNodePtr rootNode, Player* player) {
 
     checkQuestCompletion(false);
 }
+
 xmlNodePtr QuestCompletion::save(xmlNodePtr rootNode) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, "QuestCompletion");
     xml::newNumProp(curNode, "ID", questId);
@@ -206,31 +212,66 @@ xmlNodePtr QuestCompletion::save(xmlNodePtr rootNode) const {
     }
     return(curNode);
 }
+
+QuestCompleted::QuestCompleted(const QuestCompleted &qc) {
+    times = qc.times;
+    lastCompleted = qc.lastCompleted;
+}
+
+QuestCompleted::QuestCompleted(xmlNodePtr rootNode) {
+    init();
+
+    xmlNodePtr curNode = rootNode->children;
+
+    while(curNode) {
+        if(NODE_NAME(curNode, "Times")) xml::copyToNum(times, curNode);
+        else if(NODE_NAME(curNode, "LastCompleted")) xml::copyToNum(lastCompleted, curNode);
+
+        curNode = curNode->next;
+    }
+}
+
+xmlNodePtr QuestCompleted::save(xmlNodePtr rootNode, int id) const {
+    xmlNodePtr curNode = xml::newStringChild(rootNode, "QuestCompleted");
+    xml::newNumProp(curNode, "ID", id);
+    xml::newNumChild(curNode, "Times", times);
+    xml::newNumChild(curNode, "LastCompleted", lastCompleted);
+
+    return(curNode);
+}
+
+
 void QuestCompletion::resetParentQuest() {
     if((parentQuest = gConfig->getQuest(questId)) == nullptr) {
         throw(std::runtime_error("Unable to find parent quest - " + bstring(questId)));
     }
 }
+
 QuestInfo* QuestCompletion::getParentQuest() const {
     return(parentQuest);
 }
 
 TalkResponse::TalkResponse() {
-
+    quest = nullptr;
 }
 
 TalkResponse::TalkResponse(xmlNodePtr rootNode) {
+    quest = nullptr;
 
     // And then read in the XML file
     xmlNodePtr curNode = rootNode->children;
     while(curNode) {
             if(NODE_NAME(curNode, "Keyword")) keywords.push_back(xml::getBString(curNode).toLower());
         else if(NODE_NAME(curNode, "Response")) xml::copyToBString(response, curNode);
-        else if(NODE_NAME(curNode, "Action")) xml::copyToBString(action, curNode);
+        else if(NODE_NAME(curNode, "Action")) {
+                xml::copyToBString(action, curNode);
+                parseQuest();
+            }
 
         curNode = curNode->next;
     }
 }
+
 xmlNodePtr TalkResponse::saveToXml(xmlNodePtr rootNode) const {
     xmlNodePtr talkNode = xml::newStringChild(rootNode, "TalkResponse");
 
@@ -240,6 +281,41 @@ xmlNodePtr TalkResponse::saveToXml(xmlNodePtr rootNode) const {
     xml::newStringChild(talkNode, "Response", response);
     xml::newStringChild(talkNode, "Action", action);
     return(talkNode);
+}
+
+//*****************************************************************************
+//                      parseQuest
+//*****************************************************************************
+
+void TalkResponse::parseQuest() {
+    boost::tokenizer<> tok(action);
+    auto it = tok.begin();
+
+    if(it == tok.end())
+        return;
+
+    bstring cmd = *it++;
+
+    if(cmd.equals("quest", false)) {
+        if(it == tok.end())
+            return;
+
+        // Find the quest number
+        bstring num = *it++;
+        int questNum = num.toInt();
+
+        if(questNum < 1)
+            return;
+
+        QuestInfo* questInfo = gConfig->getQuest(questNum);
+        if(!questInfo)
+            return;
+
+        quest = questInfo;
+
+    }
+
+    return;
 }
 
 bool QuestInfo::isRepeatable() const {
@@ -413,32 +489,21 @@ bstring QuestInfo::getDisplayString() const {
     return(displayStr.str());
 }
 
-void Config::resetParentQuests() {
-    Player* player=0;
-    for(std::pair<bstring, Player*> p : gServer->players) {
-        player = p.second;
-        if(!player->questsInProgress.empty()) {
-            for(std::pair<int, QuestCompletion*> p : player->questsInProgress) {
-                QuestCompletion* quest = p.second;
-                quest->resetParentQuest();
-            }
-        }
-    }
-}
 
 void Config::clearQuests() {
+    // Only to be used on cleanup
     std::map<int, QuestInfo*>::iterator it;
     QuestInfo* quest;
 
     for(it = quests.begin(); it != quests.end(); it++) {
         quest = (*it).second;
         delete quest;
-        //guilds.erase(it);
     }
     quests.clear();
 }
 
 bool Config::loadQuests() {
+    // You can update quests, but you can't delete them!
     xmlDocPtr   xmlDoc;
     char filename[256];
 
@@ -450,14 +515,20 @@ bool Config::loadQuests() {
     xmlNodePtr curNode = rootNode->children;
     int questId = 0;
 
-    clearQuests();
     while(curNode) {
         if(NODE_NAME(curNode, "QuestInfo")) {
             questId = xml::getIntProp(curNode, "Num");
-            if(questId > 0 && quests[questId] == nullptr)
-                quests[questId] = new QuestInfo(curNode);
-        }
+            if(questId > 0) {
+                QuestInfo* tmpQuest = new QuestInfo(curNode);
 
+                if(quests[questId] == nullptr){
+                    quests[questId] = tmpQuest;
+                } else {
+                    (*quests[questId]) = *tmpQuest;
+                    delete tmpQuest;
+                }
+            }
+        }
         curNode = curNode->next;
     }
     xmlFreeDoc(xmlDoc);
@@ -466,8 +537,9 @@ bool Config::loadQuests() {
 }
 
 QuestInfo* Config::getQuest(int questNum) {
-    if(quests.find(questNum) != quests.end())
-        return(quests[questNum]);
+    auto questIt = quests.find(questNum);
+    if(questIt != quests.end())
+        return(questIt->second);
     else
         return(nullptr);
 
@@ -490,6 +562,59 @@ bool Player::hasQuest(const QuestInfo *quest) const {
 
 bool Player::hasDoneQuest(int questId) const {
     return(questsCompleted.find(questId) != questsCompleted.end());
+}
+
+bool Monster::hasQuests() const {
+    return quests.size() > 0;
+}
+
+QuestEligibility Monster::getEligibleQuestDisplay(const Creature* viewer) const {
+    if (!viewer)
+        return QuestEligibility::INELIGIBLE;
+
+    const Player *pViewer = viewer->getAsConstPlayer();
+    bool hasRepetable = false;
+    bool needsMoreTime = false;
+    bool isLowLevel = false;
+
+    if (!pViewer)
+        return QuestEligibility::INELIGIBLE;
+
+    for(auto quest : quests) {
+        QuestEligibility eligible = quest->getEligibility(pViewer, this);
+        if (eligible == QuestEligibility::ELIGIBLE)
+            return QuestEligibility::ELIGIBLE;
+        else if (eligible == QuestEligibility::ELIGIBLE_DAILY)
+            hasRepetable = true;
+        else if (eligible == QuestEligibility::ELIGIBLE_WEEKLY)
+            hasRepetable = true;
+        else if (eligible == QuestEligibility::INELIGIBLE_LEVEL)
+            isLowLevel = true;
+        else if (eligible == QuestEligibility::INELIGIBLE_DAILY_NOT_EXPIRED)
+            needsMoreTime = true;
+        else if (eligible == QuestEligibility::INELIGIBLE_WEEKLY_NOT_EXPIRED)
+            needsMoreTime = true;
+    }
+
+    if (hasRepetable)
+        return QuestEligibility::ELIGIBLE_DAILY;
+
+    if (needsMoreTime)
+        return QuestEligibility::INELIGIBLE_DAILY_NOT_EXPIRED;
+
+    if (isLowLevel)
+        return QuestEligibility::INELIGIBLE_LEVEL;
+
+    return QuestEligibility::INELIGIBLE;
+}
+
+QuestCompleted* Player::getQuestCompleted(const int questId) const {
+    auto completion = questsCompleted.find(questId);
+    if (completion != questsCompleted.end()) {
+        return completion->second;
+    } else {
+        return nullptr;
+    }
 }
 
 void Player::updateMobKills(Monster* monster) {
@@ -653,6 +778,7 @@ bstring QuestCompletion::getStatusDisplay() {
         displayStr << "^Y*";
     else
         displayStr << "^y";
+    displayStr << parentQuest->name << "^x\n";
     displayStr << parentQuest->name << "^x\n";
 
 
@@ -915,14 +1041,16 @@ bool QuestCompletion::complete(Monster* monster) {
     if(!parentQuest->factionRewards.empty())
         parentPlayer->adjustFactionStanding(parentQuest->factionRewards);
 
+    auto completionPtr = parentPlayer->questsCompleted.find(parentQuest->questId);
+    QuestCompleted *questCompleted = nullptr;
 
-    // Only add it to the list of quests they have done, if they haven't already
-    // done it.  No adding a quest twice if it's repeatable
-    if(!parentPlayer->hasDoneQuest(parentQuest->questId)) {
-        parentPlayer->questsCompleted.insert(std::pair<int,int>(parentQuest->questId, 1));
+    if (completionPtr == parentPlayer->questsCompleted.end()) {
+        questCompleted = new QuestCompleted();
+        parentPlayer->questsCompleted.insert(std::make_pair(parentQuest->questId, questCompleted));
     } else {
-        parentPlayer->questsCompleted[parentQuest->questId]++;
+        questCompleted = completionPtr->second;
     }
+    questCompleted->complete();
 
     // INVALID AFTER THIS...DO NOT ACCESS ANY MEMBERS OR THIS QUEST FROM ANYWHERE
     delete this;
@@ -937,6 +1065,8 @@ bool QuestCompletion::complete(Monster* monster) {
 
 int cmdTalk(Player* player, cmd* cmnd) {
     Monster *target=0;
+
+    QuestInfo* quest = nullptr;
 
     bstring question;
     bstring response;
@@ -1029,6 +1159,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
                         key = keyword;
                         response = talkResponse->response;
                         action = talkResponse->action;
+                        quest = talkResponse->quest;
                         // Next...lets get the hell out of here!
                         goto foundresponse;
                     }
@@ -1053,6 +1184,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
                                 key = keyword;
                                 response = talkResponse->response;
                                 action = talkResponse->action;
+                                quest = talkResponse->quest;
                                 // Next...lets get the hell out of here!
                                 goto foundresponse;
                             }
@@ -1064,6 +1196,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
                     key = keyword;
                     response = talkResponse->response;
                     action = talkResponse->action;
+                    quest = talkResponse->quest;
                     // Next...lets get the hell out of here!
                     goto foundresponse;
                 }
@@ -1088,7 +1221,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
         target->sayTo(player, response);
 
     if(action != "")
-        target->doTalkAction(player, action);
+        target->doTalkAction(player, action, quest);
 
     if(response == "" && action == "")
         broadcast(nullptr, player->getRoomParent(), "%M doesn't say anything.", target);
@@ -1100,7 +1233,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
 //                      doTalkAction
 //*****************************************************************************
 
-bool Monster::doTalkAction(Player* target, bstring action) {
+bool Monster::doTalkAction(Player* target, bstring action, QuestInfo* quest) {
     if(action.empty())
         return(false);
 
@@ -1112,10 +1245,29 @@ bool Monster::doTalkAction(Player* target, bstring action) {
 
     bstring cmd = *it++;
 
-    if(cmd.equals("attack", false)) {
+    if(quest != nullptr) {
+        if(isEnemy(target) && !target->checkStaff("%M refuses to talk to you about that.\n", this))
+            return(false);
+
+        if(!canSee(target) && !target->checkStaff("^m%M says, \"I'm not telling you about that unless I can see you!\"\n", this))
+            return(false);
+
+        if(!quest->canGetQuest(target, this))
+            return(false);
+
+        target->printColor("^m%M shares ^W%s^m with you.\n",  this, quest->getName().c_str());
+        broadcast(target->getSock(), target->getRoomParent(), "^x%M shares ^W%s^x with %N.\n",
+                  this, quest->getName().c_str(), target);
+        quest->printReceiveString(target, this);
+        target->addQuest(quest);
+        quest->giveInitialitems(this, target);
+        return(true);
+    }
+    else if(cmd.equals("attack", false)) {
         addEnemy(target, true);
         return(true);
-    } else if(cmd.equals("action", false)) {
+    }
+    else if(cmd.equals("action", false)) {
         if(it != tok.end()) {
             // Need to use global namespace cmd, overriding local variable
             ::cmd cm;
@@ -1138,7 +1290,8 @@ bool Monster::doTalkAction(Player* target, bstring action) {
             cmdProcess(this, &cm);
             return(true);
         }
-    } else if(cmd.equals("cast", false)) {
+    }
+    else if(cmd.equals("cast", false)) {
         if(it != tok.end()) {
             // Need to use global namespace cmd, overriding local variable
             ::cmd cm;
@@ -1163,7 +1316,8 @@ bool Monster::doTalkAction(Player* target, bstring action) {
             return(true);
 
         }
-    } else if(cmd.equals("give", false)) {
+    }
+    else if(cmd.equals("give", false)) {
         if(it != tok.end()) {
             CatRef toGive;
             // Find the area/number
@@ -1213,37 +1367,8 @@ bool Monster::doTalkAction(Player* target, bstring action) {
 
             return(true);
         }
-    } else if(cmd.equals("quest", false)) {
-        if(isEnemy(target) && !target->checkStaff("%M refuses to talk to you about that.\n", this))
-            return(false);
-
-        if(!canSee(target) && !target->checkStaff("^m%M says, \"I'm not telling you about that unless I can see you!\"\n", this))
-            return(false);
-
-        // Give them a quest
-        if(it == tok.end())
-            return(false);
-        // Find the quest number
-        bstring num = *it++;
-        int questNum = num.toInt();
-        if(questNum < 1)
-            return(false);
-
-        QuestInfo* questInfo = gConfig->getQuest(questNum);
-        if(!questInfo)
-            return(false);
-
-        if(!questInfo->canGetQuest(target, this))
-            return(false);
-
-        target->printColor("^m%M shares ^W%s^m with you.\n",  this, questInfo->getName().c_str());
-        broadcast(target->getSock(), target->getRoomParent(), "^x%M shares ^W%s^x with %N.\n",
-            this, questInfo->getName().c_str(), target);
-        questInfo->printReceiveString(target, this);
-        target->addQuest(questInfo);
-        questInfo->giveInitialitems(this, target);
-        return(true);
     }
+
     return(false);
 }
 
@@ -1273,46 +1398,116 @@ void QuestInfo::giveInitialitems(const Monster* giver, Player* player) const {
     }
 }
 
+QuestEligibility QuestInfo::getEligibility(const Player *player, const Monster *giver) const {
+    QuestEligibility eligibleRet = QuestEligibility::ELIGIBLE;
+
+    if(player->hasQuest(this)) {
+        return QuestEligibility::INELIGIBLE_HAS_QUEST;
+    }
+
+    QuestCompleted* completed = player->getQuestCompleted(questId);
+
+    if(completed != nullptr) {
+        if (!isRepeatable()) {
+            return QuestEligibility::INELIGIBLE_NOT_REPETABLE;
+        }
+        else {
+            time_t lastCompletion = completed->getLastCompleted();
+            if (repeatFrequency == QuestRepeatFrequency::REPEAT_DAILY) {
+
+                if (lastCompletion > getDailyReset()) {
+                    return QuestEligibility::INELIGIBLE_DAILY_NOT_EXPIRED;
+                }
+                eligibleRet = QuestEligibility::ELIGIBLE_DAILY;
+            }
+            else if ( repeatFrequency == QuestRepeatFrequency::REPEAT_WEEKLY) {
+                // else if weekly is the completion time earlier than last wednesday, midnight
+                // if not, return
+                if (lastCompletion > getWeeklyReset()) {
+                    return QuestEligibility::INELIGIBLE_WEEKLY_NOT_EXPIRED;
+                }
+
+                eligibleRet = QuestEligibility::ELIGIBLE_WEEKLY;
+            }
+        }
+
+    }
+    if(minLevel != 0 && player->getLevel() < minLevel) {
+        return QuestEligibility::INELIGIBLE_LEVEL;
+    }
+
+    if(minFaction != 0 && !giver->getPrimeFaction().empty()) {
+        if(player->getFactionStanding(giver->getPrimeFaction()) < minFaction) {
+            return QuestEligibility::INELIGIBLE_FACTION;
+        }
+    }
+
+    if(!preRequisites.empty()) {
+        for(const int & preReq : preRequisites) {
+            if(!player->hasDoneQuest(preReq)){
+                return QuestEligibility::INELIGIBLE_UNCOMPLETED_PREREQUISITES;
+            }
+        }
+    }
+
+    return eligibleRet;
+}
+
+
 //*****************************************************************************
 //                      canGetQuest
 //*****************************************************************************
 
-bool QuestInfo::canGetQuest(const Player* player, const Monster* giver) const {
 
-    if(player->hasQuest(this)) {
+bool QuestInfo::canGetQuest(const Player* player, const Monster* giver) const {
+    QuestEligibility eligibility = getEligibility(player, giver);
+
+    if(eligibility == QuestEligibility::INELIGIBLE_HAS_QUEST) {
         // Staff still can't have it in their quest book twice
         player->printColor("^m%M says, \"I'd tell you about ^W%s^m, but you already know about it!\"\n",
             giver, getName().c_str());
         return(false);
     }
 
-    if(!isRepeatable() && player->hasDoneQuest(questId) &&
-        !player->checkStaff("^m%M says, \"I'd tell you about ^W%s^m, but you've already done that quest!\"\n",
-        giver, getName().c_str())
-    )
+    if(eligibility == QuestEligibility::INELIGIBLE_NOT_REPETABLE &&
+            !player->checkStaff("^m%M says, \"I'd tell you about ^W%s^m, but you've already done that quest!\"\n",
+                                 giver, getName().c_str()))
+    {
+        return (false);
+    }
+
+    if (eligibility == QuestEligibility::INELIGIBLE_DAILY_NOT_EXPIRED &&
+            !player->checkStaff("^m%M says, \"Come back tomorrow and I'll tell you more about ^W%s^m.\"\n",
+                            giver, getName().c_str())) {
+        return (false);
+    }
+
+    if (eligibility == QuestEligibility::INELIGIBLE_WEEKLY_NOT_EXPIRED &&
+            !player->checkStaff("^m%M says, \"Come back next week and I'll tell you more about ^W%s^m.\"\n",
+                            giver, getName().c_str())) {
+        return (false);
+    }
+
+    if (eligibility == QuestEligibility::INELIGIBLE_LEVEL &&
+        !player->checkStaff("^m%M says, \"You're not ready for that information yet! Return when you have gained more experience.\"\n", giver))
         return(false);
 
-    if(!preRequisites.empty()) {
+    if (eligibility == QuestEligibility::INELIGIBLE_FACTION &&
+        !player->checkStaff("^m%M says, \"I'm sorry, I don't trust you enough to tell you about that.\"\n", giver)) {
+        return(false);
+    }
+
+    if(eligibility == QuestEligibility::INELIGIBLE_UNCOMPLETED_PREREQUISITES) {
         for(const int & preReq : preRequisites) {
             if(!player->hasDoneQuest(preReq) &&
                 !player->checkStaff("^m%M says, \"You're not ready for that information yet! Return when you have finished ^W%s^m.\"\n",
                     giver, gConfig->getQuest(preReq)->getName().c_str())
-            )
+            ) {
                 return(false);
+            }
         }
     }
 
-    if(minFaction != 0 && !giver->getPrimeFaction().empty()) {
-        if(player->getFactionStanding(giver->getPrimeFaction()) < minFaction) {
-            if(!player->checkStaff("^m%M says, \"I'm sorry, I don't trust you enough to tell you about that.\"\n", giver))
-                return(false);
-        }
-    }
-
-    if(minLevel != 0 && player->getLevel() < minLevel) {
-        if(!player->checkStaff("^m%M says, \"You're not ready for that information yet! Return when you have gained more experience.\"\n", giver))
-            return(false);
-    }
     return(true);
 }
 
@@ -1349,6 +1544,8 @@ void QuestInfo::printCompletionString(const Player* player, const Monster* giver
     player->printColor("%s\n", toPrint.c_str());
     return;
 }
+
+
 
 //*****************************************************************************
 //                      convertOldTalks
@@ -1521,9 +1718,9 @@ int cmdQuests(Player* player, cmd* cmnd) {
         std::ostringstream displayStr;
 
         displayStr << "^WQuests Completed:^x\n";
-        for(std::pair<int,int> qc : player->questsCompleted) {
+        for(auto qc : player->questsCompleted) {
             displayStr << gConfig->getQuest(qc.first)->getName();
-            if(qc.second > 1)
+            if(qc.second->getTimesCompleted() > 1)
                 displayStr << " (" << qc.second << ")";
             displayStr << "\n";
         }
@@ -1545,4 +1742,74 @@ int cmdQuests(Player* player, cmd* cmnd) {
     }
 
     return(0);
+}
+
+
+void QuestCompleted::complete() {
+    lastCompleted = time(0);
+    times++;
+}
+
+time_t QuestCompleted::getLastCompleted() {
+    return lastCompleted;
+}
+
+int QuestCompleted::getTimesCompleted() {
+    return times;
+}
+
+QuestCompleted::QuestCompleted(int pTimes) {
+    lastCompleted = time(0);
+    times = pTimes;
+}
+
+void QuestCompleted::init() {
+    lastCompleted = 0;
+    times = 0;
+}
+
+QuestCompleted::QuestCompleted() {
+    init();
+}
+
+
+time_t getDailyReset() {
+    struct tm t;
+    time_t now = time(0);
+    localtime_r(&now, &t);
+    t.tm_sec = t.tm_min = t.tm_hour = 0;
+    return (mktime(&t) - 1);
+
+
+}
+
+time_t getWeeklyReset() {
+    time_t base_t = time(0);
+    struct tm base_tm;
+    localtime_r(&base_t, &base_tm);
+
+    int dow = base_tm.tm_wday;
+    int ddiff = 0;
+
+    if (dow > 2) {
+        ddiff = 2 - dow;
+    } else if (dow < 2 ) {
+        ddiff = -(dow + 5);
+    }
+
+    struct tm new_tm;
+    new_tm = base_tm;
+
+    new_tm.tm_yday += ddiff;
+    new_tm.tm_wday += ddiff;
+    new_tm.tm_mday += ddiff;
+
+    // Midnight
+    new_tm.tm_min = new_tm.tm_sec = new_tm.tm_hour = 0;
+    
+    time_t new_time = mktime(&new_tm);
+    struct tm new_t;
+    localtime_r(&new_time, &new_t);
+
+    return new_time;
 }

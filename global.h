@@ -559,7 +559,8 @@ enum StrFlags {
     MIST = BIT4,
     ISBD = BIT5,
     ISCT = BIT6,
-    NONUM = BIT7
+    NONUM = BIT7,
+    QUEST = BIT8,
 };
 
 enum Color {

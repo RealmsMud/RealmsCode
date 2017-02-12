@@ -92,25 +92,26 @@ public:
 
 
     // Various info about a group
-    bool flagIsSet(int flag);
+    bool flagIsSet(int flag) const;
     bool inGroup(Creature* target);
-    Creature* getLeader();
+    Creature* getLeader() const;
     int size();
     int getSize(bool countDmInvis = false, bool membersOnly = true);
     int getNumInSameRoom(Creature* target);
     int getNumPlyInSameRoom(Creature* target);
     Creature* getMember(int num, bool countDmInvis = false);
     Creature* getMember(bstring name, int num, Creature* searcher = nullptr, bool includePets = false);
-    GroupType getGroupType();
-    bstring getGroupTypeStr();
+    GroupType getGroupType() const;
+    bstring getGroupTypeStr() const;
     bstring getFlagsDisplay();
-    bstring& getName();
-    bstring& getDescription();
+    const bstring& getName() const;
+    const bstring& getDescription() const;
     bstring getGroupList(Creature* viewer);
 
 
     void sendToAll(bstring msg, Creature* ignore = nullptr, bool sendToInvited = false);
 
+    bstring getMsdp(Creature* viewer) const;
 
 public:
     CreatureList members;
