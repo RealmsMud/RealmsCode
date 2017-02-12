@@ -20,6 +20,7 @@
 #include <arpa/telnet.h>
 #include "math.h"
 #include <stdexcept>
+#include <iomanip>
 
 // Mud Includes
 #include "creatures.h"
@@ -33,56 +34,59 @@
 
 #define MSDP_DEBUG
 
-#define NEW_MSDP_VARIABLE(var, report, player, config, write, interval, sendfn, updatefn) \
+#define NEW_MSDP_VARIABLE(var, report, player, config, write, interval, sendfn, updatefn, isgrp) \
     msdpVariables[#var] = new MsdpVariable(#var, MSDPVar::var, (report), (player), \
-    (config), (write), (interval), (sendfn), (updatefn))
+    (config), (write), (interval), (sendfn), (updatefn), (isgrp))
 
 bool Config::initMsdp() {
-    //                Name                   Report  Ply  Config W-Once  U  sendFn UpdateFn
+    //                Name                   Report  Ply  Config W-Once  U  sendFn UpdateFn isGrp
     // Server Info
-    NEW_MSDP_VARIABLE(SERVER_ID,             false, false, false, false, 1,  true, false);
+    NEW_MSDP_VARIABLE(SERVER_ID,             false, false, false, false, 1,  true, false,  false);
 
-    NEW_MSDP_VARIABLE(SERVER_TIME,           false, false, false, false, 1,  true, false);
+    NEW_MSDP_VARIABLE(SERVER_TIME,           false, false, false, false, 1,  true, false,  false);
 //
     // Character Info
-    NEW_MSDP_VARIABLE(CHARACTER_NAME,        false,  true, false, false, 1,  true, false);
-    NEW_MSDP_VARIABLE(HEALTH,                 true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(HEALTH_MAX,             true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(MANA,                   true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(MANA_MAX,               true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(EXPERIENCE,             true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(EXPERIENCE_MAX,         true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(EXPERIENCE_TNL,         true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(EXPERIENCE_TNL_MAX,     true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(WIMPY,                  true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(MONEY,                  true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(BANK,                   true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(ARMOR,                  true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(ARMOR_ABSORB,           true,  true, false, false, 1,  true,  true);
+    NEW_MSDP_VARIABLE(CHARACTER_NAME,        false,  true, false, false, 1,  true, false,  false);
+
+    NEW_MSDP_VARIABLE(HEALTH,                 true,  true, false, false, 5,  true,  true,  false);
+    NEW_MSDP_VARIABLE(HEALTH_MAX,             true,  true, false, false, 5,  true,  true,  false);
+    NEW_MSDP_VARIABLE(MANA,                   true,  true, false, false, 5,  true,  true,  false);
+    NEW_MSDP_VARIABLE(MANA_MAX,               true,  true, false, false, 5,  true,  true,  false);
+    NEW_MSDP_VARIABLE(EXPERIENCE,             true,  true, false, false, 10, true,  true,  false);
+    NEW_MSDP_VARIABLE(EXPERIENCE_MAX,         true,  true, false, false, 10, true,  true,  false);
+    NEW_MSDP_VARIABLE(EXPERIENCE_TNL,         true,  true, false, false, 10, true,  true,  false);
+    NEW_MSDP_VARIABLE(EXPERIENCE_TNL_MAX,     true,  true, false, false, 10, true,  true,  false);
+    NEW_MSDP_VARIABLE(WIMPY,                  true,  true, false, false, 10, true,  true,  false);
+    NEW_MSDP_VARIABLE(MONEY,                  true,  true, false, false, 10, true,  true,  false);
+    NEW_MSDP_VARIABLE(BANK,                   true,  true, false, false, 10, true,  true,  false);
+    NEW_MSDP_VARIABLE(ARMOR,                  true,  true, false, false, 10, true,  true,  false);
+    NEW_MSDP_VARIABLE(ARMOR_ABSORB,           true,  true, false, false, 10, true,  true,  false);
 
     //  Group
-    NEW_MSDP_VARIABLE(GROUP,                  true,  true, false, false, 1,  true,  true);
+
+    NEW_MSDP_VARIABLE(GROUP,                  true,  true, false, false, 10, true,  true,  true);
+
 
     //  Target
-    NEW_MSDP_VARIABLE(TARGET,                 true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(TARGET_ID,              true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(TARGET_HEALTH,          true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(TARGET_HEALTH_MAX,      true,  true, false, false, 1,  true,  true);
-    NEW_MSDP_VARIABLE(TARGET_STRENGTH,        true,  true, false, false, 1,  true,  true);
+    NEW_MSDP_VARIABLE(TARGET,                 true,  true, false, false, 5,  true,  true,  false);
+    NEW_MSDP_VARIABLE(TARGET_ID,              true,  true, false, false, 5,  true,  true,  false);
+    NEW_MSDP_VARIABLE(TARGET_HEALTH,          true,  true, false, false, 5,  true,  true,  false);
+    NEW_MSDP_VARIABLE(TARGET_HEALTH_MAX,      true,  true, false, false, 10, true,  true,  false);
+    NEW_MSDP_VARIABLE(TARGET_STRENGTH,        true,  true, false, false, 10, true,  true,  false);
 
     // World
-    NEW_MSDP_VARIABLE(ROOM,                   true,  true, false, false, 1,  true,  true);
+    NEW_MSDP_VARIABLE(ROOM,                   true,  true, false, false, 5,  true,  true,  false);
 
     // Configurable Variables
-    NEW_MSDP_VARIABLE(CLIENT_ID,             false, false,  true,  true, 1, false, false);
-    NEW_MSDP_VARIABLE(CLIENT_VERSION,        false, false,  true,  true, 1, false, false);
-    NEW_MSDP_VARIABLE(PLUGIN_ID,             false, false,  true, false, 1, false, false);
-    NEW_MSDP_VARIABLE(ANSI_COLORS,           false, false,  true, false, 1, false, false);
-    NEW_MSDP_VARIABLE(XTERM_256_COLORS,      false, false,  true, false, 1, false, false);
-    NEW_MSDP_VARIABLE(UTF_8,                 false, false,  true, false, 1, false, false);
-    NEW_MSDP_VARIABLE(SOUND,                 false, false,  true, false, 1, false, false);
+    NEW_MSDP_VARIABLE(CLIENT_ID,             false, false,  true,  true, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(CLIENT_VERSION,        false, false,  true,  true, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(PLUGIN_ID,             false, false,  true, false, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(ANSI_COLORS,           false, false,  true, false, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(XTERM_256_COLORS,      false, false,  true, false, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(UTF_8,                 false, false,  true, false, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(SOUND,                 false, false,  true, false, 1, false, false,  false);
 
-    NEW_MSDP_VARIABLE(MXP,                   false, false,  true, false, 1, false, false);
+    NEW_MSDP_VARIABLE(MXP,                   false, false,  true, false, 1, false, false,  false);
 
     return true;
 }
@@ -392,6 +396,12 @@ void debugMsdp(const bstring& str) {
             case (unsigned char) MSDP_TABLE_CLOSE:
                 oStr << " MSDP_TABLE_CLOSE ";
                 break;
+            case (unsigned char) MSDP_ARRAY_OPEN:
+                oStr << " MSDP_ARRAY_OPEN ";
+                break;
+            case (unsigned char) MSDP_ARRAY_CLOSE:
+                oStr << " MSDP_ARRAY_CLOSE ";
+                break;
             default:
                 oStr << ch;
                 break;
@@ -447,6 +457,7 @@ void MsdpVariable::init() {
     name ="unknown";
     updateFn = false;
     sendFn = false;
+    isGroup = false;
     varId = MSDPVar::UNKNOWN;
 }
 
@@ -456,7 +467,7 @@ MsdpVariable::MsdpVariable() {
 
 MsdpVariable::MsdpVariable(bstring pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
                            bool pWriteOnce, int pUpdateInterval, bool pSendFn,
-                           bool pUpdateFn)
+                           bool pUpdateFn, bool pIsGroup)
 {
     init();
     name = pName;
@@ -468,6 +479,7 @@ MsdpVariable::MsdpVariable(bstring pName, MSDPVar pVar, bool pReportable, bool p
     updateInterval = pUpdateInterval;
     sendFn = pSendFn;
     updateFn = pUpdateFn;
+    isGroup = pIsGroup;
 }
 
 ReportedMsdpVariable::ReportedMsdpVariable(const MsdpVariable* mv, Socket* sock) {
@@ -625,7 +637,7 @@ bstring BaseRoom::getExitsMsdp() const {
     return oStr.str();
 }
 
-bstring UniqueRoom::getMsdp() const {
+bstring UniqueRoom::getMsdp(bool showExits) const {
     std::ostringstream oStr;
 
     oStr << (unsigned char) MSDP_TABLE_OPEN
@@ -639,7 +651,8 @@ bstring UniqueRoom::getMsdp() const {
          << (unsigned char) MSDP_VAR << "NAME"
          << (unsigned char) MSDP_VAL << getName();
 
-    oStr << getExitsMsdp();
+    if (showExits)
+        oStr << getExitsMsdp();
 
     oStr << (unsigned char) MSDP_TABLE_CLOSE;
 
@@ -647,7 +660,7 @@ bstring UniqueRoom::getMsdp() const {
 }
 
 
-bstring AreaRoom::getMsdp() const {
+bstring AreaRoom::getMsdp(bool showExits) const {
     std::ostringstream oStr;
 
     oStr << (unsigned char) MSDP_TABLE_OPEN
@@ -670,12 +683,111 @@ bstring AreaRoom::getMsdp() const {
 
           << (unsigned char) MSDP_TABLE_CLOSE;
 
-    oStr << getExitsMsdp();
+    if (showExits)
+        oStr << getExitsMsdp();
 
     oStr << (unsigned char) MSDP_TABLE_CLOSE;
     return oStr.str();
 }
 
+bstring Group::getMsdp(Creature* viewer) const {
+    int i = 0;
+    std::ostringstream oStr;
+
+    oStr << (unsigned char) MSDP_TABLE_OPEN // Group
+
+         << (unsigned char) MSDP_VAR << "NAME"
+         << (unsigned char) MSDP_VAL << getName()
+
+         << (unsigned char) MSDP_VAR << "TYPE"
+         << (unsigned char) MSDP_VAL << getGroupTypeStr()
+
+         << (unsigned char) MSDP_VAR << "XPSPLIT"
+         << (unsigned char) MSDP_VAL << (flagIsSet(GROUP_SPLIT_EXPERIENCE) ? "on" : "off")
+
+         << (unsigned char) MSDP_VAR << "GOLDSPLIT"
+         << (unsigned char) MSDP_VAL << (flagIsSet(GROUP_SPLIT_GOLD) ? "on" : "off")
+
+         << (unsigned char) MSDP_VAR << "MEMBERS"
+         << (unsigned char) MSDP_VAL << (unsigned char) MSDP_TABLE_OPEN; // Members
+
+
+        for(Creature* target : members) {
+            if(!viewer->isStaff() && (target->pFlagIsSet(P_DM_INVIS) || (target->isEffected("incognito") && !viewer->inSameRoom(target))))
+                continue;
+
+            if(target->getGroupStatus() == GROUP_INVITED)
+                continue;
+
+            bool isPet = target->isPet();
+
+            oStr << (unsigned char) MSDP_VAR << ++i
+                 << (unsigned char) MSDP_VAL << (unsigned char) MSDP_TABLE_OPEN;  // Member
+
+            oStr << (unsigned char) MSDP_VAR << "NAME"
+                 << (unsigned char) MSDP_VAL;
+
+            if(isPet)
+                oStr << target->getMaster()->getName() << "'s " << target->getName();
+            else
+                oStr << target->getName();
+
+            bool showStats = ( viewer->isCt() ||
+                (isPet && !target->getMaster()->flagIsSet(P_NO_SHOW_STATS)) ||
+                (!isPet && !target->pFlagIsSet(P_NO_SHOW_STATS)) ||
+                (isPet && target->getMaster() == viewer) ||
+                (!isPet && target == viewer));
+
+            oStr << (unsigned char) MSDP_VAR << "HEALTH"
+                 << (unsigned char) MSDP_VAL << (showStats ? target->hp.getCur() : -1)
+                 << (unsigned char) MSDP_VAR << "HEALTH_MAX"
+                 << (unsigned char) MSDP_VAL << (showStats ? target->hp.getMax() : -1)
+                 << (unsigned char) MSDP_VAR << "MANA"
+                 << (unsigned char) MSDP_VAL << (showStats ? target->mp.getCur() : -1)
+                 << (unsigned char) MSDP_VAR << "MANA_MAX"
+                 << (unsigned char) MSDP_VAL << (showStats ? target->mp.getMax() : -1);
+
+            oStr << (unsigned char) MSDP_VAR << "EFFECTS"
+                 << (unsigned char) MSDP_VAL << (unsigned char) MSDP_ARRAY_OPEN;
+
+                if(!isPet) {
+                    if (target->isEffected("blindness"))
+                        oStr << MSDP_VAL << "Blind";
+                    if (target->isEffected("drunkenness"))
+                        oStr << MSDP_VAL << "Drunk";
+                    if (target->isEffected("confusion"))
+                        oStr << MSDP_VAL << "Confused";
+                    if (target->isDiseased())
+                        oStr << MSDP_VAL << "Diseased";
+                    if (target->isEffected("petrification"))
+                        oStr << MSDP_VAL << "Petrified";
+                    if (target->isPoisoned())
+                        oStr << MSDP_VAL << "Poisoned";
+                    if (target->isEffected("silence"))
+                        oStr << MSDP_VAL << "Silenced";
+                    if (target->flagIsSet(P_SLEEPING))
+                        oStr << MSDP_VAL << "Sleeping";
+                    else if (target->flagIsSet(P_UNCONSCIOUS))
+                        oStr << MSDP_VAL << "Unconscious";
+                    if (target->isEffected("wounded"))
+                        oStr << MSDP_VAL << "Wounded";
+                }
+
+                oStr << (unsigned char) MSDP_ARRAY_CLOSE;
+
+            oStr  << (unsigned char) MSDP_VAR << "ROOM"
+                  << (unsigned char) MSDP_VAL << (showStats ? target->getRoomParent()->getMsdp(false) : "");
+
+            oStr << (unsigned char) MSDP_TABLE_CLOSE;  // Member
+        }
+
+        oStr << (unsigned char) MSDP_TABLE_CLOSE;  // Members
+
+    oStr << (unsigned char) MSDP_TABLE_CLOSE; // Group
+
+    return (oStr.str());
+
+}
 
 bstring MsdpVariable::getValue(MSDPVar var, Socket* sock, Player* player) {
     switch(var) {
@@ -773,6 +885,13 @@ bstring MsdpVariable::getValue(MSDPVar var, Socket* sock, Player* player) {
             if (player) {
                 BaseRoom* room = player->getRoomParent();
                 if (room) return (room->getMsdp());
+            }
+            break;
+
+        case MSDPVar::GROUP:
+            if (player) {
+                Group* group = player->getGroup();
+                if (group) return group->getMsdp(player);
             }
             break;
 
