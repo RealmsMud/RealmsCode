@@ -308,26 +308,26 @@ void Group::setDescription(bstring newDescription) {
 //********************************************************************************
 //* getGroupType
 //********************************************************************************
-GroupType Group::getGroupType() {
+GroupType Group::getGroupType() const {
     return(groupType);
 }
 
 //********************************************************************************
 //* getLeader
 //********************************************************************************
-Creature* Group::getLeader() {
+Creature* Group::getLeader() const {
     return(leader);
 }
 //********************************************************************************
 //* getName
 //********************************************************************************
-bstring& Group::getName() {
+const bstring& Group::getName() const {
     return(name);
 }
 //********************************************************************************
 //* getDescription
 //********************************************************************************
-bstring& Group::getDescription() {
+const bstring& Group::getDescription() const {
     return(description);
 }
 
@@ -399,7 +399,7 @@ void Group::clearFlag(int flag) {
     flags &= ~(1 << flag);
 }
 
-bool Group::flagIsSet(int flag) {
+bool Group::flagIsSet(int flag) const {
     return(flags & (1 << flag));
 }
 
@@ -428,7 +428,7 @@ bool Server::unRegisterGroup(Group* toUnRegister) {
 //* GetGroupTypeStr
 //********************************************************************************
 
-bstring Group::getGroupTypeStr() {
+bstring Group::getGroupTypeStr() const {
     switch(getGroupType()) {
         case GROUP_PUBLIC:
         default:
@@ -443,6 +443,7 @@ bstring Group::getGroupTypeStr() {
     }
     return("**Unknown**");
 }
+
 //********************************************************************************
 //* GetGroupTypeStr
 //********************************************************************************

@@ -342,7 +342,6 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
     } else if(!strcmp(cmnd->str[1], "quests") && load) {
         gConfig->loadQuestTable();
         gConfig->loadQuests();
-        gConfig->resetParentQuests();
         player->print("Quests reloaded.\n");
     }
     else if(!strcmp(cmnd->str[1], "clans") && load) {

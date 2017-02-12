@@ -16,6 +16,8 @@
  *
  */
 
+#include <ctime>
+
 #include "commands.h"
 #include "config.h"
 #include "creatures.h"

@@ -269,7 +269,6 @@ public:
 
 // New Quests
     bool loadQuests();
-    void resetParentQuests();
     void clearQuests();
 
 // Areas

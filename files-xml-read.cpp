@@ -458,7 +458,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             loadBits(curNode, spells);
         }
         else if(NODE_NAME(curNode, "Quests")) {
-            loadBits(curNode, quests);
+            loadBits(curNode, old_quests);
         }
         else if(NODE_NAME(curNode, "Languages")) {
             loadBits(curNode, languages);
@@ -665,6 +665,9 @@ void Monster::readXml(xmlNodePtr curNode, bool offline) {
             if(NODE_NAME(childNode, "TalkResponse")) {
                 if((newTalk = new TalkResponse(childNode)) != nullptr) {
                     responses.push_back(newTalk);
+                    if (newTalk->quest != nullptr) {
+                        quests.push_back(newTalk->quest);
+                    }
                 }
             }
             childNode = childNode->next;
@@ -831,14 +834,14 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
             while(childNode) {
                 if(NODE_NAME(childNode, "Quest")) {
                     int questNum = xml::toNum<int>(childNode);
-                    questsCompleted.insert(std::pair<int,int>(questNum,1));
+                    questsCompleted.insert(std::make_pair(questNum, new QuestCompleted(1)));
                 }
                 childNode = childNode->next;
             }
-        } else {
-            // New Format
+        } else if (getVersion() < "2.47i") {
+            // Old - New Format
             xmlNodePtr subNode;
-             while(childNode) {
+            while(childNode) {
                 if(NODE_NAME(childNode, "Quest")) {
                     int questNum = -1;
                     int numCompletions = 1;
@@ -850,10 +853,22 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
                             numCompletions = xml::toNum<int>(subNode);
                         }
                         if(questNum != -1) {
-                            questsCompleted.insert(std::make_pair(questNum,numCompletions));
+                            questsCompleted.insert(std::make_pair(questNum, new QuestCompleted(numCompletions)));
                         }
                         subNode = subNode->next;
                     }
+                }
+                childNode = childNode->next;
+            }
+        } else {
+            // New - New format!
+            int id;
+            while(childNode) {
+                if(NODE_NAME(childNode, "QuestCompleted")) {
+                    id = xml::getIntProp(childNode, "ID");
+
+                    questsCompleted.insert(std::make_pair(id, new QuestCompleted(childNode)));
+
                 }
                 childNode = childNode->next;
             }

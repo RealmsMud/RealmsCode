@@ -463,7 +463,7 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
 
         // Perhaps change this into saveInt/CharArray
         saveBits(rootNode, "Spells", MAXSPELL, spells);
-        saveBits(rootNode, "Quests", MAXSPELL, quests);
+        saveBits(rootNode, "Quests", MAXSPELL, old_quests);
         xml::saveNonZeroNum(rootNode, "CurrentLanguage", current_language);
         saveBits(rootNode, "Languages", LANGUAGE_COUNT, languages);
     }
@@ -680,10 +680,11 @@ void Player::saveQuests(xmlNodePtr rootNode) const {
     questNode = xml::newStringChild(rootNode, "QuestsCompleted");
     if(!questsCompleted.empty()) {
         xmlNodePtr completionNode;
-        for(std::pair<int,int> qp : questsCompleted) {
-            completionNode = xml::newStringChild(questNode, "Quest");
-            xml::newNumChild(completionNode, "Id", qp.first);
-            xml::newNumChild(completionNode, "Num", qp.second);
+        for(auto qp : questsCompleted) {
+            completionNode = qp.second->save(questNode, qp.first);
+//            xml::newStringChild(questNode, "Quest");
+//            xml::newNumChild(completionNode, "Id", qp.first);
+//            xml::newNumChild(completionNode, "Num", qp.second);
         }
     }
 //  for(it = questsCompleted.begin() ; it != questsCompleted.end() ; it++) {
@@ -826,7 +827,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
         if(saveId == true)
             xml::saveNonNullString(rootNode, "Id", getId());
         else
-            xml::newProp(rootNode, "ID", "-1");
+            xml::newProp(rootNode, "Id", "-1");
     }
 
     // These are saved for full and reference

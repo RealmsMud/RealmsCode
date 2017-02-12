@@ -563,7 +563,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
     const Player *pCreature=0;
     const Creature* creature=0;
     char    name[256];
-    int     n=0, m=0, flags = player->displayFlags(), staff=0;
+    int     n=0, m=0, flags = (player->displayFlags() | QUEST), staff=0;
     std::ostringstream oStr;
     bstring str = "";
     bool    wallOfFire=false, wallOfThorns=false, canSee=false;

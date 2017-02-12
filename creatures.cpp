@@ -33,6 +33,7 @@
 #include "raceData.h"
 #include "rooms.h"
 #include "version.h"
+#include "quests.h"
 
 
 //********************************************************************
@@ -1097,6 +1098,7 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
     if(isMonster() && isInvisible() && !(flags & INV) && !(flags & ISDM) && !(flags & ISCT) && !(flags & ISBD)) {
         crtStr << "Something";
     } else {
+        const Monster* mThis = getAsConstMonster();
         if(num == 0) {
             if(!flagIsSet(M_NO_PREFIX)) {
                 crtStr << "the ";
@@ -1143,9 +1145,22 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
             crtStr << tempStr;
         }
 
+        if((flags & QUEST) && mThis->hasQuests()) {
+            QuestEligibility questType = mThis->getEligibleQuestDisplay(viewer);
+            if (questType == QuestEligibility::ELIGIBLE) {
+                crtStr << " ^Y(!)^m";
+            } else if (questType == QuestEligibility::ELIGIBLE_DAILY || questType == QuestEligibility::ELIGIBLE_WEEKLY) {
+                crtStr << " ^G(!)^m";
+            } else if (questType == QuestEligibility::INELIGIBLE_LEVEL || questType == QuestEligibility::INELIGIBLE_DAILY_NOT_EXPIRED) {
+                crtStr << " ^D(!)^m";
+            }
+        }
+
         // Target is magic, and viewer has detect magic on
         if((flags & MAG) && mFlagIsSet(M_CAN_CAST))
             crtStr << " (M)";
+
+
     }
     toReturn = crtStr.str();
 
