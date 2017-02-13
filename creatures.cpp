@@ -1145,14 +1145,26 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
             crtStr << tempStr;
         }
 
-        if((flags & QUEST) && mThis->hasQuests()) {
-            QuestEligibility questType = mThis->getEligibleQuestDisplay(viewer);
-            if (questType == QuestEligibility::ELIGIBLE) {
-                crtStr << " ^Y(!)^m";
-            } else if (questType == QuestEligibility::ELIGIBLE_DAILY || questType == QuestEligibility::ELIGIBLE_WEEKLY) {
-                crtStr << " ^G(!)^m";
-            } else if (questType == QuestEligibility::INELIGIBLE_LEVEL || questType == QuestEligibility::INELIGIBLE_DAILY_NOT_EXPIRED) {
-                crtStr << " ^D(!)^m";
+        if((flags & QUEST)) {
+            if(mThis->hasQuests()) {
+                QuestEligibility questType = mThis->getEligibleQuestDisplay(viewer);
+                if (questType == QuestEligibility::ELIGIBLE) {
+                    crtStr << " ^Y(!)^m";
+                } else if (questType == QuestEligibility::ELIGIBLE_DAILY ||
+                           questType == QuestEligibility::ELIGIBLE_WEEKLY) {
+                    crtStr << " ^G(!)^m";
+                } else if (questType == QuestEligibility::INELIGIBLE_LEVEL ||
+                           questType == QuestEligibility::INELIGIBLE_DAILY_NOT_EXPIRED) {
+                    crtStr << " ^D(!)^m";
+                }
+            }
+            QuestTurninStatus turninStatus = mThis->checkQuestTurninStatus(viewer);
+            if (turninStatus == QuestTurninStatus::UNCOMPLETED_TURNINS) {
+                crtStr << " ^D(?)^m";
+            } else if (turninStatus == QuestTurninStatus::COMPLETED_TURNINS) {
+                crtStr << " ^Y(?)^m";
+            } else if (turninStatus == QuestTurninStatus::COMPLETED_DAILY_TURNINS) {
+                crtStr << " ^G(?)^m";
             }
         }
 

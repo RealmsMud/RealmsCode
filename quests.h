@@ -62,6 +62,13 @@ enum class QuestEligibility {
     ELIGIBLE_WEEKLY = 10,
 };
 
+enum class QuestTurninStatus {
+    NO_TURNINS = 0,
+    UNCOMPLETED_TURNINS = 1,
+    COMPLETED_TURNINS = 2,
+    COMPLETED_DAILY_TURNINS = 3,
+};
+
 // Descriptive information about a quest
 class QuestInfo {
 public:
