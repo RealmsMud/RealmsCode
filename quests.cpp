@@ -75,7 +75,7 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
         else if(NODE_NAME(curNode, "ReceiveString")) xml::copyToBString(receiveString, curNode);
         else if(NODE_NAME(curNode, "CompletionString")) xml::copyToBString(completionString, curNode);
-        else if(NODE_NAME(curNode, "TimesRepetable")) xml::copyToNum(timesRepetable, curNode);
+        else if(NODE_NAME(curNode, "TimesRepeatable")) xml::copyToNum(timesRepeatable, curNode);
         else if(NODE_NAME(curNode, "RepeatFrequency")) xml::copyToNum<QuestRepeatFrequency>(repeatFrequency, curNode);
         else if(NODE_NAME(curNode, "Sharable")) xml::copyToBool(sharable, curNode);
         else if(NODE_NAME(curNode, "TurnIn")) turnInMob = QuestCatRef(curNode);
@@ -321,8 +321,8 @@ void TalkResponse::parseQuest() {
 bool QuestInfo::isRepeatable() const {
     return(repeatable);
 }
-int QuestInfo::getTimesRepetable() const {
-    return(timesRepetable);
+int QuestInfo::getTimesRepeatable() const {
+    return(timesRepeatable);
 }
 
 const QuestCatRef& QuestInfo::getTurnInMob() const {
@@ -1452,6 +1452,10 @@ QuestEligibility QuestInfo::getEligibility(const Player *player, const Monster *
             return QuestEligibility::INELIGIBLE_NOT_REPETABLE;
         }
         else {
+            if (completed->getTimesCompleted() >= getTimesRepeatable()) {
+                return QuestEligibility::INELIGIBLE_NOT_REPETABLE;
+            }
+
             time_t lastCompletion = completed->getLastCompleted();
             if (repeatFrequency == QuestRepeatFrequency::REPEAT_DAILY) {
 
