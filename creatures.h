@@ -947,6 +947,7 @@ public:
 
     bool hasQuests() const;
     QuestEligibility getEligibleQuestDisplay(const Creature* viewer) const;
+    QuestTurninStatus checkQuestTurninStatus(const Creature* viewer) const;
 };
 
 //--------------------------------------------------------------------------------

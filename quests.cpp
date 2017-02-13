@@ -608,6 +608,46 @@ QuestEligibility Monster::getEligibleQuestDisplay(const Creature* viewer) const 
     return QuestEligibility::INELIGIBLE;
 }
 
+QuestTurninStatus Monster::checkQuestTurninStatus(const Creature* viewer) const {
+    if (!viewer)
+        return QuestTurninStatus::NO_TURNINS;
+
+    const Player *pViewer = viewer->getAsConstPlayer();
+    bool hasUncompletedTurnin = false;
+    bool hasRepeatableTurnin = false;
+
+    QuestCompletion* quest;
+    for(auto p : pViewer->questsInProgress) {
+        quest = p.second;
+        if (info == quest->getParentQuest()->getTurnInMob()) {
+            // We're the turnin for this quest
+            hasUncompletedTurnin = true;
+            if(quest->checkQuestCompletion(false)) {
+
+                QuestInfo* parentQuest = quest->getParentQuest();
+                if(parentQuest->isRepeatable()) {
+                    QuestCompleted* completed = pViewer->getQuestCompleted(parentQuest->getId());
+                    if(completed) {
+                        // We've aready done this at least once
+                        hasRepeatableTurnin = true;
+                        continue;
+                    }
+                }
+                // If Daily && !first
+                // hasRpeatableTurnin = true
+                return QuestTurninStatus::COMPLETED_TURNINS;
+            }
+        }
+    }
+    if (hasRepeatableTurnin)
+        return QuestTurninStatus::COMPLETED_DAILY_TURNINS;
+
+    if (hasUncompletedTurnin)
+        return QuestTurninStatus::UNCOMPLETED_TURNINS;
+
+    return QuestTurninStatus::NO_TURNINS;
+}
+
 QuestCompleted* Player::getQuestCompleted(const int questId) const {
     auto completion = questsCompleted.find(questId);
     if (completion != questsCompleted.end()) {
