@@ -79,7 +79,7 @@ public:
     bstring getDisplayName() const;
     bstring getDisplayString() const;
     bool isRepeatable() const;
-    int getTimesRepetable() const;
+    int getTimesRepeatable() const;
     QuestEligibility getEligibility(const Player *player, const Monster *giver) const;
     bool canGetQuest(const Player* player, const Monster* giver) const;
     void printReceiveString(const Player* player, const Monster* giver) const;
@@ -99,7 +99,7 @@ private:
 
     bool repeatable;    // Can this quest be repeated multiple times?
     QuestRepeatFrequency repeatFrequency;  // How often can this quest be repeated
-    int timesRepetable;     // Number of times the quest can be repeated.  0 for infinite
+    int timesRepeatable;     // Number of times the quest can be repeated.  0 for infinite
     bool sharable;      // Can this quest be shared with other players?
     int minLevel;       // Minimum required level to get this quest
     int minFaction;     // Minimum requried faction to get this quest (Based on mob's primeFaction)
