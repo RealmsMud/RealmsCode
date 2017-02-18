@@ -27,7 +27,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
     libaspell-dev \
     libpspell-dev \
-    zlib1g-dev && \
+    zlib1g-dev \
+    aspell && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Set correct environment variables.
