@@ -35,4 +35,7 @@ COPY conf/server.key /etc/ssl/private/
 RUN ln -s /etc/apache2/sites-available/realms.conf /etc/apache2/sites-enabled/realms.conf && \
     ln -s /etc/apache2/sites-available/realms-ssl.conf /etc/apache2/sites-enabled/realms-ssl.conf
 
+ADD apache.service /etc/service/apache/run
+RUN chmod +x /etc/service/apache/run
+
 EXPOSE 47 48
