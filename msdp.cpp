@@ -78,15 +78,15 @@ bool Config::initMsdp() {
     NEW_MSDP_VARIABLE(ROOM,                   true,  true, false, false, 5,  true,  true,  false);
 
     // Configurable Variables
-    NEW_MSDP_VARIABLE(CLIENT_ID,             false, false,  true,  true, 1, false, false,  false);
-    NEW_MSDP_VARIABLE(CLIENT_VERSION,        false, false,  true,  true, 1, false, false,  false);
-    NEW_MSDP_VARIABLE(PLUGIN_ID,             false, false,  true, false, 1, false, false,  false);
-    NEW_MSDP_VARIABLE(ANSI_COLORS,           false, false,  true, false, 1, false, false,  false);
-    NEW_MSDP_VARIABLE(XTERM_256_COLORS,      false, false,  true, false, 1, false, false,  false);
-    NEW_MSDP_VARIABLE(UTF_8,                 false, false,  true, false, 1, false, false,  false);
-    NEW_MSDP_VARIABLE(SOUND,                 false, false,  true, false, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(CLIENT_ID,             true,  false,  true,  true, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(CLIENT_VERSION,        true,  false,  true,  true, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(PLUGIN_ID,             true,  false,  true, false, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(ANSI_COLORS,           true,  false,  true, false, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(XTERM_256_COLORS,      true,  false,  true, false, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(UTF_8,                 true,  false,  true, false, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(SOUND,                 true,  false,  true, false, 1, false, false,  false);
 
-    NEW_MSDP_VARIABLE(MXP,                   false, false,  true, false, 1, false, false,  false);
+    NEW_MSDP_VARIABLE(MXP,                   true,  false,  true, false, 1, false, false,  false);
 
     return true;
 }
@@ -542,7 +542,9 @@ bool MsdpVariable::send(Socket *sock) const {
         if(!isConfigurable()) return false;
 
         ReportedMsdpVariable* reported = sock->getReportedMsdpVariable(name);
-        value = reported->getValue();
+        if (reported != nullptr) {
+            value = reported->getValue();
+        }
 
     } else {
         Player* player = sock->getPlayer();

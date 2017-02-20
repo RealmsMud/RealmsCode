@@ -564,7 +564,7 @@ void Socket::continueTelnetNeg(bool queryTType) {
     write(telnet::do_naws, false);
 //  write(telnet::will_gmcp, false);
     write(telnet::will_msdp, false);
-    write(telnet::do_atcp, false);
+//    write(telnet::do_atcp, false);
     write(telnet::will_mssp, false);
     write(telnet::will_msp, false);
 //  write(telnet::do_charset, false);  // Not implemented yet
