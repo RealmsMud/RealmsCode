@@ -324,7 +324,7 @@ void addGuildCreation( GuildCreation* toAdd);
 //int findGuild(int num);
 //GuildCreation* findGuildCreation(char *creationName);
 //int avgGuildLevel(int guildId);
-const char *getGuildName( int guildNum );
+const bstring getGuildName( int guildNum );
 void updateGuild(Player* player, int what);
 
 //void initGuildArray(void);

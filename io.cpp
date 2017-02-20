@@ -462,7 +462,8 @@ void broadcastGuild(int guildNum, int showName, const char *fmt,...) {
     va_start(ap, fmt);
     if(showName) {
         strcpy(fmt2, "*CC:GUILD*[");
-        strcat(fmt2, getGuildName(guildNum));
+        bstring guild = getGuildName(guildNum);
+        strcat(fmt2, guild.c_str());
         strcat(fmt2, "] ");
     } else
         strcpy(fmt2, "");

@@ -643,26 +643,27 @@ void Guild::invite(Player* player, cmd* cmnd) {
     // Set this initially, change it if needed
     target->setGuildRank(GUILD_INVITED);
     target->setGuild(player->getGuild());
+    bstring joinType;
 
     if(player->getGuildRank() == GUILD_MASTER) {
         if(!strncmp(cmnd->str[3], "officer", strlen(cmnd->str[3])) && cmnd->num == 4) {
-            player->print("You invite %s to join your guild as an officer.\n", target->getCName());
-            target->print("You have been invited to join '%s' as an officer by %s.\n", getGuildName(player->getGuild()), player->getCName());
+            joinType = "an officer";
             target->setGuildRank(GUILD_INVITED_OFFICER);
         } else if(!strncmp(cmnd->str[3], "banker", strlen(cmnd->str[3])) && cmnd->num == 4) {
-            player->print("You invite %s to join your guild as a banker.\n", target->getCName());
-            target->print("You have been invited to join '%s' as a banker by %s.\n", getGuildName(player->getGuild()), player->getCName());
+            joinType = "a banker";
             target->setGuildRank(GUILD_INVITED_BANKER);
         } else {
-            player->print("You invite %s to join your guild as a normal member.\n", target->getCName());
-            target->print("You have been invited to join '%s' by %s.\n", getGuildName(player->getGuild()), player->getCName());
+            joinType = "a normal member";
             target->setGuildRank(GUILD_INVITED);
         }
+
     } else {
-        player->print("You invite %s to join your guild as a normal member.\n", target->getCName());
-        target->print("You have been invited to join '%s' by %s.\n", getGuildName(player->getGuild()), player->getCName());
+        joinType = "a normal member";
         target->setGuildRank(GUILD_INVITED);
     }
+
+    *player << "You invite " << target->getName() << " to join your guild as " << joinType << ".\n";
+    *target << "You have been invited to join '" << getGuildName(player->getGuild()) << "' as " << joinType << " by " << player->getName() << ".\n";
 
     target->printColor("To join type ^yguild accept^x.\n");
 }
@@ -703,7 +704,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
                 return;
             }
             updateGuild(player, GUILD_REMOVE);
-            player->print("You remove yourself from your guild (%s).\n", getGuildName(player->getGuild()));
+            *player << "You remove yourself from your guild (" <<  getGuildName(player->getGuild()) << ").\n";
             
             player->setGuild(0);
             broadcastGuild(guildId, 1, "%s has removed %sself from your guild.", player->getCName(), player->himHer());
@@ -1046,7 +1047,7 @@ void Guild::reject(Player* player, cmd* cmnd) {
         return;
     }
 
-    player->print("You reject the offer to join %s.\n", getGuildName(player->getGuild()));
+    *player << "You reject the offer to join " << getGuildName(player->getGuild()) << "\n";
     player->setGuild(0);
     player->setGuildRank(0);
 }
@@ -1638,10 +1639,10 @@ bool Config::guildExists(bstring guildName) {
 //                      getGuildName
 //*********************************************************************
 
-const char *getGuildName(int guildNum) {
+const bstring getGuildName(int guildNum) {
     Guild* guild = gConfig->getGuild(guildNum);
     if(guild)
-        return(guild->getName().c_str());
+        return(guild->getName());
     else
         return("Unknown Guild");
 }
