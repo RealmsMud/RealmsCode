@@ -483,7 +483,7 @@
 #define M_POLICE                    129      // Monster will beat the person up and then throw em in jail
 #define M_LEVEL_RESTRICTED          130      // Monster can only be killed/attacked by someone less than maxLevel
 #define M_NO_BACKSTAB               131      // Monster cannot be backstabbed - for really small creatures and stuff like slimes
-// free                             132
+#define M_IGNORE_ROOM_DESTROY       132      // Monster drops ignore room destroy flag
 // free                             133
 // free                             134
 // free                             135

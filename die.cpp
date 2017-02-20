@@ -136,7 +136,7 @@ void Monster::dropCorpse(Creature *killer) {
     Object      *object=0;
     Player*     player=0;
     Player*     pMaster = isPet() ? getPlayerMaster() : 0;
-    bool        destroy = room->isDropDestroy();
+    bool        destroy = (room->isDropDestroy() && !flagIsSet(M_IGNORE_ROOM_DESTROY));
 
     if(killer)
         player = killer->getPlayerMaster();
