@@ -188,37 +188,45 @@ bool Config::loadFlags() {
 
     clearFlags();
     while(curNode != nullptr) {
-        childNode = curNode->children;
-        while(childNode) {
-            if(NODE_NAME(childNode, "Flag")) {
-                MudFlag f;
-                f.id = xml::getIntProp(childNode, "id");
-                xml::copyPropToBString(f.name, childNode, "Name");
-                xml::copyToBString(f.desc, childNode);
+        MudFlagMap* flagmap;
+        if(NODE_NAME(curNode, "Rooms")) {
+            flagmap = &rflags;
+        } else if(NODE_NAME(curNode, "Exits")) {
+            flagmap = &xflags;
+        } else if(NODE_NAME(curNode, "Players")) {
+            flagmap = &pflags;
+        } else if(NODE_NAME(curNode, "Monsters")) {
+            flagmap = &mflags;
+        } else if(NODE_NAME(curNode, "Objects")) {
+            flagmap = &oflags;
+        } else if(NODE_NAME(curNode, "SpecialAttacks")) {
+            flagmap = &specialFlags;
+        } else if(NODE_NAME(curNode, "PropStorage")) {
+            flagmap = &propStorFlags;
+        } else if(NODE_NAME(curNode, "PropShop")) {
+            flagmap = &propShopFlags;
+        } else if(NODE_NAME(curNode, "PropHouse")) {
+            flagmap = &propHouseFlags;
+        } else if(NODE_NAME(curNode, "PropGuild")) {
+            flagmap = &propGuildFlags;
+        } else {
+            flagmap = nullptr;
+        }
 
-                if(NODE_NAME(curNode, "Rooms")) {
-                    rflags[f.id] = f;
-                } else if(NODE_NAME(curNode, "Exits")) {
-                    xflags[f.id] = f;
-                } else if(NODE_NAME(curNode, "Players")) {
-                    pflags[f.id] = f;
-                } else if(NODE_NAME(curNode, "Monsters")) {
-                    mflags[f.id] = f;
-                } else if(NODE_NAME(curNode, "Objects")) {
-                    oflags[f.id] = f;
-                } else if(NODE_NAME(curNode, "SpecialAttacks")) {
-                    specialFlags[f.id] = f;
-                } else if(NODE_NAME(curNode, "PropStorage")) {
-                    propStorFlags[f.id] = f;
-                } else if(NODE_NAME(curNode, "PropShop")) {
-                    propShopFlags[f.id] = f;
-                } else if(NODE_NAME(curNode, "PropHouse")) {
-                    propHouseFlags[f.id] = f;
-                } else if(NODE_NAME(curNode, "PropGuild")) {
-                    propGuildFlags[f.id] = f;
+        if(flagmap != nullptr) {
+            childNode = curNode->children;
+            while(childNode) {
+                if(NODE_NAME(childNode, "Flag")) {
+                    MudFlag f;
+                    f.id = xml::getIntProp(childNode, "id");
+                    xml::copyPropToBString(f.name, childNode, "Name");
+                    xml::copyToBString(f.desc, childNode);
+
+                    (*flagmap)[f.id] = f;
+
                 }
+                childNode = childNode->next;
             }
-            childNode = childNode->next;
         }
         curNode = curNode->next;
     }
