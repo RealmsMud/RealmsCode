@@ -1077,7 +1077,7 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
             return(false);
         }
 
-        \\ blah blah re-submit
+        // blah blah re-submit
         if( (cClass == CreatureClass::BERSERKER || cClass == CreatureClass::CLERIC) &&
             isEffected("berserk") )
         {
