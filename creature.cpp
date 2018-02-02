@@ -1077,9 +1077,9 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
             return(false);
         }
 
-
+        // blah blah re-submit
         if( (cClass == CreatureClass::BERSERKER || cClass == CreatureClass::CLERIC) &&
-            isEffected("berserK") )
+            isEffected("berserk") )
         {
             if(displayFail)
                 printColor("^rYour lust for battle prevents you from fleeing!\n");
