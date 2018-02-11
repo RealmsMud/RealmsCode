@@ -55,6 +55,8 @@ enum TargetType {
     TARGET_MUDOBJECT
 };
 
+bstring getSkillLevelStr(int gained);
+
 //**********************************************************************
 // SkillInfo - Class to store base information about skills
 //**********************************************************************

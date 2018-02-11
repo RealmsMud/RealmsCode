@@ -25,6 +25,7 @@
 #include "craft.h"
 #include "mud.h"
 #include "rooms.h"
+#include "skills.h"
 #include "unique.h"
 #include "xml.h"
 
@@ -360,6 +361,7 @@ int displayObject(Player* player, Object* target) {
     char str[2048];
     char filename[256];
     bstring inv = "";
+    bstring requiredSkillString = "";
 
     int flags = player->displayFlags();
 
@@ -412,14 +414,21 @@ int displayObject(Player* player, Object* target) {
             oStr << "It contains: " << inv << ".\n";
     }
 
-    if(target->getType() == ObjectType::ARMOR)
+    if(target->getType() == ObjectType::ARMOR) {
+    	requiredSkillString = target->getArmorType();
         oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is considered ^W" << target->getArmorType() << "^x armor.\n";
+    }
 
     if(target->getType() == ObjectType::WEAPON) {
+    	requiredSkillString = target->getWeaponType();
         oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is a " << obj_type(target->getType()) << "(" <<  target->getWeaponType() <<").\n";
 
         if(target->flagIsSet(O_SILVER_OBJECT))
             oStr << "It is alloyed with pure silver.\n";
+    }
+
+    if(target->getRequiredSkill() && !requiredSkillString.empty()) {
+    	oStr << "It requires minimum proficiency of '" << getSkillLevelStr(target->getRequiredSkill()) << "' with " << requiredSkillString << ".\n";
     }
 
     if(target->flagIsSet(O_NO_DROP))

@@ -44,47 +44,6 @@
 
 // Mud Includes
 #include "os.h"
-//
-//#include "alphanum.hpp"
-//#include "catRef.h"
-//#include "swap.h"
-//#include "structs.h"
-//#include "range.h"
-//#include "carry.h"
-//#include "container.h"
-//#include "xml.h"
-//
-//#include "size.h"
-//#include "socket.h"
-//#include "stats.h"
-//#include "rooms.h"
-//#include "objects.h"
-//
-//#include "timer.h"
-//#include "skills.h"
-//#include "magic.h"
-//#include "fighters.h"
-//#include "creatures.h"
-//
-////#include "bans.h"
-////#include "guilds.h"
-////#include "factions.h"
-//
-//#include "catRefInfo.h"
-//#include "startlocs.h"
-//#include "raceData.h"
-//#include "deityData.h"
-//
-//#include "playerTitle.h"
-//#include "skillGain.h"
-//#include "levelGain.h"
-//#include "playerClass.h"
-//#include "fishing.h"
-//
-//#include "server.h"
-//#include "proxy.h"
-//#include "config.h"
-
 
 #ifndef READCFG
 #define READCFG

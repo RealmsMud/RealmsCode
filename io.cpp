@@ -64,7 +64,7 @@ extern unsigned short Port;
 bool hearBroadcast(Creature* target, Socket* ignore1, Socket* ignore2, bool showTo(Socket*)) {
     if(!target)
         return(false);
-    if(target < 0)
+    if(target == NULL)
         return(false);
     if(target->getSock() == ignore1 || target->getSock() == ignore2)
         return(false);

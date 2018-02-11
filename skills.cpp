@@ -25,6 +25,7 @@
 #include "mud.h"
 #include "playerClass.h"
 #include "server.h"
+#include "utils.h"
 #include "xml.h"
 
 #define NOT_A_SKILL -10
@@ -397,7 +398,7 @@ void Creature::remSkill(const bstring& skillName) {
 }
 
 #define SKILL_CHART_SIZE        21
-char skillLevelStr[][SKILL_CHART_SIZE] = { "^rHorrible^x",          // 0-24
+const char skillLevelStr[][SKILL_CHART_SIZE] = { "^rHorrible^x",          // 0-24
         "^rPoor^x",             // 25-49
         "^rFair^x",             // 50-74
         "^mMediocre^x",         // 75-99
@@ -420,7 +421,13 @@ char skillLevelStr[][SKILL_CHART_SIZE] = { "^rHorrible^x",          // 0-24
         "^yGodlike^x"           // 500
         };
 
-char craftSkillLevelStr[][25] = { "Novice", "Apprentice", "Journeyman", "Expert", "Artisian",
+bstring getSkillLevelStr(int gained) {
+	int displayNum = (int)(tMIN<int>(gained, MAXALVL*10.0) / 25);
+	return skillLevelStr[tMAX<int>(0, tMIN<int>(SKILL_CHART_SIZE-1, displayNum))];
+}
+
+
+const char craftSkillLevelStr[][25] = { "Novice", "Apprentice", "Journeyman", "Expert", "Artisian",
         "Master", "Grand Master" };
 
 //********************************************************************
@@ -473,29 +480,16 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
         for (sIt = player->skills.begin(); sIt != player->skills.end(); sIt++) {
             crtSkill = (*sIt).second;
             if (crtSkill->getGroup() == (*sgIt).first) {
-                //1+player->saves[st].chance)/10
                 known++;
-
-                //bool isCraft = crtSkill->getGroup() == "craft";
 
                 int curSkill = 0;
                 float maxSkill = 0;
-                //if(isCraft) {
-                //  maxSkill = MIN(player->getLevel()*10, 100);
-                //  curSkill = MIN(crtSkill->getGained(), (int)maxSkill);
-                //} else {
-                maxSkill = MIN(player->getLevel()*10.0, MAXALVL*10.0);
-                curSkill = MIN(crtSkill->getGained(), maxSkill);
-                //}
+                maxSkill = tMIN<int>(player->getLevel()*10.0, MAXALVL*10.0);
+                curSkill = tMIN<int>(crtSkill->getGained(), maxSkill);
 
                 skill = curSkill;
                 if (clan)
                     skill += clan->getSkillBonus(crtSkill->getName());
-                skill /= 25;
-
-                int displayNum = (int) skill;
-
-                displayNum = MAX(0, MIN(SKILL_CHART_SIZE-1, displayNum));
 
                 //bstring progressBar(int barLength, float percentFull, bstring text, char progressChar, bool enclosed)
                 oStr << " ";
@@ -506,9 +500,7 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
                     if (gConfig->isKnownOnly(crtSkill->getName()))
                         oStr << progressBar(barLength, 1);
                     else
-                        oStr
-                                << progressBar(barLength, (1.0 * curSkill) / maxSkill,
-                                        progress.c_str());
+                        oStr << progressBar(barLength, (1.0 * curSkill) / maxSkill, progress.c_str());
                 }
 
                 oStr << " " << crtSkill->getDisplayName() << " - ";
@@ -516,14 +508,8 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
                     oStr << "^WKnown^x\n";
                     continue;
                 }
-                //if(!isCraft) {
-                //  // Not a crafting skill
-                oStr << skillLevelStr[displayNum];
-                //} else {
-                //  // Crafting Skill
-                //  int disp = (curSkill/maxSkill)*6;
-                //  oStr << craftSkillLevelStr[disp];
-                //}
+                oStr << getSkillLevelStr(skill);
+
                 if (showDigits)
                     oStr << " (" << curSkill << ")";
 
@@ -535,8 +521,7 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
                 if ((*sIt).first == "defense" && player->isEffected("protection"))
                     oStr << " (Protection: 10)";
 
-                if (toShow->isCt()) {  // && !isCraft)
-//                  oStr << " (" << crtSkill->getGained() << ")";
+                if (toShow->isCt()) {
                     oStr << " [" << player->getSkillLevel(crtSkill->getName()) << "]";
                 }
                 oStr << "\n";
