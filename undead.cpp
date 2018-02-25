@@ -526,11 +526,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    /*if(player->inCombat()) {
-        player->print("Not while you're already in combat.\n");
-        return(0);
-    }
-    */
+    
 
 
     if(!(target = player->findVictim(cmnd, 1, true, false, "Drain whom?\n", "You don't see that here.\n")))
