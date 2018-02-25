@@ -395,11 +395,10 @@ int cmdMaul(Player* player, cmd* cmnd) {
     if(!player->canAttack(creature))
         return(0);
 
+    
     if(!player->isCt()) {
-        if(!pCreature && creature->getAsMonster()->isEnemy(player)) {
-            player->print("Not while you're already fighting %s.\n", creature->himHer());
-            return(0);
-        }
+       
+
 
         i = LT(player, LT_MAUL);
         t = time(0);
