@@ -829,7 +829,7 @@ void Player::checkEffectsWearingOff() {
     }
 
 
-    if( t > LT(this, LT_JAILED) &&
+    if( t > LT(this, LT_MOB_JAILED) &&
         inUniqueRoom() && getUniqueRoomParent()->flagIsSet(R_MOB_JAIL) &&
         !staff
     ) {
