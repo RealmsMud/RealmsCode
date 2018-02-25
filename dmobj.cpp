@@ -669,8 +669,34 @@ int dmSetObj(Player* player, cmd* cmnd) {
             } else {
                 return(setWhich(player, "coin cost, compass"));
             }
-        } else {
-            return(setWhich(player, "coin cost, compass"));
+        } else if(flags[1] == 'h') {
+            // Charges
+            if(num > 100000 || num < 0) {
+                player->print("How about a realistic number of charges.\n");
+                return(PROMPT);
+            }
+
+            if(flags[2] == 'm') {
+                // Max
+                object->setChargesMax(num);
+                if(object->getChargesCur() > num) {
+                    object->setChargesCur(num);
+                }
+                setType = "Charges (Max)";
+            } else if(flags[2] == 'a'){
+                object->setChargesMax(num);
+                object->setChargesCur(num);
+                setType = "Charges (All)";
+            } else {
+                // Cur
+                num = tMIN<int>(num, object->getChargesMax());
+                object->setChargesCur(num);
+                setType = "Charges (Cur)";
+            }
+            result = num;
+        }
+        else {
+            return(setWhich(player, "coin cost, compass, ch(arges), ch(arges)m(ax), ch(arges)a(ll)"));
         }
         break;
 
