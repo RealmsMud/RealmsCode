@@ -558,7 +558,22 @@ int dmAward(Player* player, cmd* cmnd) {
     target->lasttime[LT_RP_AWARDED].ltime = t;
     target->lasttime[LT_RP_AWARDED].interval = 500L; // 45 minutes.
 
+    
+
     if(!strcmp(cmnd->str[2], "-g")) {
+
+        if (player->isDm()) {   
+            if (cmnd->val[2] < 0) {
+                player->print("*award (player) -g (gold coins)\n");
+                return(0);
+            }
+
+            if (cmnd->val[2] > 0)
+                gp = MAX(500, MIN(cmnd->val[2],300000));
+            
+        }
+
+
         player->print("%ld gold awarded to %s for roleplaying.\n", gp, target->getCName());
         target->printColor("^yYou have been awarded %ld gold as well!\nIt was put in your bank account!\n", gp);
         target->bank.add(gp, GOLD);
