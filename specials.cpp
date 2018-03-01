@@ -322,7 +322,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
         }
     }
     else if(attack->type == SPECIAL_CONFUSE) {
-        if(pVictim->isEffected("resist-magic") && mrand(1,100) <= 75)
+        if(pVictim && pVictim->isEffected("resist-magic") && mrand(1,100) <= 75)
             return(false);
 
 
