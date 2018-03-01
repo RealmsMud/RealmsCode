@@ -492,7 +492,7 @@ int dmFlash(Player* player, cmd* cmnd) {
 
 int dmAward(Player* player, cmd* cmnd) {
     Player  *target;
-    long    i=0, t=0, amount=0, gp=0;
+    long    i=0, t=0, amount=0, gp=0, gp_award=0;
     char    temp[80];
 
     if(!player->flagIsSet(P_CAN_AWARD) && !player->isDm())
@@ -531,7 +531,7 @@ int dmAward(Player* player, cmd* cmnd) {
         amount = MAX(amount, 500);
     }
 
-    gp = MAX(500, MIN(1000000, amount));
+    gp = MAX(500, MIN(300000, amount));
 
 
 
@@ -558,9 +558,22 @@ int dmAward(Player* player, cmd* cmnd) {
     target->lasttime[LT_RP_AWARDED].ltime = t;
     target->lasttime[LT_RP_AWARDED].interval = 500L; // 45 minutes.
 
+    
     if(!strcmp(cmnd->str[2], "-g")) {
+        // DMs can award a set gold amount - TC
+        if (player->isDm()) {   
+            if (cmnd->val[2] < 0) {
+                player->print("*award (player) -g (gold coins)\n");
+                return(0);
+            }
+            if (cmnd->val[2] > 0) {
+                gp_award = MAX(500, MIN(cmnd->val[2],300000));
+                gp = gp_award;
+            }
+        }
+
         player->print("%ld gold awarded to %s for roleplaying.\n", gp, target->getCName());
-        target->printColor("^yYou have been awarded %ld gold as well!\nIt was put in your bank account!\n", gp);
+        target->printColor("You have been awarded ^Y%ld gold^x as well!\nIt was put in your bank account!\n", gp);
         target->bank.add(gp, GOLD);
         logn("log.bank", "%s was awarded %ld gold for roleplaying. (Balance=%s)\n",target->getCName(), gp, target->bank.str().c_str());
         Bank::log(target->getCName(), "ROLEPLAY AWARD: %ld [Balance: %s]\n", gp, target->bank.str().c_str());
