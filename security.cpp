@@ -56,6 +56,12 @@ bool isValidPassword(Socket* sock, bstring pass) {
 
     len = pass.length();
 
+    if(len < PASSWORD_MIN_LENGTH) {
+        sock->print("Too short.\n\n");
+        sock->print(passCriteria, PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH);
+        return(false);
+    }
+
     if(pass[0] == ' ') {
         sock->print("No leading spaces allowed.\n\n");
         sock->print(passCriteria, PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH);
@@ -64,12 +70,6 @@ bool isValidPassword(Socket* sock, bstring pass) {
 
     if(pass[len-1] == ' ') {
         sock->print("No trailing spaces allowed.\n\n");
-        sock->print(passCriteria, PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH);
-        return(false);
-    }
-
-    if(len < PASSWORD_MIN_LENGTH) {
-        sock->print("Too short.\n\n");
         sock->print(passCriteria, PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH);
         return(false);
     }
