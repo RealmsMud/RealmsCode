@@ -29,6 +29,7 @@ Makefile
 # Project files
 /nbproject/
 .idea/*
+*.cbp
 
 # Compiled Object files
 *.slo
@@ -58,6 +59,9 @@ Makefile
 *.exe
 *.out
 *.app
+
+List
+RealmsCode
 
 # Config files
 docker/web/conf/*
