@@ -230,7 +230,7 @@ Object* Container::findObject(const Creature* searcher, const bstring& name, con
 Object* Container::findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const {
     Object *target = 0;
     for(Object* obj : objects) {
-        if(isMatch(searcher, obj, name, exactMatch)) {
+        if(isMatch(searcher, obj, name, exactMatch, true)) {
             match++;
             if(match == num) {
                 if(exactMatch)
@@ -337,7 +337,7 @@ Monster* Container::findMonster(const Creature* searcher, const bstring& name, c
 Monster* Container::findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) const {
     Monster* target = 0;
     for(Monster* mons : searcher->getParent()->monsters) {
-        if(isMatch(searcher, mons, name, exactMatch)) {
+        if(isMatch(searcher, mons, name, exactMatch, true)) {
             match++;
             if(match == num) {
                 if(exactMatch)
@@ -368,7 +368,7 @@ Player* Container::findPlayer(const Creature* searcher, const bstring& name, con
 }
 Player* Container::findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const {
     for(Player* ply : searcher->getParent()->players) {
-        if(isMatch(searcher, ply, name, exactMatch)) {
+        if(isMatch(searcher, ply, name, exactMatch, true)) {
             match++;
             if(match == num) {
                 return(ply);
