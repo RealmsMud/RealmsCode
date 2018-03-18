@@ -361,6 +361,7 @@ void Config::loadGeneral(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "LogDatabaseDatabase")) xml::copyToBString(logDbDatabase, curNode);
         else if(NODE_NAME(curNode, "LogDeath")) xml::copyToBool(logDeath, curNode);
         else if(NODE_NAME(curNode, "PkillInCombatDisabled")) xml::copyToBool(pkillInCombatDisabled, curNode);
+        else if(NODE_NAME(curNode, "PlayersCanMudmailStaff")) xml::copyToBool(playersCanMudmailStaff, curNode);
         else if(NODE_NAME(curNode, "RecordAll")) xml::copyToBool(recordAll, curNode);
         else if(NODE_NAME(curNode, "LogSuicide")) xml::copyToBool(logSuicide, curNode);
         else if(NODE_NAME(curNode, "SaveOnDrop")) xml::copyToBool(saveOnDrop, curNode);
@@ -377,6 +378,7 @@ void Config::loadGeneral(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "ShopNumLines")) xml::copyToNum(shopNumLines, curNode);
         else if(NODE_NAME(curNode, "CustomColors")) xml::copyToCString(customColors, curNode);
         else if(!bHavePort && NODE_NAME(curNode, "Port")) xml::copyToNum(portNum, curNode);
+
 
         curNode = curNode->next;
     }
@@ -464,6 +466,7 @@ bool Config::saveConfig() const {
     xml::newBoolChild(curNode, "LessExpLoss", lessExpLoss);
     xml::newBoolChild(curNode, "LogDeath", logDeath);
     xml::newBoolChild(curNode, "PkillInCombatDisabled", pkillInCombatDisabled);
+    xml::newBoolChild(curNode, "PlayersCanMudmailStaff", playersCanMudmailStaff);
     xml::newBoolChild(curNode, "RecordAll", recordAll);
     xml::newBoolChild(curNode, "LogSuicide", logSuicide);
     xml::newBoolChild(curNode, "SaveOnDrop", saveOnDrop);
@@ -503,6 +506,10 @@ void Config::setPortNum(short pPort) {
 }
 int getPkillInCombatDisabled() {
     return(gConfig->pkillInCombatDisabled);
+}
+
+int getPlayersCanMudmailStaff() {
+    return(gConfig->playersCanMudmailStaff)
 }
 
 bstring Config::getMonthDay() const {
