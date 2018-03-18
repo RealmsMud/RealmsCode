@@ -486,6 +486,7 @@ public:
     bool    conjureDisabled;
     bool    lessExpLoss;
     bool    pkillInCombatDisabled;
+    bool    playersCanMudmailStaff;
     bool    autoShutdown;
     bool    checkDouble;
     bool    getHostByName;

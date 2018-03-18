@@ -136,6 +136,7 @@ void Config::reset(bool reload) {
     charCreationDisabled = false;
     lessExpLoss = false;
     pkillInCombatDisabled = false;
+    playersCanMudmailStaff = false;
     recordAll = false;
 
     flashPolicyPort = 0;
@@ -508,9 +509,6 @@ int getPkillInCombatDisabled() {
     return(gConfig->pkillInCombatDisabled);
 }
 
-int getPlayersCanMudmailStaff() {
-    return(gConfig->playersCanMudmailStaff)
-}
 
 bstring Config::getMonthDay() const {
     long    t = time(0);
@@ -528,6 +526,9 @@ unsigned long Config::expNeeded(int level) {
 
 bool Config::isAprilFools() const { return(doAprilFools && getMonthDay() == "Apr  1"); }
 bool Config::willAprilFools() const { return(doAprilFools); }
+
+bool Config::getPlayersCanMudmailStaff() const { return(playersCanMudmailStaff);}
+
 int Config::getFlashPolicyPort() const { return(flashPolicyPort); }
 
 bool Config::sendTxtOnCrash() const { return(txtOnCrash); }
