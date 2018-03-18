@@ -133,7 +133,7 @@ void steal_gold(Player* player, Creature* creature) {
     player->interruptDelayedActions();
 
     if(mrand(1,100) < chance) {
-        int formula;
+        unsigned long formula;
         player->print("You succeeded.\n");
         player->checkImprove("steal", true);
         player->statistics.steal();
@@ -143,7 +143,7 @@ void steal_gold(Player* player, Creature* creature) {
         }
 
         formula = mrand(creature->coins[GOLD]/10, creature->coins[GOLD]/3);
-        amt = MIN(creature->coins[GOLD], MAX(1, formula));
+        amt = MIN(creature->coins[GOLD], MAX(1UL, formula));
         player->print("You grabbed %d coins.\n", amt);
         creature->coins.sub(amt, GOLD);
         player->coins.add(amt, GOLD);
@@ -645,7 +645,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
             // experience for stealing this item
             long expGain = target->getExperience() / 10;
             object->setDroppedBy(target, "Theft");
-            expGain = MAX(expGain, 1);
+            expGain = MAX(expGain, 1L);
             if(!player->halftolevel()) {
                 player->printColor("You %s ^Y%d^x experience for the theft of %P.\n", gConfig->isAprilFools() ? "lose" : "gain", expGain, object);
                 player->addExperience(expGain);

@@ -221,7 +221,7 @@ bool EffectInfo::pulse(time_t t) {
 bool EffectInfo::updateLastMod(time_t t) {
     time_t diff = t - lastMod;
     lastMod = t;
-    diff = MIN(MAX(0, duration), diff);
+    diff = MIN<long>(MAX<long>(0, duration), diff);
     duration -= diff;
 
     if(myApplier) {

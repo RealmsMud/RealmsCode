@@ -372,7 +372,7 @@ void Monster::addToRoom(BaseRoom* room, int num) {
 
     // Handle random aggressive monsters
     if(!flagIsSet(M_AGGRESSIVE)) {
-        if(loadAggro && (mrand(1,100) <= MAX(1, loadAggro)))
+        if(loadAggro && (mrand(1,100) <= MAX<unsigned short>(1, loadAggro)))
             setFlag(M_WILL_BE_AGGRESSIVE);
     }
 

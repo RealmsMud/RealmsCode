@@ -50,14 +50,14 @@ const std::map<ObjectType,const char*> objTypeToString = {
 char stat_names[][4] = { "STR", "DEX", "CON", "INT", "PTY", "CHA" };
 
 char* getStatName(int stat) {
-    stat = tMIN<int>(tMAX<int>(stat - 1, 0), MAX_STAT);
+    stat = MIN<int>(MAX<int>(stat - 1, 0), MAX_STAT);
     return(stat_names[stat]);
 }
 
 char save_names[][4] = { "LCK", "POI", "DEA", "BRE", "MEN", "SPL" };
 
 char* getSaveName(int save) {
-    save = tMIN<int>(tMAX<int>(save, 0), MAX_SAVE-1);
+    save = MIN<int>(MAX<int>(save, 0), MAX_SAVE-1);
     return(save_names[save]);
 }
 
@@ -354,7 +354,7 @@ char *get_trade_string(int nIndex) {
     ASSERTLOG( nIndex >= 0 );
     ASSERTLOG( nIndex < MOBTRADE_COUNT );
 
-    nIndex = MAX( 0, MIN(nIndex, MOBTRADE_COUNT) );
+    nIndex = MAX<int>( 0, MIN<int>(nIndex, MOBTRADE_COUNT) );
     return(mob_trade_str[nIndex]);
 
 }

@@ -1647,7 +1647,7 @@ void Player::silenceSpammer() {
 //*********************************************************************
 
 void Player::setMonkDice() {
-    int nLevel = MAX(0, MIN(level, MAXALVL));
+    int nLevel = MAX<int>(0, MIN<int>(level, MAXALVL));
 
     // reset monk dice?
     if(cClass == CreatureClass::MONK) {
@@ -2121,9 +2121,9 @@ int Player::getSneakChance()  {
     switch(cClass) {
     case CreatureClass::THIEF:
         if(cClass2 == CreatureClass::MAGE)
-            chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
         else
-            chance = tMIN(90, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(90, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
 
         break;
     case CreatureClass::ASSASSIN:
@@ -2131,41 +2131,41 @@ int Player::getSneakChance()  {
         break;
     case CreatureClass::CLERIC:
         if(cClass2 == CreatureClass::ASSASSIN)
-            chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
         else if(deity == KAMIRA || deity == ARACHNUS)
-            chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) piety.getCur()));
+            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) piety.getCur()));
 
         break;
     case CreatureClass::FIGHTER:
         if(cClass2 == CreatureClass::THIEF)
-            chance = tMIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
 
         break;
     case CreatureClass::MAGE:
         if(cClass2 == CreatureClass::THIEF || cClass2 == CreatureClass::ASSASSIN)
-            chance = tMIN(90, 5 + 8 * MAX(1,sLvl-3) + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(90, 5 + 8 * MAX(1,sLvl-3) + 3 * bonus((int) dexterity.getCur()));
 
         break;
     case CreatureClass::DRUID:
         if(getConstRoomParent()->isForest())
-            chance = tMIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
 
         break;
     case CreatureClass::RANGER:
         if(getConstRoomParent()->isForest())
-            chance = tMIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
         else
-            chance = tMIN(83, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(83, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
         break;
     case CreatureClass::ROGUE:
-        chance = tMIN(85, 5 + 7 * sLvl + 3 * bonus((int) dexterity.getCur()));
+        chance = MIN(85, 5 + 7 * sLvl + 3 * bonus((int) dexterity.getCur()));
         break;
     default:
         break;
     }
 
     if(isBlind())
-        chance = tMIN(20, chance);
+        chance = MIN(20, chance);
 
     if(isEffected("camouflage")) {
         if(getConstRoomParent()->isOutdoors())
@@ -2379,7 +2379,7 @@ bstring Player::expInLevel() const {
     }
 
     std::ostringstream oStr;
-    oStr << tMIN<long>((experience - gConfig->expNeeded(displayLevel-1)),
+    oStr << MIN<long>((experience - gConfig->expNeeded(displayLevel-1)),
             (gConfig->expNeeded(displayLevel) - gConfig->expNeeded(displayLevel-1)));
     return(oStr.str());
 }

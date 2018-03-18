@@ -149,7 +149,7 @@ bool doFish(Player* player) {
     comp /= 3;  // the fishing pole accounts for 1/3 of your success
     chance += comp;
 
-    chance = MAX(10, MIN(95, chance));
+    chance = MAX<double>(10, MIN<double>(95, chance));
 
     if(mrand(1,100) > chance)
         return(failFishing(player, "Dice roll.", false));

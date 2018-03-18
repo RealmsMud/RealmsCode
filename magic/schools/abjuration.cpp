@@ -667,7 +667,7 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(!multi)
             strength = spellData->level;
         else
-            strength = MAX(1, spellData->level-3);
+            strength = MAX<unsigned int>(1, spellData->level-3);
     } else {
         duration = 180L;
         strength = spellData->level/2;

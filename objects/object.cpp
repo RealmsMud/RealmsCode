@@ -451,7 +451,7 @@ int displayObject(Player* player, Object* target) {
         oStr << "^gIt drips with poison.\n";
         if((player->getClass() == CreatureClass::ASSASSIN && player->getLevel() >= 10) || player->isCt()) {
             oStr << "^gTime remaining before poison deludes: " <<
-               timestr(MAX(0,(target->lasttime[LT_ENVEN].ltime+target->lasttime[LT_ENVEN].interval-time(0)))) << ".\n";
+               timestr(MAX<long>(0,(target->lasttime[LT_ENVEN].ltime+target->lasttime[LT_ENVEN].interval-time(0)))) << ".\n";
         }
     }
 
@@ -462,7 +462,7 @@ int displayObject(Player* player, Object* target) {
         oStr << target->getObjStr(nullptr, flags | CAP, 1) << " costs " << target->getCoinCost() << "gold coins per use.\n";
 
     if(target->getShotsCur() > 0)
-        percent = (100 * (target->getShotsCur())) / (MAX(target->getShotsMax(),1));
+        percent = (100 * (target->getShotsCur())) / (MAX<short>(target->getShotsMax(),1));
     else
         percent = -1;
 
@@ -501,7 +501,7 @@ int displayObject(Player* player, Object* target) {
 
     if(target->flagIsSet(O_WEAPON_CASTS) && flags && MAG) {
         if(target->getChargesCur() > 0)
-            percent = (100 * (target->getChargesCur())) / (MAX(target->getChargesMax(),1));
+            percent = (100 * (target->getChargesCur())) / (MAX<short>(target->getChargesMax(),1));
         else
             percent = -1;
 

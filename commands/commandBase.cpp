@@ -463,7 +463,7 @@ int cmdPayToll(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    amt = MIN(amt, 30000);
+    amt = MIN<unsigned long>(amt, 30000);
 
     target = player->getParent()->findMonster(player, cmnd, 2);
     if(!target) {

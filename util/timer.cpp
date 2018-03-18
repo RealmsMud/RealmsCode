@@ -34,14 +34,14 @@ void Timer::update(int newDelay) {
 
     // The new delay is either the parameter delay, or however much time was
     // left on the timer whichever was higher
-    setDelay(tMAX<long>(newDelay, left));
+    setDelay(MAX<long>(newDelay, left));
 }
 
 void Timer::setDelay(int newDelay) {
-    delay = tMAX(1, newDelay);
+    delay = MAX(1, newDelay);
 }
 void Timer::modifyDelay(int amt) {
-    delay = tMAX(1, delay + amt);
+    delay = MAX(1, delay + amt);
 }
 
 bool Timer::hasExpired() const {
@@ -59,7 +59,7 @@ long Timer::getTimeLeft() const {
     gettimeofday(&curTime, 0);
     timeDiff(curTime, lastAttacked, difference);
     
-    timePassed += tMAX<long>(0, difference.tv_sec)*10;
+    timePassed += MAX<long>(0, difference.tv_sec)*10;
     timePassed += (long)((difference.tv_usec / 100000.0));
 
     if(timePassed >= delay)

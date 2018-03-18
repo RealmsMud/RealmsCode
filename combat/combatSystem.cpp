@@ -124,7 +124,7 @@ float Creature::getDamageReduction(const Creature* target) const {
     float targetArmor = target->getArmor();
     float myLevel = level == 1 && isPlayer() ? 2 : level;
     reduction = ((targetArmor)/((targetArmor) + 43.24 + 18.38*myLevel));
-    reduction = MIN(.75, reduction); // Max of 75% reduction
+    reduction = MIN<float>(.75, reduction); // Max of 75% reduction
     return(reduction);
 }
 
@@ -717,11 +717,11 @@ bool Creature::canParry(Creature* attacker) {
 //   try a parry, so parry returns 0 without going off. -TC
 
     // +3% fail for every monster mad at this besides the one he's currently hitting
-    combatPercent = 3*(tMAX(0,numEnemyMonInRoom(this)-1));
+    combatPercent = 3*(MAX(0,numEnemyMonInRoom(this)-1));
     // Group members are assumed to fight together to help one another.
     // -2% fail for every member in the this's group besides themself in the same room
     if(getGroup())
-        combatPercent -= 2*(tMAX(0,getGroup()->getNumInSameRoom(this)));
+        combatPercent -= 2*(MAX(0,getGroup()->getNumInSameRoom(this)));
 
     combatPercent = MAX(0,combatPercent);
 
@@ -1726,7 +1726,7 @@ int Creature::doResistMagic(int dmg, Creature* enemy) {
 
     if(isEffected("resist-magic")) {
         resist = (piety.getCur() / 10 + intelligence.getCur() / 10) * 2;
-        resist = MAX(50, MIN(resist, 100));
+        resist = MAX<float>(50, MIN<float>(resist, 100));
         resist /= 100; // percentage
         resist *= dmg;
         dmg -= (int)resist;
@@ -1769,7 +1769,7 @@ void Creature::updateAttackTimer(bool setDelay, int delay) {
     } else {
         if(delay == 0) {
             if (ready[HELD-1] && ready[HELD-1]->getWearflag() == WIELD)
-                delay = tMAX(getPrimaryDelay(), getSecondaryDelay());
+                delay = MAX(getPrimaryDelay(), getSecondaryDelay());
             else
                 delay = getPrimaryDelay();
         }

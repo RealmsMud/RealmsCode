@@ -490,14 +490,14 @@ bstring Creature::statCrt(int statFlags) {
         ) {
             crtStr << "^bIn Jailhouse. ";
             crtStr << "Time remaining: " <<
-                    timestr( MAX(0,pTarget->lasttime[LT_MOB_JAILED].ltime+pTarget->lasttime[LT_MOB_JAILED].interval-t) );
+                    timestr( MAX(0L,pTarget->lasttime[LT_MOB_JAILED].ltime+pTarget->lasttime[LT_MOB_JAILED].interval-t) );
             crtStr << ".^x\n";
         }
 
         if(pTarget->flagIsSet(P_JAILED)) {
             crtStr << "^RIn Dungeon of Despair. ";
             crtStr << "Time remaining: " <<
-                    timestr( MAX(0,pTarget->lasttime[LT_JAILED].ltime+pTarget->lasttime[LT_JAILED].interval-t) );
+                    timestr( MAX(0L,pTarget->lasttime[LT_JAILED].ltime+pTarget->lasttime[LT_JAILED].interval-t) );
             crtStr << ".^x\n";
         }
     }
@@ -877,7 +877,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
 
         if(!strcmp(cmnd->str[3], "con")) {
-            target->constitution.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+            target->constitution.setMax(MAX(1, MIN<int>(cmnd->val[3], MAX_STAT_NUM)));
             target->constitution.restore();
             player->print("Constitution set.\n");
 
@@ -1013,7 +1013,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
 
         if(!strcmp(cmnd->str[3], "dex")) {
-            target->dexterity.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+            target->dexterity.setMax(MAX(1, MIN<int>(cmnd->val[3], MAX_STAT_NUM)));
             target->dexterity.restore();
             player->print("Dexterity set.\n");
             log_immort(true, player, "%s set %s %s's dexterity to %d.\n",
@@ -1163,8 +1163,8 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                     return(0);
                 }
             } else {
-                if(cmnd->val[4] > Faction::MAX || cmnd->val[4] < Faction::MIN) {
-                    player->print("Faction rating must be between %d and %d.\n", Faction::MIN, Faction::MAX);
+                if(cmnd->val[4] > Faction::MAX_FACTION || cmnd->val[4] < Faction::MIN_FACTION) {
+                    player->print("Faction rating must be between %d and %d.\n", Faction::MIN_FACTION, Faction::MAX_FACTION);
                     return(0);
                 }
             }
@@ -1310,7 +1310,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
         break;
     case 'i':
         if(!strcmp(cmnd->str[3], "int")) {
-            target->intelligence.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+            target->intelligence.setMax(MAX(1, MIN<int>(cmnd->val[3], MAX_STAT_NUM)));
             player->print("Intelligence set.\n");
             log_immort(true, player, "%s set %s %s's Intelligence to %d.\n",
                 player->getCName(), PLYCRT(target), target->getCName(), target->intelligence.getCur());
@@ -1577,7 +1577,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                 player->print("Error: Poison duration cannot be set on players.\n");
                 return(0);
             }
-            mTarget->setPoisonDamage(MAX(1, MIN(cmnd->val[3], 1200)));
+            mTarget->setPoisonDamage(MAX(1, MIN<int>(cmnd->val[3], 1200)));
             player->print("Poison duration set to %d seconds.\n", mTarget->getPoisonDuration());
             log_immort(true, player, "%s set %s %s's %s to %d.\n",
                 player->getCName(), PLYCRT(target), target->getCName(),
@@ -1590,7 +1590,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                 player->print("Error: Poison damage/tick cannot be set on players.\n");
                 return(0);
             }
-            mTarget->setPoisonDamage(MAX(1, MIN(cmnd->val[3], 500)));
+            mTarget->setPoisonDamage(MAX<short>(1, MIN<short>(cmnd->val[3], 500)));
             player->print("Poison damage set to %d per tick.\n", mTarget->getPoisonDamage());
             log_immort(true, player, "%s set %s %s's %s to %d.\n",
                 player->getCName(), PLYCRT(target), mTarget->getCName(),
@@ -1599,7 +1599,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
         }
         //if(!strcmp(cmnd->str[3], "pie")) {
 
-        target->piety.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+        target->piety.setMax(MAX(1, MIN<int>(cmnd->val[3], MAX_STAT_NUM)));
         target->piety.restore();
         player->print("Piety set.\n");
         log_immort(true, player, "%s set %s %s's %s to %d.\n",
@@ -1783,7 +1783,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             }
 
             rnum = MAX(0, MIN(atoi(&cmnd->str[3][2]), MAX_BUILDER_RANGE));
-            pTarget->bRange[rnum-1].low.id = MAX(-1, MIN(RMAX, cmnd->val[3]));
+            pTarget->bRange[rnum-1].low.id = MAX(-1, MIN(RMAX, (int)cmnd->val[3]));
 
             player->print("%s's low range #%d set to %d.\n", pTarget->getCName(), rnum,
                 pTarget->bRange[rnum-1].low.id);
@@ -1802,7 +1802,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             }
 
             rnum = MIN(MAX_BUILDER_RANGE, MAX(atoi(&cmnd->str[3][2]),0));
-            pTarget->bRange[rnum-1].high = MAX(-1, MIN(RMAX, cmnd->val[3]));
+            pTarget->bRange[rnum-1].high = MAX(-1, MIN(RMAX, (int)cmnd->val[3]));
 
             player->print("%s's high range #%d set to %d.\n", pTarget->getCName(), rnum,
                 pTarget->bRange[rnum-1].high);
@@ -1811,7 +1811,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             break;
         default:
 
-            Realm r = (Realm)MAX(MIN_REALM, MIN(MAX_REALM-1, atoi(&cmnd->str[3][1])));
+            Realm r = (Realm)MAX((int)MIN_REALM, MIN((int)MAX_REALM-1, atoi(&cmnd->str[3][1])));
             target->setRealm(cmnd->val[3], r);
             player->print("%M given %d shots in realm#%d.\n", target, target->getRealm(r), num);
             log_immort(true, player, "%s set %s %s's %s%d to %ld.\n",
@@ -1941,7 +1941,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             break;
 
         case 't':
-            target->strength.setMax(MAX(1, MIN(cmnd->val[3], MAX_STAT_NUM)));
+            target->strength.setMax(MAX(1, MIN((int)cmnd->val[3], MAX_STAT_NUM)));
             target->strength.restore();
             player->print("Strength set.\n");
             log_immort(true, player, "%s set %s %s's %s to %d.\n",
@@ -1971,7 +1971,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                     return(0);
                 }
 
-                target->saves[num].chance = MAX(1, MIN(cmnd->val[3], 99));
+                target->saves[num].chance = MAX(1, MIN((int)cmnd->val[3], 99));
                 player->print("%M now has %d%% chance for save #%d.\n", target,
                     target->saves[num].chance, num);
                 log_immort(true, player, "%s set %s %s's %s%d to %d.\n",

@@ -338,13 +338,13 @@ public:
     bstring left(int count) const {
         // Range check the count.
 
-        count = tMAX(0, tMIN(count, static_cast<int>(this->size())));
+        count = MAX(0, MIN(count, static_cast<int>(this->size())));
         return this->substr(0, static_cast<my_size_type>(count)); 
     }
     bstring right(int count) const {
         // Range check the count.
 
-        count = tMAX(0, tMIN(count, static_cast<int>(this->size())));
+        count = MAX(0, MIN(count, static_cast<int>(this->size())));
         return this->substr(this->size()-static_cast<my_size_type>(count));
     }
     bstring mid(int first ) const {

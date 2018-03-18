@@ -51,7 +51,7 @@ bstring Track::getDirection() const { return(direction); }
 //                      setNum
 //*********************************************************************
 
-void Track::setNum(short n) { num = MAX(0, n); }
+void Track::setNum(short n) { num = MAX<short>(0, n); }
 
 //*********************************************************************
 //                      setSize

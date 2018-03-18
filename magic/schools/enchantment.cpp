@@ -840,9 +840,9 @@ int splEnchant(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
 
     if((pPlayer->getClass() == CreatureClass::MAGE || pPlayer->isStaff()) && spellData->how == CastType::CAST)
-        adj = MIN(4, (spellData->level / 5));
+        adj = MIN<int>(4, (spellData->level / 5));
 
-    object->setAdjustment(MAX(adj, object->getAdjustment()));
+    object->setAdjustment(MAX<int>(adj, object->getAdjustment()));
 
     if(object->getType() == ObjectType::WEAPON) {
         object->setShotsMax(object->getShotsMax() + adj * 10);

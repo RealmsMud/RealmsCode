@@ -138,9 +138,9 @@ public:
     static const int CONTEMPT_CUTOFF        = -8000;    // -8000 to -7001
     static const int MALICE_CUTOFF          = -32000;   // -8001 and lower
 
-    static const int MAX            = 45000;    // adjusted can't go over this amount
-    static const int MIN            = -64999;   // adjusted can't go under this amount
-    static const int ALWAYS_HATE    = -65000;   // set to this amount and you will always be hated
+    static const int MAX_FACTION            = 45000;    // adjusted can't go over this amount
+    static const int MIN_FACTION            = -64999;   // adjusted can't go under this amount
+    static const int ALWAYS_HATE            = -65000;   // set to this amount and you will always be hated
 protected:
     bstring name;
     bstring parent;     // What faction this faction inherits from

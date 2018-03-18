@@ -385,7 +385,7 @@ int cmdPrefs(Player* player, cmd* cmnd) {
         }
         if(pref->name == "wimpy") {
             player->setWimpy(cmnd->val[1] == 1L ? 10 : cmnd->val[1]);
-            player->setWimpy(MAX(player->getWimpy(), 2));
+            player->setWimpy(MAX<unsigned short>(player->getWimpy(), 2));
         }
         set = true;
 

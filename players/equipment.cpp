@@ -3072,7 +3072,7 @@ unsigned long getRepairCost(Player* player, Monster* smithy, Object* object) {
     rcost = (float)cost * (mult / 1.5);
     cost = (long)rcost;
 
-    cost = (MAX(1,cost));
+    cost = (MAX(1UL,cost));
 
     Money money;
     money.set(cost, GOLD);

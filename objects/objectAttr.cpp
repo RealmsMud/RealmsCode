@@ -49,7 +49,7 @@ void Object::setWeight(short w) { weight = w; }
 //                      setBulk
 //*********************************************************************
 
-void Object::setBulk(short b) { bulk = MAX(0, b); }
+void Object::setBulk(short b) { bulk = MAX<short>(0, b); }
 
 //*********************************************************************
 //                      setMaxbulk
@@ -79,7 +79,7 @@ void Object::setWearflag(short w) { wearflag = w; }
 //                      setArmor
 //*********************************************************************
 
-void Object::setArmor(short a) { armor = MAX(0, MIN(a, 1000)); }
+void Object::setArmor(short a) { armor = MAX<short>(0, MIN<short>(a, 1000)); }
 
 //*********************************************************************
 //                      setQuality
@@ -93,7 +93,7 @@ void Object::setQuality(short q) { quality = q; }
 
 void Object::setAdjustment(short a) {
     removeFromSet();
-    adjustment = MAX(-127, MIN(a, 127));
+    adjustment = MAX<short>(-127, MIN<short>(a, 127));
     addToSet();
 }
 
@@ -204,13 +204,13 @@ void Object::setEffect(bstring e) { effect = e; }
 //                      setEffectDuration
 //*********************************************************************
 
-void Object::setEffectDuration(long d) { effectDuration = MAX(-1, MIN(d, EFFECT_MAX_DURATION)); }
+void Object::setEffectDuration(long d) { effectDuration = MAX<long>(-1, MIN<long>(d, EFFECT_MAX_DURATION)); }
 
 //*********************************************************************
 //                      setEffectStrength
 //*********************************************************************
 
-void Object::setEffectStrength(short s) { effectStrength = MAX(0, MIN(s, EFFECT_MAX_STRENGTH)); }
+void Object::setEffectStrength(short s) { effectStrength = MAX<long>(0, MIN<long>(s, EFFECT_MAX_STRENGTH)); }
 
 //*********************************************************************
 //                      setCoinCost
@@ -224,7 +224,7 @@ void Object::setCoinCost(unsigned long c) { coinCost = c; }
 
 void Object::setShopValue(unsigned long v) {
     removeFromSet();
-    shopValue = MIN(200000000, v);
+    shopValue = MIN<unsigned long>(200000000, v);
     addToSet();
 }
 

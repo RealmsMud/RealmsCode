@@ -32,7 +32,7 @@ WanderInfo::WanderInfo() {
 }
 
 short WanderInfo::getTraffic() const { return(traffic); }
-void WanderInfo::setTraffic(short t) { traffic = MAX(0, MIN(100, t)); }
+void WanderInfo::setTraffic(short t) { traffic = MAX<short>(0, MIN<short>(100, t)); }
 
 //*********************************************************************
 //                      getRandom

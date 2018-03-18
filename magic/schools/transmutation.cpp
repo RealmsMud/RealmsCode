@@ -238,7 +238,7 @@ int splPassWithoutTrace(Creature* player, cmd* cmnd, SpellData* spellData) {
 // by foot.
 
 int splFly(Creature* player, cmd* cmnd, SpellData* spellData) {
-    return(splGeneric(player, cmnd, spellData, "a", "fly", "fly", MAX(1,spellData->level/3)));
+    return(splGeneric(player, cmnd, spellData, "a", "fly", "fly", MAX<int>(1,spellData->level/3)));
 }
 
 //*********************************************************************
@@ -529,7 +529,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
             bns = 50;
 
         if(target->isPlayer() && target->isEffected("resist-magic"))
-            bns += MIN(30, target->saves[DEA].chance);
+            bns += MIN<short>(30, target->saves[DEA].chance);
 
         if(spellData->how == CastType::CAST && player->isPlayer())
             player->getAsPlayer()->statistics.offensiveCast();

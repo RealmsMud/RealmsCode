@@ -369,7 +369,7 @@ double Player::winterProtection() const {
         if(ready[i])
             percent += ready[i]->winterProtection();
 
-    return(MAX(0, MIN(1, percent)));
+    return(MAX(0.0, MIN(1.0, percent)));
 }
 
 //*********************************************************************

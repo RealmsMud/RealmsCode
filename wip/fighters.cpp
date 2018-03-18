@@ -52,8 +52,8 @@ void Player::increaseFocus(FocusAction action, int amt, Creature* target) {
     if(target) {
         // Focus earned on damage out is reduced by a scaling factor if the player
         // is higher level than the target
-        levelDiff = tMAX(getLevel() - target->getLevel(), 0);
-        lF = 1.0/tMAX(levelDiff/5.0,1.0);
+        levelDiff = MAX(getLevel() - target->getLevel(), 0);
+        lF = 1.0/MAX(levelDiff/5.0,1.0);
     }
     switch(action) {
         case FOCUS_DAMAGE_IN:

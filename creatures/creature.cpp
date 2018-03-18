@@ -1408,7 +1408,7 @@ bool Creature::doFlee(bool magicTerror) {
 
         if(cClass == CreatureClass::PALADIN && deity != GRADIUS && !magicTerror && level >= 10) {
             n = level * 8;
-            n = MIN(experience, n);
+            n = MIN<long>(experience, n);
             print("You lose %d experience for your cowardly retreat.\n", n);
             experience -= n;
         }

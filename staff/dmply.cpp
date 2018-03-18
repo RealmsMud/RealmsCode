@@ -528,10 +528,10 @@ int dmAward(Player* player, cmd* cmnd) {
 
     if(amount < 2) {
         amount = target->getExperience() / 100;     // 1% of current xp is award.
-        amount = MAX(amount, 500);
+        amount = MAX(amount, 500L);
     }
 
-    gp = MAX(500, MIN(1000000, amount));
+    gp = MAX(500L, MIN(1000000L, amount));
 
 
 
@@ -569,7 +569,7 @@ int dmAward(Player* player, cmd* cmnd) {
             }
 
             if (cmnd->val[2] > 0)
-                gp = MAX(500, MIN(cmnd->val[2],300000));
+                gp = MAX(500L, MIN(cmnd->val[2],300000L));
             
         }
 
@@ -2413,10 +2413,10 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    tm = MAX(1, cmnd->val[1]);
+    tm = MAX(1, (int)cmnd->val[1]);
 
     if(player->isWatcher())
-        tm = MIN(60, cmnd->val[1]);
+        tm = MIN(60, (int)cmnd->val[1]);
 
     t = (long)tm*60;
 

@@ -275,7 +275,7 @@ bool Faction::alwaysHates(const Player* player) const {
 //*********************************************************************
 
 long Faction::getUpperLimit(const Player* player) const {
-    long    limit = MAX, x;
+    long    limit = MAX_FACTION, x;
     x = max.getClassRegard(player->getClass());
     if(x) limit = MIN(x, limit);
 
@@ -314,7 +314,7 @@ long Faction::getUpperLimit(const Player* player) const {
 //*********************************************************************
 
 long Faction::getLowerLimit(const Player* player) const {
-    long    limit = MIN, x;
+    long    limit = MIN_FACTION, x;
     x = min.getClassRegard(player->getClass());
     if(x) limit = MAX(x, limit);
 

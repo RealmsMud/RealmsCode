@@ -25,13 +25,13 @@
 // MIN and MAX.
 // -----------------------------------
 template<class Type>
-inline const Type& tMIN(const Type& arg1, const Type& arg2)
+inline const Type& MIN(const Type& arg1, const Type& arg2)
 {
     return arg2 < arg1 ? arg2 : arg1;
 }
 
 template<class Type>
-inline const Type& tMAX(const Type& arg1, const Type& arg2)
+inline const Type& MAX(const Type& arg1, const Type& arg2)
 {
     return arg2 > arg1 ? arg2 : arg1;
 }

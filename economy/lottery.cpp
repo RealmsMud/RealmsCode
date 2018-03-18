@@ -133,7 +133,7 @@ void Config::runLottery() {
         lotteryJackpot = 500000;
     else
         lotteryJackpot = (long)(lotteryJackpot * 1.15);
-    lotteryJackpot = MIN(lotteryJackpot, 3000000);
+    lotteryJackpot = MIN<long>(lotteryJackpot, 3000000);
     lotteryWon = 0;
     broadcast(
             "### The Highport Powerbone numbers have been drawn.\n### The jackpot is $%ld!",
@@ -207,7 +207,7 @@ void Config::increaseJackpot(int amnt) {
     if(amnt < 0)
         return;
     lotteryJackpot += amnt;
-    lotteryJackpot = MIN(lotteryJackpot, 10000000);
+    lotteryJackpot = MIN<long>(lotteryJackpot, 10000000);
 }
 void Config::addTicket(LottoTicket* ticket) {
     tickets.push_back(ticket);
