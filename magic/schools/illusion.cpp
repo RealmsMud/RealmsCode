@@ -83,33 +83,31 @@ int splCamouflage(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splIllusion
 //*********************************************************************
 
-int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splIllusion(Creature* creature, cmd* cmnd, SpellData* spellData) {
     bstring txt = "";
     Player* pPlayer=0, *target=0;
     const RaceData* race=0;
 
-    if(!player->isPlayer())
-        return(0);
-    pPlayer = player->getAsPlayer();
+    pPlayer = creature->getAsPlayer();
 
     if(spellData->how == CastType::CAST) {
         // if the spell was cast
-        if(!pPlayer->isMageLich())
+        if(pPlayer && !pPlayer->isMageLich())
             return(0);
 
         txt = getFullstrText(cmnd->fullstr, cmnd->num == 3 ? 2 : 3);
 
         if(txt == "") {
-            pPlayer->print("Illusion whom to what race?\n");
-            pPlayer->print("Syntax: cast illusion [target] <race>\n");
+            creature->print("Illusion whom to what race?\n");
+            creature->print("Syntax: cast illusion [target] <race>\n");
             return(0);
         }
 
         race = gConfig->getRace(txt);
 
         if(!race) {
-            pPlayer->print("Race not understood or not unique.\n");
-            pPlayer->print("Syntax: cast illusion [target] <race>\n");
+            creature->print("Race not understood or not unique.\n");
+            creature->print("Syntax: cast illusion [target] <race>\n");
             return(0);
         }
     } else if(spellData->object) {
@@ -118,7 +116,7 @@ int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
             race = gConfig->getRace(spellData->object->getExtra());
 
         if(!race) {
-            pPlayer->printColor("%O is doesn't taste quite right.\n", spellData->object);
+            creature->printColor("%O is doesn't taste quite right.\n", spellData->object);
             return(0);
         }
     }
@@ -128,41 +126,41 @@ int splIllusion(Creature* player, cmd* cmnd, SpellData* spellData) {
         target = pPlayer;
 
         if(spellData->how != CastType::POTION) {
-            pPlayer->print("You cast an illusion spell.\n");
-            broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts an illusion spell.", pPlayer);
+            creature->print("You cast an illusion spell.\n");
+            broadcast(pPlayer ? pPlayer->getSock() : NULL, creature->getRoomParent(), "%M casts an illusion spell.", creature);
         }
     } else {
-        if(player->noPotion( spellData))
+        if(creature->noPotion( spellData))
             return(0);
 
         cmnd->str[2][0] = up(cmnd->str[2][0]);
-        target = pPlayer->getParent()->findPlayer(pPlayer, cmnd->str[2], cmnd->val[2], false);
+        target = creature->getParent()->findPlayer(creature, cmnd->str[2], cmnd->val[2], false);
 
         if(!target) {
-            pPlayer->print("You don't see that player here.\n");
+            creature->print("You don't see that creature here.\n");
             return(0);
         }
 
-        if(checkRefusingMagic(player, target))
+        if(pPlayer && checkRefusingMagic(creature, target))
             return(0);
 
-        broadcast(pPlayer->getSock(), target->getSock(), pPlayer->getRoomParent(), "%M casts an illusion spell on %N.",
-            pPlayer, target);
-        target->print("%M casts illusion on you.\n", pPlayer);
-        pPlayer->print("You cast an illusion spell on %N.\n", target);
+        broadcast(pPlayer ? pPlayer->getSock() : NULL, target->getSock(), creature->getRoomParent(), "%M casts an illusion spell on %N.",
+                creature, target);
+        target->print("%M casts illusion on you.\n", creature);
+        creature->print("You cast an illusion spell on %N.\n", target);
     }
 
-    if(pPlayer->getRoomParent()->magicBonus())
-        pPlayer->print("The room's magical properties increase the power of your spell.\n");
+    if(creature->getRoomParent()->magicBonus())
+        creature->print("The room's magical properties increase the power of your spell.\n");
 
     if(target->isEffected("illusion"))
         target->removeEffect("illusion", false);
-    target->addEffect("illusion", -2, -2, pPlayer, true, player);
+    target->addEffect("illusion", -2, -2, creature, true, creature);
 
 
     EffectInfo* effect = target->getEffect("illusion");
     effect->setExtra(race->getId());
-    effect->setStrength(pPlayer->getLevel());
+    effect->setStrength(creature->getLevel());
 
     return(1);
 }

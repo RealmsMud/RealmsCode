@@ -455,7 +455,7 @@ int Monster::castSpell(Creature *target) {
     for(i=0; i<MAXSPELL; i++) {
         if(knowctr > 19)
             break;
-        if(spellIsKnown(i))
+        if(spellIsKnown(i) && i != S_ILLUSION)
             known[knowctr++] = i;
     }
 
