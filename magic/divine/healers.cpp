@@ -472,7 +472,7 @@ int Creature::getTurnChance(Creature* target) {
         break;
     }
 
-    level = MAX(1,level);
+    level = MAX<double>(1,level);
 
 
     bns = bonus((int)piety.getCur());

@@ -374,7 +374,7 @@ int Monster::mobDeathScream() {
 
         if(target->isEffected("berserk")) {
             n = n - (n / 5);
-            n = MAX(1, n);
+            n = MAX(1L, n);
         }
 
         if(isUndead() && target->isEffected("undead-ward"))
@@ -1200,7 +1200,7 @@ int Monster::grabCoins(Player* player) {
 
     unsigned long grab = mrand(1, player->coins[GOLD]), num = player->coins[GOLD];
     // never steal all gold if they have more than 100k
-    grab = MIN(grab, 100000);
+    grab = MIN(grab, 100000UL);
 
     gServer->logGold(GOLD_OUT, player, Money(grab, GOLD), this, "Mugging");
     coins.add(grab, GOLD);

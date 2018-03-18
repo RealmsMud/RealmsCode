@@ -165,7 +165,7 @@ void Monster::adjust(int buffswitch) {
         break;
     }
 
-    armor = tMAX<unsigned int>(tMIN(armor, MAX_ARMOR), 0);
+    armor = MAX<unsigned int>(MIN(armor, MAX_ARMOR), 0);
 
     if(level >= 7)
         setFlag(M_BLOCK_EXIT);
@@ -195,8 +195,8 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     lasttime[LT_TICK_HARMFUL].ltime = t;
 
     // Make sure armor is set properly
-    if(armor < (unsigned)(balancedStats[MIN(level, MAXALVL)].armor - 150)) {
-        armor = balancedStats[MIN(level, MAXALVL)].armor;
+    if(armor < (unsigned)(balancedStats[MIN<short>(level, MAXALVL)].armor - 150)) {
+        armor = balancedStats[MIN<short>(level, MAXALVL)].armor;
     }
 
     if(dexterity.getCur() < 200)

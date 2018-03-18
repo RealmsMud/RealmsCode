@@ -1611,7 +1611,7 @@ int Guild::averageLevel() {
     if(!level)
         recalcLevel();
 
-    cLevel = MAX(1, level);
+    cLevel = MAX(1L, level);
     cMembers = MAX(1, numMembers);
 
     return(cLevel/cMembers);

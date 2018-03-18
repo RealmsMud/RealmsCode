@@ -280,7 +280,7 @@ void Player::adjustAlignment(Monster *victim) {
     }
 
     alignment -= adjust;
-    alignment = MAX(-1000, MIN(1000, alignment));
+    alignment = MAX<short>(-1000, MIN<short>(1000, alignment));
 }
 
 //*********************************************************************

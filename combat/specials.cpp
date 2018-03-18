@@ -304,7 +304,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
 
     if(attack->type == SPECIAL_EXP_DRAIN) {
         attackDamage.set(attack->damage.roll());
-        attackDamage.set(MIN((unsigned)attackDamage.get(), victim->getExperience()));
+        attackDamage.set(MIN<unsigned long>((unsigned)attackDamage.get(), victim->getExperience()));
 
         if(saved == true)
             attackDamage.set(attackDamage.get() / 2);

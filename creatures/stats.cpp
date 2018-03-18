@@ -73,7 +73,7 @@ double getConBonusPercentage(int pCon) {
     const double c = 0.9939294404;
     const int x = pCon;
     double percentage = ((a*x*x)+(b*x)+c);
-    percentage = tMAX<double>(1.0, percentage)-1.0;
+    percentage = MAX<double>(1.0, percentage)-1.0;
     return(percentage);
 
 }
@@ -86,7 +86,7 @@ double getIntBonusPercentage(int pInt) {
 
     const int x = pInt;
     double percentage = ((a*x*x)+(b*x)+c);
-    percentage = tMAX<double>(1.0, percentage)-1.0;
+    percentage = MAX<double>(1.0, percentage)-1.0;
     return(percentage);
 
 }
@@ -658,8 +658,8 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
         statMax = 30000;
         statMin = 1;
     }
-    addAmt = tMIN(addAmt, statMax - stat->getCur());
-    addAmt = tMAX(addAmt, statMin - stat->getCur());
+    addAmt = MIN(addAmt, statMax - stat->getCur());
+    addAmt = MAX(addAmt, statMin - stat->getCur());
     
     effect->setStrength(addAmt);
     stat->addModifier(effect->getName(), addAmt, modType);

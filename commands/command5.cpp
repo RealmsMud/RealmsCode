@@ -899,7 +899,7 @@ char *timestr(long t) {
 }
 
 #define TIMELEFT(name,ltflag) \
-    tmp = MAX(0,(LT(player, (ltflag)) - t)); \
+    tmp = MAX<long>(0,(LT(player, (ltflag)) - t)); \
     player->print("Time left on current %s: %s.\n", name, timestr(tmp));
 #define TIMEUNTIL(name,ltflag,time) \
     u = (time) - t + player->lasttime[(ltflag)].ltime;\
@@ -957,7 +957,7 @@ int cmdTime(Player* player, cmd* cmnd) {
     if(cmnd->num < 2) {
 
         // for ceris/aramon when they resurrect dead people
-        tmp = MAX(0,(LT(player, LT_NOMPTICK) - t));
+        tmp = MAX<long>(0,(LT(player, LT_NOMPTICK) - t));
         if(tmp > 0)
             player->print("Time until vitality is restored: %s.\n", timestr(tmp));
 
@@ -1010,7 +1010,7 @@ int cmdTime(Player* player, cmd* cmnd) {
             else if((i - t > 60) && (i - t < 3600))
                 player->print("%d:%02d more minutes.\n", (i - t) / 60L, (i - t) % 60L);
             else
-                player->print("%d more seconds.\n", MAX((i - t),0));
+                player->print("%d more seconds.\n", MAX<int>((i - t),0));
 
         }
 
@@ -1030,7 +1030,7 @@ int cmdTime(Player* player, cmd* cmnd) {
             else if((i - t > 60) && (i - t < 3600))
                 player->print("%d:%02d more minutes.\n", (i - t) / 60L, (i - t) % 60L);
             else
-                player->print("%d more seconds.\n", MAX((i - t),0));
+                player->print("%d more seconds.\n", MAX<int>((i - t),0));
         }
 
         // All those confusing defines, i'll make up my own code

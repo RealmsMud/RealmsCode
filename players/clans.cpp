@@ -366,7 +366,7 @@ int cmdRescind(Player* player, cmd* cmnd) {
          player->getCName(), player->getLevel(), clan->getId(), clan->getName().c_str());
 
 
-    amte = MIN(clan->getRescind(), player->getExperience());
+    amte = MIN<unsigned long>(clan->getRescind(), player->getExperience());
     player->print("You lose %d experience and %d gold!\n", amte, clan->getRescind() * 2);
     player->subExperience(amte);
     player->coins.sub(clan->getRescind(), GOLD);

@@ -1328,7 +1328,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
         }
 
         if(cap > 0)
-            stabMod = tMIN<float>(cap, stabMod-1);
+            stabMod = MIN<float>(cap, stabMod-1);
 
         // Version 2.43c Update -- I'm multiplying the stabMod by 2.0 to compensate for the increase
         // in armor absorb, and the removal of multiplier for attackPower

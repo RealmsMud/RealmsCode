@@ -933,7 +933,7 @@ int Socket::processInput() {
     // handle backspaces
     n = inBuf.getLength();
 
-    for (i = tMAX<int>(n - tmp.getLength(), 0); i < (unsigned) n; i++) {
+    for (i = MAX<int>(n - tmp.getLength(), 0); i < (unsigned) n; i++) {
         if (inBuf.getAt(i) == '\b' || inBuf.getAt(i) == 127) {
             if (n < 2) {
                 inBuf = "";
@@ -1693,7 +1693,7 @@ int Socket::processCompressed() {
 
     if (len > 0) {
         for (i = 0, n = 0; i < len; i += n) {
-            block = tMIN<size_t>(len - i, 4096);
+            block = MIN<size_t>(len - i, 4096);
             if ((n = ::write(fd, out_compress_buf + i, block)) < 0)
                 return (-1);
             written += n;

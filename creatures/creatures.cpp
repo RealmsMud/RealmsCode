@@ -833,8 +833,8 @@ unsigned long Creature::getInventoryValue() const {
                     continue;
                 }
 
-                total += tMIN<unsigned long>(MAXPAWN,insideObject->value[GOLD]/2);
-                total = tMAX<long>(0,tMIN<long>(2000000000,total));
+                total += MIN<unsigned long>(MAXPAWN,insideObject->value[GOLD]/2);
+                total = MAX<long>(0,MIN<long>(2000000000,total));
             }
         }
 
@@ -852,8 +852,8 @@ unsigned long Creature::getInventoryValue() const {
             continue;
         }
 
-        total += tMIN<unsigned long>(MAXPAWN,object->value[GOLD]/2);
-        total = tMAX<long>(0,tMIN<long>(2000000000,total));
+        total += MIN<unsigned long>(MAXPAWN,object->value[GOLD]/2);
+        total = MAX<long>(0,MIN<long>(2000000000,total));
 
     }
 
@@ -876,8 +876,8 @@ unsigned long Creature::getInventoryValue() const {
                     continue;
                 }
 
-                total += tMIN<unsigned long>(MAXPAWN,insideObject->value[GOLD]);
-                total = tMAX<long>(0,tMIN<long>(2000000000,total));
+                total += MIN<unsigned long>(MAXPAWN,insideObject->value[GOLD]);
+                total = MAX<long>(0,MIN<long>(2000000000,total));
             }
         }
 
@@ -891,8 +891,8 @@ unsigned long Creature::getInventoryValue() const {
         if(object3->value[GOLD] < 20)
             continue;
 
-        total+=tMIN<unsigned long>(MAXPAWN,object3->value[GOLD]/2);
-        total = tMAX<long>(0,tMIN<long>(2000000000,total));
+        total+=MIN<unsigned long>(MAXPAWN,object3->value[GOLD]/2);
+        total = MAX<long>(0,MIN<long>(2000000000,total));
     }
 
     return(total);
@@ -1220,7 +1220,7 @@ long Creature::getLTLeft(int myLT, long t) {
 // Sets a LT
 
 void Creature::setLastTime(int myLT, long t, long interval) {
-    lasttime[myLT].interval = tMAX(interval, getLTLeft(myLT, t));
+    lasttime[myLT].interval = MAX(interval, getLTLeft(myLT, t));
     lasttime[myLT].ltime = t;
  }
 

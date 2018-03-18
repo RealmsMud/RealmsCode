@@ -593,7 +593,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 
         if(mTarget) {
             // A successful circle gives 5% of the target's max health as threat
-            mTarget->adjustThreat(player, tMAX<long>((long)(mTarget->hp.getMax()*0.05), 2));
+            mTarget->adjustThreat(player, MAX<long>((long)(mTarget->hp.getMax()*0.05), 2));
         }
 
 
@@ -605,7 +605,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
         player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
         if(mTarget) {
             // An un-successful circle gives 2.5% of the target's max health as threat
-            mTarget->adjustThreat(player, tMAX<long>((long)(mTarget->hp.getMax()*0.025),1) );
+            mTarget->adjustThreat(player, MAX<long>((long)(mTarget->hp.getMax()*0.025),1) );
         }
     }
 

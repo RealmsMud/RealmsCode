@@ -329,8 +329,6 @@
 //#define AWARENESS(a)  ((bonus((int)(a)->intelligence.getCur())+bonus[(int)(a)->dexterity.getCur()])/2)
 
 #define mrand(a,b)  ((a)+(rand()%((b)*10-(a)*10+10))/10)
-#define MIN(a,b)    (((a)<(b)) ? (a):(b))
-#define MAX(a,b)    (((a)>(b)) ? (a):(b))
 
 #define PLYCRT(p)   ((p)->isPlayer() ? "Player" : "Monster")
 

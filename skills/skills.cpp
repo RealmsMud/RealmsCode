@@ -422,8 +422,8 @@ const char skillLevelStr[][SKILL_CHART_SIZE] = { "^rHorrible^x",          // 0-2
         };
 
 bstring getSkillLevelStr(int gained) {
-	int displayNum = (int)(tMIN<int>(gained, MAXALVL*10.0) / 25);
-	return skillLevelStr[tMAX<int>(0, tMIN<int>(SKILL_CHART_SIZE-1, displayNum))];
+	int displayNum = (int)(MIN<int>(gained, MAXALVL*10.0) / 25);
+	return skillLevelStr[MAX<int>(0, MIN<int>(SKILL_CHART_SIZE-1, displayNum))];
 }
 
 
@@ -484,8 +484,8 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
 
                 int curSkill = 0;
                 float maxSkill = 0;
-                maxSkill = tMIN<int>(player->getLevel()*10.0, MAXALVL*10.0);
-                curSkill = tMIN<int>(crtSkill->getGained(), maxSkill);
+                maxSkill = MIN<int>(player->getLevel()*10.0, MAXALVL*10.0);
+                curSkill = MIN<int>(crtSkill->getGained(), maxSkill);
 
                 skill = curSkill;
                 if (clan)

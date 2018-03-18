@@ -196,7 +196,7 @@ short AlchemyEffect::getQuality() const {
 //*********************************************************************
 
 void AlchemyEffect::setDuration(const long newDuration) {
-    duration = tMIN<long>(tMAX<long>(newDuration,0), Alchemy::getMaximumDuration());
+    duration = MIN<long>(MAX<long>(newDuration,0), Alchemy::getMaximumDuration());
 }
 
 //*********************************************************************

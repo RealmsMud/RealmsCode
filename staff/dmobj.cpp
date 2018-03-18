@@ -167,7 +167,7 @@ bstring Object::statObj(int statFlags) {
     objStr << "\n";
 
     if(type == ObjectType::LIGHTSOURCE)
-        objStr << "^WThis light source will last for approximately " << (MAX(1, shotsCur) * 20 - 10) << " seconds.^x\n";
+        objStr << "^WThis light source will last for approximately " << (MAX<short>(1, shotsCur) * 20 - 10) << " seconds.^x\n";
 
     if(compass)
         objStr << "Compass: ^y" << compass->str() << "^x\n";
@@ -307,7 +307,7 @@ bstring Object::statObj(int statFlags) {
         objStr << "  Strength: " << effectStrength << ".\n";
         if(flagIsSet(O_ENVENOMED)) {
             objStr << "Time remaining: " <<
-                timestr(MAX(0,(lasttime[LT_ENVEN].ltime+lasttime[LT_ENVEN].interval-time(0))))
+                timestr(MAX(0L,(lasttime[LT_ENVEN].ltime+lasttime[LT_ENVEN].interval-time(0))))
                 << "\n";
         }
     }
@@ -689,7 +689,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
                 setType = "Charges (All)";
             } else {
                 // Cur
-                num = tMIN<int>(num, object->getChargesMax());
+                num = MIN<int>(num, object->getChargesMax());
                 object->setChargesCur(num);
                 setType = "Charges (Cur)";
             }
@@ -875,7 +875,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
                 return(0);
             }
 
-            num = MIN(50, MAX(1, num));
+            num = MIN<int>(50, MAX<int>(1, num));
 
             if(num == 1)
                 gConfig->delLore(object->info);
@@ -981,7 +981,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 
             object->in_bag[num-1].id = cmnd->val[3];
 
-            object->setShotsMax(MAX(num, object->getShotsMax()));
+            object->setShotsMax(MAX((short)num, object->getShotsMax()));
             player->print("Loadable container object %s set to item number %s.\n",
                 object->info.str().c_str(), object->in_bag[num-1].str().c_str());
             log_immort(2, player, "%s set container %s(%s) to load object %s.\n",
@@ -1070,19 +1070,19 @@ int dmSetObj(Player* player, cmd* cmnd) {
             log_immort(2, player, "%s set %s's %s to %s.\n",
                 player->getCName(), objname, "Size", getSizeName(object->getSize()).c_str());
         } else if(flags[1] == 'm') {
-            num = MAX(0, MIN(num,5000));
+            num = MAX(0, MIN((int)num,5000));
             
             object->setShotsMax(num);
             result = object->getShotsMax();
             setType = "Max Shots";
         } else if(flags[1] == 'p') {
-            num=MAX(0, MIN(num, MAX_SP));
+            num=MAX(0, MIN((int)num, MAX_SP));
 
             object->setSpecial(num);
             result = object->getSpecial();
             setType = "Special";
         } else if(flags[1] == 't') {
-            num=MAX(0, MIN(num, 280));
+            num=MAX(0, MIN((int)num, 280));
 
             object->setMinStrength(num);
             result = object->getMinStrength();
@@ -1116,7 +1116,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
             result = object->getRequiredSkill();
             setType = "Required Skill";
         } else if(flags[1] == 'c' || !flags[1]) {
-            num=MAX(0, MIN(num, 5000));
+            num=MAX(0, MIN((int)num, 5000));
 
             object->setShotsCur(num);
             result = object->getShotsCur();
@@ -1152,9 +1152,9 @@ int dmSetObj(Player* player, cmd* cmnd) {
     case 'v':
         if(flags[1] == 'a' || !flags[1]) {
             if(!player->isDm())
-                num=MAX(0, MIN(num, 500000));
+                num=MAX(0L, MIN(num, 500000L));
             else
-                num=MAX(0, MIN(num, 20000000));
+                num=MAX(0L, MIN(num, 20000000L));
 
             object->value.set(num, GOLD);
             result = num;
@@ -1165,7 +1165,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
         break;
     case 'w':
         if(flags[1] == 'g' || (flags[1] == 'e' && flags[2] == 'i')) {
-            num=MAX(0, MIN(num, 5000));
+            num=MAX(0, MIN((int)num, 5000));
 
             object->setWeight(num);
             result = object->getWeight();
@@ -1577,7 +1577,7 @@ void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, cons
     newObj->setBulk(MAX(1, bulk));
     newObj->setNumAttacks(numAttacks);
     //newObj->setBulk(bulk);
-    value = MAX(1, value);
+    value = MAX(1.0, value);
     newObj->value.set((long)value, GOLD);
     newObj->setWearflag(WIELD);
 

@@ -1352,7 +1352,7 @@ void Player::loseExperience(Monster *killer) {
 
     } else {
         // Level 10 and over, 2% exp loss with a minimum of 10k
-        xploss = MAX((long)( (float)experience * 0.02), 10000);
+        xploss = MAX<long>((long)( (float)experience * 0.02), 10000);
         print("You have lost %ld experience.\n", (long)xploss);
         statistics.experienceLost((long)xploss);
         experience -= (long)xploss;
@@ -1376,8 +1376,8 @@ void Player::loseExperience(Monster *killer) {
         if(mrand(1,100) <= 25) {
             saves[count].chance -= 1;
             saves[count].gained -= 1;
-            saves[count].chance = MAX(1, saves[count].chance);
-            saves[count].gained = MAX(1, saves[count].gained);
+            saves[count].chance = MAX<short>(1, saves[count].chance);
+            saves[count].gained = MAX<short>(1, saves[count].gained);
         }
     }
 }
@@ -1449,7 +1449,7 @@ void Monster::distributeExperience(Creature *killer) {
             // since we split it evenly, in this case pets do NOT give their master
             // any extra experience.
 
-            int averageEffort = totalGroupDamage / tMAX<int>(expList.size(), 1);
+            int averageEffort = totalGroupDamage / MAX<int>(expList.size(), 1);
             std::clog << "GROUP EXP: TGD:" << totalGroupDamage << " Num:" << expList.size() << " AVG EFF:" << averageEffort << std::endl;
             for(std::pair<Player*, int> p : expList) {
                 Player* ply = p.first;
@@ -1463,7 +1463,7 @@ void Monster::distributeExperience(Creature *killer) {
                         ply->printColor("You receive reduced experience because you contributed less than half of the average effort.\n");
                         expGain *= (((float)effort)/totalGroupDamage);
                     }
-                    expGain = MAX(1, expGain);
+                    expGain = MAX<long>(1, expGain);
                     ply->gainExperience(this, killer, expGain, true);
                 }
             }
@@ -1497,7 +1497,7 @@ void Monster::distributeExperience(Creature *killer) {
         int effort = p.second;
 
         expGain = (experience * effort) / MAX(hp.getMax(), 1);
-        expGain = MIN(MAX(0,expGain), experience);
+        expGain = MIN<long>(MAX<long>(0,expGain), experience);
 
         ply->gainExperience(this, killer, expGain);
 
@@ -2114,7 +2114,7 @@ void Player::die(DeathType dt) {
             xploss = (int)((float)experience / 10.0);
         } else {
             // Level 10 and over, 2% exp loss with a minimum of 10k
-            xploss = MAX((long)( (float)experience * 0.02), 10000);
+            xploss = MAX<long>((long)( (float)experience * 0.02), 10000);
             print("You have lost %ld experience.\n", (long)xploss);
         }
         subExperience((long)xploss);
