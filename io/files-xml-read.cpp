@@ -206,20 +206,15 @@ bool loadRoom(const CatRef cr, UniqueRoom **pRoom, bool offline) {
     if(!validRoomId(cr))
         return(false);
 
-    // If the room is already loaded, return it
-    if(gServer->roomInQueue(cr)) {
-        gServer->frontRoomQueue(cr);
-        gServer->getRoomQueue(cr, pRoom);
-    } else {
-        // Otherwise load the room and return it
+    if(!gServer->roomCache.fetch(cr, *pRoom)) {
         if(!loadRoomFromFile(cr, pRoom, "", offline))
             return(false);
-        gServer->addRoomQueue(cr, pRoom);
-
+        gServer->roomCache.insert(cr, *pRoom);
         if(offline == false) {
             (*pRoom)->registerMo();
         }
     }
+
     return(true);
 }
 

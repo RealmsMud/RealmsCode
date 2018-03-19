@@ -18,6 +18,7 @@
 
 
 #include "config.hpp"
+#include "proto.hpp"
 #include "server.hpp"
 
 void handle_args(int argc, char *argv[]);

@@ -19,6 +19,10 @@
 #ifndef _CATREF_H
 #define _CATREF_H
 
+#include <unordered_map>
+#include <string>
+#include <functional>
+
 #include "common.hpp"
 
 class Creature;
@@ -42,6 +46,15 @@ public:
     short   id;
 };
 
+namespace std {
+    template <>
+        class hash<CatRef>{
+        public :
+            size_t operator()(const CatRef &cr ) const {
+                return hash<string>()(cr.str());
+            }
+    };
+};
 
 #endif  /* _CATREF_H */
 

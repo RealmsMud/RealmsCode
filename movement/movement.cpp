@@ -850,7 +850,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
         Area *area = gServer->getArea(l.mapmarker.getArea());
         if(!area) {
             if(!teleport && creature) {
-                creature->print("Off the map in that direction.\n");
+				creature->print("Off the map in that direction.\n");
                 if(creature->isStaff())
                     creature->printColor("^eMove::getRoom failed on an area room.\n");
             }

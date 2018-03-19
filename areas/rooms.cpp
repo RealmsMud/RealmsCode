@@ -1018,7 +1018,7 @@ void UniqueRoom::destroy() {
     strcpy(filename, roomPath(info));
     unlink(filename);
     expelPlayers(true, true, true);
-    gServer->delRoomQueue(info);
+    gServer->roomCache.remove(info);
     delete this;
 }
 

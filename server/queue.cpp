@@ -31,16 +31,7 @@
 // program.
 
 void Server::flushRoom() {
-    qtag *qt=0;
-
-    while(1) {
-        pullQueue(&qt, &roomHead, &roomTail);
-        if(!qt)
-            break;
-        delete roomQueue[qt->str].rom;
-        roomQueue.erase(qt->str);
-        delete qt;
-    }
+	roomCache.clear();
 }
 
 //*********************************************************************
@@ -52,6 +43,7 @@ void Server::flushRoom() {
 // before leaving the program.
 
 void Server::flushMonster() {
+	monsterCache.clear();
     qtag *qt=0;
 
     while(1) {
@@ -73,6 +65,7 @@ void Server::flushMonster() {
 // leaving the program.
 
 void Server::flushObject() {
+	objectCache.clear();
     qtag *qt=0;
 
     while(1) {
@@ -273,84 +266,9 @@ void Server::getObjectQueue(const CatRef cr, Object** pObject) {
 }
 
 //**********************************************************************
-//                      roomInQueue
-//**********************************************************************
-
-bool Server::roomInQueue(const CatRef cr) {
-    return(roomQueue.find(cr.str()) != roomQueue.end());
-}
-
-//**********************************************************************
-//                      frontRoomQueue
-//**********************************************************************
-
-void Server::frontRoomQueue(const CatRef cr) {
-    frontQueue(&roomQueue[cr.str()].q_rom, &roomHead, &roomTail);
-}
-
-//**********************************************************************
-//                      addRoomQueue
-//**********************************************************************
-
-void Server::addRoomQueue(const CatRef cr, UniqueRoom** pRoom) {
-    qtag    *qt;
-
-    if(roomInQueue(cr))
-        return;
-
-    qt = new qtag;
-    if(!qt)
-        merror("addRoomQueue", FATAL);
-    qt->str = cr.str();
-    roomQueue[qt->str].rom = *pRoom;
-    roomQueue[qt->str].q_rom = qt;
-    putQueue(&qt, &roomHead, &roomTail);
-
-    while(roomQueue.size() > RQMAX) {
-        pullQueue(&qt, &roomHead, &roomTail);
-        if(!roomQueue[qt->str].rom->players.empty()) {
-            putQueue(&qt, &roomHead, &roomTail);
-            continue;
-        }
-        if(!roomQueue[qt->str].rom)
-            merror("ERROR - loadRoom", NONFATAL);
-        // Save Room
-        roomQueue[qt->str].rom->saveToFile(PERMONLY);
-        delete roomQueue[qt->str].rom;
-        roomQueue.erase(qt->str);
-        delete qt;
-    }
-}
-
-//**********************************************************************
-//                      delRoomQueue
-//**********************************************************************
-
-void Server::delRoomQueue(const CatRef cr) {
-    if(!roomInQueue(cr))
-        return;
-
-    qtag    *qt = roomQueue[cr.str()].q_rom;
-    delQueue(&qt, &roomHead, &roomTail);
-    delete qt;
-    roomQueue.erase(cr.str());
-}
-
-//**********************************************************************
-//                      getRoomQueue
-//**********************************************************************
-
-void Server::getRoomQueue(const CatRef cr, UniqueRoom** pRoom) {
-    *pRoom = roomQueue[cr.str()].rom;
-}
-
-//**********************************************************************
 //                      queue size
 //**********************************************************************
 
-int Server::roomQueueSize() {
-    return(roomQueue.size());
-}
 int Server::monsterQueueSize() {
     return(monsterQueue.size());
 }
@@ -369,15 +287,15 @@ void Server::killMortalObjects() {
     std::list<Area*>::iterator it;
     std::map<bstring, AreaRoom*>::iterator rt;
     std::list<AreaRoom*> toDelete;
-    Area    *area=0;
-    AreaRoom* room=0;
-    qtag    *qt=0;
+    Area    *area=nullptr;
+    AreaRoom* room=nullptr;
+    UniqueRoom* r=nullptr;
 
-    qt = roomHead;
-    while(qt) {
-        if(roomQueue[qt->str].rom)
-            roomQueue[qt->str].rom->killMortalObjects();
-        qt = qt->next;
+    for(auto it : roomCache) {
+        r = it.second->second;
+        if(!r)
+            continue;
+	    r->killMortalObjects();
     }
 
     for(it = gServer->areas.begin() ; it != gServer->areas.end() ; it++) {
@@ -407,14 +325,14 @@ void Server::killMortalObjects() {
 // rooms are saved back.
 
 void Server::resaveAllRooms(char permonly) {
-    qtag    *qt = roomHead;
-    while(qt) {
-        if(roomQueue[qt->str].rom) {
-            if(roomQueue[qt->str].rom->saveToFile(permonly) < 0)
-                return;
-        }
-        qt = qt->next;
-    }
+	UniqueRoom *r;
+
+    for(auto it : roomCache) {
+        r = it.second->second;
+        if(!r)
+            continue;
+		r->saveToFile(permonly);
+	}
 }
 
 //*********************************************************************
