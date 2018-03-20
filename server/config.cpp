@@ -109,6 +109,7 @@ void Config::cleanUp() {
     clearEffects();
     clearSongs();
     clearProxyAccess();
+    clearMsdp();
     inUse = false;
     listing = false;
 }

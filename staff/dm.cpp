@@ -2215,7 +2215,7 @@ int dmInfo(Player* player, cmd* cmnd) {
     player->print("\n    Bytes in:  %9ld\n    Bytes out: %9ld(%ld)[%f]\n", InBytes, OutBytes, UnCompressedBytes, (OutBytes*1.0)/(UnCompressedBytes*1.0));
     player->print("\nInternal Cache Queue Sizes:\n");
     player->print("   Rooms: %-5d   Monsters: %-5d   Objects: %-5d\n\n",
-            gServer->roomCache.size(), gServer->monsterQueueSize(), gServer->objectQueueSize());
+            gServer->roomCache.size(), gServer->monsterCache.size(), gServer->objectCache.size());
     player->print("Wander update: %d\n", Random_update_interval);
     if(player->isDm())
         player->print("      Players: %d\n\n", Socket::NumSockets);

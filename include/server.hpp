@@ -88,9 +88,9 @@ using SocketList = std::list<Socket*>;
 using SocketVector= std::vector<Socket*>;
 using PlayerMap = std::map<bstring, Player*>;
 
-using RoomCache = LRU::lru_cache<CatRef, UniqueRoom*>;
-using MonsterCache = LRU::lru_cache<CatRef, Monster*, FreeCrt>;
-using ObjectCache = LRU::lru_cache<CatRef, Object*>;
+using RoomCache = LRU::lru_cache<CatRef, UniqueRoom>;
+using MonsterCache = LRU::lru_cache<CatRef, Monster, FreeCrt>;
+using ObjectCache = LRU::lru_cache<CatRef, Object>;
 
 class Server
 {
@@ -196,17 +196,6 @@ private:
 
     int Deadchildren;
 
-protected:
-
-    // Queue header and tail pointers
-    qtag *monsterHead;
-    qtag *monsterTail;
-    qtag *objectHead;
-    qtag *objectTail;
-
-    std::map<bstring, osparse>  objectQueue;
-    std::map<bstring, msparse>  monsterQueue;
-
 public:
     std::list<Area*> areas;
 
@@ -262,14 +251,6 @@ private:
     // Delayed Actions
 protected:
     void parseDelayedActions(long t);
-
-    // Queue
-    void putQueue(qtag **qt, qtag **headptr, qtag **tailptr);
-    void pullQueue(qtag **qt, qtag **headptr, qtag **tailptr);
-    void frontQueue(qtag **qt, qtag **headptr, qtag **tailptr);
-    void delQueue(qtag **qt, qtag **headptr, qtag **tailptr);
-
-
 
 #ifdef SQL_LOGGER
 
@@ -330,27 +311,14 @@ public:
     void flushMonster();
     void flushObject();
 
-    bool monsterInQueue(const CatRef cr);
-    void frontMonsterQueue(const CatRef cr);
-    void addMonsterQueue(const CatRef cr, Monster** pMonster);
-    void getMonsterQueue(const CatRef cr, Monster** pMonster);
-
-    bool objectInQueue(const CatRef cr);
-    void frontObjectQueue(const CatRef cr);
-    void addObjectQueue(const CatRef cr, Object** pObject);
-    void getObjectQueue(const CatRef cr, Object** pObject);
-
     bool reloadRoom(BaseRoom* room);
     UniqueRoom* reloadRoom(CatRef cr);
     int resaveRoom(CatRef cr);
     int saveStorage(UniqueRoom* uRoom);
     int saveStorage(CatRef cr);
     void resaveAllRooms(char permonly);
-    void replaceMonsterInQueue(CatRef cr, Monster *creature);
-    void replaceObjectInQueue(CatRef cr, Object* object);
-
-    int monsterQueueSize();
-    int objectQueueSize();
+//    void replaceMonsterInQueue(CatRef cr, Monster *creature);
+//    void replaceObjectInQueue(CatRef cr, Object* object);
 
     // Areas
     Area *getArea(int id);

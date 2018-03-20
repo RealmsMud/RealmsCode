@@ -124,16 +124,15 @@ bool loadMonster(const CatRef cr, Monster ** pMonster, bool offline) {
         return(false);
 
     // Check if monster is already loaded, and if so return pointer
-    if(gServer->monsterInQueue(cr)) {
-        gServer->frontMonsterQueue(cr);
-        *pMonster = new Monster;
-        gServer->getMonsterQueue(cr, pMonster);
+    if(gServer->monsterCache.contains(cr)) {
+    	*pMonster = new Monster;
+    	gServer->monsterCache.fetch(cr, pMonster, false);
     } else {
         // Otherwise load the monster and return a pointer to the newly loaded monster
         // Load the creature from it's file
         if(!loadMonsterFromFile(cr, pMonster, "", offline))
             return(false);
-        gServer->addMonsterQueue(cr, pMonster);
+        gServer->monsterCache.insert(cr, pMonster);
     }
 
     (*pMonster)->fd = -1;
@@ -164,20 +163,16 @@ bool loadObject(const CatRef cr, Object** pObject, bool offline) {
         return(false);
 
     // Check if object is already loaded, and if so return pointer
-    if(gServer->objectInQueue(cr)) {
-        gServer->frontObjectQueue(cr);
-
-        *pObject = new Object;
-        gServer->getObjectQueue(cr, pObject);
-    }
-    // Otherwise load the object and return a pointer to the newly loaded object
-    else {
-        // Load the object from it's file
+    if(gServer->objectCache.contains(cr)) {
+    	*pObject = new Object;
+    	gServer->objectCache.fetch(cr, pObject, false);
+    } else {
+		// Otherwise load the object and return a pointer to the newly loaded object
+		// Load the object from it's file
         if(!loadObjectFromFile(cr, pObject, offline))
             return(false);
-        gServer->addObjectQueue(cr, pObject);
+        gServer->objectCache.insert(cr, pObject);
     }
-
 
     if(pObject) {
         // Quest items are now auto NO-DROP
@@ -206,10 +201,10 @@ bool loadRoom(const CatRef cr, UniqueRoom **pRoom, bool offline) {
     if(!validRoomId(cr))
         return(false);
 
-    if(!gServer->roomCache.fetch(cr, *pRoom)) {
+    if(!gServer->roomCache.fetch(cr, pRoom)) {
         if(!loadRoomFromFile(cr, pRoom, "", offline))
             return(false);
-        gServer->roomCache.insert(cr, *pRoom);
+        gServer->roomCache.insert(cr, pRoom);
         if(offline == false) {
             (*pRoom)->registerMo();
         }

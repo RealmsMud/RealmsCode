@@ -84,7 +84,7 @@ class_stats_struct class_stats[static_cast<int>(CreatureClass::CLASS_COUNT)] = {
     { 30, 30, 10, 10,  5,  5,  5}   // dungeonmaster
 };
 
-int statBonus[40] = {
+int statBonus[MAXALVL] = {
     -4, -4, -4,         // 0 - 2
     -3, -3,             // 3 - 4
     -2, -2,             // 5 - 6

@@ -158,6 +158,7 @@ public:
 
 // MSDP
     bool initMsdp();
+    void clearMsdp();
 
 // Ships
     // these functions deal with time and ships

@@ -150,7 +150,9 @@ void Server::showMemory(Socket* sock) {
 
     sock->print("\n\n");
     sock->print("Cache Stats:\n");
-    sock->print("Room: %s", gServer->roomCache.get_stat_info(true).c_str());
+    sock->print("Room: %s", gServer->roomCache.get_stat_info().c_str());
+    sock->print("Monster: %s", gServer->monsterCache.get_stat_info().c_str());
+    sock->print("Object: %s", gServer->objectCache.get_stat_info().c_str());
 }
 
 //*********************************************************************

@@ -1174,11 +1174,13 @@ void Player::reset() {
     objIncrease.clear();
     lore.clear();
     recipes.clear();
-    std::map<int, QuestCompletion*>::iterator qIt;
-    for(qIt = questsInProgress.begin() ; qIt != questsInProgress.end() ; qIt++) {
+    for(auto qIt = questsInProgress.begin() ; qIt != questsInProgress.end() ; qIt++) {
         delete (*qIt).second;
     }
     questsInProgress.clear();
+    for(auto qIt = questsCompleted.begin() ; qIt != questsCompleted.end() ; qIt++) {
+        delete (*qIt).second;
+    }
     questsCompleted.clear();
 }
 
@@ -1650,10 +1652,11 @@ Player::~Player() {
         }
     }
 
-    QuestCompletion *quest;
-    for(std::pair<int, QuestCompletion*> p : questsInProgress) {
-        quest = p.second;
-        delete quest;
+    for(auto qp : questsInProgress) {
+        delete qp.second;
+    }
+    for(auto qc : questsCompleted) {
+        delete qc.second;
     }
 
     questsInProgress.clear();

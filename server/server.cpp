@@ -96,7 +96,7 @@ bool idComp::operator() (const bstring& lhs, const bstring& rhs) const {
 //                      Server
 //********************************************************************
 
-Server::Server(): roomCache(RQMAX), monsterCache(MQMAX), objectCache(OQMAX) {
+Server::Server(): roomCache(RQMAX, true), monsterCache(MQMAX, false), objectCache(OQMAX, false) {
 	std::clog << "Constructing the Server." << std::endl;
     FD_ZERO(&inSet);
     FD_ZERO(&outSet);
@@ -112,8 +112,6 @@ Server::Server(): roomCache(RQMAX), monsterCache(MQMAX), objectCache(OQMAX) {
     loadDnsCache();
     pythonHandler = 0;
     idDirty = false;
-
-    monsterHead = monsterTail = objectHead = objectTail = 0;
 
 #ifdef SQL_LOGGER
     connActive = false;
@@ -2368,7 +2366,7 @@ UniqueRoom* Server::reloadRoom(CatRef cr) {
         oldRoom->objects.clear();
     }
 
-    roomCache.insert(cr, room);
+    roomCache.insert(cr, &room);
 
     room->registerMo();
 
