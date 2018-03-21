@@ -42,6 +42,7 @@ namespace odbc {
 #include "queue.hpp"
 #include "swap.hpp"
 #include "weather.hpp"
+#include "lru/lru.hpp"
 //#include "money.hpp"
 
 class cmd;
@@ -58,6 +59,9 @@ class ReportedMsdpVariable;
 class Socket;
 class WebInterface;
 
+struct FreeCrt {
+		void operator()( Monster* mon ) { free_crt((Creature*)mon); }
+};
 
 enum GoldLog {
     GOLD_IN,
@@ -78,11 +82,16 @@ namespace boost { namespace python {
 #ifndef PYTHON_CODE_GEN
 typedef std::map<bstring, MudObject*,idComp> IdMap;
 #endif
-typedef std::list<Monster*> MonsterList;
-typedef std::list<Group*> GroupList;
-typedef std::list<Socket*> SocketList;
-typedef std::vector<Socket*> SocketVector;
-typedef std::map<bstring, Player*> PlayerMap;
+using MonsterList= std::list<Monster*>;
+using GroupList = std::list<Group*>;
+using SocketList = std::list<Socket*>;
+using SocketVector= std::vector<Socket*>;
+using PlayerMap = std::map<bstring, Player*>;
+
+using RoomCache = LRU::lru_cache<CatRef, UniqueRoom>;
+using MonsterCache = LRU::lru_cache<CatRef, Monster, FreeCrt>;
+using ObjectCache = LRU::lru_cache<CatRef, Object>;
+
 class Server
 {
 
@@ -126,11 +135,15 @@ public:
         }
     };
 
-    // Temp public
 public:
     PlayerMap players; // Map of all players
     SocketList sockets; // List of all connected sockets
     SocketVector* vSockets = 0;
+
+    RoomCache roomCache;
+    MonsterCache monsterCache;
+    ObjectCache objectCache;
+
     void handlePythonError();
     
 // ******************
@@ -182,19 +195,6 @@ private:
     long lastActiveUpdate;
 
     int Deadchildren;
-
-protected:
-    // Queue header and tail pointers
-    qtag *roomHead;
-    qtag *roomTail;
-    qtag *monsterHead;
-    qtag *monsterTail;
-    qtag *objectHead;
-    qtag *objectTail;
-
-    std::map<bstring, rsparse>  roomQueue;
-    std::map<bstring, osparse>  objectQueue;
-    std::map<bstring, msparse>  monsterQueue;
 
 public:
     std::list<Area*> areas;
@@ -251,14 +251,6 @@ private:
     // Delayed Actions
 protected:
     void parseDelayedActions(long t);
-
-    // Queue
-    void putQueue(qtag **qt, qtag **headptr, qtag **tailptr);
-    void pullQueue(qtag **qt, qtag **headptr, qtag **tailptr);
-    void frontQueue(qtag **qt, qtag **headptr, qtag **tailptr);
-    void delQueue(qtag **qt, qtag **headptr, qtag **tailptr);
-
-
 
 #ifdef SQL_LOGGER
 
@@ -319,34 +311,14 @@ public:
     void flushMonster();
     void flushObject();
 
-    bool monsterInQueue(const CatRef cr);
-    void frontMonsterQueue(const CatRef cr);
-    void addMonsterQueue(const CatRef cr, Monster** pMonster);
-    void getMonsterQueue(const CatRef cr, Monster** pMonster);
-
-    bool objectInQueue(const CatRef cr);
-    void frontObjectQueue(const CatRef cr);
-    void addObjectQueue(const CatRef cr, Object** pObject);
-    void getObjectQueue(const CatRef cr, Object** pObject);
-
-    bool roomInQueue(const CatRef cr);
-    void frontRoomQueue(const CatRef cr);
-    void addRoomQueue(const CatRef cr, UniqueRoom** pRoom);
-    void delRoomQueue(const CatRef cr);
-    void getRoomQueue(const CatRef cr, UniqueRoom** pRoom);
-
     bool reloadRoom(BaseRoom* room);
-    int reloadRoom(CatRef cr);
+    UniqueRoom* reloadRoom(CatRef cr);
     int resaveRoom(CatRef cr);
     int saveStorage(UniqueRoom* uRoom);
     int saveStorage(CatRef cr);
     void resaveAllRooms(char permonly);
-    void replaceMonsterInQueue(CatRef cr, Monster *creature);
-    void replaceObjectInQueue(CatRef cr, Object* object);
-
-    int roomQueueSize();
-    int monsterQueueSize();
-    int objectQueueSize();
+//    void replaceMonsterInQueue(CatRef cr, Monster *creature);
+//    void replaceObjectInQueue(CatRef cr, Object* object);
 
     // Areas
     Area *getArea(int id);

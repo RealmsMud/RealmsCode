@@ -2651,7 +2651,7 @@ void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
         player->print("Monster %s updated.\n", cr.str().c_str());
 
     if(player->flagIsSet(P_NO_FLUSHCRTOBJ))
-        gServer->replaceMonsterInQueue(target->info, target);
+        gServer->monsterCache.insert(target->info, &target);
 }
 
 //*********************************************************************

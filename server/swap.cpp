@@ -783,14 +783,14 @@ void Config::swap(Player* player, bstring name) {
     }
 
     // remove the swapped rooms from the queue
-    if(gServer->roomInQueue(currentSwap.origin)) {
-        gServer->getRoomQueue(currentSwap.origin, &uOrigin);
-        gServer->delRoomQueue(currentSwap.origin);
+    if(gServer->roomCache.contains(currentSwap.origin)) {
+        gServer->roomCache.fetch(currentSwap.origin, &uOrigin, true);
+        gServer->roomCache.remove(currentSwap.origin);
     }
-    if(gServer->roomInQueue(currentSwap.target)) {
-        gServer->getRoomQueue(currentSwap.target, &uTarget);
-        gServer->delRoomQueue(currentSwap.target);
-    } else {
+    if(gServer->roomCache.contains(currentSwap.target)) {
+		gServer->roomCache.fetch(currentSwap.target, &uTarget, true);
+		gServer->roomCache.remove(currentSwap.target);
+	} else {
         // the original room won't exist anymore
         unlink(roomPath(currentSwap.origin));
     }
@@ -798,9 +798,9 @@ void Config::swap(Player* player, bstring name) {
     // readd them to the queue under their new names
     // DO NOT update now: the loop just after this will do it
     if(uOrigin)
-        gServer->addRoomQueue(currentSwap.target, &uOrigin);
+    	gServer->roomCache.insert(currentSwap.target, &uOrigin);
     if(uTarget)
-        gServer->addRoomQueue(currentSwap.origin, &uTarget);
+    	gServer->roomCache.insert(currentSwap.origin, &uTarget);
 
     // go through players, rooms, and arearooms saved while the offline search
     // was running, also includes results of the offline search

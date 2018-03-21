@@ -38,6 +38,7 @@
     msdpVariables[#var] = new MsdpVariable(#var, MSDPVar::var, (report), (player), \
     (config), (write), (interval), (sendfn), (updatefn), (isgrp))
 
+
 bool Config::initMsdp() {
     //                Name                   Report  Ply  Config W-Once  U  sendFn UpdateFn isGrp
     // Server Info
@@ -91,6 +92,12 @@ bool Config::initMsdp() {
     return true;
 }
 
+void Config::clearMsdp(void) {
+	for(auto m : msdpVariables) {
+		delete m.second;
+	}
+	msdpVariables.clear();
+}
 
 void Server::processMsdp(void) {
     for(Socket *sock : sockets) {

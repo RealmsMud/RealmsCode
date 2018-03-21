@@ -96,7 +96,8 @@ bool idComp::operator() (const bstring& lhs, const bstring& rhs) const {
 //                      Server
 //********************************************************************
 
-Server::Server() {
+Server::Server(): roomCache(RQMAX, true), monsterCache(MQMAX, false), objectCache(OQMAX, false) {
+	std::clog << "Constructing the Server." << std::endl;
     FD_ZERO(&inSet);
     FD_ZERO(&outSet);
     FD_ZERO(&excSet);
@@ -112,9 +113,6 @@ Server::Server() {
     pythonHandler = 0;
     idDirty = false;
 
-    roomHead = roomTail = monsterHead = monsterTail = objectHead = objectTail = 0;
-
-
 #ifdef SQL_LOGGER
     connActive = false;
 #endif // SQL_LOGGER
@@ -126,14 +124,14 @@ Server::Server() {
 //********************************************************************
 
 Server::~Server() {
-    std::clog << "Server destructor called!\n";
+    std::clog << "Destroying the server!" << std::endl;
     if(running) {
         // Do shutdown here
     }
     effectsIndex.clear();
     cleanUpPython();
     clearAreas();
-
+    delete vSockets;
 
 #ifdef SQL_LOGGER
     cleanUpSql();
@@ -147,7 +145,7 @@ Server::~Server() {
 
 bool Server::init() {
 
-    std::clog << "Initializing Server.\n";
+    std::clog << "Initializing Server." << std::endl;
 
     std::clog << "Setting RLIMIT...";
     struct rlimit lim;
@@ -209,7 +207,7 @@ bool Server::init() {
     umask(000);
     srand(getpid() + time(0));
     if(rebooting) {
-        std::clog << "Doing a reboot.\n";
+        std::clog << "Doing a reboot." << std::endl;
         finishReboot();
     } else if (!gConfig->isListing()) {
         addListenPort(Port);
@@ -2303,12 +2301,10 @@ bool Server::reloadRoom(BaseRoom* room) {
     UniqueRoom* uRoom = room->getAsUniqueRoom();
 
     if(uRoom) {
-        bstring str = uRoom->info.str();
-        if( roomQueue.find(str) != roomQueue.end() &&
-            roomQueue[str].rom &&
-            reloadRoom(uRoom->info) >= 0
-        ) {
-            roomQueue[str].rom->addPermCrt();
+    	CatRef cr = uRoom->info;
+        if(reloadRoom(cr))
+        {
+            roomCache.fetch(cr, false)->addPermCrt();
             return(true);
         }
     } else {
@@ -2337,48 +2333,44 @@ bool Server::reloadRoom(BaseRoom* room) {
     return(false);
 }
 
-int Server::reloadRoom(CatRef cr) {
-    UniqueRoom  *room=0;
+UniqueRoom* Server::reloadRoom(CatRef cr) {
+    UniqueRoom  *room=nullptr, *oldRoom=nullptr;
 
     bstring str = cr.str();
-    if(roomQueue.find(str) == roomQueue.end())
-        return(0);
-    if(!roomQueue[str].rom)
-        return(0);
-
-//  roomQueue[str].rom->purge();
+    oldRoom = roomCache.fetch(cr);
+    if(!oldRoom)
+    	return nullptr;
 
     if(!loadRoomFromFile(cr, &room))
-        return(-1);
+        return(nullptr);
+
     // Move any current players & monsters into the new room
-    for(Player* ply : roomQueue[str].rom->players) {
+    for(Player* ply : oldRoom->players) {
         room->players.insert(ply);
         ply->setParent(room);
     }
-    roomQueue[str].rom->players.clear();
+    oldRoom->players.clear();
 
     if(room->monsters.empty()) {
-        for(Monster* mons : roomQueue[str].rom->monsters) {
+        for(Monster* mons : oldRoom->monsters) {
             room->monsters.insert(mons);
             mons->setParent(room);
         }
-        roomQueue[str].rom->monsters.clear();
+        oldRoom->monsters.clear();
     }
     if(room->objects.empty()) {
-        for(Object* obj : roomQueue[str].rom->objects) {
+        for(Object* obj : oldRoom->objects) {
             room->objects.insert(obj);
             obj->setParent(room);
         }
-        roomQueue[str].rom->objects.clear();
+        oldRoom->objects.clear();
     }
 
-
-    delete roomQueue[str].rom;
-    roomQueue[str].rom = room;
+    roomCache.insert(cr, &room);
 
     room->registerMo();
 
-    return(0);
+    return(room);
 }
 
 //*********************************************************************
@@ -2390,9 +2382,9 @@ int Server::reloadRoom(CatRef cr) {
 int saveRoomToFile(UniqueRoom* pRoom, int permOnly);
 
 int Server::resaveRoom(CatRef cr) {
-    bstring str = cr.str();
-    if(roomQueue[str].rom)
-        roomQueue[str].rom->saveToFile(ALLITEMS);
+    UniqueRoom *room = roomCache.fetch(cr);
+    if(room)
+        room->saveToFile(ALLITEMS);
     return(0);
 }
 
@@ -2403,12 +2395,13 @@ int Server::saveStorage(UniqueRoom* uRoom) {
     return(saveStorage(uRoom->info));
 }
 int Server::saveStorage(CatRef cr) {
-    bstring str = cr.str();
-    if(!roomQueue[str].rom)
-        return(0);
 
-    if(roomQueue[str].rom->saveToFile(ALLITEMS) < 0)
-        return(-1);
+    UniqueRoom *room = roomCache.fetch(cr);
+    if(room) {
+        if(room->saveToFile(ALLITEMS) < 0) {
+            return(-1);
+        }
+    }
 
     return(0);
 }

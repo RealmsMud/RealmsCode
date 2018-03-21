@@ -77,7 +77,7 @@ char class_str[][16] = { "None", "Assassin", "Berserker", "Cleric", "Fighter", "
         "Pureblood", "Monk", "Death Knight", "Druid", "Lich", "Werewolf", "Bard", "Rogue", "Builder", "Unused",
         "Caretaker", "Dungeonmaster" };
 
-char class_abbrev[][8] = { "Assn", "Bers", "Cleric", "Ftr", "Mage", "Pal", "Rang", "Thief", "Vamp", "Monk", "Dknght",
+char class_abbrev[][8] = { "None", "Assn", "Bers", "Cleric", "Ftr", "Mage", "Pal", "Rang", "Thief", "Vamp", "Monk", "Dknght",
         "Druid", "Lich", "Were", "Bard", "Rogue", "Build", "Crt", "CT", "DM" };
 
 char shortClassAbbrev[][8] = { "A", "Be", "Cl", "F", "M", "P", "R", "T", "Va", "Mo", "Dk", "Dr", "L", "W", "Bd", "Ro",
@@ -457,7 +457,7 @@ char *getClassAbbrev(int nIndex) {
 
     nIndex = MAX( 0, MIN(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
 
-    return(class_abbrev[nIndex-1] );
+    return(class_abbrev[nIndex] );
 }
 
 char *getClassName(Player* player) {

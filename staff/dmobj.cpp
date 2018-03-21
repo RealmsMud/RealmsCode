@@ -1519,7 +1519,7 @@ void dmResaveObject(const Player* player, Object* object, bool flush) {
 
     // swap this new Object if its in the queue
     if(flush || player->flagIsSet(P_NO_FLUSHCRTOBJ))
-        gServer->replaceObjectInQueue(object->info, object);
+        gServer->objectCache.insert(object->info, &object);
 }
 
 //*********************************************************************

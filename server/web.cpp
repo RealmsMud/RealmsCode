@@ -809,14 +809,14 @@ bool WebInterface::handleInput() {
                 monster->readFromXml(rootNode);
                 monster->saveToFile();
                 broadcast(isDm, "^y*** Monster %s - %s^y updated by %s.", monster->info.str().c_str(), monster->getCName(), monster->last_mod);
-                gServer->replaceMonsterInQueue(monster->info, monster);
+                gServer->monsterCache.insert(monster->info, &monster);
             }
             else if(type == "OBJ") {
                 Object* object = new Object();
                 object->readFromXml(rootNode);
                 object->saveToFile();
                 broadcast(isDm, "^y*** Object %s - %s^y updated by %s.", object->info.str().c_str(), object->getCName(), object->lastMod.c_str());
-                gServer->replaceObjectInQueue(object->info, object);
+                gServer->objectCache.insert(object->info, &object);
             }
             else if(type == "ROM") {
                 UniqueRoom* room = new UniqueRoom();

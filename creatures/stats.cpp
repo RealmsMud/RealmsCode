@@ -244,6 +244,7 @@ bool Stat::removeModifier(bstring name) {
     if(it == modifiers.end())
         return(false);
 
+    delete it->second;
     modifiers.erase(it);
     setDirty();
     return(true);

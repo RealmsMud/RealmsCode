@@ -129,7 +129,7 @@ char up(char ch) {
 }
 
 int bonus(int num) {
-    return(statBonus[MIN(num, MAX_STAT_NUM)/10]);
+    return( statBonus[MIN(num/10, MAXALVL - 1)] );
 }
 
 int crtWisdom(Creature* creature) {

@@ -23,9 +23,11 @@
 #include "creatures.hpp"
 #include "common.hpp"
 #include "join.hpp"
+#include "proto.hpp"
 #include "objects.hpp"
 #include "rooms.hpp"
 #include "xml.hpp"
+
 
 namespace fs = boost::filesystem;
 

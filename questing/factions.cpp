@@ -255,7 +255,8 @@ long Faction::getInitialRegard(const Player* player) const {
 bool Faction::alwaysHates(const Player* player) const {
     if(initial.getClassRegard(player->getClass()) == ALWAYS_HATE)
         return(true);
-    if(initial.getRaceRegard(player->getRace()) == ALWAYS_HATE)
+    // illusioned race affects faction
+    if(initial.getRaceRegard(player->getDisplayRace()) == ALWAYS_HATE)
         return(true);
     if(player->getDeity() && initial.getDeityRegard(player->getDeity()) == ALWAYS_HATE)
         return(true);
@@ -279,7 +280,8 @@ long Faction::getUpperLimit(const Player* player) const {
     x = max.getClassRegard(player->getClass());
     if(x) limit = MIN(x, limit);
 
-    x = max.getRaceRegard(player->getRace());
+    // illusioned race affects faction
+    x = max.getRaceRegard(player->getDisplayRace());
     if(x) limit = MIN(x, limit);
 
     if(player->getDeity()) {
@@ -318,7 +320,8 @@ long Faction::getLowerLimit(const Player* player) const {
     x = min.getClassRegard(player->getClass());
     if(x) limit = MAX(x, limit);
 
-    x = min.getRaceRegard(player->getRace());
+    // illusioned race affects faction
+    x = min.getRaceRegard(player->getDisplayRace());
     if(x) limit = MAX(x, limit);
 
     if(player->getDeity()) {

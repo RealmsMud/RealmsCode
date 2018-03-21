@@ -71,8 +71,8 @@ void Server::showMemory(Socket* sock) {
 
     std::map<bstring, rsparse>::iterator it;
 
-    for(it = roomQueue.begin(); it != roomQueue.end() ; it++) {
-        r = (*it).second.rom;
+    for(auto it : roomCache) {
+        r = it.second->second;
         if(!r)
             continue;
         rooms++;
@@ -147,6 +147,12 @@ void Server::showMemory(Socket* sock) {
     sock->print("Total Talks:     %-5d", talks);
     sock->print("  %ld -> Total memory\n", talk_mem);
     sock->print("Total Memory:    %ld  (%s)\n\n", total, sizeInfo(total).c_str());
+
+    sock->print("\n\n");
+    sock->print("Cache Stats:\n");
+    sock->print("Room: %s", gServer->roomCache.get_stat_info().c_str());
+    sock->print("Monster: %s", gServer->monsterCache.get_stat_info().c_str());
+    sock->print("Object: %s", gServer->objectCache.get_stat_info().c_str());
 }
 
 //*********************************************************************
