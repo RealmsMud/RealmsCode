@@ -81,7 +81,6 @@ CatRef shopStorageRoom(const UniqueRoom *shop);
 
 // config.cpp
 int getPkillInCombatDisabled();
-int getPlayersCanMudmailStaff();
 
 
 // creature.cpp

@@ -1175,7 +1175,6 @@ int dmGameStatus(Player* player, cmd* cmnd) {
     player->printColor("^B\nSettings\n");
     player->printColor("^cCheckdouble      = ^C%-3s     ", iToYesNo(gConfig->checkDouble));
     player->printColor("^cNopkillcombat    = ^C%-3s\n", iToYesNo(getPkillInCombatDisabled()));
-    player->printColor("^cPlayersCanMailStaff    = ^C%-3s\n", iToYesNo(getPlayersCanMudmailStaff()));
     player->printColor("^cAprilFools       = ^C%-3s     ", iToYesNo(gConfig->willAprilFools()));
     player->printColor("^cFlashPolicyPort  = ^C%d\n", gConfig->getFlashPolicyPort());
 

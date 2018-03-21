@@ -125,7 +125,7 @@ int cmdSendMail(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(!getPlayersCanMudmailStaff() && target->isCt() && !player->isWatcher() && !player->isStaff() && !player->flagIsSet(P_CAN_MUDMAIL_STAFF)) {
+    if(target->isCt() && !player->isWatcher() && !player->isStaff() && !player->flagIsSet(P_CAN_MUDMAIL_STAFF)) {
         player->print("Please do not mudmail Caretakers and DMs directly.\n");
         player->print("You need to contact a watcher.\n");
         if(!online)
