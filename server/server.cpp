@@ -131,7 +131,7 @@ Server::~Server() {
     effectsIndex.clear();
     cleanUpPython();
     clearAreas();
-
+    delete vSockets;
 
 #ifdef SQL_LOGGER
     cleanUpSql();
@@ -2370,7 +2370,7 @@ UniqueRoom* Server::reloadRoom(CatRef cr) {
 
     room->registerMo();
 
-    return(0);
+    return(room);
 }
 
 //*********************************************************************

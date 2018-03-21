@@ -1626,6 +1626,13 @@ void Creature::crtDestroy() {
 
 Monster::~Monster() {
     crtDestroy();
+    for(auto it = responses.begin(); it != responses.end();) {
+    	auto response = (*it);
+    	it++;
+    	delete response;
+    }
+    responses.clear();
+
     if(threatTable) {
         delete threatTable;
         threatTable = 0;
