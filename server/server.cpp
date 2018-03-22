@@ -69,7 +69,6 @@ Server* Server::myInstance = nullptr;
 bool CanCleanupRoomFn::operator()( UniqueRoom* r ) { return r->players.empty(); }
 
 void CleanupRoomFn::operator()( UniqueRoom* r ) {
-	std::cout << "Cleaning up a room" << std::endl;
 	r->saveToFile(PERMONLY);
 	delete r;
 }
@@ -104,7 +103,7 @@ bool idComp::operator() (const bstring& lhs, const bstring& rhs) const {
 //                      Server
 //********************************************************************
 
-Server::Server(): roomCache(10, true), monsterCache(MQMAX, false), objectCache(OQMAX, false) {
+Server::Server(): roomCache(RQMAX, true), monsterCache(MQMAX, false), objectCache(OQMAX, false) {
 	std::clog << "Constructing the Server." << std::endl;
     FD_ZERO(&inSet);
     FD_ZERO(&outSet);

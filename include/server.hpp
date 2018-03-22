@@ -96,7 +96,7 @@ using SocketList = std::list<Socket*>;
 using SocketVector= std::vector<Socket*>;
 using PlayerMap = std::map<bstring, Player*>;
 
-using RoomCache = LRU::lru_cache<CatRef, UniqueRoom, LRU::CleanUpFn< UniqueRoom >, CanCleanupRoomFn>;
+using RoomCache = LRU::lru_cache<CatRef, UniqueRoom, CleanupRoomFn, CanCleanupRoomFn>;
 using MonsterCache = LRU::lru_cache<CatRef, Monster, FreeCrt>;
 using ObjectCache = LRU::lru_cache<CatRef, Object>;
 
