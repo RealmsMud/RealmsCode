@@ -15,6 +15,12 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+/*
+ * LRU Cache:
+ *  Inspiration from:
+ *    https://github.com/paudley/lru_cache
+ *    https://github.com/goldsborough/lru-cache
+ */
 
 #ifndef INCLUDE_LRU_KEY_STATISTICS_HPP_
 #define INCLUDE_LRU_KEY_STATISTICS_HPP_

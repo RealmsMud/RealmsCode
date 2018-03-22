@@ -15,6 +15,13 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+/*
+ * LRU Cache:
+ *  Inspiration from:
+ *    https://github.com/paudley/lru_cache
+ *    https://github.com/goldsborough/lru-cache
+ */
+
 
 #ifndef INCLUDE_LRU_STATISTICS_HPP_
 #define INCLUDE_LRU_STATISTICS_HPP_
@@ -73,8 +80,9 @@ public:
 	std::string detail_status() {
 	    std::ostringstream oStr;
 	    for(auto it : _hit_map) {
-	    	oStr << it.first.rstr() << ": " << it.second.hits << "/" << it.second.accesses() << std::endl;
+	    	oStr << it.first.rstr() << ":" << it.second.hits << "/" << it.second.accesses() << '|';
 	    }
+	    oStr << std::endl;
 	    return(oStr.str());
 
 	}

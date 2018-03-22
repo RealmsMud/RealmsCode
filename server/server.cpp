@@ -66,6 +66,9 @@ Server* gServer = nullptr;
 // Static initialization
 Server* Server::myInstance = nullptr;
 
+bool CanCleanupRoomFn::operator()( UniqueRoom* r ) { return r->players.empty(); }
+
+
 // Custom comparison operator to sort by the numeric id instead of standard string comparison
 bool idComp::operator() (const bstring& lhs, const bstring& rhs) const {
     std::stringstream strL(lhs);

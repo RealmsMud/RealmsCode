@@ -59,6 +59,10 @@ class ReportedMsdpVariable;
 class Socket;
 class WebInterface;
 
+struct CanCleanupRoomFn {
+	bool operator()(UniqueRoom* r);
+};
+
 struct FreeCrt {
 		void operator()( Monster* mon ) { free_crt((Creature*)mon); }
 };
@@ -88,7 +92,7 @@ using SocketList = std::list<Socket*>;
 using SocketVector= std::vector<Socket*>;
 using PlayerMap = std::map<bstring, Player*>;
 
-using RoomCache = LRU::lru_cache<CatRef, UniqueRoom>;
+using RoomCache = LRU::lru_cache<CatRef, UniqueRoom, LRU::CleanUpFn< UniqueRoom >, CanCleanupRoomFn>;
 using MonsterCache = LRU::lru_cache<CatRef, Monster, FreeCrt>;
 using ObjectCache = LRU::lru_cache<CatRef, Object>;
 
@@ -335,7 +339,7 @@ public:
 // *******************************
 // Public methods for server class
 public:
-    void showMemory(Socket* sock);
+    void showMemory(Socket* sock, bool extended=false);
 
     // Child processes
     void addChild(int pid, childType pType, int pFd = -1, bstring pExtra = "");

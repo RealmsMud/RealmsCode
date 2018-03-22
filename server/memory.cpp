@@ -50,7 +50,7 @@ bstring sizeInfo(long size) {
 //                      showMemory
 //*********************************************************************
 
-void Server::showMemory(Socket* sock) {
+void Server::showMemory(Socket* sock, bool extended) {
     char buf[80];
     int  crts    = 0;
     int  rooms   = 0;
@@ -150,9 +150,9 @@ void Server::showMemory(Socket* sock) {
 
     sock->print("\n\n");
     sock->print("Cache Stats:\n");
-    sock->print("Room: %s", gServer->roomCache.get_stat_info().c_str());
-    sock->print("Monster: %s", gServer->monsterCache.get_stat_info().c_str());
-    sock->print("Object: %s", gServer->objectCache.get_stat_info().c_str());
+    sock->print("Room: %s\n", gServer->roomCache.get_stat_info(extended).c_str());
+    sock->print("Monster: %s\n", gServer->monsterCache.get_stat_info(extended).c_str());
+    sock->print("Object: %s\n", gServer->objectCache.get_stat_info(extended).c_str());
 }
 
 //*********************************************************************
@@ -160,6 +160,10 @@ void Server::showMemory(Socket* sock) {
 //*********************************************************************
 
 int dmMemory(Player* player, cmd* cmnd) {
-    gServer->showMemory(player->getSock());
+	bool extended = false;
+	if(cmnd->num==2 && !strcmp(cmnd->str[1], "-h"))
+		extended = true;
+
+	gServer->showMemory(player->getSock(), extended);
     return(0);
 }

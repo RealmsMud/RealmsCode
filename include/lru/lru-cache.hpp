@@ -1,6 +1,6 @@
 /*
  * lru_cache.h
- *   LRU Cache - Inspired from https://github.com/paudley/lru_cache
+ *   LRU Cache
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -14,6 +14,12 @@
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
+ */
+/*
+ * LRU Cache:
+ *  Inspiration from:
+ *    https://github.com/paudley/lru_cache
+ *    https://github.com/goldsborough/lru-cache
  */
 
 #ifndef INCLUDE_LRU_CACHE_HPP_
@@ -30,11 +36,16 @@ const bool MONITOR_STATS = true;
 namespace LRU {
 
 template < class T >
+struct CanCleanupFn {
+	bool operator()( const T *x ) { return true; }
+};
+
+template < class T >
 struct CleanUpFn {
 		void operator()( const T *x ) { delete x; }
 };
 
-template< class key_t, class data_t, class clean_up_fn = CleanUpFn< data_t > > class lru_cache {
+template< class key_t, class data_t, class clean_up_fn = CleanUpFn< data_t >, class can_clean_up_fn = CanCleanupFn< data_t > > class lru_cache {
 public:
 	using list_t = std::list< std::pair< key_t, data_t* > >;       // Main cache storage typedef
 	using list_iter_t = typename list_t::iterator;                // Main cache iterator
@@ -197,11 +208,20 @@ public:
 		_items_map.insert(std::make_pair(key, l_iter));
 
 		// Check to see if we need to remove an element due to exceeding max_size
+		int sanity_check = 0;
 		while(_items_map.size() > _max_size) {
 			// Remove the last element.
 			l_iter = _items_list.end();
 			l_iter--;
-			_remove(l_iter->first);
+			if (can_clean_up_fn()(l_iter->second)) {
+				_remove(l_iter->first);
+			} else {
+				sanity_check++;
+				if(sanity_check > _max_size / 2) {
+					throw std::range_error("Couldn't clean up more than half of the cache.");
+				}
+				_touch(l_iter);
+			}
 		}
 	}
 
