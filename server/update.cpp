@@ -1045,7 +1045,7 @@ void update_track(long t) {
 //                      update_ships
 //*********************************************************************
 
-void update_ships() {
+void update_ships(int n) {
     std::list<Ship*>::iterator it;
     Ship    *ship=0;
     ShipStop *stop=0;
@@ -1081,7 +1081,11 @@ void update_ships() {
 
     // we haven't updated enough!
     if(gConfig->calendar->shipUpdates < gConfig->expectedShipUpdates())
-        update_ships();
+    	if(n > 100) {
+    		broadcast(isDm, "Runaway ships!! Current updates: %d Expected updated: %d", gConfig->calendar->shipUpdates, gConfig->expectedShipUpdates());
+    		gConfig->calendar->shipUpdates =  gConfig->expectedShipUpdates();
+    	}
+        update_ships(n+1);
 }
 
 

@@ -60,7 +60,11 @@ class Socket;
 class WebInterface;
 
 struct CanCleanupRoomFn {
-	bool operator()(UniqueRoom* r);
+	bool operator()( UniqueRoom* r );
+};
+
+struct CleanupRoomFn {
+		void operator()( UniqueRoom* r );
 };
 
 struct FreeCrt {
