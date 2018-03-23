@@ -2149,11 +2149,13 @@ int dmDelete(Player* player, cmd* cmnd) {
             // we need to figure out what our phrase is
             // turn fullstr into what we want to delete
             i = strlen(cmnd->str[0]) + strlen(cmnd->str[1]) + 1;
-
+            
+            if( i  >= cmnd->fullstr.length() ) {
+                player->print("Pattern not found.\n");
+                return(0);
+            }
             // fullstr is now our phrase
             cmnd->fullstr = cmnd->fullstr.substr(i+1);
-            //strcpy(cmnd->fullstr, &cmnd->fullstr[i+1]);
-
 
             // we will use i to help us reuse code
             // 0 = sdesc, 1 = ldesc
