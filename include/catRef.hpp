@@ -48,7 +48,7 @@ public:
 
 namespace std {
     template <>
-        class hash<CatRef>{
+        struct hash<CatRef>{
         public :
             size_t operator()(const CatRef &cr ) const {
                 return hash<string>()(cr.str());

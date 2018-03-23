@@ -1507,14 +1507,11 @@ Lore* Config::getLore(const CatRef cr) const {
 //*********************************************************************
 
 void Config::delLore(const CatRef cr) {
-    std::list<Lore*>::iterator it;
-    Lore*   l=0;
 
-    for(it = lore.begin() ; it != lore.end() ;) {
+    for(auto it = lore.begin() ; it != lore.end() ;) {
         if((*it)->getInfo() == cr) {
-            l = (*it);
-            delete l;
-            lore.erase(it);
+            delete (*it);
+            it = lore.erase(it);
             continue;
         }
         it++;
