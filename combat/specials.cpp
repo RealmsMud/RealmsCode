@@ -142,7 +142,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
     Player* pVictim = victim->getAsPlayer();
     Monster* mThis = getAsMonster();
 
-    if(victim->isMonster() && victim->flagIsSet(M_NO_CIRCLE) && attack->getName() == "circle")
+    if(victim->isMonster() && victim->flagIsSet(M_NO_CIRCLE) && attack->getName().equals("circle", false))
         return(false);
 
     if(attack->flagIsSet(SA_NO_UNDEAD) && victim->isUndead())
