@@ -1016,6 +1016,15 @@ int doRes(Creature* caster, cmd* cmnd, bool res) {
         caster->knockUnconscious(120);
 
         caster->mp.setCur(0);
+
+        // Anti RES drone abuse measure.  
+        // Res is castable only if neutral, and bloodfusion as blood red. So player must realign caster (actually play) before casting res/bloodf again. -TC
+        caster->print("Your %s deed has caused an imbalance in your soul.\n", res ? "good":"vile");
+        if (res)
+            caster->setAlignment(1000 - mrand(1,200));
+        else
+            caster->setAlignment(mrand(1,200)); // worse adjustment == punishment from Aramon.
+
     }
 
     newRoom = target->getRecallRoom().loadRoom(target);
