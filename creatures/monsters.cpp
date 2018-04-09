@@ -1120,7 +1120,7 @@ bool Monster::checkEnemyMobs() {
 
     for(Monster* mons : room->monsters) {
         if(mons != this && isEnemyMob(mons)) {
-            broadcast(nullptr, room, "%M yells, \"Die!\"\n%M attacks %N!", this, this, mons);
+            broadcast(nullptr, room, "%M attacks %N!", this, this, mons);
             addEnemy(mons);
             updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
             return(true);
