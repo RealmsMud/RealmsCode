@@ -1173,7 +1173,7 @@ int Monster::toJail(Player* player) {
     player->doPetFollow();
 
     if(room->flagIsSet(R_MOB_JAIL)) {
-        jailtime = (8 + 2*player->getLevel())*60;
+        jailtime = (MAX(5,(player->getLevel())*30));
 
         if(player->isCt())
             jailtime = 15L;
@@ -1181,7 +1181,7 @@ int Monster::toJail(Player* player) {
         player->lasttime[LT_MOB_JAILED].ltime = time(0);
         player->lasttime[LT_MOB_JAILED].interval = jailtime;
 
-        player->print("You are sentenced to around %ld day%s hard labor!\n",
+        player->print("You can get out in around %ld day%s!\n",
               (((jailtime / 60)/24 > 1) ? ((jailtime / 60)/24): 1),
               (((jailtime / 60)/24 > 1) ? "s":""));
     }
