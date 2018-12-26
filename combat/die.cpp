@@ -1571,7 +1571,7 @@ void Creature::adjustExperience(Monster* victim, int& expAmount, int& holidayExp
     bstring holidayStr = isHoliday();
 
     if(holidayStr != "")
-        holidayExp = MAX(1, (int)(expAmount * 0.1));
+        holidayExp = MAX(1, (int)(expAmount * 0.5));
 
     if(victim->flagIsSet(M_PERMENANT_MONSTER))
         holidayExp = 0;
