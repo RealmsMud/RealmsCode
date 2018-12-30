@@ -1021,7 +1021,7 @@ void Player::loseAcid() {
     for(i=0; i<MAXWEAR; i++) {
         if(ready[i]) {
             if( !ready[i]->flagIsSet(O_RESIST_DISOLVE) &&
-                (mrand(1,100) <= 5 - abs(ready[i]->getAdjustment()))
+                (mrand(1,100) <= 3 - abs(ready[i]->getAdjustment()))
             ) {
                 if(ready[i]->flagIsSet(O_NO_PREFIX)) {
                     printColor("^r%s was dissolved by acid!\n", ready[i]->getCName());
@@ -1045,7 +1045,7 @@ void Player::loseAcid() {
     for( it = objects.begin() ; it != objects.end() ; ) {
         object = (*it++);
         if( !object->flagIsSet(O_RESIST_DISOLVE) &&
-            (mrand(1,100) <= 5 - abs(object->getAdjustment())))
+            (mrand(1,100) <= 3 - abs(object->getAdjustment() ) ))
         {
             if(object->flagIsSet(O_NO_PREFIX)) {
                 printColor("^r%s is dissolved by acid!\n", object->getCName());
@@ -1057,6 +1057,8 @@ void Player::loseAcid() {
             delObj(object, true, false, true, false);
             delete object;
         }
+        if (mrand(1,100) <= 20)
+            break;
     }
     checkDarkness();
 }
