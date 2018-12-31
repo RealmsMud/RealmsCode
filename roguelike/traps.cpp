@@ -660,7 +660,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         broadcast(getSock(), getRoomParent(), "%M is immersed in acid!", this);
         trapDamage.set(mrand(20,30));
 
-        if(chkSave(BRE, this, 0)) {
+        if(chkSave(DEA, this, 0)) {
             trapDamage.set(trapDamage.get() / 2);
             print("The acid doesn't totally cover you.\n");
         } else {
