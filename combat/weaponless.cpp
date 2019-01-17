@@ -26,7 +26,7 @@
 //*********************************************************************
 
 int cmdMeditate(Player* player, cmd* cmnd) {
-    int     chance=0;
+    int     chance=0,inCombatModifier=0;
     long    i=0, t = time(0);
 
     player->clearFlag(P_AFK);
@@ -56,21 +56,34 @@ int cmdMeditate(Player* player, cmd* cmnd) {
     broadcast(player->getSock(), player->getParent(), "%M meditates.", player);
 
     if(mrand(1,100) <= chance) {
-        player->print("You feel at one with the universe.\n");
+
+        if(player->inCombat()) {
+            player->print("Your stillness of mind adds to your endurance.\n");
+            inCombatModifier=3;
+        }
+        else {
+            player->print("You feel rejuvenated and at one with the universe.\n");
+            inCombatModifier=2;
+        }
+
         player->checkImprove("meditate", true);
 
-        // new meditate
-        int heal = (MAX(0,((int)(level/3)
+        int heal = (MAX(0,((int)(level / inCombatModifier) // heals for a little less when in combat with mobs
             + mrand(1,(int)(level))
             + bonus((int)player->constitution.getCur())*mrand(1,4))));
 
         player->doHeal(player, heal,1.0);
-        // old meditate: player->hp.getCur() += mrand(4,15)+player->getLevel();
-
+        
         player->lasttime[LT_MEDITATE].ltime = t;
-        player->lasttime[LT_MEDITATE].interval = 90L;
+        if(inCombatModifier < 3) {
+            player->lasttime[LT_MEDITATE].interval = 90L;
+            player->mp.increase((int)heal/2); // MP increases also when not in combat with mobs.
+        }
+        else
+            player->lasttime[LT_MEDITATE].interval = 40L; // timer faster when done during combat with mobs
+        
     } else {
-        player->print("Your spirit is not at peace.\n");
+        player->print("You were unable to find inner stillness.\n");
         player->checkImprove("meditate", false);
         player->lasttime[LT_MEDITATE].ltime = t;
         player->lasttime[LT_MEDITATE].interval = 5L;
@@ -91,7 +104,7 @@ int cmdMeditate(Player* player, cmd* cmnd) {
 int cmdTouchOfDeath(Player* player, cmd* cmnd) {
     Creature* creature=0;
     Player  *pCreature=0;
-    long    i=0, t=0;
+    long    i=0, t=time(0);
     int     chance=0;
     Damage damage;
 
@@ -134,13 +147,20 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
     }
 
 
-    i = player->lasttime[LT_TOUCH_OF_DEATH].ltime;
-    t = time(0);
 
-    if(t-i < 600L && !player->isCt()) {
-        player->pleaseWait(600L-t+i);
+    i = player->lasttime[LT_TOUCH_OF_DEATH].ltime + player->lasttime[LT_TOUCH_OF_DEATH].interval;
+    if(i>t && !player->isCt()) {
+        player->pleaseWait(i-t);
         return(0);
     }
+
+   // i = player->lasttime[LT_TOUCH_OF_DEATH].ltime;
+    //t = time(0);
+
+   // if(t-i < 600L && !player->isCt()) {
+   //     player->pleaseWait(600L-t+i);
+   //     return(0);
+  //  }
 
     player->smashInvis();
     player->unhide();
@@ -156,7 +176,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
 
     player->updateAttackTimer(false);
     player->lasttime[LT_TOUCH_OF_DEATH].ltime = t;
-    player->lasttime[LT_TOUCH_OF_DEATH].interval = 600L;
+   // player->lasttime[LT_TOUCH_OF_DEATH].interval = 600L;
 
     if(player->isDm())
         player->lasttime[LT_TOUCH_OF_DEATH].interval = 0;
@@ -179,6 +199,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
         player->checkImprove("touch", false);
         broadcast(player->getSock(), player->getParent(), "%M failed the touch of death on %N.\n",
             player, creature);
+        player->lasttime[LT_TOUCH_OF_DEATH].interval = 25L;
         return(0);
     }
 
@@ -188,6 +209,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
             player->printColor("^y%M avoided your touch of death!\n", creature);
             player->checkImprove("touch", false);
             creature->print("You avoided %N's touch of death.\n", player);
+            player->lasttime[LT_TOUCH_OF_DEATH].interval = 25L;
             return(0);
         }
     }
@@ -206,6 +228,8 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
         broadcast(player->getSock(), player->getParent(), "%M fatally wounds %N.", player, creature);
         if(creature->isMonster())
             creature->getAsMonster()->adjustThreat(player, creature->hp.getCur());
+
+        player->lasttime[LT_TOUCH_OF_DEATH].interval = 600L;
         //player->statistics.attackDamage(creature->hp.getCur(), "touch-of-death");
         creature->die(player);
 
@@ -219,11 +243,15 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
         player->printColor("You touched %N for %s%d^x damage.\n", creature, player->customColorize("*CC:DAMAGE*").c_str(), damage.get());
         player->checkImprove("touch", true);
         broadcast(player->getSock(), player->getParent(), "%M uses the touch of death on %N.", player, creature);
+
+        player->lasttime[LT_TOUCH_OF_DEATH].interval = 600L;
+
         if(player->getClass() == CreatureClass::CARETAKER)
             log_immort(false,player, "%s uses the touch of death on %s.\n", player->getCName(), creature->getCName());
         if(player->doDamage(creature, damage.get(), CHECK_DIE)) {
             if(player->getClass() == CreatureClass::CARETAKER)
                 log_immort(false,player, "%s killed %s with touch of death.\n", player->getCName(), creature->getCName());
+
         }
     }
 
