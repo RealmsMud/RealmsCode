@@ -996,7 +996,7 @@ int cmdTime(Player* player, cmd* cmnd) {
             }
             showAbility(player, "hands", "lay on hands", LT_LAY_HANDS, player->lasttime[LT_LAY_HANDS].interval);
             showAbility(player, "maul", "maul", LT_KICK, player->lasttime[LT_KICK].interval);
-            //showAbility(player, "meditate", "meditate", LT_MEDITATE, 90);
+           
             showAbility(player, "mistbane", "mistbane", LT_FOCUS, 600, P_MISTBANE);
             showAbility(player, "poison", "poison", LT_DRAIN_LIFE, player->lasttime[LT_DRAIN_LIFE].interval);
             showAbility(player, "pray", "pray", LT_PRAY, 600);
