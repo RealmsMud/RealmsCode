@@ -154,14 +154,6 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
         return(0);
     }
 
-   // i = player->lasttime[LT_TOUCH_OF_DEATH].ltime;
-    //t = time(0);
-
-   // if(t-i < 600L && !player->isCt()) {
-   //     player->pleaseWait(600L-t+i);
-   //     return(0);
-  //  }
-
     player->smashInvis();
     player->unhide();
 
@@ -176,7 +168,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
 
     player->updateAttackTimer(false);
     player->lasttime[LT_TOUCH_OF_DEATH].ltime = t;
-   // player->lasttime[LT_TOUCH_OF_DEATH].interval = 600L;
+  
 
     if(player->isDm())
         player->lasttime[LT_TOUCH_OF_DEATH].interval = 0;
@@ -230,7 +222,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
             creature->getAsMonster()->adjustThreat(player, creature->hp.getCur());
 
         player->lasttime[LT_TOUCH_OF_DEATH].interval = 600L;
-        //player->statistics.attackDamage(creature->hp.getCur(), "touch-of-death");
+        
         creature->die(player);
 
     } else {
