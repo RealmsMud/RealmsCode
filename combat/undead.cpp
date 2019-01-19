@@ -494,10 +494,8 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
 
 
         player->lasttime[LT_REGENERATE].ltime = t;
-        if(inCombat)
-            player->lasttime[LT_REGENERATE].interval = 45L;
-        else
-            player->lasttime[LT_REGENERATE].interval = 75L;
+        player->lasttime[LT_REGENERATE].interval = inCombat ? 45L : 75L;
+
 
     } else {
         player->print("You failed to regenerate.\n");
