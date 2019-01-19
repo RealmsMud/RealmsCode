@@ -415,7 +415,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 // This command is for liches.
 
 int cmdRegenerate(Player* player, cmd* cmnd) {
-    int     chance=0, xtra=0, pasthalf=0;
+    int     chance=0, xtra=0, pasthalf=0,inCombat=0;
     long    i=0, t=0;
 
     if(!player->ableToDoCommand())
@@ -428,9 +428,8 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->inCombat() &&
-        !player->checkStaff("You are too busy to draw from the life energy around you.\n"))
-        return(0);
+
+    inCombat = player->inCombat();
 
     if(!player->isCt()) {
         if(player->hp.getCur() > player->hp.getMax() * 3 / 4) {
@@ -446,7 +445,7 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
     }
 
     if( player->getAlignment() > 100 &&
-        !player->checkStaff("There isn't enough evil in your soul to regenerate.\n")
+        !player->checkStaff("Your soul is not corrupt enough to draw energy.\n")
     )
         return(0);
 
@@ -461,7 +460,7 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
         chance = 101;
 
     if(mrand(1, 100) <= chance) {
-        player->print("You feel the evil in your soul rebuilding.\n");
+        player->print("Your dark essence draws from the positive energy around you.\n");
         player->checkImprove("regenerate", true);
         broadcast(player->getSock(), player->getParent(), "%M regenerates.", player);
 
@@ -470,11 +469,14 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
                 ply->print("You shiver from a sudden deathly coldness.\n");
         }
 
-        player->hp.increase(mrand(level+4,level*(5/2)+5));
+        if(inCombat)
+            player->hp.increase(mrand(level+6,level*(3)+7));
+        else
+            player->hp.increase(mrand(level+8,level*(4)+9));
 
         // Prevents players from avoiding the 75% hp limit to allow regenerate
         // by casting on themselves to get below half. A lich may never regenerate
-        // past 75% their max HP. This totally evens out their ticktime with mages
+        // past 75% their max HP. This potentially evens out their ticktime with mages
         if(player->hp.getCur() > player->hp.getMax() * 3 / 4) {
             player->hp.setCur((player->hp.getMax() * 3 / 4) + 1);
             pasthalf = 1;
@@ -483,22 +485,24 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
         // Extra regeneration from being extremely evil.
         if(player->getAlignment() <= -250 && !pasthalf) {
             if(player->getAlignment() <= -400)
-                xtra = mrand(8,10);
+                xtra = mrand(6,9);
             else
-                xtra = mrand(4,6);
-            player->print("Your life force regenerates %d more due to your extreme evil.\n",xtra);
+                xtra = mrand(2,5);
+            player->print("Your dark essence regenerated %d more due to your soul's corruption.\n",xtra);
             player->hp.increase(xtra);
         }
 
 
         player->lasttime[LT_REGENERATE].ltime = t;
-        player->lasttime[LT_REGENERATE].interval = 120L;
+        player->lasttime[LT_REGENERATE].interval = inCombat ? 45L : 75L;
+
+
     } else {
-        player->print("You fail to regenerate.\n");
+        player->print("You failed to regenerate.\n");
         player->checkImprove("regenerate", false);
         broadcast(player->getSock(), player->getParent(), "%M tried to regenerate.", player);
         player->lasttime[LT_REGENERATE].ltime = t;
-        player->lasttime[LT_REGENERATE].interval = 10L;
+        player->lasttime[LT_REGENERATE].interval = 6L;
     }
 
     return(0);
@@ -577,7 +581,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 
     player->lasttime[LT_DRAIN_LIFE].ltime = t;
     player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
-    player->lasttime[LT_DRAIN_LIFE].interval = 120L;
+    player->lasttime[LT_DRAIN_LIFE].interval = 45L;
 
     int level = (int)player->getSkillLevel("drain");
 
@@ -597,7 +601,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
     }
 
 
-    damage.set(mrand(level * 2, level * 4));
+    damage.set(mrand(level * 3, level * 5));
     if(target->isEffected("drain-shield"))
         damage.set(mrand(1, level));
 
@@ -621,7 +625,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 
     // drain heals us
     if(!target->isEffected("drain-shield"))
-        player->hp.increase(damage.get() / 2);
+        player->hp.increase(damage.get() / 3);
 
     player->printColor("You drained %N for %s%d^x damage.\n", target, player->customColorize("*CC:DAMAGE*").c_str(), damage.get());
     player->checkImprove("drain", true);
