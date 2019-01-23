@@ -255,7 +255,7 @@ int cmdEarthSmother(Player* player, cmd* cmnd) {
 int cmdLayHands(Player* player, cmd* cmnd) {
     Creature* creature=0;
     int     num=0;
-    long    t=0, i=0;
+    long    t=time(0), i=0;
 
     player->clearFlag(P_AFK);
 
@@ -269,10 +269,10 @@ int cmdLayHands(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        i = player->lasttime[LT_LAY_HANDS].ltime;
-        t = time(0);
-        if(t-i < 3600L) {
-            player->pleaseWait(3600L-t+i);
+        i = player->lasttime[LT_LAY_HANDS].ltime + player->lasttime[LT_LAY_HANDS].interval;
+      
+        if(i > t) {
+            player->pleaseWait(i-t);
             return(0);
         }
     }
@@ -281,7 +281,7 @@ int cmdLayHands(Player* player, cmd* cmnd) {
     // Lay on self
     if(cmnd->num == 1) {
 
-        num = player->getLevel()*4 + mrand(1,6);
+        num = mrand( (int)(player->getSkillLevel("hands")*4), (int)(player->getSkillLevel("hands")*5) ) + mrand(2,8);
         player->print("You heal yourself with the power of %s.\n", gConfig->getDeity(player->getDeity())->getName().c_str());
         player->print("You regain %d hit points.\n", MIN((player->hp.getMax() - player->hp.getCur()), num));
 
@@ -294,7 +294,7 @@ int cmdLayHands(Player* player, cmd* cmnd) {
         player->print("You feel much better now.\n");
         player->checkImprove("hands", true);
         player->lasttime[LT_LAY_HANDS].ltime = t;
-        player->lasttime[LT_LAY_HANDS].interval = 3600L;
+        player->lasttime[LT_LAY_HANDS].interval = 1200L;
 
     } else {
         // Lay hands on another player or monster
@@ -321,7 +321,8 @@ int cmdLayHands(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        num = player->getLevel()*4 + mrand(1,6);
+        num = mrand( (int)(player->getSkillLevel("hands")*4), (int)(player->getSkillLevel("hands")*5) ) + mrand(2,8);
+
         player->print("You heal %N with the power of %s.\n", creature, gConfig->getDeity(player->getDeity())->getName().c_str());
         creature->print("%M lays %s hand upon your pate.\n", player, player->hisHer());
         creature->print("You regain %d hit points.\n", MIN((creature->hp.getMax() - creature->hp.getCur()), num));

@@ -981,7 +981,7 @@ int cmdTrack(Player* player, cmd* cmnd) {
 int cmdHarmTouch(Player* player, cmd* cmnd) {
     Creature* creature=0;
     int     num=0, chance=0;
-    long    t=0, i=0;
+    long    t=time(0), i=0;
 
 
     player->clearFlag(P_AFK);
@@ -992,17 +992,15 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
     }
 
     if(player->getAdjustedAlignment() != BLOODRED && !player->isCt()) {
-        player->print("Your soul must be of the utmost darkness to do that.\n");
+        player->print("The corruption in your soul needs to be more vile.\n");
         return(0);
     }
 
-
-    i = player->lasttime[LT_LAY_HANDS].ltime;
-    t = time(0);
-
-
-    if(t-i < 1800L && !player->isCt()) {
-        player->pleaseWait(1800L-t+i);
+   
+    i = player->lasttime[LT_LAY_HANDS].ltime + player->lasttime[LT_LAY_HANDS].interval;
+      
+    if(i > t) {
+        player->pleaseWait(i-t);
         return(0);
     }
 
@@ -1021,6 +1019,8 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
     ) {
         if(!player->isCt() && mrand(1,100) > 50) {
             player->print("Your harm touch failed!\n");
+            player->checkImprove("harm", true);
+            player->lasttime[LT_LAY_HANDS].interval = 45L;
             return(0);
         }
     }
@@ -1033,6 +1033,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
 
     chance = 65 + ((int)(player->getSkillLevel("harm") - creature->getLevel())*10) +
             (2*(bonus((int)player->piety.getCur()) - bonus((int)creature->piety.getCur())));
+    chance = MIN(95,chance);
 
     if(player->isCt())
         chance = 100;
@@ -1045,11 +1046,12 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
 
     if(mrand(1,100) <= chance) {
 
-        num = (int)(player->getSkillLevel("harm")*4) + mrand(1,6);
+        num = mrand( (int)(player->getSkillLevel("harm")*4), (int)(player->getSkillLevel("harm")*5) ) + mrand(2,8);
         player->print("The darkness within you flows into %N.\n", creature);
-        player->printColor("You did %s%d^x damage!\n", player->customColorize("*CC:DAMAGE*").c_str(), num);
+        player->printColor("Your harm touch did %s%d^x damage!\n", player->customColorize("*CC:DAMAGE*").c_str(), num);
         player->checkImprove("harm", true);
         creature->print("%M harm touches you!\n", player);
+        player->lasttime[LT_LAY_HANDS].interval = 600L;
 
         player->statistics.attackDamage(num, "harm touch");
 
@@ -1066,6 +1068,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
         player->checkImprove("harm", false);
         creature->print("%s's attack had no effect.\n", player->upHisHer());
         broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M's attack failed.", player);
+        player->lasttime[LT_LAY_HANDS].interval = 45L;
     }
 
 
@@ -1078,7 +1081,6 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
         player->lasttime[LT_RENOUNCE].interval = 3L;
     }
 
-    player->lasttime[LT_LAY_HANDS].interval = 1800L;
 
     return(0);
 }
@@ -1106,7 +1108,7 @@ int cmdBloodsacrifice(Player* player, cmd* cmnd) {
     }
 
     if(player->isEffected("bloodsac")) {
-        player->print("You're haven't finished your last sacrifice!\n");
+        player->print("Your last blood sacrifice is still in effect!\n");
         return(0);
     }
 
