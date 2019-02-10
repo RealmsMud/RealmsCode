@@ -661,15 +661,15 @@ bstring Move::getString(Creature* creature, bool ordinal, bstring exit) {
     if(creature->getAsPlayer()) {
 
         if(creature->isStaff())
-            str = "wanders to the";
+            str = "wandered to the";
         else if(creature->getRoomParent()->isUnderwater())
             str = "swam to the";
         else if(creature->isEffected("fly"))
             str = "flew to the";
         else if(creature->isEffected("levitate") || creature->isEffected("mist"))
-            str = "floats to the";
+            str = "floated to the";
         else if(creature->isEffected("confusion") || drunkenStumble(creature->getEffect("drunkenness")))
-            str = "stumbles to the";
+            str = "stumbled to the";
         // Not ordinal, not up, not down, and not out
         else if( !ordinal &&
             exit != "up" &&
@@ -678,7 +678,7 @@ bstring Move::getString(Creature* creature, bool ordinal, bstring exit) {
         )
             str = "went to the";
         else
-            str = "leaves";
+            str = "left";
 
     } else {
 
@@ -700,7 +700,7 @@ bstring Move::getString(Creature* creature, bool ordinal, bstring exit) {
         else if(creature->isEffected("levitate"))
             str = "floats to the";
         else
-            str = "wanders";
+            str = "wandered";
 
     }
 
