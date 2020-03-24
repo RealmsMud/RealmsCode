@@ -416,7 +416,7 @@ void Player::upLevel() {
 
 
     if( cClass == CreatureClass::CLERIC &&
-        level >= 19 &&
+        level >= MAXALVL &&
         deity == CERIS &&
         !spellIsKnown(S_RESURRECT)
     ) {
@@ -426,7 +426,7 @@ void Player::upLevel() {
 
     if( cClass == CreatureClass::CLERIC &&
         !hasSecondClass() &&
-        level >= 22 &&
+        level >= MAXALVL &&
         deity == ARAMON &&
         !spellIsKnown(S_BLOODFUSION)
     ) {

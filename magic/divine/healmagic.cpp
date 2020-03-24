@@ -1065,8 +1065,8 @@ int splResurrect(Creature* player, cmd* cmnd, SpellData* spellData) {
             player->print("You do not know that spell.\n");
             return(0);
         }
-        if(player->getLevel() < 19) {
-            player->print("You are not high enough level to cast that spell.\n");
+        if(player->getLevel() < MAXALVL) {
+            player->print("You are not yet revered enough by Ceris to cast that spell.\n");
             return(0);
         }
         if(player->getAdjustedAlignment() != NEUTRAL) {
@@ -1096,8 +1096,8 @@ int splBloodfusion(Creature* player, cmd* cmnd, SpellData* spellData) {
             player->print("You do not know that spell.\n");
             return(0);
         }
-        if(player->getLevel() < 22) {
-            player->print("You are not high enough level to cast that spell.\n");
+        if(player->getLevel() < MAXALVL) {
+            player->print("You are not yet vile enough in the eyes of Aramon to cast that spell.\n");
             return(0);
         }
         if(player->getAdjustedAlignment() != BLOODRED) {
