@@ -491,12 +491,12 @@ void broadcastGuild(int guildNum, int showName, const char *fmt,...) {
 void shutdown_now(int sig) {
     broadcast("### Quick shutdown now!");
     gServer->processOutput();
-    loge("--- Game shutdown with SIGINT\n");
+    loge("--- Game shutdown via signal\n");
     gServer->resaveAllRooms(1);
     gServer->saveAllPly();
 
     std::clog << "Goodbye.\n";
-    kill(getpid(), 9);
+    exit(0);
 }
 
 //*********************************************************************

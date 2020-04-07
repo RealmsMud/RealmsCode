@@ -378,7 +378,6 @@ void update_shutdown(long t) {
 
         std::clog << "Goodbye.\n";
         exit(0);
-        //kill(getpid(), 9);
     }
 }
 

@@ -1,0 +1,45 @@
+Dockerfile
+docker/
+
+
+
+# User-specific stuff:
+.idea/
+*.iml
+*.iws
+*.cbp
+.cproject
+.project
+.settings
+
+# auto-generated tag files
+tags
+
+### Cpp template
+# Compiled Object files
+*.slo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# CMake
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Makefile
+cmake_install.cmake
+cmake-build-debug
+install_manifest.txt
+CTestTestfile.cmake
