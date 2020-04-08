@@ -559,10 +559,10 @@ int dice(int n, int s, int p) {
 int exp_to_lev(unsigned long exp) {
     int level = 1;
 
-    while(exp >= gConfig->expNeeded(level) && level < MAXALVL)
+    while(exp >= Config::expNeeded(level) && level < MAXALVL)
         level++;
     if(level == MAXALVL) {
-        level = exp/(needed_exp[MAXALVL-1]);
+        level = exp/(Config::expNeeded(MAXALVL));
         level++;
         level= MAX(MAXALVL, level);
     }

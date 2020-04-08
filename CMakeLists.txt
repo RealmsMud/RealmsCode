@@ -330,7 +330,9 @@ set(COMMON_SOURCE_FILES
     util/md5.cpp
     util/timer.cpp
 
+    xml/bans-xml.cpp
     xml/calendar-xml.cpp
+    xml/config-xml.cpp
     xml/files-xml-read.cpp
     xml/files-xml-save.cpp
     xml/xml.cpp
@@ -338,7 +340,6 @@ set(COMMON_SOURCE_FILES
 
     wip/fighters.cpp
     wip/songs.cpp
-
     )
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})

@@ -118,7 +118,7 @@ typedef std::map<int, MudFlag> MudFlagMap;
 class LottoTicket {
 public:
     LottoTicket(const char* name, int pNumbers[], int pCycle);
-    LottoTicket(xmlNodePtr rootNode);
+    explicit LottoTicket(xmlNodePtr rootNode);
     void saveToXml(xmlNodePtr rootNode);
 
     bstring owner;  // Owner of this ticket
@@ -227,7 +227,7 @@ public:
 
 
 // Guilds
-    bool guildExists(const bstring guildName);
+    bool guildExists(bstring guildName);
     bool addGuild(Guild* toAdd);
 
     Guild* getGuild(int guildId);
@@ -236,8 +236,8 @@ public:
     bool deleteGuild(int guildId);
 
 // GuildCreations
-    bstring removeGuildCreation(const bstring leaderName);
-    GuildCreation* findGuildCreation(const bstring name);
+    bstring removeGuildCreation(bstring leaderName);
+    GuildCreation* findGuildCreation(bstring name);
     bool addGuildCreation( GuildCreation* toAdd);
     void creationToGuild(GuildCreation* toApprove);
     void guildCreationsRenameSupporter(bstring oldName, bstring newName);
@@ -291,15 +291,14 @@ public:
     void clearLimited();
     void addUnique(Unique* unique);
     void listLimited(const Player* player);
-    void showUnique(const Player* player, int id);
     Unique* getUnique(const Object* object) const;
     Unique* getUnique(int id) const;
     void deleteUniques(Player* player);
     void deleteUnique(Unique* unique);
-    Lore* getLore(const CatRef cr) const;
-    void addLore(const CatRef cr, int i);
-    void delLore(const CatRef cr);
-    void uniqueDecay(Player* player=0);
+    Lore* getLore(CatRef cr) const;
+    void addLore(CatRef cr, int i);
+    void delLore(CatRef cr);
+    void uniqueDecay(Player* player=nullptr);
 
 // Clans
     bool loadClans();
@@ -312,7 +311,7 @@ public:
     void clearRecipes();
     bool saveRecipes() const;
     Recipe *getRecipe(int id);
-    Recipe *searchRecipes(const Player* player, bstring skill, Size recipeSize, int numIngredients, const Object* object=0);
+    Recipe *searchRecipes(const Player* player, bstring skill, Size recipeSize, int numIngredients, const Object* object=nullptr);
     void addRecipe(Recipe* recipe);
     void remRecipe(Recipe* recipe);
 
@@ -348,7 +347,7 @@ public:
 
 
 // swap
-    void swapLog(const bstring log, bool external=true);
+    void swapLog(bstring log, bool external=true);
     void swap(Player* player, bstring name);
     void swap(bstring str);
     void offlineSwap(childProcess &child, bool onReap);
@@ -384,10 +383,10 @@ public:
     const RaceData* getRace(int id) const;
     const DeityData* getDeity(int id) const;
 
-    unsigned long expNeeded(int level);
+    static unsigned long expNeeded(int level);
     int getMaxSong();
 
-    bstring getVersion();
+    static bstring getVersion();
     bstring getMudName();
     bstring getMudNameAndVersion();
     short getPortNum() const;
@@ -397,7 +396,6 @@ public:
     bool isAprilFools() const;
     bool willAprilFools() const;
     int getFlashPolicyPort() const;
-    bool startFlashPolicy() const;
     bool sendTxtOnCrash() const;
     void toggleTxtOnCrash();
     int getShopNumObjects() const;
@@ -449,7 +447,6 @@ protected:
     void loadSkillGroups(xmlNodePtr rootNode);
     void loadSkillGroup(xmlNodePtr rootNode);
     void loadSkills(xmlNodePtr rootNode);
-    void loadSkill(xmlNodePtr rootNode);
 
 
 public:
@@ -483,25 +480,27 @@ public:
 #endif
 
 public:
+    bool    bHavePort{};
+
     // Config Options
-    bool    conjureDisabled;
-    bool    lessExpLoss;
-    bool    pkillInCombatDisabled;
-    bool    autoShutdown;
-    bool    checkDouble;
-    bool    getHostByName;
-    bool    recordAll;
-    bool    logSuicide;
-    bool    charCreationDisabled;
-    int     portNum;
-    short   minBroadcastLevel;
-    bool    saveOnDrop;
-    bool    logDeath;
-    short   crashes;
-    short   supportRequiredForGuild;
-    int numGuilds;
+    bool    conjureDisabled{};
+    bool    lessExpLoss{};
+    bool    pkillInCombatDisabled{};
+    bool    autoShutdown{};
+    bool    checkDouble{};
+    bool    getHostByName{};
+    bool    recordAll{};
+    bool    logSuicide{};
+    bool    charCreationDisabled{};
+    short     portNum{};
+    short   minBroadcastLevel{};
+    bool    saveOnDrop{};
+    bool    logDeath{};
+    short   crashes{};
+    short   supportRequiredForGuild{};
+    int     numGuilds{};
     //int   maxGuilds;
-    int nextGuildId;
+    int     nextGuildId{};
 
     bstring mudName;
     bstring dmPass;
@@ -527,30 +526,30 @@ private:
 
     // Lottery
     std::list<LottoTicket*> tickets;
-    bool    lotteryEnabled;
-    int lotteryCycle;
-    long    lotteryJackpot;
-    bool    lotteryWon;
-    long    lotteryWinnings; // Money made from the lottery since the last jackpot
-    int lotteryTicketPrice;
-    long    lotteryTicketsSold;
-    time_t  lotteryRunTime;
-    short   lotteryNumbers[6];
-    bool    swapping;
-    bool    roomSearchFailure;
-    char    customColors[CUSTOM_COLOR_SIZE];
-    bool    doAprilFools;
-    bool    txtOnCrash;
-    int flashPolicyPort;
-    int shopNumObjects;
-    int shopNumLines;
+    bool    lotteryEnabled{};
+    int     lotteryCycle{};
+    long    lotteryJackpot{};
+    bool    lotteryWon{};
+    long    lotteryWinnings{}; // Money made from the lottery since the last jackpot
+    int     lotteryTicketPrice{};
+    long    lotteryTicketsSold{};
+    time_t  lotteryRunTime{};
+    short   lotteryNumbers[6]{};
+    bool    swapping{};
+    bool    roomSearchFailure{};
+    char    customColors[CUSTOM_COLOR_SIZE]{};
+    bool    doAprilFools{};
+    bool    txtOnCrash{};
+    int     flashPolicyPort{};
+    int     shopNumObjects{};
+    int     shopNumLines{};
     bstring reviewer;
 
     std::list<Unique*> uniques;
     std::list<Lore*> lore;
     std::list<accountDouble> accountDoubleLog;
 
-    ProxyManager* proxyManager;
+    ProxyManager* proxyManager{};
 
     // Quests
 public:
@@ -561,7 +560,7 @@ public:
 
 public:
     // Misc
-    char        cmdline[256];
+    char        cmdline[256]{};
 
     // MSDP
     MsdpVarMap msdpVariables;
@@ -610,7 +609,7 @@ public:
     std::map<int, Recipe*> recipes;
 
     std::map<int, Clan*> clans;
-    questPtr questTable[MAX_QUEST];
+    questPtr questTable[MAX_QUEST]{};
 
     MudFlagMap rflags;
     MudFlagMap xflags;
@@ -631,12 +630,15 @@ public:
     inline bstring getMFlag(int flagNum) { return getFlag(flagNum, mflags); };
     inline bstring getOFlag(int flagNum) { return getFlag(flagNum, oflags); };
 
-    Calendar    *calendar;
+    Calendar    *calendar{};
     std::list<Ship*> ships;
 
 public:
     void setListing(bool isListing);
-    bool isListing(void);
+    bool isListing();
+
+private:
+    static unsigned long needed_exp[];
 };
 
 extern Config *gConfig;

@@ -21,13 +21,13 @@
 #include "creatures.hpp"
 #include "magic.hpp"
 #include "mud.hpp"
+#include "config.hpp"
 
 char questions_to_email[80]="realms@rohonline.net";
 
 long InBytes = 0;
 long UnCompressedBytes = 1; // So we never have a divide by 0 error ;)
 long OutBytes = 0;
-int bHavePort = 0;
 
 // How many times has crash been called?
 int  Crash = 0;
@@ -114,25 +114,6 @@ short saving_throw_cycle[][10] = { // POI   DEA   BRE   MEN   SPL
 };
 
 int numQuests = 0;
-
-unsigned long needed_exp[] = {
-    //2   3  4   5   6   7    8   9   10
-    500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 100000,
-    // 500  1k   2k   4k     8k 16k 32k   36k
-    //11      12      13      14      15      16       17
-    160000, 270000, 390000, 560000, 750000, 1000000, 1300000,
-    // 60k   110k   120k   170k 190k    250k     300k
-    //18      19        20     21      22      23      24
-    1700000, 2200000, 2800000, 3500000, 4300000, 5300000, 6500000,
-    //400k   500k   600k     700k    800k    1mil    1.5mil
-    // 25      26     27        28        29       30        31
-    8000000, 10000000, 12200000, 14700000, 17500000, 21500000, 25700000,
-    // 32       33     34      35        36     37      38
-    30100000, 34700000, 39600000, 44800000, 50300000, 56200000, 62500000,
-    // 39       40      41
-    69200000, 76200000, 2000000000
-
-    };
 
 
 struct osong_t osong[] = {
