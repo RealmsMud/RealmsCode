@@ -59,7 +59,7 @@ typedef std::set<Object*, ObjectPtrLess> ObjectSet;
 class Container : public virtual MudObject {
 public:
     Container();
-    virtual ~Container() {};
+    ~Container() override = default;
 
     PlayerSet players;
     MonsterSet monsters;
@@ -74,22 +74,17 @@ public:
     bool add(Containable* toAdd);
 
 
-    void registerContainedItems();
-    void unRegisterContainedItems();
+    void registerContainedItems() override;
+    void unRegisterContainedItems() override;
 
 
-    bool checkAntiMagic(Monster* ignore = 0);
+    bool checkAntiMagic(Monster* ignore = nullptr);
 
     void doSocialEcho(bstring str, const Creature* actor, const Creature* target = nullptr);
 
     void effectEcho(bstring fmt, const MudObject* actor = nullptr, const MudObject* applier = nullptr, Socket* ignore = nullptr);
 
-//    virtual bool flagIsSet(int flag) const = 0;
-//    virtual void setFlag(int flag) = 0;
-//    virtual bool isEffected(const bstring& effect) const = 0;
-//    virtual bool isEffected(EffectInfo*) const = 0;
-
-    void wake(bstring str, bool noise) const;
+    void wake(const bstring& str, bool noise) const;
 
 
     bstring listObjects(const Player* player, bool showAll, char endColor ='x' ) const;
@@ -97,32 +92,32 @@ public:
     // Find routines
     Creature* findCreaturePython(Creature* searcher, const bstring& name, bool monFirst = true, bool firstAggro = false, bool exactMatch = false );
     Creature* findCreature(const Creature* searcher, const cmd* cmnd, int num=1) const;
-    Creature* findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst = true, bool firstAggro = false, bool exactMatch = false) const;
-    Creature* findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const;
+    Creature* findCreature(const Creature* searcher, const bstring& name, int num, bool monFirst = true, bool firstAggro = false, bool exactMatch = false) const;
+    Creature* findCreature(const Creature* searcher, const bstring& name, int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const;
     Monster* findMonster(const Creature* searcher, const cmd* cmnd, int num=1) const;
-    Monster* findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro = false, bool exactMatch = false) const;
-    Monster* findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) const;
+    Monster* findMonster(const Creature* searcher, const bstring& name, int num, bool firstAggro = false, bool exactMatch = false) const;
+    Monster* findMonster(const Creature* searcher, const bstring& name, int num, bool firstAggro, bool exactMatch, int& match) const;
     Player* findPlayer(const Creature* searcher, const cmd* cmnd, int num=1) const;
-    Player* findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch = false) const;
-    Player* findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const;
+    Player* findPlayer(const Creature* searcher, const bstring& name, int num, bool exactMatch = false) const;
+    Player* findPlayer(const Creature* searcher, const bstring& name, int num, bool exactMatch, int& match) const;
 
     Object* findObject(const Creature *searcher, const cmd* cmnd, int val) const;
-    Object* findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch = false) const;
-    Object* findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const;
+    Object* findObject(const Creature* searcher, const bstring& name, int num, bool exactMatch = false) const;
+    Object* findObject(const Creature* searcher, const bstring& name, int num, bool exactMatch, int& match) const;
 
     MudObject* findTarget(const Creature* searcher, const cmd* cmnd, int num=1) const;
-    MudObject* findTarget(const Creature* searcher,  const bstring& name, const int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false) const;
-    MudObject* findTarget(const Creature* searcher,  const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const;
+    MudObject* findTarget(const Creature* searcher,  const bstring& name, int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false) const;
+    MudObject* findTarget(const Creature* searcher,  const bstring& name, int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const;
 
 };
 
 class Containable : public virtual MudObject {
 public:
     Containable();
-    virtual ~Containable() {};
+    ~Containable() override = default;
 
     bool addTo(Container* container);
-    Container* removeFrom(void);
+    Container* removeFrom();
 
     void setParent(Container* container);
 
@@ -159,8 +154,8 @@ protected:
 
     // Last parent is only used in removeFromSet and addToSet and should not be used anywhere else
     Container* lastParent;
-    void removeFromSet();
-    void addToSet();
+    void removeFromSet() override;
+    void addToSet() override;
 
 };
 
