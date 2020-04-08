@@ -41,11 +41,11 @@ bool Container::purge(bool includePets) {
 bool Container::purgeMonsters(bool includePets) {
     bool purgedAll = true;
     MonsterSet::iterator mIt, prevIt;
-    Monster *mons = 0;
+    Monster *mons = nullptr;
     for(mIt = monsters.begin() ; mIt != monsters.end() ; ) {
         prevIt = mIt;
         mons = (*mIt++);
-        if(includePets == false && mons->isPet()) {
+        if(!includePets && mons->isPet()) {
             purgedAll = false;
             continue;
         }
@@ -54,7 +54,7 @@ bool Container::purgeMonsters(bool includePets) {
             if(master) {
                 master->clearFlag(P_ALIASING);
 
-                master->setAlias(0);
+                master->setAlias(nullptr);
                 master->print("%1M's soul was purged.\n", mons);
                 master->delPet(mons->getAsMonster());
             }
@@ -86,11 +86,11 @@ Container* Container::remove(Containable* toRemove) {
     if(!toRemove)
         return(nullptr);
 
-    Object* remObject = dynamic_cast<Object*>(toRemove);
-    Player* remPlayer = dynamic_cast<Player*>(toRemove);
-    Monster* remMonster = dynamic_cast<Monster*>(toRemove);
+    auto* remObject = dynamic_cast<Object*>(toRemove);
+    auto* remPlayer = dynamic_cast<Player*>(toRemove);
+    auto* remMonster = dynamic_cast<Monster*>(toRemove);
 
-    bool toReturn = false;
+    bool toReturn;
     if(remObject) {
         objects.erase(remObject);
         toReturn = true;
@@ -120,9 +120,9 @@ bool Container::add(Containable* toAdd) {
     if(!toAdd)
         return(false);
 
-    Object* addObject = dynamic_cast<Object*>(toAdd);
-    Player* addPlayer = dynamic_cast<Player*>(toAdd);
-    Monster* addMonster = dynamic_cast<Monster*>(toAdd);
+    auto* addObject = dynamic_cast<Object*>(toAdd);
+    auto* addPlayer = dynamic_cast<Player*>(toAdd);
+    auto* addMonster = dynamic_cast<Monster*>(toAdd);
 
     // If we're adding an object or a monster, we're registered and the item we're adding is not,
     // then register the item
@@ -131,7 +131,7 @@ bool Container::add(Containable* toAdd) {
     }
 
 
-    bool toReturn = false;
+    bool toReturn;
     if(addObject) {
         std::pair<ObjectSet::iterator, bool> p = objects.insert(addObject);
         toReturn = p.second;
@@ -182,7 +182,7 @@ void Container::unRegisterContainedItems() {
 //                      wake
 //*********************************************************************
 
-void Container::wake(bstring str, bool noise) const {
+void Container::wake(const bstring& str, bool noise) const {
     for(Player* ply : players) {
         ply->wake(str, noise);
     }
@@ -210,7 +210,7 @@ MudObject* Container::findTarget(const Creature* searcher, const bstring& name, 
 }
 
 MudObject* Container::findTarget(const Creature* searcher, const bstring& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch, int& match) const {
-    MudObject* toReturn = 0;
+    MudObject* toReturn = nullptr;
 
     if((toReturn = findCreature(searcher, name, num, monFirst, firstAggro, exactMatch, match))) {
         return(toReturn);
@@ -228,7 +228,7 @@ Object* Container::findObject(const Creature* searcher, const bstring& name, con
     return(findObject(searcher, name, num,exactMatch, match));
 }
 Object* Container::findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const {
-    Object *target = 0;
+    Object *target = nullptr;
     for(Object* obj : objects) {
         if(isMatch(searcher, obj, name, exactMatch, true)) {
             match++;
@@ -311,7 +311,7 @@ Creature* Container::findCreature(const Creature* searcher, const bstring& name,
     if(!searcher || name.empty())
         return(nullptr);
 
-    Creature* target=0;
+    Creature* target=nullptr;
     for(int i = 1 ; i <= 2 ; i++) {
         if( (monFirst && i == 1) || (!monFirst && i == 2) ) {
             target = findMonster(searcher, name, num, firstAggro, exactMatch, match);
@@ -335,7 +335,7 @@ Monster* Container::findMonster(const Creature* searcher, const bstring& name, c
     return(findMonster(searcher, name, num, firstAggro, exactMatch, match));
 }
 Monster* Container::findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) const {
-    Monster* target = 0;
+    Monster* target = nullptr;
     for(Monster* mons : searcher->getParent()->monsters) {
         if(isMatch(searcher, mons, name, exactMatch, true)) {
             match++;
@@ -384,8 +384,8 @@ Player* Container::findPlayer(const Creature* searcher, const bstring& name, con
 //################################################################################
 
 Containable::Containable() {
-    parent = 0;
-    lastParent = 0;
+    parent = nullptr;
+    lastParent = nullptr;
 }
 
 
@@ -394,17 +394,17 @@ void Containable::removeFromSet() {
 }
 void Containable::addToSet() {
     addTo(lastParent);
-    lastParent = 0;
+    lastParent = nullptr;
 }
 
 bool Containable::addTo(Container* container) {
-    if(this->parent != nullptr && parent->getAsMudObject() != container->getAsMudObject()) {
-        std::clog << "Non Null Parent" << std::endl;
-        return(0);
-    }
-
     if(container == nullptr)
         return(removeFrom());
+
+    if(this->parent != nullptr && parent->getAsMudObject() != container->getAsMudObject()) {
+        std::clog << "Non Null Parent" << std::endl;
+        return(false);
+    }
 
     if(this->isCreature()) {
         if(container->isUniqueRoom()) {
