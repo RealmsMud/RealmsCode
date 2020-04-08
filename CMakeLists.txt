@@ -1,23 +1,19 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.12)
 
 project(RealmsCode)
 
-set(CMAKE_C_COMPILER "/usr/bin/clang")
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+set(CMAKE_C_COMPILER "/usr/bin/clang-10")
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++-10")
 
-set(Python_ADDITIONAL_VERSIONS 3.5)
+set(Python_ADDITIONAL_VERSIONS 3.6)
 
 find_package(LibXml2 REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(PythonLibs 3.4 REQUIRED)
+find_package(PythonLibs 3.6 REQUIRED)
 find_package(ASPELL REQUIRED)
 find_package(PythonInterp)
 find_package(PythonLibs)
-IF(APPLE)
-    find_package(Boost COMPONENTS python system filesystem REQUIRED)
-ELSE()
-    find_package(Boost COMPONENTS python-py35 system filesystem REQUIRED)
-ENDIF()
+find_package(Boost COMPONENTS python36 system filesystem REQUIRED)
 
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
@@ -31,6 +27,14 @@ include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR})
 include_directories("include")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14 -g -D_GLIBCXX_DEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
+
+if($ENV{LEAK})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O1 -fsanitize=address -fno-omit-frame-pointer -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/blacklist.txt")
+ELSE()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+ENDIF()
+
+message(STATUS "USING CXX FLAGS = '${CMAKE_CXX_FLAGS}'")
 
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -g" )
 

@@ -242,11 +242,11 @@ void Server::installSignalHandlers() {
     }
     signal(SIGPIPE, SIG_IGN);
     std::clog << ".";
-    signal(SIGTERM, SIG_IGN);
+    signal(SIGTERM, shutdown_now);
     std::clog << ".";
     signal(SIGCHLD, child_died);
     std::clog << ".";
-    signal(SIGHUP, quick_shutdown);
+    signal(SIGHUP, shutdown_now);
     std::clog << ".";
     signal(SIGINT, shutdown_now);
     std::clog << ".";

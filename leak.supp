@@ -1,0 +1,3 @@
+leak:libpython3.5m
+leak:libboost_python-py35
+leak:libc.so.6
