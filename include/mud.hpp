@@ -375,8 +375,6 @@
 #define PET_CAST_DELAY      4
 
 
-extern int    bHavePort;
-
 #ifndef MIGNORE
 extern int Crash;
 /* configurable */
@@ -412,8 +410,6 @@ extern struct osp_t ospell[];
 
 extern short    saving_throw_cycle[][10];
 extern int      statBonus[40];
-extern char     article[][10];
-extern long     needed_exp[];
 extern long     last_dust_output;
 
 

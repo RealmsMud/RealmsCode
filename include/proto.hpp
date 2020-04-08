@@ -251,10 +251,10 @@ void give_money(Player* player, cmd* cmnd);
 int cmdFactions(Player* player, cmd* cmnd);
 
 // files1.cpp
-char* objectPath(CatRef cr);
-char* monsterPath(CatRef cr);
-char* roomPath(CatRef cr);
-char* roomBackupPath(CatRef cr);
+char* objectPath(const CatRef& cr);
+char* monsterPath(const CatRef& cr);
+char* roomPath(const CatRef& cr);
+char* roomBackupPath(const CatRef& cr);
 
 void free_crt(Creature* creature, bool remove=true);
 

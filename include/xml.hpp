@@ -24,6 +24,7 @@
 #include "boost/lexical_cast.hpp"
 
 #include "carry.hpp"
+#include "container.hpp"
 
 using boost::lexical_cast;
 using boost::bad_lexical_cast;

@@ -1362,9 +1362,9 @@ void Player::loseExperience(Monster *killer) {
 
     if(n > 1) {
         if(level < (MAXALVL+2))
-            experience = needed_exp[level-3];
+            experience = Config::expNeeded(level-2);
         else
-            experience = (long)((needed_exp[MAXALVL-1]*(level-2)));
+            experience = (long)((Config::expNeeded(MAXALVL)*(level-2)));
     }
 
     checkLevel();
@@ -2126,9 +2126,9 @@ void Player::die(DeathType dt) {
 
     if(n > 1) {
         if(level < (MAXALVL+2))
-            experience = needed_exp[level-3];
+            experience = Config::expNeeded(level-2);
         else
-            experience = (long)((needed_exp[MAXALVL-1]*(level-2)));
+            experience = (long)((Config::expNeeded(MAXALVL)*(level-2)));
     }
 
 

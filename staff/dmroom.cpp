@@ -1018,7 +1018,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
 // database of rooms.
 
 int dmAddRoom(Player* player, cmd* cmnd) {
-    UniqueRoom  *newRoom=0;
+    UniqueRoom  *newRoom=nullptr;
     char    file[80];
     int     i=1;
 

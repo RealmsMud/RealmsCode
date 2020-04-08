@@ -186,9 +186,9 @@ bool Calendar::isBirthday(const Player* target) const {
 }
 
 cMonth* Calendar::getMonth(short id) const {
-    for(const auto& mt = months.begin() ; mt != months.end() ; mt++) {
-        if(id == (*mt)->getId())
-            return(*mt);
+    for(const auto& mt : months) {
+        if(id == mt->getId())
+            return(mt);
     }
     return(nullptr);
 }

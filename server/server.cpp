@@ -172,7 +172,6 @@ bool Server::init() {
         std::clog << "failed." << std::endl;
 
     gConfig->loadBeforePython();
-    gConfig->startFlashPolicy();
     gConfig->setLotteryRunTime();
 
     Port = gConfig->getPortNum();
