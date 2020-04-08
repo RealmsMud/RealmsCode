@@ -90,7 +90,7 @@ int Server::runList(Socket* sock, cmd* cmnd) {
     Async async;
     if(async.branch(sock->getPlayer(), CHILD_LISTER) == AsyncExternal) {
         bstring lister = Path::UniqueRoom;
-        lister += "list.exe";
+        lister += "List";
         std::clog << "Running <" << lister << ">\n";
 
         execl(lister.c_str(), lister.c_str(), cmnd->str[1], cmnd->str[2], cmnd->str[3], cmnd->str[4], nullptr);

@@ -16,17 +16,6 @@
  *
  */
 
-// C++ Includes
-//#include <sstream>
-//#include <iostream>
-
-// C Includes
-//#include <string.h>
-//#include <stdlib.h>
-//#include <libxml/xmlmemory.h>
-//#include <libxml/parser.h>
-
-
 // Mud Includes
 #include "config.hpp"
 #include "creatures.hpp"
@@ -45,7 +34,8 @@ void Ban::reset() {
     time = ""; 
     reason = ""; 
     password = ""; 
-    duration = unbanTime = 0; 
+    duration = 0;
+    unbanTime = 0;
     isPrefix = isSuffix = false;    
 }
 
@@ -113,7 +103,7 @@ int dmListbans(Player* player, cmd* cmnd) {
             banStr << "^gNever!\n";
 
         banStr << "    ^wPassword: ";
-        if(ban->password == "")
+        if(ban->password.empty())
             banStr << "None. ";
         else {
             banStr << "^c" << ban->password << " ";
@@ -134,10 +124,11 @@ int dmListbans(Player* player, cmd* cmnd) {
 }
 
 int dmBan(Player* player, cmd* cmnd) {
-    Player* target=0;
-    int     i=0, j=0, strLen, len, dur, iTmp = 0;
+    Player* target=nullptr;
+    size_t  i=0, j=0, strLen, len;
+    int     dur, iTmp = 0;
     int     isPrefix = 0, isSuffix = 0;
-    char    *pass=0;
+    char    *pass=nullptr;
     char    log[128], log2[128], log3[128], log4[128];
     Ban*    newBan;
     char    str[255], who[255], site[255], comment[255];
@@ -275,9 +266,9 @@ int dmBan(Player* player, cmd* cmnd) {
     newBan->site = site;
     // Prefix or Suffix?
     if(isPrefix == 1)
-        newBan->isPrefix = 1;
+        newBan->isPrefix = true;
     if(isSuffix == 1)
-        newBan->isSuffix = 1;
+        newBan->isSuffix = true;
 
     // Who set the ban
     newBan->by = player->getName();
@@ -290,7 +281,7 @@ int dmBan(Player* player, cmd* cmnd) {
         newBan->reason = "No reason given";
 
     // Set the ban time
-    t = time(0);
+    t = time(nullptr);
     char *timeStr = strdup((char *)ctime(&t));
     timeStr[strlen(timeStr)-1] = '\0';
     // Get rid of the '\n'
@@ -299,7 +290,7 @@ int dmBan(Player* player, cmd* cmnd) {
     free(timeStr);
     
     if(newBan->duration > 0)// NOW  +  # of days * # of seconds in a day
-        newBan->unbanTime = time(0) + ((long)newBan->duration * 60*60*24L);
+        newBan->unbanTime = time(nullptr) + ((long)newBan->duration * 60*60*24L);
 
     // Set the password
     if(pass)
@@ -316,11 +307,11 @@ int dmBan(Player* player, cmd* cmnd) {
     else
         sprintf(log2, " indefinitely.");
 
-    if(newBan->reason != "")
+    if(!newBan->reason.empty())
         sprintf(log3, " Reason: '%s' by %s.", newBan->reason.c_str(), player->getCName());
 
 
-    if(newBan->password != "")
+    if(!newBan->password.empty())
         sprintf(log4, " Password: '%s'.\n", newBan->password.c_str());
     else
         sprintf(log4, "\n");
@@ -420,7 +411,8 @@ bool Config::deleteBan(int toDel) {
 // then 2 is returned.  If it's completely locked, 1 is returned.  If
 // it's not locked out at all, 0 is returned.
 int Config::isLockedOut( Socket* sock ) {
-    int match=0, count=0;
+    bool match = false;
+    int count=0;
     char site[80];
     char ip[40];
 
@@ -430,9 +422,9 @@ int Config::isLockedOut( Socket* sock ) {
     ip[39] = 0;
 
     std::list<Ban*>::iterator it;
-    Ban* ban;
+    Ban* ban = nullptr;
 
-    for(it = gConfig->bans.begin() ; it != gConfig->bans.end() ; it++) {
+    for(it = bans.begin() ; it != bans.end() ; it++) {
         count++;
         ban = (*it);
         // Better safe than sorry
@@ -440,33 +432,32 @@ int Config::isLockedOut( Socket* sock ) {
             continue;
         
         if(ban->matches(site) || ban->matches(ip)) {
-            match = 1;
+            match = true;
             break;
         }
     }
-    if(match) {
-        
-        if(ban->unbanTime != 0 && time(0) > ban->unbanTime) {
-            // Ban has expired so delete it
-            broadcast(isCt, "^y--- Expiring ban for '%s'", ban->site.c_str());
-            gConfig->deleteBan(count);
-            gConfig->saveBans();
+    if(!match)
+        return(0);
 
-            // See if they're effected by another ban
-            return(isLockedOut(sock));
-        }
-        if(ban->password != "") {
-            strcpy(sock->tempstr[0], ban->password.c_str());
-            return (2);
-        } else {
-            char buf[1024];
-            sprintf(buf, "\n\rYour site is locked out.\n\rSend questions to %s.\n\r", questions_to_email);
-            sock->write(buf);
-            broadcast(isCt, "^yDenying access to '%s(%s)'", sock->getHostname().c_str(), ban->site.c_str());
-            return(1);
-        }
+    if(ban->unbanTime != 0 && time(nullptr) > ban->unbanTime) {
+        // Ban has expired so delete it
+        broadcast(isCt, "^y--- Expiring ban for '%s'", ban->site.c_str());
+        deleteBan(count);
+        saveBans();
+
+        // See if they're effected by another ban
+        return(isLockedOut(sock));
     }
-    return(0);
+    if(!ban->password.empty()) {
+        strcpy(sock->tempstr[0], ban->password.c_str());
+        return (2);
+    } else {
+        char buf[1024];
+        sprintf(buf, "\n\rYour site is locked out.\n\rSend questions to %s.\n\r", questions_to_email);
+        sock->write(buf);
+        broadcast(isCt, "^yDenying access to '%s(%s)'", sock->getHostname().c_str(), ban->site.c_str());
+        return(1);
+    }
 }
 
 // Returns 1 if the site is on the ban list, 0 otherwise
@@ -474,7 +465,7 @@ bool Config::isBanned(const char *site) {
     std::list<Ban*>::iterator it;
     Ban* ban;
 
-    for(it = gConfig->bans.begin() ; it != gConfig->bans.end() ; it++) {
+    for(it = bans.begin() ; it != bans.end() ; it++) {
         ban = (*it);
         // Better safe than sorry
         if(!ban)
