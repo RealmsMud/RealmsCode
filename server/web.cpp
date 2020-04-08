@@ -749,7 +749,7 @@ bool WebInterface::handleInput() {
 
                 Monster *monster;
                 if(loadMonster(cr, &monster)) {
-                    monster->saveToXml(rootNode, ALLITEMS, LS_FULL);
+                    monster->saveToXml(rootNode, ALLITEMS, LoadType::LS_FULL);
                     std::clog << "Generated xml for " << monster->getName() << "\n";
                     free_crt(monster);
                 }
@@ -760,7 +760,7 @@ bool WebInterface::handleInput() {
 
                 Object* object;
                 if(loadObject(cr, &object)) {
-                    object->saveToXml(rootNode, ALLITEMS, LS_FULL);
+                    object->saveToXml(rootNode, ALLITEMS, LoadType::LS_FULL);
                     std::clog << "Generated xml for " << object->getName() << "\n";
                     delete object;
                 }

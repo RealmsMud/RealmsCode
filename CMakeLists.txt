@@ -148,7 +148,9 @@ set(COMMON_HEADER_FILES
     include/weather.hpp
     include/web.hpp
     include/xml.hpp
-)
+    include/enums/loadType.hpp
+    include/enums/bits.hpp
+    )
 
 set(COMMON_SOURCE_FILES
     areas/area.cpp
@@ -330,17 +332,29 @@ set(COMMON_SOURCE_FILES
     util/md5.cpp
     util/timer.cpp
 
+    xml/alchemy-xml.cpp
     xml/bans-xml.cpp
     xml/calendar-xml.cpp
     xml/config-xml.cpp
+    xml/creatures-xml.cpp
+    xml/exits-xml.cpp
     xml/files-xml-read.cpp
     xml/files-xml-save.cpp
+    xml/guilds-xml.cpp
+    xml/monsters-xml.cpp
+    xml/mxp-xml.cpp
+    xml/objects-xml.cpp
+    xml/players-xml.cpp
+    xml/rooms-xml.cpp
+    xml/skills-xml.cpp
+    xml/socials-xml.cpp
+    xml/stats-xml.cpp
     xml/xml.cpp
 
 
     wip/fighters.cpp
     wip/songs.cpp
-    )
+        xml/effects-xml.cpp)
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES})

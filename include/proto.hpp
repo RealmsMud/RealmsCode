@@ -516,7 +516,6 @@ int cmdHowl(Creature* player, cmd* cmnd);
 
 // xml.cpp
 int toBoolean(char *fromStr);
-Color toColor(char *fromStr);
 char *iToYesNo(int fromInt);
 
 // staff.cpp

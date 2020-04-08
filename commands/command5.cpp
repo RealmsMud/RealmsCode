@@ -73,9 +73,7 @@ int cmdWho(Player* player, cmd* cmnd) {
             default:
                 player->print("Parameter not unique.\n");
                 return(0);
-                break;
             }
-            break;
             break;
         case 'b':
             switch (cmnd->str[1][3]) {
@@ -91,7 +89,6 @@ int cmdWho(Player* player, cmd* cmnd) {
             default:
                 player->print("Parameter not unique.\n");
                 return(0);
-                break;
             }
             break;
         case 'c':
@@ -111,7 +108,6 @@ int cmdWho(Player* player, cmd* cmnd) {
                 default:
                     player->print("Parameter not unique.\n");
                     return(0);
-                    break;
                 }
                 break;
             case 'h':
@@ -136,13 +132,11 @@ int cmdWho(Player* player, cmd* cmnd) {
                 default:
                     player->print("Parameter not unique.\n");
                     return(0);
-                    break;
                 }
                 break;
             default:
                 player->print("Parameter not unique.\n");
                 return(0);
-                break;
             }
             break;
 
@@ -170,7 +164,6 @@ int cmdWho(Player* player, cmd* cmnd) {
             default:
                 player->print("Parameter not unique.\n");
                 return(0);
-                break;
             }
             break;
 
@@ -194,7 +187,6 @@ int cmdWho(Player* player, cmd* cmnd) {
             default:
                 player->print("Parameter not unique.\n");
                 return(0);
-                break;
             }
             break;
 
@@ -220,13 +212,11 @@ int cmdWho(Player* player, cmd* cmnd) {
                 default:
                     player->print("Parameter not unique.\n");
                     return(0);
-                    break;
                 }
                 break;
             default:
                 player->print("Parameter not unique.\n");
                 return(0);
-                break;
             }
             break;
 
@@ -241,7 +231,6 @@ int cmdWho(Player* player, cmd* cmnd) {
             default:
                 player->print("Parameter not unique.\n");
                 return(0);
-                break;
             }
             break;
 
@@ -256,7 +245,6 @@ int cmdWho(Player* player, cmd* cmnd) {
             default:
                 player->print("Parameter not unique.\n");
                 return(0);
-                break;
             }
             break;
 
@@ -275,7 +263,6 @@ int cmdWho(Player* player, cmd* cmnd) {
             default:
                 player->print("Unknown parameter.\n");
                 return(0);
-                break;
             }
             break;
 
@@ -290,7 +277,6 @@ int cmdWho(Player* player, cmd* cmnd) {
             default:
                 player->print("Unknown parameter.\n");
                 return(0);
-                break;
             }
             break;
 
@@ -305,7 +291,6 @@ int cmdWho(Player* player, cmd* cmnd) {
             default:
                 player->print("Parameter not unique.\n");
                 return(0);
-                break;
             }
             break;
 
@@ -320,7 +305,6 @@ int cmdWho(Player* player, cmd* cmnd) {
             default:
                 player->print("Parameter not unique.\n");
                 return(0);
-                break;
             }
             break;
 
@@ -341,7 +325,6 @@ int cmdWho(Player* player, cmd* cmnd) {
             default:
                 player->print("Parameter not unique.\n");
                 return(0);
-                break;
             }
             break;
 
@@ -356,9 +339,7 @@ int cmdWho(Player* player, cmd* cmnd) {
             default:
                 player->print("Parameter not unique.\n");
                 return(0);
-                break;
             }
-            break;
             break;
         case 'w':
             switch(cmnd->str[1][1]) {
@@ -371,7 +352,6 @@ int cmdWho(Player* player, cmd* cmnd) {
             default:
                 player->print("Parameter not unique.\n");
                 return(0);
-                break;
             }
             break;
         case '.':
@@ -381,7 +361,6 @@ int cmdWho(Player* player, cmd* cmnd) {
         default:
             player->print("Parameter not unique.\n");
             return(0);
-            break;
         }// end main switch
 
     } // end if cmnd->num > 1
@@ -583,7 +562,7 @@ void deletePlayer(Player* player) {
 
     // save a backup - this will be the only copy of the player!
     if(player->getLevel() >= 7)
-        player->save(false, LS_BACKUP);
+        player->save(false, LoadType::LS_BACKUP);
 
     if(player->flagIsSet(P_CREATING_GUILD)) {
         // If they are the founder, this will return text, and we
@@ -771,7 +750,6 @@ void Player::changingStats(bstring str) {
         print("Please press [ENTER].\n");
         getSock()->setState(CON_CHANGING_STATS_CALCULATE);
         return;
-        break;
     case CON_CHANGING_STATS_CALCULATE:
 
         for(a=0;a<5;a++) {
@@ -819,7 +797,6 @@ void Player::changingStats(bstring str) {
             getSock()->setState(CON_PLAYING);
             return;
         }
-        break;
     case CON_CHANGING_STATS_RAISE:
         switch (low(str[0])) {
         case 'a':
@@ -840,13 +817,11 @@ void Player::changingStats(bstring str) {
         default:
             print("\nPlease choose one.\n");
             return;
-            break;
         }
 
         print("Lower which stat?:\n[A] Strength, [B] Dexterity, [C] Constitution, [D] Intelligence, or [E] Piety.\n");
         getSock()->setState(CON_CHANGING_STATS_LOWER);
         return;
-        break;
     case CON_CHANGING_STATS_LOWER:
         switch (low(str[0])) {
         case 'a':
@@ -872,7 +847,6 @@ void Player::changingStats(bstring str) {
         default:
             print("\nPlease choose one.");
             return;
-            break;
         }
 
         print("Your stats have been calculated.\n");

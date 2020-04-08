@@ -136,7 +136,7 @@ void loga(const char *fmt,...) {
     
     vsnprintf(str, 4000, fmt, ap);
     va_end(ap);
-    snprintf(str, 4195, "%s: %s", getTimeStr(), str);
+    snprintf(str, 4045, "%s: %s", getTimeStr(), str);
 
     write(fd, str, strlen(str));
 

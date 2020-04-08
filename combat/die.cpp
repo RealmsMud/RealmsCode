@@ -253,7 +253,7 @@ void Creature::die(Creature *killer, bool &freeTarget) {
 
     // Any time a level 7+ player dies, they are auto backed up.
     if(pVictim && pVictim->getLevel() >= 7 && !duel)
-        pVictim->save(true, LS_BACKUP);
+        pVictim->save(true, LoadType::LS_BACKUP);
 
     Hooks::run(killer, "preKill", this, "preDeath", duel);
 
@@ -1768,7 +1768,7 @@ void Player::die(DeathType dt) {
 
     // Any time a level 7+ this dies, they are backed up.
     if(level >= 7)
-        save(true, LS_BACKUP);
+        save(true, LoadType::LS_BACKUP);
     if(!killedByPlayer) {
         setFlag(P_KILLED_BY_MOB);
         if(level >= 13) {

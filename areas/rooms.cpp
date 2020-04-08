@@ -1013,7 +1013,7 @@ bool BaseRoom::isSunlight() const {
 //*********************************************************************
 
 void UniqueRoom::destroy() {
-    saveToFile(0, LS_BACKUP);
+    saveToFile(0, LoadType::LS_BACKUP);
     char    filename[256];
     strcpy(filename, roomPath(info));
     unlink(filename);

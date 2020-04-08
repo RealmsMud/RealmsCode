@@ -21,22 +21,23 @@
 #include <map>
 
 #include "carry.hpp"
-#include "container.hpp"
 #include "common.hpp"
+#include "container.hpp"
 #include "creatureStreams.hpp"
 #include "damage.hpp"
 #include "fighters.hpp"
 #include "global.hpp"
 #include "group.hpp"
 #include "lasttime.hpp"
+#include "enums/loadType.hpp"
 #include "location.hpp"
 #include "magic.hpp"
 #include "mudObject.hpp"
-#include "skills.hpp"
-#include "structs.hpp"
 #include "quests.hpp"
 #include "range.hpp"
 #include "realm.hpp"
+#include "skills.hpp"
+#include "structs.hpp"
 #include "threat.hpp"
 
 class cmd;
@@ -989,8 +990,8 @@ public:
     Player& operator=(const Player& cr);
     bool operator< (const Player& t) const;
     ~Player();
-    int save(bool updateTime=false, LoadType saveType=LS_NORMAL);
-    int saveToFile(LoadType saveType=LS_NORMAL);
+    int save(bool updateTime=false, LoadType saveType=LoadType::LS_NORMAL);
+    int saveToFile(LoadType saveType=LoadType::LS_NORMAL);
     void loadAnchors(xmlNodePtr curNode);
     void readXml(xmlNodePtr curNode, bool offline=false);
     void saveXml(xmlNodePtr curNode) const;

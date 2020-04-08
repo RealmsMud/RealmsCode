@@ -566,7 +566,7 @@ void Config::offlineSwap() {
 
             dirp->d_name[strlen(dirp->d_name)-8] = 0;
 
-            if(!loadPlayer(dirp->d_name, &player, LS_BACKUP))
+            if(!loadPlayer(dirp->d_name, &player, LoadType::LS_BACKUP))
                 continue;
 
             if(player->swap(currentSwap))
@@ -978,7 +978,7 @@ void Config::swap(bstring str) {
     if(type == 'p' || type == 'b') {
         // at this point, the player will always be offline
         Player* player=0;
-        LoadType saveType = type == 'p' ? LS_NORMAL : LS_BACKUP;
+        LoadType saveType = type == 'p' ? LoadType::LS_NORMAL : LoadType::LS_BACKUP;
 
         if(!loadPlayer(str.c_str(), &player, saveType))
             return;

@@ -67,7 +67,7 @@ Config::~Config() {
     if(inUse)
         throw(std::runtime_error("Error, trying to destroy config\n"));
     else
-        std::clog << "Properly deconstructing Config class";
+        std::clog << "Properly deconstructing Config class\n";
 }
 
 //--------------------------------------------------------------------

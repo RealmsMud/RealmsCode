@@ -116,11 +116,11 @@ protected:
     void loadResources(xmlNodePtr rootNode);
 
     TargetType targetType;          // What sort of target?
-    bool offensive;                 // Is this an offensive skill? Default: Yes         // *
+    bool offensive{};                 // Is this an offensive skill? Default: Yes         // *
 
     bool usesAttackTimer;           // Delay/cooldown is also affected by the attack timer (True by default)
-    int cooldown;                   // Delay/cooldown on this skill * 10.  (10 = 1.0s delay)
-    int failCooldown;               // Delay/cooldown on this skill on failure
+    int cooldown{};                   // Delay/cooldown on this skill * 10.  (10 = 1.0s delay)
+    int failCooldown{};               // Delay/cooldown on this skill on failure
     std::list<SkillCost> resources; // Resources this skill uses
     bstring pyScript;                 // Python script for this skillCommand
 
@@ -158,12 +158,12 @@ public:
     void reset();
 protected:
     bstring name;
-    int gained;             // How many points they have gained so far
-    int gainBonus;          // Used for hard to gain skills, giving them an increased chance to improve
+    int gained{};             // How many points they have gained so far
+    int gainBonus{};          // Used for hard to gain skills, giving them an increased chance to improve
 #ifndef PYTHON_CODE_GEN
     Timer timer;            // Timer for cooldown
 #endif
-    SkillInfo* skillInfo;   // Pointer to parent skill for additional info
+    SkillInfo* skillInfo{};   // Pointer to parent skill for additional info
 public:
     void save(xmlNodePtr rootNode) const;
 
