@@ -21,11 +21,12 @@
 //                      loadMonster
 //*********************************************************************
 
-#include <creatures.hpp>
-#include <proto.hpp>
-#include <server.hpp>
-#include <mud.hpp>
-#include <xml.hpp>
+#include "config.hpp"
+#include "creatures.hpp"
+#include "mud.hpp"
+#include "proto.hpp"
+#include "server.hpp"
+#include "xml.hpp"
 
 bool loadMonster(int index, Monster ** pMonster, bool offline) {
     CatRef cr;
@@ -205,3 +206,120 @@ void loadCarryArray(xmlNodePtr curNode, Carry array[], const char* name, int max
         childNode = childNode->next;
     }
 }
+
+
+//*********************************************************************
+//                      saveToFile
+//*********************************************************************
+// This function will write the supplied creature to the proper
+// m##.xml file - To accomplish this it parse the proper m##.xml file if
+// available and walk down the tree to the proper place in numerical order
+// if the file does not exist it will create it with only that monster in it.
+// It will most likely only be called from *save c
+
+int Monster::saveToFile() {
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr  rootNode;
+    char        filename[256];
+
+    // If we can't clean the monster properly, don't save anything
+    if(cleanMobForSaving() != 1)
+        return(-1);
+
+    // Invalid Number
+    if(info.id < 0)
+        return(-1);
+    Path::checkDirExists(info.area, monsterPath);
+
+    gServer->saveIds();
+
+    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Creature", nullptr);
+    xmlDocSetRootElement(xmlDoc, rootNode);
+
+    escapeText();
+    bstring idTemp = id;
+    id = "-1";
+    saveToXml(rootNode, ALLITEMS, LoadType::LS_FULL);
+    id = idTemp;
+
+    strcpy(filename, monsterPath(info));
+    xml::saveFile(filename, xmlDoc);
+    xmlFreeDoc(xmlDoc);
+    return(0);
+}
+
+
+
+//*********************************************************************
+//                      saveXml
+//*********************************************************************
+
+void Monster::saveXml(xmlNodePtr curNode) const {
+    xmlNodePtr childNode, subNode;
+
+    // record monsters saved during swap
+    if(gConfig->swapIsInteresting(this))
+        gConfig->swapLog((bstring)"m" + info.rstr(), false);
+
+    xml::saveNonNullString(curNode, "Plural", plural);
+    xml::saveNonZeroNum(curNode, "SkillLevel", skillLevel);
+    xml::saveNonZeroNum(curNode, "UpdateAggro", updateAggro);
+    xml::saveNonZeroNum(curNode, "LoadAggro", loadAggro);
+    // Attacks
+    childNode = xml::newStringChild(curNode, "Attacks");
+    for(int i=0; i<3; i++) {
+        if(attack[i][0] == 0)
+            continue;
+        subNode = xml::newStringChild(childNode, "Attack", attack[i]);
+        xml::newNumProp(subNode, "Num", i);
+    }
+    xml::saveNonNullString(curNode, "LastMod", last_mod);
+    xml::saveNonNullString(curNode, "Talk", talk);
+    xmlNodePtr talkNode = xml::newStringChild(curNode, "TalkResponses");
+    for(TalkResponse * talkResponse : responses)
+        talkResponse->saveToXml(talkNode);
+
+    xml::saveNonNullString(curNode, "TradeTalk", ttalk);
+    xml::saveNonZeroNum(curNode, "NumWander", numwander);
+    xml::saveNonZeroNum(curNode, "MagicResistance", magicResistance);
+    xml::saveNonZeroNum(curNode, "DefenseSkill", defenseSkill);
+    xml::saveNonZeroNum(curNode, "AttackPower", attackPower);
+    xml::saveNonZeroNum(curNode, "WeaponSkill", weaponSkill);
+    saveCarryArray(curNode, "CarriedItems", "Carry", carry, 10);
+    saveCatRefArray(curNode, "AssistMobs", "Mob", assist_mob, NUM_ASSIST_MOB);
+    saveCatRefArray(curNode, "EnemyMobs", "Mob", enemy_mob, NUM_ENEMY_MOB);
+
+    xml::saveNonNullString(curNode, "PrimeFaction", primeFaction);
+    xml::saveNonNullString(curNode, "AggroString", aggroString);
+
+    jail.save(curNode, "Jail", false);
+    xml::saveNonZeroNum(curNode, "WeaponSkill", maxLevel);
+    xml::saveNonZeroNum(curNode, "Cast", cast);
+    saveCatRefArray(curNode, "Rescue", "Mob", rescue, NUM_RESCUE);
+
+    saveBits(curNode, "ClassAggro", 32, cClassAggro);
+    saveBits(curNode, "RaceAggro", 32, raceAggro);
+    saveBits(curNode, "DeityAggro", 32, deityAggro);
+}
+
+//*********************************************************************
+//                      saveCarryArray
+//*********************************************************************
+
+xmlNodePtr saveCarryArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const Carry array[], int arraySize) {
+    xmlNodePtr curNode=nullptr;
+    // this nested loop means we won't create an xml node if we don't have to
+    for(int i=0; i<arraySize; i++) {
+        if(array[i].info.id) {
+            curNode = xml::newStringChild(parentNode, rootName);
+            for(; i<arraySize; i++) {
+                if(array[i].info.id)
+                    array[i].save(curNode, childName, false, i);
+            }
+            return(curNode);
+        }
+    }
+    return(curNode);
+}
+

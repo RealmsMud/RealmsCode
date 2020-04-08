@@ -25,9 +25,12 @@
 // Attempt to load the player named 'name' into the address given
 // return 0 on success, -1 on failure
 
-#include "creatures.hpp"
 #include "calendar.hpp"
+#include "config.hpp"
+#include "creatures.hpp"
 #include "paths.hpp"
+#include "proto.hpp"
+#include "server.hpp"
 #include "xml.hpp"
 
 bool loadPlayer(const bstring& name, Player** player, enum LoadType loadType) {
@@ -315,3 +318,189 @@ void loadRanges(xmlNodePtr curNode, Player *pPlayer) {
 
 
 
+
+//*********************************************************************
+//                      saveToFile
+//*********************************************************************
+// This function will write the supplied player to Player.xml
+// NOTE: For now, it will ignore equiped equipment, so be sure to
+// remove the equiped equipment and put it in the inventory before
+// calling this function otherwise it will be lost
+
+int Player::saveToFile(LoadType saveType) {
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr  rootNode;
+    char        filename[256];
+
+    if( getName().empty() || !isPlayer())
+        return(-1);
+
+    if(getName()[0] == '\0') {
+        std::clog << "Invalid player passed to save\n";
+        return(-1);
+    }
+
+    gServer->saveIds();
+
+    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Player", nullptr);
+    xmlDocSetRootElement(xmlDoc, rootNode);
+
+    escapeText();
+    saveToXml(rootNode, ALLITEMS, LoadType::LS_FULL);
+
+    if(saveType == LoadType::LS_BACKUP) {
+        sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, getCName());
+    } else {
+        sprintf(filename, "%s/%s.xml", Path::Player, getCName());
+    }
+
+    xml::saveFile(filename, xmlDoc);
+    xmlFreeDoc(xmlDoc);
+    return(0);
+}
+
+
+//*********************************************************************
+//                      saveXml
+//*********************************************************************
+
+void Player::saveXml(xmlNodePtr curNode) const {
+    xmlNodePtr childNode;
+    int i;
+
+    // record people logging off during swap
+    if(gConfig->swapIsInteresting(this))
+        gConfig->swapLog((bstring)"p" + getName(), false);
+
+    bank.save("Bank", curNode);
+    xml::saveNonZeroNum(curNode, "WeaponTrains", weaponTrains);
+    xml::saveNonNullString(curNode, "Surname", surname);
+    xml::saveNonNullString(curNode, "Forum", forum);
+    xml::newNumChild(curNode, "Wrap", wrap);
+    bound.save(curNode, "BoundRoom");
+    previousRoom.save(curNode, "PreviousRoom"); // monster do not save PreviousRoom
+    statistics.save(curNode, "Statistics");
+    xml::saveNonZeroNum(curNode, "ActualLevel", actual_level);
+    xml::saveNonZeroNum(curNode, "Created", created);
+    xml::saveNonNullString(curNode, "OldCreated", oldCreated);
+    xml::saveNonZeroNum(curNode, "Guild", guild);
+
+    if(title != " ")
+        xml::saveNonNullString(curNode, "Title", title);
+
+    xml::saveNonZeroNum(curNode, "GuildRank", guildRank);
+
+    if(isStaff()) {
+        childNode = xml::newStringChild(curNode, "Ranges");
+        for(i=0; i<MAX_BUILDER_RANGE; i++) {
+            // empty range, skip it
+            if(!bRange[i].low.id && !bRange[i].high)
+                continue;
+            bRange[i].save(childNode, "Range", i);
+        }
+    }
+
+    xml::saveNonZeroNum(curNode, "NegativeLevels", negativeLevels);
+    xml::saveNonZeroNum(curNode, "LastInterest", lastInterest);
+    xml::saveNonZeroNum(curNode, "TickDmg", tickDmg);
+
+    xml::saveNonNullString(curNode, "CustomColors", customColors);
+    xml::saveNonZeroNum(curNode, "Thirst", thirst);
+    saveBits(curNode, "Songs", gConfig->getMaxSong(), songs);
+
+    std::list<CatRef>::const_iterator it;
+
+    if(!storesRefunded.empty()) {
+        childNode = xml::newStringChild(curNode, "StoresRefunded");
+        for(it = storesRefunded.begin() ; it != storesRefunded.end() ; it++) {
+            (*it).save(childNode, "Store", true);
+        }
+    }
+
+    if(!roomExp.empty()) {
+        childNode = xml::newStringChild(curNode, "RoomExp");
+        for(it = roomExp.begin() ; it != roomExp.end() ; it++) {
+            (*it).save(childNode, "Room", true);
+        }
+    }
+    if(!objIncrease.empty()) {
+        childNode = xml::newStringChild(curNode, "ObjIncrease");
+        for(it = objIncrease.begin() ; it != objIncrease.end() ; it++) {
+            (*it).save(childNode, "Object", true);
+        }
+    }
+    if(!lore.empty()) {
+        childNode = xml::newStringChild(curNode, "Lore");
+        for(it = lore.begin() ; it != lore.end() ; it++) {
+            (*it).save(childNode, "Info", true);
+        }
+    }
+    std::list<int>::const_iterator rt;
+    if(!recipes.empty()) {
+        childNode = xml::newStringChild(curNode, "Recipes");
+        for(rt = recipes.begin() ; rt != recipes.end() ; rt++) {
+            xml::newNumChild(childNode, "Recipe", (*rt));
+        }
+    }
+
+    // Save any Anchors
+    for(i=0; i<MAX_DIMEN_ANCHORS; i++) {
+        if(anchor[i]) {
+            childNode = xml::newStringChild(curNode, "Anchors");
+            for(; i<MAX_DIMEN_ANCHORS; i++)
+                if(anchor[i]) {
+                    xmlNodePtr subNode = xml::newStringChild(childNode, "Anchor");
+                    xml::newNumProp(subNode, "Num", i);
+                    anchor[i]->save(subNode);
+                }
+            break;
+        }
+    }
+
+    xml::saveNonZeroNum(curNode, "Wimpy", wimpy);
+
+    childNode = xml::newStringChild(curNode, "Pets");
+    savePets(childNode);
+
+    if(birthday) {
+        childNode = xml::newStringChild(curNode, "Birthday");
+        birthday->save(childNode);
+    }
+
+    xml::saveNonNullString(curNode, "LastPassword", lastPassword);
+    xml::saveNonNullString(curNode, "PoisonedBy", poisonedBy);
+    xml::saveNonNullString(curNode, "AfflictedBy", afflictedBy);
+
+    xmlNodePtr alchemyNode = xml::newStringChild(curNode, "Alchemy");
+    childNode = xml::newStringChild(alchemyNode, "KnownAlchemyEffects");
+    for(const auto& p : knownAlchemyEffects) {
+        if(p.second) {
+            xml::newStringChild(childNode, "ObjectEffect", p.first);
+        }
+    }
+
+}
+
+
+
+
+//*********************************************************************
+//                      saveQuests
+//*********************************************************************
+
+void Player::saveQuests(xmlNodePtr rootNode) const {
+    xmlNodePtr questNode;
+
+    questNode = xml::newStringChild(rootNode, "QuestsInProgress");
+    for(std::pair<int, QuestCompletion*> p : questsInProgress) {
+        p.second->save(questNode);
+    }
+
+    questNode = xml::newStringChild(rootNode, "QuestsCompleted");
+    if(!questsCompleted.empty()) {
+        for(auto qp : questsCompleted) {
+            qp.second->save(questNode, qp.first);
+        }
+    }
+}

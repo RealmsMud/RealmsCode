@@ -40,3 +40,28 @@ void Effects::load(xmlNodePtr rootNode, MudObject* pParent) {
     }
 }
 
+
+//*********************************************************************
+//                      save
+//*********************************************************************
+
+void Effects::save(xmlNodePtr rootNode, const char* name) const {
+    xmlNodePtr curNode = xml::newStringChild(rootNode, name);
+    EffectList::const_iterator eIt;
+    for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
+        (*eIt)->save(curNode);
+    }
+}
+
+//*********************************************************************
+//                      save
+//*********************************************************************
+
+void EffectInfo::save(xmlNodePtr rootNode) const {
+    xmlNodePtr effectNode = xml::newStringChild(rootNode, "Effect");
+    xml::newStringChild(effectNode, "Name", name);
+    xml::newNumChild(effectNode, "Duration", duration);
+    xml::newNumChild(effectNode, "Strength", strength);
+    xml::newNumChild(effectNode, "Extra", extra);
+    xml::newNumChild(effectNode, "PulseModifier", pulseModifier);
+}

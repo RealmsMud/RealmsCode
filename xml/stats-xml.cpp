@@ -65,3 +65,26 @@ StatModifier::StatModifier(xmlNodePtr curNode) {
         childNode = childNode->next;
     }
 }
+
+//*********************************************************************
+//                      save
+//*********************************************************************
+
+void Stat::save(xmlNodePtr parentNode, const char* statName) const {
+    xmlNodePtr curNode = xml::newStringChild(parentNode, "Stat");
+    xml::newProp(curNode, "Name", statName);
+
+    xml::newNumChild(curNode, "Initial", initial);
+    xmlNodePtr modNode = xml::newStringChild(curNode, "Modifiers");
+    for(ModifierMap::value_type p: modifiers) {
+        p.second->save(modNode);
+    }
+}
+
+void StatModifier::save(xmlNodePtr parentNode) {
+    xmlNodePtr curNode = xml::newStringChild(parentNode, "StatModifier");
+    xml::newStringChild(curNode, "Name", name);
+    xml::newNumChild(curNode, "ModAmt", modAmt);
+    xml::newNumChild(curNode, "ModType", modType);
+}
+

@@ -78,11 +78,11 @@ namespace xml {
     //***************************************************************************************
 
     // copyPropToCString -- This will properly free the return value using doStrCpy
-    void copyPropToCString(char* to, xmlNodePtr node, bstring name);
+    void copyPropToCString(char* to, xmlNodePtr node, const bstring& name);
     //#define copyPropToCString(to, node, name) doStrCpy( (to) , getProp( (node) , (name) ))
 
     // copyPropToBString -- This will properly free the value
-    void copyPropToBString(bstring& to, xmlNodePtr node, bstring name);
+    void copyPropToBString(bstring& to, xmlNodePtr node, const bstring& name);
 
     // copyToCString -- Properly frees the return value using doStrCpy
     void copyToCString(char* to, xmlNodePtr node);
@@ -102,7 +102,7 @@ namespace xml {
     // like &, <, >, etc.
     //********************************************************************************
 
-    xmlAttrPtr newProp(xmlNodePtr node, bstring name, const bstring value);
+    xmlAttrPtr newProp(xmlNodePtr node, const bstring& name, const bstring& value);
 
     template <class Type>
     bstring numToStr(const Type& value) {
@@ -173,14 +173,14 @@ namespace xml {
 #endif
     }
 
-    xmlNodePtr newBoolChild(xmlNodePtr node, const bstring name, const bool value);
-    xmlNodePtr newStringChild(xmlNodePtr node, const bstring name, const bstring value = "");
+    xmlNodePtr newBoolChild(xmlNodePtr node, const bstring& name, const bool value);
+    xmlNodePtr newStringChild(xmlNodePtr node, const bstring& name, const bstring& value = "");
 
     //***************************************************************************************
     // saveNonZero/Null will only save if it is non 0 and also escape any bad XML characters
     //***************************************************************************************
 
-    xmlNodePtr saveNonNullString(xmlNodePtr node, bstring name, const bstring value);
+    xmlNodePtr saveNonNullString(xmlNodePtr node, const bstring& name, const bstring& value);
 
     xmlChar* ConvertInput(const char *in, const char *encoding);
     char *doStrCpy(char *dest, char *src);
@@ -233,7 +233,7 @@ int saveCreaturesXml(xmlNodePtr parentNode, const MonsterSet& set, int permOnly)
 GuildCreation* parseGuildCreation(xmlNodePtr cur);
 
 xmlNodePtr saveDaily(xmlNodePtr parentNode, int i, struct daily pDaily);
-xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, struct crlasttime pCrLastTime);
+xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, const struct crlasttime& pCrLastTime);
 xmlNodePtr saveLastTime(xmlNodePtr parentNode, int i, struct lasttime pLastTime);
 xmlNodePtr saveSavingThrow(xmlNodePtr parentNode, int i, struct saves pSavingThrow);
 xmlNodePtr saveBits(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits);
@@ -244,6 +244,11 @@ xmlNodePtr saveCatRefArray(xmlNodePtr parentNode, const char* rootName, const ch
 xmlNodePtr saveCarryArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const Carry array[], int arraySize);
 xmlNodePtr saveCatRefArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const CatRef array[], int arraySize);
 xmlNodePtr saveShortIntArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const short array[], int arraySize);
+
+
+// xml.cpp
+int toBoolean(char *fromStr);
+char *iToYesNo(int fromInt);
 
 #endif /*XML_H_*/
 

@@ -514,10 +514,6 @@ bool isDay();
 // weaponless.cpp
 int cmdHowl(Creature* player, cmd* cmnd);
 
-// xml.cpp
-int toBoolean(char *fromStr);
-char *iToYesNo(int fromInt);
-
 // staff.cpp
 bool isWatcher(Socket* sock);
 bool isWatcher(const Creature* player);

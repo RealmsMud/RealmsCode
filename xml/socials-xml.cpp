@@ -95,3 +95,52 @@ SocialCommand::SocialCommand(xmlNodePtr rootNode) {
         rootNode = rootNode->next;
     }
 }
+
+
+bool Config::saveSocials() {
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr  rootNode;
+
+    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Socials", nullptr);
+    xmlDocSetRootElement(xmlDoc, rootNode);
+
+    for(const SocialMap::value_type& p : socials) {
+        p.second->saveToXml(rootNode);
+    }
+    bstring filename = bstring(Path::Code) + "/" + "socials.xml";
+    xml::saveFile(filename.c_str(), xmlDoc);
+    xmlFreeDoc(xmlDoc);
+    return(true);
+
+}
+
+bool SocialCommand::saveToXml(xmlNodePtr rootNode) const {
+    xmlNodePtr curNode;
+
+    curNode = xml::newStringChild(rootNode, "Social");
+    xml::newStringChild(curNode, "Name", name);
+
+    if(wakeTarget)
+        xml::newBoolChild(curNode, "WakeTarget", wakeTarget);
+    if(rudeWakeTarget)
+        xml::newBoolChild(curNode, "RudeWakeTarget", rudeWakeTarget);
+    if(wakeRoom)
+        xml::newBoolChild(curNode, "WakeRoom", wakeRoom);
+
+    xml::saveNonNullString(curNode, "Description", description);
+    xml::saveNonZeroNum(curNode, "Priority", priority);
+
+    xml::saveNonNullString(curNode, "SelfNoTarget", selfNoTarget);
+    xml::saveNonNullString(curNode, "RoomNoTarget", roomNoTarget);
+    xml::saveNonNullString(curNode, "SelfOnTarget", selfOnTarget);
+    xml::saveNonNullString(curNode, "RoomOnTarget", roomOnTarget);
+    xml::saveNonNullString(curNode, "VictimOnTarget", victimOnTarget);
+    xml::saveNonNullString(curNode, "SelfOnSelf", selfOnSelf);
+    xml::saveNonNullString(curNode, "RoomOnSelf", roomOnSelf);
+
+    return(true);
+}
+
+
+

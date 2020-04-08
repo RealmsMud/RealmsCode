@@ -147,3 +147,99 @@ void Guild::parseGuildMembers(xmlNodePtr cur) {
         cur = cur->next;
     }
 }
+
+
+//*********************************************************************
+//                      saveGuilds
+//*********************************************************************
+// Causes the guilds structure to be generated into an xml tree and saved
+
+bool Config::saveGuilds() const {
+    GuildCreation * gcp;
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr  rootNode;
+    //xmlNodePtr        curNode, bankNode, membersNode;
+    char        filename[80];
+    //int i;
+    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Guilds", nullptr);
+    xmlDocSetRootElement(xmlDoc, rootNode);
+    xml::newNumProp(rootNode, "NextGuildId", nextGuildId);
+
+    std::map<int, Guild*>::const_iterator it;
+    const Guild *guild;
+    for(it = guilds.begin() ; it != guilds.end() ; it++) {
+        guild = (*it).second;
+        if(guild->getNum() == 0)
+            continue;
+        guild->saveToXml(rootNode);
+    }
+
+    std::list<GuildCreation*>::const_iterator gcIt;
+    for(gcIt = guildCreations.begin() ; gcIt != guildCreations.end() ; gcIt++) {
+        gcp = (*gcIt);
+        gcp->saveToXml(rootNode);
+    }
+
+    sprintf(filename, "%s/guilds.xml", Path::PlayerData);
+    xml::saveFile(filename, xmlDoc);
+    xmlFreeDoc(xmlDoc);
+    return(true);
+}
+
+
+//*********************************************************************
+//                      saveToXml
+//*********************************************************************
+
+bool Guild::saveToXml(xmlNodePtr rootNode) const {
+    xmlNodePtr curNode, membersNode;
+
+    curNode = xml::newStringChild(rootNode, "Guild");
+//      xml::newStringChild(curNode, "", );
+//      xml::newIntChild(curNode, "", guild->);
+    xml::newNumProp(curNode, "ID", num);
+    xml::newStringChild(curNode, "Name", name);
+    xml::newStringChild(curNode, "Leader", leader);
+
+    xml::newNumChild(curNode, "Level", level);
+    xml::newNumChild(curNode, "NumMembers", numMembers);
+
+    membersNode = xml::newStringChild(curNode, "Members");
+    std::list<bstring>::const_iterator mIt;
+    for(mIt = members.begin() ; mIt != members.end() ; mIt++) {
+        xml::newStringChild(membersNode, "Member", *mIt);
+    }
+
+    xml::newNumChild(curNode, "PkillsWon", pkillsWon);
+    xml::newNumChild(curNode, "PkillsIn", pkillsIn);
+    xml::newNumChild(curNode,"Points", points);
+    bank.save("Bank", curNode);
+
+    return(true);
+}
+
+
+
+
+//*********************************************************************
+//                      saveToXml
+//*********************************************************************
+
+bool GuildCreation::saveToXml(xmlNodePtr rootNode) const {
+    xmlNodePtr childNode, curNode = xml::newStringChild(rootNode, "GuildCreation");
+
+    xml::newStringChild(curNode, "Name", name);
+    xml::newStringChild(curNode, "Leader", leader);
+    xml::newStringChild(curNode, "LeaderIp", leaderIp);
+    xml::newNumChild(curNode, "Status", status);
+
+    // Supporters
+    std::map<bstring, bstring>::const_iterator sIt;
+    for(sIt = supporters.begin() ; sIt != supporters.end() ; sIt++) {
+        childNode = xml::newStringChild(curNode, "Supporter", (*sIt).first);
+        xml::newProp(childNode, "Ip", (*sIt).second);
+    }
+    return(true);
+}
+

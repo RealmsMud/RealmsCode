@@ -28,7 +28,7 @@ namespace xml {
     // unXSC: yes
     char *doStrCpy(char *dest, char *src) {
         if(!src || !dest)
-            return(0);
+            return(nullptr);
         strcpy(dest, unxsc(src).c_str());
         free(src);
         return(dest);
@@ -37,14 +37,14 @@ namespace xml {
     // unXSC: no
     char *doStrDup(char *src) {
         if(!src)
-            return(0);
+            return(nullptr);
         char *tmp = strdup(src);
         free(src);
         return(tmp);
     }
 
     // XSC: yes
-    xmlAttrPtr newProp(xmlNodePtr node, bstring name, const bstring value) {
+    xmlAttrPtr newProp(xmlNodePtr node, const bstring& name, const bstring& value) {
         xmlAttrPtr toReturn;
         xmlChar* xmlTmp;
         xmlTmp = xmlEncodeSpecialChars((node)->doc, BAD_CAST (xsc(value).c_str()) );
@@ -55,18 +55,18 @@ namespace xml {
     }
 
 
-    xmlNodePtr newBoolChild(xmlNodePtr node, const bstring name, const bool value) {
+    xmlNodePtr newBoolChild(xmlNodePtr node, const bstring& name, const bool value) {
         return(xmlNewChild( node, nullptr, BAD_CAST (name.c_str()), BAD_CAST iToYesNo(value)));
     }
 
     // XSC: yes
-    xmlNodePtr newStringChild(xmlNodePtr node, const bstring name, const bstring value) {
+    xmlNodePtr newStringChild(xmlNodePtr node, const bstring& name, const bstring& value) {
         return(xmlNewTextChild( node, nullptr, BAD_CAST (name.c_str()), BAD_CAST (xsc(value).c_str()) ));
     }
 
     // XSC: yes
-    xmlNodePtr saveNonNullString(xmlNodePtr node, bstring name, const bstring value) {
-        if(value == "")
+    xmlNodePtr saveNonNullString(xmlNodePtr node, const bstring& name, const bstring& value) {
+        if(value.empty())
             return(nullptr);
         return(xmlNewTextChild( (node), nullptr, BAD_CAST (name.c_str()), BAD_CAST (xsc(value).c_str()) ));
     }
@@ -81,7 +81,7 @@ namespace xml {
     }
 
     // unXSC: yes
-    void copyPropToBString(bstring& to, xmlNodePtr node, bstring name) {
+    void copyPropToBString(bstring& to, xmlNodePtr node, const bstring& name) {
         char* xTemp = (char *)xmlGetProp(node, BAD_CAST(name.c_str()));
         if(xTemp) {
             to = unxsc(xTemp);
@@ -128,7 +128,7 @@ namespace xml {
     }
 
     // unXSC: yes
-    void copyPropToCString(char* to, xmlNodePtr node, bstring name) {
+    void copyPropToCString(char* to, xmlNodePtr node, const bstring& name) {
         strcpy(to, getProp(node, name.c_str()).c_str());
     }
 
@@ -155,7 +155,7 @@ namespace xml {
             xmlFreeDoc(doc);
             return(nullptr);
         }
-        if(strcmp((char*)cur->name, expectedRoot)) {
+        if(strcmp((char*)cur->name, expectedRoot) != 0) {
             loge("%s_Load: document of the wrong type: Got: [%s] Expected: [%s]\n", expectedRoot, cur->name, expectedRoot);
             xmlFreeDoc(doc);
             return(nullptr);
