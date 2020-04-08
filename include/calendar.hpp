@@ -64,7 +64,7 @@ public:
     cWeather();
     void load(xmlNodePtr curNode);
     void save(xmlNodePtr curNode) const;
-    bstring get(WeatherString w) const;
+    [[nodiscard]] bstring get(WeatherString w) const;
 };
 
 // __..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..
@@ -85,9 +85,9 @@ public:
     void load(xmlNodePtr curNode);
     void save(xmlNodePtr curNode) const;
 
-    short getMonth() const;
-    short getDay() const;
-    int getYear() const;
+    [[nodiscard]] short getMonth() const;
+    [[nodiscard]] short getDay() const;
+    [[nodiscard]] int getYear() const;
 
     void setMonth(short m);
     void setDay(short d);
@@ -115,10 +115,10 @@ public:
     void load(xmlNodePtr curNode);
     void save(xmlNodePtr curNode) const;
 
-    Season getId() const;
-    bstring getName() const;
-    short getMonth() const;
-    short getDay() const;
+    [[nodiscard]] Season getId() const;
+    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] short getMonth() const;
+    [[nodiscard]] short getDay() const;
 
     cWeather *getWeather();
 };
@@ -141,9 +141,9 @@ public:
     void load(xmlNodePtr curNode);
     void save(xmlNodePtr curNode) const;
 
-    short getId() const;
-    bstring getName() const;
-    short getDays() const;
+    [[nodiscard]] short getId() const;
+    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] short getDays() const;
 };
 
 // __..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..
@@ -161,7 +161,7 @@ protected:
     short   adjHour;
     bstring lastPirate;
 
-    cSeason *curSeason;
+    cSeason *curSeason{};
     std::list<cSeason*> seasons;
     std::list<cMonth*> months;
     void    advanceMonth();
@@ -178,7 +178,7 @@ public:
     void    printtime(const Player* player) const;
     bool    isBirthday(const Player* target) const;
     bstring getLastPirate() const;
-    void    setLastPirate(bstring name);
+    void    setLastPirate(const bstring& name);
     void    resetToMidnight();
 
     void    load();

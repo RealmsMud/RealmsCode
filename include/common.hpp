@@ -7,7 +7,7 @@
 
 #include "libxml/xmlmemory.h"
 #include "libxml/parser.h"
-#include <math.h>
+#include <cmath>
 
 #include "bstring.hpp"
 
