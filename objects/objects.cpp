@@ -1229,7 +1229,7 @@ bstring Object::getFlagList(bstring sep) const {
             if(found)
                 ostr << sep;
 
-            ostr << get_oflag(i) << "(" << i+1 << ")";
+            ostr << gConfig->getOFlag(i) << "(" << i+1 << ")";
             found = true;
         }
     }

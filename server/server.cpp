@@ -30,8 +30,6 @@
 // C++ Includes
 #include <iostream>
 #include <random>
-#include <sstream>
-#include <locale>
 #include <iomanip>
 
 #include "calendar.hpp"
@@ -56,7 +54,6 @@ extern long last_time_update;
 extern long last_weather_update;
 
 // Function prototypes
-char *inetname(struct in_addr in );
 void initSpellList(); // TODO: Move spelling stuff into server
 
 // Global server pointer
@@ -167,13 +164,12 @@ bool Server::init() {
     std::clog << "Installing unique IDs...";
     loadIds();
     std::clog << "done." << std::endl;
-#if !defined(__CYGWIN__) && !defined(__MACOS__)
+
     std::clog << "Installing custom printf handlers...";
     if(installPrintfHandlers() == 0)
         std::clog << "done." << std::endl;
     else
         std::clog << "failed." << std::endl;
-#endif
 
     gConfig->loadBeforePython();
     gConfig->startFlashPolicy();
@@ -256,7 +252,6 @@ void Server::setGDB() { GDB = true; }
 void Server::setRebooting() { rebooting = true; }
 void Server::setValgrind() { valgrind = true; }
 bool Server::isRebooting() { return(rebooting); }
-bool Server::isGDB() { return(GDB); }
 bool Server::isValgrind() { return(valgrind); }
 int Server::getNumSockets() { return(sockets.size()); }
 
@@ -293,7 +288,7 @@ void Server::populateVSockets() {
         return;
     vSockets = new SocketVector(sockets.size());
     std::copy(sockets.begin(), sockets.end(), vSockets->begin());
-    shuffle(vSockets->begin(), vSockets->end(), std::mt19937(std::random_device()()));
+    shuffle(vSockets->begin(), vSockets->end(), this->randomGenerator() );
 }
 
 
@@ -572,23 +567,12 @@ int Server::processOutput() {
 }
 
 //********************************************************************
-//                      deleteSocket
-//********************************************************************
-// This should force a socket off right away
-
-int Server::deleteSocket(Socket* sock) {
-    sock->setState(CON_DISCONNECTING);
-    cleanUp();
-    return(0);
-}
-
-//********************************************************************
 //                      disconnectAll
 //********************************************************************
 
 void Server::disconnectAll() {
     for(Socket * sock : sockets) {
-    // Set everyone to disconnecting
+        // Set everyone to disconnecting
         sock->setState(CON_DISCONNECTING);
     }
     // And now clean them up
@@ -1292,7 +1276,7 @@ int Server::reapChildren() {
     if(dnsChild)
         saveDnsCache();
 
-// just in case, kill off any zombies
+    // just in case, kill off any zombies
     wait3(&status, WNOHANG, (struct rusage *)nullptr);
     return(0);
 }
@@ -1568,7 +1552,7 @@ bool Server::startReboot(bool resetShips) {
     cleanUp();
 
     if(resetShips)
-        gConfig->resetShipsFile();
+        Config::resetShipsFile();
 
     char port[10], path[80];
 
@@ -1834,6 +1818,7 @@ bool Server::clearPlayer(const bstring& name) {
     players.erase(name);
     return(true);
 }
+
 bool Server::clearPlayer(Player* player) {
     ASSERTLOG(player);
     players.erase(player->getName());
@@ -2362,8 +2347,6 @@ UniqueRoom* Server::reloadRoom(const CatRef& cr) {
 //*********************************************************************
 // This function saves an already-loaded room back to memory without
 // altering its position on the queue.
-
-int saveRoomToFile(UniqueRoom* pRoom, int permOnly);
 
 int Server::resaveRoom(const CatRef& cr) {
     UniqueRoom *room = roomCache.fetch(cr);

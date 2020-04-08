@@ -179,7 +179,7 @@ bstring Property::getLocation() const { return(location); }
 PropType Property::getType() const { return(type); }
 
 //*********************************************************************
-//                      getTypeStr
+//                      getTypeName
 //*********************************************************************
 
 bstring Property::getTypeStr() const { return(getTypeStr(type)); }
@@ -361,7 +361,7 @@ void Property::save(xmlNodePtr rootNode) const {
 }
 
 //*********************************************************************
-//                      getTypeStr
+//                      getTypeName
 //*********************************************************************
 
 bstring Property::getTypeStr(PropType propType) {

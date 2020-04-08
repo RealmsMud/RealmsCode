@@ -228,27 +228,15 @@ void loadRanges(xmlNodePtr curNode, Player *pPlayer);
 //**********************
 //  Save Section
 //**********************
-//int saveRoomToFile(Room* pRoom, int permOnly);
-//int saveCreature(Creature * pCreature);
-//int savePlayerToFile(Creature * player);
-//int saveObject(Object* pObject);
-
-//int saveObjectsXml(xmlNodePtr parentNode, const std::set<Object*, ObjectPtrLess>& set, int permOnly);
 int saveObjectsXml(xmlNodePtr parentNode, const ObjectSet& set, int permOnly);
 int saveCreaturesXml(xmlNodePtr parentNode, const MonsterSet& set, int permOnly);
-//int saveCreatureXml(xmlNodePtr rootNode, Creature * pCreature, int permOnly, LoadType saveType);
 
-Ban *parseBan(xmlNodePtr cur);
-
-Guild* parseGuild(xmlNodePtr cur);
 GuildCreation* parseGuildCreation(xmlNodePtr cur);
-void parseGuildMembers(xmlNodePtr cur, int guildId);
 
 xmlNodePtr saveDaily(xmlNodePtr parentNode, int i, struct daily pDaily);
 xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, struct crlasttime pCrLastTime);
 xmlNodePtr saveLastTime(xmlNodePtr parentNode, int i, struct lasttime pLastTime);
 xmlNodePtr saveSavingThrow(xmlNodePtr parentNode, int i, struct saves pSavingThrow);
-xmlNodePtr saveAnchor(xmlNodePtr parentNode, int i, Anchor* pAnchor);
 xmlNodePtr saveBits(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits);
 xmlNodePtr saveBit(xmlNodePtr parentNode, int bit);
 xmlNodePtr saveLongArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const long array[], int arraySize);
@@ -258,10 +246,6 @@ xmlNodePtr saveCarryArray(xmlNodePtr parentNode, const char* rootName, const cha
 xmlNodePtr saveCatRefArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const CatRef array[], int arraySize);
 xmlNodePtr saveShortIntArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const short array[], int arraySize);
 
-
-
-int saveFactions(xmlNodePtr rootNode, Creature* pCreature);
-int saveSkills(xmlNodePtr rootNode, Creature* pCreature);
 #endif /*XML_H_*/
 
 

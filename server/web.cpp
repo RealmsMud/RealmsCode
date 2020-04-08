@@ -1086,8 +1086,6 @@ int cmdWiki(Player* player, cmd* cmnd) {
 
     entry = entry.toLower();
     entry.Replace(":", "_colon_");
-    if(!checkWinFilename(player->getSock(), entry.c_str()))
-        return(0);
     sprintf(file, "%s/%s.txt", Path::Wiki, entry.c_str());
 
     // If the file exists and was modified within the last hour, use the local cache
@@ -1135,9 +1133,7 @@ bool WebInterface::wiki(bstring command, bstring tempBuf) {
 
 
     if( tempBuf == "" ||
-        strchr(tempBuf.c_str(), '/') != nullptr ||
-        !checkWinFilename(0, tempBuf.c_str())
-    ) {
+        strchr(tempBuf.c_str(), '/') != nullptr) {
         std::clog << "WebInterface: Wiki help failed; invalid data" << std::endl;
         return(false);
     }

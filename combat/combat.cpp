@@ -24,6 +24,7 @@
 #include "socket.hpp"
 #include "unique.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
 
 //*********************************************************************
 //                      doLagProtect

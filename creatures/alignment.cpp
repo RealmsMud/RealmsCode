@@ -163,32 +163,6 @@ void Player::alignAdjustAcThaco() {
     computeAttackPower();
 }
 
-//*********************************************************************
-//                      alignmentString
-//*********************************************************************
-// Get alignment string
-
-char *alignmentString(Creature* player) {
-    static char returnStr[1024];
-
-    strcpy(returnStr, "");
-
-    if(player->flagIsSet(P_OUTLAW))
-        strcat(returnStr, "Outlawed");
-
-    if( (player->flagIsSet(P_NO_PKILL) ||
-        player->flagIsSet(P_DIED_IN_DUEL) ||
-        player->getRoomParent()->isPkSafe()) && (player->flagIsSet(P_CHAOTIC) ||
-        player->getClan())
-    )
-        strcat(returnStr, "Neutral");
-    else if(player->flagIsSet(P_CHAOTIC))
-        strcat(returnStr, "Chaotic");
-    else
-        strcat(returnStr, "Lawful");
-
-    return (returnStr);
-}
 
 //*********************************************************************
 //                      alignInOrder

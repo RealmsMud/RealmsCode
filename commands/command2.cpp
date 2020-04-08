@@ -26,6 +26,7 @@
 #include "unique.hpp"
 #include "socket.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
 
 #define STONE_SCROLL_INDEX      10
 

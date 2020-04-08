@@ -809,7 +809,7 @@ int Player::displayCreature(Creature* target)  {
 
         if(mTarget->getMobTrade()) {
             rank = mTarget->getSkillLevel()/10;
-            oStr << "^y" << mTarget->getCrtStr(this, flags | CAP, 0) << " is a " << get_trade_string(mTarget->getMobTrade())
+            oStr << "^y" << mTarget->getCrtStr(this, flags | CAP, 0) << " is a " << mTarget->getMobTradeName()
                  << ". " << mTarget->upHisHer() << " skill level: " << get_skill_string(rank) << ".^x\n";
         }
     } else if(pTarget) {
@@ -1520,7 +1520,7 @@ bstring Monster::getFlagList(bstring sep) const {
             if(found)
                 ostr << sep;
 
-            ostr << get_mflag(i) << "(" << i+1 << ")";
+            ostr << gConfig->getMFlag(i) << "(" << i+1 << ")";
             found = true;
         }
     }
@@ -1539,7 +1539,7 @@ bstring Player::getFlagList(bstring sep) const {
             if(found)
                 ostr << sep;
 
-            ostr << get_pflag(i) << "(" << i+1 << ")";
+            ostr << gConfig->getPFlag(i) << "(" << i+1 << ")";
             found = true;
         }
     }

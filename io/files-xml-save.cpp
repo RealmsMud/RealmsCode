@@ -42,6 +42,7 @@
 #include "socials.hpp"
 #include "version.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
 
 xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits);
 // Object flags to be saved for object refs

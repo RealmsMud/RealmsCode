@@ -27,6 +27,7 @@
 #include "rooms.hpp"
 #include "unique.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
 
 #define RECIPE_WIDTH    37
 

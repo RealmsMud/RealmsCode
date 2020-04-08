@@ -1152,12 +1152,6 @@ int dmGameStatus(Player* player, cmd* cmnd) {
     player->printColor("^cWebserver:   ^x%s\n", gConfig->getWebserver().c_str());
     player->printColor("^cUser Agent:  ^x%s\n", gConfig->getUserAgent().c_str());
 
-    /*  player->printColor("^cQuestions email address    : ");
-    player->printColor("%s\n", questions_to_email);
-    player->printColor("^cAuthorization email address: ");
-    player->printColor("%s\n", auth_questions_email);
-    player->printColor("^cRegistrations email address: ");
-    player->printColor("%s\n", register_questions_email); */
     player->printColor("\n");
     player->printColor("^BLottery Information\n");
     player->printColor("^cLottery Enabled:         ^C%3s\n", iToYesNo(gConfig->getLotteryEnabled()));
@@ -2229,38 +2223,6 @@ int dmInfo(Player* player, cmd* cmnd) {
 int dmMd5(Player* player, cmd* cmnd) {
     bstring tohash = getFullstrText(cmnd->fullstr, 1, ' ');
     player->print("MD5: '%s' = '%s'\n", tohash.c_str(), md5(tohash).c_str());
-    return(0);
-}
-//*********************************************************************
-//                      view_log
-//*********************************************************************
-
-int view_log(Socket* sock) {
-    FILE    *fn;
-    char    filename[80], str[80];
-    int     cntr;
-
-    cntr = 0;
-    sprintf(filename, "%s/log", Path::Log);
-    fn = fopen(filename, "rt");
-    if(!fn)
-        return(0);
-    fgets(str, 80, fn);
-    while(!feof(fn)) {
-        sock->print(str);
-        cntr++;
-        fgets(str, 80, fn);
-        if(cntr>19) {
-            cntr=0;
-            // Hit enter or Q to quit prompt
-            sock->getPlayer()->setFlag(P_READING_FILE);
-            sock->print("[Hit Return, Q to Quit]: ");
-            gServer->processOutput();
-            sock->intrpt &= ~1;
-            // Hit enter or Q to quit prompt
-        }
-    }
-    fclose(fn);
     return(0);
 }
 //*********************************************************************

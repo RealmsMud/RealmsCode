@@ -337,7 +337,7 @@ bstring Creature::statCrt(int statFlags) {
 
 
     if(mTarget && mTarget->getMobTrade()) {
-        crtStr << "NPC Trade: " << get_trade_string(mTarget->getMobTrade()) << "(" << mTarget->getMobTrade() << ")";
+        crtStr << "NPC Trade: " << mTarget->getMobTradeName() << "(" << mTarget->getMobTrade() << ")";
         crtStr << "   Skill: " << get_skill_string(mTarget->getSkillLevel()/10) << "(" << mTarget->getSkillLevel() << ")\n";
     }
 
@@ -1235,11 +1235,11 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
         if(target->flagIsSet(num - 1)) {
             target->clearFlag(num - 1);
-            player->print("%M's flag #%d(%s) off.\n", target, num, (mTarget ? get_mflag(num-1):get_pflag(num-1)));
+            player->print("%M's flag #%d(%s) off.\n", target, num, (mTarget ? gConfig->getMFlag(num-1):gConfig->getPFlag(num-1)).c_str());
             i=0;
         } else {
             target->setFlag(num - 1);
-            player->print("%M's flag #%d(%s) on.\n", target, num, (mTarget ? get_mflag(num-1):get_pflag(num-1)));
+            player->print("%M's flag #%d(%s) on.\n", target, num, (mTarget ? gConfig->getMFlag(num-1):gConfig->getPFlag(num-1)).c_str());
             i=1;
 
             if(pTarget && num == P_MXP_ENABLED+1) {
@@ -1252,7 +1252,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
         log_immort(true, player, "%s set %s %s's flag %d(%s) %s.\n",
             player->getCName(), PLYCRT(target), target->getCName(), num,
-            (mTarget ? get_mflag(num-1):get_pflag(num-1)), (i ? "On" : "Off"));
+            (mTarget ? gConfig->getMFlag(num-1):gConfig->getPFlag(num-1)).c_str(), (i ? "On" : "Off"));
         break;
     case 'g':
         if(!strcmp(cmnd->str[3], "guild") || !strcmp(cmnd->str[3], "gu")) {
@@ -1990,10 +1990,10 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             }
 
             mTarget->setMobTrade((int)cmnd->val[3]);
-            player->print("Trade set to %s.\n", get_trade_string((int)mTarget->getMobTrade()));
+            player->print("Trade set to %s.\n", mTarget->getMobTradeName().c_str());
             log_immort(true, player, "%s set %s %s's %s to %d(%s).\n",
                 player->getCName(), PLYCRT(target), target->getCName(),
-                "NPC trade", mTarget->getMobTrade(), get_trade_string((int)mTarget->getMobTrade()));
+                "NPC trade", mTarget->getMobTrade(), mTarget->getMobTradeName().c_str());
 
 
             break;

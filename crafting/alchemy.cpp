@@ -25,6 +25,7 @@
 #include "mud.hpp"
 #include "server.hpp"
 #include "unique.hpp"
+#include "objects.hpp"
 
 #include <sstream>
 #include <iomanip>

@@ -35,6 +35,7 @@
 #include "server.hpp"
 #include "version.hpp"
 #include "quests.hpp"
+#include "objects.hpp"
 
 
 //********************************************************************

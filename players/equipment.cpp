@@ -31,6 +31,7 @@
 #include "unique.hpp"
 #include "quests.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
 
 
 int cmdCompare(Player* player, cmd* cmnd) {

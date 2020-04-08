@@ -382,7 +382,7 @@ void stat_rom_exits(Creature* player, BaseRoom* room) {
 
         for(i=0; i<MAX_EXIT_FLAGS; i++) {
             if(exit->flagIsSet(i)) {
-                sprintf(tempstr, "%s(%d), ", get_xflag(i), i+1);
+                sprintf(tempstr, "%s(%d), ", gConfig->getXFlag(i).c_str(), i+1);
                 strcat(str, tempstr);
                 flagcount++;
             }
@@ -519,7 +519,7 @@ void showRoomFlags(const Player* player, const BaseRoom* room, const TileInfo *t
             if(flags)
                 oStr << ", ";
             flags = true;
-            oStr << get_rflag(i) << "(" << (int)(i+1) << ")";
+            oStr << gConfig->getRFlag(i) << "(" << (int)(i+1) << ")";
         }
     }
 
@@ -1292,9 +1292,9 @@ int dmSetRoom(Player* player, cmd* cmnd) {
 
             if(player->getUniqueRoomParent()->flagIsSet(num - 1)) {
                 player->getUniqueRoomParent()->clearFlag(num - 1);
-                player->print("Room flag #%d(%s) off.\n", num, get_rflag(num-1));
+                player->print("Room flag #%d(%s) off.\n", num, gConfig->getRFlag(num-1).c_str());
 
-                log_immort(true, player, "%s cleared flag #%d(%s) in room %s.\n", player->getCName(), num, get_rflag(num-1),
+                log_immort(true, player, "%s cleared flag #%d(%s) in room %s.\n", player->getCName(), num, gConfig->getRFlag(num-1).c_str(),
                     room->fullName().c_str());
             } else {
                 if(num >= R_TRAINING_ROOM && num - 4 <= R_TRAINING_ROOM) {
@@ -1306,8 +1306,8 @@ int dmSetRoom(Player* player, cmd* cmnd) {
                 }
 
                 player->getUniqueRoomParent()->setFlag(num - 1);
-                player->print("Room flag #%d(%s) on.\n", num, get_rflag(num-1));
-                log_immort(true, player, "%s set flag #%d(%s) in room %s.\n", player->getCName(), num, get_rflag(num-1),
+                player->print("Room flag #%d(%s) on.\n", num, gConfig->getRFlag(num-1).c_str());
+                log_immort(true, player, "%s set flag #%d(%s) in room %s.\n", player->getCName(), num, gConfig->getRFlag(num-1).c_str(),
                     room->fullName().c_str());
 
                 if(num-1 == R_SHOP)
@@ -1657,12 +1657,12 @@ int dmSetExit(Player* player, cmd* cmnd) {
             exit->clearFlag(num - 1);
             player->printColor("%s^x exit flag #%d off.\n", exit->getCName(), num);
 
-            log_immort(true, player, "%s cleared %s^g exit flag #%d(%s) in room %s.\n", player->getCName(), exit->getCName(), num, get_xflag(num-1),
+            log_immort(true, player, "%s cleared %s^g exit flag #%d(%s) in room %s.\n", player->getCName(), exit->getCName(), num, gConfig->getXFlag(num-1).c_str(),
                 room->fullName().c_str());
             } else {
                 exit->setFlag(num - 1);
                 player->printColor("%s^x exit flag #%d on.\n", exit->getCName(), num);
-                log_immort(true, player, "%s turned on %s^g exit flag #%d(%s) in room %s.\n", player->getCName(), exit->getCName(), num, get_xflag(num-1),
+                log_immort(true, player, "%s turned on %s^g exit flag #%d(%s) in room %s.\n", player->getCName(), exit->getCName(), num, gConfig->getXFlag(num-1).c_str(),
                     room->fullName().c_str());
             }
             break;

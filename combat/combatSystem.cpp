@@ -24,6 +24,7 @@
 #include "mud.hpp"
 #include "rooms.hpp"
 #include "specials.hpp"
+#include "objects.hpp"
 
 
 //**********************************************************************

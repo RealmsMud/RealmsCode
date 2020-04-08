@@ -21,6 +21,7 @@
 #include "rooms.hpp"
 #include "server.hpp"
 #include "unique.hpp"
+#include "objects.hpp"
 
 
 //*********************************************************************

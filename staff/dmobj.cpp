@@ -30,6 +30,7 @@
 #include "server.hpp"
 #include "unique.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
 
 //*********************************************************************
 //                      dmCreateObj
@@ -177,7 +178,7 @@ bstring Object::statObj(int statFlags) {
     if(minStrength > 0)
         objStr << "^WMinimum " << minStrength << " strength required to use.^x\n";
 
-    objStr << "Type: " << obj_type(type) << "    ";
+    objStr << "Type: " << getTypeName() << "    ";
 
     if(type == ObjectType::WEAPON) {
         if(magicpower > 0 && magicpower < MAXSPELL && flagIsSet(O_WEAPON_CASTS))
@@ -242,7 +243,7 @@ bstring Object::statObj(int statFlags) {
     if(size)
         objStr << "Size: ^y" << getSizeStr() << "^x\n";
     if(material)
-        objStr << "Material: ^g" << getMaterialStr() << "^x\n";
+        objStr << "Material: ^g" << getMaterialName() << "^x\n";
 
     if(type == ObjectType::ARMOR)
         objStr << "AC: " << armor;
@@ -324,7 +325,7 @@ bstring Object::statObj(int statFlags) {
         if(flagIsSet(loop)) {
             if(numFlags++ != 0)
                 objStr << ", ";
-            objStr << get_oflag(loop) << "(" << loop+1 << ")";
+            objStr << gConfig->getOFlag(loop) << "(" << loop+1 << ")";
         }
     }
 
@@ -829,7 +830,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
                 test=1;
             }
             log_immort(2, player, "%s turned %s's flag %ld(%s) %s.\n",
-                player->getCName(), objname, num, get_oflag(num-1), test == 1 ? "On" : "Off");
+                player->getCName(), objname, num, gConfig->getOFlag(num-1).c_str(), test == 1 ? "On" : "Off");
         } else {
             return(setWhich(player, "flag"));
         }
@@ -908,7 +909,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 
             object->setMaterial((Material)num);
             result = object->getMaterial();
-            resultTxt = getMaterialName(object->getMaterial());
+            resultTxt = object->getMaterialName();
             setType = "Material";
             
         } else if(flags[1] == 'b') {
@@ -1134,8 +1135,8 @@ int dmSetObj(Player* player, cmd* cmnd) {
             }
             ObjectType newType = static_cast<ObjectType>(num);
             try {
-                resultTxt = obj_type(newType);
                 object->setType(newType);
+                resultTxt =object->getTypeName();
                 setType = "Type";
             } catch(std::out_of_range e) {
                     *player << "Invalid Type.\n";

@@ -28,6 +28,64 @@
 #include "skills.hpp"
 #include "unique.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
+
+const std::map<ObjectType,const char*> Object::objTypeToString = {
+        {ObjectType::WEAPON, "weapon"},
+        {ObjectType::INSTRUMENT, "instrument"},
+        {ObjectType::HERB, "herb"},
+        {ObjectType::ARMOR, "armor"},
+        {ObjectType::POTION, "potion"},
+        {ObjectType::SCROLL, "scroll"},
+        {ObjectType::WAND, "wand"},
+        {ObjectType::CONTAINER, "container"},
+        {ObjectType::MONEY, "money"},
+        {ObjectType::KEY, "key"},
+        {ObjectType::LIGHTSOURCE , "lightsource"},
+        {ObjectType::MISC, "misc"},
+        {ObjectType::SONGSCROLL, "song scroll"},
+        {ObjectType::POISON, "poison"},
+        {ObjectType::BANDAGE, "bandage"},
+        {ObjectType::AMMO, "ammo"},
+        {ObjectType::QUIVER, "quiver"},
+        {ObjectType::LOTTERYTICKET, "lottery ticket"},
+};
+
+
+bstring Object::getTypeName() const {
+    return objTypeToString.at(type);
+}
+
+bstring Object::getMaterialName() const {
+    switch(material) {
+        case WOOD:
+            return("wood");
+        case GLASS:
+            return("glass");
+        case CLOTH:
+            return("cloth");
+        case PAPER:
+            return("paper");
+        case IRON:
+            return("iron");
+        case STEEL:
+            return("steel");
+        case MITHRIL:
+            return("mithril");
+        case ADAMANTIUM:
+            return("adamantium");
+        case STONE:
+            return("stone");
+        case ORGANIC:
+            return("organic");
+        case BONE:
+            return("bone");
+        case LEATHER:
+            return("leather");
+        default:
+            return("none");
+    }
+}
 
 //*********************************************************************
 //                      cmpName
@@ -421,7 +479,7 @@ int displayObject(Player* player, Object* target) {
 
     if(target->getType() == ObjectType::WEAPON) {
     	requiredSkillString = target->getWeaponType();
-        oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is a " << obj_type(target->getType()) << "(" <<  target->getWeaponType() <<").\n";
+        oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is a " << target->getTypeName() << "(" <<  target->getWeaponType() <<").\n";
 
         if(target->flagIsSet(O_SILVER_OBJECT))
             oStr << "It is alloyed with pure silver.\n";
@@ -773,41 +831,6 @@ void Object::killUniques() {
     }
 }
 
-//*********************************************************************
-//                      getMaterialName
-//*********************************************************************
-
-bstring getMaterialName(Material material) {
-    switch(material) {
-    case WOOD:
-        return("wood");
-    case GLASS:
-        return("glass");
-    case CLOTH:
-        return("cloth");
-    case PAPER:
-        return("paper");
-    case IRON:
-        return("iron");
-    case STEEL:
-        return("steel");
-    case MITHRIL:
-        return("mithril");
-    case ADAMANTIUM:
-        return("adamantium");
-    case STONE:
-        return("stone");
-    case ORGANIC:
-        return("organic");
-    case BONE:
-        return("bone");
-    case LEATHER:
-        return("leather");
-    default:
-        return("none");
-    }
-}
-
 short Object::getWeight() const { return(weight); }
 short Object::getBulk() const { return(bulk); }
 short Object::getMaxbulk() const { return(maxbulk); }
@@ -839,6 +862,7 @@ int Object::getLotteryCycle() const { return(lotteryCycle); }
 short Object::getLotteryNumbers(short i) const {return(lotteryNumbers[i]); }
 int Object::getRecipe() const { return(recipe); }
 Material Object::getMaterial() const { return(material); }
+
 const bstring Object::getSubType() const { return(subType); }
 short Object::getDelay() const { return(delay); }
 short Object::getExtra() const { return(extra); }
@@ -849,12 +873,6 @@ short Object::getWeaponDelay() const {
 }
 bstring Object::getQuestOwner() const { return(questOwner); }
 
-bstring Object::getTypeStr() const {
-    return obj_type(type);
-}
-bstring Object::getMaterialStr() const {
-    return(getMaterialName(material));
-}
 bstring Object::getSizeStr() const{
     return(getSizeName(size));
 }

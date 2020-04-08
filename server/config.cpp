@@ -836,3 +836,12 @@ void Config::resetShipsFile() {
     sprintf(command, "cp %s %s", sfile1, sfile2);
     system(command);
 }
+
+bstring Config::getFlag(int flagNum, MudFlagMap& flagMap) {
+    // Flags are offset by one
+    auto flag = flagMap.find(flagNum + 1);
+    if (flag == flagMap.end())
+        return "Unknown";
+    return flag->second.name;
+}
+

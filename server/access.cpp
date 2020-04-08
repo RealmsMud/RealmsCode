@@ -23,53 +23,6 @@
 #include "playerClass.hpp"
 #include "playerTitle.hpp"
 
-
-// Stats
-const std::map<ObjectType,const char*> objTypeToString = {
-    {ObjectType::WEAPON, "weapon"},
-    {ObjectType::INSTRUMENT, "instrument"},
-    {ObjectType::HERB, "herb"},
-    {ObjectType::ARMOR, "armor"},
-    {ObjectType::POTION, "potion"},
-    {ObjectType::SCROLL, "scroll"},
-    {ObjectType::WAND, "wand"},
-    {ObjectType::CONTAINER, "container"},
-    {ObjectType::MONEY, "money"},
-    {ObjectType::KEY, "key"},
-    {ObjectType::LIGHTSOURCE , "lightsource"},
-    {ObjectType::MISC, "misc"},
-    {ObjectType::SONGSCROLL, "song scroll"},
-    {ObjectType::POISON, "poison"},
-    {ObjectType::BANDAGE, "bandage"},
-    {ObjectType::AMMO, "ammo"},
-    {ObjectType::QUIVER, "quiver"},
-    {ObjectType::LOTTERYTICKET, "lottery ticket"},
-};
-
-
-char stat_names[][4] = { "STR", "DEX", "CON", "INT", "PTY", "CHA" };
-
-char* getStatName(int stat) {
-    stat = MIN<int>(MAX<int>(stat - 1, 0), MAX_STAT);
-    return(stat_names[stat]);
-}
-
-char save_names[][4] = { "LCK", "POI", "DEA", "BRE", "MEN", "SPL" };
-
-char* getSaveName(int save) {
-    save = MIN<int>(MAX<int>(save, 0), MAX_SAVE-1);
-    return(save_names[save]);
-}
-
-//
-//      object
-//
-
-char object_type[][20] = { "error", "error", "error", "instrument", "herb",
-        "weapon", "piece of armor", "potion", "scroll", "magic wand", "container", "money", "key",
-        "light source", "miscellaneous item", "song scroll", "poison", "bandage", "ammo", "quiver", "lottery ticket",
-        "unknown item" };
-
 //
 //      class
 //
@@ -88,8 +41,6 @@ char shortClassAbbrev[][8] = { "A", "Be", "Cl", "F", "M", "P", "R", "T", "Va", "
 //
 //      mobs
 //
-char mob_trade_str[][16] = { "None", "Smithy", "Banker", "Armorer", "Weaponsmith", "Merchant", "Training Perm" };
-
 char mob_skill_str[][16] = { "Horrible", "Poor", "Fair", "Decent", "Average", "Talented", "Very Good", "Exceptional",
         "Master", "Grand Master", "Godlike" };
 
@@ -343,22 +294,6 @@ char *get_language_verb(int lang) {
     return(language_verb[lang][num-1]);
 }
 
-
-
-//*********************************************************************
-//          get_trade_string()
-//*********************************************************************
-
-char *get_trade_string(int nIndex) {
-    // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < MOBTRADE_COUNT );
-
-    nIndex = MAX<int>( 0, MIN<int>(nIndex, MOBTRADE_COUNT) );
-    return(mob_trade_str[nIndex]);
-
-}
-
 //*********************************************************************
 //          get_skill_string()
 //*********************************************************************
@@ -389,65 +324,6 @@ char get_save_color(int nIndex) {
     nIndex = MAX( 0, MIN(nIndex, MAX_SAVE_COLOR-1 ) );
 
     return(save_color[nIndex]);
-}
-
-const char *get_mflag(int nIndex) {
-    // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < MAX_MONSTER_FLAGS+1 );
-
-    nIndex = MAX( 0, MIN(nIndex, MAX_MONSTER_FLAGS ) );
-
-    // flags are offset by 1
-    nIndex++;
-    return(gConfig->mflags[nIndex].name.c_str());
-}
-
-const char *get_pflag(int nIndex) {
-    // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < MAX_PLAYER_FLAGS+1 );
-
-    nIndex = MAX( 0, MIN(nIndex, MAX_PLAYER_FLAGS ) );
-
-    // flags are offset by 1
-    nIndex++;
-    return(gConfig->pflags[nIndex].name.c_str());
-}
-
-const char *get_rflag(int nIndex) {
-    // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < MAX_ROOM_FLAGS+1 );
-
-    nIndex = MAX( 0, MIN(nIndex, MAX_ROOM_FLAGS ) );
-
-    // flags are offset by 1
-    nIndex++;
-    return(gConfig->rflags[nIndex].name.c_str());
-}
-
-const char *get_xflag(int nIndex) {
-    // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < MAX_EXIT_FLAGS+1 );
-
-    nIndex = MAX( 0, MIN(nIndex, MAX_EXIT_FLAGS ) );
-
-    // flags are offset by 1
-    nIndex++;
-    return(gConfig->xflags[nIndex].name.c_str());
-}
-const char *get_oflag(int nIndex) {
-    // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < MAX_OBJECT_FLAGS+1 );
-
-    nIndex = MAX( 0, MIN(nIndex, MAX_OBJECT_FLAGS ) );
-
-    // flags are offset by 1
-    nIndex++;
-    return(gConfig->oflags[nIndex].name.c_str());
 }
 
 char *getClassAbbrev(int nIndex) {
@@ -499,67 +375,6 @@ char *getShortClassName(const Player* player) {
     return(classname);
 }
 
-//*********************************************************************
-//                      getTitle
-//*********************************************************************
-// This function returns a string with the player's character title in
-// it.  The title is determined by looking at the player's class and
-// level.
-
-bstring Player::getTitle() const {
-    std::ostringstream titleStr;
-
-    int titlnum;
-
-    if(title == "" || title == " " || title == "[custom]") {
-        titlnum = (level - 1) / 3;
-        if(titlnum > 9)
-            titlnum = 9;
-
-        if(cClass == CreatureClass::CLERIC)
-            titleStr << gConfig->getDeity(deity)->getTitle(level, getSex() == SEX_MALE);
-        else
-            titleStr << gConfig->classes[get_class_string(static_cast<int>(cClass))]->getTitle(level, getSex() == SEX_MALE);
-
-        if(hasSecondClass()) {
-            titleStr <<  "/";
-
-            if(cClass2 == CreatureClass::CLERIC)
-                titleStr << gConfig->getDeity(deity)->getTitle(level, getSex() == SEX_MALE);
-            else
-                titleStr << gConfig->classes[get_class_string(static_cast<int>(cClass2))]->getTitle(level, getSex() == SEX_MALE);
-        }
-
-        return(titleStr.str());
-
-    } else {
-        return(title);
-    }
-}
-
-bstring Player::getCustomTitle() const { return(title); }
-bstring Player::getTempTitle() const { return(tempTitle); }
-
-bool Player::canChooseCustomTitle() const {
-    const std::map<int, PlayerTitle*>* titles=0;
-    std::map<int, PlayerTitle*>::const_iterator it;
-    const PlayerTitle* title=0;
-
-    if(cClass == CreatureClass::CLERIC)
-        titles = &(gConfig->getDeity(deity)->titles);
-    else
-        titles = &(gConfig->classes[get_class_string(static_cast<int>(cClass))]->titles);
-
-    it = titles->find(level);
-    if(it == titles->end())
-        return(false);
-
-    title = (*it).second;
-    return(title && title->getTitle(getSex() == SEX_MALE) == "[custom]");
-}
-
-void Player::setTitle(bstring newTitle) { title = newTitle; }
-void Player::setTempTitle(bstring newTitle) { tempTitle = newTitle; }
 
 //*********************************************************************
 //                      int_to_test()
@@ -610,104 +425,12 @@ const char *get_quest_name(int nIndex) {
         return(gConfig->questTable[nIndex]->name);
 }
 
-//*********************************************************************
-//                      obj_type
-//*********************************************************************
-const char *obj_type(ObjectType type) {
-    return objTypeToString.at(type);
-}
-
-char conjureTitles[][3][10][30] = {
-// earth
-        {
-        // weak
-                { "lesser earth elemental", "marble mongoose", "rock ape", "earth spider", "giant badger",
-                        "steel snake", "golden fox", "giant rock worm", "glassteel golem", "earth demon" },
-                // normal
-                { "giant mole", "obsidian worm", "mud sloth", "crystal wolf", "earth elemental", "granite elephant",
-                        "iron sentinel", "greater earth elemental", "steel tiger", "adamantium tiger" },
-                // buff
-                { "pet rock", "sandman", "rock wolverine", "rock demon", "marble tiger", "earth devil",
-                        "crystal sentinel", "galeb duhr", "steel hydra", "adamantium dragon" } },
-        // air
-        {
-        // weak
-                { "lesser air elemental", "wind snake", "wind rat", "zephyr cat", "wind imp", "aerial tiger",
-                        "cloud ogre", "silver eagle", "cloud giant", "winged elf lord" },
-                // normal
-                { "giant wasp", "aerial vortex", "air sentinel", "winged cobra", "air elemental", "aerial stalker",
-                        "wind devil", "greater air elemental", "cloud drake", "djinn air lord" },
-                // buff
-                { "wind bat", "baby griffon", "dust devil", "winged elf", "winged unicorn", "black pegasus",
-                        "djinn", "jade falcon", "ki-rin", "cloud giant wizard" } },
-        // fire
-        {
-        // weak
-                { "lesser fire elemental", "giant firefly", "lesser fire demon", "fire mephit", "fire cat",
-                        "salamander", "firey skeleton warrior", "crimson lion", "fire drake", "lava raptor" },
-                // normal
-                { "fire sphere", "fire snake", "fire beetle", "flame spider", "fire elemental", "firehawk",
-                        "fire angel", "greater fire elemental", "fire kraken", "phoenix" },
-                // buff
-                { "burning bush", "fire asp", "flame sprite", "ruby serpent", "crimson iguana", "brimstone demon",
-                        "efretti", "horned fire devil", "fire giant shaman", "venerable red dragon" } },
-        // water
-        {
-        // weak
-                { "lesser water elemental", "aquatic elf", "acidic blob", "vapor rat", "water weird", "fog beast",
-                        "white crocodile", "steam jaguar", "water-logged troll", "bronze dragon" },
-                // normal
-                { "giant frog", "water imp", "mist devil", "water scorpion", "water elemental", "steam spider",
-                        "blood elemental", "greater water elemental", "acid devil", "water elemental lord" },
-                // buff
-                { "mist rat", "creeping fog", "water mephit", "mist spider", "carp dragon", "giant water slug",
-                        "giant squid", "mist dragon", "kraken", "sea titan" } },
-        // electricity
-        {
-        // weak
-                { "lesser lightning elemental", "lightning ball", "storm cloud", "lightning imp", "crackling mephit",
-                        "crackling orb", "storm mephit", "storm eagle", "storm sentinel", "greater lightning elemental" },
-                // normal
-                { "spark", "shocker lizard", "thunder hawk", "electric eel", "lightning demon",
-                        "shocker imp", "shocking salamander", "thunderbolt", "storm giant", "storm giant shaman" },
-                // buff
-                { "static ball", "lightning serpent", "lightning devil", "thundercloud", "thunder cat",
-                        "lightning djinn", "crackling roc", "young blue dragon", "blue dragon", "venerable blue dragon" } },
-        // cold
-        {
-        // weak
-                { "lesser ice elemental", "snow storm", "polar bear cub", "frost revenant", "swirling blizzard",
-                        "frozen beast", "snow witch", "crystalline golem", "ice troll", "greater ice elemental" },
-                // normal
-                { "ice rat", "snowman", "snow eagle", "winter mephit", "ice elemental",
-                        "glacier wolf", "frozen guardian", "white remorhaz", "frost giant shaman", "frost giant lord" },
-                // buff
-                { "winter fox", "winter wolf cub", "ice mephit", "polar bear", "frozen yeti",
-                        "winter wolf", "abominable snowman", "young white dragon", "white dragon", "venerable white dragon" } } };
-
-char bardConjureTitles[][10][35] = { { "dancing bunny rabbit", "ebony squirrel", "bearded lady", "blue chimpanzee",
-        "singing sword", "redskin wild-elf", "mechanical dwarf", "psychotic animated cello", "clockwork wyrm",
-        "untuned rabid barisax" },
-        { "talking sewer rat", "alley cat", "chattering tea pot", "ivory jaguar", "invisible entity",
-                "singing velociraptor", "cackling scarecrow", "shade", "miming storm giant", "googleplex" },
-
-        { "angry teddy bear", "red spider monkey", "wild-eyed poet", "psychotic hand puppet",
-                "schizophrenic serial killer clown", "sabre-tooth gnome", "albino dark-elf", "headless horseman",
-                "rampaging bass drum", "vorpal bunny" } };
-
-char mageConjureTitles[][10][35] = { { "large crow", "unseen servant", "jade rat", "guardian daemon", "marble owl",
-        "chasme demon", "bone devil", "balor", "devil princess", "daemon overlord" },
-
-{ "large black beetle", "raven", "ebony cat", "quasit", "iron cobra", "shadow daemon", "succubus", "large blue demon",
-        "ultradaemon", "hellfire darklord" }, { "white shrew", "red-blue tarantula", "azurite hawk", "fiendish imp",
-        "pseudo dragon", "styx devil", "glabrezu demon", "pit fiend", "demon prince", "abyssal lord" } };
-
-bool isTitle(bstring str) {
+bool isTitle(const bstring& str) {
     std::map<int, PlayerTitle*>::iterator tt;
 
     std::map<bstring, PlayerClass*>::iterator cIt;
-    PlayerClass* pClass=0;
-    PlayerTitle* title=0;
+    PlayerClass* pClass=nullptr;
+    PlayerTitle* title=nullptr;
     for(cIt = gConfig->classes.begin() ; cIt != gConfig->classes.end() ; cIt++) {
         pClass = (*cIt).second;
         for(tt = pClass->titles.begin() ; tt != pClass->titles.end(); tt++) {
@@ -718,7 +441,7 @@ bool isTitle(bstring str) {
     }
 
     std::map<int, DeityData*>::iterator it;
-    DeityData* data=0;
+    DeityData* data=nullptr;
     for(it = gConfig->deities.begin() ; it != gConfig->deities.end() ; it++) {
         data = (*it).second;
         for(tt = data->titles.begin() ; tt != data->titles.end(); tt++) {

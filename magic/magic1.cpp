@@ -28,6 +28,7 @@
 #include "server.hpp"
 #include "unique.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
 
 //*********************************************************************
 //                      spellShortcut

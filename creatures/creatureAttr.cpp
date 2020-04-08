@@ -2139,6 +2139,12 @@ void Monster::setBaseRealm(Realm toSet) {
     baseRealm = toSet;
 }
 
+bstring Monster::getMobTradeName() const {
+    int nIndex = MAX<int>( 0, MIN<int>(this->mobTrade, MOBTRADE_COUNT) );
+    return(mob_trade_str[nIndex]);
+
+}
+
 //*********************************************************************
 //                      hasMp
 //*********************************************************************

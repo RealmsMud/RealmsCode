@@ -34,6 +34,7 @@ namespace odbc {
 // C Includes
 //#include "pythonHandler.hpp"
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
+#include <random>
 
 #include "catRef.hpp"
 #include "delayedAction.hpp"
@@ -110,6 +111,15 @@ public:
     static void destroyInstance();
 
     ~Server();
+
+
+    // A function to return a seeded random number generator.
+    inline std::mt19937& randomGenerator() {
+        // the generator will only be seeded once (per thread) since it's static
+        static thread_local std::mt19937 gen(std::random_device{}());
+        return gen;
+    }
+
 // Instance
 private:
     static Server* myInstance;
@@ -153,7 +163,7 @@ public:
     ObjectCache objectCache;
 
     void handlePythonError();
-    
+
 // ******************
 // Internal Variables
 private:
@@ -367,7 +377,7 @@ public:
     void sendCrash();
 
     bool isRebooting();
-    bool isGDB();
+
     bool isValgrind();
 
     // Reboot
@@ -387,8 +397,6 @@ public:
     void saveAllPly();
     int getNumPlayers();
 
-    // Sockets
-    int deleteSocket(Socket* sock);
     void disconnectAll();
     int processOutput(); // Send any buffered output
 
