@@ -67,6 +67,7 @@ EXPOSE 3333
 ENV HOME /home/realms/
 
 COPY --from=BUILD /build/RealmsCode .
+COPY --from=BUILD /build/List .
 COPY --from=BUILD /build/leak.supp .
 
 ENV ASAN_OPTIONS="detect_leaks=1"

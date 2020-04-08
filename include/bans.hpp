@@ -29,14 +29,14 @@ public:
     
 public: // for now
     bstring     site;
-    int             duration;
-    long            unbanTime;
+    int             duration{};
+    long            unbanTime{};
     bstring     by;
     bstring     time;
     bstring     reason;
     bstring     password;
-    bool            isPrefix;
-    bool            isSuffix;
+    bool            isPrefix{};
+    bool            isSuffix{};
 };
 
 
