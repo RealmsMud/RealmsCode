@@ -133,7 +133,7 @@ public:
         bstring ip;
         bstring hostName;
         time_t time;
-        dnsCache(bstring pIp, bstring pHostName, time_t pTime) {
+        dnsCache(const bstring& pIp, const bstring& pHostName, time_t pTime) {
             ip = pIp;
             hostName = pHostName;
             time = pTime;
@@ -146,7 +146,7 @@ public:
 public:
     PlayerMap players; // Map of all players
     SocketList sockets; // List of all connected sockets
-    SocketVector* vSockets = 0;
+    SocketVector* vSockets = nullptr;
 
     RoomCache roomCache;
     MonsterCache monsterCache;
@@ -164,9 +164,9 @@ private:
 
     std::list<BaseRoom*> effectsIndex;
 
-    fd_set inSet;
-    fd_set outSet;
-    fd_set excSet;
+    fd_set inSet{};
+    fd_set outSet{};
+    fd_set excSet{};
 
     bool running; // True while the game is up and bound to a port
     long pulse; // Current pulse
@@ -214,27 +214,27 @@ private:
     bool initPython();
     bool cleanUpPython();
 
-    int getNumSockets(void); // Get number of sockets in the sockets list
+    int getNumSockets(); // Get number of sockets in the sockets list
 
     // Game & Socket methods
     int handleNewConnection(controlSock& control);
-    int poll(void); // Poll all descriptors for input
-    int checkNew(void); // Accept new connections
-    int processInput(void); // Process input from users
-    int processCommands(void); // Process commands from users
-    int updatePlayerCombat(void); // Handle player auto attacks etc
-    int processChildren(void);
+    int poll(); // Poll all descriptors for input
+    int checkNew(); // Accept new connections
+    int processInput(); // Process input from users
+    int processCommands(); // Process commands from users
+    int updatePlayerCombat(); // Handle player auto attacks etc
+    int processChildren();
     int processListOutput(childProcess &lister);
 
     // Child processes
-    int reapChildren(void); // Clean up after any dead children
+    int reapChildren(); // Clean up after any dead children
 
     // Reboot
     bool saveRebootFile(bool resetShips = false);
 
     // Updates
-    void updateGame(void);
-    void processMsdp(void);
+    void updateGame();
+    void processMsdp();
     void pulseTicks(long t);
     void pulseCreatureEffects(long t);
     void pulseRoomEffects(long t);
@@ -246,13 +246,13 @@ private:
     void updateAction(long t);
 
     // DNS
-    void addCache(bstring ip, bstring hostName, time_t t = -1);
+    void addCache(const bstring& ip, const bstring& hostName, time_t t = -1);
     void saveDnsCache();
     void loadDnsCache();
     void pruneDns();
 
     int installPrintfHandlers();
-    void installSignalHandlers();
+    static void installSignalHandlers();
 
     void populateVSockets();
 
@@ -281,7 +281,7 @@ public:
     void clearAsEnemy(Player* player);
     bstring showActiveList();
 
-    void logGold(GoldLog dir, Player* player, Money amt, MudObject* target, bstring logType);
+    static void logGold(GoldLog dir, Player* player, Money amt, MudObject* target, const bstring& logType);
 
     bool registerGroup(Group* toRegister);
     bool unRegisterGroup(Group* toUnRegister);
@@ -320,10 +320,10 @@ public:
     void flushObject();
 
     bool reloadRoom(BaseRoom* room);
-    UniqueRoom* reloadRoom(CatRef cr);
-    int resaveRoom(CatRef cr);
+    UniqueRoom* reloadRoom(const CatRef& cr);
+    int resaveRoom(const CatRef& cr);
     int saveStorage(UniqueRoom* uRoom);
-    int saveStorage(CatRef cr);
+    int saveStorage(const CatRef& cr);
     void resaveAllRooms(char permonly);
 //    void replaceMonsterInQueue(CatRef cr, Monster *creature);
 //    void replaceObjectInQueue(CatRef cr, Object* object);
@@ -346,7 +346,7 @@ public:
     void showMemory(Socket* sock, bool extended=false);
 
     // Child processes
-    void addChild(int pid, childType pType, int pFd = -1, bstring pExtra = "");
+    void addChild(int pid, childType pType, int pFd = -1, const bstring& pExtra = "");
 
     // Python
     bool runPython(const bstring& pyScript, boost::python::object& dictionary);
@@ -360,7 +360,7 @@ public:
     void setRebooting();
     void setValgrind();
 
-    int run(void); // Run the server
+    int run(); // Run the server
     int addListenPort(int); // Add a new port to listen to
 
     // Status
@@ -372,7 +372,7 @@ public:
 
     // Reboot
     bool startReboot(bool resetShips = false);
-    int finishReboot(void); // Bring the mud back up from a reboot
+    int finishReboot(); // Bring the mud back up from a reboot
 
     // DNS
     bstring getDnsCacheString();
@@ -382,15 +382,15 @@ public:
     // Players
     bool addPlayer(Player* player);
     bool clearPlayer(Player* player);
-    Player* findPlayer(bstring name);
-    bool clearPlayer(bstring name);
+    Player* findPlayer(const bstring& name);
+    bool clearPlayer(const bstring& name);
     void saveAllPly();
     int getNumPlayers();
 
     // Sockets
     int deleteSocket(Socket* sock);
-    void disconnectAll(void);
-    int processOutput(void); // Send any buffered output
+    void disconnectAll();
+    int processOutput(); // Send any buffered output
 
     // Web Interface
     bool initWebInterface();
@@ -423,8 +423,8 @@ public:
     void checkBans();
 
     // Broadcasts
-    bstring getTimeZone();
-    bstring getServerTime();
+    static bstring getTimeZone();
+    static bstring getServerTime();
 
     // Effects
     void addEffectsIndex(BaseRoom* room);
@@ -433,7 +433,7 @@ public:
     void showEffectsIndex(const Player* player);
 
 protected:
-    int cleanUp(void); // Kick out any disconnectors and other general cleanup
+    int cleanUp(); // Kick out any disconnectors and other general cleanup
 
 
 

@@ -165,7 +165,7 @@ public:
     int currentHour(bool format=false) const;
     int currentMinutes() const;
     void resetMinutes();
-    void resetShipsFile();
+    static void resetShipsFile();
     int expectedShipUpdates() const;
 
 
