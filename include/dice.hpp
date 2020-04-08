@@ -31,26 +31,26 @@ public:
     void load(xmlNodePtr curNode);
     void save(xmlNodePtr curNode, const char* name) const;
 
-    int roll() const;
-    int average() const;
-    int low() const;
-    int high() const;
-    bstring str() const;
+    [[nodiscard]] int roll() const;
+    [[nodiscard]] int average() const;
+    [[nodiscard]] int low() const;
+    [[nodiscard]] int high() const;
+    [[nodiscard]] bstring str() const;
 
-    double getMean() const;
-    unsigned short getNumber() const;
-    unsigned short getSides() const;
-    short getPlus() const;
+    [[nodiscard]] double getMean() const;
+    [[nodiscard]] unsigned short getNumber() const;
+    [[nodiscard]] unsigned short getSides() const;
+    [[nodiscard]] short getPlus() const;
 
     void setMean(double m);
     void setNumber(unsigned short n);
     void setSides(unsigned short s);
     void setPlus(short p);
 protected:
-    double mean;        // If set, replaces number/sides/plus
-    unsigned short number;
-    unsigned short sides;
-    short plus;
+    double mean{};        // If set, replaces number/sides/plus
+    unsigned short number{};
+    unsigned short sides{};
+    short plus{};
 };
 
 
