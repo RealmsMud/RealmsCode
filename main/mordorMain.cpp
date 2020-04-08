@@ -40,15 +40,8 @@ void startup_mordor(void) {
 
 
 
-    std::clog << "Starting RoH Server " << VERSION " compiled on " << __DATE__ << " at " << __TIME__ << " ";
-    #ifdef __CYGWIN__
-    std::clog << "(CYGWIN)\n";
-    #elif defined(__MACOS)
-    std::clog << "(MACOSX)\n";
-    #else
-    std::clog << "(LINUX)\n";
-    #endif
-    
+    std::clog << "Starting RoH Server " << VERSION " compiled on " << __DATE__ << " at " << __TIME__ << " " << "(LINUX)\n";
+
 #ifdef NODEMOGRAPHICS
     std::clog << "Demographics disabled\n";
 #endif
