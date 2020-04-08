@@ -29,7 +29,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 ca-
     libpspell-dev \
     aspell \
     zlib1g-dev && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    ln -s /usr/bin/clang-10 /usr/bin/clang && \
+    ln -s /usr/bin/clang++-10 /usr/bin/clang++
 
 WORKDIR /build
 
