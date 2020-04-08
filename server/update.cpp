@@ -883,11 +883,9 @@ void doCrash(int sig) {
     logn("log.outbytes", "-- %ld\n", OutBytes);
     logn("log.crash","--- !CRASH! Game closed ---\n");
     loge("--- !CRASH! Game closed ---\n");
-// for some reason, on cygwin this will (sometimes) corrupt room files
-#ifndef __CYGWIN__
-// Turning this off because of the xp->ext = nullptr bug which is erasing exits
-//  gConfig->resaveAllRooms(1);
-#endif
+
+    // Turning this off because of the xp->ext = nullptr bug which is erasing exits
+//    gConfig->resaveAllRooms(1);
     gServer->saveAllPly();
 
     cleanUpMemory();
