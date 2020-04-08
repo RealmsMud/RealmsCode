@@ -213,12 +213,9 @@ set(COMMON_SOURCE_FILES
     
     io/creatureStreams.cpp
     io/color.cpp
-    io/files-xml-read.cpp
-    io/files-xml-save.cpp
     io/io.cpp
     io/socket.cpp
     io/vprint.cpp
-    io/xml.cpp
 
     main/mordorMain.cpp
 
@@ -332,7 +329,12 @@ set(COMMON_SOURCE_FILES
     util/misc.cpp
     util/md5.cpp
     util/timer.cpp
-    
+
+    xml/calendar-xml.cpp
+    xml/files-xml-read.cpp
+    xml/files-xml-save.cpp
+    xml/xml.cpp
+
 
     wip/fighters.cpp
     wip/songs.cpp

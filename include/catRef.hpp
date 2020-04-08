@@ -37,10 +37,10 @@ public:
     CatRef& operator=(const CatRef& cr);
     bool    operator==(const CatRef& cr) const;
     bool    operator!=(const CatRef& cr) const;
-    bstring rstr() const;
-    bstring str(bstring current = "", char color = '\0') const;
+    [[nodiscard]] bstring rstr() const;
+    [[nodiscard]] bstring str(bstring current = "", char color = '\0') const;
     void    setArea(bstring c);
-    bool    isArea(bstring c) const;
+    [[nodiscard]] bool    isArea(bstring c) const;
 
     bstring area;
     short   id;

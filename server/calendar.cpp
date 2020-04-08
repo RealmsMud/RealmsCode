@@ -23,7 +23,6 @@
 #include "rooms.hpp"
 #include "mud.hpp"
 #include "server.hpp"
-#include "xml.hpp"
 
 //*********************************************************************
 //                      cWeather
@@ -37,69 +36,6 @@ cWeather::cWeather() {
     lightRain = heavyRain = sheetsRain = torrentRain = "";
 }
 
-
-void cWeather::load(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-
-    while(childNode) {
-        if(NODE_NAME(childNode, "Sunrise")) xml::copyToBString(sunrise, childNode);
-        else if(NODE_NAME(childNode, "Sunset")) xml::copyToBString(sunset, childNode);
-        else if(NODE_NAME(childNode, "EarthTrembles")) xml::copyToBString(earthTrembles, childNode);
-        else if(NODE_NAME(childNode, "HeavyFog")) xml::copyToBString(heavyFog, childNode);
-        else if(NODE_NAME(childNode, "BeautifulDay")) xml::copyToBString(beautifulDay, childNode);
-        else if(NODE_NAME(childNode, "BrightSun")) xml::copyToBString(brightSun, childNode);
-        else if(NODE_NAME(childNode, "GlaringSun")) xml::copyToBString(glaringSun, childNode);
-        else if(NODE_NAME(childNode, "Heat")) xml::copyToBString(heat, childNode);
-        else if(NODE_NAME(childNode, "Still")) xml::copyToBString(still, childNode);
-        else if(NODE_NAME(childNode, "LightBreeze")) xml::copyToBString(lightBreeze, childNode);
-        else if(NODE_NAME(childNode, "StrongWind")) xml::copyToBString(strongWind, childNode);
-        else if(NODE_NAME(childNode, "WindGusts")) xml::copyToBString(windGusts, childNode);
-        else if(NODE_NAME(childNode, "GaleForce")) xml::copyToBString(galeForce, childNode);
-        else if(NODE_NAME(childNode, "ClearSkies")) xml::copyToBString(clearSkies, childNode);
-        else if(NODE_NAME(childNode, "LightClouds")) xml::copyToBString(lightClouds, childNode);
-        else if(NODE_NAME(childNode, "Thunderheads")) xml::copyToBString(thunderheads, childNode);
-        else if(NODE_NAME(childNode, "LightRain")) xml::copyToBString(lightRain, childNode);
-        else if(NODE_NAME(childNode, "HeavyRain")) xml::copyToBString(heavyRain, childNode);
-        else if(NODE_NAME(childNode, "SheetsRain")) xml::copyToBString(sheetsRain, childNode);
-        else if(NODE_NAME(childNode, "TorrentRain")) xml::copyToBString(torrentRain, childNode);
-        else if(NODE_NAME(childNode, "NoMoon")) xml::copyToBString(noMoon, childNode);
-        else if(NODE_NAME(childNode, "SliverMoon")) xml::copyToBString(sliverMoon, childNode);
-        else if(NODE_NAME(childNode, "HalfMoon")) xml::copyToBString(halfMoon, childNode);
-        else if(NODE_NAME(childNode, "WaxingMoon")) xml::copyToBString(waxingMoon, childNode);
-        else if(NODE_NAME(childNode, "FullMoon")) xml::copyToBString(fullMoon, childNode);
-
-        childNode = childNode->next;
-    }
-}
-
-
-void cWeather::save(xmlNodePtr curNode) const {
-    xml::newStringChild(curNode, "Sunrise", sunrise);
-    xml::newStringChild(curNode, "Sunset", sunset);
-    xml::newStringChild(curNode, "EarthTrembles", earthTrembles);
-    xml::newStringChild(curNode, "HeavyFog", heavyFog);
-    xml::newStringChild(curNode, "BeautifulDay", beautifulDay);
-    xml::newStringChild(curNode, "BrightSun", brightSun);
-    xml::newStringChild(curNode, "GlaringSun", glaringSun);
-    xml::newStringChild(curNode, "Heat", heat);
-    xml::newStringChild(curNode, "Still", still);
-    xml::newStringChild(curNode, "LightBreeze", lightBreeze);
-    xml::newStringChild(curNode, "StrongWind", strongWind);
-    xml::newStringChild(curNode, "WindGusts", windGusts);
-    xml::newStringChild(curNode, "GaleForce", galeForce);
-    xml::newStringChild(curNode, "ClearSkies", clearSkies);
-    xml::newStringChild(curNode, "LightClouds", lightClouds);
-    xml::newStringChild(curNode, "Thunderheads", thunderheads);
-    xml::newStringChild(curNode, "LightRain", lightRain);
-    xml::newStringChild(curNode, "HeavyRain", heavyRain);
-    xml::newStringChild(curNode, "SheetsRain", sheetsRain);
-    xml::newStringChild(curNode, "TorrentRain", torrentRain);
-    xml::newStringChild(curNode, "NoMoon", noMoon);
-    xml::newStringChild(curNode, "SliverMoon", sliverMoon);
-    xml::newStringChild(curNode, "HalfMoon", halfMoon);
-    xml::newStringChild(curNode, "WaxingMoon", waxingMoon);
-    xml::newStringChild(curNode, "FullMoon", fullMoon);
-}
 
 bstring cWeather::get(WeatherString w) const {
     switch(w) {
@@ -170,7 +106,9 @@ bstring cWeather::get(WeatherString w) const {
 //*********************************************************************
 
 cDay::cDay() {
-    month = day = year = 0;
+    month = 0;
+    day = 0;
+    year = 0;
 }
 
 short cDay::getMonth() const { return(month); }
@@ -180,23 +118,6 @@ int cDay::getYear() const { return(year); }
 void cDay::setMonth(short m) { month = m; }
 void cDay::setDay(short d) { day = d; }
 void cDay::setYear(int y) { year = y; }
-
-void cDay::save(xmlNodePtr curNode) const {
-    xml::saveNonZeroNum(curNode, "Year", year);
-    xml::saveNonZeroNum(curNode, "Month", month);
-    xml::saveNonZeroNum(curNode, "Day", day);
-}
-
-void cDay::load(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-
-    while(childNode) {
-        if(NODE_NAME(childNode, "Day")) xml::copyToNum(day, childNode);
-        else if(NODE_NAME(childNode, "Month")) xml::copyToNum(month, childNode);
-        else if(NODE_NAME(childNode, "Year")) xml::copyToNum(year, childNode);
-        childNode = childNode->next;
-    }
-}
 
 
 //*********************************************************************
@@ -212,31 +133,6 @@ short cMonth::getId() const { return(id); }
 bstring cMonth::getName() const { return(name); }
 short cMonth::getDays() const { return(days); }
 
-//*********************************************************************
-//                      save
-//*********************************************************************
-
-void cMonth::save(xmlNodePtr curNode) const {
-    xml::newNumProp(curNode, "id", id);
-    xml::saveNonNullString(curNode, "Name", name);
-    xml::saveNonZeroNum(curNode, "Days", days);
-}
-
-
-//*********************************************************************
-//                      load
-//*********************************************************************
-
-void cMonth::load(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-
-    id = xml::getIntProp(curNode, "id");
-    while(childNode) {
-        if(NODE_NAME(childNode, "Days")) xml::copyToNum(days, childNode);
-        else if(NODE_NAME(childNode, "Name")) xml::copyToBString(name, childNode);
-        childNode = childNode->next;
-    }
-}
 
 
 //*********************************************************************
@@ -255,40 +151,6 @@ short cSeason::getMonth() const { return(month); }
 short cSeason::getDay() const { return(day); }
 cWeather *cSeason::getWeather() { return(&weather); }
 
-//*********************************************************************
-//                      save
-//*********************************************************************
-
-void cSeason::save(xmlNodePtr curNode) const {
-    xml::newNumProp(curNode, "id", (int)id);
-    xml::saveNonNullString(curNode, "Name", name);
-    xml::saveNonZeroNum(curNode, "Month", month);
-    xml::saveNonZeroNum(curNode, "Day", day);
-
-    xmlNodePtr childNode = xml::newStringChild(curNode, "Weather");
-    weather.save(childNode);
-}
-
-
-//*********************************************************************
-//                      load
-//*********************************************************************
-
-void cSeason::load(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-
-    id = (Season)xml::getIntProp(curNode, "id");
-    while(childNode) {
-        if(NODE_NAME(childNode, "Month")) xml::copyToNum(month, childNode);
-        else if(NODE_NAME(childNode, "Day")) xml::copyToNum(day, childNode);
-        else if(NODE_NAME(childNode, "Name")) xml::copyToBString(name, childNode);
-        else if(NODE_NAME(childNode, "Weather")) {
-            weather.load(childNode);
-        }
-        childNode = childNode->next;
-    }
-}
-
 
 //*********************************************************************
 //                      Calendar
@@ -301,57 +163,14 @@ Calendar::Calendar() {
     // set the startup time to whatever is saved in the xml file
 }
 
-//*********************************************************************
-//                      getTotalDays
-//*********************************************************************
-
 int Calendar::getTotalDays() const { return(totalDays); }
-
-//*********************************************************************
-//                      getCurYear
-//*********************************************************************
-
 int Calendar::getCurYear() const { return(curYear); }
-
-//*********************************************************************
-//                      getCurMonth
-//*********************************************************************
-
 short Calendar::getCurMonth() const { return(curMonth); }
-
-//*********************************************************************
-//                      getCurDay
-//*********************************************************************
-
 short Calendar::getCurDay() const { return(curDay); }
-
-//*********************************************************************
-//                      getAdjHour
-//*********************************************************************
-
 short Calendar::getAdjHour() const { return(adjHour); }
-
-//*********************************************************************
-//                      getCurSeason
-//*********************************************************************
-
 cSeason *Calendar::getCurSeason() const { return(curSeason); }
-
-//*********************************************************************
-//                      whatSeason
-//*********************************************************************
-
 Season Calendar::whatSeason() const { return(curSeason->getId()); }
-
-//*********************************************************************
-//                      getLastPirate
-//*********************************************************************
-
 bstring Calendar::getLastPirate() const { return(lastPirate); }
-
-//*********************************************************************
-//                      resetToMidnight
-//*********************************************************************
 
 void Calendar::resetToMidnight() {
     adjHour = 0;
@@ -359,43 +178,27 @@ void Calendar::resetToMidnight() {
     setLastPirate("");
 }
 
-//*********************************************************************
-//                      isBirthday
-//*********************************************************************
-
 bool Calendar::isBirthday(const Player* target) const {
     cDay* b = target->getBirthday();
     if(!b)
-        return(0);
+        return(false);
     return(b->getDay() == curDay && b->getMonth() == curMonth);
 }
 
-//*********************************************************************
-//                      getMonth
-//*********************************************************************
-
 cMonth* Calendar::getMonth(short id) const {
-    std::list<cMonth*>::const_iterator mt;
-
-    for(mt = months.begin() ; mt != months.end() ; mt++) {
+    for(const auto& mt = months.begin() ; mt != months.end() ; mt++) {
         if(id == (*mt)->getId())
             return(*mt);
     }
-    return(0);
+    return(nullptr);
 }
 
-//*********************************************************************
-//                      setSeason
-//*********************************************************************
-
 void Calendar::setSeason() {
-    std::list<cSeason*>::iterator st;
-
     // we start at the end
-    for(st = seasons.begin() ; st != seasons.end() ; st++)
+    for(auto st = seasons.begin() ; st != seasons.end() ; st++)
         curSeason = (*st);
 
-    for(st = seasons.begin() ; st != seasons.end() ; st++) {
+    for(auto st = seasons.begin() ; st != seasons.end() ; st++) {
         if( curMonth > (*st)->getMonth() ||
             (curMonth == (*st)->getMonth() && curDay >= (*st)->getDay())
         )
@@ -417,7 +220,7 @@ void Calendar::printtime(const Player* player) const {
     if(cri)
         year += cri->getYearOffset();
 
-    if(cri && cri->getYearsSince() != "") {
+    if(cri && !cri->getYearsSince().empty()) {
         yearsSince += cri->getYearsSince();
     } else {
         yearsSince = "the dawn of time";
@@ -463,57 +266,12 @@ void Calendar::printtime(const Player* player) const {
 //                      save
 //*********************************************************************
 
-void Calendar::save() const {
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr      rootNode, curNode, childNode;
-    char            filename[80];
-
-    // we only save if we're up on the main port
-    if(gConfig->getPortNum() != 3333)
-        return;
-
-    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Calendar", nullptr);
-    xmlDocSetRootElement(xmlDoc, rootNode);
-
-    xml::saveNonZeroNum(rootNode, "TotalDays", totalDays);
-    // only save ship updates if we're inaccurate
-    //if(shipUpdates != gConfig->expectedShipUpdates())
-    //  xml::saveNonZeroInt(rootNode, "ShipUpdates", gConfig->expectedShipUpdates() - shipUpdates);
-    xml::newStringChild(rootNode, "LastPirate", lastPirate);
-
-    curNode = xml::newStringChild(rootNode, "Current");
-    xml::saveNonZeroNum(curNode, "Year", curYear);
-    xml::saveNonZeroNum(curNode, "Month", curMonth);
-    xml::saveNonZeroNum(curNode, "Day", curDay);
-    xml::saveNonZeroNum(curNode, "Hour", gConfig->currentHour());
-
-    curNode = xml::newStringChild(rootNode, "Seasons");
-    std::list<cSeason*>::const_iterator st;
-    for(st = seasons.begin() ; st != seasons.end() ; st++) {
-        childNode = xml::newStringChild(curNode, "Season");
-        (*st)->save(childNode);
-    }
-
-    curNode = xml::newStringChild(rootNode, "Months");
-    std::list<cMonth*>::const_iterator mt;
-    for(mt = months.begin() ; mt != months.end() ; mt++) {
-        childNode = xml::newStringChild(curNode, "Month");
-        (*mt)->save(childNode);
-    }
-
-    sprintf(filename, "%s/calendar.xml", Path::PlayerData);
-
-    xml::saveFile(filename, xmlDoc);
-    xmlFreeDoc(xmlDoc);
-}
-
 //*********************************************************************
 //                      advance
 //*********************************************************************
 
 void Calendar::advance() {
-    cMonth* month=0;
+    cMonth* month=nullptr;
 
     curDay++;
     totalDays++;
@@ -537,7 +295,7 @@ void Calendar::advance() {
 
 void Calendar::advanceMonth() {
     std::list<cMonth*>::iterator mt;
-    cMonth  *month=0;
+    cMonth  *month=nullptr;
 
     for(mt = months.begin() ; mt != months.end() ; mt++) {
         if(curMonth == (*mt)->getId()) {
@@ -558,120 +316,22 @@ void Calendar::advanceMonth() {
 }
 
 //*********************************************************************
-//                      loadCurrent
-//*********************************************************************
-
-void Calendar::loadCurrent(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-
-    while(childNode) {
-        if(NODE_NAME(childNode, "Year")) xml::copyToNum(curYear, childNode);
-        else if(NODE_NAME(childNode, "Month")) xml::copyToNum(curMonth, childNode);
-        else if(NODE_NAME(childNode, "Day")) xml::copyToNum(curDay, childNode);
-        else if(NODE_NAME(childNode, "Hour")) xml::copyToNum(adjHour, childNode);
-        childNode = childNode->next;
-    }
-}
-
-//*********************************************************************
-//                      loadSeasons
-//*********************************************************************
-
-void Calendar::loadSeasons(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-    cSeason* season=0;
-
-    while(childNode) {
-        if(NODE_NAME(childNode, "Season")) {
-            season = new cSeason;
-            season->load(childNode);
-            seasons.push_back(season);
-        }
-        childNode = childNode->next;
-    }
-}
-
-
-//*********************************************************************
-//                      loadMonths
-//*********************************************************************
-
-void Calendar::loadMonths(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-    cMonth* month=0;
-
-    while(childNode) {
-        if(NODE_NAME(childNode, "Month")) {
-            month = new cMonth;
-            month->load(childNode);
-            months.push_back(month);
-        }
-        childNode = childNode->next;
-    }
-}
-
-//*********************************************************************
-//                      load
-//*********************************************************************
-
-void Calendar::load() {
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr  rootNode;
-    xmlNodePtr  curNode;
-    char        filename[80];
-
-    sprintf(filename, "%s/calendar.xml", Path::PlayerData);
-
-    if(!file_exists(filename))
-        merror("Unable to find calendar file", FATAL);
-
-    if((xmlDoc = xml::loadFile(filename, "Calendar")) == nullptr)
-        merror("Unable to read calendar file", FATAL);
-
-    rootNode = xmlDocGetRootElement(xmlDoc);
-    curNode = rootNode->children;
-
-
-    while(curNode) {
-             if(NODE_NAME(curNode, "TotalDays")) xml::copyToNum(totalDays, curNode);
-        else if(NODE_NAME(curNode, "ShipUpdates")) xml::copyToNum(shipUpdates, curNode);
-        else if(NODE_NAME(curNode, "LastPirate")) {
-            xml::copyToBString(lastPirate, curNode);
-        } else if(NODE_NAME(curNode, "Current"))
-            loadCurrent(curNode);
-        else if(NODE_NAME(curNode, "Seasons"))
-            loadSeasons(curNode);
-        else if(NODE_NAME(curNode, "Months"))
-            loadMonths(curNode);
-        curNode = curNode->next;
-    }
-
-    setSeason();
-
-    xmlFreeDoc(xmlDoc);
-    xmlCleanupParser();
-}
-
-
-//*********************************************************************
 //                      clear
 //*********************************************************************
 
 void Calendar::clear() {
-    std::list<cSeason*>::iterator st;
-    cSeason *season=0;
+    cSeason *season=nullptr;
 
-    for(st = seasons.begin() ; st != seasons.end() ; st++) {
+    for(auto st = seasons.begin() ; st != seasons.end() ; st++) {
         season = (*st);
         delete season;
     }
     seasons.clear();
 
 
-    std::list<cMonth*>::iterator mt;
-    cMonth *month=0;
+    cMonth *month=nullptr;
 
-    for(mt = months.begin() ; mt != months.end() ; mt++) {
+    for(auto mt = months.begin() ; mt != months.end() ; mt++) {
         month = (*mt);
         delete month;
     }
@@ -684,10 +344,10 @@ void Calendar::clear() {
 //                      setLastPirate
 //*********************************************************************
 
-void Calendar::setLastPirate(bstring name) {
+void Calendar::setLastPirate(const bstring& name) {
     std::ostringstream oStr;
     oStr << "The " << getOrdinal(curDay).c_str() << " of " << getMonth(curMonth)->getName();
-    if(name != "")
+    if(!name.empty())
         oStr << " by " << name;
     oStr << ".";
     lastPirate = oStr.str();
@@ -699,7 +359,7 @@ void Calendar::setLastPirate(bstring name) {
 //*********************************************************************
 
 int checkBirthdays(Player* player, cmd* cmnd) {
-    const Player* target=0;
+    const Player* target=nullptr;
     const Calendar* calendar = gConfig->getCalendar();
     bool    found = false;
 
@@ -716,8 +376,7 @@ int checkBirthdays(Player* player, cmd* cmnd) {
         calendar->getMonth(calendar->getCurMonth())->getName().c_str(),
         getOrdinal(calendar->getCurMonth()).c_str());
 
-    calendar = gConfig->getCalendar();
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    for(const auto& p : gServer->players) {
         target = p.second;
 
         if(!target->isConnected())
@@ -786,7 +445,7 @@ int reloadCalendar(Player* player) {
 //*********************************************************************
 
 int Config::currentHour(bool format) const {
-    int h = ((time(0) - StartTime) / 120 + calendar->getAdjHour()) % 24;
+    int h = ((time(nullptr) - StartTime) / 120 + calendar->getAdjHour()) % 24;
     if(format)
         h = (h % 12 == 0 ? 12 : h % 12);
     return(h);
@@ -797,7 +456,7 @@ int Config::currentHour(bool format) const {
 //*********************************************************************
 
 int Config::currentMinutes() const {
-    return(((time(0) - StartTime) / 2) % 60);
+    return(((time(nullptr) - StartTime) / 2) % 60);
 }
 
 //*********************************************************************
@@ -814,7 +473,7 @@ void Config::resetMinutes() {
 //*********************************************************************
 
 int Config::expectedShipUpdates() const {
-    return((time(0) - StartTime) / 2);
+    return((time(nullptr) - StartTime) / 2);
 }
 
 //*********************************************************************
