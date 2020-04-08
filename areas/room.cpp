@@ -26,6 +26,7 @@
 #include "rooms.hpp"
 #include "server.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
 
 //*********************************************************************
 //                      addToSameRoom

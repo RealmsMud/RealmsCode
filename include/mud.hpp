@@ -57,10 +57,6 @@
 #define TRUE        (!FALSE)
 #endif
 
-// File permissions
-//#define S_IWRITE  00660
-//#define S_IREAD   00006
-
 #ifndef O_BINARY
 #define O_BINARY    0
 #endif
@@ -370,22 +366,13 @@
 // For various effects that create objects
 #define SHIT_OBJ        349
 #define CORPSE_OBJ      800
-#define BODYPART_OBJ        21
+#define BODYPART_OBJ    21
 #define STATUE_OBJ      39
 #define MONEY_OBJ       0
 #define TICKET_OBJ      200
 
 // When a player forces a pet to cast, this is the delay.
 #define PET_CAST_DELAY      4
-
-
-//
-//// If a player dies X times in X hours, they don't lose exp for that death.
-//// LUCKY_DEATHS should be defined as x - 1: if they get a free restore after
-//// 3 deaths in 24 hours, enter 2. Set LUCKY_DEATH_HOURS to 0 to disable
-//// lucky dying.
-//#define LUCKY_DEATHS      2
-//#define LUCKY_DEATH_HOURS 24
 
 
 extern int    bHavePort;
@@ -395,11 +382,7 @@ extern int Crash;
 /* configurable */
 
 
-extern int  PORTNUM;
-
-extern char     auth_questions_email[80];
 extern char     questions_to_email[80];
-extern char     register_questions_email[80];
 
 extern const int    GUILD_NONE, GUILD_INVITED, GUILD_INVITED_OFFICER, GUILD_INVITED_BANKER,
     GUILD_PEON, GUILD_OFFICER, GUILD_BANKER, GUILD_MASTER;
@@ -408,26 +391,12 @@ extern const int   GUILD_JOIN, GUILD_REMOVE, GUILD_LEVEL, GUILD_DIE;
 
 
 extern int      Tablesize;
-extern int      Cmdnum;
 extern long     StartTime;
 extern struct lasttime  Shutdown;
 extern struct lasttime  Weather[5];
-extern int      Numlockedout;
 
 extern class_stats_struct class_stats[static_cast<int>(CreatureClass::CLASS_COUNT)];
 extern char allowedClassesStr[static_cast<int>(CreatureClass::CLASS_COUNT) + 4][16];
-
-
-
-
-
-extern char   conjureTitles[][3][10][30];
-extern char bardConjureTitles[][10][35];
-extern char mageConjureTitles[][10][35];
-extern creatureStats conjureStats[3][40];
-extern short multiHpMpAdj[MAX_MULTICLASS][2];
-extern short multiStatCycle[MAX_MULTICLASS][10];
-extern short multiSaveCycle[MAX_MULTICLASS][10];
 
 
 extern char scrollDesc [][10][20];
@@ -438,18 +407,11 @@ extern char scrollType [][2][20];
 extern int Ansi[12];
 extern int Mirc[9];
 
-//extern int MAX_QUEST;
-
-
-
 
 extern struct osp_t ospell[];
 
-//extern short  level_cycle[][10];
 extern short    saving_throw_cycle[][10];
-//extern short  thaco_list[][30];
 extern int      statBonus[40];
-extern char     lev_title[][10][20];
 extern char     article[][10];
 extern long     needed_exp[];
 extern long     last_dust_output;
@@ -462,8 +424,6 @@ extern int numQuests;
 
 extern char *dmname[];
 
-extern int numBans;
-//extern int maxGuild;
 extern int SUPPORT_REQUIRED;
 extern unsigned short Port;
 

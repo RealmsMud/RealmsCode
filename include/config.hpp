@@ -623,6 +623,13 @@ public:
     MudFlagMap propHouseFlags;
     MudFlagMap propGuildFlags;
 
+    static bstring getFlag(int flagNum, MudFlagMap& flagMap);
+
+    inline bstring getRFlag(int flagNum) { return getFlag(flagNum, rflags); };
+    inline bstring getXFlag(int flagNum) { return getFlag(flagNum, xflags); };
+    inline bstring getPFlag(int flagNum) { return getFlag(flagNum, pflags); };
+    inline bstring getMFlag(int flagNum) { return getFlag(flagNum, mflags); };
+    inline bstring getOFlag(int flagNum) { return getFlag(flagNum, oflags); };
 
     Calendar    *calendar;
     std::list<Ship*> ships;

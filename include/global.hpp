@@ -387,35 +387,6 @@ const int EXIT = 3;
 //const int MISSILE = 4;
 //const int CLEAVE = 5;
 
-enum class ObjectType {
-    // 0,1,2 open
-
-    INSTRUMENT = 3, // Bard Instrument
-
-    HERB = 4,   // Item is a herb!  Subtype if needed in subtype
-
-    WEAPON = 5,
-
-    ARMOR = 6,
-    POTION = 7,
-    SCROLL = 8,
-    WAND = 9,
-    CONTAINER = 10,
-
-    MONEY = 11,
-    KEY = 12,
-    LIGHTSOURCE = 13,
-    MISC = 14,
-    SONGSCROLL = 15,
-    POISON = 16,
-    BANDAGE = 17,
-    AMMO = 18,
-    QUIVER = 19,
-    LOTTERYTICKET = 20,
-
-    MAX_OBJECT_TYPE,
-};
-
 
 enum class CastType {
     POTION,

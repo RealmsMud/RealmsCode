@@ -464,9 +464,6 @@ void doCreateHelp(Socket* sock, bstring str) {
         return;
     }
 
-    if(!checkWinFilename(sock, cmnd.str[1]))
-        return;
-
     if(strchr(cmnd.str[1], '/')!=nullptr) {
         sock->print("You may not use backslashes.\n");
         return;
@@ -2244,9 +2241,6 @@ bool nameIsAllowed(bstring str, Socket* sock) {
     int i=0, nonalpha=0, len = str.length();
 
     if(!isalpha(str[0]))
-        return(false);
-
-    if(!checkWinFilename(sock, str))
         return(false);
 
     if(len < 3) {

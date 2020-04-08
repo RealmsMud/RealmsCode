@@ -18,6 +18,7 @@
 
 #include "creatures.hpp"
 #include "mud.hpp"
+#include "objects.hpp"
 
 
 

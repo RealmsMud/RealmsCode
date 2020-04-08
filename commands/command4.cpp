@@ -53,8 +53,6 @@ int cmdHelp(Player* player, cmd* cmnd) {
         viewFile(player->getSock(), file);
         return(DOPROMPT);
     }
-    if(!checkWinFilename(player->getSock(), cmnd->str[1]))
-        return(0);
     if(strchr(cmnd->str[1], '/')!=nullptr) {
         player->print("You may not use backslashes.\n");
         return(0);

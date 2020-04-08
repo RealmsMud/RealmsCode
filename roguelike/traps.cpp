@@ -22,6 +22,7 @@
 #include "server.hpp"
 #include "traps.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
 
 //*********************************************************************
 //                      teleport_trap

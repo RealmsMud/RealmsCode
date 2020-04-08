@@ -46,7 +46,7 @@ bool validRoomId(const CatRef cr) {
 
 
 //*********************************************************************
-//                      nameEqual
+//                      removeColor
 //*********************************************************************
 // we need to remove colors that might be in the name!
 
@@ -62,21 +62,6 @@ bstring removeColor(bstring obj) {
     }
 
     return(name);
-}
-
-//*********************************************************************
-//                      nameEqual
-//*********************************************************************
-// checks to see if the names are equal.
-
-bool nameEqual(bstring obj, bstring str) {
-    if(obj=="" || str=="")
-        return(false);
-
-    if(!strncasecmp(removeColor(obj).c_str(), str.c_str(), str.length()))
-        return(true);
-
-    return(false);
 }
 
 

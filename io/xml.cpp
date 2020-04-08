@@ -235,32 +235,4 @@ char *iToYesNo(int fromInt) {
         sprintf(toReturn, "Yes");
     return(toReturn);
 }
-char *colorToStr(int fromColor) {
-    static char toReturn[128];
-    strcpy(toReturn, "");
-
-    if(fromColor & BOLD)
-        strcat(toReturn, "Bold");
-    if(fromColor & BLINK)
-        strcat(toReturn, "Blink");
-    if(fromColor & NORMAL)
-        strcat(toReturn, "Normal");
-
-    if(fromColor & RED)
-        strcat(toReturn, "Red");
-    else if(fromColor & GREEN)
-        strcat(toReturn, "Green");
-    else if(fromColor & YELLOW)
-        strcat(toReturn, "Yellow");
-    else if(fromColor & BLUE)
-        strcat(toReturn, "Blue");
-    else if(fromColor & MAGENTA)
-        strcat(toReturn, "Magenta");
-    else if(fromColor & CYAN)
-        strcat(toReturn, "Cyan");
-    else // Default to White
-        strcat(toReturn, "White");
-
-    return(toReturn);
-}
 

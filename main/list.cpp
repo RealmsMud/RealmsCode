@@ -169,7 +169,7 @@ int list_objects() {
                               << lObject->lastMod << ","
                               << "\"" << boost::replace_all_copy(lObject->getName(), "\n", "\\n") << "\"" << ","
                               << "\"" << description << "\"" << ","
-                              << lObject->getTypeStr() << ","
+                              << lObject->getTypeName() << ","
                               << lObject->getSubType() << ","
                               << lObject->getKey() << ","
                               << lObject->getWearName() << ","

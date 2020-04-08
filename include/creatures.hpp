@@ -740,6 +740,10 @@ public:
 //*********************************************************************
 
 class Monster : public Creature {
+public:
+    static char mob_trade_str[][16];
+
+
 protected:
     void doCopy(const Monster& cr);
     void reset();
@@ -888,6 +892,7 @@ public:
 
 // Get
     unsigned short getMobTrade() const;
+    bstring getMobTradeName() const;
     int getSkillLevel() const;
     unsigned int getMaxLevel() const;
     unsigned short getNumWander() const;
@@ -1210,7 +1215,7 @@ public:
     bstring getLastPassword() const;
     bstring getAfflictedBy() const;
     bstring getTitle() const;
-    bstring getCustomTitle() const;
+
     bstring getTempTitle() const;
     bstring getLastCommunicate() const;
     bstring getLastCommand() const;
@@ -1249,8 +1254,8 @@ public:
     void setAfflictedBy(bstring a);
     void setLastLogin(long l);
     void setLastInterest(long l);
-    void setTitle(bstring newTitle);
-    void setTempTitle(bstring newTitle);
+    void setTitle(const bstring& newTitle);
+    void setTempTitle(const bstring& newTitle);
     void setLastCommunicate(bstring c);
     void setLastCommand(bstring c);
     void setCreated();

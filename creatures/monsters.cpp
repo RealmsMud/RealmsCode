@@ -26,6 +26,10 @@
 #include "server.hpp"
 #include "socket.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
+
+
+char Monster::mob_trade_str[][16]  = { "None", "Smithy", "Banker", "Armorer", "Weaponsmith", "Merchant", "Training Perm" };
 
 // TODO switch this strcmp to compare
 bool Monster::operator <(const Monster& t) const {
@@ -1216,3 +1220,4 @@ int Monster::grabCoins(Player* player) {
         return(1);
     }
 }
+

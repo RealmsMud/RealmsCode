@@ -293,6 +293,21 @@ time_t Statistics::getLevelHistoryStart() {
 //                      displayLevelHistory
 //*********************************************************************
 
+char stat_names[][4] = { "STR", "DEX", "CON", "INT", "PTY", "CHA" };
+
+char* getStatName(int stat) {
+    stat = MIN<int>(MAX<int>(stat - 1, 0), MAX_STAT);
+    return(stat_names[stat]);
+}
+
+
+char save_names[][4] = { "LCK", "POI", "DEA", "BRE", "MEN", "SPL" };
+
+char* getSaveName(int save) {
+    save = MIN<int>(MAX<int>(save, 0), MAX_SAVE-1);
+    return(save_names[save]);
+}
+
 void Statistics::displayLevelHistory(const Player* viewer) {
     bstring padding;
     std::ostringstream oStr;

@@ -302,3 +302,65 @@ void doSurname(Socket* sock, bstring str) {
 
     sock->setState(CON_PLAYING);
 }
+
+
+//*********************************************************************
+//                      getTitle
+//*********************************************************************
+// This function returns a string with the player's character title in
+// it.  The title is determined by looking at the player's class and
+// level.
+
+bstring Player::getTitle() const {
+    std::ostringstream titleStr;
+
+    int titlnum;
+
+    if(title.empty() || title == " " || title == "[custom]") {
+        titlnum = (level - 1) / 3;
+        if(titlnum > 9)
+            titlnum = 9;
+
+        if(cClass == CreatureClass::CLERIC)
+            titleStr << gConfig->getDeity(deity)->getTitle(level, getSex() == SEX_MALE);
+        else
+            titleStr << gConfig->classes[get_class_string(static_cast<int>(cClass))]->getTitle(level, getSex() == SEX_MALE);
+
+        if(hasSecondClass()) {
+            titleStr <<  "/";
+
+            if(cClass2 == CreatureClass::CLERIC)
+                titleStr << gConfig->getDeity(deity)->getTitle(level, getSex() == SEX_MALE);
+            else
+                titleStr << gConfig->classes[get_class_string(static_cast<int>(cClass2))]->getTitle(level, getSex() == SEX_MALE);
+        }
+
+        return(titleStr.str());
+
+    } else {
+        return(title);
+    }
+}
+
+bstring Player::getTempTitle() const { return(tempTitle); }
+
+bool Player::canChooseCustomTitle() const {
+    const std::map<int, PlayerTitle*>* titles=nullptr;
+    std::map<int, PlayerTitle*>::const_iterator it;
+    const PlayerTitle* cTitle=nullptr;
+
+    if(cClass == CreatureClass::CLERIC)
+        titles = &(gConfig->getDeity(deity)->titles);
+    else
+        titles = &(gConfig->classes[get_class_string(static_cast<int>(cClass))]->titles);
+
+    it = titles->find(level);
+    if(it == titles->end())
+        return(false);
+
+    cTitle = (*it).second;
+    return(cTitle && cTitle->getTitle(getSex() == SEX_MALE) == "[custom]");
+}
+
+void Player::setTitle(const bstring& newTitle) { title = newTitle; }
+void Player::setTempTitle(const bstring& newTitle) { tempTitle = newTitle; }

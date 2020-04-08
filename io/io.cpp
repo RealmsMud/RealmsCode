@@ -199,16 +199,6 @@ bool wantsPermDeaths(Socket* sock) {
     Player* ply = sock->getPlayer();
     return(ply && ply && !ply->flagIsSet(P_NO_BROADCASTS) && ply->flagIsSet(P_PERM_DEATH));
 }
-void announcePermDeath(Creature* player, const char *fmt,...) {
-    va_list ap;
-
-    if(player->isStaff())
-        return;
-
-    va_start(ap, fmt);
-    doBroadCast(wantsPermDeaths, 0, fmt, ap);
-    va_end(ap);
-}
 
 //********************************************************************
 //                      broadcast_login
@@ -445,11 +435,6 @@ void child_died(int sig) {
 //  by signal to force a  shutdown in response to a HUP signal
 //  (i.e. kill -HUP pid) from the system.
 
-void quick_shutdown(int sig) {
-    Shutdown.ltime = time(0);
-    Shutdown.interval = 120;
-}
-
 //**********************************************************************
 //                      broadcastGuild
 //**********************************************************************
@@ -499,10 +484,6 @@ void shutdown_now(int sig) {
     exit(0);
 }
 
-//*********************************************************************
-//                      check_flood
-//*********************************************************************
-
 int check_flood(int fd) {
 //  int i,j=0;
 //
@@ -521,15 +502,6 @@ int check_flood(int fd) {
 //  }
 //  gServer->cleanUp();
     return(0);
-}
-
-//*********************************************************************
-//                      checkWinFilename
-//*********************************************************************
-
-int checkWinFilename(Socket* sock, const bstring str) {
-    // only do this if we're on windows
-    return(1);
 }
 
 //*********************************************************************

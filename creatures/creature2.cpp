@@ -522,19 +522,6 @@ bool isGuardLoot(BaseRoom *inRoom, Creature* player, const char *fmt) {
     return(false);
 }
 
-//***********************************************************************
-//                      npcPresent
-//***********************************************************************
-
-bool npcPresent(UniqueRoom *inRoom, short trade) {
-    for(Monster* mons : inRoom->monsters) {
-        if(mons->getMobTrade() == trade)
-            return(true);
-    }
-
-    return(false);
-}
-
 
 //*********************************************************************
 //                      race aggro

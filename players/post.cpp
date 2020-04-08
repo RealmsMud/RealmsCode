@@ -93,8 +93,6 @@ int cmdSendMail(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(!checkWinFilename(player->getSock(), cmnd->str[1]))
-        return(0);
     cmnd->str[1][0] = up(cmnd->str[1][0]);
 
     if(!Player::exists(cmnd->str[1])) {
@@ -332,8 +330,6 @@ int cmdReadMail(Player* player, cmd* cmnd) {
 int dmReadmail(Player* player, cmd* cmnd) {
     char    filename[80];
 
-    if(!checkWinFilename(player->getSock(), cmnd->str[1]))
-        return(0);
     cmnd->str[1][0] = up(cmnd->str[1][0]);
 
     if(!Player::exists(cmnd->str[1])) {

@@ -23,6 +23,7 @@
 #include "quests.hpp"
 #include "tokenizer.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
 
 // Function prototypes
 static questPtr parseQuest(xmlDocPtr doc, xmlNodePtr cur);

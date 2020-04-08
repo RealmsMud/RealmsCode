@@ -45,6 +45,7 @@
 #include "version.hpp"
 #include "quests.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
 
 #include <exception>
 
@@ -64,11 +65,6 @@ bool loadPlayer(const bstring name, Player** player, LoadType loadType) {
     xmlNodePtr  rootNode;
     char        filename[256];
     bstring     pass = "", loadName = "";
-
-    if(!checkWinFilename(nullptr, name)) {
-        std::clog << "Failed lookup on player " << name << " due to checkWinFilename.\n";
-        return(false);
-    }
 
     if(loadType == LS_BACKUP)
         sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, name.c_str());
@@ -1710,9 +1706,6 @@ bool Config::loadBans() {
 
     cur = xmlDocGetRootElement(xmlDoc);
 
-
-    //  numBans = 0;
-    //  memset(banTable, 0, sizeof(banTable));
 
     // First level we expect a Ban
     cur = cur->children;

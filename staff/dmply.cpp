@@ -32,6 +32,7 @@
 #include "unique.hpp"
 #include "web.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
 
 
 

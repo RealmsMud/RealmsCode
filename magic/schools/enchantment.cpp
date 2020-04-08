@@ -22,6 +22,7 @@
 #include "mud.hpp"
 #include "rooms.hpp"
 #include "socket.hpp"
+#include "objects.hpp"
 
 
 //*********************************************************************

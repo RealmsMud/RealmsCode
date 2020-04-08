@@ -25,6 +25,7 @@
 #include "server.hpp"
 #include "tokenizer.hpp"
 #include "xml.hpp"
+#include "objects.hpp"
 
 QuestCatRef::QuestCatRef() {
     area = gConfig->defaultArea;

@@ -23,6 +23,7 @@
 #include "rooms.hpp"
 #include "server.hpp"
 #include "socket.hpp"
+#include "objects.hpp"
 
 //**********************************************************************
 //                      cmdIdentify
@@ -146,7 +147,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
             }
 
         } else if(object->getType() == ObjectType::WEAPON) {
-            player->printColor("%O is a %s, with an average damage of %d.\n", object, obj_type(object->getType()),
+            player->printColor("%O is a %s, with an average damage of %d.\n", object, object->getTypeName().c_str(),
                   MAX(1, object->damage.average() + object->getAdjustment()));
         } else if(object->getType() == ObjectType::POISON) {
             player->printColor("%O is a poison.\n", object);
@@ -186,9 +187,9 @@ int cmdIdentify(Player* player, cmd* cmnd) {
                     strcpy(desc, "splendid");
                 else if(ac > 48 && ac <= 62)
                     strcpy(desc, "excellent");
-                else if(ac > 62 && ac <= 18)
+                else if(ac > 62 && ac <= 81)
                     strcpy(desc, "exemplary");
-                else if(ac > 18 && ac <= 88)
+                else if(ac > 81 && ac <= 88)
                     strcpy(desc, "superb");
                 else if(ac > 88)
                     strcpy(desc, "amazing");
@@ -318,9 +319,9 @@ int cmdIdentify(Player* player, cmd* cmnd) {
                     strcpy(desc, "splendid");
                 else if(ac > 53 && ac <= 62)
                     strcpy(desc, "excellent");
-                else if(ac > 62 && ac <= 17)
+                else if(ac > 62 && ac <= 71)
                     strcpy(desc, "exemplary");
-                else if(ac > 17 && ac <= 84)
+                else if(ac > 72 && ac <= 84)
                     strcpy(desc, "superb");
                 else if(ac > 84)
                     strcpy(desc, "amazing");
@@ -343,27 +344,27 @@ int cmdIdentify(Player* player, cmd* cmnd) {
                     strcpy(desc, "amazing");
             }
 
-            player->printColor("%O is a %s.\n", object, obj_type(object->getType()));
+            player->printColor("%O is a %s.\n", object, object->getTypeName().c_str());
             if(desc[0])
                 player->printColor("It will offer %s protection for where it's worn.\n", desc);
         } else if(object->getType() == ObjectType::SONGSCROLL) {
             player->printColor("%O is a %s, enscribed with the Song of %s.\n",
-                object, obj_type(object->getType()), get_song_name(object->getMagicpower()-1));
+                               object, object->getTypeName().c_str(), get_song_name(object->getMagicpower() - 1));
         } else if(object->getType() == ObjectType::WAND || object->getType() == ObjectType::SCROLL || object->getType() == ObjectType::POTION) {
-            player->printColor("%O is a %s, with the %s spell.\n", object, obj_type(object->getType()),
+            player->printColor("%O is a %s, with the %s spell.\n", object, object->getTypeName().c_str(),
                 get_spell_name(object->getMagicpower()-1));
         } else if(object->getType() == ObjectType::KEY) {
             player->printColor("%O is a %s %s.\n", object,
                   (object->getShotsCur() < 1 ? "broken" : (object->getShotsCur() > 2 ? "sturdy" : "weak")),
-                  obj_type(object->getType()));
+                               object->getTypeName().c_str());
         } else if(object->getType() == ObjectType::MONEY) {
-            player->printColor("%O is a %s.\n", object, obj_type(object->getType()));
+            player->printColor("%O is a %s.\n", object, object->getTypeName().c_str());
         } else if(object->getType() == ObjectType::CONTAINER) {
-            player->printColor("%O is a %s.\n", object, obj_type(object->getType()));
+            player->printColor("%O is a %s.\n", object, object->getTypeName().c_str());
             if(object->getSize())
                 player->print("It can hold %s items.\n", getSizeName(object->getSize()).c_str());
         } else {
-            player->printColor("%O is a %s.\n", object, obj_type(ObjectType::MISC));
+            player->printColor("%O is a %s.\n", object, object->getTypeName().c_str());
         }
 
         if(object->flagIsSet(O_EQUIPPING_BESTOWS_EFFECT) && Effect::objectCanBestowEffect(object->getEffect())) {
