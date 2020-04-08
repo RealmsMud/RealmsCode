@@ -20,7 +20,6 @@
 #include <xml.hpp>
 #include <proto.hpp>
 #include <paths.hpp>
-#include <mud.hpp>
 
 
 bool Config::loadConfig(bool reload) {
@@ -120,7 +119,7 @@ void Config::loadLottery(xmlNodePtr rootNode) {
 
 void Config::loadTickets(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
-    LottoTicket* ticket=0;
+    LottoTicket* ticket=nullptr;
 
     while(curNode) {
         if(NODE_NAME(curNode, "Ticket")) {
@@ -207,7 +206,7 @@ bool Config::saveConfig() const {
 // **************
 
 template<class Type>
-bool saveList(bstring xmlDocName, bstring fName, const std::map<bstring, Type*, comp>& sMap) {
+bool saveList(const bstring& xmlDocName, const bstring& fName, const std::map<bstring, Type*, comp>& sMap) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     char        filename[80];
@@ -216,7 +215,7 @@ bool saveList(bstring xmlDocName, bstring fName, const std::map<bstring, Type*, 
     rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST xmlDocName.c_str(), nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
-    for(std::pair<bstring, Type*> sp : sMap) {
+    for(const auto& sp : sMap) {
         Type* curItem = sp.second;
         curItem->save(rootNode);
     }
@@ -241,7 +240,7 @@ bool Config::saveSongs() const {
 // **************
 
 template<class Type>
-bool loadList(bstring xmlDocName, bstring xmlNodeName, bstring fName, std::map<bstring, Type*, comp>& sMap) {
+bool loadList(const bstring& xmlDocName, const bstring& xmlNodeName, const bstring& fName, std::map<bstring, Type*, comp>& sMap) {
     xmlDocPtr xmlDoc;
     xmlNodePtr curNode;
 
@@ -257,7 +256,7 @@ bool loadList(bstring xmlDocName, bstring xmlNodeName, bstring fName, std::map<b
     while(curNode && xmlIsBlankNode(curNode))
         curNode = curNode->next;
 
-    if(curNode == 0) {
+    if(curNode == nullptr) {
         xmlFreeDoc(xmlDoc);
         return(false);
     }

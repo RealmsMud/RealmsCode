@@ -26,6 +26,29 @@
 #include "mud.hpp"
 #include "xml.hpp"
 
+
+// Object flags to be saved for object refs
+int objRefSaveFlags[] =
+        {
+                O_PERM_ITEM,
+                O_HIDDEN,
+                O_CURSED,
+                O_WORN,
+                O_TEMP_ENCHANT,
+                O_WAS_SHOPLIFTED,
+                O_ENVENOMED,
+                O_JUST_BOUGHT,
+                O_NO_DROP,
+                O_BROKEN_BY_CMD,
+                O_BEING_PREPARED,
+                O_UNIQUE,
+                O_KEEP,
+                O_DARKNESS,
+                O_RECLAIMED,
+                -1
+        };
+
+
 //*********************************************************************
 //                      loadObject
 //*********************************************************************
@@ -368,6 +391,323 @@ void DroppedBy::load(xmlNodePtr rootNode) {
 
         curNode = curNode->next;
     }
+}
+
+xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits);
+
+//*********************************************************************
+//                      saveObject
+//*********************************************************************
+// This function will write the supplied object to the proper
+// o##.xml file - To accomplish this it parse the proper o##.xml file if
+// available and walk down the tree to the proper place in numerical order
+// if the file does not exist it will create it with only that object in it.
+// It will most likely only be called from *save o
+
+int Object::saveToFile() {
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr  rootNode;
+    char        filename[256];
+
+    ASSERTLOG( this );
+
+    // Invalid Number
+    if(info.id < 0)
+        return(-1);
+    Path::checkDirExists(info.area, objectPath);
+
+    gServer->saveIds();
+
+    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Object", nullptr);
+    xmlDocSetRootElement(xmlDoc, rootNode);
+
+    // make sure uniqueness stays intact
+    setFlag(O_UNIQUE);
+    if(!gConfig->getUnique(this))
+        clearFlag(O_UNIQUE);
+
+    escapeText();
+    bstring idTemp = id;
+    id = "-1";
+    saveToXml(rootNode, ALLITEMS, LoadType::LS_PROTOTYPE, false);
+    id = idTemp;
+
+    strcpy(filename, objectPath(info));
+    xml::saveFile(filename, xmlDoc);
+    xmlFreeDoc(xmlDoc);
+    return(0);
+}
+
+
+//*********************************************************************
+//                      saveToXml
+//*********************************************************************
+// This function will save the entire object except 0 values to the
+// given node which should be an object node unless saveType is REF
+// in which case it will only save fields that are changed in the
+// ordinary course of the game
+
+int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int quantity, bool saveId, std::list<bstring> *idList) const {
+//  xmlNodePtr  rootNode;
+    xmlNodePtr      curNode;
+    xmlNodePtr      childNode;
+
+    int i=0;
+
+    if(rootNode == nullptr)
+        return(-1);
+
+    ASSERTLOG( info.id >= 0 );
+    ASSERTLOG( info.id < OMAX );
+
+    // If the object's index is 0, then we have to do a full save
+    if(!info.id && saveType != LoadType::LS_FULL && saveType != LoadType::LS_PROTOTYPE) {
+        // We should never get here...if it's a 0 index, should have O_SAVE_FULL set
+        std::clog << "ERROR: Forcing full save.\n";
+        saveType = LoadType::LS_FULL;
+    }
+
+    // record objects saved during swap
+    if(gConfig->swapIsInteresting(this))
+        gConfig->swapLog((bstring)"o" + info.rstr(), false);
+
+    xml::newNumProp(rootNode, "Num", info.id);
+    xml::newProp(rootNode, "Area", info.area);
+    xml::newProp(rootNode, "Version", Config::getVersion());
+    if(quantity > 1) {
+        xml::newNumProp(rootNode, "Quantity", quantity);
+        curNode = xml::newStringChild(rootNode, "IdList");
+        if(idList != nullptr) {
+            auto idIt = idList->begin();
+            while(idIt != idList->end()) {
+                xml::newStringChild(curNode, "Id", (*idIt++));
+            }
+        }
+    } else {
+        if(saveId)
+            xml::saveNonNullString(rootNode, "Id", getId());
+        else
+            xml::newProp(rootNode, "Id", "-1");
+    }
+
+    // These are saved for full and reference
+    xml::saveNonNullString(rootNode, "Name", getName());
+    if(saveType != LoadType::LS_PROTOTYPE) {
+        droppedBy.save(rootNode);
+        xml::saveNonZeroNum(rootNode, "ShopValue", shopValue);
+    }
+
+
+    xml::saveNonNullString(rootNode, "Plural", plural);
+    xml::saveNonZeroNum(rootNode, "Adjustment", adjustment);
+    xml::saveNonZeroNum(rootNode, "ShotsMax", shotsMax);
+    xml::saveNonZeroNum(rootNode, "ChargesMax", chargesMax);
+    // NOTE: This is saved even if zero so that it loads broken items
+    // properly.
+    xml::newNumChild(rootNode, "ShotsCur", shotsCur);
+    xml::newNumChild(rootNode, "ChargesCur", chargesCur);
+    xml::saveNonZeroNum(rootNode, "Armor", armor);
+    xml::saveNonZeroNum(rootNode, "NumAttacks", numAttacks);
+    xml::saveNonZeroNum(rootNode, "Delay", delay);
+    xml::saveNonZeroNum(rootNode, "Extra", extra);
+    xml::saveNonZeroNum(rootNode, "LotteryCycle", lotteryCycle);
+
+    if(type == ObjectType::LOTTERYTICKET) {
+        // Lottery tickets have a custom description so be sure to save it
+        xml::saveNonNullString(rootNode, "Description", description);
+        saveShortIntArray(rootNode, "LotteryNumbers", "LotteryNum", lotteryNumbers, 6);
+    }
+
+    damage.save(rootNode, "Dice");
+    value.save("Value", rootNode);
+    hooks.save(rootNode, "Hooks");
+
+    // Save the keys in case they were modified
+    // Keys
+    curNode = xml::newStringChild(rootNode, "Keys");
+    for(i=0; i<3; i++) {
+        if(key[i][0] == 0)
+            continue;
+        childNode = xml::newStringChild(curNode, "Key", key[i]);
+        xml::newNumProp(childNode, "Num", i);
+    }
+
+    for(i=0; i<4; i++) {
+        // this nested loop means we won't create an xml node if we don't have to
+        if(lasttime[i].interval || lasttime[i].ltime || lasttime[i].misc) {
+            curNode = xml::newStringChild(rootNode, "LastTimes");
+            for(; i<4; i++)
+                saveLastTime(curNode, i, lasttime[i]);
+        }
+    }
+
+    xml::saveNonNullString(rootNode, "Effect", effect);
+    xml::saveNonZeroNum(rootNode, "EffectDuration", effectDuration);
+    xml::saveNonZeroNum(rootNode, "EffectStrength", effectStrength);
+
+    xml::saveNonZeroNum(rootNode, "Recipe", recipe);
+    xml::saveNonZeroNum(rootNode, "Made", made);
+    xml::saveNonNullString(rootNode, "Owner", questOwner);
+
+    if(saveType != LoadType::LS_FULL && saveType != LoadType::LS_PROTOTYPE) {
+        // Save only a subset of flags for obj references
+        saveObjRefFlags(rootNode, "Flags", MAX_OBJECT_FLAGS, flags);
+    }
+
+    if(saveType == LoadType::LS_FULL || saveType == LoadType::LS_PROTOTYPE) {
+        saveBits(rootNode, "Flags", MAX_OBJECT_FLAGS, flags);
+        // These are only saved for full objects
+        if(type != ObjectType::LOTTERYTICKET)
+            xml::saveNonNullString(rootNode, "Description", description);
+
+
+        if(!alchemyEffects.empty()) {
+            curNode = xml::newStringChild(rootNode, "AlchemyEffects");
+
+            for(std::pair<int, AlchemyEffect> p : alchemyEffects) {
+                childNode = xml::newStringChild(curNode, "AlchemyEffect");
+                p.second.saveToXml(childNode);
+                xml::newNumProp(childNode, "Num", p.first);
+            }
+        }
+        xml::saveNonNullString(rootNode, "UseOutput", use_output);
+        xml::saveNonNullString(rootNode, "UseAttack", use_attack);
+        xml::saveNonNullString(rootNode, "LastMod", lastMod);
+
+        xml::saveNonZeroNum(rootNode, "Weight", weight);
+        xml::saveNonZeroNum(rootNode, "Type", static_cast<int>(type));
+        xml::saveNonNullString(rootNode, "SubType", subType);
+
+        xml::saveNonZeroNum(rootNode, "WearFlag", wearflag);
+        xml::saveNonZeroNum(rootNode, "MagicPower", magicpower);
+
+        xml::saveNonZeroNum(rootNode, "Level", level);
+        xml::saveNonZeroNum(rootNode, "Quality", quality);
+        xml::saveNonZeroNum(rootNode, "RequiredSkill", requiredSkill);
+        xml::saveNonZeroNum(rootNode, "Clan", clan);
+        xml::saveNonZeroNum(rootNode, "Special", special);
+        xml::saveNonZeroNum(rootNode, "QuestNum", questnum);
+
+        xml::saveNonZeroNum(rootNode, "Bulk", bulk);
+        xml::saveNonZeroNum(rootNode, "Size", size);
+        xml::saveNonZeroNum(rootNode, "MaxBulk", maxbulk);
+
+        xml::saveNonZeroNum(rootNode, "CoinCost", coinCost);
+
+        deed.save(rootNode, "Deed", false);
+
+        xml::saveNonZeroNum(rootNode, "KeyVal", keyVal);
+        xml::saveNonZeroNum(rootNode, "Material", (int)material);
+        xml::saveNonZeroNum(rootNode, "MinStrength", minStrength);
+
+        saveCatRefArray(rootNode, "InBag", "Obj", in_bag, 3);
+
+        std::list<CatRef>::const_iterator it;
+        if(!randomObjects.empty()) {
+            curNode = xml::newStringChild(rootNode, "RandomObjects");
+            for(it = randomObjects.begin() ; it != randomObjects.end() ; it++) {
+                (*it).save(curNode, "RandomObject", false);
+            }
+        }
+
+    }
+
+    if(compass) {
+        curNode = xml::newStringChild(rootNode, "Compass");
+        compass->save(curNode);
+    }
+    if(increase) {
+        curNode = xml::newStringChild(rootNode, "ObjIncrease");
+        increase->save(curNode);
+    }
+
+    // Save contained items for both full and reference saves
+    // Also check for container flag
+    if(saveType != LoadType::LS_PROTOTYPE && !objects.empty()) {
+        curNode = xml::newStringChild(rootNode, "SubItems");
+        // If we're a permenant container, always save the items inside of it
+        if(type == ObjectType::CONTAINER && flagIsSet(O_PERM_ITEM))
+            permOnly = ALLITEMS;
+        saveObjectsXml(curNode, objects, permOnly);
+    }
+    return(0);
+}
+
+
+//*********************************************************************
+//                      saveObjectsXml
+//*********************************************************************
+
+int saveObjectsXml(xmlNodePtr parentNode, const ObjectSet &set, int permOnly) {
+    xmlNodePtr curNode;
+    int quantity = 0;
+    LoadType lt;
+    ObjectSet::const_iterator it;
+    const Object *obj;
+    std::list<bstring> *idList = nullptr;
+    for (it = set.begin(); it != set.end();) {
+        obj = (*it++);
+        if (obj &&
+            (permOnly == ALLITEMS ||
+             (permOnly == PERMONLY && obj->flagIsSet(O_PERM_ITEM))
+            )) {
+            if (obj->flagIsSet(O_CUSTOM_OBJ) || obj->flagIsSet(O_SAVE_FULL) || !obj->info.id) {
+                // If it's a custom or has the save flag set, save the entire object
+                curNode = xml::newStringChild(parentNode, "Object");
+                lt = LoadType::LS_FULL;
+            } else {
+                // Just save a reference and any changed fields
+                curNode = xml::newStringChild(parentNode, "ObjRef");
+                lt = LoadType::LS_REF;
+            }
+
+            // TODO: Modify this to work with object ids
+            // quantity code reduces filesize for player shops, storage rooms, and
+            // inventories (which tend of have a lot of identical items in them)
+            quantity = 1;
+            idList = new std::list<bstring>;
+            idList->push_back(obj->getId());
+            while (it != set.end() && *(*it) == *obj) {
+                idList->push_back((*it)->getId());
+                quantity++;
+                it++;
+            }
+
+            obj->saveToXml(curNode, permOnly, lt, quantity, true, idList);
+            delete idList;
+        }
+    }
+    return (0);
+}
+
+
+void DroppedBy::save(xmlNodePtr rootNode) const {
+    xmlNodePtr curNode = xml::newStringChild(rootNode, "DroppedBy");
+    xml::newStringChild(curNode, "Name", name);
+    xml::saveNonNullString(curNode, "Index", index);
+    xml::saveNonNullString(curNode, "ID", id);
+    xml::newStringChild(curNode, "Type", type);
+}
+
+//*********************************************************************
+//                      saveObjRefFlags
+//*********************************************************************
+
+xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits) {
+    xmlNodePtr curNode=nullptr;
+    // this nested loop means we won't create an xml node if we don't have to
+    for(int i=0; objRefSaveFlags[i] != -1; i++) {
+        if(BIT_ISSET(bits, objRefSaveFlags[i])) {
+            curNode = xml::newStringChild(parentNode, name);
+            for(; objRefSaveFlags[i] != -1; i++) {
+                if(BIT_ISSET(bits, objRefSaveFlags[i]))
+                    saveBit(curNode, objRefSaveFlags[i]);
+            }
+            return(curNode);
+        }
+    }
+    return(curNode);
 }
 
 

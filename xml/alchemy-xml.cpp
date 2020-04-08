@@ -111,3 +111,14 @@ void Object::loadAlchemyEffects(xmlNodePtr curNode) {
         childNode = childNode->next;
     }
 }
+
+int AlchemyEffect::saveToXml(xmlNodePtr rootNode) {
+    if(rootNode == nullptr)
+        return(-1);
+    xml::newStringChild(rootNode, "Effect", effect);
+    xml::newNumChild(rootNode, "Duration", duration);
+    xml::newNumChild(rootNode, "Strength", strength);
+    xml::newNumChild(rootNode, "Quality", quality);
+
+    return(0);
+}

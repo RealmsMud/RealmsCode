@@ -78,3 +78,57 @@ Ban::Ban(xmlNodePtr curNode) {
         curNode = curNode->next;
     }
 }
+
+
+
+//*********************************************************************
+//                      saveBans
+//*********************************************************************
+
+bool Config::saveBans() const {
+    int found=0;
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr  rootNode;
+    xmlNodePtr  curNode;
+    char        filename[80];
+
+    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
+    rootNode = xmlNewDocNode(xmlDoc, nullptr,BAD_CAST "Bans", nullptr);
+    xmlDocSetRootElement(xmlDoc, rootNode);
+
+    std::list<Ban*>::const_iterator it;
+    Ban* ban;
+
+    for(it = bans.begin() ; it != bans.end() ; it++) {
+        found++;
+        ban = (*it);
+
+        curNode = xmlNewChild(rootNode, nullptr, BAD_CAST "Ban", nullptr);
+        // Site
+        xmlNewChild(curNode, nullptr, BAD_CAST "Site", BAD_CAST ban->site.c_str());
+        // Duration
+        //sprintf(buf, "%d", ban->duration);
+        xml::newNumChild(curNode, "Duration", ban->duration);
+        // Unban Time
+        //sprintf(buf, "%ld", ban->unbanTime);
+        xml::newNumChild(curNode, "UnbanTime", ban->unbanTime);
+        // Banned By
+        xmlNewChild(curNode, nullptr, BAD_CAST "BannedBy", BAD_CAST ban->by.c_str());
+        // Ban Time
+        xmlNewChild(curNode, nullptr, BAD_CAST "BanTime", BAD_CAST ban->time.c_str());
+        // Reason
+        xmlNewChild(curNode, nullptr, BAD_CAST "Reason", BAD_CAST ban->reason.c_str());
+        // Password
+        xmlNewChild(curNode, nullptr, BAD_CAST "Password", BAD_CAST ban->password.c_str());
+        // Suffix
+        xmlNewChild(curNode, nullptr, BAD_CAST "Suffix", BAD_CAST iToYesNo(ban->isSuffix));
+        // Prefix
+        xmlNewChild(curNode, nullptr, BAD_CAST "Prefix", BAD_CAST iToYesNo(ban->isPrefix));
+    }
+    sprintf(filename, "%s/bans.xml", Path::Config);
+    xml::saveFile(filename, xmlDoc);
+    xmlFreeDoc(xmlDoc);
+    return(true);
+}
+
+

@@ -106,3 +106,66 @@ void BaseRoom::readExitsXml(xmlNodePtr curNode, bool offline) {
     }
 }
 
+
+//*********************************************************************
+//                      saveToXml
+//*********************************************************************
+
+int Exit::saveToXml(xmlNodePtr parentNode) const {
+    xmlNodePtr  rootNode;
+    xmlNodePtr      curNode;
+    xmlNodePtr      childNode;
+
+    int i;
+
+    if(parentNode == nullptr || flagIsSet(X_PORTAL))
+        return(-1);
+
+    rootNode = xml::newStringChild(parentNode, "Exit");
+    xml::newProp(rootNode, "Name", getName());
+
+    // Exit Keys
+    curNode = xml::newStringChild(rootNode, "Keys");
+    for(i=0; i<3; i++) {
+        if(desc_key[i][0] == 0)
+            continue;
+        childNode = xml::newStringChild(curNode, "Key", desc_key[i]);
+        xml::newNumProp(childNode, "Num",i);
+    }
+
+    target.save(rootNode, "Target");
+    xml::saveNonZeroNum(rootNode, "Toll", toll);
+    xml::saveNonZeroNum(rootNode, "Level", level);
+    xml::saveNonZeroNum(rootNode, "Trap", trap);
+    xml::saveNonZeroNum(rootNode, "Key", key);
+    xml::saveNonNullString(rootNode, "KeyArea", keyArea);
+    xml::saveNonZeroNum(rootNode, "Size", size);
+    xml::saveNonZeroNum(rootNode, "Direction", (int)direction);
+    xml::saveNonNullString(rootNode, "PassPhrase", passphrase);
+    xml::saveNonZeroNum(rootNode, "PassLang", passlang);
+    xml::saveNonNullString(rootNode, "Description", description);
+    xml::saveNonNullString(rootNode, "Enter", enter);
+    xml::saveNonNullString(rootNode, "Open", open);
+    effects.save(rootNode, "Effects");
+
+    saveBits(rootNode, "Flags", MAX_EXIT_FLAGS, flags);
+    saveLastTime(curNode, 0, ltime);
+    hooks.save(rootNode, "Hooks");
+
+    return(0);
+}
+
+
+
+
+//*********************************************************************
+//                      saveExitsXml
+//*********************************************************************
+
+int BaseRoom::saveExitsXml(xmlNodePtr curNode) const {
+    for(Exit* exit : exits) {
+        exit->saveToXml(curNode);
+    }
+    return(0);
+}
+

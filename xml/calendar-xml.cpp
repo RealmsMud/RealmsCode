@@ -229,7 +229,7 @@ void Calendar::loadCurrent(xmlNodePtr curNode) {
 
 void Calendar::loadSeasons(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
-    cSeason* season=0;
+    cSeason* season=nullptr;
 
     while(childNode) {
         if(NODE_NAME(childNode, "Season")) {
@@ -243,7 +243,7 @@ void Calendar::loadSeasons(xmlNodePtr curNode) {
 
 void Calendar::loadMonths(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
-    cMonth* month=0;
+    cMonth* month=nullptr;
 
     while(childNode) {
         if(NODE_NAME(childNode, "Month")) {

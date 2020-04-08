@@ -21,6 +21,7 @@
 #include <server.hpp>
 #include <mud.hpp>
 #include <xml.hpp>
+#include <config.hpp>
 
 //*********************************************************************
 //                      loadRoom
@@ -199,4 +200,136 @@ void loadCrLastTimes(xmlNodePtr curNode, std::map<int, crlasttime>& pCrLastTimes
     }
 }
 
+//*********************************************************************
+//                      saveToFile
+//*********************************************************************
+// This function will write the supplied room to ROOM_PATH/r#####.xml
+// It will most likely only be called from *save r
+
+int UniqueRoom::saveToFile(int permOnly, LoadType saveType) {
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr  rootNode;
+    char        filename[256];
+
+    ASSERTLOG( info.id >= 0 );
+    if(saveType == LoadType::LS_BACKUP)
+        Path::checkDirExists(info.area, roomBackupPath);
+    else
+        Path::checkDirExists(info.area, roomPath);
+
+    gServer->saveIds();
+
+    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Room", nullptr);
+    xmlDocSetRootElement(xmlDoc, rootNode);
+
+    escapeText();
+    saveToXml(rootNode, permOnly);
+
+    if(saveType == LoadType::LS_BACKUP)
+        strcpy(filename, roomBackupPath(info));
+    else
+        strcpy(filename, roomPath(info));
+    xml::saveFile(filename, xmlDoc);
+    xmlFreeDoc(xmlDoc);
+    return(0);
+}
+
+
+//*********************************************************************
+//                      saveToXml
+//*********************************************************************
+
+int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
+    std::map<int, crlasttime>::const_iterator it;
+    xmlNodePtr      curNode;
+    int i;
+
+    if(getName()[0] == '\0' || rootNode == nullptr)
+        return(-1);
+
+    // record rooms saved during swap
+    if(gConfig->swapIsInteresting(this))
+        gConfig->swapLog((bstring)"r" + info.rstr(), false);
+
+    xml::newNumProp(rootNode, "Num", info.id);
+    xml::newProp(rootNode, "Version", Config::getVersion());
+    xml::newProp(rootNode, "Area", info.area);
+
+    xml::saveNonNullString(rootNode, "Name", getName());
+    xml::saveNonNullString(rootNode, "ShortDescription", short_desc);
+    xml::saveNonNullString(rootNode, "LongDescription", long_desc);
+    xml::saveNonNullString(rootNode, "Fishing", fishing);
+    xml::saveNonNullString(rootNode, "Faction", faction);
+    xml::saveNonNullString(rootNode, "LastModBy", last_mod);
+    // TODO: Change this into a TimeStamp
+    xml::saveNonNullString(rootNode, "LastModTime", lastModTime);
+    xml::saveNonNullString(rootNode, "LastPlayer", lastPly);
+    // TODO: Change this into a TimeStamp
+    xml::saveNonNullString(rootNode, "LastPlayerTime", lastPlyTime);
+
+
+    xml::saveNonZeroNum(rootNode, "LowLevel", lowLevel);
+    xml::saveNonZeroNum(rootNode, "HighLevel", highLevel);
+    xml::saveNonZeroNum(rootNode, "MaxMobs", maxmobs);
+
+    xml::saveNonZeroNum(rootNode, "Trap", trap);
+    trapexit.save(rootNode, "TrapExit", false);
+    xml::saveNonZeroNum(rootNode, "TrapWeight", trapweight);
+    xml::saveNonZeroNum(rootNode, "TrapStrength", trapstrength);
+
+    xml::saveNonZeroNum(rootNode, "BeenHere", beenhere);
+    xml::saveNonZeroNum(rootNode, "RoomExp", roomExp);
+
+    saveBits(rootNode, "Flags", MAX_ROOM_FLAGS, flags);
+
+    curNode = xml::newStringChild(rootNode, "Wander");
+    wander.save(curNode);
+
+    if(!track.getDirection().empty()) {
+        curNode = xml::newStringChild(rootNode, "Track");
+        track.save(curNode);
+    }
+
+    xml::saveNonZeroNum(rootNode, "Size", size);
+    effects.save(rootNode, "Effects");
+    hooks.save(rootNode, "Hooks");
+
+
+
+    // Save Perm Mobs
+    curNode = xml::newStringChild(rootNode, "PermMobs");
+    for(it = permMonsters.begin(); it != permMonsters.end() ; it++) {
+        saveCrLastTime(curNode, (*it).first, (*it).second);
+    }
+
+    // Save Perm Objs
+    curNode = xml::newStringChild(rootNode, "PermObjs");
+    for(it = permObjects.begin(); it != permObjects.end() ; it++) {
+        saveCrLastTime(curNode, (*it).first, (*it).second);
+    }
+
+    // Save LastTimes -- Dunno if we need this?
+    for(i=0; i<16; i++) {
+        // this nested loop means we won't create an xml node if we don't have to
+        if(lasttime[i].interval || lasttime[i].ltime || lasttime[i].misc) {
+            curNode = xml::newStringChild(rootNode, "LastTimes");
+            for(; i<16; i++)
+                saveLastTime(curNode, i, lasttime[i]);
+        }
+    }
+
+    // Save Objects
+    curNode = xml::newStringChild(rootNode, "Objects");
+    saveObjectsXml(curNode, objects, permOnly);
+
+    // Save Creatures
+    curNode = xml::newStringChild(rootNode, "Creatures");
+    saveCreaturesXml(curNode, monsters, permOnly);
+
+    // Save Exits
+    curNode = xml::newStringChild(rootNode, "Exits");
+    saveExitsXml(curNode);
+    return(0);
+}
 

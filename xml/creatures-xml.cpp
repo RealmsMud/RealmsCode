@@ -565,4 +565,325 @@ void loadSavingThrow(xmlNodePtr curNode, struct saves* pSavingThrow) {
 
 
 
+//*********************************************************************
+//                      saveToXml
+//*********************************************************************
+// This will save the entire creature with anything non zero to the given
+// node which should be a creature or player node
+//
+// Keep in mind, we're saving a copy of the creature - so make sure the Copy
+// constructor has copied whatever you're expecting to save
+
+int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bool saveID) const {
+//  xmlNodePtr  rootNode;
+    xmlNodePtr      curNode;
+    xmlNodePtr      childNode;
+    int i;
+
+    if(getName()[0] == '\0' || rootNode == nullptr)
+        return(-1);
+
+    const Player    *pPlayer = getAsConstPlayer();
+    const Monster   *mMonster = getAsConstMonster();
+
+    if(pPlayer) {
+        xml::newProp(rootNode, "Name", pPlayer->getName());
+        xml::newProp(rootNode, "Password", pPlayer->getPassword());
+        xml::newNumProp(rootNode, "LastLogin", pPlayer->getLastLogin());
+    } else if(mMonster) {
+        // Saved for LoadType::LS_REF and LoadType::LS_FULL
+        xml::newNumProp(rootNode, "Num", mMonster->info.id);
+        xml::saveNonNullString(rootNode, "Name", mMonster->getName());
+        xml::newProp(rootNode, "Area", mMonster->info.area);
+    }
+
+    if(saveID)
+        xml::saveNonNullString(rootNode, "Id", getId());
+    else
+        xml::newProp(rootNode, "ID", "-1");
+
+    // For the future, when we change things, can read them in based on the version they
+    // were saved in before or do modifications based on the new version
+    xml::newProp(rootNode, "Version", Config::getVersion());
+
+    if(pPlayer) {
+        if(pPlayer->inAreaRoom()) {
+            curNode = xml::newStringChild(rootNode, "AreaRoom");
+            pPlayer->getConstAreaRoomParent()->mapmarker.save(curNode);
+            //pPlayer->currentLocation.mapmarker.save(curNode);
+        } else
+            pPlayer->currentLocation.room.save(rootNode, "Room", true);
+    }
+
+    // Saved for LoadType::LS_REF and LoadType::LS_FULL
+    xml::saveNonZeroNum(rootNode, "Race", race);
+    xml::saveNonZeroNum(rootNode, "Class", static_cast<int>(cClass));
+    if(pPlayer) {
+        xml::saveNonZeroNum(rootNode, "Class2", static_cast<int>(pPlayer->getSecondClass()));
+    } else if(mMonster) {
+        // TODO: Dom: for compatability, remove when possible
+        xml::saveNonZeroNum(rootNode, "Class2", mMonster->getMobTrade());
+        xml::saveNonZeroNum(rootNode, "MobTrade", mMonster->getMobTrade());
+    }
+
+    xml::saveNonZeroNum(rootNode, "Level", level);
+    xml::saveNonZeroNum(rootNode, "Type", (int)type);
+    xml::saveNonZeroNum(rootNode, "Experience", experience);
+    coins.save("Coins", rootNode);
+    xml::saveNonZeroNum(rootNode, "Alignment", alignment);
+
+    curNode = xml::newStringChild(rootNode, "Stats");
+    strength.save(curNode, "Strength");
+    dexterity.save(curNode, "Dexterity");
+    constitution.save(curNode, "Constitution");
+    intelligence.save(curNode, "Intelligence");
+    piety.save(curNode, "Piety");
+    hp.save(curNode, "Hp");
+    mp.save(curNode, "Mp");
+
+    if(pPlayer)
+        pPlayer->focus.save(curNode, "Focus");
+
+    // Only saved for LoadType::LS_FULL saves, or player saves
+    if(saveType == LoadType::LS_FULL || pPlayer) {
+        xml::saveNonNullString(rootNode, "Description", description);
+
+        // Keys
+        curNode = xml::newStringChild(rootNode, "Keys");
+        for(i=0; i<3; i++) {
+            if(key[i][0] == 0)
+                continue;
+            childNode = xml::newStringChild(curNode, "Key", key[i]);
+            xml::newNumProp(childNode, "Num", i);
+        }
+
+        // MoveTypes
+        curNode = xml::newStringChild(rootNode, "MoveTypes");
+        for(i=0; i<3; i++) {
+            if(movetype[i][0] == 0)
+                continue;
+            childNode = xml::newStringChild(curNode, "MoveType", movetype[i]);
+            xml::newNumProp(childNode, "Num", i);
+        }
+
+
+        xml::saveNonZeroNum(rootNode, "Armor", armor);
+        xml::saveNonZeroNum(rootNode, "Deity", deity);
+
+
+        saveULongArray(rootNode, "Realms", "Realm", realm, MAX_REALM-1);
+        saveLongArray(rootNode, "Proficiencies", "Proficiency", proficiency, 6);
+
+        damage.save(rootNode, "Dice");
+
+        xml::saveNonZeroNum(rootNode, "Clan", clan);
+        xml::saveNonZeroNum(rootNode, "PoisonDuration", poison_dur);
+        xml::saveNonZeroNum(rootNode, "PoisonDamage", poison_dmg);
+        xml::saveNonZeroNum(rootNode, "Size", size);
+
+        if(pPlayer) pPlayer->saveXml(rootNode);
+        else if(mMonster) mMonster->saveXml(rootNode);
+
+        saveFactions(rootNode);
+        saveSkills(rootNode);
+
+        hooks.save(rootNode, "Hooks");
+
+        effects.save(rootNode, "Effects");
+        saveAttacks(rootNode);
+
+        if(!minions.empty()) {
+            curNode = xml::newStringChild(rootNode, "Minions");
+            std::list<bstring>::const_iterator mIt;
+            for(mIt = minions.begin() ; mIt != minions.end() ; mIt++) {
+                childNode = xml::newStringChild(curNode, "Minion", (*mIt));
+            }
+        }
+
+        //      saveShortIntArray(rootNode, "Factions", "Faction", faction, MAX_FACTION);
+
+        // Save dailys
+        curNode = xml::newStringChild(rootNode, "DailyTimers");
+        for(i=0; i<DAILYLAST+1; i++)
+            saveDaily(curNode, i, daily[i]);
+
+        // Save saving throws
+        curNode = xml::newStringChild(rootNode, "SavingThrows");
+        for(i=0; i<MAX_SAVE; i++)
+            saveSavingThrow(curNode, i, saves[i]);
+
+        // Perhaps change this into saveInt/CharArray
+        saveBits(rootNode, "Spells", MAXSPELL, spells);
+        saveBits(rootNode, "Quests", MAXSPELL, old_quests);
+        xml::saveNonZeroNum(rootNode, "CurrentLanguage", current_language);
+        saveBits(rootNode, "Languages", LANGUAGE_COUNT, languages);
+    }
+
+    // Saved for LoadType::LS_FULL and LoadType::LS_REF
+    saveBits(rootNode, "Flags", pPlayer ? MAX_PLAYER_FLAGS : MAX_MONSTER_FLAGS, flags);
+
+    // Save lasttimes
+    for(i=0; i<TOTAL_LTS; i++) {
+        // this nested loop means we won't create an xml node if we don't have to
+        if(lasttime[i].interval || lasttime[i].ltime || lasttime[i].misc) {
+            curNode = xml::newStringChild(rootNode, "LastTimes");
+            for(; i<TOTAL_LTS; i++)
+                saveLastTime(curNode, i, lasttime[i]);
+        }
+    }
+
+    curNode = xml::newStringChild(rootNode, "Inventory");
+    saveObjectsXml(curNode, objects, permOnly);
+
+    // We want quests saved after inventory so when they are loaded we can calculate
+    // if the quest is complete or not and store it in the appropriate variables
+    if(pPlayer)
+        pPlayer->saveQuests(rootNode);
+
+    return(0);
+}
+
+
+
+//*********************************************************************
+//                      saveFactions
+//*********************************************************************
+
+void Creature::saveFactions(xmlNodePtr rootNode) const {
+    xmlNodePtr curNode = xml::newStringChild(rootNode, "Factions");
+    xmlNodePtr factionNode;
+    std::map<bstring, long>::const_iterator fIt;
+    for(fIt = factions.begin() ; fIt != factions.end() ; fIt++) {
+        factionNode = xml::newStringChild(curNode, "Faction");
+        xml::newStringChild(factionNode, "Name", (*fIt).first);
+        xml::newNumChild(factionNode, "Regard", (*fIt).second);
+    }
+}
+
+//*********************************************************************
+//                      saveSkills
+//*********************************************************************
+
+void Creature::saveSkills(xmlNodePtr rootNode) const {
+    xmlNodePtr curNode = xml::newStringChild(rootNode, "Skills");
+    std::map<bstring, Skill*>::const_iterator sIt;
+    for(sIt = skills.begin() ; sIt != skills.end() ; sIt++) {
+        (*sIt).second->save(curNode);
+    }
+}
+
+
+
+//*********************************************************************
+//                      saveAttacks
+//*********************************************************************
+
+void Creature::saveAttacks(xmlNodePtr rootNode) const {
+    xmlNodePtr curNode = xml::newStringChild(rootNode, "SpecialAttacks");
+    std::list<SpecialAttack*>::const_iterator eIt;
+    for(eIt = specials.begin() ; eIt != specials.end() ; eIt++) {
+        (*eIt)->save(curNode);
+    }
+}
+
+
+//*********************************************************************
+//                      saveCreaturesXml
+//*********************************************************************
+
+int saveCreaturesXml(xmlNodePtr parentNode, const MonsterSet& set, int permOnly) {
+    xmlNodePtr curNode;
+    for(const Monster* mons : set) {
+        if( mons && mons->isMonster() &&
+            (   (permOnly == ALLITEMS && !mons->isPet()) ||
+                (permOnly == PERMONLY && mons->flagIsSet(M_PERMENANT_MONSTER))
+            ) )
+        {
+            if(mons->flagIsSet(M_SAVE_FULL)) {
+                // Save a fully copy of the mob to the node
+                curNode = xml::newStringChild(parentNode, "Creature");
+                mons->saveToXml(curNode, permOnly, LoadType::LS_FULL);
+            } else {
+                // Just save a reference
+                curNode = xml::newStringChild(parentNode, "CrtRef");
+                mons->saveToXml(curNode, permOnly, LoadType::LS_REF);
+            }
+        }
+
+    }
+    return(0);
+}
+
+
+
+//*********************************************************************
+//                      savePets
+//*********************************************************************
+
+void Creature::savePets(xmlNodePtr parentNode) const {
+    xmlNodePtr curNode;
+
+    for(const Monster* pet : pets) {
+        // Only save pets, not creatures just following
+        if(!pet->isPet()) continue;
+        curNode = xml::newStringChild(parentNode, "Creature");
+        pet->saveToXml(curNode, ALLITEMS, LoadType::LS_FULL);
+    }
+}
+
+
+//*********************************************************************
+//                      saveDaily
+//*********************************************************************
+
+xmlNodePtr saveDaily(xmlNodePtr parentNode, int i, struct daily pDaily) {
+    // Avoid writing un-used daily timers
+    if(pDaily.max == 0 && pDaily.cur == 0 && pDaily.ltime == 0)
+        return(nullptr);
+
+    xmlNodePtr curNode = xml::newStringChild(parentNode, "Daily");
+    xml::newNumProp(curNode, "Num", i);
+
+    xml::newNumChild(curNode, "Max", pDaily.max);
+    xml::newNumChild(curNode, "Current", pDaily.cur);
+    xml::newNumChild(curNode, "LastTime", pDaily.ltime);
+    return(curNode);
+}
+
+//*********************************************************************
+//                      saveCrLastTime
+//*********************************************************************
+
+xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, const struct crlasttime& pCrLastTime) {
+    // Avoid writing un-used last times
+    if(!pCrLastTime.interval && !pCrLastTime.ltime && !pCrLastTime.cr.id)
+        return(nullptr);
+
+    if(i < 0 || i >= NUM_PERM_SLOTS)
+        return(nullptr);
+
+    xmlNodePtr curNode = xml::newStringChild(parentNode, "LastTime");
+    xml::newNumProp(curNode, "Num", i);
+
+    xml::newNumChild(curNode, "Interval", pCrLastTime.interval);
+    xml::newNumChild(curNode, "LastTime", pCrLastTime.ltime);
+    pCrLastTime.cr.save(curNode, "Misc", false);
+    return(curNode);
+}
+
+
+//*********************************************************************
+//                      saveSavingThrow
+//*********************************************************************
+
+xmlNodePtr saveSavingThrow(xmlNodePtr parentNode, int i, struct saves pSavingThrow) {
+    xmlNodePtr curNode = xml::newStringChild(parentNode, "SavingThrow");
+    xml::newNumProp(curNode, "Num", i);
+
+    xml::newNumChild(curNode, "Chance", pSavingThrow.chance);
+    xml::newNumChild(curNode, "Gained", pSavingThrow.gained);
+    xml::newNumChild(curNode, "Misc", pSavingThrow.misc);
+    return(curNode);
+}
+
 

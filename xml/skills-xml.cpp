@@ -333,3 +333,14 @@ SkillCost::SkillCost(xmlNodePtr rootNode) {
 
 }
 
+//*********************************************************************
+//                      save
+//*********************************************************************
+
+void Skill::save(xmlNodePtr rootNode) const {
+    xmlNodePtr skillNode = xml::newStringChild(rootNode, "Skill");
+    xml::newStringChild(skillNode, "Name", getName());
+    xml::newNumChild(skillNode, "Gained", getGained());
+    xml::newNumChild(skillNode, "GainBonus", getGainBonus());
+}
+
