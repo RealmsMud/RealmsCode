@@ -1793,7 +1793,7 @@ int Creature::getAttackDelay() const {
 
 bool Creature::checkAttackTimer(bool displayFail) {
     long i;
-    if(!((i = attackTimer.getTimeLeft()) == 0) && !isDm()) {
+    if(((i = attackTimer.getTimeLeft()) != 0) && !isDm()) {
         if(displayFail)
             pleaseWait(i/10.0);
         return(false);

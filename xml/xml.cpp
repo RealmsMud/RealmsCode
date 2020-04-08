@@ -110,9 +110,6 @@ namespace xml {
     void copyToBool(bool& to, xmlNodePtr node) {
         to = toBoolean(getCString( (node) ));
     }
-    void copyToColor(Color& to, xmlNodePtr node) {
-        to = toColor(getCString( (node) ));
-    }
 
     // unXSC: no
     char* getCString(xmlNodePtr node) {
@@ -191,40 +188,6 @@ int toBoolean(char *fromStr) {
     return(toReturn);
 }
 
-// Returns an int representing the color in fromStr and then frees fromStr
-Color toColor(char *fromStr) {
-    int toReturn = 0;
-    if(!fromStr)
-        return(NOCOLOR);
-
-    if(strstr(fromStr, "Bold"))
-        toReturn |= BOLD;
-    if(strstr(fromStr, "Blink"))
-        toReturn |= BLINK;
-    if(strstr(fromStr, "Normal"))
-        toReturn |= NORMAL;
-
-    if(strstr(fromStr, "Red"))
-        toReturn |= RED;
-    else if(strstr(fromStr, "Green"))
-        toReturn |= GREEN;
-    else if(strstr(fromStr, "Yellow"))
-        toReturn |= YELLOW;
-    else if(strstr(fromStr, "Blue"))
-        toReturn |= BLUE;
-    else if(strstr(fromStr, "Magenta"))
-        toReturn |= MAGENTA;
-    else if(strstr(fromStr, "Cyan"))
-        toReturn |= CYAN;
-    else //if(strstr(fromStr, "White"))
-        toReturn |= WHITE;
-
-    //  if(toReturn == 0)
-    //      toReturn |= WHITE);
-
-    free(fromStr);
-    return((Color)toReturn);
-}
 // Converts an int to a yes or no
 char *iToYesNo(int fromInt) {
     static char toReturn[8];

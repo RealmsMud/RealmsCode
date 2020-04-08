@@ -118,11 +118,11 @@ protected:
     bstring name;
     unsigned short num;
     bstring leader;
-    long    level;      // Sum of everyone's level in the guild
-    int     numMembers; // Number of members in the guild
-    long    pkillsIn;
-    long    pkillsWon;
-    long    points;     // Points from quests/etc
+    long    level{};      // Sum of everyone's level in the guild
+    int     numMembers{}; // Number of members in the guild
+    long    pkillsIn{};
+    long    pkillsWon{};
+    long    points{};     // Points from quests/etc
 };
 
 

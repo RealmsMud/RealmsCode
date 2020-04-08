@@ -60,7 +60,7 @@
 #define NONFATAL    0
 
 enum LoadType {
-    LS_NORMAL,
+    LoadType::LS_NORMAL,
     LS_BACKUP,
     LS_CONVERT,
 

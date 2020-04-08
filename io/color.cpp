@@ -384,44 +384,6 @@ void Player::setSockColors() {
     }
 }
 
-
-//***********************************************************************
-//                      ANSI
-//***********************************************************************
-
-void ANSI(Socket* sock, int color) {
-    if(sock && sock->getPlayer()) {
-        if(sock->getPlayer()->flagIsSet(P_ANSI_COLOR)) {
-            if(color & BOLD)            sock->print("%c[%dm", 27, Ansi[COLOR_BOLD]);
-            if(color & BLINK)           sock->print("%c[%dm", 27, Ansi[COLOR_BLINK]);
-            if(color & NORMAL)          sock->print("%c[%dm", 27, Ansi[COLOR_NORMAL]);
-
-                 if(color & RED)        sock->print("%c[%dm", 27, Ansi[COLOR_RED]);
-            else if(color & GREEN)      sock->print("%c[%dm", 27, Ansi[COLOR_GREEN]);
-            else if(color & YELLOW)     sock->print("%c[%dm", 27, Ansi[COLOR_YELLOW]);
-            else if(color & BLUE)       sock->print("%c[%dm", 27, Ansi[COLOR_BLUE]);
-            else if(color & MAGENTA)    sock->print("%c[%dm", 27, Ansi[COLOR_MAGENTA]);
-            else if(color & CYAN)       sock->print("%c[%dm", 27, Ansi[COLOR_CYAN]);
-            else if(color & BLACK)      sock->print("%c[%dm", 27, Ansi[COLOR_BLACK]);
-            else if(color & WHITE)      sock->print("%c[%dm", 27, Ansi[COLOR_WHITE]);
-
-        } else if(sock->getPlayer()->flagIsSet(P_MIRC) && color != BLINK) {
-            if(color & BOLD)            sock->print("%c", 2);
-            if(color & UNDERLINE)       sock->print("%c", 31);
-            if(color & NORMAL)          sock->print("%c%c", 3, 3);
-
-                 if(color & RED)        sock->print("%c%d", 3, Mirc[COLOR_RED]);
-            else if(color & GREEN)      sock->print("%c%d", 3, Mirc[COLOR_GREEN]);
-            else if(color & YELLOW)     sock->print("%c%d", 3, Mirc[COLOR_YELLOW]);
-            else if(color & BLUE)       sock->print("%c%d", 3, Mirc[COLOR_BLUE]);
-            else if(color & MAGENTA)    sock->print("%c%d", 3, Mirc[COLOR_MAGENTA]);
-            else if(color & CYAN)       sock->print("%c%d", 3, Mirc[COLOR_CYAN]);
-            else if(color & BLACK)      sock->print("%c%d", 3, Mirc[COLOR_BLACK]);
-            else if(color & WHITE)      sock->print("%c%d", 3, Mirc[COLOR_WHITE]);
-        }
-    }
-}
-
 //***********************************************************************
 //                      getColorCode
 //***********************************************************************

@@ -19,6 +19,8 @@
 #ifndef GLOBAL_H_
 #define GLOBAL_H_
 
+#include "enums/bits.hpp"
+
 #define MAX_DIMEN_ANCHORS   3
 
 // Size of exp array, also highest you can train
@@ -223,18 +225,6 @@ enum Languages {
     LTIEFLING = 23,
 
     LANGUAGE_COUNT = 24
-};
-
-
-// Enums
-enum LoadType {
-    LS_NORMAL,
-    LS_BACKUP,
-    LS_CONVERT,
-
-    LS_FULL,
-    LS_PROTOTYPE,
-    LS_REF
 };
 
 
@@ -495,22 +485,6 @@ const int SP_MAPSC = 1;     // Map or scroll
 const int SP_COMBO = 2;     // Combination lock
 const int MAX_SP = 3;
 
-enum Bits {
-    BIT0 = (1<<0),
-    BIT1 = (1<<1),
-    BIT2 = (1<<2),
-    BIT3 = (1<<3),
-    BIT4 = (1<<4),
-    BIT5 = (1<<5),
-    BIT6 = (1<<6),
-    BIT7 = (1<<7),
-    BIT8 = (1<<8),
-    BIT9 = (1<<9),
-    BIT10 = (1<<10),
-    BIT11 = (1<<11),
-    BIT12 = (1<<12)
-};
-
 // findTarget search places
 enum FindTargets {
     FIND_OBJ_EQUIPMENT = BIT0,
@@ -534,22 +508,6 @@ enum StrFlags {
     QUEST = BIT8,
 };
 
-enum Color {
-    NOCOLOR     = 0,
-    BLACK       = BIT0,
-    RED         = BIT1,
-    GREEN       = BIT2,
-    YELLOW      = BIT3,
-    BLUE        = BIT4,
-    MAGENTA     = BIT5,
-    CYAN        = BIT6,
-    WHITE       = BIT7,
-    BOLD        = BIT8,
-    NORMAL      = BIT9,
-    BLINK       = BIT10,
-    UNDERLINE   = BIT11,
-    MAX_COLOR
-};
 
 enum AttackResultFlags {
     NO_FLAG     = 0,

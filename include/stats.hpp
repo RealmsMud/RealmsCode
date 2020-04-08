@@ -48,7 +48,7 @@ public:
     bstring toString();
 private:
     bstring         name;
-    int             modAmt;
+    int             modAmt{};
     ModifierType    modType;
 
 };
@@ -71,7 +71,7 @@ public:
 
     void setName(bstring pName);
 
-    bool load(xmlNodePtr curNode, bstring statName);
+    bool load(xmlNodePtr curNode, const bstring& statName);
     bool loadModifiers(xmlNodePtr curNode);
     void save(xmlNodePtr parentNode, const char* statName) const;
     

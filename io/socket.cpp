@@ -1777,66 +1777,6 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
 }
 
 //********************************************************************
-//                      ANSI
-//********************************************************************
-
-void Socket::ANSI(int color) {
-    if (fd > -1 && myPlayer) {
-        if (myPlayer->flagIsSet(P_ANSI_COLOR)) {
-            if (color & BOLD)
-                print("%c[%dm", 27, Ansi[COLOR_BOLD]);
-            if (color & BLINK)
-                print("%c[%dm", 27, Ansi[COLOR_BLINK]);
-            if (color & NORMAL)
-                print("%c[%dm", 27, Ansi[COLOR_NORMAL]);
-
-            if (color & RED)
-                print("%c[%dm", 27, Ansi[COLOR_RED]);
-            else if (color & GREEN)
-                print("%c[%dm", 27, Ansi[COLOR_GREEN]);
-            else if (color & YELLOW)
-                print("%c[%dm", 27, Ansi[COLOR_YELLOW]);
-            else if (color & BLUE)
-                print("%c[%dm", 27, Ansi[COLOR_BLUE]);
-            else if (color & MAGENTA)
-                print("%c[%dm", 27, Ansi[COLOR_MAGENTA]);
-            else if (color & CYAN)
-                print("%c[%dm", 27, Ansi[COLOR_CYAN]);
-            else if (color & BLACK)
-                print("%c[%dm", 27, Ansi[COLOR_BLACK]);
-            else if (color & WHITE)
-                print("%c[%dm", 27, Ansi[COLOR_WHITE]);
-
-        } else if (myPlayer->flagIsSet(P_MIRC) && color != BLINK) {
-            if (color & BOLD)
-                print("%c", 2);
-            if (color & UNDERLINE)
-                print("%c", 31);
-            if (color & NORMAL)
-                print("%c%c", 3, 3);
-
-            if (color & RED)
-                print("%c%d", 3, Mirc[COLOR_RED]);
-            else if (color & GREEN)
-                print("%c%d", 3, Mirc[COLOR_GREEN]);
-            else if (color & YELLOW)
-                print("%c%d", 3, Mirc[COLOR_YELLOW]);
-            else if (color & BLUE)
-                print("%c%d", 3, Mirc[COLOR_BLUE]);
-            else if (color & MAGENTA)
-                print("%c%d", 3, Mirc[COLOR_MAGENTA]);
-            else if (color & CYAN)
-                print("%c%d", 3, Mirc[COLOR_CYAN]);
-            else if (color & BLACK)
-                print("%c%d", 3, Mirc[COLOR_BLACK]);
-            else if (color & WHITE)
-                print("%c%d", 3, Mirc[COLOR_WHITE]);
-
-        }
-    }
-}
-
-//********************************************************************
 //                      hasOutput
 //********************************************************************
 

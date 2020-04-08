@@ -30,6 +30,7 @@
 #include "dice.hpp"
 #include "global.hpp"
 #include "lasttime.hpp"
+#include "enums/loadType.hpp"
 #include "money.hpp"
 #include "range.hpp"
 #include "size.hpp"
@@ -231,7 +232,7 @@ public:
     void loadAlchemyEffects(xmlNodePtr curNode);
 
     // Xml - Saving
-    int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType = LS_FULL, int quantity = 1,
+    int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType = LoadType::LS_FULL, int quantity = 1,
                   bool saveId = true, std::list<bstring> *idList = 0) const;
     int saveToFile();
 

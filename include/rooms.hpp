@@ -29,6 +29,7 @@ class Fishing;
 #include "container.hpp"
 #include "exits.hpp"
 #include "global.hpp"
+#include "enums/loadType.hpp"
 #include "location.hpp"
 #include "realm.hpp"
 #include "size.hpp"
@@ -142,7 +143,7 @@ public:
     void escapeText();
     int readFromXml(xmlNodePtr rootNode, bool offline=false);
     int saveToXml(xmlNodePtr rootNode, int permOnly) const;
-    int saveToFile(int permOnly, LoadType saveType=LS_NORMAL);
+    int saveToFile(int permOnly, LoadType saveType=LoadType::LS_NORMAL);
 
     bstring getShortDescription() const;
     bstring getLongDescription() const;

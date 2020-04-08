@@ -2256,7 +2256,7 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
     }
 
 
-    if(target->save(online, LS_BACKUP) > 0) {
+    if(target->save(online, LoadType::LS_BACKUP) > 0) {
         player->print("Backup failed.\n");
         if(!online)
             free_crt(target);

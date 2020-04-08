@@ -25,6 +25,7 @@
 
 #include "carry.hpp"
 #include "container.hpp"
+#include "enums/loadType.hpp"
 
 using boost::lexical_cast;
 using boost::bad_lexical_cast;
@@ -92,9 +93,6 @@ namespace xml {
 
         // copyToBool -- Properly frees the return value using toBoolean
     void copyToBool(bool& to, xmlNodePtr node);
-
-    // copyToColor -- Properly frees the return value using toColor
-    void copyToColor(Color& to, xmlNodePtr node);
 
 
     //*******************************************************************************
@@ -199,16 +197,16 @@ namespace xml {
 //******************
 
 bool loadMonster(int index, Monster** pMonster, bool offline=false);
-bool loadMonster(const CatRef cr, Monster** pMonster, bool offline=false);
-bool loadMonsterFromFile(const CatRef cr, Monster **pMonster, bstring filename="", bool offline=false);
+bool loadMonster(const CatRef& cr, Monster** pMonster, bool offline=false);
+bool loadMonsterFromFile(const CatRef& cr, Monster **pMonster, bstring filename="", bool offline=false);
 bool loadObject(int index, Object** pObject, bool offline=false);
-bool loadObject(const CatRef cr, Object** pObject, bool offline=false);
-bool loadObjectFromFile(const CatRef cr, Object** pObject, bool offline=false);
+bool loadObject(const CatRef& cr, Object** pObject, bool offline=false);
+bool loadObjectFromFile(const CatRef& cr, Object** pObject, bool offline=false);
 bool loadRoom(int index, UniqueRoom **pRoom, bool offline=false);
-bool loadRoom(const CatRef cr, UniqueRoom **pRoom, bool offline=false);
-bool loadRoomFromFile(const CatRef cr, UniqueRoom **pRoom, bstring filename="", bool offline=false);
+bool loadRoom(const CatRef& cr, UniqueRoom **pRoom, bool offline=false);
+bool loadRoomFromFile(const CatRef& cr, UniqueRoom **pRoom, bstring filename="", bool offline=false);
 
-bool loadPlayer(const bstring name, Player** player, LoadType loadType=LS_NORMAL);
+bool loadPlayer(const bstring& name, Player** player, enum LoadType loadType=LoadType::LS_NORMAL);
 
 void loadCarryArray(xmlNodePtr curNode, Carry array[], const char* name, int maxProp);
 void loadCatRefArray(xmlNodePtr curNode, std::map<int, CatRef>& array, const char* name, int maxProp);

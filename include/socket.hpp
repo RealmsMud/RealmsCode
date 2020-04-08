@@ -237,11 +237,6 @@ public:
     bool hasOutput(void) const;
     bool hasCommand(void) const;
 
-//  void login(bstring& cmd);
-//  void command(bstring& cmd);
-//  void createPlayer(bstring& cmd);
-    void ANSI(int color);
-
     long getIdle() const;
     int getMccp() const;
     bool getMxp() const;
