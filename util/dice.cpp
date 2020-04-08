@@ -16,7 +16,6 @@
  *
  */
 #include "mud.hpp"
-#include "xml.hpp"
 
 //*********************************************************************
 //                      Dice
@@ -46,51 +45,16 @@ void Dice::clear() {
 //*********************************************************************
 
 bool Dice::operator==(const Dice& d) const {
-    if( number != d.getNumber() ||
-        plus != d.getPlus() ||
-        sides != d.getSides() ||
-        mean != d.getMean()
-    )
-        return(false);
-    return(true);
+    return !(number != d.getNumber() ||
+             plus != d.getPlus() ||
+             sides != d.getSides() ||
+             mean != d.getMean());
 }
 
 bool Dice::operator!=(const Dice& d) const {
     return(!(*this==d));
 }
 
-//*********************************************************************
-//                      load
-//*********************************************************************
-
-void Dice::load(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-    clear();
-
-    while(childNode) {
-        if(NODE_NAME(childNode, "Number")) setNumber(xml::toNum<unsigned short>(childNode));
-        else if(NODE_NAME(childNode, "Sides")) setSides(xml::toNum<unsigned short>(childNode));
-        else if(NODE_NAME(childNode, "Plus")) setPlus(xml::toNum<short>(childNode));
-        else if(NODE_NAME(childNode, "Mean")) setMean(xml::toNum<double>(childNode));
-
-        childNode = childNode->next;
-    }
-}
-
-//*********************************************************************
-//                      save
-//*********************************************************************
-
-void Dice::save(xmlNodePtr curNode, const char* name) const {
-    if(!number && !sides && !plus && !mean)
-        return;
-    xmlNodePtr childNode = xml::newStringChild(curNode, name);
-
-    xml::saveNonZeroNum(childNode, "Number", number);
-    xml::saveNonZeroNum(childNode, "Sides", sides);
-    xml::saveNonZeroNum(childNode, "Plus", plus);
-    xml::saveNonZeroNum(childNode, "Mean", mean);
-}
 
 //*********************************************************************
 //                      roll
