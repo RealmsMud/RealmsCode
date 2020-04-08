@@ -21,20 +21,19 @@
 #include <sys/stat.h>
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
 #include <sys/socket.h> // Needs: bind, std::listen, socket, AF_INET
-#include <fcntl.h>      // Needs: fnctl
 #include <netdb.h>      // Needs: gethostbyaddr
 #include <sys/wait.h>   // Needs: WNOHANG, wait3
-#include <errno.h>
-#include <stdlib.h>
+#include <cerrno>
+#include <cstdlib>
 #include <sys/resource.h>
 
 // C++ Includes
 #include <iostream>
+#include <random>
 #include <sstream>
-#include <iomanip>
 #include <locale>
+#include <iomanip>
 
-// Mud Includes
 #include "calendar.hpp"
 #include "config.hpp"
 #include "creatures.hpp"
@@ -113,11 +112,11 @@ Server::Server(): roomCache(RQMAX, true), monsterCache(MQMAX, false), objectCach
     running = false;
     Deadchildren = 0;
     pulse = 0;
-    webInterface = 0;
+    webInterface = nullptr;
     lastDnsPrune = lastUserUpdate = lastRoomPulseUpdate = lastRandomUpdate = lastActiveUpdate = 0;
     maxPlayerId = maxObjectId = maxMonsterId = 0;
     loadDnsCache();
-    pythonHandler = 0;
+    pythonHandler = nullptr;
     idDirty = false;
 
 #ifdef SQL_LOGGER
@@ -155,7 +154,7 @@ bool Server::init() {
     std::clog << "Initializing Server." << std::endl;
 
     std::clog << "Setting RLIMIT...";
-    struct rlimit lim;
+    struct rlimit lim{};
     lim.rlim_cur = RLIM_INFINITY;
     lim.rlim_max = RLIM_INFINITY;
     setrlimit(RLIMIT_CORE, &lim);
@@ -212,7 +211,7 @@ bool Server::init() {
 #endif // SQL_LOGGER
 
     umask(000);
-    srand(getpid() + time(0));
+    srand(getpid() + time(nullptr));
     if(rebooting) {
         std::clog << "Doing a reboot." << std::endl;
         finishReboot();
@@ -280,8 +279,7 @@ Server* Server::getInstance() {
 // Destroy Instance - Destroy the static instance
 //********************************************************************
 void Server::destroyInstance() {
-    if(myInstance != nullptr)
-        delete myInstance;
+    delete myInstance;
     myInstance = nullptr;
 }
 
@@ -295,7 +293,7 @@ void Server::populateVSockets() {
         return;
     vSockets = new SocketVector(sockets.size());
     std::copy(sockets.begin(), sockets.end(), vSockets->begin());
-    random_shuffle(vSockets->begin(), vSockets->end());
+    shuffle(vSockets->begin(), vSockets->end(), std::mt19937(std::random_device()()));
 }
 
 
@@ -303,9 +301,9 @@ void Server::populateVSockets() {
 //                      run
 //********************************************************************
 
-int Server::run(void) {
-    ServerTimer timer;
-    if(running == false)
+int Server::run() {
+    ServerTimer timer{};
+    if(!running)
     {
         std::cerr << "Not bound to any ports, exiting." << std::endl;
         exit(-1);
@@ -343,7 +341,7 @@ int Server::run(void) {
         checkWebInterface();
 
         delete vSockets;
-        vSockets = 0;
+        vSockets = nullptr;
 
         timer.end(); // End the timer
         timer.sleep();
@@ -357,7 +355,7 @@ int Server::run(void) {
 //********************************************************************
 
 int Server::addListenPort(int port) {
-    struct sockaddr_in sa;
+    struct sockaddr_in sa{};
     int optval = 1;
     int control;
 
@@ -395,7 +393,7 @@ int Server::addListenPort(int port) {
     std::clog << "Mud is now listening on port " << port << std::endl;
 
     // TODO: Leaky, make sure to erase these when the server shuts down
-    controlSocks.push_back(controlSock(port, control));
+    controlSocks.emplace_back(port, control);
     running = true;
 
     return(0);
@@ -413,7 +411,7 @@ int Server::poll() {
 
     int maxFd = 0;
 
-    struct timeval noTime;
+    struct timeval noTime{};
     noTime.tv_sec = 0;
     noTime.tv_usec = 0;
 
@@ -463,7 +461,7 @@ int Server::handleNewConnection(controlSock& cs) {
     int fd;
     int len;
 
-    struct sockaddr_in addr;
+    struct sockaddr_in addr{};
 
     addr.sin_family = AF_INET;
     addr.sin_port = htons(Port);
@@ -603,7 +601,7 @@ void Server::disconnectAll() {
 
 int Server::cleanUp() {
     std::list<Socket*>::iterator it;
-    Socket *sock=0;
+    Socket *sock=nullptr;
 
     for(it = sockets.begin() ; it != sockets.end() ;) {
         sock = *it;
@@ -663,7 +661,7 @@ bool Server::getDnsCache(bstring &ip, bstring &hostName) {
 
 void Server::pruneDns() {
     long fifteenDays = 60*60*24*15;
-    long currentTime = time(0);
+    long currentTime = time(nullptr);
     std::list<dnsCache>::iterator it;
     std::list<dnsCache>::iterator oldIt;
 
@@ -701,7 +699,7 @@ void Server::pulseTicks(long t) {
 //*********************************************************************
 
 void Server::updateUsers(long t) {
-    int tout = 300;
+    int tout;
     lastUserUpdate = t;
 
     for(Socket* sock : *vSockets) {
@@ -709,7 +707,7 @@ void Server::updateUsers(long t) {
         Player* player= sock->getPlayer();
 
         if(player) {
-            if(player->isDm()) tout = t;
+            if(player->isDm()) tout = INT_MAX;
             else if(player->isStaff()) tout = 1200;
             else tout = 600;
         } else {
@@ -735,16 +733,14 @@ void Server::updateUsers(long t) {
 // a room, it is loaded and items it is carrying will be loaded with it.
 
 void Server::updateRandom(long t) {
-    Monster* monster=0;
-    BaseRoom* room=0;
-    UniqueRoom* uRoom=0;
-    AreaRoom* aRoom=0;
-    WanderInfo* wander=0;
+    Monster* monster=nullptr;
+    BaseRoom* room=nullptr;
+    UniqueRoom* uRoom=nullptr;
+    AreaRoom* aRoom=nullptr;
+    WanderInfo* wander=nullptr;
     CatRef  cr;
     int     num=0, l=0;
     std::map<bstring, bool> check;
-    //Object      *object;
-    //int       k, numout=0, alnum=0, x=0;
 
     lastRandomUpdate = t;
 
@@ -758,7 +754,6 @@ void Server::updateRandom(long t) {
         aRoom = player->getAreaRoomParent();
         room = player->getRoomParent();
 
-        wander = 0;
         if(uRoom) {
             // handle monsters arriving in unique rooms
             if(!uRoom->info.id)
@@ -848,10 +843,9 @@ void Server::updateRandom(long t) {
 // for monsters in rooms that are occupied by players.
 
 void Server::updateActive(long t) {
-    Player  *ply=0;
-    Creature *target=0;
-    Monster *monster=0;
-    BaseRoom* room=0;
+    Creature* target = nullptr;
+    Monster* monster = nullptr;
+    BaseRoom* room = nullptr;
 
     long    tt = gConfig->currentHour();
     int     timetowander=0, immort=0;
@@ -861,10 +855,8 @@ void Server::updateActive(long t) {
 
     if(activeList.empty())
         return;
-//  if(!(cp = first_active))
-//      return;
 
-    MonsterList::iterator it = activeList.begin();
+    auto it = activeList.begin();
     while(it != activeList.end()) {
         // Increment the iterator in case this monster dies during the update and is removed from the active list
         monster = (*it++);
@@ -998,7 +990,7 @@ void Server::updateActive(long t) {
         }
 
 
-        if(monster->getPrimeFaction() != "")
+        if(!monster->getPrimeFaction().empty())
             Faction::worshipSocial(monster);
 
 
@@ -1046,7 +1038,7 @@ void Server::updateActive(long t) {
 
         // Steal from people
         if(monster->flagIsSet(M_STEAL_ALWAYS) && (t - monster->lasttime[LT_STEAL].ltime) > 60 && mrand(1, 100) <= 5) {
-            ply = lowest_piety(room, monster->isEffected("detect-invisible"));
+            Player* ply = lowest_piety(room, monster->isEffected("detect-invisible"));
             if(ply)
                 monster->steal(ply);
         }
@@ -1149,7 +1141,7 @@ void Server::delActive(Monster* monster) {
         return;
     }
 
-    MonsterList::iterator it = std::find(activeList.begin(), activeList.end(), monster);
+    auto it = std::find(activeList.begin(), activeList.end(), monster);
     if(it == activeList.end()) {
         std::cerr << "Attempting to delete '" << monster->getName() << "' from active list but could not find them on the list." << std::endl;
         broadcast(isStaff, "^yAttempting to delete %s from active list but could not find them on the list.", monster->getCName());
@@ -1171,14 +1163,12 @@ bool Server::isActive(Monster* monster) {
     if(activeList.empty())
         return(false);
 
-    MonsterList::iterator it = std::find(activeList.begin(), activeList.end(), monster);
+    auto it = std::find(activeList.begin(), activeList.end(), monster);
     if(it == activeList.end())
         return(false);
 
-    if(*it == monster)
-        return(true);
+    return *it == monster;
 
-    return(false);
 }
 
 // End - Active List Manipulation
@@ -1285,7 +1275,7 @@ int Server::reapChildren() {
                     } else if(c.type == CHILD_PRINT) {
                         const Player* player = gServer->findPlayer(c.extra);
                         bstring output = gServer->simpleChildRead(c);
-                        if(player && output != "")
+                        if(player && !output.empty())
                             player->printColor("%s\n", output.c_str());
                     }
                     // Don't forget to close the pipe!
@@ -1303,7 +1293,7 @@ int Server::reapChildren() {
         saveDnsCache();
 
 // just in case, kill off any zombies
-    wait3(&status, WNOHANG, (struct rusage *)0);
+    wait3(&status, WNOHANG, (struct rusage *)nullptr);
     return(0);
 }
 
@@ -1346,7 +1336,7 @@ int Server::processListOutput(childProcess &lister) {
 //                      processChildren
 //********************************************************************
 
-int Server::processChildren(void) {
+int Server::processChildren() {
     for(childProcess & child : children) {
         if(child.type == CHILD_DNS_RESOLVER) {
             // Ignore, will be handled by reapChildren
@@ -1359,7 +1349,7 @@ int Server::processChildren(void) {
         } else if(child.type == CHILD_PRINT) {
             const Player* player = gServer->findPlayer(child.extra);
             bstring output = gServer->simpleChildRead(child);
-            if(player && output != "")
+            if(player && !output.empty())
                 player->printColor("%s\n", output.c_str());
         } else {
             std::clog << "processChildren: Unknown child type " << child.type << std::endl;
@@ -1388,7 +1378,7 @@ int Server::startDnsLookup(Socket* sock, struct sockaddr_in addr) {
         // Child Process
         // Close the reading end, we'll only be writing
         close(fds[0]);
-        struct hostent *he = 0;
+        struct hostent *he = nullptr;
         int tries = 0;
         while(tries < 5 && tries >= 0) {
             he = gethostbyaddr((char *)&addr.sin_addr.s_addr, sizeof(addr.sin_addr.s_addr), AF_INET);
@@ -1404,6 +1394,7 @@ int Server::startDnsLookup(Socket* sock, struct sockaddr_in addr) {
                     tries = -1;
                     break;
                 case TRY_AGAIN:
+                default:
                     std::clog << "DNS Error: Try again for " << sock->getIp() << std::endl;
                     tries++;
                     break;
@@ -1436,19 +1427,19 @@ int Server::startDnsLookup(Socket* sock, struct sockaddr_in addr) {
 //                      addCache
 //********************************************************************
 
-void Server::addCache(bstring ip, bstring hostName, time_t t) {
+void Server::addCache(const bstring& ip, const bstring& hostName, time_t t) {
     if(t == -1)
-        t = time(0);
-    cachedDns.push_back(dnsCache(ip, hostName, t));
+        t = time(nullptr);
+    cachedDns.emplace_back(ip, hostName, t);
 }
 
 //********************************************************************
 //                      addChild
 //********************************************************************
 
-void Server::addChild(int pid, childType pType, int pFd, bstring pExtra) {
+void Server::addChild(int pid, childType pType, int pFd, const bstring& pExtra) {
     std::clog << "Adding pid " << pid << " as child type " << pType << ", watching " << pFd << "\n";
-    children.push_back(childProcess(pid, pType, pFd, pExtra));
+    children.emplace_back(pid, pType, pFd, pExtra);
 }
 
 // End - Children Control
@@ -1502,7 +1493,7 @@ void Server::loadDnsCache() {
     while(curNode && xmlIsBlankNode(curNode)) {
         curNode = curNode->next;
     }
-    if(curNode == 0) {
+    if(curNode == nullptr) {
         xmlFreeDoc(xmlDoc);
         return;
     }
@@ -1534,20 +1525,6 @@ void Server::loadDnsCache() {
 // Reboot Functions
 
 //********************************************************************
-//                      resetShipsFile
-//********************************************************************
-
-void Config::resetShipsFile() {
-    // copying ships.midnight.xml to ships.xml
-    char    sfile1[80], sfile2[80], command[255];
-    sprintf(sfile1, "%s/ships.midnight.xml", Path::Game);
-    sprintf(sfile2, "%s/ships.xml", Path::Game);
-
-    sprintf(command, "cp %s %s", sfile1, sfile2);
-    system(command);
-}
-
-//********************************************************************
 //                      startReboot
 //********************************************************************
 
@@ -1576,11 +1553,11 @@ bool Server::startReboot(bool resetShips) {
                 sock->endCompress();
             }
             player->save(true);
-            players[player->getName()] = 0;
+            players[player->getName()] = nullptr;
             player->uninit();
             free_crt(player);
-            player = 0;
-            sock->setPlayer(0);
+            player = nullptr;
+            sock->setPlayer(nullptr);
         } else {
             sock->write("\n\r\n\r\n\rSorry, we are rebooting. You may reconnect in a few seconds.\n\r");
             sock->disconnect();
@@ -1605,7 +1582,7 @@ bool Server::startReboot(bool resetShips) {
     unlink(filename);
 
     merror("dmReboot failed!!!", FATAL);
-    return(0);
+    return(false);
 }
 
 //********************************************************************
@@ -1694,13 +1671,13 @@ int Server::finishReboot() {
     while(curNode && xmlIsBlankNode(curNode)) {
         curNode = curNode->next;
     }
-    if(curNode == 0) {
+    if(curNode == nullptr) {
         xmlFreeDoc(doc);
         merror("Parsing reboot file", FATAL);
     }
 
     Numplayers = 0;
-    StartTime = time(0);
+    StartTime = time(nullptr);
 
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Server")) {
@@ -1709,7 +1686,7 @@ int Server::finishReboot() {
                 if(NODE_NAME(childNode, "ControlSock")) {
                     int port = xml::getIntProp(childNode, "Port");
                     int control = xml::getIntProp(childNode, "Control");
-                    controlSocks.push_back(controlSock(port, control));
+                    controlSocks.emplace_back(port, control);
                     running = true;
                 }
                 else if(NODE_NAME(childNode, "StartTime"))
@@ -1733,8 +1710,8 @@ int Server::finishReboot() {
             }
         } else if(NODE_NAME(curNode, "Player")) {
             childNode = curNode->children;
-            Player* player=0;
-            Socket* sock=0;
+            Player* player=nullptr;
+            Socket* sock=nullptr;
             while(childNode != nullptr) {
                 if(NODE_NAME(childNode, "Name")) {
                     bstring name;
@@ -1781,7 +1758,7 @@ int Server::finishReboot() {
             if(!player || !sock)
                 merror("finishReboot: Finished, still no Sock/Player", FATAL);
 
-            sock->ltime = time(0);
+            sock->ltime = time(nullptr);
             sock->print("The world comes back into focus!\n");
             player->init();
 
@@ -1825,12 +1802,12 @@ int Server::finishReboot() {
 //                      findPlayer
 //********************************************************************
 
-Player* Server::findPlayer(bstring name) {
-    std::map<bstring, Player*>::const_iterator it = players.find(name);
+Player* Server::findPlayer(const bstring& name) {
+    auto it = players.find(name);
 
     if(it != players.end())
         return((*it).second);
-    return(0);
+    return(nullptr);
 
 }
 
@@ -1853,7 +1830,7 @@ void Server::saveAllPly() {
 //*********************************************************************
 // This will NOT free up the player, it will just remove them from the list
 
-bool Server::clearPlayer(bstring name) {
+bool Server::clearPlayer(const bstring& name) {
     players.erase(name);
     return(true);
 }
@@ -1909,7 +1886,7 @@ bool Server::checkDouble(Socket* sock) {
     if(strstr(sock->getHostname().c_str(), "localhost"))
         return(false);
 
-    Player* player=0;
+    Player* player=nullptr;
     for(Socket *s : sockets) {
         player = s->getPlayer();
         if(!player || s == sock)
@@ -1953,7 +1930,7 @@ void Server::sendCrash() {
 
 bstring Server::getTimeZone() {
     // current local time
-    time_t curr = time(0);
+    time_t curr = time(nullptr);
     // convert curr to GMT, store as tm
     tm local = *gmtime(&curr);
     // convert GMT tm to GMT time_t
@@ -2020,7 +1997,7 @@ bstring Server::getTimeZone() {
 }
 
 bstring Server::getServerTime() {
-    time_t t = time(0);
+    time_t t = time(nullptr);
     char* str = ctime(&t);
     str[strlen(str) - 1] = 0;
     std::ostringstream oStr;
@@ -2035,7 +2012,7 @@ bstring Server::getServerTime() {
 
 int Server::getNumPlayers() {
     int numPlayers=0;
-    Player* target=0;
+    Player* target=nullptr;
     for(std::pair<bstring, Player*> p : players) {
         target = p.second;
 
@@ -2058,7 +2035,7 @@ bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
     if(toRegister->getId().equals("-1"))
         return(false);
 
-    IdMap::iterator it =registeredIds.find(toRegister->getId());
+    auto it =registeredIds.find(toRegister->getId());
     if(it != registeredIds.end()) {
         std::ostringstream oStr;
         oStr << "ERROR: ID: " << toRegister->getId() << " is already registered!";
@@ -2091,7 +2068,7 @@ bool Server::unRegisterMudObject(MudObject* toUnRegister) {
     if(toUnRegister->getId().equals("-1"))
         return(false);
 
-    IdMap::iterator it = registeredIds.find(toUnRegister->getId());
+    auto it = registeredIds.find(toUnRegister->getId());
     bool registered = toUnRegister->isRegistered();
     if(!registered) {
         std::ostringstream oStr;
@@ -2134,7 +2111,7 @@ Object* Server::lookupObjId(const bstring& toLookup) {
     if(toLookup[0] != 'O')
         return(nullptr);
 
-    IdMap::iterator it = registeredIds.find(toLookup);
+    auto it = registeredIds.find(toLookup);
 
     if(it == registeredIds.end())
         return(nullptr);
@@ -2147,7 +2124,7 @@ Creature* Server::lookupCrtId(const bstring& toLookup) {
     if(toLookup[0] != 'M' && toLookup[0] != 'P')
         return(nullptr);
 
-    IdMap::iterator it = registeredIds.find(toLookup);
+    auto it = registeredIds.find(toLookup);
 
     if(it == registeredIds.end())
         return(nullptr);
@@ -2158,7 +2135,7 @@ Creature* Server::lookupCrtId(const bstring& toLookup) {
 Player* Server::lookupPlyId(const bstring& toLookup) {
     if(toLookup[0] != 'P')
         return(nullptr);
-    IdMap::iterator it = registeredIds.find(toLookup);
+    auto it = registeredIds.find(toLookup);
 
     if(it == registeredIds.end())
         return(nullptr);
@@ -2225,7 +2202,7 @@ void Server::loadIds() {
     while(curNode && xmlIsBlankNode(curNode)) {
         curNode = curNode->next;
     }
-    if(curNode == 0) {
+    if(curNode == nullptr) {
         xmlFreeDoc(xmlDoc);
         return;
     }
@@ -2245,7 +2222,7 @@ void Server::saveIds() {
     xmlNodePtr      rootNode;
     char            filename[80];
 
-    if(idDirty == false)
+    if(!idDirty)
         return;
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
@@ -2263,7 +2240,7 @@ void Server::saveIds() {
     idDirty = false;
 }
 
-void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, bstring logType) {
+void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, const bstring& logType) {
     bstring pName = player->getName();
     bstring pId = player->getId();
     // long amt
@@ -2340,7 +2317,7 @@ bool Server::reloadRoom(BaseRoom* room) {
     return(false);
 }
 
-UniqueRoom* Server::reloadRoom(CatRef cr) {
+UniqueRoom* Server::reloadRoom(const CatRef& cr) {
     UniqueRoom  *room=nullptr, *oldRoom=nullptr;
 
     bstring str = cr.str();
@@ -2388,7 +2365,7 @@ UniqueRoom* Server::reloadRoom(CatRef cr) {
 
 int saveRoomToFile(UniqueRoom* pRoom, int permOnly);
 
-int Server::resaveRoom(CatRef cr) {
+int Server::resaveRoom(const CatRef& cr) {
     UniqueRoom *room = roomCache.fetch(cr);
     if(room)
         room->saveToFile(ALLITEMS);
@@ -2401,7 +2378,7 @@ int Server::saveStorage(UniqueRoom* uRoom) {
         saveStorage(shopStorageRoom(uRoom));
     return(saveStorage(uRoom->info));
 }
-int Server::saveStorage(CatRef cr) {
+int Server::saveStorage(const CatRef& cr) {
 
     UniqueRoom *room = roomCache.fetch(cr);
     if(room) {
