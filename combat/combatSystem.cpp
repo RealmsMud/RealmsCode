@@ -31,7 +31,7 @@
 //                      computeAttackPower
 //**********************************************************************
 
-int Player::computeAttackPower() {
+unsigned int Player::computeAttackPower() {
     attackPower = 0;
 
     switch(cClass) {
@@ -122,9 +122,9 @@ unsigned int Creature::getBaseDamage() const {
 
 float Creature::getDamageReduction(const Creature* target) const {
     float reduction = 0.0;
-    float targetArmor = target->getArmor();
-    float myLevel = level == 1 && isPlayer() ? 2 : level;
-    reduction = ((targetArmor)/((targetArmor) + 43.24 + 18.38*myLevel));
+    auto targetArmor = (float)target->getArmor();
+    float myLevel = level == 1 && isPlayer() ? 2 : (float)level;
+    reduction = (float)((targetArmor)/((targetArmor) + 43.24 + 18.38*myLevel));
     reduction = MIN<float>(.75, reduction); // Max of 75% reduction
     return(reduction);
 }
@@ -133,7 +133,7 @@ float Creature::getDamageReduction(const Creature* target) const {
 //                      getWeaponType
 //**********************************************************************
 
-const bstring Object::getWeaponType() const {
+bstring Object::getWeaponType() const {
     if(type != ObjectType::WEAPON)
         return("none");
     else
@@ -144,7 +144,7 @@ const bstring Object::getWeaponType() const {
 //                      getArmorType
 //**********************************************************************
 
-const bstring Object::getArmorType() const {
+bstring Object::getArmorType() const {
     if(type != ObjectType::ARMOR)
         return("none");
     else
@@ -155,7 +155,7 @@ const bstring Object::getArmorType() const {
 //                      getWeaponCategory
 //**********************************************************************
 
-const bstring Object::getWeaponCategory() const {
+bstring Object::getWeaponCategory() const {
     SkillInfo* weaponSkill = gConfig->getSkill(subType);
 
     if(type != ObjectType::WEAPON || !weaponSkill)
@@ -173,7 +173,7 @@ const bstring Object::getWeaponCategory() const {
 //**********************************************************************
 
 
-const bstring  Creature::getWeaponVerb() const {
+bstring  Creature::getWeaponVerb() const {
     if(ready[WIELD-1])
         return(ready[WIELD-1]->getWeaponVerb());
     else
@@ -181,7 +181,7 @@ const bstring  Creature::getWeaponVerb() const {
 
 }
 
-const bstring Object::getWeaponVerb() const {
+bstring Object::getWeaponVerb() const {
     const bstring category = getWeaponCategory();
 
     if(category == "crushing")
@@ -203,7 +203,7 @@ const bstring Object::getWeaponVerb() const {
 //**********************************************************************
 
 
-const bstring Creature::getWeaponVerbPlural() const {
+bstring Creature::getWeaponVerbPlural() const {
     if(ready[WIELD-1])
         return(ready[WIELD-1]->getWeaponVerbPlural());
     else
@@ -211,7 +211,7 @@ const bstring Creature::getWeaponVerbPlural() const {
 
 }
 
-const bstring  Object::getWeaponVerbPlural() const {
+bstring  Object::getWeaponVerbPlural() const {
     const bstring category = getWeaponCategory();
 
     if(category == "crushing")
@@ -232,7 +232,7 @@ const bstring  Object::getWeaponVerbPlural() const {
 //                      getWeaponVerbPast
 //**********************************************************************
 
-const bstring Object::getWeaponVerbPast() const {
+bstring Object::getWeaponVerbPast() const {
     const bstring category = getWeaponCategory();
 
     if(category == "crushing") {
@@ -272,17 +272,18 @@ const bstring Object::getWeaponVerbPast() const {
 bool Object::needsTwoHands() const {
     const bstring weaponType = getWeaponType();
 
-    if(flagIsSet(O_TWO_HANDED))
-        return(true);
-    if( weaponType == "great-axe" || weaponType == "great-mace" ||
-        weaponType == "great-hammer" || weaponType == "staff" ||
-        weaponType == "great-sword" || weaponType == "polearm"
-    )
-        return(true);
-    if((weaponType == "bow" || weaponType == "crossbow") && !flagIsSet(O_SMALL_BOW))
-        return(true);
+    if (flagIsSet(O_TWO_HANDED))
+        return (true);
 
-    return(false);
+    if (weaponType == "great-axe" || weaponType == "great-mace" ||
+        weaponType == "great-hammer" || weaponType == "staff" ||
+        weaponType == "great-sword" || weaponType == "polearm")
+        return (true);
+
+    if ((weaponType == "bow" || weaponType == "crossbow") && !flagIsSet(O_SMALL_BOW))
+        return (true);
+
+    return (false);
 }
 
 //**********************************************************************
@@ -354,14 +355,14 @@ int Monster::getWeaponSkill(const Object* weapon) const {
 //                      getWeaponSkill
 //**********************************************************************
 
-int Player::getWeaponSkill(const Object* weapon) const {;
+int Player::getWeaponSkill(const Object* weapon) const {
     int bonus = 0;
 
     // Bless improves your chance to hit
     if(isEffected("bless"))
         bonus += 10;
 
-//  print("Looking at weapon skill for %s.\n", weapon ? weapon->getCName() : "null object");
+
     bstring weaponType;
     if(weapon)
         weaponType = weapon->getWeaponType();
@@ -369,7 +370,7 @@ int Player::getWeaponSkill(const Object* weapon) const {;
         weaponType = getUnarmedWeaponSkill();
 
     // we're very confused about what type of weapon this is
-    if(weaponType == "")
+    if(weaponType.empty())
         weaponType = "bare-hand";
 
     Skill* weaponSkill = getSkill(weaponType);
@@ -410,7 +411,7 @@ int Player::getDefenseSkill() const {
 // 295 - 300 = -5 * .01% less chance to miss
 // 320 - 300 = 20 * .01% more chance to miss
 
-AttackResult Creature::getAttackResult(Creature* victim, const Object* weapon, int resultFlags, int altSkillLevel) {
+AttackResult Creature::getAttackResult(Creature* victim, const Object* weapon, unsigned int resultFlags, int altSkillLevel) {
     /*
     int pFd;
     if(isPlayer())
@@ -439,7 +440,7 @@ AttackResult Creature::getAttackResult(Creature* victim, const Object* weapon, i
     double fumbleChance=0;
     //double hitChance=0;
 
-    EffectInfo* effect=0;
+    EffectInfo* effect=nullptr;
 
     missChance = victim->getMissChance(difference);
 
@@ -565,13 +566,9 @@ int Creature::adjustChance(const int &difference) {
     } else {
         // Rating < 0
         // Weapon skill is HIGHER than defense skill
-        if(isPlayer())
-            adjustment = 0.04;
-        else
-            adjustment = 0.04;
+        adjustment = 0.04;
     }
     return((int)(difference * adjustment));
-    //chance += (difference * adjustment);
 }
 
 //**********************************************************************
@@ -727,7 +724,7 @@ bool Creature::canParry(Creature* attacker) {
     combatPercent = MAX(0,combatPercent);
 
     if(Random::get(1,100) <= combatPercent)
-        return(0); // Did not find a parry opening due to excessive combat. No parry.
+        return(false); // Did not find a parry opening due to excessive combat. No parry.
 
     // Parry is not possible against some types of creatures
     if( attacker->type == INSECT || attacker->type == AVIAN ||
@@ -738,7 +735,7 @@ bool Creature::canParry(Creature* attacker) {
     )
         return(false);
 
-    long t = time(0);
+    long t = time(nullptr);
     long i = LT(this, LT_RIPOSTE);
 
     if(t < i) {
@@ -1124,7 +1121,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
     } else if(attackType == ATTACK_MAUL) {
         if(computeBonus)
             bonusDamage.set(getBaseDamage()/2);
-        attackDamage.set(( Random::get( (int)(level/2), (int)(level + 1)) + (strength.getCur()/10)));
+        attackDamage.set((Random::get(level / 2, level + 1) + (strength.getCur() / 10)));
         attackDamage.add(Random::get(2, 4));
     } else {
         // Any non kick attack for now
@@ -1204,7 +1201,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
         {
             // Only do a bonus if not a multi weapon, or is a multi weapon and it's the first attack
             if(weapon && weaponCategory != "ranged")
-                bonusDamage.add((int)(attackDamage.get()/2));
+                bonusDamage.add(attackDamage.get() / 2);
         }
 
         if( (   (cClass == CreatureClass::DEATHKNIGHT && getAdjustedAlignment() <= REDDISH) ||
@@ -1245,7 +1242,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
     }
 
     if(multiplier > 0.0) {
-        attackDamage.set((int)((float)(attackDamage.get() * multiplier)));
+        attackDamage.set((int) (attackDamage.get() * multiplier));
         if(computeBonus) {
             if(attackType != ATTACK_BACKSTAB)
                 bonusDamage.set((int)((float)bonusDamage.get() * multiplier));
@@ -1501,11 +1498,11 @@ int Creature::parry(Creature* target) {
         return(0);
     }
 
-    t = time(0);
+    t = time(nullptr);
     //i = LT(this, LT_RIPOSTE);
 
     if(isPlayer()) {
-        t=time(0);
+        t=time(nullptr);
         lasttime[LT_RIPOSTE].ltime = t;
 
         switch(cClass) {
@@ -1718,8 +1715,8 @@ int Creature::doResistMagic(int dmg, Creature* enemy) {
     dmg = MAX(1, dmg);
 
     if(negAuraRepel() && enemy && this != enemy) {
-        resist = (10 + Random::get(1,3) + level + bonus((int) constitution.getCur()))
-            - (bonus((int)enemy->intelligence.getCur()) + bonus((int)enemy->piety.getCur()));
+        resist = (10 + Random::get(1,3) + level + bonus(constitution.getCur()))
+            - (bonus(enemy->intelligence.getCur()) + bonus(enemy->piety.getCur()));
         resist /= 100; // percentage
         resist *= dmg;
         dmg -= (int)resist;
@@ -1745,14 +1742,14 @@ int Creature::getSecondaryDelay() {
                           ready[HELD-1]->getWeaponDelay() : DEFAULT_WEAPON_DELAY);
 }
 
-const bstring Creature::getPrimaryWeaponCategory() const {
+bstring Creature::getPrimaryWeaponCategory() const {
     if(ready[WIELD-1])
         return(ready[WIELD-1]->getWeaponCategory());
     else
         return("none");
 }
 
-const bstring Creature::getSecondaryWeaponCategory() const {
+bstring Creature::getSecondaryWeaponCategory() const {
     if(ready[HELD-1] && ready[HELD-1]->getWearflag() == WIELD)
         return(ready[HELD-1]->getWeaponCategory());
     else
@@ -1795,7 +1792,7 @@ bool Creature::checkAttackTimer(bool displayFail) {
     long i;
     if(((i = attackTimer.getTimeLeft()) != 0) && !isDm()) {
         if(displayFail)
-            pleaseWait(i/10.0);
+            pleaseWait((double)i/10.0);
         return(false);
     }
     return(true);

@@ -309,12 +309,12 @@ public:
     bstring getQuestOwner() const;
     bstring getObjStr(const Creature* viewer = nullptr, int flags = 0, int num = 0) const;
     const bstring getSubType() const;
-    const bstring getWeaponType() const;
-    const bstring getArmorType() const;
-    const bstring getWeaponCategory() const;
-    const bstring getWeaponVerb() const;
-    const bstring getWeaponVerbPlural() const;
-    const bstring getWeaponVerbPast() const;
+    bstring getWeaponType() const;
+    bstring getArmorType() const;
+    bstring getWeaponCategory() const;
+    bstring getWeaponVerb() const;
+    bstring getWeaponVerbPlural() const;
+    bstring getWeaponVerbPast() const;
 
     bool isQuestOwner(const Player* player) const;
     bstring getWearName();
