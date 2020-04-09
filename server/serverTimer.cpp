@@ -16,9 +16,6 @@
  *
  */
 
-#include <sys/time.h>
-#include <stdio.h>
-
 #include "serverTimer.hpp"
 
 //*********************************************************************
@@ -71,7 +68,7 @@ void ServerTimer::reset() {
 void ServerTimer::start() {
     reset();
     running = 1;
-    gettimeofday(&startTime, 0);
+    gettimeofday(&startTime, nullptr);
 }
 
 //*********************************************************************
@@ -79,9 +76,9 @@ void ServerTimer::start() {
 //*********************************************************************
 
 void ServerTimer::end() {
-    gettimeofday(&endTime, 0);
+    gettimeofday(&endTime, nullptr);
     timeDiff(endTime,startTime, timePassed);
-    running = 0;
+    running = false;
 }
 
 //*********************************************************************
@@ -96,13 +93,13 @@ void ServerTimer::sleep() {
         //printf("Not sleeping, Time passed was %ld sec %ld usec\n", timePassed.tv_sec, timePassed.tv_usec);
         //Do nothing
     } else {
-        struct timeval toSleep;
+        struct timeval toSleep{};
         timeZero(toSleep);
         toSleep.tv_usec = 100000 - timePassed.tv_usec;
 //      if(toSleep.tv_usec < 50000) {
 //          printf("%ld sec %ld usec\n", timePassed.tv_sec, timePassed.tv_usec);
 //          printf("Sleeping for %ld usec\n", toSleep.tv_usec);
 //      }
-        select(0,0,0,0,&toSleep);
+        select(0,nullptr,nullptr,nullptr,&toSleep);
     }
 }
