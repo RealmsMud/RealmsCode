@@ -67,11 +67,9 @@ void Server::showMemory(Socket* sock, bool extended) {
     long bt_mem     = 0L;
     long total=0;
     ttag    *tlk;
-    UniqueRoom* r=0;
+    UniqueRoom* r=nullptr;
 
-    std::map<bstring, rsparse>::iterator it;
-
-    for(auto it : roomCache) {
+    for(const auto& it : roomCache) {
         r = it.second->second;
         if(!r)
             continue;
