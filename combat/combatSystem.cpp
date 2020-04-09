@@ -1133,7 +1133,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
                 attackDamage.set(Random::get(1,2) + level/3 + Random::get((1+level/4),(1+level)/2));
                 if(strength.getCur() < 90) {
                     attackDamage.set(attackDamage.get() - (90-strength.getCur())/10);
-                    attackDamage.set(MAX(1,attackDamage.get()));
+                    attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
                 }
             } else {
                 attackDamage.set(damage.roll());
@@ -1149,7 +1149,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
     if(isEffected("lycanthropy"))
         attackDamage.add(packBonus());
 
-    attackDamage.set(MAX(1, attackDamage.get()));
+    attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
 
     // Damage reduction on every hit
     if(cClass == CreatureClass::PALADIN) {
@@ -1327,7 +1327,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
 
     if(retVal != 1) {
         // If we didn't shatter, minimum of 1 damage
-        attackDamage.set(MAX(attackDamage.get(), 1));
+        attackDamage.set(MAX<unsigned int>(attackDamage.get(), 1));
     }
 
     return(retVal);
@@ -1368,7 +1368,7 @@ int Monster::computeDamage(Creature* victim, Object* weapon, AttackType attackTy
     victim->modifyDamage(this, PHYSICAL, bonusDamage);
     attackDamage.setBonus(bonusDamage);
 
-    attackDamage.set(MAX(1, attackDamage.get()));
+    attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
     return(0);
 }
 
@@ -1561,7 +1561,7 @@ int Creature::parry(Creature* target) {
         // So mob riposte isn't soo mean
         if(isMonster()) {
             attackDamage.set(attackDamage.get() / 2);
-            attackDamage.set(MAX(1, attackDamage.get()));
+            attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
         }
 
         switch(Random::get(1,7)) {

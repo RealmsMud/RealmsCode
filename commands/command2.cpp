@@ -62,7 +62,7 @@ void lookAtExit(Player* player, Exit* exit) {
     
     player->printColor("You look at the %s^x exit.\n", exit->getCName());
 
-    if(exit->getDescription() != "")
+    if(!exit->getDescription().empty())
         player->printColor("%s\n", exit->getDescription().c_str());
     // the owner of the portal gets more information
     if(exit->flagIsSet(X_PORTAL) && exit->getPassPhrase() == player->getName())
@@ -101,7 +101,7 @@ void lookAtExit(Player* player, Exit* exit) {
 //*********************************************************************
 
 int cmdLook(Player* player, cmd* cmnd) {
-    MudObject* target=0;
+    MudObject* target=nullptr;
     int flags = player->displayFlags();
 
     if(!player->ableToDoCommand())
@@ -123,7 +123,7 @@ int cmdLook(Player* player, cmd* cmnd) {
         if(target->isCreature()) {
             player->displayCreature(target->getAsCreature());
         } else if(target->isObject()) {
-            Object* obj = dynamic_cast<Object*>(target);
+            auto* obj = dynamic_cast<Object*>(target);
             if(cmnd->num == 3 && obj->info.id == STONE_SCROLL_INDEX && obj->info.isArea("misc"))
                 stoneScroll(player, cmnd);
             else
@@ -147,13 +147,13 @@ int cmdLook(Player* player, cmd* cmnd) {
 bool storageProperty(const Player* player, const Object* object, Property **p);
 
 int cmdThrow(Creature* creature, cmd* cmnd) {
-    Object* object=0;
-    Creature* victim=0;
-    const Monster* guard=0;
-    Exit*   exit=0;
-    BaseRoom *room=0, *newRoom=0;
-    Property* p=0;
-    Player* player = creature->getAsPlayer(), *pVictim=0;
+    Object* object=nullptr;
+    Creature* victim=nullptr;
+    const Monster* guard=nullptr;
+    Exit*   exit=nullptr;
+    BaseRoom *room=nullptr, *newRoom=nullptr;
+    Property* p=nullptr;
+    Player* player = creature->getAsPlayer(), *pVictim=nullptr;
 
     if(!creature->ableToDoCommand())
         return(0);
@@ -232,15 +232,15 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
         // closed, or off map, or being guarded
         if(!loadExit || (!newRoom)) {
             if(guard)
-                broadcast(0, room, "%M knocks %P to the ground.", guard, object);
+                broadcast(nullptr, room, "%M knocks %P to the ground.", guard, object);
             else
-                broadcast(0, room, "%O hits the %s^x and falls to the ground.",
+                broadcast(nullptr, room, "%O hits the %s^x and falls to the ground.",
                     object, exit->getCName());
             finishDropObject(object, room, creature);
         } else {
             room = newRoom;
 
-            broadcast(0, room, "%1O comes flying into the room.", object);
+            broadcast(nullptr, room, "%1O comes flying into the room.", object);
             room->wake("Loud noises disturb your sleep.", true);
             finishDropObject(object, room, creature, false, false, true);
 
@@ -284,7 +284,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
             victim->printColor("%O passes right through you.\n", object);
         } else {
             int skillLevel = (int)creature->getSkillGained("thrown");
-            AttackResult result = creature->getAttackResult(victim, 0, NO_FUMBLE, skillLevel);
+            AttackResult result = creature->getAttackResult(victim, nullptr, NO_FUMBLE, skillLevel);
 
             if(pVictim && victim->flagIsSet(P_UNCONSCIOUS))
                 result = ATTACK_HIT;
@@ -346,8 +346,8 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 //*********************************************************************
 
 int cmdKnock(Creature* creature, cmd* cmnd) {
-    BaseRoom* targetRoom=0;
-    Exit    *exit=0;
+    BaseRoom* targetRoom=nullptr;
+    Exit    *exit=nullptr;
 
     if(cmnd->num < 2) {
         creature->print("Knock on what exit?\n");
@@ -375,9 +375,9 @@ int cmdKnock(Creature* creature, cmd* cmnd) {
     targetRoom->wake("You awaken suddenly!", true);
 
     if(exit)
-        broadcast(0, targetRoom, "You hear someone knocking on the %s.", exit);
+        broadcast(nullptr, targetRoom, "You hear someone knocking on the %s.", exit);
     else
-        broadcast(0, targetRoom, "You hear the sound of someone knocking.");
+        broadcast(nullptr, targetRoom, "You hear the sound of someone knocking.");
     return(0);
 }
 
@@ -401,9 +401,9 @@ int cmdBreak(Player* player, cmd* cmnd) {
     CatRef  newloc;
     int     chance=0, dmg=0, xpgain=0, splvl=0;
     float   mtbf=0, shots=0, shotsmax=0;
-    UniqueRoom *new_rom=0;
+    UniqueRoom *new_rom=nullptr;
     char    item[80];
-    Object  *object=0;
+    Object  *object=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -493,7 +493,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
         object->setFlag(O_BROKEN_BY_CMD);
         if(object->compass) {
             delete object->compass;
-            object->compass = 0;
+            object->compass = nullptr;
         }
 
         if(!(object->getType() == ObjectType::POISON && player->getClass() == CreatureClass::PALADIN)) {
@@ -570,10 +570,10 @@ int cmdBreak(Player* player, cmd* cmnd) {
             player->printColor("You take %s%d^x damage from the release of magical energy!\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg);
 
             if(splvl >= 4) {
-                PlayerSet::iterator pIt = player->getRoomParent()->players.begin();
-                PlayerSet::iterator pEnd = player->getRoomParent()->players.end();
+                auto pIt = player->getRoomParent()->players.begin();
+                auto pEnd = player->getRoomParent()->players.end();
 
-                Player* ply=0;
+                Player* ply=nullptr;
                 while(pIt != pEnd) {
                     ply = (*pIt++);
                     if(ply != player && !ply->inCombat()) {
@@ -644,7 +644,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
         } else {
             player->printColor("You were unable to properly dispose of the %P.\n", object);
             broadcast(player->getSock(), player->getParent(), "%M tried to dispose of the %P.", player, object);
-            chance = 30 - (bonus((int)player->dexterity.getCur()));
+            chance = 30 - (bonus(player->dexterity.getCur()));
 
             if(player->immuneToPoison())
                 chance = 101;

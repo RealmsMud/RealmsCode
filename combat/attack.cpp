@@ -683,7 +683,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
                 attackDamage.add(wcdmg);
 
                 if(!meKilled && drain && victim->hp.getCur() - attackDamage.get() > 0) {
-                    drain = MIN(victim->hp.getCur() - attackDamage.get(), drain);
+                    drain = MIN<unsigned int>(victim->hp.getCur() - attackDamage.get(), drain);
                     printColor("Your aura of evil drains %s%d^x hit point%s from your opponent.\n",
                         customColorize("*CC:DAMAGE*").c_str(), drain, drain == 1 ? "" : "s");
                     victim->printColor("^r%M drains %s%d^r hit points from you!\n", this, victim->customColorize("*CC:DAMAGE*").c_str(), drain);
@@ -1095,7 +1095,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
             // zerkers: 1/5
             // everyone else: 1/7
             attackDamage.set(attackDamage.get() - (attackDamage.get() / (cClass == CreatureClass::BERSERKER ? 5 : 7)));
-            attackDamage.set(MAX(1, attackDamage.get()));
+            attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
         }
 
         // monsters do more damage while berserked
@@ -1121,7 +1121,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         if(resistPet)
             attackDamage.set(attackDamage.get() / 2);
         if(vulnPet)
-            attackDamage.add(Random::get(MAX(1, attackDamage.get()/6),MAX(2, attackDamage.get()/2)));
+            attackDamage.add(Random::get(MAX<unsigned int>(1, attackDamage.get()/6),MAX<unsigned int>(2, attackDamage.get()/2)));
         if(immunePet)
             attackDamage.set(1);
     }
@@ -1167,7 +1167,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         attackDamage.set(attackDamage.get() / 2);
     }
 
-    attackDamage.set(MAX(0, attackDamage.get()));
+    attackDamage.set(MAX<unsigned int>(0, attackDamage.get()));
 
     // check drain last
     if(dmgType == NEGATIVE_ENERGY || dmgType == MAGICAL_NEGATIVE) {
@@ -1175,10 +1175,10 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
             if(dmgType == NEGATIVE_ENERGY)
                 attackDamage.setDrain(attackDamage.get() / 2);
             else
-                attackDamage.setDrain(Random::get(0, attackDamage.get() / 4));
+                attackDamage.setDrain(Random::get<unsigned int>(0, attackDamage.get() / 4));
 
             // don't drain more than can be drained!
-            attackDamage.setDrain(MIN(attackDamage.getDrain(), hp.getCur()));
+            attackDamage.setDrain(MIN<unsigned int>(attackDamage.getDrain(), hp.getCur()));
 
             // liches can't use drain damage as their HP is their MP
             // they can do more damage instead

@@ -26,18 +26,18 @@ Damage::Damage() {
     reset();
 }
 
-int Damage::get() const { return(damage); }
-int Damage::getBonus() const { return(bonus); }
-int Damage::getDrain() const { return(drain); }
-int Damage::getReflected() const { return(reflected); }
-int Damage::getDoubleReflected() const { return(doubleReflected); }
-int Damage::getPhysicalReflected() const { return(physicalReflected); }
+unsigned int Damage::get() const { return(damage); }
+unsigned int Damage::getBonus() const { return(bonus); }
+unsigned int Damage::getDrain() const { return(drain); }
+unsigned int Damage::getReflected() const { return(reflected); }
+unsigned int Damage::getDoubleReflected() const { return(doubleReflected); }
+unsigned int Damage::getPhysicalReflected() const { return(physicalReflected); }
 
 ReflectedDamageType Damage::getPhysicalReflectedType() const { return(physicalReflectedType); }
-int Damage::getPhysicalBonusReflected() const { return(physicalBonusReflected); }
+unsigned int Damage::getPhysicalBonusReflected() const { return(physicalBonusReflected); }
 
-void Damage::add(int d) { damage += d; }
-void Damage::set(int d) { damage = d; }
+void Damage::add(unsigned int d) { damage += d; }
+void Damage::set(unsigned int d) { damage = d; }
 
 void Damage::includeBonus(int fraction) {
     if(!fraction)
@@ -46,16 +46,16 @@ void Damage::includeBonus(int fraction) {
     physicalReflected += physicalBonusReflected / fraction;
 }
 
-void Damage::setBonus(int b) { bonus = b; }
+void Damage::setBonus(unsigned int b) { bonus = b; }
 void Damage::setBonus(Damage dmg) {
     setBonus(dmg.get());
     physicalBonusReflected = dmg.getPhysicalReflected();
 }
 
-void Damage::setDrain(int d) { drain = d; }
-void Damage::setReflected(int r) { reflected = r; }
-void Damage::setDoubleReflected(int r) { doubleReflected = r; }
-void Damage::setPhysicalReflected(int r) { physicalReflected = r; }
+void Damage::setDrain(unsigned int d) { drain = d; }
+void Damage::setReflected(unsigned int r) { reflected = r; }
+void Damage::setDoubleReflected(unsigned int r) { doubleReflected = r; }
+void Damage::setPhysicalReflected(unsigned int r) { physicalReflected = r; }
 void Damage::setPhysicalReflectedType(ReflectedDamageType type) { physicalReflectedType = type; }
 
 void Damage::reset() {

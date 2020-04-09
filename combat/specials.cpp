@@ -387,7 +387,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
         if(!saved && attack->flagIsSet(SA_CAN_DISINTEGRATE) && Random::get(1,100) < 2) {
             victim->printColor("^Y%M seriously damages you!\n", this);
             attackDamage.set(victim->hp.getCur() - 5);
-            attackDamage.set(MAX(attackDamage.get(), 1));
+            attackDamage.set(MAX<unsigned int>(attackDamage.get(), 1));
         }
     }
 

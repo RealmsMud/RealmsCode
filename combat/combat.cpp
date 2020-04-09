@@ -302,7 +302,7 @@ bool Monster::updateCombat() {
         }
 
         target->printColor("^r%M %s you%s for ^R%d^r damage.\n", this, atk,
-            target->isBrittle() ? "r brittle body" : "", MAX(1, attackDamage.get()));
+            target->isBrittle() ? "r brittle body" : "", MAX<unsigned int>(1, attackDamage.get()));
 
         if(!isPet())
             target->checkImprove("defense", false);
