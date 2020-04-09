@@ -15,22 +15,13 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <arpa/telnet.h>
 
-#include <stdio.h>
+#include <cstdio>
 #include <sys/types.h>
 
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
 
-#include <sys/ioctl.h>
-#include <signal.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <sys/wait.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <unistd.h>
-
+#include <csignal>
 
 #include "clans.hpp"
 #include "config.hpp"
@@ -43,18 +34,13 @@
 #include "rooms.hpp"
 #include "server.hpp"
 #include "socket.hpp"
-#include "timer.hpp"
 
 #include <sstream>
 #include <stdlib.h>
 
 #define TELOPT_COMPRESS2       86
-#define buflen(a,b,c)   (a-b + (a<b ? c:0))
-#define saddr       addr.sin_addr.s_addr
-#define MAXPLAYERS  100
 
 int Numplayers;
-int controlSock;
 extern unsigned short Port;
 
 //********************************************************************
@@ -197,7 +183,7 @@ bool yes(Socket* sock) {
 }
 bool wantsPermDeaths(Socket* sock) {
     Player* ply = sock->getPlayer();
-    return(ply && ply && !ply->flagIsSet(P_NO_BROADCASTS) && ply->flagIsSet(P_PERM_DEATH));
+    return(ply != nullptr && !ply->flagIsSet(P_NO_BROADCASTS) && ply->flagIsSet(P_PERM_DEATH));
 }
 
 //********************************************************************
@@ -785,26 +771,20 @@ bool keyTxtCompare(const char* key, const char* txt, int tLen) {
 
 bool keyTxtEqual(const Creature* target, const char* txt) {
     int len = strlen(txt);
-    if( keyTxtCompare(target->key[0], txt, len) ||
-        keyTxtCompare(target->key[1], txt, len) ||
-        keyTxtCompare(target->key[2], txt, len) ||
-        keyTxtCompare(target->getCName(), txt, len) ||
-        target->getId() == txt
-    )
-        return(true);
-    return(false);
+    return keyTxtCompare(target->key[0], txt, len) ||
+           keyTxtCompare(target->key[1], txt, len) ||
+           keyTxtCompare(target->key[2], txt, len) ||
+           keyTxtCompare(target->getCName(), txt, len) ||
+           target->getId() == txt;
 }
 
 bool keyTxtEqual(const Object* target, const char* txt) {
     int len = strlen(txt);
-    if( keyTxtCompare(target->key[0], txt, len) ||
-        keyTxtCompare(target->key[1], txt, len) ||
-        keyTxtCompare(target->key[2], txt, len) ||
-        keyTxtCompare(target->getCName(), txt, len) ||
-        target->getId() == txt
-    )
-        return(true);
-    return(false);
+    return keyTxtCompare(target->key[0], txt, len) ||
+           keyTxtCompare(target->key[1], txt, len) ||
+           keyTxtCompare(target->key[2], txt, len) ||
+           keyTxtCompare(target->getCName(), txt, len) ||
+           target->getId() == txt;
 }
 
 //*********************************************************************
