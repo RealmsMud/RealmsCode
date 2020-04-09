@@ -365,7 +365,7 @@ WanderInfo* AreaRoom::getRandomWanderInfo() {
 
     if(!i)
         return(0);
-    return(w[mrand(0,i-1)]);
+    return(w[Random::get(0,i-1)]);
 }
 
 

@@ -248,7 +248,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
     )
         chance = 0;
 
-    if(pPlayer->isStaff() || mrand(1, 100) < chance) {
+    if(pPlayer->isStaff() || Random::get(1, 100) < chance) {
 
         chance += (target->getClass() == CreatureClass::MAGE) ? 5 : 0;
         chance = MIN(85, chance);
@@ -261,7 +261,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(!pPlayer->isStaff()) {
             if(!target->chkSave(MEN, pPlayer, 0)) {
                 display_rom(target, pPlayer);
-                if(mrand(1, 100) < chance) {
+                if(Random::get(1, 100) < chance) {
                     // display a different string if the target can't see
                     if(target->flagIsSet(P_SLEEPING) || target->isBlind()) {
                         target->print("%M temporarily sees your surroundings.\n", pPlayer);
@@ -272,7 +272,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
                 }
             } else {
                 pPlayer->print("You failed to locate %N.\n", target);
-                if(mrand(1, 100) < chance)
+                if(Random::get(1, 100) < chance)
                     target->print("%M tried to connect to your mind.\n", pPlayer);
             }
         } else {
@@ -285,7 +285,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
         chance = 65 + ((int)target->getLevel() - (int)spellData->level) * 5 +
                 (bonus((int) target->intelligence.getCur()) - bonus((int) pPlayer->intelligence.getCur())) * 5;
 
-        if(!pPlayer->isStaff() && mrand(1, 100) < chance)
+        if(!pPlayer->isStaff() && Random::get(1, 100) < chance)
             target->print("%M attempts to connect to your mind.\n", pPlayer);
     }
 

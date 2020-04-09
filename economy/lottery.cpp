@@ -99,7 +99,7 @@ void Config::runLottery() {
     // Lottery hasn't been rigged
     if(1) {
         while(go) {
-            numbers[x] = mrand(1,MAXBONE);
+            numbers[x] = Random::get(1,MAXBONE);
             for(j = 0; j < x; j++) {
                 if(numbers[x] == numbers[j]) {
                     reCalc = 1;
@@ -115,7 +115,7 @@ void Config::runLottery() {
                 go = 0;
         }
         bubblesort(numbers, 5);
-        numbers[5] = mrand(1,MAXBONE);
+        numbers[5] = Random::get(1,MAXBONE);
 
         for(x=0; x < 6; x++)
             lotteryNumbers[x] = numbers[x];
@@ -167,7 +167,7 @@ int createLotteryTicket(Object **object, const char *name) {
         return(-1);
 
     while(go) {
-        numbers[x] = mrand(1,MAXBONE);
+        numbers[x] = Random::get(1,MAXBONE);
         for(j = 0; j < x; j++) {
             if(numbers[x] == numbers[j]) {
                 reCalc = 1;
@@ -183,7 +183,7 @@ int createLotteryTicket(Object **object, const char *name) {
             go = 0;
     }
     bubblesort(numbers, 5);
-    numbers[5] = mrand(1,MAXBONE);
+    numbers[5] = Random::get(1,MAXBONE);
 
     sprintf(
             desc,

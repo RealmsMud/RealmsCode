@@ -81,7 +81,7 @@ bool canFish(const Player* player, const Fishing** list, Object** pole) {
 
 bool failFishing(Player* player, bstring adminMsg, bool almost=true) {
     if(almost) {
-        switch(mrand(0,1)) {
+        switch(Random::get(0,1)) {
         case 1:
             player->print("You almost caught a fish, but it got away.\n");
             break;
@@ -90,7 +90,7 @@ bool failFishing(Player* player, bstring adminMsg, bool almost=true) {
             break;
         }
     } else {
-        switch(mrand(0,1)) {
+        switch(Random::get(0,1)) {
         case 1:
             player->print("You failed to catch anything.\n");
             break;
@@ -131,7 +131,7 @@ bool doFish(Player* player) {
 
     // did they break the fishing pole?
     if(pole) {
-        if(!mrand(0, 3))
+        if(!Random::get(0, 3))
             pole->decShotsCur();
         if(pole->getShotsCur() < 1) {
             player->breakObject(pole, HELD);
@@ -151,7 +151,7 @@ bool doFish(Player* player) {
 
     chance = MAX<double>(10, MIN<double>(95, chance));
 
-    if(mrand(1,100) > chance)
+    if(Random::get(1,100) > chance)
         return(failFishing(player, "Dice roll.", false));
 
     item = list->getItem((short)skill, (short)quality);
@@ -279,7 +279,7 @@ int cmdFish(Player* player, cmd* cmnd) {
         return(0);
 
     player->interruptDelayedActions();
-    gServer->addDelayedAction(doFish, player, 0, ActionFish, 10 - (int)(player->getSkillLevel("fishing") / 10) - mrand(0,3));
+    gServer->addDelayedAction(doFish, player, 0, ActionFish, 10 - (int)(player->getSkillLevel("fishing") / 10) - Random::get(0,3));
 
     player->print("You begin fishing.\n");
     broadcast(player->getSock(), player->getParent(), "%M begins fishing.", player);
@@ -387,7 +387,7 @@ const FishingItem* Fishing::getItem(short skill, short quality) const {
         return(0);
 
     // which item to pick?
-    pick = mrand(1, total);
+    pick = Random::get(1, total);
     total = 0;
 
     for(it = items.begin() ; it != items.end() ; it++) {

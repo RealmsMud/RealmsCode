@@ -1711,7 +1711,7 @@ int cmdSell(Player* player, cmd* cmnd) {
             (object->getType() == ObjectType::POTION && !object->flagIsSet(O_EATABLE)
                     && !object->flagIsSet(O_DRINKABLE)) || object->getType() == ObjectType::SONGSCROLL
             || object->flagIsSet(O_STARTING)) {
-        switch(mrand(1,5)) {
+        switch(Random::get(1,5)) {
             case 1:
                 player->print("The shopkeep says, \"I'm not interested in that.\"\n");
                 break;
@@ -2443,7 +2443,7 @@ void Creature::doHaggling(Creature *vendor, Object* object, int trans) {
     else
         val = object->value[GOLD]/2;
 
-    roll = mrand(1,100);
+    roll = Random::get(1,100);
 
     if(isCt()) {
         print("haggle chance: %d\n", chance);
@@ -2451,7 +2451,7 @@ void Creature::doHaggling(Creature *vendor, Object* object, int trans) {
     }
     if(roll <= chance) {
 
-        discount = MAX(1,mrand(getLevel()/2, 1+getLevel()));
+        discount = MAX(1,Random::get(getLevel()/2, 1+getLevel()));
 
         percent = (float)(discount);
         percent /= 100;
@@ -2462,13 +2462,13 @@ void Creature::doHaggling(Creature *vendor, Object* object, int trans) {
         modAmt = (long)amt;
 
         if(modAmt >= 10000)
-            modAmt += (mrand(1,10000)-1);
+            modAmt += (Random::get(1,10000)-1);
         else if(modAmt >= 100)
-            modAmt += (mrand(1,1000)-1);
+            modAmt += (Random::get(1,1000)-1);
         else if(modAmt >= 100)
-            modAmt += (mrand(1,100)-1);
+            modAmt += (Random::get(1,100)-1);
         else if(modAmt >= 10)
-            modAmt += (mrand(1,10)-1);
+            modAmt += (Random::get(1,10)-1);
 
 
         if(isCt()) {

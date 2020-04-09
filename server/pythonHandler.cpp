@@ -34,7 +34,7 @@
 #include "xml.hpp"
 
 int pythonRand(int a, int b) {
-    return (mrand(a,b));
+    return (Random::get(a,b));
 }
 
 struct BaseRoom_wrapper: BaseRoom, bp::wrapper<BaseRoom> {

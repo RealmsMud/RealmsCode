@@ -1646,7 +1646,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
                 }
                 object = pet->findObject(pet, cmnd, 1);
                 if(!object) {
-                    player->print("%M doesn't have %s.\n", pet, mrand(0, 1) ? "that" : "one of those");
+                    player->print("%M doesn't have %s.\n", pet, Random::get(0, 1) ? "that" : "one of those");
                     return(0);
                 }
             }
@@ -3335,7 +3335,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
         keepPlus = 100;
     }
 
-    roll = mrand(1,100);
+    roll = Random::get(1,100);
     /*if(player->isDm()) {
         player->print("Chance: %d\n", repairChance);
         player->print("AlignDiff: %d\n", alignDiff);
@@ -3345,7 +3345,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
     if(roll < repairChance) {
 
         if(object->getAdjustment()) {
-            plusRoll = mrand(1,100);
+            plusRoll = Random::get(1,100);
             if(plusRoll > keepPlus && object->getAdjustment() > 1) {
                 if(plusRoll - keepPlus <= 5) {
                     object->setAdjustment(object->getAdjustment() - 1);

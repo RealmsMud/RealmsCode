@@ -1170,7 +1170,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
             if(!numResponses)
                 response = "";
             else {
-                numResponses = mrand(1,numResponses);
+                numResponses = Random::get(1,numResponses);
                 while(numResponses > 1) {
                     randomResponses.pop_front();
                     randomActions.pop_front();

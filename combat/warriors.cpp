@@ -170,7 +170,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
 
 
 
-    if(mrand(1, 100) > chance) {
+    if(Random::get(1, 100) > chance) {
         player->print("You fail to disarm %N.\n", creature);
         player->checkImprove("disarm", false);
         creature->print("%M tried to disarm you!\n",player);
@@ -192,7 +192,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
         if(creature->isMonster() && Unique::is(creature->ready[WIELD-1]))
             drop = 0;
 
-        if( mrand(1,100) <= drop &&
+        if( Random::get(1,100) <= drop &&
             !creature->ready[WIELD-1]->flagIsSet(O_NO_DROP)
         ) {
             player->print("You disarm %N!\n", creature);
@@ -273,10 +273,10 @@ int cmdMistbane(Player* player, cmd* cmnd) {
     chance = MIN(80, (int)(player->getSkillLevel("mistbane") * 20) + bonus((int) player->piety.getCur()));
 
 
-    if(mrand(1, 100) > player->getLuck() + player->getSkillLevel("mistbane") * 2)
+    if(Random::get(1, 100) > player->getLuck() + player->getSkillLevel("mistbane") * 2)
         chance = 10;
 
-    if(mrand(1, 100) <= chance) {
+    if(Random::get(1, 100) <= chance) {
         player->print("You imbue yourself with positive energy.\n");
         broadcast(player->getSock(), player->getParent(), "%M imbues %sself with positive energy.", player, player->himHer());
         player->checkImprove("mistbane", true);
@@ -443,7 +443,7 @@ int cmdBerserk(Player* player, cmd* cmnd) {
 
     chance = MIN(85, (int)(player->getSkillLevel("berserk") * 10) + (bonus((int) player->strength.getCur()) * 5));
 
-    if(mrand(1, 100) <= chance) {
+    if(Random::get(1, 100) <= chance) {
         player->print("You go berserk.\n");
         broadcast(player->getSock(), player->getParent(), "%M goes berserk!", player);
         player->checkImprove("berserk", true);
@@ -558,15 +558,15 @@ int cmdCircle(Player* player, cmd* cmnd) {
 
     if(player->isCt()) chance = 101;
 
-    if(mrand(1,100) <= chance && (mrand(1,100) > ((target->dexterity.getCur()/10)/2))) {
+    if(Random::get(1,100) <= chance && (Random::get(1,100) > ((target->dexterity.getCur()/10)/2))) {
         if(mTarget) {
             if(!mTarget->flagIsSet(M_RESIST_CIRCLE) && !mTarget->isUndead())
-                delay = MAX(6, (mrand(6,10) + (MIN(3,((bonus((int) player->dexterity.getCur()) -
+                delay = MAX(6, (Random::get(6,10) + (MIN(3,((bonus((int) player->dexterity.getCur()) -
                         bonus((int) target->dexterity.getCur()))/2)))));
             else
-                delay = mrand(6,9);
+                delay = Random::get(6,9);
         } else
-            delay = mrand(6,10);
+            delay = Random::get(6,10);
 
 
 
@@ -577,7 +577,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
         log_immort(false, player, "%s circled %s.\n", player->getCName(), target->getCName());
 
         if(mTarget && player->isPlayer()) {
-            if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (mrand(1,100) <= (MAX(15, (mTarget->inUniqueRoom() ? mTarget->getUniqueRoomParent()->wander.getTraffic() : 15)/2)))) {
+            if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (Random::get(1,100) <= (MAX(15, (mTarget->inUniqueRoom() ? mTarget->getUniqueRoomParent()->wander.getTraffic() : 15)/2)))) {
                 mTarget->summonMobs(player);
                 mTarget->clearFlag(M_YELLED_FOR_HELP);
                 mTarget->setFlag(M_WILL_YELL_FOR_HELP);
@@ -712,7 +712,7 @@ int cmdBash(Player* player, cmd* cmnd) {
 
     if(player->isCt()) chance = 101;
     // For bash we have a bash chance, and then a normal attack miss chance
-    if(mrand(1,100) <= chance) {
+    if(Random::get(1,100) <= chance) {
         // We made the bash check, do the attack
         player->attackCreature(creature, ATTACK_BASH);
     }
@@ -808,7 +808,7 @@ int cmdKick(Player* player, cmd* cmnd) {
     if(player->isDm())
         chance = 101;
 
-    if(mrand(1,100) <= chance) {
+    if(Random::get(1,100) <= chance) {
         // Like bash, two checks, first is to see if the kick was sucessfull, 2nd check
         // is to see if we actually hit the target
 
@@ -885,7 +885,7 @@ void doTrack(Player* player) {
 
     chance = 25 + (int)((bonus((int)player->dexterity.getCur()) + skLevel)*5);
 
-    if(!track || mrand(1,100) > chance) {
+    if(!track || Random::get(1,100) > chance) {
         player->print("You fail to find any tracks.\n");
         player->checkImprove("track", false);
         return;
@@ -1018,7 +1018,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
     if( (creature->isMonster() && creature->isEffected("resist-magic")) ||
         (creature->isPlayer() && creature->isEffected("resist-magic"))
     ) {
-        if(!player->isCt() && mrand(1,100) > 50) {
+        if(!player->isCt() && Random::get(1,100) > 50) {
             player->print("Your harm touch failed!\n");
             player->checkImprove("harm", true);
             player->lasttime[LT_LAY_HANDS].interval = 45L;
@@ -1045,9 +1045,9 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
     if(creature->isMonster())
         creature->getAsMonster()->addEnemy(player);
 
-    if(mrand(1,100) <= chance) {
+    if(Random::get(1,100) <= chance) {
 
-        num = mrand( (int)(player->getSkillLevel("harm")*4), (int)(player->getSkillLevel("harm")*5) ) + mrand(2,8);
+        num = Random::get( (int)(player->getSkillLevel("harm")*4), (int)(player->getSkillLevel("harm")*5) ) + Random::get(2,8);
         player->print("The darkness within you flows into %N.\n", creature);
         player->printColor("Your harm touch did %s%d^x damage!\n", player->customColorize("*CC:DAMAGE*").c_str(), num);
         player->checkImprove("harm", true);
@@ -1132,7 +1132,7 @@ int cmdBloodsacrifice(Player* player, cmd* cmnd) {
         chance = 0;
     }
 
-    if(mrand(1, 100) <= chance) {
+    if(Random::get(1, 100) <= chance) {
         player->print("Your blood sacrifice infuses your body with increased vitality.\n");
         player->checkImprove("bloodsac", true);
         player->addEffect("bloodsac", 120L + 60L * (int)(level / 5));

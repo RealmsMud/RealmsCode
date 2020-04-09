@@ -454,7 +454,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
             setAttackDelay( (int)((getAttackDelay()*4.0)/3.0));
 
 
-        if(deathSickness && mrand(1,100) < deathSickness->getStrength()) {
+        if(deathSickness && Random::get(1,100) < deathSickness->getStrength()) {
             printColor("^DYou cough heavily as you attack.\n");
             modifyAttackDelay(10);
         }
@@ -536,7 +536,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
             && attackType != ATTACK_MAUL)
     {
         // Random number of attacks 1-numAttacks
-        attacks = mrand(1, weapon->getNumAttacks());
+        attacks = Random::get<short>(1, weapon->getNumAttacks());
         // TODO: maybe add a flag so always certain # of attacks
         multiWeapon = true;
         // No multi attack weapons if duel wielding
@@ -685,7 +685,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 
                 statistics.attackDamage(attackDamage.get()+drain, Statistics::damageWith(this, weapon));
 
-                if(weapon && !mrand(0, 3))
+                if(weapon && !Random::get(0, 3))
                     weapon->decShotsCur();
 
 
@@ -706,20 +706,20 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 
                 if(attackType == ATTACK_BASH) {
                     if(victim->isPlayer())
-                        victim->stun(mrand(4,6));
+                        victim->stun(Random::get(4,6));
                     else
-                        victim->stun(mrand(5,8));
+                        victim->stun(Random::get(5,8));
                     checkImprove("bash", true);
                 } else if(attackType == ATTACK_MAUL) {
                     int dur = 0;
                     if(!pVictim) {
                         if(!victim->flagIsSet(M_RESIST_CIRCLE) && !victim->isUndead())
-                            dur = MAX(3, (mrand(3,5) + (MIN(2,((::bonus(strength.getCur()) -
+                            dur = MAX(3, (Random::get(3,5) + (MIN(2,((::bonus(strength.getCur()) -
                                 ::bonus(victim->strength.getCur()))/2)))));
                         else
-                            dur = mrand(2,4);
+                            dur = Random::get(2,4);
                     } else
-                        dur = MAX(3,(mrand(3,5) + (::bonus(strength.getCur()) - ::bonus(victim->strength.getCur()))));
+                        dur = MAX(3,(Random::get(3,5) + (::bonus(strength.getCur()) - ::bonus(victim->strength.getCur()))));
                     victim->stun(dur);
                     checkImprove("maul", true);
                 } else if(attackType == ATTACK_AMBUSH) {
@@ -958,12 +958,12 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
 
             // off-guard penalties are worse for sleeping
             if(flagIsSet(P_SLEEPING)) {
-                stun(mrand(7,15));
+                stun(Random::get(7,15));
                 attackDamage.set(attackDamage.get() * 2);
                 if(offguard != OFFGUARD_NOREMOVE)
                     wake("", true);
             } else {
-                stun(mrand(3,4));
+                stun(Random::get(3,4));
                 attackDamage.set(attackDamage.get() * 3 / 2);
                 if(offguard != OFFGUARD_NOREMOVE)
                     clearFlag(P_SITTING);
@@ -998,7 +998,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         if(enemy && enemy != this && isEffected("reflect-magic")) {
             effect = getEffect("reflect-magic");
             // the strength of the effect represents the chance to reflect the spell
-            if(effect->getStrength() >= mrand(1,100)) {
+            if(effect->getStrength() >= Random::get(1,100)) {
                 attackDamage.set(attackDamage.get() / 2);
                 attackDamage.setReflected(attackDamage.get());
                 enemy->modifyDamage(0, dmgType, attackDamage, realm);
@@ -1143,7 +1143,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         if(resistPet)
             attackDamage.set(attackDamage.get() / 2);
         if(vulnPet)
-            attackDamage.add(mrand(MAX(1, attackDamage.get()/6),MAX(2, attackDamage.get()/2)));
+            attackDamage.add(Random::get(MAX(1, attackDamage.get()/6),MAX(2, attackDamage.get()/2)));
         if(immunePet)
             attackDamage.set(1);
     }
@@ -1201,7 +1201,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
             if(dmgType == NEGATIVE_ENERGY)
                 attackDamage.setDrain(attackDamage.get() / 2);
             else
-                attackDamage.setDrain(mrand(0, attackDamage.get() / 4));
+                attackDamage.setDrain(Random::get(0, attackDamage.get() / 4));
 
             // don't drain more than can be drained!
             attackDamage.setDrain(MIN(attackDamage.getDrain(), hp.getCur()));
@@ -1377,7 +1377,7 @@ Player* Monster::whoToAggro() const {
 
     // this logic is currently copied from old mordor lowest peity algorithm:
     // higher piety = lower chance of being picked
-    pick = mrand(1, total);
+    pick = Random::get(1, total);
     total = 0;
 
     for(it = players.begin() ; it != players.end() ; it++) {

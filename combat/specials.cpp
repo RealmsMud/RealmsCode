@@ -72,7 +72,7 @@ bool Creature::useSpecial(SpecialAttack* attack, Creature* victim) {
         return(false);  // Not enough time has passed yet
 
     // Check random chance that this attack goes off -- Chance of 101 means always go off
-    if(attack->chance < mrand(1, 100))
+    if(attack->chance < Random::get(1, 100))
         return(false);
 
     // Check time here
@@ -279,7 +279,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
         //chance -= attack->saveBonus;
         chance = MAX(1, MIN(90, chance));
         // Chance is chance for the attacker to succeed...so invert the check to see if the victim saved
-        if(mrand(1, 100) > chance)
+        if(Random::get(1, 100) > chance)
             saved = true;
     }
 
@@ -311,7 +311,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
     }
     else if(attack->type == SPECIAL_PETRIFY) {
         if(pVictim) {
-            if((pVictim->isEffected("resist-earth") || pVictim->isEffected("resist-magic")) && mrand(1,100) <= 50)
+            if((pVictim->isEffected("resist-earth") || pVictim->isEffected("resist-magic")) && Random::get(1,100) <= 50)
                 return(false);
 
             if(!saved) {
@@ -322,7 +322,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
         }
     }
     else if(attack->type == SPECIAL_CONFUSE) {
-        if(pVictim && pVictim->isEffected("resist-magic") && mrand(1,100) <= 75)
+        if(pVictim && pVictim->isEffected("resist-magic") && Random::get(1,100) <= 75)
             return(false);
 
 
@@ -384,10 +384,10 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
             victim->modifyDamage(this, NEGATIVE_ENERGY, attackDamage);
 
         if(attack->flagIsSet(SA_BERSERK_REDUCE))
-            attackDamage.set(mrand(1, 10));
+            attackDamage.set(Random::get(1, 10));
 
         // Put here to avoid other damage reducers
-        if(!saved && attack->flagIsSet(SA_CAN_DISINTEGRATE) && mrand(1,100) < 2) {
+        if(!saved && attack->flagIsSet(SA_CAN_DISINTEGRATE) && Random::get(1,100) < 2) {
             victim->printColor("^Y%M seriously damages you!\n", this);
             attackDamage.set(victim->hp.getCur() - 5);
             attackDamage.set(MAX(attackDamage.get(), 1));
@@ -465,7 +465,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
     if(attack->stunLength && !saved) {
         int stunLength = 0;
         if(attack->flagIsSet(SA_RANDOMIZE_STUN)) {
-            stunLength = mrand(attack->stunLength - 3, attack->stunLength + 3);
+            stunLength = Random::get(attack->stunLength - 3, attack->stunLength + 3);
             stunLength = MAX(1, stunLength);
         } else
             stunLength = attack->stunLength;

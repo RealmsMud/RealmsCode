@@ -52,7 +52,7 @@ void teleport_trap(Player* player) {
     player->lasttime[LT_SPELL].ltime = time(0);
     player->lasttime[LT_SPELL].interval = 120L;
 
-    player->stun(mrand(20,95));
+    player->stun(Random::get(20,95));
 }
 
 //*********************************************************************
@@ -71,7 +71,7 @@ void rock_slide(Player* player) {
         if(!target)
             continue;
 
-        dmg = mrand(10, 20);
+        dmg = Random::get(10, 20);
 
         if(target->getClass() == CreatureClass::LICH)
             dmg *= 2;
@@ -147,57 +147,57 @@ int Player::doCheckTraps(UniqueRoom* room) {
     case TRAP_BONEAV:
     case TRAP_PIERCER:
     case TRAP_CHUTE:
-        if(flagIsSet(P_PREPARED) && mrand(1,20) < dexterity.getCur()/10) {
+        if(flagIsSet(P_PREPARED) && Random::get(1,20) < dexterity.getCur()/10) {
             clearFlag(P_PREPARED);
             return(0);
         }
         clearFlag(P_PREPARED);
-        if(mrand(1,100) < dexterity.getCur()/10)
+        if(Random::get(1,100) < dexterity.getCur()/10)
             return(0);
 
         break;
     case TRAP_FALL:
-        if(flagIsSet(P_PREPARED) && mrand(1,30) < dexterity.getCur()/20) {
+        if(flagIsSet(P_PREPARED) && Random::get(1,30) < dexterity.getCur()/20) {
             clearFlag(P_PREPARED);
             return(0);
         }
         clearFlag(P_PREPARED);
-        if(mrand(1,100) < dexterity.getCur()/20)
+        if(Random::get(1,100) < dexterity.getCur()/20)
             return(0);
         break;
 
     case TRAP_DISP:
         if(cClass == CreatureClass::MAGE || cClass == CreatureClass::LICH || cClass == CreatureClass::CLERIC || cClass == CreatureClass::DRUID) {
-            if(flagIsSet(P_PREPARED) && mrand(1,30) < ((intelligence.getCur()/10 + piety.getCur()/10)/2)) {
+            if(flagIsSet(P_PREPARED) && Random::get(1,30) < ((intelligence.getCur()/10 + piety.getCur()/10)/2)) {
                 clearFlag(P_PREPARED);
                 return(0);
             }
             clearFlag(P_PREPARED);
-            if(mrand(1,100) < intelligence.getCur()/10)
+            if(Random::get(1,100) < intelligence.getCur()/10)
                 return(0);
-        } else if(flagIsSet(P_PREPARED) && (mrand(1,100)<=5)) {
+        } else if(flagIsSet(P_PREPARED) && (Random::get(1,100)<=5)) {
             clearFlag(P_PREPARED);
             return(0);
         }
         break;
     case TRAP_MPDAM:
     case TRAP_RMSPL:
-        if(flagIsSet(P_PREPARED) && mrand(1,30) < ((intelligence.getCur()/10 + piety.getCur()/10)/2)) {
+        if(flagIsSet(P_PREPARED) && Random::get(1,30) < ((intelligence.getCur()/10 + piety.getCur()/10)/2)) {
             clearFlag(P_PREPARED);
             return(0);
         }
         clearFlag(P_PREPARED);
-        if(mrand(1,100) < intelligence.getCur()/10)
+        if(Random::get(1,100) < intelligence.getCur()/10)
             return(0);
         break;
     case TRAP_TPORT:
     case TRAP_ETHEREAL_TRAVEL:
-        if(flagIsSet(P_PREPARED) && mrand(1,50) < (level/2+(intelligence.getCur()/10 + piety.getCur()/10)/2)) {
+        if(flagIsSet(P_PREPARED) && Random::get(1,50) < (level/2+(intelligence.getCur()/10 + piety.getCur()/10)/2)) {
             clearFlag(P_PREPARED);
             return(0);
         }
         clearFlag(P_PREPARED);
-        if(mrand(1,100) < intelligence.getCur()/10)
+        if(Random::get(1,100) < intelligence.getCur()/10)
             return(0);
         break;
 
@@ -220,7 +220,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
             addToRoom(newRoom);
             doPetFollow();
 
-            trapDamage.set(mrand(1,15));
+            trapDamage.set(Random::get(1,15));
 
             if(chkSave(DEA, this, 0)) {
                 print("You managed to control your fall.\n");
@@ -247,7 +247,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
             deleteFromRoom(room);
             addToRoom(newRoom);
             doPetFollow();
-            trapDamage.set(mrand(1,20));
+            trapDamage.set(Random::get(1,20));
 
             if(chkSave(DEA, this, -25)) {
                 print("You manage slow your fall.\n");
@@ -313,7 +313,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         deleteFromRoom(room);
         addToRoom(newRoom);
         doPetFollow();
-        trapDamage.set(mrand(hp.getMax() / 4, hp.getMax() / 2));
+        trapDamage.set(Random::get(hp.getMax() / 4, hp.getMax() / 2));
 
         if(chkSave(DEA, this, -15)) {
             print("You manage to only be partially buried.\n");
@@ -341,7 +341,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
             deleteFromRoom(room);
             addToRoom(newRoom);
             doPetFollow();
-            trapDamage.set(mrand(15,30));
+            trapDamage.set(Random::get(15,30));
 
             if(chkSave(DEA,this,0)) {
                 print("The spikes barely graze you.\n");
@@ -361,7 +361,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
     case TRAP_DART:
         print("You triggered a hidden dart!\n");
         broadcast(getSock(), getRoomParent(), "%M gets hit by a hidden poisoned dart!", this);
-        trapDamage.set(mrand(1,10));
+        trapDamage.set(Random::get(1,10));
         if(chkSave(DEA,this,-1)) {
             print("The dart barely scratches you.\n");
             trapDamage.set(trapDamage.get() / 2);
@@ -383,7 +383,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         print("You triggered an arrow trap!\n");
         print("A flight of arrows peppers you!\n");
         broadcast(getSock(), getRoomParent(), "%M gets hit by a flight of arrows!", this);
-        trapDamage.set(mrand(15,20));
+        trapDamage.set(Random::get(15,20));
 
         if(chkSave(DEA,this,0)) {
             print("You manage to dive and take half damage.\n");
@@ -401,7 +401,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         print("You triggered a spear trap!\n");
         print("A giant spear impales you!\n");
         broadcast(getSock(), getRoomParent(), "%M gets hit by a giant spear!", this);
-        trapDamage.set(mrand(10, 15));
+        trapDamage.set(Random::get(10, 15));
 
         if(chkSave(DEA, this, 0)) {
             print("The glances off of you.\n");
@@ -419,7 +419,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         print("You triggered a crossbow trap!\n");
         print("A giant poisoned crossbow bolt hits you in the chest!\n");
         broadcast(getSock(), getRoomParent(), "%M gets hit by a giant crossbow bolt!", this);
-        trapDamage.set(mrand(20, 25));
+        trapDamage.set(Random::get(20, 25));
 
         if(chkSave(DEA, this, 0)) {
             print("The bolt barely scratches you.\n");
@@ -485,7 +485,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
                 if(!fPly->flagIsSet(P_RESIST_STUN)) {
                     fPly->print("Billowing white clouds surrounds you!\n");
                     fPly->print("You are stunned!\n");
-                    fPly->stun(mrand(10, 18));
+                    fPly->stun(Random::get(10, 18));
                 } else {
                     fPly->print("The billowing cloud of white gas has no effect on you.\n");
                 }
@@ -508,9 +508,9 @@ int Player::doCheckTraps(UniqueRoom* room) {
         }
 
         if(chkSave(DEA, this , -1))
-            stun(mrand(5,10));
+            stun(Random::get(5,10));
         else
-            stun(mrand(20,30));
+            stun(Random::get(20,30));
         break;
 
     case TRAP_ETHEREAL_TRAVEL:
@@ -529,7 +529,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 
 
     case TRAP_PIERCER:
-        num = MAX(1,MIN(8,mrand((room->getTrapStrength()+1)/2, room->getTrapStrength()+1)));
+        num = MAX(1,MIN(8,Random::get((room->getTrapStrength()+1)/2, room->getTrapStrength()+1)));
         for(a=0;a<num;a++) {
             target = getRandomPlayer(room);
             if(!target)
@@ -543,13 +543,13 @@ int Player::doCheckTraps(UniqueRoom* room) {
                 continue;
 
             trapDamage.reset();
-            trapDamage.set(mrand(target->hp.getMax()/20, target->hp.getMax()/10));
+            trapDamage.set(Random::get(target->hp.getMax()/20, target->hp.getMax()/10));
             target->modifyDamage(0, PHYSICAL, trapDamage);
 
             toHit = 14 - (trapDamage.get()/10);
             if(target->isInvisible() && target->isPlayer())
                 toHit= 20 - (trapDamage.get()/10);
-            roll = mrand(1,20);
+            roll = Random::get(1,20);
 
             if(roll >= toHit) {
                 broadcast(target->getSock(), room, "A living stalagtite falls upon %N from above!", target);
@@ -589,7 +589,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         print("You set off a fire trap!\n");
         print("Flames engulf you!\n");
         broadcast(getSock(), getRoomParent(), "%M is engulfed by flames!", this);
-        trapDamage.set(mrand(20,40));
+        trapDamage.set(Random::get(20,40));
 
         if(chkSave(BRE, this, 0)) {
             trapDamage.set(trapDamage.get() / 2);
@@ -613,7 +613,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         print("You are hit by a blast of ice!\n");
         print("Frost envelopes you!\n");
         broadcast(getSock(), getRoomParent(), "%M is engulfed by a cloud of frost!", this);
-        trapDamage.set(mrand(20,40));
+        trapDamage.set(Random::get(20,40));
 
         if(chkSave(BRE, this, 0)) {
             trapDamage.set(trapDamage.get() / 2);
@@ -637,7 +637,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         print("You are hit by a crackling blue bolt!\n");
         print("Electricity pulses through your body!\n");
         broadcast(getSock(), getRoomParent(), "%M is surrounded by crackling blue arcs!", this);
-        trapDamage.set(mrand(20,40));
+        trapDamage.set(Random::get(20,40));
 
         if(chkSave(BRE, this, 0)) {
             trapDamage.set(trapDamage.get() / 2);
@@ -659,7 +659,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         print("You are blasted by a jet of acid!\n");
         print("You are immersed in dissolving liquid.\n");
         broadcast(getSock(), getRoomParent(), "%M is immersed in acid!", this);
-        trapDamage.set(mrand(20,30));
+        trapDamage.set(Random::get(20,30));
 
         if(chkSave(DEA, this, 0)) {
             trapDamage.set(trapDamage.get() / 2);
@@ -746,11 +746,11 @@ int Player::doCheckTraps(UniqueRoom* room) {
 
         if(chkSave(DEA, this, 0)) {
             broadcast(getSock(), getRoomParent(), "^gA foul smelling and oozing green slime envelops %N.", this);
-            stun(mrand(1,10));
+            stun(Random::get(1,10));
         } else {
             print("Your possessions begin to dissolve!\n");
             lose_all(this, false, "slime-trap");
-            stun(mrand(5,20));
+            stun(Random::get(5,20));
         }
         break;
 
@@ -910,7 +910,7 @@ bool resistLose(Object* object) {
     if(object->getType() == ObjectType::CONTAINER)
         r += object->getShotsCur() * 5;
 
-    return(mrand(1,100) < r);
+    return(Random::get(1,100) < r);
 }
 
 //*********************************************************************
@@ -983,7 +983,7 @@ void Player::dissolveItem(Creature* creature) {
     if(!numwear)
         n = 0;
     else {
-        i = mrand(0, numwear-1);
+        i = Random::get(0, numwear-1);
         n = (int) checklist[i];
     }
     if(n) {
@@ -1022,7 +1022,7 @@ void Player::loseAcid() {
     for(i=0; i<MAXWEAR; i++) {
         if(ready[i]) {
             if( !ready[i]->flagIsSet(O_RESIST_DISOLVE) &&
-                (mrand(1,100) <= 3 - abs(ready[i]->getAdjustment()))
+                (Random::get(1,100) <= 3 - abs(ready[i]->getAdjustment()))
             ) {
                 if(ready[i]->flagIsSet(O_NO_PREFIX)) {
                     printColor("^r%s was dissolved by acid!\n", ready[i]->getCName());
@@ -1046,7 +1046,7 @@ void Player::loseAcid() {
     for( it = objects.begin() ; it != objects.end() ; ) {
         object = (*it++);
         if( !object->flagIsSet(O_RESIST_DISOLVE) &&
-            (mrand(1,100) <= 3 - abs(object->getAdjustment() ) ))
+            (Random::get(1,100) <= 3 - abs(object->getAdjustment() ) ))
         {
             if(object->flagIsSet(O_NO_PREFIX)) {
                 printColor("^r%s is dissolved by acid!\n", object->getCName());
@@ -1058,7 +1058,7 @@ void Player::loseAcid() {
             delObj(object, true, false, true, false);
             delete object;
         }
-        if (mrand(1,100) <= 20)
+        if (Random::get(1,100) <= 20)
             break;
     }
     checkDarkness();

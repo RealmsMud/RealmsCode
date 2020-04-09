@@ -152,13 +152,13 @@ bool Player::checkConfusion() {
     if(!isEffected("confusion"))
         return(false);
 
-    action = mrand(1,4);
+    action = Random::get(1,4);
     switch(action) {
     case 1: // Stand confused
 
         broadcast(getSock(), room, "%M stands with a confused look on %s face.", this, hisHer());
         printColor("^BYou are confused and dizzy. You stand and look around cluelessly.\n");
-        stun(mrand(5,10));
+        stun(Random::get(5,10));
         return(true);
         break;
     case 2: // Wander to random exit
@@ -182,7 +182,7 @@ bool Player::checkConfusion() {
         if(!checkAttackTimer(false))
             return(false);
 
-        switch(mrand(1,2)) {
+        switch(Random::get(1,2)) {
         case 1:
             target = getRandomMonster(room);
             if(!target)
@@ -224,7 +224,7 @@ bool Player::checkConfusion() {
             } else {
                 printColor("^BYou madly flail around at imaginary enemies.\n");
                 if(cClass == CreatureClass::MONK) {
-                    dmg = mrand(1,2) + level/3 + mrand(1,(1+level)/2);
+                    dmg = Random::get(1,2) + level/3 + Random::get(1,(1+level)/2);
                     if(strength.getCur() < 90) {
                         dmg -= (90-strength.getCur())/10;
                         dmg = MAX(1,dmg);
@@ -290,7 +290,7 @@ CatRef getEtherealTravelRoom() {
     const CatRefInfo* eth = gConfig->getCatRefInfo("et");
     CatRef cr;
     cr.setArea("et");
-    cr.id = mrand(1, eth->getTeleportWeight());
+    cr.id = Random::get(1, eth->getTeleportWeight());
     return(cr);
 }
 
@@ -407,7 +407,7 @@ int cmdDice(Creature* player, cmd* cmnd) {
 
 
     for(rolls=0;rolls<diceNum;rolls++)
-        total += mrand(1, diceSides);
+        total += Random::get(1, diceSides);
 
     total += diceAdd;
 

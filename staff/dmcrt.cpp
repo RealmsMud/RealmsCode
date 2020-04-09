@@ -85,7 +85,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
      * nobody uses this
      *
     else if(getFullstrText(cmnd->fullstr, 2).left(1) == "g") {
-        total = mrand(1, room->countVisPly());
+        total = Random::get(1, room->countVisPly());
         if(cmnd->val[1] == 1) {
             cr = wander->getRandom();
             if(!cr.id) {

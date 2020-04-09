@@ -392,8 +392,8 @@ void Server::updateWeather(long t) {
         if(Weather[j].ltime + Weather[j].interval < t) {
             switch (j) {
             case 0:
-                if(mrand(1,100) > 80) {
-                    n = mrand(0,2);
+                if(Random::get(1,100) > 80) {
+                    n = Random::get(0,2);
                     n -= 1;
                     n = Weather[j].misc + n;
                     if(n < 0 || n > 4)
@@ -416,8 +416,8 @@ void Server::updateWeather(long t) {
                 break;
 
             case 1:
-                if(mrand(1,100) > 50 && isDay()) {
-                    n = mrand(0,2);
+                if(Random::get(1,100) > 50 && isDay()) {
+                    n = Random::get(0,2);
                     n -= 1;
                     n = Weather[j].misc + n;
                     if(n < 0 || n > 4)
@@ -447,8 +447,8 @@ void Server::updateWeather(long t) {
                 }
                 break;
             case 2:
-                if(mrand(1,100) > 50) {
-                    n = mrand(0,2);
+                if(Random::get(1,100) > 50) {
+                    n = Random::get(0,2);
                     n -= 1;
                     n = Weather[j].misc +n;
                     if(n< 0 || n> 4)
@@ -482,8 +482,8 @@ void Server::updateWeather(long t) {
                 }
                 break;
             case 3:
-                if(mrand(1,100) > 50) {
-                    n = mrand(0,2);
+                if(Random::get(1,100) > 50) {
+                    n = Random::get(0,2);
                     n -= 1;
                     n = Weather[j].misc+n;
                     if(n< 0 || n> 6)
@@ -525,8 +525,8 @@ void Server::updateWeather(long t) {
                 }
                 break;
             case 4:
-                if(mrand(1,100) > 50 && !isDay()) {
-                    n = mrand(0,2);
+                if(Random::get(1,100) > 50 && !isDay()) {
+                    n = Random::get(0,2);
                     n -= 1;
                     n += Weather[j].misc;
                     if(n< 0 || n> 4)
@@ -720,7 +720,7 @@ void Server::updateAction(long t) {
                             ++resp;
                             num = (num == 0) ? 100:num;
 
-                            thresh = mrand(1,200);
+                            thresh = Random::get(1,200);
 
                             //  broadcast(isDm, -1, cp->crt->getRoom(), "*DM* NUM: %d Thresh: %d", num, thresh);
 
@@ -738,7 +738,7 @@ void Server::updateAction(long t) {
                                 broadcast(nullptr, monster->getRoomParent(), "%M says, \"%s\"", monster, resp);
                             break;
                         case 'T':   // Mob Trash-talk
-                            if(mrand(1,100) <= 10) {
+                            if(Random::get(1,100) <= 10) {
 
                                 if(countTotalEnemies(monster) > 0 && !monster->getAsMonster()->nearEnemy()) {
                                     if(monster->daily[DL_BROAD].cur > 0) {
@@ -749,7 +749,7 @@ void Server::updateAction(long t) {
                             }
                             break;
                         case 'B':   // Mob general random broadcasts
-                            if(mrand(1,100) <= 10) {
+                            if(Random::get(1,100) <= 10) {
 
                                 if(countTotalEnemies(monster) < 1 && thresh <= num) {
                                     if(monster->daily[DL_BROAD].cur > 0) {

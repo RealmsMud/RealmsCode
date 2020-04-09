@@ -129,7 +129,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(target->isPlayer() && mrand(1,100) <= 50 && target->isEffected("resist-magic")) {
+        if(target->isPlayer() && Random::get(1,100) <= 50 && target->isEffected("resist-magic")) {
             player->printColor("^yYour spell failed.\n");
             return(0);
         }
@@ -161,9 +161,9 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
             if((!target->chkSave(SPL, player, bns) && !nohold) || player->isCt()) {
 
                 if(spellData->how == CastType::CAST)
-                    dur = mrand(9,18) + 2*bonus((int)player->intelligence.getCur()) - crtWisdom(target);
+                    dur = Random::get(9,18) + 2*bonus((int)player->intelligence.getCur()) - crtWisdom(target);
                 else
-                    dur = mrand(9,12);
+                    dur = Random::get(9,12);
 
                 target->stun(dur);
 
@@ -189,9 +189,9 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
             if(!target->chkSave(SPL, player, bns) || player->isCt()) {
 
                 if(spellData->how == CastType::CAST)
-                    dur = mrand(12,18) + 2*bonus((int)player->intelligence.getCur()) - crtWisdom(target);
+                    dur = Random::get(12,18) + 2*bonus((int)player->intelligence.getCur()) - crtWisdom(target);
                 else
-                    dur = mrand(9,12);
+                    dur = Random::get(9,12);
 
                 if(player->isCt())
                     player->print("*DM* %d seconds.\n", dur);
@@ -329,7 +329,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(mrand(1,100) <= 50 && target->isEffected("resist-magic")) {
+        if(Random::get(1,100) <= 50 && target->isEffected("resist-magic")) {
             player->printColor("^yYour spell failed.\n");
             return(0);
         }
@@ -374,7 +374,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
             if(target->flee(true) == 2)
                 return(1);
 
-            target->stun(mrand(5,8));
+            target->stun(Random::get(5,8));
 
             if(weapon)
                 target->ready[WIELD-1] = weapon;
@@ -488,14 +488,14 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
     int     dur=0;
 
     if(spellData->how == CastType::CAST) {
-        dur = 600 + mrand(1, 30) * 10 + bonus((int) player->intelligence.getCur()) * 150;
+        dur = 600 + Random::get(1, 30) * 10 + bonus((int) player->intelligence.getCur()) * 150;
     } else if(spellData->how == CastType::SCROLL)
-        dur = 600 + mrand(1, 15) * 10 + bonus((int) player->intelligence.getCur()) * 50;
+        dur = 600 + Random::get(1, 15) * 10 + bonus((int) player->intelligence.getCur()) * 50;
     else
-        dur = 600 + mrand(1, 30) * 10;
+        dur = 600 + Random::get(1, 30) * 10;
 
     if(spellData->how == CastType::POTION)
-        dur = mrand(1,120) + 180L;
+        dur = Random::get(1,120) + 180L;
 
     if(player->spellFail( spellData->how))
         return(0);
@@ -645,11 +645,11 @@ int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
     player->smashInvis();
 
     if(spellData->how == CastType::CAST) {
-        dur = mrand(180,300) + 3*bonus((int) player->intelligence.getCur());
+        dur = Random::get(180,300) + 3*bonus((int) player->intelligence.getCur());
     } else if(spellData->how == CastType::SCROLL)
-        dur = mrand(30,120) + bonus((int) player->intelligence.getCur());
+        dur = Random::get(30,120) + bonus((int) player->intelligence.getCur());
     else
-        dur = mrand(30,60);
+        dur = Random::get(30,60);
 
 
 
@@ -941,7 +941,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
     if( player->getClass() == CreatureClass::LICH ||
          (pPlayer && pPlayer->getClass() == CreatureClass::MAGE && !pPlayer->hasSecondClass()) ||
          player->isCt())
-        mageStunBns = mrand(1,5);
+        mageStunBns = Random::get(1,5);
 
     if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == nullptr)
         return(0);
@@ -978,7 +978,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
 
         if(mTarget) {
-            if(mrand(1,100) < mTarget->getMagicResistance()) {
+            if(Random::get(1,100) < mTarget->getMagicResistance()) {
                 player->printColor("^MYour spell has no effect on %N.\n", mTarget);
                 if(player->isPlayer())
                     broadcast(player->getSock(), player->getParent(), "%M's spell has no effect on %N.", player, mTarget);
@@ -1118,7 +1118,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
             logCast(player, target, "stun");
 
             if(mTarget && player->isPlayer()) {
-                if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (mrand(1,100) <= (MAX(25, mTarget->inUniqueRoom() ? mTarget->getUniqueRoomParent()->wander.getTraffic() : 25)))) {
+                if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (Random::get(1,100) <= (MAX(25, mTarget->inUniqueRoom() ? mTarget->getUniqueRoomParent()->wander.getTraffic() : 25)))) {
                     mTarget->summonMobs(player);
                     mTarget->clearFlag(M_YELLED_FOR_HELP);
                     mTarget->setFlag(M_WILL_YELL_FOR_HELP);
@@ -1131,7 +1131,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
                 if(mTarget->flagIsSet(M_LEVEL_BASED_STUN) && (((int)mTarget->getLevel() - (int)spellData->level) > ((player->getClass() == CreatureClass::LICH || player->getClass() == CreatureClass::MAGE) ? 6:4))) {
                     player->printColor("^yYour magic is currently too weak to fully stun %N!\n", mTarget);
 
-                    switch(mrand(1,9)) {
+                    switch(Random::get(1,9)) {
                     case 1:
                         player->print("%M laughs wickedly at you.\n", target);
                         break;

@@ -1600,12 +1600,12 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
     case S_VIGOR:
         if(check) return(true);
         if(player->getClass() !=  CreatureClass::LICH)
-            player->hp.increase(mrand(1,6) + 4 + 2);
+            player->hp.increase(Random::get(1,6) + 4 + 2);
         break;
     case S_MEND_WOUNDS:
         if(check) return(true);
         if(player->getClass() !=  CreatureClass::LICH)
-            player->hp.increase(mrand(2,10) + 4 + 4);
+            player->hp.increase(Random::get(2,10) + 4 + 4);
         break;
     case S_RESTORE:
         if(check) return(true);

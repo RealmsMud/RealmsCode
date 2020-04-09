@@ -450,7 +450,7 @@ int Monster::mobileCrt() {
     if(!i)
         return(0);
 
-    num = mrand(1, i);
+    num = Random::get(1, i);
     i = 0;
 
     for(Exit* exit : getRoomParent()->exits) {
@@ -485,9 +485,7 @@ int Monster::mobileCrt() {
             if(flagIsSet(M_WILL_SNEAK) && flagIsSet(M_HIDDEN))
                 setFlag(M_SNEAKING);
 
-            if( flagIsSet(M_SNEAKING) &&
-                mrand (1,100) <= (3+dexterity.getCur())*3)
-            {
+            if( flagIsSet(M_SNEAKING) && Random::get(1,100) <= (3+dexterity.getCur())*3) {
                 broadcast(::isStaff, getSock(), getRoomParent(), "*DM* %M just snuck to the %s.", this,exit->getCName());
             } else {
                 Creature* lookingFor = nullptr;
@@ -515,15 +513,15 @@ int Monster::mobileCrt() {
             if(newRoom->isAreaRoom())
                 newRoom->getAsAreaRoom()->setStayInMemory(mem);
 
-            lasttime[LT_MON_WANDER].ltime = time(0);
-            lasttime[LT_MON_WANDER].interval = mrand(5,60);
+            lasttime[LT_MON_WANDER].ltime = time(nullptr);
+            lasttime[LT_MON_WANDER].interval = Random::get(5,60);
 
             ret = 1;
             break;
         }
     }
 
-    if(mrand(1,100) > 80)
+    if(Random::get(1,100) > 80)
         clearFlag(M_MOBILE_MONSTER);
 
     return(ret);
@@ -687,7 +685,7 @@ Creature *enm_in_group(Creature *target) {
     int     chosen=0;
 
 
-    if(!target || mrand(1,100) <= 50)
+    if(!target || Random::get(1,100) <= 50)
         return(target);
 
     Group* group = target->getGroup();
@@ -695,7 +693,7 @@ Creature *enm_in_group(Creature *target) {
     if(!group)
         return(target);
 
-    chosen = mrand(1, group->getSize());
+    chosen = Random::get(1, group->getSize());
 
     enemy = group->getMember(chosen);
     if(!enemy || !enemy->inSameRoom(target))
@@ -836,8 +834,8 @@ int Player::displayCreature(Creature* target)  {
         // vampires and werewolves can sense each other
         if(isEffected("vampirism") || isEffected("lycanthropy"))
             chance = 101;
-        if(chance > mrand(0,100)) {
-            switch(mrand(1,4)) {
+        if(chance > Random::get(0,100)) {
+            switch(Random::get(1,4)) {
             case 1:
                 oStr << target->upHeShe() << " looks awfully pale.\n";
                 break;
@@ -858,8 +856,8 @@ int Player::displayCreature(Creature* target)  {
         // vampires and werewolves can sense each other
         if(isEffected("vampirism") || isEffected("lycanthropy"))
             chance = 101;
-        if(chance > mrand(0,100)) {
-            switch(mrand(1,3)) {
+        if(chance > Random::get(0,100)) {
+            switch(Random::get(1,3)) {
             case 1:
                 oStr << target->upHeShe() << " looks awfully shaggy.\n";
                 break;
@@ -1189,7 +1187,7 @@ bool Creature::canFleeToExit(const Exit *exit, bool skipScary, bool blinking) {
                     if(getRoomParent()->flagIsSet(R_DIFFICULT_TO_MOVE) || getRoomParent()->flagIsSet(R_DIFFICULT_FLEE))
                         chance /=2;
 
-                    if(mrand(1,100) < chance)
+                    if(Random::get(1,100) < chance)
                         return(false);
 
                     // success; means that the player is now scared of this room
@@ -1248,7 +1246,7 @@ Exit* Creature::getFleeableExit() {
 
     if(i) {
         // pick a random exit
-        exit = mrand(1, i);
+        exit = Random::get(1, i);
     } else if(isPlayer()) {
         // force players to skip the scary list
         skipScary = true;
@@ -1259,7 +1257,7 @@ Exit* Creature::getFleeableExit() {
                 i++;
         }
         if(i)
-            exit = mrand(1, i);
+            exit = Random::get(1, i);
     }
 
     if(!exit)
@@ -1344,7 +1342,7 @@ bool Creature::doFlee(bool magicTerror) {
     }
 
 
-    switch(mrand(1,10)) {
+    switch(Random::get(1,10)) {
     case 1:
         print("You run like a chicken.\n");
         break;

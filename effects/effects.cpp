@@ -989,7 +989,7 @@ bool exitEffectDamage(const EffectInfo *effect, Creature* target, Creature* owne
         }
     }
 
-    damage.set(mrand(effect->getStrength() / 2, effect->getStrength() * 3 / 2));
+    damage.set(Random::get(effect->getStrength() / 2, effect->getStrength() * 3 / 2));
     target->modifyDamage(0, MAGICAL, damage, realm);
 
     if(killer && target->isMonster()) {

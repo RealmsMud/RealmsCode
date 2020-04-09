@@ -110,7 +110,7 @@ int cmdBite(Player* player, cmd* cmnd) {
     if(player->isDm())
         chance = 100;
 
-    if(mrand(1, 100) > chance) {
+    if(Random::get(1, 100) > chance) {
         player->print("%s eludes your bite.\n", target->upHeShe());
         player->checkImprove("bite", false);
         target->print("%M tried to bite you!\n",player);
@@ -119,7 +119,7 @@ int cmdBite(Player* player, cmd* cmnd) {
     }
 
 
-    damage.set(mrand((int)(player->getSkillLevel("bite")*3), (int)(player->getSkillLevel("bite")*4)));
+    damage.set(Random::get((int)(player->getSkillLevel("bite")*3), (int)(player->getSkillLevel("bite")*4)));
 
     target->modifyDamage(player, NEGATIVE_ENERGY, damage);
 
@@ -141,7 +141,7 @@ int cmdBite(Player* player, cmd* cmnd) {
         log_immort(false,player, "%s bites %s.\n", player->getCName(), target->getCName());
 
     target->printColor("%M bites you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), dmgnum);
-    target->stun((mrand(5, 8) + bonus((int) player->strength.getCur())));
+    target->stun((Random::get(5, 8) + bonus((int) player->strength.getCur())));
     broadcast(player->getSock(), target->getSock(), player->getParent(), "%M bites %N!", player, target);
     broadcastGroup(false, target, "^M%M^x bites ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n",
         player, target, dmgnum, target->heShe(), target->getStatusStr(dmgnum));
@@ -301,7 +301,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    dur = 300 + mrand(1, 30) * 10 + bonus((int) player->constitution.getCur()) * 30 +
+    dur = 300 + Random::get(1, 30) * 10 + bonus((int) player->constitution.getCur()) * 30 +
           (int)(player->getSkillLevel("hypnotize") * 5);
 
     if(!(target = player->findVictim(cmnd, 1, true, false, "Hypnotize whom?\n", "You don't see that here.\n")))
@@ -356,7 +356,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
         chance-=25;
     if(player->isDm())
         chance = 101;
-    if(mrand(1, 100) > chance && !player->isCt()) {
+    if(Random::get(1, 100) > chance && !player->isCt()) {
         player->print("You fail to hypnotize %N.\n", target);
         player->checkImprove("hypnotize", false);
         broadcast(player->getSock(), target->getSock(), player->getParent(), "%M attempts to hypnotize %N.",player, target);
@@ -459,7 +459,7 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
     if(player->isCt())
         chance = 101;
 
-    if(mrand(1, 100) <= chance) {
+    if(Random::get(1, 100) <= chance) {
         player->print("Your dark essence draws from the positive energy around you.\n");
         player->checkImprove("regenerate", true);
         broadcast(player->getSock(), player->getParent(), "%M regenerates.", player);
@@ -470,9 +470,9 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
         }
 
         if(inCombat)
-            player->hp.increase(mrand(level+6,level*(3)+7));
+            player->hp.increase(Random::get(level+6,level*(3)+7));
         else
-            player->hp.increase(mrand(level+8,level*(4)+9));
+            player->hp.increase(Random::get(level+8,level*(4)+9));
 
         // Prevents players from avoiding the 75% hp limit to allow regenerate
         // by casting on themselves to get below half. A lich may never regenerate
@@ -485,9 +485,9 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
         // Extra regeneration from being extremely evil.
         if(player->getAlignment() <= -250 && !pasthalf) {
             if(player->getAlignment() <= -400)
-                xtra = mrand(6,9);
+                xtra = Random::get(6,9);
             else
-                xtra = mrand(2,5);
+                xtra = Random::get(2,5);
             player->print("Your dark essence regenerated %d more due to your soul's corruption.\n",xtra);
             player->hp.increase(xtra);
         }
@@ -591,7 +591,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
     if(target->isEffected("drain-shield"))
         chance /= 2;
 
-    if(mrand(1, 100) > chance) {
+    if(Random::get(1, 100) > chance) {
         player->print("You failed to drain %N's life.\n", target);
         player->checkImprove("drain", false);
 
@@ -601,9 +601,9 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
     }
 
 
-    damage.set(mrand(level * 3, level * 5));
+    damage.set(Random::get(level * 3, level * 5));
     if(target->isEffected("drain-shield"))
-        damage.set(mrand(1, level));
+        damage.set(Random::get(1, level));
 
     // Berserked barbarians have more energy to drain
     if(pTarget && pTarget->isEffected("berserk"))

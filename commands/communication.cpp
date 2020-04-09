@@ -37,37 +37,37 @@
 
 char confusionChar() {
     int n;
-    switch(mrand(0,10)) {
+    switch(Random::get(0,10)) {
     case 0:
         // random upper case
-        return(mrand(65, 90));
+        return(Random::get(65, 90));
     case 1:
     case 2:
         // random character
-        n = mrand(0,57);
+        n = Random::get(0,57);
         // weight all the characters in the different ranges evenly
         if(n <= 31) {
-            // mrand(91, 121);      31 chars
+            // Random::get(91, 121);      31 chars
             return(n + 91);
         } else if(n <= 38) {
-            // mrand(58, 64);       7 chars
+            // Random::get(58, 64);       7 chars
             return(n - 31 + 58);
         } else if(n <= 54) {
-            // mrand(32, 47);       16 chars
+            // Random::get(32, 47);       16 chars
             return(n - 31 - 7 + 32);
         } else {
-            // mrand(123, 125);     3 chars
+            // Random::get(123, 125);     3 chars
             return(n - 31 - 7 - 16 + 123);
         }
     case 3:
         // random number
-        return(mrand(48, 57));
+        return(Random::get(48, 57));
         break;
     default:
         break;
     }
     // random lower case
-    return(mrand(97, 122));
+    return(Random::get(97, 122));
 }
 
 //*********************************************************************
@@ -81,17 +81,17 @@ bstring confusionText(Creature* speaker, bstring text) {
     )
         return(text);
 
-    bool scramble = mrand(0,1);
+    bool scramble = Random::get(0,1);
 
     for(int i=0; i<text.getLength(); i++) {
         if(text.getAt(i) == ' ') {
-            scramble = !mrand(0,3);
+            scramble = !Random::get(0,3);
             // sometimes scramble spaces, too
-            if(!mrand(0,8))
+            if(!Random::get(0,8))
                 text.setAt(i, confusionChar());
         } else {
 
-            if(scramble || !mrand(0,8))
+            if(scramble || !Random::get(0,8))
                 text.setAt(i, confusionChar());
 
         }

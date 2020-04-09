@@ -127,7 +127,7 @@ void ShipExit::spawnRaiders(ShipRaid* sRaid) {
         return;
     }
 
-    total = mrand(sRaid->getMinSpawnNum(), sRaid->getMaxSpawnNum());
+    total = Random::get(sRaid->getMinSpawnNum(), sRaid->getMaxSpawnNum());
 
     for(l=0; l<total;) {
         raider->initMonster(true, false);
@@ -340,7 +340,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
 
                     ply->bPrint(raider->getCrtStr(nullptr, CAP | NONUM, 0) + " searches the room.\n");
 
-                    if(mrand(1,100) <= SHIP_SEARCH_CHANCE) {
+                    if(Random::get(1,100) <= SHIP_SEARCH_CHANCE) {
                         found = 1;
                         ply->unhide();
 

@@ -113,7 +113,7 @@ void steal_gold(Player* player, Creature* creature) {
         return;
 
 
-    chance = 5*(level - creature->getLevel()) + bonus((int)player->dexterity.getCur())*5 + bonus(player->getLuck() / 4)*5 + mrand(-15, 15);
+    chance = 5*(level - creature->getLevel()) + bonus((int)player->dexterity.getCur())*5 + bonus(player->getLuck() / 4)*5 + Random::get(-15, 15);
 
     if(player->flagIsSet(P_HIDDEN))
         chance += 10;
@@ -132,7 +132,7 @@ void steal_gold(Player* player, Creature* creature) {
     player->statistics.attemptSteal();
     player->interruptDelayedActions();
 
-    if(mrand(1,100) < chance) {
+    if(Random::get(1,100) < chance) {
         unsigned long formula;
         player->print("You succeeded.\n");
         player->checkImprove("steal", true);
@@ -142,7 +142,7 @@ void steal_gold(Player* player, Creature* creature) {
             return;
         }
 
-        formula = mrand(creature->coins[GOLD]/10, creature->coins[GOLD]/3);
+        formula = Random::get(creature->coins[GOLD]/10, creature->coins[GOLD]/3);
         amt = MIN(creature->coins[GOLD], MAX(1UL, formula));
         player->print("You grabbed %d coins.\n", amt);
         creature->coins.sub(amt, GOLD);
@@ -523,7 +523,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
     if(!mTarget)
         player->clearFlag(P_NO_PKILL);
 
-    roll = mrand(1,100);
+    roll = Random::get(1,100);
     player->statistics.attemptSteal();
 
     // A roll of 100 always fails
@@ -573,7 +573,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 
 
 
-            roll = mrand(1,100);
+            roll = Random::get(1,100);
             // adjust roll to reflect chance for new observer.
             //***************************************************
             roll += crtAwareness(target)*2;
@@ -622,7 +622,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
                 )
                     continue;
 
-                roll = mrand(1,100);
+                roll = Random::get(1,100);
                 // adjust roll to reflect chance for new observer.
                 //**************************************************
                 roll += crtAwareness(target)*2;

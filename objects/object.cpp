@@ -194,7 +194,7 @@ bstring Container::listObjects(const Player* player, bool showAll, char endColor
 // is set.
 
 void Object::randomEnchant(int bonus) {
-    char    m = mrand(1,100);
+    char    m = Random::get(1,100);
     m += bonus;
 
     if(m > 98)
@@ -237,12 +237,12 @@ int new_scroll(int level, Object **new_obj) {
     else
         lvl = 5;
 
-    lvl = MIN(lvl,(mrand(1,100)<=10 ? 3:2));
+    lvl = MIN(lvl,(Random::get(1,100)<=10 ? 3:2));
 
-    if(mrand(1,100) > 10)
-        realm = mrand(EARTH,WATER);
+    if(Random::get(1,100) > 10)
+        realm = Random::get<int>(EARTH,WATER);
     else
-        realm = mrand(EARTH,COLD); // cold/elect rarer
+        realm = Random::get<int>(EARTH,COLD); // cold/elect rarer
 
 
 
@@ -253,10 +253,10 @@ int new_scroll(int level, Object **new_obj) {
     (*new_obj)->description = "It has arcane runes.";
     delem = " ";
 
-    num = mrand(1,10);
+    num = Random::get(1,10);
     strcpy(name, scrollDesc[realm-1][num-1]);
     strcat(name, " ");
-    num = mrand(1,2);
+    num = Random::get(1,2);
     strcat(name, scrollType[lvl-1][num-1]);
     (*new_obj)->setName( name);
     p = strtok(name, delem);
@@ -291,7 +291,7 @@ int Monster::checkScrollDrop() {
         cClass == CreatureClass::MAGE ||
         cClass == CreatureClass::LICH
     ) {
-        if(mrand(1,100) <= 4 && !isPet())
+        if(Random::get(1,100) <= 4 && !isPet())
             return(1);
     }
     return(0);
@@ -317,7 +317,7 @@ void Object::loadContainerContents() {
         if(!loadObject(in_bag[a], &newObj))
             continue;
 
-        if(mrand(1,100)<25) {
+        if(Random::get(1,100)<25) {
             newObj->setDroppedBy(this, "ContainerContents");
             addObj(newObj);
         } else {
@@ -607,7 +607,7 @@ void getDamageString(char atk[50], Creature* player, Object *weapon, bool critic
         strcpy(atk, "^Rpunched^x");
 
         if(player->getClass() == CreatureClass::MONK) {
-            switch(critical ? mrand(10,12) : mrand(1,9)) {
+            switch(critical ? Random::get(10,12) : Random::get(1,9)) {
             case 1: strcpy(atk, "punched");             break;
             case 2: strcpy(atk, "backhanded");          break;
             case 3: strcpy(atk, "smacked");             break;
@@ -624,7 +624,7 @@ void getDamageString(char atk[50], Creature* player, Object *weapon, bool critic
                 break;
             }
         } else if(player->isEffected("lycanthropy")) {
-            switch(critical ? mrand(10,12) : mrand(1,9)) {
+            switch(critical ? Random::get(10,12) : Random::get(1,9)) {
             case 1: strcpy(atk, "clawed");          break;
             case 2: strcpy(atk, "rended");          break;
             case 3: strcpy(atk, "ripped");          break;

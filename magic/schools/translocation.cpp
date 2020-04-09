@@ -616,7 +616,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
         // Porting self only uses a port 1/3 of the time. (Unless they have no ports left!
         if( pPlayer && !pPlayer->isCt() &&
             (pPlayer->daily[DL_TELEP].cur == 0 ||
-            (mrand(1,100) <= 33 &&
+            (Random::get(1,100) <= 33 &&
             !dec_daily(&pPlayer->daily[DL_TELEP])))
         ) {
             pPlayer->print("You are too weak to teleport again today.\n");
@@ -812,7 +812,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
                 player->print("You are too weak to teleport again today.\n");
                 return(1);
             }
-            if(target->isEffected("resist-magic") && (mrand(1, 60) + ((int)player->getLevel() - (int)target->getLevel()) * 10) > 80) {
+            if(target->isEffected("resist-magic") && (Random::get(1, 60) + ((int)player->getLevel() - (int)target->getLevel()) * 10) > 80) {
                 player->print("Your magic is too weak to teleport %N.\n", target);
                 if(target->getSock())
                     target->print("%M tried to teleport you.\n", player);
@@ -1264,7 +1264,7 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
             if(target->isEffected("mist"))
                 chance -= 35;
 
-            if(mrand(1,100) < chance) {
+            if(Random::get(1,100) < chance) {
                 if(target->isEffected("mist"))
                     pPlayer->print("%s's mist form eluded your magic.\n", target->getCName());
                 else
@@ -1501,7 +1501,7 @@ bool Creature::checkDimensionalAnchor() const {
     if(!isEffected("anchor"))
         return(false);
 
-    if(mrand(1,10)>9)
+    if(Random::get(1,10)>9)
         return(false);
 
     return(true);
@@ -1585,7 +1585,7 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
         isPortal = true;
 
         // 10% chance of going to the ethereal plane
-        if(mrand(1,10) == 1) {
+        if(Random::get(1,10) == 1) {
             CatRef cr = getEtherealTravelRoom();
             UniqueRoom* uRoom=0;
             if(loadRoom(cr, &uRoom))
@@ -1618,9 +1618,9 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
             if(ply->isStaff())
                 dmg = 0;
             else if(ply == player)
-                dmg = mrand(25,45);
+                dmg = Random::get(25,45);
             else
-                dmg = mrand(5,25);
+                dmg = Random::get(5,25);
 
             if(ply->chkSave(BRE, player, -25))
                 dmg /= 2;
@@ -1725,7 +1725,7 @@ void BaseRoom::scatterObjects() {
         object = (*it++);
 
         // 10% chance of not moving this object
-        if(!mrand(0,9))
+        if(!Random::get(0,9))
             continue;
 
         if( object->flagIsSet(O_NO_TAKE) ||
@@ -1745,7 +1745,7 @@ void BaseRoom::scatterObjects() {
         if(!pick)
             return;
 
-        pick = mrand(1, pick);
+        pick = Random::get(1, pick);
         for(Exit* ext : exits) {
             if(willScatterTo(object, this, ext)) {
                 pick--;

@@ -860,7 +860,7 @@ void Faction::worshipSocial(Monster *monster) {
     cmnd.num = 2;
     cmnd.val[1] = 1;
     for(Player* player : monster->getRoomParent()->players) {
-        if( mrand(1,100)>2 ||
+        if( Random::get(1,100)>2 ||
             !player ||
             player->flagIsSet(P_UNCONSCIOUS) ||
             !monster->canSee(player) ||
@@ -889,7 +889,7 @@ bool Faction::willAggro(const Player* player, bstring faction) {
     int attitude = getAttitude(player->getFactionStanding(faction));
     if(attitude <= MALICE)
         return(true);
-    if(attitude == CONTEMPT && mrand(1,100) <= 10)
+    if(attitude == CONTEMPT && Random::get(1,100) <= 10)
         return(true);
     return(false);
 }

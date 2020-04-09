@@ -212,7 +212,7 @@ void Monster::beneficialCaster() {
             continue;
 
         if(ply->flagIsSet(P_DOCTOR_KILLER)) {
-            if(mrand(1,100)<=2) {
+            if(Random::get(1,100)<=2) {
                 broadcast(ply->getSock(), ply->getRoomParent(), "%M spits, \"Doctor killer!\" at %N.", this, ply);
                 ply->print("%M spits, \"Doctor killer!\" at you.\n", this);
             }
@@ -221,7 +221,7 @@ void Monster::beneficialCaster() {
 
         if(spellIsKnown(S_SLOW_POISON)) {
 
-            chance = mrand(1,100);
+            chance = Random::get(1,100);
             if((mp.getCur() >= 8) && (chance < 10) && !ply->isEffected("slow-poison") && ply->isPoisoned()) {
                 if(ply->immuneToPoison())
                     continue;
@@ -242,7 +242,7 @@ void Monster::beneficialCaster() {
 
         if(spellIsKnown(S_CURE_DISEASE)) {
 
-            chance = mrand(1,100);
+            chance = Random::get(1,100);
             if((mp.getCur() >= 12) && (chance < 10) && (ply->isDiseased())) {
                 if(ply->immuneToDisease())
                     continue;
@@ -260,11 +260,11 @@ void Monster::beneficialCaster() {
 
         if(ply->getClass() == CreatureClass::LICH)
             continue;
-        if(ply->flagIsSet(P_POISONED_BY_PLAYER) && mrand(1,100) >= 3)
+        if(ply->flagIsSet(P_POISONED_BY_PLAYER) && Random::get(1,100) >= 3)
             continue;
 
         if(spellIsKnown(S_VIGOR)) {
-            chance = mrand(1,100);
+            chance = Random::get(1,100);
             if((mp.getCur() >= 2) && (chance <= 5) && (ply->hp.getCur() < ply->hp.getMax())) {
 
                 ply->print("%M casts a vigor spell on you.\n", this);
@@ -272,7 +272,7 @@ void Monster::beneficialCaster() {
                 broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a vigor spell on %N.",
                     this, ply);
                 mp.decrease(2);
-                heal = mrand(1,6) + bonus((int) piety.getCur());
+                heal = Random::get(1,6) + bonus((int) piety.getCur());
                 heal = MAX(1, heal);
 
                 if(cClass == CreatureClass::CLERIC && clan != 12) {
@@ -282,7 +282,7 @@ void Monster::beneficialCaster() {
                 if( (cClass == CreatureClass::CLERIC && clan == 11) ||
                     (cClass == CreatureClass::PALADIN)
                 )
-                    heal += mrand(1,4);
+                    heal += Random::get(1,4);
                 ply->hp.increase(heal);
                 heal = 0;
                 continue;
@@ -291,7 +291,7 @@ void Monster::beneficialCaster() {
 
         if(spellIsKnown(S_MEND_WOUNDS)) {
 
-            chance = mrand(1,100);
+            chance = Random::get(1,100);
             if((mp.getCur() >= 4) && (chance <= 5) && (ply->hp.getCur() < (ply->hp.getMax()/2))) {
 
                 ply->print("%M casts a mend-wounds spell on you.\n", this);
@@ -299,7 +299,7 @@ void Monster::beneficialCaster() {
                 broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a mend-wounds spell on %N.",
                     this, ply);
                 mp.decrease(4);
-                heal = mrand(6,9) + bonus((int) piety.getCur());
+                heal = Random::get(6,9) + bonus((int) piety.getCur());
                 heal = MAX(1, heal);
                 if(cClass == CreatureClass::CLERIC && clan != 12) {
                     heal *= 2;
@@ -308,7 +308,7 @@ void Monster::beneficialCaster() {
                 if( (cClass == CreatureClass::CLERIC && clan == 11) ||
                     (cClass == CreatureClass::PALADIN)
                 )
-                    heal += mrand(1,4);
+                    heal += Random::get(1,4);
                 ply->hp.increase(heal);
                 heal = 0;
                 continue;
@@ -317,7 +317,7 @@ void Monster::beneficialCaster() {
 
         if(spellIsKnown(S_HEAL)) {
 
-            chance = mrand(1,100);
+            chance = Random::get(1,100);
             if((mp.getCur() >= 25) && (chance < 3) && (cClass == CreatureClass::CLERIC && clan != 12) &&
                     (ply->hp.getCur() < (ply->hp.getMax()/4)) && (ply->getLevel() >= 5)) {
 
@@ -365,7 +365,7 @@ int Monster::mobDeathScream() {
     PlayerSet::iterator pEnd = getRoomParent()->players.end();
     while(pIt != pEnd) {
         target = (*pIt++);
-        n = mrand(1,15) + level; // Damage done.
+        n = Random::get(1,15) + level; // Damage done.
 
         if(target->isEffected("resist-magic"))
             n /= 2;
@@ -373,7 +373,7 @@ int Monster::mobDeathScream() {
         target->printColor("^yHarmful vibrations double you over in pain for ^Y%d^y damage!\n", n);
 
         if(n > (level+11))
-            target->stun(mrand(4, 6));
+            target->stun(Random::get(4, 6));
 
 
         if(target->isEffected("berserk")) {
@@ -466,7 +466,7 @@ int Monster::castSpell(Creature *target) {
     if(!knowctr)
         return(0);
 
-    spl = known[mrand(0, knowctr-1)];
+    spl = known[Random::get(0, knowctr-1)];
 
     // pets are smarter
     if(isPet()) {
@@ -597,13 +597,13 @@ bool Monster::petCaster() {
     if(t < i)
         return(false);
 
-    if(mp.getCur() < 2 || mrand(1,100) > 33 || getRoomParent()->flagIsSet(R_NO_MAGIC))
+    if(mp.getCur() < 2 || Random::get(1,100) > 33 || getRoomParent()->flagIsSet(R_NO_MAGIC))
         return(false);
 
     if( spellIsKnown(S_HEAL) &&
         master->hp.getCur() <= (master->hp.getMax()/8) &&
         mp.getCur() >= 25 &&
-        mrand(1,100) > 50
+        Random::get(1,100) > 50
     ) {
         mp.decrease(25);
 
@@ -618,7 +618,7 @@ bool Monster::petCaster() {
     if( spellIsKnown(S_MEND_WOUNDS) &&
         master->hp.getCur() <= (master->hp.getMax()/2) &&
         mp.getCur() >= 4 &&
-        mrand(1,100) > 25
+        Random::get(1,100) > 25
     ) {
         master->print("%M casts a mend-wounds spell on you.\n", this);
         broadcast((Socket*)nullptr, master->getSock(), getRoomParent(),
@@ -628,13 +628,13 @@ bool Monster::petCaster() {
 
         heal = MAX(bonus((int) intelligence.getCur()), bonus((int) piety.getCur())) +
                ((cClass == CreatureClass::CLERIC) ?
-                level + mrand(1, 1 + level / 2) : 0) +
+                level + Random::get(1, 1 + level / 2) : 0) +
                (cClass == CreatureClass::PALADIN ?
-                level / 2 + mrand(1, 1 + level / 3) : 0) +
+                level / 2 + Random::get(1, 1 + level / 3) : 0) +
                ((isEffected("vampirism") || cClass == CreatureClass::BARD || cClass == CreatureClass::DEATHKNIGHT) ?
-                mrand(1, 1 + level / 5) + 2 : 0) +
+                Random::get(1, 1 + level / 5) + 2 : 0) +
                ((isEffected("lycanthropy") || cClass == CreatureClass::MONK) ? level / 5 +
-                mrand(1, 1 + level / 7) + 2 : 0) +
+                Random::get(1, 1 + level / 7) + 2 : 0) +
                dice(2, 7, 0);
 
                 this->doHeal(master, heal);
@@ -653,14 +653,14 @@ bool Monster::petCaster() {
 
         heal = MAX(bonus((int) intelligence.getCur()),bonus((int) piety.getCur())) +
                ((cClass == CreatureClass::CLERIC) ? level / 2 +
-                mrand(1, 1 + level / 2) : 0) +
+                Random::get(1, 1 + level / 2) : 0) +
                (cClass == CreatureClass::PALADIN ?
-                level / 3 + mrand(1, 1 + level / 4) : 0) +
+                level / 3 + Random::get(1, 1 + level / 4) : 0) +
                ((isEffected("vampirism") || cClass == CreatureClass::BARD || cClass == CreatureClass::DEATHKNIGHT) ?
-                mrand(1, 1 + level / 5) : 0) +
+                Random::get(1, 1 + level / 5) : 0) +
                ((isEffected("lycanthropy") || cClass == CreatureClass::MONK) ? level/5 +
-                mrand(1,1+level/7) : 0)
-               + mrand(1, 8);
+                Random::get(1,1+level/7) : 0)
+               + Random::get(1, 8);
 
                 this->doHeal(master, heal);
         castDelay(PET_CAST_DELAY);
@@ -671,20 +671,20 @@ bool Monster::petCaster() {
     if( spellIsKnown(S_MEND_WOUNDS) &&
         hp.getCur() <= (hp.getMax()/2) &&
         mp.getCur() >= 4 &&
-        mrand(1,100) > 25
+        Random::get(1,100) > 25
     ) {
         broadcast(nullptr, getRoomParent(), "%M casts a mend-wounds spell on %sself.", this, himHer());
         mp.decrease(4);
 
         heal = MAX(bonus((int) intelligence.getCur()), bonus((int) piety.getCur())) +
                ((cClass == CreatureClass::CLERIC) ?
-                level + mrand(1, 1 + level / 2) : 0) +
+                level + Random::get(1, 1 + level / 2) : 0) +
                (cClass == CreatureClass::PALADIN ?
-                level / 2 + mrand(1, 1 + level / 3) : 0) +
+                level / 2 + Random::get(1, 1 + level / 3) : 0) +
                ((isEffected("vampirism") || cClass == CreatureClass::BARD || cClass == CreatureClass::DEATHKNIGHT) ?
-                mrand(1, 1 + level / 5) + 2 : 0) +
+                Random::get(1, 1 + level / 5) + 2 : 0) +
                ((isEffected("lycanthropy") || cClass == CreatureClass::MONK) ? level / 5 +
-                mrand(1, 1 + level / 7) + 2 : 0) +
+                Random::get(1, 1 + level / 7) + 2 : 0) +
                dice(2, 7, 0);
 
                 doHeal(this, heal);
@@ -702,14 +702,14 @@ bool Monster::petCaster() {
 
         heal = MAX(bonus((int) intelligence.getCur()),bonus((int) piety.getCur())) +
                ((cClass == CreatureClass::CLERIC) ? level / 2 +
-                mrand(1, 1 + level / 2) : 0) +
+                Random::get(1, 1 + level / 2) : 0) +
                (cClass == CreatureClass::PALADIN ?
-                level / 3 + mrand(1, 1 + level / 4) : 0) +
+                level / 3 + Random::get(1, 1 + level / 4) : 0) +
                ((isEffected("vampirism") || cClass == CreatureClass::BARD || cClass == CreatureClass::DEATHKNIGHT) ?
-                mrand(1, 1 + level / 5) : 0) +
+                Random::get(1, 1 + level / 5) : 0) +
                ((isEffected("lycanthropy") || cClass == CreatureClass::MONK) ? level/5 +
-                mrand(1,1+level/7) : 0)
-               + mrand(1, 8);
+                Random::get(1,1+level/7) : 0)
+               + Random::get(1, 8);
 
         doHeal(this, heal);
         castDelay(PET_CAST_DELAY);
@@ -832,7 +832,7 @@ void Monster::checkScavange(long t) {
     if(flagIsSet(M_SCAVANGER)) {
         i = lasttime[LT_MON_SCAVANGE].ltime;
         if( t - i > 20 &&
-            mrand(1, 100) <= 15 &&
+            Random::get<bool>(0.15) &&
             !room->objects.empty() &&
             canScavange((*room->objects.begin())) &&
             !((*room->objects.begin())->getType() == ObjectType::WEAPON && flagIsSet(M_WILL_WIELD)))
@@ -903,7 +903,7 @@ void Monster::checkScavange(long t) {
             if(hide_obj) {
                 object = hide_obj;
                 broadcast(getSock(), room, "%M attempts to hide %1P.", this, object);
-                if(mrand(1, 100) <= level * 10) {
+                if(Random::get(1, 100) <= level * 10) {
                     object->setFlag(O_HIDDEN);
                 }
             }
@@ -957,7 +957,7 @@ int Monster::checkWander(long t) {
         // Fast wander can wander once a second
         if((flagIsSet(M_FAST_WANDER) && t - i > 1) ||
             // Non fast wander has a 20% chance after 20 seconds
-            (t - i > 20 && mrand(1, 100) > 20))
+            (t - i > 20 && Random::get(1, 100) > 20))
         {
             // If we're a fast wanderer, see if there's anyone in the room we
             // might want to stick around and attack. If there isn't we can
@@ -981,10 +981,10 @@ int Monster::checkWander(long t) {
     // and sufficient time has passed
     if( flagIsSet(M_ATTACKING_SHOPLIFTER) &&
         !nearEnemy() &&
-        (t - i > 60 && mrand(1, 100) <= (!flagIsSet(M_PERMENANT_MONSTER) ? 40:30))
+        (t - i > 60 && Random::get(1, 100) <= (!flagIsSet(M_PERMENANT_MONSTER) ? 40:30))
     ) {
         // If we have a mobile chance or we're a fast wanderer
-        if((mrand(1, 100) < Mobilechance || flagIsSet(M_FAST_WANDER))) {
+        if((Random::get(1, 100) < Mobilechance || flagIsSet(M_FAST_WANDER))) {
             // We can go looking for the guy
             setFlag(M_MOBILE_MONSTER);
         } else if(!flagIsSet(M_CHASING_SOMEONE)) {
@@ -1011,7 +1011,7 @@ int Monster::checkWander(long t) {
         }
 
         // If we're chasing someone we have a chance to wander away
-        if(flagIsSet(M_CHASING_SOMEONE) && mrand(1,100) < 10) {
+        if(flagIsSet(M_CHASING_SOMEONE) && Random::get(1,100) < 10) {
             Creature* target = getTarget(false);
             if(target)
                 broadcast(nullptr, room, "%1M gives up %s search for %s and wanders away.", this, hisHer(), target->getCName());
@@ -1028,7 +1028,7 @@ int Monster::checkWander(long t) {
         !flagIsSet(M_PERMENANT_MONSTER)
     ) {
         // Then we've got a chance to wander away
-        if(mrand(1, 100) < 5) {
+        if(Random::get<bool>(0.05)) {
             if(race || monType::isIntelligent(type))
                 broadcast(nullptr, room, "%1M %s away in search of someone to bully.", this, Move::getString(this).c_str());
             else
@@ -1047,7 +1047,7 @@ int Monster::checkWander(long t) {
         !isPet() && !flagIsSet(M_DM_FOLLOW)))
     {
         if( // If it's time to wander, and we have no enemey
-            (t - i > 60 && (inUniqueRoom() && mrand(1, 100) <= getUniqueRoomParent()->wander.getTraffic()) && !hasEnemy()) ||
+            (t - i > 60 && (inUniqueRoom() && Random::get(1, 100) <= getUniqueRoomParent()->wander.getTraffic()) && !hasEnemy()) ||
             // or we fast-wander if enemies are not nearby
             (flagIsSet(M_FAST_WANDER) && !nearEnemy()))
         {
@@ -1068,7 +1068,7 @@ int Monster::checkWander(long t) {
                     // and there is no dminvis person in the room
                     !room->dmInRoom() &&
                     // and we've got a wander chance
-                    (mrand(1,100) <= wanderchance)
+                    (Random::get(1,100) <= wanderchance)
                 ) {
                     broadcast(nullptr, room, "%1M just %s away.", this, Move::getString(this).c_str());
                     return(2);
@@ -1078,7 +1078,7 @@ int Monster::checkWander(long t) {
             // If we're not a fast wanderer
             if(!flagIsSet(M_FAST_WANDER)) {
                 // And we've got a mobile chance
-                if(mrand(1, 100) < Mobilechance) {
+                if(Random::get(1, 100) < Mobilechance) {
                     // Then we can wander next round
                     setFlag(M_MOBILE_MONSTER);
                 }
@@ -1116,7 +1116,7 @@ bool Monster::checkEnemyMobs() {
         return(false);
 
     // 25% chance each update cycle to aggro an enemy monster
-    if(mrand(1,100) > 25)
+    if(Random::get(1,100) > 25)
         return(false);
 
     // We know we have some enemies, now lets see if we have any
@@ -1202,7 +1202,7 @@ int Monster::grabCoins(Player* player) {
     if(!player->coins[GOLD])
         return(0);
 
-    unsigned long grab = mrand(1, player->coins[GOLD]), num = player->coins[GOLD];
+    unsigned long grab = Random::get<unsigned long>(1, player->coins[GOLD]), num = player->coins[GOLD];
     // never steal all gold if they have more than 100k
     grab = MIN(grab, 100000UL);
 

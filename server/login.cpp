@@ -1935,19 +1935,19 @@ void Create::doFamily(Player* player, int mode) {
     // siblings
     int i = 0;
     if(mode == 3)
-        i = mrand(1,3);
+        i = Random::get(1,3);
     else if(mode == 4)
-        i = mrand(4, 10);
+        i = Random::get(4, 10);
 
     while(i) {
-        if(mrand(0,1))
+        if(Random::get(0,1))
             player->custom.sisters++;
         else
             player->custom.brothers++;
         i--;
     }
 
-    switch(mrand(1,6)) {
+    switch(Random::get(1,6)) {
     case 1:
         player->custom.parents = CustomCrt::PARENTS_DEAD;
         break;
@@ -2131,11 +2131,11 @@ bool Create::getEducation(Socket* sock, bstring str, int mode) {
 int Create::calcHeight(int race, int mode) {
     switch(mode) {
     case 1:     // shorter
-        return(mrand(1,50));
+        return(Random::get(1,50));
     case 3:     // taller
-        return(mrand(100,150));
+        return(Random::get(100,150));
     default:    // normal
-        return(mrand(50,100));
+        return(Random::get(50,100));
     }
 }
 
@@ -2182,11 +2182,11 @@ bool Create::getHeight(Socket* sock, bstring str, int mode) {
 int Create::calcWeight(int race, int mode) {
     switch(mode) {
     case 1:     // thinner
-        return(mrand(1,50));
+        return(Random::get(1,50));
     case 3:     // stockier
-        return(mrand(100,150));
+        return(Random::get(100,150));
     default:    // normal
-        return(mrand(50,100));
+        return(Random::get(50,100));
     }
 }
 

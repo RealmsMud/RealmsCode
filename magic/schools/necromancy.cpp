@@ -81,7 +81,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
         } else {
             if(spellData->how == CastType::CAST && player->isPlayer())
                 player->getAsPlayer()->statistics.offensiveCast();
-            player->hp.setCur(MIN(player->hp.getCur(), mrand(1,10)));
+            player->hp.setCur(MIN(player->hp.getCur(), Random::get(1,10)));
             player->print("Your lifeforce is nearly sucked away by deadly magic.\n");
             return(0);
         }
@@ -157,7 +157,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
         if(!saved || player->isCt()) {
-            roll = mrand(1,10);
+            roll = Random::get(1,10);
             dmg = target->hp.getCur() - roll;
 
             target->hp.setCur(MIN(target->hp.getCur(), roll));
@@ -312,7 +312,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
         player->getAdjustedAlignment() > REDDISH)
     {
         player->print("You are not evil enough to do that!\n");
-        shocked = mrand(5,10);
+        shocked = Random::get(5,10);
 
         player->print("You are shocked for %d damage by %s's wrath!\n", shocked, gConfig->getDeity(player->getDeity())->getName().c_str());
 
@@ -371,7 +371,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     crt_num = MAX(BASE_UNDEAD, BASE_UNDEAD + 3*(title-1));
     // 0 = weak, 1 = normal, 2 = buff
-    buff = mrand(1,3) - 1;
+    buff = Random::get(1,3) - 1;
 
     if(spellData->object) {
         level = spellData->object->getQuality()/10;
@@ -391,7 +391,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
         break;
     case 2:
         // Buff undead, add 2
-        level -= mrand(0,1);
+        level -= Random::get(0,1);
         crt_num += 2;
         break;
     default:
@@ -439,9 +439,9 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
     // find out how long it's going to last and create all the timeouts
-    //interval = (60L*mrand(2,4)) + (bonus((int) player->piety.getCur())*60L >= 0 ? bonus((int) pPlayer->piety.getCur())*60L : 0);      /* + 60 * title; */
+    //interval = (60L*Random::get(2,4)) + (bonus((int) player->piety.getCur())*60L >= 0 ? bonus((int) pPlayer->piety.getCur())*60L : 0);      /* + 60 * title; */
 
-    interval = ((60L*mrand(3,5)) + (60L*bonus((int) player->piety.getCur())));
+    interval = ((60L*Random::get(3,5)) + (60L*bonus((int) player->piety.getCur())));
     target->lasttime[LT_ANIMATE].ltime = t;
     target->lasttime[LT_ANIMATE].interval = interval;
     player->lasttime[LT_ANIMATE].ltime = t;

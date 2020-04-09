@@ -310,7 +310,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
                 Damage damage;
                 damage.set(1);
                 if(object->getActualWeight() > 1)
-                    damage.set(mrand(1,6));
+                    damage.set(Random::get(1,6));
 
                 victim->modifyDamage(creature, PHYSICAL, damage);
                 if(pVictim)
@@ -488,7 +488,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(mrand(1,100) <= chance) {
+    if(Random::get(1,100) <= chance) {
 
         object->setFlag(O_BROKEN_BY_CMD);
         if(object->compass) {
@@ -527,7 +527,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
         if( (player->getClass() == CreatureClass::BERSERKER || player->isCt()) && object->getType() != ObjectType::WEAPON &&
             (shots > 0.0) && object->value[GOLD] > 100
         ) {
-            xpgain = (int)mtbf+(object->getAdjustment()*10)+mrand(1,50);
+            xpgain = (int)mtbf+(object->getAdjustment()*10)+Random::get(1,50);
             if(object->getType() == ObjectType::WAND)
                 xpgain *= 3;
 
@@ -538,7 +538,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
         }
 
         if( (object->getType() == ObjectType::WAND || (object->getType() == ObjectType::WEAPON && object->flagIsSet(O_WEAPON_CASTS) && object->getMagicpower())) &&
-            (shots > 0.0) && (mrand(1,100) <= 50)
+            (shots > 0.0) && (Random::get(1,100) <= 50)
         ) {
             splvl = get_spell_lvl(object->getMagicpower()-1);
             if(player->isCt())
@@ -561,8 +561,8 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
             broadcast(player->getSock(), player->getParent(), "%M is engulfed by a magical vortex!", player);
 
-            dmg = mrand(1,5);
-            dmg += MAX(5,(mrand(splvl*2, splvl*6)))+((int)mtbf/2);
+            dmg = Random::get(1,5);
+            dmg += MAX(5,(Random::get(splvl*2, splvl*6)))+((int)mtbf/2);
 
             if(player->chkSave(BRE, player, 0))
                 dmg /= 2;
@@ -577,7 +577,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
                 while(pIt != pEnd) {
                     ply = (*pIt++);
                     if(ply != player && !ply->inCombat()) {
-                        dmg = mrand(splvl*4, splvl*8);
+                        dmg = Random::get(splvl*4, splvl*8);
 
                         if(ply->chkSave(BRE, ply, 0))
                             dmg /= 2;
@@ -601,7 +601,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
             }
 
             if(splvl >= 3) {
-                if(mrand(1,100) <= 50) {
+                if(Random::get(1,100) <= 50) {
                     newloc = getEtherealTravelRoom();
                     if(player->inJail())
                         newloc = player->getUniqueRoomParent()->info;
@@ -649,7 +649,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
             if(player->immuneToPoison())
                 chance = 101;
 
-            if(mrand(1,100) <= chance) {
+            if(Random::get(1,100) <= chance) {
                 player->printColor("^r^#You accidentally poisoned yourself!\n");
                 broadcast(player->getSock(), player->getParent(), "%M accidentally poisoned %sself!",
                     player, player->himHer());

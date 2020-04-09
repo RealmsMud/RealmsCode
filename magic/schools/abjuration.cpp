@@ -378,7 +378,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
         else if(spellData->how == CastType::POTION && align) {
             player->smashInvis();
 
-            damage.set(mrand(spellData->level * 2, spellData->level * 4));
+            damage.set(Random::get(spellData->level * 2, spellData->level * 4));
             damage.add(MAX(0, bonus((int) player->piety.getCur())));
             player->modifyDamage(player, MAGICAL, damage);
 
@@ -438,7 +438,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
             if(!align) {
                 player->print("Nothing happens.\n");
             } else {
-                damage.set(mrand(spellData->level * 2, spellData->level * 4));
+                damage.set(Random::get(spellData->level * 2, spellData->level * 4));
                 damage.add(abs(player->getAlignment()/100));
                 damage.add(MAX(0, bonus((int) player->piety.getCur())));
                 target->modifyDamage(player, MAGICAL, damage);
@@ -751,7 +751,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
         } else {
             player->print("You cast a %s spell on %N.\n%s body returns to flesh.\n",
                 spell, target, target->upHisHer());
-            if(mrand(1,100) < 50) {
+            if(Random::get(1,100) < 50) {
 
                 target->print("%M casts a %s spell on you.\nYour body returns to flesh.\n", player, spell);
                 broadcast(player->getSock(), target->getSock(), player->getParent(),
@@ -783,7 +783,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 
 
         if( player->isCt() ||
-            (mrand(1,100) <= chance && !target->chkSave(SPL, player, 0)))
+            (Random::get(1,100) <= chance && !target->chkSave(SPL, player, 0)))
         {
             player->print("You cast a %s spell on %N.\n", spell, target);
 
@@ -821,11 +821,11 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 //*********************************************************************
 
 int splCancelMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
-    return(doDispelMagic(player, cmnd, spellData, "cancel-magic", mrand(1,2)));
+    return(doDispelMagic(player, cmnd, spellData, "cancel-magic", Random::get(1,2)));
 }
 
 int splDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
-    return(doDispelMagic(player, cmnd, spellData, "dispel-magic", mrand(3,5)));
+    return(doDispelMagic(player, cmnd, spellData, "dispel-magic", Random::get(3,5)));
 }
 
 int splAnnulMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
@@ -919,7 +919,7 @@ void Creature::doDispelMagic(int num) {
         if(!numEffects)
             return;
         // which effect shall we dispel?
-        choice = mrand(1, numEffects);
+        choice = Random::get(1, numEffects);
         numEffects = 0;
 
         // find it and get rid of it!

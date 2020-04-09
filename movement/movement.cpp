@@ -322,7 +322,7 @@ bool Move::sneak(Player* player, bool sneaking) {
         // see if they failed sneaking or not
         if(sneaking && (
                 !player->flagIsSet(P_HIDDEN) ||
-                mrand(1, 100) > player->getSneakChance()
+                Random::get(1, 100) > player->getSneakChance()
             )
         ) {
             player->checkImprove("sneak", false);
@@ -376,8 +376,8 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
     {
         int fall = (exit->flagIsSet(X_DIFFICULT_CLIMB) ? 50 : 0) + 50 - player->getFallBonus();
 
-        if(mrand(1, 100) < fall) {
-            int dmg = mrand(5, 15 + fall / 10);
+        if(Random::get(1, 100) < fall) {
+            int dmg = Random::get(5, 15 + fall / 10);
 
             player->printColor("You fell and hurt yourself for %s%d^x damage.\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg);
             ::broadcast(player->getSock(), player->getParent(), "%M fell down.", player);
@@ -516,7 +516,7 @@ bool Move::canMove(Player* player, cmd* cmnd) {
                 !player->isEffected("fly") &&
                 !player->flagIsSet(P_FREE_ACTION) &&
                 !player->isEffected("mist") &&
-                mrand(1,100) > chance
+                Random::get(1,100) > chance
             ))
         {
             if(player->lasttime[LT_MOVED].misc > moves) {
@@ -637,10 +637,10 @@ bool drunkenStumble(const EffectInfo* effect) {
     switch(state) {
     case ALCOHOL_TIPSY:
         // 33%
-        return(!mrand(0,2));
+        return(!Random::get(0,2));
     case ALCOHOL_DRUNK:
         // 75%
-        return(!!mrand(0,3));
+        return(!!Random::get(0,3));
     case ALCOHOL_INEBRIATED:
         // 100%
         return(true);
@@ -689,7 +689,7 @@ bstring Move::getString(Creature* creature, bool ordinal, bstring exit) {
         ) {
 
             do {
-                num = mrand(1, 3);
+                num = Random::get(1, 3);
                 if(creature->movetype[num-1][0])
                     str = creature->movetype[num-1];
             } while(!creature->movetype[num-1][0]);
@@ -742,7 +742,7 @@ void Move::checkFollowed(Player* player, Exit* exit, BaseRoom* room, std::list<C
         if(!target->canEnter(exit))
             continue;
 
-        if(mrand(1,20) > 10 - (player->dexterity.getCur()/10) + target->dexterity.getCur()/10)
+        if(Random::get(1,20) > 10 - (player->dexterity.getCur()/10) + target->dexterity.getCur()/10)
             continue;
 
         player->print("%M followed you.\n", target);
@@ -938,7 +938,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
             player->print("Water currents disperse your mist.\n");
         else {
             player->print("Swirling vapors disperse your mist.\n");
-            player->stun(mrand(5,8));
+            player->stun(Random::get(5,8));
         }
         player->unmist();
     }

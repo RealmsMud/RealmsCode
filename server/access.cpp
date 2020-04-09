@@ -288,7 +288,7 @@ char *get_language_verb(int lang) {
     ASSERTLOG( lang >= 0 );
     ASSERTLOG( lang < LANGUAGE_COUNT );
 
-    num = mrand(1,3);
+    num = Random::get(1,3);
     lang = MAX(0, MIN(lang, LANGUAGE_COUNT-1));
 
     return(language_verb[lang][num-1]);
