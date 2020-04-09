@@ -347,6 +347,7 @@ set(COMMON_SOURCE_FILES
     xml/files-xml-save.cpp
     xml/guilds-xml.cpp
     xml/hooks-xml.cpp
+    xml/location-xml.cpp
     xml/monsters-xml.cpp
     xml/mxp-xml.cpp
     xml/objects-xml.cpp
@@ -359,8 +360,6 @@ set(COMMON_SOURCE_FILES
 
     wip/fighters.cpp
     wip/songs.cpp
-
-
 
     )
 
