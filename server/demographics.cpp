@@ -128,9 +128,9 @@ void doDemographics() {
 
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode, curNode, childNode;
-    struct      dirent *dirp=0;
+    struct      dirent *dirp=nullptr;
     struct      lasttime lasttime[128];
-    DIR         *dir=0;
+    DIR         *dir=nullptr;
     char        highest[HIGHEST_END][80], name[80], outstr[120], *str, spells[32];
     char        percent1[10], percent2[10];
     long        exp;
@@ -143,7 +143,7 @@ void doDemographics() {
     const Calendar* calendar = gConfig->getCalendar();
     Statistics statistics;
 
-    t = time(0);
+    t = time(nullptr);
     std::clog << "Begining demographics routine.\n";
 
 
@@ -354,7 +354,7 @@ void doDemographics() {
             sprintf(highest[BEST_PK], "%s", name);
         }
         delete birthday;
-        birthday=0;
+        birthday=nullptr;
     }
     std::clog << "done.\n";
     closedir(dir);
