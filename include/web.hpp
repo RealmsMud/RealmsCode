@@ -24,8 +24,8 @@
 bstring webwho();
 void updateRecentActivity();
 void callWebserver(bstring url, bool questionMark=true, bool silent=false);
-void webUnassociate(bstring user);
-void webCrash(bstring msg);
+void webUnassociate(const bstring& user);
+void webCrash(const bstring& msg);
 
 
 // Ascii characters we'll need
@@ -56,8 +56,8 @@ private:
     bool wiki(bstring command, bstring tempBuf);
 
 private:
-    int inFd;
-    int outFd;
+    int inFd{};
+    int outFd{};
     bstring inBuf;  // Input Buffer
     bstring outBuf; // Output Buffer
 
