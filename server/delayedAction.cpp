@@ -113,7 +113,7 @@ void Server::addDelayedAction(void (*callback)(DelayedActionFn), MudObject* targ
             break;
     }
 
-    DelayedAction action = DelayedAction(callback, target, cmnd, type, time(0) + howLong, canInterrupt);
+    DelayedAction action = DelayedAction(callback, target, cmnd, type, time(nullptr) + howLong, canInterrupt);
 
     delayedActionQueue.push_back(action);
     target->addDelayedAction(&action);
@@ -123,8 +123,8 @@ void Server::addDelayedAction(void (*callback)(DelayedActionFn), MudObject* targ
 //                      addDelayedScript
 //*********************************************************************
 
-void Server::addDelayedScript(void (*callback)(DelayedActionFn), MudObject* target, bstring script, long howLong, bool canInterrupt) {
-    DelayedAction action = DelayedAction(callback, target, script, time(0) + howLong, canInterrupt);
+void Server::addDelayedScript(void (*callback)(DelayedActionFn), MudObject* target, const bstring& script, long howLong, bool canInterrupt) {
+    DelayedAction action = DelayedAction(callback, target, script, time(nullptr) + howLong, canInterrupt);
 
     delayedActionQueue.push_back(action);
     target->addDelayedAction(&action);
@@ -187,7 +187,7 @@ bstring Server::delayedActionStrings(const MudObject* target) {
 // Called whenever the player does something to make them cancel their delayed action queue.
 
 void MudObject::interruptDelayedActions() {
-    if(delayedActionQueue.size()) {
+    if(!delayedActionQueue.empty()) {
         // true means we are only removing interrupt-able actions
         if(gServer->removeDelayedActions(this, true)) {
             const Creature* creature = getAsConstCreature();
@@ -253,8 +253,8 @@ void doDelayedAction(const DelayedAction* action) {
 //                      delayedAction
 //*********************************************************************
 
-void stripBadChars(bstring str);
-void Creature::delayedAction(bstring action, int delay, MudObject* target) {
+
+void Creature::delayedAction(const bstring& action, int delay, MudObject* target) {
     cmd cmnd;
 
     cmnd.fullstr = action;
@@ -284,6 +284,6 @@ void doDelayedScript(const DelayedAction* action) {
 //                      delayedScript
 //*********************************************************************
 
-void Creature::delayedScript(bstring script, int delay) {
+void Creature::delayedScript(const bstring& script, int delay) {
     gServer->addDelayedScript(doDelayedScript, this, script, delay);
 }

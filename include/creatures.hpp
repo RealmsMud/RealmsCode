@@ -228,8 +228,8 @@ public:
     virtual void upgradeStats() {};
     virtual Socket* getSock() const;
     Location getLocation();
-    void delayedAction(bstring action, int delay, MudObject* target=0);
-    void delayedScript(bstring script, int delay);
+    void delayedAction(const bstring& action, int delay, MudObject* target=0);
+    void delayedScript(const bstring& script, int delay);
 
 //  const Monster* getConstMonster() const;
 //  const Player* getConstPlayer() const;

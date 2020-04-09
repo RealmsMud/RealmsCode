@@ -317,7 +317,7 @@ public:
 
     bool removeDelayedActions(MudObject* target, bool interruptOnly=false);
     void addDelayedAction(void (*callback)(DelayedActionFn), MudObject* target, cmd* cmnd, DelayedActionType type, long howLong, bool canInterrupt=true);
-    void addDelayedScript(void (*callback)(DelayedActionFn), MudObject* target, bstring script, long howLong, bool canInterrupt=true);
+    void addDelayedScript(void (*callback)(DelayedActionFn), MudObject* target, const bstring& script, long howLong, bool canInterrupt=true);
     bool hasAction(const MudObject* target, DelayedActionType type);
     bstring delayedActionStrings(const MudObject* target);
 
