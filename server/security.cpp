@@ -19,11 +19,10 @@
 #include "creatures.hpp"
 #include "mud.hpp"
 #include "login.hpp"
-#include "security.hpp"
 #include "server.hpp"
 #include "socket.hpp"
 
-bstring Player::hashPassword(bstring pass) {
+bstring Player::hashPassword(const bstring& pass) {
     // implement md5 or sha1 here if you want 
     return(pass);
 }
@@ -32,11 +31,11 @@ bstring Player::getPassword() const {
     return(password);
 }
 
-bool Player::isPassword(bstring pass) const {
+bool Player::isPassword(const bstring& pass) const {
     return(password == hashPassword(pass));
 }
 
-void Player::setPassword(bstring pass) {
+void Player::setPassword(const bstring& pass) {
     lastPassword = password;
     password = hashPassword(pass);
 }
@@ -117,7 +116,7 @@ int cmdPassword(Player* player, cmd* cmnd) {
         player->print("You are brain-dead. You can't do that.\n");
         return(0);
     }
-    if(player->getProxyName() != "") {
+    if(!player->getProxyName().empty()) {
         player->print("You are unable to change the password of a proxied character.\n");
         return(0);
     }
@@ -181,7 +180,6 @@ void changePassword(Socket* sock, const bstring& str) {
             player->getSock()->setState(CON_CHANGE_PASSWORD_FINISH);
             return;
         }
-        break;
     case CON_CHANGE_PASSWORD_FINISH:
         sock->print("%c%c%c\n\r", 255, 252, 1);
         if(str.equals(sock->tempstr[1])) {

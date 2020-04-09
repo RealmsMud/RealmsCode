@@ -968,7 +968,7 @@ public:
 
 class Player : public Creature {
 public:
-    static bstring hashPassword(bstring pass);
+    static bstring hashPassword(const bstring& pass);
 
 protected:
     void doCopy(const Player& cr);
@@ -1417,8 +1417,8 @@ public:
     void forgetSong(int song);
 
     bstring getPassword() const;
-    bool isPassword(bstring pass) const;
-    void setPassword(bstring pass);
+    bool isPassword(const bstring& pass) const;
+    void setPassword(const bstring& pass);
 
     static bool exists(bstring name);
     time_t getIdle();
