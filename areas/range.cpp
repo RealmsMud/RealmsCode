@@ -15,8 +15,7 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.hpp"
-#include "xml.hpp"
+#include "range.hpp"
 
 //*********************************************************************
 //                      Range
@@ -26,62 +25,22 @@ Range::Range() {
     high = 0;
 }
 
-Range& Range::operator=(const Range& r) {
-    low = r.low;
-    high = r.high;
-    return(*this);
-}
+Range& Range::operator=(const Range& r) = default;
 
 bool Range::operator==(const Range& r) const {
-    if( low != r.low ||
-        high != r.high
-    )
-        return(false);
-    return(true);
+    return !(low != r.low ||
+             high != r.high);
 }
 bool Range::operator!=(const Range& r) const {
     return(!(*this==r));
 }
 
-//*********************************************************************
-//                      load
-//*********************************************************************
-
-void Range::load(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-
-    while(childNode) {
-             if(NODE_NAME(childNode, "Low")) low.load(childNode);
-        else if(NODE_NAME(childNode, "High")) xml::copyToNum(high, childNode);
-
-        childNode = childNode->next;
-    }
-    if(!high && low.id)
-        high = low.id;
-}
-
-//*********************************************************************
-//                      save
-//*********************************************************************
-
-xmlNodePtr Range::save(xmlNodePtr rootNode, const char* childName, int pos) const {
-    if(!low.id && !high)
-        return(nullptr);
-    xmlNodePtr curNode = xml::newStringChild(rootNode, childName);
-    if(pos)
-        xml::newNumProp(curNode, "Num", pos);
-
-    low.save(curNode, "Low", false);
-    xml::newNumChild(curNode, "High", high);
-
-    return(curNode);
-}
 
 //*********************************************************************
 //                      belongs
 //*********************************************************************
 
-bool Range::belongs(CatRef cr) const {
+bool Range::belongs(const CatRef& cr) const {
     return( low.isArea(cr.area) && (
             (cr.id >= low.id && cr.id <= high) ||
             (low.id == -1 && high == -1)
@@ -108,6 +67,6 @@ bstring Range::str() const {
 //                      isArea
 //*********************************************************************
 
-bool Range::isArea(bstring c) const {
+bool Range::isArea(const bstring& c) const {
     return(low.isArea(c));
 }

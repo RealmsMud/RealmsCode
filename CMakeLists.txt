@@ -352,6 +352,8 @@ set(COMMON_SOURCE_FILES
     xml/mxp-xml.cpp
     xml/objects-xml.cpp
     xml/players-xml.cpp
+    xml/property-xml.cpp
+    xml/range-xml.cpp
     xml/rooms-xml.cpp
     xml/skills-xml.cpp
     xml/socials-xml.cpp
@@ -361,7 +363,7 @@ set(COMMON_SOURCE_FILES
     wip/fighters.cpp
     wip/songs.cpp
 
-    xml/property-xml.cpp)
+    )
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES})

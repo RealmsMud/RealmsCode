@@ -31,9 +31,9 @@ public:
     Range&  operator=(const Range& r);
     bool operator==(const Range& r) const;
     bool operator!=(const Range& r) const;
-    bool    belongs(CatRef cr) const;
-    bstring str() const;
-    bool    isArea(bstring c) const;
+    [[nodiscard]] bool    belongs(const CatRef& cr) const;
+    [[nodiscard]] bstring str() const;
+    [[nodiscard]] bool    isArea(const bstring& c) const;
 
     CatRef  low;
     short   high;
