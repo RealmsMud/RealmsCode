@@ -18,10 +18,8 @@
 
 #define MIGNORE
 
-#include "creatures.hpp"
 #include "magic.hpp"
 #include "mud.hpp"
-#include "config.hpp"
 
 char questions_to_email[80]="realms@rohonline.net";
 
