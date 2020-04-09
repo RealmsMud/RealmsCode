@@ -318,9 +318,9 @@ public:
 // StartLocs
     bool loadStartLoc();
     void clearStartLoc();
-    const StartLoc* getStartLoc(bstring id) const;
+    const StartLoc* getStartLoc(const bstring& id) const;
     const StartLoc* getDefaultStartLoc() const;
-    const StartLoc* getStartLocByReq(CatRef cr) const;
+    const StartLoc* getStartLocByReq(const CatRef& cr) const;
     void saveStartLocs() const;
 
 // Properties

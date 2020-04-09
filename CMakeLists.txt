@@ -357,6 +357,7 @@ set(COMMON_SOURCE_FILES
     xml/rooms-xml.cpp
     xml/skills-xml.cpp
     xml/socials-xml.cpp
+    xml/startlocs-xml.cpp
     xml/stats-xml.cpp
     xml/xml.cpp
 
