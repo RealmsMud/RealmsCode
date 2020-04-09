@@ -1997,7 +1997,7 @@ bstring Server::getServerTime() {
 int Server::getNumPlayers() {
     int numPlayers=0;
     Player* target=nullptr;
-    for(std::pair<bstring, Player*> p : players) {
+    for(const auto& p : players) {
         target = p.second;
 
         if(!target->isConnected())
@@ -2129,7 +2129,7 @@ Player* Server::lookupPlyId(const bstring& toLookup) {
 }
 bstring Server::getRegisteredList() {
     std::ostringstream oStr;
-    for(std::pair<bstring, MudObject*> p : registeredIds) {
+    for(const auto& p : registeredIds) {
         oStr << p.first << " - " << p.second->getName() << std::endl;
     }
     return(oStr.str());
