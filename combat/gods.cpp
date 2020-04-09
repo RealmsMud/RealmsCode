@@ -42,14 +42,14 @@ int checkGodKill(Player *killer, Player *victim) {
         bns += levelDiff * 50;
 
 
-    total = MAX(1, mrand((base + bns)/2, base + bns));
+    total = MAX(1, Random::get((base + bns)/2, base + bns));
 
     if(killer->halftolevel())
         total = 0;
     if(killer->hasSecondClass())
         total = total * 3 / 4;
 
-    penalty = MIN(mrand(1000,1500), (bns*3)/2);
+    penalty = MIN(Random::get(1000,1500), (bns*3)/2);
 
     if(killer->getLevel() > victim->getLevel() + 6)
         penalty = 100;

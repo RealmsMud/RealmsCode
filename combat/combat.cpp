@@ -77,7 +77,7 @@ int Monster::updateCombat() {
     // If we're fighting a pet, see if we'll ignore the pet and attack a player instead
     if(target->isPet() && target->getMaster()) {
         if(target->inSameRoom(target->getMaster())) {
-            if(mrand(1,100) < 20 || target->intelligence.getCur() >= 150 || target->flagIsSet(M_KILL_MASTER_NOT_PET)) {
+            if(Random::get(1,100) < 20 || target->intelligence.getCur() >= 150 || target->flagIsSet(M_KILL_MASTER_NOT_PET)) {
                 target = target->getMaster();
                 addEnemy(target);
             }
@@ -148,7 +148,7 @@ int Monster::updateCombat() {
     }
 
 
-    if(mrand(1,100) < n) {
+    if(Random::get(1,100) < n) {
         willCast = true;
         if(room->checkAntiMagic(this))
             antiMagic = true;
@@ -227,7 +227,7 @@ int Monster::updateCombat() {
             else
                 yellchance = 25+(2*bonus((int) intelligence.getCur()));
 
-            if(flagIsSet(M_WILL_YELL_FOR_HELP) && ((mrand(1,100) < yellchance) || (hp.getCur() <= hp.getCur()/5))) {
+            if(flagIsSet(M_WILL_YELL_FOR_HELP) && ((Random::get(1,100) < yellchance) || (hp.getCur() <= hp.getCur()/5))) {
                 if(!flagIsSet(M_WILL_BE_HELPED))
                     broadcast(getSock(), room, "%M yells for help!", this);
                 setFlag(M_YELLED_FOR_HELP);
@@ -239,7 +239,7 @@ int Monster::updateCombat() {
     }
 
     if( flagIsSet(M_YELLED_FOR_HELP) &&
-        (mrand(1,100) < (MAX(15, inUniqueRoom() ? getUniqueRoomParent()->wander.getTraffic() : 15))) &&
+        (Random::get(1,100) < (MAX(15, inUniqueRoom() ? getUniqueRoomParent()->wander.getTraffic() : 15))) &&
         !flagIsSet(M_WILL_YELL_FOR_HELP)
     ) {
         setFlag(M_WILL_YELL_FOR_HELP);
@@ -284,7 +284,7 @@ int Monster::updateCombat() {
         if(!breathe) {
             if(attack[0][0] || attack[1][0] || attack[2][0]) {
                 do {
-                    num = mrand(1,3);
+                    num = Random::get(1,3);
                     if(attack[num-1][0])
                         strcpy(atk, attack[num-1]);
                 } while(!attack[num-1][0]);
@@ -369,7 +369,7 @@ int Monster::updateCombat() {
                 flagIsSet(M_STEAL_WHEN_ATTACKING) ||
                 flagIsSet(M_STEAL_ALWAYS)
             ) &&
-            mrand(1,100) <= 10 && (
+            Random::get(1,100) <= 10 && (
                 !pTarget->hasCharm(getName()) &&
                 flagIsSet(M_CHARMED)
             )
@@ -386,7 +386,7 @@ int Monster::updateCombat() {
         if(flagIsSet(M_WILL_BLIND))
             tryToBlind(target);
 
-        if(pTarget && flagIsSet(M_DISOLVES_ITEMS) && mrand(1,100) <= 15)
+        if(pTarget && flagIsSet(M_DISOLVES_ITEMS) && Random::get(1,100) <= 15)
             pTarget->dissolveItem(this);
 
         if( doDamage(target, attackDamage.get(), CHECK_DIE_ROB, PHYSICAL_DMG, freeTarget) ||
@@ -412,7 +412,7 @@ int Monster::updateCombat() {
                 ::bonus((int)pTarget->constitution.getCur())*3 +
                 ((pTarget->getClass() == CreatureClass::PALADIN ||
                          pTarget->getClass() == CreatureClass::DEATHKNIGHT) ? -10 : 0);
-            if(ff < mrand(1,100)) {
+            if(ff < Random::get(1,100)) {
                 pTarget->flee(true);
                 return(1);
             }
@@ -477,7 +477,7 @@ int Monster::zapMp(Creature *victim, SpecialAttack* attack) {
     if(victim->mp.getCur() <= 0)
         return(0);
 
-    n = MIN(victim->mp.getCur(), (mrand(1+level/2, level) + bonus((int)intelligence.getCur())));
+    n = MIN(victim->mp.getCur(), (Random::get<unsigned short>(1+level/2, level) + bonus((int)intelligence.getCur())));
 
     victim->printColor("^M%M zaps your magical talents!\n", this);
     victim->printColor("%M stole %d magic points!\n", this, n);
@@ -496,7 +496,7 @@ int Monster::zapMp(Creature *victim, SpecialAttack* attack) {
 //*********************************************************************
 
 void Monster::regenerate() {
-    hp.increase(mrand(4, 15) + level * 7/2);
+    hp.increase(Random::get(4, 15) + level * 7/2);
 }
 
 //*********************************************************************
@@ -527,7 +527,7 @@ int Monster::steal(Player *victim) {
     if(i == 1)
         inventory = 1;
     else
-        inventory = mrand(1, i - 1);
+        inventory = Random::get(1, i - 1);
 
     i = 1;
     for(Object *obj : victim->objects) {
@@ -547,7 +547,7 @@ int Monster::steal(Player *victim) {
     )
         chance = 0;
 
-    if(mrand(1, 100) <= chance) {
+    if(Random::get(1, 100) <= chance) {
         victim->delObj(object, false, true);
         addObj(object);
 
@@ -599,7 +599,7 @@ int Monster::summonMobs(Creature *victim) {
     if(getRoomParent()->countCrt() >= getRoomParent()->getMaxMobs())
         return(0);
 
-    found = mrand(1, found)-1;
+    found = Random::get(1, found)-1;
 
     for(mob=0; found; mob++) {
         if(validMobId(rescue[mob]))
@@ -607,7 +607,7 @@ int Monster::summonMobs(Creature *victim) {
     }
 
 
-    arrive = mrand(1,2);
+    arrive = Random::get(1,2);
 
     if(victim->pFlagIsSet(P_LAG_PROTECTION_SET))
         victim->pSetFlag(P_LAG_PROTECTION_ACTIVE);
@@ -656,7 +656,7 @@ int Monster::checkForYell(Creature* target) {
         yellchance = 50+(2*bonus((int) intelligence.getCur()));
 
 
-    if(flagIsSet(M_WILL_YELL_FOR_HELP) && ((mrand(1,100) < yellchance) || (hp.getCur() <= hp.getCur()/5))) {
+    if(flagIsSet(M_WILL_YELL_FOR_HELP) && ((Random::get(1,100) < yellchance) || (hp.getCur() <= hp.getCur()/5))) {
         if(!flagIsSet(M_WILL_BE_HELPED))
             broadcast(getSock(), target->getRoomParent(), "%M yells for help!", this);
         setFlag(M_YELLED_FOR_HELP);
@@ -853,7 +853,7 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
 
     chance = MAX(1,MIN(95, chance));
 
-    roll = mrand(1,100);
+    roll = Random::get(1,100);
     if(isCt())
         print("Roll: %d.\n", roll);
 
@@ -865,7 +865,7 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
             upchance = 0;
 
 
-        if(mrand(1,100) <= upchance) {
+        if(Random::get(1,100) <= upchance) {
             t = time(0);
             j = LT(this, LT_SAVES);
             if(t < j) {
@@ -971,7 +971,7 @@ void Player::damageArmor(int dmg) {
     Object  *armor=0;
 
     // Damage armor 1/10th of the time
-    if(mrand(1, 10) == 1)
+    if(Random::get(1, 10) == 1)
         return;
 
     int wear = chooseItem();
@@ -995,7 +995,7 @@ void Player::damageArmor(int dmg) {
 
 
     // Make armor skill worth something, the higher the skill, the lower the chance it'll take damage
-    if(mrand(1,100) > avoidChance) {
+    if(Random::get(1,100) > avoidChance) {
         printColor("Your ^W%s^x just got a little more scratched.\n", armor->getCName());
         armor->decShotsCur();
         if(armorType != "shield")
@@ -1152,7 +1152,7 @@ bool Monster::tryToPoison(Creature* target, SpecialAttack* attack) {
     if(target->isPoisoned())
         return(false);
 
-    if(!attack && mrand(1,100) > 15)
+    if(!attack && Random::get(1,100) > 15)
         return(false);
 
     if(target->immuneToPoison()) {
@@ -1173,7 +1173,7 @@ bool Monster::tryToPoison(Creature* target, SpecialAttack* attack) {
             duration = poison_dur - 12*bonus((int)target->constitution.getCur());
             duration = MAX(120, MIN(duration, 1200));
         } else {
-            duration = (mrand(2,3)*60) - 12*bonus((int)target->constitution.getCur());
+            duration = (Random::get(2,3)*60) - 12*bonus((int)target->constitution.getCur());
         }
 
         target->poison(isPet() ? getMaster() : this, poison_dmg ? poison_dmg : level, duration);
@@ -1204,10 +1204,10 @@ bool Monster::tryToStone(Creature* target, SpecialAttack* attack) {
     if(pTarget->isEffected("petrification") || pTarget->isUnconscious())
         return(false);
 
-    if(!attack && mrand(1,100) > 5)
+    if(!attack && Random::get(1,100) > 5)
         return(false);
 
-    if((pTarget->isEffected("resist-earth") || pTarget->isEffected("resist-magic")) && mrand(1,100) <= 50)
+    if((pTarget->isEffected("resist-earth") || pTarget->isEffected("resist-magic")) && Random::get(1,100) <= 50)
         avoid = true;
 
     pTarget->wake("Terrible nightmares disturb your sleep!");
@@ -1246,7 +1246,7 @@ bool Monster::tryToDisease(Creature* target, SpecialAttack* attack) {
         return(false);
     if(target->isPlayer() && target->isEffected("stoneskin"))
         return(false);
-    if(!attack && mrand(1,100) > 15)
+    if(!attack && Random::get(1,100) > 15)
         return(false);
 
     if(target->immuneToDisease()) {
@@ -1285,7 +1285,7 @@ bool Monster::tryToBlind(Creature* target, SpecialAttack* attack) {
     if(!flagIsSet(M_WILL_BLIND) && !attack)
         return(false);
 
-    if(!attack && mrand(1,100) > 15)
+    if(!attack && Random::get(1,100) > 15)
         return(false);
     int bns = 0;
     if(attack)

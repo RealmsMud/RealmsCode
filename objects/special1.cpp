@@ -63,7 +63,7 @@ int Object::doSpecial(Player* player) {
 
         if(strlen(sock->tempstr[3]) >= strlen(use_output)) {
             if(strcmp(sock->tempstr[3], use_output)) {
-                dmg = mrand(20,40 + player->getLevel());
+                dmg = Random::get(20,40 + player->getLevel());
                 player->hp.decrease(dmg);
                 player->printColor("You were zapped for %s%d^x damage!\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg);
                 broadcast(sock, room, "%M was zapped by %P^x!", player, this);

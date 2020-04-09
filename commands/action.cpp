@@ -263,7 +263,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
                 creature->print("You must be wielding a piercing weapon in order to stab yourself.\n");
             } else {
                 OUT_HIMHER("You stab yourself in the eye. OUCH!\n", "%M stabs %sself in the eye.");
-                if( mrand(1,100) <= 50 &&
+                if( Random::get(1,100) <= 50 &&
                     !creature->isEffected("blindness"))
                 {
                     creature->addEffect("blindness", creature->strength.getCur(), 1, player, true, player);
@@ -283,7 +283,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
             OUT_HISHER("You slice your ear!\n", "%M slices %s ear.");
             // don't let them die from it
-            n = mrand(1,4);
+            n = Random::get(1,4);
             if(creature->hp.getCur() - n > 0) {
                 creature->hp.decrease(n);
                 creature->printColor("You take ^R%d^x damage.\n", n);
@@ -368,7 +368,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
         OUT("You masturbate to orgasm.\n", "%M masturbates to orgasm.");
 
         if( player &&
-            mrand(1,100) <= 5 &&
+            Random::get(1,100) <= 5 &&
             !player->isEffected("blindness")
         ) {
             player->addEffect("blindness", 300 - player->constitution.getCur(), 1, player, true, player);
@@ -442,7 +442,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
             OUT_HISHER("You roll over in your sleep.\n", "%M rolls over in %s sleep.");
         }
     } else if(str == "hum") {
-        if(mrand(0,10) || player->getClass() == CreatureClass::BARD || player->isStaff()) {
+        if(Random::get(0,10) || player->getClass() == CreatureClass::BARD || player->isStaff()) {
             OUT("You hum a little tune.\n", "%M hums a little tune.");
         } else {
             OUT("You hum off-key.\n", "%M hums off-key.");
@@ -620,7 +620,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
         creature->stand();
 
     } else if(str == "flip") {
-        bstring result = (mrand(0,1) ? "heads" : "tails");
+        bstring result = (Random::get(0,1) ? "heads" : "tails");
 
         if(creature->getClass() == CreatureClass::CLERIC && creature->getDeity() == KAMIRA) {
             sock->print("You flip a coin. It lands on its side!\n");
@@ -642,7 +642,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
                 "%M wants to do rock-paper-scissors with you.\n",
                 "%M offers to do rock-paper-scissors with %N.");
         } else {
-            num = mrand(1,100);
+            num = Random::get(1,100);
 
             if(num <= 33)
                 strcpy(temp, "rock");
@@ -661,14 +661,14 @@ int cmdAction(Creature* creature, cmd* cmnd) {
                 "%M challenges you to a game of dice.\n",
                 "%M challenges %N to a game of dice.");
         } else {
-            num1 = mrand(1,6);
-            num2 = mrand(1,6);
+            num1 = Random::get(1,6);
+            num2 = Random::get(1,6);
             //  sock->print("num: %d.", num);
 
             num = ((num1 + num2));
 
             if(creature->getClass() == CreatureClass::CLERIC && creature->getDeity() == KAMIRA)
-                num = (mrand(0,1) ? 2 : 12);
+                num = (Random::get(0,1) ? 2 : 12);
 
             sock->print("You roll 2d6\n: %d\n", num);
             broadcast(sock, room, "(Dice 2d6): %M got %d.", creature, num);

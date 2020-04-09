@@ -34,7 +34,6 @@ namespace odbc {
 // C Includes
 //#include "pythonHandler.hpp"
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
-#include <random>
 
 #include "catRef.hpp"
 #include "delayedAction.hpp"
@@ -76,13 +75,13 @@ enum GoldLog {
     GOLD_OUT
 };
 
-namespace boost { namespace python {
-        namespace api
-        {
-            class object;
-        }
-        using api::object;
-    }} // namespace boost::python
+namespace boost::python {
+    namespace api
+    {
+        class object;
+    }
+    using api::object;
+} // namespace boost::python
 
 
 #include "asynch.hpp"
@@ -110,14 +109,6 @@ public:
     static void destroyInstance();
 
     ~Server();
-
-
-    // A function to return a seeded random number generator.
-    inline std::mt19937& randomGenerator() {
-        // the generator will only be seeded once (per thread) since it's static
-        static thread_local std::mt19937 gen(std::random_device{}());
-        return gen;
-    }
 
 // Instance
 private:

@@ -1593,7 +1593,7 @@ bool UniqueOwner::runDecay(long t, int decay, int max) {
         chance = ((t - time) - (decay * 48*60)) * 100 / max;
     }
 
-    if(mrand(1,100) > chance) 
+    if(Random::get(1,100) > chance)
         return(false);
 
     Player* player = gServer->findPlayer(owner.c_str());

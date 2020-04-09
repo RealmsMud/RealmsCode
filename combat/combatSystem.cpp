@@ -236,19 +236,19 @@ const bstring Object::getWeaponVerbPast() const {
     const bstring category = getWeaponCategory();
 
     if(category == "crushing") {
-        if(mrand(0,1))
+        if(Random::get(0,1))
             return("crushed");
         else
             return("bludgeoned");
     }
     else if(category == "piercing") {
-        if(mrand(0,1))
+        if(Random::get(0,1))
             return("impaled");
         else
             return("stabbed");
     }
     else if(category == "slashing") {
-        if(mrand(0,1))
+        if(Random::get(0,1))
             return("gutted");
         else
             return("slashed");
@@ -256,7 +256,7 @@ const bstring Object::getWeaponVerbPast() const {
     else if(category == "ranged")
         return("shot");
     else if(category == "chopping") {
-        if(mrand(0,1))
+        if(Random::get(0,1))
             return("chopped");
         else
             return("cleaved");
@@ -513,7 +513,7 @@ AttackResult Creature::getAttackResult(Creature* victim, const Object* weapon, i
 //  printColor("^gCutoffs: ^G%d^g miss,  ^G%d^g dodge,  ^G%d^g parry,  ^G%d^g glancing,  ^G%d^g block, ^G%d^g critical ^G%d^g fumble ^G%d^g hit.\n",
 //          missCutoff, dodgeCutoff, parryCutoff, glancingCutoff, blockCutoff, criticalCutoff, fumbleCutoff, hitCutoff);
 //
-    int randNum = mrand(0, 10000);
+    int randNum = Random::get(0, 10000);
     AttackResult result;
 
     if(randNum < missCutoff)
@@ -726,7 +726,7 @@ bool Creature::canParry(Creature* attacker) {
 
     combatPercent = MAX(0,combatPercent);
 
-    if(mrand(1,100) <= combatPercent)
+    if(Random::get(1,100) <= combatPercent)
         return(0); // Did not find a parry opening due to excessive combat. No parry.
 
     // Parry is not possible against some types of creatures
@@ -1117,15 +1117,15 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
     if(attackType == ATTACK_KICK) {
         if(computeBonus)
             bonusDamage.set(getBaseDamage()/2);
-        attackDamage.set(mrand(2,6) + ::bonus(strength.getCur()));
+        attackDamage.set(Random::get(2,6) + ::bonus(strength.getCur()));
         if((cClass == CreatureClass::FIGHTER || cClass == CreatureClass::MONK) && !hasSecondClass()) {
             attackDamage.add((int)(getSkillLevel("kick") / 4));
         }
     } else if(attackType == ATTACK_MAUL) {
         if(computeBonus)
             bonusDamage.set(getBaseDamage()/2);
-        attackDamage.set(( mrand( (int)(level/2), (int)(level + 1)) + (strength.getCur()/10)));
-        attackDamage.add(mrand(2, 4));
+        attackDamage.set(( Random::get( (int)(level/2), (int)(level + 1)) + (strength.getCur()/10)));
+        attackDamage.add(Random::get(2, 4));
     } else {
         // Any non kick attack for now
         if(computeBonus)
@@ -1133,7 +1133,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
 
          if(!weapon) {
             if(cClass == CreatureClass::MONK) {
-                attackDamage.set(mrand(1,2) + level/3 + mrand((1+level/4),(1+level)/2));
+                attackDamage.set(Random::get(1,2) + level/3 + Random::get((1+level/4),(1+level)/2));
                 if(strength.getCur() < 90) {
                     attackDamage.set(attackDamage.get() - (90-strength.getCur())/10);
                     attackDamage.set(MAX(1,attackDamage.get()));
@@ -1178,7 +1178,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
     // Bonus spread out over entire series of attack for multi attack weapons
     if(computeBonus) {
         if(cClass == CreatureClass::PALADIN) {
-            int goodDmg = mrand(1, 1 + level / 3);
+            int goodDmg = Random::get(1, 1 + level / 3);
             if(deity == GRADIUS) {
                 if(alignInOrder() && victim->getRace() != DWARF && victim->getDeity() != GRADIUS) {
                     bonusDamage.add(goodDmg);
@@ -1194,7 +1194,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
         if(cClass == CreatureClass::DEATHKNIGHT) {
             // Only drain on 1st attack if a multi weapon
             if(getAdjustedAlignment() <= REDDISH && victim->getAdjustedAlignment() >= NEUTRAL)
-                drain = mrand(1, 1 + level / 3);
+                drain = Random::get(1, 1 + level / 3);
         }
         if( (   cClass == CreatureClass::BERSERKER ||
                 (cClass == CreatureClass::CLERIC && deity == ARES) ||
@@ -1212,13 +1212,13 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
             ) &&
             (isEffected("pray") || isEffected("dkpray"))
         )
-            bonusDamage.add(mrand(1,3));
+            bonusDamage.add(Random::get(1,3));
 
         if((isEffected("lycanthropy") || isCt()) && isEffected("frenzy"))
-            bonusDamage.add(mrand(3,5));
+            bonusDamage.add(Random::get(3,5));
 
         if((cClass == CreatureClass::MONK || isCt()) && flagIsSet(P_FOCUSED))
-            bonusDamage.add(mrand(1,3));
+            bonusDamage.add(Random::get(1,3));
     }
 
 
@@ -1272,7 +1272,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
 
         printColor("^gCRITICAL %s!\n", atk);
         broadcast(getSock(), getRoomParent(), "^g%M made a critical %s.", this, atk);
-        mult = mrand(3, 5);
+        mult = Random::get(3, 5);
         attackDamage.set(attackDamage.get() * mult);
         drain *= mult;
         // We'll go with the assumption that if you critical on the first hit, the remaining
@@ -1287,7 +1287,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
                     !weapon->flagIsSet(O_STARTING) &&
                     // using half-percentages here:
                     // +0 = 3.5%, +1 = 2.5%, +2 = 1.5%, +3 = 0.5%
-                    mrand(1, 200) <= (7 - weapon->getAdjustment()*2)
+                    Random::get(1, 200) <= (7 - weapon->getAdjustment()*2)
                 )
             )
         ) {
@@ -1298,7 +1298,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
     } else if(result == ATTACK_GLANCING) {
         printColor("^CYou only managed to score a glancing blow!\n");
         broadcast(getSock(), getRoomParent(), "^C%M scored a glancing blow!", this);
-        if(mrand(1,2)) {
+        if(Random::get(1,2)) {
             attackDamage.set(attackDamage.get() / 2);
             drain /= 2;
             if(computeBonus)
@@ -1355,7 +1355,7 @@ int Monster::computeDamage(Creature* victim, Object* weapon, AttackType attackTy
 
     if(result == ATTACK_CRITICAL) {
         broadcast(nullptr, getRoomParent(), "%M made a critical hit.", this);
-        int mult = mrand(2, 5);
+        int mult = Random::get(2, 5);
         attackDamage.set(attackDamage.get() * mult);
         drain *= mult;
         // No shatter for mobs :)
@@ -1393,7 +1393,7 @@ int Creature::computeBlock(int dmg) {
 // computed elsewhere
 
 int Creature::dodge(Creature* target) {
-    int     i = mrand(1,10);
+    int     i = Random::get(1,10);
 
     unhide();
     smashInvis();
@@ -1567,7 +1567,7 @@ int Creature::parry(Creature* target) {
             attackDamage.set(MAX(1, attackDamage.get()));
         }
 
-        switch(mrand(1,7)) {
+        switch(Random::get(1,7)) {
         case 1:
             printColor("^cYou side-step ^M%N's^c attack and %s %s for %s%d^c damage.\n",
                     target, verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
@@ -1633,7 +1633,7 @@ int Creature::parry(Creature* target) {
             break;
         }
         if(weapon) {
-            if(!mrand(0, 3))
+            if(!Random::get(0, 3))
                 weapon->decShotsCur();
 
             // die check moved right before return.
@@ -1718,7 +1718,7 @@ int Creature::doResistMagic(int dmg, Creature* enemy) {
     dmg = MAX(1, dmg);
 
     if(negAuraRepel() && enemy && this != enemy) {
-        resist = (10 + mrand(1,3) + level + bonus((int) constitution.getCur()))
+        resist = (10 + Random::get(1,3) + level + bonus((int) constitution.getCur()))
             - (bonus((int)enemy->intelligence.getCur()) + bonus((int)enemy->piety.getCur()));
         resist /= 100; // percentage
         resist *= dmg;

@@ -287,7 +287,7 @@ void Server::populateVSockets() {
         return;
     vSockets = new SocketVector(sockets.size());
     std::copy(sockets.begin(), sockets.end(), vSockets->begin());
-    shuffle(vSockets->begin(), vSockets->end(), this->randomGenerator() );
+    Random::shuffle(vSockets->begin(), vSockets->end());
 }
 
 
@@ -760,7 +760,7 @@ void Server::updateRandom(long t) {
         if(!wander)
             continue;
 
-        if(mrand(1,100) > wander->getTraffic())
+        if(Random::get(1,100) > wander->getTraffic())
             continue;
 
         cr = wander->getRandom();
@@ -791,9 +791,9 @@ void Server::updateRandom(long t) {
         }
 
         if(room->flagIsSet(R_PLAYER_DEPENDENT_WANDER))
-            num = mrand(1, room->countVisPly());
+            num = Random::get(1, room->countVisPly());
         else if(monster->getNumWander() > 1)
-            num = mrand(1, monster->getNumWander());
+            num = Random::get<unsigned short>(1, monster->getNumWander());
         else
             num = 1;
 
@@ -941,7 +941,7 @@ void Server::updateActive(long t) {
         if(monster->isPoisoned() && !monster->immuneToPoison()) {
             if( monster->spellIsKnown(S_CURE_POISON) &&
                 monster->mp.getCur() >=6 &&
-                (mrand(1,100) < (30+monster->intelligence.getCur()/10)))
+                (Random::get(1,100) < (30+monster->intelligence.getCur()/10)))
             {
                 broadcast(nullptr, monster->getRoomParent(), "%M casts a curepoison spell on %sself.", monster, monster->himHer());
                 monster->mp.decrease(6);
@@ -1020,7 +1020,7 @@ void Server::updateActive(long t) {
 
 
         // Steal from people
-        if(monster->flagIsSet(M_STEAL_ALWAYS) && (t - monster->lasttime[LT_STEAL].ltime) > 60 && mrand(1, 100) <= 5) {
+        if(monster->flagIsSet(M_STEAL_ALWAYS) && (t - monster->lasttime[LT_STEAL].ltime) > 60 && Random::get<bool>(0.05)) {
             Player* ply = lowest_piety(room, monster->isEffected("detect-invisible"));
             if(ply)
                 monster->steal(ply);
@@ -1048,7 +1048,7 @@ void Server::updateActive(long t) {
         if( !monster->flagIsSet(M_AGGRESSIVE) &&
             monster->flagIsSet(M_WILL_BE_AGGRESSIVE) &&
             !monster->hasEnemy() &&
-            mrand(1,100) <= monster->getUpdateAggro() &&
+            Random::get(1,100) <= monster->getUpdateAggro() &&
             room->countVisPly()
         ) {
             //broadcast(isDm, "^g%M(L%d,R:%s) just became aggressive!", monster, monster->getLevel(), room->fullName().c_str());

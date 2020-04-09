@@ -90,7 +90,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 
     switch(spell) {
     case S_VIGOR:
-        base = mrand(1,8); //1d8
+        base = Random::get(1,8); //1d8
         break;
     case S_MEND_WOUNDS:
         base = dice(2,7,0); //2d7
@@ -112,18 +112,18 @@ int getHeal(Creature *healer, Creature* target, int spell) {
             }
 
 
-            mod = level / 2 + mrand(1, 1 + level / 2);
+            mod = level / 2 + Random::get(1, 1 + level / 2);
             if(healer->getAdjustedAlignment() == NEUTRAL) {
                 if(spell != S_REJUVENATE)
                     healer->print("Your harmonial balance gains you power with Ceris.\n");
-                mod += mrand(1,4);
+                mod += Random::get(1,4);
             }
 
             if(spell == S_MEND_WOUNDS)
                 mod += level / 2;
 
             if(spell == S_REJUVENATE)
-                mod = level / 3 + mrand(1, 1 + level / 3);
+                mod = level / 3 + Random::get(1, 1 + level / 3);
 
             break;
         case ARES:
@@ -134,7 +134,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
                 level /= 2;
             }
 
-            mod = level / 2 + mrand(1, 1 + level / 2);
+            mod = level / 2 + Random::get(1, 1 + level / 2);
 
             if(spell == S_MEND_WOUNDS)
                 mod += level / 2;
@@ -146,7 +146,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
                 healer->print("Being evil at heart is distorting your healing magic.\n");
                 level /= 2;
             }
-            mod = level / 2 + mrand(1, 1 + level / 2);
+            mod = level / 2 + Random::get(1, 1 + level / 2);
 
             if(spell == S_MEND_WOUNDS)
                 mod += level / 2;
@@ -157,7 +157,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
                 level /= 2;
             }
 
-            mod = level / 2 + mrand(1, 1 + level / 2);
+            mod = level / 2 + Random::get(1, 1 + level / 2);
             if(spell == S_MEND_WOUNDS)
                 mod += level / 2;
 
@@ -168,7 +168,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 
     case CreatureClass::DRUID:
         statBns = MAX(bonus((int)healer->intelligence.getCur()), bonus((int)healer->constitution.getCur()));
-        mod = level/4 + mrand(1, 1 + level / 5);
+        mod = level/4 + Random::get(1, 1 + level / 5);
         break;
     case CreatureClass::THIEF:
     case CreatureClass::ASSASSIN:
@@ -182,14 +182,14 @@ int getHeal(Creature *healer, Creature* target, int spell) {
         break;
     case CreatureClass::MONK:
         statBns = bonus((int)healer->constitution.getCur());
-        mod = mrand(1,6);
+        mod = Random::get(1,6);
         break;
 
     case CreatureClass::RANGER:
     case CreatureClass::BARD:
     case CreatureClass::PUREBLOOD:
         statBns = MAX(bonus((int)healer->piety.getCur()), bonus((int)healer->intelligence.getCur()));
-        mod = mrand(1,6);
+        mod = Random::get(1,6);
         break;
     case CreatureClass::MAGE:
         statBns = MAX(bonus((int)healer->piety.getCur()), bonus((int)healer->intelligence.getCur()));
@@ -199,7 +199,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
     case CreatureClass::CARETAKER:
     case CreatureClass::DUNGEONMASTER:
         statBns = MAX(bonus((int)healer->piety.getCur()), bonus((int)healer->intelligence.getCur()));
-        mod = mrand(level/2, level);
+        mod = Random::get(level/2, level);
         break;
 
     default:
@@ -228,15 +228,15 @@ int getHeal(Creature *healer, Creature* target, int spell) {
         }
 
         if(healer->getClass() == CreatureClass::CLERIC) {
-            mod = level / 2 + mrand(1, 1 + level / 2);
+            mod = level / 2 + Random::get(1, 1 + level / 2);
             if(spell == S_MEND_WOUNDS)
                 mod += level / 2;
             mod = (mod*3)/4;
         } else {
             if(spell == S_VIGOR)
-                mod = level / 3 + mrand(1, 1 + level / 4);
+                mod = level / 3 + Random::get(1, 1 + level / 4);
             else
-                mod = level / 2 + mrand(1, 1 + level / 3);
+                mod = level / 2 + Random::get(1, 1 + level / 3);
         }
 
     // clerics and paladins of Enoch and Linothan
@@ -255,14 +255,14 @@ int getHeal(Creature *healer, Creature* target, int spell) {
         }
 
         if(healer->getClass() == CreatureClass::CLERIC) {
-            mod = level / 2 + mrand(1, 1 + level / 2);
+            mod = level / 2 + Random::get(1, 1 + level / 2);
             if(spell == S_MEND_WOUNDS)
                 mod += level / 2;
         } else {
             if(spell == S_VIGOR)
-                mod = level / 3 + mrand(1, 1 + level / 4);
+                mod = level / 3 + Random::get(1, 1 + level / 4);
             else
-                mod = level / 2 + mrand(1, 1 + level / 3);
+                mod = level / 2 + Random::get(1, 1 + level / 3);
         }
 
     // clerics and deathknights of Aramon and Arachnus
@@ -275,7 +275,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
         if(healer->getAdjustedAlignment() >= LIGHTBLUE) {
 
             healer->print("FOOL! You dare turn from %s's evil ways!\n", gConfig->getDeity(healer->getDeity())->getName().c_str());
-            dmg = mrand(1,10);
+            dmg = Random::get(1,10);
             healer->print("You are shocked for %d damage by %s's wrath!\n", dmg, gConfig->getDeity(healer->getDeity())->getName().c_str());
             broadcast(healer->getSock(), healer->getRoomParent(), "%M doubles over in pain and wretches.\n", healer);
             healer->hp.decrease(dmg);
@@ -285,7 +285,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 
             if(target->getAdjustedAlignment() > LIGHTBLUE) {
                 healer->print("How DARE you heal the righteous and good of heart!\n");
-                dmg = mrand(1,10);
+                dmg = Random::get(1,10);
                 healer->print("You are shocked for %d damage by %s's wrath!\n", dmg, gConfig->getDeity(healer->getDeity())->getName().c_str());
                 broadcast(healer->getSock(), healer->getRoomParent(), "%M doubles over in pain and wretches.\n", healer);
                 healer->hp.decrease(dmg);
@@ -298,17 +298,17 @@ int getHeal(Creature *healer, Creature* target, int spell) {
                     healer->print("%s disapproves of healing others than yourself.\n", gConfig->getDeity(healer->getDeity())->getName().c_str());
                 else
                     healer->print("%s disapproves of healing non-dark-elves.\n", gConfig->getDeity(healer->getDeity())->getName().c_str());
-                mod = mrand(1, (1 + level / 5));
+                mod = Random::get(1, (1 + level / 5));
             }
 
         } else {
 
             if(healer->getClass() == CreatureClass::CLERIC) {
-                mod = level / 2 + mrand(1, 1 + level / 2);
+                mod = level / 2 + Random::get(1, 1 + level / 2);
                 if(spell == S_MEND_WOUNDS)
                     mod += level / 2;
             } else {
-                mod = level / 4 + mrand(1, 1 + level / 4);
+                mod = level / 4 + Random::get(1, 1 + level / 4);
             }
 
         }
@@ -323,9 +323,9 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 
     if(healer->getRoomParent()->magicBonus()) {
         if(spell == S_MEND_WOUNDS)
-            heal += mrand(1, 6);
+            heal += Random::get(1, 6);
         else
-            heal += mrand(1, 3);
+            heal += Random::get(1, 3);
         healer->print("The room's magical properties increase the power of your spell.\n");
     }
 
@@ -335,17 +335,17 @@ int getHeal(Creature *healer, Creature* target, int spell) {
                 heal /= 2;
 
             if(target->flagIsSet(P_POISONED_BY_PLAYER))
-                heal = mrand(1,4);
+                heal = Random::get(1,4);
 
             if(target->flagIsSet(P_OUTLAW) && target->getRoomParent()->isOutlawSafe())
-                heal = mrand(1,3);
+                heal = Random::get(1,3);
 
         }
     } else {
         if(healer->isEffected("stoneskin"))
             heal /= 2;
         if(healer->flagIsSet(P_OUTLAW) && healer->getRoomParent()->isOutlawSafe())
-            heal = mrand (1,3);
+            heal = Random::get(1,3);
     }
 
     return(MAX(1, heal));
@@ -525,7 +525,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
 // another monster.
 
 int splVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
-    return(castHealingSpell(player, cmnd, spellData, "vigor", "You feel better.", S_VIGOR, mrand(1, 8)));
+    return(castHealingSpell(player, cmnd, spellData, "vigor", "You feel better.", S_VIGOR, Random::get(1, 8)));
 }
 
 //*********************************************************************
@@ -595,8 +595,8 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
             player->mp.decrease(8);
 
         } else {
-            heal = mrand(1,8);
-            mpHeal = mrand(1,8);
+            heal = Random::get(1,8);
+            mpHeal = Random::get(1,8);
         }
 
         player->doHeal(player, heal);
@@ -654,8 +654,8 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
             mpHeal = getHeal(player, target, S_REJUVENATE);
 
         } else {
-            heal = mrand(1,8);
-            mpHeal = mrand(1,8);
+            heal = Random::get(1,8);
+            mpHeal = Random::get(1,8);
         }
 
         heal = player->doHeal(target, heal);
@@ -788,7 +788,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
             if(creature->getClass() == CreatureClass::LICH) {
                 int dmg;
                 if(creature->hp.getCur() >= 4)
-                    dmg = creature->hp.getCur() - mrand(2,4);
+                    dmg = creature->hp.getCur() - Random::get(2,4);
                 else
                     dmg = creature->hp.getCur() - 1;
 
@@ -812,9 +812,9 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 
             if(player->isPlayer())
                 player->getAsPlayer()->statistics.healingCast();
-            int healed = MAX(creature->hp.getMax() - creature->hp.getCur() - mrand(1,4), 0);
+            int healed = MAX(creature->hp.getMax() - creature->hp.getCur() - Random::get(1,4), 0);
             player->doHeal(creature, healed, 0.33);
-            //creature->hp.setCur(MAX(1, creature->hp.getMax() - mrand(1,4)));
+            //creature->hp.setCur(MAX(1, creature->hp.getMax() - Random::get(1,4)));
 
             player->print("Heal spell cast on %N.\n", creature);
             creature->print("%M casts a heal spell on you.\n", player);
@@ -1157,7 +1157,7 @@ int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
     player->doHeal(target, dice(2, 10, 0));
 
-    if(mrand(1, 100) < 34)
+    if(Random::get<bool>(.34))
         target->mp.restore();
 
     if(player->isStaff()) {
@@ -1188,10 +1188,10 @@ int splRoomVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
     player->print("You cast vigor on everyone in the room.\n");
     broadcast(player->getSock(), player->getParent(), "%M casts vigor on everyone in the room.\n", player);
 
-    heal = mrand(1, 6) + bonus((int) player->piety.getCur());
+    heal = Random::get(1, 6) + bonus((int) player->piety.getCur());
 
     if(player->getRoomParent()->magicBonus()) {
-        heal += mrand(1, 3);
+        heal += Random::get(1, 3);
         player->print("\nThe room's magical properties increase the power of your spell\n");
     }
 

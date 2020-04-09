@@ -562,7 +562,7 @@ void Object::selectRandom() {
     // rather than a random one. Thus, don't use this code.
     if(!which || flagIsSet(O_LOAD_ALL))
         return;
-    which = mrand(1, which);
+    which = Random::get(1, which);
 
     for(it = randomObjects.begin(); it != randomObjects.end(); it++) {
         which--;

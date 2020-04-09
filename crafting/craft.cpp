@@ -1466,7 +1466,7 @@ int cmdCraft(Player* player, cmd* cmnd) {
     // check success: skillless recipes are always successful
     if(skill != "") {
         double chance = 30 + 20 * log(player->getSkillLevel(skill));
-        if(chance < mrand(0,100))
+        if(chance < Random::get(0,100))
             succeed = false;
         player->checkImprove(skill, succeed);
     }

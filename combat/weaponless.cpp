@@ -48,14 +48,14 @@ int cmdMeditate(Player* player, cmd* cmnd) {
 
     chance = MIN(85, (int)(player->getSkillLevel("meditate")*10)+bonus((int)player->piety.getCur()));
 
-    if(mrand(1, 100) > player->getLuck() + (int)(player->getSkillLevel("meditate") * 2))
+    if(Random::get(1, 100) > player->getLuck() + (int)(player->getSkillLevel("meditate") * 2))
         chance = 10;
 
     int level = MAX(1,(int)player->getSkillLevel("meditate"));
 
     broadcast(player->getSock(), player->getParent(), "%M meditates.", player);
 
-    if(mrand(1,100) <= chance) {
+    if(Random::get(1,100) <= chance) {
 
         if(player->inCombat()) {
             player->print("Your stillness of mind adds to your endurance.\n");
@@ -69,8 +69,8 @@ int cmdMeditate(Player* player, cmd* cmnd) {
         player->checkImprove("meditate", true);
 
         int heal = (MAX(0,((int)(level / inCombatModifier) // heals for a little less when in combat with mobs
-            + mrand(1,(int)(level))
-            + bonus((int)player->constitution.getCur())*mrand(1,4))));
+            + Random::get(1,(int)(level))
+            + bonus((int)player->constitution.getCur())*Random::get(1,4))));
 
         player->doHeal(player, heal,1.0);
         
@@ -186,7 +186,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
     if(creature->isPlayer() && creature->isEffected("berserk"))
         chance /= 2;
 
-    if(mrand(1,100) > chance) {
+    if(Random::get(1,100) > chance) {
         player->print("You failed to harm %N.\n", creature);
         player->checkImprove("touch", false);
         broadcast(player->getSock(), player->getParent(), "%M failed the touch of death on %N.\n",
@@ -206,7 +206,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
         }
     }
 
-    if( (   (mrand(1,100) > 80 - bonus((int)player->constitution.getCur())) &&
+    if( (   (Random::get(1,100) > 80 - bonus((int)player->constitution.getCur())) &&
             (   (creature->isMonster() &&
                 !creature->flagIsSet(M_PERMENANT_MONSTER)) ||
                 creature->isPlayer() )) ||
@@ -281,13 +281,13 @@ int cmdFocus(Player* player, cmd* cmnd) {
     chance = MIN(80, (int)(player->getSkillLevel("focus") * 20) + bonus((int) player->piety.getCur()));
 
     double level = player->getSkillLevel("focus");
-    if(mrand(1, 100) > player->getLuck() + (int)(level * 2))
+    if(Random::get(1, 100) > player->getLuck() + (int)(level * 2))
         chance = 10;
 
     if(player->isEffected("pray"))
         chance += 10;
 
-    if(mrand(1, 100) <= chance) {
+    if(Random::get(1, 100) <= chance) {
         player->print("You begin to focus your energy.\n");
         player->checkImprove("focus", true);
         broadcast(player->getSock(), player->getParent(), "%M focuses %s energy.", player, player->hisHer());
@@ -361,10 +361,10 @@ int cmdFrenzy(Player* player, cmd* cmnd) {
 
     chance = MIN(85, (int)(player->getSkillLevel("frenzy") * 20) + bonus((int) player->dexterity.getCur()));
 
-    if(mrand(1, 100) > player->getLuck() + (int)(player->getSkillLevel("frenzy") * 2))
+    if(Random::get(1, 100) > player->getLuck() + (int)(player->getSkillLevel("frenzy") * 2))
         chance = 10;
 
-    if(mrand(1, 100) <= chance) {
+    if(Random::get(1, 100) <= chance) {
         player->print("You begin to attack in a frenzy.\n");
         player->checkImprove("frenzy", true);
         broadcast(player->getSock(), player->getParent(), "%M attacks in a frenzy.", player);
@@ -495,10 +495,10 @@ int cmdMaul(Player* player, cmd* cmnd) {
     if(player->isDm())
         chance = 101;
 
-    if(mrand(1, 100) > player->getLuck() + (int)(level * 2))
+    if(Random::get(1, 100) > player->getLuck() + (int)(level * 2))
         chance = 5;
 
-    if(mrand(1, 100) <= chance) {
+    if(Random::get(1, 100) <= chance) {
         player->attackCreature(creature, ATTACK_MAUL);
         if(!induel(player, pCreature)) {
             // 5% chance to get lycanthropy when mauled by a werewolf
@@ -534,7 +534,7 @@ int Player::packBonus() {
 
             // bonus for all within 3 levels.
             if(crt->isEffected("lycanthropy") && (abs((int)getLevel() - (int)getLevel()) < 4))
-                bns += mrand(1,2);
+                bns += Random::get(1,2);
 
         }
     }
@@ -614,15 +614,15 @@ int cmdHowl(Creature* player, cmd* cmnd) {
         if( !monster->flagIsSet(M_DM_FOLLOW) &&
             !monster->flagIsSet(M_PERMENANT_MONSTER) &&
             !monster->flagIsSet(M_PASSIVE_EXIT_GUARD) &&
-            mrand(1,100) <= 50
+            Random::get(1,100) <= 50
         ) {
             if(monster->flee(true) == 2)
                 continue;
-            monster->stun(mrand(5,8));
+            monster->stun(Random::get(5,8));
             continue;
         }
 
-        stunTime = mrand(5, MAX(6, player->getLevel()/2));
+        stunTime = Random::get(5, MAX(6, player->getLevel()/2));
         monster->stun(stunTime);
         broadcast(nullptr, room, "^b%M is frozen in terror!", monster);
     }

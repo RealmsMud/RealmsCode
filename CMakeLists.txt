@@ -149,7 +149,7 @@ set(COMMON_HEADER_FILES
     include/xml.hpp
     include/enums/loadType.hpp
     include/enums/bits.hpp
-        include/post.hpp include/security.hpp)
+        include/post.hpp include/security.hpp include/random.hpp include/random.hpp)
 
 set(COMMON_SOURCE_FILES
     areas/area.cpp
@@ -158,12 +158,11 @@ set(COMMON_SOURCE_FILES
     areas/location.cpp
     areas/property.cpp
     areas/range.cpp
-    
     areas/room.cpp
     areas/rooms.cpp
     areas/startlocs.cpp
     areas/wanderInfo.cpp
-    
+
     combat/attack.cpp
     combat/combat.cpp
     combat/combatSystem.cpp
@@ -177,20 +176,20 @@ set(COMMON_SOURCE_FILES
     combat/undead.cpp
     combat/warriors.cpp
     combat/weaponless.cpp
-
     commands/action.cpp
+
     commands/cmd.cpp
-    commands/commandBase.cpp
     commands/command2.cpp
     commands/command4.cpp
     commands/command5.cpp
+    commands/commandBase.cpp
     commands/communication.cpp
     commands/socials.cpp
 
     crafting/alchemy.cpp
     crafting/craft.cpp
     crafting/fishing.cpp
-        
+
     creatures/afflictions.cpp
     creatures/alignment.cpp
     creatures/carry.cpp
@@ -198,12 +197,12 @@ set(COMMON_SOURCE_FILES
     creatures/creature2.cpp
     creatures/creatureAttr.cpp
     creatures/creatures.cpp
-    creatures/monsters.cpp
     creatures/monType.cpp
+    creatures/monsters.cpp
     creatures/raceData.cpp
     creatures/size.cpp
     creatures/stats.cpp
-    
+
     economy/bank.cpp
     economy/commerce.cpp
     economy/lottery.cpp
@@ -211,22 +210,21 @@ set(COMMON_SOURCE_FILES
     economy/unique.cpp
 
     effects/effects.cpp
-    
-    io/creatureStreams.cpp
+
+    groups/group.cpp
+    groups/groups.cpp
+
     io/color.cpp
+    io/creatureStreams.cpp
     io/io.cpp
     io/socket.cpp
     io/vprint.cpp
 
-    main/mordorMain.cpp
-
-    # Magic
+    magic/divine/healers.cpp
+    magic/divine/healmagic.cpp
     magic/magic.cpp
     magic/magic1.cpp
     magic/realms.cpp
-    magic/spells.cpp
-    magic/divine/healers.cpp
-    magic/divine/healmagic.cpp
     magic/schools/abjuration.cpp
     magic/schools/conjuration.cpp
     magic/schools/divination.cpp
@@ -236,76 +234,81 @@ set(COMMON_SOURCE_FILES
     magic/schools/necromancy.cpp
     magic/schools/translocation.cpp
     magic/schools/transmutation.cpp
+    magic/spells.cpp
+
+    main/mordorMain.cpp
 
     movement/anchor.cpp
     movement/exits.cpp
     movement/movement.cpp
     movement/ships.cpp
     movement/track.cpp
-    
+
+    objects/objIncrease.cpp
     objects/object.cpp
     objects/objectAttr.cpp
     objects/objects.cpp
-    objects/objIncrease.cpp
     objects/special1.cpp
-    
+
     players/clans.cpp
     players/equipment.cpp
     players/guilds.cpp
     players/levelGain.cpp
+    players/pets.cpp
     players/player.cpp
+    players/player2.cpp
     players/playerClass.cpp
     players/playerInfo.cpp
-    players/player2.cpp
-    players/players.cpp
     players/playerTitle.cpp
-    players/pets.cpp
+    players/players.cpp
     players/post.cpp
     players/prefs.cpp
     players/proxy.cpp
     players/statistics.cpp
-    
-    groups/group.cpp
-    groups/groups.cpp
-    
+
+    questing/factions.cpp
+    questing/logic.cpp
+    questing/oldQuest.cpp
+    questing/quests.cpp
+    questing/talk.cpp
+
     roguelike/rogues.cpp
     roguelike/steal.cpp
     roguelike/traps.cpp
-    
+
     server/access.cpp
     server/asynch.cpp
     server/bans.cpp
     server/calendar.cpp
-    server/container.cpp
     server/config.cpp
-    server/delayedAction.cpp
+    server/container.cpp
     server/deityData.cpp
+    server/delayedAction.cpp
     server/demographics.cpp
     server/flags.cpp
     server/global.cpp
     server/hooks.cpp
     server/log.cpp
     server/login.cpp
-    server/memory.cpp
     server/mccp.cpp
-    server/mudObject.cpp
+    server/memory.cpp
     server/msdp.cpp
+    server/mudObject.cpp
     server/mxp.cpp
     server/pythonHandler.cpp
+    server/queue.cpp
     server/security.cpp
     server/server.cpp
     server/serverTimer.cpp
-    server/swap.cpp
     server/sql.cpp
+    server/swap.cpp
     server/update.cpp
-    server/queue.cpp
     server/web.cpp
-    
+
     skills/skillCommand.cpp
     skills/skillGain.cpp
     skills/skills.cpp
-    server/web.cpp
-    
+
     staff/builder.cpp
     staff/dm.cpp
     staff/dmcrt.cpp
@@ -315,20 +318,13 @@ set(COMMON_SOURCE_FILES
     staff/spelling.cpp
     staff/staff.cpp
     staff/watchers.cpp
-    
-    
-    questing/factions.cpp
-    questing/logic.cpp
-    questing/oldQuest.cpp
-    questing/quests.cpp
-    questing/talk.cpp
-        
+
     util/alphanum.cpp
     util/dice.cpp
-    util/help.cpp
     util/errors.cpp
-    util/misc.cpp
+    util/help.cpp
     util/md5.cpp
+    util/misc.cpp
     util/timer.cpp
 
     xml/alchemy-xml.cpp
@@ -336,10 +332,14 @@ set(COMMON_SOURCE_FILES
     xml/calendar-xml.cpp
     xml/config-xml.cpp
     xml/creatures-xml.cpp
+    xml/dice-xml.cpp
+    xml/diety-xml.cpp
+    xml/effects-xml.cpp
     xml/exits-xml.cpp
     xml/files-xml-read.cpp
     xml/files-xml-save.cpp
     xml/guilds-xml.cpp
+    xml/hooks-xml.cpp
     xml/monsters-xml.cpp
     xml/mxp-xml.cpp
     xml/objects-xml.cpp
@@ -350,10 +350,10 @@ set(COMMON_SOURCE_FILES
     xml/stats-xml.cpp
     xml/xml.cpp
 
-
     wip/fighters.cpp
     wip/songs.cpp
-        xml/effects-xml.cpp xml/dice-xml.cpp xml/diety-xml.cpp xml/hooks-xml.cpp)
+
+    )
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES})

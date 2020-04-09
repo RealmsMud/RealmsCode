@@ -626,7 +626,7 @@ int Player::guildKill(Player *killer) {
     else if(guildRank == GUILD_OFFICER)
         bns = (bns*3)/2;
 
-    total = MAX(1, mrand((base + bns)/2, base + bns));
+    total = MAX(1, Random::get((base + bns)/2, base + bns));
 
     if(killer->halftolevel())
         total = 0;
@@ -634,7 +634,7 @@ int Player::guildKill(Player *killer) {
     if(killer->hasSecondClass())
         total = total * 3 / 4;
 
-    penalty = MIN(mrand(1000,1500), (bns*3)/2);
+    penalty = MIN(Random::get(1000,1500), (bns*3)/2);
 
     if(killer->getLevel() > level + 6)
         penalty = 100;
@@ -703,7 +703,7 @@ int Player::godKill(Player *killer) {
         bns += levelDiff * 50;
 
 
-    total = MAX(1, mrand((base + bns)/2, base + bns));
+    total = MAX(1, Random::get((base + bns)/2, base + bns));
 
     if(killer->halftolevel())
         total = 0;
@@ -711,7 +711,7 @@ int Player::godKill(Player *killer) {
     if(killer->hasSecondClass())
         total = total * 3 / 4;
 
-    penalty = MIN(mrand(1000,1500), (bns*3)/2);
+    penalty = MIN(Random::get(1000,1500), (bns*3)/2);
 
     if(killer->getLevel() > level + 6)
         penalty = 100;
@@ -920,7 +920,7 @@ void Player::dropEquipment(bool dropAll, Socket* killerSock) {
                     continue;
                 // 20% chance each item will be dropped (ignore this chance for wielded items
                 // as we want them added to the list of stuff dropped)
-                if((i != WIELD-1 && i != HELD-1) && mrand(1,5) > 1)
+                if((i != WIELD-1 && i != HELD-1) && Random::get(1,5) > 1)
                     continue;
 
                 if(!dropString.empty())
@@ -973,7 +973,7 @@ void Player::dropBodyPart(Player *killer) {
 
     dueling = induel(this,killer);
 
-    if(mrand (1,100) > 5 && !killer->isDm() && !flagIsSet(P_OUTLAW))
+    if(Random::get<bool>(0.95) && !killer->isDm() && !flagIsSet(P_OUTLAW))
         nopart = true;
 
     if(level <= 4 && !killer->isDm() && !flagIsSet(P_OUTLAW))
@@ -997,7 +997,7 @@ void Player::dropBodyPart(Player *killer) {
     if(!nopart && !dueling) {
 
         if(loadObject(BODYPART_OBJ, &body_part)) {
-            num = mrand(1,14);
+            num = Random::get(1,14);
 
             switch(num) {
             case 1:
@@ -1057,8 +1057,8 @@ void Player::dropBodyPart(Player *killer) {
             strncpy(body_part->key[1], part, 20);
             strncpy(body_part->key[2], part, 20);
 
-            body_part->setAdjustment(mrand(1,2));
-            if(mrand(1,100) == 1)
+            body_part->setAdjustment(Random::get(1,2));
+            if(Random::get(1,100) == 1)
                 body_part->setAdjustment(3);
 
             body_part->addToRoom(getRoomParent());
@@ -1369,7 +1369,7 @@ void Player::loseExperience(Monster *killer) {
 //      down_level(this);
 
     for(count=0; count < 6; count++) {      // Random loss to saving throws due to death.
-        if(mrand(1,100) <= 25) {
+        if(Random::get(1,100) <= 25) {
             saves[count].chance -= 1;
             saves[count].gained -= 1;
             saves[count].chance = MAX<short>(1, saves[count].chance);
@@ -1524,7 +1524,7 @@ void Creature::adjustExperience(Monster* victim, int& expAmount, int& holidayExp
     }
 
     if(player->getRace() == HUMAN && expAmount)
-        expAmount += MAX(mrand(4,6),expAmount/3/10);
+        expAmount += MAX(Random::get(4,6),expAmount/3/10);
 
     if(player->hasSecondClass()) {
         // Penalty is 12.5% at level 30 and above

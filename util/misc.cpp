@@ -545,7 +545,7 @@ int dice(int n, int s, int p) {
         return(p);
 
     for(i=0; i<n; i++)
-        p += mrand(1,s);
+        p += Random::get(1,s);
 
     return(p);
 }

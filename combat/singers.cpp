@@ -107,7 +107,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
     if(player->isCt())
         player->print("Chance: %d%\n", chance);
 
-    if(!player->isStaff() && mrand(1,100) > chance) {
+    if(!player->isStaff() && Random::get(1,100) > chance) {
         player->printColor("You need to study %P more to surmise its qualities.\n", object);
         player->checkImprove("identify", false);
         broadcast(player->getSock(), player->getParent(), "%M carefully studies %P.",player, object);
@@ -413,7 +413,7 @@ int cmdSing(Creature* creature, cmd* cmnd) {
         return(0);
 
     if(!player || (player->getClass() !=  CreatureClass::BARD && !player->isCt())) {
-        if(mrand(0,10) || creature->isStaff()) {
+        if(Random::get(0,10) || creature->isStaff()) {
             creature->print("You sing a song.\n");
             broadcast(creature->getSock(), creature->getRoomParent(), "%M sings a song.", creature);
         } else {
@@ -657,7 +657,7 @@ int songOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) {
 
 
         // dmg = dice(oso->ndice, oso->sdice, oso->pdice + bns);
-        dmg = (mrand(7,14) + player->getLevel() * 2) + bns;
+        dmg = (Random::get(7,14) + player->getLevel() * 2) + bns;
         dmg = MAX(1, dmg);
 
         if(!pCreature) {
@@ -750,7 +750,7 @@ int songsKnown(Socket* sock, Player* player, int test) {
 //*********************************************************************
 
 int songFail(Player* player) {
-    int chance=0, n = mrand(1, 100);
+    int chance=0, n = Random::get(1, 100);
     player->computeLuck();
 
     chance = ((player->getLevel() + bonus((int) player->intelligence.getCur())) * 5) + 65;
@@ -773,11 +773,11 @@ int songHeal(Player* player, cmd* cmnd) {
     player->print("You sing a song of healing.\n");
     player->print("Your song rejuvenates everyone in the room.\n");
 
-    heal = mrand(player->getLevel(), player->getLevel()*2);
+    heal = Random::get<unsigned short>(player->getLevel(), player->getLevel()*2);
 
     if(player->getRoomParent()->magicBonus()) {
         player->print("The room's magical properties increase the power of your song.\n");
-        heal += mrand(5, 10);
+        heal += Random::get(5, 10);
     }
 
     for(Player* ply : player->getRoomParent()->players) {
@@ -808,11 +808,11 @@ int songMPHeal(Player* player, cmd* cmnd) {
     player->print("You sing a song of magic restoration.\n");
     player->print("Your song mentally revitalizes everyone in the room.\n");
 
-    heal = mrand(player->getLevel(), player->getLevel()*2)/2;
+    heal = Random::get<unsigned short>(player->getLevel(), player->getLevel()*2)/2;
 
     if(player->getRoomParent()->magicBonus()) {
         player->print("The room's magical properties increase the power of your song.\n");
-        heal += mrand(5, 10);
+        heal += Random::get(5, 10);
     }
     for(Player* ply : player->getRoomParent()->players) {
         if(ply->hasMp()) {
@@ -841,11 +841,11 @@ int songRestore(Player* player, cmd* cmnd) {
     player->print("You sing a song of restoration.\n");
     player->print("Your song restores everyone in the room.\n");
 
-    heal = mrand(player->getLevel(), player->getLevel()*2)*2;
+    heal = Random::get<unsigned short>(player->getLevel(), player->getLevel()*2)*2;
 
     if(player->getRoomParent()->magicBonus()) {
         player->print("The room's magical properties increase the power of your song.\n");
-        heal += mrand(5, 10);
+        heal += Random::get(5, 10);
     }
     for(Player* ply : player->getRoomParent()->players) {
         if(ply->getClass() !=  CreatureClass::LICH) {
@@ -1102,7 +1102,7 @@ int cmdCharm(Player* player, cmd* cmnd) {
     }
 
     int level = (int)player->getSkillLevel("charm");
-    dur = 300 + mrand(1, 30) * 10 + bonus((int) player->piety.getCur()) * 30 + level * 5;
+    dur = 300 + Random::get(1, 30) * 10 + bonus((int) player->piety.getCur()) * 30 + level * 5;
 
     //cmnd->str[1][0] = up(cmnd->str[1][0]);
 
@@ -1149,7 +1149,7 @@ int cmdCharm(Player* player, cmd* cmnd) {
 
     if(player->isDm())
         chance = 101;
-    if((creature->isUndead() || chance < mrand(1, 100)) && chance != 101) {
+    if((creature->isUndead() || chance < Random::get(1, 100)) && chance != 101) {
         player->print("Your song has no effect on %N.\n", creature);
         player->checkImprove("charm", false);
         broadcast(player->getSock(), player->getParent(), "%M sings off key.",player);

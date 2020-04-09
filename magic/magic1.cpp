@@ -1699,10 +1699,10 @@ int cmdTransmute(Player* player, cmd* cmnd) {
         broadcast(player->getSock(), player->getParent(), "A wand explodes in %s's hand!\n", player->getCName());
 
         if(player->chkSave(SPL, player, -1)) {
-            dmg = mrand(5, 10);
+            dmg = Random::get(5, 10);
             player->print("You managed to avoid most of the explosion.\n");
         } else
-            dmg = mrand(10, 20);
+            dmg = Random::get(10, 20);
 
 
         player->doDamage(player, dmg, CHECK_DIE);
@@ -1811,7 +1811,7 @@ int Creature::spellFail(CastType how) {
     if(!pPlayer)
         return(0);
 
-    n = mrand(1, 100);
+    n = Random::get(1, 100);
     if(pPlayer)
         pPlayer->computeLuck();
 
@@ -1991,7 +1991,7 @@ int cmdBarkskin(Player *player, cmd *cmnd) {
 
     broadcast(player->getSock(), player->getParent(), "%M's skin turns to bark.", player);
 
-    adjustment = mrand(3,6);
+    adjustment = Random::get(3,6);
     player->addEffect("barkskin", 120, adjustment, player, true, player);
     player->printColor("^yYour skin turns to bark.\n");
     player->checkImprove("barkskin", true);
@@ -2043,7 +2043,7 @@ int cmdCommune(Player *player, cmd *cmnd) {
     if(player->isStaff())
         chance = 100;
 
-    if(mrand(1, 100) <= chance) {
+    if(Random::get(1, 100) <= chance) {
 
         player->print("You successfully commune with nature.\n");
         player->print("You sense any living creatures in your surroundings.\n");

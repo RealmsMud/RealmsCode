@@ -99,13 +99,13 @@ int cmdCreepingDoom(Player* player, cmd* cmnd) {
     chance = ((int)(level - creature->getLevel()) * 20) + bonus((int) player->piety.getCur()) * 5 + 25;
     chance = MIN(chance, 80);
 
-    dmg = mrand((int)(level*2), (int)(level*3));
+    dmg = Random::get((int)(level*2), (int)(level*3));
 
     if(mCreature)
         mCreature->addEnemy(player);
 
     if(!creature->isCt()) {
-        if(mrand(1, 100) > chance) {
+        if(Random::get(1, 100) > chance) {
             player->print("You failed to strike %N with creeping doom.\n", creature);
             broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M tried to strike %N with creeping doom!", player, creature);
             creature->print("%M tried to strike you with creeping doom!\n", player);
@@ -214,7 +214,7 @@ int cmdPoison(Player* player, cmd* cmnd) {
         mCreature->addEnemy(player);
 
     if(!player->isCt()) {
-        if(mrand(1, 100) > chance || creature->isPoisoned() || creature->immuneToPoison()) {
+        if(Random::get(1, 100) > chance || creature->isPoisoned() || creature->immuneToPoison()) {
             player->printColor("^GYou fail to poison %N.\n", creature);
             creature->printColor("^G%M tried to poison you!\n", player);
             broadcastGroup(false, creature, "%M tried to poison %N.\n", player, creature);
@@ -375,7 +375,7 @@ bool Effects::removePoison() {
 //********************************************************************
 
 unsigned int standardPoisonDuration(short level, short con) {
-    int dur = 60 * mrand(1,3) - (60*bonus((int)con)) + level*10;
+    int dur = 60 * Random::get(1,3) - (60*bonus((int)con)) + level*10;
     if(con > 120) {
         // a spread between 400 (50%) and 120 (0%) resistance
         double percent = 1 - (con - 120) / (680 - 120);
@@ -689,7 +689,7 @@ bool Creature::addPorphyria(Creature *killer, int chance) {
     if(rdata)
         chance -= rdata->getPorphyriaResistance();
 
-    if(mrand(1,100) > chance)
+    if(Random::get(1,100) > chance)
         return(false);
     if(!willBecomeVampire())
         return(false);
@@ -721,7 +721,7 @@ bool Creature::sunlightDamage() {
     if(isStaff() || !isNewVampire())
         return(false);
 
-    int dmg = hp.getMax() / 5 + mrand(1,10);
+    int dmg = hp.getMax() / 5 + Random::get(1,10);
 
     unmist();
     wake("Terrible nightmares disturb your sleep!");
@@ -777,7 +777,7 @@ bool Creature::willBecomeWerewolf() const {
 //********************************************************************
 
 bool Creature::addLycanthropy(Creature *killer, int chance) {
-    if(mrand(1,100) > chance)
+    if(Random::get(1,100) > chance)
         return(false);
     if(!willBecomeWerewolf())
         return(false);

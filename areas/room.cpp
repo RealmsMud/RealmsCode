@@ -373,7 +373,7 @@ void Monster::addToRoom(BaseRoom* room, int num) {
 
     // Handle random aggressive monsters
     if(!flagIsSet(M_AGGRESSIVE)) {
-        if(loadAggro && (mrand(1,100) <= MAX<unsigned short>(1, loadAggro)))
+        if(loadAggro && (Random::get(1,100) <= MAX<unsigned short>(1, loadAggro)))
             setFlag(M_WILL_BE_AGGRESSIVE);
     }
 
@@ -973,13 +973,13 @@ void doRoomHarms(BaseRoom *inRoom, Player* target) {
             return;
         }
 
-        roll = mrand(1,20);
+        roll = Random::get(1,20);
         toHit = 10 - target->getArmor()/10;
         toHit = MAX(MIN(toHit,20), 1);
 
 
         if(roll >= toHit) {
-            dmg = mrand(1,8) + mrand(1,2);
+            dmg = Random::get(1,8) + Random::get(1,2);
             target->printColor("A deadly arrow strikes you from above for %s%d^x damage.\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
             broadcast(target->getSock(), inRoom, "An arrow strikes %s from the trees above!", target->getCName());
 
@@ -1002,7 +1002,7 @@ void doRoomHarms(BaseRoom *inRoom, Player* target) {
         if(target->flagIsSet(P_DM_INVIS) || target->getClass() == CreatureClass::LICH)
             return;
 
-        dmg = 15 - MIN(bonus((int)target->constitution.getCur()),2) + mrand(1,3);
+        dmg = 15 - MIN(bonus((int)target->constitution.getCur()),2) + Random::get(1,3);
         target->printColor("Deadly underdark moss spores envelope you for %s%d^x damage!\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
         broadcast(target->getSock(), inRoom, "Spores from deadly underdark moss envelope %s!", target->getCName());
 

@@ -1389,7 +1389,7 @@ Player* lowest_piety(BaseRoom* room, bool invis) {
 
     if(!totalpiety)
         return(0);
-    pick = mrand(1, totalpiety);
+    pick = Random::get(1, totalpiety);
 
     totalpiety = 0;
 
@@ -1849,7 +1849,7 @@ BaseRoom* Creature::recallWhere() {
     }
 
     if( getRoomParent()->flagIsSet(R_ETHEREAL_PLANE) &&
-        (mrand(1,100) <= 50)
+        (Random::get(1,100) <= 50)
     ) {
         return(teleportWhere());
     }
@@ -1901,7 +1901,7 @@ BaseRoom* Creature::teleportWhere() {
         // special area used to signify overland map
         if(cri->getArea() == "area") {
             area = gServer->getArea(cri->getId());
-            l.mapmarker.set(area->id, mrand(0, area->width), mrand(0, area->height), mrand(0, area->depth));
+            l.mapmarker.set(area->id, Random::get<short>(0, area->width), Random::get<short>(0, area->height), Random::get<short>(0, area->depth));
             if(area->canPass(0, &l.mapmarker, true)) {
                 //area->adjustCoords(&mapmarker.x, &mapmarker.y, &mapmarker.z);
 
@@ -1922,7 +1922,7 @@ BaseRoom* Creature::teleportWhere() {
         } else {
             l.room.setArea(cri->getArea());
             // if misc, first 1000 rooms are off-limits
-            l.room.id = mrand(l.room.isArea("misc") ? 1000 : 1, cri->getTeleportWeight());
+            l.room.id = Random::get(l.room.isArea("misc") ? 1000 : 1, cri->getTeleportWeight());
             UniqueRoom* uRoom = 0;
 
             if(loadRoom(l.room, &uRoom))

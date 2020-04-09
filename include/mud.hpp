@@ -28,7 +28,7 @@
 #include "bstring.hpp"
 #include "flags.hpp"
 #include "global.hpp"
-
+#include "random.hpp"
 
 
 #include "proto.hpp"
@@ -324,7 +324,9 @@
 //#define WISDOM(a)     ((bonus((int)(a)->intelligence.getCur())+bonus[(int)(a)->piety.getCur()])/2)
 //#define AWARENESS(a)  ((bonus((int)(a)->intelligence.getCur())+bonus[(int)(a)->dexterity.getCur()])/2)
 
-#define mrand(a,b)  ((a)+(rand()%((b)*10-(a)*10+10))/10)
+//#define Random::get(a,b)  ((a)+(rand()%((b)*10-(a)*10+10))/10)
+
+// A function to generate integers in the range [min, max]
 
 #define PLYCRT(p)   ((p)->isPlayer() ? "Player" : "Monster")
 

@@ -94,13 +94,13 @@ void Streamable::setColorOff() {
     streamColor = false;
 }
 
-void Streamable::setManipFlags(int flags) {
+void Streamable::setManipFlags(unsigned int flags) {
     manipFlags |= flags;
 }
 
 // Returns the manipFlags and resets them
-int Streamable::getManipFlags() {
-    int toReturn = manipFlags;
+unsigned int Streamable::getManipFlags() {
+    unsigned int toReturn = manipFlags;
     manipFlags = 0;
 
     return (toReturn);

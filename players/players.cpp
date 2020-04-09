@@ -39,7 +39,7 @@ long Player::tickInterval(Stat& stat, bool fastTick, bool deathSickness, bool va
 
     if(fastTick)
         interval /= 2;
-    if(deathSickness && mrand(1,100) < 50)
+    if(deathSickness && Random::get(1,100) < 50)
         interval += 10;
     if(vampAndDay)
         interval += 15;
@@ -401,7 +401,7 @@ bool Player::doPlayerHarmRooms() {
         print("The room starts to spin around you.\nYou feel confused.\n");
         if(!isStaff()) {
             updateAttackTimer(true, MAX(dice(2,6,0), 6));
-            stun(mrand(3,9));
+            stun(Random::get(3,9));
         }
     }
 
@@ -587,6 +587,6 @@ int Player::chooseItem() {
     if(!numwear)
         return(0);
 
-    i = mrand(0, numwear-1);
+    i = Random::get(0, numwear-1);
     return(checklist[i]);
 }

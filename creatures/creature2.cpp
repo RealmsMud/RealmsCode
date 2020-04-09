@@ -82,7 +82,7 @@ void Monster::adjust(int buffswitch) {
     long    xpmod=0;
 
     if(buffswitch == -1)
-        buff = mrand(1,3)-1;
+        buff = Random::get(1,3)-1;
     else
         buff = MAX(0, MIN(buffswitch, 2));
 
@@ -215,17 +215,17 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     // Randomize alignment and gold unless we don' want it
     if(!loadOriginal) {
         if(flagIsSet(M_ALIGNMENT_VARIES) && alignment != 0) {
-            alnum = mrand(1,100);
+            alnum = Random::get(1,100);
             if(alnum == 1)
                 alignment = 0;
             else if(alnum < 51)
-                alignment = mrand((short)1, (short)std::abs(alignment)) * -1;
+                alignment = Random::get((short)1, (short)std::abs(alignment)) * -1;
             else
-                alignment = mrand((short)1, (short)std::abs(alignment));
+                alignment = Random::get((short)1, (short)std::abs(alignment));
         }
 
         if(!flagIsSet(M_NO_RANDOM_GOLD) && coins[GOLD])
-            coins.set(mrand(coins[GOLD]/10, coins[GOLD]), GOLD);
+            coins.set(Random::get(coins[GOLD]/10, coins[GOLD]), GOLD);
     }
     // Check for loading of random scrolls
     if(checkScrollDrop()) {
@@ -257,7 +257,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
 
         object = 0;
 
-        int numDrops = mrand(1,100), whichDrop=0;
+        int numDrops = Random::get(1,100), whichDrop=0;
 
              if(numDrops<90)    numDrops=1;
         else if(numDrops<96)    numDrops=2;
@@ -269,7 +269,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
             if(prototype)
                 whichDrop=x;
             else
-                whichDrop = mrand(0,9);
+                whichDrop = Random::get(0,9);
             if(carry[whichDrop].info.id && !flagIsSet(M_TRADES)) {
                 if(!loadObject(carry[whichDrop].info, &object))
                     continue;
@@ -287,7 +287,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
                     continue;
                 }
 
-                object->value.set(mrand((object->value[GOLD]*9)/10,(object->value[GOLD]*11)/10), GOLD);
+                object->value.set(Random::get((object->value[GOLD]*9)/10,(object->value[GOLD]*11)/10), GOLD);
 
                 addObj(object);
                 object->setFlag(O_JUST_LOADED);
@@ -296,7 +296,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     }
 
     if(weaponSkill < (level * 3))
-        weaponSkill = (level-1) * mrand(9,11);
+        weaponSkill = (level-1) * Random::get(9,11);
     return(1);
 }
 
@@ -340,7 +340,7 @@ Creature *getRandomMonster(BaseRoom *inRoom) {
     if(!num)
         return(0);
 
-    roll = mrand(1, num);
+    roll = Random::get(1, num);
     for(Monster* mons : inRoom->monsters) {
         if(mons->isPet())
             continue;
@@ -366,7 +366,7 @@ Creature *getRandomPlayer(BaseRoom *inRoom) {
     num = inRoom->countVisPly();
     if(!num)
         return(0);
-    roll = mrand(1, num);
+    roll = Random::get(1, num);
     for(Player* ply : inRoom->players) {
         if(ply->flagIsSet(P_DM_INVIS)) {
             continue;
@@ -447,7 +447,7 @@ int Monster::doHarmfulAuras() {
             if(player->isEffected("petrification") || player->isCt())
                 continue;
 
-            dmg = mrand(level/2, (level*3)/2);
+            dmg = Random::get(level/2, (level*3)/2);
 
             dmg = MAX(2,dmg);
 

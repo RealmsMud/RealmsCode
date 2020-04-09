@@ -233,8 +233,8 @@ void doSearch(Player* player, bool immediate) {
 
     
     for(Exit* ext : room->exits) {
-        if( (ext->flagIsSet(X_SECRET) && mrand(1,100) <= (chance + searchMod(ext->getSize()))) ||
-            (ext->isConcealed(player) && mrand(1,100) <= 5))
+        if( (ext->flagIsSet(X_SECRET) && Random::get(1,100) <= (chance + searchMod(ext->getSize()))) ||
+            (ext->isConcealed(player) && Random::get(1,100) <= 5))
         {
             // canSee doesnt handle DescOnly
             if(player->canSee(ext) && !ext->flagIsSet(X_DESCRIPTION_ONLY)) {
@@ -254,7 +254,7 @@ void doSearch(Player* player, bool immediate) {
     for(Object* obj : room->objects) {
         if( obj->flagIsSet(O_HIDDEN) &&
             player->canSee(obj) &&
-            mrand(1,100) <= (chance + searchMod(obj->getSize())) )
+            Random::get(1,100) <= (chance + searchMod(obj->getSize())) )
         {
             found = true;
             player->printColor("You found %1P.\n", obj);
@@ -264,7 +264,7 @@ void doSearch(Player* player, bool immediate) {
     for(Player* ply : room->players) {
         if( ply->flagIsSet(P_HIDDEN) &&
             player->canSee(ply) &&
-            mrand(1,100) <= (chance + searchMod(ply->getSize())))
+            Random::get(1,100) <= (chance + searchMod(ply->getSize())))
         {
             found = true;
             player->print("You found %s hiding.\n", ply->getCName());
@@ -274,7 +274,7 @@ void doSearch(Player* player, bool immediate) {
     for(Monster* mons : room->monsters) {
         if( mons->flagIsSet(M_HIDDEN) &&
             player->canSee(mons) &&
-            mrand(1,100) <= (chance + searchMod(mons->getSize())))
+            Random::get(1,100) <= (chance + searchMod(mons->getSize())))
         {
             found = true;
             player->print("You found %1N hiding.\n", mons);
@@ -288,7 +288,7 @@ void doSearch(Player* player, bool immediate) {
     if(player->isStaff())
         chance = 100;
 
-    if(chance >= mrand(1,100)) {
+    if(chance >= Random::get(1,100)) {
         if(player->inAreaRoom() && player->getAreaRoomParent()->spawnHerbs()) {
             player->print("You found some herbs!\n");
             found = true;
@@ -384,7 +384,7 @@ bool AreaRoom::spawnHerbs() {
 bool TileInfo::spawnHerbs(BaseRoom* room) const {
     Object* object=0;
     int     max = herbs.size();
-    short   num = mrand(1,MAX(1,max)), i=0, n=0, k=0;
+    short   num = Random::get(1,MAX(1,max)), i=0, n=0, k=0;
     std::list<CatRef>::const_iterator it;
     bool    found=false;
 
@@ -399,7 +399,7 @@ bool TileInfo::spawnHerbs(BaseRoom* room) const {
 
     for(; i<num; i++) {
         k = 1;
-        n = mrand(1, max);
+        n = Random::get(1, max);
 
         for(it = herbs.begin() ; it != herbs.end() ; it++) {
             if(k++==n)
@@ -547,7 +547,7 @@ int cmdHide(Player* player, cmd* cmnd) {
         if(player->isBlind())
             chance = MIN(chance, 20);
 
-        if(mrand(1,100) <= chance || player->isEffected("mist")) {
+        if(Random::get(1,100) <= chance || player->isEffected("mist")) {
             player->setFlag(P_HIDDEN);
             player->print("You slip into the shadows unnoticed.\n");
             player->checkImprove("hide", true);
@@ -591,7 +591,7 @@ int cmdHide(Player* player, cmd* cmnd) {
     player->print("You attempt to hide it.\n");
     broadcast(player->getSock(), player->getParent(), "%M attempts to hide %1P.", player, object);
 
-    if(mrand(1, 100) <= chance) {
+    if(Random::get(1, 100) <= chance) {
         object->setFlag(O_HIDDEN);
         player->printColor("You tuck %1P into a corner.\n", object);
         player->checkImprove("hide", true);
@@ -738,7 +738,7 @@ int cmdScout(Player* player, cmd* cmnd) {
 
         chance = MIN(85, chance);
 
-        if(!player->isStaff() && mrand(1, 100) > chance) {
+        if(!player->isStaff() && Random::get(1, 100) > chance) {
             player->print("You fail scout in that direction.\n");
             player->checkImprove("scout", false);
             return(0);
@@ -874,7 +874,7 @@ int cmdEnvenom(Player* player, cmd* cmnd) {
     // poisoning everyone with a small knife just for fun.
 
     weapon->lasttime[LT_ENVEN].ltime = time(0);
-    weapon->lasttime[LT_ENVEN].interval = 60*(mrand(3,5)+weapon->getAdjustment());
+    weapon->lasttime[LT_ENVEN].interval = 60*(Random::get(3,5)+weapon->getAdjustment());
 
     return(0);
 }
@@ -1072,7 +1072,7 @@ int cmdShoplift(Player* player, cmd* cmnd) {
     player->statistics.attemptSteal();
     player->interruptDelayedActions();
 
-    if(mrand(1,100) > chance) {
+    if(Random::get(1,100) > chance) {
         player->setFlag(P_CAUGHT_SHOPLIFTING);
         player->print("You were caught!\n");
         broadcast(player->getSock(), room, "%M tried to shoplift %1P.\n%M was seen!", player, object, player);
@@ -1135,7 +1135,7 @@ int cmdShoplift(Player* player, cmd* cmnd) {
         }
 
         // prevents shoptlift ; flee
-        player->stun(mrand(3,5));
+        player->stun(Random::get(3,5));
 
     } else {
 
@@ -1378,7 +1378,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 
         if( weapon && weapon->getMagicpower() &&
             weapon->flagIsSet(O_WEAPON_CASTS) &&
-            mrand(1,100) <= 50 && weapon->getChargesCur() > 0)
+            Random::get(1,100) <= 50 && weapon->getChargesCur() > 0)
         {
             n += player->castWeapon(target, weapon, meKilled);
         }
@@ -1396,8 +1396,8 @@ int cmdBackstab(Player* player, cmd* cmnd) {
         wasKilled = target->hp.getCur() < 1;
 
         // Check for disembowel
-        if(wasKilled && n > disembowel && mrand(1,100) < 50) {
-            switch(mrand(1,4)) {
+        if(wasKilled && n > disembowel && Random::get(1,100) < 50) {
+            switch(Random::get(1,4)) {
             case 1:
                 player->printColor("^cYou completely disemboweled %N! %s's dead!\n", target, target->upHeShe());
                 broadcast(player->getSock(), player->getParent(), "%M completely disembowels %N! %s's dead!",
@@ -1457,7 +1457,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
         player->print("You missed.\n");
         player->checkImprove("backstab", false);
         broadcast(player->getSock(), player->getParent(), "%s backstab failed.", player->upHisHer());
-        player->setAttackDelay(mrand(30,90));
+        player->setAttackDelay(Random::get(30,90));
     } else if(result == ATTACK_DODGE) {
         target->dodge(player);
     } else if(result == ATTACK_PARRY) {
@@ -1480,7 +1480,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
                     player, player->himHer());
 
                 if(weapon->getEffectStrength()) {
-                    dmg = (mrand(1,3) + (weapon->getEffectStrength()/10));
+                    dmg = (Random::get(1,3) + (weapon->getEffectStrength()/10));
                     player->hp.decrease(dmg);
                     player->print("You take %d damage as the poison takes effect!\n", dmg);
                 }
@@ -1557,9 +1557,9 @@ int Player::checkPoison(Creature* target, Object* weapon) {
     if(isCt())
         poisonchance = 101;
 
-    if(mrand(1,100) <= poisonchance && !target->chkSave(POI, this, -1)) {
+    if(Random::get(1,100) <= poisonchance && !target->chkSave(POI, this, -1)) {
         // 75% chance to use up the poison
-        if(mrand (1,100) > 25)
+        if(Random::get<bool>(0.75))
             weapon->clearFlag(O_ENVENOMED);
 
         printColor("^gYou poisoned %N!\n", target);
@@ -1569,7 +1569,7 @@ int Player::checkPoison(Creature* target, Object* weapon) {
         unsigned int dur = standardPoisonDuration(weapon->getEffectDuration(), target->constitution.getCur());
 
         if(weapon->getEffectStrength()) {
-            dmg = (mrand(1,3) + (weapon->getEffectStrength()/10));
+            dmg = (Random::get(1,3) + (weapon->getEffectStrength()/10));
             printColor("^gThe poison did ^G%d^g onset damage!\n", dmg);
             target->printColor("^gYou take ^G%d^g damage as the poison takes effect!\n", dmg);
         }
@@ -1770,7 +1770,7 @@ int cmdPickLock(Player* player, cmd* cmnd) {
 
     broadcast(player->getSock(), player->getParent(), "%M attempts to pick the %s^x.", player, exit->getCName());
 
-    if(mrand(1,100) <= chance) {
+    if(Random::get(1,100) <= chance) {
         log_immort(false, player, "%s picked the %s in room %s.\n", player->getCName(), exit->getCName(),
             player->getRoomParent()->fullName().c_str());
 
@@ -1905,9 +1905,9 @@ int cmdPeek(Player* player, cmd* cmnd) {
 
     if(player->isStaff())
         chance=100;
-    if(mrand(1,100) > chance) {
+    if(Random::get(1,100) > chance) {
         player->print("You failed.\n");
-        if(mrand(1,50) <= 50)
+        if(Random::get(1,50) <= 50)
             player->unhide();
         player->checkImprove("peek", false);
         return(0);
@@ -1915,7 +1915,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
 
     chance = MIN(90, (player->getClass() == CreatureClass::ASSASSIN ? (level*4):(15 + level*5)));
 
-    if(mrand(1,100) > chance && !player->isStaff()) {
+    if(Random::get(1,100) > chance && !player->isStaff()) {
         creature->print("%M peeked at your inventory.\n", player);
         broadcast(player->getSock(), creature->getSock(), player->getRoomParent(),
             "%M peeked at %N's inventory.", player, creature);
@@ -1939,7 +1939,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
     if(player->isCt())
         goldchance = 101;
 
-    if(mrand(1,100) <= goldchance && !pCreature && !creature->flagIsSet(M_PERMENANT_MONSTER))
+    if(Random::get(1,100) <= goldchance && !pCreature && !creature->flagIsSet(M_PERMENANT_MONSTER))
         player->print("%s has %ld gold coins.\n", creature->upHeShe(), creature->coins[GOLD]);
 
     return(0);
@@ -1970,7 +1970,7 @@ int peek_bag(Player* player, Player* target, cmd* cmnd, int inv) {
         if(target->getLevel() >= level + 6)
             chance = 0;
 
-        if(mrand(1,100) > chance) {
+        if(Random::get(1,100) > chance) {
             player->print("You failed.\n");
             player->checkImprove("peek", false);
             return(0);
@@ -1990,7 +1990,7 @@ int peek_bag(Player* player, Player* target, cmd* cmnd, int inv) {
     }
 
     if(!inv) {
-        if(mrand(1,100) > chance && !player->isStaff()) {
+        if(Random::get(1,100) > chance && !player->isStaff()) {
 
             player->print("You manage to peek inside %N's %s.\n", target, container->getCName());
             target->print("%M managed to peek in your %s!\n", player, container->getCName());

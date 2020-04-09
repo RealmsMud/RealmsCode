@@ -59,7 +59,7 @@ CatRef WanderInfo::getRandom() const {
 
     // pick a random element, adding weight if <9
     i = (*it).first;
-    i = mrand(0, i < 9 ? 9 : i);
+    i = Random::get(0, i < 9 ? 9 : i);
 
     it = random.find(i);
     if(it != random.end())

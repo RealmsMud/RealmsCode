@@ -453,7 +453,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     // 0 = weak, 1 = normal, 2 = buff
-    buff = mrand(1,3) - 1;
+    buff = Random::get(1,3) - 1;
 
     target = new Monster;
     if(!target) {
@@ -490,7 +490,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
             level -= 2;
             break;
         case 2:
-            level -= mrand(0,1);
+            level -= Random::get(0,1);
             break;
     }
 
@@ -507,21 +507,21 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
         strncpy(target->key[2], p, 19);
 
 //  if(realm == CONJUREBARD) {
-//      level = title * 12 / 7 + mrand(1,4) - 2;
+//      level = title * 12 / 7 + Random::get(1,4) - 2;
 //      level = MAX(1,MIN(skLevel-3, level));
 //  } else if(realm == CONJUREMAGE) {
-//      level = title * 6 / 4 + mrand(1,4) - 2;
+//      level = title * 6 / 4 + Random::get(1,4) - 2;
 //  } else {
-//      level = title * 2 + mrand(1,4) - 2;
+//      level = title * 2 + Random::get(1,4) - 2;
 //  }
 
     target->setType(MONSTER);
     bool combatPet = false;
 
     if(realm == CONJUREBARD) {
-        chance = mrand(1,100);
+        chance = Random::get(1,100);
         if(chance > 50)
-            cClass = mrand(1,13);
+            cClass = Random::get(1,13);
 
         if(cClass) {
             switch(cClass)  {
@@ -568,10 +568,10 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
                 break;
             }
         }
-        //if(target->getClass() == CreatureClass::CLERIC && mrand(1,100) > 50)
+        //if(target->getClass() == CreatureClass::CLERIC && Random::get(1,100) > 50)
         //  target->learnSpell(S_HEAL);
 
-        if(target->getClass() == CreatureClass::MAGE && mrand(1,100) > 50)
+        if(target->getClass() == CreatureClass::MAGE && Random::get(1,100) > 50)
             target->learnSpell(S_RESIST_MAGIC);
     }
 
@@ -606,13 +606,13 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     hphigh = conjureStats[buff][level].hp;
     hplow = (conjureStats[buff][level].hp * hp_percent) / 10;
-    target->hp.setInitial(mrand(hplow, hphigh));
+    target->hp.setInitial(Random::get(hplow, hphigh));
     target->hp.restore();
 
     if(!combatPet) {
         mphigh = conjureStats[buff][level].mp;
         mplow = (conjureStats[buff][level].mp * mp_percent) / 10;
-        target->mp.setInitial(MAX(10,mrand(mplow, mphigh)));
+        target->mp.setInitial(MAX(10,Random::get(mplow, mphigh)));
         target->mp.restore();
     }
 
@@ -637,7 +637,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(!combatPet) {
         for(Realm r = MIN_REALM; r<MAX_REALM; r = (Realm)((int)r + 1))
-            target->setRealm(mrand((conjureStats[buff][level].realms*3)/4, conjureStats[buff][level].realms), r);
+            target->setRealm(Random::get((conjureStats[buff][level].realms*3)/4, conjureStats[buff][level].realms), r);
     }
 
 
@@ -653,9 +653,9 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(!combatPet) {
         if(player->getDeity() == GRADIUS || realm == CONJUREBARD)
-            target->setCastChance(mrand(5,10)); // cast precent
+            target->setCastChance(Random::get(5,10)); // cast precent
         else
-            target->setCastChance(mrand(20,50));    // cast precent
+            target->setCastChance(Random::get(20,50));    // cast precent
         target->proficiency[1] = realm;
         target->setFlag(M_CAST_PRECENT);
         target->setFlag(M_CAN_CAST);
@@ -670,15 +670,15 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
         switch(buff) {
         case 0:
             // Wimpy mob -- get 1-2 spells
-            spells = mrand(1, 2);
+            spells = Random::get(1, 2);
             break;
         case 1:
             // Medium mob -- get 1-4 spells
-            spells = mrand(2, 4);
+            spells = Random::get(2, 4);
             break;
         case 2:
             // Buff mob -- get 2-5 spells
-            spells = mrand(2,5);
+            spells = Random::get(2,5);
             break;
         }
 
@@ -731,21 +731,21 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
             circleChance += 25;
         }
 
-        if(mrand(1,100) <= enchantedOnlyChance)
+        if(Random::get(1,100) <= enchantedOnlyChance)
             target->setFlag(M_ENCHANTED_WEAPONS_ONLY);
 
-        if(mrand(1, 100) <= bashChance)
+        if(Random::get(1, 100) <= bashChance)
             target->addSpecial("bash");
 
-        if(mrand(1, 100) <= circleChance)
+        if(Random::get(1, 100) <= circleChance)
             target->addSpecial("circle");
 
 
         if(target->getLevel() >= 10) {
 
-            int numResist = mrand(1,3);
+            int numResist = Random::get(1,3);
             for(a=0;a<numResist;a++) {
-                rnum = mrand(1,5);
+                rnum = Random::get(1,5);
                 switch(rnum) {
                 case 1:
                     target->addEffect("resist-slashing");
@@ -767,27 +767,27 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
 
         if(target->getLevel() >= 13) {
-            if(mrand(1,100) <= 50) {
+            if(Random::get(1,100) <= 50) {
                 target->setFlag(M_PLUS_TWO);
                 target->clearFlag(M_ENCHANTED_WEAPONS_ONLY);
             }
             target->setFlag(M_REGENERATES);
-            if(mrand(1,100) <= 15)
+            if(Random::get(1,100) <= 15)
                 target->addSpecial("smother");
         }
 
         if(target->getLevel() >= 16) {
             target->setFlag(M_PLUS_TWO);
-            if(mrand(1,100) <= 20) {
+            if(Random::get(1,100) <= 20) {
                 target->setFlag(M_PLUS_THREE);
                 target->clearFlag(M_PLUS_TWO);
                 target->clearFlag(M_ENCHANTED_WEAPONS_ONLY);
             }
             target->setFlag(M_REGENERATES);
-            if(mrand(1,100) <= 30)
+            if(Random::get(1,100) <= 30)
                 target->addSpecial("smother");
 
-            if(mrand(1,100) <= 15)
+            if(Random::get(1,100) <= 15)
                 target->addSpecial("trample");
 
             target->addPermEffect("immune-earth");
@@ -795,16 +795,16 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         if(target->getLevel() >= 19) {
             target->setFlag(M_PLUS_TWO);
-            if(mrand(1,100) <= 40) {
+            if(Random::get(1,100) <= 40) {
                 target->setFlag(M_PLUS_THREE);
                 target->clearFlag(M_PLUS_TWO);
                 target->clearFlag(M_ENCHANTED_WEAPONS_ONLY);
             }
             target->setFlag(M_REGENERATES);
-            if(mrand(1,100) <= 40)
+            if(Random::get(1,100) <= 40)
                 target->addSpecial("smother");
 
-            if(mrand(1,100) <= 25)
+            if(Random::get(1,100) <= 25)
                 target->addSpecial("trample");
 
             target->addPermEffect("immune-earth");
@@ -829,7 +829,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
     if(!combatPet) {
-        chance = mrand(1,100);
+        chance = Random::get(1,100);
         if(chance > 50)
             target->learnSpell(S_DETECT_INVISIBILITY);
         if(chance > 90)
@@ -859,7 +859,7 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
         x = player->constitution.getCur();
     x = bonus((int) x)*60L;
 
-    interval = (60L*mrand(2,4)) + (x >= 0 ? x :  0); //+ 60 * title;
+    interval = (60L*Random::get(2,4)) + (x >= 0 ? x :  0); //+ 60 * title;
 
     target->lasttime[LT_INVOKE].ltime = t;
     target->lasttime[LT_INVOKE].interval = interval;

@@ -129,7 +129,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if(target->isPlayer() && mrand(1,100) <= 50 && target->isEffected("resist-magic")) {
+        if(target->isPlayer() && Random::get(1,100) <= 50 && target->isEffected("resist-magic")) {
             player->printColor("^yYour spell failed.\n");
             return(0);
         }
@@ -157,9 +157,9 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
             if((!target->chkSave(SPL, player, bns) && !nohold) || player->isCt()) {
 
                 if(spellData->how == CastType::CAST)
-                    dur = mrand(9,18) + 2*bonus((int)player->intelligence.getCur()) - statmod;
+                    dur = Random::get(9,18) + 2*bonus((int)player->intelligence.getCur()) - statmod;
                 else
-                    dur = mrand(9,12);
+                    dur = Random::get(9,12);
 
                 target->stun(dur);
 
@@ -190,9 +190,9 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
                 broadcast(target->getSock(), player->getRoomParent(), "%M becomes entangled in vines and weeds!", target);
 
                 if(spellData->how == CastType::CAST)
-                    dur = mrand(12,18) + 2*bonus((int)player->intelligence.getCur()) - statmod;
+                    dur = Random::get(12,18) + 2*bonus((int)player->intelligence.getCur()) - statmod;
                 else
-                    dur = mrand(9,12);
+                    dur = Random::get(9,12);
 
                 if(player->isCt())
                     player->print("*DM* %d seconds.\n", dur);
@@ -425,7 +425,7 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
     broadcast(player->getSock(), player->getParent(), "%M casts a knock spell at the %s^x.", player, exit->getCName());
 
 
-    if(player->isStaff() || mrand(1,100) <= chance) {
+    if(player->isStaff() || Random::get(1,100) <= chance) {
         player->print("Click!");
         if(spellData->how == CastType::CAST)
             player->print(" Your knock spell was successful!");
@@ -475,7 +475,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
             } else {
                 player->print("Ewww! That tastes HORRIBLE.\n");
                 player->print("You vomit uncontrollabley.\n");
-                player->stun(mrand(20,30));
+                player->stun(Random::get(20,30));
                 return(0);
             }
         }
@@ -539,7 +539,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(saved) {
             player->doDamage(target, target->hp.getCur()/2);
             target->print("Negative energy rips through your body.\n");
-            target->stun(mrand(10,15));
+            target->stun(Random::get(10,15));
             player->print("%M avoided disintegration.\n", target);
         } else {
             target->printColor("^GYou are engulfed in an eerie green light.\n");
@@ -753,13 +753,13 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
     player->smashInvis();
 
     if(spellData->how == CastType::CAST) {
-        dur = mrand(180,300) + 3*bonus((int) player->intelligence.getCur());
+        dur = Random::get(180,300) + 3*bonus((int) player->intelligence.getCur());
 
         player->subMp(mpCost);
     } else if(spellData->how == CastType::SCROLL)
-        dur = mrand(30,120) + bonus((int) player->intelligence.getCur());
+        dur = Random::get(30,120) + bonus((int) player->intelligence.getCur());
     else
-        dur = mrand(30,60);
+        dur = Random::get(30,60);
 
 
 

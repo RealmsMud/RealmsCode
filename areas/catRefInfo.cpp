@@ -437,7 +437,7 @@ const CatRefInfo* Config::getRandomCatRefInfo(int zone) const {
     if(!total)
         return(0);
 
-    pick = mrand(1, total);
+    pick = Random::get(1, total);
     total = 0;
 
     for(it = catRefInfo.begin() ; it != catRefInfo.end() ; it++) {

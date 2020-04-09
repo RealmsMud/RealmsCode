@@ -248,7 +248,7 @@ void Creature::checkImprove(const bstring& skillName, bool success, int attribut
     if (gained >= (level * 10))
         chance = 0;
 
-    int roll = mrand(1, 100);
+    int roll = Random::get(1, 100);
     if (roll <= chance) {
         bool af = gConfig->isAprilFools();
         if (success) {
@@ -268,7 +268,7 @@ void Creature::checkImprove(const bstring& skillName, bool success, int attribut
             lasttime[LT_SKILL_INCREASE].interval = wait;
         }
         // Chance for a double improve for a hard skill
-        if (gainType == SKILL_HARD && mrand(1,100) < 33)
+        if (gainType == SKILL_HARD && Random::get(1,100) < 33)
             crSkill->improve(2);
         else
             crSkill->improve();

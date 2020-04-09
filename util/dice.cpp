@@ -62,7 +62,7 @@ bool Dice::operator!=(const Dice& d) const {
 
 int Dice::roll() const {
     if(mean)
-        return(mrand(low(), high()));
+        return(Random::get(low(), high()));
     return(dice(number, sides, plus));
 }
 

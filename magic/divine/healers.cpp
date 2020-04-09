@@ -58,7 +58,7 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    dur = 300 + mrand(1, 30) * 10 + bonus((int) player->piety.getCur()) * 30 +
+    dur = 300 + Random::get(1, 30) * 10 + bonus((int) player->piety.getCur()) * 30 +
           (int)(player->getSkillLevel("enthrall") * 5);
 
 
@@ -97,7 +97,7 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
     if(player->isDm())
         chance = 101;
 
-    if((chance < mrand(1, 100)) && (chance != 101)) {
+    if((chance < Random::get(1, 100)) && (chance != 101)) {
         player->print("You were unable to enthrall %N.\n", creature);
         player->checkImprove("enthrall",false);
         broadcast(player->getSock(), player->getParent(), "%M tried to enthrall %N.",player, creature);
@@ -135,7 +135,7 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
 
     player->addCharm(creature);
 
-    creature->stun(MAX(1,7+mrand(1,2)+bonus((int) player->piety.getCur())));
+    creature->stun(MAX(1,7+Random::get(1,2)+bonus((int) player->piety.getCur())));
 
     creature->lasttime[LT_CHARMED].ltime = time(0);
     creature->lasttime[LT_CHARMED].interval = dur;
@@ -210,9 +210,9 @@ int cmdEarthSmother(Player* player, cmd* cmnd) {
     if(!pCreature && creature->isEffected("immune-earth"))
         chance = 0;
 
-    dmg = mrand((int)(level*3), (int)(level*4));
+    dmg = Random::get((int)(level*3), (int)(level*4));
     if(creature->isEffected("resist-earth"))
-        dmg = mrand(1, (int)level);
+        dmg = Random::get(1, (int)level);
     if(player->getRoomParent()->flagIsSet(R_EARTH_BONUS) && player->getRoomParent()->flagIsSet(R_ROOM_REALM_BONUS))
         dmg = dmg*3/2;
 
@@ -220,7 +220,7 @@ int cmdEarthSmother(Player* player, cmd* cmnd) {
         mCreature->addEnemy(player);
 
     if(!player->isCt()) {
-        if(mrand(1, 100) > chance) {
+        if(Random::get(1, 100) > chance) {
             player->print("You failed to earth smother %N.\n", creature);
             broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M tried to earth smother %N.", player, creature);
             creature->print("%M tried to earth smother you!\n", player);
@@ -282,7 +282,7 @@ int cmdLayHands(Player* player, cmd* cmnd) {
     // Lay on self
     if(cmnd->num == 1) {
 
-        num = mrand( (int)(player->getSkillLevel("hands")*4), (int)(player->getSkillLevel("hands")*5) ) + mrand(2,8);
+        num = Random::get( (int)(player->getSkillLevel("hands")*4), (int)(player->getSkillLevel("hands")*5) ) + Random::get(2,8);
         player->print("You heal yourself with the power of %s.\n", gConfig->getDeity(player->getDeity())->getName().c_str());
         player->print("You regain %d hit points.\n", MIN((player->hp.getMax() - player->hp.getCur()), num));
 
@@ -322,7 +322,7 @@ int cmdLayHands(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        num = mrand( (int)(player->getSkillLevel("hands")*4), (int)(player->getSkillLevel("hands")*5) ) + mrand(2,8);
+        num = Random::get( (int)(player->getSkillLevel("hands")*4), (int)(player->getSkillLevel("hands")*5) ) + Random::get(2,8);
 
         player->print("You heal %N with the power of %s.\n", creature, gConfig->getDeity(player->getDeity())->getName().c_str());
         creature->print("%M lays %s hand upon your pate.\n", player, player->hisHer());
@@ -403,7 +403,7 @@ int cmdPray(Player* player, cmd* cmnd) {
     else
         chance = MIN(85, (int)(player->getSkillLevel("pray") * 20) + bonus((int) player->piety.getCur()));
 
-    if(mrand(1, 100) <= chance) {
+    if(Random::get(1, 100) <= chance) {
         player->lasttime[LT_PRAY].ltime = t;
 
         if(player->getClass() !=  CreatureClass::DEATHKNIGHT) {
@@ -439,7 +439,7 @@ bool Creature::kamiraLuck(Creature *attacker) {
         return(false);
 
     chance = (level / 10)+3;
-    if(mrand(1,100) <= chance) {
+    if(Random::get(1,100) <= chance) {
         broadcast(getSock(), getRoomParent(), "^YA feeling of deja vous comes over you.");
         printColor("^YThe luck of %s was with you!\n", gConfig->getDeity(KAMIRA)->getName().c_str());
         printColor("^C%M missed you.\n", attacker);
@@ -601,7 +601,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
 
     chance = player->getTurnChance(target);
 
-    roll = mrand(1,100);
+    roll = Random::get(1,100);
 
     if(roll > chance && !player->isStaff()) {
         player->print("You failed to turn %N.\n", target);
@@ -613,7 +613,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    disroll = mrand(1,100);
+    disroll = Random::get(1,100);
 
     if((disroll < (dis + bns) && !target->flagIsSet(M_SPECIAL_UNDEAD)) || player->isDm()) {
         player->printColor("^BYou disintegrated %N.\n", target);
@@ -715,7 +715,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
         if(player->isDm())
             chance = 101;
 
-        if(mrand(1,100) > chance) {
+        if(Random::get(1,100) > chance) {
             player->print("Your god refuses to renounce %N.\n", target);
             player->checkImprove("renounce", false);
             broadcast(player->getSock(), player->getParent(), "%M tried to renounce %N.", player, target);
@@ -732,7 +732,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
             }
         }
 
-        if(mrand(1,100) > 90 - bonus((int)player->piety.getCur()) || player->isDm()) {
+        if(Random::get(1,100) > 90 - bonus((int)player->piety.getCur()) || player->isDm()) {
             player->print("You destroy %N with your faith.\n", target);
             player->checkImprove("renounce", true);
             broadcast(player->getSock(), player->getParent(), "The power of %N's faith destroys %N.",
@@ -789,7 +789,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
         chance = MIN(chance, 90);
         if(player->isDm())
             chance = 101;
-        if(mrand(1,100) > chance) {
+        if(Random::get(1,100) > chance) {
             player->print("Your god refuses to renounce %N.\n", target);
             player->checkImprove("renounce", false);
             broadcast(player->getSock(), target->getSock(), player->getParent(),
@@ -808,7 +808,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
             }
         }
 
-        if(mrand(1,100) > 90 - bonus((int)player->piety.getCur()) || player->isDm()) {
+        if(Random::get(1,100) > 90 - bonus((int)player->piety.getCur()) || player->isDm()) {
             player->print("You destroyed %N with your faith.\n", target);
             player->checkImprove("renounce", true);
             target->print("The power of %N's faith destroys you!\n", player);
@@ -909,7 +909,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
         if(player->isDm())
             chance = 101;
 
-        if(mrand(1,100) > chance) {
+        if(Random::get(1,100) > chance) {
             player->print("Your holy word is ineffective on %N.\n", target);
             player->checkImprove("holyword", false);
             broadcast(player->getSock(), player->getParent(), "%M tried to pronounce a holy word on %N.", player, target);
@@ -925,7 +925,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
             }
         }
 
-        if((mrand(1,100) > (90 - bonus((int)player->piety.getCur()))) || (player->isDm())) {
+        if((Random::get(1,100) > (90 - bonus((int)player->piety.getCur()))) || (player->isDm())) {
             player->print("Your holy word utterly destroys %N.\n", target);
             player->checkImprove("holyword", true);
             broadcast(player->getSock(), player->getParent(), "%M's holy word utterly destroys %N.",
@@ -936,12 +936,12 @@ int cmdHolyword(Player* player, cmd* cmnd) {
             target->die(player);
         } else {
             alnum = player->getAlignment() / 100;
-            dmg = mrand((int)level + alnum, (int)(level*4)) + bonus((int)player->piety.getCur());
+            dmg = Random::get((int)level + alnum, (int)(level*4)) + bonus((int)player->piety.getCur());
             //player->statistics.attackDamage(dmg, "holyword");
 
             player->print("Your holy word does %d damage to %N.\n", dmg, target);
             player->checkImprove("holyword", true);
-            target->stun((bonus((int)player->piety.getCur()) + mrand(2,6)) );
+            target->stun((bonus((int)player->piety.getCur()) + Random::get(2,6)) );
 
             broadcast(player->getSock(), player->getParent(), "%M pronounces a holy word on %N.", player, target);
 
@@ -990,7 +990,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
         chance = MIN(chance, 90);
         if(player->isDm())
             chance = 101;
-        if(mrand(1,100) > chance) {
+        if(Random::get(1,100) > chance) {
             player->print("Your holy word is ineffective on %N.\n", target);
             player->checkImprove("holyword", false);
             broadcast(player->getSock(), target->getSock(), player->getParent(),
@@ -1008,7 +1008,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
             }
         }
 
-        if((mrand(1,100) > (90 - bonus((int)player->piety.getCur()))) || player->isDm()) {
+        if((Random::get(1,100) > (90 - bonus((int)player->piety.getCur()))) || player->isDm()) {
 
             player->print("Your holy word utterly destroys %N.\n", target);
             player->checkImprove("holyword", true);
@@ -1020,13 +1020,13 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 
         } else {
             alnum = player->getAlignment() / 100;
-            dmg = (mrand((int)level + alnum, (int)(level*4))
+            dmg = (Random::get((int)level + alnum, (int)(level*4))
                    + bonus((int)player->piety.getCur())) - bonus((int)target->piety.getCur());
             player->statistics.attackDamage(dmg, "holyword");
 
             player->printColor("Your holy word does %s%d^x damage to %N.\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg, target);
             player->checkImprove("holyword", true);
-            target->stun((bonus((int)player->piety.getCur()) + mrand(2,6)) );
+            target->stun((bonus((int)player->piety.getCur()) + Random::get(2,6)) );
 
             target->printColor("%M pronounced a holy word on you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), dmg);
             broadcast(player->getSock(), target->getSock(), player->getParent(),

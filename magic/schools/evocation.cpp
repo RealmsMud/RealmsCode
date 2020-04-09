@@ -26,7 +26,7 @@
 //*********************************************************************
 
 char getRandColor() {
-    switch(mrand(1,7)) {
+    switch(Random::get(1,7)) {
     case 1:
         return('r');
     case 2:
@@ -83,23 +83,16 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
     if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == nullptr)
         return(0);
 
-//  target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], true, true);
-//  if(!target || target == player) {
-//      player->print("That is not here.\n");
-//      return(0);
-//  }
     mTarget = target->getAsMonster();
 
     // default is to cast max number of missiles.
-
     if(!player->canAttack(target))
         return(0);
 
     if(spellData->how == CastType::CAST) {
         maxMissiles = spellData->level / 2;
     } else {
-        maxMissiles = mrand(2,4);
-        missileDmg = mrand (2,4)+1;
+        maxMissiles = Random::get(2,4);
     }
 
     num = MAX(1,maxMissiles);
@@ -148,15 +141,15 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(spellData->how == CastType::CAST && player->isPlayer())
         player->getAsPlayer()->statistics.offensiveCast();
 
-    if(mTarget && mrand(1,100) <= mTarget->getMagicResistance()) {
+    if(mTarget && Random::get(1,100) <= mTarget->getMagicResistance()) {
         player->print("Your missiles have no effect on %N.\n", mTarget);
         return(0);
     }
 
     while(a < num) {
         a++;
-        missileDmg = mrand(2,5) + bonus(player->intelligence.getCur())/2;
-        if(mrand(1,100) <= 25 && target->isEffected("resist-magic")) {
+        missileDmg = Random::get(2,5) + bonus(player->intelligence.getCur())/2;
+        if(Random::get(1,100) <= 25 && target->isEffected("resist-magic")) {
             player->print("Your magic-missile deflects off of %N.\n", target);
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's magic-missile deflects off of %N.", player, target);
             target->print("%M's magic-missile deflects off of you.\n", player);
@@ -341,7 +334,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
             return(0);
 
         if(mTarget) {
-            if(mrand(1,100) < mTarget->getMagicResistance()) {
+            if(Random::get(1,100) < mTarget->getMagicResistance()) {
                 caster->printColor("^MYour spell has no effect on %N.\n", mTarget);
                 if(pCaster)
                     broadcast(pCaster->getSock(), room, "%M's spell has no effect on %N.", caster, mTarget);

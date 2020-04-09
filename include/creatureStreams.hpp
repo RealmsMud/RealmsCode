@@ -29,32 +29,32 @@ class MudObject;
 
 class Streamable {
 public:
-    virtual ~Streamable() {};
+    virtual ~Streamable() = default;
     void initStreamable();
     // Stream operators
     Streamable& operator<< (const MudObject* obj);
     Streamable& operator<< (const MudObject& obj);
     Streamable& operator<< (const bstring& str);
-    Streamable& operator<< (const int num);
+    Streamable& operator<< (int num);
     Streamable& operator<< (Stat& stat);
 
     // This is to allow simple function based manipulators (like ColorOn, ColorOff)
     Streamable& operator <<( Streamable& (*op)(Streamable&));
 
-    void setManipFlags(int flags);
+    void setManipFlags(unsigned int flags);
     void setManipNum(int num);
     void setColorOn();
     void setColorOff();
 
-    int getManipFlags();
+    unsigned int getManipFlags();
     int getManipNum();
     //Creature& operator<< (creatureManip& manip)
 
 protected:
-    int manipFlags;
-    int manipNum;
-    bool streamColor;
-    bool petPrinted;
+    unsigned int manipFlags{};
+    int manipNum{};
+    bool streamColor{};
+    bool petPrinted{};
 
     void doPrint(const bstring& toPrint);
 };

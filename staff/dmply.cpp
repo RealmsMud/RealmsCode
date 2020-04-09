@@ -1635,7 +1635,7 @@ int dmKillAll(int type, int silent, int unconscious, int uncon_length) {
             target->print("A freak meteor strikes you!\n");
             broadcast(target->getSock(), target->getRoomParent(), "A freak meteors strikes %N!", target);
 
-            target->print("The freak meteor slams into you for %d damage!\n", mrand(5000,10000));
+            target->print("The freak meteor slams into you for %d damage!\n", Random::get(5000,10000));
             broadcast(target->getSock(), target->getRoomParent(), "The freak meteor blasts right through %N!", target);
             target->print("You die as your ashes fall to the ground.\n");
             broadcast(target->getSock(), target->getRoomParent(), "The freak meteor vaporized %N!", target);
