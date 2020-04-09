@@ -54,7 +54,7 @@ void Streamable::initStreamable() {
 
 
 Streamable& Streamable::operator<< ( const MudObject& mo) {
-    Player* player = dynamic_cast<Player*>(this);
+    auto* player = dynamic_cast<Player*>(this);
     if(player && player->getSock()) {
         const Creature* creature = mo.getAsConstCreature();
         const Object* object = mo.getAsConstObject();
