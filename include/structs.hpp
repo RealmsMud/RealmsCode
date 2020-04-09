@@ -278,8 +278,8 @@ public:
     virtual ~MudMethod() = default;
     int priority{};
 
-    bool exactMatch(bstring toMatch); 
-    bool partialMatch(bstring toMatch);
+    bool exactMatch(const bstring& toMatch);
+    bool partialMatch(const bstring& toMatch);
 };
 
 // ******************
@@ -290,8 +290,8 @@ class MysticMethod: public MudMethod {
 public:
     virtual ~MysticMethod() = default;
            
-    bool exactMatch(bstring toMatch); 
-    bool partialMatch(bstring toMatch);
+    bool exactMatch(const bstring& toMatch);
+    bool partialMatch(const bstring& toMatch);
 
     virtual void save(xmlNodePtr rootNode) const = 0;
     const bstring& getScript() const;
