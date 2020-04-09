@@ -318,7 +318,7 @@ bool Server::swap(Swap s) {
     // find the room ourselves!
     if(s.target.id == -1) {
         // only one forked process at a time
-        if(gServer->swapName() != "Someone")
+        if(swapName() != "Someone")
             return(false);
 
 
@@ -669,19 +669,18 @@ void Config::offlineSwap(childProcess &child, bool onReap) {
     Player* player = gServer->findPlayer(child.extra.c_str());
     bstring toProcess = gServer->simpleChildRead(child);
 
-    if(toProcess != "") {
+    if(!toProcess.empty()) {
         UniqueRoom *uRoom=0;
         Monster *monster=0;
         CatRef cr;
         bstring input;
 
-        charTokenizer::iterator it;
         boost::char_separator<char> sep(sepType);
         charTokenizer tok(toProcess, sep);
 
         // load the rooms as we go
         // last one will always be loaded in target
-        for(it = tok.begin() ; it != tok.end() ; it++) {
+        for(auto it = tok.begin() ; it != tok.end() ; it++) {
             input = *it;
 
             swapLog(input);
@@ -710,7 +709,7 @@ void Config::swap(Player* player, bstring name) {
     std::list<bstring>::iterator bIt;
     std::list<Swap>::iterator qIt;
     UniqueRoom *uOrigin=0, *uTarget=0;
-    bool found=false;
+    bool found;
 
     if(player)
         player->printColor("^YRS: ^eSearch complete. Beginning final sequence.\n");
@@ -1122,7 +1121,7 @@ void Config::endSwap(int id) {
 //*********************************************************************
 
 void Config::swapInfo(const Player* player) {
-    bool canSee = true;
+    bool canSee;
     char type;
     bstring mvName;
 
@@ -1238,10 +1237,8 @@ bool Config::swapIsInteresting(const MudObject* target) const {
         return(true);
 
     const UniqueRoom* uRoom = target->getAsConstUniqueRoom();
-    if(uRoom && uRoom->swapIsInteresting(currentSwap))
-        return(true);
+    return uRoom && uRoom->swapIsInteresting(currentSwap);
 
-    return(false);
 }
 
 //*********************************************************************
@@ -1479,10 +1476,8 @@ bool Player::swapIsInteresting(Swap s) const {
             return(true);
     }
 
-    if(hooks.swapIsInteresting(s))
-        return(true);
+    return hooks.swapIsInteresting(s);
 
-    return(false);
 }
 
 //*********************************************************************
@@ -1523,10 +1518,8 @@ bool Monster::swapIsInteresting(Swap s) const {
     if(currentLocation.room == s.origin || currentLocation.room == s.target)
         return(true);
 
-    if(hooks.swapIsInteresting(s))
-        return(true);
+    return hooks.swapIsInteresting(s);
 
-    return(false);
 }
 
 //*********************************************************************
@@ -1548,10 +1541,8 @@ bool Object::swap(Swap s) {
 
 bool Object::swapIsInteresting(Swap s) const {
 
-    if(hooks.swapIsInteresting(s))
-        return(true);
+    return hooks.swapIsInteresting(s);
 
-    return(false);
 }
 
 //*********************************************************************
@@ -1627,10 +1618,8 @@ bool UniqueRoom::swapIsInteresting(Swap s) const {
             return(true);
     }
 
-    if(hooks.swapIsInteresting(s))
-        return(true);
+    return hooks.swapIsInteresting(s);
 
-    return(false);
 }
 
 //*********************************************************************
@@ -1686,10 +1675,8 @@ bool AreaRoom::swapIsInteresting(Swap s) const {
             return(true);
     }
 
-    if(hooks.swapIsInteresting(s))
-        return(true);
+    return hooks.swapIsInteresting(s);
 
-    return(false);
 }
 
 //*********************************************************************
