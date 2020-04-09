@@ -24,14 +24,14 @@
 #include "raceData.hpp"
 #include "rooms.hpp"
 #include "startlocs.hpp"
-#include "xml.hpp"
+
 
 //*********************************************************************
 //                      initialBind
 //*********************************************************************
 // setup the player for the first time they are bound
 
-void initialBind(Player* player, bstring str) {
+void initialBind(Player* player, const bstring& str) {
     const StartLoc* location = gConfig->getStartLoc(str);
     if(!location) {
         broadcast(isCt, "Invalid start location: %s", str.c_str());
@@ -62,126 +62,126 @@ void initialBind(Player* player, bstring str) {
 // choose = true    return true if they made a valid selection
 //                  return false if they made an invalid selection
 
-bool startingChoices(Player* player, bstring str, char* location, bool choose) {
+bool startingChoices(Player *player, bstring str, char *location, bool choose) {
 
     // if only one start location is defined, our choices are easy!
-    if(gConfig->start.size() == 1) {
-        std::map<bstring, StartLoc*>::iterator s = gConfig->start.begin();
+    if (gConfig->start.size() == 1) {
+        auto s = gConfig->start.begin();
         sprintf(location, "%s", (*s).first.c_str());
         location[0] = up(location[0]);
         player->bind((*s).second);
-        return(true);
+        return (true);
     }
 
     std::list<bstring> options;
-    int     race = player->getRace();
+    int race = player->getRace();
 
     // set race equal to their parent race, use player->getRace() if checking
     // for subraces
-    const RaceData* r = gConfig->getRace(race);
-    if(r && r->getParentRace())
+    const RaceData *r = gConfig->getRace(race);
+    if (r && r->getParentRace())
         race = r->getParentRace();
 
-    if(player->getClass() == CreatureClass::DRUID) {
+    if (player->getClass() == CreatureClass::DRUID) {
 
         // druidic order overrides all other starting locations
-        options.push_back("druidwood");
+        options.emplace_back("druidwood");
 
-    } else if(player->getDeity() == ENOCH || player->getRace() == SERAPH) {
-
-        // religious states
-        options.push_back("sigil");
-
-    } else if(player->getDeity() == ARAMON || player->getRace() == CAMBION) {
+    } else if (player->getDeity() == ENOCH || player->getRace() == SERAPH) {
 
         // religious states
-        options.push_back("caladon");
+        options.emplace_back("sigil");
 
-    } else if(race == HUMAN && player->getClass() == CreatureClass::CLERIC) {
+    } else if (player->getDeity() == ARAMON || player->getRace() == CAMBION) {
+
+        // religious states
+        options.emplace_back("caladon");
+
+    } else if (race == HUMAN && player->getClass() == CreatureClass::CLERIC) {
 
         // all other human clerics have to start in HP because
         // Sigil and Caladon are very religious
-        options.push_back("highport");
+        options.emplace_back("highport");
 
-    } else if(race == GNOME || race == HALFLING) {
+    } else if (race == GNOME || race == HALFLING) {
 
-        options.push_back("gnomebarrow");
+        options.emplace_back("gnomebarrow");
 
-    } else if(race == HALFGIANT) {
+    } else if (race == HALFGIANT) {
 
-        options.push_back("schnai");
-        options.push_back("highport");
+        options.emplace_back("schnai");
+        options.emplace_back("highport");
 
-    } else if(race == BARBARIAN) {
+    } else if (race == BARBARIAN) {
 
-        options.push_back("schnai");
+        options.emplace_back("schnai");
 
-    } else if(race == DWARF) {
+    } else if (race == DWARF) {
 
-        options.push_back("ironguard");
+        options.emplace_back("ironguard");
 
-    } else if(race == DARKELF) {
+    } else if (race == DARKELF) {
 
-        options.push_back("oakspire");
+        options.emplace_back("oakspire");
 
-    } else if(race == TIEFLING) {
+    } else if (race == TIEFLING) {
 
-        options.push_back("highport");
-        options.push_back("caladon");
+        options.emplace_back("highport");
+        options.emplace_back("caladon");
 
-    } else if(race == MINOTAUR) {
+    } else if (race == MINOTAUR) {
 
-        options.push_back("ruhrdan");
+        options.emplace_back("ruhrdan");
 
-    } else if(race == KATARAN) {
+    } else if (race == KATARAN) {
 
-        options.push_back("kataran");
+        options.emplace_back("kataran");
 
-    } else if(race == HALFORC) {
+    } else if (race == HALFORC) {
 
         // half-breeds can start in more places
-        options.push_back("highport");
-        options.push_back("caladon");
-        options.push_back("orc");
+        options.emplace_back("highport");
+        options.emplace_back("caladon");
+        options.emplace_back("orc");
 
-    } else if(race == ORC) {
+    } else if (race == ORC) {
 
-        options.push_back("orc");
+        options.emplace_back("orc");
 
-    } else if(race == ELF || player->getDeity() == LINOTHAN) {
+    } else if (race == ELF || player->getDeity() == LINOTHAN) {
 
-        options.push_back("meadhil");
+        options.emplace_back("meadhil");
 
-    } else if(race == HALFELF || race == HUMAN) {
+    } else if (race == HALFELF || race == HUMAN) {
 
         // humans and half-breeds can start in more places
-        options.push_back("highport");
-        options.push_back("sigil");
+        options.emplace_back("highport");
+        options.emplace_back("sigil");
 
-        if(race == HUMAN)
-            options.push_back("caladon");
-        else if(race == HALFELF)
-            options.push_back("meadhil");
+        if (race == HUMAN)
+            options.emplace_back("caladon");
+        else if (race == HALFELF)
+            options.emplace_back("meadhil");
 
 
     }
 
-    switch(player->getClass()) {
-    case CreatureClass::RANGER:
-        options.push_back("druidwood");
-        break;
-    // even seraphs of these classes cannot start in Sigil
-    case CreatureClass::ASSASSIN:
-    case CreatureClass::LICH:
-    case CreatureClass::THIEF:
-    case CreatureClass::DEATHKNIGHT:
-    case CreatureClass::PUREBLOOD:
-    case CreatureClass::ROGUE:
-    case CreatureClass::WEREWOLF:
-        options.remove("sigil");
-        break;
-    default:
-        break;
+    switch (player->getClass()) {
+        case CreatureClass::RANGER:
+            options.emplace_back("druidwood");
+            break;
+            // even seraphs of these classes cannot start in Sigil
+        case CreatureClass::ASSASSIN:
+        case CreatureClass::LICH:
+        case CreatureClass::THIEF:
+        case CreatureClass::DEATHKNIGHT:
+        case CreatureClass::PUREBLOOD:
+        case CreatureClass::ROGUE:
+        case CreatureClass::WEREWOLF:
+            options.remove("sigil");
+            break;
+        default:
+            break;
     }
 
     // needed:
@@ -197,32 +197,32 @@ bool startingChoices(Player* player, bstring str, char* location, bool choose) {
 
     // if the areas aren't open, give them the default starting location,
     // which is the first one on the list
-    if(!options.size())
+    if (options.empty())
         options.push_back(gConfig->getDefaultStartLoc()->getName());
 
     // OCEANCREST: Dom: HC
     //options.push_back("oceancrest");
 
     // if they have no choice, we assign them a location and are done with it
-    if(options.size() == 1) {
+    if (options.size() == 1) {
         sprintf(location, "%s", options.front().c_str());
         location[0] = up(location[0]);
 
         initialBind(player, options.front());
-        return(true);
+        return (true);
     }
 
 
     std::list<bstring>::iterator it;
-    int     i=0;
+    int i = 0;
 
 
     // we don't need to make any choices - we need to show them what they can choose
-    if(!choose) {
+    if (!choose) {
         std::ostringstream oStr;
         char opt = 'A';
-        for(it = options.begin(); it != options.end(); it++) {
-            if(i)
+        for (it = options.begin(); it != options.end(); it++) {
+            if (i)
                 oStr << "     ";
             i++;
 
@@ -232,23 +232,23 @@ bool startingChoices(Player* player, bstring str, char* location, bool choose) {
             oStr << "[^W" << (opt++) << "^x] " << location;
         }
         sprintf(location, "%s", oStr.str().c_str());
-        return(false);
+        return (false);
     }
 
     // determine where they want to start
     int choice = low(str[0]) - 'a' + 1;
 
-    for(it = options.begin(); it != options.end(); it++) {
-        if(++i == choice) {
+    for (it = options.begin(); it != options.end(); it++) {
+        if (++i == choice) {
             sprintf(location, "%s", (*it).c_str());
             location[0] = up(location[0]);
 
             initialBind(player, *it);
-            return(true);
+            return (true);
         }
     }
 
-    return(false);
+    return (false);
 }
 
 
@@ -276,9 +276,9 @@ int dmStartLocs(Player* player, cmd* cmnd) {
 // to any room
 
 int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* creature=0;
-    Player* target=0, *pPlayer = player->getAsPlayer();
-    const StartLoc* location=0;
+    Creature* creature=nullptr;
+    Player* target=nullptr, *pPlayer = player->getAsPlayer();
+    const StartLoc* location=nullptr;
 
     if(!pPlayer)
         return(0);
@@ -405,37 +405,6 @@ StartLoc::StartLoc() {
     primary = false;
 }
 
-//*********************************************************************
-//                      load
-//*********************************************************************
-
-void StartLoc::load(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-    xml::copyPropToBString(name, curNode, "Name");
-    while(childNode) {
-             if(NODE_NAME(childNode, "BindName")) xml::copyToBString(bindName, childNode);
-        else if(NODE_NAME(childNode, "RequiredName")) xml::copyToBString(requiredName, childNode);
-        else if(NODE_NAME(childNode, "Bind")) bind.load(childNode);
-        else if(NODE_NAME(childNode, "Required")) required.load(childNode);
-        else if(NODE_NAME(childNode, "StartingGuide")) startingGuide.load(childNode);
-        childNode = childNode->next;
-    }
-}
-
-//*********************************************************************
-//                      save
-//*********************************************************************
-
-void StartLoc::save(xmlNodePtr curNode) const {
-    xmlNodePtr childNode = xml::newStringChild(curNode, "Location");
-    xml::newProp(childNode, "Name", name);
-
-    xml::saveNonNullString(childNode, "BindName", bindName);
-    xml::saveNonNullString(childNode, "RequiredName", requiredName);
-    bind.save(childNode, "Bind");
-    required.save(childNode, "Required");
-    startingGuide.save(childNode, "StartingGuide", false);
-}
 
 bstring StartLoc::getName() const { return(name); }
 bstring StartLoc::getBindName() const { return(bindName); }
@@ -459,11 +428,11 @@ void Player::bind(const StartLoc* location) {
 //                      getStartLoc
 //*********************************************************************
 
-const StartLoc *Config::getStartLoc(bstring id) const {
-    std::map<bstring, StartLoc*>::const_iterator it = start.find(id);
+const StartLoc *Config::getStartLoc(const bstring& id) const {
+    auto it = start.find(id);
 
     if(it == start.end())
-        return(0);
+        return(nullptr);
 
     return((*it).second);
 }
@@ -479,7 +448,7 @@ const StartLoc *Config::getDefaultStartLoc() const {
         if((*it).second->isDefault())
             return((*it).second);
     }
-    return(0);
+    return(nullptr);
 }
 
 
@@ -487,16 +456,16 @@ const StartLoc *Config::getDefaultStartLoc() const {
 //                      getStartLocByReq
 //*********************************************************************
 
-const StartLoc *Config::getStartLocByReq(CatRef cr) const {
+const StartLoc *Config::getStartLocByReq(const CatRef& cr) const {
     std::map<bstring, StartLoc*>::const_iterator it;
-    StartLoc* s=0;
+    StartLoc* s=nullptr;
 
     for(it = start.begin() ; it != start.end() ; it++) {
         s = (*it).second;
         if(cr == s->getRequired().room)
             return(s);
     }
-    return(0);
+    return(nullptr);
 }
 
 
@@ -512,76 +481,4 @@ void Config::clearStartLoc() {
         delete s;
     }
     start.clear();
-}
-
-//*********************************************************************
-//                      loadStartLoc
-//*********************************************************************
-
-bool Config::loadStartLoc() {
-    xmlDocPtr xmlDoc;
-    xmlNodePtr curNode;
-    // first one loaded is the primary one
-    bool primary=true;
-
-    char filename[80];
-    snprintf(filename, 80, "%s/start.xml", Path::Game);
-    xmlDoc = xml::loadFile(filename, "Locations");
-
-    if(xmlDoc == nullptr)
-        return(false);
-
-    curNode = xmlDocGetRootElement(xmlDoc);
-
-    curNode = curNode->children;
-    while(curNode && xmlIsBlankNode(curNode))
-        curNode = curNode->next;
-
-    if(curNode == 0) {
-        xmlFreeDoc(xmlDoc);
-        return(false);
-    }
-
-    clearStartLoc();
-    bstring loc = "";
-    while(curNode != nullptr) {
-        if(NODE_NAME(curNode, "Location")) {
-            xml::copyPropToBString(loc, curNode, "Name");
-            if(loc != "" && start.find(loc) == start.end()) {
-                start[loc] = new StartLoc;
-                start[loc]->load(curNode);
-                if(primary) {
-                    start[loc]->setDefault();
-                    primary = false;
-                }
-            }
-        }
-        curNode = curNode->next;
-    }
-    xmlFreeDoc(xmlDoc);
-    xmlCleanupParser();
-
-    return(true);
-}
-
-//*********************************************************************
-//                      saveStartLocs
-//*********************************************************************
-
-void Config::saveStartLocs() const {
-    std::map<bstring, StartLoc*>::const_iterator it;
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr  rootNode;
-    char            filename[80];
-
-    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Locations", nullptr);
-    xmlDocSetRootElement(xmlDoc, rootNode);
-
-    for(it = start.begin() ; it != start.end() ; it++)
-        (*it).second->save(rootNode);
-
-    sprintf(filename, "%s/start.xml", Path::Game);
-    xml::saveFile(filename, xmlDoc);
-    xmlFreeDoc(xmlDoc);
 }
