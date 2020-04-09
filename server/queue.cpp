@@ -66,23 +66,21 @@ void Server::flushObject() {
 // in game that can't be kept around anymore
 
 void Server::killMortalObjects() {
-    std::list<Area*>::iterator it;
-    std::map<bstring, AreaRoom*>::iterator rt;
     std::list<AreaRoom*> toDelete;
     Area    *area=nullptr;
     AreaRoom* room=nullptr;
     UniqueRoom* r=nullptr;
 
-    for(auto it : roomCache) {
+    for(const auto& it : roomCache) {
         r = it.second->second;
         if(!r)
             continue;
 	    r->killMortalObjects();
     }
 
-    for(it = gServer->areas.begin() ; it != gServer->areas.end() ; it++) {
+    for(auto it = gServer->areas.begin() ; it != gServer->areas.end() ; it++) {
         area = (*it);
-        for(rt = area->rooms.begin() ; rt != area->rooms.end() ; rt++) {
+        for(auto rt = area->rooms.begin() ; rt != area->rooms.end() ; rt++) {
             room = (*rt).second;
             room->killMortalObjects();
 
@@ -109,7 +107,7 @@ void Server::killMortalObjects() {
 void Server::resaveAllRooms(char permonly) {
 	UniqueRoom *r;
 
-    for(auto it : roomCache) {
+    for(const auto& it : roomCache) {
         r = it.second->second;
         if(!r)
             continue;

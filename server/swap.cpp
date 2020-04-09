@@ -707,7 +707,6 @@ void Config::offlineSwap(childProcess &child, bool onReap) {
 //*********************************************************************
 
 void Config::swap(Player* player, bstring name) {
-    std::map<bstring, rsparse>::iterator rIt;
     std::list<bstring>::iterator bIt;
     std::list<Swap>::iterator qIt;
     UniqueRoom *uOrigin=0, *uTarget=0;
