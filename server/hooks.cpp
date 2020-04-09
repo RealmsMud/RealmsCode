@@ -18,16 +18,16 @@
 
 #include <unordered_map>
 #include <sstream>
-#include <iomanip>
 #include <locale>
+#include <proto.hpp>
 
 
 #include "creatures.hpp"
-#include "mud.hpp"
+#include "hooks.hpp"
+#include "flags.hpp"
 #include "rooms.hpp"
 #include "server.hpp"
 #include "socket.hpp"
-#include "xml.hpp"
 
 
 //*********************************************************************
@@ -36,7 +36,7 @@
 // View the "hooks" dm help file to view available hooks.
 
 Hooks::Hooks() {
-    parent = 0;
+    parent = nullptr;
 }
 
 //*********************************************************************
@@ -72,41 +72,7 @@ void Hooks::add(const bstring& event, const bstring& code) {
     hooks.insert(std::pair<bstring,bstring>(event, code));
 }
 
-//*********************************************************************
-//                      load
-//*********************************************************************
 
-void Hooks::load(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-    bstring event, code;
-    while(childNode) {
-        event = "", code = "";
-        if(NODE_NAME(childNode, "Hook")) {
-            xml::copyPropToBString(event, childNode, "event");
-            xml::copyToBString(code, childNode);
-            add(event, code);
-        }
-        childNode = childNode->next;
-    }
-}
-
-//*********************************************************************
-//                      save
-//*********************************************************************
-
-void Hooks::save(xmlNodePtr curNode, const char* name) const {
-    if(hooks.empty())
-        return;
-
-    xmlNodePtr childNode, subNode;
-
-    childNode = xml::newStringChild(curNode, name);
-
-    for( std::pair<bstring, bstring> p: hooks ) {
-        subNode = xml::newStringChild(childNode, "Hook", p.second);
-        xml::newProp(subNode, "event", p.first);
-    }
-}
 
 //*********************************************************************
 //                      display
@@ -119,7 +85,7 @@ bstring Hooks::display() const {
     std::ostringstream oStr;
 
     oStr << "^oHooks:^x\n";
-    for( std::pair<bstring, bstring> p : hooks ) {
+    for( const auto& p : hooks ) {
         oStr << "^WEvent:^x " << p.first << "\n^WCode:^x" << p.second << "\n";
     }
 
@@ -170,11 +136,11 @@ bool Hooks::execute(const bstring& event, MudObject* target, const bstring& para
     bool ran = false;
 
     bstring params = "";
-    if(param1 != "")
+    if(!param1.empty())
         params += "   param1: " + param1;
-    if(param2 != "")
+    if(!param2.empty())
         params += "   param2: " + param2;
-    if(param3 != "")
+    if(!param3.empty())
         params += "   param3: " + param3;
 
     broadcast(seeAllHooks, "^ochecking hook %s: %s^o on %s^o%s", event.c_str(),
@@ -182,7 +148,7 @@ bool Hooks::execute(const bstring& event, MudObject* target, const bstring& para
         params.c_str());
 
     //std::unordered_map<bstring, bstring>::const_iterator it = hooks.find(event);
-    std::map<bstring, bstring>::const_iterator it = hooks.find(event);
+    auto it = hooks.find(event);
 
 
     if(it != hooks.end()) {
@@ -200,18 +166,18 @@ bool Hooks::executeWithReturn(const bstring& event, MudObject* target, const bst
     bool returnValue = true;
 
     bstring params = "";
-    if(param1 != "")
+    if(!param1.empty())
         params += "   param1: " + param1;
-    if(param2 != "")
+    if(!param2.empty())
         params += "   param2: " + param2;
-    if(param3 != "")
+    if(!param3.empty())
         params += "   param3: " + param3;
 
     broadcast(seeAllHooks, "^ochecking hook %s: %s^o on %s^o%s", event.c_str(),
         hookMudObjName(parent).c_str(), hookMudObjName(target).c_str(),
         params.c_str());
 
-    std::map<bstring, bstring>::const_iterator it = hooks.find(event);
+    auto it = hooks.find(event);
 
 
     if(it != hooks.end()) {
