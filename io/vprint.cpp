@@ -15,7 +15,7 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <stdarg.h>
+#include <cstdarg>
 
 #include "creatures.hpp"
 #include "mud.hpp"
@@ -27,7 +27,7 @@
 // Function Prototypes
 bstring delimit(const char *str, int wrap);
 
-void Creature::bPrint(bstring toPrint) const {
+void Creature::bPrint(const bstring& toPrint) const {
     printColor("%s", toPrint.c_str());
 }
 
@@ -41,7 +41,7 @@ void Creature::print(const char *fmt,...) const {
     if(isPet())
         printTo = getConstMaster()->getSock();
 
-    if(!this || !printTo)
+    if(!printTo)
         return;
 
     va_list ap;

@@ -416,7 +416,7 @@ public:
     const char* getStatusStr(int dmg=0);
     virtual bstring customColorize(const bstring& text, bool caret=true) const = 0;
 
-    void bPrint(bstring toPrint) const;
+    void bPrint(const bstring& toPrint) const;
     void print(const char *fmt, ...) const;
     void printColor(const char *fmt, ...) const;
     virtual void vprint(const char *fmt, va_list ap) const {};
