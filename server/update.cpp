@@ -46,8 +46,6 @@ long            TX_interval = 4200;
 short           Random_update_interval = 6;
 short           Action_update_interval = 6;
 
-extern msparse  Mob[MMAX];
-
 // over the course of time, ships begin to become a few seconds
 // off from the main clock. this variable will help us keep
 // things in check

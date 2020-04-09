@@ -40,7 +40,6 @@ namespace odbc {
 #include "delayedAction.hpp"
 #include "money.hpp"
 #include "proc.hpp"
-#include "queue.hpp"
 #include "swap.hpp"
 #include "weather.hpp"
 #include "lru/lru.hpp"
