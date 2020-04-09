@@ -17,28 +17,21 @@
  */
 
 // C++ includes
-#include <sstream>
 #include <iomanip>
-#include <list>
 #include <stdexcept>
 
 // Mud Includes
 #include "calendar.hpp"
 #include "commands.hpp"
 #include "creatures.hpp"
-#include "effects.hpp"
-#include "guilds.hpp"
 #include "mud.hpp"
-#include "property.hpp"
-#include "quests.hpp"
 #include "rooms.hpp"
 #include "server.hpp"
 #include "specials.hpp"
-#include "version.hpp"
 
 
 
-void MudObject::setName(bstring newName) {
+void MudObject::setName(const bstring& newName) {
     removeFromSet();
     name = newName;
     addToSet();
@@ -98,10 +91,8 @@ bool MudObject::unRegisterMo() {
 }
 
 void MudObject::registerContainedItems() {
-    return;
 }
 void MudObject::unRegisterContainedItems() {
-    return;
 }
 
 bool PlayerPtrLess::operator()(const Player* lhs, const Player* rhs) const {
@@ -297,7 +288,7 @@ bool MudObject::equals(MudObject* other) {
 }
 
 
-void MudObject::setId(bstring newId, bool handleParentSet) {
+void MudObject::setId(const bstring& newId, bool handleParentSet) {
     if(!id.equals("-1") && !newId.equals("-1")) {
         throw std::runtime_error(bstring("Error, re-setting ID:") + getName() + ":" + getId() + ":" + newId);
     }
