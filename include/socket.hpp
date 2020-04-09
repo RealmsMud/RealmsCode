@@ -171,7 +171,7 @@ public:
     static bool needsPrompt(bstring& inStr);
 
 public:
-    Socket(int pFd);
+    explicit Socket(int pFd);
     Socket(int pFd, sockaddr_in pAddr, bool &dnsDone);
     ~Socket();
 
@@ -192,25 +192,24 @@ public:
 
     void vprint(const char *fmt, va_list ap);
 
-    void bprint(bstring toPrint);
-    void bprintColor(bstring toPrint);
+    void bprint(const bstring& toPrint);
+    void bprintColor(const bstring& toPrint);
     void bprintNoColor(bstring toPrint);
-    void println(bstring toPrint = "");
-//  void printPrompt(bstring toPrint);
+    void println(const bstring& toPrint = "");
     void print(const char* format, ...);
     void printColor(const char* format, ...);
 
     bstring parseForOutput(bstring& outBuf);
-    bstring getColorCode(const unsigned char ch);
+    bstring getColorCode(unsigned char ch);
 
-    int processInput(void);
-    int processOneCommand(void);
+    int processInput();
+    int processOneCommand();
 
     void reconnect(bool pauseScreen=false);
     void disconnect();
     void showLoginScreen(bool dnsDone=true);
 
-    void flush(void); // Flush any pending output
+    void flush(); // Flush any pending output
 
 
     int startCompress(bool silent = false);
@@ -223,19 +222,19 @@ public:
 
 // End Telopt related
 
-    int getFd(void) const;
+    int getFd() const;
     bool isConnected() const;
-    int getState(void) const;
-    const bstring& getIp(void) const;
-    const bstring& getHostname(void) const;
+    int getState() const;
+    const bstring& getIp() const;
+    const bstring& getHostname() const;
 
-    void checkLockOut(void);
+    void checkLockOut();
 
-    void setHostname(bstring pName);
-    void setIp(bstring pIp);
+    void setHostname(const bstring& pName);
+    void setIp(const bstring& pIp);
 
-    bool hasOutput(void) const;
-    bool hasCommand(void) const;
+    bool hasOutput() const;
+    bool hasCommand() const;
 
     long getIdle() const;
     int getMccp() const;
@@ -286,7 +285,7 @@ protected:
     bool negotiate(unsigned char ch);
     //bool subNegotiate(unsigned char ch);
     bool handleNaws(int& colRow, unsigned char& chr, bool high);
-    int processCompressed(void); // Mccp
+    int processCompressed(); // Mccp
 
     bool parseMXPSecure();
 
@@ -302,7 +301,7 @@ protected:
 
 // TODO - Retool so they can be moved to protected
 public:
-    char tempstr[4][256];
+    char tempstr[4][256]{};
     bstring tempbstr;
 
     int getParam();
@@ -311,15 +310,15 @@ protected:
     int         fd;                 // File Descriptor of this socket
     Host        host;
     Term        term;
-    SockOptions opts;
-    bool inPlayerList;
+    SockOptions opts{};
+    bool inPlayerList{};
 
-    int         lastState;
-    int         connState;
+    int         lastState{};
+    int         connState{};
 
-    int         tState;
-    bool        oneIAC;
-    bool        watchBrokenClient;
+    int         tState{};
+    bool        oneIAC{};
+    bool        watchBrokenClient{};
 
     bstring     output;
     bstring     processed_output;   // Output that has been processed but not fully sent (in the case of EWOULDBLOCK for example)
@@ -332,33 +331,33 @@ protected:
     bstring     inBuf;              // Input Buffer
     bstring     inLast;             // Last command
 
-    Player*     myPlayer;
+    Player*     myPlayer{};
 
 
 // From ply extr struct
-    int ansi;
-    unsigned long timeout;
+    int ansi{};
+    unsigned long timeout{};
 
 // For MCCP
-    char        *out_compress_buf;
-    z_stream    *out_compress;
+    char        *out_compress_buf{};
+    z_stream    *out_compress{};
 
 // Old items from IOBUF that we might keep
 
-    void        (*fn)(Socket*, const bstring&);
+    void        (*fn)(Socket*, const bstring&){};
 
-    char        fnparam;
+    char        fnparam{};
 
-    char        commands;
+    char        commands{};
 
-    Socket      *spyingOn;      // Socket we are spying on
+    Socket      *spyingOn{};      // Socket we are spying on
     std::list<Socket*> spying;  // Sockets spying on us
 
     std::map<bstring, ReportedMsdpVariable*> msdpReporting;
 // TEMP
 public:
-    long        ltime;
-    char        intrpt;
+    long        ltime{};
+    char        intrpt{};
 
 
 public:
@@ -369,7 +368,6 @@ public:
 
 // Other socket related prototypes
 int nonBlock(int pFd);
-int restoreState(Socket* sock);
 
 
 #endif /*SOCKET_H_*/

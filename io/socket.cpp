@@ -19,7 +19,6 @@
 
 // C++ Includes
 #include <iostream>
-#include <sstream>
 
 // C Includes
 #include <arpa/telnet.h>
@@ -202,10 +201,10 @@ void Socket::reset() {
     term.cols = 82;
     term.rows = 40;
 
-    ltime = time(0);
+    ltime = time(nullptr);
     intrpt = 0;
 
-    fn = 0;
+    fn = nullptr;
     timeout = 0;
     ansi = 0;
     tState = NEG_NONE;
@@ -215,7 +214,7 @@ void Socket::reset() {
     zero(tempstr, sizeof(tempstr));
     inBuf = "";
 //  cmdInBuf = "";
-    spyingOn = 0;
+    spyingOn = nullptr;
 }
 
 //********************************************************************
@@ -231,7 +230,7 @@ Socket::Socket(int pFd) {
 Socket::Socket(int pFd, sockaddr_in pAddr, bool &dnsDone) {
     reset();
 
-    struct linger ling;
+    struct linger ling{};
     fd = pFd;
 
     resolveIp(pAddr, host.ip);
@@ -312,7 +311,7 @@ void Socket::addToPlayerList() {
 void Socket::freePlayer() {
     if (myPlayer)
         free_crt(myPlayer, inPlayerList);
-    myPlayer = 0;
+    myPlayer = nullptr;
     inPlayerList = false;
 }
 
@@ -326,7 +325,7 @@ void Socket::freePlayer() {
 void Socket::clearSpying() {
     if (spyingOn) {
         spyingOn->removeSpy(this);
-        spyingOn = 0;
+        spyingOn = nullptr;
     }
 }
 
@@ -965,7 +964,7 @@ int Socket::processInput() {
         }
         input.push(tmpr);
     }
-    ltime = time(0);
+    ltime = time(nullptr);
     return (0);
 }
 
@@ -1055,11 +1054,7 @@ bool Socket::negotiate(unsigned char ch) {
             tState = NEG_NONE;
             break;
         case TELOPT_NAWS:
-            if (tState == NEG_WILL) {
-                opts.naws = true;
-            } else {
-                opts.naws = false;
-            }
+            opts.naws = (tState == NEG_WILL);
             tState = NEG_NONE;
             break;
         case TELOPT_ECHO:
@@ -1148,7 +1143,7 @@ bool Socket::handleNaws(int& colRow, unsigned char& chr, bool high) {
 //********************************************************************
 // Aka interpreter
 
-int Socket::processOneCommand(void) {
+int Socket::processOneCommand() {
     bstring cmd = input.front();
     input.pop();
 
@@ -1175,12 +1170,6 @@ int Socket::processOneCommand(void) {
 void Socket::restoreState() {
     setState(lastState);
     createPlayer(this, "");
-    return;
-}
-
-int restoreState(Socket* sock) {
-    sock->restoreState();
-    return (0);
 }
 
 //*********************************************************************
@@ -1264,7 +1253,7 @@ void Socket::setState(int pState, int pFnParam) {
     fnparam = (char) pFnParam;
 }
 
-bstring getMxpTag( bstring tag, bstring text ) {
+bstring getMxpTag( const bstring& tag, bstring text ) {
     bstring::size_type n = text.find(tag);
     if(n == bstring::npos)
         return("");
@@ -1307,15 +1296,9 @@ bool Socket::parseMXPSecure() {
         if(!version.empty()) {
             term.version = version;
             if(term.type.equals("mushclient", false)) {
-                if(version >= "4.02")
-                    opts.xterm256 = true;
-                else
-                    opts.xterm256 = false;
+                opts.xterm256 = (version >= "4.02");
             } else if (term.type.equals("cmud", false)) {
-                if(version >=  "3.04")
-                    opts.xterm256 = true;
-                else
-                    opts.xterm256 = false;
+                opts.xterm256 = (version >= "3.04");
             } else if (term.type.equals("atlantis", false)) {
                 // Any version of atlantis with MXP supports xterm256
                 opts.xterm256 = true;
@@ -1421,7 +1404,7 @@ bool Socket::parseAtcp() {
 //********************************************************************
 // Append a string to the socket's output queue
 
-void Socket::bprint(bstring toPrint) {
+void Socket::bprint(const bstring& toPrint) {
     if (!toPrint.empty())
         output += toPrint;
 }
@@ -1431,7 +1414,7 @@ void Socket::bprint(bstring toPrint) {
 //********************************************************************
 // Append a string to the socket's output queue...in color!
 
-void Socket::bprintColor(bstring toPrint) {
+void Socket::bprintColor(const bstring& toPrint) {
     if(!toPrint.empty()) {
         // Append the string to the output buffer, we'll parse color there
         output += toPrint;
@@ -1456,9 +1439,8 @@ void Socket::bprintNoColor(bstring toPrint) {
 //********************************************************************
 // Append a string to the socket's output queue with a \n
 
-void Socket::println(bstring toPrint) {
+void Socket::println(const bstring& toPrint) {
     bprint(toPrint + "\n");
-    return;
 }
 
 //********************************************************************
@@ -1492,11 +1474,8 @@ void Socket::printColor(const char* fmt, ...) {
 void Socket::flush() {
     ssize_t n, len;
     if(!processed_output.empty()) {
-        len = processed_output.length();
-
         n = write(processed_output, false, false);
     } else {
-        len = output.length();
         if ((n = write(output)) == 0)
             return;
         output.clear();
@@ -1681,7 +1660,7 @@ int Socket::endCompress() {
 //********************************************************************
 
 int Socket::processCompressed() {
-    size_t len = (size_t) ((char*) out_compress->next_out - (char*) out_compress_buf);
+    auto len = (size_t) ((char*) out_compress->next_out - (char*) out_compress_buf);
     int written = 0;
     size_t block;
     ssize_t n, i;
@@ -1775,7 +1754,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
 //                      hasOutput
 //********************************************************************
 
-bool Socket::hasOutput(void) const {
+bool Socket::hasOutput() const {
     return (!processed_output.empty() || !output.empty());
 }
 
@@ -1783,7 +1762,7 @@ bool Socket::hasOutput(void) const {
 //                      hasCommand
 //********************************************************************
 
-bool Socket::hasCommand(void) const {
+bool Socket::hasCommand() const {
     return (!input.empty());
 }
 
@@ -1792,7 +1771,7 @@ bool Socket::hasCommand(void) const {
 //********************************************************************
 // True if the socket is playing (ie: fn is command and fnparam is 1)
 
-bool Socket::canForce(void) const {
+bool Socket::canForce() const {
     return (fn == (void(*)(Socket*, const bstring&)) ::command && fnparam == 1);
 }
 
@@ -1800,7 +1779,7 @@ bool Socket::canForce(void) const {
 //                      get
 //********************************************************************
 
-int Socket::getState(void) const {
+int Socket::getState() const {
     return (connState);
 }
 bool Socket::isConnected() const {
@@ -1810,10 +1789,10 @@ bool Player::isConnected() const {
     return (getSock()->isConnected());
 }
 
-int Socket::getFd(void) const {
+int Socket::getFd() const {
     return (fd);
 }
-bool Socket::getMxp(void) const {
+bool Socket::getMxp() const {
     return (opts.mxp);
 }
 bool Socket::getMxpClientSecure() const {
@@ -1822,44 +1801,44 @@ bool Socket::getMxpClientSecure() const {
 void Socket::clearMxpClientSecure() {
     opts.mxpClientSecure = false;
 }
-int Socket::getMccp(void) const {
+int Socket::getMccp() const {
     return (opts.mccp);
 }
 bool Socket::getMsdp() const {
     return (opts.msdp);
 }
-;
+
 bool Socket::getAtcp() const {
     return (opts.atcp);
 }
-;
+
 bool Socket::getMsp() const {
     return (opts.msp);
 }
-;
+
 bool Socket::getCharset() const {
     return (opts.charset);
 }
-;
+
 bool Socket::getUtf8() const {
     return (opts.UTF8);
 }
-bool Socket::getEor(void) const {
+bool Socket::getEor() const {
     return (opts.eor);
 }
-bool Socket::isDumbClient(void) const {
+bool Socket::isDumbClient() const {
     return(opts.dumb);
 }
-bool Socket::getNaws(void) const {
+bool Socket::getNaws() const {
     return (opts.naws);
 }
-long Socket::getIdle(void) const {
-    return (time(0) - ltime);
+long Socket::getIdle() const {
+    return (time(nullptr) - ltime);
 }
-const bstring& Socket::getIp(void) const {
+const bstring& Socket::getIp() const {
     return (host.ip);
 }
-const bstring& Socket::getHostname(void) const {
+const bstring& Socket::getHostname() const {
     return (host.hostName);
 }
 bstring Socket::getTermType() const {
@@ -1885,10 +1864,10 @@ void Socket::setParam(int newParam) {
     fnparam = newParam;
 }
 
-void Socket::setHostname(bstring pName) {
+void Socket::setHostname(const bstring& pName) {
     host.hostName = pName;
 }
-void Socket::setIp(bstring pIp) {
+void Socket::setIp(const bstring& pIp) {
     host.ip = pIp;
 }
 void Socket::setPlayer(Player* ply) {
@@ -1962,7 +1941,7 @@ void Socket::askFor(const char *str) {
 unsigned const char mssp_val[] = { MSSP_VAL, '\0' };
 unsigned const char mssp_var[] = { MSSP_VAR, '\0' };
 
-void addMSSPVar(std::ostringstream& msspStr, bstring var) {
+void addMSSPVar(std::ostringstream& msspStr, const bstring& var) {
     msspStr << mssp_var << var;
 }
 

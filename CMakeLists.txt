@@ -114,7 +114,6 @@ set(COMMON_HEADER_FILES
     include/pymud.hpp
     include/pythonHandler.hpp
     include/quests.hpp
-    include/queue.hpp
     include/raceData.hpp
     include/range.hpp
     include/realm.hpp
