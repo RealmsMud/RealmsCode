@@ -26,19 +26,7 @@
 #include "delayedAction.hpp"
 #include "hooks.hpp"
 #include "effects.hpp"
-//#include <boost/unordered_map.hpp> // Gnu gcc specific, switch to <map>
-//#include <unordered_map>
 
-// allow the gnu hash_map to work on bstring
-//namespace std {
-//   template<> struct hash< bstring > {
-//    size_t operator()(const bstring& s) const {
-//       return hash< const char* >()( s.c_str() );
-//    }
-//   }; // gcc.gnu.org/ml/libstdc++/2002-04/msg00107.html
-//}
-
-//typedef std::unordered_map<bstring, bstring> MultiMap;  // change to std::map
 class AreaRoom;
 class BaseRoom;
 class Creature;
@@ -57,7 +45,7 @@ private:
     bstring name;
 
 public:
-    void setName(bstring newName);
+    void setName(const bstring& newName);
     const bstring& getName() const;
     const char* getCName() const;
 
@@ -93,7 +81,7 @@ public:
     void moReset();
     void moDestroy();
 
-    void setId(bstring newId, bool handleParentSet = true);
+    void setId(const bstring& newId, bool handleParentSet = true);
 
     MudObject* getAsMudObject();
     Monster* getAsMonster();
@@ -139,9 +127,9 @@ public:
     EffectInfo* getEffect(const bstring& effect) const;
     EffectInfo* getExactEffect(const bstring& effect) const;
     EffectInfo* addEffect(EffectInfo* newEffect, bool show = true, bool keepApplier=false);
-    EffectInfo* addEffect(const bstring& effect, long duration = -2, int strength = -2, MudObject* applier = nullptr, bool show = true, const Creature* owner=0, bool keepApplier=false);
+    EffectInfo* addEffect(const bstring& effect, long duration = -2, int strength = -2, MudObject* applier = nullptr, bool show = true, const Creature* owner=nullptr, bool keepApplier=false);
     EffectInfo* addPermEffect(const bstring& effect, int strength = 1, bool show = true);
-    bool removeEffect(const bstring& effect, bool show = true, bool remPerm = true, MudObject* fromApplier=0);
+    bool removeEffect(const bstring& effect, bool show = true, bool remPerm = true, MudObject* fromApplier=nullptr);
     bool removeEffect(EffectInfo* toDel, bool show = true);
     bool removeOppositeEffect(const EffectInfo *effect);
     virtual bool pulseEffects(time_t t) = 0;
