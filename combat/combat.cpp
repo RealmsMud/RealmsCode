@@ -31,17 +31,17 @@
 //*********************************************************************
 // comes in as a creature, our job to turn into a player
 
-int Creature::doLagProtect() {
+bool Creature::doLagProtect() {
     Player  *pThis = getAsPlayer();
 
     if(!pThis)
-        return(0);
+        return(false);
 
     if(pThis->flagIsSet(P_LAG_PROTECTION_SET) && pThis->flagIsSet(P_LAG_PROTECTION_ACTIVE))
         if(pThis->lagProtection())
-            return(1);
+            return(true);
 
-    return(0);
+    return(false);
 }
 
 
@@ -49,15 +49,15 @@ int Creature::doLagProtect() {
 //                      updateCombat
 //*********************************************************************
 
-int Monster::updateCombat() {
-    BaseRoom* room=0;
-    Creature* target=0;
-    Player* pTarget=0;
-    Monster* mTarget=0;
+bool Monster::updateCombat() {
+    BaseRoom* room=nullptr;
+    Creature* target=nullptr;
+    Player* pTarget=nullptr;
+    Monster* mTarget=nullptr;
     char    atk[30];
-    int     n=1, rtn=0, yellchance=0, num=0, breathe=0;
+    int     n, rtn=0, yellchance=0, num=0, breathe=0;
     int     x=0;
-    bool    monstervmonster=false, casted=false;
+    bool    monstervmonster, casted=false;
     bool    resistPet=false, immunePet=false, vulnPet=false;
     bool    willCast=false, antiMagic=false, isCharmed=false;
 
@@ -68,7 +68,7 @@ int Monster::updateCombat() {
 
     target = getTarget();
 
-    if(!target) return(0);
+    if(!target) return(false);
 
     // is this a player?
     pTarget = target->getAsPlayer();
@@ -90,7 +90,7 @@ int Monster::updateCombat() {
         !getMaster()->isCt() &&
         getRoomParent()->isPkSafe()
     )
-        return(0);
+        return(false);
 
     // Stop fighting if it's a no exp loss monster
     if( pTarget &&
@@ -98,7 +98,7 @@ int Monster::updateCombat() {
         !isPet() &&
         target->inCombat(this)
     )
-        return(0);
+        return(false);
 
     monstervmonster = (!pTarget && !target->isPet() && isMonster() && !isPet());
 
@@ -106,9 +106,9 @@ int Monster::updateCombat() {
 
 
     if(target == this)
-        return(0);
+        return(false);
     if(target->hasCharm(getName()) && flagIsSet(M_CHARMED))
-        return(0);
+        return(false);
 
 
     target->checkTarget(this);
@@ -163,7 +163,7 @@ int Monster::updateCombat() {
         removeEffect("invisibility");
     }
 
-    lasttime[LT_AGGRO_ACTION].ltime = time(0);
+    lasttime[LT_AGGRO_ACTION].ltime = time(nullptr);
 
     if( willCast &&
         flagIsSet(M_CAN_CAST) &&
@@ -175,18 +175,18 @@ int Monster::updateCombat() {
 
 
         if(target->doLagProtect())
-            return(1);
+            return(true);
 
         rtn = castSpell( target );
 
         if(rtn == 2)
-            return(1);
+            return(true);
         else if(rtn == 1) {
             casted = true;
             if(pTarget && pTarget->flagIsSet(P_WIMPY) && !pTarget->flagIsSet(P_LAG_PROTECTION_OPERATING)) {
                 if(pTarget->hp.getCur() <= pTarget->getWimpy()) {
                     pTarget->flee(false, true);
-                    return(1);
+                    return(true);
                 }
             }
         }
@@ -211,11 +211,11 @@ int Monster::updateCombat() {
 
 
     if(casted)
-        return(1);
+        return(true);
 
     // Try running special attacks if we have any
     if(!specials.empty() && runSpecialAttacks(target))
-        return(1);
+        return(true);
 
 
 
@@ -223,9 +223,9 @@ int Monster::updateCombat() {
         if(canSpeak()) {
 
             if(flagIsSet(M_YELLED_FOR_HELP))
-                yellchance = 15+(2*bonus((int) intelligence.getCur()));
+                yellchance = 15+(2*bonus(intelligence.getCur()));
             else
-                yellchance = 25+(2*bonus((int) intelligence.getCur()));
+                yellchance = 25+(2*bonus(intelligence.getCur()));
 
             if(flagIsSet(M_WILL_YELL_FOR_HELP) && ((Random::get(1,100) < yellchance) || (hp.getCur() <= hp.getCur()/5))) {
                 if(!flagIsSet(M_WILL_BE_HELPED))
@@ -233,7 +233,7 @@ int Monster::updateCombat() {
                 setFlag(M_YELLED_FOR_HELP);
                 setFlag(M_WILL_BE_ASSISTED);
                 clearFlag(M_WILL_YELL_FOR_HELP);
-                return(0);
+                return(false);
             }
         }
     }
@@ -244,7 +244,7 @@ int Monster::updateCombat() {
     ) {
         setFlag(M_WILL_YELL_FOR_HELP);
         if(summonMobs(target))
-            return(0);
+            return(false);
     }
 
 //  if(pTarget && isPet() && target->inCombat())
@@ -258,7 +258,7 @@ int Monster::updateCombat() {
             (target->flagIsSet(M_ONLY_HARMED_BY_MAGIC) || immunePet))
         {
             getMaster()->print("%M's attack has no effect on %N.\n", this, target);
-            return(0);
+            return(false);
         }
     }
     // We'll be nice for now...no critical hits from mobs :)
@@ -274,7 +274,7 @@ int Monster::updateCombat() {
     if(result == ATTACK_HIT || result == ATTACK_CRITICAL || result == ATTACK_BLOCK) {
         Damage attackDamage;
         int drain = 0;
-        bool wasKilled = false, freeTarget = false, meKilled = false;
+        bool wasKilled = false, freeTarget = false, meKilled;
 
         computeDamage(target, ready[WIELD - 1], ATTACK_NORMAL, result, attackDamage, true, drain);
         attackDamage.includeBonus();
@@ -379,7 +379,7 @@ int Monster::updateCombat() {
                     pTarget->checkDie(this);
                 if(meKilled)
                     checkDie(pTarget);
-                return(0);
+                return(false);
             }
         }
 
@@ -394,7 +394,7 @@ int Monster::updateCombat() {
             meKilled
         ) {
             Creature::simultaneousDeath(this, target, false, freeTarget);
-            return(1);
+            return(true);
         }
 
         if( pTarget &&
@@ -404,22 +404,22 @@ int Monster::updateCombat() {
         {
             if(pTarget->hp.getCur() <= pTarget->getWimpy()) {
                 pTarget->flee(false, true);
-                return(1);
+                return(true);
             }
         } else if(pTarget && pTarget->isEffected("fear")) {
             int ff;
             ff = 40 + (1- (pTarget->hp.getCur()/pTarget->hp.getMax()))*40 +
-                ::bonus((int)pTarget->constitution.getCur())*3 +
-                ((pTarget->getClass() == CreatureClass::PALADIN ||
+                 ::bonus(pTarget->constitution.getCur()) * 3 +
+                 ((pTarget->getClass() == CreatureClass::PALADIN ||
                          pTarget->getClass() == CreatureClass::DEATHKNIGHT) ? -10 : 0);
             if(ff < Random::get(1,100)) {
                 pTarget->flee(true);
-                return(1);
+                return(true);
             }
         }
 
         if(target->doLagProtect())
-            return(1);
+            return(true);
 
     } else if(result == ATTACK_MISS) {
         target->printColor("^c%M missed you.\n", this);
@@ -427,7 +427,7 @@ int Monster::updateCombat() {
             target->checkImprove("defense", true);
 
         if(target->doLagProtect())
-            return(1);
+            return(true);
 
         // Output only when monster v. monster
         if(monstervmonster) {
@@ -446,7 +446,7 @@ int Monster::updateCombat() {
             ) {
                 if(pTarget->hp.getCur() <= pTarget->getWimpy()) {
                     pTarget->flee(false, true);
-                    return(1);
+                    return(true);
                 }
             }
         }
@@ -454,30 +454,30 @@ int Monster::updateCombat() {
         if(!isPet())
             target->checkImprove("defense", true);
         target->dodge(this);
-        return(1);
+        return(true);
     }
     else if(result == ATTACK_PARRY) {
         if(!isPet())
             target->checkImprove("defense", true);
         target->parry(this);
-        return(1);
+        return(true);
     }
 
-    return(0);
+    return(false);
 }
 
 //*********************************************************************
 //                      zapMp
 //*********************************************************************
 
-int Monster::zapMp(Creature *victim, SpecialAttack* attack) {
+bool Monster::zapMp(Creature *victim, SpecialAttack* attack) {
     //Player    *pVictim = victim->getPlayer();
     int     n=0;
 
     if(victim->mp.getCur() <= 0)
-        return(0);
+        return(false);
 
-    n = MIN(victim->mp.getCur(), (Random::get<unsigned short>(1+level/2, level) + bonus((int)intelligence.getCur())));
+    n = MIN(victim->mp.getCur(), (Random::get<unsigned short>(1+level/2, level) + bonus(intelligence.getCur())));
 
     victim->printColor("^M%M zaps your magical talents!\n", this);
     victim->printColor("%M stole %d magic points!\n", this, n);
@@ -488,7 +488,7 @@ int Monster::zapMp(Creature *victim, SpecialAttack* attack) {
 
     victim->mp.decrease(n);
 
-    return(1);
+    return(true);
 }
 
 //*********************************************************************
@@ -505,24 +505,24 @@ void Monster::regenerate() {
 // Returns 0 if unable to steal for some reason but returns 1 if
 // succeeded or steal failed
 
-int Monster::steal(Player *victim) {
+bool Monster::steal(Player *victim) {
     int chance=0, inventory=0, i=0;
-    Object* object=0;
+    Object* object=nullptr;
 
     ASSERTLOG( victim );
 
     if(!victim || !canSee(victim) || victim->isStaff())
-        return(0);
+        return(false);
     if(victim->isEffected("petrification") || victim->isEffected("mist"))
-        return(0);
+        return(false);
     if(victim->objects.empty())
-        return(0);
+        return(false);
 
-    lasttime[LT_STEAL].ltime = time(0);
+    lasttime[LT_STEAL].ltime = time(nullptr);
 
     i = victim->countInv();
     if(i < 1)
-        return(0);
+        return(false);
 
     if(i == 1)
         inventory = 1;
@@ -537,7 +537,7 @@ int Monster::steal(Player *victim) {
         }
     }
 
-    chance = 4 * level + bonus((int) dexterity.getCur()) * 3;
+    chance = 4 * level + bonus(dexterity.getCur()) * 3;
     if(victim->getLevel() > level)
         chance -= 15 * (victim->getLevel() - level);
     chance = MIN(chance, 65);
@@ -557,7 +557,7 @@ int Monster::steal(Player *victim) {
         broadcast(victim->getSock(), getRoomParent(), "%M tried to steal from %N.", this, victim);
         victim->printColor("^Y%M tried to steal %P^Y from you.\n", this, object);
     }
-    return(1);
+    return(true);
 }
 
 //*********************************************************************
@@ -574,16 +574,15 @@ void Monster::berserk() {
     strength.addModifier("Berserk", 50, MOD_CUR_MAX);
 
     broadcast(nullptr, getRoomParent(), "^R%M goes berserk!", this);
-    return;
 }
 
 //*********************************************************************
 //                      summonMobs
 //*********************************************************************
 
-int Monster::summonMobs(Creature *victim) {
+bool Monster::summonMobs(Creature *victim) {
     int     mob=0, arrive=0, i=0, found=0;
-    Monster *monster=0;
+    Monster *monster=nullptr;
 
     // Calls for help will be suspended if max mob allowance
     // in room is already reached.
@@ -594,10 +593,10 @@ int Monster::summonMobs(Creature *victim) {
     }
 
     if(!found)
-        return(0);
+        return(false);
 
     if(getRoomParent()->countCrt() >= getRoomParent()->getMaxMobs())
-        return(0);
+        return(false);
 
     found = Random::get(1, found)-1;
 
@@ -614,9 +613,9 @@ int Monster::summonMobs(Creature *victim) {
 
 
     for(i=0; i < arrive; i++) {
-        monster = 0;
+        monster = nullptr;
         if(!loadMonster(rescue[mob], &monster))
-            return(0);
+            return(false);
 
         gServer->addActive(monster);
         monster->addToRoom(victim->getRoomParent());
@@ -632,28 +631,27 @@ int Monster::summonMobs(Creature *victim) {
         monster->clearFlag(M_PERMENANT_MONSTER);
     }
 
-    //clearFlag(M_YELLED_FOR_HELP);
-    return(1);
+    return(true);
 }
 
 //*********************************************************************
 //                      check_for_yell
 //*********************************************************************
 
-int Monster::checkForYell(Creature* target) {
+bool Monster::checkForYell(Creature* target) {
     int yellchance=0;
 
     if(!(flagIsSet(M_WILL_YELL_FOR_HELP) || flagIsSet(M_YELLED_FOR_HELP)))
-        return(0);
+        return(false);
 
     if(!canSpeak())
-        return(0);
+        return(false);
 
 
     if(flagIsSet(M_YELLED_FOR_HELP))
-        yellchance = 35+(2*bonus((int) intelligence.getCur()));
+        yellchance = 35+(2*bonus(intelligence.getCur()));
     else
-        yellchance = 50+(2*bonus((int) intelligence.getCur()));
+        yellchance = 50+(2*bonus(intelligence.getCur()));
 
 
     if(flagIsSet(M_WILL_YELL_FOR_HELP) && ((Random::get(1,100) < yellchance) || (hp.getCur() <= hp.getCur()/5))) {
@@ -662,38 +660,38 @@ int Monster::checkForYell(Creature* target) {
         setFlag(M_YELLED_FOR_HELP);
         setFlag(M_WILL_BE_ASSISTED);
         clearFlag(M_WILL_YELL_FOR_HELP);
-        return(1);  // Monster yells
+        return(true);  // Monster yells
     }
 
 
-    return(0); // Monster does not yell
+    return(false); // Monster does not yell
 }
 
 //*********************************************************************
 //                      lagProtection
 //*********************************************************************
 
-int Player::lagProtection() {
+bool Player::lagProtection() {
     BaseRoom* room = getRoomParent();
     int     t=0, idle=0;
 
     // Can't do anything while unconsious!
     if(flagIsSet(P_UNCONSCIOUS))
-        return(0);
+        return(false);
 
-    t = time(0);
+    t = time(nullptr);
     idle = t - getSock()->ltime;
 
 
     // This number can be changed.
     if(idle < 10L) {
         //print("testing for idle..\n");
-        return(0);
+        return(false);
     }
 
     // Only lag protect below wimpy if auto attack is on
     if(autoAttackEnabled() && hp.getCur() > getWimpy())
-        return(0);
+        return(false);
 
 
     printColor("^cPossible lagout detected.\n");
@@ -703,7 +701,7 @@ int Player::lagProtection() {
         setFlag(P_LAG_PROTECTION_OPERATING);
 
         if(useRecallPotion(1, 1))
-            return(1);
+            return(true);
     }
 
     broadcast(getSock(), room, "%M enters autoflee lag protection routine.", this);
@@ -748,9 +746,9 @@ int Player::lagProtection() {
         logn("log.lprotect","### %s(L%d) fled due to lag protection. HP: %d/%d. Room: %s.\n",
             getCName(), level, hp.getCur(), hp.getMax(), getRoomParent()->fullName().c_str());
 
-        return(1);
+        return(true);
     }
-    return(0);
+    return(false);
 }
 
 
@@ -766,8 +764,8 @@ int Player::lagProtection() {
 // if the creature does not save, and 1 if it does. How the save
 // affects creature is determined in the code of the calling function. -- TC
 
-int Creature::chkSave(short savetype, Creature* target, short bns) {
-    Player  *pCreature=0;
+bool Creature::chkSave(short savetype, Creature* target, short bns) {
+    Player  *pCreature=nullptr;
     int     chance, gain, i, ringbonus=0, opposing=0, upchance = 0, natural=1;
     int     roll=0, nogain=0;
     long    j=0, t=0;
@@ -802,7 +800,7 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
 
     switch(savetype) {
     case POI:
-        chance += bonus((int) constitution.getCur());
+        chance += bonus(constitution.getCur());
         if(hp.getCur() <= hp.getMax()/3)
             chance /= 2;    // More vulnerable to poison if weakened severely.
         if(pCreature && pCreature->isEffected("berserk"))
@@ -814,7 +812,7 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
 
         break;
     case BRE:
-        chance += bonus((int) dexterity.getCur())*2;
+        chance += bonus(dexterity.getCur()) * 2;
         if(ready[BODY-1])
             chance += 5*ready[BODY-1]->getAdjustment();
         break;
@@ -827,9 +825,9 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
         break;
     case SPL:
         if(opposing)
-            chance -= 2*(bonus((int) target->intelligence.getCur())-bonus((int)intelligence.getCur()));
+            chance -= 2*(bonus(target->intelligence.getCur()) - bonus(intelligence.getCur()));
         else
-            chance -= 2*bonus((int) target->intelligence.getCur());
+            chance -= 2*bonus(target->intelligence.getCur());
 
         if(pCreature && pCreature->isEffected("resist-magic")) {
             natural = 0;
@@ -866,7 +864,7 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
 
 
         if(Random::get(1,100) <= upchance) {
-            t = time(0);
+            t = time(nullptr);
             j = LT(this, LT_SAVES);
             if(t < j) {
                 nogain = 1;
@@ -942,9 +940,9 @@ int Creature::chkSave(short savetype, Creature* target, short bns) {
         // save made
         if(isPlayer())
             getAsPlayer()->statistics.save();
-        return(1);
+        return(true);
     }
-    return(0);
+    return(false);
 }
 
 //*********************************************************************
@@ -960,7 +958,6 @@ void Creature::clearAsEnemy() {
     for(Monster* mons : getRoomParent()->monsters) {
         mons->clearEnemy(this);
     }
-    return;
 }
 
 //*********************************************************************
@@ -968,7 +965,7 @@ void Creature::clearAsEnemy() {
 //*********************************************************************
 
 void Player::damageArmor(int dmg) {
-    Object  *armor=0;
+    Object  *armor=nullptr;
 
     // Damage armor 1/10th of the time
     if(Random::get(1, 10) == 1)
@@ -1072,7 +1069,7 @@ int Creature::doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, Dam
     target->hp.decrease(dmg);
     //checkTarget(target);
     if(mTarget) {
-        mTarget->lasttime[LT_AGGRO_ACTION].ltime = time(0);
+        mTarget->lasttime[LT_AGGRO_ACTION].ltime = time(nullptr);
         mTarget->adjustThreat(this, m);
     }
     if(mThis) {
@@ -1127,7 +1124,6 @@ void Creature::simultaneousDeath(Creature* attacker, Creature* target, bool free
     }
     if(freeAttacker && attacker->isMonster()) {
         attacker->getAsMonster()->finishMobDeath(target);
-        attacker = nullptr;
     }
 }
 
@@ -1137,22 +1133,22 @@ void Creature::simultaneousDeath(Creature* attacker, Creature* target, bool free
 // noRandomChance = always can poison if they don't save (for breath attacks)
 // Return: true if they are poisoned, false if they aren't
 
-bool Monster::tryToPoison(Creature* target, SpecialAttack* attack) {
+bool Monster::tryToPoison(Creature* target, SpecialAttack* pAttack) {
     Player* pTarget = target->getAsPlayer();
     BaseRoom* room=getRoomParent();
     int saveBonus = 0;
-    if(attack)
-        saveBonus = attack->saveBonus;
+    if(pAttack)
+        saveBonus = pAttack->saveBonus;
 
     // If this is from a special attack, we don't need the WILL_POISON flag
-    if(!flagIsSet(M_WILL_POISON) && !attack)
+    if(!flagIsSet(M_WILL_POISON) && !pAttack)
         return(false);
     if(pTarget && target->isEffected("stoneskin"))
         return(false);
     if(target->isPoisoned())
         return(false);
 
-    if(!attack && Random::get(1,100) > 15)
+    if(!pAttack && Random::get(1, 100) > 15)
         return(false);
 
     if(target->immuneToPoison()) {
@@ -1170,15 +1166,15 @@ bool Monster::tryToPoison(Creature* target, SpecialAttack* attack) {
         broadcast(getSock(), target->getSock(), room, "^G%M poisons %N.", this, target);
 
         if(poison_dur) {
-            duration = poison_dur - 12*bonus((int)target->constitution.getCur());
+            duration = poison_dur - 12*bonus(target->constitution.getCur());
             duration = MAX(120, MIN(duration, 1200));
         } else {
-            duration = (Random::get(2,3)*60) - 12*bonus((int)target->constitution.getCur());
+            duration = (Random::get(2,3)*60) - 12*bonus(target->constitution.getCur());
         }
 
         target->poison(isPet() ? getMaster() : this, poison_dmg ? poison_dmg : level, duration);
         return(true);
-    } else if(attack) {
+    } else if(pAttack) {
         target->print("You avoided being poisoned!\n");
     }
 
@@ -1190,13 +1186,13 @@ bool Monster::tryToPoison(Creature* target, SpecialAttack* attack) {
 //*********************************************************************
 // Return: true if they have been petrified, false if they haven't
 
-bool Monster::tryToStone(Creature* target, SpecialAttack* attack) {
+bool Monster::tryToStone(Creature* target, SpecialAttack* pAttack) {
     Player* pTarget = target->getAsPlayer();
     int     bns=0;
     bool    avoid=false;
 
     // If a special attack we don't need the can stone flag
-    if(!flagIsSet(M_CAN_STONE) && !attack)
+    if(!flagIsSet(M_CAN_STONE) && !pAttack)
         return(false);
 
     if(!pTarget)
@@ -1204,16 +1200,16 @@ bool Monster::tryToStone(Creature* target, SpecialAttack* attack) {
     if(pTarget->isEffected("petrification") || pTarget->isUnconscious())
         return(false);
 
-    if(!attack && Random::get(1,100) > 5)
+    if(!pAttack && Random::get(1, 100) > 5)
         return(false);
 
     if((pTarget->isEffected("resist-earth") || pTarget->isEffected("resist-magic")) && Random::get(1,100) <= 50)
         avoid = true;
 
     pTarget->wake("Terrible nightmares disturb your sleep!");
-    bns = 10*(pTarget->getLevel()-level) + 3*bonus((int)pTarget->constitution.getCur());
-    if(attack)
-        bns += attack->saveBonus;
+    bns = 10*(pTarget->getLevel()-level) + 3*bonus(pTarget->constitution.getCur());
+    if(pAttack)
+        bns += pAttack->saveBonus;
 
     bns = MAX(0,MIN(bns,75));
 
@@ -1238,15 +1234,15 @@ bool Monster::tryToStone(Creature* target, SpecialAttack* attack) {
 //*********************************************************************
 // Return: true if they have been diseased, false if they haven't
 
-bool Monster::tryToDisease(Creature* target, SpecialAttack* attack) {
+bool Monster::tryToDisease(Creature* target, SpecialAttack* pAttack) {
     int bns = 0;
 
     // Don't need the diseases flag if this is a special attack
-    if(!flagIsSet(M_DISEASES) && !attack)
+    if(!flagIsSet(M_DISEASES) && !pAttack)
         return(false);
     if(target->isPlayer() && target->isEffected("stoneskin"))
         return(false);
-    if(!attack && Random::get(1,100) > 15)
+    if(!pAttack && Random::get(1, 100) > 15)
         return(false);
 
     if(target->immuneToDisease()) {
@@ -1256,8 +1252,8 @@ bool Monster::tryToDisease(Creature* target, SpecialAttack* attack) {
         return(false);
     }
 
-    if(attack)
-        bns = attack->saveBonus;
+    if(pAttack)
+        bns = pAttack->saveBonus;
 
     if(!target->chkSave(POI, this, bns)) {
         target->printColor("^D%M infects you.\n", this);
@@ -1268,7 +1264,7 @@ bool Monster::tryToDisease(Creature* target, SpecialAttack* attack) {
         else
             target->disease(this, target->hp.getMax()/20);
         return(true);
-    } else if(attack) {
+    } else if(pAttack) {
         target->print("You narrowly avoid catching a disease!\n");
     }
 
@@ -1280,16 +1276,16 @@ bool Monster::tryToDisease(Creature* target, SpecialAttack* attack) {
 //*********************************************************************
 // Return: true if they have been blinded, false if they haven't
 
-bool Monster::tryToBlind(Creature* target, SpecialAttack* attack) {
+bool Monster::tryToBlind(Creature* target, SpecialAttack* pAttack) {
     // Don't need the blind flag if it's a special attack
-    if(!flagIsSet(M_WILL_BLIND) && !attack)
+    if(!flagIsSet(M_WILL_BLIND) && !pAttack)
         return(false);
 
-    if(!attack && Random::get(1,100) > 15)
+    if(!pAttack && Random::get(1, 100) > 15)
         return(false);
     int bns = 0;
-    if(attack)
-        bns = attack->saveBonus;
+    if(pAttack)
+        bns = pAttack->saveBonus;
     if(!target->chkSave(LCK, this, bns)) {
         target->printColor("^y%M blinds your eyes.\n",this);
         broadcastGroup(false, target, "%M blinds %N.\n", this, target);
@@ -1298,7 +1294,7 @@ bool Monster::tryToBlind(Creature* target, SpecialAttack* attack) {
         }
         target->addEffect("blindness", 180 - (target->constitution.getCur()/10), 1, this, true, this);
         return(true);
-    } else if(attack) {
+    } else if(pAttack) {
         target->print("You narrowly avoided going blind!\n");
     }
     return(false);
