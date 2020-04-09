@@ -18,19 +18,12 @@
 #include <iomanip>
 
 // Mud Includes
-#include "calendar.hpp"
 #include "commands.hpp"
 #include "creatures.hpp"
-#include "effects.hpp"
-#include "guilds.hpp"
 #include "mud.hpp"
-#include "specials.hpp"
-#include "quests.hpp"
-#include "property.hpp"
 #include "rooms.hpp"
 #include "server.hpp"
 #include "threat.hpp"
-#include "version.hpp"
 
 
 //################################################################################
@@ -60,7 +53,7 @@ ThreatTable::~ThreatTable() {
 
 // Clear the threat table
 void ThreatTable::clear() {
-    for(ThreatMap::value_type p : threatMap) {
+    for(const ThreatMap::value_type& p : threatMap) {
         delete p.second;
     }
     threatMap.clear();
@@ -77,7 +70,7 @@ long ThreatTable::getTotalThreat() {
 }
 
 long ThreatTable::getThreat(Creature* target) {
-    ThreatMap::iterator it = threatMap.find(target->getId());
+    auto it = threatMap.find(target->getId());
     if(it != threatMap.end()) {
         return((*it).second->getThreatValue());
     }
@@ -103,7 +96,7 @@ long ThreatTable::adjustThreat(Creature* target, long modAmt, double threatFacto
     ThreatSet::iterator it;
 
     // Find the place in the threat list it is, or would be
-    ThreatMap::iterator mLb = threatMap.lower_bound(target->getId());
+    auto mLb = threatMap.lower_bound(target->getId());
 
     // If it's there, update it
     if(mLb != threatMap.end() && !(threatMap.key_comp()(target->getId(), mLb->first))) {
@@ -134,14 +127,9 @@ bool ThreatTable::isEnemy(const Creature *target) {
     if(!target) {
         return(false);
     }
-    ThreatMap::iterator it = threatMap.find(target->getId());
+    auto it = threatMap.find(target->getId());
 
-    if(it == threatMap.end()) {
-        return(false);
-    }
-    else {
-        return(true);
-    }
+    return !(it == threatMap.end());
 }
 bool ThreatTable::hasEnemy() const {
     return(!threatMap.empty());
@@ -156,8 +144,7 @@ ThreatSet::iterator ThreatTable::removeFromSet(ThreatEntry* threat) {
     ThreatSet::iterator it;
 
     // Remove the threat from set because we're going to be modifying the key value
-    std::pair<ThreatSet::iterator, ThreatSet::iterator> p;
-    p = threatSet.equal_range(threat);
+    auto p = threatSet.equal_range(threat);
 
     // We use the std::find algorithm because we want the exact threat
     // not an equivalent threat.  Narrow it down first using equal range so we don't
@@ -181,7 +168,7 @@ ThreatSet::iterator ThreatTable::removeFromSet(ThreatEntry* threat) {
 
 long ThreatTable::removeThreat(const bstring& pUid) {
     long toReturn = 0;
-    ThreatMap::iterator mIt = threatMap.find(pUid);
+    auto mIt = threatMap.find(pUid);
     if(mIt == threatMap.end())
         return(toReturn);
     ThreatEntry* threat = (*mIt).second;
@@ -245,11 +232,11 @@ void ThreatTable::setParent(Creature* pParent) {
 //#       Threat Entry
 //################################################################################
 
-ThreatEntry::ThreatEntry(bstring pUid) {
+ThreatEntry::ThreatEntry(const bstring& pUid) {
     threatValue = 0;
     contributionValue = 0;
     uId = pUid;
-    lastMod = time(0);
+    lastMod = time(nullptr);
 }
 
 std::ostream& operator<<(std::ostream& out, const ThreatEntry& threat) {
@@ -281,12 +268,12 @@ long ThreatEntry::getContributionValue() {
 
 long ThreatEntry::adjustThreat(long modAmt) {
     threatValue += modAmt;
-    lastMod = time(0);
+    lastMod = time(nullptr);
     return(threatValue);
 }
 long ThreatEntry::adjustContribution(long modAmt) {
     contributionValue += modAmt;
-    lastMod = time(0);
+    lastMod = time(nullptr);
     return(contributionValue);
 }
 // ThreatPtr comparison
@@ -400,8 +387,6 @@ void Creature::clearTarget(bool clearTargetsList) {
         myTarget->clearTargetingThis(this);
 
     myTarget = nullptr;
-
-    return;
 }
 
 //*********************************************************************
