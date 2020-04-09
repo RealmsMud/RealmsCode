@@ -27,7 +27,7 @@
 
 int cmdMeditate(Player* player, cmd* cmnd) {
     int     chance=0,inCombatModifier=0;
-    long    i=0, t = time(0);
+    long    i=0, t = time(nullptr);
 
     player->clearFlag(P_AFK);
 
@@ -46,7 +46,7 @@ int cmdMeditate(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    chance = MIN(85, (int)(player->getSkillLevel("meditate")*10)+bonus((int)player->piety.getCur()));
+    chance = MIN(85, (int)(player->getSkillLevel("meditate")*10)+bonus(player->piety.getCur()));
 
     if(Random::get(1, 100) > player->getLuck() + (int)(player->getSkillLevel("meditate") * 2))
         chance = 10;
@@ -68,16 +68,16 @@ int cmdMeditate(Player* player, cmd* cmnd) {
 
         player->checkImprove("meditate", true);
 
-        int heal = (MAX(0,((int)(level / inCombatModifier) // heals for a little less when in combat with mobs
-            + Random::get(1,(int)(level))
-            + bonus((int)player->constitution.getCur())*Random::get(1,4))));
+        int heal = (MAX(0,(level / inCombatModifier // heals for a little less when in combat with mobs
+            + Random::get(1, level)
+                           + bonus(player->constitution.getCur()) * Random::get(1, 4))));
 
         player->doHeal(player, heal,1.0);
         
         player->lasttime[LT_MEDITATE].ltime = t;
         if(inCombatModifier < 3) {
             player->lasttime[LT_MEDITATE].interval = 90L;
-            player->mp.increase((int)heal/2); // MP increases also when not in combat with mobs.
+            player->mp.increase(heal / 2); // MP increases also when not in combat with mobs.
         }
         else
             player->lasttime[LT_MEDITATE].interval = 40L; // timer faster when done during combat with mobs
@@ -102,9 +102,9 @@ int cmdMeditate(Player* player, cmd* cmnd) {
 // for approximately half of its hit points.
 
 int cmdTouchOfDeath(Player* player, cmd* cmnd) {
-    Creature* creature=0;
-    Player  *pCreature=0;
-    long    i=0, t=time(0);
+    Creature* creature=nullptr;
+    Player  *pCreature=nullptr;
+    long    i=0, t=time(nullptr);
     int     chance=0;
     Damage damage;
 
@@ -174,7 +174,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
         player->lasttime[LT_TOUCH_OF_DEATH].interval = 0;
 
 
-    chance = (int)((player->getSkillLevel("touch") - creature->getLevel())*20)+bonus((int)player->constitution.getCur())*10;
+    chance = (int)((player->getSkillLevel("touch") - creature->getLevel())*20)+ bonus(player->constitution.getCur()) * 10;
     chance = MIN(chance, 85);
 
     if(player->isCt())
@@ -206,8 +206,8 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
         }
     }
 
-    if( (   (Random::get(1,100) > 80 - bonus((int)player->constitution.getCur())) &&
-            (   (creature->isMonster() &&
+    if( ((Random::get(1,100) > 80 - bonus(player->constitution.getCur())) &&
+         (   (creature->isMonster() &&
                 !creature->flagIsSet(M_PERMENANT_MONSTER)) ||
                 creature->isPlayer() )) ||
         player->isDm())
@@ -272,13 +272,13 @@ int cmdFocus(Player* player, cmd* cmnd) {
     }
 
     i = player->lasttime[LT_FOCUS].ltime;
-    t = time(0);
+    t = time(nullptr);
 
     if(t - i < 600L) {
         player->pleaseWait(600L-t+i);
         return(0);
     }
-    chance = MIN(80, (int)(player->getSkillLevel("focus") * 20) + bonus((int) player->piety.getCur()));
+    chance = MIN(80, (int)(player->getSkillLevel("focus") * 20) + bonus(player->piety.getCur()));
 
     double level = player->getSkillLevel("focus");
     if(Random::get(1, 100) > player->getLuck() + (int)(level * 2))
@@ -352,14 +352,14 @@ int cmdFrenzy(Player* player, cmd* cmnd) {
     }
 
     i = player->lasttime[LT_FRENZY].ltime;
-    t = time(0);
+    t = time(nullptr);
 
     if(t - i < 600L && !player->isStaff()) {
         player->pleaseWait(600L-t+i);
         return(0);
     }
 
-    chance = MIN(85, (int)(player->getSkillLevel("frenzy") * 20) + bonus((int) player->dexterity.getCur()));
+    chance = MIN(85, (int)(player->getSkillLevel("frenzy") * 20) + bonus(player->dexterity.getCur()));
 
     if(Random::get(1, 100) > player->getLuck() + (int)(player->getSkillLevel("frenzy") * 2))
         chance = 10;
@@ -389,8 +389,8 @@ int cmdFrenzy(Player* player, cmd* cmnd) {
 // over for a few seconds, leaving them unable to attack back.
 
 int cmdMaul(Player* player, cmd* cmnd) {
-    Creature* creature=0;
-    Player  *pCreature=0;
+    Creature* creature=nullptr;
+    Player  *pCreature=nullptr;
     long    i=0, t=0;
     int     chance=0, not_initial=0;
 
@@ -421,7 +421,7 @@ int cmdMaul(Player* player, cmd* cmnd) {
 
 
         i = LT(player, LT_MAUL);
-        t = time(0);
+        t = time(nullptr);
         if(i > t) {
             player->pleaseWait(i - t);
             return(0);
@@ -481,8 +481,8 @@ int cmdMaul(Player* player, cmd* cmnd) {
     }
     double level = player->getSkillLevel("maul");
     chance = 45 + (int)((level - creature->getLevel()) * 5) +
-        bonus((int) player->strength.getCur()) * 3 + (bonus((int) player->dexterity.getCur())
-        - bonus((int) creature->dexterity.getCur())) * 2;
+             bonus(player->strength.getCur()) * 3 + (bonus(player->dexterity.getCur())
+                                                     - bonus(creature->dexterity.getCur())) * 2;
 
     if(player->isBlind())
         chance = MIN(20, chance);
@@ -549,7 +549,7 @@ int Player::packBonus() {
 
 int cmdHowl(Creature* player, cmd* cmnd) {
     BaseRoom* room = player->getRoomParent();
-    Monster *monster=0;
+    Monster *monster=nullptr;
     long    i=0, t=0, stunTime=0;
     int     maxEffected=0, numEffected=0, bns=0;
 
@@ -565,7 +565,7 @@ int cmdHowl(Creature* player, cmd* cmnd) {
     }
 
     i = LT(player, LT_HOWLS);
-    t = time(0);
+    t = time(nullptr);
     if(i > t && !player->isCt()) {
         player->pleaseWait(i-t);
         return(0);
@@ -581,18 +581,18 @@ int cmdHowl(Creature* player, cmd* cmnd) {
     player->print("You let out a blood-curdling supernatural howl!\n");
     player->checkImprove("howl", true);
     broadcast(player->getSock(), room, "^Y%M lets out a blood-curdling supernatural howl!", player);
-    maxEffected = (int)level / 2;
+    maxEffected = level / 2;
 
     player->lasttime[LT_HOWLS].ltime = t;
     player->lasttime[LT_HOWLS].interval = 240L; // every 4 minutes
 
-    MonsterSet::iterator mIt = room->monsters.begin();
+    auto mIt = room->monsters.begin();
     while(mIt != room->monsters.end() && numEffected < maxEffected) {
         monster = (*mIt++);
 
         if(!monster || !monster->isEnemy(player))
             continue;
-        if((int)level - monster->getLevel() < 6)
+        if(level - monster->getLevel() < 6)
             continue;
         if(monster->isPet() || monster->getClass() == CreatureClass::PALADIN)
             continue;
@@ -600,7 +600,7 @@ int cmdHowl(Creature* player, cmd* cmnd) {
         numEffected++;
 
 
-        bns = (int)(-10 * ((level-6) - monster->getLevel()));
+        bns = -10 * ((level - 6) - monster->getLevel());
         bns += monster->saves[MEN].chance*2;
 
         if(monster->isEffected("resist-magic"))
