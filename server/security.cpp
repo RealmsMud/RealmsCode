@@ -19,6 +19,7 @@
 #include "creatures.hpp"
 #include "mud.hpp"
 #include "login.hpp"
+#include "security.hpp"
 #include "server.hpp"
 #include "socket.hpp"
 
@@ -141,7 +142,7 @@ int cmdPassword(Player* player, cmd* cmnd) {
 // wrong password  or an invalid password (too short or long),
 // the password will not be changed and the procedure is aborted.
 
-void changePassword(Socket* sock, bstring str) {
+void changePassword(Socket* sock, const bstring& str) {
     Player* player = sock->getPlayer();
     gServer->processOutput();
 

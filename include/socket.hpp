@@ -345,7 +345,7 @@ protected:
 
 // Old items from IOBUF that we might keep
 
-    void        (*fn)(Socket*, bstring);
+    void        (*fn)(Socket*, const bstring&);
 
     char        fnparam;
 

@@ -155,7 +155,7 @@ int cmdTitle(Player* player, cmd* cmnd) {
 //                      doTitle
 //*********************************************************************
 
-void doTitle(Socket* sock, bstring str) {
+void doTitle(Socket* sock, const bstring& str) {
     Player* player = sock->getPlayer();
 
     if(low(str[0]) == 'y') {
@@ -284,7 +284,7 @@ int cmdSurname(Player* player, cmd* cmnd) {
 //                      doSurname
 //*********************************************************************
 
-void doSurname(Socket* sock, bstring str) {
+void doSurname(Socket* sock, const bstring& str) {
     if(low(str[0]) == 'y') {
         sock->print("You are now known as %s %s.\n", sock->getPlayer()->getCName(), sock->getPlayer()->getSurname().c_str());
 

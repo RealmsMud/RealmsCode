@@ -82,7 +82,7 @@ int cmdThrow(Creature* creature, cmd* cmnd);
 // command1.c
 int cmdNoExist(Player* player, cmd* cmnd);
 int cmdNoAuth(Player* player);
-void command(Socket* sock, bstring str);
+void command(Socket* sock, const bstring& str);
 void parse(bstring str, cmd* cmnd);
 
 int cmdPush(Player* player, cmd* cmnd);
@@ -117,7 +117,7 @@ int cmdPrefs(Player* player, cmd* cmnd);
 int cmdTelOpts(Player* player, cmd* cmnd);
 int cmdQuit(Player* player, cmd* cmnd);
 int cmdChangeStats(Player* player, cmd* cmnd);
-void changingStats(Socket* sock, bstring str );
+void changingStats(Socket* sock, const bstring& str );
 
 
 // command7.c

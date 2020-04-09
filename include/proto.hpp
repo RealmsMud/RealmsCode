@@ -192,8 +192,8 @@ bool isClass(char str[80]);
 
 
 int cmdReconnect(Player* player, cmd* cmnd);
-void login(Socket* sock, bstring str);
-void createPlayer(Socket* sock, bstring str);
+//void login(Socket* sock, bstring str);
+//void createPlayer(Socket* sock, const bstring& str);
 
 void remove_all(Player* player);
 
@@ -366,9 +366,9 @@ void lowercize(char* str, int flag);
 char low(char ch);
 char up(char ch);
 void zero(void *ptr, int size);
-void viewFile(Socket* sock, bstring str);
-void viewLoginFile(Socket* sock, bstring str, bool showError=true);
-void viewFileReverse(Socket* sock, bstring str);
+void viewFile(Socket* sock, const bstring& str);
+void viewLoginFile(Socket* sock, const bstring& str, bool showError=true);
+void viewFileReverse(Socket* sock, const bstring& str);
 int dice(int n, int s, int p);
 int exp_to_lev(unsigned long exp);
 int dec_daily(struct daily *dly_ptr);
@@ -412,7 +412,6 @@ void getDamageString(char atk[50], Creature* player, Object *weapon, bool critic
 
 // player.cpp
 int cmdTitle(Player* player, cmd* cmnd);
-void doTitle(Socket* sock, bstring str);
 int mprofic(const Creature* player, int index);
 Player* lowest_piety(BaseRoom* room, bool invis);
 
@@ -423,7 +422,6 @@ void renamePlayerFiles(const char *old_name, const char *new_name);
 CatRef getEtherealTravelRoom();
 void etherealTravel(Player* player);
 int cmdSurname(Player* player, cmd* cmnd);
-void doSurname(Socket* sock, bstring str);
 int cmdVisible(Player* player, cmd* cmnd);
 int cmdDice(Creature* player, cmd* cmnd);
 int cmdChooseAlignment(Player* player, cmd* cmnd);
@@ -431,13 +429,10 @@ int cmdChooseAlignment(Player* player, cmd* cmnd);
 
 // post.cpp
 int cmdSendMail(Player* player, cmd* cmnd);
-void postedit(Socket* sock, bstring str);
 int cmdReadMail(Player* player, cmd* cmnd);
 int cmdDeleteMail(Player* player, cmd* cmnd);
 int notepad(Player* player, cmd* cmnd);
-void noteedit(Socket* sock,bstring str);
 int cmdEditHistory(Player* player, cmd* cmnd);
-void histedit(Socket* sock, bstring str);
 int cmdHistory(Player* player, cmd* cmnd);
 int cmdDeleteHistory(Player* player, cmd* cmnd);
 void sendMail(const bstring& target, const bstring& message);
@@ -466,7 +461,6 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), CatRef cr);
 // security.cpp
 bool isValidPassword(Socket*, bstring pass);
 int cmdPassword(Player* player, cmd* cmnd);
-void changePassword(Socket*, bstring str);
 
 
 // size.cpp

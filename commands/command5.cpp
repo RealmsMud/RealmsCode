@@ -691,7 +691,7 @@ void Player::changeStats() {
 //********************************************************************
 // This function allows a player to change their stats
 
-void changingStats(Socket* sock, bstring str) {
+void changingStats(Socket* sock, const bstring& str) {
     sock->getPlayer()->changingStats(str);
 }
 void Player::changingStats(bstring str) {

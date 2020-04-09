@@ -371,9 +371,9 @@ public:
     bool swapIsInteresting(const MudObject* target) const;
 
 // Double Logging
-    void addDoubleLog(bstring forum1, bstring forum2);
-    void remDoubleLog(bstring forum1, bstring forum2);
-    bool canDoubleLog(bstring forum1, bstring forum2) const;
+    void addDoubleLog(const bstring& forum1, const bstring& forum2);
+    void remDoubleLog(const bstring& forum1, const bstring& forum2);
+    bool canDoubleLog(const bstring& forum1, const bstring& forum2) const;
     bool loadDoubleLog();
     void saveDoubleLog() const;
     void listDoubleLog(const Player* viewer) const;
