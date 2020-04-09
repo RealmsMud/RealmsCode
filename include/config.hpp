@@ -172,7 +172,7 @@ public:
 // Mxp Elements
     bool loadMxpElements();
     void clearMxpElements();
-    bstring& getMxpColorTag(bstring str);
+    bstring& getMxpColorTag(const bstring& str);
 
 // Commands
     bool initCommands();

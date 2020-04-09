@@ -50,14 +50,14 @@ void Socket::defineMxp() {
 
 
 void Config::clearMxpElements() {
-    for(MxpElementMap::value_type p : mxpElements) {
+    for(const MxpElementMap::value_type& p : mxpElements) {
         delete p.second;
     }
     mxpElements.clear();
     mxpColors.clear();
 }
 
-bstring& Config::getMxpColorTag(bstring str) {
+bstring& Config::getMxpColorTag(const bstring& str) {
     return(mxpColors[str]);
 }
 
