@@ -218,21 +218,14 @@ public:
     Creature(Creature& cr);
     Creature(const Creature& cr);
     Creature& operator=(const Creature& cr);
-    //virtual bool operator< (const MudObject& t) const = 0;
-    virtual ~Creature() {};
+    virtual ~Creature() = default;;
 
-//  Monster* getMonster();
-//  Player* getPlayer();
-//
 
     virtual void upgradeStats() {};
     virtual Socket* getSock() const;
     Location getLocation();
-    void delayedAction(const bstring& action, int delay, MudObject* target=0);
+    void delayedAction(const bstring& action, int delay, MudObject* target=nullptr);
     void delayedScript(const bstring& script, int delay);
-
-//  const Monster* getConstMonster() const;
-//  const Player* getConstPlayer() const;
 
     Creature* getMaster();
     const Creature* getConstMaster() const;
@@ -337,7 +330,6 @@ public:
     void setPreviousRoom();
 
 // Groups & Pets
-
     void setGroup(Group* newGroup);
     void setGroupStatus(GroupStatus newStatus);
 
@@ -507,7 +499,7 @@ public:
     bool runOpeners(Creature* victim); // Run any opening attacks
     bool runSpecialAttacks(Creature* victim); // Pick a special attack and do it on the target
     bstring getSpecialsList() const;
-    SpecialAttack* addSpecial(const bstring specialName);
+    SpecialAttack* addSpecial(bstring specialName);
     bool delSpecials();
     SpecialAttack* getSpecial(const bstring& special);
 
@@ -806,12 +798,6 @@ public:
 
 
 // Combat & Death
-//  int addEnmName(const char* enemy);
-//  int addEnmCrt(Creature* target, bool print=false);
-//  int delEnmCrt(const char* enemy, const char* owner = 0);
-//  void endEnmCrt(const char* enemy);
-//  void addEnmDmg(const Creature* enemy, int dmg);
-//  bool isEnmCrt(const char* enemy) const;
     bool addEnemy(Creature* target, bool print=false);
     long clearEnemy(Creature* target);
 
@@ -857,10 +843,7 @@ public:
     bool tryToStone(Creature* target, SpecialAttack* pAttack = nullptr);
     bool tryToPoison(Creature* target, SpecialAttack* pAttack = nullptr);
     bool tryToBlind(Creature* target, SpecialAttack* pAttack = nullptr);
-    bool tryToConfuse(Creature* target, SpecialAttack* attack = nullptr);
     bool zapMp(Creature *victim, SpecialAttack* attack = nullptr);
-    int petrify(Player *victim);
-    void regenerate();
     bool steal(Player *victim);
     void berserk();
     bool summonMobs(Creature *victim);
@@ -881,7 +864,7 @@ public:
     void clearDeityAggro(int x);
     void gainExperience(Monster* victim, Creature* killer, int expAmount,
         bool groupExp = false);
-    int powerEnergyDrain(Creature *victim, SpecialAttack* attack = nullptr);
+
     int computeDamage(Creature* victim, Object* weapon, AttackType attackType,
         AttackResult& result, Damage& attackDamage, bool computeBonus,
         int& drain, float multiplier = 1.0);

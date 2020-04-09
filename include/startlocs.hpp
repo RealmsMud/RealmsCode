@@ -19,6 +19,9 @@
 #ifndef _START_H
 #define _START_H
 
+class Location;
+class CatRef;
+class bstring;
 
 class StartLoc {
 public:
@@ -26,14 +29,14 @@ public:
     void    load(xmlNodePtr curNode);
     void    save(xmlNodePtr curNode) const;
 
-    bstring getName() const;
-    bstring getBindName() const;
-    bstring getRequiredName() const;
-    Location getBind() const;
-    Location getRequired() const;
-    CatRef getStartingGuide() const;
+    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] bstring getBindName() const;
+    [[nodiscard]] bstring getRequiredName() const;
+    [[nodiscard]] Location getBind() const;
+    [[nodiscard]] Location getRequired() const;
+    [[nodiscard]] CatRef getStartingGuide() const;
     bool    swap(Swap s);
-    bool    isDefault() const;
+    [[nodiscard]] bool    isDefault() const;
     void    setDefault();
 
 protected:

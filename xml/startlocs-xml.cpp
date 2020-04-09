@@ -17,6 +17,7 @@
  */
 
 #include "config.hpp"
+#include "location.hpp"
 #include "paths.hpp"
 #include "startlocs.hpp"
 #include "xml.hpp"
