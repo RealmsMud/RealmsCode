@@ -1,5 +1,5 @@
 /*
- * property.h
+ * property.cpp
  *   Code dealing with properties
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
@@ -34,6 +34,7 @@
 #include "socket.hpp"
 #include "xml.hpp"
 
+
 //*********************************************************************
 //                      PartialOwner
 //*********************************************************************
@@ -54,7 +55,7 @@ void PartialOwner::defaultFlags(PropType type) {
 }
 
 bstring PartialOwner::getName() const { return(name); }
-void PartialOwner::setName(bstring str) { name = str; }
+void PartialOwner::setName(const bstring& str) { name = str; }
 
 bool PartialOwner::flagIsSet(int flag) const {
     return(flags[flag/8] & 1<<(flag%8));
@@ -71,21 +72,6 @@ bool PartialOwner::toggleFlag(int flag) {
     else
         setFlag(flag);
     return(flagIsSet(flag));
-}
-
-void PartialOwner::load(xmlNodePtr rootNode) {
-    xml::copyPropToBString(name, rootNode, "Name");
-    loadBits(rootNode, flags);
-}
-
-void PartialOwner::save(xmlNodePtr rootNode) const {
-    xmlNodePtr curNode = xml::newStringChild(rootNode, "Owner") ;
-
-    xml::newProp(curNode, "Name", name.c_str());
-    for(int i=0; i<32; i++) {
-        if(BIT_ISSET(flags, i))
-            saveBit(curNode, i);
-    }
 }
 
 //*********************************************************************
@@ -200,26 +186,26 @@ void Property::setGuild(int g) { guild = g; }
 //                      setArea
 //*********************************************************************
 
-void Property::setArea(bstring str) { area = str; }
+void Property::setArea(const bstring& str) { area = str; }
 
 //*********************************************************************
 //                      setOwner
 //*********************************************************************
 
-void Property::setOwner(bstring str) { owner = str; }
+void Property::setOwner(const bstring& str) { owner = str; }
 
 //*********************************************************************
 //                      setName
 //*********************************************************************
 
-void Property::setName(bstring str) { name = str; }
+void Property::setName(const bstring& str) { name = str; }
 
 //*********************************************************************
 //                      setDateFounded
 //*********************************************************************
 
 void Property::setDateFounded() {
-    long    t = time(0);
+    long    t = time(nullptr);
     dateFounded = ctime(&t);
     dateFounded.trim();
 }
@@ -228,7 +214,7 @@ void Property::setDateFounded() {
 //                      setLocation
 //*********************************************************************
 
-void Property::setLocation(bstring str) { location = str; }
+void Property::setLocation(const bstring& str) { location = str; }
 
 //*********************************************************************
 //                      setType
@@ -242,123 +228,6 @@ void Property::setType(PropType t) { type = t; }
 
 void Property::setLogType(PropLog t) { logType = t; }
 
-//*********************************************************************
-//                      load
-//*********************************************************************
-
-void Property::load(xmlNodePtr rootNode) {
-    xmlNodePtr childNode, curNode = rootNode->children;
-    bstring temp = "";
-    CatRef low;
-
-    while(curNode) {
-             if(NODE_NAME(curNode, "Owner")) xml::copyToBString(owner, curNode);
-        else if(NODE_NAME(curNode, "Area")) xml::copyToBString(area, curNode);
-        else if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
-        else if(NODE_NAME(curNode, "DateFounded")) xml::copyToBString(dateFounded, curNode);
-        else if(NODE_NAME(curNode, "Location")) xml::copyToBString(location, curNode);
-        else if(NODE_NAME(curNode, "Guild")) xml::copyToNum(guild, curNode);
-        else if(NODE_NAME(curNode, "Type")) type = (PropType)xml::toNum<int>(curNode);
-        else if(NODE_NAME(curNode, "Flags")) loadBits(curNode, flags);
-
-        else if(NODE_NAME(curNode, "Ranges")) {
-            childNode = curNode->children;
-            while(childNode) {
-                if(NODE_NAME(childNode, "Range")) {
-                    Range r;
-                    r.load(childNode);
-
-                    // find the first in the range
-                    if(!low.id)
-                        low = r.low;
-
-                    ranges.push_back(r);
-                }
-                childNode = childNode->next;
-            }
-        }
-        else if(NODE_NAME(curNode, "PartialOwners")) {
-            childNode = curNode->children;
-            while(childNode) {
-                if(NODE_NAME(childNode, "Owner")) {
-                    PartialOwner po;
-                    po.load(childNode);
-                    if(po.getName() != "")
-                        partialOwners.push_back(po);
-                }
-                childNode = childNode->next;
-            }
-        }
-        else if(NODE_NAME(curNode, "LogType")) logType = (PropLog)xml::toNum<int>(curNode);
-        else if(NODE_NAME(curNode, "Log")) {
-            childNode = curNode->children;
-            while(childNode) {
-                if(NODE_NAME(childNode, "Entry")) {
-                    xml::copyToBString(temp, childNode);
-                    log.push_back(temp);
-                }
-                childNode = childNode->next;
-            }
-        }
-        curNode = curNode->next;
-    }
-
-    // backwards compatability - removable when all are updated
-    if(type != PROP_STORAGE && area == "") {
-        // load intro room, find the out exit, look at the room info
-        UniqueRoom* room=0;
-        if(loadRoom(low, &room)) {
-            for(Exit* ext : room->exits) {
-                if(ext->target.room.area != "shop" && low.area != ext->target.room.area) {
-                    area = ext->target.room.area;
-                    break;
-                }
-            }
-        }
-    }
-}
-
-//*********************************************************************
-//                      save
-//*********************************************************************
-
-void Property::save(xmlNodePtr rootNode) const {
-    xmlNodePtr childNode, curNode = xml::newStringChild(rootNode, "Property");
-
-    xml::saveNonNullString(curNode, "Owner", owner.c_str());
-    xml::saveNonNullString(curNode, "Area", area.c_str());
-    xml::saveNonNullString(curNode, "Name", name.c_str());
-    xml::saveNonNullString(curNode, "DateFounded", dateFounded.c_str());
-    xml::saveNonNullString(curNode, "Location", location.c_str());
-    xml::saveNonZeroNum(curNode, "Guild", guild);
-    xml::saveNonZeroNum(curNode, "Type", (int)type);
-    saveBits(curNode, "Flags", 32, flags);
-
-    if(!ranges.empty()) {
-        std::list<Range>::const_iterator rt;
-        childNode = xml::newStringChild(curNode, "Ranges");
-
-        for(rt = ranges.begin() ; rt != ranges.end() ; rt++)
-            (*rt).save(childNode, "Range");
-    }
-
-    if(!partialOwners.empty()) {
-        std::list<PartialOwner>::const_iterator pt;
-        childNode = xml::newStringChild(curNode, "PartialOwners");
-
-        for(pt = partialOwners.begin() ; pt != partialOwners.end() ; pt++)
-            (*pt).save(childNode);
-    }
-    xml::saveNonZeroNum(curNode, "LogType", logType);
-    if(!log.empty()) {
-        std::list<bstring>::const_iterator it;
-        childNode = xml::newStringChild(curNode, "Log");
-
-        for(it = log.begin() ; it != log.end() ; it++) {
-            xml::saveNonNullString(childNode, "Entry", (*it).c_str());
-        }
-    }
-}
 
 //*********************************************************************
 //                      getTypeName
@@ -424,7 +293,7 @@ bstring Property::getLogTypeStr() const {
 //                      addRange
 //*********************************************************************
 
-void Property::addRange(CatRef cr) {
+void Property::addRange(const CatRef& cr) {
     // first of all, let us intelligently try to update existing ranges
     std::list<Range>::iterator rt;
     for(rt = ranges.begin() ; rt != ranges.end() ; rt++) {
@@ -439,7 +308,7 @@ void Property::addRange(CatRef cr) {
     ranges.push_back(r);
 }
 
-void Property::addRange(bstring area, int low, int high) {
+void Property::addRange(const bstring& area, int low, int high) {
     // first of all, let us intelligently try to update existing ranges
     std::list<Range>::iterator rt;
     for(rt = ranges.begin() ; rt != ranges.end() ; rt++) {
@@ -467,7 +336,7 @@ bool Property::isOwner(const bstring& str) const {
 //                      belongs
 //*********************************************************************
 
-bool Property::belongs(CatRef cr) const {
+bool Property::belongs(const CatRef& cr) const {
     std::list<Range>::const_iterator rt;
     for(rt = ranges.begin() ; rt != ranges.end() ; rt++)
         if((*rt).belongs(cr))
@@ -492,7 +361,7 @@ std::map<int, MudFlag>* Property::getFlagList() {
     default:
         break;
     }
-    return(0);
+    return(nullptr);
 }
 
 //*********************************************************************
@@ -502,7 +371,6 @@ std::map<int, MudFlag>* Property::getFlagList() {
 int Property::viewLogFlag() const {
     switch(type) {
     case PROP_STORAGE:
-        return(PROP_STOR_VIEW_LOG);
     case PROP_SHOP:
         return(PROP_SHOP_VIEW_LOG);
     default:
@@ -544,7 +412,7 @@ bool Property::canEnter(const Player* player, const UniqueRoom* room, bool p) {
     if( room->info.isArea(getTypeArea(PROP_GUILDHALL)) &&
         !room->flagIsSet(R_GUILD_OPEN_ACCESS)
     ) {
-        const Guild *guild=0, *pGuild=0;
+        const Guild *guild=nullptr, *pGuild=nullptr;
 
         if(player && player->getGuild())
             guild = gConfig->getGuild(player->getGuild());
@@ -585,8 +453,8 @@ bool Property::canEnter(const Player* player, const UniqueRoom* room, bool p) {
 //                      goodNameDesc
 //*********************************************************************
 
-bool Property::goodNameDesc(const Player* player, bstring str, bstring fail, bstring disallow) {
-    if(str == "") {
+bool Property::goodNameDesc(const Player* player, const bstring& str, const bstring& fail, const bstring& disallow) {
+    if(str.empty()) {
         player->print("%s\n", fail.c_str());
         return(false);
     }
@@ -605,7 +473,7 @@ bool Property::goodNameDesc(const Player* player, bstring str, bstring fail, bst
 //                      goodExit
 //*********************************************************************
 
-bool Property::goodExit(const Player* player, const BaseRoom* room, const char *type, bstring xname) {
+bool Property::goodExit(const Player* player, const BaseRoom* room, const char *type, const bstring& xname) {
     if(xname.getLength() > 19) {
         player->print("%s exit name is too long!\n", type);
         return(false);
@@ -647,9 +515,9 @@ bool Property::goodExit(const Player* player, const BaseRoom* room, const char *
 //*********************************************************************
 
 void Property::destroy() {
-    BaseRoom* outside=0;
-    AreaRoom* aRoom=0;
-    UniqueRoom  *room=0, *uRoom=0;
+    BaseRoom* outside=nullptr;
+    AreaRoom* aRoom=nullptr;
+    UniqueRoom  *room=nullptr, *uRoom=nullptr;
     std::list<Range>::iterator rt;
 
     for(rt = ranges.begin() ; rt != ranges.end() ; rt++) {
@@ -713,7 +581,7 @@ void Property::destroy() {
 // This function is called when a player is destroyed and everything
 // they own must be destroyed as well.
 
-void Config::destroyProperties(bstring pOwner) {
+void Config::destroyProperties(const bstring& pOwner) {
     std::list<Property*>::iterator it;
 
     // giving guildhalls a new owner occurs when the player leaves the guild
@@ -763,23 +631,23 @@ PartialOwner* Property::getPartialOwner(const bstring& pOwner) {
         if(pOwner == (*it).getName())
             return(&(*it));
     }
-    return(0);
+    return(nullptr);
 }
 
 bool Property::isPartialOwner(const bstring& pOwner) {
     // shops will also check guild membership, if they're assigned to a guild
     if(type == PROP_SHOP) {
-        if(!!getPartialOwner(pOwner))
+        if(getPartialOwner(pOwner) != nullptr)
             return(true);
     } else if(type != PROP_GUILDHALL)
-        return(!!getPartialOwner(pOwner));
+        return getPartialOwner(pOwner) != nullptr;
     if(!guild)
         return(false);
     Guild *g = gConfig->getGuild(guild);
     return(g && g->isMember(pOwner));
 }
 
-void Property::assignPartialOwner(bstring pOwner) {
+void Property::assignPartialOwner(const bstring& pOwner) {
     if(type == PROP_GUILDHALL)
         return;
     PartialOwner po;
@@ -788,7 +656,7 @@ void Property::assignPartialOwner(bstring pOwner) {
     partialOwners.push_back(po);
 }
 
-void Property::unassignPartialOwner(bstring pOwner) {
+void Property::unassignPartialOwner(const bstring& pOwner) {
     std::list<PartialOwner>::iterator it;
     for(it = partialOwners.begin() ; it != partialOwners.end() ; it++) {
         if(pOwner == (*it).getName()) {
@@ -809,72 +677,6 @@ void Config::addProperty(Property* p) {
 }
 
 //*********************************************************************
-//                      loadProperties
-//*********************************************************************
-
-bool Config::loadProperties() {
-    xmlDocPtr xmlDoc;
-    xmlNodePtr curNode;
-    Property *p=0;
-
-    char filename[80];
-    snprintf(filename, 80, "%s/properties.xml", Path::PlayerData);
-    xmlDoc = xml::loadFile(filename, "Properties");
-
-    if(xmlDoc == nullptr)
-        return(false);
-
-    curNode = xmlDocGetRootElement(xmlDoc);
-
-    curNode = curNode->children;
-    while(curNode && xmlIsBlankNode(curNode))
-        curNode = curNode->next;
-
-    if(curNode == 0) {
-        xmlFreeDoc(xmlDoc);
-        return(false);
-    }
-
-    clearProperties();
-    while(curNode != nullptr) {
-        if(NODE_NAME(curNode, "Property")) {
-            p = new Property;
-            p->load(curNode);
-            properties.push_back(p);
-        }
-        curNode = curNode->next;
-    }
-    xmlFreeDoc(xmlDoc);
-    xmlCleanupParser();
-
-    return(true);
-}
-
-//*********************************************************************
-//                      saveProperties
-//*********************************************************************
-
-bool Config::saveProperties() const {
-    std::list<Property*>::const_iterator it;
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr  rootNode;
-    char            filename[80];
-
-    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Properties", nullptr);
-    xmlDocSetRootElement(xmlDoc, rootNode);
-
-    for(it = properties.begin() ; it != properties.end() ; it++) {
-        (*it)->save(rootNode);
-    }
-
-    sprintf(filename, "%s/properties.xml", Path::PlayerData);
-    xml::saveFile(filename, xmlDoc);
-    xmlFreeDoc(xmlDoc);
-    return(true);
-}
-
-//*********************************************************************
 //                      getSingleProperty
 //*********************************************************************
 // cr.id = 0 means they have no property
@@ -882,21 +684,20 @@ bool Config::saveProperties() const {
 // otherwise, cr points to the property's first room
 
 CatRef Config::getSingleProperty(const Player* player, PropType type) {
-    std::list<Property*>::iterator it;
     CatRef  cr;
 
-    for(it = gConfig->properties.begin() ; it != gConfig->properties.end() ; it++) {
-        if((*it)->getType() != type)
+    for(const auto &it : properties) {
+        if(it->getType() != type)
             continue;
-        if(type == PROP_STORAGE && !(*it)->isOwner(player->getName()) && !(*it)->isPartialOwner(player->getName()))
+        if(type == PROP_STORAGE && !it->isOwner(player->getName()) && !it->isPartialOwner(player->getName()))
             continue;
-        if(type == PROP_GUILDHALL && player->getGuild() != (*it)->getGuild())
+        if(type == PROP_GUILDHALL && player->getGuild() != it->getGuild())
             continue;
 
         if(cr.id)
             cr.id = -1;
         else
-            cr = (*it)->ranges.front().low;
+            cr = it->ranges.front().low;
     }
     return(cr);
 }
@@ -922,9 +723,9 @@ void Property::expelToExit(Player* player, bool offline) {
     if(!expelOnRemove() || player->inAreaRoom() || !belongs(player->currentLocation.room))
         return;
 
-    AreaRoom* aRoom=0;
-    UniqueRoom* uRoom=0;
-    BaseRoom* newRoom=0;
+    AreaRoom* aRoom=nullptr;
+    UniqueRoom* uRoom=nullptr;
+    BaseRoom* newRoom=nullptr;
 
     if(loadRoom(ranges.front().low, &uRoom)) {
         for(Exit* ext : uRoom->exits ) {
@@ -934,7 +735,7 @@ void Property::expelToExit(Player* player, bool offline) {
                     break;
             }
         }
-        uRoom = 0;
+        uRoom = nullptr;
     }
 
     if(!newRoom)
@@ -1063,8 +864,7 @@ void propLog(Player* player, cmd* cmnd, Property *p) {
         player->print("Command not understood.\n");
         propCommands(player, p);
     }
-    return;
-}
+    }
 
 //*********************************************************************
 //                      propDestroy
@@ -1072,7 +872,7 @@ void propLog(Player* player, cmd* cmnd, Property *p) {
 // handles property destruction
 
 void propDestroy(Player* player, cmd* cmnd, Property *p) {
-    if(strcmp(cmnd->str[2], "confirm")) {
+    if(strcmp(cmnd->str[2], "confirm") != 0) {
         player->printColor("^rAre you sure you wish to destroy this property?\n");
         player->printColor("Type \"property destroy confirm\" to destroy it.\n");
     } else {
@@ -1180,7 +980,7 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
 void propFlags(Player* player, cmd* cmnd, Property *p) {
     std::map<int, MudFlag>* list = p->getFlagList();
     std::map<int, MudFlag>::iterator it;
-    PartialOwner *po=0;
+    PartialOwner *po=nullptr;
     MudFlag f;
     bool propFlag = Property::usePropFlags(p->getType());
 
@@ -1206,7 +1006,7 @@ void propFlags(Player* player, cmd* cmnd, Property *p) {
 
         bstring action = cmnd->str[2];
 
-        if(action == "" || action == "view") {
+        if(action.empty() || action == "view") {
 
             player->printColor("^yFlags set for this property:^x\n\n");
             for(it = list->begin(); it != list->end() ; it++) {
@@ -1265,7 +1065,7 @@ void propFlags(Player* player, cmd* cmnd, Property *p) {
 
         bstring action = cmnd->str[3];
 
-        if(action == "" || action == "view") {
+        if(action.empty() || action == "view") {
 
             // if viewing self, show property name instead
             bstring title = po->getName();
@@ -1372,8 +1172,8 @@ void propHelp(Player* player, cmd* cmnd, PropType propType) {
 //*********************************************************************
 
 int cmdProperties(Player* player, cmd* cmnd) {
-    Property *p=0;
-    PartialOwner *po=0;
+    Property *p=nullptr;
+    PartialOwner *po=nullptr;
 
     if(player->inUniqueRoom())
         p = gConfig->getProperty(player->getUniqueRoomParent()->info);
@@ -1452,13 +1252,13 @@ int cmdProperties(Player* player, cmd* cmnd) {
             case PROP_HOUSE:
                 if(!strcmp(cmnd->str[1], "assign"))
                     assign = true;
-                else if(strcmp(cmnd->str[1], "unassign"))
+                else if(strcmp(cmnd->str[1], "unassign") != 0)
                     found = false;
                 break;
             case PROP_SHOP:
                 if(!strcmp(cmnd->str[1], "hire"))
                     assign = true;
-                else if(strcmp(cmnd->str[1], "fire"))
+                else if(strcmp(cmnd->str[1], "fire") != 0)
                     found = false;
                 break;
             default:
@@ -1482,7 +1282,7 @@ int cmdProperties(Player* player, cmd* cmnd) {
             p->viewLogFlag() != -1 &&
             po->flagIsSet(p->viewLogFlag())
         ) {
-            propLog(player, 0, p);
+            propLog(player, nullptr, p);
         } else if(!strcmp(cmnd->str[1], "flags") && p->getType() != PROP_HOUSE) {
             cmnd->num = 4;
             strcpy(cmnd->str[2], player->getCName());
@@ -1507,12 +1307,12 @@ int cmdProperties(Player* player, cmd* cmnd) {
 
 int dmProperties(Player* player, cmd* cmnd) {
     bstring id = getFullstrText(cmnd->fullstr, 1);
-    if(id == "") {
+    if(id.empty()) {
         player->printColor("Properties: Type ^c*property [num]^x to view more info.\n");
         player->printColor("Properties: Type ^c*property [type]^x to filter the list.\n");
         player->printColor("Properties: Type ^c*property destroy [num] [owner]^x to destroy a property.\n");
         player->printColor("^b--------------------------------------------------------------\n");
-        gConfig->showProperties(player, 0);
+        gConfig->showProperties(player, nullptr);
     } else if(!strcmp(cmnd->str[1], "destroy")) {
         int num = cmnd->val[1];
         int i=1;
@@ -1546,7 +1346,7 @@ int dmProperties(Player* player, cmd* cmnd) {
 
         player->printColor("Properties filtered on type: %s.\n", Property::getTypeStr(propType).c_str());
         player->printColor("^b--------------------------------------------------------------\n");
-        gConfig->showProperties(player, 0, propType);
+        gConfig->showProperties(player, nullptr, propType);
     } else {
         int num = atoi(id.c_str());
         int i=1;
@@ -1570,17 +1370,17 @@ int dmProperties(Player* player, cmd* cmnd) {
 //                      show
 //*********************************************************************
 
-bstring Property::show(bool isOwner, bstring player, int *i) {
+bstring Property::show(bool isOwner, const bstring& player, int *i) {
     std::ostringstream oStr;
     oStr.setf(std::ios::left, std::ios::adjustfield);
 
     oStr << "Name:     ^e" << name;
-    if(player != "" && !!getPartialOwner(player))
+    if(!player.empty() && getPartialOwner(player) != nullptr)
         oStr << " (#" << (*i)++ << ")";
 
     oStr << "^x\n"
          << "Location: ^c" << location;
-    if(area != "")
+    if(!area.empty())
         oStr << " in " << gConfig->catRefName(area);
 
     oStr << "^x\n"
@@ -1638,7 +1438,7 @@ bstring Property::show(bool isOwner, bstring player, int *i) {
     }
 
     // admin info
-    if(player == "") {
+    if(player.empty()) {
         oStr << "Ranges:\n";
         std::list<Range>::const_iterator rt;
         for(rt = ranges.begin() ; rt != ranges.end() ; rt++)
@@ -1662,7 +1462,7 @@ bstring Property::show(bool isOwner, bstring player, int *i) {
 void Config::showProperties(Player* viewer, Player* player, PropType propType) {
     std::list<Property*>::iterator it;
     std::ostringstream oStr;
-    Property *p=0;
+    Property *p=nullptr;
     bstring name = "";
     bool    isOwner=false, partialOwnerList=false;
     int     i=0;
@@ -1680,7 +1480,7 @@ void Config::showProperties(Player* viewer, Player* player, PropType propType) {
             // guild halls don't count toward the partial owner list, since they can't
             // remove themselves with the property interface
             if(!partialOwnerList && player && p->getType() != PROP_GUILDHALL)
-                partialOwnerList = !!p->getPartialOwner(name);
+                partialOwnerList = p->getPartialOwner(name) != nullptr;
             if(!isOwner && !p->isPartialOwner(name))
                 continue;
         }
@@ -1727,7 +1527,7 @@ void Config::clearProperties() {
 //                      getProperty
 //*********************************************************************
 
-Property* Config::getProperty(CatRef cr) {
+Property* Config::getProperty(const CatRef& cr) {
     std::list<Property*>::iterator it;
 
     for(it = properties.begin() ; it != properties.end() ; it++) {
@@ -1735,7 +1535,7 @@ Property* Config::getProperty(CatRef cr) {
             return(*it);
     }
 
-    return(0);
+    return(nullptr);
 }
 
 //*********************************************************************
@@ -1809,7 +1609,7 @@ void storageName(UniqueRoom* room, const Player* player);
 void setupShop(Property *p, Player* player, const Guild* guild, UniqueRoom* shop, UniqueRoom* storage);
 
 void Property::rename(Player *player) {
-    UniqueRoom  *shop=0, *storage=0;
+    UniqueRoom  *shop=nullptr, *storage=nullptr;
     setOwner(player->getName());
 
     if(type == PROP_STORAGE) {
@@ -1825,7 +1625,7 @@ void Property::rename(Player *player) {
             if(loadRoom(cr, &storage)) {
                 // only rename shops that aren't affiliated with a guild
                 if(!guild)
-                    setupShop(this, player, 0, shop, storage);
+                    setupShop(this, player, nullptr, shop, storage);
             }
         }
     }
@@ -1835,7 +1635,7 @@ void Property::rename(Player *player) {
 //                      renamePropertyOwner
 //*********************************************************************
 
-void Config::renamePropertyOwner(bstring oldName, Player *player) {
+void Config::renamePropertyOwner(const bstring& oldName, Player *player) {
     std::list<Property*>::iterator it;
 
     for(it = properties.begin() ; it != properties.end() ; it++) {
@@ -1870,7 +1670,7 @@ bstring Property::getLog() const {
 //                      appendLog
 //*********************************************************************
 
-void Property::appendLog(bstring user, const char *fmt, ...) {
+void Property::appendLog(const bstring& user, const char *fmt, ...) {
     if(logType == LOG_NONE)
         return;
     if(logType == LOG_PARTIAL && isOwner(user))
@@ -1886,7 +1686,7 @@ void Property::appendLog(bstring user, const char *fmt, ...) {
     }
     va_end(ap);
 
-    long    t = time(0);
+    long    t = time(nullptr);
     bstring txt;
     txt = "^c";
     txt += ctime(&t);
@@ -1967,7 +1767,7 @@ void Property::roomSetup(UniqueRoom *room, PropType propType, const Player* play
 //                      linkRoom
 //*********************************************************************
 
-void Property::linkRoom(BaseRoom* inside, BaseRoom* outside, bstring xname) {
+void Property::linkRoom(BaseRoom* inside, BaseRoom* outside, const bstring& xname) {
     UniqueRoom* uRoom = outside->getAsUniqueRoom();
     AreaRoom* aRoom = outside->getAsAreaRoom();
     if(uRoom) {
@@ -1993,8 +1793,8 @@ void Property::linkRoom(BaseRoom* inside, BaseRoom* outside, bstring xname) {
 //                      makeNextRoom
 //*********************************************************************
 
-UniqueRoom* Property::makeNextRoom(UniqueRoom* r1, PropType propType, CatRef cr, bool exits, const Player* player, const Guild* guild, BaseRoom* room, bstring xname, const char *go, const char *back, bool save) {
-    UniqueRoom *r2 = new UniqueRoom;
+UniqueRoom* Property::makeNextRoom(UniqueRoom* r1, PropType propType, const CatRef& cr, bool exits, const Player* player, const Guild* guild, BaseRoom* room, const bstring& xname, const char *go, const char *back, bool save) {
+    auto *r2 = new UniqueRoom;
     r2->info = cr;
 
     if(r1) {
@@ -2007,7 +1807,7 @@ UniqueRoom* Property::makeNextRoom(UniqueRoom* r1, PropType propType, CatRef cr,
 
     if(save) {
         roomSetup(r2, propType, player, guild);
-        return(0);
+        return(nullptr);
     }
     return(r2);
 }
@@ -2080,7 +1880,7 @@ void Property::descEdit(Socket* sock, const bstring& str) {
         ply->clearFlag(P_READING_FILE);
         sock->restoreState();
 
-        Property *p=0;
+        Property *p=nullptr;
         if(!Property::requireInside(ply, ply->getUniqueRoomParent(), &p))
             return;
 
@@ -2143,10 +1943,8 @@ int cmdHouse(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 bool Property::houseCanBuild(AreaRoom* aRoom, BaseRoom* room) {
-    if(room->flagIsSet(R_BUILD_HOUSE))
-        return(true);
+    return room->flagIsSet(R_BUILD_HOUSE);
 
-    return(false);
 }
 
 //*********************************************************************
@@ -2234,7 +2032,7 @@ void Property::manageName(Player* player, cmd* cmnd, PropType propType, int x) {
 //*********************************************************************
 
 void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const Guild* guild, int x) {
-    Object  *deed=0, *oHidden=0, *oConceal=0, *oInvis=0, *oFoyer=0;
+    Object  *deed=nullptr, *oHidden=nullptr, *oConceal=nullptr, *oInvis=nullptr, *oFoyer=nullptr;
     AreaRoom* aRoom = player->getAreaRoomParent();
     UniqueRoom* uRoom = player->getUniqueRoomParent();
     BaseRoom* room = player->getRoomParent();
@@ -2331,7 +2129,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 
 
     bstring xname = getFullstrText(cmnd->fullstr, 3-x);
-    if(xname == "") {
+    if(xname.empty()) {
         player->print("Please enter an exit name followed by the number of the room you wish to connect to.\n");
         return;
     }
@@ -2414,7 +2212,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     }
 
 
-    Property *p = new Property;
+    auto *p = new Property;
     p->found(player, propType);
 
     // foyer needs 1 extra room
@@ -2430,10 +2228,10 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     }
 
     // if they have a foyer, make one
-    UniqueRoom* rFoyer=0;
+    UniqueRoom* rFoyer=nullptr;
     bstring xPropName = xname;
     if(oFoyer) {
-        rFoyer = makeNextRoom(0, propType, cr, true, player, guild, room, xname, "", "", false);
+        rFoyer = makeNextRoom(nullptr, propType, cr, true, player, guild, room, xname, "", "", false);
         if(propType == PROP_GUILDHALL) {
             rFoyer->setFlag(R_GUILD_OPEN_ACCESS);
             xname = "guild";
@@ -2447,7 +2245,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     // this is where the work of creating the rooms is done.
     if(layout == "5 room cross") {
 
-        UniqueRoom* r1 = makeNextRoom(0, propType, cr, false, player, guild, room, xname, "", "", false);
+        UniqueRoom* r1 = makeNextRoom(nullptr, propType, cr, false, player, guild, room, xname, "", "", false);
 
         cr.id++; // north
         makeNextRoom(r1, propType, cr, roomId == 2, player, guild, room, xname, "north", "south", true);
@@ -2462,7 +2260,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 
     } else if(layout == "4 room square") {
 
-        UniqueRoom* nw = makeNextRoom(0, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
+        UniqueRoom* nw = makeNextRoom(nullptr, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
         cr.id++; // northeast
         UniqueRoom* ne = makeNextRoom(nw, propType, cr, roomId == 2, player, guild, room, xname, "east", "west", false);
         cr.id++; // southwest
@@ -2484,7 +2282,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 
     } else if(layout == "tower") {
 
-        UniqueRoom* r1 = makeNextRoom(0, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
+        UniqueRoom* r1 = makeNextRoom(nullptr, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
         int i=1;
 
         while(i < req) {
@@ -2503,11 +2301,11 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 
     } else if(layout == "small house") {
 
-        makeNextRoom(0, propType, cr, true, player, guild, room, xname, "", "", true);
+        makeNextRoom(nullptr, propType, cr, true, player, guild, room, xname, "", "", true);
 
     } else if(layout == "medium house") {
 
-        UniqueRoom* r1 = makeNextRoom(0, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
+        UniqueRoom* r1 = makeNextRoom(nullptr, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
 
         cr.id++;
         if(orientation == "n")
@@ -2519,7 +2317,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     } else if(layout == "large house") {
 
         char dir1[10], dir2[10];
-        UniqueRoom* r1 = makeNextRoom(0, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
+        UniqueRoom* r1 = makeNextRoom(nullptr, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
 
         cr.id++;
         extra = rotateHouse(dir1, dir2, extra);
@@ -2537,9 +2335,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
         roomSetup(r1, propType, player, guild);
 
     } else {
-
-        if(rFoyer)
-            delete rFoyer;
+        delete rFoyer;
 
         player->print("There was an error in construction of your %s!\n", getTypeStr(propType).c_str());
         delete p;
@@ -2647,7 +2443,7 @@ void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Proper
 
 
     bstring xname = getFullstrText(cmnd->fullstr, 4-x);
-    if(xname != "" && isdigit(xname.getAt(0)))
+    if(!xname.empty() && isdigit(xname.getAt(0)))
         xname = getFullstrText(xname, 1);
 
     xname.Replace("_", " ");
@@ -2662,7 +2458,7 @@ void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Proper
     }
 
 
-    UniqueRoom* target = new UniqueRoom;
+    auto* target = new UniqueRoom;
     bool outside=false;
 
     if(layout == "normal room") {
@@ -2721,7 +2517,7 @@ void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x)
     // caps!
     xNameType.setAt(0, toupper(xNameType.getAt(0)));
 
-    if(origExit == "" || newExit == "") {
+    if(origExit.empty() || newExit.empty()) {
         player->print("Rename which exit to what?\n");
         return;
     }
@@ -2734,7 +2530,7 @@ void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x)
         return;
 
 
-    Exit* found = 0;
+    Exit* found = nullptr;
     bool unique=true;
     for(Exit* ext : room->exits ) {
         // exact match
@@ -2780,12 +2576,12 @@ void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x)
 
 void Property::manage(Player* player, cmd* cmnd, PropType propType, int x) {
     BaseRoom* room = player->getRoomParent();
-    const Guild* guild=0;
-    Property *p=0;
+    const Guild* guild=nullptr;
+    Property *p=nullptr;
     int canBuildFlag = Property::buildFlag(propType);
 
     int len = strlen(cmnd->str[2-x]);
-    const char *syntax;
+    const char *syntax = nullptr;
 
     if(player->getClass() == CreatureClass::BUILDER) {
         player->print("Builders have no need to manage property.");
@@ -2942,7 +2738,7 @@ void Property::manage(Player* player, cmd* cmnd, PropType propType, int x) {
 void Property::found(const Player* player, PropType propType, bstring location, bool shouldSetArea) {
     setOwner(player->getName());
     setDateFounded();
-    if(location == "")
+    if(location.empty())
         location = player->getConstUniqueRoomParent()->getName();
     setLocation(location);
     if(shouldSetArea && player->inUniqueRoom()) {
@@ -2952,7 +2748,7 @@ void Property::found(const Player* player, PropType propType, bstring location, 
             Property* p = gConfig->getProperty(player->getConstUniqueRoomParent()->info);
 
             CatRef cr = p->ranges.front().low;
-            UniqueRoom* room=0;
+            UniqueRoom* room=nullptr;
             if(loadRoom(cr, &room)) {
                 // Look for the first exit not linking to the shop
                 for(Exit* ext : room->exits) {
