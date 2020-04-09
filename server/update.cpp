@@ -57,7 +57,7 @@ short           Action_update_interval = 6;
 // typing.
 
 void Server::updateGame() {
-    long    t = time(0);
+    long    t = time(nullptr);
 
     if(t == last_update)
         return;
@@ -102,7 +102,6 @@ void Server::updateGame() {
         gServer->updateWeather(t);
     if(t - last_action_update >= Action_update_interval)
         gServer->updateAction(t);
-//      update_action(t);
     if(last_dust_output && last_dust_output < t)
         update_dust_oldPrint(t);
     if(t > gConfig->getLotteryRunTime())
@@ -119,8 +118,8 @@ void Server::updateGame() {
 //*********************************************************************
 
 bstring Config::weatherize(WeatherString w, const BaseRoom* room) const {
-    const CatRefInfo* cri=0;
-    const cWeather* weather=0;
+    const CatRefInfo* cri=nullptr;
+    const cWeather* weather=nullptr;
     bstring txt = "";
 
     // get weather data out of catrefinfo
@@ -128,8 +127,8 @@ bstring Config::weatherize(WeatherString w, const BaseRoom* room) const {
     if(cri) {
         weather = cri->getWeather();
         // if the requested string doesn't exist, default to config weather
-        if(weather && weather->get(w) == "")
-            weather = 0;
+        if(weather && weather->get(w).empty())
+            weather = nullptr;
     }
 
     // try parent
@@ -138,8 +137,8 @@ bstring Config::weatherize(WeatherString w, const BaseRoom* room) const {
         if(cri) {
             weather = cri->getWeather();
             // if the requested string doesn't exist, default to config weather
-            if(weather && weather->get(w) == "")
-                weather = 0;
+            if(weather && weather->get(w).empty())
+                weather = nullptr;
         }
     }
 
@@ -255,14 +254,14 @@ void Server::weather(WeatherString w) {
         }
 
         weather = gConfig->weatherize(w, player->getRoomParent());
-        if(weather != "") {
+        if(!weather.empty()) {
             player->printColor("^%c%s\n", color, weather.c_str());
-            player->hooks.execute(event, 0, season);
+            player->hooks.execute(event, nullptr, season);
         }
     }
 
 
-    MonsterList::iterator it = activeList.begin();
+    auto it = activeList.begin();
     while(it != activeList.end()) {
         // Increment the iterator in case this monster dies during the update and is removed from the active list
         Monster* monster = (*it++);
@@ -282,8 +281,8 @@ void Server::weather(WeatherString w) {
         // monsters don't need to see the message, but we need to know if there is a message or not
         // as that will decide whether or not we tell them to execute a hook
         weather = gConfig->weatherize(w, monster->getRoomParent());
-        if(weather != "")
-            monster->hooks.execute(event, 0, season);
+        if(!weather.empty())
+            monster->hooks.execute(event, nullptr, season);
     }
 }
 
@@ -311,7 +310,7 @@ void update_time(long t) {
 
     daytime = gConfig->currentHour();
     if(daytime == SUNRISE-1) {
-        for(std::pair<bstring, Player*> p : gServer->players) {
+        for(const auto& p : gServer->players) {
             if(p.second->isEffected("vampirism"))
                 p.second->printColor("^YThe sun is about to rise.\n");
         }
@@ -319,7 +318,7 @@ void update_time(long t) {
         gServer->weather(WEATHER_SUNRISE);
         gServer->killMortalObjects();
     } else if(daytime == SUNSET-1) {
-        for( std::pair<bstring, Player*> p : gServer->players) {
+        for( const auto& p : gServer->players) {
             if(p.second->isEffected("vampirism"))
                 p.second->printColor("^DThe sun is about to set.\n");
         }
@@ -408,6 +407,8 @@ void Server::updateWeather(long t) {
                         Weather[j].ltime = t;
                         weather(WEATHER_HEAVY_FOG);
                         break;
+                    default:
+                        break;
                     }
                     Weather[j].misc = (short)n;
                     Weather[j].interval = 3200;
@@ -437,6 +438,8 @@ void Server::updateWeather(long t) {
                     case 4:
                         Weather[j].ltime = t;
                         weather(WEATHER_HEAT);
+                        break;
+                    default:
                         break;
                     }
                     Weather[j].misc = (short)n;
@@ -470,6 +473,8 @@ void Server::updateWeather(long t) {
                     case 4:
                         Weather[j].ltime = t;
                         weather(WEATHER_GALE_FORCE);
+                        break;
+                    default:
                         break;
                     }
                     Weather[j].misc = (short)n;
@@ -512,6 +517,8 @@ void Server::updateWeather(long t) {
                         Weather[j].ltime = t;
                         weather(WEATHER_TORRENT_RAIN);
                         break;
+                    default:
+                        break;
                     }
                     Weather[j].misc = (short)n;
                     Weather[j].interval = 1100;
@@ -545,10 +552,14 @@ void Server::updateWeather(long t) {
                         Weather[j].ltime = t;
                         weather(WEATHER_FULL_MOON);
                         break;
+                    default:
+                        break;
                     }
                     Weather[j].misc = (short)n;
                     Weather[j].interval = 1200;
                 }
+                break;
+            default:
                 break;
             }
         }
@@ -559,7 +570,6 @@ void Server::updateWeather(long t) {
         n=11;
     //Random_update_interval = (short)n;
     Random_update_interval = 5;
-    return;
 }
 
 
@@ -569,10 +579,10 @@ void Server::updateWeather(long t) {
 // update function for logic scripts
 
 void Server::updateAction(long t) {
-    Creature* victim=0;
-    Object  *object=0;
-    BaseRoom* room=0;
-    ttag    *act=0, *tact=0;
+    Creature* victim=nullptr;
+    Object  *object=nullptr;
+    BaseRoom* room=nullptr;
+    ttag    *act=nullptr, *tact=nullptr;
     int     i=0, on_cmd=0, thresh=0;
     int     xdir=0, num=0;
     char    *resp;
@@ -582,8 +592,8 @@ void Server::updateAction(long t) {
 
     last_action_update = t;
 
-    Monster *monster=0;
-    MonsterList::iterator it = activeList.begin();
+    Monster *monster=nullptr;
+    auto it = activeList.begin();
     while(it != activeList.end()) {
         monster = (*it++);
         if(monster) {
@@ -609,15 +619,14 @@ void Server::updateAction(long t) {
                         case 'P': // test for player
                             victim = room->findPlayer(monster, act->response, 1);
                             if(victim) {
-                                if(monster->first_tlk->target)
-                                    delete[] monster->first_tlk->target;
+                                delete[] monster->first_tlk->target;
                                 monster->first_tlk->target = new char[strlen(act->response)+1];
                                 strcpy(monster->first_tlk->target, act->response);
                                 act->success = 1;
                             } else {
                                 if(monster->first_tlk->target)
                                     free(monster->first_tlk->target);
-                                monster->first_tlk->target = 0;
+                                monster->first_tlk->target = nullptr;
                                 act->success = 0;
                             }
                             break;
@@ -626,8 +635,7 @@ void Server::updateAction(long t) {
                             for(Player* ply : room->players) {
                                 if(act->test_for == 'C')
                                     if(static_cast<int>(ply->getClass()) == act->arg1) {
-                                        if(monster->first_tlk->target)
-                                            delete[] monster->first_tlk->target;
+                                        delete[] monster->first_tlk->target;
                                         monster->first_tlk->target = new char[ply->getName().length()+1];
                                         strcpy(monster->first_tlk->target, ply->getCName());
                                         act->success = 1;
@@ -635,8 +643,7 @@ void Server::updateAction(long t) {
                                     }
                                 if(act->test_for == 'R')
                                     if(ply->getRace() == act->arg1) {
-                                        if(monster->first_tlk->target)
-                                            delete monster->first_tlk->target;
+                                        delete monster->first_tlk->target;
                                         monster->first_tlk->target = new char[ply->getName().length()+1];
                                         strcpy(monster->first_tlk->target, ply->getCName());
                                         act->success = 1;
@@ -644,9 +651,8 @@ void Server::updateAction(long t) {
                                     }
                             }
                             if(!act->success) {
-                                if(monster->first_tlk->target)
-                                    delete monster->first_tlk->target;
-                                monster->first_tlk->target = 0;
+                                delete monster->first_tlk->target;
+                                monster->first_tlk->target = nullptr;
                                 act->success = 0;
                             }
                             break;
@@ -654,8 +660,7 @@ void Server::updateAction(long t) {
                             object = room->findObject(monster, act->response, 1);
 
                             if(object) {
-                                if(monster->first_tlk->target)
-                                    delete monster->first_tlk->target;
+                                delete monster->first_tlk->target;
                                 monster->first_tlk->target = new char[strlen(act->response)+1];
                                 strcpy(monster->first_tlk->target, act->response);
                                 act->success = 1;
@@ -663,7 +668,7 @@ void Server::updateAction(long t) {
                             } else {
                                 if(monster->first_tlk->target)
                                     free(monster->first_tlk->target);
-                                monster->first_tlk->target = 0;
+                                monster->first_tlk->target = nullptr;
                                 act->success = 0;
                             }
                             break;
@@ -672,15 +677,14 @@ void Server::updateAction(long t) {
                         case 'M': // test for monster
                             victim = room->findMonster(monster, act->response, 1);
                             if(victim) {
-                                if(monster->first_tlk->target)
-                                    delete monster->first_tlk->target;
+                                delete monster->first_tlk->target;
                                 monster->first_tlk->target = new char[strlen(act->response)+1];
                                 strcpy(monster->first_tlk->target, act->response);
                                 act->success = 1;
                             } else {
                                 if(monster->first_tlk->target)
                                     free(monster->first_tlk->target);
-                                monster->first_tlk->target = 0;
+                                monster->first_tlk->target = nullptr;
                                 act->success = 0;
                             }
                             break;
@@ -763,27 +767,18 @@ void Server::updateAction(long t) {
                                 victim->getAsMonster()->monsterCombat((Monster*)monster);
                                 if(monster->first_tlk->target)
                                     free(monster->first_tlk->target);
-                                monster->first_tlk->target = 0;
+                                monster->first_tlk->target = nullptr;
                             }
                             break;
                         case 'a': // attack player target
-                            break;
                         case 'c': // cast a spell on target
-                            break;
                         case 'F': // force target to do somthing
-                            break;
                         case '|': // set a flag on target
-                            break;
                         case '&': // remove flag on target
-                            break;
                         case 'P': // perform social
-                            break;
                         case 'O': // open door
-                            break;
                         case 'C': // close door
-                            break;
                         case 'D': // delay action
-                            break;
                         case 'G': // go into a keyword exit
                             break;
                         case '0': // go n
@@ -839,7 +834,7 @@ void handle_pipe( int sig) {
 //*********************************************************************
 
 void doCrash(int sig) {
-    long t = time(0);
+    long t = time(nullptr);
     std::ostringstream oStr;
     Crash++;
     if(Crash > 1) exit(-12);
@@ -856,8 +851,7 @@ void doCrash(int sig) {
     broadcast(isStaff, "%s", ctime(&t));
 
     oStr << "People online: ";
-    std::pair<bstring, Player*> p;
-    Player* player=0;
+    Player* player=nullptr;
     int i=0;
     for(Socket* sock : gServer->sockets) {
         player = sock->getPlayer();
@@ -896,12 +890,6 @@ void doCrash(int sig) {
     std::clog << "The mud has crashed :(.\n";
 
     if(sig != -69) {
-//      char dbx[160];
-//
-//      sprintf(dbx, "gstack %d > realms.%d.dump", getpid(), getpid());
-//      system(dbx);
-//
-    //  abort();
         signal(sig, SIG_DFL);
         kill(getpid(), sig);
     } else {
@@ -920,7 +908,7 @@ void crash(int sig) {
     doCrash(sig);
 }
 
-void cleanup_spelling(void);
+void cleanup_spelling();
 
 //*********************************************************************
 //                      cleanUpMemory
@@ -978,8 +966,8 @@ int countTotalEnemies(Creature *monster) {
 
 void Server::clearAsEnemy(Player* player) {
 
-    Monster *monster=0;
-    MonsterList::iterator it = activeList.begin();
+    Monster *monster=nullptr;
+    auto it = activeList.begin();
     while(it != activeList.end()) {
         // Increment the iterator in case this monster dies during the update and is removed from the active list
         monster = (*it++);
@@ -989,8 +977,7 @@ void Server::clearAsEnemy(Player* player) {
         monster->clearEnemy(player);
     }
 
-    return;
-}
+    }
 
 //*********************************************************************
 //                      dmInRoom
@@ -1042,8 +1029,8 @@ void update_track(long t) {
 
 void update_ships(int n) {
     std::list<Ship*>::iterator it;
-    Ship    *ship=0;
-    ShipStop *stop=0;
+    Ship    *ship=nullptr;
+    ShipStop *stop=nullptr;
 
     // we must delay ships for a while
     if(gConfig->calendar->shipUpdates > gConfig->expectedShipUpdates())
@@ -1089,7 +1076,7 @@ void update_ships(int n) {
 //*********************************************************************
 bstring Server::showActiveList() {
     Monster* monster;
-    MonsterList::iterator it = activeList.begin();
+    auto it = activeList.begin();
     std::ostringstream oStr;
     oStr << "### Active monster list ###\n";
     oStr << "Monster    -    Room Number\n";
