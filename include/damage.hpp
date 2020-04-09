@@ -26,20 +26,19 @@ enum ReflectedDamageType {
     REFLECTED_FIRE_SHIELD = 3
 };
 
-
 class Damage {
 public:
     Damage();
     void reset();
 
-    int get() const;
-    int getBonus() const;
-    int getDrain() const;
-    int getReflected() const;
-    int getDoubleReflected() const;
-    int getPhysicalReflected() const;
-    ReflectedDamageType getPhysicalReflectedType() const;
-    int getPhysicalBonusReflected() const;
+    [[nodiscard]] int get() const;
+    [[nodiscard]] int getBonus() const;
+    [[nodiscard]] int getDrain() const;
+    [[nodiscard]] int getReflected() const;
+    [[nodiscard]] int getDoubleReflected() const;
+    [[nodiscard]] int getPhysicalReflected() const;
+    [[nodiscard]] ReflectedDamageType getPhysicalReflectedType() const;
+    [[nodiscard]] int getPhysicalBonusReflected() const;
 
     void add(int d);
     void set(int d);
@@ -52,14 +51,14 @@ public:
     void setPhysicalReflected(int r);
     void setPhysicalReflectedType(ReflectedDamageType type);
 protected:
-    int damage;
-    int bonus;
-    int drain;
-    int reflected;
-    int doubleReflected;
-    int physicalReflected;
+    int damage{};
+    int bonus{};
+    int drain{};
+    int reflected{};
+    int doubleReflected{};
+    int physicalReflected{};
     ReflectedDamageType physicalReflectedType;
-    int physicalBonusReflected;
+    int physicalBonusReflected{};
 };
 
 
