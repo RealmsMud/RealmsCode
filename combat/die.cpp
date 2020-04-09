@@ -20,10 +20,8 @@
 #include "commands.hpp"
 #include "config.hpp"
 #include "creatures.hpp"
-#include "die.hpp"
 #include "factions.hpp"
 #include "guilds.hpp"
-#include "effects.hpp"
 #include "mud.hpp"
 #include "rooms.hpp"
 #include "server.hpp"
@@ -64,11 +62,11 @@ void hardcoreDeath(Player* player) {
 
 
     BaseRoom* room = player->getRoomParent();
-    Object* object=0;
+    Object* object=nullptr;
     ObjectSet::iterator it;
     for( it = player->objects.begin() ; it != player->objects.end() ; ) {
         object = (*it++);
-        if(delete_drop_obj(room, object, factionCanRecycle) || !canDrop(player, object, 0) || object->flagIsSet(O_STARTING)) {
+        if(delete_drop_obj(room, object, factionCanRecycle) || !canDrop(player, object, nullptr) || object->flagIsSet(O_STARTING)) {
             delete object;
             continue;
         }
@@ -79,13 +77,13 @@ void hardcoreDeath(Player* player) {
     player->checkDarkness();
 
     if(player->coins[GOLD]) {
-        object=0;
+        object=nullptr;
         loadObject(MONEY_OBJ, &object);
         object->nameCoin("gold", player->coins[GOLD]);
         object->setDroppedBy(player, "HardcoreDeath");
         object->value.set(player->coins[GOLD], GOLD);
         player->coins.sub(player->coins[GOLD], GOLD);
-        gServer->logGold(GOLD_OUT, player, object->value, nullptr, "HardcoreDeath");
+        Server::logGold(GOLD_OUT, player, object->value, nullptr, "HardcoreDeath");
 
         object->addToRoom(room);
     }
@@ -122,8 +120,6 @@ bstring isHoliday() {
 }
 
 
-// TODO: Add in perm killing code
-
 //********************************************************************
 //                      dropCorpse
 //********************************************************************
@@ -133,9 +129,9 @@ bstring isHoliday() {
 void Monster::dropCorpse(Creature *killer) {
     BaseRoom* room = getRoomParent();
     bstring str = "", carry = "";
-    Object      *object=0;
-    Player*     player=0;
-    Player*     pMaster = isPet() ? getPlayerMaster() : 0;
+    Object      *object=nullptr;
+    Player*     player=nullptr;
+    Player*     pMaster = isPet() ? getPlayerMaster() : nullptr;
     bool        destroy = (room->isDropDestroy() && !flagIsSet(M_IGNORE_ROOM_DESTROY));
 
     if(killer)
@@ -197,13 +193,13 @@ void Monster::dropCorpse(Creature *killer) {
             object->addToRoom(room);
 
             if(player) {
-                if(str != "")
+                if(!str.empty())
                     str += ", ";
                 str += object->getName();
             }
         }
 
-        if(player && str != "") {
+        if(player && !str.empty()) {
             carry = getCrtStr(player, CAP | INV, 0);
             carry += " was carrying: ";
             carry += str;
@@ -319,7 +315,7 @@ void Player::dieToMonster(Monster *killer) {
 
     // Stop level 13+ players from suiciding right after dieing
     if(level >= 13) {
-        lasttime[LT_MOBDEATH].ltime = time(0);
+        lasttime[LT_MOBDEATH].ltime = time(nullptr);
         lasttime[LT_MOBDEATH].interval = 60*60*24L;
         setFlag(P_NO_SUICIDE);
     }
@@ -349,7 +345,7 @@ void Player::dieToMonster(Monster *killer) {
 // Handles pets killing players
 
 void Player::dieToPet(Monster *killer) {
-    Player  *master=0;
+    Player  *master=nullptr;
 
     if(killer->getMaster())
         master = killer->getMaster()->getAsPlayer();
@@ -383,8 +379,8 @@ void Player::dieToPet(Monster *killer) {
 // Handles pets killing monsters
 
 void Monster::dieToPet(Monster *killer, bool &freeTarget) {
-    Creature* petKiller=0;
-    Player* pKiller=0;
+    Creature* petKiller=nullptr;
+    Player* pKiller=nullptr;
     logDeath(killer);
 
     if(killer->getMaster()) {
@@ -725,7 +721,7 @@ int Player::godKill(Player *killer) {
         penalty = 50;
         same = 1;
     }
-    if(killerGuild != 0 && thisGuild != 0) {
+    if(killerGuild != nullptr && thisGuild != nullptr) {
         if(killerGuild != thisGuild) {
             killerGuild->incPkillsIn();
             killerGuild->incPkillsWon();
@@ -811,7 +807,7 @@ void Creature::checkDoctorKill(Creature *victim) {
             target->setFlag(P_DOCTOR_KILLER);
             if(!target->flagIsSet(P_DOCTOR_KILLER))
                 broadcast("### %s is a doctor this!", target->getCName());
-            target->lasttime[LT_KILL_DOCTOR].ltime = time(0);
+            target->lasttime[LT_KILL_DOCTOR].ltime = time(nullptr);
             target->lasttime[LT_KILL_DOCTOR].interval = 72000L;
         }
     }
@@ -927,7 +923,7 @@ void Player::dropEquipment(bool dropAll, Socket* killerSock) {
                 if((i != WIELD-1 && i != HELD-1) && mrand(1,5) > 1)
                     continue;
 
-                if(dropString != "")
+                if(!dropString.empty())
                     dropString += ", ";
                 dropString += ready[i]->getName();
 
@@ -943,7 +939,7 @@ void Player::dropEquipment(bool dropAll, Socket* killerSock) {
             ready[WIELD-1] = rMain;
             ready[HELD-1] = rHeld;
 
-            if(dropString != "") {
+            if(!dropString.empty()) {
                 if(killerSock)
                     killerSock->printColor("%s dropped: %s.\n", getCName(), dropString.c_str());
 
@@ -1214,7 +1210,7 @@ bool hearMobDeath(Socket* sock) {
 
 void Monster::logDeath(Creature *killer) {
     int         logType=0;
-    Creature *leader=0, *pet=0;
+    Creature *leader=nullptr, *pet=nullptr;
     BaseRoom* room = killer->getRoomParent();
     char        file[80], killerString[1024];
     char        logStr[2096];
@@ -1391,7 +1387,7 @@ void Player::loseExperience(Monster *killer) {
 void Monster::distributeExperience(Creature *killer) {
     long    expGain = 0;
 
-    Player* player=0;
+    Player* player=nullptr;
 
     if(isPet())
         return;
@@ -1473,9 +1469,9 @@ void Monster::distributeExperience(Creature *killer) {
     // Now handle everyone else on the list
     std::map<Player*, int> expList;
 
-    ThreatSet::iterator tIt = threatTable->threatSet.begin();
-    ThreatEntry* threat = 0;
-    Creature* crt = 0;
+    auto tIt = threatTable->threatSet.begin();
+    ThreatEntry* threat = nullptr;
+    Creature* crt = nullptr;
     while(tIt != threatTable->threatSet.end()) {
     // Iterate it because we will be invaliding this iterator
         threat = (*tIt++);
@@ -1530,13 +1526,13 @@ void Creature::adjustExperience(Monster* victim, int& expAmount, int& holidayExp
     if(player->getRace() == HUMAN && expAmount)
         expAmount += MAX(mrand(4,6),expAmount/3/10);
 
-        if(player->hasSecondClass()) {
-            // Penalty is 12.5% at level 30 and above
-            if(player->level >= 30)
-                expAmount = (expAmount*7)/8;
-            else // and 25% below 30
-                expAmount = (expAmount*3)/4;
-        }
+    if(player->hasSecondClass()) {
+        // Penalty is 12.5% at level 30 and above
+        if(player->level >= 30)
+            expAmount = (expAmount*7)/8;
+        else // and 25% below 30
+            expAmount = (expAmount*3)/4;
+    }
 //  // All experience is multiplied by 3/4 for a multi-classed player
 //  if(player->hasSecondClass())
 //      expAmount = (expAmount*3)/4;
@@ -1570,7 +1566,7 @@ void Creature::adjustExperience(Monster* victim, int& expAmount, int& holidayExp
     // Add in holiday experience
     bstring holidayStr = isHoliday();
 
-    if(holidayStr != "")
+    if(!holidayStr.empty())
         holidayExp = MAX(1, (int)(expAmount * 0.5));
 
     if(victim->flagIsSet(M_PERMENANT_MONSTER))
@@ -1744,8 +1740,8 @@ int Creature::checkDieRobJail(Monster *killer, bool &freeTarget) {
 
 void Player::die(DeathType dt) {
     bstring death = "";
-    Player* killer=0;
-    Object* statue=0;
+    Player* killer=nullptr;
+    Object* statue=nullptr;
     char    deathStr[2048];
     unsigned long oldxp=0;
     int     n=0;
@@ -1772,7 +1768,7 @@ void Player::die(DeathType dt) {
     if(!killedByPlayer) {
         setFlag(P_KILLED_BY_MOB);
         if(level >= 13) {
-            lasttime[LT_MOBDEATH].ltime = time(0);
+            lasttime[LT_MOBDEATH].ltime = time(nullptr);
             lasttime[LT_MOBDEATH].interval = 60*60*24L;
             setFlag(P_NO_SUICIDE);
         }
@@ -1796,7 +1792,7 @@ void Player::die(DeathType dt) {
             break;
         }
 
-        if(poisonedBy != "") {
+        if(!poisonedBy.empty()) {
             switch(dt) {
             case POISON_PLAYER:
                 sprintf(deathStr, "### Sadly, %s was poisoned to death by %s.", getCName(), poisonedBy.c_str());
@@ -2066,7 +2062,7 @@ void Player::die(DeathType dt) {
         curePoison();
 
     // only drop all if killed by player
-    dropEquipment(killedByPlayer && (!killer || !killer->isStaff()), killer ? killer->getSock() : 0);
+    dropEquipment(killedByPlayer && (!killer || !killer->isStaff()), killer ? killer->getSock() : nullptr);
 
     /*
     if(ready[WIELD - 1] && !ready[WIELD - 1]->flagIsSet(O_CURSED))
@@ -2191,7 +2187,7 @@ void Monster::cleanFollow(Creature *killer) {
 
         // This should fix the bug with having a dm's pet killed while possessing a mob
         if(flagIsSet(M_DM_FOLLOW)) {
-            player->setAlias(0);
+            player->setAlias(nullptr);
             player->clearFlag(P_ALIASING);
         }
         if(getMaster() != killer) {
@@ -2241,7 +2237,7 @@ bool Player::dropWeapons() {
         if(weapon->flagIsSet(O_CURSED)) {
             if(!ready[WIELD-1]) {
                 ready[WIELD-1] = ready[HELD-1];
-                ready[HELD-1] = 0;
+                ready[HELD-1] = nullptr;
                 jump = true;
             }
         } else {
