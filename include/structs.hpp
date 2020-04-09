@@ -45,14 +45,14 @@ class MudObject;
 // A common class that has a name and description to avoid two separate classes with name/desc (skill & command) being inherited by SkillCommand
 class Nameable {
 public:
-    Nameable() {};
-    virtual ~Nameable() {};
+    Nameable() = default;
+    virtual ~Nameable() = default;
 
     bstring name;
     bstring description;
 
-    bstring getName() const;
-    bstring getDescription() const;
+    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] bstring getDescription() const;
 
 };
 
@@ -92,7 +92,7 @@ public:
 // UniqueRoom effectList tags
 typedef struct rom_tag {
 public:
-    rom_tag() { next_tag = 0; rom = 0; };
+    rom_tag() { next_tag = nullptr; rom = nullptr; };
     struct rom_tag  *next_tag;
     UniqueRoom* rom;
 } rtag;
@@ -102,11 +102,11 @@ public:
 // Enemy effectList tags
 typedef struct enm_tag {
 public:
-    enm_tag() { next_tag = 0; enemy[0] = 0; damage = 0; owner[0] = 0; };
+    enm_tag() { next_tag = nullptr; enemy[0] = 0; damage = 0; owner[0] = 0; };
     struct enm_tag  *next_tag;
-    char            enemy[80];
+    char            enemy[80]{};
     int             damage;
-    char            owner[80];
+    char            owner[80]{};
 } etag;
 
 
@@ -114,11 +114,11 @@ typedef struct vstat {
 public:
     vstat() { num[0] = num[1] = num[2] = num[3] = num[4] = 0;
             hp = mp = pp = 0; level = race = 0; cls = cls2 = CreatureClass::NONE; };
-    int     num[5];
+    int     num[5]{};
     int     hp;
     int     mp;
     int     pp;
-    int     rp;
+    int     rp{};
     char    level;
     CreatureClass    cls;
     CreatureClass    cls2;
@@ -129,7 +129,7 @@ public:
 // Talk effectList tags
 typedef struct tlk_tag {
 public:
-    tlk_tag() { next_tag = 0; key = 0; response = 0; type = 0; action = 0; target = 0; on_cmd = 0; if_cmd = 0;
+    tlk_tag() { next_tag = nullptr; key = nullptr; response = nullptr; type = 0; action = nullptr; target = nullptr; on_cmd = 0; if_cmd = 0;
             test_for = 0; do_act = 0; success = 0; if_goto_cmd = 0; not_goto_cmd = 0; goto_cmd = 0; arg1 = arg2 = 0; };
     struct tlk_tag *next_tag;
     char    *key;
@@ -188,24 +188,24 @@ public:
 typedef struct lockout {
 public:
     lockout() { address[0] = password[0] = userid[0] = 0; };
-    char        address[80];
-    char        password[20];
-    char        userid[9];
+    char        address[80]{};
+    char        password[20]{};
+    char        userid[9]{};
 } lockout;
 
 
 typedef struct osp_t {
-    int     splno;
+    int     splno{};
     Realm   realm;
-    int     mp;
+    int     mp{};
     Dice    damage;
-    char    bonus_type;
-    bool    drain;
+    char    bonus_type{};
+    bool    drain{};
 } osp_t;
 
 
 typedef struct osong_t {
-    int     songno;
+    int     songno{};
     Dice    damage;
 } osong_t;
 
@@ -275,8 +275,8 @@ typedef struct {
 // Base class for Command, Spell, Song, etc
 class MudMethod : public virtual Nameable {
 public:
-    virtual ~MudMethod() {};
-    int priority;
+    virtual ~MudMethod() = default;
+    int priority{};
 
     bool exactMatch(bstring toMatch); 
     bool partialMatch(bstring toMatch);
@@ -288,7 +288,7 @@ public:
 // Base class for songs & spells
 class MysticMethod: public MudMethod {
 public:
-    virtual ~MysticMethod() {};
+    virtual ~MysticMethod() = default;
            
     bool exactMatch(bstring toMatch); 
     bool partialMatch(bstring toMatch);
@@ -311,7 +311,7 @@ protected:
 class Spell: public MysticMethod {
 public:
     Spell(xmlNodePtr rootNode);
-    ~Spell() {};
+    ~Spell() = default;
 
     void save(xmlNodePtr rootNode) const;
 };
@@ -321,8 +321,8 @@ public:
 // Base class for Ply/Crt commands
 class Command: public virtual MudMethod {
 public:
-    ~Command() {};
-    bool    (*auth)(const Creature *);
+    ~Command() = default;
+    bool    (*auth)(const Creature *){};
 
     virtual int execute(Creature* player, cmd* cmnd) = 0;
 };
@@ -330,28 +330,28 @@ public:
 // these are supplemental to the cmd class
 class CrtCommand: public Command {
 public:
-    CrtCommand(bstring pCmdStr, int pPriority, int (*pFn)(Creature* player, cmd* cmnd), bool (*pAuth)(const Creature *), bstring pDesc): fn(pFn)
+    CrtCommand(const bstring& pCmdStr, int pPriority, int (*pFn)(Creature* player, cmd* cmnd), bool (*pAuth)(const Creature *), const bstring& pDesc): fn(pFn)
     {
         name = pCmdStr;
         priority = pPriority;
         auth = pAuth;
         description = pDesc;
     };
-    ~CrtCommand() {};
+    ~CrtCommand() = default;
     int (*fn)(Creature* player, cmd* cmnd);
     int execute(Creature* player, cmd* cmnd);
 };
 
 class PlyCommand: public Command {
 public:
-    PlyCommand(bstring pCmdStr, int pPriority, int (*pFn)(Player* player, cmd* cmnd), bool (*pAuth)(const Creature *), bstring pDesc): fn(pFn)
+    PlyCommand(const bstring& pCmdStr, int pPriority, int (*pFn)(Player* player, cmd* cmnd), bool (*pAuth)(const Creature *), const bstring& pDesc): fn(pFn)
     {
         name = pCmdStr;
         priority = pPriority;
         auth = pAuth;
         description = pDesc;
     };
-    ~PlyCommand() {};
+    ~PlyCommand() = default;
     int (*fn)(Player* player, cmd* cmnd);
     int execute(Creature* player, cmd* cmnd);
 };
