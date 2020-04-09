@@ -26,17 +26,19 @@
 #include <fcntl.h>      // Needs: fnctl
 #include <netdb.h>      // Needs: gethostbyaddr
 #include <sys/socket.h> // Needs: AF_INET
-#include <errno.h>
-#include <stdlib.h>
+#include <cerrno>
+#include <cstdlib>
 
 // Mud Includes
 #include "commands.hpp"
 #include "config.hpp"
 #include "creatures.hpp"
+#include "login.hpp"
 #include "msdp.hpp"
 #include "mud.hpp"
-#include "login.hpp"
+#include "post.hpp"
 #include "property.hpp"
+#include "security.hpp"
 #include "server.hpp"
 #include "socket.hpp"
 #include "version.hpp"
@@ -1185,7 +1187,7 @@ int restoreState(Socket* sock) {
 //                      pauseScreen
 //*********************************************************************
 
-void pauseScreen(Socket* sock, bstring str) {
+void pauseScreen(Socket* sock, const bstring& str) {
     if(str.equals("quit"))
         sock->disconnect();
     else
@@ -1217,8 +1219,6 @@ void Socket::reconnect(bool pauseScreen) {
 //                      setState
 //*********************************************************************
 // Sets a fd's state and changes the interpreter to the appropriate function
-
-void convertNewWeaponSkills(Socket* sock, bstring str);
 
 void Socket::setState(int pState, int pFnParam) {
     // Only store the last state if we're changing states, used mainly in the viewing file states
@@ -1261,12 +1261,7 @@ void Socket::setState(int pState, int pFnParam) {
         fn = login;
     }
 
-    fnparam = pFnParam;
-}
-
-int setState(Socket* sock, int state, int pFnParam) {
-    sock->setState(state, pFnParam);
-    return (0);
+    fnparam = (char) pFnParam;
 }
 
 bstring getMxpTag( bstring tag, bstring text ) {
@@ -1798,7 +1793,7 @@ bool Socket::hasCommand(void) const {
 // True if the socket is playing (ie: fn is command and fnparam is 1)
 
 bool Socket::canForce(void) const {
-    return (fn == (void(*)(Socket*, bstring)) ::command && fnparam == 1);
+    return (fn == (void(*)(Socket*, const bstring&)) ::command && fnparam == 1);
 }
 
 //********************************************************************

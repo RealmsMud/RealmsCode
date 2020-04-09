@@ -83,10 +83,11 @@ int getFailFd(Creature *user) {
 // appropriate function, depending on what service is requested by the
 // player.
 
-void command(Socket* sock, bstring str) {
+void command(Socket* sock, const bstring& inStr) {
     cmd cmnd;
     int n;
     Player* ply = sock->getPlayer();
+    bstring str = inStr;
 
     ASSERTLOG( ply );
 

@@ -327,7 +327,7 @@ void viewFileReal(Socket* sock, bstring str ) {
     }
 }
 // Wrapper function for viewFile_real that will set the correct connected state
-void viewFile(Socket* sock, bstring str) {
+void viewFile(Socket* sock, const bstring& str) {
     if(sock->getState() != CON_VIEWING_FILE)
         sock->setState(CON_VIEWING_FILE);
 
@@ -344,7 +344,7 @@ void viewFile(Socket* sock, bstring str) {
 
 #define FBUF_L  1024
 
-void viewLoginFile(Socket* sock, bstring str, bool showError) {
+void viewLoginFile(Socket* sock, const bstring& str, bool showError) {
     char    buf[FBUF_L + 1];
     int     i=0, l=0, n=0, ff=0, line=0;
     long    offset=0;
@@ -528,7 +528,7 @@ nomatch:
 }
 
 // Wrapper for viewFileReverse_real that properly sets the connected state
-void viewFileReverse(Socket* sock, bstring str) {
+void viewFileReverse(Socket* sock, const bstring& str) {
     if(sock->getState() != CON_VIEWING_FILE_REVERSE)
         sock->setState(CON_VIEWING_FILE_REVERSE);
     viewFileReverseReal(sock, str);

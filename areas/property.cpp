@@ -2070,7 +2070,7 @@ bool Property::requireInside(const Player* player, const UniqueRoom* room, Prope
 
 bstring postText(bstring str);
 
-void Property::descEdit(Socket* sock, bstring str) {
+void Property::descEdit(Socket* sock, const bstring& str) {
     bstring outstr = "";
     char    outcstr[160];
     int     ff=0;

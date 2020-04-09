@@ -150,7 +150,7 @@ set(COMMON_HEADER_FILES
     include/xml.hpp
     include/enums/loadType.hpp
     include/enums/bits.hpp
-    )
+        include/post.hpp include/security.hpp)
 
 set(COMMON_SOURCE_FILES
     areas/area.cpp
