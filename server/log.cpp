@@ -31,7 +31,7 @@ char *getTimeStr() {
     time_t  t;
     static char timestr[40];
 
-    t = time(0);
+    t = time(nullptr);
     strcpy(timestr, ctime(&t));
 
     // strip the newline at the end
@@ -96,7 +96,7 @@ void loge(const char *fmt, ...) {
             return;
     }
     lseek(fd, 0L, 2);
-    t = time(0);
+    t = time(nullptr);
     strcpy(str, ctime(&t));
     str[24] = ':';
     str[25] = ' ';
