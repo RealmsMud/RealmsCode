@@ -173,7 +173,6 @@ set(COMMON_SOURCE_FILES
     combat/damage.cpp
     combat/die.cpp
     combat/duel.cpp
-    combat/gods.cpp
     combat/singers.cpp
     combat/specials.cpp
     combat/threat.cpp
