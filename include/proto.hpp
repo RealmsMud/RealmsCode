@@ -70,7 +70,7 @@ int reloadCalendar(Player* player);
 
 
 // color.cpp
-bstring stripColor(bstring color);
+bstring stripColor(const bstring& color);
 bstring escapeColor(bstring color);
 
 
