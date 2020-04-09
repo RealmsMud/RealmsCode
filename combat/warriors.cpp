@@ -41,7 +41,7 @@ void Player::disarmSelf() {
         if(ready[HELD-1]->flagIsSet(O_CURSED)) {
             if(!ready[WIELD-1]) {
                 ready[WIELD-1] = ready[HELD-1];
-                ready[HELD-1] = 0;
+                ready[HELD-1] = nullptr;
                 if(ready[WIELD-1]->flagIsSet(O_NO_PREFIX)) {
                     print("%s jumped to your primary hand! It's cursed!\n", ready[WIELD-1]->getCName());
                 } else {
@@ -55,7 +55,7 @@ void Player::disarmSelf() {
             removed = true;
         }
     }
-    if(removed == false)
+    if(!removed)
         print("Disarm whom?\n");
     else
         unhide();
@@ -66,8 +66,8 @@ void Player::disarmSelf() {
 //*********************************************************************
 
 int cmdDisarm(Player* player, cmd* cmnd) {
-    Creature* creature=0;
-    Player  *pCreature=0;
+    Creature* creature=nullptr;
+    Player  *pCreature=nullptr;
     BaseRoom* room = player->getRoomParent();
     long    i=0, t=0;
     int     chance=0, drop=0;
@@ -116,11 +116,8 @@ int cmdDisarm(Player* player, cmd* cmnd) {
     )
         return(0);
 
-
-
-
     i = player->lasttime[LT_DISARM].ltime;
-    t = time(0);
+    t = time(nullptr);
 
     if((t - i < 30L) && !player->isCt()) {
         player->pleaseWait(30L-t+i);
@@ -150,7 +147,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
 
     int level = (int)player->getSkillLevel("disarm");
     chance = 30 + (level - creature->getLevel()) * 10
-            + bonus((int) player->dexterity.getCur()) * 5;
+            + bonus(player->dexterity.getCur()) * 5;
     if(player->getClass() == CreatureClass::ROGUE)
         chance += 10;
     chance = MIN(chance, 85);
@@ -182,7 +179,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
         if(player->getClass() == CreatureClass::CARETAKER)
             log_immort(false,player, "%s disarms %s.\n", player->getCName(), creature->getCName());
 
-        drop = 5 + ((level - creature->getLevel()) - (bonus((int) creature->dexterity.getCur())*2));
+        drop = 5 + ((level - creature->getLevel()) - (bonus(creature->dexterity.getCur()) * 2));
 
         player->checkImprove("disarm", true);
         if(player->isDm())
@@ -264,13 +261,13 @@ int cmdMistbane(Player* player, cmd* cmnd) {
     }
 
     i = player->lasttime[LT_MISTBANE].ltime;
-    t = time(0);
+    t = time(nullptr);
 
     if(t - i < 600L) {
         player->pleaseWait(600L-t+i);
         return(0);
     }
-    chance = MIN(80, (int)(player->getSkillLevel("mistbane") * 20) + bonus((int) player->piety.getCur()));
+    chance = MIN(80, (int)(player->getSkillLevel("mistbane") * 20) + bonus(player->piety.getCur()));
 
 
     if(Random::get(1, 100) > player->getLuck() + player->getSkillLevel("mistbane") * 2)
@@ -302,7 +299,7 @@ int cmdMistbane(Player* player, cmd* cmnd) {
 // damage, and 1/2 the thac0 bonus from it.
 
 int cmdSecond(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -434,14 +431,14 @@ int cmdBerserk(Player* player, cmd* cmnd) {
     }
 
     i = player->lasttime[LT_BERSERK].ltime;
-    t = time(0);
+    t = time(nullptr);
 
     if(t - i < 600L && !player->isCt()) {
         player->pleaseWait(600L-t+i);
         return(0);
     }
 
-    chance = MIN(85, (int)(player->getSkillLevel("berserk") * 10) + (bonus((int) player->strength.getCur()) * 5));
+    chance = MIN(85, (int)(player->getSkillLevel("berserk") * 10) + (bonus(player->strength.getCur()) * 5));
 
     if(Random::get(1, 100) <= chance) {
         player->print("You go berserk.\n");
@@ -475,9 +472,9 @@ int cmdBerserk(Player* player, cmd* cmnd) {
 // enemy, confusing it for several seconds.
 
 int cmdCircle(Player* player, cmd* cmnd) {
-    Creature* target=0;
-    Monster *mTarget=0;
-    Player  *pTarget=0;
+    Creature* target=nullptr;
+    Monster *mTarget=nullptr;
+    Player  *pTarget=nullptr;
     int     chance=0, delay=0;
     double level = 0.0;
 
@@ -533,7 +530,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
         level = MAX(1, (int)level-2);
 
     chance = 50 + (int)((level-target->getLevel())*20) +
-        (bonus((int) player->dexterity.getCur()) -bonus((int) target->dexterity.getCur()))*2;
+             (bonus(player->dexterity.getCur()) - bonus(target->dexterity.getCur())) * 2;
 
     // Having less then average dex has a major effect on circling chances.
     // This is being done because there is no save against circle, and there is one
@@ -561,8 +558,8 @@ int cmdCircle(Player* player, cmd* cmnd) {
     if(Random::get(1,100) <= chance && (Random::get(1,100) > ((target->dexterity.getCur()/10)/2))) {
         if(mTarget) {
             if(!mTarget->flagIsSet(M_RESIST_CIRCLE) && !mTarget->isUndead())
-                delay = MAX(6, (Random::get(6,10) + (MIN(3,((bonus((int) player->dexterity.getCur()) -
-                        bonus((int) target->dexterity.getCur()))/2)))));
+                delay = MAX(6, (Random::get(6,10) + (MIN(3,((bonus(player->dexterity.getCur()) -
+                                                             bonus(target->dexterity.getCur())) / 2)))));
             else
                 delay = Random::get(6,9);
         } else
@@ -621,9 +618,9 @@ int cmdCircle(Player* player, cmd* cmnd) {
 // over for a few seconds, leaving them unable to attack back.
 
 int cmdBash(Player* player, cmd* cmnd) {
-    Creature* creature=0;
-    Player  *pCreature=0;
-    long    t = time(0);
+    Creature* creature=nullptr;
+    Player  *pCreature=nullptr;
+    long    t = time(nullptr);
     int     chance=0;
     double level=0.0;
 
@@ -697,8 +694,8 @@ int cmdBash(Player* player, cmd* cmnd) {
 
 
     chance = 50 + (int)((level-creature->getLevel())*10) +
-            bonus((int) player->strength.getCur())*3 +
-            (bonus((int) player->dexterity.getCur()) -bonus((int) creature->dexterity.getCur()))*2;
+             bonus(player->strength.getCur()) * 3 +
+             (bonus(player->dexterity.getCur()) - bonus(creature->dexterity.getCur())) * 2;
     chance += player->getClass() == CreatureClass::BERSERKER ? 10:0;
 
     chance = player->getClass() == CreatureClass::BERSERKER ? MIN(90, chance) : MIN(85, chance);
@@ -735,7 +732,7 @@ int cmdBash(Player* player, cmd* cmnd) {
 // seconds, in order to do a little extra damage. -- TC
 
 int cmdKick(Player* player, cmd* cmnd) {
-    Creature* creature=0;
+    Creature* creature=nullptr;
     long    i=0, t=0;
     int     chance=0;
 
@@ -759,7 +756,7 @@ int cmdKick(Player* player, cmd* cmnd) {
 
 
     i = LT(player, LT_KICK);
-    t = time(0);
+    t = time(nullptr);
 
     if(i > t && !player->isDm()) {
         player->pleaseWait(i-t);
@@ -791,10 +788,10 @@ int cmdKick(Player* player, cmd* cmnd) {
     }
 
     chance = 40 + (int)((player->getSkillLevel("kick") - creature->getLevel())*10) +
-            (3*bonus((int) player->dexterity.getCur()) - bonus((int) creature->dexterity.getCur()))*2;
+             (3*bonus(player->dexterity.getCur()) - bonus(creature->dexterity.getCur())) * 2;
 
     if(player->getClass() == CreatureClass::ROGUE)
-        chance -= (15 - (bonus((int) player->dexterity.getCur()) - bonus((int) creature->dexterity.getCur())));
+        chance -= (15 - (bonus(player->dexterity.getCur()) - bonus(creature->dexterity.getCur())));
 
 
     chance = MAX(0, MIN(95, chance));
@@ -868,7 +865,7 @@ bool canTrack(const Player* player) {
 //*********************************************************************
 
 void doTrack(Player* player) {
-    Track*  track=0;
+    Track*  track=nullptr;
     int     chance=0;
     int     skLevel = (int)player->getSkillLevel("track");
 
@@ -883,7 +880,7 @@ void doTrack(Player* player) {
     else if(player->inUniqueRoom())
         track = &player->getUniqueRoomParent()->track;
 
-    chance = 25 + (int)((bonus((int)player->dexterity.getCur()) + skLevel)*5);
+    chance = 25 + (bonus(player->dexterity.getCur()) + skLevel) * 5;
 
     if(!track || Random::get(1,100) > chance) {
         player->print("You fail to find any tracks.\n");
@@ -891,7 +888,7 @@ void doTrack(Player* player) {
         return;
     }
 
-    if(track->getDirection() == "") {
+    if(track->getDirection().empty()) {
         player->print("There are no tracks in this room.\n");
         return;
     }
@@ -932,7 +929,7 @@ int cmdTrack(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    t = time(0);
+    t = time(nullptr);
     i = LT(player, LT_TRACK);
 
     if(!player->isStaff() && t < i) {
@@ -941,7 +938,7 @@ int cmdTrack(Player* player, cmd* cmnd) {
     }
 
     player->lasttime[LT_TRACK].ltime = t;
-    player->lasttime[LT_TRACK].interval = 5 - bonus((int)player->dexterity.getCur());
+    player->lasttime[LT_TRACK].interval = 5 - bonus(player->dexterity.getCur());
 
     if(player->isStaff())
         player->lasttime[LT_TRACK].interval = 1;
@@ -953,7 +950,7 @@ int cmdTrack(Player* player, cmd* cmnd) {
         // doSearch calls unhide, no need to do it twice
         player->unhide();
 
-        gServer->addDelayedAction(doTrack, player, 0, ActionTrack, player->lasttime[LT_TRACK].interval);
+        gServer->addDelayedAction(doTrack, player, nullptr, ActionTrack, player->lasttime[LT_TRACK].interval);
 
         if(scentTrack(player)) {
             player->print("You begin sniffing for tracks.\n");
@@ -980,9 +977,9 @@ int cmdTrack(Player* player, cmd* cmnd) {
 // This will allow death knights to harm touch once reaching 16th level.
 
 int cmdHarmTouch(Player* player, cmd* cmnd) {
-    Creature* creature=0;
+    Creature* creature=nullptr;
     int     num=0, chance=0;
-    long    t=time(0), i=0;
+    long    t=time(nullptr), i=0;
 
 
     player->clearFlag(P_AFK);
@@ -1033,7 +1030,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
 
 
     chance = 65 + ((int)(player->getSkillLevel("harm") - creature->getLevel())*10) +
-            (2*(bonus((int)player->piety.getCur()) - bonus((int)creature->piety.getCur())));
+            (2*(bonus(player->piety.getCur()) - bonus(creature->piety.getCur())));
     chance = MIN(95,chance);
 
     if(player->isCt())
@@ -1114,7 +1111,7 @@ int cmdBloodsacrifice(Player* player, cmd* cmnd) {
     }
 
     i = player->lasttime[LT_BLOOD_SACRIFICE].ltime;
-    t = time(0);
+    t = time(nullptr);
 
     if(t - i < 600L && !player->isStaff()) {
         player->pleaseWait(600L-t+i);
@@ -1122,7 +1119,7 @@ int cmdBloodsacrifice(Player* player, cmd* cmnd) {
     }
 
     int level = (int)player->getSkillLevel("bloodsac");
-    chance = MIN(85, (int)(level * 20) + bonus((int) player->piety.getCur()));
+    chance = MIN(85, level * 20 + bonus(player->piety.getCur()));
     player->interruptDelayedActions();
     player->hp.decrease(10);
 
@@ -1135,7 +1132,7 @@ int cmdBloodsacrifice(Player* player, cmd* cmnd) {
     if(Random::get(1, 100) <= chance) {
         player->print("Your blood sacrifice infuses your body with increased vitality.\n");
         player->checkImprove("bloodsac", true);
-        player->addEffect("bloodsac", 120L + 60L * (int)(level / 5));
+        player->addEffect("bloodsac", 120L + 60L * (level / 5));
         player->lasttime[LT_BLOOD_SACRIFICE].ltime = t;
         player->lasttime[LT_BLOOD_SACRIFICE].interval = 600L;
     } else {
