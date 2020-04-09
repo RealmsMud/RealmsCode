@@ -18,35 +18,13 @@
 
 #include "creatures.hpp"
 #include "mud.hpp"
-#include "rooms.hpp"
 #include "server.hpp"
-#include "xml.hpp"
-
 
 //*********************************************************************
 //                      Location
 //*********************************************************************
 
-Location::Location() { }
-
-void Location::save(xmlNodePtr rootNode, bstring name) const {
-    xmlNodePtr curNode = xml::newStringChild(rootNode, name);
-    room.save(curNode, "Room", false);
-    if(mapmarker.getArea()) {
-        xmlNodePtr childNode = xml::newStringChild(curNode, "MapMarker");
-        mapmarker.save(childNode);
-    }
-}
-
-void Location::load(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-
-    while(childNode) {
-        if(NODE_NAME(childNode, "Room")) room.load(childNode);
-        else if(NODE_NAME(childNode, "MapMarker")) mapmarker.load(childNode);
-        childNode = childNode->next;
-    }
-}
+Location::Location() = default;
 
 bstring Location::str() const {
     if(room.id)
@@ -63,20 +41,6 @@ bool Location::operator==(const Location& l) const {
 }
 bool Location::operator!=(const Location& l) const {
     return(!(*this == l));
-}
-
-BaseRoom* Location::loadRoom(Player* player) const {
-    UniqueRoom* uRoom=0;
-    if(room.id && ::loadRoom(room, &uRoom))
-        return(uRoom);
-
-    Area* area = gServer->getArea(mapmarker.getArea());
-    if(area) {
-        AreaRoom* aRoom = area->loadRoom(player, &mapmarker, false);
-        return(aRoom);
-    }
-
-    return(0);
 }
 
 short Location::getId() const {

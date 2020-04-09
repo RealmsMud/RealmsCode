@@ -28,13 +28,13 @@ class BaseRoom;
 class Location {
 public:
     Location();
-    void save(xmlNodePtr rootNode, bstring name) const;
+    void save(xmlNodePtr rootNode, const bstring& name) const;
     void load(xmlNodePtr curNode);
-    bstring str() const;
+    [[nodiscard]] bstring str() const;
     bool    operator==(const Location& l) const;
     bool    operator!=(const Location& l) const;
-    BaseRoom* loadRoom(Player* player=0) const;
-    short getId() const;
+    BaseRoom* loadRoom(Player* player=nullptr) const;
+    [[nodiscard]] short getId() const;
 
     CatRef room;
     MapMarker mapmarker;
