@@ -265,8 +265,8 @@ public:
     bool inSameRoom(Creature* target);
 
 
-    Creature* findVictim(cmd* cmnd, int cmndNo, bool aggressive=true, bool selfOk=false, bstring noVictim="", bstring notFound="");
-    Creature* findVictim(bstring toFind, int num, bool aggressive=true, bool selfOk=false, bstring noVictim="", bstring notFound="");
+    Creature* findVictim(cmd* cmnd, int cmndNo, bool aggressive=true, bool selfOk=false, const bstring& noVictim="", const bstring& notFound="");
+    Creature* findVictim(const bstring& toFind, int num, bool aggressive=true, bool selfOk=false, const bstring& noVictim="", const bstring& notFound="");
     Creature* findMagicVictim(bstring toFind, int num, SpellData* spellData, bool aggressive=true, bool selfOk=false, bstring noVictim="", bstring notFound="");
 
     bool hasAttackableTarget();
@@ -433,7 +433,7 @@ public:
     void clearAsPetEnemy();
     virtual void gainExperience(Monster* victim, Creature* killer, int expAmount, bool groupExp = false) {} ;
     void adjustExperience(Monster* victim, int& expAmount, int& holidayExp);
-    int doWeaponResist(int dmg, bstring weaponCategory) const;
+    int doWeaponResist(int dmg, const bstring& weaponCategory) const;
     int doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie = CHECK_DIE, DamageType dmgType = PHYSICAL_DMG);
     int doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget);
     int chkSave(short savetype, Creature* target, short bns);

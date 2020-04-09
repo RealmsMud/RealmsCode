@@ -16,9 +16,6 @@
  *
  */
 
-// C includes
-#include <math.h>
-
 // Mud includes
 #include "commands.hpp"
 #include "config.hpp"
@@ -32,10 +29,10 @@
 #include "socket.hpp"
 
 
-Creature* Creature::findVictim(bstring toFind, int num, bool aggressive, bool selfOk, bstring noVictim, bstring notFound) {
-    Creature* victim=0;
-    Player  *pVictim=0;
-    if(toFind == "") {
+Creature* Creature::findVictim(const bstring& toFind, int num, bool aggressive, bool selfOk, const bstring& noVictim, const bstring& notFound) {
+    Creature* victim=nullptr;
+    Player  *pVictim=nullptr;
+    if(toFind.empty()) {
         if(hasAttackableTarget()) {
             return(getTarget());
         }
@@ -57,7 +54,7 @@ Creature* Creature::findVictim(bstring toFind, int num, bool aggressive, bool se
         return(victim);
     }
 }
-Creature* Creature::findVictim(cmd* cmnd, int cmndNo, bool aggressive, bool selfOk, bstring noVictim, bstring notFound) {
+Creature* Creature::findVictim(cmd* cmnd, int cmndNo, bool aggressive, bool selfOk, const bstring& noVictim, const bstring& notFound) {
     return(findVictim(cmnd->str[cmndNo], cmnd->val[cmndNo], aggressive, selfOk, noVictim, notFound));
 }
 
@@ -68,8 +65,8 @@ Creature* Creature::findVictim(cmd* cmnd, int cmndNo, bool aggressive, bool self
 // to attack a monster.
 
 int cmdAttack(Creature* creature, cmd* cmnd) {
-    Creature *victim=0;
-    Player  *pVictim=0, *pPlayer=0;
+    Creature *victim=nullptr;
+    Player  *pVictim=nullptr, *pPlayer=nullptr;
 
     if(!creature->ableToDoCommand())
         return(0);
@@ -127,9 +124,9 @@ int cmdAttack(Creature* creature, cmd* cmnd) {
 //*********************************************************************
 
 bool Creature::canAttack(Creature* target, bool stealing) {
-    Creature *check=0;
-    Player  *pCheck=0, *pThis = getAsPlayer();
-    bool    holy_war=false;
+    Creature *check=nullptr;
+    Player  *pCheck=nullptr, *pThis = getAsPlayer();
+    bool    holy_war;
     bstring verb = stealing ? "steal from" : "attack";
 
     ASSERTLOG( target );
@@ -354,7 +351,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
 bstring Player::getUnarmedWeaponSkill() const {
     if(isEffected("lycanthropy"))
         return("claw");
-    std::map<bstring, PlayerClass*>::const_iterator it = gConfig->classes.find(getClassString());
+    auto it = gConfig->classes.find(getClassString());
     if(it == gConfig->classes.end() || !(*it).second)
         return("bare-hand");
     return((*it).second->getUnarmedWeaponSkill());
@@ -392,7 +389,7 @@ void checkWeapon(Player* player, Object** weapon, bool alwaysRemove, int* loc, i
     if(multiWeapon)
         *attacks = 1;
 
-    *weapon = 0;
+    *weapon = nullptr;
     *loc = -1;
     *wielding = false;
 
@@ -407,17 +404,17 @@ void checkWeapon(Player* player, Object** weapon, bool alwaysRemove, int* loc, i
 // victim.  A 1 is returned if the attack results in death.
 
 int Player::attackCreature(Creature *victim, AttackType attackType) {
-    Player  *pVictim=0;
-    Monster *mVictim=0;
+    Player  *pVictim=nullptr;
+    Monster *mVictim=nullptr;
     bool    duelWield = false, wielding = false;
     bool    multiWeapon = false;
-    Object  *weapon=0;
+    Object  *weapon=nullptr;
     int     attacks=1, attacked=0;//, enchant=0;
     int     loc = -1;
     EffectInfo* deathSickness = getEffect("death-sickness");
     Damage attackDamage;
 
-    long    t = time(0);
+    long    t = time(nullptr);
     int     drain=0, hit=0, wcdmg=0;
     bool    glow=true;
 
@@ -636,22 +633,13 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
                 // Determine here how to handle the bonus.
                 // If it's a multi attack weapon, divide the bonus over all of the attacks
                 // If it's a multi attack (ambush, etc) no division of bonus
-//              if(computeBonus)
-//                  printColor("^YInitial Bonus: %d^x ", bonus);
                 if(!multiWeapon) {
                     attackDamage.includeBonus();
                 } else {
-                    // Divide the bonus over the number of attacks.  If we only have 1 attack, then they of course get the full bonus!
                     attackDamage.includeBonus(attacks);
-                    //printColor("^yDamage: %d Bonus: %d Result: %d\n", dmg, (int)round(bonus/attacks), (int)round(dmg + (bonus/attacks)));
                 }
-                // How many attacks have we had with this weapon? (Used for bonus computation on multi hit weapons)
-//              if((!multiWeapon || (multiWeapon && attacked==1)))
-//                  attackNum = 1;
-//              else
-//                  attackNum = attacked;
                 bool showToRoom = false;
-                bool wasKilled = false, freeTarget = false, meKilled = false;
+                bool wasKilled = false, freeTarget = false, meKilled;
 
                 if(attackType == ATTACK_BASH) {
                     strcpy(atk, "bashed");
@@ -817,7 +805,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
                 printColor("^RError!!! Unhandled attack result: %d\n", result);
             }
 
-        } while(0); // End DO
+        } while(false); // End DO
 
         // If duel wielding, weapon is now second weapon, go on for the next attack
         if(attacked == 1 && duelWield) {
@@ -935,7 +923,7 @@ int Creature::castWeapon(Creature* target, Object *weapon, bool &meKilled) {
 
 void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, Realm realm, Object* weapon, int saveBonus, short offguard, bool computingBonus) {
     Player  *player = getAsPlayer();
-    const EffectInfo *effect = 0;
+    const EffectInfo *effect = nullptr;
     int     vHp = 0;
     dmgType = MAX(0, dmgType);
 
@@ -1001,7 +989,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
             if(effect->getStrength() >= Random::get(1,100)) {
                 attackDamage.set(attackDamage.get() / 2);
                 attackDamage.setReflected(attackDamage.get());
-                enemy->modifyDamage(0, dmgType, attackDamage, realm);
+                enemy->modifyDamage(nullptr, dmgType, attackDamage, realm);
             }
         }
 
@@ -1102,9 +1090,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
             }
         }
 
-        //
         // players take less damage while berserked
-        //
         if(enemy && isEffected("berserk")) {
             // zerkers: 1/5
             // everyone else: 1/7
@@ -1112,30 +1098,22 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
             attackDamage.set(MAX(1, attackDamage.get()));
         }
 
-        //
         // monsters do more damage while berserked
-        //
         if(enemy && isEffected("berserk"))
             attackDamage.set(attackDamage.get() * 3 / 2);
 
-        //
         // armor damage reduction
-        //
         if(enemy) {
             float damageReduction = enemy->getDamageReduction(this);
             attackDamage.set(attackDamage.get() - (int)(attackDamage.get() * damageReduction));
         }
 
-        //
         // Werewolf silver vulnerability
-        //
         if(weapon && weapon->flagIsSet(O_SILVER_OBJECT) && isEffected("lycanthropy"))
             attackDamage.set(attackDamage.get() * 2);
     }
 
-    //
     // if it's a pet, check elemental realm resistance
-    //
     if(enemy) {
         bool resistPet=false, immunePet=false, vulnPet=false;
         checkResistPet(enemy, resistPet, immunePet, vulnPet);
@@ -1148,9 +1126,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
             attackDamage.set(1);
     }
 
-    //
     // armor spell
-    //
     if(dmgType != MENTAL && isEffected("armor")) {
         EffectInfo* armor = getEffect("armor");
         vHp = armor->getStrength();
@@ -1171,9 +1147,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         }
     }
 
-    //
     // stoneskin spell
-    //
     if(dmgType == PHYSICAL && isEffected("stoneskin")) {
         EffectInfo* stoneskin = getEffect("stoneskin");
         vHp = stoneskin->getStrength();
@@ -1234,7 +1208,7 @@ bool Creature::canBeDrained() const {
 //                      doWeaponResist
 //*********************************************************************
 
-int Creature::doWeaponResist(int dmg, bstring weaponCategory) const {
+int Creature::doWeaponResist(int dmg, const bstring& weaponCategory) const {
     if(isEffected("resist-" + weaponCategory)) {
         dmg /= 2;
     }
@@ -1279,7 +1253,7 @@ bool Monster::willAggro(const Player *player) const {
     if(flagIsSet(M_ALWAYS_AGGRESSIVE))
         return(true);
 
-    if( primeFaction != "" &&
+    if( !primeFaction.empty() &&
         !flagIsSet(M_NO_FACTION_AGGRO) &&
         Faction::willAggro(player, primeFaction)
     )
@@ -1313,7 +1287,7 @@ bool Monster::willAggro(const Player *player) const {
 
     // will they aggro anyone based on their race?
     std::map<int, RaceData*>::iterator rIt;
-    RaceData* rData=0;
+    RaceData* rData=nullptr;
     for(rIt = gConfig->races.begin() ; rIt != gConfig->races.end() ; rIt++) {
         rData = (*rIt).second;
 
@@ -1329,7 +1303,7 @@ bool Monster::willAggro(const Player *player) const {
 
     // will they aggro anyone based on their deity?
     std::map<int, DeityData*>::iterator dIt;
-    DeityData* dData=0;
+    DeityData* dData=nullptr;
     for(dIt = gConfig->deities.begin() ; dIt != gConfig->deities.end() ; dIt++) {
         dData = (*dIt).second;
 
@@ -1347,13 +1321,13 @@ bool Monster::willAggro(const Player *player) const {
 Player* Monster::whoToAggro() const {
     std::list<Player*> players;
     std::list<Player*>::iterator it;
-    Player* player=0;
+    Player* player=nullptr;
     int total=0, pick=0;
     const BaseRoom* myRoom = getConstRoomParent();
 
     if(!myRoom) {
         broadcast(::isDm, "^g *** Monster '%s' has no room in whoToAggro!", getCName());
-        return(0);
+        return(nullptr);
     }
 
     for(Player* ply : myRoom->players) {
@@ -1368,7 +1342,7 @@ Player* Monster::whoToAggro() const {
         }
     }
     if(players.empty())
-        return(0);
+        return(nullptr);
     if(players.size() == 1)
         return(players.front());
 
@@ -1386,5 +1360,5 @@ Player* Monster::whoToAggro() const {
         if(total >= pick)
             return(player);
     }
-    return(0);
+    return(nullptr);
 }
