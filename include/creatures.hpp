@@ -696,7 +696,7 @@ public:
     bool isSitting();
 
     bool ableToDoCommand(const cmd* cmnd=nullptr) const;
-    void wake(bstring str = "", bool noise=false);
+    void wake(const bstring& str = "", bool noise=false);
     void modifyDamage(Creature* enemy, int atype, Damage& damage, Realm realm=NO_REALM, Object* weapon=0, int saveBonus=0, short offguard=OFFGUARD_REMOVE, bool computingBonus=false);
     bool checkResistPet(Creature *pet, bool& resistPet, bool& immunePet, bool& vulnPet);
 

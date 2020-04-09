@@ -52,8 +52,8 @@ bool isMatch(const Creature* searcher, MudObject* target, const bstring& name, b
 
 
 // Socials
-void socialHooks(Creature *creature, MudObject* target, bstring action, bstring result = "");
-void socialHooks(Creature *target, bstring action, bstring result = "");
+void socialHooks(Creature *creature, MudObject* target, const bstring& action, const bstring& result = "");
+void socialHooks(Creature *target, const bstring& action, const bstring& result = "");
 bool actionShow(Player* pTarget, Creature* creature);
 
 // afflictions.cpp
