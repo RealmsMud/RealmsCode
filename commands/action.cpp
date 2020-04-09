@@ -27,11 +27,11 @@
 //                      socialHooks
 //*********************************************************************
 
-void socialHooks(Creature *creature, MudObject* target, bstring action, bstring result) {
+void socialHooks(Creature *creature, MudObject* target, const bstring& action, const bstring& result) {
     Hooks::run(creature, "doSocial", target, "receiveSocial", action, result);
 }
 
-void socialHooks(Creature *target, bstring action, bstring result) {
+void socialHooks(Creature *target, const bstring& action, const bstring& result) {
     if(!target->getRoomParent())
         return;
     Hooks::run<Monster*,MonsterPtrLess>(target->getRoomParent()->monsters, target, "roomSocial", action, result);
@@ -46,7 +46,7 @@ bool actionShow(Player* pTarget, Creature* creature) {
 }
 
 // prototype for actionFail
-int actionFail(Creature* player, bstring action, bstring second = "m");
+int actionFail(Creature* player, bstring action, const bstring& second = "m");
 
 #define ACTION_SHOW
 
@@ -110,7 +110,7 @@ int orderPet(Player* player, cmd* cmnd) {
 
             // chop the "pet <pet> " off
             cmnd->fullstr = getFullstrText(cmnd->fullstr, 2);
-            cmnd->myCommand = 0;
+            cmnd->myCommand = nullptr;
 
             cmdProcess(player, cmnd, pet);
 
@@ -132,7 +132,7 @@ int orderPet(Player* player, cmd* cmnd) {
                 player->print("%M can't hear you.\n", pet);
                 continue;
             }
-            cmnd->myCommand = 0;
+            cmnd->myCommand = nullptr;
 
             cmdProcess(player, cmnd, pet);
         }
@@ -162,10 +162,10 @@ int plyAction(Player* player, cmd* cmnd) {
 
 int cmdAction(Creature* creature, cmd* cmnd) {
     BaseRoom* room = creature->getRoomParent();
-    Player  *player=0, *pTarget=0;
-    Creature* target=0;
-    Object  *object=0;
-    Exit    *exit=0;
+    Player  *player=nullptr, *pTarget=nullptr;
+    Creature* target=nullptr;
+    Object  *object=nullptr;
+    Exit    *exit=nullptr;
     int     n=0, num=0, num1=0, num2=0;
     char    temp[12];
     bstring str = "";
@@ -856,9 +856,9 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 bool isBadSocial(const bstring& str) {
     return( str == "anvil" || str == "knee" || str == "kic" || str == "spit" || str == "mark" || str == "cstr" || str == "hammer" ||
             str == "slap" || str == "bird" || str == "moon" || str == "punch" || str == "choke" || str == "bhand" || str == "pants" ||
-            str == "noogie" || str == "pummel" || str == "" || str == "trip" || str == "smack" || str == "swat" || str == "whip" ||
-            str == "defenestrate" || str == "fangs" || str == "hiss" || str == "" || str == "gnaw" || str == "pan" || str == "wedgy" ||
-            str == "" || str == "bitchslap");
+            str == "noogie" || str == "pummel" || str.empty() || str == "trip" || str == "smack" || str == "swat" || str == "whip" ||
+            str == "defenestrate" || str == "fangs" || str == "hiss" || str.empty() || str == "gnaw" || str == "pan" || str == "wedgy" ||
+            str.empty() || str == "bitchslap");
 }
 
 //*********************************************************************
@@ -866,7 +866,7 @@ bool isBadSocial(const bstring& str) {
 //*********************************************************************
 
 bool isSemiBadSocial(const bstring& str) {
-    return( str == "hump" || str == "ogle" || str == "fart" || str == "" || str == "expose" || str == "goose" || str == "copulate" ||
+    return( str == "hump" || str == "ogle" || str == "fart" || str.empty() || str == "expose" || str == "goose" || str == "copulate" ||
             str == "suck" || str == "glare" || str == "growl" || str == "dirt" || str == "cough" || str == "shove" || str == "taunt" ||
             str == "eye" || str == "narrow" || str == "disgust" || str == "fondle" || str == "grope" || str == "loom" || str == "pester" ||
             str == "boo" || str == "scowl" || str == "snarl" || str == "sneer" || str == "spank" || str == "tease" || str == "tip" ||
@@ -890,7 +890,7 @@ bool isGoodSocial(const bstring& str) {
 //*********************************************************************
 // print the error message to the right person
 
-int actionFail(Creature* player, bstring action, bstring second) {
+int actionFail(Creature* player, bstring action, const bstring& second) {
     action.at(0) = up(action.at(0));
     player->print("%s who%s?\n", action.c_str(), second.c_str());
     return(0);
@@ -935,7 +935,7 @@ void Creature::stand() {
 //                      wake
 //*********************************************************************
 
-void Creature::wake(bstring str, bool noise) {
+void Creature::wake(const bstring& str, bool noise) {
     if(isMonster())
         return;
 
@@ -946,7 +946,7 @@ void Creature::wake(bstring str, bool noise) {
     if(noise && isEffected("deafness"))
         return;
 
-    if(str != "") {
+    if(!str.empty()) {
         printColor("%s\n", str.c_str());
         broadcast(getSock(), getRoomParent(), "%M wakes up.", this);
     }
