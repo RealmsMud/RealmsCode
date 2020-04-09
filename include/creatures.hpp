@@ -414,7 +414,7 @@ public:
     void pleaseWait(int duration) const;
     void pleaseWait(double duration) const;
     const char* getStatusStr(int dmg=0);
-    virtual const bstring customColorize(bstring text, bool caret=true) const = 0;
+    virtual bstring customColorize(const bstring& text, bool caret=true) const = 0;
 
     void bPrint(bstring toPrint) const;
     void print(const char *fmt, ...) const;
@@ -949,7 +949,7 @@ public:
 
     Realm getBaseRealm() const;
     void setBaseRealm(Realm toSet);
-    const bstring customColorize(bstring text, bool caret=true) const;
+    bstring customColorize(const bstring& text, bool caret=true) const;
 
     bool hasQuests() const;
     QuestEligibility getEligibleQuestDisplay(const Creature* viewer) const;
@@ -1353,7 +1353,7 @@ public:
     void score(const Player* viewer);
     void information(const Player* viewer=0, bool online=true);
     void showAge(const Player* viewer) const;
-    const bstring customColorize(bstring text, bool caret=true) const;
+    bstring customColorize(const bstring& text, bool caret=true) const;
     void resetCustomColors();
 
 // Misellaneous

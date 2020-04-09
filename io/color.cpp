@@ -159,12 +159,14 @@ bstring Config::getCustomColor(CustomColor i, bool caret) const {
 //                      customColorize
 //**********************************************************************
 
-const bstring Monster::customColorize(bstring text, bool caret) const {
+bstring Monster::customColorize(const bstring& pText, bool caret) const {
+    bstring text = pText;
     if(getMaster() && getMaster()->isPlayer())
         text = getMaster()->getAsConstPlayer()->customColorize(text, caret);
     return(text);
 }
-const bstring Player::customColorize(bstring text, bool caret) const {
+bstring Player::customColorize(const bstring& pText, bool caret) const {
+    bstring text = pText;
     text.Replace("*CC:BROADCAST*", getCustomColor(CUSTOM_COLOR_BROADCAST, caret).c_str());
     text.Replace("*CC:GOSSIP*", getCustomColor(CUSTOM_COLOR_GOSSIP, caret).c_str());
     text.Replace("*CC:PTEST*", getCustomColor(CUSTOM_COLOR_PTEST, caret).c_str());
@@ -414,7 +416,7 @@ bstring Socket::getColorCode(const unsigned char ch) {
 //                      stripColor
 //***********************************************************************
 
-bstring stripColor(bstring color) {
+bstring stripColor(const bstring& color) {
     std::ostringstream str;
     unsigned int i=0, max = color.getLength();
     for(; i < max ; i++) {
