@@ -18,7 +18,7 @@
 
 // C Includes
 #include <arpa/telnet.h>
-#include <math.h>
+#include <cmath>
 #include <stdexcept>
 #include <iomanip>
 
@@ -92,14 +92,14 @@ bool Config::initMsdp() {
     return true;
 }
 
-void Config::clearMsdp(void) {
-	for(auto m : msdpVariables) {
+void Config::clearMsdp() {
+	for(const auto& m : msdpVariables) {
 		delete m.second;
 	}
 	msdpVariables.clear();
 }
 
-void Server::processMsdp(void) {
+void Server::processMsdp() {
     for(Socket *sock : sockets) {
         if(sock->getState() == CON_DISCONNECTING)
             continue;
@@ -239,7 +239,7 @@ bool Socket::msdpList(bstring& value) {
 }
 
 ReportedMsdpVariable* Socket::getReportedMsdpVariable(const bstring& value) {
-    std::map<bstring, ReportedMsdpVariable*>::iterator it = msdpReporting.find(value);
+    auto it = msdpReporting.find(value);
 
     if (it == msdpReporting.end())
         return (nullptr);
@@ -316,7 +316,7 @@ bool Socket::msdpSend(bstring variable) {
 
 
 bool Socket::msdpUnReport(bstring& value) {
-    std::map<bstring, ReportedMsdpVariable*>::iterator it = msdpReporting.find(value);
+    auto it = msdpReporting.find(value);
 
     if (it == msdpReporting.end())
         return (false);
@@ -330,7 +330,7 @@ bool Socket::msdpUnReport(bstring& value) {
     }
 }
 
-void Socket::msdpSendList(bstring variable, std::vector<bstring> values) {
+void Socket::msdpSendList(const bstring& variable, const std::vector<bstring>& values) {
     std::ostringstream oStr;
 
     if (getMsdp()) {
@@ -362,7 +362,7 @@ void debugMsdp(const bstring& str) {
     bool iac = false;
 
     std::ostringstream oStr;
-    for ( const unsigned char& ch : str) {
+    for ( const auto& ch : str) {
         switch(ch) {
             case (unsigned char) IAC:
                 oStr << " IAC ";
@@ -418,7 +418,7 @@ void debugMsdp(const bstring& str) {
     std::clog << oStr.str() << std::endl;
 }
 
-bool Socket::msdpSendPair(bstring variable, bstring value) {
+bool Socket::msdpSendPair(const bstring& variable, const bstring& value) {
     if (variable.empty() || value.empty())
         return false;
 
@@ -449,7 +449,7 @@ bool Socket::msdpSendPair(bstring variable, bstring value) {
 }
 
 MsdpVariable* Config::getMsdpVariable(bstring& name) {
-    std::map<bstring, MsdpVariable*>::iterator it = msdpVariables.find(name);
+    auto it = msdpVariables.find(name);
     if(it == msdpVariables.end())
         return(nullptr);
     else
@@ -472,7 +472,7 @@ MsdpVariable::MsdpVariable() {
     init();
 }
 
-MsdpVariable::MsdpVariable(bstring pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
+MsdpVariable::MsdpVariable(const bstring& pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
                            bool pWriteOnce, int pUpdateInterval, bool pSendFn,
                            bool pUpdateFn, bool pIsGroup)
 {
@@ -577,7 +577,7 @@ bool ReportedMsdpVariable::checkTimer() {
     }
 }
 
-void ReportedMsdpVariable::setValue(bstring newValue) {
+void ReportedMsdpVariable::setValue(const bstring& newValue) {
     if(value != newValue) {
         value = newValue;
         dirty = true;
@@ -611,7 +611,7 @@ void ReportedMsdpVariable::setDirty(bool pDirty) {
 bstring BaseRoom::getExitsMsdp() const {
     std::ostringstream oStr;
 
-    if (exits.size() > 0) {
+    if (!exits.empty()) {
         oStr << (unsigned char) MSDP_VAR << "EXITS"
              << (unsigned char) MSDP_VAL << (unsigned char) MSDP_TABLE_OPEN;
 
@@ -804,7 +804,7 @@ bstring MsdpVariable::getValue(MSDPVar var, Socket* sock, Player* player) {
         case MSDPVar::SERVER_ID:
             return (gConfig->getMudNameAndVersion());
         case MSDPVar::SERVER_TIME:
-            return (gServer->getServerTime());
+            return (Server::getServerTime());
 
         case MSDPVar::CHARACTER_NAME:
             if (player) return (player->getName());

@@ -276,8 +276,8 @@ public:
 
     // MSDP Support Functions
     ReportedMsdpVariable *getReportedMsdpVariable(const bstring& value);
-    bool msdpSendPair(bstring variable, bstring value);
-    void msdpSendList(bstring variable, std::vector<bstring> values);
+    bool msdpSendPair(const bstring& variable, const bstring& value);
+    void msdpSendList(const bstring& variable, const std::vector<bstring>& values);
     void msdpClearReporting();
     bstring getMsdpReporting();
 
