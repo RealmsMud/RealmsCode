@@ -454,11 +454,11 @@ public:
 
     int getPrimaryDelay();
     int getSecondaryDelay();
-    const bstring getPrimaryWeaponCategory() const;
-    const bstring getSecondaryWeaponCategory() const;
+    bstring getPrimaryWeaponCategory() const;
+    bstring getSecondaryWeaponCategory() const;
 
-    const bstring getWeaponVerb() const;
-    const bstring getWeaponVerbPlural() const;
+    bstring getWeaponVerb() const;
+    bstring getWeaponVerbPlural() const;
 
     time_t getLTAttack() const;
     void modifyAttackDelay(int amt);
@@ -466,7 +466,7 @@ public:
     int getAttackDelay() const;
     unsigned int getBaseDamage() const;
     float getDamageReduction(const Creature* target) const; // How much is our damage reduced attacking the target
-    AttackResult getAttackResult(Creature* victim, const Object* weapon = nullptr, int resultFlags = 0, int altSkillLevel = -1);
+    AttackResult getAttackResult(Creature* victim, const Object* weapon = nullptr, unsigned int resultFlags = 0, int altSkillLevel = -1);
     bool kamiraLuck(Creature *attacker);
     virtual int computeDamage(Creature* victim, Object* weapon,
             AttackType attackType, AttackResult& result, Damage& attackDamage,
@@ -1097,7 +1097,7 @@ public:
     bstring getProxyId() const;
 
     // Combat & Death
-    int computeAttackPower();
+    unsigned int computeAttackPower();
     void dieToPet(Monster *killer);
     void dieToMonster(Monster *killer);
     void dieToPlayer(Player *killer);
