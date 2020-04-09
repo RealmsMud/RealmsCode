@@ -29,7 +29,6 @@
 #include "server.hpp"
 #include "socket.hpp"
 #include "version.hpp"
-#include "xml.hpp"
 
 
 //*********************************************************************
@@ -130,7 +129,7 @@ void Player::showAge(const Player* viewer) const {
     viewer->print("\n");
 
     bstring str = getCreatedStr();
-    if(str != "")
+    if(!str.empty())
         viewer->printColor("^gCharacter Created:^x %s\n", str.c_str());
 
     viewer->printColor("^gTime Played:^x %s\n\n", getTimePlayed().c_str());
