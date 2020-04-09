@@ -18,8 +18,8 @@
 // C includes
 #include <stdexcept>
 
-#include <errno.h>
-#include <string.h>
+#include <cerrno>
+#include <cstring>
 #include <sys/stat.h>
 
 #include "clans.hpp"
@@ -72,7 +72,7 @@ void updateRecentActivity() {
 
 void latestPost(const bstring& view, const bstring& subject, const bstring& username, const bstring& boardname, const bstring& post) {
 
-    if(view == "" || boardname == "" || username == "" || post == "")
+    if(view.empty() || boardname.empty() || username.empty() || post.empty())
         return;
 
     for(Socket* sock : gServer->sockets) {
@@ -193,7 +193,7 @@ void WebInterface::recreateFifos() {
 // If it doesn't exist, create it.
 
 bool WebInterface::checkFifo(const char* fifoFile) {
-    struct stat statInfo;
+    struct stat statInfo{};
     int retVal;
     bool needToCreate = false;
 
@@ -233,8 +233,7 @@ WebInterface* WebInterface::getInstance() {
 //*********************************************************************
 
 void WebInterface::destroyInstance() {
-    if(myInstance != nullptr)
-        delete myInstance;
+    delete myInstance;
     myInstance = nullptr;
 }
 
@@ -290,7 +289,7 @@ bool WebInterface::messagePlayer(bstring command, bstring tempBuf) {
     bstring::size_type pos=0;
 
     // we don't know the command yet
-    if(command == "") {
+    if(command.empty()) {
         pos = tempBuf.Find(' ');
         if(pos == bstring::npos)
             command = tempBuf;
@@ -301,7 +300,7 @@ bool WebInterface::messagePlayer(bstring command, bstring tempBuf) {
     pos = tempBuf.Find(' ');
     if(pos == bstring::npos) {
         std::clog << "WebInterface: Messaging failed; not enough data!" << std::endl;
-        return("");
+        return(false);
     }
 
     bstring user = tempBuf.left(pos);
@@ -405,26 +404,6 @@ bool webUse(Player* player, int id, int type) {
 
     // Disabled
     return(false);
-//
-//  switch(type) {
-//  case ObjectType::WEAPON:
-//      return(webWield(player, id));
-//  case ObjectType::ARMOR:
-//      return(webWear(player, id));
-//  case POTION:
-//      //return(cmdConsume(player, id));
-//  case SCROLL:
-//      //return(cmdReadScroll(player, id));
-//  case WAND:
-//      //return(cmdUseWand(player, id));
-//  case KEY:
-//      //return(cmdUnlock(player, id));
-//  case LIGHTSOURCE:
-//      //return(cmdHold(player, id));
-//  default:
-//      player->print("How does one use that?\n");
-//      return(false);
-//  }
 }
 
 //*********************************************************************
@@ -473,7 +452,7 @@ bool WebInterface::handleInput() {
     //const unsigned char* before = (unsigned char*)strdup(inBuf.c_str());
 
     // certain commands can only be called from the webserver
-    if(gConfig->getWebserver() == "") {
+    if(gConfig->getWebserver().empty()) {
         if( command == "FORUM" ||
             command == "UNFORUM" ||
             command == "AUTOGUILD"
@@ -586,7 +565,7 @@ bool WebInterface::handleInput() {
             return(true);
         } else if(command == "FINGER") {
             std::clog << "WebInterface: Fingering user " << tempBuf << std::endl;
-            outBuf += doFinger(0, tempBuf, CreatureClass::NONE);
+            outBuf += doFinger(nullptr, tempBuf, CreatureClass::NONE);
             outBuf += EOT;
             return(true);
         } else if(command == "WIKI") {
@@ -627,7 +606,7 @@ bool WebInterface::handleInput() {
         } else if(command == "UNFORUM") {
             std::clog << "WebInterface: Forum unassociation for user " << tempBuf << std::endl;
 
-            if(tempBuf == "") {
+            if(tempBuf.empty()) {
                 std::clog << "WebInterface: Forum unassociation failed; not enough data!" << std::endl;
                 return(false);
             }
@@ -637,7 +616,7 @@ bool WebInterface::handleInput() {
 
             Player* player = gServer->findPlayer(tempBuf);
             if(player) {
-                if(player->getForum() != "") {
+                if(!player->getForum().empty()) {
                     messagePlayer("MSG", tempBuf + " Your character has been unassociated from forum account " + player->getForum() + ".");
                     player->setForum("");
                     player->save(true);
@@ -657,12 +636,12 @@ bool WebInterface::handleInput() {
             outBuf += EOT;
             return(true);
         } else if(command == "AUTOGUILD") {
-            if(tempBuf == "") {
+            if(tempBuf.empty()) {
                 std::clog << "WebInterface: Autoguild failed; not enough data!" << std::endl;
                 return(false);
             }
 
-            const Guild* guild=0;
+            const Guild* guild=nullptr;
             if(tempBuf.getLength() <= 40)
                 guild = gConfig->getGuild(tempBuf);
             if(!guild) {
@@ -671,7 +650,7 @@ bool WebInterface::handleInput() {
             }
 
             std::list<bstring>::const_iterator it;
-            Player* player=0;
+            Player* player=nullptr;
             bool online=true;
             for(it = guild->members.begin() ; it != guild->members.end() ; it++ ) {
                 online = true;
@@ -684,7 +663,7 @@ bool WebInterface::handleInput() {
                     online = false;
                 }
 
-                if(player->getForum() != "")
+                if(!player->getForum().empty())
                     callWebserver((bstring)"mud.php?type=autoguild&guild=" + guild->getName() + "&user=" + player->getForum() + "&char=" + player->getName());
 
                 if(!online)
@@ -733,7 +712,7 @@ bool WebInterface::handleInput() {
         tempBuf.erase(0, 4);
 
         // Now we need to find what area/index we're working on.  If no area is found we assume misc
-        getCatRef(tempBuf, &cr, 0);
+        getCatRef(tempBuf, &cr, nullptr);
 
         std::clog << "WebInterface: Found command: " << command << " " << type << " " << cr.area << "." << cr.id << std::endl;
 
@@ -805,21 +784,21 @@ bool WebInterface::handleInput() {
                 return(false);
             }
             if(type == "CRT") {
-                Monster* monster = new Monster();
+                auto* monster = new Monster();
                 monster->readFromXml(rootNode);
                 monster->saveToFile();
                 broadcast(isDm, "^y*** Monster %s - %s^y updated by %s.", monster->info.str().c_str(), monster->getCName(), monster->last_mod);
                 gServer->monsterCache.insert(monster->info, &monster);
             }
             else if(type == "OBJ") {
-                Object* object = new Object();
+                auto* object = new Object();
                 object->readFromXml(rootNode);
                 object->saveToFile();
                 broadcast(isDm, "^y*** Object %s - %s^y updated by %s.", object->info.str().c_str(), object->getCName(), object->lastMod.c_str());
                 gServer->objectCache.insert(object->info, &object);
             }
             else if(type == "ROM") {
-                UniqueRoom* room = new UniqueRoom();
+                auto* room = new UniqueRoom();
                 room->readFromXml(rootNode);
                 room->saveToFile(0);
 
@@ -877,9 +856,9 @@ bool WebInterface::sendOutput() {
 
 bstring webwho() {
     std::ostringstream oStr;
-    const Player *player=0;
+    const Player *player=nullptr;
 
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    for(const auto& p : gServer->players) {
         player = p.second;
 
         if(!player->isConnected())
@@ -925,7 +904,7 @@ bstring webwho() {
             oStr << "[" << getGuildName(player->getGuild()) << "]";
         oStr << "\n";
     }
-    long t = time(0);
+    long t = time(nullptr);
     oStr << ctime(&t);
 
     return(oStr.str());
@@ -940,14 +919,14 @@ bstring webwho() {
 // questionMark: is a question mark has already been added to the url (for GET parameters)
 
 void callWebserver(bstring url, bool questionMark, bool silent) {
-    if(gConfig->getWebserver() == "" || url == "" || url.getLength() > 450)
+    if(gConfig->getWebserver().empty() || url.empty() || url.getLength() > 450)
         return;
 
     if(!silent)
         broadcast(isDm, "^yWebserver called: ^x%s", url.c_str());
 
     // authorization query string
-    if(gConfig->getQS() != "") {
+    if(!gConfig->getQS().empty()) {
         if(!questionMark)
             url += "?";
         else
@@ -960,7 +939,7 @@ void callWebserver(bstring url, bool questionMark, bool silent) {
     sprintf(command, "wget \"%s%s\" -q -O /dev/null", gConfig->getWebserver().c_str(), url.c_str());
 
     // set the user agent, if applicable
-    if(gConfig->getUserAgent() != "") {
+    if(!gConfig->getUserAgent().empty()) {
         strcat(command, " -U \"");
         strcat(command, gConfig->getUserAgent().c_str());
         strcat(command, "\"");
@@ -990,7 +969,7 @@ int dmFifo(Player* player, cmd* cmnd) {
 
 int cmdForum(Player* player, cmd* cmnd) {
 
-    if(player->getProxyName() != "") {
+    if(!player->getProxyName().empty()) {
         *player << "You are unable to modify forum accounts of proxied characters.\n";
         return(0);
     }
@@ -1006,7 +985,7 @@ int cmdForum(Player* player, cmd* cmnd) {
     if(pos != bstring::npos)
         user = "";
 
-    if(user == "remove" && player->getForum() != "") {
+    if(user == "remove" && !player->getForum().empty()) {
 
         player->printColor("Attempting to unassociate this character with forum account: ^C%s\n", player->getForum().c_str());
         player->setForum("");
@@ -1014,7 +993,7 @@ int cmdForum(Player* player, cmd* cmnd) {
         webUnassociate(player->getName());
         return(0);
 
-    } else if(user != "" && pass != "") {
+    } else if(!user.empty() && !pass.empty()) {
 
         pass = md5(pass);
         player->printColor("Attempting to associate this character with forum account: ^C%s\n", user.c_str());
@@ -1025,7 +1004,7 @@ int cmdForum(Player* player, cmd* cmnd) {
         player->setLastCommand(cmnd->str[0] + (bstring)" " + cmnd->str[1] + (bstring)" ********");
         return(0);
 
-    } else if(player->getForum() == "") {
+    } else if(player->getForum().empty()) {
 
         player->print("There is currently no forum account associated with this character.\n");
 
@@ -1048,7 +1027,7 @@ int cmdForum(Player* player, cmd* cmnd) {
 //                      webUnassociate
 //*********************************************************************
 
-void webUnassociate(bstring user) {
+void webUnassociate(const bstring& user) {
     callWebserver("mud.php?type=forum&char=" + user + "&delete");
 }
 
@@ -1056,7 +1035,7 @@ void webUnassociate(bstring user) {
 //                      webCrash
 //*********************************************************************
 
-void webCrash(bstring msg) {
+void webCrash(const bstring& msg) {
     callWebserver("mud.php?type=crash&msg=" + msg);
 }
 
@@ -1067,7 +1046,7 @@ void webCrash(bstring msg) {
 // This function allows a player to loop up a wiki entry
 
 int cmdWiki(Player* player, cmd* cmnd) {
-    struct stat f_stat;
+    struct stat f_stat{};
     char    file[80];
     std::ostringstream url;
     bstring entry = getFullstrText(cmnd->fullstr, 1);
@@ -1079,7 +1058,7 @@ int cmdWiki(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(entry == "") {
+    if(entry.empty()) {
         entry = "Main_Page";
         player->printColor("Type ^ywiki [entry]^x to look up a specific entry.\n\n");
     }
@@ -1089,7 +1068,7 @@ int cmdWiki(Player* player, cmd* cmnd) {
     sprintf(file, "%s/%s.txt", Path::Wiki, entry.c_str());
 
     // If the file exists and was modified within the last hour, use the local cache
-    if(!stat(file, &f_stat) && (time(0) - f_stat.st_mtim.tv_sec) < 3600) {
+    if(!stat(file, &f_stat) && (time(nullptr) - f_stat.st_mtim.tv_sec) < 3600) {
         viewFile(player->getSock(), file);
         return(0);
     }
@@ -1110,7 +1089,7 @@ bool WebInterface::wiki(bstring command, bstring tempBuf) {
     bstring::size_type pos=0;
 
     // we don't know the command yet
-    if(command == "") {
+    if(command.empty()) {
         pos = tempBuf.Find(' ');
         if(pos == bstring::npos)
             command = tempBuf;
@@ -1132,7 +1111,7 @@ bool WebInterface::wiki(bstring command, bstring tempBuf) {
     tempBuf = tempBuf.trim();
 
 
-    if( tempBuf == "" ||
+    if( tempBuf.empty() ||
         strchr(tempBuf.c_str(), '/') != nullptr) {
         std::clog << "WebInterface: Wiki help failed; invalid data" << std::endl;
         return(false);
