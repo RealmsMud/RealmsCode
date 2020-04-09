@@ -16,6 +16,7 @@
  *
  */
 
+#include <sys/time.h>
 #include "serverTimer.hpp"
 
 //*********************************************************************
@@ -87,19 +88,14 @@ void ServerTimer::end() {
 
 void ServerTimer::sleep() {
     // Only sleep if we're not running!
-    if(running == true)
+    if(running)
         return;
     if(timePassed.tv_sec > 0 || timePassed.tv_usec > 100000) {
-        //printf("Not sleeping, Time passed was %ld sec %ld usec\n", timePassed.tv_sec, timePassed.tv_usec);
         //Do nothing
     } else {
         struct timeval toSleep{};
         timeZero(toSleep);
         toSleep.tv_usec = 100000 - timePassed.tv_usec;
-//      if(toSleep.tv_usec < 50000) {
-//          printf("%ld sec %ld usec\n", timePassed.tv_sec, timePassed.tv_usec);
-//          printf("Sleeping for %ld usec\n", toSleep.tv_usec);
-//      }
         select(0,nullptr,nullptr,nullptr,&toSleep);
     }
 }
