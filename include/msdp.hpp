@@ -75,33 +75,33 @@ protected:
 
     bstring         name;               // Name of this variable
     MSDPVar         varId;
-    bool            reportable;         // This variable is reportable
-    bool            requiresPlayer;     // Variable requires a player attached to the socket
-    bool            configurable;       // Can it be configured by the client?
-    bool            writeOnce;          // Can only set this variable once
-    int             updateInterval;     // Update interval (in 10ths of a second)
-    bool            sendFn;             // Does this have a send function?
-    bool            updateFn;           // Does this have an update function?
-    bool            isGroup;            // Is this a group of related variables?
+    bool            reportable{};         // This variable is reportable
+    bool            requiresPlayer{};     // Variable requires a player attached to the socket
+    bool            configurable{};       // Can it be configured by the client?
+    bool            writeOnce{};          // Can only set this variable once
+    int             updateInterval{};     // Update interval (in 10ths of a second)
+    bool            sendFn{};             // Does this have a send function?
+    bool            updateFn{};           // Does this have an update function?
+    bool            isGroup{};            // Is this a group of related variables?
 
 
 public:
     MsdpVariable();
-    MsdpVariable(bstring pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
+    MsdpVariable(const bstring& pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
                  bool pWriteOnce, int pUpdateInterval, bool pSendFn = false, bool pUpdateFn = false,
                  bool pIsGroup = false);
     // Todo: Make this have the server erase all reported variables of this type
-    virtual ~MsdpVariable() { };
+    virtual ~MsdpVariable() = default;
 
-    bstring         getName() const;
-    MSDPVar         getId() const;
-    bool            hasSendFn() const;
-    bool            hasUpdateFn() const;
-    bool            isConfigurable() const;
-    bool            isReportable() const;
-    bool            isWriteOnce() const;
-    bool            getRequiresPlayer() const;
-    int             getUpdateInterval() const;
+    [[nodiscard]] bstring         getName() const;
+    [[nodiscard]] MSDPVar         getId() const;
+    [[nodiscard]] bool            hasSendFn() const;
+    [[nodiscard]] bool            hasUpdateFn() const;
+    [[nodiscard]] bool            isConfigurable() const;
+    [[nodiscard]] bool            isReportable() const;
+    [[nodiscard]] bool            isWriteOnce() const;
+    [[nodiscard]] bool            getRequiresPlayer() const;
+    [[nodiscard]] int             getUpdateInterval() const;
 
     bool            send(Socket* sock) const;
 
@@ -118,13 +118,13 @@ protected:
 public:
     ReportedMsdpVariable(const MsdpVariable* mv, Socket *sock);
 
-    bstring         getValue() const;
-    void            setValue(bstring newValue);
+    [[nodiscard]] bstring         getValue() const;
+    void            setValue(const bstring& newValue);
     void            setValue(int newValue);
     void            setValue(long newValue);
     bool            checkTimer();       // True = ok to send, False = timer hasn't expired yet
 
-    bool            isDirty() const;
+    [[nodiscard]] bool            isDirty() const;
     void            update();
     void            setDirty(bool pDirty = true);
 };
