@@ -16,10 +16,7 @@
  *
  */
 
-#include <sstream>
 #include <iomanip>
-#include <locale>
-#include <iostream>
 #include <fstream>
 
 #include "config.hpp"
@@ -55,10 +52,10 @@ bstring flagFileTitle(const bstring& title, const char* file, int pad) {
 //                      writeFlagFile
 //**********************************************************************
 
-bstring writeFlagFile(const bstring& title, const char* file, int pad, bool builderLink, const std::map<int, MudFlag> flags) {
+bstring writeFlagFile(const bstring& title, const char* file, int pad, bool builderLink, const std::map<int, MudFlag>& flags) {
     std::ostringstream padding;
     std::map<int, MudFlag>::const_iterator it;
-    const MudFlag *flag=0;
+    const MudFlag *flag=nullptr;
     bstring desc = "", output = "\n";
     char    dmfile[80], dmfileLink[80];
     char    bhfile[80], bhfileLink[80];
@@ -181,7 +178,7 @@ bool Config::loadFlags() {
     while(curNode && xmlIsBlankNode(curNode))
         curNode = curNode->next;
 
-    if(curNode == 0) {
+    if(curNode == nullptr) {
         xmlFreeDoc(xmlDoc);
         return(false);
     }
