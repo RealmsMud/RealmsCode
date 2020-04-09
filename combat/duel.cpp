@@ -88,10 +88,6 @@ int cmdDuel(Player* player, cmd* cmnd) {
         }
     }
 
-
-
-    creature = 0;
-
     if(cmnd->num == 2) {
         if(!strcmp(cmnd->str[1], "clear")) {
             player->print("Option disabled. Log off/on to clear your entire duel list at once.\n");
@@ -105,7 +101,6 @@ int cmdDuel(Player* player, cmd* cmnd) {
         player->print("That player is not on.\n");
         return(0);
     }
-
 
 
     if(player->isDueling(creature->getName())) {

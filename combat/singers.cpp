@@ -31,7 +31,7 @@
 // Gives a bard info about an item if sucessfull
 
 int cmdIdentify(Player* player, cmd* cmnd) {
-    Object      *object=0;
+    Object      *object=nullptr;
     int         chance=0, avgbns=0, ac=0, wear=0, jakar=0;
     long        i=0,t=0;
     char        desc[32];
@@ -78,7 +78,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 
     if(!player->isStaff()) {
         i = player->lasttime[LT_IDENTIFY].ltime + player->lasttime[LT_IDENTIFY].interval;
-        t = time(0);
+        t = time(nullptr);
         if(i > t) {
             player->pleaseWait(i-t);
             return(0);
@@ -95,7 +95,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
     else
         avgbns = player->piety.getCur();
 
-    chance = (int)(5*player->getSkillLevel("identify")) + (bonus((int) avgbns)) - object->getLevel();
+    chance = (int)(5*player->getSkillLevel("identify")) + (bonus(avgbns)) - object->getLevel();
     chance = MIN(90, chance);
 
     if(object->flagIsSet(O_CUSTOM_OBJ))
@@ -204,9 +204,9 @@ int cmdIdentify(Player* player, cmd* cmnd) {
                     strcpy(desc, "splendid");
                 else if(ac > 48 && ac <= 62)
                     strcpy(desc, "excellent");
-                else if(ac > 62 && ac <= 18)
+                else if(ac > 62 && ac <= 81)
                     strcpy(desc, "exemplary");
-                else if(ac > 18 && ac <= 88)
+                else if(ac > 81 && ac <= 88)
                     strcpy(desc, "superb");
                 else if(ac > 88)
                     strcpy(desc, "amazing");
@@ -435,7 +435,7 @@ int cmdSing(Creature* creature, cmd* cmnd) {
     }
 
     i = player->lasttime[LT_SING].ltime + player->lasttime[LT_SING].interval;
-    t = time(0);
+    t = time(nullptr);
     if(i > t && !player->isCt()) {
         player->pleaseWait(i-t);
         return(0);
@@ -526,7 +526,7 @@ int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) 
     }
     cmnd->num = 3;
     if(monsters) {
-        MonsterSet::iterator mIt = player->getRoomParent()->monsters.begin();
+        auto mIt = player->getRoomParent()->monsters.begin();
         lastname[0] = 0;
         while(mIt != player->getRoomParent()->monsters.end()) {
             Monster* mons = (*mIt++);
@@ -554,7 +554,7 @@ int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) 
         }
     }
     if(players) {
-        PlayerSet::iterator pIt = player->getRoomParent()->players.begin();
+        auto pIt = player->getRoomParent()->players.begin();
         lastname[0] = 0;
         while(pIt != player->getRoomParent()->players.end()) {
             Player* ply = (*pIt++);
@@ -594,8 +594,8 @@ int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) 
 // damage to a given creature.
 
 int songOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) {
-    Player  *pCreature=0;
-    Creature* creature=0;
+    Player  *pCreature=nullptr;
+    Creature* creature=nullptr;
     BaseRoom* room = player->getRoomParent();
     int     m=0, dmg=0, bns=0;
 
@@ -615,7 +615,7 @@ int songOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) {
     player->smashInvis();
     player->interruptDelayedActions();
 
-    bns = (bonus((int) player->intelligence.getCur()) + bonus((int) player->piety.getCur()))/2;
+    bns = (bonus(player->intelligence.getCur()) + bonus(player->piety.getCur())) / 2;
 
     // sing on self
     if(cmnd->num == 2) {
@@ -670,7 +670,7 @@ int songOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) {
 
 
 
-        player->lasttime[LT_SPELL].ltime = time(0);
+        player->lasttime[LT_SPELL].ltime = time(nullptr);
         player->lasttime[LT_SPELL].interval = 3L;
         player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
         player->statistics.magicDamage(dmg, (bstring)"a song of " + songname);
@@ -753,7 +753,7 @@ int songFail(Player* player) {
     int chance=0, n = Random::get(1, 100);
     player->computeLuck();
 
-    chance = ((player->getLevel() + bonus((int) player->intelligence.getCur())) * 5) + 65;
+    chance = ((player->getLevel() + bonus(player->intelligence.getCur())) * 5) + 65;
     chance = chance * player->getLuck() / 50;
     if(n > chance) {
         player->print("You sing off key.\n");
@@ -927,7 +927,7 @@ int songProtection(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int songFlight(Player* player, cmd* cmnd) {
-    Player* target=0;
+    Player* target=nullptr;
 
     if(cmnd->num == 2) {
         player->print("Your song makes you feel light as a feather.\n");
@@ -959,8 +959,8 @@ int songFlight(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int songRecall(Player* player, cmd* cmnd) {
-    Player  *target=0;
-    BaseRoom *newRoom=0;
+    Player  *target=nullptr;
+    BaseRoom *newRoom=nullptr;
 
 
     if(player->getLevel() < 7) {
@@ -1018,8 +1018,8 @@ int songRecall(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int songSafety(Player* player, cmd* cmnd) {
-    Player  *follower=0;
-    BaseRoom *newRoom=0;
+    Player  *follower=nullptr;
+    BaseRoom *newRoom=nullptr;
 
 
     if(player->getLevel() < 10) {
@@ -1075,7 +1075,7 @@ int songSafety(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdCharm(Player* player, cmd* cmnd) {
-    Creature* creature=0;
+    Creature* creature=nullptr;
     int     dur, chance;
     long    i, t;
 
@@ -1095,14 +1095,14 @@ int cmdCharm(Player* player, cmd* cmnd) {
     }
 
     i = LT(player, LT_HYPNOTIZE);
-    t = time(0);
+    t = time(nullptr);
     if(i > t && !player->isDm()) {
         player->pleaseWait(i-t);
         return(0);
     }
 
     int level = (int)player->getSkillLevel("charm");
-    dur = 300 + Random::get(1, 30) * 10 + bonus((int) player->piety.getCur()) * 30 + level * 5;
+    dur = 300 + Random::get(1, 30) * 10 + bonus(player->piety.getCur()) * 30 + level * 5;
 
     //cmnd->str[1][0] = up(cmnd->str[1][0]);
 
@@ -1142,7 +1142,7 @@ int cmdCharm(Player* player, cmd* cmnd) {
     player->lasttime[LT_HYPNOTIZE].interval = 600L;
 
 
-    chance = MIN(90, 40 + ((level) - (creature->getLevel())) * 20 + 4 * bonus((int) player->intelligence.getCur()));
+    chance = MIN(90, 40 + ((level) - (creature->getLevel())) * 20 + 4 * bonus(player->intelligence.getCur()));
 
     if(creature->flagIsSet(M_PERMENANT_MONSTER) && creature->isMonster())
         chance /= 2;
@@ -1181,7 +1181,7 @@ int cmdCharm(Player* player, cmd* cmnd) {
     creature->print("%M's song charms you.\n", player);
     player->addCharm(creature);
 
-    creature->lasttime[LT_CHARMED].ltime = time(0);
+    creature->lasttime[LT_CHARMED].ltime = time(nullptr);
     creature->lasttime[LT_CHARMED].interval = dur;
 
     creature->setFlag(creature->isPlayer() ? P_CHARMED : M_CHARMED);
