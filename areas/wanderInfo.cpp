@@ -17,11 +17,11 @@
  */
 
 
+#include <xml.hpp>
 #include "creatures.hpp"
 #include "mud.hpp"
 #include "rooms.hpp"
 #include "wanderInfo.hpp"
-#include "xml.hpp"
 
 //*********************************************************************
 //                      WanderInfo
@@ -46,7 +46,7 @@ CatRef WanderInfo::getRandom() const {
     CatRef cr;
     int i=0;
 
-    if(!random.size())
+    if(random.empty())
         return(cr);
 
     // past the end
@@ -71,39 +71,14 @@ unsigned long WanderInfo::getRandomCount() const {
     return random.size();
 }
 
-//*********************************************************************
-//                      load
-//*********************************************************************
-
-void WanderInfo::load(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-
-    while(childNode) {
-             if(NODE_NAME(childNode, "Traffic")) xml::copyToNum(traffic, childNode);
-        else if(NODE_NAME(childNode, "RandomMonsters")) {
-            loadCatRefArray(childNode, random, "Mob", NUM_RANDOM_SLOTS);
-        }
-        childNode = childNode->next;
-    }
-}
-
-//*********************************************************************
-//                      save
-//*********************************************************************
-
-void WanderInfo::save(xmlNodePtr curNode) const {
-    xml::saveNonZeroNum(curNode, "Traffic", traffic);
-    saveCatRefArray(curNode, "RandomMonsters", "Mob", random, NUM_RANDOM_SLOTS);
-}
-
 
 //*********************************************************************
 //                      show
 //*********************************************************************
 
-void WanderInfo::show(const Player* player, bstring area) const {
+void WanderInfo::show(const Player* player, const bstring& area) const {
     std::map<int, CatRef>::const_iterator it;
-    Monster* monster=0;
+    Monster* monster=nullptr;
 
     player->print("Traffic: %d%%\n", traffic);
     player->print("Random Monsters:\n");
@@ -115,7 +90,7 @@ void WanderInfo::show(const Player* player, bstring area) const {
 
         if(monster) {
             free_crt(monster);
-            monster = 0;
+            monster = nullptr;
         }
     }
 }

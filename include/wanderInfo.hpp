@@ -32,7 +32,7 @@ public:
     CatRef  getRandom() const;
     void    load(xmlNodePtr curNode);
     void    save(xmlNodePtr curNode) const;
-    void    show(const Player* player, bstring area="") const;
+    void    show(const Player* player, const bstring& area="") const;
 
     std::map<int, CatRef> random;
 
@@ -42,7 +42,6 @@ public:
 protected:
     short   traffic;
 };
-
 
 #endif  /* _WANDERINFO_H */
 
