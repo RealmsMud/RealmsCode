@@ -52,16 +52,16 @@ public:
     void save(xmlNodePtr rootNode) const;
 
     void    defaultFlags(PropType type);
-    bstring getName() const;
-    void    setName(bstring str);
+    [[nodiscard]] bstring getName() const;
+    void    setName(const bstring& str);
 
-    bool flagIsSet(int flag) const;
+    [[nodiscard]] bool flagIsSet(int flag) const;
     void setFlag(int flag);
     void clearFlag(int flag);
     bool toggleFlag(int flag);
 protected:
     bstring name;
-    char    flags[4];       // 32 max
+    char    flags[4]{};       // 32 max
 };
 
 
@@ -87,18 +87,18 @@ public:
     bstring getLogTypeStr() const;
 
     void    setGuild(int g);
-    void    setArea(bstring str);
-    void    setOwner(bstring str);
-    void    setName(bstring str);
+    void    setArea(const bstring& str);
+    void    setOwner(const bstring& str);
+    void    setName(const bstring& str);
     void    setDateFounded();
-    void    setLocation(bstring str);
+    void    setLocation(const bstring& str);
     void    setType(PropType t);
     void    setLogType(PropLog t);
 
-    void    addRange(CatRef cr);
-    void    addRange(bstring area, int low, int high);
+    void    addRange(const CatRef& cr);
+    void    addRange(const bstring& area, int low, int high);
     bool    isOwner(const bstring& str) const;
-    bool    belongs(CatRef cr) const;
+    bool    belongs(const CatRef& cr) const;
     void    rename(Player *player);
     void    destroy();
     bool    expelOnRemove() const;
@@ -107,15 +107,15 @@ public:
 
     PartialOwner* getPartialOwner(const bstring& pOwner);
     bool    isPartialOwner(const bstring& pOwner);
-    void    assignPartialOwner(bstring pOwner);
-    void    unassignPartialOwner(bstring pOwner);
+    void    assignPartialOwner(const bstring& pOwner);
+    void    unassignPartialOwner(const bstring& pOwner);
 
     int     viewLogFlag() const;
     bstring getLog() const;
-    void    appendLog(bstring user, const char *fmt, ...);
+    void    appendLog(const bstring& user, const char *fmt, ...);
     void    clearLog();
 
-    bstring show(bool isOwner=false, bstring player="", int *i=0);
+    bstring show(bool isOwner=false, const bstring& player="", int *i=nullptr);
     std::list<Range> ranges;
     std::list<PartialOwner> partialOwners;
 
@@ -128,16 +128,16 @@ public:
     static bstring getTypeArea(PropType propType);
     static bool usePropFlags(PropType propType);
     static bool canEnter(const Player* player, const UniqueRoom* room, bool p);
-    static bool goodNameDesc(const Player* player, bstring str, bstring fail, bstring disallow);
-    static bool goodExit(const Player* player, const BaseRoom* room, const char *type, bstring xname);
+    static bool goodNameDesc(const Player* player, const bstring& str, const bstring& fail, const bstring& disallow);
+    static bool goodExit(const Player* player, const BaseRoom* room, const char *type, const bstring& xname);
     static bool isInside(const Player* player, const UniqueRoom* room, Property** p);
     static bool requireInside(const Player* player, const UniqueRoom* room, Property** p, PropType propType = PROP_NONE);
     static void descEdit(Socket* sock, const bstring& str);
     static void guildRoomSetup(UniqueRoom *room, const Guild* guild, bool outside);
     static void houseRoomSetup(UniqueRoom *room, const Player* player, bool outside);
     static void roomSetup(UniqueRoom *room, PropType propType, const Player* player, const Guild* guild, bool outside=false);
-    static void linkRoom(BaseRoom* inside, BaseRoom* outside, bstring xname);
-    static UniqueRoom* makeNextRoom(UniqueRoom* r1, PropType propType, CatRef cr, bool exits, const Player* player, const Guild* guild, BaseRoom* room, bstring xname, const char *go, const char *back, bool save);
+    static void linkRoom(BaseRoom* inside, BaseRoom* outside, const bstring& xname);
+    static UniqueRoom* makeNextRoom(UniqueRoom* r1, PropType propType, const CatRef& cr, bool exits, const Player* player, const Guild* guild, BaseRoom* room, const bstring& xname, const char *go, const char *back, bool save);
     static int rotateHouse(char *dir1, char *dir2, int rotation);
     static bool houseCanBuild(AreaRoom* aRoom, BaseRoom* room);
 
@@ -163,7 +163,7 @@ protected:
 
     // for guildhalls and shops, points to guild
     int     guild;
-    char    flags[4];       // 32 max
+    char    flags[4]{};       // 32 max
 };
 
 

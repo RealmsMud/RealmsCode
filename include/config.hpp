@@ -329,11 +329,11 @@ public:
     void clearProperties();
     void addProperty(Property* p);
     void showProperties(Player* viewer, Player* player, PropType propType = PROP_NONE);
-    Property* getProperty(CatRef cr);
+    Property* getProperty(const CatRef& cr);
     void destroyProperty(Property *p);
-    void destroyProperties(bstring owner);
+    void destroyProperties(const bstring& owner);
     CatRef getAvailableProperty(PropType type, int numRequired);
-    void renamePropertyOwner(bstring oldName, Player *player);
+    void renamePropertyOwner(const bstring& oldName, Player *player);
     CatRef getSingleProperty(const Player* player, PropType type);
 
 // CatRefInfo
