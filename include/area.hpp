@@ -57,16 +57,16 @@ public:
     void    load(xmlNodePtr curNode);
     void    load(bstring str);
     void    reset();
-    bstring str(bool color=false) const;
+    [[nodiscard]] bstring str(bool color=false) const;
     bstring direction(const MapMarker *mapmarker) const;
     bstring distance(const MapMarker *mapmarker) const;
 
-    bstring filename() const;
+    [[nodiscard]] bstring filename() const;
 
-    short   getArea() const;
-    short   getX() const;
-    short   getY() const;
-    short   getZ() const;
+    [[nodiscard]] short   getArea() const;
+    [[nodiscard]] short   getX() const;
+    [[nodiscard]] short   getY() const;
+    [[nodiscard]] short   getZ() const;
 
     void    setArea(short n);
     void    setX(short n);
@@ -92,7 +92,7 @@ public:
     MapMarker   mapmarker;
     Track       track;
 
-    int getDuration() const;
+    [[nodiscard]] int getDuration() const;
     void setDuration(int dur);
 
 protected:
@@ -118,13 +118,13 @@ public:
     bstring name;           // for staff identification
     bstring display;        // displayed to player in room description
 
-    char    terRestrict[10];
-    char    mapRestrict[10];
+    char    terRestrict[10]{};
+    char    mapRestrict[10]{};
 
     WanderInfo wander;      // Random monster info
     CatRef  unique;         // does this zone lead to a unique room
 
-    char    flags[16];
+    char    flags[16]{};
 
     MapMarker   min;
     MapMarker   max;
@@ -140,7 +140,7 @@ public:
 
     void    load(xmlNodePtr curNode);
     void    save(xmlNodePtr curNode) const;
-    char    getStyle(const Player* player=0) const;
+    char    getStyle(const Player* player=nullptr) const;
 
     char    getId() const;
     bstring getName() const;
@@ -169,7 +169,7 @@ protected:
     char    style;
     char    display;
     short   trackDur;       // duration of tracks in game minutes
-    char    flags[16];
+    char    flags[16]{};
 
     bool    water;
     bool    road;
@@ -271,7 +271,7 @@ public:
     short       height;
     short       depth;
 
-    char        dataFile[20];
+    char        dataFile[20]{};
 
     char        defaultTerrain;
     char        errorTerrain;
