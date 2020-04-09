@@ -340,8 +340,8 @@ public:
     bool loadCatRefInfo();
     void clearCatRefInfo();
     void saveCatRefInfo() const;
-    bstring catRefName(bstring area) const;
-    const CatRefInfo* getCatRefInfo(bstring area, int id=0, int shouldGetParent=0) const;
+    bstring catRefName(const bstring& area) const;
+    const CatRefInfo* getCatRefInfo(const bstring& area, int id=0, int shouldGetParent=0) const;
     const CatRefInfo* getCatRefInfo(const BaseRoom* room, int shouldGetParent=0) const;
     const CatRefInfo* getRandomCatRefInfo(int zone) const;
 

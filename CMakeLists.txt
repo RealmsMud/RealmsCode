@@ -66,8 +66,8 @@ set(COMMON_HEADER_FILES
     include/config.hpp
     include/container.hpp
     include/craft.hpp
-    include/creatures.hpp
     include/creatureStreams.hpp
+    include/creatures.hpp
     include/damage.hpp
     include/deityData.hpp
     include/delayedAction.hpp
@@ -75,6 +75,8 @@ set(COMMON_HEADER_FILES
     include/die.hpp
     include/dm.hpp
     include/effects.hpp
+    include/enums/bits.hpp
+    include/enums/loadType.hpp
     include/exits.hpp
     include/factions.hpp
     include/fighters.hpp
@@ -92,21 +94,22 @@ set(COMMON_HEADER_FILES
     include/login.hpp
     include/magic.hpp
     include/md5.hpp
-    include/money.hpp
     include/monType.hpp
+    include/money.hpp
     include/move.hpp
     include/msdp.hpp
     include/mud.hpp
     include/mudObject.hpp
     include/mxp.hpp
-    include/objects.hpp
     include/objIncrease.hpp
+    include/objects.hpp
     include/oldquest.hpp
     include/os.hpp
     include/paths.hpp
-    include/playerClass.hpp
     include/player.hpp
+    include/playerClass.hpp
     include/playerTitle.hpp
+    include/post.hpp
     include/proc.hpp
     include/property.hpp
     include/proto.hpp
@@ -115,10 +118,13 @@ set(COMMON_HEADER_FILES
     include/pythonHandler.hpp
     include/quests.hpp
     include/raceData.hpp
+    include/random.hpp
+    include/random.hpp
     include/range.hpp
     include/realm.hpp
     include/rooms.hpp
     include/season.hpp
+    include/security.hpp
     include/server.hpp
     include/serverTimer.hpp
     include/ships.hpp
@@ -147,9 +153,7 @@ set(COMMON_HEADER_FILES
     include/weather.hpp
     include/web.hpp
     include/xml.hpp
-    include/enums/loadType.hpp
-    include/enums/bits.hpp
-        include/post.hpp include/security.hpp include/random.hpp include/random.hpp)
+    )
 
 set(COMMON_SOURCE_FILES
     areas/area.cpp
@@ -310,6 +314,7 @@ set(COMMON_SOURCE_FILES
     skills/skills.cpp
 
     staff/builder.cpp
+    staff/catref-staff.xml.cpp
     staff/dm.cpp
     staff/dmcrt.cpp
     staff/dmobj.cpp
@@ -328,8 +333,10 @@ set(COMMON_SOURCE_FILES
     util/timer.cpp
 
     xml/alchemy-xml.cpp
+    xml/area-xml.cpp
     xml/bans-xml.cpp
     xml/calendar-xml.cpp
+    xml/catref-xml.cpp
     xml/config-xml.cpp
     xml/creatures-xml.cpp
     xml/dice-xml.cpp
@@ -352,6 +359,8 @@ set(COMMON_SOURCE_FILES
 
     wip/fighters.cpp
     wip/songs.cpp
+
+
 
     )
 

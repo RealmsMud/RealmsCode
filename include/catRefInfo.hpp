@@ -61,21 +61,21 @@ public:
     // That code ought to be rewritten:
     // Config::finishSwap in swap.cpp
     // getSpecialArea in rooms.cpp
-    int     limbo;
-    int     recall;
+    int     limbo{};
+    int     recall{};
 protected:
     bstring fishing;
 
-    int     id;         // 0 for unique rooms, a number for areas
+    int     id{};         // 0 for unique rooms, a number for areas
     bstring area;       // "area" is a special area for the overland
     bstring name;       // display purposes only
     bstring worldName;  // for cmdTime
     bstring yearsSince; // for printtime
     bstring parent;     // which catrefinfo to inherit limbo/recall from, misc by default
-    int     yearOffset;
-    int     teleportWeight;
-    int     teleportZone;
-    int     trackZone;
+    int     yearOffset{};
+    int     teleportWeight{};
+    int     teleportZone{};
+    int     trackZone{};
 };
 
 

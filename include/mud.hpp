@@ -321,16 +321,7 @@
 //   can have spell flags set and have them be permanent.
 #define LT(a,b)     ((a)->lasttime[(b)].ltime ? (a)->lasttime[(b)].ltime + (a)->lasttime[(b)].interval : MAXINT)
 
-//#define WISDOM(a)     ((bonus((int)(a)->intelligence.getCur())+bonus[(int)(a)->piety.getCur()])/2)
-//#define AWARENESS(a)  ((bonus((int)(a)->intelligence.getCur())+bonus[(int)(a)->dexterity.getCur()])/2)
-
-//#define Random::get(a,b)  ((a)+(rand()%((b)*10-(a)*10+10))/10)
-
-// A function to generate integers in the range [min, max]
-
 #define PLYCRT(p)   ((p)->isPlayer() ? "Player" : "Monster")
-
-#define AC(p)       ((int)((p)->getArmor()) / 10)
 
 //*********************************************************************
 //  Below this line are customizable options for the mud
@@ -401,11 +392,6 @@ extern char allowedClassesStr[static_cast<int>(CreatureClass::CLASS_COUNT) + 4][
 
 extern char scrollDesc [][10][20];
 extern char scrollType [][2][20];
-
-
-//Ansi/Mirc Settings
-extern int Ansi[12];
-extern int Mirc[9];
 
 
 extern struct osp_t ospell[];

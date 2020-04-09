@@ -68,6 +68,9 @@ void CatRef::clear() {
 //*********************************************************************
 
 CatRef& CatRef::operator=(const CatRef& cr) {
+    if(this == &cr)
+        return *this;
+
     area = cr.area;
     id = cr.id;
     return(*this);
@@ -95,13 +98,13 @@ bstring CatRef::rstr() const {
 //                      str
 //*********************************************************************
 
-bstring CatRef::str(bstring current, char color) const {
+bstring CatRef::str(const bstring& current, char color) const {
     std::ostringstream oStr;
     // if we're in an area already, we can chop off some text because they
     // already know what the area is
     if( id &&
-        area != "" &&
-        (current == "" || area != current)
+        !area.empty() &&
+        (current.empty() || area != current)
     ) {
         if(color)
             oStr << "^" << color << area << ":^x" << id;
@@ -126,7 +129,7 @@ void CatRef::setArea(bstring c) {
 //                      isArea
 //*********************************************************************
 
-bool CatRef::isArea(bstring c) const {
+bool CatRef::isArea(const bstring& c) const {
     return(area == c);
 }
 
