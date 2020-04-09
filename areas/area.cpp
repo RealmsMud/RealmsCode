@@ -17,7 +17,7 @@
  */
 #include <dirent.h>
 #include <fstream>
-#include <math.h>
+#include <cmath>
 #include <sys/stat.h>
 #include <stdexcept>
 
@@ -374,7 +374,7 @@ AreaZone::~AreaZone() {
 // This code is patterned after [Franklin, 2000]
 
 bool AreaZone::inside(const Area *area, const MapMarker *mapmarker) const {
-    MapMarker *vi=0, *vn=0;
+    MapMarker *vi=nullptr, *vn=nullptr;
     // the crossing number counter
     int     cn = 0;
     int     i=0, n = coords.size();
@@ -387,8 +387,8 @@ bool AreaZone::inside(const Area *area, const MapMarker *mapmarker) const {
         return(false);
     }
 
-    if( !inRestrict(area->getTerrain(0, mapmarker, 0, 0, 0, true), terRestrict) ||
-        !inRestrict(area->getTerrain(0, mapmarker, 0, 0, 0, false), mapRestrict)
+    if( !inRestrict(area->getTerrain(nullptr, mapmarker, 0, 0, 0, true), terRestrict) ||
+        !inRestrict(area->getTerrain(nullptr, mapmarker, 0, 0, 0, false), mapRestrict)
     ) {
         return(false);
     }
@@ -459,7 +459,7 @@ void AreaZone::save(xmlNodePtr curNode) const {
 
 void AreaZone::load(xmlNodePtr curNode) {
     xmlNodePtr mNode, childNode = curNode->children;
-    MapMarker *mapmarker=0;
+    MapMarker *mapmarker=nullptr;
     int     i=0;
 
     while(childNode) {
@@ -655,14 +655,14 @@ char TileInfo::getStyle(const Player* player) const {
 //*********************************************************************
 
 AreaData::AreaData() {
-    area = 0;
+    area = nullptr;
     isTerrain = true;
 }
 
 char AreaData::get(short x, short y, short z) const {
     try {
         return (data.at(z).at(y).at(x));
-    } catch(std::out_of_range e) {
+    } catch(std::out_of_range &e) {
         return (area->errorTerrain);
     }
 }
@@ -691,12 +691,12 @@ Area::Area() {
 }
 
 Area::~Area() {
-    AreaZone *zone=0;
-    AreaTrack *aTrack=0;
+    AreaZone *zone=nullptr;
+    AreaTrack *aTrack=nullptr;
     std::map<char, TileInfo*>::iterator tt;
     std::map<bstring, AreaRoom*>::iterator it;
-    TileInfo* tile=0;
-    AreaRoom* room=0;
+    TileInfo* tile=nullptr;
+    AreaRoom* room=nullptr;
 
     for(it = rooms.begin() ; it != rooms.end() ; it++) {
         room = (*it).second;
@@ -741,7 +741,7 @@ Area::~Area() {
 
 CatRef Area::getUnique(const MapMarker *mapmarker) const {
     std::list<AreaZone*>::const_iterator it;
-    AreaZone *zone=0;
+    AreaZone *zone=nullptr;
 
     for(it = zones.begin() ; it != zones.end() ; it++) {
         zone = (*it);
@@ -811,7 +811,7 @@ void Area::remove(AreaRoom* room) {
 // only checks to see if the room is in memory or on disk
 
 AreaRoom *Area::getRoom(const MapMarker *mapmarker) {
-    AreaRoom* room=0;
+    AreaRoom* room=nullptr;
     MapMarker m = *mapmarker;
 
     // this will modify the mapmarker, but if it's pointing to invalid rooms,
@@ -842,7 +842,7 @@ AreaRoom *Area::getRoom(const MapMarker *mapmarker) {
         return(room);
     }
 
-    return(0);
+    return(nullptr);
 }
 
 
@@ -860,7 +860,7 @@ AreaRoom *Area::loadRoom(Creature* creature, const MapMarker* mapmarker, bool re
         if(!canPass(creature, mapmarker, true)) {
             if(!(creature->isPet() && creature->getConstMaster()->isStaff())) {
                 if(p) creature->checkStaff("You can't go there!\n");
-                if(!creature->isStaff()) return(0);
+                if(!creature->isStaff()) return(nullptr);
             }
         }
     }
@@ -909,7 +909,7 @@ short Area::checkCycle(short vector, short critical) const {
 
 bool Area::canPass(const Creature* creature, const MapMarker *mapmarker, bool adjust) const {
     int fly = 0;
-    TileInfo* tile=0;
+    TileInfo* tile=nullptr;
 
     short x = mapmarker->getX();
     short y = mapmarker->getY();
@@ -964,7 +964,7 @@ bool Area::isRoad(short x, short y, short z, bool adjust) const {
 bool Area::isWater(short x, short y, short z, bool adjust) const {
     if(adjust)
         adjustCoords(&x, &y, &z);
-    TileInfo* tile = 0;
+    TileInfo* tile = nullptr;
     if(outOfBounds(x, y, z))
         tile = getTile(defaultTerrain, 0);
     else
@@ -988,11 +988,11 @@ TileInfo *Area::getTile(char grid, char seasonFlags, Season season, bool checkSe
     if(season != NO_SEASON && !(seasonFlags & (int)pow(2, (double)season-1)))
         season = NO_SEASON;
 
-    std::map<char, TileInfo*>::const_iterator it = ter_tiles.find(grid);
+    auto it = ter_tiles.find(grid);
     if(it != ter_tiles.end()) {
         TileInfo* tile = (*it).second;
         if(season != NO_SEASON) {
-            std::map<Season,char>::const_iterator st = tile->season.find(season);
+            auto st = tile->season.find(season);
             if(st != tile->season.end()) {
                 it = ter_tiles.find((*st).second);
                 // only switch if we can find the new tile
@@ -1005,7 +1005,7 @@ TileInfo *Area::getTile(char grid, char seasonFlags, Season season, bool checkSe
     it = map_tiles.find(grid);
     if(it != map_tiles.end())
         return((*it).second);
-    return(0);
+    return(nullptr);
 }
 
 //*********************************************************************
@@ -1014,7 +1014,7 @@ TileInfo *Area::getTile(char grid, char seasonFlags, Season season, bool checkSe
 
 char Area::getTerrain(const Player* player, const MapMarker *mapmarker, short y, short x, short z, bool terOnly) const {
     std::list<AreaRoom*>::iterator it;
-    AreaRoom* room=0;
+    AreaRoom* room=nullptr;
     bool    staff = player ? player->isStaff() : false;
     bool    found=false;
 
@@ -1115,9 +1115,9 @@ float Area::getLosPower(const Player* player, int xVision, int yVision) const {
 
 void Area::getGridText(char grid[][80], int height, const MapMarker *mapmarker, int maxWidth) const {
     std::list<AreaZone*>::const_iterator it;
-    AreaZone *zone=0;
+    AreaZone *zone=nullptr;
 
-    TileInfo *tile = getTile(getTerrain(0, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
+    TileInfo *tile = getTile(getTerrain(nullptr, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
     bstring desc = tile ? tile->getDescription() : "";
     if(maxWidth < 80)
         desc = wrapText(desc, maxWidth);
@@ -1183,7 +1183,7 @@ bstring Area::showGrid(const Player* player, const MapMarker *mapmarker, bool co
     char    gridText[my][80];
     char    seasonFlags;
     Season  season = gConfig->getCalendar()->whatSeason();
-    TileInfo *tile=0;
+    TileInfo *tile=nullptr;
     MapMarker m = *mapmarker;
 
     zero(gridText, sizeof(gridText));
@@ -1320,14 +1320,14 @@ void Area::adjustCoords(short* x, short* y, short* z) const {
 
 Track* Area::getTrack(MapMarker* mapmarker) const {
     std::list<AreaTrack*>::const_iterator it;
-    AreaTrack *aTrack=0;
+    AreaTrack *aTrack=nullptr;
 
     for(it = tracks.begin() ; it != tracks.end() ; it++) {
         aTrack = (*it);
         if(*&aTrack->mapmarker == *mapmarker)
             return(&aTrack->track);
     }
-    return(0);
+    return(nullptr);
 }
 
 
@@ -1349,7 +1349,7 @@ void Area::addTrack(AreaTrack *aTrack) {
 // how long will the tracks last?
 
 int Area::getTrackDuration(const MapMarker* mapmarker) const {
-    TileInfo *tile = getTile(getTerrain(0, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
+    TileInfo *tile = getTile(getTerrain(nullptr, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
     return(tile ? tile->getTrackDur() : 0);
 }
 
@@ -1360,11 +1360,11 @@ int Area::getTrackDuration(const MapMarker* mapmarker) const {
 // make sure tracks don't stay around for too long
 
 void Area::updateTrack(int t) {
-    std::list<AreaTrack*>::iterator it = tracks.begin();
-    AreaTrack *aTrack=0;
+    auto it = tracks.begin();
+    AreaTrack *aTrack=nullptr;
 
     while(it != tracks.end()) {
-        std::list<AreaTrack*>::iterator next = it;
+        auto next = it;
         ++next;
         aTrack = (*it);
         aTrack->setDuration(aTrack->getDuration() - t);
@@ -1476,7 +1476,7 @@ void Area::load(xmlNodePtr curNode) {
 
 void Area::loadZones(xmlNodePtr curNode) {
     xmlNodePtr  childNode = curNode->children;
-    AreaZone    *zone=0;
+    AreaZone    *zone=nullptr;
 
     while(childNode) {
         if(NODE_NAME(childNode, "Zone")) {
@@ -1495,7 +1495,7 @@ void Area::loadZones(xmlNodePtr curNode) {
 // is a bad thing.
 
 void Area::checkFileSize(int& size, const char* filename) const {
-    struct stat f_stat;
+    struct stat f_stat{};
     if(stat(filename, &f_stat))
         return;
     if(!size) {
@@ -1628,9 +1628,9 @@ void Area::loadTerrain(int minDepth) {
 //*********************************************************************
 
 void Area::loadRooms() {
-    struct dirent *dirp=0;
-    DIR         *dir=0;
-    AreaRoom    *room=0;
+    struct dirent *dirp=nullptr;
+    DIR         *dir=nullptr;
+    AreaRoom    *room=nullptr;
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     char        filename[256];
@@ -1670,14 +1670,14 @@ void Area::loadRooms() {
 
 void Area::loadTiles(xmlNodePtr curNode, bool ter) {
     xmlNodePtr  childNode = curNode->children;
-    TileInfo    *tile=0;
+    TileInfo    *tile=nullptr;
 
     while(childNode) {
         tile = new TileInfo();
         tile->load(childNode);
 
         // TODO: Dom: why does this happen?
-        if(tile->getName() == "")
+        if(tile->getName().empty())
             delete tile;
         else {
             if(ter)
@@ -1694,14 +1694,14 @@ void Area::loadTiles(xmlNodePtr curNode, bool ter) {
 //*********************************************************************
 
 bool Area::flagIsSet(int flag, const MapMarker* mapmarker) const {
-    TileInfo *tile = getTile(getTerrain(0, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
+    TileInfo *tile = getTile(getTerrain(nullptr, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
     if(!tile)
         return(false);
     if(tile->flagIsSet(flag))
         return(true);
 
     std::list<AreaZone*>::const_iterator it;
-    AreaZone *zone=0;
+    AreaZone *zone=nullptr;
 
     for(it = zones.begin() ; it != zones.end() ; it++) {
         zone = (*it);
@@ -1722,12 +1722,12 @@ void showMobList(Player* player, WanderInfo *wander, bstring type);
 int dmListArea(Player* player, cmd* cmnd) {
     std::list<Area*>::iterator it;
     std::map<bstring, AreaRoom*>::iterator rt;
-    Area    *area=0;
-    AreaRoom* room=0;
+    Area    *area=nullptr;
+    AreaRoom* room=nullptr;
     int     a=0;
     bstring str = getFullstrText(cmnd->fullstr, 1);
 
-    if(str != "")
+    if(!str.empty())
         a = atoi(str.c_str());
     if(!a)
         player->printColor("You may type ^y*arealist [num]^x to display only a specific area.\n\n");
@@ -1771,7 +1771,7 @@ int dmListArea(Player* player, cmd* cmnd) {
 
         if(tiles) {
             std::map<char, TileInfo*>::iterator tt;
-            TileInfo *tile=0;
+            TileInfo *tile=nullptr;
 
             if(!wander) {
                 if(a)
@@ -1794,7 +1794,7 @@ int dmListArea(Player* player, cmd* cmnd) {
                     if(tile->isWater())
                         player->printColor("  ^BWater: ^x(^c%s^x)", tile->getFishing().c_str());
                     player->print("\n");
-                    showRoomFlags(player, 0, tile, 0);
+                    showRoomFlags(player, nullptr, tile, nullptr);
                 }
             }
 
@@ -1819,8 +1819,8 @@ int dmListArea(Player* player, cmd* cmnd) {
         if(zones) {
             std::map<int, MapMarker*>::iterator zIt;
             std::list<AreaZone*>::iterator zt;
-            AreaZone *zone=0;
-            MapMarker *mapmarker=0;
+            AreaZone *zone=nullptr;
+            MapMarker *mapmarker=nullptr;
 
             if(!coords) {
                 if(a)
@@ -1848,10 +1848,10 @@ int dmListArea(Player* player, cmd* cmnd) {
                     player->printColor("   Min: (X:^c%d^x Y:^c%d^x Z:^c%d^x) Max: (X:^c%d^x Y:^c%d^x Z:^c%d^x)\n",
                         zone->min.getX(), zone->min.getY(), zone->min.getZ(),
                         zone->max.getX(), zone->max.getY(), zone->max.getZ());
-                    if(zone->getFishing() != "")
+                    if(!zone->getFishing().empty())
                         player->printColor("   Fishing: ^c%s\n", zone->getFishing().c_str());
                     player->print("   ");
-                    showRoomFlags(player, 0, 0, zone);
+                    showRoomFlags(player, nullptr, nullptr, zone);
 
                     if(coords) {
                         player->print("   Coords:\n");
@@ -1874,7 +1874,7 @@ int dmListArea(Player* player, cmd* cmnd) {
 
         if(track) {
             std::list<AreaTrack*>::iterator at;
-            AreaTrack *aTrack=0;
+            AreaTrack *aTrack=nullptr;
 
             player->printColor("Track Objects: ^c%d\n", area->tracks.size());
 
@@ -1926,7 +1926,7 @@ bool Server::loadAreas() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     xmlNodePtr  curNode;
-    Area    *area=0;
+    Area    *area=nullptr;
 
     sprintf(filename, "%s/areas.xml", Path::AreaData);
 
@@ -1986,7 +1986,7 @@ void Area::losCloser(int *x, int *y, int me_x, int me_y, int i) const {
 float Area::lineOfSight(float *grid, const Player* player, int width, int *y, int *x, int me_y, int me_x, int *i, const MapMarker *mapmarker) const {
     int     og_y = (*y), og_x = (*x);
     float   *g, *h, cost=0.0;
-    TileInfo *tile=0;
+    TileInfo *tile=nullptr;
 
     // Calculate the position in the array you're going after
     g = grid + (*y) * width + (*x);
@@ -2001,7 +2001,7 @@ float Area::lineOfSight(float *grid, const Player* player, int width, int *y, in
     } else {
 
         // see how much this piece of terrain costs
-        tile = getTile(getTerrain(0, mapmarker, og_y - me_y, og_x - me_x, 0, true), getSeasonFlags(mapmarker, og_y - me_y, og_x - me_x));
+        tile = getTile(getTerrain(nullptr, mapmarker, og_y - me_y, og_x - me_x, 0, true), getSeasonFlags(mapmarker, og_y - me_y, og_x - me_x));
         cost = tile ? tile->getVision() : 0;
         if(isRoad(og_x - me_x + mapmarker->getX(), og_y - me_y + mapmarker->getY(), mapmarker->getZ(), true))
             cost /= 4 ;
@@ -2088,7 +2088,7 @@ void Area::makeLosGrid(float *grid, const Player* player, int height, int width,
 //*********************************************************************
 
 void Server::clearAreas() {
-    Area    *area=0;
+    Area    *area=nullptr;
 
     while(!areas.empty()) {
         area = areas.front();
@@ -2104,14 +2104,14 @@ void Server::clearAreas() {
 
 Area *Server::getArea(int id) {
     std::list<Area*>::iterator it;
-    Area    *area=0;
+    Area    *area=nullptr;
 
     for(it = areas.begin() ; it != areas.end() ; it++) {
         area = (*it);
         if(area->id == id)
             return(area);
     }
-    return(0);
+    return(nullptr);
 }
 
 //*********************************************************************
@@ -2156,7 +2156,7 @@ void Server::cleanUpAreas() {
 
 void Area::cleanUpRooms() {
     std::map<bstring, AreaRoom*>::iterator it;
-    AreaRoom* room=0;
+    AreaRoom* room=nullptr;
 
     for(it = rooms.begin() ; it != rooms.end() ; ) {
         room = (*it).second;
