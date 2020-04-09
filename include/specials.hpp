@@ -140,7 +140,6 @@ enum SpecialSaveType {
 class SpecialAttack {
 private:
     bstring name;
-//  bstring display;
 
     bstring verb;           // For broadcast group, *attacker* *verb* *target*:
                             // ie: The monster backstabbed john for 25 damage!
@@ -158,23 +157,23 @@ private:
 
     SpecialSaveType saveType;   // Save, stat or level to check for save
     SaveBonus saveBonus;        // What save bonuses
-    int maxBonus;               // Max save bonus
+    int maxBonus{};             // Max save bonus
 
     // Strings to print on a sucessful save
     bstring targetSaveStr;
     bstring selfSaveStr;
     bstring roomSaveStr;
 
-    int chance;         // Chance 1-100 that this attack will be executed
-    int delay;          // Delay between uses
+    int chance{};         // Chance 1-100 that this attack will be executed
+    int delay{};          // Delay between uses
     lasttime ltime;     // When we last used it, when we can use it again, etc
-    int stunLength;
+    int stunLength{};
     SpecialType type;   // Fire, water, general breath, weapon attack, etc
-    char flags[8];      // 8*8 flags
+    char flags[8]{};      // 8*8 flags
     Dice damage;
 
-    int limit;          // Max number of times this attack can be used in a monster's lifetime
-    int used;           // How many times we've used this attack since being alive (Doesn't save)
+    int limit{};          // Max number of times this attack can be used in a monster's lifetime
+    int used{};           // How many times we've used this attack since being alive (Doesn't save)
 
 private:
     void reset();
@@ -199,8 +198,8 @@ public:
     bool save(xmlNodePtr rootNode) const;
 
 
-    bool isAreaAttack() const;
-    bool flagIsSet(int flag) const;
+    [[nodiscard]] bool isAreaAttack() const;
+    [[nodiscard]] bool flagIsSet(int flag) const;
 
     void printFailStrings(Creature* attacker, Creature* target);
     void printRoomString(Creature* attacker, Creature* target = nullptr);
