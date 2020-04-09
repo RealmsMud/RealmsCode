@@ -359,6 +359,7 @@ set(COMMON_SOURCE_FILES
     xml/socials-xml.cpp
     xml/startlocs-xml.cpp
     xml/stats-xml.cpp
+    xml/wanderInfo-xml.cpp
     xml/xml.cpp
 
     wip/fighters.cpp
