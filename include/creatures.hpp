@@ -499,7 +499,7 @@ public:
     bool runOpeners(Creature* victim); // Run any opening attacks
     bool runSpecialAttacks(Creature* victim); // Pick a special attack and do it on the target
     bstring getSpecialsList() const;
-    SpecialAttack* addSpecial(bstring specialName);
+    SpecialAttack* addSpecial(const bstring& specialName);
     bool delSpecials();
     SpecialAttack* getSpecial(const bstring& special);
 

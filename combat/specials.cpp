@@ -66,7 +66,7 @@ bool Creature::useSpecial(SpecialAttack* attack, Creature* victim) {
 
     long i, t;
     i = attack->ltime.ltime;
-    t = time(0);
+    t = time(nullptr);
     // See if we can use this attack yet
     if(t - i < attack->delay)
         return(false);  // Not enough time has passed yet
@@ -85,7 +85,7 @@ bool Creature::useSpecial(SpecialAttack* attack, Creature* victim) {
     if(attack->flagIsSet(SA_REQUIRE_HIDE) && isHidden())
         unhide();
 
-    attack->ltime.ltime = time(0);
+    attack->ltime.ltime = time(nullptr);
     attack->ltime.interval = attack->delay;
 
     if(!attack->isAreaAttack() && !attack->flagIsSet(SA_SINGLE_TARGET))
@@ -103,14 +103,14 @@ bool Creature::useSpecial(SpecialAttack* attack, Creature* victim) {
         BaseRoom* room = getRoomParent();
         if(attack->flagIsSet(SA_AE_PLAYER) || attack->flagIsSet(SA_AE_ALL)) {
             // First hit players
-            PlayerSet::iterator pIt = room->players.begin();
+            auto pIt = room->players.begin();
             while(pIt != room->players.end()) {
                 Player* ply = (*pIt++);
                 doSpecial(attack, ply);
                 attacked = true;
             }
             // Second, hit pets
-            MonsterSet::iterator mIt = room->monsters.begin();
+            auto mIt = room->monsters.begin();
             while(mIt != room->monsters.end()) {
                 Monster* mons = (*mIt++);
                 if(mons->isPet()) {
@@ -121,7 +121,7 @@ bool Creature::useSpecial(SpecialAttack* attack, Creature* victim) {
         }
         if(attack->flagIsSet(SA_AE_MONSTER) || attack->flagIsSet(SA_AE_ALL)) {
             // Hit all non pets
-            MonsterSet::iterator mIt = room->monsters.begin();
+            auto mIt = room->monsters.begin();
             while(mIt != room->monsters.end()) {
                 Monster* mons = (*mIt++);
                 if(!mons->isPet()) {
@@ -259,16 +259,13 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
         int chance = 50;
         switch(attack->saveType) {
             case SAVE_STRENGTH:
+            case SAVE_CONSTITUTION:
+            case SAVE_INTELLIGENCE:
+            case SAVE_PIETY:
                 break;
             case SAVE_DEXTERITY:
                 chance = 50 + (level - victim->getLevel()) * 10 +
                         (dexterity.getCur() - victim->dexterity.getCur())/5 ;
-                break;
-            case SAVE_CONSTITUTION:
-                break;
-            case SAVE_INTELLIGENCE:
-                break;
-            case SAVE_PIETY:
                 break;
             case SAVE_LEVEL:
                 chance = 35 + ((level - victim->getLevel()) * 20);
@@ -306,7 +303,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
         attackDamage.set(attack->damage.roll());
         attackDamage.set(MIN<unsigned long>((unsigned)attackDamage.get(), victim->getExperience()));
 
-        if(saved == true)
+        if(saved)
             attackDamage.set(attackDamage.get() / 2);
     }
     else if(attack->type == SPECIAL_PETRIFY) {
@@ -315,7 +312,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
                 return(false);
 
             if(!saved) {
-                pVictim->addEffect("petrification", 0, 0, 0, true, this);
+                pVictim->addEffect("petrification", 0, 0, nullptr, true, this);
                 pVictim->clearAsEnemy(); // clears player from all mob's enemy lists in the room.
                 pVictim->removeFromGroup(false);
             }
@@ -356,7 +353,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
         }
 
         // Now check for a save to adjust damage
-        if(saved == true)
+        if(saved)
             attackDamage.set(attackDamage.get() / 2);
 
         // Now check for realm resists, item disolving, etc
@@ -546,7 +543,6 @@ void SpecialAttack::printFailStrings(Creature* attacker, Creature* target) {
     printToRoom(target->getRoomParent(), roomFailStr, attacker, target);
     bstring toPrint = modifyAttackString(targetFailStr, target, attacker, target);
     target->printColor("%s\n", toPrint.c_str());
-    return;
 }
 void SpecialAttack::printRoomString(Creature* attacker, Creature* target) {
     return(printToRoom(attacker->getRoomParent(), roomStr, attacker, target));
@@ -555,7 +551,6 @@ void SpecialAttack::printRoomString(Creature* attacker, Creature* target) {
 void SpecialAttack::printTargetString(Creature* attacker, Creature* target, int dmg) {
     bstring toPrint = modifyAttackString(targetStr, target, attacker, target, dmg);
     target->printColor("%s\n", toPrint.c_str());
-    return;
 }
 
 void SpecialAttack::printRoomSaveString(Creature* attacker, Creature* target) {
@@ -564,7 +559,6 @@ void SpecialAttack::printRoomSaveString(Creature* attacker, Creature* target) {
 void SpecialAttack::printTargetSaveString(Creature* attacker, Creature* target, int dmg) {
     bstring toPrint = modifyAttackString(targetSaveStr, target, attacker, target, dmg);
     target->printColor("%s\n", toPrint.c_str());
-    return;
 }
 
 void SpecialAttack::reset() {
@@ -576,8 +570,6 @@ void SpecialAttack::reset() {
     int i;
     for(i = 0 ; i < 8 ; i++)
         flags[i] = 0;
-
-    return;
 }
 bstring Creature::getSpecialsFullList() const {
     std::ostringstream specialsStr;
@@ -599,8 +591,8 @@ bstring Creature::getSpecialsFullList() const {
     return(toPrint);
 }
 int dmSpecials(Player* player, cmd* cmnd) {
-    Creature* target=0;
-    Monster* mTarget=0;
+    Creature* target=nullptr;
+    Monster* mTarget=nullptr;
 
     if(player->getClass() == CreatureClass::BUILDER && !player->canBuildMonsters())
         return(cmdNoAuth(player));
@@ -788,72 +780,9 @@ bstring Creature::getSpecialsList() const {
 SpecialAttack::SpecialAttack() {
     reset();
 }
-SpecialAttack::SpecialAttack(xmlNodePtr rootNode) {
-    xmlNodePtr curNode = rootNode->children;
-    reset();
 
-    while(curNode) {
-            if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
-        else if(NODE_NAME(curNode, "Verb")) xml::copyToBString(verb, curNode);
-        else if(NODE_NAME(curNode, "TargetStr")) xml::copyToBString(targetStr, curNode);
-        else if(NODE_NAME(curNode, "TargetFailStr")) xml::copyToBString(targetFailStr, curNode);
-        else if(NODE_NAME(curNode, "RoomFailStr")) xml::copyToBString(roomFailStr, curNode);
-        else if(NODE_NAME(curNode, "SelfStr")) xml::copyToBString(selfStr, curNode);
-        else if(NODE_NAME(curNode, "RoomStr")) xml::copyToBString(roomStr, curNode);
-
-        else if(NODE_NAME(curNode, "TargetSaveStr")) xml::copyToBString(targetSaveStr, curNode);
-        else if(NODE_NAME(curNode, "SelfSaveStr")) xml::copyToBString(selfSaveStr, curNode);
-        else if(NODE_NAME(curNode, "RoomSaveStr")) xml::copyToBString(roomSaveStr, curNode);
-
-        else if(NODE_NAME(curNode, "Delay")) xml::copyToNum(delay, curNode);
-        else if(NODE_NAME(curNode, "Chance")) xml::copyToNum(chance, curNode);
-        else if(NODE_NAME(curNode, "StunLength")) xml::copyToNum(stunLength, curNode);
-        else if(NODE_NAME(curNode, "Limit")) xml::copyToNum(limit, curNode);
-        else if(NODE_NAME(curNode, "MaxBonus")) xml::copyToNum(maxBonus, curNode);
-        else if(NODE_NAME(curNode, "SaveType")) saveType = (SpecialSaveType)xml::toNum<int>(xml::getCString(curNode));
-        else if(NODE_NAME(curNode, "SaveBonus")) saveBonus = (SaveBonus)xml::toNum<int>(xml::getCString(curNode));
-        else if(NODE_NAME(curNode, "Type")) type = (SpecialType)xml::toNum<int>(xml::getCString(curNode));
-        else if(NODE_NAME(curNode, "Flags")) loadBits(curNode, flags);
-        else if(NODE_NAME(curNode, "LastTime")) loadLastTime(curNode, &ltime);
-        else if(NODE_NAME(curNode, "Dice")) damage.load(curNode);
-
-        curNode = curNode->next;
-    }
-}
-
-bool SpecialAttack::save(xmlNodePtr rootNode) const {
-    xmlNodePtr attackNode = xml::newStringChild(rootNode, "SpecialAttack");
-    xml::newStringChild(attackNode, "Name", name);
-    xml::newStringChild(attackNode, "Verb", verb);
-
-    xml::newStringChild(attackNode, "TargetStr", targetStr);
-    xml::newStringChild(attackNode, "TargetFailStr", targetFailStr);
-    xml::newStringChild(attackNode, "RoomFailStr", roomFailStr);
-    xml::newStringChild(attackNode, "SelfStr", selfStr);
-    xml::newStringChild(attackNode, "RoomStr", roomStr);
-
-    xml::newStringChild(attackNode, "TargetSaveStr", targetSaveStr);
-    xml::newStringChild(attackNode, "SelfSaveStr", selfSaveStr);
-    xml::newStringChild(attackNode, "RoomSaveStr", roomSaveStr);
-
-    xml::newNumChild(attackNode, "Limit", limit);
-    xml::newNumChild(attackNode, "Delay", delay);
-    xml::newNumChild(attackNode, "Chance", chance);
-    xml::newNumChild(attackNode, "StunLength", stunLength);
-    xml::newNumChild(attackNode, "Type", type);
-    xml::newNumChild(attackNode, "SaveType", saveType);
-    xml::newNumChild(attackNode, "SaveBonus", saveBonus);
-    xml::newNumChild(attackNode, "MaxBonus", maxBonus);
-
-    saveBits(attackNode, "Flags", SA_MAX_FLAG, flags);
-    saveLastTime(attackNode, 0, ltime);
-    damage.save(attackNode, "Dice");
-
-    return(true);
-}
-
-SpecialAttack* Creature::addSpecial(const bstring specialName) {
-    SpecialAttack* attack=0;
+SpecialAttack* Creature::addSpecial(const bstring& specialName) {
+    SpecialAttack* attack=nullptr;
 
     /*          Web Editor
      *           _   _  ____ _______ ______
