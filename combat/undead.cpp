@@ -25,8 +25,8 @@
 //*********************************************************************
 
 int cmdBite(Player* player, cmd* cmnd) {
-    Creature* target=0;
-    Player  *pTarget=0;
+    Creature* target=nullptr;
+    Player  *pTarget=nullptr;
     long    i=0, t=0;
     int     chance=0, dmgnum=0;
     Damage damage;
@@ -75,7 +75,7 @@ int cmdBite(Player* player, cmd* cmnd) {
     }
 
     i = player->lasttime[LT_PLAYER_BITE].ltime;
-    t = time(0);
+    t = time(nullptr);
 
     if((t - i < 30L) && !player->isDm()) {
         player->pleaseWait(30L-t+i);
@@ -101,7 +101,7 @@ int cmdBite(Player* player, cmd* cmnd) {
     player->lasttime[LT_PLAYER_BITE].interval = 30L;
 
 
-    chance = 35 + ((int)((player->getSkillLevel("bite") - target->getLevel()) * 20) + bonus((int) player->strength.getCur()) * 5);
+    chance = 35 + ((int)((player->getSkillLevel("bite") - target->getLevel()) * 20) + bonus(player->strength.getCur()) * 5);
     chance = MIN(chance, 85);
 
     if(target->isEffected("drain-shield"))
@@ -141,7 +141,7 @@ int cmdBite(Player* player, cmd* cmnd) {
         log_immort(false,player, "%s bites %s.\n", player->getCName(), target->getCName());
 
     target->printColor("%M bites you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), dmgnum);
-    target->stun((Random::get(5, 8) + bonus((int) player->strength.getCur())));
+    target->stun((Random::get(5, 8) + bonus(player->strength.getCur())));
     broadcast(player->getSock(), target->getSock(), player->getParent(), "%M bites %N!", player, target);
     broadcastGroup(false, target, "^M%M^x bites ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n",
         player, target, dmgnum, target->heShe(), target->getStatusStr(dmgnum));
@@ -167,7 +167,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 
 int cmdMist(Player* player, cmd* cmnd) {
     long    i=0, t=0;
-    t = time(0);
+    t = time(nullptr);
     i = player->getLTAttack() > LT(player, LT_SPELL) ? player->getLTAttack() : LT(player, LT_SPELL);
 
     if(LT(player, LT_MIST) > i)
@@ -228,7 +228,7 @@ int cmdMist(Player* player, cmd* cmnd) {
     player->clearFlag(P_SITTING);
     player->interruptDelayedActions();
 
-    player->lasttime[LT_MIST].ltime = time(0);
+    player->lasttime[LT_MIST].ltime = time(nullptr);
     player->lasttime[LT_MIST].interval = 3L;
 
     return(0);
@@ -276,7 +276,7 @@ int cmdUnmist(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdHypnotize(Player* player, cmd* cmnd) {
-    Creature* target=0;
+    Creature* target=nullptr;
     int     dur=0, chance=0;
     long    i=0, t=0;
 
@@ -295,16 +295,17 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
     }
 
     i = LT(player, LT_HYPNOTIZE);
-    t = time(0);
+    t = time(nullptr);
     if(i > t && !player->isDm()) {
         player->pleaseWait(i-t);
         return(0);
     }
 
-    dur = 300 + Random::get(1, 30) * 10 + bonus((int) player->constitution.getCur()) * 30 +
+    dur = 300 + Random::get(1, 30) * 10 + bonus(player->constitution.getCur()) * 30 +
           (int)(player->getSkillLevel("hypnotize") * 5);
 
-    if(!(target = player->findVictim(cmnd, 1, true, false, "Hypnotize whom?\n", "You don't see that here.\n")))
+    if(!(target = player->findVictim(cmnd, 1, true, false, "Hypnotize whom?\n",
+            "You don't see that here.\n")))
         return(0);
 
     if(!target->canSee(player) && !player->checkStaff("Your victim must see you to be hypnotized.\n"))
@@ -319,8 +320,6 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
             return(0);
         }
     }
-
-
 
     if( target->isPlayer() &&
         (   player->vampireCharmed(target->getAsPlayer()) ||
@@ -351,7 +350,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
     player->lasttime[LT_HYPNOTIZE].ltime = t;
     player->lasttime[LT_HYPNOTIZE].interval = 600L;
     chance = MIN(90, 40 + (int)(player->getSkillLevel("hypnotize") - target->getLevel()) * 20 + 4 *
-            bonus((int) player->intelligence.getCur()));
+            bonus(player->intelligence.getCur()));
     if(target->flagIsSet(M_PERMENANT_MONSTER))
         chance-=25;
     if(player->isDm())
@@ -396,7 +395,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 
     player->addCharm(target);
 
-    target->lasttime[LT_CHARMED].ltime = time(0);
+    target->lasttime[LT_CHARMED].ltime = time(nullptr);
     target->lasttime[LT_CHARMED].interval = dur;
 
     if(target->isPlayer())
@@ -437,7 +436,7 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
             return(0);
         }
         i = player->lasttime[LT_REGENERATE].ltime + player->lasttime[LT_REGENERATE].interval;
-        t = time(0);
+        t = time(nullptr);
         if(i > t) {
             player->pleaseWait(i-t);
             return(0);
@@ -515,8 +514,8 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
 // damage to their own
 
 int cmdDrainLife(Player* player, cmd* cmnd) {
-    Creature* target=0;
-    Player  *pTarget=0;
+    Creature* target=nullptr;
+    Player  *pTarget=nullptr;
     long    i=0, t=0;
     int     chance=0;
     Damage damage;
@@ -529,9 +528,6 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
         player->print("You haven't learned how to drain someone's life.\n");
         return(0);
     }
-
-    
-
 
     if(!(target = player->findVictim(cmnd, 1, true, false, "Drain whom?\n", "You don't see that here.\n")))
         return(0);
@@ -570,7 +566,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
     }
 
     i = LT(player, LT_DRAIN_LIFE);
-    t = time(0);
+    t = time(nullptr);
     if(i > t && !player->isDm()) {
         player->pleaseWait(i-t);
         return(0);
@@ -585,7 +581,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
 
     int level = (int)player->getSkillLevel("drain");
 
-    chance = (level - target->getLevel()) * 20 + bonus((int) player->constitution.getCur()) * 5 + 25;
+    chance = (level - target->getLevel()) * 20 + bonus(player->constitution.getCur()) * 5 + 25;
     chance = MIN(chance, 80);
 
     if(target->isEffected("drain-shield"))
