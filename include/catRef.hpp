@@ -19,11 +19,10 @@
 #ifndef _CATREF_H
 #define _CATREF_H
 
-#include <unordered_map>
-#include <string>
-#include <functional>
-
-#include "common.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr
+#include <iosfwd>           // for size_t
+#include <string>           // for hash, string
+#include "bstring.hpp"      // for bstring
 
 class Creature;
 

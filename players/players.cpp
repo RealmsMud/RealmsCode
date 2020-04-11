@@ -16,14 +16,23 @@
  *
  */
 
-#include "calendar.hpp"
-#include "creatures.hpp"
-#include "effects.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
+#include <cstring>       // for strcmp
+#include <ctime>         // for time, time_t
+#include <string>         // for operator!=, basic_string, operator==
+
+#include "bstring.hpp"    // for bstring
+#include "creatures.hpp"  // for Player
+#include "effects.hpp"    // for EffectInfo
+#include "flags.hpp"      // for R_DESERT_HARM, P_SITTING, R_AIR_BONUS, R_DE...
+#include "global.hpp"     // for CreatureClass, CreatureClass::LICH, Creatur...
+#include "mud.hpp"        // for LT_TICK_HARMFUL, LT_TICK_SECONDARY, LT, LT_...
+#include "objects.hpp"    // for Object
+#include "proto.hpp"      // for bonus, isDay, broadcast, dice, standardPois...
+#include "random.hpp"     // for Random
+#include "rooms.hpp"      // for BaseRoom, AreaRoom
+#include "socket.hpp"     // for Socket
+#include "stats.hpp"      // for Stat
+#include "utils.hpp"      // for MAX, MIN
 
 
 bool Player::operator <(const Player& t) const {
@@ -196,9 +205,9 @@ void Player::pulseTick(long t) {
         } else {
             // If you have higher piety, you get hurt less often
             if(cClass != CreatureClass::LICH)
-                lasttime[LT_TICK_HARMFUL].interval = 45 + 5*bonus((int)piety.getCur());
+                lasttime[LT_TICK_HARMFUL].interval = 45 + 5*bonus(piety.getCur());
             else
-                lasttime[LT_TICK_HARMFUL].interval = 45 + 5*bonus((int)constitution.getCur());
+                lasttime[LT_TICK_HARMFUL].interval = 45 + 5*bonus(constitution.getCur());
 
             if(isEffected("vampirism") && isDay())
                 lasttime[LT_TICK_HARMFUL].interval -= 15;
@@ -378,7 +387,7 @@ double Player::winterProtection() const {
 // return true if they died, false if they lived
 
 bool Player::doPlayerHarmRooms() {
-    DeathType dt;
+    DeathType dt = DT_NONE;
     bool    prot = true;
     // gives us a range of 10-18 dmg
     int     dmg = 15 - (constitution.getCur() - 150)/50;
@@ -390,7 +399,7 @@ bool Player::doPlayerHarmRooms() {
         wake("Terrible nightmares disturb your sleep!");
         printColor("^#^GThe toxic air poisoned you.\n");
         if(!isStaff()) {
-            poison(0, 15, 210 + standardPoisonDuration(15, constitution.getCur()));
+            poison(nullptr, 15, 210 + standardPoisonDuration(15, constitution.getCur()));
             poisonedBy = "noxious fumes";
         }
     }
@@ -560,7 +569,7 @@ bool Player::doPlayerHarmRooms() {
 //*********************************************************************
 
 time_t Player::getIdle() {
-    return(time(0) - mySock->ltime);
+    return(time(nullptr) - mySock->ltime);
 }
 
 

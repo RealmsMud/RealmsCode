@@ -15,19 +15,37 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <sstream>
-#include <iomanip>
+#include <cctype>                                  // for isdigit
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlNode
+#include <cmath>                                   // for log, abs
+#include <cstdio>                                  // for snprintf, sprintf
+#include <cstdlib>                                 // for atoi, abs
+#include <cstring>                                 // for strlen, strncmp
+#include <ctime>                                   // for time
+#include <iomanip>                                  // for operator<<, setw
+#include <sstream>                                  // for operator<<, basic...
 
-#include "craft.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "factions.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "unique.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include "bstring.hpp"                              // for bstring, operator+
+#include "catRef.hpp"                               // for CatRef
+#include "cmd.hpp"                                  // for cmd
+#include "commands.hpp"                             // for getFullstrText
+#include "config.hpp"                               // for Config, gConfig
+#include "container.hpp"                            // for ObjectSet, Monste...
+#include "craft.hpp"                                // for Recipe, operator<<
+#include "creatures.hpp"                            // for Player, Monster
+#include "factions.hpp"                             // for Faction
+#include "flags.hpp"                                // for O_BEING_PREPARED
+#include "global.hpp"                               // for INV, MAG
+#include "mud.hpp"                                  // for LT_MOVED, LT_SPELL
+#include "objects.hpp"                              // for Object, ObjectType
+#include "paths.hpp"                                // for Game
+#include "proto.hpp"                                // for log_immort, broad...
+#include "random.hpp"                               // for Random
+#include "rooms.hpp"                                // for BaseRoom
+#include "size.hpp"                                 // for Size, NO_SIZE
+#include "unique.hpp"                               // for Lore, Unique
+#include "utils.hpp"                                // for MAX
+#include "xml.hpp"                                  // for loadObject
 
 #define RECIPE_WIDTH    37
 
@@ -44,7 +62,7 @@ Object* findHot(const Player* player) {
         if(Recipe::goodObject(player, obj) && obj->flagIsSet(O_HOT))
             return(obj);
     }
-    return(0);
+    return(nullptr);
 }
 
 //*********************************************************************
@@ -57,80 +75,6 @@ Recipe::Recipe() {
     skill = resultName = creator = "";
 }
 
-//*********************************************************************
-//                      save
-//*********************************************************************
-
-void Recipe::save(xmlNodePtr rootNode) const {
-    xmlNodePtr curNode = xml::newStringChild(rootNode, "Recipe");
-    xml::newNumProp(curNode, "Id", id);
-
-    result.save(curNode, "Result", false);
-    xml::saveNonNullString(curNode, "Skill", skill);
-    xml::saveNonNullString(curNode, "Creator", creator);
-    xml::saveNonZeroNum(curNode, "Experience", experience);
-    xml::saveNonZeroNum(curNode, "RequireRecipe", requireRecipe);
-    xml::saveNonZeroNum(curNode, "Sizable", sizable);
-
-    saveList(curNode, "Ingredients", &ingredients);
-    saveList(curNode, "Reusables", &reusables);
-    saveList(curNode, "Equipment", &equipment);
-}
-
-//*********************************************************************
-//                      load
-//*********************************************************************
-
-void Recipe::load(xmlNodePtr curNode) {
-    id = xml::getIntProp(curNode, "Id");
-    curNode = curNode->children;
-    while(curNode) {
-        if(NODE_NAME(curNode, "Result")) result.load(curNode);
-        else if(NODE_NAME(curNode, "MinSkill")) xml::copyToNum(minSkill, curNode);
-        else if(NODE_NAME(curNode, "Experience")) xml::copyToNum(experience, curNode);
-        else if(NODE_NAME(curNode, "Skill")) { xml::copyToBString(skill, curNode); }
-        else if(NODE_NAME(curNode, "Creator")) { xml::copyToBString(creator, curNode); }
-        else if(NODE_NAME(curNode, "Sizable")) xml::copyToBool(sizable, curNode);
-        else if(NODE_NAME(curNode, "RequireRecipe")) xml::copyToBool(requireRecipe, curNode);
-        else if(NODE_NAME(curNode, "Ingredients")) loadList(curNode->children, &ingredients);
-        else if(NODE_NAME(curNode, "Reusables")) loadList(curNode->children, &reusables);
-        else if(NODE_NAME(curNode, "Equipment")) loadList(curNode->children, &equipment);
-        curNode = curNode->next;
-    }
-}
-
-//*********************************************************************
-//                      saveList
-//*********************************************************************
-
-void Recipe::saveList(xmlNodePtr curNode, bstring name, const std::list<CatRef>* list) const {
-    if(!list->size())
-        return;
-    xmlNodePtr childNode = xml::newStringChild(curNode, name.c_str());
-    CatRef  cr;
-
-    std::list<CatRef>::const_iterator it;
-    for(it = list->begin(); it != list->end() ; it++) {
-        cr = (*it);
-        cr.save(childNode, "Item", false);
-    }
-}
-
-//*********************************************************************
-//                      loadList
-//*********************************************************************
-
-void Recipe::loadList(xmlNodePtr curNode, std::list<CatRef>* list) {
-    while(curNode) {
-        if(NODE_NAME(curNode, "Item")) {
-            CatRef cr;
-            cr.load(curNode);
-            list->push_back(cr);
-        }
-        curNode = curNode->next;
-    }
-}
-
 
 
 int Recipe::getId() const { return(id); }
@@ -140,13 +84,15 @@ void Recipe::setExperience(int exp) { experience = exp; }
 bool Recipe::isSizable() const { return(sizable); }
 void Recipe::setSizable(bool size) { sizable = size; }
 CatRef Recipe::getResult() const { return(result); }
-void Recipe::setResult(CatRef cr) {
+
+void Recipe::setResult(const CatRef& cr) {
     result = cr;
     resultName = "";
 }
+
 bstring Recipe::getResultName(bool appendCr) {
-    Object* object=0;
-    if(resultName == "" || resultName == "<unknown item>") {
+    Object* object=nullptr;
+    if(resultName.empty() || resultName == "<unknown item>") {
         if(object || loadObject(result, &object)) {
             resultName = object->getObjStr(nullptr, INV | MAG, 1);
             delete object;
@@ -160,9 +106,9 @@ bstring Recipe::getResultName(bool appendCr) {
     return(oStr.str());
 }
 bstring Recipe::getSkill() const { return(skill); }
-void Recipe::setSkill(bstring s) { skill = s; }
+void Recipe::setSkill(const bstring& s) { skill = s; }
 bstring Recipe::getCreator() const { return(creator); }
-void Recipe::setCreator(bstring c) { creator = c; }
+void Recipe::setCreator(const bstring& c) { creator = c; }
 int Recipe::getMinSkill() const { return(minSkill); }
 bool Recipe::requiresRecipe() const { return(requireRecipe); }
 void Recipe::setRequiresRecipe(bool r) { requireRecipe = r; }
@@ -172,7 +118,7 @@ void Recipe::setRequiresRecipe(bool r) { requireRecipe = r; }
 //**********************************************************************
 
 bool Recipe::isSkilled(const Player* player, Size recipeSize) const {
-    if(skill == "")
+    if(skill.empty())
         return(true);
     if(!player->knowsSkill(skill))
         return(false);
@@ -217,8 +163,8 @@ bool Recipe::goodObject(const Player* player, const Object* object, const CatRef
 //                      check
 //**********************************************************************
 
-bool Recipe::check(const Player* player, const std::list<CatRef>* list, bstring type, int numIngredients) const {
-    Object* object=0;
+bool Recipe::check(const Player* player, const std::list<CatRef>* list, const bstring& type, int numIngredients) const {
+    Object* object=nullptr;
     const ObjectSet *set;
     if(type == "equipment")
         set = &player->getConstRoomParent()->objects;
@@ -305,7 +251,7 @@ bool Recipe::check(std::list<CatRef>* list, const std::list<CatRef>* require, in
 //**********************************************************************
 
 bstring Recipe::listIngredients(const std::list<CatRef>* list) const {
-    Object* object=0;
+    Object* object=nullptr;
     std::list<CatRef>::const_iterator it;
     std::ostringstream oStr;
     int     num=1;
@@ -379,7 +325,7 @@ bstring Recipe::display() {
     oStr << "  _______________________________________\n"
          << " /\\                                      \\\n";
 
-    if(skill != "") {
+    if(!skill.empty()) {
         oStr << " \\_| ^WSkill Required:^x                      |\n"
              << "   |   " << std::setw(35) << skill << "|\n"
              << "   |                                      |\n"
@@ -426,7 +372,7 @@ bstring Recipe::display() {
 //                      canUseEquipment
 //**********************************************************************
 
-bool Recipe::canUseEquipment(const Player* player, bstring skill) const {
+bool Recipe::canUseEquipment(const Player* player, const bstring& skill) const {
     if(!equipment.empty() || skill == "cooking") {
         for(Monster* mons : player->getConstRoomParent()->monsters) {
             if(mons->canSee(player)) {
@@ -485,12 +431,12 @@ void Config::remRecipe(Recipe* recipe) {
 // items in inventory are prepared, this sees if they match any known recipe
 // this function essentially lets people experiment and find new recipes
 
-Recipe* Config::searchRecipes(const Player* player, bstring skill, Size recipeSize, int numIngredients, const Object* object) {
+Recipe* Config::searchRecipes(const Player* player, const bstring& skill, Size recipeSize, int numIngredients, const Object* object) {
     std::list<CatRef> list, tList;
     std::list<CatRef>::const_iterator iIt;
     std::map<int, Recipe*>::iterator rIt;
-    Object* hot=0;
-    Recipe* recipe=0;
+    Object* hot=nullptr;
+    Recipe* recipe=nullptr;
     int     flags = player->displayFlags();
     unsigned int num=0;
     bstring str = "";
@@ -516,7 +462,7 @@ Recipe* Config::searchRecipes(const Player* player, bstring skill, Size recipeSi
     if(list.empty()) {
         if(print)
             player->print("You do not have any items prepared.\n");
-        return(0);
+        return(nullptr);
     }
 
     num = list.size();
@@ -581,8 +527,8 @@ Recipe* Config::searchRecipes(const Player* player, bstring skill, Size recipeSi
             // probably use this recipe
             if(hasEquipment) {
                 if(!recipe->canUseEquipment(player, skill))
-                    return(0);
-                if(str != "")
+                    return(nullptr);
+                if(!str.empty())
                     player->printColor("%s", str.c_str());
                 return(recipe);
             }
@@ -595,7 +541,7 @@ Recipe* Config::searchRecipes(const Player* player, bstring skill, Size recipeSi
 
     if(print)
         player->print("Your combination of prepared items didn't produce anything.\n");
-    return(0);
+    return(nullptr);
 }
 
 //**********************************************************************
@@ -603,7 +549,7 @@ Recipe* Config::searchRecipes(const Player* player, bstring skill, Size recipeSi
 //**********************************************************************
 
 int cmdRecipes(Player* player, cmd* cmnd) {
-    Recipe* recipe=0;
+    Recipe* recipe=nullptr;
     int     i=0, shown=0, truncate=0;
     std::list<int>::iterator it;
     std::ostringstream oStr;
@@ -612,7 +558,7 @@ int cmdRecipes(Player* player, cmd* cmnd) {
     oStr.setf(std::ios::left, std::ios::adjustfield);
 
     // the parser doesn't understand "recipe 5" as two strings. this will force it to.
-    if(cmnd->num == 1 && getFullstrText(cmnd->fullstr, 1) != "")
+    if(cmnd->num == 1 && !getFullstrText(cmnd->fullstr, 1).empty())
         cmnd->num = 2;
 
     if(cmnd->num > 1) {
@@ -646,9 +592,9 @@ int cmdRecipes(Player* player, cmd* cmnd) {
         recipe = gConfig->getRecipe(*it);
         i++;
 
-        if( filter != "" &&
+        if( !filter.empty() &&
             !(  filter == recipe->getSkill() ||
-                (filter == "none" && recipe->getSkill() == "")
+                (filter == "none" && recipe->getSkill().empty())
             )
         )
             continue;
@@ -665,12 +611,12 @@ int cmdRecipes(Player* player, cmd* cmnd) {
 
         oStr << "^c#" << std::setw(3) << i << "^x "
              << std::setw(31) << recipe->getResultName()
-             << std::setw(14) << (recipe->getSkill() == "" ? "none" : recipe->getSkill())
+             << std::setw(14) << (recipe->getSkill().empty() ? "none" : recipe->getSkill())
              << "|\n";
 
         // don't spam them if they have too many recipes
         // if they filter, we must show them all
-        if(shown > 80 && filter == "")
+        if(shown > 80 && filter.empty())
             truncate = shown;
     }
 
@@ -683,7 +629,7 @@ int cmdRecipes(Player* player, cmd* cmnd) {
 
     if(!shown) {
         oStr << " \\_|                                                 |\n";
-        if(filter == "")
+        if(filter.empty())
             oStr << "   |             You know no recipes.                |\n";
         else
             oStr << "   |         No recipes matched that filter.         |\n";
@@ -707,7 +653,7 @@ int cmdRecipes(Player* player, cmd* cmnd) {
 //                      findRecipe
 //**********************************************************************
 
-Recipe* Player::findRecipe(cmd* cmnd, bstring skill, bool* searchRecipes, Size recipeSize, int numIngredients) const {
+Recipe* Player::findRecipe(cmd* cmnd, const bstring& skill, bool* searchRecipes, Size recipeSize, int numIngredients) const {
     std::list<int>::const_iterator it;
     bstring txt = getFullstrText(cmnd->fullstr, 1);
 
@@ -724,7 +670,7 @@ Recipe* Player::findRecipe(cmd* cmnd, bstring skill, bool* searchRecipes, Size r
         }
         print("You don't know that recipe.\n");
     } else {
-        Recipe* recipe = 0;
+        Recipe* recipe = nullptr;
         Object* object = this->findObject(this, cmnd, 1);
         if(object) {
             // if the object they're using is a recipe
@@ -750,7 +696,7 @@ Recipe* Player::findRecipe(cmd* cmnd, bstring skill, bool* searchRecipes, Size r
         //for(it = recipes.begin(); it != recipes.end() ; it++) {
         //}
     }
-    return(0);
+    return(nullptr);
 }
 
 //**********************************************************************
@@ -758,7 +704,7 @@ Recipe* Player::findRecipe(cmd* cmnd, bstring skill, bool* searchRecipes, Size r
 //**********************************************************************
 
 int dmCombine(Player* player, cmd* cmnd) {
-    Recipe *recipe=0;
+    Recipe *recipe=nullptr;
     std::list<CatRef> objects;
     std::list<CatRef>* list;
     bstring txt = "";
@@ -814,7 +760,7 @@ int dmCombine(Player* player, cmd* cmnd) {
     list->assign(objects.begin(), objects.end());
 
     player->print("Recipe #%d %s %s.\n", recipe->getId(), txt.c_str(),
-        list->size() ? "set" : "cleared");
+        !list->empty() ? "set" : "cleared");
     player->unprepareAllObjects();
     return(0);
 }
@@ -837,7 +783,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 
     switch(low(cmnd->str[2][0])) {
     case 'd':
-        if(strcmp(cmnd->str[3], "confirm")) {
+        if(strcmp(cmnd->str[3], "confirm") != 0) {
             player->printColor("Are you sure you want to delete recipe #%d?\nType ^y*set rec %d del confirm^x to delete.\n",
                 recipe->getId(), recipe->getId());
             return(0);
@@ -896,7 +842,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
                 player->getCName(), recipe->getId(), "Sizable", recipe->isSizable() ? "true" : "false");
         } else {
             txt = cmnd->str[3];
-            if(txt != "" && !gConfig->getSkill(txt)) {
+            if(!txt.empty() && !gConfig->getSkill(txt)) {
                 player->print("The skill \"%s\" doesn't exist.\n", txt.c_str());
                 return(0);
             }
@@ -921,7 +867,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 
 int dmRecipes(Player* player, cmd* cmnd) {
     std::list<CatRef>::iterator lIt;
-    Recipe* recipe=0;
+    Recipe* recipe=nullptr;
     std::ostringstream oStr;
     bstring txt = getFullstrText(cmnd->fullstr, 1);
 
@@ -930,7 +876,7 @@ int dmRecipes(Player* player, cmd* cmnd) {
 
     oStr.setf(std::ios::left, std::ios::adjustfield);
 
-    if(txt != "" && isdigit(txt.getAt(0))) {
+    if(!txt.empty() && isdigit(txt.getAt(0))) {
         bool    i=false;
 
         recipe = gConfig->getRecipe(atoi(txt.c_str()));
@@ -949,7 +895,7 @@ int dmRecipes(Player* player, cmd* cmnd) {
 
         oStr << "Recipe: ^c" << recipe->getId() << "^w"
              << "      Skill: ";
-        if(recipe->getSkill() != "")
+        if(!recipe->getSkill().empty())
             oStr << "^c" << recipe->getSkill() << "^x";
         else
             oStr << "<none>";
@@ -1003,7 +949,7 @@ int dmRecipes(Player* player, cmd* cmnd) {
 
         oStr << "^yListing Recipes; type *recipe <num> for more detailed information.^x\n";
 
-        if(txt == "")
+        if(txt.empty())
              oStr << "^y                 or *recipe <skill> to filter by skill^x\n";
         else
              oStr << "^y        Filtering on skill: " << txt << "^x\n";
@@ -1011,9 +957,9 @@ int dmRecipes(Player* player, cmd* cmnd) {
         for(it = gConfig->recipes.begin(); it != gConfig->recipes.end() ; it++) {
             recipe = (*it).second;
 
-            if( txt != "" &&
+            if( !txt.empty() &&
                 !(  txt == recipe->getSkill() ||
-                    (txt == "none" && recipe->getSkill() == "")
+                    (txt == "none" && recipe->getSkill().empty())
                 )
             )
                 continue;
@@ -1022,7 +968,7 @@ int dmRecipes(Player* player, cmd* cmnd) {
 
             oStr << "   Recipe: ^c" << std::setw(4) << recipe->getId() << "^w"
                  << " Result: ^c" << std::setw(50) << recipe->getResultName(true) << "^xSkill: ";
-            if(recipe->getSkill() != "")
+            if(!recipe->getSkill().empty())
                 oStr << "^c" << recipe->getSkill() << "^x";
             else
                 oStr << "<none>";
@@ -1087,7 +1033,7 @@ bool Config::loadRecipes() {
     while(curNode && xmlIsBlankNode(curNode))
         curNode = curNode->next;
 
-    if(curNode == 0) {
+    if(curNode == nullptr) {
         xmlFreeDoc(xmlDoc);
         return(false);
     }
@@ -1155,7 +1101,7 @@ void Config::clearRecipes() {
 Recipe* Config::getRecipe(int id) {
     if(recipes.find(id) != recipes.end())
         return(recipes[id]);
-    return(0);
+    return(nullptr);
 }
 
 
@@ -1199,7 +1145,7 @@ void Player::removeItems(const std::list<CatRef>* list, int numIngredients) {
 //**********************************************************************
 
 int cmdPrepareObject(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
 
     if(cmnd->num < 2) {
         player->print("Prepare what?\n");
@@ -1234,7 +1180,7 @@ int cmdPrepareObject(Player* player, cmd* cmnd) {
 //**********************************************************************
 
 int cmdUnprepareObject(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
     if(cmnd->num < 2) {
         player->print("Unprepare what?\n");
         return(0);
@@ -1259,7 +1205,7 @@ int cmdUnprepareObject(Player* player, cmd* cmnd) {
     return(0);
 }
 
-void Player::checkFreeSkills(bstring skill) {
+void Player::checkFreeSkills(const bstring& skill) {
     if( skill == "smithing" ||
         skill == "cooking" ||
         skill == "fishing" ||
@@ -1276,20 +1222,20 @@ void Player::checkFreeSkills(bstring skill) {
 //**********************************************************************
 
 int cmdCraft(Player* player, cmd* cmnd) {
-    Object* object=0;
-    const Recipe* recipe=0;
+    Object* object=nullptr;
+    const Recipe* recipe=nullptr;
     bool succeed=true, searchRecipes=false;
     std::list<int>::iterator it;
     bstring skill = "", action = cmnd->myCommand->getName(), reqSize = "";
     bstring result = "created", fail = "create";
-    long t = time(0);
+    long t = time(nullptr);
     Size size = player->getSize();
     int numIngredients = 1;
 
     player->unhide();
 
     // the parser doesn't understand "cook 5" as two strings. this will force it to.
-    if(cmnd->num == 1 && getFullstrText(cmnd->fullstr, 1) != "")
+    if(cmnd->num == 1 && !getFullstrText(cmnd->fullstr, 1).empty())
         cmnd->num = 2;
 
     if(!player->isStaff()) {
@@ -1316,7 +1262,7 @@ int cmdCraft(Player* player, cmd* cmnd) {
 
     // this info will only be used for sizable recipes
     reqSize = getFullstrText(cmnd->fullstr, 2);
-    if(reqSize != "") {
+    if(!reqSize.empty()) {
         size = getSize(reqSize);
         if(size == NO_SIZE)
             size = player->getSize();
@@ -1356,7 +1302,7 @@ int cmdCraft(Player* player, cmd* cmnd) {
 
 
     // initial skill check
-    if(skill != "" && !player->knowsSkill(skill)) {
+    if(!skill.empty() && !player->knowsSkill(skill)) {
         player->print("You lack the training in %s.\n", skill.c_str());
         return(0);
     }
@@ -1377,7 +1323,7 @@ int cmdCraft(Player* player, cmd* cmnd) {
             return(0);
         }
         if(recipe->getSkill() != skill) {
-            if(recipe->getSkill() == "")
+            if(recipe->getSkill().empty())
                 player->print("Sorry, that recipe is not a %s recipe.\n", skill.c_str());
             else
                 player->print("Sorry, that recipe is a %s recipe.\n", recipe->getSkill().c_str());
@@ -1464,7 +1410,7 @@ int cmdCraft(Player* player, cmd* cmnd) {
     player->unprepareAllObjects();
 
     // check success: skillless recipes are always successful
-    if(skill != "") {
+    if(!skill.empty()) {
         double chance = 30 + 20 * log(player->getSkillLevel(skill));
         if(chance < Random::get(0,100))
             succeed = false;

@@ -15,14 +15,18 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstdarg>
+#include <printf.h>       // for register_printf_function, printf_info, PA_P...
+#include <cstdio>         // for asprintf, fprintf, vasprintf, FILE, size_t
+#include <cstdlib>        // for free
+#include <ostream>        // for operator<<, ostringstream, endl, ostream
+#include <string>         // for basic_string
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "login.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "vprint.hpp"
+#include "bstring.hpp"    // for bstring
+#include "creatures.hpp"  // for Creature, Player
+#include "global.hpp"     // for CAP
+#include "objects.hpp"    // for Object
+#include "server.hpp"     // for Server
+#include "socket.hpp"     // for Socket
 
 // Function Prototypes
 bstring delimit(const char *str, int wrap);

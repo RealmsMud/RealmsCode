@@ -19,7 +19,8 @@
 #ifndef MXP_H
 #define MXP_H
 
-#include "common.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr
+#include "bstring.hpp"
 
 class MxpElement {
 public:

@@ -15,124 +15,48 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "factions.hpp"
-#include "mud.hpp"
-#include "quests.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "tokenizer.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include <bits/types/struct_tm.h>                   // for tm
+#include <boost/iterator/iterator_facade.hpp>       // for operator++, itera...
+#include <boost/mpl/eval_if.hpp>                    // for eval_if<>::type
+#include <cctype>                                   // for ispunct, isspace
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <cstdio>                                   // for sprintf
+#include <cstring>                                  // for strlen, strncmp
+#include <strings.h>                                // for strncasecmp
+#include <ctime>                                    // for time, time_t, loc...
+#include <locale>                                   // for locale
+#include <ostream>                                  // for operator<<, basic...
+#include <stdexcept>                                // for runtime_error
+#include <string>                                   // for basic_string, cha...
+#include <boost/tokenizer.hpp>
+
+#include "bstring.hpp"                              // for bstring, operator+
+#include "catRef.hpp"                               // for CatRef
+#include "cmd.hpp"                                  // for cmd
+#include "commands.hpp"                             // for getFullstrText
+#include "config.hpp"                               // for Config, gConfig
+#include "container.hpp"                            // for ObjectSet, Container
+#include "creatures.hpp"                            // for Player, Monster
+#include "factions.hpp"                             // for Faction
+#include "flags.hpp"                                // for M_TALKS, P_AFK
+#include "global.hpp"                               // for CAP, INV, CAST_RE...
+#include "objects.hpp"                              // for Object, ObjectType
+#include "paths.hpp"                                // for Game
+#include "proto.hpp"                                // for broadcast, get_la...
+#include "quests.hpp"                               // for QuestCompletion
+#include "random.hpp"                               // for Random
+#include "rooms.hpp"                                // for UniqueRoom, BaseRoom
+#include "server.hpp"                               // for GOLD_IN, Server
+#include "structs.hpp"                              // for ttag
+#include "utils.hpp"                                // for MIN
+#include "xml.hpp"                                  // for NODE_NAME, newStr...
+
 
 QuestCatRef::QuestCatRef() {
     area = gConfig->defaultArea;
     reqNum = 1;
     curNum = 0;
     id = 0;
-}
-
-QuestCatRef::QuestCatRef(xmlNodePtr rootNode) {
-    // Set up the defaults
-    reqNum = 1;
-    curNum = 0;
-    area = gConfig->defaultArea;
-
-    // And then read in the XML file
-    xmlNodePtr curNode = rootNode->children;
-    while(curNode) {
-            if(NODE_NAME(curNode, "Area")) xml::copyToBString(area, curNode);
-        else if(NODE_NAME(curNode, "Id")) xml::copyToNum(id, curNode);
-        else if(NODE_NAME(curNode, "ReqAmt")) xml::copyToNum(reqNum, curNode);
-        else if(NODE_NAME(curNode, "CurAmt")) xml::copyToNum(curNum, curNode);
-
-        curNode = curNode->next;
-    }
-}
-xmlNodePtr QuestCatRef::save(xmlNodePtr rootNode, bstring saveName) const {
-    xmlNodePtr curNode = xml::newStringChild(rootNode, saveName.c_str());
-
-    xml::newStringChild(curNode, "Area", area);
-    xml::newNumChild(curNode, "Id", id);
-    xml::newNumChild(curNode, "ReqAmt", reqNum);
-    xml::newNumChild(curNode, "CurAmt", curNum);
-    return(curNode);
-}
-
-QuestInfo::QuestInfo(xmlNodePtr rootNode) {
-    bstring faction = "";
-
-    questId = xml::getIntProp(rootNode, "Num");
-    repeatable = sharable = false;
-    expReward = minLevel = minFaction = level = 0;
-    repeatFrequency = QuestRepeatFrequency::REPEAT_NEVER;
-
-    xmlNodePtr curNode = rootNode->children;
-    while(curNode) {
-            if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
-        else if(NODE_NAME(curNode, "Revision")) xml::copyToBString(revision, curNode);
-        else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
-        else if(NODE_NAME(curNode, "ReceiveString")) xml::copyToBString(receiveString, curNode);
-        else if(NODE_NAME(curNode, "CompletionString")) xml::copyToBString(completionString, curNode);
-        else if(NODE_NAME(curNode, "TimesRepeatable")) xml::copyToNum(timesRepeatable, curNode);
-        else if(NODE_NAME(curNode, "RepeatFrequency")) xml::copyToNum<QuestRepeatFrequency>(repeatFrequency, curNode);
-        else if(NODE_NAME(curNode, "Sharable")) xml::copyToBool(sharable, curNode);
-        else if(NODE_NAME(curNode, "TurnIn")) turnInMob = QuestCatRef(curNode);
-        else if(NODE_NAME(curNode, "Level")) xml::copyToNum(level, curNode);
-        else if(NODE_NAME(curNode, "MinLevel")) xml::copyToNum(minLevel, curNode);
-        else if(NODE_NAME(curNode, "MinFaction")) xml::copyToNum(minFaction, curNode);
-        else if(NODE_NAME(curNode, "Prerequisites")) {
-            xmlNodePtr childNode = curNode->children;
-            int preReq=0;
-            while(childNode) {
-                if(NODE_NAME(childNode, "Prerequisite"))
-                    if((preReq = xml::toNum<int>(childNode)) != 0)
-                        preRequisites.push_back(preReq);
-
-                childNode = childNode->next;
-            }
-        }
-        else if(NODE_NAME(curNode, "Initial")) {
-            xmlNodePtr childNode = curNode->children;
-            while(childNode) {
-                if(NODE_NAME(childNode, "Object")) initialItems.push_back(QuestCatRef(childNode));
-
-                childNode = childNode->next;
-            }
-        }
-        else if(NODE_NAME(curNode, "Requirements")) {
-            xmlNodePtr childNode = curNode->children;
-            while(childNode) {
-                    if(NODE_NAME(childNode, "Object")) itemsToGet.push_back(QuestCatRef(childNode));
-                else if(NODE_NAME(childNode, "Monster")) mobsToKill.push_back(QuestCatRef(childNode));
-                else if(NODE_NAME(childNode, "Room")) roomsToVisit.push_back(QuestCatRef(childNode));
-
-                childNode = childNode->next;
-            }
-        }
-        else if(NODE_NAME(curNode, "Rewards")) {
-            xmlNodePtr childNode = curNode->children;
-            while(childNode) {
-                    if(NODE_NAME(childNode, "Coins")) cashReward.load(childNode);
-                else if(NODE_NAME(childNode, "Experience")) xml::copyToNum(expReward, childNode);
-                else if(NODE_NAME(childNode, "Object")) itemRewards.push_back(QuestCatRef(childNode));
-                else if(NODE_NAME(childNode, "Faction")) {
-                    xml::copyPropToBString(faction, childNode, "id");
-                    if(faction != "")
-                        factionRewards[faction] = xml::toNum<long>(childNode) * -1;
-                }
-
-                childNode = childNode->next;
-            }
-        }
-        curNode = curNode->next;
-    }
-
-    if (repeatFrequency != QuestRepeatFrequency::REPEAT_NEVER)
-        repeatable = true;
-
 }
 
 
@@ -171,7 +95,7 @@ QuestCompletion::QuestCompletion(xmlNodePtr rootNode, Player* player) {
             childNode = curNode->children;
             while(childNode) {
                 if(NODE_NAME(childNode, "QuestCatRef")) {
-                    mobsKilled.push_back(QuestCatRef(childNode));
+                    mobsKilled.emplace_back(childNode);
                 }
                 childNode = childNode->next;
             }
@@ -180,7 +104,7 @@ QuestCompletion::QuestCompletion(xmlNodePtr rootNode, Player* player) {
             childNode = curNode->children;
             while(childNode) {
                 if(NODE_NAME(childNode, "QuestCatRef")) {
-                    roomsVisited.push_back(QuestCatRef(childNode));
+                    roomsVisited.emplace_back(childNode);
                 }
                 childNode = childNode->next;
             }
@@ -219,28 +143,6 @@ QuestCompleted::QuestCompleted(const QuestCompleted &qc) {
     lastCompleted = qc.lastCompleted;
 }
 
-QuestCompleted::QuestCompleted(xmlNodePtr rootNode) {
-    init();
-
-    xmlNodePtr curNode = rootNode->children;
-
-    while(curNode) {
-        if(NODE_NAME(curNode, "Times")) xml::copyToNum(times, curNode);
-        else if(NODE_NAME(curNode, "LastCompleted")) xml::copyToNum(lastCompleted, curNode);
-
-        curNode = curNode->next;
-    }
-}
-
-xmlNodePtr QuestCompleted::save(xmlNodePtr rootNode, int id) const {
-    xmlNodePtr curNode = xml::newStringChild(rootNode, "QuestCompleted");
-    xml::newNumProp(curNode, "ID", id);
-    xml::newNumChild(curNode, "Times", times);
-    xml::newNumChild(curNode, "LastCompleted", lastCompleted);
-
-    return(curNode);
-}
-
 
 void QuestCompletion::resetParentQuest() {
     if((parentQuest = gConfig->getQuest(questId)) == nullptr) {
@@ -254,34 +156,6 @@ QuestInfo* QuestCompletion::getParentQuest() const {
 
 TalkResponse::TalkResponse() {
     quest = nullptr;
-}
-
-TalkResponse::TalkResponse(xmlNodePtr rootNode) {
-    quest = nullptr;
-
-    // And then read in the XML file
-    xmlNodePtr curNode = rootNode->children;
-    while(curNode) {
-            if(NODE_NAME(curNode, "Keyword")) keywords.push_back(xml::getBString(curNode).toLower());
-        else if(NODE_NAME(curNode, "Response")) xml::copyToBString(response, curNode);
-        else if(NODE_NAME(curNode, "Action")) {
-                xml::copyToBString(action, curNode);
-                parseQuest();
-            }
-
-        curNode = curNode->next;
-    }
-}
-
-xmlNodePtr TalkResponse::saveToXml(xmlNodePtr rootNode) const {
-    xmlNodePtr talkNode = xml::newStringChild(rootNode, "TalkResponse");
-
-    for(const bstring&  keyword : keywords) {
-        xml::newStringChild(talkNode, "Keyword", keyword);
-    }
-    xml::newStringChild(talkNode, "Response", response);
-    xml::newStringChild(talkNode, "Action", action);
-    return(talkNode);
 }
 
 //*****************************************************************************
@@ -316,8 +190,7 @@ void TalkResponse::parseQuest() {
 
     }
 
-    return;
-}
+    }
 
 bool QuestInfo::isRepeatable() const {
     return(repeatable);
@@ -364,7 +237,7 @@ bstring QuestInfo::getDisplayString() const {
     displayStr << "^WCompletionString: ^x" << temp << "\n";
 
     if(!preRequisites.empty()) {
-        QuestInfo* q=0;
+        QuestInfo* q=nullptr;
         int t = 0;
         displayStr << "^WPrerequisites:^x";
         for(const int & preReq : preRequisites) {
@@ -384,7 +257,7 @@ bstring QuestInfo::getDisplayString() const {
     if(minFaction)
         displayStr << "^WMinimum Faction:^x " << minFaction << "\n";
 
-    Monster* endMonster = 0;
+    Monster* endMonster = nullptr;
     displayStr << "^RTurn in Monster:^x ";
     if(loadMonster(turnInMob, &endMonster)) {
          displayStr << endMonster->getName();
@@ -520,7 +393,7 @@ bool Config::loadQuests() {
         if(NODE_NAME(curNode, "QuestInfo")) {
             questId = xml::getIntProp(curNode, "Num");
             if(questId > 0) {
-                QuestInfo* tmpQuest = new QuestInfo(curNode);
+                auto* tmpQuest = new QuestInfo(curNode);
 
                 if(quests[questId] == nullptr){
                     quests[questId] = tmpQuest;
@@ -566,7 +439,7 @@ bool Player::hasDoneQuest(int questId) const {
 }
 
 bool Monster::hasQuests() const {
-    return quests.size() > 0;
+    return !quests.empty();
 }
 
 QuestEligibility Monster::getEligibleQuestDisplay(const Creature* viewer) const {
@@ -737,27 +610,21 @@ bool QuestCompletion::checkQuestCompletion(bool showMessage) {
     bool alreadyCompleted = mobsCompleted && itemsCompleted && roomsCompleted;
 
     // First see if we have killed all required monsters
-    if(mobsCompleted == false) {
+    if(!mobsCompleted) {
         // Variable is false, so check the function
-        if(!hasRequiredMobs())
-            mobsCompleted = false;
-        else
-            mobsCompleted = true;
+        mobsCompleted = hasRequiredMobs();
     }
     // Now check to see if we've been to all of the rooms we should have
-    if(roomsCompleted == false) {
+    if(!roomsCompleted) {
         // Nope, so check the function
-        if(!hasRequiredRooms())
-            roomsCompleted = false;
-        else
-            roomsCompleted = true;
+        roomsCompleted = hasRequiredRooms();
     }
 
     // Now see if we still have the required items
     bool itemsDone = hasRequiredItems();
-    if(itemsCompleted == true && itemsDone == true) {
+    if(itemsCompleted && itemsDone) {
         itemsCompleted = true;
-    } else if(itemsDone == false) {
+    } else if(!itemsDone) {
         itemsCompleted = false;
         return(false);
     } else { //if(itemsDone == true) {
@@ -766,7 +633,7 @@ bool QuestCompletion::checkQuestCompletion(bool showMessage) {
 
     if(mobsCompleted && roomsCompleted && itemsCompleted) {
         if(showMessage && !alreadyCompleted) {
-            Monster* endMonster = 0;
+            Monster* endMonster = nullptr;
 
             parentPlayer->printColor("You have fufilled all of the requirements for ^W%s^x!\n", parentQuest->getName().c_str());
             if(loadMonster(parentQuest->turnInMob, &endMonster)) {
@@ -825,7 +692,7 @@ bstring QuestCompletion::getStatusDisplay() {
 
     displayStr << "^WDescription: ^w" << parentQuest->description << "^x\n";
 
-    Monster* endMonster = 0;
+    Monster* endMonster = nullptr;
     displayStr << "^RWhen finished, return to: ^x";
     if(loadMonster(parentQuest->turnInMob, &endMonster)) {
          displayStr << endMonster->getName();
@@ -996,7 +863,7 @@ bool QuestCompletion::complete(Monster* monster) {
     // if they can't get all of the item rewards, they can't complete the quest
     for(QuestCatRef & obj : parentQuest->itemRewards) {
         int num = obj.reqNum, cur = 0;
-        Object* object=0;
+        Object* object=nullptr;
         if(num <= 0)
             continue;
 
@@ -1069,7 +936,7 @@ bool QuestCompletion::complete(Monster* monster) {
 
     if(!parentQuest->cashReward.isZero()) {
         parentPlayer->coins.add(parentQuest->cashReward);
-        gServer->logGold(GOLD_IN, parentPlayer, parentQuest->cashReward, nullptr, "QuestCompletion");
+        Server::logGold(GOLD_IN, parentPlayer, parentQuest->cashReward, nullptr, "QuestCompletion");
         parentPlayer->printColor("%M gives you ^C%s^x. You now have %s.\n",
             monster, parentQuest->cashReward.str().c_str(), parentPlayer->coins.str().c_str());
     }
@@ -1105,7 +972,7 @@ bool QuestCompletion::complete(Monster* monster) {
 //*****************************************************************************
 
 int cmdTalk(Player* player, cmd* cmnd) {
-    Monster *target=0;
+    Monster *target=nullptr;
 
     QuestInfo* quest = nullptr;
 
@@ -1146,7 +1013,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(target->getTalk() != "" && !Faction::willSpeakWith(player, target->getPrimeFaction())) {
+    if(!target->getTalk().empty() && !Faction::willSpeakWith(player, target->getPrimeFaction())) {
         player->print("%M refuses to speak with you.\n", target);
         return(0);
     }
@@ -1180,7 +1047,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
                 action = randomActions.front();
             }
         }
-        if(response != "")
+        if(!response.empty())
             broadcast(player->getSock(), player->getParent(), "%M speaks to %N in %s.",
                 player, target, get_language_adj(player->current_language));
     } else {
@@ -1246,25 +1113,25 @@ int cmdTalk(Player* player, cmd* cmnd) {
         foundresponse:
 
         // they can't trigger special responses by talking to them
-        if(key == "" || key.getAt(0) == '$') {
+        if(key.empty() || key.getAt(0) == '$') {
             response = "";
             action = "";
         }
 
-        if(response == "" && action == "") {
+        if(response.empty() && action.empty()) {
             broadcast(nullptr, player->getRoomParent(), "%M shrugs.", target);
             return(0);
         }
     }
 
 
-    if(response != "")
+    if(!response.empty())
         target->sayTo(player, response);
 
-    if(action != "")
+    if(!action.empty())
         target->doTalkAction(player, action, quest);
 
-    if(response == "" && action == "")
+    if(response.empty() && action.empty())
         broadcast(nullptr, player->getRoomParent(), "%M doesn't say anything.", target);
 
     return(0);
@@ -1379,7 +1246,7 @@ bool Monster::doTalkAction(Player* target, bstring action, QuestInfo* quest) {
             }
             toGive.id = objNum;
 
-            Object* object = 0;
+            Object* object = nullptr;
             if(loadObject(toGive, &object)) {
                 if(object->flagIsSet(O_RANDOM_ENCHANT))
                     object->randomEnchant();
@@ -1418,7 +1285,7 @@ bool Monster::doTalkAction(Player* target, bstring action, QuestInfo* quest) {
 //*****************************************************************************
 
 void QuestInfo::giveInitialitems(const Monster* giver, Player* player) const {
-    Object* object=0;
+    Object* object=nullptr;
     std::list<QuestCatRef>::const_iterator it;
     int num=0, cur=0;
 
@@ -1570,7 +1437,6 @@ void QuestInfo::printReceiveString(const Player* player, const Monster* giver) c
     toPrint.Replace("*CR*", "\n");
 
     player->printColor("%s\n", toPrint.c_str());
-    return;
 }
 
 //*****************************************************************************
@@ -1587,7 +1453,6 @@ void QuestInfo::printCompletionString(const Player* player, const Monster* giver
     toPrint.Replace("*CR*", "\n");
 
     player->printColor("%s\n", toPrint.c_str());
-    return;
 }
 
 
@@ -1597,15 +1462,15 @@ void QuestInfo::printCompletionString(const Player* player, const Monster* giver
 //*****************************************************************************
 
 void Monster::convertOldTalks() {
-    ttag    *tp=0, *next=0;
+    ttag    *tp=nullptr, *next=nullptr;
 
     if(!flagIsSet(M_TALKS))
         return;
     clearFlag(M_TALKS);
     tp = first_tlk;
     while(tp) {
-        TalkResponse* newResponse = new TalkResponse();
-        newResponse->keywords.push_back(tp->key);
+        auto* newResponse = new TalkResponse();
+        newResponse->keywords.emplace_back(tp->key);
         newResponse->response = tp->response;
         switch(tp->type) {
         case 1:
@@ -1627,17 +1492,13 @@ void Monster::convertOldTalks() {
     }
 
     tp = first_tlk;
-    first_tlk = 0;
+    first_tlk = nullptr;
     while(tp) {
         next = tp->next_tag;
-        if(tp->key)
-            delete[] tp->key;
-        if(tp->response)
-            delete[] tp->response;
-        if(tp->action)
-            delete[] tp->action;
-        if(tp->target)
-            delete[] tp->target;
+        delete[] tp->key;
+        delete[] tp->response;
+        delete[] tp->action;
+        delete[] tp->target;
         delete tp;
         tp = next;
     }
@@ -1791,7 +1652,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
 
 
 void QuestCompleted::complete() {
-    lastCompleted = time(0);
+    lastCompleted = time(nullptr);
     times++;
 }
 
@@ -1804,7 +1665,7 @@ int QuestCompleted::getTimesCompleted() {
 }
 
 QuestCompleted::QuestCompleted(int pTimes) {
-    lastCompleted = time(0);
+    lastCompleted = time(nullptr);
     times = pTimes;
 }
 
@@ -1819,8 +1680,8 @@ QuestCompleted::QuestCompleted() {
 
 
 time_t getDailyReset() {
-    struct tm t;
-    time_t now = time(0);
+    struct tm t{};
+    time_t now = time(nullptr);
     localtime_r(&now, &t);
     t.tm_sec = t.tm_min = t.tm_hour = 0;
     return (mktime(&t) - 1);
@@ -1829,8 +1690,8 @@ time_t getDailyReset() {
 }
 
 time_t getWeeklyReset() {
-    time_t base_t = time(0);
-    struct tm base_tm;
+    time_t base_t = time(nullptr);
+    struct tm base_tm{};
     localtime_r(&base_t, &base_tm);
 
     int dow = base_tm.tm_wday;
@@ -1842,7 +1703,7 @@ time_t getWeeklyReset() {
         ddiff = -(dow + 5);
     }
 
-    struct tm new_tm;
+    struct tm new_tm{};
     new_tm = base_tm;
 
     new_tm.tm_yday += ddiff;
@@ -1853,7 +1714,7 @@ time_t getWeeklyReset() {
     new_tm.tm_min = new_tm.tm_sec = new_tm.tm_hour = 0;
     
     time_t new_time = mktime(&new_tm);
-    struct tm new_t;
+    struct tm new_t{};
     localtime_r(&new_time, &new_t);
 
     return new_time;

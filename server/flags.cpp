@@ -16,12 +16,20 @@
  *
  */
 
-#include <iomanip>
-#include <fstream>
+#include <libxml/parser.h>        // for xmlFreeDoc, xmlNode, xmlDocGetRootE...
+#include <cstdio>                 // for sprintf, snprintf
+#include <unistd.h>               // for link
+#include <fstream>                // for operator<<, basic_ostream, char_traits
+#include <iomanip>                // for operator<<, setw
+#include <map>                    // for operator==, operator!=, map, map<>:...
+#include <string>                 // for operator<<, operator==, allocator
 
-#include "config.hpp"
-#include "mud.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"            // for bstring, operator+
+#include "config.hpp"             // for Config, MudFlagMap, gConfig
+#include "paths.hpp"              // for BuilderHelp, DMHelp, Code
+#include "proto.hpp"              // for wrapText
+#include "structs.hpp"            // for MudFlag
+#include "xml.hpp"                // for NODE_NAME, copyPropToBString, copyT...
 
 //*********************************************************************
 //                      MudFlag

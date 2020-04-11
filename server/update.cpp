@@ -16,23 +16,35 @@
  *
  */
 
-#include <sys/signal.h>
+#include <cctype>                 // for isdigit
+#include <csignal>                // for signal, SIG_DFL, kill, SIGALRM, SIGFPE
+#include <cstdlib>                // for free, exit, atoi
+#include <cstring>                // for strcpy, strlen
+#include <ctime>                  // for time, ctime
+#include <unistd.h>               // for getpid
 
-#include "catRefInfo.hpp"
-#include "calendar.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "factions.hpp"
-#include "login.hpp"
-#include "mud.hpp"
-#include "move.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "ships.hpp"
-#include "socket.hpp"
-#include "web.hpp"
-#include "xml.hpp"
+#include "area.hpp"               // for Area
+#include "bstring.hpp"            // for bstring, operator+
+#include "calendar.hpp"           // for Calendar, cWeather, cSeason
+#include "catRefInfo.hpp"         // for CatRefInfo
+#include "cmd.hpp"                // for cmd
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Monster, Player, Creature
+#include "flags.hpp"              // for M_LOGIC_MONSTER, M_OUTLAW_AGGRO
+#include "global.hpp"             // for DEFAULT_WEAPON_DELAY
+#include "mud.hpp"                // for Weather, DL_BROAD, Shutdown, last_d...
+#include "proto.hpp"              // for broadcast, logn, isDay, loge, isDm
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom, UniqueRoom
+#include "server.hpp"             // for Server, gServer, MonsterList, Playe...
+#include "ships.hpp"              // for Ship, ShipStop, shipBroadcastRange
+#include "socket.hpp"             // for Socket, InBytes, OutBytes
+#include "structs.hpp"            // for ttag, daily
+#include "threat.hpp"             // for ThreatTable
+#include "weather.hpp"            // for WEATHER_SUNRISE, WEATHER_SUNSET
+#include "web.hpp"                // for webCrash
+
+class Object;
 
 bool            firstLoop=true;
 long            last_track_update=0;
@@ -613,8 +625,7 @@ void Server::updateAction(long t) {
                         }
                     on_cmd+=2; // set for next command, can be altered later
                     // proccess commands based on a higharcy
-                    if(act)
-                    if(act->test_for) {
+                    if(act && act->test_for) {
                         switch(act->test_for) {
                         case 'P': // test for player
                             victim = room->findPlayer(monster, act->response, 1);

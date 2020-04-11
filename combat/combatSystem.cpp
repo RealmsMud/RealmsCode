@@ -16,15 +16,30 @@
  *
  */
 
-#include <sstream>
+#include <cstdlib>        // for abs
+#include <cstring>        // for strcpy
+#include <ctime>          // for time, time_t
+#include <sstream>         // for operator<<, basic_ostream, endl, ostream
+#include <string>          // for operator==, basic_string, operator!=, oper...
 
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "specials.hpp"
-#include "objects.hpp"
+#include "bstring.hpp"     // for bstring
+#include "config.hpp"      // for Config, gConfig
+#include "creatures.hpp"   // for Creature, Player, Monster, AttackResult
+#include "damage.hpp"      // for Damage
+#include "effects.hpp"     // for EffectInfo
+#include "fighters.hpp"    // for FOCUS_DODGE, FOCUS_PARRY, FOCUS_RIPOSTE
+#include "flags.hpp"       // for M_ENCHANTED_WEAPONS_ONLY, M_PLUS_TWO, P_FO...
+#include "global.hpp"      // for CreatureClass, WIELD, CreatureClass::MONK
+#include "monType.hpp"     // for ASTRAL, AVIAN, DEMON, DEVA, DEVIL, DINOSAUR
+#include "mud.hpp"         // for LT_RIPOSTE, LT
+#include "objects.hpp"     // for Object, ObjectType, ObjectType::WEAPON
+#include "proto.hpp"       // for broadcast, bonus, broadcastGroup, isDay
+#include "random.hpp"      // for Random
+#include "realm.hpp"       // for NO_REALM
+#include "rooms.hpp"       // for BaseRoom
+#include "skills.hpp"      // for SkillInfo, Skill
+#include "timer.hpp"       // for Timer
+#include "utils.hpp"       // for MAX, MIN
 
 
 //**********************************************************************

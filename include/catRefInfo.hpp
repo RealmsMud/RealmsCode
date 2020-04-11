@@ -21,7 +21,6 @@
 
 #include <map>
 
-#include "common.hpp"
 #include "season.hpp"
 #include "swap.hpp"
 
@@ -38,7 +37,7 @@ public:
     void    save(xmlNodePtr curNode) const;
     bstring str() const;
     void    copyVars(const CatRefInfo* cri);
-    bool    swap(Swap s);
+    bool    swap(const Swap& s);
     const cWeather* getWeather() const;
     
     bstring getFishing() const;

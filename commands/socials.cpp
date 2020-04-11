@@ -16,17 +16,24 @@
  *
  */
 
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "socials.hpp"
+#include <cassert>             // for assert
+
+#include "bstring.hpp"          // for bstring
+#include "cmd.hpp"              // for cmd
+#include "commands.hpp"         // for orderPet, cmdSocial
+#include "config.hpp"           // for Config, SocialMap
+#include "container.hpp"        // for Container, PlayerSet
+#include "creatureStreams.hpp"  // for Streamable
+#include "creatures.hpp"        // for Creature, Player
+#include "flags.hpp"            // for P_AFK, P_SLEEPING
+#include "global.hpp"           // for CAP
+#include "proto.hpp"            // for socialHooks, actionShow
+#include "socials.hpp"          // for SocialCommand
 
 
 void Config::clearSocials() {
-    for(SocialMap::value_type p : socials) {
-        if(p.second)
-            delete p.second;
+    for(const SocialMap::value_type& p : socials) {
+        delete p.second;
     }
     socials.clear();
 }
@@ -70,15 +77,15 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
 
     assert(parent);
 
-    Player  *player=0, *pTarget=0;
-    Creature* target=0;
+    Player  *player=nullptr, *pTarget=nullptr;
+    Creature* target=nullptr;
 
     player = creature->getAsPlayer();
     if(!creature->ableToDoCommand(cmnd))
         return(0);
 
     bstring str = cmnd->myCommand->getName();
-    SocialCommand* social = dynamic_cast<SocialCommand*>(cmnd->myCommand);
+    auto* social = dynamic_cast<SocialCommand*>(cmnd->myCommand);
 
     if(!social)
         return(0);
@@ -133,7 +140,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
             *target << toTarget << "\n";
         }
 
-        bstring toRoom = social->getRoomOnTarget();
+        const bstring& toRoom = social->getRoomOnTarget();
         parent->doSocialEcho(toRoom, creature, target);
 
         socialHooks(creature, target, str);
@@ -142,7 +149,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
 
         *creature << social->getSelfNoTarget() << "\n";
 
-        bstring toRoom = social->getRoomNoTarget();
+        const bstring& toRoom = social->getRoomNoTarget();
 
         if(!toRoom.empty() && parent) {
             parent->doSocialEcho(toRoom, creature, target);

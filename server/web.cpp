@@ -16,25 +16,41 @@
  *
  */
 // C includes
-#include <stdexcept>
+#include <fcntl.h>                // for open, O_NONBLOCK, O_RDONLY, O_WRONLY
+#include <libxml/parser.h>        // for xmlDocSetRootElement, xmlNewDocNode
+#include <libxml/xmlstring.h>     // for BAD_CAST
+#include <cstdio>                 // for snprintf, sprintf
+#include <cstdlib>                // for exit, free, system
+#include <sys/stat.h>             // for stat, mkfifo
+#include <ctime>                  // for time, ctime, timespec
+#include <unistd.h>               // for unlink, close, fork, read, write
+#include <cerrno>                 // for errno
+#include <cstring>                // for strcat, strerror, strchr
+#include <stdexcept>              // for runtime_error
 
-#include <cerrno>
-#include <cstring>
-#include <sys/stat.h>
-
-#include "clans.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "guilds.hpp"
-#include "mud.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "web.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"            // for bstring, operator+
+#include "catRef.hpp"             // for CatRef
+#include "clans.hpp"              // for Clan
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for getFullstrText, doFinger, cmdForum
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for ObjectSet
+#include "creatures.hpp"          // for Player, Monster
+#include "deityData.hpp"          // for DeityData
+#include "enums/loadType.hpp"     // for LoadType, LoadType::LS_FULL
+#include "flags.hpp"              // for P_CHAOTIC, P_DM_INVIS, P_AFK, P_DIE...
+#include "global.hpp"             // for ALLITEMS, CreatureClass, CreatureCl...
+#include "guilds.hpp"             // for Guild
+#include "mud.hpp"                // for GUILD_PEON
+#include "objects.hpp"            // for Object
+#include "paths.hpp"              // for Game, Wiki
+#include "proto.hpp"              // for broadcast, free_crt, up, isDm, view...
+#include "raceData.hpp"           // for RaceData
+#include "rooms.hpp"              // for UniqueRoom, BaseRoom
+#include "server.hpp"             // for Server, gServer, MonsterCache, Obje...
+#include "socket.hpp"             // for Socket
+#include "web.hpp"                // for WebInterface, callWebserver, update...
+#include "xml.hpp"                // for copyToBString, loadPlayer, NODE_NAME
 
 
 int lastmod = 0;

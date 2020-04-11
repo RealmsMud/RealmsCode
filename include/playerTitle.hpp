@@ -19,7 +19,7 @@
 #ifndef _PLAYERTITLE_H
 #define _PLAYERTITLE_H
 
-#include "common.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr
 
 class PlayerTitle {
 public:

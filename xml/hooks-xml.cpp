@@ -16,8 +16,12 @@
  *
  */
 
-#include "hooks.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr, xmlNode
+#include <utility>          // for pair
+
+#include "bstring.hpp"      // for bstring
+#include "hooks.hpp"        // for Hooks
+#include "xml.hpp"          // for newStringChild, copyPropToBString, copyTo...
 
 //*********************************************************************
 //                      load

@@ -16,11 +16,13 @@
  *
  */
 
-#include "common.hpp"
-#include "config.hpp"
-#include "mud.hpp"
-#include "mxp.hpp"
-#include "socket.hpp"
+#include <map>          // for map
+#include <ostream>      // for operator<<, basic_ostream, ostringstream, endl
+
+#include "bstring.hpp"  // for bstring
+#include "config.hpp"   // for Config, MxpElementMap, BstringMap, gConfig
+#include "mxp.hpp"      // for MxpElement
+#include "socket.hpp"   // for Socket, MXP_BEG, MXP_END
 
 bstring MxpElement::getName() {
     return(name);

@@ -15,30 +15,36 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <unistd.h>
+#include <cerrno>               // for errno
+#include <cstdio>               // for fclose, fopen, fprintf, printf, sprintf
+#include <cstdlib>              // for atoi
+#include <cstring>              // for strerror, strncpy
+#include <ctime>                // for time
+#include <unistd.h>             // for getpid
+#include <ostream>              // for operator<<, basic_ostream, char_traits
 
-#include "config.hpp"
-#include "mud.hpp"
-#include "version.hpp"
-#include "server.hpp"
+#include "config.hpp"           // for Config, gConfig
+#include "mud.hpp"              // for StartTime
+#include "paths.hpp"            // for Paths
+#include "proto.hpp"            // for loge, is_num, handle_args, startup_mo...
+#include "server.hpp"           // for Server, gServer
+#include "version.hpp"          // for VERSION
 
-void handle_args(int argc, char *argv[]);
-void startup_mordor(void);
+
+
 
 unsigned short  Port;
 
 extern long     last_weather_update;
 extern int      Numplayers;
 
-void startup_mordor(void) {
+void startup_mordor() {
     char    buf[BUFSIZ];
     FILE    *out;
 
     LIBXML_TEST_VERSION
 
-    StartTime = time(0);
-
-
+    StartTime = time(nullptr);
 
     std::clog << "Starting RoH Server " << VERSION " compiled on " << __DATE__ << " at " << __TIME__ << " " << "(LINUX)\n";
 
@@ -67,13 +73,10 @@ void startup_mordor(void) {
     std::clog << "Starting Sock Loop\n";
     gServer->run();
 
-    return;
-
 }
 
 void usage(char *szName) {
     printf(" %s [port number] [-r]\n", szName);
-    return;
 }
 
 void handle_args(int argc, char *argv[]) {

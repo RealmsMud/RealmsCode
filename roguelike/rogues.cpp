@@ -15,18 +15,37 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "factions.hpp"
-#include "calendar.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "dm.hpp"
-#include "move.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include <cstdlib>                // for strtoul
+#include <ctime>                  // for time
+#include <string>                 // for operator!=, basic_string, operator==
+
+#include "area.hpp"               // for Area, TileInfo, MapMarker
+#include "bstring.hpp"            // for bstring
+#include "catRef.hpp"             // for CatRef
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for cmdNoAuth, cmdAmbush, cmdBackstab
+#include "creatures.hpp"          // for Player, Creature, Monster, ATTACK_C...
+#include "damage.hpp"             // for Damage
+#include "delayedAction.hpp"      // for ActionSearch, DelayedAction
+#include "dm.hpp"                 // for dmMobInventory
+#include "exits.hpp"              // for Exit
+#include "factions.hpp"           // for Faction
+#include "flags.hpp"              // for P_AFK, M_PERMENANT_MONSTER, O_ENVEN...
+#include "global.hpp"             // for CreatureClass, CreatureClass::THIEF
+#include "hooks.hpp"              // for Hooks
+#include "money.hpp"              // for Money, GOLD
+#include "move.hpp"               // for formatFindExit, getRoom
+#include "mud.hpp"                // for LT_HIDE, LT_SEARCH, LT_SCOUT, LT
+#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
+#include "os.hpp"                 // for merror
+#include "proto.hpp"              // for broadcast, bonus, searchMod, log_im...
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom, UniqueRoom, AreaRoom, Exi...
+#include "server.hpp"             // for Server, gServer, GOLD_OUT
+#include "size.hpp"               // for SIZE_GARGANTUAN
+#include "statistics.hpp"         // for Statistics
+#include "utils.hpp"              // for MIN, MAX
+#include "xml.hpp"                // for loadObject, loadRoom
 
 
 //*********************************************************************
@@ -37,7 +56,7 @@
 // avoid a trap that they already know is there.
 
 int cmdPrepareForTraps(Player* player, cmd* cmnd) {
-    long    i=0, t = time(0);
+    long    i=0, t = time(nullptr);
 
 
     player->clearFlag(P_AFK);
@@ -83,7 +102,7 @@ int cmdPrepareForTraps(Player* player, cmd* cmnd) {
 // keeps the money and stays.
 
 int cmdBribe(Player* player, cmd* cmnd) {
-    Monster *creature=0;
+    Monster *creature=nullptr;
     unsigned long amount=0;
     Money cost;
 
@@ -123,7 +142,7 @@ int cmdBribe(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    amount = strtoul(&cmnd->str[2][1], 0, 0);
+    amount = strtoul(&cmnd->str[2][1], nullptr, 0);
     if(amount < 1 || amount > player->coins[GOLD]) {
         player->print("Please enter the amount of the bribe.\n");
         return(0);
@@ -134,7 +153,7 @@ int cmdBribe(Player* player, cmd* cmnd) {
 
     player->coins.sub(amount, GOLD);
 
-    gServer->logGold(GOLD_OUT, player, Money(amount, GOLD), creature, "Bribe");
+    Server::logGold(GOLD_OUT, player, Money(amount, GOLD), creature, "Bribe");
 
     if(amount < cost[GOLD] || creature->flagIsSet(M_PERMENANT_MONSTER)) {
         player->print("%M takes your money, but stays.\n", creature);
@@ -213,7 +232,7 @@ void doSearch(Player* player, bool immediate) {
     int level = (int)(player->getSkillLevel("search"));
 
     // TODO: SKILLS: tweak the formula
-    chance = 15 + 5*bonus((int)player->piety.getCur()) + level*2;
+    chance = 15 + 5*bonus(player->piety.getCur()) + level * 2;
     chance = MIN(chance, 90);
     if(player->getClass() == CreatureClass::RANGER)
         chance += level*8;
@@ -319,7 +338,7 @@ void doSearch(const DelayedAction* action) {
 // exits, monsters and players.
 
 int cmdSearch(Player* player, cmd* cmnd) {
-    long    i=0, t = time(0);
+    long    i=0, t = time(nullptr);
 
     player->clearFlag(P_AFK);
 
@@ -357,7 +376,7 @@ int cmdSearch(Player* player, cmd* cmnd) {
         player->unhide();
 
         player->print("You begin searching.\n");
-        gServer->addDelayedAction(doSearch, player, 0, ActionSearch, player->lasttime[LT_SEARCH].interval);
+        gServer->addDelayedAction(doSearch, player, nullptr, ActionSearch, player->lasttime[LT_SEARCH].interval);
     } else {
         doSearch(player, true);
     }
@@ -371,7 +390,7 @@ int cmdSearch(Player* player, cmd* cmnd) {
 bool AreaRoom::spawnHerbs() {
     if(!area)
         return(false);
-    const TileInfo* tile = area->getTile(area->getTerrain(0, &mapmarker, 0, 0, 0, true), area->getSeasonFlags(&mapmarker));
+    const TileInfo* tile = area->getTile(area->getTerrain(nullptr, &mapmarker, 0, 0, 0, true), area->getSeasonFlags(&mapmarker));
     if(!tile)
         return(false);
     return(tile->spawnHerbs(this));
@@ -382,7 +401,7 @@ bool AreaRoom::spawnHerbs() {
 //*********************************************************************
 
 bool TileInfo::spawnHerbs(BaseRoom* room) const {
-    Object* object=0;
+    Object* object=nullptr;
     int     max = herbs.size();
     short   num = Random::get(1,MAX(1,max)), i=0, n=0, k=0;
     std::list<CatRef>::const_iterator it;
@@ -424,8 +443,8 @@ bool TileInfo::spawnHerbs(BaseRoom* room) const {
 // or it can be used to hide an object in a room.
 
 int cmdHide(Player* player, cmd* cmnd) {
-    Object  *object=0;
-    long    i = LT(player, LT_HIDE), t = time(0);
+    Object  *object=nullptr;
+    long    i = LT(player, LT_HIDE), t = time(nullptr);
     int     chance=0;
 
     player->clearFlag(P_AFK);
@@ -471,48 +490,48 @@ int cmdHide(Player* player, cmd* cmnd) {
         switch(player->getClass()) {
         case CreatureClass::THIEF:
             if(player->getSecondClass() == CreatureClass::MAGE) {
-                chance = MIN(90, 5 + 4*level + 3*bonus((int) player->dexterity.getCur()));
+                chance = MIN(90, 5 + 4*level + 3*bonus(player->dexterity.getCur()));
                 player->lasttime[LT_HIDE].interval = 8;
             } else
-                chance = MIN(90, 5 + 6*level + 3*bonus((int) player->dexterity.getCur()));
+                chance = MIN(90, 5 + 6*level + 3*bonus(player->dexterity.getCur()));
             break;
         case CreatureClass::ASSASSIN:
-            chance = MIN(90, 5 + 6*level + 3*bonus((int) player->dexterity.getCur()));
+            chance = MIN(90, 5 + 6*level + 3*bonus(player->dexterity.getCur()));
             break;
         case CreatureClass::FIGHTER:
             if(player->getSecondClass() == CreatureClass::THIEF)
-                chance = MIN(90, 5 + 4*level + 3*bonus((int) player->dexterity.getCur()));
+                chance = MIN(90, 5 + 4*level + 3*bonus(player->dexterity.getCur()));
             else
-                chance = MIN(90, 5 + 2*level + 3*bonus((int) player->dexterity.getCur()));
+                chance = MIN(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
             break;
         case CreatureClass::MAGE:
             if(player->getSecondClass() == CreatureClass::ASSASSIN || player->getSecondClass() == CreatureClass::THIEF) {
-                chance = MIN(90, 5 + 4*level + 3*bonus((int) player->dexterity.getCur()));
+                chance = MIN(90, 5 + 4*level + 3*bonus(player->dexterity.getCur()));
                 player->lasttime[LT_HIDE].interval = 8;
             } else
                 chance = MIN(90, 5 + 2*level +
-                        3*bonus((int) player->dexterity.getCur()));
+                        3*bonus(player->dexterity.getCur()));
             break;
         case CreatureClass::CLERIC:
             if(player->getSecondClass() == CreatureClass::ASSASSIN) {
-                chance = MIN(90, 5 + 5*level + 3*bonus((int) player->dexterity.getCur()));
+                chance = MIN(90, 5 + 5*level + 3*bonus(player->dexterity.getCur()));
             } else if( (player->getDeity() == KAMIRA && player->getAdjustedAlignment() >= NEUTRAL) ||
                 (player->getDeity() == ARACHNUS && player->alignInOrder())
             ) {
-                chance = MIN(90, 5 + 4*level + 3*bonus((int) player->piety.getCur()));
+                chance = MIN(90, 5 + 4*level + 3*bonus(player->piety.getCur()));
             } else
-                chance = MIN(90, 5 + 2*level + 3*bonus((int) player->dexterity.getCur()));
+                chance = MIN(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
 
             break;
         case CreatureClass::RANGER:
         case CreatureClass::DRUID:
-            chance = 5 + 10*level + 3*bonus((int) player->dexterity.getCur());
+            chance = 5 + 10*level + 3*bonus(player->dexterity.getCur());
             break;
         case CreatureClass::ROGUE:
-            chance = MIN(90, 5 + 5*level + 3*bonus((int) player->dexterity.getCur()));
+            chance = MIN(90, 5 + 5*level + 3*bonus(player->dexterity.getCur()));
             break;
         default:
-            chance = MIN(90, 5 + 2*level + 3*bonus((int) player->dexterity.getCur()));
+            chance = MIN(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
             break;
         }
 
@@ -580,11 +599,11 @@ int cmdHide(Player* player, cmd* cmnd) {
     if(player->isDm())
         chance = 100;
     else if(player->getClass() == CreatureClass::THIEF || player->getClass() == CreatureClass::ASSASSIN || player->getClass() == CreatureClass::ROGUE)
-        chance = MIN(90, 10 + 5*level + 5*bonus((int) player->dexterity.getCur()));
+        chance = MIN(90, 10 + 5*level + 5*bonus(player->dexterity.getCur()));
     else if(player->getClass() == CreatureClass::RANGER || player->getClass() == CreatureClass::DRUID)
-        chance = 5 + 9*level + 3*bonus((int) player->dexterity.getCur());
+        chance = 5 + 9*level + 3*bonus(player->dexterity.getCur());
     else
-        chance = MIN(90, 5 + 3*level + 3*bonus((int) player->dexterity.getCur()));
+        chance = MIN(90, 5 + 3*level + 3*bonus(player->dexterity.getCur()));
 
 
 
@@ -608,7 +627,7 @@ int cmdHide(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 bool doScout(Player* player, const Exit* exit) {
-    BaseRoom *room=0;
+    BaseRoom *room=nullptr;
 
 
     if(exit->flagIsSet(X_STAFF_ONLY) && !player->isStaff()) {
@@ -639,7 +658,7 @@ bool doScout(Player* player, const Exit* exit) {
         }
         // There is no room, but we're going to pretend there is.
         player->print("\n");
-        if(area->name != "")
+        if(!area->name.empty())
             player->printColor("%s%s^x\n\n",
                 (!player->flagIsSet(P_NO_EXTRA_COLOR) && area->isSunlight(&exit->target.mapmarker) ? "^C" : "^c"),
                 area->name.c_str());
@@ -665,7 +684,7 @@ bool doScout(Player* player, const Exit* exit) {
 //*********************************************************************
 
 int cmdScout(Player* player, cmd* cmnd) {
-    Exit    *exit=0;
+    Exit    *exit=nullptr;
     int     chance=0;
     long    t=0, i=0;
     bool    alwaysSucceed=false;
@@ -696,7 +715,7 @@ int cmdScout(Player* player, cmd* cmnd) {
     }
 
     i = player->lasttime[LT_SCOUT].ltime + player->lasttime[LT_SCOUT].interval;
-    t = time(0);
+    t = time(nullptr);
 
     if(!player->isStaff() && t < i) {
         player->pleaseWait(i - t);
@@ -729,7 +748,7 @@ int cmdScout(Player* player, cmd* cmnd) {
         player->lasttime[LT_SCOUT].ltime = t;
         player->lasttime[LT_SCOUT].interval = 20L;
 
-        chance = 40 + (bonus((int) player->dexterity.getCur()) + (int)player->getSkillLevel("scout")) * 4;
+        chance = 40 + (bonus(player->dexterity.getCur()) + (int)player->getSkillLevel("scout")) * 4;
 
         if(exit->isEffected("wall-of-fire"))
             chance -= 15;
@@ -792,7 +811,7 @@ int cmdScout(Player* player, cmd* cmnd) {
 // poison other players and monsters. -- TC
 
 int cmdEnvenom(Player* player, cmd* cmnd) {
-    Object      *weapon=0, *object=0;
+    Object      *weapon=nullptr, *object=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -861,7 +880,7 @@ int cmdEnvenom(Player* player, cmd* cmnd) {
     // TODO: make poison more powerful with better envenom skill
     object->decShotsCur();
     weapon->setFlag(O_ENVENOMED);
-    if(object->getEffect() != "")
+    if(!object->getEffect().empty())
         weapon->setEffect(object->getEffect());
     else
         weapon->setEffect("poison");
@@ -873,7 +892,7 @@ int cmdEnvenom(Player* player, cmd* cmnd) {
     // them have to buy it makes it more of a pain for some idiot to go around
     // poisoning everyone with a small knife just for fun.
 
-    weapon->lasttime[LT_ENVEN].ltime = time(0);
+    weapon->lasttime[LT_ENVEN].ltime = time(nullptr);
     weapon->lasttime[LT_ENVEN].interval = 60*(Random::get(3,5)+weapon->getAdjustment());
 
     return(0);
@@ -888,8 +907,8 @@ int cmdEnvenom(Player* player, cmd* cmnd) {
 bool isValidShop(const UniqueRoom* shop, const UniqueRoom* storage);
 
 int cmdShoplift(Player* player, cmd* cmnd) {
-    UniqueRoom  *room=0, *storage=0;
-    Object  *object=0, *object2=0;
+    UniqueRoom  *room=nullptr, *storage=nullptr;
+    Object  *object=nullptr, *object2=nullptr;
     int     chance=0, guarded=0;
 
 
@@ -1030,14 +1049,14 @@ int cmdShoplift(Player* player, cmd* cmnd) {
     case CreatureClass::CARETAKER:
     case CreatureClass::DUNGEONMASTER:
         chance = ((player->getLevel()+35 - (2*object->getActualWeight())) - (object->value[GOLD]/1500))
-                + (bonus((int) player->dexterity.getCur())*2);
+                + (bonus(player->dexterity.getCur()) * 2);
         break;
 
     case CreatureClass::ASSASSIN:
     case CreatureClass::BARD:
     case CreatureClass::ROGUE:
         chance = ((player->getLevel()+20 - (2*object->getActualWeight())) - (object->value[GOLD]/1500))
-                + (bonus((int) player->dexterity.getCur())*2);
+                + (bonus(player->dexterity.getCur()) * 2);
         break;
 
     // Casting classes just aren't cut out for it.
@@ -1046,10 +1065,10 @@ int cmdShoplift(Player* player, cmd* cmnd) {
     case CreatureClass::DRUID:
     case CreatureClass::CLERIC:
         chance = (((int)player->getLevel() - (2*object->getActualWeight())) - (object->value[GOLD]/1500))
-                + (bonus((int) player->dexterity.getCur())*2);
+                + (bonus(player->dexterity.getCur()) * 2);
     default:
         chance = (((int)player->getLevel()+10 - (2*object->getActualWeight())) - (object->value[GOLD]/1500))
-                + (bonus((int) player->dexterity.getCur())*2);
+                + (bonus(player->dexterity.getCur()) * 2);
         break;
     }
 
@@ -1098,7 +1117,7 @@ int cmdShoplift(Player* player, cmd* cmnd) {
                 mons->diePermCrt();
             }
         }
-        MonsterSet::iterator mIt = storage->monsters.begin();
+        auto mIt = storage->monsters.begin();
 
         while(mIt != storage->monsters.end()) {
 
@@ -1170,8 +1189,8 @@ int cmdShoplift(Player* player, cmd* cmnd) {
 // normal amount of time for their next attack.
 
 int cmdBackstab(Player* player, cmd* cmnd) {
-    Player  *pTarget=0;
-    Creature* target=0;
+    Player  *pTarget=nullptr;
+    Creature* target=nullptr;
     int      n=0;
     int     disembowel=0, dur=0, dmg=0;
     float   stabMod=0.0, cap=0.0;
@@ -1490,7 +1509,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
                 if(player->hp.getCur() < 1) {
                     n = 0;
                     player->addObj(weapon);
-                    weapon = 0;
+                    weapon = nullptr;
                     player->computeAttackPower();
                     player->die(POISON_PLAYER);
                     return(0);
@@ -1507,8 +1526,8 @@ int cmdBackstab(Player* player, cmd* cmnd) {
 
         n = 0;
         player->addObj(weapon);
-        player->ready[WIELD-1] = 0;
-        weapon = 0;
+        player->ready[WIELD-1] = nullptr;
+        weapon = nullptr;
         player->computeAttackPower();
         player->computeAttackPower();
     } else {
@@ -1587,8 +1606,8 @@ int Player::checkPoison(Creature* target, Object* weapon) {
 // more limited. -- TC
 
 int cmdAmbush(Player* player, cmd* cmnd) {
-    Player  *pCreature=0;
-    Creature* creature=0;
+    Player  *pCreature=nullptr;
+    Creature* creature=nullptr;
 
 
     if(!player->ableToDoCommand())
@@ -1673,7 +1692,7 @@ int cmdAmbush(Player* player, cmd* cmnd) {
 // player's level) that the lock will be picked.
 
 int cmdPickLock(Player* player, cmd* cmnd) {
-    Exit    *exit=0;
+    Exit    *exit=nullptr;
     long    i=0, t=0;
     int     chance=0;
 
@@ -1733,7 +1752,7 @@ int cmdPickLock(Player* player, cmd* cmnd) {
     if(!player->isCt()) {
 
         i = LT(player, LT_PICKLOCK);
-        t = time(0);
+        t = time(nullptr);
 
         if(t < i) {
             player->pleaseWait(i-t);
@@ -1746,13 +1765,13 @@ int cmdPickLock(Player* player, cmd* cmnd) {
     }
     int level = (int)player->getSkillLevel("pick");
     if(player->getClass() == CreatureClass::THIEF)
-        chance = 10*(level - exit->getLevel()) + (2*bonus((int)player->dexterity.getCur()));
+        chance = 10*(level - exit->getLevel()) + (2*bonus(player->dexterity.getCur()));
     else if(player->getSecondClass() == CreatureClass::THIEF && (player->getClass() == CreatureClass::MAGE || player->getClass() == CreatureClass::FIGHTER) )
-        chance = 5*(level - exit->getLevel()) + (2*bonus((int)player->dexterity.getCur()));
+        chance = 5*(level - exit->getLevel()) + (2*bonus(player->dexterity.getCur()));
     else if(player->getClass() == CreatureClass::ROGUE || (player->getClass() == CreatureClass::THIEF && player->getSecondClass() == CreatureClass::MAGE))
-        chance = 7*(level - exit->getLevel()) + (2*bonus((int)player->dexterity.getCur()));
+        chance = 7*(level - exit->getLevel()) + (2*bonus(player->dexterity.getCur()));
     else
-        chance = 2*(level - exit->getLevel()) + (2*bonus((int)player->dexterity.getCur()));
+        chance = 2*(level - exit->getLevel()) + (2*bonus(player->dexterity.getCur()));
 
 
     if(exit->flagIsSet(X_UNPICKABLE))
@@ -1800,9 +1819,9 @@ int cmdPickLock(Player* player, cmd* cmnd) {
 // another roll is made to see if they get caught.
 
 int cmdPeek(Player* player, cmd* cmnd) {
-    Creature* creature=0;
-    Player  *pCreature=0;
-    Monster* mCreature=0;
+    Creature* creature=nullptr;
+    Player  *pCreature=nullptr;
+    Monster* mCreature=nullptr;
     bstring str = "";
     long    i=0, t=0;
     int     chance=0, goldchance=0, ok=0;
@@ -1867,7 +1886,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
         return(0);
 
     i = LT(player, LT_PEEK);
-    t = time(0);
+    t = time(nullptr);
 
     if(i > t && !player->isStaff()) {
         player->pleaseWait(i-t);
@@ -1927,7 +1946,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
     player->checkImprove("peek", true);
 
     str = creature->listObjects(player, player->isStaff());
-    if(str != "")
+    if(!str.empty())
         player->printColor("%s is carrying: %s.\n", creature->upHeShe(), str.c_str());
     else
         player->print("%s isn't holding anything.\n", creature->upHeShe());
@@ -1951,7 +1970,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int peek_bag(Player* player, Player* target, cmd* cmnd, int inv) {
-    Object  *container=0;
+    Object  *container=nullptr;
     bstring str = "";
     int     chance=0;
 
@@ -2007,7 +2026,7 @@ int peek_bag(Player* player, Player* target, cmd* cmnd, int inv) {
 
     if(container->getType() == ObjectType::CONTAINER) {
         str = container->listObjects(player, false);
-        if(str != "")
+        if(!str.empty())
             player->printColor("It contains: %s.\n", str.c_str());
         else
             player->print("It is empty.\n");

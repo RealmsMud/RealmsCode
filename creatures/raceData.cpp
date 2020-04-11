@@ -16,13 +16,25 @@
  *
  */
 
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "mud.hpp"
-#include "raceData.hpp"
-#include "skillGain.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNode, xmlFreeDoc
+#include <cstdio>                                   // for snprintf
+#include <cstring>                                  // for strcmp
+#include <map>                                      // for operator==, opera...
+
+#include "bstring.hpp"                              // for bstring
+#include "cmd.hpp"                                  // for cmd
+#include "config.hpp"                               // for Config, gConfig
+#include "creatures.hpp"                            // for Player
+#include "deityData.hpp"                            // for DeityData
+#include "dice.hpp"                                 // for Dice
+#include "global.hpp"                               // for CreatureClass
+#include "paths.hpp"                                // for Game
+#include "proto.hpp"                                // for zero, getSexName
+#include "raceData.hpp"                             // for RaceData
+#include "size.hpp"                                 // for NO_SIZE, Size
+#include "skillGain.hpp"                            // for SkillGain
+#include "structs.hpp"                              // for Sex
+#include "xml.hpp"                                  // for NODE_NAME, copyPr...
 
 
 //*********************************************************************
@@ -64,7 +76,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
 
     id = 0;
     name = adjective = abbr = "";
-    infra = bonus = 0;
+    infra = bonus = false;
     startAge = parentRace = porphyriaResistance = 0;
     size = NO_SIZE;
     isParentRace = false;
@@ -211,7 +223,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
                     xmlNodePtr skillNode = childNode->children;
                     while(skillNode) {
                         if(NODE_NAME(skillNode, "Skill")) {
-                            SkillGain* skillGain = new SkillGain(skillNode);
+                            auto* skillGain = new SkillGain(skillNode);
                             baseSkills.push_back(skillGain);
                         }
                         skillNode = skillNode->next;
@@ -233,7 +245,7 @@ RaceData::~RaceData() {
 //                      stattoNum
 //*********************************************************************
 
-int Config::stattoNum(bstring str) {
+int Config::stattoNum(const bstring& str) {
     if(str == "Str") return(STR);
     if(str == "Con") return(CON);
     if(str == "Dex") return(DEX);
@@ -246,7 +258,7 @@ int Config::stattoNum(bstring str) {
 //                      savetoNum
 //*********************************************************************
 
-int Config::savetoNum(bstring str) {
+int Config::savetoNum(const bstring& str) {
     if(str == "Poi") return(POI);
     if(str == "Dea") return(DEA);
     if(str == "Bre") return(BRE);
@@ -259,7 +271,7 @@ int Config::savetoNum(bstring str) {
 //                      classtoNum
 //*********************************************************************
 
-int Config::classtoNum(bstring str) {
+int Config::classtoNum(const bstring& str) {
     if(str == "Assassin") return(static_cast<int>(CreatureClass::ASSASSIN));
     if(str == "Berserker") return(static_cast<int>(CreatureClass::BERSERKER));
     if(str == "Cleric") return(static_cast<int>(CreatureClass::CLERIC));
@@ -290,7 +302,7 @@ int Config::classtoNum(bstring str) {
 //                      racetoNum
 //*********************************************************************
 
-int Config::racetoNum(bstring str) {
+int Config::racetoNum(const bstring& str) {
     for(unsigned i=0; i<races.size(); i++) {
         if(!races[i])
             continue;
@@ -304,7 +316,7 @@ int Config::racetoNum(bstring str) {
 //                      deitytoNum
 //*********************************************************************
 
-int Config::deitytoNum(bstring str) {
+int Config::deitytoNum(const bstring& str) {
     for(unsigned i=0; i<deities.size(); i++) {
         if(!deities[i])
             continue;
@@ -336,7 +348,7 @@ bool Config::loadRaces() {
     while(curNode && xmlIsBlankNode(curNode))
         curNode = curNode->next;
 
-    if(curNode == 0) {
+    if(curNode == nullptr) {
         xmlFreeDoc(xmlDoc);
         return(false);
     }
@@ -363,7 +375,7 @@ bool Config::loadRaces() {
 
 const RaceData* Config::getRace(bstring race) const {
     std::map<int, RaceData*>::const_iterator it;
-    RaceData* data=0;
+    RaceData* data=nullptr;
     int len = race.getLength();
     race = race.toLower();
 
@@ -374,7 +386,7 @@ const RaceData* Config::getRace(bstring race) const {
         if((*it).second->getName().substr(0, len) == race) {
             // not unique
             if(data)
-                return(0);
+                return(nullptr);
             data = (*it).second;
         }
     }
@@ -387,7 +399,7 @@ const RaceData* Config::getRace(bstring race) const {
 //**********************************************************************
 
 const RaceData* Config::getRace(int id) const {
-    std::map<int, RaceData*>::const_iterator it = races.find(id);
+    auto it = races.find(id);
 
     if(it == races.end())
         it = races.begin();
@@ -401,7 +413,7 @@ const RaceData* Config::getRace(int id) const {
 
 int dmShowRaces(Player* player, cmd* cmnd) {
     std::map<int, RaceData*>::const_iterator it;
-    RaceData* data=0;
+    RaceData* data=nullptr;
     bool    all = player->isDm() && cmnd->num > 1 && !strcmp(cmnd->str[1], "all");
     std::map<Sex, short>::const_iterator bIt;
     std::map<Sex, Dice>::const_iterator dIt;
@@ -432,26 +444,26 @@ int dmShowRaces(Player* player, cmd* cmnd) {
             for(bIt = data->baseHeight.begin() ; bIt != data->baseHeight.end() ; bIt++) {
                 player->printColor("   BaseHeight: %s: ^c%d", getSexName((*bIt).first).c_str(), (*bIt).second);
             }
-            if(data->baseHeight.size())
+            if(!data->baseHeight.empty())
                 player->print("\n");
             // variable weight for all genders
             for(dIt = data->varHeight.begin() ; dIt != data->varHeight.end() ; dIt++) {
                 player->printColor("   VarHeight: %s: ^c%s", getSexName((*dIt).first).c_str(), (*dIt).second.str().c_str());
             }
-            if(data->varHeight.size())
+            if(!data->varHeight.empty())
                 player->print("\n");
 
             // base height for all genders
             for(bIt = data->baseWeight.begin() ; bIt != data->baseWeight.end() ; bIt++) {
                 player->printColor("   BaseWeight: %s: ^c%d", getSexName((*bIt).first).c_str(), (*bIt).second);
             }
-            if(data->baseWeight.size())
+            if(!data->baseWeight.empty())
                 player->print("\n");
             // variable height for all genders
             for(dIt = data->varWeight.begin() ; dIt != data->varWeight.end() ; dIt++) {
                 player->printColor("   VarWeight: %s: ^c%s", getSexName((*dIt).first).c_str(), (*dIt).second.str().c_str());
             }
-            if(data->varWeight.size())
+            if(!data->varWeight.empty())
                 player->print("\n");
         }
     }

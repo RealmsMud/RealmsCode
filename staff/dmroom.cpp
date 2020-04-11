@@ -16,36 +16,61 @@
  *
  */
 
-#include <signal.h>
-#include <dirent.h>
-#include <iomanip>
+#include <dirent.h>               // for opendir, readdir, dirent, DIR
+#include <cstdio>                // for sprintf
+#include <cstdlib>               // for atoi, exit
+#include <cstring>               // for strcmp, strlen, strcpy, strcat
+#include <ctime>                 // for time, ctime, time_t
+#include <iomanip>                // for operator<<, setw
+#include <iostream>               // for operator<<, basic_ostream, basic_os...
 
-#include "asynch.hpp"
-#include "catRefInfo.hpp"
-#include "commands.hpp"
-#include "creatures.hpp"
-#include "config.hpp"
-#include "deityData.hpp"
-#include "effects.hpp"
-#include "dm.hpp"
-#include "factions.hpp"
-#include "mud.hpp"
-#include "property.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "ships.hpp"
-#include "startlocs.hpp"
-#include "tokenizer.hpp"
-#include "traps.hpp"
-#include "xml.hpp"
+#include "area.hpp"               // for Area, AreaZone, MapMarker, TileInfo
+#include "asynch.hpp"             // for Async, AsyncExternal
+#include "bstring.hpp"            // for bstring, operator+
+#include "catRef.hpp"             // for CatRef
+#include "catRefInfo.hpp"         // for CatRefInfo
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for getFullstrText, cmdNoAuth
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player, Monster, Creature
+#include "deityData.hpp"          // for DeityData
+#include "dm.hpp"                 // for dmAddMob, dmAddObj, findRoomsWithFlag
+#include "effects.hpp"            // for EffectInfo, EffectList, Effects
+#include "exits.hpp"              // for Exit, getDir, getDirName, NoDirection
+#include "factions.hpp"           // for Faction
+#include "flags.hpp"              // for R_TRAINING_ROOM, R_SHOP_STORAGE
+#include "global.hpp"             // for CreatureClass, CreatureClass::CARET...
+#include "lasttime.hpp"           // for crlasttime
+#include "location.hpp"           // for Location
+#include "monType.hpp"            // for getHitdice, getName
+#include "money.hpp"              // for Money, GOLD
+#include "objects.hpp"            // for Object
+#include "os.hpp"                 // for merror
+#include "paths.hpp"              // for checkDirExists
+#include "proc.hpp"               // for ChildType::PRINT
+#include "property.hpp"           // for Property
+#include "proto.hpp"              // for log_immort, low, getSizeName, needU...
+#include "raceData.hpp"           // for RaceData
+#include "range.hpp"              // for Range
+#include "rooms.hpp"              // for UniqueRoom, BaseRoom, AreaRoom, Exi...
+#include "server.hpp"             // for Server, gServer
+#include "size.hpp"               // for NO_SIZE
+#include "startlocs.hpp"          // for StartLoc
+#include "swap.hpp"               // for SwapRoom
+#include "track.hpp"              // for Track
+#include "traps.hpp"              // for TRAP_ACID, TRAP_ALARM, TRAP_ARROW
+#include "utils.hpp"              // for MAX, MIN
+#include "wanderInfo.hpp"         // for WanderInfo
+#include "xml.hpp"                // for loadRoom, loadMonster, loadObject
+
+class Fishing;
 
 
 //*********************************************************************
 //                          checkTeleportRange
 //*********************************************************************
 
-void checkTeleportRange(const Player* player, CatRef cr) {
+void checkTeleportRange(const Player* player, const CatRef& cr) {
     // No warning for the test range
     if(cr.isArea("test"))
         return;
@@ -67,7 +92,7 @@ void checkTeleportRange(const Player* player, CatRef cr) {
 //                          isCardinal
 //*********************************************************************
 
-bool isCardinal(bstring xname) {
+bool isCardinal(const bstring& xname) {
     return( xname == "north" ||
             xname == "east" ||
             xname == "south" ||
@@ -85,7 +110,7 @@ bool isCardinal(bstring xname) {
 //*********************************************************************
 
 bstring wrapText(const bstring& text, int wrap) {
-    if(text == "")
+    if(text.empty())
         return("");
     
     bstring wrapped = "";
@@ -255,7 +280,7 @@ int dmEcho(Player* player, cmd* cmnd) {
     }
 
     bstring text = getFullstrText(cmnd->fullstr, 1);
-    if(text == "" || Pueblo::is(text)) {
+    if(text.empty() || Pueblo::is(text)) {
         player->print("Echo what?\n");
         return(0);
     }
@@ -295,7 +320,7 @@ int dmReloadRoom(Player* player, cmd* cmnd) {
 
 int dmResetPerms(Player* player, cmd* cmnd) {
     std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm=0;
+    crlasttime* crtm=nullptr;
     std::map<int, long> tempMonsters;
     std::map<int, long> tempObjects;
     UniqueRoom  *room = player->getUniqueRoomParent();
@@ -313,13 +338,13 @@ int dmResetPerms(Player* player, cmd* cmnd) {
     for(it = room->permMonsters.begin(); it != room->permMonsters.end() ; it++) {
         crtm = &(*it).second;
         tempMonsters[(*it).first] = crtm->interval;
-        crtm->ltime = time(0);
+        crtm->ltime = time(nullptr);
         crtm->interval = 0;
     }
     for(it = room->permObjects.begin(); it != room->permObjects.end() ; it++) {
         crtm = &(*it).second;
         tempObjects[(*it).first] = crtm->interval;
-        crtm->ltime = time(0);
+        crtm->ltime = time(nullptr);
         crtm->interval = 0;
     }
 
@@ -329,12 +354,12 @@ int dmResetPerms(Player* player, cmd* cmnd) {
     for(it = room->permMonsters.begin(); it != room->permMonsters.end() ; it++) {
         crtm = &(*it).second;
         crtm->interval = tempMonsters[(*it).first];
-        crtm->ltime = time(0);
+        crtm->ltime = time(nullptr);
     }
     for(it = room->permObjects.begin(); it != room->permObjects.end() ; it++) {
         crtm = &(*it).second;
         crtm->interval = tempObjects[(*it).first];
-        crtm->ltime = time(0);
+        crtm->ltime = time(nullptr);
     }
 
     log_immort(true, player, "%s reset perm timeouts in room %s\n", player->getCName(), player->getRoomParent()->fullName().c_str());
@@ -400,7 +425,7 @@ void stat_rom_exits(Creature* player, BaseRoom* room) {
 
         if(exit->flagIsSet(X_LOCKABLE)) {
             player->print(" Key#: %d ", exit->getKey());
-            if(exit->getKeyArea() != "")
+            if(!exit->getKeyArea().empty())
                 player->printColor(" Area: ^y%s^x ", exit->getKeyArea().c_str());
         }
 
@@ -409,7 +434,7 @@ void stat_rom_exits(Creature* player, BaseRoom* room) {
 
         player->print("\n");
 
-        if(exit->getDescription() != "")
+        if(!exit->getDescription().empty())
             player->print("    Description: \"%s\"\n", exit->getDescription().c_str());
 
         if( (exit->flagIsSet(X_CAN_LOOK) || exit->flagIsSet(X_LOOK_ONLY)) &&
@@ -428,14 +453,14 @@ void stat_rom_exits(Creature* player, BaseRoom* room) {
         }
         if(exit->flagIsSet(X_PORTAL)) {
             player->printColor("    Owner: ^c%s^x  Uses: ^c%d^x\n", exit->getPassPhrase().c_str(), exit->getKey());
-        } else if(exit->getPassPhrase() != "") {
+        } else if(!exit->getPassPhrase().empty()) {
             player->print("    Passphrase: \"%s\"\n", exit->getPassPhrase().c_str());
             if(exit->getPassLanguage())
                 player->print("    Passlang: %s\n", get_language_adj(exit->getPassLanguage()));
         }
-        if(exit->getEnter() != "")
+        if(!exit->getEnter().empty())
             player->print("    OnEnter: \"%s\"\n", exit->getEnter().c_str());
-        if(exit->getOpen() != "")
+        if(!exit->getOpen().empty())
             player->print("    OnOpen: \"%s\"\n", exit->getOpen().c_str());
 
         
@@ -450,7 +475,7 @@ void stat_rom_exits(Creature* player, BaseRoom* room) {
             player->print("\n");
         }
 
-        if(exit->effects.effectList.size())
+        if(!exit->effects.effectList.empty())
             player->printColor("    Effects:\n%s", exit->effects.getEffectsString(player).c_str());
         player->printColor("%s", exit->hooks.display().c_str());
     }
@@ -495,7 +520,7 @@ bool BaseRoom::hasTraining() const {
 }
 
 CreatureClass BaseRoom::whatTraining(int extra) const {
-    return(static_cast<CreatureClass>(::whatTraining(this, (const TileInfo*)0, (const AreaZone*)0, extra)));
+    return(static_cast<CreatureClass>(::whatTraining(this, (const TileInfo*)nullptr, (const AreaZone*)nullptr, extra)));
 }
 
 
@@ -630,10 +655,10 @@ void showRoomFlags(const Player* player, const BaseRoom* room, const TileInfo *t
 
 int stat_rom(Player* player, AreaRoom* room) {
     std::list<AreaZone*>::iterator it;
-    AreaZone* zone=0;
-    TileInfo* tile=0;
+    AreaZone* zone=nullptr;
+    TileInfo* tile=nullptr;
 
-    if(!player->checkBuilder(0))
+    if(!player->checkBuilder(nullptr))
         return(0);
 
     if(player->getClass() == CreatureClass::CARETAKER)
@@ -641,7 +666,7 @@ int stat_rom(Player* player, AreaRoom* room) {
 
     player->print("Room: %s %s\n\n",
         room->area->name.c_str(), room->fullName().c_str());
-    tile = room->area->getTile(room->area->getTerrain(0, &room->mapmarker, 0, 0, 0, true), false);
+    tile = room->area->getTile(room->area->getTerrain(nullptr, &room->mapmarker, 0, 0, 0, true), false);
 
     for(it = room->area->zones.begin() ; it != room->area->zones.end() ; it++) {
         zone = (*it);
@@ -676,8 +701,8 @@ int stat_rom(Player* player, AreaRoom* room) {
     }
     player->print("\n");
 
-    showRoomFlags(player, room, 0, 0);
-    if(room->effects.effectList.size())
+    showRoomFlags(player, room, nullptr, nullptr);
+    if(!room->effects.effectList.empty())
         player->printColor("Effects:\n%s", room->effects.getEffectsString(player).c_str());
     player->printColor("%s", room->hooks.display().c_str());
     stat_rom_exits(player, room);
@@ -756,12 +781,12 @@ void validateShop(const Player* player, const UniqueRoom* shop, const UniqueRoom
 
 int stat_rom(Player* player, UniqueRoom* room) {
     std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm=0;
+    crlasttime* crtm=nullptr;
     CatRef  cr;
-    Monster* monster=0;
-    Object* object=0;
-    UniqueRoom* shop=0;
-    time_t t = time(0);
+    Monster* monster=nullptr;
+    Object* object=nullptr;
+    UniqueRoom* shop=nullptr;
+    time_t t = time(nullptr);
 
     if(!player->checkBuilder(room))
         return(0);
@@ -795,9 +820,9 @@ int stat_rom(Player* player, UniqueRoom* room) {
     if(room->getRoomExperience())
         player->print("Experience for entering this room: %d\n", room->getRoomExperience());
 
-    if(room->getFaction() != "")
+    if(!room->getFaction().empty())
         player->printColor("Faction: ^g%s^x\n", room->getFaction().c_str());
-    if(room->getFishingStr() != "")
+    if(!room->getFishingStr().empty())
         player->printColor("Fishing: ^g%s^x\n", room->getFishingStr().c_str());
 
     if(room->getMaxMobs() > 0)
@@ -825,7 +850,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
 
         if(object) {
             delete object;
-            object = 0;
+            object = nullptr;
         }
     }
     player->print("\n");
@@ -840,12 +865,12 @@ int stat_rom(Player* player, UniqueRoom* room) {
 
         if(monster) {
             free_crt(monster);
-            monster = 0;
+            monster = nullptr;
         }
     }
     player->print("\n");
 
-    if(room->track.getDirection() != "" && room->flagIsSet(R_PERMENANT_TRACKS))
+    if(!room->track.getDirection().empty() && room->flagIsSet(R_PERMENANT_TRACKS))
         player->print("Perm Tracks: %s.\n", room->track.getDirection().c_str());
 
     if(room->getLowLevel() || room->getHighLevel()) {
@@ -882,13 +907,13 @@ int stat_rom(Player* player, UniqueRoom* room) {
         player->print("Shop storage room: %s (%s)\n", cr.str().c_str(),
             cr.id == room->info.id+1 && cr.isArea(room->info.area) ? "default" : "trapexit");
 
-        if(room->getFaction() == "" && room->info.area != "shop")
+        if(room->getFaction().empty() && room->info.area != "shop")
             player->printColor("^yThis shop does not have a faction set.\n");
 
         loadRoom(cr, &shop);
         validateShop(player, room, shop);
     } else if(room->flagIsSet(R_PAWN_SHOP)) {
-        if(room->getFaction() == "")
+        if(room->getFaction().empty())
             player->printColor("^yThis pawn shop does not have a faction set.\n");
     }
 
@@ -1001,10 +1026,10 @@ int stat_rom(Player* player, UniqueRoom* room) {
     if(room->flagIsSet(R_CAN_SHOPLIFT))
         player->print("Store guardroom: rm %s\n", cr.str(room->info.area).c_str());
 
-    showRoomFlags(player, room, 0, 0);
+    showRoomFlags(player, room, nullptr, nullptr);
 
 
-    if(room->effects.effectList.size())
+    if(!room->effects.effectList.empty())
         player->printColor("Effects:\n%s", room->effects.getEffectsString(player).c_str());
     player->printColor("%s", room->hooks.display().c_str());
     stat_rom_exits(player, room);
@@ -1150,10 +1175,10 @@ int dmSetRoom(Player* player, cmd* cmnd) {
             int strength = 1;
 
             bstring txt = getFullstrText(cmnd->fullstr, 4);
-            if(txt != "")
+            if(!txt.empty())
                 duration = atoi(txt.c_str());
             txt = getFullstrText(cmnd->fullstr, 5);
-            if(txt != "")
+            if(!txt.empty())
                 strength = atoi(txt.c_str());
 
             if(duration > EFFECT_MAX_DURATION || duration < -1) {
@@ -1167,7 +1192,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
             }
 
             bstring effectStr = cmnd->str[3];
-            EffectInfo* toSet = 0;
+            EffectInfo* toSet = nullptr;
             if((toSet = room->getExactEffect(effectStr))) {
                 // We have an existing effect we're modifying
                 if(duration == 0) {
@@ -1186,7 +1211,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
                 // No existing effect, add a new one
                 if(strength == -1)
                     strength = 1;
-                if(room->addEffect(effectStr, duration, strength, 0, true) != nullptr){
+                if(room->addEffect(effectStr, duration, strength, nullptr, true) != nullptr){
                     player->print("Effect '%s' (room) added with duration %d and strength %d.\n", effectStr.c_str(), duration, strength);
                 } else {
                     player->print("Unable to add effect '%s' (room)\n", effectStr.c_str());
@@ -1322,7 +1347,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
                 player->getUniqueRoomParent()->exits.empty())
             {
                 cr = player->getUniqueRoomParent()->info;
-                UniqueRoom* shop=0;
+                UniqueRoom* shop=nullptr;
                 bstring storageName = "Storage: ";
 
                 cr.id--;
@@ -1350,7 +1375,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
             player->print("Error: You need to be in a unique room to do that.\n");
             return(0);
         }
-        if(strcmp(cmnd->str[3], "clear")) {
+        if(strcmp(cmnd->str[3], "clear") != 0) {
             player->print("Are you sure?\nType \"*set r last clear\" to clear last-arrived info.\n");
             return(0);
         }
@@ -1565,7 +1590,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
                 desc.Replace("*CR*", "\n");
                 exit->setDescription(desc);
 
-                if(exit->getDescription() == "") {
+                if(exit->getDescription().empty()) {
                     player->print("Description cleared.\n");
                     log_immort(true, player, "%s cleared %s^g's %s.\n", player->getCName(), exit->getCName(), "Description");
                 } else {
@@ -1590,10 +1615,10 @@ int dmSetExit(Player* player, cmd* cmnd) {
                 int strength = 1;
 
                 bstring txt = getFullstrText(cmnd->fullstr, 4);
-                if(txt != "")
+                if(!txt.empty())
                     duration = atoi(txt.c_str());
                 txt = getFullstrText(cmnd->fullstr, 5);
-                if(txt != "")
+                if(!txt.empty())
                     strength = atoi(txt.c_str());
 
                 if(duration > EFFECT_MAX_DURATION || duration < -1) {
@@ -1607,7 +1632,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
                 }
 
                 bstring effectStr = cmnd->str[3];
-                EffectInfo* toSet = 0;
+                EffectInfo* toSet = nullptr;
                 if((toSet = exit->getExactEffect(effectStr))) {
                     // We have an existing effect we're modifying
                     if(duration == 0) {
@@ -1625,7 +1650,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
                     // No existing effect, add a new one
                     if(strength == -1)
                         strength = 1;
-                    if(exit->addEffect(effectStr, duration, strength, 0, true) != nullptr) {
+                    if(exit->addEffect(effectStr, duration, strength, nullptr, true) != nullptr) {
                         player->print("Effect '%s' (exit) added with duration %d and strength %d.\n", effectStr.c_str(), duration, strength);
                     } else {
                         player->print("Unable to add effect '%s' (exit)\n", effectStr.c_str());
@@ -1635,7 +1660,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
             } else {
                 exit->setEnter(getFullstrText(cmnd->fullstr, 3));
 
-                if(exit->getEnter() == "" || Pueblo::is(exit->getEnter())) {
+                if(exit->getEnter().empty() || Pueblo::is(exit->getEnter())) {
                     exit->setEnter("");
                     player->print("OnEnter cleared.\n");
                     log_immort(true, player, "%s cleared %s^g's %s.\n", player->getCName(), exit->getCName(), "OnEnter");
@@ -1670,7 +1695,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 
             if(cmnd->str[1][2] == 'a') {
                 exit->setKeyArea(cmnd->str[3]);
-                if(exit->getKeyArea() == "") {
+                if(exit->getKeyArea().empty()) {
                     player->print("Key Area cleared.\n");
                     log_immort(true, player, "%s cleared %s^g's %s.\n", player->getCName(), exit->getCName(), "Key Area");
                 } else {
@@ -1703,7 +1728,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 
             exit->setOpen(getFullstrText(cmnd->fullstr, 3));
 
-            if(exit->getOpen() == "" || Pueblo::is(exit->getOpen())) {
+            if(exit->getOpen().empty() || Pueblo::is(exit->getOpen())) {
                 exit->setOpen("");
                 player->print("OnOpen cleared.\n");
                 log_immort(true, player, "%s cleared %s^g's %s.\n", player->getCName(), exit->getCName(), "OnOpen");
@@ -1718,7 +1743,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 
                 exit->setPassPhrase(getFullstrText(cmnd->fullstr, 3));
 
-                if(exit->getPassPhrase() == "") {
+                if(exit->getPassPhrase().empty()) {
                     player->print("Passphrase cleared.\n");
                     log_immort(true, player, "%s cleared %s^g's %s.\n", player->getCName(), exit->getCName(), "Passphrase");
                 } else {
@@ -1786,10 +1811,10 @@ int dmSetExit(Player* player, cmd* cmnd) {
 
     // we need more variables to continue our work
     MapMarker mapmarker;
-    BaseRoom* room2=0;
-    AreaRoom* aRoom=0;
-    UniqueRoom  *uRoom=0;
-    Area    *area=0;
+    BaseRoom* room2=nullptr;
+    AreaRoom* aRoom=nullptr;
+    UniqueRoom  *uRoom=nullptr;
+    Area    *area=nullptr;
     CatRef  cr;
     bstring returnExit = getFullstrText(cmnd->fullstr, 4);
 
@@ -1828,7 +1853,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
             player->print("Area does not exist.\n");
             return(0);
         }
-        aRoom = area->loadRoom(0, &mapmarker, false);
+        aRoom = area->loadRoom(nullptr, &mapmarker, false);
         room2 = aRoom;
     }
 
@@ -1844,7 +1869,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
     newName = expand_exit_name(newName);
 
 
-    if(returnExit != "") {
+    if(!returnExit.empty()) {
 
         if(returnExit == ".")
             returnExit = opposite_exit_name(newName);
@@ -1906,7 +1931,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int room_track(Creature* player) {
-    long    t = time(0);
+    long    t = time(nullptr);
 
     if(player->isMonster() || !player->inUniqueRoom())
         return(0);
@@ -2239,7 +2264,7 @@ int dmNameRoom(Player* player, cmd* cmnd) {
 
     bstring name = getFullstrText(cmnd->fullstr, 1);
 
-    if(name == "" || Pueblo::is(name)) {
+    if(name.empty() || Pueblo::is(name)) {
         player->print("Rename room to what?\n");
         return(0);
     }
@@ -2289,12 +2314,12 @@ int dmDescription(Player* player, cmd* cmnd, bool append) {
     cmnd->fullstr = cmnd->fullstr.substr(i+1);
 //  strcpy(cmnd->fullstr, &cmnd->fullstr[i+1]);
 
-    if(cmnd->fullstr.find("  ") != cmnd->fullstr.npos)
+    if(cmnd->fullstr.find("  ") != bstring::npos)
         player->printColor("Do not use double spaces in room descriptions! Use ^W*wrap^x to fix this.\n");
 
     if(sdesc) {
         // short descriptions
-        newline = newline && room->getShortDescription() != "";
+        newline = newline && !room->getShortDescription().empty();
 
         if(append) {
             room->appendShortDescription(newline ? "\n" : "");
@@ -2308,7 +2333,7 @@ int dmDescription(Player* player, cmd* cmnd, bool append) {
         player->print("Short description %s.\n", append ? "appended" : "prepended");
     } else {
         // long descriptions
-        newline = newline && room->getLongDescription() != "";
+        newline = newline && !room->getLongDescription().empty();
 
         if(append) {
             room->appendLongDescription(newline ? "\n" : "");
@@ -2348,9 +2373,9 @@ int dmPrepend(Player* player, cmd* cmnd) {
 //*********************************************************************
 // Display information about what mobs will randomly spawn.
 
-void showMobList(Player* player, WanderInfo *wander, bstring type) {
+void showMobList(Player* player, WanderInfo *wander, const bstring& type) {
     std::map<int, CatRef>::iterator it;
-    Monster *monster=0;
+    Monster *monster=nullptr;
     bool    found=false, maybeAggro=false;
     std::ostringstream oStr;
 
@@ -2443,7 +2468,7 @@ int dmMobList(Player* player, cmd* cmnd) {
 
         Area* area = player->getAreaRoomParent()->area;
         std::list<AreaZone*>::iterator it;
-        AreaZone *zone=0;
+        AreaZone *zone=nullptr;
 
         for(it = area->zones.begin() ; it != area->zones.end() ; it++) {
             zone = (*it);
@@ -2453,7 +2478,7 @@ int dmMobList(Player* player, cmd* cmnd) {
             }
         }
 
-        TileInfo* tile = area->getTile(area->getTerrain(0, &player->getAreaRoomParent()->mapmarker, 0, 0, 0, true),
+        TileInfo* tile = area->getTile(area->getTerrain(nullptr, &player->getAreaRoomParent()->mapmarker, 0, 0, 0, true),
                 area->getSeasonFlags(&player->getAreaRoomParent()->mapmarker));
         if(tile && tile->wander.getTraffic()) {
             player->print("Tile: %s\n", tile->getName().c_str());
@@ -2513,7 +2538,7 @@ int dmWrap(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if((!which && room->getShortDescription() == "") || (which && room->getLongDescription() == "")) {
+    if((!which && room->getShortDescription().empty()) || (which && room->getLongDescription().empty())) {
         player->print("No text to wrap!\n");
         return(0);
     }
@@ -2642,7 +2667,7 @@ int dmArrangeExits(Player* player, cmd* cmnd) {
 //                          link_rom
 //*********************************************************************
 // from this room to unique room
-void link_rom(BaseRoom* room, Location l, bstring str) {
+void link_rom(BaseRoom* room, const Location& l, const bstring& str) {
 
     const char* dir = str.c_str();
     for(Exit* ext : room->exits) {
@@ -2662,17 +2687,17 @@ void link_rom(BaseRoom* room, Location l, bstring str) {
     room->exits.push_back(exit);
 }
 
-void link_rom(BaseRoom* room, short tonum, bstring str) {
+void link_rom(BaseRoom* room, short tonum, const bstring& str) {
     Location l;
     l.room.id = tonum;
     link_rom(room, l, str);
 }
-void link_rom(BaseRoom* room, CatRef cr, bstring str) {
+void link_rom(BaseRoom* room, const CatRef& cr, const bstring& str) {
     Location l;
     l.room = cr;
     link_rom(room, l, str);
 }
-void link_rom(BaseRoom* room, MapMarker *mapmarker, bstring str) {
+void link_rom(BaseRoom* room, MapMarker *mapmarker, const bstring& str) {
     Location l;
     l.mapmarker = *mapmarker;
     link_rom(room, l, str);
@@ -2685,8 +2710,8 @@ void link_rom(BaseRoom* room, MapMarker *mapmarker, bstring str) {
 //                      dmFix
 //*********************************************************************
 
-int dmFix(Player* player, cmd* cmnd, bstring name, char find, char replace) {
-    Exit    *exit=0;
+int dmFix(Player* player, cmd* cmnd, const bstring& name, char find, char replace) {
+    Exit    *exit=nullptr;
     int     i=0;
     bool    fixed=false;
 
@@ -2739,7 +2764,7 @@ int dmFixExit(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmRenameExit(Player* player, cmd* cmnd) {
-    Exit    *exit=0;
+    Exit    *exit=nullptr;
 
     if(!player->checkBuilder(player->getUniqueRoomParent())) {
         player->print("Room is not in any of your alotted room ranges.\n");
@@ -2843,14 +2868,14 @@ int dmDestroyRoom(Player* player, cmd* cmnd) {
 //                          findRoomsWithFlag
 //*********************************************************************
 
-void findRoomsWithFlag(const Player* player, Range range, int flag) {
+void findRoomsWithFlag(const Player* player, const Range& range, int flag) {
     Async async;
-    if(async.branch(player, CHILD_PRINT) == AsyncExternal) {
+    if(async.branch(player, ChildType::PRINT) == AsyncExternal) {
         std::ostringstream oStr;
         bool found = false;
 
         if(range.low.id <= range.high) {
-            UniqueRoom* room=0;
+            UniqueRoom* room=nullptr;
             CatRef cr;
             int high = range.high;
 
@@ -2886,13 +2911,13 @@ void findRoomsWithFlag(const Player* player, Range range, int flag) {
 
 void findRoomsWithFlag(const Player* player, CatRef area, int flag) {
     Async async;
-    if(async.branch(player, CHILD_PRINT) == AsyncExternal) {
-        struct  dirent *dirp=0;
-        DIR     *dir=0;
+    if(async.branch(player, ChildType::PRINT) == AsyncExternal) {
+        struct  dirent *dirp=nullptr;
+        DIR     *dir=nullptr;
         std::ostringstream oStr;
         bool    found = false;
         char    filename[250];
-        UniqueRoom  *room=0;
+        UniqueRoom  *room=nullptr;
 
         // This tells us just to get the path, not the file,
         // and tells loadRoomFromFile to ignore the CatRef
@@ -2950,8 +2975,8 @@ int dmFind(Player* player, cmd* cmnd) {
     else if(type == "m")
         type = "monster";
 
-    if(type == "" || (type != "room" && type != "object" && type != "monster")) {
-        if(type != "")
+    if(type.empty() || (type != "room" && type != "object" && type != "monster")) {
+        if(!type.empty())
             player->print("\"%s\" is not a valid type.\n", type.c_str());
         player->print("Search for next available of the following: room, object, monster.\n");
         return(0);
@@ -2973,7 +2998,7 @@ int dmFind(Player* player, cmd* cmnd) {
 
 
     Async async;
-    if(async.branch(player, CHILD_PRINT) == AsyncExternal) {
+    if(async.branch(player, ChildType::PRINT) == AsyncExternal) {
         cr = findNextEmpty(type, cr.area);
 
         std::cout << "^YNext available " << type << " in area " << cr.area << "^x\n";
@@ -2996,18 +3021,18 @@ int dmFind(Player* player, cmd* cmnd) {
 //*********************************************************************
 // searches for the next empty room/object/monster in the area
 
-CatRef findNextEmpty(bstring type, bstring area) {
+CatRef findNextEmpty(const bstring& type, const bstring& area) {
     CatRef cr;
     cr.setArea(area);
 
     if(type == "room") {
-        UniqueRoom* room=0;
+        UniqueRoom* room=nullptr;
         
         for(cr.id = 1; cr.id < RMAX; cr.id++)
             if(!loadRoom(cr, &room))
                 return(cr);
     } else if(type == "object") {
-        Object *object=0;
+        Object *object=nullptr;
 
         for(cr.id = 1; cr.id < OMAX; cr.id++) {
             if(!loadObject(cr, &object))
@@ -3016,7 +3041,7 @@ CatRef findNextEmpty(bstring type, bstring area) {
                 delete object;
         }
     } else if(type == "monster") {
-        Monster *monster=0;
+        Monster *monster=nullptr;
 
         for(cr.id = 1; cr.id < MMAX; cr.id++) {
             if(!loadMonster(cr, &monster))
@@ -3030,3 +3055,59 @@ CatRef findNextEmpty(bstring type, bstring area) {
     cr.id = -1;
     return(cr);
 }
+
+
+//*********************************************************************
+//                      save
+//*********************************************************************
+
+void AreaRoom::save(Player* player) const {
+    char            filename[256];
+
+    sprintf(filename, "%s/%d/", Path::AreaRoom, area->id);
+    Path::checkDirExists(filename);
+    strcat(filename, mapmarker.filename().c_str());
+
+    if(!canSave()) {
+        if(file_exists(filename)) {
+            if(player)
+                player->print("Restoring this room to generic status.\n");
+            unlink(filename);
+        } else {
+            if(player)
+                player->print("There is no reason to save this room!\n\n");
+        }
+        return;
+    }
+
+    // record rooms saved during swap
+    if(gConfig->swapIsInteresting(this))
+        gConfig->swapLog((bstring)"a" + mapmarker.str(), false);
+
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr      rootNode, curNode;
+
+    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "AreaRoom", nullptr);
+    xmlDocSetRootElement(xmlDoc, rootNode);
+
+    unique.save(rootNode, "Unique", false);
+    xml::saveNonZeroNum(rootNode, "NeedsCompass", needsCompass);
+    xml::saveNonZeroNum(rootNode, "DecCompass", decCompass);
+    effects.save(rootNode, "Effects");
+    hooks.save(rootNode, "Hooks");
+
+    curNode = xml::newStringChild(rootNode, "MapMarker");
+    mapmarker.save(curNode);
+
+    curNode = xml::newStringChild(rootNode, "Exits");
+    saveExitsXml(curNode);
+
+    xml::saveFile(filename, xmlDoc);
+    xmlFreeDoc(xmlDoc);
+
+    if(player)
+        player->print("Room saved.\n");
+}
+
+

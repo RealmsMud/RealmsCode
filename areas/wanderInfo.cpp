@@ -17,11 +17,16 @@
  */
 
 
-#include <xml.hpp>
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "wanderInfo.hpp"
+#include <map>                    // for operator==, operator!=, allocator
+
+#include "bstring.hpp"            // for bstring
+#include "catRef.hpp"             // for CatRef
+#include "creatures.hpp"          // for Player, Monster
+#include "free_crt.hpp"           // for free_crt
+#include "random.hpp"             // for Random
+#include "utils.hpp"              // for MAX, MIN
+#include "wanderInfo.hpp"         // for WanderInfo
+#include "xml.hpp"                // for loadMonster
 
 //*********************************************************************
 //                      WanderInfo

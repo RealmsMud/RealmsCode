@@ -16,11 +16,21 @@
  *
  */
 
-#include <rooms.hpp>
-#include <exits.hpp>
-#include <proto.hpp>
-#include <mud.hpp>
-#include <xml.hpp>
+#include <exits.hpp>                                // for Exit, Direction
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <proto.hpp>                                // for whatSize
+#include <rooms.hpp>                                // for BaseRoom, AreaRoom
+#include <xml.hpp>                                  // for NODE_NAME, saveNo...
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for operator<, basic_...
+
+#include "area.hpp"                                 // for MapMarker
+#include "bstring.hpp"                              // for bstring
+#include "catRef.hpp"                               // for CatRef
+#include "effects.hpp"                              // for Effects
+#include "flags.hpp"                                // for X_PORTAL, MAX_EXI...
+#include "hooks.hpp"                                // for Hooks
+#include "location.hpp"                             // for Location
 
 
 //*********************************************************************

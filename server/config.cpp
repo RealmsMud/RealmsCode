@@ -17,20 +17,25 @@
  */
 
 
-#include "magic.hpp"
-#include <sys/stat.h>
-#include <stdexcept>
+#include <cstdio>                 // for sprintf
+#include <cstdlib>                // for exit, system
+#include <cstring>                // for memset, strcpy
+#include <sys/stat.h>             // for stat, mkdir
+#include <ctime>                  // for ctime, time
+#include <map>                    // for map
+#include <ostream>                // for operator<<, endl, basic_ostream
+#include <stdexcept>              // for runtime_error
 
-#include "calendar.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "factions.hpp"
-#include "fishing.hpp"
-#include "guilds.hpp"
-#include "mud.hpp"
-#include "msdp.hpp"
-#include "proxy.hpp"
-#include "rooms.hpp"
+#include "bstring.hpp"            // for bstring, operator+
+#include "calendar.hpp"           // for Calendar, cSeason, cWeather (ptr only)
+#include "catRef.hpp"             // for CatRef
+#include "config.hpp"             // for Config, accountDouble, MudFlagMap
+#include "fishing.hpp"            // for Fishing
+#include "global.hpp"             // for CUSTOM_COLOR_ADMIN, CUSTOM_COLOR_BR...
+#include "mud.hpp"                // for MAXINT
+#include "paths.hpp"              // for checkDirExists, checkPaths
+#include "proxy.hpp"              // for ProxyManager
+#include "structs.hpp"            // for MudFlag
 
 // Globals
 Config *gConfig = nullptr;
@@ -347,7 +352,7 @@ bstring Config::getQS() const { return(qs); }
 bstring Config::getUserAgent() const { return(userAgent); }
 bstring Config::getReviewer() const { return(reviewer); }
 
-#include "specials.hpp"
+#include "specials.hpp"           // for SA_MAX_FLAG, SA_NO_FLAG
 
 bstring Config::getSpecialFlag(int index) {
     if(index >= SA_MAX_FLAG || index <= SA_NO_FLAG )
@@ -355,7 +360,16 @@ bstring Config::getSpecialFlag(int index) {
 
     return(specialFlags[index].name);
 }
-#include "version.hpp"
+#include "version.hpp"            // for VERSION
+
+class Ban;
+class CatRefInfo;
+class GuildCreation;
+class Lore;
+class Property;
+class Ship;
+class Unique;
+
 bstring Config::getVersion() {
     return(VERSION);
 }

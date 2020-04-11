@@ -16,13 +16,24 @@
  *
  */
 
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "socket.hpp"
-#include "objects.hpp"
+#include <ctime>           // for time
+
+#include "bstring.hpp"     // for bstring
+#include "cmd.hpp"         // for cmd
+#include "config.hpp"      // for Config, gConfig
+#include "creatures.hpp"   // for Player, Creature, Monster, CHECK_DIE
+#include "deityData.hpp"   // for DeityData
+#include "flags.hpp"       // for P_AFK, M_SPECIAL_UNDEAD, P_LAG_PROTECTION_...
+#include "global.hpp"      // for CreatureClass, CreatureClass::DEATHKNIGHT
+#include "magic.hpp"       // for SpellData, splHallow, splUnhallow
+#include "monType.hpp"     // for PLAYER
+#include "mud.hpp"         // for LT, LT_HOLYWORD, LT_TURN, LT_LAY_HANDS
+#include "objects.hpp"     // for Object, ObjectType, ObjectType::BANDAGE
+#include "proto.hpp"       // for broadcast, bonus, up
+#include "random.hpp"      // for Random
+#include "realm.hpp"       // for EARTH
+#include "rooms.hpp"       // for BaseRoom
+#include "utils.hpp"       // for MIN, MAX
 
 
 //*********************************************************************
@@ -32,7 +43,7 @@
 // and players. -- TC
 
 int cmdEnthrall(Player* player, cmd* cmnd) {
-    Creature* creature=0;
+    Creature* creature=nullptr;
     int     dur=0, chance=0;
     long    i=0, t=0;
 
@@ -52,13 +63,13 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
     }
 
     i = LT(player, LT_HYPNOTIZE);
-    t = time(0);
+    t = time(nullptr);
     if(i > t && !player->isDm()) {
         player->pleaseWait(i-t);
         return(0);
     }
 
-    dur = 300 + Random::get(1, 30) * 10 + bonus((int) player->piety.getCur()) * 30 +
+    dur = 300 + Random::get(1, 30) * 10 + bonus(player->piety.getCur()) * 30 +
           (int)(player->getSkillLevel("enthrall") * 5);
 
 
@@ -89,7 +100,7 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
     player->lasttime[LT_HYPNOTIZE].interval = 300L;
 
     chance = MIN(90, 40 + (int)((player->getSkillLevel("enthrall") - creature->getLevel()) * 10) +
-            4 * bonus((int) player->piety.getCur()));
+            4 * bonus(player->piety.getCur()));
 
     if(creature->flagIsSet(M_PERMENANT_MONSTER))
         chance -= 25;
@@ -135,9 +146,9 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
 
     player->addCharm(creature);
 
-    creature->stun(MAX(1,7+Random::get(1,2)+bonus((int) player->piety.getCur())));
+    creature->stun(MAX(1,7+Random::get(1,2)+bonus(player->piety.getCur())));
 
-    creature->lasttime[LT_CHARMED].ltime = time(0);
+    creature->lasttime[LT_CHARMED].ltime = time(nullptr);
     creature->lasttime[LT_CHARMED].interval = dur;
 
     creature->setFlag(creature->isPlayer() ? P_CHARMED : M_CHARMED);
@@ -152,9 +163,9 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
 // This command allows a dwarven cleric/paladin of Gradius to smother enemies
 
 int cmdEarthSmother(Player* player, cmd* cmnd) {
-    Creature* creature=0;
-    Player  *pCreature=0;
-    Monster *mCreature=0;
+    Creature* creature=nullptr;
+    Player  *pCreature=nullptr;
+    Monster *mCreature=nullptr;
     long    i=0, t=0;
     int     chance=0, dmg=0;
 
@@ -192,7 +203,7 @@ int cmdEarthSmother(Player* player, cmd* cmnd) {
 
     double level = player->getSkillLevel("smother");
     i = LT(player, LT_SMOTHER);
-    t = time(0);
+    t = time(nullptr);
     if(i > t && !player->isCt()) {
         player->pleaseWait(i-t);
         return(0);
@@ -203,7 +214,7 @@ int cmdEarthSmother(Player* player, cmd* cmnd) {
     player->lasttime[LT_SMOTHER].interval = 120L;
 
 
-    chance = ((int)(level - creature->getLevel()) * 20) + bonus((int) player->piety.getCur()) * 5 + 25;
+    chance = ((int)(level - creature->getLevel()) * 20) + bonus(player->piety.getCur()) * 5 + 25;
     chance = MIN(chance, 80);
     if(creature->isEffected("resist-earth"))
         chance /= 2;
@@ -254,9 +265,9 @@ int cmdEarthSmother(Player* player, cmd* cmnd) {
 // This will allow paladins to lay on hands
 
 int cmdLayHands(Player* player, cmd* cmnd) {
-    Creature* creature=0;
+    Creature* creature=nullptr;
     int     num=0;
-    long    t=time(0), i=0;
+    long    t=time(nullptr), i=0;
 
     player->clearFlag(P_AFK);
 
@@ -391,7 +402,7 @@ int cmdPray(Player* player, cmd* cmnd) {
     }
 
     i = player->lasttime[LT_PRAY].ltime;
-    t = time(0);
+    t = time(nullptr);
 
     if(t - i < 600L && !player->isStaff()) {
         player->pleaseWait(600L-t+i);
@@ -399,9 +410,9 @@ int cmdPray(Player* player, cmd* cmnd) {
     }
 
     if(player->getClass()==CreatureClass::DEATHKNIGHT)
-        chance = MIN(85, (int)(player->getSkillLevel("pray") * 10) + (bonus((int) player->strength.getCur()) * 5));
+        chance = MIN(85, (int)(player->getSkillLevel("pray") * 10) + (bonus(player->strength.getCur()) * 5));
     else
-        chance = MIN(85, (int)(player->getSkillLevel("pray") * 20) + bonus((int) player->piety.getCur()));
+        chance = MIN(85, (int)(player->getSkillLevel("pray") * 20) + bonus(player->piety.getCur()));
 
     if(Random::get(1, 100) <= chance) {
         player->lasttime[LT_PRAY].ltime = t;
@@ -477,7 +488,7 @@ int Creature::getTurnChance(Creature* target) {
     level = MAX<double>(1,level);
 
 
-    bns = bonus((int)piety.getCur());
+    bns = bonus(piety.getCur());
 
     chance = (int)((level - target->getLevel())*20) +
             bns*5 + (getClass() == CreatureClass::PALADIN ? 15:25);
@@ -501,7 +512,7 @@ int Creature::getTurnChance(Creature* target) {
 //*********************************************************************
 
 int cmdTurn(Player* player, cmd* cmnd) {
-    Creature* target=0;
+    Creature* target=nullptr;
     long    i=0, t=0;
     int     m=0, dmg=0, dis=5, chance=0;
     int     roll=0, disroll=0, bns=0;
@@ -509,7 +520,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
 
     player->clearFlag(P_AFK);
 
-    bns = bonus((int)player->piety.getCur());
+    bns = bonus(player->piety.getCur());
 
     if(!player->ableToDoCommand())
         return(0);
@@ -546,7 +557,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
     player->interruptDelayedActions();
 
     i = LT(player, LT_TURN);
-    t = time(0);
+    t = time(nullptr);
 
     if(i > t && !player->isDm()) {
         player->pleaseWait(i-t);
@@ -654,7 +665,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
 // destroying one another utterly.  --- TC
 
 int cmdRenounce(Player* player, cmd* cmnd) {
-    Creature* target=0;
+    Creature* target=nullptr;
     long    i=0, t=0;
     int     chance=0, dmg=0;
 
@@ -688,7 +699,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
         }
 
         i = LT(player, LT_RENOUNCE);
-        t = time(0);
+        t = time(nullptr);
 
         if(i > t && !player->isCt()) {
             player->pleaseWait(i-t);
@@ -708,7 +719,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
         player->lasttime[LT_RENOUNCE].ltime = t;
         player->lasttime[LT_RENOUNCE].interval = 60L;
 
-        chance = ((int)(level - target->getLevel())*20) + bonus((int)player->piety.getCur())*5 + 25;
+        chance = ((int)(level - target->getLevel())*20) + bonus(player->piety.getCur()) * 5 + 25;
         if(target->flagIsSet(M_PERMENANT_MONSTER))
             chance -= 15;
         chance = MIN(chance, 90);
@@ -732,7 +743,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
             }
         }
 
-        if(Random::get(1,100) > 90 - bonus((int)player->piety.getCur()) || player->isDm()) {
+        if(Random::get(1,100) > 90 - bonus(player->piety.getCur()) || player->isDm()) {
             player->print("You destroy %N with your faith.\n", target);
             player->checkImprove("renounce", true);
             broadcast(player->getSock(), player->getParent(), "The power of %N's faith destroys %N.",
@@ -770,7 +781,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
         player->interruptDelayedActions();
 
         i = LT(player, LT_RENOUNCE);
-        t = time(0);
+        t = time(nullptr);
 
         if(i > t && !player->isCt()) {
             player->pleaseWait(i-t);
@@ -785,7 +796,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
         player->lasttime[LT_RENOUNCE].interval = 60L;
 
         chance = ((int)(level - target->getLevel())*20) +
-            bonus((int)player->piety.getCur())*5 + 25;
+                 bonus(player->piety.getCur()) * 5 + 25;
         chance = MIN(chance, 90);
         if(player->isDm())
             chance = 101;
@@ -808,7 +819,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
             }
         }
 
-        if(Random::get(1,100) > 90 - bonus((int)player->piety.getCur()) || player->isDm()) {
+        if(Random::get(1,100) > 90 - bonus(player->piety.getCur()) || player->isDm()) {
             player->print("You destroyed %N with your faith.\n", target);
             player->checkImprove("renounce", true);
             target->print("The power of %N's faith destroys you!\n", player);
@@ -839,7 +850,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
 // upon reaching level 13 or higher. ---TC
 
 int cmdHolyword(Player* player, cmd* cmnd) {
-    Creature* target=0;
+    Creature* target=nullptr;
     long    i=0, t=0;
     int     chance=0, dmg=0, alnum=0;
 
@@ -883,7 +894,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 
 
         i = LT(player, LT_HOLYWORD);
-        t = time(0);
+        t = time(nullptr);
 
         if(i > t && !player->isDm()) {
             player->pleaseWait(i-t);
@@ -903,7 +914,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
         player->lasttime[LT_HOLYWORD].interval = 240L;
 
         chance = ((int)(level - target->getLevel())*20) +
-                bonus((int)player->piety.getCur())*5 + 25;
+                 bonus(player->piety.getCur()) * 5 + 25;
 
         chance = MIN(chance, 90);
         if(player->isDm())
@@ -925,7 +936,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
             }
         }
 
-        if((Random::get(1,100) > (90 - bonus((int)player->piety.getCur()))) || (player->isDm())) {
+        if((Random::get(1,100) > (90 - bonus(player->piety.getCur()))) || (player->isDm())) {
             player->print("Your holy word utterly destroys %N.\n", target);
             player->checkImprove("holyword", true);
             broadcast(player->getSock(), player->getParent(), "%M's holy word utterly destroys %N.",
@@ -936,12 +947,12 @@ int cmdHolyword(Player* player, cmd* cmnd) {
             target->die(player);
         } else {
             alnum = player->getAlignment() / 100;
-            dmg = Random::get((int)level + alnum, (int)(level*4)) + bonus((int)player->piety.getCur());
+            dmg = Random::get((int)level + alnum, (int)(level*4)) + bonus(player->piety.getCur());
             //player->statistics.attackDamage(dmg, "holyword");
 
             player->print("Your holy word does %d damage to %N.\n", dmg, target);
             player->checkImprove("holyword", true);
-            target->stun((bonus((int)player->piety.getCur()) + Random::get(2,6)) );
+            target->stun((bonus(player->piety.getCur()) + Random::get(2, 6)) );
 
             broadcast(player->getSock(), player->getParent(), "%M pronounces a holy word on %N.", player, target);
 
@@ -968,7 +979,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
         player->interruptDelayedActions();
 
         i = LT(player, LT_HOLYWORD);
-        t = time(0);
+        t = time(nullptr);
 
 
         if(i > t && !player->isDm()) {
@@ -986,7 +997,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
         player->lasttime[LT_HOLYWORD].interval = 240L;
 
         chance = ((int)(level - target->getLevel())*20) +
-                bonus((int)player->piety.getCur())*5 + 25;
+                 bonus(player->piety.getCur()) * 5 + 25;
         chance = MIN(chance, 90);
         if(player->isDm())
             chance = 101;
@@ -1008,7 +1019,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
             }
         }
 
-        if((Random::get(1,100) > (90 - bonus((int)player->piety.getCur()))) || player->isDm()) {
+        if((Random::get(1,100) > (90 - bonus(player->piety.getCur()))) || player->isDm()) {
 
             player->print("Your holy word utterly destroys %N.\n", target);
             player->checkImprove("holyword", true);
@@ -1021,12 +1032,12 @@ int cmdHolyword(Player* player, cmd* cmnd) {
         } else {
             alnum = player->getAlignment() / 100;
             dmg = (Random::get((int)level + alnum, (int)(level*4))
-                   + bonus((int)player->piety.getCur())) - bonus((int)target->piety.getCur());
+                   + bonus(player->piety.getCur())) - bonus(target->piety.getCur());
             player->statistics.attackDamage(dmg, "holyword");
 
             player->printColor("Your holy word does %s%d^x damage to %N.\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg, target);
             player->checkImprove("holyword", true);
-            target->stun((bonus((int)player->piety.getCur()) + Random::get(2,6)) );
+            target->stun((bonus(player->piety.getCur()) + Random::get(2, 6)) );
 
             target->printColor("%M pronounced a holy word on you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), dmg);
             broadcast(player->getSock(), target->getSock(), player->getParent(),
@@ -1045,8 +1056,8 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdBandage(Player* player, cmd* cmnd) {
-    Creature* creature=0;
-    Object  *object=0;
+    Creature* creature=nullptr;
+    Object  *object=nullptr;
     int     heal=0;
 
     player->clearFlag(P_AFK);

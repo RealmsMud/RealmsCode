@@ -17,12 +17,17 @@
  */
 
 
-#include <iomanip>
+#include <algorithm>              // for find
+#include <iomanip>                // for operator<<, setw
+#include <list>                   // for operator==, operator!=
+#include <ostream>                // for operator<<, basic_ostream, basic_os...
+#include <string>                 // for char_traits, operator<<, basic_string
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "socket.hpp"
+#include "bstring.hpp"            // for bstring
+#include "creatures.hpp"          // for Creature, Monster, PetList
+#include "flags.hpp"              // for M_PET, P_NO_EXTRA_COLOR
+#include "proto.hpp"              // for broadcast, isMatch
+#include "rooms.hpp"              // for BaseRoom
 
 void Creature::addPet(Monster* newPet, bool setPetFlag) {
     if(newPet->getMaster())
@@ -36,14 +41,14 @@ void Creature::addPet(Monster* newPet, bool setPetFlag) {
         getGroup()->add(newPet);
 }
 void Creature::delPet(Monster* toDel) {
-    PetList::iterator it = std::find(pets.begin(), pets.end(), toDel);
+    auto it = std::find(pets.begin(), pets.end(), toDel);
     if(it != pets.end()) {
         pets.erase(it);
     }
 
 }
 Monster* Creature::findPet(Monster* toFind) {
-    PetList::iterator it = std::find(pets.begin(), pets.end(), toFind);
+    auto it = std::find(pets.begin(), pets.end(), toFind);
     if(it != pets.end())
         return((*it));
     return(nullptr);
@@ -61,7 +66,7 @@ Creature* Monster::getMaster() const {
     return(myMaster);
 }
 
-Monster* Creature::findPet(bstring pName, int pNum) {
+Monster* Creature::findPet(const bstring& pName, int pNum) {
     int match = 0;
     for(Monster* pet : pets) {
         if(isMatch(this, pet, pName, false, false)) {

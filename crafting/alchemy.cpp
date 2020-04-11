@@ -17,19 +17,21 @@
  */
 
 #include "alchemy.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "craft.hpp"
-#include "creatures.hpp"
-#include "factions.hpp"
-#include "mud.hpp"
-#include "server.hpp"
-#include "unique.hpp"
-#include "objects.hpp"
 
-#include <sstream>
-#include <iomanip>
-#include <locale>
+#include <iomanip>                // for operator<<, setw
+#include <sstream>                // for operator<<, basic_ostream, ostrings...
+#include <string>                 // for operator<<, operator==, basic_string
+#include <utility>                // for pair
+
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for cmdBrew
+#include "config.hpp"             // for Config, AlchemyMap, gConfig
+#include "creatureStreams.hpp"    // for Streamable, ColorOff, ColorOn
+#include "creatures.hpp"          // for Player, Creature, Player::KnownAlch...
+#include "global.hpp"             // for FIND_OBJ_EQUIPMENT, FIND_OBJ_INVENTORY
+#include "objects.hpp"            // for Object, AlchemyEffectMap, ObjectType
+#include "server.hpp"             // for Server, gServer
+#include "utils.hpp"              // for MAX, MIN
 
 //########################################################################
 //# AlchemyInfo
@@ -90,10 +92,9 @@ bool AlchemyInfo::isPositive() const {
 //*********************************************************************
 
 bool Config::clearAlchemy() {
-    for(std::pair<bstring, AlchemyInfo*> p : alchemy) {
+    for(const auto& p : alchemy) {
         AlchemyInfo* alcInfo = p.second;
-        if(alcInfo)
-            delete alcInfo;
+        delete alcInfo;
     }
     alchemy.clear();
     return(true);
@@ -104,8 +105,8 @@ bool Config::clearAlchemy() {
 //                      getAlchemyInfo
 //*********************************************************************
 
-const AlchemyInfo *Config::getAlchemyInfo(bstring effect) const {
-    AlchemyMap::const_iterator it = alchemy.find(effect);
+const AlchemyInfo *Config::getAlchemyInfo(const bstring& effect) const {
+    auto it = alchemy.find(effect);
 
     if(it != alchemy.end())
         return it->second;
@@ -215,7 +216,7 @@ void AlchemyEffect::combineWith(const AlchemyEffect& ae) {
 //                      alchemyEffectVisible
 //*********************************************************************
 
-bool Player::alchemyEffectVisible(Object* obj, const bstring effect) {
+bool Player::alchemyEffectVisible(Object* obj, const bstring& effect) {
     if(!obj || effect.empty())
         return(false);
 
@@ -237,7 +238,7 @@ bool Player::alchemyEffectVisible(Object* obj, const bstring effect) {
 //                      learnAlchemyEffect
 //*********************************************************************
 
-bool Player::learnAlchemyEffect(Object* obj, const bstring effect) {
+bool Player::learnAlchemyEffect(Object* obj, const bstring& effect) {
     if(!obj || effect.empty())
         return(false);
 
@@ -267,7 +268,7 @@ bstring Object::showAlchemyEffects(Player *player) {
         if(player->knowsSkill("alchemy") || isct)
             visible = true;
         skillLevel = static_cast<int>(player->getTradeSkillGained("alchemy"));
-    } else if(!player) {
+    } else {
         isct = true;
         visible = true;
         skillLevel = 300;  // TODO: Constant
@@ -351,7 +352,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    Object* mortar=0;   // Our Mortar and Pestle
+    Object* mortar=nullptr;   // Our Mortar and Pestle
 
     mortar = dynamic_cast<Object*>(player->findTarget(FIND_OBJ_INVENTORY | FIND_OBJ_EQUIPMENT | FIND_OBJ_ROOM, 0, cmnd->str[1], cmnd->val[1]));
 
@@ -414,7 +415,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 
 
 
-        for( HerbMap::value_type effectPair : effectCount) {
+        for( const HerbMap::value_type& effectPair : effectCount) {
             if(effectPair.second.size() > 1) {
                 player->printColor("Using effect: ^Y%s^x.\n", effectPair.first.c_str());
                 for(Object* herb : effectPair.second) {
@@ -450,7 +451,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 
     int i = 1;
     // Copy the alchemy effects to the potion
-    for(std::pair<bstring, AlchemyEffect> aep : effects) {
+    for(const auto& aep : effects) {
         AlchemyEffect eff = aep.second;
         long duration = 10;
 
@@ -487,7 +488,7 @@ void Object::nameAlchemyPotion(bool potion) {
         suffix << "poison of";
     bool valid = false;
 
-    for(AlchemyEffectMap::value_type p : alchemyEffects) {
+    for(const AlchemyEffectMap::value_type& p : alchemyEffects) {
         const AlchemyInfo* alc = gConfig->getAlchemyInfo(p.second.getEffect());
 
         if(alc) {
@@ -526,7 +527,7 @@ bool Object::addAlchemyEffect(int num, const AlchemyEffect &ae) {
 //*********************************************************************
 
 bool Object::isAlchemyPotion() {
-    return(type == ObjectType::POTION && alchemyEffects.size() > 0);
+    return(type == ObjectType::POTION && !alchemyEffects.empty());
 }
 
 bool AlchemyInfo::potionNameHasPrefix() const {

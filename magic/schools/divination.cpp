@@ -15,12 +15,17 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "move.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
+#include "cmd.hpp"        // for cmd
+#include "creatures.hpp"  // for Player, Creature
+#include "flags.hpp"      // for P_SLEEPING, R_LIMBO, R_NO_CLAIR_ROOM, R_SHO...
+#include "global.hpp"     // for CreatureClass, CastType, CastType::CAST
+#include "magic.hpp"      // for splGeneric, SpellData, splClairvoyance, spl...
+#include "move.hpp"       // for tooFarAway
+#include "proto.hpp"      // for bonus, broadcast, display_rom, lowercize, up
+#include "random.hpp"     // for Random
+#include "rooms.hpp"      // for BaseRoom
+#include "server.hpp"     // for Server, gServer
+#include "utils.hpp"      // for MIN, MAX
 
 
 //*********************************************************************
@@ -77,7 +82,7 @@ int splKnowAura(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This allows bards to tell the luck of a given player.
 
 int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
     int     luk;
 
     Player  *pPlayer = player->getAsPlayer();
@@ -204,7 +209,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!pPlayer)
         return(0);
 
-    Player  *target=0;
+    Player  *target=nullptr;
     int     chance=0;
 
     if(pPlayer->getClass() == CreatureClass::BUILDER) {
@@ -233,7 +238,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
         pPlayer->print("You attempt to focus on %N.\n", target);
 
     chance = 50 + (spellData->level - target->getLevel()) * 5 +
-            (bonus((int) pPlayer->intelligence.getCur()) - bonus((int) target->intelligence.getCur())) * 5;
+             (bonus(pPlayer->intelligence.getCur()) - bonus(target->intelligence.getCur())) * 5;
 
     chance += (pPlayer->getClass() == CreatureClass::MAGE) ? 5 : 0;
     chance = MIN(85, chance);
@@ -250,11 +255,8 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(pPlayer->isStaff() || Random::get(1, 100) < chance) {
 
-        chance += (target->getClass() == CreatureClass::MAGE) ? 5 : 0;
-        chance = MIN(85, chance);
-
         chance = 60 + ((int)target->getLevel() - (int)spellData->level) * 5 +
-            (bonus((int) target->intelligence.getCur()) - bonus((int) pPlayer->intelligence.getCur())) * 5;
+                 (bonus(target->intelligence.getCur()) - bonus(pPlayer->intelligence.getCur())) * 5;
         chance += (target->getClass() == CreatureClass::MAGE) ? 5 : 0;
         chance = MIN(85, chance);
 
@@ -283,7 +285,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
         pPlayer->print("Your mind is unable to connect.\n");
 
         chance = 65 + ((int)target->getLevel() - (int)spellData->level) * 5 +
-                (bonus((int) target->intelligence.getCur()) - bonus((int) pPlayer->intelligence.getCur())) * 5;
+                 (bonus(target->intelligence.getCur()) - bonus(pPlayer->intelligence.getCur())) * 5;
 
         if(!pPlayer->isStaff() && Random::get(1, 100) < chance)
             target->print("%M attempts to connect to your mind.\n", pPlayer);

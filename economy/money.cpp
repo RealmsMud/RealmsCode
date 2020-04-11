@@ -15,8 +15,15 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr
+#include <ostream>                                  // for operator<<, strin...
+#include <string>                                   // for char_traits, oper...
+
+#include "bstring.hpp"                              // for bstring
+#include "money.hpp"                                // for Money, Coin, MAX_...
+#include "proto.hpp"                                // for zero
+#include "utils.hpp"                                // for MIN
+#include "xml.hpp"                                  // for loadNumArray, sav...
 
 //*********************************************************************
 //                      Money

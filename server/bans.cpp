@@ -16,13 +16,24 @@
  *
  */
 
-// Mud Includes
-#include "config.hpp"
-#include "creatures.hpp"
-#include "bans.hpp"
-#include "mud.hpp"
-#include "server.hpp"
-#include "socket.hpp"
+#include <cctype>                 // for isspace, isgraph, isdigit
+#include <cstdio>                 // for sprintf
+#include <cstdlib>                // for atoi, free
+#include <cstring>                // for strlen, strcpy, strstr, strcat, memcpy
+#include <strings.h>              // for strncasecmp
+#include <ctime>                  // for time, ctime
+
+#include "bans.hpp"               // for Ban
+#include "bstring.hpp"            // for bstring
+#include "cmd.hpp"                // for cmd
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player
+#include "global.hpp"             // for CreatureClass, CreatureClass::BUILDER
+#include "mud.hpp"                // for questions_to_email
+#include "proto.hpp"              // for broadcast, isCt, log_immort, logn
+#include "server.hpp"             // for Server, gServer, SocketList
+#include "socket.hpp"             // for Socket
+#include "utils.hpp"              // for MAX, MIN
 
 Ban::Ban() {
     reset(); 

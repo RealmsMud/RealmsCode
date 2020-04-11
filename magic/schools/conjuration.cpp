@@ -15,10 +15,29 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
+#include <cstring>        // for strncpy, strtok, strlen
+#include <strings.h>      // for strncasecmp
+#include <ctime>          // for time, time_t
+
+#include "bstring.hpp"    // for bstring
+#include "cmd.hpp"        // for cmd
+#include "creatures.hpp"  // for Monster, Creature, Player
+#include "effects.hpp"    // for EffectInfo, Effect
+#include "exits.hpp"      // for Exit
+#include "flags.hpp"      // for M_PLUS_TWO, M_ENCHANTED_WEAPONS_ONLY, M_REG...
+#include "global.hpp"     // for CreatureClass, CastType, CastType::CAST
+#include "magic.hpp"      // for SpellData, CONJURATION, NO_DOMAIN, S_CURE_P...
+#include "monType.hpp"    // for MONSTER
+#include "mud.hpp"        // for LT_INVOKE, LT_SPELL, LT_TICK, LT_TICK_HARMFUL
+#include "objects.hpp"    // for Object
+#include "os.hpp"         // for merror
+#include "proto.hpp"      // for broadcast, findExit, bonus, getOffensiveSpell
+#include "random.hpp"     // for Random
+#include "realm.hpp"      // for Realm, EARTH, MAX_REALM, COLD, ELEC, FIRE
+#include "rooms.hpp"      // for BaseRoom
+#include "server.hpp"     // for Server, gServer
+#include "structs.hpp"    // for creatureStats
+#include "utils.hpp"      // for MIN, MAX
 
 
 char conjureTitles[][3][10][30] = {
@@ -293,7 +312,6 @@ void petTalkDesc(Monster* pet, Creature* owner) {
 int getPetTitle(CastType how, int skLevel, bool weaker, bool undead) {
     int title=0, num=0;
     if(how == CastType::CAST || how == CastType::SKILL || how == CastType::WAND) {
-        title = (skLevel + 2) / 3;
         if(weaker) {
             num = skLevel / 2;
             if(num < 1)
@@ -317,38 +335,38 @@ int getPetTitle(CastType how, int skLevel, bool weaker, bool undead) {
 //*********************************************************************
 int conjureCmd(Player* player, cmd* cmnd) {
     SpellData data;
-    data.set(CastType::SKILL, CONJURATION, NO_DOMAIN, 0, player);
+    data.set(CastType::SKILL, CONJURATION, NO_DOMAIN, nullptr, player);
     if(!data.check(player))
         return(0);
     return(conjure(player, cmnd, &data));
 }
 
-int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player* pPlayer = player->getAsPlayer();
-    if(!pPlayer)
-        return(0);
+int conjure(Creature *player, cmd *cmnd, SpellData *spellData) {
+    Player *pPlayer = player->getAsPlayer();
+    if (!pPlayer)
+        return (0);
 
-    Monster *target=0;
-    int     title=0, mp=0, realm=0, level=0, spells=0, chance=0, sRealm=0;
-    int     buff=0, hp_percent=0, mp_percent=0, a=0, rnum=0, cClass=0, skLevel=0;
-    int     interval=0, len=0, n=0, x=0, hplow=0,hphigh=0, mplow=0, mphigh=0;
-    time_t  t, i;
+    Monster *target = nullptr;
+    int title = 0, mp = 0, realm = 0, level = 0, spells = 0, chance = 0, sRealm = 0;
+    int buff = 0, hp_percent = 0, mp_percent = 0, a = 0, rnum = 0, cClass = 0, skLevel = 0;
+    int interval = 0, n = 0, x = 0, hplow = 0, hphigh = 0, mplow = 0, mphigh = 0;
+    time_t t, i, len = 0;;
     const char *delem;
 
     // BUG: Name is not long enough for "schizophrenic serial killer clown"
-    char    *s, *p, name[80];
+    char *s, *p, name[80];
 
     delem = " ";
 
-    if(!player->ableToDoCommand())
-        return(0);
+    if (!player->ableToDoCommand())
+        return (0);
 
-    if(player->noPotion( spellData))
-        return(0);
+    if (player->noPotion(spellData))
+        return (0);
 
-    if(spellData->how == CastType::SKILL && !player->knowsSkill("conjure")) {
+    if (spellData->how == CastType::SKILL && !player->knowsSkill("conjure")) {
         player->print("The conjuring of elementals escapes you.\n");
-        return(0);
+        return (0);
     }
 
     /*
@@ -362,127 +380,128 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     // has been fixed
     skLevel = player->getLevel();
 
-    if( spellData->how == CastType::SKILL &&
+    if (spellData->how == CastType::SKILL &&
         player->getClass() == CreatureClass::CLERIC &&
         player->getDeity() == GRADIUS &&
-        (   player->getAdjustedAlignment() == BLOODRED ||
-            player->getAdjustedAlignment() == ROYALBLUE
-        ) )
-    {
+        (player->getAdjustedAlignment() == BLOODRED ||
+         player->getAdjustedAlignment() == ROYALBLUE
+        )) {
         player->print("Your alignment is out of harmony.\n");
-        return(0);
+        return (0);
     }
 
-    if(player->getClass() == CreatureClass::BUILDER) {
+    if (player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot conjure pets.\n");
-        return(0);
+        return (0);
     }
 
-    if(player->hasPet() && !player->checkStaff("Only one conjuration at a time!\n"))
-        return(0);
+    if (player->hasPet() && !player->checkStaff("Only one conjuration at a time!\n"))
+        return (0);
 
-    if(spellData->object) {
-        level = spellData->object->getQuality()/10;
+    if (spellData->object) {
+        level = spellData->object->getQuality() / 10;
     } else {
         level = skLevel;
     }
 
-    title = getPetTitle(spellData->how, level, spellData->how == CastType::WAND && player->getClass() !=  CreatureClass::DRUID && !(player->getClass() == CreatureClass::CLERIC && player->getDeity() == GRADIUS), false);
+    title = getPetTitle(spellData->how, level,
+                        spellData->how == CastType::WAND && player->getClass() != CreatureClass::DRUID &&
+                        !(player->getClass() == CreatureClass::CLERIC && player->getDeity() == GRADIUS), false);
     mp = 4 * title;
 
-    if(spellData->how == CastType::CAST && !player->checkMp(mp))
-        return(0);
+    if (spellData->how == CastType::CAST && !player->checkMp(mp))
+        return (0);
 
-    t = time(0);
+    t = time(nullptr);
     i = LT(player, LT_INVOKE);
-    if(!player->isCt()) {
-        if( (i > t) && (spellData->how != CastType::WAND) ) {
-            player->pleaseWait(i-t);
-            return(0);
+    if (!player->isCt()) {
+        if ((i > t) && (spellData->how != CastType::WAND)) {
+            player->pleaseWait(i - t);
+            return (0);
         }
-        if(spellData->how == CastType::CAST) {
-            if(player->spellFail( spellData->how)) {
+        if (spellData->how == CastType::CAST) {
+            if (player->spellFail(spellData->how)) {
                 player->subMp(mp);
-                return(0);
+                return (0);
             }
         }
     }
 
-    if( player->getClass() == CreatureClass::DRUID ||
-        (spellData->how == CastType::SKILL && !(player->getClass() == CreatureClass::CLERIC && player->getDeity() == GRADIUS)) ||
-        player->isDm() )
-    {
+    if (player->getClass() == CreatureClass::DRUID ||
+        (spellData->how == CastType::SKILL &&
+         !(player->getClass() == CreatureClass::CLERIC && player->getDeity() == GRADIUS)) ||
+        player->isDm()) {
 
-        if( (cmnd->num < 3 && (spellData->how == CastType::CAST || spellData->how == CastType::WAND)) ||
+        if ((cmnd->num < 3 && (spellData->how == CastType::CAST || spellData->how == CastType::WAND)) ||
             (cmnd->num < 2 && spellData->how == CastType::SKILL)
-        ) {
+                ) {
             player->print("Conjure what kind of elemental (earth, air, water, fire, electricity, cold)?\n");
-            return(0);
+            return (0);
         }
         s = cmnd->str[spellData->how == CastType::SKILL ? 1 : 2];
         len = strlen(s);
 
-        if(!strncasecmp(s, "earth", len))
+        if (!strncasecmp(s, "earth", len))
             realm = EARTH;
-        else if(!strncasecmp(s, "air", len))
+        else if (!strncasecmp(s, "air", len))
             realm = WIND;
-        else if(!strncasecmp(s, "fire", len))
+        else if (!strncasecmp(s, "fire", len))
             realm = FIRE;
-        else if(!strncasecmp(s, "water", len))
+        else if (!strncasecmp(s, "water", len))
             realm = WATER;
-        else if(!strncasecmp(s, "cold", len))
+        else if (!strncasecmp(s, "cold", len))
             realm = COLD;
-        else if(!strncasecmp(s, "electricity", len))
+        else if (!strncasecmp(s, "electricity", len))
             realm = ELEC;
 
-        else if(player->isDm() && !strncasecmp(s, "mage", len))
+        else if (player->isDm() && !strncasecmp(s, "mage", len))
             realm = CONJUREMAGE;
-        else if(player->isDm() && !strncasecmp(s, "bard", len))
+        else if (player->isDm() && !strncasecmp(s, "bard", len))
             realm = CONJUREBARD;
         else {
             player->print("Conjure what kind of elemental (earth, air, water, fire, electricity, cold)?\n");
-            return(0);
+            return (0);
         }
     } else {
-        if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == GRADIUS)
+        if (player->getClass() == CreatureClass::CLERIC && player->getDeity() == GRADIUS)
             realm = EARTH;
-        else if(player->getClass() == CreatureClass::BARD)
+        else if (player->getClass() == CreatureClass::BARD)
             realm = CONJUREBARD;
         else
             realm = CONJUREMAGE;
     }
 
     // 0 = weak, 1 = normal, 2 = buff
-    buff = Random::get(1,3) - 1;
+    buff = Random::get(1, 3) - 1;
 
     target = new Monster;
-    if(!target) {
+    if (!target) {
         player->print("Cannot allocate memory for target.\n");
         merror("conjure", NONFATAL);
-        return(PROMPT);
+        return (PROMPT);
     }
 
     // Only level 30 titles
     int titleIdx = MIN(29, title);
-    if(realm == CONJUREBARD) {
-        target->setName(bardConjureTitles[buff][titleIdx-1]);
-        strncpy(name,  bardConjureTitles[buff][titleIdx-1], 79);
-    } else if(realm == CONJUREMAGE) {
-        target->setName(mageConjureTitles[buff][titleIdx-1]);
-        strncpy(name,  mageConjureTitles[buff][titleIdx-1], 79);
+    if (realm == CONJUREBARD) {
+        target->setName(bardConjureTitles[buff][titleIdx - 1]);
+        strncpy(name, bardConjureTitles[buff][titleIdx - 1], 79);
+    } else if (realm == CONJUREMAGE) {
+        target->setName(mageConjureTitles[buff][titleIdx - 1]);
+        strncpy(name, mageConjureTitles[buff][titleIdx - 1], 79);
     } else {
-        target->setName(conjureTitles[realm-1][buff][titleIdx-1]);
-        strncpy(name, conjureTitles[realm-1][buff][titleIdx-1], 79);
+        target->setName(conjureTitles[realm - 1][buff][titleIdx - 1]);
+        strncpy(name, conjureTitles[realm - 1][buff][titleIdx - 1], 79);
     }
     name[79] = '\0';
 
-    if(spellData->object) {
-        level = spellData->object->getQuality()/10;
+    if (spellData->object) {
+        level = spellData->object->getQuality() / 10;
     } else {
         level = skLevel;
     }
 
-    switch(buff) {
+    switch (buff) {
         case 0:
             level -= 3;
             break;
@@ -490,99 +509,90 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
             level -= 2;
             break;
         case 2:
-            level -= Random::get(0,1);
+            level -= Random::get(0, 1);
             break;
     }
 
     level = MAX(1, MIN(MAXALVL, level));
 
     p = strtok(name, delem);
-    if(p)
+    if (p)
         strncpy(target->key[0], p, 19);
     p = strtok(nullptr, delem);
-    if(p)
+    if (p)
         strncpy(target->key[1], p, 19);
     p = strtok(nullptr, delem);
-    if(p)
+    if (p)
         strncpy(target->key[2], p, 19);
-
-//  if(realm == CONJUREBARD) {
-//      level = title * 12 / 7 + Random::get(1,4) - 2;
-//      level = MAX(1,MIN(skLevel-3, level));
-//  } else if(realm == CONJUREMAGE) {
-//      level = title * 6 / 4 + Random::get(1,4) - 2;
-//  } else {
-//      level = title * 2 + Random::get(1,4) - 2;
-//  }
 
     target->setType(MONSTER);
     bool combatPet = false;
 
-    if(realm == CONJUREBARD) {
-        chance = Random::get(1,100);
-        if(chance > 50)
-            cClass = Random::get(1,13);
+    if (realm == CONJUREBARD) {
+        chance = Random::get(1, 100);
+        if (chance > 50)
+            cClass = Random::get(1, 13);
 
-        if(cClass) {
-            switch(cClass)  {
-            case 1:
-                target->setClass(CreatureClass::ASSASSIN);
-                break;
-            case 2:
-                target->setClass(CreatureClass::BERSERKER);
-                combatPet = true;
-                break;
-            case 3:
-                target->setClass(CreatureClass::CLERIC);
-                break;
-            case 4:
-                target->setClass(CreatureClass::FIGHTER);
-                combatPet = true;
-                break;
-            case 5:
-                target->setClass(CreatureClass::MAGE);
-                break;
-            case 6:
-                target->setClass(CreatureClass::PALADIN);
-                break;
-            case 7:
-                target->setClass(CreatureClass::RANGER);
-                break;
-            case 8:
-                target->setClass(CreatureClass::THIEF);
-                break;
-            case 9:
-                target->setClass(CreatureClass::PUREBLOOD);
-                break;
-            case 10:
-                target->setClass(CreatureClass::MONK);
-                break;
-            case 11:
-                target->setClass(CreatureClass::DEATHKNIGHT);
-                break;
-            case 12:
-                target->setClass(CreatureClass::WEREWOLF);
-                break;
-            case 13:
-                target->setClass(CreatureClass::ROGUE);
-                break;
+        if (cClass) {
+            switch (cClass) {
+                case 1:
+                    target->setClass(CreatureClass::ASSASSIN);
+                    break;
+                case 2:
+                    target->setClass(CreatureClass::BERSERKER);
+                    combatPet = true;
+                    break;
+                case 3:
+                    target->setClass(CreatureClass::CLERIC);
+                    break;
+                case 4:
+                    target->setClass(CreatureClass::FIGHTER);
+                    combatPet = true;
+                    break;
+                case 5:
+                    target->setClass(CreatureClass::MAGE);
+                    break;
+                case 6:
+                    target->setClass(CreatureClass::PALADIN);
+                    break;
+                case 7:
+                    target->setClass(CreatureClass::RANGER);
+                    break;
+                case 8:
+                    target->setClass(CreatureClass::THIEF);
+                    break;
+                case 9:
+                    target->setClass(CreatureClass::PUREBLOOD);
+                    break;
+                case 10:
+                    target->setClass(CreatureClass::MONK);
+                    break;
+                case 11:
+                    target->setClass(CreatureClass::DEATHKNIGHT);
+                    break;
+                case 12:
+                    target->setClass(CreatureClass::WEREWOLF);
+                    break;
+                case 13:
+                    target->setClass(CreatureClass::ROGUE);
+                    break;
             }
         }
         //if(target->getClass() == CreatureClass::CLERIC && Random::get(1,100) > 50)
         //  target->learnSpell(S_HEAL);
 
-        if(target->getClass() == CreatureClass::MAGE && Random::get(1,100) > 50)
+        if (target->getClass() == CreatureClass::MAGE && Random::get(1, 100) > 50)
             target->learnSpell(S_RESIST_MAGIC);
     }
 
 
-    target->setLevel(MIN(level, skLevel+1));
+    target->setLevel(MIN(level, skLevel + 1));
     level--;
-    target->strength.setInitial(conjureStats[buff][level].str*10);
-    target->dexterity.setInitial(conjureStats[buff][level].dex*10);
-    target->constitution.setInitial(conjureStats[buff][level].con*10);
-    target->intelligence.setInitial(conjureStats[buff][level].intel*10);
-    target->piety.setInitial(conjureStats[buff][level].pie*10);
+    target->strength.setInitial(conjureStats[buff][level].str * 10);
+    target->dexterity.setInitial(conjureStats[buff][level].dex * 10);
+    target->constitution.setInitial(conjureStats[buff][level].con * 10);
+    target->intelligence.setInitial(conjureStats[buff][level].intel * 10);
+    target->piety.setInitial(conjureStats[buff][level].pie * 10);
 
     target->strength.restore();
     target->dexterity.restore();
@@ -591,12 +601,12 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     target->piety.restore();
 
     // This will be adjusted in 2.50, for now just str*2
-    target->setAttackPower(target->strength.getCur()*2);
+    target->setAttackPower(target->strength.getCur() * 2);
 
     // There are as many variations of elementals on the elemental
     // planes as there are people on the Prime Material. Therefore,
     // the elementals summoned have varying hp and mp stats. -TC
-    if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == GRADIUS) {
+    if (player->getClass() == CreatureClass::CLERIC && player->getDeity() == GRADIUS) {
         hp_percent = 8;
         mp_percent = 4;
     } else {
@@ -609,10 +619,10 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     target->hp.setInitial(Random::get(hplow, hphigh));
     target->hp.restore();
 
-    if(!combatPet) {
+    if (!combatPet) {
         mphigh = conjureStats[buff][level].mp;
         mplow = (conjureStats[buff][level].mp * mp_percent) / 10;
-        target->mp.setInitial(MAX(10,Random::get(mplow, mphigh)));
+        target->mp.setInitial(MAX(10, Random::get(mplow, mphigh)));
         target->mp.restore();
     }
 
@@ -629,72 +639,73 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     target->damage.setNumber(conjureStats[buff][level].ndice);
     target->damage.setSides(conjureStats[buff][level].sdice);
     target->damage.setPlus(conjureStats[buff][level].pdice);
-    target->first_tlk = 0;
+    target->first_tlk = nullptr;
     target->setParent(nullptr);
 
-    for(n=0; n<20; n++)
-        target->ready[n] = 0;
+    for (n = 0; n < 20; n++)
+        target->ready[n] = nullptr;
 
-    if(!combatPet) {
-        for(Realm r = MIN_REALM; r<MAX_REALM; r = (Realm)((int)r + 1))
-            target->setRealm(Random::get((conjureStats[buff][level].realms*3)/4, conjureStats[buff][level].realms), r);
+    if (!combatPet) {
+        for (Realm r = MIN_REALM; r < MAX_REALM; r = (Realm) ((int) r + 1))
+            target->setRealm(Random::get((conjureStats[buff][level].realms * 3) / 4, conjureStats[buff][level].realms),
+                             r);
     }
 
 
     target->lasttime[LT_TICK].ltime =
     target->lasttime[LT_TICK_SECONDARY].ltime =
-    target->lasttime[LT_TICK_HARMFUL].ltime = time(0);
+    target->lasttime[LT_TICK_HARMFUL].ltime = time(nullptr);
 
-    target->lasttime[LT_TICK].interval  =
+    target->lasttime[LT_TICK].interval =
     target->lasttime[LT_TICK_SECONDARY].interval = 60;
     target->lasttime[LT_TICK_HARMFUL].interval = 30;
 
     target->getMobSave();
 
-    if(!combatPet) {
-        if(player->getDeity() == GRADIUS || realm == CONJUREBARD)
-            target->setCastChance(Random::get(5,10)); // cast precent
+    if (!combatPet) {
+        if (player->getDeity() == GRADIUS || realm == CONJUREBARD)
+            target->setCastChance(Random::get(5, 10)); // cast precent
         else
-            target->setCastChance(Random::get(20,50));    // cast precent
+            target->setCastChance(Random::get(20, 50));    // cast precent
         target->proficiency[1] = realm;
         target->setFlag(M_CAST_PRECENT);
         target->setFlag(M_CAN_CAST);
 
         target->learnSpell(S_VIGOR);
-        if(target->getLevel() > 10 && player->getDeity() != GRADIUS)
+        if (target->getLevel() > 10 && player->getDeity() != GRADIUS)
             target->learnSpell(S_MEND_WOUNDS);
-        if(target->getLevel() > 7 && player->getDeity() != GRADIUS && player->getClass() !=  CreatureClass::DRUID)
+        if (target->getLevel() > 7 && player->getDeity() != GRADIUS && player->getClass() != CreatureClass::DRUID)
             target->learnSpell(S_CURE_POISON);
 
 
-        switch(buff) {
-        case 0:
-            // Wimpy mob -- get 1-2 spells
-            spells = Random::get(1, 2);
-            break;
-        case 1:
-            // Medium mob -- get 1-4 spells
-            spells = Random::get(2, 4);
-            break;
-        case 2:
-            // Buff mob -- get 2-5 spells
-            spells = Random::get(2,5);
-            break;
+        switch (buff) {
+            case 0:
+                // Wimpy mob -- get 1-2 spells
+                spells = Random::get(1, 2);
+                break;
+            case 1:
+                // Medium mob -- get 1-4 spells
+                spells = Random::get(2, 4);
+                break;
+            case 2:
+                // Buff mob -- get 2-5 spells
+                spells = Random::get(2, 5);
+                break;
         }
 
         // Give higher level pets higher chance for more spells
-        if(target->getLevel() > 25)
+        if (target->getLevel() > 25)
             spells += 2;
-        else if(target->getLevel() > 16)
+        else if (target->getLevel() > 16)
             spells += 1;
 
-        if(target->getLevel() < 3)
+        if (target->getLevel() < 3)
             spells = 1;
-        else if(target->getLevel() < 7)
+        else if (target->getLevel() < 7)
             spells = MIN(spells, 2);
-        else if(target->getLevel() < 12)
+        else if (target->getLevel() < 12)
             spells = MIN(spells, 3);
-        else if(target->getLevel() < 16)
+        else if (target->getLevel() < 16)
             spells = MIN(spells, 4);
         else
             spells = MIN(spells, 5);
@@ -708,103 +719,103 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 //      // ie: earth - smother, water - ?? fire - ??
 //  }
     //Gradius Earth Pets
-    if(player->getDeity() == GRADIUS) {
+    if (player->getDeity() == GRADIUS) {
         int enchantedOnlyChance = 0;
         int bashChance = 0;
         int circleChance = 0;
 
-        if(target->getLevel() <= 12)
+        if (target->getLevel() <= 12)
             enchantedOnlyChance = 50;
         else
             enchantedOnlyChance = 101;
 
-        if(target->getLevel() >= 10)
+        if (target->getLevel() >= 10)
             bashChance = 50;
 
-        if(target->getLevel() >= 16)
+        if (target->getLevel() >= 16)
             circleChance = 75;
-        else if(target->getLevel() >= 13)
+        else if (target->getLevel() >= 13)
             circleChance = 50;
 
-        if(combatPet) {
+        if (combatPet) {
             bashChance += 25;
             circleChance += 25;
         }
 
-        if(Random::get(1,100) <= enchantedOnlyChance)
+        if (Random::get(1, 100) <= enchantedOnlyChance)
             target->setFlag(M_ENCHANTED_WEAPONS_ONLY);
 
-        if(Random::get(1, 100) <= bashChance)
+        if (Random::get(1, 100) <= bashChance)
             target->addSpecial("bash");
 
-        if(Random::get(1, 100) <= circleChance)
+        if (Random::get(1, 100) <= circleChance)
             target->addSpecial("circle");
 
 
-        if(target->getLevel() >= 10) {
+        if (target->getLevel() >= 10) {
 
-            int numResist = Random::get(1,3);
-            for(a=0;a<numResist;a++) {
-                rnum = Random::get(1,5);
-                switch(rnum) {
-                case 1:
-                    target->addEffect("resist-slashing");
-                    break;
-                case 2:
-                    target->addEffect("resist-piercing");
-                    break;
-                case 3:
-                    target->addEffect("resist-crushing");
-                    break;
-                case 4:
-                    target->addEffect("resist-ranged");
-                    break;
-                case 5:
-                    target->addEffect("resist-chopping");
-                    break;
+            int numResist = Random::get(1, 3);
+            for (a = 0; a < numResist; a++) {
+                rnum = Random::get(1, 5);
+                switch (rnum) {
+                    case 1:
+                        target->addEffect("resist-slashing");
+                        break;
+                    case 2:
+                        target->addEffect("resist-piercing");
+                        break;
+                    case 3:
+                        target->addEffect("resist-crushing");
+                        break;
+                    case 4:
+                        target->addEffect("resist-ranged");
+                        break;
+                    case 5:
+                        target->addEffect("resist-chopping");
+                        break;
                 }
             }
         }
 
-        if(target->getLevel() >= 13) {
-            if(Random::get(1,100) <= 50) {
+        if (target->getLevel() >= 13) {
+            if (Random::get(1, 100) <= 50) {
                 target->setFlag(M_PLUS_TWO);
                 target->clearFlag(M_ENCHANTED_WEAPONS_ONLY);
             }
             target->setFlag(M_REGENERATES);
-            if(Random::get(1,100) <= 15)
+            if (Random::get(1, 100) <= 15)
                 target->addSpecial("smother");
         }
 
-        if(target->getLevel() >= 16) {
+        if (target->getLevel() >= 16) {
             target->setFlag(M_PLUS_TWO);
-            if(Random::get(1,100) <= 20) {
+            if (Random::get(1, 100) <= 20) {
                 target->setFlag(M_PLUS_THREE);
                 target->clearFlag(M_PLUS_TWO);
                 target->clearFlag(M_ENCHANTED_WEAPONS_ONLY);
             }
             target->setFlag(M_REGENERATES);
-            if(Random::get(1,100) <= 30)
+            if (Random::get(1, 100) <= 30)
                 target->addSpecial("smother");
 
-            if(Random::get(1,100) <= 15)
+            if (Random::get(1, 100) <= 15)
                 target->addSpecial("trample");
 
             target->addPermEffect("immune-earth");
         }
 
-        if(target->getLevel() >= 19) {
+        if (target->getLevel() >= 19) {
             target->setFlag(M_PLUS_TWO);
-            if(Random::get(1,100) <= 40) {
+            if (Random::get(1, 100) <= 40) {
                 target->setFlag(M_PLUS_THREE);
                 target->clearFlag(M_PLUS_TWO);
                 target->clearFlag(M_ENCHANTED_WEAPONS_ONLY);
             }
             target->setFlag(M_REGENERATES);
-            if(Random::get(1,100) <= 40)
+            if (Random::get(1, 100) <= 40)
                 target->addSpecial("smother");
 
-            if(Random::get(1,100) <= 25)
+            if (Random::get(1, 100) <= 25)
                 target->addSpecial("trample");
 
             target->addPermEffect("immune-earth");
@@ -814,12 +825,12 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     }
 
-    if(!combatPet) {
+    if (!combatPet) {
         sRealm = realm;
-        for(x=0;x<spells;x++) {
-            if(realm == CONJUREBARD || realm == CONJUREMAGE)
+        for (x = 0; x < spells; x++) {
+            if (realm == CONJUREBARD || realm == CONJUREMAGE)
                 sRealm = getRandomRealm();
-            target->learnSpell(getOffensiveSpell((Realm)sRealm, x)); // TODO: fix bad cast
+            target->learnSpell(getOffensiveSpell((Realm) sRealm, x)); // TODO: fix bad cast
         }
     }
 
@@ -828,11 +839,11 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     broadcast(player->getSock(), player->getParent(), "%M conjures a %s.", player, target->getCName());
 
 
-    if(!combatPet) {
-        chance = Random::get(1,100);
-        if(chance > 50)
+    if (!combatPet) {
+        chance = Random::get(1, 100);
+        if (chance > 50)
             target->learnSpell(S_DETECT_INVISIBILITY);
-        if(chance > 90)
+        if (chance > 90)
             target->learnSpell(S_TRUE_SIGHT);
     }
 
@@ -848,18 +859,18 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     petTalkDesc(target, player);
     target->setFlag(M_PET);
 
-    if(!combatPet) {
-        if(realm < MAX_REALM)
-            target->setBaseRealm((Realm)realm); // TODO: fix bad cast
+    if (!combatPet) {
+        if (realm < MAX_REALM)
+            target->setBaseRealm((Realm) realm); // TODO: fix bad cast
     }
 
     // find out how long it's going to last and create all the timeouts
     x = player->piety.getCur();
-    if(player->getClass() == CreatureClass::DRUID && player->constitution.getCur() > player->piety.getCur())
+    if (player->getClass() == CreatureClass::DRUID && player->constitution.getCur() > player->piety.getCur())
         x = player->constitution.getCur();
-    x = bonus((int) x)*60L;
+    x = bonus(x) * 60L;
 
-    interval = (60L*Random::get(2,4)) + (x >= 0 ? x :  0); //+ 60 * title;
+    interval = (60L * Random::get(2, 4)) + (x >= 0 ? x : 0); //+ 60 * title;
 
     target->lasttime[LT_INVOKE].ltime = t;
     target->lasttime[LT_INVOKE].interval = interval;
@@ -869,16 +880,16 @@ int conjure(Creature* player, cmd* cmnd, SpellData* spellData) {
     target->lasttime[LT_SPELL].ltime = t;
     target->lasttime[LT_SPELL].interval = 3;
 
-    if(player->isCt())
+    if (player->isCt())
         player->lasttime[LT_INVOKE].interval = 6L;
 
-    if(spellData->how == CastType::CAST)
+    if (spellData->how == CastType::CAST)
         player->mp.decrease(mp);
 
-    if(spellData->how == CastType::SKILL)
-        return(PROMPT);
+    if (spellData->how == CastType::SKILL)
+        return (PROMPT);
     else
-        return(1);
+        return (1);
 }
 
 //*********************************************************************
@@ -960,7 +971,7 @@ int splToxicCloud(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splWallOfFire(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Exit *exit=0;
+    Exit *exit=nullptr;
     int strength = spellData->level;
     long duration = 300;
 
@@ -1008,7 +1019,7 @@ int splWallOfFire(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splWallOfForce(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Exit *exit=0;
+    Exit *exit=nullptr;
     int strength = spellData->level;
     long duration = 300;
 
@@ -1045,7 +1056,7 @@ int splWallOfForce(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splWallOfThorns(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Exit *exit=0;
+    Exit *exit=nullptr;
     int strength = spellData->level;
     long duration = 300;
 
@@ -1090,7 +1101,7 @@ void bringDownTheWall(EffectInfo* effect, BaseRoom* room, Exit* exit) {
     if(!effect)
         return;
 
-    BaseRoom* targetRoom=0;
+    BaseRoom* targetRoom=nullptr;
     bstring name = effect->getName();
 
     if(effect->isPermanent()) {

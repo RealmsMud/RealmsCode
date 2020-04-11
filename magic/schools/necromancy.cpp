@@ -16,14 +16,30 @@
  *
  */
 
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
+#include <cstring>         // for strlen, strncmp
+#include <ctime>           // for time, time_t
+
+#include "bstring.hpp"     // for bstring
+#include "cmd.hpp"         // for cmd
+#include "config.hpp"      // for Config, gConfig
+   // for Container
+#include "creatures.hpp"   // for Creature, Monster, Player, NO_CHECK
+#include "deityData.hpp"   // for DeityData
+#include "flags.hpp"       // for M_PERMENANT_MONSTER, M_PET, M_UNDEAD, P_LI...
+#include "global.hpp"      // for CastType, CastType::CAST, CreatureClass
+    // for lasttime
+#include "magic.hpp"       // for SpellData, doOffensive, getPetTitle, petTa...
+#include "mud.hpp"         // for LT_ANIMATE, ospell, LT_SPELL, DL_HARM, LT
+#include "objects.hpp"     // for Object
+#include "proto.hpp"       // for broadcast, dice, bonus, dec_daily, get_spe...
+#include "random.hpp"      // for Random
+#include "rooms.hpp"       // for BaseRoom
+#include "server.hpp"      // for Server, gServer
+  // for Statistics
+       // for Stat
+#include "structs.hpp"     // for osp_t, daily
+#include "utils.hpp"       // for MIN, MAX
+#include "xml.hpp"         // for loadMonster
 
 
 //*********************************************************************
@@ -32,7 +48,7 @@
 
 int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *pPlayer = player->getAsPlayer();
-    Creature* target=0;
+    Creature* target=nullptr;
     int wrongdiety=0, multi=0, roll=0, dmg=0, bns=0, saved=0;
 
 
@@ -190,7 +206,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
 // intended to be learned or casted by a player.
 
 int drain_exp(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
 
     unsigned long loss=0;
 
@@ -265,7 +281,7 @@ int drain_exp(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int animateDeadCmd(Player* player, cmd* cmnd) {
     SpellData data;
-    data.set(CastType::SKILL, NECROMANCY, EVIL, 0, player);
+    data.set(CastType::SKILL, NECROMANCY, EVIL, nullptr, player);
     if(!data.check(player))
         return(0);
     return(animate_dead(player, cmnd, &data));
@@ -276,7 +292,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!pPlayer)
         return(0);
 
-    Monster *target=0;
+    Monster *target=nullptr;
     int     title=0, mp=0, shocked=0, level=0, skLevel=0;
     int     crt_num=0, buff=0, interval=0;
     time_t  t, i;
@@ -355,7 +371,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(spellData->how == CastType::CAST && !player->checkMp(mp))
         return(0);
 
-    t = time(0);
+    t = time(nullptr);
     i = LT(player, LT_ANIMATE);
     if(i > t && !player->isCt() && spellData->how != CastType::WAND) {
         player->pleaseWait(i-t);
@@ -462,7 +478,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splNecroDrain(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
     bstring spell = "";
     int tier=0, c=0;
     osp_t osp;

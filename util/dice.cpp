@@ -15,11 +15,18 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.hpp"
 
 //*********************************************************************
 //                      Dice
 //*********************************************************************
+
+#include <ostream>      // for basic_ostream::operator<<, operator<<, basic_...
+
+#include "bstring.hpp"  // for bstring
+#include "dice.hpp"     // for Dice
+#include "proto.hpp"    // for dice
+#include "random.hpp"   // for Random
+#include "utils.hpp"    // for MAX
 
 Dice::Dice() {
     clear();

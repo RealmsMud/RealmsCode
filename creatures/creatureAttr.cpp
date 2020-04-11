@@ -15,16 +15,42 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "calendar.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "specials.hpp"
-#include "quests.hpp"
-#include "version.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>        // for xmlNodePtr
+#include <cstring>                // for memset, strcpy
+#include <ctime>                  // for time, ctime
+#include <map>                    // for operator==, operator!=, map
+#include <ostream>                // for operator<<, ostringstream, basic_os...
+#include <utility>                // for pair, make_pair
+
+#include "anchor.hpp"             // for Anchor
+#include "bstring.hpp"            // for bstring, operator+
+#include "calendar.hpp"           // for cDay, Calendar
+#include "catRef.hpp"             // for CatRef
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for Container, ObjectSet
+#include "creatures.hpp"          // for Creature, Player, Monster, Player::...
+#include "flags.hpp"              // for M_MALE, M_SEXLESS, P_MALE, P_SEXLESS
+#include "global.hpp"             // for CreatureClass, CreatureClass::NONE
+#include "group.hpp"              // for GROUP_NO_STATUS
+#include "location.hpp"           // for Location
+#include "monType.hpp"            // for PLAYER, immuneCriticals, isUndead
+#include "mud.hpp"                // for LT_UNCONSCIOUS
+#include "proto.hpp"              // for zero, broadcast, get_class_string
+#include "quests.hpp"             // for QuestInfo (ptr only), QuestCompleted
+#include "raceData.hpp"           // for RaceData
+#include "realm.hpp"              // for Realm, MAX_REALM, MIN_REALM, NO_REALM
+#include "rooms.hpp"              // for BaseRoom, UniqueRoom
+#include "size.hpp"               // for Size, NO_SIZE, MAX_SIZE
+#include "skills.hpp"             // for Skill
+#include "specials.hpp"           // for SpecialAttack
+#include "structs.hpp"            // for SEX_FEMALE, SEX_MALE, Sex, tic, SEX...
+#include "threat.hpp"             // for ThreatTable
+#include "utils.hpp"              // for MIN, MAX
+#include "version.hpp"            // for VERSION
+#include "xml.hpp"                // for copyPropToBString
+
+class Object;
+class Socket;
 
 //*********************************************************************
 //                      getClass
@@ -44,100 +70,33 @@ int Creature::getSecondClassInt() const {
 }
 
 
-//*********************************************************************
-//                      getLevel
-//*********************************************************************
-
 unsigned short Creature::getLevel() const { return(level); }
-
-//*********************************************************************
-//                      getAlignment
-//*********************************************************************
 
 short Creature::getAlignment() const { return(alignment); }
 
-//*********************************************************************
-//                      getArmor
-//*********************************************************************
-
 unsigned int Creature::getArmor() const { return(armor); }
-
-//*********************************************************************
-//                      getExperience
-//*********************************************************************
 
 unsigned long Creature::getExperience() const { return(experience); }
 
-//*********************************************************************
-//                getCoinDisplay & getBankDisplay
-//*********************************************************************
 bstring Player::getCoinDisplay() const { return(coins.str()); }
-
 bstring Player::getBankDisplay() const { return(bank.str()); }
-
-//*********************************************************************
-//                      getClan
-//*********************************************************************
 
 unsigned short Creature::getClan() const { return(clan); }
 
-//*********************************************************************
-//                      getType
-//*********************************************************************
-
 mType Creature::getType() const { return(type); }
 
-//*********************************************************************
-//                      getRace
-//*********************************************************************
-
 unsigned short Creature::getRace() const { return(race); }
-
-//*********************************************************************
-//                      getDeity
-//*********************************************************************
-
 unsigned short Creature::getDeity() const { return(deity); }
-
-//*********************************************************************
-//                      getSize
-//*********************************************************************
 
 Size Creature::getSize() const { return(size); }
 
-//*********************************************************************
-//                      getAttackPower
-//*********************************************************************
-
 unsigned int Creature::getAttackPower() const { return(attackPower); }
 
-//*********************************************************************
-//                      getDescription
-//*********************************************************************
-
 bstring Creature::getDescription() const { return(description); }
-
-//*********************************************************************
-//                      getVersion
-//*********************************************************************
-
 bstring Creature::getVersion() const { return(version); }
 
-//*********************************************************************
-//                      getPoisonDuration
-//*********************************************************************
-
 unsigned short Creature::getPoisonDuration() const { return(poison_dur); }
-
-//*********************************************************************
-//                      getPoisonDamage
-//*********************************************************************
-
 unsigned short Creature::getPoisonDamage() const { return(poison_dmg); }
-
-//*********************************************************************
-//                      getSex
-//*********************************************************************
 
 Sex Creature::getSex() const {
     if(isPlayer()) {
@@ -155,21 +114,9 @@ Sex Creature::getSex() const {
     }
 }
 
-//*********************************************************************
-//                      getRealm
-//*********************************************************************
-
 unsigned long Creature::getRealm(Realm r) const { return(realm[r-1]); }
 
-//*********************************************************************
-//                      getPoisonedBy
-//*********************************************************************
-
 bstring Creature::getPoisonedBy() const { return(poisonedBy); }
-
-//*********************************************************************
-//                      inJail
-//*********************************************************************
 
 bool Creature::inJail() const {
     if(isStaff())
@@ -179,19 +126,11 @@ bool Creature::inJail() const {
     return(getConstUniqueRoomParent()->flagIsSet(R_JAIL));
 }
 
-//*********************************************************************
-//                      addExperience
-//*********************************************************************
-
 void Creature::addExperience(unsigned long e) {
     setExperience(experience + e);
     if(isPlayer())
         getAsPlayer()->checkLevel();
 }
-
-//*********************************************************************
-//                      subExperience
-//*********************************************************************
 
 void Creature::subExperience(unsigned long e) {
     setExperience(e > experience ? 0 : experience - e);
@@ -240,75 +179,36 @@ void Creature::setClass(CreatureClass c) {
     cClass = c;
 }
 
-//*********************************************************************
-//                      setClan
-//*********************************************************************
-
 void Creature::setClan(unsigned short c) { clan = c; }
-
-//*********************************************************************
-//                      setLevel
-//*********************************************************************
 
 void Creature::setLevel(unsigned short l, bool isDm) { level = MAX(1, MIN<int>(l, isDm ? 127 : MAXALVL)); }
 
-//*********************************************************************
-//                      setAlignment
-//*********************************************************************
-
 void Creature::setAlignment(short a) { alignment = MAX<short>(-1000, MIN<short>(1000, a)); }
 
-//*********************************************************************
-//                      subAlignment
-//*********************************************************************
 
 void Creature::subAlignment(unsigned short a) { setAlignment(alignment - a); }
 
-//*********************************************************************
-//                      setArmor
-//*********************************************************************
 
 void Creature::setArmor(unsigned int a) { armor = MAX<unsigned int>(MIN(a, MAX_ARMOR), 0); }
 
-//*********************************************************************
-//                      setAttackPower
-//*********************************************************************
 
 void Creature::setAttackPower(unsigned int a) { attackPower = MIN<unsigned int>(1500, a); }
 
-//*********************************************************************
-//                      setDeity
-//*********************************************************************
 
 void Creature::setDeity(unsigned short d) { deity = MIN<unsigned short>(d, DEITY_COUNT-1); }
 
-//*********************************************************************
-//                      setRace
-//*********************************************************************
 
 void Creature::setRace(unsigned short r) { race = MIN<unsigned short>(gConfig->raceCount()-1, r); }
 
-//*********************************************************************
-//                      setSize
-//*********************************************************************
 
 void Creature::setSize(Size s) { size = MAX(NO_SIZE, MIN(MAX_SIZE, s)); }
 
-//*********************************************************************
-//                      setType
-//*********************************************************************
 
 void Creature::setType(unsigned short t) { type = (mType)MIN<short>(MAX_MOB_TYPES-1, t); }
 
-//*********************************************************************
-//                      setType
-//*********************************************************************
 
 void Creature::setType(mType t) { type = t; }
 
-//*********************************************************************
-//                      setDescription
-//*********************************************************************
 
 void Creature::setDescription(const bstring& desc) {
     description = desc;
@@ -316,33 +216,16 @@ void Creature::setDescription(const bstring& desc) {
         description.Replace("*CR*", "\n");
 }
 
-//*********************************************************************
-//                      setVersion
-//*********************************************************************
 
-void Creature::setVersion(bstring v) { version = v == "" ? VERSION : v; }
-
-//*********************************************************************
-//                      setVersion
-//*********************************************************************
+void Creature::setVersion(const bstring& v) { version = v.empty() ? VERSION : v; }
 
 void Creature::setVersion(xmlNodePtr rootNode) { xml::copyPropToBString(version, rootNode, "Version"); }
 
-//*********************************************************************
-//                      setPoisonDuration
-//*********************************************************************
 
 void Creature::setPoisonDuration(unsigned short d) { poison_dur = d; }
 
-//*********************************************************************
-//                      setPoisonDamage
-//*********************************************************************
 
 void Creature::setPoisonDamage(unsigned short d) { poison_dmg = d; }
-
-//*********************************************************************
-//                      setSex
-//*********************************************************************
 
 void Creature::setSex(Sex sex) {
     if(isPlayer()) {
@@ -370,9 +253,6 @@ void Creature::setSex(Sex sex) {
     }
 }
 
-//*********************************************************************
-//                      getSexName
-//*********************************************************************
 
 bstring getSexName(Sex sex) {
     if(sex == SEX_FEMALE)
@@ -384,292 +264,72 @@ bstring getSexName(Sex sex) {
     return("Unknown");
 }
 
-//*********************************************************************
-//                      setDeathType
-//*********************************************************************
 
 void Creature::setDeathType(DeathType d) { deathtype = d; }
 
-//*********************************************************************
-//                      setRealm
-//*********************************************************************
 
 void Creature::setRealm(unsigned long num, Realm r) { realm[r-1] = MIN<unsigned long>(10000000, num); }
-
-//*********************************************************************
-//                      addRealm
-//*********************************************************************
-
 void Creature::addRealm(unsigned long num, Realm r) { setRealm(getRealm(r) + num, r); }
-
-//*********************************************************************
-//                      subRealm
-//*********************************************************************
-
 void Creature::subRealm(unsigned long num, Realm r) { setRealm(num > getRealm(r) ? 0 : getRealm(r) - num, r); }
-
-//*********************************************************************
-//                      setPoisonedBy
-//*********************************************************************
 
 void Creature::setPoisonedBy(const bstring& p) { poisonedBy = p; }
 
-//*********************************************************************
-//                      getMobTrade
-//*********************************************************************
-
 unsigned short Monster::getMobTrade() const { return(mobTrade); }
-
-//*********************************************************************
-//                      getSkillLevel
-//*********************************************************************
 
 int Monster::getSkillLevel() const { return(skillLevel); }
 
-//*********************************************************************
-//                      getMaxLevel
-//*********************************************************************
-
 unsigned int Monster::getMaxLevel() const { return(maxLevel); }
 
-//*********************************************************************
-//                      getNumWander
-//*********************************************************************
-
 unsigned short Monster::getNumWander() const { return(numwander); }
-
-//*********************************************************************
-//                      getLoadAggro
-//*********************************************************************
-
 unsigned short Monster::getLoadAggro() const { return(loadAggro); }
-
-//*********************************************************************
-//                      getUpdateAggro
-//*********************************************************************
-
 unsigned short Monster::getUpdateAggro() const { return(updateAggro); }
-
-//*********************************************************************
-//                      getCastChance
-//*********************************************************************
-
 unsigned short Monster::getCastChance() const { return(cast); }
-
-//*********************************************************************
-//                      getMagicResistance
-//*********************************************************************
-
 unsigned short Monster::getMagicResistance() const { return(magicResistance); }
 
-//*********************************************************************
-//                      getPrimeFaction
-//*********************************************************************
-
 bstring Monster::getPrimeFaction() const { return(primeFaction); }
-
-//*********************************************************************
-//                      getTalk
-//*********************************************************************
-
 bstring Monster::getTalk() const { return(talk); }
 
-//*********************************************************************
-//                      setMaxLevel
-//*********************************************************************
-
 void Monster::setMaxLevel(unsigned short l) { maxLevel = MAX<unsigned short>(0, MIN<unsigned short>(l, MAXALVL)); }
-
-//*********************************************************************
-//                      setCastChance
-//*********************************************************************
-
 void Monster::setCastChance(unsigned short c) { cast = MAX<unsigned short>(0, MIN<unsigned short>(c, 100)); }
-
-//*********************************************************************
-//                      setMagicResistance
-//*********************************************************************
-
 void Monster::setMagicResistance(unsigned short m) { magicResistance = MAX<unsigned short>(0, MIN<unsigned short>(100, m)); }
-
-//*********************************************************************
-//                      setLoadAggro
-//*********************************************************************
-
 void Monster::setLoadAggro(unsigned short a) { loadAggro = MAX<unsigned short>(0, MIN<unsigned short>(a, 99)); }
-
-//*********************************************************************
-//                      setUpdateAggro
-//*********************************************************************
-
 void Monster::setUpdateAggro(unsigned short a) { updateAggro = MAX<unsigned short>(1, MIN<unsigned short>(a, 99)); }
-
-//*********************************************************************
-//                      setNumWander
-//*********************************************************************
-
 void Monster::setNumWander(unsigned short n) { numwander = MAX<unsigned short>(0, MIN<unsigned short>(6, n)); }
-
-//*********************************************************************
-//                      setSkillLevel
-//*********************************************************************
-
 void Monster::setSkillLevel(int l) { skillLevel = MAX(0, MIN(100, l)); }
-
-//*********************************************************************
-//                      setMobTrade
-//*********************************************************************
-
 void Monster::setMobTrade(unsigned short t) { mobTrade = MAX<unsigned short>(0,MIN<unsigned short>(MOBTRADE_COUNT-1, t)); }
-
-//*********************************************************************
-//                      setPrimeFaction
-//*********************************************************************
-
-void Monster::setPrimeFaction(bstring f) { primeFaction = f; }
-
-//*********************************************************************
-//                      setTalk
-//*********************************************************************
-
-void Monster::setTalk(bstring t) { talk = t; talk.Replace("*CR*", "\n"); }
-
-//*********************************************************************
-//                      getSecondClass
-//*********************************************************************
+void Monster::setPrimeFaction(const bstring& f) { primeFaction = f; }
+void Monster::setTalk(const bstring& t) { talk = t; talk.Replace("*CR*", "\n"); }
 
 CreatureClass Player::getSecondClass() const { return(cClass2); }
 bool Player::hasSecondClass() const { return(cClass2 != CreatureClass::NONE); }
 
-//*********************************************************************
-//                      getGuild
-//*********************************************************************
-
 unsigned short Player::getGuild() const { return(guild); }
-
-//*********************************************************************
-//                      getGuildRank
-//*********************************************************************
-
 unsigned short Player::getGuildRank() const { return(guildRank); }
-
-//*********************************************************************
-//                      getActualLevel
-//*********************************************************************
-
 unsigned short Player::getActualLevel() const { return(actual_level); }
-
-//*********************************************************************
-//                      getNegativeLevels
-//*********************************************************************
-
 unsigned short Player::getNegativeLevels() const { return(negativeLevels); }
-
-//*********************************************************************
-//                      getWimpy
-//*********************************************************************
-
 unsigned short Player::getWimpy() const { return(wimpy); }
-
-//*********************************************************************
-//                      getTickDamage
-//*********************************************************************
-
 unsigned short Player::getTickDamage() const { return(tickDmg); }
-
-//*********************************************************************
-//                      getWarnings
-//*********************************************************************
-
 unsigned short Player::getWarnings() const { return(warnings); }
-
-//*********************************************************************
-//                      getPkin
-//*********************************************************************
-
 unsigned short Player::getPkin() const { return(pkin); }
-
-//*********************************************************************
-//                      getPkwon
-//*********************************************************************
-
 unsigned short Player::getPkwon() const { return(pkwon); }
-
-//*********************************************************************
-//                      getWrap
-//*********************************************************************
 
 int Player::getWrap() const { return(wrap); }
 
-//*********************************************************************
-//                      getLuck
-//*********************************************************************
-
 short Player::getLuck() const { return(luck); }
-
-//*********************************************************************
-//                      getWeaponTrains
-//*********************************************************************
 
 unsigned short Player::getWeaponTrains() const { return(weaponTrains); }
 
-//*********************************************************************
-//                      getLastLogin
-//*********************************************************************
-
 long Player::getLastLogin() const { return(lastLogin); }
-
-//*********************************************************************
-//                      getLastInterest
-//*********************************************************************
-
 long Player::getLastInterest() const { return(lastInterest); }
 
-//*********************************************************************
-//                      getLastPassword
-//*********************************************************************
-
 bstring Player::getLastPassword() const { return(lastPassword); }
-
-//*********************************************************************
-//                      getAfflictedBy
-//*********************************************************************
-
 bstring Player::getAfflictedBy() const { return(afflictedBy); }
-
-//*********************************************************************
-//                      getLastCommunicate
-//*********************************************************************
-
 bstring Player::getLastCommunicate() const { return(lastCommunicate); }
-
-//*********************************************************************
-//                      getLastCommand
-//*********************************************************************
-
 bstring Player::getLastCommand() const { return(lastCommand); }
-
-//*********************************************************************
-//                      getSurname
-//*********************************************************************
-
 bstring Player::getSurname() const { return(surname); }
-
-//*********************************************************************
-//                      getForum
-//*********************************************************************
-
 bstring Player::getForum() const { return(forum); }
 
-//*********************************************************************
-//                      getCreated
-//*********************************************************************
-
 long Player::getCreated() const { return(created); }
-
-//*********************************************************************
-//                      getCreatedStr
-//*********************************************************************
 
 bstring Player::getCreatedStr() const {
     bstring str;
@@ -681,241 +341,70 @@ bstring Player::getCreatedStr() const {
     return(str);
 }
 
-//*********************************************************************
-//                      getAlias
-//*********************************************************************
 
 Monster* Player::getAlias() const { return(alias_crt); }
 
-//*********************************************************************
-//                      getBirthday
-//*********************************************************************
-
 cDay* Player::getBirthday() const { return(birthday); }
 
-//*********************************************************************
-//                      getAnchorAlias
-//*********************************************************************
-
 bstring Player::getAnchorAlias(int i) const { return(anchor[i] ? anchor[i]->getAlias() : ""); }
-
-//*********************************************************************
-//                      getAnchorRoomName
-//*********************************************************************
-
 bstring Player::getAnchorRoomName(int i) const { return(anchor[i] ? anchor[i]->getRoomName() : ""); }
-
-//*********************************************************************
-//                      getAnchor
-//*********************************************************************
 
 const Anchor* Player::getAnchor(int i) const { return(anchor[i]); }
 
-//*********************************************************************
-//                      hasAnchor
-//*********************************************************************
-
-bool Player::hasAnchor(int i) const { return(!!anchor[i]); }
-
-//*********************************************************************
-//                      isAnchor
-//*********************************************************************
-
+bool Player::hasAnchor(int i) const { return anchor[i] != nullptr; }
 bool Player::isAnchor(int i, const BaseRoom* room) const { return(anchor[i]->is(room)); }
-
-//*********************************************************************
-//                      getThirst
-//*********************************************************************
 
 unsigned short Player::getThirst() const { return(thirst); }
 
-//*********************************************************************
-//                      numDiscoveredRooms
-//*********************************************************************
-
 int Player::numDiscoveredRooms() const { return(roomExp.size()); }
-
-//*********************************************************************
-//                      getUniqueObjId
-//*********************************************************************
 
 int Player::getUniqueObjId() const { return(uniqueObjId); }
 
-//*********************************************************************
-//                      setTickDamage
-//*********************************************************************
-
 void Player::setTickDamage(unsigned short t) { tickDmg = t; }
-
-//*********************************************************************
-//                      setWarnings
-//*********************************************************************
-
 void Player::setWarnings(unsigned short w) { warnings = w; }
-
-//*********************************************************************
-//                      addWarnings
-//*********************************************************************
-
 void Player::addWarnings(unsigned short w) { setWarnings(w + warnings); }
-
-//*********************************************************************
-//                      subWarnings
-//*********************************************************************
-
 void Player::subWarnings(unsigned short w) { setWarnings(w > warnings ? 0 : warnings - w); }
-
-//*********************************************************************
-//                      setWimpy
-//*********************************************************************
-
 void Player::setWimpy(unsigned short w) { wimpy = w; }
-
-//*********************************************************************
-//                      setActualLevel
-//*********************************************************************
-
 void Player::setActualLevel(unsigned short l) { actual_level = MAX<unsigned short>(1, MIN<unsigned short>(l, MAXALVL)); }
-
-//*********************************************************************
-//                      setSecondClass
-//*********************************************************************
-
 void Player::setSecondClass(CreatureClass c) { cClass2 = c; }
-
-//*********************************************************************
-//                      setGuild
-//*********************************************************************
-
 void Player::setGuild(unsigned short g) { guild = g; }
-
-//*********************************************************************
-//                      setGuildRank
-//*********************************************************************
-
 void Player::setGuildRank(unsigned short g) { guildRank = g; }
-
-//*********************************************************************
-//                      setNegativeLevels
-//*********************************************************************
-
 void Player::setNegativeLevels(unsigned short l) { negativeLevels = MAX<unsigned short>(0, MIN<unsigned short>(exp_to_lev(experience), l)); }
-
-//*********************************************************************
-//                      setLuck
-//*********************************************************************
-
 void Player::setLuck(int l) { luck = l; }
-
-//*********************************************************************
-//                      setWeaponTrains
-//*********************************************************************
-
 void Player::setWeaponTrains(unsigned short t) { weaponTrains = t; }
-
-//*********************************************************************
-//                      subWeaponTrains
-//*********************************************************************
-
 void Player::subWeaponTrains(unsigned short t) { setWeaponTrains(t > weaponTrains ? 0 : weaponTrains - t); }
 
-//*********************************************************************
-//                      setLastPassword
-//*********************************************************************
-
-void Player::setLastPassword(bstring p) { lastPassword = p; }
-
-//*********************************************************************
-//                      setAfflictedBy
-//*********************************************************************
-
-void Player::setAfflictedBy(bstring a) { afflictedBy = a; }
-
-//*********************************************************************
-//                      setLastLogin
-//*********************************************************************
-
+void Player::setLastPassword(const bstring& p) { lastPassword = p; }
+void Player::setAfflictedBy(const bstring& a) { afflictedBy = a; }
 void Player::setLastLogin(long l) { lastLogin = MAX<long>(0, l); }
-
-//*********************************************************************
-//                      setLastInterest
-//*********************************************************************
-
 void Player::setLastInterest(long l) { lastInterest = MAX<long>(0, l); }
-
-//*********************************************************************
-//                      setLastCommunicate
-//*********************************************************************
-
-void Player::setLastCommunicate(bstring c) { lastCommunicate = c; }
-
-//*********************************************************************
-//                      setLastCommand
-//*********************************************************************
-
-void Player::setLastCommand(bstring c) { lastCommand = c; lastCommand.trim(); }
-
-//*********************************************************************
-//                      setCreated
-//*********************************************************************
-
-void Player::setCreated() { created = time(0); }
-
-//*********************************************************************
-//                      setSurname
-//*********************************************************************
-
-void Player::setSurname(bstring s) { surname = s.left(20); }
-
-//*********************************************************************
-//                      setForum
-//*********************************************************************
-
-void Player::setForum(bstring f) { forum = f; }
-
-//*********************************************************************
-//                      setAlias
-//*********************************************************************
-
+void Player::setLastCommunicate(const bstring& c) { lastCommunicate = c; }
+void Player::setLastCommand(const bstring& c) { lastCommand = c; lastCommand.trim(); }
+void Player::setCreated() { created = time(nullptr); }
+void Player::setSurname(const bstring& s) { surname = s.left(20); }
+void Player::setForum(const bstring& f) { forum = f; }
 void Player::setAlias(Monster* m) { alias_crt = m; }
-
-//*********************************************************************
-//                      setBirthday
-//*********************************************************************
 
 void Player::setBirthday() {
     const Calendar* calendar = gConfig->getCalendar();
-    if(birthday)
-        delete birthday;
+    delete birthday;
     birthday = new cDay;
     birthday->setYear(calendar->getCurYear() - gConfig->getRace(getRace())->getStartAge());
     birthday->setDay(calendar->getCurDay());
     birthday->setMonth(calendar->getCurMonth());
 }
 
-//*********************************************************************
-//                      delAnchor
-//*********************************************************************
-
 void Player::delAnchor(int i) {
     if(anchor[i]) {
         delete anchor[i];
-        anchor[i] = 0;
+        anchor[i] = nullptr;
     }
 }
 
-//*********************************************************************
-//                      setAnchor
-//*********************************************************************
-
-void Player::setAnchor(int i, bstring a) {
+void Player::setAnchor(int i, const bstring& a) {
     delAnchor(i);
     anchor[i] = new Anchor(a, this);
 }
-
-//*********************************************************************
-//                      setThirst
-//*********************************************************************
 
 void Player::setThirst(unsigned short t) { thirst = t; }
 
@@ -929,31 +418,15 @@ int Player::setWrap(int newWrap) {
     return(wrap);
 }
 
-
-//*********************************************************************
-//                      setCustomColor
-//*********************************************************************
-
 void Player::setCustomColor(CustomColor i, char c) { customColors[i] = c; }
-
-//*********************************************************************
-//                      getMaster
-//*********************************************************************
 
 Creature* Creature::getMaster() {
     return((isMonster() ? getAsMonster()->getMaster() : this));
 }
 
-//*********************************************************************
-//                      getConstMaster
-//*********************************************************************
-
 const Creature* Creature::getConstMaster() const {
     return((isMonster() ? getAsConstMonster()->getMaster() : this));
 }
-//*********************************************************************
-//                      getPlayerMaster
-//*********************************************************************
 
 Player* Creature::getPlayerMaster() {
     if(!getMaster())
@@ -961,28 +434,15 @@ Player* Creature::getPlayerMaster() {
     return(getMaster()->getAsPlayer());
 }
 
-//*********************************************************************
-//                      getConstPlayerMaster
-//*********************************************************************
-
 const Player* Creature::getConstPlayerMaster() const {
     if(!getConstMaster())
         return(nullptr);
     return(getConstMaster()->getAsConstPlayer());
 }
 
-
-//*********************************************************************
-//                      isPlayer
-//*********************************************************************
-
 bool Creature::isPlayer() const {
     return(type == PLAYER);
 }
-
-//*********************************************************************
-//                      isMonster
-//*********************************************************************
 
 bool Creature::isMonster() const {
     return(type != PLAYER);
@@ -1051,14 +511,14 @@ void Creature::crtReset() {
     }
 
     for(i=0; i<MAXWEAR; i++)
-        ready[i] = 0;
+        ready[i] = nullptr;
 
-    first_tlk = 0;
+    first_tlk = nullptr;
 
     currentLocation.mapmarker.reset();
     currentLocation.room.clear();
 
-    group = 0;
+    group = nullptr;
     groupStatus = GROUP_NO_STATUS;
 
     current_language = 0;
@@ -1106,7 +566,7 @@ void Monster::reset() {
     for(i=0; i<NUM_RESCUE; i++)
         rescue[i].clear();
 
-    myMaster = 0;
+    myMaster = nullptr;
     updateAggro = 0;
     cast = 0;
     magicResistance = 0;
@@ -1151,23 +611,22 @@ void Player::reset() {
     int i;
     actual_level = warnings = 0;
     for(i=0; i<MAX_DIMEN_ANCHORS; i++)
-        anchor[i] = 0;
+        anchor[i] = nullptr;
 
     negativeLevels = 0;
     birthday = nullptr;
-    first_charm = 0;
 
     luck = 0;
     ansi = 0;
-    alias_crt = 0;
-    scared_of = 0;
+    alias_crt = nullptr;
+    scared_of = nullptr;
     for(i=0; i<5; i++)
         tnum[i] = 0;
     timeout = 0;
     thirst = 0;
 
     resetCustomColors();
-    lastPawn = 0;
+    lastPawn = nullptr;
 
     storesRefunded.clear();
     roomExp.clear();
@@ -1635,7 +1094,7 @@ Monster::~Monster() {
 
     if(threatTable) {
         delete threatTable;
-        threatTable = 0;
+        threatTable = nullptr;
     }
 }
 
@@ -1655,7 +1114,7 @@ Player::~Player() {
     for(i=0; i<MAX_DIMEN_ANCHORS; i++) {
         if(anchor[i]) {
             delete anchor[i];
-            anchor[i] = 0;
+            anchor[i] = nullptr;
         }
     }
 
@@ -1668,7 +1127,7 @@ Player::~Player() {
 
     questsInProgress.clear();
     questsCompleted.clear();
-    setLastPawn(0);
+    setLastPawn(nullptr);
 }
 
 //*********************************************************************
@@ -2048,7 +1507,7 @@ void Creature::knockUnconscious(long duration) {
 
     setFlag(P_UNCONSCIOUS);
     clearFlag(P_SLEEPING);
-    lasttime[LT_UNCONSCIOUS].ltime = time(0);
+    lasttime[LT_UNCONSCIOUS].ltime = time(nullptr);
     lasttime[LT_UNCONSCIOUS].interval = duration;
 }
 
@@ -2073,7 +1532,7 @@ bstring Creature::fullName() const {
     if(player && !player->getProxyName().empty())
         str += "(" + player->getProxyName() + ")";
 
-    if(player && player->flagIsSet(P_CHOSEN_SURNAME) && player->getSurname() != "") {
+    if(player && player->flagIsSet(P_CHOSEN_SURNAME) && !player->getSurname().empty()) {
         str += " ";
         str += player->getSurname();
     }

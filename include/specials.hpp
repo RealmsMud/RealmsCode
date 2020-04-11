@@ -30,7 +30,8 @@
 #ifndef SPECIALS_H_
 #define SPECIALS_H_
 
-#include "common.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr
+
 #include "dice.hpp"
 #include "lasttime.hpp"
 #include "realm.hpp"

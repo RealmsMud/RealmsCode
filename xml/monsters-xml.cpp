@@ -21,12 +21,28 @@
 //                      loadMonster
 //*********************************************************************
 
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "proto.hpp"
-#include "server.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlFr...
+#include <cstring>                                  // for strcpy
+#include <ctime>                                    // for time
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for operator<, basic_...
+
+#include "bstring.hpp"                              // for bstring, operator+
+#include "carry.hpp"                                // for Carry
+#include "catRef.hpp"                               // for CatRef
+#include "config.hpp"                               // for Config, gConfig
+#include "creatures.hpp"                            // for Monster, NUM_ASSI...
+#include "enums/loadType.hpp"                       // for LoadType, LoadTyp...
+#include "flags.hpp"                                // for M_TALKS
+#include "global.hpp"                               // for ALLITEMS, FATAL
+#include "lasttime.hpp"                             // for lasttime
+#include "mud.hpp"                                  // for LT_TICK, LT_TICK_...
+#include "os.hpp"                                   // for merror
+#include "paths.hpp"                                // for checkDirExists
+#include "proto.hpp"                                // for monsterPath, load...
+#include "quests.hpp"                               // for TalkResponse
+#include "server.hpp"                               // for Server, gServer
+#include "xml.hpp"                                  // for toNum, NODE_NAME
 
 bool loadMonster(int index, Monster ** pMonster, bool offline) {
     CatRef cr;

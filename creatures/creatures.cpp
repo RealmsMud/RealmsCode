@@ -17,25 +17,40 @@
  */
 // Mud Includes
 
-// C++ includes
-#include <sstream>
-#include <iomanip>
-#include <locale>
+#include <cstdlib>             // for abs
+#include <cstring>             // for strlen, strcat, strcpy
+#include <ctime>               // for time
+#include <sstream>             // for operator<<, basic_ostream, ostringstream
 
-#include "calendar.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "guilds.hpp"
-#include "mud.hpp"
-#include "property.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "version.hpp"
-#include "quests.hpp"
-#include "objects.hpp"
+#include "area.hpp"            // for MapMarker, Area
+#include "bstring.hpp"         // for bstring
+#include "calendar.hpp"        // for Calendar
+#include "cmd.hpp"             // for cmd
+#include "commands.hpp"        // for tollcost
+#include "config.hpp"          // for Config, gConfig
+#include "creatures.hpp"       // for Creature, Player, Monster
+#include "deityData.hpp"       // for DeityData
+#include "enums/loadType.hpp"  // for LoadType
+#include "exits.hpp"           // for Exit
+#include "flags.hpp"           // for P_DM_INVIS, O_SMALL_SHIELD, O_NO_PAWN
+#include "global.hpp"          // for HELD, WIELD, SHIELD, ISDM, MAXWEAR
+#include "lasttime.hpp"        // for lasttime, crlasttime, operator<<
+#include "money.hpp"           // for GOLD, Money
+#include "mud.hpp"             // for LT_AGE
+#include "mudObject.hpp"       // for MudObject
+#include "objects.hpp"         // for Object, ObjectType, ObjectType::ARMOR
+#include "os.hpp"              // for ASSERTLOG, merror
+#include "property.hpp"        // for Property
+#include "proto.hpp"           // for isDay, getSizeName, int_to_text, getOr...
+#include "quests.hpp"          // for QuestEligibility, QuestTurninStatus
+#include "raceData.hpp"        // for RaceData
+#include "realm.hpp"           // for WATER
+#include "rooms.hpp"           // for UniqueRoom, BaseRoom
+#include "season.hpp"          // for AUTUMN, SPRING, SUMMER, WINTER
+#include "server.hpp"          // for Server, gServer
+#include "size.hpp"            // for SIZE_COLOSSAL, SIZE_DIMINUTIVE, SIZE_FINE
+#include "structs.hpp"         // for Command, SEX_FEMALE, SEX_MALE
+#include "utils.hpp"           // for MIN, MAX
 
 
 //********************************************************************
@@ -165,7 +180,7 @@ bool Creature::canSee(const MudObject* target, bool skip) const {
 // returning false here would prevent the player from entering the room.
 
 bool Creature::canEnter(const Exit *exit, bool p, bool blinking) const {
-    const Calendar* calendar=0;
+    const Calendar* calendar=nullptr;
     int staff = isStaff();
 
     if(!exit)
@@ -238,7 +253,7 @@ bool Creature::canEnter(const Exit *exit, bool p, bool blinking) const {
     if( getConstRoomParent()->getTollkeeper() &&
         (exit->flagIsSet(X_TOLL_TO_PASS) || exit->flagIsSet(X_LEVEL_BASED_TOLL))
     ) {
-        if(p) checkStaff("You must pay a toll of %lu gold coins to go through the %s^x.\n", tollcost(this->getAsConstPlayer(), exit, 0), exit->getCName());
+        if(p) checkStaff("You must pay a toll of %lu gold coins to go through the %s^x.\n", tollcost(this->getAsConstPlayer(), exit, nullptr), exit->getCName());
         if(!staff) return(false);
     }
 
@@ -352,13 +367,10 @@ bool Creature::canEnter(const UniqueRoom* room, bool p) const {
     // special rules for pets
     if(isPet()) {
         const Monster* mThis = getAsConstMonster();
-        if( room->isUnderwater() &&
-            mThis->getBaseRealm() != WATER &&
-            !isEffected("breathe-water") &&
-            !doesntBreathe()
-        )
-            return(false);
-        return(true);
+        return !(room->isUnderwater() &&
+                 mThis->getBaseRealm() != WATER &&
+                 !isEffected("breathe-water") &&
+                 !doesntBreathe());
     }
 
 
@@ -462,7 +474,7 @@ bool Creature::tooBulky(int n) const {
     int     total=0, i=0, max=0;
 
     if(isCt())
-        return(0);
+        return(false);
 
     for(Object *obj : objects) {
         total += obj->getActualBulk();
@@ -813,7 +825,7 @@ bool Creature::canWield(const Object* object, int n) const {
 unsigned long Creature::getInventoryValue() const {
     int     a=0;
     long    total=0;
-    Object  *object3=0;
+    Object  *object3=nullptr;
 
     if(isMonster())
         return(0);
@@ -913,14 +925,14 @@ unsigned long Creature::getInventoryValue() const {
 // memory.
 
 int Player::save(bool updateTime, LoadType saveType) {
-    Player* copy=0;
+    Player* copy=nullptr;
     Object  *obj[MAXWEAR];
     int     i=0, n=0;
 
     // having an update time option, which should be false for offline
     // operations, prevents aging of chars and keeps last login accurate
     if(updateTime) {
-        lastLogin = time(0);
+        lastLogin = time(nullptr);
         lasttime[LT_AGE].interval += (lastLogin - lasttime[LT_AGE].ltime);
         lasttime[LT_AGE].ltime = lastLogin;
     }
@@ -936,7 +948,7 @@ int Player::save(bool updateTime, LoadType saveType) {
             obj[n] = copy->unequip(i+1, UNEQUIP_ADD_TO_INVENTORY, false, false);
             obj[n]->setFlag(O_WORN);
             n++;
-            copy->ready[i] = 0;
+            copy->ready[i] = nullptr;
         }
     }
 
@@ -999,7 +1011,7 @@ bool Creature::ableToDoCommand(const cmd* cmnd) const {
 // we only care if they're fighting someone in THIS room
 
 bool Creature::inCombat(bool countPets) const {
-    return(inCombat(0, countPets));
+    return(inCombat(nullptr, countPets));
 }
 
 // target is used when you want to check for a player being in combat
@@ -1125,7 +1137,7 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
                     crtStr << "a ";
             }
             crtStr << getName();
-        } else if(plural != "") {
+        } else if(!plural.empty()) {
             // use new plural code - on monster
             crtStr << int_to_text(num);
             crtStr << " " ;
@@ -1205,7 +1217,7 @@ bool Creature::inSameRoom(Creature* target) {
 
 long Creature::getLTLeft(int myLT, long t) {
     if(t == -1)
-        t = time(0);
+        t = time(nullptr);
 
     long i = lasttime[myLT].ltime + lasttime[myLT].interval;
 

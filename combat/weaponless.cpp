@@ -16,10 +16,25 @@
  *
  */
 
-#include "creatures.hpp"
-#include "commands.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
+#include <cstdlib>                // for abs
+#include <ctime>                  // for time
+
+#include "bstring.hpp"            // for bstring
+#include "commands.hpp"           // for cmdFocus, cmdFrenzy, cmdMaul, cmdMe...
+#include "creatures.hpp"          // for Player, Creature, Monster, ATTACK_MAUL
+#include "damage.hpp"             // for Damage
+#include "flags.hpp"              // for M_PERMENANT_MONSTER, P_AFK, P_FOCUSED
+#include "global.hpp"             // for CreatureClass, CreatureClass::CARET...
+#include "group.hpp"              // for CreatureList, Group
+#include "mud.hpp"                // for LT_TOUCH_OF_DEATH, LT_MEDITATE, LT_...
+#include "objects.hpp"            // for Object
+#include "proto.hpp"              // for broadcast, bonus, log_immort, induel
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom
+#include "structs.hpp"            // for saves
+#include "utils.hpp"              // for MIN, MAX
+
+class cmd;
 
 //*********************************************************************
 //                      cmdMeditate

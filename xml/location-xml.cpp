@@ -16,12 +16,16 @@
  *
  */
 
-#include "creatures.hpp"
-#include "location.hpp"
-#include "proto.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr, xmlNode
+
+#include "area.hpp"         // for MapMarker, Area
+#include "bstring.hpp"      // for bstring
+#include "catRef.hpp"       // for CatRef
+#include "creatures.hpp"    // for Player
+#include "location.hpp"     // for Location
+#include "rooms.hpp"        // for AreaRoom, BaseRoom (ptr only), UniqueRoom
+#include "server.hpp"       // for Server, gServer
+#include "xml.hpp"          // for newStringChild, loadRoom, NODE_NAME
 
 void Location::save(xmlNodePtr rootNode, const bstring& name) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, name);

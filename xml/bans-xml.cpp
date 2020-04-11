@@ -15,12 +15,16 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <stdexcept>
-#include <exception>
-#include <config.hpp>
-#include <paths.hpp>
-#include "bans.hpp"
-#include "xml.hpp"
+#include <config.hpp>                               // for Config
+#include <libxml/parser.h>                          // for xmlNewChild, xmlF...
+#include <paths.hpp>                                // for Config
+#include <cstdio>                                   // for snprintf, sprintf
+#include <cstring>                                  // for strcmp
+#include <ostream>                                  // for basic_ostream::op...
+
+#include "bans.hpp"                                 // for Ban
+#include "bstring.hpp"                              // for bstring
+#include "xml.hpp"                                  // for copyToBString
 
 bool Config::loadBans() {
     xmlDocPtr xmlDoc;

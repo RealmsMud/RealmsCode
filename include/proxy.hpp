@@ -20,8 +20,8 @@
 #define PROXY_H_
 
 #include <map>
+#include <libxml/parser.h>  // for xmlNodePtr
 
-#include "common.hpp"
 
 class Player;
 class ProxyAccess;
@@ -38,7 +38,7 @@ public:
     bool hasProxyAccess(Player* proxy, Player* proxied);
     void grantProxyAccess(Player* proxy, Player* proxied);
     bool removeProxyAccess(Player* proxy, Player* proxied);
-    bool removeProxyAccess(bstring id, Player* proxied);
+    bool removeProxyAccess(const bstring& id, Player* proxied);
 
 protected:
     void loadProxies();
@@ -61,10 +61,10 @@ protected:
     bstring proxyId;
 
 public:
-    bstring getProxiedId() const;
-    bstring getProxiedName() const;
-    bstring getProxyId() const;
-    bstring getProxyName() const;
+    [[nodiscard]] bstring getProxiedId() const;
+    [[nodiscard]] bstring getProxiedName() const;
+    [[nodiscard]] bstring getProxyId() const;
+    [[nodiscard]] bstring getProxyName() const;
 };
 
 

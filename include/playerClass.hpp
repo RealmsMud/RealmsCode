@@ -21,8 +21,8 @@
 
 #include <list>
 #include <map>
+#include <libxml/parser.h>  // for xmlNodePtr
 
-#include "common.hpp"
 #include "dice.hpp"
 
 class LevelGain;
@@ -59,9 +59,9 @@ protected:
 
     // Base Stats for the class
     bstring name;
-    int id;
-    short baseHp;
-    short baseMp;
+    int id{};
+    short baseHp{};
+    short baseMp{};
     bool hasAutomaticStats;
     void checkAutomaticStats();
     short baseStrength;

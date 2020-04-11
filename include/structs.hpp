@@ -89,15 +89,6 @@ public:
 };
 
 
-// UniqueRoom effectList tags
-typedef struct rom_tag {
-public:
-    rom_tag() { next_tag = nullptr; rom = nullptr; };
-    struct rom_tag  *next_tag;
-    UniqueRoom* rom;
-} rtag;
-
-
 // TODO: Rework first_charm and remove this
 // Enemy effectList tags
 typedef struct enm_tag {
@@ -230,17 +221,6 @@ typedef struct tagPlayer {
 //  iobuf   *io;
 //  extra   *extr;
 } plystruct;
-
-
-typedef struct {
-    short   hpstart;
-    short   mpstart;
-    short   hp;
-    short   mp;
-    short   ndice;
-    short   sdice;
-    short   pdice;
-} class_stats_struct;
 
 
 typedef struct {

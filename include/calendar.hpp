@@ -18,11 +18,12 @@
 #ifndef CALENDAR_H_
 #define CALENDAR_H_
 
+#include <libxml/parser.h>  // for xmlNodePtr
 #include <list>
 
-#include "common.hpp"
-#include "season.hpp"
-#include "weather.hpp"
+#include "bstring.hpp"      // for bstring
+#include "season.hpp"       // for Season
+#include "weather.hpp"      // for WeatherString
 
 class Player;
 

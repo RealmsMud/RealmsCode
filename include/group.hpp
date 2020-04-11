@@ -25,7 +25,6 @@ class cmd;
 class Creature;
 class Player;
 
-#include "common.hpp"
 #include "size.hpp"
 
 enum GroupStatus {
@@ -84,8 +83,8 @@ public:
 
     // Set information about a group
     bool setLeader(Creature* newLeader);
-    void setName(bstring newName);
-    void setDescription(bstring newDescription);
+    void setName(const bstring& newName);
+    void setDescription(const bstring& newDescription);
     void setGroupType(GroupType newType);
     void setFlag(int flag);
     void clearFlag(int flag);
@@ -100,7 +99,7 @@ public:
     int getNumInSameRoom(Creature* target);
     int getNumPlyInSameRoom(Creature* target);
     Creature* getMember(int num, bool countDmInvis = false);
-    Creature* getMember(bstring name, int num, Creature* searcher = nullptr, bool includePets = false);
+    Creature* getMember(const bstring& name, int num, Creature* searcher = nullptr, bool includePets = false);
     GroupType getGroupType() const;
     bstring getGroupTypeStr() const;
     bstring getFlagsDisplay();
@@ -109,7 +108,7 @@ public:
     bstring getGroupList(Creature* viewer);
 
 
-    void sendToAll(bstring msg, Creature* ignore = nullptr, bool sendToInvited = false);
+    void sendToAll(const bstring& msg, Creature* ignore = nullptr, bool sendToInvited = false);
 
     bstring getMsdp(Creature* viewer) const;
 

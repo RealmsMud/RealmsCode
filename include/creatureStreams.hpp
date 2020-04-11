@@ -22,7 +22,6 @@
 
 #include <map>
 
-#include "common.hpp"
 #include "stats.hpp"
 
 class MudObject;

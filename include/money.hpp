@@ -19,7 +19,9 @@
 #ifndef _MONEY_H
 #define _MONEY_H
 
-#include "common.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr
+
+#include "bstring.hpp"
 
 enum Coin {
     MIN_COINS = 0,
@@ -61,7 +63,7 @@ public:
 
     static bstring coinNames(Coin c);
 protected:
-    unsigned long m[MAX_COINS+1];
+    unsigned long m[MAX_COINS+1]{};
 };
 
 

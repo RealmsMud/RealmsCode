@@ -15,62 +15,27 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "effects.hpp"
-#include "mud.hpp"
-#include "pythonHandler.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "songs.hpp"
-#include "xml.hpp"
+#include <boost/python/errors.hpp>                  // for error_already_set
+#include <boost/python/extract.hpp>                 // for extract
+#include <boost/python/handle.hpp>                  // for handle
+#include <boost/python/object_core.hpp>             // for object, object_op...
 
-//*********************************************************************
-//                      Song
-//*********************************************************************
+#include "bstring.hpp"                              // for bstring
+#include "cmd.hpp"                                  // for cmd, CMD_NOT_FOUND
+#include "commands.hpp"                             // for getFullstrText
+#include "config.hpp"                               // for Config, SongMap
+#include "container.hpp"                            // for PlayerSet
+#include "creatureStreams.hpp"                      // for Streamable
+#include "creatures.hpp"                            // for Creature, Player
+#include "dictobject.h"                             // for PyDict_New
+#include "import.h"                                 // for PyImport_ImportMo...
+#include "mud.hpp"                                  // for LT_SONG_PLAYED
+#include "pythonHandler.hpp"                        // for addMudObjectToDic...
+#include "rooms.hpp"                                // for BaseRoom
+#include "server.hpp"                               // for Server, gServer
+#include "songs.hpp"                                // for Song
 
-Song::Song(xmlNodePtr rootNode) {
-    xmlNodePtr curNode = rootNode->children;
-    priority = 100;
-    delay = 5;
-    duration = 15;
-
-    while(curNode) {
-             if(NODE_NAME(curNode, "Name")) { 
-                 xml::copyToBString(name, curNode);
-                 parseName();
-             }
-        else if(NODE_NAME(curNode, "Script")) xml::copyToBString(script, curNode);
-        else if(NODE_NAME(curNode, "Effect")) xml::copyToBString(effect, curNode);
-        else if(NODE_NAME(curNode, "Type")) xml::copyToBString(type, curNode);
-        else if(NODE_NAME(curNode, "TargetType")) xml::copyToBString(targetType, curNode);
-        else if(NODE_NAME(curNode, "Priority")) xml::copyToNum(priority, curNode);
-        else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
-        else if(NODE_NAME(curNode, "Delay")) xml::copyToNum(delay, curNode);
-        else if(NODE_NAME(curNode, "Duration")) xml::copyToNum(duration, curNode);
-
-        curNode = curNode->next;
-    }
-}
-
-
-//*********************************************************************
-//                      save
-//*********************************************************************
-
-void Song::save(xmlNodePtr rootNode) const {
-    xml::saveNonNullString(rootNode, "Name", name);
-    xml::saveNonNullString(rootNode, "Script", script);
-    xml::saveNonNullString(rootNode, "Effect", effect);
-    xml::saveNonNullString(rootNode, "Type", type);
-    xml::saveNonNullString(rootNode, "TargetType", targetType);
-    xml::saveNonZeroNum<int>(rootNode, "Priority", priority);
-    xml::saveNonNullString(rootNode,"Description", description);
-    xml::saveNonZeroNum<int>(rootNode, "Delay", priority);
-    xml::saveNonZeroNum<int>(rootNode, "Duration", priority);
-
-}
+class MudObject;
 
 //*********************************************************************
 //                      getEffect
@@ -123,7 +88,7 @@ bool Song::runScript(MudObject* singer, MudObject* target) {
         bool retVal = bp::extract<bool>(localNamespace["retVal"]);
         return(retVal);
     }
-    catch( bp::error_already_set) {
+    catch( bp::error_already_set &e) {
         gServer->handlePythonError();
     }
 
@@ -140,7 +105,7 @@ void Config::clearSongs() {
     for(PlayerMap::value_type p : gServer->players) {
         p.second->stopPlaying(true);
     }
-    for(std::pair<bstring, Song*> sp : songs) {
+    for(const auto& sp : songs) {
         delete sp.second;
     }
     songs.clear();
@@ -255,10 +220,10 @@ bool Creature::pulseSong(long t) {
 //*********************************************************************
 
 int dmSongList(Player* player, cmd* cmnd) {
-    const Song* song=0;
+    const Song* song=nullptr;
 
     player->printColor("^YSongs\n");
-    for(std::pair<bstring, Song*> sp : gConfig->songs) {
+    for(const auto& sp : gConfig->songs) {
         song = sp.second;
         player->printColor("  %s   %d - %s\n    Script: ^y%s^x\n", song->name.c_str(),
             song->priority, song->description.c_str(), song->script.c_str());

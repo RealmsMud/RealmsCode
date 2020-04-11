@@ -15,19 +15,33 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <dirent.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <cctype>                 // for isupper
+#include <dirent.h>               // for closedir, dirent
+#include <fcntl.h>                // for open, O_CREAT
+#include <libxml/parser.h>        // for xmlNode, xmlDocGe...
+#include <cstdio>                 // for sprintf
+#include <cstdlib>                // for exit
+#include <cstring>                // for strlen, strcat
+#include <ctime>                  // for ctime, time
+#include <unistd.h>               // for write, close, unlink
+#include <ostream>                // for operator<<, ostream
 
-#include "calendar.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "mud.hpp"
-#include "raceData.hpp"
-#include "server.hpp"
-#include "statistics.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"            // for bstring
+#include "calendar.hpp"           // for cDay, Calendar
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player
+#include "deityData.hpp"          // for DeityData
+#include "global.hpp"             // for STAFF, MAX_PLAYAB...
+#include "lasttime.hpp"           // for lasttime
+#include "mud.hpp"                // for ACC, LT_AGE
+#include "paths.hpp"              // for Sign, Player
+#include "proto.hpp"              // for zero, get_class_s...
+#include "raceData.hpp"           // for RaceData
+#include "server.hpp"             // for Server, gServer
+#include "statistics.hpp"         // for Statistics
+#include "xml.hpp"                // for copyToNum, bad_le...
+
+class cmd;
 
 #define MINIMUM_LEVEL   3
 
@@ -355,10 +369,11 @@ void doDemographics() {
         }
         delete birthday;
         birthday=nullptr;
+        xmlFreeDoc(xmlDoc);
     }
     std::clog << "done.\n";
     closedir(dir);
-    xmlFreeDoc(xmlDoc);
+
     xmlCleanupParser();
 
     std::clog << "Formatting stone scrolls...";
@@ -424,7 +439,7 @@ void doDemographics() {
     str = ctime(&t);
     str[strlen(str) - 1] = 0;
     strcat(str, " (");
-    strcat(str, gServer->getTimeZone().c_str());
+    strcat(str, Server::getTimeZone().c_str());
     strcat(str, ").");
 
     sprintf(outstr, "    | %36s |\n", str);

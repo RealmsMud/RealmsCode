@@ -16,23 +16,43 @@
  *
  */
 
-#include <sstream>
-#include <iomanip>
+#include <cctype>                 // for toupper, isdigit, isupper
+#include <fcntl.h>                // for open, O_APPEND, O_CREAT, O_RDONLY
+#include <cstdarg>                // for va_end, va_list, va_start
+#include <cstdio>                 // for sprintf, fclose, feof, fgets, fopen
+#include <cstdlib>                // for atoi
+#include <cstring>                // for strcmp, strncmp, strcpy, strlen
+#include <ctime>                  // for ctime, time
+#include <unistd.h>               // for close, unlink, write
+#include <iomanip>                // for operator<<, setw
+#include <sstream>                // for operator<<, basic_ostream, char_traits
 
-#include "catRefInfo.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "dm.hpp"
-#include "guilds.hpp"
-#include "login.hpp"
-#include "move.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "property.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"            // for bstring, operator+
+#include "catRef.hpp"             // for CatRef
+#include "catRefInfo.hpp"         // for CatRefInfo
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for getFullstrText, cmdHelp, cmdShop
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player
+#include "dm.hpp"                 // for isCardinal, findRoomsWithFlag, oppo...
+#include "exits.hpp"              // for Exit
+#include "flags.hpp"              // for P_READING_FILE, R_BUILD_GUILDHALL
+#include "global.hpp"             // for PROP_GUILDHALL, PROP_HOUSE, PropType
+#include "guilds.hpp"             // for Guild
+#include "login.hpp"              // for CON_EDIT_PROPERTY
+#include "move.hpp"               // for tooFarAway
+#include "mud.hpp"                // for ACC, GUILD_BANKER, GUILD_MASTER
+#include "objects.hpp"            // for Object
+#include "os.hpp"                 // for merror
+#include "paths.hpp"              // for Paths
+#include "property.hpp"           // for Property, PartialOwner, LOG_PARTIAL
+#include "proto.hpp"              // for link_rom, broadcast, free_crt, up
+#include "range.hpp"              // for Range
+#include "rooms.hpp"              // for UniqueRoom, BaseRoom, ExitList, Are...
+#include "server.hpp"             // for Server, gServer
+#include "socket.hpp"             // for Socket
+#include "structs.hpp"            // for MudFlag
+#include "xml.hpp"                // for loadRoom, loadPlayer
 
 
 //*********************************************************************
@@ -86,33 +106,17 @@ Property::Property() {
     zero(flags, sizeof(flags));
 }
 
-//*********************************************************************
-//                      flagIsSet
-//*********************************************************************
-
 bool Property::flagIsSet(int flag) const {
     return(flags[flag/8] & 1<<(flag%8));
 }
-
-//*********************************************************************
-//                      setFlag
-//*********************************************************************
 
 void Property::setFlag(int flag) {
     flags[flag/8] |= 1<<(flag%8);
 }
 
-//*********************************************************************
-//                      clearFlag
-//*********************************************************************
-
 void Property::clearFlag(int flag) {
     flags[flag/8] &= ~(1<<(flag%8));
 }
-
-//*********************************************************************
-//                      toggleFlag
-//*********************************************************************
 
 bool Property::toggleFlag(int flag) {
     if(flagIsSet(flag))
@@ -122,87 +126,19 @@ bool Property::toggleFlag(int flag) {
     return(flagIsSet(flag));
 }
 
-//*********************************************************************
-//                      getGuild
-//*********************************************************************
-
 int Property::getGuild() const { return(guild); }
-
-//*********************************************************************
-//                      getArea
-//*********************************************************************
-
 bstring Property::getArea() const { return(area); }
-
-//*********************************************************************
-//                      getOwner
-//*********************************************************************
-
 bstring Property::getOwner() const { return(owner); }
-
-//*********************************************************************
-//                      getName
-//*********************************************************************
-
 bstring Property::getName() const { return(name); }
-
-//*********************************************************************
-//                      getDateFounded
-//*********************************************************************
-
 bstring Property::getDateFounded() const { return(dateFounded); }
-
-//*********************************************************************
-//                      getLocation
-//*********************************************************************
-
 bstring Property::getLocation() const { return(location); }
-
-//*********************************************************************
-//                      getType
-//*********************************************************************
-
 PropType Property::getType() const { return(type); }
-
-//*********************************************************************
-//                      getTypeName
-//*********************************************************************
-
 bstring Property::getTypeStr() const { return(getTypeStr(type)); }
-
-//*********************************************************************
-//                      getLogType
-//*********************************************************************
-
 PropLog Property::getLogType() const { return(logType); }
-
-//*********************************************************************
-//                      setGuild
-//*********************************************************************
-
 void Property::setGuild(int g) { guild = g; }
-
-//*********************************************************************
-//                      setArea
-//*********************************************************************
-
 void Property::setArea(const bstring& str) { area = str; }
-
-//*********************************************************************
-//                      setOwner
-//*********************************************************************
-
 void Property::setOwner(const bstring& str) { owner = str; }
-
-//*********************************************************************
-//                      setName
-//*********************************************************************
-
 void Property::setName(const bstring& str) { name = str; }
-
-//*********************************************************************
-//                      setDateFounded
-//*********************************************************************
 
 void Property::setDateFounded() {
     long    t = time(nullptr);
@@ -210,28 +146,9 @@ void Property::setDateFounded() {
     dateFounded.trim();
 }
 
-//*********************************************************************
-//                      setLocation
-//*********************************************************************
-
 void Property::setLocation(const bstring& str) { location = str; }
-
-//*********************************************************************
-//                      setType
-//*********************************************************************
-
 void Property::setType(PropType t) { type = t; }
-
-//*********************************************************************
-//                      setLogType
-//*********************************************************************
-
 void Property::setLogType(PropLog t) { logType = t; }
-
-
-//*********************************************************************
-//                      getTypeName
-//*********************************************************************
 
 bstring Property::getTypeStr(PropType propType) {
     switch(propType) {
@@ -249,10 +166,6 @@ bstring Property::getTypeStr(PropType propType) {
     return("unknown type");
 }
 
-//*********************************************************************
-//                      getTypeArea
-//*********************************************************************
-
 bstring Property::getTypeArea(PropType propType) {
     switch(propType) {
     case PROP_SHOP:
@@ -269,10 +182,6 @@ bstring Property::getTypeArea(PropType propType) {
 
     return("");
 }
-
-//*********************************************************************
-//                      getLogTypeStr
-//*********************************************************************
 
 bstring Property::getLogTypeStr() const {
     switch(logType) {
@@ -1868,7 +1777,7 @@ bool Property::requireInside(const Player* player, const UniqueRoom* room, Prope
 //                      descEdit
 //*********************************************************************
 
-bstring postText(bstring str);
+bstring postText(const bstring& str);
 
 void Property::descEdit(Socket* sock, const bstring& str) {
     bstring outstr = "";

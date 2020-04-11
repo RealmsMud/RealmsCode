@@ -16,15 +16,32 @@
  *
  */
 
-#include "area.hpp"
-#include "creatures.hpp"
-#include "config.hpp"
-#include "objects.hpp"
-#include "proto.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "mud.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <cstdio>                                   // for sprintf
+#include <cstring>                                  // for strcpy
+#include <ostream>                                  // for basic_ostream::op...
+#include <stdexcept>                                // for runtime_error
+
+#include "alchemy.hpp"                              // for AlchemyEffect
+#include "area.hpp"                                 // for MapMarker
+#include "bstring.hpp"                              // for bstring, operator+
+#include "catRef.hpp"                               // for CatRef
+#include "config.hpp"                               // for Config, gConfig
+#include "container.hpp"                            // for ObjectSet
+#include "creatures.hpp"                            // for Creature
+#include "enums/loadType.hpp"                       // for LoadType, LoadTyp...
+#include "flags.hpp"                                // for O_UNIQUE, O_PERM_...
+#include "global.hpp"                               // for ALLITEMS, FATAL
+#include "hooks.hpp"                                // for Hooks
+#include "mudObject.hpp"                            // for MudObject
+#include "objIncrease.hpp"                          // for ObjIncrease
+#include "objects.hpp"                              // for Object, DroppedBy
+#include "os.hpp"                                   // for ASSERTLOG, merror
+#include "paths.hpp"                                // for checkDirExists
+#include "proto.hpp"                                // for objectPath, valid...
+#include "rooms.hpp"                                // for UniqueRoom
+#include "server.hpp"                               // for Server, gServer
+#include "xml.hpp"                                  // for saveNonZeroNum
 
 
 // Object flags to be saved for object refs

@@ -20,9 +20,9 @@
 #define UNIQUE_H_
 
 #include <list>
+#include <libxml/parser.h>  // for xmlNodePtr
 
 #include "catRef.hpp"
-#include "common.hpp"
 
 class Creature;
 class Object;
@@ -39,12 +39,12 @@ public:
 
     CatRef getInfo() const;
     int getLimit() const;
-    void setInfo(const CatRef cr);
+    void setInfo(const CatRef& cr);
     void setLimit(int i);
 
     static bool isLore(const Object* object);
     static bool hasLore(const Object* object);
-    static bool canHave(const Player* player, const CatRef cr);
+    static bool canHave(const Player* player, const CatRef& cr);
     static bool canHave(const Player* player, const Object* object);
     static bool canHave(const Player* player, const Object* object, bool checkBagOnly);
 
@@ -81,7 +81,7 @@ public:
     void show(const Player* player);
 
     long getTime() const;
-    bool is(const Player* player, const CatRef cr) const;
+    bool is(const Player* player, const CatRef& cr) const;
     bool is(const Player* player, const Object* object) const;
     void set(const Player* player, const Object* object);
     void set(const Player* player);
@@ -121,24 +121,24 @@ public:
     void setMax(int num);
 
     void show(const Player* player);
-    bool inObjectsList(const CatRef cr) const;
-    bool setObjectLimit(const CatRef cr, int id);
-    int numInOwners(const CatRef cr) const;
-    const CatRef firstObject();
+    bool inObjectsList(const CatRef& cr) const;
+    bool setObjectLimit(const CatRef& cr, int id);
+    int numInOwners(const CatRef& cr) const;
+    CatRef firstObject();
     int numObjects(const Player* player) const;
 
-    void addObject(CatRef cr);
-    void deUnique(CatRef cr);
+    void addObject(const CatRef& cr);
+    void deUnique(const CatRef& cr);
     void runDecay(long t, Player* player=0);
 
     bool addOwner(const Player* player, const Object* object);
     bool deleteOwner(const Player* player, const Object* object);
     void transferOwner(const Player* owner, const Player* target, const Object* object);
     void remove(const Player* player);
-    bool checkItemLimit(const CatRef item) const;
-    bool canGet(const Player* player, const CatRef item, bool transfer) const;
+    bool checkItemLimit(const CatRef& item) const;
+    bool canGet(const Player* player, const CatRef& item, bool transfer) const;
 
-    static void broadcastDestruction(const bstring owner, const Object* object);
+    static void broadcastDestruction(const bstring& owner, const Object* object);
     static bool canLoad(const Object* object);
     static bool is(const Object* object);
     static bool isUnique(const Object* object);

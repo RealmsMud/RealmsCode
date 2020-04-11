@@ -15,10 +15,22 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "socket.hpp"
+#include <cstdio>         // for sprintf
+#include <cstring>        // for strlen, strcpy, strcat, strcmp
+#include <ctime>          // for time
+#include <string>          // for operator==, basic_string
+
+#include "bstring.hpp"     // for bstring
+#include "creatures.hpp"   // for Player
+#include "exits.hpp"       // for Exit
+#include "flags.hpp"       // for O_LOGIN_FILE, X_CLOSED, X_LOCKED
+#include "global.hpp"      // for SP_COMBO, SP_MAPSC, ZAPPED
+#include "objects.hpp"     // for Object
+#include "paths.hpp"       // for Sign
+#include "proto.hpp"       // for broadcast, viewFile, viewLoginFile
+#include "random.hpp"      // for Random
+#include "rooms.hpp"       // for BaseRoom, ExitList
+#include "socket.hpp"      // for Socket
 
 //*********************************************************************
 //                      doSpecial
@@ -44,8 +56,7 @@ int Object::doSpecial(Player* player) {
         break;
         
     case SP_COMBO:
-        char    str[80];
-        int     dmg, i;
+        int     dmg;
 
         str[0] = damage.getSides()+'0';
         str[1] = 0;
@@ -62,7 +73,7 @@ int Object::doSpecial(Player* player) {
         broadcast(sock, room, "%M presses %P^x.", player, this);
 
         if(strlen(sock->tempstr[3]) >= strlen(use_output)) {
-            if(strcmp(sock->tempstr[3], use_output)) {
+            if(strcmp(sock->tempstr[3], use_output) != 0) {
                 dmg = Random::get(20,40 + player->getLevel());
                 player->hp.decrease(dmg);
                 player->printColor("You were zapped for %s%d^x damage!\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg);
@@ -74,7 +85,7 @@ int Object::doSpecial(Player* player) {
                     player->die(ZAPPED);
                 }
             } else {
-                Exit* toOpen = 0;
+                Exit* toOpen = nullptr;
                 i = 1;
                 for(Exit* ext : room->exits) {
                     if(i++ >= damage.getPlus())
@@ -92,7 +103,7 @@ int Object::doSpecial(Player* player) {
                     "%M opened the %s!", player, toOpen->getCName());
                 toOpen->clearFlag(X_LOCKED);
                 toOpen->clearFlag(X_CLOSED);
-                toOpen->ltime.ltime = time(0);
+                toOpen->ltime.ltime = time(nullptr);
             }
         }
         break;

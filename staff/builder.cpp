@@ -15,14 +15,19 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "commands.hpp"
-#include "creatures.hpp"
-#include "dm.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"    // for bstring
+#include "catRef.hpp"     // for CatRef
+#include "cmd.hpp"        // for cmd
+#include "commands.hpp"   // for lose_all
+#include "creatures.hpp"  // for Player, Creature
+#include "dm.hpp"         // for dmMax, builderMob, builderObj, dmMakeBuilder
+#include "flags.hpp"      // for P_BUILDER_MOBS, P_BUILDER_OBJS, P_DM_INVIS
+#include "free_crt.hpp"    // for free_crt
+#include "global.hpp"     // for CreatureClass, CreatureClass::BUILDER, Crea...
+#include "proto.hpp"      // for log_immort, lowercize, up
+#include "rooms.hpp"      // for UniqueRoom, BaseRoom
+#include "server.hpp"     // for Server, gServer
+#include "xml.hpp"        // for loadPlayer, loadRoom
 
 
 //*********************************************************************
@@ -30,7 +35,7 @@
 //*********************************************************************
 
 int dmMakeBuilder(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
 
     if(!cmnd->str[1][0]) {
         player->print("Builderize whom?");
@@ -68,7 +73,7 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
         !target->getUniqueRoomParent()->info.isArea("test") ||
         target->getUniqueRoomParent()->info.id != 1)
     {
-        UniqueRoom* uRoom=0;
+        UniqueRoom* uRoom=nullptr;
         CatRef cr;
         cr.setArea("test");
         cr.id = 1;
@@ -98,7 +103,7 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
 //  web site - inc.inc - inRange()
 //  web server - editor.inc - isAuthorized()
 
-bool Player::checkRangeRestrict(CatRef cr, bool reading) const {
+bool Player::checkRangeRestrict(const CatRef& cr, bool reading) const {
     int     i=0;
 
     if(cClass != CreatureClass::BUILDER)
@@ -143,7 +148,7 @@ bool Player::checkBuilder(UniqueRoom* room, bool reading) const {
     return(checkBuilder(room->info, reading));
 }
 
-bool Player::checkBuilder(CatRef cr, bool reading) const {
+bool Player::checkBuilder(const CatRef& cr, bool reading) const {
     if(cClass != CreatureClass::BUILDER)
         return(true);
 
@@ -191,7 +196,7 @@ void Player::listRanges(const Player* viewer) const {
 //*********************************************************************
 
 int dmRange(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     int     offline=0;
 
     if(player->getClass() == CreatureClass::BUILDER || cmnd->num == 1) {
@@ -240,7 +245,7 @@ void Player::initBuilder() {
 
     doDispelMagic();
 
-    dmMax(this, 0);
+    dmMax(this, nullptr);
 
     cureDisease();
     curePoison();
@@ -295,7 +300,7 @@ bool Creature::canBuildMonsters() const {
 //                      builderCanEdit
 //*********************************************************************
 
-bool Player::builderCanEditRoom(bstring action) {
+bool Player::builderCanEditRoom(const bstring& action) {
     if(cClass == CreatureClass::BUILDER && !getRoomParent()->isConstruction()) {
         print("You cannot %s while you are in a room that is not under construction.\n", action.c_str());
         return(false);

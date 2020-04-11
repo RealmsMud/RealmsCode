@@ -26,7 +26,7 @@
 #include <Python.h>
 #include <boost/python.hpp>
 
-#include "common.hpp"
+#include "bstring.hpp"
 
 class MudObject;
 

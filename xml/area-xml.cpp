@@ -15,16 +15,24 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <dirent.h>
+#include <dirent.h>                                 // for closedir, opendir
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <cstdio>                                  // for sprintf
 
-#include "area.hpp"
-#include "flags.hpp"
-#include "os.hpp"
-#include "paths.hpp"
-#include "proto.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "xml.hpp"
+#include "area.hpp"                                 // for Area, TileInfo
+#include "bstring.hpp"                              // for bstring
+#include "catRef.hpp"                               // for CatRef
+#include "flags.hpp"                                // for MAX_ROOM_FLAGS
+#include "global.hpp"                               // for FATAL
+#include "os.hpp"                                   // for merror
+#include "paths.hpp"                                // for AreaRoom, AreaData
+#include "proto.hpp"                                // for file_exists
+#include "rooms.hpp"                                // for AreaRoom
+#include "season.hpp"                               // for Season
+#include "server.hpp"                               // for Server
+#include "xml.hpp"                                  // for saveNonZeroNum
+
+class Creature;
 
 //*********************************************************************
 //                      load

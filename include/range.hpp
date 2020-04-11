@@ -19,8 +19,9 @@
 #ifndef _RANGE_H
 #define _RANGE_H
 
+#include <libxml/parser.h>  // for xmlNodePtr
+
 #include "catRef.hpp"
-#include "common.hpp"
 
 class Range {
 public:

@@ -16,19 +16,21 @@
  *
  */
 
-// Mud includes
-#include "commands.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "move.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
+#include <cstring>              // for strlen, strncmp
+#include <strings.h>            // for strncasecmp
 
-// C++ Includes
-#include <sstream>
-#include <iomanip>
-#include <locale>
+#include "bstring.hpp"          // for operator+, bstring
+#include "cmd.hpp"              // for cmd
+#include "commands.hpp"         // for getFullstrText, cmdFollow, cmdGroup
+#include "creatureStreams.hpp"  // for Streamable, ColorOff, ColorOn
+#include "creatures.hpp"        // for Player, Creature, Monster, PetList
+#include "flags.hpp"            // for P_AFK, P_DM_INVIS, P_NO_FOLLOW, P_GRO...
+#include "global.hpp"           // for CAP
+#include "group.hpp"            // for Group, GROUP_LEADER, GROUP_INVITED
+#include "move.hpp"             // for tooFarAway
+#include "proto.hpp"            // for lowercize, broadcast
+#include "rooms.hpp"            // for BaseRoom
+#include "server.hpp"           // for Server, gServer
 
 
 //*********************************************************************
@@ -39,7 +41,7 @@
 // following you.
 
 int cmdFollow(Player* player, cmd* cmnd) {
-    Player* toFollow=0;
+    Player* toFollow=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -193,7 +195,7 @@ bool Creature::removeFromGroup(bool announce) {
 // following.
 
 int cmdLose(Player* player, cmd* cmnd) {
-    Creature* target=0;
+    Creature* target=nullptr;
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
@@ -307,7 +309,7 @@ int cmdGroup(Player* player, cmd* cmnd) {
 }
 
 int Group::invite(Player* player, cmd* cmnd) {
-    Player* target = 0;
+    Player* target = nullptr;
 
     if(cmnd->num < 3) {
         *player << "Invite who into your group?\n";
@@ -420,7 +422,7 @@ int Group::promote(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    Player* target = 0;
+    Player* target = nullptr;
 
     if(cmnd->num < 3) {
         *player << "Who would you like to promote to leader?\n";
@@ -461,7 +463,7 @@ int Group::kick(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    Player* target = 0;
+    Player* target = nullptr;
 
     if(cmnd->num < 3) {
         *player << "Who would you like to kick from your group?\n";

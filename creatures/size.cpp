@@ -15,16 +15,28 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "commands.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
+#include <cstring>        // for strncmp, strcmp
+#include <ostream>        // for basic_ostream::operator<<, operator<<, basi...
+
+#include "bstring.hpp"    // for bstring
+#include "cmd.hpp"        // for cmd
+#include "commands.hpp"   // for getFullstrText
+#include "creatures.hpp"  // for Creature, Player
+#include "effects.hpp"    // for EffectInfo
+#include "flags.hpp"      // for O_CURSED
+#include "global.hpp"     // for CastType, CastType::CAST, CreatureClass
+#include "magic.hpp"      // for SpellData, checkRefusingMagic, splEnlarge
+#include "objects.hpp"    // for Object
+#include "proto.hpp"      // for broadcast, bonus, up, getSize, getSizeName
+#include "rooms.hpp"      // for BaseRoom
+#include "size.hpp"       // for NO_SIZE, SIZE_COLOSSAL, SIZE_DIMINUTIVE
+#include "utils.hpp"      // for MIN, MAX
 
 //*********************************************************************
 //                      getSize
 //*********************************************************************
 
-Size getSize(bstring str) {
+Size getSize(const bstring& str) {
     int n = str.getLength();
     if(!n)
         return(NO_SIZE);
@@ -172,10 +184,10 @@ int sizePower(int lvl) {
 //                      splChangeSize
 //*********************************************************************
 
-int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, bstring effect) {
+int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const bstring& effect) {
     bstring power = "", opposite = effect == "enlarge" ? "reduce" : "enlarge";
-    EffectInfo *e=0;
-    Creature* target=0;
+    EffectInfo *e=nullptr;
+    Creature* target=nullptr;
     int     strength=0, num=0, pos=0;
 
     bstring spell;

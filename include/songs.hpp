@@ -20,8 +20,8 @@
 #define _SONGS_H
 
 #include <list>
+#include <libxml/parser.h>  // for xmlNodePtr
 
-#include "common.hpp"
 #include "global.hpp"
 #include "structs.hpp"
 

@@ -15,14 +15,27 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "commands.hpp"
-#include "creatures.hpp"
-#include "login.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
+#include <fcntl.h>        // for open, O_CREAT, O_RDWR, O_APPEND, O_RDONLY
+#include <cstdio>         // for sprintf, fclose, feof, fgets, fopen, FILE
+#include <cstring>        // for strlen, strcpy, strcmp
+#include <ctime>          // for ctime, time
+#include <unistd.h>       // for unlink, write, close
+#include <string>         // for operator==, basic_string
+
+#include "bstring.hpp"    // for bstring
+#include "cmd.hpp"        // for cmd
+#include "creatures.hpp"  // for Player
+#include "flags.hpp"      // for P_READING_FILE, P_UNREAD_MAIL, P_CAN_MUDMAI...
+#include "global.hpp"     // for DOPROMPT, FATAL, PROMPT, CreatureClass, Cre...
+#include "login.hpp"      // for CON_EDIT_HISTORY, CON_EDIT_NOTE, CON_SENDIN...
+#include "mud.hpp"        // for ACC
+#include "os.hpp"         // for merror
+#include "paths.hpp"      // for Post, History
+#include "proto.hpp"      // for file_exists, free_crt, up, viewFile, broadcast
+#include "rooms.hpp"      // for BaseRoom
+#include "server.hpp"     // for Server, gServer
+#include "socket.hpp"     // for Socket
+#include "xml.hpp"        // for loadPlayer
 
 //*********************************************************************
 //                      hasNewMudmail
@@ -60,7 +73,7 @@ bool canPost(Player* player) {
 //*********************************************************************
 // format text for writing to file
 
-bstring postText(bstring str) {
+bstring postText(const bstring& str) {
     bstring outstr = "";
 
     if(Pueblo::is(str))
@@ -80,7 +93,7 @@ bstring postText(bstring str) {
 // he/she is in a post office.
 
 int cmdSendMail(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     char    file[80];
 
     bool    online=false;
@@ -176,13 +189,13 @@ int cmdSendMail(Player* player, cmd* cmnd) {
 // Sends a mudmail from System to the target. Include a trailing \n yourself.
 
 void sendMail(const bstring& target, const bstring& message) {
-    Player  *player=0;
+    Player  *player=nullptr;
     char    outcstr[158], postfile[80], datestr[40];
     long    t=0;
     int     ff=0;
     bool    online=true;
 
-    if(target == "" || message == "")
+    if(target.empty() || message.empty())
         return;
 
     player = gServer->findPlayer(target.c_str());
@@ -230,7 +243,7 @@ void postedit(Socket* sock, const bstring& str) {
     char    outcstr[158], datestr[40], filename[80], postfile[80];
     long    t=0;
     int     ff=0;
-    FILE    *fp=0;
+    FILE    *fp=nullptr;
     bstring outstr = "";
 
     Player* ply = sock->getPlayer();
@@ -375,7 +388,7 @@ int cmdDeleteMail(Player* player, cmd* cmnd) {
 // This function allows a DM to delete a player's mail file.
 
 int dmDeletemail(Player* player, cmd* cmnd) {
-    Player  *creature=0;
+    Player  *creature=nullptr;
     char    str[50];
 
     cmnd->str[1][0] = up(cmnd->str[1][0]);
@@ -495,7 +508,6 @@ void noteedit(Socket* sock, const bstring& str) {
 
     gServer->processOutput();
     sock->intrpt &= ~1;
-    return;
 }
 
 

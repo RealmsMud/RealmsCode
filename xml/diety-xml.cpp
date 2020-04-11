@@ -15,11 +15,16 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "config.hpp"
-#include "deityData.hpp"
-#include "paths.hpp"
-#include "playerTitle.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>        // for xmlNode, xmlFreeDoc, xmlNodePtr
+#include <cstdio>                 // for snprintf
+#include <map>                    // for operator==, map, allocator
+
+#include "bstring.hpp"            // for bstring
+#include "config.hpp"             // for Config
+#include "deityData.hpp"          // for DeityData
+#include "paths.hpp"              // for Game
+#include "playerTitle.hpp"        // for PlayerTitle
+#include "xml.hpp"                // for getIntProp, NODE_NAME, copyPropToBS...
 
 //**********************************************************************
 //                      loadDeities

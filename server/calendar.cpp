@@ -16,13 +16,23 @@
  *
  */
 #include "calendar.hpp"
-#include "catRef.hpp"
-#include "catRefInfo.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "rooms.hpp"
-#include "mud.hpp"
-#include "server.hpp"
+
+#include <cstdio>                 // for sprintf
+#include <cstdlib>                // for system
+#include <ctime>                  // for time
+#include <ostream>                // for operator<<, basic_ostream, ostrings...
+
+#include "catRefInfo.hpp"         // for CatRefInfo
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player
+#include "flags.hpp"              // for R_ALWAYS_WINTER, R_WINTER_COLD
+#include "mud.hpp"                // for StartTime, SUNRISE, SUNSET
+#include "paths.hpp"              // for Game, PlayerData
+#include "proto.hpp"              // for getOrdinal, file_exists, checkBirth...
+#include "rooms.hpp"              // for BaseRoom
+#include "server.hpp"             // for PlayerMap, Server, gServer
+
+class cmd;
 
 //*********************************************************************
 //                      cWeather

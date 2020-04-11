@@ -22,7 +22,6 @@
 #include <list>
 #include <map>
 
-#include "common.hpp"
 #include "global.hpp"
 #include "size.hpp"
 #include "structs.hpp"
@@ -46,15 +45,15 @@ protected:
     bool gendered;
     int parentRace;
 
-    int stats[MAX_STAT];
-    int saves[MAX_SAVE];
+    int stats[MAX_STAT]{};
+    int saves[MAX_SAVE]{};
     short porphyriaResistance;
 
-    bool classes[CLASS_COUNT_MULT];
-    bool multiClerDeities[DEITY_COUNT];
-    bool clerDeities[DEITY_COUNT];
-    bool palDeities[DEITY_COUNT];
-    bool dkDeities[DEITY_COUNT];
+    bool classes[CLASS_COUNT_MULT]{};
+    bool multiClerDeities[DEITY_COUNT]{};
+    bool clerDeities[DEITY_COUNT]{};
+    bool palDeities[DEITY_COUNT]{};
+    bool dkDeities[DEITY_COUNT]{};
 
     // Skills they start with
     std::list<SkillGain*> baseSkills;

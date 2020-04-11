@@ -19,7 +19,8 @@
 #define PATHS_H_
 
 #include "bstring.hpp"
-#include "catRef.hpp"
+
+class CatRef;
 
 namespace Path {
     extern const char* Bin;

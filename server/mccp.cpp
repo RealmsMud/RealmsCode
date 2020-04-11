@@ -18,9 +18,10 @@
 // Copyright (c) 1999, Oliver Jowett <icecube@ihug.co.nz>.
 // This code may be freely distributed and used if this copyright notice is retained intact.
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "socket.hpp"
+#include "creatures.hpp"  // for Player
+#include "socket.hpp"     // for Socket, will_comp1, will_comp2
+
+class cmd;
 
 int mccp(Player* player, cmd* cmnd) {
     if(!player)

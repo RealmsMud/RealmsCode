@@ -16,9 +16,10 @@
  *
  */
 
-#include "creatures.hpp"
-#include "specials.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+
+#include "specials.hpp"                             // for SpecialAttack
+#include "xml.hpp"                                  // for newStringChild
 
 SpecialAttack::SpecialAttack(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;

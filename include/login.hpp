@@ -18,8 +18,6 @@
 #ifndef LOGIN_H
 #define LOGIN_H
 
-#include "common.hpp"
-
 class Player;
 class Socket;
 

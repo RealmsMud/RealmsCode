@@ -16,16 +16,38 @@
  *
  */
 
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "proto.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socials.hpp"
-#include "specials.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <map>                                      // for operator==, opera...
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for operator<, operat...
+
+#include "bstring.hpp"                              // for bstring
+#include "catRef.hpp"                               // for CatRef
+#include "config.hpp"                               // for Config, gConfig
+#include "container.hpp"                            // for MonsterSet
+#include "creatures.hpp"                            // for Creature, Monster
+#include "effects.hpp"                              // for Effects
+#include "enums/loadType.hpp"                       // for LoadType, LoadTyp...
+#include "flags.hpp"                                // for MAX_MONSTER_FLAGS
+#include "global.hpp"                               // for CreatureClass
+#include "lasttime.hpp"                             // for crlasttime, lasttime
+#include "magic.hpp"                                // for MAXSPELL, S_SAP_LIFE
+#include "mud.hpp"                                  // for TOTAL_LTS, DAILYLAST
+#include "mudObject.hpp"                            // for MudObject
+#include "os.hpp"                                   // for merror
+#include "proto.hpp"                                // for mprofic, whatSize
+#include "raceData.hpp"                             // for RaceData
+#include "realm.hpp"                                // for MAX_REALM, COLD
+#include "rooms.hpp"                                // for AreaRoom, NUM_PER...
+#include "server.hpp"                               // for Server, gServer
+#include "size.hpp"                                 // for NO_SIZE
+#include "skills.hpp"                               // for Skill, SkillInfo
+#include "specials.hpp"                             // for SpecialAttack
+#include "structs.hpp"                              // for daily, saves
+#include "utils.hpp"                                // for MAX
+#include "xml.hpp"                                  // for newStringChild
+
+class Object;
 
 
 int convertProf(Creature* player, Realm realm) {

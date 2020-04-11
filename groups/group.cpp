@@ -16,14 +16,17 @@
  *
  */
 
-// Mud includes
-#include "creatures.hpp"
-#include "group.hpp"
-#include "mud.hpp"
-#include "server.hpp"
+#include <algorithm>              // for find
+#include <iomanip>                // for operator<<, setw
+#include <list>                   // for operator==, operator!=
 
-// C++ Includes
-#include <iomanip>
+#include "bstring.hpp"            // for bstring, operator+
+#include "creatureStreams.hpp"    // for Streamable, ColorOff, ColorOn
+#include "creatures.hpp"          // for Creature, Monster, PetList
+#include "flags.hpp"              // for P_DM_INVIS, P_NO_EXTRA_COLOR, P_NO_...
+#include "group.hpp"              // for Group, CreatureList, GROUP_MEMBER
+#include "proto.hpp"              // for keyTxtEqual
+#include "server.hpp"             // for Server, GroupList, gServer
 
 //################################################################################
 //# Group methods for groups
@@ -90,7 +93,7 @@ bool Group::add(Creature* newMember, bool addPets) {
 // Returns: true  - The group was deleted and is no longer valid
 //          false - The group still exists
 bool Group::remove(Creature* toRemove) {
-    CreatureList::iterator it = std::find(members.begin(), members.end(), toRemove);
+    auto it = std::find(members.begin(), members.end(), toRemove);
     if(it != members.end()) {
         toRemove->setGroup(nullptr);
         toRemove->setGroupStatus(GROUP_NO_STATUS);
@@ -229,7 +232,7 @@ Creature* Group::getMember(int num, bool countDmInvis) {
 //              Searcher    - The creature doing the search (allows nulls)
 //              includePets - Include pets in the search
 // Returns: A pointer to the creature, if found
-Creature* Group::getMember(bstring name, int num, Creature* searcher, bool includePets) {
+Creature* Group::getMember(const bstring& name, int num, Creature* searcher, bool includePets) {
     int match = 0;
     for(Creature* crt : members) {
         if(!crt->isPlayer() && !includePets) continue;
@@ -261,7 +264,7 @@ bool Group::inGroup(Creature* target) {
 //********************************************************************************
 // Parameters: sendToInvited - Are invited members counted as in the group or not?
 // Send msg to everyone in the group except ignore
-void Group::sendToAll(bstring msg, Creature* ignore, bool sendToInvited) {
+void Group::sendToAll(const bstring& msg, Creature* ignore, bool sendToInvited) {
     for(Creature* crt : members) {
         if(!crt->isPet() && crt != ignore && (sendToInvited || crt->getGroupStatus() >= GROUP_MEMBER )) {
             *crt << ColorOn << msg << ColorOff;
@@ -279,7 +282,7 @@ void Group::setGroupType(GroupType newType) {
 //********************************************************************************
 //* setName
 //********************************************************************************
-void Group::setName(bstring newName) {
+void Group::setName(const bstring& newName) {
     // Test validity of name here
     name = newName;
 }
@@ -300,7 +303,7 @@ bool Group::setLeader(Creature* newLeader) {
 //********************************************************************************
 //* setDescription
 //********************************************************************************
-void Group::setDescription(bstring newDescription) {
+void Group::setDescription(const bstring& newDescription) {
     // Test validity of description here
     description = newDescription;
 }
@@ -433,13 +436,10 @@ bstring Group::getGroupTypeStr() const {
         case GROUP_PUBLIC:
         default:
             return("(Public)");
-            break;
         case GROUP_INVITE_ONLY:
             return("(Invite Only)");
-            break;
         case GROUP_PRIVATE:
             return("(Private)");
-            break;
     }
     return("**Unknown**");
 }
@@ -447,7 +447,7 @@ bstring Group::getGroupTypeStr() const {
 //********************************************************************************
 //* GetGroupTypeStr
 //********************************************************************************
-bstring displayPref(bstring name, bool set) {
+bstring displayPref(const bstring& name, bool set) {
     return(name + (set ? "^gon^x" : "^roff^x"));
 }
 bstring Group::getFlagsDisplay() {

@@ -16,19 +16,44 @@
  *
  */
 // Mud includes
-#include "bank.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "factions.hpp"
-#include "guilds.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "unique.hpp"
-#include "web.hpp"
-#include "xml.hpp"
+#include <cstdio>                 // for sprintf
+#include <cstdlib>                // for abs
+#include <cstring>                // for strcpy, strncpy
+#include <ctime>                  // for time
+#include <map>                    // for operator==, map, operator!=
+#include <ostream>                // for operator<<, basic_ostream::operator<<
+
+#include "bank.hpp"               // for guildLog
+#include "bstring.hpp"            // for bstring, operator+
+#include "commands.hpp"           // for finishDropObject, deletePlayer, los...
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for ObjectSet, MonsterSet
+#include "creatures.hpp"          // for Player, Monster, Creature, PetList
+#include "enums/loadType.hpp"     // for LoadType, LoadType::LS_BACKUP
+#include "factions.hpp"           // for Faction
+#include "flags.hpp"              // for P_OUTLAW, O_CURSED, O_STARTING, M_G...
+#include "global.hpp"             // for WIELD, CreatureClass, HELD, POISON_...
+#include "group.hpp"              // for Group, CreatureList, GROUP_SPLIT_EX...
+#include "guilds.hpp"             // for Guild
+#include "hooks.hpp"              // for Hooks
+#include "money.hpp"              // for Money, GOLD
+#include "mud.hpp"                // for LT_MOBDEATH, LT_KILL_DOCTOR, MONEY_OBJ
+#include "objects.hpp"            // for Object
+#include "os.hpp"                 // for ASSERTLOG
+#include "paths.hpp"              // for BugLog
+#include "proto.hpp"              // for logn, broadcast, induel, isCt, exp_...
+#include "random.hpp"             // for Random
+#include "realm.hpp"              // for COLD, EARTH, ELEC, FIRE, WATER, WIND
+#include "rooms.hpp"              // for BaseRoom, UniqueRoom
+#include "server.hpp"             // for Server, gServer, GOLD_OUT
+#include "socket.hpp"             // for Socket
+#include "threat.hpp"             // for ThreatSet, ThreatTable, ThreatEntry
+#include "unique.hpp"             // for Lore
+#include "utils.hpp"              // for MAX, MIN
+#include "web.hpp"                // for updateRecentActivity
+#include "xml.hpp"                // for loadObject
+
+class Property;
 
 //********************************************************************
 //                      isHardcore
@@ -1180,19 +1205,6 @@ void Player::resetPlayer(Creature *killer) {
     killer->hooks.execute("postKill", this, duel);
     hooks.execute("postDeath", killer, duel, same);
 }
-
-//void clearMobEnemies(Creature *monster) {
-//  etag        *ep=0;
-//
-//  if(monster->isPlayer())
-//      return;
-//
-//  ep = monster->first_enm;
-//  while(ep) {
-//      del_enm_crt(ep->enemy, monster);
-//      ep = ep->next_tag;
-//  }
-//}
 
 //********************************************************************
 //                      hearMobDeath

@@ -16,8 +16,17 @@
  *
  */
 
-#include "creatures.hpp"
-#include "mud.hpp"
+#include <cstdio>         // for fgets, feof, fclose, fopen, sprintf, FILE
+#include <cstdlib>        // for atoi
+#include <cstring>        // for strcpy, strlen
+
+#include "creatures.hpp"  // for Creature
+#include "flags.hpp"      // for M_LOGIC_MONSTER
+#include "global.hpp"     // for FATAL, NONFATAL
+#include "os.hpp"         // for merror
+#include "paths.hpp"      // for Talk
+#include "proto.hpp"      // for logn, loadCreature_actions
+#include "structs.hpp"    // for ttag
 
 
 int loadCreature_actions( Creature* creature ) {
@@ -51,11 +60,11 @@ int loadCreature_actions( Creature* creature ) {
     while(!feof(fp)) {
         count++;
         act = new ttag;
-        act->key = 0;
-        act->target = 0;
-        act->action = 0;
-        act->response = 0;
-        act->next_tag = 0;
+        act->key = nullptr;
+        act->target = nullptr;
+        act->action = nullptr;
+        act->response = nullptr;
+        act->next_tag = nullptr;
 
         if(!act)
             merror("loadCreature_actions",FATAL);
@@ -124,8 +133,8 @@ int loadCreature_actions( Creature* creature ) {
                 merror("loadCreature_action",FATAL);
             strcpy(act->response,responsestr);
         } else
-            act->response = 0;
-        act->next_tag = 0;
+            act->response = nullptr;
+        act->next_tag = nullptr;
         if(!creature->first_tlk) {
             creature->first_tlk = act;
             act->on_cmd = 1;

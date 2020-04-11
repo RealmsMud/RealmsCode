@@ -22,7 +22,6 @@
 #include <list>
 
 #include "catRef.hpp"
-#include "common.hpp"
 #include "size.hpp"
 
 class Player;
@@ -36,15 +35,15 @@ public:
     friend std::ostream& operator<<(std::ostream& out, Recipe* recipe);
     void    save(xmlNodePtr rootNode) const;
     void    load(xmlNodePtr curNode);
-    void    saveList(xmlNodePtr curNode, bstring name, const std::list<CatRef>* list) const;
+    void    saveList(xmlNodePtr curNode, const bstring& name, const std::list<CatRef>* list) const;
     void    loadList(xmlNodePtr curNode, std::list<CatRef>* list);
     bool    isValid() const;
-    bool    check(const Player* player, const std::list<CatRef>* list, bstring type, int numIngredients) const;
+    bool    check(const Player* player, const std::list<CatRef>* list, const bstring& type, int numIngredients) const;
     bool    check(std::list<CatRef>* list, const std::list<CatRef>* require, int numIngredients) const;
     bool    isSkilled(const Player* player, Size recipeSize) const;
     bstring listIngredients(const std::list<CatRef>* list) const;
     bstring display();
-    bool    canUseEquipment(const Player* player, bstring skill) const;
+    bool    canUseEquipment(const Player* player, const bstring& skill) const;
     bool    canBeEdittedBy(const Player* player) const;
 
     int     getId() const;
@@ -54,12 +53,12 @@ public:
     bool    isSizable() const;
     void    setSizable(bool size);
     CatRef  getResult() const;
-    void    setResult(CatRef cr);
+    void    setResult(const CatRef& cr);
     bstring getResultName(bool appendCr=false);
     bstring getSkill() const;
-    void    setSkill(bstring s);
+    void    setSkill(const bstring& s);
     bstring getCreator() const;
-    void    setCreator(bstring c);
+    void    setCreator(const bstring& c);
     int     getMinSkill() const;
     bool    requiresRecipe() const;
     void    setRequiresRecipe(bool r);

@@ -16,26 +16,26 @@
  *
  */
 
-#include <boost/filesystem.hpp>
-#include <boost/algorithm/string/replace.hpp>
-#include <iostream>
+#include <boost/algorithm/string/replace.hpp>  // for replace_all_copy
+#include <boost/filesystem.hpp>                // for directory_iterator, path
+#include <libxml/parser.h>                     // for xmlDocGetRootElement
+#include <algorithm>                           // for copy, sort
+#include <iostream>                            // for operator<<, basic_ostream
 
-#include "creatures.hpp"
-#include "common.hpp"
-#include "join.hpp"
-#include "proto.hpp"
-#include "objects.hpp"
-#include "rooms.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"                         // for bstring
+#include "creatures.hpp"                       // for Monster
+#include "join.hpp"                            // for join, mjoin
+#include "money.hpp"                           // for GOLD, Money
+#include "objects.hpp"                         // for Object
+#include "rooms.hpp"                           // for UniqueRoom
+#include "statistics.hpp"                      // for Statistics
+#include "xml.hpp"                             // for loadFile
 
 
 namespace fs = boost::filesystem;
 
-#include "config.hpp"
-#include "server.hpp"
-
-extern Config *gConfig;
-extern Server *gServer;
+#include "config.hpp"                          // for Config
+#include "server.hpp"                          // for Server
 
 
 int list_rooms() {
@@ -58,15 +58,15 @@ int list_rooms() {
               << "RandomCrt" << std::endl;
 
 
-    for(fs::path area : areas) {
+    for(const fs::path& area : areas) {
         if (fs::is_directory(area)) {
             std::vector<fs::path> rooms;
             fs::directory_iterator rooms_end, rooms_start(area);
             std::copy(rooms_start, rooms_end, std::back_inserter(rooms));
             std::sort(rooms.begin(), rooms.end());
-            for (fs::path room : rooms) {
+            for (const fs::path& room : rooms) {
                 if (fs::is_regular_file(room)) {
-                    UniqueRoom *lRoom = new UniqueRoom();
+                    auto *lRoom = new UniqueRoom();
                     const char *filename = room.string().c_str();
                     if((xmlDoc = xml::loadFile(filename, "Room")) == nullptr) {
                         std::cout << "Error loading: " << filename << "\n";
@@ -144,22 +144,22 @@ int list_objects() {
               << "" << std::endl;
 
 
-    for(fs::path area : areas) {
+    for(const fs::path& area : areas) {
         if (fs::is_directory(area)) {
             std::vector<fs::path> objects;
             fs::directory_iterator rooms_end, rooms_start(area);
             std::copy(rooms_start, rooms_end, std::back_inserter(objects));
             std::sort(objects.begin(), objects.end());
-            for (fs::path object : objects) {
+            for (const fs::path& object : objects) {
                 if (fs::is_regular_file(object)) {
-                    Object *lObject = new Object();
+                    auto *lObject = new Object();
                     const char *filename = object.string().c_str();
                     if((xmlDoc = xml::loadFile(filename, "Object")) == nullptr) {
                         std::cout << "Error loading: " << filename << "\n";
                         continue;
                     }
                     rootNode = xmlDocGetRootElement(xmlDoc);
-                    lObject->readFromXml(rootNode, 0, true);
+                    lObject->readFromXml(rootNode, nullptr, true);
                     bstring description = lObject->description;
                     description.Replace("\n", "\\n");
                     description.Replace("\"", "\"\"");
@@ -255,15 +255,15 @@ int list_monsters() {
               << "" << std::endl;
 
 
-    for(fs::path area : areas) {
+    for(const fs::path& area : areas) {
         if (fs::is_directory(area)) {
             std::vector<fs::path> monsters;
             fs::directory_iterator rooms_end, rooms_start(area);
             std::copy(rooms_start, rooms_end, std::back_inserter(monsters));
             std::sort(monsters.begin(), monsters.end());
-            for (fs::path monster : monsters) {
+            for (const fs::path& monster : monsters) {
                 if (fs::is_regular_file(monster)) {
-                    Monster *lMonster = new Monster();
+                    auto *lMonster = new Monster();
                     const char *filename = monster.string().c_str();
                     if((xmlDoc = xml::loadFile(filename, "Creature")) == nullptr) {
                         std::cout << "Error loading: " << filename << "\n";

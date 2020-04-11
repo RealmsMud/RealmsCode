@@ -7,31 +7,30 @@
 
 #include "bstring.hpp"
 
-enum childType {
-    CHILD_START,
+enum class ChildType {
+    DNS_RESOLVER,
+    LISTER,
+    DEMOGRAPHICS,
+    SWAP_FIND,
+    SWAP_FINISH,
+    PRINT,
+    UNKNOWN,
 
-    CHILD_DNS_RESOLVER,
-    CHILD_LISTER,
-    CHILD_DEMOGRAPHICS,
-    CHILD_SWAP_FIND,
-    CHILD_SWAP_FINISH,
-    CHILD_PRINT,
-
-    CHILD_END
 };
 
 
 struct childProcess {
     int pid;
-    childType type;
+    ChildType type;
     int fd; // Fd if any we should watch
     bstring extra;
     childProcess() {
         pid = 0;
         fd = -1;
         extra = "";
+        type = ChildType::UNKNOWN;
     }
-    childProcess(int p, childType t, int f = -1, bstring e = "") {
+    childProcess(int p, ChildType t, int f = -1, const bstring& e = "") {
         pid = p;
         type = t;
         fd = f;

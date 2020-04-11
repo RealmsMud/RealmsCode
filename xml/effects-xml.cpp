@@ -16,9 +16,14 @@
  *
  */
 
-#include "mudObject.hpp"
-#include "effects.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>        // for xmlNodePtr, xmlNode
+#include <ostream>                // for basic_ostream::operator<<, operator<<
+#include <stdexcept>              // for runtime_error
+
+#include "effects.hpp"            // for EffectInfo, EffectList, Effects
+#include "xml.hpp"                // for newNumChild, newStringChild, NODE_NAME
+
+class MudObject;
 
 //*********************************************************************
 //                      load

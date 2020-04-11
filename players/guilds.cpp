@@ -16,22 +16,34 @@
  *
  */
 
-#include <fcntl.h>
+#include <cctype>                 // for isspace, isalpha
+#include <fcntl.h>                // for open, O_APPEND, O_CREAT, O_RDWR
+#include <cstdio>                 // for sprintf
+#include <cstring>                // for strncmp, strcpy, strlen, strstr
+#include <ctime>                  // for ctime, time
+#include <unistd.h>               // for close, write
 
-#include "bank.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "dm.hpp"
-#include "guilds.hpp"
-#include "move.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "property.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "web.hpp"
-#include "xml.hpp"
+#include "bank.hpp"               // for balance, deleteStatement, deposit
+#include "bstring.hpp"            // for bstring, operator+
+#include "catRef.hpp"             // for CatRef
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for getFullstrText, cmdGuild, cmdGuildHall
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player
+#include "flags.hpp"              // for P_CREATING_GUILD, P_AFK, P_PTESTER
+#include "global.hpp"             // for PROP_GUILDHALL, PROP_SHOP
+#include "guilds.hpp"             // for Guild, GuildCreation, shopStaysWith...
+#include "move.hpp"               // for tooFarAway
+#include "mud.hpp"                // for SUPPORT_REQUIRED, ACC
+#include "paths.hpp"              // for Paths
+#include "property.hpp"           // for Property
+#include "proto.hpp"              // for broadcast, free_crt, broadcastGuild
+#include "rooms.hpp"              // for UniqueRoom, ExitList
+#include "server.hpp"             // for Server, gServer, PlayerMap
+#include "socket.hpp"             // for Socket
+#include "utils.hpp"              // for MAX, MIN
+#include "web.hpp"                // for callWebserver
+#include "xml.hpp"                // for loadPlayer, loadRoom
 
 //*********************************************************************
 //                      Guild
@@ -45,124 +57,25 @@ Guild::Guild() {
     points = 0;
 }
 
-//*********************************************************************
-//                      getName
-//*********************************************************************
-
 bstring Guild::getName() const { return(name); }
-
-//*********************************************************************
-//                      getNum
-//*********************************************************************
-
 unsigned short Guild::getNum() const { return(num); }
-
-//*********************************************************************
-//                      getLeader
-//*********************************************************************
-
 bstring Guild::getLeader() const { return(leader); }
-
-//*********************************************************************
-//                      getLevel
-//*********************************************************************
-
 long Guild::getLevel() const { return(level); }
-
-//*********************************************************************
-//                      getNumMembers
-//*********************************************************************
-
 int Guild::getNumMembers() const { return(numMembers); }
-
-//*********************************************************************
-//                      getPkillsIn
-//*********************************************************************
-
 long Guild::getPkillsIn() const { return(pkillsIn); }
-
-//*********************************************************************
-//                      getPkillsWon
-//*********************************************************************
-
 long Guild::getPkillsWon() const { return(pkillsWon); }
-
-//*********************************************************************
-//                      getPoints
-//*********************************************************************
-
 long Guild::getPoints() const { return(points); }
-
-//*********************************************************************
-//                      setName
-//*********************************************************************
-
-void Guild::setName(bstring n) { name = n; }
-
-//*********************************************************************
-//                      setNum
-//*********************************************************************
-
+void Guild::setName(const bstring& n) { name = n; }
 void Guild::setNum(unsigned short n) { num = n; }
-
-//*********************************************************************
-//                      setLeader
-//*********************************************************************
-
-void Guild::setLeader(bstring l) { leader = l; }
-
-//*********************************************************************
-//                      setLevel
-//*********************************************************************
-
+void Guild::setLeader(const bstring& l) { leader = l; }
 void Guild::setLevel(long l) { level = l; }
-
-//*********************************************************************
-//                      setNumMembers
-//*********************************************************************
-
 void Guild::setNumMembers(int n) { numMembers = n; }
-
-//*********************************************************************
-//                      setPkillsIn
-//*********************************************************************
-
 void Guild::setPkillsIn(long pk) { pkillsIn = pk; }
-
-//*********************************************************************
-//                      setPkillsWon
-//*********************************************************************
-
 void Guild::setPkillsWon(long pk) { pkillsWon = pk; }
-
-//*********************************************************************
-//                      setPoints
-//*********************************************************************
-
 void Guild::setPoints(long p) { points = p; }
-
-//*********************************************************************
-//                      incLevel
-//*********************************************************************
-
 void Guild::incLevel(int l) { level += l; }
-
-//*********************************************************************
-//                      incNumMembers
-//*********************************************************************
-
 void Guild::incNumMembers(int n) { numMembers += n; }
-
-//*********************************************************************
-//                      incPkillsIn
-//*********************************************************************
-
 void Guild::incPkillsIn(long pk) { pkillsIn += pk; }
-
-//*********************************************************************
-//                      incPkillsWon
-//*********************************************************************
-
 void Guild::incPkillsWon(long pk) { pkillsWon += pk; }
 
 //*********************************************************************
@@ -198,7 +111,7 @@ GuildCreation::GuildCreation() {
 void printGuildSyntax(Player* player) {
     player->printColor("Syntax: guild ^e<^xlist^e>\n");
     player->printColor("              ^e<^xfound^e>^x ^e<^cguild name^e>\n");
-    if(gConfig->getWebserver() != "") {
+    if(!gConfig->getWebserver().empty()) {
         player->printColor("              ^e<^xforum^e>^x :: set your account to guildmaster on the forum\n");
         player->printColor("                      -create :: create a guild and private board on the website\n");
     }
@@ -442,7 +355,7 @@ void Guild::cancel(Player* player, cmd* cmnd) {
     player->clearFlag(P_CREATING_GUILD);
     bstring guildName = gConfig->removeGuildCreation(player->getName());
 
-    if(guildName != "") {
+    if(!guildName.empty()) {
         player->print("You remove your bid to create '%s'.\n", guildName.c_str());
         return;
     }
@@ -466,12 +379,12 @@ void Guild::forum(Player* player, cmd* cmnd) {
         player->print("Invalid guild!\n");
         return;
     }
-    if(gConfig->getWebserver() == "") {
+    if(gConfig->getWebserver().empty()) {
         player->print("The mud currently does not have a webserver configured.\n");
         return;
     }
 
-    if(player->getForum() == "") {
+    if(player->getForum().empty()) {
         player->print("Your player must be associated with a forum account to update or create a guild forum.\n");
         return;
     }
@@ -496,7 +409,7 @@ void Guild::forum(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 void Guild::support(Player* player, cmd* cmnd) {
-    GuildCreation *toSupport=0;
+    GuildCreation *toSupport=nullptr;
     char    guildName[41];
     int     len=0, i=0, j=0;
 
@@ -577,7 +490,7 @@ void Guild::support(Player* player, cmd* cmnd) {
     toSupport->addSupporter(player);
 
     if(toSupport->numSupporters >= SUPPORT_REQUIRED) {
-        Player* leader=0;
+        Player* leader=nullptr;
 
         toSupport->status = GUILD_AWAITING_APPROVAL;
         // We now have enough players to seek staff approval
@@ -596,7 +509,7 @@ void Guild::support(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 void Guild::invite(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
 
     if(!player->getGuild() || player->getGuildRank() < GUILD_OFFICER) {
         player->print("You are not an officer in a guild.\n");
@@ -683,8 +596,8 @@ bool shopStaysWithGuild(const UniqueRoom* shop) {
 void shopRemoveGuild(Property *p, Player* player, UniqueRoom* shop, UniqueRoom* storage);
 
 void Guild::remove(Player* player, cmd* cmnd) {
-    Player  *target=0;
-    Property* p=0;
+    Player  *target=nullptr;
+    Property* p=nullptr;
     int guildId = player->getGuild();
 
     if((!player->getGuild() || player->getGuildRank() < GUILD_OFFICER) && cmnd->num >= 3) {
@@ -755,7 +668,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
     player->print("You remove %s from your guild.\n", target->getCName());
     broadcastGuild(guildId, 1, "%s has been removed from your guild by %s.", target->getCName(), player->getCName());
 
-    if(target->getForum() != "") {
+    if(!target->getForum().empty()) {
         player->printColor("%s is associated with forum account ^C%s^x.\n", target->getCName(), target->getForum().c_str());
         player->printColor("You may wish to consider removing this account from the guild forum.\n");
     }
@@ -764,7 +677,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
     for(pt = gConfig->properties.begin(); pt != gConfig->properties.end(); pt++) {
         if((*pt)->isOwner(target->getName()) && (*pt)->getGuild() == guildId) {
             if((*pt)->getType() == PROP_SHOP) {
-                shopRemoveGuild(*pt, target, 0, 0);
+                shopRemoveGuild(*pt, target, nullptr, nullptr);
             } else {
                 bstring output = (*pt)->getName();
                 broadcast(isCt, "^r%s was removed from guild %d.\nProperty \"%s\" belongs to the guild, but is not a shop.", target, guildId, output.c_str());
@@ -787,7 +700,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 void Guild::promote(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     int newRank=0;
     char rank[80];
 
@@ -846,7 +759,7 @@ void Guild::promote(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 void Guild::demote(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     int newRank=0;
     char rank[80];
 
@@ -938,7 +851,7 @@ void Guild::abdicate(Player* player, Player* target, bool online) {
             } else if((*pt)->getType() == PROP_SHOP) {
                 // shops located inside the guild transfer ownership to the new guildmaster
                 CatRef cr = (*pt)->ranges.front().low;
-                UniqueRoom* room=0;
+                UniqueRoom* room=nullptr;
                 bool transferOwnership = false;
 
                 if(loadRoom(cr, &room)) {
@@ -974,7 +887,7 @@ void Guild::abdicate(Player* player, Player* target, bool online) {
 }
 
 void Guild::abdicate(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     int guildId = player->getGuild();
 
     if((!guildId || player->getGuildRank() != GUILD_MASTER) && cmnd->num >= 3) {
@@ -1032,7 +945,7 @@ void Guild::join(Player* player, cmd *cmnd) {
     name = getGuildName(player->getGuild());
     player->print("You have joined %s.\n", name.c_str());
 
-    if(player->getForum() != "")
+    if(!player->getForum().empty())
         callWebserver((bstring)"mud.php?type=autoguild&guild=" + name + "&user=" + player->getForum() + "&char=" + player->getCName());
 
 }
@@ -1072,7 +985,7 @@ void Guild::disband(Player* player, cmd* cmnd) {
 
     broadcastGuild(guildId, 1, "Your guild has been disbanded by %s.", player->getCName());
     Player* ply;
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    for(const auto& p : gServer->players) {
         ply = p.second;
 
         if(!ply->getGuild() || ply->getGuild() != guildId)
@@ -1134,7 +1047,7 @@ int cmdGuildSend(Player* player, cmd* cmnd) {
     }
 
     text = getFullstrText(cmnd->fullstr, 1);
-    if(text == "") {
+    if(text.empty()) {
         player->print("Send what?\n");
         return(0);
     }
@@ -1207,7 +1120,7 @@ int dmApproveGuild(Player* player, cmd* cmnd) {
 
 int dmRejectGuild(Player* player, cmd* cmnd) {
     char guildName[41];
-    char *reason=0;
+    char *reason=nullptr;
     GuildCreation * toReject;
     int len,i=0,j=0, iTmp=0, strLen;
 
@@ -1269,7 +1182,7 @@ int dmRejectGuild(Player* player, cmd* cmnd) {
         strLen = iTmp;
         cmnd->fullstr[iTmp] = '\0';
     }
-    if(reason != 0) {
+    if(reason != nullptr) {
         player->print("Reason '%s'\n", reason);
     }
     toReject = gConfig->findGuildCreation(guildName);
@@ -1460,15 +1373,15 @@ int dmListGuilds(Player* player, cmd* cmnd) {
 //                      guild membership functions
 //*********************************************************************
 
-bool Guild::addMember(bstring memberName) {
-    if(memberName != "") {
+bool Guild::addMember(const bstring& memberName) {
+    if(!memberName.empty()) {
         members.push_back(memberName);
         return(true);
     }
     return(false);
 }
 
-bool Guild::delMember(bstring memberName) {
+bool Guild::delMember(const bstring& memberName) {
     std::list<bstring>::iterator mIt;
 
     for(mIt = members.begin() ; mIt != members.end() ; mIt++) {
@@ -1480,7 +1393,7 @@ bool Guild::delMember(bstring memberName) {
     return(false);
 }
 
-bool Guild::isMember(bstring memberName) {
+bool Guild::isMember(const bstring& memberName) {
     std::list<bstring>::iterator mIt;
 
     for(mIt = members.begin() ; mIt != members.end() ; mIt++) {
@@ -1490,7 +1403,7 @@ bool Guild::isMember(bstring memberName) {
     return(false);
 }
 
-void Guild::renameMember(bstring oldName, bstring newName) {
+void Guild::renameMember(const bstring& oldName, const bstring& newName) {
     std::list<bstring>::iterator mIt;
 
     if(leader == oldName)
@@ -1527,7 +1440,7 @@ bool GuildCreation::addSupporter(Player* supporter) {
     return(false);
 }
 
-bool GuildCreation::removeSupporter(bstring supporterName) {
+bool GuildCreation::removeSupporter(const bstring& supporterName) {
     if(supporters.find(supporterName) != supporters.end()) {
         supporters.erase(supporterName);
         numSupporters--;
@@ -1536,7 +1449,7 @@ bool GuildCreation::removeSupporter(bstring supporterName) {
     return(false);
 }
 
-void GuildCreation::renameSupporter(bstring oldName, bstring newName) {
+void GuildCreation::renameSupporter(const bstring& oldName, const bstring& newName) {
     if(leader == oldName)
         leader = newName;
 
@@ -1546,7 +1459,7 @@ void GuildCreation::renameSupporter(bstring oldName, bstring newName) {
     }
 }
 
-void Config::guildCreationsRenameSupporter(bstring oldName, bstring newName) {
+void Config::guildCreationsRenameSupporter(const bstring& oldName, const bstring& newName) {
     std::list<GuildCreation*>::iterator gcIt;
     for(gcIt = guildCreations.begin(); gcIt != guildCreations.end(); gcIt++) {
         (*gcIt)->renameSupporter(oldName, newName);
@@ -1559,7 +1472,7 @@ void Config::guildCreationsRenameSupporter(bstring oldName, bstring newName) {
 //                      findGuildCreation
 //*********************************************************************
 
-GuildCreation* Config::findGuildCreation(bstring creationName) {
+GuildCreation* Config::findGuildCreation(const bstring& creationName) {
     std::list<GuildCreation*>::iterator gcIt;
     GuildCreation* gcp;
     for(gcIt = guildCreations.begin(); gcIt != guildCreations.end(); gcIt++) {
@@ -1577,7 +1490,7 @@ GuildCreation* Config::findGuildCreation(bstring creationName) {
 
 void Guild::recalcLevel() {
     std::list<bstring>::iterator mIt;
-    Player* member=0;
+    Player* member=nullptr;
     bool    online;
 
     broadcast(isCt, "\n^yError: Guild level for \"%s\" is being recalculated.\n", name.c_str());
@@ -1621,7 +1534,7 @@ int Guild::averageLevel() {
 //                      guildExists
 //*********************************************************************
 
-bool Config::guildExists(bstring guildName) {
+bool Config::guildExists(const bstring& guildName) {
     Guild* guild;
     guild = getGuild(guildName);
     if(guild)
@@ -1639,7 +1552,7 @@ bool Config::guildExists(bstring guildName) {
 //                      getGuildName
 //*********************************************************************
 
-const bstring getGuildName(int guildNum) {
+bstring getGuildName(int guildNum) {
     Guild* guild = gConfig->getGuild(guildNum);
     if(guild)
         return(guild->getName());
@@ -1700,7 +1613,7 @@ void updateGuild(Player* player, int what) {
         // the guildmaster is leaving and did not abdicate their position!
         // find someone to take their place
         if(player->getGuildRank() == GUILD_MASTER) {
-            Player* leader=0;
+            Player* leader=nullptr;
 
             do {
                 guild->setLeader(guild->members.front());
@@ -1711,7 +1624,7 @@ void updateGuild(Player* player, int what) {
                 else {
                     online = false;
                     if(!loadPlayer(guild->getLeader().c_str(), &leader))
-                        leader = 0;
+                        leader = nullptr;
                 }
 
 
@@ -1728,15 +1641,15 @@ void updateGuild(Player* player, int what) {
                 guild->setLeader("");
                 guild->incNumMembers(-1);
                 guild->members.pop_front();
-            } while(guild->members.size());
+            } while(!guild->members.empty());
         }
 
         // If we're removing, find the forum account. If any remaining members are associated
         // with this forum account, don't remove the forum account from the guild
         std::list<bstring>::const_iterator it;
 
-        if(player->getForum() != "") {
-            Player* target=0;
+        if(!player->getForum().empty()) {
+            Player* target=nullptr;
             bool removeForum = true;
 
             for(it = guild->members.begin(); it != guild->members.end(); it++) {
@@ -1746,7 +1659,7 @@ void updateGuild(Player* player, int what) {
                 else {
                     online = false;
                     if(!loadPlayer((*it).c_str(), &target))
-                        target = 0;
+                        target = nullptr;
                 }
 
 
@@ -1781,7 +1694,7 @@ void updateGuild(Player* player, int what) {
 
 void Config::creationToGuild(GuildCreation* toApprove) {
     std::map<bstring, bstring>::iterator sIt;
-    Player *leader=0, *officer=0;
+    Player *leader=nullptr, *officer=nullptr;
     int     guildId=0;
     bool    online=false;
     std::ostringstream url;
@@ -1834,7 +1747,7 @@ void Config::creationToGuild(GuildCreation* toApprove) {
 
     nextGuildId++;
     numGuilds++;
-    Guild* guild = new Guild;
+    auto* guild = new Guild;
 
     guild->setName(toApprove->name);
     url << "&guildName=" << toApprove->name;
@@ -1900,7 +1813,7 @@ void Config::creationToGuild(GuildCreation* toApprove) {
 //*********************************************************************
 
 void rejectGuild(GuildCreation * toReject, char *reason) {
-    Player  *leader=0, *officer=0;
+    Player  *leader=nullptr, *officer=nullptr;
     bstring leaderName = "";
     int     error = 0, ff;
     char    Reason[250], file[80], outStr[1024], datestr[40];
@@ -1908,7 +1821,7 @@ void rejectGuild(GuildCreation * toReject, char *reason) {
     bool    online=false;
 
 
-    if(reason == 0)
+    if(reason == nullptr)
         strcpy(Reason, "No reason given.\n");
     else
         strcpy(Reason, reason);
@@ -1970,7 +1883,7 @@ void rejectGuild(GuildCreation * toReject, char *reason) {
 //                      removeGuildCreation
 //*********************************************************************
 
-bstring Config::removeGuildCreation(bstring leaderName) {
+bstring Config::removeGuildCreation(const bstring& leaderName) {
     std::list<GuildCreation*>::iterator it;
     GuildCreation *gc;
     bstring toReturn = "";
@@ -1993,7 +1906,7 @@ bstring Config::removeGuildCreation(bstring leaderName) {
 //*********************************************************************
 
 Guild* Config::getGuild(const bstring& name) {
-    Guild* guild=0;
+    Guild* guild=nullptr;
     std::map<int, Guild*>::iterator it;
     for(it = guilds.begin(); it != guilds.end(); it++) {
         guild = (*it).second;
@@ -2006,14 +1919,14 @@ Guild* Config::getGuild(const bstring& name) {
 Guild* Config::getGuild(int guildId) {
     if(guilds.find(guildId) != guilds.end())
         return(guilds[guildId]);
-    return(0);
+    return(nullptr);
 }
 
 // Will find a guild based on "txt". If a guild could not be found, it
 // will print a message to the player informing them of such.
 
 Guild* Config::getGuild(const Player* player, bstring txt) {
-    Guild* guild=0;
+    Guild* guild=nullptr;
     // 0 = not found, -1 = not unique
     int check = 0, len = txt.getLength();
     txt = txt.toLower();
@@ -2032,10 +1945,10 @@ Guild* Config::getGuild(const Player* player, bstring txt) {
 
     if(!check) {
         player->print("Guild not found.\n");
-        return(0);
+        return(nullptr);
     } else if(check == -1) {
         player->print("Guild name was not unique.\n");
-        return(0);
+        return(nullptr);
     }
 
     return(guild);
@@ -2059,7 +1972,7 @@ bool Config::deleteGuild(int guildId) {
     if(!player) {
         online = false;
         if(!loadPlayer(guild->getLeader().c_str(), &player))
-            player = 0;
+            player = nullptr;
     }
 
     if(player) {
@@ -2075,11 +1988,11 @@ bool Config::deleteGuild(int guildId) {
                 // If the shop is located inside the guildhall, then destroy it.
                 // If it isn't, then unlink it.
                 CatRef cr = (*it)->ranges.front().low;
-                UniqueRoom* shop=0;
+                UniqueRoom* shop=nullptr;
                 if(loadRoom(cr, &shop)) {
                     // If the shop belongs to the guild, remove and continue
                     if(!shop->exits.empty() && !shopStaysWithGuild(shop)) {
-                        shopRemoveGuild(*it, player, shop, 0);
+                        shopRemoveGuild(*it, player, shop, nullptr);
                         it++;
                         continue;
                     }

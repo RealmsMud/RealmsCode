@@ -16,12 +16,17 @@
  *
  */
 
-#include <proto.hpp>
-#include <os.hpp>
-#include <paths.hpp>
-#include <config.hpp>
-#include "calendar.hpp"
-#include "xml.hpp"
+#include <config.hpp>                               // for Config, gConfig
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <cstdio>                                   // for sprintf
+
+#include "calendar.hpp"                             // for cWeather, Calendar
+#include "global.hpp"                               // for FATAL
+#include "os.hpp"                                   // for merror
+#include "paths.hpp"                                // for PlayerData
+#include "proto.hpp"                                // for file_exists
+#include "season.hpp"                               // for Season
+#include "xml.hpp"                                  // for newStringChild
 
 //*********************************************************************
 //                      cWeather

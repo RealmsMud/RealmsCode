@@ -16,18 +16,20 @@
  *
  */
 
-#include <unordered_map>
-#include <sstream>
-#include <locale>
-#include <proto.hpp>
+#include <proto.hpp>              // for broadcast
+#include <map>                    // for operator==, operator!=
+#include <sstream>                // for operator<<, basic_ostream, char_traits
+#include <string>                 // for operator<<, allocator
+#include <utility>                // for pair
 
-
-#include "creatures.hpp"
-#include "hooks.hpp"
-#include "flags.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
+#include "bstring.hpp"            // for bstring, operator+
+#include "creatures.hpp"          // for Player
+#include "flags.hpp"              // for P_SEE_ALL_HOOKS, P_SEE_HOOKS
+#include "hooks.hpp"              // for Hooks
+#include "mudObject.hpp"          // for MudObject
+#include "rooms.hpp"              // for AreaRoom
+#include "server.hpp"             // for Server, gServer
+#include "socket.hpp"             // for Socket
 
 
 //*********************************************************************
@@ -46,12 +48,15 @@ Hooks::Hooks() {
 void Hooks::doCopy(const Hooks& h) {
     hooks.clear();
 
-    for(std::pair<bstring,bstring> p : h.hooks) {
+    for(const auto& p : h.hooks) {
         add(p.first, p.second);
     }
 }
 
 Hooks& Hooks::operator=(const Hooks& h) {
+    if (this == &h)
+        return (*this);
+
     doCopy(h);
     return(*this);
 }

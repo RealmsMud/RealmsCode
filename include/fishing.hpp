@@ -22,7 +22,6 @@
 #include <list>
 
 #include "catRef.hpp"
-#include "common.hpp"
 
 class FishingItem {
 public:

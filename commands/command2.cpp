@@ -15,18 +15,33 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "exits.hpp"
-#include "move.hpp"
-#include "mud.hpp"
-#include "property.hpp"
-#include "rooms.hpp"
-#include "unique.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include <cstdio>                 // for sprintf
+#include <cstring>                // for strcat, strlen, strncmp, strcpy
+#include <string>                 // for operator==, basic_string
+
+#include "bstring.hpp"            // for bstring, operator+
+#include "catRef.hpp"             // for CatRef
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for finishDropObject, cmdPrepareObject
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player, Creature, Monster, CHECK_DIE
+#include "damage.hpp"             // for Damage
+#include "exits.hpp"              // for Exit, getDir, getDirName, NoDirection
+#include "flags.hpp"              // for X_CLOSED, O_BROKEN_BY_CMD, O_NO_DROP
+#include "global.hpp"             // for CreatureClass, CreatureClass::PALADIN
+#include "money.hpp"              // for GOLD, Money
+#include "move.hpp"               // for getRoom
+#include "mudObject.hpp"          // for MudObject
+#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
+#include "paths.hpp"              // for Sign
+#include "proto.hpp"              // for broadcast, findExit, bonus, broadca...
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom, AreaRoom, UniqueRoom
+#include "statistics.hpp"         // for Statistics
+#include "utils.hpp"              // for MAX, MIN
+#include "xml.hpp"                // for loadRoom
+
+class Property;
 
 #define STONE_SCROLL_INDEX      10
 

@@ -26,7 +26,7 @@
 #include <iostream>
 #include <list>
 
-#include "common.hpp"
+#include "bstring.hpp"
 
 class MudObject;
 
@@ -88,9 +88,9 @@ private:
     bool        isSpellEffect;  // Decides if the effect will show up under "spells under"
     bool        usesStr;
 
-    int         baseDuration;       // Base duration of the effect
-    float       potionMultiplyer;   // Multiplier of duration for potion
-    int         magicRoomBonus;     // Bonus in +magic room
+    int         baseDuration{};       // Base duration of the effect
+    float       potionMultiplyer{};   // Multiplier of duration for potion
+    int         magicRoomBonus{};     // Bonus in +magic room
 
 };
 
@@ -123,7 +123,7 @@ class EffectInfo
 
 friend class Effects;
 public:
-    EffectInfo(bstring pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent=0, const Creature* owner=0);
+    EffectInfo(const bstring& pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent=0, const Creature* owner=0);
     EffectInfo(xmlNodePtr rootNode);
     virtual ~EffectInfo();
     friend std::ostream& operator<<(std::ostream& out, const EffectInfo& effectinfo);
@@ -141,9 +141,9 @@ public:
     void        save(xmlNodePtr rootNode) const;
 
 
-    const       bstring getName() const;
+    bstring     getName() const;
     bstring     getDisplayName() const;
-    const bstring getOwner() const;
+    bstring     getOwner() const;
     time_t      getLastMod() const;
     long        getDuration() const;
     int         getStrength() const;

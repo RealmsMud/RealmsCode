@@ -18,7 +18,10 @@
 #ifndef PROTO_H
 #define PROTO_H
 
-#include <stdarg.h>
+#include <cstdarg>
+
+#include "structs.hpp"
+
 
 class cmd;
 
@@ -27,6 +30,7 @@ class AreaZone;
 class BaseRoom;
 class CatRefInfo;
 class Creature;
+class Container;
 class GuildCreation;
 class Location;
 class MapMarker;
@@ -37,10 +41,6 @@ class Ship;
 class ShipStop;
 class Socket;
 class TileInfo;
-
-#include "objects.hpp"
-#include "oldquest.hpp"
-#include "structs.hpp"
 
 
 // Stats
@@ -109,7 +109,7 @@ namespace Pueblo {
     static bstring activation = "this world is pueblo ";
 
     bstring multiline(bstring str);
-    bool is(bstring txt);
+    bool is(const bstring& txt);
 }
 
 char keyTxtConvert(unsigned char c);
@@ -130,7 +130,7 @@ void showRoomFlags(const Player* player, const BaseRoom* room, const TileInfo *t
 
 
 void getCatRef(bstring str, CatRef* cr, const Creature* target);
-void getDestination(bstring str, Location* l, const Creature* target);
+void getDestination(const bstring& str, Location* l, const Creature* target);
 void getDestination(bstring str, MapMarker* mapmarker, CatRef* cr, const Creature* target);
 
 void spawnObjects(const bstring& room, const bstring& objects);
@@ -140,9 +140,9 @@ int cmdSing(Creature* creature, cmd* cmnd);
 
 
 
-void link_rom(BaseRoom* room, Location l, bstring str);
-void link_rom(BaseRoom* room, CatRef cr, bstring str);
-void link_rom(BaseRoom* room, MapMarker *mapmarker, bstring str);
+void link_rom(BaseRoom* room, const Location& l, const bstring& str);
+void link_rom(BaseRoom* room, const CatRef& cr, const bstring& str);
+void link_rom(BaseRoom* room, MapMarker *mapmarker, const bstring& str);
 
 int room_track(Creature* player);
 
@@ -256,15 +256,13 @@ char* monsterPath(const CatRef& cr);
 char* roomPath(const CatRef& cr);
 char* roomBackupPath(const CatRef& cr);
 
-void free_crt(Creature* creature, bool remove=true);
-
 // files3.cpp
 int loadCreature_tlk(Creature* creature);
 int talk_crt_act(char *str, ttag *tlk);
 
 
 // guilds.cpp
-const bstring getGuildName( int guildNum );
+bstring getGuildName( int guildNum );
 void updateGuild(Player* player, int what);
 
 void rejectGuild(GuildCreation* toReject, char *reason);
@@ -297,7 +295,7 @@ void broadcast(Creature* player, bool showTo(Socket*), int color, const char *fm
 void broadcast_wc(int color,const char *fmt, ...);
 void broadcast_login(Player* player, BaseRoom* inRoom, int login);
 
-void broadcast_rom_LangWc(int lang, Socket* ignore, Location currentLocation, const char *fmt,...);
+void broadcast_rom_LangWc(int lang, Socket* ignore, const Location& currentLocation, const char *fmt,...);
 void broadcastGroup(bool dropLoot, Creature* player, const char *fmt, ...);
 void child_died(int sig);
 
@@ -338,7 +336,7 @@ int cmdRecall(Player* player, cmd* cmnd);
 bool hinderedByDimensionalAnchor(int splno);
 
 
-void logCast(Creature* caster, Creature* target, bstring spell, bool dmToo=false);
+void logCast(Creature* caster, Creature* target, const bstring& spell, bool dmToo=false);
 
 
 // main.cpp
@@ -347,14 +345,14 @@ void usage(char *szName);
 void handle_args(int argc, char *argv[]);
 
 // misc.cpp
-bool validMobId(const CatRef cr);
-bool validObjId(const CatRef cr);
-bool validRoomId(const CatRef cr);
+bool validMobId(const CatRef& cr);
+bool validObjId(const CatRef& cr);
+bool validRoomId(const CatRef& cr);
 bstring timeStr(int seconds);
 bstring removeColor(bstring obj);
 
 int cmdGo(Player* player, cmd* cmnd);
-bstring progressBar(int barLength, float percentFull, bstring text = "", char progressChar = '=', bool enclosed = true);
+bstring progressBar(int barLength, float percentFull, const bstring& text = "", char progressChar = '=', bool enclosed = true);
 
 bool nameIsAllowed(bstring str, Socket* sock);
 int bonus(int num);
@@ -381,8 +379,8 @@ void logn(const char *name, const char *fmt, ...);
 int log_immort(int broad, Player* player, const char *fmt, ...);
 bool is_num(char *str);
 void _assertlog(const char *strExp, const char *strFile, unsigned int nLine);
-bool isdm(bstring name);
-bool parse_name(bstring name);
+bool isdm(const bstring& name);
+bool parse_name(const bstring& name);
 int dmIson(void);
 int strPrefix(const char *haystack, const char *needle);
 int strSuffix(const char *haystack, const char *needle);
@@ -437,10 +435,6 @@ int cmdHistory(Player* player, cmd* cmnd);
 int cmdDeleteHistory(Player* player, cmd* cmnd);
 void sendMail(const bstring& target, const bstring& message);
 
-// quests.cpp
-void freeQuest(questPtr toFree);
-void fulfillQuest(Player* player, Object* object);
-
 // refuse.cpp
 int cmdRefuse(Player* player, cmd* cmnd);
 int cmdWatch(Player* player, cmd* cmnd);
@@ -454,8 +448,8 @@ int createStorage(CatRef cr, const Player* player);
 void doRoomHarms(BaseRoom *inRoom, Player* target);
 BaseRoom *abortFindRoom(Creature* player, const char from[15]);
 bool needUniqueRoom(const Creature* player);
-Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, bstring area, short id);
-Location getSpecialArea(int (CatRefInfo::*toCheck), CatRef cr);
+Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, const bstring& area, short id);
+Location getSpecialArea(int (CatRefInfo::*toCheck), const CatRef& cr);
 
 
 // security.cpp
@@ -463,11 +457,6 @@ bool isValidPassword(Socket*, bstring pass);
 int cmdPassword(Player* player, cmd* cmnd);
 
 
-// size.cpp
-Size getSize(bstring str);
-bstring getSizeName(Size size);
-int searchMod(Size size);
-Size whatSize(int i);
 
 // sing.cpp
 int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso);

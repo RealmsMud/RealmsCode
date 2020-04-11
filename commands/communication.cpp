@@ -15,21 +15,38 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "clans.hpp"
-#include "commands.hpp"
-#include "communication.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "guilds.hpp"
-#include "mud.hpp"
-#include "move.hpp"
-#include "playerClass.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
+#include <cstdio>                 // for sprintf
+#include <cstring>                // for strcpy, strcmp, strlen, strcat, str...
+#include <strings.h>              // for strncasecmp
+#include <map>                    // for operator==, operator!=, map
+#include <ostream>                // for operator<<, basic_ostream, ostrings...
+
+#include "bstring.hpp"            // for bstring, operator+
+#include "clans.hpp"              // for Clan
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for cmdNoExist, cmdNoAuth, doGuildSend
+#include "communication.hpp"      // for channelInfo, commInfo, sayInfo, COM...
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for PlayerSet
+#include "creatureStreams.hpp"    // for Streamable, ColorOff, ColorOn
+#include "creatures.hpp"          // for Player, Creature, Monster
+#include "deityData.hpp"          // for DeityData
+#include "exits.hpp"              // for Exit
+#include "flags.hpp"              // for P_AFK, P_GLOBAL_GAG, P_DM_SILENCED
+#include "global.hpp"             // for CreatureClass, CAP, LCOMMON, LUNKNOWN
+#include "group.hpp"              // for CreatureList, GROUP_MEMBER, Group
+#include "move.hpp"               // for getRoom
+#include "playerClass.hpp"        // for PlayerClass
+#include "proto.hpp"              // for get_language_adj, broadcast, escape...
+#include "raceData.hpp"           // for RaceData
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom, ExitList
+#include "server.hpp"             // for Server, gServer, PlayerMap
+#include "socket.hpp"             // for Socket, MXP_BEG, MXP_END
+            // for Command
+#include "xml.hpp"                // for loadPlayer
+
+class Guild;
 
 //*********************************************************************
 //                      confusionChar
@@ -110,7 +127,7 @@ bstring confusionText(Creature* speaker, bstring text) {
 // skip = 2 when we have 2 commands to skip
 //    Ex: tell bob hello there
 
-bstring getFullstrTextTrun(bstring str, int skip, char toSkip, bool colorEscape) {
+bstring getFullstrTextTrun(const bstring& str, int skip, char toSkip, bool colorEscape) {
     return(getFullstrText(str, skip, toSkip, colorEscape, true));
 }
 
@@ -168,7 +185,7 @@ bstring getFullstrText(bstring str, int skip, char toSkip, bool colorEscape, boo
 
 int communicateWith(Player* player, cmd* cmnd) {
     bstring text = "";
-    Player  *target=0;
+    Player  *target=nullptr;
     int     i=0, found=0;
     char    ooc_str[10];
 
@@ -244,7 +261,7 @@ int communicateWith(Player* player, cmd* cmnd) {
     // run the player table
     cmnd->str[1][0] = up(cmnd->str[1][0]);
     Player* ply;
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    for(const auto& p : gServer->players) {
         ply = p.second;
 
         if(!ply->isConnected())
@@ -349,7 +366,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 
     // reuse text
     text = getFullstrText(cmnd->fullstr, chan->skip, ' ', true);
-    if(text == "") {
+    if(text.empty()) {
         player->print("%s what?\n", com_text_u[chan->type]);
         return(0);
     }
@@ -439,7 +456,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 //*********************************************************************
 // function that does the actual printing of message for below
 
-void commTarget(Creature* player, Player* target, int type, bool ooc, int lang, bstring text, bstring speak, char *ooc_str, bool anon) {
+void commTarget(Creature* player, Player* target, int type, bool ooc, int lang, const bstring& text, bstring speak, char *ooc_str, bool anon) {
     std::ostringstream out;
 
     if(!target || target->flagIsSet(P_UNCONSCIOUS))
@@ -505,11 +522,11 @@ int pCommunicate(Player* player, cmd* cmnd) {
 }
 
 int communicate(Creature* creature, cmd* cmnd) {
-    const Player* player=0;
+    const Player* player=nullptr;
     bstring text = "", name = "";
-    Creature *owner=0;
-    Player* pTarget=0;
-    BaseRoom* room=0;
+    Creature *owner=nullptr;
+    Player* pTarget=nullptr;
+    BaseRoom* room=nullptr;
 
     int     i=0, lang;
     char    speak[35], ooc_str[10];
@@ -548,7 +565,7 @@ int communicate(Creature* creature, cmd* cmnd) {
     }
     // reuse text
     text = getFullstrText(cmnd->fullstr, 1, ' ', true);
-    if(text == "") {
+    if(text.empty()) {
         creature->print("%s what?\n", com_text_u[chan->type]);
         return(0);
     }
@@ -643,12 +660,12 @@ int communicate(Creature* creature, cmd* cmnd) {
 
 
             for(Exit* exit : creature->getRoomParent()->exits) {
-                room = 0;
+                room = nullptr;
                 i=0;
                 PlayerSet::iterator pIt, pEnd;
                 // don't shout through closed doors
                 if(!exit->flagIsSet(X_CLOSED))
-                    Move::getRoom(0, exit, &room, true);
+                    Move::getRoom(nullptr, exit, &room, true);
 
                 // the same-room checks aren't run in getRoom because
                 // we don't send a creature.
@@ -693,7 +710,7 @@ int communicate(Creature* creature, cmd* cmnd) {
 
             for(Exit* exit : creature->getRoomParent()->exits) {
                 // got the phrase right?
-                if(exit->getPassPhrase() != "" && exit->getPassPhrase() == text) {
+                if(!exit->getPassPhrase().empty() && exit->getPassPhrase() == text) {
                     // right language?
                     if(!exit->getPassLanguage() || lang == exit->getPassLanguage()) {
                         // even needs to be open?
@@ -702,11 +719,11 @@ int communicate(Creature* creature, cmd* cmnd) {
                             exit->clearFlag(X_LOCKED);
                             exit->clearFlag(X_CLOSED);
 
-                            if(exit->getOpen() != "") {
+                            if(!exit->getOpen().empty()) {
                                 if(exit->flagIsSet(X_ONOPEN_PLAYER)) {
                                     creature->print("%s.\n", exit->getOpen().c_str());
                                 } else {
-                                    broadcast(0, creature->getRoomParent(), exit->getOpen().c_str());
+                                    broadcast(nullptr, creature->getRoomParent(), exit->getOpen().c_str());
                                 }
                             }
 
@@ -741,7 +758,7 @@ int communicate(Creature* creature, cmd* cmnd) {
     return(0);
 }
 
-bstring mxpTag(bstring str) {
+bstring mxpTag(const bstring& str) {
     return( bstring(MXP_BEG) + str + bstring(MXP_END));
 }
 //*********************************************************************
@@ -752,7 +769,7 @@ bstring mxpTag(bstring str) {
 int channel(Player* player, cmd* cmnd) {
     bstring text = "", chanStr = "", extra = "";
     int     i=0, check=0, skip=1;
-    const Guild* guild=0;
+    const Guild* guild=nullptr;
 
     const int max_class = static_cast<int>(CreatureClass::CLASS_COUNT)-1;
 
@@ -793,7 +810,7 @@ int channel(Player* player, cmd* cmnd) {
         skip = 2;
 
         std::map<int, Clan*>::iterator it;
-        Clan *clan=0;
+        Clan *clan=nullptr;
 
         for(it = gConfig->clans.begin() ; it != gConfig->clans.end() ; it++) {
             clan = (*it).second;
@@ -815,7 +832,7 @@ int channel(Player* player, cmd* cmnd) {
 
 
     text = getFullstrText(cmnd->fullstr, skip);
-    if(text == "") {
+    if(text.empty()) {
         player->print("Send what?\n");
         return(0);
     }
@@ -907,7 +924,7 @@ int channel(Player* player, cmd* cmnd) {
 
     if(player->flagIsSet(P_GLOBAL_GAG) && !player->isStaff()) {
         // global gag - don't let them know they're gagged!
-        if(extra != "")
+        if(!extra.empty())
             player->printColor("%s%s", player->customColorize(chan->color).c_str(), extra.c_str());
 
         player->printColor(player->customColorize(chan->color + chan->displayFmt).c_str(), player, text.c_str());
@@ -928,9 +945,9 @@ int channel(Player* player, cmd* cmnd) {
         text = escapeColor(text);
 
         // more complicated checks go here
-        Player* ply=0;
-        Socket* sock=0;
-        for(std::pair<bstring, Player*> p : gServer->players) {
+        Player* ply=nullptr;
+        Socket* sock=nullptr;
+        for(const auto& p : gServer->players) {
             ply = p.second;
 
             sock = ply->getSock();
@@ -953,7 +970,7 @@ int channel(Player* player, cmd* cmnd) {
                     (chan->type != COM_RACE || ply->getDisplayRace() == check) &&
                     (chan->type != COM_CLAN || (ply->getDeity() ? ply->getDeityClan() : ply->getClan()) == check) ) )
             {
-                if(extra != "")
+                if(!extra.empty())
                     *ply << ColorOn << ply->customColorize(chan->color) << extra << ColorOff;
 
                 bstring toPrint = chan->displayFmt;
@@ -1342,8 +1359,10 @@ bool canCommunicate(Player* player) {
 //                      bstring list functions
 //*********************************************************************
 
-int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun, bstring (Player::*show)(void) const, bool (Player::*is)(bstring name) const, void (Player::*del)(bstring name), void (Player::*add)(bstring name), void (Player::*clear)(void)) {
-    Player  *target=0;
+int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun, bstring (Player::*show)() const,
+        bool (Player::*is)(const bstring& name) const, void (Player::*del)(const bstring& name),
+        void (Player::*add)(const bstring& name), void (Player::*clear)()) {
+    Player  *target=nullptr;
     bool online=true;
 
     player->clearFlag(P_AFK);

@@ -19,9 +19,10 @@
 #define STAT_H_
 
 #include <map>
+#include <libxml/parser.h>  // for xmlNodePtr
 
 #include "alphanum.hpp"
-#include "common.hpp"
+#include "bstring.hpp"
 
 enum ModifierType {
     MOD_NONE = 0,
@@ -33,7 +34,7 @@ enum ModifierType {
 class StatModifier {
 public:
     StatModifier();
-    StatModifier(bstring pName, int pModAmt, ModifierType pModType);
+    StatModifier(const bstring& pName, int pModAmt, ModifierType pModType);
     StatModifier(xmlNodePtr curNode);
     StatModifier(StatModifier &sm);
     void save(xmlNodePtr parentNode);
@@ -69,7 +70,7 @@ public:
     bstring toString();
     friend std::ostream& operator<<(std::ostream& out, Stat& stat);
 
-    void setName(bstring pName);
+    void setName(const bstring& pName);
 
     bool load(xmlNodePtr curNode, const bstring& statName);
     bool loadModifiers(xmlNodePtr curNode);
@@ -96,16 +97,16 @@ public:
     void reCalc();
 
     bool addModifier(StatModifier* toAdd);
-    bool addModifier(bstring name, int modAmt, ModifierType modType);
+    bool addModifier(const bstring& name, int modAmt, ModifierType modType);
 
-    bool removeModifier(bstring name);
-    bool adjustModifier(bstring name, int modAmt, ModifierType modType = MOD_CUR);
-    bool setModifier(bstring name, int newAmt, ModifierType modType = MOD_CUR);
+    bool removeModifier(const bstring& name);
+    bool adjustModifier(const bstring& name, int modAmt, ModifierType modType = MOD_CUR);
+    bool setModifier(const bstring& name, int newAmt, ModifierType modType = MOD_CUR);
 
     void clearModifiers();
 
-    StatModifier* getModifier(bstring name);
-    int getModifierAmt(bstring name);
+    StatModifier* getModifier(const bstring& name);
+    int getModifierAmt(const bstring& name);
 
     void upgradeSetCur(int newCur);  // Used only in upgrading to new stats
 protected:

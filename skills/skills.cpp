@@ -15,20 +15,33 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <sstream>
+#include <cstring>               // for strcpy, strlen, strncmp
+#include <ctime>                 // for time
+#include <map>                    // for operator==, operator!=, map
+#include <sstream>                // for operator<<, basic_ostream, ostrings...
+#include <string>                 // for operator==, basic_string, operator<<
 
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "clans.hpp"
-#include "levelGain.hpp"
-#include "mud.hpp"
-#include "playerClass.hpp"
-#include "server.hpp"
-#include "utils.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"            // for bstring, operator+
+#include "clans.hpp"              // for Clan
+#include "cmd.hpp"                // for cmd, SONGFN
+#include "commands.hpp"           // for cmdSkills, dmSetSkills
+#include "config.hpp"             // for Config, SkillInfoMap, gConfig, Skil...
+#include "creatures.hpp"          // for Player, Creature, SkillMap
+#include "flags.hpp"              // for P_DM_INVIS, P_SHOW_SKILL_PROGRESS
+#include "global.hpp"             // for MAXALVL, CreatureClass, CreatureCla...
+#include "levelGain.hpp"          // for LevelGain
+#include "mud.hpp"                // for LT_SKILL_INCREASE, LT, SONG_BLESS
+#include "os.hpp"                 // for ASSERTLOG
+#include "playerClass.hpp"        // for PlayerClass
+#include "proto.hpp"              // for up, free_crt, progressBar, broadcast
+#include "random.hpp"             // for Random
+#include "server.hpp"             // for Server, gServer, PlayerMap
+#include "skills.hpp"             // for Skill, SkillInfo, SkillCommand, SKI...
+#include "structs.hpp"            // for Command
+#include "utils.hpp"              // for MIN, MAX
+#include "xml.hpp"                // for loadPlayer
 
-#define NOT_A_SKILL -10
+#define NOT_A_SKILL (-10)
 
 int SkillInfo::getGainType() const {
     return (gainType);
@@ -44,7 +57,7 @@ bool SkillInfo::hasBaseSkill() const {
 }
 
 bool Config::isKnownOnly(const bstring& skillName) const {
-    SkillInfoMap::const_iterator it = skills.find(skillName);
+    auto it = skills.find(skillName);
     if (it != skills.end())
         return (((*it).second)->isKnownOnly());
     return (false);
@@ -66,7 +79,7 @@ void Skill::reset() {
     name = "";
     gained = 0;
     gainBonus = 0;
-    skillInfo = 0;
+    skillInfo = nullptr;
 }
 
 // End constructors
@@ -114,7 +127,7 @@ void Skill::setGained(int pGained) {
     gained = pGained;
 }
 
-void Skill::setName(bstring pName) {
+void Skill::setName(const bstring& pName) {
     name = pName;
     updateParent();
 }
@@ -150,9 +163,9 @@ void Skill::improve(int amt) {
 // Sets group, aborts if not valid
 
 bool SkillInfo::setGroup(bstring &pGroup) {
-    ASSERTLOG(pGroup != "");
+    ASSERTLOG(!pGroup.empty());
     bstring groupName = gConfig->getSkillGroupDisplayName(pGroup);
-    if (groupName == "") {
+    if (groupName.empty()) {
         return (false);
     }
     group = pGroup;
@@ -160,7 +173,7 @@ bool SkillInfo::setGroup(bstring &pGroup) {
 }
 
 bool SkillInfo::setBase(bstring &pBase) {
-    ASSERTLOG(pBase != "");
+    ASSERTLOG(!pBase.empty());
     SkillInfo* skInfo = gConfig->getSkill(pBase);
     if (skInfo == nullptr || skInfo == this || pBase == name) {
         return (false);
@@ -211,7 +224,7 @@ void Creature::checkImprove(const bstring& skillName, bool success, int attribut
     }
     long j = 0, t;
 
-    t = time(0);
+    t = time(nullptr);
     j = LT(this, LT_SKILL_INCREASE);
     //
     if (t < j)
@@ -294,14 +307,11 @@ bool Creature::knowsSkill(const bstring& skillName) const {
         return (true);
     if (isCt())
         return (true);
-    if (skillName == "")
+    if (skillName.empty())
         return (false);
 
     std::map<bstring, Skill*>::const_iterator csIt;
-    if ((csIt = skills.find(skillName)) == skills.end())
-        return (false);
-    else
-        return (true);
+    return !((csIt = skills.find(skillName)) == skills.end());
 }
 
 //********************************************************************
@@ -310,10 +320,10 @@ bool Creature::knowsSkill(const bstring& skillName) const {
 // Returns the requested skill if it can be found on the creature
 
 Skill* Creature::getSkill(const bstring& skillName, bool useBase) const {
-    if (skillName == "")
+    if (skillName.empty())
         return (nullptr);
 
-    SkillMap::const_iterator csIt = skills.find(skillName);
+    auto csIt = skills.find(skillName);
     if (csIt == skills.end())
         return (nullptr);
     else {
@@ -334,7 +344,7 @@ Skill* Creature::getSkill(const bstring& skillName, bool useBase) const {
 //                      setSkill
 //*********************************************************************
 
-bool Creature::setSkill(const bstring skillStr, int gained) {
+bool Creature::setSkill(const bstring& skillStr, int gained) {
     if(!gConfig->skillExists(skillStr))
         return(false);
 
@@ -364,10 +374,10 @@ bool Creature::setSkill(const bstring skillStr, int gained) {
 // Add a new skill of 'skillName' at 'gained' level
 
 void Creature::addSkill(const bstring& skillName, int gained) {
-    if (skillName == "" || getSkill(skillName, false) != nullptr)
+    if (skillName.empty() || getSkill(skillName, false) != nullptr)
         return;
 
-    Skill* skill = new Skill(skillName, gained);
+    auto* skill = new Skill(skillName, gained);
     skills[skillName] = skill;
 
     // Add any base skill we need as well
@@ -384,9 +394,9 @@ void Creature::addSkill(const bstring& skillName, int gained) {
 //********************************************************************
 
 void Creature::remSkill(const bstring& skillName) {
-    if (skillName == "")
+    if (skillName.empty())
         return;
-    SkillMap::iterator it = skills.find(skillName);
+    auto it = skills.find(skillName);
     if (it == skills.end())
         return;
     Skill* skill = (*it).second;
@@ -422,7 +432,7 @@ const char skillLevelStr[][SKILL_CHART_SIZE] = { "^rHorrible^x",          // 0-2
         };
 
 bstring getSkillLevelStr(int gained) {
-	int displayNum = (int)(MIN<int>(gained, MAXALVL*10.0) / 25);
+	int displayNum = MIN<int>(gained, MAXALVL * 10.0) / 25;
 	return skillLevelStr[MAX<int>(0, MIN<int>(SKILL_CHART_SIZE-1, displayNum))];
 }
 
@@ -438,10 +448,10 @@ const char craftSkillLevelStr[][25] = { "Novice", "Apprentice", "Journeyman", "E
 int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool showWeapons = false) {
     std::map<bstring, bstring>::iterator sgIt;
     std::map<bstring, Skill*>::iterator sIt;
-    Skill* crtSkill = 0;
+    Skill* crtSkill = nullptr;
     int known = 0;
     double skill = 0;
-    const Clan *clan = 0;
+    const Clan *clan = nullptr;
 
     bool showProgress = player->flagIsSet(P_SHOW_SKILL_PROGRESS);
     bool showDigits = !showProgress;
@@ -465,13 +475,8 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
     toShow->print("\n");
 
     for (sgIt = gConfig->skillGroups.begin(); sgIt != gConfig->skillGroups.end(); sgIt++) {
-        if ((*sgIt).first == "arcane" || (*sgIt).first == "divine" || (*sgIt).first == "magic") {
-            if (!showMagic)
-                continue;
-        } else {
-            if (showMagic)
-                continue;
-        }
+        if (((*sgIt).first == "arcane" || (*sgIt).first == "divine" || (*sgIt).first == "magic") == !showMagic)
+            continue;
 
 
         std::ostringstream oStr;
@@ -650,7 +655,7 @@ int dmSkills(Player* player, cmd* cmnd) {
             }
         }
     } else {
-        Creature* target = 0;
+        Creature* target = nullptr;
         cmnd->str[1][0] = up(cmnd->str[1][0]);
         target = gServer->findPlayer(cmnd->str[1]);
         cmnd->str[1][0] = low(cmnd->str[1][0]);
@@ -672,7 +677,7 @@ int dmSkills(Player* player, cmd* cmnd) {
 //********************************************************************
 
 int dmSetSkills(Player *admin, cmd* cmnd) {
-    Player* target = 0;
+    Player* target = nullptr;
 
     if (cmnd->num < 2) {
         admin->print("Set skills for who?\n");
@@ -730,7 +735,7 @@ int cmdSkills(Player* player, cmd* cmnd) {
             target = gServer->findPlayer(cmnd->str[pos]);
 
             if (!target) {
-                Player* pTarget = 0;
+                Player* pTarget = nullptr;
                 loadPlayer(cmnd->str[pos], &pTarget);
                 target = pTarget;
                 online = false;
@@ -770,7 +775,7 @@ struct {
                         (int (*)()) songBless }, { "protection", SONG_PROTECTION,
                         (int (*)()) songProtection }, { "flight", SONG_FLIGHT,
                         (int (*)()) songFlight }, { "recall", SONG_RECALL, (int (*)()) songRecall },
-                { "safety", SONG_SAFETY, (int (*)()) songSafety }, { "@", -1, 0 } };
+                { "safety", SONG_SAFETY, (int (*)()) songSafety }, { "@", -1, nullptr } };
 int songlist_size = sizeof(songlist) / sizeof(*songlist);
 
 //**********************************************************************
@@ -839,7 +844,7 @@ void Config::clearSkills() {
 }
 // Updates skill pointers on players
 void Config::updateSkillPointers() {
-    for (PlayerMap::value_type pp : gServer->players) {
+    for (const PlayerMap::value_type& pp : gServer->players) {
         for (SkillMap::value_type sp : pp.second->skills) {
             sp.second->updateParent();
         }
@@ -853,7 +858,7 @@ void Config::updateSkillPointers() {
 // True if the skill exists
 
 bool Config::skillExists(const bstring& skillName) const {
-    SkillInfoMap::const_iterator it = skills.find(skillName);
+    auto it = skills.find(skillName);
     return (it != skills.end());
 }
 
@@ -863,10 +868,10 @@ bool Config::skillExists(const bstring& skillName) const {
 // Returns the given skill skill
 
 SkillInfo* Config::getSkill(const bstring& skillName) const {
-    SkillInfoMap::const_iterator it = skills.find(skillName);
+    auto it = skills.find(skillName);
     if (it != skills.end())
         return ((*it).second);
-    return (0);
+    return (nullptr);
 }
 
 //********************************************************************
@@ -875,7 +880,7 @@ SkillInfo* Config::getSkill(const bstring& skillName) const {
 // Get the display name of the skill
 
 bstring Config::getSkillDisplayName(const bstring& skillName) const {
-    SkillInfoMap::const_iterator it = skills.find(skillName);
+    auto it = skills.find(skillName);
     if (it != skills.end())
         return (((*it).second)->getDisplayName());
     return ("");
@@ -887,7 +892,7 @@ bstring Config::getSkillDisplayName(const bstring& skillName) const {
 // Get the group display name of the skill
 
 bstring Config::getSkillGroupDisplayName(const bstring& groupName) const {
-    std::map<bstring, bstring>::const_iterator it = skillGroups.find(groupName);
+    auto it = skillGroups.find(groupName);
     if (it != skillGroups.end())
         return ((*it).second);
     return ("");
@@ -899,7 +904,7 @@ bstring Config::getSkillGroupDisplayName(const bstring& groupName) const {
 // Get the skill group of the skill
 
 bstring Config::getSkillGroup(const bstring& skillName) const {
-    SkillInfoMap::const_iterator it = skills.find(skillName);
+    auto it = skills.find(skillName);
     if (it != skills.end())
         return (((*it).second)->getGroup());
     return ("");

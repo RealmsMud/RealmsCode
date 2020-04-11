@@ -16,10 +16,23 @@
  *
  */
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "pythonHandler.hpp"
-#include "server.hpp"
+#include <boost/python/errors.hpp>        // for error_already_set
+#include <boost/python/extract.hpp>       // for extract
+#include <boost/python/handle.hpp>        // for handle
+#include <boost/python/object_core.hpp>   // for object, object_operators
+#include <boost/python/ptr.hpp>           // for pointer_wrapper, ptr
+
+#include "bstring.hpp"                    // for bstring, operator+
+#include "cmd.hpp"                        // for cmd
+#include "creatures.hpp"                  // for Creature, Player
+#include "dictobject.h"                   // for PyDict_New
+#include "global.hpp"                     // for FIND_MON_ROOM, FIND_PLY_ROOM
+#include "import.h"                       // for PyImport_ImportModule
+#include "money.hpp"                      // for GOLD, Money
+#include "mudObject.hpp"                  // for MudObject
+#include "pythonHandler.hpp"              // for addMudObjectToDictionary
+#include "server.hpp"                     // for Server, gServer
+#include "skills.hpp"                     // for SkillCommand, Skill, SkillCost
 
 int getFindWhere(TargetType targetType) {
     switch(targetType) {

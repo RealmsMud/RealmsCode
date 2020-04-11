@@ -16,10 +16,18 @@
  *
  */
 
-#include "socials.hpp"
-#include <config.hpp>
-#include <xml.hpp>
-#include <paths.hpp>
+#include <config.hpp>                               // for Config, SocialMap
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlNode
+#include <paths.hpp>                                // for Code
+#include <cstdio>                                   // for sprintf
+#include <xml.hpp>                                  // for copyToBString
+#include <ostream>                                  // for basic_ostream::op...
+
+#include "bstring.hpp"                              // for bstring, operator+
+#include "socials.hpp"                              // for SocialCommand
+
+class Creature;
+class cmd;
 
 //*********************************************************************
 //                      loadSocials

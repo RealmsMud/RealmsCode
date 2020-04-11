@@ -15,17 +15,35 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "dm.hpp"
-#include "mud.hpp"
-#include "unique.hpp"
-#include "property.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <cstdio>                                  // for sprintf
+#include <cstdlib>                                 // for atoi
+#include <cstring>                                 // for strncmp, strcmp
+#include <ctime>                                   // for time, ctime
+#include <list>                                     // for operator==, opera...
+#include <string>                                   // for operator==, basic...
+
+#include "bstring.hpp"                              // for bstring
+#include "catRef.hpp"                               // for CatRef
+#include "cmd.hpp"                                  // for cmd
+#include "commands.hpp"                             // for getFullstrText
+#include "config.hpp"                               // for Config, gConfig
+#include "container.hpp"                            // for ObjectSet
+#include "creatures.hpp"                            // for Player, Creature
+#include "dm.hpp"                                   // for dmHelp, dmResaveO...
+#include "flags.hpp"                                // for O_UNIQUE, O_LORE
+#include "free_crt.hpp"                             // for free_crt
+#include "global.hpp"                               // for PROP_SHOP, PROP_S...
+#include "objects.hpp"                              // for Object, ObjectType
+#include "paths.hpp"                                // for PlayerData
+#include "property.hpp"                             // for Property
+#include "proto.hpp"                                // for validObjId
+#include "random.hpp"                               // for Random
+#include "range.hpp"                                // for Range
+#include "rooms.hpp"                                // for UniqueRoom
+#include "server.hpp"                               // for Server, gServer
+#include "unique.hpp"                               // for Unique, UniqueOwner
+#include "xml.hpp"                                  // for copyToNum, saveNo...
 
 //*********************************************************************
 //                          UniqueObject
@@ -73,7 +91,7 @@ long UniqueOwner::getTime() const {
     return(time);
 }
 
-bool UniqueOwner::is(const Player* player, const CatRef cr) const {
+bool UniqueOwner::is(const Player* player, const CatRef& cr) const {
     return((!player || owner == player->getName()) && item == cr);
 }
 
@@ -84,7 +102,7 @@ bool UniqueOwner::is(const Player* player, const Object* object) const {
 }
 
 void UniqueOwner::set(const Player* player, const Object* object) {
-    time = object->getMade() ? object->getMade() : ::time(0);
+    time = object->getMade() ? object->getMade() : ::time(nullptr);
     owner = player->getName();
     item = object->info;
 }
@@ -148,7 +166,7 @@ void UniqueOwner::doRemove(Player* player, Object* parent, Object* object, bool 
         else if(parent)
             parent->delObj(object);
 
-        UniqueRoom* uRoom=0;
+        UniqueRoom* uRoom=nullptr;
         if(object->inUniqueRoom())
             uRoom = object->getUniqueRoomParent();
         object->deleteFromRoom();
@@ -179,7 +197,7 @@ void UniqueOwner::removeUnique(bool destroy) {
     if(player) {
         for(Object* obj : player->objects) {
             if(Unique::isUnique(obj) && obj->info == item) {
-                doRemove(player, 0, obj, online, destroy);
+                doRemove(player, nullptr, obj, online, destroy);
                 return;
             }
             for(Object *subObj : obj->objects) {
@@ -190,17 +208,17 @@ void UniqueOwner::removeUnique(bool destroy) {
             }
         }
 
-        for(int i=0; i<MAXWEAR; i++) {
-            if( player->ready[i]) {
-                if( Unique::isUnique(player->ready[i]) &&
-                    player->ready[i]->info == item)
+        for(auto & i : player->ready) {
+            if( i) {
+                if( Unique::isUnique(i) &&
+                    i->info == item)
                 {
-                    doRemove(player, 0, player->ready[i], online, destroy);
+                    doRemove(player, nullptr, i, online, destroy);
                     return;
                 }
-                for(Object* obj : player->ready[i]->objects) {
+                for(Object* obj : i->objects) {
                     if(Unique::isUnique(obj) && obj->info == item) {
-                        doRemove(player, player->ready[i], obj, online, destroy);
+                        doRemove(player, i, obj, online, destroy);
                         return;
                     }
                 }
@@ -212,10 +230,10 @@ void UniqueOwner::removeUnique(bool destroy) {
     }
 
     // for properties, we only have to worry about primary owners
-    Property* p=0;
+    Property* p=nullptr;
     std::list<Property*>::iterator it;
     std::list<Range>::iterator rt;
-    UniqueRoom* uRoom=0;
+    UniqueRoom* uRoom=nullptr;
     CatRef  cr;
 
     for(it = gConfig->properties.begin() ; it != gConfig->properties.end() ; it++) {
@@ -233,12 +251,12 @@ void UniqueOwner::removeUnique(bool destroy) {
                     continue;
                 for(Object* obj : uRoom->objects) {
                     if(Unique::isUnique(obj) && obj->info == item) {
-                        doRemove(0, 0, obj, online, destroy);
+                        doRemove(nullptr, nullptr, obj, online, destroy);
                         return;
                     }
                     for(Object* subObj : obj->objects) {
                         if(Unique::isUnique(subObj) && subObj->info == item) {
-                            doRemove(0, obj, subObj, online, destroy);
+                            doRemove(nullptr, obj, subObj, online, destroy);
                             return;
                         }
                     }
@@ -295,7 +313,7 @@ void Unique::setMax(int num) {
 //                          inObjectsList
 //*********************************************************************
 
-bool Unique::inObjectsList(const CatRef cr) const {
+bool Unique::inObjectsList(const CatRef& cr) const {
     std::list<UniqueObject>::const_iterator it;
     for(it = objects.begin() ; it != objects.end() ; it++) {
         if((*it).item == cr)
@@ -308,7 +326,7 @@ bool Unique::inObjectsList(const CatRef cr) const {
 //                          setObjectLimit
 //*********************************************************************
 
-bool Unique::setObjectLimit(const CatRef cr, int id) {
+bool Unique::setObjectLimit(const CatRef& cr, int id) {
     std::list<UniqueObject>::iterator it;
     for(it = objects.begin() ; it != objects.end() ; it++) {
         if((*it).item == cr) {
@@ -323,12 +341,12 @@ bool Unique::setObjectLimit(const CatRef cr, int id) {
 //                          numInOwners
 //*********************************************************************
 
-int Unique::numInOwners(const CatRef cr) const {
+int Unique::numInOwners(const CatRef& cr) const {
     std::list<UniqueOwner>::const_iterator it;
     int i=0;
 
     for(it = owners.begin() ; it != owners.end() ; it++) {
-        if((*it).is(0, cr))
+        if((*it).is(nullptr, cr))
             i++;
     }
     return(i);
@@ -343,7 +361,7 @@ int Unique::numObjects(const Player* player) const {
     int i=0;
 
     for(it = owners.begin() ; it != owners.end() ; it++) {
-        if((*it).is(player, 0))
+        if((*it).is(player, nullptr))
             i++;
     }
     return(i);
@@ -355,14 +373,14 @@ int Unique::numObjects(const Player* player) const {
 
 Unique* Config::getUnique(const Object* object) const {
     if(!Unique::isUnique(object) || !validObjId(object->info))
-        return(0);
+        return(nullptr);
     std::list<Unique*>::const_iterator it;
 
     for(it = uniques.begin() ; it != uniques.end() ; it++) {
         if((*it)->inObjectsList(object->info))
             return(*it);
     }
-    return(0);
+    return(nullptr);
 }
 
 Unique* Config::getUnique(int id) const {
@@ -375,7 +393,7 @@ Unique* Config::getUnique(int id) const {
         i++;
     }
 
-    return(0);
+    return(nullptr);
 }
 
 
@@ -392,7 +410,7 @@ void Config::addUnique(Unique* unique) {
 //*********************************************************************
 
 void Config::clearLimited() {
-    Unique* unique=0;
+    Unique* unique=nullptr;
 
     while(!uniques.empty()) {
         unique = uniques.front();
@@ -401,7 +419,7 @@ void Config::clearLimited() {
     }
     uniques.clear();
 
-    Lore* l=0;
+    Lore* l=nullptr;
 
     while(!lore.empty()) {
         l = lore.front();
@@ -430,7 +448,7 @@ bool Unique::canLoad(const Object* object) {
 //                          checkItemLimit
 //*********************************************************************
 
-bool Unique::checkItemLimit(const CatRef item) const {
+bool Unique::checkItemLimit(const CatRef& item) const {
 
     // checking itemLimit is a little more complicated
     std::list<UniqueObject>::const_iterator ut;
@@ -444,7 +462,7 @@ bool Unique::checkItemLimit(const CatRef item) const {
             // there IS a limit; see how many are currently in game
             std::list<UniqueOwner>::const_iterator it;
             for(it = owners.begin() ; it != owners.end() ; it++) {
-                if((*it).is(0, item)) {
+                if((*it).is(nullptr, item)) {
                     i--;
                     if(!i)
                         return(false);
@@ -461,7 +479,7 @@ bool Unique::checkItemLimit(const CatRef item) const {
 //                          canGet
 //*********************************************************************
 
-bool Unique::canGet(const Player* player, const CatRef item, bool transfer) const {
+bool Unique::canGet(const Player* player, const CatRef& item, bool transfer) const {
     if(player->isStaff())
         return(true);
     // if we're trying to transfer the item to this player,
@@ -573,7 +591,7 @@ bool Limited::hasLimited(const Object* object) {
 //*********************************************************************
 
 void Config::deleteUniques(Player* player) {
-    Object* object=0;
+    Object* object=nullptr;
 
     ObjectSet::iterator it;
     for( it = player->objects.begin() ; it != player->objects.end() ; ) {
@@ -606,7 +624,7 @@ void Config::deleteUniques(Player* player) {
 
 int Limited::addOwner(Player* player, const Object* object) {
     int     added=0;
-    Unique* unique=0;
+    Unique* unique=nullptr;
 
     for(Object* obj : object->objects) {
         unique = gConfig->getUnique(obj);
@@ -667,7 +685,7 @@ bool Limited::deleteOwner(Player* player, const Object* object, bool save, bool 
         return(false);
 
     bool    del=false;
-    Unique* unique=0;
+    Unique* unique=nullptr;
 
     Object* obj;
     ObjectSet::iterator it;
@@ -718,7 +736,7 @@ void Unique::remove(const Player* player) {
     std::list<UniqueOwner>::iterator it;
 
     for(it = owners.begin() ; it != owners.end() ;) {
-        if((*it).is(player, 0)) {
+        if((*it).is(player, nullptr)) {
             inGame--;
             owners.erase(it);
             it = owners.begin();
@@ -823,7 +841,7 @@ bool Config::loadLimited() {
     while(cur && xmlIsBlankNode(cur))
         cur = cur->next;
 
-    if(cur == 0) {
+    if(cur == nullptr) {
         xmlFreeDoc(xmlDoc);
         xmlCleanupParser();
         return(false);
@@ -882,8 +900,8 @@ void Config::saveLimited() const {
 //                      firstObject
 //*********************************************************************
 
-const CatRef Unique::firstObject() {
-    if(!objects.size()) {
+CatRef Unique::firstObject() {
+    if(objects.empty()) {
         CatRef cr;
         return(cr);
     }
@@ -897,7 +915,7 @@ const CatRef Unique::firstObject() {
 void Config::listLimited(const Player* player) {
     std::list<Unique*>::iterator it;
     std::list<Lore*>::iterator lt;
-    Object* object=0;
+    Object* object=nullptr;
     CatRef cr;
     int id = 1;
 
@@ -935,7 +953,7 @@ void Config::listLimited(const Player* player) {
 //*********************************************************************
 
 void Unique::show(const Player* player) {
-    Object* object=0;
+    Object* object=nullptr;
     CatRef cr;
 
     player->printColor("^yUnique Item Group:\n");
@@ -974,7 +992,7 @@ void Unique::show(const Player* player) {
 //                      addObject
 //*********************************************************************
 
-void Unique::addObject(CatRef cr) {
+void Unique::addObject(const CatRef& cr) {
     UniqueObject ub;
     ub.item = cr;
     objects.push_back(ub);
@@ -1000,7 +1018,7 @@ void Config::deleteUnique(Unique* unique) {
 //                      deUnique
 //*********************************************************************
 
-void Unique::deUnique(CatRef cr) {
+void Unique::deUnique(const CatRef& cr) {
     std::list<UniqueObject>::iterator ct;
 
     for(ct = objects.begin() ; ct != objects.end() ; ct++) {
@@ -1013,7 +1031,7 @@ void Unique::deUnique(CatRef cr) {
     std::list<UniqueOwner>::iterator it;
 
     for(it = owners.begin() ; it != owners.end() ;) {
-        if((*it).is(0, cr)) {
+        if((*it).is(nullptr, cr)) {
             (*it).removeUnique(false);
             inGame--;
             owners.erase(it);
@@ -1023,7 +1041,7 @@ void Unique::deUnique(CatRef cr) {
         it++;
     }
 
-    if(!objects.size())
+    if(objects.empty())
         gConfig->deleteUnique(this);
 }
 
@@ -1075,8 +1093,8 @@ void Limited::transferOwner(Player* owner, Player* target, const Object* object)
 //*********************************************************************
 
 int dmUnique(Player* player, cmd* cmnd) {
-    Object* object=0;
-    Unique* unique=0;
+    Object* object=nullptr;
+    Unique* unique=nullptr;
     int     id=0, len=0;
 
     if(cmnd->num < 2) {
@@ -1132,7 +1150,7 @@ int dmUnique(Player* player, cmd* cmnd) {
             }
 
             CatRef  cr;
-            getCatRef(getFullstrText(cmnd->fullstr, 3), &cr, 0);
+            getCatRef(getFullstrText(cmnd->fullstr, 3), &cr, nullptr);
 
             if(!unique->setObjectLimit(cr, id)) {
                 player->printColor("^c%s^x is not in that unique group.\n", cr.str().c_str());
@@ -1207,7 +1225,7 @@ int dmUnique(Player* player, cmd* cmnd) {
             return(0);
         }
         id = atoi(getFullstrText(cmnd->fullstr, 3).c_str());
-        unique = 0;
+        unique = nullptr;
         if(id)
             unique = gConfig->getUnique(id);
         if(!unique) {
@@ -1241,7 +1259,7 @@ int dmUnique(Player* player, cmd* cmnd) {
             player->print("This object does not belong to a unique group.\n");
             return(0);
         }
-        if(strcmp(cmnd->str[3], "confirm")) {
+        if(strcmp(cmnd->str[3], "confirm") != 0) {
             player->printColor("^rAre you sure you want to remove this object's unique status?\n");
             player->print("All existing objects in-game will be reflagged. This cannot be undone.\n");
             player->print("Number of items in game: %d\n", unique->numInOwners(object->info));
@@ -1276,7 +1294,7 @@ CatRef Lore::getInfo() const {
 int Lore::getLimit() const {
     return(limit);
 }
-void Lore::setInfo(const CatRef cr) {
+void Lore::setInfo(const CatRef& cr) {
     info = cr;
 }
 void Lore::setLimit(int i) {
@@ -1330,7 +1348,7 @@ bool Lore::hasLore(const Object* object) {
 //                      canHave
 //*********************************************************************
 
-bool Lore::canHave(const Player* player, const CatRef cr) {
+bool Lore::canHave(const Player* player, const CatRef& cr) {
     if(!validObjId(cr))
         return(true);
     int i=0, limit=1;
@@ -1438,19 +1456,19 @@ void Lore::reset(Player* player, Creature* creature) {
         Lore::add(player, obj, true);
     }
 
-    for(int i=0; i<MAXWEAR; i++) {
-        if(creature->ready[i])
-            Lore::add(player, creature->ready[i], true);
+    for(auto & i : creature->ready) {
+        if(i)
+            Lore::add(player, i, true);
     }
 
     if(player != creature)
         return;
 
     // for properties, we only have to worry about primary owners
-    Property* p=0;
+    Property* p=nullptr;
     std::list<Property*>::iterator it;
     std::list<Range>::iterator rt;
-    UniqueRoom* uRoom=0;
+    UniqueRoom* uRoom=nullptr;
     CatRef  cr;
 
     for(it = gConfig->properties.begin() ; it != gConfig->properties.end() ; it++) {
@@ -1492,7 +1510,7 @@ void Lore::reset(Player* player, Creature* creature) {
 //                      getLore
 //*********************************************************************
 
-Lore* Config::getLore(const CatRef cr) const {
+Lore* Config::getLore(const CatRef& cr) const {
     std::list<Lore*>::const_iterator it;
 
     for(it = lore.begin() ; it != lore.end() ; it++) {
@@ -1500,14 +1518,14 @@ Lore* Config::getLore(const CatRef cr) const {
             return(*it);
     }
 
-    return(0);
+    return(nullptr);
 }
 
 //*********************************************************************
 //                      getLore
 //*********************************************************************
 
-void Config::delLore(const CatRef cr) {
+void Config::delLore(const CatRef& cr) {
 
     for(auto it = lore.begin() ; it != lore.end() ;) {
         if((*it)->getInfo() == cr) {
@@ -1523,7 +1541,7 @@ void Config::delLore(const CatRef cr) {
 //                      getLore
 //*********************************************************************
 
-void Config::addLore(const CatRef cr, int i) {
+void Config::addLore(const CatRef& cr, int i) {
     Lore* l = new Lore;
     l->setInfo(cr);
     l->setLimit(i);
@@ -1537,7 +1555,7 @@ void Config::addLore(const CatRef cr, int i) {
 
 void Config::uniqueDecay(Player* player) {
     std::list<Unique*>::iterator it;
-    long t = time(0);
+    long t = time(nullptr);
 
     for(it = uniques.begin() ; it != uniques.end() ; it++) {
         (*it)->runDecay(t, player);
@@ -1559,7 +1577,7 @@ void Unique::runDecay(long t, Player* player) {
 
     // don't run the loop 2x here since chances are determined
     for(it = owners.begin() ; it != owners.end() ; it++) {
-        if(!player || (*it).is(player, 0))
+        if(!player || (*it).is(player, nullptr))
             ran = (*it).runDecay(t, decay, max) || ran;
     }
 
@@ -1610,7 +1628,7 @@ bool UniqueOwner::runDecay(long t, int decay, int max) {
     return(true);
 }
 
-void Unique::broadcastDestruction(const bstring owner, const Object* object) {
+void Unique::broadcastDestruction(const bstring& owner, const Object* object) {
     Player* player = gServer->findPlayer(owner.c_str());
     if(player)
         player->printColor("^yThe %s^y vanishes!\n", object->getCName());

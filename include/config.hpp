@@ -22,9 +22,8 @@
 #include <map>
 #include <utility>
 #include <vector>
+#include <cstring>  // strcasecmp
 
-#include "common.hpp"
-#include "delayedAction.hpp"
 #include "global.hpp"
 #include "money.hpp"
 #include "proc.hpp"
@@ -117,12 +116,12 @@ typedef std::map<int, MudFlag> MudFlagMap;
 
 class LottoTicket {
 public:
-    LottoTicket(const char* name, int pNumbers[], int pCycle);
+    LottoTicket(const char* name, const int pNumbers[], int pCycle);
     explicit LottoTicket(xmlNodePtr rootNode);
     void saveToXml(xmlNodePtr rootNode);
 
     bstring owner;  // Owner of this ticket
-    short numbers[6]; // Numbers
+    short numbers[6]{}; // Numbers
     int lottoCycle; // Lottery Cycle
 };
 
@@ -151,7 +150,7 @@ public:
     bool hasProxyAccess(Player* proxy, Player* proxied);
     void grantProxyAccess(Player* proxy, Player* proxied);
     bool removeProxyAccess(Player* proxy, Player* proxied);
-    bool removeProxyAccess(bstring id, Player* proxied);
+    bool removeProxyAccess(const bstring& id, Player* proxied);
     void clearProxyAccess();
 
     bstring getProxyList(Player* player = nullptr);
@@ -188,8 +187,8 @@ public:
 // Effects
     bool loadEffects();
     void clearEffects();
-    Effect* getEffect(bstring eName);
-    bool effectExists(bstring eName);
+    Effect* getEffect(const bstring& eName);
+    bool effectExists(const bstring& eName);
 
 // Spells
     bool loadSpells();
@@ -208,7 +207,7 @@ public:
 // Alchemy
     bool loadAlchemy();
     bool clearAlchemy();
-    const AlchemyInfo *getAlchemyInfo(bstring effect) const;
+    const AlchemyInfo *getAlchemyInfo(const bstring& effect) const;
 
 // Skills
     bool skillExists(const bstring& skillName) const;
@@ -227,7 +226,7 @@ public:
 
 
 // Guilds
-    bool guildExists(bstring guildName);
+    bool guildExists(const bstring& guildName);
     bool addGuild(Guild* toAdd);
 
     Guild* getGuild(int guildId);
@@ -236,11 +235,11 @@ public:
     bool deleteGuild(int guildId);
 
 // GuildCreations
-    bstring removeGuildCreation(bstring leaderName);
-    GuildCreation* findGuildCreation(bstring name);
+    bstring removeGuildCreation(const bstring& leaderName);
+    GuildCreation* findGuildCreation(const bstring& name);
     bool addGuildCreation( GuildCreation* toAdd);
     void creationToGuild(GuildCreation* toApprove);
-    void guildCreationsRenameSupporter(bstring oldName, bstring newName);
+    void guildCreationsRenameSupporter(const bstring& oldName, const bstring& newName);
 
 // Bans
     bool loadBans();
@@ -255,12 +254,12 @@ public:
 // Factions
     bool loadFactions();
     void clearFactionList();
-    const Faction *getFaction(bstring factionStr) const;
+    const Faction *getFaction(const bstring& factionStr) const;
 
 // Fishing
     bool loadFishing();
     void clearFishing();
-    const Fishing *getFishing(bstring id) const;
+    const Fishing *getFishing(const bstring& id) const;
 
 // Old Quests (Quest Table)
     bool loadQuestTable();
@@ -279,11 +278,11 @@ public:
     void loadCalendar();
     const Calendar* getCalendar() const;
 
-    int classtoNum(bstring str);
-    int racetoNum(bstring str);
-    int deitytoNum(bstring str);
-    int stattoNum(bstring str);
-    int savetoNum(bstring str);
+    int classtoNum(const bstring& str);
+    int racetoNum(const bstring& str);
+    int deitytoNum(const bstring& str);
+    int stattoNum(const bstring& str);
+    int savetoNum(const bstring& str);
 
 // Uniques
     bool loadLimited();
@@ -295,9 +294,9 @@ public:
     Unique* getUnique(int id) const;
     void deleteUniques(Player* player);
     void deleteUnique(Unique* unique);
-    Lore* getLore(CatRef cr) const;
-    void addLore(CatRef cr, int i);
-    void delLore(CatRef cr);
+    Lore* getLore(const CatRef& cr) const;
+    void addLore(const CatRef& cr, int i);
+    void delLore(const CatRef& cr);
     void uniqueDecay(Player* player=nullptr);
 
 // Clans
@@ -311,7 +310,7 @@ public:
     void clearRecipes();
     bool saveRecipes() const;
     Recipe *getRecipe(int id);
-    Recipe *searchRecipes(const Player* player, bstring skill, Size recipeSize, int numIngredients, const Object* object=nullptr);
+    Recipe *searchRecipes(const Player* player, const bstring& skill, Size recipeSize, int numIngredients, const Object* object=nullptr);
     void addRecipe(Recipe* recipe);
     void remRecipe(Recipe* recipe);
 
@@ -347,27 +346,27 @@ public:
 
 
 // swap
-    void swapLog(bstring log, bool external=true);
-    void swap(Player* player, bstring name);
+    void swapLog(const bstring& log, bool external=true);
+    void swap(Player* player, const bstring& name);
     void swap(bstring str);
     void offlineSwap(childProcess &child, bool onReap);
     void offlineSwap();
     void findNextEmpty(childProcess &child, bool onReap);
-    void finishSwap(bstring mover);
+    void finishSwap(const bstring& mover);
     void endSwap(int id=1);
-    bool moveRoomRestrictedArea(bstring area) const;
-    bool moveObjectRestricted(CatRef cr) const;
+    bool moveRoomRestrictedArea(const bstring& area) const;
+    bool moveObjectRestricted(const CatRef& cr) const;
     void swapEmptyQueue();
     void swapNextInQueue();
-    void swapAddQueue(Swap s);
-    bool inSwapQueue(CatRef origin, SwapType type, bool checkTarget=false);
+    void swapAddQueue(const Swap& s);
+    bool inSwapQueue(const CatRef& origin, SwapType type, bool checkTarget=false);
     int swapQueueSize();
     bool isSwapping() const;
-    void setMovingRoom(CatRef o, CatRef t);
+    void setMovingRoom(const CatRef& o, const CatRef& t);
     void swapInfo(const Player* player);
     void swapAbort();
-    bool checkSpecialArea(CatRef origin, CatRef target, int (CatRefInfo::*toCheck), Player* player, bool online, bstring type);
-    bool swapChecks(const Player* player, Swap s);
+    bool checkSpecialArea(const CatRef& origin, const CatRef& target, int (CatRefInfo::*toCheck), Player* player, bool online, const bstring& type);
+    bool swapChecks(const Player* player, const Swap& s);
     bool swapIsInteresting(const MudObject* target) const;
 
 // Double Logging

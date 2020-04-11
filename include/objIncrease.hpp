@@ -19,7 +19,7 @@
 #ifndef _OBJINCREASE_H
 #define _OBJINCREASE_H
 
-#include "common.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr
 
 enum IncreaseType {
     UnknownIncrease =     0,
@@ -38,9 +38,9 @@ public:
 
     IncreaseType type;
     bstring increase;
-    unsigned int amount;
-    bool onlyOnce;
-    bool canAddIfNotKnown;
+    unsigned int amount{};
+    bool onlyOnce{};
+    bool canAddIfNotKnown{};
 };
 
 

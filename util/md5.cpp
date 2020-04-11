@@ -50,6 +50,9 @@
 //md5 class include
 #include "md5.hpp"
 
+#include <cstdio>    // for fclose, fopen, fread, sprintf, FILE
+
+
 // Constants for MD5Transform routine.
 #define S11 7
 #define S12 12

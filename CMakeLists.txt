@@ -61,7 +61,6 @@ set(COMMON_HEADER_FILES
     include/clans.hpp
     include/cmd.hpp
     include/commands.hpp
-    include/common.hpp
     include/communication.hpp
     include/config.hpp
     include/container.hpp
@@ -72,7 +71,6 @@ set(COMMON_HEADER_FILES
     include/deityData.hpp
     include/delayedAction.hpp
     include/dice.hpp
-    include/die.hpp
     include/dm.hpp
     include/effects.hpp
     include/enums/bits.hpp
@@ -106,7 +104,6 @@ set(COMMON_HEADER_FILES
     include/oldquest.hpp
     include/os.hpp
     include/paths.hpp
-    include/player.hpp
     include/playerClass.hpp
     include/playerTitle.hpp
     include/post.hpp
@@ -153,7 +150,7 @@ set(COMMON_HEADER_FILES
     include/weather.hpp
     include/web.hpp
     include/xml.hpp
-    )
+    include/free_crt.hpp)
 
 set(COMMON_SOURCE_FILES
     areas/area.cpp
@@ -336,14 +333,18 @@ set(COMMON_SOURCE_FILES
     xml/bans-xml.cpp
     xml/calendar-xml.cpp
     xml/catref-xml.cpp
+    xml/clans-xml.cpp
     xml/config-xml.cpp
+    xml/craft-xml.cpp
     xml/creatures-xml.cpp
     xml/dice-xml.cpp
     xml/diety-xml.cpp
     xml/effects-xml.cpp
     xml/exits-xml.cpp
+    xml/factions-xml.cpp
     xml/files-xml-read.cpp
     xml/files-xml-save.cpp
+    xml/fishing-xml.cpp
     xml/guilds-xml.cpp
     xml/hooks-xml.cpp
     xml/location-xml.cpp
@@ -352,12 +353,17 @@ set(COMMON_SOURCE_FILES
     xml/objects-xml.cpp
     xml/players-xml.cpp
     xml/property-xml.cpp
+    xml/quests-xml.cpp
     xml/range-xml.cpp
     xml/rooms-xml.cpp
+    xml/ships-xml.cpp
     xml/skills-xml.cpp
     xml/socials-xml.cpp
+    xml/songs-xml.cpp
     xml/specials-xml.cpp
+    xml/spells-xml.cpp
     xml/startlocs-xml.cpp
+    xml/statistics-xml.cpp
     xml/stats-xml.cpp
     xml/wanderInfo-xml.cpp
     xml/xml.cpp
@@ -365,7 +371,9 @@ set(COMMON_SOURCE_FILES
     wip/fighters.cpp
     wip/songs.cpp
 
-   )
+
+
+    )
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES})

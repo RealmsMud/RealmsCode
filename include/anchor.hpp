@@ -19,7 +19,6 @@
 #ifndef _ANCHOR_H
 #define _ANCHOR_H
 
-#include "common.hpp"
 #include "catRef.hpp"
 
 class AreaRoom;
@@ -31,7 +30,7 @@ class UniqueRoom;
 class Anchor {
 public:
     Anchor();
-    Anchor(bstring a, const Player* player);
+    Anchor(const bstring& a, const Player* player);
     ~Anchor();
     void reset();
 
@@ -42,22 +41,22 @@ public:
     void bind(const Player* player);
     void bind(const UniqueRoom* uRoom);
     void bind(const AreaRoom* aRoom);
-    void setRoom(CatRef r);
+    void setRoom(const CatRef& r);
 
     bool is(const BaseRoom* room) const;
     bool is(const Player* player) const;
     bool is(const UniqueRoom* uRoom) const;
     bool is(const AreaRoom* aRoom) const;
 
-    bstring getAlias() const;
-    bstring getRoomName() const;
-    CatRef getRoom() const;
-    const MapMarker* getMapMarker() const;
+    [[nodiscard]] bstring getAlias() const;
+    [[nodiscard]] bstring getRoomName() const;
+    [[nodiscard]] CatRef getRoom() const;
+    [[nodiscard]] const MapMarker* getMapMarker() const;
 protected:
     bstring alias;
     bstring roomName;
     CatRef room;
-    MapMarker *mapmarker;
+    MapMarker *mapmarker{};
 };
 
 

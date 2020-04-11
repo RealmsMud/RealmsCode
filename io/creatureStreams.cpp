@@ -16,10 +16,15 @@
  *
  */
 
-#include "creatures.hpp"
-#include "creatureStreams.hpp"
-#include "mud.hpp"
-#include "socket.hpp"
+#include <string>               // for basic_string<>::npos
+
+#include "bstring.hpp"          // for bstring
+#include "creatureStreams.hpp"  // for Streamable, setf, setn, operator<<
+#include "creatures.hpp"        // for Player, Monster, Creature
+#include "mudObject.hpp"        // for MudObject
+#include "objects.hpp"          // for Object
+#include "socket.hpp"           // for Socket
+#include "stats.hpp"            // for Stat
 
 Streamable& Streamable::operator << ( Streamable& (*op)(Streamable&)) {
     // call the function passed as parameter with this stream as the argument
@@ -59,7 +64,7 @@ Streamable& Streamable::operator<< ( const MudObject& mo) {
         const Creature* creature = mo.getAsConstCreature();
         const Object* object = mo.getAsConstObject();
 
-        int mFlags = player->displayFlags() | player->getManipFlags();
+        unsigned int mFlags = player->displayFlags() | player->getManipFlags();
         int mNum = player->getManipNum();
         if(creature) {
             doPrint(creature->getCrtStr(player, mFlags, mNum));

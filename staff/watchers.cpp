@@ -16,11 +16,16 @@
  *
  */
 
-#include "commands.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
+#include <cstring>        // for strcpy
+
+#include "bstring.hpp"    // for bstring, operator+
+#include "cmd.hpp"        // for cmd
+#include "commands.hpp"   // for cmdNoExist, cmdNoAuth, cmdProcess, getFulls...
+#include "creatures.hpp"  // for Player
+#include "flags.hpp"      // for R_TYPO, P_WATCHER
+#include "proto.hpp"      // for broadcast, up, log_immort, needUniqueRoom
+#include "rooms.hpp"      // for BaseRoom, UniqueRoom
+#include "server.hpp"     // for Server, gServer, PlayerMap
 
 
 //*********************************************************************
@@ -28,7 +33,7 @@
 //*********************************************************************
 
 int dmCheckStats(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
 
     if(!player->isStaff() && !player->isWatcher())
         return(cmdNoExist(player, cmnd));
@@ -68,7 +73,7 @@ int dmCheckStats(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmLocatePlayer(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
 
 
     if(!player->isStaff() && !player->isWatcher())
@@ -105,18 +110,18 @@ int dmLocatePlayer(Player* player, cmd* cmnd) {
 
 int dmWatcherBroad(Player *admin, cmd* cmnd) {
     bstring text = "";
-    Player  *watcher=0;
+    Player  *watcher=nullptr;
     int     found=0;
 
     text = getFullstrText(cmnd->fullstr, 1);
-    if(text == "") {
+    if(text.empty()) {
         admin->print("Broadcast what?\n");
         return(0);
     }
 
     found = 0;
     Player *ply;
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    for(const auto& p : gServer->players) {
         ply = p.second;
 
         if(!ply->isConnected())

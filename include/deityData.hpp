@@ -21,8 +21,6 @@
 
 #include <map>
 
-#include "common.hpp"
-
 class PlayerTitle;
 
 class DeityData {

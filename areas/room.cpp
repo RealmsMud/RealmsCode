@@ -15,18 +15,35 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <sstream>
+#include <cstdio>                 // for sprintf
+#include <cstring>                // for strcpy
+#include <ctime>                  // for time, ctime
+#include <sstream>                // for operator<<, basic_ostream, ostrings...
+#include <string>                 // for operator<<, operator!=, allocator
 
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "move.hpp"
-#include "property.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include "bstring.hpp"            // for bstring, operator+
+#include "catRef.hpp"             // for CatRef
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for MonsterSet, PlayerSet, ObjectSet
+#include "creatureStreams.hpp"    // for Streamable, operator<<, setf, ColorOn
+#include "creatures.hpp"          // for Player, Monster, Creature, DEL_PORT...
+#include "effects.hpp"            // for EffectInfo
+#include "exits.hpp"              // for Exit
+#include "flags.hpp"              // for M_PERMENANT_MONSTER, O_JUST_BOUGHT
+#include "global.hpp"             // for MAG, CreatureClass, CAP, CreatureCl...
+#include "hooks.hpp"              // for Hooks
+#include "lasttime.hpp"           // for crlasttime, lasttime
+#include "move.hpp"               // for deletePortal
+#include "mud.hpp"                // for DL_BROAD, LT_AGGRO_ACTION
+#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
+#include "os.hpp"                 // for ASSERTLOG, merror
+#include "property.hpp"           // for Property
+#include "proto.hpp"              // for broadcast, isCt, logn, isStaff, bonus
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for UniqueRoom, BaseRoom, AreaRoom, Exi...
+#include "server.hpp"             // for Server, gServer
+#include "utils.hpp"              // for MAX, MIN
+#include "xml.hpp"                // for loadMonster, loadObject, loadRoom
 
 //*********************************************************************
 //                      addToSameRoom

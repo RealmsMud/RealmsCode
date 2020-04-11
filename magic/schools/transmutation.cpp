@@ -16,10 +16,22 @@
  *
  */
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "move.hpp"
-#include "rooms.hpp"
+#include "bstring.hpp"            // for bstring
+#include "cmd.hpp"                // for cmd
+#include "container.hpp"          // for Container, ObjectSet
+#include "creatures.hpp"          // for Creature, Player, Monster
+#include "effects.hpp"            // for EffectInfo
+#include "exits.hpp"              // for Exit
+#include "flags.hpp"              // for M_PERMENANT_MONSTER, X_PORTAL, X_LO...
+#include "global.hpp"             // for CastType, CreatureClass, CastType::...
+#include "magic.hpp"              // for SpellData, splGeneric, checkRefusin...
+#include "move.hpp"               // for deletePortal
+#include "mud.hpp"                // for DL_SILENCE
+#include "objects.hpp"            // for Object
+#include "proto.hpp"              // for broadcast, bonus, up, dec_daily
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom
+#include "utils.hpp"              // for MAX, MIN
 
 //*********************************************************************
 //                      splLevitate
@@ -37,7 +49,7 @@ int splLevitate(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
     int     bns=0, nohold=0, dur=0, statmod=0;
-    Creature* target=0;
+    Creature* target=nullptr;
 
     if( player->getClass() !=  CreatureClass::DRUID &&
         player->getClass() !=  CreatureClass::RANGER &&
@@ -109,7 +121,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
 
 
-        statmod = (bonus((int)target->strength.getCur()) + bonus((int)target->dexterity.getCur()))/2;
+        statmod = (bonus(target->strength.getCur()) + bonus(target->dexterity.getCur())) / 2;
 
         player->print("You cast an entangle spell on %N.\n", target);
         target->print("%M casts an entangle spell on you.\n", player);
@@ -135,7 +147,8 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
 
         if(spellData->how == CastType::CAST)
-            bns = 5*((int)player->getLevel() - (int)target->getLevel()) + 2*crtWisdom(target) - 2*bonus((int)player->intelligence.getCur());
+            bns = 5*((int)player->getLevel() - (int)target->getLevel()) + 2*crtWisdom(target) - 2*bonus(
+                    player->intelligence.getCur());
 
         if(target->isMonster()) {
             if( target->flagIsSet(M_DM_FOLLOW) ||
@@ -157,7 +170,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
             if((!target->chkSave(SPL, player, bns) && !nohold) || player->isCt()) {
 
                 if(spellData->how == CastType::CAST)
-                    dur = Random::get(9,18) + 2*bonus((int)player->intelligence.getCur()) - statmod;
+                    dur = Random::get(9,18) + 2*bonus(player->intelligence.getCur()) - statmod;
                 else
                     dur = Random::get(9,12);
 
@@ -190,7 +203,7 @@ int splEntangle(Creature* player, cmd* cmnd, SpellData* spellData) {
                 broadcast(target->getSock(), player->getRoomParent(), "%M becomes entangled in vines and weeds!", target);
 
                 if(spellData->how == CastType::CAST)
-                    dur = Random::get(12,18) + 2*bonus((int)player->intelligence.getCur()) - statmod;
+                    dur = Random::get(12,18) + 2*bonus(player->intelligence.getCur()) - statmod;
                 else
                     dur = Random::get(9,12);
 
@@ -248,7 +261,7 @@ int splFly(Creature* player, cmd* cmnd, SpellData* spellData) {
 // allow them to see in a dark/magically dark room
 
 int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
 
     if(cmnd->num == 2) {
         target = player;
@@ -332,7 +345,7 @@ int splInfravision(Creature* player, cmd* cmnd, SpellData* spellData) {
 int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *pPlayer = player->getAsPlayer();
     int         chance=0, canCast=0, mpNeeded=0;
-    Exit        *exit=0;
+    Exit        *exit=nullptr;
 
     if(spellData->how == CastType::CAST) {
         if( player->getClass() == CreatureClass::MAGE ||
@@ -416,9 +429,9 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA)
-        chance = 10*((int)player->getLevel() - exit->getLevel()) + (2*bonus((int)player->piety.getCur()));
+        chance = 10*((int)player->getLevel() - exit->getLevel()) + (2*bonus(player->piety.getCur()));
     else
-        chance = 10*((int)player->getLevel() - exit->getLevel()) + (2*bonus((int)player->intelligence.getCur()));
+        chance = 10*((int)player->getLevel() - exit->getLevel()) + (2*bonus(player->intelligence.getCur()));
 
     if(spellData->how == CastType::CAST)
         player->printColor("You cast a knock spell on the \"%s^x\" exit.\n", exit->getCName());
@@ -445,7 +458,7 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature *target=0;
+    Creature *target=nullptr;
     int saved=0, bns=0;
 
     if(spellData->how == CastType::CAST && !player->isMageLich()) {
@@ -490,7 +503,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
             // disintegrate can destroy walls of force
             cmnd->str[2][0] = low(cmnd->str[2][0]);
             Exit* exit = findExit(player, cmnd, 2);
-            EffectInfo* effect=0;
+            EffectInfo* effect=nullptr;
 
             if(exit) {
                 effect = exit->getEffect("wall-of-force");
@@ -502,10 +515,10 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
                     broadcast(player->getSock(), player->getParent(), "%M casts a disintegration spell on the %s^x.", player, exit->getCName());
 
                     if(exit->flagIsSet(X_PORTAL)) {
-                        broadcast(0, player->getRoomParent(), "^GAn eerie green light engulfs the %s^x!", exit->getCName());
+                        broadcast(nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the %s^x!", exit->getCName());
                         Move::deletePortal(player->getRoomParent(), exit);
                     } else {
-                        broadcast(0, player->getRoomParent(), "^GAn eerie green light engulfs the wall of force blocking the %s^x!", exit->getCName());
+                        broadcast(nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the wall of force blocking the %s^x!", exit->getCName());
                         bringDownTheWall(effect, player->getRoomParent(), exit);
                     }
                     return(0);
@@ -573,8 +586,8 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splStatChange
 //*********************************************************************
 
-int splStatChange(Creature* player, cmd* cmnd, SpellData* spellData, bstring effect, bool good) {
-    Creature* target=0;
+int splStatChange(Creature* player, cmd* cmnd, SpellData* spellData, const bstring& effect, bool good) {
+    Creature* target=nullptr;
     if( spellData->how == CastType::CAST &&
         player->getClass() !=  CreatureClass::MAGE &&
         player->getClass() !=  CreatureClass::LICH &&
@@ -675,7 +688,7 @@ int splWeakness(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splStoneToFlesh(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
 
     if(cmnd->num < 3) {
         player->print("On whom?\n");
@@ -729,7 +742,7 @@ int splStoneToFlesh(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
     int     bns=0, canCast=0, mpCost=0;
     long    dur=0;
 
@@ -753,11 +766,11 @@ int splDeafness(Creature* player, cmd* cmnd, SpellData* spellData) {
     player->smashInvis();
 
     if(spellData->how == CastType::CAST) {
-        dur = Random::get(180,300) + 3*bonus((int) player->intelligence.getCur());
+        dur = Random::get(180,300) + 3*bonus(player->intelligence.getCur());
 
         player->subMp(mpCost);
     } else if(spellData->how == CastType::SCROLL)
-        dur = Random::get(30,120) + bonus((int) player->intelligence.getCur());
+        dur = Random::get(30,120) + bonus(player->intelligence.getCur());
     else
         dur = Random::get(30,60);
 

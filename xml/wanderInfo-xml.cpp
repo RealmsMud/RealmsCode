@@ -16,9 +16,12 @@
  *
  */
 
-#include "rooms.hpp"
-#include "wanderInfo.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <ostream>                                  // for basic_ostream::op...
+
+#include "rooms.hpp"                                // for NUM_RANDOM_SLOTS
+#include "wanderInfo.hpp"                           // for WanderInfo
+#include "xml.hpp"                                  // for copyToNum, loadCa...
 
 //*********************************************************************
 //                      load

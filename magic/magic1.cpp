@@ -16,19 +16,40 @@
  *
  */
 
-#include "alchemy.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "craft.hpp"
-#include "creatures.hpp"
-#include "effects.hpp"
-#include "mud.hpp"
-#include "move.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "unique.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include <cstdlib>                // for atoi
+#include <cstring>                // for strcmp, strcpy, strlen, strncmp
+#include <strings.h>              // for strcasecmp
+#include <ctime>                  // for time
+#include <ostream>                // for operator<<, basic_ostream, basic_os...
+
+#include "bstring.hpp"            // for bstring, operator+
+#include "catRef.hpp"             // for CatRef
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for cmdNoAuth, parse, cmdBarkskin, cmdC...
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for Container, MonsterSet, PlayerSet
+#include "craft.hpp"              // for Recipe
+#include "creatures.hpp"          // for Player, Creature, Monster, CHECK_DIE
+#include "delayedAction.hpp"      // for DelayedAction, ActionStudy
+#include "exits.hpp"              // for Exit
+#include "flags.hpp"              // for O_CAN_USE_FROM_FLOOR, O_EATABLE, P_AFK
+#include "global.hpp"             // for CreatureClass, CastType, CAST_RESUL...
+#include "magic.hpp"              // for SpellData, SpellFn, get_spell_school
+#include "money.hpp"              // for GOLD, Money
+#include "move.hpp"               // for getRoom
+#include "mud.hpp"                // for LT_SPELL, ospell, LT, LT_READ_SCROLL
+#include "mudObject.hpp"          // for MudObject
+#include "objIncrease.hpp"        // for ObjIncrease, LanguageIncrease, Skil...
+#include "objects.hpp"            // for Object, ObjectType, ObjectType::POTION
+#include "proto.hpp"              // for get_spell_num, broadcast, get_spell...
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom, ExitList, UniqueRoom (ptr...
+#include "server.hpp"             // for Server, gServer, GOLD_OUT
+#include "skills.hpp"             // for Skill, SkillInfo
+#include "structs.hpp"            // for osp_t, daily
+#include "unique.hpp"             // for Unique
+#include "utils.hpp"              // for MAX, MIN
+#include "xml.hpp"                // for loadRoom
 
 //*********************************************************************
 //                      spellShortcut
@@ -79,7 +100,7 @@ int cmdCast(Creature* creature, cmd* cmnd) {
 }
 
 
-void doCastPython(MudObject* caster, Creature* target, bstring spell, int strength) {
+void doCastPython(MudObject* caster, Creature* target, const bstring& spell, int strength) {
     if(!caster || !target)
         return;
     int c = 0, n = 0;
@@ -104,7 +125,7 @@ void doCastPython(MudObject* caster, Creature* target, bstring spell, int streng
 
     fn = get_spell_function(data.splno);
     if(caster->isCreature()) {
-        data.set(CastType::CAST, get_spell_school(data.splno), get_spell_domain(data.splno), 0, caster->getAsConstCreature());
+        data.set(CastType::CAST, get_spell_school(data.splno), get_spell_domain(data.splno), nullptr, caster->getAsConstCreature());
         cmnd.fullstr = "cast " + spell + " " + target->getName();
     }
     else {
@@ -276,7 +297,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
         i = MAX(LT(creature, LT_SPELL), creature->lasttime[LT_READ_SCROLL].interval + 2);
     else
         i = LT(creature, LT_SPELL);
-    t = time(0);
+    t = time(nullptr);
 
     if(t < i && i != MAXINT) {
         listen->pleaseWait(i-t);
@@ -290,9 +311,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
         lvl = 5;
     else if(num == 4)
         lvl = 10;
-    else if(num == 5)
-        lvl = 16;
-    else if(num == 6)
+    else if(num == 5 || num == 6)
         lvl = 16;
     else
         lvl = 0;
@@ -325,7 +344,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
     fn = get_spell_function(data.splno);
 
 
-    data.set(CastType::CAST, get_spell_school(data.splno), get_spell_domain(data.splno), 0, creature);
+    data.set(CastType::CAST, get_spell_school(data.splno), get_spell_domain(data.splno), nullptr, creature);
     if(!data.check(creature))
         return(CAST_RESULT_FAILURE);
 
@@ -397,9 +416,9 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
     case CreatureClass::FIGHTER:
         if(player->getSecondClass() == CreatureClass::MAGE) {
             bool heavy = false;
-            for(int z = 0 ; z < MAXWEAR ; z++) {
-                if(player->ready[z] && (player->ready[z]->isHeavyArmor() || player->ready[z]->isMediumArmor())) {
-                    player->printColor("^W%P^x hinders your movement!\n",player->ready[z]);
+            for(auto & z : player->ready) {
+                if(z && (z->isHeavyArmor() || z->isMediumArmor())) {
+                    player->printColor("^W%P^x hinders your movement!\n",z);
                     heavy = true;
                     break;
                 }
@@ -434,7 +453,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
     // improve schools/domains of magic
     // Can't improve evocation/necromancy/destruction spells by casting on yourself
     MagicType castingType = player->getCastingType();
-    if(data.skill != "" && (!self || (
+    if(!data.skill.empty() && (!self || (
             (castingType == Arcane && data.school != EVOCATION) ||
             (castingType == Arcane && data.school != NECROMANCY) ||
             (castingType == Divine && data.domain != DESTRUCTION)
@@ -450,7 +469,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
 // This function allowsspell-casters to teach other players basic spells
 
 int cmdTeach(Player* player, cmd* cmnd) {
-    Creature* target=0;
+    Creature* target=nullptr;
     int      splno=0, c=0, match=0;
     bstring skill = "";
 
@@ -587,7 +606,7 @@ int cmdTeach(Player* player, cmd* cmnd) {
     } else {
         if(target->isPlayer()) {
             skill = spellSkill(get_spell_school(splno));
-            if(skill != "") {
+            if(!skill.empty()) {
                 if(!player->knowsSkill(skill)) {
                     player->print("You are unable to teach %s spells.\n", gConfig->getSkillDisplayName(skill).c_str());
                     return(0);
@@ -620,25 +639,25 @@ int cmdTeach(Player* player, cmd* cmnd) {
 // and determines if they can study it.
 
 Object* studyFindObject(Player* player, const cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
 
     if(cmnd->num < 2) {
         player->print("Study what?\n");
-        return(0);
+        return(nullptr);
     }
 
     if(!player->ableToDoCommand())
-        return(0);
+        return(nullptr);
 
     if(player->isBlind()) {
         player->printColor("^CYou're blind!\n");
-        return(0);
+        return(nullptr);
     }
 
     object = player->findObject(player, cmnd, 1);
     if(!object) {
         player->print("You don't have that.\n");
-        return(0);
+        return(nullptr);
     }
 
     if(object->increase) {
@@ -652,7 +671,7 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
             for(it = player->objIncrease.begin() ; it != player->objIncrease.end() ; it++) {
                 if( *it == object->info &&
                     !player->checkStaff("You can gain no further understanding from %P.\n", object))
-                    return(0);
+                    return(nullptr);
             }
         }
 
@@ -663,23 +682,23 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
 
             if(!skill) {
                 player->printColor("The skill set on this object is not a valid skill.\n");
-                return(0);
+                return(nullptr);
             }
             if(!crtSkill && !object->increase->canAddIfNotKnown) {
                 player->printColor("You lack the training to understand %P properly.\n", object);
-                return(0);
+                return(nullptr);
             }
 
             // don't improve skills that don't need to improve
             if(crtSkill && skill->isKnownOnly()) {
                 player->printColor("You can gain no further understanding from %P.\n", object);
-                return(0);
+                return(nullptr);
             }
 
             // 10 skill points per level possible, can't go over that
             if(crtSkill && (crtSkill->getGained() + object->increase->amount) >= (player->getLevel()*10)) {
                 player->printColor("You can currently gain no further understanding from %P.\n", object);
-                return(0);
+                return(nullptr);
             }
 
         } else if(object->increase->type == LanguageIncrease) {
@@ -687,17 +706,17 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
 
             if(lang < 1 || lang > LANGUAGE_COUNT) {
                 player->printColor("The language set on this object is not a valid language.\n");
-                return(0);
+                return(nullptr);
             }
 
             if(player->languageIsKnown(LUNKNOWN+lang-1)) {
                 player->printColor("You already know how to speak %s!\n", get_language_adj(lang-1));
-                return(0);
+                return(nullptr);
             }
 
         } else {
             player->printColor("You don't understand how to use %P properly.\n", object);
-            return(0);
+            return(nullptr);
         }
         
     } else if(object->getRecipe()) {
@@ -711,13 +730,13 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
             player->print("Error: Bad Recipe.\n");
             broadcast(isCt, "^y%s has a bad recipe!^x\n", player->getCName());
             loge("Study: %s has a bad recipe.\n", player->getCName());
-            return(0);
+            return(nullptr);
         }
         
         player->checkFreeSkills(recipe->getSkill());
-        if(recipe->getSkill() != "" && !player->knowsSkill(recipe->getSkill())) {
+        if(!recipe->getSkill().empty() && !player->knowsSkill(recipe->getSkill())) {
             player->print("Sorry, you don't have enough training in %s to learn that recipe.\n", recipe->getSkill().c_str());
-            return(0);
+            return(nullptr);
         }
 
     } else if(object->getType() == ObjectType::SCROLL) {
@@ -730,7 +749,7 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
             player->print("%O is unintelligible.\n", object);
             broadcast(isCt, "^y%s has a bad scroll: %s.\n", player->getCName(), object->getCName());
             loge("Study: %s has a bad scroll: %s.\n", player->getCName(), object->getCName());
-            return(0);
+            return(nullptr);
         }
 
 
@@ -739,9 +758,9 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
             skill = spellSkill(get_spell_domain(object->getMagicpower() - 1));
         else
             skill = spellSkill(get_spell_school(object->getMagicpower() - 1));
-        if(skill != "" && !player->knowsSkill(skill)) {
+        if(!skill.empty() && !player->knowsSkill(skill)) {
             player->print("You are unable to learn %s spells.\n", gConfig->getSkillDisplayName(skill).c_str());
-            return(0);
+            return(nullptr);
         }
         
     } else if(object->getType() == ObjectType::SONGSCROLL) {
@@ -753,12 +772,12 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
     } else {
 
         player->print("You can't study that!\n");
-        return(0);
+        return(nullptr);
 
     }
 
     if(object->doRestrict(player, true))
-        return(0);
+        return(nullptr);
 
     return(object);
 }
@@ -908,14 +927,14 @@ int cmdStudy(Player* player, cmd* cmnd) {
 // player or monster will be the target of the spell.
 
 int cmdReadScroll(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
     int     (*fn)(SpellFn);
     long    i=0, t=0;
     int     n=0, match=0, c=0;
     bool    dimensionalFailure=false;
     SpellData data;
 
-    fn = 0;
+    fn = nullptr;
     if(!player->ableToDoCommand())
         return(0);
 
@@ -973,7 +992,7 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
     }
 
     i = MAX(LT(player, LT_READ_SCROLL), player->lasttime[LT_SPELL].ltime + 2);
-    t = time(0);
+    t = time(nullptr);
 
     if(i > t) {
         player->pleaseWait(i - t);
@@ -1087,7 +1106,7 @@ int Player::consume(Object* object, cmd* cmnd) {
     bool    dimensionalFailure=false;
     bool    eat = (object->flagIsSet(O_EATABLE) || object->getType() == ObjectType::HERB), drink=object->flagIsSet(O_DRINKABLE) || object->getType() == ObjectType::POTION;
     //const bstring& effect = object->getEffect();
-    fn = 0;
+    fn = nullptr;
 
     if(isStaff() && object->getType() != ObjectType::POTION && !strcmp(cmnd->str[0], "eat")) {
         broadcast(getSock(), getParent(), "%M eats %1P.", this, object);
@@ -1141,7 +1160,7 @@ int Player::consume(Object* object, cmd* cmnd) {
     // Handle Alchemy Potions
     if(object->isAlchemyPotion()) {
         if(object->consumeAlchemyPotion(this))
-            return(endConsume(object,this));
+            return(endConsume(object,false));
         else
             return(0);
     }
@@ -1190,14 +1209,14 @@ int Player::consume(Object* object, cmd* cmnd) {
 // drink wrapper
 
 int cmdConsume(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
     int      n=0, match=0;
 
     if(!player->ableToDoCommand())
         return(0);
 
     if(cmnd->num < 2) {
-        if(strcmp(cmnd->str[0], "eat")) {
+        if(strcmp(cmnd->str[0], "eat") != 0) {
             player->print("Drink what?\n");
         } else {
             player->print("Eat what?\n");
@@ -1238,7 +1257,7 @@ int cmdConsume(Player* player, cmd* cmnd) {
 // or monster.
 
 int cmdUseWand(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
     long    i=0, t=0;
     int     (*fn)(SpellFn);
     bool    dimensionalFailure=false;
@@ -1309,7 +1328,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
     }
 
     i = MAX(LT(player, LT_SPELL), player->lasttime[LT_READ_SCROLL].interval + 2);
-    t = time(0);
+    t = time(nullptr);
 
     if(!player->isCt() && i > t) {
         player->pleaseWait(i - t);
@@ -1410,11 +1429,11 @@ int cmdRecall(Player* player, cmd* cmnd) {
 
 // does the logging for a lag-protect hazy
 
-void Player::recallLog(bstring name, bstring cname, bstring room) {
+void Player::recallLog(const bstring& name, const bstring& cname, const bstring& room) {
     std::ostringstream log;
 
     log << "### " << getName() << "(L" << getLevel() << ") hazied (" << name << ") ";
-    if(cname != "")
+    if(!cname.empty())
         log << "(out of bag: " << cname << ") ";
     log << "due to lag protection. HP: " << hp.getCur() << "/" << hp.getMax()
         << ". Room: " << room << " to " << getRoomParent()->fullName() << ".";
@@ -1533,7 +1552,7 @@ int Player::useRecallPotion(int show, int log) {
 //                      logCast
 //*********************************************************************
 
-void logCast(Creature* caster, Creature* target, bstring spell, bool dmToo) {
+void logCast(Creature* caster, Creature* target, const bstring& spell, bool dmToo) {
     Player* pCaster = caster->getAsPlayer();
     if(!pCaster || !pCaster->isStaff() || (!dmToo && pCaster->isDm()))
         return;
@@ -1554,8 +1573,8 @@ bool noCastUndead(const bstring& effect) {
 //                      splGeneric
 //*********************************************************************
 
-int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, bstring effect, int strength, long duration) {
-    Creature* target=0;
+int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const bstring& effect, int strength, long duration) {
+    Creature* target=nullptr;
 
     if(cmnd->num == 2) {
         target = player;
@@ -1637,7 +1656,7 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
 // This allows a mage to transmute gold into magical charges for a wand
 
 int cmdTransmute(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
     unsigned long cost=0;
 
     if(!player->ableToDoCommand())
@@ -1686,7 +1705,7 @@ int cmdTransmute(Player* player, cmd* cmnd) {
         return(0);
     }
     player->coins.sub(cost, GOLD);
-    gServer->logGold(GOLD_OUT, player, Money(cost, GOLD), object, "Transmuate");
+    Server::logGold(GOLD_OUT, player, Money(cost, GOLD), object, "Transmuate");
 
     if(!player->isCt() && !dec_daily(&player->daily[DL_RCHRG])) {
         player->print("You have recharged enough wands for one day.\n");
@@ -1727,7 +1746,7 @@ int cmdTransmute(Player* player, cmd* cmnd) {
 // players, rooms, or inventory. Also a player or monster cannot read.
 
 int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
 
 
     if(player->getClass() == CreatureClass::BUILDER) {
@@ -1818,48 +1837,48 @@ int Creature::spellFail(CastType how) {
     switch (pPlayer->getClass()) {
 
     case CreatureClass::ASSASSIN:
-        chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 30;
+        chance = ((pPlayer->getLevel() + bonus(pPlayer->intelligence.getCur())) * 5) + 30;
         break;
     case CreatureClass::BERSERKER:
-        chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5);
+        chance = ((pPlayer->getLevel() + bonus(pPlayer->intelligence.getCur())) * 5);
         break;
     case CreatureClass::PUREBLOOD:
-        chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 60;
+        chance = ((pPlayer->getLevel() + bonus(pPlayer->intelligence.getCur())) * 5) + 60;
         break;
     case CreatureClass::CLERIC:
     case CreatureClass::DRUID:
     case CreatureClass::BARD:
-        chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 65;
+        chance = ((pPlayer->getLevel() + bonus(pPlayer->intelligence.getCur())) * 5) + 65;
         break;
     case CreatureClass::FIGHTER:
         if(pPlayer->getSecondClass() == CreatureClass::MAGE)
-            chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 75;
+            chance = ((pPlayer->getLevel() + bonus(pPlayer->intelligence.getCur())) * 5) + 75;
         else
-            chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 10;
+            chance = ((pPlayer->getLevel() + bonus(pPlayer->intelligence.getCur())) * 5) + 10;
         break;
     case CreatureClass::MAGE:
     case CreatureClass::LICH:
-        chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 75;
+        chance = ((pPlayer->getLevel() + bonus(pPlayer->intelligence.getCur())) * 5) + 75;
         break;
     case CreatureClass::MONK:
     case CreatureClass::WEREWOLF:
-        chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 6) + 25;
+        chance = ((pPlayer->getLevel() + bonus(pPlayer->intelligence.getCur())) * 6) + 25;
         break;
     case CreatureClass::PALADIN:
     case CreatureClass::DEATHKNIGHT:
-        chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 50;
+        chance = ((pPlayer->getLevel() + bonus(pPlayer->intelligence.getCur())) * 5) + 50;
         break;
     case CreatureClass::RANGER:
-        chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 4) + 56;
+        chance = ((pPlayer->getLevel() + bonus(pPlayer->intelligence.getCur())) * 4) + 56;
         break;
     case CreatureClass::THIEF:
         if(pPlayer->getSecondClass() == CreatureClass::MAGE)
-            chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 5) + 75;
+            chance = ((pPlayer->getLevel() + bonus(pPlayer->intelligence.getCur())) * 5) + 75;
         else
-            chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 6) + 22;
+            chance = ((pPlayer->getLevel() + bonus(pPlayer->intelligence.getCur())) * 6) + 22;
         break;
     case CreatureClass::ROGUE:
-        chance = ((pPlayer->getLevel() + bonus((int) pPlayer->intelligence.getCur())) * 6) + 22;
+        chance = ((pPlayer->getLevel() + bonus(pPlayer->intelligence.getCur())) * 6) + 22;
         break;
     default:
         return(0);
@@ -1880,8 +1899,8 @@ int Creature::spellFail(CastType how) {
 // This function allows a DM to teleport themself or another player to jail
 
 int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *target=0;
-    UniqueRoom  *new_rom=0;
+    Player  *target=nullptr;
+    UniqueRoom  *new_rom=nullptr;
 
     if(!player->isPlayer() || (!player->isCt() && spellData->how == CastType::CAST)) {
         player->print("That spell does not exist.\n");
@@ -1946,7 +1965,7 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int cmdBarkskin(Player *player, cmd *cmnd) {
-    long    i=0, t = time(0);
+    long    i=0, t = time(nullptr);
     int     adjustment=0;
 
     player->clearFlag(P_AFK);
@@ -2009,9 +2028,9 @@ int cmdBarkskin(Player *player, cmd *cmnd) {
 //*********************************************************************
 
 int cmdCommune(Player *player, cmd *cmnd) {
-    long    i=0, t = time(0), first_exit=0;
+    long    i=0, t = time(nullptr), first_exit=0;
     int     chance=0;
-    BaseRoom* newRoom=0;
+    BaseRoom* newRoom=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -2038,7 +2057,7 @@ int cmdCommune(Player *player, cmd *cmnd) {
     }
     int level = (int)player->getSkillLevel(("commune"));
 
-    chance = MIN(85, level * 20 + bonus((int) player->piety.getCur()));
+    chance = MIN(85, level * 20 + bonus(player->piety.getCur()));
 
     if(player->isStaff())
         chance = 100;
@@ -2147,7 +2166,7 @@ bool Creature::isMageLich() {
 bool Creature::noPotion(SpellData* spellData) {
     if(spellData->how == CastType::POTION) {
         print("You can only use a potion on yourself.\n");
-        return(1);
+        return(true);
     }
-    return(0);
+    return(false);
 }

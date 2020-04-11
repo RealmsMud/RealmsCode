@@ -16,9 +16,12 @@
  *
  */
 
-#include <config.hpp>
-#include <xml.hpp>
-#include <stats.hpp>
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <stats.hpp>                                // for StatModifier, Stat
+#include <xml.hpp>                                  // for copyToNum, newStr...
+#include <ostream>                                  // for basic_ostream::op...
+
+#include "bstring.hpp"                              // for bstring
 
 
 //*********************************************************************

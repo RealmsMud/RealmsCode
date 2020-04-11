@@ -16,12 +16,25 @@
  *
  */
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "unique.hpp"
-#include "objects.hpp"
+#include <cstring>            // for strlen
+#include <ctime>              // for time
+#include <string>             // for operator==, basic_string
+
+#include "cmd.hpp"            // for cmd
+#include "creatures.hpp"      // for Player, Creature, Monster, ATTACK_BASH
+#include "delayedAction.hpp"  // for ActionTrack, DelayedAction
+#include "flags.hpp"          // for P_AFK, P_LAG_PROTECTION_ACTIVE, P_LAG_P...
+#include "global.hpp"         // for WIELD, CreatureClass, HELD, CreatureCla...
+#include "mud.hpp"            // for LT_KICK, LT_LAY_HANDS, LT_DISARM, LT_TRACK
+#include "objects.hpp"        // for Object, ObjectType, ObjectType::WEAPON
+#include "proto.hpp"          // for broadcast, bonus, log_immort, getSizeName
+#include "random.hpp"         // for Random
+#include "rooms.hpp"          // for BaseRoom, AreaRoom, UniqueRoom
+#include "server.hpp"         // for Server, gServer
+#include "size.hpp"           // for NO_SIZE, SIZE_HUGE, SIZE_LARGE
+#include "track.hpp"          // for Track
+#include "unique.hpp"         // for Unique
+#include "utils.hpp"          // for MIN, MAX
 
 
 //*********************************************************************

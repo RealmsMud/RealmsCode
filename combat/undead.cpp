@@ -16,9 +16,19 @@
  *
  */
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
+#include <ctime>           // for time
+
+#include "creatures.hpp"   // for Player, Creature, Monster, CHECK_DIE
+#include "damage.hpp"      // for Damage
+#include "flags.hpp"       // for P_OUTLAW, P_LAG_PROTECTION_ACTIVE, P_LAG_P...
+#include "global.hpp"      // for CreatureClass, CreatureClass::CARETAKER
+#include "mud.hpp"         // for LT, LT_REGENERATE, LT_MIST, LT_DRAIN_LIFE
+#include "proto.hpp"       // for broadcast, bonus, log_immort, isDay, broad...
+#include "random.hpp"      // for Random
+#include "rooms.hpp"       // for BaseRoom
+#include "utils.hpp"       // for MIN
+
+class cmd;
 
 //*********************************************************************
 //                      cmdBite

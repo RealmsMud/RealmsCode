@@ -48,7 +48,7 @@ public:
     //xtag  *first_ext;     // Exits
     ExitList exits;
 
-    char    misc[64];       // miscellaneous space
+    char    misc[64]{};       // miscellaneous space
 
 public:
     BaseRoom();
@@ -56,7 +56,7 @@ public:
 //  virtual bool operator< (const MudObject& t) const = 0;
 
     void readExitsXml(xmlNodePtr curNode, bool offline=false);
-    bool delExit(bstring dir);
+    bool delExit(const bstring& dir);
     bool delExit(Exit *exit);
     void clearExits();
 
@@ -111,7 +111,7 @@ public:
 
     bstring fullName() const;
     bstring getVersion() const;
-    void setVersion(bstring v);
+    void setVersion(const bstring& v);
     bool hasTraining() const;
     CreatureClass whatTraining(int extra=0) const;
 
@@ -169,21 +169,21 @@ public:
     void setHighLevel(short lvl);
     void setMaxMobs(short m);
     void setTrap(short t);
-    void setTrapExit(CatRef t);
+    void setTrapExit(const CatRef& t);
     void setTrapWeight(short weight);
     void setTrapStrength(short strength);
-    void setFaction(bstring f);
+    void setFaction(const bstring& f);
     void incBeenHere();
     void setTerrain(short t);
     void setRoomExperience(int exp);
     void setSize(Size s);
 
-    bool swap(Swap s);
-    bool swapIsInteresting(Swap s) const;
+    bool swap(const Swap& s);
+    bool swapIsInteresting(const Swap& s) const;
 
     bstring getMsdp(bool showExits = true) const;
 protected:
-    char    flags[16];  // Max flags - 128
+    char    flags[16]{};  // Max flags - 128
     bstring fishing;
 
     bstring short_desc;     // Descriptions
@@ -211,13 +211,13 @@ public:
     std::map<int, crlasttime> permMonsters; // Permanent/reappearing monsters
     std::map<int, crlasttime> permObjects;  // Permanent/reappearing items
 
-    char    last_mod[24];   // Last staff member to modify room.
+    char    last_mod[24]{};   // Last staff member to modify room.
     struct lasttime lasttime[16];   // For timed room things, like darkness spells.
 
-    char    lastModTime[32]; // date created (first *saved)
+    char    lastModTime[32]{}; // date created (first *saved)
 
-    char    lastPly[32];
-    char    lastPlyTime[32];
+    char    lastPly[32]{};
+    char    lastPlyTime[32]{};
 
 public:
 
@@ -234,7 +234,7 @@ public:
     bool toggleFlag(int flag);
 
     bstring getFishingStr() const;
-    void setFishing(bstring id);
+    void setFishing(const bstring& id);
     const Fishing* getFishing() const;
 };
 
@@ -250,7 +250,7 @@ public:
 
     bool    canDelete();
     void    recycle();
-    bool    updateExit(bstring dir);
+    bool    updateExit(const bstring& dir);
     void    updateExits();
     bool    isInteresting(const Player *viewer) const;
     bool    isRoad() const;
@@ -283,14 +283,14 @@ public:
     void setDecCompass(bool dec);
     void setStayInMemory(bool stay);
 
-    bool swap(Swap s);
-    bool swapIsInteresting(Swap s) const;
+    bool swap(const Swap& s);
+    bool swapIsInteresting(const Swap& s) const;
 
     bstring getMsdp(bool showExits = true) const;
 protected:
-    bool    needsCompass;
-    bool    decCompass;
-    bool    stayInMemory;
+    bool    needsCompass{};
+    bool    decCompass{};
+    bool    stayInMemory{};
 };
 
 

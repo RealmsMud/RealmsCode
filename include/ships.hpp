@@ -19,9 +19,9 @@
 #define SHIPS_H_
 
 #include <list>
+#include <libxml/parser.h>  // for xmlNodePtr
 
 #include "catRef.hpp"
-#include "common.hpp"
 #include "location.hpp"
 #include "range.hpp"
 #include "swap.hpp"
@@ -64,7 +64,7 @@ public:
     bstring getDumpAction() const;
     bstring getPrisonAction() const;
     bool getUnconInPrison() const;
-    bool swap(Swap s);
+    bool swap(const Swap& s);
 };
 
 
@@ -76,7 +76,7 @@ protected:
     bstring name;
 
     bool    raid;
-    char    flags[16];
+    char    flags[16]{};
     bstring arrives;
     bstring departs;
 
@@ -92,7 +92,7 @@ public:
     void removeExit();
     void spawnRaiders(ShipRaid* sRaid);
     BaseRoom* getRoom(bool useOrigin);
-    bool swap(Swap s);
+    bool swap(const Swap& s);
     
     bstring getName() const;
     bool getRaid() const;
@@ -113,8 +113,8 @@ public:
     void loadExits(xmlNodePtr curNode);
     void save(xmlNodePtr rootNode) const;
     void spawnRaiders();
-    bool belongs(CatRef cr);
-    bool swap(Swap s);
+    bool belongs(const CatRef& cr);
+    bool swap(const Swap& s);
     
     // name of the stop, only needed if canQuery in Ship is true,
     // but still helpful
@@ -145,8 +145,8 @@ public:
     void load(xmlNodePtr curNode);
     void loadStops(xmlNodePtr curNode);
     void save(xmlNodePtr rootNode) const;
-    bool belongs(CatRef cr);
-    bool swap(Swap s);
+    bool belongs(const CatRef& cr);
+    bool swap(const Swap& s);
     
     // this info gets changed by the mud to keep track of where stuff is
     bool    inPort;         // if the ship is docked
@@ -173,7 +173,7 @@ public:
 
 
 
-void shipBroadcastRange(Ship *ship, ShipStop *stop, bstring message);
+void shipBroadcastRange(Ship *ship, ShipStop *stop, const bstring& message);
 int cmdQueryShips(Player* player, cmd* cmnd);
 void update_ships(int n=0);
 int shipSetExits(Ship *ship, ShipStop *stop);

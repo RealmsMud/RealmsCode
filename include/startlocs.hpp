@@ -35,7 +35,7 @@ public:
     [[nodiscard]] Location getBind() const;
     [[nodiscard]] Location getRequired() const;
     [[nodiscard]] CatRef getStartingGuide() const;
-    bool    swap(Swap s);
+    bool    swap(const Swap& s);
     [[nodiscard]] bool    isDefault() const;
     void    setDefault();
 

@@ -16,11 +16,15 @@
  *
  */
 
-#include "alchemy.hpp"
-#include "config.hpp"
-#include "objects.hpp"
-#include "xml.hpp"
-#include "paths.hpp"
+#include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
+#include <cstdio>                                   // for sprintf
+
+#include "alchemy.hpp"                              // for AlchemyEffect
+#include "bstring.hpp"                              // for bstring
+#include "config.hpp"                               // for Config, AlchemyMap
+#include "objects.hpp"                              // for Object, AlchemyEf...
+#include "paths.hpp"                                // for Code
+#include "xml.hpp"                                  // for NODE_NAME, copyTo...
 
 bool Config::loadAlchemy() {
     xmlDocPtr   xmlDoc;

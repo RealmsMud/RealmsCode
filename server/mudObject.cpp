@@ -16,18 +16,18 @@
  *
  */
 
-// C++ includes
-#include <iomanip>
-#include <stdexcept>
+#include <stdexcept>      // for runtime_error
 
-// Mud Includes
-#include "calendar.hpp"
-#include "commands.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "specials.hpp"
+#include "bstring.hpp"    // for bstring, operator+
+#include "container.hpp"  // for MonsterPtrLess, ObjectPtrLess, PlayerPtrLess
+#include "creatures.hpp"  // for Monster, Player, Creature
+#include "exits.hpp"      // for Exit
+#include "mudObject.hpp"  // for MudObject
+#include "objects.hpp"    // for Object
+#include "rooms.hpp"      // for AreaRoom, UniqueRoom, BaseRoom
+#include "server.hpp"     // for Server, gServer
+
+struct DelayedAction;
 
 
 

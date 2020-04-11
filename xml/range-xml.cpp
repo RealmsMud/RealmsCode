@@ -15,8 +15,12 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "range.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <ostream>                                  // for basic_ostream::op...
+
+#include "catRef.hpp"                               // for CatRef
+#include "range.hpp"                                // for Range
+#include "xml.hpp"                                  // for copyToNum, newNum...
 
 
 //*********************************************************************

@@ -16,22 +16,38 @@
  *
  */
 
-#include <sstream>
+#include <cstdio>                 // for sprintf
+#include <cstdlib>                // for strtoul, atoi
+#include <cstring>                // for strlen, strcat, strcmp
+#include <ctime>                  // for time
 
-#include "calendar.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "effects.hpp"
-#include "factions.hpp"
-#include "mud.hpp"
-#include "property.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "unique.hpp"
-#include "quests.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include "bstring.hpp"            // for bstring, operator+
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for cmdTrade, cmdCompare, cmdCost, cmdDrop
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for ObjectSet, Container, PlayerSet
+#include "creatureStreams.hpp"    // for Streamable, ColorOn, ColorOff, oper...
+#include "creatures.hpp"          // for Player, Creature, Monster
+#include "effects.hpp"            // for Effect
+#include "factions.hpp"           // for Faction, Faction::INDIFFERENT
+#include "flags.hpp"              // for P_AFK, O_WORN, O_NO_DROP, R_DUMP_ROOM
+#include "global.hpp"             // for HELD, WIELD, MAXWEAR, CreatureClass
+#include "group.hpp"              // for GROUP_SPLIT_GOLD, Group
+#include "lasttime.hpp"           // for lasttime, crlasttime
+#include "money.hpp"              // for Money, GOLD
+#include "mud.hpp"                // for LT_KICK, LT_MIST, LT_PEEK, LT_STEAL
+#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
+#include "property.hpp"           // for Property
+#include "proto.hpp"              // for broadcast, keyTxtEqual, log_immort, up
+#include "quests.hpp"             // for TalkResponse
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom, UniqueRoom, AreaRoom
+#include "server.hpp"             // for Server, gServer, GOLD_IN, GOLD_OUT
+#include "unique.hpp"             // for remove, Lore, is, deleteOwner, Unique
+#include "utils.hpp"              // for MAX, MIN
+#include "xml.hpp"                // for loadObject, loadPlayer
+
+class Socket;
 
 
 int cmdCompare(Player* player, cmd* cmnd) {
@@ -43,8 +59,8 @@ int cmdCompare(Player* player, cmd* cmnd) {
         *player << "What would you like to compare?\n";
         return(0);
     }
-    Object* toCompare = 0;
-    Object* compareTo = 0;
+    Object* toCompare = nullptr;
+    Object* compareTo = nullptr;
 
     // Attempt to compare to something we're wearing
     toCompare = player->findObject(player, cmnd, 1);
@@ -54,12 +70,12 @@ int cmdCompare(Player* player, cmd* cmnd) {
     }
 
     if(cmnd->num == 2) {
-        for(int i=0; i<MAXWEAR; i++) {
-            if( player->ready[i] ) {
-                if( player->ready[i]->getType() == toCompare->getType()
-                        && player->ready[i]->getWearflag() == toCompare->getWearflag())
+        for(auto & i : player->ready) {
+            if( i ) {
+                if( i->getType() == toCompare->getType()
+                        && i->getWearflag() == toCompare->getWearflag())
                 {
-                    compareTo = player->ready[i];
+                    compareTo = i;
                     break;
                 }
             }
@@ -214,7 +230,7 @@ bool Creature::equip(Object* object, bool showMessage) {
 Object* Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool showEffect) {
     wearloc--;
     Object* object = ready[wearloc];
-    ready[wearloc] = 0;
+    ready[wearloc] = nullptr;
     if(object) {
         object->clearFlag(O_WORN);
         
@@ -228,7 +244,7 @@ Object* Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool
             Limited::remove(getAsPlayer(), object);
             darkness = object->flagIsSet(O_DARKNESS);
             delete object;
-            object = 0;
+            object = nullptr;
         } else if(action == UNEQUIP_ADD_TO_INVENTORY) {
             darkness = false;
             addObj(object);
@@ -247,7 +263,7 @@ Object* Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool
 // it is, and calls the appropriate functions.
 
 int cmdUse(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
     BaseRoom* room = player->getRoomParent();
     unsigned long amt=0;
 
@@ -298,7 +314,7 @@ int cmdUse(Player* player, cmd* cmnd) {
                 amt != 1 ? "s" : "", object);
         broadcast(player->getSock(), room, "%M puts some coins in %P.", player, object);
 
-        gServer->logGold(GOLD_OUT, player, Money(amt, GOLD), object, "CoinOperated");
+        Server::logGold(GOLD_OUT, player, Money(amt, GOLD), object, "CoinOperated");
         player->coins.sub(amt, GOLD);
     }
 
@@ -337,7 +353,7 @@ int cmdUse(Player* player, cmd* cmnd) {
 // actual code to wear object
 
 bool doWear(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -400,7 +416,7 @@ int cmdWear(Player* player, cmd* cmnd) {
 
 void Player::wearCursed() {
 
-    Object  *object=0;
+    Object  *object=nullptr;
     ObjectSet::iterator it;
 
     for( it = objects.begin() ; it != objects.end() ; ) {
@@ -416,7 +432,7 @@ void Player::wearCursed() {
                 ) {
 
                     if(ready[HELD-1]) {
-                        ready[HELD-1] = 0;
+                        ready[HELD-1] = nullptr;
                         object->clearFlag(O_WORN);
                         addObj(object);
                     }
@@ -459,7 +475,7 @@ void wearAll(Player* player, bool login) {
             return;
         }
     }
-    Object  *object=0;
+    Object  *object=nullptr;
     ObjectSet::iterator it;
 
     for( it = player->objects.begin() ; it != player->objects.end() ; ) {
@@ -512,7 +528,7 @@ void wearAll(Player* player, bool login) {
 // This function does the heavy lifting of removing objects
 
 bool doRemoveObj(Player* player, cmd* cmnd ) {
-    Object  *object=0, *second=0;
+    Object  *object=nullptr, *second=nullptr;
     int     found=0, match=0, i=0, jumped=0;
 
     player->clearFlag(P_AFK);
@@ -537,7 +553,7 @@ bool doRemoveObj(Player* player, cmd* cmnd ) {
 
         while(i<MAXWEAR) {
             object = player->ready[i];
-            second = 0;
+            second = nullptr;
             jumped=0;
             if(!object) {
                 i++;
@@ -573,7 +589,7 @@ bool doRemoveObj(Player* player, cmd* cmnd ) {
                 // if cmnd is set, pass true to resetUniqueId
                 player->addObj(second);
                 second->clearFlag(O_WORN);
-                player->ready[HELD-1] = 0;
+                player->ready[HELD-1] = nullptr;
             }
         }
 
@@ -587,7 +603,7 @@ bool doRemoveObj(Player* player, cmd* cmnd ) {
             i == (WIELD-1)
         ) {
 
-            player->ready[HELD-1] = 0;
+            player->ready[HELD-1] = nullptr;
             player->ready[WIELD-1] = second;
             player->computeAC();
             player->computeAttackPower();
@@ -646,15 +662,15 @@ void Player::doRemove(int i) {
     if(i == FEET) {
         // Takes some time to remove boots in combat and then kick.
         if(inCombat()) {
-            lasttime[LT_KICK].ltime = time(0);
+            lasttime[LT_KICK].ltime = time(nullptr);
             lasttime[LT_KICK].interval = (cClass == CreatureClass::FIGHTER ? 12L:15L);
         }
     }
     if(cClass == CreatureClass::FIGHTER && cClass2 == CreatureClass::THIEF && object->isHeavyArmor()) {
         updateAttackTimer(true, 70);
-        lasttime[LT_STEAL].ltime = time(0);
+        lasttime[LT_STEAL].ltime = time(nullptr);
         lasttime[LT_STEAL].interval = 30;
-        lasttime[LT_PEEK].ltime = time(0);
+        lasttime[LT_PEEK].ltime = time(nullptr);
         lasttime[LT_PEEK].interval = 30;
     }
 }
@@ -709,7 +725,7 @@ void remove_all(Player* player) {
 // wearing/wielding/holding on their body.
 
 int cmdEquipment(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     int     i=0, found=0;
 
     player->clearFlag(P_AFK);
@@ -820,7 +836,7 @@ void Creature::printEquipList(const Player* viewer) {
 // ready a weapon specified in the second, if it is a weapon.
 
 bool doWield(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -885,7 +901,7 @@ int cmdReady(Player* player, cmd* cmnd) {
 // as a hold-able item.
 
 int cmdHold(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -1007,13 +1023,13 @@ int doGetObject(Object* object, Creature* creature, bool doLimited, bool noSplit
         Group* group = player->getGroup(true);
 
         if(group && group->flagIsSet(GROUP_SPLIT_GOLD) && !noSplit) {
-            gServer->logGold(GOLD_IN, player, object->value, object, "GetObject-Split");
+            Server::logGold(GOLD_IN, player, object->value, object, "GetObject-Split");
             if(!player->autosplit(object->value[GOLD])) {
                 player->coins.add(object->value);
             }
         } else {
             player->coins.add(object->value);
-            gServer->logGold(GOLD_IN, player, object->value, object, "GetObject");
+            Server::logGold(GOLD_IN, player, object->value, object, "GetObject");
         }
 
         delete object;
@@ -1060,7 +1076,7 @@ bool storageProperty(const Player* player, const Object* object, Property **p) {
             // currently, we only care about storage rooms. we don't log gets
             // in any other type of property
             if((*p)->getType() != PROP_STORAGE)
-                (*p) = 0;
+                (*p) = nullptr;
 
             // are they allowed to get anything?
             else if(!(*p)->isOwner(player->getName()) && !(*p)->isPartialOwner(player->getName()) &&
@@ -1085,10 +1101,10 @@ bool storageProperty(const Player* player, const Object* object, Property **p) {
 
 void getPermObj(Object* object) {
     std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm=0;
+    crlasttime* crtm=nullptr;
     Object  *temp_obj;
-    UniqueRoom* room=0;
-    long    t = time(0);
+    UniqueRoom* room=nullptr;
+    long    t = time(nullptr);
 
     object->setFlag(O_PERM_INV_ITEM);
     object->clearFlag(O_PERM_ITEM);
@@ -1123,8 +1139,8 @@ void getPermObj(Object* object) {
 
 void getAllObj(Creature* creature, Object *container) {
     Player  *player = creature->getPlayerMaster();
-    Property *p=0;
-    Object  *object=0, *last_obj=0;
+    Property *p=nullptr;
+    Object  *object=nullptr, *last_obj=nullptr;
     char    str[2048];
     const char *str2;
     int     n=1, found=0, heavy=0;
@@ -1144,7 +1160,7 @@ void getAllObj(Creature* creature, Object *container) {
         return;
 
     // are they allowed to put objects from this storage room?
-    if(!storageProperty(player, 0, &p))
+    if(!storageProperty(player, nullptr, &p))
         return;
     doUnique = !container->inCreature() && !p;
 
@@ -1206,7 +1222,7 @@ void getAllObj(Creature* creature, Object *container) {
             }
 
             if(object->getType() == ObjectType::MONEY) {
-                last_obj = 0;
+                last_obj = nullptr;
             } else {
                 last_obj = object;
             }
@@ -1263,7 +1279,7 @@ void getAllObj(Creature* creature, Object *container) {
 void get_all_rom(Creature* creature, char *item) {
     Player  *player = creature->getPlayerMaster();
     BaseRoom* room = creature->getRoomParent();
-    Object  *object=0, *last_obj=0;
+    Object  *object=nullptr, *last_obj=nullptr;
     char    str[2048];
     const char *str2;
     int     n=1, found=0, heavy=0, dogoldmsg=0;
@@ -1281,7 +1297,7 @@ void get_all_rom(Creature* creature, char *item) {
     if(!player->ableToDoCommand())
         return;
 
-    last_obj = 0;
+    last_obj = nullptr;
     str[0] = 0;
 
     if(!player->isStaff()) {
@@ -1361,7 +1377,7 @@ void get_all_rom(Creature* creature, char *item) {
                     strcat(str, str2);
                     strcat(str, ", ");
                 }
-                last_obj = 0;
+                last_obj = nullptr;
                 dogoldmsg = 1;
             } else {
                 last_obj = object;
@@ -1428,10 +1444,10 @@ void get_all_rom(Creature* creature, char *item) {
 int cmdGet(Creature* creature, cmd* cmnd) {
     Player  *player = creature->getPlayerMaster();
     BaseRoom* room = creature->getRoomParent();
-    Object  *object=0, *container=0;
+    Object  *object=nullptr, *container=nullptr;
     int      n=0, match=0, ground=0;
-    Monster *pet=0;
-    Property* p=0;
+    Monster *pet=nullptr;
+    Property* p=nullptr;
 
     // we're being sent either a player or a pet
     //  - creature will be the one getting the object
@@ -1485,7 +1501,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
             if(cmnd->num == 3)
                 get_all_rom(creature, cmnd->str[2]);
             else
-                get_all_rom(creature, 0);
+                get_all_rom(creature, nullptr);
 
             return(0);
         }
@@ -1566,7 +1582,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 
             // Mist timer always reset when getting something
             if(player->isEffected("vampirism")) {
-                player->lasttime[LT_MIST].ltime = time(0);
+                player->lasttime[LT_MIST].ltime = time(nullptr);
                 player->lasttime[LT_MIST].interval = 10L;
             }
         }
@@ -1633,8 +1649,8 @@ int cmdGet(Creature* creature, cmd* cmnd) {
             }
         }
 
-        object = 0;
-        pet = 0;
+        object = nullptr;
+        pet = nullptr;
 
         if(!container && player == creature) {
             // check for pets
@@ -1653,7 +1669,7 @@ int cmdGet(Creature* creature, cmd* cmnd) {
         }
 
         if(!object) {
-            pet = 0;
+            pet = nullptr;
             if(!container) {
                 player->print("That isn't here.\n");
                 return(0);
@@ -1897,8 +1913,8 @@ void dropAllRoom(Creature* creature, Player *player, bool factionCanRecycle) {
     Player  *pCreature = creature->getAsPlayer();
     int     money=0, flags=0, m=0, n=0;
     BaseRoom* room = creature->getRoomParent();
-    Object  *object=0;
-    Property* p=0;
+    Object  *object=nullptr;
+    Property* p=nullptr;
     bool    first=false;
     bstring txt = "";
 
@@ -1911,7 +1927,7 @@ void dropAllRoom(Creature* creature, Player *player, bool factionCanRecycle) {
     }
     flags = player->displayFlags();
 
-    if(!storageProperty(player, 0, &p))
+    if(!storageProperty(player, nullptr, &p))
         return;
 
     if(room->isDropDestroy()) {
@@ -1994,7 +2010,7 @@ void dropAllRoom(Creature* creature, Player *player, bool factionCanRecycle) {
     if(money) {
         player->coins.add(money, GOLD);
         player->print("Thank you for recycling!\nYou now have %s.\n", player->coins.str().c_str());
-        gServer->logGold(GOLD_IN, player, Money(money, GOLD), nullptr, "RecycleAll");
+        Server::logGold(GOLD_IN, player, Money(money, GOLD), nullptr, "RecycleAll");
     }
 
     player->bug("%s%s dropped %s.\n", player->getCName(), player != creature ? "'s pet" : "", txt.c_str());
@@ -2047,7 +2063,7 @@ bool canDropAllObj(Object* object, Object* container) {
 
 void dropAllObj(Creature* creature, Object *container, Property *p) {
     Player  *player = creature->getPlayerMaster();
-    Object  *object=0, *last=0;
+    Object  *object=nullptr, *last=nullptr;
     BaseRoom* room = creature->getRoomParent();
     int     n=1, found=0, full=0;
     bstring txt = "";
@@ -2148,7 +2164,7 @@ void dropAllObj(Creature* creature, Object *container, Property *p) {
 //*********************************************************************
 
 void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cash, bool printPlayer, bool printRoom) {
-    Socket* sock = 0;
+    Socket* sock = nullptr;
     if(player)
         sock = player->getSock();
 
@@ -2163,7 +2179,7 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
                     player->print("Your gold was swallowed by the earth!!\n", object);
             }
             if(printRoom)
-                broadcast(0, room, "The earth swallowed it!");
+                broadcast(nullptr, room, "The earth swallowed it!");
         } else if(room->flagIsSet(R_AIR_BONUS)) {
             if(printPlayer) {
                 if(!cash)
@@ -2172,7 +2188,7 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
                     player->print("Your gold frozen solid and destroyed!!\n", object);
             }
             if(printRoom)
-                broadcast(0, room, "It froze completely and was destroyed!");
+                broadcast(nullptr, room, "It froze completely and was destroyed!");
         } else if(room->flagIsSet(R_FIRE_BONUS)) {
             if(printPlayer) {
                 if(!cash)
@@ -2181,7 +2197,7 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
                     player->print("Your gold was engulfed in flames and melted away!!\n", object);
             }
             if(printRoom)
-                broadcast(0, room, "It was incinerated by flames!");
+                broadcast(nullptr, room, "It was incinerated by flames!");
         } else if(room->flagIsSet(R_WATER_BONUS) || (aRoom && aRoom->isWater())) {
             if(printPlayer) {
                 if(!cash)
@@ -2190,7 +2206,7 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
                     player->print("Your gold is swept away by the strong current!!\n", object);
             }
             if(printRoom)
-                broadcast(0, room, "The current swept it away!");
+                broadcast(nullptr, room, "The current swept it away!");
         } else if(room->flagIsSet(R_ELEC_BONUS)) {
             if(printPlayer) {
                 if(!cash)
@@ -2199,7 +2215,7 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
                     player->print("Your gold is melted by electricity!!\n", object);
             }
             if(printRoom)
-                broadcast(0, room, "It was destroyed by electricity!");
+                broadcast(nullptr, room, "It was destroyed by electricity!");
         } else if(room->flagIsSet(R_COLD_BONUS) || room->isWinter()) {
             if(printPlayer) {
                 if(!cash)
@@ -2208,7 +2224,7 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
                     player->print("Your gold freezes solid and shatters!!\n", object);
             }
             if(printRoom)
-                broadcast(0, room, "It froze solid and shattered!");
+                broadcast(nullptr, room, "It froze solid and shattered!");
         } else {
             if(printPlayer) {
                 if(!cash)
@@ -2217,7 +2233,7 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
                     player->print("Your gold shatters and turns to dust!\n", object);
             }
             if(printRoom)
-                broadcast(0, room, "It shattered and turned to dust!");
+                broadcast(nullptr, room, "It shattered and turned to dust!");
         }
 
         if(player)
@@ -2268,11 +2284,11 @@ void containerOutput(const Player* player, const Object* container, const Object
 int cmdDrop(Creature* creature, cmd* cmnd) {
     Player  *player = creature->getPlayerMaster();
     BaseRoom* room = creature->getRoomParent();
-    Object  *object=0, *container=0;
+    Object  *object=nullptr, *container=nullptr;
     int     n=0, match=0, in_room=0;
     unsigned long cash=0;
     bool    dmAlias=false, is_pet=false, factionCanRecycle=true, created=false;
-    Property *p=0;
+    Property *p=nullptr;
 
 // TODO: check to see if this extra aliasing check is even needed - won't  print handle it?
 
@@ -2341,13 +2357,13 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
                 return(0);
             }
 
-            cash = strtoul(cmnd->str[1]+1, 0, 0);
+            cash = strtoul(cmnd->str[1]+1, nullptr, 0);
             if(cash > 0 && cash <= player->coins[GOLD]) {
                 loadObject(MONEY_OBJ, &object);
                 object->nameCoin("gold", cash);
                 object->value.set(cash, GOLD);
                 player->coins.sub(cash, GOLD);
-                gServer->logGold(GOLD_OUT, player, Money(cash, GOLD), nullptr, "DropGold");
+                Server::logGold(GOLD_OUT, player, Money(cash, GOLD), nullptr, "DropGold");
                 object->setDroppedBy(player, "DropGold");
                 created = true;
             } else {
@@ -2449,11 +2465,11 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
             if(!object->flagIsSet(O_STARTING)) {
                 if(created || object->flagIsSet(O_NO_PAWN) || (object->flagIsSet(O_BREAK_ON_DROP) && object->getType() != ObjectType::BANDAGE && object->getType() != ObjectType::LOTTERYTICKET)) {
                     player->coins.add(object->value);
-                    gServer->logGold(GOLD_IN, player, object->value, object, "Recycle");
+                    Server::logGold(GOLD_IN, player, object->value, object, "Recycle");
                     object->refund = object->value;
                 } else {
                     player->coins.add(5, GOLD);
-                    gServer->logGold(GOLD_IN, player, Money(5, GOLD), object, "Recycle");
+                    Server::logGold(GOLD_IN, player, Money(5, GOLD), object, "Recycle");
                     object->refund.add(5, GOLD);
                 }
             }
@@ -2648,7 +2664,7 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 // does some simple checks to see if we can give item away
 
 int canGiveTransport(Creature* creature, Creature* target, Object* object, bool give) {
-    Player  *player=0, *pTarget=0, *pMaster=0;
+    Player  *player=nullptr, *pTarget=nullptr, *pMaster=nullptr;
 
     // we're being sent either a player or a pet
     //  - creature will be the one getting the object
@@ -2751,8 +2767,8 @@ int canGiveTransport(Creature* creature, Creature* target, Object* object, bool 
 
 int cmdGive(Creature* creature, cmd* cmnd) {
     Player  *player = creature->getPlayerMaster();
-    Object  *object=0;
-    Creature* target=0;
+    Object  *object=nullptr;
+    Creature* target=nullptr;
     BaseRoom* room = creature->getRoomParent();
 
     // we're being sent either a player or a pet
@@ -2907,10 +2923,10 @@ int cmdGive(Creature* creature, cmd* cmnd) {
 // is interpreted as gold if it is preceded by a dollar sign.
 
 void give_money(Player* player, cmd* cmnd) {
-    Creature* target=0, *master=0;
-    Monster* mTarget=0;
+    Creature* target=nullptr, *master=nullptr;
+    Monster* mTarget=nullptr;
     BaseRoom* room = player->getRoomParent();
-    unsigned long amt = strtoul(&cmnd->str[1][1], 0, 0);
+    unsigned long amt = strtoul(&cmnd->str[1][1], nullptr, 0);
 
     if(!player->ableToDoCommand()) return;
     if(amt < 1 || amt > player->coins[GOLD]) {
@@ -2981,10 +2997,10 @@ void give_money(Player* player, cmd* cmnd) {
                     match = cost * player->getLevel() == amt;
                 }
                 if(match) {
-                    if(talkResponse->response != "")
+                    if(!talkResponse->response.empty())
                         mTarget->sayTo(player, talkResponse->response);
 
-                    if(talkResponse->action != "") {
+                    if(!talkResponse->action.empty()) {
                         if(!mTarget->doTalkAction(player, talkResponse->action)) {
                             mTarget->coins.sub(amt, GOLD);
                             player->coins.add(amt, GOLD);
@@ -2995,7 +3011,7 @@ void give_money(Player* player, cmd* cmnd) {
                             return;
                         }
                     }
-                    gServer->logGold(GOLD_OUT, player, Money(amt, GOLD), mTarget, "GiveGold(TalkResponse)");
+                    Server::logGold(GOLD_OUT, player, Money(amt, GOLD), mTarget, "GiveGold(TalkResponse)");
                     return;
                 }
             }
@@ -3014,7 +3030,7 @@ void give_money(Player* player, cmd* cmnd) {
             player->save(true);
             return;
         }
-        gServer->logGold(GOLD_OUT, player, Money(amt, GOLD), mTarget, "GiveGold");
+        Server::logGold(GOLD_OUT, player, Money(amt, GOLD), mTarget, "GiveGold");
     }
 }
 
@@ -3090,8 +3106,8 @@ unsigned long getRepairCost(Player* player, Monster* smithy, Object* object) {
 int cmdCost(Player* player, cmd* cmnd) {
     int     alignDiff=0;
     unsigned long cost=0;
-    Monster *smithy=0;
-    Object  *object=0;
+    Monster *smithy=nullptr;
+    Object  *object=nullptr;
 
 
     if(!player->ableToDoCommand())
@@ -3165,8 +3181,8 @@ int cmdCost(Player* player, cmd* cmnd) {
 // in a repair shop. There is a chance of breakage.
 
 int cmdRepair(Player* player, cmd* cmnd) {
-    Object  *object=0;
-    Monster *smithy=0;
+    Object  *object=nullptr;
+    Monster *smithy=nullptr;
     unsigned long cost=0;
     int     skill=0, alignDiff=0, repairChance=0, repairMod=0, roll=0, plusRoll=0, keepPlus=0;
 
@@ -3237,7 +3253,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
     player->print("%M says, \"That'll be $%ld.\"\n%M takes the gold from you.\n", smithy, cost, smithy);
     player->coins.sub(cost, GOLD);
 
-    gServer->logGold(GOLD_OUT, player, Money(cost, GOLD), object, "Repair");
+    Server::logGold(GOLD_OUT, player, Money(cost, GOLD), object, "Repair");
 
     broadcast(player->getSock(), player->getParent(), "%M has %N repair %1P.", player, smithy, object);
 
@@ -3276,7 +3292,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
 
     skill = smithy->getSkillLevel();
     repairMod = -1 * (50-skill);
-    repairChance = 50 + repairMod + bonus((int) player->piety.getCur());
+    repairChance = 50 + repairMod + bonus(player->piety.getCur());
 
     if(object->getAdjustment()) {
         if(skill < 30)      /* skill levels 0-29 cannot repair magical or high quality weapons */
@@ -3374,7 +3390,7 @@ int cmdRepair(Player* player, cmd* cmnd) {
         if(object->getShotsCur() > 0 && !alignDiff) {
             player->print("%M says, \"Well, here's your cash back.\"\n", smithy);
             player->coins.add(cost, GOLD);
-            gServer->logGold(GOLD_IN, player, Money(cost, GOLD), object, "RepairRefund");
+            Server::logGold(GOLD_IN, player, Money(cost, GOLD), object, "RepairRefund");
         }
 
         player->delObj(object, true);
@@ -3390,8 +3406,8 @@ int cmdRepair(Player* player, cmd* cmnd) {
 
 void Creature::checkDarkness() {
     clearFlag(isPlayer() ? P_DARKNESS : M_DARKNESS);
-    for(int i=0; i<MAXWEAR; i++) {
-        if(ready[i] && ready[i]->flagIsSet(O_DARKNESS)) {
+    for(auto & i : ready) {
+        if(i && i->flagIsSet(O_DARKNESS)) {
             setFlag(isPlayer() ? P_DARKNESS : M_DARKNESS);
             return;
         }

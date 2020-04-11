@@ -16,13 +16,12 @@
  *
  */
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "server.hpp"
-
 //*********************************************************************
 //                      Location
 //*********************************************************************
+
+#include "bstring.hpp"   // for bstring
+#include "location.hpp"  // for Location
 
 Location::Location() = default;
 

@@ -16,36 +16,53 @@
  *
  */
 
-// C Includes
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
-#include <sys/socket.h> // Needs: bind, std::listen, socket, AF_INET
-#include <netdb.h>      // Needs: gethostbyaddr
-#include <sys/wait.h>   // Needs: WNOHANG, wait3
-#include <cerrno>
-#include <cstdlib>
-#include <sys/resource.h>
+#include <bits/types/struct_tm.h>                   // for tm
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlNode
+#include <netdb.h>                                  // for gethostbyaddr
+#include <netinet/in.h>                             // for sockaddr_in, in_addr
+#include <cstdio>                                   // for snprintf, sprintf
+#include <cstring>                                  // for memset, strcpy
+#include <sys/resource.h>                           // for rlimit, setrlimit
+#include <sys/select.h>                             // for FD_ZERO, FD_ISSET
+#include <sys/socket.h>                             // for AF_INET, accept
+#include <sys/stat.h>                               // for umask
+#include <sys/types.h>                              // for time_t
+#include <sys/wait.h>                               // for wait3, waitpid
+#include <ctime>                                    // for time, ctime, diff...
+#include <unistd.h>                                 // for close, unlink, read
+#include <algorithm>                                // for find, copy
+#include <cerrno>                                   // for EWOULDBLOCK, errno
+#include <cstdlib>                                  // for exit, abort, srand
+#include <iomanip>                                  // for operator<<, setw
+#include <iostream>                                 // for operator<<, basic...
 
-// C++ Includes
-#include <iostream>
-#include <random>
-#include <iomanip>
-
-#include "calendar.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "dm.hpp"
-#include "login.hpp"
-#include "factions.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "serverTimer.hpp"
-#include "socket.hpp"
-#include "version.hpp"
-#include "web.hpp"
-#include "xml.hpp"
+#include "area.hpp"                                 // for MapMarker, Area
+#include "bstring.hpp"                              // for bstring, operator+
+#include "calendar.hpp"                             // for Calendar
+#include "catRef.hpp"                               // for CatRef
+#include "config.hpp"                               // for Config, gConfig
+#include "creatures.hpp"                            // for Monster, Player
+#include "factions.hpp"                             // for Faction
+#include "flags.hpp"                                // for M_PERMENANT_MONSTER
+#include "global.hpp"                               // for FATAL, ALLITEMS
+#include "login.hpp"                                // for CON_DISCONNECTING
+#include "magic.hpp"                                // for S_CURE_POISON
+#include "money.hpp"                                // for Money, GOLD
+#include "mud.hpp"                                  // for Port, LT, StartTime
+#include "mudObject.hpp"                            // for MudObject
+#include "objects.hpp"                              // for Object, DroppedBy
+#include "os.hpp"                                   // for merror, ASSERTLOG
+#include "paths.hpp"                                // for Config, Game, Are...
+#include "proc.hpp"                                 // for childProcess, CHI...
+#include "proto.hpp"                                // for broadcast, free_crt
+#include "random.hpp"                               // for Random
+#include "rooms.hpp"                                // for UniqueRoom, BaseRoom
+#include "server.hpp"                               // for Server, MonsterList
+#include "serverTimer.hpp"                          // for ServerTimer
+#include "socket.hpp"                               // for Socket, nonBlock
+#include "version.hpp"                              // for VERSION
+#include "wanderInfo.hpp"                           // for WanderInfo
+#include "xml.hpp"                                  // for copyToNum, newNum...
 
 
 // External declarations
@@ -1196,7 +1213,7 @@ int Server::reapChildren() {
         std::list<childProcess>::iterator it;
         for( it = children.begin(); it != children.end();) {
             if((*it).pid == pid) {
-                if((*it).type == CHILD_DNS_RESOLVER) {
+                if((*it).type == ChildType::DNS_RESOLVER) {
                     char tmpBuf[1024];
                     memset(tmpBuf, '\0', sizeof(tmpBuf));
                     // Read in the results from the resolver
@@ -1226,22 +1243,22 @@ int Server::reapChildren() {
                         }
                     }
                     std::clog << "Reaped DNS child (" << pid << "-" << tmpBuf << ")\n";
-                } else if((*it).type == CHILD_LISTER) {
+                } else if((*it).type == ChildType::LISTER) {
                     std::clog << "Reaping LISTER child (" << pid << "-" << (*it).extra << ")" << std::endl;
                     processListOutput(*it);
                     // Don't forget to close the pipe!
                     close((*it).fd);
-                } else if((*it).type == CHILD_SWAP_FINISH) {
+                } else if((*it).type == ChildType::SWAP_FINISH) {
                     std::clog << "Reaping MoveRoom Finish child (" << pid << "-" << (*it).extra << ")" << std::endl;
                     c = *it;
                     found = true;
-                } else if((*it).type == CHILD_PRINT) {
+                } else if((*it).type == ChildType::PRINT) {
                     //broadcast(isDm, "Reaping Print Child (%d-%s)",pid, (*it).extra.c_str());
                     std::clog << "Reaping Print child (" << pid << "-" << (*it).extra << ")" << std::endl;
                     c = *it;
                     found = true;
                 } else {
-                    std::clog << "ReapChildren: Unknown child type " << (*it).type << std::endl;
+                    std::clog << "ReapChildren: Unknown child type " << (int)(*it).type << std::endl;
                 }
 //              // Child was processed, reduce number of children
 //              Deadchildren--;
@@ -1251,11 +1268,11 @@ int Server::reapChildren() {
                 // finish swap after they've been deleted from the list
                 if(found) {
                     found = false;
-                    if(c.type == CHILD_SWAP_FIND) {
+                    if(c.type == ChildType::SWAP_FIND) {
                         gConfig->findNextEmpty(c, true);
-                    } else if(c.type == CHILD_SWAP_FINISH) {
+                    } else if(c.type == ChildType::SWAP_FINISH) {
                         gConfig->offlineSwap(c, true);
-                    } else if(c.type == CHILD_PRINT) {
+                    } else if(c.type == ChildType::PRINT) {
                         const Player* player = gServer->findPlayer(c.extra);
                         bstring output = gServer->simpleChildRead(c);
                         if(player && !output.empty())
@@ -1321,21 +1338,21 @@ int Server::processListOutput(childProcess &lister) {
 
 int Server::processChildren() {
     for(childProcess & child : children) {
-        if(child.type == CHILD_DNS_RESOLVER) {
+        if(child.type == ChildType::DNS_RESOLVER) {
             // Ignore, will be handled by reapChildren
-        } else if(child.type == CHILD_LISTER) {
+        } else if(child.type == ChildType::LISTER) {
             processListOutput(child);
-        } else if(child.type == CHILD_SWAP_FIND) {
+        } else if(child.type == ChildType::SWAP_FIND) {
             gConfig->findNextEmpty(child, false);
-        } else if(child.type == CHILD_SWAP_FINISH) {
+        } else if(child.type == ChildType::SWAP_FINISH) {
             gConfig->offlineSwap(child, false);
-        } else if(child.type == CHILD_PRINT) {
+        } else if(child.type == ChildType::PRINT) {
             const Player* player = gServer->findPlayer(child.extra);
             bstring output = gServer->simpleChildRead(child);
             if(player && !output.empty())
                 player->printColor("%s\n", output.c_str());
         } else {
-            std::clog << "processChildren: Unknown child type " << child.type << std::endl;
+            std::clog << "processChildren: Unknown child type " << (int)child.type << std::endl;
         }
     }
     return(1);
@@ -1401,7 +1418,7 @@ int Server::startDnsLookup(Socket* sock, struct sockaddr_in addr) {
         std::clog << "Watching Child DNS Resolver for(" << sock->getIp() << ") running with pid " << pid
                   << " reading from fd " << fds[0] << std::endl;
         // Let the server know we're monitoring this child process
-        addChild(pid, CHILD_DNS_RESOLVER, fds[0], sock->getIp());
+        addChild(pid, ChildType::DNS_RESOLVER, fds[0], sock->getIp());
     }
     return(0);
 }
@@ -1420,8 +1437,8 @@ void Server::addCache(const bstring& ip, const bstring& hostName, time_t t) {
 //                      addChild
 //********************************************************************
 
-void Server::addChild(int pid, childType pType, int pFd, const bstring& pExtra) {
-    std::clog << "Adding pid " << pid << " as child type " << pType << ", watching " << pFd << "\n";
+void Server::addChild(int pid, ChildType pType, int pFd, const bstring& pExtra) {
+    std::clog << "Adding pid " << pid << " as child type " << (int)pType << ", watching " << pFd << "\n";
     children.emplace_back(pid, pType, pFd, pExtra);
 }
 

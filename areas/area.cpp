@@ -15,21 +15,39 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <fstream>
-#include <cmath>
-#include <sys/stat.h>
-#include <stdexcept>
+#include <cctype>                 // for islower, isupper, tolower, toupper
+#include <cstdio>                 // for sprintf
+#include <cstdlib>                // for abs, atoi
+#include <cstring>                // for strcmp, strlen, strcpy, strncpy
+#include <sys/stat.h>             // for stat
+#include <cmath>                  // for pow, atan
+#include <fstream>                // for operator<<, basic_ostream, ostrings...
+#include <list>                   // for operator==, operator!=
+#include <map>                    // for operator==, operator!=
+#include <stdexcept>              // for out_of_range
+#include <string>                 // for operator<<, operator==, basic_string
 
-#include "area.hpp"
-#include "calendar.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-//#include "dm.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
+#include "area.hpp"               // for Area, MapMarker, TileInfo, AreaZone
+#include "bstring.hpp"            // for bstring
+#include "calendar.hpp"           // for Calendar
+#include "catRef.hpp"             // for CatRef
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for getFullstrText
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player, Creature, Monster
+#include "flags.hpp"              // for M_HIDDEN, P_HIDDEN, P_INVERT_AREA_C...
+#include "global.hpp"             // for DARKELF, MAXWEAR
+#include "objects.hpp"            // for Object
+#include "paths.hpp"              // for Paths
+#include "proto.hpp"              // for zero, file_exists, showRoomFlags
+#include "rooms.hpp"              // for AreaRoom, BaseRoom (ptr only)
+#include "season.hpp"             // for NO_SEASON, Season
+#include "server.hpp"             // for Server, gServer
+#include "socket.hpp"             // for Socket
+#include "track.hpp"              // for Track
+#include "utils.hpp"              // for MAX
+
+class WanderInfo;
 
 //*********************************************************************
 //                      AreaTrack
@@ -1304,7 +1322,7 @@ bool Area::flagIsSet(int flag, const MapMarker* mapmarker) const {
 //*********************************************************************
 
 // a prototype needed for only this function: from dmroom.cpp
-void showMobList(Player* player, WanderInfo *wander, bstring type);
+void showMobList(Player* player, WanderInfo *wander, const bstring& type);
 
 int dmListArea(Player* player, cmd* cmnd) {
     std::list<Area*>::iterator it;

@@ -17,34 +17,51 @@
  */
 
 // C includes
-#include <arpa/telnet.h>
-#include <math.h>
+#include <arpa/telnet.h>          // for IAC, EOR, GA
+#include <cstdio>                // for sprintf, rename
+#include <cstdlib>               // for free, abs
+#include <cstring>               // for strcpy, strlen, strcat
+#include <ctime>                 // for time, ctime
+#include <unistd.h>               // for unlink
+#include <iomanip>                // for operator<<, setw
 
-#include <iomanip>
-#include <locale>
-
-// Mud includes
-#include "catRefInfo.hpp"
-#include "clans.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "effects.hpp"
-#include "guilds.hpp"
-#include "login.hpp"
-#include "mud.hpp"
-#include "move.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "property.hpp"
-#include "skillGain.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "startlocs.hpp"
-#include "unique.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include "area.hpp"               // for Area, MapMarker, MAX_VISION
+#include "bstring.hpp"            // for bstring
+#include "catRef.hpp"             // for CatRef
+#include "catRefInfo.hpp"         // for CatRefInfo
+#include "clans.hpp"              // for Clan
+#include "commands.hpp"           // for cmdSave
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player, Creature, Monster, PetList
+#include "deityData.hpp"          // for DeityData
+#include "dice.hpp"               // for Dice
+#include "effects.hpp"            // for EffectInfo
+#include "flags.hpp"              // for P_DM_INVIS, P_CHAOTIC, O_DARKNESS
+#include "global.hpp"             // for CreatureClass, CreatureClass::CLERIC
+#include "guilds.hpp"             // for Guild
+#include "hooks.hpp"              // for Hooks
+#include "location.hpp"           // for Location
+#include "magic.hpp"              // for S_ARMOR, S_REJUVENATE
+#include "money.hpp"              // for GOLD, Money
+#include "move.hpp"               // for getRoom
+#include "mud.hpp"                // for LT, LT_PLAYER_SEND, LT_AGE, LT_PLAY...
+#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
+#include "paths.hpp"              // for Help, Bank, DMHelp, History, Player
+#include "property.hpp"           // for Property
+#include "proto.hpp"              // for bonus, broadcast, abortFindRoom
+#include "raceData.hpp"           // for RaceData
+#include "random.hpp"             // for Random
+#include "realm.hpp"              // for Realm
+#include "rooms.hpp"              // for UniqueRoom, BaseRoom, AreaRoom, Exi...
+#include "server.hpp"             // for Server, gServer, PlayerMap
+#include "size.hpp"               // for NO_SIZE, SIZE_MEDIUM
+#include "skillGain.hpp"          // for SkillGain
+#include "socket.hpp"             // for Socket
+#include "startlocs.hpp"          // for StartLoc
+#include "stats.hpp"              // for Stat, MOD_CUR
+#include "unique.hpp"             // for remove, deleteOwner
+#include "utils.hpp"              // for MIN, MAX
+#include "xml.hpp"                // for loadRoom
 
 
 //********************************************************************
@@ -52,7 +69,7 @@
 //********************************************************************
 
 void Creature::fixLts() {
-    long tdiff=0, t = time(0);
+    long tdiff=0, t = time(nullptr);
     int i=0;
     if(isPet())  {
         tdiff = t - getMaster()->lasttime[LT_AGE].ltime;
@@ -79,8 +96,8 @@ void Creature::fixLts() {
 
 void Player::init() {
     char    file[80], str[50], watchers[128];
-    BaseRoom *newRoom=0;
-    long    t = time(0);
+    BaseRoom *newRoom=nullptr;
+    long    t = time(nullptr);
     int     watch=0;
 
     statistics.setParent(this);
@@ -89,7 +106,7 @@ void Player::init() {
     if(size == NO_SIZE) {
         size = gConfig->getRace(race)->getSize();
 
-        EffectInfo *e=0;
+        EffectInfo *e=nullptr;
         if(isEffected("enlarge"))
             e = getEffect("enlarge");
         else if(isEffected("reduce"))
@@ -265,7 +282,7 @@ void Player::init() {
     if(currentLocation.mapmarker.getArea() != 0) {
         Area *area = gServer->getArea(currentLocation.mapmarker.getArea());
         if(area)
-            newRoom = area->loadRoom(0, &currentLocation.mapmarker, false);
+            newRoom = area->loadRoom(nullptr, &currentLocation.mapmarker, false);
 
     }
     // load up parent_rom for the broadcast below, but don't add the
@@ -291,7 +308,7 @@ void Player::init() {
             if(this->currentLocation.mapmarker.getArea() != 0) {
                 Area *area = gServer->getArea(currentLocation.mapmarker.getArea());
                 if(area)
-                    newRoom = area->loadRoom(0, &currentLocation.mapmarker, false);
+                    newRoom = area->loadRoom(nullptr, &currentLocation.mapmarker, false);
             }
         }
     }
@@ -299,7 +316,7 @@ void Player::init() {
 
     // area_room might get set by areaInit, so check again
     if(!newRoom) {
-        UniqueRoom  *uRoom=0;
+        UniqueRoom  *uRoom=nullptr;
         if(!loadRoom(currentLocation.room, &uRoom)) {
             loge("%s: %s (%s) Attempted logon to bad or missing room!\n", getCName(),
                 getSock()->getHostname().c_str(), currentLocation.room.str().c_str());
@@ -438,7 +455,7 @@ void Player::init() {
         strcpy(watchers, "");
         printColor("^yWatchers currently online: ");
         Player* ply;
-        for(std::pair<bstring, Player*> p : gServer->players) {
+        for(const auto& p : gServer->players) {
             ply = p.second;
 
             if(!ply->isConnected())
@@ -478,8 +495,8 @@ void Player::init() {
 
         setMonkDice();
 
-        if(lasttime[LT_AGE].ltime > time(0) ) {
-            lasttime[LT_AGE].ltime = time(0);
+        if(lasttime[LT_AGE].ltime > time(nullptr) ) {
+            lasttime[LT_AGE].ltime = time(nullptr);
             lasttime[LT_AGE].interval = 0;
             broadcast(::isCt, "^yPlayer %s had negative age and is now validated.\n", getCName());
             logn("log.validate", "Player %s had negative age and is now validated.\n", getCName());
@@ -557,26 +574,18 @@ void Player::uninit() {
 
     // TODO: Handle deleting from non rooms
 
-    t = time(0);
+    t = time(nullptr);
     strcpy(str, (char *)ctime(&t));
     str[strlen(str)-1] = 0;
     if(!isDm() && !gServer->isRebooting())
         loge("%s logged off.\n", getCName());
 
-    // Clean up the old "Extra" struct
-    etag    *crm, *ctemp;
 
-    crm = first_charm;
-    while(crm) {
-        ctemp = crm;
-        crm = crm->next_tag;
-        delete ctemp;
-    }
-    first_charm = 0;
+    charms.clear();
 
     if(alias_crt) {
         alias_crt->clearFlag(M_DM_FOLLOW);
-        alias_crt = 0;
+        alias_crt = nullptr;
     }
 }
 
@@ -602,7 +611,7 @@ void Player::checkTempEnchant( Object* object) {
     long i=0, t=0;
     if(object) {
         if( object->flagIsSet(O_TEMP_ENCHANT)) {
-            t = time(0);
+            t = time(nullptr);
             i = LT(object, LT_ENCHA);
             if(i < t) {
                 object->setArmor(MAX(0, object->getArmor() - object->getAdjustment()));
@@ -632,7 +641,7 @@ void Player::checkTempEnchant( Object* object) {
 void Player::checkEnvenom( Object* object) {
     long i=0, t=0;
     if(object && object->flagIsSet(O_ENVENOMED)) {
-        t = time(0);
+        t = time(nullptr);
         i = LT(object, LT_ENVEN);
         if(i < t) {
             object->clearFlag(O_ENVENOMED);
@@ -668,7 +677,7 @@ void Player::checkInventory( ) {
 //*********************************************************************
 
 void Player::checkEffectsWearingOff() {
-    long t = time(0);
+    long t = time(nullptr);
     int staff = isStaff();
 
     // Added P_STUNNED and LT_PLAYER_STUNNED stun for dodge code.
@@ -806,7 +815,7 @@ void Player::checkEffectsWearingOff() {
                 experience = expTemp;
 
                 lasttime[LT_LEVEL_DRAIN].ltime = t;
-                lasttime[LT_LEVEL_DRAIN].interval = 60L + 5*bonus((int)constitution.getCur());
+                lasttime[LT_LEVEL_DRAIN].interval = 60L + 5*bonus(constitution.getCur());
             } else {
                 printColor("^WYou have recovered all your lost levels.\n");
                 expTemp = experience;
@@ -853,7 +862,7 @@ bool Creature::doPetrificationDmg() {
 
     wake("Terrible nightmares disturb your sleep!");
     printColor("^c^#Petrification spreads toward your heart.\n");
-    hp.decrease(MAX(1,(hp.getMax()/15 - bonus((int)constitution.getCur()))));
+    hp.decrease(MAX(1,(hp.getMax()/15 - bonus(constitution.getCur()))));
 
     if(hp.getCur() < 1) {
         Player* pThis = getAsPlayer();
@@ -875,8 +884,8 @@ bool Creature::doPetrificationDmg() {
 // if some of them have expired.  If so, flags are set accordingly.
 
 void Player::update() {
-    BaseRoom* room=0;
-    long    t = time(0);
+    BaseRoom* room=nullptr;
+    long    t = time(nullptr);
     int     item=0;
     bool    fighting = inCombat();
 
@@ -919,7 +928,7 @@ void Player::update() {
 
     if(t > LT(this, LT_PLAYER_SAVE)) {
         lasttime[LT_PLAYER_SAVE].ltime = t;
-        cmdSave(this, 0);
+        cmdSave(this, nullptr);
     }
 
     item = getLight();
@@ -1044,13 +1053,13 @@ void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool 
             }
 
             // not in their inventory? they must be wearing a bag
-            for(int i=0; i < MAXWEAR; i++) {
-                if(!ready[i])
+            for(auto & i : ready) {
+                if(!i)
                     continue;
-                if(ready[i]->getType() == ObjectType::CONTAINER) {
-                    for(Object* obj : ready[i]->objects) {
+                if(i->getType() == ObjectType::CONTAINER) {
+                    for(Object* obj : i->objects) {
                         if(obj == object) {
-                            ready[i]->delObj(object);
+                            i->delObj(object);
                             finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
                             return;
                         }
@@ -1126,13 +1135,13 @@ void Player::computeAC() {
 int Player::getArmorWeight() const {
     int weight=0;
 
-    for(int i=0; i<MAXWEAR; i++) {
-        if( ready[i] && ready[i]->getType() == ObjectType::ARMOR &&
-            (   (ready[i]->getWearflag() < FINGER) ||
-                (ready[i]->getWearflag() > HELD)
+    for(auto i : ready) {
+        if( i && i->getType() == ObjectType::ARMOR &&
+            (   (i->getWearflag() < FINGER) ||
+                (i->getWearflag() > HELD)
             )
         )
-            weight += ready[i]->getActualWeight();
+            weight += i->getActualWeight();
     }
 
     return(weight);
@@ -1350,12 +1359,12 @@ int mprofic(const Creature* player, int index) {
 // while climbing.
 
 int Player::getFallBonus()  {
-    int fall = bonus((int)dexterity.getCur())*5;
+    int fall = bonus(dexterity.getCur()) * 5;
 
-    for(int j=0; j<MAXWEAR; j++)
-        if(ready[j])
-            if(ready[j]->flagIsSet(O_CLIMBING_GEAR))
-                fall += ready[j]->damage.getPlus()*3;
+    for(auto & j : ready)
+        if(j)
+            if(j->flagIsSet(O_CLIMBING_GEAR))
+                fall += j->damage.getPlus()*3;
     return(fall);
 }
 
@@ -1369,11 +1378,11 @@ int Player::getFallBonus()  {
 // them is randomly chosen.
 
 Player* lowest_piety(BaseRoom* room, bool invis) {
-    Creature* player=0;
+    Creature* player=nullptr;
     int     totalpiety=0, pick=0;
 
     if(room->players.empty())
-        return(0);
+        return(nullptr);
 
     for(Player* ply : room->players) {
         if( ply->flagIsSet(P_HIDDEN) ||
@@ -1388,7 +1397,7 @@ Player* lowest_piety(BaseRoom* room, bool invis) {
     }
 
     if(!totalpiety)
-        return(0);
+        return(nullptr);
     pick = Random::get(1, totalpiety);
 
     totalpiety = 0;
@@ -1591,7 +1600,7 @@ const char* Creature::getStatusStr(int dmg) {
 //*********************************************************************
 
 bool Player::checkForSpam() {
-    int     t = time(0);
+    int     t = time(nullptr);
 
     if(!isCt()) {
         if(lasttime[LT_PLAYER_SEND].ltime == t) {
@@ -1646,6 +1655,100 @@ void Player::silenceSpammer() {
 //*********************************************************************
 //                      setMonkDice
 //*********************************************************************
+
+// Wolf leveling code
+Dice wolf_dice[41] =
+{                           // Old dice
+    Dice(2, 2, 0),   /* 0  */  // Dice(1, 4, 0)
+    Dice(2, 2, 0),   /* 1  */  // Dice(1, 4, 0)
+    Dice(2, 2, 1),   /* 2  */  // Dice(1, 5, 1)
+    Dice(2, 3, 1),   /* 3  */  // Dice(1, 7, 1)
+    Dice(2, 4, 0),   /* 4  */  // Dice(1, 7, 2)
+    Dice(3, 3, 0),   /* 5  */  // Dice(2, 3, 2)
+    Dice(3, 3, 2),   /* 6  */  // Dice(2, 4, 1)
+    Dice(4, 3, 0),   /* 7  */  // Dice(2, 4, 2)
+    Dice(4, 3, 1),   /* 8  */  // Dice(2, 5, 1)
+    Dice(5, 3, 0),   /* 9  */  // Dice(2, 5, 2)
+    Dice(5, 3, 1),   /* 10 */  // Dice(2, 6, 1)
+    Dice(5, 3, 2),   /* 11 */  // Dice(2, 6, 2)
+    Dice(6, 3, 1),   /* 12 */  // Dice(3, 4, 1)
+    Dice(6, 3, 2),   /* 13 */  // Dice(3, 4, 2)
+    Dice(7, 3, 0),   /* 14 */  // Dice(3, 5, 1)
+    Dice(7, 3, 1),   /* 15 */  // Dice(3, 5, 2)
+    Dice(7, 3, 2),   /* 16 */  // Dice(3, 7, 1)
+    Dice(7, 3, 3),   /* 17 */  // Dice(4, 5, 0)
+    Dice(7, 4, 0),   /* 18 */  // Dice(5, 6, 1)
+    Dice(7, 4, 2),   /* 19 */  // Dice(5, 6, 2)
+    Dice(7, 4, 3),   /* 20 */  // Dice(6, 5, 3)
+    Dice(7, 4, 5),   /* 21 */  // Dice(6, 6, 0)
+    Dice(7, 5, 0),   /* 22 */  // Dice(6, 6, 2)
+    Dice(7, 5, 2),   /* 23 */  // Dice(6, 6, 3)
+    Dice(7, 5, 1),   /* 24 */  // Dice(6, 7, 1)
+    Dice(7, 5, 3),   /* 25 */  // Dice(6, 8, 0)
+    Dice(8, 5, 0),   /* 26 */  // Dice(6, 8, 2)
+    Dice(8, 5, 2),   /* 27 */  // Dice(6, 8, 4)
+    Dice(8, 5, 4),   /* 28 */  // Dice(7, 7, 2)
+    Dice(9, 5, 2),   /* 29 */  // Dice(7, 7, 4)
+    Dice(9, 5, 3),  /* 30 */  // Dice(7, 7, 6)
+    Dice(9, 5, 3),  /* 31 */  // Dice(7, 7, 6)
+    Dice(9, 5, 3),  /* 32 */  // Dice(7, 7, 6)
+    Dice(9, 5, 3),  /* 33 */  // Dice(7, 7, 6)
+    Dice(9, 5, 3),  /* 34 */  // Dice(7, 7, 6)
+    Dice(9, 5, 3),  /* 35 */  // Dice(7, 7, 6)
+    Dice(9, 5, 3),  /* 36 */  // Dice(7, 7, 6)
+    Dice(9, 5, 3),  /* 37 */  // Dice(7, 7, 6)
+    Dice(9, 5, 3),  /* 38 */  // Dice(7, 7, 6)
+    Dice(9, 5, 3),  /* 39 */  // Dice(7, 7, 6)
+    Dice(9, 5, 3)   /* 40 */  // Dice(7, 7, 6)
+};
+
+
+// monk leveling code
+Dice monk_dice[41] =
+{
+    Dice(1, 3, 0),  /* 0  */  // Old dice
+    Dice(1, 3, 0),  /* 1  */  // Dice(1, 3, 0)
+    Dice(1, 4, 0),  /* 2  */  // Dice(1, 5, 0)
+    Dice(1, 5, 0),  /* 3  */  // Dice(1, 5, 1)
+    Dice(1, 6, 0),  /* 4  */  // Dice(1, 6, 0)
+    Dice(1, 6, 1),  /* 5  */  // Dice(1, 6, 1)
+    Dice(2, 4, 1),  /* 6  */  // Dice(1, 6, 2)
+    Dice(2, 5, 0),  /* 7  */  // Dice(2, 3, 1)
+    Dice(2, 5, 1),  /* 8  */  // Dice(2, 4, 0)
+    Dice(2, 6, 0),  /* 9  */  // Dice(2, 4, 1)
+    Dice(2, 6, 2),  /* 10 */  // Dice(2, 5, 0)
+    Dice(3, 5, 2),  /* 11 */  // Dice(2, 5, 2)
+    Dice(3, 6, 0),  /* 12 */  // Dice(2, 6, 1)
+    Dice(3, 6, 2),  /* 13 */  // Dice(2, 6, 2)
+    Dice(3, 7, 0),  /* 14 */  // Dice(3, 6, 1)
+    Dice(3, 7, 2),  /* 15 */  // Dice(3, 7, 1)
+    Dice(4, 6, 2),  /* 16 */  // Dice(4, 7, 1)
+    Dice(4, 7, 0),  /* 17 */  // Dice(5, 7, 0)
+    Dice(4, 7, 2),  /* 18 */  // Dice(5, 8, 1)
+    Dice(4, 8, 0),  /* 19 */  // Dice(6, 7, 0)
+    Dice(4, 8, 2),  /* 20 */  // Dice(6, 7, 2)
+    Dice(5, 7, 2),  /* 21 */  // Dice(6, 8, 0)
+    Dice(5, 8, 0),  /* 22 */  // Dice(6, 8, 2)
+    Dice(5, 8, 2),  /* 23 */  // Dice(6, 9, 0)
+    Dice(5, 9, 0),  /* 24 */  // Dice(6, 9, 2)
+    Dice(5, 9, 2),  /* 25 */  // Dice(6, 10, 0 )
+    Dice(6, 8, 2),  /* 26 */  // Dice(6, 10, 2 )
+    Dice(6, 9, 0),  /* 27 */  // Dice(7, 9, 4)
+    Dice(6, 9, 2),  /* 28 */  // Dice(7, 9, 6)
+    Dice(6, 10, 0), /* 29 */  // Dice(7, 8, 8)
+    Dice(6, 10, 2), /* 30 */  // Dice(8, 8, 10 )
+    Dice(6, 10, 2), /* 31 */  // Dice(8, 8, 10 )
+    Dice(6, 10, 2), /* 32 */  // Dice(8, 8, 10 )
+    Dice(6, 10, 2), /* 33 */  // Dice(8, 8, 10 )
+    Dice(6, 10, 2), /* 34 */  // Dice(8, 8, 10 )
+    Dice(6, 10, 2), /* 35 */  // Dice(8, 8, 10 )
+    Dice(6, 10, 2), /* 36 */  // Dice(8, 8, 10 )
+    Dice(6, 10, 2), /* 37 */  // Dice(8, 8, 10 )
+    Dice(6, 10, 2), /* 38 */  // Dice(8, 8, 10 )
+    Dice(6, 10, 2), /* 39 */  // Dice(8, 8, 10 )
+    Dice(6, 10, 2)  /* 40 */  // Dice(8, 8, 10 )
+
+};
 
 void Player::setMonkDice() {
     int nLevel = MAX<int>(0, MIN<int>(level, MAXALVL));
@@ -1803,16 +1906,15 @@ void Player::initLanguages() {
         default:
             break;
     }
-    return;
-}
+    }
 
 //*********************************************************************
 //                      doRecall
 //*********************************************************************
 
 void Player::doRecall(int roomNum) {
-    UniqueRoom  *new_rom=0;
-    BaseRoom *newRoom=0;
+    UniqueRoom  *new_rom=nullptr;
+    BaseRoom *newRoom=nullptr;
 
     if(roomNum == -1) {
         newRoom = recallWhere();
@@ -1840,7 +1942,7 @@ BaseRoom* Creature::recallWhere() {
     // A builder should never get this far, but let's not chance it.
     // Only continue if they can't load the perm_low_room.
     if(cClass == CreatureClass::BUILDER) {
-        UniqueRoom* uRoom=0;
+        UniqueRoom* uRoom=nullptr;
         CatRef cr;
         cr.setArea("test");
         cr.id = 1;
@@ -1869,10 +1971,10 @@ BaseRoom* Creature::recallWhere() {
 // This function will always return a room or it will crash trying to.
 
 BaseRoom* Creature::teleportWhere() {
-    BaseRoom *newRoom=0;
+    BaseRoom *newRoom=nullptr;
     const CatRefInfo* cri = gConfig->getCatRefInfo(getRoomParent());
     int     i=0, zone = cri ? cri->getTeleportZone() : 0;
-    Area    *area=0;
+    Area    *area=nullptr;
     Location l;
     bool    found = false;
 
@@ -1884,7 +1986,7 @@ BaseRoom* Creature::teleportWhere() {
         CatRef cr;
         cr.setArea("test");
         cr.id = 1;
-        UniqueRoom* uRoom =0;
+        UniqueRoom* uRoom =nullptr;
         if(loadRoom(cr, &uRoom))
             return(uRoom);
     }
@@ -1902,18 +2004,18 @@ BaseRoom* Creature::teleportWhere() {
         if(cri->getArea() == "area") {
             area = gServer->getArea(cri->getId());
             l.mapmarker.set(area->id, Random::get<short>(0, area->width), Random::get<short>(0, area->height), Random::get<short>(0, area->depth));
-            if(area->canPass(0, &l.mapmarker, true)) {
+            if(area->canPass(nullptr, &l.mapmarker, true)) {
                 //area->adjustCoords(&mapmarker.x, &mapmarker.y, &mapmarker.z);
 
                 // don't bother sending a creature because we've already done
                 // canPass check here
                 //aRoom = area->loadRoom(0, &mapmarker, false);
-                if(Move::getRoom(this, 0, &newRoom, false, &l.mapmarker)) {
+                if(Move::getRoom(this, nullptr, &newRoom, false, &l.mapmarker)) {
                     if(newRoom->isUniqueRoom()) {
                         // recheck, just to be safe
                         found = newRoom->getAsUniqueRoom()->canPortHere(this);
                         if(!found)
-                            newRoom = 0;
+                            newRoom = nullptr;
                     } else {
                         found = true;
                     }
@@ -1923,7 +2025,7 @@ BaseRoom* Creature::teleportWhere() {
             l.room.setArea(cri->getArea());
             // if misc, first 1000 rooms are off-limits
             l.room.id = Random::get(l.room.isArea("misc") ? 1000 : 1, cri->getTeleportWeight());
-            UniqueRoom* uRoom = 0;
+            UniqueRoom* uRoom = nullptr;
 
             if(loadRoom(l.room, &uRoom))
                 found = uRoom->canPortHere(this);
@@ -1985,12 +2087,12 @@ bool UniqueRoom::canPortHere(const Creature* creature) const {
 //*********************************************************************
 // setToLevel: Set skill level to player level - 1, otherwise set to whatever the skill gain tells us to
 
-void Creature::checkSkillsGain(std::list<SkillGain*>::const_iterator begin, std::list<SkillGain*>::const_iterator end, bool setToLevel) {
-    SkillGain *sGain=0;
+void Creature::checkSkillsGain(const std::list<SkillGain*>::const_iterator& begin, const std::list<SkillGain*>::const_iterator& end, bool setToLevel) {
+    SkillGain *sGain=nullptr;
     std::list<SkillGain*>::const_iterator sgIt;
     for(sgIt = begin ; sgIt != end ; sgIt++) {
         sGain = (*sgIt);
-        if(sGain->getName() == "")
+        if(sGain->getName().empty())
             continue;
         if(!sGain->hasDeities() || sGain->deityIsAllowed(deity)) {
             if(!knowsSkill(sGain->getName())) {
@@ -2066,10 +2168,10 @@ bool Player::halftolevel() const {
         return(false);
 
     // can save up xp until level 5.
-    if(experience <= gConfig->expNeeded(5))
+    if(experience <= Config::expNeeded(5))
         return(false);
 
-    if(experience >= gConfig->expNeeded(level) + (((unsigned)(gConfig->expNeeded(level+1) - gConfig->expNeeded(level)))/2)) {
+    if(experience >= Config::expNeeded(level) + (((unsigned)(Config::expNeeded(level+1) - Config::expNeeded(level)))/2)) {
         print("You have enough experience to train.\nYou are half way to the following level.\n");
         print("You must go train in order to gain further experience.\n");
         return(true);
@@ -2117,49 +2219,49 @@ int Player::getSneakChance()  {
         return(101);
 
     // this is the base chance for most classes
-    int chance = MIN(70, 5 + 2 * sLvl + 3 * bonus((int) dexterity.getCur()));
+    int chance = MIN(70, 5 + 2 * sLvl + 3 * bonus(dexterity.getCur()));
 
     switch(cClass) {
     case CreatureClass::THIEF:
         if(cClass2 == CreatureClass::MAGE)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
         else
-            chance = MIN(90, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(90, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
 
         break;
     case CreatureClass::ASSASSIN:
-        chance = MIN(90, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
+        chance = MIN(90, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
         break;
     case CreatureClass::CLERIC:
         if(cClass2 == CreatureClass::ASSASSIN)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
         else if(deity == KAMIRA || deity == ARACHNUS)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) piety.getCur()));
+            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus(piety.getCur()));
 
         break;
     case CreatureClass::FIGHTER:
         if(cClass2 == CreatureClass::THIEF)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
 
         break;
     case CreatureClass::MAGE:
         if(cClass2 == CreatureClass::THIEF || cClass2 == CreatureClass::ASSASSIN)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-3) + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(90, 5 + 8 * MAX(1,sLvl-3) + 3 * bonus(dexterity.getCur()));
 
         break;
     case CreatureClass::DRUID:
         if(getConstRoomParent()->isForest())
-            chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus(dexterity.getCur()));
 
         break;
     case CreatureClass::RANGER:
         if(getConstRoomParent()->isForest())
-            chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus(dexterity.getCur()));
         else
-            chance = MIN(83, 5 + 8 * sLvl + 3 * bonus((int) dexterity.getCur()));
+            chance = MIN(83, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
         break;
     case CreatureClass::ROGUE:
-        chance = MIN(85, 5 + 7 * sLvl + 3 * bonus((int) dexterity.getCur()));
+        chance = MIN(85, 5 + 7 * sLvl + 3 * bonus(dexterity.getCur()));
         break;
     default:
         break;
@@ -2197,7 +2299,7 @@ bool Player::breakObject(Object* object, int loc) {
 
         if(object->compass) {
             delete object->compass;
-            object->compass = 0;
+            object->compass = nullptr;
         }
 
         object->clearFlag(O_WORN);
@@ -2358,7 +2460,7 @@ Location Player::getBound() {
 //*********************************************************************
 
 unsigned long Player::expToLevel() const {
-    return(experience > gConfig->expNeeded(level) ? 0 : gConfig->expNeeded(level) - experience);
+    return(experience > Config::expNeeded(level) ? 0 : Config::expNeeded(level) - experience);
 }
 
 bstring Player::expToLevel(bool addX) const {
@@ -2380,8 +2482,8 @@ bstring Player::expInLevel() const {
     }
 
     std::ostringstream oStr;
-    oStr << MIN<long>((experience - gConfig->expNeeded(displayLevel-1)),
-            (gConfig->expNeeded(displayLevel) - gConfig->expNeeded(displayLevel-1)));
+    oStr << MIN<long>((experience - Config::expNeeded(displayLevel-1)),
+            (Config::expNeeded(displayLevel) - Config::expNeeded(displayLevel-1)));
     return(oStr.str());
 }
 
@@ -2393,7 +2495,7 @@ bstring Player::expForLevel() const {
     }
 
     std::ostringstream oStr;
-    oStr << (gConfig->expNeeded(displayLevel) - gConfig->expNeeded(displayLevel-1));
+    oStr << (Config::expNeeded(displayLevel) - Config::expNeeded(displayLevel-1));
     return(oStr.str());
 }
 
@@ -2401,7 +2503,7 @@ bstring Player::expNeededDisplay() const {
     if(level < MAXALVL) {
         std::ostringstream oStr;
         oStr.imbue(std::locale(isStaff() ? "C" : ""));
-        oStr << gConfig->expNeeded(level);
+        oStr << Config::expNeeded(level);
         return(oStr.str());
     }
     return("infinity");
@@ -2410,7 +2512,7 @@ bstring Player::expNeededDisplay() const {
 //                      exists
 //*********************************************************************
 
-bool Player::exists(bstring name) {
+bool Player::exists(const bstring& name) {
     char    file[80];
     sprintf(file, "%s/%s.xml", Path::Player, name.c_str());
     return(file_exists(file));
@@ -2420,7 +2522,7 @@ bool Player::exists(bstring name) {
 //                      inList functions
 //*********************************************************************
 
-bool Player::inList(const std::list<bstring>* list, bstring name) const {
+bool Player::inList(const std::list<bstring>* list, const bstring& name) const {
     std::list<bstring>::const_iterator it;
 
     for(it = list->begin(); it != list->end() ; it++) {
@@ -2431,19 +2533,19 @@ bool Player::inList(const std::list<bstring>* list, bstring name) const {
 }
 
 
-bool Player::isIgnoring(bstring name) const {
+bool Player::isIgnoring(const bstring& name) const {
     return(inList(&ignoring, name));
 }
-bool Player::isGagging(bstring name) const {
+bool Player::isGagging(const bstring& name) const {
     return(inList(&gagging, name));
 }
-bool Player::isRefusing(bstring name) const {
+bool Player::isRefusing(const bstring& name) const {
     return(inList(&refusing, name));
 }
-bool Player::isDueling(bstring name) const {
+bool Player::isDueling(const bstring& name) const {
     return(inList(&dueling, name));
 }
-bool Player::isWatching(bstring name) const {
+bool Player::isWatching(const bstring& name) const {
     return(inList(&watching, name));
 }
 
@@ -2492,21 +2594,21 @@ bstring Player::showWatching() const {
 //                      addList functions
 //*********************************************************************
 
-void Player::addList(std::list<bstring>* list, bstring name) {
+void Player::addList(std::list<bstring>* list, const bstring& name) {
     list->push_back(name);
 }
 
 
-void Player::addIgnoring(bstring name) {
+void Player::addIgnoring(const bstring& name) {
     addList(&ignoring, name);
 }
-void Player::addGagging(bstring name) {
+void Player::addGagging(const bstring& name) {
     addList(&gagging, name);
 }
-void Player::addRefusing(bstring name) {
+void Player::addRefusing(const bstring& name) {
     addList(&refusing, name);
 }
-void Player::addDueling(bstring name) {
+void Player::addDueling(const bstring& name) {
     delList(&maybeDueling, name);
 
     // if they aren't dueling us, add us to their maybe dueling list
@@ -2516,10 +2618,10 @@ void Player::addDueling(bstring name) {
 
     addList(&dueling, name);
 }
-void Player::addMaybeDueling(bstring name) {
+void Player::addMaybeDueling(const bstring& name) {
     addList(&maybeDueling, name);
 }
-void Player::addWatching(bstring name) {
+void Player::addWatching(const bstring& name) {
     addList(&watching, name);
 }
 
@@ -2527,7 +2629,7 @@ void Player::addWatching(bstring name) {
 //                      delList functions
 //*********************************************************************
 
-void Player::delList(std::list<bstring>* list, bstring name) {
+void Player::delList(std::list<bstring>* list, const bstring& name) {
     std::list<bstring>::iterator it;
 
     for(it = list->begin(); it != list->end() ; it++) {
@@ -2539,19 +2641,19 @@ void Player::delList(std::list<bstring>* list, bstring name) {
 }
 
 
-void Player::delIgnoring(bstring name) {
+void Player::delIgnoring(const bstring& name) {
     delList(&ignoring, name);
 }
-void Player::delGagging(bstring name) {
+void Player::delGagging(const bstring& name) {
     delList(&gagging, name);
 }
-void Player::delRefusing(bstring name) {
+void Player::delRefusing(const bstring& name) {
     delList(&refusing, name);
 }
-void Player::delDueling(bstring name) {
+void Player::delDueling(const bstring& name) {
     delList(&dueling, name);
 }
-void Player::delWatching(bstring name) {
+void Player::delWatching(const bstring& name) {
     delList(&watching, name);
 }
 
@@ -2574,7 +2676,7 @@ void Player::clearDueling() {
 void Player::clearMaybeDueling() {
     std::list<bstring>::iterator it;
 
-    Player* player=0;
+    Player* player=nullptr;
     for(it = maybeDueling.begin(); it != maybeDueling.end() ; it++) {
         player = gServer->findPlayer(*it);
         if(!player)
@@ -2624,22 +2726,22 @@ bool Player::checkHeavyRestrict(const bstring& skill) const {
 
     // Allows us to do a blank check and see if the player's class is one of the heavy armor
     // restricted classes.
-    if(skill == "")
+    if(skill.empty())
         return(true);
 
 
     bool mediumOK = (getClass() == CreatureClass::RANGER);
 
-    for(int i = 0 ; i < MAXWEAR ; i++) {
-        if( ready[i] &&
-            (   ready[i]->isHeavyArmor() ||
+    for(auto i : ready) {
+        if( i &&
+            (   i->isHeavyArmor() ||
                 (   !mediumOK &&
-                    ready[i]->isMediumArmor()
+                    i->isMediumArmor()
                 )
             )
         ) {
             printColor("You can't ^W%s^x while wearing heavy armor!\n", skill.c_str());
-            printColor("^W%O^x would hinder your movement too much!\n", ready[i]);
+            printColor("^W%O^x would hinder your movement too much!\n", i);
             return(true);
         }
     }

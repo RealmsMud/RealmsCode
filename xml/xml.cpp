@@ -16,9 +16,15 @@
  *
  */
 
-// Mud includes
-#include "mud.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlGe...
+#include <cstdio>                                   // for sprintf
+#include <cstdlib>                                  // for free
+#include <cstring>                                  // for strcmp, strcpy
+#include <strings.h>                                // for strcasecmp
+
+#include "bstring.hpp"                              // for bstring
+#include "proto.hpp"                                // for unxsc, xsc, loge
+#include "xml.hpp"                                  // for toNum, bad_lexica...
 
 namespace xml {
 

@@ -20,8 +20,7 @@
 #define _WANDERINFO_H
 
 #include <map>
-
-#include "common.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr
 
 class CatRef;
 class Player;

@@ -16,23 +16,46 @@
  *
  */
 
-// C++ includes
-#include <sstream>
-#include <iomanip>
-#include <locale>
+#include <cctype>                 // for isspace, tolower
+#include <cstdio>                 // for sprintf
+#include <cstring>                // for strcmp, strlen, strcpy, strcat, strchr
+#include <ctime>                  // for time
+#include <unistd.h>               // for getpid
+#include <iomanip>                // for operator<<, setw
+#include <list>                   // for operator==, operator!=
+#include <map>                    // for operator==, operator!=, map
+#include <sstream>                // for operator<<, basic_ostream, ostrings...
+#include <string>                 // for operator<<, operator!=, operator==
+#include <utility>                // for pair
 
-// Mud Includes
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "dm.hpp"
-#include "effects.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "quests.hpp"
-#include "xml.hpp"
+#include "area.hpp"               // for MapMarker, Area
+#include "bstring.hpp"            // for bstring, operator+
+#include "catRef.hpp"             // for CatRef
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for cmdNoAuth, getFullstrText, dmStatDe...
+#include "config.hpp"             // for Config, gConfig, AlchemyMap
+#include "creatureStreams.hpp"    // for Streamable, ColorOff, ColorOn
+#include "creatures.hpp"          // for Player, Creature, Monster
+#include "dm.hpp"                 // for stat_rom, dmLastCommand, dmListbans
+#include "flags.hpp"              // for P_DM_INVIS, P_OUTLAW, P_NO_SUMMON
+#include "global.hpp"             // for CreatureClass, PROMPT, CreatureClas...
+#include "lasttime.hpp"           // for lasttime, crlasttime
+#include "location.hpp"           // for Location
+#include "magic.hpp"              // for S_ANNUL_MAGIC, S_AURA_OF_FLAME, S_B...
+#include "mud.hpp"                // for StartTime, LT_OUTLAW, LT_FREE_ACTION
+#include "objects.hpp"            // for Object
+#include "oldquest.hpp"           // for quest, questPtr
+#include "os.hpp"                 // for merror
+#include "paths.hpp"              // for Log, BuilderHelp, DMHelp, Post
+#include "proto.hpp"              // for get_spell_name, broadcast, log_immort
+#include "quests.hpp"             // for QuestInfo
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for UniqueRoom, BaseRoom, AreaRoom, NUM...
+#include "server.hpp"             // for Server, gServer, SocketList, Monste...
+#include "socket.hpp"             // for Socket, OutBytes, UnCompressedBytes
+#include "utils.hpp"              // for MAX
+#include "weather.hpp"            // for WEATHER_BEAUTIFUL_DAY, WEATHER_BRIG...
+#include "xml.hpp"                // for iToYesNo, loadRoom, loadObject
 
 
 long        last_dust_output;
@@ -79,7 +102,7 @@ int dmReboot(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmMobInventory(Player* player, cmd* cmnd) {
-    Monster *monster=0;
+    Monster *monster=nullptr;
     Object  *object;
     //char  str[2048];
     int     i=0;
@@ -126,7 +149,7 @@ int dmMobInventory(Player* player, cmd* cmnd) {
     }
     bstring str = monster->listObjects(player, true);
     bstring prefix =bstring(monster->flagIsSet(M_NO_PREFIX) ? "":"The ") + monster->getName() + " is carrying: ";
-    if(str != "") {
+    if(!str.empty()) {
         str =  prefix + str + ".";
     } else {
         str = prefix + "Nothing.";
@@ -169,40 +192,40 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
         std::list<bstring>::const_iterator it;
 
         // create a list of possible effects
-        loadList.push_back("areas");
-        loadList.push_back("bans");
-        loadList.push_back("calendar");
-        loadList.push_back("catrefinfo");
-        loadList.push_back("config");
-        loadList.push_back("classes");
-        loadList.push_back("clans");
-        loadList.push_back("deities");
-        loadList.push_back("faction");
-        loadList.push_back("fishing");
-        loadList.push_back("flags");
-        loadList.push_back("guilds");
-        loadList.push_back("limited");
-        loadList.push_back("properties");
-        loadList.push_back("proxies");
-        loadList.push_back("quests");
-        loadList.push_back("races");
-        loadList.push_back("recipes");
-        loadList.push_back("ships");
-        loadList.push_back("skills");
-        loadList.push_back("socials");
-        loadList.push_back("spells");
-        loadList.push_back("spl [spell id]");
-        loadList.push_back("startlocs");
+        loadList.emplace_back("areas");
+        loadList.emplace_back("bans");
+        loadList.emplace_back("calendar");
+        loadList.emplace_back("catrefinfo");
+        loadList.emplace_back("config");
+        loadList.emplace_back("classes");
+        loadList.emplace_back("clans");
+        loadList.emplace_back("deities");
+        loadList.emplace_back("faction");
+        loadList.emplace_back("fishing");
+        loadList.emplace_back("flags");
+        loadList.emplace_back("guilds");
+        loadList.emplace_back("limited");
+        loadList.emplace_back("properties");
+        loadList.emplace_back("proxies");
+        loadList.emplace_back("quests");
+        loadList.emplace_back("races");
+        loadList.emplace_back("recipes");
+        loadList.emplace_back("ships");
+        loadList.emplace_back("skills");
+        loadList.emplace_back("socials");
+        loadList.emplace_back("spells");
+        loadList.emplace_back("spl [spell id]");
+        loadList.emplace_back("startlocs");
 
-        saveList.push_back("bans");
-        saveList.push_back("config");
-        saveList.push_back("guilds");
-        saveList.push_back("limited");
-        saveList.push_back("properties");
-        saveList.push_back("proxies");
-        saveList.push_back("recipes");
-        saveList.push_back("socials");
-        saveList.push_back("spells");
+        saveList.emplace_back("bans");
+        saveList.emplace_back("config");
+        saveList.emplace_back("guilds");
+        saveList.emplace_back("limited");
+        saveList.emplace_back("properties");
+        saveList.emplace_back("proxies");
+        saveList.emplace_back("recipes");
+        saveList.emplace_back("socials");
+        saveList.emplace_back("spells");
 
         // run through the lists and display them
         player->print("*dmload / *dmsave supports the following options:\n");
@@ -323,7 +346,7 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
 
             std::list<Area*>::iterator at;
             std::map<bstring, AreaRoom*>::iterator it;
-            AreaRoom* aRoom = 0;
+            AreaRoom* aRoom = nullptr;
 
             for(at = gServer->areas.begin() ; at != gServer->areas.end() ; at++) {
                 for(it = (*at)->rooms.begin() ; it != (*at)->rooms.end() ; it++) {
@@ -433,10 +456,10 @@ void Player::dmPoof(BaseRoom* room, BaseRoom *newRoom) {
 }
 
 int dmTeleport(Player* player, cmd* cmnd) {
-    BaseRoom    *room=0, *old_room=0;
-    UniqueRoom      *uRoom=0;
-    Creature    *creature=0;
-    Player      *target=0, *target2=0;
+    BaseRoom    *room=nullptr, *old_room=nullptr;
+    UniqueRoom      *uRoom=nullptr;
+    Creature    *creature=nullptr;
+    Player      *target=nullptr, *target2=nullptr;
 
     Location    l;
 
@@ -447,7 +470,7 @@ int dmTeleport(Player* player, cmd* cmnd) {
     bstring txt = getFullstrText(str, 1, '.');
 
     // set default *t room
-    if(str == "") {
+    if(str.empty()) {
         l = player->getRecallRoom();
 
         if(player->inAreaRoom() && l.mapmarker == player->currentLocation.mapmarker) {
@@ -456,8 +479,8 @@ int dmTeleport(Player* player, cmd* cmnd) {
         }
 
         room =  l.loadRoom();
-    } else if(cmnd->num < 2 || (txt != "" && txt.getAt(0))) {
-        Area        *area=0;
+    } else if(cmnd->num < 2 || (!txt.empty() && txt.getAt(0))) {
+        Area        *area=nullptr;
 
         getDestination(str, &l, player);
 
@@ -474,7 +497,7 @@ int dmTeleport(Player* player, cmd* cmnd) {
             }
 
             // pointer to old room
-            player->dmPoof(player->getRoomParent(), 0);
+            player->dmPoof(player->getRoomParent(), nullptr);
             area->move(player, &l.mapmarker);
             // manual
             if(player->flagIsSet(P_ALIASING))
@@ -579,10 +602,10 @@ int dmTeleport(Player* player, cmd* cmnd) {
 // level, name, current room # and name, and address.
 
 int dmUsers(Player* player, cmd* cmnd) {
-    long    t = time(0);
+    long    t = time(nullptr);
     bool    full=false;
     bstring tmp="", host="";
-    Player* user=0;
+    Player* user=nullptr;
     //Socket* sock=0;
 
     std::ostringstream oStr;
@@ -719,7 +742,7 @@ int dmShutdown(Player* player, cmd* cmnd) {
 
     log_immort(true, player, "*** Shutdown by %s.\n", player->getCName());
 
-    Shutdown.ltime = time(0);
+    Shutdown.ltime = time(nullptr);
     Shutdown.interval = cmnd->val[0] * 60 + 1;
 
     return(0);
@@ -762,7 +785,7 @@ int dmResave(Player* player, cmd* cmnd) {
         (!strcmp(cmnd->str[1], "c") || !strcmp(cmnd->str[1], "o"))
     ) {
         bstring str = getFullstrText(cmnd->fullstr, 3);
-        if(str == "") {
+        if(str.empty()) {
             player->print("Syntax: *save %c [name] [number]\n", cmnd->str[1]);
             return(0);
         }
@@ -810,8 +833,8 @@ int dmResave(Player* player, cmd* cmnd) {
 
 int dmPerm(Player* player, cmd* cmnd) {
     std::map<int, crlasttime>::iterator it;
-    Monster* target=0;
-    Object  *object=0;
+    Monster* target=nullptr;
+    Object  *object=nullptr;
     int     x=0;
 
     if(!player->canBuildMonsters() && !player->canBuildObjects())
@@ -1011,7 +1034,7 @@ int dmIncog(Player* player, cmd* cmnd) {
 // or another user's stats.
 
 int dmAc(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
 
     if(cmnd->num == 2) {
         lowercize(cmnd->str[1], 1);
@@ -1245,7 +1268,7 @@ int dmQuestList(Player* player, cmd* cmnd) {
 
     if(output == "all") {
         all = true;
-    } else if(output != "") {
+    } else if(!output.empty()) {
         output.trimLeft('#');
         questId = output.toInt();
         player->print("Looking for quest %d.\n", questId);
@@ -1362,7 +1385,7 @@ int dmParam(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    t = time(0);
+    t = time(nullptr);
 
     switch(low(cmnd->str[1][0])) {
     case 'r':
@@ -1404,7 +1427,7 @@ int dmParam(Player* player, cmd* cmnd) {
 // up to 2 hrs of online time max. - TC
 
 int dmOutlaw(Player* player, cmd* cmnd) {
-    Creature* target=0;
+    Creature* target=nullptr;
     int     minutes=0;
     long    t=0, i=0;
 
@@ -1446,7 +1469,7 @@ int dmOutlaw(Player* player, cmd* cmnd) {
     }
 
     i = LT(target, LT_OUTLAW);
-    t = time(0);
+    t = time(nullptr);
 
     if(!strcmp(cmnd->str[2], "-f") && !target->flagIsSet(P_OUTLAW)) {
         player->print("%s is not currently an outlaw.\n", target->getCName());
@@ -1498,7 +1521,7 @@ int dmOutlaw(Player* player, cmd* cmnd) {
     minutes = MAX(minutes, 10);
 
     target->setFlag(P_OUTLAW);
-    target->lasttime[LT_OUTLAW].ltime = time(0);
+    target->lasttime[LT_OUTLAW].ltime = time(nullptr);
     target->lasttime[LT_OUTLAW].interval = (60L * minutes);
 
     player->print("%s is now an outlaw for %d minutes.\n", target->getCName(), minutes);
@@ -1594,7 +1617,7 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
     if(!player)
         return(false);
 
-    long    t = time(0);
+    long    t = time(nullptr);
 
     switch(splno) {
     case S_VIGOR:
@@ -1706,17 +1729,8 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
         player->doDispelMagic();
         break;
     case S_RADIATION:
-        if(check) return(true);
-        player->addEffect("fire-shield", 900, 1);
-        break;
     case S_FIERY_RETRIBUTION:
-        if(check) return(true);
-        player->addEffect("fire-shield", 900, 1);
-        break;
     case S_AURA_OF_FLAME:
-        if(check) return(true);
-        player->addEffect("fire-shield", 900, 1);
-        break;
     case S_BARRIER_OF_COMBUSTION:
         if(check) return(true);
         player->addEffect("fire-shield", 900, 1);
@@ -1896,7 +1910,7 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
 //*********************************************************************
 
 int dmCast(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     char    rcast=0, *sp;
     int     splno=0, c=0, fd = player->fd, i=0, silent=0;
 
@@ -1956,7 +1970,7 @@ int dmCast(Player* player, cmd* cmnd) {
             log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->getCName(), get_spell_name(splno),
                 player->getRoomParent()->fullName().c_str());
 
-            PlayerSet::iterator pIt = player->getRoomParent()->players.begin();
+            auto pIt = player->getRoomParent()->players.begin();
             while(pIt != player->getRoomParent()->players.end()) {
                 target = (*pIt++);
                 target->print("%M casts %s on you.\n", player, get_spell_name(splno));
@@ -2002,7 +2016,7 @@ int dmCast(Player* player, cmd* cmnd) {
         }
 
         Player* ply;
-        for(std::pair<bstring, Player*> p : gServer->players) {
+        for(const auto& p : gServer->players) {
             ply = p.second;
 
             if(!ply->isConnected())
@@ -2194,7 +2208,7 @@ int dmInfo(Player* player, cmd* cmnd) {
 
     player->print("Last compiled " __TIME__ " " __DATE__ ".\n");
 
-    t = time(0);
+    t = time(nullptr);
     days = (t - StartTime) / 86400L;
     hours = (t - StartTime) / 3600L;
     hours %= 24;
@@ -2231,7 +2245,7 @@ int dmMd5(Player* player, cmd* cmnd) {
 //  This function will allow staff to display detailed stat information
 
 int dmStatDetail(Player* player, cmd* cmnd) {
-    Creature* target = 0;
+    Creature* target = nullptr;
 
     if(cmnd->num < 2)
         target = player;
@@ -2268,10 +2282,10 @@ int dmStatDetail(Player* player, cmd* cmnd) {
 //  creature, player, or room.
 
 int dmStat(Player* player, cmd* cmnd) {
-    Object  *object=0;
-    Creature* target=0;
-    Monster* mTarget=0;
-    Creature* player2=0;
+    Object  *object=nullptr;
+    Creature* target=nullptr;
+    Monster* mTarget=nullptr;
+    Creature* player2=nullptr;
     int i=0, j=0;
     CatRef  cr;
 
@@ -2288,14 +2302,14 @@ int dmStat(Player* player, cmd* cmnd) {
     bstring str = getFullstrText(cmnd->fullstr, 1);
     bstring txt = getFullstrText(str, 1, '.');
 
-    if(cmnd->num < 2 || (txt != "" && txt.getAt(0))) {
-        Area        *area=0;
+    if(cmnd->num < 2 || (!txt.empty() && txt.getAt(0))) {
+        Area        *area=nullptr;
         MapMarker   mapmarker;
-        AreaRoom*   aRoom=0;
-        UniqueRoom      *uRoom=0;
+        AreaRoom*   aRoom=nullptr;
+        UniqueRoom      *uRoom=nullptr;
 
         // if they're not *st-ing anything in particular
-        if(str == "") {
+        if(str.empty()) {
             if(player->inUniqueRoom()) {
                 uRoom = player->getUniqueRoomParent();
                 cr = player->getUniqueRoomParent()->info;
@@ -2318,7 +2332,7 @@ int dmStat(Player* player, cmd* cmnd) {
                     return(0);
                 }
 
-                aRoom = area->loadRoom(0, &mapmarker, false);
+                aRoom = area->loadRoom(nullptr, &mapmarker, false);
             }
 
             stat_rom(player, aRoom);

@@ -15,18 +15,32 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "alchemy.hpp"
-#include "area.hpp"
-#include "catRef.hpp"
-#include "clans.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "objects.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "xml.hpp"
+#include <cstring>                // for strlen, strcpy, memset, strcmp, strcat
+#include <list>                   // for operator==, operator!=
+
+#include "alchemy.hpp"            // for AlchemyEffect
+#include "area.hpp"               // for MapMarker, Area
+#include "bstring.hpp"            // for bstring, operator+
+#include "catRef.hpp"             // for CatRef
+#include "clans.hpp"              // for Clan
+#include "commands.hpp"           // for getFullstrTextTrun
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for ObjectSet
+#include "creatures.hpp"          // for Creature, Player, Monster
+#include "exits.hpp"              // for Exit
+#include "flags.hpp"              // for O_NULL_MAGIC, O_SOME_PREFIX, O_BODY...
+#include "global.hpp"             // for CreatureClass, CreatureClass::MONK
+#include "hooks.hpp"              // for Hooks
+#include "mudObject.hpp"          // for MudObject
+#include "objIncrease.hpp"        // for ObjIncrease
+#include "objects.hpp"            // for Object, DroppedBy, ObjectType, Alch...
+#include "proto.hpp"              // for getCatRef, int_to_text, broadcast, low
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for UniqueRoom, AreaRoom, BaseRoom
+#include "server.hpp"             // for Server, gServer
+#include "size.hpp"               // for NO_SIZE
+#include "structs.hpp"            // for SEX_FEMALE, SEX_MALE, SEX_NONE, Sex
+#include "xml.hpp"                // for loadObject, loadRoom
 
 
 bool Object::operator< (const Object& t) const {
@@ -90,15 +104,15 @@ void Object::validateId() {
     }
 }
 
-void Object::setDroppedBy(MudObject* dropper, bstring pDropType) {
+void Object::setDroppedBy(MudObject* dropper, const bstring& pDropType) {
 
     droppedBy.name = dropper->getName();
     droppedBy.id = dropper->getId();
 
-    Monster* mDropper = dynamic_cast<Monster*>(dropper);
-    Object* oDropper = dynamic_cast<Object*>(dropper);
-    UniqueRoom* rDropper = dynamic_cast<UniqueRoom*>(dropper);
-    AreaRoom* aDropper = dynamic_cast<AreaRoom*>(dropper);
+    auto* mDropper = dynamic_cast<Monster*>(dropper);
+    auto* oDropper = dynamic_cast<Object*>(dropper);
+    auto* rDropper = dynamic_cast<UniqueRoom*>(dropper);
+    auto* aDropper = dynamic_cast<AreaRoom*>(dropper);
 
     if(mDropper) {
         droppedBy.index = mDropper->info.rstr();
@@ -143,8 +157,8 @@ Object::Object() {
 
     material = NO_MATERIAL;
     keyVal = minStrength = 0;
-    compass = 0;
-    increase = 0;
+    compass = nullptr;
+    increase = nullptr;
     recipe = 0;
     made = 0;
     extra = 0;
@@ -153,12 +167,10 @@ Object::Object() {
 }
 
 Object::~Object() {
-    if(compass)
-        delete compass;
-    if(increase)
-        delete increase;
+    delete compass;
+    delete increase;
     alchemyEffects.clear();
-    compass = 0;
+    compass = nullptr;
     ObjectSet::iterator it;
     Object* obj;
     for(it = objects.begin() ; it != objects.end() ; ) {
@@ -194,7 +206,7 @@ void Object::init(bool selRandom) {
 //*********************************************************************
 
 Object* Object::getNewPotion() {
-    Object* newPotion = new Object;
+    auto* newPotion = new Object;
 
     newPotion->type = ObjectType::POTION;
     newPotion->setName( "generic potion");
@@ -281,14 +293,12 @@ void Object::doCopy(const Object& o) {
     size = o.size;
 
     if(o.compass) {
-        if(compass)
-            delete compass;
+        delete compass;
         compass = new MapMarker;
         *compass = *o.compass;
     }
     if(o.increase) {
-        if(increase)
-            delete increase;
+        delete increase;
         increase = new ObjIncrease;
         *increase = *o.increase;
     }
@@ -305,7 +315,7 @@ void Object::doCopy(const Object& o) {
         *newObj = *obj;
         addObj(newObj, false);
     }
-    for(std::pair<int, AlchemyEffect> p : o.alchemyEffects) {
+    for(const auto& p : o.alchemyEffects) {
         alchemyEffects[p.first] = p.second;
     }
     subType = o.subType;
@@ -318,6 +328,9 @@ void Object::doCopy(const Object& o) {
 }
 
 DroppedBy& DroppedBy::operator=(const DroppedBy& o) {
+    if(this == &o)
+        return(*this);
+
     name = o.name;
     index = o.index;
     id = o.id;
@@ -326,6 +339,9 @@ DroppedBy& DroppedBy::operator=(const DroppedBy& o) {
 }
 
 Object& Object::operator=(const Object& o) {
+    if(this == &o)
+        return(*this);
+
     doCopy(o);
     return(*this);
 }
@@ -376,15 +392,15 @@ bool Object::operator==(const Object& o) const {
         alchemyEffects.size() != o.alchemyEffects.size() ||
         !objects.empty() ||
         !o.objects.empty() ||
-        strcmp(use_output, o.use_output) ||
-        strcmp(use_attack, o.use_attack) ||
+        strcmp(use_output, o.use_output) != 0 ||
+        strcmp(use_attack, o.use_attack) != 0 ||
         value != o.value ||
         refund != o.refund
     )
         return(false);
 
     for(i=0; i<3; i++)
-        if(strcmp(key[i], o.key[i]))
+        if(strcmp(key[i], o.key[i]) != 0)
             return(false);
     for(i=0; i<OBJ_FLAG_ARRAY_SIZE; i++)
         if(flags[i] != o.flags[i])
@@ -555,7 +571,7 @@ int Object::getActualBulk() const {
 void Object::selectRandom() {
     std::list<CatRef>::const_iterator it;
     CatRef cr;
-    Object* object=0;
+    Object* object=nullptr;
     int which = randomObjects.size();
 
     // Load all means we will become every object in this list (trade only)
@@ -771,7 +787,7 @@ bool Object::skillRestrict(const Creature* creature, bool p) const {
     } else if(flagIsSet(O_FISHING)) {
         skill = "fishing";
     }
-    if(skill != "") {
+    if(!skill.empty()) {
         skillLevel = (int)creature->getSkillGained(skill);
         if(requiredSkill > skillLevel) {
             if(p) creature->checkStaff("You do not have enough training in ^W%s%s^x to use that!\n", skill.c_str(), type == ObjectType::ARMOR ? " armor" : "");
@@ -961,7 +977,7 @@ bstring Object::getCompass(const Creature* creature, bool useName) {
         return(oStr.str());
     }
 
-    const MapMarker *mapmarker=0;
+    const MapMarker *mapmarker=nullptr;
     if(creature->inAreaRoom())
         mapmarker = &creature->getConstAreaRoomParent()->mapmarker;
 
@@ -999,7 +1015,7 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 
 
     // use new plural code - on object
-    if(num > 1 && plural != "") {
+    if(num > 1 && !plural.empty()) {
         objStr << int_to_text(num) << " "  << plural;
         irrPlural = true;
     }
@@ -1104,7 +1120,7 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 // removes an object from the bag, usually when the bag is stolen or destroyed
 
 void Object::popBag(Creature* creature, bool quest, bool drop, bool steal, bool bodypart, bool dissolve) {
-    Object* object=0;
+    Object* object=nullptr;
 
     ObjectSet::iterator it;
     for(it = objects.begin() ; it != objects.end() ; ) {
@@ -1141,7 +1157,7 @@ bool Object::isKey(const UniqueRoom* room, const Exit* exit) const {
     // For the key to work, it must be from the same area
     // ie: no using oceancrest keys in highport!
     bstring area = exit->getKeyArea();
-    if(area == "")
+    if(area.empty())
         area = room->info.area;
 
     if(!info.isArea("") && !info.isArea(area))
@@ -1156,11 +1172,11 @@ bool Object::isKey(const UniqueRoom* room, const Exit* exit) const {
 // room = the catref for the destination room
 
 void spawnObjects(const bstring& room, const bstring& objects) {
-    UniqueRoom *dest = 0;
-    Object* object=0;
+    UniqueRoom *dest = nullptr;
+    Object* object=nullptr;
     CatRef  cr;
 
-    getCatRef(room, &cr, 0);
+    getCatRef(room, &cr, nullptr);
 
     if(!loadRoom(cr, &dest))
         return;
@@ -1173,9 +1189,9 @@ void spawnObjects(const bstring& room, const bstring& objects) {
     if(!dest->objects.empty()) {
         do {
             obj = getFullstrTextTrun(objects, i++);
-            if(obj != "")
+            if(!obj.empty())
             {
-                getCatRef(obj, &cr, 0);
+                getCatRef(obj, &cr, nullptr);
                 ObjectSet::iterator it;
                 for( it = dest->objects.begin() ; it != dest->objects.end() ; ) {
                     object = (*it++);
@@ -1186,7 +1202,7 @@ void spawnObjects(const bstring& room, const bstring& objects) {
                     }
                 }
             }
-        } while(obj != "");
+        } while(!obj.empty());
     }
 
     // add the objects
@@ -1194,9 +1210,9 @@ void spawnObjects(const bstring& room, const bstring& objects) {
 
     do {
         obj = getFullstrTextTrun(objects, i++);
-        if(obj != "")
+        if(!obj.empty())
         {
-            getCatRef(obj, &cr, 0);
+            getCatRef(obj, &cr, nullptr);
 
             if(loadObject(cr, &object)) {
                 // no need to spawn darkmetal items in a sunlit room
@@ -1208,7 +1224,7 @@ void spawnObjects(const bstring& room, const bstring& objects) {
                 }
             }
         }
-    } while(obj != "");
+    } while(!obj.empty());
 }
 
 
@@ -1217,7 +1233,7 @@ double Object::getDps() {
     if(!numAttacks)
         num = 1;
 
-    return(( (damage.average() + adjustment) * (1+num) / 2) / (getWeaponDelay()/10.0));
+    return(( (damage.average() + adjustment) * (1+num) / 2.0) / (getWeaponDelay()/10.0));
 }
 
 

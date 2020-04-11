@@ -23,7 +23,6 @@
 #include <zlib.h>
 #include <netinet/in.h>
 
-//class sockaddr_in;
 // C++ Includes
 #include <list>
 #include <map>
@@ -31,8 +30,6 @@
 #include <vector>
 #include <string>
 
-// Mud Includes
-#include "common.hpp"
 
 // Defines needed
 #define TELOPTS

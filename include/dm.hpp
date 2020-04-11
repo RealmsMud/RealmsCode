@@ -19,7 +19,6 @@
 #define DMH_H
 
 #include "catRef.hpp"
-#include "common.hpp"
 #include "range.hpp"
 
 class cmd;
@@ -143,7 +142,7 @@ int dmFollow(Player* player, cmd* cmnd);
 int dmAttack(Player* player, cmd* cmnd);
 int dmListEnemy(Player* player, cmd* cmnd);
 int dmListCharm(Player* player, cmd* cmnd);
-void dmSaveMob(Player* player, cmd* cmnd, CatRef cr);
+void dmSaveMob(Player* player, cmd* cmnd, const CatRef& cr);
 int dmAddMob(Player* player, cmd* cmnd);
 int dmForceWander(Player* player, cmd* cmnd);
 int dmBalance(Player* player, cmd* cmnd);
@@ -155,7 +154,7 @@ int stat_obj(Player* player, Object* object);
 int dmSetObj(Player* player, cmd* cmnd);
 int dmObjName(Player* player, cmd* cmnd);
 int dmAddObj(Player* player, cmd* cmnd);
-void dmSaveObj(Player* player, cmd* cmnd, CatRef cr);
+void dmSaveObj(Player* player, cmd* cmnd, const CatRef& cr);
 void dmResaveObject(const Player* player, Object* object, bool flush=false);
 int dmSize(Player* player, cmd* cmnd);
 int dmClone(Player* player, cmd* cmnd);
@@ -201,7 +200,7 @@ int dm2x(Player* player, cmd* cmnd);
 
 
 // dmroom.cpp
-bool isCardinal(bstring xname);
+bool isCardinal(const bstring& xname);
 bstring opposite_exit_name(const bstring& name);
 int dmPurge(Player* player, cmd* cmnd);
 int dmEcho(Player* player, cmd* cmnd);
@@ -225,9 +224,9 @@ int dmFixExit(Player* player, cmd* cmnd);
 int dmUnfixExit(Player* player, cmd* cmnd);
 int dmRenameExit(Player *admin, cmd* cmnd);
 int dmDestroyRoom(Player* player, cmd* cmnd);
-void findRoomsWithFlag(const Player* player, Range range, int flag);
+void findRoomsWithFlag(const Player* player, const Range& range, int flag);
 void findRoomsWithFlag(const Player* player, CatRef area, int flag);
-CatRef findNextEmpty(bstring type, bstring area);
+CatRef findNextEmpty(const bstring& type, const bstring& area);
 int dmFind(Player* player, cmd* cmnd);
 
 // watchers.c

@@ -16,9 +16,20 @@
  *
  */
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
+#include <ostream>                // for operator<<, basic_ostream, endl
+#include <string>                 // for operator==, operator<<, basic_string
+#include <utility>                // for pair
+
+#include "bstring.hpp"            // for bstring
+#include "cmd.hpp"                // for cmd
+#include "container.hpp"          // for Container, Containable, MonsterSet
+#include "creatures.hpp"          // for Monster, Player, Creature
+#include "flags.hpp"              // for M_ANTI_MAGIC_AURA, M_DM_FOLLOW, O_T...
+#include "free_crt.hpp"           // for free_crt
+#include "mudObject.hpp"          // for MudObject
+#include "objects.hpp"            // for Object
+#include "proto.hpp"              // for keyTxtEqual, broadcast, free_crt
+#include "rooms.hpp"              // for BaseRoom (ptr only), AreaRoom, Uniq...
 
 //################################################################################
 //# Container

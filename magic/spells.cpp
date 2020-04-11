@@ -15,52 +15,36 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "server.hpp"
-#include "xml.hpp"
+#include <boost/algorithm/string/join.hpp>          // join
+#include <cstdlib>                                  // for qsort
+#include <cstring>                                  // for memcpy, strcpy
+#include <list>                                     // for operator==, opera...
+#include <ostream>                                  // for basic_ostream::op...
 
-//*********************************************************************
-//                      load
-//*********************************************************************
+#include "anchor.hpp"                               // for Anchor
+#include "bstring.hpp"                              // for bstring
+#include "cmd.hpp"                                  // for cmd
+#include "commands.hpp"                             // for cmdSpells, spells...
+#include "config.hpp"                               // for Config, gConfig
+#include "creatures.hpp"                            // for Creature, Player
+#include "effects.hpp"                              // for EffectList, Effect
+#include "flags.hpp"                                // for P_AFK, P_FREE_ACTION
+#include "global.hpp"                               // for CreatureClass
+#include "magic.hpp"                                // for SpellData, Divine
+#include "proto.hpp"                                // for zero, free_crt
+#include "server.hpp"                               // for Server, gServer
+#include "structs.hpp"                              // for Spell, PFNCOMPARE
+#include "xml.hpp"                                  // for copyToBString
 
-Spell::Spell(xmlNodePtr rootNode) {
-    xmlNodePtr curNode = rootNode->children;
-    priority = 100;
+class Object;
 
-    while(curNode) {
-             if(NODE_NAME(curNode, "Name")) { 
-                 xml::copyToBString(name, curNode);
-                 parseName();
-             }
-        else if(NODE_NAME(curNode, "Script")) xml::copyToBString(script, curNode);
-        else if(NODE_NAME(curNode, "Priority")) xml::copyToNum(priority, curNode);
-        else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
-
-        curNode = curNode->next;
-    }
-}
-
-//*********************************************************************
-//                      save
-//*********************************************************************
-
-void Spell::save(xmlNodePtr rootNode) const {
-    xml::saveNonNullString(rootNode, "Name", name);
-    xml::saveNonNullString(rootNode, "Script", script);
-    xml::saveNonZeroNum<int>(rootNode, "Priority", priority);
-    xml::saveNonNullString(rootNode,"Description", description);
-
-}
 
 //*********************************************************************
 //                      clearSpells
 //*********************************************************************
 
 void Config::clearSpells() {
-    for(std::pair<bstring, Spell*> sp : spells) {
+    for(const auto& sp : spells) {
         delete sp.second;
     }
     spells.clear();
@@ -71,10 +55,10 @@ void Config::clearSpells() {
 //*********************************************************************
 
 int dmSpellList(Player* player, cmd* cmnd) {
-    const Spell* spell=0;
+    const Spell* spell=nullptr;
 
     player->printColor("^YSpells\n");
-    for(std::pair<bstring, Spell*> sp : gConfig->spells) {
+    for(const auto& sp : gConfig->spells) {
         spell = sp.second;
         player->printColor("  %s   %d - %s\n    Script: ^y%s^x\n", spell->name.c_str(),
             spell->priority, spell->description.c_str(), spell->script.c_str());
@@ -222,7 +206,7 @@ SpellData::SpellData() {
     how = CastType::CAST;
     splno = 0;
     level = 0;
-    object = 0;
+    object = nullptr;
     school = NO_SCHOOL;
     skill = "";
 }
@@ -261,7 +245,7 @@ bool SpellData::check(const Creature* player, bool skipKnowCheck) const {
     if(player->isMonster())
         return(true);
     if( !skipKnowCheck &&
-        skill != "" &&
+        !skill.empty() &&
         !player->knowsSkill(skill) &&
         !player->checkStaff("You are unable to cast %s spells.\n", gConfig->getSkillDisplayName(skill).c_str())
     )
@@ -276,6 +260,7 @@ bool SpellData::check(const Creature* player, bool skipKnowCheck) const {
         !player->checkStaff("You must be good to cast %s spells.\n", gConfig->getSkillDisplayName(skill).c_str())
     )
         return(false);
+
     return(true);
 }
 
@@ -286,7 +271,7 @@ bool SpellData::check(const Creature* player, bool skipKnowCheck) const {
 
 void infoSpells(const Player* viewer, Creature* target, bool notSelf) {
     Player *player = target->getAsPlayer();
-    const Anchor* anchor=0;
+    const Anchor* anchor=nullptr;
     MagicType castingType = target->getCastingType();
     int     min = (castingType == Divine ? (int)MIN_DOMAIN : (int)MIN_SCHOOL) + 1, max = (castingType == Divine ? (int)MAX_DOMAIN : (int)MAX_SCHOOL);
     char    spl[max][MAXSPELL][24], list[MAXSPELL][24];
@@ -393,7 +378,7 @@ void infoSpells(const Player* viewer, Creature* target, bool notSelf) {
 
 int cmdSpells(Creature* player, cmd* cmnd) {
     Creature* target = player;
-    Player  *pTarget=0, *viewer=0;
+    Player  *pTarget=nullptr, *viewer=nullptr;
     bool    notSelf=false;
 
     if(player->isPet()) {
@@ -456,17 +441,15 @@ bstring effectSpellName(bstring effect) {
 //                      spellsUnder
 //*********************************************************************
 
-void spellsUnder(const Player* viewer, const Creature* target, bool notSelf) {
+void spellsUnder(const Player *viewer, const Creature* target, bool notSelf) {
     bstring str = "";
     const Player* player = target->getAsConstPlayer();
     std::list<bstring> spells;
-    std::list<bstring>::const_iterator it;
-    const Effect* effect=0;
-    EffectList::const_iterator eIt;
+    const Effect* effect=nullptr;
 
     // effects are flagged as whether or not they are a spell effect
-    for(eIt = target->effects.effectList.begin() ; eIt != target->effects.effectList.end() ; eIt++) {
-        effect = (*eIt)->getEffect();
+    for(const auto& effectInfo : target->effects.effectList) {
+        effect = effectInfo->getEffect();
         if(!effect->isSpell())
             continue;
         spells.push_back(effectSpellName(effect->getDisplay()));
@@ -475,26 +458,19 @@ void spellsUnder(const Player* viewer, const Creature* target, bool notSelf) {
     // we want some flags to show up, too
     if(player) {
         if(player->flagIsSet(P_FREE_ACTION))
-            spells.push_back("free-action");
+            spells.emplace_back("free-action");
         if(player->flagIsSet(P_STUNNED))
-            spells.push_back("stun");
+            spells.emplace_back("stun");
     }
 
 
     spells.sort();
-    for(it = spells.begin() ; it != spells.end() ; it++) {
-        str += (*it);
-        str += ", ";
-    }
-
-
-    if(!str.length())
-        str = "None";
+    if(!spells.empty())
+        str = boost::algorithm::join(spells, ", ");
     else
-        str = str.substr(0, str.length() - 2);
+        str = "None";
 
     if(notSelf)
-        viewer->printColor("^W%M's Spells Under:^x %s.\n\n", target, str.c_str());
-    else
-        viewer->printColor("^WSpells under:^x %s.\n\n", str.c_str());
+        (Streamable &) *viewer << ColorOn << "^W" << target << "'s ";
+    (Streamable &) *viewer << ColorOn << "^WSpells Under:^x " << str << ".\n\n" << ColorOff;
 }

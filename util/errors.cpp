@@ -16,8 +16,11 @@
  *
  */
 
-#include "mud.hpp"
-#include "server.hpp"
+#include <cstdio>     // for sprintf
+#include <cstdlib>    // for abort
+
+#include "proto.hpp"   // for broadcast, logn, isDm, _assertlog
+#include "server.hpp"  // for Server, gServer
 
 //*********************************************************************
 // _assertlog()

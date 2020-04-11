@@ -16,8 +16,10 @@
  *
  */
 #include "carry.hpp"
-#include "mud.hpp"
-#include "xml.hpp"
+
+#include <ostream>  // for basic_ostream::operator<<, operator<<, ostringstream
+
+#include "xml.hpp"  // for getIntProp, newNumProp
 
 //*********************************************************************
 //                      Carry
