@@ -15,16 +15,34 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "commands.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "specials.hpp"
-#include "socket.hpp"
-#include "unique.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include <cstring>        // for strcpy
+#include <ctime>          // for time
+#include <string>          // for operator!=, operator==, basic_string
+
+#include "bstring.hpp"     // for bstring
+#include "creatures.hpp"   // for Monster, Player, Creature, ATTACK_BLOCK
+#include "damage.hpp"      // for Damage
+#include "effects.hpp"     // for EffectInfo
+#include "exits.hpp"       // for Exit
+#include "fighters.hpp"    // for FOCUS_DAMAGE_IN, FOCUS_DAMAGE_OUT
+#include "flags.hpp"       // for M_WILL_YELL_FOR_HELP, M_YELLED_FOR_HELP
+#include "global.hpp"      // for WIELD, HELD, SPL, DEA, POI, CreatureClass
+#include "mud.hpp"         // for LT_SAVES, LT_AGGRO_ACTION, LT, LT_STEAL
+#include "objects.hpp"     // for Object, ObjectType, ObjectType::ARMOR, Obj...
+#include "os.hpp"          // for ASSERTLOG
+#include "proto.hpp"       // for broadcast, bonus, broadcastGroup, crtWisdom
+#include "random.hpp"      // for Random
+#include "rooms.hpp"       // for BaseRoom, ExitList, UniqueRoom
+#include "server.hpp"      // for Server, gServer
+#include "socket.hpp"      // for Socket
+#include "specials.hpp"    // for SpecialAttack
+#include "statistics.hpp"  // for Statistics
+#include "stats.hpp"       // for Stat, MOD_CUR_MAX
+#include "structs.hpp"     // for saves
+#include "unique.hpp"      // for isLimited, remove
+#include "utils.hpp"       // for MIN, MAX
+#include "wanderInfo.hpp"  // for WanderInfo
+#include "xml.hpp"         // for loadMonster
 
 //*********************************************************************
 //                      doLagProtect

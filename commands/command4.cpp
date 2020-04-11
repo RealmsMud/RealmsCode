@@ -15,20 +15,25 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <iomanip>
+#include <cstdio>         // for sprintf
+#include <cstdlib>        // for abs
+#include <cstring>        // for strchr
+#include <ostream>        // for operator<<, basic_ostream, ostringstream
+#include <string>         // for char_traits, operator!=, basic_string
 
-#include "calendar.hpp"
-#include "clans.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "mud.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "version.hpp"
+#include "bstring.hpp"    // for bstring
+#include "calendar.hpp"   // for cDay, Calendar, cMonth
+#include "cmd.hpp"        // for cmd
+#include "commands.hpp"   // for cmdAge, cmdHelp, cmdInfo, cmdVersion, cmdWe...
+#include "config.hpp"     // for Config, gConfig
+#include "creatures.hpp"  // for Player
+#include "flags.hpp"      // for P_AFK
+#include "global.hpp"     // for DOPROMPT
+#include "mud.hpp"        // for LT_AGE
+#include "paths.hpp"      // for Help
+#include "proto.hpp"      // for viewFile, getOrdinal, up
+#include "server.hpp"     // for Server, gServer
+#include "version.hpp"    // for VERSION
 
 
 //*********************************************************************

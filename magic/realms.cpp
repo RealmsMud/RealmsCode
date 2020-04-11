@@ -15,17 +15,24 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
+#include <string>         // for operator==, basic_string
 
-#define NUM_RESISTS_ALLOWED     2
+#include "bstring.hpp"    // for bstring, operator+
+#include "cmd.hpp"        // for cmd
+#include "creatures.hpp"  // for Creature, Player, Monster
+#include "flags.hpp"      // for R_AIR_BONUS, R_COLD_BONUS, R_EARTH_BONUS
+#include "global.hpp"     // for CastType, CastType::CAST
+#include "magic.hpp"      // for SpellData, checkRefusingMagic, realmSkill
+#include "mud.hpp"        // for ospell
+#include "proto.hpp"      // for broadcast, up, getOffensiveSpell, getOpposi...
+#include "random.hpp"     // for Random
+#include "realm.hpp"      // for Realm, COLD, EARTH, ELEC, FIRE, WATER, WIND
+#include "rooms.hpp"      // for BaseRoom
 
 //
 // The get functions essentially store info about relationships between
 // flags and realms.
 //
-
 
 //*********************************************************************
 //                      getRandomRealm
@@ -113,57 +120,23 @@ Realm getOppositeRealm(Realm realm) {
 //                      checkRealmResist
 //*********************************************************************
 
-int Creature::checkRealmResist(int dmg, Realm realm) const {
-    bstring resistEffect = "resist-" + getRealmSpellName(realm);
+int Creature::checkRealmResist(int dmg, Realm pRealm) const {
+    bstring resistEffect = "resist-" + getRealmSpellName(pRealm);
     if(isEffected(resistEffect))
         dmg /= 2;
 
-    bstring immuneEffect = "immune-" + getRealmSpellName(realm);
+    bstring immuneEffect = "immune-" + getRealmSpellName(pRealm);
     if(isEffected(immuneEffect))
         dmg = 1;
 
-    bstring vulnEffect = "vuln-" + getRealmSpellName(realm);
+    bstring vulnEffect = "vuln-" + getRealmSpellName(pRealm);
     if(isEffected(vulnEffect))
         dmg = dmg + (dmg / 2);
 
     return(dmg);
 }
 
-//*********************************************************************
-//                      checkNumResistSpells
-//*********************************************************************
-
-void Player::checkNumResistSpells() {
-// TODO: Redo
-//  Realm realm=0, i=0;
-//  int num = countResistSpells();
-//  bstring str = "";
-//
-//  if(num <= NUM_RESISTS_ALLOWED)
-//      return;
-//
-//  // they have too many resist spells; make the ones with the shortest
-//  // remaining duration wear off
-//  while(num > NUM_RESISTS_ALLOWED) {
-//
-//      realm = WATER;
-//
-//      for(i=1; i<MAX_REALM; i++)
-//          if(flagIsSet(getRealmPlayerResistFlag(i)) &&
-//              ( !lasttime[getRealmSpellLT(realm)].ltime ||
-//                lasttime[getRealmSpellLT(i)].ltime <= lasttime[getRealmSpellLT(realm)].ltime) )
-//                realm = i;
-//
-//      clearFlag(getRealmPlayerResistFlag(realm));
-//      lasttime[getRealmSpellLT(realm)].ltime = 0;
-//
-//      player->print("Your resist-%s spell wears off.\n", getRealmSpellName(realm).c_str());
-//      num--;
-//  }
-}
-
-
-bool Player::checkOppositeResistSpell(bstring effect) {
+bool Player::checkOppositeResistSpell(const bstring& effect) {
     if(effect == "resist-cold" )
         removeEffect("resist-fire");
     else if(effect == "resist-fire" )
@@ -189,8 +162,8 @@ bool Player::checkOppositeResistSpell(bstring effect) {
 // This function replaces the code for the resist element functions
 
 int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm) {
-    Creature* target=0;
-    Player* pTarget=0;
+    Creature* target=nullptr;
+    Player* pTarget=nullptr;
 
     //int       lt = getRealmSpellLT(realm);
     bstring name = getRealmSpellName(realm);

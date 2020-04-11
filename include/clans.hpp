@@ -19,8 +19,9 @@
 #define CLAN_H_
 
 #include <map>
+#include <libxml/parser.h>  // for xmlNodePtr
 
-#include "common.hpp"
+#include "bstring.hpp"
 
 class Clan {
 public:
@@ -32,7 +33,7 @@ public:
     unsigned int getRescind() const;
     unsigned int getDeity() const;
     bstring getName() const;
-    short   getSkillBonus(bstring skill) const;
+    short   getSkillBonus(const bstring& skill) const;
 protected:
     unsigned int id;
     unsigned int join;

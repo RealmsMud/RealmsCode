@@ -15,12 +15,29 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.hpp"
-#include "creatures.hpp"
-#include "commands.hpp"
-#include "rooms.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
+#include <cstring>        // for strcpy, strcmp, strlen
+#include <string>         // for operator==, basic_string, operator!=
+
+#include "bstring.hpp"    // for bstring, operator+
+#include "cmd.hpp"        // for cmd
+#include "commands.hpp"   // for cmdProcess, getFullstrText, finishDropObject
+#include "container.hpp"  // for MonsterPtrLess (ptr only), PlayerSet
+#include "creatures.hpp"  // for Player, Creature, Monster, PetList
+#include "exits.hpp"      // for Exit
+#include "flags.hpp"      // for P_SLEEPING, P_SITTING, P_UNCONSCIOUS, P_ALI...
+#include "global.hpp"     // for CreatureClass, CreatureClass::CLERIC, KAMIRA
+#include "hooks.hpp"      // for Hooks
+#include "mud.hpp"        // for DL_DEFEC, SHIT_OBJ
+#include "objects.hpp"    // for Object
+#include "os.hpp"         // for ASSERTLOG
+#include "proto.hpp"      // for broadcast, dec_daily, findExit, log_immort
+#include "random.hpp"     // for Random
+#include "rooms.hpp"      // for BaseRoom
+#include "socket.hpp"     // for Socket
+#include "structs.hpp"    // for daily, Command, SEX_MALE
+#include "xml.hpp"        // for loadObject
+
+class MudObject;
 
 
 //*********************************************************************

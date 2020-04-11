@@ -15,10 +15,17 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "server.hpp"
-#include "socket.hpp"
+#include <cstring>       // for strcmp
+#include <ctime>         // for time
+
+#include "cmd.hpp"        // for cmd
+#include "creatures.hpp"  // for Player
+#include "flags.hpp"      // for P_AFK, P_NO_DUEL_MESSAGES
+#include "global.hpp"     // for CreatureClass, CreatureClass::BUILDER, DEFA...
+#include "mud.hpp"        // for LT_SPELL
+#include "proto.hpp"      // for logn, up, broadcast, induel
+#include "server.hpp"     // for Server, gServer
+#include "socket.hpp"     // for Socket
 
 
 

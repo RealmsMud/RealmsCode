@@ -15,15 +15,24 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "boost/format.hpp"
+#include <bits/exception.h>             // for exception
+#include <boost/format.hpp>             // for basic_altstringbuf<>::int_type
+#include <cstring>                      // for strcmp, strncmp, strcpy, strlen
+#include <strings.h>                    // for strcasecmp
+#include <ostream>                      // for operator<<, basic_ios::imbue
+#include <string>                       // for operator<<, operator==, char_...
 
-#include "commands.hpp"
-#include "creatures.hpp"
-#include "login.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
+#include "bstring.hpp"                  // for bstring, operator+
+#include "cmd.hpp"                      // for cmd
+#include "commands.hpp"                 // for cmdPrefs, cmdTelOpts
+#include "creatures.hpp"                // for Player, Creature (ptr only)
+#include "flags.hpp"                    // for P_NO_SHOW_MAIL, P_DONT_SHOW_S...
+#include "login.hpp"                    // for ANSI_COLOR, NO_COLOR
+#include "proto.hpp"                    // for isCt, broadcast, up, isDm
+#include "rooms.hpp"                    // for BaseRoom
+#include "server.hpp"                   // for Server, gServer
+#include "socket.hpp"                   // for Socket
+#include "utils.hpp"                    // for MAX
 
 // having a pref that starts with a hyphen (-) is instead a category
 typedef struct prefInfo {
@@ -37,89 +46,89 @@ typedef struct prefInfo {
 prefInfo prefList[] =
 {
     // name         flag                    canUse  desc
-    { "-Staff Preferences", 0, isStaff, "", 0 },
-    { "eaves",      P_EAVESDROPPER,         isCt,   "eavesdropper mode",        0 },
-    { "supereaves", P_SUPER_EAVESDROPPER,   isCt,   "super eavesdropper mode",  0 },
+    { "-Staff Preferences", 0, isStaff, "", false },
+    { "eaves",      P_EAVESDROPPER,         isCt,   "eavesdropper mode",        false },
+    { "supereaves", P_SUPER_EAVESDROPPER,   isCt,   "super eavesdropper mode",  false },
     { "msg",        P_NO_MSG,               isCt,   "*msg channel",             true },
     { "mobtick",    P_NO_TICK_MSG,          isCt,   "See mob tick broadcasts",  true },
     { "mobaggro",   P_NO_AGGRO_MSG,         isCt,   "See mob aggro broadcasts", true },
     { "mobdeath",   P_NO_DEATH_MSG,         isCt,   "See mob death broadcasts", true },
-    { "ttobound",   P_T_TO_BOUND,           isStaff,"*t to bound room",         0 },
+    { "ttobound",   P_T_TO_BOUND,           isStaff,"*t to bound room",         false },
     { "wts",        P_NO_WTS,               isCt,   "*wts channel",             true },
-    { "zones",      P_VIEW_ZONES,           isCt,   "view overland zones",      0 },
-    { "autoinvis",  P_AUTO_INVIS,           isCt,   "auto-invis if idle for 100+ mins",     0 },
-    { "allhooks",   P_SEE_ALL_HOOKS,        isDm,   "see all hooks",            0 },
-    { "hooks",      P_SEE_HOOKS,            isDm,   "see triggered hooks",      0 },
+    { "zones",      P_VIEW_ZONES,           isCt,   "view overland zones",      false },
+    { "autoinvis",  P_AUTO_INVIS,           isCt,   "auto-invis if idle for 100+ mins",     false },
+    { "allhooks",   P_SEE_ALL_HOOKS,        isDm,   "see all hooks",            false },
+    { "hooks",      P_SEE_HOOKS,            isDm,   "see triggered hooks",      false },
 
-    { "-Color",     0, 0, "", 0 },
-    { "mirc",       P_MIRC,                 0,      "mirc colors",              0 },
-    { "ansi",       P_ANSI_COLOR,           0,      "ansi colors",              0 },
-    { "langcolor",  P_LANGUAGE_COLORS,      0,      "language colors",          0 },
-    { "extracolor", P_NO_EXTRA_COLOR,       0,      "extra color options",      true },
-    { "areacolor",  P_INVERT_AREA_COLOR,    0,      "invert area colors",       0 },
-    { "mxpcolors",  P_MXP_ENABLED,          0,      "use MXP for more than 16 colors",      0 },
+    { "-Color",     0, nullptr, "", false },
+    { "mirc",       P_MIRC,                 nullptr,      "mirc colors",              false },
+    { "ansi",       P_ANSI_COLOR,           nullptr,      "ansi colors",              false },
+    { "langcolor",  P_LANGUAGE_COLORS,      nullptr,      "language colors",          false },
+    { "extracolor", P_NO_EXTRA_COLOR,       nullptr,      "extra color options",      true },
+    { "areacolor",  P_INVERT_AREA_COLOR,    nullptr,      "invert area colors",       false },
+    { "mxpcolors",  P_MXP_ENABLED,          nullptr,      "use MXP for more than 16 colors",      false },
 
-    { "-Channels",  0, 0, "", 0 },
-    { "cls",        P_IGNORE_CLASS_SEND,    0,      "class channel",            true },
-    { "race",       P_IGNORE_RACE_SEND,     0,      "race channel",             true },
-    { "broad",      P_NO_BROADCASTS,        0,      "broadcast channel",        true },
-    { "newbie",     P_IGNORE_NEWBIE_SEND,   0,      "newbie channel",           true },
-    { "gossip",     P_IGNORE_GOSSIP,        0,      "gossip channel",           true },
-    { "clan",       P_IGNORE_CLAN,          0,      "clan channel",             true },
-    { "tells",      P_NO_TELLS,             0,      "send/tell/whisper/sign",   true },
-    { "sms",        P_IGNORE_SMS,           0,      "receive text messages",    true },
-    { "ignore",     0,                      0,      "ignore all channels",      0 },
+    { "-Channels",  0, nullptr, "", false },
+    { "cls",        P_IGNORE_CLASS_SEND,    nullptr,      "class channel",            true },
+    { "race",       P_IGNORE_RACE_SEND,     nullptr,      "race channel",             true },
+    { "broad",      P_NO_BROADCASTS,        nullptr,      "broadcast channel",        true },
+    { "newbie",     P_IGNORE_NEWBIE_SEND,   nullptr,      "newbie channel",           true },
+    { "gossip",     P_IGNORE_GOSSIP,        nullptr,      "gossip channel",           true },
+    { "clan",       P_IGNORE_CLAN,          nullptr,      "clan channel",             true },
+    { "tells",      P_NO_TELLS,             nullptr,      "send/tell/whisper/sign",   true },
+    { "sms",        P_IGNORE_SMS,           nullptr,      "receive text messages",    true },
+    { "ignore",     0,                      nullptr,      "ignore all channels",      false },
     // do something with P_IGNORE_ALL
 
-    { "-Notifications", 0, 0, "", 0 },
-    { "duel",       P_NO_DUEL_MESSAGES,     0,      "duel messages",            true },
-    { "login",      P_NO_LOGIN_MESSAGES,    0,      "login messages",           true },
-    { "shopprofit", P_DONT_SHOW_SHOP_PROFITS,0,     "shop profit notifications",true },
-    { "mail",       P_NO_SHOW_MAIL,         0,      "mudmail notifications",    true },
-    { "permdeath",  P_PERM_DEATH,           0,      "perm death broadcasts",    0 },
-    { "auction",    P_NO_AUCTIONS,          0,      "player auctions",          true },
-    { "showforum",  P_HIDE_FORUM_POSTS,     0,      "notification of forum posts", true },
-    { "forumbrevity",P_FULL_FORUM_POSTS,    0,      "forum posts notification length", true },
-    { "notifications",0,                    0,      "show all notifications",   0 },
+    { "-Notifications", 0, nullptr, "", false },
+    { "duel",       P_NO_DUEL_MESSAGES,     nullptr,      "duel messages",            true },
+    { "login",      P_NO_LOGIN_MESSAGES,    nullptr,      "login messages",           true },
+    { "shopprofit", P_DONT_SHOW_SHOP_PROFITS,nullptr,     "shop profit notifications",true },
+    { "mail",       P_NO_SHOW_MAIL,         nullptr,      "mudmail notifications",    true },
+    { "permdeath",  P_PERM_DEATH,           nullptr,      "perm death broadcasts",    false },
+    { "auction",    P_NO_AUCTIONS,          nullptr,      "player auctions",          true },
+    { "showforum",  P_HIDE_FORUM_POSTS,     nullptr,      "notification of forum posts", true },
+    { "forumbrevity",P_FULL_FORUM_POSTS,    nullptr,      "forum posts notification length", true },
+    { "notifications",0,                    nullptr,      "show all notifications",   false },
 
-    { "-Combat",    0, 0, "", 0 },
-    { "autoattack", P_NO_AUTO_ATTACK,       0,      "auto attack",              true },
-    { "lagprotect", P_LAG_PROTECTION_SET,   0,      "lag protection",           0 },
-    { "lagrecall",  P_NO_LAG_HAZY,          0,      "recall potion if below half hp",true },
-    { "wimpy",      P_WIMPY,                0,      "flee when HP below this number",0 },
-    { "killaggros", P_KILL_AGGROS,          0,      "attack aggros first",      0 },
-    { "mobnums",    P_NO_NUMBERS,           0,      "monster ordinal numbers",  true },
-    { "autotarget", P_NO_AUTO_TARGET,       0,      "automatic targeting",      true },
+    { "-Combat",    0, nullptr, "", false },
+    { "autoattack", P_NO_AUTO_ATTACK,       nullptr,      "auto attack",              true },
+    { "lagprotect", P_LAG_PROTECTION_SET,   nullptr,      "lag protection",           false },
+    { "lagrecall",  P_NO_LAG_HAZY,          nullptr,      "recall potion if below half hp",true },
+    { "wimpy",      P_WIMPY,                nullptr,      "flee when HP below this number",false },
+    { "killaggros", P_KILL_AGGROS,          nullptr,      "attack aggros first",      false },
+    { "mobnums",    P_NO_NUMBERS,           nullptr,      "monster ordinal numbers",  true },
+    { "autotarget", P_NO_AUTO_TARGET,       nullptr,      "automatic targeting",      true },
 
-    { "-Group",     0, 0, "", 0 },
-    { "group",      P_IGNORE_GROUP_BROADCAST,0,     "group combat messages",    true },
-    { "xpsplit",    P_XP_DIVIDE,            0,      "group experience split",   0 },
-    { "split",      P_GOLD_SPLIT,           0,      "split gold among group",   0 },
-    { "stats",      P_NO_SHOW_STATS,        0,      "show group your stats",    true },
-    { "follow",     P_NO_FOLLOW,            0,      "can be followed",          true },
+    { "-Group",     0, nullptr, "", false },
+    { "group",      P_IGNORE_GROUP_BROADCAST,nullptr,     "group combat messages",    true },
+    { "xpsplit",    P_XP_DIVIDE,            nullptr,      "group experience split",   false },
+    { "split",      P_GOLD_SPLIT,           nullptr,      "split gold among group",   false },
+    { "stats",      P_NO_SHOW_STATS,        nullptr,      "show group your stats",    true },
+    { "follow",     P_NO_FOLLOW,            nullptr,      "can be followed",          true },
 
-    { "-Display",   0, 0, "", 0 },
-    { "showall",    P_SHOW_ALL_PREFS,       0,      "show all preferences",     false },
-    { "short",      P_NO_SHORT_DESCRIPTION, 0,      "short description",        true },
-    { "long",       P_NO_LONG_DESCRIPTION,  0,      "long description",         true },
-    { "nlprompt",   P_NEWLINE_AFTER_PROMPT, 0,      "newline after prompt",     0 },
-    { "xpprompt",   P_SHOW_XP_IN_PROMPT,    0,      "show exp in prompt",       0 },
-    { "prompt",     P_PROMPT,               0,      "descriptive prompt",       0 },
-    { "compact",    P_COMPACT,              0,      "compacts most output",     false },
-    { "tick",       P_SHOW_TICK,            0,      "shows ticks",              false },
-    { "skillprogress", P_SHOW_SKILL_PROGRESS,0,     "show skill progress bar",  false },
+    { "-Display",   0, nullptr, "", false },
+    { "showall",    P_SHOW_ALL_PREFS,       nullptr,      "show all preferences",     false },
+    { "short",      P_NO_SHORT_DESCRIPTION, nullptr,      "short description",        true },
+    { "long",       P_NO_LONG_DESCRIPTION,  nullptr,      "long description",         true },
+    { "nlprompt",   P_NEWLINE_AFTER_PROMPT, nullptr,      "newline after prompt",     false },
+    { "xpprompt",   P_SHOW_XP_IN_PROMPT,    nullptr,      "show exp in prompt",       false },
+    { "prompt",     P_PROMPT,               nullptr,      "descriptive prompt",       false },
+    { "compact",    P_COMPACT,              nullptr,      "compacts most output",     false },
+    { "tick",       P_SHOW_TICK,            nullptr,      "shows ticks",              false },
+    { "skillprogress", P_SHOW_SKILL_PROGRESS,nullptr,     "show skill progress bar",  false },
 
-    { "-Miscellaneous", 0, 0, "", 0 },
-    { "autowear",   P_NO_AUTO_WEAR,         0,      "wear all on login",        true },
-    { "summon",     P_NO_SUMMON,            0,      "can be summoned",          true },
+    { "-Miscellaneous", 0, nullptr, "", false },
+    { "autowear",   P_NO_AUTO_WEAR,         nullptr,      "wear all on login",        true },
+    { "summon",     P_NO_SUMMON,            nullptr,      "can be summoned",          true },
     //{ "pkill",        P_NO_PKILL_PERCENT,     0,      "show pkill percentage",    true },
-    { "afk",        P_AFK,                  0,      "away from keyboard",       0 },
-    { "statistics", P_NO_TRACK_STATS,       0,      "track statistics",         true },
+    { "afk",        P_AFK,                  nullptr,      "away from keyboard",       false },
+    { "statistics", P_NO_TRACK_STATS,       nullptr,      "track statistics",         true },
 
     // handle wimpy below
     // handle afk below
 
-    { "", 0, 0, "" }
+    { "", 0, nullptr, "" }
 };
 
 //*********************************************************************
@@ -223,7 +232,7 @@ int cmdPrefs(Player* player, cmd* cmnd) {
             player->print("\"pref -[category]\". To view all preferences, type \"pref -all\".\n\n");
         }
 
-        while(prefList[i].name != "") {
+        while(!prefList[i].name.empty()) {
             if(!prefList[i].canUse || prefList[i].canUse(player)) {
 
                 if(prefList[i].name.at(0) == '-') {
@@ -273,7 +282,7 @@ int cmdPrefs(Player* player, cmd* cmnd) {
 
     // we're setting or clearing a preference
     // find out which one
-    while(prefList[i].name != "") {
+    while(!prefList[i].name.empty()) {
         if( prefList[i].name.at(0) != '-' &&
             (!prefList[i].canUse || prefList[i].canUse(player))
         ) {

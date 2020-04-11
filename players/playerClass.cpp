@@ -16,15 +16,18 @@
  *
  */
 
-#include "config.hpp"
-#include "creatures.hpp"
-#include "levelGain.hpp"
-#include "mud.hpp"
-#include "playerClass.hpp"
-#include "playerTitle.hpp"
-#include "server.hpp"
-#include "skillGain.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
+#include <cstring>                                 // for strcmp
+
+#include "bstring.hpp"                              // for bstring
+#include "cmd.hpp"                                  // for cmd
+#include "config.hpp"                               // for Config, gConfig
+#include "creatures.hpp"                            // for Player
+#include "levelGain.hpp"                            // for LevelGain
+#include "playerClass.hpp"                          // for PlayerClass
+#include "playerTitle.hpp"                          // for PlayerTitle
+#include "server.hpp"                               // for Server, gServer
+#include "skillGain.hpp"                            // for SkillGain
 
 
 //*********************************************************************
@@ -69,180 +72,19 @@ PlayerClass::~PlayerClass() {
     titles.clear();
 }
 
-//*********************************************************************
-//                      load
-//*********************************************************************
-
-void PlayerClass::load(xmlNodePtr rootNode) {
-//  // Stuff gained on each additional level
-//  std::map<int, LevelGain*> levels;
-
-    id = xml::getIntProp(rootNode, "id");
-    xml::copyPropToBString(name, rootNode, "Name");
-
-    xmlNodePtr curNode = rootNode->children;
-
-    while(curNode) {
-        if(NODE_NAME(curNode, "Title")) {
-            titles[1] = new PlayerTitle;
-            titles[1]->load(curNode);
-        }
-        else if(NODE_NAME(curNode, "UnarmedWeaponSkill")) xml::copyToBString(unarmedWeaponSkill, curNode);
-        else if(NODE_NAME(curNode, "NumProfs")) xml::copyToNum(numProf, curNode);
-        else if(NODE_NAME(curNode, "NeedsDeity")) {
-            int i=0;
-            xml::copyToNum(i, curNode);
-            if(i)
-                needDeity = true;
-        } else if(NODE_NAME(curNode, "Base")) {
-            xmlNodePtr baseNode = curNode->children;
-            while(baseNode) {
-                if(NODE_NAME(baseNode, "Stats")) {
-                    xmlNodePtr statNode = baseNode->children;
-                    while(statNode) {
-                        if(NODE_NAME(statNode, "Hp")) {
-                            xml::copyToNum(baseHp, statNode);
-                        } else if(NODE_NAME(statNode, "Mp")) {
-                            xml::copyToNum(baseMp, statNode);
-                        } else if(NODE_NAME(statNode, "Strength")) {
-                            xml::copyToNum(baseStrength, statNode);
-                            checkAutomaticStats();
-                        } else if(NODE_NAME(statNode, "Dexterity")) {
-                            xml::copyToNum(baseDexterity, statNode);
-                            checkAutomaticStats();
-                        } else if(NODE_NAME(statNode, "Constitution")) {
-                            xml::copyToNum(baseConstitution, statNode);
-                            checkAutomaticStats();
-                        } else if(NODE_NAME(statNode, "Intelligence")) {
-                            xml::copyToNum(baseIntelligence, statNode);
-                            checkAutomaticStats();
-                        } else if(NODE_NAME(statNode, "Piety")) {
-                            xml::copyToNum(basePiety, statNode);
-                            checkAutomaticStats();
-                        }
-                        statNode = statNode->next;
-                    }
-                } else if(NODE_NAME(baseNode, "Dice")) damage.load(baseNode);
-                else if(NODE_NAME(baseNode, "Skills")) {
-                    xmlNodePtr skillNode = baseNode->children;
-                    while(skillNode) {
-                        if(NODE_NAME(skillNode, "Skill")) {
-                            SkillGain* skillGain = new SkillGain(skillNode);
-                            baseSkills.push_back(skillGain);
-                        }
-                        skillNode = skillNode->next;
-                    }
-                }
-                baseNode = baseNode->next;
-            }
-        } else if(NODE_NAME(curNode, "Levels")) {
-            xmlNodePtr levelNode = curNode->children;
-            int lvl;
-            while(levelNode) {
-                if(NODE_NAME(levelNode, "Level")) {
-                    lvl = xml::getIntProp(levelNode, "Num");
-                    if(lvl > 0) {
-                        levels[lvl] = new LevelGain(levelNode);
-                    }
-
-                    xmlNodePtr childNode = levelNode->children;
-                    while(childNode) {
-                        if(NODE_NAME(childNode, "Title")) {
-                            titles[lvl] = new PlayerTitle;
-                            titles[lvl]->load(childNode);
-                        }
-                        childNode = childNode->next;
-                    }
-                }
-                levelNode = levelNode->next;
-            }
-        }
-
-        curNode = curNode->next;
-
-    }
-}
-
-//*********************************************************************
-//                      getId
-//*********************************************************************
-
 int PlayerClass::getId() const { return(id); }
-
-//*********************************************************************
-//                      getName
-//*********************************************************************
-
 bstring PlayerClass::getName() const { return(name); }
-
-//*********************************************************************
-//                      getUnarmedWeaponSkill
-//*********************************************************************
-
 bstring PlayerClass::getUnarmedWeaponSkill() const { return(unarmedWeaponSkill); }
-
-//*********************************************************************
-//                      getSkillBegin
-//*********************************************************************
-
 std::list<SkillGain*>::const_iterator PlayerClass::getSkillBegin() { return(baseSkills.begin()); }
-
-//*********************************************************************
-//                      getSkillEnd
-//*********************************************************************
-
 std::list<SkillGain*>::const_iterator PlayerClass::getSkillEnd() { return(baseSkills.end()); }
-
-//*********************************************************************
-//                      getLevelBegin
-//*********************************************************************
-
 std::map<int, LevelGain*>::const_iterator PlayerClass::getLevelBegin() { return(levels.begin()); }
-
-//*********************************************************************
-//                      getLevelEnd
-//*********************************************************************
-
 std::map<int, LevelGain*>::const_iterator PlayerClass::getLevelEnd() { return(levels.end()); }
-
-//*********************************************************************
-//                      getBaseHp
-//*********************************************************************
-
 short PlayerClass::getBaseHp() { return(baseHp); }
-
-//*********************************************************************
-//                      getBaseMp
-//*********************************************************************
-
 short PlayerClass::getBaseMp() { return(baseMp); }
-
-//*********************************************************************
-//                      needsDeity
-//*********************************************************************
-
 bool PlayerClass::needsDeity() { return(needDeity); }
-
-//*********************************************************************
-//                      numProfs
-//*********************************************************************
-
 short PlayerClass::numProfs() { return(numProf); }
-
-//*********************************************************************
-//                      getLevelGain
-//*********************************************************************
-
 LevelGain* PlayerClass::getLevelGain(int lvl) { return(levels[lvl]); }
-
-//*********************************************************************
-//                      hasDefaultStats
-//*********************************************************************
 bool PlayerClass::hasDefaultStats() { return(hasAutomaticStats); }
-
-//*********************************************************************
-//                      setDefaultStats
-//*********************************************************************
 bool PlayerClass::setDefaultStats(Player* player) {
     if(!hasDefaultStats() || !player)
         return(false);
@@ -263,53 +105,6 @@ void PlayerClass::checkAutomaticStats() {
         std::clog << "Automatic stats registered for " << this->getName() << std::endl;
         hasAutomaticStats = true;
     }
-}
-//*********************************************************************
-//                      loadClasses
-//*********************************************************************
-
-bool Config::loadClasses() {
-    xmlDocPtr xmlDoc;
-    xmlNodePtr curNode;
-
-    char filename[80];
-    snprintf(filename, 80, "%s/classes.xml", Path::Game);
-    xmlDoc = xml::loadFile(filename, "Classes");
-
-    if(xmlDoc == nullptr)
-        return(false);
-
-    curNode = xmlDocGetRootElement(xmlDoc);
-
-    curNode = curNode->children;
-    while(curNode && xmlIsBlankNode(curNode))
-        curNode = curNode->next;
-
-    if(curNode == 0) {
-        xmlFreeDoc(xmlDoc);
-        return(false);
-    }
-
-    clearClasses();
-    bstring className = "";
-    while(curNode != nullptr) {
-        if(NODE_NAME(curNode, "Class")) {
-            xml::copyPropToBString( className, curNode, "Name");
-            if(className != "") {
-                if(classes.find(className) == classes.end()) {
-                    //printf("\n\tLoaded %s", className.c_str());
-                    classes[className] = new PlayerClass(curNode);
-                } else {
-                    std::clog << "Error: Duplicate class: " << className.c_str() << std::endl;
-                }
-            }
-        }
-        curNode = curNode->next;
-    }
-    xmlFreeDoc(xmlDoc);
-    xmlCleanupParser();
-    //printf("\n");
-    return(true);
 }
 
 //*********************************************************************

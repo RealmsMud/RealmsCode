@@ -16,13 +16,23 @@
  *
  */
 
-#include "creatures.hpp"
-#include "config.hpp"
-#include "deityData.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "socket.hpp"
-#include "objects.hpp"
+#include <ctime>           // for time
+
+#include "bstring.hpp"     // for bstring
+#include "cmd.hpp"         // for cmd
+#include "config.hpp"      // for Config, gConfig
+#include "creatures.hpp"   // for Creature, Player, Monster
+#include "deityData.hpp"   // for DeityData
+#include "flags.hpp"       // for M_PERMENANT_MONSTER, M_RESIST_STUN_SPELL
+#include "global.hpp"      // for CastType, CreatureClass, CastType::CAST
+#include "magic.hpp"       // for SpellData, checkRefusingMagic, canEnchant
+#include "money.hpp"       // for GOLD, Money
+#include "mud.hpp"         // for DL_SILENCE, LT_ENCHA, LT_SPELL, DL_ENCHA
+#include "objects.hpp"     // for Object, ObjectType, ObjectType::WEAPON
+#include "proto.hpp"       // for broadcast, bonus, crtWisdom, dec_daily, dice
+#include "random.hpp"      // for Random
+#include "rooms.hpp"       // for BaseRoom, UniqueRoom
+#include "utils.hpp"       // for MAX, MIN
 
 
 //*********************************************************************
@@ -31,7 +41,7 @@
 
 int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
     int     bns=0, nohold=0, dur=0;
-    Creature* target=0;
+    Creature* target=nullptr;
 
 
     if( player->getClass() !=  CreatureClass::CLERIC &&
@@ -135,7 +145,8 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
 
         if(spellData->how == CastType::CAST)
-            bns = 5*(spellData->level - target->getLevel()) + 2*crtWisdom(target) - 2*bonus((int)player->intelligence.getCur());
+            bns = 5*(spellData->level - target->getLevel()) + 2*crtWisdom(target) - 2*bonus(
+                    player->intelligence.getCur());
 
         if(target->isPlayer() && target->getClass() == CreatureClass::CLERIC && target->getDeity() == ARES)
             bns += 25;
@@ -161,7 +172,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
             if((!target->chkSave(SPL, player, bns) && !nohold) || player->isCt()) {
 
                 if(spellData->how == CastType::CAST)
-                    dur = Random::get(9,18) + 2*bonus((int)player->intelligence.getCur()) - crtWisdom(target);
+                    dur = Random::get(9,18) + 2*bonus(player->intelligence.getCur()) - crtWisdom(target);
                 else
                     dur = Random::get(9,12);
 
@@ -189,7 +200,7 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
             if(!target->chkSave(SPL, player, bns) || player->isCt()) {
 
                 if(spellData->how == CastType::CAST)
-                    dur = Random::get(12,18) + 2*bonus((int)player->intelligence.getCur()) - crtWisdom(target);
+                    dur = Random::get(12,18) + 2*bonus(player->intelligence.getCur()) - crtWisdom(target);
                 else
                     dur = Random::get(9,12);
 
@@ -213,10 +224,10 @@ int splHoldPerson(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *target=0;
+    Player  *target=nullptr;
     int     bns=0;
-    long    t = time(0);
-    Object  *weapon=0, *weapon2=0;
+    long    t = time(nullptr);
+    Object  *weapon=nullptr, *weapon2=nullptr;
 
     if(spellData->how == CastType::POTION &&
         player->getClass() == CreatureClass::PALADIN &&
@@ -255,11 +266,11 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
         broadcast(player->getSock(), player->getParent(), "%M becomes utterly terrified!", player);
         if(player->ready[WIELD-1]) {
             weapon = player->ready[WIELD-1];
-            player->ready[WIELD-1] = 0;
+            player->ready[WIELD-1] = nullptr;
         }
         if(player->ready[HELD-1]) {
             weapon2 = player->ready[HELD-1];
-            player->ready[HELD-1] = 0;
+            player->ready[HELD-1] = nullptr;
         }
 
         target = player->getAsPlayer();
@@ -363,11 +374,11 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
             //*********************************************************************
             if(target->ready[WIELD-1]) {
                 weapon = target->ready[WIELD-1];
-                target->ready[WIELD-1] = 0;
+                target->ready[WIELD-1] = nullptr;
             }
             if(target->ready[HELD-1]) {
                 weapon2 = target->ready[HELD-1];
-                target->ready[HELD-1] = 0;
+                target->ready[HELD-1] = nullptr;
             }
 
             // killed while fleeing?
@@ -396,7 +407,7 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splCourage(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
     long    dur=0;
     int     noCast=0;
 
@@ -464,7 +475,7 @@ int splCourage(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     if(spellData->how == CastType::CAST) {
-        dur = MAX(300, 900 + bonus((int) player->intelligence.getCur()) * 300);
+        dur = MAX(300, 900 + bonus(player->intelligence.getCur()) * 300);
 
         if(player->getRoomParent()->magicBonus()) {
             player->print("The room's magical properties increase the power of your spell.\n");
@@ -484,13 +495,13 @@ int splCourage(Creature* player, cmd* cmnd, SpellData* spellData) {
 // percentage and a penality of -2 on all attacks
 
 int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
     int     dur=0;
 
     if(spellData->how == CastType::CAST) {
-        dur = 600 + Random::get(1, 30) * 10 + bonus((int) player->intelligence.getCur()) * 150;
+        dur = 600 + Random::get(1, 30) * 10 + bonus(player->intelligence.getCur()) * 150;
     } else if(spellData->how == CastType::SCROLL)
-        dur = 600 + Random::get(1, 15) * 10 + bonus((int) player->intelligence.getCur()) * 50;
+        dur = 600 + Random::get(1, 15) * 10 + bonus(player->intelligence.getCur()) * 50;
     else
         dur = 600 + Random::get(1, 30) * 10;
 
@@ -612,7 +623,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 // unable to casts spells, use scrolls, speak, yell, or broadcast
 
 int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
     int     bns=0, canCast=0, mpCost=0;
     long    dur=0;
 
@@ -645,9 +656,9 @@ int splSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
     player->smashInvis();
 
     if(spellData->how == CastType::CAST) {
-        dur = Random::get(180,300) + 3*bonus((int) player->intelligence.getCur());
+        dur = Random::get(180,300) + 3*bonus(player->intelligence.getCur());
     } else if(spellData->how == CastType::SCROLL)
-        dur = Random::get(30,120) + bonus((int) player->intelligence.getCur());
+        dur = Random::get(30,120) + bonus(player->intelligence.getCur());
     else
         dur = Random::get(30,60);
 
@@ -817,7 +828,7 @@ int splEnchant(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!pPlayer)
         return(0);
 
-    Object  *object=0;
+    Object  *object=nullptr;
     int     adj=1;
 
     if(!canEnchant(pPlayer, spellData))
@@ -869,7 +880,7 @@ int splEnchant(Creature* player, cmd* cmnd, SpellData* spellData) {
 // for a short period of time.
 
 int cmdEnchant(Player* player, cmd* cmnd) {
-    Object* object=0;
+    Object* object=nullptr;
     int     dur;
 
     if(!player->ableToDoCommand())
@@ -906,9 +917,9 @@ int cmdEnchant(Player* player, cmd* cmnd) {
 //  }
 
 
-    dur = MAX(600, MIN(7200, (int)(player->getSkillLevel("enchant")*100) + (int)bonus((int)player->intelligence.getCur())*100));
+    dur = MAX(600, MIN(7200, (int)(player->getSkillLevel("enchant")*100) + bonus(player->intelligence.getCur()) * 100));
     object->lasttime[LT_ENCHA].interval = dur;
-    object->lasttime[LT_ENCHA].ltime = time(0);
+    object->lasttime[LT_ENCHA].ltime = time(nullptr);
 
     object->randomEnchant((int)player->getSkillLevel("enchant")/2);
 
@@ -929,8 +940,8 @@ int cmdEnchant(Player* player, cmd* cmnd) {
 
 int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *pPlayer = player->getAsPlayer();
-    Creature* target=0;
-    Monster *mTarget=0;
+    Creature* target=nullptr;
+    Monster *mTarget=nullptr;
     int     dur=0, bns=0, mageStunBns=0;
 
     if(pPlayer)
@@ -950,7 +961,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(target == player) {
 
         if(spellData->how == CastType::CAST) {
-            dur = bonus((int) player->intelligence.getCur()) * 2 +
+            dur = bonus(player->intelligence.getCur()) * 2 +
                   (((Player*)player)->getLuck() / 10) + mageStunBns;
         } else
             dur = dice(2, 6, 0);
@@ -1004,14 +1015,14 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
         if(spellData->how == CastType::CAST) {
-            dur = bonus((int) player->intelligence.getCur()) * 2 + dice(2, 6, 0) + mageStunBns;
+            dur = bonus(player->intelligence.getCur()) * 2 + dice(2, 6, 0) + mageStunBns;
         } else
             dur = dice(2, 5, 0);
 
         if(player->isPlayer() && !mTarget) {
             dur = ((spellData->level - target->getLevel()) +
-                    (bonus((int) player->intelligence.getCur()) -
-                    bonus((int) target->intelligence.getCur())));
+                    (bonus(player->intelligence.getCur()) -
+                     bonus(target->intelligence.getCur())));
             if(dur < 3)
                 dur = 3;
 
@@ -1048,7 +1059,7 @@ int splStun(Creature* player, cmd* cmnd, SpellData* spellData) {
                 mTarget->flagIsSet(M_LEVEL_BASED_STUN)
             ) {
                 if(((int)mTarget->getLevel() - (int)spellData->level) > ((player->getClass() == CreatureClass::LICH || player->getClass() == CreatureClass::MAGE) ? 6:4))
-                    dur = MAX(3, bonus((int) player->intelligence.getCur()));
+                    dur = MAX(3, bonus(player->intelligence.getCur()));
                 else
                     dur = MAX(5, dur);
             }

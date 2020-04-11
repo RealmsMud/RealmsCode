@@ -18,13 +18,11 @@
 #ifndef VPRINT_H_
 #define VPRINT_H_
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include <printf.h>
 // Function prototypes
 int print_arginfo (const struct printf_info *info, size_t n, int *argtypes);
-int print_object(FILE *stream, const struct printf_info *info, const void *const *args);
-int print_creature(FILE *stream, const struct printf_info *info, const void *const *args);
 
 #endif /*VPRINT_H_*/

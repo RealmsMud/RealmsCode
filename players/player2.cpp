@@ -16,18 +16,33 @@
  *
  */
 
-#include "catRefInfo.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "levelGain.hpp"
-#include "login.hpp"
-#include "mud.hpp"
-#include "playerClass.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "xml.hpp"
+#include <cctype>          // for isspace
+#include <cstdio>          // for sprintf
+#include <cstdlib>         // for atoi
+#include <cstring>         // for strtok, strcpy, strcat, strdup, strstr
+
+#include "bstring.hpp"      // for bstring, operator+
+#include "catRef.hpp"       // for CatRef
+#include "catRefInfo.hpp"   // for CatRefInfo
+#include "cmd.hpp"          // for cmd
+#include "commands.hpp"     // for cmdAction
+#include "config.hpp"       // for Config, gConfig
+#include "creatures.hpp"    // for Player, Creature
+#include "exits.hpp"        // for Exit
+#include "flags.hpp"        // for M_UNKILLABLE
+#include "global.hpp"       // for CreatureClass, CON, CreatureClass::LICH
+#include "levelGain.hpp"    // for LevelGain
+#include "monType.hpp"      // for INVALID, PLAYER, mType
+#include "objects.hpp"      // for Object
+#include "os.hpp"           // for merror
+#include "playerClass.hpp"  // for PlayerClass
+#include "proto.hpp"        // for broadcast, getRandomMonster, getRandomPlayer
+#include "raceData.hpp"     // for RaceData
+#include "random.hpp"       // for Random
+#include "rooms.hpp"        // for BaseRoom, UniqueRoom (ptr only)
+#include "structs.hpp"      // for vstat
+#include "utils.hpp"        // for MAX, MIN
+#include "xml.hpp"          // for loadRoom
 
 //********************************************************************
 //                      calcStats
@@ -73,7 +88,7 @@ void Player::calcStats(vstat sendStat, vstat *toStat) {
 
     PlayerClass *pClass = gConfig->classes[getClassString()];
     //const RaceData* rData = gConfig->getRace(race);
-    LevelGain *lGain = 0;
+    LevelGain *lGain = nullptr;
 
     // Check for level info
     if(!pClass) {
@@ -143,9 +158,9 @@ bool Player::checkConfusion() {
     int     action=0, dmg=0;
     mType   targetType = PLAYER;
     char    atk[50];
-    Creature* target=0;
-    Exit    *newExit=0;
-    BaseRoom* room = getRoomParent(), *bRoom=0;
+    Creature* target=nullptr;
+    Exit    *newExit=nullptr;
+    BaseRoom* room = getRoomParent(), *bRoom=nullptr;
     CatRef  cr;
 
 
@@ -219,7 +234,7 @@ bool Player::checkConfusion() {
 
             if(ready[WIELD-1]) {
                 dmg = ready[WIELD-1]->damage.roll() +
-                      bonus((int)strength.getCur()) + ready[WIELD-1]->getAdjustment();
+                      bonus(strength.getCur()) + ready[WIELD - 1]->getAdjustment();
                 printColor("^BYou frantically swing your weapon at imaginary enemies.\n");
             } else {
                 printColor("^BYou madly flail around at imaginary enemies.\n");
@@ -299,7 +314,7 @@ CatRef getEtherealTravelRoom() {
 //********************************************************************
 
 void etherealTravel(Player* player) {
-    UniqueRoom  *newRoom=0;
+    UniqueRoom  *newRoom=nullptr;
     CatRef  cr = getEtherealTravelRoom();
 
     if(!loadRoom(cr, &newRoom))
@@ -330,7 +345,7 @@ int cmdVisible(Player* player, cmd* cmnd) {
 //********************************************************************
 
 int cmdDice(Creature* player, cmd* cmnd) {
-    char    *str=0, *tok=0, diceOutput[256], add[256];
+    char    *str=nullptr, *tok=nullptr, diceOutput[256], add[256];
     int     strLen=0, i=0;
     int     diceSides=0,diceNum=0,diceAdd=0;
     int     rolls=0, total=0;

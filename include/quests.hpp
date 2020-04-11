@@ -34,7 +34,7 @@ class QuestCatRef : public CatRef {
 public:
     QuestCatRef();
     QuestCatRef(xmlNodePtr rootNode);
-    xmlNodePtr save(xmlNodePtr rootNode, bstring saveName = "QuestCatRef") const;
+    xmlNodePtr save(xmlNodePtr rootNode, const bstring& saveName = "QuestCatRef") const;
 //  bstring area;
 //  int index;
     int curNum;
@@ -99,7 +99,7 @@ private:
 
     bool repeatable;    // Can this quest be repeated multiple times?
     QuestRepeatFrequency repeatFrequency;  // How often can this quest be repeated
-    int timesRepeatable;     // Number of times the quest can be repeated.  0 for infinite
+    int timesRepeatable{};     // Number of times the quest can be repeated.  0 for infinite
     bool sharable;      // Can this quest be shared with other players?
     int minLevel;       // Minimum required level to get this quest
     int minFaction;     // Minimum requried faction to get this quest (Based on mob's primeFaction)
@@ -134,7 +134,7 @@ public:
     QuestInfo* getParentQuest() const;
 private:
     int questId;
-    QuestInfo* parentQuest; // What quest are we keeping track of?
+    QuestInfo* parentQuest{}; // What quest are we keeping track of?
     Player* parentPlayer;   // Parent Player for this quest
     bstring revision;
 
@@ -165,8 +165,8 @@ public:
 
 class QuestCompleted {
 private:
-    int times;
-    time_t lastCompleted;
+    int times{};
+    time_t lastCompleted{};
     void init();
 public:
     QuestCompleted(xmlNodePtr rootNode);

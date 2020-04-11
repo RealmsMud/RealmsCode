@@ -15,23 +15,45 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <sstream>
-#include <iomanip>
+#include <cctype>                 // for isalpha
+#include <fcntl.h>                // for open, O_RDONLY
+#include <cstdio>                 // for sprintf, snprintf
+#include <cstdlib>                // for atoi
+#include <cstring>                // for strcpy, strchr
+#include <ctime>                  // for time
+#include <unistd.h>               // for close, read
+#include <sstream>                // for operator<<, basic_ostream, ostrings...
+#include <iomanip>                // for setw
 
-#include "calendar.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "guilds.hpp"
-#include "login.hpp"
-#include "mud.hpp"
-#include "playerClass.hpp"
-#include "raceData.hpp"
-#include "skills.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"            // for bstring, operator+
+#include "catRef.hpp"             // for CatRef
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for parse, cmdWeapons
+#include "config.hpp"             // for Config, gConfig, accountDouble, Ski...
+#include "container.hpp"          // for ObjectSet
+#include "creatures.hpp"          // for Player, CustomCrt, Creature, Custom...
+#include "deityData.hpp"          // for DeityData
+#include "flags.hpp"              // for P_HARDCORE, O_STARTING, P_LAG_PROTE...
+#include "global.hpp"             // for CreatureClass, CreatureClass::CLERIC
+#include "login.hpp"              // for doPrint, doWork, CON_PLAYING, CREAT...
+#include "magic.hpp"              // for Divine, S_SAP_LIFE
+#include "mud.hpp"                // for LT_AGE, MAX_LT, SONG_HEAL, allowedC...
+#include "objects.hpp"            // for Object
+#include "os.hpp"                 // for merror
+#include "paths.hpp"              // for Config, CreateHelp
+#include "playerClass.hpp"        // for PlayerClass
+#include "proto.hpp"              // for low, free_crt, get_class_string
+#include "raceData.hpp"           // for RaceData
+#include "random.hpp"             // for Random
+#include "server.hpp"             // for Server, gServer
+#include "skills.hpp"             // for SkillInfo
+#include "socket.hpp"             // for Socket
+#include "stats.hpp"              // for Stat
+#include "structs.hpp"            // for SEX_FEMALE, SEX_MALE, SEX_NONE
+#include "utils.hpp"              // for MAX
+#include "xml.hpp"                // for LoadPlayer
+
+class StartLoc;
 
 /*
  * Generic get function, copy for future use
@@ -46,6 +68,14 @@ bool Create::get(Socket* sock, bstring str, int mode) {
 }
  *
  */
+
+char allowedClassesStr[static_cast<int>(CreatureClass::CLASS_COUNT) + 4][16] =
+    { "Assassin", "Berserker", "Cleric", "Fighter",
+      "Mage", "Paladin", "Ranger", "Thief", "Pureblood", "Monk", "Death Knight",
+      "Druid", "Lich", "Werewolf", "Bard", "Rogue", "Figh/Mage", "Figh/Thief",
+      "Cler/Ass", "Mage/Thief", "Thief/Mage", "Cler/Figh", "Mage/Ass"
+    };
+
 
 
 //*********************************************************************
@@ -1045,7 +1075,7 @@ bool Create::getClass(Socket* sock, bstring str, int mode) {
         if(!isalpha(str[0]))
             i = -1;
         else
-            i = (int)(up(str[0]) - 64);
+            i = up(str[0]) - 64;
 
         for(l=1, k=0; l<CLASS_COUNT_MULT; l++) {
             if(gConfig->getRace(sock->getPlayer()->getRace())->allowedClass(l)) {
@@ -1101,7 +1131,7 @@ bool Create::getDeity(Socket* sock, bstring str, int mode) {
         if(!isalpha(str[0]))
             i = -1;
         else
-            i = (int)(up(str[0]) - 64);
+            i = up(str[0]) - 64;
 
         for(l=1, k=0; l < static_cast<int>(CreatureClass::CLASS_COUNT)+4; l++) {
 
@@ -1422,7 +1452,7 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
     if(!isalpha(ch))
         i = -1;
     else
-        i = (int)(up(ch) - 64);
+        i = up(ch) - 64;
 
     if(mode == Create::doPrint) {
         if(sock->getPlayer()->getClass() == CreatureClass::WEREWOLF) {
@@ -2335,83 +2365,6 @@ bool Config::canDoubleLog(const bstring& forum1, const bstring& forum2) const {
     }
 
     return(false);
-}
-
-//*********************************************************************
-//                      saveDoubleLog
-//*********************************************************************
-
-bool Config::loadDoubleLog() {
-    xmlDocPtr xmlDoc;
-    xmlNodePtr curNode, childNode;
-    bstring account = "";
-
-    char filename[80];
-    snprintf(filename, 80, "%s/doubleLog.xml", Path::Config);
-    xmlDoc = xml::loadFile(filename, "DoubleLog");
-
-    if(xmlDoc == nullptr)
-        return(false);
-
-    curNode = xmlDocGetRootElement(xmlDoc);
-    curNode = curNode->children;
-    while(curNode && xmlIsBlankNode(curNode))
-        curNode = curNode->next;
-
-    if(curNode == nullptr) {
-        xmlFreeDoc(xmlDoc);
-        return(false);
-    }
-
-    accountDoubleLog.clear();
-    while(curNode != nullptr) {
-        if(NODE_NAME(curNode, "Accounts")) {
-            childNode = curNode->children;
-            account = "";
-            while(childNode) {
-                if(NODE_NAME(childNode, "Forum1") || NODE_NAME(childNode, "Forum2")) {
-                    if(account.empty()) {
-                        // cache!
-                        xml::copyToBString(account, childNode);
-                    } else {
-                        // add!
-                        addDoubleLog(account, xml::getBString(childNode));
-                        account = "";
-                    }
-                }
-                childNode = childNode->next;
-            }
-        }
-        curNode = curNode->next;
-    }
-    xmlFreeDoc(xmlDoc);
-    xmlCleanupParser();
-    return(true);
-}
-
-//*********************************************************************
-//                      saveDoubleLog
-//*********************************************************************
-
-void Config::saveDoubleLog() const {
-    std::list<accountDouble>::const_iterator it;
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr      rootNode, curNode;
-    char            filename[80];
-
-    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "DoubleLog", nullptr);
-    xmlDocSetRootElement(xmlDoc, rootNode);
-
-    for(it = accountDoubleLog.begin(); it != accountDoubleLog.end() ; it++) {
-        curNode = xml::newStringChild(rootNode, "Accounts");
-        xml::saveNonNullString(curNode, "Forum1", (*it).first);
-        xml::saveNonNullString(curNode, "Forum2", (*it).second);
-    }
-
-    sprintf(filename, "%s/doubleLog.xml", Path::Config);
-    xml::saveFile(filename, xmlDoc);
-    xmlFreeDoc(xmlDoc);
 }
 
 //*********************************************************************

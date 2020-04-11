@@ -26,18 +26,14 @@
  *      editor! Either edit the PHP yourself or tell Dominus to make the changes.
  */
 
-#include "alchemy.hpp"
-#include "bans.hpp"
-#include "calendar.hpp"
-#include "creatures.hpp"
-#include "config.hpp"
-#include "rooms.hpp"
-#include "specials.hpp"
-#include "socials.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include <cstring>          // for strcpy, strlen
+#include <map>              // for map
 
-#include <exception>
+#include "catRef.hpp"       // for CatRef
+#include "config.hpp"       // for Config
+#include "lasttime.hpp"     // for lasttime
+#include "paths.hpp"        // for Path
+#include "xml.hpp"          // for getIntProp, copyT...
 
 //*********************************************************************
 //                      loadCatRefArray
@@ -165,3 +161,56 @@ void loadLastTime(xmlNodePtr curNode, struct lasttime* pLastTime) {
         childNode = childNode->next;
     }
 }
+
+//*********************************************************************
+//                      saveDoubleLog
+//*********************************************************************
+
+bool Config::loadDoubleLog() {
+    xmlDocPtr xmlDoc;
+    xmlNodePtr curNode, childNode;
+    bstring account = "";
+
+    char filename[80];
+    snprintf(filename, 80, "%s/doubleLog.xml", Path::Config);
+    xmlDoc = xml::loadFile(filename, "DoubleLog");
+
+    if(xmlDoc == nullptr)
+        return(false);
+
+    curNode = xmlDocGetRootElement(xmlDoc);
+    curNode = curNode->children;
+    while(curNode && xmlIsBlankNode(curNode))
+        curNode = curNode->next;
+
+    if(curNode == nullptr) {
+        xmlFreeDoc(xmlDoc);
+        return(false);
+    }
+
+    accountDoubleLog.clear();
+    while(curNode != nullptr) {
+        if(NODE_NAME(curNode, "Accounts")) {
+            childNode = curNode->children;
+            account = "";
+            while(childNode) {
+                if(NODE_NAME(childNode, "Forum1") || NODE_NAME(childNode, "Forum2")) {
+                    if(account.empty()) {
+                        // cache!
+                        xml::copyToBString(account, childNode);
+                    } else {
+                        // add!
+                        addDoubleLog(account, xml::getBString(childNode));
+                        account = "";
+                    }
+                }
+                childNode = childNode->next;
+            }
+        }
+        curNode = curNode->next;
+    }
+    xmlFreeDoc(xmlDoc);
+    xmlCleanupParser();
+    return(true);
+}
+

@@ -16,19 +16,34 @@
  *
  */
 
-#include <stdexcept>
+#include <cstdio>                 // for snprintf, sprintf
+#include <cstring>                // for strcpy, strtok, strcat, strcmp, strlen
+#include <ctime>                  // for time
 
-#include "commands.hpp"
-#include "container.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "craft.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "skills.hpp"
-#include "unique.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include "bstring.hpp"            // for bstring
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for timestr
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for ObjectSet, Container, MonsterSet
+#include "craft.hpp"              // for operator<<, Recipe (ptr only)
+#include "creatures.hpp"          // for Player, Monster, Creature
+#include "flags.hpp"              // for O_KEEP, O_DARKMETAL, O_BEING_PREPARED
+#include "global.hpp"             // for CAP, CreatureClass, CreatureClass::...
+#include "hooks.hpp"              // for Hooks
+#include "mud.hpp"                // for LT_ENVEN, ospell, scrollDesc, scrol...
+#include "objects.hpp"            // for Object, ObjectType, ObjectType::WEAPON
+#include "paths.hpp"              // for Sign
+#include "proto.hpp"              // for broadcast, getSizeName, keyTxtEqual
+#include "random.hpp"             // for Random
+#include "realm.hpp"              // for EARTH, COLD, WATER
+#include "rooms.hpp"              // for BaseRoom, UniqueRoom
+#include "size.hpp"               // for NO_SIZE, Size
+#include "skills.hpp"             // for getSkillLevelStr
+#include "unique.hpp"             // for Unique, Lore
+#include "utils.hpp"              // for MAX, MIN
+#include "xml.hpp"                // for loadObject
+
+class MudObject;
 
 const std::map<ObjectType,const char*> Object::objTypeToString = {
         {ObjectType::WEAPON, "weapon"},
@@ -147,8 +162,9 @@ bool listObjectSee(const Player* player, Object* object, bool showAll) {
 }
 
 bstring Container::listObjects(const Player* player, bool showAll, char endColor) const {
-    Object  *object=0;
-    int     num=1, n=0, flags = player->displayFlags();
+    Object  *object=nullptr;
+    int     num=1, n=0;
+    unsigned int flags = player->displayFlags();
     bstring str = "";
 
     ObjectSet::iterator it;
@@ -299,7 +315,7 @@ int Monster::checkScrollDrop() {
 
 void Object::loadContainerContents() {
     int     count=0, a=0;
-    Object  *newObj=0;
+    Object  *newObj=nullptr;
 
     if(type != ObjectType::CONTAINER)
         return;
@@ -352,7 +368,7 @@ int cmdKeep(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdUnkeep(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
 
     if(!strcmp(cmnd->str[1], "all")) {
         for(Object* obj : player->objects ) {
@@ -394,7 +410,7 @@ bool cantDropInBag(Object* object) {
 //                      findObj
 //*********************************************************************
 
-MudObject* Creature::findObjTarget(ObjectSet &set, int findFlags, bstring str, int val, int* match) {
+MudObject* Creature::findObjTarget(ObjectSet &set, int findFlags, const bstring& str, int val, int* match) {
     if(set.empty())
         return(nullptr);
 
@@ -421,7 +437,7 @@ int displayObject(Player* player, Object* target) {
     bstring inv = "";
     bstring requiredSkillString = "";
 
-    int flags = player->displayFlags();
+    unsigned int flags = player->displayFlags();
 
     // special 2 is a combo lock, should have normal descriptions
     if(target->getSpecial() == 1) {
@@ -438,7 +454,7 @@ int displayObject(Player* player, Object* target) {
     }
     std::ostringstream oStr;
 
-    if(target->description != "") {
+    if(!target->description.empty()) {
         oStr << target->description << "\n";
     } else if(!target->getRecipe()) {
         // don't show this message if we have a recipe
@@ -468,7 +484,7 @@ int displayObject(Player* player, Object* target) {
 
     if(target->getType() == ObjectType::CONTAINER) {
         inv = target->listObjects(player, true);
-        if(inv != "")
+        if(!inv.empty())
             oStr << "It contains: " << inv << ".\n";
     }
 
@@ -509,7 +525,7 @@ int displayObject(Player* player, Object* target) {
         oStr << "^gIt drips with poison.\n";
         if((player->getClass() == CreatureClass::ASSASSIN && player->getLevel() >= 10) || player->isCt()) {
             oStr << "^gTime remaining before poison deludes: " <<
-               timestr(MAX<long>(0,(target->lasttime[LT_ENVEN].ltime+target->lasttime[LT_ENVEN].interval-time(0)))) << ".\n";
+               timestr(MAX<long>(0,(target->lasttime[LT_ENVEN].ltime+target->lasttime[LT_ENVEN].interval-time(nullptr)))) << ".\n";
         }
     }
 
@@ -583,7 +599,7 @@ int displayObject(Player* player, Object* target) {
     if(target->getSize() != NO_SIZE)
         oStr << "It is ^W" << getSizeName(target->getSize()).c_str() << "^x.\n";
 
-    if(target->getQuestOwner() != "") {
+    if(!target->getQuestOwner().empty()) {
         if(target->isQuestOwner(player))
             oStr << "You own "<< target->getObjStr(nullptr, flags, 1) << ".\n";
         else
@@ -669,7 +685,7 @@ bool Object::showAsSame(const Player* player, const Object* object) const {
 //                      nameCoin
 //*********************************************************************
 
-void Object::nameCoin(bstring type, unsigned long value) {
+void Object::nameCoin(const bstring& type, unsigned long value) {
     char temp[80];
     snprintf(temp, 80, "%lu %s coin%s", value, type.c_str(), value != 1 ? "s" : "");
     setName(temp);
@@ -686,7 +702,7 @@ void BaseRoom::killMortalObjectsOnFloor() {
     if(room && room->info.isArea("shop") && !room->flagIsSet(R_SHOP))
         return;
 
-    Object* object=0;
+    Object* object=nullptr;
     bool    sunlight = isSunlight(), isStor = room && room->info.isArea("stor");
     ObjectSet::iterator it;
     for( it = objects.begin() ; it != objects.end() ; ) {
@@ -736,7 +752,7 @@ void BaseRoom::killMortalObjects(bool floor) {
 
 void Creature::killDarkmetal() {
     Player  *pTarget = getAsPlayer();
-    Object  *object=0;
+    Object  *object=nullptr;
     int     i=0;
     bool    found=false;
 
@@ -806,7 +822,7 @@ void BaseRoom::setTempNoKillDarkmetal(bool noKillDarkmetal) {
 //*********************************************************************
 
 void Monster::killUniques() {
-    Object* object=0;
+    Object* object=nullptr;
     ObjectSet::iterator it;
     for(it = objects.begin() ; it != objects.end() ; ) {
         object = (*it++);
@@ -819,7 +835,7 @@ void Monster::killUniques() {
 }
 
 void Object::killUniques() {
-    Object* object=0;
+    Object* object=nullptr;
     ObjectSet::iterator it;
     for(it = objects.begin() ; it != objects.end() ; ) {
         object = (*it++);
@@ -863,7 +879,7 @@ short Object::getLotteryNumbers(short i) const {return(lotteryNumbers[i]); }
 int Object::getRecipe() const { return(recipe); }
 Material Object::getMaterial() const { return(material); }
 
-const bstring Object::getSubType() const { return(subType); }
+bstring Object::getSubType() const { return(subType); }
 short Object::getDelay() const { return(delay); }
 short Object::getExtra() const { return(extra); }
 short Object::getWeaponDelay() const {
@@ -885,7 +901,7 @@ bstring Object::getSizeStr() const{
 // ownership.
 
 bool Object::isQuestOwner(const Player* player) const {
-    if(questOwner == "")
+    if(questOwner.empty())
         return(true);
     if(questOwner != player->getName())
         return(false);

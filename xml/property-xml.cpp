@@ -16,11 +16,20 @@
  *
  */
 
-#include "config.hpp"
-#include "property.hpp"
-#include "paths.hpp"
-#include "rooms.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
+#include <cstdio>                                  // for snprintf, sprintf
+#include <string>                                   // for operator!=, basic...
+
+#include "bstring.hpp"                              // for bstring
+#include "catRef.hpp"                               // for CatRef
+#include "config.hpp"                               // for Config
+#include "exits.hpp"                                // for Exit
+#include "global.hpp"                               // for PROP_STORAGE, Pro...
+#include "paths.hpp"                                // for PlayerData
+#include "property.hpp"                             // for Property, Partial...
+#include "range.hpp"                                // for Range
+#include "rooms.hpp"                                // for UniqueRoom, ExitList
+#include "xml.hpp"                                  // for copyToBString
 
 void PartialOwner::load(xmlNodePtr rootNode) {
     xml::copyPropToBString(name, rootNode, "Name");

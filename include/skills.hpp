@@ -178,7 +178,7 @@ public:
     int getGained() const;
     int getGainBonus() const;
 
-    void setName(bstring pName);
+    void setName(const bstring& pName);
     void updateParent();
     void setGained(int pGained);
 

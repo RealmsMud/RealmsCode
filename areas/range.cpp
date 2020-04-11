@@ -17,6 +17,11 @@
  */
 #include "range.hpp"
 
+#include <ostream>      // for basic_ostream::operator<<, operator<<, basic_...
+#include <string>       // for char_traits, operator<<
+
+#include "bstring.hpp"  // for bstring
+
 //*********************************************************************
 //                      Range
 //*********************************************************************

@@ -33,12 +33,10 @@
 
 #include "alphanum.hpp"
 
-#include <cassert>
-#include <functional>
-#include <string>
-#include <sstream>
-
-#include <cctype>
+#include <cstdlib>  // for strtoul
+#include <cassert>   // for assert
+#include <cctype>    // for isdigit
+#include <string>    // for string
 
 /** wrapper function for ::isdigit() */
 bool alphanum_isdigit(int c) {

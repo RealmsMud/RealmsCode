@@ -16,12 +16,19 @@
  *
  */
 
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
+#include <cstdio>                 // for sprintf
+#include <cstring>                // for strlen, strcmp
+
+#include "bstring.hpp"            // for operator+, bstring
+#include "cmd.hpp"                // for cmd
+#include "creatures.hpp"          // for Monster, Player
+#include "flags.hpp"              // for M_LOGIC_MONSTER, M_TALKS
+#include "objects.hpp"            // for Object
+#include "proto.hpp"              // for loge
+#include "rooms.hpp"              // for UniqueRoom
+#include "server.hpp"             // for Server, gServer, RoomCache, Monster...
+#include "socket.hpp"             // for Socket
+#include "structs.hpp"            // for ttag
 
 //*********************************************************************
 //                      sizeInfo
@@ -63,7 +70,6 @@ void Server::showMemory(Socket* sock, bool extended) {
     long obj_mem    = 0L;
     long talk_mem   = 0L;
     long act_mem    = 0L;
-    //  long total_mem  = 0L;
     long bt_mem     = 0L;
     long total=0;
     ttag    *tlk;

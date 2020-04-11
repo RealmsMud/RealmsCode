@@ -17,15 +17,12 @@
  */
 
 
-#include "config.hpp"
-#include "proto.hpp"
-#include "server.hpp"
+#include "config.hpp"  // for Config
+#include "server.hpp"  // for Server
 
 void handle_args(int argc, char *argv[]);
-void startup_mordor(void);
+void startup_mordor();
 
-extern Config *gConfig;
-extern Server *gServer;
 
 int main(int argc, char *argv[]) {
     // Get our instance variables

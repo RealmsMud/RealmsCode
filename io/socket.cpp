@@ -17,31 +17,45 @@
  */
 
 
-// C++ Includes
-#include <iostream>
-
 // C Includes
-#include <arpa/telnet.h>
-#include <fcntl.h>      // Needs: fnctl
-#include <netdb.h>      // Needs: gethostbyaddr
-#include <sys/socket.h> // Needs: AF_INET
-#include <cerrno>
-#include <cstdlib>
+#include <arpa/telnet.h>                            // for IAC, SE, WILL, SB
+#include <cctype>                                   // for isalpha, isdigit
+#include <fcntl.h>                                  // for fcntl, F_GETFL
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <netinet/in.h>                             // for sockaddr_in, htonl
+#include <cstdarg>                                  // for va_end, va_list
+#include <cstdio>                                   // for sprintf
+#include <cstring>                                  // for memmove
+#include <sys/socket.h>                             // for linger, setsockopt
+#include <ctime>                                    // for time
+#include <unistd.h>                                 // for ssize_t, write
+#include <zconf.h>                                  // for Bytef
+#include <zlib.h>                                   // for z_stream, deflate
+#include <cerrno>                                   // for EWOULDBLOCK, errno
+#include <cstdlib>                                  // for free, calloc, malloc
+#include <iostream>                                 // for operator<<, basic...
+#include <queue>                                    // for queue
 
-// Mud Includes
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "login.hpp"
-#include "msdp.hpp"
-#include "mud.hpp"
-#include "post.hpp"
-#include "property.hpp"
-#include "security.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "version.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"                              // for bstring, operator+
+#include "commands.hpp"                             // for command, changing...
+#include "config.hpp"                               // for Config, gConfig
+#include "creatures.hpp"                            // for Player
+#include "flags.hpp"                                // for P_SPYING
+#include "free_crt.hpp"                             // for free_crt
+#include "global.hpp"                               // for MAXALVL
+#include "login.hpp"                                // for createPlayer, LOG...
+#include "mud.hpp"                                  // for StartTime
+#include "os.hpp"                                   // for ASSERTLOG
+#include "paths.hpp"                                // for Config
+#include "post.hpp"                                 // for histedit, noteedit
+#include "property.hpp"                             // for Property
+#include "proto.hpp"                                // for stripColor
+#include "security.hpp"                             // for changePassword
+#include "server.hpp"                               // for Server, gServer
+#include "socket.hpp"                               // for Socket, Socket::S...
+#include "utils.hpp"                                // for MAX, MIN
+#include "version.hpp"                              // for VERSION
+#include "xml.hpp"                                  // for copyToBool, newNu...
 
 // Static initialization
 const int Socket::COMPRESSED_OUTBUF_SIZE = 8192;

@@ -15,24 +15,49 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <signal.h>
-#include <dirent.h>
-#include <iomanip>
+#include <cctype>                              // for isupper
+#include <dirent.h>                            // for dirent, opendir, readdir
+#include <csignal>                             // for kill
+#include <cstdio>                              // for printf
+#include <cstdlib>                             // for atoi, exit
+#include <cstring>                             // for memset, strlen
+#include <unistd.h>                            // for close, read, unlink
+#include <list>                                // for operator==
+#include <map>                                 // for operator==, operator!=
+#include <string>                              // for basic_string, operator==
+#include <utility>                             // for pair
 
-#include "catRefInfo.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "dm.hpp"
-#include "effects.hpp"
-#include "mud.hpp"
-#include "property.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "ships.hpp"
-#include "startlocs.hpp"
-#include "tokenizer.hpp"
-#include "xml.hpp"
+#include "area.hpp"                            // for Area, AreaZone, MapMarker
+#include "asynch.hpp"                          // for Async, AsyncExternal
+#include "bstring.hpp"                         // for bstring, operator+
+#include "catRef.hpp"                          // for CatRef
+#include "catRefInfo.hpp"                      // for CatRefInfo, CatRefInfo...
+#include "cmd.hpp"                             // for cmd
+#include "commands.hpp"                        // for getFullstrText, getFul...
+#include "config.hpp"                          // for Config, gConfig
+#include "creatures.hpp"                       // for Player, Monster
+#include "dm.hpp"                              // for findNextEmpty, dmMobSwap
+#include "enums/loadType.hpp"                  // for LoadType, LoadType::LS...
+#include "exits.hpp"                           // for Exit
+#include "free_crt.hpp"                        // for free_crt
+#include "flags.hpp"                           // for R_SHOP, X_LOCKABLE
+#include "global.hpp"                          // for CreatureClass, Creatur...
+#include "hooks.hpp"                           // for Hooks
+#include "location.hpp"                        // for Location
+#include "mud.hpp"                             // for BODYPART_OBJ, CORPSE_OBJ
+#include "mudObject.hpp"                       // for MudObject
+#include "objects.hpp"                         // for Object
+#include "paths.hpp"                           // for Monster, UniqueRoom
+#include "proc.hpp"                            // for childProcess, CHILD_SW...
+#include "proto.hpp"                           // for getCatRef
+#include "rooms.hpp"                           // for UniqueRoom, AreaRoom
+#include "server.hpp"                          // for Server, gServer, RoomC...
+#include "ships.hpp"                           // for ShipExit, ShipRaid
+#include "startlocs.hpp"                       // for StartLoc
+#include "swap.hpp"                            // for Swap, SwapRoom, SwapOb...
+#include "tokenizer.hpp"                       // for charTokenizer
+#include "utils.hpp"                           // for MAX
+#include "xml.hpp"                             // for loadPlayer, loadRoom
 
 const char* sepType = " ";
 #define SWAP_QUEUE_LIMIT    100
@@ -108,7 +133,7 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
     }
     swapType = swapName(type);
 
-    if(str == "") {
+    if(str.empty()) {
         bstring prefix = "  ^e";
         prefix += cmd;
 
@@ -143,8 +168,8 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
         return;
     } else if(str.left(6) == "-range" && type != SwapNone) {
         bstring o = getFullstrText(cmnd->fullstr, 2);
-        getCatRef(o, &s.origin, 0);
-        getCatRef(getFullstrText(cmnd->fullstr, 3), &s.target, 0);
+        getCatRef(o, &s.origin, nullptr);
+        getCatRef(getFullstrText(cmnd->fullstr, 3), &s.target, nullptr);
 
         player->printColor("^YRS: ^xLooking to swap %s ranges starting at %s to %s.\n", swapType.c_str(),
             s.origin.rstr().c_str(), s.target.id == -1 ? s.target.area.c_str() : s.target.rstr().c_str());
@@ -304,7 +329,7 @@ int dmMobSwap(Player* player, cmd* cmnd) {
 //                          swap
 //*********************************************************************
 
-bool Server::swap(Swap s) {
+bool Server::swap(const Swap& s) {
     Player *player = gServer->findPlayer(s.player.c_str());
     gConfig->setMovingRoom(s.origin, s.target);
     bstring output;
@@ -323,7 +348,7 @@ bool Server::swap(Swap s) {
 
 
         Async async;
-        if(async.branch(player, CHILD_SWAP_FIND) == AsyncExternal) {
+        if(async.branch(player, ChildType::SWAP_FIND) == AsyncExternal) {
             output = findNextEmpty("room", s.target.area).rstr();
             printf("%s", output.c_str());
             exit(0);
@@ -372,8 +397,8 @@ void Config::findNextEmpty(childProcess &child, bool onReap) {
     if(currentSwap.target.id == -1) {
         bstring toProcess = gServer->simpleChildRead(child);
 
-        if(toProcess != "") {
-            getCatRef(toProcess, &currentSwap.target, 0);
+        if(!toProcess.empty()) {
+            getCatRef(toProcess, &currentSwap.target, nullptr);
             if(player)
                 player->printColor("^YRS: ^eRoom found: %s.\n", currentSwap.target.rstr().c_str());
         }
@@ -385,7 +410,7 @@ void Config::findNextEmpty(childProcess &child, bool onReap) {
                 player->printColor("^YRS: No empty rooms were found!\n");
             endSwap();
         } else {
-            UniqueRoom* uRoom=0;
+            UniqueRoom* uRoom=nullptr;
 
             // did we actually get a room where we were expecting none?
             if(loadRoom(currentSwap.target, &uRoom)) {
@@ -417,7 +442,7 @@ void Config::findNextEmpty(childProcess &child, bool onReap) {
 //                          finishSwap
 //*********************************************************************
 
-void Config::finishSwap(bstring mover) {
+void Config::finishSwap(const bstring& mover) {
     Player* player = gServer->findPlayer(mover.c_str());
     bool online=true;
 
@@ -487,7 +512,7 @@ void Config::finishSwap(bstring mover) {
     gServer->finishSwap(player, online, currentSwap.origin, currentSwap.target);
 }
 
-void Server::finishSwap(Player* player, bool online, CatRef origin, CatRef target) {
+void Server::finishSwap(Player* player, bool online, const CatRef& origin, const CatRef& target) {
     // only one forked process at a time
     if(gServer->swapName() != "Someone") {
         if(!online)
@@ -499,7 +524,7 @@ void Server::finishSwap(Player* player, bool online, CatRef origin, CatRef targe
 
 
     Async async;
-    if(async.branch(player, CHILD_SWAP_FINISH) == AsyncExternal) {
+    if(async.branch(player, ChildType::SWAP_FINISH) == AsyncExternal) {
         gConfig->offlineSwap();
         exit(0);
     } else {
@@ -521,15 +546,15 @@ void Server::finishSwap(Player* player, bool online, CatRef origin, CatRef targe
 void Config::offlineSwap() {
     std::list<Area*>::iterator aIt;
     std::map<bstring, AreaRoom*>::iterator rIt;
-    struct  dirent *dirp=0, *dirq=0;
-    DIR     *dir=0, *subdir=0;
+    struct  dirent *dirp=nullptr, *dirq=nullptr;
+    DIR     *dir=nullptr, *subdir=nullptr;
     bstring filename = "";
     bstring output = "";
 
-    UniqueRoom* uRoom=0;
-    AreaRoom* aRoom=0;
-    Player* player=0;
-    Monster* monster=0;
+    UniqueRoom* uRoom=nullptr;
+    AreaRoom* aRoom=nullptr;
+    Player* player=nullptr;
+    Monster* monster=nullptr;
     // id = -1 tells the loadFromFile functions to rely on the monster/room
     CatRef placeholder;
     placeholder.id = -1;
@@ -670,8 +695,8 @@ void Config::offlineSwap(childProcess &child, bool onReap) {
     bstring toProcess = gServer->simpleChildRead(child);
 
     if(!toProcess.empty()) {
-        UniqueRoom *uRoom=0;
-        Monster *monster=0;
+        UniqueRoom *uRoom=nullptr;
+        Monster *monster=nullptr;
         CatRef cr;
         bstring input;
 
@@ -686,11 +711,11 @@ void Config::offlineSwap(childProcess &child, bool onReap) {
             swapLog(input);
 
             if(input.getAt(0) == 'r') {
-                getCatRef(input.right(input.getLength()-1), &cr, 0);
+                getCatRef(input.right(input.getLength()-1), &cr, nullptr);
                 // this will put rooms in the queue
                 loadRoom(cr, &uRoom);
             } else if(input.getAt(0) == 'm') {
-                getCatRef(input.right(input.getLength()-1), &cr, 0);
+                getCatRef(input.right(input.getLength()-1), &cr, nullptr);
                 // this will put monsters in the queue
                 if(loadMonster(cr, &monster))
                     free_crt(monster);
@@ -705,10 +730,10 @@ void Config::offlineSwap(childProcess &child, bool onReap) {
 //                          swap
 //*********************************************************************
 
-void Config::swap(Player* player, bstring name) {
+void Config::swap(Player* player, const bstring& name) {
     std::list<bstring>::iterator bIt;
     std::list<Swap>::iterator qIt;
-    UniqueRoom *uOrigin=0, *uTarget=0;
+    UniqueRoom *uOrigin=nullptr, *uTarget=nullptr;
     bool found;
 
     if(player)
@@ -772,8 +797,8 @@ void Config::swap(Player* player, bstring name) {
 
 
     // check all players online
-    Player* ply=0;
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    Player* ply=nullptr;
+    for(const auto& p : gServer->players) {
         ply = p.second;
         if(ply->swap(currentSwap))
             ply->save(true);
@@ -834,14 +859,14 @@ void Config::swap(Player* player, bstring name) {
 
 Swap::Swap() { player = ""; }
 
-void Swap::set(bstring mover, CatRef swapOrigin, CatRef swapTarget, SwapType swapType) {
+void Swap::set(const bstring& mover, const CatRef& swapOrigin, const CatRef& swapTarget, SwapType swapType) {
     player = mover;
     origin = swapOrigin;
     target = swapTarget;
     type = swapType;
 }
 
-bool Swap::match(CatRef o, CatRef t) {
+bool Swap::match(const CatRef& o, const CatRef& t) {
     bool found=false;
 
     if(origin == o) {
@@ -868,7 +893,7 @@ bool Swap::match(CatRef o, CatRef t) {
 //                          swapChecks
 //*********************************************************************
 
-bool Config::swapChecks(const Player* player, Swap s) {
+bool Config::swapChecks(const Player* player, const Swap& s) {
     if(s.type == SwapNone) {
         player->printColor("^YRS: ^RError: ^xInvalid swap type.\n");
         return(false);
@@ -921,7 +946,7 @@ bool Config::swapChecks(const Player* player, Swap s) {
 //                          moveObjectRestricted
 //*********************************************************************
 
-bool Config::moveObjectRestricted(CatRef cr) const {
+bool Config::moveObjectRestricted(const CatRef& cr) const {
     if(cr.isArea("misc")) {
         if( cr.id == SHIT_OBJ ||
             cr.id == CORPSE_OBJ ||
@@ -940,7 +965,7 @@ bool Config::moveObjectRestricted(CatRef cr) const {
 //                          moveRoomRestrictedArea
 //*********************************************************************
 
-bool Config::moveRoomRestrictedArea(bstring area) const {
+bool Config::moveRoomRestrictedArea(const bstring& area) const {
     return(area == "area" || area == "stor" || area == "shop" || area == "guild");
 }
 
@@ -949,7 +974,7 @@ bool Config::moveRoomRestrictedArea(bstring area) const {
 //                          checkSpecialArea
 //*********************************************************************
 
-bool Config::checkSpecialArea(CatRef origin, CatRef target, int (CatRefInfo::*toCheck), Player* player, bool online, bstring type) {
+bool Config::checkSpecialArea(const CatRef& origin, const CatRef& target, int (CatRefInfo::*toCheck), Player* player, bool online, const bstring& type) {
     Location l = getSpecialArea(toCheck, origin);
     bool t = origin == l.room;
     if(t || target == l.room) {
@@ -975,7 +1000,7 @@ void Config::swap(bstring str) {
     str = str.right(str.getLength()-1);
     if(type == 'p' || type == 'b') {
         // at this point, the player will always be offline
-        Player* player=0;
+        Player* player=nullptr;
         LoadType saveType = type == 'p' ? LoadType::LS_NORMAL : LoadType::LS_BACKUP;
 
         if(!loadPlayer(str.c_str(), &player, saveType))
@@ -986,9 +1011,9 @@ void Config::swap(bstring str) {
         free_crt(player);
     } else if(type == 'm') {
         // the monster should have been loaded into the queue by now
-        Monster* monster=0;
+        Monster* monster=nullptr;
         CatRef cr;
-        getCatRef(str, &cr, 0);
+        getCatRef(str, &cr, nullptr);
 
         if(!loadMonster(cr, &monster))
             return;
@@ -998,9 +1023,9 @@ void Config::swap(bstring str) {
         free_crt(monster);
     } else if(type == 'r') {
         // the room should have been loaded into the queue by now
-        UniqueRoom* uRoom=0;
+        UniqueRoom* uRoom=nullptr;
         CatRef cr;
-        getCatRef(str, &cr, 0);
+        getCatRef(str, &cr, nullptr);
 
         if(!loadRoom(cr, &uRoom))
             return;
@@ -1009,15 +1034,15 @@ void Config::swap(bstring str) {
             uRoom->saveToFile(0);
     } else if(type == 'a') {
         // arearooms are always in memory
-        Area *area=0;
-        AreaRoom* aRoom=0;
+        Area *area=nullptr;
+        AreaRoom* aRoom=nullptr;
         MapMarker m;
 
         m.load(str);
         area = gServer->getArea(m.getArea());
         if(!area)
             return;
-        aRoom = area->loadRoom(0, &m, false);
+        aRoom = area->loadRoom(nullptr, &m, false);
         if(!aRoom)
             return;
 
@@ -1031,7 +1056,7 @@ void Config::swap(bstring str) {
 //*********************************************************************
 // record players and rooms that are saved during roomMove
 
-void Config::swapLog(const bstring log, bool external) {
+void Config::swapLog(const bstring& log, bool external) {
     char type = log.getAt(0);
     if(type != 'b' && type != 'p' && type != 'm' && type != 'r' && type != 'a')
         return;
@@ -1064,7 +1089,7 @@ void Config::swapLog(const bstring log, bool external) {
 //*********************************************************************
 
 bool Config::isSwapping() const { return(swapping); }
-void Config::setMovingRoom(CatRef o, CatRef t) {
+void Config::setMovingRoom(const CatRef& o, const CatRef& t) {
     swapping = true;
     currentSwap.origin = o;
     currentSwap.target = t;
@@ -1076,7 +1101,7 @@ void Config::setMovingRoom(CatRef o, CatRef t) {
 
 bstring Server::swapName() {
     for(childProcess & child : children)
-        if(child.type == CHILD_SWAP_FIND || child.type == CHILD_SWAP_FINISH)
+        if(child.type == ChildType::SWAP_FIND || child.type == ChildType::SWAP_FINISH)
             return(child.extra);
     return("Someone");
 }
@@ -1088,7 +1113,7 @@ bstring Server::swapName() {
 void Server::endSwap() {
     std::list<childProcess>::iterator it;
     for(it = children.begin(); it != children.end() ;) {
-        if((*it).type == CHILD_SWAP_FIND || (*it).type == CHILD_SWAP_FINISH) {
+        if((*it).type == ChildType::SWAP_FIND || (*it).type == ChildType::SWAP_FINISH) {
             close((*it).fd);
             kill((*it).pid, 9);
             it = children.erase(it);
@@ -1161,10 +1186,10 @@ void Server::swapInfo(const Player* player) {
     player->printColor("^WSwap Server Info\n");
     player->print("   Child Processes Being Watched:\n");
     for(childProcess & child : children) {
-        if(child.type == CHILD_SWAP_FIND || child.type == CHILD_SWAP_FINISH) {
+        if(child.type == ChildType::SWAP_FIND || child.type == ChildType::SWAP_FINISH) {
             player->printColor("      Player: ^e%s^x   Pid: ^e%d^x   Fd: ^e%d^x   Purpose: ^e%s\n",
                 child.extra.c_str(), child.pid, child.fd,
-                child.type == CHILD_SWAP_FIND ? "Finding next empty slot." :
+                child.type == ChildType::SWAP_FIND ? "Finding next empty slot." :
                     "Finding things that need updating.");
         }
     }
@@ -1185,11 +1210,11 @@ void Config::swapNextInQueue() {
     gServer->swap(s);
 }
 
-void Config::swapAddQueue(Swap s) {
+void Config::swapAddQueue(const Swap& s) {
     swapQueue.push_back(s);
 }
 
-bool Config::inSwapQueue(CatRef origin, SwapType type, bool checkTarget) {
+bool Config::inSwapQueue(const CatRef& origin, SwapType type, bool checkTarget) {
     std::list<Swap>::iterator it;
     for(it = swapQueue.begin() ; it != swapQueue.end() ; it++) {
         if(type == (*it).type) {
@@ -1266,7 +1291,7 @@ char whichDelim(const bstring& code) {
 //                          getParamFromCode
 //*********************************************************************
 
-bstring getParamFromCode(const bstring& pythonCode, bstring function, SwapType type) {
+bstring getParamFromCode(const bstring& pythonCode, const bstring& function, SwapType type) {
     bstring code = pythonCode;
     bstring::size_type pos;
     char delim;
@@ -1319,7 +1344,7 @@ bstring getParamFromCode(const bstring& pythonCode, bstring function, SwapType t
 //                          setParamInCode
 //*********************************************************************
 
-bstring setParamInCode(const bstring& pythonCode, bstring function, SwapType type, bstring param) {
+bstring setParamInCode(const bstring& pythonCode, const bstring& function, SwapType type, const bstring& param) {
     bstring code = pythonCode;
     bstring::size_type pos;
 
@@ -1338,7 +1363,7 @@ bstring setParamInCode(const bstring& pythonCode, bstring function, SwapType typ
 //                          Hooks swap
 //*********************************************************************
 
-bool Hooks::swap(Swap s) {
+bool Hooks::swap(const Swap& s) {
     bool found=false;
     bstring param;
     CatRef cr;
@@ -1346,7 +1371,7 @@ bool Hooks::swap(Swap s) {
     for(std::pair<bstring,bstring> p : hooks ) {
         if(s.type == SwapRoom) {
             param = getParamFromCode(p.second, "spawnObjects", s.type);
-            if(param != "") {
+            if(!param.empty()) {
                 getCatRef(param, &cr, 0);
                 if(cr == s.origin) {
                     p.second = setParamInCode(p.second, "spawnObjects", s.type, param);
@@ -1365,15 +1390,15 @@ bool Hooks::swap(Swap s) {
 //                          Hooks swapIsInteresting
 //*********************************************************************
 
-bool Hooks::swapIsInteresting(Swap s) const {
+bool Hooks::swapIsInteresting(const Swap& s) const {
     bstring param;
     CatRef cr;
 
-    for(std::pair<bstring, bstring> p : hooks) {
+    for(const std::pair<bstring, bstring>& p : hooks) {
         if(s.type == SwapRoom) {
             param = getParamFromCode(p.second, "spawnObjects", s.type);
-            if(param != "") {
-                getCatRef(param, &cr, 0);
+            if(!param.empty()) {
+                getCatRef(param, &cr, nullptr);
                 if(cr == s.origin || cr == s.target)
                     return(true);
             }
@@ -1382,16 +1407,16 @@ bool Hooks::swapIsInteresting(Swap s) const {
             int i=0;
 
             param = getParamFromCode(p.second, "spawnObjects", s.type);
-            if(param != "") {
+            if(!param.empty()) {
                 do {
                     obj = getFullstrTextTrun(param, i++);
-                    if(obj != "")
+                    if(!obj.empty())
                     {
-                        getCatRef(obj, &cr, 0);
+                        getCatRef(obj, &cr, nullptr);
                         if(cr == s.origin || cr == s.target)
                             return(true);
                     }
-                } while(obj != "");
+                } while(!obj.empty());
             }
         }
     }
@@ -1403,7 +1428,7 @@ bool Hooks::swapIsInteresting(Swap s) const {
 //                          Player swap
 //*********************************************************************
 
-bool Player::swap(Swap s) {
+bool Player::swap(const Swap& s) {
     bool found=false;
 
     if(bound.room == s.origin) {
@@ -1421,13 +1446,13 @@ bool Player::swap(Swap s) {
         found = true;
     }
 
-    for(int i=0; i<MAX_DIMEN_ANCHORS; i++) {
-        if(anchor[i]) {
-            if(anchor[i]->getRoom() == s.origin) {
-                anchor[i]->setRoom(s.target);
+    for(auto & i : anchor) {
+        if(i) {
+            if(i->getRoom() == s.origin) {
+                i->setRoom(s.target);
                 found = true;
-            } else if(anchor[i]->getRoom() == s.target) {
-                anchor[i]->setRoom(s.origin);
+            } else if(i->getRoom() == s.target) {
+                i->setRoom(s.origin);
                 found = true;
             }
         }
@@ -1454,7 +1479,7 @@ bool Player::swap(Swap s) {
 //                          Player swapIsInteresting
 //*********************************************************************
 
-bool Player::swapIsInteresting(Swap s) const {
+bool Player::swapIsInteresting(const Swap& s) const {
     if(!gConfig->isSwapping())
         return(false);
 
@@ -1463,9 +1488,9 @@ bool Player::swapIsInteresting(Swap s) const {
     if(currentLocation.room == s.origin || currentLocation.room == s.target)
         return(true);
 
-    for(int i=0; i<MAX_DIMEN_ANCHORS; i++) {
-        if(anchor[i]) {
-            if(anchor[i]->getRoom() == s.origin || anchor[i]->getRoom() == s.target)
+    for(auto i : anchor) {
+        if(i) {
+            if(i->getRoom() == s.origin || i->getRoom() == s.target)
                 return(true);
         }
     }
@@ -1484,7 +1509,7 @@ bool Player::swapIsInteresting(Swap s) const {
 //                          Monster swap
 //*********************************************************************
 
-bool Monster::swap(Swap s) {
+bool Monster::swap(const Swap& s) {
     bool found=false;
 
     if(jail == s.origin) {
@@ -1512,7 +1537,7 @@ bool Monster::swap(Swap s) {
 //                          Monster swapIsInteresting
 //*********************************************************************
 
-bool Monster::swapIsInteresting(Swap s) const {
+bool Monster::swapIsInteresting(const Swap& s) const {
     if(jail == s.origin || jail == s.target)
         return(true);
     if(currentLocation.room == s.origin || currentLocation.room == s.target)
@@ -1529,7 +1554,7 @@ bool Monster::swapIsInteresting(Swap s) const {
 bool Object::swap(Swap s) {
     bool found=false;
 
-    if(hooks.swap(s))
+    if(hooks.swap(std::move(s)))
         found = true;
 
     return(found);
@@ -1541,7 +1566,7 @@ bool Object::swap(Swap s) {
 
 bool Object::swapIsInteresting(Swap s) const {
 
-    return hooks.swapIsInteresting(s);
+    return hooks.swapIsInteresting(std::move(s));
 
 }
 
@@ -1549,7 +1574,7 @@ bool Object::swapIsInteresting(Swap s) const {
 //                          Room swap
 //*********************************************************************
 
-bool UniqueRoom::swap(Swap s) {
+bool UniqueRoom::swap(const Swap& s) {
     bool found=false;
 
     if(info == s.origin || info == s.target) {
@@ -1601,7 +1626,7 @@ bool UniqueRoom::swap(Swap s) {
 //                          Room swapIsInteresting
 //*********************************************************************
 
-bool UniqueRoom::swapIsInteresting(Swap s) const {
+bool UniqueRoom::swapIsInteresting(const Swap& s) const {
     if(info == s.origin || info == s.target)
         return(true);
 
@@ -1626,7 +1651,7 @@ bool UniqueRoom::swapIsInteresting(Swap s) const {
 //                          AreaRoom swap
 //*********************************************************************
 
-bool AreaRoom::swap(Swap s) {
+bool AreaRoom::swap(const Swap& s) {
     bool found=false;
 
     if(unique == s.origin) {
@@ -1661,7 +1686,7 @@ bool AreaRoom::swap(Swap s) {
 //                          AreaRoom swapIsInteresting
 //*********************************************************************
 
-bool AreaRoom::swapIsInteresting(Swap s) const {
+bool AreaRoom::swapIsInteresting(const Swap& s) const {
     if(unique == s.origin || unique == s.target)
         return(true);
 
@@ -1683,7 +1708,7 @@ bool AreaRoom::swapIsInteresting(Swap s) const {
 //                          AreaZone swap
 //*********************************************************************
 
-bool AreaZone::swap(Swap s) {
+bool AreaZone::swap(const Swap& s) {
     bool found=false;
 
     if(unique == s.origin) {
@@ -1701,7 +1726,7 @@ bool AreaZone::swap(Swap s) {
 //                          Area swap
 //*********************************************************************
 
-bool Area::swap(Swap s) {
+bool Area::swap(const Swap& s) {
     //std::map<bstring, AreaRoom*>::iterator rIt;
     std::list<AreaZone*>::iterator zIt;
     bool found=false;
@@ -1718,7 +1743,7 @@ bool Area::swap(Swap s) {
 //                          ShipRaid swap
 //*********************************************************************
 
-bool ShipRaid::swap(Swap s) {
+bool ShipRaid::swap(const Swap& s) {
     bool found=false;
 
     if(prison == s.origin) {
@@ -1743,7 +1768,7 @@ bool ShipRaid::swap(Swap s) {
 //                          ShipExit swap
 //*********************************************************************
 
-bool ShipExit::swap(Swap s) {
+bool ShipExit::swap(const Swap& s) {
     bool found=false;
 
     if(origin.room == s.origin) {
@@ -1768,7 +1793,7 @@ bool ShipExit::swap(Swap s) {
 //                          ShipStop swap
 //*********************************************************************
 
-bool ShipStop::swap(Swap s) {
+bool ShipStop::swap(const Swap& s) {
     std::list<ShipExit*>::iterator it;
     bool found=false;
 
@@ -1787,7 +1812,7 @@ bool ShipStop::swap(Swap s) {
 //                          Ship swap
 //*********************************************************************
 
-bool Ship::swap(Swap s) {
+bool Ship::swap(const Swap& s) {
     std::list<ShipStop*>::iterator it;
     bool found=false;
 
@@ -1803,7 +1828,7 @@ bool Ship::swap(Swap s) {
 //                          StartLoc swap
 //*********************************************************************
 
-bool StartLoc::swap(Swap s) {
+bool StartLoc::swap(const Swap& s) {
     bool found=false;
 
     if(bind.room == s.origin) {
@@ -1828,7 +1853,7 @@ bool StartLoc::swap(Swap s) {
 //                          CatRefInfo swap
 //*********************************************************************
 
-bool CatRefInfo::swap(Swap s) {
+bool CatRefInfo::swap(const Swap& s) {
     bool found=false;
 
     if(s.origin.isArea(area) && limbo == s.origin.id) {

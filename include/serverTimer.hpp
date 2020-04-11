@@ -19,7 +19,7 @@
 #ifndef SERVERTIMER_H_
 #define SERVERTIMER_H_
 
-#include <ctime>
+#include <ctime>    // timeval
 
 class ServerTimer {
 protected:

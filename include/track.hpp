@@ -18,7 +18,8 @@
 #ifndef _TRACK_H
 #define _TRACK_H
 
-#include "common.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr
+
 #include "size.hpp"
 
 class Track {
@@ -33,7 +34,7 @@ public:
 
     void setNum(short n);
     void setSize(Size s);
-    void setDirection(bstring dir);
+    void setDirection(const bstring& dir);
 protected:
     short   num;
     Size    size;

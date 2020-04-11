@@ -16,16 +16,36 @@
  *
  */
 
-#include "catRefInfo.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "move.hpp"
-#include "rooms.hpp"
-#include "unique.hpp"
-#include "server.hpp"
-#include "xml.hpp"
+#include <cstring>                // for strcmp, strlen, strcpy
+#include <strings.h>              // for strcasecmp
+#include <ctime>                  // for time
+
+#include "anchor.hpp"             // for Anchor
+#include "area.hpp"               // for Area, MapMarker
+#include "bstring.hpp"            // for bstring
+#include "catRef.hpp"             // for CatRef
+#include "catRefInfo.hpp"         // for CatRefInfo
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for finishDropObject
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for Container, ObjectSet, PlayerSet
+#include "creatures.hpp"          // for Player, Creature, Monster, DEL_ROOM...
+#include "exits.hpp"              // for Exit
+#include "flags.hpp"              // for R_LIMBO, P_NO_SUMMON, X_PORTAL, P_D...
+#include "global.hpp"             // for CastType, CastType::CAST, CreatureC...
+#include "group.hpp"              // for CreatureList, GROUP_LEADER, Group
+#include "magic.hpp"              // for SpellData, checkRefusingMagic, splG...
+#include "monType.hpp"            // for PLAYER
+#include "move.hpp"               // for tooFarAway, deletePortal, createPortal
+#include "mud.hpp"                // for DL_TELEP, LT_HIDE, LT_SPELL, DL_TRACK
+#include "objects.hpp"            // for Object
+#include "proto.hpp"              // for broadcast, up, dec_daily, isCt, bonus
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom, ExitList, UniqueRoom, Are...
+#include "server.hpp"             // for Server, gServer
+#include "unique.hpp"             // for transferOwner
+#include "utils.hpp"              // for MAX
+#include "xml.hpp"                // for loadRoom
 
 
 //*********************************************************************
@@ -36,8 +56,8 @@
 
 int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player* pPlayer = player->getAsPlayer();
-    Creature* target=0;
-    Object  *object=0;
+    Creature* target=nullptr;
+    Object  *object=nullptr;
     int     cost;
 
     if(pPlayer->getClass() == CreatureClass::BUILDER) {
@@ -96,7 +116,7 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
 
 
-    cost = 5 + bonus((int) pPlayer->intelligence.getCur()) + ((int)pPlayer->getLevel() - 5) * 2;
+    cost = 5 + bonus(pPlayer->intelligence.getCur()) + ((int)pPlayer->getLevel() - 5) * 2;
     if(object->getActualWeight() > cost) {
         pPlayer->printColor("%O is too heavy to transport at your current level.\n", object);
         return(0);
@@ -160,8 +180,8 @@ bool hinderedByDimensionalAnchor(int splno) {
 // them resistant to magical movement spells
 
 int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* creature=0;
-    Player* target=0, *pPlayer = player->getAsPlayer();
+    Creature* creature=nullptr;
+    Player* target=nullptr, *pPlayer = player->getAsPlayer();
     int     i=0, num=-1;
     bool    destroy=false;
 
@@ -356,9 +376,9 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 int splPortal(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player* pPlayer = player->getAsPlayer();
     const Anchor* destination=0;
-    BaseRoom* newRoom=0;
-    UniqueRoom* uRoom=0;
-    AreaRoom* aRoom=0;
+    BaseRoom* newRoom=nullptr;
+    UniqueRoom* uRoom=nullptr;
+    AreaRoom* aRoom=nullptr;
     int     i=0;
 
     if(!pPlayer)
@@ -477,7 +497,7 @@ void Move::createPortal(BaseRoom* room, BaseRoom* target, const Player* player, 
     ext->setKey(MAX(1, ((int)player->getLevel() - 28) / 2));
     ext->setDescription("You see a shimmering portal of mystical origin.");
 
-    broadcast(0, room, "^YA dimensional portal forms in the room!");
+    broadcast(nullptr, room, "^YA dimensional portal forms in the room!");
 
     if(initial)
         createPortal(target, room, player, false);
@@ -499,7 +519,7 @@ bool Move::usePortal(Creature* player, BaseRoom* room, Exit* exit, bool initial)
 
     if(initial) {
         BaseRoom* target = exit->target.loadRoom();
-        Exit* toUse = 0;
+        Exit* toUse = nullptr;
         for(Exit* ext : target->exits) {
             if(ext->flagIsSet(X_PORTAL) && ext->getPassPhrase() == exit->getPassPhrase()) {
                 toUse = ext;
@@ -522,7 +542,7 @@ bool Move::deletePortal(BaseRoom* room, Exit* exit, const Creature* leader, std:
     return(Move::deletePortal(room, exit->getPassPhrase(), leader, followers, initial));
 }
 
-bool Move::deletePortal(BaseRoom* room, bstring name, const Creature* leader, std::list<Creature*> *followers, bool initial) {
+bool Move::deletePortal(BaseRoom* room, const bstring& name, const Creature* leader, std::list<Creature*> *followers, bool initial) {
     ExitList::iterator xit;
     for(xit = room->exits.begin() ; xit != room->exits.end() ; xit++) {
         Exit* ext = *xit;
@@ -541,11 +561,11 @@ bool Move::deletePortal(BaseRoom* room, bstring name, const Creature* leader, st
                 }
             }
 
-            broadcast(0, room, "The %s^x collapses into nothingness.", ext->getCName());
+            broadcast(nullptr, room, "The %s^x collapses into nothingness.", ext->getCName());
 
             if(initial) {
                 BaseRoom* target = ext->target.loadRoom();
-                Move::deletePortal(target, name, 0, 0, false);
+                Move::deletePortal(target, name, nullptr, nullptr, false);
             }
             room->exits.erase(xit);
             delete ext;
@@ -566,14 +586,14 @@ bool Move::deletePortal(BaseRoom* room, bstring name, const Creature* leader, st
 // to another room randomly.
 
 int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
-    Player* pPlayer = player->getAsPlayer(), *pTarget=0;
-    Monster* mTarget=0;
-    UniqueRoom  *uRoom=0;
-    BaseRoom *newRoom=0;
-    AreaRoom *aRoom=0;
+    Creature* target=nullptr;
+    Player* pPlayer = player->getAsPlayer(), *pTarget=nullptr;
+    Monster* mTarget=nullptr;
+    UniqueRoom  *uRoom=nullptr;
+    BaseRoom *newRoom=nullptr;
+    AreaRoom *aRoom=nullptr;
     int     i=0;
-    const Anchor* destination=0;
+    const Anchor* destination=nullptr;
     char    dest[18];
 
     strcpy(dest, "");
@@ -888,8 +908,8 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
     }
 
-    Player  *target=0, *pCaster = player->getAsPlayer();
-    UniqueRoom  *new_rom=0;
+    Player  *target=nullptr, *pCaster = player->getAsPlayer();
+    UniqueRoom  *new_rom=nullptr;
     CatRef  cr;
 
     if(player->getClass() == CreatureClass::BUILDER) {
@@ -1018,7 +1038,7 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
 // in the game, taking that person to your current room.
 
 int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *target=0;
+    Player  *target=nullptr;
 
     if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot cast this spell.\n");
@@ -1155,11 +1175,11 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 // to any other player in the game.
 
 int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *pPlayer=0, *target=0, *follower=0;
-    BaseRoom *oldRoom=0;
-    UniqueRoom  *troom=0;
+    Player  *pPlayer=nullptr, *target=nullptr, *follower=nullptr;
+    BaseRoom *oldRoom=nullptr;
+    UniqueRoom  *troom=nullptr;
     int     chance=0;
-    long    t = time(0);
+    long    t = time(nullptr);
 
     pPlayer = player->getAsPlayer();
     if(!pPlayer)
@@ -1259,7 +1279,7 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
         {
 
             chance = (50 + (((int)pPlayer->getLevel() - (int)target->getLevel())*10)
-                    + (bonus((int) pPlayer->intelligence.getCur()) - bonus((int) target->intelligence.getCur())));
+                    + (bonus(pPlayer->intelligence.getCur()) - bonus(target->intelligence.getCur())));
 
             if(target->isEffected("mist"))
                 chance -= 35;
@@ -1346,7 +1366,7 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *caster = player->getAsPlayer();
-    Player  *target=0;
+    Player  *target=nullptr;
 
     if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot cast this spell.\n");
@@ -1440,8 +1460,8 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This spell allows a player to travel to another plane
 
 int splPlaneShift(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *pPlayer=0, *target=0;
-    UniqueRoom  *new_rom=0;
+    Player  *pPlayer=nullptr, *target=nullptr;
+    UniqueRoom  *new_rom=nullptr;
 
     pPlayer = player->getAsPlayer();
     if(!pPlayer)
@@ -1513,13 +1533,13 @@ bool Creature::checkDimensionalAnchor() const {
 
 int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *pPlayer = player->getAsPlayer();
-    Exit    *exit=0;
+    Exit    *exit=nullptr;
     int     i=0;
     bool doMove = true;
     bool portalDestroyed = false;
     bool isPortal = false;
     bool canCast = false;
-    BaseRoom* newRoom=0, *room = player->getRoomParent();
+    BaseRoom* newRoom=nullptr, *room = player->getRoomParent();
 
     if(!pPlayer)
         return(0);
@@ -1587,7 +1607,7 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
         // 10% chance of going to the ethereal plane
         if(Random::get(1,10) == 1) {
             CatRef cr = getEtherealTravelRoom();
-            UniqueRoom* uRoom=0;
+            UniqueRoom* uRoom=nullptr;
             if(loadRoom(cr, &uRoom))
                 newRoom = uRoom;
         }
@@ -1610,7 +1630,7 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
         player->print("You cast a blink spell.\n");
         broadcast(pPlayer->getSock(), room, "%M casts a blink spell.", player);
 
-        broadcast(0, room, "^YThe %s^Y explodes violently as the dimensional tunnels converge!", exit->getCName());
+        broadcast(nullptr, room, "^YThe %s^Y explodes violently as the dimensional tunnels converge!", exit->getCName());
 
         int dmg=0;
         for(Player* ply : room->players) {
@@ -1667,7 +1687,7 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         // if we left an area room that got recycled, no need to do any more
         if(i & DEL_ROOM_DESTROYED)
-            room = 0;
+            room = nullptr;
     }
 
     if(room && !isPortal)
@@ -1690,7 +1710,7 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 bool willScatterTo(const Object* object, const BaseRoom* room, const Exit* exit) {
     return( !exit->flagIsSet(X_SECRET) &&
-            !exit->isConcealed(0) &&
+            !exit->isConcealed(nullptr) &&
             !exit->flagIsSet(X_DESCRIPTION_ONLY) &&
             !exit->flagIsSet(X_CLOSED) &&
             !exit->flagIsSet(X_STAFF_ONLY) &&
@@ -1704,7 +1724,7 @@ bool willScatterTo(const Object* object, const BaseRoom* room, const Exit* exit)
             !exit->flagIsSet(X_TOLL_TO_PASS) &&
             !exit->flagIsSet(X_WATCHER_UNLOCK) &&
             !exit->isWall("wall-of-force") &&
-            !room->getGuardingExit(exit, 0) &&
+            !room->getGuardingExit(exit, nullptr) &&
             !(object->getSize() && exit->getSize() && object->getSize() > exit->getSize())
     );
 }
@@ -1714,9 +1734,9 @@ bool willScatterTo(const Object* object, const BaseRoom* room, const Exit* exit)
 //*********************************************************************
 
 void BaseRoom::scatterObjects() {
-    BaseRoom* newRoom=0;
-    Object* object=0;
-    Exit* exit=0;
+    BaseRoom* newRoom=nullptr;
+    Object* object=nullptr;
+    Exit* exit=nullptr;
 
     int pick=0;
     ObjectSet::iterator it;
@@ -1761,15 +1781,15 @@ void BaseRoom::scatterObjects() {
         if(!newRoom)
             continue;
 
-        broadcast(0, this, "%1O flies to the %s^x!", object, exit->getCName());
+        broadcast(nullptr, this, "%1O flies to the %s^x!", object, exit->getCName());
 
         // send it to exit
         object->clearFlag(O_HIDDEN);
         object->deleteFromRoom();
 
-        broadcast(0, newRoom, "%1O comes flying into the room!", object);
+        broadcast(nullptr, newRoom, "%1O comes flying into the room!", object);
         newRoom->wake("Loud noises disturb your sleep.", true);
-        finishDropObject(object, newRoom, 0, false, false, true);
+        finishDropObject(object, newRoom, nullptr, false, false, true);
 
         //newRoom->killMortalObjectsOnFloor();
     }

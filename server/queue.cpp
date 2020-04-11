@@ -16,10 +16,10 @@
  *
  */
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
+#include "area.hpp"               // for Area
+#include "rooms.hpp"              // for AreaRoom, UniqueRoom
+#include "objects.hpp"            // for Object
+#include "server.hpp"             // for Server, RoomCache, gServer, Monster...
 
 
 //*********************************************************************

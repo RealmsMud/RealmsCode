@@ -32,17 +32,17 @@ namespace odbc {
 #include <vector>
 
 // C Includes
-//#include "pythonHandler.hpp"
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
 
 #include "catRef.hpp"
 #include "delayedAction.hpp"
+#include "free_crt.hpp"
 #include "money.hpp"
 #include "proc.hpp"
 #include "swap.hpp"
 #include "weather.hpp"
 #include "lru/lru.hpp"
-//#include "money.hpp"
+
 
 class cmd;
 class Area;
@@ -346,7 +346,7 @@ public:
     void showMemory(Socket* sock, bool extended=false);
 
     // Child processes
-    void addChild(int pid, childType pType, int pFd = -1, const bstring& pExtra = "");
+    void addChild(int pid, ChildType pType, int pFd = -1, const bstring& pExtra = "");
 
     // Python
     bool runPython(const bstring& pyScript, boost::python::object& dictionary);
@@ -408,8 +408,8 @@ public:
 
     // Swap functions - use children
     bstring swapName();
-    void finishSwap(Player* player, bool online, CatRef origin, CatRef target);
-    bool swap(Swap s);
+    void finishSwap(Player* player, bool online, const CatRef& origin, const CatRef& target);
+    bool swap(const Swap& s);
     void endSwap();
     void swapInfo(const Player* player);
 

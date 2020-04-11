@@ -16,22 +16,37 @@
  *
  */
 
-#include <iomanip>
-#include <iostream>
-#include <fstream>
+#include <cstdio>                     // for snprintf, sprintf
+#include <strings.h>                  // for strncasecmp
+#include <unistd.h>                   // for link
+#include <fstream>                    // for ofstream, operator<<, basic_ost...
+#include <iomanip>                    // for operator<<, setw
+#include <map>                        // for map, operator==, operator!=
+#include <string>                     // for operator<<, allocator, operator==
+#include <utility>                    // for pair
 #include <boost/tokenizer.hpp>
 
-#include "bstring.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "dm.hpp"
-#include "help.hpp"
-#include "mud.hpp"
-#include "ships.hpp"
-#include "server.hpp"
-#include "socials.hpp"
-#include "unique.hpp"
+
+#include "bstring.hpp"                // for bstring
+#include "cmd.hpp"                    // for cmd, CMD_NOT_UNIQUE, CMD_NOT_FOUND
+#include "commands.hpp"               // for cmdAction, channel, cmdMove
+#include "config.hpp"                 // for Config, PlyCommandMap, CrtComma...
+#include "creatureStreams.hpp"        // for Streamable
+#include "creatures.hpp"              // for Player, Creature
+#include "dm.hpp"                     // for dmKillSwitch, builderMob, build...
+#include "global.hpp"                 // for CreatureClass, CreatureClass::NONE
+#include "help.hpp"                   // for loadHelpTemplate
+#include "os.hpp"                     // for ASSERTLOG
+#include "paths.hpp"                  // for Help, BuilderHelp, DMHelp
+#include "proto.hpp"                  // for isDm, isCt, cmdGo, broadcast
+#include "server.hpp"                 // for Server, gServer
+#include "ships.hpp"                  // for cmdQueryShips
+#include "skills.hpp"                 // for SkillCommand
+#include "socials.hpp"                // for SocialCommand
+#include "songs.hpp"                  // for Song
+#include "structs.hpp"                // for PlyCommand, Command, CrtCommand
+
+class MudObject;
 
 
 

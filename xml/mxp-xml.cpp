@@ -17,10 +17,16 @@
  */
 
 
-#include "config.hpp"
-#include "xml.hpp"
-#include "mxp.hpp"
-#include "paths.hpp"
+#include <libxml/parser.h>  // for xmlFreeDoc, xmlNode, xmlDocGetRootElement
+#include <cstdio>           // for sprintf
+#include <map>              // for operator==
+#include <utility>          // for pair
+
+#include "bstring.hpp"      // for bstring
+#include "config.hpp"       // for Config, BstringMap, MxpElementMap
+#include "mxp.hpp"          // for MxpElement
+#include "paths.hpp"        // for Code
+#include "xml.hpp"          // for copyToBString, NODE_NAME, copyToBool, loa...
 
 //*********************************************************************
 //                      loadMxpElements

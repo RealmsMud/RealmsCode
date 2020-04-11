@@ -15,13 +15,23 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "config.hpp"
-#include "calendar.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "mud.hpp"
-#include "playerClass.hpp"
-#include "playerTitle.hpp"
+#include <cstdio>                 // for sprintf
+#include <cstring>                // for strcat, strcpy, strcmp
+#include <map>                    // for operator==, operator!=
+#include <string>                 // for operator==, basic_string, allocator
+
+#include "bstring.hpp"            // for bstring
+#include "calendar.hpp"           // for Calendar, cDay
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player
+#include "deityData.hpp"          // for DeityData
+#include "global.hpp"             // for CreatureClass, CreatureClass::CLASS...
+#include "os.hpp"                 // for ASSERTLOG
+#include "playerClass.hpp"        // for PlayerClass
+#include "playerTitle.hpp"        // for PlayerTitle
+#include "proto.hpp"              // for getLastDigit, ltoa, up, getClassAbbrev
+#include "random.hpp"             // for Random
+#include "utils.hpp"              // for MAX, MIN
 
 //
 //      class
@@ -392,37 +402,6 @@ char *int_to_text(int nNumber) {
     }
 
     return(strReturn);
-}
-
-//*********************************************************************
-//                      get_quest_exp()
-//*********************************************************************
-long get_quest_exp(int nQuest) {
-    // quests are 1 based and this array is zero based
-    // so subtract one first
-    nQuest--;
-
-    nQuest = MAX(0, MIN(nQuest, numQuests ) );
-
-    return(gConfig->questTable[nQuest]->exp);
-}
-
-//*********************************************************************
-//                      get_quest_name()
-//*********************************************************************
-const char *get_quest_name(int nIndex) {
-    // do bounds checking
-    ASSERTLOG(nIndex >= -1);
-    ASSERTLOG(nIndex < 64);
-
-    nIndex = MAX(-1, MIN(nIndex, numQuests));
-
-    if(nIndex==-1)
-        return("None");
-    if(nIndex >= numQuests)
-        return("Unknown");
-    else
-        return(gConfig->questTable[nIndex]->name);
 }
 
 bool isTitle(const bstring& str) {

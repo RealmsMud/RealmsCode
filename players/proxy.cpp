@@ -17,17 +17,18 @@
  */
 
 
-#include <iomanip>
-#include <fstream>
+#include <boost/format.hpp>             // for basic_altstringbuf<>::int_type
+#include <cctype>                       // for isdigit
 
-#include "boost/format.hpp"
-
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "proxy.hpp"
-#include "server.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"                  // for bstring, operator+
+#include "cmd.hpp"                      // for cmd
+#include "config.hpp"                   // for Config, gConfig
+#include "creatures.hpp"                // for Player
+#include "free_crt.hpp"                 // for free_crt
+#include "proto.hpp"                    // for up, file_exists
+#include "proxy.hpp"                    // for ProxyAccess, ProxyManager
+#include "server.hpp"                   // for Server, gServer
+#include "xml.hpp"                      // for newStringChild, copyToBString
 
 //*********************************************************************
 // CmdProxy
@@ -45,7 +46,7 @@ int cmdProxy(Player* player, cmd* cmnd) {
             *player << proxyList;
         return(0);
     }
-    if(player->getProxyName() != "") {
+    if(!player->getProxyName().empty()) {
         *player << "You cannot change the proxy access of a proxied character.\n";
         return(0);
     }
@@ -55,7 +56,7 @@ int cmdProxy(Player* player, cmd* cmnd) {
     }
     bool online=true;
 
-    Player* target=0;
+    Player* target=nullptr;
     bstring name =  cmnd->str[1];
 
     if(name.length() > 1 && name.getAt(0) == 'p' && isdigit(name.getAt(1))) {
@@ -151,8 +152,8 @@ bstring Config::getProxyList(Player* player) {
     boost::format format("%1% %|15t|%2% %|45t|%3%\n");
 
     oStr << format % "" % "Character Name" % "Proxy Access";
-    for(ProxyMultiMap::value_type p : proxyManager->proxies) {
-        ProxyAccess &proxy = p.second;
+    for(const ProxyMultiMap::value_type& p : proxyManager->proxies) {
+        auto& proxy = p.second;
 
         if(player && proxy.getProxiedId() != player->getId())
             continue;
@@ -194,7 +195,7 @@ bool Config::removeProxyAccess(Player* proxy, Player* proxied) {
 //*********************************************************************
 // Remove proxy access to (proxied) for (id)
 
-bool Config::removeProxyAccess(bstring id, Player* proxied) {
+bool Config::removeProxyAccess(const bstring& id, Player* proxied) {
     return(proxyManager->removeProxyAccess(id, proxied));
 }
 
@@ -237,7 +238,7 @@ void Player::setProxy(Player* proxy) {
 //*********************************************************************
 // Set's proxyName & proxyId as the current proxy user & ID
 
-void Player::setProxy(bstring pProxyName, bstring pProxyId) {
+void Player::setProxy(const bstring& pProxyName, const bstring& pProxyId) {
     proxyName = pProxyName;
     proxyId = pProxyId;
 }
@@ -247,7 +248,7 @@ void Player::setProxy(bstring pProxyName, bstring pProxyId) {
 //*********************************************************************
 // Set's proxyName as the current proxy user
 
-void Player::setProxyName(bstring pProxyName) {
+void Player::setProxyName(const bstring& pProxyName) {
     proxyName = pProxyName;
 }
 
@@ -256,7 +257,7 @@ void Player::setProxyName(bstring pProxyName) {
 //*********************************************************************
 // Set's proxyId as the current proxy ID
 
-void Player::setProxyId(bstring pProxyId) {
+void Player::setProxyId(const bstring& pProxyId) {
     proxyId = pProxyId;
 }
 
@@ -305,9 +306,9 @@ bool ProxyManager::removeProxyAccess(Player* proxy, Player* proxied) {
 //*********************************************************************
 // Remove proxy access to (proxied) for (proxy)
 
-bool ProxyManager::removeProxyAccess(bstring id, Player* proxied) {
+bool ProxyManager::removeProxyAccess(const bstring& id, Player* proxied) {
     ProxyMultiMapRange range = proxies.equal_range(proxied->getId());
-    for(ProxyMultiMap::iterator it = range.first ; it != range.second ; it++) {
+    for(auto it = range.first ; it != range.second ; it++) {
         ProxyAccess& proxyAccess = it->second;
         if(proxyAccess.getProxyId() == id) {
             proxies.erase(it);
@@ -328,7 +329,7 @@ bool ProxyManager::hasProxyAccess(Player* proxy, Player* proxied) {
         return(false);
 
     ProxyMultiMapRange range = proxies.equal_range(proxied->getId());
-    for(ProxyMultiMap::iterator it = range.first ; it != range.second ; it++) {
+    for(auto it = range.first ; it != range.second ; it++) {
         ProxyAccess& proxyAccess = it->second;
         if(proxyAccess.hasProxyAccess(proxy, proxied))
             return(true);
@@ -337,87 +338,15 @@ bool ProxyManager::hasProxyAccess(Player* proxy, Player* proxied) {
 }
 
 
-void ProxyManager::save() {
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr      rootNode;
-    char            filename[80];
-
-
-    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Proxies", nullptr);
-    xmlDocSetRootElement(xmlDoc, rootNode);
-
-    for(ProxyMultiMap::value_type p : proxies) {
-        p.second.save(rootNode);
-    }
-
-    sprintf(filename, "%s/proxies.xml", Path::PlayerData);
-
-    xml::saveFile(filename, xmlDoc);
-    xmlFreeDoc(xmlDoc);
-}
-
-void ProxyManager::loadProxies() {
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr  rootNode;
-    xmlNodePtr  curNode;
-    char        filename[80];
-
-    sprintf(filename, "%s/proxies.xml", Path::PlayerData);
-
-    if(!file_exists(filename))
-        return;
-
-    if((xmlDoc = xml::loadFile(filename, "Proxies")) == nullptr)
-        return;
-
-    rootNode = xmlDocGetRootElement(xmlDoc);
-    curNode = rootNode->children;
-
-    while(curNode) {
-        if(NODE_NAME(curNode, "ProxyAccess")) {
-            ProxyAccess access(curNode);
-            proxies.insert(ProxyMultiMap::value_type(access.getProxiedId(), access));
-        }
-        curNode = curNode->next;
-    }
-
-    xmlFreeDoc(xmlDoc);
-    xmlCleanupParser();
-}
-
-
 //*********************************************************************
 //                ProxyAccess proxy functions
 //*********************************************************************
 
-
-
-ProxyAccess::ProxyAccess(xmlNodePtr rootNode) {
-    xmlNodePtr curNode = rootNode->children;
-    while(curNode) {
-             if(NODE_NAME(curNode, "ProxyId")) xml::copyToBString(proxyId, curNode);
-        else if (NODE_NAME(curNode, "ProxyName")) xml::copyToBString(proxyName, curNode);
-        else if (NODE_NAME(curNode, "ProxiedId")) xml::copyToBString(proxiedId, curNode);
-        else if (NODE_NAME(curNode, "ProxiedName")) xml::copyToBString(proxiedName, curNode);
-
-        curNode = curNode->next;
-    }
-}
 ProxyAccess::ProxyAccess(Player* proxy, Player* proxied) {
     proxyName = proxy->getName();
     proxyId = proxy->getId();
     proxiedName = proxied->getName();
     proxiedId = proxied->getId();
-}
-
-void ProxyAccess::save(xmlNodePtr rootNode) {
-    xmlNodePtr curNode = xml::newStringChild(rootNode, "ProxyAccess");
-    xml::newStringChild(curNode, "ProxiedId", proxiedId);
-    xml::newStringChild(curNode, "ProxiedName", proxiedName);
-    xml::newStringChild(curNode, "ProxyId", proxyId);
-    xml::newStringChild(curNode, "ProxyName", proxyName);
-
 }
 
 //*********************************************************************

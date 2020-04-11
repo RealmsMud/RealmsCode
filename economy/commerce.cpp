@@ -15,21 +15,40 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <boost/utility.hpp>
-#include "bank.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "dm.hpp"
-#include "factions.hpp"
-#include "guilds.hpp"
-#include "mud.hpp"
-#include "property.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "unique.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include <boost/utility.hpp>      // for next
+#include <cstdlib>                // for atoi, atol
+#include <cstring>                // for strncmp, strcmp, strlen, strcpy
+#include <ctime>                  // for time
+
+#include "bank.hpp"               // for guildLog
+#include "bstring.hpp"            // for bstring, operator+
+#include "carry.hpp"              // for Carry
+#include "catRef.hpp"             // for CatRef
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for getFullstrText, cmdHelp, cmdProperties
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for ObjectSet, Container
+#include "creatureStreams.hpp"    // for Streamable, ColorOff, ColorOn
+#include "creatures.hpp"          // for Player, Creature, Monster
+#include "dm.hpp"                 // for findRoomsWithFlag
+#include "exits.hpp"              // for Exit
+#include "factions.hpp"           // for Faction, Faction::INDIFFERENT
+#include "flags.hpp"              // for P_AFK, R_SHOP, O_PERM_ITEM, R_BUILD...
+#include "global.hpp"             // for CreatureClass, MAG, PROP_SHOP, BUY
+#include "guilds.hpp"             // for Guild, shopStaysWithGuild
+#include "hooks.hpp"              // for Hooks
+#include "money.hpp"              // for Money, GOLD
+#include "mud.hpp"                // for MINSHOPLEVEL, GUILD_MASTER
+#include "objects.hpp"            // for Object, ObjectType, ObjectType::LOT...
+#include "os.hpp"                 // for merror
+#include "property.hpp"           // for Property, PartialOwner
+#include "proto.hpp"              // for broadcast, logn, link_rom, needUniq...
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for UniqueRoom, BaseRoom, ExitList
+#include "server.hpp"             // for Server, gServer, GOLD_OUT, GOLD_IN
+#include "unique.hpp"             // for Lore, addOwner, isLimited, Unique
+#include "utils.hpp"              // for MAX, MIN
+#include "xml.hpp"                // for loadRoom, loadObject, loadPlayer
 
 #define TAX .06
 
@@ -248,7 +267,7 @@ void shopRemoveGuild(Property *p, Player* player, UniqueRoom* shop, UniqueRoom* 
         }
     }
 
-    setupShop(p, player, 0, shop, storage);
+    setupShop(p, player, nullptr, shop, storage);
 }
 
 
@@ -306,7 +325,7 @@ bool tooManyItemsInShop(const Player* player, const UniqueRoom* storage) {
 
 
         while(it != storage->objects.end()) {
-            if(playerShopSame(0, obj, (*it))) {
+            if(playerShopSame(nullptr, obj, (*it))) {
                 numObjects++;
                 it++;
             } else
@@ -364,11 +383,11 @@ bool canBuildShop(const Player* player, const UniqueRoom* room) {
 //*********************************************************************
 
 int cmdShop(Player* player, cmd* cmnd) {
-    UniqueRoom* room = player->getUniqueRoomParent(), *storage=0;
-    Object  *deed=0;
+    UniqueRoom* room = player->getUniqueRoomParent(), *storage=nullptr;
+    Object  *deed=nullptr;
     int     action=0;
     int     flags = 0, len = strlen(cmnd->str[1]);
-    const Guild* guild=0;
+    const Guild* guild=nullptr;
     if(player->getGuild())
         guild = gConfig->getGuild(player->getGuild());
 
@@ -479,7 +498,7 @@ int cmdShop(Player* player, cmd* cmnd) {
     }
 
     PartialOwner partial;
-    PartialOwner* po=0;
+    PartialOwner* po=nullptr;
     if(p && !p->isOwner(player->getName())) {
         po = p->getPartialOwner(player->getName());
         // get default flags if not on the list
@@ -517,8 +536,8 @@ int cmdShop(Player* player, cmd* cmnd) {
 
     bool limited=false;
     if(action == SHOP_FOUND) {
-        UniqueRoom *shop=0;
-        storage = 0;
+        UniqueRoom *shop=nullptr;
+        storage = nullptr;
 
         bstring xname = getFullstrText(cmnd->fullstr, 2);
         xname.Replace("_", " ");
@@ -561,7 +580,7 @@ int cmdShop(Player* player, cmd* cmnd) {
         p->addRange(shop->info.area, shop->info.id, shop->info.id+1);
 
         if(!room->info.isArea("guild")) {
-            setupShop(p, player, 0, shop, storage);
+            setupShop(p, player, nullptr, shop, storage);
         } else {
             shopAssignGuild(p, player, guild, shop, storage, false);
         }
@@ -769,7 +788,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 bool doFilter(const Object* object, const bstring& filter) {
-    if(filter == "")
+    if(filter.empty())
         return(false);
 
     if(filter == object->getSubType())
@@ -842,8 +861,8 @@ const char* cannotUseMarker(Player* player, Object* object) {
 // shop.
 
 int cmdList(Player* player, cmd* cmnd) {
-    UniqueRoom* room = player->getUniqueRoomParent(), *storage=0;
-    Object* object=0;
+    UniqueRoom* room = player->getUniqueRoomParent(), *storage=nullptr;
+    Object* object=nullptr;
     int     n=0;
     bstring filter = "";
 
@@ -893,7 +912,7 @@ int cmdList(Player* player, cmd* cmnd) {
         ObjectSet::iterator it;
         if(!storage->objects.empty()) {
             *player << "You may buy:";
-            if(filter != "")
+            if(!filter.empty())
                 *player << ColorOn << " ^Y(filtering on \"" << filter << "\")" << ColorOff;
             *player << "\n";
             for(it = storage->objects.begin() ; it != storage->objects.end() ; ) {
@@ -943,7 +962,7 @@ int cmdList(Player* player, cmd* cmnd) {
                 owner = true;
         }
 
-        if(filter != "")
+        if(!filter.empty())
             player->printColor(" ^Y(filtering on \"%s\")", filter.c_str());
         *player << "\n";
         ObjectSet::iterator it;
@@ -991,8 +1010,8 @@ int cmdList(Player* player, cmd* cmnd) {
 // object listed in carried items.
 
 int cmdPurchase(Player* player, cmd* cmnd) {
-    Monster *creature=0;
-    Object  *object=0;
+    Monster *creature=nullptr;
+    Object  *object=nullptr;
     int     maxitem=0;
     CatRef  obj_num[10];
     Money cost;
@@ -1116,7 +1135,7 @@ int cmdPurchase(Player* player, cmd* cmnd) {
         player->coins.sub(cost);
 
         player->doHaggling(creature, object, BUY);
-        gServer->logGold(GOLD_OUT, player, object->refund, object, "MobPurchase");
+        Server::logGold(GOLD_OUT, player, object->refund, object, "MobPurchase");
 
         if(object->hooks.executeWithReturn("afterPurchase", player, creature->getId())) {
             // A return value of true means the object still exists
@@ -1147,8 +1166,8 @@ int cmdPurchase(Player* player, cmd* cmnd) {
 // The monster needs the M_CAN_PURCHASE_FROM flag set to denote it can sell.
 
 int cmdSelection(Player* player, cmd* cmnd) {
-    Monster *creature=0;
-    Object  *object=0;
+    Monster *creature=nullptr;
+    Object  *object=nullptr;
     CatRef  obj_list[10];
     int     i=0, j=0, found=0, maxitem=0;
     bstring filter = "";
@@ -1202,7 +1221,7 @@ int cmdSelection(Player* player, cmd* cmnd) {
     }
 
     player->print("%M is currently selling:", creature);
-    if(filter != "")
+    if(!filter.empty())
         player->printColor(" ^Y(filtering on \"%s\")", filter.c_str());
     *player << "\n";
 
@@ -1231,8 +1250,8 @@ int cmdSelection(Player* player, cmd* cmnd) {
 // This function allows a player to buy something from a shop.
 
 int cmdBuy(Player* player, cmd* cmnd) {
-    UniqueRoom* room = player->getUniqueRoomParent(), *storage=0;
-    Object  *object=0, *object2=0;
+    UniqueRoom* room = player->getUniqueRoomParent(), *storage=nullptr;
+    Object  *object=nullptr, *object2=nullptr;
     int     num=0, n=1;
 
     if(cmnd->num == 3)
@@ -1274,8 +1293,8 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
     if(p && p->getType() == PROP_SHOP) {
         // We have a player run shop here!!!
-        Player* owner=0;
-        Guild*  guild=0;
+        Player* owner=nullptr;
+        Guild*  guild=nullptr;
         int     flags=0;
         long    deposit=0;
         bool    online=false;
@@ -1374,7 +1393,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
         object->deleteFromRoom();
         Limited::transferOwner(owner, player, object);
         player->addObj(object);
-        gServer->logGold(GOLD_OUT, player, Money(object->getShopValue() * TAX, GOLD), object, "TAX");
+        Server::logGold(GOLD_OUT, player, Money(object->getShopValue() * TAX, GOLD), object, "TAX");
         deposit = shopProfit(object);
 
         if(!guild) {
@@ -1491,20 +1510,17 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
             if(!Unique::canGet(player, object)) {
                 *player << "You are unable to purchase that limited item at this time.\n";
-                if(object2)
-                    delete object2;
+                delete object2;
                 return(0);
             }
             if(!Lore::canHave(player, object, false)) {
                 *player << "You cannot purchased that item.\nIt is a limited item of which you cannot carry any more.\n";
-                if(object2)
-                    delete object2;
+                delete object2;
                 return(0);
             }
             if(!Lore::canHave(player, object, true)) {
                 *player << "You cannot purchased that item.\nIt contains a limited item that you cannot carry.\n";
-                if(object2)
-                    delete object2;
+                delete object2;
                 return(0);
             }
 
@@ -1513,8 +1529,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
             // buying a deed
             if(isDeed && player->getLevel() < MINSHOPLEVEL) {
                 player->print("You must be at least level %d to buy a shop deed.\n", MINSHOPLEVEL);
-                if(object2)
-                    delete object2;
+                delete object2;
                 return(0);
             }
 
@@ -1526,7 +1541,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
             // No haggling on deeds!
             if(!isDeed)
-                player->doHaggling(0, object2, BUY);
+                player->doHaggling(nullptr, object2, BUY);
 
             // We just did a full priced purchase, we can now haggle again (unless they do another refund)
             if(player->getRoomParent() && player->getRoomParent()->getAsUniqueRoom())
@@ -1534,7 +1549,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
 
             object2->setDroppedBy(room, "StoreBought");
-            gServer->logGold(GOLD_OUT, player, object2->refund, object2, "StoreBought");
+            Server::logGold(GOLD_OUT, player, object2->refund, object2, "StoreBought");
 
             if(object2->getType() == ObjectType::LOTTERYTICKET || object2->getType() == ObjectType::BANDAGE)
                 object2->value.zero();
@@ -1609,7 +1624,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
             }
 
             player->coins.sub(cost);
-            gServer->logGold(GOLD_OUT, player, cost, nullptr, "PurchaseStorage");
+            Server::logGold(GOLD_OUT, player, cost, nullptr, "PurchaseStorage");
 
             player->print("The shopkeeper says, \"Congratulations, you are now the proud owner of a new storage room. Don't forget, to get in you must also buy a key.\"\n");
             player->print("You have %s left.\n", player->coins.str().c_str());
@@ -1621,7 +1636,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
         } else {
             // Buying bail to get outta jail!
-            Exit    *exit=0;
+            Exit    *exit=nullptr;
 
             // Find the cell door
             exit = findExit(player, "cell", 1);
@@ -1633,9 +1648,9 @@ int cmdBuy(Player* player, cmd* cmnd) {
             }
 
             exit->clearFlag(X_LOCKED);
-            exit->ltime.ltime = time(0);
+            exit->ltime.ltime = time(nullptr);
             player->coins.sub(cost);
-            gServer->logGold(GOLD_OUT, player, cost, exit, "Bail");
+            Server::logGold(GOLD_OUT, player, cost, exit, "Bail");
             player->print("You bail yourself out for %s gold.\n", cost.str().c_str());
             broadcast("### %M just bailed %sself out of jail!", player, player->himHer());
         }
@@ -1650,7 +1665,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
 // This function will allow a player to sell an object in a pawn shop
 
 int cmdSell(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
     bool    poorquality=false;
     Money value;
 
@@ -1747,8 +1762,8 @@ int cmdSell(Player* player, cmd* cmnd) {
 
     object->refund.zero();
     object->refund.set(value);
-    player->doHaggling(0, object, SELL);
-    gServer->logGold(GOLD_IN, player, object->refund, object, "Pawn");
+    player->doHaggling(nullptr, object, SELL);
+    Server::logGold(GOLD_IN, player, object->refund, object, "Pawn");
     player->bug("%s sold %s in room %s.\n", player->getCName(), object->getCName(),
         player->getRoomParent()->fullName().c_str());
     logn("log.commerce", "%s sold %s in room %s.\n", player->getCName(), object->getCName(),
@@ -1768,7 +1783,7 @@ int cmdSell(Player* player, cmd* cmnd) {
 // object, if they are in the pawn shop.
 
 int cmdValue(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
     Money value;
 
 
@@ -1815,7 +1830,7 @@ int cmdValue(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdRefund(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
 
 
     if(player->getClass() == CreatureClass::BUILDER)
@@ -1855,7 +1870,7 @@ int cmdRefund(Player* player, cmd* cmnd) {
     player->coins.add(object->refund);
     player->printColor("The shopkeep takes the %s from you and returns %s to you.\n", object->getCName(), object->refund.str().c_str());
     broadcast(player->getSock(), player->getParent(), "%M refunds %P.", player, object);
-    gServer->logGold(GOLD_IN, player, object->refund, object, "Refund");
+    Server::logGold(GOLD_IN, player, object->refund, object, "Refund");
     player->delObj(object, true);
     // No further haggling allowed in this store until they buy a full priced item and have left the room
     player->setFlag(P_JUST_REFUNDED);
@@ -1871,15 +1886,14 @@ int cmdRefund(Player* player, cmd* cmnd) {
 //                      failTrade
 //*********************************************************************
 
-void failTrade(const Player* player, const Object* object, const Monster* target, Object* trade=0, bool useHeShe=true) {
+void failTrade(const Player* player, const Object* object, const Monster* target, Object* trade=nullptr, bool useHeShe=true) {
     if(useHeShe)
         player->printColor("%s gives you back %P.\n", target->upHeShe(), object);
     else
         player->printColor("%M gives you back %P.\n", target, object);
     broadcast(player->getSock(), player->getParent(), "%M tried to trade %P with %N.",
         player, object, target);
-    if(trade)
-        delete trade;
+    delete trade;
 }
 
 //*********************************************************************
@@ -1906,7 +1920,7 @@ bool canReceiveObject(const Player* player, Object* object, const Monster* monst
             player->print("%M cannot trade for that right now.\n", monster);
         else
             player->print("You cannot complete that quest right now.\nThe unique item reward is already in the game.\n");
-        if(tryAgain != "")
+        if(!tryAgain.empty())
             player->print(tryAgain.c_str());
         return(false);
     }
@@ -1917,7 +1931,7 @@ bool canReceiveObject(const Player* player, Object* object, const Monster* monst
             player->printColor("%M cannot trade for that right now, as you already have %P.\n", monster, object);
         else
             player->printColor("You cannot complete that quest right now, as you already have %P.\n", object);
-        if(tryAgain != "")
+        if(!tryAgain.empty())
             player->print(tryAgain.c_str());
         return(false);
     }
@@ -1926,7 +1940,7 @@ bool canReceiveObject(const Player* player, Object* object, const Monster* monst
     if( object->getQuestnum() && player->questIsSet(object->getQuestnum()-1) &&
         !player->checkStaff("You have already fulfilled that quest.\n")
     ) {
-        if(tryAgain != "")
+        if(!tryAgain.empty())
             player->print(tryAgain.c_str());
         return(false);
     }
@@ -1945,9 +1959,9 @@ bool canReceiveObject(const Player* player, Object* object, const Monster* monst
 // delete all the objects we have already loaded.
 
 void abortItemList(std::list<Object*> &objects) {
-    Object* object=0;
+    Object* object=nullptr;
 
-    while(objects.size()) {
+    while(!objects.empty()) {
         object = objects.front();
         delete object;
         objects.pop_front();
@@ -1967,10 +1981,10 @@ void abortItemList(std::list<Object*> &objects) {
 
 bool prepareItemList(const Player* player, std::list<Object*> &objects, Object* object, const Monster* monster, bool isTrade, bool doQuestOwner, int totalBulk) {
     std::list<CatRef>::const_iterator it;
-    Object* toGive=0;
+    Object* toGive=nullptr;
     // if they're getting a random result of a quest or trade,
     // they might be able to try again should it fail
-    bool maybeTryAgainMsg = !object->flagIsSet(O_LOAD_ALL) && object->randomObjects.size();
+    bool maybeTryAgainMsg = !object->flagIsSet(O_LOAD_ALL) && !object->randomObjects.empty();
 
     // count the bulk we will be getting rid of if this transaction is successful
     if(totalBulk > 0)
@@ -1986,7 +2000,7 @@ bool prepareItemList(const Player* player, std::list<Object*> &objects, Object* 
         return(false);
     }
 
-    if(object->flagIsSet(O_LOAD_ALL) && object->randomObjects.size()) {
+    if(object->flagIsSet(O_LOAD_ALL) && !object->randomObjects.empty()) {
         // in this case, we give them a lot of items
         for(it = object->randomObjects.begin(); it != object->randomObjects.end(); it++) {
             if(!loadObject(*it, &toGive))
@@ -2026,8 +2040,8 @@ bool prepareItemList(const Player* player, std::list<Object*> &objects, Object* 
 //*********************************************************************
 
 int cmdTrade(Player* player, cmd* cmnd) {
-    Monster *creature=0;
-    Object  *object=0, *trade=0;
+    Monster *creature=nullptr;
+    Object  *object=nullptr, *trade=nullptr;
     Carry   invTrade, invResult;
     int     i=0, numTrade = cmnd->val[0];
     bool    badNumTrade=false, found=false, hasTrade=false, doQuestOwner=false;
@@ -2134,7 +2148,7 @@ int cmdTrade(Player* player, cmd* cmnd) {
 
     // If the quest owner is set on the item we are giving, set the quest owner
     // on the item(s) we are receiving.
-    doQuestOwner = (object->getQuestOwner() != "");
+    doQuestOwner = (!object->getQuestOwner().empty());
 
     if(!prepareItemList(player, objects, trade, creature, true, doQuestOwner, object->getActualBulk())) {
         // in the event of failure, prepareItemList() will delete the trade object
@@ -2148,7 +2162,7 @@ int cmdTrade(Player* player, cmd* cmnd) {
 
         ObjectSet toDelSet;
         ObjectSet::iterator it;
-        Object *obj = 0;
+        Object *obj = nullptr;
 
         // find the first occurance of the object in their inventory
         for( it = player->objects.begin() ; it != player->objects.end() ; ) {
@@ -2220,7 +2234,7 @@ int cmdTrade(Player* player, cmd* cmnd) {
 int cmdAuction(Player* player, cmd* cmnd) {
     int         i=0, flags=0;
     long        amnt=0, batch=1, each=0;
-    Object      *object=0;
+    Object      *object=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -2251,7 +2265,7 @@ int cmdAuction(Player* player, cmd* cmnd) {
     // use i to point to where the money will be
     i = 2;
 
-    if(strcmp(cmnd->str[1], "self")) {
+    if(strcmp(cmnd->str[1], "self") != 0) {
         object = player->findObject(player, cmnd, 1);
         if(!object) {
             *player << "That object is not in your inventory.\n";
@@ -2299,8 +2313,8 @@ int cmdAuction(Player* player, cmd* cmnd) {
 
 
 
-    Player* target=0;
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    Player* target=nullptr;
+    for(const auto& p : gServer->players) {
         target = p.second;
 
         if(!target->isConnected())
@@ -2331,7 +2345,7 @@ void Player::setLastPawn(Object* object) {
     }
     if(lastPawn) {
         delete lastPawn;
-        lastPawn = 0;
+        lastPawn = nullptr;
     }
     lastPawn = object;
 }
@@ -2360,12 +2374,12 @@ bool Player::restoreLastPawn() {
     }
     coins.sub(lastPawn->refund);
     printColor("You give the shopkeeper %d gold and reclaim %P.\n", lastPawn->refund[GOLD], lastPawn);
-    gServer->logGold(GOLD_OUT, this, lastPawn->refund, lastPawn, "Reclaim");
+    Server::logGold(GOLD_OUT, this, lastPawn->refund, lastPawn, "Reclaim");
 
     lastPawn->setFlag(O_RECLAIMED);
     lastPawn->refund.zero();
     doGetObject(lastPawn, this, true, true);
-    lastPawn = 0;
+    lastPawn = nullptr;
     return(true);
 }
 
@@ -2407,7 +2421,7 @@ void Creature::doHaggling(Creature *vendor, Object* object, int trans) {
             (getClass() == CreatureClass::CLERIC && getDeity() == JAKAR) ) )
         return;
 
-    if(chkSave(LCK, 0, -1))
+    if(chkSave(LCK, nullptr, -1))
         lck = 25;
     else
         lck = 0;

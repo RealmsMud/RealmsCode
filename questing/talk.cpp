@@ -16,8 +16,17 @@
  *
  */
 
-#include "creatures.hpp"
-#include "mud.hpp"
+#include <cctype>         // for isalpha, isdigit, isspace
+#include <cstdio>         // for fgets, fclose, feof, fopen, sprintf, FILE
+#include <cstring>        // for strcmp, strcpy, strlen, memcpy
+
+#include "creatures.hpp"  // for Creature
+#include "flags.hpp"      // for M_TALKS
+#include "global.hpp"     // for FATAL
+#include "os.hpp"         // for merror
+#include "paths.hpp"      // for Talk
+#include "proto.hpp"      // for loadCreature_tlk, talk_crt_act
+#include "structs.hpp"    // for ttag
 
 //***********************************************************************
 //              loadCreature_tlk
@@ -71,7 +80,7 @@ int loadCreature_tlk( Creature* creature ) {
         tp->response = new char[len2];
         if(!tp->response)
             merror("loadCreature_tlk", FATAL);
-        tp->next_tag = 0;
+        tp->next_tag = nullptr;
 
         strcpy(tp->key, keystr);
         talk_crt_act(keystr,tp);
@@ -102,16 +111,16 @@ int talk_crt_act(char *str, ttag *tlk ) {
 
 
     if(!str) {
-        tlk->key = 0;
-        tlk->action = 0;
-        tlk->target = 0;
+        tlk->key = nullptr;
+        tlk->action = nullptr;
+        tlk->target = nullptr;
         tlk->type = 0;
         return(0);
     }
 
 
     for(i=0;i<4;i++)
-        word[i] = 0;
+        word[i] = nullptr;
 
     for(n=0;n<4;n++) {
 
@@ -142,16 +151,16 @@ int talk_crt_act(char *str, ttag *tlk ) {
     tlk->key = word[0];
 
     if(num < 2) {
-        tlk->action = 0;
-        tlk->target = 0;
+        tlk->action = nullptr;
+        tlk->target = nullptr;
         tlk->type = 0;
         return(0);
     }
 
     if(!strcmp(word[1],"ATTACK")) {
         tlk->type = 1;
-        tlk->target = 0;
-        tlk->action = 0;
+        tlk->target = nullptr;
+        tlk->action = nullptr;
     } else if(!strcmp(word[1],"ACTION") && num > 2) {
         tlk->type = 2;
         tlk->action = word[2];
@@ -163,11 +172,11 @@ int talk_crt_act(char *str, ttag *tlk ) {
     } else if(!strcmp(word[1],"GIVE")) {
         tlk->type = 4;
         tlk->action = word[2];
-        tlk->target = 0;
+        tlk->target = nullptr;
     } else {
         tlk->type = 0;
-        tlk->action = 0;
-        tlk->target = 0;
+        tlk->action = nullptr;
+        tlk->target = nullptr;
     }
     return(0);
 }

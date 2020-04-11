@@ -16,18 +16,39 @@
  *
  */
 
-#include <fcntl.h>
+#include <fcntl.h>                // for open, O_RDONLY
+#include <cstdio>                 // for sprintf
+#include <cstdlib>                // for malloc, realloc
+#include <cstring>                // for strcmp, strcpy
+#include <ctime>                  // for time
+#include <unistd.h>               // for close, read
+#include <ostream>                // for operator<<, basic_ostream, ostrings...
 
-#include "calendar.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "move.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"            // for bstring
+#include "calendar.hpp"           // for Calendar
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for ObjectSet, MonsterSet, PlayerSet
+#include "creatures.hpp"          // for Monster, Creature, Player, PetList
+#include "exits.hpp"              // for Exit
+#include "flags.hpp"              // for M_DM_FOLLOW, M_SNEAKING, M_CHARMED
+#include "global.hpp"             // for CreatureClass, BRE, DEA, MEN, POI, SPL
+#include "group.hpp"              // for Group
+#include "lasttime.hpp"           // for lasttime, crlasttime
+#include "money.hpp"              // for GOLD, Money
+#include "move.hpp"               // for getRoom, getString, deletePortal
+#include "mud.hpp"                // for LT_SPELL, LT_MON_WANDER, LT, LT_CHA...
+#include "objects.hpp"            // for Object
+#include "paths.hpp"              // for Desc
+#include "proto.hpp"              // for broadcast, bonus, getSizeName, get_...
+#include "raceData.hpp"           // for RaceData
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom, AreaRoom, ExitList, Uniqu...
+#include "server.hpp"             // for Server, gServer
+#include "size.hpp"               // for NO_SIZE
+#include "structs.hpp"            // for saves, ttag
+#include "threat.hpp"             // for ThreatTable, operator<<
+#include "utils.hpp"              // for MAX, MIN
+#include "xml.hpp"                // for loadMonster
 
 const short Creature::OFFGUARD_REMOVE=0;
 const short Creature::OFFGUARD_NOREMOVE=1;
@@ -46,7 +67,7 @@ bool Creature::inSameRoom(const Creature *b) const {
 //*********************************************************************
 
 Monster *getFirstAggro(Monster* creature, const Creature* player) {
-    Monster *foundCrt=0;
+    Monster *foundCrt=nullptr;
 
     if(creature->isPlayer())
         return(creature);
@@ -88,7 +109,7 @@ bool Monster::addEnemy(Creature* target, bool print) {
     if(target->isPlayer()) {
       // take pity on these people
       if(target->isEffected("petrification") || target->isUnconscious())
-          return(0);
+          return(false);
       // pets should not attack master
       if(isPet() && getMaster() == target)
           return(false);
@@ -203,11 +224,11 @@ void Object::tempPerm() {
 
 void Monster::diePermCrt() {
     std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm=0;
-    Monster *temp_mob=0;
-    UniqueRoom  *room=0;
+    crlasttime* crtm=nullptr;
+    Monster *temp_mob=nullptr;
+    UniqueRoom  *room=nullptr;
     char    perm[80];
-    long    t = time(0);
+    long    t = time(nullptr);
     int     i=0;
 
     strcpy(perm,getCName());
@@ -319,10 +340,8 @@ bstring Player::consider(Creature* creature) const {
 // This function returns true if the name passed in the first parameter
 // is in the charm list of the creature
 
-bool Creature::hasCharm(bstring charmed) {
-    etag    *cp=0;
-
-    if(charmed == "")
+bool Creature::hasCharm(const bstring& charmed) {
+    if(charmed.empty())
         return(false);
 
     Player* player = getAsPlayer();
@@ -330,15 +349,7 @@ bool Creature::hasCharm(bstring charmed) {
     if(!player)
         return(false);
 
-    cp = player->first_charm;
-
-    while(cp) {
-        if(!strcmp(cp->enemy, charmed.c_str()))
-            return(true);
-        cp = cp->next_tag;
-    }
-
-    return(false);
+    return (player->charms.find(charmed) != player->charms.end());
 }
 
 //********************************************************************
@@ -348,21 +359,15 @@ bool Creature::hasCharm(bstring charmed) {
 // parameter to the charm list of the creature
 
 int Player::addCharm(Creature* creature) {
-    etag    *cp=0;
-
-    ASSERTLOG( creature );
+    if(!creature)
+        return(0);
 
     if(hasCharm(creature->getName()))
         return(0);
 
-    if(creature && !creature->isDm()) {
-        cp = new etag;
-        if(!cp)
-            merror("add_charm_crt", FATAL);
-
-        strcpy(cp->enemy, creature->getCName());
-        cp->next_tag = first_charm;
-        first_charm = cp;
+    if(!creature->isDm()) {
+        charms.insert(creature->getName());
+        return(1);
     }
     return(0);
 }
@@ -374,30 +379,14 @@ int Player::addCharm(Creature* creature) {
 // parameter from the charm list of the creature
 
 int Player::delCharm(Creature* creature) {
-    etag    *cp, *prev;
-
-    ASSERTLOG( creature );
+    if(!creature)
+        return(0);
 
     if(!hasCharm(creature->getName()))
         return(0);
 
-    cp = first_charm;
-
-    if(!strcmp(cp->enemy, creature->getCName())) {
-        first_charm = cp->next_tag;
-        delete cp;
-        return(1);
-    } else
-        while(cp) {
-            if(!strcmp(cp->enemy, creature->getCName())) {
-                prev->next_tag = cp->next_tag;
-                delete cp;
-                return(1);
-            }
-            prev = cp;
-            cp = cp->next_tag;
-        }
-    return(0);
+    charms.erase(creature->getName());
+    return(1);
 }
 
 //*********************************************************************
@@ -426,7 +415,7 @@ bool mobileEnter(Exit* exit) {
 // the M_MOBILE_MONSTER flag is set the creature will move around.
 
 int Monster::mobileCrt() {
-    BaseRoom *newRoom=0;
+    BaseRoom *newRoom=nullptr;
     AreaRoom *caRoom = getAreaRoomParent();
     int     i=0, num=0, ret=0;
     bool    mem=false;
@@ -543,7 +532,7 @@ void Monster::monsterCombat(Monster *target) {
 //*********************************************************************
 
 int Monster::mobWield() {
-    Object  *returnObject=0;
+    Object  *returnObject=nullptr;
     int     i=0, found=0;
 
     if(objects.empty())
@@ -661,7 +650,7 @@ void Creature::castDelay(long delay) {
     if(delay < 1)
         return;
 
-    lasttime[LT_SPELL].ltime = time(0);
+    lasttime[LT_SPELL].ltime = time(nullptr);
     lasttime[LT_SPELL].interval = delay;
 }
 
@@ -673,7 +662,7 @@ void Creature::attackDelay(long delay) {
     if(delay < 1)
         return;
 
-    getAsPlayer()->updateAttackTimer(true, delay*10);
+    getAsPlayer()->updateAttackTimer(true, (int)delay*10);
 }
 
 //*********************************************************************
@@ -681,7 +670,7 @@ void Creature::attackDelay(long delay) {
 //*********************************************************************
 
 Creature *enm_in_group(Creature *target) {
-    Creature *enemy=0;
+    Creature *enemy=nullptr;
     int     chosen=0;
 
 
@@ -716,7 +705,7 @@ void Monster::clearEnemyList() {
 //*********************************************************************
 
 void Monster::clearMobInventory() {
-    Object* object=0;
+    Object* object=nullptr;
     ObjectSet::iterator it;
     for(it = objects.begin() ; it != objects.end() ; ) {
         object = (*it++);
@@ -751,7 +740,7 @@ int Monster::cleanMobForSaving() {
         Player* master;
         if(getMaster() != nullptr && (master = getMaster()->getAsPlayer()) != nullptr) {
             master->clearFlag(P_ALIASING);
-            master->getAsPlayer()->setAlias(0);
+            master->getAsPlayer()->setAlias(nullptr);
             master->print("%1M's soul was saved.\n", this);
             removeFromGroup(false);
         }
@@ -765,25 +754,25 @@ int Monster::cleanMobForSaving() {
 //                      displayFlags
 //*********************************************************************
 
-int Creature::displayFlags() const {
-    int flags = 0;
+unsigned int Creature::displayFlags() const {
+    unsigned int retFlags = 0;
     if(isEffected("detect-invisible"))
-        flags |= INV;
+        retFlags |= INV;
     if(isEffected("detect-magic"))
-        flags |= MAG;
+        retFlags |= MAG;
     if(isEffected("true-sight"))
-        flags |= MIST;
+        retFlags |= MIST;
     if(isPlayer()) {
         if(cClass == CreatureClass::BUILDER)
-            flags |= ISBD;
+            retFlags |= ISBD;
         if(cClass == CreatureClass::CARETAKER)
-            flags |= ISCT;
+            retFlags |= ISCT;
         if(isDm())
-            flags |= ISDM;
+            retFlags |= ISDM;
         if(flagIsSet(P_NO_NUMBERS))
-            flags |= NONUM;
+            retFlags |= NONUM;
     }
-    return(flags);
+    return(retFlags);
 }
 
 //*********************************************************************
@@ -791,7 +780,8 @@ int Creature::displayFlags() const {
 //*********************************************************************
 
 int Player::displayCreature(Creature* target)  {
-    int     percent=0, align=0, rank=0, chance=0, flags = displayFlags();
+    int     percent=0, align=0, rank=0, chance=0;
+    unsigned int flags = displayFlags();
     Player  *pTarget = target->getAsPlayer();
     Monster *mTarget = target->getAsMonster();
     std::ostringstream oStr;
@@ -800,7 +790,7 @@ int Player::displayCreature(Creature* target)  {
 
     if(mTarget) {
         oStr << "You see " << mTarget->getCrtStr(this, flags, 1) << ".\n";
-        if(mTarget->getDescription() != "")
+        if(!mTarget->getDescription().empty())
             oStr << mTarget->getDescription() << "\n";
         else
             oStr << "There is nothing special about " << mTarget->getCrtStr(this, flags, 0) << ".\n";
@@ -825,7 +815,7 @@ int Player::displayCreature(Creature* target)  {
                  << " is " << pTarget->getAge() << " years old.^x\n";
         }
 
-        if(pTarget->description != "")
+        if(!pTarget->description.empty())
             oStr << pTarget->description << "\n";
     }
 
@@ -978,7 +968,7 @@ int Player::displayCreature(Creature* target)  {
     } else {
         if(mTarget->isEnemy(this))
             oStr << mTarget->upHeShe() << " looks very angry at you.\n";
-        else if(mTarget->getPrimeFaction() != "")
+        else if(!mTarget->getPrimeFaction().empty())
             oStr << mTarget->upHeShe() << " " << getFactionMessage(mTarget->getPrimeFaction()) << ".\n";
 
         Creature* firstEnm = nullptr;
@@ -1000,7 +990,7 @@ int Player::displayCreature(Creature* target)  {
         if(mTarget->isPet() && mTarget->getMaster() == this) {
             str = mTarget->listObjects(this, true);
             oStr << mTarget->upHeShe() << " ";
-            if(str == "")
+            if(str.empty())
                 oStr << "isn't holding anything.\n";
             else
                 oStr << "is carrying: " << str << ".\n";
@@ -1016,7 +1006,7 @@ int Player::displayCreature(Creature* target)  {
 //*********************************************************************
 
 void Monster::checkSpellWearoff() {
-    long t = time(0);
+    long t = time(nullptr);
 
     /*
     if(flagIsSet(M_WILL_MOVE_FOR_CASH)) {
@@ -1085,7 +1075,7 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
         }
 
         if(checkTimer && !isEffected("fear") && !isStaff()) {
-            t = time(0);
+            t = time(nullptr);
             i = MAX(getLTAttack(), MAX(lasttime[LT_SPELL].ltime,lasttime[LT_READ_SCROLL].ltime)) + 3L;
             if(t < i) {
                 if(displayFail)
@@ -1182,7 +1172,7 @@ bool Creature::canFleeToExit(const Exit *exit, bool skipScary, bool blinking) {
                     // oldPrint(fd, "Scared of going %s^x!\n", exit->getCName());
 
                     // there is a chance we will flee to this exit anyway
-                    chance = 65 + bonus((int) dexterity.getCur()) * 5;
+                    chance = 65 + bonus(dexterity.getCur()) * 5;
 
                     if(getRoomParent()->flagIsSet(R_DIFFICULT_TO_MOVE) || getRoomParent()->flagIsSet(R_DIFFICULT_FLEE))
                         chance /=2;
@@ -1261,7 +1251,7 @@ Exit* Creature::getFleeableExit() {
     }
 
     if(!exit)
-        return(0);
+        return(nullptr);
 
     i=0;
     for(Exit* ext : getRoomParent()->exits) {
@@ -1271,7 +1261,7 @@ Exit* Creature::getFleeableExit() {
             return(ext);
     }
 
-    return(0);
+    return(nullptr);
 }
 
 
@@ -1280,12 +1270,12 @@ Exit* Creature::getFleeableExit() {
 //*********************************************************************
 
 BaseRoom* Creature::getFleeableRoom(Exit* exit) {
-    BaseRoom* newRoom=0;
+    BaseRoom* newRoom=nullptr;
     if(!exit)
-        return(0);
+        return(nullptr);
     // exit flags have already been taken care of above, so
     // feign teleporting so we don't recycle the room
-    Move::getRoom(this, exit, &newRoom, false, 0, false);
+    Move::getRoom(this, exit, &newRoom, false, nullptr, false);
     return(newRoom);
 }
 
@@ -1318,10 +1308,10 @@ int Creature::flee(bool magicTerror, bool wimpyFlee) {
 bool Creature::doFlee(bool magicTerror) {
     Monster* mThis = getAsMonster();
     Player* pThis = getAsPlayer();
-    BaseRoom* oldRoom = getRoomParent(), *newRoom=0;
-    UniqueRoom* uRoom=0;
+    BaseRoom* oldRoom = getRoomParent(), *newRoom=nullptr;
+    UniqueRoom* uRoom=nullptr;
 
-    Exit*   exit=0;
+    Exit*   exit=nullptr;
     unsigned int n=0;
 
     if(isEffected("fear"))
@@ -1332,13 +1322,13 @@ bool Creature::doFlee(bool magicTerror) {
         printColor("You couldn't find any place to run to!\n");
         if(pThis)
             pThis->setFleeing(false);
-        return(0);
+        return(false);
     }
 
     newRoom = getFleeableRoom(exit);
     if(!newRoom) {
         printColor("You failed to escape!\n");
-        return(0);
+        return(false);
     }
 
 
@@ -1383,7 +1373,7 @@ bool Creature::doFlee(bool magicTerror) {
     if(mThis) {
         mThis->diePermCrt();
         if(exit->doEffectDamage(this))
-            return(2);
+            return(true);
         mThis->deleteFromRoom();
         mThis->addToRoom(newRoom);
     } else if(pThis) {
@@ -1412,7 +1402,7 @@ bool Creature::doFlee(bool magicTerror) {
         }
 
         if(exit->doEffectDamage(this))
-            return(2);
+            return(true);
         pThis->deleteFromRoom();
         pThis->addToRoom(newRoom);
 
@@ -1437,7 +1427,7 @@ bool Creature::doFlee(bool magicTerror) {
             Move::deletePortal(oldRoom, exit);
     }
 
-    return(1);
+    return(true);
 }
 
 
@@ -1454,7 +1444,7 @@ bool Creature::doFlee(bool magicTerror) {
 // memory (but not a monster).
 
 void free_crt(Creature* creature, bool remove) {
-    ttag    *tp=0, *tempt=0;
+    ttag    *tp=nullptr, *tempt=nullptr;
     int i;
     for(i=0; i<MAXWEAR; i++) {
         if(creature->ready[i])
@@ -1482,17 +1472,13 @@ void free_crt(Creature* creature, bool remove) {
     creature->pets.clear();
 
     tp = creature->first_tlk;
-    creature->first_tlk = 0;
+    creature->first_tlk = nullptr;
     while(tp) {
         tempt = tp->next_tag;
-        if(tp->key)
-            delete[] tp->key;
-        if(tp->response)
-            delete[] tp->response;
-        if(tp->action)
-            delete[] tp->action;
-        if(tp->target)
-            delete[] tp->target;
+        delete[] tp->key;
+        delete[] tp->response;
+        delete[] tp->action;
+        delete[] tp->target;
         delete tp;
         tp = tempt;
     }

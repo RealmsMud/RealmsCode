@@ -25,25 +25,25 @@
 //#include <Python.h> // Python!
 //#endif
 
-#include "bstring.hpp"
-#include "flags.hpp"
-#include "global.hpp"
-#include "random.hpp"
-
-
-#include "proto.hpp"
-#include "help.hpp"
-#include "paths.hpp"
-
-
-
-// C includes
-#ifndef PYTHON_CODE_GEN
-#include <fcntl.h>
-#endif
-
-// Mud Includes
-#include "os.hpp"
+//#include "bstring.hpp"
+//#include "flags.hpp"
+//#include "global.hpp"
+//#include "random.hpp"
+//
+//
+//#include "proto.hpp"
+//#include "help.hpp"
+//#include "paths.hpp"
+//
+//
+//
+//// C includes
+//#ifndef PYTHON_CODE_GEN
+//#include <fcntl.h>
+//#endif
+//
+//// Mud Includes
+//#include "os.hpp"
 
 #ifndef READCFG
 #define READCFG
@@ -386,9 +386,6 @@ extern long     StartTime;
 extern struct lasttime  Shutdown;
 extern struct lasttime  Weather[5];
 
-extern class_stats_struct class_stats[static_cast<int>(CreatureClass::CLASS_COUNT)];
-extern char allowedClassesStr[static_cast<int>(CreatureClass::CLASS_COUNT) + 4][16];
-
 
 extern char scrollDesc [][10][20];
 extern char scrollType [][2][20];
@@ -397,14 +394,8 @@ extern char scrollType [][2][20];
 extern struct osp_t ospell[];
 
 extern short    saving_throw_cycle[][10];
-extern int      statBonus[40];
 extern long     last_dust_output;
 
-
-extern Dice monk_dice[41];
-extern Dice wolf_dice[41];
-
-extern int numQuests;
 
 extern char *dmname[];
 

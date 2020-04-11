@@ -16,14 +16,32 @@
  *
  */
 
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "objects.hpp"
+#include <cstdio>                 // for sprintf
+#include <cstdlib>                // for atoi, qsort
+#include <cstring>                // for strcpy, strcat, strlen, strncmp
+#include <ctime>                  // for time
+#include <string>                 // for operator==, basic_string
+
+#include "bstring.hpp"            // for bstring, operator+
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for cmdNoAuth, cmdCharm, cmdIdentify
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player, Creature, Monster, CHECK_DIE
+#include "effects.hpp"            // for Effect
+#include "flags.hpp"              // for P_AFK, P_CHARMED, M_CHARMED, M_NO_C...
+#include "global.hpp"             // for CreatureClass, CreatureClass::LICH
+#include "group.hpp"              // for CreatureList, Group
+#include "mud.hpp"                // for LT_IDENTIFY, LT_SING, LT_HYPNOTIZE
+#include "objIncrease.hpp"        // for ObjIncrease, LanguageIncrease, Skil...
+#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
+#include "proto.hpp"              // for broadcast, bonus, get_song_name, up
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom
+#include "server.hpp"             // for Server, gServer
+#include "skills.hpp"             // for SkillInfo
+#include "socket.hpp"             // for Socket
+#include "structs.hpp"            // for osong_t, PFNCOMPARE
+#include "utils.hpp"              // for MAX, MIN
 
 //**********************************************************************
 //                      cmdIdentify

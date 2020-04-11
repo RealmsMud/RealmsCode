@@ -19,11 +19,14 @@
 #ifndef _ALCHEMY_H
 #define _ALCHEMY_H
 
-#include <map>
-#include <vector>
+#include <libxml/parser.h>  // for xmlNodePtr
+#include <iosfwd>           // for ostream
+#include <map>              // for operator==, operator!=
+#include <vector>           // for allocator
 
-#include "common.hpp"
+#include "bstring.hpp"      // for bstring
 
+class bstring;
 class Creature;
 class Object;
 
@@ -32,7 +35,7 @@ typedef std::map<bstring, HerbVector > HerbMap;
 
 namespace Alchemy {
     bstring getEffectString(Object* obj, const bstring& effect);
-    int numEffectsVisisble(const int skillLevel);
+    int numEffectsVisisble(int skillLevel);
 };
 
 //########################################################################
@@ -45,16 +48,16 @@ public:
 
     bstring getDisplayString();
 
-    const bstring& getName() const;
-    const bstring& getPotionPrefix() const;
-    const bstring& getPotionDisplayName() const;
-    const bstring& getAction() const;
-    const bstring& getPythonScript() const;
-    long getBaseDuration() const;
-    short getBaseStrength() const;
-    bool potionNameHasPrefix() const;
-    bool isThrowable() const;
-    bool isPositive() const;
+    [[nodiscard]] const bstring& getName() const;
+    [[nodiscard]] const bstring& getPotionPrefix() const;
+    [[nodiscard]] const bstring& getPotionDisplayName() const;
+    [[nodiscard]] const bstring& getAction() const;
+    [[nodiscard]] const bstring& getPythonScript() const;
+    [[nodiscard]] long getBaseDuration() const;
+    [[nodiscard]] short getBaseStrength() const;
+    [[nodiscard]] bool potionNameHasPrefix() const;
+    [[nodiscard]] bool isThrowable() const;
+    [[nodiscard]] bool isPositive() const;
 
 
 protected:
@@ -101,12 +104,12 @@ public:
     // Apply this effect to the creature:
     bool apply(Creature* target);
 
-    const bstring& getEffect() const;
-    long getDuration() const;
-    short getStrength() const;
-    short getQuality() const;
+    [[nodiscard]] const bstring& getEffect() const;
+    [[nodiscard]] long getDuration() const;
+    [[nodiscard]] short getStrength() const;
+    [[nodiscard]] short getQuality() const;
 
-    void setDuration(const long newDuration);
+    void setDuration(long newDuration);
 
 };
 

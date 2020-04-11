@@ -16,10 +16,23 @@
  *
  */
 
-#include "config.hpp"
-#include "xml.hpp"
-#include "skills.hpp"
-#include "paths.hpp"
+#include <bits/exception.h>                         // for exception
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <cstdio>                                   // for sprintf
+#include <cstdlib>                                  // for abort
+#include <map>                                      // for map, map<>::mappe...
+#include <ostream>                                  // for operator<<, basic...
+#include <stdexcept>                                // for runtime_error
+#include <string>                                   // for operator==, opera...
+
+#include "bstring.hpp"                              // for bstring
+#include "config.hpp"                               // for Config, SkillComm...
+#include "paths.hpp"                                // for Code
+#include "skills.hpp"                               // for SkillCommand, Ski...
+#include "xml.hpp"                                  // for NODE_NAME, copyTo...
+
+class Creature;
+class cmd;
 
 //*********************************************************************
 //                      loadSkills

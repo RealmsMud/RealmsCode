@@ -16,23 +16,45 @@
  *
  */
 
-#include <sys/stat.h>
+#include <cctype>                 // for isspace, isalpha, isdigit
+#include <cstdio>                 // for sprintf, snprintf, fclose, fopen, FILE
+#include <cstdlib>                // for atoi
+#include <cstring>                // for strcmp, strlen, strcpy, strstr
+#include <strings.h>              // for strcasecmp
+#include <sys/stat.h>             // for stat, st_atime, st_ctime
+#include <ctime>                  // for time, ctime
+#include <unistd.h>               // for unlink, link
 
-#include "bank.hpp"
-#include "commands.hpp"
-#include "creatures.hpp"
-#include "config.hpp"
-#include "dm.hpp"
-#include "guilds.hpp"
-#include "login.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "unique.hpp"
-#include "web.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include "area.hpp"               // for MapMarker, Area (ptr only)
+#include "bank.hpp"               // for Bank
+#include "bstring.hpp"            // for bstring, operator+
+#include "catRef.hpp"             // for CatRef
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for getFullstrText, cmdNoAuth, cmdNoExist
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for PlayerSet, Container
+#include "creatures.hpp"          // for Player, Creature
+#include "enums/loadType.hpp"     // for LoadType, LoadType::LS_BACKUP
+#include "flags.hpp"              // for P_SPYING, P_BUGGED, P_CANT_BROADCAST
+#include "global.hpp"             // for PROMPT, MAX_STAT_NUM, CreatureClass
+#include "group.hpp"              // for operator<<, Group, GROUP_INVITED
+#include "guilds.hpp"             // for Guild
+#include "login.hpp"              // for PASSWORD_MAX_LENGTH, PASSWORD_MIN_L...
+#include "magic.hpp"              // for MAXSPELL, S_ANIMIATE_DEAD, S_JUDGEMENT
+#include "money.hpp"              // for Money, GOLD
+#include "mud.hpp"                // for LT_NO_BROADCAST, LT_RP_AWARDED, LT
+#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
+#include "paths.hpp"              // for Config, Player, PlayerBackup, Post
+#include "proto.hpp"              // for broadcast, free_crt, log_immort, up
+#include "random.hpp"             // for Random
+#include "realm.hpp"              // for Realm, MAX_REALM, MIN_REALM
+#include "rooms.hpp"              // for BaseRoom, UniqueRoom (ptr only)
+#include "server.hpp"             // for Server, gServer, PlayerMap
+#include "socket.hpp"             // for Socket
+#include "unique.hpp"             // for addOwner, deleteOwner
+#include "utils.hpp"              // for MAX, MIN
+#include "web.hpp"                // for callWebserver
+#include "xml.hpp"                // for loadPlayer, loadRoom
 
 
 
@@ -53,7 +75,7 @@ bstring dmLastCommand(const Player* player) {
 // This function allows a DM to force another user to do a command.
 
 int dmForce(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     int     index=0;
     bstring::size_type i=0;
     char    str[IBUFSIZE+1];
@@ -116,7 +138,7 @@ int dmForce(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmSpy(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
 
 
     if(cmnd->num < 2 && !player->flagIsSet(P_SPYING)) {
@@ -173,7 +195,7 @@ int dmSpy(Player* player, cmd* cmnd) {
 // however long specified by [minutes]
 
 int dmSilence(Player* player, cmd* cmnd) {
-    Creature* target=0;
+    Creature* target=nullptr;
 
 
     if(cmnd->num < 2) {
@@ -190,7 +212,7 @@ int dmSilence(Player* player, cmd* cmnd) {
     }
 
     target->print("You have been silenced by the gods.\n");
-    target->lasttime[LT_NO_BROADCAST].ltime = time(0);
+    target->lasttime[LT_NO_BROADCAST].ltime = time(nullptr);
 
 
     if(cmnd->num > 2 && low(cmnd->str[2][0]) == 'r') {
@@ -220,7 +242,7 @@ int dmSilence(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmTitle(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     bstring title = "";
 
     if(cmnd->num < 3) {
@@ -259,7 +281,7 @@ int dmTitle(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmSurname(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     int     i=0;
     char    which=0;
 
@@ -346,7 +368,7 @@ int dmSurname(Player* player, cmd* cmnd) {
 // who are following you.
 
 int dmGroup(Player* player, cmd* cmnd) {
-    Creature *target=0;
+    Creature *target=nullptr;
 
     if(cmnd->num < 2) {
         player->printColor("Active Groups: \n%s", gServer->getGroupList().c_str());
@@ -397,7 +419,7 @@ int dmGroup(Player* player, cmd* cmnd) {
 // This function allows staff to delete a player.
 
 int dmDust(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     char    buf[120];
 
     if(cmnd->num < 2) {
@@ -444,7 +466,7 @@ int dmDust(Player* player, cmd* cmnd) {
     } else {
         broadcast("### %s has been turned to dust!", target->getCName());
         broadcast(target->getSock(), target->getRoomParent(), "A bolt of lightning strikes %s from on high.", target->getCName());
-        last_dust_output = time(0) + 15L;
+        last_dust_output = time(nullptr) + 15L;
     }
 
     deletePlayer(target);
@@ -459,7 +481,7 @@ int dmDust(Player* player, cmd* cmnd) {
 
 int dmFlash(Player* player, cmd* cmnd) {
     bstring text = "";
-    Player  *target=0;
+    Player  *target=nullptr;
 
 
     if(cmnd->num < 2) {
@@ -476,7 +498,7 @@ int dmFlash(Player* player, cmd* cmnd) {
     }
 
     text = getFullstrText(cmnd->fullstr, 2);
-    if(text == "") {
+    if(text.empty()) {
         player->print("Send what?\n");
         return(0);
     }
@@ -537,7 +559,7 @@ int dmAward(Player* player, cmd* cmnd) {
 
 
     i = LT(target, LT_RP_AWARDED);
-    t = time(0);
+    t = time(nullptr);
 
     if(i > t && !player->isDm()) {
         if(i - t > 3600)
@@ -595,7 +617,7 @@ int dmAward(Player* player, cmd* cmnd) {
 //                      dmBeep
 //*********************************************************************
 int dmBeep(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
 
     if(cmnd->num < 2) {
         player->print("\n*Beep whom?\n");
@@ -625,7 +647,7 @@ int dmBeep(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmAdvance(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     int     lev=0, i=0;
 
     if(cmnd->num < 2) {
@@ -665,7 +687,7 @@ int dmAdvance(Player* player, cmd* cmnd) {
         player->print("%M has been lowered to level %d.\n", target, target->getLevel());
     }
     if(target->getLevel() > 1)
-        target->setExperience(gConfig->expNeeded(target->getLevel()-1)+1);
+        target->setExperience(Config::expNeeded(target->getLevel()-1)+1);
     else
         target->setExperience(0);
     return(0);
@@ -676,8 +698,8 @@ int dmAdvance(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmFinger(Player* player, cmd* cmnd) {
-    struct stat     f_stat;
-    Player  *target=0;
+    struct stat     f_stat{};
+    Player  *target=nullptr;
     char    tmp[80];
 
     if(cmnd->num < 2) {
@@ -722,7 +744,7 @@ int dmFinger(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmDisconnect(Player* player, cmd* cmnd) {
-    Player  *creature=0;
+    Player  *creature=nullptr;
 
     if(cmnd->num < 2) {
         player->print("\nDisconnect whom?\n");
@@ -754,8 +776,8 @@ int dmDisconnect(Player* player, cmd* cmnd) {
 // This function allows staff to steal items from a player remotely.
 
 int dmTake(Player* player, cmd* cmnd) {
-    Player  *target=0;
-    Object  *object=0, *container=0;
+    Player  *target=nullptr;
+    Object  *object=nullptr, *container=nullptr;
     bool    online=false;
 
     if(cmnd->num < 2) {
@@ -863,8 +885,8 @@ int dmTake(Player* player, cmd* cmnd) {
 // This function allows staff to unwield/unwear items from a player remotely.
 
 int dmRemove(Player* player, cmd* cmnd) {
-    Player  *target=0;
-    Object  *object=0;
+    Player  *target=nullptr;
+    Object  *object=nullptr;
     int     i=0, j=0, found=0;
 
     if(cmnd->num < 2) {
@@ -942,8 +964,8 @@ int dmRemove(Player* player, cmd* cmnd) {
 // This function allows a CT or DM to remotely add items to a player.
 
 int dmPut(Player* player, cmd* cmnd) {
-    Player  *target=0;
-    Object  *object=0, *container=0;
+    Player  *target=nullptr;
+    Object  *object=nullptr, *container=nullptr;
 
     bool    online=false;
 
@@ -1057,7 +1079,7 @@ int dmPut(Player* player, cmd* cmnd) {
 // the online function.
 
 int dmMove(Player* player, cmd* cmnd) {
-    Player  *creature=0;
+    Player  *creature=nullptr;
 
     MapMarker mapmarker;
     std::ostringstream log;
@@ -1141,11 +1163,11 @@ int dmMove(Player* player, cmd* cmnd) {
 // one place for whatever reason.
 
 int dmWordAll(Player* player, cmd* cmnd) {
-    BaseRoom    *room=0;
+    BaseRoom    *room=nullptr;
 
-    Player* target=0;
+    Player* target=nullptr;
 
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    for(const auto& p : gServer->players) {
         target = p.second;
 
         if(!target->isConnected())
@@ -1185,7 +1207,7 @@ int dmWordAll(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmRename(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     int     i=0;
     FILE    *fp;
     bstring oldName, newName;
@@ -1284,7 +1306,7 @@ int dmRename(Player* player, cmd* cmnd) {
     logn("log.rename", "%s renamed %s to %s.\n", player->getCName(), oldName.c_str(), target->getCName());
 
     // unassociate
-    if(target->getForum() != "") {
+    if(!target->getForum().empty()) {
         //target->printColor("Your forum account ^C%s^x is no longer unassociated with this character.\n", target->getForum().c_str());
         //target->print("Use the \"forum\" command to reassociate this character with your forum account.\n");
         //target->setForum("");
@@ -1301,7 +1323,7 @@ int dmRename(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmPassword(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
 
     bool    online=false;
     bstring pass = "";
@@ -1312,7 +1334,7 @@ int dmPassword(Player* player, cmd* cmnd) {
     }
 
     pass = getFullstrText(cmnd->fullstr, 2);
-    if(pass == "") {
+    if(pass.empty()) {
         player->print("Change the password to what?\n");
         return(0);
     }
@@ -1358,7 +1380,7 @@ int dmPassword(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmRestorePlayer(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     int     n=0;
     long    old_xp=0;
     float   exp=0;
@@ -1417,8 +1439,8 @@ int dmRestorePlayer(Player* player, cmd* cmnd) {
 #define DM_GEN_WARN     4
 #define DM_GEN_BUG      5
 
-int dmGeneric(Player* player, cmd* cmnd, bstring action, int what) {
-    Player  *target=0;
+int dmGeneric(Player* player, cmd* cmnd, const bstring& action, int what) {
+    Player  *target=nullptr;
 
     bool    online=false;
 
@@ -1611,10 +1633,10 @@ int dmBugPlayer(Player* player, cmd* cmnd) {
 // this function handles and *kill commands that kill everyone
 
 int dmKillAll(int type, int silent, int unconscious, int uncon_length) {
-    BaseRoom *room=0;
+    BaseRoom *room=nullptr;
 
     Player* target;
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    for(const auto& p : gServer->players) {
         target = p.second;
 
         if(!target->isConnected())
@@ -1695,7 +1717,7 @@ int dmKillAll(int type, int silent, int unconscious, int uncon_length) {
 
 int dmKill(Player* player, Player *victim, int type, int silent, int unconscious, int uncon_length) {
     int     kill_room=0, no_limbo=0;
-    BaseRoom *newRoom=0;
+    BaseRoom *newRoom=nullptr;
 
     char filename[80];
     snprintf(filename, 80, "%s/crash.txt", Path::Config);
@@ -1913,8 +1935,8 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
         }
     }
 
-    PlayerSet::iterator pIt = victim->getRoomParent()->players.begin();
-    PlayerSet::iterator pEnd = victim->getRoomParent()->players.end();
+    auto pIt = victim->getRoomParent()->players.begin();
+    auto pEnd = victim->getRoomParent()->players.end();
     while(pIt != pEnd) {
         player = (*pIt++);
         if(!player || (player->isStaff() && player!=victim))
@@ -2072,7 +2094,7 @@ int dmKillSwitch(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmRepair(Player* player, cmd* cmnd) {
-    Player  *creature=0;
+    Player  *creature=nullptr;
     int     a=0, count=0, check=0;
 
     if(cmnd->num < 2) {
@@ -2189,7 +2211,7 @@ int dmMax(Player* player, cmd* cmnd) {
 int dmBackupPlayer(Player* player, cmd* cmnd) {
 
     char    filename[80], restoredFile[80];
-    Player  *target=0;
+    Player  *target=nullptr;
     bool    online=false;
 
     if(cmnd->num < 2) {
@@ -2279,7 +2301,7 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmChangeStats(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
 
 
     if(cmnd->num < 2) {
@@ -2320,9 +2342,9 @@ int dmChangeStats(Player* player, cmd* cmnd) {
 int dmJailPlayer(Player* player, cmd* cmnd) {
     int         tm=0, i=0, iTmp=0, len=0, strLen=0;
     long        t=0;
-    UniqueRoom  *newRoom=0;
-    Player  *target=0;
-    char        *reason=0;
+    UniqueRoom  *newRoom=nullptr;
+    Player  *target=nullptr;
+    char        *reason=nullptr;
     bool        online=false;
 
     if(!player->isStaff() && !player->isWatcher())
@@ -2421,7 +2443,7 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 
     t = (long)tm*60;
 
-    target->lasttime[LT_JAILED].ltime = time(0);
+    target->lasttime[LT_JAILED].ltime = time(nullptr);
     target->lasttime[LT_JAILED].interval = t;
 
     target->setFlag(P_JAILED);
@@ -2489,9 +2511,9 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmLts(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
     int     i=0;
-    long    t = time(0);
+    long    t = time(nullptr);
 
     if(cmnd-> num < 2) {
         player->print("syntax: *lt <player>\n");
@@ -2518,7 +2540,7 @@ int dmLts(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmLtClear(Player* player, cmd* cmnd) {
-    Player  *target=0;
+    Player  *target=nullptr;
 //  int     i=0;
 
     if(cmnd->num < 2) {
@@ -2567,7 +2589,7 @@ int dm2x(Player* player, cmd* cmnd) {
         forum1 = forum1.substr(0, forum1.getLength() - forum2.getLength() - 1);
 
         // add a new account pair
-        if(forum1 == "" || forum2 == "") {
+        if(forum1.empty() || forum2.empty()) {
             player->print("Account names not provided.\n");
         } else {
             player->printColor("^G*ADD*^X Accounts \"%s\" and \"%s\" may now double log.\n",
@@ -2582,7 +2604,7 @@ int dm2x(Player* player, cmd* cmnd) {
         forum1 = forum1.substr(0, forum1.getLength() - forum2.getLength() - 1);
 
         // remove an account pair
-        if(forum1 == "" || forum2 == "") {
+        if(forum1.empty() || forum2.empty()) {
             player->print("Account names not provided.\n");
         } else {
             player->printColor("^R*DEL*^X Accounts \"%s\" and \"%s\" may no longer double log.\n",

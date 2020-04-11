@@ -15,27 +15,50 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <sstream>
-#include <iomanip>
-#include <locale>
+#include <cctype>                 // for isdigit, isspace, isalpha
+#include <cstdio>                 // for sprintf
+#include <cstdlib>                // for atoi, qsort
+#include <cstring>                // for strcmp, strcpy, strlen, strncmp
+#include <ctime>                  // for time
+#include <iomanip>                // for operator<<, setw, setfill
+#include <map>                    // for map
+#include <sstream>                // for operator<<, basic_ostream, char_traits
 
-#include "calendar.hpp"
-#include "clans.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "dm.hpp"
-#include "effects.hpp"
-#include "factions.hpp"
-#include "move.hpp"
-#include "mud.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "unique.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"            // for bstring
+#include "calendar.hpp"           // for cDay
+#include "catRef.hpp"             // for CatRef
+#include "clans.hpp"              // for Clan
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for getFullstrText, cmdNoAuth, timestr
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player, Monster, Creature, NUM_ASSI...
+#include "deityData.hpp"          // for DeityData
+#include "dm.hpp"                 // for dmInvis, dmLastCommand, dmAddMob
+#include "effects.hpp"            // for EffectInfo, EFFECT_MAX_DURATION
+#include "factions.hpp"           // for Faction, Faction::MAX_FACTION, Fact...
+#include "flags.hpp"              // for M_DM_FOLLOW, M_CUSTOM, M_PERMENANT_...
+#include "global.hpp"             // for PROMPT, CreatureClass, LUNKNOWN
+#include "magic.hpp"              // for MAXSPELL
+#include "monType.hpp"            // for getName, getHitdice, size, MONSTER
+#include "money.hpp"              // for GOLD, Money
+#include "move.hpp"               // for getString
+#include "mud.hpp"                // for PLYCRT, LT_AGE, LT_JAILED, LT_MOB_J...
+#include "objects.hpp"            // for Object
+#include "os.hpp"                 // for merror
+#include "proto.hpp"              // for log_immort, mprofic, getCatRef, get...
+#include "raceData.hpp"           // for RaceData
+#include "realm.hpp"              // for COLD, EARTH, ELEC, FIRE, Realm, WATER
+#include "rooms.hpp"              // for BaseRoom, UniqueRoom
+#include "server.hpp"             // for Server, gServer, MonsterCache
+#include "size.hpp"               // for NO_SIZE
+#include "socket.hpp"             // for Socket
+#include "statistics.hpp"         // for Statistics
+#include "structs.hpp"            // for saves, ttag, PFNCOMPARE
+#include "threat.hpp"             // for operator<<
+#include "unique.hpp"             // for Lore
+#include "utils.hpp"              // for MAX, MIN
+#include "wanderInfo.hpp"         // for WanderInfo
+#include "xml.hpp"                // for loadMonster
 
 
 //*********************************************************************
@@ -45,7 +68,7 @@
 // in the room they are located in.
 
 int dmCreateMob(Player* player, cmd* cmnd) {
-    Monster *monster=0;
+    Monster *monster=nullptr;
     BaseRoom* room = player->getRoomParent();
     int     l=0, total=1;
     bstring noMonsters = "^mNo monsters were summoned.\n";
@@ -120,7 +143,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
 
     for(l=0; l<total;) {
 
-        monster->initMonster(cmnd->str[1][0]=='r' ? false : true, cmnd->str[1][0]=='p' ? true : false);
+        monster->initMonster(cmnd->str[1][0] != 'r', cmnd->str[1][0] == 'p');
 
         if(!l)
             monster->addToRoom(room, total);
@@ -151,7 +174,7 @@ bstring Creature::statCrt(int statFlags) {
     std::ostringstream crtStr;
     bstring str = "";
     int     i=0, n=0;
-    long    t = time(0);
+    long    t = time(nullptr);
     char    tmp[10], spl[128][20];
     bstring txt = "";
 
@@ -177,12 +200,12 @@ bstring Creature::statCrt(int statFlags) {
 
         if(statFlags & ISDM) {
             crtStr << "Password: " << pTarget->getPassword();
-            if(pTarget->getLastPassword() != "")
+            if(!pTarget->getLastPassword().empty())
                 crtStr << " Previous password: " << pTarget->getLastPassword();
             crtStr << "\n";
         }
 
-        if(pTarget->getForum() != "")
+        if(!pTarget->getForum().empty())
             crtStr << "^gForum Account:^x " << pTarget->getForum() << "\n";
 
         crtStr << "Room: " << pTarget->getConstRoomParent()->fullName() << "\n";
@@ -200,7 +223,7 @@ bstring Creature::statCrt(int statFlags) {
         mobName.Replace("^", "^^");
         mobPlural.Replace("^", "^^");
 
-        if(mobPlural == "") {
+        if(mobPlural.empty()) {
             crtStr << "Name: " << mobName << "^x";
         } else {
             crtStr << "Name:   " << mobName << "^x";
@@ -212,7 +235,7 @@ bstring Creature::statCrt(int statFlags) {
         else
             crtStr << " (CUSTOM:" << monType::getHitdice(mTarget->type) << "HD)\n";
 
-        if(mobPlural != "")
+        if(!mobPlural.empty())
             crtStr << "Plural: " << mobPlural << "^x\n";
         
 
@@ -222,7 +245,7 @@ bstring Creature::statCrt(int statFlags) {
                << "                Toughness: " << Statistics::calcToughness(this) << "\n";
         crtStr.imbue(std::locale(""));
 
-        if(mTarget->getPrimeFaction() != "")
+        if(!mTarget->getPrimeFaction().empty())
             crtStr << "\n^yPrime Faction:^x " << mTarget->getPrimeFaction() << "\n";
 
         crtStr << "Desc: " << mTarget->getDescription() << "\n";
@@ -253,7 +276,7 @@ bstring Creature::statCrt(int statFlags) {
             crtStr << "Max Lvl: " << mTarget->getMaxLevel() << "\n";
     }
 
-    crtStr << "\nID: <" << getId() << ">" << " Registered(Slf/Svr): " << (isRegistered() ? "Y" : "N") << "/" << (gServer->lookupCrtId(getId()) != nullptr ? "Y" : "N") << "\n"; ;
+    crtStr << "\nID: <" << getId() << ">" << " Registered(Slf/Svr): " << (isRegistered() ? "Y" : "N") << "/" << (gServer->lookupCrtId(getId()) != nullptr ? "Y" : "N") << "\n";
 
     crtStr << "Level: " << level;
     if(pTarget) {
@@ -327,7 +350,7 @@ bstring Creature::statCrt(int statFlags) {
         }
     }
 
-    if(str == "")
+    if(str.empty())
         str = "None";
     else
         str = str.substr(0, str.length() - 2);
@@ -482,7 +505,7 @@ bstring Creature::statCrt(int statFlags) {
             }
         }
     } else {
-        if(pTarget->getPoisonedBy() != "")
+        if(!pTarget->getPoisonedBy().empty())
             crtStr << "^r*Poisoned* by " <<  pTarget->getPoisonedBy() << ".^x";
 
         if( pTarget->inUniqueRoom() &&
@@ -534,7 +557,7 @@ bstring Creature::statCrt(int statFlags) {
         }
 
 
-        if(str != "") {
+        if(!str.empty()) {
             str = str.substr(0, str.length() - 2);
             crtStr << "Will aggro: " << str << ".\n";
         }
@@ -580,7 +603,7 @@ bstring Creature::statCrt(int statFlags) {
             }
         }
 
-        if(str == "")
+        if(str.empty())
             str = "None";
         else
             str = str.substr(0, str.length() - 2);
@@ -634,11 +657,11 @@ bstring Creature::statCrt(int statFlags) {
  */
 
 int dmSetCrt(Player* player, cmd* cmnd) {
-    Creature* target=0;
-    Player  *pTarget=0;
-    Monster *mTarget=0;
+    Creature* target=nullptr;
+    Player  *pTarget=nullptr;
+    Monster *mTarget=nullptr;
     int     i=0, num=0, test=0, a=0, sp=0,  rnum=0, f=0;
-    Object  *object=0;
+    Object  *object=nullptr;
     bool    ctModBuilder=false;
 
     if(player->getClass() == CreatureClass::BUILDER) {
@@ -731,8 +754,8 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                 return(PROMPT);
             }
 
-            pTarget->lasttime[LT_AGE].ltime = time(0);
-            pTarget->lasttime[LT_AGE].interval = (long)cmnd->val[3];
+            pTarget->lasttime[LT_AGE].ltime = time(nullptr);
+            pTarget->lasttime[LT_AGE].interval = cmnd->val[3];
 
             player->print("Player age set.\n");
             break;
@@ -1059,10 +1082,10 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             int strength = 1;
 
             bstring txt = getFullstrText(cmnd->fullstr, 5);
-            if(txt != "")
+            if(!txt.empty())
                 duration = atoi(txt.c_str());
             txt = getFullstrText(cmnd->fullstr, 6);
-            if(txt != "")
+            if(!txt.empty())
                 strength = atoi(txt.c_str());
 
             if(duration > EFFECT_MAX_DURATION || duration < -1) {
@@ -1076,7 +1099,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             }
 
             bstring effectStr = cmnd->str[4];
-            EffectInfo* toSet = 0;
+            EffectInfo* toSet = nullptr;
             if((toSet = target->getExactEffect(effectStr))) {
                 // We have an existing effect we're modifying
                 if(duration == 0) {
@@ -1095,7 +1118,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                 // No existing effect, add a new one
                 if(strength == -1)
                     strength = 1;
-                if(target->addEffect(effectStr, duration, strength, 0, true) != nullptr) {
+                if(target->addEffect(effectStr, duration, strength, nullptr, true) != nullptr) {
                     player->print("Effect '%s' (creature) added with duration %d and strength %d.\n", effectStr.c_str(), duration, strength);
                 } else {
                     player->print("Unable to add effect '%s' (creature)\n", effectStr.c_str());
@@ -1350,13 +1373,13 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             int inv=0;
             char action=0;
 
-            if(txt != "") {
+            if(!txt.empty()) {
                 inv = atoi(txt.c_str());
                 if(!inv) {
                     action = txt.getAt(0);
                 } else {
                     txt = getFullstrText(cmnd->fullstr, 5);
-                    if(txt != "")
+                    if(!txt.empty())
                         action = txt.getAt(0);
                 }
             }
@@ -1874,7 +1897,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             player->print("Monster trade skill level set.\n");
             log_immort(true, player, "%s set %s %s's %s to %d(%s).\n",
                 player->getCName(), PLYCRT(mTarget), mTarget->getCName(), "trade skill level",
-                mTarget->getSkillLevel(), get_skill_string((int)mTarget->getSkillLevel()/10));
+                mTarget->getSkillLevel(), get_skill_string(mTarget->getSkillLevel() / 10));
             break;
         case 'o':
             if(!pTarget) {
@@ -2081,7 +2104,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 // weapons and objects to the game
 
 int dmCrtName(Player* player, cmd* cmnd) {
-    Monster *target=0;
+    Monster *target=nullptr;
     int     i=0, num=0;
     char    modstr[32];
     char    which=0;
@@ -2196,7 +2219,7 @@ int dmCrtName(Player* player, cmd* cmnd) {
         break;
     case 1:
         strcpy(modstr, "description");
-        if(text == "0" && target->getDescription() == "") {
+        if(text == "0" && target->getDescription().empty()) {
             target->setDescription("");
             player->print("Description cleared.\n");
             return(0);
@@ -2207,7 +2230,7 @@ int dmCrtName(Player* player, cmd* cmnd) {
         break;
     case 2:
         strcpy(modstr, "talk string");
-        if(text == "0" && target->getTalk() != "") {
+        if(text == "0" && !target->getTalk().empty()) {
             target->setTalk("");
             player->print("Talk string cleared.\n");
             return(0);
@@ -2306,7 +2329,7 @@ int dmCrtName(Player* player, cmd* cmnd) {
 //  This function allows staff to become a monster.
 
 int dmAlias(Player* player, cmd* cmnd) {
-    Monster* monster = 0;
+    Monster* monster = nullptr;
 
     if(cmnd->num < 2) {
         player->print("Syntax: *possess <creature>\n");
@@ -2343,7 +2366,7 @@ int dmAlias(Player* player, cmd* cmnd) {
 
         log_immort(false,player, "%s no longer possesses %s.\n", player->getCName(), monster->getCName());
         monster->removeFromGroup(false);
-        player->setAlias(0);
+        player->setAlias(nullptr);
         return(0);
     }
     player->addPet(monster, false);
@@ -2384,7 +2407,7 @@ int dmAlias(Player* player, cmd* cmnd) {
 // custom monsters (made with the dmCrtName function).
 
 int dmFollow(Player* player, cmd* cmnd) {
-    Monster* creature=0;
+    Monster* creature=nullptr;
 
     if(cmnd->num < 2) {
         player->print("syntax: *cfollow <creature>\n");
@@ -2418,8 +2441,8 @@ int dmFollow(Player* player, cmd* cmnd) {
 //  This function allows staff to make a monster attack a given player.
 
 int dmAttack(Player* player, cmd* cmnd) {
-    Monster* attacker=0;
-    Creature* victim=0;
+    Monster* attacker=nullptr;
+    Creature* victim=nullptr;
     int inroom=1;
 
     if(!player->checkBuilder(player->getUniqueRoomParent())) {
@@ -2484,7 +2507,7 @@ int dmAttack(Player* player, cmd* cmnd) {
 //  This function lists the enemy list of a given monster.
 
 int dmListEnemy(Player* player, cmd* cmnd) {
-    Monster* target=0;
+    Monster* target=nullptr;
 
     target = player->getParent()->findMonster(player, cmnd);
 
@@ -2507,37 +2530,34 @@ int dmListEnemy(Player* player, cmd* cmnd) {
 // This function allows staff to see a given players charm list
 
 int dmListCharm(Player* player, cmd* cmnd) {
-    Player* target=0;
-    etag    *cp=0;
+    Player* target=nullptr;
 
     if(cmnd->num < 2) {
-        player->print("See whose charm list?\n");
+        *player << "See whose charm list?\n";
         return(PROMPT);
     }
 
     lowercize(cmnd->str[1], 1);
     target = gServer->findPlayer(cmnd->str[1]);
     if(!target) {
-        player->print("%s is not on.\n", cmnd->str[1]);
+        *player << cmnd->str[1] << " is not on.\n";
         return(0);
     }
 
-    cp = target->first_charm;
-    player->print("Charm list for %s:\n", target->getCName());
+    *player << "Charm list for " << target->getName() << ":\n";
 
-    if(!cp)
-        player->print("Nobody.\n");
-    while(cp) {
-        player->print("  %s\n", cp->enemy);
-        cp = cp->next_tag;
+    if(target->charms.empty())
+        *player << "Nobody.\n";
+    else {
+        for(const auto &charm : target->charms) {
+            *player << "  " << charm << "\n";
+        }
     }
-
-    player->print("Afflicted By: %s\n", target->getAfflictedBy().c_str());
+    *player << "Afflicted By: " << target->getAfflictedBy() << "\n";
     if(!target->minions.empty()) {
-        player->print("Minions:\n");
-        std::list<bstring>::iterator mIt;
-        for(mIt = target->minions.begin() ; mIt != target->minions.end() ; mIt++) {
-            player->print("  %s\n", (*mIt).c_str());
+        *player <<"Minions:\n";
+        for(const auto& minion : target->minions) {
+            *player <<"  " << minion << "\n";
         }
     }
     return(0);
@@ -2547,9 +2567,9 @@ int dmListCharm(Player* player, cmd* cmnd) {
 //                      dmSaveMob
 //*********************************************************************
 
-void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
-    Monster *target=0;
-    ttag    *tp=0, *tempt=0;
+void dmSaveMob(Player* player, cmd* cmnd, const CatRef& cr) {
+    Monster *target=nullptr;
+    ttag    *tp=nullptr, *tempt=nullptr;
     char    file[80];
     int     i=0, x=0;
 
@@ -2594,18 +2614,14 @@ void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
     tp = target->first_tlk;
     while(tp) {
         tempt = tp->next_tag;
-        if(tp->key)
-            delete tp->key;
-        if(tp->response)
-            delete[] tp->response;
-        if(tp->action)
-            delete tp->action;
-        if(tp->target)
-            delete tp->target;
+        delete tp->key;
+        delete[] tp->response;
+        delete tp->action;
+        delete tp->target;
         delete tp;
         tp = tempt;
     }
-    target->first_tlk = 0;
+    target->first_tlk = nullptr;
 
     if(!target->flagIsSet(M_TRADES)) {
         for(Object* obj : target->objects ) {
@@ -2630,7 +2646,7 @@ void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
 
             master->clearFlag(P_ALIASING);
 
-            master->setAlias(0);
+            master->setAlias(nullptr);
             master->print("%1M's soul was saved.\n", target);
             master->delPet(target);
         }
@@ -2660,9 +2676,9 @@ void dmSaveMob(Player* player, cmd* cmnd, CatRef cr) {
 // This function creates a generic creature for staff to work on.
 
 int dmAddMob(Player* player, cmd* cmnd) {
-    Monster *new_mob=0;
+    Monster *new_mob=nullptr;
     int     n;
-    long    t = time(0);
+    long    t = time(nullptr);
 
     if(!player->canBuildMonsters())
         return(cmdNoAuth(player));
@@ -2701,11 +2717,11 @@ int dmAddMob(Player* player, cmd* cmnd) {
     new_mob->damage.setNumber(1);
     new_mob->damage.setSides(4);
     new_mob->damage.setPlus(1);
-    new_mob->first_tlk = 0;
+    new_mob->first_tlk = nullptr;
     new_mob->setParent(nullptr);
 
     for(n=0; n<20; n++)
-        new_mob->ready[n] = 0;
+        new_mob->ready[n] = nullptr;
     new_mob->setFlag(M_SAVE_FULL);
     new_mob->lasttime[LT_MON_SCAVANGE].ltime =
     new_mob->lasttime[LT_MON_WANDER].ltime =
@@ -2727,7 +2743,7 @@ int dmAddMob(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmForceWander(Player* player, cmd* cmnd) {
-    Monster* monster=0;
+    Monster* monster=nullptr;
     char    name[80];
 
     strcpy(name,"");
@@ -2785,7 +2801,7 @@ int dmForceWander(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmBalance(Player* player, cmd* cmnd) {
-    Monster *target=0;
+    Monster *target=nullptr;
     int     lvl=0;
 
     if(cmnd->num < 2) {

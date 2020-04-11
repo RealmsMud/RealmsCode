@@ -16,17 +16,29 @@
  *
  */
 
-#include "config.hpp"
-#include "commands.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "mud.hpp"
-#include "proto.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
+#include <ctime>                  // for time
+
+#include "bstring.hpp"            // for bstring, operator+
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for cmdCreepingDoom, cmdPoison
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Creature, Player, Monster, SkillMap
+#include "deityData.hpp"          // for DeityData
+#include "effects.hpp"            // for Effects, EffectInfo, EffectList
+#include "flags.hpp"              // for O_CURSED, P_DM_BLINDED, P_POISONED_...
+#include "global.hpp"             // for CastType, CreatureClass, CastType::...
+#include "magic.hpp"              // for SpellData, checkRefusingMagic, splC...
+#include "monType.hpp"            // for noLivingVulnerabilities, ARACHNID
+#include "mud.hpp"                // for LT_DRAIN_LIFE, LT_SMOTHER, LT
+#include "objects.hpp"            // for Object
+#include "proto.hpp"              // for broadcast, up, bonus, free_crt, bro...
+#include "raceData.hpp"           // for RaceData
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom
+#include "server.hpp"             // for Server, gServer
+#include "skills.hpp"             // for Skill
+#include "utils.hpp"              // for MIN, MAX
+#include "xml.hpp"                // for loadPlayer
 
 
 //*********************************************************************
@@ -34,8 +46,8 @@
 //*********************************************************************
 
 int cmdCreepingDoom(Player* player, cmd* cmnd) {
-    Creature* creature=0;
-    Monster *mCreature=0;
+    Creature* creature=nullptr;
+    Monster *mCreature=nullptr;
     long    i=0, t=0;
     int     chance=0, dmg=0;
 
@@ -85,7 +97,7 @@ int cmdCreepingDoom(Player* player, cmd* cmnd) {
 
     double level = player->getSkillLevel("creeping-doom");
     i = LT(player, LT_SMOTHER);
-    t = time(0);
+    t = time(nullptr);
     if(i > t && !player->isCt()) {
         player->pleaseWait(i-t);
         return(0);
@@ -96,7 +108,7 @@ int cmdCreepingDoom(Player* player, cmd* cmnd) {
     player->lasttime[LT_SMOTHER].interval = 120L;
 
 
-    chance = ((int)(level - creature->getLevel()) * 20) + bonus((int) player->piety.getCur()) * 5 + 25;
+    chance = ((int)(level - creature->getLevel()) * 20) + bonus(player->piety.getCur()) * 5 + 25;
     chance = MIN(chance, 80);
 
     dmg = Random::get((int)(level*2), (int)(level*3));
@@ -139,8 +151,8 @@ int cmdCreepingDoom(Player* player, cmd* cmnd) {
 // the Arachnus ability to inflict enemies with poison
 
 int cmdPoison(Player* player, cmd* cmnd) {
-    Creature* creature=0;
-    Monster *mCreature=0;
+    Creature* creature=nullptr;
+    Monster *mCreature=nullptr;
     long    i=0, t=0;
     int     chance=0;
     unsigned int dur=0;
@@ -195,7 +207,7 @@ int cmdPoison(Player* player, cmd* cmnd) {
 
     double level = player->getSkillLevel("poison");
     i = LT(player, LT_DRAIN_LIFE);
-    t = time(0);
+    t = time(nullptr);
     if(i > t && !player->isCt()) {
         player->pleaseWait(i-t);
         return(0);
@@ -206,7 +218,7 @@ int cmdPoison(Player* player, cmd* cmnd) {
     player->lasttime[LT_DRAIN_LIFE].interval = 120L;
 
 
-    chance = ((int)(level - creature->getLevel()) * 20) + bonus((int) player->piety.getCur()) * 5 + 25;
+    chance = ((int)(level - creature->getLevel()) * 20) + bonus(player->piety.getCur()) * 5 + 25;
     chance = MIN(chance, 80);
     dur = standardPoisonDuration((short)level, creature->constitution.getCur());
 
@@ -285,7 +297,7 @@ void Creature::poison(Creature *enemy, unsigned int damagePerPulse, unsigned int
         }
     }
 
-    addEffect("poison", duration, damagePerPulse, 0, false, this);
+    addEffect("poison", duration, damagePerPulse, nullptr, false, this);
 }
 
 //********************************************************************
@@ -355,7 +367,7 @@ bool Effects::removePoison() {
     bool removed=false;
     // remove all effects flagged as poison
     EffectList::iterator eIt;
-    EffectInfo *effect=0;
+    EffectInfo *effect=nullptr;
     for(eIt = effectList.begin() ; eIt != effectList.end() ;) {
         effect = (*eIt);
 
@@ -378,7 +390,7 @@ unsigned int standardPoisonDuration(short level, short con) {
     int dur = 60 * Random::get(1,3) - (60*bonus((int)con)) + level*10;
     if(con > 120) {
         // a spread between 400 (50%) and 120 (0%) resistance
-        double percent = 1 - (con - 120) / (680 - 120);
+        double percent = 1 - (con - 120.0) / (680.0 - 120.0);
         percent *= dur;
         dur = (int)percent;
     }
@@ -456,7 +468,7 @@ bool Effects::removeDisease() {
     bool removed=false;
     // remove all effects flagged as disease
     EffectList::iterator eIt;
-    EffectInfo *effect=0;
+    EffectInfo *effect=nullptr;
     for(eIt = effectList.begin() ; eIt != effectList.end() ;) {
         effect = (*eIt);
 
@@ -483,7 +495,7 @@ bool Creature::removeCurse() {
 bool Effects::removeCurse() {
     bool removed=false;
     EffectList::iterator eIt;
-    EffectInfo *effect=0;
+    EffectInfo *effect=nullptr;
     for(eIt = effectList.begin() ; eIt != effectList.end() ;) {
         effect = (*eIt);
 
@@ -538,7 +550,7 @@ void Creature::makeVampire() {
 
         // make sure the master still exists and is still a vampire
         Player* player = getAsPlayer();
-        if(player->getAfflictedBy() != "") {
+        if(!player->getAfflictedBy().empty()) {
             bool online = true;
             Player* master = gServer->findPlayer(player->getAfflictedBy());
 
@@ -639,10 +651,10 @@ bool Creature::vampireCharmed(Player* master) {
 void Creature::clearMinions() {
     if(!isPlayer())
         return;
-    Player* player = getAsPlayer(), *target=0;
+    Player* player = getAsPlayer(), *target=nullptr;
     bool online = true;
 
-    if(player->getAfflictedBy() != "") {
+    if(!player->getAfflictedBy().empty()) {
         target = gServer->findPlayer(player->getAfflictedBy());
 
         if(!target) {
@@ -807,7 +819,7 @@ bool Creature::addLycanthropy(Creature *killer, int chance) {
 // that player's system.
 
 int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
 
     if( player->isPlayer() &&
         player->getClass() !=  CreatureClass::CLERIC &&
@@ -867,7 +879,7 @@ int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splSlowPoison(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
 
     // slow_poison self
     if(cmnd->num == 2) {
@@ -929,7 +941,7 @@ int splSlowPoison(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splCureDisease(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
 
     if(player->getClass() !=  CreatureClass::CLERIC &&
         player->getClass() !=  CreatureClass::PALADIN &&
@@ -983,7 +995,7 @@ int splCureDisease(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splCureBlindness(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
 
     if(cmnd->num == 2) {
 
@@ -1080,7 +1092,7 @@ bool EffectInfo::isPoison() const {
 // This function allows a player to curse a item in their inventory
 
 int splCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Object  *object=0;
+    Object  *object=nullptr;
 
     if(spellData->how == CastType::CAST && player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::LICH && !player->isStaff()) {
         player->print("Only mages and liches can curse.\n");
@@ -1117,7 +1129,7 @@ int splCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 // in their inventory or on another player's inventory
 
 int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
     int     i=0;
     bool    equipment=true;
 

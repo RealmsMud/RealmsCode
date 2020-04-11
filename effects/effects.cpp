@@ -16,25 +16,38 @@
  *
  */
 
-// C++ includes
-#include <iomanip>
-#include <locale>
+#include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
+#include <ctime>                                    // for time, time_t
+#include <iomanip>                                  // for operator<<, setw
 
-
-#include "commands.hpp"
-#include "creatures.hpp"
-#include "creatureStreams.hpp"
-#include "config.hpp"
-#include "effects.hpp"
-
-#include "join.hpp"
-#include "mud.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "pythonHandler.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"                              // for bstring, operator+
+#include "cmd.hpp"                                  // for cmd
+#include "commands.hpp"                             // for getFullstrText
+#include "config.hpp"                               // for Config, gConfig
+#include "container.hpp"                            // for Container, PlayerSet
+#include "creatureStreams.hpp"                      // for Streamable, ColorOff
+#include "creatures.hpp"                            // for Creature, Player
+#include "damage.hpp"                               // for Damage
+#include "effects.hpp"                              // for EffectInfo, Effect
+#include "exits.hpp"                                // for Exit
+#include "flags.hpp"                                // for O_WORN
+#include "free_crt.hpp"                             // for free_crt
+#include "global.hpp"                               // for CAP, DT_NONE, BURNED
+#include "join.hpp"                                 // for join
+#include "mudObject.hpp"                            // for MudObject
+#include "objects.hpp"                              // for Object
+#include "os.hpp"                                   // for ASSERTLOG
+#include "proto.hpp"                                // for broadcast
+#include "pythonHandler.hpp"                        // for addMudObjectToDic...
+#include "raceData.hpp"                             // for RaceData
+#include "random.hpp"                               // for Random
+#include "realm.hpp"                                // for EARTH, FIRE, Realm
+#include "rooms.hpp"                                // for BaseRoom, ExitList
+#include "server.hpp"                               // for Server, gServer
+#include "socket.hpp"                               // for Socket
+#include "structs.hpp"                              // for ALCOHOL_DRUNK
+#include "utils.hpp"                                // for MAX, MIN
+#include "xml.hpp"                                  // for copyToBString
 
 //*********************************************************************
 //                      getDisplayName
@@ -79,7 +92,7 @@ AlcoholState getAlcoholState(const EffectInfo* effect) {
 //*********************************************************************
 
 void Config::clearEffects() {
-    for(std::pair<bstring, Effect*> ep : effects) {
+    for(const auto& ep : effects) {
         delete ep.second;
     }
     effects.clear();
@@ -89,7 +102,7 @@ void Config::clearEffects() {
 //                      getEffect
 //*********************************************************************
 
-Effect* Config::getEffect(bstring eName) {
+Effect* Config::getEffect(const bstring& eName) {
     EffectMap::const_iterator eIt;
     if( (eIt = effects.find(eName)) == effects.end())
         return(nullptr);
@@ -101,7 +114,7 @@ Effect* Config::getEffect(bstring eName) {
 //                      effectExists
 //*********************************************************************
 
-bool Config::effectExists(bstring eName) {
+bool Config::effectExists(const bstring& eName) {
     return(effects.find(eName) != effects.end());
 }
 
@@ -110,7 +123,7 @@ bool Config::effectExists(bstring eName) {
 //*********************************************************************
 
 int dmEffectList(Player* player, cmd* cmnd) {
-    Effect* effect=0;
+    Effect* effect=nullptr;
     bstring command = getFullstrText(cmnd->fullstr, 1);
 
     bool all = (command == "all");
@@ -120,7 +133,7 @@ int dmEffectList(Player* player, cmd* cmnd) {
     player->printColor("Type ^y*effects all^x to see all effects or ^y*effects [num]^x to see a specific effect.\n");
 
     int i = 0;
-    for(std::pair<bstring, Effect*> sp : gConfig->effects) {
+    for(const auto& sp : gConfig->effects) {
         effect = sp.second;
         i++;
 
@@ -388,7 +401,7 @@ bool EffectInfo::postApply(bool keepApplier) {
     // invalid pointer that might crash the game. Currently only equipped object
     // appliers are supported for passing in keepApplier = true.
     if(!keepApplier)
-        myApplier = 0;
+        myApplier = nullptr;
 
     return(success);
 }
@@ -408,7 +421,7 @@ EffectInfo* MudObject::addEffect(const bstring& effect, long duration, int stren
 EffectInfo* Effects::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
     if(!gConfig->getEffect(effect))
         return(nullptr);
-    EffectInfo* newEffect = new EffectInfo(effect, time(0), duration, strength, pParent, owner);
+    auto* newEffect = new EffectInfo(effect, time(nullptr), duration, strength, pParent, owner);
 
     if(!newEffect->compute(applier)) {
         delete newEffect;
@@ -421,7 +434,7 @@ EffectInfo* Effects::addEffect(const bstring& effect, long duration, int strengt
     if(duration != -2)
         newEffect->setDuration(duration);
 
-    return(addEffect(newEffect, show, 0, keepApplier));
+    return(addEffect(newEffect, show, nullptr, keepApplier));
 }
 
 EffectInfo* MudObject::addEffect(EffectInfo* newEffect, bool show, bool keepApplier) {
@@ -516,7 +529,7 @@ void Effects::removeOwner(const Creature* owner) {
 
     for(it = effectList.begin() ; it != effectList.end() ; it++) {
         if((*it)->isOwner(owner))
-            (*it)->setOwner(0);
+            (*it)->setOwner(nullptr);
     }
 }
 
@@ -525,7 +538,7 @@ void Effects::removeOwner(const Creature* owner) {
 //*********************************************************************
 
 bool Effect::objectCanBestowEffect(const bstring& effect) {
-    return( effect != "" &&
+    return( !effect.empty() &&
             effect != "vampirism" &&
             effect != "porphyria" &&
             effect != "lycanthropy"
@@ -643,7 +656,7 @@ EffectInfo* Effects::getExactEffect(const bstring& effect) const {
 bool Creature::pulseEffects(time_t t) {
     bool pulsed = true;
     bool poison = false;
-    EffectInfo* effect=0;
+    EffectInfo* effect=nullptr;
     EffectList::iterator eIt;
     deathtype = DT_NONE;
     for(eIt = effects.effectList.begin() ; eIt != effects.effectList.end() ;) {
@@ -710,7 +723,7 @@ bool Exit::pulseEffects(time_t t) {
 
 void Effects::pulse(time_t t, MudObject* pParent) {
     EffectList::iterator it;
-    EffectInfo* effect=0;
+    EffectInfo* effect=nullptr;
     bool pulsed=false;
 
     for(it = effectList.begin() ; it != effectList.end() ;) {
@@ -735,7 +748,7 @@ void Effects::pulse(time_t t, MudObject* pParent) {
 //*********************************************************************
 
 void Effects::removeAll() {
-    EffectInfo* effect=0;
+    EffectInfo* effect=nullptr;
     EffectList::iterator eIt;
     for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
         effect = (*eIt);
@@ -818,7 +831,7 @@ bstring Effects::getEffectsList() const {
 
     effStr << "Effects: ";
 
-    if(effectList.size() == 0) {
+    if(effectList.empty()) {
         effStr << "None";
     } else {
         effStr << join(effectList, ", ");
@@ -837,9 +850,9 @@ bstring Effects::getEffectsList() const {
 // Used to print out what effects a creature is under
 
 bstring Effects::getEffectsString(const Creature* viewer) {
-    const Object* object=0;
+    const Object* object=nullptr;
     std::ostringstream effStr;
-    long t = time(0);
+    long t = time(nullptr);
 
     for(EffectInfo* effectInfo : effectList) {
         effectInfo->updateLastMod(t);
@@ -931,7 +944,7 @@ bool Creature::convertToEffect(const bstring& effect, int flag, int lt) {
     else
         duration = -1;
 
-    EffectInfo* newEffect = new EffectInfo(effect, time(0), duration, 1, this);
+    auto* newEffect = new EffectInfo(effect, time(nullptr), duration, 1, this);
 
 //  if(lt != -1 && (effect == "armor" || effect == "stoneskin")) {
 //      newEffect->setStrength(lasttime[lt].misc);
@@ -976,21 +989,21 @@ bool exitEffectDamage(const EffectInfo *effect, Creature* target, Creature* owne
     if(!effect || effect->getExtra() || effect->isOwner(owner))
         return(false);
 
-    Player* killer=0;
+    Player* killer=nullptr;
     bool online = true;
 
-    if(effect->getOwner() != "") {
+    if(!effect->getOwner().empty()) {
         killer = gServer->findPlayer(effect->getOwner());
         if(!killer) {
             if(loadPlayer(effect->getOwner().c_str(), &killer))
                 online = false;
             else
-                killer = 0;
+                killer = nullptr;
         }
     }
 
     damage.set(Random::get(effect->getStrength() / 2, effect->getStrength() * 3 / 2));
-    target->modifyDamage(0, MAGICAL, damage, realm);
+    target->modifyDamage(nullptr, MAGICAL, damage, realm);
 
     if(killer && target->isMonster()) {
         target->getAsMonster()->addEnemy(killer);
@@ -1158,7 +1171,7 @@ bool EffectInfo::runScript(const bstring& pyScript, MudObject* applier) {
         //std::clog << "runScript returning: " << retVal << std::endl;
         return(retVal);
     }
-    catch( boost::python::error_already_set) {
+    catch( boost::python::error_already_set& e) {
         gServer->handlePythonError();
     }
 
@@ -1172,9 +1185,9 @@ bool EffectInfo::runScript(const bstring& pyScript, MudObject* applier) {
 // lastUserUpdate is set in updateUsers
 
 void Server::pulseCreatureEffects(long t) {
-    Monster *monster=0;
-    const Socket *sock=0;
-    Player* player=0;
+    Monster *monster=nullptr;
+    const Socket *sock=nullptr;
+    Player* player=nullptr;
     std::list<Socket*>::const_iterator it;
 
     for(it = sockets.begin(); it != sockets.end() ; ) {
@@ -1187,7 +1200,7 @@ void Server::pulseCreatureEffects(long t) {
             player->pulseEffects(t);
     }
 
-    MonsterList::iterator mIt = activeList.begin();
+    auto mIt = activeList.begin();
     while(mIt != activeList.end()) {
         // Increment the iterator in case this monster dies during the update and is removed from the active list
         monster = (*mIt++);
@@ -1267,12 +1280,12 @@ void Server::addEffectsIndex(BaseRoom* room) {
 
 bool BaseRoom::needsEffectsIndex() const {
     // any room effects?
-    if(effects.effectList.size())
+    if(!effects.effectList.empty())
         return(true);
 
     // any exit effects?
     for(Exit* exit : exits) {
-        if(exit->effects.effectList.size())
+        if(!exit->effects.effectList.empty())
             return(true);
     }
 
@@ -1513,7 +1526,7 @@ bstring Effect::getName() const {
 //*********************************************************************
 // TODO: Add applier here
 
-EffectInfo::EffectInfo(bstring pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent, const Creature* owner):
+EffectInfo::EffectInfo(const bstring& pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent, const Creature* owner):
         name(pName), lastMod(pLastMod), lastPulse(pLastMod), duration(pDuration), strength(pStrength), myParent(pParent)
 {
     myEffect = gConfig->getEffect(pName);
@@ -1526,10 +1539,7 @@ EffectInfo::EffectInfo(bstring pName, time_t pLastMod, long pDuration, int pStre
 //                      EffectInfo
 //*********************************************************************
 
-EffectInfo::EffectInfo()
-{
-
-}
+EffectInfo::EffectInfo() = default;
 
 //*********************************************************************
 //                      EffectInfo
@@ -1548,7 +1558,7 @@ EffectInfo::EffectInfo(xmlNodePtr rootNode) {
         curNode = curNode->next;
     }
 
-    lastPulse = lastMod = time(0);
+    lastPulse = lastMod = time(nullptr);
     myEffect = gConfig->getEffect(name);
 
     if(!myEffect) {
@@ -1560,8 +1570,7 @@ EffectInfo::EffectInfo(xmlNodePtr rootNode) {
 //                      EffectInfo
 //*********************************************************************
 
-EffectInfo::~EffectInfo() {
-}
+EffectInfo::~EffectInfo() = default;
 
 //*********************************************************************
 //                      setParent
@@ -1583,7 +1592,7 @@ Effect* EffectInfo::getEffect() const {
 //                      getName
 //*********************************************************************
 
-const bstring EffectInfo::getName() const {
+bstring EffectInfo::getName() const {
     return(name);
 }
 
@@ -1591,7 +1600,7 @@ const bstring EffectInfo::getName() const {
 //                      getOwner
 //*********************************************************************
 
-const bstring EffectInfo::getOwner() const {
+bstring EffectInfo::getOwner() const {
     return(pOwner);
 }
 

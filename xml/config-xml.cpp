@@ -16,11 +16,20 @@
  *
  */
 
-#include <config.hpp>
-#include <xml.hpp>
-#include <proto.hpp>
-#include <paths.hpp>
+#include <config.hpp>                               // for Config, LottoTicket
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlNo...
+#include <paths.hpp>                                // for Config, Code
+#include <proto.hpp>                                // for file_exists
+#include <cstdio>                                   // for snprintf, sprintf
+#include <sys/types.h>                              // for time_t
 
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for operator<<
+#include "bstring.hpp"                              // for bstring
+#include "effects.hpp"                              // for Effect
+#include "songs.hpp"                                // for Song
+#include "structs.hpp"                              // for Spell
+#include "xml.hpp"                                  // for NODE_NAME, copyTo...
 
 bool Config::loadConfig(bool reload) {
     char filename[256];

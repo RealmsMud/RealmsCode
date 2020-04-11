@@ -19,9 +19,6 @@
 #ifndef _EXITS_H
 #define _EXITS_H
 
-#include "area.hpp"
-#include "common.hpp"
-#include "effects.hpp"
 #include "lasttime.hpp"
 #include "location.hpp"
 #include "mudObject.hpp"
@@ -69,33 +66,33 @@ public:
     BaseRoom* getRoom() const;
 
     void setLevel(short lvl);
-    void setOpen(bstring o);
+    void setOpen(const bstring& o);
     void setTrap(short t);
     void setKey(short k);
-    void setKeyArea(bstring k);
+    void setKeyArea(const bstring& k);
     void setToll(short t);
-    void setPassPhrase(bstring phrase);
+    void setPassPhrase(const bstring& phrase);
     void setPassLanguage(short lang);
-    void setDescription(bstring d);
+    void setDescription(const bstring& d);
     void setSize(Size s);
     void setDirection(Direction d);
-    void setEnter(bstring e);
+    void setEnter(const bstring& e);
     void setRoom(BaseRoom* room);
 
     void checkReLock(Creature* creature, bool sneaking);
 
-    bstring blockedByStr(char color, bstring spell, bstring effectName, bool detectMagic, bool canSee) const;
+    bstring blockedByStr(char color, const bstring& spell, const bstring& effectName, bool detectMagic, bool canSee) const;
     Exit* getReturnExit(const BaseRoom* parent, BaseRoom** targetRoom) const;
     void doDispelMagic(BaseRoom* parent);  // true if the exit was destroyed by dispel-magic
-    bool isWall(bstring name) const;
-    bool isConcealed(const Creature* viewer=0) const;
+    bool isWall(const bstring& name) const;
+    bool isConcealed(const Creature* viewer=nullptr) const;
 
 //// Effects
     bool pulseEffects(time_t t);
     bool doEffectDamage(Creature* target);
 
-    void addEffectReturnExit(bstring effect, long duration, int strength, const Creature* owner);
-    void removeEffectReturnExit(bstring effect, BaseRoom* rParent);
+    void addEffectReturnExit(const bstring& effect, long duration, int strength, const Creature* owner);
+    void removeEffectReturnExit(const bstring& effect, BaseRoom* rParent);
 protected:
     short   level;
     bstring open;           // output on open
@@ -114,15 +111,15 @@ protected:
 public:
     // almost ready to be made protected - just need to get
     // loading of flags done
-    char        flags[16];      // Max exit flags 128 now
+    char        flags[16]{};      // Max exit flags 128 now
 
     struct      lasttime ltime; // Timed open/close
 
-    char        desc_key[3][EXIT_KEY_LENGTH]; // Exit keys
+    char        desc_key[3][EXIT_KEY_LENGTH]{}; // Exit keys
 
-    char        clanFlags[4];   // clan allowed flags
-    char        classFlags[4];  // class allowed flags
-    char        raceFlags[4];   // race allowed flags
+    char        clanFlags[4]{};   // clan allowed flags
+    char        classFlags[4]{};  // class allowed flags
+    char        raceFlags[4]{};   // race allowed flags
 
     Location target;
 

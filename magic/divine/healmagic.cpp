@@ -16,15 +16,28 @@
  *
  */
 
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "mud.hpp"
-#include "move.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "web.hpp"
+#include <cctype>          // for toupper
+#include <cstring>         // for strcpy
+#include <strings.h>       // for strcasecmp
+#include <ctime>           // for time
+
+#include "bstring.hpp"     // for bstring
+#include "cmd.hpp"         // for cmd
+#include "config.hpp"      // for Config, gConfig
+#include "creatures.hpp"   // for Creature, Player, Monster
+#include "deityData.hpp"   // for DeityData
+#include "effects.hpp"     // for EffectInfo
+#include "flags.hpp"       // for P_NO_TICK_MP, P_OUTLAW, P_KILLED_BY_MOB
+#include "global.hpp"      // for CastType, CreatureClass, CastType::CAST
+#include "magic.hpp"       // for SpellData, S_MEND_WOUNDS, S_REJUVENATE
+#include "move.hpp"        // for tooFarAway
+#include "mud.hpp"         // for DL_RESURRECT, LT_SPELL, DL_FHEAL, LT_NOMPTICK
+#include "proto.hpp"       // for broadcast, bonus, dec_daily, dice, up, log...
+#include "random.hpp"      // for Random
+#include "rooms.hpp"       // for BaseRoom
+#include "server.hpp"      // for Server, gServer
+#include "utils.hpp"       // for MAX
+#include "web.hpp"         // for updateRecentActivity
 
 
 //*********************************************************************
@@ -73,7 +86,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
         }
 
         if(target == healer)
-            target = 0;
+            target = nullptr;
     }
 
     level = healer->getLevel();
@@ -102,7 +115,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 
     switch(healer->getClass()) {
     case CreatureClass::CLERIC:
-        statBns = bonus((int)healer->piety.getCur());
+        statBns = bonus(healer->piety.getCur());
 
         switch(healer->getDeity()) {
         case CERIS:
@@ -167,7 +180,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
         break;
 
     case CreatureClass::DRUID:
-        statBns = MAX(bonus((int)healer->intelligence.getCur()), bonus((int)healer->constitution.getCur()));
+        statBns = MAX(bonus(healer->intelligence.getCur()), bonus(healer->constitution.getCur()));
         mod = level/4 + Random::get(1, 1 + level / 5);
         break;
     case CreatureClass::THIEF:
@@ -177,28 +190,28 @@ int getHeal(Creature *healer, Creature* target, int spell) {
     case CreatureClass::BERSERKER:
 
     case CreatureClass::WEREWOLF:
-        statBns = bonus((int)healer->constitution.getCur());
+        statBns = bonus(healer->constitution.getCur());
         mod = 0;
         break;
     case CreatureClass::MONK:
-        statBns = bonus((int)healer->constitution.getCur());
+        statBns = bonus(healer->constitution.getCur());
         mod = Random::get(1,6);
         break;
 
     case CreatureClass::RANGER:
     case CreatureClass::BARD:
     case CreatureClass::PUREBLOOD:
-        statBns = MAX(bonus((int)healer->piety.getCur()), bonus((int)healer->intelligence.getCur()));
+        statBns = MAX(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
         mod = Random::get(1,6);
         break;
     case CreatureClass::MAGE:
-        statBns = MAX(bonus((int)healer->piety.getCur()), bonus((int)healer->intelligence.getCur()));
+        statBns = MAX(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
         mod = 0;
         break;
 
     case CreatureClass::CARETAKER:
     case CreatureClass::DUNGEONMASTER:
-        statBns = MAX(bonus((int)healer->piety.getCur()), bonus((int)healer->intelligence.getCur()));
+        statBns = MAX(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
         mod = Random::get(level/2, level);
         break;
 
@@ -215,7 +228,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 
     // clerics and paladins of Gradius
     if(healer->getDeity() == GRADIUS) {
-        statBns = bonus((int)healer->piety.getCur());
+        statBns = bonus(healer->piety.getCur());
 
         if(pHealer && !pHealer->alignInOrder()) {
             healer->print("You are out of balance with the earth. Your healing is weakened.\n");
@@ -241,7 +254,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 
     // clerics and paladins of Enoch and Linothan
     } else if(healer->getDeity() == ENOCH || healer->getDeity() == LINOTHAN) {
-        statBns = bonus((int)healer->piety.getCur());
+        statBns = bonus(healer->piety.getCur());
 
         if(pHealer && !pHealer->alignInOrder()) {
             healer->print("Your healing magic is weakened from lack of faith in %s.\n", gConfig->getDeity(healer->getDeity())->getName().c_str());
@@ -267,7 +280,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 
     // clerics and deathknights of Aramon and Arachnus
     } else if(healer->getDeity() == ARAMON || healer->getDeity() == ARACHNUS) {
-        statBns = bonus((int)healer->piety.getCur());
+        statBns = bonus(healer->piety.getCur());
 
         if(pHealer && !pHealer->alignInOrder())
             level /= 2;
@@ -353,14 +366,13 @@ int getHeal(Creature *healer, Creature* target, int spell) {
 
 
 void niceExp(Creature *healer, Creature *creature, int heal, CastType how) {
-    Player  *player=0, *target=0;
-    int     exp=0;
+    Player  *player=nullptr, *target=nullptr;
+    unsigned int exp=0;
 
     if(how != CastType::CAST)
         return;
 
-    // only players are allowed to use this function! It's called from creature-spells
-    // though, so we have to cast
+    // only players are allowed to use this function! It's called from creature-spells though, so we have to cast
     player = healer->getAsPlayer();
     target = creature->getAsPlayer();
 
@@ -435,7 +447,7 @@ bool canCastHealing(Creature* player, Creature* target, bool rej=false, bool hea
 //*********************************************************************
 
 int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const char* spellName, const char* feelBetter, int flag, int defaultAmount) {
-    Creature* target=0;
+    Creature* target=nullptr;
     char    capSpellName[25];
     int     heal=0;
 
@@ -459,7 +471,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
 
             if(player->isPlayer())
                 player->getAsPlayer()->statistics.healingCast();
-            heal = getHeal(player, 0, flag);
+            heal = getHeal(player, nullptr, flag);
 
         } else
             heal = defaultAmount;
@@ -547,7 +559,7 @@ int splMendWounds(Creature* player, cmd* cmnd, SpellData* spellData) {
 // another monster.
 
 int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
     int     heal=0, mpHeal=0;
 
     if(!(player->getClass() == CreatureClass::CLERIC && player->getDeity() == CERIS) && spellData->how == CastType::CAST && !player->isCt()) {
@@ -585,11 +597,11 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
 
             if(player->isPlayer())
                 player->getAsPlayer()->statistics.healingCast();
-            heal = getHeal(player, 0, S_REJUVENATE);
-            mpHeal = getHeal(player, 0, S_REJUVENATE);
+            heal = getHeal(player, nullptr, S_REJUVENATE);
+            mpHeal = getHeal(player, nullptr, S_REJUVENATE);
 
             if(!player->isCt()) {
-                player->lasttime[LT_SPELL].ltime = time(0);
+                player->lasttime[LT_SPELL].ltime = time(nullptr);
                 player->lasttime[LT_SPELL].interval = 24L;
             }
             player->mp.decrease(8);
@@ -641,7 +653,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
             player->smashInvis();
 
         if(spellData->how == CastType::CAST && !player->isCt()) {
-            player->lasttime[LT_SPELL].ltime = time(0);
+            player->lasttime[LT_SPELL].ltime = time(nullptr);
             player->lasttime[LT_SPELL].interval = 24L;
         }
 
@@ -683,7 +695,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
 // times a day.
 
 int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* creature=0;
+    Creature* creature=nullptr;
 
 
     if(spellData->how == CastType::CAST && !player->isStaff()) {
@@ -870,8 +882,8 @@ int doRes(Creature* caster, cmd* cmnd, bool res) {
     int     prevLevel=0;
     bool    full=false;
     long    t=0;
-    Player *target=0;
-    BaseRoom *newRoom=0;
+    Player *target=nullptr;
+    BaseRoom *newRoom=nullptr;
 
     if(player && !player->isDm()) {
         if(player->getNegativeLevels()) {
@@ -1005,7 +1017,7 @@ int doRes(Creature* caster, cmd* cmnd, bool res) {
 
 
     if(player && !player->isDm()) {
-        t = time(0);
+        t = time(nullptr);
         caster->setFlag(P_NO_TICK_MP);
         // caster cannot tick MP for 20 mins online time
         caster->lasttime[LT_NOMPTICK].ltime = t;
@@ -1117,7 +1129,7 @@ int splBloodfusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 // it can restore magic points to full.
 
 int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
 
     if(spellData->how == CastType::CAST && player->isPlayer() && !player->isStaff()) {
         player->print("You may not cast that spell.\n");
@@ -1188,7 +1200,7 @@ int splRoomVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
     player->print("You cast vigor on everyone in the room.\n");
     broadcast(player->getSock(), player->getParent(), "%M casts vigor on everyone in the room.\n", player);
 
-    heal = Random::get(1, 6) + bonus((int) player->piety.getCur());
+    heal = Random::get(1, 6) + bonus(player->piety.getCur());
 
     if(player->getRoomParent()->magicBonus()) {
         heal += Random::get(1, 3);

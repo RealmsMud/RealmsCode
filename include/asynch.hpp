@@ -34,7 +34,7 @@ protected:
     int fds[2];
 public:
     Async();
-    AsyncResult branch(const Player* player, childType type);
+    AsyncResult branch(const Player* player, ChildType type);
 };
 
 

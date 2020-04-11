@@ -19,7 +19,6 @@
 #ifndef COMMANDS_H_
 #define COMMANDS_H_
 
-#include "common.hpp"
 #include "global.hpp"
 
 class BaseRoom;
@@ -83,7 +82,7 @@ int cmdThrow(Creature* creature, cmd* cmnd);
 int cmdNoExist(Player* player, cmd* cmnd);
 int cmdNoAuth(Player* player);
 void command(Socket* sock, const bstring& str);
-void parse(bstring str, cmd* cmnd);
+void parse(const bstring& str, cmd* cmnd);
 
 int cmdPush(Player* player, cmd* cmnd);
 int cmdPull(Player* player, cmd* cmnd);
@@ -102,7 +101,7 @@ int cmdLevelHistory(Player* player, cmd* cmnd);
 int cmdStatistics(Player* player, cmd* cmnd);
 int cmdInfo(Player* player, cmd* cmnd);
 int cmdSpells(Creature* player, cmd* cmnd);
-void spellsUnder(const Player* viewer, const Creature* target, bool notSelf);
+void spellsUnder(const Player *viewer, const Creature* target, bool notSelf);
 
 
 // command5.c
@@ -146,7 +145,7 @@ int hire(Player* player, cmd* cmnd);
 
 
 // communication.c
-bstring getFullstrTextTrun(bstring str, int skip, char toSkip = ' ', bool colorEscape=false);
+bstring getFullstrTextTrun(const bstring& str, int skip, char toSkip = ' ', bool colorEscape=false);
 bstring getFullstrText(bstring str, int skip, char toSkip = ' ', bool colorEscape=false, bool truncate=false);
 int communicateWith(Player* player, cmd* cmnd);
 int pCommunicate(Player* player, cmd* cmnd);
@@ -372,6 +371,6 @@ int cmdForum(Player* player, cmd* cmnd);
 
 int dmStatDetail(Player* player, cmd* cmnd);
 
-void doCastPython(MudObject* caster, Creature* target, bstring spell, int strength = 130);
+void doCastPython(MudObject* caster, Creature* target, const bstring& spell, int strength = 130);
 
 #endif /*COMMANDS_H_*/

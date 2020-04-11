@@ -15,9 +15,14 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.hpp"
-#include "track.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+
+#include "bstring.hpp"                              // for bstring
+#include "proto.hpp"                                // for whatSize
+#include "size.hpp"                                 // for Size, NO_SIZE
+#include "track.hpp"                                // for Track
+#include "utils.hpp"                                // for MAX
+#include "xml.hpp"                                  // for saveNonZeroNum
 
 //*********************************************************************
 //                      Track
@@ -29,41 +34,13 @@ Track::Track() {
     direction = "";
 }
 
-//*********************************************************************
-//                      getNum
-//*********************************************************************
-
 short Track::getNum() const { return(num); }
-
-//*********************************************************************
-//                      getSize
-//*********************************************************************
-
 Size Track::getSize() const { return(size); }
-
-//*********************************************************************
-//                      getDirection
-//*********************************************************************
-
 bstring Track::getDirection() const { return(direction); }
 
-//*********************************************************************
-//                      setNum
-//*********************************************************************
-
 void Track::setNum(short n) { num = MAX<short>(0, n); }
-
-//*********************************************************************
-//                      setSize
-//*********************************************************************
-
 void Track::setSize(Size s) { size = s; }
-
-//*********************************************************************
-//                      setDirection
-//*********************************************************************
-
-void Track::setDirection(bstring dir) { direction = dir; }
+void Track::setDirection(const bstring& dir) { direction = dir; }
 
 //*********************************************************************
 //                      load

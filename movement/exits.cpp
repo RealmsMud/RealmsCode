@@ -15,13 +15,20 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <sstream>
+#include <cstring>       // for strncmp
+#include <sstream>        // for operator<<, basic_ostream, char_traits, ost...
 
-#include "creatures.hpp"
-#include "effects.hpp"
-#include "rooms.hpp"
-#include "exits.hpp"
-#include "mud.hpp"
+#include "bstring.hpp"    // for bstring
+#include "cmd.hpp"        // for cmd
+#include "creatures.hpp"  // for Creature, Player
+#include "effects.hpp"    // for EffectInfo, EffectList, Effects
+#include "exits.hpp"      // for Exit, Direction, NoDirection, East, North
+#include "flags.hpp"      // for X_CLAN_1, X_CLAN_10, X_CLAN_11, X_CLAN_12
+#include "global.hpp"     // for CreatureClass, NEUTRAL, BARBARIAN, CAMBION
+#include "mudObject.hpp"  // for MudObject
+#include "proto.hpp"      // for zero, removeColor, broadcast, findExit, isCt
+#include "rooms.hpp"      // for BaseRoom, ExitList, AreaRoom, UniqueRoom
+#include "size.hpp"       // for NO_SIZE, Size
 
 //*********************************************************************
 //                      Exit
@@ -41,12 +48,12 @@ Exit::Exit() {
     passlang = 0;
     size = NO_SIZE;
     hooks.setParent(this);
-    parentRoom = 0;
+    parentRoom = nullptr;
     direction = NoDirection;
 }
 
 Exit::~Exit() {
-    if(effects.effectList.size()) {
+    if(!effects.effectList.empty()) {
         //BaseRoom* parent = effects.list.front()->getParentRoom();
         effects.removeAll();
         //parent->removeEffectsIndex();
@@ -74,17 +81,17 @@ bstring Exit::getEnter() const { return(enter); }
 BaseRoom* Exit::getRoom() const { return(parentRoom); }
 
 void Exit::setLevel(short lvl) { level = lvl; }
-void Exit::setOpen(bstring o) { open = o; }
+void Exit::setOpen(const bstring& o) { open = o; }
 void Exit::setTrap(short t) { trap = t; }
 void Exit::setKey(short k) { key = k; }
-void Exit::setKeyArea(bstring k) { keyArea = k; }
+void Exit::setKeyArea(const bstring& k) { keyArea = k; }
 void Exit::setToll(short t) { toll = t; }
-void Exit::setPassPhrase(bstring phrase) { passphrase = phrase; }
+void Exit::setPassPhrase(const bstring& phrase) { passphrase = phrase; }
 void Exit::setPassLanguage(short lang) { passlang = lang; }
-void Exit::setDescription(bstring d) { description = d; }
+void Exit::setDescription(const bstring& d) { description = d; }
 void Exit::setSize(Size s) { size = s; }
 void Exit::setDirection(Direction d) { direction = d; }
-void Exit::setEnter(bstring e) { enter = e; }
+void Exit::setEnter(const bstring& e) { enter = e; }
 void Exit::setRoom(BaseRoom* room) { parentRoom = room; }
 
 // Checks if the exit is flagged to relock after being used, and do as such
@@ -183,7 +190,7 @@ Exit *findExit(Creature* creature, bstring str, int val, BaseRoom* room) {
             return(exit);
     }
 
-    return(0);
+    return(nullptr);
 }
 
 //*********************************************************************
@@ -362,9 +369,9 @@ bool Exit::alignRestrict(const Creature* creature) const {
 Exit* Exit::getReturnExit(const BaseRoom* parent, BaseRoom** targetRoom) const {
     (*targetRoom) = target.loadRoom();
     if(!*targetRoom)
-        return(0);
+        return(nullptr);
 
-    Exit* exit=0;
+    Exit* exit=nullptr;
     bool found = false;
 
     const AreaRoom* aRoom = parent->getAsConstAreaRoom();
@@ -374,14 +381,14 @@ Exit* Exit::getReturnExit(const BaseRoom* parent, BaseRoom** targetRoom) const {
         if(ext->target.mapmarker.getArea()) {
             if(aRoom && ext->target.mapmarker == aRoom->mapmarker) {
                 if(found)
-                    return(0);
+                    return(nullptr);
                 exit = ext;
                 found = true;
             }
         } else {
             if(uRoom && ext-> target.room == uRoom->info) {
                 if(found)
-                    return(0);
+                    return(nullptr);
                 exit = ext;
                 found = true;
             }
@@ -395,8 +402,8 @@ Exit* Exit::getReturnExit(const BaseRoom* parent, BaseRoom** targetRoom) const {
 //                      blockedByStr
 //*********************************************************************
 
-bstring Exit::blockedByStr(char color, bstring spell, bstring effectName, bool detectMagic, bool canSee) const {
-    EffectInfo* effect = 0;
+bstring Exit::blockedByStr(char color, const bstring& spell, const bstring& effectName, bool detectMagic, bool canSee) const {
+    EffectInfo* effect = nullptr;
     std::ostringstream oStr;
 
     if(canSee)
@@ -406,7 +413,7 @@ bstring Exit::blockedByStr(char color, bstring spell, bstring effectName, bool d
 
     if(detectMagic) {
         effect = getEffect(effectName);
-        if(effect->getOwner() != "")
+        if(!effect->getOwner().empty())
             oStr << " (cast by " << effect->getOwner() << ")";
     }
 
@@ -435,8 +442,8 @@ bool Player::showExit(const Exit* exit, int magicShowHidden) const {
 // Add an effect to the given exit and the return exit (ie, an exit in
 // the room it points to that points back to this room)
 
-void Exit::addEffectReturnExit(bstring effect, long duration, int strength, const Creature* owner) {
-    BaseRoom *targetRoom=0;
+void Exit::addEffectReturnExit(const bstring& effect, long duration, int strength, const Creature* owner) {
+    BaseRoom *targetRoom=nullptr;
 
     addEffect(effect, duration, strength, nullptr, true, owner);
     // switch the meaning of exit
@@ -451,8 +458,8 @@ void Exit::addEffectReturnExit(bstring effect, long duration, int strength, cons
 // Add an effect to the given exit and the return exit (ie, an exit in
 // the room it points to that points back to this room)
 
-void Exit::removeEffectReturnExit(bstring effect, BaseRoom* rParent) {
-    BaseRoom *targetRoom=0;
+void Exit::removeEffectReturnExit(const bstring& effect, BaseRoom* rParent) {
+    BaseRoom *targetRoom=nullptr;
 
     removeEffect(effect, true, false);
     // switch the meaning of exit
@@ -465,7 +472,7 @@ void Exit::removeEffectReturnExit(bstring effect, BaseRoom* rParent) {
 //                      isWall
 //*********************************************************************
 
-bool Exit::isWall(bstring name) const {
+bool Exit::isWall(const bstring& name) const {
     EffectInfo* effect = getEffect(name);
     if(!effect)
         return(false);
@@ -492,7 +499,7 @@ bool Exit::isConcealed(const Creature* viewer) const {
 //*********************************************************************
 
 Direction getDir(bstring str) {
-    int n = str.getLength();
+    size_t n = str.getLength();
     if(!n)
         return(NoDirection);
     str = removeColor(str);

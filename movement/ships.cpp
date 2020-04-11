@@ -16,21 +16,33 @@
  *
  */
 
-#include <sstream>
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <cstdio>                                   // for sprintf
+#include <cstdlib>                                  // for atoi
+#include <sstream>                                  // for basic_ostream::op...
 
-#include "calendar.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "commands.hpp"
-#include "mud.hpp"
-#include "move.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "ships.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"                              // for bstring, operator+
+#include "calendar.hpp"                             // for Calendar
+#include "catRef.hpp"                               // for CatRef
+#include "cmd.hpp"                                  // for cmd
+#include "commands.hpp"                             // for getFullstrText
+#include "config.hpp"                               // for Config, gConfig
+#include "creatures.hpp"                            // for Player, Monster
+#include "exits.hpp"                                // for Exit
+#include "flags.hpp"                                // for MAX_EXIT_FLAGS
+#include "global.hpp"                               // for CAP, NONUM
+#include "move.hpp"                                 // for getString
+#include "proto.hpp"                                // for broadcast, free_crt
+#include "random.hpp"                               // for Random
+#include "range.hpp"                                // for Range
+#include "rooms.hpp"                                // for BaseRoom, UniqueRoom
+#include "server.hpp"                               // for Server, gServer
+#include "ships.hpp"                                // for ShipStop, ShipRaid
+#include "utils.hpp"                                // for MAX
+#include "xml.hpp"                                  // for copyToBString
 
 
-#define PIRATE_QUEST 54 - 1
+#define PIRATE_QUEST (54 - 1)
 
 
 
@@ -51,7 +63,7 @@
 // given a ShipStop and a message, we'll announce it to the
 // mud (appropriate rooms)
 
-bool ShipStop::belongs(CatRef cr) {
+bool ShipStop::belongs(const CatRef& cr) {
     std::list<Range>::iterator rt;
     for(rt = announce.begin() ; rt != announce.end() ; rt++)
         if((*rt).belongs(cr))
@@ -59,7 +71,7 @@ bool ShipStop::belongs(CatRef cr) {
     return(false);
 }
 
-bool Ship::belongs(CatRef cr) {
+bool Ship::belongs(const CatRef& cr) {
     std::list<Range>::iterator rt;
     for(rt = ranges.begin() ; rt != ranges.end() ; rt++)
         if((*rt).belongs(cr))
@@ -67,9 +79,9 @@ bool Ship::belongs(CatRef cr) {
     return(false);
 }
 
-void shipBroadcastRange(Ship *ship, ShipStop *stop, bstring message) {
+void shipBroadcastRange(Ship *ship, ShipStop *stop, const bstring& message) {
 
-    if(message == "")
+    if(message.empty())
         return;
 
     // if our announce range isnt there, announce to everyone and quit
@@ -78,9 +90,9 @@ void shipBroadcastRange(Ship *ship, ShipStop *stop, bstring message) {
         return;
     }
 
-    Player* target=0;
+    Player* target=nullptr;
     // otherwise go through each player
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    for(const auto& p : gServer->players) {
         target = p.second;
 
         if(!target->isConnected())
@@ -103,11 +115,11 @@ void shipBroadcastRange(Ship *ship, ShipStop *stop, bstring message) {
 // run through the exits declared as Raid and spawn some raiders!
 
 void ShipExit::spawnRaiders(ShipRaid* sRaid) {
-    Monster *raider=0;
-    BaseRoom *room=0;
+    Monster *raider=nullptr;
+    BaseRoom *room=nullptr;
     int     l=0, total=0;
 
-    if(name == "" || !raid || !origin.getId() || !target.getId())
+    if(name.empty() || !raid || !origin.getId() || !target.getId())
         return;
 
     if(!loadMonster(sRaid->getSearchMob(), &raider))
@@ -181,10 +193,10 @@ void ShipStop::spawnRaiders() {
 // it also takes care of announcing the ship's arrival
 
 bool ShipExit::createExit() {
-    BaseRoom* newRoom=0;
+    BaseRoom* newRoom=nullptr;
     int     i=0;
 
-    if(name == "" || !origin.getId() || !target.getId())
+    if(name.empty() || !origin.getId() || !target.getId())
         return(false);
 
     newRoom = getRoom(true);
@@ -202,7 +214,7 @@ bool ShipExit::createExit() {
                 ext->flags[i] = flags[i];
             ext->setFlag(X_MOVING);
 
-            if(arrives != "")
+            if(!arrives.empty())
                 broadcast(nullptr, newRoom, "%s", arrives.c_str());
             return(true);
         }
@@ -235,9 +247,9 @@ int shipSetExits(Ship *ship, ShipStop *stop) {
 // Will also cause raiders to wander away.
 
 void ShipExit::removeExit() {
-    Monster *raider=0;
-    BaseRoom* newRoom=0;
-    AreaRoom* aRoom=0;
+    Monster *raider=nullptr;
+    BaseRoom* newRoom=nullptr;
+    AreaRoom* aRoom=nullptr;
     int     i=0, n=0;
 
     newRoom = getRoom(true);
@@ -245,7 +257,7 @@ void ShipExit::removeExit() {
         return;
 
     // kill all raiders
-    MonsterSet::iterator mIt = newRoom->monsters.begin();
+    auto mIt = newRoom->monsters.begin();
     while(mIt != newRoom->monsters.end()) {
         raider = (*mIt++);
 
@@ -259,7 +271,7 @@ void ShipExit::removeExit() {
     }
 
 
-    if(departs != "")
+    if(!departs.empty())
         broadcast(nullptr, newRoom, "%s", departs.c_str());
 
     aRoom = newRoom->getAsAreaRoom();
@@ -287,8 +299,8 @@ void ShipExit::removeExit() {
 // but do broadcasting and kicking people off a raiding vessel
 int shipDeleteExits(Ship *ship, ShipStop *stop) {
     std::list<ShipExit*>::iterator exit;
-    Monster     *raider=0;
-    UniqueRoom      *room=0, *newRoom=0;
+    Monster     *raider=nullptr;
+    UniqueRoom      *room=nullptr, *newRoom=nullptr;
     int         found=1;
     char        output[160];
 
@@ -305,7 +317,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
         ) {
             Player* ply;
             // otherwise go through each player
-            for(std::pair<bstring, Player*> p : gServer->players) {
+            for(const auto& p : gServer->players) {
                 ply = p.second;
 
                 if(!ply->isConnected())
@@ -364,11 +376,11 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                 ) {
 
 
-                    if(stop->raid->getDumpTalk() != "") {
+                    if(!stop->raid->getDumpTalk().empty()) {
                         ply->bPrint(raider->getCrtStr(nullptr, CAP|NONUM, 0) + " says to you, \"" + stop->raid->getDumpTalk() + "\".\n");
                     }
-                    if(stop->raid->getDumpAction() != "") {
-                        if(stop->raid->getDumpTalk() != "")
+                    if(!stop->raid->getDumpAction().empty()) {
+                        if(!stop->raid->getDumpTalk().empty())
                             ply->sendPrompt();
                         bstring tmp = stop->raid->getDumpAction();
                         bstring tmp2 = raider->getCrtStr(nullptr, CAP|NONUM, 0);
@@ -383,11 +395,11 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                     loadRoom(stop->raid->getPrison(), &newRoom)
                 ) {
 
-                    if(stop->raid->getPrisonTalk() != "") {
+                    if(!stop->raid->getPrisonTalk().empty()) {
                         ply->bPrint(raider->getCrtStr(nullptr, CAP|NONUM, 0) + "says to you \"" + stop->raid->getPrisonTalk() + "\".\n");
                     }
-                    if(stop->raid->getPrisonAction() != "") {
-                        if(stop->raid->getPrisonTalk() != "")
+                    if(!stop->raid->getPrisonAction().empty()) {
+                        if(!stop->raid->getPrisonTalk().empty())
                             ply->sendPrompt();
                         bstring tmp = stop->raid->getPrisonAction();
                         bstring tmp2 = raider->getCrtStr(nullptr, CAP|NONUM, 0);
@@ -420,7 +432,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
 // ___...---...___...---...___...---
 
 ShipRaid::ShipRaid() {
-    searchMob = raidMob = minSpawnNum = maxSpawnNum = record = 0;
+    searchMob = raidMob = minSpawnNum = maxSpawnNum = record = false;
     dumpTalk = prisonTalk = dumpAction = prisonAction = "";
     unconInPrison = false;
 }
@@ -510,7 +522,7 @@ bool ShipRaid::getUnconInPrison() const {
 // ___...---...___...---...___...---
 
 ShipExit::ShipExit() {
-    raid = 0;
+    raid = false;
     zero(flags, sizeof(flags));
     name = "";
     arrives = "";
@@ -565,14 +577,13 @@ void ShipExit::load(xmlNodePtr curNode) {
 ShipStop::ShipStop() {
     name = arrives = lastcall = departs = "";
     to_next = in_dock = 0;
-    raid = 0;
+    raid = nullptr;
 }
 
 ShipStop::~ShipStop() {
-    ShipExit* exit=0;
+    ShipExit* exit=nullptr;
 
-    if(raid)
-        delete raid;
+    delete raid;
 
     while(!exits.empty()) {
         exit = exits.front();
@@ -619,7 +630,7 @@ void ShipStop::load(xmlNodePtr curNode) {
 
 void ShipStop::loadExits(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
-    ShipExit    *exit=0;
+    ShipExit    *exit=nullptr;
 
     while(childNode) {
         if(NODE_NAME(childNode, "Exit")) {
@@ -677,7 +688,7 @@ Ship::Ship() {
 }
 
 Ship::~Ship() {
-    ShipStop* stop=0;
+    ShipStop* stop=nullptr;
 
     while(!stops.empty()) {
         stop = stops.front();
@@ -686,94 +697,6 @@ Ship::~Ship() {
     }
     stops.clear();
 }
-
-void Ship::load(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-    int     at_stop=0, stop=0;
-
-    while(childNode) {
-             if(NODE_NAME(childNode, "Name"))  xml::copyToBString(name, childNode);
-        else if(NODE_NAME(childNode, "Clan")) xml::copyToNum(clan, childNode);
-        else if(NODE_NAME(childNode, "Transit"))  xml::copyToBString(transit, childNode);
-        else if(NODE_NAME(childNode, "Movement"))  xml::copyToBString(movement, childNode);
-        else if(NODE_NAME(childNode, "Docked"))  xml::copyToBString(docked, childNode);
-
-        else if(NODE_NAME(childNode, "CanQuery")) xml::copyToBool(canQuery, childNode);
-        else if(NODE_NAME(childNode, "InPort")) xml::copyToBool(inPort, childNode);
-        else if(NODE_NAME(childNode, "TimeLeft")) xml::copyToNum(timeLeft, childNode);
-        // at_stop is only used when loading - the cycling of the stops below
-        // will put the stop pointed to by at_stop at the front. when it's saved,
-        // it will load first
-        else if(NODE_NAME(childNode, "AtStop")) xml::copyToNum(at_stop, childNode);
-
-        else if(NODE_NAME(childNode, "BoatRange")) {
-            xmlNodePtr subNode = childNode->children;
-
-            while(subNode) {
-                if(NODE_NAME(subNode, "Range")) {
-                    Range r;
-                    r.load(subNode);
-                    ranges.push_back(r);
-                }
-                subNode = subNode->next;
-            }
-        } else if(NODE_NAME(childNode, "Stops"))
-            loadStops(childNode);
-        childNode = childNode->next;
-    }
-
-    // now move what stop we're at to the front of the list
-    while(stop < at_stop) {
-        stop++;
-        stops.push_back(stops.front());
-        stops.pop_front();
-    }
-}
-
-
-void Ship::loadStops(xmlNodePtr curNode) {
-    xmlNodePtr childNode = curNode->children;
-    ShipStop    *stop=0;
-
-    while(childNode) {
-        if(NODE_NAME(childNode, "Stop")) {
-            stop = new ShipStop;
-            stop->load(childNode);
-            stops.push_back(stop);
-        }
-        childNode = childNode->next;
-    }
-}
-
-
-void Ship::save(xmlNodePtr rootNode) const {
-    xmlNodePtr  curNode, childNode;
-
-    curNode = xml::newStringChild(rootNode, "Ship");
-    xml::saveNonNullString(curNode, "Name", name);
-    xml::saveNonZeroNum(curNode, "Clan", clan);
-    xml::saveNonZeroNum(curNode, "AtStop", 0);
-    xml::saveNonZeroNum(curNode, "InPort", inPort);
-    xml::saveNonZeroNum(curNode, "TimeLeft", timeLeft);
-
-    xml::saveNonZeroNum(curNode, "CanQuery", canQuery);
-    xml::saveNonNullString(curNode, "Transit", transit);
-    xml::saveNonNullString(curNode, "Movement", movement);
-    xml::saveNonNullString(curNode, "Docked", docked);
-
-    if(!ranges.empty()) {
-        childNode = xml::newStringChild(curNode, "BoatRange");
-        std::list<Range>::const_iterator rt;
-        for(rt = ranges.begin() ; rt != ranges.end() ; rt++)
-            (*rt).save(childNode, "Range");
-    }
-
-    childNode = xml::newStringChild(curNode, "Stops");
-    std::list<ShipStop*>::const_iterator st;
-    for(st = stops.begin() ; st != stops.end() ; st++)
-        (*st)->save(childNode);
-}
-
 
 //*********************************************************************
 //                      shipPrintRange
@@ -797,12 +720,12 @@ int dmQueryShips(Player* player, cmd* cmnd) {
     std::list<Ship*>::iterator it;
     std::list<ShipStop*>::iterator st;
     std::list<ShipExit*>::iterator xt;
-    Ship        *ship=0;
-    ShipStop    *stop=0;
-    ShipExit    *exit=0;
+    Ship        *ship=nullptr;
+    ShipStop    *stop=nullptr;
+    ShipExit    *exit=nullptr;
     int shipID = atoi(getFullstrText(cmnd->fullstr, 1).c_str());
     int stopID = atoi(getFullstrText(cmnd->fullstr, 2).c_str());
-    const Calendar* calendar = 0;
+    const Calendar* calendar = nullptr;
 
     if(!shipID) {
         calendar = gConfig->getCalendar();
@@ -865,11 +788,11 @@ int dmQueryShips(Player* player, cmd* cmnd) {
     if(!stopID) {
 
         player->print("Can Query: %s\n", ship->canQuery ? "Yes" : "No");
-        if(ship->transit != "")
+        if(!ship->transit.empty())
             player->print("Transit:   %s\n", ship->transit.c_str());
-        if(ship->movement != "")
+        if(!ship->movement.empty())
             player->print("Movement:  %s\n", ship->movement.c_str());
-        if(ship->docked != "")
+        if(!ship->docked.empty())
             player->print("Docked:    %s\n", ship->docked.c_str());
         player->print("\n");
 
@@ -921,13 +844,13 @@ int dmQueryShips(Player* player, cmd* cmnd) {
         player->print("In Dock:   %d minutes\n", stop->in_dock);
         player->print("To Next:   %d minutes\n\n", stop->to_next);
 
-        if(stop->arrives != "")
+        if(!stop->arrives.empty())
             player->print("Arrives:   %s\n", stop->arrives.c_str());
-        if(stop->lastcall != "")
+        if(!stop->lastcall.empty())
             player->print("Last Call: %s\n", stop->lastcall.c_str());
-        if(stop->departs != "")
+        if(!stop->departs.empty())
             player->print("Departs:   %s\n", stop->departs.c_str());
-        if(stop->arrives != "" || stop->lastcall != "" || stop->departs != "")
+        if(!stop->arrives.empty() || !stop->lastcall.empty() || !stop->departs.empty())
             player->print("\n");
 
         if(stop->raid) {
@@ -936,13 +859,13 @@ int dmQueryShips(Player* player, cmd* cmnd) {
             player->print("Search Mob:      %d\n", stop->raid->getSearchMob());
             player->print("Dump Room:       %s\n", stop->raid->getDump().str().c_str());
             player->print("Prison Room:     %s\n", stop->raid->getPrison().str().c_str());
-            if(stop->raid->getDumpTalk() != "")
+            if(!stop->raid->getDumpTalk().empty())
                 player->print("Dump Talk:       %s\n", stop->raid->getDumpTalk().c_str());
-            if(stop->raid->getPrisonTalk() != "")
+            if(!stop->raid->getPrisonTalk().empty())
                 player->print("Prison Talk:     %s\n", stop->raid->getPrisonTalk().c_str());
-            if(stop->raid->getDumpAction() != "")
+            if(!stop->raid->getDumpAction().empty())
                 player->print("Dump Action:     %s\n", stop->raid->getDumpAction().c_str());
-            if(stop->raid->getPrisonAction() != "")
+            if(!stop->raid->getPrisonAction().empty())
                 player->print("Prison Action:   %s\n", stop->raid->getPrisonAction().c_str());
             player->print("Uncon In Prison: %s\n\n", stop->raid->getUnconInPrison() ? "Yes" : "No");
         }
@@ -964,9 +887,9 @@ int dmQueryShips(Player* player, cmd* cmnd) {
             player->print("  uTarget: %s   aTarget: %s\n", exit->target.room.str().c_str(),
                 exit->target.mapmarker.str().c_str());
             player->print("  Raid:    %s\n", exit->getRaid() ? "Yes" : "No");
-            if(exit->getArrives() != "")
+            if(!exit->getArrives().empty())
                 player->print("  Arrives: %s\n", exit->getArrives().c_str());
-            if(exit->getDeparts() != "")
+            if(!exit->getDeparts().empty())
                 player->print("  Departs: %s\n", exit->getDeparts().c_str());
 
             player->print("\n");
@@ -987,8 +910,8 @@ int cmdQueryShips(Player* player, cmd* cmnd) {
     int     mod=0;
     std::list<Ship*>::iterator it;
     std::list<ShipStop*>::iterator st;
-    Ship    *ship=0;
-    ShipStop *stop=0;
+    Ship    *ship=nullptr;
+    ShipStop *stop=nullptr;
 
     if(!player->ableToDoCommand())
         return(0);
@@ -1038,86 +961,12 @@ int cmdQueryShips(Player* player, cmd* cmnd) {
     return(0);
 }
 
-
-//*********************************************************************
-//                      saveShips
-//*********************************************************************
-
-void Config::saveShips() const {
-    std::list<Ship*>::const_iterator it;
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr  rootNode;
-    char            filename[80];
-
-    // we only save if we're up on the main port
-    if(getPortNum() != 3333)
-        return;
-
-    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Ships", nullptr);
-    xmlDocSetRootElement(xmlDoc, rootNode);
-
-    for(it = ships.begin() ; it != ships.end() ; it++)
-        (*it)->save(rootNode);
-
-    sprintf(filename, "%s/ships.xml", Path::Game);
-    xml::saveFile(filename, xmlDoc);
-    xmlFreeDoc(xmlDoc);
-}
-
-
-//*********************************************************************
-//                      loadShips
-//*********************************************************************
-
-bool Config::loadShips() {
-    char filename[80];
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr  rootNode;
-    xmlNodePtr  curNode;
-    Ship    *ship=0;
-    std::list<Ship*>::iterator it;
-
-    sprintf(filename, "%s/ships.xml", Path::Game);
-
-    if(!file_exists(filename))
-        return(false);
-
-    if((xmlDoc = xml::loadFile(filename, "Ships")) == nullptr)
-        return(false);
-
-    rootNode = xmlDocGetRootElement(xmlDoc);
-    curNode = rootNode->children;
-
-    clearShips();
-    while(curNode) {
-        if(NODE_NAME(curNode, "Ship")) {
-            ship = new Ship;
-            ship->load(curNode);
-            ships.push_back(ship);
-        }
-        curNode = curNode->next;
-    }
-
-    // exits have all been deleted - go and set the current ones
-    for(it = ships.begin() ; it != ships.end() ; it++) {
-        ship = (*it);
-        // if at a stop, make the exits
-        if(ship->inPort)
-            shipSetExits(ship, ship->stops.front());
-    }
-
-    xmlFreeDoc(xmlDoc);
-    xmlCleanupParser();
-    return(true);
-}
-
 //*********************************************************************
 //                      clearShips
 //*********************************************************************
 
 void Config::clearShips() {
-    Ship    *ship=0;
+    Ship    *ship=nullptr;
 
     while(!ships.empty()) {
         ship = ships.front();

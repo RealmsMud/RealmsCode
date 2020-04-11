@@ -19,8 +19,10 @@
 #ifndef _CARRY_H
 #define _CARRY_H
 
-#include "catRef.hpp"
-#include "common.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr
+
+#include "bstring.hpp"      // for bstring
+#include "catRef.hpp"       // for CatRef
 
 class Carry {
 public:

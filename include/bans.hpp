@@ -18,7 +18,9 @@
 #ifndef BANS_H_
 #define BANS_H_
 
-#include "common.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr
+
+#include "bstring.hpp"
 
 class Ban {
 public:
@@ -29,14 +31,14 @@ public:
     
 public: // for now
     bstring     site;
-    int             duration{};
-    long            unbanTime{};
+    int         duration{};
+    long        unbanTime{};
     bstring     by;
     bstring     time;
     bstring     reason;
     bstring     password;
-    bool            isPrefix{};
-    bool            isSuffix{};
+    bool        isPrefix{};
+    bool        isSuffix{};
 };
 
 

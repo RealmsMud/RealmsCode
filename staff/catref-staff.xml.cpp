@@ -16,13 +16,16 @@
  *
  */
 
-#include <iomanip>
-#include <iostream>
+#include <iomanip>                // for operator<<, setw
+#include <iostream>               // for operator<<, basic_ostream, basic_os...
+#include <list>                   // for operator==, operator!=
+#include <string>                 // for operator<<, basic_string
 
-#include "catRef.hpp"
-#include "catRefInfo.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
+#include "catRefInfo.hpp"         // for CatRefInfo
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player
+
+class cmd;
 
 //*********************************************************************
 //                      dmCatRefInfo

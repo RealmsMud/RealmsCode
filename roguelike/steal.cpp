@@ -16,12 +16,22 @@
  *
  */
 
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "unique.hpp"
-#include "server.hpp"
+#include <ctime>           // for time
+
+#include "cmd.hpp"         // for cmd
+#include "config.hpp"      // for Config, gConfig
+#include "creatures.hpp"   // for Player, Creature, Monster
+#include "flags.hpp"       // for P_OUTLAW, P_HIDDEN, P_CHAOTIC, P_DM_INVIS
+#include "global.hpp"      // for CreatureClass, CreatureClass::THIEF, Creat...
+#include "money.hpp"       // for Money, GOLD
+#include "mud.hpp"         // for LT_STEAL, LT, LT_SPELL
+#include "objects.hpp"     // for Object
+#include "proto.hpp"       // for bonus, crtAwareness, broadcast, isCt, log_...
+#include "random.hpp"      // for Random
+#include "rooms.hpp"       // for BaseRoom
+#include "server.hpp"      // for GOLD_IN, Server, gServer
+#include "unique.hpp"      // for Unique, transferOwner, Lore
+#include "utils.hpp"       // for MAX, MIN
 
 //*********************************************************************
 //                      steal_gold
@@ -113,7 +123,7 @@ void steal_gold(Player* player, Creature* creature) {
         return;
 
 
-    chance = 5*(level - creature->getLevel()) + bonus((int)player->dexterity.getCur())*5 + bonus(player->getLuck() / 4)*5 + Random::get(-15, 15);
+    chance = 5*(level - creature->getLevel()) + bonus(player->dexterity.getCur()) * 5 + bonus(player->getLuck() / 4) * 5 + Random::get(-15, 15);
 
     if(player->flagIsSet(P_HIDDEN))
         chance += 10;
@@ -151,7 +161,7 @@ void steal_gold(Player* player, Creature* creature) {
         if(creature->isPlayer())
             log_immort(false,player, "%s stole %d gold from %s.\n", player->getCName(), amt, creature->getCName());
         if(creature->getAsMonster())
-            gServer->logGold(GOLD_IN, player, Money(amt, GOLD), creature, "StealGold");
+            Server::logGold(GOLD_IN, player, Money(amt, GOLD), creature, "StealGold");
 
 
     } else {
@@ -221,9 +231,9 @@ int get_steal_chance(Player* player, Creature* target, Object* object) {
     chance = (player->getClass() == CreatureClass::THIEF) ? 4*level : 3*level;
 
     if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA)
-        chance += bonus((int)player->piety.getCur())*4;
+        chance += bonus(player->piety.getCur()) * 4;
     else
-        chance += bonus((int)player->dexterity.getCur())*4;
+        chance += bonus(player->dexterity.getCur()) * 4;
 
     chance -= crtAwareness(target)*2; // Awareness = (int bonus + dex bonus)/2
 
@@ -340,12 +350,12 @@ int get_steal_chance(Player* player, Creature* target, Object* object) {
 // this function allows a player to steal from a monster or another player
 
 int cmdSteal(Player* player, cmd* cmnd) {
-    Creature* target=0;
-    Monster *mTarget=0;
-    Player* pTarget=0;
+    Creature* target=nullptr;
+    Monster *mTarget=nullptr;
+    Player* pTarget=nullptr;
     BaseRoom* room = player->getRoomParent();
-    Object      *object=0;
-    long        i=0, t = time(0);
+    Object      *object=nullptr;
+    long        i=0, t = time(nullptr);
     int         cantSteal=0;
     int         caught=0, chance=0, roll=0;
 
@@ -426,7 +436,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
 
         // Lower dex means bad bonus, means more waiting between steals.
         player->lasttime[LT_STEAL].ltime = t;
-        player->lasttime[LT_STEAL].interval = 9 - bonus((int)player->dexterity.getCur());
+        player->lasttime[LT_STEAL].interval = 9 - bonus(player->dexterity.getCur());
 
         player->updateAttackTimer(true, 10);
     }

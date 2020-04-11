@@ -16,21 +16,21 @@
  *
  */
 
-// C Includes
-#include <arpa/telnet.h>
-#include <cmath>
-#include <stdexcept>
-#include <iomanip>
+#include <arpa/telnet.h>          // for IAC, SB, SE
+#include <cmath>                  // for floor, round
+#include <ostream>                // for operator<<, basic_ostream, basic_os...
+#include <string>                 // for operator<<, char_traits, operator!=
 
-// Mud Includes
-#include "creatures.hpp"
-#include "config.hpp"
-#include "mud.hpp"
-#include "msdp.hpp"
-#include "login.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
+#include "bstring.hpp"            // for bstring
+#include "config.hpp"             // for Config, MsdpVarMap, gConfig
+#include "creatures.hpp"          // for Creature, Player
+#include "flags.hpp"              // for P_NO_SHOW_STATS, P_DM_INVIS, P_SLEE...
+#include "group.hpp"              // for Group, CreatureList, GROUP_INVITED
+#include "login.hpp"              // for CON_DISCONNECTING, CON_PLAYING
+#include "msdp.hpp"               // for MsdpVariable, ReportedMsdpVariable
+#include "rooms.hpp"              // for AreaRoom, UniqueRoom, BaseRoom, Exi...
+#include "server.hpp"             // for Server, SocketList
+#include "socket.hpp"             // for Socket, MSDP_VAL, MSDP_VAR, MSDP_TA...
 
 #define MSDP_DEBUG
 
@@ -45,7 +45,7 @@ bool Config::initMsdp() {
     NEW_MSDP_VARIABLE(SERVER_ID,             false, false, false, false, 1,  true, false,  false);
 
     NEW_MSDP_VARIABLE(SERVER_TIME,           false, false, false, false, 1,  true, false,  false);
-//
+
     // Character Info
     NEW_MSDP_VARIABLE(CHARACTER_NAME,        false,  true, false, false, 1,  true, false,  false);
 

@@ -26,19 +26,12 @@
 
 #include <map>
 
-#include "common.hpp"
 #include "global.hpp"
 #include "money.hpp"
 
 class BaseRoom;
 class Monster;
 class Player;
-
-//class CrtFaction {
-//public:
-//    bstring name;
-//    int     value;
-//};
 
 
 class FactionRegard {
@@ -58,9 +51,9 @@ public:
     bstring guildDisplay() const;
     bstring clanDisplay() const;
 protected:
-    long classRegard[static_cast<int>(CreatureClass::CLASS_COUNT)];
-    long raceRegard[RACE_COUNT];
-    long deityRegard[DEITY_COUNT];
+    long classRegard[static_cast<int>(CreatureClass::CLASS_COUNT)]{};
+    long raceRegard[RACE_COUNT]{};
+    long deityRegard[DEITY_COUNT]{};
     long vampirismRegard;
     long lycanthropyRegard;
     std::map<int,long> guildRegard;
@@ -98,7 +91,7 @@ public:
     long getLowerLimit(const Player* player) const;
     Player* findAggro(BaseRoom* room);
     bool isParent() const;
-    void setParent(bstring value);
+    void setParent(const bstring& value);
     void setIsParent(bool value);
 
     static int getCutoff(int attitude);
@@ -108,14 +101,14 @@ public:
     static bstring getBar(int regard, bool alwaysPad);
     static void worshipSocial(Monster *monster);
 
-    static bool willAggro(const Player* player, bstring faction);
-    static bool willSpeakWith(const Player* player, bstring faction);
-    static bool willDoBusinessWith(const Player* player, bstring faction);
-    static bool willBeneCast(const Player* player, bstring faction);
-    static bool willLetThrough(const Player* player, bstring faction);
+    static bool willAggro(const Player* player, const bstring& faction);
+    static bool willSpeakWith(const Player* player, const bstring& faction);
+    static bool willDoBusinessWith(const Player* player, const bstring& faction);
+    static bool willBeneCast(const Player* player, const bstring& faction);
+    static bool willLetThrough(const Player* player, const bstring& faction);
 
-    static Money adjustPrice(const Player* player, bstring faction, Money money, bool sell);
-    static bool canPledgeTo(const Player* player, bstring faction);
+    static Money adjustPrice(const Player* player, const bstring& faction, Money money, bool sell);
+    static bool canPledgeTo(const Player* player, const bstring& faction);
 
     static const int WORSHIP        = 4;
     static const int REGARD         = 3;

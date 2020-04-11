@@ -23,7 +23,6 @@
 #include <vector>
 
 #include "catRef.hpp"
-#include "common.hpp"
 #include "swap.hpp"
 #include "season.hpp"
 #include "track.hpp"
@@ -110,7 +109,7 @@ public:
     bool    inRestrict(char tile, const char *list) const;
     void    load(xmlNodePtr curNode);
     void    save(xmlNodePtr curNode) const;
-    bool    swap(Swap s);
+    bool    swap(const Swap& s);
 
     bool flagIsSet(int flag) const;
 
@@ -227,7 +226,7 @@ public:
     void    addTrack(AreaTrack *aTrack);
     int     getTrackDuration(const MapMarker* mapmarker) const;
     void    updateTrack(int t);
-    bool    swap(Swap s);
+    bool    swap(const Swap& s);
 
     void    load(xmlNodePtr curNode);
     void    loadZones(xmlNodePtr curNode);

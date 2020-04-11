@@ -20,8 +20,8 @@
 #define _SKILLGAIN_H
 
 #include <map>
+#include <libxml/parser.h>  // for xmlNodePtr
 
-#include "common.hpp"
 
 // Describes the skill gained and who gets it
 class SkillGain {
@@ -35,7 +35,7 @@ public:
 protected:
     void load(xmlNodePtr rootNode);
     bstring skillName; // Name of the skill being gained
-    int gainLevel; // Gained level they start with
+    int gainLevel{}; // Gained level they start with
 
     std::map<int, bool> deities;
 };

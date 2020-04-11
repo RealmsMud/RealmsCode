@@ -16,15 +16,22 @@
  *
  */
 
-#include <math.h>
+#include <cmath>                  // for ceil, floor, round
+#include <ctime>                  // for time
+#include <map>                    // for map
+#include <ostream>                // for operator<<, basic_ostream, basic_os...
 
-#include "config.hpp"
-#include "creatures.hpp"
-#include "effects.hpp"
-#include "levelGain.hpp"
-#include "mud.hpp"
-#include "playerClass.hpp"
-#include "stats.hpp"
+#include "bstring.hpp"            // for bstring, operator+
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player, Creature, Monster
+#include "effects.hpp"            // for EffectInfo
+#include "flags.hpp"              // for P_PTESTER, P_JUST_STAT_MOD
+#include "global.hpp"             // for CreatureClass, CON, CreatureClass::...
+#include "levelGain.hpp"          // for LevelGain
+#include "playerClass.hpp"        // for PlayerClass
+#include "statistics.hpp"         // for Statistics, LevelInfo
+#include "stats.hpp"              // for Stat, StatModifier, ModifierMap
+#include "utils.hpp"              // for MAX, MIN
 
 
 
@@ -37,7 +44,7 @@ StatModifier::StatModifier() {
     modType = MOD_NONE;
 }
 
-StatModifier::StatModifier(bstring pName, int pModAmt, ModifierType pModType) {
+StatModifier::StatModifier(const bstring& pName, int pModAmt, ModifierType pModType) {
     name = pName;
     modAmt = pModAmt;
     modType = pModType;
@@ -105,7 +112,7 @@ void Stat::reCalc() {
     cur = initial;
     max = initial;
 
-    for(ModifierMap::value_type p : modifiers) {
+    for(const ModifierMap::value_type& p : modifiers) {
         StatModifier *mod = p.second;
         if(!mod)
             continue;
@@ -149,21 +156,21 @@ void Stat::reCalc() {
     }
     dirty = false;
 }
-StatModifier* Stat::getModifier(bstring name) {
-    ModifierMap::iterator it = modifiers.find(name);
+StatModifier* Stat::getModifier(const bstring& name) {
+    auto it = modifiers.find(name);
     if(it == modifiers.end())
         return(nullptr);
     else
         return(it->second);
 }
-int Stat::getModifierAmt(bstring name) {
+int Stat::getModifierAmt(const bstring& name) {
     StatModifier* mod = getModifier(name);
     if(mod)
         return(mod->getModAmt());
     else
         return(0);
 }
-Stat* Creature::getStat(bstring statName) {
+Stat* Creature::getStat(const bstring& statName) {
     if(statName == "strength") {
         return(&strength);
     } else if(statName == "dexterity") {
@@ -186,10 +193,10 @@ Stat* Creature::getStat(bstring statName) {
 
 }
 
-bool Creature::addStatModifier(bstring statName, bstring modifierName, int modAmt, ModifierType modType) {
+bool Creature::addStatModifier(const bstring& statName, const bstring& modifierName, int modAmt, ModifierType modType) {
     return(addStatModifier(statName, new StatModifier(modifierName, modAmt, modType)));
 }
-bool Creature::addStatModifier(bstring statName, StatModifier* statModifier) {
+bool Creature::addStatModifier(const bstring& statName, StatModifier* statModifier) {
     Stat* stat = getStat(statName);
 
     if(!stat) {
@@ -205,7 +212,7 @@ bool Creature::addStatModifier(bstring statName, StatModifier* statModifier) {
 
     return(true);
 }
-bool Creature::setStatDirty(bstring statName) {
+bool Creature::setStatDirty(const bstring& statName) {
     Stat* stat = getStat(statName);
 
     if(!stat)
@@ -233,14 +240,14 @@ void Stat::setDirty() {
     if(influences)
         influences->setDirty();
 }
-bool Stat::addModifier(bstring name, int modAmt, ModifierType modType) {
+bool Stat::addModifier(const bstring& name, int modAmt, ModifierType modType) {
     if(getModifier(name) != nullptr)
         return(false);
     return(addModifier(new StatModifier(name, modAmt, modType)));
 }
 
-bool Stat::removeModifier(bstring name) {
-    ModifierMap::iterator it = modifiers.find(name);
+bool Stat::removeModifier(const bstring& name) {
+    auto it = modifiers.find(name);
     if(it == modifiers.end())
         return(false);
 
@@ -250,14 +257,14 @@ bool Stat::removeModifier(bstring name) {
     return(true);
 }
 void Stat::clearModifiers() {
-    ModifierMap::iterator it = modifiers.begin();
+    auto it = modifiers.begin();
 
     while(it != modifiers.end()) {
         delete it->second;
         modifiers.erase(it++);
     }
 }
-bool Stat::adjustModifier(bstring name, int modAmt, ModifierType modType) {
+bool Stat::adjustModifier(const bstring& name, int modAmt, ModifierType modType) {
     StatModifier* mod = getModifier(name);
     if(!mod) {
         if(modAmt == 0)
@@ -276,7 +283,7 @@ bool Stat::adjustModifier(bstring name, int modAmt, ModifierType modType) {
     return(true);
 }
 
-bool Stat::setModifier(bstring name, int newAmt, ModifierType modType) {
+bool Stat::setModifier(const bstring& name, int newAmt, ModifierType modType) {
     StatModifier* mod = getModifier(name);
     if(newAmt == 0) {
         if(!mod) {
@@ -303,7 +310,7 @@ bool Stat::setModifier(bstring name, int newAmt, ModifierType modType) {
 Stat::Stat() {
      cur = max = initial = 0;
      dirty = true;
-     influences = influencedBy = 0;
+     influences = influencedBy = nullptr;
 }
 
 StatModifier::StatModifier(StatModifier &sm) {
@@ -317,8 +324,8 @@ Stat& Stat::operator=(const Stat& st) {
     return(*this);
 }
 void Stat::doCopy(const Stat& st) {
-    StatModifier* mod = 0;
-    for(ModifierMap::value_type p : st.modifiers) {
+    StatModifier* mod = nullptr;
+    for(const ModifierMap::value_type& p : st.modifiers) {
         mod = new StatModifier();
         (*mod) = (*p.second);
         modifiers.insert(ModifierMap::value_type(mod->getName(), mod));
@@ -328,18 +335,18 @@ void Stat::doCopy(const Stat& st) {
     max = st.max;
     initial = st.initial;
     dirty = st.dirty;
-    influences = 0;
-    influencedBy = 0;
+    influences = nullptr;
+    influencedBy = nullptr;
 }
 
 Stat::~Stat() {
-    for(ModifierMap::value_type p : modifiers) {
+    for(const ModifierMap::value_type& p : modifiers) {
         delete p.second;
     }
     modifiers.clear();
 }
 
-void Stat::setName(bstring pName) {
+void Stat::setName(const bstring& pName) {
     name = pName;
 }
 
@@ -506,7 +513,7 @@ bstring Stat::toString() {
 
     oStr << "^C" << name << ": ^c" << getCur() << "/" << getMax() << "(" << getInitial() << ")\n";
     int i = 1;
-    for(ModifierMap::value_type p : modifiers) {
+    for(const ModifierMap::value_type& p : modifiers) {
         StatModifier* mod = p.second;
         oStr << "\t" << i++ << ") ";
         oStr << "^C" << mod->getName() << "^c ";
@@ -576,7 +583,7 @@ bool Player::statsAddUp() const {
 //*********************************************************************
 
 bool Creature::addStatModEffect(EffectInfo* effect) {
-    Stat* stat=0;
+    Stat* stat=nullptr;
     Player* pThis = getAsPlayer();
     bool good;
     ModifierType modType = MOD_CUR_MAX;
@@ -677,7 +684,7 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 //*********************************************************************
 
 bool Creature::remStatModEffect(EffectInfo* effect) {
-    Stat* stat=0;
+    Stat* stat=nullptr;
     Player* pThis = getAsPlayer();
 
     if(effect->getName() == "strength" || effect->getName() == "enfeeblement") {
@@ -744,17 +751,14 @@ void Player::recordLevelInfo() {
     statistics.startLevelHistoryTracking();
 
     PlayerClass *pClass = gConfig->classes[getClassString()];
-    LevelGain *lGain = 0;
-    int hpAmt = 0;
+    LevelGain *lGain = nullptr;
     for(int l = level ; l > 1 ; l--) {
         lGain = pClass->getLevelGain(l);
         if(!lGain)
             continue;
 
-        hpAmt = lGain->getHp();
-
         // Track level history
-        statistics.setLevelInfo(l, new LevelInfo(l, lGain->getHp(), lGain->getMp(), lGain->getStat(), lGain->getSave(), time(0)));
+        statistics.setLevelInfo(l, new LevelInfo(l, lGain->getHp(), lGain->getMp(), lGain->getStat(), lGain->getSave(), time(nullptr)));
 
     }
 }
@@ -787,7 +791,7 @@ void Player::upgradeStats() {
     checkEffect(this, "damnation", cPie, false);
 
     PlayerClass *pClass = gConfig->classes[getClassString()];
-    LevelGain *lGain = 0;
+    LevelGain *lGain = nullptr;
 
     int hpAmt = pClass->getBaseHp();
 
@@ -809,7 +813,7 @@ void Player::upgradeStats() {
         }
         int switchNum = lGain->getStat();
 
-        StatModifier* newMod = new StatModifier(modName, 10, MOD_CUR_MAX);
+        auto* newMod = new StatModifier(modName, 10, MOD_CUR_MAX);
         switch(switchNum) {
         case STR:
             strength.addModifier(newMod);

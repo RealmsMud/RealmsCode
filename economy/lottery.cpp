@@ -16,14 +16,26 @@
  *
  */
 
-#include "config.hpp"
-#include "creatures.hpp"
-#include "factions.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <cstdio>                                   // for sprintf
+#include <cstring>                                  // for memset, strcmp
+#include <ctime>                                    // for ctime, localtime
+
+#include "bstring.hpp"                              // for bstring
+#include "cmd.hpp"                                  // for cmd
+#include "config.hpp"                               // for Config, gConfig
+#include "creatures.hpp"                            // for Player
+#include "factions.hpp"                             // for Faction
+#include "flags.hpp"                                // for O_NO_DROP, R_LOTT...
+#include "money.hpp"                                // for GOLD, Money
+#include "mud.hpp"                                  // for TICKET_OBJ
+#include "objects.hpp"                              // for Object, ObjectType
+#include "proto.hpp"                                // for broadcast, logn
+#include "random.hpp"                               // for Random
+#include "rooms.hpp"                                // for BaseRoom, UniqueRoom
+#include "server.hpp"                               // for GOLD_IN, Server
+#include "utils.hpp"                                // for MIN
+#include "xml.hpp"                                  // for newStringChild
 
 
 // Max lottery #
@@ -42,7 +54,7 @@ void bubblesort(int numbers[], int array_size) {
         }
     }
 }
-LottoTicket::LottoTicket(const char* name, int pNumbers[], int pCycle) {
+LottoTicket::LottoTicket(const char* name, const int pNumbers[], int pCycle) {
     for(int i = 0; i<6; i++) {
         numbers[i] = pNumbers[i];
     }
@@ -69,14 +81,14 @@ LottoTicket::LottoTicket(xmlNodePtr rootNode) {
     }
 }
 void Config::setLotteryRunTime() {
-    struct tm *timeToRun=0;
-    struct tm *curTime=0;
+    struct tm *timeToRun=nullptr;
+    struct tm *curTime=nullptr;
     long i=0;
     // Sets the run time to the sunday of the next week
 
     timeToRun = new tm;
     memset(timeToRun, 0, sizeof(*timeToRun));
-    i = time(0);
+    i = time(nullptr);
     curTime = localtime(&i);
     timeToRun->tm_hour = 20;
     timeToRun->tm_min = 0;
@@ -97,7 +109,7 @@ void Config::runLottery() {
     int go=1, x=0, j=0, reCalc=0;
 
     // Lottery hasn't been rigged
-    if(1) {
+    if(true) {
         while(go) {
             numbers[x] = Random::get(1,MAXBONE);
             for(j = 0; j < x; j++) {
@@ -135,7 +147,7 @@ void Config::runLottery() {
     else
         lotteryJackpot = (long)(lotteryJackpot * 1.15);
     lotteryJackpot = MIN<long>(lotteryJackpot, 3000000);
-    lotteryWon = 0;
+    lotteryWon = false;
     broadcast(
             "### The Highport Powerbone numbers have been drawn.\n### The jackpot is $%ld!",
             lotteryJackpot);
@@ -148,7 +160,7 @@ void Config::runLottery() {
 }
 
 int dmLottery(Player* player, cmd* cmnd) {
-    if(cmnd->num < 2 || strcmp(cmnd->str[1], "run")) {
+    if(cmnd->num < 2 || strcmp(cmnd->str[1], "run") != 0) {
         player->print("Type \"*lottery run\" to run the lottery.\nTo view lottery info, type \"lottery\".\n");
         return(0);
     }
@@ -200,7 +212,7 @@ int createLotteryTicket(Object **object, const char *name) {
     for(x = 0; x < 6; x++)
         (*object)->setLotteryNumbers(x, numbers[x]);
 
-    LottoTicket* ticket = new LottoTicket(name, numbers, gConfig->getCurrentLotteryCycle()+1);
+    auto* ticket = new LottoTicket(name, numbers, gConfig->getCurrentLotteryCycle()+1);
     gConfig->addTicket(ticket);
     return(0);
 }
@@ -235,7 +247,7 @@ long Config::getLotteryWinnings() {
     return(lotteryWinnings);
 }
 void Config::winLottery() {
-    lotteryWon = 0;
+    lotteryWon = false;
     lotteryJackpot = 500000;
 }
 int Config::getLotteryTicketsSold() {
@@ -252,7 +264,7 @@ time_t Config::getLotteryRunTime() {
 }
 int cmdClaim(Player* player, cmd* cmnd) {
     BaseRoom *inRoom = player->getRoomParent();
-    Object  *ticket=0;
+    Object  *ticket=nullptr;
     long    prize=0;
 
     if(!player->ableToDoCommand())
@@ -318,14 +330,14 @@ int cmdClaim(Player* player, cmd* cmnd) {
         player->print("Sorry you didn't win the jackpot this time, but you did win $%ld today!\n", prize);
         player->print("The lottery official hands you %ld gold coin%s.\n", prize, prize != 1 ? "s" : "");
         player->coins.add(prize, GOLD);
-        gServer->logGold(GOLD_IN, player, Money(prize, GOLD), nullptr, "Lottery");
+        Server::logGold(GOLD_IN, player, Money(prize, GOLD), nullptr, "Lottery");
         return(0);
     } else { // Big winner
         broadcast("### %s just won the Highport Powerbones' Jackpot of %ld gold coin%s!", player->getCName(), prize, prize != 1 ? "s" : "");
         // Reset the pot!
         player->print("The lottery official hands you %ld gold coin%s.\n", prize, prize != 1 ? "s" : "");
         player->coins.add(prize, GOLD);
-        gServer->logGold(GOLD_IN, player, Money(prize, GOLD), nullptr, "LotteryJackpot");
+        Server::logGold(GOLD_IN, player, Money(prize, GOLD), nullptr, "LotteryJackpot");
         gConfig->winLottery();
         return(0);
     }

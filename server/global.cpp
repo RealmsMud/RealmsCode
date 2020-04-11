@@ -18,8 +18,13 @@
 
 #define MIGNORE
 
-#include "magic.hpp"
-#include "mud.hpp"
+#include "dice.hpp"      // for Dice
+#include "global.hpp"    // for SPL, DEA, POI, MEN, BRE, CreatureClass, Crea...
+#include "lasttime.hpp"  // for lasttime
+#include "magic.hpp"     // for S_ATROPHY, S_BLISTER, S_BLIZZARD, S_BLOODBOIL
+#include "mud.hpp"       // for SONG_DESTRUCTION, SONG_MASS_DESTRUCTION
+#include "realm.hpp"     // for NO_REALM, COLD, EARTH, ELEC, FIRE, WATER, WIND
+#include "structs.hpp"   // for osong_t, osp_t
 
 char questions_to_email[80]="realms@rohonline.net";
 
@@ -43,47 +48,6 @@ const char *dmname[] = {
 };
 
 
-char allowedClassesStr[static_cast<int>(CreatureClass::CLASS_COUNT) + 4][16] = { "Assassin", "Berserker", "Cleric", "Fighter",
-            "Mage", "Paladin", "Ranger", "Thief", "Pureblood", "Monk", "Death Knight",
-            "Druid", "Lich", "Werewolf", "Bard", "Rogue", "Figh/Mage", "Figh/Thief",
-            "Cler/Ass", "Mage/Thief", "Thief/Mage", "Cler/Figh", "Mage/Ass" };
-
-
-class_stats_struct class_stats[static_cast<int>(CreatureClass::CLASS_COUNT)] = {
-    {  0,  0,  0,  0,  0,  0,  0},
-    { 19,  2,  6,  2,  1,  6,  0},  // assassin
-    { 24,  0,  8,  1,  1,  3,  1},  // barbarian
-    { 16,  4,  5,  4,  1,  4,  0},  // cleric
-    { 22,  2,  7,  2,  1,  5,  0},  // fighter
-    { 14,  5,  4,  5,  1,  3,  0},  // mage
-    { 19,  3,  6,  3,  1,  4,  0},  // paladin
-    { 18,  3,  6,  3,  2,  2,  0},  // ranger
-    { 18,  3,  5,  2,  2,  2,  1},  // thief
-    { 15,  3,  5,  4,  2,  2,  1},  // pureblood
-    { 17,  3,  5,  2,  1,  3,  0},  // monk
-    { 19,  3,  6,  3,  1,  4,  0},  // death-knight
-    { 15,  4,  5,  4,  1,  3,  0},  // druid
-    { 16,  0,  6,  0,  1,  3,  1},  // lich
-    { 20,  1,  6,  2,  1,  3,  1},  // werewolf
-    { 17,  3,  5,  4,  2,  2,  0},  // bard
-    { 18,  3,  5,  2,  2,  2,  1},  // rogue
-    { 30, 30, 10, 10,  5,  5,  5},  // builder
-    { 30, 30, 10, 10,  5,  5,  5},  // unused
-    { 30, 30, 10, 10,  5,  5,  5},  // caretaker
-    { 30, 30, 10, 10,  5,  5,  5}   // dungeonmaster
-};
-
-int statBonus[MAXALVL] = {
-    -4, -4, -4,         // 0 - 2
-    -3, -3,             // 3 - 4
-    -2, -2,             // 5 - 6
-    -1,                 // 7
-    0, 0, 0, 0, 0, 0,   // 8 - 13
-    1, 1, 1,            // 14 - 16
-    2, 2, 2, 2,         // 17 - 20
-    3, 3, 3, 3,         // 21 - 24
-    4, 4, 4,            // 25 - 27
-    5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };   // 28+
 
 
 short saving_throw_cycle[][10] = { // POI   DEA   BRE   MEN   SPL
@@ -111,8 +75,6 @@ short saving_throw_cycle[][10] = { // POI   DEA   BRE   MEN   SPL
         { POI, DEA, BRE, MEN, SPL, POI, DEA, BRE, MEN, SPL }   // dungeonmaster
 };
 
-int numQuests = 0;
-
 
 struct osong_t osong[] = {
     { SONG_DESTRUCTION,     Dice(10, 20, 10) },
@@ -126,49 +88,50 @@ struct osp_t ospell[] = {
     char    realm;
     Dice    damage;
     char    bonus_type;
+    bool    drain
     */
-    { S_RUMBLE,         EARTH,  3,  Dice(1, 8, 0),  1, 0},  // rumble
-    { S_ZEPHYR,         WIND,   3,  Dice(1, 8, 0),  1, 0},  // hurt
-    { S_BURN,           FIRE,   3,  Dice(1, 8, 0),  1, 0},  // burn
-    { S_BLISTER,        WATER,  3,  Dice(1, 8, 0),  1, 0},  // blister
-    { S_ZAP,            ELEC,   3,  Dice(1, 8, 0),  1, 0},  // zap
-    { S_CHILL,          COLD,   3,  Dice(1, 8, 0),  1, 0},  // chill
+    { S_RUMBLE,         EARTH,  3,  Dice(1, 8, 0),  1, false},  // rumble
+    { S_ZEPHYR,         WIND,   3,  Dice(1, 8, 0),  1, false},  // hurt
+    { S_BURN,           FIRE,   3,  Dice(1, 8, 0),  1, false},  // burn
+    { S_BLISTER,        WATER,  3,  Dice(1, 8, 0),  1, false},  // blister
+    { S_ZAP,            ELEC,   3,  Dice(1, 8, 0),  1, false},  // zap
+    { S_CHILL,          COLD,   3,  Dice(1, 8, 0),  1, false},  // chill
 
-    { S_CRUSH,          EARTH,  7,  Dice(2, 5, 7),  2, 0},  // crush
-    { S_DUSTGUST,       WIND,   7,  Dice(2, 5, 7),  2, 0},  // dustgust 9-17 base dmg
-    { S_FIREBALL,       FIRE,   7,  Dice(2, 5, 7),  2, 0},  // fireball
-    { S_WATERBOLT,      WATER,  7,  Dice(2, 5, 7),  2, 0},  // waterbolt
-    { S_LIGHTNING_BOLT, ELEC,   7,  Dice(2, 5, 7),  2, 0},  // lightning-bolt
-    { S_FROSTBITE,      COLD,   7,  Dice(2, 5, 7),  2, 0},  // frostbite
+    { S_CRUSH,          EARTH,  7,  Dice(2, 5, 7),  2, false},  // crush
+    { S_DUSTGUST,       WIND,   7,  Dice(2, 5, 7),  2, false},  // dustgust 9-17 base dmg
+    { S_FIREBALL,       FIRE,   7,  Dice(2, 5, 7),  2, false},  // fireball
+    { S_WATERBOLT,      WATER,  7,  Dice(2, 5, 7),  2, false},  // waterbolt
+    { S_LIGHTNING_BOLT, ELEC,   7,  Dice(2, 5, 7),  2, false},  // lightning-bolt
+    { S_FROSTBITE,      COLD,   7,  Dice(2, 5, 7),  2, false},  // frostbite
 
-    { S_ENGULF,         EARTH,  10, Dice(2, 5, 14), 2, 0},  // ACTUALLY SHATTERSTONE
-    { S_WHIRLWIND,      WIND,   10, Dice(2, 5, 14), 2, 0},  // whirlwind 16-24 base damage
-    { S_BURSTFLAME,     FIRE,   10, Dice(2, 5, 14), 2, 0},  // burstflame
-    { S_STEAMBLAST,     WATER,  10, Dice(2, 5, 14), 2, 0},  // steamblast
-    { S_SHOCKBOLT,      ELEC,   10, Dice(2, 5, 14), 2, 0},  // shockbolt
-    { S_SLEET,          COLD,   10, Dice(2, 5, 14), 2, 0},  // sleet
+    { S_ENGULF,         EARTH,  10, Dice(2, 5, 14), 2, false},  // ACTUALLY SHATTERSTONE
+    { S_WHIRLWIND,      WIND,   10, Dice(2, 5, 14), 2, false},  // whirlwind 16-24 base damage
+    { S_BURSTFLAME,     FIRE,   10, Dice(2, 5, 14), 2, false},  // burstflame
+    { S_STEAMBLAST,     WATER,  10, Dice(2, 5, 14), 2, false},  // steamblast
+    { S_SHOCKBOLT,      ELEC,   10, Dice(2, 5, 14), 2, false},  // shockbolt
+    { S_SLEET,          COLD,   10, Dice(2, 5, 14), 2, false},  // sleet
 
-    { S_SHATTERSTONE,   EARTH,  15, Dice(3, 4, 21), 3, 0},  // ACTUALLY ENGULF
-    { S_CYCLONE,        WIND,   15, Dice(3, 4, 21), 3, 0},  // cyclone 24-35 base damage
-    { S_IMMOLATE,       FIRE,   15, Dice(3, 4, 21), 3, 0},  // immolate
-    { S_BLOODBOIL,      WATER,  15, Dice(3, 4, 21), 3, 0},  // bloodboil
-    { S_ELECTROCUTE,    ELEC,   15, Dice(3, 4, 21), 3, 0},  // electrocute
-    { S_COLD_CONE,      COLD,   15, Dice(3, 4, 21), 3, 0},  // cold-cone
+    { S_SHATTERSTONE,   EARTH,  15, Dice(3, 4, 21), 3, false},  // ACTUALLY ENGULF
+    { S_CYCLONE,        WIND,   15, Dice(3, 4, 21), 3, false},  // cyclone 24-35 base damage
+    { S_IMMOLATE,       FIRE,   15, Dice(3, 4, 21), 3, false},  // immolate
+    { S_BLOODBOIL,      WATER,  15, Dice(3, 4, 21), 3, false},  // bloodboil
+    { S_ELECTROCUTE,    ELEC,   15, Dice(3, 4, 21), 3, false},  // electrocute
+    { S_COLD_CONE,      COLD,   15, Dice(3, 4, 21), 3, false},  // cold-cone
 
-    { S_EARTH_TREMOR,   EARTH,  25, Dice(4, 5, 35), 3, 0},  // earth-tremor
-    { S_TEMPEST,        WIND,   25, Dice(4, 5, 35), 3, 0},  // tempest 39-59 base damage
-    { S_FLAMEFILL,      FIRE,   25, Dice(4, 5, 35), 3, 0},  // flamefill
-    { S_ATROPHY,        WATER,  25, Dice(4, 5, 35), 3, 0},  // atrophy
-    { S_THUNDERBOLT,    ELEC,   25, Dice(4, 5, 35), 3, 0},  // thuderbolt
-    { S_ICEBLADE,       COLD,   25, Dice(4, 5, 35), 3, 0},  // iceblade
+    { S_EARTH_TREMOR,   EARTH,  25, Dice(4, 5, 35), 3, false},  // earth-tremor
+    { S_TEMPEST,        WIND,   25, Dice(4, 5, 35), 3, false},  // tempest 39-59 base damage
+    { S_FLAMEFILL,      FIRE,   25, Dice(4, 5, 35), 3, false},  // flamefill
+    { S_ATROPHY,        WATER,  25, Dice(4, 5, 35), 3, false},  // atrophy
+    { S_THUNDERBOLT,    ELEC,   25, Dice(4, 5, 35), 3, false},  // thuderbolt
+    { S_ICEBLADE,       COLD,   25, Dice(4, 5, 35), 3, false},  // iceblade
 
     // multiple target spells
-    { S_EARTHQUAKE,         EARTH,  3,  Dice(2, 5, 10), 2, 0},  // earthquake
-    { S_HURRICANE,          WIND,   3,  Dice(2, 5, 10), 2, 0},  // hurricane 12-20 base damage
-    { S_FIRESTORM,          FIRE,   3,  Dice(2, 5, 10), 2, 0},  // firestorm
-    { S_FLOOD,              WATER,  3,  Dice(2, 5, 10), 2, 0},  // tsunami
-    { S_CHAIN_LIGHTNING,    ELEC,   3,  Dice(2, 5, 10), 2, 0},  // chain-lightning
-    { S_BLIZZARD,           COLD,   3,  Dice(2, 5, 10), 2, 0},  // icestorm
+    { S_EARTHQUAKE,         EARTH,  3,  Dice(2, 5, 10), 2, false},  // earthquake
+    { S_HURRICANE,          WIND,   3,  Dice(2, 5, 10), 2, false},  // hurricane 12-20 base damage
+    { S_FIRESTORM,          FIRE,   3,  Dice(2, 5, 10), 2, false},  // firestorm
+    { S_FLOOD,              WATER,  3,  Dice(2, 5, 10), 2, false},  // tsunami
+    { S_CHAIN_LIGHTNING,    ELEC,   3,  Dice(2, 5, 10), 2, false},  // chain-lightning
+    { S_BLIZZARD,           COLD,   3,  Dice(2, 5, 10), 2, false},  // icestorm
 
     // necro spells
     { S_SAP_LIFE,           NO_REALM,   3,  Dice(2, 4, 0),      0, true},
@@ -181,101 +144,6 @@ struct osp_t ospell[] = {
     { S_TOUCH_OF_KESH,      NO_REALM,   24, Dice(2, 11, 98),    0, true},
 
     { -1, NO_REALM, 0, Dice(0, 0, 0), 0 }
-};
-
-
-// Wolf leveling code
-Dice wolf_dice[41] =
-{                           // Old dice
-    Dice(2, 2, 0),   /* 0  */  // Dice(1, 4, 0)
-    Dice(2, 2, 0),   /* 1  */  // Dice(1, 4, 0)
-    Dice(2, 2, 1),   /* 2  */  // Dice(1, 5, 1)
-    Dice(2, 3, 1),   /* 3  */  // Dice(1, 7, 1)
-    Dice(2, 4, 0),   /* 4  */  // Dice(1, 7, 2)
-    Dice(3, 3, 0),   /* 5  */  // Dice(2, 3, 2)
-    Dice(3, 3, 2),   /* 6  */  // Dice(2, 4, 1)
-    Dice(4, 3, 0),   /* 7  */  // Dice(2, 4, 2)
-    Dice(4, 3, 1),   /* 8  */  // Dice(2, 5, 1)
-    Dice(5, 3, 0),   /* 9  */  // Dice(2, 5, 2)
-    Dice(5, 3, 1),   /* 10 */  // Dice(2, 6, 1)
-    Dice(5, 3, 2),   /* 11 */  // Dice(2, 6, 2)
-    Dice(6, 3, 1),   /* 12 */  // Dice(3, 4, 1)
-    Dice(6, 3, 2),   /* 13 */  // Dice(3, 4, 2)
-    Dice(7, 3, 0),   /* 14 */  // Dice(3, 5, 1)
-    Dice(7, 3, 1),   /* 15 */  // Dice(3, 5, 2)
-    Dice(7, 3, 2),   /* 16 */  // Dice(3, 7, 1)
-    Dice(7, 3, 3),   /* 17 */  // Dice(4, 5, 0)
-    Dice(7, 4, 0),   /* 18 */  // Dice(5, 6, 1)
-    Dice(7, 4, 2),   /* 19 */  // Dice(5, 6, 2)
-    Dice(7, 4, 3),   /* 20 */  // Dice(6, 5, 3)
-    Dice(7, 4, 5),   /* 21 */  // Dice(6, 6, 0)
-    Dice(7, 5, 0),   /* 22 */  // Dice(6, 6, 2)
-    Dice(7, 5, 2),   /* 23 */  // Dice(6, 6, 3)
-    Dice(7, 5, 1),   /* 24 */  // Dice(6, 7, 1)
-    Dice(7, 5, 3),   /* 25 */  // Dice(6, 8, 0)
-    Dice(8, 5, 0),   /* 26 */  // Dice(6, 8, 2)
-    Dice(8, 5, 2),   /* 27 */  // Dice(6, 8, 4)
-    Dice(8, 5, 4),   /* 28 */  // Dice(7, 7, 2)
-    Dice(9, 5, 2),   /* 29 */  // Dice(7, 7, 4)
-    Dice(9, 5, 3),  /* 30 */  // Dice(7, 7, 6)
-    Dice(9, 5, 3),  /* 31 */  // Dice(7, 7, 6)
-    Dice(9, 5, 3),  /* 32 */  // Dice(7, 7, 6)
-    Dice(9, 5, 3),  /* 33 */  // Dice(7, 7, 6)
-    Dice(9, 5, 3),  /* 34 */  // Dice(7, 7, 6)
-    Dice(9, 5, 3),  /* 35 */  // Dice(7, 7, 6)
-    Dice(9, 5, 3),  /* 36 */  // Dice(7, 7, 6)
-    Dice(9, 5, 3),  /* 37 */  // Dice(7, 7, 6)
-    Dice(9, 5, 3),  /* 38 */  // Dice(7, 7, 6)
-    Dice(9, 5, 3),  /* 39 */  // Dice(7, 7, 6)
-    Dice(9, 5, 3)   /* 40 */  // Dice(7, 7, 6)
-};
-
-
-// monk leveling code
-Dice monk_dice[41] =
-{
-    Dice(1, 3, 0),  /* 0  */  // Old dice
-    Dice(1, 3, 0),  /* 1  */  // Dice(1, 3, 0)
-    Dice(1, 4, 0),  /* 2  */  // Dice(1, 5, 0)
-    Dice(1, 5, 0),  /* 3  */  // Dice(1, 5, 1)
-    Dice(1, 6, 0),  /* 4  */  // Dice(1, 6, 0)
-    Dice(1, 6, 1),  /* 5  */  // Dice(1, 6, 1)
-    Dice(2, 4, 1),  /* 6  */  // Dice(1, 6, 2)
-    Dice(2, 5, 0),  /* 7  */  // Dice(2, 3, 1)
-    Dice(2, 5, 1),  /* 8  */  // Dice(2, 4, 0)
-    Dice(2, 6, 0),  /* 9  */  // Dice(2, 4, 1)
-    Dice(2, 6, 2),  /* 10 */  // Dice(2, 5, 0)
-    Dice(3, 5, 2),  /* 11 */  // Dice(2, 5, 2)
-    Dice(3, 6, 0),  /* 12 */  // Dice(2, 6, 1)
-    Dice(3, 6, 2),  /* 13 */  // Dice(2, 6, 2)
-    Dice(3, 7, 0),  /* 14 */  // Dice(3, 6, 1)
-    Dice(3, 7, 2),  /* 15 */  // Dice(3, 7, 1)
-    Dice(4, 6, 2),  /* 16 */  // Dice(4, 7, 1)
-    Dice(4, 7, 0),  /* 17 */  // Dice(5, 7, 0)
-    Dice(4, 7, 2),  /* 18 */  // Dice(5, 8, 1)
-    Dice(4, 8, 0),  /* 19 */  // Dice(6, 7, 0)
-    Dice(4, 8, 2),  /* 20 */  // Dice(6, 7, 2)
-    Dice(5, 7, 2),  /* 21 */  // Dice(6, 8, 0)
-    Dice(5, 8, 0),  /* 22 */  // Dice(6, 8, 2)
-    Dice(5, 8, 2),  /* 23 */  // Dice(6, 9, 0)
-    Dice(5, 9, 0),  /* 24 */  // Dice(6, 9, 2)
-    Dice(5, 9, 2),  /* 25 */  // Dice(6, 10, 0 )
-    Dice(6, 8, 2),  /* 26 */  // Dice(6, 10, 2 )
-    Dice(6, 9, 0),  /* 27 */  // Dice(7, 9, 4)
-    Dice(6, 9, 2),  /* 28 */  // Dice(7, 9, 6)
-    Dice(6, 10, 0), /* 29 */  // Dice(7, 8, 8)
-    Dice(6, 10, 2), /* 30 */  // Dice(8, 8, 10 )
-    Dice(6, 10, 2), /* 31 */  // Dice(8, 8, 10 )
-    Dice(6, 10, 2), /* 32 */  // Dice(8, 8, 10 )
-    Dice(6, 10, 2), /* 33 */  // Dice(8, 8, 10 )
-    Dice(6, 10, 2), /* 34 */  // Dice(8, 8, 10 )
-    Dice(6, 10, 2), /* 35 */  // Dice(8, 8, 10 )
-    Dice(6, 10, 2), /* 36 */  // Dice(8, 8, 10 )
-    Dice(6, 10, 2), /* 37 */  // Dice(8, 8, 10 )
-    Dice(6, 10, 2), /* 38 */  // Dice(8, 8, 10 )
-    Dice(6, 10, 2), /* 39 */  // Dice(8, 8, 10 )
-    Dice(6, 10, 2)  /* 40 */  // Dice(8, 8, 10 )
-
 };
 
 

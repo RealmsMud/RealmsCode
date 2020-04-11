@@ -16,32 +16,39 @@
  *
  */
 
-#include <cstdio>
-#include <sys/types.h>
+#include <cctype>         // for tolower, isalpha, isprint
+#include <netinet/in.h>   // for in_addr, INADDR_ANY, ntohl
+#include <cstdarg>        // for va_list, va_start, va_end
+#include <cstdlib>        // for atoi, exit
+#include <cstring>        // for strcat, strcpy, strlen
+#include <csignal>        // for signal, SIGCHLD
+#include <cstdio>         // for size_t, sprintf, NULL
+#include <sstream>        // for operator<<, basic_ostream, ostringstream
 
-#include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
-
-#include <csignal>
-
-#include "clans.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "flags.hpp"
-#include "login.hpp"
-#include "mud.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-
-#include <sstream>
-#include <stdlib.h>
+#include "bstring.hpp"    // for bstring, operator+
+#include "clans.hpp"      // for Clan
+#include "config.hpp"     // for Config, gConfig
+#include "container.hpp"  // for Container, PlayerSet
+#include "creatures.hpp"  // for Player, Creature, Monster
+#include "deityData.hpp"  // for DeityData
+#include "exits.hpp"      // for Exit
+#include "flags.hpp"      // for P_DM_INVIS, P_NO_BROADCASTS, P_UNCONSCIOUS
+#include "global.hpp"     // for CreatureClass, CreatureClass::BUILDER, Crea...
+#include "group.hpp"      // for CreatureList, Group
+#include "location.hpp"   // for Location
+#include "mud.hpp"        // for GUILD_PEON
+#include "objects.hpp"    // for Object
+#include "os.hpp"         // for ASSERTLOG
+#include "proto.hpp"      // for broadcast, activation, getGuildName, get_la...
+#include "raceData.hpp"   // for RaceData
+#include "rooms.hpp"      // for UniqueRoom, BaseRoom, AreaRoom, ExitList
+#include "server.hpp"     // for Server, gServer, PlayerMap, SocketList
+#include "socket.hpp"     // for Socket
 
 #define TELOPT_COMPRESS2       86
 
 int Numplayers;
-extern unsigned short Port;
+
 
 //********************************************************************
 //                      broadcast
@@ -257,7 +264,7 @@ void broadcast_login(Player* player, BaseRoom* inRoom, int login) {
 
 
         Player* target=0;
-        for(std::pair<bstring, Player*> p : gServer->players) {
+        for(const auto& p : gServer->players) {
             target = p.second;
 
             if(!target->isConnected())
@@ -291,7 +298,7 @@ void broadcast_login(Player* player, BaseRoom* inRoom, int login) {
 // descriptor is present in the room, they are not given the message
 
 // TODO: Dom: remove
-void broadcast_rom_LangWc(int lang, Socket* ignore, Location currentLocation, const char *fmt,...) {
+void broadcast_rom_LangWc(int lang, Socket* ignore, const Location& currentLocation, const char *fmt,...) {
     char    fmt2[1024];
     va_list ap;
 
@@ -300,7 +307,7 @@ void broadcast_rom_LangWc(int lang, Socket* ignore, Location currentLocation, co
     strcat(fmt2, "\n");
 
     Player* ply;
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    for(const auto& p : gServer->players) {
         ply = p.second;
         Socket* sock = ply->getSock();
 
@@ -384,7 +391,7 @@ void broadcastGroup(bool dropLoot, Creature* player, const char *fmt,...) {
 // passed in as the first parameter.
 
 char *inetname(struct in_addr in) {
-    char *cp=0;
+    char *cp=nullptr;
     static char line[50];
 
     if(in.s_addr == INADDR_ANY)
@@ -441,8 +448,8 @@ void broadcastGuild(int guildNum, int showName, const char *fmt,...) {
     strcat(fmt2, fmt);
     strcat(fmt2, "\n");
 
-    Player* target=0;
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    Player* target=nullptr;
+    for(const auto& p : gServer->players) {
         target = p.second;
 
         if(!target->isConnected())
@@ -494,7 +501,7 @@ int check_flood(int fd) {
 //                      pueblo functions
 //*********************************************************************
 
-bool Pueblo::is(bstring txt) {
+bool Pueblo::is(const bstring& txt) {
     return(txt.left(activation.getLength()).toLower() == activation);
 }
 

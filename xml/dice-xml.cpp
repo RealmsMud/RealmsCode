@@ -16,8 +16,11 @@
  *
  */
 
-#include "dice.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <ostream>                                  // for basic_ostream::op...
+
+#include "dice.hpp"                                 // for Dice
+#include "xml.hpp"                                  // for saveNonZeroNum
 
 //*********************************************************************
 //                      load

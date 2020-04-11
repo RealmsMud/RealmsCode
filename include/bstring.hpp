@@ -24,7 +24,7 @@
 #include <algorithm>
 
 #ifndef ASSERT
-#include <assert.h>
+#include <cassert>
 #define ASSERT(f) assert((f))
 #endif
 
@@ -39,8 +39,8 @@
 
 #include "utils.hpp"
 
-#include <stdarg.h>
-#include <stdio.h>
+#include <cstdarg>
+#include <cstdio>
 
 #include <string>       // basic_string
 #include <sstream>  // for stringstream
@@ -49,7 +49,7 @@
 // strLen: strlen
 // ------------------------------------------------------------
 inline int strLen(const char* s) {
-    return s == 0 ? 0 : std::basic_string<char>::traits_type::length(s);
+    return s == nullptr ? 0 : std::basic_string<char>::traits_type::length(s);
 }
 inline int strLen(const std::string& s) {
     return s.length();
@@ -382,9 +382,9 @@ public:
 
     int Replace(char oldCh, char newCh) {
         int numReplaced = 0;
-        for( my_iterator iter=this->begin(); iter != this->end(); iter++ ) {
-            if( *iter == oldCh ) {
-                *iter = newCh;
+        for(char & iter : *this) {
+            if( iter == oldCh ) {
+                iter = newCh;
                 numReplaced++;
             }
         }
@@ -410,7 +410,7 @@ public:
                 this->reserve(this->size() + nFound * (nNewLen - nOldLen));
             }
             static const char ch = char(0);
-            my_const_pointer szRealNew = szNew == 0 ? &ch : szNew;
+            my_const_pointer szRealNew = szNew == nullptr ? &ch : szNew;
             nIdx = 0;
             while( nIdx < this->length() && (nIdx=this->find(szOld, nIdx)) != my_base::npos ) {
                 this->replace(this->begin()+nIdx, this->begin()+nIdx+nOldLen, szRealNew);
@@ -454,7 +454,7 @@ public:
     }
 
     int ReverseFind(my_const_pointer szFind, my_size_type pos=my_base::npos) const {
-        return(rfind(0 == szFind ? bstring() : szFind, pos));
+        return(rfind(nullptr == szFind ? bstring() : szFind, pos));
     }
 
     void setAt(int nIndex, char ch) {

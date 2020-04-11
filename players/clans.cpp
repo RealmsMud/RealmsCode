@@ -15,20 +15,27 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <sstream>
-#include <iomanip>
-#include <locale>
 
-#include "clans.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "dm.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "xml.hpp"
+#include <cstring>                                  // for strcmp
+#include <iomanip>                                  // for operator<<, setw
+#include <map>                                      // for operator==, opera...
+#include <sstream>                                  // for operator<<, basic...
+#include <string>                                   // for allocator, operat...
+
+#include "bstring.hpp"                              // for bstring
+#include "clans.hpp"                                // for Clan
+#include "cmd.hpp"                                  // for cmd
+#include "commands.hpp"                             // for cmdPledge, cmdRes...
+#include "config.hpp"                               // for Config, gConfig
+#include "creatures.hpp"                            // for Player, Monster
+#include "deityData.hpp"                            // for DeityData
+#include "flags.hpp"                                // for P_PLEDGED, M_CAN_...
+#include "global.hpp"                               // for DWARF
+#include "money.hpp"                                // for GOLD, Money
+#include "proto.hpp"                                // for broadcast, logn
+#include "rooms.hpp"                                // for BaseRoom
+#include "server.hpp"                               // for Server, gServer
+#include "utils.hpp"                                // for MIN
 
 
 //*********************************************************************
@@ -46,8 +53,8 @@ unsigned int Clan::getRescind() const { return(rescind); }
 unsigned int Clan::getDeity() const { return(deity); }
 bstring Clan::getName() const { return(name); }
 
-short Clan::getSkillBonus(bstring skill) const {
-    std::map<bstring, short>::const_iterator it = skillBonus.find(skill);
+short Clan::getSkillBonus(const bstring& skill) const {
+    auto it = skillBonus.find(skill);
 
     if(it != skillBonus.end())
         return((*it).second);
@@ -55,43 +62,11 @@ short Clan::getSkillBonus(bstring skill) const {
 }
 
 //*********************************************************************
-//                      load
-//*********************************************************************
-
-void Clan::load(xmlNodePtr rootNode) {
-    xmlNodePtr childNode, curNode = rootNode->children;
-    bstring temp;
-
-    id = xml::getIntProp(rootNode, "Id");
-    while(curNode) {
-             if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
-        else if(NODE_NAME(curNode, "Join")) join = xml::toNum<int>(curNode);
-        else if(NODE_NAME(curNode, "Rescind")) rescind = xml::toNum<int>(curNode);
-        else if(NODE_NAME(curNode, "Deity")) {
-            xml::copyToBString(temp, curNode);
-            deity = gConfig->deitytoNum(temp);
-        }
-        else if(NODE_NAME(curNode, "SkillBonus")) {
-            childNode = curNode->children;
-            while(childNode) {
-                if(NODE_NAME(childNode, "Skill")) {
-                    xml::copyPropToBString(temp, childNode, "Name");
-                    skillBonus[temp] = xml::toNum<short>(childNode);
-                }
-                childNode = childNode->next;
-            }
-        }
-        curNode = curNode->next;
-    }
-}
-
-
-//*********************************************************************
 //                      getClan
 //*********************************************************************
 
 const Clan* Config::getClan(unsigned int id) const {
-    std::map<int, Clan*>::const_iterator it = clans.find(id);
+    auto it = clans.find(id);
 
     if(it == clans.end())
         it = clans.begin();
@@ -105,7 +80,7 @@ const Clan* Config::getClan(unsigned int id) const {
 
 const Clan* Config::getClanByDeity(unsigned int deity) const {
     std::map<int, Clan*>::const_iterator it;
-    Clan* clan=0;
+    Clan* clan=nullptr;
 
     for(it = clans.begin() ; it != clans.end() ; it++) {
         clan = (*it).second;
@@ -123,57 +98,13 @@ const Clan* Config::getClanByDeity(unsigned int deity) const {
 
 void Config::clearClans() {
     std::map<int, Clan*>::iterator it;
-    Clan* clan=0;
+    Clan* clan=nullptr;
 
     for(it = clans.begin() ; it != clans.end() ; it++) {
         clan = (*it).second;
         delete clan;
     }
     clans.clear();
-}
-
-//*********************************************************************
-//                      loadClans
-//*********************************************************************
-
-bool Config::loadClans() {
-    xmlDocPtr xmlDoc;
-    xmlNodePtr curNode;
-    int     i=0;
-
-    char filename[80];
-    snprintf(filename, 80, "%s/clans.xml", Path::Game);
-    xmlDoc = xml::loadFile(filename, "Clans");
-
-    if(xmlDoc == nullptr)
-        return(false);
-
-    curNode = xmlDocGetRootElement(xmlDoc);
-
-    curNode = curNode->children;
-    while(curNode && xmlIsBlankNode(curNode))
-        curNode = curNode->next;
-
-    if(curNode == 0) {
-        xmlFreeDoc(xmlDoc);
-        return(false);
-    }
-
-    clearClans();
-    while(curNode != nullptr) {
-        if(NODE_NAME(curNode, "Clan")) {
-            i = xml::getIntProp(curNode, "Id");
-
-            if(clans.find(i) == clans.end()) {
-                clans[i] = new Clan;
-                clans[i]->load(curNode);
-            }
-        }
-        curNode = curNode->next;
-    }
-    xmlFreeDoc(xmlDoc);
-    xmlCleanupParser();
-    return(true);
 }
 
 //*********************************************************************
@@ -195,8 +126,8 @@ int Player::getDeityClan() const {
 // room with a correct monster to pledge to.
 
 int cmdPledge(Player* player, cmd* cmnd) {
-    Monster* creature=0;
-    const Clan* clan=0;
+    Monster* creature=nullptr;
+    const Clan* clan=nullptr;
 
     player->clearFlag(P_AFK);
     if(!player->ableToDoCommand())
@@ -275,7 +206,7 @@ int cmdPledge(Player* player, cmd* cmnd) {
         player->addExperience(clan->getJoin());
 
     player->coins.add(clan->getJoin() * 5, GOLD);
-    gServer->logGold(GOLD_IN, player, Money(clan->getJoin() * 5, GOLD), nullptr, "ClanPledge");
+    Server::logGold(GOLD_IN, player, Money(clan->getJoin() * 5, GOLD), nullptr, "ClanPledge");
     player->hp.restore();
     player->mp.restore();
 
@@ -295,9 +226,9 @@ int cmdPledge(Player* player, cmd* cmnd) {
 // specified amount of experience and gold.
 
 int cmdRescind(Player* player, cmd* cmnd) {
-    Monster* creature=0;
+    Monster* creature=nullptr;
     unsigned int amte=0;
-    const Clan* clan=0;
+    const Clan* clan=nullptr;
 
     player->clearFlag(P_AFK);
     if(!player->ableToDoCommand())
@@ -370,7 +301,7 @@ int cmdRescind(Player* player, cmd* cmnd) {
     player->print("You lose %d experience and %d gold!\n", amte, clan->getRescind() * 2);
     player->subExperience(amte);
     player->coins.sub(clan->getRescind(), GOLD);
-    gServer->logGold(GOLD_OUT, player, Money(clan->getRescind(), GOLD), nullptr, "Rescind");
+    Server::logGold(GOLD_OUT, player, Money(clan->getRescind(), GOLD), nullptr, "Rescind");
     player->hp.setCur(player->hp.getMax() / 3);
     player->mp.setCur(0);
 
@@ -388,7 +319,7 @@ int cmdRescind(Player* player, cmd* cmnd) {
 
 int dmClanList(Player* player, cmd* cmnd) {
     std::map<int, Clan*>::iterator it;
-    Clan *clan=0;
+    Clan *clan=nullptr;
     bool    all = player->isCt() && cmnd->num > 1 && !strcmp(cmnd->str[1], "all");
     std::ostringstream oStr;
     oStr.imbue(std::locale(""));

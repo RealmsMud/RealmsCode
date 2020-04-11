@@ -20,7 +20,6 @@
 
 #include <list>
 
-#include "common.hpp"
 
 class SkillGain;
 
@@ -41,10 +40,10 @@ public:
 protected:
     void load(xmlNodePtr rootNode); // Read in a level gain from the given node;
 
-    int stat; // The stat they get this level
-    int hp; // HP & MP gain
-    int mp;
-    int save; // Saving throw to go up
+    int stat{}; // The stat they get this level
+    int hp{}; // HP & MP gain
+    int mp{};
+    int save{}; // Saving throw to go up
     std::list<SkillGain*> skills; // Skills they gain at this level
 public:
 

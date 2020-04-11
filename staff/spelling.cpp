@@ -15,10 +15,17 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <pspell/pspell.h>
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
+#include <pspell/pspell.h>  // for pspell_config_replace, PspellWordList
+#include <cstdio>          // for fprintf, stderr
+#include <cstdlib>         // for free, malloc
+#include <cstring>         // for strcmp, strlen, strtok_r, strcspn, strdup
+
+#include "bstring.hpp"      // for bstring
+#include "cmd.hpp"          // for cmd, COMMANDMAX
+#include "creatures.hpp"    // for Player
+#include "exits.hpp"        // for Exit
+#include "proto.hpp"        // for needUniqueRoom, init_spelling
+#include "rooms.hpp"        // for UniqueRoom, ExitList
 
 #define SP_MODE_LIST        1
 #define SP_MODE_ADVISE      2
@@ -27,7 +34,7 @@
 static void     check_spelling(Player* player,cmd* cmnd);
 static void     learn_spelling(Player* player,cmd* cmnd);
 static void     forget_spelling(Player* player,cmd* cmnd);
-static void     do_spelling_check(Player* player, int mode, bstring str);
+static void     do_spelling_check(Player* player, int mode, const bstring& str);
 /*static void       do_spelling_learn(Player* player,cmd *cmd);*/
 static void     print_word_list(Player* player, const PspellWordList *wl);
 
@@ -46,11 +53,11 @@ const char *spellingSyntax =
     "Syntax: *spell check [-s|-l|-a]\n"
     "        *spell learn <word>\n";
 
-void cleanup_spelling(void) {
+void cleanup_spelling() {
     if(manager)
         delete_pspell_manager(manager);
 }
-void init_spelling(void) {
+void init_spelling() {
     config = new_pspell_config();
     if(sp_language != nullptr)
         pspell_config_replace(config,"language-tag",sp_language);
@@ -210,11 +217,11 @@ static void forget_spelling(Player* player,cmd* cmnd) {
     /*pspell_manager_save_all_word_lists(manager);*/
 }
 
-static void do_spelling_check(Player* player, int mode, bstring str) {
+static void do_spelling_check(Player* player, int mode, const bstring& str) {
     char    *tmp;
     char    *tok;
     char    *word;
-    char    *buf = 0;
+    char    *buf = nullptr;
     int  wordlen;
     int  i;
 
@@ -268,11 +275,11 @@ static void do_spelling_learn(Player* player,cmd *cmd)
 */
 
 static void print_word_list(Player* player,const PspellWordList *wl) {
-    if(wl != 0) {
+    if(wl != nullptr) {
         PspellStringEmulation   *emu = pspell_word_list_elements(wl);
         const char      *word;
 
-        while((word = pspell_string_emulation_next(emu)) != 0) {
+        while((word = pspell_string_emulation_next(emu)) != nullptr) {
             player->print((char *) word);
             player->print(" ");
         }

@@ -15,15 +15,21 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "factions.hpp"
-#include "quests.hpp"
-#include "tokenizer.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include <libxml/parser.h>       // for xmlNode, xmlNodeL...
+#include <cstdio>                // for sprintf
+#include <cstring>               // for strcmp, memset
+
+#include "config.hpp"            // for Config
+#include "creatures.hpp"         // for Player
+#include "objects.hpp"           // for Object, ObjectType
+#include "oldquest.hpp"          // for quest, questPtr
+#include "paths.hpp"             // for Path
+#include "proto.hpp"             // for get_quest_exp, loge
+#include "xml.hpp"               // for toNum
+
+
+int numQuests = 0;
+
 
 // Function prototypes
 static questPtr parseQuest(xmlDocPtr doc, xmlNodePtr cur);
@@ -50,7 +56,7 @@ bool Config::loadQuestTable() {
     while(cur && xmlIsBlankNode(cur))
         cur = cur->next;
 
-    if(cur == 0) {
+    if(cur == nullptr) {
         xmlFreeDoc(doc);
         return(false);
     }
@@ -78,10 +84,6 @@ bool Config::loadQuestTable() {
 static questPtr parseQuest(xmlDocPtr doc, xmlNodePtr cur) {
     questPtr ret = nullptr;
     ret = new quest;
-    if(ret == nullptr) {
-        loge("Quest_Load: out of memory\n");
-        return(nullptr);
-    }
 
     cur = cur->children;
     // Note: (char *)xmlNodeListGetString returns a string which MUST be freed
@@ -131,4 +133,32 @@ void fulfillQuest(Player* player, Object* object) {
     for(Object *obj : object->objects) {
         fulfillQuest(player, obj);
     }
+}
+
+
+//*********************************************************************
+//                      get_quest_exp()
+//*********************************************************************
+long get_quest_exp(int nQuest) {
+    // quests are 1 based and this array is zero based
+    // so subtract one first
+    nQuest--;
+
+    nQuest = MAX(0, MIN(nQuest, numQuests ) );
+
+    return(gConfig->questTable[nQuest]->exp);
+}
+
+//*********************************************************************
+//                      get_quest_name()
+//*********************************************************************
+const char *get_quest_name(int nIndex) {
+    nIndex = MAX(-1, MIN(nIndex, numQuests));
+
+    if(nIndex==-1)
+        return("None");
+    if(nIndex >= numQuests)
+        return("Unknown");
+    else
+        return(gConfig->questTable[nIndex]->name);
 }

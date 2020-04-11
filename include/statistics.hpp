@@ -20,8 +20,9 @@
 #define _STATISTICS_H
 
 #include <map>
+#include <libxml/parser.h>  // for xmlNodePtr
 
-#include "common.hpp"
+#include "bstring.hpp"
 
 class Creature;
 class Monster;
@@ -56,12 +57,12 @@ typedef std::map<int, LevelInfo*> LevelInfoMap;
 class StringStatistic {
 public:
     StringStatistic();
-    void save(xmlNodePtr rootNode, bstring nodeName) const;
+    void save(xmlNodePtr rootNode, const bstring& nodeName) const;
     void load(xmlNodePtr curNode);
-    void update(unsigned long num, bstring with);
+    void update(unsigned long num, const bstring& with);
     void reset();
 
-    unsigned long value;
+    unsigned long value{};
     bstring name;
 };
 
@@ -72,7 +73,7 @@ public:
     Statistics(const Statistics& cr);
     Statistics& operator=(const Statistics& cr);
     ~Statistics();
-    void save(xmlNodePtr rootNode, bstring nodeName) const;
+    void save(xmlNodePtr rootNode, const bstring& nodeName) const;
     void load(xmlNodePtr curNode);
     void display(const Player* viewer, bool death=false);
     void displayLevelHistory(const Player* viewer);
@@ -88,55 +89,55 @@ protected:
     void doCopy(const Statistics& cr);
 private:
     bstring start;
-    time_t levelHistoryStart; // Time when leveling history started being tracked
+    time_t levelHistoryStart{}; // Time when leveling history started being tracked
     LevelInfoMap levelHistory; // New
 
     // combat
-    unsigned long numSwings;
-    unsigned long numHits;
-    unsigned long numMisses;
-    unsigned long numFumbles;
-    unsigned long numDodges;
-    unsigned long numCriticals;
-    unsigned long numTimesHit;
-    unsigned long numTimesMissed;
-    unsigned long numTimesFled;
-    unsigned long numPkIn;
-    unsigned long numPkWon;
+    unsigned long numSwings{};
+    unsigned long numHits{};
+    unsigned long numMisses{};
+    unsigned long numFumbles{};
+    unsigned long numDodges{};
+    unsigned long numCriticals{};
+    unsigned long numTimesHit{};
+    unsigned long numTimesMissed{};
+    unsigned long numTimesFled{};
+    unsigned long numPkIn{};
+    unsigned long numPkWon{};
     // magic
-    unsigned long numCasts;
-    unsigned long numOffensiveCasts;
-    unsigned long numHealingCasts;
-    unsigned long numWandsUsed;
-    unsigned long numTransmutes;
-    unsigned long numPotionsDrank;
+    unsigned long numCasts{};
+    unsigned long numOffensiveCasts{};
+    unsigned long numHealingCasts{};
+    unsigned long numWandsUsed{};
+    unsigned long numTransmutes{};
+    unsigned long numPotionsDrank{};
     // death
-    unsigned long numKills;
-    unsigned long numDeaths;
-    unsigned long expLost; // New
-    unsigned long lastExpLoss; // New
+    unsigned long numKills{};
+    unsigned long numDeaths{};
+    unsigned long expLost{}; // New
+    unsigned long lastExpLoss{}; // New
 
     // other
-    unsigned long numThefts;
-    unsigned long numAttemptedThefts;
-    unsigned long numSaves;
-    unsigned long numAttemptedSaves;
-    unsigned long numRecalls;
-    unsigned long numLagouts;
-    unsigned long numFishCaught;
-    unsigned long numItemsCrafted;
-    unsigned long numCombosOpened;
+    unsigned long numThefts{};
+    unsigned long numAttemptedThefts{};
+    unsigned long numSaves{};
+    unsigned long numAttemptedSaves{};
+    unsigned long numRecalls{};
+    unsigned long numLagouts{};
+    unsigned long numFishCaught{};
+    unsigned long numItemsCrafted{};
+    unsigned long numCombosOpened{};
 
     // most
-    unsigned long mostGroup;
+    unsigned long mostGroup{};
     StringStatistic mostExperience; // New
     StringStatistic mostMonster;
     StringStatistic mostAttackDamage;
     StringStatistic mostMagicDamage;
     // so we can reference
-    Player* parent;
+    Player* parent{};
 public:
-    bool track;
+    bool track{};
     // combat
     void swing();
     void hit();
@@ -177,9 +178,9 @@ public:
     // most
     void group(unsigned long num);
     void monster(Monster* monster);
-    void attackDamage(unsigned long num, bstring with);
-    void magicDamage(unsigned long num, bstring with);
-    void experience(unsigned long num, bstring with);
+    void attackDamage(unsigned long num, const bstring& with);
+    void magicDamage(unsigned long num, const bstring& with);
+    void experience(unsigned long num, const bstring& with);
 
     unsigned long pkRank() const;
     unsigned long getPkin() const;

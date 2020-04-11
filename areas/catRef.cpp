@@ -15,13 +15,15 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
+#include <ostream>                                  // for basic_ostream::op...
+
 #include "catRef.hpp"
-#include "catRefInfo.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "xml.hpp"
+#include "catRefInfo.hpp"                           // for CatRefInfo
+#include "config.hpp"                               // for gConfig, Config
+#include "creatures.hpp"                            // for Creature
+#include "rooms.hpp"                                // for AreaRoom, UniqueRoom
+#include "xml.hpp"                                  // for copyPropToBString
 
 //*********************************************************************
 //                      CatRef

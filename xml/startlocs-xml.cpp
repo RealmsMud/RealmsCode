@@ -16,11 +16,16 @@
  *
  */
 
-#include "config.hpp"
-#include "location.hpp"
-#include "paths.hpp"
-#include "startlocs.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>        // for xmlFreeDoc, xmlNodePtr, xmlNode
+#include <cstdio>                 // for snprintf, sprintf
+#include <map>                    // for operator==, map, operator!=, allocator
+
+#include "bstring.hpp"            // for bstring
+#include "config.hpp"             // for Config
+#include "location.hpp"           // for Location
+#include "paths.hpp"              // for Game
+#include "startlocs.hpp"          // for StartLoc
+#include "xml.hpp"                // for NODE_NAME, copyPropToBString, copyT...
 
 //*********************************************************************
 //                      loadStartLoc

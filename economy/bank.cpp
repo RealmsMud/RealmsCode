@@ -16,17 +16,30 @@
  *
  */
 
-#include <math.h>
+#include <fcntl.h>        // for open, O_RDWR, O_APPEND, O_CREAT
+#include <cmath>          // for exp, log
+#include <cstdarg>        // for va_end, va_list, va_start
+#include <cstdio>         // for sprintf, vsnprintf
+#include <cstdlib>        // for atol
+#include <cstring>        // for strcmp, strcpy, strlen
+#include <ctime>          // for time, ctime
+#include <unistd.h>       // for close, lseek, unlink, write
 
-#include "bank.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "guilds.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
+#include "bank.hpp"       // for can, balance, canAnywhere, canSee, deleteSt...
+#include "cmd.hpp"        // for cmd
+#include "config.hpp"     // for Config, gConfig
+#include "creatures.hpp"  // for Player, Monster
+#include "flags.hpp"      // for R_BANK, R_MAGIC_MONEY_MACHINE, P_AFK, R_LIMBO
+#include "global.hpp"     // for CreatureClass, CreatureClass::BUILDER, Crea...
+#include "guilds.hpp"     // for Guild
+#include "money.hpp"      // for Money, GOLD
+#include "mud.hpp"        // for GUILD_BANKER, ACC, GUILD_PEON
+#include "paths.hpp"      // for Bank, GuildBank, BankLog, GuildBankLog
+#include "proto.hpp"      // for broadcast, free_crt, file_exists, log_immort
+#include "rooms.hpp"      // for BaseRoom
+#include "server.hpp"     // for Server, gServer, GOLD_IN
+#include "socket.hpp"     // for Socket
+#include "xml.hpp"        // for loadPlayer
 
 //*********************************************************************
 //                      teller
@@ -40,7 +53,7 @@ Monster* Bank::teller(const BaseRoom* room) {
 
     }
 
-    return(0);
+    return(nullptr);
 }
 
 
@@ -92,7 +105,7 @@ bool Bank::canAnywhere(const Player* player) {
 //*********************************************************************
 
 bool Bank::can(Player* player, bool isGuild) {
-    Guild* guild=0;
+    Guild* guild=nullptr;
     return(Bank::can(player, isGuild, &guild));
 }
 
@@ -158,7 +171,7 @@ void Bank::say(const Player* player, const char* text) {
 // gives you your current balance
 
 void Bank::balance(Player* player, bool isGuild) {
-    Guild* guild=0;
+    Guild* guild=nullptr;
     bool isBank = player->getRoomParent()->flagIsSet(R_BANK);
     
     // can they use the bank?
@@ -214,7 +227,7 @@ int cmdBalance(Player* player, cmd* cmnd) {
 void Bank::deposit(Player* player, cmd* cmnd, bool isGuild) {
     int i = (isGuild ? 2 : 1);
     unsigned long amt=0;
-    Guild* guild=0;
+    Guild* guild=nullptr;
 
     // can they use the bank?
     if(!Bank::can(player, isGuild, &guild))
@@ -280,7 +293,7 @@ int cmdDeposit(Player* player, cmd* cmnd) {
 void Bank::withdraw(Player* player, cmd* cmnd, bool isGuild) {
     int i = (isGuild ? 2 : 1);
     unsigned long amt=0;
-    Guild* guild=0;
+    Guild* guild=nullptr;
 
     // can they use the bank?
     if(!Bank::can(player, isGuild, &guild))
@@ -357,10 +370,10 @@ int cmdWithdraw(Player* player, cmd* cmnd) {
 
 void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
     int i = (isGuild ? 2 : 1);
-    Player* target=0;
+    Player* target=nullptr;
     unsigned long amt=0;
     bool    online=false;
-    Guild* guild=0;
+    Guild* guild=nullptr;
 
     // can they use the bank?
     if(!Bank::can(player, isGuild, &guild))
@@ -600,14 +613,14 @@ void Player::computeInterest(long t, bool online) {
         return;
     // people in jail don't earn interest
     if(inJail()) {
-        lastInterest = time(0);
+        lastInterest = time(nullptr);
         if(online)
             save(true);
         return;
     }
 
     if(!t)
-        t = time(0);
+        t = time(nullptr);
     if(!lastInterest)
         lastInterest = lastLogin;
 
@@ -645,7 +658,7 @@ void Player::computeInterest(long t, bool online) {
         return;
 
     bank.add(amt, GOLD);
-    gServer->logGold(GOLD_IN, this, Money(amt, GOLD), nullptr, "BankInterest");
+    Server::logGold(GOLD_IN, this, Money(amt, GOLD), nullptr, "BankInterest");
 
     Bank::log(getCName(), "INTEREST for %d day%s at %d%%: %ld [Balance: %s]\n",
         interestDays, interestDays != 1 ? "s" : "", (int)(rate*100), amt, bank.str().c_str());
@@ -683,7 +696,7 @@ void Bank::doLog(const char *file, const char *str) {
 void Bank::log(const char *name, const char *fmt, ...) {
     char    file[80];
     char    str[2048];
-    long    t = time(0);
+    long    t = time(nullptr);
     va_list ap;
 
     va_start(ap, fmt);
@@ -709,7 +722,7 @@ void Bank::log(const char *name, const char *fmt, ...) {
 void Bank::guildLog(int guild, const char *fmt, ...) {
     char    file[80];
     char    str[2048];
-    long    t = time(0);
+    long    t = time(nullptr);
     va_list ap;
 
     va_start(ap, fmt);

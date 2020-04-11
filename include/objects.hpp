@@ -25,7 +25,6 @@
 
 #include "alchemy.hpp"
 #include "catRef.hpp"
-#include "common.hpp"
 #include "container.hpp"
 #include "dice.hpp"
 #include "global.hpp"
@@ -159,14 +158,14 @@ protected:
     long            made;           // the time this object was created
     short           keyVal;         // key # value to match exit
     int             lotteryCycle;
-    short           lotteryNumbers[6];
+    short           lotteryNumbers[6]{};
     int             recipe;
     Material        material;
     // SubType: For Armor - The type of armor it is, ie: cloth, leather, chain, plate, etc
     //          For Weapons - The weapon class it is, sword, dagger, etc
     //          For Alchemy - The type of device it is, mortar and pestle, etc
     bstring subType;
-    char flags[OBJ_FLAG_ARRAY_SIZE];  // Max object flags - 256
+    char flags[OBJ_FLAG_ARRAY_SIZE]{};  // Max object flags - 256
     short delay;
     short extra;
     bstring questOwner;
@@ -188,9 +187,9 @@ public:
     // Information about where this object came from
     DroppedBy droppedBy;
 
-    char key[3][OBJ_KEY_LENGTH];    // key 3 hold object index
-    char use_output[80];    // String output by successful use
-    char use_attack[50];
+    char key[3][OBJ_KEY_LENGTH]{};    // key 3 hold object index
+    char use_output[80]{};    // String output by successful use
+    char use_attack[50]{};
 
     Dice damage;
     double getDps();
@@ -236,7 +235,7 @@ public:
                   bool saveId = true, std::list<bstring> *idList = 0) const;
     int saveToFile();
 
-    void setDroppedBy(MudObject* dropper, bstring pDropType);
+    void setDroppedBy(MudObject* dropper, const bstring& pDropType);
 
     bool isBroken() const;
 
@@ -308,7 +307,7 @@ public:
     bstring getVersion() const;
     bstring getQuestOwner() const;
     bstring getObjStr(const Creature* viewer = nullptr, int flags = 0, int num = 0) const;
-    const bstring getSubType() const;
+    bstring getSubType() const;
     bstring getWeaponType() const;
     bstring getArmorType() const;
     bstring getWeaponCategory() const;
@@ -356,7 +355,7 @@ public:
     void setClan(short c);
     void setSpecial(short s);
     void setQuestnum(short q);
-    void setEffect(bstring e);
+    void setEffect(const bstring& e);
     void setEffectDuration(long d);
     void setEffectStrength(short s);
     void setCoinCost(unsigned long c);
@@ -373,7 +372,7 @@ public:
     // Adjust things
     void killUniques();
     void loadContainerContents();
-    void nameCoin(bstring type, unsigned long value);
+    void nameCoin(const bstring& type, unsigned long value);
     void randomEnchant(int bonus = 0);
     int adjustArmor();
     int adjustWeapon();

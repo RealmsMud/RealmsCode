@@ -16,8 +16,9 @@
  *
  */
 
-#include "mud.hpp"
-#include "monType.hpp"
+#include "monType.hpp"  // for mType, MAX_MOB_TYPES, UNDEAD, AUTOMATON, ELEM...
+#include "os.hpp"       // for ASSERTLOG
+#include "size.hpp"     // for NO_SIZE, SIZE_FINE, SIZE_GARGANTUAN, SIZE_HUGE
 
 char mobtype_name[MAX_MOB_TYPES][20] = { "Player", "Monster", "Humanoid", "Goblinoid", "Monstrous Humanoid",
         "Giantkin", "Animal", "Dire Animal", "Insect", "Insectoid", "Arachnid", "Reptile", "Dinosaur", "Automaton",

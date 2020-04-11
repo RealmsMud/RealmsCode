@@ -15,9 +15,17 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
+#include <cstdlib>        // for abs
+#include <strings.h>      // for strcasecmp
+
+#include "bstring.hpp"    // for bstring
+#include "cmd.hpp"        // for cmd
+#include "creatures.hpp"  // for Player, Monster, Creature
+#include "flags.hpp"      // for P_CHAOTIC, P_CHOSEN_ALIGNMENT, P_PLEDGED
+#include "global.hpp"     // for NEUTRAL, CreatureClass, BLUISH, CreatureCla...
+#include "mud.hpp"        // for ALIGNMENT_LEVEL
+#include "proto.hpp"      // for broadcast, logn, isStaff, antiGradius, cmdC...
+#include "utils.hpp"      // for MAX, MIN
 
 
 //***********************************************************************
@@ -213,7 +221,7 @@ bool antiGradius(int race) {
 //********************************************************************
 
 void Player::adjustAlignment(Monster *victim) {
-    int adjust = victim->getAlignment() / 8;
+    auto adjust = (short)(victim->getAlignment() / 8);
 
     if(victim->getAlignment() < 0 && victim->getAlignment() > -8)
         adjust = -1;
@@ -277,7 +285,7 @@ int cmdConvert(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(cmnd->num < 2 || strcasecmp(cmnd->str[1], "yes")) {
+    if(cmnd->num < 2 || strcasecmp(cmnd->str[1], "yes") != 0) {
         player->print("To prevent accidental conversion you must confirm you want to convert,\n");
         player->print("to do so type 'convert yes'\n");
         player->print("Remember, you will NEVER be able to be chaotic again.\n");

@@ -15,14 +15,27 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "creatures.hpp"
-#include "commands.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "traps.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include <cstdlib>                // for abs
+#include <ctime>                  // for time
+
+#include "bstring.hpp"            // for bstring
+#include "catRef.hpp"             // for CatRef
+#include "commands.hpp"           // for lose_all
+#include "container.hpp"          // for PlayerSet, ObjectSet, MonsterSet
+#include "creatures.hpp"          // for Player, Creature, Monster, NO_CHECK
+#include "damage.hpp"             // for Damage
+#include "flags.hpp"              // for P_PREPARED, O_RESIST_DISOLVE, M_PER...
+#include "global.hpp"             // for DEA, CreatureClass, MAXWEAR, BRE, POI
+#include "location.hpp"           // for Location
+#include "mud.hpp"                // for LT_SPELL
+#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
+#include "proto.hpp"              // for broadcast, logn, standardPoisonDura...
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom, UniqueRoom
+#include "server.hpp"             // for Server, gServer
+#include "traps.hpp"              // for TRAP_ALARM, TRAP_BONEAV, TRAP_GASS
+#include "utils.hpp"              // for MAX, MIN
+#include "xml.hpp"                // for loadRoom
 
 //*********************************************************************
 //                      teleport_trap
@@ -30,7 +43,7 @@
 // This functions allows a player to be teleported via a trap.
 
 void teleport_trap(Player* player) {
-    BaseRoom *newRoom=0;
+    BaseRoom *newRoom=nullptr;
 
     if(player->isStaff())
         return;
@@ -49,7 +62,7 @@ void teleport_trap(Player* player) {
     // will not be abused for exploring.
     player->smashInvis();
 
-    player->lasttime[LT_SPELL].ltime = time(0);
+    player->lasttime[LT_SPELL].ltime = time(nullptr);
     player->lasttime[LT_SPELL].interval = 120L;
 
     player->stun(Random::get(20,95));
@@ -60,11 +73,11 @@ void teleport_trap(Player* player) {
 //*********************************************************************
 
 void rock_slide(Player* player) {
-    Player  *target=0;
+    Player  *target=nullptr;
     int     dmg=0;
 
-    PlayerSet::iterator pIt = player->getRoomParent()->players.begin();
-    PlayerSet::iterator pEnd = player->getRoomParent()->players.end();
+    auto pIt = player->getRoomParent()->players.begin();
+    auto pEnd = player->getRoomParent()->players.end();
     while(pIt != pEnd) {
         target = (*pIt++);
 
@@ -99,10 +112,10 @@ void rock_slide(Player* player) {
 
 
 int Player::doCheckTraps(UniqueRoom* room) {
-    Player  *ply=0;
-    BaseRoom *newRoom=0;
-    UniqueRoom  *uRoom=0;
-    Creature* target=0;
+    Player  *ply=nullptr;
+    BaseRoom *newRoom=nullptr;
+    UniqueRoom  *uRoom=nullptr;
+    Creature* target=nullptr;
     int     toHit=0, a=0, num=0, roll=0, saved=0;
     Location l;
     Damage trapDamage;
@@ -216,7 +229,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
             print("You fell into a pit trap!\n");
             broadcast(getSock(), getRoomParent(), "%M fell into a pit trap!", this);
 
-            deleteFromRoom(room);
+            deleteFromRoom();
             addToRoom(newRoom);
             doPetFollow();
 
@@ -244,7 +257,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 
             print("You tumble downward uncontrollably!\n");
             broadcast(getSock(), getRoomParent(), "%M tumbles downward uncontrollably!", this);
-            deleteFromRoom(room);
+            deleteFromRoom();
             addToRoom(newRoom);
             doPetFollow();
             trapDamage.set(Random::get(1,20));
@@ -273,7 +286,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 
         print("You are overcome by vertigo!\n");
         broadcast(getSock(), getRoomParent(), "%M vanishes!", this);
-        deleteFromRoom(room);
+        deleteFromRoom();
         addToRoom(newRoom);
         doPetFollow();
         checkTraps(newRoom->getAsUniqueRoom());
@@ -286,7 +299,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 
         print("You fall down a chute!\n");
         broadcast(getSock(), getRoomParent(), "%M fell down a chute!", this);
-        deleteFromRoom(room);
+        deleteFromRoom();
         addToRoom(newRoom);
         doPetFollow();
         checkTraps(newRoom->getAsUniqueRoom());
@@ -310,7 +323,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         print("You have triggered an avalanche of bones!\n");
         print("You are knocked down by its immense weight!\n");
         broadcast(getSock(), getRoomParent(), "%M was crushed by an avalanche of bones!", this);
-        deleteFromRoom(room);
+        deleteFromRoom();
         addToRoom(newRoom);
         doPetFollow();
         trapDamage.set(Random::get(hp.getMax() / 4, hp.getMax() / 2));
@@ -338,7 +351,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
             print("You are impaled by spikes!\n");
             broadcast(getSock(), getRoomParent(), "%M fell into a pit!", this);
             broadcast(getSock(), getRoomParent(), "It has spikes at the bottom!");
-            deleteFromRoom(room);
+            deleteFromRoom();
             addToRoom(newRoom);
             doPetFollow();
             trapDamage.set(Random::get(15,30));
@@ -371,7 +384,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         if(!immuneToPoison() && !chkSave(POI, this, -1)) {
             num = room->getTrapStrength() ? room->getTrapStrength() : 2;
 
-            poison(0, num, standardPoisonDuration(num, constitution.getCur()));
+            poison(nullptr, num, standardPoisonDuration(num, constitution.getCur()));
             poisonedBy = "a poisoned dart";
         }
         hp.decrease(trapDamage.get());
@@ -430,7 +443,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         if(!immuneToPoison() && !chkSave(POI, this, 0)) {
             num = room->getTrapStrength() ? room->getTrapStrength() : 7;
 
-            poison(0, num, standardPoisonDuration(num, constitution.getCur()));
+            poison(nullptr, num, standardPoisonDuration(num, constitution.getCur()));
             poisonedBy = "a poisoned crossbow bolt";
         }
 
@@ -453,7 +466,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 
                 num = room->getTrapStrength() ? room->getTrapStrength() : 15;
 
-                poison(0, num, standardPoisonDuration(num, constitution.getCur()));
+                poison(nullptr, num, standardPoisonDuration(num, constitution.getCur()));
                 poisonedBy = "poison gas";
             } else {
                 print("You managed to hold your breath.\n");
@@ -544,7 +557,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
 
             trapDamage.reset();
             trapDamage.set(Random::get(target->hp.getMax()/20, target->hp.getMax()/10));
-            target->modifyDamage(0, PHYSICAL, trapDamage);
+            target->modifyDamage(nullptr, PHYSICAL, trapDamage);
 
             toHit = 14 - (trapDamage.get()/10);
             if(target->isInvisible() && target->isPlayer())
@@ -806,8 +819,8 @@ int Player::doCheckTraps(UniqueRoom* room) {
 
         uRoom->addPermCrt();
 
-        Monster *tmp_crt=0;
-        MonsterSet::iterator mIt = uRoom->monsters.begin();
+        Monster *tmp_crt=nullptr;
+        auto mIt = uRoom->monsters.begin();
         while(mIt != uRoom->monsters.end()) {
             tmp_crt = (*mIt++);
             if(tmp_crt->flagIsSet(M_PERMENANT_MONSTER)) {
@@ -841,7 +854,7 @@ int Player::checkTraps(UniqueRoom* room, bool self, bool isEnter) {
     if(!room)
         return(0);
 
-    Player  *target=0;
+    Player  *target=nullptr;
 
     if(!room->getTrap()) {
         clearFlag(P_PREPARED);
@@ -874,8 +887,8 @@ int Player::checkTraps(UniqueRoom* room, bool self, bool isEnter) {
 
         // we loop through everyone in the room!
 
-        PlayerSet::iterator pIt = room->players.begin();
-        PlayerSet::iterator pEnd = room->players.end();
+        auto pIt = room->players.begin();
+        auto pEnd = room->players.end();
         while(pIt != pEnd) {
             target = (*pIt++);
             if(target)
@@ -918,7 +931,7 @@ bool resistLose(Object* object) {
 //*********************************************************************
 
 void lose_all(Player* player, bool destroyAll, const char* lostTo) {
-    Object* object=0;
+    Object* object=nullptr;
     int     i=0;
 
     // if we send !destroyAll, there are some scenarios where
@@ -1015,7 +1028,7 @@ void Player::dissolveItem(Creature* creature) {
 // and determines whether it was fragged due to dissolving acid.
 
 void Player::loseAcid() {
-    Object* object=0;
+    Object* object=nullptr;
     int     i=0;
 
     // Check all equipped items

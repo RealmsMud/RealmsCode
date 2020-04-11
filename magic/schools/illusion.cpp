@@ -16,12 +16,21 @@
  *
  */
 
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
+#include "bstring.hpp"    // for bstring
+#include "cmd.hpp"        // for cmd
+#include "commands.hpp"   // for getFullstrText
+#include "config.hpp"     // for Config, gConfig
+#include "creatures.hpp"  // for Creature, Player
+#include "effects.hpp"    // for EffectInfo
+#include "exits.hpp"      // for Exit
+#include "flags.hpp"      // for X_CONCEALED
+#include "global.hpp"     // for CastType, CastType::CAST, CastType::POTION
+#include "magic.hpp"      // for SpellData, splGeneric, checkRefusingMagic
+#include "monType.hpp"    // for noLivingVulnerabilities
+#include "objects.hpp"    // for Object
+#include "proto.hpp"      // for broadcast, findExit, up
+#include "raceData.hpp"   // for RaceData
+#include "rooms.hpp"      // for BaseRoom
 
 
 
@@ -85,8 +94,8 @@ int splCamouflage(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splIllusion(Creature* creature, cmd* cmnd, SpellData* spellData) {
     bstring txt = "";
-    Player* pPlayer=0, *target=0;
-    const RaceData* race=0;
+    Player* pPlayer=nullptr, *target=nullptr;
+    const RaceData* race=nullptr;
 
     pPlayer = creature->getAsPlayer();
 
@@ -97,7 +106,7 @@ int splIllusion(Creature* creature, cmd* cmnd, SpellData* spellData) {
 
         txt = getFullstrText(cmnd->fullstr, cmnd->num == 3 ? 2 : 3);
 
-        if(txt == "") {
+        if(txt.empty()) {
             creature->print("Illusion whom to what race?\n");
             creature->print("Syntax: cast illusion [target] <race>\n");
             return(0);
@@ -127,7 +136,7 @@ int splIllusion(Creature* creature, cmd* cmnd, SpellData* spellData) {
 
         if(spellData->how != CastType::POTION) {
             creature->print("You cast an illusion spell.\n");
-            broadcast(pPlayer ? pPlayer->getSock() : NULL, creature->getRoomParent(), "%M casts an illusion spell.", creature);
+            broadcast(pPlayer ? pPlayer->getSock() : nullptr, creature->getRoomParent(), "%M casts an illusion spell.", creature);
         }
     } else {
         if(creature->noPotion( spellData))
@@ -144,7 +153,7 @@ int splIllusion(Creature* creature, cmd* cmnd, SpellData* spellData) {
         if(pPlayer && checkRefusingMagic(creature, target))
             return(0);
 
-        broadcast(pPlayer ? pPlayer->getSock() : NULL, target->getSock(), creature->getRoomParent(), "%M casts an illusion spell on %N.",
+        broadcast(pPlayer ? pPlayer->getSock() : nullptr, target->getSock(), creature->getRoomParent(), "%M casts an illusion spell on %N.",
                 creature, target);
         target->print("%M casts illusion on you.\n", creature);
         creature->print("You cast an illusion spell on %N.\n", target);
@@ -197,7 +206,7 @@ int splBlur(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splIllusoryWall(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Exit *exit=0;
+    Exit *exit=nullptr;
     int strength = spellData->level;
     long duration = 300;
 

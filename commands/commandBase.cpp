@@ -16,30 +16,38 @@
  *
  */
 
-#include <sys/stat.h>
-#include <sstream>
-#include <iomanip>
-#include <locale>
+#include <cctype>         // for isdigit
+#include <cstdio>         // for sprintf
+#include <cstdlib>        // for atol
+#include <cstring>        // for strncpy, strcmp
+#include <sys/stat.h>     // for stat, st_atime, st_mtime
+#include <ctime>          // for ctime, time
+#include <iomanip>        // for operator<<, setw
+#include <sstream>        // for operator<<, basic_ostream, char_traits, ost...
 
-#include "calendar.hpp"
-#include "creatures.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "factions.hpp"
-#include "login.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "mud.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
-
-//static int    newline;
-//static int    color;
-
-//#include <arpa/telnet.h>
-//#define TELOPT_COMPRESS2       86
-
+#include "bstring.hpp"    // for bstring
+#include "calendar.hpp"   // for Calendar
+#include "cmd.hpp"        // for cmd, MAX_TOKEN_SIZE, COMMANDMAX
+#include "commands.hpp"   // for cmdProcess, getFullstrText, cmdDescription
+#include "config.hpp"     // for Config, gConfig
+#include "creatures.hpp"  // for Player, Creature, Monster
+#include "exits.hpp"      // for Exit
+#include "factions.hpp"   // for Faction
+#include "flags.hpp"      // for P_AFK, M_TOLLKEEPER, O_PUSH_PULL_SPRINGS_TRAP
+#include "global.hpp"     // for CreatureClass, PROMPT, CreatureClass::CARET...
+#include "money.hpp"      // for Money, GOLD
+#include "mud.hpp"        // for StartTime, LT_PLAYER_STUNNED, DEFAULT_TOLL
+#include "mudObject.hpp"  // for MudObject
+#include "objects.hpp"    // for Object
+#include "os.hpp"         // for ASSERTLOG
+#include "paths.hpp"      // for Post
+#include "proto.hpp"      // for broadcast, free_crt, dmIson, findExit, isDay
+#include "raceData.hpp"   // for RaceData
+#include "rooms.hpp"      // for BaseRoom, UniqueRoom (ptr only)
+#include "server.hpp"     // for Server, gServer, GOLD_OUT, PlayerMap
+#include "socket.hpp"     // for Socket
+#include "utils.hpp"      // for MAX, MIN
+#include "xml.hpp"        // for loadPlayer
 
 //*********************************************************************
 //                      cmdNoExist
@@ -142,7 +150,7 @@ void command(Socket* sock, const bstring& inStr) {
 // resulting words are stored in a command structure pointed to by the
 // second argument.
 
-void parse(const bstring str, cmd *cmnd) {
+void parse(const bstring& str, cmd *cmnd) {
     int     i=0, j=0, l=0, n=0;
     //char  token[MAX_TOKEN_SIZE];
     bstring token;
@@ -339,9 +347,9 @@ int cmdPress(Player* player, cmd* cmnd) {
 // sending 0 to cls means we're not a player and we want reduced padding
 
 bstring doFinger(const Player* player, bstring name, CreatureClass cls) {
-    struct stat f_stat;
+    struct stat f_stat{};
     char    tmp[80];
-    Player* target=0;
+    Player* target=nullptr;
     std::ostringstream oStr;
     bool online=true;
 
@@ -349,7 +357,7 @@ bstring doFinger(const Player* player, bstring name, CreatureClass cls) {
     oStr.setf(std::ios::left, std::ios::adjustfield);
     oStr.imbue(std::locale(""));
 
-    if(name == "")
+    if(name.empty())
         return("Finger who?\n");
 
     name = name.toLower();
@@ -396,7 +404,7 @@ bstring doFinger(const Player* player, bstring name, CreatureClass cls) {
     else
         oStr << "New mail since: " << ctime(&f_stat.st_mtime);
 
-    if(target->getForum() != "")
+    if(!target->getForum().empty())
         oStr << "Forum account: " << target->getForum() << "\n";
 
     if(online) {
@@ -435,9 +443,9 @@ int cmdFinger(Player* player, cmd* cmnd) {
 // players' level, making the cost equal exit->toll*player->getLevel().
 
 int cmdPayToll(Player* player, cmd* cmnd) {
-    Monster* target=0;
-    BaseRoom    *newRoom=0;
-    Exit    *exit=0;
+    Monster* target=nullptr;
+    BaseRoom    *newRoom=nullptr;
+    Exit    *exit=nullptr;
     unsigned long tc=0, amt=0;
 
     if(cmnd->num < 4) {
@@ -522,7 +530,7 @@ int cmdPayToll(Player* player, cmd* cmnd) {
         return(0);
 
     player->coins.sub(amt, GOLD);
-    gServer->logGold(GOLD_OUT, player, Money(amt, GOLD), exit, "Toll");
+    Server::logGold(GOLD_OUT, player, Money(amt, GOLD), exit, "Toll");
 
     player->printColor("%M accepts your toll and ushers you through the %s^x.\n", target, exit->getCName());
     broadcast(player->getSock(), player->getParent(), "%M pays %N some coins and goes through the %s^x.", player, target, exit->getCName());
@@ -563,10 +571,9 @@ int infoGamestat(Player* player, cmd* cmnd) {
     int     players=0, immorts=0;
     int     daytime=0;
     long    t=0, days=0, hours=0, minutes=0;
-    char    *str;
 
-    Player* target=0;
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    Player* target=nullptr;
+    for(const auto& p : gServer->players) {
         target = p.second;
 
         if(!target->isConnected())
@@ -580,7 +587,7 @@ int infoGamestat(Player* player, cmd* cmnd) {
 
     player->print("\nCurrent Realms Gamestat Information\n\n");
 
-    t = time(0);
+    t = time(nullptr);
     daytime = gConfig->currentHour();
 
     days = (t - StartTime) / (60*60*24);

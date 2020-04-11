@@ -15,15 +15,60 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <stdlib.h>
+#include <cstdlib>                // for abs
+#include <ctime>                  // for time
+#include <string>                 // for operator==, basic_string
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"            // for bstring
+#include "container.hpp"          // for PlayerSet, MonsterSet
+#include "creatures.hpp"          // for Monster, Creature, Player
+#include "flags.hpp"              // for M_FIRE_AURA, O_JUST_LOADED, M_CLASS...
+#include "global.hpp"             // for BRE, MAXALVL, MAX_AURAS, CreatureClass
+#include "monType.hpp"            // for getHitdice, HUMANOID
+#include "money.hpp"              // for Money, GOLD
+#include "mud.hpp"                // for LT_TICK, LT_TICK_SECONDARY, LT_M_AU...
+#include "objects.hpp"            // for Object
+#include "proto.hpp"              // for bonus, get_perm_ac, new_scroll, get...
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom
+#include "utils.hpp"              // for MAX, MIN
+#include "xml.hpp"                // for loadObject
+
+typedef struct {
+    short   hpstart;
+    short   mpstart;
+    short   hp;
+    short   mp;
+    short   ndice;
+    short   sdice;
+    short   pdice;
+} class_stats_struct;
+
+class_stats_struct class_stats[static_cast<int>(CreatureClass::CLASS_COUNT)] = {
+        {  0,  0,  0,  0,  0,  0,  0},
+        { 19,  2,  6,  2,  1,  6,  0},  // assassin
+        { 24,  0,  8,  1,  1,  3,  1},  // barbarian
+        { 16,  4,  5,  4,  1,  4,  0},  // cleric
+        { 22,  2,  7,  2,  1,  5,  0},  // fighter
+        { 14,  5,  4,  5,  1,  3,  0},  // mage
+        { 19,  3,  6,  3,  1,  4,  0},  // paladin
+        { 18,  3,  6,  3,  2,  2,  0},  // ranger
+        { 18,  3,  5,  2,  2,  2,  1},  // thief
+        { 15,  3,  5,  4,  2,  2,  1},  // pureblood
+        { 17,  3,  5,  2,  1,  3,  0},  // monk
+        { 19,  3,  6,  3,  1,  4,  0},  // death-knight
+        { 15,  4,  5,  4,  1,  3,  0},  // druid
+        { 16,  0,  6,  0,  1,  3,  1},  // lich
+        { 20,  1,  6,  2,  1,  3,  1},  // werewolf
+        { 17,  3,  5,  4,  2,  2,  0},  // bard
+        { 18,  3,  5,  2,  2,  2,  1},  // rogue
+        { 30, 30, 10, 10,  5,  5,  5},  // builder
+        { 30, 30, 10, 10,  5,  5,  5},  // unused
+        { 30, 30, 10, 10,  5,  5,  5},  // caretaker
+        { 30, 30, 10, 10,  5,  5,  5}   // dungeonmaster
+};
 
 
-//#include "string.hpp"
 typedef struct {
     unsigned short  armor;
     short   thaco;
@@ -183,9 +228,9 @@ void Monster::adjust(int buffswitch) {
 int Monster::initMonster(bool loadOriginal, bool prototype) {
     int n=0, alnum=0, x=0;
     long t=0;
-    Object* object=0;
+    Object* object=nullptr;
 
-    t = time(0);
+    t = time(nullptr);
     // init the timers
     lasttime[LT_MON_SCAVANGE].ltime =
     lasttime[LT_MON_WANDER].ltime =
@@ -209,7 +254,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     else if(flagIsSet(M_REGENERATES))
         lasttime[LT_TICK].interval = lasttime[LT_TICK_SECONDARY].interval = 15L;
     else
-        lasttime[LT_TICK].interval = lasttime[LT_TICK_SECONDARY].interval = 60L - (2*bonus((int)constitution.getCur()));
+        lasttime[LT_TICK].interval = lasttime[LT_TICK_SECONDARY].interval = 60L - (2*bonus(constitution.getCur()));
 
     lasttime[LT_TICK_HARMFUL].interval = 30;
     // Randomize alignment and gold unless we don' want it
@@ -255,7 +300,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
             }
         }
 
-        object = 0;
+        object = nullptr;
 
         int numDrops = Random::get(1,100), whichDrop=0;
 
@@ -333,12 +378,12 @@ int Monster::getNumMobs() const {
 //***********************************************************************
 
 Creature *getRandomMonster(BaseRoom *inRoom) {
-    Creature *foundCrt=0;
+    Creature *foundCrt=nullptr;
     int         count=0, roll=0, num=0;
 
     num = inRoom->countCrt();
     if(!num)
-        return(0);
+        return(nullptr);
 
     roll = Random::get(1, num);
     for(Monster* mons : inRoom->monsters) {
@@ -352,7 +397,7 @@ Creature *getRandomMonster(BaseRoom *inRoom) {
 
     if(foundCrt)
         return(foundCrt);
-    return(0);
+    return(nullptr);
 }
 
 //***********************************************************************
@@ -360,12 +405,12 @@ Creature *getRandomMonster(BaseRoom *inRoom) {
 //***********************************************************************
 
 Creature *getRandomPlayer(BaseRoom *inRoom) {
-    Creature *foundPly=0;
+    Creature *foundPly=nullptr;
     int         count=0, roll=0, num=0;
 
     num = inRoom->countVisPly();
     if(!num)
-        return(0);
+        return(nullptr);
     roll = Random::get(1, num);
     for(Player* ply : inRoom->players) {
         if(ply->flagIsSet(P_DM_INVIS)) {
@@ -380,7 +425,7 @@ Creature *getRandomPlayer(BaseRoom *inRoom) {
 
     if(foundPly)
         return(foundPly);
-    return(0);
+    return(nullptr);
 }
 
 
@@ -403,8 +448,8 @@ void Monster::validateAc() {
 int Monster::doHarmfulAuras() {
     int         a=0,dmg=0,aura=0, saved=0;
     long        i=0,t=0;
-    BaseRoom    *inRoom=0;
-    Creature* player=0;
+    BaseRoom    *inRoom=nullptr;
+    Creature* player=nullptr;
 
     if(isPet())
         return(0);
@@ -422,7 +467,7 @@ int Monster::doHarmfulAuras() {
         return(0);
 
     i = lasttime[LT_M_AURA_ATTACK].ltime;
-    t = time(0);
+    t = time(nullptr);
 
     if(t - i < 20L) // Mob has to wait 20 seconds.
         return(0);
@@ -439,8 +484,8 @@ int Monster::doHarmfulAuras() {
 
         if(!flagIsSet(M_FIRE_AURA + a))
             continue;
-        PlayerSet::iterator pIt = inRoom->players.begin();
-        PlayerSet::iterator pEnd = inRoom->players.end();
+        auto pIt = inRoom->players.begin();
+        auto pEnd = inRoom->players.end();
         while(pIt != pEnd) {
             player = (*pIt++);
 

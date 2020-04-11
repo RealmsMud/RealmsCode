@@ -16,29 +16,59 @@
  *
  */
 
-#include <ctime>
+#include <bits/types/struct_tm.h>  // for tm
+#include <cctype>                  // for isdigit, tolower, toupper
+#include <fcntl.h>                 // for open, O_RDONLY, SEEK_SET, O_RDWR
+#include <cmath>                   // for pow
+#include <cstdarg>                 // for va_end, va_list, va_start
+#include <cstdio>                  // for sprintf, fclose, fseek, fopen, ftell
+#include <cstdlib>                 // for atol, free, ldiv_t, abort, labs, ldiv
+#include <cstring>                 // for strlen, strstr, strcpy, strcmp
+#include <unistd.h>                // for close, read, lseek, off_t, write
+#include <ctime>                   // for time, localtime, ctime
+#include <ostream>                 // for operator<<, basic_ostream::operator<<
+#include <string>                  // for char_traits, operator==, basic_string
+#include <utility>                 // for pair
 
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "login.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
+#include "bstring.hpp"             // for bstring
+#include "catRef.hpp"              // for CatRef
+#include "config.hpp"              // for Config, gConfig
+#include "container.hpp"           // for MonsterSet, PlayerSet, Container
+#include "creatures.hpp"           // for Creature, Player, Monster
+#include "exits.hpp"               // for Exit
+#include "flags.hpp"               // for P_READING_FILE, P_BUGGED, P_MIRC
+#include "global.hpp"              // for MAXALVL, FATAL, FIND_EXIT, FIND_MO...
+#include "group.hpp"               // for CreatureList, Group
+#include "lasttime.hpp"            // for lasttime
+#include "login.hpp"               // for CON_VIEWING_FILE, CON_VIEWING_FILE...
+#include "money.hpp"               // for GOLD, Money
+#include "mud.hpp"                 // for dmname, LT_KICK, LT_PLAYER_STUNNED
+#include "objects.hpp"             // for Object
+#include "os.hpp"                  // for merror
+#include "paths.hpp"               // for BugLog, Config
+#include "proto.hpp"               // for keyTxtEqual, broadcast, findExit
+#include "random.hpp"              // for Random
+#include "rooms.hpp"               // for BaseRoom
+#include "server.hpp"              // for Server, gServer, PlayerMap
+#include "socket.hpp"              // for Socket
+#include "stats.hpp"               // for Stat
+#include "structs.hpp"             // for daily
+#include "utils.hpp"               // for MAX, MIN
+
+class MudObject;
 
 //*********************************************************************
 //                      validId functions
 //*********************************************************************
 
-bool validMobId(const CatRef cr) {
+bool validMobId(const CatRef& cr) {
     return(!cr.isArea("") && cr.id > 0 && cr.id < MMAX);
 }
-bool validObjId(const CatRef cr) {
+bool validObjId(const CatRef& cr) {
     // 0 = coins
     return(!cr.isArea("") && cr.id >= 0 && cr.id < OMAX);
 }
-bool validRoomId(const CatRef cr) {
+bool validRoomId(const CatRef& cr) {
     // 0 = void
     return(!cr.isArea("") && cr.id >= 0 && cr.id < RMAX);
 }
@@ -112,6 +142,19 @@ char up(char ch) {
     else
         return(ch);
 }
+
+
+int statBonus[MAXALVL] = {
+    -4, -4, -4,         // 0 - 2
+    -3, -3,             // 3 - 4
+    -2, -2,             // 5 - 6
+    -1,                 // 7
+    0, 0, 0, 0, 0, 0,   // 8 - 13
+    1, 1, 1,            // 14 - 16
+    2, 2, 2, 2,         // 17 - 20
+    3, 3, 3, 3,         // 21 - 24
+    4, 4, 4,            // 25 - 27
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };   // 28+
 
 int bonus(int num) {
     return( statBonus[MIN(num/10, MAXALVL - 1)] );
@@ -221,7 +264,7 @@ void viewFileReal(Socket* sock, bstring str ) {
             return;
         }
         line = 0;
-        while(1) {
+        while(true) {
             n = read(ff, buf, FBUF);
             l = 0;
             for(i=0; i<n; i++) {
@@ -283,7 +326,7 @@ void viewFileReal(Socket* sock, bstring str ) {
         }
         lseek(ff, offset, 0);
         line = 0;
-        while(1) {
+        while(true) {
             n = read(ff, buf, FBUF);
             l = 0;
             for(i=0; i<n; i++) {
@@ -363,7 +406,7 @@ void viewLoginFile(Socket* sock, const bstring& str, bool showError) {
             return;
         }
         line = 0;
-        while(1) {
+        while(true) {
             n = read(ff, buf, FBUF_L);
             l = 0;
             for(i=0; i<n; i++) {
@@ -580,9 +623,9 @@ int exp_to_lev(unsigned long exp) {
 
 int dec_daily(struct daily *dly_ptr) {
     long        t;
-    struct tm   *tm, time1, time2;
+    struct tm   *tm, time1{}, time2{};
 
-    t = time(0);
+    t = time(nullptr);
     tm = localtime(&t);
     time1 = *tm;
     tm = localtime(&dly_ptr->ltime);
@@ -606,8 +649,8 @@ int dec_daily(struct daily *dly_ptr) {
 //*********************************************************************
 
 int update_daily(struct daily *dly_ptr) {
-    long        t = time(0);
-    struct tm   *tm, time1, time2;
+    long        t = time(nullptr);
+    struct tm   *tm, time1{}, time2{};
 
     tm = localtime(&t);
     time1 = *tm;
@@ -655,7 +698,7 @@ bool is_num(char *str ) {
 //*********************************************************************
 // returns 1 if the given player name is a dm
 
-bool isdm(bstring name) {
+bool isdm(const bstring& name) {
     char **s = dmname;
     while(*s) {
         if(name == *s)
@@ -681,8 +724,8 @@ int Creature::smashInvis() {
 //*********************************************************************
 // Determine if a given name is acceptable
 
-bool parse_name(bstring name) {
-    FILE    *fp=0;
+bool parse_name(const bstring& name) {
+    FILE    *fp=nullptr;
     int     i = name.length() - 1;
     char    str[80], path[80], forbid[20];
     strcpy(str, name.c_str());
@@ -709,7 +752,7 @@ bool parse_name(bstring name) {
     i=0;
     while(dmname[i]) {
         // don't forbid names directly equal to DM
-        if(strcmp(dmname[i], str)) {
+        if(strcmp(dmname[i], str) != 0) {
             if(!strncmp(dmname[i], str, strlen(str)))
                 return(false);
             if(!strncmp(str, dmname[i], strlen(dmname[i])))
@@ -769,11 +812,11 @@ bool parse_name(bstring name) {
 //*********************************************************************
 
 int dmIson() {
-    Player* player=0;
+    Player* player=nullptr;
     int     idle=0;
-    long    t = time(0);
+    long    t = time(nullptr);
 
-    for( std::pair<bstring, Player*> p : gServer->players) {
+    for( const auto& p : gServer->players) {
         player = p.second;
 
         if(!player->isConnected())
@@ -794,7 +837,7 @@ void Player::bug(const char *fmt, ...) const {
     char    file[80];
     char    str[2048];
     int     fd;
-    long    t = time(0);
+    long    t = time(nullptr);
     va_list ap;
 
     if(!flagIsSet(P_BUGGED))
@@ -941,14 +984,14 @@ void Creature::stun(int delay) {
     if(!delay)
         return;
     updateAttackTimer(true, (delay+1)*10);
-    lasttime[LT_KICK].ltime = time(0);
-    lasttime[LT_SPELL].ltime = time(0);
-    lasttime[LT_READ_SCROLL].ltime = time(0);
+    lasttime[LT_KICK].ltime = time(nullptr);
+    lasttime[LT_SPELL].ltime = time(nullptr);
+    lasttime[LT_READ_SCROLL].ltime = time(nullptr);
     lasttime[LT_KICK].interval = delay+1;
     lasttime[LT_SPELL].interval = delay+1;
     lasttime[LT_READ_SCROLL].interval = delay+1;
     if(isPlayer()) {
-        lasttime[LT_PLAYER_STUNNED].ltime = time(0);
+        lasttime[LT_PLAYER_STUNNED].ltime = time(nullptr);
         lasttime[LT_PLAYER_STUNNED].interval = delay+1;
         setFlag(P_STUNNED);
     }
@@ -974,7 +1017,7 @@ int numEnemyMonInRoom(Creature* player) {
 
 char *stripLineFeeds(char *str) {
     int n=0, i=0;
-    char *name=0;
+    char *name=nullptr;
 
     name = str;
     n = strlen(name);
@@ -1112,7 +1155,7 @@ MudObject* findCrtTarget(Creature * player, SetType& set, int findFlags, const c
 //                      findTarget
 //*********************************************************************
 
-MudObject* Creature::findTarget(int findWhere, int findFlags, bstring str, int val) {
+MudObject* Creature::findTarget(int findWhere, int findFlags, const bstring& str, int val) {
     int match=0;
     MudObject* target;
     do {
@@ -1166,7 +1209,7 @@ MudObject* Creature::findTarget(int findWhere, int findFlags, bstring str, int v
                 break;
             }
         }
-    } while(0);
+    } while(false);
 
     return(target);
 }
@@ -1214,7 +1257,7 @@ bstring timeStr(int secs) {
 //                      progressBar
 //*********************************************************************
 
-bstring progressBar(int barLength, float percentFull, bstring text, char progressChar, bool enclosed) {
+bstring progressBar(int barLength, float percentFull, const bstring& text, char progressChar, bool enclosed) {
     bstring str = "";
     int i=0, progress = (int)(barLength * percentFull);
     int lowTextBound=-1, highTextBound=-1;

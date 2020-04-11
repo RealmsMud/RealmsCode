@@ -15,15 +15,25 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "location.hpp"
-#include "login.hpp"
-#include "mud.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "startlocs.hpp"
+#include <ostream>                // for operator<<, basic_ostream, ostrings...
+
+#include "bstring.hpp"            // for bstring
+#include "catRef.hpp"             // for CatRef
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for dmStartLocs
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player, Creature
+#include "flags.hpp"              // for P_CHAOTIC, P_CHOSEN_ALIGNMENT, P_HA...
+#include "global.hpp"             // for CreatureClass, HUMAN, CastType, Cre...
+#include "location.hpp"           // for Location
+#include "login.hpp"              // for addStartingItem
+#include "magic.hpp"              // for checkRefusingMagic, SpellData, splBind
+#include "mud.hpp"                // for DL_TELEP
+#include "proto.hpp"              // for up, broadcast, dec_daily, low, isCt
+#include "raceData.hpp"           // for RaceData
+#include "rooms.hpp"              // for UniqueRoom, BaseRoom, AreaRoom
+#include "startlocs.hpp"          // for StartLoc
+#include "structs.hpp"            // for daily
 
 
 //*********************************************************************

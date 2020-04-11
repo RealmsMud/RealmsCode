@@ -16,11 +16,15 @@
  *
  */
 
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "mud.hpp"
-#include "playerTitle.hpp"
+#include <cstring>                // for strcmp
+#include <map>                    // for operator==, operator!=, allocator
+
+#include "bstring.hpp"            // for bstring
+#include "cmd.hpp"                // for cmd
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player
+#include "deityData.hpp"          // for DeityData
+#include "playerTitle.hpp"        // for PlayerTitle
 
 //**********************************************************************
 //                      getDeity

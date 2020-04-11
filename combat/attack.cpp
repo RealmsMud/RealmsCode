@@ -16,17 +16,35 @@
  *
  */
 
+#include <cstring>               // for strcpy
+#include <ctime>                 // for time
+#include <map>                    // for operator==, operator!=
+
 // Mud includes
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "factions.hpp"
-#include "mud.hpp"
-#include "playerClass.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "socket.hpp"
+#include "bstring.hpp"            // for bstring, operator+
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for cmdAttack
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player, Creature, Monster, ATTACK_BASH
+#include "damage.hpp"             // for Damage, REFLECTED_FIRE_SHIELD
+#include "deityData.hpp"          // for DeityData
+#include "effects.hpp"            // for EffectInfo
+#include "factions.hpp"           // for Faction
+#include "flags.hpp"              // for P_SITTING, M_UNKILLABLE, P_CHAOTIC
+#include "global.hpp"             // for CreatureClass, WIELD, HELD, ARAMON
+#include "magic.hpp"              // for get_spell_function, splOffensive
+#include "monType.hpp"            // for noLivingVulnerabilities, ARACHNID
+#include "mud.hpp"                // for LT_MAUL, ospell, LT
+#include "objects.hpp"            // for Object
+#include "playerClass.hpp"        // for PlayerClass
+#include "proto.hpp"              // for broadcast, bonus, get_spell_lvl, isDm
+#include "raceData.hpp"           // for RaceData
+#include "random.hpp"             // for Random
+#include "realm.hpp"              // for NO_REALM, Realm, FIRE
+#include "rooms.hpp"              // for BaseRoom
+#include "statistics.hpp"         // for Statistics
+#include "structs.hpp"            // for osp_t
+#include "utils.hpp"              // for MAX, MIN
 
 
 Creature* Creature::findVictim(const bstring& toFind, int num, bool aggressive, bool selfOk, const bstring& noVictim, const bstring& notFound) {
@@ -129,7 +147,8 @@ bool Creature::canAttack(Creature* target, bool stealing) {
     bool    holy_war;
     bstring verb = stealing ? "steal from" : "attack";
 
-    ASSERTLOG( target );
+    if (!target)
+        return(false);
 
     // monsters don't use this function, but pets have to obey their masters
     if(!pThis) {

@@ -16,25 +16,36 @@
  *
  */
 
-// C includes
-#include <arpa/telnet.h>
-#include <math.h>
+#include <cstdio>         // for sprintf
+#include <ctime>          // for ctime
+#include <iomanip>         // for operator<<, setw, setfill
+#include <ostream>         // for operator<<, basic_ostream, ostringstream
+#include <string>          // for char_traits, operator<<, basic_string, ope...
 
-#include <iomanip>
-#include <locale>
+#include "bstring.hpp"     // for bstring, operator+
+#include "clans.hpp"       // for Clan
+#include "cmd.hpp"         // for cmd
+#include "commands.hpp"    // for spellsUnder, cmdDaily, cmdScore
+#include "config.hpp"      // for Config, gConfig
+#include "creatures.hpp"   // for Player
+#include "deityData.hpp"   // for DeityData
+#include "effects.hpp"     // for EffectInfo
+#include "flags.hpp"       // for P_AFK, P_PTESTER, P_CHAOTIC, P_CHARMED
+#include "free_crt.hpp"    // for free_crt
+#include "global.hpp"      // for CreatureClass, CreatureClass::CLERIC, Crea...
+#include "location.hpp"    // for Location
+#include "magic.hpp"       // for S_HEAL, S_TELEPORT, S_TRACK
+#include "money.hpp"       // for Money, GOLD
+#include "mud.hpp"         // for DL_RESURRECT, DL_HANDS, DL_BROAD, DL_ENCHA
+#include "proto.hpp"       // for up, getClassName, getSizeName
+#include "raceData.hpp"    // for RaceData
+#include "rooms.hpp"       // for BaseRoom
+#include "server.hpp"      // for Server, gServer
+#include "socket.hpp"      // for Socket
+#include "utils.hpp"       // for MIN
+#include "xml.hpp"         // for loadPlayer
 
-// Mud includes
-#include "clans.hpp"
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "mud.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
+class Object;
 
 
 //*********************************************************************
@@ -87,7 +98,7 @@ int cmdScore(Player* player, cmd* cmnd) {
 // experience, gold and level.
 
 void Player::score(const Player* viewer) {
-    const EffectInfo* eff=0;
+    const EffectInfo* eff=nullptr;
     int     i=0;
 
     std::ostringstream oStr;
@@ -201,7 +212,7 @@ void Player::score(const Player* viewer) {
     viewer->printColor("Your size is: ^y%s^x.\n", getSizeName(getSize()).c_str());
 
     // show spells under also
-    spellsUnder(viewer, this, false);
+    spellsUnder(viewer, this, viewer != this);
 
     if(getWarnings()) {
         viewer->printColor("\n^BWarnings: ");
@@ -353,7 +364,7 @@ void Player::information(const Player* viewer, bool online) {
     oStr.imbue(std::locale(isStaff() ? "C" : ""));
     oStr << std::setfill(' ')
          << "+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+\n";
-    if(lastPassword != "" && viewer && viewer->isDm())
+    if(!lastPassword.empty() && viewer && viewer->isDm())
         oStr << "| Last Password: " << std::setw(14) << lastPassword << "                               ^W|\\^x            |\n";
     else
         oStr << "|                                                             ^W|\\^x            |\n";

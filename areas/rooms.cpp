@@ -15,18 +15,39 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <sstream>
+#include <cstdio>                 // for sprintf
+#include <cstring>                // for memset, strcat, strcpy
+#include <ctime>                  // for time
+#include <unistd.h>               // for unlink
+#include <algorithm>              // for find
+#include <sstream>                // for operator<<, basic_ostream, ostrings...
 
-#include "catRefInfo.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "effects.hpp"
-#include "move.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
+#include "area.hpp"               // for MapMarker, Area, AreaZone, TileInfo
+#include "bstring.hpp"            // for bstring, operator+
+#include "catRef.hpp"             // for CatRef
+#include "catRefInfo.hpp"         // for CatRefInfo, CatRefInfo::limbo, CatR...
+#include "config.hpp"             // for Config, gConfig
+#include "container.hpp"          // for PlayerSet, MonsterSet, ObjectSet
+#include "creatures.hpp"          // for Player, Creature, Monster
+#include "enums/loadType.hpp"     // for LoadType, LoadType::LS_BACKUP
+#include "exits.hpp"              // for Exit
+#include "flags.hpp"              // for R_LIMBO, R_VAMPIRE_COVEN, R_DARK_AL...
+#include "global.hpp"             // for HELD, ARACHNUS, ARAMON, ARES, CERIS
+#include "hooks.hpp"              // for Hooks
+#include "location.hpp"           // for Location
+#include "move.hpp"               // for deletePortal
+#include "mud.hpp"                // for MAX_MOBS_IN_ROOM
+#include "objects.hpp"            // for Object
+#include "proto.hpp"              // for link_rom, isDay, broadcast, getReal...
+#include "random.hpp"             // for Random
+#include "realm.hpp"              // for Realm
+#include "rooms.hpp"              // for AreaRoom, BaseRoom, UniqueRoom, Exi...
+#include "server.hpp"             // for Server, gServer, RoomCache
+#include "size.hpp"               // for Size, NO_SIZE, SIZE_COLOSSAL
+#include "socket.hpp"             // for Socket
+#include "utils.hpp"              // for MAX
+#include "wanderInfo.hpp"         // for WanderInfo
+#include "xml.hpp"                // for NODE_NAME, copyToBool, newStringChild
 
 
 BaseRoom::BaseRoom() {
@@ -37,7 +58,7 @@ BaseRoom::BaseRoom() {
 
 
 bstring BaseRoom::getVersion() const { return(version); }
-void BaseRoom::setVersion(bstring v) { version = v; }
+void BaseRoom::setVersion(const bstring& v) { version = v; }
 
 
 bstring BaseRoom::fullName() const {
@@ -105,10 +126,10 @@ void UniqueRoom::setLowLevel(short lvl) { lowLevel = MAX<short>(0, lvl); }
 void UniqueRoom::setHighLevel(short lvl) { highLevel = MAX<short>(0, lvl); }
 void UniqueRoom::setMaxMobs(short m) { maxmobs = MAX<short>(0, m); }
 void UniqueRoom::setTrap(short t) { trap = t; }
-void UniqueRoom::setTrapExit(CatRef t) { trapexit = t; }
+void UniqueRoom::setTrapExit(const CatRef& t) { trapexit = t; }
 void UniqueRoom::setTrapWeight(short weight) { trapweight = MAX<short>(0, weight); }
 void UniqueRoom::setTrapStrength(short strength) { trapstrength = MAX<short>(0, strength); }
-void UniqueRoom::setFaction(bstring f) { faction = f; }
+void UniqueRoom::setFaction(const bstring& f) { faction = f; }
 void UniqueRoom::incBeenHere() { beenhere++; }
 void UniqueRoom::setRoomExperience(int exp) { roomExp = MAX(0, exp); }
 void UniqueRoom::setSize(Size s) { size = s; }
@@ -127,7 +148,7 @@ void BaseRoom::BaseDestroy() {
     }
     objects.clear();
 
-    MonsterSet::iterator mIt = monsters.begin();
+    auto mIt = monsters.begin();
     while(mIt != monsters.end()) {
         Monster* mons = (*mIt++);
         free_crt(mons);
@@ -166,7 +187,7 @@ bool AreaRoom::operator< (const AreaRoom& t) const {
 //*********************************************************************
 
 void AreaRoom::reset() {
-    area = 0;
+    area = nullptr;
     decCompass = needsCompass = stayInMemory = false;
 
     ExitList::iterator xit;
@@ -237,7 +258,7 @@ void AreaRoom::setMapMarker(const MapMarker* m) {
 //                      updateExits
 //*********************************************************************
 
-bool AreaRoom::updateExit(bstring dir) {
+bool AreaRoom::updateExit(const bstring& dir) {
     if(dir == "north") {
         mapmarker.add(0, 1, 0);
         link_rom(this, &mapmarker, dir);
@@ -346,8 +367,8 @@ bool AreaRoom::canSave() const {
 
 WanderInfo* AreaRoom::getRandomWanderInfo() {
     std::list<AreaZone*>::iterator it;
-    AreaZone *zone=0;
-    TileInfo* tile=0;
+    AreaZone *zone=nullptr;
+    TileInfo* tile=nullptr;
     std::map<int, WanderInfo*> w;
     int i=0;
 
@@ -359,12 +380,12 @@ WanderInfo* AreaRoom::getRandomWanderInfo() {
         }
     }
 
-    tile = area->getTile(area->getTerrain(0, &mapmarker, 0, 0, 0, true), area->getSeasonFlags(&mapmarker));
+    tile = area->getTile(area->getTerrain(nullptr, &mapmarker, 0, 0, 0, true), area->getSeasonFlags(&mapmarker));
     if(tile && tile->wander.getTraffic())
         w[i++] = &tile->wander;
 
     if(!i)
-        return(0);
+        return(nullptr);
     return(w[Random::get(0,i-1)]);
 }
 
@@ -380,60 +401,7 @@ WanderInfo* BaseRoom::getWanderInfo() {
     AreaRoom* aRoom = getAsAreaRoom();
     if(aRoom)
         return(aRoom->getRandomWanderInfo());
-    return(0);
-}
-
-//*********************************************************************
-//                      save
-//*********************************************************************
-
-void AreaRoom::save(Player* player) const {
-    char            filename[256];
-
-    sprintf(filename, "%s/%d/", Path::AreaRoom, area->id);
-    Path::checkDirExists(filename);
-    strcat(filename, mapmarker.filename().c_str());
-
-    if(!canSave()) {
-        if(file_exists(filename)) {
-            if(player)
-                player->print("Restoring this room to generic status.\n");
-            unlink(filename);
-        } else {
-            if(player)
-                player->print("There is no reason to save this room!\n\n");
-        }
-        return;
-    }
-
-    // record rooms saved during swap
-    if(gConfig->swapIsInteresting(this))
-        gConfig->swapLog((bstring)"a" + mapmarker.str(), false);
-
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr      rootNode, curNode;
-
-    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "AreaRoom", nullptr);
-    xmlDocSetRootElement(xmlDoc, rootNode);
-
-    unique.save(rootNode, "Unique", false);
-    xml::saveNonZeroNum(rootNode, "NeedsCompass", needsCompass);
-    xml::saveNonZeroNum(rootNode, "DecCompass", decCompass);
-    effects.save(rootNode, "Effects");
-    hooks.save(rootNode, "Hooks");
-
-    curNode = xml::newStringChild(rootNode, "MapMarker");
-    mapmarker.save(curNode);
-
-    curNode = xml::newStringChild(rootNode, "Exits");
-    saveExitsXml(curNode);
-
-    xml::saveFile(filename, xmlDoc);
-    xmlFreeDoc(xmlDoc);
-
-    if(player)
-        player->print("Room saved.\n");
+    return(nullptr);
 }
 
 //*********************************************************************
@@ -442,7 +410,7 @@ void AreaRoom::save(Player* player) const {
 
 bool BaseRoom::delExit(Exit *exit) {
     if(exit) {
-        ExitList::iterator xit = std::find(exits.begin(), exits.end(), exit);
+        auto xit = std::find(exits.begin(), exits.end(), exit);
         if(xit != exits.end()) {
             exits.erase(xit);
             delete exit;
@@ -451,7 +419,7 @@ bool BaseRoom::delExit(Exit *exit) {
     }
     return(false);
 }
-bool BaseRoom::delExit( bstring dir) {
+bool BaseRoom::delExit( const bstring& dir) {
     for(Exit* ext : exits) {
         if(ext->getName() == dir.c_str()) {
 
@@ -476,32 +444,6 @@ void BaseRoom::clearExits() {
         delete exit;
     }
     exits.clear();
-}
-//*********************************************************************
-//                      load
-//*********************************************************************
-
-void AreaRoom::load(xmlNodePtr rootNode) {
-    xmlNodePtr childNode = rootNode->children;
-
-    clearExits();
-
-    while(childNode) {
-        if(NODE_NAME(childNode, "Exits"))
-            readExitsXml(childNode);
-        else if(NODE_NAME(childNode, "MapMarker")) {
-            mapmarker.load(childNode);
-            area->rooms[mapmarker.str()] = this;
-        }
-        else if(NODE_NAME(childNode, "Unique")) unique.load(childNode);
-        else if(NODE_NAME(childNode, "NeedsCompass")) xml::copyToBool(needsCompass, childNode);
-        else if(NODE_NAME(childNode, "DecCompass")) xml::copyToBool(decCompass, childNode);
-        else if(NODE_NAME(childNode, "Effects")) effects.load(childNode);
-        else if(NODE_NAME(childNode, "Hooks")) hooks.load(childNode);
-
-        childNode = childNode->next;
-    }
-    addEffectsIndex();
 }
 
 //*********************************************************************
@@ -571,21 +513,6 @@ bool AreaRoom::isInteresting(const Player *viewer) const {
     // Fewer than 8 exits
     if( i < 7 )
         return(true);
-//  xp = first_ext;
-//  for(i=0; i<8; i++) {
-//      if(!xp)
-//          return(true);
-//      if(strcmp(xp->ext->name, exitNameByOrder(i)))
-//          return(true);
-//      xp = xp->next_tag;
-//  }
-//
-    // check out the remaining exits
-//  while(xp) {
-//      if(viewer->showExit(xp->ext))
-//          return(true);
-//      xp = xp->next_tag;
-//  }
 
     return(false);
 }
@@ -598,7 +525,6 @@ bool AreaRoom::flagIsSet(int flag) const {
 
 void AreaRoom::setFlag(int flag) {
     std::clog << "Trying to set a flag on an area room!" << std::endl;
-    return;
 }
 bool UniqueRoom::flagIsSet(int flag) const {
     return(flags[flag/8] & 1<<(flag%8));
@@ -676,7 +602,7 @@ void BaseRoom::addExit(Exit *ext) {
 // re-shut/re-closed.
 //
 void BaseRoom::checkExits() {
-    long    t = time(0);
+    long    t = time(nullptr);
 
     for(Exit* ext : exits) {
         if( ext->flagIsSet(X_LOCKABLE) && (ext->ltime.ltime + ext->ltime.interval) < t)
@@ -928,9 +854,8 @@ bool BaseRoom::isDropDestroy() const {
     if(!flagIsSet(R_DESTROYS_ITEMS))
         return(false);
     const AreaRoom* aRoom = getAsConstAreaRoom();
-    if(aRoom && aRoom->area->isRoad(aRoom->mapmarker.getX(), aRoom->mapmarker.getY(), aRoom->mapmarker.getZ(), true))
-        return(false);
-    return(true);
+    return !(aRoom &&
+             aRoom->area->isRoad(aRoom->mapmarker.getX(), aRoom->mapmarker.getY(), aRoom->mapmarker.getZ(), true));
 }
 bool BaseRoom::hasRealmBonus(Realm realm) const {
     return(flagIsSet(R_ROOM_REALM_BONUS) && flagIsSet(getRealmRoomBonusFlag(realm)));
@@ -945,7 +870,7 @@ Monster* BaseRoom::getTollkeeper() const {
         if(!mons->isPet() && mons->flagIsSet(M_TOLLKEEPER))
             return(mons->getAsMonster());
     }
-    return(0);
+    return(nullptr);
 }
 
 //*********************************************************************
@@ -985,7 +910,7 @@ bool BaseRoom::isSunlight() const {
         return(false);
 
     const UniqueRoom* uRoom = getAsConstUniqueRoom();
-    const CatRefInfo* cri=0;
+    const CatRefInfo* cri=nullptr;
     if(uRoom)
         cri = gConfig->getCatRefInfo(uRoom->info.area);
 
@@ -1027,23 +952,23 @@ void UniqueRoom::destroy() {
 //*********************************************************************
 
 void BaseRoom::expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelStaff) {
-    Player* target=0;
-    BaseRoom* newRoom=0;
-    UniqueRoom* uRoom=0;
+    Player* target=nullptr;
+    BaseRoom* newRoom=nullptr;
+    UniqueRoom* uRoom=nullptr;
 
     // allow them to be sent to the room's trap exit
     if(useTrapExit) {
         uRoom = getAsUniqueRoom();
         if(uRoom) {
             CatRef cr = uRoom->getTrapExit();
-            uRoom = 0;
+            uRoom = nullptr;
             if(cr.id && loadRoom(cr, &uRoom))
                 newRoom = uRoom;
         }
     }
 
-    PlayerSet::iterator pIt = players.begin();
-    PlayerSet::iterator pEnd = players.end();
+    auto pIt = players.begin();
+    auto pEnd = players.end();
     while(pIt != pEnd) {
         target = (*pIt++);
 
@@ -1075,11 +1000,11 @@ void BaseRoom::expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelS
 //                      getSpecialArea
 //*********************************************************************
 
-Location getSpecialArea(int (CatRefInfo::*toCheck), CatRef cr) {
-    return(getSpecialArea(toCheck, 0, cr.area, cr.id));
+Location getSpecialArea(int (CatRefInfo::*toCheck), const CatRef& cr) {
+    return(getSpecialArea(toCheck, nullptr, cr.area, cr.id));
 }
 
-Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, bstring area, short id) {
+Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, const bstring& area, short id) {
     Location l;
 
     if(creature) {
@@ -1090,7 +1015,7 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, bs
             l.room.setArea(creature->currentLocation.room.area);
         }
     }
-    if(area != "")
+    if(!area.empty())
         l.room.setArea(area);
     if(id)
         l.room.id = id;
@@ -1141,13 +1066,13 @@ bool hearBroadcast(Creature* target, Socket* ignore1, Socket* ignore2, bool show
 void BaseRoom::print(Socket* ignore, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    doPrint(0, ignore, nullptr, fmt, ap);
+    doPrint(nullptr, ignore, nullptr, fmt, ap);
     va_end(ap);
 }
 void BaseRoom::print(Socket* ignore1, Socket* ignore2, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    doPrint(0, ignore1, ignore2, fmt, ap);
+    doPrint(nullptr, ignore1, ignore2, fmt, ap);
     va_end(ap);
 }
 

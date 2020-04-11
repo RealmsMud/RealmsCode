@@ -7,7 +7,7 @@
 
 #include "bstring.hpp"
 
-#include <string.h>  // memset
+#include <cstring>  // memset
 
 typedef int (*SONGFN)();
 

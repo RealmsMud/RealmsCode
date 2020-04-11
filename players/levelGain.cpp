@@ -15,19 +15,35 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "bank.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "levelGain.hpp"
-#include "mud.hpp"
-#include "playerClass.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "skillGain.hpp"
-#include "web.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
+#include <ctime>                                    // for time
+
+#include "bank.hpp"                                 // for Bank
+#include "bstring.hpp"                              // for bstring, operator+
+#include "config.hpp"                               // for Config, gConfig
+#include "creatures.hpp"                            // for Player
+#include "deityData.hpp"                            // for DeityData
+#include "flags.hpp"                                // for P_CHOSEN_ALIGNMENT
+#include "global.hpp"                               // for CreatureClass, POI
+#include "levelGain.hpp"                            // for LevelGain
+#include "magic.hpp"                                // for S_BLOODFUSION
+#include "money.hpp"                                // for GOLD, Money
+#include "mud.hpp"                                  // for ALIGNMENT_LEVEL
+#include "os.hpp"                                   // for merror
+#include "playerClass.hpp"                          // for PlayerClass
+#include "proto.hpp"                                // for updateGuild, broa...
+#include "raceData.hpp"                             // for RaceData
+#include "rooms.hpp"                                // for BaseRoom
+#include "server.hpp"                               // for GOLD_OUT, Server
+#include "skillGain.hpp"                            // for SkillGain
+#include "statistics.hpp"                           // for LevelInfo, Statis...
+#include "stats.hpp"                                // for Stat, MOD_CUR_MAX
+#include "structs.hpp"                              // for saves
+#include "utils.hpp"                                // for MIN
+#include "web.hpp"                                  // for updateRecentActivity
+#include "xml.hpp"                                  // for NODE_NAME, copyTo...
+
+class cmd;
 
 char statStr[][5] = {
     "NONE", "STR", "DEX", "CON", "INT", "PTY", "CHA"
@@ -105,7 +121,7 @@ void LevelGain::load(xmlNodePtr rootNode) {
             xmlNodePtr skillNode = curNode->children;
             while(skillNode) {
                 if(NODE_NAME(skillNode, "Skill")) {
-                    SkillGain* skillGain = new SkillGain(skillNode);
+                    auto* skillGain = new SkillGain(skillNode);
                     skills.push_back(skillGain);
                 }
                 skillNode = skillNode->next;
@@ -116,58 +132,14 @@ void LevelGain::load(xmlNodePtr rootNode) {
     }
 }
 
-//*********************************************************************
-//                      hasSkills
-//*********************************************************************
-
 bool LevelGain::hasSkills() { return(!skills.empty()); }
-
-//*********************************************************************
-//                      getSkillBegin
-//*********************************************************************
-
 std::list<SkillGain*>::const_iterator LevelGain::getSkillBegin() { return(skills.begin()); }
-
-//*********************************************************************
-//                      getSkillEnd
-//*********************************************************************
-
 std::list<SkillGain*>::const_iterator LevelGain::getSkillEnd() { return(skills.end()); }
-
-//*********************************************************************
-//                      getStatStr
-//*********************************************************************
-
 bstring LevelGain::getStatStr() { return(statStr[stat]); }
-
-//*********************************************************************
-//                      getSaveStr
-//*********************************************************************
-
 bstring LevelGain::getSaveStr() { return(saveStr[save]); }
-
-//*********************************************************************
-//                      getStat
-//*********************************************************************
-
 int LevelGain::getStat() { return(stat); }
-
-//*********************************************************************
-//                      getSave
-//*********************************************************************
-
 int LevelGain::getSave() { return(save); }
-
-//*********************************************************************
-//                      getHp
-//*********************************************************************
-
 int LevelGain::getHp() { return(hp); }
-
-//*********************************************************************
-//                      getMp
-//*********************************************************************
-
 int LevelGain::getMp() { return(mp); }
 
 //*********************************************************************
@@ -209,7 +181,7 @@ void Player::upLevel() {
 
     PlayerClass *pClass = gConfig->classes[getClassString()];
     const RaceData* rData = gConfig->getRace(race);
-    LevelGain *lGain = 0;
+    LevelGain *lGain = nullptr;
 
     if(level == actual_level)
         actual_level++;
@@ -305,7 +277,7 @@ void Player::upLevel() {
 
 
         // Add gains here
-        StatModifier* newMod = new StatModifier(modName, 10, MOD_CUR_MAX);
+        auto* newMod = new StatModifier(modName, 10, MOD_CUR_MAX);
         switch(statGain) {
         case STR:
             addStatModifier("strength", newMod);
@@ -362,7 +334,7 @@ void Player::upLevel() {
         }
 
         if(!relevel) {
-            statistics.setLevelInfo(level, new LevelInfo(level, hpAmt, mpAmt, statGain, saveGain, time(0)));
+            statistics.setLevelInfo(level, new LevelInfo(level, hpAmt, mpAmt, statGain, saveGain, time(nullptr)));
 
             // Saving throw bug fix: Spells and mental saving throws will now be
             // properly reset so they can increase like the other ones  -Bane
@@ -461,7 +433,7 @@ void Player::downLevel() {
 
 
     PlayerClass *pClass = gConfig->classes[getClassString()];
-    LevelGain *lGain = 0;
+    LevelGain *lGain = nullptr;
 
     // Check for level info
     if(!pClass) {
@@ -593,7 +565,7 @@ int cmdTrain(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    expneeded = gConfig->expNeeded(player->getLevel());
+    expneeded = Config::expNeeded(player->getLevel());
 
     if(player->getLevel() < 19)
         maxgold = 750000;
@@ -652,7 +624,7 @@ int cmdTrain(Player* player, cmd* cmnd) {
         } else
             player->coins.sub(goldneeded, GOLD);
     }
-    gServer->logGold(GOLD_OUT, player, Money(goldneeded, GOLD), nullptr, "Training");
+    Server::logGold(GOLD_OUT, player, Money(goldneeded, GOLD), nullptr, "Training");
 
     doTrain(player);
 

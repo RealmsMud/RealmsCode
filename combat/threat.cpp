@@ -15,15 +15,25 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <iomanip>
+#include <cassert>                // for assert
+#include <cstring>                // for strcasecmp
+#include <ctime>                  // for time
+#include <functional>             // for less
+#include <iostream>               // for operator<<, ostream, basic_ostream
+#include <map>                    // for operator==, operator!=
+#include <string>                 // for operator<<, char_traits, operator==
 
-// Mud Includes
-#include "commands.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "threat.hpp"
+#include "bstring.hpp"            // for bstring
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for cmdAssist, cmdTarget
+#include "creatures.hpp"          // for Creature, Player, Monster
+#include "flags.hpp"              // for P_COMPACT, P_NO_AUTO_TARGET
+#include "mudObject.hpp"          // for MudObject
+#include "os.hpp"                 // for ASSERTLOG
+#include "proto.hpp"              // for lowercize
+#include "rooms.hpp"              // for BaseRoom
+#include "server.hpp"             // for Server, gServer
+#include "threat.hpp"             // for ThreatTable, ThreatEntry, ThreatMap
 
 
 //################################################################################

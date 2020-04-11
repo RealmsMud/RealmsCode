@@ -16,12 +16,16 @@
  *
  */
 
-#include "calendar.hpp"
-#include "catRef.hpp"
-#include "catRefInfo.hpp"
-#include "config.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
+#include <ostream>                // for ostringstream, basic_ostream, basic...
+
+#include "bstring.hpp"            // for bstring
+#include "calendar.hpp"           // for cSeason, Calendar, cWeather (ptr only)
+#include "catRefInfo.hpp"         // for CatRefInfo
+#include "config.hpp"             // for Config, gConfig
+#include "proto.hpp"              // for broadcast, isCt
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom, AreaRoom, UniqueRoom
+#include "season.hpp"             // for Season
 
 //*********************************************************************
 //                      CatRefInfo

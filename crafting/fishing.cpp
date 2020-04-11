@@ -15,17 +15,30 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "area.hpp"
-#include "calendar.hpp"
-#include "catRefInfo.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "fishing.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "unique.hpp"
-#include "xml.hpp"
+#include <cstring>                                  // for strcmp
+#include <ostream>                                  // for operator<<, basic...
+
+#include "area.hpp"                                 // for Area, AreaZone
+#include "bstring.hpp"                              // for bstring
+#include "catRef.hpp"                               // for CatRef
+#include "catRefInfo.hpp"                           // for CatRefInfo
+#include "cmd.hpp"                                  // for cmd
+#include "config.hpp"                               // for Config, gConfig
+#include "creatures.hpp"                            // for Player, Monster
+#include "delayedAction.hpp"                        // for ActionFish, Delay...
+#include "fishing.hpp"                              // for FishingItem, Fishing
+#include "flags.hpp"                                // for O_FISHING
+#include "global.hpp"                               // for HELD, DEFAULT_WEA...
+#include "objects.hpp"                              // for Object
+#include "proto.hpp"                                // for broadcast, isDay
+#include "random.hpp"                               // for Random
+#include "rooms.hpp"                                // for AreaRoom, UniqueRoom
+#include "server.hpp"                               // for Server, gServer
+#include "unique.hpp"                               // for Lore, Unique
+#include "utils.hpp"                                // for MAX, MIN
+#include "xml.hpp"                                  // for loadObject
+
+class Socket;
 
 //**********************************************************************
 //                      canFish
@@ -53,7 +66,7 @@ bool canFish(const Player* player, const Fishing** list, Object** pole) {
         }
         if(player->isEffected("berserk")) {
             player->print("You are too angry to go fishing!\n");
-            return(0);
+            return(false);
         }
 
         if(!*pole || !(*pole)->flagIsSet(O_FISHING)) {
@@ -79,7 +92,7 @@ bool canFish(const Player* player, const Fishing** list, Object** pole) {
 //                      failFishing
 //**********************************************************************
 
-bool failFishing(Player* player, bstring adminMsg, bool almost=true) {
+bool failFishing(Player* player, const bstring& adminMsg, bool almost=true) {
     if(almost) {
         switch(Random::get(0,1)) {
         case 1:
@@ -114,10 +127,10 @@ bool failFishing(Player* player, bstring adminMsg, bool almost=true) {
 bool hearMobAggro(Socket* sock);
 
 bool doFish(Player* player) {
-    const Fishing* list=0;
-    const FishingItem* item=0;
-    Monster* monster=0;
-    Object* pole=0, *fish=0;
+    const Fishing* list=nullptr;
+    const FishingItem* item=nullptr;
+    Monster* monster=nullptr;
+    Object* pole=nullptr, *fish=nullptr;
     double chance=0.0, comp=0.0, skill=0.0, quality=0.0;
     bool day = isDay();
 
@@ -265,8 +278,8 @@ void doFish(const DelayedAction* action) {
 //**********************************************************************
 
 int cmdFish(Player* player, cmd* cmnd) {
-    const Fishing* list=0;
-    Object* pole=0;
+    const Fishing* list=nullptr;
+    Object* pole=nullptr;
 
     player->unhide();
 
@@ -279,7 +292,7 @@ int cmdFish(Player* player, cmd* cmnd) {
         return(0);
 
     player->interruptDelayedActions();
-    gServer->addDelayedAction(doFish, player, 0, ActionFish, 10 - (int)(player->getSkillLevel("fishing") / 10) - Random::get(0,3));
+    gServer->addDelayedAction(doFish, player, nullptr, ActionFish, 10 - (int)(player->getSkillLevel("fishing") / 10) - Random::get(0,3));
 
     player->print("You begin fishing.\n");
     broadcast(player->getSock(), player->getParent(), "%M begins fishing.", player);
@@ -295,58 +308,17 @@ FishingItem::FishingItem() {
     weight = minQuality = minSkill = exp = 0;
 }
 
-//*********************************************************************
-//                      getFish
-//*********************************************************************
-
 CatRef FishingItem::getFish() const { return(fish); }
 
-//*********************************************************************
-//                      isDayOnly
-//*********************************************************************
-
 bool FishingItem::isDayOnly() const { return(dayOnly); }
-
-//*********************************************************************
-//                      isNightOnly
-//*********************************************************************
-
 bool FishingItem::isNightOnly() const { return(nightOnly); }
 
-//*********************************************************************
-//                      getWeight
-//*********************************************************************
-
 short FishingItem::getWeight() const { return(weight); }
-
-//*********************************************************************
-//                      getMinQuality
-//*********************************************************************
-
 short FishingItem::getMinQuality() const { return(minQuality); }
-
-//*********************************************************************
-//                      getMinSkill
-//*********************************************************************
-
 short FishingItem::getMinSkill() const { return(minSkill); }
-
-//*********************************************************************
-//                      getExp
-//*********************************************************************
-
 long FishingItem::getExp() const { return(exp); }
 
-//*********************************************************************
-//                      isMonster
-//*********************************************************************
-
 bool FishingItem::isMonster() const { return(monster); }
-
-//*********************************************************************
-//                      willAggro
-//*********************************************************************
-
 bool FishingItem::willAggro() const { return(aggro); }
 
 //*********************************************************************
@@ -384,7 +356,7 @@ const FishingItem* Fishing::getItem(short skill, short quality) const {
 
     // nothing to catch?
     if(!total)
-        return(0);
+        return(nullptr);
 
     // which item to pick?
     pick = Random::get(1, total);
@@ -399,7 +371,7 @@ const FishingItem* Fishing::getItem(short skill, short quality) const {
         if(total >= pick)
             return(&(*it));
     }
-    return(0);
+    return(nullptr);
 }
 
 //*********************************************************************
@@ -407,18 +379,18 @@ const FishingItem* Fishing::getItem(short skill, short quality) const {
 //*********************************************************************
 
 const Fishing* AreaRoom::doGetFishing(short y, short x) const {
-    const TileInfo* tile = area->getTile(area->getTerrain(0, &mapmarker, y, x, 0, true), area->getSeasonFlags(&mapmarker));
-    const AreaZone* zone=0;
-    const Fishing* list=0;
+    const TileInfo* tile = area->getTile(area->getTerrain(nullptr, &mapmarker, y, x, 0, true), area->getSeasonFlags(&mapmarker));
+    const AreaZone* zone=nullptr;
+    const Fishing* list=nullptr;
     std::list<AreaZone*>::const_iterator it;
 
     if(!tile || !tile->isWater())
-        return(0);
+        return(nullptr);
 
     // zone comes first
     for(it = area->zones.begin() ; it != area->zones.end() ; it++) {
         zone = (*it);
-        if(zone->inside(area, &mapmarker) && zone->getFishing() != "") {
+        if(zone->inside(area, &mapmarker) && !zone->getFishing().empty()) {
             list = gConfig->getFishing(zone->getFishing());
             if(list)
                 return(list);
@@ -426,7 +398,7 @@ const Fishing* AreaRoom::doGetFishing(short y, short x) const {
     }
 
     // then tile
-    if(tile->getFishing() != "") {
+    if(!tile->getFishing().empty()) {
         list = gConfig->getFishing(tile->getFishing());
         if(list)
             return(list);
@@ -434,7 +406,7 @@ const Fishing* AreaRoom::doGetFishing(short y, short x) const {
 
     // then catrefinfo
     const CatRefInfo* cri = gConfig->getCatRefInfo(this);
-    if(cri && cri->getFishing() != "") {
+    if(cri && !cri->getFishing().empty()) {
         list = gConfig->getFishing(cri->getFishing());
         if(list)
             return(list);
@@ -471,7 +443,7 @@ const Fishing* UniqueRoom::getFishing() const {
     const Fishing *list=0;
 
     // room fish list comes first
-    if(fishing != "") {
+    if(!fishing.empty()) {
         list = gConfig->getFishing(fishing);
         if(list)
             return(list);
@@ -479,13 +451,13 @@ const Fishing* UniqueRoom::getFishing() const {
 
     // then catrefinfo
     const CatRefInfo* cri = gConfig->getCatRefInfo(this);
-    if(cri && cri->getFishing() != "") {
+    if(cri && !cri->getFishing().empty()) {
         list = gConfig->getFishing(cri->getFishing());
         if(list)
             return(list);
     }
 
-    return(0);
+    return(nullptr);
 }
 
 bstring AreaZone::getFishing() const { return(fishing); }
@@ -497,87 +469,9 @@ bstring UniqueRoom::getFishingStr() const { return(fishing); }
 //                      setFishing
 //*********************************************************************
 
-void UniqueRoom::setFishing(bstring id) { fishing = id; }
+void UniqueRoom::setFishing(const bstring& id) { fishing = id; }
 
-//*********************************************************************
-//                      loadFishing
-//*********************************************************************
 
-bool Config::loadFishing() {
-    xmlDocPtr xmlDoc;
-    xmlNodePtr curNode;
-
-    char filename[80];
-    snprintf(filename, 80, "%s/fishing.xml", Path::Game);
-    xmlDoc = xml::loadFile(filename, "Fishing");
-    if(xmlDoc == nullptr)
-        return(false);
-
-    curNode = xmlDocGetRootElement(xmlDoc);
-
-    curNode = curNode->children;
-    while(curNode && xmlIsBlankNode(curNode))
-        curNode = curNode->next;
-
-    if(curNode == 0) {
-        xmlFreeDoc(xmlDoc);
-        return(false);
-    }
-
-    clearFishing();
-    bstring id = "";
-    while(curNode != nullptr) {
-        if(NODE_NAME(curNode, "List")) {
-            xml::copyPropToBString(id, curNode, "id");
-            if(id != "") {
-                Fishing list;
-                list.load(curNode);
-                list.id = id;
-                fishing[id] = list;
-            }
-        }
-        curNode = curNode->next;
-    }
-
-    xmlFreeDoc(xmlDoc);
-    xmlCleanupParser();
-    return(true);
-}
-
-//*********************************************************************
-//                      load
-//*********************************************************************
-
-void Fishing::load(xmlNodePtr rootNode) {
-    xmlNodePtr curNode = rootNode->children;
-    xml::copyPropToBString(id, rootNode, "id");
-
-    while(curNode) {
-        if(NODE_NAME(curNode, "Item")) {
-            FishingItem item;
-            item.load(curNode);
-            items.push_back(item);
-        }
-        curNode = curNode->next;
-    }
-}
-
-void FishingItem::load(xmlNodePtr rootNode) {
-    xmlNodePtr curNode = rootNode->children;
-
-    while(curNode) {
-             if(NODE_NAME(curNode, "Fish")) fish.load(curNode);
-        else if(NODE_NAME(curNode, "DayOnly")) dayOnly = true;
-        else if(NODE_NAME(curNode, "NightOnly")) nightOnly = true;
-        else if(NODE_NAME(curNode, "Weight")) xml::copyToNum(weight, curNode);
-        else if(NODE_NAME(curNode, "Experience")) xml::copyToNum(exp, curNode);
-        else if(NODE_NAME(curNode, "MinQuality")) xml::copyToNum(minQuality, curNode);
-        else if(NODE_NAME(curNode, "MinSkill")) xml::copyToNum(minSkill, curNode);
-        else if(NODE_NAME(curNode, "Monster")) monster = true;
-        else if(NODE_NAME(curNode, "Aggro")) aggro = true;
-        curNode = curNode->next;
-    }
-}
 
 //*********************************************************************
 //                      clearFishing
@@ -591,11 +485,11 @@ void Config::clearFishing() {
 //                      getFishing
 //*********************************************************************
 
-const Fishing *Config::getFishing(bstring id) const {
-    std::map<bstring, Fishing>::const_iterator it = fishing.find(id);
+const Fishing *Config::getFishing(const bstring& id) const {
+    auto it = fishing.find(id);
 
     if(it == fishing.end())
-        return(0);
+        return(nullptr);
 
     return(&(*it).second);
 }
@@ -608,10 +502,10 @@ int dmFishing(Player* player, cmd* cmnd) {
     std::map<bstring, Fishing>::const_iterator it;
     std::list<FishingItem>::const_iterator ft;
     std::ostringstream oStr;
-    const Fishing *list=0;
-    const FishingItem *item=0;
-    Object* fish=0;
-    Monster* monster=0;
+    const Fishing *list=nullptr;
+    const FishingItem *item=nullptr;
+    Object* fish=nullptr;
+    Monster* monster=nullptr;
     bstring name="";
     bool all = !strcmp(cmnd->str[1], "all");
 
@@ -645,7 +539,7 @@ int dmFishing(Player* player, cmd* cmnd) {
             }
 
 
-            if(name != "")
+            if(!name.empty())
                 oStr << "^x, ^c" << name;
             oStr << "^x\n";
 

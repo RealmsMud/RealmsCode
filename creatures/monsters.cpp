@@ -15,18 +15,35 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <math.h>
+#include <cmath>                  // for pow
+#include <cstring>                // for strcpy, strcmp
+#include <ctime>                  // for time
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "factions.hpp"
-#include "move.hpp"
-#include "rooms.hpp"
-#include "unique.hpp"
-#include "server.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include "bstring.hpp"            // for bstring
+#include "catRef.hpp"             // for CatRef
+#include "cmd.hpp"                // for cmd
+#include "container.hpp"          // for ObjectSet, PlayerSet, MonsterSet
+#include "creatures.hpp"          // for Monster, Player, Creature, NUM_ASSI...
+#include "factions.hpp"           // for Faction
+#include "flags.hpp"              // for M_FAST_WANDER, M_PERMENANT_MONSTER
+#include "global.hpp"             // for CreatureClass, CreatureClass::CLERIC
+#include "magic.hpp"              // for get_spell_function, splOffensive
+#include "monType.hpp"            // for isIntelligent
+#include "money.hpp"              // for Money, GOLD
+#include "move.hpp"               // for getString
+#include "mud.hpp"                // for ospell, PET_CAST_DELAY, LT, LT_MON_...
+#include "objects.hpp"            // for Object, ObjectType, ObjectType::MONEY
+#include "os.hpp"                 // for ASSERTLOG
+#include "proto.hpp"              // for broadcast, bonus, get_spell_lvl
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom, UniqueRoom
+#include "server.hpp"             // for Server, gServer, GOLD_OUT
+#include "socket.hpp"             // for Socket
+#include "structs.hpp"            // for osp_t
+#include "unique.hpp"             // for Unique
+#include "utils.hpp"              // for MAX, MIN
+#include "wanderInfo.hpp"         // for WanderInfo
+#include "xml.hpp"                // for loadRoom
 
 
 char Monster::mob_trade_str[][16]  = { "None", "Smithy", "Banker", "Armorer", "Weaponsmith", "Merchant", "Training Perm" };
@@ -341,10 +358,10 @@ void Monster::beneficialCaster() {
 int Monster::mobDeathScream() {
     long    i=0, t=0, n=0;
     int     death=0;
-    Creature* target=0;
+    Creature* target=nullptr;
 
     i = lasttime[LT_BERSERK].ltime;
-    t = time(0);
+    t = time(nullptr);
 
     if(t - i < 30L) // Mob has to wait 30 seconds.
         return(0);
@@ -361,8 +378,8 @@ int Monster::mobDeathScream() {
 
     broadcast(nullptr, getRoomParent(), "%M bellows out a deadly ear-splitting scream!!", this);
 
-    PlayerSet::iterator pIt = getRoomParent()->players.begin();
-    PlayerSet::iterator pEnd = getRoomParent()->players.end();
+    auto pIt = getRoomParent()->players.begin();
+    auto pEnd = getRoomParent()->players.end();
     while(pIt != pEnd) {
         target = (*pIt++);
         n = Random::get(1,15) + level; // Damage done.
@@ -394,7 +411,7 @@ int Monster::mobDeathScream() {
 
     }
 
-    return(!!death);
+    return death != 0;
 }
 
 
@@ -405,7 +422,7 @@ int Monster::mobDeathScream() {
 // designed for fast wandering, hunting mobs....like inquisitors. -- TC
 
 bool Monster::possibleEnemy() {
-    bool    possible=0, nodetect=0;
+    bool    possible=false, nodetect=false;
 
     ASSERTLOG(this);
 
@@ -414,7 +431,7 @@ bool Monster::possibleEnemy() {
         !flagIsSet(M_AGGRESSIVE_GOOD) &&
         !flagIsSet(M_AGGRESSIVE_EVIL)
     )
-        return(0);
+        return(false);
 
     for(Player* ply : getRoomParent()->players) {
         if(flagIsSet(M_AGGRESSIVE))
@@ -447,7 +464,7 @@ bool Monster::possibleEnemy() {
 // This function allows monsters to cast spells at players.
 
 int Monster::castSpell(Creature *target) {
-    Creature *temp_ptr=0;
+    Creature *temp_ptr=nullptr;
     cmd     cmnd;
     int     i=0, spl=0, c=0;
     int     known[20], knowctr=0;
@@ -565,7 +582,7 @@ int Monster::castSpell(Creature *target) {
     target->printColor("^r");
 
     SpellData data;
-    data.set(CastType::CAST, get_spell_school(spl), get_spell_domain(spl), 0, this);
+    data.set(CastType::CAST, get_spell_school(spl), get_spell_domain(spl), nullptr, this);
     data.splno = spl;
 
     if((int(*)(SpellFn, char*, osp_t*))fn == splOffensive) {
@@ -588,7 +605,7 @@ int Monster::castSpell(Creature *target) {
 bool Monster::petCaster() {
     Player *master = getPlayerMaster();
     int     heal=0;
-    long    i=0, t = time(0);
+    long    i=0, t = time(nullptr);
 
     if(!isPet() || !master || !inSameRoom(master))
         return(false);
@@ -735,7 +752,7 @@ bool hearMobAggro(Socket* sock) {
 bool Monster::checkAssist() {
     int i=0, assist=0;
 
-    Creature *crt=0;
+    Creature *crt=nullptr;
 
     for(i=0; i<NUM_ASSIST_MOB; i++) {
         if(assist_mob[i].id) {
@@ -763,15 +780,15 @@ bool Monster::checkAssist() {
                         getCName(), getRoomParent()->fullName().c_str(), crt->getCName(), hisHer());
 
                     setFlag(M_ALWAYS_ACTIVE);
-                    crt = 0;
+                    crt = nullptr;
                 }
             }
         }
     }
 
 
-    if(flagIsSet(M_WILL_BE_ASSISTED) || primeFaction != "") {
-        Creature* target=0;
+    if(flagIsSet(M_WILL_BE_ASSISTED) || !primeFaction.empty()) {
+        Creature* target=nullptr;
         if(hasEnemy()) {
             target = getTarget();
             if(target)
@@ -809,8 +826,8 @@ bool Monster::willAssist(const Monster *victim) const {
     if(!victim->info.id)
         return(false);
 
-    for(int i=0; i<NUM_ASSIST_MOB; i++) {
-        if(assist_mob[i] == victim->info)
+    for(const auto & i : assist_mob) {
+        if(i == victim->info)
             return(true);
     }
 
@@ -823,7 +840,7 @@ bool Monster::willAssist(const Monster *victim) const {
 
 void Monster::checkScavange(long t) {
     BaseRoom* room = getRoomParent();
-    Object* object=0;
+    Object* object=nullptr;
     long i=0;
 
     if(room->flagIsSet(R_SHOP_STORAGE))
@@ -1141,8 +1158,8 @@ bool Monster::checkEnemyMobs() {
 bool Monster::isEnemyMob(const Monster* target) const {
     if(target->info.id == 0)
         return(false);
-    for(int i=0 ; i<NUM_ENEMY_MOB ; i++) {
-        if(enemy_mob[i] == target->info)
+    for(const auto & i : enemy_mob) {
+        if(i == target->info)
             return(true);
     }
     return(false);
@@ -1155,7 +1172,7 @@ bool Monster::isEnemyMob(const Monster* target) const {
 // Sends a guy off to jail
 
 int Monster::toJail(Player* player) {
-    UniqueRoom* room=0;
+    UniqueRoom* room=nullptr;
     CatRef jailroom;
     jailroom.id = 2650;
     long jailtime=0;
@@ -1182,7 +1199,7 @@ int Monster::toJail(Player* player) {
         if(player->isCt())
             jailtime = 15L;
 
-        player->lasttime[LT_MOB_JAILED].ltime = time(0);
+        player->lasttime[LT_MOB_JAILED].ltime = time(nullptr);
         player->lasttime[LT_MOB_JAILED].interval = jailtime;
 
         player->print("You can get out in around %ld day%s!\n",
@@ -1206,7 +1223,7 @@ int Monster::grabCoins(Player* player) {
     // never steal all gold if they have more than 100k
     grab = MIN(grab, 100000UL);
 
-    gServer->logGold(GOLD_OUT, player, Money(grab, GOLD), this, "Mugging");
+    Server::logGold(GOLD_OUT, player, Money(grab, GOLD), this, "Mugging");
     coins.add(grab, GOLD);
     player->coins.sub(grab, GOLD);
 

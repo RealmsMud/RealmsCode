@@ -15,16 +15,24 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "login.hpp"
-#include "playerClass.hpp"
-#include "playerTitle.hpp"
-#include "mud.hpp"
-#include "socket.hpp"
-#include "xml.hpp"
+#include <cctype>                 // for isalpha
+#include <cstring>                // for strlen, size_t
+
+#include "bstring.hpp"            // for bstring, operator+
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for getFullstrText
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player
+#include "deityData.hpp"          // for DeityData
+#include "flags.hpp"              // for P_CAN_CHOOSE_CUSTOM_TITLE, P_CHOSEN...
+#include "global.hpp"             // for CreatureClass, CreatureClass::CLERIC
+#include "login.hpp"              // for CON_PLAYING, CON_CONFIRM_SURNAME
+#include "mud.hpp"                // for SURNAME_LEVEL
+#include "playerClass.hpp"        // for PlayerClass
+#include "playerTitle.hpp"        // for PlayerTitle
+#include "proto.hpp"              // for get_class_string, broadcast, low
+#include "socket.hpp"             // for Socket
+#include "structs.hpp"            // for SEX_MALE
 
 //*********************************************************************
 //                      PlayerTitle
@@ -35,18 +43,6 @@ PlayerTitle::PlayerTitle() {
     female = "";
 }
 
-//*********************************************************************
-//                      load
-//*********************************************************************
-
-void PlayerTitle::load(xmlNodePtr rootNode) {
-    xmlNodePtr curNode = rootNode->children;
-    while(curNode) {
-             if(NODE_NAME(curNode, "Female")) xml::copyToBString(female, curNode);
-        else if(NODE_NAME(curNode, "Male")) xml::copyToBString(male, curNode);
-        curNode = curNode->next;
-    }
-}
 
 //*********************************************************************
 //                      getTitle

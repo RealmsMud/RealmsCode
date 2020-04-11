@@ -15,16 +15,29 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "deityData.hpp"
-#include "effects.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "specials.hpp"
-#include "xml.hpp"
+#include <cstring>               // for strncmp
+#include <ctime>                 // for time
+#include <list>                   // for operator==, operator!=
+#include <ostream>                // for operator<<, basic_ostream, basic_os...
+#include <string>                 // for operator==, operator<<, basic_string
+
+#include "bstring.hpp"            // for bstring
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for cmdNoAuth, dmSpecials
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Creature, Player, Monster, ATTACK_B...
+#include "damage.hpp"             // for Damage
+#include "deityData.hpp"          // for DeityData
+#include "flags.hpp"              // for M_NO_CIRCLE, P_UNCONSCIOUS
+#include "global.hpp"             // for CreatureClass, CAP, CreatureClass::...
+#include "proto.hpp"              // for bonus, broadcastGroup, dice, up
+#include "random.hpp"             // for Random
+#include "realm.hpp"              // for Realm
+#include "rooms.hpp"              // for BaseRoom
+#include "server.hpp"             // for Server, gServer
+#include "specials.hpp"           // for SpecialAttack, SA_SINGLE_TARGET
+#include "utils.hpp"              // for MAX, MIN
+#include "xml.hpp"                // for numToStr
 
 bool Creature::runSpecialAttacks(Creature* victim) {
     if(specials.empty())

@@ -15,22 +15,43 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <iomanip>
-#include <stdexcept>
+#include <cctype>                 // for isspace, isdigit, isalpha
+#include <cstdio>                 // for sprintf
+#include <cstdlib>                // for atoi, atof
+#include <cstring>                // for strcpy, strcmp, strcat, strncpy
+#include <ctime>                  // for ctime, time
+#include <iomanip>                // for operator<<, setw
+#include <list>                   // for operator==, operator!=
+#include <ostream>                // for operator<<, basic_ostream, basic_os...
+#include <stdexcept>              // for out_of_range
+#include <string>                 // for operator==, char_traits, basic_string
 
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "craft.hpp"
-#include "dm.hpp"
-#include "effects.hpp"
-#include "mud.hpp"
-#include "raceData.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
-#include "unique.hpp"
-#include "xml.hpp"
-#include "objects.hpp"
+#include "area.hpp"               // for MapMarker, Area (ptr only)
+#include "bstring.hpp"            // for bstring, operator+
+#include "catRef.hpp"             // for CatRef
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for getFullstrText, cmdNoAuth, parse
+#include "config.hpp"             // for Config, gConfig
+#include "craft.hpp"              // for Recipe
+#include "creatures.hpp"          // for Player, Creature, Monster
+#include "dm.hpp"                 // for dmAddObj, dmClone, dmCreateObj, dmO...
+#include "effects.hpp"            // for EFFECT_MAX_DURATION, EFFECT_MAX_STR...
+#include "flags.hpp"              // for O_SAVE_FULL, MAX_OBJECT_FLAGS, O_SO...
+#include "global.hpp"             // for PROMPT, FEET, ARMS, BELT, BODY, FACE
+#include "magic.hpp"              // for MAXSPELL, S_ILLUSION
+#include "money.hpp"              // for GOLD, Money
+#include "mud.hpp"                // for LT_ENVEN
+#include "objIncrease.hpp"        // for ObjIncrease, LanguageIncrease, Skil...
+#include "objects.hpp"            // for Object, ObjectType, ObjectType::ARMOR
+#include "os.hpp"                 // for merror
+#include "proto.hpp"              // for log_immort, low, get_spell_name
+#include "raceData.hpp"           // for RaceData
+#include "rooms.hpp"              // for BaseRoom
+#include "server.hpp"             // for Server, gServer, ObjectCache
+#include "skills.hpp"             // for SkillInfo
+#include "unique.hpp"             // for Unique, Lore
+#include "utils.hpp"              // for MAX, MIN
+#include "xml.hpp"                // for loadObject
 
 //*********************************************************************
 //                      dmCreateObj
@@ -39,7 +60,7 @@
 // in their inventory.
 
 int dmCreateObj(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
 
     CatRef  cr;
     getCatRef(getFullstrText(cmnd->fullstr, 1), &cr, player);
@@ -77,7 +98,7 @@ int dmCreateObj(Player* player, cmd* cmnd) {
 
 bstring Object::statObj(int statFlags) {
     std::ostringstream objStr;
-    Object* object=0;
+    Object* object=nullptr;
     bstring str = "";
     bstring objName = getName();
     bstring objPlural = plural;
@@ -85,7 +106,7 @@ bstring Object::statObj(int statFlags) {
     objName.Replace("^", "^^");
     objPlural.Replace("^", "^^");
 
-    if(objPlural == "") {
+    if(objPlural.empty()) {
         objStr << "Name: " << objName << "^x\n";
     } else {
         objStr << "Name:   " << objName << "^x\n"
@@ -156,7 +177,7 @@ bstring Object::statObj(int statFlags) {
             // Note: this equation is actually used backwards in Object::adjustWeapon
             // to compute weapon quality.
             objStr << "Damage per Second: " <<
-                ( (damage.average() + adjustment) * (1+num) / 2)
+                ( (damage.average() + adjustment) * (1+num) / 2.0)
                     / (getWeaponDelay()/10.0) << "\n";
         }
     }
@@ -193,7 +214,7 @@ bstring Object::statObj(int statFlags) {
             if(magicpower > 0 && magicpower <= MAXSPELL) {
                 objStr << "Spell: " << magicpower << "(" << get_spell_name(magicpower - 1) << ")";
                 if(magicpower-1 == S_ILLUSION) {
-                    const RaceData* race = 0;
+                    const RaceData* race = nullptr;
                     if(getExtra() > 0 && getExtra() < RACE_COUNT)
                         race = gConfig->getRace(getExtra());
                     if(!race)
@@ -296,7 +317,7 @@ bstring Object::statObj(int statFlags) {
         }
     }
 
-    if(effect != "") {
+    if(!effect.empty()) {
         objStr << "^yEffect: " << effect << "^x\n"
                << "  Duration: ";
 
@@ -308,7 +329,7 @@ bstring Object::statObj(int statFlags) {
         objStr << "  Strength: " << effectStrength << ".\n";
         if(flagIsSet(O_ENVENOMED)) {
             objStr << "Time remaining: " <<
-                timestr(MAX(0L,(lasttime[LT_ENVEN].ltime+lasttime[LT_ENVEN].interval-time(0))))
+                timestr(MAX(0L,(lasttime[LT_ENVEN].ltime+lasttime[LT_ENVEN].interval-time(nullptr))))
                 << "\n";
         }
     }
@@ -336,7 +357,7 @@ bstring Object::statObj(int statFlags) {
 
     objStr << "\n";
 
-    if(randomObjects.size()) {
+    if(!randomObjects.empty()) {
         objStr << "^WRandomObjects:^x this item will turn into these random objects:\n";
         std::list<CatRef>::const_iterator it;
         for(it = randomObjects.begin(); it != randomObjects.end(); it++) {
@@ -347,7 +368,7 @@ bstring Object::statObj(int statFlags) {
 
             if(object) {
                 delete object;
-                object = 0;
+                object = nullptr;
             }
         }
     }
@@ -377,7 +398,7 @@ bstring Object::statObj(int statFlags) {
         objStr << "^W  Only Once:^x " << (increase->onlyOnce ? "Yes" : "No") << "\n";
     }
 
-    if(questOwner != "")
+    if(!questOwner.empty())
         objStr << "^gOwner:^x " << questOwner << "\n";
     if(made) {
         str = ctime(&made);
@@ -406,7 +427,7 @@ int stat_obj(Player* player, Object* object) {
         log_immort(false,player, "%s statted object %s(%s).\n",
             player->getCName(), object->getCName(), object->info.str().c_str());
 
-    int statFlags = 0;
+    unsigned int statFlags = 0;
     if(player->isCt())
         statFlags |= ISCT;
     if(player->isDm())
@@ -444,10 +465,10 @@ int dmSetObj(Player* player, cmd* cmnd) {
      */
 
 
-    Creature* creature=0;
-    Monster* mTarget=0;
+    Creature* creature=nullptr;
+    Monster* mTarget=nullptr;
     BaseRoom* room = player->getRoomParent();
-    Object  *object=0;
+    Object  *object=nullptr;
     int     n=0, match=0, test=0;
     long    num=0;
     double  dNum=0.0;
@@ -643,7 +664,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
                 CatRef  cr;
                 getDestination(getFullstrText(cmnd->fullstr, cmnd->num+cmnd->val[2]-1), &mapmarker, &cr, player);
 
-                Area *area=0;
+                Area *area=nullptr;
                 if(mapmarker.getArea())
                     area = gServer->getArea(mapmarker.getArea());
 
@@ -651,7 +672,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
                     if(object->compass) {
                         player->print("Deleting compass.\n");
                         delete object->compass;
-                        object->compass = 0;
+                        object->compass = nullptr;
                         log_immort(2, player, "%s cleared %s's %s.\n",
                             player->getCName(), objname, "compass");
                     } else
@@ -764,10 +785,10 @@ int dmSetObj(Player* player, cmd* cmnd) {
             int strength = 1;
 
             bstring txt = getFullstrText(cmnd->fullstr, 5);
-            if(txt != "")
+            if(!txt.empty())
                 duration = atoi(txt.c_str());
             txt = getFullstrText(cmnd->fullstr, 6);
-            if(txt != "")
+            if(!txt.empty())
                 strength = atoi(txt.c_str());
 
             if(duration > EFFECT_MAX_DURATION || duration < -1) {
@@ -1133,12 +1154,12 @@ int dmSetObj(Player* player, cmd* cmnd) {
                 *player << "Invalid Type.\n";
                 return(PROMPT);
             }
-            ObjectType newType = static_cast<ObjectType>(num);
+            auto newType = static_cast<ObjectType>(num);
             try {
                 object->setType(newType);
                 resultTxt =object->getTypeName();
                 setType = "Type";
-            } catch(std::out_of_range e) {
+            } catch(std::out_of_range &e) {
                     *player << "Invalid Type.\n";
                     return(PROMPT);
 
@@ -1228,8 +1249,8 @@ int dmSetObj(Player* player, cmd* cmnd) {
     }
 
     
-    if(setType != "") {
-        if(resultTxt != "") {
+    if(!setType.empty()) {
+        if(!resultTxt.empty()) {
             player->printColor("%s set to %ld(%s).\n", setType.c_str(), result, resultTxt.c_str());
             log_immort(2, player, "%s set %s's %s to %ld(%s^g).\n",
                 player->getCName(), objname, setType.c_str(), result, resultTxt.c_str());
@@ -1273,7 +1294,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
 // not be saved to the database using the dmSaveObj function.
 
 int dmObjName(Player* player, cmd* cmnd) {
-    Object  *object=0;
+    Object  *object=nullptr;
     int     i=0, num=0;
     char    which=0;
     bstring text = "";
@@ -1361,7 +1382,7 @@ int dmObjName(Player* player, cmd* cmnd) {
         player->print("\nName ");
         break;
     case 1:
-        if(text == "0" && object->description != "") {
+        if(text == "0" && !object->description.empty()) {
             object->description = "";
             player->print("Item description cleared.\n");
             return(0);
@@ -1426,7 +1447,7 @@ int dmObjName(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmAddObj(Player* player, cmd* cmnd) {
-    Object    *newObj=0;
+    Object    *newObj=nullptr;
 
     if(!player->canBuildObjects())
         return(cmdNoAuth(player));
@@ -1462,9 +1483,9 @@ int dmAddObj(Player* player, cmd* cmnd) {
 //                      dmSaveObj
 //*********************************************************************
 
-void dmSaveObj(Player* player, cmd* cmnd, CatRef cr) {
+void dmSaveObj(Player* player, cmd* cmnd, const CatRef& cr) {
     char    file[80];
-    Object* object=0;
+    Object* object=nullptr;
 
     if(!player->canBuildObjects()) {
         cmdNoAuth(player);
@@ -1545,7 +1566,7 @@ int dmSize(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, const bstring& sub, const bstring& descBase, const bstring& descAll, bool twoHanded, int weight, double value, int bulk, short numAttacks) {
-    Object* newObj = 0;
+    Object* newObj = nullptr;
     bool addToInventory = true;
 
     if(sub == object->getSubType()) {
@@ -1618,7 +1639,7 @@ void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, cons
 //*********************************************************************
 
 void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int wear, const bstring& base, const bstring& descBase, const bstring& descAll, long value, int weight, int bulk, bool somePrefix=false) {
-    Object* newObj = 0;
+    Object* newObj = nullptr;
     bool addToInventory = true;
 
     if(wear == object->getWearflag()) {
@@ -1688,7 +1709,7 @@ void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int w
 // given an object, this code will create a set of armor
 
 int dmClone(Player* player, cmd* cmnd) {
-    Object* object=0, *random=0;
+    Object* object=nullptr, *random=nullptr;
     bool isArmor=false, isWeapon = false;
 
     if(cmnd->num == 1) {
@@ -1746,7 +1767,7 @@ int dmClone(Player* player, cmd* cmnd) {
     }
 
     bstring desc = getFullstrText(cmnd->fullstr, 3);
-    if(desc == "") {
+    if(desc.empty()) {
         player->printColor("Syntax: ^c*clone <object> <area.id> <partial desc>\n");
         player->print("The partial description should complete the sentence, \"It's a <item> _____\".\n");
         return(0);

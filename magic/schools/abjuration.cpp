@@ -15,13 +15,28 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "creatures.hpp"
-#include "config.hpp"
-#include "deityData.hpp"
-#include "mud.hpp"
-#include "move.hpp"
-#include "rooms.hpp"
-#include "server.hpp"
+#include <cmath>                  // for pow
+#include <cstdlib>                // for abs
+#include <ctime>                  // for time
+
+#include "bstring.hpp"            // for bstring
+#include "cmd.hpp"                // for cmd
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Creature, Player, Monster, NO_CHECK
+#include "damage.hpp"             // for Damage, REFLECTED_MAGIC, REFLECTED_...
+#include "deityData.hpp"          // for DeityData
+#include "effects.hpp"            // for EffectInfo
+#include "exits.hpp"              // for Exit
+#include "flags.hpp"              // for P_DM_SILENCED, P_FREE_ACTION, P_OUTLAW
+#include "global.hpp"             // for CastType, CastType::CAST, CreatureC...
+#include "magic.hpp"              // for SpellData, splGeneric, checkRefusin...
+#include "move.hpp"               // for deletePortal
+#include "mud.hpp"                // for LT_FREE_ACTION
+#include "proto.hpp"              // for broadcast, bonus, up, broadcastGroup
+#include "random.hpp"             // for Random
+#include "rooms.hpp"              // for BaseRoom
+#include "server.hpp"             // for Server, gServer
+#include "utils.hpp"              // for MAX, MIN
 
 
 //*********************************************************************
@@ -163,9 +178,9 @@ int splResistMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
-    Player  *pTarget=0;
-    long    t = time(0);
+    Creature* target=nullptr;
+    Player  *pTarget=nullptr;
+    long    t = time(nullptr);
 
     if(spellData->how != CastType::POTION && !player->isCt() && player->getClass() !=  CreatureClass::DRUID && player->getClass() !=  CreatureClass::CLERIC) {
         player->print("Your class is unable to cast that spell.\n");
@@ -211,7 +226,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
         pTarget->lasttime[LT_FREE_ACTION].ltime = t;
         if(spellData->how == CastType::CAST) {
             pTarget->lasttime[LT_FREE_ACTION].interval = MAX(300, 900 +
-                bonus((int) player->intelligence.getCur()) * 300);
+                                                                  bonus(player->intelligence.getCur()) * 300);
 
             if(player->getRoomParent()->magicBonus()) {
                 pTarget->print("The room's magical properties increase the power of your spell.\n");
@@ -235,7 +250,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
 
     if(cmnd->num == 2) {
         target = player;
@@ -293,7 +308,7 @@ int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splRemoveSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=0;
+    Creature* target=nullptr;
 
     if(cmnd->num == 2) {
         target = player;
@@ -352,7 +367,7 @@ int splRemoveSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char* spell, int align) {
-    Creature* target=0;
+    Creature* target=nullptr;
     Damage damage;
 
 
@@ -379,7 +394,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
             player->smashInvis();
 
             damage.set(Random::get(spellData->level * 2, spellData->level * 4));
-            damage.add(MAX(0, bonus((int) player->piety.getCur())));
+            damage.add(MAX(0, bonus(player->piety.getCur())));
             player->modifyDamage(player, MAGICAL, damage);
 
             player->print("You feel as if your soul is savagely ripped apart!\n");
@@ -440,7 +455,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
             } else {
                 damage.set(Random::get(spellData->level * 2, spellData->level * 4));
                 damage.add(abs(player->getAlignment()/100));
-                damage.add(MAX(0, bonus((int) player->piety.getCur())));
+                damage.add(MAX(0, bonus(player->piety.getCur())));
                 target->modifyDamage(player, MAGICAL, damage);
 
                 if(target->chkSave(SPL, player,0))
@@ -576,7 +591,7 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
     int strength = 0;
     int duration = 0;
     if(spellData->how == CastType::CAST) {
-        duration = 1800 + bonus((int)pPlayer->intelligence.getCur());
+        duration = 1800 + bonus(pPlayer->intelligence.getCur());
 
         if(spellData->how == CastType::CAST)
             pPlayer->subMp(mpNeeded);
@@ -656,7 +671,7 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
     int strength = 0;
     // Cast stoneskin on self
     if(spellData->how == CastType::CAST) {
-        duration = 240 + 10*bonus((int)player->intelligence.getCur());
+        duration = 240 + 10*bonus(player->intelligence.getCur());
         if(spellData->how == CastType::CAST)
             player->subMp(mpNeeded);
         if(player->getRoomParent()->magicBonus()) {
@@ -690,7 +705,7 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char* spell, int numDispel) {
-    Creature* target=0;
+    Creature* target=nullptr;
     int     chance=0;
 
     if(spellData->how == CastType::CAST &&
@@ -769,8 +784,8 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
         }
 
 
-        chance = 50 - (10*(bonus((int) player->intelligence.getCur()) -
-            bonus((int) target->intelligence.getCur())));
+        chance = 50 - (10*(bonus(player->intelligence.getCur()) -
+                           bonus(target->intelligence.getCur())));
 
         chance += (spellData->level - target->getLevel())*10;
 
@@ -837,80 +852,83 @@ int splAnnulMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
 //********************************************************************
 // num = -1 means dispel all effects
 
+static const std::list<bstring> dispellableEffects = {
+    "anchor",
+    "hold-person",
+    "strength",
+    "haste",
+    "fortitude",
+    "insight",
+    "prayer",
+    "enfeeblement",
+    "slow",
+    "weakness",
+    "prayer",
+    "damnation",
+    "confusion",
+
+    "enlarge",
+    "reduce",
+    "darkness",
+    "infravision",
+    "invisibility",
+    "detect-invisible",
+    "undead-ward",
+    "bless",
+    "detect-magic",
+    "protection",
+    "tongues",
+    "comprehend-languages",
+    "true-sight",
+    "fly",
+    "levitate",
+    "drain-shield",
+    "resist-magic",
+    "know-aura",
+    "warmth",
+    "breathe-water",
+    "earth-shield",
+    "reflect-magic",
+    "camouflage",
+    "heat-protection",
+    "farsight",
+    "pass-without-trace",
+    "resist-earth",
+    "resist-air",
+    "resist-fire",
+    "resist-water",
+    "resist-cold",
+    "resist-electricity",
+    "wind-protection",
+    "static-field",
+
+    "illusion",
+    "blur",
+    "fire-shield",
+    "greater-invisibility",
+
+};
+
 void Creature::doDispelMagic(int num) {
-    EffectInfo* effect=0;
-    std::list<bstring> effList;
+    EffectInfo* effect=nullptr;
     std::list<bstring>::const_iterator it;
 
     // create a list of possible effects
-    effList.push_back("anchor");
-    effList.push_back("hold-person");
-    effList.push_back("strength");
-    effList.push_back("haste");
-    effList.push_back("fortitude");
-    effList.push_back("insight");
-    effList.push_back("prayer");
-    effList.push_back("enfeeblement");
-    effList.push_back("slow");
-    effList.push_back("weakness");
-    effList.push_back("prayer");
-    effList.push_back("damnation");
-    effList.push_back("confusion");
-
-    effList.push_back("enlarge");
-    effList.push_back("reduce");
-    effList.push_back("darkness");
-    effList.push_back("infravision");
-    effList.push_back("invisibility");
-    effList.push_back("detect-invisible");
-    effList.push_back("undead-ward");
-    effList.push_back("bless");
-    effList.push_back("detect-magic");
-    effList.push_back("protection");
-    effList.push_back("tongues");
-    effList.push_back("comprehend-languages");
-    effList.push_back("true-sight");
-    effList.push_back("fly");
-    effList.push_back("levitate");
-    effList.push_back("drain-shield");
-    effList.push_back("resist-magic");
-    effList.push_back("know-aura");
-    effList.push_back("warmth");
-    effList.push_back("breathe-water");
-    effList.push_back("earth-shield");
-    effList.push_back("reflect-magic");
-    effList.push_back("camouflage");
-    effList.push_back("heat-protection");
-    effList.push_back("farsight");
-    effList.push_back("pass-without-trace");
-    effList.push_back("resist-earth");
-    effList.push_back("resist-air");
-    effList.push_back("resist-fire");
-    effList.push_back("resist-water");
-    effList.push_back("resist-cold");
-    effList.push_back("resist-electricity");
-    effList.push_back("wind-protection");
-    effList.push_back("static-field");
-
-    effList.push_back("illusion");
-    effList.push_back("blur");
-    effList.push_back("fire-shield");
-    effList.push_back("greater-invisibility");
 
     // true we'll show, false don't remove perm effects
 
     // num = -1 means dispel all effects
     if(num <= -1) {
-        for(it = effList.begin() ; it != effList.end() ; it++)
-            removeEffect(*it, true, false);
+        for(auto& effectName : dispellableEffects)
+            removeEffect(effectName, true, false);
         return;
     }
 
     int numEffects=0, choice=0;
     while(num > 0) {
         // how many effects are we under?
-        for(it = effList.begin() ; it != effList.end() ; it++) {
-            effect = getEffect(*it);
+        for(auto& effectName: dispellableEffects) {
+            effect = getEffect(effectName);
             if(effect && !effect->isPermanent())
                 numEffects++;
         }
@@ -923,14 +941,15 @@ void Creature::doDispelMagic(int num) {
         numEffects = 0;
 
         // find it and get rid of it!
-        for(it = effList.begin() ; it != effList.end() && choice ; it++) {
-            effect = getEffect(*it);
+        for(auto& effectName: dispellableEffects) {
+            effect = getEffect(effectName);
             if(effect && !effect->isPermanent()) {
                 numEffects++;
                 if(choice == numEffects) {
                     removeEffect(*it, true, false);
                     // stop the loop!
                     choice = 0;
+                    break;
                 }
             }
         }
@@ -1028,7 +1047,5 @@ bool Creature::doReflectionDamage(Damage damage, Creature* target, ReflectedDama
         getAsMonster()->adjustThreat(target, dmg);
 
     hp.decrease(dmg);
-    if(hp.getCur() <= 0)
-        return(true);
-    return(false);
+    return hp.getCur() <= 0;
 }

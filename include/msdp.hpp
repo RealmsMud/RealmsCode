@@ -21,7 +21,6 @@
 
 #include <sys/time.h>
 
-#include "common.hpp"
 #include "timer.hpp"
 
 class Socket;

@@ -25,13 +25,28 @@
 // Attempt to load the player named 'name' into the address given
 // return 0 on success, -1 on failure
 
-#include "calendar.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "paths.hpp"
-#include "proto.hpp"
-#include "server.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>          // for xmlNode, xmlNodePtr
+#include <ostream>                  // for operator<<, basic...
+
+#include "anchor.hpp"               // for Anchor
+#include "bstring.hpp"              // for bstring, operator+
+#include "calendar.hpp"             // for cDay
+#include "catRef.hpp"               // for CatRef
+#include "config.hpp"               // for Config, gConfig
+#include "creatures.hpp"            // for Player, Player::Q...
+#include "enums/loadType.hpp"       // for LoadType, LoadTyp...
+#include "global.hpp"               // for MAX_DIMEN_ANCHORS
+#include "levelGain.hpp"            // for LevelGain
+#include "paths.hpp"                // for Player, PlayerBackup
+#include "playerClass.hpp"          // for PlayerClass
+#include "playerTitle.hpp"          // for PlayerTitle
+#include "proxy.hpp"                // for ProxyAccess, ProxyManager
+#include "proto.hpp"                // file_exists
+#include "quests.hpp"               // for QuestCompleted
+#include "server.hpp"               // for Server, gServer
+#include "skillGain.hpp"            // for SkillGain
+#include "xml.hpp"                  // for NODE_NAME, newStr...
+
 
 bool loadPlayer(const bstring& name, Player** player, enum LoadType loadType) {
     xmlDocPtr   xmlDoc;
@@ -504,3 +519,237 @@ void Player::saveQuests(xmlNodePtr rootNode) const {
         }
     }
 }
+
+
+//*********************************************************************
+//                      load
+//*********************************************************************
+
+void PlayerClass::load(xmlNodePtr rootNode) {
+//  // Stuff gained on each additional level
+//  std::map<int, LevelGain*> levels;
+
+    id = xml::getIntProp(rootNode, "id");
+    xml::copyPropToBString(name, rootNode, "Name");
+
+    xmlNodePtr curNode = rootNode->children;
+
+    while(curNode) {
+        if(NODE_NAME(curNode, "Title")) {
+            titles[1] = new PlayerTitle;
+            titles[1]->load(curNode);
+        }
+        else if(NODE_NAME(curNode, "UnarmedWeaponSkill")) xml::copyToBString(unarmedWeaponSkill, curNode);
+        else if(NODE_NAME(curNode, "NumProfs")) xml::copyToNum(numProf, curNode);
+        else if(NODE_NAME(curNode, "NeedsDeity")) {
+            int i=0;
+            xml::copyToNum(i, curNode);
+            if(i)
+                needDeity = true;
+        } else if(NODE_NAME(curNode, "Base")) {
+            xmlNodePtr baseNode = curNode->children;
+            while(baseNode) {
+                if(NODE_NAME(baseNode, "Stats")) {
+                    xmlNodePtr statNode = baseNode->children;
+                    while(statNode) {
+                        if(NODE_NAME(statNode, "Hp")) {
+                            xml::copyToNum(baseHp, statNode);
+                        } else if(NODE_NAME(statNode, "Mp")) {
+                            xml::copyToNum(baseMp, statNode);
+                        } else if(NODE_NAME(statNode, "Strength")) {
+                            xml::copyToNum(baseStrength, statNode);
+                            checkAutomaticStats();
+                        } else if(NODE_NAME(statNode, "Dexterity")) {
+                            xml::copyToNum(baseDexterity, statNode);
+                            checkAutomaticStats();
+                        } else if(NODE_NAME(statNode, "Constitution")) {
+                            xml::copyToNum(baseConstitution, statNode);
+                            checkAutomaticStats();
+                        } else if(NODE_NAME(statNode, "Intelligence")) {
+                            xml::copyToNum(baseIntelligence, statNode);
+                            checkAutomaticStats();
+                        } else if(NODE_NAME(statNode, "Piety")) {
+                            xml::copyToNum(basePiety, statNode);
+                            checkAutomaticStats();
+                        }
+                        statNode = statNode->next;
+                    }
+                } else if(NODE_NAME(baseNode, "Dice")) damage.load(baseNode);
+                else if(NODE_NAME(baseNode, "Skills")) {
+                    xmlNodePtr skillNode = baseNode->children;
+                    while(skillNode) {
+                        if(NODE_NAME(skillNode, "Skill")) {
+                            auto* skillGain = new SkillGain(skillNode);
+                            baseSkills.push_back(skillGain);
+                        }
+                        skillNode = skillNode->next;
+                    }
+                }
+                baseNode = baseNode->next;
+            }
+        } else if(NODE_NAME(curNode, "Levels")) {
+            xmlNodePtr levelNode = curNode->children;
+            int lvl;
+            while(levelNode) {
+                if(NODE_NAME(levelNode, "Level")) {
+                    lvl = xml::getIntProp(levelNode, "Num");
+                    if(lvl > 0) {
+                        levels[lvl] = new LevelGain(levelNode);
+                    }
+
+                    xmlNodePtr childNode = levelNode->children;
+                    while(childNode) {
+                        if(NODE_NAME(childNode, "Title")) {
+                            titles[lvl] = new PlayerTitle;
+                            titles[lvl]->load(childNode);
+                        }
+                        childNode = childNode->next;
+                    }
+                }
+                levelNode = levelNode->next;
+            }
+        }
+
+        curNode = curNode->next;
+
+    }
+}
+
+//*********************************************************************
+//                      loadClasses
+//*********************************************************************
+
+bool Config::loadClasses() {
+    xmlDocPtr xmlDoc;
+    xmlNodePtr curNode;
+
+    char filename[80];
+    snprintf(filename, 80, "%s/classes.xml", Path::Game);
+    xmlDoc = xml::loadFile(filename, "Classes");
+
+    if(xmlDoc == nullptr)
+        return(false);
+
+    curNode = xmlDocGetRootElement(xmlDoc);
+
+    curNode = curNode->children;
+    while(curNode && xmlIsBlankNode(curNode))
+        curNode = curNode->next;
+
+    if(curNode == nullptr) {
+        xmlFreeDoc(xmlDoc);
+        return(false);
+    }
+
+    clearClasses();
+    bstring className = "";
+    while(curNode != nullptr) {
+        if(NODE_NAME(curNode, "Class")) {
+            xml::copyPropToBString( className, curNode, "Name");
+            if(!className.empty()) {
+                if(classes.find(className) == classes.end()) {
+                    //printf("\n\tLoaded %s", className.c_str());
+                    classes[className] = new PlayerClass(curNode);
+                } else {
+                    std::clog << "Error: Duplicate class: " << className.c_str() << std::endl;
+                }
+            }
+        }
+        curNode = curNode->next;
+    }
+    xmlFreeDoc(xmlDoc);
+    xmlCleanupParser();
+    //printf("\n");
+    return(true);
+}
+
+
+//*********************************************************************
+//                ProxyManager
+//*********************************************************************
+
+void ProxyManager::save() {
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr      rootNode;
+    char            filename[80];
+
+
+    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
+    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Proxies", nullptr);
+    xmlDocSetRootElement(xmlDoc, rootNode);
+
+    for(ProxyMultiMap::value_type p : proxies) {
+        p.second.save(rootNode);
+    }
+
+    sprintf(filename, "%s/proxies.xml", Path::PlayerData);
+
+    xml::saveFile(filename, xmlDoc);
+    xmlFreeDoc(xmlDoc);
+}
+
+void ProxyManager::loadProxies() {
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr  rootNode;
+    xmlNodePtr  curNode;
+    char        filename[80];
+
+    sprintf(filename, "%s/proxies.xml", Path::PlayerData);
+
+    if(!file_exists(filename))
+        return;
+
+    if((xmlDoc = xml::loadFile(filename, "Proxies")) == nullptr)
+        return;
+
+    rootNode = xmlDocGetRootElement(xmlDoc);
+    curNode = rootNode->children;
+
+    while(curNode) {
+        if(NODE_NAME(curNode, "ProxyAccess")) {
+            ProxyAccess access(curNode);
+            proxies.insert(ProxyMultiMap::value_type(access.getProxiedId(), access));
+        }
+        curNode = curNode->next;
+    }
+
+    xmlFreeDoc(xmlDoc);
+    xmlCleanupParser();
+}
+
+
+//*********************************************************************
+//                      load
+//*********************************************************************
+
+void PlayerTitle::load(xmlNodePtr rootNode) {
+    xmlNodePtr curNode = rootNode->children;
+    while(curNode) {
+        if(NODE_NAME(curNode, "Female")) xml::copyToBString(female, curNode);
+        else if(NODE_NAME(curNode, "Male")) xml::copyToBString(male, curNode);
+        curNode = curNode->next;
+    }
+}
+
+ProxyAccess::ProxyAccess(xmlNodePtr rootNode) {
+    xmlNodePtr curNode = rootNode->children;
+    while(curNode) {
+        if(NODE_NAME(curNode, "ProxyId")) xml::copyToBString(proxyId, curNode);
+        else if (NODE_NAME(curNode, "ProxyName")) xml::copyToBString(proxyName, curNode);
+        else if (NODE_NAME(curNode, "ProxiedId")) xml::copyToBString(proxiedId, curNode);
+        else if (NODE_NAME(curNode, "ProxiedName")) xml::copyToBString(proxiedName, curNode);
+
+        curNode = curNode->next;
+    }
+}
+
+
+void ProxyAccess::save(xmlNodePtr rootNode) {
+    xmlNodePtr curNode = xml::newStringChild(rootNode, "ProxyAccess");
+    xml::newStringChild(curNode, "ProxiedId", proxiedId);
+    xml::newStringChild(curNode, "ProxiedName", proxiedName);
+    xml::newStringChild(curNode, "ProxyId", proxyId);
+    xml::newStringChild(curNode, "ProxyName", proxyName);
+
+}
+

@@ -35,9 +35,9 @@
 /* $Header: /code/doj/alphanum.hpp,v 1.3 2008/01/28 23:06:47 doj Exp $ */
 
 #include <cassert>
-#include <functional>
-#include <string>
-#include <sstream>
+#include <functional>  // for binary_function
+#include <sstream>     // for ostringstream
+#include <string>      // for string, basic_string
 
 #ifdef ALPHANUM_LOCALE
 #include <cctype>

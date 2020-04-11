@@ -16,8 +16,11 @@
  *
  */
 
-#include "creatures.hpp"
-#include "mud.hpp"
+#include "creatures.hpp"  // for Player, Creature
+#include "fighters.hpp"   // for FOCUS_BASH, FOCUS_BLOCK, FOCUS_CIRCLE, FOCU...
+#include "flags.hpp"      // for P_PTESTER
+#include "global.hpp"     // for CreatureClass, CreatureClass::FIGHTER
+#include "utils.hpp"      // for MAX
 
 // Used for new fighters, returns true if they're a pure fighter
 // (and for now a ptester)

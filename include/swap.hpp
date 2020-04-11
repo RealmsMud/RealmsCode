@@ -33,8 +33,8 @@ class Swap {
 public:
     Swap();
 
-    void set(bstring mover, CatRef swapOrigin, CatRef swapTarget, SwapType swapType);
-    bool match(CatRef o, CatRef t);
+    void set(const bstring& mover, const CatRef& swapOrigin, const CatRef& swapTarget, SwapType swapType);
+    bool match(const CatRef& o, const CatRef& t);
 
     bstring player;
     SwapType type;

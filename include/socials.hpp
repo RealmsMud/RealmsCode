@@ -20,8 +20,8 @@
 #define SOCIAL_H_
 
 #include <list>
+#include <libxml/parser.h>  // for xmlNodePtr
 
-#include "common.hpp"
 #include "global.hpp"
 #include "structs.hpp"
 
@@ -31,19 +31,19 @@ public:
     bool saveToXml(xmlNodePtr rootNode) const;
     int execute(Creature* player, cmd* cmnd);
 
-    bool getWakeTarget() const;
-    bool getRudeWakeTarget() const;
-    bool getWakeRoom() const;
+    [[nodiscard]] bool getWakeTarget() const;
+    [[nodiscard]] bool getRudeWakeTarget() const;
+    [[nodiscard]] bool getWakeRoom() const;
 
-    const bstring& getSelfNoTarget() const;
-    const bstring& getRoomNoTarget() const;
+    [[nodiscard]] const bstring& getSelfNoTarget() const;
+    [[nodiscard]] const bstring& getRoomNoTarget() const;
 
-    const bstring& getSelfOnTarget() const;
-    const bstring& getRoomOnTarget() const;
-    const bstring& getVictimOnTarget() const;
+    [[nodiscard]] const bstring& getSelfOnTarget() const;
+    [[nodiscard]] const bstring& getRoomOnTarget() const;
+    [[nodiscard]] const bstring& getVictimOnTarget() const;
 
-    const bstring& getSelfOnSelf() const;
-    const bstring& getRoomOnSelf() const;
+    [[nodiscard]] const bstring& getSelfOnSelf() const;
+    [[nodiscard]] const bstring& getRoomOnSelf() const;
 
 private:
     int (*fn)(Creature* player, cmd* cmnd);

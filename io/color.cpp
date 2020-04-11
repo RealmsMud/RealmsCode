@@ -16,14 +16,21 @@
  *
  */
 
-#include <sstream>
+#include <cstdio>                // for sprintf
+#include <cstring>               // for memset, strcmp
+#include <map>                    // for map, map<>::mapped_type, operator==
+#include <sstream>                // for operator<<, ostringstream, basic_os...
+#include <string>                 // for operator==, basic_string, allocator
 
-#include "commands.hpp"
-#include "config.hpp"
-#include "creatures.hpp"
-#include "login.hpp"
-#include "mud.hpp"
-#include "socket.hpp"
+#include "bstring.hpp"            // for bstring, operator+
+#include "cmd.hpp"                // for cmd
+#include "commands.hpp"           // for isPtester, getFullstrText, cmdColors
+#include "config.hpp"             // for Config, gConfig
+#include "creatures.hpp"          // for Player, Monster, Creature
+#include "flags.hpp"              // for P_ANSI_COLOR, P_MXP_ENABLED, P_MIRC
+#include "global.hpp"             // for CUSTOM_COLOR_DEFAULT, CustomColor
+#include "login.hpp"              // for ANSI_COLOR, NO_COLOR
+#include "socket.hpp"             // for Socket, Socket::SockOptions
 
 #define CLEAR       "\033[0m"       // Resets color
 #define C_BLACK     "\033[0;30m"    // Normal colors

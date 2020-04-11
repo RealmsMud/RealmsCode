@@ -36,7 +36,7 @@
 #ifndef MD5_H
 #define MD5_H
 
-#include "mud.hpp"
+#include "bstring.hpp"  // for bstring
 
 //---------------------------------------------------------------------- 
 //STL includes

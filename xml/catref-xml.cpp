@@ -16,12 +16,20 @@
  *
  */
 
-#include "calendar.hpp"
-#include "catRef.hpp"
-#include "catRefInfo.hpp"
-#include "config.hpp"
-#include "paths.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlFr...
+#include <cstdio>                                   // for snprintf, sprintf
+#include <map>                                      // for operator==, map
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for operator==, alloc...
+#include <utility>                                  // for pair
+
+#include "bstring.hpp"                              // for bstring
+#include "calendar.hpp"                             // for cSeason
+#include "catRefInfo.hpp"                           // for CatRefInfo
+#include "config.hpp"                               // for Config, gConfig
+#include "paths.hpp"                                // for Game
+#include "season.hpp"                               // for Season
+#include "xml.hpp"                                  // for copyToBString
 
 
 //*********************************************************************

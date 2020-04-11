@@ -18,12 +18,12 @@
 #ifndef _HOOKS_H
 #define _HOOKS_H
 
+#include <libxml/parser.h>  // for xmlNodePtr
 #include <map>
 #include <set>
 
 class MudObject;
-
-#include "swap.hpp"
+class Swap;
 
 class Hooks {
 public:
@@ -54,8 +54,8 @@ public:
         return(ran);
     }
 
-    bool swap(Swap s);
-    bool swapIsInteresting(Swap s) const;
+    bool swap(const Swap& s);
+    bool swapIsInteresting(const Swap& s) const;
 private:
     std::map<bstring,bstring> hooks;
     MudObject* parent;

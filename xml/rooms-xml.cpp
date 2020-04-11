@@ -16,12 +16,23 @@
  *
  */
 
-#include <rooms.hpp>
-#include <proto.hpp>
-#include <server.hpp>
-#include <mud.hpp>
-#include <xml.hpp>
-#include <config.hpp>
+#include <config.hpp>                               // for Config, gConfig
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlFr...
+#include <proto.hpp>                                // for roomPath, whatSize
+#include <rooms.hpp>                                // for UniqueRoom, NUM_P...
+#include <server.hpp>                               // for Server, gServer
+#include <cstring>                                  // for strcpy
+#include <xml.hpp>                                  // for NODE_NAME, copyToNum
+
+#include "bstring.hpp"                              // for bstring, operator+
+#include "catRef.hpp"                               // for CatRef
+#include "enums/loadType.hpp"                       // for LoadType, LoadTyp...
+#include "flags.hpp"                                // for MAX_ROOM_FLAGS
+#include "global.hpp"                               // for FATAL
+#include "lasttime.hpp"                             // for lasttime, crlasttime
+#include "os.hpp"                                   // for ASSERTLOG, merror
+#include "paths.hpp"                                // for checkDirExists
+#include "track.hpp"                                // for Track
 
 //*********************************************************************
 //                      loadRoom
@@ -331,5 +342,32 @@ int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
     curNode = xml::newStringChild(rootNode, "Exits");
     saveExitsXml(curNode);
     return(0);
+}
+
+//*********************************************************************
+//                      load
+//*********************************************************************
+
+void AreaRoom::load(xmlNodePtr rootNode) {
+    xmlNodePtr childNode = rootNode->children;
+
+    clearExits();
+
+    while(childNode) {
+        if(NODE_NAME(childNode, "Exits"))
+            readExitsXml(childNode);
+        else if(NODE_NAME(childNode, "MapMarker")) {
+            mapmarker.load(childNode);
+            area->rooms[mapmarker.str()] = this;
+        }
+        else if(NODE_NAME(childNode, "Unique")) unique.load(childNode);
+        else if(NODE_NAME(childNode, "NeedsCompass")) xml::copyToBool(needsCompass, childNode);
+        else if(NODE_NAME(childNode, "DecCompass")) xml::copyToBool(decCompass, childNode);
+        else if(NODE_NAME(childNode, "Effects")) effects.load(childNode);
+        else if(NODE_NAME(childNode, "Hooks")) hooks.load(childNode);
+
+        childNode = childNode->next;
+    }
+    addEffectsIndex();
 }
 

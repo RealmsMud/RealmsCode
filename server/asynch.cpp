@@ -16,10 +16,17 @@
  *
  */
 #include "asynch.hpp"
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "server.hpp"
-#include "socket.hpp"
+
+#include <cstdlib>        // for abort, exit
+#include <unistd.h>       // for close, dup2, execl, fork, pipe, STDOUT_FILENO
+#include <ostream>        // for operator<<, basic_ostream::operator<<, basi...
+#include <string>         // for operator<<, char_traits
+
+#include "bstring.hpp"    // for bstring
+#include "cmd.hpp"        // for cmd
+#include "creatures.hpp"  // for Player
+#include "server.hpp"     // for Server, gServer
+#include "socket.hpp"     // for nonBlock, Socket
 
 //*********************************************************************
 //                      Async
@@ -27,7 +34,7 @@
 // Sample code:
 //
 //  Async async;
-//  if(async.branch(player, CHILD_PRINT) == AsyncExternal) {
+//  if(async.branch(player, ChildType::PRINT) == AsyncExternal) {
 //      bstring output = somethingArduous();
 //      printf("%s", output.c_str());
 //      exit(0);
@@ -37,7 +44,7 @@
 //
 // Responses to asychronous communication are handled in Server::reapChildren().
 // Create your own CHILD_XYZ type if you want to perform special handling. The
-// CHILD_PRINT type simply prints the response back to the player.
+// ChildType::PRINT type simply prints the response back to the player.
 
 Async::Async() {
 }
@@ -46,7 +53,7 @@ Async::Async() {
 //                      branch
 //*********************************************************************
 
-AsyncResult Async::branch(const Player* player, childType type) {
+AsyncResult Async::branch(const Player* player, ChildType type) {
     bstring user = (player ? player->getName() : "Someone");
     if(pipe(fds) == -1) {
         std::clog << "Error with pipe!\n";
@@ -88,7 +95,7 @@ AsyncResult Async::branch(const Player* player, childType type) {
 
 int Server::runList(Socket* sock, cmd* cmnd) {
     Async async;
-    if(async.branch(sock->getPlayer(), CHILD_LISTER) == AsyncExternal) {
+    if(async.branch(sock->getPlayer(), ChildType::LISTER) == AsyncExternal) {
         bstring lister = "/mud/List";
         std::clog << "Running <" << lister << ">\n";
 

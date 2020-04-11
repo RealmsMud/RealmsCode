@@ -23,8 +23,6 @@
 #include <map>
 #include <set>
 
-#include "common.hpp"
-
 class Creature;
 
 class ThreatEntry {

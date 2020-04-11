@@ -16,10 +16,19 @@
  *
  */
 
-#include "config.hpp"
-#include "guilds.hpp"
-#include "xml.hpp"
-#include "paths.hpp"
+#include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
+#include <cstdio>                                   // for sprintf
+#include <cstdlib>                                  // for free
+#include <cstring>                                  // for strcmp
+#include <map>                                      // for operator==, opera...
+#include <stdexcept>                                // for runtime_error
+
+#include "bstring.hpp"                              // for bstring
+#include "config.hpp"                               // for Config, gConfig
+#include "guilds.hpp"                               // for Guild, GuildCreation
+#include "paths.hpp"                                // for PlayerData
+#include "utils.hpp"                                // for MAX
+#include "xml.hpp"                                  // for newStringChild
 
 
 

@@ -21,10 +21,9 @@
 
 #include <list>
 #include <map>
+#include <libxml/parser.h>  // for xmlNodePtr
 
 #include "catRef.hpp"
-#include "common.hpp"
-#include "global.hpp"
 #include "range.hpp"
 
 class cmd;

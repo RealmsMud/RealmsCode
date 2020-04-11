@@ -15,8 +15,11 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "mud.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+
+#include "bstring.hpp"                              // for bstring
+#include "objIncrease.hpp"                          // for ObjIncrease, Unkn...
+#include "xml.hpp"                                  // for saveNonZeroNum
 
 //*********************************************************************
 //                          ObjIncrease
@@ -42,6 +45,9 @@ void ObjIncrease::reset() {
 //*********************************************************************
 
 ObjIncrease& ObjIncrease::operator=(const ObjIncrease& o) {
+    if(this == &o)
+        return(*this);
+
     type = o.type;
     increase = o.increase;
     amount = o.amount;
@@ -89,6 +95,6 @@ void ObjIncrease::save(xmlNodePtr curNode) const {
 //*********************************************************************
 
 bool ObjIncrease::isValid() const {
-    return(type != UnknownIncrease && increase != "");
+    return(type != UnknownIncrease && !increase.empty());
 }
 

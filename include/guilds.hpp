@@ -21,7 +21,6 @@
 #include <map>
 #include <list>
 
-#include "common.hpp"
 #include "money.hpp"
 
 class cmd;
@@ -37,8 +36,8 @@ public:
     GuildCreation();
 
     bool addSupporter(Player* supporter);
-    bool removeSupporter(bstring supporterName);
-    void renameSupporter(bstring oldName, bstring newName);
+    bool removeSupporter(const bstring& supporterName);
+    void renameSupporter(const bstring& oldName, const bstring& newName);
     bool saveToXml(xmlNodePtr rootNode) const;
 
 public:
@@ -59,10 +58,10 @@ public:
     Guild(xmlNodePtr curNode);
     void recalcLevel();
     int averageLevel();
-    bool addMember(bstring memberName);
-    bool delMember(bstring memberName);
-    bool isMember(bstring memberName);
-    void renameMember(bstring oldName, bstring newName);
+    bool addMember(const bstring& memberName);
+    bool delMember(const bstring& memberName);
+    bool isMember(const bstring& memberName);
+    void renameMember(const bstring& oldName, const bstring& newName);
     void parseGuildMembers(xmlNodePtr cur);
     bool saveToXml(xmlNodePtr rootNode) const;
 
@@ -99,9 +98,9 @@ public:
     long    getPkillsWon() const;
     long    getPoints() const;
 
-    void setName(bstring n);
+    void setName(const bstring& n);
     void setNum(unsigned short n);
-    void setLeader(bstring l);
+    void setLeader(const bstring& l);
     void setLevel(long l);
     void setNumMembers(int n);
     void setPkillsIn(long pk);

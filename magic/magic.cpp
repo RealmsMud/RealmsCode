@@ -15,16 +15,27 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <sstream>
-#include <iomanip>
-#include <iostream>
-#include <fstream>
+#include <libxml/parser.h>     // for xmlDocSetRootElement, xmlFreeDoc, xmlN...
+#include <cstdio>              // for sprintf
+#include <cstdlib>             // for abort, qsort
+#include <cstring>             // for memcpy, strcpy, strcmp
+#include <unistd.h>            // for link
+#include <fstream>             // for operator<<, ofstream, basic_ostream
+#include <iomanip>             // for operator<<, setw
 
-#include "config.hpp"
-#include "creatures.hpp"
-#include "magic.hpp"
-#include "mud.hpp"
-#include "xml.hpp"
+#include "bstring.hpp"         // for bstring
+#include "config.hpp"          // for Config
+#include "creatures.hpp"       // for Creature, Player
+#include "flags.hpp"           // for P_LINKDEAD
+#include "global.hpp"          // for CreatureClass, CreatureClass::LICH
+#include "help.hpp"            // for loadHelpTemplate
+#include "magic.hpp"           // for splOffensive, SpellFn, EVOCATION, DEST...
+#include "os.hpp"              // for ASSERTLOG
+#include "paths.hpp"           // for BuilderHelp, DMHelp, Code, Help
+#include "proto.hpp"           // for zero, getSpellMp, get_spell_list_size
+#include "structs.hpp"         // for PFNCOMPARE
+#include "utils.hpp"           // for MAX, MIN
+#include "xml.hpp"             // for newNumProp, newStringChild, saveFile
 
 
 // Spells with -1 mp will not check mp and will leave it up to
@@ -207,7 +218,7 @@ struct {
     { "touch-of-kesh",      S_TOUCH_OF_KESH,        splNecroDrain,              -1,         NECROMANCY,         EVIL        },
     { "regeneration",       S_REGENERATION,         splRegeneration,            40,         SCHOOL_CANNOT_CAST, HEALING     },
     { "well-of-magic",      S_WELLOFMAGIC,          splWellOfMagic,             40,         TRANSMUTATION,      HEALING     },
-    { "@",                  -1,                     0,                          0,          NO_SCHOOL,          NO_DOMAIN   }
+    { "@",                  -1,                     nullptr,                          0,          NO_SCHOOL,          NO_DOMAIN   }
 };
 int spllist_size = sizeof(spllist)/sizeof(*spllist);
 
@@ -249,7 +260,7 @@ void writeSchoolDomainFiles(MagicType type, int min, int max, const char* seeAls
         else
             skill = spellSkill((SchoolOfMagic)n);
 
-        if(skill == "")
+        if(skill.empty())
             continue;
 
 
@@ -572,7 +583,7 @@ bool checkRefusingMagic(Creature* player, Creature* target, bool healing, bool p
     if(!healing && target->flagIsSet(P_LINKDEAD)) {
         if(print)
             player->print("%M doesn't want that cast on them right now.\n", target);
-        return(0);
+        return(false);
     }
     if(target->getAsPlayer()->isRefusing(player->getName())) {
         if(print)

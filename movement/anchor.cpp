@@ -16,10 +16,15 @@
  *
  */
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
-#include "xml.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr, xmlNode
+
+#include "anchor.hpp"       // for Anchor
+#include "area.hpp"         // for MapMarker, Area, TileInfo
+#include "bstring.hpp"      // for bstring
+#include "catRef.hpp"       // for CatRef
+#include "creatures.hpp"    // for Player
+#include "rooms.hpp"        // for AreaRoom, BaseRoom, UniqueRoom
+#include "xml.hpp"          // for newStringChild, copyToBString, NODE_NAME
 
 //*********************************************************************
 //                      Anchor
@@ -29,14 +34,13 @@ Anchor::Anchor() {
     reset();
 }
 
-Anchor::Anchor(bstring a, const Player* player) {
+Anchor::Anchor(const bstring& a, const Player* player) {
     reset();
     alias = a;
     bind(player);
 }
 
 Anchor::~Anchor() {
-    if(mapmarker)
         delete mapmarker;
 }
 
@@ -50,7 +54,7 @@ CatRef Anchor::getRoom() const { return(room); }
 //                      setRoom
 //*********************************************************************
 
-void Anchor::setRoom(CatRef r) { room = r; }
+void Anchor::setRoom(const CatRef& r) { room = r; }
 
 //*********************************************************************
 //                      getMapMarker
@@ -76,7 +80,7 @@ bstring Anchor::getRoomName() const { return(roomName); }
 
 void Anchor::reset() {
     alias = roomName = "";
-    mapmarker = 0;
+    mapmarker = nullptr;
 }
 
 //*********************************************************************
@@ -96,9 +100,8 @@ void Anchor::bind(const UniqueRoom* uRoom) {
 }
 void Anchor::bind(const AreaRoom* aRoom) {
     roomName = aRoom->area->getTile(
-            aRoom->area->getTerrain(0, &aRoom->mapmarker, 0, 0, 0, true), false
+            aRoom->area->getTerrain(nullptr, &aRoom->mapmarker, 0, 0, 0, true), false
         )->getName().c_str();
-    if(mapmarker)
         delete mapmarker;
     mapmarker = new MapMarker;
     *mapmarker = *&aRoom->mapmarker;
@@ -133,12 +136,14 @@ bool Anchor::is(const AreaRoom* aRoom) const {
 //*********************************************************************
 
 Anchor& Anchor::operator=(const Anchor& a) {
+    if (this == &a)
+        return(*this);
+
     alias = a.alias;
     roomName = a.roomName;
     room = a.room;
     if(a.mapmarker) {
-        if(mapmarker)
-            delete mapmarker;
+        delete mapmarker;
         mapmarker = new MapMarker;
         *mapmarker = *a.mapmarker;
     }

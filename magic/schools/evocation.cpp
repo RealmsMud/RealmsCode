@@ -16,9 +16,23 @@
  *
  */
 
-#include "creatures.hpp"
-#include "mud.hpp"
-#include "rooms.hpp"
+#include <cstring>                // for strncmp, strlen
+#include <string>                 // for operator==, basic_string
+
+#include "bstring.hpp"            // for bstring, operator+
+#include "cmd.hpp"                // for cmd
+#include "creatures.hpp"          // for Creature, Player, Monster, CHECK_DIE
+#include "damage.hpp"             // for Damage
+#include "flags.hpp"              // for M_GREEDY, M_POLICE, M_NO_LEVEL_FOUR
+#include "global.hpp"             // for CastType, CastType::CAST, CreatureC...
+#include "magic.hpp"              // for SpellData, canEnchant, decEnchant
+#include "objects.hpp"            // for Object
+#include "proto.hpp"              // for broadcast, get_spell_name, bonus
+#include "random.hpp"             // for Random
+#include "realm.hpp"              // for NO_REALM
+#include "rooms.hpp"              // for BaseRoom
+#include "structs.hpp"            // for osp_t
+#include "utils.hpp"              // for MAX, MIN
 
 
 //*********************************************************************
@@ -55,8 +69,8 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
     int     maxMissiles=0, mpNeeded=0, canCast=0, num=0;
     int     missileDmg = 0, a=0;
     char    colorCh=0;
-    Creature *target=0;
-    Monster *mTarget=0;
+    Creature *target=nullptr;
+    Monster *mTarget=nullptr;
 
     if(!player->spellIsKnown(S_MAGIC_MISSILE) && spellData->how == CastType::CAST) {
         player->print("You do not know that spell.\n");
@@ -193,7 +207,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
     else
         skill = spellData->skill;
 
-    if(skill == "") {
+    if(skill.empty()) {
         caster->print("The spell unexpectedly fails.\n");
         return(0);
     }
@@ -225,7 +239,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
     caster->smashInvis();
 
     if(osp->bonus_type) {
-        bns = bonus((int) caster->intelligence.getCur());
+        bns = bonus(caster->intelligence.getCur());
         if(caster->getClass() == CreatureClass::MAGE || caster->getClass() == CreatureClass::LICH || caster->isStaff())
             bns = (bns * 3)/2;
 
@@ -498,10 +512,10 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 //*********************************************************************
 // This function is called by all spells whose sole purpose is to do
 // damage to a creature.
-Creature* Creature::findMagicVictim(bstring toFind, int num, SpellData* spellData, bool aggressive, bool selfOk, bstring noVictim, bstring notFound) {
-    Creature* victim=0;
-        Player  *pVictim=0;
-        if(toFind == "") {
+Creature* Creature::findMagicVictim(const bstring& toFind, int num, SpellData* spellData, bool aggressive, bool selfOk, const bstring& noVictim, const bstring& notFound) {
+    Creature* victim=nullptr;
+        Player  *pVictim=nullptr;
+        if(toFind.empty()) {
             if(spellData->how != CastType::POTION) {
                 if(hasAttackableTarget()) {
                     return(getTarget());
@@ -545,7 +559,7 @@ Creature* Creature::findMagicVictim(bstring toFind, int num, SpellData* spellDat
         }
 }
 int splOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *spellname, osp_t *osp) {
-    Creature* target=0;
+    Creature* target=nullptr;
 
     if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == nullptr)
         return(0);
@@ -586,7 +600,7 @@ int doMultiOffensive(Creature* player, Creature* target, int *found_something, i
 // this type of spell causes damage to everyone in a given room
 
 int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *spellname, osp_t *osp) {
-    Creature* target=0;
+    Creature* target=nullptr;
     int     monsters=0, players=0, len=0;
     int     something_died=0, found_something=0;
 
@@ -619,7 +633,7 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
         player->subMp(5);
 
     if(monsters) {
-        MonsterSet::iterator mIt = player->getRoomParent()->monsters.begin();
+        auto mIt = player->getRoomParent()->monsters.begin();
         while(mIt != player->getRoomParent()->monsters.end()) {
             target = (*mIt++);
             // skip all pets - they are treated as players
@@ -631,7 +645,7 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
         }
     }
     if(players) {
-        PlayerSet::iterator pIt = player->getRoomParent()->players.begin();
+        auto pIt = player->getRoomParent()->players.begin();
         while(pIt != player->getRoomParent()->players.end()) {
             target = (*pIt++);
             if(target == player)
@@ -642,7 +656,7 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
 
         }
 
-        MonsterSet::iterator mIt = player->getRoomParent()->monsters.begin();
+        auto mIt = player->getRoomParent()->monsters.begin();
         while(mIt != player->getRoomParent()->monsters.end()) {
             target = (*mIt++);
             // only do pets
@@ -676,8 +690,8 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
 
 int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player* pPlayer = player->getAsPlayer();
-    Creature* target=0;
-    Object* object=0;
+    Creature* target=nullptr;
+    Object* object=nullptr;
 
     player->smashInvis();
 

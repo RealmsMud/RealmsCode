@@ -16,8 +16,12 @@
  *
  */
 
-#include "mud.hpp"
-#include <fstream>
+#include <cstdio>       // for sprintf
+#include <fstream>      // for ifstream, basic_ios
+
+#include "bstring.hpp"  // for bstring
+#include "help.hpp"     // for loadHelpTemplate
+#include "paths.hpp"    // for HelpTemplate
 
 namespace Help {
 //**********************************************************************

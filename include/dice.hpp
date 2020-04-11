@@ -19,7 +19,9 @@
 #ifndef _DICE_H
 #define _DICE_H
 
-#include "common.hpp"
+#include <libxml/parser.h>  // for xmlNodePtr
+
+#include "bstring.hpp"
 
 class Dice {
 public:

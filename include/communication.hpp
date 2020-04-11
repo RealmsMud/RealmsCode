@@ -19,7 +19,6 @@
 #define COMM_H
 
 #include "commands.hpp"
-#include "common.hpp"
 #include "flags.hpp"
 #include "proto.hpp"
 
