@@ -55,6 +55,9 @@ Monster* Creature::findPet(Monster* toFind) {
 }
 
 bool Creature::hasPet() const {
+    if(this == nullptr)
+        return false;
+
     return(!pets.empty());
 }
 
