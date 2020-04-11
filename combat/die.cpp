@@ -1880,6 +1880,7 @@ void Player::die(DeathType dt) {
         logn("log.death", "%s was choked to death by deadly underdark moss.\n", getCName());
         sprintf(deathStr, "### Sadly, %s was choked to death by deadly underdark moss.", getCName());
         death = "deadly underdark moss";
+        break;
     case PIERCER:
         sprintf(deathStr, "### Sadly, %s was impaled to death by a piercer.", getCName());
         logn("log.death", "%s was killed by a piercer.\n", getCName());
@@ -2053,6 +2054,7 @@ void Player::die(DeathType dt) {
     //  print(deathStr);
     //}
     broadcast(deathStr);
+
 
 
     oldxp = experience;
