@@ -599,7 +599,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
                     "%M curtly dismisses %N .");
             }
         } else {
-            if(player->hasPet() && !strcmp(cmnd->str[1], "all")) {
+            if(player && player->hasPet() && !strcmp(cmnd->str[1], "all")) {
                 player->dismissAll();
                 return(0);
             } else {
