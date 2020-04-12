@@ -944,6 +944,11 @@ int doRes(Creature* caster, cmd* cmnd, bool res) {
 
 
     if(!caster->isDm()) {
+    	// If caster is max available level, they can res/fuse anybody. Otherwise, target must be lower level than caster.
+        if((caster->getLevel() <= target->getLevel()) && caster->getLevel() != MAXALVL) {
+        	caster->print("You must be higher level than %s to %s %s.\n",target->getCName(), res ? "resurrect" : "bloodfuse", target->himHer());
+        	return(0);
+        }
         if(target->getLocation() != target->getLimboRoom()) {
             caster->print("%s is not in limbo! How can you %s %s?\n",
                 target->getCName(), res ? "resurrect" : "bloodfuse", target->himHer());
@@ -1077,8 +1082,8 @@ int splResurrect(Creature* player, cmd* cmnd, SpellData* spellData) {
             player->print("You do not know that spell.\n");
             return(0);
         }
-        if(player->getLevel() < 19) {
-            player->print("You are not high enough level to cast that spell.\n");
+        if(player->getLevel() < 30) {
+            player->print("You are not yet revered enough by Ceris to cast that spell. You must be level 30.\n");
             return(0);
         }
         if(player->getAdjustedAlignment() != NEUTRAL) {
@@ -1108,8 +1113,8 @@ int splBloodfusion(Creature* player, cmd* cmnd, SpellData* spellData) {
             player->print("You do not know that spell.\n");
             return(0);
         }
-        if(player->getLevel() < 22) {
-            player->print("You are not high enough level to cast that spell.\n");
+        if(player->getLevel() < 30) {
+            player->print("You are not yet vile enough in the eyes of Aramon to cast that spell. You must be level 30.\n");
             return(0);
         }
         if(player->getAdjustedAlignment() != BLOODRED) {
