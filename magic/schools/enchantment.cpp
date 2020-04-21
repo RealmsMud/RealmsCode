@@ -851,7 +851,7 @@ int splEnchant(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!decEnchant(pPlayer, spellData->how))
         return(0);
 
-    if((pPlayer->getClass() == CreatureClass::MAGE || pPlayer->isStaff()) && spellData->how == CastType::CAST)
+    if((pPlayer->getClass() == CreatureClass::MAGE || pPlayer->getClass() == CreatureClass::LICH || pPlayer->isStaff()) && spellData->how == CastType::CAST)
         adj = MIN<int>(4, (spellData->level / 5));
 
     object->setAdjustment(MAX<int>(adj, object->getAdjustment()));
