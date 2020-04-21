@@ -430,7 +430,7 @@ bool Player::showExit(const Exit* exit, int magicShowHidden) const {
         return(true);
     return( canSee(exit) &&
         (!exit->flagIsSet(X_SECRET) || magicShowHidden) &&
-        !exit->isConcealed(this) &&
+        (!exit->isConcealed(this) || magicShowHidden) &&
         !exit->flagIsSet(X_DESCRIPTION_ONLY) &&
         (isEffected("fly") ? 1:!exit->flagIsSet(X_NEEDS_FLY))
     );
