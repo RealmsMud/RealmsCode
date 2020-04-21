@@ -445,7 +445,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
         }
         if(attack->type == SPECIAL_EXP_DRAIN) {
             // Damage is experience, not hp
-            victim->addExperience(attackDamage.get() * -1);
+            victim->subExperience(attackDamage.get());
         } else {
             if(isPet() && getMaster())
                 getMaster()->printColor("%M %s %N for %s%d^x damage.\n", this, attack->verb.c_str(), victim, getMaster()->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
