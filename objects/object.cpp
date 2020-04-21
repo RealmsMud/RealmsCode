@@ -626,7 +626,7 @@ void getDamageString(char atk[50], Creature* player, Object *weapon, bool critic
         strcpy(atk, "^Rpunched^x");
 
         if(player->getClass() == CreatureClass::MONK) {
-            switch(critical ? Random::get(10,12) : Random::get(1,9)) {
+            switch(critical ? Random::get(11,14) : Random::get(1,10)) {
             case 1: strcpy(atk, "punched");             break;
             case 2: strcpy(atk, "backhanded");          break;
             case 3: strcpy(atk, "smacked");             break;
@@ -636,26 +636,30 @@ void getDamageString(char atk[50], Creature* player, Object *weapon, bool critic
             case 7: strcpy(atk, "whacked");             break;
             case 8: strcpy(atk, "jabbed");              break;
             case 9: strcpy(atk, "throttled");           break;
-            case 10: strcpy(atk, "decimated");          break;
-            case 11: strcpy(atk, "annihilated");        break;
-            case 12: strcpy(atk, "obliterated");        break;
+            case 10: strcpy(atk, "clouted");            break;
+            case 11: strcpy(atk, "decimated");          break;
+            case 12: strcpy(atk, "annihilated");        break;
+            case 13: strcpy(atk, "obliterated");        break;
+            case 14: strcpy(atk, "demolished");         break;
             default:
                 break;
             }
         } else if(player->isEffected("lycanthropy")) {
-            switch(critical ? Random::get(10,12) : Random::get(1,9)) {
+            switch(critical ? Random::get(11,14) : Random::get(1,10)) {
             case 1: strcpy(atk, "clawed");          break;
             case 2: strcpy(atk, "rended");          break;
             case 3: strcpy(atk, "ripped");          break;
             case 4: strcpy(atk, "slashed");         break;
-            case 5: strcpy(atk, "cleaved");         break;
+            case 5: strcpy(atk, "ravaged");         break;
             case 6: strcpy(atk, "shredded");        break;
             case 7: strcpy(atk, "thrashed");        break;
             case 8: strcpy(atk, "maimed");          break;
             case 9: strcpy(atk, "mangled");         break;
-            case 10: strcpy(atk, "mutilated");      break;
-            case 11: strcpy(atk, "disembowled");    break;
-            case 12: strcpy(atk, "slaughtered");    break;
+            case 10: strcpy(atk, "lacerated");      break;
+            case 11: strcpy(atk, "mutilated");      break;
+            case 12: strcpy(atk, "eviscerated");    break;
+            case 13: strcpy(atk, "disembowled");    break;
+            case 14: strcpy(atk, "slaughtered");    break;
             default: strcpy(atk, "clawed");         break;
             }
         }
