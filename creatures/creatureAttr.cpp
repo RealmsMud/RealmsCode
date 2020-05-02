@@ -134,7 +134,7 @@ void Creature::addExperience(unsigned long e) {
 
 void Creature::subExperience(unsigned long e) {
     setExperience(e > experience ? 0 : experience - e);
-    int lost = (e > experience ? 0 : e);
+    unsigned long lost = (e > experience ? 0 : e);
     if(isPlayer()) {
         getAsPlayer()->checkLevel();
         getAsPlayer()->statistics.experienceLost(lost);
