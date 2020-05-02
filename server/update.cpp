@@ -1078,7 +1078,7 @@ void update_ships(int n) {
     		broadcast(isDm, "Runaway ships!! Current updates: %d Expected updated: %d", gConfig->calendar->shipUpdates, gConfig->expectedShipUpdates());
     		gConfig->calendar->shipUpdates =  gConfig->expectedShipUpdates();
     	}
-        update_ships(n+1);
+    update_ships(n+1);
 }
 
 

@@ -463,6 +463,7 @@ bool Monster::possibleEnemy() {
 //*********************************************************************
 // This function allows monsters to cast spells at players.
 
+extern int spllist_size;
 int Monster::castSpell(Creature *target) {
     Creature *temp_ptr=nullptr;
     cmd     cmnd;
@@ -483,15 +484,26 @@ int Monster::castSpell(Creature *target) {
     if(!knowctr)
         return(0);
 
-    spl = known[Random::get(0, knowctr-1)];
+    spl = known[Random::get<int>(0, knowctr-1)];
 
     // pets are smarter
     if(isPet()) {
         // Pets only cast offensive spells in combat
         if((int(*)(SpellFn, char*, osp_t*)) get_spell_function(spl) != splOffensive) {
             realm = proficiency[1];
-            if(realm == CONJUREBARD || realm == CONJUREMAGE || realm == CONJUREANIM)
+            bool randomRealm = false;
+            if(realm == CONJUREBARD || realm == CONJUREMAGE || realm == CONJUREANIM) {
                 realm = getRandomRealm();
+                randomRealm = true;
+            }
+            if (ospell[(realm-1)].splno > spllist_size) {
+                std::ostringstream oStr;
+                oStr << "INVALID PET SPELL: " << getName() << " " << "Realm: " << (int)realm << " SpellNo: " << ospell[(realm-1)].splno << " Random Realm:" << randomRealm;
+                const bstring str = oStr.str();
+                loge(str.c_str());
+                broadcast(::isDm, str.c_str());
+                return (0);
+            }
             spl = ospell[(realm-1)].splno;
         }
 

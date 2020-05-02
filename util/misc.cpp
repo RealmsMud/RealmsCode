@@ -1155,7 +1155,7 @@ MudObject* findCrtTarget(Creature * player, SetType& set, int findFlags, const c
 //                      findTarget
 //*********************************************************************
 
-MudObject* Creature::findTarget(int findWhere, int findFlags, const bstring& str, int val) {
+MudObject* Creature::findTarget(unsigned int findWhere, unsigned int findFlags, const bstring& str, int val) {
     int match=0;
     MudObject* target;
     do {

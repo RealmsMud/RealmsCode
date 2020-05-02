@@ -1394,7 +1394,7 @@ bool Hooks::swapIsInteresting(const Swap& s) const {
     bstring param;
     CatRef cr;
 
-    for(const std::pair<bstring, bstring>& p : hooks) {
+    for(const auto& p : hooks) {
         if(s.type == SwapRoom) {
             param = getParamFromCode(p.second, "spawnObjects", s.type);
             if(!param.empty()) {

@@ -68,6 +68,9 @@ const std::map<ObjectType,const char*> Object::objTypeToString = {
 
 
 bstring Object::getTypeName() const {
+    if(objTypeToString.find(type) == objTypeToString.end())
+        return("error");
+
     return objTypeToString.at(type);
 }
 
@@ -410,7 +413,7 @@ bool cantDropInBag(Object* object) {
 //                      findObj
 //*********************************************************************
 
-MudObject* Creature::findObjTarget(ObjectSet &set, int findFlags, const bstring& str, int val, int* match) {
+MudObject* Creature::findObjTarget(ObjectSet &set, unsigned int findFlags, const bstring& str, int val, int* match) {
     if(set.empty())
         return(nullptr);
 

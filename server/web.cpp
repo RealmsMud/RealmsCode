@@ -494,6 +494,7 @@ bool WebInterface::handleInput() {
         command == "GETINVENTORY" ||
         command == "EQUIP" ||
         command == "UNEQUIP" ||
+        command == "EFFECTLIST" ||
         (needData && inBuf.find(EOT, idx) != bstring::npos)
     ) {
         // We've got a valid command so we can erase it out of the input buffer
@@ -562,7 +563,21 @@ bool WebInterface::handleInput() {
             outBuf += webwho();
             outBuf += EOT;
             return(true);
-        } else if(command == "WHOIS") {
+        }
+        else if(command == "EFFECTLIST") {
+            Effect* effect=nullptr;
+            std::ostringstream oStr;
+            for(const auto& sp : gConfig->effects) {
+                effect = sp.second;
+                oStr << "Name,Display,OppositeEffect,Type,Pulsed,UsesStrength";
+                oStr << effect->getName().c_str() << "," << effect->getDisplay().c_str() << "," <<
+                        effect->getType().c_str() << "," << (effect->isPulsed() ? "yes" : "no") << "," <<
+                        (effect->usesStrength() ? "Y" : "N") ;
+            }
+            outBuf += oStr.str();
+            outBuf += EOT;
+        }
+        else if(command == "WHOIS") {
             std::clog << "WebInterface: Whois for user " << tempBuf << std::endl;
             tempBuf = tempBuf.toLower();
             tempBuf.setAt(0, up(tempBuf.getAt(0)));

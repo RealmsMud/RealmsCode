@@ -714,8 +714,8 @@ public:
     int doResistMagic(int dmg, Creature* enemy=0);
     virtual void pulseTick(long t) = 0;
 
-    MudObject* findTarget(int findWhere, int findFlags, const bstring& str, int val);
-    MudObject* findObjTarget(ObjectSet &set, int findFlags, const bstring& str, int val, int* match);
+    MudObject* findTarget(unsigned int findWhere, unsigned int findFlags, const bstring& str, int val);
+    MudObject* findObjTarget(ObjectSet &set, unsigned int findFlags, const bstring& str, int val, int* match);
     //MudObject* findTarget(cmd* cmnd, TargetType targetType, bool offensive);
 
     // New songs

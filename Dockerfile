@@ -54,12 +54,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libboost-python1.65 \
     libboost-filesystem1.65 \
     aspell \
-    zlib1g && \
+    zlib1g  \
+    gdb && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ARG username=jason
 
 RUN useradd ${username}
+
+# We want the SRC, but not all the build objs, for GDB to work
+WORKDIR /build
+COPY . .
+
 WORKDIR /mud
 
 # Set correct environment variables.
