@@ -491,18 +491,12 @@ int Monster::castSpell(Creature *target) {
         // Pets only cast offensive spells in combat
         if((int(*)(SpellFn, char*, osp_t*)) get_spell_function(spl) != splOffensive) {
             realm = proficiency[1];
-            bool randomRealm = false;
+            if (realm <= NO_REALM || realm >= MAX_REALM) {
+                // Non casting pet class if realm is zero
+                return (0);
+            }
             if(realm == CONJUREBARD || realm == CONJUREMAGE || realm == CONJUREANIM) {
                 realm = getRandomRealm();
-                randomRealm = true;
-            }
-            if (ospell[(realm-1)].splno > spllist_size) {
-                std::ostringstream oStr;
-                oStr << "INVALID PET SPELL: " << getName() << " " << "Realm: " << (int)realm << " SpellNo: " << ospell[(realm-1)].splno << " Random Realm:" << randomRealm;
-                const bstring str = oStr.str();
-                loge(str.c_str());
-                broadcast(::isDm, str.c_str());
-                return (0);
             }
             spl = ospell[(realm-1)].splno;
         }
