@@ -196,7 +196,10 @@ bool QuestInfo::isRepeatable() const {
     return(repeatable);
 }
 int QuestInfo::getTimesRepeatable() const {
-    return(timesRepeatable);
+    if (timesRepeatable == 0)
+        return(MAX_INT);
+    else
+        return(timesRepeatable)
 }
 
 const QuestCatRef& QuestInfo::getTurnInMob() const {
