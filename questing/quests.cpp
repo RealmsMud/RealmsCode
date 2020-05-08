@@ -29,6 +29,7 @@
 #include <stdexcept>                                // for runtime_error
 #include <string>                                   // for basic_string, cha...
 #include <boost/tokenizer.hpp>
+#include <limits>                                   // for numeric limits
 
 #include "bstring.hpp"                              // for bstring, operator+
 #include "catRef.hpp"                               // for CatRef
@@ -196,7 +197,10 @@ bool QuestInfo::isRepeatable() const {
     return(repeatable);
 }
 int QuestInfo::getTimesRepeatable() const {
-    return(timesRepeatable);
+    if (timesRepeatable == 0)
+        return(std::numeric_limits<int>::max());
+    else
+        return(timesRepeatable);
 }
 
 const QuestCatRef& QuestInfo::getTurnInMob() const {
