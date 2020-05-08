@@ -950,6 +950,11 @@ bool QuestCompletion::complete(Monster* monster) {
             parentPlayer->addExperience(parentQuest->expReward);
         }
     }
+    if(parentQuest->alignmentChange) {
+            parentPlayer->printColor("%sYour alignment has shifted towards %s.^x\n", parentQuest->alignmentChange < 0 ? "^r" : "^b", parentQuest->alignmentChange < 0 ? "^Revil" : "^Bgood");
+            parentPlayer->setAlignment(MAX<short>(-1000, MIN<short>(1000,(parentPlayer->getAlignment()+parentQuest->alignmentChange))));
+            parentPlayer->alignAdjustAcThaco();
+    }
     if(!parentQuest->factionRewards.empty())
         parentPlayer->adjustFactionStanding(parentQuest->factionRewards);
 
