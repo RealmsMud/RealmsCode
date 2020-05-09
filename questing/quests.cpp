@@ -950,6 +950,16 @@ bool QuestCompletion::complete(Monster* monster) {
             parentPlayer->addExperience(parentQuest->expReward);
         }
     }
+    if(parentQuest->alignmentChange) {
+        std::ostringstream oStr;
+        oStr << (parentQuest->alignmentChange < 0 ? "^r" : "^b") << "Your alignment has shifted towards " << (parentQuest->alignmentChange < 0 ? "^Revil" : "^Bgood") << ".";
+        if (parentPlayer->isStaff())
+            oStr << " (" << parentQuest->alignmentChange << ")";
+        *parentPlayer << ColorOn << oStr.str() << ColorOff << "\n";
+
+        parentPlayer->setAlignment(MAX<short>(-1000, MIN<short>(1000,(parentPlayer->getAlignment()+parentQuest->alignmentChange))));
+        parentPlayer->alignAdjustAcThaco();
+    }
     if(!parentQuest->factionRewards.empty())
         parentPlayer->adjustFactionStanding(parentQuest->factionRewards);
 

@@ -52,7 +52,7 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
 
     questId = xml::getIntProp(rootNode, "Num");
     repeatable = sharable = false;
-    expReward = minLevel = minFaction = level = 0;
+    expReward = minLevel = minFaction = alignmentChange = level = 0;
     repeatFrequency = QuestRepeatFrequency::REPEAT_NEVER;
 
     xmlNodePtr curNode = rootNode->children;
@@ -103,6 +103,7 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
             while(childNode) {
                 if(NODE_NAME(childNode, "Coins")) cashReward.load(childNode);
                 else if(NODE_NAME(childNode, "Experience")) xml::copyToNum(expReward, childNode);
+                else if(NODE_NAME(childNode, "AlignmentChange")) xml::copyToNum(alignmentChange, childNode);
                 else if(NODE_NAME(childNode, "Object")) itemRewards.emplace_back(childNode);
                 else if(NODE_NAME(childNode, "Faction")) {
                     xml::copyPropToBString(faction, childNode, "id");

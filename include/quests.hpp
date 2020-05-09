@@ -116,6 +116,7 @@ private:
     QuestCatRef turnInMob;          // Monster that we turn this quest into for completion
     Money cashReward;           // Coin Reward
     long expReward;             // Exp reward
+    short alignmentChange;			// Amount alignment changes upon quest completion
     std::list<QuestCatRef> itemRewards; // Items rewarded on completion
     std::map<bstring,long> factionRewards;  // Factions to be modified
 
