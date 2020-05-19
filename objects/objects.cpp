@@ -1048,6 +1048,7 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
         }
         else {
             char tempStr[2056];
+            char* xloc;
             strcpy( tempStr, int_to_text(num) );
             strcat(tempStr, " ");
 
@@ -1055,18 +1056,31 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
                 strcat(tempStr, "sets of ");
 
             strcat(tempStr, getCName());
+
             if(!flagIsSet(O_SOME_PREFIX)) {
                 tempStr[strlen(tempStr)+1] = 0;
                 tempStr[strlen(tempStr)+2] = 0;
-                if(tempStr[strlen(tempStr)-1] == 's' ||
-                        tempStr[strlen(tempStr)-1] == 'x') {
+                // Handle any trailing color article (^x) so color-tagged object names dont have to be irregular plural.
+                if(strlen(tempStr)>=2 && (tempStr[strlen(tempStr)-2] == '^' && (tempStr[strlen(tempStr)-3] == 's' || tempStr[strlen(tempStr)-3] == 'x'))) {
+                   xloc = strstr(tempStr,"^x");
+                    if (xloc)
+                        strcpy(xloc ,"es^x");
+                }
+                else if(strlen(tempStr)>=2 && (tempStr[strlen(tempStr)-2] == '^' && !(tempStr[strlen(tempStr)-3] == 's' || tempStr[strlen(tempStr)-3] == 'x'))) {
+                    xloc = strstr(tempStr,"^x");
+                    if (xloc)
+                        strcpy(xloc ,"s^x");
+                }
+                else if(tempStr[strlen(tempStr)-1] == 's' || tempStr[strlen(tempStr)-1] == 'x')  {
                     tempStr[strlen(tempStr)] = 'e';
                     tempStr[strlen(tempStr)] = 's';
-                } else
+                } 
+                else
                     tempStr[strlen(tempStr)] = 's';
+                
             }
             objStr << tempStr;
-        }
+        } 
     }
 
 
