@@ -62,9 +62,14 @@ void BaseRoom::setVersion(const bstring& v) { version = v; }
 
 
 bstring BaseRoom::fullName() const {
+    std::ostringstream oStr;
+    if(!this) {
+        oStr << "Invalid Room";
+        return(oStr.str());
+    }
+
     const UniqueRoom* uRoom = getAsConstUniqueRoom();
     const AreaRoom* aRoom = getAsConstAreaRoom();
-    std::ostringstream oStr;
 
     if(uRoom) {
         oStr << uRoom->info.str() << "(" << uRoom->getName() << ")";
