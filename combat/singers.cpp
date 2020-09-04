@@ -102,12 +102,19 @@ int cmdIdentify(Player* player, cmd* cmnd) {
             return(0);
         }
 
+        if(object->flagIsSet(O_CUSTOM_OBJ)) {
+            player->printColor("%P was made by the gods. It is beyond you to understand their ways.\n", object);
+            return(0);
+        }
+
         if(object->getLevel() > player->getLevel()) {
             broadcast(player->getSock(), player->getParent(), "%M is totally puzzled by %P.", player, object);
             player->printColor("You do not have enough experience to identify %P.\n", object);
             return(0);
         }
+
     }
+    
     if(!jakar)
         avgbns = (player->intelligence.getCur() + player->piety.getCur())/2;
     else
@@ -115,10 +122,6 @@ int cmdIdentify(Player* player, cmd* cmnd) {
 
     chance = (int)(5*player->getSkillLevel("identify")) + (bonus(avgbns)) - object->getLevel();
     chance = MIN(90, chance);
-
-    if(object->flagIsSet(O_CUSTOM_OBJ))
-        chance = 0; // Customs cannot be identified, so people do not know
-                    // their stats in case we want to change them.
 
     if(player->isStaff())
         chance = 101;
@@ -130,7 +133,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
         player->checkImprove("identify", false);
         broadcast(player->getSock(), player->getParent(), "%M carefully studies %P.",player, object);
         player->lasttime[LT_IDENTIFY].ltime = t;
-        player->lasttime[LT_IDENTIFY].interval = 60L;
+        player->lasttime[LT_IDENTIFY].interval = 45L;
         return(0);
     } else {
         broadcast(player->getSock(), player->getParent(), "%M carefully studies %P.", player, object);
@@ -142,7 +145,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
         object->clearFlag(O_JUST_BOUGHT);
 
         player->lasttime[LT_IDENTIFY].ltime = t;
-        player->lasttime[LT_IDENTIFY].interval = 120L;
+        player->lasttime[LT_IDENTIFY].interval = 45L;
 
         if(object->increase) {
             
