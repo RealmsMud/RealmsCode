@@ -189,10 +189,10 @@ void Creature::setAlignment(short a) { alignment = MAX<short>(-1000, MIN<short>(
 void Creature::subAlignment(unsigned short a) { setAlignment(alignment - a); }
 
 
-void Creature::setArmor(unsigned int a) { armor = MAX<unsigned int>(MIN(a, MAX_ARMOR), 0); }
+void Creature::setArmor(unsigned int a) { armor = MAX<int>(MIN(a, MAX_ARMOR), 0); }
 
 
-void Creature::setAttackPower(unsigned int a) { attackPower = MIN<unsigned int>(1500, a); }
+void Creature::setAttackPower(unsigned int a) { attackPower = MIN<int>(1500, a); }
 
 
 void Creature::setDeity(unsigned short d) { deity = MIN<unsigned short>(d, DEITY_COUNT-1); }

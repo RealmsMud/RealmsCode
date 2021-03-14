@@ -702,7 +702,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
                 attackDamage.add(wcdmg);
 
                 if(!meKilled && drain && victim->hp.getCur() - attackDamage.get() > 0) {
-                    drain = MIN<unsigned int>(victim->hp.getCur() - attackDamage.get(), drain);
+                    drain = MIN<int>(victim->hp.getCur() - attackDamage.get(), drain);
                     printColor("Your aura of evil drains %s%d^x hit point%s from your opponent.\n",
                         customColorize("*CC:DAMAGE*").c_str(), drain, drain == 1 ? "" : "s");
                     victim->printColor("^r%M drains %s%d^r hit points from you!\n", this, victim->customColorize("*CC:DAMAGE*").c_str(), drain);
@@ -940,7 +940,7 @@ int Creature::castWeapon(Creature* target, Object *weapon, bool &meKilled) {
 //      15) Stoneskin spell
 //      16) Werewolf silver vulnerability
 
-void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, Realm realm, Object* weapon, int saveBonus, short offguard, bool computingBonus) {
+void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, Realm pRealm, Object* weapon, short saveBonus, short offguard, bool computingBonus) {
     Player  *player = getAsPlayer();
     const EffectInfo *effect = nullptr;
     int     vHp = 0;
@@ -985,17 +985,13 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
     // always check undead-ward
     //
     if(enemy && enemy->isUndead()) {
-        if(getRoomParent()->isEffected("unhallow"))
-            attackDamage.set(attackDamage.get() * 3 / 2);
-        if(getRoomParent()->isEffected("hallow"))
-            attackDamage.set(attackDamage.get() * 2 / 3);
-        if(isEffected("undead-ward"))
-            attackDamage.set(attackDamage.get() / 2);
+        if(getRoomParent()->isEffected("unhallow")) attackDamage.set(attackDamage.get() * 3 / 2);
+        if(getRoomParent()->isEffected("hallow"))   attackDamage.set(attackDamage.get() * 2 / 3);
+        if(isEffected("undead-ward"))               attackDamage.set(attackDamage.get() / 2);
     }
 
     if(dmgType == NEGATIVE_ENERGY || dmgType == MAGICAL_NEGATIVE) {
-        if(isEffected("drain-shield"))
-            attackDamage.set(attackDamage.get() / 3);
+        if(isEffected("drain-shield")) attackDamage.set(attackDamage.get() / 3);
     }
 
     if(dmgType == MAGICAL || dmgType == MAGICAL_NEGATIVE) {
@@ -1008,7 +1004,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
             if(effect->getStrength() >= Random::get(1,100)) {
                 attackDamage.set(attackDamage.get() / 2);
                 attackDamage.setReflected(attackDamage.get());
-                enemy->modifyDamage(nullptr, dmgType, attackDamage, realm);
+                enemy->modifyDamage(nullptr, dmgType, attackDamage, pRealm);
             }
         }
 
@@ -1027,10 +1023,10 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         }
 
         //
-        // if it's an elemental realm, check resistances
+        // if it's an elemental pRealm, check resistances
         //
-        if(realm != NO_REALM)
-            attackDamage.set(checkRealmResist(attackDamage.get(), realm));
+        if(pRealm != NO_REALM)
+            attackDamage.set(checkRealmResist(attackDamage.get(), pRealm));
 
         //
         // modify damage for resist-magic
@@ -1069,16 +1065,11 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         //
         if(isBrittle()) {
             float brittle = 0;
-            if(level < 7)
-                brittle = 8;
-            else if(level < 13)
-                brittle = 5;
-            else if(level < 19)
-                brittle = 3;
-            else if(level < 25)
-                brittle = 2.5;
-            else
-                brittle = 2;
+            if     (level < 7)  brittle = 8;
+            else if(level < 13) brittle = 5;
+            else if(level < 19) brittle = 3;
+            else if(level < 25) brittle = 2.5;
+            else                brittle = 2;
 
             attackDamage.set((int)((double)attackDamage.get() + (double)attackDamage.get() / brittle));
         }
@@ -1114,7 +1105,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
             // zerkers: 1/5
             // everyone else: 1/7
             attackDamage.set(attackDamage.get() - (attackDamage.get() / (cClass == CreatureClass::BERSERKER ? 5 : 7)));
-            attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
+            attackDamage.set(MAX<int>(1, attackDamage.get()));
         }
 
         // monsters do more damage while berserked
@@ -1123,8 +1114,8 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
 
         // armor damage reduction
         if(enemy) {
-            float damageReduction = enemy->getDamageReduction(this);
-            attackDamage.set(attackDamage.get() - (int)(attackDamage.get() * damageReduction));
+            const float damageReduction = enemy->getDamageReduction(this);
+            attackDamage.set(attackDamage.get() - (unsigned int)((float)attackDamage.get() * damageReduction));
         }
 
         // Werewolf silver vulnerability
@@ -1132,7 +1123,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
             attackDamage.set(attackDamage.get() * 2);
     }
 
-    // if it's a pet, check elemental realm resistance
+    // if it's a pet, check elemental pRealm resistance
     if(enemy) {
         bool resistPet=false, immunePet=false, vulnPet=false;
         checkResistPet(enemy, resistPet, immunePet, vulnPet);
@@ -1140,53 +1131,53 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         if(resistPet)
             attackDamage.set(attackDamage.get() / 2);
         if(vulnPet)
-            attackDamage.add(Random::get(MAX<unsigned int>(1, attackDamage.get()/6),MAX<unsigned int>(2, attackDamage.get()/2)));
+            attackDamage.add(Random::get(MAX<int>(1, attackDamage.get()/6),MAX<int>(2, attackDamage.get()/2)));
         if(immunePet)
             attackDamage.set(1);
     }
 
     // armor spell
     if(dmgType != MENTAL && isEffected("armor")) {
-        EffectInfo* armor = getEffect("armor");
-        vHp = armor->getStrength();
+        EffectInfo* armorEffect = getEffect("armorEffect");
+        vHp = armorEffect->getStrength();
 
         if(vHp <= 0 || attackDamage.get() <= 0)
             vHp=0; //shouldn't happen, but check anyway.
 
-        vHp -= attackDamage.get();
+        vHp -= (int)attackDamage.get();
         if(vHp <= 0) {
-            removeEffect("armor");
+            removeEffect("armorEffect");
             if(player) {
-                printColor("^y^#Your magical armor has been dispelled.\n");
+                printColor("^y^#Your magical armorEffect has been dispelled.\n");
                 player->computeAC();
             }
-            broadcast(getSock(), getRoomParent(), "%M's magical armor has been dispelled.", this);
+            broadcast(getSock(), getRoomParent(), "%M's magical armorEffect has been dispelled.", this);
         } else {
-            armor->setStrength(vHp);
+            armorEffect->setStrength(vHp);
         }
     }
 
     // stoneskin spell
     if(dmgType == PHYSICAL && isEffected("stoneskin")) {
-        EffectInfo* stoneskin = getEffect("stoneskin");
-        vHp = stoneskin->getStrength();
+        EffectInfo* stoneskinEffect = getEffect("stoneskinEffect");
+        vHp = stoneskinEffect->getStrength();
 
         if(vHp <= 0 || attackDamage.get() <= 0)
-            vHp=0; //shouldn't happen, but check anyway.
+            vHp = 0; //shouldn't happen, but check anyway.
 
         vHp--;
         if(vHp <= 0) {
-            removeEffect("stoneskin");
-            printColor("^g^#Your stoneskin has been dispelled.\n");
-            broadcast(getSock(), getRoomParent(), "%M's stoneskin has been depleted.", this);
+            removeEffect("stoneskinEffect");
+            printColor("^g^#Your stoneskinEffect has been dispelled.\n");
+            broadcast(getSock(), getRoomParent(), "%M's stoneskinEffect has been depleted.", this);
         } else {
-            stoneskin->setStrength(vHp);
+            stoneskinEffect->setStrength(vHp);
         }
         // Stoneskin absorbs 50% damage.
         attackDamage.set(attackDamage.get() / 2);
     }
 
-    attackDamage.set(MAX<unsigned int>(0, attackDamage.get()));
+    attackDamage.set(MAX<int>(0, attackDamage.get()));
 
     // check drain last
     if(dmgType == NEGATIVE_ENERGY || dmgType == MAGICAL_NEGATIVE) {
@@ -1197,7 +1188,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
                 attackDamage.setDrain(Random::get<unsigned int>(0, attackDamage.get() / 4));
 
             // don't drain more than can be drained!
-            attackDamage.setDrain(MIN<unsigned int>(attackDamage.getDrain(), hp.getCur()));
+            attackDamage.setDrain(MIN<int>(attackDamage.getDrain(), hp.getCur()));
 
             // liches can't use drain damage as their HP is their MP
             // they can do more damage instead
@@ -1227,7 +1218,7 @@ bool Creature::canBeDrained() const {
 //                      doWeaponResist
 //*********************************************************************
 
-int Creature::doWeaponResist(int dmg, const bstring& weaponCategory) const {
+unsigned int Creature::doWeaponResist(unsigned int dmg, const bstring& weaponCategory) const {
     if(isEffected("resist-" + weaponCategory)) {
         dmg /= 2;
     }
@@ -1354,7 +1345,7 @@ Player* Monster::whoToAggro() const {
 
             player = ply->getAsPlayer();
             if(willAggro(player)) {
-                total += MAX(1, 300 - player->piety.getCur());
+                total += MAX<int>(1, 300 - player->piety.getCur());
                 players.push_back(player);
             }
 
@@ -1375,7 +1366,7 @@ Player* Monster::whoToAggro() const {
 
     for(it = players.begin() ; it != players.end() ; it++) {
         player = (*it);
-        total += MAX(1, 300 - player->piety.getCur());
+        total += MAX<int>(1, 300 - player->piety.getCur());
         if(total >= pick)
             return(player);
     }

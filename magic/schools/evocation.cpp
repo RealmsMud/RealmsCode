@@ -392,9 +392,9 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 
         damage.set(osp->damage.roll() + bns);
         target->modifyDamage(caster, dmgType, damage, osp->realm);
-        damage.set(MAX<unsigned int>(0, damage.get()));
+        damage.set(MAX<int>(0, damage.get()));
 
-        m = MIN<unsigned int>(target->hp.getCur(), damage.get());
+        m = MIN<int>(target->hp.getCur(), damage.get());
 
         //addrealm = (m * target->getExperience()) / MAX(1, target->hp.getMax());
         //addrealm = MIN(addrealm, target->getExperience());

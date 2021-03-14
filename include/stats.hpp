@@ -76,23 +76,23 @@ public:
     bool loadModifiers(xmlNodePtr curNode);
     void save(xmlNodePtr parentNode, const char* statName) const;
     
-    int increase(int amt);
-    int decrease(int amt);
-    int adjust(int amt);
+    unsigned int increase(unsigned int amt);
+    unsigned int decrease(unsigned int amt);
+    unsigned int adjust(int amt);
     
-    int getCur(bool recalc = true);
-    int getMax();
-    int getInitial() const;
+    unsigned int getCur(bool recalc = true);
+    unsigned int getMax();
+    unsigned int getInitial() const;
 
-    void addInitial(int a);
-    void setMax(int newMax, bool allowZero=false);
-    void setCur(int newCur);
-    void setInitial(int i);
+    void addInitial(unsigned int a);
+    void setMax(unsigned int newMax, bool allowZero= false);
+    void setCur(unsigned int newCur);
+    void setInitial(unsigned int i);
     void setDirty();
 
     void setInfluences(Stat* pInfluences);
     void setInfluencedBy(Stat* pInfluencedBy);
-    int restore(); // Set a stat to it's maximum value
+    unsigned int restore(); // Set a stat to it's maximum value
 
     void reCalc();
 
@@ -105,10 +105,10 @@ public:
 
     void clearModifiers();
 
-    StatModifier* getModifier(const bstring& name);
-    int getModifierAmt(const bstring& name);
+    StatModifier* getModifier(const bstring& pName);
+    int getModifierAmt(const bstring& pName);
 
-    void upgradeSetCur(int newCur);  // Used only in upgrading to new stats
+    void upgradeSetCur(unsigned int newCur);  // Used only in upgrading to new stats
 protected:
 
     bstring name;
@@ -118,9 +118,9 @@ protected:
     bool dirty;
 
 
-    int cur;
-    int max;
-    int initial;
+    unsigned int cur;
+    unsigned int max;
+    unsigned int initial;
 
     Stat* influences;
     Stat* influencedBy;

@@ -135,7 +135,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 
     dmgnum = damage.get();
 
-    damage.set(MIN<unsigned int>(damage.get(), target->hp.getCur() + 1));
+    damage.set(MIN<int>(damage.get(), target->hp.getCur() + 1));
     if(damage.get() < 1)
         damage.set(1);
 
@@ -615,7 +615,7 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
     if(pTarget && pTarget->isEffected("berserk"))
         damage.set(damage.get() + (damage.get() / 5));
 
-    damage.set(MIN<unsigned int>(damage.get(), target->hp.getCur() + 1));
+    damage.set(MIN<int>(damage.get(), target->hp.getCur() + 1));
     if(damage.get() < 1)
         damage.set(1);
 

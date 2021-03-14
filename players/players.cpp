@@ -418,10 +418,10 @@ bool Player::doPlayerHarmRooms() {
     if(room->flagIsSet(R_DRAIN_MANA) && !isStaff()) {
         wake("Terrible nightmares disturb your sleep!");
         if(cClass != CreatureClass::LICH)
-            mp.decrease(MIN(mp.getCur(),6));
+            mp.decrease(MIN<int>(mp.getCur(),6));
 
         if(cClass == CreatureClass::LICH) {
-            hp.decrease(MIN(hp.getCur(), 6));
+            hp.decrease(MIN<int>(hp.getCur(), 6));
             if(hp.getCur() < 1)
                 die(DRAINED);
         }

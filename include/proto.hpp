@@ -44,8 +44,8 @@ class TileInfo;
 
 
 // Stats
-double getConBonusPercentage(int pCon);
-double getIntBonusPercentage(int pInt);
+double getConBonusPercentage(unsigned int pCon);
+double getIntBonusPercentage(unsigned int pInt);
 
 // Container
 bool isMatch(const Creature* searcher, MudObject* target, const bstring& name, bool exactMatch, bool checkVisibility = false);
@@ -355,7 +355,7 @@ int cmdGo(Player* player, cmd* cmnd);
 bstring progressBar(int barLength, float percentFull, const bstring& text = "", char progressChar = '=', bool enclosed = true);
 
 bool nameIsAllowed(bstring str, Socket* sock);
-int bonus(int num);
+int bonus(unsigned int num);
 int crtWisdom(Creature* creature);
 int crtAwareness(Creature* creature);
 void new_merror(const char *str, char errtype, const char *file, const int line );

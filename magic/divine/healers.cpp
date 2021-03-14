@@ -295,7 +295,7 @@ int cmdLayHands(Player* player, cmd* cmnd) {
 
         num = Random::get( (int)(player->getSkillLevel("hands")*4), (int)(player->getSkillLevel("hands")*5) ) + Random::get(2,8);
         player->print("You heal yourself with the power of %s.\n", gConfig->getDeity(player->getDeity())->getName().c_str());
-        player->print("You regain %d hit points.\n", MIN((player->hp.getMax() - player->hp.getCur()), num));
+        player->print("You regain %d hit points.\n", MIN<int>((player->hp.getMax() - player->hp.getCur()), num));
 
 
         player->doHeal(player, num);
@@ -337,7 +337,7 @@ int cmdLayHands(Player* player, cmd* cmnd) {
 
         player->print("You heal %N with the power of %s.\n", creature, gConfig->getDeity(player->getDeity())->getName().c_str());
         creature->print("%M lays %s hand upon your pate.\n", player, player->hisHer());
-        creature->print("You regain %d hit points.\n", MIN((creature->hp.getMax() - creature->hp.getCur()), num));
+        creature->print("You regain %d hit points.\n", MIN<int>((creature->hp.getMax() - creature->hp.getCur()), num));
 
 
         player->doHeal(creature, num);
@@ -584,7 +584,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
 
 
     // determine damage turn will do
-    dmg = MAX(1, target->hp.getCur() / 2);
+    dmg = MAX<int>(1, target->hp.getCur() / 2);
 
 
     switch(player->getDeity()) {
@@ -639,7 +639,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
         target->die(player);
     } else {
 
-        m = MIN(target->hp.getCur(), dmg);
+        m = MIN<int>(target->hp.getCur(), dmg);
         //player->statistics.attackDamage(dmg, "turn undead");
 
         if(target->isMonster())
@@ -754,7 +754,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
             target->die(player);
         }
         else {
-            dmg = MAX(1, target->hp.getCur() / 2);
+            dmg = MAX<int>(1, target->hp.getCur() / 2);
             //player->statistics.attackDamage(dmg, "renounce");
 
             player->printColor("You renounced %N for %s%d^x damage.\n", target, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
@@ -829,7 +829,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
             target->die(player);
 
         } else {
-            dmg = MAX(1, target->hp.getCur() / 2);
+            dmg = MAX<int>(1, target->hp.getCur() / 2);
             //player->statistics.attackDamage(dmg, "renounce");
             player->printColor("You renounced %N for %s%d^x damage.\n", target, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
             player->checkImprove("renounce", true);

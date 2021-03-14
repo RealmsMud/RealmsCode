@@ -1179,7 +1179,7 @@ void Player::resetPlayer(Creature *killer) {
     unhide();
 
     if(killer->isPlayer() || duel) {
-        hp.setCur( MAX(1, MAX(hp.getMax()/2, hp.getCur())));
+        hp.setCur( MAX<int>(1, MAX(hp.getMax()/2, hp.getCur())));
         mp.setCur(MAX(mp.getCur(),(mp.getMax())/10));
     } else {
         hp.restore();
@@ -1450,7 +1450,7 @@ void Monster::distributeExperience(Creature *killer) {
                     }
                 }
             }
-            float xpPercent = (float)MIN(totalGroupDamage, hp.getMax())/(float)hp.getMax();
+            float xpPercent = (float)MIN<int>(totalGroupDamage, hp.getMax())/(float)hp.getMax();
             long adjustedExp = (long)((xpPercent*experience) * (1.0 + (.25*numGroupMembers)));
 
             // Exp is split amoungst the group based on their level,
@@ -1504,7 +1504,7 @@ void Monster::distributeExperience(Creature *killer) {
         }
         int effort = p.second;
 
-        expGain = (experience * effort) / MAX(hp.getMax(), 1);
+        expGain = (experience * effort) / MAX<int>(hp.getMax(), 1);
         expGain = MIN<long>(MAX<long>(0,expGain), experience);
 
         ply->gainExperience(this, killer, expGain);

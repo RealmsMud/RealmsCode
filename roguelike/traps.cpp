@@ -57,7 +57,7 @@ void teleport_trap(Player* player) {
     player->print("Your body is violently pulled in all directions.\n");
 //  player->hp.getCur() -= player->hp.getMax()/2;
     player->doDamage(player, player->hp.getMax()/2, NO_CHECK);
-    player->hp.setCur(MAX(5, player->hp.getCur()));
+    player->hp.setCur(MAX<int>(5, player->hp.getCur()));
     // This is all done so a teleport trap
     // will not be abused for exploring.
     player->smashInvis();

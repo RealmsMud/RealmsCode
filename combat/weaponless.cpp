@@ -242,7 +242,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
 
     } else {
 
-        damage.set(MAX(1, creature->hp.getCur() / 2));
+        damage.set(MAX<int>(1, creature->hp.getCur() / 2));
 
         creature->modifyDamage(player, ABILITY, damage);
         //player->statistics.attackDamage(dmg, "touch-of-death");

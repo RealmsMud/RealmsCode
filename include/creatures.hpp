@@ -425,9 +425,9 @@ public:
     void clearAsPetEnemy();
     virtual void gainExperience(Monster* victim, Creature* killer, int expAmount, bool groupExp = false) {} ;
     void adjustExperience(Monster* victim, int& expAmount, int& holidayExp);
-    int doWeaponResist(int dmg, const bstring& weaponCategory) const;
-    int doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie = CHECK_DIE, DamageType dmgType = PHYSICAL_DMG);
-    int doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget);
+    unsigned int doWeaponResist(unsigned int dmg, const bstring& weaponCategory) const;
+    unsigned int doDamage(Creature* target, unsigned int dmg, DeathCheck shouldCheckDie = CHECK_DIE, DamageType dmgType = PHYSICAL_DMG);
+    int doDamage(Creature* target, unsigned int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget);
     bool chkSave(short savetype, Creature* target, short bns);
     int castWeapon(Creature* target, Object* weapon, bool &meKilled);
     void castDelay(long delay);
@@ -438,10 +438,10 @@ public:
     bool inCombat(bool countPets) const;
     bool inCombat(const Creature* target=0, bool countPets=0) const;
     bool canAttack(Creature* target, bool stealing=false);
-    int checkRealmResist(int dmg, Realm pRealm) const;
+    unsigned int checkRealmResist(unsigned int dmg, Realm pRealm) const;
     void knockUnconscious(long duration);
     void clearAsEnemy();
-    bool checkAttackTimer(bool displayFail = true);
+    bool checkAttackTimer(bool displayFail = true) const;
     void updateAttackTimer(bool setDelay = true, int delay = 0);
 
     int getPrimaryDelay();
@@ -468,17 +468,17 @@ public:
     bool canDodge(Creature* attacker);
     int dodge(Creature* target);
     int parry(Creature* target);
-    double getFumbleChance(const Object* weapon);
+    double getFumbleChance(const Object* weapon) const;
     double getCriticalChance(const int& difference);
     double getBlockChance(Creature* attacker, const int& difference);
-    double getGlancingBlowChance(Creature* attacker, const int& difference);
+    double getGlancingBlowChance(Creature* attacker, const int& difference) const;
     double getParryChance(Creature* attacker, const int& difference);
     double getDodgeChance(Creature* attacker, const int& difference);
     double getMissChance(const int& difference);
     virtual int getWeaponSkill(const Object* weapon = nullptr) const = 0;
     virtual int getDefenseSkill() const = 0;
-    int adjustChance(const int &difference);
-    int computeBlock(int dmg);
+    int adjustChance(const int &difference) const;
+    static unsigned int computeBlock(unsigned int dmg);
     bool getsGroupExperience(Monster* target);
     bool canHit(Creature* target, Object* weapon = nullptr, bool glow = true, bool showFail = true);
     bool doReflectionDamage(Damage damage, Creature* target, ReflectedDamageType printZero=REFLECTED_NONE);
@@ -697,7 +697,7 @@ public:
 
     bool ableToDoCommand(const cmd* cmnd=nullptr) const;
     void wake(const bstring& str = "", bool noise=false);
-    void modifyDamage(Creature* enemy, int atype, Damage& damage, Realm realm=NO_REALM, Object* weapon=0, int saveBonus=0, short offguard=OFFGUARD_REMOVE, bool computingBonus=false);
+    void modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, Realm pRealm=NO_REALM, Object* weapon=0, short saveBonus=0, short offguard=OFFGUARD_REMOVE, bool computingBonus=false);
     bool checkResistPet(Creature *pet, bool& resistPet, bool& immunePet, bool& vulnPet);
 
     void doHaggling(Creature *vendor, Object* object, int trans);
@@ -711,7 +711,7 @@ protected:
     virtual int doDeleteFromRoom(BaseRoom* room, bool delPortal) = 0;
 public:
 
-    int doResistMagic(int dmg, Creature* enemy=0);
+    unsigned int doResistMagic(unsigned int dmg, Creature* enemy=0);
     virtual void pulseTick(long t) = 0;
 
     MudObject* findTarget(unsigned int findWhere, unsigned int findFlags, const bstring& str, int val);
@@ -1309,7 +1309,7 @@ public:
 
     bool isPureFighter();
     void decreaseFocus();
-    void increaseFocus(FocusAction action, int amt = 0, Creature* target = nullptr);
+    void increaseFocus(FocusAction action, unsigned int amt = 0, Creature* target = nullptr);
     void clearFocus();
     bool doPlayerHarmRooms();
     bool doDoTs();

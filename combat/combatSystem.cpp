@@ -136,7 +136,7 @@ unsigned int Creature::getBaseDamage() const {
 // Returns the damage reduction factor when attacking the given target
 
 float Creature::getDamageReduction(const Creature* target) const {
-    float reduction = 0.0;
+    float reduction;
     auto targetArmor = (float)target->getArmor();
     float myLevel = level == 1 && isPlayer() ? 2 : (float)level;
     reduction = (float)((targetArmor)/((targetArmor) + 43.24 + 18.38*myLevel));
@@ -560,7 +560,7 @@ AttackResult Creature::getAttackResult(Creature* victim, const Object* weapon, u
 //                      adjustChance
 //**********************************************************************
 
-int Creature::adjustChance(const int &difference) {
+int Creature::adjustChance(const int &difference) const {
     double adjustment = 0;
     // defense - skill
     // 295 - 300 = -5 * .01% less chance to miss == negative difference, defense LOWER than weapon
@@ -590,7 +590,7 @@ int Creature::adjustChance(const int &difference) {
 //                      getFumbleChance
 //**********************************************************************
 
-double Creature::getFumbleChance(const Object* weapon) {
+double Creature::getFumbleChance(const Object* weapon) const {
     double chance = 2.0;
 
     if(!weapon || weapon->flagIsSet(O_CURSED) || isDm()) {
@@ -649,7 +649,7 @@ double Creature::getBlockChance(Creature* attacker, const int& difference) {
 // when a player or pet is attacking a monster but only against
 // monsters of the same level or higher
 
-double Creature::getGlancingBlowChance(Creature* attacker, const int& difference) {
+double Creature::getGlancingBlowChance(Creature* attacker, const int& difference) const {
     if(isPlayer() || isPet() || (attacker->isMonster() && !attacker->isPet()))
         return(0);
 
@@ -1148,7 +1148,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
                 attackDamage.set(Random::get(1,2) + level/3 + Random::get((1+level/4),(1+level)/2));
                 if(strength.getCur() < 90) {
                     attackDamage.set(attackDamage.get() - (90-strength.getCur())/10);
-                    attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
+                    attackDamage.set(MAX<int>(1, attackDamage.get()));
                 }
             } else {
                 attackDamage.set(damage.roll());
@@ -1164,7 +1164,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
     if(isEffected("lycanthropy"))
         attackDamage.add(packBonus());
 
-    attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
+    attackDamage.set(MAX<int>(1, attackDamage.get()));
 
     // Damage reduction on every hit
     if(cClass == CreatureClass::PALADIN) {
@@ -1257,7 +1257,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
     }
 
     if(multiplier > 0.0) {
-        attackDamage.set((int) (attackDamage.get() * multiplier));
+        attackDamage.set((int) ((float)attackDamage.get() * multiplier));
         if(computeBonus) {
             if(attackType != ATTACK_BACKSTAB)
                 bonusDamage.set((int)((float)bonusDamage.get() * multiplier));
@@ -1342,7 +1342,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
 
     if(retVal != 1) {
         // If we didn't shatter, minimum of 1 damage
-        attackDamage.set(MAX<unsigned int>(attackDamage.get(), 1));
+        attackDamage.set(MAX<int>(attackDamage.get(), 1));
     }
 
     return(retVal);
@@ -1373,9 +1373,9 @@ int Monster::computeDamage(Creature* victim, Object* weapon, AttackType attackTy
         // No shatter for mobs :)
     }
     else if(result == ATTACK_BLOCK) {
-        attackDamage.set(victim->computeBlock(attackDamage.get()));
+        attackDamage.set(Creature::computeBlock(attackDamage.get()));
         if(computeBonus) {
-            bonusDamage.set(victim->computeBlock(bonusDamage.get()));
+            bonusDamage.set(Creature::computeBlock(bonusDamage.get()));
         }
     }
 
@@ -1383,7 +1383,7 @@ int Monster::computeDamage(Creature* victim, Object* weapon, AttackType attackTy
     victim->modifyDamage(this, PHYSICAL, bonusDamage);
     attackDamage.setBonus(bonusDamage);
 
-    attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
+    attackDamage.set(MAX<int>(1, attackDamage.get()));
     return(0);
 }
 
@@ -1391,7 +1391,7 @@ int Monster::computeDamage(Creature* victim, Object* weapon, AttackType attackTy
 //                      computeBlock
 //**********************************************************************
 
-int Creature::computeBlock(int dmg) {
+unsigned int Creature::computeBlock(unsigned int dmg) {
     // TODO: Tweak amount of blockage based on the shield
     // for now, just half the damage
     dmg /= 2;
@@ -1576,7 +1576,7 @@ int Creature::parry(Creature* target) {
         // So mob riposte isn't soo mean
         if(isMonster()) {
             attackDamage.set(attackDamage.get() / 2);
-            attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
+            attackDamage.set(MAX<int>(1, attackDamage.get()));
         }
 
         switch(Random::get(1,7)) {
@@ -1725,12 +1725,12 @@ bool Creature::negAuraRepel() const {
 //                      doResistMagic
 //*********************************************************************
 
-int Creature::doResistMagic(int dmg, Creature* enemy) {
-    float resist=0;
-    dmg = MAX(1, dmg);
+unsigned int Creature::doResistMagic(unsigned int dmg, Creature* enemy) {
+    double resist=0;
+    dmg = MAX<int>(1, dmg);
 
     if(negAuraRepel() && enemy && this != enemy) {
-        resist = (10 + Random::get(1,3) + level + bonus(constitution.getCur()))
+        resist = (10.0 + Random::get(1,3) + level + bonus(constitution.getCur()))
             - (bonus(enemy->intelligence.getCur()) + bonus(enemy->piety.getCur()));
         resist /= 100; // percentage
         resist *= dmg;
@@ -1738,14 +1738,14 @@ int Creature::doResistMagic(int dmg, Creature* enemy) {
     }
 
     if(isEffected("resist-magic")) {
-        resist = (piety.getCur() / 10 + intelligence.getCur() / 10) * 2;
+        resist = (piety.getCur() / 10.0 + intelligence.getCur() / 10.0) * 2;
         resist = MAX<float>(50, MIN<float>(resist, 100));
         resist /= 100; // percentage
         resist *= dmg;
         dmg -= (int)resist;
     }
 
-    return(MAX(0, dmg));
+    return(MAX<int>(0, dmg));
 }
 
 int Creature::getPrimaryDelay() {
@@ -1803,7 +1803,7 @@ int Creature::getAttackDelay() const {
 //*********************************************************************
 // Return: true if the attack timer has expired, false if not
 
-bool Creature::checkAttackTimer(bool displayFail) {
+bool Creature::checkAttackTimer(bool displayFail) const {
     long i;
     if(((i = attackTimer.getTimeLeft()) != 0) && !isDm()) {
         if(displayFail)
@@ -1850,7 +1850,7 @@ void Creature::pleaseWait(int duration) const {
 
 void Creature::pleaseWait(double duration) const {
     // Floating point equality is unreliable
-    if(!(duration > 1) && !(duration < 1))
+    if(duration <= 1 && duration >= 1)
         print("Please wait 1.0 more second.\n");
     else
         print("Please wait %.1f more seconds.\n", duration);
@@ -1963,7 +1963,7 @@ int Object::adjustWeapon() {
 
     // For a given quality, convert to damage-per-second
     double dps = (quality / 11.4 + 5) / 2.6;
-    short num = (numAttacks ? numAttacks : 1);
+    short num = (numAttacks ? numAttacks : (short)1);
 
     // For a given damage-per-second, convert it to average damage.
     // This is the equation from Object::statObj backwards.
@@ -1973,5 +1973,5 @@ int Object::adjustWeapon() {
     damage.clear();
     damage.setMean(avg);
 
-    return(avg);
+    return((int)avg);
 }

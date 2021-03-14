@@ -824,7 +824,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 
             if(player->isPlayer())
                 player->getAsPlayer()->statistics.healingCast();
-            int healed = MAX(creature->hp.getMax() - creature->hp.getCur() - Random::get(1,4), 0);
+            int healed = MAX<int>(creature->hp.getMax() - creature->hp.getCur() - Random::get(1,4), 0);
             player->doHeal(creature, healed, 0.33);
             //creature->hp.setCur(MAX(1, creature->hp.getMax() - Random::get(1,4)));
 

@@ -32,7 +32,7 @@ bool Player::isPureFighter() {
 //                      increaseFocus
 //*********************************************************************
 
-void Player::increaseFocus(FocusAction action, int amt, Creature* target) {
+void Player::increaseFocus(FocusAction action, unsigned int amt, Creature* target) {
     int focusIncrease = 0;
 
     // Only pure fighters have increased battle focus

@@ -103,19 +103,11 @@ bool Monster::updateCombat() {
     }
 
     // No fighting in a safe room!
-    if( pTarget &&
-        isPet() &&
-        !getMaster()->isCt() &&
-        getRoomParent()->isPkSafe()
-    )
+    if( pTarget && isPet() && !getMaster()->isCt() && getRoomParent()->isPkSafe())
         return(false);
 
     // Stop fighting if it's a no exp loss monster
-    if( pTarget &&
-        flagIsSet(M_NO_EXP_LOSS) &&
-        !isPet() &&
-        target->inCombat(this)
-    )
+    if( pTarget && flagIsSet(M_NO_EXP_LOSS) && !isPet() && target->inCombat(this))
         return(false);
 
     monstervmonster = (!pTarget && !target->isPet() && isMonster() && !isPet());
@@ -183,15 +175,7 @@ bool Monster::updateCombat() {
 
     lasttime[LT_AGGRO_ACTION].ltime = time(nullptr);
 
-    if( willCast &&
-        flagIsSet(M_CAN_CAST) &&
-        canSpeak() &&
-        !getRoomParent()->flagIsSet(R_NO_MAGIC) &&
-        !antiMagic &&
-        !isCharmed
-    ) {
-
-
+    if( willCast && flagIsSet(M_CAN_CAST) && canSpeak() && !getRoomParent()->flagIsSet(R_NO_MAGIC) && !antiMagic && !isCharmed) {
         if(target->doLagProtect())
             return(true);
 
@@ -265,9 +249,6 @@ bool Monster::updateCombat() {
             return(false);
     }
 
-//  if(pTarget && isPet() && target->inCombat())
-//      getMonster()->delEnmCrt(target->name);
-
     // Check resisting of elemental pets
     if(isPet()) {
         target->checkResistPet(this, resistPet, immunePet, vulnPet);
@@ -320,7 +301,7 @@ bool Monster::updateCombat() {
         }
 
         target->printColor("^r%M %s you%s for ^R%d^r damage.\n", this, atk,
-            target->isBrittle() ? "r brittle body" : "", MAX<unsigned int>(1, attackDamage.get()));
+            target->isBrittle() ? "r brittle body" : "", MAX<int>(1, attackDamage.get()));
 
         if(!isPet())
             target->checkImprove("defense", false);
@@ -495,7 +476,7 @@ bool Monster::zapMp(Creature *victim, SpecialAttack* attack) {
     if(victim->mp.getCur() <= 0)
         return(false);
 
-    n = MIN(victim->mp.getCur(), (Random::get<unsigned short>(1+level/2, level) + bonus(intelligence.getCur())));
+    n = MIN<int>(victim->mp.getCur(), (Random::get<unsigned short>(1+level/2, level) + bonus(intelligence.getCur())));
 
     victim->printColor("^M%M zaps your magical talents!\n", this);
     victim->printColor("%M stole %d magic points!\n", this, n);
@@ -1065,12 +1046,12 @@ Creature *Creature::findFirstEnemyCrt(Creature *pet) {
 // and will increase battle focus for fighters
 //  1 = died, 0 = didn't die
 
-int Creature::doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, DamageType dmgType) {
+unsigned int Creature::doDamage(Creature* target, unsigned int dmg, DeathCheck shouldCheckDie, DamageType dmgType) {
     bool freeTarget=true;
     return(doDamage(target, dmg, shouldCheckDie, dmgType, freeTarget));
 }
 
-int Creature::doDamage(Creature* target, int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget) {
+int Creature::doDamage(Creature* target, unsigned int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget) {
     ASSERTLOG( target );
 
     Player* pTarget = target->getAsPlayer();

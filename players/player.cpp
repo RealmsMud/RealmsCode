@@ -862,7 +862,7 @@ bool Creature::doPetrificationDmg() {
 
     wake("Terrible nightmares disturb your sleep!");
     printColor("^c^#Petrification spreads toward your heart.\n");
-    hp.decrease(MAX(1,(hp.getMax()/15 - bonus(constitution.getCur()))));
+    hp.decrease(MAX<int>(1,(hp.getMax()/15 - bonus(constitution.getCur()))));
 
     if(hp.getCur() < 1) {
         Player* pThis = getAsPlayer();
@@ -1393,7 +1393,7 @@ Player* lowest_piety(BaseRoom* room, bool invis) {
         {
             continue;
         }
-        totalpiety += MAX(1, (25 - ply->piety.getCur()));
+        totalpiety += MAX<int>(1, (25 - ply->piety.getCur()));
     }
 
     if(!totalpiety)
@@ -1411,7 +1411,7 @@ Player* lowest_piety(BaseRoom* room, bool invis) {
         {
             continue;
         }
-        totalpiety += MAX(1, (25 - ply->piety.getCur()));
+        totalpiety += MAX<int>(1, (25 - ply->piety.getCur()));
         if(totalpiety >= pick) {
             player = ply;
             break;
@@ -1567,7 +1567,7 @@ const char* Creature::getStatusStr(int dmg) {
     if(health < 1)
         return "'s dead!";
 
-    switch(MIN(health * 10 / (hp.getMax() ? hp.getMax() : 1), 10)) {
+    switch(MIN<int>(health * 10 / (hp.getMax() ? hp.getMax() : 1), 10)) {
     case 10:
         return("'s unharmed.");
     case 9:

@@ -40,7 +40,7 @@ public:
     [[nodiscard]] ReflectedDamageType getPhysicalReflectedType() const;
     [[nodiscard]] unsigned int getPhysicalBonusReflected() const;
 
-    void add(unsigned int d);
+    void add(int d);
     void set(unsigned int d);
     void includeBonus(int fraction=1);
     void setBonus(unsigned int b);

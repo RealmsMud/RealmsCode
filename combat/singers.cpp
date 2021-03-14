@@ -618,7 +618,8 @@ int songOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) {
     Player  *pCreature=nullptr;
     Creature* creature=nullptr;
     BaseRoom* room = player->getRoomParent();
-    int     m=0, dmg=0, bns=0;
+    int     m=0, bns=0;
+    unsigned int dmg = 0;
 
     if(!player->ableToDoCommand())
         return(0);
@@ -679,7 +680,7 @@ int songOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) {
 
         // dmg = dice(oso->ndice, oso->sdice, oso->pdice + bns);
         dmg = (Random::get(7,14) + player->getLevel() * 2) + bns;
-        dmg = MAX(1, dmg);
+        dmg = MAX<int>(1, dmg);
 
         if(!pCreature) {
             // if(is_charm_crt(creature->name, player))

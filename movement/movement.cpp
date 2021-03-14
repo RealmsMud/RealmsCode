@@ -515,7 +515,7 @@ bool Move::canMove(Player* player, cmd* cmnd) {
         if(!player->checkAttackTimer())
             return(false);
     } else {
-        chance = MAX(1, ((5+(player->dexterity.getCur()/10)*3) - player->getArmorWeight() + player->strength.getCur()));
+        chance = MAX<int>(1, ((5+(player->dexterity.getCur()/10)*3) - player->getArmorWeight() + player->strength.getCur()));
 
         if(player->getClass() == CreatureClass::RANGER || player->getClass() == CreatureClass::DRUID)
             chance += 5;

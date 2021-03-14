@@ -156,8 +156,8 @@ int statBonus[MAXALVL] = {
     4, 4, 4,            // 25 - 27
     5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };   // 28+
 
-int bonus(int num) {
-    return( statBonus[MIN(num/10, MAXALVL - 1)] );
+int bonus(unsigned int num) {
+    return( statBonus[MIN<int>(num/10, MAXALVL - 1)] );
 }
 
 int crtWisdom(Creature* creature) {

@@ -97,7 +97,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
         } else {
             if(spellData->how == CastType::CAST && player->isPlayer())
                 player->getAsPlayer()->statistics.offensiveCast();
-            player->hp.setCur(MIN(player->hp.getCur(), Random::get(1,10)));
+            player->hp.setCur(MIN<int>(player->hp.getCur(), Random::get(1,10)));
             player->print("Your lifeforce is nearly sucked away by deadly magic.\n");
             return(0);
         }
@@ -176,7 +176,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
             roll = Random::get(1,10);
             dmg = target->hp.getCur() - roll;
 
-            target->hp.setCur(MIN(target->hp.getCur(), roll));
+            target->hp.setCur(MIN<int>(target->hp.getCur(), roll));
             target->print("Your lifeforce is nearly sucked away by deadly magic.\n");
             player->print("Your harm spell nearly sucks the life out of %N!\n", target);
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's harm spell sucks away %N's life.", player, target);
