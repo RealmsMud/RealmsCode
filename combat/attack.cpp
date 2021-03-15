@@ -1138,7 +1138,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
 
     // armor spell
     if(dmgType != MENTAL && isEffected("armor")) {
-        EffectInfo* armorEffect = getEffect("armorEffect");
+        EffectInfo* armorEffect = getEffect("armor");
         vHp = armorEffect->getStrength();
 
         if(vHp <= 0 || attackDamage.get() <= 0)
@@ -1330,8 +1330,6 @@ bool Monster::willAggro(const Player *player) const {
 
 Player* Monster::whoToAggro() const {
     std::list<Player*> players;
-    std::list<Player*>::iterator it;
-    Player* player=nullptr;
     int total=0, pick=0;
     const BaseRoom* myRoom = getConstRoomParent();
 
@@ -1340,15 +1338,12 @@ Player* Monster::whoToAggro() const {
         return(nullptr);
     }
 
-    for(Player* ply : myRoom->players) {
-        if(canSee(ply) && !ply->flagIsSet(P_HIDDEN)) {
-
-            player = ply->getAsPlayer();
+    for(Player* player : myRoom->players) {
+        if(canSee(player) && !player->flagIsSet(P_HIDDEN)) {
             if(willAggro(player)) {
                 total += MAX<int>(1, 300 - player->piety.getCur());
                 players.push_back(player);
             }
-
         }
     }
     if(players.empty())
@@ -1364,8 +1359,7 @@ Player* Monster::whoToAggro() const {
     pick = Random::get(1, total);
     total = 0;
 
-    for(it = players.begin() ; it != players.end() ; it++) {
-        player = (*it);
+    for(Player* player : players) {
         total += MAX<int>(1, 300 - player->piety.getCur());
         if(total >= pick)
             return(player);
