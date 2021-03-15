@@ -1146,7 +1146,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
 
         vHp -= (int)attackDamage.get();
         if(vHp <= 0) {
-            removeEffect("armorEffect");
+            removeEffect("armor");
             if(player) {
                 printColor("^y^#Your magical armorEffect has been dispelled.\n");
                 player->computeAC();
@@ -1159,7 +1159,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
 
     // stoneskin spell
     if(dmgType == PHYSICAL && isEffected("stoneskin")) {
-        EffectInfo* stoneskinEffect = getEffect("stoneskinEffect");
+        EffectInfo* stoneskinEffect = getEffect("stoneskin");
         vHp = stoneskinEffect->getStrength();
 
         if(vHp <= 0 || attackDamage.get() <= 0)
@@ -1167,7 +1167,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
 
         vHp--;
         if(vHp <= 0) {
-            removeEffect("stoneskinEffect");
+            removeEffect("stoneskin");
             printColor("^g^#Your stoneskinEffect has been dispelled.\n");
             broadcast(getSock(), getRoomParent(), "%M's stoneskinEffect has been depleted.", this);
         } else {
