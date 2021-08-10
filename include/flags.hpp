@@ -367,7 +367,7 @@
 #define M_WILL_POISON               13      // Poisoner
 #define M_UNDEAD                    14      // Undead
 #define M_CANT_BE_STOLEN_FROM       15      // Cannot be stolen from
-// free                             16
+#define M_NO_HARM_SPELL             16      // Immune to Harm spell
 #define M_CAN_CAST                  17      // Can cast spells
 #define M_HAS_SCAVANGED             18      // Has already scavenged something
 // free                             19

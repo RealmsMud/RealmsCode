@@ -128,10 +128,17 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
+
         if(target->pFlagIsSet(P_LINKDEAD) && target->getClass() !=  CreatureClass::LICH) {
             player->print("%M is immune to that right now.\n", target);
             return(0);
         }
+
+        if (pPlayer && target->isMonster() && target->mFlagIsSet(M_NO_HARM_SPELL)) {
+            player->print("Your spell has no effect on %M.\n", target);
+            return(0);
+        }
+
 
         if( !dec_daily(&player->daily[DL_HARM]) &&
             spellData->how == CastType::CAST &&
