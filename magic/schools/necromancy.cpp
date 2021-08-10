@@ -134,7 +134,7 @@ int splHarm(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
 
-        if (pPlayer && target->isMonster() && target->mFlagIsSet(M_NO_HARM_SPELL)) {
+        if (pPlayer && target->isMonster() && !player->isCT() && target->mFlagIsSet(M_NO_HARM_SPELL)) {
             player->print("Your spell has no effect on %M.\n", target);
             return(0);
         }
