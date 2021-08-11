@@ -1738,13 +1738,13 @@ int dmClone(Player* player, cmd* cmnd) {
     }
 
     bstring sub = object->getSubType();
-    if(sub == "cloth" || sub == "leather" || sub == "chain" || sub == "plate") {
+    if(sub == "cloth" || sub == "leather" || sub == "chain" || sub == "plate" || sub == "scale" || sub == "ring") {
         isArmor = true;
     } else if(sub == "sword" || sub == "great-sword" || sub == "polearm" || sub == "whip" ||
         sub == "axe" || sub == "great-axe" || sub == "rapier" || sub == "spear" ||
         sub == "dagger" || sub == "staff" || sub == "mace" || sub == "great-mace" ||
         sub == "club" || sub == "hammer" || sub == "great-hammer" || sub == "bow" ||
-        sub == "crossbow" || sub == "thrown"
+        sub == "crossbow" || sub == "thrown" || sub == "sling" || sub == "knife"
     ) {
         isWeapon = true;
     } else {
@@ -1870,7 +1870,30 @@ int dmClone(Player* player, cmd* cmnd) {
             makeArmor(player, &cr, object, random, FEET, "boots", "They're some boots", desc, value/4, 5, 7, true);
             makeArmor(player, &cr, object, random, FACE, "faceguard", "It's a faceguard", desc, value/3, 4, 6);
             makeArmor(player, &cr, object, random, SHIELD, "shield", "It's a shield", desc, value/3, 10, 15);
+        } else if(sub == "scale") {
+            makeArmor(player, &cr, object, random, BODY, "armor", "It's armor", desc, value, 7, 9, true);
+            makeArmor(player, &cr, object, random, ARMS, "sleeves", "They're some sleeves", desc, value/4, 5, 7, true);
+            makeArmor(player, &cr, object, random, LEGS, "leggings", "They're some leggings", desc, value/3, 5, 7, true);
+            makeArmor(player, &cr, object, random, NECK, "neckguard", "It's a neckguard", desc, value/5, 4, 6);
+            makeArmor(player, &cr, object, random, BELT, "waistguard", "It's a waistguard", desc, value/4, 4, 6);
+            makeArmor(player, &cr, object, random, HANDS, "gloves", "They're some gloves", desc, value/4, 4, 6, true);
+            makeArmor(player, &cr, object, random, HEAD, "hood", "It's a hood", desc, value/4, 4, 6);
+            makeArmor(player, &cr, object, random, FEET, "boots", "They're some boots", desc, value/4, 4, 6, true);
+            makeArmor(player, &cr, object, random, FACE, "faceguard", "It's a faceguard", desc, value/3, 3, 5);
+            makeArmor(player, &cr, object, random, SHIELD, "shield", "It's a shield", desc, value/3, 6, 8);
+        } else if(sub == "ring") {
+            makeArmor(player, &cr, object, random, BODY, "armor", "It's armor", desc, value, 7, 9, true);
+            makeArmor(player, &cr, object, random, ARMS, "sleeves", "They're some sleeves", desc, value/4, 5, 7, true);
+            makeArmor(player, &cr, object, random, LEGS, "leggings", "They're some leggings", desc, value/3, 5, 7, true);
+            makeArmor(player, &cr, object, random, NECK, "neckguard", "It's a neckguard", desc, value/5, 4, 6);
+            makeArmor(player, &cr, object, random, BELT, "waistguard", "It's a waistguard", desc, value/4, 4, 6);
+            makeArmor(player, &cr, object, random, HANDS, "gloves", "They're some gloves", desc, value/4, 4, 6, true);
+            makeArmor(player, &cr, object, random, HEAD, "hood", "It's a hood", desc, value/4, 4, 6);
+            makeArmor(player, &cr, object, random, FEET, "boots", "They're some boots", desc, value/4, 4, 6, true);
+            makeArmor(player, &cr, object, random, FACE, "faceguard", "It's a faceguard", desc, value/3, 3, 5);
+            makeArmor(player, &cr, object, random, SHIELD, "shield", "It's a shield", desc, value/3, 6, 8);
         }
+
     } else if(isWeapon) {
         double value = object->value[GOLD];
         int baseWeight = object->getActualWeight();
@@ -1878,8 +1901,8 @@ int dmClone(Player* player, cmd* cmnd) {
 
         if(numAttacks < 1)
             numAttacks = 1;
-        // bows get more attacks, so lower it for everyone else
-        if(object->getSubType() == "bow" && numAttacks == 2)
+        // bows and slings get more attacks, so lower it for everyone else
+        if((object->getSubType() == "bow" || object->getSubType() == "sling") && numAttacks == 2)
             numAttacks = 1;
 
         if( sub == "great-sword" || sub == "polearm" || sub == "great-axe" ||
@@ -1911,6 +1934,8 @@ int dmClone(Player* player, cmd* cmnd) {
         makeWeapon(player, &cr, object, random, "great-hammer", "It's a great hammer", desc, true, baseWeight+2, value/0.8, 6, numAttacks);
         makeWeapon(player, &cr, object, random, "bow", "It's a bow", desc, true, baseWeight-1, value, 6, numAttacks == 1 ? 2 : numAttacks);
         makeWeapon(player, &cr, object, random, "crossbow", "It's a crossbow", desc, false, baseWeight-1, value, 4, numAttacks);
+        makeWeapon(player, &cr, object, random, "sling", "It's a sling", desc, false, baseWeight-2, value, 3, numAttacks);
+        makeWeapon(player, &cr, object, random, "knife", "It's a knife", desc, false, baseWeight-3, value, 2, numAttacks);
     }
 
     random->info = cr;
