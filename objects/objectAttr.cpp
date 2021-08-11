@@ -122,7 +122,7 @@ bool Object::isHeavyArmor() const {
 }
 
 bool Object::isMediumArmor() const {
-    return(type == ObjectType::ARMOR && subType == "chain");
+    return(type == ObjectType::ARMOR && (subType == "chain" || subType == "scale" || subType == "ring"));
 }
 
 bool Object::isLightArmor() const {

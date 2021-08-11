@@ -1765,6 +1765,8 @@ void Create::done(Socket* sock, const bstring& str, int mode) {
             case CreatureClass::RANGER:
                 player->addSkill("plate", 1);
                 player->addSkill("chain", 1);
+                player->addSkill("scale", 1);
+                player->addSkill("ring", 1);
             case CreatureClass::ASSASSIN:
             case CreatureClass::THIEF:
             case CreatureClass::ROGUE:
@@ -1786,6 +1788,8 @@ void Create::done(Socket* sock, const bstring& str, int mode) {
             if(player->getDeity() == ENOCH || player->getDeity() == ARES || player->getDeity() == GRADIUS) {
                 player->addSkill("plate", 1);
                 player->addSkill("chain", 1);
+                player->addSkill("scale", 1);
+                player->addSkill("ring", 1);
             }
         }
 
