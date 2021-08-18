@@ -320,6 +320,21 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         }
         if(getClass() == CreatureClass::LICH && getVersion() < "2.43b" && !spellIsKnown(S_SAP_LIFE))
             learnSpell(S_SAP_LIFE);
+
+        if(getVersion() < "2.47l") {
+            if(getClass() == CreatureClass::FIGHTER ||
+            getClass() == CreatureClass::PALADIN ||
+            getClass() == CreatureClass::DEATHKNIGHT ||
+            getClass() == CreatureClass::RANGER ||
+            (getClass() == CreatureClass::CLERIC && (getDeity() == ENOCH ||
+            getDeity() == ARES || getDeity() == GRADIUS)))
+            {
+                int initialSkill = (int)getSkillGained("chain");
+                initialSkill = MAX(1,initialSkill-(initialSkill/10));
+                addSkill("scale",initialSkill);
+                addSkill("ring",initialSkill);
+            }
+        }
     }
 
     setVersion();
