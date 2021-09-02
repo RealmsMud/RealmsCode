@@ -202,6 +202,10 @@ void Player::init() {
     //if((race != KATARAN && race != TROLL))
     learnLanguage(LCOMMON); // All races speak common but troll and kataran.
 
+    //Barbarians get natural warmth. They're from the frozen tundra.
+    if(race == BARBARIAN) {
+       addPermEffect("warmth"); 
+    }
 
     if(!current_language) {
         initLanguages();
