@@ -160,7 +160,7 @@ bool startingChoices(Player *player, bstring str, char *location, bool choose) {
 
     } else if (race == ELF || player->getDeity() == LINOTHAN) {
 
-        options.emplace_back("meadhil");
+        options.emplace_back("eldinwood");
 
     } else if (race == HALFELF || race == HUMAN) {
 
@@ -171,7 +171,7 @@ bool startingChoices(Player *player, bstring str, char *location, bool choose) {
         if (race == HUMAN)
             options.emplace_back("caladon");
         else if (race == HALFELF)
-            options.emplace_back("meadhil");
+            options.emplace_back("eldinwood");
 
 
     }
