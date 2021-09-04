@@ -1890,6 +1890,10 @@ float Object::getTypeModifier() const {
         return(42.89);
     else if(armorType == "chain")
         return(34.14);
+    else if(armorType == "scale")
+        return(31.12);
+    else if(armorType == "ring")
+        return(28.24);
     else if(armorType == "leather")
         return(24.46);
     else if(armorType == "cloth")

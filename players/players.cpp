@@ -340,7 +340,7 @@ bool Player::doDoTs() {
 double Object::winterProtection() const {
     double percent = 0;
 
-    if(subType != "cloth" && subType != "leather")
+    if(subType != "cloth" && subType != "leather" && subType != "ring")
         return(0);
 
     switch(wearflag) {
