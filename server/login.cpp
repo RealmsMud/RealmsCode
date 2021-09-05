@@ -1501,6 +1501,9 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
             n = 0;
         }
 
+
+
+
         for(sIt = gConfig->skills.begin() ; sIt != gConfig->skills.end() ; sIt++) {
             curSkill = (*sIt).second;
             if(curSkill->getGroup() != curGroup)
@@ -1511,6 +1514,24 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
 
             if(sock->getPlayer()->getClass() == CreatureClass::CLERIC && sock->getPlayer()->getDeity() == CERIS)
                 if(curSkill->getName() == "whip")
+                    continue;
+
+            if(sock->getPlayer()->getLevel() < 4 &&
+            ((curSkill->getName() == "arcane-weapon" || curSkill->getName() == "divine-weapon")))
+                continue;
+
+            if ((!(sock->getPlayer()->getClass() == CreatureClass::MAGE ||
+                sock->getPlayer()->getClass() == CreatureClass::LICH ||
+                sock->getPlayer()->getClass() == CreatureClass::BARD ||
+                sock->getPlayer()->getSecondClass() == CreatureClass::MAGE))
+                && curSkill->getName() == "arcane-weapon")
+                    continue;
+
+            if ((!(sock->getPlayer()->getClass() == CreatureClass::CLERIC ||
+                sock->getPlayer()->getClass() == CreatureClass::PALADIN ||
+                sock->getPlayer()->getClass() == CreatureClass::DRUID ||
+                sock->getPlayer()->getClass() == CreatureClass::DEATHKNIGHT))
+                && curSkill->getName() == "divine-weapon")
                     continue;
 
             if(sock->getPlayer()->knowsSkill(curSkill->getName()))
