@@ -350,6 +350,7 @@ void Player::dieToMonster(Monster *killer) {
 
     broadcast("### Sadly, %s was killed by %1N.", getCName(), killer);
     killer->clearEnemy(this);
+    clearTarget();
     clearAsEnemy();
     gServer->clearAsEnemy(this);
     loseExperience(killer);
