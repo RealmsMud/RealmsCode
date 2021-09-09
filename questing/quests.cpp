@@ -224,8 +224,20 @@ bstring QuestInfo::getDisplayString() const {
     int i = 0;
 
     displayStr << getDisplayName();
-    if(repeatable)
-        displayStr << " ^G*Repeatable*^x";
+
+    if(timesRepeatable)
+            displayStr << " ^G*Repeatable " << timesRepeatable << " times*^x\n";
+    if (isRepeatable()) {
+        if(repeatFrequency == QuestRepeatFrequency::REPEAT_DAILY)
+            displayStr << " ^G*Offered Daily*^x";
+        else if (repeatFrequency == QuestRepeatFrequency::REPEAT_WEEKLY)
+            displayStr << " ^G*Offered Weekly*^x";
+        else if (repeatFrequency == QuestRepeatFrequency::REPEAT_UNLIMITED)
+            displayStr << " ^G*Offered Always*^x";
+   }
+    
+
+
     if(sharable)
         displayStr << " ^Y*Sharable*^x";
     displayStr << std::endl;
@@ -691,8 +703,22 @@ bstring QuestCompletion::getStatusDisplay() {
     else
         displayStr << "^y";
     displayStr << parentQuest->name << "^x\n";
-    displayStr << parentQuest->name << "^x\n";
+    displayStr << parentQuest->name << "^x";
+    
+    if(parentQuest->timesRepeatable)
+        displayStr << " ^G*Repeatable Limited*^x";
+    if (parentQuest->isRepeatable()) {
+        if(parentQuest->repeatFrequency == QuestRepeatFrequency::REPEAT_DAILY)
+            displayStr << " ^G*Offered Daily*^x";
+        else if (parentQuest->repeatFrequency == QuestRepeatFrequency::REPEAT_WEEKLY)
+            displayStr << " ^G*Offered Weekly*^x";
+        else if (parentQuest->repeatFrequency == QuestRepeatFrequency::REPEAT_UNLIMITED)
+            displayStr << " ^G*Offered Always*^x";
+    }
 
+
+
+    displayStr << std::endl;
 
     displayStr << "^WDescription: ^w" << parentQuest->description << "^x\n";
 
@@ -1616,7 +1642,8 @@ int cmdQuests(Player* player, cmd* cmnd) {
         }
         player->printColor("Could not find any quests that matched the name ^W%s^x.\n", questName.c_str());
         return(0);
-    }
+    } 
+
     sprintf(str, "^WOld Quests Completed:^x\n");
     for(i=1, j=0; i<MAX_QUEST; i++)
         if(player->questIsSet(i)) {
@@ -1640,8 +1667,10 @@ int cmdQuests(Player* player, cmd* cmnd) {
         displayStr << "^WQuests Completed:^x\n";
         for(auto qc : player->questsCompleted) {
             displayStr << gConfig->getQuest(qc.first)->getName();
+
             if(qc.second->getTimesCompleted() > 1)
                 displayStr << " (" << qc.second << ")";
+
             displayStr << "\n";
         }
 
