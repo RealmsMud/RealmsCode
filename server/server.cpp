@@ -802,7 +802,7 @@ void Server::updateRandom(long t) {
         if(!monster->flagIsSet(M_CUSTOM))
             monster->validateAc();
 
-        if( (monster->flagIsSet(M_NIGHT_ONLY) && isDay()) ||(monster->flagIsSet(M_DAY_ONLY) && !isDay()) && monster->inCombat(false)) {
+        if( ((monster->flagIsSet(M_NIGHT_ONLY) && isDay()) ||(monster->flagIsSet(M_DAY_ONLY) && !isDay())) && !monster->inCombat()) {
             free_crt(monster);
             continue;
         }
