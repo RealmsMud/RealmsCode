@@ -1478,6 +1478,10 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
     if(!sock->getPlayer()->knowsSkill("bare-hand"))
         sock->getPlayer()->addSkill("bare-hand", 1);
 
+
+
+
+
     std::map<bstring, bstring>::const_iterator sgIt;
     SkillInfoMap::const_iterator sIt;
     int k = 0, n = 0;
@@ -1494,6 +1498,7 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
             if(curGroup.Find("slashing") != -1 || curGroup.Find("piercing") != -1)
                 continue;
         }
+
 
 
         if(mode == Create::doPrint) {
@@ -1515,6 +1520,24 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
 
             if(sock->getPlayer()->knowsSkill(curSkill->getName()))
                 continue;
+
+            if(sock->getPlayer()->getLevel() < 4 &&
+            ((curSkill->getName() == "arcane-weapon" || curSkill->getName() == "divine-weapon")))
+                continue;
+
+            if ((!(sock->getPlayer()->getClass() == CreatureClass::MAGE ||
+                sock->getPlayer()->getClass() == CreatureClass::LICH ||
+                sock->getPlayer()->getClass() == CreatureClass::BARD ||
+                sock->getPlayer()->getSecondClass() == CreatureClass::MAGE))
+                && curSkill->getName() == "arcane-weapon")
+                    continue;
+
+            if ((!(sock->getPlayer()->getClass() == CreatureClass::CLERIC ||
+                sock->getPlayer()->getClass() == CreatureClass::PALADIN ||
+                sock->getPlayer()->getClass() == CreatureClass::DRUID ||
+                sock->getPlayer()->getClass() == CreatureClass::DEATHKNIGHT))
+                && curSkill->getName() == "divine-weapon")
+                    continue;
 
             if(mode == Create::doPrint) {
                 if(n++%2==0)
