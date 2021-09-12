@@ -96,6 +96,10 @@ bool startingChoices(Player *player, bstring str, char *location, bool choose) {
 
         // druidic order overrides all other starting locations
         options.emplace_back("druidwood");
+    } else if (player->getClass() == CreatureClass::LICH) {
+        
+        //for now, all liches start in Highport
+        options.emplace_back("highport");
 
     } else if (player->getDeity() == ENOCH || player->getRace() == SERAPH) {
 
