@@ -875,6 +875,10 @@ bstring Effects::getEffectsString(const Creature* viewer) {
         else
             effStr << timeStr(effectInfo->duration);
 
+        if( !viewer->isStaff() && effectInfo->getName() == "armor") 
+            effStr << "  ^WStrength:^x " << effectInfo->getStrength();
+    
+
         if(viewer->isStaff()) {
 //          if(!effectInfo->getBaseEffect().empty())
 //              effStr << " Base(" << effectInfo->getBaseEffect() << ")";

@@ -551,7 +551,7 @@ int splDispelGood(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *pPlayer = player->getAsPlayer();
-    int mpNeeded=0, multi=0;
+    int mpNeeded=0;
 
     if(!pPlayer)
         return(0);
@@ -562,9 +562,9 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
 
     if(!pPlayer->isCt()) {
-        if(pPlayer->getClass() !=  CreatureClass::MAGE && pPlayer->getSecondClass() != CreatureClass::MAGE) {
+        if(pPlayer->getClass() !=  CreatureClass::MAGE && pPlayer->getClass() != CreatureClass::LICH && pPlayer->getSecondClass() != CreatureClass::MAGE) {
             if(spellData->how == CastType::CAST) {
-                player->print("The arcane nature of that spell eludes you.\n");
+                player->print("The arcane nature of that spell eludes you.\nOnly mages, multi-class mages, and liches can cast the armor spell.\n");
                 return(0);
             } else {
                 player->print("Nothing happens.\n");
@@ -574,11 +574,13 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
 
-    if( pPlayer->getSecondClass() == CreatureClass::MAGE ||
-        (pPlayer->getClass() == CreatureClass::MAGE && pPlayer->getSecondClass() != CreatureClass::MAGE)
-    ) {
-        multi=1;
-    }
+    bool multi=false;
+
+    multi = ( (pPlayer->getClass() == CreatureClass::MAGE && (pPlayer->getSecondClass() == CreatureClass::THIEF || pPlayer->getSecondClass() == CreatureClass::ASSASSIN)) ||
+         (pPlayer->getClass() == CreatureClass::FIGHTER && pPlayer->getSecondClass() == CreatureClass::MAGE) ||
+         (pPlayer->getClass() == CreatureClass::THIEF && pPlayer->getSecondClass() == CreatureClass::MAGE) );
+        
+
 
     if(pPlayer->spellFail( spellData->how)) {
         if(spellData->how == CastType::CAST)
@@ -600,17 +602,24 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
             duration += 600L;
         }
 
-        if(!multi)
-            strength = pPlayer->hp.getMax();
-        else
-            strength = pPlayer->hp.getMax()/2;
-    } else {
-        duration = 300L;
-        strength = pPlayer->hp.getMax()/2;
+        //Armor effect strength (vHp):
+        //For Multi-class mage = current hp
+        //For Lich = current hp + 30% (since they have higher HP, and can also regen in combat, and have drain life)
+        //For Mage = current hp * 2
+        if(multi)
+            strength = pPlayer->hp.getCur();
+        else if (pPlayer->getClass() == CreatureClass::LICH)
+            strength = mpNeeded + (MAX<int>(1,(pPlayer->hp.getCur() + ((pPlayer->hp.getCur()*30)/100))));
+        else // we have a mage or staff
+            strength = pPlayer->hp.getCur()*2;
+    } else { // everybody else, strength is current hp
+        duration = 600L;
+        strength = pPlayer->hp.getCur();
     }
 
     pPlayer->addEffect("armor", duration, strength, player, true, player);
     pPlayer->computeAC();
+    pPlayer->printColor("^BYour magical armor will remain until it takes ^C%d^B damage.\n", strength);
 
     if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
         player->print("Armor spell cast.\n");
