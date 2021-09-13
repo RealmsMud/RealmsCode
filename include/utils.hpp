@@ -19,7 +19,9 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-
+// Undefine stdlib MIN/MAX so we can use our own template based ones
+#undef MIN
+#undef MAX
 
 // -----------------------------------
 // MIN and MAX.

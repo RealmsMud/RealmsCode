@@ -166,10 +166,15 @@ public:
     static void resolveIp(const sockaddr_in &addr, bstring& ip);
     static bstring stripTelnet(bstring& inStr);
     static bool needsPrompt(bstring& inStr);
+    void viewFile(const bstring& str);
+    void viewFileReal(const bstring& str );
+    void viewLoginFile(const bstring& str, bool showError=true);
+    void viewFileReverse(const bstring& str);
+    void viewFileReverseReal(const bstring& str);
 
 public:
     explicit Socket(int pFd);
-    Socket(int pFd, sockaddr_in pAddr, bool &dnsDone);
+    Socket(int pFd, sockaddr_in pAddr, bool dnsDone);
     ~Socket();
 
     void cleanUp();
@@ -230,31 +235,32 @@ public:
     void setHostname(const bstring& pName);
     void setIp(const bstring& pIp);
 
-    bool hasOutput() const;
-    bool hasCommand() const;
+    [[nodiscard]] bool hasOutput() const;
+    [[nodiscard]] bool hasCommand() const;
 
-    long getIdle() const;
-    int getMccp() const;
-    bool getMxp() const;
-    bool getMxpClientSecure() const;
-    bool getMsdp() const;
-    bool getAtcp() const;
-    bool canForce() const;
-    bool getEor() const;
-    bool isDumbClient() const;
-    bool getMsp() const;
-    bool getNaws() const;
-    bool getCharset() const;
-    bool getUtf8() const;
+    [[nodiscard]] long getIdle() const;
+    [[nodiscard]] int getMccp() const;
+    [[nodiscard]] bool getMxp() const;
+    [[nodiscard]] bool getMxpClientSecure() const;
+    [[nodiscard]] bool getMsdp() const;
+    [[nodiscard]] bool getAtcp() const;
+    [[nodiscard]] bool canForce() const;
+    [[nodiscard]] bool getEor() const;
+    [[nodiscard]] bool isDumbClient() const;
+    [[nodiscard]] bool getMsp() const;
+    [[nodiscard]] bool getNaws() const;
+    [[nodiscard]] bool getCharset() const;
+    [[nodiscard]] bool getUtf8() const;
 
-    bstring getTermType() const;
-    int getColorOpt() const;
-    int getTermCols() const;
-    int getTermRows() const;
+    [[nodiscard]] bstring getTermType() const;
+    [[nodiscard]] int getColorOpt() const;
+    [[nodiscard]] int getTermCols() const;
+    [[nodiscard]] int getTermRows() const;
 
     void setColorOpt(int opt);
 
-    Player* getPlayer() const;
+    [[nodiscard]] bool hasPlayer() const;
+    [[nodiscard]] Player* getPlayer() const;
     void setPlayer(Player* ply);
     void freePlayer();
 

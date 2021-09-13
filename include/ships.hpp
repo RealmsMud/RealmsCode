@@ -175,7 +175,6 @@ public:
 
 void shipBroadcastRange(Ship *ship, ShipStop *stop, const bstring& message);
 int cmdQueryShips(Player* player, cmd* cmnd);
-void update_ships(int n=0);
 int shipSetExits(Ship *ship, ShipStop *stop);
 int shipDeleteExits(Ship *ship, ShipStop *stop);
 

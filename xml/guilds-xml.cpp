@@ -99,7 +99,7 @@ Guild::Guild(xmlNodePtr curNode) {
         throw(std::runtime_error("Invalid GuildID"));
 
     num = guildId;
-    gConfig->numGuilds = MAX(gConfig->numGuilds, guildId);
+    gConfig->setNumGuilds(guildId);
     curNode = curNode->children;
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
@@ -175,7 +175,7 @@ bool Config::saveGuilds() const {
     xmlDocSetRootElement(xmlDoc, rootNode);
     xml::newNumProp(rootNode, "NextGuildId", nextGuildId);
 
-    std::map<int, Guild*>::const_iterator it;
+    GuildMap::const_iterator it;
     const Guild *guild;
     for(it = guilds.begin() ; it != guilds.end() ; it++) {
         guild = (*it).second;

@@ -315,7 +315,7 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
 //  Player* pParent = parent->getPlayer();
     UniqueRoom* rParent = getAsUniqueRoom();
     Object* oParent = getAsObject();
-    std::list<bstring> *idList;
+    std::list<bstring> *idList = nullptr;
 
     while(childNode) {
         object = nullptr;

@@ -138,7 +138,7 @@ namespace xml {
             return(toReturn);
 
         try {
-            toReturn = static_cast<Type>(lexical_cast<int>(fromStr));
+            toReturn = static_cast<Type>(lexical_cast<long>(fromStr));
         } catch (bad_lexical_cast &) {
             // And do nothing
         }

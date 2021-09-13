@@ -44,7 +44,7 @@ const DeityData* Config::getDeity(int id) const {
 //*********************************************************************
 
 int dmShowDeities(Player* player, cmd* cmnd) {
-    std::map<int, DeityData*>::iterator it;
+    DeityDataMap::iterator it;
     std::map<int, PlayerTitle*>::iterator tt;
     DeityData* data=nullptr;
     PlayerTitle* title=nullptr;
@@ -74,7 +74,7 @@ int dmShowDeities(Player* player, cmd* cmnd) {
 //**********************************************************************
 
 void Config::clearDeities() {
-    std::map<int, DeityData*>::iterator it;
+    DeityDataMap::iterator it;
     std::map<int, PlayerTitle*>::iterator tt;
 
     for(it = deities.begin() ; it != deities.end() ; it++) {

@@ -405,8 +405,8 @@ bool Recipe::canBeEdittedBy(const Player* player) const {
 // to be called when creating a brand new recipe, not when loading
 
 void Config::addRecipe(Recipe* recipe) {
-    std::map<int, Recipe*>::iterator rIt;
-    int id = 0;
+    RecipeMap::iterator rIt;
+    unsigned int id = 0;
 
     for(rIt = recipes.begin(); rIt != recipes.end() ; rIt++) {
         id = MAX(id, (*rIt).first);
@@ -434,7 +434,7 @@ void Config::remRecipe(Recipe* recipe) {
 Recipe* Config::searchRecipes(const Player* player, const bstring& skill, Size recipeSize, int numIngredients, const Object* object) {
     std::list<CatRef> list, tList;
     std::list<CatRef>::const_iterator iIt;
-    std::map<int, Recipe*>::iterator rIt;
+    RecipeMap::iterator rIt;
     Object* hot=nullptr;
     Recipe* recipe=nullptr;
     int     flags = player->displayFlags();
@@ -943,7 +943,7 @@ int dmRecipes(Player* player, cmd* cmnd) {
 
     } else {
 
-        std::map<int, Recipe*>::iterator it;
+        RecipeMap::iterator it;
         if(cmnd->num > 1)
             txt = getFullstrText(cmnd->fullstr, 1);
 
@@ -1061,7 +1061,7 @@ bool Config::loadRecipes() {
 //**********************************************************************
 
 bool Config::saveRecipes() const {
-    std::map<int, Recipe*>::const_iterator it;
+    RecipeMap::const_iterator it;
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     char            filename[80];
@@ -1084,7 +1084,7 @@ bool Config::saveRecipes() const {
 //**********************************************************************
 
 void Config::clearRecipes() {
-    std::map<int, Recipe*>::iterator it;
+    RecipeMap::iterator it;
 
     for(it = recipes.begin() ; it != recipes.end() ; it++) {
         Recipe* r = (*it).second;

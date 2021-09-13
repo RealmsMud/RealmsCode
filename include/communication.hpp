@@ -43,12 +43,13 @@ class Socket;
 #define COM_EMOTE       7
 #define COM_GT          8
 
+// using these defines require more complicated authorization.
+#define COM_CLASS       9
+#define COM_RACE        10
+#define COM_CLAN        11
 
-char com_text[][20] = { "sent", "replied", "whispered", "signed", "said",
-    "recited", "yelled", "emoted", "group mentioned" };
-char com_text_u[][20] = { "Send", "Reply", "Whisper", "Sign", "Say",
-    "Recite", "Yell", "Emote", "Group mention" };
-
+extern char com_text[][20];
+extern char com_text_u[][20];
 
 typedef struct commInfo {
     const char  *name;
@@ -57,22 +58,7 @@ typedef struct commInfo {
     bool    ooc;
 } commInfo, *commPtr;
 
-commInfo commList[] = 
-{
-    // name     type      skip  ooc
-    { "tell",   COM_TELL,   2,  false },
-    { "send",   COM_TELL,   2,  false },
-        
-    { "otell",  COM_TELL,   2,  true },
-    { "osend",  COM_TELL,   2,  true },
-
-    { "reply",  COM_REPLY,  1,  false },
-    { "sign",   COM_SIGN,   2,  false },
-    { "whisper",COM_WHISPER,2,  false },
-
-    { nullptr, 0, 0, 0 }
-};
-
+extern commInfo commList[];
 
 typedef struct sayInfo {
     const char  *name;
@@ -82,37 +68,7 @@ typedef struct sayInfo {
     int     type;
 } sayInfo, *sayPtr;
 
-sayInfo sayList[] = 
-{
-    // name     ooc     shout   passphrase  type
-    { "say",    0,      0,      0,      COM_SAY },
-    { "\"",     0,      0,      0,      COM_SAY },
-    { "'",      0,      0,      0,      COM_SAY },
-        
-    { "osay",   true,   0,      0,      COM_SAY },
-    { "os",     true,   0,      0,      COM_SAY },
-
-    { "recite", 0,      0,      true,   COM_RECITE },
-        
-    { "yell",   0,      true,   0,      COM_YELL },
-
-    { "emote",  0,      0,      0,      COM_EMOTE },
-    { ":",      0,      0,      0,      COM_EMOTE },
-
-    { "gtalk",  0,      0,      0,      COM_GT },
-    { "gt",     0,      0,      0,      COM_GT },
-    { "gtoc",   true,   0,      0,      COM_GT },
-
-    { nullptr, 0, 0, 0, 0 }
-};
-
-
-
-// using these defines require more complicated authorization.
-#define COM_CLASS       1
-#define COM_RACE        2
-#define COM_CLAN        3
-
+extern sayInfo sayList[];
 
 
 typedef struct channelInfo {
@@ -131,40 +87,19 @@ typedef struct channelInfo {
     int     flag;                   // a flag that MUST be set
     int     not_flag;               // a flag that MUST NOT be set
     int     type;                   // for more complicated checks
+    long    discordWebhookID;       // DiscordWebhook this should be sent to, if any.  -1 for None
+    long    discordChannelID;       // DiscordChannelID, if any.  -1 for None.
 } channelInfo, *channelPtr;
 
-channelInfo channelList[] = 
-{
-//     Name         OOC     Color               Format                                              MIN MAX eaves   canSee      canUse              canHear     flag    not flag                type
-    { "broadcast",  true,  "*CC:BROADCAST*",    "### *IC-NAME* broadcasted, \"*TEXT*\"",            2,  -1, false,  0,          canCommunicate,     0,          0,      P_NO_BROADCASTS,        0 },
-    { "broad",      true,  "*CC:BROADCAST*",    "### *IC-NAME* broadcasted, \"*TEXT*\"",            2,  -1, false,  0,          canCommunicate,     0,          0,      P_NO_BROADCASTS,        0 },
-    { "bro",        true,  "*CC:BROADCAST*",    "### *IC-NAME* broadcasted, \"*TEXT*\"",            2,  -1, false,  0,          canCommunicate,     0,          0,      P_NO_BROADCASTS,        0 },
-    { "bemote",     true,  "*CC:BROADCAST*",    "*** *IC-NAME* *TEXT*.",                            2,  -1, false,  0,          canCommunicate,     0,          0,      P_NO_BROADCASTS,        0 },
-    { "broademote", true,  "*CC:BROADCAST*",    "*** *IC-NAME* *TEXT*.",                            2,  -1, false,  0,          canCommunicate,     0,          0,      P_NO_BROADCASTS,        0 },
+extern channelInfo channelList[];
 
-    { "gossip",     true,  "*CC:GOSSIP*",       "(Gossip) *IC-NAME* sent, \"*TEXT*\"",              2,  -1, false,  0,          canCommunicate,     0,          0,      P_IGNORE_GOSSIP,        0 },
-    { "ptest",      false,   "*CC:PTEST*",      "[P-Test] *IC-NAME* sent, \"*TEXT*\"",              -1, -1, false,  isPtester,  0,                  isPtester,  0,      0,                      0 },
-    { "newbie",     false,   "*CC:NEWBIE*",     "[Newbie]: *** *OOC-NAME* just sent, \"*TEXT*\"",   1,   4, false,  0,          canCommunicate,     0,          0,      P_IGNORE_NEWBIE_SEND,   0 },
 
-    { "dm",         false,   "*CC:DM*",         "(DM) *OOC-NAME* sent, \"*TEXT*\"",                 -1, -1, false,  isDm,       0,                  isDm,       0,      0,                      0 },
-    { "admin",      false,   "*CC:ADMIN*",      "(Admin) *OOC-NAME* sent, \"*TEXT*\"",              -1, -1, false,  isAdm,      0,                  isAdm,      0,      0,                      0 },
-    { "*s",         false,   "*CC:SEND*",       "=> *OOC-NAME* sent, \"*TEXT*\"",                   -1, -1, false,  isCt,       0,                  isCt,       0,      0,                      0 },
-    { "*send",      false,   "*CC:SEND*",       "=> *OOC-NAME* sent, \"*TEXT*\"",                   -1, -1, false,  isCt,       0,                  isCt,       0,      0,                      0 },
-    { "*msg",       false,   "*CC:MESSAGE*",    "-> *OOC-NAME* sent, \"*TEXT*\"",                   -1, -1, false,  isStaff,    0,                  isStaff,    0,      P_NO_MSG,               0 },
-    { "*wts",       false,   "*CC:WATCHER*",    "-> *OOC-NAME* sent, \"*TEXT*\"",                   -1, -1, false,  isWatcher,  0,                  isWatcher,  0,      P_NO_WTS,               0 },
+void sendGlobalComm(const Player *player, const bstring &text, const bstring &extra, unsigned int check,
+                    const channelInfo *chan, const bstring &etxt, const bstring& oocName, const bstring& icName);
 
-    { "cls",        true,   "*CC:CLASS*",       "### *OOC-NAME* sent, \"*TEXT*\".",                 -1, -1, true,   0,          canCommunicate,     0,          0,      P_IGNORE_CLASS_SEND,    COM_CLASS },
-    { "classsend",  true,   "*CC:CLASS*",       "### *OOC-NAME* sent, \"*TEXT*\".",                 -1, -1, true,   0,          canCommunicate,     0,          0,      P_IGNORE_CLASS_SEND,    COM_CLASS },
-    { "clem",       false,  "*CC:CLASS*",       "### *OOC-NAME* *TEXT*.",                           -1, -1, true,   0,          canCommunicate,     0,          0,      P_IGNORE_CLASS_SEND,    COM_CLASS },
-    { "classemote", false,  "*CC:CLASS*",       "### *OOC-NAME* *TEXT*.",                           -1, -1, true,   0,          canCommunicate,     0,          0,      P_IGNORE_CLASS_SEND,    COM_CLASS },
 
-    { "racesend",   true,   "*CC:RACE*",        "### *OOC-NAME* sent, \"*TEXT*\".",                 -1, -1, true,   0,          canCommunicate,     0,          0,      P_IGNORE_RACE_SEND,     COM_RACE },
-    { "raemote",    false,  "*CC:RACE*",        "### *OOC-NAME* *TEXT*.",                           -1, -1, true,   0,          canCommunicate,     0,          0,      P_IGNORE_RACE_SEND,     COM_RACE },
-
-    { "clansend",   true,   "*CC:CLAN*",        "### *OOC-NAME* sent, \"*TEXT*\".",                 -1, -1, true,   0,          canCommunicate,     0,          0,      P_IGNORE_CLAN,          COM_CLAN },
-
-    { nullptr,         false,  "",                 nullptr,                                               0,  0,  false,  0,          0,                  0,          0,      0,                      0 }
-};
+channelPtr getChannelByName(const Player *player, const bstring &chanStr);
+channelPtr getChannelByDiscordChannel(const unsigned long discordChannelID);
 
 
 #endif

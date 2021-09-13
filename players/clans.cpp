@@ -79,7 +79,7 @@ const Clan* Config::getClan(unsigned int id) const {
 //*********************************************************************
 
 const Clan* Config::getClanByDeity(unsigned int deity) const {
-    std::map<int, Clan*>::const_iterator it;
+    ClanMap::const_iterator it;
     Clan* clan=nullptr;
 
     for(it = clans.begin() ; it != clans.end() ; it++) {
@@ -97,7 +97,7 @@ const Clan* Config::getClanByDeity(unsigned int deity) const {
 //*********************************************************************
 
 void Config::clearClans() {
-    std::map<int, Clan*>::iterator it;
+    ClanMap::iterator it;
     Clan* clan=nullptr;
 
     for(it = clans.begin() ; it != clans.end() ; it++) {
@@ -318,7 +318,7 @@ int cmdRescind(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmClanList(Player* player, cmd* cmnd) {
-    std::map<int, Clan*>::iterator it;
+    ClanMap::iterator it;
     Clan *clan=nullptr;
     bool    all = player->isCt() && cmnd->num > 1 && !strcmp(cmnd->str[1], "all");
     std::ostringstream oStr;

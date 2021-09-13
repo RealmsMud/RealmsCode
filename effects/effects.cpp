@@ -1186,18 +1186,12 @@ bool EffectInfo::runScript(const bstring& pyScript, MudObject* applier) {
 
 void Server::pulseCreatureEffects(long t) {
     Monster *monster=nullptr;
-    const Socket *sock=nullptr;
-    Player* player=nullptr;
-    std::list<Socket*>::const_iterator it;
 
-    for(it = sockets.begin(); it != sockets.end() ; ) {
-        sock = *it;
-        it++;
-        if(!sock->isConnected())
+    for (const auto& sock : sockets) {
+        if(!sock.isConnected())
             continue;
-        player = sock->getPlayer();
-        if(player)
-            player->pulseEffects(t);
+        if(sock.hasPlayer())
+            sock.getPlayer()->pulseEffects(t);
     }
 
     auto mIt = activeList.begin();

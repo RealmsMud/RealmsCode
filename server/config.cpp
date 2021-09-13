@@ -101,9 +101,6 @@ void Config::destroyInstance() {
 //--------------------------------------------------------------------
 
 
-
-
-
 //--------------------------------------------------------------------
 // Memory Functions
 void Config::cleanUp() {
@@ -132,6 +129,7 @@ void Config::cleanUp() {
     clearSongs();
     clearProxyAccess();
     clearMsdp();
+    clearWebhookTokens();
     inUse = false;
     listing = false;
 }
@@ -215,7 +213,7 @@ void Config::reset(bool reload) {
     logDbUser="";
     logDbPass="";
     logDbDatabase="";
-
+    botToken="";
     
     // the following settings aren't cleared on reload
     if(reload)
@@ -247,6 +245,7 @@ bool Config::loadBeforePython() {
     std::clog << "Initializing MSDP..." << (initMsdp() ? "done" : "*** FAILED ***") << std::endl;
 
     std::clog << "Loading Config..." << (loadConfig() ? "done" : "*** FAILED ***")<< std::endl;
+    std::clog << "Loading Discord Config..." << (loadDiscordConfig() ? "done" : "*** FAILED ***")<< std::endl;
 
     std::clog << "Loading Socials..." << (loadSocials() ? "done" : "*** FAILED ***") << std::endl;
     
@@ -315,9 +314,11 @@ short Config::getPortNum() const {
 }
 void Config::setPortNum(short pPort) {
     portNum = pPort;
+    bHavePort = true;
 }
-int getPkillInCombatDisabled() {
-    return(gConfig->pkillInCombatDisabled);
+
+int Config::getPkillInCombatDisabled() {
+    return(pkillInCombatDisabled);
 }
 
 bstring Config::getMonthDay() const {
@@ -572,7 +573,7 @@ void Config::resetShipsFile() {
     system(command);
 }
 
-bstring Config::getFlag(int flagNum, MudFlagMap& flagMap) {
+bstring Config::getFlag(unsigned int flagNum, MudFlagMap& flagMap) {
     // Flags are offset by one
     auto flag = flagMap.find(flagNum + 1);
     if (flag == flagMap.end())
@@ -580,3 +581,42 @@ bstring Config::getFlag(int flagNum, MudFlagMap& flagMap) {
     return flag->second.name;
 }
 
+const bstring &Config::getDefaultArea() const {
+    return defaultArea;
+}
+
+void Config::setDefaultArea(const bstring &pDefaultArea) {
+    Config::defaultArea = pDefaultArea;
+}
+
+bool Config::hasPort() const {
+    return bHavePort;
+}
+
+int Config::getNextGuildId() const {
+    return nextGuildId;
+}
+
+void Config::setNextGuildId(int pNextGuildId) {
+    Config::nextGuildId = pNextGuildId;
+}
+
+bool Config::getCheckDouble() const {
+    return checkDouble;
+}
+
+void Config::setNumGuilds(int guildId) {
+    numGuilds = MAX(numGuilds, guildId);
+}
+
+const bstring &Config::getBotToken() const {
+    return botToken;
+}
+
+const bstring &Config::getWebhookToken(long webhookID) const {
+    return webhookTokens.at(webhookID);
+}
+
+bool Config::isBotEnabled() const {
+    return botEnabled;
+}

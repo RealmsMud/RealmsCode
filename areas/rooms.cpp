@@ -1029,13 +1029,13 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, co
     const CatRefInfo* cri = gConfig->getCatRefInfo(l.room.area, l.room.id, true);
 
     if(!cri)
-        cri = gConfig->getCatRefInfo(gConfig->defaultArea);
+        cri = gConfig->getCatRefInfo(gConfig->getDefaultArea());
     if(cri) {
         l.room.setArea(cri->getArea());
         l.room.id = (cri->*toCheck);
     } else {
         // failure!
-        l.room.setArea(gConfig->defaultArea);
+        l.room.setArea(gConfig->getDefaultArea());
         l.room.id = 0;
     }
 

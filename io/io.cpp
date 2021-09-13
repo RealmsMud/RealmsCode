@@ -85,16 +85,16 @@ bool hearBroadcast(Creature* target, Socket* ignore1, Socket* ignore2, bool show
 
 // global broadcast
 void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, va_list ap, Creature* player) {
-    for(Socket* sock : gServer->sockets) {
-        const Player* ply = sock->getPlayer();
+    for(Socket &sock : gServer->sockets) {
+        const Player* ply = sock.getPlayer();
 
         if(!ply)
             continue;
         if(ply->fd < 0)
             continue;
-        if(!showTo(sock))
+        if(!showTo(&sock))
             continue;
-        if(showAlso && !showAlso(sock))
+        if(showAlso && !showAlso(&sock))
             continue;
         // No gagging staff!
         if(player && ply->isGagging(player->getName()) && !player->isCt())
@@ -411,17 +411,6 @@ char *inetname(struct in_addr in) {
     return (line);
 }
 
-//**********************************************************************
-//                      child_died
-//**********************************************************************
-// This function gets called when a SIGCHLD signal is sent to the
-// program.
-
-void child_died(int sig) {
-    gServer->childDied();
-    std::clog << "Child died: " << gServer->getDeadChildren() << " children dead now.\n";
-    signal(SIGCHLD, child_died);
-}
 //**********************************************************************
 
 //  This causes the game to shutdown in one minute.  It is used

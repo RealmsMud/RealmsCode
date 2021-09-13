@@ -110,7 +110,15 @@ typedef std::map<bstring, Spell*, comp> SpellMap;
 typedef std::map<bstring, Song*, comp> SongMap;
 typedef std::map<bstring, AlchemyInfo*, comp> AlchemyMap;
 typedef std::map<bstring, MsdpVariable*> MsdpVarMap;
-typedef std::map<int, MudFlag> MudFlagMap;
+typedef std::map<unsigned int, MudFlag> MudFlagMap;
+
+typedef std::map<unsigned int, RaceData*> RaceDataMap;
+typedef std::map<unsigned int, DeityData*> DeityDataMap;
+typedef std::map<unsigned int, Recipe*> RecipeMap;
+typedef std::map<unsigned int, Clan*> ClanMap;
+typedef std::map<unsigned int, Guild*> GuildMap;
+typedef std::map<unsigned int, QuestInfo*> QuestInfoMap;
+typedef std::map<long, bstring> DiscordTokenMap; // webhookId --> token
 
 // Case insensitive
 
@@ -131,6 +139,10 @@ public:
     static void destroyInstance();
 
 // Instance
+    int getPkillInCombatDisabled();
+
+    void setNumGuilds(int guildId);
+
 private:
     static Config* myInstance;
     bool inUse;
@@ -161,11 +173,11 @@ public:
 
 // Ships
     // these functions deal with time and ships
-    int currentHour(bool format=false) const;
-    int currentMinutes() const;
+    [[nodiscard]] int currentHour(bool format=false) const;
+    [[nodiscard]] int currentMinutes() const;
     void resetMinutes();
     static void resetShipsFile();
-    int expectedShipUpdates() const;
+    [[nodiscard]] int expectedShipUpdates() const;
 
 
 // Mxp Elements
@@ -182,7 +194,7 @@ public:
     bool saveSocials();
     void clearSocials();
     // For help socials
-    bool writeSocialFile() const;
+    [[nodiscard]] bool writeSocialFile() const;
 
 // Effects
     bool loadEffects();
@@ -192,7 +204,7 @@ public:
 
 // Spells
     bool loadSpells();
-    bool saveSpells() const;
+    [[nodiscard]] bool saveSpells() const;
     void clearSpells();
     Spell* getSpell(bstring sName, int& ret);
 
@@ -210,12 +222,12 @@ public:
     const AlchemyInfo *getAlchemyInfo(const bstring& effect) const;
 
 // Skills
-    bool skillExists(const bstring& skillName) const;
-    SkillInfo* getSkill(const bstring& skillName) const;
-    bstring getSkillGroupDisplayName(const bstring& groupName) const;
-    bstring getSkillGroup(const bstring& skillName) const;
-    bstring getSkillDisplayName(const bstring& skillName) const;
-    bool isKnownOnly(const bstring& skillName) const;
+    [[nodiscard]] bool skillExists(const bstring& skillName) const;
+    [[nodiscard]] SkillInfo* getSkill(const bstring& skillName) const;
+    [[nodiscard]] bstring getSkillGroupDisplayName(const bstring& groupName) const;
+    [[nodiscard]] bstring getSkillGroup(const bstring& skillName) const;
+    [[nodiscard]] bstring getSkillDisplayName(const bstring& skillName) const;
+    [[nodiscard]] bool isKnownOnly(const bstring& skillName) const;
 
 
 // Bans
@@ -243,18 +255,18 @@ public:
 
 // Bans
     bool loadBans();
-    bool saveBans() const;
+    [[nodiscard]] bool saveBans() const;
     void clearBanList();
 
 // Guilds
     bool loadGuilds();
-    bool saveGuilds() const;
+    [[nodiscard]] bool saveGuilds() const;
     void clearGuildList();
 
 // Factions
     bool loadFactions();
     void clearFactionList();
-    const Faction *getFaction(const bstring& factionStr) const;
+    [[nodiscard]] const Faction *getFaction(const bstring& factionStr) const;
 
 // Fishing
     bool loadFishing();
@@ -276,7 +288,7 @@ public:
 
 // Calendar
     void loadCalendar();
-    const Calendar* getCalendar() const;
+    [[nodiscard]] const Calendar* getCalendar() const;
 
     int classtoNum(const bstring& str);
     int racetoNum(const bstring& str);
@@ -290,11 +302,11 @@ public:
     void clearLimited();
     void addUnique(Unique* unique);
     void listLimited(const Player* player);
-    Unique* getUnique(const Object* object) const;
-    Unique* getUnique(int id) const;
+    [[nodiscard]] Unique* getUnique(const Object* object) const;
+    [[nodiscard]] Unique* getUnique(int id) const;
     void deleteUniques(Player* player);
     void deleteUnique(Unique* unique);
-    Lore* getLore(const CatRef& cr) const;
+    [[nodiscard]] Lore* getLore(const CatRef& cr) const;
     void addLore(const CatRef& cr, int i);
     void delLore(const CatRef& cr);
     void uniqueDecay(Player* player=nullptr);
@@ -302,13 +314,13 @@ public:
 // Clans
     bool loadClans();
     void clearClans();
-    const Clan *getClan(unsigned int id) const;
-    const Clan *getClanByDeity(unsigned int deity) const;
+    [[nodiscard]] const Clan *getClan(unsigned int id) const;
+    [[nodiscard]] const Clan *getClanByDeity(unsigned int deity) const;
 
 // Recipes
     bool loadRecipes();
     void clearRecipes();
-    bool saveRecipes() const;
+    [[nodiscard]] bool saveRecipes() const;
     Recipe *getRecipe(int id);
     Recipe *searchRecipes(const Player* player, const bstring& skill, Size recipeSize, int numIngredients, const Object* object=nullptr);
     void addRecipe(Recipe* recipe);
@@ -317,9 +329,9 @@ public:
 // StartLocs
     bool loadStartLoc();
     void clearStartLoc();
-    const StartLoc* getStartLoc(const bstring& id) const;
-    const StartLoc* getDefaultStartLoc() const;
-    const StartLoc* getStartLocByReq(const CatRef& cr) const;
+    [[nodiscard]] const StartLoc* getStartLoc(const bstring& id) const;
+    [[nodiscard]] const StartLoc* getDefaultStartLoc() const;
+    [[nodiscard]] const StartLoc* getStartLocByReq(const CatRef& cr) const;
     void saveStartLocs() const;
 
 // Properties
@@ -339,10 +351,10 @@ public:
     bool loadCatRefInfo();
     void clearCatRefInfo();
     void saveCatRefInfo() const;
-    bstring catRefName(const bstring& area) const;
-    const CatRefInfo* getCatRefInfo(const bstring& area, int id=0, int shouldGetParent=0) const;
-    const CatRefInfo* getCatRefInfo(const BaseRoom* room, int shouldGetParent=0) const;
-    const CatRefInfo* getRandomCatRefInfo(int zone) const;
+    [[nodiscard]] bstring catRefName(const bstring& area) const;
+    [[nodiscard]] const CatRefInfo* getCatRefInfo(const bstring& area, int id=0, int shouldGetParent=0) const;
+    [[nodiscard]] const CatRefInfo* getCatRefInfo(const BaseRoom* room, int shouldGetParent=0) const;
+    [[nodiscard]] const CatRefInfo* getRandomCatRefInfo(int zone) const;
 
 
 // swap
@@ -378,40 +390,40 @@ public:
     void listDoubleLog(const Player* viewer) const;
 
 // Misc
-    const RaceData* getRace(bstring race) const;
-    const RaceData* getRace(int id) const;
-    const DeityData* getDeity(int id) const;
+    [[nodiscard]] const RaceData* getRace(bstring race) const;
+    [[nodiscard]] const RaceData* getRace(unsigned int id) const;
+    [[nodiscard]] const DeityData* getDeity(int id) const;
 
     static unsigned long expNeeded(int level);
     int getMaxSong();
 
-    static bstring getVersion();
-    bstring getMudName();
-    bstring getMudNameAndVersion();
-    short getPortNum() const;
+    [[nodiscard]] static bstring getVersion();
+    [[nodiscard]] bstring getMudName();
+    [[nodiscard]] bstring getMudNameAndVersion();
+    [[nodiscard]] short getPortNum() const;
     void setPortNum(short pPort);
-    bstring weatherize(WeatherString w, const BaseRoom* room) const;
-    bstring getMonthDay() const;
-    bool isAprilFools() const;
-    bool willAprilFools() const;
-    int getFlashPolicyPort() const;
-    bool sendTxtOnCrash() const;
+    [[nodiscard]] bstring weatherize(WeatherString w, const BaseRoom* room) const;
+    [[nodiscard]] bstring getMonthDay() const;
+    [[nodiscard]] bool isAprilFools() const;
+    [[nodiscard]] bool willAprilFools() const;
+    [[nodiscard]] int getFlashPolicyPort() const;
+    [[nodiscard]] bool sendTxtOnCrash() const;
     void toggleTxtOnCrash();
-    int getShopNumObjects() const;
-    int getShopNumLines() const;
+    [[nodiscard]] int getShopNumObjects() const;
+    [[nodiscard]] int getShopNumLines() const;
 
     bstring getSpecialFlag(int index);
 
 // Get
     const cWeather* getWeather() const;
 
-    bstring getDmPass() const;
-    bstring getWebserver() const;
-    bstring getQS() const;
-    bstring getUserAgent() const;
-    bstring getReviewer() const;
+    [[nodiscard]] bstring getDmPass() const;
+    [[nodiscard]] bstring getWebserver() const;
+    [[nodiscard]] bstring getQS() const;
+    [[nodiscard]] bstring getUserAgent() const;
+    [[nodiscard]] bstring getReviewer() const;
 
-    bstring getCustomColor(CustomColor i, bool caret) const;
+    [[nodiscard]] bstring getCustomColor(CustomColor i, bool caret) const;
 
 // Lottery
     void addTicket(LottoTicket* ticket);
@@ -440,6 +452,7 @@ protected:
     void loadGeneral(xmlNodePtr rootNode);
     void loadLottery(xmlNodePtr rootNode);
     void loadTickets(xmlNodePtr rootNode);
+    void loadWebhookTokens(xmlNodePtr rootNode);
 
     void clearSkills();
     void updateSkillPointers();
@@ -450,6 +463,7 @@ protected:
 
 public:
     bool loadConfig(bool reload=false);
+    bool loadDiscordConfig();
     bool saveConfig() const;
     bool loadSkills();
 
@@ -478,8 +492,12 @@ public:
     bstring getDbConnectionString();
 #endif
 
+private:
+    bool bHavePort = false;
 public:
-    bool    bHavePort{};
+    bool hasPort() const;
+
+private:
 
     // Config Options
     bool    conjureDisabled{};
@@ -491,22 +509,34 @@ public:
     bool    recordAll{};
     bool    logSuicide{};
     bool    charCreationDisabled{};
-    short     portNum{};
+    short   portNum{};
     short   minBroadcastLevel{};
     bool    saveOnDrop{};
     bool    logDeath{};
     short   crashes{};
     short   supportRequiredForGuild{};
     int     numGuilds{};
-    //int   maxGuilds;
     int     nextGuildId{};
+public:
+    [[nodiscard]] int getNextGuildId() const;
+    [[nodiscard]] bool getCheckDouble() const;
+
+    void setNextGuildId(int pNextGuildId);
+
+private:
 
     bstring mudName;
     bstring dmPass;
     bstring webserver;
     bstring qs;             // authorization query string
     bstring userAgent;
-    bstring defaultArea;    // loaded from catrefinfo file
+    bstring defaultArea;
+public:
+    void setDefaultArea(const bstring &pDefaultArea);
+    [[nodiscard]] const bstring &getDefaultArea() const;
+
+private:
+    // loaded from catrefinfo file
 
 //#ifdef SQL_LOGGER
     bstring logDbType;
@@ -552,10 +582,10 @@ private:
 
     // Quests
 public:
-    std::map<int, QuestInfo*> quests;
+    QuestInfoMap quests;
     MxpElementMap mxpElements;
     BstringMap mxpColors;
-    QuestInfo* getQuest(int questNum);
+    QuestInfo* getQuest(unsigned int questNum);
 
 public:
     // Misc
@@ -591,7 +621,7 @@ public:
 
     // Guilds
     std::list<GuildCreation*> guildCreations;
-    std::map<int, Guild*> guilds;
+    GuildMap guilds;
 
     // Factions
     std::map<bstring, Faction*> factions;
@@ -603,11 +633,11 @@ public:
     std::list<Property*> properties;
     std::list<CatRefInfo*> catRefInfo;
 
-    std::map<int, RaceData*> races;
-    std::map<int, DeityData*> deities;
-    std::map<int, Recipe*> recipes;
+    RaceDataMap races;
+    DeityDataMap deities;
+    RecipeMap recipes;
+    ClanMap clans;
 
-    std::map<int, Clan*> clans;
     questPtr questTable[MAX_QUEST]{};
 
     MudFlagMap rflags;
@@ -621,7 +651,7 @@ public:
     MudFlagMap propHouseFlags;
     MudFlagMap propGuildFlags;
 
-    static bstring getFlag(int flagNum, MudFlagMap& flagMap);
+    static bstring getFlag(unsigned int flagNum, MudFlagMap& flagMap);
 
     inline bstring getRFlag(int flagNum) { return getFlag(flagNum, rflags); };
     inline bstring getXFlag(int flagNum) { return getFlag(flagNum, xflags); };
@@ -638,6 +668,23 @@ public:
 
 private:
     static unsigned long needed_exp[];
+
+
+    // Discord Integration
+private:
+    bool botEnabled = false;
+public:
+    bool isBotEnabled() const;
+
+private:
+    bstring botToken;
+    DiscordTokenMap webhookTokens;
+
+public:
+    [[nodiscard]] const bstring &getBotToken() const;
+    [[nodiscard]] const bstring &getWebhookToken(long webhookID) const;
+    void clearWebhookTokens();
+
 };
 
 extern Config *gConfig;

@@ -537,7 +537,7 @@ void Bank::statement(Player* player, bool isGuild) {
 
     if(file_exists(file)) {
         strcpy(player->getSock()->tempstr[3], "\0");
-        viewFileReverse(player->getSock(), file);
+        player->getSock()->viewFileReverse(file);
     } else {
         player->print("\n   There is no transaction history.\n");
     }

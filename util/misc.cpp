@@ -244,23 +244,23 @@ bstring delimit(const char *str, int wrap) {
 
 #define FBUF    800
 
-void viewFileReal(Socket* sock, bstring str ) {
+void Socket::viewFileReal(const bstring &str ) {
     char    buf[FBUF+1];
     int i, l, n, ff, line;
     long    offset;
 
     buf[FBUF] = 0;
-    switch(sock->getParam()) {
+    switch(getParam()) {
     case 1:
         offset = 0L;
-        strncpy(sock->tempstr[1], str.c_str(),255);
-        sock->tempstr[1][255] = 0;
+        strncpy(tempstr[1], str.c_str(),255);
+        tempstr[1][255] = 0;
         ff = open(str.c_str(), O_RDONLY, 0);
         if(ff < 0) {
-            sock->print("File could not be opened.\n");
-            if(sock->getPlayer())
-                sock->getPlayer()->clearFlag(P_READING_FILE);
-            sock->restoreState();
+            print("File could not be opened.\n");
+            if(getPlayer())
+                getPlayer()->clearFlag(P_READING_FILE);
+            restoreState();
             return;
         }
         line = 0;
@@ -271,8 +271,8 @@ void viewFileReal(Socket* sock, bstring str ) {
                 if(buf[i] == '\n') {
                     buf[i] = 0;
                     line++;
-                    sock->bprint(&buf[l]);
-                    sock->bprint("\n");
+                    bprint(&buf[l]);
+                    bprint("\n");
                     offset += (i-l+1);
                     l = i+1;
                 }
@@ -280,48 +280,48 @@ void viewFileReal(Socket* sock, bstring str ) {
                     break;
             }
             if(line > 20) {
-                sprintf(sock->tempstr[2], "%ld", offset);
+                sprintf(tempstr[2], "%ld", offset);
                 break;
             } else if(l != n) {
-                sock->bprint(&buf[l]);
+                bprint(&buf[l]);
                 offset += (i-l);
             }
             if(n<FBUF)
                 break;
         }
         if(n==FBUF || line>20) {
-            sock->getPlayer()->setFlag(P_READING_FILE);
-            if(!sock->getPlayer()->flagIsSet(P_MIRC))
-                sock->print("[Hit Return, Q to Quit]: ");
+            getPlayer()->setFlag(P_READING_FILE);
+            if(!getPlayer()->flagIsSet(P_MIRC))
+                print("[Hit Return, Q to Quit]: ");
             else
-                sock->print("[Hit C to continue]: ");
+                print("[Hit C to continue]: ");
             gServer->processOutput();
         }
         if(n<FBUF && line <= 20) {
             close(ff);
-            sock->restoreState();
+            restoreState();
             return;
         } else {
             close(ff);
-            sock->getPlayer()->setFlag(P_READING_FILE);
-            sock->setState(CON_VIEWING_FILE, 2);
+            getPlayer()->setFlag(P_READING_FILE);
+            setState(CON_VIEWING_FILE, 2);
             return;
         }
     case 2:
         if(str[0] != 0  && str[0] != 'c' && str[0] != 'C') {
-            sock->print("Aborted.\n");
-            if(sock->getPlayer())
-                sock->getPlayer()->clearFlag(P_READING_FILE);
-            sock->restoreState();
+            print("Aborted.\n");
+            if(getPlayer())
+                getPlayer()->clearFlag(P_READING_FILE);
+            restoreState();
             return;
         }
-        offset = atol(sock->tempstr[2]);
-        ff = open(sock->tempstr[1], O_RDONLY, 0);
+        offset = atol(tempstr[2]);
+        ff = open(tempstr[1], O_RDONLY, 0);
         if(ff < 0) {
-            sock->print("File could not be opened [%s].\n", sock->tempstr);
-            if(sock->getPlayer())
-                sock->getPlayer()->clearFlag(P_READING_FILE);
-            sock->restoreState();
+            print("File could not be opened [%s].\n", tempstr);
+            if(getPlayer())
+                getPlayer()->clearFlag(P_READING_FILE);
+            restoreState();
             return;
         }
         lseek(ff, offset, 0);
@@ -333,8 +333,8 @@ void viewFileReal(Socket* sock, bstring str ) {
                 if(buf[i] == '\n') {
                     buf[i] = 0;
                     line++;
-                    sock->bprint(&buf[l]);
-                    sock->bprint("\n");
+                    bprint(&buf[l]);
+                    bprint("\n");
                     offset += (i-l+1);
                     l = i+1;
                 }
@@ -342,39 +342,39 @@ void viewFileReal(Socket* sock, bstring str ) {
                     break;
             }
             if(line > 20) {
-                sprintf(sock->tempstr[2], "%ld", offset);
+                sprintf(tempstr[2], "%ld", offset);
                 break;
             } else if(l != n) {
-                sock->bprint(&buf[l]);
+                bprint(&buf[l]);
                 offset += (i-l);
             }
             if(n<FBUF)
                 break;
         }
         if(n==FBUF || line > 20) {
-            if(sock->getPlayer())
-                sock->getPlayer()->setFlag(P_READING_FILE);
-            sock->print("[Hit Return, Q to Quit]: ");
+            if(getPlayer())
+                getPlayer()->setFlag(P_READING_FILE);
+            print("[Hit Return, Q to Quit]: ");
             gServer->processOutput();
         }
         if(n<FBUF && line <= 20) {
             close(ff);
-            if(sock->getPlayer())
-                sock->getPlayer()->clearFlag(P_READING_FILE);
-            sock->restoreState();
+            if(getPlayer())
+                getPlayer()->clearFlag(P_READING_FILE);
+            restoreState();
             return;
         } else {
             close(ff);
-            sock->setState(CON_VIEWING_FILE, 2);
+            setState(CON_VIEWING_FILE, 2);
         }
     }
 }
 // Wrapper function for viewFile_real that will set the correct connected state
-void viewFile(Socket* sock, const bstring& str) {
-    if(sock->getState() != CON_VIEWING_FILE)
-        sock->setState(CON_VIEWING_FILE);
+void Socket::viewFile(const bstring& str) {
+    if(getState() != CON_VIEWING_FILE)
+        setState(CON_VIEWING_FILE);
 
-    viewFileReal(sock, str);
+    viewFileReal(str);
 }
 
 //*********************************************************************
@@ -387,20 +387,21 @@ void viewFile(Socket* sock, const bstring& str) {
 
 #define FBUF_L  1024
 
-void viewLoginFile(Socket* sock, const bstring& str, bool showError) {
+void Socket::viewLoginFile(const bstring& str, bool showError) {
     char    buf[FBUF_L + 1];
-    int     i=0, l=0, n=0, ff=0, line=0;
+    int     i=0, l=0, ff=0, line=0;
+    size_t  n=0;
     long    offset=0;
     zero(buf, sizeof(buf));
 
     buf[FBUF_L] = 0;
     {
         offset = 0L;
-        strcpy(sock->tempstr[1], str.c_str());
+        strcpy(tempstr[1], str.c_str());
         ff = open(str.c_str(), O_RDONLY, 0);
         if(ff < 0) {
             if(showError) {
-                sock->print("File could not be opened.\n");
+                print("File could not be opened.\n");
                 broadcast(isCt, "^yCan't open file: %s.\n", str.c_str()); // nothing to put into (%m)?
             }
             return;
@@ -415,13 +416,13 @@ void viewLoginFile(Socket* sock, const bstring& str, bool showError) {
                     if(i != 0 && buf[i-1] == '\r')
                         buf[i-1] = 0;
                     line++;
-                    sock->printColor("%s\n", &buf[l]);
+                    printColor("%s\n", &buf[l]);
                     offset += (i - l + 1);
                     l = i + 1;
                 }
             }
             if(l != n) {
-                sock->printColor("%s", &buf[l]);
+                printColor("%s", &buf[l]);
                 offset += (i - l);
             }
             if(n < FBUF_L) {
@@ -430,7 +431,6 @@ void viewLoginFile(Socket* sock, const bstring& str, bool showError) {
             }
         }
         // Never makes it out of the while loop to get here
-//      close(ff);
     }
 }
 
@@ -440,7 +440,7 @@ void viewLoginFile(Socket* sock, const bstring& str, bool showError) {
 // displays a file, line by line starting with the last
 // similar to unix 'tac' command
 
-void viewFileReverseReal(Socket* sock, bstring str) {
+void Socket::viewFileReverseReal(const bstring& str) {
     off_t oldpos;
     off_t newpos;
     off_t temppos;
@@ -451,18 +451,18 @@ void viewFileReverseReal(Socket* sock, bstring str) {
     FILE *ff;
     int TACBUF = ( (81 * 20 * sizeof(char)) + 1 );
 
-    if(strlen(sock->tempstr[3]) > 0)
-        strcpy(search, sock->tempstr[3]);
+    if(strlen(tempstr[3]) > 0)
+        strcpy(search, tempstr[3]);
     else
         strcpy(search, "\0");
 
-    switch(sock->getParam()) {
+    switch(getParam()) {
     case 1:
 
-        strcpy(sock->tempstr[1], str.c_str());
+        strcpy(tempstr[1], str.c_str());
         if((ff = fopen(str.c_str(), "r")) == nullptr) {
-            sock->print("error opening file\n");
-            sock->restoreState();
+            print("error opening file\n");
+            restoreState();
             return;
         }
 
@@ -471,8 +471,8 @@ void viewFileReverseReal(Socket* sock, bstring str) {
         fseek(ff, 0L, SEEK_END);
         oldpos = ftell(ff);
         if(oldpos < 1) {
-            sock->print("Error opening file\n");
-            sock->restoreState();
+            print("Error opening file\n");
+            restoreState();
             return;
         }
         break;
@@ -480,25 +480,25 @@ void viewFileReverseReal(Socket* sock, bstring str) {
     case 2:
 
         if(str[0] != 0) {
-            sock->print("Aborted.\n");
-            sock->getPlayer()->clearFlag(P_READING_FILE);
-            sock->restoreState();
+            print("Aborted.\n");
+            getPlayer()->clearFlag(P_READING_FILE);
+            restoreState();
             return;
         }
 
-        if((ff = fopen(sock->tempstr[1], "r")) == nullptr) {
-            sock->print("error opening file\n");
-            sock->getPlayer()->clearFlag(P_READING_FILE);
-            sock->restoreState();
+        if((ff = fopen(tempstr[1], "r")) == nullptr) {
+            print("error opening file\n");
+            getPlayer()->clearFlag(P_READING_FILE);
+            restoreState();
             return;
         }
 
-        offset = atol(sock->tempstr[2]);
+        offset = atol(tempstr[2]);
         fseek(ff, offset, SEEK_SET);
         oldpos = ftell(ff);
         if(oldpos < 1) {
-            sock->print("Error opening file\n");
-            sock->restoreState();
+            print("Error opening file\n");
+            restoreState();
             return;
         }
 
@@ -529,7 +529,7 @@ nomatch:
                 ) ||
                 search[0] == '\0'
             ) {
-                sock->printColor("%s", &string[i]);
+                printColor("%s", &string[i]);
                 count++;
             }
             string[i]='\0';
@@ -543,38 +543,38 @@ nomatch:
     if(oldpos < 3)
         more_file = 0;
 
-    sprintf(sock->tempstr[2], "%ld", (long) oldpos);
+    sprintf(tempstr[2], "%ld", (long) oldpos);
 
 
     if(more_file && count == 0)
         goto nomatch;       // didnt find a match within a screenful
     else if(more_file) {
-        sock->print("\n[Hit Return, Q to Quit]: ");
+        print("\n[Hit Return, Q to Quit]: ");
         gServer->processOutput();
-        sock->intrpt &= ~1;
+        intrpt &= ~1;
 
         fclose(ff);
-        sock->getPlayer()->setFlag(P_READING_FILE);
-        sock->setState(CON_VIEWING_FILE_REVERSE, 2);
+        getPlayer()->setFlag(P_READING_FILE);
+        setState(CON_VIEWING_FILE_REVERSE, 2);
         return;
     } else {
         if((strlen(search) > 0 && strstr(string, search))
                 || search[0] == '\0') {
-            sock->print("\n%s\n", string);
+            print("\n%s\n", string);
         }
         fclose(ff);
-        sock->getPlayer()->clearFlag(P_READING_FILE);
-        sock->restoreState();
+        getPlayer()->clearFlag(P_READING_FILE);
+        restoreState();
         return;
     }
 
 }
 
 // Wrapper for viewFileReverse_real that properly sets the connected state
-void viewFileReverse(Socket* sock, const bstring& str) {
-    if(sock->getState() != CON_VIEWING_FILE_REVERSE)
-        sock->setState(CON_VIEWING_FILE_REVERSE);
-    viewFileReverseReal(sock, str);
+void Socket::viewFileReverse(const bstring& str) {
+    if(getState() != CON_VIEWING_FILE_REVERSE)
+        setState(CON_VIEWING_FILE_REVERSE);
+    viewFileReverseReal(str);
 }
 
 //*********************************************************************

@@ -350,12 +350,12 @@ int dmBan(Player* player, cmd* cmnd) {
 void Server::checkBans() {
     static const char* banString = "\n\rThe watcher just arrived.\n\rThe watcher says, \"Begone from this place!\".\n\rThe watcher banishes your soul from this world.\n\r\n\r\n\r";
 
-    for(Socket* sock : sockets) {
-        if(sock->getPlayer() && (gConfig->isBanned(sock->getIp().c_str()) || 
-            gConfig->isBanned(sock->getHostname().c_str()))) {
-            if(sock->getPlayer()->getClass() <= CreatureClass::BUILDER) {
-                sock->write(banString);
-                sock->disconnect();
+    for(auto sock : sockets) {
+        if(sock.getPlayer() && (gConfig->isBanned(sock.getIp().c_str()) ||
+            gConfig->isBanned(sock.getHostname().c_str()))) {
+            if(sock.getPlayer()->getClass() <= CreatureClass::BUILDER) {
+                sock.write(banString);
+                sock.disconnect();
             }
         }
     }

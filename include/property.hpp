@@ -102,7 +102,7 @@ public:
     void    destroy();
     bool    expelOnRemove() const;
     void    expelToExit(Player* player, bool offline);
-    std::map<int, MudFlag>* getFlagList();
+    MudFlagMap* getFlagList();
 
     PartialOwner* getPartialOwner(const bstring& pOwner);
     bool    isPartialOwner(const bstring& pOwner);

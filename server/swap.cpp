@@ -370,7 +370,7 @@ bool Server::swap(const Swap& s) {
 bstring Server::simpleChildRead(childProcess &child) {
     char tmpBuf[4096];
     bstring toProcess;
-    int n;
+    size_t n;
     for(;;) {
         // read in all of the data
         memset(tmpBuf, '\0', sizeof(tmpBuf));
@@ -391,7 +391,7 @@ void Config::findNextEmpty(childProcess &child, bool onReap) {
     if(!isSwapping())
         return;
 
-    Player* player = gServer->findPlayer(child.extra.c_str());
+    Player* player = gServer->findPlayer(child.extra);
 
     // a target has not yet been found
     if(currentSwap.target.id == -1) {

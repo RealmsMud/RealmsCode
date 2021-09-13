@@ -63,6 +63,40 @@ bool Config::loadConfig(bool reload) {
     return(true);
 }
 
+bool Config::loadDiscordConfig() {
+    char filename[256];
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr  rootNode;
+    xmlNodePtr  curNode;
+
+    sprintf(filename, "%s/discord.xml", Path::Config);
+
+    if(!file_exists(filename))
+        return(false);
+
+    if((xmlDoc = xml::loadFile(filename, "Discord")) == nullptr)
+        return(false);
+
+    rootNode = xmlDocGetRootElement(xmlDoc);
+    curNode = rootNode->children;
+
+    while(curNode) {
+        if(NODE_NAME(curNode, "BotToken")) {
+            xml::copyToBString(botToken, curNode);
+            botEnabled = true;
+        } else if(NODE_NAME(curNode, "WebhookTokens")) {
+            loadWebhookTokens(curNode);
+        }
+
+        curNode = curNode->next;
+    }
+
+    xmlFreeDoc(xmlDoc);
+    xmlCleanupParser();
+
+    return(true);
+}
+
 void Config::loadGeneral(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
 
@@ -141,6 +175,28 @@ void Config::loadTickets(xmlNodePtr rootNode) {
     }
 }
 
+void Config::loadWebhookTokens(xmlNodePtr rootNode) {
+    xmlNodePtr curNode = rootNode->children;
+    while(curNode) {
+        if(NODE_NAME(curNode, "WebhookToken")) {
+            xmlNodePtr tokenNode = curNode->children;
+            long webhookID = -1;
+            bstring token;
+            while(tokenNode) {
+                if(NODE_NAME(tokenNode, "ID")) xml::copyToNum(webhookID, tokenNode);
+                else if(NODE_NAME(tokenNode, "Token")) xml::copyToBString(token, tokenNode);
+
+                tokenNode = tokenNode->next;
+            }
+            if (webhookID != -1 && !token.empty()) {
+                webhookTokens.insert({webhookID, token});
+            }
+        }
+
+        curNode = curNode->next;
+    }
+}
+
 // Functions to get configured options
 bool Config::saveConfig() const {
     xmlDocPtr   xmlDoc;
@@ -200,6 +256,16 @@ bool Config::saveConfig() const {
     xmlNodePtr ticketsNode = xml::newStringChild(curNode, "Tickets");
     for(LottoTicket* ticket : tickets) {
         ticket->saveToXml(ticketsNode);
+    }
+
+    // Discord Config
+    curNode = xmlNewChild(rootNode, nullptr, BAD_CAST "Discord", nullptr);
+    xml::saveNonNullString(curNode, "BotToken", botToken);
+    xmlNodePtr webtokenNodes = xml::newStringChild(curNode, "WebhookTokens");
+    for(const auto& [webhookID, token] : webhookTokens) {
+        xmlNodePtr tokenNode = xml::newStringChild(webtokenNodes, "WebhookToken");
+        xml::newNumChild<long>(tokenNode, "ID", webhookID);
+        xml::newStringChild(tokenNode, "Token", token);
     }
 
     sprintf(filename, "%s/config.xml", Path::Config);

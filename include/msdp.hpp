@@ -67,7 +67,7 @@ enum class MSDPVar {
 class MsdpVariable {
     friend class ReportedMsdpVariable;
 public:
-    static bstring getValue(MSDPVar var, Socket* sock, Player* player);
+    static bstring getValue(MSDPVar var, Socket &sock, Player* player);
 
 protected:
     void            init();
@@ -102,7 +102,7 @@ public:
     [[nodiscard]] bool            getRequiresPlayer() const;
     [[nodiscard]] int             getUpdateInterval() const;
 
-    bool            send(Socket* sock) const;
+    bool            send(Socket& sock) const;
 
 };
 

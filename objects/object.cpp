@@ -39,6 +39,7 @@
 #include "rooms.hpp"              // for BaseRoom, UniqueRoom
 #include "size.hpp"               // for NO_SIZE, Size
 #include "skills.hpp"             // for getSkillLevelStr
+#include "socket.hpp"             // for Socket
 #include "unique.hpp"             // for Unique, Lore
 #include "utils.hpp"              // for MAX, MIN
 #include "xml.hpp"                // for loadObject
@@ -450,9 +451,9 @@ int displayObject(Player* player, Object* target) {
                 str[i] = '_';
         sprintf(filename, "%s/%s.txt", Path::Sign, str);
         if(target->flagIsSet(O_LOGIN_FILE))
-            viewLoginFile(player->getSock(), filename);
+            player->getSock()->viewLoginFile(filename);
         else
-            viewFile(player->getSock(), filename);
+            player->getSock()->viewFile(filename);
         return(0);
     }
     std::ostringstream oStr;
@@ -763,7 +764,7 @@ void Creature::killDarkmetal() {
     int     i=0;
     bool    found=false;
 
-    if(!getRoomParent()->isSunlight())
+    if(!getRoomParent() || !getRoomParent()->isSunlight())
         return;
 
     if(pTarget) {

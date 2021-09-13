@@ -374,7 +374,7 @@ bool Config::loadRaces() {
 //**********************************************************************
 
 const RaceData* Config::getRace(bstring race) const {
-    std::map<int, RaceData*>::const_iterator it;
+    RaceDataMap::const_iterator it;
     RaceData* data=nullptr;
     int len = race.getLength();
     race = race.toLower();
@@ -398,7 +398,7 @@ const RaceData* Config::getRace(bstring race) const {
 //                      getRace
 //**********************************************************************
 
-const RaceData* Config::getRace(int id) const {
+const RaceData* Config::getRace(unsigned int id) const {
     auto it = races.find(id);
 
     if(it == races.end())
@@ -412,7 +412,7 @@ const RaceData* Config::getRace(int id) const {
 //*********************************************************************
 
 int dmShowRaces(Player* player, cmd* cmnd) {
-    std::map<int, RaceData*>::const_iterator it;
+    RaceDataMap::const_iterator it;
     RaceData* data=nullptr;
     bool    all = player->isDm() && cmnd->num > 1 && !strcmp(cmnd->str[1], "all");
     std::map<Sex, short>::const_iterator bIt;
@@ -476,7 +476,7 @@ int dmShowRaces(Player* player, cmd* cmnd) {
 //**********************************************************************
 
 void Config::clearRaces() {
-    std::map<int, RaceData*>::iterator it;
+    RaceDataMap::iterator it;
 
     for(it = races.begin() ; it != races.end() ; it++) {
         RaceData* r = (*it).second;

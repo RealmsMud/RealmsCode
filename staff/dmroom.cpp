@@ -2400,7 +2400,7 @@ void showMobList(Player* player, WanderInfo *wander, const bstring& type) {
                 monster->flagIsSet(M_DEITY_AGGRO_INVERT);
 
             if(!maybeAggro) {
-                std::map<int, RaceData*>::iterator rIt;
+                RaceDataMap::iterator rIt;
                 for(rIt = gConfig->races.begin() ; rIt != gConfig->races.end() ; rIt++) {
                     if(monster->isRaceAggro((*rIt).second->getId(), false)) {
                         maybeAggro = true;
@@ -2419,7 +2419,7 @@ void showMobList(Player* player, WanderInfo *wander, const bstring& type) {
             }
 
             if(!maybeAggro) {
-                std::map<int, DeityData*>::iterator dIt;
+                DeityDataMap::iterator dIt;
                 for(dIt = gConfig->deities.begin() ; dIt != gConfig->deities.end() ; dIt++) {
                     if(monster->isDeityAggro((*dIt).second->getId(), false)) {
                         maybeAggro = true;

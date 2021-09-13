@@ -24,7 +24,7 @@ QuestCatRef::QuestCatRef(xmlNodePtr rootNode) {
     // Set up the defaults
     reqNum = 1;
     curNum = 0;
-    area = gConfig->defaultArea;
+    area = gConfig->getDefaultArea();
 
     // And then read in the XML file
     xmlNodePtr curNode = rootNode->children;

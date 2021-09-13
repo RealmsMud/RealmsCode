@@ -230,15 +230,13 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         }
         if(getVersion() < "2.47a") {
             // Update weapon skills
-            SkillMap::iterator skIt;
-            for(skIt = skills.begin() ; skIt != skills.end() ; ) {
-                Skill* skill = (*skIt++).second;
+            for (auto const& [skillId, skill] : skills) {
                 SkillInfo* parentSkill = skill->getSkillInfo();
                 if(!parentSkill)
                     continue;
-                bstring group = parentSkill->getGroup();
-                if(group.left(7) == "weapons" && group.length() > 6) {
-                    bstring weaponSkillName = group.right(group.length() - 8);
+                bstring skillGroup = parentSkill->getGroup();
+                if(skillGroup.left(7) == "weapons" && skillGroup.length() > 6) {
+                    bstring weaponSkillName = skillGroup.right(skillGroup.length() - 8);
                     Skill* weaponSkill = getSkill(weaponSkillName, false);
                     if(!weaponSkill) {
                         addSkill(weaponSkillName, skill->getGained());
