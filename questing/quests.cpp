@@ -31,6 +31,7 @@
 #include <boost/tokenizer.hpp>
 #include <limits>                                   // for numeric limits
 
+#include "fmt/core.h"
 #include "bstring.hpp"                              // for bstring, operator+
 #include "catRef.hpp"                               // for CatRef
 #include "cmd.hpp"                                  // for cmd
@@ -435,7 +436,7 @@ bool Player::addQuest(QuestInfo* toAdd) {
     if(hasQuest(toAdd))
         return(false);
     questsInProgress[toAdd->getId()] = new QuestCompletion(toAdd, this);
-    printColor("^W%s^x has been added to your quest book.\n", toAdd->getName().c_str());
+    *this << ColorOn << fmt::format("^W{}^x has been added to your quest book.\n", toAdd->getName()) << ColorOff;
     return(true);
 }
 bool Player::hasQuest(int questId) const {
@@ -470,15 +471,11 @@ QuestEligibility Monster::getEligibleQuestDisplay(const Creature* viewer) const 
         QuestEligibility eligible = quest->getEligibility(pViewer, this);
         if (eligible == QuestEligibility::ELIGIBLE)
             return QuestEligibility::ELIGIBLE;
-        else if (eligible == QuestEligibility::ELIGIBLE_DAILY)
-            hasRepetable = true;
-        else if (eligible == QuestEligibility::ELIGIBLE_WEEKLY)
+        else if (eligible == QuestEligibility::ELIGIBLE_DAILY || eligible == QuestEligibility::ELIGIBLE_WEEKLY)
             hasRepetable = true;
         else if (eligible == QuestEligibility::INELIGIBLE_LEVEL)
             isLowLevel = true;
-        else if (eligible == QuestEligibility::INELIGIBLE_DAILY_NOT_EXPIRED)
-            needsMoreTime = true;
-        else if (eligible == QuestEligibility::INELIGIBLE_WEEKLY_NOT_EXPIRED)
+        else if (eligible == QuestEligibility::INELIGIBLE_DAILY_NOT_EXPIRED || eligible == QuestEligibility::INELIGIBLE_WEEKLY_NOT_EXPIRED)
             needsMoreTime = true;
     }
 
@@ -568,12 +565,14 @@ void QuestCompletion::updateMobKills(Monster* monster) {
         if(qcr == monster->info) {
             if(qcr.reqNum != qcr.curNum) {
                 if(++(qcr.curNum) == qcr.reqNum) {
-                    parentPlayer->printColor("Quest Update: %s - Required number of ^W%s^x have been killed.\n",
-                            parentQuest->getName().c_str(), monster->getCName());
+                    *parentPlayer << ColorOn << fmt::format(
+                            "Quest Update: {} - Required number of ^W{}^x have been killed.\n",
+                            parentQuest->getName(), monster->getName()) << ColorOff;
                 } else {
-                    parentPlayer->printColor("Quest Update: %s - Killed ^W %s / %s^x.\n",
-                            parentQuest->getName().c_str(), intToText(qcr.curNum).c_str(),
-                            monster->getCrtStr(parentPlayer, INV, qcr.reqNum).c_str());
+                    *parentPlayer << ColorOn << fmt::format(
+                            "Quest Update: {} - Killed ^W {} / {}^x.\n",
+                            parentQuest->getName(), intToText(qcr.curNum),
+                            monster->getCrtStr(parentPlayer, INV, qcr.reqNum))  << ColorOff;
                 }
             }
         }
@@ -590,12 +589,14 @@ void QuestCompletion::updateItems(Object* object) {
             if(curNum < qcr.reqNum) {
                 itemsCompleted = false;
                 if(++curNum == qcr.reqNum) {
-                    parentPlayer->printColor("Quest Update: %s - Required number of ^W%s^x have been obtained.\n",
-                        parentQuest->getName().c_str(), object->getCName());
+                    *parentPlayer << ColorOn << fmt::format(
+                        "Quest Update: {} - Required number of ^W{}^x have been obtained.\n",
+                        parentQuest->getName(), object->getName()) << ColorOff;
                 } else {
-                    parentPlayer->printColor("Quest Update: %s - Obtained ^W%s / %s^x.\n",
-                        parentQuest->getName().c_str(), intToText(curNum).c_str(),
-                        object->getObjStr(parentPlayer, INV, qcr.reqNum).c_str());
+                    *parentPlayer << ColorOn << fmt::format(
+                        "Quest Update: {} - Obtained ^W{} / {}^x.\n",
+                        parentQuest->getName(), intToText(curNum),
+                        object->getObjStr(parentPlayer, INV, qcr.reqNum)) << ColorOff;
                 }
             }
         }
@@ -610,8 +611,8 @@ void QuestCompletion::updateRooms(UniqueRoom* room) {
             if(qcr.curNum != 1) {
                 if(++qcr.curNum == 1) {
                     // ReqNum should always be one
-                    parentPlayer->printColor("Quest Update: %s - Visited ^W%s^x.\n",
-                            parentQuest->getName().c_str(), room->getCName());
+                    *parentPlayer << ColorOn << fmt::format("Quest Update: {} - Visited ^W{}^x.\n",
+                            parentQuest->getName(), room->getName());
                 }
             }
         }
@@ -647,9 +648,9 @@ bool QuestCompletion::checkQuestCompletion(bool showMessage) {
         if(showMessage && !alreadyCompleted) {
             Monster* endMonster = nullptr;
 
-            parentPlayer->printColor("You have fufilled all of the requirements for ^W%s^x!\n", parentQuest->getName().c_str());
+            *parentPlayer << ColorOn << fmt::format("You have fufilled all of the requirements for ^W{}^x!\n", parentQuest->getName()) << ColorOff;
             if(loadMonster(parentQuest->turnInMob, &endMonster)) {
-                parentPlayer->printColor("Return to ^W%s^x to claim your reward.\n", endMonster->getCName());
+                *parentPlayer << ColorOn << fmt::format("Return to ^W{}^x to claim your reward.\n", endMonster->getName()) << ColorOff;
                 delete endMonster;
             }
         }
@@ -840,16 +841,6 @@ bstring QuestCompletion::getStatusDisplay() {
 
 }
 
-int cmdQuestStatus(Player* player, cmd* cmnd) {
-    Player* target = player;
-    int i = 1;
-
-    for(std::pair<int, QuestCompletion*> p : target->questsInProgress) {
-        QuestCompletion* quest = p.second;
-        player->print("%d) %s\n", i++, quest->getStatusDisplay().c_str());
-    }
-    return(1);
-}
 bool Object::isQuestValid() const {
     return((type == ObjectType::CONTAINER && shotsCur == 0) ||
      (type != ObjectType::CONTAINER && (shotsCur != 0 || shotsMax == 0)) );
@@ -882,7 +873,7 @@ bool QuestCompletion::complete(Monster* monster) {
     std::list<Object*>::iterator oIt;
 
     if(!checkQuestCompletion()) {
-        parentPlayer->print("You have not fulfilled all the requirements to complete this quest.\n");
+        *parentPlayer <<"You have not fulfilled all the requirements to complete this quest.\n";
         return(false);
     }
 
@@ -912,11 +903,11 @@ bool QuestCompletion::complete(Monster* monster) {
     for(QuestCatRef & obj : parentQuest->itemsToGet) {
         bstring oName;
         Object *object;
-        ObjectSet::iterator it;
+        ObjectSet::iterator osIt;
         int num = obj.reqNum;
 
-        for( it = parentPlayer->objects.begin() ; it != parentPlayer->objects.end() && num > 0 ; ) {
-            object = (*it++);
+        for(osIt = parentPlayer->objects.begin() ; osIt != parentPlayer->objects.end() && num > 0 ; ) {
+            object = (*osIt++);
             if(object->info == obj && object->isQuestValid()) {
                 oName = object->getName();
                 parentPlayer->delObj(object, true, false, true, false);
@@ -940,14 +931,13 @@ bool QuestCompletion::complete(Monster* monster) {
             }
         }
         if(loadObject(obj, &object)) {
-            parentPlayer->printColor("%M takes ^W%s^x from you.\n", monster,
-                object->getObjStr(parentPlayer, 0, obj.reqNum).c_str());
+            *parentPlayer << ColorOn << setf(CAP) << monster << " takes ^W" << setn(obj.reqNum) << object << "^x from you.\n" << ColorOff;
             delete object;
         }
     }
 
     for(oIt = objects.begin(); oIt != objects.end(); oIt++) {
-        parentPlayer->printColor("%M gives you ^C%P^x.\n", monster, *oIt);
+        *parentPlayer << ColorOn << setf(CAP) << monster << " gives you ^C" << *oIt << "^x.\n" << ColorOff;
         (*oIt)->setDroppedBy(monster, "QuestCompletion");
         doGetObject(*oIt, parentPlayer);
     }
@@ -963,12 +953,11 @@ bool QuestCompletion::complete(Monster* monster) {
     if(!parentQuest->cashReward.isZero()) {
         parentPlayer->coins.add(parentQuest->cashReward);
         Server::logGold(GOLD_IN, parentPlayer, parentQuest->cashReward, nullptr, "QuestCompletion");
-        parentPlayer->printColor("%M gives you ^C%s^x. You now have %s.\n",
-            monster, parentQuest->cashReward.str().c_str(), parentPlayer->coins.str().c_str());
+        *parentPlayer << ColorOn << setf(CAP) << monster << " gives you ^C" << parentQuest->cashReward.str() << "^x. You now have " << parentPlayer->coins.str() << ".\n" << ColorOff;
     }
     if(parentQuest->expReward) {
         if(!parentPlayer->halftolevel()) {
-            parentPlayer->printColor("You %s ^C%ld^x experience.\n", gConfig->isAprilFools() ? "lose" : "gain", parentQuest->expReward);
+            *parentPlayer << ColorOn << fmt::format("You {} ^C{}^x experience.\n", gConfig->isAprilFools() ? "lose" : "gain", parentQuest->expReward);
             parentPlayer->addExperience(parentQuest->expReward);
         }
     }
@@ -1022,13 +1011,13 @@ int cmdTalk(Player* player, cmd* cmnd) {
         return(0);
 
     if(cmnd->num < 2) {
-        player->print("Talk to whom?\n");
+        *player << "Talk to whom?\n";
         return(0);
     }
 
     target = player->getParent()->findMonster(player, cmnd);
     if(!target) {
-        player->print("You don't see that here.\n");
+        *player << "You don't see that here.\n";
         return(0);
     }
 
@@ -1683,7 +1672,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
 
     for(std::pair<int, QuestCompletion*> p : target->questsInProgress) {
         QuestCompletion* quest = p.second;
-        player->printColor("%d) %s\n", i++, quest->getStatusDisplay().c_str());
+        *player << i++ << ") " << ColorOn << quest->getStatusDisplay() << ColorOff;
     }
 
     return(0);
@@ -1695,11 +1684,11 @@ void QuestCompleted::complete() {
     times++;
 }
 
-time_t QuestCompleted::getLastCompleted() {
+time_t QuestCompleted::getLastCompleted() const {
     return lastCompleted;
 }
 
-int QuestCompleted::getTimesCompleted() {
+int QuestCompleted::getTimesCompleted() const {
     return times;
 }
 

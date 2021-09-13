@@ -158,6 +158,8 @@ set(COMMON_HEADER_FILES
     include/free_crt.hpp)
 
 set(COMMON_SOURCE_FILES
+    fmt/format.cc
+
     areas/area.cpp
     areas/catRef.cpp
     areas/catRefInfo.cpp
@@ -215,8 +217,6 @@ set(COMMON_SOURCE_FILES
     economy/unique.cpp
 
     effects/effects.cpp
-
-    fmt/format.cc
 
     groups/group.cpp
     groups/groups.cpp

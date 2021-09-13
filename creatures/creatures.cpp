@@ -1054,7 +1054,7 @@ bool Creature::convertFlag(int flag) {
 //                      getCrtStr
 //*********************************************************************
 
-bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
+bstring Creature::getCrtStr(const Creature* viewer, unsigned int ioFlags, int num) const {
     std::ostringstream crtStr;
     bstring toReturn = "";
     char ch;
@@ -1062,7 +1062,7 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
     //  char    *str;
 
     if(viewer)
-        flags |= viewer->displayFlags();
+        ioFlags |= viewer->displayFlags();
 
     const Player* pThis = getAsConstPlayer();
     // Player
@@ -1077,18 +1077,18 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
         // Target is a dm, is dm invis, and viewer is not a dm       OR
         // Target is a ct, is dm invis, and viewer is not a dm or ct OR
         // Target is staff less than a ct and is dm invis, viewier is less than a builder
-        else if((cClass == CreatureClass::DUNGEONMASTER && flagIsSet(P_DM_INVIS) && !(flags & ISDM) ) ||
-                 (cClass == CreatureClass::CARETAKER && (flagIsSet(P_DM_INVIS) && !(flags & ISDM) && !(flags & ISCT))) ||
-                 (flagIsSet(P_DM_INVIS) && !(flags & ISDM) && !(flags & ISCT) && !(flags & ISBD))  )
+        else if((cClass == CreatureClass::DUNGEONMASTER && flagIsSet(P_DM_INVIS) && !(ioFlags & ISDM) ) ||
+                (cClass == CreatureClass::CARETAKER && (flagIsSet(P_DM_INVIS) && !(ioFlags & ISDM) && !(ioFlags & ISCT))) ||
+                (flagIsSet(P_DM_INVIS) && !(ioFlags & ISDM) && !(ioFlags & ISCT) && !(ioFlags & ISBD))  )
         {
             crtStr << "Someone";
         }
         // Target is misted, viewer can't detect mist, or isn't staff
-        else if( isEffected("mist") && !(flags & MIST) && !(flags & ISDM) && !(flags & ISCT) && !(flags & ISBD)) {
+        else if(isEffected("mist") && !(ioFlags & MIST) && !(ioFlags & ISDM) && !(ioFlags & ISCT) && !(ioFlags & ISBD)) {
             crtStr << "A light mist";
         }
         // Target is invisible and viewer doesn't have detect-invis or isn't staff
-        else if(isInvisible() && !(flags & INV) && !(flags & ISDM) && !(flags & ISCT) && !(flags & ISBD)) {
+        else if(isInvisible() && !(ioFlags & INV) && !(ioFlags & ISDM) && !(ioFlags & ISCT) && !(ioFlags & ISBD)) {
             crtStr << "Someone";
         }
         // Can be seen
@@ -1109,14 +1109,14 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
 
     // Monster
     // Target is a monster, is invisible, and viewer doesn't have detect-invis or is not staff
-    if(isMonster() && isInvisible() && !(flags & INV) && !(flags & ISDM) && !(flags & ISCT) && !(flags & ISBD)) {
+    if(isMonster() && isInvisible() && !(ioFlags & INV) && !(ioFlags & ISDM) && !(ioFlags & ISCT) && !(ioFlags & ISBD)) {
         crtStr << "Something";
     } else {
         const Monster* mThis = getAsConstMonster();
         if(num == 0) {
             if(!flagIsSet(M_NO_PREFIX)) {
                 crtStr << "the ";
-                if(!(flags & NONUM)) {
+                if(!(ioFlags & NONUM)) {
                     mobNum = ((Monster*)this)->getNumMobs();
                     if(mobNum>1) {
                         crtStr << getOrdinal(mobNum).c_str();
@@ -1159,7 +1159,7 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
             crtStr << tempStr;
         }
 
-        if((flags & QUEST)) {
+        if((ioFlags & QUEST)) {
             if(mThis->hasQuests()) {
                 QuestEligibility questType = mThis->getEligibleQuestDisplay(viewer);
                 if (questType == QuestEligibility::ELIGIBLE) {
@@ -1183,14 +1183,14 @@ bstring Creature::getCrtStr(const Creature* viewer, int flags, int num) const {
         }
 
         // Target is magic, and viewer has detect magic on
-        if((flags & MAG) && mFlagIsSet(M_CAN_CAST))
+        if((ioFlags & MAG) && mFlagIsSet(M_CAN_CAST))
             crtStr << " (M)";
 
 
     }
     toReturn = crtStr.str();
 
-    if(flags & CAP) {
+    if(ioFlags & CAP) {
         int pos = 0;
         // don't capitalize colors
         while(toReturn[pos] == '^') pos += 2;

@@ -59,20 +59,29 @@ void Streamable::initStreamable() {
 
 
 Streamable& Streamable::operator<< ( const MudObject& mo) {
-    auto* player = dynamic_cast<Player*>(this);
-    if(player && player->getSock()) {
-        const Creature* creature = mo.getAsConstCreature();
-        const Object* object = mo.getAsConstObject();
+    auto* thisPlayer = dynamic_cast<Player*>(this);
+    auto* thisCreature = dynamic_cast<Creature*>(this);
+    if (!thisCreature)
+        throw std::runtime_error("WTF");
 
-        unsigned int mFlags = player->displayFlags() | player->getManipFlags();
-        int mNum = player->getManipNum();
-        if(creature) {
-            doPrint(creature->getCrtStr(player, mFlags, mNum));
-        } else if(object) {
-            doPrint(object->getObjStr(player, mFlags, mNum));
-        }
+    unsigned int mFlags = thisCreature->displayFlags();
 
+    if(thisPlayer && thisPlayer->getSock()) {
+        mFlags |= thisPlayer->getManipFlags();
     }
+    int mNum = this->getManipNum();
+    const Creature* creature = mo.getAsConstCreature();
+    if(creature) {
+        doPrint(thisCreature->getCrtStr(thisPlayer, mFlags, mNum));
+        return(*this);
+    }
+
+    const Object* object = mo.getAsConstObject();
+    if(object) {
+        doPrint(object->getObjStr(thisPlayer, mFlags, mNum));
+        return(*this);
+    }
+
     return(*this);
 }
 
