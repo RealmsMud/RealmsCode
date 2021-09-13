@@ -179,8 +179,8 @@ public:
 
     void complete();
 
-    time_t getLastCompleted();
-    int getTimesCompleted();
+    time_t getLastCompleted() const;
+    int getTimesCompleted() const;
 };
 
 

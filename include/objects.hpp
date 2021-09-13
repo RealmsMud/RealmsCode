@@ -306,7 +306,7 @@ public:
     bstring getCompass(const Creature* creature, bool useName);
     bstring getVersion() const;
     bstring getQuestOwner() const;
-    bstring getObjStr(const Creature* viewer = nullptr, int flags = 0, int num = 0) const;
+    bstring getObjStr(const Creature* viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
     bstring getSubType() const;
     bstring getWeaponType() const;
     bstring getArmorType() const;

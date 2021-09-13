@@ -1001,7 +1001,7 @@ bstring Object::getCompass(const Creature* creature, bool useName) {
 //                      getObjStr
 //*********************************************************************
 
-bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
+bstring Object::getObjStr(const Creature* viewer, unsigned int ioFlags, int num) const {
     std::ostringstream objStr;
     bstring toReturn = "";
     char ch;
@@ -1010,7 +1010,7 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
         objStr << "^D";
 
     if(viewer != nullptr)
-        flags |= viewer->displayFlags();
+        ioFlags |= viewer->displayFlags();
     bool irrPlural = false;
 
 
@@ -1070,18 +1070,18 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
     }
 
 
-    if(flagIsSet(O_NULL_MAGIC) && ((flags & ISDM) || (flags & ISCT))) {
+    if(flagIsSet(O_NULL_MAGIC) && ((ioFlags & ISDM) || (ioFlags & ISCT))) {
         objStr << " (+" << adjustment << ")(n)";
-    } else if((flags & MAG) && adjustment && !flagIsSet(O_NULL_MAGIC)) {
+    } else if((ioFlags & MAG) && adjustment && !flagIsSet(O_NULL_MAGIC)) {
         objStr << " (";
         if(adjustment >= 0)
             objStr << "+";
         objStr << adjustment << ")";
-    } else if((flags & MAG) && (magicpower || flagIsSet(O_MAGIC)) && !flagIsSet(O_NULL_MAGIC))
+    } else if((ioFlags & MAG) && (magicpower || flagIsSet(O_MAGIC)) && !flagIsSet(O_NULL_MAGIC))
         objStr << " (M)";
 
 
-    if(flags & ISDM) {
+    if(ioFlags & ISDM) {
         if(flagIsSet(O_HIDDEN))
             objStr <<  " (h)";
         if(isEffected("invisibility"))
@@ -1103,7 +1103,7 @@ bstring Object::getObjStr(const Creature* viewer, int flags, int num) const {
 
     toReturn = objStr.str();
 
-    if(flags & CAP) {
+    if(ioFlags & CAP) {
         int pos = 0;
         // don't capitalize colors
         while(toReturn[pos] == '^') pos += 2;

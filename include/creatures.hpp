@@ -392,7 +392,7 @@ public:
 
 // Formatting
     virtual void escapeText() {};
-    bstring getCrtStr(const Creature* viewer = nullptr, int flags = 0, int num = 0) const;
+    bstring getCrtStr(const Creature* viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
     bstring statCrt(int statFlags);
     unsigned int displayFlags() const;
     bstring alignColor() const;
