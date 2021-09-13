@@ -235,8 +235,13 @@ void Player::init() {
     if(cClass == CreatureClass::THIEF && cClass2 == CreatureClass::MAGE)
         addPermEffect("detect-magic");
 
-    if((cClass == CreatureClass::MAGE || cClass2 == CreatureClass::MAGE) && level >= 7)
+    if(level >=1 && (cClass == CreatureClass::LICH || cClass == CreatureClass::MAGE) ) {
         learnSpell(S_ARMOR);
+        learnSpell(S_MAGIC_MISSILE);
+    }
+
+    if(level >= 1 && (cClass == CreatureClass::CLERIC || cClass == CreatureClass::DRUID) )
+        learnSpell(S_VIGOR);
 
     if(cClass == CreatureClass::CLERIC && deity == CERIS && level >= 13)
         learnSpell(S_REJUVENATE);
@@ -526,7 +531,7 @@ void Player::init() {
     killDarkmetal();
 
     if(weaponTrains != 0)
-        print("You have %d weapon train(s) available!\n", weaponTrains);
+        print("You have %d weapon train(s) available! (^YHELP WEAPONS^x)\n", weaponTrains);
 
 
     computeInterest(t, true);

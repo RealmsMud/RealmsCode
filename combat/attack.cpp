@@ -1141,18 +1141,23 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         EffectInfo* armorEffect = getEffect("armor");
         vHp = armorEffect->getStrength();
 
-        if(vHp <= 0 || attackDamage.get() <= 0)
-            vHp=0; //shouldn't happen, but check anyway.
+      //  if(vHp <= 0 || attackDamage.get() <= 0)
+      //    vHp=0; //shouldn't happen, but check anyway.
+
+        vHp = MAX(0,vHp); 
 
         vHp -= (int)attackDamage.get();
+
         if(vHp <= 0) {
             removeEffect("armor");
             if(player) {
-                printColor("^y^#Your magical armorEffect has been dispelled.\n");
+                printColor("^y^#Your magical armor has been dispelled.\n");
                 player->computeAC();
             }
-            broadcast(getSock(), getRoomParent(), "%M's magical armorEffect has been dispelled.", this);
+            broadcast(getSock(), getRoomParent(), "%M's magical armor has been dispelled.", this);
         } else {
+           // if ((int)attackDamage.get() > 0)    
+           //     printColor("^BYour magical armor has ^C%d^B strength remaining.\n", vHp);
             armorEffect->setStrength(vHp);
         }
     }
