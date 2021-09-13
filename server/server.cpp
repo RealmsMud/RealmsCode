@@ -1716,9 +1716,9 @@ int Server::finishReboot() {
                     }
                 }
                 else if(NODE_NAME(childNode, "Fd")) {
-                    int fd;
+                    short fd;
                     xml::copyToNum(fd, childNode);
-                    sock = new Socket(fd);
+                    sock = &sockets.emplace_back(fd);
                     if(!player || !sock)
                         merror("finishReboot: No Sock/Player", FATAL);
 
@@ -1765,8 +1765,6 @@ int Server::finishReboot() {
             }
             sock->intrpt = 1;
             sock->setState(CON_PLAYING);
-            // HMMMMM
-            sockets.push_back(*sock);
             Numplayers++;
         }
 

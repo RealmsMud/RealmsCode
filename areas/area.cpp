@@ -1624,11 +1624,16 @@ void Server::cleanUpAreas() {
 //*********************************************************************
 
 void Area::cleanUpRooms() {
-    for(auto& [rId, room] : rooms) {
+    std::map<bstring, AreaRoom*>::iterator it;
+    AreaRoom* room=nullptr;
+
+    for(it = rooms.begin() ; it != rooms.end() ; ) {
+        room = (*it).second;
+        it++;
+
         if(room->canDelete()) {
             rooms.erase(room->mapmarker.str());
             delete room;
         }
     }
-    rooms.clear();
 }
