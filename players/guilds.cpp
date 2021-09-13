@@ -1270,16 +1270,11 @@ void Guild::viewMembers(Player* player, cmd* cmnd) {
 
 void Guild::list(Player* player, cmd* cmnd) {
     int num = 1;
-    GuildCreation * gcp;
 
     player->printColor("^b    %-25s %-15s  Info\n", "Guild", "Leader");
     player->printColor("^b--------------------------------------------------------------------------------\n");
 
-    std::map<int, Guild*>::iterator it;
-    Guild *guild;
-    for(it = gConfig->guilds.begin() ; it != gConfig->guilds.end() ; it++) {
-        guild = (*it).second;
-
+    for(auto const& [guildId, guild] : gConfig->guilds) {
         player->printColor("%2d> ^c%-25s ^g%-15s ^x%2d Member(s)",
             num++, guild->name.c_str(), guild->leader.c_str(), guild->numMembers);
         if(guild->pkillsIn)
@@ -1288,12 +1283,11 @@ void Guild::list(Player* player, cmd* cmnd) {
             player->printColor("^r (Pk: N/A)");
         player->printColor("^y Avg Lvl: %2d\n", guild->averageLevel());
     }
-    std::list<GuildCreation*>::iterator gcIt;
-    for(gcIt = gConfig->guildCreations.begin() ; gcIt != gConfig->guildCreations.end() ; gcIt++) {
-        gcp = (*gcIt);
+
+    for(auto const gcp : gConfig->guildCreations) {
         if(gcp->status != GUILD_NEEDS_SUPPORT)
             continue;
-        num ++;
+        num++;
         if(num == 1) {
             player->print("\nGuilds needing support\n");
             player->print("--------------------------------------------------------------------------------\n");
@@ -1320,11 +1314,11 @@ int dmListGuilds(Player* player, cmd* cmnd) {
     int     found = 0;
 
     //player->print("Max Guild Id:  %d\n", gConfig->maxGuilds);
-    player->print("Next Guild Id: %d\n\n", gConfig->nextGuildId);
+    player->print("Next Guild Id: %d\n\n", gConfig->getNextGuildId());
     //  gp = firstGuild;
 
     //  while(gp) {
-    std::map<int, Guild*>::iterator it;
+    GuildMap::iterator it;
     Guild *guild;
     for(it = gConfig->guilds.begin() ; it != gConfig->guilds.end() ; it++) {
         guild = (*it).second;
@@ -1907,7 +1901,7 @@ bstring Config::removeGuildCreation(const bstring& leaderName) {
 
 Guild* Config::getGuild(const bstring& name) {
     Guild* guild=nullptr;
-    std::map<int, Guild*>::iterator it;
+    GuildMap::iterator it;
     for(it = guilds.begin(); it != guilds.end(); it++) {
         guild = (*it).second;
         if(guild->getName() == name)
@@ -1931,7 +1925,7 @@ Guild* Config::getGuild(const Player* player, bstring txt) {
     int check = 0, len = txt.getLength();
     txt = txt.toLower();
 
-    std::map<int, Guild*>::iterator it;
+    GuildMap::iterator it;
     for(it = gConfig->guilds.begin(); it != gConfig->guilds.end(); it++) {
 
         if((*it).second->getName().left(len).toLower() == txt) {
@@ -2030,7 +2024,7 @@ bool Config::addGuild(Guild* toAdd) {
 
 // Clears the global list of guilds
 void Config::clearGuildList() {
-    std::map<int, Guild*>::iterator it;
+    GuildMap::iterator it;
     Guild* guild;
 
     for(it = guilds.begin(); it != guilds.end(); it++) {

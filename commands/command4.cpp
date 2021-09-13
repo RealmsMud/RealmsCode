@@ -33,6 +33,7 @@
 #include "paths.hpp"      // for Help
 #include "proto.hpp"      // for viewFile, getOrdinal, up
 #include "server.hpp"     // for Server, gServer
+#include "socket.hpp"     // for Socket
 #include "version.hpp"    // for VERSION
 
 
@@ -54,7 +55,7 @@ int cmdHelp(Player* player, cmd* cmnd) {
 
     if(cmnd->num < 2) {
         sprintf(file, "%s/helpfile.txt", Path::Help);
-        viewFile(player->getSock(), file);
+        player->getSock()->viewFile(file);
         return(DOPROMPT);
     }
     if(strchr(cmnd->str[1], '/')!=nullptr) {
@@ -62,7 +63,7 @@ int cmdHelp(Player* player, cmd* cmnd) {
         return(0);
     }
     sprintf(file, "%s/%s.txt", Path::Help, cmnd->str[1]);
-    viewFile(player->getSock(), file);
+    player->getSock()->viewFile(file);
     return(DOPROMPT);
 }
 
@@ -83,7 +84,7 @@ int cmdWelcome(Player* player, cmd* cmnd) {
 
     sprintf(file, "%s/welcomerealms.txt", Path::Help);
 
-    viewFile(player->getSock(), file);
+    player->getSock()->viewFile(file);
     return(0);
 }
 

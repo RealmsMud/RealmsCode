@@ -13,6 +13,8 @@
 /*.dump
 /*~
 /.ptp-sync
+Testing/
+cmake-build-debug
 .objs/
 .deps/
 build/

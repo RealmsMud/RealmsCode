@@ -54,7 +54,7 @@
 
 
 QuestCatRef::QuestCatRef() {
-    area = gConfig->defaultArea;
+    area = gConfig->getDefaultArea();
     reqNum = 1;
     curNum = 0;
     id = 0;
@@ -382,11 +382,7 @@ bstring QuestInfo::getDisplayString() const {
 
 void Config::clearQuests() {
     // Only to be used on cleanup
-    std::map<int, QuestInfo*>::iterator it;
-    QuestInfo* quest;
-
-    for(it = quests.begin(); it != quests.end(); it++) {
-        quest = (*it).second;
+    for (auto const& [questId, quest] : quests) {
         delete quest;
     }
     quests.clear();
@@ -426,7 +422,7 @@ bool Config::loadQuests() {
     return(true);
 }
 
-QuestInfo* Config::getQuest(int questNum) {
+QuestInfo* Config::getQuest(unsigned int questNum) {
     auto questIt = quests.find(questNum);
     if(questIt != quests.end())
         return(questIt->second);

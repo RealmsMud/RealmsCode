@@ -436,26 +436,26 @@ void Player::init() {
 
     if(!gServer->isRebooting()) {
         sprintf(file, "%s/news.txt",Path::Help);
-        viewLoginFile(sock, file);
+        sock->viewLoginFile(file);
 
         sprintf(file, "%s/newbie_news.txt",Path::Help);
-        viewLoginFile(sock, file);
+        sock->viewLoginFile(file);
 
         if(isCt()) {
             sprintf(file, "%s/news.txt", Path::DMHelp);
-            viewLoginFile(sock, file);
+            sock->viewLoginFile(file);
         }
         if(isStaff() && getName() != "Bane") {
             sprintf(file, "%s/news.txt", Path::BuilderHelp);
-            viewLoginFile(sock, file);
+            sock->viewLoginFile(file);
         }
         if(isCt() || flagIsSet(P_WATCHER)) {
             sprintf(file, "%s/watcher_news.txt", Path::DMHelp);
-            viewLoginFile(sock, file);
+            sock->viewLoginFile(file);
         }
 
         sprintf(file, "%s/latest_post.txt", Path::Help);
-        viewLoginFile(sock, file, false);
+        sock->viewLoginFile(file, false);
 
         hasNewMudmail();
     }

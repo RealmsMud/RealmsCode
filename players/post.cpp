@@ -331,7 +331,7 @@ int cmdReadMail(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    viewFile(player->getSock(), filename);
+    player->getSock()->viewFile(filename);
     return(DOPROMPT);
 }
 
@@ -357,7 +357,7 @@ int dmReadmail(Player* player, cmd* cmnd) {
     }
 
     player->print("%s's current mudmail:\n", cmnd->str[1]);
-    viewFile(player->getSock(), filename);
+    player->getSock()->viewFile(filename);
     return(DOPROMPT);
 }
 
@@ -459,14 +459,14 @@ int notepad(Player* player, cmd* cmnd) {
             player->print("Clearing your notepad.\n");
             return(PROMPT);
         } else if(low(cmnd->str[1][0]) == 'v') {
-            viewFile(player->getSock(), file);
+            player->getSock()->viewFile(file);
             return(DOPROMPT);
         } else {
             player->print("invalid option.\n");
             return(PROMPT);
         }
     } else {
-        viewFile(player->getSock(), file);
+        player->getSock()->viewFile(file);
         return(DOPROMPT);
     }
 }
@@ -534,7 +534,7 @@ int cmdEditHistory(Player* player, cmd* cmnd) {
 
     if(file_exists(file)) {
         player->print("%s's history so far:\n\n", player->getCName());
-        viewLoginFile(player->getSock(), file);
+        player->getSock()->viewLoginFile(file);
         player->print("\n\n");
     }
 
@@ -620,7 +620,7 @@ int cmdHistory(Player* player, cmd* cmnd) {
     else
         player->print("Current History of %s:\n\n", cmnd->str[1]);
 
-    viewFile(player->getSock(), file);
+    player->getSock()->viewFile(file);
     return(0);
 }
 

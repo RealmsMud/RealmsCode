@@ -84,8 +84,7 @@ void handle_args(int argc, char *argv[]) {
 
     strncpy(gConfig->cmdline, argv[0], 255);
     gConfig->cmdline[255] = 0;
-    
-    gConfig->bHavePort = false;
+
     for(i = 1; i < argc; i++) {
         switch (argv[i][0]) {
         case '-':
@@ -111,8 +110,7 @@ void handle_args(int argc, char *argv[]) {
             break;
         default:
             if(is_num(argv[i])) {
-                gConfig->portNum = (unsigned short)atoi(argv[i]);
-                gConfig->bHavePort = true;
+                gConfig->setPortNum((unsigned short)atoi(argv[i]));
             } else {
                 std::clog << "Unknown option\n";
                 usage(argv[0]);

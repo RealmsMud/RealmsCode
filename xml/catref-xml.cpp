@@ -133,7 +133,7 @@ bool Config::loadCatRefInfo() {
     bstring d = "";
     xml::copyPropToBString(d, curNode, "default");
     if(!d.empty())
-        gConfig->defaultArea = d;
+        gConfig->setDefaultArea(d);
 
     curNode = curNode->children;
     while(curNode && xmlIsBlankNode(curNode))
@@ -158,13 +158,11 @@ bool Config::loadCatRefInfo() {
 
     // propogate: this happens once, so if we ever need to know info from the
     // parent, we never need to look for it
-    std::list<CatRefInfo*>::iterator it;
-    for(it = catRefInfo.begin() ; it != catRefInfo.end() ; it++) {
-        cri = (*it);
-        if(!cri->getParent().empty()) {
-            parent = getCatRefInfo(cri->getParent(), 0, true);
+    for(const auto& crj : catRefInfo) {
+        if(!crj->getParent().empty()) {
+            parent = getCatRefInfo(crj->getParent(), 0, true);
             if(parent)
-                cri->copyVars(parent);
+                crj->copyVars(parent);
         }
     }
     return(true);

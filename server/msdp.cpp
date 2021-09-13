@@ -100,15 +100,15 @@ void Config::clearMsdp() {
 }
 
 void Server::processMsdp() {
-    for(Socket *sock : sockets) {
-        if(sock->getState() == CON_DISCONNECTING)
+    for(auto &sock : sockets) {
+        if(sock.getState() == CON_DISCONNECTING)
             continue;
 
-        if(sock->getMccp() || sock->getAtcp()) {
-            for(auto& p : sock->msdpReporting) {
+        if(sock.getMccp() || sock.getAtcp()) {
+            for(auto& p : sock.msdpReporting) {
                 ReportedMsdpVariable* var = p.second;
 
-                if(var->getRequiresPlayer() && (!sock->getPlayer() || sock->getState() != CON_PLAYING)) continue;
+                if(var->getRequiresPlayer() && (!sock.getPlayer() || sock.getState() != CON_PLAYING)) continue;
 
                 if(!var->checkTimer()) continue;
 
@@ -311,7 +311,7 @@ bool Socket::msdpSend(bstring variable) {
 #endif
         return (false);
     }
-    return (msdpVar->send(this));
+    return (msdpVar->send(*this));
 }
 
 
@@ -541,26 +541,25 @@ bool MsdpVariable::hasUpdateFn() const {
     return(updateFn);
 }
 
-bool MsdpVariable::send(Socket *sock) const {
+bool MsdpVariable::send(Socket &sock) const {
     bstring value = "";
 
     if (!hasSendFn()) {
         // If there's no send function, and it's not configurable, there's nothing we can do
         if(!isConfigurable()) return false;
 
-        ReportedMsdpVariable* reported = sock->getReportedMsdpVariable(name);
+        ReportedMsdpVariable* reported = sock.getReportedMsdpVariable(name);
         if (reported != nullptr) {
             value = reported->getValue();
         }
 
     } else {
-        Player* player = sock->getPlayer();
-        if (requiresPlayer && player == nullptr) return false;
+        if (requiresPlayer && !sock.hasPlayer()) return false;
 
-        value = getValue(getId(), sock, player);
+        value = getValue(getId(), sock, sock.getPlayer());
     }
 
-    sock->msdpSendPair(getName(), value);
+    sock.msdpSendPair(getName(), value);
     return true;
 }
 
@@ -601,7 +600,7 @@ void ReportedMsdpVariable::update() {
     if(!parentSock) return;
 
     bstring oldValue = value;
-    setValue(MsdpVariable::getValue(getId(), parentSock, parentSock->getPlayer()));
+    setValue(MsdpVariable::getValue(getId(), *parentSock, parentSock->getPlayer()));
 }
 
 void ReportedMsdpVariable::setDirty(bool pDirty) {
@@ -798,7 +797,7 @@ bstring Group::getMsdp(Creature* viewer) const {
 
 }
 
-bstring MsdpVariable::getValue(MSDPVar var, Socket* sock, Player* player) {
+bstring MsdpVariable::getValue(MSDPVar var, Socket &sock, Player* player) {
     switch(var) {
 
         case MSDPVar::SERVER_ID:

@@ -60,9 +60,9 @@ bstring flagFileTitle(const bstring& title, const char* file, int pad) {
 //                      writeFlagFile
 //**********************************************************************
 
-bstring writeFlagFile(const bstring& title, const char* file, int pad, bool builderLink, const std::map<int, MudFlag>& flags) {
+bstring writeFlagFile(const bstring& title, const char* file, int pad, bool builderLink, const MudFlagMap &flags) {
     std::ostringstream padding;
-    std::map<int, MudFlag>::const_iterator it;
+    MudFlagMap::const_iterator it;
     const MudFlag *flag=nullptr;
     bstring desc = "", output = "\n";
     char    dmfile[80], dmfileLink[80];

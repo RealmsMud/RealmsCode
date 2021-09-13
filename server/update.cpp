@@ -86,7 +86,7 @@ void Server::updateGame() {
 
     // Run ships every other second.
     if(t%2)
-        update_ships();
+        gServer->updateShips();
 
     // Prune Dns once a day
     if(t - lastDnsPrune >= 86400)
@@ -105,7 +105,7 @@ void Server::updateGame() {
         pulseRoomEffects(t);
 
     if(t - last_track_update >= 20)
-        update_track(t);
+        gServer->updateTrack(t);
     if(t - lastRandomUpdate >= Random_update_interval)
         updateRandom(t);
     if(t != lastActiveUpdate)
@@ -249,11 +249,11 @@ void Server::weather(WeatherString w) {
         color = 'w';
 
 
-    for(Socket* sock : gServer->sockets) {
-        Player* player = sock->getPlayer();
+    for(Socket &sock : gServer->sockets) {
+        if (!sock.hasPlayer()) continue;
 
-        if(!player)
-            continue;
+        Player *player = sock.getPlayer();
+
         if(player->fd < 0)
             continue;
         if( (w == WEATHER_SUNRISE || w == WEATHER_SUNSET) &&
@@ -864,17 +864,17 @@ void doCrash(int sig) {
     oStr << "People online: ";
     Player* player=nullptr;
     int i=0;
-    for(Socket* sock : gServer->sockets) {
-        player = sock->getPlayer();
-        if(!player)
-            continue;
+    for(Socket &sock : gServer->sockets) {
+        if (!sock.hasPlayer()) continue;
+        player = sock.getPlayer();
+
         if(i++)
             oStr << ", ";
 
-        if(!sock->isConnected())
+        if(!sock.isConnected())
             oStr << player->getName() << " (connecting)";
         else
-            oStr << player->getName() << " (^xcmd:" + player->getLastCommand() << ":" << (t-sock->ltime) << "^W)";
+            oStr << player->getName() << " (^xcmd:" + player->getLastCommand() << ":" << (t-sock.ltime) << "^W)";
     }
     if(!i)
         oStr << "No one";
@@ -1021,15 +1021,13 @@ void Player::checkOutlawAggro() {
 
 
 //*********************************************************************
-//                      update_track
+//                      updateTrack
 //*********************************************************************
 
-void update_track(long t) {
-    std::list<Area*>::iterator it;
-
+void Server::updateTrack(long t) {
     if(last_track_update)
-        for(it = gServer->areas.begin() ; it != gServer->areas.end() ; it++)
-            (*it)->updateTrack((int)t - last_track_update);
+        for(const auto& area : areas)
+            area->updateTrack((int)t - last_track_update);
 
     last_track_update = t;
 }
@@ -1038,9 +1036,7 @@ void update_track(long t) {
 //                      update_ships
 //*********************************************************************
 
-void update_ships(int n) {
-    std::list<Ship*>::iterator it;
-    Ship    *ship=nullptr;
+void Server::updateShips(long n) {
     ShipStop *stop=nullptr;
 
     // we must delay ships for a while
@@ -1048,8 +1044,7 @@ void update_ships(int n) {
         return;
     gConfig->calendar->shipUpdates++;
 
-    for(it = gConfig->ships.begin() ; it != gConfig->ships.end() ; it++) {
-        ship = (*it);
+    for(const auto& ship : gConfig->ships) {
         ship->timeLeft--;
         stop = ship->stops.front();
         // only do last call if we're in port
@@ -1078,7 +1073,7 @@ void update_ships(int n) {
     		broadcast(isDm, "Runaway ships!! Current updates: %d Expected updated: %d", gConfig->calendar->shipUpdates, gConfig->expectedShipUpdates());
     		gConfig->calendar->shipUpdates =  gConfig->expectedShipUpdates();
     	}
-    update_ships(n+1);
+    updateShips(n+1);
 }
 
 

@@ -241,7 +241,7 @@ Socket::Socket(int pFd) {
     NumSockets++;
 }
 
-Socket::Socket(int pFd, sockaddr_in pAddr, bool &dnsDone) {
+Socket::Socket(int pFd, sockaddr_in pAddr, bool dnsDone) {
     reset();
 
     struct linger ling{};
@@ -274,6 +274,8 @@ Socket::Socket(int pFd, sockaddr_in pAddr, bool &dnsDone) {
     }
 
     startTelnetNeg();
+
+    showLoginScreen(dnsDone);
 }
 
 //********************************************************************
@@ -304,9 +306,9 @@ void Socket::cleanUp() {
 //********************************************************************
 
 Socket::~Socket() {
-    std::clog << "Deconstructing socket , ";
+    std::cout << "Deconstructing socket , ";
     NumSockets--;
-    std::clog << "Num sockets: " << NumSockets << std::endl;
+    std::cout << "Num sockets: " << NumSockets << std::endl;
     cleanUp();
 }
 
@@ -1218,6 +1220,17 @@ void Socket::reconnect(bool pauseScreen) {
     }
 }
 
+
+void viewFile(Socket *sock, const bstring& file) {
+    sock->viewFile(file);
+}
+
+
+void viewFileReverse(Socket *sock, const bstring& file) {
+    sock->viewFileReverse(file);
+}
+
+
 //*********************************************************************
 //                      setState
 //*********************************************************************
@@ -1244,7 +1257,7 @@ void Socket::setState(int pState, int pFnParam) {
     else if (pState == CON_CONFIRM_TITLE)
         fn = doTitle;
     else if (pState == CON_VIEWING_FILE)
-        fn = viewFile;
+        fn = ::viewFile;
     else if (pState == CON_SENDING_MAIL)
         fn = postedit;
     else if (pState == CON_EDIT_NOTE)
@@ -1254,7 +1267,7 @@ void Socket::setState(int pState, int pFnParam) {
     else if (pState == CON_EDIT_PROPERTY)
         fn = Property::descEdit;
     else if (pState == CON_VIEWING_FILE_REVERSE)
-        fn = viewFileReverse;
+        fn = ::viewFileReverse;
     else if (pState > CON_PASSWORD_START && pState < CON_PASSWORD_END)
         fn = changePassword;
     else if (pState == CON_CHOSING_WEAPONS)
@@ -1888,6 +1901,10 @@ void Socket::setPlayer(Player* ply) {
     myPlayer = ply;
 }
 
+bool Socket::hasPlayer() const {
+    return myPlayer != nullptr;
+}
+
 Player* Socket::getPlayer() const {
     return (myPlayer);
 }
@@ -1928,7 +1945,7 @@ void Socket::showLoginScreen(bool dnsDone) {
 
     char file[80];
     sprintf(file, "%s/login_screen.txt", Path::Config);
-    viewLoginFile(this, file);
+    viewLoginFile(file);
 
     if (dnsDone)
         checkLockOut();
@@ -2141,4 +2158,6 @@ int Socket::sendMSSP() {
 
     return (write(msspStr.str()));
 }
+
+
 

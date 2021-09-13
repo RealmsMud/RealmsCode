@@ -41,10 +41,7 @@ void CatRefInfo::clear() {
     teleportWeight = teleportZone = trackZone = 0;
     yearOffset = 0;
 
-    std::map<Season,cSeason*>::iterator st;
-    cSeason *season=nullptr;
-    for(st = seasons.begin() ; st != seasons.end() ; st++) {
-        season = (*st).second;
+    for(auto& [eSea, season] : seasons) {
         delete season;
     }
     seasons.clear();

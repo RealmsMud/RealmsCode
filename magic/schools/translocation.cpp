@@ -894,7 +894,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(!player->isStaff()) {
         const CatRefInfo* cri = gConfig->getCatRefInfo(player->getRoomParent());
-        const CatRefInfo* eth = gConfig->getCatRefInfo(gConfig->defaultArea);
+        const CatRefInfo* eth = gConfig->getCatRefInfo(gConfig->getDefaultArea());
         // can only cast ethereal-travel if in same teleportZone
         if(!cri || !eth || cri->getTeleportZone() != eth->getTeleportZone()) {
             player->print("You are currently unable to cast this spell.\n");

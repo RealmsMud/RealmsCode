@@ -32,7 +32,7 @@
 CatRef::CatRef() {
     clear();
     if(gConfig)
-        setArea(gConfig->defaultArea);
+        setArea(gConfig->getDefaultArea());
     else
         setArea("misc");
 }
@@ -43,7 +43,7 @@ CatRef::CatRef() {
 
 void CatRef::setDefault(const Creature* target) {
     clear();
-    setArea(gConfig->defaultArea);
+    setArea(gConfig->getDefaultArea());
 
     if(target) {
         if(target->inUniqueRoom()) {

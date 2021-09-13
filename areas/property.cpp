@@ -257,7 +257,7 @@ bool Property::belongs(const CatRef& cr) const {
 //                      getFlagList
 //*********************************************************************
 
-std::map<int, MudFlag>* Property::getFlagList() {
+MudFlagMap* Property::getFlagList() {
     switch(type) {
     case PROP_STORAGE:
         return(&gConfig->propStorFlags);
@@ -887,8 +887,8 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
 // handles viewing/setting of flags on partial owners
 
 void propFlags(Player* player, cmd* cmnd, Property *p) {
-    std::map<int, MudFlag>* list = p->getFlagList();
-    std::map<int, MudFlag>::iterator it;
+    MudFlagMap* list = p->getFlagList();
+    MudFlagMap::iterator it;
     PartialOwner *po=nullptr;
     MudFlag f;
     bool propFlag = Property::usePropFlags(p->getType());
@@ -1891,7 +1891,7 @@ void Property::manageDesc(Player* player, cmd* cmnd, PropType propType, int x) {
 
     if(file_exists(file)) {
         player->print("Room description so far:\n\n");
-        viewLoginFile(player->getSock(), file);
+        player->getSock()->viewLoginFile(file);
         player->print("\n\n");
     }
 

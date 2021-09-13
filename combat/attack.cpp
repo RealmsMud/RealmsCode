@@ -261,7 +261,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
 
             // you can attack pets if they are in combat,
             // but not their master
-            if(getPkillInCombatDisabled() && !target->isPet() && target->inCombat(false)) {
+            if(gConfig->getPkillInCombatDisabled() && !target->isPet() && target->inCombat(false)) {
                 print("Not in the middle of combat.\n");
                 return(false);
             }
@@ -1301,7 +1301,7 @@ bool Monster::willAggro(const Player *player) const {
         return(true);
 
     // will they aggro anyone based on their race?
-    std::map<int, RaceData*>::iterator rIt;
+    RaceDataMap ::iterator rIt;
     RaceData* rData=nullptr;
     for(rIt = gConfig->races.begin() ; rIt != gConfig->races.end() ; rIt++) {
         rData = (*rIt).second;
@@ -1317,7 +1317,7 @@ bool Monster::willAggro(const Player *player) const {
     }
 
     // will they aggro anyone based on their deity?
-    std::map<int, DeityData*>::iterator dIt;
+    DeityDataMap::iterator dIt;
     DeityData* dData=nullptr;
     for(dIt = gConfig->deities.begin() ; dIt != gConfig->deities.end() ; dIt++) {
         dData = (*dIt).second;

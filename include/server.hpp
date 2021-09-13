@@ -47,6 +47,8 @@ namespace odbc {
 class cmd;
 class Area;
 class BaseRoom;
+class UniqueRoom;
+class MapMarker;
 class Creature;
 class Group;
 class Monster;
@@ -57,6 +59,10 @@ class PythonHandler;
 class ReportedMsdpVariable;
 class Socket;
 class WebInterface;
+
+namespace dpp {
+    class cluster;
+}
 
 struct CanCleanupRoomFn {
 	bool operator()( UniqueRoom* r );
@@ -89,9 +95,9 @@ namespace boost::python {
 #ifndef PYTHON_CODE_GEN
 typedef std::map<bstring, MudObject*,idComp> IdMap;
 #endif
-using MonsterList= std::list<Monster*>;
+using MonsterList = std::list<Monster*>;
 using GroupList = std::list<Group*>;
-using SocketList = std::list<Socket*>;
+using SocketList = std::list<Socket>;
 using SocketVector= std::vector<Socket*>;
 using PlayerMap = std::map<bstring, Player*>;
 
@@ -138,7 +144,7 @@ public:
             hostName = pHostName;
             time = pTime;
         }
-        bool operator==(const dnsCache& o) {
+        bool operator==(const dnsCache& o) const {
             return(ip == o.ip && hostName == o.hostName);
         }
     };
@@ -192,6 +198,7 @@ private:
     std::list<controlSock> controlSocks; // List of control fds
     std::list<dnsCache> cachedDns; // Cache of DNS lookups
     WebInterface* webInterface;
+    dpp::cluster *discordBot;
 
     // Game Updates
     MonsterList activeList; // The new active list
@@ -202,8 +209,6 @@ private:
     long lastRandomUpdate;
     long lastActiveUpdate;
 
-    int Deadchildren;
-
 public:
     std::list<Area*> areas;
 
@@ -213,8 +218,9 @@ private:
     // Python
     bool initPython();
     bool cleanUpPython();
+    bool initDiscordBot();
 
-    int getNumSockets(); // Get number of sockets in the sockets list
+    size_t getNumSockets() const; // Get number of sockets in the sockets list
 
     // Game & Socket methods
     int handleNewConnection(controlSock& control);
@@ -224,7 +230,7 @@ private:
     int processCommands(); // Process commands from users
     int updatePlayerCombat(); // Handle player auto attacks etc
     int processChildren();
-    int processListOutput(childProcess &lister);
+    int processListOutput(const childProcess &lister);
 
     // Child processes
     int reapChildren(); // Clean up after any dead children
@@ -241,6 +247,8 @@ private:
     void updateUsers(long t);
     void updateRandom(long t);
     void updateActive(long t);
+    void updateTrack(long t);
+    void updateShips(long n=0);
 
     // TODO: Get rid of this and switch all old "logic" creatures over to python scripts
     void updateAction(long t);
@@ -325,8 +333,6 @@ public:
     int saveStorage(UniqueRoom* uRoom);
     int saveStorage(const CatRef& cr);
     void resaveAllRooms(char permonly);
-//    void replaceMonsterInQueue(CatRef cr, Monster *creature);
-//    void replaceObjectInQueue(CatRef cr, Object* object);
 
     // Areas
     Area *getArea(int id);
@@ -401,8 +407,6 @@ public:
     bool isActive(Monster* monster);
 
     // Child Processes
-    void childDied();
-    int getDeadChildren() const;
     int runList(Socket* sock, cmd* cmnd);
     bstring simpleChildRead(childProcess &child);
 
@@ -414,8 +418,8 @@ public:
     void swapInfo(const Player* player);
 
     // Queries
-    bool checkDuplicateName(Socket* sock, bool dis);
-    bool checkDouble(Socket* sock);
+    bool checkDuplicateName(Socket &sock, bool dis);
+    bool checkDouble(Socket &sock);
 
     // Bans
     void checkBans();
@@ -434,7 +438,8 @@ protected:
     int cleanUp(); // Kick out any disconnectors and other general cleanup
 
 
-
+public:
+    bool sendDiscordWebhook(long webhookID, int type, const bstring &author, const bstring &msg);
 };
 
 extern Server *gServer;

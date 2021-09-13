@@ -419,7 +419,7 @@ bool isTitle(const bstring& str) {
         }
     }
 
-    std::map<int, DeityData*>::iterator it;
+    DeityDataMap::iterator it;
     DeityData* data=nullptr;
     for(it = gConfig->deities.begin() ; it != gConfig->deities.end() ; it++) {
         data = (*it).second;

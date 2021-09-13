@@ -37,6 +37,7 @@
 #include "proto.hpp"              // for broadcast, findExit, bonus, broadca...
 #include "random.hpp"             // for Random
 #include "rooms.hpp"              // for BaseRoom, AreaRoom, UniqueRoom
+#include "socket.hpp"             // for Socket
 #include "statistics.hpp"         // for Statistics
 #include "utils.hpp"              // for MAX, MIN
 #include "xml.hpp"                // for loadRoom
@@ -62,7 +63,7 @@ int stoneScroll(Player* player, cmd* cmnd) {
     else if(!strncmp(cmnd->str[2], "breakdown", strlen(cmnd->str[2])))
         strcat(filename, "_breakdown");
     strcat(filename, ".txt");
-    viewLoginFile(player->getSock(), filename);
+    player->getSock()->viewLoginFile(filename);
     return(0);
 }
 

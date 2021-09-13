@@ -332,11 +332,7 @@ AreaZone::AreaZone() {
 }
 
 AreaZone::~AreaZone() {
-    std::map<int, MapMarker*>::iterator it;
-    MapMarker *mapmarker;
-
-    for(it = coords.begin() ; it != coords.end() ; it++) {
-        mapmarker = (*it).second;
+    for (auto const& [mapId, mapmarker] : coords) {
         delete mapmarker;
     }
     coords.clear();
@@ -512,45 +508,28 @@ Area::Area() {
 }
 
 Area::~Area() {
-    AreaZone *zone=nullptr;
-    AreaTrack *aTrack=nullptr;
-    std::map<char, TileInfo*>::iterator tt;
-    std::map<bstring, AreaRoom*>::iterator it;
-    TileInfo* tile=nullptr;
-    AreaRoom* room=nullptr;
-
-    for(it = rooms.begin() ; it != rooms.end() ; it++) {
-        room = (*it).second;
+    for (auto const& [roomId, room] : rooms) {
         delete room;
     }
     rooms.clear();
 
-    while(!zones.empty()) {
-        zone = zones.front();
+    for(auto const& zone : zones) {
         delete zone;
-        zones.pop_front();
     }
     zones.clear();
 
-
-
-    for(tt = ter_tiles.begin() ; tt != ter_tiles.end() ; tt++) {
-        tile = (*tt).second;
+    for (auto const& [tileId, tile] : ter_tiles) {
         delete tile;
     }
     ter_tiles.clear();
 
-    for(tt = map_tiles.begin() ; tt != map_tiles.end() ; tt++) {
-        tile = (*tt).second;
+    for (auto const& [tileId, tile] : map_tiles) {
         delete tile;
     }
     map_tiles.clear();
 
-
-    while(!tracks.empty()) {
-        aTrack = tracks.front();
+    for( auto const& aTrack : tracks) {
         delete aTrack;
-        tracks.pop_front();
     }
     tracks.clear();
 }
@@ -561,16 +540,12 @@ Area::~Area() {
 //*********************************************************************
 
 CatRef Area::getUnique(const MapMarker *mapmarker) const {
-    std::list<AreaZone*>::const_iterator it;
-    AreaZone *zone=nullptr;
-
-    for(it = zones.begin() ; it != zones.end() ; it++) {
-        zone = (*it);
+    for (auto const& zone : zones) {
         if(zone->unique.id && zone->inside(this, mapmarker))
             return(zone->unique);
     }
-    CatRef  cr;
-    return(cr);
+
+    return(CatRef{});
 }
 
 
@@ -794,21 +769,19 @@ TileInfo *Area::getTile(char grid, char seasonFlags, Season season, bool checkSe
 //*********************************************************************
 
 char Area::getTerrain(const Player* player, const MapMarker *mapmarker, short y, short x, short z, bool terOnly) const {
-    std::list<AreaRoom*>::iterator it;
     AreaRoom* room=nullptr;
-    bool    staff = player ? player->isStaff() : false;
+    bool    staff = player != nullptr && player->isStaff();
     bool    found=false;
 
-    // If given a player, vision may be distorted based on properties
-    // on the player
+    // If given a player, vision may be distorted based on properties on the player
     if(player) {
         MapMarker m = *mapmarker;
 
         // adjust our mapmarker
         m.add(x, y, z);
-
-        if(rooms.find(m.str()) != rooms.end()) {
-            room = (*rooms.find(m.str())).second;
+        auto it = rooms.find(m.str());
+        if(it != rooms.end()) {
+            room = it->second;
 
             if(!room->players.empty() || !room->monsters.empty()) {
                 if(!staff && room->isMagicDark()) {
@@ -895,10 +868,7 @@ float Area::getLosPower(const Player* player, int xVision, int yVision) const {
 //*********************************************************************
 
 void Area::getGridText(char grid[][80], int height, const MapMarker *mapmarker, int maxWidth) const {
-    std::list<AreaZone*>::const_iterator it;
-    AreaZone *zone=nullptr;
-
-    TileInfo *tile = getTile(getTerrain(nullptr, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
+   TileInfo *tile = getTile(getTerrain(nullptr, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
     bstring desc = tile ? tile->getDescription() : "";
     if(maxWidth < 80)
         desc = wrapText(desc, maxWidth);
@@ -906,15 +876,14 @@ void Area::getGridText(char grid[][80], int height, const MapMarker *mapmarker, 
         desc = "";
 
     int     i=0, n=0, k=0, lines=1, offset=0;
-    bool    displayed = (desc == "");
+    bool    displayed = (desc.empty());
 
     for(i=0; i<height; i++)
         strcpy(grid[i], "");
 
     // see if there is any zone text to add
-    for(it = zones.begin() ; it != zones.end() ; it++) {
-        zone = (*it);
-        if(zone->display != "" && zone->inside(this, mapmarker)) {
+    for (auto const& zone : zones) {
+        if(!zone->display.empty() && zone->inside(this, mapmarker)) {
             if(!displayed) {
                 desc += "\n";
                 displayed = true;
@@ -929,8 +898,8 @@ void Area::getGridText(char grid[][80], int height, const MapMarker *mapmarker, 
 
     // if we know how many lines the text will take up, we can adjust its
     // starting point based on how much room we have
-    for(i = desc.size()-1; i>=0; i--)
-        if(desc.at(i) == '\n')
+    for (char const &c: desc)
+        if(c == '\n')
             lines++;
 
     // time to move the description into the array
@@ -1325,10 +1294,6 @@ bool Area::flagIsSet(int flag, const MapMarker* mapmarker) const {
 void showMobList(Player* player, WanderInfo *wander, const bstring& type);
 
 int dmListArea(Player* player, cmd* cmnd) {
-    std::list<Area*>::iterator it;
-    std::map<bstring, AreaRoom*>::iterator rt;
-    Area    *area=nullptr;
-    AreaRoom* room=nullptr;
     int     a=0;
     bstring str = getFullstrText(cmnd->fullstr, 1);
 
@@ -1344,8 +1309,7 @@ int dmListArea(Player* player, cmd* cmnd) {
     bool wander = cmnd->num >= 3 && (!strcmp(cmnd->str[1], "zones") || !strcmp(cmnd->str[1], "tile")) && !strcmp(cmnd->str[2], "wander");
     bool track = cmnd->num >= 2 && !strcmp(cmnd->str[1], "track");
 
-    for(it = gServer->areas.begin() ; it != gServer->areas.end() ; it++) {
-        area = (*it);
+    for(auto area : gServer->areas) {
         if(a && a != area->id)
             continue;
         player->printColor("Area: ^C%s\n", area->name.c_str());
@@ -1363,9 +1327,7 @@ int dmListArea(Player* player, cmd* cmnd) {
             else
                 player->printColor("     ^yTo show empty rooms in memory, type \"*arealist all\".\n");
         }
-
-        for(rt = area->rooms.begin() ; rt != area->rooms.end() ; rt++) {
-            room = (*rt).second;
+        for(const auto& [roomId, room] : area->rooms) {
             if(!room->players.empty() || !room->monsters.empty() || !room->objects.empty() || empty) {
                 player->printColor("     %-16s Ply: %s^x  Mon: %s^x  Obj: %s\n",
                     room->fullName().c_str(), !room->players.empty() ? "^gy" : "^rn",
@@ -1375,9 +1337,6 @@ int dmListArea(Player* player, cmd* cmnd) {
         player->print("\n");
 
         if(tiles) {
-            std::map<char, TileInfo*>::iterator tt;
-            TileInfo *tile=nullptr;
-
             if(!wander) {
                 if(a)
                     player->printColor("^yTo show tile wander info, type \"*arealist %d tile wander\".\n", a);
@@ -1385,8 +1344,7 @@ int dmListArea(Player* player, cmd* cmnd) {
                     player->printColor("^yTo show tile wander info, type \"*arealist tile wander\".\n");
             }
 
-            for(tt = area->ter_tiles.begin() ; tt != area->ter_tiles.end() ; tt++) {
-                tile = (*tt).second;
+            for(const auto& [tId, tile] : area->ter_tiles) {
                 player->print("Ter Tile: %-17s ID: %c  ", tile->getName().c_str(), tile->getId());
                 if(wander) {
                     player->print("\n");
@@ -1405,9 +1363,7 @@ int dmListArea(Player* player, cmd* cmnd) {
 
             if(!wander) {
                 player->print("\n");
-
-                for(tt = area->map_tiles.begin() ; tt != area->map_tiles.end() ; tt++) {
-                    tile = (*tt).second;
+                for(const auto& [tId, tile] : area->map_tiles) {
                     player->print("Map Tile: %-17s ID: %c   ", tile->getName().c_str(), tile->getId());
                     player->printColor("^%cStyle: %c^x  ", tile->getStyle(), tile->getStyle());
                     player->printColor("Display: %c%s\n", tile->getDisplay(), tile->isRoad() ? "  ^WRoad" : "");
@@ -1422,11 +1378,6 @@ int dmListArea(Player* player, cmd* cmnd) {
         }
 
         if(zones) {
-            std::map<int, MapMarker*>::iterator zIt;
-            std::list<AreaZone*>::iterator zt;
-            AreaZone *zone=nullptr;
-            MapMarker *mapmarker=nullptr;
-
             if(!coords) {
                 if(a)
                     player->printColor("^yTo show zone coordinates, type \"*arealist %d zones coords\".\n", a);
@@ -1439,9 +1390,7 @@ int dmListArea(Player* player, cmd* cmnd) {
                 else
                     player->printColor("^yTo show zone wander info, type \"*arealist zones wander\".\n");
             }
-
-            for(zt = area->zones.begin() ; zt != area->zones.end() ; zt++) {
-                zone = (*zt);
+            for(const auto& zone : area->zones) {
                 player->printColor("Name: ^c%s\n", zone->name.c_str());
                 if(wander) {
                     showMobList(player, &zone->wander, "zone");
@@ -1460,8 +1409,7 @@ int dmListArea(Player* player, cmd* cmnd) {
 
                     if(coords) {
                         player->print("   Coords:\n");
-                        for(zIt = zone->coords.begin() ; zIt != zone->coords.end() ; zIt++) {
-                            mapmarker = (*zIt).second;
+                        for(const auto& [c, mapmarker] : zone->coords) {
                             player->printColor("      (X:^c%d^x Y:^c%d^x Z:^c%d^x)\n",
                                 mapmarker->getX(), mapmarker->getY(), mapmarker->getZ());
                         }
@@ -1478,13 +1426,9 @@ int dmListArea(Player* player, cmd* cmnd) {
         }
 
         if(track) {
-            std::list<AreaTrack*>::iterator at;
-            AreaTrack *aTrack=nullptr;
-
             player->printColor("Track Objects: ^c%d\n", area->tracks.size());
 
-            for(at = area->tracks.begin() ; at != area->tracks.end() ; at++) {
-                aTrack = (*at);
+            for(const auto& aTrack : area->tracks)  {
                 player->print("   MapMarker: %s  Dur: %d   Dir: %s \n",
                     aTrack->mapmarker.str().c_str(), aTrack->getDuration(), aTrack->track.getDirection().c_str());
             }
@@ -1658,11 +1602,7 @@ void Server::clearAreas() {
 //*********************************************************************
 
 Area *Server::getArea(int id) {
-    std::list<Area*>::iterator it;
-    Area    *area=nullptr;
-
-    for(it = areas.begin() ; it != areas.end() ; it++) {
-        area = (*it);
+    for(auto area: areas) {
         if(area->id == id)
             return(area);
     }
@@ -1674,10 +1614,8 @@ Area *Server::getArea(int id) {
 //*********************************************************************
 
 void Server::cleanUpAreas() {
-    std::list<Area*>::iterator it;
-
-    for(it = areas.begin() ; it != areas.end() ; it++) {
-        (*it)->cleanUpRooms();
+    for(auto area : areas) {
+        area->cleanUpRooms();
     }
 }
 
@@ -1686,16 +1624,11 @@ void Server::cleanUpAreas() {
 //*********************************************************************
 
 void Area::cleanUpRooms() {
-    std::map<bstring, AreaRoom*>::iterator it;
-    AreaRoom* room=nullptr;
-
-    for(it = rooms.begin() ; it != rooms.end() ; ) {
-        room = (*it).second;
-        it++;
-
+    for(auto& [rId, room] : rooms) {
         if(room->canDelete()) {
             rooms.erase(room->mapmarker.str());
             delete room;
         }
     }
+    rooms.clear();
 }

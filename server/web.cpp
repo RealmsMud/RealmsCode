@@ -91,8 +91,8 @@ void latestPost(const bstring& view, const bstring& subject, const bstring& user
     if(view.empty() || boardname.empty() || username.empty() || post.empty())
         return;
 
-    for(Socket* sock : gServer->sockets) {
-        const Player* player = sock->getPlayer();
+    for(Socket &sock : gServer->sockets) {
+        const Player* player = sock.getPlayer();
 
         if(!player || player->fd < 0)
             continue;
@@ -1100,7 +1100,7 @@ int cmdWiki(Player* player, cmd* cmnd) {
 
     // If the file exists and was modified within the last hour, use the local cache
     if(!stat(file, &f_stat) && (time(nullptr) - f_stat.st_mtim.tv_sec) < 3600) {
-        viewFile(player->getSock(), file);
+        player->getSock()->viewFile(file);
         return(0);
     }
 
@@ -1156,7 +1156,7 @@ bool WebInterface::wiki(bstring command, bstring tempBuf) {
         char    file[80];
 
         sprintf(file, "%s/%s.txt", Path::Wiki, tempBuf.c_str());
-        viewFile(player->getSock(), file);
+        player->getSock()->viewFile(file);
     }
     outBuf += EOT;
     return(true);

@@ -1,5 +1,7 @@
 Dockerfile
 docker/
+build/
+cmake-build-debug/
 RealmsCode
 List
 

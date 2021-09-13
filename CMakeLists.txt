@@ -1,19 +1,24 @@
 cmake_minimum_required(VERSION 3.12)
 
 project(RealmsCode)
-
 set(CMAKE_C_COMPILER "/usr/bin/clang")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
-set(Python_ADDITIONAL_VERSIONS 3.6)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(DPP_LIB_NAME "dpp")
+
+set(Python_ADDITIONAL_VERSIONS 3.8)
 
 find_package(LibXml2 REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(PythonLibs 3.6 REQUIRED)
+find_package(PythonLibs 3.8 REQUIRED)
 find_package(ASPELL REQUIRED)
 find_package(PythonInterp)
 find_package(PythonLibs)
-find_package(Boost COMPONENTS python3 system filesystem REQUIRED)
+find_package(Boost COMPONENTS python system filesystem REQUIRED)
 
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
@@ -25,13 +30,13 @@ include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR})
 
 # For indexing_suite and such
 include_directories("include")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++17 -g -D_GLIBCXX_DEBUG")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
 
 if($ENV{LEAK})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O1 -fsanitize=address -fno-omit-frame-pointer -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/blacklist.txt")
 ELSE()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 ENDIF()
 
 message(STATUS "USING CXX FLAGS = '${CMAKE_CXX_FLAGS}'")
@@ -211,6 +216,8 @@ set(COMMON_SOURCE_FILES
 
     effects/effects.cpp
 
+    fmt/format.cc
+
     groups/group.cpp
     groups/groups.cpp
 
@@ -373,10 +380,10 @@ set(COMMON_SOURCE_FILES
 
 
 
-    )
+    server/discordBot.cpp)
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
-target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES})
+target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES} ${DPP_LIB_NAME})
 
 add_executable(RealmsCode ${REALMS_SOURCE_FILES})
 target_link_libraries(RealmsCode RealmsLib)

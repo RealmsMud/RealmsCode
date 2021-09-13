@@ -59,10 +59,6 @@ bool actionShow(Player* pTarget, Creature* creature);
 // afflictions.cpp
 unsigned int standardPoisonDuration(short level, short con);
 
-// area.cpp
-void update_track(long t);
-
-
 // calendar.cpp
 int checkBirthdays(Player* player, cmd* cmnd);
 int reloadCalendar(Player* player);
@@ -77,10 +73,6 @@ bstring escapeColor(bstring color);
 
 // commerce.cpp
 CatRef shopStorageRoom(const UniqueRoom *shop);
-
-
-// config.cpp
-int getPkillInCombatDisabled();
 
 
 // creature.cpp
@@ -297,7 +289,6 @@ void broadcast_login(Player* player, BaseRoom* inRoom, int login);
 
 void broadcast_rom_LangWc(int lang, Socket* ignore, const Location& currentLocation, const char *fmt,...);
 void broadcastGroup(bool dropLoot, Creature* player, const char *fmt, ...);
-void child_died(int sig);
 
 void broadcastGuild(int guildNum, int showName, const char *fmt,...);
 void shutdown_now(int sig);
@@ -364,9 +355,6 @@ void lowercize(char* str, int flag);
 char low(char ch);
 char up(char ch);
 void zero(void *ptr, int size);
-void viewFile(Socket* sock, const bstring& str);
-void viewLoginFile(Socket* sock, const bstring& str, bool showError=true);
-void viewFileReverse(Socket* sock, const bstring& str);
 int dice(int n, int s, int p);
 int exp_to_lev(unsigned long exp);
 int dec_daily(struct daily *dly_ptr);

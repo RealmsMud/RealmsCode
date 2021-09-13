@@ -48,43 +48,121 @@
 
 class Guild;
 
+char com_text[][20] = {"sent", "replied", "whispered", "signed", "said",
+                       "recited", "yelled", "emoted", "group mentioned" };
+char com_text_u[][20] = { "Send", "Reply", "Whisper", "Sign", "Say",
+                          "Recite", "Yell", "Emote", "Group mention" };
+
+
+commInfo commList[] = {
+    // name     type      skip  ooc
+    { "tell",   COM_TELL,   2,  false },
+    { "send",   COM_TELL,   2,  false },
+
+    { "otell",  COM_TELL,   2,  true },
+    { "osend",  COM_TELL,   2,  true },
+
+    { "reply",  COM_REPLY,  1,  false },
+    { "sign",   COM_SIGN,   2,  false },
+    { "whisper",COM_WHISPER,2,  false },
+
+    { nullptr, 0, 0, false }
+};
+
+
+sayInfo sayList[] = {
+    // name     ooc     shout   passphrase  type
+    { "say",    false,      false,      false,      COM_SAY },
+    { "\"",     false,      false,      false,      COM_SAY },
+    { "'",      false,      false,      false,      COM_SAY },
+
+    { "osay",   true,   false,      false,      COM_SAY },
+    { "os",     true,   false,      false,      COM_SAY },
+
+    { "recite", false,      false,      true,   COM_RECITE },
+
+    { "yell",   false,      true,   false,      COM_YELL },
+
+    { "emote",  false,      false,      false,      COM_EMOTE },
+    { ":",      false,      false,      false,      COM_EMOTE },
+
+    { "gtalk",  false,      false,      false,      COM_GT },
+    { "gt",     false,      false,      false,      COM_GT },
+    { "gtoc",   true,   false,      false,      COM_GT },
+
+    { nullptr, false, false, false, 0 }
+};
+
+channelInfo channelList[] = {
+    //     Name         OOC     Color               Format                                              MIN MAX eaves   canSee                  canUse      canHear     flag    not flag                type
+    { "broadcast",  true,  "*CC:BROADCAST*",    "### *IC-NAME* broadcasted, \"*TEXT*\"",            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        0, 886681065878605855, 886681021041500170},
+    { "broad",      true,  "*CC:BROADCAST*",    "### *IC-NAME* broadcasted, \"*TEXT*\"",            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        0, 886681065878605855, -1},
+    { "bro",        true,  "*CC:BROADCAST*",    "### *IC-NAME* broadcasted, \"*TEXT*\"",            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        0, 886681065878605855, -1},
+    { "bemote",     true,  "*CC:BROADCAST*",    "*** *IC-NAME* *TEXT*.",                            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        COM_EMOTE, 886681065878605855, -1},
+    { "broademote", true,  "*CC:BROADCAST*",    "*** *IC-NAME* *TEXT*.",                            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        COM_EMOTE, 886681065878605855, -1},
+
+    { "gossip",     true,  "*CC:GOSSIP*",       "(Gossip) *IC-NAME* sent, \"*TEXT*\"",              2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_GOSSIP,        0, 886678176099627100, 886678132327862332},
+    { "ptest",      false,   "*CC:PTEST*",      "[P-Test] *IC-NAME* sent, \"*TEXT*\"",              -1, -1, false,  isPtester,         nullptr,            isPtester,         0,      0,              0, -1, -1},
+    { "newbie",     false,   "*CC:NEWBIE*",     "[Newbie]: *** *OOC-NAME* just sent, \"*TEXT*\"",   1,   4, false,  nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_NEWBIE_SEND,   0, 886681403146788914, 886681367885279282},
+
+    { "dm",         false,   "*CC:DM*",         "(DM) *OOC-NAME* sent, \"*TEXT*\"",                 -1, -1, false,  isDm,              nullptr,            isDm,              0,      0,              0, 886471850715136010, 886050341035061308},
+    { "admin",      false,   "*CC:ADMIN*",      "(Admin) *OOC-NAME* sent, \"*TEXT*\"",              -1, -1, false,  isAdm,             nullptr,            isAdm,             0,      0,              0, -1, -1},
+    { "*s",         false,   "*CC:SEND*",       "=> *OOC-NAME* sent, \"*TEXT*\"",                   -1, -1, false,  isCt,              nullptr,            isCt,              0,      0,              0, 886677295312568440, 409888057916129281},
+    { "*send",      false,   "*CC:SEND*",       "=> *OOC-NAME* sent, \"*TEXT*\"",                   -1, -1, false,  isCt,              nullptr,            isCt,              0,      0,              0, 886677295312568440, -1},
+    { "*msg",       false,   "*CC:MESSAGE*",    "-> *OOC-NAME* sent, \"*TEXT*\"",                   -1, -1, false,  isStaff,           nullptr,            isStaff,           0,      P_NO_MSG,               0, -1, -1},
+    { "*wts",       false,   "*CC:WATCHER*",    "-> *OOC-NAME* sent, \"*TEXT*\"",                   -1, -1, false,  isWatcher,         nullptr,            isWatcher,         0,      P_NO_WTS,               0, -1, -1},
+
+    { "cls",        true,   "*CC:CLASS*",       "### *OOC-NAME* sent, \"*TEXT*\".",                 -1, -1, true,   nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_CLASS_SEND,    COM_CLASS, -1, -1},
+    { "classsend",  true,   "*CC:CLASS*",       "### *OOC-NAME* sent, \"*TEXT*\".",                 -1, -1, true,   nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_CLASS_SEND,    COM_CLASS, -1, -1},
+    { "clem",       false,  "*CC:CLASS*",       "### *OOC-NAME* *TEXT*.",                           -1, -1, true,   nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_CLASS_SEND,    COM_CLASS, -1, -1},
+    { "classemote", false,  "*CC:CLASS*",       "### *OOC-NAME* *TEXT*.",                           -1, -1, true,   nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_CLASS_SEND,    COM_CLASS, -1, -1},
+
+    { "racesend",   true,   "*CC:RACE*",        "### *OOC-NAME* sent, \"*TEXT*\".",                 -1, -1, true,   nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_RACE_SEND,     COM_RACE, -1, -1},
+    { "raemote",    false,  "*CC:RACE*",        "### *OOC-NAME* *TEXT*.",                           -1, -1, true,   nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_RACE_SEND,     COM_RACE, -1, -1},
+
+    { "clansend",   true,   "*CC:CLAN*",        "### *OOC-NAME* sent, \"*TEXT*\".",                 -1, -1, true,   nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_CLAN,          COM_CLAN, -1, -1},
+
+    { nullptr,         false,  "",              nullptr,                                            0,  0,  false,  nullptr,          nullptr,     nullptr,    0,      0,             0, -1 , -1},
+};
+
+
 //*********************************************************************
 //                      confusionChar
 //*********************************************************************
 
 char confusionChar() {
-    int n;
+    char n;
     switch(Random::get(0,10)) {
     case 0:
         // random upper case
-        return(Random::get(65, 90));
+        return(Random::get<char>(65, 90));
     case 1:
     case 2:
         // random character
-        n = Random::get(0,57);
+        n = Random::get<char>(0,57);
         // weight all the characters in the different ranges evenly
         if(n <= 31) {
             // Random::get(91, 121);      31 chars
-            return(n + 91);
+            return(n + (char)91);
         } else if(n <= 38) {
             // Random::get(58, 64);       7 chars
-            return(n - 31 + 58);
+            return(n - (char)31 + (char)58);
         } else if(n <= 54) {
             // Random::get(32, 47);       16 chars
-            return(n - 31 - 7 + 32);
+            return(n - (char)31 - (char)7 + (char)32);
         } else {
             // Random::get(123, 125);     3 chars
-            return(n - 31 - 7 - 16 + 123);
+            return(n - (char)31 - (char)7 -(char) 16 + (char)123);
         }
     case 3:
         // random number
-        return(Random::get(48, 57));
+        return(Random::get<char>(48, 57));
         break;
     default:
         break;
     }
     // random lower case
-    return(Random::get(97, 122));
+    return(Random::get<char>(97, 122));
 }
 
 //*********************************************************************
@@ -768,7 +846,8 @@ bstring mxpTag(const bstring& str) {
 
 int channel(Player* player, cmd* cmnd) {
     bstring text = "", chanStr = "", extra = "";
-    int     i=0, check=0, skip=1;
+    size_t i = 0;
+    unsigned int check=0, skip=1;
     const Guild* guild=nullptr;
 
     const int max_class = static_cast<int>(CreatureClass::CLASS_COUNT)-1;
@@ -809,7 +888,7 @@ int channel(Player* player, cmd* cmnd) {
         chanStr = "clansend";
         skip = 2;
 
-        std::map<int, Clan*>::iterator it;
+        ClanMap::iterator it;
         Clan *clan=nullptr;
 
         for(it = gConfig->clans.begin() ; it != gConfig->clans.end() ; it++) {
@@ -847,17 +926,7 @@ int channel(Player* player, cmd* cmnd) {
 
 
     // get us a channel to use!
-    channelPtr chan = nullptr;
-    i = 0;
-    while(channelList[i].channelName != nullptr) {
-        if( !strcmp(chanStr.c_str(), channelList[i].channelName) &&
-            (!channelList[i].canSee || channelList[i].canSee(player))
-        ) {
-            chan = &channelList[i];
-            break;
-        }
-        i++;
-    }
+    channelPtr chan = getChannelByName(player, chanStr);
 
     if(!chan)
         return(cmdNoExist(player, cmnd));
@@ -909,7 +978,6 @@ int channel(Player* player, cmd* cmnd) {
 
     // it is up to the canUse function to print out the error message
     if(chan->canUse && !chan->canUse(player))
-        //oldPrint(fd, "You are not authorized to use that channel.\n");
         return(0);
     if(chan->maxLevel != -1 && player->getLevel() > chan->maxLevel && !player->isWatcher()) {
         player->print("You are too high of a level to use that channel.\n");
@@ -944,81 +1012,105 @@ int channel(Player* player, cmd* cmnd) {
         etxt = escapeColor(etxt);
         text = escapeColor(text);
 
-        // more complicated checks go here
-        Player* ply=nullptr;
-        Socket* sock=nullptr;
-        for(const auto& p : gServer->players) {
-            ply = p.second;
-
-            sock = ply->getSock();
-            if(!sock->isConnected())
-                continue;
-
-            // no gagging staff!
-            if(player && ply->isGagging(player->getName()) && !player->isCt())
-                continue;
-            // deaf people can always hear staff and themselves
-            if(ply->isEffected("deafness") && !player->isStaff() && ply != player)
-                continue;
-
-            // must satisfy all the basic canHear rules to hear this channel
-            if( (   (!chan->canHear || chan->canHear(sock)) &&
-                    (!chan->flag || ply->flagIsSet(chan->flag)) &&
-                    (!chan->not_flag || !ply->flagIsSet(chan->not_flag)) )
-                && ( // they must also satisfy any special conditions here
-                    (chan->type != COM_CLASS || static_cast<int>(ply->getClass()) == check) &&
-                    (chan->type != COM_RACE || ply->getDisplayRace() == check) &&
-                    (chan->type != COM_CLAN || (ply->getDeity() ? ply->getDeityClan() : ply->getClan()) == check) ) )
-            {
-                if(!extra.empty())
-                    *ply << ColorOn << ply->customColorize(chan->color) << extra << ColorOff;
-
-                bstring toPrint = chan->displayFmt;
-                bstring icName = player->getCrtStr(ply, ply->displayFlags() | CAP);
-                bstring oocName = player->getName();
-                bstring prompt = "";
-
-                if(ply->getSock()->getTermType().toUpper().find("MUDLET") != bstring::npos)
-                    prompt = " PROMPT";
-
-                if(ply->canSee(player)) {
-                    icName = mxpTag(bstring("player name='") + player->getName() + "'" + prompt ) + icName + mxpTag("/player");
-                    oocName = mxpTag(bstring("player name='") + player->getName()  + "'" + prompt) + oocName + mxpTag("/player");
-                }
-
-                toPrint.Replace("*IC-NAME*", icName.c_str());
-                toPrint.Replace("*OOC-NAME*", oocName.c_str());
-                //std::clog << "ToPrint: " << toPrint << std::endl;
-
-                if(ply->isStaff() || (player->current_language && ply->isEffected("comprehend-languages"))
-                        || ply->languageIsKnown(player->current_language))
-                {
-                    // Listern speaks this language
-                    toPrint.Replace("*TEXT*", text.c_str());
-                } else {
-                    // Listern doesn't speak this language
-                    toPrint.Replace("*TEXT*", "<something incomprehensible>");
-                }
-
-
-                if(player->current_language != LCOMMON)
-                    toPrint += bstring(" in ") + get_language_adj(player->current_language) + ".";
-
-                *ply << ColorOn << ply->customColorize(chan->color) << toPrint << "\n" << ColorOff;
-            }
-
-
-            // even if they fail the check, it might still show up on eaves
-            if( chan->eaves &&
-                watchingEaves(sock) &&
-                !(chan->type == COM_CLASS && check == static_cast<int>(CreatureClass::DUNGEONMASTER))
-            ) {
-                ply->printColor("^E%s", etxt.c_str());
-            }
+        if(chan->discordWebhookID != -1) {
+            gServer->sendDiscordWebhook(chan->discordWebhookID, chan->type, player->getName(), text);
         }
+        sendGlobalComm(player, text, extra, check, chan, etxt, player->getName(), bstring(""));
     }
 
     return(0);
+}
+
+channelPtr getChannelByName(const Player *player, const bstring &chanStr) {
+    for(auto& curChan : channelList) {
+        if (curChan.channelName == nullptr) return nullptr;
+        if (chanStr.equals(curChan.channelName) && (!curChan.canSee || curChan.canSee(player)))
+            return &curChan;
+    }
+    return nullptr;
+}
+channelPtr getChannelByDiscordChannel(const unsigned long discordChannelID) {
+    for(auto& curChan : channelList) {
+        if (curChan.channelName == nullptr) return nullptr;
+        if (curChan.discordChannelID == -1) continue;
+        if (curChan.discordChannelID == discordChannelID) return &curChan;
+    }
+    return nullptr;
+}
+
+void sendGlobalComm(const Player *player, const bstring &text, const bstring &extra, unsigned int check,
+                    const channelInfo *chan, const bstring &etxt, const bstring& oocName, const bstring& icName) {
+    // more complicated checks go here
+    Socket* sock=nullptr;
+    for(const auto& [pId, ply] : gServer->players) {
+        sock = ply->getSock();
+        if(!sock->isConnected())
+            continue;
+
+        // no gagging staff!
+        if(player && ply->isGagging(player->getName()) && !player->isCt())
+            continue;
+        // deaf people can always hear staff and themselves
+        if(ply->isEffected("deafness") && player && !player->isStaff() && ply != player)
+            continue;
+
+        // must satisfy all the basic canHear rules to hear this channel
+        if( (   (!chan->canHear || chan->canHear(sock)) &&
+                (!chan->flag || ply->flagIsSet(chan->flag)) &&
+                (!chan->not_flag || !ply->flagIsSet(chan->not_flag)) )
+            && ( // they must also satisfy any special conditions here
+                (chan->type != COM_CLASS || static_cast<int>(ply->getClass()) == check) &&
+                (chan->type != COM_RACE || ply->getDisplayRace() == check) &&
+                (chan->type != COM_CLAN || (ply->getDeity() ? ply->getDeityClan() : ply->getClan()) == check) ) )
+        {
+            if(!extra.empty())
+                *ply << ColorOn << ply->customColorize(chan->color) << extra << ColorOff;
+
+            bstring toPrint = chan->displayFmt;
+            bstring prompt = "";
+
+            if(ply->getSock()->getTermType().toUpper().find("MUDLET") != bstring::npos)
+                prompt = " PROMPT";
+
+            bstring oocNameRep;
+            bstring icNameRep;
+
+            if(player && ply->canSee(player)) {
+                icNameRep = mxpTag(bstring("player name='") + player->getName() + "'" + prompt ) + player->getCrtStr(ply, ply->displayFlags() | CAP) + mxpTag("/player");
+                oocNameRep = mxpTag(bstring("player name='") + player->getName()  + "'" + prompt) + oocName + mxpTag("/player");
+            } else {
+                icNameRep = icName;
+                oocNameRep = oocName;
+            }
+
+            toPrint.Replace("*IC-NAME*", icNameRep.c_str());
+            toPrint.Replace("*OOC-NAME*", oocNameRep.c_str());
+
+            if(ply->isStaff() || !player
+                || (player->current_language && ply->isEffected("comprehend-languages"))
+                || ply->languageIsKnown(player->current_language))
+            {
+                // Listern speaks this language
+                toPrint.Replace("*TEXT*", text.c_str());
+            } else {
+                // Listern doesn't speak this language
+                toPrint.Replace("*TEXT*", "<something incomprehensible>");
+            }
+
+
+            if(player && player->current_language != LCOMMON)
+                toPrint += bstring(" in ") + get_language_adj(player->current_language) + ".";
+
+            *ply << ColorOn << ply->customColorize(chan->color) << toPrint << "\n" << ColorOff;
+        }
+
+
+        // even if they fail the check, it might still show up on eaves
+        if( chan->eaves && watchingEaves(sock) &&
+            !(chan->type == COM_CLASS && check == static_cast<int>(CreatureClass::DUNGEONMASTER))) {
+            ply->printColor("^E%s", etxt.c_str());
+        }
+    }
 }
 
 

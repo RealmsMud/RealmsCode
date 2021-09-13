@@ -147,8 +147,7 @@ bool Config::loadShips() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     xmlNodePtr  curNode;
-    Ship    *ship=nullptr;
-    std::list<Ship*>::iterator it;
+    Ship    *lShip;
 
     sprintf(filename, "%s/ships.xml", Path::Game);
 
@@ -164,19 +163,18 @@ bool Config::loadShips() {
     clearShips();
     while(curNode) {
         if(NODE_NAME(curNode, "Ship")) {
-            ship = new Ship;
-            ship->load(curNode);
-            ships.push_back(ship);
+            lShip = new Ship;
+            lShip->load(curNode);
+            ships.push_back(lShip);
         }
         curNode = curNode->next;
     }
 
     // exits have all been deleted - go and set the current ones
-    for(it = ships.begin() ; it != ships.end() ; it++) {
-        ship = (*it);
+    for(const auto& aShip : ships) {
         // if at a stop, make the exits
-        if(ship->inPort)
-            shipSetExits(ship, ship->stops.front());
+        if(aShip->inPort)
+            shipSetExits(aShip, aShip->stops.front());
     }
 
     xmlFreeDoc(xmlDoc);

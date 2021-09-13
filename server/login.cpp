@@ -222,7 +222,7 @@ void login(Socket* sock, const bstring& inStr) {
             //gServer->addPlayer(player);
             sock->setPlayer(player);
 
-            if(gServer->checkDuplicateName(sock, false)) {
+            if(gServer->checkDuplicateName(*sock, false)) {
                 // Don't free player here or ask for name again because checkDuplicateName does that
                 // We only need to worry about freeing proxy
                 if(!online)
@@ -325,8 +325,8 @@ void Socket::finishLogin() {
     print("%s", echo_on);
     strcpy(charName, getPlayer()->getCName());
 
-    gServer->checkDuplicateName(this, true);
-    if(gServer->checkDouble(this)) {
+    gServer->checkDuplicateName(*this, true);
+    if(gServer->checkDouble(*this)) {
 //      gServer->cleanUp();
         return;
     }
@@ -490,7 +490,7 @@ void doCreateHelp(Socket* sock, const bstring& str) {
     bstring helpfile;
     if(cmnd.num < 2) {
         helpfile = bstring(Path::CreateHelp) + "/helpfile.txt";
-        viewFile(sock, helpfile.c_str());
+        sock->viewFile(helpfile.c_str());
         return;
     }
 
@@ -499,7 +499,7 @@ void doCreateHelp(Socket* sock, const bstring& str) {
         return;
     }
     helpfile = bstring(Path::CreateHelp) + "/" + cmnd.str[1] + ".txt";
-    viewFile(sock, helpfile.c_str());
+    sock->viewFile(helpfile.c_str());
 
 }
 
@@ -853,8 +853,8 @@ bool Create::getSex(Socket* sock, bstring str, int mode) {
 #define FBUF    800
 
 bool Create::getRace(Socket* sock, bstring str, int mode) {
-    std::map<int, RaceData*> choices;
-    std::map<int, RaceData*>::iterator it;
+    RaceDataMap choices;
+    RaceDataMap::iterator it;
     int k=0;
 
     // figure out what they can play
@@ -872,7 +872,7 @@ bool Create::getRace(Socket* sock, bstring str, int mode) {
 
         // show them the race menu header
         sprintf(file, "%s/race_menu.0.txt", Path::Config);
-        viewLoginFile(sock, file);
+        sock->viewLoginFile(file);
 
         // show them the main race menu
         sprintf(file, "%s/race_menu.1.txt", Path::Config);
@@ -954,8 +954,8 @@ bool Create::getRace(Socket* sock, bstring str, int mode) {
 //*********************************************************************
 
 bool Create::getSubRace(Socket* sock, bstring str, int mode) {
-    std::map<int, RaceData*> choices;
-    std::map<int, RaceData*>::iterator it;
+    RaceDataMap choices;
+    RaceDataMap::iterator it;
     int k=0;
 
     // figure out what they can play
@@ -1725,7 +1725,7 @@ void Create::done(Socket* sock, const bstring& str, int mode) {
 
         char file[80];
         sprintf(file, "%s/policy_login.txt", Path::Config);
-        viewLoginFile(sock, file);
+        sock->viewLoginFile(file);
 
         sock->print("[Press Enter to Continue]");
         sock->setState(CREATE_DONE);
@@ -1740,9 +1740,9 @@ void Create::done(Socket* sock, const bstring& str, int mode) {
 
         player->setName( sock->tempstr[0]);
 
-        if(gServer->checkDuplicateName(sock, false))
+        if(gServer->checkDuplicateName(*sock, false))
             return;
-        if(gServer->checkDouble(sock))
+        if(gServer->checkDouble(*sock))
             return;
         if(Player::exists(player->getName())) {
             sock->printColor("\n\n^ySorry, that player already exists.^x\n\n\n");

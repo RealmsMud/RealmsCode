@@ -35,6 +35,7 @@
 #include <cstdlib>                                  // for exit, abort, srand
 #include <iomanip>                                  // for operator<<, setw
 #include <iostream>                                 // for operator<<, basic...
+#include <poll.h>
 
 #include "area.hpp"                                 // for MapMarker, Area
 #include "bstring.hpp"                              // for bstring, operator+
@@ -124,7 +125,6 @@ Server::Server(): roomCache(RQMAX, true), monsterCache(MQMAX, false), objectCach
     rebooting = GDB = valgrind = false;
 
     running = false;
-    Deadchildren = 0;
     pulse = 0;
     webInterface = nullptr;
     lastDnsPrune = lastUserUpdate = lastRoomPulseUpdate = lastRandomUpdate = lastActiveUpdate = 0;
@@ -212,6 +212,8 @@ bool Server::init() {
     std::clog << "Loading Areas..." << (loadAreas() ? "done" : "*** FAILED ***") << std::endl;
     gConfig->loadAfterPython();
 
+    initDiscordBot();
+
 
 
 #ifdef SQL_LOGGER
@@ -242,24 +244,29 @@ bool Server::init() {
 
 void Server::installSignalHandlers() {
     if (!gConfig->isListing()) {
-        signal(SIGABRT, crash); // abnormal termination triggered by abort call
+        struct sigaction crash_sa{};
+        crash_sa.sa_handler = crash;
+        sigaction(SIGABRT, &crash_sa, nullptr); // abnormal termination triggered by abort call
         std::clog << ".";
-        signal(SIGFPE, crash);  // floating point exception
+        sigaction(SIGFPE, &crash_sa, nullptr);  // floating point exception
         std::clog << ".";
-        signal(SIGSEGV, crash); // segment violation
+        sigaction(SIGSEGV, &crash_sa, nullptr); // segment violation
         std::clog << ".";
     } else {
         std::clog << "Ignoring crash handlers";
     }
     signal(SIGPIPE, SIG_IGN);
     std::clog << ".";
-    signal(SIGTERM, shutdown_now);
+    signal(SIGCHLD, SIG_IGN);
     std::clog << ".";
-    signal(SIGCHLD, child_died);
+
+    struct sigaction shutdown_sa{};
+    shutdown_sa.sa_handler = shutdown_now;
+    sigaction(SIGTERM, &shutdown_sa, nullptr);
     std::clog << ".";
-    signal(SIGHUP, shutdown_now);
+    sigaction(SIGHUP, &shutdown_sa, nullptr);
     std::clog << ".";
-    signal(SIGINT, shutdown_now);
+    sigaction(SIGINT, &shutdown_sa, nullptr);
     std::clog << ".";
 }
 
@@ -269,7 +276,7 @@ void Server::setRebooting() { rebooting = true; }
 void Server::setValgrind() { valgrind = true; }
 bool Server::isRebooting() { return(rebooting); }
 bool Server::isValgrind() { return(valgrind); }
-int Server::getNumSockets() { return(sockets.size()); }
+size_t Server::getNumSockets() const { return(sockets.size()); }
 
 // End - Constructors, Destructors, etc
 //--------------------------------------------------------------------
@@ -302,8 +309,9 @@ void Server::destroyInstance() {
 void Server::populateVSockets() {
     if(vSockets)
         return;
-    vSockets = new SocketVector(sockets.size());
-    std::copy(sockets.begin(), sockets.end(), vSockets->begin());
+    vSockets = new SocketVector();
+    for(auto &sock : sockets) vSockets->push_back(&sock);
+
     Random::shuffle(vSockets->begin(), vSockets->end());
 }
 
@@ -314,14 +322,13 @@ void Server::populateVSockets() {
 
 int Server::run() {
     ServerTimer timer{};
-    if(!running)
-    {
+    if(!running) {
         std::cerr << "Not bound to any ports, exiting." << std::endl;
         exit(-1);
     }
 
     while(running) {
-        if(Deadchildren) reapChildren();
+        if(!children.empty()) reapChildren();
 
         processChildren();
         timer.start(); // Start the timer
@@ -436,12 +443,12 @@ int Server::poll() {
         FD_SET(cs.control, &inSet);
     }
 
-    for(Socket * sock : sockets) {
-        if(sock->getFd() > maxFd)
-            maxFd = sock->getFd();
-        FD_SET(sock->getFd(), &inSet);
-        FD_SET(sock->getFd(), &outSet);
-        FD_SET(sock->getFd(), &excSet);
+    for(Socket &sock : sockets) {
+        if(sock.getFd() > maxFd)
+            maxFd = sock.getFd();
+        FD_SET(sock.getFd(), &inSet);
+        FD_SET(sock.getFd(), &outSet);
+        FD_SET(sock.getFd(), &excSet);
     }
 
     if(select(maxFd+1, &inSet, &outSet, &excSet, &noTime) < 0)
@@ -488,13 +495,7 @@ int Server::handleNewConnection(controlSock& cs) {
         close(fd);
         return -1;
     }
-
-    Socket *newSock;
-    bool dnsDone = false;
-    newSock = new Socket(fd, addr, dnsDone);
-    sockets.push_back(newSock);
-
-    newSock->showLoginScreen(dnsDone);
+    sockets.emplace_back(fd, addr, false);
     return(0);
 }
 
@@ -504,24 +505,24 @@ int Server::handleNewConnection(controlSock& cs) {
 
 int Server::processInput() {
 
-    for(Socket * sock : sockets) {
-        if(sock->getState() == CON_DISCONNECTING)
+    for(Socket &sock : sockets) {
+        if(sock.getState() == CON_DISCONNECTING)
             continue;
 
         // Clear out the descriptor of we have an exception
-        if(FD_ISSET(sock->getFd(), &excSet)) {
-            FD_CLR(sock->getFd(), &inSet);
-            FD_CLR(sock->getFd(), &outSet);
-            sock->setState(CON_DISCONNECTING);
+        if(FD_ISSET(sock.getFd(), &excSet)) {
+            FD_CLR(sock.getFd(), &inSet);
+            FD_CLR(sock.getFd(), &outSet);
+            sock.setState(CON_DISCONNECTING);
             std::clog << "Exception found\n";
             continue;
         }
         // Try to read something
-        if(FD_ISSET(sock->getFd(), &inSet)) {
-            if(sock->processInput() != 0) {
-                FD_CLR(sock->getFd(), &outSet);
-                std::clog << "Error reading from socket " << sock->getFd() << std::endl;
-                sock->setState(CON_DISCONNECTING);
+        if(FD_ISSET(sock.getFd(), &inSet)) {
+            if(sock.processInput() != 0) {
+                FD_CLR(sock.getFd(), &outSet);
+                std::clog << "Error reading from socket " << sock.getFd() << std::endl;
+                sock.setState(CON_DISCONNECTING);
                 continue;
             }
         }
@@ -534,8 +535,8 @@ int Server::processInput() {
 //********************************************************************
 
 int Server::processCommands() {
-    for(Socket * sock : *vSockets) {
-        if(sock->hasCommand() && sock->getState() != CON_DISCONNECTING) {
+    for(Socket *sock : *vSockets) {
+        if(sock != nullptr && sock->hasCommand() && sock->getState() != CON_DISCONNECTING) {
             if(sock->processOneCommand() == -1) {
                 sock->setState(CON_DISCONNECTING);
                 continue;
@@ -587,9 +588,9 @@ int Server::processOutput() {
 //********************************************************************
 
 void Server::disconnectAll() {
-    for(Socket * sock : sockets) {
+    for(Socket &sock : sockets) {
         // Set everyone to disconnecting
-        sock->setState(CON_DISCONNECTING);
+        sock.setState(CON_DISCONNECTING);
     }
     // And now clean them up
     cleanUp();
@@ -599,21 +600,17 @@ void Server::disconnectAll() {
 //                      cleanUp
 //********************************************************************
 
-int Server::cleanUp() {
-    std::list<Socket*>::iterator it;
-    Socket *sock=nullptr;
-
-    for(it = sockets.begin() ; it != sockets.end() ;) {
-        sock = *it;
-        if(sock->getState() == CON_DISCONNECTING) {
-            // Flush any residual data
-            sock->flush();
-            delete sock;
-            it = sockets.erase(it);
-        } else
-            it++;
+bool isDisconnecting(Socket &sock) {
+    if(sock.getState() == CON_DISCONNECTING) {
+        // Flush any residual data
+        sock.flush();
+        return true;
     }
+    return false;
+}
 
+int Server::cleanUp() {
+    sockets.remove_if(isDisconnecting);
     return(0);
 }
 
@@ -1178,120 +1175,119 @@ bool Server::isActive(Monster* monster) {
 //--------------------------------------------------------------------
 // Children Control
 
-//********************************************************************
-//                      childDied
-//********************************************************************
-
-void Server::childDied() {
-    Deadchildren++;
-}
-
-//********************************************************************
-//                      getDeadChildren
-//********************************************************************
-
-int Server::getDeadChildren() const {
-    return(Deadchildren);
-}
 
 //********************************************************************
 //                      reapChildren
 //********************************************************************
 
 int Server::reapChildren() {
-    int pid, status;
+    int status;
     bool dnsChild = false;
-    childProcess c;
+    childProcess myChild;
+    const childProcess* cp;
     bool found=false;
+    std::cout << "Reaping Children (maybe)\n";
+    pollfd *fds = nullptr;
 
-    while(Deadchildren > 0) {
-        pid = waitpid(-1, &status, WNOHANG);
-        if(pid <= 0) {
-            Deadchildren--;
-            return(-1);
+    while(!children.empty()) {
+        delete fds;
+        fds = new pollfd[children.size()];
+        int i = 0;
+        for(const childProcess& c : children) {
+            fds[i].fd = c.fd;
+            fds[i++].events = POLLHUP;
         }
-        std::list<childProcess>::iterator it;
-        for( it = children.begin(); it != children.end();) {
-            if((*it).pid == pid) {
-                if((*it).type == ChildType::DNS_RESOLVER) {
-                    char tmpBuf[1024];
-                    memset(tmpBuf, '\0', sizeof(tmpBuf));
-                    // Read in the results from the resolver
-                    int n = read((*it).fd, tmpBuf, 1023);
+        int ret = ::poll(fds, i, -1);
+        if (ret <= 0) break;
 
-                    // Close the read fd in the pipe now, won't need it anymore
-                    close((*it).fd);
-                    // If we have an error reading, just use the ip address then
-                    if( n <= 0 ) {
-                        if(errno == EWOULDBLOCK)
-                            std::clog << "DNS ReapChildren: Error would block\n";
-                        else
-                            std::clog << "DNS ReapChildren: Error\n";
-                        strcpy(tmpBuf, (*it).extra.c_str());
-                    }
+        std::list<childProcess>::const_iterator it, oldIt;
+        for( it = children.begin(), i=0; it != children.end() ; i++) {
+            cp = &*it;
+            oldIt = it++;
 
-                    // Add dns to cache
-                    addCache((*it).extra, tmpBuf);
-                    dnsChild = true;
-
-                    // Now we want to look through all connected sockets and update dns where appropriate
-                    for(Socket * sock : sockets) {
-                        if(sock->getState() == LOGIN_DNS_LOOKUP && sock->getIp() == (*it).extra) {
-                            // Be sure to set the hostname first, then check for lockout
-                            sock->setHostname(tmpBuf);
-                            sock->checkLockOut();
-                        }
-                    }
-                    std::clog << "Reaped DNS child (" << pid << "-" << tmpBuf << ")\n";
-                } else if((*it).type == ChildType::LISTER) {
-                    std::clog << "Reaping LISTER child (" << pid << "-" << (*it).extra << ")" << std::endl;
-                    processListOutput(*it);
-                    // Don't forget to close the pipe!
-                    close((*it).fd);
-                } else if((*it).type == ChildType::SWAP_FINISH) {
-                    std::clog << "Reaping MoveRoom Finish child (" << pid << "-" << (*it).extra << ")" << std::endl;
-                    c = *it;
-                    found = true;
-                } else if((*it).type == ChildType::PRINT) {
-                    //broadcast(isDm, "Reaping Print Child (%d-%s)",pid, (*it).extra.c_str());
-                    std::clog << "Reaping Print child (" << pid << "-" << (*it).extra << ")" << std::endl;
-                    c = *it;
-                    found = true;
-                } else {
-                    std::clog << "ReapChildren: Unknown child type " << (int)(*it).type << std::endl;
-                }
-//              // Child was processed, reduce number of children
-//              Deadchildren--;
-//              printf("Reaped Child: %d dead children left.\n", Deadchildren);
-                it = children.erase(it);
-
-                // finish swap after they've been deleted from the list
-                if(found) {
-                    found = false;
-                    if(c.type == ChildType::SWAP_FIND) {
-                        gConfig->findNextEmpty(c, true);
-                    } else if(c.type == ChildType::SWAP_FINISH) {
-                        gConfig->offlineSwap(c, true);
-                    } else if(c.type == ChildType::PRINT) {
-                        const Player* player = gServer->findPlayer(c.extra);
-                        bstring output = gServer->simpleChildRead(c);
-                        if(player && !output.empty())
-                            player->printColor("%s\n", output.c_str());
-                    }
-                    // Don't forget to close the pipe!
-                    close(c.fd);
-                }
+            if(fds[i].revents == 0) {
                 continue;
-            } else {
-                it++;
+            } else if (fds[i].revents != POLLHUP) {
+                std::cout << "Unexpected revent " << fds[i].revents << std::endl;
                 continue;
             }
+
+            std::cout << "waitpid " << cp->pid << std::endl;
+            waitpid(cp->pid, &status, WNOHANG);
+
+            if(cp->type == ChildType::DNS_RESOLVER) {
+                char tmpBuf[1024];
+                memset(tmpBuf, '\0', sizeof(tmpBuf));
+                // Read in the results from the resolver
+                size_t n = read(cp->fd, tmpBuf, 1023);
+
+                // Close the read fd in the pipe now, won't need it anymore
+                close(cp->fd);
+                // If we have an error reading, just use the ip address then
+                if( n <= 0 ) {
+                    if(errno == EWOULDBLOCK)
+                        std::clog << "DNS ReapChildren: Error would block\n";
+                    else
+                        std::clog << "DNS ReapChildren: Error\n";
+                    strcpy(tmpBuf, cp->extra.c_str());
+                }
+
+                // Add dns to cache
+                addCache(cp->extra, tmpBuf);
+                dnsChild = true;
+
+                // Now we want to look through all connected sockets and update dns where appropriate
+                for(Socket &sock : sockets) {
+                    if(sock.getState() == LOGIN_DNS_LOOKUP && sock.getIp() == cp->extra) {
+                        // Be sure to set the hostname first, then check for lockout
+                        sock.setHostname(tmpBuf);
+                        sock.checkLockOut();
+                    }
+                }
+                std::clog << "Reaped DNS child (" << cp->pid << "-" << tmpBuf << ")\n";
+            } else if(cp->type == ChildType::LISTER) {
+                std::clog << "Reaping LISTER child (" << cp->pid << "-" << cp->extra << ")" << std::endl;
+                processListOutput(*cp);
+                // Don't forget to close the pipe!
+                close(cp->fd);
+            } else if(cp->type == ChildType::SWAP_FINISH) {
+                std::clog << "Reaping MoveRoom Finish child (" << cp->pid << "-" << cp->extra << ")" << std::endl;
+                myChild = *it;
+                found = true;
+            } else if(cp->type == ChildType::PRINT) {
+                //broadcast(isDm, "Reaping Print Child (%d-%s)",pid, cp->extra.c_str());
+                std::clog << "Reaping Print child (" << cp->pid << "-" << cp->extra << ")" << std::endl;
+                myChild = *it;
+                found = true;
+            } else {
+                std::clog << "ReapChildren: Unknown child type " << (int)cp->type << std::endl;
+            }
+            children.erase(oldIt);
+
+            // finish swap after they've been deleted from the list
+            if(found) {
+                found = false;
+                if(myChild.type == ChildType::SWAP_FIND) {
+                    gConfig->findNextEmpty(myChild, true);
+                } else if(myChild.type == ChildType::SWAP_FINISH) {
+                    gConfig->offlineSwap(myChild, true);
+                } else if(myChild.type == ChildType::PRINT) {
+                    const Player* player = gServer->findPlayer(myChild.extra);
+                    bstring output = gServer->simpleChildRead(myChild);
+                    if(player && !output.empty())
+                        player->printColor("%s\n", output.c_str());
+                }
+                // Don't forget to close the pipe!
+                close(myChild.fd);
+            }
         }
-        Deadchildren--;
     }
     if(dnsChild)
         saveDnsCache();
-
+    if(fds != nullptr) {
+        delete fds;
+        fds = nullptr;
+    }
     // just in case, kill off any zombies
     wait3(&status, WNOHANG, (struct rusage *)nullptr);
     return(0);
@@ -1301,23 +1297,22 @@ int Server::reapChildren() {
 //                      processListOutput
 //********************************************************************
 
-int Server::processListOutput(childProcess &lister) {
+int Server::processListOutput(const childProcess &lister) {
     bool found = false;
-    std::list<Socket*>::iterator sIt;
-    Socket *sock;
-    for(sIt = sockets.begin() ; sIt != sockets.end() ; ++sIt ) {
-        sock = *sIt;
-        if(sock->getPlayer() && lister.extra == sock->getPlayer()->getName()) {
+    Socket* foundSock;
+    for(auto& sock : sockets) {
+        if(sock.getPlayer() && lister.extra == sock.getPlayer()->getName()) {
             found = true;
+            foundSock = &sock;
             break;
         }
     }
 
     char tmpBuf[4096];
     bstring toWrite;
-    int n;
+    size_t n;
     for(;;) {
-        // Even if no socket is found, read in all of the data
+        // Even if no socket is found, read in all the data
         memset(tmpBuf, '\0', sizeof(tmpBuf));
         n = read(lister.fd, tmpBuf, sizeof(tmpBuf)-1);
         if(n <= 0)
@@ -1326,7 +1321,7 @@ int Server::processListOutput(childProcess &lister) {
         if(found) {
             toWrite = tmpBuf;
             toWrite.Replace("\n", "\nList> ");
-            sock->write(toWrite, false);
+            foundSock->write(toWrite, false);
         }
     }
     return(1);
@@ -1533,8 +1528,8 @@ bool Server::startReboot(bool resetShips) {
 
     gServer->setRebooting();
     // First give all players a free restore
-    for(Socket *sock : sockets) {
-        Player* player = sock->getPlayer();
+    for(Socket &sock : sockets) {
+        Player* player = sock.getPlayer();
         if(player && player->fd > -1) {
             player->hp.restore();
             player->mp.restore();
@@ -1545,22 +1540,22 @@ bool Server::startReboot(bool resetShips) {
     saveRebootFile(resetShips);
 
     // Now disconnect people that won't make it through the reboot
-    for(Socket *sock : sockets) {
-        Player* player = sock->getPlayer();
+    for(Socket &sock : sockets) {
+        Player* player = sock.getPlayer();
         if(player && player->fd > -1 ) {
             // End the compression, we'll try to restart it after the reboot
-            if(sock->getMccp()) {
-                sock->endCompress();
+            if(sock.getMccp()) {
+                sock.endCompress();
             }
             player->save(true);
             players[player->getName()] = nullptr;
             player->uninit();
             free_crt(player);
             player = nullptr;
-            sock->setPlayer(nullptr);
+            sock.setPlayer(nullptr);
         } else {
-            sock->write("\n\r\n\r\n\rSorry, we are rebooting. You may reconnect in a few seconds.\n\r");
-            sock->disconnect();
+            sock.write("\n\r\n\r\n\rSorry, we are rebooting. You may reconnect in a few seconds.\n\r");
+            sock.disconnect();
         }
     }
 
@@ -1619,17 +1614,17 @@ bool Server::saveRebootFile(bool resetShips) {
     xml::newNumChild(serverNode, "UnCompressedBytes", UnCompressedBytes);
     if(resetShips)
         xml::newStringChild(serverNode, "ResetShips", "true");
-    for(Socket *sock : sockets) {
-        Player*player = sock->getPlayer();
+    for(Socket &sock : sockets) {
+        Player*player = sock.getPlayer();
         if(player && player->fd > -1) {
             curNode = xmlNewChild(rootNode, nullptr, BAD_CAST"Player", nullptr);
             xml::newStringChild(curNode, "Name", player->getCName());
-            xml::newNumChild(curNode, "Fd", sock->getFd());
-            xml::newStringChild(curNode, "Ip", sock->getIp().c_str());
-            xml::newStringChild(curNode, "HostName", sock->getHostname().c_str());
+            xml::newNumChild(curNode, "Fd", sock.getFd());
+            xml::newStringChild(curNode, "Ip", sock.getIp().c_str());
+            xml::newStringChild(curNode, "HostName", sock.getHostname().c_str());
             xml::newStringChild(curNode, "ProxyName", player->getProxyName());
             xml::newStringChild(curNode, "ProxyId", player->getProxyId());
-            sock->saveTelopts(curNode);
+            sock.saveTelopts(curNode);
         }
     }
 
@@ -1770,7 +1765,8 @@ int Server::finishReboot() {
             }
             sock->intrpt = 1;
             sock->setState(CON_PLAYING);
-            sockets.push_back(sock);
+            // HMMMMM
+            sockets.push_back(*sock);
             Numplayers++;
         }
 
@@ -1859,14 +1855,14 @@ bool Server::addPlayer(Player* player) {
 //                      checkDuplicateName
 //*********************************************************************
 
-bool Server::checkDuplicateName(Socket* sock, bool dis) {
-    for(Socket *s : sockets) {
-        if(sock != s && s->getPlayer() && s->getPlayer()->getName() ==  sock->getPlayer()->getName()) {
+bool Server::checkDuplicateName(Socket &sock, bool dis) {
+    for(Socket &s : sockets) {
+        if(&sock != &s && s.hasPlayer() && s.getPlayer()->getName() ==  sock.getPlayer()->getName()) {
             if(!dis) {
-                sock->printColor("\n\n^ySorry, that character is already logged in.^x\n\n\n");
-                sock->reconnect();
+                sock.printColor("\n\n^ySorry, that character is already logged in.^x\n\n\n");
+                sock.reconnect();
             } else {
-                s->disconnect();
+                s.disconnect();
             }
             return(true);
         }
@@ -1879,32 +1875,32 @@ bool Server::checkDuplicateName(Socket* sock, bool dis) {
 //*********************************************************************
 // returning true will disconnect the connecting socket (sock)
 
-bool Server::checkDouble(Socket* sock) {
-    if(!gConfig->checkDouble)
+bool Server::checkDouble(Socket &sock) {
+    if(!gConfig->getCheckDouble())
         return(false);
-    if(sock->getPlayer()->flagIsSet(P_ON_PROXY) || sock->getPlayer()->isCt())
+    if(sock.getPlayer()->flagIsSet(P_ON_PROXY) || sock.getPlayer()->isCt())
         return(false);
-    if(strstr(sock->getHostname().c_str(), "localhost"))
+    if(strstr(sock.getHostname().c_str(), "localhost"))
         return(false);
 
     Player* player=nullptr;
-    for(Socket *s : sockets) {
-        player = s->getPlayer();
-        if(!player || s == sock)
+    for(Socket &s : sockets) {
+        player = s.getPlayer();
+        if(!player || &s == &sock)
             continue;
 
         if(player->isCt())
             continue;
         if(player->flagIsSet(P_LINKDEAD) || player->flagIsSet(P_ON_PROXY))
             continue;
-        if(sock->getIp() != s->getIp())
+        if(sock.getIp() != s.getIp())
             continue;
-        if(gConfig->canDoubleLog(sock->getPlayer()->getForum(), s->getPlayer()->getForum()))
+        if(gConfig->canDoubleLog(sock.getPlayer()->getForum(), s.getPlayer()->getForum()))
             continue;
 
-        s->printColor("^Y\n\nAnother character (%s) from your IP address has just logged in.\n\n",
-            sock->getPlayer()->getCName());
-        s->disconnect();
+        s.printColor("^Y\n\nAnother character (%s) from your IP address has just logged in.\n\n",
+            sock.getPlayer()->getCName());
+        s.disconnect();
         return(false);
     }
     return(false);
@@ -1918,8 +1914,8 @@ void Server::sendCrash() {
     char filename[80];
     snprintf(filename, 80, "%s/crash.txt", Path::Config);
 
-    for(Socket *sock : sockets) {
-        viewLoginFile(sock, filename);
+    for(Socket &sock : sockets) {
+        sock.viewLoginFile(filename);
     }
 }
 

@@ -169,9 +169,9 @@ int dmSockets(Player* player, cmd* cmnd) {
 
     player->print("Connected Sockets:\n");
 
-    for(Socket* sock : gServer->sockets) {
+    for(Socket &sock : gServer->sockets) {
         num += 1;
-        player->print("Fd: %-2d   %s (%ld)\n", sock->getFd(), sock->getHostname().c_str(), sock->getIdle());
+        player->print("Fd: %-2d   %s (%ld)\n", sock.getFd(), sock.getHostname().c_str(), sock.getIdle());
     }
     player->print("%d total connection%s.\n", num, num != 1 ? "s" : "");
     return(PROMPT);
@@ -343,14 +343,8 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
         }
     } else if(!strcmp(cmnd->str[1], "areas") && load) {
         if(!strcmp(cmnd->str[2], "confirm")) {
-
-            std::list<Area*>::iterator at;
-            std::map<bstring, AreaRoom*>::iterator it;
-            AreaRoom* aRoom = nullptr;
-
-            for(at = gServer->areas.begin() ; at != gServer->areas.end() ; at++) {
-                for(it = (*at)->rooms.begin() ; it != (*at)->rooms.end() ; it++) {
-                    aRoom = (*it).second;
+            for(const auto& area : gServer->areas) {
+                for (const auto& [roomId, aRoom] : area->rooms) {
                     aRoom->setStayInMemory(true);
                     aRoom->expelPlayers(false, true, true);
                 }
@@ -613,7 +607,7 @@ int dmUsers(Player* player, cmd* cmnd) {
     oStr.setf(std::ios::left, std::ios::adjustfield);
     oStr.imbue(std::locale(""));
 
-    bstring cr = gConfig->defaultArea;
+    bstring cr = gConfig->getDefaultArea();
     if(player->inUniqueRoom())
         cr = player->getUniqueRoomParent()->info.area;
 
@@ -628,15 +622,15 @@ int dmUsers(Player* player, cmd* cmnd) {
     oStr << "\n---------------------------------------------------------------------------------------\n";
 
     //std::pair<bstring, Player*> p;
-    for(Socket* sock : gServer->sockets) {
+    for(Socket &sock : gServer->sockets) {
         //user = p.second;
         //sock = user->getSock();
-        user = sock->getPlayer();
+        user = sock.getPlayer();
 
         if(!user || !player->canSee(user))
             continue;
 
-        host = sock->getHostname();
+        host = sock.getHostname();
         if(user->isDm() && !player->isDm())
             host = "mud.rohonline.net";
 
@@ -676,8 +670,8 @@ int dmUsers(Player* player, cmd* cmnd) {
         else
             oStr << std::setw(10) << bstring(user->getName() + "(" + user->getProxyName() + ")").left(10) << "^w ";
 
-        if(!sock->isConnected()) {
-            sprintf(str, "connecting (Fd: %d)", sock->getFd());
+        if(!sock.isConnected()) {
+            sprintf(str, "connecting (Fd: %d)", sock.getFd());
             oStr << "^Y" << std::setw(20) << str << " ^c" << std::setw(37) << host.left(37);
         } else if(full) {
             oStr << "^m" << std::setw(58) << host.left(58);
@@ -703,7 +697,7 @@ int dmUsers(Player* player, cmd* cmnd) {
                 oStr << std::setw(17) << "l";
         }
 
-        sprintf(str, "%02ld:%02ld", (t-sock->ltime)/60L, (t-sock->ltime)%60L);
+        sprintf(str, "%02ld:%02ld", (t-sock.ltime)/60L, (t-sock.ltime)%60L);
         oStr << " ^w" << str << "\n";
     }
 
@@ -1190,8 +1184,8 @@ int dmGameStatus(Player* player, cmd* cmnd) {
     player->printColor("\n");
 
     player->printColor("^B\nSettings\n");
-    player->printColor("^cCheckdouble      = ^C%-3s     ", iToYesNo(gConfig->checkDouble));
-    player->printColor("^cNopkillcombat    = ^C%-3s\n", iToYesNo(getPkillInCombatDisabled()));
+    player->printColor("^cCheckdouble      = ^C%-3s     ", iToYesNo(gConfig->getCheckDouble()));
+    player->printColor("^cNopkillcombat    = ^C%-3s\n", iToYesNo(gConfig->getPkillInCombatDisabled()));
     player->printColor("^cAprilFools       = ^C%-3s     ", iToYesNo(gConfig->willAprilFools()));
     player->printColor("^cFlashPolicyPort  = ^C%d\n", gConfig->getFlashPolicyPort());
 
@@ -1331,7 +1325,7 @@ int dmHelp(Player* player, cmd* cmnd) {
 
     if(cmnd->num < 2) {
         sprintf(file, "%s/dmHelpfile.txt", Path::DMHelp);
-        viewFile(player->getSock(), file);
+        player->getSock()->viewFile(file);
         return(DOPROMPT);
     }
     if(strchr(cmnd->str[1], '/')!=nullptr) {
@@ -1340,7 +1334,7 @@ int dmHelp(Player* player, cmd* cmnd) {
     }
 
     sprintf(file, "%s/%s.txt", Path::DMHelp, cmnd->str[1]);
-    viewFile(player->getSock(), file);
+    player->getSock()->viewFile(file);
     return(DOPROMPT);
 
 }
@@ -1356,7 +1350,7 @@ int bhHelp(Player* player, cmd* cmnd) {
 
     if(cmnd->num < 2) {
         sprintf(file, "%s/build_help.txt", Path::BuilderHelp);
-        viewFile(player->getSock(), file);
+        player->getSock()->viewFile(file);
         return(DOPROMPT);
     }
     if(strchr(cmnd->str[1], '/')!=nullptr) {
@@ -1365,7 +1359,7 @@ int bhHelp(Player* player, cmd* cmnd) {
     }
 
     sprintf(file, "%s/%s.txt", Path::BuilderHelp, cmnd->str[1]);
-    viewFile(player->getSock(), file);
+    player->getSock()->viewFile(file);
     return(DOPROMPT);
 
 }
@@ -2080,7 +2074,7 @@ int dmView(Player* player, cmd* cmnd) {
     sprintf(file,"%s/%s.txt", Path::Post, cmnd->str[1]);
     player->print("file: %s\n",file);
     gServer->processOutput();
-    viewFile(player->getSock(), file);
+    player->getSock()->viewFile(file);
     return(0);
 }
 
@@ -2162,7 +2156,7 @@ int dmLog(Player* player, cmd* cmnd) {
     } else
         strcpy(player->getSock()->tempstr[3], "\0");
 
-    viewFileReverse(player->getSock(), filename);
+    player->getSock()->viewFileReverse(filename);
 
 
     return(DOPROMPT);
