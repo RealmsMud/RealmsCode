@@ -2,6 +2,7 @@ FROM ubuntu:20.04 as BUILD
 ENV TZ=US
 ENV CC=/usr/bin/clang
 ENV CXX=/usr/bin/clang++
+ENV DPP_VERSION=9.0.2
 
 # Update
 RUN apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
@@ -41,8 +42,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 ca-
     ln -s /usr/bin/clang-12 /usr/bin/clang && \
     ln -s /usr/bin/clang++-12 /usr/bin/clang++ && \
     # libdpp TODO - needs to be 9.0.4+ to work with execute_webhook
-    wget https://github.com/brainboxdotcc/DPP/releases/download/v9.0.2/libdpp-9.0.2-Linux.deb && \
-    dpkg -i libdpp-9.0.2-Linux.deb
+    wget https://github.com/brainboxdotcc/DPP/releases/download/v${DPP_VERSION}/libdpp-${DPP_VERSION}-Linux.deb && \
+    dpkg -i libdpp-${DPP_VERSION}-Linux.deb
 
 
 WORKDIR /build
@@ -60,7 +61,7 @@ FROM ubuntu:20.04 as RUN
 RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-COPY --from=BUILD /libdpp-9.0.2-Linux.deb .
+COPY --from=BUILD /libdpp-${DPP_VERSION}-Linux.deb .
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2 \
@@ -74,8 +75,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     aspell \
     zlib1g  \
     gdb && \
-    dpkg -i libdpp-9.0.2-Linux.deb && \
-    rm libdpp-9.0.2-Linux.deb && \
+    dpkg -i libdpp-${DPP_VERSION}-Linux.deb && \
+    rm libdpp-${DPP_VERSION}-Linux.deb && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ARG username=jason
