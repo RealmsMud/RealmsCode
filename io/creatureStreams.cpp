@@ -72,7 +72,7 @@ Streamable& Streamable::operator<< ( const MudObject& mo) {
     int mNum = this->getManipNum();
     const Creature* creature = mo.getAsConstCreature();
     if(creature) {
-        doPrint(thisCreature->getCrtStr(thisPlayer, mFlags, mNum));
+        doPrint(creature->getCrtStr(thisPlayer, mFlags, mNum));
         return(*this);
     }
 
