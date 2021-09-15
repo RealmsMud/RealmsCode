@@ -1015,7 +1015,7 @@ int channel(Player* player, cmd* cmnd) {
         if(chan->discordWebhookID != -1) {
             gServer->sendDiscordWebhook(chan->discordWebhookID, chan->type, player->getName(), text);
         }
-        sendGlobalComm(player, text, extra, check, chan, etxt, player->getName(), bstring(""));
+        sendGlobalComm(player, text, extra, check, chan, etxt, player->getName(), player->getName());
     }
 
     return(0);
@@ -1075,9 +1075,9 @@ void sendGlobalComm(const Player *player, const bstring &text, const bstring &ex
             bstring oocNameRep;
             bstring icNameRep;
 
-            if(player && ply->canSee(player)) {
-                icNameRep = mxpTag(bstring("player name='") + player->getName() + "'" + prompt ) + player->getCrtStr(ply, ply->displayFlags() | CAP) + mxpTag("/player");
-                oocNameRep = mxpTag(bstring("player name='") + player->getName()  + "'" + prompt) + oocName + mxpTag("/player");
+            if(player) {
+                icNameRep = mxpTag(bstring("player name='") + player->getName() + "'" + prompt) + player->getCrtStr(ply, ply->displayFlags() | CAP) + mxpTag("/player");
+                oocNameRep = mxpTag(bstring("player name='") + player->getName() + "'" + prompt) + oocName + mxpTag("/player");
             } else {
                 icNameRep = icName;
                 oocNameRep = oocName;
