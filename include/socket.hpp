@@ -288,7 +288,7 @@ protected:
     bool negotiate(unsigned char ch);
     //bool subNegotiate(unsigned char ch);
     bool handleNaws(int& colRow, unsigned char& chr, bool high);
-    int processCompressed(); // Mccp
+    size_t processCompressed(); // Mccp
 
     bool parseMXPSecure();
 

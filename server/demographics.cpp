@@ -162,7 +162,7 @@ void doDemographics() {
 
 
     // load the directory all the players are stored in
-    std::clog << "Opening %s..." << Path::Player;
+    std::clog << "Opening " << Path::Player << "...";
     if((dir = opendir(Path::Player)) == nullptr) {
         std::clog << "Directory could not be opened.\n";
         return;

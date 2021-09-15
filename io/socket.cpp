@@ -1686,9 +1686,9 @@ int Socket::endCompress() {
 //                      processCompressed
 //********************************************************************
 
-int Socket::processCompressed() {
+size_t Socket::processCompressed() {
     auto len = (size_t) ((char*) out_compress->next_out - (char*) out_compress_buf);
-    int written = 0;
+    size_t written = 0;
     size_t block;
     ssize_t n, i;
 
