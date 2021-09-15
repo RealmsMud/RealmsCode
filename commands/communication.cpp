@@ -1076,7 +1076,7 @@ void sendGlobalComm(const Player *player, const bstring &text, const bstring &ex
             bstring icNameRep;
 
             if(player) {
-                icNameRep = mxpTag(bstring("player name='") + player->getName() + "'" + prompt) + player->getCrtStr(ply, ply->displayFlags() | CAP) + mxpTag("/player");
+                icNameRep = mxpTag(bstring("player name='") + player->getName() + "'" + prompt) + icName + mxpTag("/player");
                 oocNameRep = mxpTag(bstring("player name='") + player->getName() + "'" + prompt) + oocName + mxpTag("/player");
             } else {
                 icNameRep = icName;
