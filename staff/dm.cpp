@@ -1250,46 +1250,52 @@ int dmAlchemyList(Player* player, cmd* cmnd) {
     return(0);
 }
 
+void printOldQuests(Player* player) {
+
+    player->print("Quest Table:\n\n");
+    player->print("| # |             Name             |    Exp    |\n");
+    player->print("|---|------------------------------|-----------|\n");
+    for(int i=0; i < numQuests; i++) {
+        if(gConfig->questTable[i]->num-1 == i) {
+            player->print("|%3d|%-30s|%11d|\n",i+1,
+                          get_quest_name(i), gConfig->questTable[i]->exp);
+        }
+    }
+    player->print("|---|------------------------------|-----------|\n");
+
+}
 
 //*********************************************************************
 //                      dmQuestList
 //*********************************************************************
 
 int dmQuestList(Player* player, cmd* cmnd) {
-    int     i=0, questId = -1;
     bool all = false;
     bstring output = getFullstrText(cmnd->fullstr, 1);
 
-    if(output == "all") {
+    if(output.equals("all")) {
         all = true;
+    } else if (output.equals("old")) {
+        printOldQuests(player);
+        return(0);
     } else if(!output.empty()) {
         output.trimLeft('#');
-        questId = output.toInt();
-        player->print("Looking for quest %d.\n", questId);
-    } else {
-        player->printColor("Type ^y*questlist all^x to see all details or ^y*questlist [num]^x to see a specific quest.\n");
-    }
-
-    player->print("Quest Table:\n\n");
-    player->print("| # |             Name             |    Exp    |\n");
-    player->print("|---|------------------------------|-----------|\n");
-    for(; i < numQuests; i++) {
-        if(gConfig->questTable[i]->num-1 == i) {
-            player->print("|%3d|%-30s|%11d|\n",i+1,
-                  get_quest_name(i), gConfig->questTable[i]->exp);
+        int questId = output.toInt();
+        *player << "Looking for quest " << questId << ".\n";
+        auto qPair = gConfig->quests.find(questId);
+        if(qPair == gConfig->quests.end()) {
+            *player << "Not found\n";
+        } else {
+            *player << ColorOn << qPair->first << ") " << qPair->second->getDisplayString() << ColorOff;
         }
+        return(0);
+    } else {
+        *player << ColorOn << "Old Quests: Type ^y*questlist old^x to see old style quests.\nNew Quests: Type ^y*questlist all^x to see all details or ^y*questlist [num]^x to see a specific quest.\n" << ColorOff;
     }
-    player->print("|---|------------------------------|-----------|\n");
 
     player->print("New Quests:\n");
-    for(std::pair<int, QuestInfo*> p : gConfig->quests) {
-        QuestInfo* quest = p.second;
-        if(all || quest->getId() == questId)
-            output = quest->getDisplayString();
-        else
-            output = quest->getDisplayName();
-
-        player->printColor("%d) %s\n", p.first, output.c_str());
+    for(auto& [questId, quest] : gConfig->quests) {
+        *player << ColorOn << questId << ") " << (all ? quest->getDisplayString() : quest->getDisplayName()) << "\n" << ColorOff;
     }
     return(0);
 }

@@ -1362,11 +1362,10 @@ void Player::loseExperience(Monster *killer) {
     } else {
         // Level 10 and over, 2% exp loss with a minimum of 10k
         xploss = MAX<long>((long)( (float)experience * 0.02), 10000);
-        print("You have lost %ld experience.\n", (long)xploss);
         statistics.experienceLost((long)xploss);
         experience -= (long)xploss;
     }
-
+    print("You have lost %ld experience.\n", (long)xploss);
     n = level - exp_to_lev(experience);
 
     if(n > 1) {

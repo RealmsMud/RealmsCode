@@ -131,16 +131,14 @@ int dmShowClasses(Player* admin, cmd* cmnd) {
     bool    more = admin->isDm() && cmnd->num > 1 && !strcmp(cmnd->str[1], "more");
     bool    all = admin->isDm() && cmnd->num > 1 && !strcmp(cmnd->str[1], "all");
 
-    std::map<bstring, PlayerClass*>::iterator cIt;
-    PlayerClass* pClass;
     SkillGain* sGain;
     bstring tmp;
 
     admin->printColor("Displaying Classes:%s\n",
         admin->isDm() ? "  Type ^y*classlist more^x to view more, ^y*classlist all^x to view all information." : "");
-    for(cIt = gConfig->classes.begin() ; cIt != gConfig->classes.end() ; cIt++) {
-        pClass = (*cIt).second;
-        admin->printColor("Id: ^c%-2d^x   Name: ^c%s\n", pClass->getId(), (*cIt).first.c_str());
+
+    for(auto& [clsName, pClass] : gConfig->classes) {
+        admin->printColor("Id: ^c%-2d^x   Name: ^c%s\n", pClass->getId(), clsName.c_str());
         if(more || all) {
             std::ostringstream cStr;
             std::map<int, PlayerTitle*>::iterator tt;
@@ -186,7 +184,7 @@ int dmShowClasses(Player* admin, cmd* cmnd) {
             }
             cStr << "\n";
             tmp = cStr.str();
-            admin->printColor("%s", tmp.c_str());
+            *admin << ColorOn << cStr.str() << ColorOff;
             gServer->processOutput();
         }
     }
