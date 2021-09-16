@@ -199,7 +199,7 @@ bool wantsPermDeaths(Socket* sock) {
 // This function broadcasts a message to all the players that are in the
 // game. If they have the NO-BROADCAST flag set, then they will not see it.
 
-void broadcast_login(Player* player, BaseRoom* inRoom, int login) {
+void broadcastLogin(Player* player, BaseRoom* inRoom, int login) {
     std::ostringstream preText, postText, extra, room;
     bstring text = "", illusion = "";
     int    logoff=0;
@@ -263,7 +263,7 @@ void broadcast_login(Player* player, BaseRoom* inRoom, int login) {
     } else {
 
 
-        Player* target=0;
+        Player* target= nullptr;
         for(const auto& p : gServer->players) {
             target = p.second;
 

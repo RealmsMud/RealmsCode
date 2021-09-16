@@ -285,7 +285,7 @@ void broadcast(bool showTo(Socket*), int color, const char *fmt,...);
 void broadcast(Creature* player, bool showTo(Socket*), int color, const char *fmt,...);
 
 void broadcast_wc(int color,const char *fmt, ...);
-void broadcast_login(Player* player, BaseRoom* inRoom, int login);
+void broadcastLogin(Player* player, BaseRoom* inRoom, int login);
 
 void broadcast_rom_LangWc(int lang, Socket* ignore, const Location& currentLocation, const char *fmt,...);
 void broadcastGroup(bool dropLoot, Creature* player, const char *fmt, ...);

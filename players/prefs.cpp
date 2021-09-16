@@ -188,17 +188,16 @@ int cmdTelOpts(Player* player, cmd* cmnd) {
         else
             oStr << formatNoDesc % "Server Linewrap" % target->getWrap();
         oStr << formatWithDesc % "MCCP" % "Mud Client Compression Protocol" % ((sock->getMccp() != 0) ? "^gon^x" : "^roff^x");
-        oStr << formatWithDesc % "MXP" % "MUD eXtension Protocol" % ((sock->getMxp() == true) ? "^gon^x" : "^roff^x");
-        oStr << formatWithDesc % "MSDP" % "MUD Server Data Protocol" % ((sock->getMsdp() == true) ? "^gon^x" : "^roff^x");
+        oStr << formatWithDesc % "MXP" % "MUD eXtension Protocol" % (sock->getMxp() ? "^gon^x" : "^roff^x");
+        oStr << formatWithDesc % "MSDP" % "MUD Server Data Protocol" % (sock->getMsdp() ? "^gon^x" : "^roff^x");
         if (sock->getMsdp()) {
             oStr << "\t MSDP Reporting: " << sock->getMsdpReporting() << "\n";
 
         }
-        oStr << formatWithDesc % "ATCP" % "Achaea Telnet Client Protocol" % ((sock->getAtcp() == true) ? "^gon^x" : "^roff^x");
-        oStr << formatWithDesc % "Charset" % "Charset Negotiation" % ((sock->getCharset() == true) ? "^gon^x" : "^roff^x");
-        oStr << formatWithDesc % "UTF-8" % "UTF-8 Support" % ((sock->getUtf8() == true) ? "^gon^x" : "^roff^x");
-        oStr << formatWithDesc % "MSP" % "Mud Sound Protocol" % ((sock->getMsp() == true) ? "^gon^x" : "^roff^x");
-        oStr << formatWithDesc % "EOR" % "End of Record" % ((sock->getEor() == true) ? "^gon^x" : "^roff^x");
+        oStr << formatWithDesc % "Charset" % "Charset Negotiation" % (sock->getCharset() ? "^gon^x" : "^roff^x");
+        oStr << formatWithDesc % "UTF-8" % "UTF-8 Support" % (sock->getUtf8() ? "^gon^x" : "^roff^x");
+        oStr << formatWithDesc % "MSP" % "Mud Sound Protocol" % (sock->getMsp() ? "^gon^x" : "^roff^x");
+        oStr << formatWithDesc % "EOR" % "End of Record" % (sock->getEor() ? "^gon^x" : "^roff^x");
     } catch (std::exception &e) {
         std::clog << e.what() << std::endl;
     }

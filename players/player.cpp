@@ -389,7 +389,7 @@ void Player::init() {
     // broadcast
     if(!gServer->isRebooting()) {
         setSockColors();
-        broadcast_login(this, newRoom, 1);
+        broadcastLogin(this, newRoom, 1);
     }
 
     // don't do the actual adding until after broadcast
@@ -576,7 +576,7 @@ void Player::uninit() {
     }
 
     if(!gServer->isRebooting())
-        broadcast_login(this, this->getRoomParent(), 0);
+        broadcastLogin(this, this->getRoomParent(), 0);
 
     if(this->inRoom())
         deleteFromRoom();

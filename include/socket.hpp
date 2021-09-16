@@ -36,7 +36,6 @@
 #define TELCMDS
 #define NAWS TELOPT_NAWS
 #define TTYPE TELOPT_TTYPE
-#define ATCP TELOPT_ATCP
 #define MSDP TELOPT_MSDP
 #define CHARSET TELOPT_CHARSET
 
@@ -55,7 +54,6 @@ namespace telnet {
     #define TELOPT_COMPRESS2    86
     #define TELOPT_MSP          90
     #define TELOPT_MXP          91
-    #define TELOPT_ATCP         200
     #define TELOPT_GMCP         201
 
     #define SEND                1
@@ -93,9 +91,6 @@ namespace telnet {
 
     extern unsigned const char will_msdp[];     // Generic Mud Communication Protocol
     extern unsigned const char wont_msdp[];     // Stop GMCP support
-
-    extern unsigned const char do_atcp[];       // ATCP support
-    extern unsigned const char wont_atcp[];     // Stop ATCP support
 
     extern unsigned const char will_mxp[];      // MXP Support
     extern unsigned const char start_mxp[];     // Start MPX string
@@ -141,6 +136,7 @@ class Socket {
         int rows;
         int cols;
         bstring type;
+        bstring firstType;
         bstring lastType;
         bstring version;
     };
@@ -153,7 +149,6 @@ class Socket {
         bool            mxpClientSecure;
         unsigned char   lastColor;
         bool            msdp;
-        bool            atcp;
         bool            eor;
         bool            msp;
         bool            compressing;
@@ -243,7 +238,6 @@ public:
     [[nodiscard]] bool getMxp() const;
     [[nodiscard]] bool getMxpClientSecure() const;
     [[nodiscard]] bool getMsdp() const;
-    [[nodiscard]] bool getAtcp() const;
     [[nodiscard]] bool canForce() const;
     [[nodiscard]] bool getEor() const;
     [[nodiscard]] bool isDumbClient() const;
@@ -295,7 +289,6 @@ protected:
     // MSDP Support Functions
     bool parseMsdp();
     bool processMsdpVarVal(bstring& variable, bstring& value);
-    bool parseAtcp();
     bool msdpSend(bstring variable);
     bool msdpList(bstring& value);
     ReportedMsdpVariable* msdpReport(bstring& value);

@@ -83,9 +83,6 @@ enum telnetNegotiation {
     NEG_SB_MSDP,
     NEG_SB_MSDP_END,
 
-    NEG_SB_ATCP,
-    NEG_SB_ATCP_END,
-
     NEG_SB_GMCP,
     NEG_SB_GMCP_END,
 
@@ -114,10 +111,6 @@ unsigned const char wont_msdp[] = { IAC, WONT, TELOPT_MSDP, '\0' };
 // GMCP Support
 unsigned const char will_gmcp[] = { IAC, WILL, TELOPT_GMCP, '\0' };
 unsigned const char wont_gmcp[] = { IAC, WONT, TELOPT_GMCP, '\0' };
-
-// ATCP Support
-unsigned const char do_atcp[] = { IAC, DO, TELOPT_ATCP, '\0' };
-unsigned const char wont_atcp[] = { IAC, WONT, TELOPT_ATCP, '\0' };
 
 // MXP Support
 unsigned const char will_mxp[] = { IAC, WILL, TELOPT_MXP, '\0' };
@@ -193,7 +186,6 @@ void Socket::reset() {
     opts.msp = false;
     opts.eor = false;
     opts.msdp = false;
-    opts.atcp = false;
     opts.charset = false;
     opts.UTF8 = false;
     opts.mxpClientSecure = false;
@@ -212,6 +204,7 @@ void Socket::reset() {
     oneIAC = watchBrokenClient = false;
 
     term.type = "dumb";
+    term.firstType = "";
     term.cols = 82;
     term.rows = 40;
 
@@ -581,7 +574,6 @@ void Socket::continueTelnetNeg(bool queryTType) {
     write(telnet::do_naws, false);
 //  write(telnet::will_gmcp, false);
     write(telnet::will_msdp, false);
-//    write(telnet::do_atcp, false);
     write(telnet::will_mssp, false);
     write(telnet::will_msp, false);
 //  write(telnet::do_charset, false);  // Not implemented yet
@@ -750,9 +742,6 @@ int Socket::processInput() {
                     case MSDP:
                         tState = NEG_SB_MSDP;
                         break;
-                    case ATCP:
-                        tState = NEG_SB_ATCP;
-                        break;
                     case TELOPT_GMCP:
                         tState = NEG_SB_GMCP;
                         break;
@@ -771,7 +760,7 @@ int Socket::processInput() {
                 break;
             case NEG_SB_MSDP_END:
                 if (tmpBuf[i] == SE) {
-                    // We should have a full ATCP command now, let's parse it now
+                    // We should have a full MDSP command now, let's parse it now
                     parseMsdp();
                     tState = NEG_NONE;
                     break;
@@ -799,27 +788,6 @@ int Socket::processInput() {
                     // Not an SE: The last input was an IAC, so keep going
                     cmdInBuf.push_back(tmpBuf[i]);
                     tState = NEG_SB_GMCP;
-                    break;
-                }
-                break;
-            case NEG_SB_ATCP:
-                if (tmpBuf[i] == IAC) {
-                    tState = NEG_SB_ATCP_END;
-                    break;
-                }
-                cmdInBuf.push_back(tmpBuf[i]);
-                break;
-            case NEG_SB_ATCP_END:
-                if (tmpBuf[i] == SE) {
-                    // We should have a full ATCP command now, let's parse it now
-                    parseAtcp();
-                    tState = NEG_NONE;
-                    break;
-                } else {
-                    // Not an SE: The last input was an IAC, so push the new input
-                    // onto the inbuf and keep going
-                    cmdInBuf.push_back(tmpBuf[i]);
-                    tState = NEG_SB_ATCP;
                     break;
                 }
                 break;
@@ -873,13 +841,10 @@ int Socket::processInput() {
                 break;
             case NEG_SB_TTYPE_END:
                 if (tmpBuf[i] == SE) {
-                    // TODO: Save the first one and once we get the last one, either:
-                    // 1) turn off ttype and turn it back on once to get the first reported type
-                    // 2) request it one more time to get the first time
                     std::clog << "Found term type: " << term.type << std::endl;
-                    // No previous term type
-                    // Or the current term type isn't the same as the last
-                    if (term.lastType.empty() ||  (term.type != term.lastType)) {
+                    // We haven't cycled back around to the first term type, and
+                    // No previous term type or the current term type isn't the same as the last
+                    if ((term.firstType != term.type) && (term.lastType.empty() ||  (term.type != term.lastType))) {
                         term.lastType = "";
                         // Look for 256 color support
                         if (term.type.find("-256color") != bstring::npos) {
@@ -889,6 +854,9 @@ int Socket::processInput() {
 
                         // Request another!
                         write(telnet::query_ttype, false);
+                    }
+                    if (term.firstType.empty()) {
+                        term.firstType = term.type;
                     }
 
                     if (term.type.find("Mudlet") != bstring::npos and term.type > "Mudlet 1.1") {
@@ -1102,18 +1070,6 @@ bool Socket::negotiate(unsigned char ch) {
             } else {
                 std::clog << "Disabled MSDP" << std::endl;
                 opts.msdp = false;
-            }
-            tState = NEG_NONE;
-            break;
-        case TELOPT_ATCP:
-            if (tState == NEG_WILL || tState == NEG_DO) {
-                opts.atcp = true;
-                std::clog << "Enabled ATCP" << std::endl;
-                msdpSend("SERVER_ID");
-    //          msdpSendPair("SERVER_ID", "The Realms of Hell v" VERSION);
-            } else {
-                std::clog << "Disabled ATCP" << std::endl;
-                opts.atcp = false;
             }
             tState = NEG_NONE;
             break;
@@ -1388,43 +1344,6 @@ bool Socket::parseMsdp() {
 
     return (true);
 }
-
-bool Socket::parseAtcp() {
-    if(getAtcp()) {
-        bstring var, val;
-
-        var.reserve(15);
-        val.reserve(30);
-        ssize_t i = 0, n = cmdInBuf.size();
-        while (i < n && cmdInBuf[i] != SE) {
-            switch (cmdInBuf[i]) {
-            case '@':
-                i++;
-                var.erase();
-                while (i < n && cmdInBuf[i] != ' ') {
-                    var += cmdInBuf[i++];
-                }
-                break;
-            case ' ':
-                i++;
-                val.erase();
-                while (i < n && cmdInBuf[i] != '@' && cmdInBuf[i] != ' ') {
-                    val += cmdInBuf[i++];
-                }
-                processMsdpVarVal(var, val);
-
-                break;
-            default:
-                i++;
-                break;
-            }
-        }
-    }
-    cmdInBuf.clear();
-
-    return (true);
-}
-
 
 //********************************************************************
 //                      bprint
@@ -1718,7 +1637,6 @@ bool Socket::saveTelopts(xmlNodePtr rootNode) {
     rootNode = xml::newStringChild(rootNode, "Telopts");
     xml::newNumChild(rootNode, "MCCP", getMccp());
     xml::newNumChild(rootNode, "MSDP", getMsdp());
-    xml::newNumChild(rootNode, "ATCP", getAtcp());
     xml::newBoolChild(rootNode, "MXP", getMxp());
     xml::newBoolChild(rootNode, "DumbClient", isDumbClient());
     xml::newStringChild(rootNode, "Term", getTermType());
@@ -1745,14 +1663,6 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
         else if (NODE_NAME(curNode, "MXP")) xml::copyToBool(opts.mxp, curNode);
         else if (NODE_NAME(curNode, "Color")) xml::copyToNum(opts.color, curNode);
         else if (NODE_NAME(curNode, "MSDP"))  xml::copyToBool(opts.msdp, curNode);
-        else if (NODE_NAME(curNode, "ATCP")) {
-            xml::copyToBool(opts.atcp, curNode);
-            if (opts.atcp) {
-                if (opts.msdp) {
-                    opts.atcp = false;
-                }
-            }
-        }
         else if (NODE_NAME(curNode, "Term")) xml::copyToBString(term.type, curNode);
         else if (NODE_NAME(curNode, "DumbClient")) xml::copyToBool(opts.dumb, curNode);
         else if (NODE_NAME(curNode, "TermCols")) xml::copyToNum(term.cols, curNode);
@@ -1764,14 +1674,9 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
         curNode = curNode->next;
     }
 
-    // We can only have one of these enabled, MSDP trumps
     if (opts.msdp) {
         // Re-negotiate MSDP after a reboot
         write(telnet::will_msdp, false);
-    } else if (opts.atcp) {
-        // Re-negotiate ATCP after a reboot
-        write(telnet::do_atcp, false);
-
     }
 
     return (true);
@@ -1833,10 +1738,6 @@ int Socket::getMccp() const {
 }
 bool Socket::getMsdp() const {
     return (opts.msdp);
-}
-
-bool Socket::getAtcp() const {
-    return (opts.atcp);
 }
 
 bool Socket::getMsp() const {
@@ -2069,7 +1970,7 @@ int Socket::sendMSSP() {
     addMSSPVal<bstring>(msspStr, "0");
 
     addMSSPVar(msspStr, "ATCP");
-    addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVal<bstring>(msspStr, "0");
 
     addMSSPVar(msspStr, "SSL");
     addMSSPVal<bstring>(msspStr, "0");

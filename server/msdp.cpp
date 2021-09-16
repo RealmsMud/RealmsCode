@@ -104,7 +104,7 @@ void Server::processMsdp() {
         if(sock.getState() == CON_DISCONNECTING)
             continue;
 
-        if(sock.getMccp() || sock.getAtcp()) {
+        if(sock.getMccp()) {
             for(auto& p : sock.msdpReporting) {
                 ReportedMsdpVariable* var = p.second;
 
@@ -343,15 +343,6 @@ void Socket::msdpSendList(const bstring& variable, const std::vector<bstring>& v
         }
 
         oStr << (unsigned char) MSDP_ARRAY_CLOSE << (unsigned char) IAC << (unsigned char) SE;
-    } else if (getAtcp()) {
-        oStr
-                << (unsigned char) IAC << (unsigned char) SB << (unsigned char) TELOPT_ATCP
-                << "MSDP." << variable << " ";
-        for( auto& value : values ) {
-            oStr << (unsigned char) MSDP_VAL << value;
-        }
-
-        oStr << (unsigned char) IAC << (unsigned char) SE;
     }
 
     write(oStr.str());
@@ -374,14 +365,6 @@ void debugMsdp(const bstring& str) {
             case (unsigned char) SE:
                 oStr << " SE ";
                 iac = false;
-                break;
-            case (unsigned char) TELOPT_ATCP:
-                if(iac) {
-                    oStr << " TELOPT_ATCP ";
-                    iac = false;
-                } else {
-                    oStr << ch;
-                }
                 break;
             case (unsigned char) TELOPT_MSDP:
                 if(iac) {
@@ -430,12 +413,6 @@ bool Socket::msdpSendPair(const bstring& variable, const bstring& value) {
                 << (unsigned char) IAC << (unsigned char) SB << (unsigned char) TELOPT_MSDP
                 << (unsigned char) MSDP_VAR << variable
                 << (unsigned char) MSDP_VAL << value
-                << (unsigned char) IAC << (unsigned char) SE;
-    } else if (getAtcp()) {
-        std::clog << "SendPair:ATCP" << std::endl;
-        oStr
-                << (unsigned char) IAC << (unsigned char) SB << (unsigned char) TELOPT_ATCP
-                << "MSDP." << variable << " " << value
                 << (unsigned char) IAC << (unsigned char) SE;
     }
     bstring toSend = oStr.str();
