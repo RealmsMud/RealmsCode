@@ -1055,13 +1055,13 @@ void Player::loseAcid() {
     computeAttackPower();
 
     // 10% chance to attempt dissolving inventory possessions, reduced by higher dexterity bonus.
-    if ( Random:get(1,100) <= MAX(1,(10 - bonus(player->dexterity.getCur()))) )
+    if ( Random::get(1,100) <= MAX(1,(10 - bonus(dexterity.getCur()))) )
     {
         ObjectSet::iterator it;
         for( it = objects.begin() ; it != objects.end() ; ) {
             object = (*it++);
             // Bags have a much much rarer chance to attempt dissolve. (approx 25/10000 == .25%)
-            if(object->getType() == ObjectType::CONTAINER && (Random:get(1,10000) <= 25))
+            if(object->getType() == ObjectType::CONTAINER && (Random::get(1,10000) <= 25))
                 continue;
             // Anything not r-dissolve with a magical adjustment is more resistant. Anything +-4 or better/worse is immune.
             if( !object->flagIsSet(O_RESIST_DISOLVE) &&
@@ -1078,7 +1078,7 @@ void Player::loseAcid() {
                 delete object;
             }
             // Check if acid loses potency and stops dissolving inv items...20% chance + dexterity bonus
-            if (Random::get(1,100) <= (MAX(1,20+bonus(player->dexterity.getCur()))))
+            if (Random::get(1,100) <= (MAX(1,20+bonus(dexterity.getCur()))))
                 break;
         }
     }
