@@ -674,6 +674,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         broadcast(getSock(), getRoomParent(), "%M is immersed in acid!", this);
         trapDamage.set(Random::get(20,30));
 
+
         if(chkSave(DEA, this, 0)) {
             trapDamage.set(trapDamage.get() / 2);
             print("The acid doesn't totally cover you.\n");
@@ -1038,12 +1039,12 @@ void Player::loseAcid() {
                 (Random::get(1,100) <= 3 - abs(ready[i]->getAdjustment()))
             ) {
                 if(ready[i]->flagIsSet(O_NO_PREFIX)) {
-                    printColor("^r%s was dissolved by acid!\n", ready[i]->getCName());
+                    printColor("^y%s %s dissolved by acid!\n", ready[i]->getCName(), ready[i]->flagIsSet(O_SOME_PREFIX) ? "were":"was");
                 } else {
-                    printColor("^rYour %s was dissolved by acid!\n", ready[i]->getCName());
+                    printColor("^yYour %s %s dissolved by acid!\n", ready[i]->getCName(),ready[i]->flagIsSet(O_SOME_PREFIX) ? "were":"was");
                 }
 
-                logn("log.dissolve", "%s(L%d) lost %s to acid in room %s.\n",
+                logn("log.dissolve", "%s(L%d) lost %s to acid trap in room %s.\n",
                         getCName(), level, ready[i]->getCName(), getRoomParent()->fullName().c_str());
                 unequip(i+1, UNEQUIP_DELETE);
             }
@@ -1054,25 +1055,34 @@ void Player::loseAcid() {
     computeAC();
     computeAttackPower();
 
-    // Remove and possibly dissolve possessions
-    ObjectSet::iterator it;
-    for( it = objects.begin() ; it != objects.end() ; ) {
-        object = (*it++);
-        if( !object->flagIsSet(O_RESIST_DISOLVE) &&
-            (Random::get(1,100) <= 3 - abs(object->getAdjustment() ) ))
-        {
-            if(object->flagIsSet(O_NO_PREFIX)) {
-                printColor("^r%s is dissolved by acid!\n", object->getCName());
-            } else {
-                printColor("^rYour %s is dissolved by acid!\n", object->getCName());
+    // 10% chance to attempt dissolving inventory possessions, reduced by higher dexterity bonus.
+    if (Random::get(1,100) <= MAX(1,(10 - bonus(dexterity.getCur()))) )
+    {
+        ObjectSet::iterator it;
+        for( it = objects.begin() ; it != objects.end() ; ) {
+            object = (*it++);
+            // Bags have a much much rarer chance to attempt dissolve. (approx 25/10000 == .25%)
+            if(object->getType() == ObjectType::CONTAINER && (Random::get(1,10000) <= 25))
+                continue;
+            // Anything not r-dissolve with a magical adjustment is more resistant. Anything +-4 or better/worse is immune.
+            if( !object->flagIsSet(O_RESIST_DISOLVE) &&
+                (Random::get(1,100) <= (4 - abs(object->getAdjustment() )) ))
+            {
+                if(object->flagIsSet(O_NO_PREFIX)) {
+                    printColor("^y%s %s dissolved by acid!\n", object->getCName(), object->flagIsSet(O_SOME_PREFIX) ? "were":"was");
+                } else {
+                    printColor("^yYour %s %s dissolved by acid!\n", object->getCName(), object->flagIsSet(O_SOME_PREFIX) ? "were":"was");
+                }
+                logn("log.dissolve", "%s(L%d) lost %s to acid trap in room %s.\n",
+                        getCName(), level, object->getCName(), getRoomParent()->fullName().c_str());
+                delObj(object, true, false, true, false);
+                delete object;
             }
-            logn("log.dissolve", "%s(L%d) lost %s to acid in room %s.\n",
-                    getCName(), level, object->getCName(), getRoomParent()->fullName().c_str());
-            delObj(object, true, false, true, false);
-            delete object;
+            // Check if acid loses potency and stops dissolving inv items...20% chance + dexterity bonus
+            if (Random::get(1,100) <= (MAX(1,20+bonus(dexterity.getCur()))))
+                break;
         }
-        if (Random::get(1,100) <= 20)
-            break;
     }
+   
     checkDarkness();
 }
