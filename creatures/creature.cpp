@@ -1377,7 +1377,7 @@ bool Creature::doFlee(bool magicTerror) {
         mThis->deleteFromRoom();
         mThis->addToRoom(newRoom);
     } else if(pThis) {
-        pThis->dropWeapons();
+       
         pThis->checkDarkness();
         unhide();
 
