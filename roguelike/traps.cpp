@@ -674,6 +674,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
         broadcast(getSock(), getRoomParent(), "%M is immersed in acid!", this);
         trapDamage.set(Random::get(20,30));
 
+
         if(chkSave(DEA, this, 0)) {
             trapDamage.set(trapDamage.get() / 2);
             print("The acid doesn't totally cover you.\n");
@@ -1038,9 +1039,9 @@ void Player::loseAcid() {
                 (Random::get(1,100) <= 3 - abs(ready[i]->getAdjustment()))
             ) {
                 if(ready[i]->flagIsSet(O_NO_PREFIX)) {
-                    printColor("^r%s was dissolved by acid!\n", ready[i]->getCName());
+                    printColor("^y%s %s dissolved by acid!\n", ready[i]->getCName(), ready[i]->flagIsSet(O_SOME_PREFIX) ? "were":"was");
                 } else {
-                    printColor("^rYour %s was dissolved by acid!\n", ready[i]->getCName());
+                    printColor("^yYour %s %s dissolved by acid!\n", ready[i]->getCName(),ready[i]->flagIsSet(O_SOME_PREFIX) ? "were":"was");
                 }
 
                 logn("log.dissolve", "%s(L%d) lost %s to acid trap in room %s.\n",
@@ -1055,7 +1056,7 @@ void Player::loseAcid() {
     computeAttackPower();
 
     // 10% chance to attempt dissolving inventory possessions, reduced by higher dexterity bonus.
-    if ( Random::get(1,100) <= MAX(1,(10 - bonus(dexterity.getCur()))) )
+    if (Random::get(1,100) <= MAX(1,(10 - bonus(dexterity.getCur()))) )
     {
         ObjectSet::iterator it;
         for( it = objects.begin() ; it != objects.end() ; ) {
@@ -1068,9 +1069,9 @@ void Player::loseAcid() {
                 (Random::get(1,100) <= (4 - abs(object->getAdjustment() )) ))
             {
                 if(object->flagIsSet(O_NO_PREFIX)) {
-                    printColor("^y%s is dissolved by acid!\n", object->getCName());
+                    printColor("^y%s %s dissolved by acid!\n", object->getCName(), object->flagIsSet(O_SOME_PREFIX) ? "were":"was");
                 } else {
-                    printColor("^yYour %s is dissolved by acid!\n", object->getCName());
+                    printColor("^yYour %s %s dissolved by acid!\n", object->getCName(), object->flagIsSet(O_SOME_PREFIX) ? "were":"was");
                 }
                 logn("log.dissolve", "%s(L%d) lost %s to acid trap in room %s.\n",
                         getCName(), level, object->getCName(), getRoomParent()->fullName().c_str());
