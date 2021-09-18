@@ -104,25 +104,19 @@ bool Server::initDiscordBot() {
             std::ostringstream contentStr;
 
             if (!event.msg->content.empty()) {
-                if (!event.msg->mentions.empty()) {
-                    // Replace all mentions with the actual users
-                    std::string content = event.msg->content;
+                std::string content = event.msg->content;
 
-                    for (auto& mention : event.msg->mentions) {
-                        boost::replace_all(content, fmt::format("<@!{}>", mention), fmt::format("@{}", getUsername(guild, dpp::find_user(mention))));
-                    }
-
-                    for (auto& mention : event.msg->mention_channels) {
-                        boost::replace_all(content, fmt::format("<@#{}>", mention), fmt::format("#{}", dpp::find_channel(mention)->name));
-                    }
-
-                    for (auto& mention : event.msg->mention_roles) {
-                        boost::replace_all(content, fmt::format("<@&{}>", mention), fmt::format("#{}", dpp::find_role(mention)->name));
-                    }
-                    contentStr << content;
-                } else {
-                    contentStr << event.msg->content;
+                // Replace all mentions with the actual users
+                for (auto &mention: event.msg->mentions) {
+                    boost::replace_all(content, fmt::format("<@!{}>", mention), fmt::format("@{}", getUsername(guild, dpp::find_user(mention))));
                 }
+                for (auto &mention: event.msg->mention_channels) {
+                    boost::replace_all(content, fmt::format("<#{}>", mention), fmt::format("#{}", dpp::find_channel(mention)->name));
+                }
+                for (auto &mention: event.msg->mention_roles) {
+                    boost::replace_all(content, fmt::format("<@&{}>", mention), fmt::format("@{}", dpp::find_role(mention)->name));
+                }
+                contentStr << content;
             }
 
             if (!event.msg->attachments.empty())
