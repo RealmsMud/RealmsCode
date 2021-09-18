@@ -393,50 +393,22 @@ int cmdWho(Player* player, cmd* cmnd) {
     for(std::pair<bstring, Player*> p : gServer->players) {
         target = p.second;
 
-        if(!target->isConnected())
-            continue;
-        if(!player->canSee(target))
-            continue;
+        if(!target->isConnected()) continue;
+        if(target->flagIsSet(P_DM_INVIS) && player->getClass() < target->getClass()) continue;
+        if(target->isEffected("incognito") && player->getClass() < target->getClass() && player->getParent() != target->getParent()) continue;
 
-        if(cls == 1)
-            if(target->getClass() !=  player->getClass())
-                continue;
-        if(clan == 1)
-            if(!target->getClan())
-                continue;
-        if(guild == 1)
-            if(player->getGuild() && target->getGuild() != player->getGuild())
-                continue;
-        if(chaos == 1)
-            if(!target->flagIsSet(P_CHAOTIC))
-                continue;
-        if(law == 1)
-            if(target->flagIsSet(P_CHAOTIC))
-                continue;
-        if(pledge == 1)
-            if((target->getClan() && target->getClan() == player->getClan()) || !target->getClan())
-                continue;
-        if(race > 0)
-            if((player->willIgnoreIllusion() ? target->getRace() : target->getDisplayRace()) != race)
-                continue;
-        if(special == -1)
-            if(!target->isPublicWatcher())
-                continue;
-        if(special == -2)
-            if(!target->flagIsSet(P_ADULT))
-                continue;
-        if(special == -3)
-            if(!target->flagIsSet(P_VETERAN))
-                continue;
-        if(cClass != CreatureClass::NONE)
-            if(target->getClass() != cClass)
-                continue;
-        if(target->isEffected("mist") && !player->isEffected("true-sight") && !player->isCt() )
-            continue;
-        if(target->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt() )
-            continue;
-        if(target->flagIsSet(P_GLOBAL_GAG) && player != target && !player->isCt())
-            continue;
+        if(cls == 1) if(target->getClass() != player->getClass()) continue;
+        if(clan == 1) if(!target->getClan()) continue;
+        if(guild == 1) if(player->getGuild() && target->getGuild() != player->getGuild()) continue;
+        if(chaos == 1) if(!target->flagIsSet(P_CHAOTIC)) continue;
+        if(law == 1) if(target->flagIsSet(P_CHAOTIC)) continue;
+        if(pledge == 1) if((target->getClan() && target->getClan() == player->getClan()) || !target->getClan()) continue;
+        if(race > 0) if((player->willIgnoreIllusion() ? target->getRace() : target->getDisplayRace()) != race) continue;
+        if(special == -1) if(!target->isPublicWatcher()) continue;
+        if(special == -2) if(!target->flagIsSet(P_ADULT)) continue;
+        if(special == -3) if(!target->flagIsSet(P_VETERAN)) continue;
+        if(cClass != CreatureClass::NONE) if(target->getClass() != cClass) continue;
+        if(target->flagIsSet(P_GLOBAL_GAG) && player != target && !player->isCt()) continue;
 
         found = true;
 

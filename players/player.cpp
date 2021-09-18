@@ -1503,7 +1503,7 @@ void Player::sendPrompt() {
         toPrint += "\n";
 
     // Send EOR if they want it, otherwise send GA
-    if(getSock()->getEor() == 1) {
+    if(getSock()->getEor()) {
         unsigned char eor_str[] = {IAC, EOR, '\0' };
         toPrint += eor_str;
     } else if(!getSock()->isDumbClient()){
@@ -2410,23 +2410,16 @@ bstring Player::getWhoString(bool whois, bool color, bool ignoreIllusion) const 
         isEffected("mist") ||
         (flagIsSet(P_LINKDEAD) && !isPublicWatcher())
     ) {
-        if(color)
-            whoStr << " ^w";
-        if(flagIsSet(P_DM_INVIS))
-            whoStr << "[+]";
-        if(isEffected("incognito") )
-            whoStr << "[g]";
-        if(isInvisible() )
-            whoStr << "[*]";
-        if(isEffected("mist") )
-            whoStr << "[m]";
-        if(flagIsSet(P_LINKDEAD) && !isPublicWatcher() )
-            whoStr << "[l]";
+        if(color) whoStr << " ^w";
+        if(flagIsSet(P_DM_INVIS)) whoStr << "[+]";
+        if(isEffected("incognito") ) whoStr << "[g]";
+        if(isInvisible() ) whoStr << "[*]";
+        if(isEffected("mist") ) whoStr << "[m]";
+        if(flagIsSet(P_LINKDEAD) && !isPublicWatcher() ) whoStr << "[l]";
     }
 
 
-    if(flagIsSet(P_AFK))
-        whoStr << (color ? "^R" : "") << " [AFK]";
+    if(flagIsSet(P_AFK)) whoStr << (color ? "^R" : "") << " [AFK]";
 
     if(deity) {
         whoStr << (color ? "^r" : "") << " (" << gConfig->getDeity(deity)->getName() << ")";

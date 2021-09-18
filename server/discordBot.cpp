@@ -16,11 +16,13 @@
  *
  */
 #include <dpp/dpp.h>
+#include <dpp/commandhandler.h>
 #include "fmt/core.h"
 #include "random.hpp"           // for Random
 #include "config.hpp"           // for Config
 #include "communication.hpp"    // for COM_EMOTE
 #include "server.hpp"           // for Server, MonsterList
+#include "creatures.hpp"        // for Player
 #include <boost/algorithm/string/replace.hpp>
 
 void Config::clearWebhookTokens() {
@@ -32,6 +34,31 @@ std::string getUsername(dpp::guild *guild, dpp::user *author) {
     return ((member != guild->members.end() && !member->second.nickname.empty()) ? member->second.nickname : author->username);
 }
 
+
+std::string getWho() {
+    bool found = false;
+    std::ostringstream whoStr;
+
+    whoStr << "```\n";
+    for(const auto& [pId, player] : gServer->players) {
+        if(!player->isConnected()) continue;
+        if(player->flagIsSet(P_DM_INVIS)) continue;
+        if(player->isEffected("incognito")) continue;
+
+        found = true;
+
+        whoStr << player->getWhoString(false, false, false);
+    }
+    if(!found)
+        return bstring("Nobody found!\n");
+    else {
+        whoStr << "```\n";
+        return whoStr.str();
+    }
+
+}
+
+
 bool Server::initDiscordBot() {
     if (!gConfig->isBotEnabled()) {
         std::cout << "Discord bot NOT enabled" << std::endl;
@@ -41,15 +68,33 @@ bool Server::initDiscordBot() {
     std::cout << "Initializing Discord bot" << std::endl;
     discordBot = new dpp::cluster(gConfig->getBotToken());
 
-    discordBot->on_ready([bot=this->discordBot](const dpp::ready_t & event) {
+    /* Create command handler, and specify prefixes */
+    commandHandler = new dpp::commandhandler (discordBot);
+
+    /* Specifying a prefix of "/" tells the command handler it should also expect slash commands */
+    commandHandler->add_prefix(".").add_prefix("/");
+
+    discordBot->on_ready([bot=this->discordBot, command_handler=this->commandHandler](const dpp::ready_t & event) {
         std::cout << "Logged in as " << bot->me.username << "!\n";
+        command_handler->add_command(
+                /* Command name */
+                "who",
+                /* Parameters */
+                {},
+                /* Command handler */
+                [command_handler](const std::string& command, const dpp::parameter_list_t& parameters, dpp::command_source src) {
+                    command_handler->reply(dpp::message().add_embed((dpp::embed().set_title("Players currently online").set_description(getWho()))), src);
+                },
+                /* Command description */
+                "Get a list of who is currently logged into the mud."
+        );
     });
+
     discordBot->on_message_create([bot=this->discordBot](const dpp::message_create_t & event) {
         if (event.msg->author->is_bot()) {
             // Don't respond to bot messages
             return;
         }
-        // TODO: First handle slash commands
 
         channelPtr chan = getChannelByDiscordChannel(event.msg->channel_id);
         auto guild = dpp::find_guild(event.msg->guild_id);
@@ -62,9 +107,17 @@ bool Server::initDiscordBot() {
                 if (!event.msg->mentions.empty()) {
                     // Replace all mentions with the actual users
                     std::string content = event.msg->content;
+
                     for (auto& mention : event.msg->mentions) {
-                        const auto& mentionedUser = dpp::find_user(mention);
-                        boost::replace_all(content, fmt::format("<@!{}>", mention), fmt::format("@{}", getUsername(guild, mentionedUser)));
+                        boost::replace_all(content, fmt::format("<@!{}>", mention), fmt::format("@{}", getUsername(guild, dpp::find_user(mention))));
+                    }
+
+                    for (auto& mention : event.msg->mention_channels) {
+                        boost::replace_all(content, fmt::format("<@#{}>", mention), fmt::format("#{}", dpp::find_channel(mention)->name));
+                    }
+
+                    for (auto& mention : event.msg->mention_roles) {
+                        boost::replace_all(content, fmt::format("<@&{}>", mention), fmt::format("#{}", dpp::find_role(mention)->name));
                     }
                     contentStr << content;
                 } else {
@@ -106,9 +159,11 @@ bool Server::sendDiscordWebhook(long webhookID, int type, const bstring &author,
          */
         myMessage = dpp::message(msg).set_allowed_mentions(true, false, false, false, {}, {});
 
-        auto myAuthor = new dpp::user();
-        myAuthor->username = author;
-        myMessage.author = myAuthor;
+        if(!author.empty()) {
+            auto myAuthor = new dpp::user();
+            myAuthor->username = author;
+            myMessage.author = myAuthor;
+        }
     }
 
     auto wh = dpp::webhook();

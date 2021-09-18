@@ -45,6 +45,10 @@
 #include "server.hpp"     // for Server, gServer, PlayerMap, SocketList
 #include "socket.hpp"     // for Socket
 
+
+// Communication.cpp
+extern const long IN_GAME_WEBHOOK;
+
 #define TELOPT_COMPRESS2       86
 
 int Numplayers;
@@ -261,12 +265,9 @@ void broadcastLogin(Player* player, BaseRoom* inRoom, int login) {
             broadcast(isStaff, "^G%s", illusion.c_str());
         }
     } else {
+        gServer->sendDiscordWebhook(IN_GAME_WEBHOOK, -1, "", illusion);
 
-
-        Player* target= nullptr;
-        for(const auto& p : gServer->players) {
-            target = p.second;
-
+        for(const auto& [tId, target] : gServer->players) {
             if(!target->isConnected())
                 continue;
             if(target->isGagging(player->getName()))
@@ -275,14 +276,12 @@ void broadcastLogin(Player* player, BaseRoom* inRoom, int login) {
                 continue;
 
             if(target->getClass() <= CreatureClass::BUILDER && !target->isWatcher()) {
-                if( !player->isStaff() &&
-                    !(logoff && target->getClass() == CreatureClass::BUILDER)
-                )
-                    target->print("%s\n", player->willIgnoreIllusion() ? illusion.c_str() : text.c_str());
+                if( !player->isStaff() && !(logoff && target->getClass() == CreatureClass::BUILDER))
+                    *target << (player->willIgnoreIllusion() ? illusion : text) << "\n";
             } else if((target->isCt() || target->isWatcher()) && player->getClass() !=  CreatureClass::BUILDER) {
-                target->print("%s%s\n", player->willIgnoreIllusion() ? illusion.c_str() : text.c_str(), room.str().c_str());
+                *target << (player->willIgnoreIllusion() ? illusion : text) << room.str() << "\n";
                 if(login && target->isCt())
-                    target->print("%s\n", extra.str().c_str());
+                    *target << extra.str() << "\n";
             }
         }
     }
@@ -464,26 +463,6 @@ void shutdown_now(int sig) {
 
     std::clog << "Goodbye.\n";
     exit(0);
-}
-
-int check_flood(int fd) {
-//  int i,j=0;
-//
-//  for(i=0; i<Tablesize ;i++) {
-//      if(fd!=i) {
-//          if(Ply[i].sock) {
-//              if(!strcmp(Ply[i].sock->getHostname().c_str(),sock->getHostname().c_str()) && i != fd) {
-//                  j++;
-//                  if(j >= 3) {
-//                      disconnect(i);
-//                      return(1);
-//                  }
-//              }
-//          }
-//      }
-//  }
-//  gServer->cleanUp();
-    return(0);
 }
 
 //*********************************************************************

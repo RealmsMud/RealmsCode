@@ -93,13 +93,15 @@ sayInfo sayList[] = {
     { nullptr, false, false, false, 0 }
 };
 
+const long IN_GAME_WEBHOOK = 886681065878605855;
+
 channelInfo channelList[] = {
     //     Name         OOC     Color               Format                                              MIN MAX eaves   canSee                  canUse      canHear     flag    not flag                type
-    { "broadcast",  true,  "*CC:BROADCAST*",    "### *IC-NAME* broadcasted, \"*TEXT*\"",            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        0, 886681065878605855, 886681021041500170},
-    { "broad",      true,  "*CC:BROADCAST*",    "### *IC-NAME* broadcasted, \"*TEXT*\"",            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        0, 886681065878605855, -1},
-    { "bro",        true,  "*CC:BROADCAST*",    "### *IC-NAME* broadcasted, \"*TEXT*\"",            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        0, 886681065878605855, -1},
-    { "bemote",     true,  "*CC:BROADCAST*",    "*** *IC-NAME* *TEXT*.",                            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        COM_EMOTE, 886681065878605855, -1},
-    { "broademote", true,  "*CC:BROADCAST*",    "*** *IC-NAME* *TEXT*.",                            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        COM_EMOTE, 886681065878605855, -1},
+    { "broadcast",  true,  "*CC:BROADCAST*",    "### *IC-NAME* broadcasted, \"*TEXT*\"",            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        0, IN_GAME_WEBHOOK, 886681021041500170},
+    { "broad",      true,  "*CC:BROADCAST*",    "### *IC-NAME* broadcasted, \"*TEXT*\"",            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        0, IN_GAME_WEBHOOK, -1},
+    { "bro",        true,  "*CC:BROADCAST*",    "### *IC-NAME* broadcasted, \"*TEXT*\"",            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        0, IN_GAME_WEBHOOK, -1},
+    { "bemote",     true,  "*CC:BROADCAST*",    "*** *IC-NAME* *TEXT*.",                            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        COM_EMOTE, IN_GAME_WEBHOOK, -1},
+    { "broademote", true,  "*CC:BROADCAST*",    "*** *IC-NAME* *TEXT*.",                            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        COM_EMOTE, IN_GAME_WEBHOOK, -1},
 
     { "gossip",     true,  "*CC:GOSSIP*",       "(Gossip) *IC-NAME* sent, \"*TEXT*\"",              2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_GOSSIP,        0, 886678176099627100, 886678132327862332},
     { "ptest",      false,   "*CC:PTEST*",      "[P-Test] *IC-NAME* sent, \"*TEXT*\"",              -1, -1, false,  isPtester,         nullptr,            isPtester,         0,      0,              0, -1, -1},
