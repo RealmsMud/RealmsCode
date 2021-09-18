@@ -415,7 +415,7 @@ public:
     bstring getSpecialFlag(int index);
 
 // Get
-    const cWeather* getWeather() const;
+    [[nodiscard]] const cWeather* getWeather() const;
 
     [[nodiscard]] bstring getDmPass() const;
     [[nodiscard]] bstring getWebserver() const;

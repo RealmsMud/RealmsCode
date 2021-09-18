@@ -48,6 +48,8 @@ class Socket;
 #define COM_RACE        10
 #define COM_CLAN        11
 
+extern const long IN_GAME_WEBHOOK;
+
 extern char com_text[][20];
 extern char com_text_u[][20];
 

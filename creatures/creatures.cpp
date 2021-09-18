@@ -118,27 +118,18 @@ bool Creature::canSee(const MudObject* target, bool skip) const {
     if(target->isCreature()) {
         const Creature* cTarget = target->getAsConstCreature();
         if(cTarget->isPlayer()) {
-            if(cTarget->isDm() && cTarget->flagIsSet(P_DM_INVIS) && !isDm())
-                return(false);
-            if(cTarget->isCt() && cTarget->flagIsSet(P_DM_INVIS) && !isCt())
-                return(false);
-            if(cTarget->isStaff() && cTarget->flagIsSet(P_DM_INVIS) && !isStaff())
-                return(false);
-            if(target->isEffected("incognito") && (getClass() < cTarget->getClass()) && getParent() != cTarget->getParent())
-                return(false);
+            if(cTarget->flagIsSet(P_DM_INVIS) && getClass() < cTarget->getClass()) return(false);
+            if(target->isEffected("incognito") && (getClass() < cTarget->getClass()) && getParent() != cTarget->getParent()) return(false);
 
             if(!skip) {
-                if(cTarget->isInvisible() && !isEffected("detect-invisible") && !isStaff())
-                    return(false);
-                if(target->isEffected("mist") && !isEffected("true-sight") && !isStaff())
-                    return(false);
+                if(cTarget->isInvisible() && !isEffected("detect-invisible") && !isStaff()) return(false);
+                if(target->isEffected("mist") && !isEffected("true-sight") && !isStaff()) return(false);
             }
 
         } else {
 
             if(!skip) {
-                if(cTarget->isInvisible() && !isEffected("detect-invisible") && !isStaff())
-                    return(false);
+                if(cTarget->isInvisible() && !isEffected("detect-invisible") && !isStaff()) return(false);
             }
 
         }
@@ -146,22 +137,17 @@ bool Creature::canSee(const MudObject* target, bool skip) const {
     } // End Creature
     if(target->isExit()) {
         const Exit* exit = target->getAsConstExit();
-        if(isStaff())
-            return(true);
+        if(isStaff()) return(true);
 
         // handle NoSee right away
-        if(exit->flagIsSet(X_NO_SEE))
-            return(false);
-        if(exit->isEffected("invisibility") && !isEffected("detect-invisible"))
-            return(false);
+        if(exit->flagIsSet(X_NO_SEE)) return(false);
+        if(exit->isEffected("invisibility") && !isEffected("detect-invisible")) return(false);
     }
     if(target->isObject()) {
         const Object* object = target->getAsConstObject();
 
-        if(isStaff())
-            return(true);
-        if(object->isEffected("invisibility") && !isEffected("detect-invisible"))
-            return(false);
+        if(isStaff()) return(true);
+        if(object->isEffected("invisibility") && !isEffected("detect-invisible")) return(false);
 
     }
     return(true);

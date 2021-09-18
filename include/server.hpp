@@ -62,6 +62,7 @@ class WebInterface;
 
 namespace dpp {
     class cluster;
+    class commandhandler;
 }
 
 struct CanCleanupRoomFn {
@@ -199,6 +200,7 @@ private:
     std::list<dnsCache> cachedDns; // Cache of DNS lookups
     WebInterface* webInterface;
     dpp::cluster *discordBot;
+    dpp::commandhandler *commandHandler;
 
     // Game Updates
     MonsterList activeList; // The new active list
