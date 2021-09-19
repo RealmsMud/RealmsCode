@@ -18,6 +18,7 @@
 #ifndef MSTRUCT_H
 #define MSTRUCT_H
 
+#include <functional>
 #include <list>
 
 #include "anchor.hpp"
@@ -25,6 +26,7 @@
 #include "dice.hpp"
 #include "global.hpp"
 #include "money.hpp"
+#include "namable.hpp"
 #include "realm.hpp"
 
 
@@ -42,19 +44,6 @@ class EffectInfo;
 class AlchemyEffect;
 class MudObject;
 
-// A common class that has a name and description to avoid two separate classes with name/desc (skill & command) being inherited by SkillCommand
-class Nameable {
-public:
-    Nameable() = default;
-    virtual ~Nameable() = default;
-
-    bstring name;
-    bstring description;
-
-    [[nodiscard]] bstring getName() const;
-    [[nodiscard]] bstring getDescription() const;
-
-};
 
 enum AlcoholState {
     ALCOHOL_SOBER = 0,
@@ -255,11 +244,11 @@ typedef struct {
 // Base class for Command, Spell, Song, etc
 class MudMethod : public virtual Nameable {
 public:
-    virtual ~MudMethod() = default;
+    ~MudMethod() override = default;
     int priority{};
 
-    bool exactMatch(const bstring& toMatch);
-    bool partialMatch(const bstring& toMatch);
+    [[nodiscard]] bool exactMatch(const bstring& toMatch) const;
+    bool partialMatch(const bstring& toMatch) const;
 };
 
 // ******************
@@ -268,13 +257,10 @@ public:
 // Base class for songs & spells
 class MysticMethod: public MudMethod {
 public:
-    virtual ~MysticMethod() = default;
-           
-    bool exactMatch(const bstring& toMatch);
-    bool partialMatch(const bstring& toMatch);
+    ~MysticMethod() override = default;
 
     virtual void save(xmlNodePtr rootNode) const = 0;
-    const bstring& getScript() const;
+    [[nodiscard]] const bstring& getScript() const;
 
 public:
     bstring script;
@@ -290,10 +276,13 @@ protected:
 
 class Spell: public MysticMethod {
 public:
-    Spell(xmlNodePtr rootNode);
-    ~Spell() = default;
+    explicit Spell(xmlNodePtr rootNode);
+    Spell(const bstring& pCmdStr) {
+        name = pCmdStr;
+    }
+    ~Spell() override = default;
 
-    void save(xmlNodePtr rootNode) const;
+    void save(xmlNodePtr rootNode) const override;
 };
 
 #include "songs.hpp"
@@ -304,7 +293,7 @@ public:
     ~Command() = default;
     bool    (*auth)(const Creature *){};
 
-    virtual int execute(Creature* player, cmd* cmnd) = 0;
+    virtual int execute(Creature* player, cmd* cmnd) const = 0;
 };
 
 // these are supplemental to the cmd class
@@ -317,23 +306,29 @@ public:
         auth = pAuth;
         description = pDesc;
     };
+    CrtCommand(const bstring& pCmdStr) {
+        name = pCmdStr;
+    }
     ~CrtCommand() = default;
     int (*fn)(Creature* player, cmd* cmnd);
-    int execute(Creature* player, cmd* cmnd);
+    int execute(Creature* player, cmd* cmnd) const;
 };
 
 class PlyCommand: public Command {
 public:
     PlyCommand(const bstring& pCmdStr, int pPriority, int (*pFn)(Player* player, cmd* cmnd), bool (*pAuth)(const Creature *), const bstring& pDesc): fn(pFn)
     {
-        name = pCmdStr;
+        name = bstring(pCmdStr);
         priority = pPriority;
         auth = pAuth;
-        description = pDesc;
+        description = bstring(pDesc);
     };
+    PlyCommand(const bstring& pCmdStr) {
+        name = pCmdStr;
+    }
     ~PlyCommand() = default;
     int (*fn)(Player* player, cmd* cmnd);
-    int execute(Creature* player, cmd* cmnd);
+    int execute(Creature* player, cmd* cmnd) const;
 };
 
 typedef int (*PFNCOMPARE)(const void *, const void *);

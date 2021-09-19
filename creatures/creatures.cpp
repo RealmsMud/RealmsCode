@@ -958,7 +958,7 @@ int Player::save(bool updateTime, LoadType saveType) {
 //                      ableToDoCommand
 //*********************************************************************
 
-bool Creature::ableToDoCommand(const cmd* cmnd) const {
+bool Creature::ableToDoCommand( cmd* cmnd) const {
 
     if(isMonster())
         return(true);

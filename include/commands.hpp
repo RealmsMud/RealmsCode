@@ -170,7 +170,8 @@ int cmdAuction(Player* player, cmd* cmnd);
 int cmdReclaim(Player* player, cmd* cmnd);
 
 
-
+// demographics.cpp
+int cmdDemographics(Player* player, cmd* cmnd);
 
 // effects.cpp
 int cmdEffects(Creature* player, cmd* cmnd);
@@ -367,6 +368,70 @@ int cmdQuests(Player* player, cmd* cmnd);
 // web.cpp
 int dmFifo(Player* player, cmd* cmnd);
 int cmdForum(Player* player, cmd* cmnd);
+
+// update.cpp
+int list_act(Player* player, cmd* cmnd);
+
+
+// Somewhere
+int cmdPrepare(Player* player, cmd* cmnd);
+int cmdTitle(Player* player, cmd* cmnd);
+int cmdReconnect(Player* player, cmd* cmnd);
+int cmdWear(Player* player, cmd* cmnd);
+int cmdRemoveObj(Player* player, cmd* cmnd);
+int cmdEquipment(Player *creature, cmd* cmnd);
+int cmdReady(Player* player, cmd* cmnd);
+int cmdHold(Player* player, cmd* cmnd);
+int cmdSecond(Player* player, cmd* cmnd);
+
+int cmdCast(Creature* creature, cmd* cmnd);
+int cmdTeach(Player* player, cmd* cmnd);
+int cmdStudy(Player* player, cmd* cmnd);
+int cmdReadScroll(Player* player, cmd* cmnd);
+int cmdConsume(Player* player, cmd* cmnd);
+int cmdUseWand(Player* player, cmd* cmnd);
+int cmdUnlock(Player* player, cmd* cmnd);
+
+int checkBirthdays(Player* player, cmd* cmnd);
+int cmdFlee(Player* player, cmd* cmnd);
+int cmdPrepareForTraps(Player* player, cmd* cmnd);
+int cmdSteal(Player* player, cmd* cmnd);
+int cmdRecall(Player* player, cmd* cmnd);
+int cmdPassword(Player* player, cmd* cmnd);
+int cmdSongs(Player* player, cmd* cmnd);
+int cmdSurname(Player* player, cmd* cmnd);
+int cmdVisible(Player* player, cmd* cmnd);
+int cmdDice(Creature* player, cmd* cmnd);
+int cmdChooseAlignment(Player* player, cmd* cmnd);
+int cmdKeep(Player* player, cmd* cmnd);
+int cmdUnkeep(Player* player, cmd* cmnd);
+int cmdGo(Player* player, cmd* cmnd);
+int cmdSing(Creature* creature, cmd* cmnd);
+
+
+
+// refuse.cpp
+int cmdRefuse(Player* player, cmd* cmnd);
+int cmdWatch(Player* player, cmd* cmnd);
+
+// data.cpp
+int cmdRecipes(Player* player, cmd* cmnd);
+
+// faction.cpp
+int cmdFactions(Player* player, cmd* cmnd);
+
+
+// post.cpp
+int cmdSendMail(Player* player, cmd* cmnd);
+int cmdReadMail(Player* player, cmd* cmnd);
+int cmdDeleteMail(Player* player, cmd* cmnd);
+int cmdEditHistory(Player* player, cmd* cmnd);
+int cmdHistory(Player* player, cmd* cmnd);
+int cmdDeleteHistory(Player* player, cmd* cmnd);
+
+// weaponless.cpp
+int cmdHowl(Creature* player, cmd* cmnd);
+
 
 
 int dmStatDetail(Player* player, cmd* cmnd);

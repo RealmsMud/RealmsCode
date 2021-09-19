@@ -835,11 +835,10 @@ void Config::clearSkills() {
     SkillInfo* skill;
     for (sIt = skills.begin(); sIt != skills.end(); sIt++) {
         skill = (*sIt).second;
-        delete skill;
-        //skills.erase(sIt);
+        auto* sk = dynamic_cast<SkillCommand*>(skill);
+        if(sk == nullptr) delete skill;
     }
     skills.clear();
-    // Every skill command is in the skills list, so they've already been erased, just clear them
     skillCommands.clear();
 }
 // Updates skill pointers on players

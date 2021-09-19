@@ -33,7 +33,7 @@ public:
         ret = num = 0;
         memset(str, 0, sizeof(str));
         memset(val, 0, sizeof(val));
-        myCommand=0;
+        myCommand= nullptr;
 #endif
     };
     int         num;
@@ -42,7 +42,7 @@ public:
     long        val[COMMANDMAX];
 
     int         ret;
-    Command *myCommand;
+    const Command *myCommand;
 };
 
 

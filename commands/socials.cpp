@@ -32,9 +32,6 @@
 
 
 void Config::clearSocials() {
-    for(const SocialMap::value_type& p : socials) {
-        delete p.second;
-    }
     socials.clear();
 }
 
@@ -85,7 +82,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
         return(0);
 
     bstring str = cmnd->myCommand->getName();
-    auto* social = dynamic_cast<SocialCommand*>(cmnd->myCommand);
+    auto* social = dynamic_cast<const SocialCommand*>(cmnd->myCommand);
 
     if(!social)
         return(0);
@@ -186,6 +183,6 @@ void Container::doSocialEcho(bstring str, const Creature* actor, const Creature*
 
 
 
-int SocialCommand::execute(Creature* player, cmd* cmnd) {
+int SocialCommand::execute(Creature* player, cmd* cmnd) const {
     return((fn)(player, cmnd));
 }

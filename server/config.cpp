@@ -30,12 +30,16 @@
 #include "calendar.hpp"           // for Calendar, cSeason, cWeather (ptr only)
 #include "catRef.hpp"             // for CatRef
 #include "config.hpp"             // for Config, accountDouble, MudFlagMap
+#include "effects.hpp"            // for Effect
 #include "fishing.hpp"            // for Fishing
 #include "global.hpp"             // for CUSTOM_COLOR_ADMIN, CUSTOM_COLOR_BR...
 #include "mud.hpp"                // for MAXINT
 #include "paths.hpp"              // for checkDirExists, checkPaths
 #include "proxy.hpp"              // for ProxyManager
+#include "skills.hpp"
+#include "socials.hpp"
 #include "structs.hpp"            // for MudFlag
+
 
 // Globals
 Config *gConfig = nullptr;

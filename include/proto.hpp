@@ -60,7 +60,6 @@ bool actionShow(Player* pTarget, Creature* creature);
 unsigned int standardPoisonDuration(short level, short con);
 
 // calendar.cpp
-int checkBirthdays(Player* player, cmd* cmnd);
 int reloadCalendar(Player* player);
 
 
@@ -83,8 +82,6 @@ Monster *getFirstAggro(Monster* creature, const Creature* player);
 Creature *enm_in_group(Creature *target);
 
 
-// data.cpp
-int cmdRecipes(Player* player, cmd* cmnd);
 
 // dmroom.cpp
 bstring wrapText(const bstring& text, int wrap);
@@ -127,8 +124,6 @@ void getDestination(bstring str, MapMarker* mapmarker, CatRef* cr, const Creatur
 
 void spawnObjects(const bstring& room, const bstring& objects);
 
-int cmdSing(Creature* creature, cmd* cmnd);
-
 
 
 
@@ -139,13 +134,9 @@ void link_rom(BaseRoom* room, MapMarker *mapmarker, const bstring& str);
 int room_track(Creature* player);
 
 
-int cmdPrepare(Player* player, cmd* cmnd);
 
 
 
-
-int cmdFlee(Player* player, cmd* cmnd);
-int cmdPrepareForTraps(Player* player, cmd* cmnd);
 
 
 // access.cp
@@ -183,7 +174,6 @@ bool isClass(char str[80]);
 
 
 
-int cmdReconnect(Player* player, cmd* cmnd);
 //void login(Socket* sock, bstring str);
 //void createPlayer(Socket* sock, const bstring& str);
 
@@ -192,7 +182,6 @@ void remove_all(Player* player);
 int peek_bag(Player* player, Player* target, cmd* cmnd, int inv);
 
 
-int cmdSteal(Player* player, cmd* cmnd);
 void steal_gold(Player* player, Creature* creature);
 
 
@@ -211,7 +200,6 @@ int getAlignDiff(Creature *crt1, Creature *crt2);
 
 // demographics.cpp
 void runDemographics();
-int cmdDemographics(Player* player, cmd* cmnd);
 
 
 // duel.cpp
@@ -220,27 +208,12 @@ bool induel(const Player* player, const Player* target);
 // equipment.cpp
 int doGetObject(Object* object, Creature* player, bool doLimited=true, bool noSplit=false, bool noQuest=false, bool noMessage=false, bool saveOnLimited=true);
 void wearAll(Player* player, bool login = false);
-int cmdWear(Player* player, cmd* cmnd);
-int cmdRemoveObj(Player* player, cmd* cmnd);
-int cmdEquipment(Player *creature, cmd* cmnd);
-int cmdReady(Player* player, cmd* cmnd);
-int cmdHold(Player* player, cmd* cmnd);
-int cmdSecond(Player* player, cmd* cmnd);
-
-int cmdCast(Creature* creature, cmd* cmnd);
 CastResult doCast(Creature* creature, cmd* cmnd);
-int cmdTeach(Player* player, cmd* cmnd);
-int cmdStudy(Player* player, cmd* cmnd);
-int cmdReadScroll(Player* player, cmd* cmnd);
-int cmdConsume(Player* player, cmd* cmnd);
-int cmdUseWand(Player* player, cmd* cmnd);
-int cmdUnlock(Player* player, cmd* cmnd);
+
 void give_money(Player* player, cmd* cmnd);
 
 
 
-// faction.cpp
-int cmdFactions(Player* player, cmd* cmnd);
 
 // files1.cpp
 char* objectPath(const CatRef& cr);
@@ -323,7 +296,6 @@ void doStatCancel(Creature* target, Player *pTarget, int stat, bool good);
 void doStatChange(Creature* target, Player *pTarget, int stat, bool good);
 
 // magic
-int cmdRecall(Player* player, cmd* cmnd);
 bool hinderedByDimensionalAnchor(int splno);
 
 
@@ -342,7 +314,6 @@ bool validRoomId(const CatRef& cr);
 bstring timeStr(int seconds);
 bstring removeColor(bstring obj);
 
-int cmdGo(Player* player, cmd* cmnd);
 bstring progressBar(int barLength, float percentFull, const bstring& text = "", char progressChar = '=', bool enclosed = true);
 
 bool nameIsAllowed(bstring str, Socket* sock);
@@ -390,14 +361,11 @@ int displayObject(Player* player, Object* target);
 int new_scroll(int level, Object **new_obj);
 
 
-int cmdKeep(Player* player, cmd* cmnd);
-int cmdUnkeep(Player* player, cmd* cmnd);
 bool cantDropInBag(Object* object);
 
 void getDamageString(char atk[50], Creature* player, Object *weapon, bool critical=false);
 
 // player.cpp
-int cmdTitle(Player* player, cmd* cmnd);
 int mprofic(const Creature* player, int index);
 Player* lowest_piety(BaseRoom* room, bool invis);
 
@@ -407,25 +375,10 @@ void renamePlayerFiles(const char *old_name, const char *new_name);
 // player2.cpp
 CatRef getEtherealTravelRoom();
 void etherealTravel(Player* player);
-int cmdSurname(Player* player, cmd* cmnd);
-int cmdVisible(Player* player, cmd* cmnd);
-int cmdDice(Creature* player, cmd* cmnd);
-int cmdChooseAlignment(Player* player, cmd* cmnd);
 
 
-// post.cpp
-int cmdSendMail(Player* player, cmd* cmnd);
-int cmdReadMail(Player* player, cmd* cmnd);
-int cmdDeleteMail(Player* player, cmd* cmnd);
-int notepad(Player* player, cmd* cmnd);
-int cmdEditHistory(Player* player, cmd* cmnd);
-int cmdHistory(Player* player, cmd* cmnd);
-int cmdDeleteHistory(Player* player, cmd* cmnd);
 void sendMail(const bstring& target, const bstring& message);
 
-// refuse.cpp
-int cmdRefuse(Player* player, cmd* cmnd);
-int cmdWatch(Player* player, cmd* cmnd);
 
 // room.cpp
 void display_rom(Player* player, Player *looker=0, int magicShowHidden=0);
@@ -442,14 +395,12 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const CatRef& cr);
 
 // security.cpp
 bool isValidPassword(Socket*, bstring pass);
-int cmdPassword(Player* player, cmd* cmnd);
 
 
 
 // sing.cpp
 int songMultiOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso);
 int songOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso);
-int cmdSongs(Player* player, cmd* cmnd);
 int songsKnown(Socket* sock, Player* player, int test);
 int songFail(Player* player);
 int songHeal(Player* player, cmd* cmnd);
@@ -473,7 +424,6 @@ int steal(Creature* player, cmd* cmnd);
 // update.cpp
 void update_time(long t);
 void update_shutdown(long t);
-int list_act(Player* player, cmd* cmnd);
 void update_dust_oldPrint(long t);
 void crash(int sig);
 void cleanUpMemory(void);
@@ -482,8 +432,6 @@ int countTotalEnemies(Creature *monster);
 bool isDay();
 
 
-// weaponless.cpp
-int cmdHowl(Creature* player, cmd* cmnd);
 
 // staff.cpp
 bool isWatcher(Socket* sock);

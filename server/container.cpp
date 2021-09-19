@@ -211,7 +211,7 @@ bool Container::checkAntiMagic(Monster* ignore) {
     return(false);
 }
 
-MudObject* Container::findTarget(const Creature* searcher, const cmd* cmnd, int num) const {
+MudObject* Container::findTarget(const Creature* searcher,  cmd* cmnd, int num) const {
     return(findTarget(searcher, cmnd->str[num], cmnd->val[num]));
 }
 
@@ -260,7 +260,7 @@ Object* Container::findObject(const Creature* searcher, const bstring& name, con
 
 
 // Wrapper for the real findCreature to support legacy callers
-Creature* Container::findCreature(const Creature* searcher, const cmd* cmnd, int num) const {
+Creature* Container::findCreature(const Creature* searcher,  cmd* cmnd, int num) const {
     return(findCreature(searcher, cmnd->str[num], cmnd->val[num]));
 }
 
@@ -338,7 +338,7 @@ Creature* Container::findCreature(const Creature* searcher, const bstring& name,
 
 }
 
-Monster* Container::findMonster(const Creature* searcher, const cmd* cmnd, int num) const {
+Monster* Container::findMonster(const Creature* searcher,  cmd* cmnd, int num) const {
     return(findMonster(searcher, cmnd->str[num], cmnd->val[num]));
 }
 Monster* Container::findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch) const {
@@ -370,7 +370,7 @@ Monster* Container::findMonster(const Creature* searcher, const bstring& name, c
         return(target);
     }
 }
-Player* Container::findPlayer(const Creature* searcher, const cmd* cmnd, int num) const {
+Player* Container::findPlayer(const Creature* searcher,  cmd* cmnd, int num) const {
     return(findPlayer(searcher, cmnd->str[num], cmnd->val[num]));
 }
 Player* Container::findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch) const {

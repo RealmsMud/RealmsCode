@@ -1106,7 +1106,7 @@ void bringDownTheWall(EffectInfo* effect, BaseRoom* room, Exit* exit) {
 
     if(effect->isPermanent()) {
         // fake being removed
-        Effect* ef = effect->getEffect();
+        auto* ef = effect->getEffect();
         room->effectEcho(ef->getRoomAddStr(), exit);
 
         // extra of 2 means a 2 pulse (21-40 seconds) duration

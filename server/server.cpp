@@ -942,7 +942,7 @@ void Server::updateActive(long t) {
                 if( !monster->willAssist(mons->getAsMonster()) &&
                     !mons->flagIsSet(M_PERMENANT_MONSTER) &&
                     !monster->isEnemy(mons) && 
-                    !monster->isPet()
+                    !mons->isPet()
                 )
                     monster->addEnemy(mons);
             }

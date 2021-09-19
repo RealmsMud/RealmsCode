@@ -61,8 +61,7 @@ bool Config::loadSocials() {
     clearAlchemy();
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Social")) {
-            auto* social = new SocialCommand(curNode);
-            socials.insert(SocialMap::value_type(social->getName(),social));
+            socials.emplace(curNode);
         }
         curNode = curNode->next;
     }
@@ -113,8 +112,8 @@ bool Config::saveSocials() {
     rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Socials", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
-    for(const SocialMap::value_type& p : socials) {
-        p.second->saveToXml(rootNode);
+    for(const auto &social : socials) {
+        social.saveToXml(rootNode);
     }
     bstring filename = bstring(Path::Code) + "/" + "socials.xml";
     xml::saveFile(filename.c_str(), xmlDoc);

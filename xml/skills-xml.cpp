@@ -121,11 +121,10 @@ void Config::loadSkillGroup(xmlNodePtr rootNode) {
 
 void Config::loadSkills(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
-    SkillInfo* skill=nullptr;
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Skill")) {
             try {
-                skill = new SkillInfo(curNode);
+                auto* skill = new SkillInfo(curNode);
                 // A SkillInfo is not a SkillCommand, it only goes in the SkillInfo table
                 skills.insert(SkillInfoMap::value_type(skill->getName(), skill));
             } catch(std::exception &e) {
@@ -133,15 +132,14 @@ void Config::loadSkills(xmlNodePtr rootNode) {
             }
         } else if(NODE_NAME(curNode, "SkillCommand")) {
             try {
-                skill = new SkillCommand(curNode);
-                auto* skillCmd = dynamic_cast<SkillCommand*>(skill);
+                auto skill = skillCommands.emplace(curNode);
+                auto* skillCmd = const_cast<SkillCommand *>(&(*(skill.first)));
                 // All SkillCommands are also SkillInfos, put them in both tables
-                skills.insert(SkillInfoMap::value_type(skill->getName(), skill));
-                skillCommands.insert(SkillCommandMap::value_type(skill->getName(), skillCmd));
-                // Insert any aliases as well
-                for(const bstring& alias : skillCmd->aliases) {
-                    skillCommands.insert(SkillCommandMap::value_type(alias, skillCmd));
-                }
+                skills.insert(std::make_pair(skillCmd->getName(), skillCmd));
+//                // Insert any aliases as well // TODO: Maybe later
+//                for(const bstring& alias : skillCmd->aliases) {
+//                    skillCommands.insert(SkillCommandSet::value_type(alias, skillCmd));
+//                }
             } catch(std::exception &e) {
 
             }

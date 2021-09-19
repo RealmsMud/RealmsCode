@@ -565,10 +565,10 @@ bool WebInterface::handleInput() {
             return(true);
         }
         else if(command == "EFFECTLIST") {
-            Effect* effect=nullptr;
+            const Effect* effect=nullptr;
             std::ostringstream oStr;
             for(const auto& sp : gConfig->effects) {
-                effect = sp.second;
+                effect = &(sp.second);
                 oStr << "Name,Display,OppositeEffect,Type,Pulsed,UsesStrength";
                 oStr << effect->getName().c_str() << "," << effect->getDisplay().c_str() << "," <<
                         effect->getType().c_str() << "," << (effect->isPulsed() ? "yes" : "no") << "," <<

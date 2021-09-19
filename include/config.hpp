@@ -20,15 +20,18 @@
 
 #include <list>
 #include <map>
+#include <set>
 #include <utility>
 #include <vector>
 #include <cstring>  // strcasecmp
 
 #include "global.hpp"
 #include "money.hpp"
+#include "namable.hpp"
 #include "proc.hpp"
 #include "size.hpp"
 #include "swap.hpp"
+#include "namable.hpp"
 #include "weather.hpp"
 
 #include "oldquest.hpp"
@@ -97,17 +100,23 @@ struct comp {
     }
 };
 
+struct namableCmp {
+    bool operator() (const Nameable& a, const Nameable& b) const {
+        return strcasecmp(a.getName().c_str(), b.getName().c_str()) < 0;
+    }
+};
+
 typedef std::pair<bstring, bstring> accountDouble;
 typedef std::map<bstring, MxpElement*, comp> MxpElementMap;
 typedef std::map<bstring, bstring, comp> BstringMap;
-typedef std::map<bstring, SocialCommand*, comp> SocialMap;
 typedef std::map<bstring, SkillInfo*, comp> SkillInfoMap;
-typedef std::map<bstring, Effect*, comp> EffectMap;
-typedef std::map<bstring, PlyCommand*, comp> PlyCommandMap;
-typedef std::map<bstring, CrtCommand*, comp> CrtCommandMap;
-typedef std::map<bstring, SkillCommand*, comp> SkillCommandMap;
-typedef std::map<bstring, Spell*, comp> SpellMap;
-typedef std::map<bstring, Song*, comp> SongMap;
+typedef std::map<bstring, Effect, comp> EffectMap;
+typedef std::set<SocialCommand, namableCmp> SocialSet;
+typedef std::set<PlyCommand, namableCmp> PlyCommandSet;
+typedef std::set<CrtCommand, namableCmp> CrtCommandSet;
+typedef std::set<SkillCommand, namableCmp> SkillCommandSet;
+typedef std::set<Spell, namableCmp> SpellSet;
+typedef std::set<Song, namableCmp> SongSet;
 typedef std::map<bstring, AlchemyInfo*, comp> AlchemyMap;
 typedef std::map<bstring, MsdpVariable*> MsdpVarMap;
 typedef std::map<unsigned int, MudFlag> MudFlagMap;
@@ -199,21 +208,21 @@ public:
 // Effects
     bool loadEffects();
     void clearEffects();
-    Effect* getEffect(const bstring& eName);
+    const Effect* getEffect(const bstring& eName);
     bool effectExists(const bstring& eName);
 
 // Spells
     bool loadSpells();
     [[nodiscard]] bool saveSpells() const;
     void clearSpells();
-    Spell* getSpell(bstring sName, int& ret);
+    const Spell* getSpell(const bstring& sName, int& ret);
 
 // New Songs
     bool loadSongs();
     bool saveSongs() const;
     void clearSongs();
-    Song* getSong(bstring sName, int& ret);
-    Song* getSong(bstring sName);
+    const Song* getSong(const bstring& sName, int& ret);
+    const Song* getSong(const bstring& sName);
 
 
 // Alchemy
@@ -603,20 +612,20 @@ public:
     std::list<Ban*> bans;
 
     // Effects
-    std::map<bstring, Effect*, comp> effects;
+    EffectMap effects;
 
     // Commands
-    PlyCommandMap staffCommands;
-    PlyCommandMap playerCommands;
-    CrtCommandMap generalCommands;
+    PlyCommandSet staffCommands;
+    PlyCommandSet playerCommands;
+    CrtCommandSet generalCommands;
 
-    SpellMap spells;
-    SongMap songs;
+    SpellSet spells;
+    SongSet songs;
 
-    SocialMap socials;
+    SocialSet socials;
 
     // All Skill Commands are SkillInfos, but not all SkillInfos are SkillCommands
-    SkillCommandMap skillCommands;
+    SkillCommandSet skillCommands;
     SkillInfoMap skills;
 
     // Guilds

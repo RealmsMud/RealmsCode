@@ -69,8 +69,6 @@ int dmDeletehist(Player* player, cmd* cmnd);
 int dmLottery(Player* player, cmd* cmnd);
 int dmSpelling(Player* player, cmd* cmnd);
 
-int dmAdvance(Creature* player, cmd* cmnd);
-
 int dmApproveGuild(Player* player, cmd* cmnd);
 int dmRejectGuild(Player* player, cmd* cmnd);
 

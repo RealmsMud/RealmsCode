@@ -65,7 +65,7 @@ const bstring& Song::getTargetType() const {
 //                      runScript
 //*********************************************************************
 
-bool Song::runScript(MudObject* singer, MudObject* target) {
+bool Song::runScript(MudObject* singer, MudObject* target) const {
 
     if(script.empty())
         return(false);
@@ -100,14 +100,10 @@ bool Song::runScript(MudObject* singer, MudObject* target) {
 //*********************************************************************
 
 void Config::clearSongs() {
+    for(const auto& [pId, p] : gServer->players) {
+        p->stopPlaying(true);
+    }
 
-    // TODO: Loop through all players and stop any songs being played
-    for(PlayerMap::value_type p : gServer->players) {
-        p.second->stopPlaying(true);
-    }
-    for(const auto& sp : songs) {
-        delete sp.second;
-    }
     songs.clear();
 }
 
@@ -123,7 +119,7 @@ bool Creature::isPlaying() {
 //                      getPlaying
 //*********************************************************************
 
-Song* Creature::getPlaying() {
+const Song* Creature::getPlaying() {
     return(playing);
 }
 
@@ -131,7 +127,7 @@ Song* Creature::getPlaying() {
 //                      setPlaying
 //*********************************************************************
 
-bool Creature::setPlaying(Song* newSong, bool echo) {
+bool Creature::setPlaying(const Song* newSong, bool echo) {
     bool wasPlaying = false;
     if(isPlaying()) {
         stopPlaying(echo);
@@ -220,13 +216,10 @@ bool Creature::pulseSong(long t) {
 //*********************************************************************
 
 int dmSongList(Player* player, cmd* cmnd) {
-    const Song* song=nullptr;
-
     player->printColor("^YSongs\n");
-    for(const auto& sp : gConfig->songs) {
-        song = sp.second;
-        player->printColor("  %s   %d - %s\n    Script: ^y%s^x\n", song->name.c_str(),
-            song->priority, song->description.c_str(), song->script.c_str());
+    for(const auto& song : gConfig->songs) {
+        player->printColor("  %s   %d - %s\n    Script: ^y%s^x\n", song.name.c_str(),
+            song.priority, song.description.c_str(), song.script.c_str());
     }
 
     return(0);
@@ -250,7 +243,7 @@ int cmdPlay(Player* player, cmd* cmnd) {
 
     int retVal = 0;
     bstring songStr = getFullstrText(cmnd->fullstr, 1);
-    Song* song = gConfig->getSong(songStr, retVal);
+    auto* song = gConfig->getSong(songStr, retVal);
 
     if(retVal == CMD_NOT_FOUND) {
         *player << "Alas, there exists no song by that name (" << songStr << ")\n";
@@ -285,7 +278,7 @@ int cmdPlay(Player* player, cmd* cmnd) {
 //                      getDelay
 //*********************************************************************
 
-int Song::getDelay() {
+int Song::getDelay() const {
     return(delay);
 }
 
@@ -293,7 +286,7 @@ int Song::getDelay() {
 //                      getDuration
 //*********************************************************************
 
-int Song::getDuration() {
+int Song::getDuration() const {
     return(duration);
 }
 
