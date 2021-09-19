@@ -66,11 +66,11 @@ char getRandColor() {
 
 int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *pPlayer = player->getAsPlayer();
-    int     maxMissiles=0, mpNeeded=0, canCast=0, num=0;
-    int     missileDmg = 0, a=0;
-    char    colorCh=0;
-    Creature *target=nullptr;
-    Monster *mTarget=nullptr;
+    int     maxMissiles, mpNeeded, canCast=0, num;
+    int     missileDmg, a=0;
+    char    colorCh;
+    Creature *target;
+    Monster *mTarget;
 
     if(!player->spellIsKnown(S_MAGIC_MISSILE) && spellData->how == CastType::CAST) {
         player->print("You do not know that spell.\n");
@@ -193,11 +193,12 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
     Monster *mTarget = target->getAsMonster();
     Monster *mCaster = caster->getAsMonster();
     BaseRoom* room = caster->getRoomParent();
-    int     m=0, bns=0;
+    unsigned int m;
+    int bns=0;
     Damage damage;
-    int     slvl=0, skillPercent=0;
-    //unsigned long addrealm=0;
-    bstring skill = "";
+    int     slvl, skillPercent;
+
+    bstring skill;
     int dmgType = MAGICAL;
     if(osp->drain)
         dmgType = MAGICAL_NEGATIVE;
@@ -394,7 +395,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
         target->modifyDamage(caster, dmgType, damage, osp->realm);
         damage.set(MAX<int>(0, damage.get()));
 
-        m = MIN<int>(target->hp.getCur(), damage.get());
+        m = MIN<unsigned int>(target->hp.getCur(), damage.get());
 
         //addrealm = (m * target->getExperience()) / MAX(1, target->hp.getMax());
         //addrealm = MIN(addrealm, target->getExperience());
@@ -452,10 +453,8 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
             }
         }
 
-        bool wasKilled = false, meKilled = false;
-
-        meKilled = caster->doReflectionDamage(damage, target);
-        wasKilled = target->hp.getCur() < 1;
+        bool meKilled = caster->doReflectionDamage(damage, target);
+        bool wasKilled = target->hp.getCur() < 1;
 
         if( (wasKilled && (
                 pCaster ||
@@ -513,50 +512,50 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 // This function is called by all spells whose sole purpose is to do
 // damage to a creature.
 Creature* Creature::findMagicVictim(const bstring& toFind, int num, SpellData* spellData, bool aggressive, bool selfOk, const bstring& noVictim, const bstring& notFound) {
-    Creature* victim=nullptr;
-        Player  *pVictim=nullptr;
-        if(toFind.empty()) {
-            if(spellData->how != CastType::POTION) {
-                if(hasAttackableTarget()) {
-                    return(getTarget());
-                }
-                if(!noVictim.empty())
-                    bPrint(noVictim);
-                return(nullptr);
-            } else {
-                return(this);
+    Creature *victim = nullptr;
+    Player *pVictim = nullptr;
+    if (toFind.empty()) {
+        if (spellData->how != CastType::POTION) {
+            if (hasAttackableTarget()) {
+                return (getTarget());
             }
+            if (!noVictim.empty())
+                bPrint(noVictim);
+            return (nullptr);
         } else {
-            if(spellData->how == CastType::POTION) {
-                bPrint("You can only use a potion on yourself.\n");
-                return(nullptr);
-            }
-            if(toFind == ".") {
-                // Cast offensive spell on self
-                return(this);
-            } else {
-                victim = getRoomParent()->findCreature(this, toFind.c_str(), num, true, true);
-                if(victim)
-                    pVictim = victim->getAsPlayer();
-
-                if(!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3)
-                        || (!selfOk && victim == this)) {
-                    if(!notFound.empty())
-                        bPrint(notFound);
-                    return(nullptr);
-                }
-                if(isMonster()) {
-                    if(victim == this) {
-                        // for monster casting we need to make sure its not on itself
-                        victim = getRoomParent()->findCreature(this, toFind.c_str(), 2, true, true);
-                        // look for second creature with same name
-                        if(!victim || victim == this)
-                            return(nullptr);
-                    }
-                }
-                return(victim);
-            }
+            return (this);
         }
+    } else {
+        if (spellData->how == CastType::POTION) {
+            bPrint("You can only use a potion on yourself.\n");
+            return (nullptr);
+        }
+        if (toFind == ".") {
+            // Cast offensive spell on self
+            return (this);
+        } else {
+            victim = getRoomParent()->findCreature(this, toFind.c_str(), num, true, true);
+            if (victim)
+                pVictim = victim->getAsPlayer();
+
+            if (!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3)
+                || (!selfOk && victim == this)) {
+                if (!notFound.empty())
+                    bPrint(notFound);
+                return (nullptr);
+            }
+            if (isMonster()) {
+                if (victim == this) {
+                    // for monster casting we need to make sure its not on itself
+                    victim = getRoomParent()->findCreature(this, toFind.c_str(), 2, true, true);
+                    // look for second creature with same name
+                    if (!victim || victim == this)
+                        return (nullptr);
+                }
+            }
+            return (victim);
+        }
+    }
 }
 int splOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *spellname, osp_t *osp) {
     Creature* target=nullptr;
@@ -601,7 +600,8 @@ int doMultiOffensive(Creature* player, Creature* target, int *found_something, i
 
 int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *spellname, osp_t *osp) {
     Creature* target=nullptr;
-    int     monsters=0, players=0, len=0;
+    int     monsters=0, players=0;
+    size_t  len=0;
     int     something_died=0, found_something=0;
 
 

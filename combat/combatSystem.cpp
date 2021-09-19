@@ -611,7 +611,7 @@ double Creature::getFumbleChance(const Object* weapon) const {
 //                      getCriticalChance
 //**********************************************************************
 
-double Creature::getCriticalChance(const int& difference) {
+double Creature::getCriticalChance(const int& difference) const {
     double chance = 5.0;
 
     chance -= adjustChance(difference);

@@ -1008,7 +1008,7 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
     if(player && !Move::canEnter(player, exit, leader))
         return(nullptr);
 
-    if(!Move::getRoom(creature, exit, &newRoom))
+    if(!Move::getRoom(creature, exit, &newRoom) || newRoom == nullptr)
         return(nullptr);
 
     // Rangers and F/T can't sneak with heavy armor on!

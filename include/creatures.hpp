@@ -469,7 +469,7 @@ public:
     int dodge(Creature* target);
     int parry(Creature* target);
     double getFumbleChance(const Object* weapon) const;
-    double getCriticalChance(const int& difference);
+    double getCriticalChance(const int& difference) const;
     double getBlockChance(Creature* attacker, const int& difference);
     double getGlancingBlowChance(Creature* attacker, const int& difference) const;
     double getParryChance(Creature* attacker, const int& difference);
