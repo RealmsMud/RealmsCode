@@ -219,11 +219,11 @@ public:
 
 // End Telopt related
 
-    int getFd() const;
-    bool isConnected() const;
-    int getState() const;
-    const bstring& getIp() const;
-    const bstring& getHostname() const;
+    [[nodiscard]] int getFd() const;
+    [[nodiscard]] bool isConnected() const;
+    [[nodiscard]] int getState() const;
+    [[nodiscard]] const bstring& getIp() const;
+    [[nodiscard]] const bstring& getHostname() const;
 
     void checkLockOut();
 

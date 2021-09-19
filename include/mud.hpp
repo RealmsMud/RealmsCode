@@ -21,30 +21,6 @@
 // Other includes are at the end of the file to make sure all defines and such in this
 // file are visible
 
-//#ifndef PYTHON_CODE_GEN
-//#include <Python.h> // Python!
-//#endif
-
-//#include "bstring.hpp"
-//#include "flags.hpp"
-//#include "global.hpp"
-//#include "random.hpp"
-//
-//
-//#include "proto.hpp"
-//#include "help.hpp"
-//#include "paths.hpp"
-//
-//
-//
-//// C includes
-//#ifndef PYTHON_CODE_GEN
-//#include <fcntl.h>
-//#endif
-//
-//// Mud Includes
-//#include "os.hpp"
-
 #ifndef READCFG
 #define READCFG
 #endif // READCFG
@@ -89,55 +65,6 @@
 #define LT_ENCHA        0
 #define LT_ENVEN        1
 #define DONT_USE        2
-
-// Last-time specifications
-#define OLD_LT_INVISIBILITY     0
-#define OLD_LT_PROTECTION       1
-#define OLD_LT_BLESS            2
-#define OLD_LT_INFRAVISION      13
-#define OLD_LT_DETECT_INVIS     17
-#define OLD_LT_DETECT_MAGIC     18
-#define OLD_LT_LEVITATE         21
-#define OLD_LT_HEAT_PROTECTION      23
-#define OLD_LT_FLY          24
-#define OLD_LT_RESIST_MAGIC     25
-#define OLD_LT_KNOW_AURA        27
-#define OLD_LT_RESIST_COLD      29
-#define OLD_LT_BREATHE_WATER        30
-#define OLD_LT_EARTH_SHIELD     31
-#define OLD_LT_RESIST_WATER     52
-#define OLD_LT_RESIST_FIRE      53
-#define OLD_LT_RESIST_AIR       54
-#define OLD_LT_RESIST_EARTH     55
-#define OLD_LT_REFLECT_MAGIC        56
-#define OLD_LT_TRUE_SIGHT       60
-#define OLD_LT_CAMOUFLAGE       61
-#define OLD_LT_DRAIN_SHIELD     63
-#define OLD_LT_UNDEAD_WARD          65
-#define OLD_LT_RESIST_ELEC      66
-#define OLD_LT_WARMTH           67
-#define OLD_LT_HASTE            71
-#define OLD_LT_SLOW         72
-#define OLD_LT_STRENGTH         78
-#define OLD_LT_ENFEEBLEMENT     79
-#define OLD_LT_DARKNESS         88
-#define OLD_LT_TONGUES          90
-#define OLD_LT_INSIGHT          93
-#define OLD_LT_FEEBLEMIND       94
-#define OLD_LT_PRAYER           95
-#define OLD_LT_DAMNATION        96
-#define OLD_LT_FORTITUDE        97
-#define OLD_LT_WEAKNESS         98
-#define OLD_LT_PASS_WITHOUT_TRACE   99
-#define OLD_LT_COMPREHEND_LANGUAGES 74
-#define OLD_LT_FARSIGHT         102
-#define OLD_LT_HOLD_PERSON      75
-#define OLD_LT_CONFUSED         80
-#define OLD_LT_TEMP_BLIND       45  // Was LT_CHARM which wasn't being used.
-#define OLD_LT_SILENCE          34
-#define OLD_LT_ARMOR            39
-#define OLD_LT_ATTACK           3
-
 
 // free             0
 // free             1

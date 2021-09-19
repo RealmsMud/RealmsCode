@@ -44,7 +44,7 @@ namespace Alchemy {
 
 class AlchemyInfo {
 public:
-    AlchemyInfo(xmlNodePtr rootNode);
+    explicit AlchemyInfo(xmlNodePtr rootNode);
 
     bstring getDisplayString();
 
@@ -61,7 +61,6 @@ public:
 
 
 protected:
-    void init();
     bstring name;
     bstring potionDisplayName;
     bstring potionPrefix;
@@ -91,7 +90,7 @@ protected:
 
 public:
     AlchemyEffect();
-    AlchemyEffect(xmlNodePtr curNode);
+    explicit AlchemyEffect(xmlNodePtr curNode);
     AlchemyEffect(const AlchemyEffect &ae);
     friend std::ostream& operator<<(std::ostream& out, AlchemyEffect& effect);
     friend std::ostream& operator<<(std::ostream& out, AlchemyEffect* effect);

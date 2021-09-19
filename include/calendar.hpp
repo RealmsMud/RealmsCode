@@ -172,13 +172,13 @@ public:
     int     shipUpdates;
 
     void clear();
-    Season  whatSeason() const;
+    [[nodiscard]] Season  whatSeason() const;
     cMonth* getMonth(short id) const;
     void    setSeason();
     void    advance();
     void    printtime(const Player* player) const;
     bool    isBirthday(const Player* target) const;
-    bstring getLastPirate() const;
+    [[nodiscard]] bstring getLastPirate() const;
     void    setLastPirate(const bstring& name);
     void    resetToMidnight();
 
@@ -188,13 +188,13 @@ public:
     void    loadSeasons(xmlNodePtr curNode);
     void    loadCurrent(xmlNodePtr curNode);
 
-    int     getTotalDays() const;
-    int     getCurYear() const;
-    short   getCurMonth() const;
-    short   getCurDay() const;
-    short   getAdjHour() const;
+    [[nodiscard]] int     getTotalDays() const;
+    [[nodiscard]] int     getCurYear() const;
+    [[nodiscard]] short   getCurMonth() const;
+    [[nodiscard]] short   getCurDay() const;
+    [[nodiscard]] short   getAdjHour() const;
 
-    cSeason *getCurSeason() const;
+    [[nodiscard]] cSeason *getCurSeason() const;
 };
 
 

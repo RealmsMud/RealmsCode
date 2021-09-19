@@ -51,19 +51,19 @@ public:
 
     void escapeText();
 
-    short getLevel() const;
-    bstring getOpen() const;
-    short getTrap() const;
-    short getKey() const;
-    bstring getKeyArea() const;
-    short getToll() const;
-    bstring getPassPhrase() const;
-    short getPassLanguage() const;
-    Size getSize() const;
-    bstring getDescription() const;
-    Direction getDirection() const;
-    bstring getEnter() const;
-    BaseRoom* getRoom() const;
+    [[nodiscard]] short getLevel() const;
+    [[nodiscard]] bstring getOpen() const;
+    [[nodiscard]] short getTrap() const;
+    [[nodiscard]] short getKey() const;
+    [[nodiscard]] bstring getKeyArea() const;
+    [[nodiscard]] short getToll() const;
+    [[nodiscard]] bstring getPassPhrase() const;
+    [[nodiscard]] short getPassLanguage() const;
+    [[nodiscard]] Size getSize() const;
+    [[nodiscard]] bstring getDescription() const;
+    [[nodiscard]] Direction getDirection() const;
+    [[nodiscard]] bstring getEnter() const;
+    [[nodiscard]] BaseRoom* getRoom() const;
 
     void setLevel(short lvl);
     void setOpen(const bstring& o);
@@ -81,10 +81,10 @@ public:
 
     void checkReLock(Creature* creature, bool sneaking);
 
-    bstring blockedByStr(char color, const bstring& spell, const bstring& effectName, bool detectMagic, bool canSee) const;
+    [[nodiscard]] bstring blockedByStr(char color, const bstring& spell, const bstring& effectName, bool detectMagic, bool canSee) const;
     Exit* getReturnExit(const BaseRoom* parent, BaseRoom** targetRoom) const;
     void doDispelMagic(BaseRoom* parent);  // true if the exit was destroyed by dispel-magic
-    bool isWall(const bstring& name) const;
+    [[nodiscard]] bool isWall(const bstring& name) const;
     bool isConcealed(const Creature* viewer=nullptr) const;
 
 //// Effects
@@ -123,7 +123,7 @@ public:
 
     Location target;
 
-    bool flagIsSet(int flag) const;
+    [[nodiscard]] bool flagIsSet(int flag) const;
     void setFlag(int flag);
     void clearFlag(int flag);
     bool toggleFlag(int flag);

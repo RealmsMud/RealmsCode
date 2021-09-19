@@ -35,24 +35,24 @@ public:
     void    load(xmlNodePtr rootNode);
     void    loadSeasons(xmlNodePtr curNode);
     void    save(xmlNodePtr curNode) const;
-    bstring str() const;
+    [[nodiscard]] bstring str() const;
     void    copyVars(const CatRefInfo* cri);
     bool    swap(const Swap& s);
-    const cWeather* getWeather() const;
-    
-    bstring getFishing() const;
-    int getId() const;
-    bstring getArea() const;
-    bstring getName() const;
-    bstring getWorldName() const;
-    bstring getYearsSince() const;
-    bstring getParent() const;
-    int getYearOffset() const;
-    int getLimbo() const;
-    int getRecall() const;
-    int getTeleportWeight() const;
-    int getTeleportZone() const;
-    int getTrackZone() const;
+    [[nodiscard]] const cWeather* getWeather() const;
+
+    [[nodiscard]] bstring getFishing() const;
+    [[nodiscard]] int getId() const;
+    [[nodiscard]] bstring getArea() const;
+    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] bstring getWorldName() const;
+    [[nodiscard]] bstring getYearsSince() const;
+    [[nodiscard]] bstring getParent() const;
+    [[nodiscard]] int getYearOffset() const;
+    [[nodiscard]] int getLimbo() const;
+    [[nodiscard]] int getRecall() const;
+    [[nodiscard]] int getTeleportWeight() const;
+    [[nodiscard]] int getTeleportZone() const;
+    [[nodiscard]] int getTrackZone() const;
 
     std::map<Season,cSeason*> seasons;  // the seaons hold the weather
 

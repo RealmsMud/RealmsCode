@@ -33,9 +33,9 @@ public:
 
     std::map<int, PlayerTitle*> titles;
 
-    int getId() const;
-    bstring getName() const;
-    bstring getTitle(int lvl, bool male, bool ignoreCustom=true) const;
+    [[nodiscard]] int getId() const;
+    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] bstring getTitle(int lvl, bool male, bool ignoreCustom=true) const;
 };
 
 

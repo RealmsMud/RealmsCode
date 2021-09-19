@@ -125,13 +125,13 @@ public:
 
 
     // What type of parent are we contained in?
-    bool inRoom() const;
-    bool inUniqueRoom() const;
-    bool inAreaRoom() const;
-    bool inObject() const;
-    bool inPlayer() const;
-    bool inMonster() const;
-    bool inCreature() const;
+    [[nodiscard]] bool inRoom() const;
+    [[nodiscard]] bool inUniqueRoom() const;
+    [[nodiscard]] bool inAreaRoom() const;
+    [[nodiscard]] bool inObject() const;
+    [[nodiscard]] bool inPlayer() const;
+    [[nodiscard]] bool inMonster() const;
+    [[nodiscard]] bool inCreature() const;
 
     BaseRoom* getRoomParent();
     UniqueRoom* getUniqueRoomParent();
@@ -141,13 +141,13 @@ public:
     Monster* getMonsterParent();
     Creature* getCreatureParent();
 
-    const BaseRoom* getConstRoomParent() const;
-    const UniqueRoom* getConstUniqueRoomParent() const;
-    const AreaRoom* getConstAreaRoomParent() const;
-    const Object* getConstObjectParent() const;
-    const Player* getConstPlayerParent() const;
-    const Monster* getConstMonsterParent() const;
-    const Creature* getConstCreatureParent() const;
+    [[nodiscard]] const BaseRoom* getConstRoomParent() const;
+    [[nodiscard]] const UniqueRoom* getConstUniqueRoomParent() const;
+    [[nodiscard]] const AreaRoom* getConstAreaRoomParent() const;
+    [[nodiscard]] const Object* getConstObjectParent() const;
+    [[nodiscard]] const Player* getConstPlayerParent() const;
+    [[nodiscard]] const Monster* getConstMonsterParent() const;
+    [[nodiscard]] const Creature* getConstCreatureParent() const;
 
 protected:
     Container* parent;   // Parent Container

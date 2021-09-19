@@ -54,8 +54,8 @@ private:
     bstring type; // script, effect, etc
     bstring targetType; // Valid Targets: Room, Self, Group, Target, RoomBene, RoomAggro
 
-    int delay;
-    int duration;
+    int delay{};
+    int duration{};
 
 };
 

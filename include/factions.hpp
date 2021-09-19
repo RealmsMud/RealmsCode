@@ -39,17 +39,17 @@ public:
     FactionRegard();
     void load(xmlNodePtr rootNode);
 
-    long getClassRegard(CreatureClass i) const;
-    long getRaceRegard(int i) const;
-    long getDeityRegard(int i) const;
-    long getVampirismRegard() const;
-    long getLycanthropyRegard() const;
-    long getGuildRegard(int i) const;
-    long getClanRegard(int i) const;
-    long getOverallRegard() const;
+    [[nodiscard]] long getClassRegard(CreatureClass i) const;
+    [[nodiscard]] long getRaceRegard(int i) const;
+    [[nodiscard]] long getDeityRegard(int i) const;
+    [[nodiscard]] long getVampirismRegard() const;
+    [[nodiscard]] long getLycanthropyRegard() const;
+    [[nodiscard]] long getGuildRegard(int i) const;
+    [[nodiscard]] long getClanRegard(int i) const;
+    [[nodiscard]] long getOverallRegard() const;
 
-    bstring guildDisplay() const;
-    bstring clanDisplay() const;
+    [[nodiscard]] bstring guildDisplay() const;
+    [[nodiscard]] bstring clanDisplay() const;
 protected:
     long classRegard[static_cast<int>(CreatureClass::CLASS_COUNT)]{};
     long raceRegard[RACE_COUNT]{};
@@ -67,20 +67,20 @@ public:
     Faction();
     void load(xmlNodePtr rootNode);
 
-    bstring getName() const;
-    bstring getDisplayName() const;
-    bstring getParent() const;
-    bstring getGroup() const;
-    bstring getSocial() const;
-    long getBaseRegard() const;
-    long getClassRegard(CreatureClass i) const;
-    long getRaceRegard(int i) const;
-    long getDeityRegard(int i) const;
-    long getVampirismRegard() const;
-    long getLycanthropyRegard() const;
-    long getInitialRegard(const Player* player) const;
-    long getGuildRegard(int i) const;
-    long getClanRegard(int i) const;
+    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] bstring getDisplayName() const;
+    [[nodiscard]] bstring getParent() const;
+    [[nodiscard]] bstring getGroup() const;
+    [[nodiscard]] bstring getSocial() const;
+    [[nodiscard]] long getBaseRegard() const;
+    [[nodiscard]] long getClassRegard(CreatureClass i) const;
+    [[nodiscard]] long getRaceRegard(int i) const;
+    [[nodiscard]] long getDeityRegard(int i) const;
+    [[nodiscard]] long getVampirismRegard() const;
+    [[nodiscard]] long getLycanthropyRegard() const;
+    [[nodiscard]] long getInitialRegard(const Player* player) const;
+    [[nodiscard]] long getGuildRegard(int i) const;
+    [[nodiscard]] long getClanRegard(int i) const;
 
     const FactionRegard* getInitial();
     const FactionRegard* getMax();
@@ -90,7 +90,7 @@ public:
     long getUpperLimit(const Player* player) const;
     long getLowerLimit(const Player* player) const;
     Player* findAggro(BaseRoom* room);
-    bool isParent() const;
+    [[nodiscard]] bool isParent() const;
     void setParent(const bstring& value);
     void setIsParent(bool value);
 

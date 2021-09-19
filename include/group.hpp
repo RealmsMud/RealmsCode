@@ -91,20 +91,20 @@ public:
 
 
     // Various info about a group
-    bool flagIsSet(int flag) const;
-    bool inGroup(Creature* target);
-    Creature* getLeader() const;
-    int size();
-    int getSize(bool countDmInvis = false, bool membersOnly = true);
-    int getNumInSameRoom(Creature* target);
-    int getNumPlyInSameRoom(Creature* target);
-    Creature* getMember(int num, bool countDmInvis = false);
-    Creature* getMember(const bstring& name, int num, Creature* searcher = nullptr, bool includePets = false);
-    GroupType getGroupType() const;
-    bstring getGroupTypeStr() const;
-    bstring getFlagsDisplay();
-    const bstring& getName() const;
-    const bstring& getDescription() const;
+    [[nodiscard]] bool flagIsSet(int flag) const;
+    [[nodiscard]] bool inGroup(Creature* target);
+    [[nodiscard]] Creature* getLeader() const;
+    [[nodiscard]] int size();
+    [[nodiscard]] int getSize(bool countDmInvis = false, bool membersOnly = true);
+    [[nodiscard]] int getNumInSameRoom(Creature* target);
+    [[nodiscard]] int getNumPlyInSameRoom(Creature* target);
+    [[nodiscard]] Creature* getMember(int num, bool countDmInvis = false);
+    [[nodiscard]] Creature* getMember(const bstring& name, int num, Creature* searcher = nullptr, bool includePets = false);
+    [[nodiscard]] GroupType getGroupType() const;
+    [[nodiscard]] bstring getGroupTypeStr() const;
+    [[nodiscard]] bstring getFlagsDisplay();
+    [[nodiscard]] const bstring& getName() const;
+    [[nodiscard]] const bstring& getDescription() const;
     bstring getGroupList(Creature* viewer);
 
 

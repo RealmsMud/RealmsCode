@@ -33,18 +33,17 @@ public:
         ret = num = 0;
         memset(str, 0, sizeof(str));
         memset(val, 0, sizeof(val));
-        myCommand= nullptr;
+        myCommand = nullptr;
 #endif
     };
-    int         num;
-    bstring     fullstr;
-    char        str[COMMANDMAX][MAX_TOKEN_SIZE];
-    long        val[COMMANDMAX];
+    int num;
+    bstring fullstr;
+    char str[COMMANDMAX][MAX_TOKEN_SIZE];
+    long val[COMMANDMAX];
 
-    int         ret;
+    int ret;
     const Command *myCommand;
 };
-
 
 
 #endif //REALMSCODE_CMD_H

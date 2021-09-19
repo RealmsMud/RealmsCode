@@ -101,7 +101,7 @@ void sendGlobalComm(const Player *player, const bstring &text, const bstring &ex
 
 
 channelPtr getChannelByName(const Player *player, const bstring &chanStr);
-channelPtr getChannelByDiscordChannel(const unsigned long discordChannelID);
+channelPtr getChannelByDiscordChannel(unsigned long discordChannelID);
 
 
 #endif

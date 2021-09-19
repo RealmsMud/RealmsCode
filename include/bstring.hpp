@@ -66,8 +66,7 @@ inline void assignStr(std::string& dst, const std::string& src) {
 }
 inline void assignStr(std::string& dst, const char* src) {
     // Watch out for nulls
-    if(src == nullptr)
-    {
+    if(src == nullptr) {
         dst.erase();
     }
     // If src actually points to part of dst, we must NOT erase(), but
@@ -127,30 +126,26 @@ inline void strAdd(std::string& dst, int val) {
 // strToUpper/strToLower: Uppercase/Lowercase conversion functions
 // -----------------------------------------------------------------
 
-inline void strToLower(char* str, size_t len)
-{
+inline void strToLower(char* str, size_t len) {
     std::use_facet< std::ctype<char> >(std::locale()).tolower(str, str+len);
 }
 
-inline void strToUpper(char* str, size_t len)
-{
+inline void strToUpper(char* str, size_t len) {
     std::use_facet< std::ctype<char> >(std::locale()).toupper(str, str+len);
 }
 // -----------------------------------------------------------------------------
 // sscoll/ssicoll: Collation wrappers
 // -----------------------------------------------------------------------------
 
-inline int sscoll(const char* sz1, int nLen1, const char* sz2, int nLen2)
-{
-    const std::collate<char>& coll = std::use_facet< std::collate<char> >(std::locale());
+inline int sscoll(const char* sz1, int nLen1, const char* sz2, int nLen2) {
+    const auto& coll = std::use_facet< std::collate<char> >(std::locale());
 
     return coll.compare(sz2, sz2+nLen2, sz1, sz1+nLen1);
 }
 
-inline int ssicoll(const char* sz1, int nLen1, const char* sz2, int nLen2)
-{
+inline int ssicoll(const char* sz1, int nLen1, const char* sz2, int nLen2) {
     const std::locale loc;
-    const std::collate<char>& coll = std::use_facet< std::collate<char> >(std::locale());
+    const auto& coll = std::use_facet< std::collate<char> >(std::locale());
 
     // Some implementations seem to have trouble using the collate<>
     // facet typedefs so we'll just default to basic_string and hope
@@ -170,10 +165,9 @@ inline int ssicoll(const char* sz1, int nLen1, const char* sz2, int nLen2)
 // -----------------------------------------------------------------------------
 // strCaseCmp: comparison (case insensitive )
 // -----------------------------------------------------------------------------
-inline int strCaseCmp(const char* s1, const char* s2)
-{
+inline int strCaseCmp(const char* s1, const char* s2) {
     std::locale loc;
-    const std::ctype<char>& ct = std::use_facet< std::ctype<char> >(std::locale());
+    const auto& ct = std::use_facet< std::ctype<char> >(std::locale());
     char f;
     char l;
 
@@ -187,8 +181,7 @@ inline int strCaseCmp(const char* s1, const char* s2)
 }
 
 // This struct is used for TrimRight() and TrimLeft() function implementations.
-struct NotSpace : public std::unary_function<char, bool>
-{
+struct NotSpace : public std::unary_function<char, bool> {
     const std::locale loc;
     NotSpace(const std::locale& locArg=std::locale()) : loc(locArg) {}
     bool operator() (char ch) const { return !std::isspace(ch, loc); }
@@ -197,8 +190,7 @@ struct NotSpace : public std::unary_function<char, bool>
 // -----------------------------------------------------------------
 //  class bstring - The class itself!
 // -----------------------------------------------------------------
-class bstring : public std::basic_string<char>
-{
+class bstring : public std::basic_string<char> {
 
     // Typedefs for shorter names.  Using these names also appears to help
     // us avoid some ambiguities that otherwise arise on some platforms
@@ -297,7 +289,7 @@ public:
         return  useCase ? this->compare(str) == 0 : strCaseCmp(bstring(*this).c_str(), str) == 0;
     } 
 
-    char getAt(int idx) const {
+    [[nodiscard]] char getAt(int idx) const {
         return this->at(static_cast<my_size_type>(idx));
     }
 
@@ -326,7 +318,7 @@ public:
         return getLength();
     }
 
-    bool isEmpty() const {
+    [[nodiscard]] bool isEmpty() const {
         return this->empty();
     }
 
@@ -335,28 +327,25 @@ public:
     }
 
 
-    bstring left(int count) const {
+    [[nodiscard]] bstring left(int count) const {
         // Range check the count.
 
         count = MAX(0, MIN(count, static_cast<int>(this->size())));
         return this->substr(0, static_cast<my_size_type>(count)); 
     }
-    bstring right(int count) const {
+    [[nodiscard]] bstring right(int count) const {
         // Range check the count.
 
         count = MAX(0, MIN(count, static_cast<int>(this->size())));
         return this->substr(this->size()-static_cast<my_size_type>(count));
     }
-    bstring mid(int first ) const {
+    [[nodiscard]] bstring mid(int first ) const {
         return mid(first, size()-first);
     }
 
-    bstring mid(int first, int count) const {
-
-        if( first < 0 )
-            first = 0;
-        if( count < 0 )
-            count = 0;
+    [[nodiscard]] bstring mid(int first, int count) const {
+        if( first < 0 ) first = 0;
+        if( count < 0 ) count = 0;
 
         if( first + count > (signed)size() )
             count = size() - first;
@@ -423,28 +412,23 @@ public:
         return nReplaced;
     }
     
-    int Find(char ch) const
-    {
+    int Find(char ch) const {
         return(find_first_of(ch));
     }
 
-    int Find(my_const_pointer szSub) const
-    {
+    int Find(my_const_pointer szSub) const {
         return(find(szSub));
     }
 
-    int Find(char ch, int nStart) const
-    {
+    int Find(char ch, int nStart) const {
         return(find_first_of(ch, static_cast<my_base::size_type>(nStart)));
     }
 
-    int Find(my_const_pointer szSub, int nStart) const
-    {
+    int Find(my_const_pointer szSub, int nStart) const {
         return(find(szSub, static_cast<my_base::size_type>(nStart)));
     }
 
-    int FindOneOf(my_const_pointer szCharSet) const
-    {
+    int FindOneOf(my_const_pointer szCharSet) const {
         return(find_first_of(szCharSet));
     }
     
@@ -515,16 +499,14 @@ public:
             this->assign(mt.c_str(), mt.size());
     }
 
-    void Format(const char* fmt, ...)
-    {
+    void Format(const char* fmt, ...) {
         va_list argList;
         va_start(argList, fmt);
         FormatV(fmt, argList);
         va_end(argList);
     }
 
-    void AppendFormat(const char* fmt, ...)
-    {
+    void AppendFormat(const char* fmt, ...) {
         va_list argList;
         va_start(argList, fmt);
         AppendFormatV(fmt, argList);
@@ -535,16 +517,14 @@ public:
 
     // an efficient way to add formatted characters to the string.  You may only
     // add up to STD_BUF_SIZE characters at a time, though
-    void AppendFormatV(const char* fmt, va_list argList)
-    {
+    void AppendFormatV(const char* fmt, va_list argList) {
         char buf[STD_BUF_SIZE];
         int nLen = vsprintf(buf, fmt, argList);
         if( nLen > 0  )
             this->append(buf, nLen);
     }
 
-    void FormatV(const char* szFormat, va_list argList)
-    {
+    void FormatV(const char* szFormat, va_list argList) {
         int nLen = strLen(szFormat) + STD_BUF_SIZE;
         char *buf;
         buf = new char[nLen];
@@ -554,28 +534,23 @@ public:
 
     }
 
-    int Collate(my_const_pointer that) const
-    {
+    int Collate(my_const_pointer that) const {
         return sscoll(this->c_str(), this->length(), that, strLen(that));
     }
 
-    int CollateNoCase(my_const_pointer that) const
-    {
+    int CollateNoCase(my_const_pointer that) const {
         return ssicoll(this->c_str(), this->length(), that, strLen(that));
     }
 
-    int Compare(my_const_pointer that) const
-    {
+    int Compare(my_const_pointer that) const {
         return this->compare(that);   
     }
 
-    int CompareNoCase(my_const_pointer that)  const
-    {
+    int CompareNoCase(my_const_pointer that)  const {
         return strCaseCmp(this->c_str(), that);
     }
 
-    int Delete(int idx, int count=1)
-    {
+    int Delete(int idx, int count=1) {
         if( idx < 0 )
             idx = 0;
 
@@ -585,8 +560,7 @@ public:
         return getLength();
     }
 
-    void Empty()
-    {
+    void Empty() {
         this->erase();
     }
 
@@ -633,14 +607,6 @@ public:
     const char& operator[](int idx) const {
         return my_base::operator[](static_cast<my_size_type>(idx));
     }
-
-//    char& operator[](unsigned int idx) {
-//        return my_base::operator[](static_cast<my_size_type>(idx));
-//    }
-//
-//    const char& operator[](unsigned int idx) const {
-//        return my_base::operator[](static_cast<my_size_type>(idx));
-//    }
 
     // -----------------------------------------------
     // inline concatenation.
@@ -690,14 +656,12 @@ inline bstring operator+(const bstring& s1, const char* s2) {
     return bstring(s1) + bstring(s2);
 }
 
-inline bstring operator+(const bstring& s, char ch)
-{
+inline bstring operator+(const bstring& s, char ch) {
     bstring strRet(s);
     strRet.append(1, ch);
     return strRet;
 }
-inline bstring operator+(const bstring& s, int val)
-{
+inline bstring operator+(const bstring& s, int val) {
     bstring strRet(s);
     strAdd(strRet, val);
     return(strRet);
@@ -719,21 +683,17 @@ inline bstring operator+(int val, const bstring& s) {
     return strRet;
 }
 
-struct bstringLessNoCase : public std::binary_function<bstring, bstring, bool>
-{
+struct bstringLessNoCase : public std::binary_function<bstring, bstring, bool> {
     inline bool operator()(const bstring& sLeft, const bstring& sRight) const
     { return strCaseCmp(sLeft.c_str(), sRight.c_str()) < 0; }
 };
-struct bstringEqualsNoCase : public std::binary_function<bstring, bstring, bool>
-{
+struct bstringEqualsNoCase : public std::binary_function<bstring, bstring, bool> {
     inline bool operator()(const bstring& sLeft, const bstring& sRight) const
     { return strCaseCmp(sLeft.c_str(), sRight.c_str()) == 0; }
 };
 
-namespace std
-{
-    inline void swap(bstring& s1, bstring& s2) throw()
-    {
+namespace std {
+    inline void swap(bstring& s1, bstring& s2) throw() {
         s1.swap(s2);
     }
 }

@@ -37,7 +37,7 @@ public:
     void    load(xmlNodePtr curNode);
     void    saveList(xmlNodePtr curNode, const bstring& name, const std::list<CatRef>* list) const;
     void    loadList(xmlNodePtr curNode, std::list<CatRef>* list);
-    bool    isValid() const;
+    [[nodiscard]] bool    isValid() const;
     bool    check(const Player* player, const std::list<CatRef>* list, const bstring& type, int numIngredients) const;
     bool    check(std::list<CatRef>* list, const std::list<CatRef>* require, int numIngredients) const;
     bool    isSkilled(const Player* player, Size recipeSize) const;
@@ -46,22 +46,22 @@ public:
     bool    canUseEquipment(const Player* player, const bstring& skill) const;
     bool    canBeEdittedBy(const Player* player) const;
 
-    int     getId() const;
     void    setId(int i);
-    int     getExperience() const;
     void    setExperience(int exp);
-    bool    isSizable() const;
     void    setSizable(bool size);
-    CatRef  getResult() const;
     void    setResult(const CatRef& cr);
-    bstring getResultName(bool appendCr=false);
-    bstring getSkill() const;
     void    setSkill(const bstring& s);
-    bstring getCreator() const;
-    void    setCreator(const bstring& c);
-    int     getMinSkill() const;
-    bool    requiresRecipe() const;
     void    setRequiresRecipe(bool r);
+    void    setCreator(const bstring& c);
+    [[nodiscard]] int     getId() const;
+    [[nodiscard]] int     getExperience() const;
+    [[nodiscard]] bool    isSizable() const;
+    [[nodiscard]] CatRef  getResult() const;
+    [[nodiscard]] bstring getResultName(bool appendCr=false);
+    [[nodiscard]] bstring getSkill() const;
+    [[nodiscard]] bstring getCreator() const;
+    [[nodiscard]] int     getMinSkill() const;
+    [[nodiscard]] bool    requiresRecipe() const;
 
     static bool goodObject(const Player* player, const Object* object, const CatRef* cr=0);
 

@@ -28,12 +28,12 @@ public:
     Clan();
     void load(xmlNodePtr curNode);
 
-    unsigned int getId() const;
-    unsigned int getJoin() const;
-    unsigned int getRescind() const;
-    unsigned int getDeity() const;
-    bstring getName() const;
-    short   getSkillBonus(const bstring& skill) const;
+    [[nodiscard]] unsigned int getId() const;
+    [[nodiscard]]     unsigned int getJoin() const;
+    [[nodiscard]] unsigned int getRescind() const;
+    [[nodiscard]] unsigned int getDeity() const;
+    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] short   getSkillBonus(const bstring& skill) const;
 protected:
     unsigned int id;
     unsigned int join;

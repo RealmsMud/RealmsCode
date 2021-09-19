@@ -62,70 +62,69 @@ enum class MSDPVar {
 };
 
 
-
-
 class MsdpVariable {
     friend class ReportedMsdpVariable;
+
 public:
-    static bstring getValue(MSDPVar var, Socket &sock, Player* player);
+    static bstring getValue(MSDPVar var, Socket &sock, Player *player);
 
 protected:
-    void            init();
+    void init();
 
-    bstring         name;               // Name of this variable
-    MSDPVar         varId;
-    bool            reportable{};         // This variable is reportable
-    bool            requiresPlayer{};     // Variable requires a player attached to the socket
-    bool            configurable{};       // Can it be configured by the client?
-    bool            writeOnce{};          // Can only set this variable once
-    int             updateInterval{};     // Update interval (in 10ths of a second)
-    bool            sendFn{};             // Does this have a send function?
-    bool            updateFn{};           // Does this have an update function?
-    bool            isGroup{};            // Is this a group of related variables?
+    bstring name;               // Name of this variable
+    MSDPVar varId;
+    bool reportable{};         // This variable is reportable
+    bool requiresPlayer{};     // Variable requires a player attached to the socket
+    bool configurable{};       // Can it be configured by the client?
+    bool writeOnce{};          // Can only set this variable once
+    int updateInterval{};     // Update interval (in 10ths of a second)
+    bool sendFn{};             // Does this have a send function?
+    bool updateFn{};           // Does this have an update function?
+    bool isGroup{};            // Is this a group of related variables?
 
 
 public:
     MsdpVariable();
-    MsdpVariable(const bstring& pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
+    MsdpVariable(const bstring &pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
                  bool pWriteOnce, int pUpdateInterval, bool pSendFn = false, bool pUpdateFn = false,
                  bool pIsGroup = false);
     // Todo: Make this have the server erase all reported variables of this type
     virtual ~MsdpVariable() = default;
 
-    [[nodiscard]] bstring         getName() const;
-    [[nodiscard]] MSDPVar         getId() const;
-    [[nodiscard]] bool            hasSendFn() const;
-    [[nodiscard]] bool            hasUpdateFn() const;
-    [[nodiscard]] bool            isConfigurable() const;
-    [[nodiscard]] bool            isReportable() const;
-    [[nodiscard]] bool            isWriteOnce() const;
-    [[nodiscard]] bool            getRequiresPlayer() const;
-    [[nodiscard]] int             getUpdateInterval() const;
+    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] MSDPVar getId() const;
+    [[nodiscard]] bool hasSendFn() const;
+    [[nodiscard]] bool hasUpdateFn() const;
+    [[nodiscard]] bool isConfigurable() const;
+    [[nodiscard]] bool isReportable() const;
+    [[nodiscard]] bool isWriteOnce() const;
+    [[nodiscard]] bool getRequiresPlayer() const;
+    [[nodiscard]] int getUpdateInterval() const;
 
-    bool            send(Socket& sock) const;
+    bool send(Socket &sock) const;
 
 };
 
 class ReportedMsdpVariable : public MsdpVariable {
 protected:
-    bstring         value;
-    bool            dirty;
-    Socket          *parentSock; // Parent Socket
+    bstring value;
+    bool dirty;
+    Socket *parentSock; // Parent Socket
 
-    Timer           timer;
+    Timer timer;
 
 public:
-    ReportedMsdpVariable(const MsdpVariable* mv, Socket *sock);
+    ReportedMsdpVariable(const MsdpVariable *mv, Socket *sock);
 
-    [[nodiscard]] bstring         getValue() const;
-    void            setValue(const bstring& newValue);
-    void            setValue(int newValue);
-    void            setValue(long newValue);
-    bool            checkTimer();       // True = ok to send, False = timer hasn't expired yet
+    [[nodiscard]] bstring getValue() const;
+    void setValue(const bstring &newValue);
+    void setValue(int newValue);
+    void setValue(long newValue);
+    bool checkTimer();       // True = ok to send, False = timer hasn't expired yet
 
-    [[nodiscard]] bool            isDirty() const;
-    void            update();
-    void            setDirty(bool pDirty = true);
+    [[nodiscard]] bool isDirty() const;
+    void update();
+    void setDirty(bool pDirty = true);
 };
 
 

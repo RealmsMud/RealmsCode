@@ -139,16 +139,16 @@ public:
     void save(xmlNodePtr rootNode) const;
 
 
-    bstring getName() const;
-    bstring getDisplayName() const;
-    bstring getOwner() const;
-    time_t getLastMod() const;
-    long getDuration() const;
-    int getStrength() const;
-    int getExtra() const;
-    MudObject *getParent() const;
-    const Effect *getEffect() const;
-    bool hasBaseEffect(const bstring &effect) const;
+    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] bstring getDisplayName() const;
+    [[nodiscard]] bstring getOwner() const;
+    [[nodiscard]] time_t getLastMod() const;
+    [[nodiscard]] long getDuration() const;
+    [[nodiscard]] int getStrength() const;
+    [[nodiscard]] int getExtra() const;
+    [[nodiscard]] MudObject *getParent() const;
+    [[nodiscard]] const Effect *getEffect() const;
+    [[nodiscard]] bool hasBaseEffect(const bstring &effect) const;
     bool runScript(const bstring &pyScript, MudObject *applier = nullptr);
     bool updateLastMod(time_t t);    // True if it's time to wear off
     bool timeForPulse(time_t t);  // True if it's time to pulse
@@ -161,12 +161,12 @@ public:
     void setParent(MudObject *parent);
 
     bool isOwner(const Creature *owner) const;
-    bool isCurse() const;
-    bool isDisease() const;
-    bool isPoison() const;
-    bool isPermanent() const;
+    [[nodiscard]] bool isCurse() const;
+    [[nodiscard]] bool isDisease() const;
+    [[nodiscard]] bool isPoison() const;
+    [[nodiscard]] bool isPermanent() const;
 
-    MudObject *getApplier() const;
+    [[nodiscard]] MudObject *getApplier() const;
 
 protected:
     EffectInfo();
@@ -202,7 +202,7 @@ public:
     void save(xmlNodePtr rootNode, const char *name) const;
 
     [[nodiscard]] EffectInfo *getEffect(const bstring &effect) const;
-    EffectInfo *getExactEffect(const bstring &effect) const;
+    [[nodiscard]] EffectInfo *getExactEffect(const bstring &effect) const;
 
     [[nodiscard]] bool isEffected(const bstring &effect, bool exactMatch = false) const;
     [[nodiscard]] bool isEffected(EffectInfo *effect) const;
@@ -218,13 +218,13 @@ public:
     void removeAll();
     void removeOwner(const Creature *owner);
     void copy(const Effects *source, MudObject *pParent = nullptr);
-    bool hasPoison() const;
+    [[nodiscard]] bool hasPoison() const;
     bool removePoison();
-    bool hasDisease() const;
+    [[nodiscard]] bool hasDisease() const;
     bool removeDisease();
     bool removeCurse();
-    bstring getEffectsString(const Creature *viewer);
-    bstring getEffectsList() const;
+    [[nodiscard]] bstring getEffectsString(const Creature *viewer);
+    [[nodiscard]] bstring getEffectsList() const;
     void pulse(time_t t, MudObject *pParent = nullptr);
 
     EffectList effectList;

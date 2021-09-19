@@ -28,16 +28,15 @@ public:
     FishingItem();
     void    load(xmlNodePtr rootNode);
 
-    CatRef getFish() const;
-    bool isDayOnly() const;
-    bool isNightOnly() const;
-    short getWeight() const;    // as in: probability
-    short getMinQuality() const;
-    short getMinSkill() const;
-    long getExp() const;
-
-    bool isMonster() const;
-    bool willAggro() const;
+    [[nodiscard]] CatRef getFish() const;
+    [[nodiscard]] bool isDayOnly() const;
+    [[nodiscard]] bool isNightOnly() const;
+    [[nodiscard]] short getWeight() const;    // as in: probability
+    [[nodiscard]] short getMinQuality() const;
+    [[nodiscard]] short getMinSkill() const;
+    [[nodiscard]] long getExp() const;
+    [[nodiscard]] bool isMonster() const;
+    [[nodiscard]] bool willAggro() const;
 protected:
     CatRef fish;
     bool dayOnly;
@@ -55,8 +54,8 @@ class Fishing {
 public:
     Fishing();
     void    load(xmlNodePtr rootNode);
-    const FishingItem* getItem(short skill, short quality) const;
-    bool empty() const;
+    [[nodiscard]] const FishingItem* getItem(short skill, short quality) const;
+    [[nodiscard]] bool empty() const;
     bstring id;
     std::list<FishingItem> items;
 };

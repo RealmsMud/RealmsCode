@@ -46,8 +46,6 @@ public:
     bstring leaderIp;
     int     status;
     int     numSupporters;
-    // first = name
-    // second = ip
     std::map<bstring, bstring> supporters;
 };
 
@@ -55,7 +53,7 @@ public:
 class Guild {
 public:
     Guild();
-    Guild(xmlNodePtr curNode);
+    explicit Guild(xmlNodePtr curNode);
     void recalcLevel();
     int averageLevel();
     bool addMember(const bstring& memberName);
@@ -64,8 +62,6 @@ public:
     void renameMember(const bstring& oldName, const bstring& newName);
     void parseGuildMembers(xmlNodePtr cur);
     bool saveToXml(xmlNodePtr rootNode) const;
-
-    static bool requireInside(Player* player, UniqueRoom* room);
 
     static void create(Player* player, cmd* cmnd);
     static void forum(Player* player, cmd* cmnd);
@@ -89,14 +85,14 @@ public:
     std::list<bstring> members;
     Money   bank;
 
-    bstring getName() const;
-    unsigned short getNum() const;
-    bstring getLeader() const;
-    long    getLevel() const;
-    int     getNumMembers() const;
-    long    getPkillsIn() const;
-    long    getPkillsWon() const;
-    long    getPoints() const;
+    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] unsigned short getNum() const;
+    [[nodiscard]] bstring getLeader() const;
+    [[nodiscard]] long getLevel() const;
+    [[nodiscard]] int getNumMembers() const;
+    [[nodiscard]] long getPkillsIn() const;
+    [[nodiscard]] long getPkillsWon() const;
+    [[nodiscard]] long getPoints() const;
 
     void setName(const bstring& n);
     void setNum(unsigned short n);

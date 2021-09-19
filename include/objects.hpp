@@ -261,59 +261,59 @@ public:
     int countObj(bool permOnly = false);
 
     // Get
-    short getDelay() const;
-    short getExtra() const;
-    short getWeight() const;
-    int getActualWeight() const;
-    short getBulk() const;
-    int getActualBulk() const;
-    short getMaxbulk() const;
-    short getWeaponDelay() const;
-    float getLocationModifier() const;
-    float getTypeModifier() const;
-    unsigned short getKey() const;
-    Size getSize() const;
-    bstring getSizeStr() const;
-    ObjectType getType() const; // *
-    bstring getTypeName() const;
-    short getWearflag() const; // *
-    short getArmor() const;
-    short getQuality() const;
-    short getAdjustment() const;
-    short getNumAttacks() const;
-    short getShotsMax() const; // *
-    short getShotsCur() const; // *
-    short getChargesMax() const;
-    short getChargesCur() const;
-    short getMagicpower() const;
-    short getLevel() const;
-    int getRequiredSkill() const;
-    short getMinStrength() const;
-    short getClan() const;
-    short getSpecial() const;
-    short getQuestnum() const;
-    bstring getEffect() const;
-    long getEffectDuration() const;
-    short getEffectStrength() const;
-    unsigned long getCoinCost() const;
-    unsigned long getShopValue() const;
-    long getMade() const;
-    int getLotteryCycle() const;
-    short getLotteryNumbers(short i) const;
-    int getRecipe() const;
-    Material getMaterial() const;
-    bstring getMaterialName() const;
-    bstring getCompass(const Creature* creature, bool useName);
-    bstring getVersion() const;
-    bstring getQuestOwner() const;
-    bstring getObjStr(const Creature* viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
-    bstring getSubType() const;
-    bstring getWeaponType() const;
-    bstring getArmorType() const;
-    bstring getWeaponCategory() const;
-    bstring getWeaponVerb() const;
-    bstring getWeaponVerbPlural() const;
-    bstring getWeaponVerbPast() const;
+    [[nodiscard]] short getDelay() const;
+    [[nodiscard]] short getExtra() const;
+    [[nodiscard]] short getWeight() const;
+    [[nodiscard]] int getActualWeight() const;
+    [[nodiscard]] short getBulk() const;
+    [[nodiscard]] int getActualBulk() const;
+    [[nodiscard]] short getMaxbulk() const;
+    [[nodiscard]] short getWeaponDelay() const;
+    [[nodiscard]] float getLocationModifier() const;
+    [[nodiscard]] float getTypeModifier() const;
+    [[nodiscard]] unsigned short getKey() const;
+    [[nodiscard]] Size getSize() const;
+    [[nodiscard]] bstring getSizeStr() const;
+    [[nodiscard]] ObjectType getType() const; // *
+    [[nodiscard]] bstring getTypeName() const;
+    [[nodiscard]] short getWearflag() const; // *
+    [[nodiscard]] short getArmor() const;
+    [[nodiscard]] short getQuality() const;
+    [[nodiscard]] short getAdjustment() const;
+    [[nodiscard]] short getNumAttacks() const;
+    [[nodiscard]] short getShotsMax() const; // *
+    [[nodiscard]] short getShotsCur() const; // *
+    [[nodiscard]] short getChargesMax() const;
+    [[nodiscard]] short getChargesCur() const;
+    [[nodiscard]] short getMagicpower() const;
+    [[nodiscard]] short getLevel() const;
+    [[nodiscard]] int getRequiredSkill() const;
+    [[nodiscard]] short getMinStrength() const;
+    [[nodiscard]] short getClan() const;
+    [[nodiscard]] short getSpecial() const;
+    [[nodiscard]] short getQuestnum() const;
+    [[nodiscard]] bstring getEffect() const;
+    [[nodiscard]] long getEffectDuration() const;
+    [[nodiscard]] short getEffectStrength() const;
+    [[nodiscard]] unsigned long getCoinCost() const;
+    [[nodiscard]] unsigned long getShopValue() const;
+    [[nodiscard]] long getMade() const;
+    [[nodiscard]] int getLotteryCycle() const;
+    [[nodiscard]] short getLotteryNumbers(short i) const;
+    [[nodiscard]] int getRecipe() const;
+    [[nodiscard]] Material getMaterial() const;
+    [[nodiscard]] bstring getMaterialName() const;
+    [[nodiscard]] bstring getCompass(const Creature* creature, bool useName);
+    [[nodiscard]] bstring getVersion() const;
+    [[nodiscard]] bstring getQuestOwner() const;
+    [[nodiscard]] bstring getObjStr(const Creature* viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
+    [[nodiscard]] bstring getSubType() const;
+    [[nodiscard]] bstring getWeaponType() const;
+    [[nodiscard]] bstring getArmorType() const;
+    [[nodiscard]] bstring getWeaponCategory() const;
+    [[nodiscard]] bstring getWeaponVerb() const;
+    [[nodiscard]] bstring getWeaponVerbPlural() const;
+    [[nodiscard]] bstring getWeaponVerbPast() const;
 
     bool isQuestOwner(const Player* player) const;
     bstring getWearName();
@@ -380,25 +380,25 @@ public:
     void track(Player* player);
 
     // Check conditions
-    bool doRestrict(Creature* creature, bool p);
-    bool raceRestrict(const Creature* creature) const;
-    bool raceRestrict(const Creature* creature, bool p) const;
-    bool classRestrict(const Creature* creature) const;
-    bool classRestrict(const Creature* creature, bool p) const;
-    bool clanRestrict(const Creature* creature) const;
-    bool clanRestrict(const Creature* creature, bool p) const;
-    bool levelRestrict(const Creature* creature, bool p = false) const;
-    bool skillRestrict(const Creature* creature, bool p = false) const;
-    bool alignRestrict(const Creature* creature, bool p = false) const;
-    bool sexRestrict(const Creature* creature, bool p = false) const;
-    bool strRestrict(Creature* creature, bool p = false) const;
-    bool lawchaoRestrict(const Creature* creature, bool p = false) const;
-    bool showAsSame(const Player* player, const Object* Object) const;
-    bool isHeavyArmor() const;
-    bool isMediumArmor() const;
-    bool isLightArmor() const;
-    bool needsTwoHands() const;
-    bool isQuestValid() const; // Is this object valid for a quest?
+    [[nodiscard]] bool doRestrict(Creature* creature, bool p);
+    [[nodiscard]] bool raceRestrict(const Creature* creature) const;
+    [[nodiscard]] bool raceRestrict(const Creature* creature, bool p) const;
+    [[nodiscard]] bool classRestrict(const Creature* creature) const;
+    [[nodiscard]] bool classRestrict(const Creature* creature, bool p) const;
+    [[nodiscard]] bool clanRestrict(const Creature* creature) const;
+    [[nodiscard]] bool clanRestrict(const Creature* creature, bool p) const;
+    [[nodiscard]] bool levelRestrict(const Creature* creature, bool p = false) const;
+    [[nodiscard]] bool skillRestrict(const Creature* creature, bool p = false) const;
+    [[nodiscard]] bool alignRestrict(const Creature* creature, bool p = false) const;
+    [[nodiscard]] bool sexRestrict(const Creature* creature, bool p = false) const;
+    [[nodiscard]] bool strRestrict(Creature* creature, bool p = false) const;
+    [[nodiscard]] bool lawchaoRestrict(const Creature* creature, bool p = false) const;
+    [[nodiscard]] bool showAsSame(const Player* player, const Object* Object) const;
+    [[nodiscard]] bool isHeavyArmor() const;
+    [[nodiscard]] bool isMediumArmor() const;
+    [[nodiscard]] bool isLightArmor() const;
+    [[nodiscard]] bool needsTwoHands() const;
+    [[nodiscard]] bool isQuestValid() const; // Is this object valid for a quest?
 
     bstring showAlchemyEffects(Player *player = nullptr);
     bstring statObj(int statFlags);

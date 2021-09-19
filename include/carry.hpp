@@ -29,7 +29,7 @@ public:
     Carry();
     xmlNodePtr save(xmlNodePtr curNode, const char* childName, bool saveNonZero, int pos=0) const;
     void    load(xmlNodePtr curNode);
-    bstring str(bstring current = "", char color = '\0') const;
+    [[nodiscard]] bstring str(bstring current = "", char color = '\0') const;
     Carry& operator=(const Carry& cry);
     bool    operator==(const Carry& cry) const;
     bool    operator!=(const Carry& cry) const;

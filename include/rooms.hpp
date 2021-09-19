@@ -60,7 +60,7 @@ public:
     bool delExit(Exit *exit);
     void clearExits();
 
-    bool isSunlight() const;
+    [[nodiscard]] bool isSunlight() const;
     // handles darkmetal and unique
     void killMortalObjectsOnFloor();
     void killMortalObjects(bool floor=true);
@@ -68,52 +68,52 @@ public:
     void setTempNoKillDarkmetal(bool noKillDarkmetal);
     void scatterObjects();
 
-    bool isCombat() const;
-    bool isConstruction() const;
+    [[nodiscard]] bool isCombat() const;
+    [[nodiscard]] bool isConstruction() const;
 
     int saveExitsXml(xmlNodePtr curNode) const;
 
 
-    Monster* getGuardingExit(const Exit* exit, const Player* player) const;
+    [[nodiscard]] Monster* getGuardingExit(const Exit* exit, const Player* player) const;
     void addExit(Exit *ext);
     void checkExits();
-    bool deityRestrict(const Creature* creature) const;
-    int maxCapacity() const;
-    bool isFull() const;
-    int countVisPly() const;
-    int countCrt() const;
-    Monster* getTollkeeper() const;
+    [[nodiscard]] bool deityRestrict(const Creature* creature) const;
+    [[nodiscard]] int maxCapacity() const;
+    [[nodiscard]] bool isFull() const;
+    [[nodiscard]] int countVisPly() const;
+    [[nodiscard]] int countCrt() const;
+    [[nodiscard]] Monster* getTollkeeper() const;
 
-    bool isMagicDark() const;
-    bool isNormalDark() const;
-    bool isUnderwater() const;
-    bool isOutdoors() const;
-    bool isDropDestroy() const;
-    bool magicBonus() const;
-    bool isForest() const;
-    bool vampCanSleep(Socket* sock) const;
-    int getMaxMobs() const;
-    int dmInRoom() const;
-    void arrangeExits(Player* player=0);
-    bool isWinter() const;
-    bool isOutlawSafe() const;
-    bool isPkSafe() const;
-    bool isFastTick() const;
+    [[nodiscard]] bool isMagicDark() const;
+    [[nodiscard]] bool isNormalDark() const;
+    [[nodiscard]] bool isUnderwater() const;
+    [[nodiscard]] bool isOutdoors() const;
+    [[nodiscard]] bool isDropDestroy() const;
+    [[nodiscard]] bool magicBonus() const;
+    [[nodiscard]] bool isForest() const;
+    [[nodiscard]] bool vampCanSleep(Socket* sock) const;
+    [[nodiscard]] int getMaxMobs() const;
+    [[nodiscard]] int dmInRoom() const;
+    void arrangeExits(Player* player= nullptr);
+    [[nodiscard]] bool isWinter() const;
+    [[nodiscard]] bool isOutlawSafe() const;
+    [[nodiscard]] bool isPkSafe() const;
+    [[nodiscard]] bool isFastTick() const;
 
 
-    virtual bool flagIsSet(int flag) const = 0;
+    [[nodiscard]] virtual bool flagIsSet(int flag) const = 0;
 //  virtual void setFlag(int flag) = 0;
-    virtual Size getSize() const = 0;
-    bool hasRealmBonus(Realm realm) const;
-    bool hasOppositeRealmBonus(Realm realm) const;
+    [[nodiscard]] virtual Size getSize() const = 0;
+    [[nodiscard]] bool hasRealmBonus(Realm realm) const;
+    [[nodiscard]] bool hasOppositeRealmBonus(Realm realm) const;
     WanderInfo* getWanderInfo();
     void expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelStaff);
 
-    bstring fullName() const;
-    bstring getVersion() const;
+    [[nodiscard]] bstring fullName() const;
+    [[nodiscard]] bstring getVersion() const;
     void setVersion(const bstring& v);
-    bool hasTraining() const;
-    CreatureClass whatTraining(int extra=0) const;
+    [[nodiscard]] bool hasTraining() const;
+    [[nodiscard]] CreatureClass whatTraining(int extra=0) const;
 
     virtual const Fishing* getFishing() const = 0;
 
@@ -121,14 +121,14 @@ public:
 
     void addEffectsIndex();
     bool removeEffectsIndex();
-    bool needsEffectsIndex() const;
+    [[nodiscard]] bool needsEffectsIndex() const;
 
 
     void print(Socket* ignore, const char *fmt, ...);
     void print(Socket* ignore1, Socket* ignore2, const char *fmt, ...);
 
     virtual bstring getMsdp(bool showExits = true) const { return ""; };
-    bstring getExitsMsdp() const;
+    [[nodiscard]] bstring getExitsMsdp() const;
 private:
     void doPrint(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const char *fmt, va_list ap);
 };
@@ -145,21 +145,21 @@ public:
     int saveToXml(xmlNodePtr rootNode, int permOnly) const;
     int saveToFile(int permOnly, LoadType saveType=LoadType::LS_NORMAL);
 
-    bstring getShortDescription() const;
-    bstring getLongDescription() const;
-    short getLowLevel() const;
-    short getHighLevel() const;
-    short getMaxMobs() const;
-    short getTrap() const;
-    CatRef getTrapExit() const;
-    short getTrapWeight() const;
-    short getTrapStrength() const;
-    bstring getFaction() const;
-    long getBeenHere() const;
-    short getTerrain() const;
-    int getRoomExperience() const;
-    Size getSize() const;
-    bool canPortHere(const Creature* creature=0) const;
+    [[nodiscard]] bstring getShortDescription() const;
+    [[nodiscard]] bstring getLongDescription() const;
+    [[nodiscard]] short getLowLevel() const;
+    [[nodiscard]] short getHighLevel() const;
+    [[nodiscard]] short getMaxMobs() const;
+    [[nodiscard]] short getTrap() const;
+    [[nodiscard]] CatRef getTrapExit() const;
+    [[nodiscard]] short getTrapWeight() const;
+    [[nodiscard]] short getTrapStrength() const;
+    [[nodiscard]] bstring getFaction() const;
+    [[nodiscard]] long getBeenHere() const;
+    [[nodiscard]] short getTerrain() const;
+    [[nodiscard]] int getRoomExperience() const;
+    [[nodiscard]] Size getSize() const;
+    [[nodiscard]] bool canPortHere(const Creature* creature=0) const;
 
     void setShortDescription(const bstring& desc);
     void setLongDescription(const bstring& desc);

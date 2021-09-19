@@ -93,26 +93,26 @@ public:
     BaseRoom* getAsRoom();
     Exit* getAsExit();
 
-    const Monster* getAsConstMonster() const;
-    const Player* getAsConstPlayer() const;
-    const Creature* getAsConstCreature() const;
-    const Object* getAsConstObject() const;
-    const UniqueRoom *getAsConstUniqueRoom() const;
-    const AreaRoom *getAsConstAreaRoom() const;
-    const BaseRoom* getAsConstRoom() const;
-    const Exit* getAsConstExit() const;
+    [[nodiscard]] const Monster* getAsConstMonster() const;
+    [[nodiscard]] const Player* getAsConstPlayer() const;
+    [[nodiscard]] const Creature* getAsConstCreature() const;
+    [[nodiscard]] const Object* getAsConstObject() const;
+    [[nodiscard]] const UniqueRoom *getAsConstUniqueRoom() const;
+    [[nodiscard]] const AreaRoom *getAsConstAreaRoom() const;
+    [[nodiscard]] const BaseRoom* getAsConstRoom() const;
+    [[nodiscard]] const Exit* getAsConstExit() const;
 
-    bool isRoom() const;
-    bool isUniqueRoom() const;
-    bool isAreaRoom() const;
-    bool isObject() const;
-    bool isPlayer() const;
-    bool isMonster() const;
-    bool isCreature() const;
-    bool isExit() const;
+    [[nodiscard]] bool isRoom() const;
+    [[nodiscard]] bool isUniqueRoom() const;
+    [[nodiscard]] bool isAreaRoom() const;
+    [[nodiscard]] bool isObject() const;
+    [[nodiscard]] bool isPlayer() const;
+    [[nodiscard]] bool isMonster() const;
+    [[nodiscard]] bool isCreature() const;
+    [[nodiscard]] bool isExit() const;
 
-    const bstring& getId() const;
-    bstring getIdPython() const;
+    [[nodiscard]] const bstring& getId() const;
+    [[nodiscard]] bstring getIdPython() const;
     virtual void validateId() {};
     Effects effects;
 
@@ -121,11 +121,11 @@ public:
 
 
 // Effects
-    bool isEffected(const bstring& effect, bool exactMatch = false) const;
-    bool isEffected(EffectInfo* effect) const;
-    bool hasPermEffect(const bstring& effect) const;
-    EffectInfo* getEffect(const bstring& effect) const;
-    EffectInfo* getExactEffect(const bstring& effect) const;
+    [[nodiscard]] bool isEffected(const bstring& effect, bool exactMatch = false) const;
+    [[nodiscard]] bool isEffected(EffectInfo* effect) const;
+    [[nodiscard]] bool hasPermEffect(const bstring& effect) const;
+    [[nodiscard]] EffectInfo* getEffect(const bstring& effect) const;
+    [[nodiscard]] EffectInfo* getExactEffect(const bstring& effect) const;
     EffectInfo* addEffect(EffectInfo* newEffect, bool show = true, bool keepApplier=false);
     EffectInfo* addEffect(const bstring& effect, long duration = -2, int strength = -2, MudObject* applier = nullptr, bool show = true, const Creature* owner=nullptr, bool keepApplier=false);
     EffectInfo* addPermEffect(const bstring& effect, int strength = 1, bool show = true);

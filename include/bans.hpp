@@ -25,7 +25,7 @@
 class Ban {
 public:
     Ban();
-    Ban(xmlNodePtr curNode);
+    explicit Ban(xmlNodePtr curNode);
     void reset();
     bool matches(const char* toMatch);
     

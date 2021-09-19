@@ -170,16 +170,16 @@ protected:
 public:
     void save(xmlNodePtr rootNode) const;
 
-    bool hasBaseSkill() const;
-    bstring getBaseSkill();
+    [[nodiscard]] bool hasBaseSkill() const;
+    [[nodiscard]] bstring getBaseSkill();
 
 
-    bstring getName() const;
-    bstring getDisplayName() const;
-    bstring getGroup() const;
-    int getGainType() const;
-    int getGained() const;
-    int getGainBonus() const;
+    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] bstring getDisplayName() const;
+    [[nodiscard]] bstring getGroup() const;
+    [[nodiscard]] int getGainType() const;
+    [[nodiscard]] int getGained() const;
+    [[nodiscard]] int getGainBonus() const;
 
     void setName(const bstring& pName);
     void updateParent();

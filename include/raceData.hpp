@@ -61,34 +61,34 @@ public:
     RaceData(xmlNodePtr rootNode);
     ~RaceData();
 
-    int getId() const;
-    bstring getName(int tryToShorten=0) const;
-    bstring getAdjective() const;
-    bstring getAbbr() const;
+    [[nodiscard]] int getId() const;
+    [[nodiscard]] bstring getName(int tryToShorten=0) const;
+    [[nodiscard]] bstring getAdjective() const;
+    [[nodiscard]] bstring getAbbr() const;
 
-    int getParentRace() const;
+    [[nodiscard]] int getParentRace() const;
     void makeParent();
-    bool isParent() const;
-    bool isPlayable() const;
-    bool isGendered() const;
+    [[nodiscard]] bool isParent() const;
+    [[nodiscard]] bool isPlayable() const;
+    [[nodiscard]] bool isGendered() const;
 
-    bool hasInfravision() const;
-    bool bonusStat() const;
-    Size getSize() const;
-    int getStartAge() const;
-    int getStatAdj(int stat) const;
-    int getSave(int save) const;
-    short getPorphyriaResistance() const;
+    [[nodiscard]] bool hasInfravision() const;
+    [[nodiscard]] bool bonusStat() const;
+    [[nodiscard]] Size getSize() const;
+    [[nodiscard]] int getStartAge() const;
+    [[nodiscard]] int getStatAdj(int stat) const;
+    [[nodiscard]] int getSave(int save) const;
+    [[nodiscard]] short getPorphyriaResistance() const;
 
-    bool allowedClass(int cls) const;
-    bool allowedDeity(CreatureClass cls, CreatureClass cls2, int dty) const;
-    bool allowedMultiClericDeity(int dty) const;
-    bool allowedClericDeity(int dty) const;
-    bool allowedPaladinDeity(int dty) const;
-    bool allowedDeathknightDeity(int dty) const;
+    [[nodiscard]] bool allowedClass(int cls) const;
+    [[nodiscard]] bool allowedDeity(CreatureClass cls, CreatureClass cls2, int dty) const;
+    [[nodiscard]] bool allowedMultiClericDeity(int dty) const;
+    [[nodiscard]] bool allowedClericDeity(int dty) const;
+    [[nodiscard]] bool allowedPaladinDeity(int dty) const;
+    [[nodiscard]] bool allowedDeathknightDeity(int dty) const;
 
-    std::list<SkillGain*>::const_iterator getSkillBegin() const;
-    std::list<SkillGain*>::const_iterator getSkillEnd() const;
+    [[nodiscard]] std::list<SkillGain*>::const_iterator getSkillBegin() const;
+    [[nodiscard]] std::list<SkillGain*>::const_iterator getSkillEnd() const;
 
     std::map<Sex, short> baseHeight;
     std::map<Sex, short> baseWeight;
