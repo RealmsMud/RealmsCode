@@ -389,7 +389,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
         }
 
         if(object->flagIsSet(O_EQUIPPING_BESTOWS_EFFECT) && Effect::objectCanBestowEffect(object->getEffect())) {
-            Effect* effect = gConfig->getEffect(object->getEffect());
+            auto* effect = gConfig->getEffect(object->getEffect());
             if(effect)
                 player->printColor("Equipping this item will give you the %s^x effect.\n", effect->getDisplay().c_str());
         }

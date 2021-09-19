@@ -8,7 +8,6 @@ class Socket;
 class bstring;
 
 void postedit(Socket* sock, const bstring& str);
-void noteedit(Socket* sock, const bstring& str);
 void histedit(Socket* sock, const bstring& str);
 
 #endif //REALMSCODE_POST_HPP

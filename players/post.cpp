@@ -27,7 +27,7 @@
 #include "creatures.hpp"  // for Player
 #include "flags.hpp"      // for P_READING_FILE, P_UNREAD_MAIL, P_CAN_MUDMAI...
 #include "global.hpp"     // for DOPROMPT, FATAL, PROMPT, CreatureClass, Cre...
-#include "login.hpp"      // for CON_EDIT_HISTORY, CON_EDIT_NOTE, CON_SENDIN...
+#include "login.hpp"      // for CON_EDIT_HISTORY, CON_SENDIN...
 #include "mud.hpp"        // for ACC
 #include "os.hpp"         // for merror
 #include "paths.hpp"      // for Post, History
@@ -425,89 +425,6 @@ int dmDeletemail(Player* player, cmd* cmnd) {
     }
 
     return(0);
-}
-
-
-
-//*********************************************************************
-//                      notepad
-//*********************************************************************
-
-int notepad(Player* player, cmd* cmnd) {
-    char    file[80];
-
-    if(cmnd->num == 3 && 0 == strcmp(cmnd->str[2], "all")) {
-        sprintf(file, "%s/all_pad.txt", Path::Post);
-        cmnd->num = 2;
-    } else {
-        sprintf(file, "%s/%s_pad.txt", Path::Post, player->getCName());
-    }
-
-    if(cmnd->num == 2) {
-        if(low(cmnd->str[1][0]) == 'a') {
-            strcpy(player->getSock()->tempstr[0], file);
-            player->print("Staff notepad:\n->");
-            player->setFlag(P_READING_FILE);
-            gServer->processOutput();
-            player->getSock()->setState(CON_EDIT_NOTE);
-            player->getSock()->intrpt &= ~1;
-            //player->getSock()->fn = noteedit;
-            //player->getSock()->fnparam = 1;
-            return(DOPROMPT);
-        } else if(low(cmnd->str[1][0]) == 'd') {
-            unlink(file);
-            player->print("Clearing your notepad.\n");
-            return(PROMPT);
-        } else if(low(cmnd->str[1][0]) == 'v') {
-            player->getSock()->viewFile(file);
-            return(DOPROMPT);
-        } else {
-            player->print("invalid option.\n");
-            return(PROMPT);
-        }
-    } else {
-        player->getSock()->viewFile(file);
-        return(DOPROMPT);
-    }
-}
-
-//*********************************************************************
-//                      noteedit
-//*********************************************************************
-
-void noteedit(Socket* sock, const bstring& str) {
-    char    tmpstr[40];
-    int     ff=0;
-    bstring outstr = "";
-    Player* ply = sock->getPlayer();
-
-    if(str[0] == '.') {
-        ply->clearFlag(P_READING_FILE);
-        ply->print("Message appended.\n");
-        sock->restoreState();
-        return;
-    }
-
-    ff = open(sock->tempstr[0], O_RDONLY, 0);
-    if(ff < 0) {
-        ff = open(sock->tempstr[0], O_CREAT | O_RDWR, ACC);
-        sprintf(tmpstr, "            %s\n\n", "=== Staff Notepad ===");
-        write(ff, tmpstr, strlen(tmpstr));
-    }
-    close(ff);
-
-    ff = open(sock->tempstr[0], O_CREAT | O_APPEND | O_RDWR, ACC);
-    if(ff < 0)
-        merror("noteedit", FATAL);
-
-    outstr = postText(str);
-    write(ff, outstr.c_str(), outstr.getLength());
-    close(ff);
-
-    sock->print("->");
-
-    gServer->processOutput();
-    sock->intrpt &= ~1;
 }
 
 

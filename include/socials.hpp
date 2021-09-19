@@ -27,9 +27,12 @@
 
 class SocialCommand: public Command {
 public:
-    SocialCommand(xmlNodePtr rootNode);
+    explicit SocialCommand(xmlNodePtr rootNode);
+    SocialCommand(const bstring& pCmdStr) {
+        name = pCmdStr;
+    }
     bool saveToXml(xmlNodePtr rootNode) const;
-    int execute(Creature* player, cmd* cmnd);
+    int execute(Creature* player, cmd* cmnd) const;
 
     [[nodiscard]] bool getWakeTarget() const;
     [[nodiscard]] bool getRudeWakeTarget() const;
@@ -46,7 +49,7 @@ public:
     [[nodiscard]] const bstring& getRoomOnSelf() const;
 
 private:
-    int (*fn)(Creature* player, cmd* cmnd);
+    int (*fn)(Creature* player, cmd* cmnd){};
     bstring script;
 
     bstring selfNoTarget;
@@ -59,9 +62,9 @@ private:
     bstring selfOnSelf;
     bstring roomOnSelf;
 
-    bool wakeTarget;
-    bool rudeWakeTarget;
-    bool wakeRoom;
+    bool wakeTarget{};
+    bool rudeWakeTarget{};
+    bool wakeRoom{};
 
 
 };

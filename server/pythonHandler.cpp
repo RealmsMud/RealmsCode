@@ -56,6 +56,7 @@
 #include "server.hpp"                                          // for Server
 #include "size.hpp"                                            // for Size
 #include "skills.hpp"                                          // for SkillInfo
+#include "socials.hpp"
 #include "socket.hpp"                                          // for Socket
 #include "stats.hpp"                                           // for Stat
 #include "unicodeobject.h"                                     // for PyUnic...

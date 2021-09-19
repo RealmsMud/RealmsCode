@@ -695,7 +695,7 @@ public:
 
     bool isSitting();
 
-    bool ableToDoCommand(const cmd* cmnd=nullptr) const;
+    bool ableToDoCommand( cmd* cmnd=nullptr) const;
     void wake(const bstring& str = "", bool noise=false);
     void modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, Realm pRealm=NO_REALM, Object* weapon=0, short saveBonus=0, short offguard=OFFGUARD_REMOVE, bool computingBonus=false);
     bool checkResistPet(Creature *pet, bool& resistPet, bool& immunePet, bool& vulnPet);
@@ -720,11 +720,11 @@ public:
 
     // New songs
     bool isPlaying();
-    Song* getPlaying();
-    bool setPlaying(Song* newSong, bool echo = true);
+    const Song* getPlaying();
+    bool setPlaying(const Song* newSong, bool echo = true);
     bool stopPlaying(bool echo = true);
     bool pulseSong(long t);
-    Song* playing{};
+    const Song* playing{};
 
 };
 

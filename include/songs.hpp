@@ -33,18 +33,21 @@ class MudObject;
 
 class Song: public MysticMethod {
 public:
-    Song(xmlNodePtr rootNode);
+    explicit Song(xmlNodePtr rootNode);
+    Song(const bstring& pCmdStr) {
+        name = pCmdStr;
+    }
     ~Song() {};
 
-    void save(xmlNodePtr rootNode) const;
+    void save(xmlNodePtr rootNode) const override;
 
-    const bstring& getEffect() const;
-    const bstring& getType() const;
-    const bstring& getTargetType() const;
-    bool runScript(MudObject* singer, MudObject* target = nullptr);
+    [[nodiscard]] const bstring& getEffect() const;
+    [[nodiscard]] const bstring& getType() const;
+    [[nodiscard]] const bstring& getTargetType() const;
+    bool runScript(MudObject* singer, MudObject* target = nullptr) const;
 
-    int getDelay();
-    int getDuration();
+    [[nodiscard]] int getDelay() const;
+    [[nodiscard]] int getDuration() const;
 private:
     Song() {};
     bstring effect;

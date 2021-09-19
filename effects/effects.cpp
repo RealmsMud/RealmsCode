@@ -92,9 +92,6 @@ AlcoholState getAlcoholState(const EffectInfo* effect) {
 //*********************************************************************
 
 void Config::clearEffects() {
-    for(const auto& ep : effects) {
-        delete ep.second;
-    }
     effects.clear();
 }
 
@@ -102,12 +99,12 @@ void Config::clearEffects() {
 //                      getEffect
 //*********************************************************************
 
-Effect* Config::getEffect(const bstring& eName) {
+const Effect* Config::getEffect(const bstring& eName) {
     EffectMap::const_iterator eIt;
     if( (eIt = effects.find(eName)) == effects.end())
         return(nullptr);
     else
-        return((*eIt).second);
+        return(&((*eIt).second));
 }
 
 //*********************************************************************
@@ -123,7 +120,7 @@ bool Config::effectExists(const bstring& eName) {
 //*********************************************************************
 
 int dmEffectList(Player* player, cmd* cmnd) {
-    Effect* effect=nullptr;
+    const Effect* effect=nullptr;
     bstring command = getFullstrText(cmnd->fullstr, 1);
 
     bool all = (command == "all");
@@ -134,7 +131,7 @@ int dmEffectList(Player* player, cmd* cmnd) {
 
     int i = 0;
     for(const auto& sp : gConfig->effects) {
-        effect = sp.second;
+        effect = &(sp.second);
         i++;
 
         if(id != 0 && i != id)
@@ -970,13 +967,10 @@ bool MudObject::removeOppositeEffect(const EffectInfo *effect) {
 }
 
 bool Effects::removeOppositeEffect(const EffectInfo *effect) {
-    Effect* parentEffect = effect->getEffect();
+    auto* parentEffect = effect->getEffect();
 
-    if(!parentEffect)
-        return(false);
-
-    if(parentEffect->getOppositeEffect().empty())
-        return(false);
+    if(!parentEffect) return(false);
+    if(parentEffect->getOppositeEffect().empty()) return(false);
 
     return(removeEffect(parentEffect->getOppositeEffect(), true, true));
 }
@@ -1582,7 +1576,7 @@ void EffectInfo::setParent(MudObject* pParent) {
 //                      getEffect
 //*********************************************************************
 
-Effect* EffectInfo::getEffect() const {
+const Effect* EffectInfo::getEffect() const {
     return(myEffect);
 }
 

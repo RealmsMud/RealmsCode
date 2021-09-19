@@ -107,8 +107,11 @@ public:
 class SkillCommand : public virtual SkillInfo, public virtual Command {
     friend class Config;
 public:
-    SkillCommand(xmlNodePtr rootNode);
-    int execute(Creature* player, cmd* cmnd);
+    explicit SkillCommand(xmlNodePtr rootNode);
+    SkillCommand(const bstring& pCmdStr) {
+        name = pCmdStr;
+    }
+    int execute(Creature* player, cmd* cmnd) const;
 
     void setName(bstring pName);
 protected:
@@ -118,7 +121,7 @@ protected:
     TargetType targetType;          // What sort of target?
     bool offensive{};                 // Is this an offensive skill? Default: Yes         // *
 
-    bool usesAttackTimer;           // Delay/cooldown is also affected by the attack timer (True by default)
+    bool usesAttackTimer{};           // Delay/cooldown is also affected by the attack timer (True by default)
     int cooldown{};                   // Delay/cooldown on this skill * 10.  (10 = 1.0s delay)
     int failCooldown{};               // Delay/cooldown on this skill on failure
     std::list<SkillCost> resources; // Resources this skill uses
@@ -127,15 +130,15 @@ protected:
     std::list<bstring> aliases;
 
 private:
-    int (*fn)(Creature* player, cmd* cmnd);
+    int (*fn)(Creature* player, cmd* cmnd){};
 
 public:
-    bool checkResources(Creature* creature);
+    bool checkResources(Creature* creature) const;
     void subResources(Creature* creature);
 
     TargetType getTargetType() const;
     bool isOffensive() const;
-    bool runScript(Creature* actor, MudObject* target, Skill* skill);
+    bool runScript(Creature* actor, MudObject* target, Skill* skill) const;
 
     bool getUsesAttackTimer() const;
     bool hasCooldown() const;

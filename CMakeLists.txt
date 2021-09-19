@@ -155,7 +155,8 @@ set(COMMON_HEADER_FILES
     include/weather.hpp
     include/web.hpp
     include/xml.hpp
-    include/free_crt.hpp)
+    include/free_crt.hpp
+    include/namable.hpp)
 
 set(COMMON_SOURCE_FILES
     fmt/format.cc

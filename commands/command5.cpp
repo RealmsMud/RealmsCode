@@ -484,7 +484,7 @@ int cmdSuicide(Player* player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->getProxyName() != "") {
+    if(!player->getProxyName().empty()) {
         player->print("You are unable to suicide a proxied character.\n");
         return(0);
     }

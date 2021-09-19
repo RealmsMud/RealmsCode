@@ -48,7 +48,6 @@ typedef enum {
 
     // Post edit etc
     CON_SENDING_MAIL,
-    CON_EDIT_NOTE,
     CON_EDIT_HISTORY,
     CON_EDIT_PROPERTY,
 

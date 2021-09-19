@@ -281,7 +281,7 @@ bool Config::saveConfig() const {
 // **************
 
 template<class Type>
-bool saveList(const bstring& xmlDocName, const bstring& fName, const std::map<bstring, Type*, comp>& sMap) {
+bool saveSet(const bstring& xmlDocName, const bstring& fName, const std::set<Type, namableCmp>& sSet) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     char        filename[80];
@@ -290,9 +290,8 @@ bool saveList(const bstring& xmlDocName, const bstring& fName, const std::map<bs
     rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST xmlDocName.c_str(), nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
-    for(const auto& sp : sMap) {
-        Type* curItem = sp.second;
-        curItem->save(rootNode);
+    for(const auto& curItem : sSet) {
+        curItem.save(rootNode);
     }
 
     snprintf(filename, 80, "%s/%s", Path::Config, fName.c_str());
@@ -303,11 +302,11 @@ bool saveList(const bstring& xmlDocName, const bstring& fName, const std::map<bs
 }
 
 bool Config::saveSpells() const {
-    return(saveList<Spell>("Spells", "spelllist.xml", spells));
+    return(saveSet<Spell>("Spells", "spelllist.xml", spells));
 }
 
 bool Config::saveSongs() const {
-    return(saveList<Song>("Songs", "songlist.xml", songs));
+    return(saveSet<Song>("Songs", "songlist.xml", songs));
 }
 
 // **************
@@ -315,7 +314,40 @@ bool Config::saveSongs() const {
 // **************
 
 template<class Type>
-bool loadList(const bstring& xmlDocName, const bstring& xmlNodeName, const bstring& fName, std::map<bstring, Type*, comp>& sMap) {
+bool loadSet(const bstring& xmlDocName, const bstring& xmlNodeName, const bstring& fName, std::set<Type, namableCmp>& sSet) {
+    xmlDocPtr xmlDoc;
+    xmlNodePtr curNode;
+
+    char filename[80];
+    snprintf(filename, 80, "%s/%s", Path::Code, fName.c_str());
+    xmlDoc = xml::loadFile(filename, xmlDocName.c_str());
+    if(xmlDoc == nullptr)
+        return(false);
+
+    curNode = xmlDocGetRootElement(xmlDoc);
+
+    curNode = curNode->children;
+    while(curNode && xmlIsBlankNode(curNode))
+        curNode = curNode->next;
+
+    if(curNode == nullptr) {
+        xmlFreeDoc(xmlDoc);
+        return(false);
+    }
+
+    while(curNode != nullptr) {
+        if(NODE_NAME(curNode, xmlNodeName.c_str())) {
+            sSet.emplace(curNode);
+        }
+        curNode = curNode->next;
+    }
+
+    xmlFreeDoc(xmlDoc);
+    xmlCleanupParser();
+    return(true);
+}
+template<class Type>
+bool loadMap(const bstring& xmlDocName, const bstring& xmlNodeName, const bstring& fName, std::map<bstring, Type, comp>& sMap) {
     xmlDocPtr xmlDoc;
     xmlNodePtr curNode;
 
@@ -339,7 +371,7 @@ bool loadList(const bstring& xmlDocName, const bstring& xmlNodeName, const bstri
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, xmlNodeName.c_str())) {
             Type* curItem = new Type(curNode);
-            sMap[curItem->getName()] = curItem;
+            sMap.insert(std::make_pair(curItem->getName(), *curItem));
         }
         curNode = curNode->next;
     }
@@ -351,15 +383,15 @@ bool loadList(const bstring& xmlDocName, const bstring& xmlNodeName, const bstri
 
 bool Config::loadEffects() {
     clearEffects();
-    return(loadList<Effect>("Effects", "Effect", "effects.xml", effects));
+    return(loadMap<Effect>("Effects", "Effect", "effects.xml", effects));
 }
 
 bool Config::loadSpells() {
     clearSpells();
-    return(loadList<Spell>("Spells", "Spell", "spelllist.xml", spells));
+    return(loadSet<Spell>("Spells", "Spell", "spelllist.xml", spells));
 }
 
 bool Config::loadSongs() {
     clearSongs();
-    return(loadList<Song>("Songs", "Song", "songlist.xml", songs));
+    return(loadSet<Song>("Songs", "Song", "songlist.xml", songs));
 }

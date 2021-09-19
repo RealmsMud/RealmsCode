@@ -62,7 +62,7 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
         return(0);
 
     bstring str = cmnd->myCommand->getName();
-    SkillCommand* skillCmd = dynamic_cast<SkillCommand*>(cmnd->myCommand);
+    const auto* skillCmd = dynamic_cast<const SkillCommand*>(cmnd->myCommand);
     if(!skillCmd) {
         *creature << "Invalid skill!\n";
         return(0);
@@ -134,11 +134,10 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
 
 bool Skill::checkTimer(Creature* creature, bool displayFail) {
     long i;
-    if(!((i = timer.getTimeLeft()) == 0)) {
+    if((i = timer.getTimeLeft()) != 0) {
         if(displayFail)
             creature->pleaseWait(i/10.0);
-//        if(!creature->isDm())
-            return(false);
+        return(false);
     }
     return(true);
 }
@@ -184,7 +183,7 @@ int SkillCommand::getFailCooldown() const {
 }
 
 
-bool SkillCommand::runScript(Creature* actor, MudObject* target, Skill* skill) {
+bool SkillCommand::runScript(Creature* actor, MudObject* target, Skill* skill) const {
     try {
         bp::object localNamespace( (bp::handle<>(PyDict_New())));
 
@@ -314,8 +313,8 @@ bstring getResourceName(ResourceType resType) {
 // Returns: True  - Sufficient resources
 //          False - Insufficient resources
 
-bool SkillCommand::checkResources(Creature* creature) {
-    for(SkillCost& res : resources) {
+bool SkillCommand::checkResources(Creature* creature) const {
+    for(const auto& res : resources) {
         if(!creature->checkResource(res.resource, res.cost)) {
             bstring failMsg = bstring("You need to have at least ") + res.cost + " " + getResourceName(res.resource) + ".\n";
             return(creature->checkStaff(failMsg.c_str()));
@@ -329,6 +328,6 @@ void SkillCommand::subResources(Creature* creature) {
     }
 }
 
-int SkillCommand::execute(Creature* player, cmd* cmnd) {
+int SkillCommand::execute(Creature* player, cmd* cmnd) const {
     return((fn)(player, cmnd));
 }

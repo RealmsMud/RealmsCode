@@ -47,7 +47,7 @@
 #include "mud.hpp"                                  // for StartTime
 #include "os.hpp"                                   // for ASSERTLOG
 #include "paths.hpp"                                // for Config
-#include "post.hpp"                                 // for histedit, noteedit
+#include "post.hpp"                                 // for histedit
 #include "property.hpp"                             // for Property
 #include "proto.hpp"                                // for stripColor
 #include "security.hpp"                             // for changePassword
@@ -1216,8 +1216,6 @@ void Socket::setState(int pState, int pFnParam) {
         fn = ::viewFile;
     else if (pState == CON_SENDING_MAIL)
         fn = postedit;
-    else if (pState == CON_EDIT_NOTE)
-        fn = noteedit;
     else if (pState == CON_EDIT_HISTORY)
         fn = histedit;
     else if (pState == CON_EDIT_PROPERTY)

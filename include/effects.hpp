@@ -34,63 +34,61 @@ class Effect {
 public:
     Effect(xmlNodePtr rootNode);
 
-    bstring     getPulseScript() const;
-    bstring     getUnApplyScript() const;
-    bstring     getApplyScript() const;
-    bstring     getPreApplyScript() const;
-    bstring     getPostApplyScript() const;
-    bstring     getComputeScript() const;
-    bstring     getType() const;
-    bstring     getRoomDelStr() const;
-    bstring     getRoomAddStr() const;
-    bstring     getSelfDelStr() const;
-    bstring     getSelfAddStr() const;
-    bstring     getOppositeEffect() const;
-    bstring     getDisplay() const;
-    bool        hasBaseEffect(const bstring& effect) const;
-    bstring     getName() const;
+    [[nodiscard]] bstring getPulseScript() const;
+    [[nodiscard]] bstring getUnApplyScript() const;
+    [[nodiscard]] bstring getApplyScript() const;
+    [[nodiscard]] bstring getPreApplyScript() const;
+    [[nodiscard]] bstring getPostApplyScript() const;
+    [[nodiscard]] bstring getComputeScript() const;
+    [[nodiscard]] bstring getType() const;
+    [[nodiscard]] bstring getRoomDelStr() const;
+    [[nodiscard]] bstring getRoomAddStr() const;
+    [[nodiscard]] bstring getSelfDelStr() const;
+    [[nodiscard]] bstring getSelfAddStr() const;
+    [[nodiscard]] bstring getOppositeEffect() const;
+    [[nodiscard]] bstring getDisplay() const;
+    [[nodiscard]] bool hasBaseEffect(const bstring &effect) const;
+    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] int getPulseDelay() const;
+    [[nodiscard]] bool isPulsed() const;
+    [[nodiscard]] bool isSpell() const;
+    [[nodiscard]] bool usesStrength() const;
 
-    int         getPulseDelay() const;
+    const std::list<bstring> &getBaseEffects();
+    static bool objectCanBestowEffect(const bstring &effect);
 
-    bool        isPulsed() const;
-    bool        isSpell() const;
-    bool        usesStrength() const;
-
-    const std::list<bstring>& getBaseEffects();
-
-    static bool objectCanBestowEffect(const bstring& effect);
 private:
     Effect();
 
-    bstring     name;
+    bstring name;
     std::list<bstring> baseEffects;  // For multiple effects that confer the same type of effect, ie: Fly
 
-    bstring     display;
+    bstring display;
 
-    bstring     oppositeEffect;
+    bstring oppositeEffect;
 
-    bstring     selfAddStr;
-    bstring     selfDelStr;
-    bstring     roomAddStr;
-    bstring     roomDelStr;
-    bool        pulsed;      // Does this effect need to be pulsed?
-    int         pulseDelay;  // Time between pulses
+    bstring selfAddStr;
+    bstring selfDelStr;
+    bstring roomAddStr;
+    bstring roomDelStr;
+    bool pulsed;      // Does this effect need to be pulsed?
+    int pulseDelay;  // Time between pulses
 
-    bstring     type;
+    bstring type;
 
-    bstring     computeScript;
-    bstring     applyScript;
-    bstring     unApplyScript;
-    bstring     preApplyScript;
-    bstring     postApplyScript;
-    bstring     pulseScript;
+    bstring computeScript;
+    bstring applyScript;
+    bstring unApplyScript;
+    bstring preApplyScript;
+    bstring postApplyScript;
+    bstring pulseScript;
 
-    bool        isSpellEffect;  // Decides if the effect will show up under "spells under"
-    bool        usesStr;
+    bool isSpellEffect;  // Decides if the effect will show up under "spells under"
+    bool usesStr;
 
-    int         baseDuration{};       // Base duration of the effect
-    float       potionMultiplyer{};   // Multiplier of duration for potion
-    int         magicRoomBonus{};     // Bonus in +magic room
+    int baseDuration{};       // Base duration of the effect
+    float potionMultiplyer{};   // Multiplier of duration for potion
+    int magicRoomBonus{};     // Bonus in +magic room
 
 };
 
@@ -118,112 +116,116 @@ class Creature;
 // };
 
 // Information about an effect on a creature
-class EffectInfo
-{
+class EffectInfo {
 
-friend class Effects;
+    friend class Effects;
+
 public:
-    EffectInfo(const bstring& pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent=0, const Creature* owner=0);
+    EffectInfo(const bstring &pName, time_t pLastMod, long pDuration, int pStrength, MudObject *pParent = 0, const Creature *owner = 0);
     EffectInfo(xmlNodePtr rootNode);
+
     virtual ~EffectInfo();
-    friend std::ostream& operator<<(std::ostream& out, const EffectInfo& effectinfo);
-    friend std::ostream& operator<<(std::ostream& out, EffectInfo* effectinfo);
 
-    bool        compute(MudObject* applier);
-    bool        add();
-    bool        apply();
-    bool        preApply();
-    bool        postApply(bool keepApplier);
-    bool        remove(bool show = true);
+    friend std::ostream &operator<<(std::ostream &out, const EffectInfo &effectinfo);
+    friend std::ostream &operator<<(std::ostream &out, EffectInfo *effectinfo);
 
-    bool        willOverWrite(EffectInfo* existingEffect) const;
+    bool compute(MudObject *applier);
+    bool add();
+    bool apply();
+    bool preApply();
+    bool postApply(bool keepApplier);
+    bool remove(bool show = true);
+    bool willOverWrite(EffectInfo *existingEffect) const;
+    void save(xmlNodePtr rootNode) const;
 
-    void        save(xmlNodePtr rootNode) const;
 
+    bstring getName() const;
+    bstring getDisplayName() const;
+    bstring getOwner() const;
+    time_t getLastMod() const;
+    long getDuration() const;
+    int getStrength() const;
+    int getExtra() const;
+    MudObject *getParent() const;
+    const Effect *getEffect() const;
+    bool hasBaseEffect(const bstring &effect) const;
+    bool runScript(const bstring &pyScript, MudObject *applier = nullptr);
+    bool updateLastMod(time_t t);    // True if it's time to wear off
+    bool timeForPulse(time_t t);  // True if it's time to pulse
+    bool pulse(time_t t);
 
-    bstring     getName() const;
-    bstring     getDisplayName() const;
-    bstring     getOwner() const;
-    time_t      getLastMod() const;
-    long        getDuration() const;
-    int         getStrength() const;
-    int         getExtra() const;
-    MudObject*  getParent() const;
-    Effect*     getEffect() const;
-    bool        hasBaseEffect(const bstring& effect) const;
-    bool        runScript(const bstring& pyScript, MudObject* applier = nullptr);
+    void setOwner(const Creature *owner);
+    void setStrength(int pStrength);
+    void setExtra(int pExtra);
+    void setDuration(long pDuration);
+    void setParent(MudObject *parent);
 
-    bool        updateLastMod(time_t t);    // True if it's time to wear off
-    bool        timeForPulse(time_t t);  // True if it's time to pulse
+    bool isOwner(const Creature *owner) const;
+    bool isCurse() const;
+    bool isDisease() const;
+    bool isPoison() const;
+    bool isPermanent() const;
 
-    bool        pulse(time_t t);
-
-    void        setOwner(const Creature* owner);
-    void        setStrength(int pStrength);
-    void        setExtra(int pExtra);
-    void        setDuration(long pDuration);
-    void        setParent(MudObject* parent);
-
-    bool        isOwner(const Creature* owner) const;
-    bool        isCurse() const;
-    bool        isDisease() const;
-    bool        isPoison() const;
-    bool        isPermanent() const;
-    MudObject* getApplier() const;
+    MudObject *getApplier() const;
 
 protected:
     EffectInfo();
 
 private:
-    bstring     name;               // Which effect is this
-    bstring     pOwner;             // Who cast this effect (player)
-    time_t      lastMod = 0;        // When did we last update duration
-    time_t      lastPulse  = 0;     // Last Pulsed time
-    int         pulseModifier = 0;  // Adjustment to base pulse timer
-    long        duration = 0;       // How much longer will this effect last
-    int         strength = 0;       // How strong is this effect (for overwriting effects)
-    int         extra = 0;          // Extra info
-    Effect*     myEffect = 0;       // Pointer to the effect listing
+    bstring name;          // Which effect is this
+    bstring pOwner;        // Who cast this effect (player)
+    time_t lastMod = 0;    // When did we last update duration
+    time_t lastPulse = 0;  // Last Pulsed time
+    int pulseModifier = 0; // Adjustment to base pulse timer
+    long duration = 0;     // How much longer will this effect last
+    int strength = 0;      // How strong is this effect (for overwriting effects)
+    int extra = 0;         // Extra info
+    const Effect *myEffect = nullptr; // Pointer to the effect listing
 
-    MudObject*  myParent = 0;       // Pointer to parent MudObject
+    MudObject *myParent = nullptr;    // Pointer to parent MudObject
 
     // MudObject applying this effect; only valid during application unless otherwise
     // specified. And if you DO specify otherwise, be sure you know what you're doing!
     // The effect will keep a pointer to the applier, and if the applier is removed
     // from memory, you'll get an invalid pointer that might crash the game.
-    MudObject*  myApplier = 0;
+    MudObject *myApplier = nullptr;
 
 };
 
-typedef std::list<EffectInfo*> EffectList;
+typedef std::list<EffectInfo *> EffectList;
+
 // this class holds effect information and makes effects portable
 // across multiple objects
 class Effects {
 public:
-    void    load(xmlNodePtr rootNode, MudObject* pParent=0);
-    void    save(xmlNodePtr rootNode, const char* name) const;
-    EffectInfo* getEffect(const bstring& effect) const;
-    EffectInfo* getExactEffect(const bstring& effect) const;
-    bool    isEffected(const bstring& effect, bool exactMatch = false) const;
-    bool    isEffected(EffectInfo* effect) const;
-    //EffectInfo* addEffect(const bstring& effect, MudObject* applier, bool show, MudObject* pParent=0, const Creature* onwer=0, bool keepApplier=false);
-    EffectInfo* addEffect(EffectInfo* newEffect, bool show, MudObject* parent=0, bool keepApplier=false);
-    EffectInfo* addEffect(const bstring& effect, long duration, int strength, MudObject* applier = nullptr, bool show = true, MudObject* pParent=0, const Creature* onwer=0, bool keepApplier=false);
-    bool    removeEffect(const bstring& effect, bool show, bool remPerm, MudObject* fromApplier=0);
-    bool    removeEffect(EffectInfo* toDel, bool show);
-    bool    removeOppositeEffect(const EffectInfo *effect);
-    void    removeAll();
-    void    removeOwner(const Creature* owner);
-    void    copy(const Effects* source, MudObject* pParent=0);
-    bool    hasPoison() const;
-    bool    removePoison();
-    bool    hasDisease() const;
-    bool    removeDisease();
-    bool    removeCurse();
-    bstring getEffectsString(const Creature* viewer);
-    bstring getEffectsList() const;
+    void load(xmlNodePtr rootNode, MudObject *pParent = 0);
+    void save(xmlNodePtr rootNode, const char *name) const;
 
-    void    pulse(time_t t, MudObject* pParent=0);
+    [[nodiscard]] EffectInfo *getEffect(const bstring &effect) const;
+    EffectInfo *getExactEffect(const bstring &effect) const;
+
+    [[nodiscard]] bool isEffected(const bstring &effect, bool exactMatch = false) const;
+    [[nodiscard]] bool isEffected(EffectInfo *effect) const;
+
+    //EffectInfo* addEffect(const bstring& effect, MudObject* applier, bool show, MudObject* pParent=0, const Creature* onwer=0, bool keepApplier=false);
+    EffectInfo *addEffect(EffectInfo *newEffect, bool show, MudObject *parent = nullptr, bool keepApplier = false);
+    EffectInfo *addEffect(const bstring &effect, long duration, int strength, MudObject *applier = nullptr, bool show = true, MudObject *pParent = nullptr,
+                          const Creature *onwer = nullptr, bool keepApplier = false);
+
+    bool removeEffect(const bstring &effect, bool show, bool remPerm, MudObject *fromApplier = nullptr);
+    bool removeEffect(EffectInfo *toDel, bool show);
+    bool removeOppositeEffect(const EffectInfo *effect);
+    void removeAll();
+    void removeOwner(const Creature *owner);
+    void copy(const Effects *source, MudObject *pParent = nullptr);
+    bool hasPoison() const;
+    bool removePoison();
+    bool hasDisease() const;
+    bool removeDisease();
+    bool removeCurse();
+    bstring getEffectsString(const Creature *viewer);
+    bstring getEffectsList() const;
+    void pulse(time_t t, MudObject *pParent = nullptr);
 
     EffectList effectList;
 };

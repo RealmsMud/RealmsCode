@@ -20,6 +20,7 @@
 #include <cstring>                                  // for memcpy, strcpy
 #include <list>                                     // for operator==, opera...
 #include <ostream>                                  // for basic_ostream::op...
+#include <fmt/format.h>
 
 #include "anchor.hpp"                               // for Anchor
 #include "bstring.hpp"                              // for bstring
@@ -44,9 +45,6 @@ class Object;
 //*********************************************************************
 
 void Config::clearSpells() {
-    for(const auto& sp : spells) {
-        delete sp.second;
-    }
     spells.clear();
 }
 
@@ -59,9 +57,7 @@ int dmSpellList(Player* player, cmd* cmnd) {
 
     player->printColor("^YSpells\n");
     for(const auto& sp : gConfig->spells) {
-        spell = sp.second;
-        player->printColor("  %s   %d - %s\n    Script: ^y%s^x\n", spell->name.c_str(),
-            spell->priority, spell->description.c_str(), spell->script.c_str());
+        *player << ColorOn << fmt::format("  {}   {} - {}\n    Script: ^y{}^x\n", spell->name, spell->priority, spell->description, spell->script);
     }
 
     return(0);
