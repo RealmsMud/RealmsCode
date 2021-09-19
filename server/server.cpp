@@ -148,8 +148,14 @@ Server::~Server() {
     if(running) {
         // Do shutdown here
     }
+    sockets.clear();
+    players.clear();
+    flushRoom();
+    flushObject();
+    flushMonster();
     effectsIndex.clear();
     cleanUpPython();
+
     clearAreas();
     delete vSockets;
 

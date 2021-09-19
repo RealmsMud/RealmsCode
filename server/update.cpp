@@ -930,9 +930,6 @@ void cleanup_spelling();
 void cleanUpMemory() {
     gConfig->clearQuestTable();
 
-    gServer->flushRoom();
-    gServer->flushObject();
-    gServer->flushMonster();
     //flush_ext();
 
     Config::destroyInstance();

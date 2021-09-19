@@ -575,7 +575,7 @@ void Player::uninit() {
         }
     }
 
-    if(!gServer->isRebooting())
+    if(!gServer->isRebooting() && Crash == 0)
         broadcastLogin(this, this->getRoomParent(), 0);
 
     if(this->inRoom())
