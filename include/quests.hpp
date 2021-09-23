@@ -82,8 +82,8 @@ public:
     int getTimesRepeatable() const;
     QuestEligibility getEligibility(const Player *player, const Monster *giver) const;
     bool canGetQuest(const Player* player, const Monster* giver) const;
-    void printReceiveString(const Player* player, const Monster* giver) const;
-    void printCompletionString(const Player* player, const Monster* giver) const;
+    void printReceiveString(Player* player, const Monster* giver) const;
+    void printCompletionString(Player* player, const Monster* giver) const;
     void giveInitialitems(const Monster* giver, Player* player) const;
     const QuestCatRef& getTurnInMob() const;
 private:

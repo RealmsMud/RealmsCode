@@ -138,9 +138,10 @@ namespace xml {
             return(toReturn);
 
         try {
-            toReturn = static_cast<Type>(lexical_cast<long>(fromStr));
+            toReturn = (lexical_cast<Type>(fromStr));
         } catch (bad_lexical_cast &) {
             // And do nothing
+            std::clog << "Error from lexical_cast `" << fromStr << "'\n";
         }
 
         free(fromStr);
@@ -155,6 +156,12 @@ namespace xml {
     template <class Type>
     void copyToNum(Type& to, xmlNodePtr node) {
         to = toNum<Type>(getCString(node));
+    }
+
+    template <class Type, class NumType>
+    void copyToNum(Type& to, xmlNodePtr node) {
+        // Useful if you need to lexical_cast to an INT, and then to an ENUM
+        to = static_cast<Type>(toNum<NumType>(getCString(node)));
     }
 
     template <class Type>

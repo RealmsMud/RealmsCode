@@ -90,7 +90,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         else if(NODE_NAME(curNode, "Room")) currentLocation.room.load(curNode);
 
         else if(NODE_NAME(curNode, "Race")) setRace(xml::toNum<unsigned short>(curNode));
-        else if(NODE_NAME(curNode, "Class")) c = xml::toNum<CreatureClass>(curNode);
+        else if(NODE_NAME(curNode, "Class")) c = static_cast<CreatureClass>(xml::toNum<short>(curNode));
         else if(NODE_NAME(curNode, "AttackPower")) setAttackPower(xml::toNum<unsigned int>(curNode));
         else if(NODE_NAME(curNode, "DefenseSkill")) {
             if(mMonster) {
@@ -104,7 +104,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         }
         else if(NODE_NAME(curNode, "Class2")) {
             if(pPlayer) {
-                pPlayer->setSecondClass(xml::toNum<CreatureClass>(curNode));
+                pPlayer->setSecondClass(static_cast<CreatureClass>(xml::toNum<short>(curNode)));
             } else if(mMonster) {
                 // TODO: Dom: for compatability, remove when possible
                 mMonster->setMobTrade(xml::toNum<unsigned short>(curNode));

@@ -63,7 +63,7 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "ReceiveString")) xml::copyToBString(receiveString, curNode);
         else if(NODE_NAME(curNode, "CompletionString")) xml::copyToBString(completionString, curNode);
         else if(NODE_NAME(curNode, "TimesRepeatable")) xml::copyToNum(timesRepeatable, curNode);
-        else if(NODE_NAME(curNode, "RepeatFrequency")) xml::copyToNum<QuestRepeatFrequency>(repeatFrequency, curNode);
+        else if(NODE_NAME(curNode, "RepeatFrequency")) xml::copyToNum<QuestRepeatFrequency, short>(repeatFrequency, curNode);
         else if(NODE_NAME(curNode, "Sharable")) xml::copyToBool(sharable, curNode);
         else if(NODE_NAME(curNode, "TurnIn")) turnInMob = QuestCatRef(curNode);
         else if(NODE_NAME(curNode, "Level")) xml::copyToNum(level, curNode);

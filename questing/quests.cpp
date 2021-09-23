@@ -17,14 +17,12 @@
  */
 #include <bits/types/struct_tm.h>                   // for tm
 #include <boost/iterator/iterator_facade.hpp>       // for operator++, itera...
-#include <boost/mpl/eval_if.hpp>                    // for eval_if<>::type
 #include <cctype>                                   // for ispunct, isspace
 #include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
 #include <cstdio>                                   // for sprintf
 #include <cstring>                                  // for strlen, strncmp
 #include <strings.h>                                // for strncasecmp
 #include <ctime>                                    // for time, time_t, loc...
-#include <locale>                                   // for locale
 #include <ostream>                                  // for operator<<, basic...
 #include <stdexcept>                                // for runtime_error
 #include <string>                                   // for basic_string, cha...
@@ -1034,12 +1032,12 @@ int cmdTalk(Player* player, cmd* cmnd) {
     }
 
     if(!target->canSpeak()) {
-        player->print("%M is unable to speak right now.\n", target);
+        *player << setf(CAP) << target << " is unable to speak right now.\n";
         return(0);
     }
 
     if(!target->getTalk().empty() && !Faction::willSpeakWith(player, target->getPrimeFaction())) {
-        player->print("%M refuses to speak with you.\n", target);
+        *player << setf(CAP) << target << " irefuses to speak with you.\n";
         return(0);
     }
 
@@ -1452,7 +1450,7 @@ bool QuestInfo::canGetQuest(const Player* player, const Monster* giver) const {
 //                      printReceiveString
 //*****************************************************************************
 
-void QuestInfo::printReceiveString(const Player* player, const Monster* giver) const {
+void QuestInfo::printReceiveString(Player* player, const Monster* giver) const {
     if(receiveString.empty())
         return;
 
@@ -1460,15 +1458,14 @@ void QuestInfo::printReceiveString(const Player* player, const Monster* giver) c
 
     toPrint.Replace("*GIVER*", giver->getCrtStr(player, CAP).c_str());
     toPrint.Replace("*CR*", "\n");
-
-    player->printColor("%s\n", toPrint.c_str());
+    *player << ColorOn << toPrint << ColorOff << "\n";
 }
 
 //*****************************************************************************
 //                      printCompletionString
 //*****************************************************************************
 
-void QuestInfo::printCompletionString(const Player* player, const Monster* giver) const {
+void QuestInfo::printCompletionString(Player* player, const Monster* giver) const {
     if(receiveString.empty())
         return;
 
@@ -1476,8 +1473,7 @@ void QuestInfo::printCompletionString(const Player* player, const Monster* giver
 
     toPrint.Replace("*GIVER*", giver->getCrtStr(player, CAP).c_str());
     toPrint.Replace("*CR*", "\n");
-
-    player->printColor("%s\n", toPrint.c_str());
+    *player << ColorOn << toPrint << ColorOff << "\n";
 }
 
 
@@ -1541,7 +1537,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(player->isBraindead()) {
-        player->print("You are brain-dead. You can't do that.\n");
+        *player << "You are brain-dead. You can't do that.\n";
         return(0);
     }
 
@@ -1555,15 +1551,12 @@ int cmdQuests(Player* player, cmd* cmnd) {
         for(std::pair<int, QuestCompletion*> p : player->questsInProgress) {
             quest = p.second;
             if(questName.empty() || !strncasecmp(quest->getParentQuest()->getName().c_str(), questName.c_str(), questName.length())) {
-
                 // Make sure the quest is completed!!
                 if(!quest->checkQuestCompletion(false)) {
-
                     // No name was specified, so continue to next quest and try to complete that
                     if(questName.empty()) continue;
 
-                    player->printColor("But you haven't met all of the requirements for ^W%s^x yet!\n",
-                        quest->getParentQuest()->getName().c_str());
+                    *player << ColorOn <<"But you haven't met all of the requirements for ^W" << quest->getParentQuest()->getName() << "^x yet!\n" << ColorOff;
                     return(0);
                 }
 
@@ -1573,12 +1566,12 @@ int cmdQuests(Player* player, cmd* cmnd) {
                     if( mons->info == quest->getParentQuest()->getTurnInMob() ) {
                         // We have a turn in monster, lets complete the quest
                         if(mons->isEnemy(player)) {
-                            player->print("%M refuses to deal with you right now!\n", mons);
+                            *player << setf(CAP) << mons << " refuses to deal with you right now!\n";
                             return(0);
                         }
 
                         bstring name = quest->getParentQuest()->getName();
-                        player->printColor("Completing quest ^W%s^x.\n", name.c_str());
+                        *player << ColorOn << "Completing quest ^W" << name << "^x.\n";
 
                         // NOTE: After quest->complete, quest is INVALID, do not attempt to access it
                         if(quest->complete(mons)) {
@@ -1597,13 +1590,13 @@ int cmdQuests(Player* player, cmd* cmnd) {
 
                 if(!questName.empty()) {
                     // Name was specified, so stop
-                    player->printColor("Could not find a turn in monster!\n");
+                    *player << "Could not find a turn in monster!\n";
                     return(0);
                 }
                 // No name was specified, so continue to next quest and try to complete that
             }
         }
-        player->printColor("No quests were found that could be completed right now.\n");
+        *player <<"No quests were found that could be completed right now.\n";
         return(0);
     } else if(cmnd->num > 1 && (!strncmp(cmnd->str[1], "quit", strlen(cmnd->str[1])) ||
              !strncmp(cmnd->str[1], "abandon", strlen(cmnd->str[1]))) )
@@ -1613,19 +1606,19 @@ int cmdQuests(Player* player, cmd* cmnd) {
         bstring questName = getFullstrText(cmnd->fullstr, 2);
         QuestCompletion* quest;
         if(questName.empty()) {
-            player->print("Abandon which quest?\n");
+            *player << "Abandon which quest?\n";
             return(0);
         }
         for(std::pair<int, QuestCompletion*> p : player->questsInProgress) {
             quest = p.second;
             if(!strncasecmp(quest->getParentQuest()->getName().c_str(), questName.c_str(), questName.length())) {
-                player->printColor("Abandoning ^W%s^x.\n", quest->getParentQuest()->getName().c_str());
+                *player << ColorOn << "Abandoning ^W" << quest->getParentQuest()->getName() << "^x.\n";
                 player->questsInProgress.erase(quest->getParentQuest()->getId());
                 delete quest;
                 return(0);
             }
         }
-        player->printColor("Could not find any quests that matched the name ^W%s^x.\n", questName.c_str());
+        *player << "Could not find any quests that matched the name ^W" << questName << "^x.\n";
         return(0);
     } 
 
@@ -1643,7 +1636,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
         strcat(str, "\n");
     }
 
-    player->printColor("%s", str);
+    *player << ColorOn << str << ColorOff;
 
     if(!player->questsCompleted.empty()) {
 
@@ -1659,13 +1652,13 @@ int cmdQuests(Player* player, cmd* cmnd) {
             displayStr << "\n";
         }
 
-        player->printColor("%s", displayStr.str().c_str());
+        *player << ColorOn << displayStr.str() << ColorOff;
     }
 
 
     Player* target = player;
     i = 1;
-    player->printColor("^WQuests in Progress:\n");
+    *player << ColorOn << "^WQuests in Progress:\n" << ColorOff;
 
     if(target->questsInProgress.empty())
         player->printColor("None!\n");

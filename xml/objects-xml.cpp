@@ -181,7 +181,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList, bool of
             loadStringArray(curNode, key, OBJ_KEY_LENGTH, "Key", 3);
         }
         else if(NODE_NAME(curNode, "Weight")) xml::copyToNum(weight, curNode);
-        else if(NODE_NAME(curNode, "Type")) xml::copyToNum<ObjectType>(type, curNode);
+        else if(NODE_NAME(curNode, "Type")) xml::copyToNum<ObjectType, short>(type, curNode);
         else if(NODE_NAME(curNode, "SubType")) xml::copyToBString(subType, curNode);
         else if(NODE_NAME(curNode, "Adjustment")) setAdjustment(xml::toNum<short int>(curNode));
         else if(NODE_NAME(curNode, "ShotsMax")) xml::copyToNum(shotsMax, curNode);
