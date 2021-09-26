@@ -401,7 +401,7 @@ public:
     [[nodiscard]] bool isQuestValid() const; // Is this object valid for a quest?
 
     bstring showAlchemyEffects(Player *player = nullptr);
-    bstring statObj(int statFlags);
+    bstring statObj(unsigned int statFlags);
     double winterProtection() const;
     bool isKey(const UniqueRoom* room, const Exit* exit) const;
 

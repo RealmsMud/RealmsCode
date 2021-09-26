@@ -1810,7 +1810,7 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
         victim->printColor("^gYou begin to meltdown!\n");
         char filename[80];
         snprintf(filename, 80, "%s/crash.txt", Path::Config);
-        victim->getSock()->viewLoginFile(filename);
+        victim->getSock()->viewFile(filename);
         break;
     case DM_RAPE:
         victim->printColor("^mYou have been raped by the gods!\n");
@@ -1948,7 +1948,7 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
             if(kill_room && player!=victim && !silent) {
                 switch(type) {
                 case DM_NUCLEAR:
-                    player->getSock()->viewLoginFile(filename);
+                    player->getSock()->viewFile(filename);
                     broadcast("^g### Sadly, %s was killed by %s's radiation.", player->getCName(), victim->getCName());
                     break;
                 default:

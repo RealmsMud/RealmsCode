@@ -27,7 +27,7 @@
 #include "commands.hpp"           // for isPtester, getFullstrText, cmdColors
 #include "config.hpp"             // for Config, gConfig
 #include "creatures.hpp"          // for Player, Monster, Creature
-#include "flags.hpp"              // for P_ANSI_COLOR, P_MXP_ENABLED, P_MIRC
+#include "flags.hpp"              // for P_ANSI_COLOR, P_MXP_ENABLED
 #include "global.hpp"             // for CUSTOM_COLOR_DEFAULT, CustomColor
 #include "login.hpp"              // for ANSI_COLOR, NO_COLOR
 #include "socket.hpp"             // for Socket, Socket::SockOptions
@@ -371,12 +371,10 @@ void Player::defineColors() {
     if(mySock->getColorOpt() == ANSI_COLOR) {
         setFlag(P_ANSI_COLOR);
         clearFlag(P_MXP_ENABLED);
-        clearFlag(P_MIRC);
         clearFlag(P_NEWLINE_AFTER_PROMPT);
     } else if(mySock->getColorOpt() == NO_COLOR) {
         clearFlag(P_ANSI_COLOR);
         clearFlag(P_MXP_ENABLED);
-        clearFlag(P_MIRC);
         clearFlag(P_NEWLINE_AFTER_PROMPT);
     }
 }

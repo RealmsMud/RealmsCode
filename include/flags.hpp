@@ -741,7 +741,7 @@
 #define O_ALLOW_TOUCH_OF_DEATH      144      // Monks can use touch-of-death with this weapon wielded
 #define O_JUST_BOUGHT               145      // Object was just bought and is refundable
 #define O_NO_DROP                   146      // Can't drop or otherwise get rid of this object
-#define O_LOGIN_FILE                147      // Display file all at once
+#define O_UNPAGED_FILE                147      // Display file all at once
 #define O_BROKEN_BY_CMD             148      // Object is broken by break command
 #define O_SMALL_BOW                 149      // Objext is a small bow
 #define O_COIN_OPERATED_OBJECT      150      // Coin operated object

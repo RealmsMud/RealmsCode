@@ -121,7 +121,6 @@ int dmParam(Player* player, cmd* cmnd);
 int dmOutlaw(Player* player, cmd* cmnd);
 int dmBroadecho(Player* player, cmd* cmnd);
 int dmCast(Player* player, cmd* cmnd);
-int dmView(Player* player, cmd* cmnd);
 int dmSet(Player* player, cmd* cmnd);
 int dmLog(Player* player, cmd* cmnd);
 int dmList(Player* player, cmd* cmnd);

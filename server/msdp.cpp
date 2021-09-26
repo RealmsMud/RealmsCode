@@ -104,7 +104,7 @@ void Server::processMsdp() {
         if(sock.getState() == CON_DISCONNECTING)
             continue;
 
-        if(sock.getMccp()) {
+        if(sock.mccpEnabled()) {
             for(auto& p : sock.msdpReporting) {
                 ReportedMsdpVariable* var = p.second;
 
@@ -333,7 +333,7 @@ bool Socket::msdpUnReport(bstring& value) {
 void Socket::msdpSendList(const bstring& variable, const std::vector<bstring>& values) {
     std::ostringstream oStr;
 
-    if (getMsdp()) {
+    if (msdpEnabled()) {
         oStr    << (unsigned char) IAC << (unsigned char) SB << (unsigned char) TELOPT_MSDP
                 << (unsigned char) MSDP_VAR << variable << (unsigned char) MSDP_VAL
                 << (unsigned char) MSDP_ARRAY_OPEN;
@@ -407,7 +407,7 @@ bool Socket::msdpSendPair(const bstring& variable, const bstring& value) {
 
     std::ostringstream oStr;
 
-    if (this->getMsdp()) {
+    if (this->msdpEnabled()) {
         std::clog << "SendPair:MSDP" << std::endl;
         oStr
                 << (unsigned char) IAC << (unsigned char) SB << (unsigned char) TELOPT_MSDP

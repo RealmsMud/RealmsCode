@@ -450,10 +450,7 @@ int displayObject(Player* player, Object* target) {
             if(str[i] == ' ')
                 str[i] = '_';
         sprintf(filename, "%s/%s.txt", Path::Sign, str);
-        if(target->flagIsSet(O_LOGIN_FILE))
-            player->getSock()->viewLoginFile(filename);
-        else
-            player->getSock()->viewFile(filename);
+        player->getSock()->viewFile(filename, !target->flagIsSet(O_UNPAGED_FILE));
         return(0);
     }
     std::ostringstream oStr;

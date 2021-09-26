@@ -91,7 +91,7 @@ namespace boost::python {
 } // namespace boost::python
 
 
-#include "asynch.hpp"
+#include "async.hpp"
 
 #ifndef PYTHON_CODE_GEN
 typedef std::map<bstring, MudObject*,idComp> IdMap;

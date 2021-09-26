@@ -27,6 +27,7 @@
 #include <cerrno>                 // for errno
 #include <cstring>                // for strcat, strerror, strchr
 #include <stdexcept>              // for runtime_error
+#include <fmt/format.h>
 
 #include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
@@ -1078,7 +1079,6 @@ void webCrash(const bstring& msg) {
 
 int cmdWiki(Player* player, cmd* cmnd) {
     struct stat f_stat{};
-    char    file[80];
     std::ostringstream url;
     bstring entry = getFullstrText(cmnd->fullstr, 1);
 
@@ -1096,11 +1096,11 @@ int cmdWiki(Player* player, cmd* cmnd) {
 
     entry = entry.toLower();
     entry.Replace(":", "_colon_");
-    sprintf(file, "%s/%s.txt", Path::Wiki, entry.c_str());
+    auto file = fmt::format("{}/{}.txt", Path::Wiki, entry);
 
     // If the file exists and was modified within the last hour, use the local cache
-    if(!stat(file, &f_stat) && (time(nullptr) - f_stat.st_mtim.tv_sec) < 3600) {
-        player->getSock()->viewFile(file);
+    if(!stat(file.c_str(), &f_stat) && (time(nullptr) - f_stat.st_mtim.tv_sec) < 3600) {
+        player->getSock()->viewFile(file, true);
         return(0);
     }
 
@@ -1155,8 +1155,7 @@ bool WebInterface::wiki(bstring command, bstring tempBuf) {
     } else {
         char    file[80];
 
-        sprintf(file, "%s/%s.txt", Path::Wiki, tempBuf.c_str());
-        player->getSock()->viewFile(file);
+        player->getSock()->viewFile(fmt::format("{}/{}.txt", Path::Wiki, tempBuf), true);
     }
     outBuf += EOT;
     return(true);

@@ -172,11 +172,6 @@ bool isTitle(const bstring& str);
 bool isClass(char str[80]);
 
 
-
-
-//void login(Socket* sock, bstring str);
-//void createPlayer(Socket* sock, const bstring& str);
-
 void remove_all(Player* player);
 
 int peek_bag(Player* player, Player* target, cmd* cmnd, int inv);

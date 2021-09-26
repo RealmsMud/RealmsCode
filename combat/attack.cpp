@@ -55,7 +55,7 @@ Creature* Creature::findVictim(const bstring& toFind, int num, bool aggressive, 
             return(getTarget());
         }
         if(!noVictim.empty())
-            bPrint(noVictim);
+            *this << ColorOn << noVictim << ColorOff;;
         return(nullptr);
     } else {
         victim = getRoomParent()->findCreature(this, toFind.c_str(), num, true, true);
@@ -63,10 +63,9 @@ Creature* Creature::findVictim(const bstring& toFind, int num, bool aggressive, 
         if(victim)
             pVictim = victim->getAsPlayer();
 
-        if(!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3)
-                || (!selfOk && victim == this)) {
+        if(!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3) || (!selfOk && victim == this)) {
             if(!notFound.empty())
-                bPrint(notFound);
+                *this << ColorOn << notFound << ColorOff;
             return(nullptr);
         }
         return(victim);

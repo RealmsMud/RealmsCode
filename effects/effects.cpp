@@ -1115,7 +1115,7 @@ bstring Creature::doReplace(bstring fmt, const MudObject* actor, const MudObject
 //                      effectEcho
 //*********************************************************************
 
-void Container::effectEcho(bstring fmt, const MudObject* actor, const MudObject* applier, Socket* ignore) {
+void Container::effectEcho(const bstring& fmt, const MudObject* actor, const MudObject* applier, Socket* ignore) {
     Socket* ignore2 = nullptr;
     if(actor->getAsConstCreature())
         ignore2 = actor->getAsConstCreature()->getSock();
@@ -1124,7 +1124,7 @@ void Container::effectEcho(bstring fmt, const MudObject* actor, const MudObject*
             continue;
 
         bstring toSend = ply->doReplace(fmt, actor, applier);
-        ply->bPrint(toSend + "\n");
+        (Streamable &) *ply << ColorOn << toSend << ColorOff << "\n";
     }
 }
 

@@ -520,14 +520,14 @@ Creature* Creature::findMagicVictim(const bstring& toFind, int num, SpellData* s
                 return (getTarget());
             }
             if (!noVictim.empty())
-                bPrint(noVictim);
+                *this << ColorOn << noVictim << ColorOff;
             return (nullptr);
         } else {
             return (this);
         }
     } else {
         if (spellData->how == CastType::POTION) {
-            bPrint("You can only use a potion on yourself.\n");
+            print("You can only use a potion on yourself.\n");
             return (nullptr);
         }
         if (toFind == ".") {
@@ -538,10 +538,9 @@ Creature* Creature::findMagicVictim(const bstring& toFind, int num, SpellData* s
             if (victim)
                 pVictim = victim->getAsPlayer();
 
-            if (!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3)
-                || (!selfOk && victim == this)) {
+            if (!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3) || (!selfOk && victim == this)) {
                 if (!notFound.empty())
-                    bPrint(notFound);
+                    *this << ColorOn << notFound << ColorOff;
                 return (nullptr);
             }
             if (isMonster()) {

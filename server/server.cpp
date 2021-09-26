@@ -1550,7 +1550,7 @@ bool Server::startReboot(bool resetShips) {
         Player* player = sock.getPlayer();
         if(player && player->fd > -1 ) {
             // End the compression, we'll try to restart it after the reboot
-            if(sock.getMccp()) {
+            if(sock.mccpEnabled()) {
                 sock.endCompress();
             }
             player->save(true);
@@ -1919,7 +1919,7 @@ void Server::sendCrash() {
     snprintf(filename, 80, "%s/crash.txt", Path::Config);
 
     for(Socket &sock : sockets) {
-        sock.viewLoginFile(filename);
+        sock.viewFile(filename);
     }
 }
 

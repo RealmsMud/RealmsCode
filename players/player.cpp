@@ -436,26 +436,26 @@ void Player::init() {
 
     if(!gServer->isRebooting()) {
         sprintf(file, "%s/news.txt",Path::Help);
-        sock->viewLoginFile(file);
+        sock->viewFile(file);
 
         sprintf(file, "%s/newbie_news.txt",Path::Help);
-        sock->viewLoginFile(file);
+        sock->viewFile(file);
 
         if(isCt()) {
             sprintf(file, "%s/news.txt", Path::DMHelp);
-            sock->viewLoginFile(file);
+            sock->viewFile(file);
         }
         if(isStaff() && getName() != "Bane") {
             sprintf(file, "%s/news.txt", Path::BuilderHelp);
-            sock->viewLoginFile(file);
+            sock->viewFile(file);
         }
         if(isCt() || flagIsSet(P_WATCHER)) {
             sprintf(file, "%s/watcher_news.txt", Path::DMHelp);
-            sock->viewLoginFile(file);
+            sock->viewFile(file);
         }
 
         sprintf(file, "%s/latest_post.txt", Path::Help);
-        sock->viewLoginFile(file, false);
+        sock->viewFile(file, false);
 
         hasNewMudmail();
     }
@@ -1503,7 +1503,7 @@ void Player::sendPrompt() {
         toPrint += "\n";
 
     // Send EOR if they want it, otherwise send GA
-    if(getSock()->getEor()) {
+    if(getSock()->eorEnabled()) {
         unsigned char eor_str[] = {IAC, EOR, '\0' };
         toPrint += eor_str;
     } else if(!getSock()->isDumbClient()){

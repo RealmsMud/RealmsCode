@@ -27,6 +27,7 @@
 #include <sstream>                // for operator<<, basic_ostream, ostrings...
 #include <string>                 // for operator<<, operator!=, operator==
 #include <utility>                // for pair
+#include <fmt/format.h>
 
 #include "area.hpp"               // for MapMarker, Area
 #include "bstring.hpp"            // for bstring, operator+
@@ -1321,7 +1322,6 @@ int dmBane(Player* player, cmd* cmnd) {
 // monsters, players and objects.
 
 int dmHelp(Player* player, cmd* cmnd) {
-    char    file[80];
 
     if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You must use the builder help file system.\n");
@@ -1330,8 +1330,7 @@ int dmHelp(Player* player, cmd* cmnd) {
     }
 
     if(cmnd->num < 2) {
-        sprintf(file, "%s/dmHelpfile.txt", Path::DMHelp);
-        player->getSock()->viewFile(file);
+        player->getSock()->viewFile(fmt::format("{}/dmHelpfile.txt", Path::DMHelp), true);
         return(DOPROMPT);
     }
     if(strchr(cmnd->str[1], '/')!=nullptr) {
@@ -1339,8 +1338,7 @@ int dmHelp(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(file, "%s/%s.txt", Path::DMHelp, cmnd->str[1]);
-    player->getSock()->viewFile(file);
+    player->getSock()->viewFile(fmt::format("{}/{}.txt", Path::DMHelp, cmnd->str[1]), true);
     return(DOPROMPT);
 
 }
@@ -1352,11 +1350,8 @@ int dmHelp(Player* player, cmd* cmnd) {
 // monsters, players and objects.
 
 int bhHelp(Player* player, cmd* cmnd) {
-    char    file[80];
-
     if(cmnd->num < 2) {
-        sprintf(file, "%s/build_help.txt", Path::BuilderHelp);
-        player->getSock()->viewFile(file);
+        player->getSock()->viewFile(fmt::format("{}/build_help.txt", Path::BuilderHelp), true);
         return(DOPROMPT);
     }
     if(strchr(cmnd->str[1], '/')!=nullptr) {
@@ -1364,8 +1359,7 @@ int bhHelp(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(file, "%s/%s.txt", Path::BuilderHelp, cmnd->str[1]);
-    player->getSock()->viewFile(file);
+    player->getSock()->viewFile(fmt::format("{}/{}.txt", Path::BuilderHelp, cmnd->str[1]), true);
     return(DOPROMPT);
 
 }
@@ -2044,47 +2038,6 @@ int dmCast(Player* player, cmd* cmnd) {
 }
 
 
-
-
-// TODO: not used?
-int dmView(Player* player, cmd* cmnd) {
-    char    file[80];
-    int     i=0, j=0;
-
-    if(!player->isDm())
-        return(cmdNoAuth(player));
-
-    if(cmnd->num < 2) {
-        player->print("View what file?\n");
-        return(PROMPT);
-
-    }
-
-    while(isspace(cmnd->fullstr[i]))
-        i++;
-    player->print("file: %s\n",&cmnd->fullstr[i]);
-    while(!isspace(cmnd->fullstr[i]))
-        i++;
-    player->print("file: %s\n",&cmnd->fullstr[i]);
-    while(isspace(cmnd->fullstr[i]))
-        i++;
-    player->print("file: %s\n",&cmnd->fullstr[i]);
-
-    while(!isspace(cmnd->fullstr[i])) {
-        if(cmnd->fullstr[i] == '\n')
-            break;
-        j++;
-        i++;
-    }
-
-    sprintf(file,"%s/%s.txt", Path::Post, cmnd->str[1]);
-    player->print("file: %s\n",file);
-    gServer->processOutput();
-    player->getSock()->viewFile(file);
-    return(0);
-}
-
-
 //*********************************************************************
 //                      dmSet
 //*********************************************************************
@@ -2226,7 +2179,7 @@ int dmInfo(Player* player, cmd* cmnd) {
             gServer->roomCache.size(), gServer->monsterCache.size(), gServer->objectCache.size());
     player->print("Wander update: %d\n", Random_update_interval);
     if(player->isDm())
-        player->print("      Players: %d\n\n", Socket::NumSockets);
+        player->print("      Players: %d\n\n", Socket::getNumSockets());
 
     player->print("Max Ids: P: %ld M: %ld O: %ld\n", gServer->getMaxPlayerId(), gServer->getMaxMonsterId(), gServer->getMaxObjectId());
 

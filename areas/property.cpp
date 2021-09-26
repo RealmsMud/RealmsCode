@@ -1891,7 +1891,7 @@ void Property::manageDesc(Player* player, cmd* cmnd, PropType propType, int x) {
 
     if(file_exists(file)) {
         player->print("Room description so far:\n\n");
-        player->getSock()->viewLoginFile(file);
+        player->getSock()->viewFile(file);
         player->print("\n\n");
     }
 

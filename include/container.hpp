@@ -82,7 +82,7 @@ public:
 
     void doSocialEcho(bstring str, const Creature* actor, const Creature* target = nullptr);
 
-    void effectEcho(bstring fmt, const MudObject* actor = nullptr, const MudObject* applier = nullptr, Socket* ignore = nullptr);
+    void effectEcho(const bstring& fmt, const MudObject* actor = nullptr, const MudObject* applier = nullptr, Socket* ignore = nullptr);
 
     void wake(const bstring& str, bool noise) const;
 

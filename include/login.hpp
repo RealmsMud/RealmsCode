@@ -43,7 +43,6 @@ typedef enum {
     CON_CHOSING_WEAPONS,
 
     // Viewing a file
-    CON_VIEWING_FILE,
     CON_VIEWING_FILE_REVERSE,
 
     // Post edit etc

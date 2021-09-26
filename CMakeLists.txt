@@ -55,7 +55,7 @@ set(COMMON_HEADER_FILES
     include/alchemy.hpp
     include/anchor.hpp
     include/area.hpp
-    include/asynch.hpp
+    include/async.hpp
     include/bank.hpp
     include/bans.hpp
     include/bstring.hpp
@@ -285,7 +285,7 @@ set(COMMON_SOURCE_FILES
     roguelike/traps.cpp
 
     server/access.cpp
-    server/asynch.cpp
+    server/async.cpp
     server/bans.cpp
     server/calendar.cpp
     server/config.cpp

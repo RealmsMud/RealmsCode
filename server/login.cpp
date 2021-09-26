@@ -24,6 +24,7 @@
 #include <unistd.h>               // for close, read
 #include <sstream>                // for operator<<, basic_ostream, ostrings...
 #include <iomanip>                // for setw
+#include <fmt/format.h>
 
 #include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
@@ -490,7 +491,7 @@ void doCreateHelp(Socket* sock, const bstring& str) {
     bstring helpfile;
     if(cmnd.num < 2) {
         helpfile = bstring(Path::CreateHelp) + "/helpfile.txt";
-        sock->viewFile(helpfile.c_str());
+        sock->viewFile(helpfile);
         return;
     }
 
@@ -499,7 +500,7 @@ void doCreateHelp(Socket* sock, const bstring& str) {
         return;
     }
     helpfile = bstring(Path::CreateHelp) + "/" + cmnd.str[1] + ".txt";
-    sock->viewFile(helpfile.c_str());
+    sock->viewFile(helpfile);
 
 }
 
@@ -879,7 +880,7 @@ bool Create::getRace(Socket* sock, bstring str, int mode) {
 
         // show them the race menu header
         sprintf(file, "%s/race_menu.0.txt", Path::Config);
-        sock->viewLoginFile(file);
+        sock->viewFile(file);
 
         // show them the main race menu
         sprintf(file, "%s/race_menu.1.txt", Path::Config);
@@ -1493,15 +1494,8 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
 
 
 
-    std::map<bstring, bstring>::const_iterator sgIt;
-    SkillInfoMap::const_iterator sIt;
     int k = 0, n = 0;
-    bstring curGroup, curGroupDisplay;
-    SkillInfo* curSkill;
-    for(sgIt = gConfig->skillGroups.begin() ; sgIt != gConfig->skillGroups.end() ; sgIt++) {
-        curGroup = (*sgIt).first;
-        curGroupDisplay = (*sgIt).second;
-
+    for(const auto& [curGroup, curGroupDisplay] : gConfig->skillGroups) {
         if(curGroup.left(7) != "weapons" || curGroup.length() <= 7)
             continue;
 
@@ -1510,15 +1504,11 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
                 continue;
         }
 
-
-
         if(mode == Create::doPrint) {
-            sock->printColor("^W\n\n%s", (*sgIt).second.c_str());
+            sock->bprintColor(fmt::format("^W\n\n{}", curGroupDisplay));
             n = 0;
         }
-
-        for(sIt = gConfig->skills.begin() ; sIt != gConfig->skills.end() ; sIt++) {
-            curSkill = (*sIt).second;
+        for(const auto& [skillName, curSkill] : gConfig->skills) {
             if(curSkill->getGroup() != curGroup)
                 continue;
 
@@ -1532,8 +1522,7 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
             if(sock->getPlayer()->knowsSkill(curSkill->getName()))
                 continue;
 
-            if(sock->getPlayer()->getLevel() < 4 &&
-            ((curSkill->getName() == "arcane-weapon" || curSkill->getName() == "divine-weapon")))
+            if(sock->getPlayer()->getLevel() < 4 && ((curSkill->getName() == "arcane-weapon" || curSkill->getName() == "divine-weapon")))
                 continue;
 
             if ((!(sock->getPlayer()->getClass() == CreatureClass::MAGE ||
@@ -1554,12 +1543,12 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
                 if(n++%2==0)
                     sock->print("\n%5s", " ");
 
-                sock->printColor("[^W%1c^x] %-30s", ++k + 64, curSkill->getDisplayName().c_str());
+                sock->bprintColor(fmt::format("[^W{:1}^x] {:<30}", (char)(++k + 64), curSkill->getDisplayName()));
             } else {
                 if(i == ++k) {
                     sock->getPlayer()->addSkill(curSkill->getName(),1);
                     Create::addStartingWeapon(sock->getPlayer(), curSkill->getName());
-                    sock->printColor("You have learned how to use ^W%s^x.\n", curSkill->getDisplayName().c_str());
+                    sock->bprintColor(fmt::format("You have learned how to use ^W{}^x.\n", curSkill->getDisplayName()));
                     return(true);
                 }
             }
@@ -1577,7 +1566,7 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
 
 int cmdWeapons(Player* player, cmd* cmnd) {
     if(player->getWeaponTrains() < 1) {
-        player->print("You don't have any weapon trains left!\n");
+        *player << "You don't have any weapon trains left!\n";
         return(0);
     }
 
@@ -1586,11 +1575,10 @@ int cmdWeapons(Player* player, cmd* cmnd) {
 //      return(0);
 //  }
 
-    player->printColor("You have ^W%d^x weapon skills to choose.\n",
-        player->getWeaponTrains());
+    *player << ColorOn <<fmt::format("You have ^W{}}^x weapon skills to choose.\n", player->getWeaponTrains()) << ColorOff;
 
     if(!Create::handleWeapon(player->getSock(), Create::doPrint, '\0')) {
-        player->print("\n\nSorry, couldn't find any weapon skills you don't know that you can learn.\n");
+        *player << "\n\nSorry, couldn't find any weapon skills you don't know that you can learn.\n";
         return(0);
     }
     player->getSock()->setState(CON_CHOSING_WEAPONS);
@@ -1732,7 +1720,7 @@ void Create::done(Socket* sock, const bstring& str, int mode) {
 
         char file[80];
         sprintf(file, "%s/policy_login.txt", Path::Config);
-        sock->viewLoginFile(file);
+        sock->viewFile(file);
 
         sock->print("[Press Enter to Continue]");
         sock->setState(CREATE_DONE);

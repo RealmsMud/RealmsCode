@@ -31,7 +31,7 @@
 #include "mud.hpp"        // for ACC
 #include "os.hpp"         // for merror
 #include "paths.hpp"      // for Post, History
-#include "proto.hpp"      // for file_exists, free_crt, up, viewFile, broadcast
+#include "proto.hpp"      // for file_exists, free_crt, up, broadcast
 #include "rooms.hpp"      // for BaseRoom
 #include "server.hpp"     // for Server, gServer
 #include "socket.hpp"     // for Socket
@@ -331,7 +331,7 @@ int cmdReadMail(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    player->getSock()->viewFile(filename);
+    player->getSock()->viewFile(filename, true);
     return(DOPROMPT);
 }
 
@@ -357,7 +357,7 @@ int dmReadmail(Player* player, cmd* cmnd) {
     }
 
     player->print("%s's current mudmail:\n", cmnd->str[1]);
-    player->getSock()->viewFile(filename);
+    player->getSock()->viewFile(filename, true);
     return(DOPROMPT);
 }
 
@@ -451,7 +451,7 @@ int cmdEditHistory(Player* player, cmd* cmnd) {
 
     if(file_exists(file)) {
         player->print("%s's history so far:\n\n", player->getCName());
-        player->getSock()->viewLoginFile(file);
+        player->getSock()->viewFile(file);
         player->print("\n\n");
     }
 
@@ -537,7 +537,7 @@ int cmdHistory(Player* player, cmd* cmnd) {
     else
         player->print("Current History of %s:\n\n", cmnd->str[1]);
 
-    player->getSock()->viewFile(file);
+    player->getSock()->viewFile(file, true);
     return(0);
 }
 
