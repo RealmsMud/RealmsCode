@@ -538,9 +538,11 @@ bool Monster::steal(Player *victim) {
     chance = MIN(chance, 65);
 
     if( object->getQuestnum() ||
-        (flagIsSet(M_CANT_BE_STOLEN_FROM))
+        (flagIsSet(M_CANT_BE_STOLEN_FROM) ||
+            object->flagIsSet(O_NO_STEAL))
     )
         chance = 0;
+
 
     if(Random::get(1, 100) <= chance) {
         victim->delObj(object, false, true);
