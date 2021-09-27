@@ -26,6 +26,8 @@
 #include "socket.hpp"           // for Socket
 #include "stats.hpp"            // for Stat
 
+bstring escapeColor(bstring color);
+
 Streamable& Streamable::operator << ( Streamable& (*op)(Streamable&)) {
     // call the function passed as parameter with this stream as the argument
     return (*op)(*this);
@@ -89,12 +91,12 @@ Streamable& Streamable::operator<< ( const MudObject* mo) {
     return(*this << *mo);
 }
 
-Streamable& Streamable::operator<< (const bstring& str) {
+Streamable& Streamable::operator<< (std::string_view str) {
     doPrint(str);
     return(*this);
 }
 Streamable& Streamable::operator<< (const int num) {
-    doPrint(num);
+    doPrint(bstring(num));
     return(*this);
 }
 Streamable& Streamable::operator<< (Stat& stat) {
@@ -106,6 +108,12 @@ void Streamable::setColorOn() {
 }
 void Streamable::setColorOff() {
     streamColor = false;
+}
+void Streamable::setPagerOn() {
+    pager = true;
+}
+void Streamable::setPagerOff() {
+    pager = false;
 }
 
 void Streamable::setManipFlags(unsigned int flags) {
@@ -132,7 +140,7 @@ int Streamable::getManipNum() {
     return(toReturn);
 }
 
-void Streamable::doPrint(const bstring& toPrint) {
+void Streamable::doPrint(std::string_view toPrint) {
     const Player* player = dynamic_cast<Player*>(this);
     const Monster* monster = dynamic_cast<Monster*>(this);
     const Player* master = nullptr;
@@ -158,10 +166,17 @@ void Streamable::doPrint(const bstring& toPrint) {
                     petPrinted = false;
             }
         }
-        if(streamColor)
-            sock->bprintColor(toPrint);
-        else
-            sock->bprintNoColor(toPrint);
+        if(pager) { // Paged
+            if(streamColor)
+                sock->printPaged(toPrint);
+            else
+                sock->printPaged(escapeColor(toPrint));
+        } else { // Unpaged
+            if(streamColor)
+                sock->bprint(toPrint);
+            else
+                sock->bprint(escapeColor(toPrint));
+        }
     }
 
 }

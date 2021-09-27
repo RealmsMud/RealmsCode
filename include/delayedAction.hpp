@@ -56,7 +56,7 @@ struct DelayedAction {
         this->script = "";
     }
 
-    DelayedAction(void (*callback)(DelayedActionFn), MudObject* target, const bstring& script, long whenFinished, bool canInterrupt) {
+    DelayedAction(void (*callback)(DelayedActionFn), MudObject* target, std::string_view script, long whenFinished, bool canInterrupt) {
         this->callback = callback;
         this->target = target;
         this->type = ActionScript;

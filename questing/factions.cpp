@@ -353,7 +353,7 @@ long Faction::getLowerLimit(const Player* player) const {
 //                      getFaction
 //*********************************************************************
 
-const Faction *Config::getFaction(const bstring& factionStr) const {
+const Faction *Config::getFaction(std::string_view factionStr) const {
     if(factionStr.empty())
         return(nullptr);
     auto it = factions.find(factionStr);
@@ -383,7 +383,7 @@ bool Faction::isParent() const {
 //                      setIsParent
 //*********************************************************************
 
-void Faction::setParent(const bstring& value) {
+void Faction::setParent(std::string_view value) {
     parent = value;
 }
 
@@ -399,7 +399,7 @@ void Faction::setIsParent(bool value) {
 //                      showRegard
 //*********************************************************************
 
-void showRegard(const Player* viewer, const bstring& type, const FactionRegard* regard) {
+void showRegard(const Player* viewer, std::string_view type, const FactionRegard* regard) {
     int a;
     std::ostringstream oStr;
 
@@ -435,7 +435,7 @@ void showRegard(const Player* viewer, const bstring& type, const FactionRegard* 
         oStr << "Overall: " << regard->getOverallRegard();
 
     if(!oStr.str().empty())
-        viewer->printColor("    ^y%s:^x %s\n", type.c_str(), oStr.str().c_str());
+        viewer->bPrint(fmt::format("    ^y{}:^x {}\n", type, oStr.str()));
 }
 
 //*********************************************************************
@@ -717,7 +717,7 @@ bstring Faction::getNoun(int regard) {
 //*********************************************************************
 // Returns the faction standing of the current creature with regards to 'faction'
 
-bstring Player::getFactionMessage(const bstring& factionStr) const {
+bstring Player::getFactionMessage(std::string_view factionStr) const {
     int regard = getFactionStanding(factionStr);
     std::ostringstream oStr;
 
@@ -764,7 +764,7 @@ bstring Player::getFactionMessage(const bstring& factionStr) const {
 //*********************************************************************
 // Gets the faction standing of Creature with regards to 'faction'
 
-int Player::getFactionStanding(const bstring& factionStr) const {
+int Player::getFactionStanding(std::string_view factionStr) const {
     int regard = 0;
     auto it = factions.find(factionStr);
 
@@ -881,7 +881,7 @@ void Faction::worshipSocial(Monster *monster) {
 //                      willAggro
 //*********************************************************************
 
-bool Faction::willAggro(const Player* player, const bstring& faction) {
+bool Faction::willAggro(const Player* player, std::string_view faction) {
     if(faction.empty())
         return(false);
     int attitude = getAttitude(player->getFactionStanding(faction));
@@ -896,7 +896,7 @@ bool Faction::willAggro(const Player* player, const bstring& faction) {
 //                      willSpeakWith
 //*********************************************************************
 
-bool Faction::willSpeakWith(const Player* player, const bstring& faction) {
+bool Faction::willSpeakWith(const Player* player, std::string_view faction) {
     if(faction.empty())
         return(true);
     return(getAttitude(player->getFactionStanding(faction)) > CONTEMPT);
@@ -906,7 +906,7 @@ bool Faction::willSpeakWith(const Player* player, const bstring& faction) {
 //                      willDoBusinessWith
 //*********************************************************************
 
-bool Faction::willDoBusinessWith(const Player* player, const bstring& faction) {
+bool Faction::willDoBusinessWith(const Player* player, std::string_view faction) {
     if(faction.empty())
         return(true);
     return(getAttitude(player->getFactionStanding(faction)) > DISFAVOR);
@@ -916,7 +916,7 @@ bool Faction::willDoBusinessWith(const Player* player, const bstring& faction) {
 //                      willBeneCast
 //*********************************************************************
 
-bool Faction::willBeneCast(const Player* player, const bstring& faction) {
+bool Faction::willBeneCast(const Player* player, std::string_view faction) {
     if(faction.empty())
         return(true);
     return(getAttitude(player->getFactionStanding(faction)) >= INDIFFERENT);
@@ -926,7 +926,7 @@ bool Faction::willBeneCast(const Player* player, const bstring& faction) {
 //                      willLetThrough
 //*********************************************************************
 
-bool Faction::willLetThrough(const Player* player, const bstring& faction) {
+bool Faction::willLetThrough(const Player* player, std::string_view faction) {
     if(faction.empty())
         return(false);
     return(getAttitude(player->getFactionStanding(faction)) >= FAVORABLE);
@@ -936,7 +936,7 @@ bool Faction::willLetThrough(const Player* player, const bstring& faction) {
 //                      adjustPrice
 //*********************************************************************
 
-Money Faction::adjustPrice(const Player* player, const bstring& faction, Money money, bool sell) {
+Money Faction::adjustPrice(const Player* player, std::string_view faction, Money money, bool sell) {
     if(faction.empty())
         return(money);
     int attitude = getAttitude(player->getFactionStanding(faction));
@@ -966,7 +966,7 @@ Money Faction::adjustPrice(const Player* player, const bstring& faction, Money m
 //                      canPledgeTo
 //*********************************************************************
 
-bool Faction::canPledgeTo(const Player* player, const bstring& faction) {
+bool Faction::canPledgeTo(const Player* player, std::string_view faction) {
     if(faction.empty())
         return(true);
     return(getAttitude(player->getFactionStanding(faction)) >= INDIFFERENT);

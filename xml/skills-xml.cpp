@@ -137,7 +137,7 @@ void Config::loadSkills(xmlNodePtr rootNode) {
                 // All SkillCommands are also SkillInfos, put them in both tables
                 skills.insert(std::make_pair(skillCmd->getName(), skillCmd));
 //                // Insert any aliases as well // TODO: Maybe later
-//                for(const bstring& alias : skillCmd->aliases) {
+//                for(std::string_view alias : skillCmd->aliases) {
 //                    skillCommands.insert(SkillCommandSet::value_type(alias, skillCmd));
 //                }
             } catch(std::exception &e) {

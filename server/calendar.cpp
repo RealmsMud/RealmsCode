@@ -354,7 +354,7 @@ void Calendar::clear() {
 //                      setLastPirate
 //*********************************************************************
 
-void Calendar::setLastPirate(const bstring& name) {
+void Calendar::setLastPirate(std::string_view name) {
     std::ostringstream oStr;
     oStr << "The " << getOrdinal(curDay).c_str() << " of " << getMonth(curMonth)->getName();
     if(!name.empty())

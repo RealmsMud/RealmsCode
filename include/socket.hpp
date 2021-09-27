@@ -29,6 +29,7 @@
 #include <queue>
 #include <vector>
 #include <string>
+#include <fmt/format.h>
 
 
 // Defines needed
@@ -163,8 +164,8 @@ private:
 public:
     // Static Methods
     static void resolveIp(const sockaddr_in &addr, bstring& ip);
-    static bstring stripTelnet(bstring& inStr);
-    static bool needsPrompt(bstring& inStr);
+    static bstring stripTelnet(std::string_view inStr);
+    static bool needsPrompt(std::string_view inStr);
     void viewFile(const bstring& str, bool paged=false);
     void viewFileReverse(const bstring& str);
     void viewFileReverseReal(const bstring& str);
@@ -185,19 +186,29 @@ public:
     void finishLogin();
 
 
-    ssize_t write(bstring toWrite, bool pSpy = true, bool process = true);
+    ssize_t write(std::string_view toWrite, bool pSpy = true, bool process = true);
     void askFor(const char *str);
 
     void vprint(const char *fmt, va_list ap);
 
-    void bprint(const bstring& toPrint);
-    void bprintColor(const bstring& toPrint);
-    void bprintNoColor(bstring toPrint);
-    void println(const bstring& toPrint = "");
+    void bprint(std::string_view toPrint);
+
+    template <typename... Args>
+    void bprint(std::string_view toPrint, Args &&... args) const {
+        return bprint(fmt::format(toPrint, std::forward<Args>(args)...));
+    }
+
+    void printPaged(std::string_view toPrint);
+
+    template <typename... Args>
+    void printPaged(std::string_view toPrint, Args &&... args) const {
+        return printPaged(fmt::format(toPrint, std::forward<Args>(args)...));
+    }
+    void println(std::string_view toPrint = "");
     void print(const char* format, ...);
     void printColor(const char* format, ...);
 
-    bstring parseForOutput(bstring& outBuf);
+    bstring parseForOutput(std::string_view outBuf);
     bstring getColorCode(unsigned char ch);
 
     int processInput();
@@ -223,13 +234,13 @@ public:
     [[nodiscard]] int getFd() const;
     [[nodiscard]] bool isConnected() const;
     [[nodiscard]] int getState() const;
-    [[nodiscard]] const bstring& getIp() const;
-    [[nodiscard]] const bstring& getHostname() const;
+    [[nodiscard]] std::string_view getIp() const;
+    [[nodiscard]] std::string_view getHostname() const;
 
     void checkLockOut();
 
-    void setHostname(const bstring& pName);
-    void setIp(const bstring& pIp);
+    void setHostname(std::string_view pName);
+    void setIp(std::string_view pIp);
 
     [[nodiscard]] bool hasOutput() const;
     [[nodiscard]] bool hasCommand() const;
@@ -272,9 +283,9 @@ public:
     void defineMxp();
 
     // MSDP Support Functions
-    ReportedMsdpVariable *getReportedMsdpVariable(const bstring& value);
-    bool msdpSendPair(const bstring& variable, const bstring& value);
-    void msdpSendList(const bstring& variable, const std::vector<bstring>& values);
+    ReportedMsdpVariable *getReportedMsdpVariable(std::string_view value);
+    bool msdpSendPair(std::string_view variable, std::string_view value);
+    void msdpSendList(std::string_view variable, const std::vector<bstring>& values);
     void msdpClearReporting();
     bstring getMsdpReporting();
 
@@ -347,11 +358,8 @@ public:
     long        ltime{};
     char        intrpt{};
 
-public:
-    void printPaged(const bstring& toPrint);
-
 private:
-    std::vector<bstring> pagerOutput;
+    std::vector<std::string> pagerOutput;
 
 public:
     static const int COMPRESSED_OUTBUF_SIZE;

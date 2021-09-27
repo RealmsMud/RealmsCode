@@ -106,12 +106,12 @@ bstring::size_type checkProxyLogin(const bstring &str) {
     return(n);
 }
 // Character used for access
-bstring getProxyChar(const bstring& str, unsigned int n) {
+bstring getProxyChar(std::string_view str, unsigned int n) {
     return(str.substr(0,n));
 }
 // Character being logged in
-bstring getProxiedChar(const bstring& str, unsigned int n) {
-    unsigned int m = str.Find(" ", n+1);
+bstring getProxiedChar(std::string_view str, unsigned int n) {
+    unsigned int m = str.find_first_of(" ", n+1);
     return(str.substr(m+1, str.length() - m - 1));
 }
 
@@ -295,7 +295,7 @@ void login(Socket* sock, const bstring& inStr) {
 
         if(!sock->getPlayer()->isPassword(str)) {
             sock->write("\255\252\1\n\rIncorrect.\n\r");
-            logn("log.incorrect", "Invalid password(%s) for %s from %s\n", str.c_str(), sock->getPlayer()->getCName(), sock->getHostname().c_str());
+            logn("log.incorrect", fmt::format("Invalid password({}) for {} from {}\n", str, sock->getPlayer()->getName(), sock->getHostname()).c_str());
             sock->disconnect();
             return;
         } else {
@@ -307,7 +307,7 @@ void login(Socket* sock, const bstring& inStr) {
     case LOGIN_GET_PROXY_PASSWORD:
         if(Player::hashPassword(str) != sock->tempbstr) {
             sock->write("\255\252\1\n\rIncorrect.\n\r");
-            logn("log.incorrect", "Invalid password(%s) for %s from %s\n", str.c_str(), sock->getPlayer()->getCName(), sock->getHostname().c_str());
+            logn("log.incorrect", fmt::format("Invalid password({}) for {} from {}\n", str, sock->getPlayer()->getName(), sock->getHostname()).c_str());
             sock->disconnect();
             return;
         } else {
@@ -484,7 +484,7 @@ void setPlyDeity(Socket* sock, int deity) {
 //*********************************************************************
 // This function allows a new player to create their character.
 
-void doCreateHelp(Socket* sock, const bstring& str) {
+void doCreateHelp(Socket* sock, std::string_view str) {
     cmd cmnd;
     parse(str, &cmnd);
 
@@ -738,7 +738,7 @@ no_pass:
 //                      addStartingItem
 //*********************************************************************
 
-void Create::addStartingItem(Player* player, const bstring& area, int id, bool wear, bool skipUseCheck, int num) {
+void Create::addStartingItem(Player* player, std::string_view area, int id, bool wear, bool skipUseCheck, int num) {
     CatRef cr;
     cr.setArea(area);
     cr.id = id;
@@ -764,7 +764,7 @@ void Create::addStartingItem(Player* player, const bstring& area, int id, bool w
 //                      addStartingWeapon
 //*********************************************************************
 
-void Create::addStartingWeapon(Player* player, const bstring& weapon) {
+void Create::addStartingWeapon(Player* player, std::string_view weapon) {
     if(weapon == "sword")
         Create::addStartingItem(player, "tut", 28, false);
     else if(weapon == "great-sword")
@@ -1176,7 +1176,7 @@ bool Create::getDeity(Socket* sock, bstring str, int mode) {
 // from startlocs.cpp
 bool startingChoices(Player* player, bstring str, char* location, bool choose);
 
-bool Create::getLocation(Socket* sock, const bstring& str, int mode) {
+bool Create::getLocation(Socket* sock, std::string_view str, int mode) {
     char location[256];
     if(mode == Create::doPrint) {
 
@@ -1505,7 +1505,7 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
         }
 
         if(mode == Create::doPrint) {
-            sock->bprintColor(fmt::format("^W\n\n{}", curGroupDisplay));
+            sock->bprint(fmt::format("^W\n\n{}", curGroupDisplay));
             n = 0;
         }
         for(const auto& [skillName, curSkill] : gConfig->skills) {
@@ -1543,12 +1543,12 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
                 if(n++%2==0)
                     sock->print("\n%5s", " ");
 
-                sock->bprintColor(fmt::format("[^W{:1}^x] {:<30}", (char)(++k + 64), curSkill->getDisplayName()));
+                sock->bprint(fmt::format("[^W{:1}^x] {:<30}", (char)(++k + 64), curSkill->getDisplayName()));
             } else {
                 if(i == ++k) {
                     sock->getPlayer()->addSkill(curSkill->getName(),1);
                     Create::addStartingWeapon(sock->getPlayer(), curSkill->getName());
-                    sock->bprintColor(fmt::format("You have learned how to use ^W{}^x.\n", curSkill->getDisplayName()));
+                    sock->bprint(fmt::format("You have learned how to use ^W{}^x.\n", curSkill->getDisplayName()));
                     return(true);
                 }
             }
@@ -1575,7 +1575,7 @@ int cmdWeapons(Player* player, cmd* cmnd) {
 //      return(0);
 //  }
 
-    *player << ColorOn <<fmt::format("You have ^W{}}^x weapon skills to choose.\n", player->getWeaponTrains()) << ColorOff;
+    *player << ColorOn <<fmt::format("You have ^W{}^x weapon skills to choose.\n", player->getWeaponTrains()) << ColorOff;
 
     if(!Create::handleWeapon(player->getSock(), Create::doPrint, '\0')) {
         *player << "\n\nSorry, couldn't find any weapon skills you don't know that you can learn.\n";
@@ -1679,7 +1679,7 @@ bool Create::getSecondProf(Socket* sock, bstring str, int mode) {
 //                      getPassword
 //*********************************************************************
 
-bool Create::getPassword(Socket* sock, const bstring& str, int mode) {
+bool Create::getPassword(Socket* sock, std::string_view str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nYou must now choose a password. Remember that it\n");
@@ -1714,7 +1714,7 @@ bool Create::getPassword(Socket* sock, const bstring& str, int mode) {
 //                      done
 //*********************************************************************
 
-void Create::done(Socket* sock, const bstring& str, int mode) {
+void Create::done(Socket* sock, std::string_view str, int mode) {
 
     if(mode == Create::doPrint) {
 
@@ -2338,7 +2338,7 @@ bool nameIsAllowed(bstring str, Socket* sock) {
 //                      addDouble
 //*********************************************************************
 
-void Config::addDoubleLog(const bstring& forum1, const bstring& forum2) {
+void Config::addDoubleLog(std::string_view forum1, std::string_view forum2) {
     if(forum1.empty() || forum2.empty())
         return;
     if(canDoubleLog(forum1, forum2))
@@ -2356,7 +2356,7 @@ void Config::addDoubleLog(const bstring& forum1, const bstring& forum2) {
 //                      remDouble
 //*********************************************************************
 
-void Config::remDoubleLog(const bstring& forum1, const bstring& forum2) {
+void Config::remDoubleLog(std::string_view forum1, std::string_view forum2) {
     std::list<accountDouble>::iterator it;
 
     if(forum1.empty() || forum2.empty())
@@ -2377,7 +2377,7 @@ void Config::remDoubleLog(const bstring& forum1, const bstring& forum2) {
 //                      canDoubleLog
 //*********************************************************************
 
-bool Config::canDoubleLog(const bstring& forum1, const bstring& forum2) const {
+bool Config::canDoubleLog(std::string_view forum1, std::string_view forum2) const {
     std::list<accountDouble>::const_iterator it;
 
     if(forum1.empty() || forum2.empty())

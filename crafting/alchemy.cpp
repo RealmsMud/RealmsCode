@@ -57,19 +57,19 @@ bstring AlchemyInfo::getDisplayString() {
 
 
 
-const bstring& AlchemyInfo::getName() const {
+std::string_view AlchemyInfo::getName() const {
     return(name);
 }
-const bstring& AlchemyInfo::getAction() const {
+std::string_view AlchemyInfo::getAction() const {
     return(action);
 }
-const bstring& AlchemyInfo::getPythonScript() const {
+std::string_view AlchemyInfo::getPythonScript() const {
     return(pythonScript);
 }
-const bstring& AlchemyInfo::getPotionPrefix() const {
+std::string_view AlchemyInfo::getPotionPrefix() const {
     return(potionPrefix);
 }
-const bstring& AlchemyInfo::getPotionDisplayName() const {
+std::string_view AlchemyInfo::getPotionDisplayName() const {
     return(potionDisplayName);
 }
 
@@ -105,7 +105,7 @@ bool Config::clearAlchemy() {
 //                      getAlchemyInfo
 //*********************************************************************
 
-const AlchemyInfo *Config::getAlchemyInfo(const bstring& effect) const {
+const AlchemyInfo *Config::getAlchemyInfo(std::string_view effect) const {
     auto it = alchemy.find(effect);
 
     if(it != alchemy.end())
@@ -125,7 +125,7 @@ namespace Alchemy {
         return(MAX_ALCHEMY_DURATION);
     }
 
-    bstring getEffectString(Object* obj, const bstring& effect) {
+    bstring getEffectString(Object* obj, std::string_view effect) {
         if(!obj || effect.empty())
             return("*invalid*");
         return(obj->info.rstr() + "|" + effect);
@@ -165,7 +165,7 @@ AlchemyEffect::AlchemyEffect(const AlchemyEffect &ae) {
 //                      getEffect
 //*********************************************************************
 
-const bstring& AlchemyEffect::getEffect() const {
+std::string_view AlchemyEffect::getEffect() const {
     return(effect);
 }
 
@@ -216,7 +216,7 @@ void AlchemyEffect::combineWith(const AlchemyEffect& ae) {
 //                      alchemyEffectVisible
 //*********************************************************************
 
-bool Player::alchemyEffectVisible(Object* obj, const bstring& effect) {
+bool Player::alchemyEffectVisible(Object* obj, std::string_view effect) {
     if(!obj || effect.empty())
         return(false);
 
@@ -238,7 +238,7 @@ bool Player::alchemyEffectVisible(Object* obj, const bstring& effect) {
 //                      learnAlchemyEffect
 //*********************************************************************
 
-bool Player::learnAlchemyEffect(Object* obj, const bstring& effect) {
+bool Player::learnAlchemyEffect(Object* obj, std::string_view effect) {
     if(!obj || effect.empty())
         return(false);
 
@@ -435,7 +435,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 
         AlchemyEffect &ae = herb->alchemyEffects[1];
         effects[ae.getEffect()] = ae;
-        player->printColor("Brewing a single effect potion: ^Y%s^x\n", ae.getEffect().c_str());
+        player->bPrint(fmt::format("Brewing a single effect potion: ^Y{}^x\n", ae.getEffect()));
         player->learnAlchemyEffect(herb, ae.getEffect());
     }
 
@@ -466,7 +466,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
         }
 
         eff.setDuration(duration);
-        player->print("Effect: %s Duration: %d\n", eff.getEffect().c_str(), eff.getDuration());
+        player->bPrint(fmt::format("Effect: {} Duration: {}\n", eff.getEffect(), eff.getDuration()));
         potion->addAlchemyEffect(i++, eff);
     }
 
@@ -559,7 +559,7 @@ bool Object::consumeAlchemyPotion(Creature* consumer) {
                 consumed = true;
         }
         else
-            consumer->print("Unknown action: %s\n", alc->getAction().c_str());
+            consumer->bPrint(fmt::format("Unknown action: {}\n", alc->getAction()));
     }
 
     return(consumed);

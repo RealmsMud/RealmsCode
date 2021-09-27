@@ -172,7 +172,7 @@ int dmSockets(Player* player, cmd* cmnd) {
 
     for(Socket &sock : gServer->sockets) {
         num += 1;
-        player->print("Fd: %-2d   %s (%ld)\n", sock.getFd(), sock.getHostname().c_str(), sock.getIdle());
+        player->bPrint(fmt::format("Fd: {:-2}   {} ({})\n", sock.getFd(), sock.getHostname(), sock.getIdle()));
     }
     player->print("%d total connection%s.\n", num, num != 1 ? "s" : "");
     return(PROMPT);
@@ -1294,10 +1294,12 @@ int dmQuestList(Player* player, cmd* cmnd) {
         *player << ColorOn << "Old Quests: Type ^y*questlist old^x to see old style quests.\nNew Quests: Type ^y*questlist all^x to see all details or ^y*questlist [num]^x to see a specific quest.\n" << ColorOff;
     }
 
-    player->print("New Quests:\n");
+    *player << ColorOn << PagerOn << "New style Quests:\n";
     for(auto& [questId, quest] : gConfig->quests) {
-        *player << ColorOn << questId << ") " << (all ? quest->getDisplayString() : quest->getDisplayName()) << "\n" << ColorOff;
+        *player << questId << ") " << (all ? quest->getDisplayString() : quest->getDisplayName()) << "\n";
     }
+
+    *player << ColorOff << PagerOff;
     return(0);
 }
 

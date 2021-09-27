@@ -136,7 +136,7 @@ unsigned int Creature::checkRealmResist(unsigned int dmg, Realm pRealm) const {
     return(dmg);
 }
 
-bool Player::checkOppositeResistSpell(const bstring& effect) {
+bool Player::checkOppositeResistSpell(std::string_view effect) {
     if(effect == "resist-cold" )
         removeEffect("resist-fire");
     else if(effect == "resist-fire" )

@@ -33,7 +33,7 @@ public:
     // Stream operators
     Streamable& operator<< (const MudObject* obj);
     Streamable& operator<< (const MudObject& obj);
-    Streamable& operator<< (const bstring& str);
+    Streamable& operator<< (std::string_view str);
     Streamable& operator<< (int num);
     Streamable& operator<< (Stat& stat);
 
@@ -44,6 +44,8 @@ public:
     void setManipNum(int num);
     void setColorOn();
     void setColorOff();
+    void setPagerOn();
+    void setPagerOff();
 
     unsigned int getManipFlags();
     int getManipNum();
@@ -53,9 +55,12 @@ protected:
     unsigned int manipFlags{};
     int manipNum{};
     bool streamColor{};
+    bool pager{};
     bool petPrinted{};
 
-    void doPrint(const bstring& toPrint);
+    void doPrint(std::string_view toPrint);
+
+
 };
 
 inline Streamable& ColorOn(Streamable& out) {
@@ -66,6 +71,16 @@ inline Streamable& ColorOn(Streamable& out) {
 inline Streamable& ColorOff(Streamable& out) {
     out << "^x";
     out.setColorOff();
+    return out;
+}
+
+inline Streamable& PagerOn(Streamable& out) {
+    out.setPagerOn();
+    return out;
+}
+
+inline Streamable& PagerOff(Streamable& out) {
+    out.setPagerOff();
     return out;
 }
 

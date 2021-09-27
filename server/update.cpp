@@ -237,7 +237,7 @@ bstring weatherToEvent(WeatherString w) {
 
 void Server::weather(WeatherString w) {
     bstring season = gConfig->calendar->getCurSeason()->getName().toLower();
-    const bstring& event = weatherToEvent(w);
+    std::string_view event = weatherToEvent(w);
     bstring weather;
     char color;
 

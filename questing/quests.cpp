@@ -1048,7 +1048,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
             std::list<bstring> randomActions;
             int numResponses=0;
             for(TalkResponse * talkResponse : target->responses) {
-                for(const bstring&  keyword : talkResponse->keywords) {
+                for(std::string_view  keyword : talkResponse->keywords) {
                     if(keyword == "$random") {
                         randomResponses.push_back(talkResponse->response);
                         randomActions.push_back(talkResponse->action);
@@ -1079,12 +1079,12 @@ int cmdTalk(Player* player, cmd* cmnd) {
             player, target, question.c_str());
         bstring key = "", keyword = "";
         for(TalkResponse * talkResponse : target->responses) {
-            for(const bstring& keyWrd : talkResponse->keywords) {
+            for(std::string_view keyWrd : talkResponse->keywords) {
                 keyword = keyTxtConvert(keyWrd).toLower();
 
                 if(keyword[0] == '@') {
                     // We're looking for an exact match of the entire string
-                    const bstring& toMatch = keyword.substr(1);
+                    std::string_view toMatch = keyword.substr(1);
                     if(question == toMatch) {
                         // First let's copy over the information
                         key = keyword;
@@ -1097,7 +1097,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
                 } else if(keyword[0] == '%') {
                     // Now we're looking for a match of the keyword surrounded by either white space,
                     // punctuation, or the end/start of the string
-                    const bstring& toMatch = keyword.substr(1);
+                    std::string_view toMatch = keyword.substr(1);
                     bstring::size_type idx = question.find(toMatch,0);
                     if(idx != bstring::npos) {
                         // Possible match

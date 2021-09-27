@@ -94,7 +94,7 @@ StringStatistic::StringStatistic() {
 //                      update
 //*********************************************************************
 
-void StringStatistic::update(unsigned long num, const bstring& with) {
+void StringStatistic::update(unsigned long num, std::string_view with) {
     if(num > value) {
         value = num;
         name = stripColor(with);
@@ -682,7 +682,7 @@ void Statistics::monster(Monster* monster) {
 //                      experience
 //*********************************************************************
 
-void Statistics::experience(unsigned long num, const bstring& with) {
+void Statistics::experience(unsigned long num, std::string_view with) {
     if(track) mostExperience.update(num, with);
 }
 
@@ -690,7 +690,7 @@ void Statistics::experience(unsigned long num, const bstring& with) {
 //                      attackDamage
 //*********************************************************************
 
-void Statistics::attackDamage(unsigned long num, const bstring& with) {
+void Statistics::attackDamage(unsigned long num, std::string_view with) {
     if(track) mostAttackDamage.update(num, with);
 }
 
@@ -698,7 +698,7 @@ void Statistics::attackDamage(unsigned long num, const bstring& with) {
 //                      magicDamage
 //*********************************************************************
 
-void Statistics::magicDamage(unsigned long num, const bstring& with) {
+void Statistics::magicDamage(unsigned long num, std::string_view with) {
     if(track) mostMagicDamage.update(num, with);
 }
 

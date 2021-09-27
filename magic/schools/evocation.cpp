@@ -511,7 +511,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 //*********************************************************************
 // This function is called by all spells whose sole purpose is to do
 // damage to a creature.
-Creature* Creature::findMagicVictim(const bstring& toFind, int num, SpellData* spellData, bool aggressive, bool selfOk, const bstring& noVictim, const bstring& notFound) {
+Creature* Creature::findMagicVictim(std::string_view toFind, int num, SpellData* spellData, bool aggressive, bool selfOk, std::string_view noVictim, std::string_view notFound) {
     Creature *victim = nullptr;
     Player *pVictim = nullptr;
     if (toFind.empty()) {
@@ -534,7 +534,7 @@ Creature* Creature::findMagicVictim(const bstring& toFind, int num, SpellData* s
             // Cast offensive spell on self
             return (this);
         } else {
-            victim = getRoomParent()->findCreature(this, toFind.c_str(), num, true, true);
+            victim = getRoomParent()->findCreature(this, toFind, num, true, true);
             if (victim)
                 pVictim = victim->getAsPlayer();
 
@@ -546,7 +546,7 @@ Creature* Creature::findMagicVictim(const bstring& toFind, int num, SpellData* s
             if (isMonster()) {
                 if (victim == this) {
                     // for monster casting we need to make sure its not on itself
-                    victim = getRoomParent()->findCreature(this, toFind.c_str(), 2, true, true);
+                    victim = getRoomParent()->findCreature(this, toFind, 2, true, true);
                     // look for second creature with same name
                     if (!victim || victim == this)
                         return (nullptr);

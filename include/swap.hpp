@@ -33,7 +33,7 @@ class Swap {
 public:
     Swap();
 
-    void set(const bstring& mover, const CatRef& swapOrigin, const CatRef& swapTarget, SwapType swapType);
+    void set(std::string_view mover, const CatRef& swapOrigin, const CatRef& swapTarget, SwapType swapType);
     bool match(const CatRef& o, const CatRef& t);
 
     bstring player;

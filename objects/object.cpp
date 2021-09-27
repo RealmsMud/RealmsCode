@@ -690,10 +690,8 @@ bool Object::showAsSame(const Player* player, const Object* object) const {
 //                      nameCoin
 //*********************************************************************
 
-void Object::nameCoin(const bstring& type, unsigned long value) {
-    char temp[80];
-    snprintf(temp, 80, "%lu %s coin%s", value, type.c_str(), value != 1 ? "s" : "");
-    setName(temp);
+void Object::nameCoin(std::string_view type, unsigned long value) {
+    setName(fmt::format("{} {} coin{}", value, type, value != 1 ? "s" : ""));
 }
 
 //*********************************************************************

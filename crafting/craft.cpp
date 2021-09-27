@@ -106,9 +106,9 @@ bstring Recipe::getResultName(bool appendCr) {
     return(oStr.str());
 }
 bstring Recipe::getSkill() const { return(skill); }
-void Recipe::setSkill(const bstring& s) { skill = s; }
+void Recipe::setSkill(std::string_view s) { skill = s; }
 bstring Recipe::getCreator() const { return(creator); }
-void Recipe::setCreator(const bstring& c) { creator = c; }
+void Recipe::setCreator(std::string_view c) { creator = c; }
 int Recipe::getMinSkill() const { return(minSkill); }
 bool Recipe::requiresRecipe() const { return(requireRecipe); }
 void Recipe::setRequiresRecipe(bool r) { requireRecipe = r; }
@@ -163,7 +163,7 @@ bool Recipe::goodObject(const Player* player, const Object* object, const CatRef
 //                      check
 //**********************************************************************
 
-bool Recipe::check(const Player* player, const std::list<CatRef>* list, const bstring& type, int numIngredients) const {
+bool Recipe::check(const Player* player, const std::list<CatRef>* list, std::string_view type, int numIngredients) const {
     Object* object=nullptr;
     const ObjectSet *set;
     if(type == "equipment")
@@ -208,7 +208,7 @@ bool Recipe::check(const Player* player, const std::list<CatRef>* list, const bs
         }
         if(oIt == set->end()) {
             player->unprepareAllObjects();
-            player->print("You lack the necessary %s listed in this recipe.\n", type.c_str());
+            player->bPrint(fmt::format("You lack the necessary {} listed in this recipe.\n", type));
             return(false);
         }
     }
@@ -372,7 +372,7 @@ bstring Recipe::display() {
 //                      canUseEquipment
 //**********************************************************************
 
-bool Recipe::canUseEquipment(const Player* player, const bstring& skill) const {
+bool Recipe::canUseEquipment(const Player* player, std::string_view skill) const {
     if(!equipment.empty() || skill == "cooking") {
         for(Monster* mons : player->getConstRoomParent()->monsters) {
             if(mons->canSee(player)) {
@@ -431,7 +431,7 @@ void Config::remRecipe(Recipe* recipe) {
 // items in inventory are prepared, this sees if they match any known recipe
 // this function essentially lets people experiment and find new recipes
 
-Recipe* Config::searchRecipes(const Player* player, const bstring& skill, Size recipeSize, int numIngredients, const Object* object) {
+Recipe* Config::searchRecipes(const Player* player, std::string_view skill, Size recipeSize, int numIngredients, const Object* object) {
     std::list<CatRef> list, tList;
     std::list<CatRef>::const_iterator iIt;
     RecipeMap::iterator rIt;
@@ -653,7 +653,7 @@ int cmdRecipes(Player* player, cmd* cmnd) {
 //                      findRecipe
 //**********************************************************************
 
-Recipe* Player::findRecipe(cmd* cmnd, const bstring& skill, bool* searchRecipes, Size recipeSize, int numIngredients) const {
+Recipe* Player::findRecipe(cmd* cmnd, std::string_view skill, bool* searchRecipes, Size recipeSize, int numIngredients) const {
     std::list<int>::const_iterator it;
     bstring txt = getFullstrText(cmnd->fullstr, 1);
 
@@ -1205,7 +1205,7 @@ int cmdUnprepareObject(Player* player, cmd* cmnd) {
     return(0);
 }
 
-void Player::checkFreeSkills(const bstring& skill) {
+void Player::checkFreeSkills(std::string_view skill) {
     if( skill == "smithing" ||
         skill == "cooking" ||
         skill == "fishing" ||

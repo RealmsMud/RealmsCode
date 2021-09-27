@@ -38,21 +38,21 @@ public:
     void    saveList(xmlNodePtr curNode, const bstring& name, const std::list<CatRef>* list) const;
     void    loadList(xmlNodePtr curNode, std::list<CatRef>* list);
     [[nodiscard]] bool    isValid() const;
-    bool    check(const Player* player, const std::list<CatRef>* list, const bstring& type, int numIngredients) const;
+    bool    check(const Player* player, const std::list<CatRef>* list, std::string_view type, int numIngredients) const;
     bool    check(std::list<CatRef>* list, const std::list<CatRef>* require, int numIngredients) const;
     bool    isSkilled(const Player* player, Size recipeSize) const;
     bstring listIngredients(const std::list<CatRef>* list) const;
     bstring display();
-    bool    canUseEquipment(const Player* player, const bstring& skill) const;
+    bool    canUseEquipment(const Player* player, std::string_view skill) const;
     bool    canBeEdittedBy(const Player* player) const;
 
     void    setId(int i);
     void    setExperience(int exp);
     void    setSizable(bool size);
     void    setResult(const CatRef& cr);
-    void    setSkill(const bstring& s);
+    void    setSkill(std::string_view s);
     void    setRequiresRecipe(bool r);
-    void    setCreator(const bstring& c);
+    void    setCreator(std::string_view c);
     [[nodiscard]] int     getId() const;
     [[nodiscard]] int     getExperience() const;
     [[nodiscard]] bool    isSizable() const;

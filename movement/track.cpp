@@ -40,7 +40,7 @@ bstring Track::getDirection() const { return(direction); }
 
 void Track::setNum(short n) { num = MAX<short>(0, n); }
 void Track::setSize(Size s) { size = s; }
-void Track::setDirection(const bstring& dir) { direction = dir; }
+void Track::setDirection(std::string_view dir) { direction = dir; }
 
 //*********************************************************************
 //                      load

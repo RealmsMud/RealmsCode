@@ -33,15 +33,15 @@ public:
     void save(xmlNodePtr curNode, const char* name) const;
     void load(xmlNodePtr curNode);
     bstring display() const;
-    void add(const bstring& event, const bstring& code);
-    bool execute(const bstring& event, MudObject* target=0, const bstring& param1="", const bstring& param2="", const bstring& param3="") const;
-    bool executeWithReturn(const bstring& event, MudObject* target=0, const bstring& param1="", const bstring& param2="", const bstring& param3="") const;
+    void add(std::string_view event, std::string_view code);
+    bool execute(std::string_view event, MudObject* target=0, std::string_view param1="", std::string_view param2="", std::string_view param3="") const;
+    bool executeWithReturn(std::string_view event, MudObject* target=0, std::string_view param1="", std::string_view param2="", std::string_view param3="") const;
     void setParent(MudObject* target);
 
-    static bool run(MudObject* trigger1, const bstring& event1, MudObject* trigger2, const bstring& event2, const bstring& param1="", const bstring& param2="", const bstring& param3="");
+    static bool run(MudObject* trigger1, std::string_view event1, MudObject* trigger2, std::string_view event2, std::string_view param1="", std::string_view param2="", std::string_view param3="");
 
     template<class Type, class Compare>
-    inline static bool run(std::set<Type, Compare>& set, MudObject* trigger, const bstring& event, const bstring& param1="", const bstring& param2="", const bstring& param3="") {
+    inline static bool run(std::set<Type, Compare>& set, MudObject* trigger, std::string_view event, std::string_view param1="", std::string_view param2="", std::string_view param3="") {
         bool ran=false;
 #ifndef PYTHON_CODE_GEN
         for(Type crt : set) {

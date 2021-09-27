@@ -197,8 +197,8 @@ int dm2x(Player* player, cmd* cmnd);
 
 
 // dmroom.cpp
-bool isCardinal(const bstring& xname);
-bstring opposite_exit_name(const bstring& name);
+bool isCardinal(std::string_view xname);
+bstring opposite_exit_name(std::string_view name);
 int dmPurge(Player* player, cmd* cmnd);
 int dmEcho(Player* player, cmd* cmnd);
 int dmReloadRoom(Player* player, cmd* cmnd);
@@ -223,7 +223,7 @@ int dmRenameExit(Player *admin, cmd* cmnd);
 int dmDestroyRoom(Player* player, cmd* cmnd);
 void findRoomsWithFlag(const Player* player, const Range& range, int flag);
 void findRoomsWithFlag(const Player* player, CatRef area, int flag);
-CatRef findNextEmpty(const bstring& type, const bstring& area);
+CatRef findNextEmpty(std::string_view type, std::string_view area);
 int dmFind(Player* player, cmd* cmnd);
 
 // watchers.c

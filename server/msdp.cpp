@@ -238,7 +238,7 @@ bool Socket::msdpList(bstring& value) {
     return (false);
 }
 
-ReportedMsdpVariable* Socket::getReportedMsdpVariable(const bstring& value) {
+ReportedMsdpVariable* Socket::getReportedMsdpVariable(std::string_view value) {
     auto it = msdpReporting.find(value);
 
     if (it == msdpReporting.end())
@@ -330,7 +330,7 @@ bool Socket::msdpUnReport(bstring& value) {
     }
 }
 
-void Socket::msdpSendList(const bstring& variable, const std::vector<bstring>& values) {
+void Socket::msdpSendList(std::string_view variable, const std::vector<bstring>& values) {
     std::ostringstream oStr;
 
     if (msdpEnabled()) {
@@ -349,7 +349,7 @@ void Socket::msdpSendList(const bstring& variable, const std::vector<bstring>& v
 
 }
 
-void debugMsdp(const bstring& str) {
+void debugMsdp(std::string_view str) {
     bool iac = false;
 
     std::ostringstream oStr;
@@ -401,7 +401,7 @@ void debugMsdp(const bstring& str) {
     std::clog << oStr.str() << std::endl;
 }
 
-bool Socket::msdpSendPair(const bstring& variable, const bstring& value) {
+bool Socket::msdpSendPair(std::string_view variable, std::string_view value) {
     if (variable.empty() || value.empty())
         return false;
 
@@ -553,7 +553,7 @@ bool ReportedMsdpVariable::checkTimer() {
     }
 }
 
-void ReportedMsdpVariable::setValue(const bstring& newValue) {
+void ReportedMsdpVariable::setValue(std::string_view newValue) {
     if(value != newValue) {
         value = newValue;
         dirty = true;

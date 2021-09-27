@@ -54,9 +54,9 @@ int cmdProxy(Player* player, cmd* cmnd);
 // action.c
 int plyAction(Player* player, cmd* cmnd);
 int cmdAction(Creature* player, cmd* cmnd);
-bool isBadSocial(const bstring& str);
-bool isSemiBadSocial(const bstring& str);
-bool isGoodSocial(const bstring& str);
+bool isBadSocial(std::string_view str);
+bool isSemiBadSocial(std::string_view str);
+bool isGoodSocial(std::string_view str);
 
 // attack.c
 int cmdAttack(Creature* player, cmd* cmnd);
@@ -82,7 +82,7 @@ int cmdThrow(Creature* creature, cmd* cmnd);
 int cmdNoExist(Player* player, cmd* cmnd);
 int cmdNoAuth(Player* player);
 void command(Socket* sock, const bstring& str);
-void parse(const bstring& str, cmd* cmnd);
+void parse(std::string_view str, cmd* cmnd);
 
 int cmdPush(Player* player, cmd* cmnd);
 int cmdPull(Player* player, cmd* cmnd);
@@ -145,7 +145,7 @@ int hire(Player* player, cmd* cmnd);
 
 
 // communication.c
-bstring getFullstrTextTrun(const bstring& str, int skip, char toSkip = ' ', bool colorEscape=false);
+bstring getFullstrTextTrun(std::string_view str, int skip, char toSkip = ' ', bool colorEscape=false);
 bstring getFullstrText(bstring str, int skip, char toSkip = ' ', bool colorEscape=false, bool truncate=false);
 int communicateWith(Player* player, cmd* cmnd);
 int pCommunicate(Player* player, cmd* cmnd);
@@ -436,6 +436,6 @@ int cmdHowl(Creature* player, cmd* cmnd);
 
 int dmStatDetail(Player* player, cmd* cmnd);
 
-void doCastPython(MudObject* caster, Creature* target, const bstring& spell, int strength = 130);
+void doCastPython(MudObject* caster, Creature* target, std::string_view spell, int strength = 130);
 
 #endif /*COMMANDS_H_*/

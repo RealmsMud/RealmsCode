@@ -150,7 +150,7 @@ void command(Socket* sock, const bstring& inStr) {
 // resulting words are stored in a command structure pointed to by the
 // second argument.
 
-void parse(const bstring& str, cmd *cmnd) {
+void parse(std::string_view str, cmd *cmnd) {
     int     i=0, j=0, l=0, n=0;
     //char  token[MAX_TOKEN_SIZE];
     bstring token;

@@ -27,7 +27,7 @@ class BaseRoom;
 class Location {
 public:
     Location();
-    void save(xmlNodePtr rootNode, const bstring& name) const;
+    void save(xmlNodePtr rootNode, std::string_view name) const;
     void load(xmlNodePtr curNode);
     [[nodiscard]] bstring str() const;
     bool    operator==(const Location& l) const;

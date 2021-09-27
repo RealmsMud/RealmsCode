@@ -45,7 +45,7 @@ MudFlag::MudFlag() {
 //                      flagFileTitle
 //**********************************************************************
 
-bstring flagFileTitle(const bstring& title, const char* file, int pad) {
+bstring flagFileTitle(std::string_view title, const char* file, int pad) {
     std::ostringstream oStr;
 
     // Prepare the text to go into the flag index helpfile
@@ -60,7 +60,7 @@ bstring flagFileTitle(const bstring& title, const char* file, int pad) {
 //                      writeFlagFile
 //**********************************************************************
 
-bstring writeFlagFile(const bstring& title, const char* file, int pad, bool builderLink, const MudFlagMap &flags) {
+bstring writeFlagFile(std::string_view title, const char* file, int pad, bool builderLink, const MudFlagMap &flags) {
     std::ostringstream padding;
     MudFlagMap::const_iterator it;
     const MudFlag *flag=nullptr;

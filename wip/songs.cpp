@@ -171,7 +171,7 @@ bool Creature::pulseSong(long t) {
 
     print("Pulsing song: %s\n", playing->getName().c_str());
 
-    bstring targetType = playing->getTargetType();
+    const auto& targetType = playing->getTargetType();
 
     if(playing->getType().equals("effect", false)) {
         // Group effects affect the singer as well

@@ -43,7 +43,7 @@ bool Player::operator <(const Player& t) const {
 //                      regenModifyDuration
 //*********************************************************************
 
-long Player::tickInterval(Stat& stat, bool fastTick, bool deathSickness, bool vampAndDay, const bstring& effectName) {
+long Player::tickInterval(Stat& stat, bool fastTick, bool deathSickness, bool vampAndDay, std::string_view effectName) {
     long interval = 45 - 5*bonus(stat.getCur());
 
     if(fastTick)

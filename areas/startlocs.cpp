@@ -41,10 +41,10 @@
 //*********************************************************************
 // setup the player for the first time they are bound
 
-void initialBind(Player* player, const bstring& str) {
+void initialBind(Player* player, std::string_view str) {
     const StartLoc* location = gConfig->getStartLoc(str);
     if(!location) {
-        broadcast(isCt, "Invalid start location: %s", str.c_str());
+        broadcast(isCt, fmt::format("Invalid start location: {}", str).c_str());
         return;
     }
     CatRef cr = location->getStartingGuide();
@@ -442,7 +442,7 @@ void Player::bind(const StartLoc* location) {
 //                      getStartLoc
 //*********************************************************************
 
-const StartLoc *Config::getStartLoc(const bstring& id) const {
+const StartLoc *Config::getStartLoc(std::string_view id) const {
     auto it = start.find(id);
 
     if(it == start.end())

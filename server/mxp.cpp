@@ -59,7 +59,7 @@ void Config::clearMxpElements() {
     mxpColors.clear();
 }
 
-bstring& Config::getMxpColorTag(const bstring& str) {
+bstring& Config::getMxpColorTag(std::string_view str) {
     return(mxpColors[str]);
 }
 

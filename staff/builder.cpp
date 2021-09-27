@@ -300,9 +300,9 @@ bool Creature::canBuildMonsters() const {
 //                      builderCanEdit
 //*********************************************************************
 
-bool Player::builderCanEditRoom(const bstring& action) {
+bool Player::builderCanEditRoom(std::string_view action) {
     if(cClass == CreatureClass::BUILDER && !getRoomParent()->isConstruction()) {
-        print("You cannot %s while you are in a room that is not under construction.\n", action.c_str());
+        bPrint(fmt::format("You cannot {} while you are in a room that is not under construction.\n", action));
         return(false);
     }
     return(true);

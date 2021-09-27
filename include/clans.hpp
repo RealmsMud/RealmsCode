@@ -33,7 +33,7 @@ public:
     [[nodiscard]] unsigned int getRescind() const;
     [[nodiscard]] unsigned int getDeity() const;
     [[nodiscard]] bstring getName() const;
-    [[nodiscard]] short   getSkillBonus(const bstring& skill) const;
+    [[nodiscard]] short   getSkillBonus(std::string_view skill) const;
 protected:
     unsigned int id;
     unsigned int join;

@@ -1439,13 +1439,13 @@ int dmRestorePlayer(Player* player, cmd* cmnd) {
 #define DM_GEN_WARN     4
 #define DM_GEN_BUG      5
 
-int dmGeneric(Player* player, cmd* cmnd, const bstring& action, int what) {
+int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
     Player  *target=nullptr;
 
     bool    online=false;
 
     if(cmnd->num < 2) {
-        player->print("%s whom?\n", action.c_str());
+        player->bPrint(fmt::format("{} whom?\n", action));
         return(0);
     }
 

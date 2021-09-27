@@ -29,7 +29,7 @@
 
 class cmd;
 
-bstring Player::hashPassword(const bstring& pass) {
+bstring Player::hashPassword(std::string_view pass) {
     // implement md5 or sha1 here if you want 
     return(pass);
 }
@@ -38,11 +38,11 @@ bstring Player::getPassword() const {
     return(password);
 }
 
-bool Player::isPassword(const bstring& pass) const {
+bool Player::isPassword(std::string_view pass) const {
     return(password == hashPassword(pass));
 }
 
-void Player::setPassword(const bstring& pass) {
+void Player::setPassword(std::string_view pass) {
     lastPassword = password;
     password = hashPassword(pass);
 }
@@ -192,8 +192,8 @@ void changePassword(Socket* sock, const bstring& str) {
         if(str.equals(sock->tempstr[1])) {
 
             if(!player->isCt())
-                logn("log.passwd", "(%s)\n   %s changed %s password. Old: %s New: %s\n", player->getSock()->getHostname().c_str(),
-                     player->getCName(), player->hisHer(), player->getPassword().c_str(), sock->tempstr[1]);
+                logn("log.passwd", fmt::format("({})\n   {} changed {} password. Old: {} New: {}\n", player->getSock()->getHostname(),
+                     player->getName(), player->hisHer(), player->getPassword(), sock->tempstr[1]).c_str());
             player->setPassword(str);
 
             sock->print("Password changed.\n");

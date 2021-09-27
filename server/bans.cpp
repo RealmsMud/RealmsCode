@@ -50,17 +50,17 @@ void Ban::reset() {
     isPrefix = isSuffix = false;    
 }
 
-bool Ban::matches(const char* toMatch) {
+bool Ban::matches(std::string_view toMatch) {
 
     if(site == "*")
         return(true);
-    else if(isPrefix && isSuffix && strstr(toMatch, site.c_str()))
+    else if(isPrefix && isSuffix && toMatch.find(site) != std::string_view::npos)
         return(true);
-    else if(isPrefix && strPrefix(toMatch, site.c_str()))
+    else if(isPrefix && toMatch.starts_with(site))
         return(true);
-    else if(isSuffix && strSuffix(toMatch, site.c_str()))
+    else if(isSuffix && toMatch.ends_with(site))
         return(true);
-    else if(!strcmp(toMatch, site.c_str()))
+    else if(!toMatch.compare(site))
         return(true);
     
     return(false);
@@ -254,7 +254,7 @@ int dmBan(Player* player, cmd* cmnd) {
         return(0);
     }
     if(target)
-        strcpy(site, target->getSock()->getHostname().c_str());
+        strncpy(site, target->getSock()->getHostname().data(), target->getSock()->getHostname().length());
 
     if(strlen(site) > 1) {
         if(site[0] == '*') {
@@ -351,8 +351,8 @@ void Server::checkBans() {
     static const char* banString = "\n\rThe watcher just arrived.\n\rThe watcher says, \"Begone from this place!\".\n\rThe watcher banishes your soul from this world.\n\r\n\r\n\r";
 
     for(auto sock : sockets) {
-        if(sock.getPlayer() && (gConfig->isBanned(sock.getIp().c_str()) ||
-            gConfig->isBanned(sock.getHostname().c_str()))) {
+        if(sock.getPlayer() && (gConfig->isBanned(sock.getIp()) ||
+            gConfig->isBanned(sock.getHostname()))) {
             if(sock.getPlayer()->getClass() <= CreatureClass::BUILDER) {
                 sock.write(banString);
                 sock.disconnect();
@@ -424,13 +424,6 @@ bool Config::deleteBan(int toDel) {
 int Config::isLockedOut( Socket* sock ) {
     bool match = false;
     int count=0;
-    char site[80];
-    char ip[40];
-
-    strncpy(site, sock->getHostname().c_str(), 80);
-    strncpy(ip, sock->getIp().c_str(), 40);
-    site[79] = 0;
-    ip[39] = 0;
 
     std::list<Ban*>::iterator it;
     Ban* ban = nullptr;
@@ -442,7 +435,7 @@ int Config::isLockedOut( Socket* sock ) {
         if(!ban)
             continue;
         
-        if(ban->matches(site) || ban->matches(ip)) {
+        if(ban->matches(sock->getHostname()) || ban->matches(sock->getIp())) {
             match = true;
             break;
         }
@@ -466,13 +459,13 @@ int Config::isLockedOut( Socket* sock ) {
         char buf[1024];
         sprintf(buf, "\n\rYour site is locked out.\n\rSend questions to %s.\n\r", questions_to_email);
         sock->write(buf);
-        broadcast(isCt, "^yDenying access to '%s(%s)'", sock->getHostname().c_str(), ban->site.c_str());
+        broadcast(isCt, "^yDenying access to '%s(%s)'", sock->getHostname(), ban->site.c_str());
         return(1);
     }
 }
 
 // Returns 1 if the site is on the ban list, 0 otherwise
-bool Config::isBanned(const char *site) {
+bool Config::isBanned(std::string_view site) {
     std::list<Ban*>::iterator it;
     Ban* ban;
 

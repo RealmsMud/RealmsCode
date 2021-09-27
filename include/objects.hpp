@@ -235,7 +235,7 @@ public:
                   bool saveId = true, std::list<bstring> *idList = 0) const;
     int saveToFile();
 
-    void setDroppedBy(MudObject* dropper, const bstring& pDropType);
+    void setDroppedBy(MudObject* dropper, std::string_view pDropType);
 
     bool isBroken() const;
 
@@ -323,9 +323,9 @@ public:
 
     // Set
     void setKey(unsigned short k);
-    bool setWeaponType(const bstring& newType);
-    bool setArmorType(const bstring& newType);
-    bool setSubType(const bstring& newType);
+    bool setWeaponType(std::string_view newType);
+    bool setArmorType(std::string_view newType);
+    bool setSubType(std::string_view newType);
     void setMade();
     void setDelay(int newDelay);
     void setExtra(int x);
@@ -355,7 +355,7 @@ public:
     void setClan(short c);
     void setSpecial(short s);
     void setQuestnum(short q);
-    void setEffect(const bstring& e);
+    void setEffect(std::string_view e);
     void setEffectDuration(long d);
     void setEffectStrength(short s);
     void setCoinCost(unsigned long c);
@@ -372,7 +372,7 @@ public:
     // Adjust things
     void killUniques();
     void loadContainerContents();
-    void nameCoin(const bstring& type, unsigned long value);
+    void nameCoin(std::string_view type, unsigned long value);
     void randomEnchant(int bonus = 0);
     int adjustArmor();
     int adjustWeapon();

@@ -114,13 +114,13 @@ struct MudObject_wrapper: MudObject, bp::wrapper<MudObject> {
 
 BOOST_PYTHON_MODULE(mud)
 {
-
+    // done
     bp::class_<Config>("Config", bp::no_init).def("getVersion", &Config::getVersion)
             .def("getMudName", &Config::getMudName)
             .def("getMudNameAndVersion",&Config::getMudNameAndVersion)
             .def("effectExists", &Config::effectExists)
             ;
-
+    // done
     bp::class_<Server>("Server", bp::no_init).def("findPlayer", &Server::findPlayer,
                                                   bp::return_internal_reference<>())
 
@@ -128,6 +128,7 @@ BOOST_PYTHON_MODULE(mud)
 //          return_value_policy <bp::reference_existing_object>())
             ;
 
+    // NOT DONE
     { //::MudObject
         typedef bp::class_<MudObject_wrapper, boost::noncopyable> MudObject_exposer_t;
         MudObject_exposer_t MudObject_exposer = MudObject_exposer_t("MudObject",
@@ -145,7 +146,7 @@ BOOST_PYTHON_MODULE(mud)
 
         { //::MudObject::isEffected
 
-            typedef bool ( ::MudObject::*isEffected_function_type )( ::bstring const &,bool ) const;
+            typedef bool ( ::MudObject::*isEffected_function_type )( std::string_view ,bool ) const;
 
             MudObject_exposer.def(
                 "isEffected"
@@ -165,7 +166,7 @@ BOOST_PYTHON_MODULE(mud)
         }
         { //::MudObject::addEffect
 
-            typedef ::EffectInfo * ( ::MudObject::*addEffect_function_type )( ::bstring const &,long int,int,::MudObject *,bool,::Creature const *,bool ) ;
+            typedef ::EffectInfo * ( ::MudObject::*addEffect_function_type )( std::string_view ,long int,int,::MudObject *,bool,::Creature const *,bool ) ;
 
             MudObject_exposer.def(
                 "addEffect"
@@ -191,7 +192,7 @@ BOOST_PYTHON_MODULE(mud)
 //      .def("getName", &MudObject::getName)
 //  ;
 
-
+    // DONE
     bp::enum_< CreatureClass>("crtClasses")
         .value("ASSASSIN", CreatureClass::ASSASSIN)
         .value("BERSERKER", CreatureClass::BERSERKER)
@@ -216,7 +217,7 @@ BOOST_PYTHON_MODULE(mud)
         .export_values()
         ;
 
-
+    // DONE
     bp::enum_< religions>("religions")
         .value("ATHEIST", ATHEIST)
         .value("ARAMON", ARAMON)
@@ -232,7 +233,7 @@ BOOST_PYTHON_MODULE(mud)
         .value("MAX_DEITY", MAX_DEITY)
         .export_values()
         ;
-
+    // DONE
     bp::enum_< DeathType>("DeathType")
          .value("DT_NONE", DT_NONE)
          .value("FALL", FALL)
@@ -279,7 +280,7 @@ BOOST_PYTHON_MODULE(mud)
          .value("THORNS", THORNS)
          .export_values()
          ;
-
+    // DONE
     bp::enum_< mType>("mType")
         .value("INVALID", INVALID)
         .value("PLAYER", PLAYER)
@@ -320,7 +321,7 @@ BOOST_PYTHON_MODULE(mud)
         .export_values()
         ;
 
-
+    // Done
     bp::def("dice", &::dice);
     bp::def("rand", &::pythonRand);
     bp::def("spawnObjects", &::spawnObjects);
@@ -360,54 +361,17 @@ BOOST_PYTHON_MODULE(MudObjects)
 
 
     bp::class_<Stat, boost::noncopyable>("Stat", bp::init<>())
-
-        .def("getModifierAmt", &Stat::getModifierAmt)
-
-    .def(
-            "adjust"
-            , (int ( ::Stat::* )( int,bool ) )( &::Stat::adjust )
-            , ( bp::arg("amt") ) )
-    .def(
-            "decrease"
-            , (int ( ::Stat::* )( int ) )( &::Stat::decrease )
-            , ( bp::arg("amt") ) )
-    .def(
-             "getCur"
-             , (int (::Stat::* ) ( bool ) const)( &::Stat::getCur )
-             , ( bp::arg("recalc")=(bool)(true) ) )
-    .def(
-            "getInitial"
-            , (short int ( ::Stat::* )( ) const)( &::Stat::getInitial ) )
-    .def(
-            "getMax"
-            , (short int ( ::Stat::* )( ) const)( &::Stat::getMax ) )
-    .def(
-            "increase"
-            , (int ( ::Stat::* )( int,bool ) )( &::Stat::increase )
-            , ( bp::arg("amt"), bp::arg("overMaxOk")=(bool)(false) ) )
-    .def(
-            "load"
-            , (bool ( ::Stat::* )( ::xmlNodePtr ) )( &::Stat::load )
-            , ( bp::arg("curNode") ) )
-    .def(
-            "restore"
-            , (int ( ::Stat::* )( ) )( &::Stat::restore ) )
-    .def(
-            "save"
-            , (void ( ::Stat::* )( ::xmlNodePtr,char const * ) const)( &::Stat::save )
-            , ( bp::arg("parentNode"), bp::arg("statName") ) )
-    .def(
-            "setCur"
-            , (int ( ::Stat::* )( short int ) )( &::Stat::setCur )
-            , ( bp::arg("newCur") ) )
-    .def(
-            "setInitial"
-            , (void ( ::Stat::* )( short int ) )( &::Stat::setInitial )
-            , ( bp::arg("i") ) )
-    .def(
-            "setMax"
-            , (int ( ::Stat::* )( short int,bool ) )( &::Stat::setMax )
-            , ( bp::arg("newMax"), bp::arg("allowZero")=(bool)(false) ) )
+            .def("getModifierAmt", &Stat::getModifierAmt)
+            .def("adjust", &Stat::adjust, bp::arg("amt"))
+            .def("decrease", &Stat::decrease, bp::arg("amt"))
+            .def("getCur", &Stat::getCur, bp::arg("recalc") = true)
+            .def("getInitial", &Stat::getInitial)
+            .def("getMax", &Stat::getMax)
+            .def("increase", &Stat::increase, bp::arg("amt"))
+            .def("restore", &Stat::restore)
+            .def("setCur", &Stat::setCur, bp::arg("newCur"))
+            .def("setInitial", &Stat::setInitial, bp::arg("i"))
+            .def("setMax", &Stat::setMax, bp::arg("newMax"), bp::arg("allowZero") = false);
 
     ;
 
@@ -462,7 +426,7 @@ BOOST_PYTHON_MODULE(MudObjects)
     bp::class_<SkillCommand, boost::noncopyable, bp::bases<SkillInfo> >( "SkillCommand", bp::no_init )
         ;
 
-    bp::class_<EffectInfo, boost::noncopyable >( "EffectInfo", bp::no_init )
+    bp::class_<EffectInfo, boost::noncopyable >( "EffectInfo", bp::no_init ) // Done
     .def("add", &EffectInfo::add )
     .def("compute", &EffectInfo::compute)
     .def("pulse", &EffectInfo::pulse)
@@ -517,9 +481,9 @@ BOOST_PYTHON_MODULE(MudObjects)
 
     .def("isPulsed", &Effect::isPulsed)
     ;
-
+//.def("bprint", (void ( ::Socket::* )( std::string_view ))(&Socket::bprint))
     bp::class_<Creature, boost::noncopyable, bp::bases<Container>, bp::bases<Containable> >("Creature", bp::no_init)
-    .def("send", &Creature::bPrint)
+    .def("send", (void ( ::Creature::* )( std::string_view ) const)(&Creature::bPrint))
     .def("getCrtStr", &Creature::getCrtStr, ( bp::arg("viewer")=0l, bp::arg("flags")=(int)(0), bp::arg("num")=(int)(0) ))
     .def("getParent", &Creature::getParent, bp::return_value_policy <bp::reference_existing_object>())
     .def("hisHer", &Creature::hisHer)
@@ -642,7 +606,7 @@ BOOST_PYTHON_MODULE(MudObjects)
 
     bp::class_<Socket, boost::noncopyable >("Socket", bp::no_init)
     .def("getPlayer", &Socket::getPlayer, bp::return_value_policy <bp::reference_existing_object>())
-    .def("bprint", &Socket::bprint)
+    .def("bprint", (void ( ::Socket::* )( std::string_view ))(&Socket::bprint))
     ;
 
 //  .def(

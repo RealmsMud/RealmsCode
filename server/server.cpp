@@ -1409,7 +1409,7 @@ int Server::startDnsLookup(Socket* sock, struct sockaddr_in addr) {
             write(fds[1], he->h_name, strlen(he->h_name));
         } else {
             // Didn't find a hostname, print the ip
-            write(fds[1], sock->getIp().c_str(), sock->getIp().length());
+            write(fds[1], sock->getIp().data(), sock->getIp().length());
         }
         exit(0);
     } else { // pid != 0
@@ -1428,7 +1428,7 @@ int Server::startDnsLookup(Socket* sock, struct sockaddr_in addr) {
 //                      addCache
 //********************************************************************
 
-void Server::addCache(const bstring& ip, const bstring& hostName, time_t t) {
+void Server::addCache(std::string_view ip, std::string_view hostName, time_t t) {
     if(t == -1)
         t = time(nullptr);
     cachedDns.emplace_back(ip, hostName, t);
@@ -1438,7 +1438,7 @@ void Server::addCache(const bstring& ip, const bstring& hostName, time_t t) {
 //                      addChild
 //********************************************************************
 
-void Server::addChild(int pid, ChildType pType, int pFd, const bstring& pExtra) {
+void Server::addChild(int pid, ChildType pType, int pFd, std::string_view pExtra) {
     std::clog << "Adding pid " << pid << " as child type " << (int)pType << ", watching " << pFd << "\n";
     children.emplace_back(pid, pType, pFd, pExtra);
 }
@@ -1626,8 +1626,8 @@ bool Server::saveRebootFile(bool resetShips) {
             curNode = xmlNewChild(rootNode, nullptr, BAD_CAST"Player", nullptr);
             xml::newStringChild(curNode, "Name", player->getCName());
             xml::newNumChild(curNode, "Fd", sock.getFd());
-            xml::newStringChild(curNode, "Ip", sock.getIp().c_str());
-            xml::newStringChild(curNode, "HostName", sock.getHostname().c_str());
+            xml::newStringChild(curNode, "Ip", bstring(sock.getIp()).c_str());
+            xml::newStringChild(curNode, "HostName", bstring(sock.getHostname()).c_str());
             xml::newStringChild(curNode, "ProxyName", player->getProxyName());
             xml::newStringChild(curNode, "ProxyId", player->getProxyId());
             sock.saveTelopts(curNode);
@@ -1802,7 +1802,7 @@ int Server::finishReboot() {
 //                      findPlayer
 //********************************************************************
 
-Player* Server::findPlayer(const bstring& name) {
+Player* Server::findPlayer(std::string_view name) {
     auto it = players.find(name);
 
     if(it != players.end())
@@ -1830,7 +1830,7 @@ void Server::saveAllPly() {
 //*********************************************************************
 // This will NOT free up the player, it will just remove them from the list
 
-bool Server::clearPlayer(const bstring& name) {
+bool Server::clearPlayer(std::string_view name) {
     players.erase(name);
     return(true);
 }
@@ -1884,7 +1884,8 @@ bool Server::checkDouble(Socket &sock) {
         return(false);
     if(sock.getPlayer()->flagIsSet(P_ON_PROXY) || sock.getPlayer()->isCt())
         return(false);
-    if(strstr(sock.getHostname().c_str(), "localhost"))
+
+    if(sock.getHostname().find("localhost") != std::string_view::npos)
         return(false);
 
     Player* player=nullptr;
@@ -2033,7 +2034,7 @@ int Server::getNumPlayers() {
 bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
     ASSERT(toRegister != nullptr);
 
-    if(toRegister->getId().equals("-1"))
+    if(toRegister->getId() =="-1")
         return(false);
 
     auto it =registeredIds.find(toRegister->getId());
@@ -2066,7 +2067,7 @@ bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
 bool Server::unRegisterMudObject(MudObject* toUnRegister) {
     ASSERT(toUnRegister != nullptr);
 
-    if(toUnRegister->getId().equals("-1"))
+    if(toUnRegister->getId() == "-1")
         return(false);
 
     auto it = registeredIds.find(toUnRegister->getId());
@@ -2108,7 +2109,7 @@ bool Server::unRegisterMudObject(MudObject* toUnRegister) {
     return(true);
 }
 
-Object* Server::lookupObjId(const bstring& toLookup) {
+Object* Server::lookupObjId(std::string_view toLookup) {
     if(toLookup[0] != 'O')
         return(nullptr);
 
@@ -2121,7 +2122,7 @@ Object* Server::lookupObjId(const bstring& toLookup) {
 
 }
 
-Creature* Server::lookupCrtId(const bstring& toLookup) {
+Creature* Server::lookupCrtId(std::string_view toLookup) {
     if(toLookup[0] != 'M' && toLookup[0] != 'P')
         return(nullptr);
 
@@ -2133,7 +2134,7 @@ Creature* Server::lookupCrtId(const bstring& toLookup) {
         return(((*it).second)->getAsCreature());
 
 }
-Player* Server::lookupPlyId(const bstring& toLookup) {
+Player* Server::lookupPlyId(std::string_view toLookup) {
     if(toLookup[0] != 'P')
         return(nullptr);
     auto it = registeredIds.find(toLookup);
@@ -2241,7 +2242,7 @@ void Server::saveIds() {
     idDirty = false;
 }
 
-void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, const bstring& logType) {
+void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, std::string_view logType) {
     bstring pName = player->getName();
     bstring pId = player->getId();
     // long amt

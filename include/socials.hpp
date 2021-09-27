@@ -28,7 +28,7 @@
 class SocialCommand: public Command {
 public:
     explicit SocialCommand(xmlNodePtr rootNode);
-    SocialCommand(const bstring& pCmdStr) {
+    SocialCommand(std::string_view pCmdStr) {
         name = pCmdStr;
     }
     bool saveToXml(xmlNodePtr rootNode) const;
@@ -38,15 +38,15 @@ public:
     [[nodiscard]] bool getRudeWakeTarget() const;
     [[nodiscard]] bool getWakeRoom() const;
 
-    [[nodiscard]] const bstring& getSelfNoTarget() const;
-    [[nodiscard]] const bstring& getRoomNoTarget() const;
+    [[nodiscard]] std::string_view getSelfNoTarget() const;
+    [[nodiscard]] std::string_view getRoomNoTarget() const;
 
-    [[nodiscard]] const bstring& getSelfOnTarget() const;
-    [[nodiscard]] const bstring& getRoomOnTarget() const;
-    [[nodiscard]] const bstring& getVictimOnTarget() const;
+    [[nodiscard]] std::string_view getSelfOnTarget() const;
+    [[nodiscard]] std::string_view getRoomOnTarget() const;
+    [[nodiscard]] std::string_view getVictimOnTarget() const;
 
-    [[nodiscard]] const bstring& getSelfOnSelf() const;
-    [[nodiscard]] const bstring& getRoomOnSelf() const;
+    [[nodiscard]] std::string_view getSelfOnSelf() const;
+    [[nodiscard]] std::string_view getRoomOnSelf() const;
 
 private:
     int (*fn)(Creature* player, cmd* cmnd){};

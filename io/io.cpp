@@ -228,7 +228,7 @@ void broadcastLogin(Player* player, BaseRoom* inRoom, int login) {
 
         postText << " just logged in.";
 
-        extra << "### (Lvl: " << (int)player->getLevel() << ") (Host: " << player->getSock()->getHostname().c_str() << ")";
+        extra << "### (Lvl: " << (int)player->getLevel() << ") (Host: " << player->getSock()->getHostname() << ")";
     } else {
         logoff = 1;
         preText << "just logged off.";
@@ -546,12 +546,12 @@ void Exit::escapeText() {
 // into Br&#252;gal (which the xml parser can save). Display will be affected
 // on old clients, so this should only be run when saving the string.
 
-bstring xsc(const bstring& txt) {
+bstring xsc(std::string_view txt) {
     std::ostringstream ret;
     unsigned char c=0;
-    int t = txt.getLength();
+    int t = txt.length();
     for(int i=0; i<t; i++) {
-        c = txt.getAt(i);
+        c = txt.at(i);
         // beyond 127 we get into the unsupported character range
         if(c > 127)
             ret << "&#" << c << ";";
@@ -566,8 +566,8 @@ bstring xsc(const bstring& txt) {
 //*********************************************************************
 // Reverse of xsc - attempts to turn &#252; into �. We do this when we load from file.
 
-bstring unxsc(const bstring& txt) {
-    return(unxsc(txt.c_str()));
+bstring unxsc(std::string_view txt) {
+    return(unxsc(txt));
 }
 bstring unxsc(const char* txt) {
     std::ostringstream ret;
@@ -677,10 +677,10 @@ char keyTxtConvert(unsigned char c) {
 //                      keyTxtConvert
 //*********************************************************************
 
-bstring keyTxtConvert(const bstring& txt) {
+bstring keyTxtConvert(std::string_view txt) {
     std::ostringstream ret;
-    for(int i=0; i<txt.getLength(); i++) {
-        ret << keyTxtConvert(txt.getAt(i));
+    for(int i=0; i<txt.length(); i++) {
+        ret << keyTxtConvert(txt.at(i));
     }
     return(ret.str());
 }

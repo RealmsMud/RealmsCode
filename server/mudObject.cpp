@@ -31,7 +31,7 @@ struct DelayedAction;
 
 
 
-void MudObject::setName(const bstring& newName) {
+void MudObject::setName(std::string_view newName) {
     removeFromSet();
     name = newName;
     addToSet();
@@ -288,22 +288,22 @@ bool MudObject::equals(MudObject* other) {
 }
 
 
-void MudObject::setId(const bstring& newId, bool handleParentSet) {
-    if(!id.equals("-1") && !newId.equals("-1")) {
+void MudObject::setId(std::string_view newId, bool handleParentSet) {
+    if(!id.equals("-1") && newId != "-1") {
         throw std::runtime_error(bstring("Error, re-setting ID:") + getName() + ":" + getId() + ":" + newId);
     }
 
-    if(newId.equals("-1"))
+    if(newId == "-1")
         handleParentSet = false;
 
-    if(!newId.equals("")) {
+    if(newId != ("")) {
         if(handleParentSet) removeFromSet();
         id = newId;
         if(handleParentSet) addToSet();
     }
 }
 
-const bstring& MudObject::getId() const {
+std::string_view MudObject::getId() const {
     return(id);
 }
 

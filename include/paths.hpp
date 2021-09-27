@@ -62,7 +62,7 @@ namespace Path {
     extern const char* HelpTemplate;
 
     bool checkDirExists(const char* filename);
-    bool checkDirExists(const bstring& area, char* (*fn)(const CatRef &cr));
+    bool checkDirExists(std::string_view area, char* (*fn)(const CatRef &cr));
 
     bool checkPaths();
 }

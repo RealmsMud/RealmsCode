@@ -87,7 +87,7 @@ void updateRecentActivity() {
 //                      latestPost
 //*********************************************************************
 
-void latestPost(const bstring& view, const bstring& subject, const bstring& username, const bstring& boardname, const bstring& post) {
+void latestPost(std::string_view view, std::string_view subject, std::string_view username, std::string_view boardname, std::string_view post) {
 
     if(view.empty() || boardname.empty() || username.empty() || post.empty())
         return;
@@ -114,9 +114,9 @@ void latestPost(const bstring& view, const bstring& subject, const bstring& user
             fullMode = false;
 
         if(fullMode)
-            player->printColor("%s", post.c_str());
+            player->bPrint(post);
         else
-            player->printColor("^C==>^x There is a new post titled ^W\"%s\"^x by ^W%s^x in the ^W%s^x board.\n", subject.c_str(), username.c_str(), boardname.c_str());
+            player->bPrint(fmt::format("^C==>^x There is a new post titled ^W\"{}\"^x by ^W{}^x in the ^W{}^x board.\n", subject, username, boardname));
     }
 }
 
@@ -1059,7 +1059,7 @@ int cmdForum(Player* player, cmd* cmnd) {
 //                      webUnassociate
 //*********************************************************************
 
-void webUnassociate(const bstring& user) {
+void webUnassociate(std::string_view user) {
     callWebserver("mud.php?type=forum&char=" + user + "&delete");
 }
 
@@ -1067,7 +1067,7 @@ void webUnassociate(const bstring& user) {
 //                      webCrash
 //*********************************************************************
 
-void webCrash(const bstring& msg) {
+void webCrash(std::string_view msg) {
     callWebserver("mud.php?type=crash&msg=" + msg);
 }
 
@@ -1153,8 +1153,6 @@ bool WebInterface::wiki(bstring command, bstring tempBuf) {
     if(!player) {
         outBuf += "That player is not logged on.";
     } else {
-        char    file[80];
-
         player->getSock()->viewFile(fmt::format("{}/{}.txt", Path::Wiki, tempBuf), true);
     }
     outBuf += EOT;

@@ -75,7 +75,7 @@ void PartialOwner::defaultFlags(PropType type) {
 }
 
 bstring PartialOwner::getName() const { return(name); }
-void PartialOwner::setName(const bstring& str) { name = str; }
+void PartialOwner::setName(std::string_view str) { name = str; }
 
 bool PartialOwner::flagIsSet(int flag) const {
     return(flags[flag/8] & 1<<(flag%8));
@@ -136,9 +136,9 @@ PropType Property::getType() const { return(type); }
 bstring Property::getTypeStr() const { return(getTypeStr(type)); }
 PropLog Property::getLogType() const { return(logType); }
 void Property::setGuild(int g) { guild = g; }
-void Property::setArea(const bstring& str) { area = str; }
-void Property::setOwner(const bstring& str) { owner = str; }
-void Property::setName(const bstring& str) { name = str; }
+void Property::setArea(std::string_view str) { area = str; }
+void Property::setOwner(std::string_view str) { owner = str; }
+void Property::setName(std::string_view str) { name = str; }
 
 void Property::setDateFounded() {
     long    t = time(nullptr);
@@ -146,7 +146,7 @@ void Property::setDateFounded() {
     dateFounded.trim();
 }
 
-void Property::setLocation(const bstring& str) { location = str; }
+void Property::setLocation(std::string_view str) { location = str; }
 void Property::setType(PropType t) { type = t; }
 void Property::setLogType(PropLog t) { logType = t; }
 
@@ -217,7 +217,7 @@ void Property::addRange(const CatRef& cr) {
     ranges.push_back(r);
 }
 
-void Property::addRange(const bstring& area, int low, int high) {
+void Property::addRange(std::string_view area, int low, int high) {
     // first of all, let us intelligently try to update existing ranges
     std::list<Range>::iterator rt;
     for(rt = ranges.begin() ; rt != ranges.end() ; rt++) {
@@ -237,7 +237,7 @@ void Property::addRange(const bstring& area, int low, int high) {
 //                      isOwner
 //*********************************************************************
 
-bool Property::isOwner(const bstring& str) const {
+bool Property::isOwner(std::string_view str) const {
     return(owner == str);
 }
 
@@ -362,17 +362,17 @@ bool Property::canEnter(const Player* player, const UniqueRoom* room, bool p) {
 //                      goodNameDesc
 //*********************************************************************
 
-bool Property::goodNameDesc(const Player* player, const bstring& str, const bstring& fail, const bstring& disallow) {
+bool Property::goodNameDesc(const Player* player, std::string_view str, std::string_view fail, std::string_view disallow) {
     if(str.empty()) {
-        player->print("%s\n", fail.c_str());
+        player->bPrint(fmt::format("{}\n", fail));
         return(false);
     }
-    if(str.getLength() > 79) {
-        player->print("Too long.\n");
+    if(str.length() > 79) {
+        player->bPrint("Too long.\n");
         return(false);
     }
     if(Pueblo::is(str)) {
-        player->print("That %s is not allowed.\n", disallow.c_str());
+        player->bPrint(fmt::format("That {} is not allowed.\n", disallow));
         return(false);
     }
     return(true);
@@ -382,12 +382,12 @@ bool Property::goodNameDesc(const Player* player, const bstring& str, const bstr
 //                      goodExit
 //*********************************************************************
 
-bool Property::goodExit(const Player* player, const BaseRoom* room, const char *type, const bstring& xname) {
-    if(xname.getLength() > 19) {
+bool Property::goodExit(const Player* player, const BaseRoom* room, const char *type, std::string_view xname) {
+    if(xname.length() > 19) {
         player->print("%s exit name is too long!\n", type);
         return(false);
     }
-    if(xname.getLength() < 3) {
+    if(xname.length() < 3) {
         player->print("%s exit name is too short!\n", type);
         return(false);
     }
@@ -397,13 +397,13 @@ bool Property::goodExit(const Player* player, const BaseRoom* room, const char *
         return(false);
     }
 
-    int len = xname.getLength();
+    int len = xname.length();
     for(int i=0; i<len; i++) {
-        if(isupper(xname.getAt(i))) {
+        if(isupper(xname.at(i))) {
             player->print("Do not use capital letters in exit names.\n");
             return(false);
         }
-        if(xname.getAt(i) == '^') {
+        if(xname.at(i) == '^') {
             player->print("Carets (^) are not allowed in exit names.\n");
             return(false);
         }
@@ -490,7 +490,7 @@ void Property::destroy() {
 // This function is called when a player is destroyed and everything
 // they own must be destroyed as well.
 
-void Config::destroyProperties(const bstring& pOwner) {
+void Config::destroyProperties(std::string_view pOwner) {
     std::list<Property*>::iterator it;
 
     // giving guildhalls a new owner occurs when the player leaves the guild
@@ -502,7 +502,7 @@ void Config::destroyProperties(const bstring& pOwner) {
             continue;
         } else if((*it)->isPartialOwner(pOwner)) {
             (*it)->unassignPartialOwner(pOwner);
-            (*it)->appendLog(pOwner, "%s has resigned as partial owner.", pOwner.c_str());
+            (*it)->appendLog(pOwner, fmt::format("{} has resigned as partial owner.", pOwner).c_str());
         }
         it++;
     }
@@ -534,7 +534,7 @@ void Config::destroyProperty(Property *p) {
 // guildhalls do not use the partialowner list: they rely on getting
 // their information from the guild
 
-PartialOwner* Property::getPartialOwner(const bstring& pOwner) {
+PartialOwner* Property::getPartialOwner(std::string_view pOwner) {
     std::list<PartialOwner>::iterator it;
     for(it = partialOwners.begin() ; it != partialOwners.end() ; it++) {
         if(pOwner == (*it).getName())
@@ -543,7 +543,7 @@ PartialOwner* Property::getPartialOwner(const bstring& pOwner) {
     return(nullptr);
 }
 
-bool Property::isPartialOwner(const bstring& pOwner) {
+bool Property::isPartialOwner(std::string_view pOwner) {
     // shops will also check guild membership, if they're assigned to a guild
     if(type == PROP_SHOP) {
         if(getPartialOwner(pOwner) != nullptr)
@@ -556,7 +556,7 @@ bool Property::isPartialOwner(const bstring& pOwner) {
     return(g && g->isMember(pOwner));
 }
 
-void Property::assignPartialOwner(const bstring& pOwner) {
+void Property::assignPartialOwner(std::string_view pOwner) {
     if(type == PROP_GUILDHALL)
         return;
     PartialOwner po;
@@ -565,7 +565,7 @@ void Property::assignPartialOwner(const bstring& pOwner) {
     partialOwners.push_back(po);
 }
 
-void Property::unassignPartialOwner(const bstring& pOwner) {
+void Property::unassignPartialOwner(std::string_view pOwner) {
     std::list<PartialOwner>::iterator it;
     for(it = partialOwners.begin() ; it != partialOwners.end() ; it++) {
         if(pOwner == (*it).getName()) {
@@ -1279,7 +1279,7 @@ int dmProperties(Player* player, cmd* cmnd) {
 //                      show
 //*********************************************************************
 
-bstring Property::show(bool isOwner, const bstring& player, int *i) {
+bstring Property::show(bool isOwner, std::string_view player, int *i) {
     std::ostringstream oStr;
     oStr.setf(std::ios::left, std::ios::adjustfield);
 
@@ -1544,7 +1544,7 @@ void Property::rename(Player *player) {
 //                      renamePropertyOwner
 //*********************************************************************
 
-void Config::renamePropertyOwner(const bstring& oldName, Player *player) {
+void Config::renamePropertyOwner(std::string_view oldName, Player *player) {
     std::list<Property*>::iterator it;
 
     for(it = properties.begin() ; it != properties.end() ; it++) {
@@ -1579,7 +1579,7 @@ bstring Property::getLog() const {
 //                      appendLog
 //*********************************************************************
 
-void Property::appendLog(const bstring& user, const char *fmt, ...) {
+void Property::appendLog(std::string_view user, const char *fmt, ...) {
     if(logType == LOG_NONE)
         return;
     if(logType == LOG_PARTIAL && isOwner(user))
@@ -1702,7 +1702,7 @@ void Property::linkRoom(BaseRoom* inside, BaseRoom* outside, const bstring& xnam
 //                      makeNextRoom
 //*********************************************************************
 
-UniqueRoom* Property::makeNextRoom(UniqueRoom* r1, PropType propType, const CatRef& cr, bool exits, const Player* player, const Guild* guild, BaseRoom* room, const bstring& xname, const char *go, const char *back, bool save) {
+UniqueRoom* Property::makeNextRoom(UniqueRoom* r1, PropType propType, const CatRef& cr, bool exits, const Player* player, const Guild* guild, BaseRoom* room, std::string_view xname, const char *go, const char *back, bool save) {
     auto *r2 = new UniqueRoom;
     r2->info = cr;
 
@@ -1777,7 +1777,7 @@ bool Property::requireInside(const Player* player, const UniqueRoom* room, Prope
 //                      descEdit
 //*********************************************************************
 
-bstring postText(const bstring& str);
+bstring postText(std::string_view str);
 
 void Property::descEdit(Socket* sock, const bstring& str) {
     bstring outstr = "";

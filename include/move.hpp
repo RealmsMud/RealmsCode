@@ -51,7 +51,7 @@ namespace Move {
     bool canEnter(Player* player, Exit* exit, bool leader);
     bool canMove(Player* player, cmd* cmnd);
     Exit *getExit(Creature* player, cmd* cmnd);
-    bstring getString(Creature* creature, bool ordinal=false, const bstring& exit = "");
+    bstring getString(Creature* creature, bool ordinal=false, std::string_view exit = "");
     void checkFollowed(Player* player, Exit* exit, BaseRoom* room, std::list<Creature*> *followers);
     void finish(Creature* creature, BaseRoom* room, bool self, std::list<Creature*> *followers);
     bool getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, bool justLooking=false, MapMarker* tMapmarker=0, bool recycle=true);
@@ -60,7 +60,7 @@ namespace Move {
     void createPortal(BaseRoom* room, BaseRoom* target, const Player* player, bool initial=true);
     bool usePortal(Creature* player, BaseRoom* room, Exit* exit, bool initial=true);
     bool deletePortal(BaseRoom* room, Exit* exit, const Creature* leader=0, std::list<Creature*> *followers=0, bool initial=true);
-    bool deletePortal(BaseRoom* room, const bstring& name, const Creature* leader=0, std::list<Creature*> *followers=0, bool initial=true);
+    bool deletePortal(BaseRoom* room, std::string_view name, const Creature* leader=0, std::list<Creature*> *followers=0, bool initial=true);
 }
 
 #endif

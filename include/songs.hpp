@@ -34,7 +34,7 @@ class MudObject;
 class Song: public MysticMethod {
 public:
     explicit Song(xmlNodePtr rootNode);
-    Song(const bstring& pCmdStr) {
+    Song(std::string_view pCmdStr) {
         name = pCmdStr;
     }
     ~Song() {};

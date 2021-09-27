@@ -81,17 +81,17 @@ bstring Exit::getEnter() const { return(enter); }
 BaseRoom* Exit::getRoom() const { return(parentRoom); }
 
 void Exit::setLevel(short lvl) { level = lvl; }
-void Exit::setOpen(const bstring& o) { open = o; }
+void Exit::setOpen(std::string_view o) { open = o; }
 void Exit::setTrap(short t) { trap = t; }
 void Exit::setKey(short k) { key = k; }
-void Exit::setKeyArea(const bstring& k) { keyArea = k; }
+void Exit::setKeyArea(std::string_view k) { keyArea = k; }
 void Exit::setToll(short t) { toll = t; }
-void Exit::setPassPhrase(const bstring& phrase) { passphrase = phrase; }
+void Exit::setPassPhrase(std::string_view phrase) { passphrase = phrase; }
 void Exit::setPassLanguage(short lang) { passlang = lang; }
-void Exit::setDescription(const bstring& d) { description = d; }
+void Exit::setDescription(std::string_view d) { description = d; }
 void Exit::setSize(Size s) { size = s; }
 void Exit::setDirection(Direction d) { direction = d; }
-void Exit::setEnter(const bstring& e) { enter = e; }
+void Exit::setEnter(std::string_view e) { enter = e; }
 void Exit::setRoom(BaseRoom* room) { parentRoom = room; }
 
 // Checks if the exit is flagged to relock after being used, and do as such
@@ -402,7 +402,7 @@ Exit* Exit::getReturnExit(const BaseRoom* parent, BaseRoom** targetRoom) const {
 //                      blockedByStr
 //*********************************************************************
 
-bstring Exit::blockedByStr(char color, const bstring& spell, const bstring& effectName, bool detectMagic, bool canSee) const {
+bstring Exit::blockedByStr(char color, std::string_view spell, std::string_view effectName, bool detectMagic, bool canSee) const {
     EffectInfo* effect = nullptr;
     std::ostringstream oStr;
 
@@ -442,7 +442,7 @@ bool Player::showExit(const Exit* exit, int magicShowHidden) const {
 // Add an effect to the given exit and the return exit (ie, an exit in
 // the room it points to that points back to this room)
 
-void Exit::addEffectReturnExit(const bstring& effect, long duration, int strength, const Creature* owner) {
+void Exit::addEffectReturnExit(std::string_view effect, long duration, int strength, const Creature* owner) {
     BaseRoom *targetRoom=nullptr;
 
     addEffect(effect, duration, strength, nullptr, true, owner);
@@ -458,7 +458,7 @@ void Exit::addEffectReturnExit(const bstring& effect, long duration, int strengt
 // Add an effect to the given exit and the return exit (ie, an exit in
 // the room it points to that points back to this room)
 
-void Exit::removeEffectReturnExit(const bstring& effect, BaseRoom* rParent) {
+void Exit::removeEffectReturnExit(std::string_view effect, BaseRoom* rParent) {
     BaseRoom *targetRoom=nullptr;
 
     removeEffect(effect, true, false);
@@ -472,7 +472,7 @@ void Exit::removeEffectReturnExit(const bstring& effect, BaseRoom* rParent) {
 //                      isWall
 //*********************************************************************
 
-bool Exit::isWall(const bstring& name) const {
+bool Exit::isWall(std::string_view name) const {
     EffectInfo* effect = getEffect(name);
     if(!effect)
         return(false);

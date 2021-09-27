@@ -57,9 +57,9 @@ typedef std::map<int, LevelInfo*> LevelInfoMap;
 class StringStatistic {
 public:
     StringStatistic();
-    void save(xmlNodePtr rootNode, const bstring& nodeName) const;
+    void save(xmlNodePtr rootNode, std::string_view nodeName) const;
     void load(xmlNodePtr curNode);
-    void update(unsigned long num, const bstring& with);
+    void update(unsigned long num, std::string_view with);
     void reset();
 
     unsigned long value{};
@@ -73,7 +73,7 @@ public:
     Statistics(const Statistics& cr);
     Statistics& operator=(const Statistics& cr);
     ~Statistics();
-    void save(xmlNodePtr rootNode, const bstring& nodeName) const;
+    void save(xmlNodePtr rootNode, std::string_view nodeName) const;
     void load(xmlNodePtr curNode);
     void display(const Player* viewer, bool death=false);
     void displayLevelHistory(const Player* viewer);
@@ -178,9 +178,9 @@ public:
     // most
     void group(unsigned long num);
     void monster(Monster* monster);
-    void attackDamage(unsigned long num, const bstring& with);
-    void magicDamage(unsigned long num, const bstring& with);
-    void experience(unsigned long num, const bstring& with);
+    void attackDamage(unsigned long num, std::string_view with);
+    void magicDamage(unsigned long num, std::string_view with);
+    void experience(unsigned long num, std::string_view with);
 
     unsigned long pkRank() const;
     unsigned long getPkin() const;

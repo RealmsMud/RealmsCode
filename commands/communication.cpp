@@ -207,7 +207,7 @@ bstring confusionText(Creature* speaker, bstring text) {
 // skip = 2 when we have 2 commands to skip
 //    Ex: tell bob hello there
 
-bstring getFullstrTextTrun(const bstring& str, int skip, char toSkip, bool colorEscape) {
+bstring getFullstrTextTrun(std::string_view str, int skip, char toSkip, bool colorEscape) {
     return(getFullstrText(str, skip, toSkip, colorEscape, true));
 }
 
@@ -520,11 +520,6 @@ int communicateWith(Player* player, cmd* cmnd) {
     broadcast(watchingEaves, "^E--- %s %s to %s, \"%s%s\".", player->getCName(),
         com_text[chan->type], target->getCName(), ooc_str, text.c_str());
 
-    player->bug("%s %s, \"%s%s\" to %s.\n", player->getCName(),
-        com_text[chan->type], ooc_str, text.c_str(), target->getCName());
-    target->bug("%s %s, \"%s%s\" to %s.\n", player->getCName(),
-        com_text[chan->type], ooc_str, text.c_str(), target->getCName());
-
     if(chan->type != COM_SIGN)
         target->setLastCommunicate(player->getName());
     return(0);
@@ -536,7 +531,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 //*********************************************************************
 // function that does the actual printing of message for below
 
-void commTarget(Creature* player, Player* target, int type, bool ooc, int lang, const bstring& text, bstring speak, char *ooc_str, bool anon) {
+void commTarget(Creature* player, Player* target, int type, bool ooc, int lang, std::string_view text, bstring speak, char *ooc_str, bool anon) {
     std::ostringstream out;
 
     if(!target || target->flagIsSet(P_UNCONSCIOUS))
@@ -549,8 +544,6 @@ void commTarget(Creature* player, Player* target, int type, bool ooc, int lang, 
 
     if(type == COM_EMOTE) {
         out << player->getCrtStr(target, CAP) << " " << text << "\n";
-        target->bug("%s emoted: %s.\n", player->getCName(), text.c_str());
-
     } else if( ooc ||
         target->languageIsKnown(LUNKNOWN+lang) ||
         target->isStaff() ||
@@ -577,15 +570,11 @@ void commTarget(Creature* player, Player* target, int type, bool ooc, int lang, 
         out << ooc_str << text;
         out << "\".\n";
 
-        target->bug("%s %s in %s, \"%s%s.\"\n", player->getCName(), com_text[type],
-            get_language_adj(lang), ooc_str, text.c_str());
-
     } else {
         if(anon) out << "Someone";
         else     out << player->getCrtStr(target, CAP);
 
         out << " " << speak << " something in " << get_language_adj(lang) << ".\n";
-        target->bug("%s %s something in %s.\n", player->getCName(), speak.c_str(), get_language_adj(lang));
     }
     *target << ColorOn << out.str() << ColorOff;
 //  target->printColor("%s", out.str().c_str());
@@ -697,7 +686,6 @@ int communicate(Creature* creature, cmd* cmnd) {
         if(chan->type == COM_EMOTE) {
 
             creature->printColor("You emote: %s.\n", text.c_str());
-            player->bug("%s emoted: %s.\n", creature->getCName(), text.c_str());
 
         } else {
             char intro[2046];
@@ -708,8 +696,6 @@ int communicate(Creature* creature, cmd* cmnd) {
 
             creature->printColor("%s%s \"%s%s\".\n^x", ((!chan->ooc && creature->flagIsSet(P_LANGUAGE_COLORS)) ? get_lang_color(lang) : ""),
                     intro, ooc_str, text.c_str());
-            player->bug("%s %s in %s, \"%s%s.\"\n", creature->getCName(), com_text[chan->type],
-                get_language_adj(lang), ooc_str, text.c_str());
 
         }
 
@@ -838,7 +824,7 @@ int communicate(Creature* creature, cmd* cmnd) {
     return(0);
 }
 
-bstring mxpTag(const bstring& str) {
+bstring mxpTag(std::string_view str) {
     return( bstring(MXP_BEG) + str + bstring(MXP_END));
 }
 //*********************************************************************
@@ -1041,7 +1027,7 @@ channelPtr getChannelByDiscordChannel(const unsigned long discordChannelID) {
 }
 
 void sendGlobalComm(const Player *player, const bstring &text, const bstring &extra, unsigned int check,
-                    const channelInfo *chan, const bstring &etxt, const bstring& oocName, const bstring& icName) {
+                    const channelInfo *chan, const bstring &etxt, std::string_view oocName, std::string_view icName) {
     // more complicated checks go here
     Socket* sock=nullptr;
     for(const auto& [pId, ply] : gServer->players) {
@@ -1400,8 +1386,7 @@ void printForeignTongueMsg(const BaseRoom *inRoom, Creature *talker) {
 void Monster::sayTo(const Player* player, const bstring& message) {
     short language = player->current_language;
 
-    broadcast_rom_LangWc(language, player->getSock(), player->currentLocation,
-        "%M says to %N, \"%s\"^x", this, player, message.c_str());
+    broadcast_rom_LangWc(language, player->getSock(), player->currentLocation, "%M says to %N, \"%s\"^x", this, player, message.c_str());
     printForeignTongueMsg(player->getConstRoomParent(), this);
 
     player->printColor("%s%M says to you, \"%s\"\n^x",get_lang_color(language), this, message.c_str());
@@ -1454,8 +1439,8 @@ bool canCommunicate(Player* player) {
 //*********************************************************************
 
 int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun, bstring (Player::*show)() const,
-        bool (Player::*is)(const bstring& name) const, void (Player::*del)(const bstring& name),
-        void (Player::*add)(const bstring& name), void (Player::*clear)()) {
+        bool (Player::*is)(std::string_view name) const, void (Player::*del)(std::string_view name),
+        void (Player::*add)(std::string_view name), void (Player::*clear)()) {
     Player  *target=nullptr;
     bool online=true;
 

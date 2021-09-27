@@ -842,7 +842,10 @@ void MysticMethod::parseName() {
 
 // bestMethod is a reference to a pointer
 template<class Type, class Type2>
-void examineList(std::set<Type, namableCmp>& mySet, const bstring& str, int& match, bool& found, const Type2*& bestMethod) {
+void examineList(std::set<Type, namableCmp>& mySet, std::string_view str, int& match, bool& found, const Type2*& bestMethod) {
+    if(str.length() == 0)
+        return;
+
     const Type2* curMethod = nullptr;
 
     // Narrow down the range of the map we'll be looking at
@@ -941,7 +944,7 @@ void getCommand(Creature *user, cmd* cmnd) {
 //                      getSpell
 //*********************************************************************
 
-const Spell *Config::getSpell(const bstring& id, int& ret) {
+const Spell *Config::getSpell(std::string_view id, int& ret) {
     const Spell *toReturn = nullptr;
     int match = 0;
     bool found = false;
@@ -963,7 +966,7 @@ const Spell *Config::getSpell(const bstring& id, int& ret) {
 //                      getSong
 //*********************************************************************
 
-const Song *Config::getSong(const bstring& pName) {
+const Song *Config::getSong(std::string_view pName) {
     const Song *toReturn = nullptr;
     int match = 0;
     bool found = false;
@@ -973,7 +976,7 @@ const Song *Config::getSong(const bstring& pName) {
     return(toReturn);
 }
 
-const Song *Config::getSong(const bstring& name, int& ret){
+const Song *Config::getSong(std::string_view name, int& ret){
     const Song *toReturn = nullptr;
     int match = 0;
     bool found = false;
@@ -1015,7 +1018,7 @@ static std::set<bstring> commandsAllowedWhilePetrified = {
     {"who"},
     {"whois"},
 };
-int allowedWhilePetrified(const bstring& str) {
+int allowedWhilePetrified(std::string_view str) {
     return commandsAllowedWhilePetrified.find(str) != commandsAllowedWhilePetrified.end();
 }
 
@@ -1091,6 +1094,6 @@ int CrtCommand::execute(Creature* player, cmd* cmnd) const {
     return((fn)(player, cmnd));
 }
 
-const bstring& MysticMethod::getScript() const {
+std::string_view MysticMethod::getScript() const {
     return(script);
 }

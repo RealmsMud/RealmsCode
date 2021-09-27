@@ -34,7 +34,7 @@ Anchor::Anchor() {
     reset();
 }
 
-Anchor::Anchor(const bstring& a, const Player* player) {
+Anchor::Anchor(std::string_view a, const Player* player) {
     reset();
     alias = a;
     bind(player);

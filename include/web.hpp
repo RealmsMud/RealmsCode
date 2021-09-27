@@ -24,8 +24,8 @@
 bstring webwho();
 void updateRecentActivity();
 void callWebserver(bstring url, bool questionMark=true, bool silent=false);
-void webUnassociate(const bstring& user);
-void webCrash(const bstring& msg);
+void webUnassociate(std::string_view user);
+void webCrash(std::string_view msg);
 
 
 // Ascii characters we'll need

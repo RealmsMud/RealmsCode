@@ -276,7 +276,7 @@ void Creature::die(Creature *killer, bool &freeTarget) {
     if(pVictim && pVictim->getLevel() >= 7 && !duel)
         pVictim->save(true, LoadType::LS_BACKUP);
 
-    Hooks::run(killer, "preKill", this, "preDeath", duel);
+    Hooks::run(killer, "preKill", this, "preDeath", bstring(duel));
 
     if(mKiller && mKiller->isPet() && pVictim) {
         pVictim->dieToPet(mKiller);
@@ -1203,8 +1203,8 @@ void Player::resetPlayer(Creature *killer) {
         courageous();
     }
 
-    killer->hooks.execute("postKill", this, duel);
-    hooks.execute("postDeath", killer, duel, same);
+    killer->hooks.execute("postKill", this, bstring(duel));
+    hooks.execute("postDeath", killer, bstring(duel), bstring(same));
 }
 
 //********************************************************************

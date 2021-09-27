@@ -140,7 +140,7 @@ public:
         bstring ip;
         bstring hostName;
         time_t time;
-        dnsCache(const bstring& pIp, const bstring& pHostName, time_t pTime) {
+        dnsCache(std::string_view pIp, std::string_view pHostName, time_t pTime) {
             ip = pIp;
             hostName = pHostName;
             time = pTime;
@@ -256,7 +256,7 @@ private:
     void updateAction(long t);
 
     // DNS
-    void addCache(const bstring& ip, const bstring& hostName, time_t t = -1);
+    void addCache(std::string_view ip, std::string_view hostName, time_t t = -1);
     void saveDnsCache();
     void loadDnsCache();
     void pruneDns();
@@ -291,7 +291,7 @@ public:
     void clearAsEnemy(Player* player);
     bstring showActiveList();
 
-    static void logGold(GoldLog dir, Player* player, Money amt, MudObject* target, const bstring& logType);
+    static void logGold(GoldLog dir, Player* player, Money amt, MudObject* target, std::string_view logType);
 
     bool registerGroup(Group* toRegister);
     bool unRegisterGroup(Group* toUnRegister);
@@ -300,9 +300,9 @@ public:
     bool registerMudObject(MudObject* toRegister, bool reassignId = false);
     bool unRegisterMudObject(MudObject* toUnRegister);
     bstring getRegisteredList();
-    Creature* lookupCrtId(const bstring& toLookup);
-    Object* lookupObjId(const bstring& toLookup);
-    Player* lookupPlyId(const bstring& toLookup);
+    Creature* lookupCrtId(std::string_view toLookup);
+    Object* lookupObjId(std::string_view toLookup);
+    Player* lookupPlyId(std::string_view toLookup);
 
     void loadIds();
     void saveIds();
@@ -317,7 +317,7 @@ public:
 
     bool removeDelayedActions(MudObject* target, bool interruptOnly=false);
     void addDelayedAction(void (*callback)(DelayedActionFn), MudObject* target, cmd* cmnd, DelayedActionType type, long howLong, bool canInterrupt=true);
-    void addDelayedScript(void (*callback)(DelayedActionFn), MudObject* target, const bstring& script, long howLong, bool canInterrupt=true);
+    void addDelayedScript(void (*callback)(DelayedActionFn), MudObject* target, std::string_view script, long howLong, bool canInterrupt=true);
     bool hasAction(const MudObject* target, DelayedActionType type);
     bstring delayedActionStrings(const MudObject* target);
 
@@ -354,7 +354,7 @@ public:
     void showMemory(Socket* sock, bool extended=false);
 
     // Child processes
-    void addChild(int pid, ChildType pType, int pFd = -1, const bstring& pExtra = "");
+    void addChild(int pid, ChildType pType, int pFd = -1, std::string_view pExtra = "");
 
     // Python
     bool runPython(const bstring& pyScript, boost::python::object& dictionary);
@@ -390,8 +390,8 @@ public:
     // Players
     bool addPlayer(Player* player);
     bool clearPlayer(Player* player);
-    Player* findPlayer(const bstring& name);
-    bool clearPlayer(const bstring& name);
+    Player* findPlayer(std::string_view name);
+    bool clearPlayer(std::string_view name);
     void saveAllPly();
     int getNumPlayers();
 

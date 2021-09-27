@@ -48,20 +48,20 @@
 #include "xml.hpp"                  // for NODE_NAME, newStr...
 
 
-bool loadPlayer(const bstring& name, Player** player, enum LoadType loadType) {
+bool loadPlayer(std::string_view name, Player** player, enum LoadType loadType) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
-    char        filename[256];
+    bstring     filename;
     bstring     pass = "", loadName = "";
 
     if(loadType == LoadType::LS_BACKUP)
-        sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, name.c_str());
+        filename = fmt::format("{}/{}.bak.xml", Path::PlayerBackup, name);
     else if(loadType == LoadType::LS_CONVERT)
-        sprintf(filename, "%s/convert/%s.xml", Path::Player, name.c_str());
+        filename = fmt::format("{}/convert/{}.xml", Path::Player, name);
     else // LoadType::LS_NORMAL
-        sprintf(filename, "%s/%s.xml", Path::Player, name.c_str());
+        filename = fmt::format("{}/{}.xml", Path::Player, name);
 
-    if((xmlDoc = xml::loadFile(filename, "Player")) == nullptr)
+    if((xmlDoc = xml::loadFile(filename.c_str(), "Player")) == nullptr)
         return(false);
 
     rootNode = xmlDocGetRootElement(xmlDoc);

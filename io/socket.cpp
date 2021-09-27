@@ -406,7 +406,7 @@ void Socket::resolveIp(const sockaddr_in &addr, bstring& ip) {
     ip = tmp.str();
 }
 
-bstring Socket::parseForOutput(bstring& outBuf) {
+bstring Socket::parseForOutput(std::string_view outBuf) {
     int i = 0;
     auto n = outBuf.size();
     std::ostringstream oStr;
@@ -446,7 +446,7 @@ bstring Socket::parseForOutput(bstring& outBuf) {
 
 }
 
-bool Socket::needsPrompt(bstring& inStr) {
+bool Socket::needsPrompt(std::string_view inStr) {
     int i = 0;
     auto n = inStr.size();
 
@@ -481,7 +481,7 @@ bool Socket::needsPrompt(bstring& inStr) {
     return false;
 }
 
-bstring Socket::stripTelnet(bstring& inStr) {
+bstring Socket::stripTelnet(std::string_view inStr) {
     int i = 0;
     auto n = inStr.size();
     std::ostringstream oStr;
@@ -547,25 +547,25 @@ void Socket::startTelnetNeg() {
     // other protocols if the client responds with IAC WILL TTYPE or IAC WONT
     // TTYPE.  Thanks go to Donky on MudBytes for the suggestion.
 
-    write(telnet::do_ttype, false);
+    write(reinterpret_cast<const char *>(telnet::do_ttype), false);
 
 }
 void Socket::continueTelnetNeg(bool queryTType) {
     if (queryTType)
-        write(telnet::query_ttype, false);
+        write(reinterpret_cast<const char *>(telnet::query_ttype), false);
 
     // Not a dumb client if we've gotten a response
     opts.dumb = false;
-    write(telnet::will_comp2, false);
-    write(telnet::will_comp1, false);
+    write(reinterpret_cast<const char *>(telnet::will_comp2), false);
+    write(reinterpret_cast<const char *>(telnet::will_comp1), false);
 
-    write(telnet::do_naws, false);
-    write(telnet::will_msdp, false);
-    write(telnet::will_mssp, false);
-    write(telnet::will_msp, false);
-//  write(telnet::do_charset, false);  // Not implemented yet
-    write(telnet::will_mxp, false);
-    write(telnet::will_eor, false);
+    write(reinterpret_cast<const char *>(telnet::do_naws), false);
+    write(reinterpret_cast<const char *>(telnet::will_msdp), false);
+    write(reinterpret_cast<const char *>(telnet::will_mssp), false);
+    write(reinterpret_cast<const char *>(telnet::will_msp), false);
+//  write(reinterpret_cast<const char *>(telnet::do_charset), false);  // Not implemented yet
+    write(reinterpret_cast<const char *>(telnet::will_mxp), false);
+    write(reinterpret_cast<const char *>(telnet::will_eor), false);
 }
 
 //********************************************************************
@@ -837,7 +837,7 @@ int Socket::processInput() {
                         }
 
                         // Request another!
-                        write(telnet::query_ttype, false);
+                        write(reinterpret_cast<const char *>(telnet::query_ttype), false);
                     }
                     if (term.firstType.empty()) {
                         term.firstType = term.type;
@@ -940,7 +940,7 @@ bool Socket::negotiate(unsigned char ch) {
         case TELOPT_CHARSET:
             if (tState == NEG_WILL) {
                 opts.charset = true;
-                write(telnet::charset_utf8, false);
+                write(reinterpret_cast<const char *>(telnet::charset_utf8), false);
                 std::clog << "Charset On" << std::endl;
             } else if (tState == NEG_WONT) {
                 opts.charset = false;
@@ -964,7 +964,7 @@ bool Socket::negotiate(unsigned char ch) {
                     // If they respond to something here they know how to negotiate,
                     // so continue and ask for the rest of the options, except term type
                     // which they have just indicated they won't do
-                    write(telnet::wont_ttype);
+                    write(reinterpret_cast<const char *>(telnet::wont_ttype));
                     continueTelnetNeg(false);
 
                 }
@@ -973,7 +973,7 @@ bool Socket::negotiate(unsigned char ch) {
             break;
         case TELOPT_MXP:
             if (tState == NEG_WILL || tState == NEG_DO) {
-                write(telnet::start_mxp);
+                write(reinterpret_cast<const char *>(telnet::start_mxp));
                 // Start off in MXP LOCKED CLOSED
                 //TODO: send elements we're using for mxp
                 opts.mxp = true;
@@ -1204,7 +1204,7 @@ void Socket::setState(int pState, char pFnParam) {
     fnparam = (char) pFnParam;
 }
 
-bstring getMxpTag( const bstring& tag, bstring text ) {
+bstring getMxpTag( std::string_view tag, bstring text ) {
     bstring::size_type n = text.find(tag);
     if(n == bstring::npos)
         return("");
@@ -1313,7 +1313,7 @@ bool Socket::parseMsdp() {
 //                      bprint
 //********************************************************************
 // Append a string to the socket's paged output queue
-void Socket::printPaged(const bstring& toPrint) {
+void Socket::printPaged(std::string_view toPrint) {
     boost::split(pagerOutput, toPrint, boost::is_any_of("\n"));
 }
 
@@ -1322,43 +1322,18 @@ void Socket::printPaged(const bstring& toPrint) {
 //********************************************************************
 // Append a string to the socket's output queue
 
-void Socket::bprint(const bstring& toPrint) {
+void Socket::bprint(std::string_view toPrint) {
     if (!toPrint.empty())
-        output += toPrint;
+        output.append(toPrint);
 }
 
-//********************************************************************
-//                      bprintColor
-//********************************************************************
-// Append a string to the socket's output queue...in color!
-
-void Socket::bprintColor(const bstring& toPrint) {
-    if(!toPrint.empty()) {
-        // Append the string to the output buffer, we'll parse color there
-        output += toPrint;
-    }
-}
-
-//********************************************************************
-//                      bprintColor
-//********************************************************************
-// Append a string to the socket's output queue...without color!
-
-void Socket::bprintNoColor(bstring toPrint) {
-    if(!toPrint.empty()) {
-        // Double any color codes to prevent them from being parsed later
-        toPrint.Replace("^", "^^");
-        output += toPrint;
-    }
-
-}
 //********************************************************************
 //                      println
 //********************************************************************
 // Append a string to the socket's output queue with a \n
 
-void Socket::println(const bstring& toPrint) {
-    bprint(toPrint + "\n");
+void Socket::println(std::string_view toPrint) {
+    bprint(fmt::format("{}\n", toPrint));
 }
 
 //********************************************************************
@@ -1409,7 +1384,7 @@ void Socket::flush() {
 //********************************************************************
 // Write a string of data to the socket's file descriptor
 
-ssize_t Socket::write(bstring toWrite, bool pSpy, bool process) {
+ssize_t Socket::write(std::string_view toWrite, bool pSpy, bool process) {
     ssize_t written = 0;
     ssize_t n = 0;
     size_t total = 0;
@@ -1529,9 +1504,9 @@ int Socket::startCompress(bool silent) {
 
     if (!silent) {
         if (opts.mccp == 2)
-            write(telnet::start_mccp2, false);
+            write(reinterpret_cast<const char *>(telnet::start_mccp2), false);
         else
-            write(telnet::start_mccp, false);
+            write(reinterpret_cast<const char *>(telnet::start_mccp), false);
     }
     // We're compressing now
     opts.compressing = true;
@@ -1627,7 +1602,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
             int mccp = 0;
             xml::copyToNum(mccp, curNode);
             if (mccp) {
-                write(telnet::will_comp2, false);
+                write(reinterpret_cast<const char *>(telnet::will_comp2), false);
             }
         }
         else if (NODE_NAME(curNode, "MXP")) xml::copyToBool(opts.mxp, curNode);
@@ -1646,7 +1621,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
 
     if (opts.msdp) {
         // Re-negotiate MSDP after a reboot
-        write(telnet::will_msdp, false);
+        write(reinterpret_cast<const char *>(telnet::will_msdp), false);
     }
 
     return (true);
@@ -1733,10 +1708,10 @@ bool Socket::nawsEnabled() const {
 long Socket::getIdle() const {
     return (time(nullptr) - ltime);
 }
-const bstring& Socket::getIp() const {
+std::string_view Socket::getIp() const {
     return (host.ip);
 }
-const bstring& Socket::getHostname() const {
+std::string_view Socket::getHostname() const {
     return (host.hostName);
 }
 bstring Socket::getTermType() const {
@@ -1762,10 +1737,10 @@ void Socket::setParam(int newParam) {
     fnparam = newParam;
 }
 
-void Socket::setHostname(const bstring& pName) {
+void Socket::setHostname(std::string_view pName) {
     host.hostName = pName;
 }
-void Socket::setIp(const bstring& pIp) {
+void Socket::setIp(std::string_view pIp) {
     host.ip = pIp;
 }
 void Socket::setPlayer(Player* ply) {
@@ -1834,7 +1809,7 @@ void Socket::askFor(const char *str) {
 unsigned const char mssp_val[] = { MSSP_VAL, '\0' };
 unsigned const char mssp_var[] = { MSSP_VAR, '\0' };
 
-void addMSSPVar(std::ostringstream& msspStr, const bstring& var) {
+void addMSSPVar(std::ostringstream& msspStr, std::string_view var) {
     msspStr << mssp_var << var;
 }
 

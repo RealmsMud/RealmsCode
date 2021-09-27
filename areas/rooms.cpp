@@ -58,7 +58,7 @@ BaseRoom::BaseRoom() {
 
 
 bstring BaseRoom::getVersion() const { return(version); }
-void BaseRoom::setVersion(const bstring& v) { version = v; }
+void BaseRoom::setVersion(std::string_view v) { version = v; }
 
 
 bstring BaseRoom::fullName() const {
@@ -123,10 +123,10 @@ long UniqueRoom::getBeenHere() const { return(beenhere); }
 int UniqueRoom::getRoomExperience() const { return(roomExp); }
 Size UniqueRoom::getSize() const { return(size); }
 
-void UniqueRoom::setShortDescription(const bstring& desc) { short_desc = desc; }
-void UniqueRoom::setLongDescription(const bstring& desc) { long_desc = desc; }
-void UniqueRoom::appendShortDescription(const bstring& desc) { short_desc += desc; }
-void UniqueRoom::appendLongDescription(const bstring& desc) { long_desc += desc; }
+void UniqueRoom::setShortDescription(std::string_view desc) { short_desc = desc; }
+void UniqueRoom::setLongDescription(std::string_view desc) { long_desc = desc; }
+void UniqueRoom::appendShortDescription(std::string_view desc) { short_desc += desc; }
+void UniqueRoom::appendLongDescription(std::string_view desc) { long_desc += desc; }
 void UniqueRoom::setLowLevel(short lvl) { lowLevel = MAX<short>(0, lvl); }
 void UniqueRoom::setHighLevel(short lvl) { highLevel = MAX<short>(0, lvl); }
 void UniqueRoom::setMaxMobs(short m) { maxmobs = MAX<short>(0, m); }
@@ -134,7 +134,7 @@ void UniqueRoom::setTrap(short t) { trap = t; }
 void UniqueRoom::setTrapExit(const CatRef& t) { trapexit = t; }
 void UniqueRoom::setTrapWeight(short weight) { trapweight = MAX<short>(0, weight); }
 void UniqueRoom::setTrapStrength(short strength) { trapstrength = MAX<short>(0, strength); }
-void UniqueRoom::setFaction(const bstring& f) { faction = f; }
+void UniqueRoom::setFaction(std::string_view f) { faction = f; }
 void UniqueRoom::incBeenHere() { beenhere++; }
 void UniqueRoom::setRoomExperience(int exp) { roomExp = MAX(0, exp); }
 void UniqueRoom::setSize(Size s) { size = s; }
@@ -263,7 +263,7 @@ void AreaRoom::setMapMarker(const MapMarker* m) {
 //                      updateExits
 //*********************************************************************
 
-bool AreaRoom::updateExit(const bstring& dir) {
+bool AreaRoom::updateExit(std::string_view dir) {
     if(dir == "north") {
         mapmarker.add(0, 1, 0);
         link_rom(this, &mapmarker, dir);
@@ -424,10 +424,9 @@ bool BaseRoom::delExit(Exit *exit) {
     }
     return(false);
 }
-bool BaseRoom::delExit( const bstring& dir) {
+bool BaseRoom::delExit( std::string_view dir) {
     for(Exit* ext : exits) {
-        if(ext->getName() == dir.c_str()) {
-
+        if(ext->getName() == dir) {
             exits.remove(ext);
             delete ext;
             return(true);
@@ -1009,7 +1008,7 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const CatRef& cr) {
     return(getSpecialArea(toCheck, nullptr, cr.area, cr.id));
 }
 
-Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, const bstring& area, short id) {
+Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, std::string_view area, short id) {
     Location l;
 
     if(creature) {

@@ -215,6 +215,8 @@ public:
         assignStr(*this, str);
     }
 
+    bstring(std::string_view str ): my_base(str) { }
+
     bstring(const char* str) {
         *this = str;
     }

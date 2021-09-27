@@ -29,7 +29,7 @@
 //*********************************************************************
 // Loads a single stat into the given stat pointer
 
-bool Stat::load(xmlNodePtr curNode, const bstring& statName) {
+bool Stat::load(xmlNodePtr curNode, std::string_view statName) {
     xmlNodePtr childNode = curNode->children;
     name = statName;
     while(childNode) {

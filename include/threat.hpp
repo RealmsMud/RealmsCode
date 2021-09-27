@@ -31,7 +31,7 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const ThreatEntry* threat);
 
 public:
-    ThreatEntry(const bstring& pUid);
+    ThreatEntry(std::string_view pUid);
 
     long getThreatValue();
     long getContributionValue();
@@ -46,7 +46,7 @@ public:
     long threatValue;       // How mad they are at this target
     long contributionValue; // How much this target has contributed to killing this monster
     bool operator< (const ThreatEntry& t) const;
-    [[nodiscard]] const bstring& getUid() const;
+    [[nodiscard]] std::string_view getUid() const;
 };
 
 struct ThreatPtrLess : public std::binary_function<const ThreatEntry*, const ThreatEntry*, bool> {
@@ -70,7 +70,7 @@ public:
     long getTotalThreat();
     long getThreat(Creature* target);
     long adjustThreat(Creature* target, long modAmt, double threatFactor = 1.0);
-    long removeThreat(const bstring& pUid);
+    long removeThreat(std::string_view pUid);
     long removeThreat(Creature* target);
     void setParent(Creature* pParent);
     bool hasEnemy() const;

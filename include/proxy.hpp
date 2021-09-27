@@ -38,7 +38,7 @@ public:
     bool hasProxyAccess(Player* proxy, Player* proxied);
     void grantProxyAccess(Player* proxy, Player* proxied);
     bool removeProxyAccess(Player* proxy, Player* proxied);
-    bool removeProxyAccess(const bstring& id, Player* proxied);
+    bool removeProxyAccess(std::string_view id, Player* proxied);
 
 protected:
     void loadProxies();

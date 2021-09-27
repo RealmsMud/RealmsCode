@@ -513,7 +513,7 @@ int cmdSuicide(Player* player, cmd* cmnd) {
     //else
     //  broadcast(isWatcher, "^C### %s committed suicide! We'll miss %s dearly.", player->getCName(), player->himHer());
 
-    logn("log.suicide", "%s(%s)-%d (%s)\n", player->getCName(), player->getPassword().c_str(), player->getLevel(), player->getSock()->getHostname().c_str());
+    logn("log.suicide", fmt::format("{}({})-{} ({})\n", player->getCName(), player->getPassword().c_str(), player->getLevel(), player->getSock()->getHostname()).c_str());
 
     deletePlayer(player);
     updateRecentActivity();

@@ -207,7 +207,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const bstri
         pos = 2;
 
         if(player->isEffected(effect)) {
-            player->print("You are already magically %sd!\n", effect.c_str());
+            player->bPrint(fmt::format("You are already magically {}d!\n", effect));
             return(0);
         }
 

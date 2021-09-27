@@ -73,7 +73,7 @@ void Hooks::setParent(MudObject* target) {
 //                      add
 //*********************************************************************
 
-void Hooks::add(const bstring& event, const bstring& code) {
+void Hooks::add(std::string_view event, std::string_view code) {
     hooks.insert(std::pair<bstring,bstring>(event, code));
 }
 
@@ -137,7 +137,7 @@ bstring hookMudObjName(const MudObject* target) {
 //                      execute
 //*********************************************************************
 
-bool Hooks::execute(const bstring& event, MudObject* target, const bstring& param1, const bstring& param2, const bstring& param3) const {
+bool Hooks::execute(std::string_view event, MudObject* target, std::string_view param1, std::string_view param2, std::string_view param3) const {
     bool ran = false;
 
     bstring params = "";
@@ -148,9 +148,8 @@ bool Hooks::execute(const bstring& event, MudObject* target, const bstring& para
     if(!param3.empty())
         params += "   param3: " + param3;
 
-    broadcast(seeAllHooks, "^ochecking hook %s: %s^o on %s^o%s", event.c_str(),
-        hookMudObjName(parent).c_str(), hookMudObjName(target).c_str(),
-        params.c_str());
+     broadcast(seeAllHooks, fmt::format("^ochecking hook {}: {}^o on {}^o{}", event,
+        hookMudObjName(parent), hookMudObjName(target), params).c_str());
 
     //std::unordered_map<bstring, bstring>::const_iterator it = hooks.find(event);
     auto it = hooks.find(event);
@@ -159,15 +158,14 @@ bool Hooks::execute(const bstring& event, MudObject* target, const bstring& para
     if(it != hooks.end()) {
         ran = true;
 
-        broadcast(seeHooks, "^orunning hook %s: %s^o on %s^o%s: ^x%s", event.c_str(),
-            hookMudObjName(parent).c_str(), hookMudObjName(target).c_str(),
-            params.c_str(), it->second.c_str());
+        broadcast(seeHooks, fmt::format("^orunning hook {}: {}^o on {}^o{}: ^x{}", event,
+            hookMudObjName(parent), hookMudObjName(target), params, it->second).c_str());
         gServer->runPython(it->second, param1 + "," + param2 + "," + param3, parent, target);
     }
     return(ran);
 }
 
-bool Hooks::executeWithReturn(const bstring& event, MudObject* target, const bstring& param1, const bstring& param2, const bstring& param3) const {
+bool Hooks::executeWithReturn(std::string_view event, MudObject* target, std::string_view param1, std::string_view param2, std::string_view param3) const {
     bool returnValue = true;
 
     bstring params = "";
@@ -178,17 +176,15 @@ bool Hooks::executeWithReturn(const bstring& event, MudObject* target, const bst
     if(!param3.empty())
         params += "   param3: " + param3;
 
-    broadcast(seeAllHooks, "^ochecking hook %s: %s^o on %s^o%s", event.c_str(),
-        hookMudObjName(parent).c_str(), hookMudObjName(target).c_str(),
-        params.c_str());
+    broadcast(seeAllHooks, fmt::format("^ochecking hook {}: {}^o on {}^o{}", event,
+        hookMudObjName(parent), hookMudObjName(target), params).c_str());
 
     auto it = hooks.find(event);
 
 
     if(it != hooks.end()) {
-        broadcast(seeHooks, "^orunning hook %s: %s^o on %s^o%s: ^x", event.c_str(),
-            hookMudObjName(parent).c_str(), hookMudObjName(target).c_str(),
-            params.c_str());
+        broadcast(seeHooks, fmt::format("^orunning hook {}: {}^o on {}^o{}: ^x", event,
+            hookMudObjName(parent), hookMudObjName(target), params).c_str());
 
         returnValue = gServer->runPythonWithReturn(it->second, param1 + "," + param2 + "," + param3, parent, target);
     }
@@ -200,7 +196,7 @@ bool Hooks::executeWithReturn(const bstring& event, MudObject* target, const bst
 // For hooks that must be run in pairs, run this
 
 // A trigger1 or trigger2 null value is valid, so handle appropriate
-bool Hooks::run(MudObject* trigger1, const bstring& event1, MudObject* trigger2, const bstring& event2, const bstring& param1, const bstring& param2, const bstring& param3) {
+bool Hooks::run(MudObject* trigger1, std::string_view event1, MudObject* trigger2, std::string_view event2, std::string_view param1, std::string_view param2, std::string_view param3) {
     bool ran=false;
     if(trigger1 && trigger1->hooks.execute(event1, trigger2, param1, param2, param3))
         ran = true;

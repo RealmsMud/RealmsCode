@@ -81,7 +81,7 @@ unsigned long WanderInfo::getRandomCount() const {
 //                      show
 //*********************************************************************
 
-void WanderInfo::show(const Player* player, const bstring& area) const {
+void WanderInfo::show(const Player* player, std::string_view area) const {
     std::map<int, CatRef>::const_iterator it;
     Monster* monster=nullptr;
 

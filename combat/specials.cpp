@@ -57,7 +57,7 @@ bool Creature::runSpecialAttacks(Creature* victim) {
     return(false);
 }
 
-SpecialAttack* Creature::getSpecial(const bstring& special) {
+SpecialAttack* Creature::getSpecial(std::string_view special) {
     std::list<SpecialAttack*>::const_iterator eIt;
     for(eIt = specials.begin() ; eIt != specials.end() ; eIt++) {
         if((*eIt) && (*eIt)->name == special)
@@ -66,7 +66,7 @@ SpecialAttack* Creature::getSpecial(const bstring& special) {
     return(nullptr);
 
 }
-bool Creature::useSpecial(const bstring& special, Creature* victim) {
+bool Creature::useSpecial(std::string_view special, Creature* victim) {
     return(useSpecial(getSpecial(special), victim));
 }
 
@@ -499,7 +499,7 @@ void SpecialAttack::clearFlag(int flag) {
     flags[flag/8] &= ~(1<<(flag%8));
 }
 
-bstring SpecialAttack::modifyAttackString(const bstring& input, Creature* viewer, Creature* attacker, Creature* target, int dmg) {
+bstring SpecialAttack::modifyAttackString(std::string_view input, Creature* viewer, Creature* attacker, Creature* target, int dmg) {
     bstring toReturn = input;
     /*          Web Editor
      *           _   _  ____ _______ ______
@@ -538,7 +538,7 @@ bstring SpecialAttack::modifyAttackString(const bstring& input, Creature* viewer
     return(toReturn);
 }
 
-void SpecialAttack::printToRoom(BaseRoom* room, const bstring& str, Creature* attacker, Creature* target, int dmg ) {
+void SpecialAttack::printToRoom(BaseRoom* room, std::string_view str, Creature* attacker, Creature* target, int dmg ) {
     if(str.empty())
         return;
 
@@ -794,7 +794,7 @@ SpecialAttack::SpecialAttack() {
     reset();
 }
 
-SpecialAttack* Creature::addSpecial(const bstring& specialName) {
+SpecialAttack* Creature::addSpecial(std::string_view specialName) {
     SpecialAttack* attack=nullptr;
 
     /*          Web Editor

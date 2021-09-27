@@ -404,7 +404,7 @@ char *int_to_text(int nNumber) {
     return(strReturn);
 }
 
-bool isTitle(const bstring& str) {
+bool isTitle(std::string_view str) {
     std::map<int, PlayerTitle*>::iterator tt;
 
     std::map<bstring, PlayerClass*>::iterator cIt;
@@ -433,9 +433,9 @@ bool isTitle(const bstring& str) {
     return(false);
 }
 
-bool isClass(char str[80]) {
+bool isClass(std::string_view str) {
     for(int i=1; i<static_cast<int>(CreatureClass::CLASS_COUNT); i++) {
-        if(!strcmp(class_str[i], str) || !strcmp(class_abbrev[i], str))
+        if(!str.compare(class_str[i]) || !str.compare(class_abbrev[i]))
             return(true);
     }
 

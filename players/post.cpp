@@ -73,7 +73,7 @@ bool canPost(Player* player) {
 //*********************************************************************
 // format text for writing to file
 
-bstring postText(const bstring& str) {
+bstring postText(std::string_view str) {
     bstring outstr = "";
 
     if(Pueblo::is(str))
@@ -188,9 +188,9 @@ int cmdSendMail(Player* player, cmd* cmnd) {
 //*********************************************************************
 // Sends a mudmail from System to the target. Include a trailing \n yourself.
 
-void sendMail(const bstring& target, const bstring& message) {
+void sendMail(std::string_view target, std::string_view message) {
     Player  *player=nullptr;
-    char    outcstr[158], postfile[80], datestr[40];
+    char    datestr[40];
     long    t=0;
     int     ff=0;
     bool    online=true;
@@ -198,26 +198,25 @@ void sendMail(const bstring& target, const bstring& message) {
     if(target.empty() || message.empty())
         return;
 
-    player = gServer->findPlayer(target.c_str());
+    player = gServer->findPlayer(target);
     if(!player) {
-        if(!loadPlayer(target.c_str(), &player))
+        if(!loadPlayer(target, &player))
             return;
         online = false;
     }
 
-    sprintf(postfile, "%s/%s.txt", Path::Post, target.c_str());
-    ff = open(postfile, O_CREAT | O_APPEND | O_RDWR, ACC);
+
+    ff = open(fmt::format("{}/{}.txt", Path::Post, target).c_str(), O_CREAT | O_APPEND | O_RDWR, ACC);
     if(ff < 0)
         merror("sendMail", FATAL);
 
     time(&t);
     strcpy(datestr, (char *) ctime(&t));
     datestr[strlen(datestr) - 1] = 0;
-    sprintf(outcstr, "\n--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--\n\nMail from System (%s):\n\n",
-        datestr);
+    auto header = fmt::format("\n--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--\n\nMail from System ({}):\n\n", datestr);
     
-    write(ff, outcstr, strlen(outcstr));
-    write(ff, message.c_str(), message.getLength());
+    write(ff, header.c_str(), header.length());
+    write(ff, message.data(), message.length());
 
     close(ff);
 

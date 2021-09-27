@@ -97,7 +97,7 @@ extern channelInfo channelList[];
 
 
 void sendGlobalComm(const Player *player, const bstring &text, const bstring &extra, unsigned int check,
-                    const channelInfo *chan, const bstring &etxt, const bstring& oocName, const bstring& icName);
+                    const channelInfo *chan, const bstring &etxt, std::string_view oocName, std::string_view icName);
 
 
 channelPtr getChannelByName(const Player *player, const bstring &chanStr);

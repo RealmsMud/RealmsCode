@@ -1564,7 +1564,7 @@ int dmSize(Player* player, cmd* cmnd) {
 //                      makeWeapon
 //*********************************************************************
 
-void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, const bstring& sub, const bstring& descBase, const bstring& descAll, bool twoHanded, int weight, double value, int bulk, short numAttacks) {
+void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, std::string_view sub, std::string_view descBase, std::string_view descAll, bool twoHanded, int weight, double value, int bulk, short numAttacks) {
     Object* newObj = nullptr;
     bool addToInventory = true;
 
@@ -1585,11 +1585,11 @@ void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, cons
 
 
     if(!newObj->key[2][0]) {
-        strcpy(newObj->key[1], sub.c_str());
+        strncpy(newObj->key[1], sub.data(), sub.length());
         newObj->setName(bstring(newObj->key[0]) + sub);
         //sprintf(newObj->name, "%s %s", newObj->key[0], sub.c_str());
     } else {
-        strcpy(newObj->key[2], sub.c_str());
+        strncpy(newObj->key[2], sub.data(), sub.length());
         newObj->setName(bstring(newObj->key[0]) + newObj->key[1] + sub);
         //sprintf(newObj->name, "%s %s %s", newObj->key[0], newObj->key[1], sub.c_str());
     }
@@ -1637,7 +1637,7 @@ void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, cons
 //                      makeArmor
 //*********************************************************************
 
-void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int wear, const bstring& base, const bstring& descBase, const bstring& descAll, long value, int weight, int bulk, bool somePrefix=false) {
+void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int wear, std::string_view base, std::string_view descBase, std::string_view descAll, long value, int weight, int bulk, bool somePrefix=false) {
     Object* newObj = nullptr;
     bool addToInventory = true;
 
@@ -1658,11 +1658,11 @@ void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int w
 
 
     if(!newObj->key[2][0]) {
-        strcpy(newObj->key[1], base.c_str());
+        strncpy(newObj->key[1], base.data(), base.length());
         newObj->setName(bstring(newObj->key[0]) + base);
         //sprintf(newObj->name, "%s %s", newObj->key[0], base.c_str());
     } else {
-        strcpy(newObj->key[2], base.c_str());
+        strncpy(newObj->key[2],  base.data(), base.length());
         newObj->setName(bstring(newObj->key[0]) + newObj->key[1] + base);
         //sprintf(newObj->name, "%s %s %s", newObj->key[0], newObj->key[1], base.c_str());
     }

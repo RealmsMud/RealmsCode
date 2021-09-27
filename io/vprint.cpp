@@ -31,7 +31,12 @@
 // Function Prototypes
 bstring delimit(const char *str, int wrap);
 
-void Creature::bPrint(const bstring& toPrint) const {
+void Creature::printPaged(std::string_view toPrint) {
+    if(hasSock())
+        getSock()->printPaged(toPrint);
+}
+
+void Creature::bPrint(std::string_view toPrint) const {
     (Streamable &) *this << ColorOn << toPrint << ColorOff;
 }
 
@@ -185,7 +190,7 @@ int print_arginfo (const struct printf_info *info, size_t n, int *argtypes, int*
         argtypes[0] = PA_POINTER;
         if(info->spec == 'O' || info->spec == 'P') size[0] = sizeof(Object *);
         else if(info->spec == 'R' || info->spec == 'M' || info->spec == 'N') size[0] = sizeof(Creature *);
-        else if(info->spec == 'B') size[0] = sizeof(bstring *);
+        else if(info->spec == 'b') size[0] = sizeof(bstring *);
         else if(info->spec == 'T') size[0] = sizeof(std::ostringstream *);
     }
     return(1);
@@ -194,7 +199,7 @@ int print_arginfo (const struct printf_info *info, size_t n, int *argtypes, int*
 int Server::installPrintfHandlers() {
     int r = 1;
     // bstring
-    r &= register_printf_specifier('B', print_objcrt, print_arginfo);
+    r &= register_printf_specifier('b', print_objcrt, print_arginfo);
     // std::ostringstream
     r &= register_printf_specifier('T', print_objcrt, print_arginfo);
     // creature

@@ -34,7 +34,7 @@ public:
 
     void setNum(short n);
     void setSize(Size s);
-    void setDirection(const bstring& dir);
+    void setDirection(std::string_view dir);
 protected:
     short   num;
     Size    size;

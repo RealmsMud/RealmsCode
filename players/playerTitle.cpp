@@ -358,5 +358,5 @@ bool Player::canChooseCustomTitle() const {
     return(cTitle && cTitle->getTitle(getSex() == SEX_MALE) == "[custom]");
 }
 
-void Player::setTitle(const bstring& newTitle) { title = newTitle; }
-void Player::setTempTitle(const bstring& newTitle) { tempTitle = newTitle; }
+void Player::setTitle(std::string_view newTitle) { title = newTitle; }
+void Player::setTempTitle(std::string_view newTitle) { tempTitle = newTitle; }

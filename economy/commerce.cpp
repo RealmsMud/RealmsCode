@@ -787,7 +787,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 //                      doFilter
 //*********************************************************************
 
-bool doFilter(const Object* object, const bstring& filter) {
+bool doFilter(const Object* object, std::string_view filter) {
     if(filter.empty())
         return(false);
 
@@ -1566,9 +1566,6 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
             broadcast(player->getSock(), player->getParent(), "%M bought %1P.", player, object2);
 
-            player->bug("%s just bought %s for %s in room %s.\n",
-                player->getCName(), object2->getCName(), cost.str().c_str(), player->getRoomParent()->fullName().c_str());
-
             logn("log.commerce", "%s just bought %s for %s in room %s.\n",
                 player->getCName(), object2->getCName(), cost.str().c_str(), player->getRoomParent()->fullName().c_str());
 
@@ -1764,10 +1761,7 @@ int cmdSell(Player* player, cmd* cmnd) {
     object->refund.set(value);
     player->doHaggling(nullptr, object, SELL);
     Server::logGold(GOLD_IN, player, object->refund, object, "Pawn");
-    player->bug("%s sold %s in room %s.\n", player->getCName(), object->getCName(),
-        player->getRoomParent()->fullName().c_str());
-    logn("log.commerce", "%s sold %s in room %s.\n", player->getCName(), object->getCName(),
-        player->getRoomParent()->fullName().c_str());
+    logn("log.commerce", "%s sold %s in room %s.\n", player->getCName(), object->getCName(), player->getRoomParent()->fullName().c_str());
 
 
     player->coins.add(value);

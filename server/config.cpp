@@ -424,7 +424,8 @@ namespace Path {
     const char* Config = "/home/realms/realms/config/";
 
     const char* Code = "/home/realms/realms/config/code/";
-    const char* Python = "/home/realms/realms/config/code/python/";
+    // First check the docker install path; then the code directory, and finally fall back to the old place
+    const char* Python = "/build/pythonLib/:/home/realms/realms/RealmsCode/pythonLib:/home/realms/realms/config/code/python/";
     const char* Game = "/home/realms/realms/config/game/";
     const char* AreaData = "/home/realms/realms/config/game/area/";
     const char* Talk = "/home/realms/realms/config/game/talk/";
@@ -506,7 +507,7 @@ bool Path::checkPaths() {
     ok = Path::checkDirExists(Path::Config) && ok;
 
     ok = Path::checkDirExists(Path::Code) && ok;
-    ok = Path::checkDirExists(Path::Python) && ok;
+//    ok = Path::checkDirExists(Path::Python) && ok;
     ok = Path::checkDirExists(Path::Game) && ok;
     ok = Path::checkDirExists(Path::AreaData) && ok;
     ok = Path::checkDirExists(Path::Talk) && ok;
@@ -541,12 +542,12 @@ bool Path::checkDirExists(const char* filename) {
     return(true);
 }
 
-bool Path::checkDirExists(const bstring& area, char* (*fn)(const CatRef&)) {
+bool Path::checkDirExists(std::string_view area, char* (*fn)(const CatRef&)) {
     char    filename[256];
     CatRef  cr;
 
     // this will trigger the dir-only mode
-    cr.setArea(area.c_str());
+    cr.setArea(area);
     cr.id = -1;
     strcpy(filename, (*fn)(cr));
 

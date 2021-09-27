@@ -92,7 +92,7 @@ void checkTeleportRange(const Player* player, const CatRef& cr) {
 //                          isCardinal
 //*********************************************************************
 
-bool isCardinal(const bstring& xname) {
+bool isCardinal(std::string_view xname) {
     return( xname == "north" ||
             xname == "east" ||
             xname == "south" ||
@@ -109,7 +109,7 @@ bool isCardinal(const bstring& xname) {
 //                          wrapText
 //*********************************************************************
 
-bstring wrapText(const bstring& text, int wrap) {
+bstring wrapText(std::string_view text, int wrap) {
     if(text.empty())
         return("");
     
@@ -172,7 +172,7 @@ bstring wrapText(const bstring& text, int wrap) {
 //                          expand_exit_name
 //*********************************************************************
 
-bstring expand_exit_name(const bstring& name) {
+bstring expand_exit_name(std::string_view name) {
     if(name == "n")
         return("north");
     if(name == "s")
@@ -211,7 +211,7 @@ bstring expand_exit_name(const bstring& name) {
 //                          opposite_exit_name
 //*********************************************************************
 
-bstring opposite_exit_name(const bstring& name) {
+bstring opposite_exit_name(std::string_view name) {
     if(name == "south")
         return("north");
     if(name == "north")
@@ -2373,7 +2373,7 @@ int dmPrepend(Player* player, cmd* cmnd) {
 //*********************************************************************
 // Display information about what mobs will randomly spawn.
 
-void showMobList(Player* player, WanderInfo *wander, const bstring& type) {
+void showMobList(Player* player, WanderInfo *wander, std::string_view type) {
     std::map<int, CatRef>::iterator it;
     Monster *monster=nullptr;
     bool    found=false, maybeAggro=false;
@@ -2667,11 +2667,10 @@ int dmArrangeExits(Player* player, cmd* cmnd) {
 //                          link_rom
 //*********************************************************************
 // from this room to unique room
-void link_rom(BaseRoom* room, const Location& l, const bstring& str) {
+void link_rom(BaseRoom* room, const Location& l, std::string_view str) {
 
-    const char* dir = str.c_str();
     for(Exit* ext : room->exits) {
-        if(ext->getName() == dir) {
+        if(ext->getName() == str) {
             ext->target = l;
             return;
         }
@@ -2681,23 +2680,23 @@ void link_rom(BaseRoom* room, const Location& l, const bstring& str) {
 
     exit->setRoom(room);
 
-    exit->setName( dir);
+    exit->setName(str);
     exit->target = l;
 
     room->exits.push_back(exit);
 }
 
-void link_rom(BaseRoom* room, short tonum, const bstring& str) {
+void link_rom(BaseRoom* room, short tonum, std::string_view str) {
     Location l;
     l.room.id = tonum;
     link_rom(room, l, str);
 }
-void link_rom(BaseRoom* room, const CatRef& cr, const bstring& str) {
+void link_rom(BaseRoom* room, const CatRef& cr, std::string_view str) {
     Location l;
     l.room = cr;
     link_rom(room, l, str);
 }
-void link_rom(BaseRoom* room, MapMarker *mapmarker, const bstring& str) {
+void link_rom(BaseRoom* room, MapMarker *mapmarker, std::string_view str) {
     Location l;
     l.mapmarker = *mapmarker;
     link_rom(room, l, str);
@@ -2710,13 +2709,13 @@ void link_rom(BaseRoom* room, MapMarker *mapmarker, const bstring& str) {
 //                      dmFix
 //*********************************************************************
 
-int dmFix(Player* player, cmd* cmnd, const bstring& name, char find, char replace) {
+int dmFix(Player* player, cmd* cmnd, std::string_view name, char find, char replace) {
     Exit    *exit=nullptr;
     int     i=0;
     bool    fixed=false;
 
     if(cmnd->num < 2) {
-        player->print("Syntax: *%sup <exit>\n", name.c_str());
+        player->bPrint(fmt::format("Syntax: *{}up <exit>\n", name));
         return(0);
     }
 
@@ -2735,8 +2734,8 @@ int dmFix(Player* player, cmd* cmnd, const bstring& name, char find, char replac
 
     if(fixed) {
         exit->setName(newName);
-        log_immort(true, player, "%s %sed the exit '%s' in room %s.\n",
-            player->getCName(), name.c_str(), exit->getCName(), player->getRoomParent()->fullName().c_str());
+        log_immort(true, player, fmt::format("{} {}ed the exit '{}' in room {}.\n",
+            player->getName(), name, exit->getName(), player->getRoomParent()->fullName()).c_str());
         player->print("Done.\n");
     } else
         player->print("Couldn't find any underscores.\n");
@@ -3021,7 +3020,7 @@ int dmFind(Player* player, cmd* cmnd) {
 //*********************************************************************
 // searches for the next empty room/object/monster in the area
 
-CatRef findNextEmpty(const bstring& type, const bstring& area) {
+CatRef findNextEmpty(std::string_view type, std::string_view area) {
     CatRef cr;
     cr.setArea(area);
 

@@ -305,7 +305,7 @@ bool Object::needsTwoHands() const {
 //                      setWeaponType
 //**********************************************************************
 
-bool Object::setWeaponType(const bstring& newType) {
+bool Object::setWeaponType(std::string_view newType) {
     SkillInfo* weaponSkill = gConfig->getSkill(newType);
     bstring category = "";
     if(weaponSkill) {
@@ -314,7 +314,7 @@ bool Object::setWeaponType(const bstring& newType) {
     }
 
     if(!weaponSkill || category != "weapon") {
-        std::clog << "Invalid weapon type: " << newType.c_str() << std::endl;
+        std::clog << "Invalid weapon type: " << newType << std::endl;
         return(false);
     }
     subType = newType;
@@ -325,7 +325,7 @@ bool Object::setWeaponType(const bstring& newType) {
 //                      setArmorType
 //**********************************************************************
 
-bool Object::setArmorType(const bstring& newType) {
+bool Object::setArmorType(std::string_view newType) {
     // Armor type must be ring, shield, or one of the armor type skills
     if(newType != "ring" && newType != "shield") {
         SkillInfo* weaponSkill = gConfig->getSkill(newType);
@@ -348,7 +348,7 @@ bool Object::setArmorType(const bstring& newType) {
 //                      setSubType
 //**********************************************************************
 
-bool Object::setSubType(const bstring& newType) {
+bool Object::setSubType(std::string_view newType) {
     // These must be set with the appropriate function
     if(type == ObjectType::ARMOR || type == ObjectType::WEAPON)
         return(false);

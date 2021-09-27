@@ -52,6 +52,9 @@
 #include "utils.hpp"               // for MAX, MIN
 
 class MudObject;
+bool isClass(std::string_view str);
+bool isTitle(std::string_view str);
+
 
 //*********************************************************************
 //                      validId functions
@@ -325,7 +328,7 @@ int update_daily(struct daily *dly_ptr) {
 // This function returns 1 if the filename specified by the first
 // parameter exists, 0 if it doesn't.
 
-bool file_exists(char *filename) {
+bool file_exists(const char *filename) {
     int ff=0;
     ff = open(filename, O_RDONLY);
     if(ff > -1) {
@@ -351,7 +354,7 @@ bool is_num(char *str ) {
 //*********************************************************************
 // returns 1 if the given player name is a dm
 
-bool isdm(const bstring& name) {
+bool isdm(std::string_view name) {
     char **s = dmname;
     while(*s) {
         if(name == *s)
@@ -376,53 +379,51 @@ int Creature::smashInvis() {
 //                      parse_name
 //*********************************************************************
 // Determine if a given name is acceptable
+const auto BAD_WORDS = {"fuck", "shit", "suck", "gay", "isen", "cock", "realm", "piss", "dick", "pussy", "dollar", "cunt"};
 
-bool parse_name(const bstring& name) {
+bool parse_name(std::string_view name) {
     FILE    *fp=nullptr;
     int     i = name.length() - 1;
-    char    str[80], path[80], forbid[20];
-    strcpy(str, name.c_str());
+    char    forbid[20];
 
-    if(isTitle(str) || isClass(str))
+    if(isTitle(name) || isClass(name))
         return(false);
-    if(gConfig->racetoNum(str) >= 0)
+    if(gConfig->racetoNum(name) >= 0)
         return(false);
-    if(gConfig->deitytoNum(str) >= 0)
+    if(gConfig->deitytoNum(name) >= 0)
         return(false);
 
 
     // don't allow names with all the same char
-    str[0] = tolower(str[0]);
-    for(; i>0; i--)
-        if(str[i] != str[0])
+    char c = tolower(name[0]);
+    for(; i > 1; i--)
+        if(name[i] != c)
             break;
     if(!i)
         return(false);
-    str[0] = toupper(str[0]);
 
 
     // check the DM names
     i=0;
     while(dmname[i]) {
         // don't forbid names directly equal to DM
-        if(strcmp(dmname[i], str) != 0) {
-            if(!strncmp(dmname[i], str, strlen(str)))
+        if(name.compare(dmname[i]) != 0) {
+            if(!name.compare(0, name.length(), dmname[i]))
                 return(false);
-            if(!strncmp(str, dmname[i], strlen(dmname[i])))
+            if(!name.compare(0, strlen(dmname[i]), dmname[i]))
                 return(false);
         }
         i++;
     }
 
 
-    sprintf(path, "%s/forbidden_name.txt", Path::Config);
-    fp = fopen(path, "r");
+    fp = fopen(fmt::format("{}/forbidden_name.txt", Path::Config).c_str(), "r");
     if(!fp)
         merror("ERROR - forbidden name.txt", NONFATAL);
     else {
         while(!feof(fp)) {
             fscanf(fp, "%s", forbid);
-            if(!strcmp(forbid, str)) {
+            if(!name.compare(forbid)) {
                 fclose(fp);
                 return(false);
             }
@@ -430,32 +431,11 @@ bool parse_name(const bstring& name) {
         fclose(fp);
     }
 
-
-    lowercize(str, 0);
-    if(strstr(str, "fuck"))
-        return(false);
-    if(strstr(str, "shit"))
-        return(false);
-    if(strstr(str, "suck"))
-        return(false);
-    if(strstr(str, "gay"))
-        return(false);
-    if(strstr(str, "isen"))
-        return(false);
-    if(strstr(str, "cock"))
-        return(false);
-    if(strstr(str, "realm"))
-        return(false);
-    if(strstr(str, "piss"))
-        return(false);
-    if(strstr(str, "dick"))
-        return(false);
-    if(strstr(str, "pussy"))
-        return(false);
-    if(strstr(str, "dollar"))
-        return(false);
-    if(strstr(str, "cunt"))
-        return(false);
+    auto lowerName = bstring(name).toLower();
+    for (const auto& word : BAD_WORDS) {
+        if(lowerName.find(word) != bstring::npos)
+            return false;
+    }
 
     return(true);
 }
@@ -480,43 +460,6 @@ int dmIson() {
     }
 
     return(0);
-}
-
-//*********************************************************************
-//                      bug
-//*********************************************************************
-
-void Player::bug(const char *fmt, ...) const {
-    char    file[80];
-    char    str[2048];
-    int     fd;
-    long    t = time(nullptr);
-    va_list ap;
-
-    if(!flagIsSet(P_BUGGED))
-        return;
-
-    va_start(ap, fmt);
-
-    sprintf(file, "%s/%s.txt", Path::BugLog, getCName());
-    fd = open(file, O_RDWR | O_APPEND, 0);
-    if(fd < 0) {
-        fd = open(file, O_RDWR | O_CREAT, ACC);
-        if(fd < 0)
-            return;
-    }
-    lseek(fd, 0L, 2);
-
-    // prevent string overruns with vsn
-    strcpy(str, ctime(&t));
-    str[24] = ':';
-    str[25] = ' ';
-    vsnprintf(str + 26, 2000, fmt, ap);
-    va_end(ap);
-
-    write(fd, str, strlen(str));
-
-    close(fd);
 }
 
 //*********************************************************************
@@ -910,16 +853,16 @@ bstring timeStr(int secs) {
 //                      progressBar
 //*********************************************************************
 
-bstring progressBar(int barLength, float percentFull, const bstring& text, char progressChar, bool enclosed) {
+bstring progressBar(int barLength, float percentFull, std::string_view text, char progressChar, bool enclosed) {
     bstring str = "";
     int i=0, progress = (int)(barLength * percentFull);
     int lowTextBound=-1, highTextBound=-1;
 
-    if(text.getLength()) {
-        if(text.getLength() >= barLength)
+    if(text.length()) {
+        if(text.length() >= barLength)
             return(text);
-        lowTextBound = (barLength - text.getLength())/2;
-        highTextBound = lowTextBound + text.getLength();
+        lowTextBound = (barLength - text.length())/2;
+        highTextBound = lowTextBound + text.length();
     }
 
     if(enclosed)
