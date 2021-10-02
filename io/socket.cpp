@@ -37,6 +37,7 @@
 #include <queue>                                    // for queue
 #include <fmt/format.h>
 #include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
 #include <fstream>
 
 #include "bstring.hpp"                              // for bstring, operator+
@@ -59,6 +60,10 @@
 #include "utils.hpp"                                // for MAX, MIN
 #include "version.hpp"                              // for VERSION
 #include "xml.hpp"                                  // for copyToBool, newNu...
+
+// TODO: Use window height, or player pager config instead
+const int MAX_PAGES = 80;
+
 
 // Static initialization
 const int Socket::COMPRESSED_OUTBUF_SIZE = 8192;
@@ -1159,6 +1164,36 @@ void viewFileReverse(Socket *sock, const bstring& file) {
     sock->viewFileReverse(file);
 }
 
+
+void handlePaging(Socket* sock, const bstring& inStr) {
+    sock->handlePaging(inStr);
+}
+
+void Socket::sendPages(int numPages) {
+    for(int i=numPages;i>0;i--) {
+        println(pagerOutput.front());
+        pagerOutput.pop_front();
+        paged++;
+    }
+}
+
+void Socket::handlePaging(const bstring& inStr) {
+    if(inStr.equals("")) {
+        int numPages = MIN<int>(MAX_PAGES, pagerOutput.size());
+        sendPages(numPages);
+
+        if(!pagerOutput.empty()) {
+            askFor("\n[Hit Return, Any Key to Quit]: ");
+        }
+    } else {
+        println("Aborting and clearing pager output");
+        pagerOutput.clear();
+    }
+
+    if(pagerOutput.empty())
+        paged = 0;
+
+}
 //*********************************************************************
 //                      setState
 //*********************************************************************
@@ -1314,7 +1349,17 @@ bool Socket::parseMsdp() {
 //********************************************************************
 // Append a string to the socket's paged output queue
 void Socket::printPaged(std::string_view toPrint) {
-    boost::split(pagerOutput, toPrint, boost::is_any_of("\n"));
+    boost::char_separator<char> sep("\n");
+    boost::tokenizer<boost::char_separator<char> > tokens(toPrint, sep);
+    for(const auto& line : tokens) {
+        pagerOutput.emplace_back(line);
+    }
+    if (paged < MAX_PAGES) {
+        // Send lines up to the first page size
+        sendPages(MIN<int>(pagerOutput.size(), MAX_PAGES - paged));
+        if(paged == MAX_PAGES)
+            askFor("\n[Hit Return, Any Key to Quit]: ");
+    }
 }
 
 //********************************************************************
@@ -1375,7 +1420,7 @@ void Socket::flush() {
     }
     // If we only wrote OOB data or partial data was written because of EWOULDBLOCK,
     // then n is -2, don't send a prompt in that case
-    if (n != -2 && myPlayer && connState != CON_CHOSING_WEAPONS)
+    if (n != -2 && myPlayer && connState != CON_CHOSING_WEAPONS && pagerOutput.empty())
         myPlayer->sendPrompt();
 }
 
@@ -2158,6 +2203,10 @@ void Socket::viewFileReverse(const bstring& str) {
     if(getState() != CON_VIEWING_FILE_REVERSE)
         setState(CON_VIEWING_FILE_REVERSE);
     viewFileReverseReal(str);
+}
+
+bool Socket::hasPagerOutput() {
+    return(!pagerOutput.empty());
 }
 
 

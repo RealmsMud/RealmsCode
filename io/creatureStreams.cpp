@@ -166,12 +166,14 @@ void Streamable::doPrint(std::string_view toPrint) {
                     petPrinted = false;
             }
         }
-        if(pager) { // Paged
-            if(streamColor)
-                sock->printPaged(toPrint);
-            else
-                sock->printPaged(escapeColor(toPrint));
-        } else { // Unpaged
+        // TODO: This doesn't work yet, we need to buffer it up until we get a full line and then send it
+//        if(pager) { // Paged
+//            if(streamColor)
+//                sock->printPaged(toPrint);
+//            else
+//                sock->printPaged(escapeColor(toPrint));
+//        } else
+        { // Unpaged
             if(streamColor)
                 sock->bprint(toPrint);
             else

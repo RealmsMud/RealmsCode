@@ -1637,6 +1637,9 @@ bool Creature::immuneCriticals() const {
 //*********************************************************************
 
 bool Creature::hasSock() const {
+    auto ply = getAsConstPlayer();
+    if(ply)
+        return ply->hasSock();
     return false;
 }
 

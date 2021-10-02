@@ -92,6 +92,10 @@ int getFailFd(Creature *user) {
 // player.
 
 void command(Socket* sock, const bstring& inStr) {
+    if(sock->hasPagerOutput()) {
+        return sock->handlePaging(inStr);
+    }
+
     cmd cmnd;
     int n;
     Player* ply = sock->getPlayer();

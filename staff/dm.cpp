@@ -1294,12 +1294,11 @@ int dmQuestList(Player* player, cmd* cmnd) {
         *player << ColorOn << "Old Quests: Type ^y*questlist old^x to see old style quests.\nNew Quests: Type ^y*questlist all^x to see all details or ^y*questlist [num]^x to see a specific quest.\n" << ColorOff;
     }
 
-    *player << ColorOn << PagerOn << "New style Quests:\n";
+    player->printPaged("New style Quests:");
     for(auto& [questId, quest] : gConfig->quests) {
-        *player << questId << ") " << (all ? quest->getDisplayString() : quest->getDisplayName()) << "\n";
+        player->printPaged(fmt::format("{}) {}\n", questId, (all ? quest->getDisplayString() : quest->getDisplayName())));
     }
 
-    *player << ColorOff << PagerOff;
     return(0);
 }
 

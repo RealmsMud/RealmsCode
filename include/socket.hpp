@@ -359,13 +359,19 @@ public:
     char        intrpt{};
 
 private:
-    std::vector<std::string> pagerOutput;
+    std::deque<std::string> pagerOutput;
 
 public:
     static const int COMPRESSED_OUTBUF_SIZE;
 
 public:
     static int getNumSockets();
+    void handlePaging(const bstring &inStr);
+    bool hasPagerOutput();
+
+private:
+    int paged{};
+    void sendPages(int numPages);
 };
 
 
