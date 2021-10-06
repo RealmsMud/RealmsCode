@@ -1334,6 +1334,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
     case 'i':
         if(!strcmp(cmnd->str[3], "int")) {
             target->intelligence.setMax(MAX(1, MIN<int>(cmnd->val[3], MAX_STAT_NUM)));
+            target->intelligence.restore();
             player->print("Intelligence set.\n");
             log_immort(true, player, "%s set %s %s's Intelligence to %d.\n",
                 player->getCName(), PLYCRT(target), target->getCName(), target->intelligence.getCur());
@@ -1620,7 +1621,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                 "Poison damage/tick", mTarget->getPoisonDamage());
             break;
         }
-        //if(!strcmp(cmnd->str[3], "pie")) {
+        if(!strcmp(cmnd->str[3], "pty")) {
 
         target->piety.setMax(MAX(1, MIN<int>(cmnd->val[3], MAX_STAT_NUM)));
         target->piety.restore();
@@ -1629,8 +1630,8 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             player->getCName(), PLYCRT(target), target->getCName(),
             "Peity", target->piety.getCur());
         break;
-
-        //}
+        }
+        
         /*
         if(!strcmp(cmnd->str[3], "pkin") && player->isDm()) {
             if(!pTarget) {
