@@ -800,10 +800,17 @@ void Create::addStartingWeapon(Player* player, const bstring& weapon) {
         Create::addStartingItem(player, "tut", 30, false);
     else if(weapon == "thrown")
         Create::addStartingItem(player, "tut", 31, false);
-     else if(weapon == "knife")
+    else if(weapon == "knife")
         Create::addStartingItem(player, "tut", 43, false);
-     else if(weapon == "sling")
+    else if(weapon == "arcane-weapon")
         Create::addStartingItem(player, "tut", 44, false);
+    else if(weapon == "divine-weapon")
+        Create::addStartingItem(player, "tut", 45, false);
+    else if(weapon == "flail")
+        Create::addStartingItem(player, "tut", 46, false);
+    else if(weapon == "sling")
+        Create::addStartingItem(player, "tut", 47, false);
+    
 }
 
 
