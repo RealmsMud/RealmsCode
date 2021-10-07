@@ -1121,7 +1121,7 @@ void getPermObj(Object* object) {
             continue;
         if(!loadObject(crtm->cr, &temp_obj))
             continue;
-        if(temp_obj->getName() == object->getName()) {
+        if( (temp_obj->getName() == object->getName()) || (temp_obj->getName() == object->droppedBy.getName()) ) {
             crtm->ltime = t;
             delete temp_obj;
             break;

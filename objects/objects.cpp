@@ -591,7 +591,10 @@ void Object::selectRandom() {
     if(!loadObject(cr, &object))
         return;
 
+
+    object->setDroppedBy(this, "RandomItemParent");
     *this = *object;
+    
     delete object;
 }
 

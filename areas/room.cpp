@@ -530,8 +530,12 @@ void UniqueRoom::addPermObj() {
             continue;
 
         for(Object* obj : objects) {
-            if(obj->flagIsSet(O_PERM_ITEM) && obj->getName() == object->getName() && obj->info == object->info)
-                m++;
+            if(obj->flagIsSet(O_PERM_ITEM)) {
+                if(obj->getName() == object->getName() && obj->info == object->info)
+                    m++;
+                else if( object->getName() == obj->droppedBy.getName() && object->info.rstr() == obj->droppedBy.getIndex()) 
+                    m++;
+                }
         }
 
         delete object;
@@ -540,13 +544,15 @@ void UniqueRoom::addPermObj() {
             if(!loadObject(crtm->cr, &object))
                 continue;
 
-            object->init();
+            if (!object->randomObjects.empty())
+                object->init();
+            else
+                object->setDroppedBy(this, "PermObject");
 
             if(object->flagIsSet(O_RANDOM_ENCHANT))
                 object->randomEnchant();
 
             object->setFlag(O_PERM_ITEM);
-            object->setDroppedBy(this, "PermObject");
 
             object->addToRoom(this);
         }
