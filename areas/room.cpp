@@ -543,16 +543,17 @@ void UniqueRoom::addPermObj() {
         for(j=0; j<n-m; j++) {
             if(!loadObject(crtm->cr, &object))
                 continue;
+        if (!object->randomObjects.empty())
+             object->init();
+        else
+             object->setDroppedBy(this, "PermObject");
 
-            if (!object->randomObjects.empty())
-                object->init();
-            else
-                object->setDroppedBy(this, "PermObject");
 
             if(object->flagIsSet(O_RANDOM_ENCHANT))
                 object->randomEnchant();
 
             object->setFlag(O_PERM_ITEM);
+
 
             object->addToRoom(this);
         }

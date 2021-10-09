@@ -1744,7 +1744,8 @@ int dmClone(Player* player, cmd* cmnd) {
         sub == "axe" || sub == "great-axe" || sub == "rapier" || sub == "spear" ||
         sub == "dagger" || sub == "staff" || sub == "mace" || sub == "great-mace" ||
         sub == "club" || sub == "hammer" || sub == "great-hammer" || sub == "bow" ||
-        sub == "crossbow" || sub == "thrown" || sub == "sling" || sub == "knife"
+        sub == "crossbow" || sub == "thrown" || sub == "sling" || sub == "knife" ||
+        sub == "arcane-weapon" || sub == "divine-weapon" || sub == "flail"
     ) {
         isWeapon = true;
     } else {
@@ -1936,6 +1937,9 @@ int dmClone(Player* player, cmd* cmnd) {
         makeWeapon(player, &cr, object, random, "crossbow", "It's a crossbow", desc, false, baseWeight-1, value, 4, numAttacks);
         makeWeapon(player, &cr, object, random, "sling", "It's a sling", desc, false, baseWeight-2, value, 3, numAttacks);
         makeWeapon(player, &cr, object, random, "knife", "It's a knife", desc, false, baseWeight-3, value, 2, numAttacks);
+        makeWeapon(player, &cr, object, random, "arcane-weapon", "It's an arcane weapon", desc, false, baseWeight-2, value, 3, numAttacks);
+        makeWeapon(player, &cr, object, random, "divine-weapon", "It's a divine weapon", desc, false, baseWeight-2, value, 3, numAttacks);
+        makeWeapon(player, &cr, object, random, "flail", "It's a flail", desc, false, baseWeight, value, 4, numAttacks);
     }
 
     random->info = cr;
