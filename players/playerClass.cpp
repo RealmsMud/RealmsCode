@@ -138,14 +138,13 @@ int dmShowClasses(Player* admin, cmd* cmnd) {
         admin->isDm() ? "  Type ^y*classlist more^x to view more, ^y*classlist all^x to view all information." : "");
 
     for(auto& [clsName, pClass] : gConfig->classes) {
-        *admin << fmt::format("Id: ^c{:<2}^x   Name: ^c{}\n", pClass->getId(), clsName);
+        *admin << fmt::format("Id: ^c{:<2}^x   Name: ^c{}^x\n", pClass->getId(), clsName);
         if(more || all) {
             std::ostringstream cStr;
             std::map<int, PlayerTitle*>::iterator tt;
 
             //cStr << "Class: " << (*cIt).first << "\n";
-            cStr << "    Base: " << pClass->getBaseHp() << "hp, " << pClass->getBaseMp() << "mp, "
-                 << "Dice: " << pClass->damage.str() << "\n"
+            cStr << "    Base: " << pClass->getBaseHp() << "hp, " << pClass->getBaseMp() << "mp, " << "Dice: " << pClass->damage.str() << "\n"
                  << "    NumProfs: " << pClass->numProfs() << "   NeedsDeity: " << (pClass->needsDeity() ? "^gYes" : "^rNo") << "^x\n";
             std::list<SkillGain*>::const_iterator sgIt;
             if(all) {
