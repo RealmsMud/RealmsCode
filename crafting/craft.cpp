@@ -592,22 +592,14 @@ int cmdRecipes(Player* player, cmd* cmnd) {
         recipe = gConfig->getRecipe(*it);
         i++;
 
-        if( !filter.empty() &&
-            !(  filter == recipe->getSkill() ||
-                (filter == "none" && recipe->getSkill().empty())
-            )
-        )
+        if( !filter.empty() && !(filter == recipe->getSkill() || (filter == "none" && recipe->getSkill().empty())))
             continue;
-
         shown++;
 
-        if(truncate)
-            continue;
+        if(truncate) continue;
 
-        if(shown==1)
-            oStr << " \\_| ";
-        else
-            oStr << "   | ";
+        if(shown==1) oStr << " \\_| ";
+        else         oStr << "   | ";
 
         oStr << "^c#" << std::setw(3) << i << "^x "
              << std::setw(31) << recipe->getResultName()
@@ -976,7 +968,8 @@ int dmRecipes(Player* player, cmd* cmnd) {
         }
 
     }
-    player->printColor("%s\n", oStr.str().c_str());
+    player->printPaged(oStr.str());
+    player->donePaging();
     return(0);
 }
 

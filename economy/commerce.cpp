@@ -843,7 +843,7 @@ bool isValidShop(const UniqueRoom* shop, const UniqueRoom* storage) {
 }
 
 //*********************************************************************
-//                      cmdList
+//                      cannotUseMarker
 //*********************************************************************
 
 const char* cannotUseMarker(Player* player, Object* object) {
@@ -949,22 +949,22 @@ int cmdList(Player* player, cmd* cmnd) {
         flags |= MAG;
 
         if(p->isOwner(player->getName())) {
-            player->print("You are selling:");
+            player->printPaged("You are selling:");
             owner = true;
         } else {
-            bstring owner = p->getOwner();
+            bstring ownerName = p->getOwner();
             if(p->getGuild()) {
                 const Guild* guild = gConfig->getGuild(p->getGuild());
-                owner = guild->getName();
+                ownerName = guild->getName();
             }
-            player->print("%s is selling:", owner.c_str());
+            player->printPaged(fmt::format("{} is selling:", ownerName));
             if(p->isPartialOwner(player->getName()))
                 owner = true;
         }
 
         if(!filter.empty())
-            player->printColor(" ^Y(filtering on \"%s\")", filter.c_str());
-        *player << "\n";
+            player->printPaged(fmt::format(" ^Y(filtering on \"{}\")", filter));
+
         ObjectSet::iterator it;
         for( it = storage->objects.begin() ; it != storage->objects.end() ; ) {
             object = (*it++);
@@ -978,24 +978,18 @@ int cmdList(Player* player, cmd* cmnd) {
                 } else
                     break;
             }
-
             num++;
 
-            if(doFilter(object, filter))
-                continue;
+            if(doFilter(object, filter)) continue;
 
             if(n == 1)
-                player->printColor("^WNum         Item                        Price      Condition\n");
-            player->printColor("%2d> %s $%-9ld %-12s%s", num,
-                objShopName(object, m, flags, 35).c_str(),
-                object->getShopValue(), getCondition(object).c_str(),
-                cannotUseMarker(player, object));
-            if(owner)
-                player->print(" Profit: %ld", shopProfit(object));
-            *player << "\n";
+                player->printPaged("^WNum         Item                                       Price      Condition");
+            player->printPaged(fmt::format("{:2}> {} ${:<9} {:<12} {}", num, objShopName(object, m, flags, 50), object->getShopValue(),
+                                           getCondition(object), cannotUseMarker(player, object), owner ? fmt::format(" Profit: {}", shopProfit(object)) : ""));
         }
         if(!n)
-            player->print("Absolutely nothing!\n");
+            player->printPaged("Absolutely nothing!");
+        player->donePaging();
     }
 
     return(0);
@@ -1313,7 +1307,8 @@ int cmdBuy(Player* player, cmd* cmnd) {
         ObjectSet::iterator it, next;
         for( it = storage->objects.begin() ; it != storage->objects.end() && num != n; ) {
             while(it != storage->objects.end()) {
-                if((playerShopSame(player, (*it), *(next = boost::next(it))))) {
+                next = std::next(it);
+                if(next != storage->objects.end() && (playerShopSame(player, (*it), *(next)))) {
                     it = next;
                 } else
                     break;

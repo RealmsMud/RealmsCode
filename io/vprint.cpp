@@ -36,6 +36,11 @@ void Creature::printPaged(std::string_view toPrint) {
         getSock()->printPaged(toPrint);
 }
 
+void Creature::donePaging() {
+    if(hasSock())
+        getSock()->donePaging();
+}
+
 void Creature::bPrint(std::string_view toPrint) const {
     (Streamable &) *this << ColorOn << toPrint << ColorOff;
 }

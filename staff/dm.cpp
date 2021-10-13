@@ -1298,6 +1298,7 @@ int dmQuestList(Player* player, cmd* cmnd) {
     for(auto& [questId, quest] : gConfig->quests) {
         player->printPaged(fmt::format("{}) {}\n", questId, (all ? quest->getDisplayString() : quest->getDisplayName())));
     }
+    player->donePaging();
 
     return(0);
 }

@@ -114,6 +114,8 @@ void Streamable::setPagerOn() {
 }
 void Streamable::setPagerOff() {
     pager = false;
+    Socket* sock = getMySock();
+    if(sock) sock->donePaging();
 }
 
 void Streamable::setManipFlags(unsigned int flags) {
@@ -141,6 +143,42 @@ int Streamable::getManipNum() {
 }
 
 void Streamable::doPrint(std::string_view toPrint) {
+    const Monster* monster = dynamic_cast<Monster*>(this);
+    const Player* master = nullptr;
+    Socket* sock = getMySock();
+
+    if(monster) {
+        master = monster->getConstPlayerMaster();
+    }
+    if(sock) {
+        if(master) {
+            if(!petPrinted) {
+                sock->bprint("Pet> ");
+                if(toPrint.find('\n') == bstring::npos)
+                    petPrinted = true;
+            }
+            else {
+                if(toPrint.find('\n') != bstring::npos)
+                    petPrinted = false;
+            }
+        }
+        // TODO: This doesn't work yet, we need to buffer it up until we get a full line and then send it
+        if(pager) { // Paged
+            if(streamColor)
+                sock->appendPaged(toPrint);
+            else
+                sock->appendPaged(escapeColor(toPrint));
+        } else { // Unpaged
+            if(streamColor)
+                sock->bprint(toPrint);
+            else
+                sock->bprint(escapeColor(toPrint));
+        }
+    }
+
+}
+
+Socket *Streamable::getMySock() {
     const Player* player = dynamic_cast<Player*>(this);
     const Monster* monster = dynamic_cast<Monster*>(this);
     const Player* master = nullptr;
@@ -154,31 +192,6 @@ void Streamable::doPrint(std::string_view toPrint) {
         if(master)
             sock = master->getSock();
     }
-    if(sock) {
-        if(master) {
-            if(!petPrinted) {
-                sock->bprint("Pet> ");
-                if(toPrint.find("\n") == bstring::npos)
-                    petPrinted = true;
-            }
-            else {
-                if(toPrint.find("\n") != bstring::npos)
-                    petPrinted = false;
-            }
-        }
-        // TODO: This doesn't work yet, we need to buffer it up until we get a full line and then send it
-//        if(pager) { // Paged
-//            if(streamColor)
-//                sock->printPaged(toPrint);
-//            else
-//                sock->printPaged(escapeColor(toPrint));
-//        } else
-        { // Unpaged
-            if(streamColor)
-                sock->bprint(toPrint);
-            else
-                sock->bprint(escapeColor(toPrint));
-        }
-    }
+    return sock;
 
 }

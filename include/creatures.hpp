@@ -731,6 +731,7 @@ public:
     bool pulseSong(long t);
     const Song* playing{};
 
+    void donePaging();
 };
 
 //*********************************************************************

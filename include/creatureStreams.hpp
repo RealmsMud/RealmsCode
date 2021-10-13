@@ -25,6 +25,7 @@
 #include "stats.hpp"
 
 class MudObject;
+class Socket;
 
 class Streamable {
 public:
@@ -59,7 +60,7 @@ protected:
     bool petPrinted{};
 
     void doPrint(std::string_view toPrint);
-
+    Socket* getMySock();
 
 };
 

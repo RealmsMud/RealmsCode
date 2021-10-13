@@ -199,6 +199,7 @@ public:
     }
 
     void printPaged(std::string_view toPrint);
+    void appendPaged(std::string_view toPrint);
 
     template <typename... Args>
     void printPaged(std::string_view toPrint, Args &&... args) const {
@@ -368,10 +369,13 @@ public:
     static int getNumSockets();
     void handlePaging(const bstring &inStr);
     bool hasPagerOutput();
+    int getMaxPages() const;
+    void donePaging();
 
 private:
     int paged{};
     void sendPages(int numPages);
+
 };
 
 

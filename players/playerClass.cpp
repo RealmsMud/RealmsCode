@@ -134,11 +134,11 @@ int dmShowClasses(Player* admin, cmd* cmnd) {
     SkillGain* sGain;
     bstring tmp;
 
-    admin->printColor("Displaying Classes:%s\n",
+    *admin << PagerOn << ColorOn << fmt::format("Displaying Classes:{}\n",
         admin->isDm() ? "  Type ^y*classlist more^x to view more, ^y*classlist all^x to view all information." : "");
 
     for(auto& [clsName, pClass] : gConfig->classes) {
-        admin->printColor("Id: ^c%-2d^x   Name: ^c%s\n", pClass->getId(), clsName.c_str());
+        *admin << fmt::format("Id: ^c{:<2}^x   Name: ^c{}\n", pClass->getId(), clsName);
         if(more || all) {
             std::ostringstream cStr;
             std::map<int, PlayerTitle*>::iterator tt;
@@ -183,10 +183,10 @@ int dmShowClasses(Player* admin, cmd* cmnd) {
                 }
             }
             cStr << "\n";
-            tmp = cStr.str();
-            *admin << ColorOn << cStr.str() << ColorOff;
-            gServer->processOutput();
+            *admin << cStr.str();
+
         }
     }
+    *admin << PagerOff << ColorOff;
     return(0);
 }

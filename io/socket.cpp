@@ -61,7 +61,7 @@
 #include "version.hpp"                              // for VERSION
 #include "xml.hpp"                                  // for copyToBool, newNu...
 
-// TODO: Use window height, or player pager config instead
+const int MIN_PAGES = 10;
 const int MAX_PAGES = 80;
 
 
@@ -1179,7 +1179,7 @@ void Socket::sendPages(int numPages) {
 
 void Socket::handlePaging(const bstring& inStr) {
     if(inStr.equals("")) {
-        int numPages = MIN<int>(MAX_PAGES, pagerOutput.size());
+        int numPages = MIN<int>(getMaxPages(), pagerOutput.size());
         sendPages(numPages);
 
         if(!pagerOutput.empty()) {
@@ -1354,14 +1354,49 @@ void Socket::printPaged(std::string_view toPrint) {
     for(const auto& line : tokens) {
         pagerOutput.emplace_back(line);
     }
-    if (paged < MAX_PAGES) {
+}
+
+int Socket::getMaxPages() const {
+    return MAX(MIN(MAX_PAGES, term.rows) - 2, MIN_PAGES);
+}
+
+void Socket::donePaging() {
+    const int maxRows = getMaxPages();
+    if (paged < maxRows) {
         // Send lines up to the first page size
-        sendPages(MIN<int>(pagerOutput.size(), MAX_PAGES - paged));
-        if(paged == MAX_PAGES)
+        sendPages(MIN<int>(pagerOutput.size(), maxRows - paged));
+        if(paged == maxRows)
             askFor("\n[Hit Return, Any Key to Quit]: ");
+    }
+
+    if(paged < maxRows) {
+        // We're done paging and never hit the max pages, so clear paged
+        paged = 0;
     }
 }
 
+void Socket::appendPaged(std::string_view toAppend) {
+    if(pagerOutput.empty()) {
+        // Paging output is empty, nothing to append to, use normal printPaged logic
+        printPaged(toAppend);
+        // And add an empty line for subsequent appendPaged to append to
+        pagerOutput.emplace_back("");
+    } else {
+        // It's not empty, see if we're appending to what's already there, or if we're sending a multiline output
+        auto pos = toAppend.find('\n');
+        if (pos == std::string_view::npos) {
+            // There is no newline, append to what we previously sent
+            pagerOutput.back().append(toAppend);
+        } else {
+            // There is a newline, append everything before the newline to the previous page
+            pagerOutput.back().append(toAppend.substr(0, pos));
+            // Print the rest
+            printPaged(toAppend.substr(pos + 1));
+            // And add an empty line for subsequent appendPaged to append to
+            pagerOutput.emplace_back("");
+        }
+    }
+}
 //********************************************************************
 //                      bprint
 //********************************************************************
