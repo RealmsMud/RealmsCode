@@ -56,7 +56,7 @@ bool SkillInfo::hasBaseSkill() const {
     return (!baseSkill.empty());
 }
 
-bool Config::isKnownOnly(const bstring& skillName) const {
+bool Config::isKnownOnly(std::string_view skillName) const {
     auto it = skills.find(skillName);
     if (it != skills.end())
         return (((*it).second)->isKnownOnly());
@@ -69,7 +69,7 @@ bool Config::isKnownOnly(const bstring& skillName) const {
 Skill::Skill() {
     reset();
 }
-Skill::Skill(const bstring& pName, int pGained) {
+Skill::Skill(std::string_view pName, int pGained) {
     reset();
     setName(pName);
     gained = pGained;
@@ -127,7 +127,7 @@ void Skill::setGained(int pGained) {
     gained = pGained;
 }
 
-void Skill::setName(const bstring& pName) {
+void Skill::setName(std::string_view pName) {
     name = pName;
     updateParent();
 }
@@ -204,7 +204,7 @@ bstring SkillInfo::getDisplayName() const {
 //              attribute - What attribute will be helpful in raising the skill? (default: INT)
 //              bns - Any bonus to the improve calculation (default: 0)
 
-void Creature::checkImprove(const bstring& skillName, bool success, int attribute, int bns) {
+void Creature::checkImprove(std::string_view skillName, bool success, int attribute, int bns) {
     if (isMonster())
         return;
     if (inJail())
@@ -217,9 +217,7 @@ void Creature::checkImprove(const bstring& skillName, bool success, int attribut
     int gainType = crSkill->getGainType();
     // not a skill!
     if (gainType == NOT_A_SKILL) {
-        broadcast(::isDm,
-                "^y*** Skill \"%s\" was requested by the mud, but was not\n    found in the skill list. Check *skills to verify.",
-                skillName.c_str());
+        broadcast(::isDm, fmt::format("^y*** Skill \"{}\" was requested by the mud, but was not\n    found in the skill list. Check *skills to verify.", skillName).c_str());
         return;
     }
     long j = 0, t;
@@ -302,7 +300,7 @@ void Creature::checkImprove(const bstring& skillName, bool success, int attribut
 //                      knowsSkill
 //********************************************************************
 
-bool Creature::knowsSkill(const bstring& skillName) const {
+bool Creature::knowsSkill(std::string_view skillName) const {
     if (isMonster())
         return (true);
     if (isCt())
@@ -319,7 +317,7 @@ bool Creature::knowsSkill(const bstring& skillName) const {
 //********************************************************************
 // Returns the requested skill if it can be found on the creature
 
-Skill* Creature::getSkill(const bstring& skillName, bool useBase) const {
+Skill* Creature::getSkill(std::string_view skillName, bool useBase) const {
     if (skillName.empty())
         return (nullptr);
 
@@ -344,7 +342,7 @@ Skill* Creature::getSkill(const bstring& skillName, bool useBase) const {
 //                      setSkill
 //*********************************************************************
 
-bool Creature::setSkill(const bstring& skillStr, int gained) {
+bool Creature::setSkill(std::string_view skillStr, int gained) {
     if(!gConfig->skillExists(skillStr))
         return(false);
 
@@ -373,7 +371,7 @@ bool Creature::setSkill(const bstring& skillStr, int gained) {
 //********************************************************************
 // Add a new skill of 'skillName' at 'gained' level
 
-void Creature::addSkill(const bstring& skillName, int gained) {
+void Creature::addSkill(std::string_view skillName, int gained) {
     if (skillName.empty() || getSkill(skillName, false) != nullptr)
         return;
 
@@ -393,7 +391,7 @@ void Creature::addSkill(const bstring& skillName, int gained) {
 //                      remSkill
 //********************************************************************
 
-void Creature::remSkill(const bstring& skillName) {
+void Creature::remSkill(std::string_view skillName) {
     if (skillName.empty())
         return;
     auto it = skills.find(skillName);
@@ -463,21 +461,20 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
 
     // Tell the player what skills they are looking at
     if (toShow->getAsPlayer() == player)
-        toShow->printColor("^YYour Skills:");
+        toShow->printPaged("^YYour Skills:");
     else
-        toShow->printColor("^Y%s's Skills:", player->getCName());
+        toShow->printPaged(fmt::format("^Y{}'s Skills:", player->getName()));
 
     if (showMagic)
-        toShow->printColor(" ^Ytype \"skills\" to show non-magical skills.");
+        toShow->printPaged(" ^Ytype \"skills\" to show non-magical skills.");
     else if (player->getClass() !=  CreatureClass::BERSERKER)
-        toShow->printColor(" ^Ytype \"skills magic\" to show magical skills.");
+        toShow->printPaged(" ^Ytype \"skills magic\" to show magical skills.");
 
-    toShow->print("\n");
+    toShow->printPaged("\n");
 
     for (sgIt = gConfig->skillGroups.begin(); sgIt != gConfig->skillGroups.end(); sgIt++) {
         if (((*sgIt).first == "arcane" || (*sgIt).first == "divine" || (*sgIt).first == "magic") == !showMagic)
             continue;
-
 
         std::ostringstream oStr;
         known = 0;
@@ -532,9 +529,11 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
                 oStr << "\n";
             }
         }
-        if (known)
-            toShow->printColor("%s", oStr.str().c_str());
+        if (known) {
+            toShow->printPaged(oStr.str());
+        }
     }
+    toShow->donePaging();
     return (0);
 }
 
@@ -543,7 +542,7 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
 //********************************************************************
 // Return the player level equilvalent of the given skill
 
-double Creature::getSkillLevel(const bstring& skillName, bool useBase) const {
+double Creature::getSkillLevel(std::string_view skillName, bool useBase) const {
     if (isMonster())
         return (level);
 
@@ -577,7 +576,7 @@ double Creature::getSkillLevel(const bstring& skillName, bool useBase) const {
 //                      getSkillGained
 //********************************************************************
 
-double Creature::getSkillGained(const bstring& skillName, bool useBase) const {
+double Creature::getSkillGained(std::string_view skillName, bool useBase) const {
     Skill* skill = getSkill(skillName, useBase);
 
     if (skill == nullptr) {
@@ -594,7 +593,7 @@ double Creature::getSkillGained(const bstring& skillName, bool useBase) const {
     return (gained);
 }
 
-double Creature::getTradeSkillGained(const bstring& skillName, bool useBase) const {
+double Creature::getTradeSkillGained(std::string_view skillName, bool useBase) const {
     Skill* skill = getSkill(skillName, useBase);
     if (skill == nullptr) {
         if (isCt())
@@ -856,7 +855,7 @@ void Config::updateSkillPointers() {
 //********************************************************************
 // True if the skill exists
 
-bool Config::skillExists(const bstring& skillName) const {
+bool Config::skillExists(std::string_view skillName) const {
     auto it = skills.find(skillName);
     return (it != skills.end());
 }
@@ -866,7 +865,7 @@ bool Config::skillExists(const bstring& skillName) const {
 //********************************************************************
 // Returns the given skill skill
 
-SkillInfo* Config::getSkill(const bstring& skillName) const {
+SkillInfo* Config::getSkill(std::string_view skillName) const {
     auto it = skills.find(skillName);
     if (it != skills.end())
         return ((*it).second);
@@ -878,7 +877,7 @@ SkillInfo* Config::getSkill(const bstring& skillName) const {
 //********************************************************************
 // Get the display name of the skill
 
-bstring Config::getSkillDisplayName(const bstring& skillName) const {
+bstring Config::getSkillDisplayName(std::string_view skillName) const {
     auto it = skills.find(skillName);
     if (it != skills.end())
         return (((*it).second)->getDisplayName());
@@ -890,7 +889,7 @@ bstring Config::getSkillDisplayName(const bstring& skillName) const {
 //********************************************************************
 // Get the group display name of the skill
 
-bstring Config::getSkillGroupDisplayName(const bstring& groupName) const {
+bstring Config::getSkillGroupDisplayName(std::string_view groupName) const {
     auto it = skillGroups.find(groupName);
     if (it != skillGroups.end())
         return ((*it).second);
@@ -902,7 +901,7 @@ bstring Config::getSkillGroupDisplayName(const bstring& groupName) const {
 //********************************************************************
 // Get the skill group of the skill
 
-bstring Config::getSkillGroup(const bstring& skillName) const {
+bstring Config::getSkillGroup(std::string_view skillName) const {
     auto it = skills.find(skillName);
     if (it != skills.end())
         return (((*it).second)->getGroup());

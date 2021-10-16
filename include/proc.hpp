@@ -30,7 +30,7 @@ struct childProcess {
         extra = "";
         type = ChildType::UNKNOWN;
     }
-    childProcess(int p, ChildType t, int f = -1, const bstring& e = "") {
+    childProcess(int p, ChildType t, int f = -1, std::string_view e = "") {
         pid = p;
         type = t;
         fd = f;

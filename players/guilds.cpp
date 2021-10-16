@@ -29,6 +29,7 @@
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for getFullstrText, cmdGuild, cmdGuildHall
 #include "config.hpp"             // for Config, gConfig
+#include "color.hpp"              // for stripColor
 #include "creatures.hpp"          // for Player
 #include "flags.hpp"              // for P_CREATING_GUILD, P_AFK, P_PTESTER
 #include "global.hpp"             // for PROP_GUILDHALL, PROP_SHOP
@@ -65,9 +66,9 @@ int Guild::getNumMembers() const { return(numMembers); }
 long Guild::getPkillsIn() const { return(pkillsIn); }
 long Guild::getPkillsWon() const { return(pkillsWon); }
 long Guild::getPoints() const { return(points); }
-void Guild::setName(const bstring& n) { name = n; }
+void Guild::setName(std::string_view n) { name = n; }
 void Guild::setNum(unsigned short n) { num = n; }
-void Guild::setLeader(const bstring& l) { leader = l; }
+void Guild::setLeader(std::string_view l) { leader = l; }
 void Guild::setLevel(long l) { level = l; }
 void Guild::setNumMembers(int n) { numMembers = n; }
 void Guild::setPkillsIn(long pk) { pkillsIn = pk; }
@@ -1367,7 +1368,7 @@ int dmListGuilds(Player* player, cmd* cmnd) {
 //                      guild membership functions
 //*********************************************************************
 
-bool Guild::addMember(const bstring& memberName) {
+bool Guild::addMember(std::string_view memberName) {
     if(!memberName.empty()) {
         members.push_back(memberName);
         return(true);
@@ -1375,7 +1376,7 @@ bool Guild::addMember(const bstring& memberName) {
     return(false);
 }
 
-bool Guild::delMember(const bstring& memberName) {
+bool Guild::delMember(std::string_view memberName) {
     std::list<bstring>::iterator mIt;
 
     for(mIt = members.begin() ; mIt != members.end() ; mIt++) {
@@ -1387,7 +1388,7 @@ bool Guild::delMember(const bstring& memberName) {
     return(false);
 }
 
-bool Guild::isMember(const bstring& memberName) {
+bool Guild::isMember(std::string_view memberName) {
     std::list<bstring>::iterator mIt;
 
     for(mIt = members.begin() ; mIt != members.end() ; mIt++) {
@@ -1397,7 +1398,7 @@ bool Guild::isMember(const bstring& memberName) {
     return(false);
 }
 
-void Guild::renameMember(const bstring& oldName, const bstring& newName) {
+void Guild::renameMember(std::string_view oldName, std::string_view newName) {
     std::list<bstring>::iterator mIt;
 
     if(leader == oldName)
@@ -1434,7 +1435,7 @@ bool GuildCreation::addSupporter(Player* supporter) {
     return(false);
 }
 
-bool GuildCreation::removeSupporter(const bstring& supporterName) {
+bool GuildCreation::removeSupporter(std::string_view supporterName) {
     if(supporters.find(supporterName) != supporters.end()) {
         supporters.erase(supporterName);
         numSupporters--;
@@ -1443,7 +1444,7 @@ bool GuildCreation::removeSupporter(const bstring& supporterName) {
     return(false);
 }
 
-void GuildCreation::renameSupporter(const bstring& oldName, const bstring& newName) {
+void GuildCreation::renameSupporter(std::string_view oldName, std::string_view newName) {
     if(leader == oldName)
         leader = newName;
 
@@ -1453,7 +1454,7 @@ void GuildCreation::renameSupporter(const bstring& oldName, const bstring& newNa
     }
 }
 
-void Config::guildCreationsRenameSupporter(const bstring& oldName, const bstring& newName) {
+void Config::guildCreationsRenameSupporter(std::string_view oldName, std::string_view newName) {
     std::list<GuildCreation*>::iterator gcIt;
     for(gcIt = guildCreations.begin(); gcIt != guildCreations.end(); gcIt++) {
         (*gcIt)->renameSupporter(oldName, newName);
@@ -1466,7 +1467,7 @@ void Config::guildCreationsRenameSupporter(const bstring& oldName, const bstring
 //                      findGuildCreation
 //*********************************************************************
 
-GuildCreation* Config::findGuildCreation(const bstring& creationName) {
+GuildCreation* Config::findGuildCreation(std::string_view creationName) {
     std::list<GuildCreation*>::iterator gcIt;
     GuildCreation* gcp;
     for(gcIt = guildCreations.begin(); gcIt != guildCreations.end(); gcIt++) {
@@ -1528,7 +1529,7 @@ int Guild::averageLevel() {
 //                      guildExists
 //*********************************************************************
 
-bool Config::guildExists(const bstring& guildName) {
+bool Config::guildExists(std::string_view guildName) {
     Guild* guild;
     guild = getGuild(guildName);
     if(guild)
@@ -1877,7 +1878,7 @@ void rejectGuild(GuildCreation * toReject, char *reason) {
 //                      removeGuildCreation
 //*********************************************************************
 
-bstring Config::removeGuildCreation(const bstring& leaderName) {
+bstring Config::removeGuildCreation(std::string_view leaderName) {
     std::list<GuildCreation*>::iterator it;
     GuildCreation *gc;
     bstring toReturn = "";
@@ -1899,7 +1900,7 @@ bstring Config::removeGuildCreation(const bstring& leaderName) {
 //                      getGuild
 //*********************************************************************
 
-Guild* Config::getGuild(const bstring& name) {
+Guild* Config::getGuild(std::string_view name) {
     Guild* guild=nullptr;
     GuildMap::iterator it;
     for(it = guilds.begin(); it != guilds.end(); it++) {

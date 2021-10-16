@@ -31,8 +31,18 @@
 // Function Prototypes
 bstring delimit(const char *str, int wrap);
 
-void Creature::bPrint(const bstring& toPrint) const {
-    printColor("%s", toPrint.c_str());
+void Creature::printPaged(std::string_view toPrint) {
+    if(hasSock())
+        getSock()->printPaged(toPrint);
+}
+
+void Creature::donePaging() {
+    if(hasSock())
+        getSock()->donePaging();
+}
+
+void Creature::bPrint(std::string_view toPrint) const {
+    (Streamable &) *this << ColorOn << toPrint << ColorOff;
 }
 
 void Creature::print(const char *fmt,...) const {
@@ -82,7 +92,7 @@ void Player::vprint(const char *fmt, va_list ap) const {
 }
 
 
-static int VPRINT_flags = 0;
+static unsigned int VPRINT_flags = 0;
 
 void Socket::vprint(const char *fmt, va_list ap) {
     char    *msg;
@@ -172,8 +182,6 @@ int print_objcrt(FILE *stream, const struct printf_info *info, const void *const
         return(-1);
     }
 
-    // Pad to the minimum field width and print to the stream.
-    //len = fprintf (stream, "%*s", (info->left ? -info->width : info->width), buffer);
     len = fprintf(stream, "%s", buffer);
 
     // Clean up and return.
@@ -181,28 +189,33 @@ int print_objcrt(FILE *stream, const struct printf_info *info, const void *const
     return(len);
 }
 
-int print_arginfo (const struct printf_info *info, size_t n, int *argtypes) {
-    // We always take exactly one argument and this is a pointer to the structure..
-    if(n > 0)
+int print_arginfo (const struct printf_info *info, size_t n, int *argtypes, int* size) {
+    // We always take exactly one argument and this is a pointer to the structure
+    if(n > 0) {
         argtypes[0] = PA_POINTER;
+        if(info->spec == 'O' || info->spec == 'P') size[0] = sizeof(Object *);
+        else if(info->spec == 'R' || info->spec == 'M' || info->spec == 'N') size[0] = sizeof(Creature *);
+        else if(info->spec == 'b') size[0] = sizeof(bstring *);
+        else if(info->spec == 'T') size[0] = sizeof(std::ostringstream *);
+    }
     return(1);
 }
 
 int Server::installPrintfHandlers() {
-    int r = 0;
+    int r = 1;
     // bstring
-    r |= register_printf_function('B', print_objcrt, print_arginfo);
+    r &= register_printf_specifier('b', print_objcrt, print_arginfo);
     // std::ostringstream
-    r |= register_printf_function('T', print_objcrt, print_arginfo);
+    r &= register_printf_specifier('T', print_objcrt, print_arginfo);
     // creature
-    r |= register_printf_function('N', print_objcrt, print_arginfo);
+    r &= register_printf_specifier('N', print_objcrt, print_arginfo);
     // capital creature
-    r |= register_printf_function('M', print_objcrt, print_arginfo);
+    r &= register_printf_specifier('M', print_objcrt, print_arginfo);
     // object
-    r |= register_printf_function('P', print_objcrt, print_arginfo);
+    r &= register_printf_specifier('P', print_objcrt, print_arginfo);
     // capital object
-    r |= register_printf_function('O', print_objcrt, print_arginfo);
+    r &= register_printf_specifier('O', print_objcrt, print_arginfo);
     // creature's real name
-    r |= register_printf_function('R', print_objcrt, print_arginfo);
+    r &= register_printf_specifier('R', print_objcrt, print_arginfo);
     return(r);
 }

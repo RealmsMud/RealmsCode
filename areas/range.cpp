@@ -72,6 +72,6 @@ bstring Range::str() const {
 //                      isArea
 //*********************************************************************
 
-bool Range::isArea(const bstring& c) const {
+bool Range::isArea(std::string_view c) const {
     return(low.isArea(c));
 }

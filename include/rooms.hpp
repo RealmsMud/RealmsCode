@@ -56,7 +56,7 @@ public:
 //  virtual bool operator< (const MudObject& t) const = 0;
 
     void readExitsXml(xmlNodePtr curNode, bool offline=false);
-    bool delExit(const bstring& dir);
+    bool delExit(std::string_view dir);
     bool delExit(Exit *exit);
     void clearExits();
 
@@ -111,7 +111,7 @@ public:
 
     [[nodiscard]] bstring fullName() const;
     [[nodiscard]] bstring getVersion() const;
-    void setVersion(const bstring& v);
+    void setVersion(std::string_view v);
     [[nodiscard]] bool hasTraining() const;
     [[nodiscard]] CreatureClass whatTraining(int extra=0) const;
 
@@ -161,10 +161,10 @@ public:
     [[nodiscard]] Size getSize() const;
     [[nodiscard]] bool canPortHere(const Creature* creature=0) const;
 
-    void setShortDescription(const bstring& desc);
-    void setLongDescription(const bstring& desc);
-    void appendShortDescription(const bstring& desc);
-    void appendLongDescription(const bstring& desc);
+    void setShortDescription(std::string_view desc);
+    void setLongDescription(std::string_view desc);
+    void appendShortDescription(std::string_view desc);
+    void appendLongDescription(std::string_view desc);
     void setLowLevel(short lvl);
     void setHighLevel(short lvl);
     void setMaxMobs(short m);
@@ -172,7 +172,7 @@ public:
     void setTrapExit(const CatRef& t);
     void setTrapWeight(short weight);
     void setTrapStrength(short strength);
-    void setFaction(const bstring& f);
+    void setFaction(std::string_view f);
     void incBeenHere();
     void setTerrain(short t);
     void setRoomExperience(int exp);
@@ -234,7 +234,7 @@ public:
     bool toggleFlag(int flag);
 
     bstring getFishingStr() const;
-    void setFishing(const bstring& id);
+    void setFishing(std::string_view id);
     const Fishing* getFishing() const;
 };
 
@@ -250,7 +250,7 @@ public:
 
     bool    canDelete();
     void    recycle();
-    bool    updateExit(const bstring& dir);
+    bool    updateExit(std::string_view dir);
     void    updateExits();
     bool    isInteresting(const Player *viewer) const;
     bool    isRoad() const;

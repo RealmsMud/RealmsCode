@@ -28,7 +28,7 @@
 #include <utility>                             // for pair
 
 #include "area.hpp"                            // for Area, AreaZone, MapMarker
-#include "asynch.hpp"                          // for Async, AsyncExternal
+#include "async.hpp"                          // for Async, AsyncExternal
 #include "bstring.hpp"                         // for bstring, operator+
 #include "catRef.hpp"                          // for CatRef
 #include "catRefInfo.hpp"                      // for CatRefInfo, CatRefInfo...
@@ -442,13 +442,13 @@ void Config::findNextEmpty(childProcess &child, bool onReap) {
 //                          finishSwap
 //*********************************************************************
 
-void Config::finishSwap(const bstring& mover) {
-    Player* player = gServer->findPlayer(mover.c_str());
+void Config::finishSwap(std::string_view mover) {
+    Player* player = gServer->findPlayer(mover);
     bool online=true;
 
     if(!player) {
-        if(!loadPlayer(mover.c_str(), &player)) {
-            broadcast(isStaff, "^YRS: ^RError: ^xNon-existent player %s attempting to move rooms.\n", mover.c_str());
+        if(!loadPlayer(mover, &player)) {
+            broadcast(isStaff, fmt::format("^YRS: ^RError: ^xNon-existent player {} attempting to move rooms.\n", mover).c_str());
             endSwap();
             return;
         }
@@ -730,7 +730,7 @@ void Config::offlineSwap(childProcess &child, bool onReap) {
 //                          swap
 //*********************************************************************
 
-void Config::swap(Player* player, const bstring& name) {
+void Config::swap(Player* player, std::string_view name) {
     std::list<bstring>::iterator bIt;
     std::list<Swap>::iterator qIt;
     UniqueRoom *uOrigin=nullptr, *uTarget=nullptr;
@@ -840,12 +840,12 @@ void Config::swap(Player* player, const bstring& name) {
         player->printColor("^YRS: Room swap complete.\n");
         found = true;
     } else
-        loadPlayer(name.c_str(), &player);
+        loadPlayer(name, &player);
 
     if(player)
-        log_immort(true, player, "%s has finished swapping %s with %s.\n", name.c_str(), currentSwap.origin.str().c_str(), currentSwap.target.str().c_str());
+        log_immort(true, player, fmt::format("{} has finished swapping {} with {}.\n", name, currentSwap.origin.str(), currentSwap.target.str()).c_str());
     else
-        broadcast(isStaff, "^y%s has finished swapping %s with %s.", name.c_str(), currentSwap.origin.str().c_str(), currentSwap.target.str().c_str());
+        broadcast(isStaff, fmt::format("^y{} has finished swapping {} with {}.", name, currentSwap.origin.str(), currentSwap.target.str()).c_str());
 
     if(!found && player)
         free_crt(player);
@@ -859,7 +859,7 @@ void Config::swap(Player* player, const bstring& name) {
 
 Swap::Swap() { player = ""; }
 
-void Swap::set(const bstring& mover, const CatRef& swapOrigin, const CatRef& swapTarget, SwapType swapType) {
+void Swap::set(std::string_view mover, const CatRef& swapOrigin, const CatRef& swapTarget, SwapType swapType) {
     player = mover;
     origin = swapOrigin;
     target = swapTarget;
@@ -965,7 +965,7 @@ bool Config::moveObjectRestricted(const CatRef& cr) const {
 //                          moveRoomRestrictedArea
 //*********************************************************************
 
-bool Config::moveRoomRestrictedArea(const bstring& area) const {
+bool Config::moveRoomRestrictedArea(std::string_view area) const {
     return(area == "area" || area == "stor" || area == "shop" || area == "guild");
 }
 
@@ -974,13 +974,13 @@ bool Config::moveRoomRestrictedArea(const bstring& area) const {
 //                          checkSpecialArea
 //*********************************************************************
 
-bool Config::checkSpecialArea(const CatRef& origin, const CatRef& target, int (CatRefInfo::*toCheck), Player* player, bool online, const bstring& type) {
+bool Config::checkSpecialArea(const CatRef& origin, const CatRef& target, int (CatRefInfo::*toCheck), Player* player, bool online, std::string_view type) {
     Location l = getSpecialArea(toCheck, origin);
     bool t = origin == l.room;
     if(t || target == l.room) {
         if(online) {
-            player->printColor("^YRS: ^RError: ^xRoom (%s) room is set as a %s Room under CatRefInfo.\n",
-                t ? origin.str().c_str() : target.str().c_str(), type.c_str());
+            player->bPrint(fmt::format("^YRS: ^RError: ^xRoom ({}) room is set as a {} Room under CatRefInfo.\n",
+                t ? origin.str() : target.str(), type));
             player->print("It cannot be moved out of its area.\n");
         } else
             free_crt(player);
@@ -1270,7 +1270,7 @@ bool Config::swapIsInteresting(const MudObject* target) const {
 //                          nextDelim
 //*********************************************************************
 
-char whichDelim(const bstring& code) {
+char whichDelim(std::string_view code) {
     bstring::size_type qPos, aPos;
 
     qPos = code.find("\"");
@@ -1291,7 +1291,7 @@ char whichDelim(const bstring& code) {
 //                          getParamFromCode
 //*********************************************************************
 
-bstring getParamFromCode(const bstring& pythonCode, const bstring& function, SwapType type) {
+bstring getParamFromCode(std::string_view pythonCode, std::string_view function, SwapType type) {
     bstring code = pythonCode;
     bstring::size_type pos;
     char delim;
@@ -1344,7 +1344,7 @@ bstring getParamFromCode(const bstring& pythonCode, const bstring& function, Swa
 //                          setParamInCode
 //*********************************************************************
 
-bstring setParamInCode(const bstring& pythonCode, const bstring& function, SwapType type, const bstring& param) {
+bstring setParamInCode(std::string_view pythonCode, std::string_view function, SwapType type, std::string_view param) {
     bstring code = pythonCode;
     bstring::size_type pos;
 

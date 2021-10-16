@@ -296,8 +296,8 @@ void Area::save(xmlNodePtr curNode, bool saveRooms) const {
     xml::saveNonZeroNum(curNode, "CriticalZ", critical_z);
 
     xml::saveNonZeroNum(curNode, "FlightPower", flightPower);
-    xml::saveNonNullString(curNode, "DefaultTerrain", defaultTerrain);
-    xml::saveNonNullString(curNode, "ErrorTerrain", errorTerrain);
+    xml::saveNonNullString(curNode, "DefaultTerrain", &defaultTerrain);
+    xml::saveNonNullString(curNode, "ErrorTerrain", &errorTerrain);
 
     std::list<AreaZone*>::const_iterator zIt;
     childNode = xml::newStringChild(curNode, "Zones");

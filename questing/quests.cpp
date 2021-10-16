@@ -1048,7 +1048,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
             std::list<bstring> randomActions;
             int numResponses=0;
             for(TalkResponse * talkResponse : target->responses) {
-                for(const bstring&  keyword : talkResponse->keywords) {
+                for(std::string_view  keyword : talkResponse->keywords) {
                     if(keyword == "$random") {
                         randomResponses.push_back(talkResponse->response);
                         randomActions.push_back(talkResponse->action);
@@ -1079,7 +1079,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
             player, target, question.c_str());
         bstring key = "", keyword = "";
         for(TalkResponse * talkResponse : target->responses) {
-            for(const bstring& keyWrd : talkResponse->keywords) {
+            for(std::string_view keyWrd : talkResponse->keywords) {
                 keyword = keyTxtConvert(keyWrd).toLower();
 
                 if(keyword[0] == '@') {
@@ -1636,7 +1636,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
         strcat(str, "\n");
     }
 
-    *player << ColorOn << str << ColorOff;
+    *player << PagerOn << ColorOn << str << ColorOff;
 
     if(!player->questsCompleted.empty()) {
 
@@ -1667,6 +1667,8 @@ int cmdQuests(Player* player, cmd* cmnd) {
         QuestCompletion* quest = p.second;
         *player << i++ << ") " << ColorOn << quest->getStatusDisplay() << ColorOff;
     }
+
+    *player << PagerOff;
 
     return(0);
 }

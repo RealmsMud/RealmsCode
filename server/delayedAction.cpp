@@ -131,7 +131,7 @@ void Server::addDelayedAction(void (*callback)(DelayedActionFn), MudObject* targ
 //                      addDelayedScript
 //*********************************************************************
 
-void Server::addDelayedScript(void (*callback)(DelayedActionFn), MudObject* target, const bstring& script, long howLong, bool canInterrupt) {
+void Server::addDelayedScript(void (*callback)(DelayedActionFn), MudObject* target, std::string_view script, long howLong, bool canInterrupt) {
     DelayedAction action = DelayedAction(callback, target, script, time(nullptr) + howLong, canInterrupt);
 
     delayedActionQueue.push_back(action);
@@ -262,7 +262,7 @@ void doDelayedAction(const DelayedAction* action) {
 //*********************************************************************
 
 
-void Creature::delayedAction(const bstring& action, int delay, MudObject* target) {
+void Creature::delayedAction(std::string_view action, int delay, MudObject* target) {
     cmd cmnd;
 
     cmnd.fullstr = action;
@@ -292,6 +292,6 @@ void doDelayedScript(const DelayedAction* action) {
 //                      delayedScript
 //*********************************************************************
 
-void Creature::delayedScript(const bstring& script, int delay) {
+void Creature::delayedScript(std::string_view script, int delay) {
     gServer->addDelayedScript(doDelayedScript, this, script, delay);
 }

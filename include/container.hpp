@@ -82,9 +82,9 @@ public:
 
     void doSocialEcho(bstring str, const Creature* actor, const Creature* target = nullptr);
 
-    void effectEcho(bstring fmt, const MudObject* actor = nullptr, const MudObject* applier = nullptr, Socket* ignore = nullptr);
+    void effectEcho(std::string_view fmt, const MudObject* actor = nullptr, const MudObject* applier = nullptr, Socket* ignore = nullptr);
 
-    void wake(const bstring& str, bool noise) const;
+    void wake(std::string_view str, bool noise) const;
 
 
     bstring listObjects(const Player* player, bool showAll, char endColor ='x' ) const;

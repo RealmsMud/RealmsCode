@@ -117,7 +117,7 @@ public:
     ReportedMsdpVariable(const MsdpVariable *mv, Socket *sock);
 
     [[nodiscard]] bstring getValue() const;
-    void setValue(const bstring &newValue);
+    void setValue(std::string_view newValue);
     void setValue(int newValue);
     void setValue(long newValue);
     bool checkTimer();       // True = ok to send, False = timer hasn't expired yet

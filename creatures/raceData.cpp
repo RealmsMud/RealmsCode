@@ -245,7 +245,7 @@ RaceData::~RaceData() {
 //                      stattoNum
 //*********************************************************************
 
-int Config::stattoNum(const bstring& str) {
+int Config::stattoNum(std::string_view str) {
     if(str == "Str") return(STR);
     if(str == "Con") return(CON);
     if(str == "Dex") return(DEX);
@@ -258,7 +258,7 @@ int Config::stattoNum(const bstring& str) {
 //                      savetoNum
 //*********************************************************************
 
-int Config::savetoNum(const bstring& str) {
+int Config::savetoNum(std::string_view str) {
     if(str == "Poi") return(POI);
     if(str == "Dea") return(DEA);
     if(str == "Bre") return(BRE);
@@ -271,7 +271,7 @@ int Config::savetoNum(const bstring& str) {
 //                      classtoNum
 //*********************************************************************
 
-int Config::classtoNum(const bstring& str) {
+int Config::classtoNum(std::string_view str) {
     if(str == "Assassin") return(static_cast<int>(CreatureClass::ASSASSIN));
     if(str == "Berserker") return(static_cast<int>(CreatureClass::BERSERKER));
     if(str == "Cleric") return(static_cast<int>(CreatureClass::CLERIC));
@@ -302,7 +302,7 @@ int Config::classtoNum(const bstring& str) {
 //                      racetoNum
 //*********************************************************************
 
-int Config::racetoNum(const bstring& str) {
+int Config::racetoNum(std::string_view str) {
     for(unsigned i=0; i<races.size(); i++) {
         if(!races[i])
             continue;
@@ -316,7 +316,7 @@ int Config::racetoNum(const bstring& str) {
 //                      deitytoNum
 //*********************************************************************
 
-int Config::deitytoNum(const bstring& str) {
+int Config::deitytoNum(std::string_view str) {
     for(unsigned i=0; i<deities.size(); i++) {
         if(!deities[i])
             continue;

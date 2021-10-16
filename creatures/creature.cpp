@@ -340,7 +340,7 @@ bstring Player::consider(Creature* creature) const {
 // This function returns true if the name passed in the first parameter
 // is in the charm list of the creature
 
-bool Creature::hasCharm(const bstring& charmed) {
+bool Creature::hasCharm(std::string_view charmed) {
     if(charmed.empty())
         return(false);
 

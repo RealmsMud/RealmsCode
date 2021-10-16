@@ -15,7 +15,7 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "asynch.hpp"
+#include "async.hpp"
 
 #include <cstdlib>        // for abort, exit
 #include <unistd.h>       // for close, dup2, execl, fork, pipe, STDOUT_FILENO

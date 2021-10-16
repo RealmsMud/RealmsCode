@@ -210,14 +210,14 @@ void Creature::setType(unsigned short t) { type = (mType)MIN<short>(MAX_MOB_TYPE
 void Creature::setType(mType t) { type = t; }
 
 
-void Creature::setDescription(const bstring& desc) {
+void Creature::setDescription(std::string_view desc) {
     description = desc;
     if(isMonster())
         description.Replace("*CR*", "\n");
 }
 
 
-void Creature::setVersion(const bstring& v) { version = v.empty() ? VERSION : v; }
+void Creature::setVersion(std::string_view v) { version = v.empty() ? VERSION : v; }
 
 void Creature::setVersion(xmlNodePtr rootNode) { xml::copyPropToBString(version, rootNode, "Version"); }
 
@@ -272,7 +272,7 @@ void Creature::setRealm(unsigned long num, Realm r) { realm[r-1] = MIN<unsigned 
 void Creature::addRealm(unsigned long num, Realm r) { setRealm(getRealm(r) + num, r); }
 void Creature::subRealm(unsigned long num, Realm r) { setRealm(num > getRealm(r) ? 0 : getRealm(r) - num, r); }
 
-void Creature::setPoisonedBy(const bstring& p) { poisonedBy = p; }
+void Creature::setPoisonedBy(std::string_view p) { poisonedBy = p; }
 
 unsigned short Monster::getMobTrade() const { return(mobTrade); }
 
@@ -297,8 +297,8 @@ void Monster::setUpdateAggro(unsigned short a) { updateAggro = MAX<unsigned shor
 void Monster::setNumWander(unsigned short n) { numwander = MAX<unsigned short>(0, MIN<unsigned short>(6, n)); }
 void Monster::setSkillLevel(int l) { skillLevel = MAX(0, MIN(100, l)); }
 void Monster::setMobTrade(unsigned short t) { mobTrade = MAX<unsigned short>(0,MIN<unsigned short>(MOBTRADE_COUNT-1, t)); }
-void Monster::setPrimeFaction(const bstring& f) { primeFaction = f; }
-void Monster::setTalk(const bstring& t) { talk = t; talk.Replace("*CR*", "\n"); }
+void Monster::setPrimeFaction(std::string_view f) { primeFaction = f; }
+void Monster::setTalk(std::string_view t) { talk = t; talk.Replace("*CR*", "\n"); }
 
 CreatureClass Player::getSecondClass() const { return(cClass2); }
 bool Player::hasSecondClass() const { return(cClass2 != CreatureClass::NONE); }
@@ -374,15 +374,15 @@ void Player::setLuck(int l) { luck = l; }
 void Player::setWeaponTrains(unsigned short t) { weaponTrains = t; }
 void Player::subWeaponTrains(unsigned short t) { setWeaponTrains(t > weaponTrains ? 0 : weaponTrains - t); }
 
-void Player::setLastPassword(const bstring& p) { lastPassword = p; }
-void Player::setAfflictedBy(const bstring& a) { afflictedBy = a; }
+void Player::setLastPassword(std::string_view p) { lastPassword = p; }
+void Player::setAfflictedBy(std::string_view a) { afflictedBy = a; }
 void Player::setLastLogin(long l) { lastLogin = MAX<long>(0, l); }
 void Player::setLastInterest(long l) { lastInterest = MAX<long>(0, l); }
-void Player::setLastCommunicate(const bstring& c) { lastCommunicate = c; }
-void Player::setLastCommand(const bstring& c) { lastCommand = c; lastCommand.trim(); }
+void Player::setLastCommunicate(std::string_view c) { lastCommunicate = c; }
+void Player::setLastCommand(std::string_view c) { lastCommand = c; lastCommand.trim(); }
 void Player::setCreated() { created = time(nullptr); }
 void Player::setSurname(const bstring& s) { surname = s.left(20); }
-void Player::setForum(const bstring& f) { forum = f; }
+void Player::setForum(std::string_view f) { forum = f; }
 void Player::setAlias(Monster* m) { alias_crt = m; }
 
 void Player::setBirthday() {
@@ -401,7 +401,7 @@ void Player::delAnchor(int i) {
     }
 }
 
-void Player::setAnchor(int i, const bstring& a) {
+void Player::setAnchor(int i, std::string_view a) {
     delAnchor(i);
     anchor[i] = new Anchor(a, this);
 }
@@ -1630,9 +1630,18 @@ bool Creature::immuneCriticals() const {
     return(monType::immuneCriticals(type));
 }
 
+
+
 //*********************************************************************
 //                      getSock
 //*********************************************************************
+
+bool Creature::hasSock() const {
+    auto ply = getAsConstPlayer();
+    if(ply)
+        return ply->hasSock();
+    return false;
+}
 
 Socket* Creature::getSock() const {
     return(nullptr);
@@ -1641,6 +1650,10 @@ Socket* Creature::getSock() const {
 //*********************************************************************
 //                      getSock
 //*********************************************************************
+
+bool Player::hasSock() const {
+    return(mySock != nullptr);
+}
 
 Socket* Player::getSock() const {
     return(mySock);

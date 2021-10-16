@@ -179,7 +179,7 @@ public:
     void    printtime(const Player* player) const;
     bool    isBirthday(const Player* target) const;
     [[nodiscard]] bstring getLastPirate() const;
-    void    setLastPirate(const bstring& name);
+    void    setLastPirate(std::string_view name);
     void    resetToMidnight();
 
     void    load();

@@ -193,7 +193,7 @@ void Container::unRegisterContainedItems() {
 //                      wake
 //*********************************************************************
 
-void Container::wake(const bstring& str, bool noise) const {
+void Container::wake(std::string_view str, bool noise) const {
     for(Player* ply : players) {
         ply->wake(str, noise);
     }

@@ -166,7 +166,7 @@ TalkResponse::TalkResponse(xmlNodePtr rootNode) {
 xmlNodePtr TalkResponse::saveToXml(xmlNodePtr rootNode) const {
     xmlNodePtr talkNode = xml::newStringChild(rootNode, "TalkResponse");
 
-    for(const bstring&  keyword : keywords) {
+    for(std::string_view  keyword : keywords) {
         xml::newStringChild(talkNode, "Keyword", keyword);
     }
     xml::newStringChild(talkNode, "Response", response);

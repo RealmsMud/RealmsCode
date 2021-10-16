@@ -100,7 +100,7 @@ bstring CatRef::rstr() const {
 //                      str
 //*********************************************************************
 
-bstring CatRef::str(const bstring& current, char color) const {
+bstring CatRef::str(std::string_view current, char color) const {
     std::ostringstream oStr;
     // if we're in an area already, we can chop off some text because they
     // already know what the area is
@@ -131,7 +131,7 @@ void CatRef::setArea(bstring c) {
 //                      isArea
 //*********************************************************************
 
-bool CatRef::isArea(const bstring& c) const {
+bool CatRef::isArea(std::string_view c) const {
     return(area == c);
 }
 

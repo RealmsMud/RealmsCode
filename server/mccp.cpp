@@ -27,7 +27,7 @@ int mccp(Player* player, cmd* cmnd) {
     if(!player)
         return(0);
 
-    if(player->getSock()->getMccp() == 0) {
+    if(player->getSock()->mccpEnabled() == 0) {
         player->print("Attempting to enable MCCP.\n");
         player->print("%s", telnet::will_comp2);
         player->print("%s", telnet::will_comp1);

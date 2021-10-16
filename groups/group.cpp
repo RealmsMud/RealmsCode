@@ -264,7 +264,7 @@ bool Group::inGroup(Creature* target) {
 //********************************************************************************
 // Parameters: sendToInvited - Are invited members counted as in the group or not?
 // Send msg to everyone in the group except ignore
-void Group::sendToAll(const bstring& msg, Creature* ignore, bool sendToInvited) {
+void Group::sendToAll(std::string_view msg, Creature* ignore, bool sendToInvited) {
     for(Creature* crt : members) {
         if(!crt->isPet() && crt != ignore && (sendToInvited || crt->getGroupStatus() >= GROUP_MEMBER )) {
             *crt << ColorOn << msg << ColorOff;
@@ -282,7 +282,7 @@ void Group::setGroupType(GroupType newType) {
 //********************************************************************************
 //* setName
 //********************************************************************************
-void Group::setName(const bstring& newName) {
+void Group::setName(std::string_view newName) {
     // Test validity of name here
     name = newName;
 }
@@ -303,7 +303,7 @@ bool Group::setLeader(Creature* newLeader) {
 //********************************************************************************
 //* setDescription
 //********************************************************************************
-void Group::setDescription(const bstring& newDescription) {
+void Group::setDescription(std::string_view newDescription) {
     // Test validity of description here
     description = newDescription;
 }
@@ -330,7 +330,7 @@ const bstring& Group::getName() const {
 //********************************************************************************
 //* getDescription
 //********************************************************************************
-const bstring& Group::getDescription() const {
+const bstring&Group::getDescription() const {
     return(description);
 }
 
@@ -447,7 +447,7 @@ bstring Group::getGroupTypeStr() const {
 //********************************************************************************
 //* GetGroupTypeStr
 //********************************************************************************
-bstring displayPref(const bstring& name, bool set) {
+bstring displayPref(std::string_view name, bool set) {
     return(name + (set ? "^gon^x" : "^roff^x"));
 }
 bstring Group::getFlagsDisplay() {

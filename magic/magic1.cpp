@@ -100,7 +100,7 @@ int cmdCast(Creature* creature, cmd* cmnd) {
 }
 
 
-void doCastPython(MudObject* caster, Creature* target, const bstring& spell, int strength) {
+void doCastPython(MudObject* caster, Creature* target, std::string_view spell, int strength) {
     if(!caster || !target)
         return;
     int c = 0, n = 0;
@@ -1105,7 +1105,7 @@ int Player::consume(Object* object, cmd* cmnd) {
     int     (*fn)(SpellFn);
     bool    dimensionalFailure=false;
     bool    eat = (object->flagIsSet(O_EATABLE) || object->getType() == ObjectType::HERB), drink=object->flagIsSet(O_DRINKABLE) || object->getType() == ObjectType::POTION;
-    //const bstring& effect = object->getEffect();
+    //std::string_view effect = object->getEffect();
     fn = nullptr;
 
     if(isStaff() && object->getType() != ObjectType::POTION && !strcmp(cmnd->str[0], "eat")) {
@@ -1429,7 +1429,7 @@ int cmdRecall(Player* player, cmd* cmnd) {
 
 // does the logging for a lag-protect hazy
 
-void Player::recallLog(const bstring& name, const bstring& cname, const bstring& room) {
+void Player::recallLog(std::string_view name, std::string_view cname, std::string_view room) {
     std::ostringstream log;
 
     log << "### " << getName() << "(L" << getLevel() << ") hazied (" << name << ") ";
@@ -1552,20 +1552,20 @@ int Player::useRecallPotion(int show, int log) {
 //                      logCast
 //*********************************************************************
 
-void logCast(Creature* caster, Creature* target, const bstring& spell, bool dmToo) {
+void logCast(Creature* caster, Creature* target, std::string_view spell, bool dmToo) {
     Player* pCaster = caster->getAsPlayer();
     if(!pCaster || !pCaster->isStaff() || (!dmToo && pCaster->isDm()))
         return;
-    log_immort(true, pCaster, "%s cast an %s spell on %s in room %s.\n",
-        caster->getCName(), spell.c_str(), target ? target->getCName() : "self",
-        caster->getRoomParent()->fullName().c_str());
+    log_immort(true, pCaster, fmt::format("{} cast an {} spell on {} in room {}.\n",
+        caster->getName(), spell, target ? target->getName() : "self",
+        caster->getRoomParent()->fullName()).c_str());
 }
 
 //*********************************************************************
 //                      noCastUndead
 //*********************************************************************
 
-bool noCastUndead(const bstring& effect) {
+bool noCastUndead(std::string_view effect) {
     return(effect == "regeneration");
 }
 
@@ -1573,7 +1573,7 @@ bool noCastUndead(const bstring& effect) {
 //                      splGeneric
 //*********************************************************************
 
-int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const bstring& effect, int strength, long duration) {
+int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, std::string_view effect, int strength, long duration) {
     Creature* target=nullptr;
 
     if(cmnd->num == 2) {

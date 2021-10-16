@@ -83,8 +83,8 @@ public:
 
     // Set information about a group
     bool setLeader(Creature* newLeader);
-    void setName(const bstring& newName);
-    void setDescription(const bstring& newDescription);
+    void setName(std::string_view newName);
+    void setDescription(std::string_view newDescription);
     void setGroupType(GroupType newType);
     void setFlag(int flag);
     void clearFlag(int flag);
@@ -99,7 +99,7 @@ public:
     [[nodiscard]] int getNumInSameRoom(Creature* target);
     [[nodiscard]] int getNumPlyInSameRoom(Creature* target);
     [[nodiscard]] Creature* getMember(int num, bool countDmInvis = false);
-    [[nodiscard]] Creature* getMember(const bstring& name, int num, Creature* searcher = nullptr, bool includePets = false);
+    [[nodiscard]] Creature* getMember(const bstring&  name, int num, Creature* searcher = nullptr, bool includePets = false);
     [[nodiscard]] GroupType getGroupType() const;
     [[nodiscard]] bstring getGroupTypeStr() const;
     [[nodiscard]] bstring getFlagsDisplay();
@@ -108,7 +108,7 @@ public:
     bstring getGroupList(Creature* viewer);
 
 
-    void sendToAll(const bstring& msg, Creature* ignore = nullptr, bool sendToInvited = false);
+    void sendToAll(std::string_view msg, Creature* ignore = nullptr, bool sendToInvited = false);
 
     bstring getMsdp(Creature* viewer) const;
 

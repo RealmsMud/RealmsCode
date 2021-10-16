@@ -37,9 +37,9 @@ public:
     bool    operator==(const CatRef& cr) const;
     bool    operator!=(const CatRef& cr) const;
     [[nodiscard]] bstring rstr() const;
-    [[nodiscard]] bstring str(const bstring& current = "", char color = '\0') const;
+    [[nodiscard]] bstring str(std::string_view current = "", char color = '\0') const;
     void    setArea(bstring c);
-    [[nodiscard]] bool    isArea(const bstring& c) const;
+    [[nodiscard]] bool    isArea(std::string_view c) const;
 
     bstring area;
     short   id{};

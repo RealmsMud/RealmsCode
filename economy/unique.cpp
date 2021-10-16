@@ -1628,9 +1628,9 @@ bool UniqueOwner::runDecay(long t, int decay, int max) {
     return(true);
 }
 
-void Unique::broadcastDestruction(const bstring& owner, const Object* object) {
-    Player* player = gServer->findPlayer(owner.c_str());
+void Unique::broadcastDestruction(std::string_view owner, const Object* object) {
+    Player* player = gServer->findPlayer(owner);
     if(player)
         player->printColor("^yThe %s^y vanishes!\n", object->getCName());
-    broadcast("^y### Tragically, %s's unique item %s^y just broke!", owner.c_str(), object->getCName());
+    broadcast(fmt::format("^y### Tragically, {}'s unique item {}^y just broke!", owner, object->getName()).c_str());
 }

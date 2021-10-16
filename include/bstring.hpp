@@ -94,7 +94,7 @@ inline void strAdd(std::string& dst, const std::string& src) {
     if(&src == &dst)
         dst.reserve(2*dst.size());
 
-    dst.append(src.c_str());
+    dst.append(src);
 }
 
 inline void strAdd(std::string& dst, const char* src) {
@@ -214,6 +214,8 @@ public:
     bstring(const std::string& str) {
         assignStr(*this, str);
     }
+
+    bstring(std::string_view str ): my_base(str) { }
 
     bstring(const char* str) {
         *this = str;
@@ -497,41 +499,6 @@ public:
         this->swap(mt);
         if( !mt.empty() )
             this->assign(mt.c_str(), mt.size());
-    }
-
-    void Format(const char* fmt, ...) {
-        va_list argList;
-        va_start(argList, fmt);
-        FormatV(fmt, argList);
-        va_end(argList);
-    }
-
-    void AppendFormat(const char* fmt, ...) {
-        va_list argList;
-        va_start(argList, fmt);
-        AppendFormatV(fmt, argList);
-        va_end(argList);
-    }
-
-#define STD_BUF_SIZE        1024
-
-    // an efficient way to add formatted characters to the string.  You may only
-    // add up to STD_BUF_SIZE characters at a time, though
-    void AppendFormatV(const char* fmt, va_list argList) {
-        char buf[STD_BUF_SIZE];
-        int nLen = vsprintf(buf, fmt, argList);
-        if( nLen > 0  )
-            this->append(buf, nLen);
-    }
-
-    void FormatV(const char* szFormat, va_list argList) {
-        int nLen = strLen(szFormat) + STD_BUF_SIZE;
-        char *buf;
-        buf = new char[nLen];
-        vsprintf(buf, szFormat, argList);
-        assignStr(*this, buf);
-        delete[] buf;
-
     }
 
     int Collate(my_const_pointer that) const {

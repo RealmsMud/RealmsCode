@@ -104,7 +104,7 @@ void Object::validateId() {
     }
 }
 
-void Object::setDroppedBy(MudObject* dropper, const bstring& pDropType) {
+void Object::setDroppedBy(MudObject* dropper, std::string_view pDropType) {
 
     droppedBy.name = dropper->getName();
     droppedBy.id = dropper->getId();
@@ -1174,7 +1174,7 @@ bool Object::isKey(const UniqueRoom* room, const Exit* exit) const {
 //*********************************************************************
 // room = the catref for the destination room
 
-void spawnObjects(const bstring& room, const bstring& objects) {
+void spawnObjects(std::string_view room, std::string_view objects) {
     UniqueRoom *dest = nullptr;
     Object* object=nullptr;
     CatRef  cr;

@@ -34,7 +34,7 @@ typedef std::vector<Object*> HerbVector;
 typedef std::map<bstring, HerbVector > HerbMap;
 
 namespace Alchemy {
-    bstring getEffectString(Object* obj, const bstring& effect);
+    bstring getEffectString(Object* obj, std::string_view effect);
     int numEffectsVisisble(int skillLevel);
 };
 
@@ -48,11 +48,11 @@ public:
 
     bstring getDisplayString();
 
-    [[nodiscard]] const bstring& getName() const;
-    [[nodiscard]] const bstring& getPotionPrefix() const;
-    [[nodiscard]] const bstring& getPotionDisplayName() const;
-    [[nodiscard]] const bstring& getAction() const;
-    [[nodiscard]] const bstring& getPythonScript() const;
+    [[nodiscard]] std::string_view getName() const;
+    [[nodiscard]] std::string_view getPotionPrefix() const;
+    [[nodiscard]] std::string_view getPotionDisplayName() const;
+    [[nodiscard]] std::string_view getAction() const;
+    [[nodiscard]] std::string_view getPythonScript() const;
     [[nodiscard]] long getBaseDuration() const;
     [[nodiscard]] short getBaseStrength() const;
     [[nodiscard]] bool potionNameHasPrefix() const;
@@ -103,7 +103,7 @@ public:
     // Apply this effect to the creature:
     bool apply(Creature* target);
 
-    [[nodiscard]] const bstring& getEffect() const;
+    [[nodiscard]] std::string_view getEffect() const;
     [[nodiscard]] long getDuration() const;
     [[nodiscard]] short getStrength() const;
     [[nodiscard]] short getQuality() const;

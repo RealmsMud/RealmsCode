@@ -91,7 +91,7 @@ public:
     long getLowerLimit(const Player* player) const;
     Player* findAggro(BaseRoom* room);
     [[nodiscard]] bool isParent() const;
-    void setParent(const bstring& value);
+    void setParent(std::string_view value);
     void setIsParent(bool value);
 
     static int getCutoff(int attitude);
@@ -101,14 +101,14 @@ public:
     static bstring getBar(int regard, bool alwaysPad);
     static void worshipSocial(Monster *monster);
 
-    static bool willAggro(const Player* player, const bstring& faction);
-    static bool willSpeakWith(const Player* player, const bstring& faction);
-    static bool willDoBusinessWith(const Player* player, const bstring& faction);
-    static bool willBeneCast(const Player* player, const bstring& faction);
-    static bool willLetThrough(const Player* player, const bstring& faction);
+    static bool willAggro(const Player* player, std::string_view faction);
+    static bool willSpeakWith(const Player* player, std::string_view faction);
+    static bool willDoBusinessWith(const Player* player, std::string_view faction);
+    static bool willBeneCast(const Player* player, std::string_view faction);
+    static bool willLetThrough(const Player* player, std::string_view faction);
 
-    static Money adjustPrice(const Player* player, const bstring& faction, Money money, bool sell);
-    static bool canPledgeTo(const Player* player, const bstring& faction);
+    static Money adjustPrice(const Player* player, std::string_view faction, Money money, bool sell);
+    static bool canPledgeTo(const Player* player, std::string_view faction);
 
     static const int WORSHIP        = 4;
     static const int REGARD         = 3;

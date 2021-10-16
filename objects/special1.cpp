@@ -27,7 +27,7 @@
 #include "global.hpp"      // for SP_COMBO, SP_MAPSC, ZAPPED
 #include "objects.hpp"     // for Object
 #include "paths.hpp"       // for Sign
-#include "proto.hpp"       // for broadcast, viewFile
+#include "proto.hpp"       // for broadcast
 #include "random.hpp"      // for Random
 #include "rooms.hpp"       // for BaseRoom, ExitList
 #include "socket.hpp"      // for Socket
@@ -49,10 +49,7 @@ int Object::doSpecial(Player* player) {
             if(str[i] == ' ')
                 str[i] = '_';
         sprintf(str2, "%s/%s.txt", Path::Sign, str);
-        if(flagIsSet(O_LOGIN_FILE))
-            player->getSock()->viewLoginFile(str2);
-        else
-            player->getSock()->viewFile(str2);
+        player->getSock()->viewFile(str2, !flagIsSet(O_UNPAGED_FILE));
         break;
         
     case SP_COMBO:

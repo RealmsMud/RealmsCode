@@ -302,8 +302,6 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
     Monster     *raider=nullptr;
     UniqueRoom      *room=nullptr, *newRoom=nullptr;
     int         found=1;
-    char        output[160];
-
 
     if(stop->raid) {
         // record when the last pirate raid was
@@ -311,14 +309,9 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
             gConfig->calendar->setLastPirate(ship->name);
 
         // kick people off the ship!
-        if( stop->raid->getSearchMob() &&
-            (stop->raid->getDump().id || stop->raid->getPrison().id) &&
-            loadMonster(stop->raid->getSearchMob(), &raider)
-        ) {
-            Player* ply;
+        if( stop->raid->getSearchMob() && (stop->raid->getDump().id || stop->raid->getPrison().id) && loadMonster(stop->raid->getSearchMob(), &raider)) {
             // otherwise go through each player
-            for(const auto& p : gServer->players) {
-                ply = p.second;
+            for(const auto& [pId, ply] : gServer->players) {
 
                 if(!ply->isConnected())
                     continue;
@@ -339,7 +332,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                 found = 1;
 
 
-                ply->bPrint(raider->getCrtStr(nullptr, CAP, 1) + " just arrived\n");
+                *ply << ColorOn << raider->getCrtStr(nullptr, CAP, 1) << " just arrived\n" << ColorOff;
                 ply->sendPrompt();
 
                 // you can't see me!
@@ -350,34 +343,28 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                 if(found && ply->flagIsSet(P_HIDDEN)) {
                     found = 0;
 
-                    ply->bPrint(raider->getCrtStr(nullptr, CAP | NONUM, 0) + " searches the room.\n");
+                    *ply << ColorOn << raider->getCrtStr(nullptr, CAP | NONUM, 0) << " searches the room.\n" << ColorOff;
 
                     if(Random::get(1,100) <= SHIP_SEARCH_CHANCE) {
                         found = 1;
                         ply->unhide();
 
-                        sprintf(output, "%s found something!\n", raider->upHeShe());
-                        ply->print(output);
+                        *ply << raider->upHeShe() <<" found something!\n";
                     }
                     ply->sendPrompt();
                 }
 
                 if(!found) {
-                    ply->bPrint(raider->getCrtStr(nullptr, CAP|NONUM, 0) + " wanders away.\n");
+                    *ply << ColorOn<< raider->getCrtStr(nullptr, CAP|NONUM, 0) << " wanders away.\n" << ColorOff;
                     ply->sendPrompt();
                     continue;
                 }
 
                 ply->wake("You awaken suddenly!");
 
-                if( stop->raid->getDump().id &&
-                    !(ply->isUnconscious() && stop->raid->getUnconInPrison()) &&
-                    loadRoom(stop->raid->getDump(), &newRoom)
-                ) {
-
-
+                if( stop->raid->getDump().id && !(ply->isUnconscious() && stop->raid->getUnconInPrison()) && loadRoom(stop->raid->getDump(), &newRoom)) {
                     if(!stop->raid->getDumpTalk().empty()) {
-                        ply->bPrint(raider->getCrtStr(nullptr, CAP|NONUM, 0) + " says to you, \"" + stop->raid->getDumpTalk() + "\".\n");
+                        *ply << ColorOn << raider->getCrtStr(nullptr, CAP|NONUM, 0) << " says to you, \"" << stop->raid->getDumpTalk() << "\".\n" << ColorOff;
                     }
                     if(!stop->raid->getDumpAction().empty()) {
                         if(!stop->raid->getDumpTalk().empty())
@@ -385,18 +372,16 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                         bstring tmp = stop->raid->getDumpAction();
                         bstring tmp2 = raider->getCrtStr(nullptr, CAP|NONUM, 0);
                         tmp.Replace("*ACTOR*", tmp2.c_str());
-                        ply->bPrint(tmp + "\n");
+                        *ply << ColorOn << tmp << "\n" << ColorOff;
                     }
                     ply->deleteFromRoom();
                     ply->addToRoom(newRoom);
                     ply->doPetFollow();
 
-                } else if(stop->raid->getPrison().id &&
-                    loadRoom(stop->raid->getPrison(), &newRoom)
-                ) {
+                } else if(stop->raid->getPrison().id && loadRoom(stop->raid->getPrison(), &newRoom)) {
 
                     if(!stop->raid->getPrisonTalk().empty()) {
-                        ply->bPrint(raider->getCrtStr(nullptr, CAP|NONUM, 0) + "says to you \"" + stop->raid->getPrisonTalk() + "\".\n");
+                        *ply << ColorOn << raider->getCrtStr(nullptr, CAP|NONUM, 0) << "says to you \"" << stop->raid->getPrisonTalk() + "\".\n" << ColorOff;
                     }
                     if(!stop->raid->getPrisonAction().empty()) {
                         if(!stop->raid->getPrisonTalk().empty())
@@ -404,7 +389,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                         bstring tmp = stop->raid->getPrisonAction();
                         bstring tmp2 = raider->getCrtStr(nullptr, CAP|NONUM, 0);
                         tmp.Replace("*ACTOR*", tmp2.c_str());
-                        ply->bPrint(tmp + "\n");
+                        *ply << ColorOn << tmp << "\n" << ColorOff;
                     }
                     ply->deleteFromRoom();
                     ply->addToRoom(newRoom);

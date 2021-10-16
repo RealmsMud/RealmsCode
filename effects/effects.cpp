@@ -99,7 +99,7 @@ void Config::clearEffects() {
 //                      getEffect
 //*********************************************************************
 
-const Effect* Config::getEffect(const bstring& eName) {
+const Effect* Config::getEffect(std::string_view eName) {
     EffectMap::const_iterator eIt;
     if( (eIt = effects.find(eName)) == effects.end())
         return(nullptr);
@@ -111,7 +111,7 @@ const Effect* Config::getEffect(const bstring& eName) {
 //                      effectExists
 //*********************************************************************
 
-bool Config::effectExists(const bstring& eName) {
+bool Config::effectExists(std::string_view eName) {
     return(effects.find(eName) != effects.end());
 }
 
@@ -411,11 +411,11 @@ bool EffectInfo::postApply(bool keepApplier) {
 //*********************************************************************
 
 
-EffectInfo* MudObject::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, const Creature* owner, bool keepApplier) {
+EffectInfo* MudObject::addEffect(std::string_view effect, long duration, int strength, MudObject* applier, bool show, const Creature* owner, bool keepApplier) {
     return(effects.addEffect(effect, duration, strength, applier, show, this, owner, keepApplier));
 }
 
-EffectInfo* Effects::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
+EffectInfo* Effects::addEffect(std::string_view effect, long duration, int strength, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
     if(!gConfig->getEffect(effect))
         return(nullptr);
     auto* newEffect = new EffectInfo(effect, time(nullptr), duration, strength, pParent, owner);
@@ -479,7 +479,7 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
 //                      addPermEffect
 //*********************************************************************
 
-EffectInfo* MudObject::addPermEffect(const bstring& effect, int strength, bool show) {
+EffectInfo* MudObject::addPermEffect(std::string_view effect, int strength, bool show) {
     return(effects.addEffect(effect, -1, strength, nullptr, show, this));
 }
 
@@ -488,11 +488,11 @@ EffectInfo* MudObject::addPermEffect(const bstring& effect, int strength, bool s
 //*********************************************************************
 // Remove the effect (Won't remove permanent effects if remPerm is false)
 
-bool MudObject::removeEffect(const bstring& effect, bool show, bool remPerm, MudObject* fromApplier) {
+bool MudObject::removeEffect(std::string_view effect, bool show, bool remPerm, MudObject* fromApplier) {
     return(effects.removeEffect(effect, show, remPerm, fromApplier));
 }
 
-bool Effects::removeEffect(const bstring& effect, bool show, bool remPerm, MudObject* fromApplier) {
+bool Effects::removeEffect(std::string_view effect, bool show, bool remPerm, MudObject* fromApplier) {
     EffectInfo* toDel = getExactEffect(effect);
     if( toDel &&
         (toDel->getDuration() != -1 || (toDel->getDuration() == -1 && remPerm)) &&
@@ -534,7 +534,7 @@ void Effects::removeOwner(const Creature* owner) {
 //                      objectCanBestowEffect
 //*********************************************************************
 
-bool Effect::objectCanBestowEffect(const bstring& effect) {
+bool Effect::objectCanBestowEffect(std::string_view effect) {
     return( !effect.empty() &&
             effect != "vampirism" &&
             effect != "porphyria" &&
@@ -546,7 +546,7 @@ bool Effect::objectCanBestowEffect(const bstring& effect) {
 //                      isEffected
 //*********************************************************************
 
-bool MudObject::isEffected(const bstring& effect, bool exactMatch) const {
+bool MudObject::isEffected(std::string_view effect, bool exactMatch) const {
     return(effects.isEffected(effect, exactMatch));
 }
 
@@ -557,7 +557,7 @@ bool MudObject::isEffected(EffectInfo* effect) const {
 // We are effected if we have an effect with this name, or an effect with a base effect
 // of this name
 
-bool Effects::isEffected(const bstring& effect, bool exactMatch) const {
+bool Effects::isEffected(std::string_view effect, bool exactMatch) const {
     //EffectList list;
     for(EffectInfo* eff : effectList) {
         if(eff->getName() == effect || (!exactMatch && eff->hasBaseEffect(effect)))
@@ -593,7 +593,7 @@ const std::list<bstring>& Effect::getBaseEffects() {
 //                      hasPermEffect
 //*********************************************************************
 
-bool MudObject::hasPermEffect(const bstring& effect) const {
+bool MudObject::hasPermEffect(std::string_view effect) const {
     EffectInfo* toCheck = effects.getEffect(effect);
     return(toCheck && toCheck->getDuration() == -1);
 }
@@ -602,13 +602,13 @@ bool MudObject::hasPermEffect(const bstring& effect) const {
 //                      getEffect
 //*********************************************************************
 
-EffectInfo* MudObject::getEffect(const bstring& effect) const {
+EffectInfo* MudObject::getEffect(std::string_view effect) const {
     return(effects.getEffect(effect));
 }
 // Returns the effect if we find one that the name matches or has
 // the base effect mentioned
 
-EffectInfo* Effects::getEffect(const bstring& effect) const {
+EffectInfo* Effects::getEffect(std::string_view effect) const {
     EffectList::const_iterator eIt;
     EffectInfo* toReturn = nullptr;
     for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
@@ -630,12 +630,12 @@ EffectInfo* Effects::getEffect(const bstring& effect) const {
 //                      getExactEffect
 //*********************************************************************
 
-EffectInfo* MudObject::getExactEffect(const bstring& effect) const {
+EffectInfo* MudObject::getExactEffect(std::string_view effect) const {
     return(effects.getExactEffect(effect));
 }
 
 // Returns the effect with an exact name match
-EffectInfo* Effects::getExactEffect(const bstring& effect) const {
+EffectInfo* Effects::getExactEffect(std::string_view effect) const {
     EffectList::const_iterator eIt;
     for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
         if((*eIt) && (*eIt)->getName() == effect)
@@ -932,7 +932,7 @@ void Creature::convertOldEffects() {
 //*********************************************************************
 // Convert the given effect from a flag/lt to an effect
 
-bool Creature::convertToEffect(const bstring& effect, int flag, int lt) {
+bool Creature::convertToEffect(std::string_view effect, int flag, int lt) {
     if(!flagIsSet(flag))
         return(false);
 
@@ -1115,7 +1115,7 @@ bstring Creature::doReplace(bstring fmt, const MudObject* actor, const MudObject
 //                      effectEcho
 //*********************************************************************
 
-void Container::effectEcho(bstring fmt, const MudObject* actor, const MudObject* applier, Socket* ignore) {
+void Container::effectEcho(std::string_view fmt, const MudObject* actor, const MudObject* applier, Socket* ignore) {
     Socket* ignore2 = nullptr;
     if(actor->getAsConstCreature())
         ignore2 = actor->getAsConstCreature()->getSock();
@@ -1124,7 +1124,7 @@ void Container::effectEcho(bstring fmt, const MudObject* actor, const MudObject*
             continue;
 
         bstring toSend = ply->doReplace(fmt, actor, applier);
-        ply->bPrint(toSend + "\n");
+        (Streamable &) *ply << ColorOn << toSend << ColorOff << "\n";
     }
 }
 
@@ -1140,7 +1140,7 @@ int Effect::getPulseDelay() const {
 //                      runScript
 //*********************************************************************
 
-bool EffectInfo::runScript(const bstring& pyScript, MudObject* applier) {
+bool EffectInfo::runScript(std::string_view pyScript, MudObject* applier) {
 
     // Legacy: Default action is return true, so play along with that
     if(pyScript.empty())
@@ -1489,7 +1489,7 @@ bstring Effect::getDisplay() const {
 //                      hasBaseEffect
 //*********************************************************************
 
-bool EffectInfo::hasBaseEffect(const bstring& effect) const {
+bool EffectInfo::hasBaseEffect(std::string_view effect) const {
     return(myEffect->hasBaseEffect(effect));
 }
 
@@ -1497,8 +1497,8 @@ bool EffectInfo::hasBaseEffect(const bstring& effect) const {
 //                      hasBaseEffect
 //*********************************************************************
 
-bool Effect::hasBaseEffect(const bstring& effect) const {
-    for(const bstring& be : baseEffects) {
+bool Effect::hasBaseEffect(std::string_view effect) const {
+    for(std::string_view be : baseEffects) {
         if(be == effect)
             return(true);
     }
@@ -1518,7 +1518,7 @@ bstring Effect::getName() const {
 //*********************************************************************
 // TODO: Add applier here
 
-EffectInfo::EffectInfo(const bstring& pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent, const Creature* owner):
+EffectInfo::EffectInfo(std::string_view pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent, const Creature* owner):
         name(pName), lastMod(pLastMod), lastPulse(pLastMod), duration(pDuration), strength(pStrength), myParent(pParent)
 {
     myEffect = gConfig->getEffect(pName);

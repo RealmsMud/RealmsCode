@@ -32,6 +32,7 @@
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for getFullstrText, cmdNoAuth, cmdNoExist
 #include "config.hpp"             // for Config, gConfig
+#include "color.hpp"              // for stripColor
 #include "container.hpp"          // for PlayerSet, Container
 #include "creatures.hpp"          // for Player, Creature
 #include "enums/loadType.hpp"     // for LoadType, LoadType::LS_BACKUP
@@ -1439,13 +1440,13 @@ int dmRestorePlayer(Player* player, cmd* cmnd) {
 #define DM_GEN_WARN     4
 #define DM_GEN_BUG      5
 
-int dmGeneric(Player* player, cmd* cmnd, const bstring& action, int what) {
+int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
     Player  *target=nullptr;
 
     bool    online=false;
 
     if(cmnd->num < 2) {
-        player->print("%s whom?\n", action.c_str());
+        player->bPrint(fmt::format("{} whom?\n", action));
         return(0);
     }
 
@@ -1810,7 +1811,7 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
         victim->printColor("^gYou begin to meltdown!\n");
         char filename[80];
         snprintf(filename, 80, "%s/crash.txt", Path::Config);
-        victim->getSock()->viewLoginFile(filename);
+        victim->getSock()->viewFile(filename);
         break;
     case DM_RAPE:
         victim->printColor("^mYou have been raped by the gods!\n");
@@ -1948,7 +1949,7 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
             if(kill_room && player!=victim && !silent) {
                 switch(type) {
                 case DM_NUCLEAR:
-                    player->getSock()->viewLoginFile(filename);
+                    player->getSock()->viewFile(filename);
                     broadcast("^g### Sadly, %s was killed by %s's radiation.", player->getCName(), victim->getCName());
                     break;
                 default:

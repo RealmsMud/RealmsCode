@@ -223,7 +223,7 @@ void Player::score(const Player* viewer) {
 
     // if they aren't logged on, they won't have a socket
     if(getSock()) {
-        switch(getSock()->getMccp()) {
+        switch(getSock()->mccpEnabled()) {
             case 1:
                 viewer->printColor("^yMCCP V1 Enabled\n");
                 break;

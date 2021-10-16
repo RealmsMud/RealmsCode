@@ -213,7 +213,7 @@ bool loadRoom(int index, UniqueRoom **pRoom, bool offline=false);
 bool loadRoom(const CatRef& cr, UniqueRoom **pRoom, bool offline=false);
 bool loadRoomFromFile(const CatRef& cr, UniqueRoom **pRoom, bstring filename="", bool offline=false);
 
-bool loadPlayer(const bstring& name, Player** player, enum LoadType loadType=LoadType::LS_NORMAL);
+bool loadPlayer(std::string_view name, Player** player, enum LoadType loadType=LoadType::LS_NORMAL);
 
 void loadCarryArray(xmlNodePtr curNode, Carry array[], const char* name, int maxProp);
 void loadCatRefArray(xmlNodePtr curNode, std::map<int, CatRef>& array, const char* name, int maxProp);

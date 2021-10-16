@@ -45,27 +45,27 @@ bool SocialCommand::getWakeRoom() const {
     return(wakeRoom);
 }
 
-const bstring& SocialCommand::getSelfNoTarget() const  {
+std::string_view SocialCommand::getSelfNoTarget() const  {
     return(selfNoTarget);
 }
-const bstring& SocialCommand::getRoomNoTarget() const {
+std::string_view SocialCommand::getRoomNoTarget() const {
     return(roomNoTarget);
 }
 
-const bstring& SocialCommand::getSelfOnTarget() const {
+std::string_view SocialCommand::getSelfOnTarget() const {
     return(selfOnTarget);
 }
-const bstring& SocialCommand::getRoomOnTarget() const {
+std::string_view SocialCommand::getRoomOnTarget() const {
     return(roomOnTarget);
 }
-const bstring& SocialCommand::getVictimOnTarget() const {
+std::string_view SocialCommand::getVictimOnTarget() const {
     return(victimOnTarget);
 }
 
-const bstring& SocialCommand::getSelfOnSelf() const {
+std::string_view SocialCommand::getSelfOnSelf() const {
     return(selfOnSelf);
 }
-const bstring& SocialCommand::getRoomOnSelf() const {
+std::string_view SocialCommand::getRoomOnSelf() const {
     return(roomOnSelf);
 }
 
@@ -137,7 +137,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
             *target << toTarget << "\n";
         }
 
-        const bstring& toRoom = social->getRoomOnTarget();
+        std::string_view toRoom = social->getRoomOnTarget();
         parent->doSocialEcho(toRoom, creature, target);
 
         socialHooks(creature, target, str);
@@ -146,7 +146,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
 
         *creature << social->getSelfNoTarget() << "\n";
 
-        const bstring& toRoom = social->getRoomNoTarget();
+        std::string_view toRoom = social->getRoomNoTarget();
 
         if(!toRoom.empty() && parent) {
             parent->doSocialEcho(toRoom, creature, target);

@@ -171,7 +171,7 @@ public:
     bool hasProxyAccess(Player* proxy, Player* proxied);
     void grantProxyAccess(Player* proxy, Player* proxied);
     bool removeProxyAccess(Player* proxy, Player* proxied);
-    bool removeProxyAccess(const bstring& id, Player* proxied);
+    bool removeProxyAccess(std::string_view id, Player* proxied);
     void clearProxyAccess();
 
     bstring getProxyList(Player* player = nullptr);
@@ -192,7 +192,7 @@ public:
 // Mxp Elements
     bool loadMxpElements();
     void clearMxpElements();
-    bstring& getMxpColorTag(const bstring& str);
+    bstring& getMxpColorTag(std::string_view str);
 
 // Commands
     bool initCommands();
@@ -203,84 +203,84 @@ public:
     bool saveSocials();
     void clearSocials();
     // For help socials
-    [[nodiscard]] bool writeSocialFile() const;
+    bool writeSocialFile() const;
 
 // Effects
     bool loadEffects();
     void clearEffects();
-    const Effect* getEffect(const bstring& eName);
-    bool effectExists(const bstring& eName);
+    const Effect* getEffect(std::string_view eName);
+    bool effectExists(std::string_view eName);
 
 // Spells
     bool loadSpells();
-    [[nodiscard]] bool saveSpells() const;
+    bool saveSpells() const;
     void clearSpells();
-    const Spell* getSpell(const bstring& sName, int& ret);
+    const Spell* getSpell(std::string_view sName, int& ret);
 
 // New Songs
     bool loadSongs();
     bool saveSongs() const;
     void clearSongs();
-    const Song* getSong(const bstring& sName, int& ret);
-    const Song* getSong(const bstring& sName);
+    const Song* getSong(std::string_view sName, int& ret);
+    const Song* getSong(std::string_view sName);
 
 
 // Alchemy
     bool loadAlchemy();
     bool clearAlchemy();
-    const AlchemyInfo *getAlchemyInfo(const bstring& effect) const;
+    const AlchemyInfo *getAlchemyInfo(std::string_view effect) const;
 
 // Skills
-    [[nodiscard]] bool skillExists(const bstring& skillName) const;
-    [[nodiscard]] SkillInfo* getSkill(const bstring& skillName) const;
-    [[nodiscard]] bstring getSkillGroupDisplayName(const bstring& groupName) const;
-    [[nodiscard]] bstring getSkillGroup(const bstring& skillName) const;
-    [[nodiscard]] bstring getSkillDisplayName(const bstring& skillName) const;
-    [[nodiscard]] bool isKnownOnly(const bstring& skillName) const;
+    [[nodiscard]] bool skillExists(std::string_view skillName) const;
+    [[nodiscard]] SkillInfo* getSkill(std::string_view skillName) const;
+    [[nodiscard]] bstring getSkillGroupDisplayName(std::string_view groupName) const;
+    [[nodiscard]] bstring getSkillGroup(std::string_view skillName) const;
+    [[nodiscard]] bstring getSkillDisplayName(std::string_view skillName) const;
+    [[nodiscard]] bool isKnownOnly(std::string_view skillName) const;
 
 
 // Bans
     bool addBan(Ban* toAdd);
     bool deleteBan(int toDel);
-    bool isBanned(const char *site);
+    bool isBanned(std::string_view site);
     int isLockedOut(Socket* sock);
 
 
 // Guilds
-    bool guildExists(const bstring& guildName);
+    bool guildExists(std::string_view guildName);
     bool addGuild(Guild* toAdd);
 
     Guild* getGuild(int guildId);
-    Guild* getGuild(const bstring& name);
+    Guild* getGuild(std::string_view name);
     Guild* getGuild(const Player* player, bstring txt);
     bool deleteGuild(int guildId);
 
 // GuildCreations
-    bstring removeGuildCreation(const bstring& leaderName);
-    GuildCreation* findGuildCreation(const bstring& name);
+    bstring removeGuildCreation(std::string_view leaderName);
+    GuildCreation* findGuildCreation(std::string_view name);
     bool addGuildCreation( GuildCreation* toAdd);
     void creationToGuild(GuildCreation* toApprove);
-    void guildCreationsRenameSupporter(const bstring& oldName, const bstring& newName);
+    void guildCreationsRenameSupporter(std::string_view oldName, std::string_view newName);
 
 // Bans
     bool loadBans();
-    [[nodiscard]] bool saveBans() const;
+    bool saveBans() const;
     void clearBanList();
 
 // Guilds
     bool loadGuilds();
-    [[nodiscard]] bool saveGuilds() const;
+    bool saveGuilds() const;
     void clearGuildList();
 
 // Factions
     bool loadFactions();
     void clearFactionList();
-    [[nodiscard]] const Faction *getFaction(const bstring& factionStr) const;
+    [[nodiscard]] const Faction *getFaction(std::string_view factionStr) const;
 
 // Fishing
     bool loadFishing();
     void clearFishing();
-    const Fishing *getFishing(const bstring& id) const;
+    const Fishing *getFishing(std::string_view id) const;
 
 // Old Quests (Quest Table)
     bool loadQuestTable();
@@ -299,11 +299,11 @@ public:
     void loadCalendar();
     [[nodiscard]] const Calendar* getCalendar() const;
 
-    int classtoNum(const bstring& str);
-    int racetoNum(const bstring& str);
-    int deitytoNum(const bstring& str);
-    int stattoNum(const bstring& str);
-    int savetoNum(const bstring& str);
+    int classtoNum(std::string_view str);
+    int racetoNum(std::string_view str);
+    int deitytoNum(std::string_view str);
+    int stattoNum(std::string_view str);
+    int savetoNum(std::string_view str);
 
 // Uniques
     bool loadLimited();
@@ -329,16 +329,16 @@ public:
 // Recipes
     bool loadRecipes();
     void clearRecipes();
-    [[nodiscard]] bool saveRecipes() const;
+    bool saveRecipes() const;
     Recipe *getRecipe(int id);
-    Recipe *searchRecipes(const Player* player, const bstring& skill, Size recipeSize, int numIngredients, const Object* object=nullptr);
+    Recipe *searchRecipes(const Player* player, std::string_view skill, Size recipeSize, int numIngredients, const Object* object=nullptr);
     void addRecipe(Recipe* recipe);
     void remRecipe(Recipe* recipe);
 
 // StartLocs
     bool loadStartLoc();
     void clearStartLoc();
-    [[nodiscard]] const StartLoc* getStartLoc(const bstring& id) const;
+    [[nodiscard]] const StartLoc* getStartLoc(std::string_view id) const;
     [[nodiscard]] const StartLoc* getDefaultStartLoc() const;
     [[nodiscard]] const StartLoc* getStartLocByReq(const CatRef& cr) const;
     void saveStartLocs() const;
@@ -351,31 +351,31 @@ public:
     void showProperties(Player* viewer, Player* player, PropType propType = PROP_NONE);
     Property* getProperty(const CatRef& cr);
     void destroyProperty(Property *p);
-    void destroyProperties(const bstring& owner);
+    void destroyProperties(std::string_view owner);
     CatRef getAvailableProperty(PropType type, int numRequired);
-    void renamePropertyOwner(const bstring& oldName, Player *player);
+    void renamePropertyOwner(std::string_view oldName, Player *player);
     CatRef getSingleProperty(const Player* player, PropType type);
 
 // CatRefInfo
     bool loadCatRefInfo();
     void clearCatRefInfo();
     void saveCatRefInfo() const;
-    [[nodiscard]] bstring catRefName(const bstring& area) const;
-    [[nodiscard]] const CatRefInfo* getCatRefInfo(const bstring& area, int id=0, int shouldGetParent=0) const;
+    [[nodiscard]] bstring catRefName(std::string_view area) const;
+    [[nodiscard]] const CatRefInfo* getCatRefInfo(std::string_view area, int id=0, int shouldGetParent=0) const;
     [[nodiscard]] const CatRefInfo* getCatRefInfo(const BaseRoom* room, int shouldGetParent=0) const;
     [[nodiscard]] const CatRefInfo* getRandomCatRefInfo(int zone) const;
 
 
 // swap
     void swapLog(const bstring& log, bool external=true);
-    void swap(Player* player, const bstring& name);
+    void swap(Player* player, std::string_view name);
     void swap(bstring str);
     void offlineSwap(childProcess &child, bool onReap);
     void offlineSwap();
     void findNextEmpty(childProcess &child, bool onReap);
-    void finishSwap(const bstring& mover);
+    void finishSwap(std::string_view mover);
     void endSwap(int id=1);
-    bool moveRoomRestrictedArea(const bstring& area) const;
+    bool moveRoomRestrictedArea(std::string_view area) const;
     bool moveObjectRestricted(const CatRef& cr) const;
     void swapEmptyQueue();
     void swapNextInQueue();
@@ -386,14 +386,14 @@ public:
     void setMovingRoom(const CatRef& o, const CatRef& t);
     void swapInfo(const Player* player);
     void swapAbort();
-    bool checkSpecialArea(const CatRef& origin, const CatRef& target, int (CatRefInfo::*toCheck), Player* player, bool online, const bstring& type);
+    bool checkSpecialArea(const CatRef& origin, const CatRef& target, int (CatRefInfo::*toCheck), Player* player, bool online, std::string_view type);
     bool swapChecks(const Player* player, const Swap& s);
     bool swapIsInteresting(const MudObject* target) const;
 
 // Double Logging
-    void addDoubleLog(const bstring& forum1, const bstring& forum2);
-    void remDoubleLog(const bstring& forum1, const bstring& forum2);
-    bool canDoubleLog(const bstring& forum1, const bstring& forum2) const;
+    void addDoubleLog(std::string_view forum1, std::string_view forum2);
+    void remDoubleLog(std::string_view forum1, std::string_view forum2);
+    bool canDoubleLog(std::string_view forum1, std::string_view forum2) const;
     bool loadDoubleLog();
     void saveDoubleLog() const;
     void listDoubleLog(const Player* viewer) const;

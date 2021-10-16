@@ -53,7 +53,7 @@ unsigned int Clan::getRescind() const { return(rescind); }
 unsigned int Clan::getDeity() const { return(deity); }
 bstring Clan::getName() const { return(name); }
 
-short Clan::getSkillBonus(const bstring& skill) const {
+short Clan::getSkillBonus(std::string_view skill) const {
     auto it = skillBonus.find(skill);
 
     if(it != skillBonus.end())

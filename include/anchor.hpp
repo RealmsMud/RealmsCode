@@ -30,7 +30,7 @@ class UniqueRoom;
 class Anchor {
 public:
     Anchor();
-    Anchor(const bstring& a, const Player* player);
+    Anchor(std::string_view a, const Player* player);
     ~Anchor();
     void reset();
 

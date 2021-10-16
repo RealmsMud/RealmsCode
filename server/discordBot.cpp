@@ -20,6 +20,7 @@
 #include "fmt/core.h"
 #include "random.hpp"           // for Random
 #include "config.hpp"           // for Config
+#include "color.hpp"            // for stripColor
 #include "communication.hpp"    // for COM_EMOTE
 #include "server.hpp"           // for Server, MonsterList
 #include "creatures.hpp"        // for Player
@@ -107,11 +108,11 @@ bool Server::initDiscordBot() {
                 std::string content = event.msg->content;
 
                 // Replace all mentions with the actual users
-                for (auto &mention: event.msg->mentions) {
-                    boost::replace_all(content, fmt::format("<@!{}>", mention), fmt::format("@{}", getUsername(guild, dpp::find_user(mention))));
+                for (auto &[user, guildMember]: event.msg->mentions) {
+                    boost::replace_all(content, fmt::format("<@!{}>", guildMember.user_id), fmt::format("@{}", guildMember.nickname) );
                 }
                 for (auto &mention: event.msg->mention_channels) {
-                    boost::replace_all(content, fmt::format("<#{}>", mention), fmt::format("#{}", dpp::find_channel(mention)->name));
+                    boost::replace_all(content, fmt::format("<#{}>", mention.id), fmt::format("#{}", mention.name));
                 }
                 for (auto &mention: event.msg->mention_roles) {
                     boost::replace_all(content, fmt::format("<@&{}>", mention), fmt::format("@{}", dpp::find_role(mention)->name));
@@ -121,13 +122,13 @@ bool Server::initDiscordBot() {
 
             if (!event.msg->attachments.empty())
                 for (auto& attachment : event.msg->attachments)
-                    contentStr << " " << attachment.url;
+                    contentStr << attachment.url;
 
             if (!event.msg->embeds.empty())
                 for (auto& embed: event.msg->embeds)
-                    contentStr << " " << embed.url;
+                    contentStr << embed.url;
 
-            sendGlobalComm(nullptr, contentStr.str(), "", 0, chan, "", username, username);
+            sendGlobalComm(nullptr, escapeColor(contentStr.str()), "", 0, chan, "", username, username);
         } else {
             // Third? Generic fallback... or do nothing
             std::cout << "Got msg " << event.msg->content << " in channel " << event.msg->channel_id << " from "

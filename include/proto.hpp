@@ -52,8 +52,8 @@ bool isMatch(const Creature* searcher, MudObject* target, const bstring& name, b
 
 
 // Socials
-void socialHooks(Creature *creature, MudObject* target, const bstring& action, const bstring& result = "");
-void socialHooks(Creature *target, const bstring& action, const bstring& result = "");
+void socialHooks(Creature *creature, MudObject* target, std::string_view action, std::string_view result = "");
+void socialHooks(Creature *target, std::string_view action, std::string_view result = "");
 bool actionShow(Player* pTarget, Creature* creature);
 
 // afflictions.cpp
@@ -61,13 +61,6 @@ unsigned int standardPoisonDuration(short level, short con);
 
 // calendar.cpp
 int reloadCalendar(Player* player);
-
-
-
-// color.cpp
-bstring stripColor(const bstring& color);
-bstring escapeColor(bstring color);
-
 
 
 // commerce.cpp
@@ -84,15 +77,14 @@ Creature *enm_in_group(Creature *target);
 
 
 // dmroom.cpp
-bstring wrapText(const bstring& text, int wrap);
+bstring wrapText(std::string_view text, int wrap);
 
 
 
 
 // io.cpp
-bstring xsc(const bstring& txt);
-bstring unxsc(const bstring& txt);
-bstring unxsc(const char* txt);
+bstring xsc(std::string_view txt);
+bstring unxsc(std::string_view txt);
 
 namespace Pueblo {
     static bstring activation = "this world is pueblo ";
@@ -102,7 +94,7 @@ namespace Pueblo {
 }
 
 char keyTxtConvert(unsigned char c);
-bstring keyTxtConvert(const bstring& txt);
+bstring keyTxtConvert(std::string_view txt);
 bool keyTxtEqual(const Creature* target, const char* txt);
 bool keyTxtEqual(const Object* target, const char* txt);
 bool isPrintable(char c);
@@ -119,17 +111,17 @@ void showRoomFlags(const Player* player, const BaseRoom* room, const TileInfo *t
 
 
 void getCatRef(bstring str, CatRef* cr, const Creature* target);
-void getDestination(const bstring& str, Location* l, const Creature* target);
+void getDestination(std::string_view str, Location* l, const Creature* target);
 void getDestination(bstring str, MapMarker* mapmarker, CatRef* cr, const Creature* target);
 
-void spawnObjects(const bstring& room, const bstring& objects);
+void spawnObjects(std::string_view room, std::string_view objects);
 
 
 
 
-void link_rom(BaseRoom* room, const Location& l, const bstring& str);
-void link_rom(BaseRoom* room, const CatRef& cr, const bstring& str);
-void link_rom(BaseRoom* room, MapMarker *mapmarker, const bstring& str);
+void link_rom(BaseRoom* room, const Location& l, std::string_view str);
+void link_rom(BaseRoom* room, const CatRef& cr, std::string_view str);
+void link_rom(BaseRoom* room, MapMarker *mapmarker, std::string_view str);
 
 int room_track(Creature* player);
 
@@ -168,14 +160,6 @@ bstring getOrdinal(int num);
 
 char* get_skill_string(int nIndex);
 
-bool isTitle(const bstring& str);
-bool isClass(char str[80]);
-
-
-
-
-//void login(Socket* sock, bstring str);
-//void createPlayer(Socket* sock, const bstring& str);
 
 void remove_all(Player* player);
 
@@ -299,7 +283,7 @@ void doStatChange(Creature* target, Player *pTarget, int stat, bool good);
 bool hinderedByDimensionalAnchor(int splno);
 
 
-void logCast(Creature* caster, Creature* target, const bstring& spell, bool dmToo=false);
+void logCast(Creature* caster, Creature* target, std::string_view spell, bool dmToo=false);
 
 
 // main.cpp
@@ -312,9 +296,8 @@ bool validMobId(const CatRef& cr);
 bool validObjId(const CatRef& cr);
 bool validRoomId(const CatRef& cr);
 bstring timeStr(int seconds);
-bstring removeColor(bstring obj);
 
-bstring progressBar(int barLength, float percentFull, const bstring& text = "", char progressChar = '=', bool enclosed = true);
+bstring progressBar(int barLength, float percentFull, std::string_view text = "", char progressChar = '=', bool enclosed = true);
 
 bool nameIsAllowed(bstring str, Socket* sock);
 int bonus(unsigned int num);
@@ -332,14 +315,14 @@ int dec_daily(struct daily *dly_ptr);
 int update_daily(struct daily *dly_ptr);
 void loge(const char *fmt, ...);
 void loga(const char *fmt, ...);
-bool file_exists(char *filename);
+bool file_exists(const char *filename);
 void pleaseWait(Creature* player, int duration);
 void logn(const char *name, const char *fmt, ...);
 int log_immort(int broad, Player* player, const char *fmt, ...);
 bool is_num(char *str);
 void _assertlog(const char *strExp, const char *strFile, unsigned int nLine);
-bool isdm(const bstring& name);
-bool parse_name(const bstring& name);
+bool isdm(std::string_view name);
+bool parse_name(std::string_view name);
 int dmIson(void);
 int strPrefix(const char *haystack, const char *needle);
 int strSuffix(const char *haystack, const char *needle);
@@ -377,7 +360,7 @@ CatRef getEtherealTravelRoom();
 void etherealTravel(Player* player);
 
 
-void sendMail(const bstring& target, const bstring& message);
+void sendMail(std::string_view target, std::string_view message);
 
 
 // room.cpp
@@ -389,7 +372,7 @@ int createStorage(CatRef cr, const Player* player);
 void doRoomHarms(BaseRoom *inRoom, Player* target);
 BaseRoom *abortFindRoom(Creature* player, const char from[15]);
 bool needUniqueRoom(const Creature* player);
-Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, const bstring& area, short id);
+Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, std::string_view area, short id);
 Location getSpecialArea(int (CatRefInfo::*toCheck), const CatRef& cr);
 
 

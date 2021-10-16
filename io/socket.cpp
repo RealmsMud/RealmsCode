@@ -35,10 +35,15 @@
 #include <cstdlib>                                  // for free, calloc, malloc
 #include <iostream>                                 // for operator<<, basic...
 #include <queue>                                    // for queue
+#include <fmt/format.h>
+#include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
+#include <fstream>
 
 #include "bstring.hpp"                              // for bstring, operator+
 #include "commands.hpp"                             // for command, changing...
 #include "config.hpp"                               // for Config, gConfig
+#include "color.hpp"                                // for stripColor
 #include "creatures.hpp"                            // for Player
 #include "flags.hpp"                                // for P_SPYING
 #include "free_crt.hpp"                             // for free_crt
@@ -57,9 +62,11 @@
 #include "version.hpp"                              // for VERSION
 #include "xml.hpp"                                  // for copyToBool, newNu...
 
+const int MIN_PAGES = 10;
+
 // Static initialization
 const int Socket::COMPRESSED_OUTBUF_SIZE = 8192;
-int Socket::NumSockets = 0;
+int Socket::numSockets = 0;
 
 enum telnetNegotiation {
     NEG_NONE,
@@ -187,7 +194,7 @@ void Socket::reset() {
     opts.eor = false;
     opts.msdp = false;
     opts.charset = false;
-    opts.UTF8 = false;
+    opts.utf8 = false;
     opts.mxpClientSecure = false;
     opts.color = NO_COLOR;
     opts.xterm256 = false;
@@ -196,15 +203,15 @@ void Socket::reset() {
     opts.compressing = false;
     inPlayerList = false;
 
-    out_compress_buf = nullptr;
-    out_compress = nullptr;
+    outCompressBuf = nullptr;
+    outCompress = nullptr;
     myPlayer = nullptr;
 
     tState = NEG_NONE;
     oneIAC = watchBrokenClient = false;
 
     term.type = "dumb";
-    term.firstType = "";
+    term.firstType.clear();
     term.cols = 82;
     term.rows = 40;
 
@@ -212,15 +219,12 @@ void Socket::reset() {
     intrpt = 0;
 
     fn = nullptr;
-    timeout = 0;
-    ansi = 0;
     tState = NEG_NONE;
     connState = LOGIN_START;
     lastState = LOGIN_START;
 
     zero(tempstr, sizeof(tempstr));
-    inBuf = "";
-//  cmdInBuf = "";
+    inBuf.clear();
     spyingOn = nullptr;
 }
 
@@ -231,7 +235,7 @@ void Socket::reset() {
 Socket::Socket(int pFd) {
     reset();
     fd = pFd;
-    NumSockets++;
+    numSockets++;
 }
 
 Socket::Socket(int pFd, sockaddr_in pAddr, bool dnsDone) {
@@ -241,23 +245,19 @@ Socket::Socket(int pFd, sockaddr_in pAddr, bool dnsDone) {
     fd = pFd;
 
     resolveIp(pAddr, host.ip);
-    resolveIp(pAddr, host.hostName); // Start off with the hostname as the ip, then do
-                                     // an asyncronous lookup
+    resolveIp(pAddr, host.hostName); // Start off with the hostname as the ip, then do an asyncronous lookup
 
-// Make this socket non blocking
+    // Make this socket non blocking
     nonBlock(fd);
 
-// Set Linger behavior
+    // Set Linger behavior
     ling.l_onoff = ling.l_linger = 0;
-    setsockopt(fd, SOL_SOCKET, SO_LINGER, (char *) &ling,
-            sizeof(struct linger));
+    setsockopt(fd, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(struct linger));
 
-    NumSockets++;
-    std::clog << "Constructing socket (" << fd << ") from " << host.ip
-            << " Socket #" << NumSockets << std::endl;
+    numSockets++;
+    std::clog << "Constructing socket (" << fd << ") from " << host.ip << " Socket #" << numSockets << std::endl;
 
-    // If we're running under valgrind, we don't resolve dns.  The child
-    // process tends to mess with proper memory leak detection
+    // If we're running under valgrind, we don't resolve dns.  The child process tends to mess with proper memory leak detection
     if (gServer->getDnsCache(host.ip, host.hostName) || gServer->isValgrind()) {
         dnsDone = true;
     } else {
@@ -300,8 +300,8 @@ void Socket::cleanUp() {
 
 Socket::~Socket() {
     std::cout << "Deconstructing socket , ";
-    NumSockets--;
-    std::cout << "Num sockets: " << NumSockets << std::endl;
+    numSockets--;
+    std::cout << "Num sockets: " << numSockets << std::endl;
     cleanUp();
 }
 
@@ -394,7 +394,6 @@ void Socket::addSpy(Socket *sock) {
 // Set this socket for removal on the next cleanup
 
 void Socket::disconnect() {
-    // TODO: Perhaps remove player from the world right here.
     setState(CON_DISCONNECTING);
     flush();
     cleanUp();
@@ -407,16 +406,15 @@ void Socket::disconnect() {
 void Socket::resolveIp(const sockaddr_in &addr, bstring& ip) {
     std::ostringstream tmp;
     long i = htonl(addr.sin_addr.s_addr);
-    tmp << ((i >> 24) & 0xff) << "." << ((i >> 16) & 0xff) << "."
-            << ((i >> 8) & 0xff) << "." << (i & 0xff);
+    tmp << ((i >> 24) & 0xff) << "." << ((i >> 16) & 0xff) << "." << ((i >> 8) & 0xff) << "." << (i & 0xff);
     ip = tmp.str();
 }
 
-bstring Socket::parseForOutput(bstring& outBuf) {
+bstring Socket::parseForOutput(std::string_view outBuf) {
     int i = 0;
-    ssize_t n = outBuf.size();
+    auto n = outBuf.size();
     std::ostringstream oStr;
-    bool inTag = false, inEntity = false;
+    bool inTag = false;
     unsigned char ch = 0;
     while(i < n) {
         ch = outBuf[i++];
@@ -428,12 +426,6 @@ bstring Socket::parseForOutput(bstring& outBuf) {
             } else if(opts.mxp)
                 oStr << ch;
 
-            continue;
-        } else if(inEntity) {
-            if(opts.mxp)
-                oStr << ch;
-            if(ch == ';')
-                inEntity = false;
             continue;
         } else {
             if(ch == CH_MXP_BEG) {
@@ -458,9 +450,9 @@ bstring Socket::parseForOutput(bstring& outBuf) {
 
 }
 
-bool Socket::needsPrompt(bstring& inStr) {
+bool Socket::needsPrompt(std::string_view inStr) {
     int i = 0;
-    ssize_t n = inStr.size();
+    auto n = inStr.size();
 
     while(i < n) {
         if((unsigned char)inStr[i] == IAC) {
@@ -493,9 +485,9 @@ bool Socket::needsPrompt(bstring& inStr) {
     return false;
 }
 
-bstring Socket::stripTelnet(bstring& inStr) {
+bstring Socket::stripTelnet(std::string_view inStr) {
     int i = 0;
-    ssize_t n = inStr.size();
+    auto n = inStr.size();
     std::ostringstream oStr;
 
     while(i < n) {
@@ -542,7 +534,7 @@ void Socket::checkLockOut() {
         print("\n\nA password is required to play from your site: ");
         setState(LOGIN_GET_LOCKOUT_PASSWORD);
     } else if (lockStatus == 1) {
-        print("\n\nYou are not wanted here. Begone.\n");
+        print("\n\nYou are not welcome here. Begone.\n");
         setState(CON_DISCONNECTING);
     }
 }
@@ -559,26 +551,25 @@ void Socket::startTelnetNeg() {
     // other protocols if the client responds with IAC WILL TTYPE or IAC WONT
     // TTYPE.  Thanks go to Donky on MudBytes for the suggestion.
 
-    write(telnet::do_ttype, false);
+    write(reinterpret_cast<const char *>(telnet::do_ttype), false);
 
 }
 void Socket::continueTelnetNeg(bool queryTType) {
     if (queryTType)
-        write(telnet::query_ttype, false);
+        write(reinterpret_cast<const char *>(telnet::query_ttype), false);
 
     // Not a dumb client if we've gotten a response
     opts.dumb = false;
-    write(telnet::will_comp2, false);
-    write(telnet::will_comp1, false);
+    write(reinterpret_cast<const char *>(telnet::will_comp2), false);
+    write(reinterpret_cast<const char *>(telnet::will_comp1), false);
 
-    write(telnet::do_naws, false);
-//  write(telnet::will_gmcp, false);
-    write(telnet::will_msdp, false);
-    write(telnet::will_mssp, false);
-    write(telnet::will_msp, false);
-//  write(telnet::do_charset, false);  // Not implemented yet
-    write(telnet::will_mxp, false);
-    write(telnet::will_eor, false);
+    write(reinterpret_cast<const char *>(telnet::do_naws), false);
+    write(reinterpret_cast<const char *>(telnet::will_msdp), false);
+    write(reinterpret_cast<const char *>(telnet::will_mssp), false);
+    write(reinterpret_cast<const char *>(telnet::will_msp), false);
+//  write(reinterpret_cast<const char *>(telnet::do_charset), false);  // Not implemented yet
+    write(reinterpret_cast<const char *>(telnet::will_mxp), false);
+    write(reinterpret_cast<const char *>(telnet::will_eor), false);
 }
 
 //********************************************************************
@@ -609,9 +600,8 @@ int Socket::processInput() {
 
     // Look for any IAC commands using a finite state machine
     for (i = 0; i < n; i++) {
-
-// For debugging
-//      std::clog << "DEBUG:" << (unsigned int)tmpBuf[i] << "'" << (unsigned char)tmpBuf[i] << "'" << "\n";
+        // For debugging
+//        std::clog << "DEBUG:" << (unsigned int)tmpBuf[i] << "'" << (unsigned char)tmpBuf[i] << "'" << "\n";
 
         // Try to handle zMud, cMud & tintin++ which don't seem to double the IAC for NAWS
         // during my limited testing -JM
@@ -734,7 +724,7 @@ int Socket::processInput() {
                         tState = NEG_SB_TTYPE;
                         break;
                     case CHARSET:
-                        if (getCharset())
+                        if (charsetEnabled())
                             tState = NEG_SB_CHARSET;
                         else
                             tState = NEG_NONE;
@@ -792,16 +782,15 @@ int Socket::processInput() {
                 }
                 break;
             case NEG_SB_CHARSET:
-                // We've only asked for UTF-8, so assume if they respond it's for that
-                // and just eat the rest of the input
+                // We've only asked for UTF-8, so assume if they respond it's for that and just eat the rest of the input
                 //
                 // Any other sub-negotiations (such as TTABLE-*) are not handled
                 if (tmpBuf[i] == ACCEPTED) {
                     std::clog << "Enabled UTF8" << std::endl;
-                    opts.UTF8 = true;
+                    opts.utf8 = true;
                     tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
                 } else if (tmpBuf[i] == REJECTED) {
-                    opts.UTF8 = false;
+                    opts.utf8 = false;
                     tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
                 } else {
                     tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
@@ -820,8 +809,7 @@ int Socket::processInput() {
                 } else if (tmpBuf[i] == SE) {
                     // Found what we were looking for
                 } else {
-                    std::clog << "NEG_SB_CHARSET_END Error: Expected SE, got '" << (int) tmpBuf[i]
-                            << "'" << std::endl;
+                    std::clog << "NEG_SB_CHARSET_END Error: Expected SE, got '" << (int) tmpBuf[i] << "'" << std::endl;
                 }
                 tState = NEG_NONE;
                 break;
@@ -853,7 +841,7 @@ int Socket::processInput() {
                         }
 
                         // Request another!
-                        write(telnet::query_ttype, false);
+                        write(reinterpret_cast<const char *>(telnet::query_ttype), false);
                     }
                     if (term.firstType.empty()) {
                         term.firstType = term.type;
@@ -861,8 +849,7 @@ int Socket::processInput() {
 
                     if (term.type.find("Mudlet") != bstring::npos and term.type > "Mudlet 1.1") {
                         opts.xterm256 = true;
-                    } else if(term.type.equals("EMACS-RINZAI", false) ||
-                              term.type.find("DecafMUD") != bstring::npos) {
+                    } else if(term.type.equals("EMACS-RINZAI", false) || term.type.find("DecafMUD") != bstring::npos) {
                         opts.xterm256 = true;
                     }
 
@@ -873,8 +860,7 @@ int Socket::processInput() {
                     tState = NEG_SB_TTYPE;
                     break;
                 } else {
-                    std::clog << "NEG_SB_TTYPE_END Error: Expected SE, got '" << (int) tmpBuf[i]
-                            << "'" << std::endl;
+                    std::clog << "NEG_SB_TTYPE_END Error: Expected SE, got '" << (int) tmpBuf[i] << "'" << std::endl;
                 }
 
                 tState = NEG_NONE;
@@ -958,7 +944,7 @@ bool Socket::negotiate(unsigned char ch) {
         case TELOPT_CHARSET:
             if (tState == NEG_WILL) {
                 opts.charset = true;
-                write(telnet::charset_utf8, false);
+                write(reinterpret_cast<const char *>(telnet::charset_utf8), false);
                 std::clog << "Charset On" << std::endl;
             } else if (tState == NEG_WONT) {
                 opts.charset = false;
@@ -982,7 +968,7 @@ bool Socket::negotiate(unsigned char ch) {
                     // If they respond to something here they know how to negotiate,
                     // so continue and ask for the rest of the options, except term type
                     // which they have just indicated they won't do
-                    write(telnet::wont_ttype);
+                    write(reinterpret_cast<const char *>(telnet::wont_ttype));
                     continueTelnetNeg(false);
 
                 }
@@ -991,7 +977,7 @@ bool Socket::negotiate(unsigned char ch) {
             break;
         case TELOPT_MXP:
             if (tState == NEG_WILL || tState == NEG_DO) {
-                write(telnet::start_mxp);
+                write(reinterpret_cast<const char *>(telnet::start_mxp));
                 // Start off in MXP LOCKED CLOSED
                 //TODO: send elements we're using for mxp
                 opts.mxp = true;
@@ -1089,11 +1075,9 @@ bool Socket::handleNaws(int& colRow, unsigned char& chr, bool high) {
     // If we get an IAC here, we need a double IAC
     if (chr == IAC) {
         if (!oneIAC) {
-//          std::clog << "NAWS: Got ONE IAC, checking for two.\n";
             oneIAC = true;
             return (false);
         } else {
-//          std::clog << "NAWS: Got second IAC.\n";
             oneIAC = false;
         }
     } else if (oneIAC && chr != IAC) {
@@ -1122,10 +1106,8 @@ int Socket::processOneCommand() {
     // Send the command to the people we're spying on
     if (!spying.empty()) {
         std::list<Socket*>::iterator it;
-        for (it = spying.begin(); it != spying.end(); it++) {
-            Socket *sock = *it;
-            if (sock)
-                sock->write("[" + cmd + "]\n", false);
+        for (const auto sock : spying) {
+            if (sock) sock->write(fmt::format("[{}]\n", cmd), false);
         }
     }
 
@@ -1137,7 +1119,7 @@ int Socket::processOneCommand() {
 //********************************************************************
 //                      restoreState
 //********************************************************************
-// Returns a fd to it's previous state
+// Returns a fd to its previous state
 
 void Socket::restoreState() {
     setState(lastState);
@@ -1177,22 +1159,46 @@ void Socket::reconnect(bool pauseScreen) {
 }
 
 
-void viewFile(Socket *sock, const bstring& file) {
-    sock->viewFile(file);
-}
-
-
 void viewFileReverse(Socket *sock, const bstring& file) {
     sock->viewFileReverse(file);
 }
 
 
+void handlePaging(Socket* sock, const bstring& inStr) {
+    sock->handlePaging(inStr);
+}
+
+void Socket::sendPages(int numPages) {
+    for(int i=numPages;i>0;i--) {
+        println(pagerOutput.front());
+        pagerOutput.pop_front();
+        paged++;
+    }
+}
+
+void Socket::handlePaging(const bstring& inStr) {
+    if(inStr.equals("")) {
+        int numPages = MIN<int>(getMaxPages(), pagerOutput.size());
+        sendPages(numPages);
+
+        if(!pagerOutput.empty()) {
+            askFor("\n[Hit Return, Any Key to Quit]: ");
+        }
+    } else {
+        println("Aborting and clearing pager output");
+        pagerOutput.clear();
+    }
+
+    if(pagerOutput.empty())
+        paged = 0;
+
+}
 //*********************************************************************
 //                      setState
 //*********************************************************************
 // Sets a fd's state and changes the interpreter to the appropriate function
 
-void Socket::setState(int pState, int pFnParam) {
+void Socket::setState(int pState, char pFnParam) {
     // Only store the last state if we're changing states, used mainly in the viewing file states
     if (pState != connState)
         lastState = connState;
@@ -1212,8 +1218,6 @@ void Socket::setState(int pState, int pFnParam) {
         fn = doSurname;
     else if (pState == CON_CONFIRM_TITLE)
         fn = doTitle;
-    else if (pState == CON_VIEWING_FILE)
-        fn = ::viewFile;
     else if (pState == CON_SENDING_MAIL)
         fn = postedit;
     else if (pState == CON_EDIT_HISTORY)
@@ -1234,7 +1238,7 @@ void Socket::setState(int pState, int pFnParam) {
     fnparam = (char) pFnParam;
 }
 
-bstring getMxpTag( const bstring& tag, bstring text ) {
+bstring getMxpTag( std::string_view tag, bstring text ) {
     bstring::size_type n = text.find(tag);
     if(n == bstring::npos)
         return("");
@@ -1257,13 +1261,9 @@ bstring getMxpTag( const bstring& tag, bstring text ) {
     }
     return("");
 }
-char caster_from_unsigned( unsigned char ch )
-{
-  return static_cast< char >( ch );
-}
 
 bool Socket::parseMXPSecure() {
-    if(getMxp()) {
+    if(mxpEnabled()) {
         bstring toParse(reinterpret_cast<char*>(&cmdInBuf[0]), cmdInBuf.size());
         std::clog << toParse << std::endl;
 
@@ -1298,7 +1298,7 @@ bool Socket::parseMXPSecure() {
 }
 
 bool Socket::parseMsdp() {
-    if(getMsdp()) {
+    if(msdpEnabled()) {
         bstring var, val;
         int nest = 0;
 
@@ -1346,45 +1346,73 @@ bool Socket::parseMsdp() {
 //********************************************************************
 //                      bprint
 //********************************************************************
+// Append a string to the socket's paged output queue
+void Socket::printPaged(std::string_view toPrint) {
+    boost::char_separator<char> sep("\n");
+    boost::tokenizer<boost::char_separator<char> > tokens(toPrint, sep);
+    for(const auto& line : tokens) {
+        pagerOutput.emplace_back(line);
+    }
+}
+
+int Socket::getMaxPages() const {
+    return MAX(term.rows - 2, MIN_PAGES);
+}
+
+void Socket::donePaging() {
+    const int maxRows = getMaxPages();
+    if (paged < maxRows) {
+        // Send lines up to the first page size
+        sendPages(MIN<int>(pagerOutput.size(), maxRows - paged));
+        if(paged == maxRows)
+            askFor("\n[Hit Return, Any Key to Quit]: ");
+    }
+
+    if(paged < maxRows) {
+        // We're done paging and never hit the max pages, so clear paged
+        paged = 0;
+    }
+}
+
+void Socket::appendPaged(std::string_view toAppend) {
+    if(pagerOutput.empty()) {
+        // Paging output is empty, nothing to append to, use normal printPaged logic
+        printPaged(toAppend);
+        // And add an empty line for subsequent appendPaged to append to
+        pagerOutput.emplace_back("");
+    } else {
+        // It's not empty, see if we're appending to what's already there, or if we're sending a multiline output
+        auto pos = toAppend.find('\n');
+        if (pos == std::string_view::npos) {
+            // There is no newline, append to what we previously sent
+            pagerOutput.back().append(toAppend);
+        } else {
+            // There is a newline, append everything before the newline to the previous page
+            pagerOutput.back().append(toAppend.substr(0, pos));
+            // Print the rest
+            printPaged(toAppend.substr(pos + 1));
+            // And add an empty line for subsequent appendPaged to append to
+            pagerOutput.emplace_back("");
+        }
+    }
+}
+//********************************************************************
+//                      bprint
+//********************************************************************
 // Append a string to the socket's output queue
 
-void Socket::bprint(const bstring& toPrint) {
+void Socket::bprint(std::string_view toPrint) {
     if (!toPrint.empty())
-        output += toPrint;
+        output.append(toPrint);
 }
 
-//********************************************************************
-//                      bprintColor
-//********************************************************************
-// Append a string to the socket's output queue...in color!
-
-void Socket::bprintColor(const bstring& toPrint) {
-    if(!toPrint.empty()) {
-        // Append the string to the output buffer, we'll parse color there
-        output += toPrint;
-    }
-}
-
-//********************************************************************
-//                      bprintColor
-//********************************************************************
-// Append a string to the socket's output queue...without color!
-
-void Socket::bprintNoColor(bstring toPrint) {
-    if(!toPrint.empty()) {
-        // Double any color codes to prevent them from being parsed later
-        toPrint.Replace("^", "^^");
-        output += toPrint;
-    }
-
-}
 //********************************************************************
 //                      println
 //********************************************************************
 // Append a string to the socket's output queue with a \n
 
-void Socket::println(const bstring& toPrint) {
-    bprint(toPrint + "\n");
+void Socket::println(std::string_view toPrint) {
+    bprint(fmt::format("{}\n", toPrint));
 }
 
 //********************************************************************
@@ -1416,9 +1444,9 @@ void Socket::printColor(const char* fmt, ...) {
 // Flush pending output and send a prompt
 
 void Socket::flush() {
-    ssize_t n, len;
-    if(!processed_output.empty()) {
-        n = write(processed_output, false, false);
+    ssize_t n;
+    if(!processedOutput.empty()) {
+        n = write(processedOutput, false, false);
     } else {
         if ((n = write(output)) == 0)
             return;
@@ -1426,16 +1454,16 @@ void Socket::flush() {
     }
     // If we only wrote OOB data or partial data was written because of EWOULDBLOCK,
     // then n is -2, don't send a prompt in that case
-    if (n != -2 && myPlayer && connState != CON_CHOSING_WEAPONS)
+    if (n != -2 && myPlayer && connState != CON_CHOSING_WEAPONS && pagerOutput.empty())
         myPlayer->sendPrompt();
 }
 
 //********************************************************************
 //                      write
 //********************************************************************
-// Write a string of data to the the socket's file descriptor
+// Write a string of data to the socket's file descriptor
 
-ssize_t Socket::write(bstring toWrite, bool pSpy, bool process) {
+ssize_t Socket::write(std::string_view toWrite, bool pSpy, bool process) {
     ssize_t written = 0;
     ssize_t n = 0;
     size_t total = 0;
@@ -1461,10 +1489,9 @@ ssize_t Socket::write(bstring toWrite, bool pSpy, bool process) {
                 else  {
                     // The write would have blocked
                     n = -2;
-                    // If we haven't written the total number of bytes planned
-                    // Save the remaining string for the next go around
+                    // If we haven't written the total number of bytes planned save the remaining string for the next go around
                     if(written < total) {
-                        processed_output = str+written;
+                        processedOutput = str + written;
                     }
                     break;
                 }
@@ -1477,20 +1504,20 @@ ssize_t Socket::write(bstring toWrite, bool pSpy, bool process) {
         if(n == -2)
             written = -2;
 
-        if(written >= total && !processed_output.empty() && !process) {
-            processed_output.erase();
+        if(written >= total && !processedOutput.empty() && !process) {
+            processedOutput.erase();
         }
     } else {
         UnCompressedBytes += total;
 
-        out_compress->next_in = (unsigned char*) str;
-        out_compress->avail_in = total;
-        while (out_compress->avail_in) {
-            out_compress->avail_out =
+        outCompress->next_in = (unsigned char*) str;
+        outCompress->avail_in = total;
+        while (outCompress->avail_in) {
+            outCompress->avail_out =
                     COMPRESSED_OUTBUF_SIZE
-                            - ((char*) out_compress->next_out
-                                    - (char*) out_compress_buf);
-            if (deflate(out_compress, Z_SYNC_FLUSH) != Z_OK) {
+                            - ((char*) outCompress->next_out
+                                    - (char*) outCompressBuf);
+            if (deflate(outCompress, Z_SYNC_FLUSH) != Z_OK) {
                 return (0);
             }
             written += processCompressed();
@@ -1515,8 +1542,7 @@ ssize_t Socket::write(bstring toWrite, bool pSpy, bool process) {
     // Keep track of total outbytes
     OutBytes += written;
 
-    // If stripped len is 0, it means we only wrote OOB data, so adjust the return so
-    // we don't send another prompt
+    // If stripped len is 0, it means we only wrote OOB data, so adjust the return so we don't send another prompt
     if(!needsPrompt(toWrite))
         written = -2;
 
@@ -1537,29 +1563,29 @@ int Socket::startCompress(bool silent) {
     if (opts.compressing)
         return (-1);
 
-    out_compress_buf = new char[COMPRESSED_OUTBUF_SIZE];
+    outCompressBuf = new char[COMPRESSED_OUTBUF_SIZE];
     //out_compress = new z_stream;
-    out_compress = (z_stream *) malloc(sizeof(*out_compress));
-    out_compress->zalloc = telnet::zlib_alloc;
-    out_compress->zfree = telnet::zlib_free;
-    out_compress->opaque = nullptr;
-    out_compress->next_in = nullptr;
-    out_compress->avail_in = 0;
-    out_compress->next_out = (Bytef*) out_compress_buf;
-    out_compress->avail_out = COMPRESSED_OUTBUF_SIZE;
+    outCompress = (z_stream *) malloc(sizeof(*outCompress));
+    outCompress->zalloc = telnet::zlib_alloc;
+    outCompress->zfree = telnet::zlib_free;
+    outCompress->opaque = nullptr;
+    outCompress->next_in = nullptr;
+    outCompress->avail_in = 0;
+    outCompress->next_out = (Bytef*) outCompressBuf;
+    outCompress->avail_out = COMPRESSED_OUTBUF_SIZE;
 
-    if (deflateInit(out_compress, 9) != Z_OK) {
+    if (deflateInit(outCompress, 9) != Z_OK) {
         // Problem with zlib, try to clean up
-        delete out_compress_buf;
-        free(out_compress);
+        delete outCompressBuf;
+        free(outCompress);
         return (-1);
     }
 
     if (!silent) {
         if (opts.mccp == 2)
-            write(telnet::start_mccp2, false);
+            write(reinterpret_cast<const char *>(telnet::start_mccp2), false);
         else
-            write(telnet::start_mccp, false);
+            write(reinterpret_cast<const char *>(telnet::start_mccp), false);
     }
     // We're compressing now
     opts.compressing = true;
@@ -1572,12 +1598,12 @@ int Socket::startCompress(bool silent) {
 //********************************************************************
 
 int Socket::endCompress() {
-    if (out_compress && opts.compressing) {
+    if (outCompress && opts.compressing) {
         unsigned char dummy[1] = { 0 };
-        out_compress->avail_in = 0;
-        out_compress->next_in = dummy;
+        outCompress->avail_in = 0;
+        outCompress->next_in = dummy;
         // process any remaining output first?
-        if (deflate(out_compress, Z_FINISH) != Z_STREAM_END) {
+        if (deflate(outCompress, Z_FINISH) != Z_STREAM_END) {
             std::clog << "Error with deflate Z_FINISH\n";
             return (-1);
         }
@@ -1586,12 +1612,12 @@ int Socket::endCompress() {
         if (processCompressed() < 0)
             return (-1);
 
-        deflateEnd(out_compress);
+        deflateEnd(outCompress);
 
-        delete[] out_compress_buf;
+        delete[] outCompressBuf;
 
-        out_compress = nullptr;
-        out_compress_buf = nullptr;
+        outCompress = nullptr;
+        outCompressBuf = nullptr;
 
         opts.mccp = 0;
         opts.compressing = false;
@@ -1604,7 +1630,7 @@ int Socket::endCompress() {
 //********************************************************************
 
 size_t Socket::processCompressed() {
-    auto len = (size_t) ((char*) out_compress->next_out - (char*) out_compress_buf);
+    auto len = (size_t) ((char*) outCompress->next_out - (char*) outCompressBuf);
     size_t written = 0;
     size_t block;
     ssize_t n, i;
@@ -1612,7 +1638,7 @@ size_t Socket::processCompressed() {
     if (len > 0) {
         for (i = 0, n = 0; i < len; i += n) {
             block = MIN<size_t>(len - i, 4096);
-            if ((n = ::write(fd, out_compress_buf + i, block)) < 0)
+            if ((n = ::write(fd, outCompressBuf + i, block)) < 0)
                 return (-1);
             written += n;
             if (n == 0)
@@ -1620,9 +1646,9 @@ size_t Socket::processCompressed() {
         }
         if (i) {
             if (i < len)
-                memmove(out_compress_buf, out_compress_buf + i, len - i);
+                memmove(outCompressBuf, outCompressBuf + i, len - i);
 
-            out_compress->next_out = (Bytef*) out_compress_buf + len - i;
+            outCompress->next_out = (Bytef*) outCompressBuf + len - i;
         }
     }
     return (written);
@@ -1633,17 +1659,17 @@ size_t Socket::processCompressed() {
 // "Telopts"
 bool Socket::saveTelopts(xmlNodePtr rootNode) {
     rootNode = xml::newStringChild(rootNode, "Telopts");
-    xml::newNumChild(rootNode, "MCCP", getMccp());
-    xml::newNumChild(rootNode, "MSDP", getMsdp());
-    xml::newBoolChild(rootNode, "MXP", getMxp());
+    xml::newNumChild(rootNode, "MCCP", mccpEnabled());
+    xml::newNumChild(rootNode, "MSDP", msdpEnabled());
+    xml::newBoolChild(rootNode, "MXP", mxpEnabled());
     xml::newBoolChild(rootNode, "DumbClient", isDumbClient());
     xml::newStringChild(rootNode, "Term", getTermType());
     xml::newNumChild(rootNode, "Color", getColorOpt());
     xml::newNumChild(rootNode, "TermCols", getTermCols());
     xml::newNumChild(rootNode, "TermRows", getTermRows());
-    xml::newBoolChild(rootNode, "EOR", getEor());
-    xml::newBoolChild(rootNode, "Charset", getCharset());
-    xml::newBoolChild(rootNode, "UTF8", getUtf8());
+    xml::newBoolChild(rootNode, "EOR", eorEnabled());
+    xml::newBoolChild(rootNode, "Charset", charsetEnabled());
+    xml::newBoolChild(rootNode, "UTF8", utf8Enabled());
 
     return (true);
 }
@@ -1655,7 +1681,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
             int mccp = 0;
             xml::copyToNum(mccp, curNode);
             if (mccp) {
-                write(telnet::will_comp2, false);
+                write(reinterpret_cast<const char *>(telnet::will_comp2), false);
             }
         }
         else if (NODE_NAME(curNode, "MXP")) xml::copyToBool(opts.mxp, curNode);
@@ -1667,14 +1693,14 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
         else if (NODE_NAME(curNode, "TermRows")) xml::copyToNum(term.rows, curNode);
         else if (NODE_NAME(curNode, "EOR")) xml::copyToBool(opts.eor, curNode);
         else if (NODE_NAME(curNode, "Charset")) xml::copyToBool(opts.charset, curNode);
-        else if (NODE_NAME(curNode, "UTF8")) xml::copyToBool(opts.UTF8, curNode);
+        else if (NODE_NAME(curNode, "UTF8")) xml::copyToBool(opts.utf8, curNode);
 
         curNode = curNode->next;
     }
 
     if (opts.msdp) {
         // Re-negotiate MSDP after a reboot
-        write(telnet::will_msdp, false);
+        write(reinterpret_cast<const char *>(telnet::will_msdp), false);
     }
 
     return (true);
@@ -1685,7 +1711,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
 //********************************************************************
 
 bool Socket::hasOutput() const {
-    return (!processed_output.empty() || !output.empty());
+    return (!processedOutput.empty() || !output.empty());
 }
 
 //********************************************************************
@@ -1722,7 +1748,7 @@ bool Player::isConnected() const {
 int Socket::getFd() const {
     return (fd);
 }
-bool Socket::getMxp() const {
+bool Socket::mxpEnabled() const {
     return (opts.mxp);
 }
 bool Socket::getMxpClientSecure() const {
@@ -1731,40 +1757,40 @@ bool Socket::getMxpClientSecure() const {
 void Socket::clearMxpClientSecure() {
     opts.mxpClientSecure = false;
 }
-int Socket::getMccp() const {
+int Socket::mccpEnabled() const {
     return (opts.mccp);
 }
-bool Socket::getMsdp() const {
+bool Socket::msdpEnabled() const {
     return (opts.msdp);
 }
 
-bool Socket::getMsp() const {
+bool Socket::mspEnabled() const {
     return (opts.msp);
 }
 
-bool Socket::getCharset() const {
+bool Socket::charsetEnabled() const {
     return (opts.charset);
 }
 
-bool Socket::getUtf8() const {
-    return (opts.UTF8);
+bool Socket::utf8Enabled() const {
+    return (opts.utf8);
 }
-bool Socket::getEor() const {
+bool Socket::eorEnabled() const {
     return (opts.eor);
 }
 bool Socket::isDumbClient() const {
     return(opts.dumb);
 }
-bool Socket::getNaws() const {
+bool Socket::nawsEnabled() const {
     return (opts.naws);
 }
 long Socket::getIdle() const {
     return (time(nullptr) - ltime);
 }
-const bstring& Socket::getIp() const {
+std::string_view Socket::getIp() const {
     return (host.ip);
 }
-const bstring& Socket::getHostname() const {
+std::string_view Socket::getHostname() const {
     return (host.hostName);
 }
 bstring Socket::getTermType() const {
@@ -1790,10 +1816,10 @@ void Socket::setParam(int newParam) {
     fnparam = newParam;
 }
 
-void Socket::setHostname(const bstring& pName) {
+void Socket::setHostname(std::string_view pName) {
     host.hostName = pName;
 }
-void Socket::setIp(const bstring& pIp) {
+void Socket::setIp(std::string_view pIp) {
     host.ip = pIp;
 }
 void Socket::setPlayer(Player* ply) {
@@ -1806,14 +1832,6 @@ bool Socket::hasPlayer() const {
 
 Player* Socket::getPlayer() const {
     return (myPlayer);
-}
-
-// MCCP Hooks
-void *zlib_alloc(void *opaque, unsigned int items, unsigned int size) {
-    return calloc(items, size);
-}
-void zlib_free(void *opaque, void *address) {
-    free(address);
 }
 
 //********************************************************************
@@ -1832,19 +1850,18 @@ int nonBlock(int pFd) {
 //*********************************************************************
 //                      showLoginScreen
 //*********************************************************************
+const auto LOGIN_FILE = fmt::format("{}/login_screen.txt", Path::Config);
 
 void Socket::showLoginScreen(bool dnsDone) {
     //*********************************************************************
     // As a part of the copyright agreement this section must be left intact
     //*********************************************************************
-    print(
-            "The Realms of Hell (RoH beta v" VERSION ")\n\tBased on Mordor by Brett Vickers, Brooke Paul.\n");
+    print("The Realms of Hell (RoH v" VERSION ")\n\tBased on Mordor by Brett Vickers, Brooke Paul.\n");
     print("Programmed by: Jason Mitchell, Randi Mitchell and Tim Callahan.\n");
     print("Contributions by: Jonathan Hseu.");
 
-    char file[80];
-    sprintf(file, "%s/login_screen.txt", Path::Config);
-    viewLoginFile(file);
+
+    viewFile(LOGIN_FILE);
 
     if (dnsDone)
         checkLockOut();
@@ -1854,24 +1871,24 @@ void Socket::showLoginScreen(bool dnsDone) {
 //********************************************************************
 //                      askFor
 //********************************************************************
+const char EOR_STR[] = {(char) IAC, (char) EOR, '\0' };
+const char GA_STR[] = {(char) IAC, (char) GA, '\0' };
 
 void Socket::askFor(const char *str) {
     ASSERTLOG( str);
-    if (getEor() == 1) {
-        char eor_str[] = { (char) IAC, (char) EOR, '\0' };
+    if (eorEnabled()) {
         printColor(str);
-        print(eor_str);
+        print(EOR_STR);
     } else {
-        char ga_str[] = { (char) IAC, (char) GA, '\0' };
         printColor(str);
-        print(ga_str);
+        print(GA_STR);
     }
 }
 
 unsigned const char mssp_val[] = { MSSP_VAL, '\0' };
 unsigned const char mssp_var[] = { MSSP_VAR, '\0' };
 
-void addMSSPVar(std::ostringstream& msspStr, const bstring& var) {
+void addMSSPVar(std::ostringstream& msspStr, std::string_view var) {
     msspStr << mssp_var << var;
 }
 
@@ -1953,7 +1970,7 @@ int Socket::sendMSSP() {
     addMSSPVal<int>(msspStr, 15000);
 
     addMSSPVar(msspStr, "CLASSES");
-    addMSSPVal<int>(msspStr, gConfig->classes.size());
+    addMSSPVal<size_t>(msspStr, gConfig->classes.size());
 
     addMSSPVar(msspStr, "LEVELS");
     addMSSPVal<int>(msspStr, MAXALVL);
@@ -1962,7 +1979,7 @@ int Socket::sendMSSP() {
     addMSSPVal<int>(msspStr, gConfig->getPlayableRaceCount());
 
     addMSSPVar(msspStr, "SKILLS");
-    addMSSPVal<int>(msspStr, gConfig->skills.size());
+    addMSSPVal<size_t>(msspStr, gConfig->skills.size());
 
     addMSSPVar(msspStr, "GMCP");
     addMSSPVal<bstring>(msspStr, "0");
@@ -2058,5 +2075,175 @@ int Socket::sendMSSP() {
     return (write(msspStr.str()));
 }
 
+int Socket::getNumSockets() {
+    return numSockets;
+}
+
+
+//*********************************************************************
+//                      viewFile
+//*********************************************************************
+// This function views a file whose name is given by the third
+// parameter. If the file is longer than 20 lines, then the user is
+// prompted to hit return to continue, thus dividing the output into
+// several pages.
+
+void Socket::viewFile(const bstring& str, bool shouldPage) {
+    std::ifstream file(str);
+    if(!file.is_open()) {
+        bprint("File could not be opened.\n");
+        return;
+    }
+    bstring line;
+    while(std::getline(file, line)) {
+        if(shouldPage)
+            printPaged(line);
+        else
+            bprint(fmt::format("{}\n", line));
+    }
+
+    if(shouldPage)
+        donePaging();
+
+}
+
+
+//*********************************************************************
+//                      viewFileReverseReal
+//*********************************************************************
+// displays a file, line by line starting with the last
+// similar to unix 'tac' command
+
+void Socket::viewFileReverseReal(const bstring& str) {
+    off_t oldpos;
+    off_t newpos;
+    off_t temppos;
+    int i,more_file=1,count,amount=1621;
+    char string[1622];
+    char search[80];
+    long offset;
+    FILE *ff;
+    int TACBUF = ( (81 * 20 * sizeof(char)) + 1 );
+
+    if(strlen(tempstr[3]) > 0)
+        strcpy(search, tempstr[3]);
+    else
+        strcpy(search, "\0");
+
+    switch(getParam()) {
+        case 1:
+            strcpy(tempstr[1], str.c_str());
+            if((ff = fopen(str.c_str(), "r")) == nullptr) {
+                print("error opening file\n");
+                restoreState();
+                return;
+            }
+
+            fseek(ff, 0L, SEEK_END);
+            oldpos = ftell(ff);
+            if(oldpos < 1) {
+                print("Error opening file\n");
+                restoreState();
+                return;
+            }
+            break;
+
+        case 2:
+            if(str[0] != 0) {
+                print("Aborted.\n");
+                getPlayer()->clearFlag(P_READING_FILE);
+                restoreState();
+                return;
+            }
+
+            if((ff = fopen(tempstr[1], "r")) == nullptr) {
+                print("error opening file\n");
+                getPlayer()->clearFlag(P_READING_FILE);
+                restoreState();
+                return;
+            }
+
+            offset = atol(tempstr[2]);
+            fseek(ff, offset, SEEK_SET);
+            oldpos = ftell(ff);
+            if(oldpos < 1) {
+                print("Error opening file\n");
+                restoreState();
+                return;
+            }
+
+    }
+
+    nomatch:
+    temppos = oldpos - TACBUF;
+    if(temppos > 0)
+        fseek(ff, temppos, SEEK_SET);
+    else {
+        fseek(ff, 0L, SEEK_SET);
+        amount = oldpos;
+    }
+
+    newpos = ftell(ff);
+
+
+    fread(string, amount,1, ff);
+    string[amount] = '\0';
+    i = strlen(string);
+    i--;
+
+    count = 0;
+    while(count < 21 && i > 0) {
+        if(string[i] == '\n') {
+            if( (   strlen(search) > 0 && strstr(&string[i], search)) || search[0] == '\0') {
+                printColor("%s", &string[i]);
+                count++;
+            }
+            string[i]='\0';
+            if(string[i-1] == '\r')
+                string[i-1]='\0';
+        }
+        i--;
+    }
+
+    oldpos = newpos + i + 2;
+    if(oldpos < 3)
+        more_file = 0;
+
+    sprintf(tempstr[2], "%ld", (long) oldpos);
+
+
+    if(more_file && count == 0)
+        goto nomatch;       // didnt find a match within a screenful
+    else if(more_file) {
+        askFor("\n[Hit Return, Q to Quit]: ");
+        gServer->processOutput();
+        intrpt &= ~1;
+
+        fclose(ff);
+        getPlayer()->setFlag(P_READING_FILE);
+        setState(CON_VIEWING_FILE_REVERSE, 2);
+        return;
+    } else {
+        if((strlen(search) > 0 && strstr(string, search)) || search[0] == '\0') {
+            print("\n%s\n", string);
+        }
+        fclose(ff);
+        getPlayer()->clearFlag(P_READING_FILE);
+        restoreState();
+        return;
+    }
+
+}
+
+// Wrapper for viewFileReverse_real that properly sets the connected state
+void Socket::viewFileReverse(const bstring& str) {
+    if(getState() != CON_VIEWING_FILE_REVERSE)
+        setState(CON_VIEWING_FILE_REVERSE);
+    viewFileReverseReal(str);
+}
+
+bool Socket::hasPagerOutput() {
+    return(!pagerOutput.empty());
+}
 
 

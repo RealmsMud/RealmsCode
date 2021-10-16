@@ -39,7 +39,7 @@ bool MxpElement::isColor() {
 //***********************************************************************
 // TODO: Put this in a lookup table
 void Socket::defineMxp() {
-    if(!getMxp()) return;
+    if(!mxpEnabled()) return;
 
     bprint(MXP_BEG "VERSION" MXP_END);
     bprint(MXP_BEG "SUPPORT" MXP_END);
@@ -59,7 +59,7 @@ void Config::clearMxpElements() {
     mxpColors.clear();
 }
 
-bstring& Config::getMxpColorTag(const bstring& str) {
+bstring& Config::getMxpColorTag(std::string_view str) {
     return(mxpColors[str]);
 }
 

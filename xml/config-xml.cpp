@@ -25,6 +25,7 @@
 
 #include <ostream>                                  // for basic_ostream::op...
 #include <string>                                   // for operator<<
+#include <fmt/format.h>
 #include "bstring.hpp"                              // for bstring
 #include "effects.hpp"                              // for Effect
 #include "songs.hpp"                                // for Song
@@ -32,17 +33,16 @@
 #include "xml.hpp"                                  // for NODE_NAME, copyTo...
 
 bool Config::loadConfig(bool reload) {
-    char filename[256];
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     xmlNodePtr  curNode;
 
-    sprintf(filename, "%s/config.xml", Path::Config);
+    auto filename = fmt::format( "{}/config.xml", Path::Config);
 
-    if(!file_exists(filename))
+    if(!file_exists(filename.c_str()))
         return(false);
 
-    if((xmlDoc = xml::loadFile(filename, "Config")) == nullptr)
+    if((xmlDoc = xml::loadFile(filename.c_str(), "Config")) == nullptr)
         return(false);
 
     rootNode = xmlDocGetRootElement(xmlDoc);
@@ -64,17 +64,16 @@ bool Config::loadConfig(bool reload) {
 }
 
 bool Config::loadDiscordConfig() {
-    char filename[256];
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     xmlNodePtr  curNode;
 
-    sprintf(filename, "%s/discord.xml", Path::Config);
+    auto filename = fmt::format("{}/discord.xml", Path::Config);
 
-    if(!file_exists(filename))
+    if(!file_exists(filename.c_str()))
         return(false);
 
-    if((xmlDoc = xml::loadFile(filename, "Discord")) == nullptr)
+    if((xmlDoc = xml::loadFile(filename.c_str(), "Discord")) == nullptr)
         return(false);
 
     rootNode = xmlDocGetRootElement(xmlDoc);
@@ -201,7 +200,6 @@ void Config::loadWebhookTokens(xmlNodePtr rootNode) {
 bool Config::saveConfig() const {
     xmlDocPtr   xmlDoc;
     xmlNodePtr      rootNode, curNode;
-    char            filename[256];
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
     rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Config", nullptr);
@@ -268,8 +266,7 @@ bool Config::saveConfig() const {
         xml::newStringChild(tokenNode, "Token", token);
     }
 
-    sprintf(filename, "%s/config.xml", Path::Config);
-    xml::saveFile(filename, xmlDoc);
+    xml::saveFile(fmt::format("{}/config.xml", Path::Config).c_str(), xmlDoc);
     xmlFreeDoc(xmlDoc);
 
     return(true);
@@ -284,7 +281,6 @@ template<class Type>
 bool saveSet(const bstring& xmlDocName, const bstring& fName, const std::set<Type, namableCmp>& sSet) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
-    char        filename[80];
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
     rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST xmlDocName.c_str(), nullptr);
@@ -294,8 +290,7 @@ bool saveSet(const bstring& xmlDocName, const bstring& fName, const std::set<Typ
         curItem.save(rootNode);
     }
 
-    snprintf(filename, 80, "%s/%s", Path::Config, fName.c_str());
-    xml::saveFile(filename, xmlDoc);
+    xml::saveFile(fmt::format("{}/{}", Path::Config, fName).c_str(), xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(true);
 
@@ -318,9 +313,7 @@ bool loadSet(const bstring& xmlDocName, const bstring& xmlNodeName, const bstrin
     xmlDocPtr xmlDoc;
     xmlNodePtr curNode;
 
-    char filename[80];
-    snprintf(filename, 80, "%s/%s", Path::Code, fName.c_str());
-    xmlDoc = xml::loadFile(filename, xmlDocName.c_str());
+    xmlDoc = xml::loadFile(fmt::format("{}/{}", Path::Code, fName).c_str(), xmlDocName.c_str());
     if(xmlDoc == nullptr)
         return(false);
 
@@ -351,9 +344,7 @@ bool loadMap(const bstring& xmlDocName, const bstring& xmlNodeName, const bstrin
     xmlDocPtr xmlDoc;
     xmlNodePtr curNode;
 
-    char filename[80];
-    snprintf(filename, 80, "%s/%s", Path::Code, fName.c_str());
-    xmlDoc = xml::loadFile(filename, xmlDocName.c_str());
+    xmlDoc = xml::loadFile(fmt::format("{}/{}", Path::Code, fName).c_str(), xmlDocName.c_str());
     if(xmlDoc == nullptr)
         return(false);
 

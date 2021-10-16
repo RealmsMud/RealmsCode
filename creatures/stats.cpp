@@ -44,7 +44,7 @@ StatModifier::StatModifier() {
     modType = MOD_NONE;
 }
 
-StatModifier::StatModifier(const bstring& pName, int pModAmt, ModifierType pModType) {
+StatModifier::StatModifier(std::string_view pName, int pModAmt, ModifierType pModType) {
     name = pName;
     modAmt = pModAmt;
     modType = pModType;
@@ -150,17 +150,17 @@ void Stat::reCalc() {
     }
     dirty = false;
 }
-StatModifier* Stat::getModifier(const bstring& pName) {
+StatModifier* Stat::getModifier(std::string_view pName) {
     auto it = modifiers.find(pName);
     if(it == modifiers.end()) return(nullptr);
     else                      return(it->second);
 }
-int Stat::getModifierAmt(const bstring& pName) {
+int Stat::getModifierAmt(std::string_view pName) {
     StatModifier* mod = getModifier(pName);
     if(mod) return(mod->getModAmt());
     else    return(0);
 }
-Stat* Creature::getStat(const bstring& statName) {
+Stat* Creature::getStat(std::string_view statName) {
     if     (statName == "strength")            return(&strength);
     else if(statName == "dexterity")           return(&dexterity);
     else if(statName == "constitution")        return(&constitution);
@@ -173,10 +173,10 @@ Stat* Creature::getStat(const bstring& statName) {
 
 }
 
-bool Creature::addStatModifier(const bstring& statName, const bstring& modifierName, int modAmt, ModifierType modType) {
+bool Creature::addStatModifier(std::string_view statName, std::string_view modifierName, int modAmt, ModifierType modType) {
     return(addStatModifier(statName, new StatModifier(modifierName, modAmt, modType)));
 }
-bool Creature::addStatModifier(const bstring& statName, StatModifier* statModifier) {
+bool Creature::addStatModifier(std::string_view statName, StatModifier* statModifier) {
     Stat* stat = getStat(statName);
 
     if(!stat) {
@@ -185,12 +185,12 @@ bool Creature::addStatModifier(const bstring& statName, StatModifier* statModifi
     }
 
     stat->addModifier(statModifier);
-    if(statName.equals("constitution"))      hp.setDirty();
-    else if(statName.equals("intelligence")) mp.setDirty();
+    if(statName == "constitution")      hp.setDirty();
+    else if(statName == "intelligence") mp.setDirty();
 
     return(true);
 }
-bool Creature::setStatDirty(const bstring& statName) {
+bool Creature::setStatDirty(std::string_view statName) {
     Stat* stat = getStat(statName);
 
     if(!stat) return(false);
@@ -215,12 +215,12 @@ void Stat::setDirty() {
     dirty = true;
     if(influences) influences->setDirty();
 }
-bool Stat::addModifier(const bstring& name, int modAmt, ModifierType modType) {
+bool Stat::addModifier(std::string_view name, int modAmt, ModifierType modType) {
     if(getModifier(name) != nullptr) return(false);
     return(addModifier(new StatModifier(name, modAmt, modType)));
 }
 
-bool Stat::removeModifier(const bstring& name) {
+bool Stat::removeModifier(std::string_view name) {
     auto it = modifiers.find(name);
     if(it == modifiers.end()) return(false);
 
@@ -237,7 +237,7 @@ void Stat::clearModifiers() {
         modifiers.erase(it++);
     }
 }
-bool Stat::adjustModifier(const bstring& name, int modAmt, ModifierType modType) {
+bool Stat::adjustModifier(std::string_view name, int modAmt, ModifierType modType) {
     StatModifier* mod = getModifier(name);
     if(!mod) {
         if(modAmt == 0) return(true);
@@ -253,7 +253,7 @@ bool Stat::adjustModifier(const bstring& name, int modAmt, ModifierType modType)
     return(true);
 }
 
-bool Stat::setModifier(const bstring& name, int newAmt, ModifierType modType) {
+bool Stat::setModifier(std::string_view name, int newAmt, ModifierType modType) {
     StatModifier* mod = getModifier(name);
     if(newAmt == 0) {
         if(!mod) return(true);
@@ -314,7 +314,7 @@ Stat::~Stat() {
     modifiers.clear();
 }
 
-void Stat::setName(const bstring& pName) {
+void Stat::setName(std::string_view pName) {
     name = pName;
 }
 
@@ -515,7 +515,7 @@ unsigned int Stat::restore() {
 //                      modifyStatTotalByEffect
 //*********************************************************************
 
-int modifyStatTotalByEffect(const Player* player, const bstring& effect) {
+int modifyStatTotalByEffect(const Player* player, std::string_view effect) {
     const EffectInfo* ef = player->getEffect(effect);
     if(ef) return(ef->getStrength());
     return(0);
@@ -635,7 +635,7 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 bool Creature::remStatModEffect(EffectInfo* effect) {
     Stat* stat=nullptr;
     Player* pThis = getAsPlayer();
-    const bstring& effectName = effect->getName();
+    std::string_view effectName = effect->getName();
     
     if(effectName == "strength" || effectName == "enfeeblement" || effectName == "berserk") {
         stat = &strength;
@@ -653,7 +653,7 @@ bool Creature::remStatModEffect(EffectInfo* effect) {
         stat = &hp;
     }
     else {
-        print("Unknown stat effect: %s\n", effectName.c_str());
+        bPrint(fmt::format("Unknown stat effect: {}\n", effectName));
         return(false);
     }
 
@@ -678,7 +678,7 @@ void Stat::upgradeSetCur(unsigned int newCur) {
 }
 
 // Note: Used for upgradeStats
-void checkEffect(Creature* creature, const bstring& effName, unsigned int &stat, bool positive)  {
+void checkEffect(Creature* creature, std::string_view effName, unsigned int &stat, bool positive)  {
     EffectInfo* eff = creature->getEffect(effName);
     if(eff) {
         int str = eff->getStrength();

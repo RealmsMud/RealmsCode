@@ -66,33 +66,33 @@ public:
     [[nodiscard]] BaseRoom* getRoom() const;
 
     void setLevel(short lvl);
-    void setOpen(const bstring& o);
+    void setOpen(std::string_view o);
     void setTrap(short t);
     void setKey(short k);
-    void setKeyArea(const bstring& k);
+    void setKeyArea(std::string_view k);
     void setToll(short t);
-    void setPassPhrase(const bstring& phrase);
+    void setPassPhrase(std::string_view phrase);
     void setPassLanguage(short lang);
-    void setDescription(const bstring& d);
+    void setDescription(std::string_view d);
     void setSize(Size s);
     void setDirection(Direction d);
-    void setEnter(const bstring& e);
+    void setEnter(std::string_view e);
     void setRoom(BaseRoom* room);
 
     void checkReLock(Creature* creature, bool sneaking);
 
-    [[nodiscard]] bstring blockedByStr(char color, const bstring& spell, const bstring& effectName, bool detectMagic, bool canSee) const;
+    [[nodiscard]] bstring blockedByStr(char color, std::string_view spell, std::string_view effectName, bool detectMagic, bool canSee) const;
     Exit* getReturnExit(const BaseRoom* parent, BaseRoom** targetRoom) const;
     void doDispelMagic(BaseRoom* parent);  // true if the exit was destroyed by dispel-magic
-    [[nodiscard]] bool isWall(const bstring& name) const;
+    [[nodiscard]] bool isWall(std::string_view name) const;
     bool isConcealed(const Creature* viewer=nullptr) const;
 
 //// Effects
     bool pulseEffects(time_t t);
     bool doEffectDamage(Creature* target);
 
-    void addEffectReturnExit(const bstring& effect, long duration, int strength, const Creature* owner);
-    void removeEffectReturnExit(const bstring& effect, BaseRoom* rParent);
+    void addEffectReturnExit(std::string_view effect, long duration, int strength, const Creature* owner);
+    void removeEffectReturnExit(std::string_view effect, BaseRoom* rParent);
 protected:
     short   level;
     bstring open;           // output on open

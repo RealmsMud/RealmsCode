@@ -327,11 +327,11 @@ void Player::init() {
     if(!newRoom) {
         UniqueRoom  *uRoom=nullptr;
         if(!loadRoom(currentLocation.room, &uRoom)) {
-            loge("%s: %s (%s) Attempted logon to bad or missing room!\n", getCName(),
-                getSock()->getHostname().c_str(), currentLocation.room.str().c_str());
+            loge(fmt::format("{}: {} ({}) Attempted logon to bad or missing room!\n", getName(),
+                getSock()->getHostname(), currentLocation.room.str()).c_str());
             // NOTE: Using ::isCt to use the global function, not the local function
-            broadcast(::isCt, "^y%s: %s (%s) Attempted logon to bad or missing room (normal)!", getCName(),
-                getSock()->getHostname().c_str(), currentLocation.room.str().c_str());
+            broadcast(::isCt, fmt::format("^y{}: {} ({}) Attempted logon to bad or missing room (normal)!", getName(),
+                getSock()->getHostname(), currentLocation.room.str()).c_str());
             newRoom = abortFindRoom(this, "init_ply");
             uRoom = newRoom->getAsUniqueRoom();
         }
@@ -345,8 +345,7 @@ void Player::init() {
                 uRoom->getTrapExit().id &&
                 !loadRoom(uRoom->getTrapExit(), &uRoom)
             ) {
-                broadcast(::isCt, "^y%s: %s (%s) Attempted logon to bad or missing room!", getCName(),
-                    getSock()->getHostname().c_str(), uRoom->getTrapExit().str().c_str());
+                broadcast(::isCt, fmt::format("^y{}: {} ({}) Attempted logon to bad or missing room!", getName(), getSock()->getHostname(), uRoom->getTrapExit().str()).c_str());
                 newRoom = abortFindRoom(this, "init_ply");
                 uRoom = newRoom->getAsUniqueRoom();
             }
@@ -360,8 +359,7 @@ void Player::init() {
             ) {
                 newRoom = getRecallRoom().loadRoom(this);
                 if(!newRoom) {
-                    broadcast(::isCt, "^y%s: %s (%s) Attempted logon to bad or missing room!", getCName(),
-                        getSock()->getHostname().c_str(), getRecallRoom().str().c_str());
+                    broadcast(::isCt, fmt::format("^y{}: {} ({}) Attempted logon to bad or missing room!", getName(), getSock()->getHostname(), getRecallRoom().str()).c_str());
                     newRoom = abortFindRoom(this, "init_ply");
                 }
                 uRoom = newRoom->getAsUniqueRoom();
@@ -376,14 +374,10 @@ void Player::init() {
 
     //  str[0] = 0;
     if(!isDm()) {
-        loge("%s(L:%d) (%s) %s. Room - %s (Port-%d)\n", getCName(), level,
-             getSock()->getHostname().c_str(), gServer->isRebooting() ? "reloaded" : "logged on",
-                     newRoom->fullName().c_str(), Port);
+        loge(fmt::format("{}(L:{}) ({}) {}. Room - {} (Port-{})\n", getCName(), level, getSock()->getHostname(), gServer->isRebooting() ? "reloaded" : "logged on", newRoom->fullName().c_str(), Port).c_str());
     }
     if(isStaff())
-        logn("log.imm", "%s  (%s) %s.\n",
-                getCName(), getSock()->getHostname().c_str(),
-             gServer->isRebooting() ? "reloaded" : "logged on");
+        logn("log.imm", fmt::format("{}  ({}) {}.\n", getCName(), getSock()->getHostname(), gServer->isRebooting() ? "reloaded" : "logged on").c_str());
 
 
     // broadcast
@@ -421,9 +415,6 @@ void Player::init() {
         focus.addModifier("UnFocused", -100, MOD_CUR);
     }
 
-    if(!gServer->isRebooting())
-        bug("%s logged into room %s.\n", getCName(), getRoomParent()->fullName().c_str());
-
 
     wearCursed();
     if(!flagIsSet(P_NO_AUTO_WEAR))
@@ -436,26 +427,26 @@ void Player::init() {
 
     if(!gServer->isRebooting()) {
         sprintf(file, "%s/news.txt",Path::Help);
-        sock->viewLoginFile(file);
+        sock->viewFile(file);
 
         sprintf(file, "%s/newbie_news.txt",Path::Help);
-        sock->viewLoginFile(file);
+        sock->viewFile(file);
 
         if(isCt()) {
             sprintf(file, "%s/news.txt", Path::DMHelp);
-            sock->viewLoginFile(file);
+            sock->viewFile(file);
         }
         if(isStaff() && getName() != "Bane") {
             sprintf(file, "%s/news.txt", Path::BuilderHelp);
-            sock->viewLoginFile(file);
+            sock->viewFile(file);
         }
         if(isCt() || flagIsSet(P_WATCHER)) {
             sprintf(file, "%s/watcher_news.txt", Path::DMHelp);
-            sock->viewLoginFile(file);
+            sock->viewFile(file);
         }
 
         sprintf(file, "%s/latest_post.txt", Path::Help);
-        sock->viewLoginFile(file, false);
+        sock->viewFile(file, false);
 
         hasNewMudmail();
     }
@@ -1503,7 +1494,7 @@ void Player::sendPrompt() {
         toPrint += "\n";
 
     // Send EOR if they want it, otherwise send GA
-    if(getSock()->getEor()) {
+    if(getSock()->eorEnabled()) {
         unsigned char eor_str[] = {IAC, EOR, '\0' };
         toPrint += eor_str;
     } else if(!getSock()->isDumbClient()){
@@ -2514,17 +2505,15 @@ bstring Player::expNeededDisplay() const {
 //                      exists
 //*********************************************************************
 
-bool Player::exists(const bstring& name) {
-    char    file[80];
-    sprintf(file, "%s/%s.xml", Path::Player, name.c_str());
-    return(file_exists(file));
+bool Player::exists(std::string_view name) {
+    return(file_exists(fmt::format("{}/{}.xml", Path::Player, name).c_str()));
 }
 
 //*********************************************************************
 //                      inList functions
 //*********************************************************************
 
-bool Player::inList(const std::list<bstring>* list, const bstring& name) const {
+bool Player::inList(const std::list<bstring>* list, std::string_view name) const {
     std::list<bstring>::const_iterator it;
 
     for(it = list->begin(); it != list->end() ; it++) {
@@ -2535,19 +2524,19 @@ bool Player::inList(const std::list<bstring>* list, const bstring& name) const {
 }
 
 
-bool Player::isIgnoring(const bstring& name) const {
+bool Player::isIgnoring(std::string_view name) const {
     return(inList(&ignoring, name));
 }
-bool Player::isGagging(const bstring& name) const {
+bool Player::isGagging(std::string_view name) const {
     return(inList(&gagging, name));
 }
-bool Player::isRefusing(const bstring& name) const {
+bool Player::isRefusing(std::string_view name) const {
     return(inList(&refusing, name));
 }
-bool Player::isDueling(const bstring& name) const {
+bool Player::isDueling(std::string_view name) const {
     return(inList(&dueling, name));
 }
-bool Player::isWatching(const bstring& name) const {
+bool Player::isWatching(std::string_view name) const {
     return(inList(&watching, name));
 }
 
@@ -2596,21 +2585,21 @@ bstring Player::showWatching() const {
 //                      addList functions
 //*********************************************************************
 
-void Player::addList(std::list<bstring>* list, const bstring& name) {
+void Player::addList(std::list<bstring>* list, std::string_view name) {
     list->push_back(name);
 }
 
 
-void Player::addIgnoring(const bstring& name) {
+void Player::addIgnoring(std::string_view name) {
     addList(&ignoring, name);
 }
-void Player::addGagging(const bstring& name) {
+void Player::addGagging(std::string_view name) {
     addList(&gagging, name);
 }
-void Player::addRefusing(const bstring& name) {
+void Player::addRefusing(std::string_view name) {
     addList(&refusing, name);
 }
-void Player::addDueling(const bstring& name) {
+void Player::addDueling(std::string_view name) {
     delList(&maybeDueling, name);
 
     // if they aren't dueling us, add us to their maybe dueling list
@@ -2620,10 +2609,10 @@ void Player::addDueling(const bstring& name) {
 
     addList(&dueling, name);
 }
-void Player::addMaybeDueling(const bstring& name) {
+void Player::addMaybeDueling(std::string_view name) {
     addList(&maybeDueling, name);
 }
-void Player::addWatching(const bstring& name) {
+void Player::addWatching(std::string_view name) {
     addList(&watching, name);
 }
 
@@ -2631,7 +2620,7 @@ void Player::addWatching(const bstring& name) {
 //                      delList functions
 //*********************************************************************
 
-void Player::delList(std::list<bstring>* list, const bstring& name) {
+void Player::delList(std::list<bstring>* list, std::string_view name) {
     std::list<bstring>::iterator it;
 
     for(it = list->begin(); it != list->end() ; it++) {
@@ -2643,19 +2632,19 @@ void Player::delList(std::list<bstring>* list, const bstring& name) {
 }
 
 
-void Player::delIgnoring(const bstring& name) {
+void Player::delIgnoring(std::string_view name) {
     delList(&ignoring, name);
 }
-void Player::delGagging(const bstring& name) {
+void Player::delGagging(std::string_view name) {
     delList(&gagging, name);
 }
-void Player::delRefusing(const bstring& name) {
+void Player::delRefusing(std::string_view name) {
     delList(&refusing, name);
 }
-void Player::delDueling(const bstring& name) {
+void Player::delDueling(std::string_view name) {
     delList(&dueling, name);
 }
-void Player::delWatching(const bstring& name) {
+void Player::delWatching(std::string_view name) {
     delList(&watching, name);
 }
 
@@ -2719,7 +2708,7 @@ void renamePlayerFiles(const char *old_name, const char *new_name) {
 //                      checkHeavyRestrict
 //*********************************************************************
 
-bool Player::checkHeavyRestrict(const bstring& skill) const {
+bool Player::checkHeavyRestrict(std::string_view skill) const {
     // If we aren't one of the classes that can use heavy armor, but with restrictions
     // immediately return false
     if(! ((getClass() == CreatureClass::FIGHTER && getSecondClass() == CreatureClass::THIEF) ||
@@ -2742,7 +2731,7 @@ bool Player::checkHeavyRestrict(const bstring& skill) const {
                 )
             )
         ) {
-            printColor("You can't ^W%s^x while wearing heavy armor!\n", skill.c_str());
+            printColor(fmt::format("You can't ^W{}^x while wearing heavy armor!\n", skill).c_str());
             printColor("^W%O^x would hinder your movement too much!\n", i);
             return(true);
         }

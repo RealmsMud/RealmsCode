@@ -542,7 +542,7 @@ bool Move::deletePortal(BaseRoom* room, Exit* exit, const Creature* leader, std:
     return(Move::deletePortal(room, exit->getPassPhrase(), leader, followers, initial));
 }
 
-bool Move::deletePortal(BaseRoom* room, const bstring& name, const Creature* leader, std::list<Creature*> *followers, bool initial) {
+bool Move::deletePortal(BaseRoom* room, std::string_view name, const Creature* leader, std::list<Creature*> *followers, bool initial) {
     ExitList::iterator xit;
     for(xit = room->exits.begin() ; xit != room->exits.end() ; xit++) {
         Exit* ext = *xit;
@@ -570,7 +570,7 @@ bool Move::deletePortal(BaseRoom* room, const bstring& name, const Creature* lea
             room->exits.erase(xit);
             delete ext;
 
-            Player* owner = gServer->findPlayer(name.c_str());
+            Player* owner = gServer->findPlayer(name);
             if(owner)
                 owner->clearFlag(P_PORTAL);
             return(true);

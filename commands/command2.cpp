@@ -63,7 +63,7 @@ int stoneScroll(Player* player, cmd* cmnd) {
     else if(!strncmp(cmnd->str[2], "breakdown", strlen(cmnd->str[2])))
         strcat(filename, "_breakdown");
     strcat(filename, ".txt");
-    player->getSock()->viewLoginFile(filename);
+    player->getSock()->viewFile(filename);
     return(0);
 }
 

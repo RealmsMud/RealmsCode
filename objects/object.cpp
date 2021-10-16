@@ -450,10 +450,7 @@ int displayObject(Player* player, Object* target) {
             if(str[i] == ' ')
                 str[i] = '_';
         sprintf(filename, "%s/%s.txt", Path::Sign, str);
-        if(target->flagIsSet(O_LOGIN_FILE))
-            player->getSock()->viewLoginFile(filename);
-        else
-            player->getSock()->viewFile(filename);
+        player->getSock()->viewFile(filename, !target->flagIsSet(O_UNPAGED_FILE));
         return(0);
     }
     std::ostringstream oStr;
@@ -693,10 +690,8 @@ bool Object::showAsSame(const Player* player, const Object* object) const {
 //                      nameCoin
 //*********************************************************************
 
-void Object::nameCoin(const bstring& type, unsigned long value) {
-    char temp[80];
-    snprintf(temp, 80, "%lu %s coin%s", value, type.c_str(), value != 1 ? "s" : "");
-    setName(temp);
+void Object::nameCoin(std::string_view type, unsigned long value) {
+    setName(fmt::format("{} {} coin{}", value, type, value != 1 ? "s" : ""));
 }
 
 //*********************************************************************

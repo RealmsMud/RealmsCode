@@ -179,8 +179,8 @@ private:
 private:
     void reset();
     int computeDamage(bool saved = false);
-    bstring modifyAttackString(const bstring& input, Creature* viewer, Creature* attacker, Creature* target, int dmg = -1);
-    void printToRoom(BaseRoom* room, const bstring& str, Creature* attacker, Creature* target, int dmg = -1);
+    bstring modifyAttackString(std::string_view input, Creature* viewer, Creature* attacker, Creature* target, int dmg = -1);
+    void printToRoom(BaseRoom* room, std::string_view str, Creature* attacker, Creature* target, int dmg = -1);
     void setFlag(int flag);
     void clearFlag(int flag);
 

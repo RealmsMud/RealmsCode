@@ -92,7 +92,7 @@ bstring CatRefInfo::str() const {
 //                      catRefName
 //*********************************************************************
 
-bstring Config::catRefName(const bstring& area) const {
+bstring Config::catRefName(std::string_view area) const {
     const CatRefInfo* cri = gConfig->getCatRefInfo(area);
     if(cri)
         return(cri->getName());
@@ -129,7 +129,7 @@ void Config::clearCatRefInfo() {
 //                      getCatRefInfo
 //*********************************************************************
 
-const CatRefInfo* Config::getCatRefInfo(const bstring& area, int id, int shouldGetParent) const {
+const CatRefInfo* Config::getCatRefInfo(std::string_view area, int id, int shouldGetParent) const {
     std::list<CatRefInfo*>::const_iterator it;
 
     // prevent infinite loops from bad config files

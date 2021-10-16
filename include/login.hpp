@@ -43,7 +43,6 @@ typedef enum {
     CON_CHOSING_WEAPONS,
 
     // Viewing a file
-    CON_VIEWING_FILE,
     CON_VIEWING_FILE_REVERSE,
 
     // Post edit etc
@@ -129,8 +128,8 @@ typedef enum {
 namespace Create {
     const int doPrint=1;
     const int doWork=2;
-    void addStartingItem(Player* player, const bstring& area, int id, bool wear=true, bool skipUseCheck=false, int num=1);
-    void addStartingWeapon(Player* player, const bstring& weapon);
+    void addStartingItem(Player* player, std::string_view area, int id, bool wear=true, bool skipUseCheck=false, int num=1);
+    void addStartingWeapon(Player* player, std::string_view weapon);
 
     // work functions
     bool getSex(Socket* sock, bstring str, int mode);
@@ -139,7 +138,7 @@ namespace Create {
     void finishRace(Socket* sock);
     bool getClass(Socket* sock, bstring str, int mode);
     bool getDeity(Socket* sock, bstring str, int mode);
-    bool getLocation(Socket* sock, const bstring& str, int mode);
+    bool getLocation(Socket* sock, std::string_view str, int mode);
     bool getStatsChoice(Socket* sock, bstring str, int mode);
     bool getStats(Socket* sock, bstring str, int mode);
     void finishStats(Socket* sock);
@@ -148,8 +147,8 @@ namespace Create {
     bool handleWeapon(Socket* sock, int mode, char ch);
     bool getProf(Socket* sock, bstring str, int mode);
     bool getSecondProf(Socket* sock, bstring str, int mode);
-    bool getPassword(Socket* sock, const bstring& str, int mode);
-    void done(Socket* sock, const bstring& str, int mode);
+    bool getPassword(Socket* sock, std::string_view str, int mode);
+    void done(Socket* sock, std::string_view str, int mode);
 
     // character customization functions
     bool startCustom(Socket* sock, bstring str, int mode);

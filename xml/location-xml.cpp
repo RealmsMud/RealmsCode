@@ -27,7 +27,7 @@
 #include "server.hpp"       // for Server, gServer
 #include "xml.hpp"          // for newStringChild, loadRoom, NODE_NAME
 
-void Location::save(xmlNodePtr rootNode, const bstring& name) const {
+void Location::save(xmlNodePtr rootNode, std::string_view name) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, name);
     room.save(curNode, "Room", false);
     if(mapmarker.getArea()) {

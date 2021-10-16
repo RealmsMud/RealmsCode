@@ -108,7 +108,7 @@ class SkillCommand : public virtual SkillInfo, public virtual Command {
     friend class Config;
 public:
     explicit SkillCommand(xmlNodePtr rootNode);
-    SkillCommand(const bstring& pCmdStr) {
+    SkillCommand(std::string_view pCmdStr) {
         name = pCmdStr;
     }
     int execute(Creature* player, cmd* cmnd) const;
@@ -157,7 +157,7 @@ class Skill {
 public:
     Skill();
     Skill(xmlNodePtr rootNode);
-    Skill(const bstring& pName, int pGained);
+    Skill(std::string_view pName, int pGained);
     void reset();
 protected:
     bstring name;
@@ -181,7 +181,7 @@ public:
     [[nodiscard]] int getGained() const;
     [[nodiscard]] int getGainBonus() const;
 
-    void setName(const bstring& pName);
+    void setName(std::string_view pName);
     void updateParent();
     void setGained(int pGained);
 

@@ -260,7 +260,7 @@ public:
     ~MysticMethod() override = default;
 
     virtual void save(xmlNodePtr rootNode) const = 0;
-    [[nodiscard]] const bstring& getScript() const;
+    [[nodiscard]] std::string_view getScript() const;
 
 public:
     bstring script;
@@ -277,7 +277,7 @@ protected:
 class Spell: public MysticMethod {
 public:
     explicit Spell(xmlNodePtr rootNode);
-    Spell(const bstring& pCmdStr) {
+    Spell(std::string_view pCmdStr) {
         name = pCmdStr;
     }
     ~Spell() override = default;
@@ -299,14 +299,14 @@ public:
 // these are supplemental to the cmd class
 class CrtCommand: public Command {
 public:
-    CrtCommand(const bstring& pCmdStr, int pPriority, int (*pFn)(Creature* player, cmd* cmnd), bool (*pAuth)(const Creature *), const bstring& pDesc): fn(pFn)
+    CrtCommand(std::string_view pCmdStr, int pPriority, int (*pFn)(Creature* player, cmd* cmnd), bool (*pAuth)(const Creature *), std::string_view pDesc): fn(pFn)
     {
         name = pCmdStr;
         priority = pPriority;
         auth = pAuth;
         description = pDesc;
     };
-    CrtCommand(const bstring& pCmdStr) {
+    CrtCommand(std::string_view pCmdStr) {
         name = pCmdStr;
     }
     ~CrtCommand() = default;
@@ -316,14 +316,14 @@ public:
 
 class PlyCommand: public Command {
 public:
-    PlyCommand(const bstring& pCmdStr, int pPriority, int (*pFn)(Player* player, cmd* cmnd), bool (*pAuth)(const Creature *), const bstring& pDesc): fn(pFn)
+    PlyCommand(std::string_view pCmdStr, int pPriority, int (*pFn)(Player* player, cmd* cmnd), bool (*pAuth)(const Creature *), std::string_view pDesc): fn(pFn)
     {
         name = bstring(pCmdStr);
         priority = pPriority;
         auth = pAuth;
         description = bstring(pDesc);
     };
-    PlyCommand(const bstring& pCmdStr) {
+    PlyCommand(std::string_view pCmdStr) {
         name = pCmdStr;
     }
     ~PlyCommand() = default;

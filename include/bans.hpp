@@ -27,7 +27,7 @@ public:
     Ban();
     explicit Ban(xmlNodePtr curNode);
     void reset();
-    bool matches(const char* toMatch);
+    bool matches(std::string_view toMatch);
     
 public: // for now
     bstring     site;

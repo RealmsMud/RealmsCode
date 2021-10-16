@@ -1035,7 +1035,6 @@ int doGetObject(Object* object, Creature* creature, bool doLimited, bool noSplit
         delete object;
         if(!noMessage)
             player->print("You now have %s.\n", player->coins.str().c_str());
-        player->bug("%s now has %s.\n", player->getCName(), player->coins.str().c_str());
         return(2);
 
     } else {
@@ -1257,7 +1256,6 @@ void getAllObj(Creature* creature, Object *container) {
 
     broadcast(player->getSock(), player->getParent(), "%M gets %s from %1P.", creature, str, container);
 
-    player->bug("%s%s gets %s from %s.\n", player->getCName(), player != creature ? "'s pet" : "", str, container->getCName());
     if(player == creature)
         player->printColor("You get %s from %1P.\n", str, container);
     else
@@ -1423,8 +1421,6 @@ void get_all_rom(Creature* creature, char *item) {
         return;
 
     broadcast(player->getSock(), room, "%M gets %s.", creature, str);
-
-    player->bug("%s%s gets %s.\n", player->getCName(), player != creature ? "'s pet" : "", str);
 
     if(player == creature)
         player->printColor("You get %s.\n", str);
@@ -1595,8 +1591,6 @@ int cmdGet(Creature* creature, cmd* cmnd) {
         } else
             player->printColor("%M gets %1P.\n", creature, object);
 
-        player->bug("%s%s gets %s.\n", player->getCName(), player != creature ? "'s pet" : "", object->getCName());
-
         if(object->flagIsSet(O_SILVER_OBJECT) && player->isEffected("lycanthropy")) {
             if(player == creature)
                 player->printColor("%O burns you and you drop it!\n", object);
@@ -1606,8 +1600,6 @@ int cmdGet(Creature* creature, cmd* cmnd) {
 
             broadcast(player->getSock(), room, "%M is burned by %P.", creature, object);
 
-            player->bug("%s%s burned %s and %s dropped it.\n",
-                player->getCName(), player != creature ? "'s pet" : "", object->getCName(), creature->heShe());
             //player->delObj(object, false, true);
             //object->addToRoom(room);
             return(0);
@@ -1763,7 +1755,6 @@ int cmdGet(Creature* creature, cmd* cmnd) {
                 player->printColor("%M gets %1P from %1P.\n", creature, object, container);
             broadcast(player->getSock(), room, "%M gets %1P from %1P.", creature, object, container);
 
-            player->bug("%s%s get's %s from %s.\n", player->getCName(), player != creature ? "'s pet" : "", object->getCName(), container->getCName());
         }
         if(p)
             p->appendLog(player->getName(), "%s gets %s.", player->getCName(), object->getObjStr(player, player->displayFlags(), 1).c_str());
@@ -2013,8 +2004,6 @@ void dropAllRoom(Creature* creature, Player *player, bool factionCanRecycle) {
         Server::logGold(GOLD_IN, player, Money(money, GOLD), nullptr, "RecycleAll");
     }
 
-    player->bug("%s%s dropped %s.\n", player->getCName(), player != creature ? "'s pet" : "", txt.c_str());
-
     if(!player->isDm()) {
         log_immort(false, player, "%s%s dropped %s in room %s\n", player->getCName(),
             player != creature ? "'s pet" : "", txt.c_str(), room->fullName().c_str());
@@ -2142,9 +2131,6 @@ void dropAllObj(Creature* creature, Object *container, Property *p) {
 
     container->clearFlag(O_BEING_PREPARED);
     broadcast(player->getSock(), room, "%M put %s into %1P.", creature, txt.c_str(), container);
-
-    player->bug("%s%s dropped %s into %s.\n",
-        player->getCName(), player != creature ? "'s pet" : "", txt.c_str(), container->getCName());
 
     if(player == creature)
         player->printColor("You put %s into %1P.\n", txt.c_str(), container);
@@ -2449,8 +2435,6 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
 
         broadcast(player->getSock(), room, "%M dropped %1P.", creature, object);
 
-        player->bug("%s%s dropped %s.\n", player, is_pet ? "'s pet" : "", object);
-
         if(!player->isDm())
             log_immort(false,player, "%s%s dropped %s in room %s\n", player->getCName(),
                 is_pet ? "'s pet" : "", object->getCName(), room->fullName().c_str());
@@ -2648,8 +2632,6 @@ int cmdDrop(Creature* creature, cmd* cmnd) {
         broadcast(player->getSock(), room, "%M put %1P in %1P.",
             creature, object, container);
 
-        player->bug("%s%s put %s in %s.\n", player->getCName(), !is_pet ? "'s pet" : "",
-            object->getCName(), container->getCName());
         if(p)
             p->appendLog(player->getName(), "%s stores %s.", player->getCName(), object->getObjStr(player, player->displayFlags(), 1).c_str());
     }

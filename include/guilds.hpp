@@ -36,8 +36,8 @@ public:
     GuildCreation();
 
     bool addSupporter(Player* supporter);
-    bool removeSupporter(const bstring& supporterName);
-    void renameSupporter(const bstring& oldName, const bstring& newName);
+    bool removeSupporter(std::string_view supporterName);
+    void renameSupporter(std::string_view oldName, std::string_view newName);
     bool saveToXml(xmlNodePtr rootNode) const;
 
 public:
@@ -56,10 +56,10 @@ public:
     explicit Guild(xmlNodePtr curNode);
     void recalcLevel();
     int averageLevel();
-    bool addMember(const bstring& memberName);
-    bool delMember(const bstring& memberName);
-    bool isMember(const bstring& memberName);
-    void renameMember(const bstring& oldName, const bstring& newName);
+    bool addMember(std::string_view memberName);
+    bool delMember(std::string_view memberName);
+    bool isMember(std::string_view memberName);
+    void renameMember(std::string_view oldName, std::string_view newName);
     void parseGuildMembers(xmlNodePtr cur);
     bool saveToXml(xmlNodePtr rootNode) const;
 
@@ -94,9 +94,9 @@ public:
     [[nodiscard]] long getPkillsWon() const;
     [[nodiscard]] long getPoints() const;
 
-    void setName(const bstring& n);
+    void setName(std::string_view n);
     void setNum(unsigned short n);
-    void setLeader(const bstring& l);
+    void setLeader(std::string_view l);
     void setLevel(long l);
     void setNumMembers(int n);
     void setPkillsIn(long pk);

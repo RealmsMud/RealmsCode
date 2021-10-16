@@ -23,6 +23,7 @@
 #include "bstring.hpp"              // for bstring, operator+
 #include "cmd.hpp"                  // for cmd
 #include "commands.hpp"             // for cmdLevelHistory
+#include "color.hpp"                // for stripColor
 #include "creatureStreams.hpp"      // for Streamable, ColorOff
 #include "creatures.hpp"            // for Player, Creature
 #include "free_crt.hpp"             // for free_crt
@@ -94,7 +95,7 @@ StringStatistic::StringStatistic() {
 //                      update
 //*********************************************************************
 
-void StringStatistic::update(unsigned long num, const bstring& with) {
+void StringStatistic::update(unsigned long num, std::string_view with) {
     if(num > value) {
         value = num;
         name = stripColor(with);
@@ -682,7 +683,7 @@ void Statistics::monster(Monster* monster) {
 //                      experience
 //*********************************************************************
 
-void Statistics::experience(unsigned long num, const bstring& with) {
+void Statistics::experience(unsigned long num, std::string_view with) {
     if(track) mostExperience.update(num, with);
 }
 
@@ -690,7 +691,7 @@ void Statistics::experience(unsigned long num, const bstring& with) {
 //                      attackDamage
 //*********************************************************************
 
-void Statistics::attackDamage(unsigned long num, const bstring& with) {
+void Statistics::attackDamage(unsigned long num, std::string_view with) {
     if(track) mostAttackDamage.update(num, with);
 }
 
@@ -698,7 +699,7 @@ void Statistics::attackDamage(unsigned long num, const bstring& with) {
 //                      magicDamage
 //*********************************************************************
 
-void Statistics::magicDamage(unsigned long num, const bstring& with) {
+void Statistics::magicDamage(unsigned long num, std::string_view with) {
     if(track) mostMagicDamage.update(num, with);
 }
 

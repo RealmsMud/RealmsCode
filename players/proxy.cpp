@@ -195,7 +195,7 @@ bool Config::removeProxyAccess(Player* proxy, Player* proxied) {
 //*********************************************************************
 // Remove proxy access to (proxied) for (id)
 
-bool Config::removeProxyAccess(const bstring& id, Player* proxied) {
+bool Config::removeProxyAccess(std::string_view id, Player* proxied) {
     return(proxyManager->removeProxyAccess(id, proxied));
 }
 
@@ -238,7 +238,7 @@ void Player::setProxy(Player* proxy) {
 //*********************************************************************
 // Set's proxyName & proxyId as the current proxy user & ID
 
-void Player::setProxy(const bstring& pProxyName, const bstring& pProxyId) {
+void Player::setProxy(std::string_view pProxyName, std::string_view pProxyId) {
     proxyName = pProxyName;
     proxyId = pProxyId;
 }
@@ -248,7 +248,7 @@ void Player::setProxy(const bstring& pProxyName, const bstring& pProxyId) {
 //*********************************************************************
 // Set's proxyName as the current proxy user
 
-void Player::setProxyName(const bstring& pProxyName) {
+void Player::setProxyName(std::string_view pProxyName) {
     proxyName = pProxyName;
 }
 
@@ -257,7 +257,7 @@ void Player::setProxyName(const bstring& pProxyName) {
 //*********************************************************************
 // Set's proxyId as the current proxy ID
 
-void Player::setProxyId(const bstring& pProxyId) {
+void Player::setProxyId(std::string_view pProxyId) {
     proxyId = pProxyId;
 }
 
@@ -306,7 +306,7 @@ bool ProxyManager::removeProxyAccess(Player* proxy, Player* proxied) {
 //*********************************************************************
 // Remove proxy access to (proxied) for (proxy)
 
-bool ProxyManager::removeProxyAccess(const bstring& id, Player* proxied) {
+bool ProxyManager::removeProxyAccess(std::string_view id, Player* proxied) {
     ProxyMultiMapRange range = proxies.equal_range(proxied->getId());
     for(auto it = range.first ; it != range.second ; it++) {
         ProxyAccess& proxyAccess = it->second;

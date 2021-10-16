@@ -25,6 +25,7 @@
 #include <ostream>                // for operator<<, basic_ostream, basic_os...
 #include <stdexcept>              // for out_of_range
 #include <string>                 // for operator==, char_traits, basic_string
+#include <fmt/format.h>
 
 #include "area.hpp"               // for MapMarker, Area (ptr only)
 #include "bstring.hpp"            // for bstring, operator+
@@ -96,7 +97,7 @@ int dmCreateObj(Player* player, cmd* cmnd) {
 //*********************************************************************
 //  Display information on object given to player given.
 
-bstring Object::statObj(int statFlags) {
+bstring Object::statObj(unsigned int statFlags) {
     std::ostringstream objStr;
     Object* object=nullptr;
     bstring str = "";
@@ -1251,27 +1252,25 @@ int dmSetObj(Player* player, cmd* cmnd) {
     
     if(!setType.empty()) {
         if(!resultTxt.empty()) {
-            player->printColor("%s set to %ld(%s).\n", setType.c_str(), result, resultTxt.c_str());
-            log_immort(2, player, "%s set %s's %s to %ld(%s^g).\n",
-                player->getCName(), objname, setType.c_str(), result, resultTxt.c_str());
+            *player << ColorOn << fmt::format("{} set to {}({}).\n", setType, result, resultTxt) << ColorOff;
+            log_immort(2, player, "%s set %s's %s to %ld(%s^g).\n", player->getCName(), objname, setType.c_str(), result, resultTxt.c_str());
         } else {
-            player->print("%s set to %ld.\n", setType.c_str(), result);
-            log_immort(2, player, "%s set %s's %s to %ld.\n",
-                player->getCName(), objname, setType.c_str(), result);
+            *player << fmt::format("{} set to {}.\n", setType, result);
+            log_immort(2, player, "%s set %s's %s to %ld.\n", player->getCName(), objname, setType.c_str(), result);
         }
     }
 
 
     if(Unique::isUnique(object)) {
-        player->printColor("^yUnique status of %s^y has been removed.\n", object->getCName());
-        player->print("If the object is saved to a new index, the unique flag will be removed.\n");
-        player->print("If the object is resaved to the unique range, it will become unique again.\n");
+        *player << ColorOn << fmt::format("^yUnique status of {}^y has been removed.\n", object->getName()) << ColorOff
+                << "If the object is saved to a new index, the unique flag will be removed.\n"
+                << "If the object is resaved to the unique range, it will become unique again.\n";
         object->clearFlag(O_UNIQUE);
     }
 
     if(Lore::isLore(object)) {
-        player->printColor("^yLore status of %s^y has been removed.\n", object->getCName());
-        player->print("If the object is resaved to any index, it will become lore again.\n");
+        *player << ColorOn << fmt::format("^yLore status of %s^y has been removed.\n", object->getName()) << ColorOff
+                <<"If the object is resaved to any index, it will become lore again.\n";
     }
 
     // Reset object index
@@ -1565,7 +1564,7 @@ int dmSize(Player* player, cmd* cmnd) {
 //                      makeWeapon
 //*********************************************************************
 
-void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, const bstring& sub, const bstring& descBase, const bstring& descAll, bool twoHanded, int weight, double value, int bulk, short numAttacks) {
+void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, std::string_view sub, std::string_view descBase, std::string_view descAll, bool twoHanded, int weight, double value, int bulk, short numAttacks) {
     Object* newObj = nullptr;
     bool addToInventory = true;
 
@@ -1586,11 +1585,11 @@ void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, cons
 
 
     if(!newObj->key[2][0]) {
-        strcpy(newObj->key[1], sub.c_str());
+        strncpy(newObj->key[1], sub.data(), sub.length());
         newObj->setName(bstring(newObj->key[0]) + sub);
         //sprintf(newObj->name, "%s %s", newObj->key[0], sub.c_str());
     } else {
-        strcpy(newObj->key[2], sub.c_str());
+        strncpy(newObj->key[2], sub.data(), sub.length());
         newObj->setName(bstring(newObj->key[0]) + newObj->key[1] + sub);
         //sprintf(newObj->name, "%s %s %s", newObj->key[0], newObj->key[1], sub.c_str());
     }
@@ -1638,7 +1637,7 @@ void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, cons
 //                      makeArmor
 //*********************************************************************
 
-void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int wear, const bstring& base, const bstring& descBase, const bstring& descAll, long value, int weight, int bulk, bool somePrefix=false) {
+void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int wear, std::string_view base, std::string_view descBase, std::string_view descAll, long value, int weight, int bulk, bool somePrefix=false) {
     Object* newObj = nullptr;
     bool addToInventory = true;
 
@@ -1659,11 +1658,11 @@ void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int w
 
 
     if(!newObj->key[2][0]) {
-        strcpy(newObj->key[1], base.c_str());
+        strncpy(newObj->key[1], base.data(), base.length());
         newObj->setName(bstring(newObj->key[0]) + base);
         //sprintf(newObj->name, "%s %s", newObj->key[0], base.c_str());
     } else {
-        strcpy(newObj->key[2], base.c_str());
+        strncpy(newObj->key[2],  base.data(), base.length());
         newObj->setName(bstring(newObj->key[0]) + newObj->key[1] + base);
         //sprintf(newObj->name, "%s %s %s", newObj->key[0], newObj->key[1], base.c_str());
     }

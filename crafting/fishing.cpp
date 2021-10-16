@@ -469,7 +469,7 @@ bstring UniqueRoom::getFishingStr() const { return(fishing); }
 //                      setFishing
 //*********************************************************************
 
-void UniqueRoom::setFishing(const bstring& id) { fishing = id; }
+void UniqueRoom::setFishing(std::string_view id) { fishing = id; }
 
 
 
@@ -485,7 +485,7 @@ void Config::clearFishing() {
 //                      getFishing
 //*********************************************************************
 
-const Fishing *Config::getFishing(const bstring& id) const {
+const Fishing *Config::getFishing(std::string_view id) const {
     auto it = fishing.find(id);
 
     if(it == fishing.end())

@@ -26,6 +26,8 @@
 #include "socket.hpp"           // for Socket
 #include "stats.hpp"            // for Stat
 
+bstring escapeColor(std::string_view colored);
+
 Streamable& Streamable::operator << ( Streamable& (*op)(Streamable&)) {
     // call the function passed as parameter with this stream as the argument
     return (*op)(*this);
@@ -89,12 +91,12 @@ Streamable& Streamable::operator<< ( const MudObject* mo) {
     return(*this << *mo);
 }
 
-Streamable& Streamable::operator<< (const bstring& str) {
+Streamable& Streamable::operator<< (std::string_view str) {
     doPrint(str);
     return(*this);
 }
 Streamable& Streamable::operator<< (const int num) {
-    doPrint(num);
+    doPrint(bstring(num));
     return(*this);
 }
 Streamable& Streamable::operator<< (Stat& stat) {
@@ -106,6 +108,14 @@ void Streamable::setColorOn() {
 }
 void Streamable::setColorOff() {
     streamColor = false;
+}
+void Streamable::setPagerOn() {
+    pager = true;
+}
+void Streamable::setPagerOff() {
+    pager = false;
+    Socket* sock = getMySock();
+    if(sock) sock->donePaging();
 }
 
 void Streamable::setManipFlags(unsigned int flags) {
@@ -132,7 +142,42 @@ int Streamable::getManipNum() {
     return(toReturn);
 }
 
-void Streamable::doPrint(const bstring& toPrint) {
+void Streamable::doPrint(std::string_view toPrint) {
+    const Monster* monster = dynamic_cast<Monster*>(this);
+    const Player* master = nullptr;
+    Socket* sock = getMySock();
+
+    if(monster) {
+        master = monster->getConstPlayerMaster();
+    }
+    if(sock) {
+        if(master) {
+            if(!petPrinted) {
+                sock->bprint("Pet> ");
+                if(toPrint.find('\n') == bstring::npos)
+                    petPrinted = true;
+            }
+            else {
+                if(toPrint.find('\n') != bstring::npos)
+                    petPrinted = false;
+            }
+        }
+        if(pager) { // Paged
+            if(streamColor)
+                sock->appendPaged(toPrint);
+            else
+                sock->appendPaged(escapeColor(toPrint));
+        } else { // Unpaged
+            if(streamColor)
+                sock->bprint(toPrint);
+            else
+                sock->bprint(escapeColor(toPrint));
+        }
+    }
+
+}
+
+Socket *Streamable::getMySock() {
     const Player* player = dynamic_cast<Player*>(this);
     const Monster* monster = dynamic_cast<Monster*>(this);
     const Player* master = nullptr;
@@ -146,22 +191,6 @@ void Streamable::doPrint(const bstring& toPrint) {
         if(master)
             sock = master->getSock();
     }
-    if(sock) {
-        if(master) {
-            if(!petPrinted) {
-                sock->bprint("Pet> ");
-                if(toPrint.find("\n") == bstring::npos)
-                    petPrinted = true;
-            }
-            else {
-                if(toPrint.find("\n") != bstring::npos)
-                    petPrinted = false;
-            }
-        }
-        if(streamColor)
-            sock->bprintColor(toPrint);
-        else
-            sock->bprintNoColor(toPrint);
-    }
+    return sock;
 
 }

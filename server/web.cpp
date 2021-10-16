@@ -27,6 +27,7 @@
 #include <cerrno>                 // for errno
 #include <cstring>                // for strcat, strerror, strchr
 #include <stdexcept>              // for runtime_error
+#include <fmt/format.h>
 
 #include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
@@ -86,7 +87,7 @@ void updateRecentActivity() {
 //                      latestPost
 //*********************************************************************
 
-void latestPost(const bstring& view, const bstring& subject, const bstring& username, const bstring& boardname, const bstring& post) {
+void latestPost(std::string_view view, std::string_view subject, std::string_view username, std::string_view boardname, std::string_view post) {
 
     if(view.empty() || boardname.empty() || username.empty() || post.empty())
         return;
@@ -113,9 +114,9 @@ void latestPost(const bstring& view, const bstring& subject, const bstring& user
             fullMode = false;
 
         if(fullMode)
-            player->printColor("%s", post.c_str());
+            player->bPrint(post);
         else
-            player->printColor("^C==>^x There is a new post titled ^W\"%s\"^x by ^W%s^x in the ^W%s^x board.\n", subject.c_str(), username.c_str(), boardname.c_str());
+            player->bPrint(fmt::format("^C==>^x There is a new post titled ^W\"{}\"^x by ^W{}^x in the ^W{}^x board.\n", subject, username, boardname));
     }
 }
 
@@ -1058,7 +1059,7 @@ int cmdForum(Player* player, cmd* cmnd) {
 //                      webUnassociate
 //*********************************************************************
 
-void webUnassociate(const bstring& user) {
+void webUnassociate(std::string_view user) {
     callWebserver("mud.php?type=forum&char=" + user + "&delete");
 }
 
@@ -1066,7 +1067,7 @@ void webUnassociate(const bstring& user) {
 //                      webCrash
 //*********************************************************************
 
-void webCrash(const bstring& msg) {
+void webCrash(std::string_view msg) {
     callWebserver("mud.php?type=crash&msg=" + msg);
 }
 
@@ -1078,7 +1079,6 @@ void webCrash(const bstring& msg) {
 
 int cmdWiki(Player* player, cmd* cmnd) {
     struct stat f_stat{};
-    char    file[80];
     std::ostringstream url;
     bstring entry = getFullstrText(cmnd->fullstr, 1);
 
@@ -1096,11 +1096,11 @@ int cmdWiki(Player* player, cmd* cmnd) {
 
     entry = entry.toLower();
     entry.Replace(":", "_colon_");
-    sprintf(file, "%s/%s.txt", Path::Wiki, entry.c_str());
+    auto file = fmt::format("{}/{}.txt", Path::Wiki, entry);
 
     // If the file exists and was modified within the last hour, use the local cache
-    if(!stat(file, &f_stat) && (time(nullptr) - f_stat.st_mtim.tv_sec) < 3600) {
-        player->getSock()->viewFile(file);
+    if(!stat(file.c_str(), &f_stat) && (time(nullptr) - f_stat.st_mtim.tv_sec) < 3600) {
+        player->getSock()->viewFile(file, true);
         return(0);
     }
 
@@ -1153,10 +1153,7 @@ bool WebInterface::wiki(bstring command, bstring tempBuf) {
     if(!player) {
         outBuf += "That player is not logged on.";
     } else {
-        char    file[80];
-
-        sprintf(file, "%s/%s.txt", Path::Wiki, tempBuf.c_str());
-        player->getSock()->viewFile(file);
+        player->getSock()->viewFile(fmt::format("{}/{}.txt", Path::Wiki, tempBuf), true);
     }
     outBuf += EOT;
     return(true);

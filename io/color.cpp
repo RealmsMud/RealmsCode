@@ -27,7 +27,7 @@
 #include "commands.hpp"           // for isPtester, getFullstrText, cmdColors
 #include "config.hpp"             // for Config, gConfig
 #include "creatures.hpp"          // for Player, Monster, Creature
-#include "flags.hpp"              // for P_ANSI_COLOR, P_MXP_ENABLED, P_MIRC
+#include "flags.hpp"              // for P_ANSI_COLOR, P_MXP_ENABLED
 #include "global.hpp"             // for CUSTOM_COLOR_DEFAULT, CustomColor
 #include "login.hpp"              // for ANSI_COLOR, NO_COLOR
 #include "socket.hpp"             // for Socket, Socket::SockOptions
@@ -61,50 +61,28 @@ int Mirc[9] = {  1,  4,  9,  8, 12, 13, 11, 15, 15 };
 
 char nameToColorCode(bstring name) {
     name = name.toLower();
-    if(name == "blink")
-        return('!');
-    if(name == "blue")
-        return('b');
-    if(name == "bold blue")
-        return('B');
-    if(name == "red")
-        return('r');
-    if(name == "bold red")
-        return('R');
-    if(name == "cyan")
-        return('c');
-    if(name == "bold cyan")
-        return('C');
-    if(name == "green")
-        return('g');
-    if(name == "bold green")
-        return('G');
-    if(name == "magenta")
-        return('m');
-    if(name == "bold magenta")
-        return('M');
-    if(name == "yellow")
-        return('y');
-    if(name == "bold yellow")
-        return('Y');
-    if(name == "white")
-        return('w');
-    if(name == "bold white")
-        return('W');
-    if(name == "black")
-        return('d');
-    if(name == "grey")
-        return('D');
-    if(name == "gold")
-        return('l');
-    if(name == "cerulean")
-        return('e');
-    if(name == "pink")
-        return('p');
-    if(name == "sky blue")
-        return('s');
-    if(name == "brown")
-        return('o');
+    if(name == "blink") return('!');
+    if(name == "blue") return('b');
+    if(name == "bold blue") return('B');
+    if(name == "red") return('r');
+    if(name == "bold red") return('R');
+    if(name == "cyan") return('c');
+    if(name == "bold cyan") return('C');
+    if(name == "green") return('g');
+    if(name == "bold green") return('G');
+    if(name == "magenta") return('m');
+    if(name == "bold magenta") return('M');
+    if(name == "yellow") return('y');
+    if(name == "bold yellow") return('Y');
+    if(name == "white") return('w');
+    if(name == "bold white") return('W');
+    if(name == "black") return('d');
+    if(name == "grey") return('D');
+    if(name == "gold") return('l');
+    if(name == "cerulean") return('e');
+    if(name == "pink") return('p');
+    if(name == "sky blue") return('s');
+    if(name == "brown") return('o');
     return('x');
 }
 
@@ -166,13 +144,13 @@ bstring Config::getCustomColor(CustomColor i, bool caret) const {
 //                      customColorize
 //**********************************************************************
 
-bstring Monster::customColorize(const bstring& pText, bool caret) const {
+bstring Monster::customColorize(std::string_view pText, bool caret) const {
     bstring text = pText;
     if(getMaster() && getMaster()->isPlayer())
         text = getMaster()->getAsConstPlayer()->customColorize(text, caret);
     return(text);
 }
-bstring Player::customColorize(const bstring& pText, bool caret) const {
+bstring Player::customColorize(std::string_view pText, bool caret) const {
     bstring text = pText;
     text.Replace("*CC:BROADCAST*", getCustomColor(CUSTOM_COLOR_BROADCAST, caret).c_str());
     text.Replace("*CC:GOSSIP*", getCustomColor(CUSTOM_COLOR_GOSSIP, caret).c_str());
@@ -228,7 +206,6 @@ const char* colorSection(bool staff, const char* color, char colorChar = 0) {
 
 int cmdColors(Player* player, cmd* cmnd) {
     bool staff = player->isStaff();
-//  player->defineMXP();
 
     if(!strcmp(cmnd->str[1], "reset")) {
         player->print("Custom colors have been reset to defaults.\n");
@@ -371,12 +348,10 @@ void Player::defineColors() {
     if(mySock->getColorOpt() == ANSI_COLOR) {
         setFlag(P_ANSI_COLOR);
         clearFlag(P_MXP_ENABLED);
-        clearFlag(P_MIRC);
         clearFlag(P_NEWLINE_AFTER_PROMPT);
     } else if(mySock->getColorOpt() == NO_COLOR) {
         clearFlag(P_ANSI_COLOR);
         clearFlag(P_MXP_ENABLED);
-        clearFlag(P_MIRC);
         clearFlag(P_NEWLINE_AFTER_PROMPT);
     }
 }
@@ -423,25 +398,51 @@ bstring Socket::getColorCode(const unsigned char ch) {
 //                      stripColor
 //***********************************************************************
 
-bstring stripColor(const bstring& color) {
+bstring stripColor(std::string_view colored) {
     std::ostringstream str;
-    unsigned int i=0, max = color.getLength();
-    for(; i < max ; i++) {
-        if(color.getAt(i) == '^')
-            i++;
+    for (auto it = colored.cbegin() ; it != colored.cend() ; ++it) {
+        if(*it == '^')
+            ++it;
         else
-            str << color.getAt(i);
+            str << *it;
     }
     return(str.str());
+}
+
+size_t lengthNoColor(std::string_view colored) {
+    size_t len = 0;
+    for (auto it = colored.cbegin() ; it != colored.cend() ; ++it) {
+        if(*it == '^')
+            ++it;
+        else
+            len++;
+    }
+    return len;
 }
 
 //***********************************************************************
 //                      escapeColor
 //***********************************************************************
 
-bstring escapeColor(bstring color) {
-    color.Replace("^","^^");
-    return(color);
+bstring escapeColor(std::string_view colored) {
+    std::ostringstream str;
+    for (const auto c : colored) {
+        if(c == '^')  // Double it
+            str << c;
+        str << c;
+    }
+    return(str.str());
 }
 
+//***********************************************************************
+//                      padColor
+//***********************************************************************
 
+
+bstring padColor(std::string_view toPad, size_t pad) {
+    pad -= lengthNoColor(toPad);
+    if(pad <= 0)
+        return {toPad};
+    else
+        return toPad + bstring(pad, ' ');
+}

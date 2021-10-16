@@ -193,7 +193,7 @@ bstring Creature::statCrt(int statFlags) {
         crtStr.setf(std::ios::left, std::ios::adjustfield);
         //crtStr.setFill(' ');
         crtStr << "Term(" << sock->getTermType() << ")";
-        if(sock->getMxp())
+        if(sock->mxpEnabled())
             crtStr << "MXP Enabled";
         crtStr << " size: " << sock->getTermCols() << " x " << sock->getTermRows() << "\n";
         crtStr << "Host: " << sock->getHostname() << " Ip: " << sock->getIp() << "\n";

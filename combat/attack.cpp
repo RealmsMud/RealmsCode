@@ -47,7 +47,7 @@
 #include "utils.hpp"              // for MAX, MIN
 
 
-Creature* Creature::findVictim(const bstring& toFind, int num, bool aggressive, bool selfOk, const bstring& noVictim, const bstring& notFound) {
+Creature* Creature::findVictim(std::string_view toFind, int num, bool aggressive, bool selfOk, std::string_view noVictim, std::string_view notFound) {
     Creature* victim=nullptr;
     Player  *pVictim=nullptr;
     if(toFind.empty()) {
@@ -55,24 +55,23 @@ Creature* Creature::findVictim(const bstring& toFind, int num, bool aggressive, 
             return(getTarget());
         }
         if(!noVictim.empty())
-            bPrint(noVictim);
+            *this << ColorOn << noVictim << ColorOff;;
         return(nullptr);
     } else {
-        victim = getRoomParent()->findCreature(this, toFind.c_str(), num, true, true);
+        victim = getRoomParent()->findCreature(this, toFind, num, true, true);
 
         if(victim)
             pVictim = victim->getAsPlayer();
 
-        if(!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3)
-                || (!selfOk && victim == this)) {
+        if(!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3) || (!selfOk && victim == this)) {
             if(!notFound.empty())
-                bPrint(notFound);
+                *this << ColorOn << notFound << ColorOff;
             return(nullptr);
         }
         return(victim);
     }
 }
-Creature* Creature::findVictim(cmd* cmnd, int cmndNo, bool aggressive, bool selfOk, const bstring& noVictim, const bstring& notFound) {
+Creature* Creature::findVictim(cmd* cmnd, int cmndNo, bool aggressive, bool selfOk, std::string_view noVictim, std::string_view notFound) {
     return(findVictim(cmnd->str[cmndNo], cmnd->val[cmndNo], aggressive, selfOk, noVictim, notFound));
 }
 
@@ -1223,7 +1222,7 @@ bool Creature::canBeDrained() const {
 //                      doWeaponResist
 //*********************************************************************
 
-unsigned int Creature::doWeaponResist(unsigned int dmg, const bstring& weaponCategory) const {
+unsigned int Creature::doWeaponResist(unsigned int dmg, std::string_view weaponCategory) const {
     if(isEffected("resist-" + weaponCategory)) {
         dmg /= 2;
     }

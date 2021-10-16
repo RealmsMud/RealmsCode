@@ -52,7 +52,7 @@ public:
 
     void    defaultFlags(PropType type);
     [[nodiscard]] bstring getName() const;
-    void    setName(const bstring& str);
+    void    setName(std::string_view str);
 
     [[nodiscard]] bool flagIsSet(int flag) const;
     void setFlag(int flag);
@@ -86,17 +86,17 @@ public:
     bstring getLogTypeStr() const;
 
     void    setGuild(int g);
-    void    setArea(const bstring& str);
-    void    setOwner(const bstring& str);
-    void    setName(const bstring& str);
+    void    setArea(std::string_view str);
+    void    setOwner(std::string_view str);
+    void    setName(std::string_view str);
     void    setDateFounded();
-    void    setLocation(const bstring& str);
+    void    setLocation(std::string_view str);
     void    setType(PropType t);
     void    setLogType(PropLog t);
 
     void    addRange(const CatRef& cr);
-    void    addRange(const bstring& area, int low, int high);
-    bool    isOwner(const bstring& str) const;
+    void    addRange(std::string_view area, int low, int high);
+    bool    isOwner(std::string_view str) const;
     bool    belongs(const CatRef& cr) const;
     void    rename(Player *player);
     void    destroy();
@@ -104,17 +104,17 @@ public:
     void    expelToExit(Player* player, bool offline);
     MudFlagMap* getFlagList();
 
-    PartialOwner* getPartialOwner(const bstring& pOwner);
-    bool    isPartialOwner(const bstring& pOwner);
-    void    assignPartialOwner(const bstring& pOwner);
-    void    unassignPartialOwner(const bstring& pOwner);
+    PartialOwner* getPartialOwner(std::string_view pOwner);
+    bool    isPartialOwner(std::string_view pOwner);
+    void    assignPartialOwner(std::string_view pOwner);
+    void    unassignPartialOwner(std::string_view pOwner);
 
     int     viewLogFlag() const;
     bstring getLog() const;
-    void    appendLog(const bstring& user, const char *fmt, ...);
+    void    appendLog(std::string_view user, const char *fmt, ...);
     void    clearLog();
 
-    bstring show(bool isOwner=false, const bstring& player="", int *i=nullptr);
+    bstring show(bool isOwner=false, std::string_view player="", int *i=nullptr);
     std::list<Range> ranges;
     std::list<PartialOwner> partialOwners;
 
@@ -127,16 +127,16 @@ public:
     static bstring getTypeArea(PropType propType);
     static bool usePropFlags(PropType propType);
     static bool canEnter(const Player* player, const UniqueRoom* room, bool p);
-    static bool goodNameDesc(const Player* player, const bstring& str, const bstring& fail, const bstring& disallow);
-    static bool goodExit(const Player* player, const BaseRoom* room, const char *type, const bstring& xname);
+    static bool goodNameDesc(const Player* player, std::string_view str, std::string_view fail, std::string_view disallow);
+    static bool goodExit(const Player* player, const BaseRoom* room, const char *type, std::string_view xname);
     static bool isInside(const Player* player, const UniqueRoom* room, Property** p);
     static bool requireInside(const Player* player, const UniqueRoom* room, Property** p, PropType propType = PROP_NONE);
     static void descEdit(Socket* sock, const bstring& str);
     static void guildRoomSetup(UniqueRoom *room, const Guild* guild, bool outside);
     static void houseRoomSetup(UniqueRoom *room, const Player* player, bool outside);
     static void roomSetup(UniqueRoom *room, PropType propType, const Player* player, const Guild* guild, bool outside=false);
-    static void linkRoom(BaseRoom* inside, BaseRoom* outside, const bstring& xname);
-    static UniqueRoom* makeNextRoom(UniqueRoom* r1, PropType propType, const CatRef& cr, bool exits, const Player* player, const Guild* guild, BaseRoom* room, const bstring& xname, const char *go, const char *back, bool save);
+    static void linkRoom(BaseRoom* inside, BaseRoom* outside, const bstring&  xname);
+    static UniqueRoom* makeNextRoom(UniqueRoom* r1, PropType propType, const CatRef& cr, bool exits, const Player* player, const Guild* guild, BaseRoom* room, std::string_view xname, const char *go, const char *back, bool save);
     static int rotateHouse(char *dir1, char *dir2, int rotation);
     static bool houseCanBuild(AreaRoom* aRoom, BaseRoom* room);
 

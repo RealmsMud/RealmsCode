@@ -61,7 +61,6 @@ prefInfo prefList[] =
     { "hooks",      P_SEE_HOOKS,            isDm,   "see triggered hooks",      false },
 
     { "-Color",     0, nullptr, "", false },
-    { "mirc",       P_MIRC,                 nullptr,      "mirc colors",              false },
     { "ansi",       P_ANSI_COLOR,           nullptr,      "ansi colors",              false },
     { "langcolor",  P_LANGUAGE_COLORS,      nullptr,      "language colors",          false },
     { "extracolor", P_NO_EXTRA_COLOR,       nullptr,      "extra color options",      true },
@@ -187,17 +186,17 @@ int cmdTelOpts(Player* player, cmd* cmnd) {
             oStr << formatNoDesc % "Server Linewrap" % (bstring("Using Cols (") + sock->getTermCols() + bstring(")"));
         else
             oStr << formatNoDesc % "Server Linewrap" % target->getWrap();
-        oStr << formatWithDesc % "MCCP" % "Mud Client Compression Protocol" % ((sock->getMccp() != 0) ? "^gon^x" : "^roff^x");
-        oStr << formatWithDesc % "MXP" % "MUD eXtension Protocol" % (sock->getMxp() ? "^gon^x" : "^roff^x");
-        oStr << formatWithDesc % "MSDP" % "MUD Server Data Protocol" % (sock->getMsdp() ? "^gon^x" : "^roff^x");
-        if (sock->getMsdp()) {
+        oStr << formatWithDesc % "MCCP" % "Mud Client Compression Protocol" % ((sock->mccpEnabled() != 0) ? "^gon^x" : "^roff^x");
+        oStr << formatWithDesc % "MXP" % "MUD eXtension Protocol" % (sock->mxpEnabled() ? "^gon^x" : "^roff^x");
+        oStr << formatWithDesc % "MSDP" % "MUD Server Data Protocol" % (sock->msdpEnabled() ? "^gon^x" : "^roff^x");
+        if (sock->msdpEnabled()) {
             oStr << "\t MSDP Reporting: " << sock->getMsdpReporting() << "\n";
 
         }
-        oStr << formatWithDesc % "Charset" % "Charset Negotiation" % (sock->getCharset() ? "^gon^x" : "^roff^x");
-        oStr << formatWithDesc % "UTF-8" % "UTF-8 Support" % (sock->getUtf8() ? "^gon^x" : "^roff^x");
-        oStr << formatWithDesc % "MSP" % "Mud Sound Protocol" % (sock->getMsp() ? "^gon^x" : "^roff^x");
-        oStr << formatWithDesc % "EOR" % "End of Record" % (sock->getEor() ? "^gon^x" : "^roff^x");
+        oStr << formatWithDesc % "Charset" % "Charset Negotiation" % (sock->charsetEnabled() ? "^gon^x" : "^roff^x");
+        oStr << formatWithDesc % "UTF-8" % "UTF-8 Support" % (sock->utf8Enabled() ? "^gon^x" : "^roff^x");
+        oStr << formatWithDesc % "MSP" % "Mud Sound Protocol" % (sock->mspEnabled() ? "^gon^x" : "^roff^x");
+        oStr << formatWithDesc % "EOR" % "End of Record" % (sock->eorEnabled() ? "^gon^x" : "^roff^x");
     } catch (std::exception &e) {
         std::clog << e.what() << std::endl;
     }
@@ -353,7 +352,7 @@ int cmdPrefs(Player* player, cmd* cmnd) {
     ) {
 
         if(pref->flag == P_MXP_ENABLED) {
-            if(!player->getSock()->getMxp()) {
+            if(!player->getSock()->mxpEnabled()) {
                 player->print("Your client does not support MXP!\n");
                 return(0);
             }

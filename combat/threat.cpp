@@ -176,7 +176,7 @@ ThreatSet::iterator ThreatTable::removeFromSet(ThreatEntry* threat) {
 // Completely removes the target from this threat list and returns the
 // amount of contribution they had before removal
 
-long ThreatTable::removeThreat(const bstring& pUid) {
+long ThreatTable::removeThreat(std::string_view pUid) {
     long toReturn = 0;
     auto mIt = threatMap.find(pUid);
     if(mIt == threatMap.end())
@@ -242,7 +242,7 @@ void ThreatTable::setParent(Creature* pParent) {
 //#       Threat Entry
 //################################################################################
 
-ThreatEntry::ThreatEntry(const bstring& pUid) {
+ThreatEntry::ThreatEntry(std::string_view pUid) {
     threatValue = 0;
     contributionValue = 0;
     uId = pUid;
@@ -295,7 +295,7 @@ bool ThreatEntry::operator< (const ThreatEntry& t) const {
     return(this->threatValue < t.threatValue);
 }
 
-const bstring& ThreatEntry::getUid() const {
+std::string_view ThreatEntry::getUid() const {
     return(uId);
 }
 //*********************************************************************

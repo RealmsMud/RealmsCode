@@ -28,7 +28,6 @@
 #include <ctime>                   // for time, localtime, ctime
 #include <ostream>                 // for operator<<, basic_ostream::operator<<
 #include <string>                  // for char_traits, operator==, basic_string
-#include <utility>                 // for pair
 
 #include "bstring.hpp"             // for bstring
 #include "catRef.hpp"              // for CatRef
@@ -36,11 +35,9 @@
 #include "container.hpp"           // for MonsterSet, PlayerSet, Container
 #include "creatures.hpp"           // for Creature, Player, Monster
 #include "exits.hpp"               // for Exit
-#include "flags.hpp"               // for P_READING_FILE, P_BUGGED, P_MIRC
+#include "flags.hpp"               // for P_READING_FILE, P_BUGGED
 #include "global.hpp"              // for MAXALVL, FATAL, FIND_EXIT, FIND_MO...
 #include "group.hpp"               // for CreatureList, Group
-#include "lasttime.hpp"            // for lasttime
-#include "login.hpp"               // for CON_VIEWING_FILE, CON_VIEWING_FILE...
 #include "money.hpp"               // for GOLD, Money
 #include "mud.hpp"                 // for dmname, LT_KICK, LT_PLAYER_STUNNED
 #include "objects.hpp"             // for Object
@@ -51,11 +48,13 @@
 #include "rooms.hpp"               // for BaseRoom
 #include "server.hpp"              // for Server, gServer, PlayerMap
 #include "socket.hpp"              // for Socket
-#include "stats.hpp"               // for Stat
 #include "structs.hpp"             // for daily
 #include "utils.hpp"               // for MAX, MIN
 
 class MudObject;
+bool isClass(std::string_view str);
+bool isTitle(std::string_view str);
+
 
 //*********************************************************************
 //                      validId functions
@@ -72,28 +71,6 @@ bool validRoomId(const CatRef& cr) {
     // 0 = void
     return(!cr.isArea("") && cr.id >= 0 && cr.id < RMAX);
 }
-
-
-
-//*********************************************************************
-//                      removeColor
-//*********************************************************************
-// we need to remove colors that might be in the name!
-
-bstring removeColor(bstring obj) {
-    int i=0, len=0;
-    bstring name = "";
-
-    for(len = obj.length(); i<len; i++) {
-        while(i<len && obj.at(i) == '^')
-            i += 2;
-        if(i<len)
-            name += obj.at(i);
-    }
-
-    return(name);
-}
-
 
 
 //*********************************************************************
@@ -235,349 +212,6 @@ bstring delimit(const char *str, int wrap) {
 }
 
 //*********************************************************************
-//                      viewFile
-//*********************************************************************
-// This function views a file whose name is given by the third
-// parameter. If the file is longer than 20 lines, then the user is
-// prompted to hit return to continue, thus dividing the output into
-// several pages.
-
-#define FBUF    800
-
-void Socket::viewFileReal(const bstring &str ) {
-    char    buf[FBUF+1];
-    int i, l, n, ff, line;
-    long    offset;
-
-    buf[FBUF] = 0;
-    switch(getParam()) {
-    case 1:
-        offset = 0L;
-        strncpy(tempstr[1], str.c_str(),255);
-        tempstr[1][255] = 0;
-        ff = open(str.c_str(), O_RDONLY, 0);
-        if(ff < 0) {
-            print("File could not be opened.\n");
-            if(getPlayer())
-                getPlayer()->clearFlag(P_READING_FILE);
-            restoreState();
-            return;
-        }
-        line = 0;
-        while(true) {
-            n = read(ff, buf, FBUF);
-            l = 0;
-            for(i=0; i<n; i++) {
-                if(buf[i] == '\n') {
-                    buf[i] = 0;
-                    line++;
-                    bprint(&buf[l]);
-                    bprint("\n");
-                    offset += (i-l+1);
-                    l = i+1;
-                }
-                if(line > 20)
-                    break;
-            }
-            if(line > 20) {
-                sprintf(tempstr[2], "%ld", offset);
-                break;
-            } else if(l != n) {
-                bprint(&buf[l]);
-                offset += (i-l);
-            }
-            if(n<FBUF)
-                break;
-        }
-        if(n==FBUF || line>20) {
-            getPlayer()->setFlag(P_READING_FILE);
-            if(!getPlayer()->flagIsSet(P_MIRC))
-                print("[Hit Return, Q to Quit]: ");
-            else
-                print("[Hit C to continue]: ");
-            gServer->processOutput();
-        }
-        if(n<FBUF && line <= 20) {
-            close(ff);
-            restoreState();
-            return;
-        } else {
-            close(ff);
-            getPlayer()->setFlag(P_READING_FILE);
-            setState(CON_VIEWING_FILE, 2);
-            return;
-        }
-    case 2:
-        if(str[0] != 0  && str[0] != 'c' && str[0] != 'C') {
-            print("Aborted.\n");
-            if(getPlayer())
-                getPlayer()->clearFlag(P_READING_FILE);
-            restoreState();
-            return;
-        }
-        offset = atol(tempstr[2]);
-        ff = open(tempstr[1], O_RDONLY, 0);
-        if(ff < 0) {
-            print("File could not be opened [%s].\n", tempstr);
-            if(getPlayer())
-                getPlayer()->clearFlag(P_READING_FILE);
-            restoreState();
-            return;
-        }
-        lseek(ff, offset, 0);
-        line = 0;
-        while(true) {
-            n = read(ff, buf, FBUF);
-            l = 0;
-            for(i=0; i<n; i++) {
-                if(buf[i] == '\n') {
-                    buf[i] = 0;
-                    line++;
-                    bprint(&buf[l]);
-                    bprint("\n");
-                    offset += (i-l+1);
-                    l = i+1;
-                }
-                if(line > 20)
-                    break;
-            }
-            if(line > 20) {
-                sprintf(tempstr[2], "%ld", offset);
-                break;
-            } else if(l != n) {
-                bprint(&buf[l]);
-                offset += (i-l);
-            }
-            if(n<FBUF)
-                break;
-        }
-        if(n==FBUF || line > 20) {
-            if(getPlayer())
-                getPlayer()->setFlag(P_READING_FILE);
-            print("[Hit Return, Q to Quit]: ");
-            gServer->processOutput();
-        }
-        if(n<FBUF && line <= 20) {
-            close(ff);
-            if(getPlayer())
-                getPlayer()->clearFlag(P_READING_FILE);
-            restoreState();
-            return;
-        } else {
-            close(ff);
-            setState(CON_VIEWING_FILE, 2);
-        }
-    }
-}
-// Wrapper function for viewFile_real that will set the correct connected state
-void Socket::viewFile(const bstring& str) {
-    if(getState() != CON_VIEWING_FILE)
-        setState(CON_VIEWING_FILE);
-
-    viewFileReal(str);
-}
-
-//*********************************************************************
-//                      viewLoginFile
-//*********************************************************************
-// This function views a file whose name is given by the third
-// parameter. If the file is longer than 20 lines, then the user is
-// prompted to hit return to continue, thus dividing the output into
-// several pages.
-
-#define FBUF_L  1024
-
-void Socket::viewLoginFile(const bstring& str, bool showError) {
-    char    buf[FBUF_L + 1];
-    int     i=0, l=0, ff=0, line=0;
-    size_t  n=0;
-    long    offset=0;
-    zero(buf, sizeof(buf));
-
-    buf[FBUF_L] = 0;
-    {
-        offset = 0L;
-        strcpy(tempstr[1], str.c_str());
-        ff = open(str.c_str(), O_RDONLY, 0);
-        if(ff < 0) {
-            if(showError) {
-                print("File could not be opened.\n");
-                broadcast(isCt, "^yCan't open file: %s.\n", str.c_str()); // nothing to put into (%m)?
-            }
-            return;
-        }
-        line = 0;
-        while(true) {
-            n = read(ff, buf, FBUF_L);
-            l = 0;
-            for(i=0; i<n; i++) {
-                if(buf[i] == '\n') {
-                    buf[i] = 0;
-                    if(i != 0 && buf[i-1] == '\r')
-                        buf[i-1] = 0;
-                    line++;
-                    printColor("%s\n", &buf[l]);
-                    offset += (i - l + 1);
-                    l = i + 1;
-                }
-            }
-            if(l != n) {
-                printColor("%s", &buf[l]);
-                offset += (i - l);
-            }
-            if(n < FBUF_L) {
-                close(ff);
-                return;
-            }
-        }
-        // Never makes it out of the while loop to get here
-    }
-}
-
-//*********************************************************************
-//                      viewFileReverseReal
-//*********************************************************************
-// displays a file, line by line starting with the last
-// similar to unix 'tac' command
-
-void Socket::viewFileReverseReal(const bstring& str) {
-    off_t oldpos;
-    off_t newpos;
-    off_t temppos;
-    int i,more_file=1,count,amount=1621;
-    char string[1622];
-    char search[80];
-    long offset;
-    FILE *ff;
-    int TACBUF = ( (81 * 20 * sizeof(char)) + 1 );
-
-    if(strlen(tempstr[3]) > 0)
-        strcpy(search, tempstr[3]);
-    else
-        strcpy(search, "\0");
-
-    switch(getParam()) {
-    case 1:
-
-        strcpy(tempstr[1], str.c_str());
-        if((ff = fopen(str.c_str(), "r")) == nullptr) {
-            print("error opening file\n");
-            restoreState();
-            return;
-        }
-
-
-
-        fseek(ff, 0L, SEEK_END);
-        oldpos = ftell(ff);
-        if(oldpos < 1) {
-            print("Error opening file\n");
-            restoreState();
-            return;
-        }
-        break;
-
-    case 2:
-
-        if(str[0] != 0) {
-            print("Aborted.\n");
-            getPlayer()->clearFlag(P_READING_FILE);
-            restoreState();
-            return;
-        }
-
-        if((ff = fopen(tempstr[1], "r")) == nullptr) {
-            print("error opening file\n");
-            getPlayer()->clearFlag(P_READING_FILE);
-            restoreState();
-            return;
-        }
-
-        offset = atol(tempstr[2]);
-        fseek(ff, offset, SEEK_SET);
-        oldpos = ftell(ff);
-        if(oldpos < 1) {
-            print("Error opening file\n");
-            restoreState();
-            return;
-        }
-
-    }
-
-nomatch:
-    temppos = oldpos - TACBUF;
-    if(temppos > 0)
-        fseek(ff, temppos, SEEK_SET);
-    else {
-        fseek(ff, 0L, SEEK_SET);
-        amount = oldpos;
-    }
-
-    newpos = ftell(ff);
-
-
-    fread(string, amount,1, ff);
-    string[amount] = '\0';
-    i = strlen(string);
-    i--;
-
-    count = 0;
-    while(count < 21 && i > 0) {
-        if(string[i] == '\n') {
-            if( (   strlen(search) > 0 &&
-                    strstr(&string[i], search)
-                ) ||
-                search[0] == '\0'
-            ) {
-                printColor("%s", &string[i]);
-                count++;
-            }
-            string[i]='\0';
-            if(string[i-1] == '\r')
-                string[i-1]='\0';
-        }
-        i--;
-    }
-
-    oldpos = newpos + i + 2;
-    if(oldpos < 3)
-        more_file = 0;
-
-    sprintf(tempstr[2], "%ld", (long) oldpos);
-
-
-    if(more_file && count == 0)
-        goto nomatch;       // didnt find a match within a screenful
-    else if(more_file) {
-        print("\n[Hit Return, Q to Quit]: ");
-        gServer->processOutput();
-        intrpt &= ~1;
-
-        fclose(ff);
-        getPlayer()->setFlag(P_READING_FILE);
-        setState(CON_VIEWING_FILE_REVERSE, 2);
-        return;
-    } else {
-        if((strlen(search) > 0 && strstr(string, search))
-                || search[0] == '\0') {
-            print("\n%s\n", string);
-        }
-        fclose(ff);
-        getPlayer()->clearFlag(P_READING_FILE);
-        restoreState();
-        return;
-    }
-
-}
-
-// Wrapper for viewFileReverse_real that properly sets the connected state
-void Socket::viewFileReverse(const bstring& str) {
-    if(getState() != CON_VIEWING_FILE_REVERSE)
-        setState(CON_VIEWING_FILE_REVERSE);
-    viewFileReverseReal(str);
-}
-
-//*********************************************************************
 //                      dice
 //*********************************************************************
 // This function rolls n s-sided dice and adds p to the total.
@@ -672,7 +306,7 @@ int update_daily(struct daily *dly_ptr) {
 // This function returns 1 if the filename specified by the first
 // parameter exists, 0 if it doesn't.
 
-bool file_exists(char *filename) {
+bool file_exists(const char *filename) {
     int ff=0;
     ff = open(filename, O_RDONLY);
     if(ff > -1) {
@@ -698,7 +332,7 @@ bool is_num(char *str ) {
 //*********************************************************************
 // returns 1 if the given player name is a dm
 
-bool isdm(const bstring& name) {
+bool isdm(std::string_view name) {
     char **s = dmname;
     while(*s) {
         if(name == *s)
@@ -723,53 +357,51 @@ int Creature::smashInvis() {
 //                      parse_name
 //*********************************************************************
 // Determine if a given name is acceptable
+const auto BAD_WORDS = {"fuck", "shit", "suck", "gay", "isen", "cock", "realm", "piss", "dick", "pussy", "dollar", "cunt"};
 
-bool parse_name(const bstring& name) {
+bool parse_name(std::string_view name) {
     FILE    *fp=nullptr;
     int     i = name.length() - 1;
-    char    str[80], path[80], forbid[20];
-    strcpy(str, name.c_str());
+    char    forbid[20];
 
-    if(isTitle(str) || isClass(str))
+    if(isTitle(name) || isClass(name))
         return(false);
-    if(gConfig->racetoNum(str) >= 0)
+    if(gConfig->racetoNum(name) >= 0)
         return(false);
-    if(gConfig->deitytoNum(str) >= 0)
+    if(gConfig->deitytoNum(name) >= 0)
         return(false);
 
 
     // don't allow names with all the same char
-    str[0] = tolower(str[0]);
-    for(; i>0; i--)
-        if(str[i] != str[0])
+    char c = tolower(name[0]);
+    for(; i > 1; i--)
+        if(name[i] != c)
             break;
     if(!i)
         return(false);
-    str[0] = toupper(str[0]);
 
 
     // check the DM names
     i=0;
     while(dmname[i]) {
         // don't forbid names directly equal to DM
-        if(strcmp(dmname[i], str) != 0) {
-            if(!strncmp(dmname[i], str, strlen(str)))
+        if(name.compare(dmname[i]) != 0) {
+            if(!name.compare(0, name.length(), dmname[i]))
                 return(false);
-            if(!strncmp(str, dmname[i], strlen(dmname[i])))
+            if(!name.compare(0, strlen(dmname[i]), dmname[i]))
                 return(false);
         }
         i++;
     }
 
 
-    sprintf(path, "%s/forbidden_name.txt", Path::Config);
-    fp = fopen(path, "r");
+    fp = fopen(fmt::format("{}/forbidden_name.txt", Path::Config).c_str(), "r");
     if(!fp)
         merror("ERROR - forbidden name.txt", NONFATAL);
     else {
         while(!feof(fp)) {
             fscanf(fp, "%s", forbid);
-            if(!strcmp(forbid, str)) {
+            if(!name.compare(forbid)) {
                 fclose(fp);
                 return(false);
             }
@@ -777,32 +409,11 @@ bool parse_name(const bstring& name) {
         fclose(fp);
     }
 
-
-    lowercize(str, 0);
-    if(strstr(str, "fuck"))
-        return(false);
-    if(strstr(str, "shit"))
-        return(false);
-    if(strstr(str, "suck"))
-        return(false);
-    if(strstr(str, "gay"))
-        return(false);
-    if(strstr(str, "isen"))
-        return(false);
-    if(strstr(str, "cock"))
-        return(false);
-    if(strstr(str, "realm"))
-        return(false);
-    if(strstr(str, "piss"))
-        return(false);
-    if(strstr(str, "dick"))
-        return(false);
-    if(strstr(str, "pussy"))
-        return(false);
-    if(strstr(str, "dollar"))
-        return(false);
-    if(strstr(str, "cunt"))
-        return(false);
+    auto lowerName = bstring(name).toLower();
+    for (const auto& word : BAD_WORDS) {
+        if(lowerName.find(word) != bstring::npos)
+            return false;
+    }
 
     return(true);
 }
@@ -827,43 +438,6 @@ int dmIson() {
     }
 
     return(0);
-}
-
-//*********************************************************************
-//                      bug
-//*********************************************************************
-
-void Player::bug(const char *fmt, ...) const {
-    char    file[80];
-    char    str[2048];
-    int     fd;
-    long    t = time(nullptr);
-    va_list ap;
-
-    if(!flagIsSet(P_BUGGED))
-        return;
-
-    va_start(ap, fmt);
-
-    sprintf(file, "%s/%s.txt", Path::BugLog, getCName());
-    fd = open(file, O_RDWR | O_APPEND, 0);
-    if(fd < 0) {
-        fd = open(file, O_RDWR | O_CREAT, ACC);
-        if(fd < 0)
-            return;
-    }
-    lseek(fd, 0L, 2);
-
-    // prevent string overruns with vsn
-    strcpy(str, ctime(&t));
-    str[24] = ':';
-    str[25] = ' ';
-    vsnprintf(str + 26, 2000, fmt, ap);
-    va_end(ap);
-
-    write(fd, str, strlen(str));
-
-    close(fd);
 }
 
 //*********************************************************************
@@ -1257,16 +831,16 @@ bstring timeStr(int secs) {
 //                      progressBar
 //*********************************************************************
 
-bstring progressBar(int barLength, float percentFull, const bstring& text, char progressChar, bool enclosed) {
+bstring progressBar(int barLength, float percentFull, std::string_view text, char progressChar, bool enclosed) {
     bstring str = "";
     int i=0, progress = (int)(barLength * percentFull);
     int lowTextBound=-1, highTextBound=-1;
 
-    if(text.getLength()) {
-        if(text.getLength() >= barLength)
+    if(text.length()) {
+        if(text.length() >= barLength)
             return(text);
-        lowTextBound = (barLength - text.getLength())/2;
-        highTextBound = lowTextBound + text.getLength();
+        lowTextBound = (barLength - text.length())/2;
+        highTextBound = lowTextBound + text.length();
     }
 
     if(enclosed)

@@ -116,7 +116,7 @@ bool Move::tooFarAway(Creature *player, Creature *target, const bstring& action)
 //*********************************************************************
 
 void Move::broadcast(Creature* player, Container* container, bool ordinal, const bstring& exit, bool hiddenExit) {
-    bstring strAction = Move::getString(player, ordinal, exit);
+    bstring strAction = Move::getString(player, ordinal, exit.c_str());
     bool noShow = (player->pFlagIsSet(P_DM_INVIS));
 
     if(!noShow) {
@@ -678,7 +678,7 @@ bool drunkenStumble(const EffectInfo* effect) {
 //*********************************************************************
 // gives us the text of the movement string
 
-bstring Move::getString(Creature* creature, bool ordinal, const bstring& exit) {
+bstring Move::getString(Creature* creature, bool ordinal, std::string_view exit) {
     bstring str = "";
     int     num=0;
 
@@ -1698,7 +1698,7 @@ void getCatRef(bstring str, CatRef* cr, const Creature* target) {
 // b) a CatRef. the string will start at the point we wish
 // to search, but may contain extra crap at the end
 
-void getDestination(const bstring& str, Location* l, const Creature* target) {
+void getDestination(std::string_view str, Location* l, const Creature* target) {
     l->mapmarker.reset();
     l->room.id = 0;
     getDestination(str, &l->mapmarker, &l->room, target);

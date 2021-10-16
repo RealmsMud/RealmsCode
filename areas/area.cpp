@@ -1291,7 +1291,7 @@ bool Area::flagIsSet(int flag, const MapMarker* mapmarker) const {
 //*********************************************************************
 
 // a prototype needed for only this function: from dmroom.cpp
-void showMobList(Player* player, WanderInfo *wander, const bstring& type);
+void showMobList(Player* player, WanderInfo *wander, std::string_view type);
 
 int dmListArea(Player* player, cmd* cmnd) {
     int     a=0;

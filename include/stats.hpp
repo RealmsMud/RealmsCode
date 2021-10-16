@@ -34,7 +34,7 @@ enum ModifierType {
 class StatModifier {
 public:
     StatModifier();
-    StatModifier(const bstring& pName, int pModAmt, ModifierType pModType);
+    StatModifier(std::string_view pName, int pModAmt, ModifierType pModType);
     StatModifier(xmlNodePtr curNode);
     StatModifier(StatModifier &sm);
     void save(xmlNodePtr parentNode);
@@ -70,9 +70,9 @@ public:
     bstring toString();
     friend std::ostream& operator<<(std::ostream& out, Stat& stat);
 
-    void setName(const bstring& pName);
+    void setName(std::string_view pName);
 
-    bool load(xmlNodePtr curNode, const bstring& statName);
+    bool load(xmlNodePtr curNode, std::string_view statName);
     bool loadModifiers(xmlNodePtr curNode);
     void save(xmlNodePtr parentNode, const char* statName) const;
     
@@ -85,7 +85,7 @@ public:
     unsigned int getInitial() const;
 
     void addInitial(unsigned int a);
-    void setMax(unsigned int newMax, bool allowZero= false);
+    void setMax(unsigned int newMax, bool allowZero=false);
     void setCur(unsigned int newCur);
     void setInitial(unsigned int i);
     void setDirty();
@@ -97,16 +97,16 @@ public:
     void reCalc();
 
     bool addModifier(StatModifier* toAdd);
-    bool addModifier(const bstring& name, int modAmt, ModifierType modType);
+    bool addModifier(std::string_view name, int modAmt, ModifierType modType);
 
-    bool removeModifier(const bstring& name);
-    bool adjustModifier(const bstring& name, int modAmt, ModifierType modType = MOD_CUR);
-    bool setModifier(const bstring& name, int newAmt, ModifierType modType = MOD_CUR);
+    bool removeModifier(std::string_view name);
+    bool adjustModifier(std::string_view name, int modAmt, ModifierType modType = MOD_CUR);
+    bool setModifier(std::string_view name, int newAmt, ModifierType modType = MOD_CUR);
 
     void clearModifiers();
 
-    StatModifier* getModifier(const bstring& pName);
-    int getModifierAmt(const bstring& pName);
+    StatModifier* getModifier(std::string_view pName);
+    int getModifierAmt(std::string_view pName);
 
     void upgradeSetCur(unsigned int newCur);  // Used only in upgrading to new stats
 protected:

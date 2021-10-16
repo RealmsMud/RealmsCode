@@ -63,7 +63,7 @@ void LevelInfo::save(xmlNodePtr rootNode) {
 //                      save
 //*********************************************************************
 
-void StringStatistic::save(xmlNodePtr rootNode, const bstring& nodeName) const {
+void StringStatistic::save(xmlNodePtr rootNode, std::string_view nodeName) const {
     if(!value && name.empty())
         return;
     xmlNodePtr curNode = xml::newStringChild(rootNode, nodeName);
@@ -90,7 +90,7 @@ void StringStatistic::load(xmlNodePtr curNode) {
 //                      save
 //*********************************************************************
 
-void Statistics::save(xmlNodePtr rootNode, const bstring& nodeName) const {
+void Statistics::save(xmlNodePtr rootNode, std::string_view nodeName) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, nodeName);
 
     xml::newNumChild(curNode, "Track", track);
