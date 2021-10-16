@@ -1377,48 +1377,51 @@ int Server::startDnsLookup(Socket* sock, struct sockaddr_in addr) {
     }
     pid = fork();
     if(!pid) {
-        // Child Process
-        // Close the reading end, we'll only be writing
+        // Child Process: Close the reading end, we'll only be writing
         close(fds[0]);
-        struct hostent *he = nullptr;
-        int tries = 0;
-        while(tries < 5 && tries >= 0) {
-            he = gethostbyaddr((char *)&addr.sin_addr.s_addr, sizeof(addr.sin_addr.s_addr), AF_INET);
+        int tries = 0, res = 0;
+        char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 
-            if(he == nullptr) {
-                switch(h_errno) {
-                case HOST_NOT_FOUND:
-                    std::clog << "DNS Error: Host not found for " << sock->getIp() << std::endl;
-                    tries = -1;
-                    break;
-                case NO_RECOVERY:
-                    std::clog << "DNS Error: Unrecoverable error for " << sock->getIp() << std::endl;
-                    tries = -1;
-                    break;
-                case TRY_AGAIN:
-                default:
-                    std::clog << "DNS Error: Try again for " << sock->getIp() << std::endl;
-                    tries++;
-                    break;
+        while(tries < 5 && tries >= 0) {
+            res = getnameinfo((struct sockaddr*) &addr, sizeof(addr), hbuf, sizeof(hbuf), sbuf, sizeof(sbuf), NI_NAMEREQD);
+
+            if (res != 0) {
+                switch(res) {
+                    case EAI_FAIL:
+                    case EAI_BADFLAGS:
+                    case EAI_MEMORY:
+                    case EAI_OVERFLOW:
+                    case EAI_SYSTEM:
+                        std::clog << "DNS Error: Unrecoverable error for " << sock->getIp() << std::endl;
+                        tries = -1;
+                        break;
+                    case EAI_NONAME:
+                        std::clog << "DNS Error: Host not found for " << sock->getIp() << std::endl;
+                        tries = -1;
+                        break;
+                    case EAI_AGAIN:
+                    default:
+                        std::clog << "DNS Error: Try again for " << sock->getIp() << std::endl;
+                        tries++;
+                        break;
                 }
-            } else
+            } else {
                 break;
+            }
         }
-        std::clog << "DNS: Resolver finished for " << sock->getIp() << "(" << (he ? he->h_name : sock->getIp()) << ")" << std::endl;
-        if(he) {
+        std::clog << "DNS: Resolver finished for " << sock->getIp() << "(" << (!res ? hbuf : sock->getIp()) << ")" << std::endl;
+        if(res == 0) {
             // Found a hostname so print it
-            write(fds[1], he->h_name, strlen(he->h_name));
+            write(fds[1], hbuf, strlen(hbuf));
         } else {
             // Didn't find a hostname, print the ip
             write(fds[1], sock->getIp().data(), sock->getIp().length());
         }
         exit(0);
     } else { // pid != 0
-        // Parent Process
-        // Close the writing end, we'll only be reading
+        // Parent Process: Close the writing end, we'll only be reading
         close(fds[1]);
-        std::clog << "Watching Child DNS Resolver for(" << sock->getIp() << ") running with pid " << pid
-                  << " reading from fd " << fds[0] << std::endl;
+        std::clog << "Watching Child DNS Resolver for(" << sock->getIp() << ") running with pid " << pid << " reading from fd " << fds[0] << std::endl;
         // Let the server know we're monitoring this child process
         addChild(pid, ChildType::DNS_RESOLVER, fds[0], sock->getIp());
     }
