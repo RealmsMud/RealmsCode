@@ -20,6 +20,7 @@
 #include "fmt/core.h"
 #include "random.hpp"           // for Random
 #include "config.hpp"           // for Config
+#include "color.hpp"            // for stripColor
 #include "communication.hpp"    // for COM_EMOTE
 #include "server.hpp"           // for Server, MonsterList
 #include "creatures.hpp"        // for Player
@@ -121,13 +122,13 @@ bool Server::initDiscordBot() {
 
             if (!event.msg->attachments.empty())
                 for (auto& attachment : event.msg->attachments)
-                    contentStr << " " << attachment.url;
+                    contentStr << attachment.url;
 
             if (!event.msg->embeds.empty())
                 for (auto& embed: event.msg->embeds)
-                    contentStr << " " << embed.url;
+                    contentStr << embed.url;
 
-            sendGlobalComm(nullptr, contentStr.str(), "", 0, chan, "", username, username);
+            sendGlobalComm(nullptr, escapeColor(contentStr.str()), "", 0, chan, "", username, username);
         } else {
             // Third? Generic fallback... or do nothing
             std::cout << "Got msg " << event.msg->content << " in channel " << event.msg->channel_id << " from "
