@@ -567,13 +567,10 @@ bstring xsc(std::string_view txt) {
 // Reverse of xsc - attempts to turn &#252; into �. We do this when we load from file.
 
 bstring unxsc(std::string_view txt) {
-    return(unxsc(txt));
-}
-bstring unxsc(const char* txt) {
     std::ostringstream ret;
-    size_t c=0, len = strlen(txt);
+    size_t c=0, len = txt.length();
     for(size_t i=0; i<len; i++) {
-        c = txt[i];
+        c = txt.at(i);
 
         if(c == '&' && txt[i+1] == '#') {
             // get the number from the string

@@ -30,6 +30,7 @@
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for getFullstrText
 #include "config.hpp"                               // for Config, gConfig
+#include "color.hpp"                                // for padColor
 #include "container.hpp"                            // for ObjectSet, Monste...
 #include "craft.hpp"                                // for Recipe, operator<<
 #include "creatures.hpp"                            // for Player, Monster
@@ -47,7 +48,7 @@
 #include "utils.hpp"                                // for MAX
 #include "xml.hpp"                                  // for loadObject
 
-#define RECIPE_WIDTH    37
+#define RECIPE_WIDTH    40
 
 int numIngredients(Size size);
 
@@ -77,8 +78,8 @@ Recipe::Recipe() {
 
 
 
-int Recipe::getId() const { return(id); }
-void Recipe::setId(int i) { id = i; }
+unsigned int Recipe::getId() const { return(id); }
+void Recipe::setId(unsigned int i) { id = i; }
 int Recipe::getExperience() const { return(experience); }
 void Recipe::setExperience(int exp) { experience = exp; }
 bool Recipe::isSizable() const { return(sizable); }
@@ -271,12 +272,12 @@ bstring Recipe::listIngredients(const std::list<CatRef>* list) const {
             continue;
         }
 
-        oStr << "   |   " << std::setw(RECIPE_WIDTH);
+        oStr << "   |   ";
         if(loadObject(lastObject, &object)) {
-            oStr << object->getObjStr(nullptr, INV | MAG, num);
+            oStr << padColor(object->getObjStr(nullptr, INV | MAG, num), RECIPE_WIDTH);
             delete object;
         } else {
-            oStr << "<unknown item>";
+            oStr << std::setw(RECIPE_WIDTH) << "<unknown item>";
         }
         oStr << "|\n";
 
@@ -285,12 +286,12 @@ bstring Recipe::listIngredients(const std::list<CatRef>* list) const {
     }
 
     // we offset by one, so do the last one now
-    oStr << "   |   " << std::setw(RECIPE_WIDTH);
+    oStr << "   |   ";
     if(loadObject(lastObject, &object)) {
-        oStr << object->getObjStr(nullptr, INV | MAG, num);
+        oStr << padColor(object->getObjStr(nullptr, INV | MAG, num), RECIPE_WIDTH);
         delete object;
     } else {
-        oStr << "<unknown item>";
+        oStr << std::setw(RECIPE_WIDTH) << "<unknown item>";
     }
     oStr << "|\n";
 
@@ -322,47 +323,47 @@ bstring Recipe::display() {
     }
 
     oStr.setf(std::ios::left, std::ios::adjustfield);
-    oStr << "  _______________________________________\n"
-         << " /\\                                      \\\n";
+    oStr << "  ____________________________________________\n"
+         << " /\\                                           \\\n";
 
     if(!skill.empty()) {
-        oStr << " \\_| ^WSkill Required:^x                      |\n"
-             << "   |   " << std::setw(35) << skill << "|\n"
-             << "   |                                      |\n"
-             << "   | ^WIngredients:^x                         |\n";
+        oStr << " \\_| ^WSkill Required:^x                           |\n"
+             << "   |   " << std::setw(40) << skill << "|\n"
+             << "   |                                           |\n"
+             << "   | ^WIngredients:^x                              |\n";
     } else {
-        oStr << " \\_| ^WIngredients:^x                         |\n";
+        oStr << " \\_| ^WIngredients:^x                              |\n";
     }
 
     oStr << listIngredients(&ingredients);
 
     if(!reusables.empty()) {
-        oStr << "   |                                      |\n"
-             << "   | ^WReusable Items:^x                      |\n"
+        oStr << "   |                                           |\n"
+             << "   | ^WReusable Items:^x                           |\n"
              << listIngredients(&reusables);
     }
 
     if(!equipment.empty() || skill == "cooking") {
-        oStr << "   |                                      |\n"
-             << "   | ^WEquipment:^x                           |\n";
+        oStr << "   |                                           |\n"
+             << "   | ^WEquipment:^x                                |\n";
         if(!equipment.empty())
             oStr << listIngredients(&equipment);
         else if(skill == "cooking")
-            oStr << "   |   any sufficiently hot object        |\n";
+            oStr << "   |   any sufficiently hot object             |\n";
     }
 
-    oStr << "   |                                      |\n"
-         << "   | ^WResult:^x                              |\n"
-         << "   |   " << std::setw(RECIPE_WIDTH) << getResultName() << "|\n";
+    oStr << "   |                                           |\n"
+         << "   | ^WResult:^x                                   |\n"
+         << "   |   " << padColor( getResultName(), RECIPE_WIDTH) << "|\n";
 
     if(isSizable()) {
-        oStr << "   |                                      |\n"
-             << "   | This recipe may be used to create    |\n"
-             << "   | objects of different sizes.          |\n";
+        oStr << "   |                                           |\n"
+             << "   | This recipe may be used to create         |\n"
+             << "   | objects of different sizes.               |\n";
     }
 
-    oStr << "   |   ___________________________________|_\n"
-         << "    \\_/____________________________________/\n";
+    oStr << "   |   ________________________________________|_\n"
+         << "    \\_/_________________________________________/\n";
 
     return(oStr.str());
 }
@@ -550,7 +551,7 @@ Recipe* Config::searchRecipes(const Player* player, std::string_view skill, Size
 
 int cmdRecipes(Player* player, cmd* cmnd) {
     Recipe* recipe=nullptr;
-    int     i=0, shown=0, truncate=0;
+    int     i=0, shown=0;
     std::list<int>::iterator it;
     std::ostringstream oStr;
     bstring filter = "";
@@ -585,8 +586,8 @@ int cmdRecipes(Player* player, cmd* cmnd) {
 
     if(!player->recipes.empty())
         oStr << "Recipes you know: type ^yrecipes <skill>^x or ^yrecipes <num>^x.\n";
-    oStr << "  __________________________________________________\n"
-         << " /\\                                                 \\\n";
+    oStr << "  ____________________________________________________________\n"
+         << " /\\                                                           \\\n";
 
     for(it = player->recipes.begin(); it != player->recipes.end() ; it++) {
         recipe = gConfig->getRecipe(*it);
@@ -596,48 +597,38 @@ int cmdRecipes(Player* player, cmd* cmnd) {
             continue;
         shown++;
 
-        if(truncate) continue;
 
         if(shown==1) oStr << " \\_| ";
         else         oStr << "   | ";
 
         oStr << "^c#" << std::setw(3) << i << "^x "
-             << std::setw(31) << recipe->getResultName()
+             << padColor(recipe->getResultName(), 39)
              << std::setw(14) << (recipe->getSkill().empty() ? "none" : recipe->getSkill())
              << "|\n";
 
-        // don't spam them if they have too many recipes
-        // if they filter, we must show them all
-        if(shown > 80 && filter.empty())
-            truncate = shown;
-    }
-
-    if(truncate) {
-        oStr.setf(std::ios::right, std::ios::adjustfield);
-        truncate = shown - truncate;
-        oStr << "   |                                                 |\n"
-             << "   |" << std::setw(16 + (truncate==1 ? 1 : 0)) << truncate << " recipe" << (truncate != 1 ? "s" : "") << " not shown.              |\n";
     }
 
     if(!shown) {
-        oStr << " \\_|                                                 |\n";
+        oStr << " \\_|                                                           |\n";
         if(filter.empty())
-            oStr << "   |             You know no recipes.                |\n";
+            oStr << "   |                  You know no recipes.                     |\n";
         else
-            oStr << "   |         No recipes matched that filter.         |\n";
+            oStr << "   |              No recipes matched that filter.              |\n";
         shown += 2;
     }
 
     // the list looks funny when long but not tall
     while(shown < 6) {
-        oStr << "   |                                                 |\n";
+        oStr << "   |                                                           |\n";
         shown++;
     }
 
-    oStr << "   |   ______________________________________________|_\n"
-         << "    \\_/_______________________________________________/\n";
+    oStr << "   |   ________________________________________________________|_\n"
+         << "    \\_/_________________________________________________________/\n";
+    oStr << "\n";
 
-    player->printColor("%s\n", oStr.str().c_str());
+    player->printPaged(oStr.str());
+    player->donePaging();
     return(0);
 }
 

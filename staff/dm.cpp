@@ -35,6 +35,7 @@
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for cmdNoAuth, getFullstrText, dmStatDe...
 #include "config.hpp"             // for Config, gConfig, AlchemyMap
+#include "color.hpp"              // for stripColor
 #include "creatureStreams.hpp"    // for Streamable, ColorOff, ColorOn
 #include "creatures.hpp"          // for Player, Creature, Monster
 #include "dm.hpp"                 // for stat_rom, dmLastCommand, dmListbans

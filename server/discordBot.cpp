@@ -107,11 +107,11 @@ bool Server::initDiscordBot() {
                 std::string content = event.msg->content;
 
                 // Replace all mentions with the actual users
-                for (auto &mention: event.msg->mentions) {
-                    boost::replace_all(content, fmt::format("<@!{}>", mention), fmt::format("@{}", getUsername(guild, dpp::find_user(mention))));
+                for (auto &[user, guildMember]: event.msg->mentions) {
+                    boost::replace_all(content, fmt::format("<@!{}>", guildMember.user_id), fmt::format("@{}", guildMember.nickname) );
                 }
                 for (auto &mention: event.msg->mention_channels) {
-                    boost::replace_all(content, fmt::format("<#{}>", mention), fmt::format("#{}", dpp::find_channel(mention)->name));
+                    boost::replace_all(content, fmt::format("<#{}>", mention.id), fmt::format("#{}", mention.name));
                 }
                 for (auto &mention: event.msg->mention_roles) {
                     boost::replace_all(content, fmt::format("<@&{}>", mention), fmt::format("@{}", dpp::find_role(mention)->name));

@@ -24,6 +24,7 @@
 #include "bstring.hpp"            // for bstring, operator+
 #include "clans.hpp"              // for Clan
 #include "cmd.hpp"                // for cmd
+#include "color.hpp"              // for escapeColor
 #include "commands.hpp"           // for cmdNoExist, cmdNoAuth, doGuildSend
 #include "communication.hpp"      // for channelInfo, commInfo, sayInfo, COM...
 #include "config.hpp"             // for Config, gConfig

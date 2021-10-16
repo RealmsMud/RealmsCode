@@ -27,6 +27,7 @@
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for cmdSpells, spells...
 #include "config.hpp"                               // for Config, gConfig
+#include "color.hpp"                                // for stripColor
 #include "creatures.hpp"                            // for Creature, Player
 #include "effects.hpp"                              // for EffectList, Effect
 #include "flags.hpp"                                // for P_AFK, P_FREE_ACTION

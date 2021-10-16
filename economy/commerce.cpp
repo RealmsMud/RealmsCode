@@ -24,6 +24,7 @@
 #include "bstring.hpp"            // for bstring, operator+
 #include "carry.hpp"              // for Carry
 #include "catRef.hpp"             // for CatRef
+#include "color.hpp"              // for padColor
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for getFullstrText, cmdHelp, cmdProperties
 #include "config.hpp"             // for Config, gConfig
@@ -304,10 +305,7 @@ bool playerShopSame(Player* player, Object* obj1, Object* obj2) {
 
 bstring objShopName(Object* object, int m, int flags, int pad) {
     bstring name = object->getObjStr(nullptr, flags, m);
-    pad -= stripColor(name).getLength();
-    for(int i=0; i<pad; i++)
-        name += " ";
-    return(name);
+    return padColor(name, pad);
 }
 
 //*********************************************************************

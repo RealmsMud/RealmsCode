@@ -43,6 +43,7 @@
 #include "bstring.hpp"                              // for bstring, operator+
 #include "commands.hpp"                             // for command, changing...
 #include "config.hpp"                               // for Config, gConfig
+#include "color.hpp"                                // for stripColor
 #include "creatures.hpp"                            // for Player
 #include "flags.hpp"                                // for P_SPYING
 #include "free_crt.hpp"                             // for free_crt
@@ -62,8 +63,6 @@
 #include "xml.hpp"                                  // for copyToBool, newNu...
 
 const int MIN_PAGES = 10;
-const int MAX_PAGES = 80;
-
 
 // Static initialization
 const int Socket::COMPRESSED_OUTBUF_SIZE = 8192;
@@ -1357,7 +1356,7 @@ void Socket::printPaged(std::string_view toPrint) {
 }
 
 int Socket::getMaxPages() const {
-    return MAX(MIN(MAX_PAGES, term.rows) - 2, MIN_PAGES);
+    return MAX(term.rows - 2, MIN_PAGES);
 }
 
 void Socket::donePaging() {
@@ -2089,7 +2088,7 @@ int Socket::getNumSockets() {
 // prompted to hit return to continue, thus dividing the output into
 // several pages.
 
-void Socket::viewFile(const bstring& str, bool paged) {
+void Socket::viewFile(const bstring& str, bool shouldPage) {
     std::ifstream file(str);
     if(!file.is_open()) {
         bprint("File could not be opened.\n");
@@ -2097,11 +2096,14 @@ void Socket::viewFile(const bstring& str, bool paged) {
     }
     bstring line;
     while(std::getline(file, line)) {
-        if(paged)
-            pagerOutput.emplace_back(line);
+        if(shouldPage)
+            printPaged(line);
         else
             bprint(fmt::format("{}\n", line));
     }
+
+    if(shouldPage)
+        donePaging();
 
 }
 

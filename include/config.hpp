@@ -203,7 +203,7 @@ public:
     bool saveSocials();
     void clearSocials();
     // For help socials
-    [[nodiscard]] bool writeSocialFile() const;
+    bool writeSocialFile() const;
 
 // Effects
     bool loadEffects();
@@ -213,7 +213,7 @@ public:
 
 // Spells
     bool loadSpells();
-    [[nodiscard]] bool saveSpells() const;
+    bool saveSpells() const;
     void clearSpells();
     const Spell* getSpell(std::string_view sName, int& ret);
 
@@ -269,7 +269,7 @@ public:
 
 // Guilds
     bool loadGuilds();
-    [[nodiscard]] bool saveGuilds() const;
+    bool saveGuilds() const;
     void clearGuildList();
 
 // Factions
@@ -329,7 +329,7 @@ public:
 // Recipes
     bool loadRecipes();
     void clearRecipes();
-    [[nodiscard]] bool saveRecipes() const;
+    bool saveRecipes() const;
     Recipe *getRecipe(int id);
     Recipe *searchRecipes(const Player* player, std::string_view skill, Size recipeSize, int numIngredients, const Object* object=nullptr);
     void addRecipe(Recipe* recipe);

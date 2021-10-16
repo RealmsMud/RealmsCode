@@ -166,7 +166,7 @@ public:
     static void resolveIp(const sockaddr_in &addr, bstring& ip);
     static bstring stripTelnet(std::string_view inStr);
     static bool needsPrompt(std::string_view inStr);
-    void viewFile(const bstring& str, bool paged=false);
+    void viewFile(const bstring& str, bool shouldPage=false);
     void viewFileReverse(const bstring& str);
     void viewFileReverseReal(const bstring& str);
 public:

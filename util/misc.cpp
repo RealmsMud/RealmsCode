@@ -73,28 +73,6 @@ bool validRoomId(const CatRef& cr) {
 }
 
 
-
-//*********************************************************************
-//                      removeColor
-//*********************************************************************
-// we need to remove colors that might be in the name!
-
-bstring removeColor(bstring obj) {
-    int i=0, len=0;
-    bstring name = "";
-
-    for(len = obj.length(); i<len; i++) {
-        while(i<len && obj.at(i) == '^')
-            i += 2;
-        if(i<len)
-            name += obj.at(i);
-    }
-
-    return(name);
-}
-
-
-
 //*********************************************************************
 //                      lowercize
 //*********************************************************************

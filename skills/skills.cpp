@@ -461,21 +461,20 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
 
     // Tell the player what skills they are looking at
     if (toShow->getAsPlayer() == player)
-        toShow->printColor("^YYour Skills:");
+        toShow->printPaged("^YYour Skills:");
     else
-        toShow->printColor("^Y%s's Skills:", player->getCName());
+        toShow->printPaged(fmt::format("^Y{}'s Skills:", player->getName()));
 
     if (showMagic)
-        toShow->printColor(" ^Ytype \"skills\" to show non-magical skills.");
+        toShow->printPaged(" ^Ytype \"skills\" to show non-magical skills.");
     else if (player->getClass() !=  CreatureClass::BERSERKER)
-        toShow->printColor(" ^Ytype \"skills magic\" to show magical skills.");
+        toShow->printPaged(" ^Ytype \"skills magic\" to show magical skills.");
 
-    toShow->print("\n");
+    toShow->printPaged("\n");
 
     for (sgIt = gConfig->skillGroups.begin(); sgIt != gConfig->skillGroups.end(); sgIt++) {
         if (((*sgIt).first == "arcane" || (*sgIt).first == "divine" || (*sgIt).first == "magic") == !showMagic)
             continue;
-
 
         std::ostringstream oStr;
         known = 0;
@@ -530,9 +529,11 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
                 oStr << "\n";
             }
         }
-        if (known)
-            toShow->printColor("%s", oStr.str().c_str());
+        if (known) {
+            toShow->printPaged(oStr.str());
+        }
     }
+    toShow->donePaging();
     return (0);
 }
 

@@ -65,6 +65,7 @@ set(COMMON_HEADER_FILES
     include/catRefInfo.hpp
     include/clans.hpp
     include/cmd.hpp
+    include/color.hpp
     include/commands.hpp
     include/communication.hpp
     include/config.hpp
@@ -85,6 +86,7 @@ set(COMMON_HEADER_FILES
     include/fighters.hpp
     include/fishing.hpp
     include/flags.hpp
+    include/free_crt.hpp
     include/global.hpp
     include/group.hpp
     include/guilds.hpp
@@ -104,6 +106,7 @@ set(COMMON_HEADER_FILES
     include/mud.hpp
     include/mudObject.hpp
     include/mxp.hpp
+    include/namable.hpp
     include/objIncrease.hpp
     include/objects.hpp
     include/oldquest.hpp
@@ -155,8 +158,7 @@ set(COMMON_HEADER_FILES
     include/weather.hpp
     include/web.hpp
     include/xml.hpp
-    include/free_crt.hpp
-    include/namable.hpp)
+    )
 
 set(COMMON_SOURCE_FILES
     fmt/format.cc
@@ -184,8 +186,8 @@ set(COMMON_SOURCE_FILES
     combat/undead.cpp
     combat/warriors.cpp
     combat/weaponless.cpp
-    commands/action.cpp
 
+    commands/action.cpp
     commands/cmd.cpp
     commands/command2.cpp
     commands/command4.cpp
@@ -293,6 +295,7 @@ set(COMMON_SOURCE_FILES
     server/deityData.cpp
     server/delayedAction.cpp
     server/demographics.cpp
+    server/discordBot.cpp
     server/flags.cpp
     server/global.cpp
     server/hooks.cpp
@@ -378,10 +381,7 @@ set(COMMON_SOURCE_FILES
 
     wip/fighters.cpp
     wip/songs.cpp
-
-
-
-    server/discordBot.cpp)
+    )
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES} ${DPP_LIB_NAME})

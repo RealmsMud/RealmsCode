@@ -1084,7 +1084,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
 
                 if(keyword[0] == '@') {
                     // We're looking for an exact match of the entire string
-                    std::string_view toMatch = keyword.substr(1);
+                    const bstring& toMatch = keyword.substr(1);
                     if(question == toMatch) {
                         // First let's copy over the information
                         key = keyword;
@@ -1097,7 +1097,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
                 } else if(keyword[0] == '%') {
                     // Now we're looking for a match of the keyword surrounded by either white space,
                     // punctuation, or the end/start of the string
-                    std::string_view toMatch = keyword.substr(1);
+                    const bstring& toMatch = keyword.substr(1);
                     bstring::size_type idx = question.find(toMatch,0);
                     if(idx != bstring::npos) {
                         // Possible match
@@ -1636,7 +1636,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
         strcat(str, "\n");
     }
 
-    *player << ColorOn << str << ColorOff;
+    *player << PagerOn << ColorOn << str << ColorOff;
 
     if(!player->questsCompleted.empty()) {
 
@@ -1667,6 +1667,8 @@ int cmdQuests(Player* player, cmd* cmnd) {
         QuestCompletion* quest = p.second;
         *player << i++ << ") " << ColorOn << quest->getStatusDisplay() << ColorOff;
     }
+
+    *player << PagerOff;
 
     return(0);
 }

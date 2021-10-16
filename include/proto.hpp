@@ -63,13 +63,6 @@ unsigned int standardPoisonDuration(short level, short con);
 int reloadCalendar(Player* player);
 
 
-
-// color.cpp
-bstring stripColor(std::string_view color);
-bstring escapeColor(bstring color);
-
-
-
 // commerce.cpp
 CatRef shopStorageRoom(const UniqueRoom *shop);
 
@@ -92,7 +85,6 @@ bstring wrapText(std::string_view text, int wrap);
 // io.cpp
 bstring xsc(std::string_view txt);
 bstring unxsc(std::string_view txt);
-bstring unxsc(const char* txt);
 
 namespace Pueblo {
     static bstring activation = "this world is pueblo ";
@@ -304,7 +296,6 @@ bool validMobId(const CatRef& cr);
 bool validObjId(const CatRef& cr);
 bool validRoomId(const CatRef& cr);
 bstring timeStr(int seconds);
-bstring removeColor(bstring obj);
 
 bstring progressBar(int barLength, float percentFull, std::string_view text = "", char progressChar = '=', bool enclosed = true);
 

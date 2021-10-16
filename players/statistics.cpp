@@ -23,6 +23,7 @@
 #include "bstring.hpp"              // for bstring, operator+
 #include "cmd.hpp"                  // for cmd
 #include "commands.hpp"             // for cmdLevelHistory
+#include "color.hpp"                // for stripColor
 #include "creatureStreams.hpp"      // for Streamable, ColorOff
 #include "creatures.hpp"            // for Player, Creature
 #include "free_crt.hpp"             // for free_crt

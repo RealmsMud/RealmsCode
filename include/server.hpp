@@ -199,8 +199,8 @@ private:
     std::list<controlSock> controlSocks; // List of control fds
     std::list<dnsCache> cachedDns; // Cache of DNS lookups
     WebInterface* webInterface;
-    dpp::cluster *discordBot;
-    dpp::commandhandler *commandHandler;
+    dpp::cluster *discordBot{};
+    dpp::commandhandler *commandHandler{};
 
     // Game Updates
     MonsterList activeList; // The new active list

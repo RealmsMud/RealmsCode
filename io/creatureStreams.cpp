@@ -26,7 +26,7 @@
 #include "socket.hpp"           // for Socket
 #include "stats.hpp"            // for Stat
 
-bstring escapeColor(bstring color);
+bstring escapeColor(std::string_view colored);
 
 Streamable& Streamable::operator << ( Streamable& (*op)(Streamable&)) {
     // call the function passed as parameter with this stream as the argument
@@ -162,7 +162,6 @@ void Streamable::doPrint(std::string_view toPrint) {
                     petPrinted = false;
             }
         }
-        // TODO: This doesn't work yet, we need to buffer it up until we get a full line and then send it
         if(pager) { // Paged
             if(streamColor)
                 sock->appendPaged(toPrint);

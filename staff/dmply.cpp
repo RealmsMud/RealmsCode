@@ -32,6 +32,7 @@
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for getFullstrText, cmdNoAuth, cmdNoExist
 #include "config.hpp"             // for Config, gConfig
+#include "color.hpp"              // for stripColor
 #include "container.hpp"          // for PlayerSet, Container
 #include "creatures.hpp"          // for Player, Creature
 #include "enums/loadType.hpp"     // for LoadType, LoadType::LS_BACKUP

@@ -21,6 +21,7 @@
 #include "bstring.hpp"    // for bstring
 #include "cmd.hpp"        // for cmd
 #include "creatures.hpp"  // for Creature, Player
+#include "color.hpp"      // for stripColor
 #include "effects.hpp"    // for EffectInfo, EffectList, Effects
 #include "exits.hpp"      // for Exit, Direction, NoDirection, East, North
 #include "flags.hpp"      // for X_CLAN_1, X_CLAN_10, X_CLAN_11, X_CLAN_12
@@ -158,14 +159,14 @@ Exit *findExit(Creature* creature, cmd* cmnd, int val, BaseRoom* room) {
 Exit *findExit(Creature* creature, bstring str, int val, BaseRoom* room) {
     int     match=0;
     bool    minThree = (creature->getAsPlayer() && !creature->isStaff() && str.length() < 3);
-    str = removeColor(str);
+    str = stripColor(str);
 
     if(!room)
         if((room = creature->getRoomParent()) == nullptr)
             return(nullptr);
 
     for(Exit* exit : room->exits) {
-        bstring name = removeColor(exit->getName());
+        bstring name = stripColor(exit->getName());
         name = name.toLower();
 
         if(!creature->isStaff()) {
@@ -502,7 +503,7 @@ Direction getDir(bstring str) {
     size_t n = str.getLength();
     if(!n)
         return(NoDirection);
-    str = removeColor(str);
+    str = stripColor(str);
 
     if(!strncmp(str.c_str(), "north", n))
         return(North);

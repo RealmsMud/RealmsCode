@@ -42,6 +42,7 @@
 #include "calendar.hpp"                             // for Calendar
 #include "catRef.hpp"                               // for CatRef
 #include "config.hpp"                               // for Config, gConfig
+#include "color.hpp"                                // for stripColor
 #include "creatures.hpp"                            // for Monster, Player
 #include "factions.hpp"                             // for Faction
 #include "flags.hpp"                                // for M_PERMENANT_MONSTER

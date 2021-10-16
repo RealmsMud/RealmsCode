@@ -29,6 +29,7 @@
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for getFullstrText, cmdGuild, cmdGuildHall
 #include "config.hpp"             // for Config, gConfig
+#include "color.hpp"              // for stripColor
 #include "creatures.hpp"          // for Player
 #include "flags.hpp"              // for P_CREATING_GUILD, P_AFK, P_PTESTER
 #include "global.hpp"             // for PROP_GUILDHALL, PROP_SHOP
