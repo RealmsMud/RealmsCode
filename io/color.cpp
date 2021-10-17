@@ -144,13 +144,13 @@ bstring Config::getCustomColor(CustomColor i, bool caret) const {
 //                      customColorize
 //**********************************************************************
 
-bstring Monster::customColorize(std::string_view pText, bool caret) const {
+bstring Monster::customColorize(const bstring& pText, bool caret) const {
     bstring text = pText;
     if(getMaster() && getMaster()->isPlayer())
         text = getMaster()->getAsConstPlayer()->customColorize(text, caret);
     return(text);
 }
-bstring Player::customColorize(std::string_view pText, bool caret) const {
+bstring Player::customColorize(const bstring&  pText, bool caret) const {
     bstring text = pText;
     text.Replace("*CC:BROADCAST*", getCustomColor(CUSTOM_COLOR_BROADCAST, caret).c_str());
     text.Replace("*CC:GOSSIP*", getCustomColor(CUSTOM_COLOR_GOSSIP, caret).c_str());

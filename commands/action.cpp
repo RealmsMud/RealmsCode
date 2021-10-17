@@ -870,7 +870,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 //                      isBadSocial
 //*********************************************************************
 
-bool isBadSocial(std::string_view str) {
+bool isBadSocial(const bstring& str) {
     return( str == "anvil" || str == "knee" || str == "kic" || str == "spit" || str == "mark" || str == "cstr" || str == "hammer" ||
             str == "slap" || str == "bird" || str == "moon" || str == "punch" || str == "choke" || str == "bhand" || str == "pants" ||
             str == "noogie" || str == "pummel" || str.empty() || str == "trip" || str == "smack" || str == "swat" || str == "whip" ||
@@ -882,7 +882,7 @@ bool isBadSocial(std::string_view str) {
 //                      isBadSocial
 //*********************************************************************
 
-bool isSemiBadSocial(std::string_view str) {
+bool isSemiBadSocial(const bstring& str) {
     return( str == "hump" || str == "ogle" || str == "fart" || str.empty() || str == "expose" || str == "goose" || str == "copulate" ||
             str == "suck" || str == "glare" || str == "growl" || str == "dirt" || str == "cough" || str == "shove" || str == "taunt" ||
             str == "eye" || str == "narrow" || str == "disgust" || str == "fondle" || str == "grope" || str == "loom" || str == "pester" ||
@@ -895,7 +895,7 @@ bool isSemiBadSocial(std::string_view str) {
 //                      isBadSocial
 //*********************************************************************
 
-bool isGoodSocial(std::string_view str) {
+bool isGoodSocial(const bstring& str) {
     return( str == "cheer" || str == "dance" || str == "comfort" || str == "kiss" || str == "bless" || str == "hbeer" || str == "bow" ||
             str == "curtsey" || str == "high5" || str == "worship" || str == "blow" || str == "caress" || str == "cuddle" || str == "embrace" ||
             str == "grovel" || str == "massage" || str == "salute" || str == "snuggle" || str == "thumb" || str == "congrats" || str == "thank" ||
@@ -952,7 +952,7 @@ void Creature::stand() {
 //                      wake
 //*********************************************************************
 
-void Creature::wake(std::string_view str, bool noise) {
+void Creature::wake(const bstring& str, bool noise) {
     if(isMonster())
         return;
 

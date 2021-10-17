@@ -114,13 +114,13 @@ struct MudObject_wrapper: MudObject, bp::wrapper<MudObject> {
 
 BOOST_PYTHON_MODULE(mud)
 {
-    // done
+
     bp::class_<Config>("Config", bp::no_init).def("getVersion", &Config::getVersion)
             .def("getMudName", &Config::getMudName)
             .def("getMudNameAndVersion",&Config::getMudNameAndVersion)
             .def("effectExists", &Config::effectExists)
             ;
-    // done
+
     bp::class_<Server>("Server", bp::no_init).def("findPlayer", &Server::findPlayer,
                                                   bp::return_internal_reference<>())
 
@@ -128,7 +128,7 @@ BOOST_PYTHON_MODULE(mud)
 //          return_value_policy <bp::reference_existing_object>())
             ;
 
-    // NOT DONE
+
     { //::MudObject
         typedef bp::class_<MudObject_wrapper, boost::noncopyable> MudObject_exposer_t;
         MudObject_exposer_t MudObject_exposer = MudObject_exposer_t("MudObject",
@@ -146,7 +146,7 @@ BOOST_PYTHON_MODULE(mud)
 
         { //::MudObject::isEffected
 
-            typedef bool ( ::MudObject::*isEffected_function_type )( std::string_view ,bool ) const;
+            typedef bool ( ::MudObject::*isEffected_function_type )( ::bstring const & ,bool ) const;
 
             MudObject_exposer.def(
                 "isEffected"
@@ -166,7 +166,7 @@ BOOST_PYTHON_MODULE(mud)
         }
         { //::MudObject::addEffect
 
-            typedef ::EffectInfo * ( ::MudObject::*addEffect_function_type )( std::string_view ,long int,int,::MudObject *,bool,::Creature const *,bool ) ;
+            typedef ::EffectInfo * ( ::MudObject::*addEffect_function_type )( ::bstring const & ,long int,int,::MudObject *,bool,::Creature const *,bool ) ;
 
             MudObject_exposer.def(
                 "addEffect"
@@ -192,7 +192,7 @@ BOOST_PYTHON_MODULE(mud)
 //      .def("getName", &MudObject::getName)
 //  ;
 
-    // DONE
+
     bp::enum_< CreatureClass>("crtClasses")
         .value("ASSASSIN", CreatureClass::ASSASSIN)
         .value("BERSERKER", CreatureClass::BERSERKER)
@@ -217,7 +217,7 @@ BOOST_PYTHON_MODULE(mud)
         .export_values()
         ;
 
-    // DONE
+
     bp::enum_< religions>("religions")
         .value("ATHEIST", ATHEIST)
         .value("ARAMON", ARAMON)
@@ -233,7 +233,7 @@ BOOST_PYTHON_MODULE(mud)
         .value("MAX_DEITY", MAX_DEITY)
         .export_values()
         ;
-    // DONE
+
     bp::enum_< DeathType>("DeathType")
          .value("DT_NONE", DT_NONE)
          .value("FALL", FALL)
@@ -280,7 +280,7 @@ BOOST_PYTHON_MODULE(mud)
          .value("THORNS", THORNS)
          .export_values()
          ;
-    // DONE
+
     bp::enum_< mType>("mType")
         .value("INVALID", INVALID)
         .value("PLAYER", PLAYER)
@@ -321,7 +321,7 @@ BOOST_PYTHON_MODULE(mud)
         .export_values()
         ;
 
-    // Done
+
     bp::def("dice", &::dice);
     bp::def("rand", &::pythonRand);
     bp::def("spawnObjects", &::spawnObjects);
@@ -481,9 +481,9 @@ BOOST_PYTHON_MODULE(MudObjects)
 
     .def("isPulsed", &Effect::isPulsed)
     ;
-//.def("bprint", (void ( ::Socket::* )( std::string_view ))(&Socket::bprint))
+
     bp::class_<Creature, boost::noncopyable, bp::bases<Container>, bp::bases<Containable> >("Creature", bp::no_init)
-    .def("send", (void ( ::Creature::* )( std::string_view ) const)(&Creature::bPrint))
+    .def("send", (&Creature::bPrintPython))
     .def("getCrtStr", &Creature::getCrtStr, ( bp::arg("viewer")=0l, bp::arg("flags")=(int)(0), bp::arg("num")=(int)(0) ))
     .def("getParent", &Creature::getParent, bp::return_value_policy <bp::reference_existing_object>())
     .def("hisHer", &Creature::hisHer)
@@ -606,7 +606,7 @@ BOOST_PYTHON_MODULE(MudObjects)
 
     bp::class_<Socket, boost::noncopyable >("Socket", bp::no_init)
     .def("getPlayer", &Socket::getPlayer, bp::return_value_policy <bp::reference_existing_object>())
-    .def("bprint", (void ( ::Socket::* )( std::string_view ))(&Socket::bprint))
+    .def("bprint", (&Socket::bprintPython))
     ;
 
 //  .def(
@@ -731,16 +731,12 @@ bool Server::initPython() {
         bp::scope(mudModule).attr("gServer") = bp::ptr(gServer); // Make the gServer object available
 
         // Run a python test command here
-        runPython(
-                "print(\"Python Initialized! Running Version \" + mud.gConfig.getVersion())");
-
-    } catch (bp::error_already_set) {
-        PyErr_Print();
-    } catch (...) {
-        PyErr_Print();
+        return runPython("print(\"Python Initialized! Running Version \" + mud.gConfig.getVersion())");
     }
-
-    return (true);
+    catch (...) {
+        PyErr_Print();
+        return false;
+    }
 }
 
 bool Server::cleanUpPython() {
@@ -894,6 +890,7 @@ void Server::handlePythonError() {
     } catch (...) {
         errText = "Exception getting exception info!";
     }
+    std::clog << "Python Error: " << errText << std::endl;
     broadcast(isDm, "^GPython Error: %s", errText.c_str());
     PyErr_Print();
 

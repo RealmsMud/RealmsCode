@@ -225,8 +225,8 @@ public:
     virtual void upgradeStats() {};
     virtual Socket* getSock() const;
     Location getLocation();
-    void delayedAction(std::string_view action, int delay, MudObject* target=nullptr);
-    void delayedScript(std::string_view script, int delay);
+    void delayedAction(const bstring& action, int delay, MudObject* target=nullptr);
+    void delayedScript(const bstring& script, int delay);
 
     Creature* getMaster();
     const Creature* getConstMaster() const;
@@ -381,16 +381,16 @@ public:
     bool isInvisible() const; // *
 
 // Skills
-    bool knowsSkill(std::string_view skillName) const; // *
-    double getSkillLevel(std::string_view skillName, bool useBase = true) const; // *
-    double getSkillGained(std::string_view skillName, bool useBase = true) const; // *
-    double getTradeSkillGained(std::string_view skillName, bool useBase = true) const; // *
-    Skill* getSkill(std::string_view skillName, bool useBase = true) const;
-    void addSkill(std::string_view skillName, int gained); // *
-    void remSkill(std::string_view skillName); // *
+    bool knowsSkill(const bstring& skillName) const; // *
+    double getSkillLevel(const bstring& skillName, bool useBase = true) const; // *
+    double getSkillGained(const bstring& skillName, bool useBase = true) const; // *
+    double getTradeSkillGained(const bstring& skillName, bool useBase = true) const; // *
+    Skill* getSkill(const bstring& skillName, bool useBase = true) const;
+    void addSkill(const bstring& skillName, int gained); // *
+    void remSkill(const bstring& skillName); // *
     void checkSkillsGain(const std::list<SkillGain*>::const_iterator& begin, const std::list<SkillGain*>::const_iterator& end, bool setToLevel = false);
-    void checkImprove(std::string_view skillName, bool success, int attribute = INT, int bns = 0); // *
-    bool setSkill(std::string_view skill, int gained); // *
+    void checkImprove(const bstring& skillName, bool success, int attribute = INT, int bns = 0); // *
+    bool setSkill(const bstring& skill, int gained); // *
 
 // Formatting
     virtual void escapeText() {};
@@ -408,10 +408,11 @@ public:
     void pleaseWait(int duration) const;
     void pleaseWait(double duration) const;
     const char* getStatusStr(int dmg=0);
-    virtual bstring customColorize(std::string_view text, bool caret=true) const = 0;
+    virtual bstring customColorize(const bstring& text, bool caret=true) const = 0;
 
     void printPaged(std::string_view toPrint);
     void bPrint(std::string_view toPrint) const;
+    void bPrintPython(const bstring& toPrint) const;
 
     void print(const char *fmt, ...) const;
     void printColor(const char *fmt, ...) const;
@@ -701,7 +702,7 @@ public:
     bool isSitting();
 
     bool ableToDoCommand( cmd* cmnd=nullptr) const;
-    void wake(std::string_view str = "", bool noise=false);
+    void wake(const bstring& str = "", bool noise=false);
     void modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, Realm pRealm=NO_REALM, Object* weapon=0, short saveBonus=0, short offguard=OFFGUARD_REMOVE, bool computingBonus=false);
     bool checkResistPet(Creature *pet, bool& resistPet, bool& immunePet, bool& vulnPet);
 
@@ -938,7 +939,7 @@ public:
 
     Realm getBaseRealm() const;
     void setBaseRealm(Realm toSet);
-    bstring customColorize(std::string_view text, bool caret=true) const;
+    bstring customColorize(const bstring& text, bool caret=true) const;
 
     bool hasQuests() const;
     QuestEligibility getEligibleQuestDisplay(const Creature* viewer) const;
@@ -1338,7 +1339,7 @@ public:
     void score(const Player* viewer);
     void information(const Player* viewer=0, bool online=true);
     void showAge(const Player* viewer) const;
-    bstring customColorize(std::string_view text, bool caret=true) const;
+    bstring customColorize(const bstring& text, bool caret=true) const;
     void resetCustomColors();
 
 // Misellaneous

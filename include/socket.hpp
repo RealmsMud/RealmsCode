@@ -192,6 +192,7 @@ public:
     void vprint(const char *fmt, va_list ap);
 
     void bprint(std::string_view toPrint);
+    void bprintPython(const bstring& toPrint);
 
     template <typename... Args>
     void bprint(std::string_view toPrint, Args &&... args) const {

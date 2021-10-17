@@ -45,6 +45,10 @@ void Creature::bPrint(std::string_view toPrint) const {
     (Streamable &) *this << ColorOn << toPrint << ColorOff;
 }
 
+void Creature::bPrintPython(const bstring& toPrint) const {
+    (Streamable &) *this << ColorOn << toPrint << ColorOff;
+}
+
 void Creature::print(const char *fmt,...) const {
     // Mad hack, but it'll stop some stupid errors
     if(!this)

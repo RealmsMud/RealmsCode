@@ -121,15 +121,15 @@ public:
 
 
 // Effects
-    [[nodiscard]] bool isEffected(std::string_view effect, bool exactMatch = false) const;
+    [[nodiscard]] bool isEffected(const bstring& effect, bool exactMatch = false) const;
     [[nodiscard]] bool isEffected(EffectInfo* effect) const;
     [[nodiscard]] bool hasPermEffect(std::string_view effect) const;
     [[nodiscard]] EffectInfo* getEffect(std::string_view effect) const;
     [[nodiscard]] EffectInfo* getExactEffect(std::string_view effect) const;
     EffectInfo* addEffect(EffectInfo* newEffect, bool show = true, bool keepApplier=false);
-    EffectInfo* addEffect(std::string_view effect, long duration = -2, int strength = -2, MudObject* applier = nullptr, bool show = true, const Creature* owner=nullptr, bool keepApplier=false);
-    EffectInfo* addPermEffect(std::string_view effect, int strength = 1, bool show = true);
-    bool removeEffect(std::string_view effect, bool show = true, bool remPerm = true, MudObject* fromApplier=nullptr);
+    EffectInfo* addEffect(const bstring&effect, long duration = -2, int strength = -2, MudObject* applier = nullptr, bool show = true, const Creature* owner=nullptr, bool keepApplier=false);
+    EffectInfo* addPermEffect(const bstring& effect, int strength = 1, bool show = true);
+    bool removeEffect(const bstring& effect, bool show = true, bool remPerm = true, MudObject* fromApplier=nullptr);
     bool removeEffect(EffectInfo* toDel, bool show = true);
     bool removeOppositeEffect(const EffectInfo *effect);
     virtual bool pulseEffects(time_t t) = 0;

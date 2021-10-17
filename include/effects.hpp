@@ -149,7 +149,7 @@ public:
     [[nodiscard]] MudObject *getParent() const;
     [[nodiscard]] const Effect *getEffect() const;
     [[nodiscard]] bool hasBaseEffect(std::string_view effect) const;
-    bool runScript(std::string_view pyScript, MudObject *applier = nullptr);
+    bool runScript(const bstring& pyScript, MudObject *applier = nullptr);
     bool updateLastMod(time_t t);    // True if it's time to wear off
     bool timeForPulse(time_t t);  // True if it's time to pulse
     bool pulse(time_t t);
@@ -204,15 +204,15 @@ public:
     [[nodiscard]] EffectInfo *getEffect(std::string_view effect) const;
     [[nodiscard]] EffectInfo *getExactEffect(std::string_view effect) const;
 
-    [[nodiscard]] bool isEffected(std::string_view effect, bool exactMatch = false) const;
+    [[nodiscard]] bool isEffected(const bstring& effect, bool exactMatch = false) const;
     [[nodiscard]] bool isEffected(EffectInfo *effect) const;
 
     //EffectInfo* addEffect(std::string_view effect, MudObject* applier, bool show, MudObject* pParent=0, const Creature* onwer=0, bool keepApplier=false);
     EffectInfo *addEffect(EffectInfo *newEffect, bool show, MudObject *parent = nullptr, bool keepApplier = false);
-    EffectInfo *addEffect(std::string_view effect, long duration, int strength, MudObject *applier = nullptr, bool show = true, MudObject *pParent = nullptr,
+    EffectInfo *addEffect(const bstring& effect, long duration, int strength, MudObject *applier = nullptr, bool show = true, MudObject *pParent = nullptr,
                           const Creature *onwer = nullptr, bool keepApplier = false);
 
-    bool removeEffect(std::string_view effect, bool show, bool remPerm, MudObject *fromApplier = nullptr);
+    bool removeEffect(const bstring& effect, bool show, bool remPerm, MudObject *fromApplier = nullptr);
     bool removeEffect(EffectInfo *toDel, bool show);
     bool removeOppositeEffect(const EffectInfo *effect);
     void removeAll();

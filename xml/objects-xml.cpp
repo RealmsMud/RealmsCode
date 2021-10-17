@@ -491,7 +491,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
 
     xml::newNumProp(rootNode, "Num", info.id);
     xml::newProp(rootNode, "Area", info.area);
-    xml::newProp(rootNode, "Version", Config::getVersion());
+    xml::newProp(rootNode, "Version", gConfig->getVersion());
     if(quantity > 1) {
         xml::newNumProp(rootNode, "Quantity", quantity);
         curNode = xml::newStringChild(rootNode, "IdList");

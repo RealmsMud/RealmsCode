@@ -262,7 +262,7 @@ void doDelayedAction(const DelayedAction* action) {
 //*********************************************************************
 
 
-void Creature::delayedAction(std::string_view action, int delay, MudObject* target) {
+void Creature::delayedAction(const bstring& action, int delay, MudObject* target) {
     cmd cmnd;
 
     cmnd.fullstr = action;
@@ -292,6 +292,6 @@ void doDelayedScript(const DelayedAction* action) {
 //                      delayedScript
 //*********************************************************************
 
-void Creature::delayedScript(std::string_view script, int delay) {
+void Creature::delayedScript(const bstring& script, int delay) {
     gServer->addDelayedScript(doDelayedScript, this, script, delay);
 }

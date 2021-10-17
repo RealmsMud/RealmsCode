@@ -639,7 +639,7 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
 
     // For the future, when we change things, can read them in based on the version they
     // were saved in before or do modifications based on the new version
-    xml::newProp(rootNode, "Version", Config::getVersion());
+    xml::newProp(rootNode, "Version", gConfig->getVersion());
 
     if(pPlayer) {
         if(pPlayer->inAreaRoom()) {

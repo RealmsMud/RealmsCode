@@ -411,11 +411,11 @@ bool EffectInfo::postApply(bool keepApplier) {
 //*********************************************************************
 
 
-EffectInfo* MudObject::addEffect(std::string_view effect, long duration, int strength, MudObject* applier, bool show, const Creature* owner, bool keepApplier) {
+EffectInfo* MudObject::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, const Creature* owner, bool keepApplier) {
     return(effects.addEffect(effect, duration, strength, applier, show, this, owner, keepApplier));
 }
 
-EffectInfo* Effects::addEffect(std::string_view effect, long duration, int strength, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
+EffectInfo* Effects::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
     if(!gConfig->getEffect(effect))
         return(nullptr);
     auto* newEffect = new EffectInfo(effect, time(nullptr), duration, strength, pParent, owner);
@@ -479,7 +479,7 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
 //                      addPermEffect
 //*********************************************************************
 
-EffectInfo* MudObject::addPermEffect(std::string_view effect, int strength, bool show) {
+EffectInfo* MudObject::addPermEffect(const bstring& effect, int strength, bool show) {
     return(effects.addEffect(effect, -1, strength, nullptr, show, this));
 }
 
@@ -488,11 +488,11 @@ EffectInfo* MudObject::addPermEffect(std::string_view effect, int strength, bool
 //*********************************************************************
 // Remove the effect (Won't remove permanent effects if remPerm is false)
 
-bool MudObject::removeEffect(std::string_view effect, bool show, bool remPerm, MudObject* fromApplier) {
+bool MudObject::removeEffect(const bstring& effect, bool show, bool remPerm, MudObject* fromApplier) {
     return(effects.removeEffect(effect, show, remPerm, fromApplier));
 }
 
-bool Effects::removeEffect(std::string_view effect, bool show, bool remPerm, MudObject* fromApplier) {
+bool Effects::removeEffect(const bstring& effect, bool show, bool remPerm, MudObject* fromApplier) {
     EffectInfo* toDel = getExactEffect(effect);
     if( toDel &&
         (toDel->getDuration() != -1 || (toDel->getDuration() == -1 && remPerm)) &&
@@ -546,7 +546,7 @@ bool Effect::objectCanBestowEffect(std::string_view effect) {
 //                      isEffected
 //*********************************************************************
 
-bool MudObject::isEffected(std::string_view effect, bool exactMatch) const {
+bool MudObject::isEffected(const bstring& effect, bool exactMatch) const {
     return(effects.isEffected(effect, exactMatch));
 }
 
@@ -557,7 +557,7 @@ bool MudObject::isEffected(EffectInfo* effect) const {
 // We are effected if we have an effect with this name, or an effect with a base effect
 // of this name
 
-bool Effects::isEffected(std::string_view effect, bool exactMatch) const {
+bool Effects::isEffected(const bstring& effect, bool exactMatch) const {
     //EffectList list;
     for(EffectInfo* eff : effectList) {
         if(eff->getName() == effect || (!exactMatch && eff->hasBaseEffect(effect)))
@@ -1140,7 +1140,7 @@ int Effect::getPulseDelay() const {
 //                      runScript
 //*********************************************************************
 
-bool EffectInfo::runScript(std::string_view pyScript, MudObject* applier) {
+bool EffectInfo::runScript(const bstring& pyScript, MudObject* applier) {
 
     // Legacy: Default action is return true, so play along with that
     if(pyScript.empty())

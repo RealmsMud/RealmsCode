@@ -1406,6 +1406,11 @@ void Socket::bprint(std::string_view toPrint) {
         output.append(toPrint);
 }
 
+void Socket::bprintPython(const bstring& toPrint) {
+    if (!toPrint.empty())
+        output.append(toPrint);
+}
+
 //********************************************************************
 //                      println
 //********************************************************************

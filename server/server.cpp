@@ -214,7 +214,10 @@ bool Server::init() {
 
     // Python
     std::clog <<  "Initializing Python...";
-    initPython();
+    if(!initPython()) {
+        std::clog << "failed!" << std::endl;
+        exit(-1);
+    }
 
     std::clog << "Loading Areas..." << (loadAreas() ? "done" : "*** FAILED ***") << std::endl;
     gConfig->loadAfterPython();

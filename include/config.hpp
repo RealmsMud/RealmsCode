@@ -406,7 +406,7 @@ public:
     static unsigned long expNeeded(int level);
     int getMaxSong();
 
-    [[nodiscard]] static bstring getVersion();
+    [[nodiscard]] bstring getVersion();
     [[nodiscard]] bstring getMudName();
     [[nodiscard]] bstring getMudNameAndVersion();
     [[nodiscard]] short getPortNum() const;

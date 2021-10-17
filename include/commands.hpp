@@ -54,9 +54,9 @@ int cmdProxy(Player* player, cmd* cmnd);
 // action.c
 int plyAction(Player* player, cmd* cmnd);
 int cmdAction(Creature* player, cmd* cmnd);
-bool isBadSocial(std::string_view str);
-bool isSemiBadSocial(std::string_view str);
-bool isGoodSocial(std::string_view str);
+bool isBadSocial(const bstring& str);
+bool isSemiBadSocial(const bstring& str);
+bool isGoodSocial(const bstring& str);
 
 // attack.c
 int cmdAttack(Creature* player, cmd* cmnd);
