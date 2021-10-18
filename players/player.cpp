@@ -246,6 +246,14 @@ void Player::init() {
     if(cClass == CreatureClass::CLERIC && deity == CERIS && level >= 13)
         learnSpell(S_REJUVENATE);
 
+    if(cClass == CreatureClass::CLERIC && deity == CERIS && level >= 19)
+        learnSpell(S_RESURRECT);
+
+    if(cClass == CreatureClass::CLERIC && !hasSecondClass() && deity == ARAMON && level >= 22)
+        learnSpell(S_BLOODFUSION);
+
+    if((cClass == CreatureClass::RANGER || cClass == CreatureClass::DRUID) && level >= 10)
+        learnSpell(S_TRACK);
 
     //  Werewolves get auto Detect-Invisibility at level 7
     if(isEffected("lycanthropy") && level >= 7)
