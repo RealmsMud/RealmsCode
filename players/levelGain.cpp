@@ -406,6 +406,14 @@ void Player::upLevel() {
         learnSpell(S_BLOODFUSION);
     }
 
+    if( (cClass == CreatureClass::RANGER || cClass == CreatureClass::DRUID) &&
+        level >= 10 &&
+        !spellIsKnown(S_TRACK)
+    ) {
+        print("You have learned the track spell.\n");
+        learnSpell(S_TRACK);
+    }
+
     updateGuild(this, GUILD_LEVEL);
     update();
 
