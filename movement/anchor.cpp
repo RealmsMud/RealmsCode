@@ -20,11 +20,10 @@
 
 #include "anchor.hpp"       // for Anchor
 #include "area.hpp"         // for MapMarker, Area, TileInfo
-#include "bstring.hpp"      // for bstring
 #include "catRef.hpp"       // for CatRef
 #include "creatures.hpp"    // for Player
 #include "rooms.hpp"        // for AreaRoom, BaseRoom, UniqueRoom
-#include "xml.hpp"          // for newStringChild, copyToBString, NODE_NAME
+#include "xml.hpp"          // for newStringChild, copyToString, NODE_NAME
 
 //*********************************************************************
 //                      Anchor
@@ -66,13 +65,13 @@ const MapMarker* Anchor::getMapMarker() const { return(mapmarker); }
 //                      getAlias
 //*********************************************************************
 
-bstring Anchor::getAlias() const { return(alias); }
+std::string Anchor::getAlias() const { return(alias); }
 
 //*********************************************************************
 //                      getRoomName
 //*********************************************************************
 
-bstring Anchor::getRoomName() const { return(roomName); }
+std::string Anchor::getRoomName() const { return(roomName); }
 
 //*********************************************************************
 //                      reset
@@ -158,8 +157,8 @@ void Anchor::load(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
 
     while(childNode) {
-        if(NODE_NAME(childNode, "Alias")) xml::copyToBString(alias, childNode);
-        else if(NODE_NAME(childNode, "RoomName")) xml::copyToBString(roomName, childNode);
+        if(NODE_NAME(childNode, "Alias")) xml::copyToString(alias, childNode);
+        else if(NODE_NAME(childNode, "RoomName")) xml::copyToString(roomName, childNode);
         else if(NODE_NAME(childNode, "Room")) room.load(childNode);
         else if(NODE_NAME(childNode, "MapMarker")) {
             mapmarker = new MapMarker;

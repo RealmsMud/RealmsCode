@@ -22,7 +22,6 @@
 #include <ctime>                  // for time
 #include <ostream>                // for operator<<, basic_ostream, basic_os...
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for cmdNoAuth, parse, cmdBarkskin, cmdC...
@@ -126,11 +125,11 @@ void doCastPython(MudObject* caster, Creature* target, std::string_view spell, i
     fn = get_spell_function(data.splno);
     if(caster->isCreature()) {
         data.set(CastType::CAST, get_spell_school(data.splno), get_spell_domain(data.splno), nullptr, caster->getAsConstCreature());
-        cmnd.fullstr = "cast " + spell + " " + target->getName();
+        cmnd.fullstr = fmt::format("cast {} {}", spell, target->getName());
     }
     else {
         data.set(CastType::WAND, get_spell_school(data.splno), get_spell_domain(data.splno), caster->getAsObject(), target);
-        cmnd.fullstr = bstring("use spell .");
+        cmnd.fullstr = std::string("use spell .");
         caster = target;
     }
 
@@ -471,7 +470,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
 int cmdTeach(Player* player, cmd* cmnd) {
     Creature* target=nullptr;
     int      splno=0, c=0, match=0;
-    bstring skill = "";
+    std::string skill = "";
 
     if(!player->ableToDoCommand())
         return(0);
@@ -753,7 +752,7 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
         }
 
 
-        bstring skill = "";
+        std::string skill = "";
         if(player->getCastingType() == Divine)
             skill = spellSkill(get_spell_domain(object->getMagicpower() - 1));
         else
@@ -803,7 +802,7 @@ void doStudy(Player* player, Object* object, bool immediate) {
 
 
             // improve the skill
-            bstring output = skill->getDisplayName();
+            std::string output = skill->getDisplayName();
             player->printColor("Your understanding of ^W%s^x has improved.\n", output.c_str());
 
             if(!crtSkill)
@@ -1451,7 +1450,7 @@ void Player::recallLog(std::string_view name, std::string_view cname, std::strin
 
 int Player::recallCheckBag(Object *cont, cmd* cmnd, int show, int log) {
     int     drank=0;
-    bstring room = getRoomParent()->fullName(), name = "";
+    std::string room = getRoomParent()->fullName(), name = "";
 
     for(Object* object : cont->objects) {
         name = object->getName();
@@ -1481,7 +1480,7 @@ int Player::useRecallPotion(int show, int log) {
     cmd     *cmnd;
     Object  *object=nullptr;
     int     i=0;
-    bstring room = getRoomParent()->fullName(), name = "";
+    std::string room = getRoomParent()->fullName(), name = "";
 
     if(isEffected("anchor")) {
         print("%s will not work while you are protected by a dimensional anchor.\n",
@@ -1573,7 +1572,7 @@ bool noCastUndead(std::string_view effect) {
 //                      splGeneric
 //*********************************************************************
 
-int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, std::string_view effect, int strength, long duration) {
+int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength, long duration) {
     Creature* target=nullptr;
 
     if(cmnd->num == 2) {

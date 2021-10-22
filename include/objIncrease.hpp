@@ -37,7 +37,7 @@ public:
     void    load(xmlNodePtr curNode);
 
     IncreaseType type;
-    bstring increase;
+    std::string increase;
     unsigned int amount{};
     bool onlyOnce{};
     bool canAddIfNotKnown{};

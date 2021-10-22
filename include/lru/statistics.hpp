@@ -27,6 +27,7 @@
 #define INCLUDE_LRU_STATISTICS_HPP_
 
 #include <cstddef>
+#include <sstream>
 #include <unordered_map>
 
 #include "lru/key-statistics.hpp"

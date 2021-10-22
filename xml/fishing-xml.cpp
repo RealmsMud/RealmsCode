@@ -49,10 +49,10 @@ bool Config::loadFishing() {
     }
 
     clearFishing();
-    bstring id = "";
+    std::string id = "";
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, "List")) {
-            xml::copyPropToBString(id, curNode, "id");
+            xml::copyPropToString(id, curNode, "id");
             if(!id.empty()) {
                 Fishing list;
                 list.load(curNode);
@@ -74,7 +74,7 @@ bool Config::loadFishing() {
 
 void Fishing::load(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
-    xml::copyPropToBString(id, rootNode, "id");
+    xml::copyPropToString(id, rootNode, "id");
 
     while(curNode) {
         if(NODE_NAME(curNode, "Item")) {

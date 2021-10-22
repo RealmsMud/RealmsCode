@@ -19,7 +19,6 @@
 #include <cctype>         // for isalpha, isdigit
 #include <cstring>        // for strncpy
 
-#include "bstring.hpp"    // for bstring
 #include "creatures.hpp"  // for Player
 #include "flags.hpp"      // for P_READING_FILE, P_AFK, P_PASSWORD_CURRENT
 #include "login.hpp"      // for PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
@@ -29,20 +28,20 @@
 
 class cmd;
 
-bstring Player::hashPassword(std::string_view pass) {
+std::string Player::hashPassword(const std::string &pass) {
     // implement md5 or sha1 here if you want 
     return(pass);
 }
 
-bstring Player::getPassword() const {
+std::string Player::getPassword() const {
     return(password);
 }
 
-bool Player::isPassword(std::string_view pass) const {
+bool Player::isPassword(const std::string &pass) const {
     return(password == hashPassword(pass));
 }
 
-void Player::setPassword(std::string_view pass) {
+void Player::setPassword(const std::string &pass) {
     lastPassword = password;
     password = hashPassword(pass);
 }
@@ -55,7 +54,7 @@ const char *passCriteria =
     "4) Must contain no leading or trailing spaces.\n";
 
 
-bool isValidPassword(Socket* sock, bstring pass) {
+bool isValidPassword(Socket* sock, const std::string &pass) {
     int         len=0, alpha=0, i=0, digits=0, special=0;
 
     if(!sock)
@@ -148,7 +147,7 @@ int cmdPassword(Player* player, cmd* cmnd) {
 // wrong password  or an invalid password (too short or long),
 // the password will not be changed and the procedure is aborted.
 
-void changePassword(Socket* sock, const bstring& str) {
+void changePassword(Socket* sock, const std::string& str) {
     Player* player = sock->getPlayer();
     gServer->processOutput();
 
@@ -189,7 +188,7 @@ void changePassword(Socket* sock, const bstring& str) {
         }
     case CON_CHANGE_PASSWORD_FINISH:
         sock->print("%c%c%c\n\r", 255, 252, 1);
-        if(str.equals(sock->tempstr[1])) {
+        if(str == sock->tempstr[1]) {
 
             if(!player->isCt())
                 logn("log.passwd", fmt::format("({})\n   {} changed {} password. Old: {} New: {}\n", player->getSock()->getHostname(),

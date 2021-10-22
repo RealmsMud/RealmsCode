@@ -22,9 +22,9 @@
 #include <cstring>                // for strcpy, strlen
 #include <ctime>                  // for time, ctime
 #include <unistd.h>               // for getpid
+#include <boost/algorithm/string/case_conv.hpp>
 
 #include "area.hpp"               // for Area
-#include "bstring.hpp"            // for bstring, operator+
 #include "calendar.hpp"           // for Calendar, cWeather, cSeason
 #include "catRefInfo.hpp"         // for CatRefInfo
 #include "cmd.hpp"                // for cmd
@@ -129,10 +129,10 @@ void Server::updateGame() {
 //                      weatherize
 //*********************************************************************
 
-bstring Config::weatherize(WeatherString w, const BaseRoom* room) const {
+std::string Config::weatherize(WeatherString w, const BaseRoom* room) const {
     const CatRefInfo* cri=nullptr;
     const cWeather* weather=nullptr;
-    bstring txt = "";
+    std::string txt = "";
 
     // get weather data out of catrefinfo
     cri = gConfig->getCatRefInfo(room, 0);
@@ -169,7 +169,7 @@ bstring Config::weatherize(WeatherString w, const BaseRoom* room) const {
 //*********************************************************************
 // turn the weather enum into a hook event
 
-bstring weatherToEvent(WeatherString w) {
+std::string weatherToEvent(WeatherString w) {
     switch(w) {
         case WEATHER_SUNRISE:
             return("weatherSunrise");
@@ -236,9 +236,9 @@ bstring weatherToEvent(WeatherString w) {
 //*********************************************************************
 
 void Server::weather(WeatherString w) {
-    bstring season = gConfig->calendar->getCurSeason()->getName().toLower();
-    std::string_view event = weatherToEvent(w);
-    bstring weather;
+    std::string season = boost::to_lower_copy(gConfig->calendar->getCurSeason()->getName());
+    const std::string& event = weatherToEvent(w);
+    std::string weather;
     char color;
 
     if(w == WEATHER_SUNRISE)
@@ -338,7 +338,7 @@ void update_time(long t) {
         gServer->weather(WEATHER_SUNSET);
     }
 
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    for(std::pair<std::string, Player*> p : gServer->players) {
         if(p.second->isEffected("vampirism"))
             p.second->computeAC();
     }
@@ -1077,7 +1077,7 @@ void Server::updateShips(long n) {
 //*********************************************************************
 //                          list_act
 //*********************************************************************
-bstring Server::showActiveList() {
+std::string Server::showActiveList() {
     Monster* monster;
     auto it = activeList.begin();
     std::ostringstream oStr;

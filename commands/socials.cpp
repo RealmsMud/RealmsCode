@@ -17,8 +17,9 @@
  */
 
 #include <cassert>             // for assert
+#include <string>
+#include <boost/algorithm/string/replace.hpp>
 
-#include "bstring.hpp"          // for bstring
 #include "cmd.hpp"              // for cmd
 #include "commands.hpp"         // for orderPet, cmdSocial
 #include "config.hpp"           // for Config, SocialMap
@@ -81,7 +82,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
     if(!creature->ableToDoCommand(cmnd))
         return(0);
 
-    bstring str = cmnd->myCommand->getName();
+    std::string str = cmnd->myCommand->getName();
     auto* social = dynamic_cast<const SocialCommand*>(cmnd->myCommand);
 
     if(!social)
@@ -122,22 +123,22 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
     if(target && !social->getSelfOnTarget().empty()) {
         // Social on Target
 
-        bstring toSelf = social->getSelfOnTarget();
-        toSelf.Replace("*TARGET*", target->getCrtStr(creature).c_str());
-        toSelf.Replace("*VICTIM*", target->getCrtStr(creature).c_str());
+        std::string toSelf = std::string(social->getSelfOnTarget());
+        boost::replace_all(toSelf,"*TARGET*", target->getCrtStr(creature));
+        boost::replace_all(toSelf,"*VICTIM*", target->getCrtStr(creature));
         *creature << toSelf << "\n";
 
         if(actionShow(pTarget, creature)) {
-            bstring toTarget = social->getVictimOnTarget();
-            toTarget.Replace("*A-HISHER*", creature->hisHer());
-            toTarget.Replace("*A-HIMHER*", creature->himHer());
-            toTarget.Replace("*A-HESHE*", creature->heShe());
-            toTarget.Replace("*ACTOR*", creature->getCrtStr(target, CAP).c_str());
+            std::string toTarget = std::string(social->getVictimOnTarget());
+            boost::replace_all(toTarget, "*A-HISHER*", creature->hisHer());
+            boost::replace_all(toTarget, "*A-HIMHER*", creature->himHer());
+            boost::replace_all(toTarget, "*A-HESHE*", creature->heShe());
+            boost::replace_all(toTarget, "*ACTOR*", creature->getCrtStr(target, CAP));
 
             *target << toTarget << "\n";
         }
 
-        std::string_view toRoom = social->getRoomOnTarget();
+        std::string toRoom = std::string(social->getRoomOnTarget());
         parent->doSocialEcho(toRoom, creature, target);
 
         socialHooks(creature, target, str);
@@ -146,7 +147,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
 
         *creature << social->getSelfNoTarget() << "\n";
 
-        std::string_view toRoom = social->getRoomNoTarget();
+        std::string toRoom = std::string(social->getRoomNoTarget());
 
         if(!toRoom.empty() && parent) {
             parent->doSocialEcho(toRoom, creature, target);
@@ -160,21 +161,21 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
 }
 
 
-void Container::doSocialEcho(bstring str, const Creature* actor, const Creature* target) {
+void Container::doSocialEcho(std::string str, const Creature* actor, const Creature* target) {
     if(str.empty() || !actor)
         return;
-    str.Replace("*A-HISHER*", actor->hisHer());
-    str.Replace("*A-HIMHER*", actor->himHer());
-    str.Replace("*A-HESHE*", actor->heShe());
+    boost::replace_all(str, "*A-HISHER*", actor->hisHer());
+    boost::replace_all(str, "*A-HIMHER*", actor->himHer());
+    boost::replace_all(str, "*A-HESHE*", actor->heShe());
 
     for(Player* ply : players) {
         if(ply == actor || ply == target) continue;
 
-        bstring out = str;
-        out.Replace("*ACTOR*", actor->getCrtStr(ply, CAP).c_str());
+        std::string out = str;
+        boost::replace_all(out, "*ACTOR*", actor->getCrtStr(ply, CAP));
         if(target) {
-            out.Replace("*TARGET*", target->getCrtStr(ply).c_str());
-            out.Replace("*VICTIM*", target->getCrtStr(ply).c_str());
+            boost::replace_all(out, "*TARGET*", target->getCrtStr(ply));
+            boost::replace_all(out, "*VICTIM*", target->getCrtStr(ply));
         }
         *ply << out << "\n";
     }

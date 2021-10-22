@@ -19,8 +19,8 @@
 #include <boost/python/extract.hpp>                 // for extract
 #include <boost/python/handle.hpp>                  // for handle
 #include <boost/python/object_core.hpp>             // for object, object_op...
+#include <boost/algorithm/string/predicate.hpp>
 
-#include "bstring.hpp"                              // for bstring
 #include "cmd.hpp"                                  // for cmd, CMD_NOT_FOUND
 #include "commands.hpp"                             // for getFullstrText
 #include "config.hpp"                               // for Config, SongMap
@@ -41,7 +41,7 @@ class MudObject;
 //                      getEffect
 //*********************************************************************
 
-const bstring& Song::getEffect() const {
+const std::string& Song::getEffect() const {
     return(effect);
 }
 
@@ -49,7 +49,7 @@ const bstring& Song::getEffect() const {
 //                      getType
 //*********************************************************************
 
-const bstring& Song::getType() const {
+const std::string& Song::getType() const {
     return(type);
 }
 
@@ -57,7 +57,7 @@ const bstring& Song::getType() const {
 //                      getTargetType
 //*********************************************************************
 
-const bstring& Song::getTargetType() const {
+const std::string& Song::getTargetType() const {
     return(targetType);
 }
 
@@ -70,27 +70,27 @@ bool Song::runScript(MudObject* singer, MudObject* target) const {
     if(script.empty())
         return(false);
 
-    try {
-        bp::object localNamespace( (bp::handle<>(PyDict_New())));
-
-        bp::object effectModule( (bp::handle<>(PyImport_ImportModule("songLib"))) );
-        localNamespace["songLib"] = effectModule;
-
-        localNamespace["song"] = bp::ptr(this);
-
-        // Default retVal is true
-        localNamespace["retVal"] = true;
-        addMudObjectToDictionary(localNamespace, "actor", singer);
-        addMudObjectToDictionary(localNamespace, "target", target);
-
-        gServer->runPython(script, localNamespace);
-
-        bool retVal = bp::extract<bool>(localNamespace["retVal"]);
-        return(retVal);
-    }
-    catch( bp::error_already_set &e) {
-        gServer->handlePythonError();
-    }
+//    try {
+//        bp::object localNamespace( (bp::handle<>(PyDict_New())));
+//
+//        bp::object effectModule( (bp::handle<>(PyImport_ImportModule("songLib"))) );
+//        localNamespace["songLib"] = effectModule;
+//
+//        localNamespace["song"] = bp::ptr(this);
+//
+//        // Default retVal is true
+//        localNamespace["retVal"] = true;
+//        addMudObjectToDictionary(localNamespace, "actor", singer);
+//        addMudObjectToDictionary(localNamespace, "target", target);
+//
+//        gServer->runPython(script, localNamespace);
+//
+//        bool retVal = bp::extract<bool>(localNamespace["retVal"]);
+//        return(retVal);
+//    }
+//    catch( bp::error_already_set &e) {
+//        gServer->handlePythonError();
+//    }
 
     return(false);
 }
@@ -173,19 +173,19 @@ bool Creature::pulseSong(long t) {
 
     const auto& targetType = playing->getTargetType();
 
-    if(playing->getType().equals("effect", false)) {
+    if(boost::iequals(playing->getType(), "effect")) {
         // Group effects affect the singer as well
-        if(targetType.equals("self",false) || targetType.equals("group", false)) {
+        if(boost::iequals(targetType, "self") || boost::iequals(targetType, "group")) {
             addEffect(playing->getEffect(), -2, -2, this)->setDuration(playing->getDuration());
         }
-        if(targetType.equals("group", false) && (getGroup() != nullptr)) {
-            Group* group = getGroup();
-            for(Creature* crt : group->members) {
+        if(boost::iequals(targetType, "group") && (getGroup() != nullptr)) {
+            Group* myGroup = getGroup();
+            for(Creature* crt : myGroup->members) {
                 if(inSameRoom(crt))
                     crt->addEffect(playing->getEffect(), -2, -2, this)->setDuration(playing->getDuration());
             }
         }
-        if(targetType.equals("room", false)) {
+        if(boost::iequals(targetType, "room")) {
             for(Player* ply : getRoomParent()->players) {
                 if(getAsPlayer() && ply->getAsPlayer() && getAsPlayer()->isDueling(ply->getName()))
                     continue;
@@ -197,7 +197,7 @@ bool Creature::pulseSong(long t) {
         MudObject *target = nullptr;
 
         // Find the target here, if any
-        if(targetType.equals("target", false)) {
+        if(boost::iequals(targetType, "target")) {
             if(hasAttackableTarget())
                 target = getTarget();
         }
@@ -242,7 +242,7 @@ int cmdPlay(Player* player, cmd* cmnd) {
     }
 
     int retVal = 0;
-    bstring songStr = getFullstrText(cmnd->fullstr, 1);
+    std::string songStr = getFullstrText(cmnd->fullstr, 1);
     auto* song = gConfig->getSong(songStr, retVal);
 
     if(retVal == CMD_NOT_FOUND) {

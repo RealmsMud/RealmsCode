@@ -22,7 +22,6 @@
 #include <ctime>                  // for time
 #include <string>                 // for operator==, basic_string
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for cmdNoAuth, cmdCharm, cmdIdentify
 #include "config.hpp"             // for Config, gConfig
@@ -53,7 +52,7 @@ int cmdIdentify(Player* player, cmd* cmnd) {
     int         chance=0, avgbns=0, ac=0, wear=0, jakar=0;
     long        i=0,t=0;
     char        desc[32];
-    bstring     output;
+    std::string     output;
 
     zero(desc, sizeof(desc));
 
@@ -695,7 +694,7 @@ int songOffensive(Player* player, cmd* cmnd, char *songname, osong_t *oso) {
         player->lasttime[LT_SPELL].ltime = time(nullptr);
         player->lasttime[LT_SPELL].interval = 3L;
         player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
-        player->statistics.magicDamage(dmg, (bstring)"a song of " + songname);
+        player->statistics.magicDamage(dmg, (std::string)"a song of " + songname);
 
         player->print("You sing a song of %s to %s.\n", songname, creature->getCName());
         player->printColor("Your song inflicted %s%d^x damage.\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg);

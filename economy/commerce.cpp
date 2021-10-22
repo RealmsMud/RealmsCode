@@ -21,7 +21,6 @@
 #include <ctime>                  // for time
 
 #include "bank.hpp"               // for guildLog
-#include "bstring.hpp"            // for bstring, operator+
 #include "carry.hpp"              // for Carry
 #include "catRef.hpp"             // for CatRef
 #include "color.hpp"              // for padColor
@@ -127,7 +126,7 @@ long shopProfit(Object* object) {
 //                      getCondition
 //*********************************************************************
 
-bstring getCondition(Object* object) {
+std::string getCondition(Object* object) {
     int percent = -1;
 
     // possible division by 0
@@ -303,8 +302,8 @@ bool playerShopSame(Player* player, Object* obj1, Object* obj2) {
 //                      objShopName
 //*********************************************************************
 
-bstring objShopName(Object* object, int m, int flags, int pad) {
-    bstring name = object->getObjStr(nullptr, flags, m);
+std::string objShopName(Object* object, int m, int flags, int pad) {
+    std::string name = object->getObjStr(nullptr, flags, m);
     return padColor(name, pad);
 }
 
@@ -537,8 +536,8 @@ int cmdShop(Player* player, cmd* cmnd) {
         UniqueRoom *shop=nullptr;
         storage = nullptr;
 
-        bstring xname = getFullstrText(cmnd->fullstr, 2);
-        xname.Replace("_", " ");
+        std::string xname = getFullstrText(cmnd->fullstr, 2);
+        std::replace(xname.begin(), xname.end(), '_', ' ');
 
         if(!Property::goodExit(player, room, "Shop", xname))
             return(0);
@@ -745,13 +744,13 @@ int cmdShop(Player* player, cmd* cmnd) {
             player->save(true);
         storage->saveToFile(0);
     } else if(action == SHOP_NAME) {
-        bstring name = getFullstrText(cmnd->fullstr, 2);
+        std::string name = getFullstrText(cmnd->fullstr, 2);
 
         if(!Property::goodNameDesc(player, name, "Rename shop to what?", "room name"))
             return(0);
 
         if(!p->getGuild()) {
-            if(name.find(player->getName()) == bstring::npos) {
+            if(name.find(player->getName()) == std::string::npos) {
                 *player << "Your shop name must contain your name.\n";
                 return(0);
             }
@@ -760,7 +759,7 @@ int cmdShop(Player* player, cmd* cmnd) {
                 *player << "Error loading guild.\n";
                 return(0);
             }
-            if(name.find(guild->getName()) == bstring::npos) {
+            if(name.find(guild->getName()) == std::string::npos) {
                 *player << "Your shop name must contain your guild's name.\n";
                 return(0);
             }
@@ -862,7 +861,7 @@ int cmdList(Player* player, cmd* cmnd) {
     UniqueRoom* room = player->getUniqueRoomParent(), *storage=nullptr;
     Object* object=nullptr;
     int     n=0;
-    bstring filter = "";
+    std::string filter = "";
 
     // interchange list and selection
     if(cmnd->num == 2 && cmnd->str[1][0] != '-')
@@ -950,7 +949,7 @@ int cmdList(Player* player, cmd* cmnd) {
             player->printPaged("You are selling:");
             owner = true;
         } else {
-            bstring ownerName = p->getOwner();
+            std::string ownerName = p->getOwner();
             if(p->getGuild()) {
                 const Guild* guild = gConfig->getGuild(p->getGuild());
                 ownerName = guild->getName();
@@ -1162,7 +1161,7 @@ int cmdSelection(Player* player, cmd* cmnd) {
     Object  *object=nullptr;
     CatRef  obj_list[10];
     int     i=0, j=0, found=0, maxitem=0;
-    bstring filter = "";
+    std::string filter = "";
 
     // interchange list and selection
     if(cmnd->num == 1 || cmnd->str[1][0] == '-')
@@ -1564,13 +1563,13 @@ int cmdBuy(Player* player, cmd* cmnd) {
 
             if(isDeed) {
                 int flag=0;
-                bstring type = "";
-                bstring name = object2->getName();
+                std::string type;
+                std::string name = object2->getName();
 
                 if(name == "shop deed") {
                     type = "shop";
                     flag = R_BUILD_SHOP;
-                } else if(name.left(14) == "guildhall deed") {
+                } else if(name.starts_with("guildhall deed")) {
                     type = "guildhall";
                     flag = R_BUILD_GUILDHALL;
 
@@ -1891,7 +1890,7 @@ void failTrade(const Player* player, const Object* object, const Monster* target
 // is tracked on a broader scale, rather than for each item.
 
 bool canReceiveObject(const Player* player, Object* object, const Monster* monster, bool isTrade, bool doQuestOwner, bool maybeTryAgainMsg) {
-    bstring tryAgain = "";
+    std::string tryAgain = "";
     // if the result of the quest/trade is a random item and we fail based on that random item,
     // they may be able to retry the quest/trade.
     if(maybeTryAgainMsg) {

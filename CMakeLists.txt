@@ -1,6 +1,10 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.15...3.19)
 
 project(RealmsCode)
+project(realmsPython)
+
+add_subdirectory(lib/pybind11)
+
 set(CMAKE_C_COMPILER "/usr/bin/clang")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
@@ -14,19 +18,18 @@ set(Python_ADDITIONAL_VERSIONS 3.8)
 
 find_package(LibXml2 REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
 find_package(PythonLibs 3.8 REQUIRED)
 find_package(ASPELL REQUIRED)
 find_package(PythonInterp)
 find_package(PythonLibs)
-find_package(Boost COMPONENTS python system filesystem REQUIRED)
+find_package(Boost COMPONENTS system filesystem REQUIRED)
 
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
 message(STATUS "PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
 
-message(STATUS "Boost_PYTHON_LIBRARY = ${Boost_PYTHON_LIBRARY}")
-
-include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR})
+include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} lib/pybind11/include)
 
 # For indexing_suite and such
 include_directories("include")
@@ -58,7 +61,6 @@ set(COMMON_HEADER_FILES
     include/async.hpp
     include/bank.hpp
     include/bans.hpp
-    include/bstring.hpp
     include/calendar.hpp
     include/carry.hpp
     include/catRef.hpp
@@ -119,7 +121,6 @@ set(COMMON_HEADER_FILES
     include/property.hpp
     include/proto.hpp
     include/proxy.hpp
-    include/pymud.hpp
     include/pythonHandler.hpp
     include/quests.hpp
     include/raceData.hpp
@@ -158,7 +159,7 @@ set(COMMON_HEADER_FILES
     include/weather.hpp
     include/web.hpp
     include/xml.hpp
-    )
+    include/toNum.hpp)
 
 set(COMMON_SOURCE_FILES
     fmt/format.cc
@@ -379,6 +380,12 @@ set(COMMON_SOURCE_FILES
     xml/wanderInfo-xml.cpp
     xml/xml.cpp
 
+    python/mud.cpp
+#    python/mudCreature.cpp
+#    python/mudEffect.cpp
+#    python/mudObject.cpp
+    python/mudStat.cpp
+
     wip/fighters.cpp
     wip/songs.cpp
     )
@@ -387,7 +394,8 @@ add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES} ${DPP_LIB_NAME})
 
 add_executable(RealmsCode ${REALMS_SOURCE_FILES})
-target_link_libraries(RealmsCode RealmsLib)
 
-add_executable(List ${LIST_SOURCE_FILES})
-target_link_libraries(List RealmsLib)
+target_link_libraries(RealmsCode RealmsLib pybind11::embed)
+
+#add_executable(List ${LIST_SOURCE_FILES})
+#target_link_libraries(List RealmsLib)

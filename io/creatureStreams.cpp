@@ -18,7 +18,6 @@
 
 #include <string>               // for basic_string<>::npos
 
-#include "bstring.hpp"          // for bstring
 #include "creatureStreams.hpp"  // for Streamable, setf, setn, operator<<
 #include "creatures.hpp"        // for Player, Monster, Creature
 #include "mudObject.hpp"        // for MudObject
@@ -26,7 +25,7 @@
 #include "socket.hpp"           // for Socket
 #include "stats.hpp"            // for Stat
 
-bstring escapeColor(std::string_view colored);
+std::string escapeColor(std::string_view colored);
 
 Streamable& Streamable::operator << ( Streamable& (*op)(Streamable&)) {
     // call the function passed as parameter with this stream as the argument
@@ -96,7 +95,7 @@ Streamable& Streamable::operator<< (std::string_view str) {
     return(*this);
 }
 Streamable& Streamable::operator<< (const int num) {
-    doPrint(bstring(num));
+    doPrint(std::to_string(num));
     return(*this);
 }
 Streamable& Streamable::operator<< (Stat& stat) {
@@ -154,11 +153,11 @@ void Streamable::doPrint(std::string_view toPrint) {
         if(master) {
             if(!petPrinted) {
                 sock->bprint("Pet> ");
-                if(toPrint.find('\n') == bstring::npos)
+                if(toPrint.find('\n') == std::string::npos)
                     petPrinted = true;
             }
             else {
-                if(toPrint.find('\n') != bstring::npos)
+                if(toPrint.find('\n') != std::string::npos)
                     petPrinted = false;
             }
         }

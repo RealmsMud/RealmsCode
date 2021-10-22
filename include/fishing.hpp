@@ -56,7 +56,7 @@ public:
     void    load(xmlNodePtr rootNode);
     [[nodiscard]] const FishingItem* getItem(short skill, short quality) const;
     [[nodiscard]] bool empty() const;
-    bstring id;
+    std::string id;
     std::list<FishingItem> items;
 };
 

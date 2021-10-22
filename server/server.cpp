@@ -36,9 +36,9 @@
 #include <iomanip>                                  // for operator<<, setw
 #include <iostream>                                 // for operator<<, basic...
 #include <poll.h>
+#include <boost/algorithm/string/replace.hpp>
 
 #include "area.hpp"                                 // for MapMarker, Area
-#include "bstring.hpp"                              // for bstring, operator+
 #include "calendar.hpp"                             // for Calendar
 #include "catRef.hpp"                               // for CatRef
 #include "config.hpp"                               // for Config, gConfig
@@ -89,7 +89,7 @@ void CleanupRoomFn::operator()( UniqueRoom* r ) {
 }
 
 // Custom comparison operator to sort by the numeric id instead of standard string comparison
-bool idComp::operator() (const bstring& lhs, const bstring& rhs) const {
+bool idComp::operator() (const std::string& lhs, const std::string& rhs) const {
     std::stringstream strL(lhs);
     std::stringstream strR(rhs);
 
@@ -628,7 +628,7 @@ int Server::cleanUp() {
 //                      getDnsCacheString
 //********************************************************************
 
-bstring Server::getDnsCacheString() {
+std::string Server::getDnsCacheString() {
     std::ostringstream dnsStr;
     int num = 0;
 
@@ -650,7 +650,7 @@ bstring Server::getDnsCacheString() {
 //                      getDnsCache
 //********************************************************************
 
-bool Server::getDnsCache(bstring &ip, bstring &hostName) {
+bool Server::getDnsCache(std::string &ip, std::string &hostName) {
     for(dnsCache & dns : cachedDns) {
         if(dns.ip == ip) {
             // Got a match
@@ -747,7 +747,7 @@ void Server::updateRandom(long t) {
     WanderInfo* wander=nullptr;
     CatRef  cr;
     int     num=0, l=0;
-    std::map<bstring, bool> check;
+    std::map<std::string, bool> check;
 
     lastRandomUpdate = t;
 
@@ -1283,7 +1283,7 @@ int Server::reapChildren() {
                     gConfig->offlineSwap(myChild, true);
                 } else if(myChild.type == ChildType::PRINT) {
                     const Player* player = gServer->findPlayer(myChild.extra);
-                    bstring output = gServer->simpleChildRead(myChild);
+                    std::string output = gServer->simpleChildRead(myChild);
                     if(player && !output.empty())
                         player->printColor("%s\n", output.c_str());
                 }
@@ -1319,7 +1319,7 @@ int Server::processListOutput(const childProcess &lister) {
     }
 
     char tmpBuf[4096];
-    bstring toWrite;
+    std::string toWrite;
     size_t n;
     for(;;) {
         // Even if no socket is found, read in all the data
@@ -1330,7 +1330,7 @@ int Server::processListOutput(const childProcess &lister) {
 
         if(found) {
             toWrite = tmpBuf;
-            toWrite.Replace("\n", "\nList> ");
+            boost::replace_all(toWrite, "\n", "\nList> ");
             foundSock->write(toWrite, false);
         }
     }
@@ -1353,7 +1353,7 @@ int Server::processChildren() {
             gConfig->offlineSwap(child, false);
         } else if(child.type == ChildType::PRINT) {
             const Player* player = gServer->findPlayer(child.extra);
-            bstring output = gServer->simpleChildRead(child);
+            std::string output = gServer->simpleChildRead(child);
             if(player && !output.empty())
                 player->printColor("%s\n", output.c_str());
         } else {
@@ -1507,14 +1507,14 @@ void Server::loadDnsCache() {
     }
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Dns")) {
-            bstring ip, hostname;
+            std::string ip, hostname;
             long time=0;
             childNode = curNode->children;
             while(childNode != nullptr) {
                 if(NODE_NAME(childNode, "Ip")) {
-                    xml::copyToBString(ip, childNode);
+                    xml::copyToString(ip, childNode);
                 } else if(NODE_NAME(childNode, "HostName")) {
-                    xml::copyToBString(hostname, childNode);
+                    xml::copyToString(hostname, childNode);
                 } else if(NODE_NAME(childNode, "Time")) {
                     xml::copyToNum(time, childNode);
                     addCache(ip, hostname, time);
@@ -1633,8 +1633,8 @@ bool Server::saveRebootFile(bool resetShips) {
             curNode = xmlNewChild(rootNode, nullptr, BAD_CAST"Player", nullptr);
             xml::newStringChild(curNode, "Name", player->getCName());
             xml::newNumChild(curNode, "Fd", sock.getFd());
-            xml::newStringChild(curNode, "Ip", bstring(sock.getIp()).c_str());
-            xml::newStringChild(curNode, "HostName", bstring(sock.getHostname()).c_str());
+            xml::newStringChild(curNode, "Ip", std::string(sock.getIp()).c_str());
+            xml::newStringChild(curNode, "HostName", std::string(sock.getHostname()).c_str());
             xml::newStringChild(curNode, "ProxyName", player->getProxyName());
             xml::newStringChild(curNode, "ProxyId", player->getProxyId());
             sock.saveTelopts(curNode);
@@ -1722,8 +1722,8 @@ int Server::finishReboot() {
             Socket* sock=nullptr;
             while(childNode != nullptr) {
                 if(NODE_NAME(childNode, "Name")) {
-                    bstring name;
-                    xml::copyToBString(name, childNode);
+                    std::string name;
+                    xml::copyToString(name, childNode);
                     if(!loadPlayer(name.c_str(), &player)) {
                         merror("finishReboot: loadPlayer", FATAL);
                     }
@@ -1742,21 +1742,21 @@ int Server::finishReboot() {
                     addPlayer(player);
                 }
                 else if(NODE_NAME(childNode, "Ip")) {
-                    bstring ip;
-                    xml::copyToBString(ip, childNode);
+                    std::string ip;
+                    xml::copyToString(ip, childNode);
                     sock->setIp(ip);
                 }
                 else if(NODE_NAME(childNode, "HostName")) {
-                    bstring host;
-                    xml::copyToBString(host, childNode);
+                    std::string host;
+                    xml::copyToString(host, childNode);
                     sock->setHostname(host);
                 } else if(NODE_NAME(childNode, "Telopts")) {
                     sock->loadTelopts(childNode);
                 } else if(NODE_NAME(childNode, "ProxyName")) {
-                    bstring proxyName = xml::getBString(childNode);
+                    std::string proxyName = xml::getString(childNode);
                     player->setProxyName(proxyName);
                 } else if(NODE_NAME(childNode, "ProxyId")) {
-                    bstring proxyId = xml::getBString(childNode);
+                    std::string proxyId = xml::getString(childNode);
                     player->setProxyId(proxyId);
                 }
 
@@ -1809,7 +1809,7 @@ int Server::finishReboot() {
 //                      findPlayer
 //********************************************************************
 
-Player* Server::findPlayer(std::string_view name) {
+Player* Server::findPlayer(const std::string &name) {
     auto it = players.find(name);
 
     if(it != players.end())
@@ -1824,7 +1824,7 @@ Player* Server::findPlayer(std::string_view name) {
 // This function saves all players currently in memory.
 
 void Server::saveAllPly() {
-    for(std::pair<bstring, Player*> p : players) {
+    for(std::pair<std::string, Player*> p : players) {
         if(!p.second->isConnected())
             continue;
         p.second->save(true);
@@ -1837,13 +1837,12 @@ void Server::saveAllPly() {
 //*********************************************************************
 // This will NOT free up the player, it will just remove them from the list
 
-bool Server::clearPlayer(std::string_view name) {
+bool Server::clearPlayer(const std::string &name) {
     players.erase(name);
     return(true);
 }
 
 bool Server::clearPlayer(Player* player) {
-    ASSERTLOG(player);
     players.erase(player->getName());
     player->unRegisterMo();
     return(true);
@@ -1854,7 +1853,6 @@ bool Server::clearPlayer(Player* player) {
 //*********************************************************************
 
 bool Server::addPlayer(Player* player) {
-    ASSERTLOG(player);
     player->validateId();
     players[player->getName()] = player;
     player->getSock()->addToPlayerList();
@@ -1937,7 +1935,7 @@ void Server::sendCrash() {
 //*********************************************************************
 // not accurate for the fractional hour timezones
 
-bstring Server::getTimeZone() {
+std::string Server::getTimeZone() {
     // current local time
     time_t curr = time(nullptr);
     // convert curr to GMT, store as tm
@@ -2005,7 +2003,7 @@ bstring Server::getTimeZone() {
     }
 }
 
-bstring Server::getServerTime() {
+std::string Server::getServerTime() {
     time_t t = time(nullptr);
     char* str = ctime(&t);
     str[strlen(str) - 1] = 0;
@@ -2039,7 +2037,7 @@ int Server::getNumPlayers() {
 // *************************************
 
 bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
-    ASSERT(toRegister != nullptr);
+    assert(toRegister != nullptr);
 
     if(toRegister->getId() =="-1")
         return(false);
@@ -2072,7 +2070,7 @@ bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
 }
 
 bool Server::unRegisterMudObject(MudObject* toUnRegister) {
-    ASSERT(toUnRegister != nullptr);
+    assert(toUnRegister != nullptr);
 
     if(toUnRegister->getId() == "-1")
         return(false);
@@ -2116,7 +2114,7 @@ bool Server::unRegisterMudObject(MudObject* toUnRegister) {
     return(true);
 }
 
-Object* Server::lookupObjId(std::string_view toLookup) {
+Object* Server::lookupObjId(const std::string &toLookup) {
     if(toLookup[0] != 'O')
         return(nullptr);
 
@@ -2129,7 +2127,7 @@ Object* Server::lookupObjId(std::string_view toLookup) {
 
 }
 
-Creature* Server::lookupCrtId(std::string_view toLookup) {
+Creature* Server::lookupCrtId(const std::string &toLookup) {
     if(toLookup[0] != 'M' && toLookup[0] != 'P')
         return(nullptr);
 
@@ -2141,7 +2139,7 @@ Creature* Server::lookupCrtId(std::string_view toLookup) {
         return(((*it).second)->getAsCreature());
 
 }
-Player* Server::lookupPlyId(std::string_view toLookup) {
+Player* Server::lookupPlyId(const std::string &toLookup) {
     if(toLookup[0] != 'P')
         return(nullptr);
     auto it = registeredIds.find(toLookup);
@@ -2152,7 +2150,7 @@ Player* Server::lookupPlyId(std::string_view toLookup) {
         return(((*it).second)->getAsPlayer());
 
 }
-bstring Server::getRegisteredList() {
+std::string Server::getRegisteredList() {
     std::ostringstream oStr;
     for(const auto& p : registeredIds) {
         oStr << p.first << " - " << p.second->getName() << std::endl;
@@ -2173,23 +2171,23 @@ long Server::getMaxObjectId() {
 }
 
 
-bstring Server::getNextMonsterId() {
+std::string Server::getNextMonsterId() {
     long id = ++maxMonsterId;
-    bstring toReturn = bstring("M") + bstring(id);
+    std::string toReturn = std::string("M") + std::to_string(id);
     idDirty = true;
     return(toReturn);
 }
 
-bstring Server::getNextObjectId() {
+std::string Server::getNextObjectId() {
     long id = ++maxObjectId;
-    bstring toReturn = bstring("O") + bstring(id);
+    std::string toReturn = std::string("O") + std::to_string(id);
     idDirty = true;
     return(toReturn);
 }
 
-bstring Server::getNextPlayerId() {
+std::string Server::getNextPlayerId() {
     long id = ++maxPlayerId;
-    bstring toReturn = bstring("P") + bstring(id);
+    std::string toReturn = std::string("P") + std::to_string(id);
     idDirty = true;
     return(toReturn);
 }
@@ -2250,11 +2248,11 @@ void Server::saveIds() {
 }
 
 void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, std::string_view logType) {
-    bstring pName = player->getName();
-    bstring pId = player->getId();
+    std::string pName = player->getName();
+    std::string pId = player->getId();
     // long amt
-    bstring targetStr = "";
-    bstring source = "";
+    std::string targetStr = "";
+    std::string source = "";
 
     if(target) {
         targetStr = stripColor(target->getName());
@@ -2266,16 +2264,16 @@ void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, 
             }
         }
     }
-    bstring room = "";
+    std::string room = "";
     if(player->getRoomParent()) {
         if(player->getRoomParent()->getAsUniqueRoom()) {
-            room = bstring(player->getRoomParent()->getName()) + "(" + player->getRoomParent()->getAsUniqueRoom()->info.str() + ")";
+            room = std::string(player->getRoomParent()->getName()) + "(" + player->getRoomParent()->getAsUniqueRoom()->info.str() + ")";
         } else if (player->getRoomParent()->getAsAreaRoom()) {
             room = player->getRoomParent()->getAsAreaRoom()->area->name + "(" + player->getRoomParent()->getAsAreaRoom()->mapmarker.str() + ")";
         }
     }
     // logType
-    bstring direction = (dir == GOLD_IN ? "In" : "Out");
+    std::string direction = (dir == GOLD_IN ? "In" : "Out");
     std::clog << direction << ": P:" << pName << " I:" << pId << " T: " << targetStr << " S:" << source << " R: " << room << " Type:" << logType << " G:" << amt.get(GOLD) << std::endl;
 
 #ifdef SQL_LOGGER
@@ -2329,7 +2327,7 @@ bool Server::reloadRoom(BaseRoom* room) {
 UniqueRoom* Server::reloadRoom(const CatRef& cr) {
     UniqueRoom  *room=nullptr, *oldRoom=nullptr;
 
-    bstring str = cr.str();
+    std::string str = cr.str();
     oldRoom = roomCache.fetch(cr);
     if(!oldRoom)
     	return nullptr;

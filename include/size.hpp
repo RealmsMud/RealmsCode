@@ -17,8 +17,7 @@
  */
 #ifndef SIZE_H_
 #define SIZE_H_
-
-class bstring;
+#include <string>
 
 enum Size {
     NO_SIZE         =0,
@@ -35,8 +34,8 @@ enum Size {
     MAX_SIZE        =SIZE_COLOSSAL
 };
 
-Size getSize(const bstring& str);
-bstring getSizeName(Size size);
+Size getSize(const std::string& str);
+std::string getSizeName(Size size);
 int searchMod(Size size);
 Size whatSize(int i);
 

@@ -23,7 +23,6 @@
 #include <sstream>             // for operator<<, basic_ostream, ostringstream
 
 #include "area.hpp"            // for MapMarker, Area
-#include "bstring.hpp"         // for bstring
 #include "calendar.hpp"        // for Calendar
 #include "cmd.hpp"             // for cmd
 #include "commands.hpp"        // for tollcost
@@ -567,7 +566,7 @@ bool Player::canWear(const Object* object, bool all) const {
         return(false);
     }
 
-    bstring armorType = object->getArmorType();
+    std::string armorType = object->getArmorType();
     if( (   object->getType() == ObjectType::ARMOR &&
             !object->isLightArmor() &&
             (   object->getWearflag() == BODY ||
@@ -729,8 +728,8 @@ bool Creature::canWield(const Object* object, int n) const {
         }
 
         if(cClass == CreatureClass::CLERIC) {
-            bstring objCategory = object->getWeaponCategory();
-            bstring objType = object->getWeaponType();
+            std::string objCategory = object->getWeaponCategory();
+            std::string objType = object->getWeaponType();
             switch(deity) {
             case CERIS:
                 if(objCategory != "crushing" && objCategory != "ranged" && objType != "polearm") {
@@ -1040,9 +1039,9 @@ bool Creature::convertFlag(int flag) {
 //                      getCrtStr
 //*********************************************************************
 
-bstring Creature::getCrtStr(const Creature* viewer, unsigned int ioFlags, int num) const {
+std::string Creature::getCrtStr(const Creature* viewer, unsigned int ioFlags, int num) const {
     std::ostringstream crtStr;
-    bstring toReturn = "";
+    std::string toReturn = "";
     char ch;
     int mobNum=0;
     //  char    *str;
@@ -1231,7 +1230,7 @@ void Creature::unApplyTongues() {
     Player* pTarget = getAsPlayer();
     if(pTarget) {
         if(!pTarget->languageIsKnown(LUNKNOWN + pTarget->current_language)) {
-            bstring selfStr = "";
+            std::string selfStr = "";
             int i;
             selfStr.append("You can no longer speak");
             selfStr.append(get_language_adj(pTarget->current_language));

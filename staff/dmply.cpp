@@ -27,7 +27,6 @@
 
 #include "area.hpp"               // for MapMarker, Area (ptr only)
 #include "bank.hpp"               // for Bank
-#include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for getFullstrText, cmdNoAuth, cmdNoExist
@@ -63,7 +62,7 @@
 //                      dmLastCommand
 //*********************************************************************
 
-bstring dmLastCommand(const Player* player) {
+std::string dmLastCommand(const Player* player) {
     if(player->isPassword(player->getLastCommand()))
         return("**********");
     return(escapeColor(player->getLastCommand()));
@@ -78,7 +77,7 @@ bstring dmLastCommand(const Player* player) {
 int dmForce(Player* player, cmd* cmnd) {
     Player  *target=nullptr;
     int     index=0;
-    bstring::size_type i=0;
+    std::string::size_type i=0;
     char    str[IBUFSIZE+1];
 
     if(cmnd->num < 2) {
@@ -126,7 +125,7 @@ int dmForce(Player* player, cmd* cmnd) {
     if(target->getClass() >= player->getClass())
         target->print("%s forces you to \"%s\".\n", player->getCName(), str);
 
-    bstring txt = escapeColor(str);
+    std::string txt = escapeColor(str);
     log_immort(true, player, "%s forced %s to \"%s\".\n", player->getCName(), target->getCName(), txt.c_str());
     command(target->getSock(), str);
 
@@ -244,7 +243,7 @@ int dmSilence(Player* player, cmd* cmnd) {
 
 int dmTitle(Player* player, cmd* cmnd) {
     Player  *target=nullptr;
-    bstring title = "";
+    std::string title = "";
 
     if(cmnd->num < 3) {
         player->print("\nSyntax: *title <player> [<title>|-d]\n");
@@ -481,7 +480,7 @@ int dmDust(Player* player, cmd* cmnd) {
 //  players screen.
 
 int dmFlash(Player* player, cmd* cmnd) {
-    bstring text = "";
+    std::string text = "";
     Player  *target=nullptr;
 
 
@@ -1211,7 +1210,7 @@ int dmRename(Player* player, cmd* cmnd) {
     Player  *target=nullptr;
     int     i=0;
     FILE    *fp;
-    bstring oldName, newName;
+    std::string oldName, newName;
     char    file[80];
 
     if(!player->isStaff() && !player->isWatcher())
@@ -1262,7 +1261,7 @@ int dmRename(Player* player, cmd* cmnd) {
         player->print("The new name is not allowed, pick another.\n");
         return(0);
     }
-    bstring::size_type len = newName.length();
+    std::string::size_type len = newName.length();
     if(len >= 20) {
         player->print("The name must be less than 20 characters.\n");
         return(0);
@@ -1311,7 +1310,7 @@ int dmRename(Player* player, cmd* cmnd) {
         //target->printColor("Your forum account ^C%s^x is no longer unassociated with this character.\n", target->getForum().c_str());
         //target->print("Use the \"forum\" command to reassociate this character with your forum account.\n");
         //target->setForum("");
-        callWebserver((bstring)"mud.php?type=forum&char=" + oldName + "&rename=" + newName);
+        callWebserver((std::string)"mud.php?type=forum&char=" + oldName + "&rename=" + newName);
     }
 
     target->save(true);
@@ -1327,7 +1326,7 @@ int dmPassword(Player* player, cmd* cmnd) {
     Player  *target=nullptr;
 
     bool    online=false;
-    bstring pass = "";
+    std::string pass = "";
 
     if(cmnd->num < 2) {
         player->print("Change who's password?\n");
@@ -1355,11 +1354,11 @@ int dmPassword(Player* player, cmd* cmnd) {
         player->print("Passwords must be different.\n");
         return(0);
     }
-    if(pass.getLength() > PASSWORD_MAX_LENGTH) {
+    if(pass.length() > PASSWORD_MAX_LENGTH) {
         player->print("The password must be %d characters or less.\n", PASSWORD_MAX_LENGTH);
         return(0);
     }
-    if(pass.getLength() < PASSWORD_MIN_LENGTH) {
+    if(pass.length() < PASSWORD_MIN_LENGTH) {
         player->print("Password must be at least %d characters.\n", PASSWORD_MAX_LENGTH);
         return(0);
     }
@@ -2571,8 +2570,8 @@ int dmLtClear(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dm2x(Player* player, cmd* cmnd) {
-    bstring forum1;
-    bstring forum2;
+    std::string forum1;
+    std::string forum2;
 
     if(cmnd->num == 1) {
 
@@ -2587,7 +2586,7 @@ int dm2x(Player* player, cmd* cmnd) {
 
         forum1 = getFullstrText(cmnd->fullstr, 2);
         forum2 = getFullstrText(cmnd->fullstr, 3);
-        forum1 = forum1.substr(0, forum1.getLength() - forum2.getLength() - 1);
+        forum1 = forum1.substr(0, forum1.length() - forum2.length() - 1);
 
         // add a new account pair
         if(forum1.empty() || forum2.empty()) {
@@ -2602,7 +2601,7 @@ int dm2x(Player* player, cmd* cmnd) {
 
         forum1 = getFullstrText(cmnd->fullstr, 2);
         forum2 = getFullstrText(cmnd->fullstr, 3);
-        forum1 = forum1.substr(0, forum1.getLength() - forum2.getLength() - 1);
+        forum1 = forum1.substr(0, forum1.length() - forum2.length() - 1);
 
         // remove an account pair
         if(forum1.empty() || forum2.empty()) {

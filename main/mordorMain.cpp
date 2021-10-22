@@ -15,6 +15,7 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+#include <iostream>
 #include <cerrno>               // for errno
 #include <cstdio>               // for fclose, fopen, fprintf, printf, sprintf
 #include <cstdlib>              // for atoi

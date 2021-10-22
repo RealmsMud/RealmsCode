@@ -19,8 +19,8 @@
 #include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
 #include <ctime>                                    // for time, time_t
 #include <iomanip>                                  // for operator<<, setw
+#include <boost/algorithm/string/replace.hpp>
 
-#include "bstring.hpp"                              // for bstring, operator+
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for getFullstrText
 #include "config.hpp"                               // for Config, gConfig
@@ -47,14 +47,15 @@
 #include "socket.hpp"                               // for Socket
 #include "structs.hpp"                              // for ALCOHOL_DRUNK
 #include "utils.hpp"                                // for MAX, MIN
-#include "xml.hpp"                                  // for copyToBString
+#include "xml.hpp"                                  // for copyToString
+#include "toNum.hpp"
 
 //*********************************************************************
 //                      getDisplayName
 //*********************************************************************
 
-bstring EffectInfo::getDisplayName() const {
-    bstring displayName = myEffect->getDisplay();
+std::string EffectInfo::getDisplayName() const {
+    std::string displayName = myEffect->getDisplay();
     if(myEffect->getName() != "drunkenness")
         return(displayName);
 
@@ -99,7 +100,7 @@ void Config::clearEffects() {
 //                      getEffect
 //*********************************************************************
 
-const Effect* Config::getEffect(std::string_view eName) {
+const Effect* Config::getEffect(const std::string &eName) {
     EffectMap::const_iterator eIt;
     if( (eIt = effects.find(eName)) == effects.end())
         return(nullptr);
@@ -111,7 +112,7 @@ const Effect* Config::getEffect(std::string_view eName) {
 //                      effectExists
 //*********************************************************************
 
-bool Config::effectExists(std::string_view eName) {
+bool Config::effectExists(const std::string &eName) {
     return(effects.find(eName) != effects.end());
 }
 
@@ -121,10 +122,10 @@ bool Config::effectExists(std::string_view eName) {
 
 int dmEffectList(Player* player, cmd* cmnd) {
     const Effect* effect=nullptr;
-    bstring command = getFullstrText(cmnd->fullstr, 1);
+    std::string command = getFullstrText(cmnd->fullstr, 1);
 
     bool all = (command == "all");
-    int id = command.toInt();
+    int id = toNum<int>(command);
 
     player->printColor("^YEffects\n");
     player->printColor("Type ^y*effects all^x to see all effects or ^y*effects [num]^x to see a specific effect.\n");
@@ -411,11 +412,11 @@ bool EffectInfo::postApply(bool keepApplier) {
 //*********************************************************************
 
 
-EffectInfo* MudObject::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, const Creature* owner, bool keepApplier) {
+EffectInfo* MudObject::addEffect(const std::string& effect, long duration, int strength, MudObject* applier, bool show, const Creature* owner, bool keepApplier) {
     return(effects.addEffect(effect, duration, strength, applier, show, this, owner, keepApplier));
 }
 
-EffectInfo* Effects::addEffect(const bstring& effect, long duration, int strength, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
+EffectInfo* Effects::addEffect(const std::string& effect, long duration, int strength, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
     if(!gConfig->getEffect(effect))
         return(nullptr);
     auto* newEffect = new EffectInfo(effect, time(nullptr), duration, strength, pParent, owner);
@@ -479,7 +480,7 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
 //                      addPermEffect
 //*********************************************************************
 
-EffectInfo* MudObject::addPermEffect(const bstring& effect, int strength, bool show) {
+EffectInfo* MudObject::addPermEffect(const std::string& effect, int strength, bool show) {
     return(effects.addEffect(effect, -1, strength, nullptr, show, this));
 }
 
@@ -488,11 +489,11 @@ EffectInfo* MudObject::addPermEffect(const bstring& effect, int strength, bool s
 //*********************************************************************
 // Remove the effect (Won't remove permanent effects if remPerm is false)
 
-bool MudObject::removeEffect(const bstring& effect, bool show, bool remPerm, MudObject* fromApplier) {
+bool MudObject::removeEffect(const std::string& effect, bool show, bool remPerm, MudObject* fromApplier) {
     return(effects.removeEffect(effect, show, remPerm, fromApplier));
 }
 
-bool Effects::removeEffect(const bstring& effect, bool show, bool remPerm, MudObject* fromApplier) {
+bool Effects::removeEffect(const std::string& effect, bool show, bool remPerm, MudObject* fromApplier) {
     EffectInfo* toDel = getExactEffect(effect);
     if( toDel &&
         (toDel->getDuration() != -1 || (toDel->getDuration() == -1 && remPerm)) &&
@@ -546,7 +547,7 @@ bool Effect::objectCanBestowEffect(std::string_view effect) {
 //                      isEffected
 //*********************************************************************
 
-bool MudObject::isEffected(const bstring& effect, bool exactMatch) const {
+bool MudObject::isEffected(const std::string &effect, bool exactMatch) const {
     return(effects.isEffected(effect, exactMatch));
 }
 
@@ -557,7 +558,7 @@ bool MudObject::isEffected(EffectInfo* effect) const {
 // We are effected if we have an effect with this name, or an effect with a base effect
 // of this name
 
-bool Effects::isEffected(const bstring& effect, bool exactMatch) const {
+bool Effects::isEffected(const std::string &effect, bool exactMatch) const {
     //EffectList list;
     for(EffectInfo* eff : effectList) {
         if(eff->getName() == effect || (!exactMatch && eff->hasBaseEffect(effect)))
@@ -579,7 +580,7 @@ bool Effects::isEffected(EffectInfo* effect) const {
 //                      getBaseEffects
 //*********************************************************************
 
-const std::list<bstring>& Effect::getBaseEffects() {
+const std::list<std::string>& Effect::getBaseEffects() {
     return(baseEffects);
 }
 
@@ -823,7 +824,7 @@ std::ostream& operator<<(std::ostream& out, EffectInfo* effectinfo) {
 //*********************************************************************
 // Return a list of effects
 
-bstring Effects::getEffectsList() const {
+std::string Effects::getEffectsList() const {
     std::ostringstream effStr;
 
     effStr << "Effects: ";
@@ -836,7 +837,7 @@ bstring Effects::getEffectsList() const {
 
     effStr << ".\n";
 
-    bstring toPrint = effStr.str();
+    std::string toPrint = effStr.str();
 
     return(toPrint);
 }
@@ -846,7 +847,7 @@ bstring Effects::getEffectsList() const {
 //*********************************************************************
 // Used to print out what effects a creature is under
 
-bstring Effects::getEffectsString(const Creature* viewer) {
+std::string Effects::getEffectsString(const Creature* viewer) {
     const Object* object=nullptr;
     std::ostringstream effStr;
     long t = time(nullptr);
@@ -855,12 +856,12 @@ bstring Effects::getEffectsString(const Creature* viewer) {
         effectInfo->updateLastMod(t);
 
         effStr.setf(std::ios::right, std::ios::adjustfield);
-        bstring display = effectInfo->getDisplayName();
+        std::string display = effectInfo->getDisplayName();
 
         short count=0;
-        int len = display.getLength();
+        int len = display.length();
         for(int i=0; i<len; i++) {
-            if(display.getAt(i) == '^') {
+            if(display.at(i) == '^') {
                 count += 2;
                 i++;
             }
@@ -932,7 +933,7 @@ void Creature::convertOldEffects() {
 //*********************************************************************
 // Convert the given effect from a flag/lt to an effect
 
-bool Creature::convertToEffect(std::string_view effect, int flag, int lt) {
+bool Creature::convertToEffect(const std::string &effect, int flag, int lt) {
     if(!flagIsSet(flag))
         return(false);
 
@@ -1074,39 +1075,39 @@ bool Exit::doEffectDamage(Creature* target) {
 //                      doReplace
 //*********************************************************************
 
-bstring Creature::doReplace(bstring fmt, const MudObject* actor, const MudObject* applier) const {
+std::string Creature::doReplace(std::string fmt, const MudObject* actor, const MudObject* applier) const {
     const Creature* cActor = actor->getAsConstCreature();
     const Exit* xActor = actor->getAsConstExit();
     const Creature* cApplier = applier->getAsConstCreature();
 
     if(cActor) {
-        fmt.Replace("*ACTOR*", cActor->getCrtStr(this, CAP).c_str());
-        fmt.Replace("*LOW-ACTOR*", cActor->getCrtStr(this).c_str());
-        fmt.Replace("*A-HISHER*", cActor->hisHer());
-        fmt.Replace("*A-UPHISHER*", cActor->upHisHer());
+        boost::replace_all(fmt, "*ACTOR*", cActor->getCrtStr(this, CAP).c_str());
+        boost::replace_all(fmt, "*LOW-ACTOR*", cActor->getCrtStr(this).c_str());
+        boost::replace_all(fmt, "*A-HISHER*", cActor->hisHer());
+        boost::replace_all(fmt, "*A-UPHISHER*", cActor->upHisHer());
     } else if(xActor) {
-        fmt.Replace("*ACTOR*", xActor->getCName());
-        fmt.Replace("*LOW-ACTOR*", xActor->getCName());
+        boost::replace_all(fmt, "*ACTOR*", xActor->getCName());
+        boost::replace_all(fmt, "*LOW-ACTOR*", xActor->getCName());
     }
 
     if(cApplier) {
         // Applier Possessive
         if(cActor == cApplier) {
-            fmt.Replace("*APPLIER-POS*", cApplier->upHisHer());
-            fmt.Replace("*LOW-APPLIER-POS*", cApplier->hisHer());
-            fmt.Replace("*APPLIER-SELF-POS*", "Your");
-            fmt.Replace("*LOW-APPLIER-SELF-POS*", "your");
+            boost::replace_all(fmt, "*APPLIER-POS*", cApplier->upHisHer());
+            boost::replace_all(fmt, "*LOW-APPLIER-POS*", cApplier->hisHer());
+            boost::replace_all(fmt, "*APPLIER-SELF-POS*", "Your");
+            boost::replace_all(fmt, "*LOW-APPLIER-SELF-POS*", "your");
         } else {
-            fmt.Replace("*APPLIER-POS*", bstring(cApplier->getCrtStr(this, CAP) + "'s").c_str());
-            fmt.Replace("*LOW-APPLIER-POS*", bstring(cApplier->getCrtStr(this) + "'s").c_str());
-            fmt.Replace("*APPLIER-SELF-POS*", bstring(cApplier->getCrtStr(this, CAP) + "'s").c_str());
-            fmt.Replace("*LOW-APPLIER-SELF-POS*", bstring(cApplier->getCrtStr(this) + "'s").c_str());
+            boost::replace_all(fmt, "*APPLIER-POS*", std::string(cApplier->getCrtStr(this, CAP) + "'s").c_str());
+            boost::replace_all(fmt, "*LOW-APPLIER-POS*", std::string(cApplier->getCrtStr(this) + "'s").c_str());
+            boost::replace_all(fmt, "*APPLIER-SELF-POS*", std::string(cApplier->getCrtStr(this, CAP) + "'s").c_str());
+            boost::replace_all(fmt, "*LOW-APPLIER-SELF-POS*", std::string(cApplier->getCrtStr(this) + "'s").c_str());
         }
 
-        fmt.Replace("*APPLIER*", cApplier->getCrtStr(this, CAP).c_str());
-        fmt.Replace("*LOW-APPLIER*", cApplier->getCrtStr(this).c_str());
-        fmt.Replace("*AP-HISHER*", cApplier->hisHer());
-        fmt.Replace("*AP-UPHISHER*", cApplier->upHisHer());
+        boost::replace_all(fmt, "*APPLIER*", cApplier->getCrtStr(this, CAP).c_str());
+        boost::replace_all(fmt, "*LOW-APPLIER*", cApplier->getCrtStr(this).c_str());
+        boost::replace_all(fmt, "*AP-HISHER*", cApplier->hisHer());
+        boost::replace_all(fmt, "*AP-UPHISHER*", cApplier->upHisHer());
     }
     return(fmt);
 }
@@ -1115,7 +1116,7 @@ bstring Creature::doReplace(bstring fmt, const MudObject* actor, const MudObject
 //                      effectEcho
 //*********************************************************************
 
-void Container::effectEcho(std::string_view fmt, const MudObject* actor, const MudObject* applier, Socket* ignore) {
+void Container::effectEcho(const std::string &fmt, const MudObject* actor, const MudObject* applier, Socket* ignore) {
     Socket* ignore2 = nullptr;
     if(actor->getAsConstCreature())
         ignore2 = actor->getAsConstCreature()->getSock();
@@ -1123,7 +1124,7 @@ void Container::effectEcho(std::string_view fmt, const MudObject* actor, const M
         if(!ply || (ply->getSock() && (ply->getSock() == ignore || ply->getSock() == ignore2)) || ply->isUnconscious())
             continue;
 
-        bstring toSend = ply->doReplace(fmt, actor, applier);
+        std::string toSend = ply->doReplace(fmt, actor, applier);
         (Streamable &) *ply << ColorOn << toSend << ColorOff << "\n";
     }
 }
@@ -1140,38 +1141,38 @@ int Effect::getPulseDelay() const {
 //                      runScript
 //*********************************************************************
 
-bool EffectInfo::runScript(const bstring& pyScript, MudObject* applier) {
+bool EffectInfo::runScript(const std::string& pyScript, MudObject* applier) {
 
     // Legacy: Default action is return true, so play along with that
     if(pyScript.empty())
         return(true);
 
-    try {
-
-        boost::python::object localNamespace( (boost::python::handle<>(PyDict_New())));
-
-        boost::python::object effectModule( (boost::python::handle<>(PyImport_ImportModule("effectLib"))) );
-
-        localNamespace["effectLib"] = effectModule;
-
-        localNamespace["effect"] = boost::python::ptr(this);
-
-        // Default retVal is true
-        localNamespace["retVal"] = true;
-        addMudObjectToDictionary(localNamespace, "actor", myParent);
-        addMudObjectToDictionary(localNamespace, "applier", applier);
-
-
-
-        gServer->runPython(pyScript, localNamespace);
-
-        bool retVal = boost::python::extract<bool>(localNamespace["retVal"]);
-        //std::clog << "runScript returning: " << retVal << std::endl;
-        return(retVal);
-    }
-    catch( boost::python::error_already_set& e) {
-        gServer->handlePythonError();
-    }
+//    try {
+//
+//        boost::python::object localNamespace( (boost::python::handle<>(PyDict_New())));
+//
+//        boost::python::object effectModule( (boost::python::handle<>(PyImport_ImportModule("effectLib"))) );
+//
+//        localNamespace["effectLib"] = effectModule;
+//
+//        localNamespace["effect"] = boost::python::ptr(this);
+//
+//        // Default retVal is true
+//        localNamespace["retVal"] = true;
+//        addMudObjectToDictionary(localNamespace, "actor", myParent);
+//        addMudObjectToDictionary(localNamespace, "applier", applier);
+//
+//
+//
+//        gServer->runPython(pyScript, localNamespace);
+//
+//        bool retVal = boost::python::extract<bool>(localNamespace["retVal"]);
+//        //std::clog << "runScript returning: " << retVal << std::endl;
+//        return(retVal);
+//    }
+//    catch( boost::python::error_already_set& e) {
+//        gServer->handlePythonError();
+//    }
 
     return(false);
 }
@@ -1333,23 +1334,23 @@ Effect::Effect(xmlNodePtr rootNode) {
     pulseDelay = 5;
 
     while(curNode) {
-             if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
-        else if(NODE_NAME(curNode, "BaseEffect")) baseEffects.push_back(xml::getBString(curNode));
-        else if(NODE_NAME(curNode, "Display")) xml::copyToBString(display, curNode);
-        else if(NODE_NAME(curNode, "OppositeEffect")) xml::copyToBString(oppositeEffect, curNode);
-        else if(NODE_NAME(curNode, "SelfAddStr")) xml::copyToBString(selfAddStr, curNode);
-        else if(NODE_NAME(curNode, "SelfDelStr")) xml::copyToBString(selfDelStr, curNode);
-        else if(NODE_NAME(curNode, "RoomAddStr")) xml::copyToBString(roomAddStr, curNode);
-        else if(NODE_NAME(curNode, "RoomDelStr")) xml::copyToBString(roomDelStr, curNode);
+             if(NODE_NAME(curNode, "Name")) xml::copyToString(name, curNode);
+        else if(NODE_NAME(curNode, "BaseEffect")) baseEffects.push_back(xml::getString(curNode));
+        else if(NODE_NAME(curNode, "Display")) xml::copyToString(display, curNode);
+        else if(NODE_NAME(curNode, "OppositeEffect")) xml::copyToString(oppositeEffect, curNode);
+        else if(NODE_NAME(curNode, "SelfAddStr")) xml::copyToString(selfAddStr, curNode);
+        else if(NODE_NAME(curNode, "SelfDelStr")) xml::copyToString(selfDelStr, curNode);
+        else if(NODE_NAME(curNode, "RoomAddStr")) xml::copyToString(roomAddStr, curNode);
+        else if(NODE_NAME(curNode, "RoomDelStr")) xml::copyToString(roomDelStr, curNode);
         else if(NODE_NAME(curNode, "Pulsed")) xml::copyToBool(pulsed, curNode);
         else if(NODE_NAME(curNode, "PulseDelay")) xml::copyToNum(pulseDelay, curNode);
-        else if(NODE_NAME(curNode, "Type")) xml::copyToBString(type, curNode);
-        else if(NODE_NAME(curNode, "ComputeScript")) xml::copyToBString(computeScript, curNode);
-        else if(NODE_NAME(curNode, "ApplyScript")) xml::copyToBString(applyScript, curNode);
-        else if(NODE_NAME(curNode, "PreApplyScript")) xml::copyToBString(preApplyScript, curNode);
-        else if(NODE_NAME(curNode, "PostApplyScript")) xml::copyToBString(postApplyScript, curNode);
-        else if(NODE_NAME(curNode, "UnApplyScript")) xml::copyToBString(unApplyScript, curNode);
-        else if(NODE_NAME(curNode, "PulseScript")) xml::copyToBString(pulseScript, curNode);
+        else if(NODE_NAME(curNode, "Type")) xml::copyToString(type, curNode);
+        else if(NODE_NAME(curNode, "ComputeScript")) xml::copyToString(computeScript, curNode);
+        else if(NODE_NAME(curNode, "ApplyScript")) xml::copyToString(applyScript, curNode);
+        else if(NODE_NAME(curNode, "PreApplyScript")) xml::copyToString(preApplyScript, curNode);
+        else if(NODE_NAME(curNode, "PostApplyScript")) xml::copyToString(postApplyScript, curNode);
+        else if(NODE_NAME(curNode, "UnApplyScript")) xml::copyToString(unApplyScript, curNode);
+        else if(NODE_NAME(curNode, "PulseScript")) xml::copyToString(pulseScript, curNode);
         else if(NODE_NAME(curNode, "Spell")) xml::copyToBool(isSpellEffect, curNode);
         else if(NODE_NAME(curNode, "UsesStrength")) xml::copyToBool(usesStr, curNode);
 
@@ -1361,7 +1362,7 @@ Effect::Effect(xmlNodePtr rootNode) {
 //                      getPulseScript
 //*********************************************************************
 
-bstring Effect::getPulseScript() const {
+std::string Effect::getPulseScript() const {
     return(pulseScript);
 }
 
@@ -1369,7 +1370,7 @@ bstring Effect::getPulseScript() const {
 //                      getUnApplyScript
 //*********************************************************************
 
-bstring Effect::getUnApplyScript() const {
+std::string Effect::getUnApplyScript() const {
     return(unApplyScript);
 }
 
@@ -1377,7 +1378,7 @@ bstring Effect::getUnApplyScript() const {
 //                      getApplyScript
 //*********************************************************************
 
-bstring Effect::getApplyScript() const {
+std::string Effect::getApplyScript() const {
     return(applyScript);
 }
 
@@ -1385,7 +1386,7 @@ bstring Effect::getApplyScript() const {
 //                      getPreApplyScript
 //*********************************************************************
 
-bstring Effect::getPreApplyScript() const {
+std::string Effect::getPreApplyScript() const {
     return(preApplyScript);
 }
 
@@ -1393,7 +1394,7 @@ bstring Effect::getPreApplyScript() const {
 //                      getPostApplyScript
 //*********************************************************************
 
-bstring Effect::getPostApplyScript() const {
+std::string Effect::getPostApplyScript() const {
     return(postApplyScript);
 }
 
@@ -1401,7 +1402,7 @@ bstring Effect::getPostApplyScript() const {
 //                      getComputeScript
 //*********************************************************************
 
-bstring Effect::getComputeScript() const {
+std::string Effect::getComputeScript() const {
     return(computeScript);
 }
 
@@ -1409,7 +1410,7 @@ bstring Effect::getComputeScript() const {
 //                      getType
 //*********************************************************************
 
-bstring Effect::getType() const {
+std::string Effect::getType() const {
     return(type);
 }
 
@@ -1441,7 +1442,7 @@ bool Effect::usesStrength() const {
 //                      getRoomDelStr
 //*********************************************************************
 
-bstring Effect::getRoomDelStr() const {
+std::string Effect::getRoomDelStr() const {
     return(roomDelStr);
 }
 
@@ -1449,7 +1450,7 @@ bstring Effect::getRoomDelStr() const {
 //                      getRoomAddStr
 //*********************************************************************
 
-bstring Effect::getRoomAddStr() const {
+std::string Effect::getRoomAddStr() const {
     return(roomAddStr);
 }
 
@@ -1457,7 +1458,7 @@ bstring Effect::getRoomAddStr() const {
 //                      getSelfDelStr
 //*********************************************************************
 
-bstring Effect::getSelfDelStr() const {
+std::string Effect::getSelfDelStr() const {
     return(selfDelStr);
 }
 
@@ -1465,7 +1466,7 @@ bstring Effect::getSelfDelStr() const {
 //                      getSelfAddStr
 //*********************************************************************
 
-bstring Effect::getSelfAddStr() const {
+std::string Effect::getSelfAddStr() const {
     return(selfAddStr);
 }
 
@@ -1473,7 +1474,7 @@ bstring Effect::getSelfAddStr() const {
 //                      getOppositeEffect
 //*********************************************************************
 
-bstring Effect::getOppositeEffect() const {
+std::string Effect::getOppositeEffect() const {
     return(oppositeEffect);
 }
 
@@ -1481,7 +1482,7 @@ bstring Effect::getOppositeEffect() const {
 //                      getDisplay
 //*********************************************************************
 
-bstring Effect::getDisplay() const {
+std::string Effect::getDisplay() const {
     return(display);
 }
 
@@ -1509,7 +1510,7 @@ bool Effect::hasBaseEffect(std::string_view effect) const {
 //                      getName
 //*********************************************************************
 
-bstring Effect::getName() const {
+std::string Effect::getName() const {
     return(name);
 }
 
@@ -1518,12 +1519,12 @@ bstring Effect::getName() const {
 //*********************************************************************
 // TODO: Add applier here
 
-EffectInfo::EffectInfo(std::string_view pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent, const Creature* owner):
+EffectInfo::EffectInfo(const std::string &pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent, const Creature* owner):
         name(pName), lastMod(pLastMod), lastPulse(pLastMod), duration(pDuration), strength(pStrength), myParent(pParent)
 {
     myEffect = gConfig->getEffect(pName);
     if(!myEffect)
-        throw bstring("Can't find effect " + pName);
+        throw std::string("Can't find effect " + pName);
     setOwner(owner);
 }
 
@@ -1541,7 +1542,7 @@ EffectInfo::EffectInfo(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
 
     while(curNode) {
-            if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
+            if(NODE_NAME(curNode, "Name")) xml::copyToString(name, curNode);
         else if(NODE_NAME(curNode, "Duration")) xml::copyToNum(duration, curNode);
         else if(NODE_NAME(curNode, "Strength")) xml::copyToNum(strength, curNode);
         else if(NODE_NAME(curNode, "Extra")) xml::copyToNum(extra, curNode);
@@ -1554,7 +1555,7 @@ EffectInfo::EffectInfo(xmlNodePtr rootNode) {
     myEffect = gConfig->getEffect(name);
 
     if(!myEffect) {
-        throw bstring("Can't find effect listing " + name);
+        throw std::string("Can't find effect listing " + name);
     }
 }
 
@@ -1584,7 +1585,7 @@ const Effect* EffectInfo::getEffect() const {
 //                      getName
 //*********************************************************************
 
-bstring EffectInfo::getName() const {
+std::string EffectInfo::getName() const {
     return(name);
 }
 
@@ -1592,7 +1593,7 @@ bstring EffectInfo::getName() const {
 //                      getOwner
 //*********************************************************************
 
-bstring EffectInfo::getOwner() const {
+std::string EffectInfo::getOwner() const {
     return(pOwner);
 }
 

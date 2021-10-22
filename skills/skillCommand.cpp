@@ -22,7 +22,6 @@
 #include <boost/python/object_core.hpp>   // for object, object_operators
 #include <boost/python/ptr.hpp>           // for pointer_wrapper, ptr
 
-#include "bstring.hpp"                    // for bstring, operator+
 #include "cmd.hpp"                        // for cmd
 #include "creatures.hpp"                  // for Creature, Player
 #include "dictobject.h"                   // for PyDict_New
@@ -61,7 +60,7 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
     if(!creature->ableToDoCommand(cmnd))
         return(0);
 
-    bstring str = cmnd->myCommand->getName();
+    std::string str = cmnd->myCommand->getName();
     const auto* skillCmd = dynamic_cast<const SkillCommand*>(cmnd->myCommand);
     if(!skillCmd) {
         *creature << "Invalid skill!\n";
@@ -77,7 +76,7 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
 
     MudObject* target = nullptr;
     if(skillCmd->getTargetType() != TARGET_NONE) {
-        bstring toFind = cmnd->str[1];
+        std::string toFind = cmnd->str[1];
         int num = cmnd->val[1];
         target = creature->findTarget(getFindWhere(skillCmd->getTargetType()), 0, toFind, num);
 
@@ -184,31 +183,31 @@ int SkillCommand::getFailCooldown() const {
 
 
 bool SkillCommand::runScript(Creature* actor, MudObject* target, Skill* skill) const {
-    try {
-        bp::object localNamespace( (bp::handle<>(PyDict_New())));
-
-        bp::object skillModule( (bp::handle<>(PyImport_ImportModule("skillLib"))) );
-
-        localNamespace["skillLib"] = skillModule;
-
-        localNamespace["skill"] = bp::ptr(skill);
-        localNamespace["skillCmd"] = bp::ptr(this);
-
-        // Default retVal is true
-        localNamespace["retVal"] = true;
-        addMudObjectToDictionary(localNamespace, "actor", actor);
-        addMudObjectToDictionary(localNamespace, "target", target);
-
-
-        gServer->runPython(pyScript, localNamespace);
-
-        bool retVal = bp::extract<bool>(localNamespace["retVal"]);
-        //std::clog << "runScript returning: " << retVal << std::endl;
-        return(retVal);
-    }
-    catch( bp::error_already_set) {
-        gServer->handlePythonError();
-    }
+//    try {
+//        bp::object localNamespace( (bp::handle<>(PyDict_New())));
+//
+//        bp::object skillModule( (bp::handle<>(PyImport_ImportModule("skillLib"))) );
+//
+//        localNamespace["skillLib"] = skillModule;
+//
+//        localNamespace["skill"] = bp::ptr(skill);
+//        localNamespace["skillCmd"] = bp::ptr(this);
+//
+//        // Default retVal is true
+//        localNamespace["retVal"] = true;
+//        addMudObjectToDictionary(localNamespace, "actor", actor);
+//        addMudObjectToDictionary(localNamespace, "target", target);
+//
+//
+//        gServer->runPython(pyScript, localNamespace);
+//
+//        bool retVal = bp::extract<bool>(localNamespace["retVal"]);
+//        //std::clog << "runScript returning: " << retVal << std::endl;
+//        return(retVal);
+//    }
+//    catch( bp::error_already_set) {
+//        gServer->handlePythonError();
+//    }
     return(false);
 }
 TargetType SkillCommand::getTargetType() const {
@@ -290,7 +289,7 @@ void Creature::subResource(ResourceType resType, int resCost) {
 //********************************************************************************
 // GetResourceName
 //********************************************************************************
-bstring getResourceName(ResourceType resType) {
+std::string getResourceName(ResourceType resType) {
     switch(resType) {
         case RES_NONE:
         default:
@@ -316,7 +315,7 @@ bstring getResourceName(ResourceType resType) {
 bool SkillCommand::checkResources(Creature* creature) const {
     for(const auto& res : resources) {
         if(!creature->checkResource(res.resource, res.cost)) {
-            bstring failMsg = bstring("You need to have at least ") + res.cost + " " + getResourceName(res.resource) + ".\n";
+            std::string failMsg = fmt::format("You need to have at least {} {}.\n", res.cost, getResourceName(res.resource));
             return(creature->checkStaff(failMsg.c_str()));
         }
     }

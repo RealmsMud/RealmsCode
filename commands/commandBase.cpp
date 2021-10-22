@@ -24,8 +24,8 @@
 #include <ctime>          // for ctime, time
 #include <iomanip>        // for operator<<, setw
 #include <sstream>        // for operator<<, basic_ostream, char_traits, ost...
+#include <boost/algorithm/string.hpp>
 
-#include "bstring.hpp"    // for bstring
 #include "calendar.hpp"   // for Calendar
 #include "cmd.hpp"        // for cmd, MAX_TOKEN_SIZE, COMMANDMAX
 #include "commands.hpp"   // for cmdProcess, getFullstrText, cmdDescription
@@ -91,7 +91,7 @@ int getFailFd(Creature *user) {
 // appropriate function, depending on what service is requested by the
 // player.
 
-void command(Socket* sock, const bstring& inStr) {
+void command(Socket* sock, const std::string& inStr) {
     if(sock->hasPagerOutput()) {
         return sock->handlePaging(inStr);
     }
@@ -99,7 +99,7 @@ void command(Socket* sock, const bstring& inStr) {
     cmd cmnd;
     int n;
     Player* ply = sock->getPlayer();
-    bstring str = inStr;
+    std::string str = inStr;
 
     ASSERTLOG( ply );
 
@@ -157,7 +157,7 @@ void command(Socket* sock, const bstring& inStr) {
 void parse(std::string_view str, cmd *cmnd) {
     int     i=0, j=0, l=0, n=0;
     //char  token[MAX_TOKEN_SIZE];
-    bstring token;
+    std::string token;
     int     isquote=0;
 
     j = str.length();
@@ -252,8 +252,8 @@ void handleObject(Player* player, cmd* cmnd, HandleObject type) {
     long t = time(0);
     MudObject* target=0;
 
-    bstring action;
-    bstring action2;
+    std::string action;
+    std::string action2;
     switch(type) {
         case Push:
             action = "push";
@@ -350,7 +350,7 @@ int cmdPress(Player* player, cmd* cmnd) {
 //*********************************************************************
 // sending 0 to cls means we're not a player and we want reduced padding
 
-bstring doFinger(const Player* player, bstring name, CreatureClass cls) {
+std::string doFinger(const Player* player, std::string name, CreatureClass cls) {
     struct stat f_stat{};
     char    tmp[80];
     Player* target=nullptr;
@@ -364,8 +364,8 @@ bstring doFinger(const Player* player, bstring name, CreatureClass cls) {
     if(name.empty())
         return("Finger who?\n");
 
-    name = name.toLower();
-    name.setAt(0, up(name.getAt(0)));
+    boost::to_lower(name);
+    name.at(0) = up(name.at(0));
     target = gServer->findPlayer(name);
 
     if(!target) {

@@ -16,6 +16,7 @@
  *
  */
 #include <fcntl.h>    // for open, O_RDWR, O_CREAT
+#include <iostream>
 #include <cstdarg>    // for va_end, va_list, va_start
 #include <cstdio>     // for sprintf, vsnprintf, fclose, fopen, fprintf, snp...
 #include <cstdlib>    // for free

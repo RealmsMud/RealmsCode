@@ -79,15 +79,15 @@ public:
     Object* object;
     SchoolOfMagic school;
     DomainOfMagic domain;
-    bstring skill;
+    std::string skill;
 
     void set(CastType h, SchoolOfMagic s, DomainOfMagic d, Object* obj, const Creature* caster);
     bool check(const Creature* player, bool skipKnowCheck=false) const;
 };
 
-bstring spellSkill(SchoolOfMagic school);
-bstring spellSkill(DomainOfMagic domain);
-bstring realmSkill(Realm realm);
+std::string spellSkill(SchoolOfMagic school);
+std::string spellSkill(DomainOfMagic domain);
+std::string realmSkill(Realm realm);
 
 
 // Spell flags
@@ -413,7 +413,7 @@ bool canEnchant(Player* player, SpellData* spellData);
 bool canEnchant(Creature* player, Object* object);
 bool decEnchant(Player* player, CastType how);
 
-int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, std::string_view effect, int strength=-2, long duration=-2);
+int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength=-2, long duration=-2);
 
 bool checkRefusingMagic(Creature* player, Creature* target, bool healing=false, bool print=true);
 

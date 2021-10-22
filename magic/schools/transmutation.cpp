@@ -16,7 +16,6 @@
  *
  */
 
-#include "bstring.hpp"            // for bstring
 #include "cmd.hpp"                // for cmd
 #include "container.hpp"          // for Container, ObjectSet
 #include "creatures.hpp"          // for Creature, Player, Monster
@@ -586,7 +585,7 @@ int splDisintegrate(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splStatChange
 //*********************************************************************
 
-int splStatChange(Creature* player, cmd* cmnd, SpellData* spellData, const bstring& effect, bool good) {
+int splStatChange(Creature* player, cmd* cmnd, SpellData* spellData, const std::string& effect, bool good) {
     Creature* target=nullptr;
     if( spellData->how == CastType::CAST &&
         player->getClass() !=  CreatureClass::MAGE &&

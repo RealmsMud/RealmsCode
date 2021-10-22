@@ -43,7 +43,7 @@ struct DelayedAction {
     long whenFinished;
     bool canInterrupt;
     cmd cmnd;
-    bstring script;
+    std::string script;
 
     DelayedAction(void (*callback)(DelayedActionFn), MudObject* target, cmd* cmnd, DelayedActionType type, long whenFinished, bool canInterrupt) {
         this->callback = callback;

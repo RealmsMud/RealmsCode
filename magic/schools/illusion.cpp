@@ -16,7 +16,6 @@
  *
  */
 
-#include "bstring.hpp"    // for bstring
 #include "cmd.hpp"        // for cmd
 #include "commands.hpp"   // for getFullstrText
 #include "config.hpp"     // for Config, gConfig
@@ -93,7 +92,7 @@ int splCamouflage(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 int splIllusion(Creature* creature, cmd* cmnd, SpellData* spellData) {
-    bstring txt = "";
+    std::string txt = "";
     Player* pPlayer=nullptr, *target=nullptr;
     const RaceData* race=nullptr;
 

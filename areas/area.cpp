@@ -28,7 +28,6 @@
 #include <string>                 // for operator<<, operator==, basic_string
 
 #include "area.hpp"               // for Area, MapMarker, TileInfo, AreaZone
-#include "bstring.hpp"            // for bstring
 #include "calendar.hpp"           // for Calendar
 #include "catRef.hpp"             // for CatRef
 #include "cmd.hpp"                // for cmd
@@ -116,10 +115,9 @@ bool MapMarker::operator!=(const MapMarker& m) const {
 //                      load
 //*********************************************************************
 
-void MapMarker::load(bstring str) {
+void MapMarker::load(std::string str) {
     // trim
-    str = str.right(str.getLength()-3);
-    str = str.left(str.getLength()-1);
+    str = str.substr(3, str.length()-1);
 
     area = atoi(str.c_str());
     x = atoi(getFullstrText(str, 1, ':').c_str());
@@ -132,9 +130,9 @@ void MapMarker::load(bstring str) {
 //                      str
 //*********************************************************************
 
-bstring MapMarker::str(bool color) const {
+std::string MapMarker::str(bool color) const {
     std::ostringstream oStr;
-    bstring sep = ":";
+    std::string sep = ":";
     if(color) {
         sep = "^b:^w";
         oStr << "^b";
@@ -154,12 +152,12 @@ bstring MapMarker::str(bool color) const {
 //*********************************************************************
 // judges the direction to the target
 
-bstring MapMarker::direction(const MapMarker *mapmarker) const {
+std::string MapMarker::direction(const MapMarker *mapmarker) const {
     if(area != mapmarker->area || *this == *mapmarker)
         return("nowhere");
 
     // the 360 degrees have been divided into 24 sections, 15 degrees each
-    bstring dir = "";
+    std::string dir = "";
     double dY = y - mapmarker->y;
     double dX = x - mapmarker->x;
     double dZ = z - mapmarker->z;
@@ -272,7 +270,7 @@ bstring MapMarker::direction(const MapMarker *mapmarker) const {
 //*********************************************************************
 // estimates the distance between two points
 
-bstring MapMarker::distance(const MapMarker *mapmarker) const {
+std::string MapMarker::distance(const MapMarker *mapmarker) const {
     // we don't understand distance in these scenarios
     if(area != mapmarker->getArea() || *this == *mapmarker)
         return("");
@@ -302,13 +300,13 @@ bstring MapMarker::distance(const MapMarker *mapmarker) const {
 //*********************************************************************
 // returns the filename this mapmarker would use
 
-bstring MapMarker::filename() const {
+std::string MapMarker::filename() const {
     std::ostringstream oStr;
-    bstring str;
+    std::string str;
     oStr << "m" << (int)x << "." << (int)y << "." << (int)z << ".xml";
     str = oStr.str();
     // svn doesnt like -, so we'll just use underscore
-    str.Replace("-", "_");
+    std::replace(str.begin(), str.end(), '-', '_');
     return(str);
 }
 
@@ -438,8 +436,8 @@ TileInfo::TileInfo() {
 
 
 char TileInfo::getId() const { return(id); }
-bstring TileInfo::getName() const { return(name); }
-bstring TileInfo::getDescription() const { return(description); }
+std::string TileInfo::getName() const { return(name); }
+std::string TileInfo::getDescription() const { return(description); }
 short TileInfo::getCost() const { return(cost); }
 float TileInfo::getVision() const { return(vision); }
 char TileInfo::getDisplay() const { return(display); }
@@ -869,7 +867,7 @@ float Area::getLosPower(const Player* player, int xVision, int yVision) const {
 
 void Area::getGridText(char grid[][80], int height, const MapMarker *mapmarker, int maxWidth) const {
    TileInfo *tile = getTile(getTerrain(nullptr, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
-    bstring desc = tile ? tile->getDescription() : "";
+    std::string desc = tile ? tile->getDescription() : "";
     if(maxWidth < 80)
         desc = wrapText(desc, maxWidth);
     if(desc == "\n")
@@ -921,9 +919,9 @@ void Area::getGridText(char grid[][80], int height, const MapMarker *mapmarker, 
 //                      showGrid
 //*********************************************************************
 
-bstring Area::showGrid(const Player* player, const MapMarker *mapmarker, bool compass) const {
+std::string Area::showGrid(const Player* player, const MapMarker *mapmarker, bool compass) const {
     std::list<AreaZone*>::const_iterator it;
-    bstring border = "";
+    std::string border = "";
     std::ostringstream grid;
     int     xVision = player->getVision();
     int     yVision = xVision * 2 / 3;
@@ -999,7 +997,7 @@ bstring Area::showGrid(const Player* player, const MapMarker *mapmarker, bool co
                         m.add(x*-1, y*-1, 0);
                     } else {
                         if(tile->getDisplay() == '@' && !x && !y) {
-                            bstring self = player->customColorize("*CC:SELF*", false);
+                            std::string self = player->customColorize("*CC:SELF*", false);
                             if(self == "#") {
                                 grid << "x^";
                                 resetBlink = true;
@@ -1295,7 +1293,7 @@ void showMobList(Player* player, WanderInfo *wander, std::string_view type);
 
 int dmListArea(Player* player, cmd* cmnd) {
     int     a=0;
-    bstring str = getFullstrText(cmnd->fullstr, 1);
+    std::string str = getFullstrText(cmnd->fullstr, 1);
 
     if(!str.empty())
         a = atoi(str.c_str());
@@ -1624,7 +1622,7 @@ void Server::cleanUpAreas() {
 //*********************************************************************
 
 void Area::cleanUpRooms() {
-    std::map<bstring, AreaRoom*>::iterator it;
+    std::map<std::string, AreaRoom*>::iterator it;
     AreaRoom* room=nullptr;
 
     for(it = rooms.begin() ; it != rooms.end() ; ) {

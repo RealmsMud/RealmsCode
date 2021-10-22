@@ -19,7 +19,6 @@
 #include <ostream>                                  // for operator<<, basic...
 
 #include "area.hpp"                                 // for Area, AreaZone
-#include "bstring.hpp"                              // for bstring
 #include "catRef.hpp"                               // for CatRef
 #include "catRefInfo.hpp"                           // for CatRefInfo
 #include "cmd.hpp"                                  // for cmd
@@ -92,7 +91,7 @@ bool canFish(const Player* player, const Fishing** list, Object** pole) {
 //                      failFishing
 //**********************************************************************
 
-bool failFishing(Player* player, const bstring& adminMsg, bool almost=true) {
+bool failFishing(Player* player, const std::string& adminMsg, bool almost=true) {
     if(almost) {
         switch(Random::get(0,1)) {
         case 1:
@@ -460,10 +459,10 @@ const Fishing* UniqueRoom::getFishing() const {
     return(nullptr);
 }
 
-bstring AreaZone::getFishing() const { return(fishing); }
-bstring TileInfo::getFishing() const { return(fishing); }
-bstring CatRefInfo::getFishing() const { return(fishing); }
-bstring UniqueRoom::getFishingStr() const { return(fishing); }
+std::string AreaZone::getFishing() const { return(fishing); }
+std::string TileInfo::getFishing() const { return(fishing); }
+std::string CatRefInfo::getFishing() const { return(fishing); }
+std::string UniqueRoom::getFishingStr() const { return(fishing); }
 
 //*********************************************************************
 //                      setFishing
@@ -485,7 +484,7 @@ void Config::clearFishing() {
 //                      getFishing
 //*********************************************************************
 
-const Fishing *Config::getFishing(std::string_view id) const {
+const Fishing *Config::getFishing(const std::string &id) const {
     auto it = fishing.find(id);
 
     if(it == fishing.end())
@@ -499,14 +498,14 @@ const Fishing *Config::getFishing(std::string_view id) const {
 //*********************************************************************
 
 int dmFishing(Player* player, cmd* cmnd) {
-    std::map<bstring, Fishing>::const_iterator it;
+    std::map<std::string, Fishing>::const_iterator it;
     std::list<FishingItem>::const_iterator ft;
     std::ostringstream oStr;
     const Fishing *list=nullptr;
     const FishingItem *item=nullptr;
     Object* fish=nullptr;
     Monster* monster=nullptr;
-    bstring name="";
+    std::string name="";
     bool all = !strcmp(cmnd->str[1], "all");
 
     oStr.setf(std::ios::left, std::ios::adjustfield);

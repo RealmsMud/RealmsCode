@@ -25,6 +25,7 @@
 #include "oldquest.hpp"          // for quest, questPtr
 #include "paths.hpp"             // for Path
 #include "proto.hpp"             // for get_quest_exp, loge
+#include "utils.hpp"
 #include "xml.hpp"               // for toNum
 
 

@@ -43,7 +43,7 @@ int dmCatRefInfo(Player* player, cmd* cmnd) {
     for(it = gConfig->catRefInfo.begin() ; it != gConfig->catRefInfo.end() ; it++) {
         cri = (*it);
         i = 20;
-        if(cri->getName().getAt(0) == '^')
+        if(cri->getName().at(0) == '^')
             i += 2;
         oStr << "  Area: ^c" << std::setw(10) << cri->str()
              << "^x Name: ^c" << std::setw(i)

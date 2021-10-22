@@ -20,10 +20,9 @@
 #include <libxml/parser.h>                          // for xmlFreeDoc, xmlNode
 #include <paths.hpp>                                // for Code
 #include <cstdio>                                   // for sprintf
-#include <xml.hpp>                                  // for copyToBString
+#include <xml.hpp>                                  // for copyToString
 #include <ostream>                                  // for basic_ostream::op...
 
-#include "bstring.hpp"                              // for bstring, operator+
 #include "socials.hpp"                              // for SocialCommand
 
 class Creature;
@@ -84,17 +83,17 @@ SocialCommand::SocialCommand(xmlNodePtr rootNode) {
 
     while(rootNode != nullptr)
     {
-        if(NODE_NAME(rootNode, "Name")) xml::copyToBString(name, rootNode);
-        else if(NODE_NAME(rootNode, "Description")) xml::copyToBString(description, rootNode);
+        if(NODE_NAME(rootNode, "Name")) xml::copyToString(name, rootNode);
+        else if(NODE_NAME(rootNode, "Description")) xml::copyToString(description, rootNode);
         else if(NODE_NAME(rootNode, "Priority")) xml::copyToNum(priority, rootNode);
-        else if(NODE_NAME(rootNode, "Script")) xml::copyToBString(script, rootNode);
-        else if(NODE_NAME(rootNode, "SelfNoTarget")) xml::copyToBString(selfNoTarget, rootNode);
-        else if(NODE_NAME(rootNode, "RoomNoTarget")) xml::copyToBString(roomNoTarget, rootNode);
-        else if(NODE_NAME(rootNode, "SelfOnTarget")) xml::copyToBString(selfOnTarget, rootNode);
-        else if(NODE_NAME(rootNode, "RoomOnTarget")) xml::copyToBString(roomOnTarget, rootNode);
-        else if(NODE_NAME(rootNode, "VictimOnTarget")) xml::copyToBString(victimOnTarget, rootNode);
-        else if(NODE_NAME(rootNode, "SelfOnSelf")) xml::copyToBString(selfOnSelf, rootNode);
-        else if(NODE_NAME(rootNode, "RoomOnSelf")) xml::copyToBString(roomOnSelf, rootNode);
+        else if(NODE_NAME(rootNode, "Script")) xml::copyToString(script, rootNode);
+        else if(NODE_NAME(rootNode, "SelfNoTarget")) xml::copyToString(selfNoTarget, rootNode);
+        else if(NODE_NAME(rootNode, "RoomNoTarget")) xml::copyToString(roomNoTarget, rootNode);
+        else if(NODE_NAME(rootNode, "SelfOnTarget")) xml::copyToString(selfOnTarget, rootNode);
+        else if(NODE_NAME(rootNode, "RoomOnTarget")) xml::copyToString(roomOnTarget, rootNode);
+        else if(NODE_NAME(rootNode, "VictimOnTarget")) xml::copyToString(victimOnTarget, rootNode);
+        else if(NODE_NAME(rootNode, "SelfOnSelf")) xml::copyToString(selfOnSelf, rootNode);
+        else if(NODE_NAME(rootNode, "RoomOnSelf")) xml::copyToString(roomOnSelf, rootNode);
         else if(NODE_NAME(rootNode, "WakeTarget")) xml::copyToBool(wakeTarget, rootNode);
         else if(NODE_NAME(rootNode, "RudeWakeTarget")) xml::copyToBool(rudeWakeTarget, rootNode);
         else if(NODE_NAME(rootNode, "WakeRoom")) xml::copyToBool(wakeRoom, rootNode);
@@ -115,7 +114,7 @@ bool Config::saveSocials() {
     for(const auto &social : socials) {
         social.saveToXml(rootNode);
     }
-    bstring filename = bstring(Path::Code) + "/" + "socials.xml";
+    std::string filename = std::string(Path::Code) + "/" + "socials.xml";
     xml::saveFile(filename.c_str(), xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(true);

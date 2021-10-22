@@ -59,7 +59,7 @@
  the "Alphanum Algorithm". This function is designed to read
  through the l and r strings only one time, for
  maximum performance. It does not allocate memory for
- substrings.
+ sustd::strings.
 
  @param l NULL-terminated C-style string
  @param r NULL-terminated C-style string

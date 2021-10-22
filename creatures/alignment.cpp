@@ -18,7 +18,6 @@
 #include <cstdlib>        // for abs
 #include <strings.h>      // for strcasecmp
 
-#include "bstring.hpp"    // for bstring
 #include "cmd.hpp"        // for cmd
 #include "creatures.hpp"  // for Player, Monster, Creature
 #include "flags.hpp"      // for P_CHAOTIC, P_CHOSEN_ALIGNMENT, P_PLEDGED
@@ -94,7 +93,7 @@ int Player::getAdjustedAlignment() const {
 //                      alignColor
 //***********************************************************************
 
-bstring Creature::alignColor() const {
+std::string Creature::alignColor() const {
     if(getAdjustedAlignment() < NEUTRAL)
         return("^r");
     else if(getAdjustedAlignment() > NEUTRAL)

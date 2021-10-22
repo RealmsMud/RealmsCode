@@ -22,7 +22,6 @@
 #include <ostream>        // for operator<<, ostream
 #include <string>         // for operator==, basic_string, basic_string<>::npos
 
-#include "bstring.hpp"    // for bstring
 #include "creatures.hpp"  // for Player, Creature
 #include "flags.hpp"      // for P_EAVESDROPPER, P_LOG_WATCH, P_PTESTER, P_S...
 #include "global.hpp"     // for CreatureClass, CreatureClass::BUILDER, Crea...
@@ -42,7 +41,7 @@ int log_immort(int broad, Player* player, const char *fmt,...) {
     // broad==2 - more needs to be done
     char    *str, name[42];
     va_list ap;
-    bstring txt = "";
+    std::string txt = "";
 
     if(player->isMonster() || !player->isStaff())
         return(0);
@@ -59,8 +58,8 @@ int log_immort(int broad, Player* player, const char *fmt,...) {
     // this is the case when we broadcast an object name and manually
     // return the string to the proper color
     if(broad == 2) {
-        bstring::size_type idx = txt.ReverseFind('^');
-        if(idx != bstring::npos && (txt.getAt(idx+1) == 'g' || txt.getAt(idx+1) == 'G'))
+        std::string::size_type idx = txt.find_last_of('^');
+        if(idx != std::string::npos && (txt.at(idx+1) == 'g' || txt.at(idx+1) == 'G'))
             txt.erase(idx, 2);
     }
 

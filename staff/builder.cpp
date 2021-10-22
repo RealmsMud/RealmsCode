@@ -15,7 +15,6 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "bstring.hpp"    // for bstring
 #include "catRef.hpp"     // for CatRef
 #include "cmd.hpp"        // for cmd
 #include "commands.hpp"   // for lose_all

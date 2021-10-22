@@ -22,7 +22,6 @@
 #include <string>                 // for operator<<, allocator
 #include <utility>                // for pair
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "creatures.hpp"          // for Player
 #include "flags.hpp"              // for P_SEE_ALL_HOOKS, P_SEE_HOOKS
 #include "hooks.hpp"              // for Hooks
@@ -74,7 +73,7 @@ void Hooks::setParent(MudObject* target) {
 //*********************************************************************
 
 void Hooks::add(std::string_view event, std::string_view code) {
-    hooks.insert(std::pair<bstring,bstring>(event, code));
+    hooks.insert(std::pair<std::string,std::string>(event, code));
 }
 
 
@@ -83,7 +82,7 @@ void Hooks::add(std::string_view event, std::string_view code) {
 //                      display
 //*********************************************************************
 
-bstring Hooks::display() const {
+std::string Hooks::display() const {
     if(hooks.empty())
         return("");
 
@@ -124,12 +123,12 @@ bool seeAllHooks(Socket* sock) {
 //                      hookMudObjName
 //*********************************************************************
 
-bstring hookMudObjName(const MudObject* target) {
+std::string hookMudObjName(const MudObject* target) {
     if(!target)
         return("^W-none-^o");
     const AreaRoom* aRoom = target->getAsConstAreaRoom();
     if(!aRoom)
-        return((bstring)target->getName() + "^o");
+        return((std::string)target->getName() + "^o");
     return(aRoom->mapmarker.str() + "^o");
 }
 
@@ -137,10 +136,10 @@ bstring hookMudObjName(const MudObject* target) {
 //                      execute
 //*********************************************************************
 
-bool Hooks::execute(std::string_view event, MudObject* target, std::string_view param1, std::string_view param2, std::string_view param3) const {
+bool Hooks::execute(const std::string &event, MudObject* target, const std::string &param1, const std::string &param2, const std::string &param3) const {
     bool ran = false;
 
-    bstring params = "";
+    std::string params;
     if(!param1.empty())
         params += "   param1: " + param1;
     if(!param2.empty())
@@ -151,7 +150,7 @@ bool Hooks::execute(std::string_view event, MudObject* target, std::string_view 
      broadcast(seeAllHooks, fmt::format("^ochecking hook {}: {}^o on {}^o{}", event,
         hookMudObjName(parent), hookMudObjName(target), params).c_str());
 
-    //std::unordered_map<bstring, bstring>::const_iterator it = hooks.find(event);
+    //std::unordered_map<std::string, std::string>::const_iterator it = hooks.find(event);
     auto it = hooks.find(event);
 
 
@@ -165,10 +164,10 @@ bool Hooks::execute(std::string_view event, MudObject* target, std::string_view 
     return(ran);
 }
 
-bool Hooks::executeWithReturn(std::string_view event, MudObject* target, std::string_view param1, std::string_view param2, std::string_view param3) const {
+bool Hooks::executeWithReturn(const std::string &event, MudObject* target, const std::string &param1, const std::string &param2, const std::string &param3) const {
     bool returnValue = true;
 
-    bstring params = "";
+    std::string params;
     if(!param1.empty())
         params += "   param1: " + param1;
     if(!param2.empty())
@@ -196,7 +195,7 @@ bool Hooks::executeWithReturn(std::string_view event, MudObject* target, std::st
 // For hooks that must be run in pairs, run this
 
 // A trigger1 or trigger2 null value is valid, so handle appropriate
-bool Hooks::run(MudObject* trigger1, std::string_view event1, MudObject* trigger2, std::string_view event2, std::string_view param1, std::string_view param2, std::string_view param3) {
+bool Hooks::run(MudObject* trigger1, const std::string &event1, MudObject* trigger2, const std::string &event2, const std::string &param1, const std::string &param2, const std::string &param3) {
     bool ran=false;
     if(trigger1 && trigger1->hooks.execute(event1, trigger2, param1, param2, param3))
         ran = true;

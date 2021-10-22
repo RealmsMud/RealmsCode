@@ -23,18 +23,16 @@
 #include <iosfwd>           // for ostream
 #include <map>              // for operator==, operator!=
 #include <vector>           // for allocator
+#include <string>
 
-#include "bstring.hpp"      // for bstring
-
-class bstring;
 class Creature;
 class Object;
 
 typedef std::vector<Object*> HerbVector;
-typedef std::map<bstring, HerbVector > HerbMap;
+typedef std::map<std::string, HerbVector > HerbMap;
 
 namespace Alchemy {
-    bstring getEffectString(Object* obj, std::string_view effect);
+    std::string getEffectString(Object* obj, std::string_view effect);
     int numEffectsVisisble(int skillLevel);
 };
 
@@ -46,13 +44,13 @@ class AlchemyInfo {
 public:
     explicit AlchemyInfo(xmlNodePtr rootNode);
 
-    bstring getDisplayString();
+    std::string getDisplayString();
 
-    [[nodiscard]] std::string_view getName() const;
-    [[nodiscard]] std::string_view getPotionPrefix() const;
-    [[nodiscard]] std::string_view getPotionDisplayName() const;
-    [[nodiscard]] std::string_view getAction() const;
-    [[nodiscard]] std::string_view getPythonScript() const;
+    [[nodiscard]] const std::string & getName() const;
+    [[nodiscard]] const std::string & getPotionPrefix() const;
+    [[nodiscard]] const std::string & getPotionDisplayName() const;
+    [[nodiscard]] const std::string & getAction() const;
+    [[nodiscard]] const std::string & getPythonScript() const;
     [[nodiscard]] long getBaseDuration() const;
     [[nodiscard]] short getBaseStrength() const;
     [[nodiscard]] bool potionNameHasPrefix() const;
@@ -61,9 +59,9 @@ public:
 
 
 protected:
-    bstring name;
-    bstring potionDisplayName;
-    bstring potionPrefix;
+    std::string name;
+    std::string potionDisplayName;
+    std::string potionPrefix;
     bool positive = false;
 
     // Standard duration and strength for this effect - will be modified by alchemy skill,
@@ -71,9 +69,9 @@ protected:
     long baseDuration = 10;
     short baseStrength = 1;
 
-    bstring action; // effect, python
+    std::string action; // effect, python
     bool throwable = false; // Can this be thrown at a door/creature/etc
-    bstring pythonScript; // if action == python, or if throwable, needs to handle both
+    std::string pythonScript; // if action == python, or if throwable, needs to handle both
 };
 
 //########################################################################
@@ -82,7 +80,7 @@ protected:
 
 class AlchemyEffect {
 protected:
-    bstring     effect;
+    std::string     effect;
     short       quality;
 
     long    duration;
@@ -103,7 +101,7 @@ public:
     // Apply this effect to the creature:
     bool apply(Creature* target);
 
-    [[nodiscard]] std::string_view getEffect() const;
+    [[nodiscard]] const std::string & getEffect() const;
     [[nodiscard]] long getDuration() const;
     [[nodiscard]] short getStrength() const;
     [[nodiscard]] short getQuality() const;

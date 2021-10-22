@@ -24,8 +24,8 @@
 #include <csignal>        // for signal, SIGCHLD
 #include <cstdio>         // for size_t, sprintf, NULL
 #include <sstream>        // for operator<<, basic_ostream, ostringstream
+#include <boost/algorithm/string/predicate.hpp>
 
-#include "bstring.hpp"    // for bstring, operator+
 #include "clans.hpp"      // for Clan
 #include "config.hpp"     // for Config, gConfig
 #include "container.hpp"  // for Container, PlayerSet
@@ -205,7 +205,7 @@ bool wantsPermDeaths(Socket* sock) {
 
 void broadcastLogin(Player* player, BaseRoom* inRoom, int login) {
     std::ostringstream preText, postText, extra, room;
-    bstring text = "", illusion = "";
+    std::string text = "", illusion = "";
     int    logoff=0;
 
     ASSERTLOG( player );
@@ -428,7 +428,7 @@ void broadcastGuild(int guildNum, int showName, const char *fmt,...) {
     va_start(ap, fmt);
     if(showName) {
         strcpy(fmt2, "*CC:GUILD*[");
-        bstring guild = getGuildName(guildNum);
+        std::string guild = getGuildName(guildNum);
         strcat(fmt2, guild.c_str());
         strcat(fmt2, "] ");
     } else
@@ -469,22 +469,22 @@ void shutdown_now(int sig) {
 //                      pueblo functions
 //*********************************************************************
 
-bool Pueblo::is(const bstring& txt) {
-    return(txt.left(activation.getLength()).toLower() == activation);
+bool Pueblo::is(const std::string& txt) {
+    return(boost::istarts_with(txt, activation));
 }
 
-bstring Pueblo::multiline(bstring str) {
-    int i=1, plen = activation.getLength()-1;
+std::string Pueblo::multiline(std::string str) {
+    int i=1, plen = activation.length()-1;
     if(Pueblo::is(str)) {
         i = plen;
-        str.Insert(0, ' ');
+        str.insert(0, 1, ' ');
     }
-    int len = str.getLength();
+    int len = str.length();
     for(; i<len; i++) {
-        if( str.getAt(i-1) == '\n' &&
-            Pueblo::is(str.right(len-i))
+        if( str.at(i-1) == '\n' &&
+            Pueblo::is(str.substr(i))
         ) {
-            str.Insert(i, ' ');
+            str.insert(i, 1, ' ');
             len++;
             i += plen;
         }
@@ -546,7 +546,7 @@ void Exit::escapeText() {
 // into Br&#252;gal (which the xml parser can save). Display will be affected
 // on old clients, so this should only be run when saving the string.
 
-bstring xsc(std::string_view txt) {
+std::string xsc(std::string_view txt) {
     std::ostringstream ret;
     unsigned char c=0;
     int t = txt.length();
@@ -566,7 +566,7 @@ bstring xsc(std::string_view txt) {
 //*********************************************************************
 // Reverse of xsc - attempts to turn &#252; into �. We do this when we load from file.
 
-bstring unxsc(std::string_view txt) {
+std::string unxsc(std::string_view txt) {
     std::ostringstream ret;
     size_t c=0, len = txt.length();
     for(size_t i=0; i<len; i++) {
@@ -674,7 +674,7 @@ char keyTxtConvert(unsigned char c) {
 //                      keyTxtConvert
 //*********************************************************************
 
-bstring keyTxtConvert(std::string_view txt) {
+std::string keyTxtConvert(std::string_view txt) {
     std::ostringstream ret;
     for(int i=0; i<txt.length(); i++) {
         ret << keyTxtConvert(txt.at(i));

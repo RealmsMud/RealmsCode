@@ -24,7 +24,6 @@
 #include <ctime>                  // for time, ctime
 
 #include "bans.hpp"               // for Ban
-#include "bstring.hpp"            // for bstring
 #include "cmd.hpp"                // for cmd
 #include "config.hpp"             // for Config, gConfig
 #include "creatures.hpp"          // for Player
@@ -124,7 +123,7 @@ int dmListbans(Player* player, cmd* cmnd) {
 
         banStr << "^c" << ban->reason << "^x\n\n";
     }
-    bstring toPrint = banStr.str();
+    std::string toPrint = banStr.str();
     player->printColor("%s", toPrint.c_str());
     
     if(!found)

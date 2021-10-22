@@ -22,7 +22,6 @@
 #include <map>
 #include <libxml/parser.h>  // for xmlNodePtr
 
-#include "bstring.hpp"
 
 class Creature;
 class Monster;
@@ -57,13 +56,13 @@ typedef std::map<int, LevelInfo*> LevelInfoMap;
 class StringStatistic {
 public:
     StringStatistic();
-    void save(xmlNodePtr rootNode, std::string_view nodeName) const;
+    void save(xmlNodePtr rootNode, const std::string &nodeName) const;
     void load(xmlNodePtr curNode);
     void update(unsigned long num, std::string_view with);
     void reset();
 
     unsigned long value{};
-    bstring name;
+    std::string name;
 };
 
 class Statistics {
@@ -73,22 +72,22 @@ public:
     Statistics(const Statistics& cr);
     Statistics& operator=(const Statistics& cr);
     ~Statistics();
-    void save(xmlNodePtr rootNode, std::string_view nodeName) const;
+    void save(xmlNodePtr rootNode, const std::string &nodeName) const;
     void load(xmlNodePtr curNode);
     void display(const Player* viewer, bool death=false);
     void displayLevelHistory(const Player* viewer);
     void reset();
-    bstring getTime();
+    std::string getTime();
     unsigned long pkDemographics() const;
 
     static unsigned long calcToughness(Creature* target);
-    static bstring damageWith(const Player* player, const Object* weapon);
+    static std::string damageWith(const Player* player, const Object* weapon);
     void startLevelHistoryTracking();
     time_t getLevelHistoryStart();
 protected:
     void doCopy(const Statistics& cr);
 private:
-    bstring start;
+    std::string start;
     time_t levelHistoryStart{}; // Time when leveling history started being tracked
     LevelInfoMap levelHistory; // New
 

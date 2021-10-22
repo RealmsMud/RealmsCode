@@ -73,8 +73,8 @@ public:
     MudFlag();
 
     int id;
-    bstring name;
-    bstring desc;
+    std::string name;
+    std::string desc;
 };
 
 
@@ -247,8 +247,8 @@ public:
     ~MudMethod() override = default;
     int priority{};
 
-    [[nodiscard]] bool exactMatch(const bstring& toMatch) const;
-    bool partialMatch(const bstring& toMatch) const;
+    [[nodiscard]] bool exactMatch(const std::string& toMatch) const;
+    bool partialMatch(const std::string& toMatch) const;
 };
 
 // ******************
@@ -263,10 +263,10 @@ public:
     [[nodiscard]] std::string_view getScript() const;
 
 public:
-    bstring script;
+    std::string script;
     
 protected:
-    std::list<bstring> nameParts;
+    std::list<std::string> nameParts;
     void parseName();
 };
 
@@ -318,10 +318,10 @@ class PlyCommand: public Command {
 public:
     PlyCommand(std::string_view pCmdStr, int pPriority, int (*pFn)(Player* player, cmd* cmnd), bool (*pAuth)(const Creature *), std::string_view pDesc): fn(pFn)
     {
-        name = bstring(pCmdStr);
+        name = std::string(pCmdStr);
         priority = pPriority;
         auth = pAuth;
-        description = bstring(pDesc);
+        description = std::string(pDesc);
     };
     PlyCommand(std::string_view pCmdStr) {
         name = pCmdStr;

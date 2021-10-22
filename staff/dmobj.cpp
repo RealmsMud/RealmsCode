@@ -26,9 +26,10 @@
 #include <stdexcept>              // for out_of_range
 #include <string>                 // for operator==, char_traits, basic_string
 #include <fmt/format.h>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include "area.hpp"               // for MapMarker, Area (ptr only)
-#include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for getFullstrText, cmdNoAuth, parse
@@ -97,15 +98,15 @@ int dmCreateObj(Player* player, cmd* cmnd) {
 //*********************************************************************
 //  Display information on object given to player given.
 
-bstring Object::statObj(unsigned int statFlags) {
+std::string Object::statObj(unsigned int statFlags) {
     std::ostringstream objStr;
     Object* object=nullptr;
-    bstring str = "";
-    bstring objName = getName();
-    bstring objPlural = plural;
+    std::string str = "";
+    std::string objName = getName();
+    std::string objPlural = plural;
     
-    objName.Replace("^", "^^");
-    objPlural.Replace("^", "^^");
+    boost::replace_all(objName, "^", "^^");
+    boost::replace_all(objPlural, "^", "^^");
 
     if(objPlural.empty()) {
         objStr << "Name: " << objName << "^x\n";
@@ -403,14 +404,14 @@ bstring Object::statObj(unsigned int statFlags) {
         objStr << "^gOwner:^x " << questOwner << "\n";
     if(made) {
         str = ctime(&made);
-        str.trim();
+        boost::trim(str);
         objStr << "Made: " << str << "\n";
     }
 
     objStr << showAlchemyEffects()
             << hooks.display();
 
-    bstring toReturn = objStr.str();
+    std::string toReturn = objStr.str();
     return(toReturn);
 }
 
@@ -444,8 +445,8 @@ int stat_obj(Player* player, Object* object) {
 //                      setWhich
 //*********************************************************************
 
-int setWhich(const Player* player, bstring options) {
-    options.Replace(",", "^x,^W");
+int setWhich(const Player* player, std::string options) {
+    boost::replace_all(options, ",", "^x,^W");
     player->printColor("Which do you wish to set: ^W%s^x?\n", options.c_str());
     return(0);
 }
@@ -600,8 +601,8 @@ int dmSetObj(Player* player, cmd* cmnd) {
     }
 
     long result = 0;
-    bstring resultTxt = "";
-    bstring setType = "";
+    std::string resultTxt = "";
+    std::string setType = "";
 
     // Save this object as a full object until *saved
     object->setFlag(O_SAVE_FULL);
@@ -785,7 +786,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
             long duration = -1;
             int strength = 1;
 
-            bstring txt = getFullstrText(cmnd->fullstr, 5);
+            std::string txt = getFullstrText(cmnd->fullstr, 5);
             if(!txt.empty())
                 duration = atoi(txt.c_str());
             txt = getFullstrText(cmnd->fullstr, 6);
@@ -802,7 +803,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
                 return(0);
             }
 
-            bstring effectStr = cmnd->str[4];
+            std::string effectStr = cmnd->str[4];
 
             if(duration == 0) {
                 player->print("Effect '%s' removed.\n", object->getEffect().c_str());
@@ -1111,7 +1112,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
             result = object->getMinStrength();
             setType = "MinStrength";
         } else if(flags[1] == 'u') {
-            bstring subType = cmnd->str[4];
+            std::string subType = cmnd->str[4];
             if(object->getType() == ObjectType::WEAPON)
                 object->setWeaponType(subType);
             else if(object->getType() == ObjectType::ARMOR) {
@@ -1194,7 +1195,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
             result = object->getWeight();
             setType = "Weight";
         } else if(flags[1] == 'r' || (flags[1] == 'e' && flags[2] == 'a')) {
-            bstring wear = cmnd->str[4];
+            std::string wear = cmnd->str[4];
             if(!isdigit(cmnd->str[4][0])) {
                 if(wear == "body")
                     num = 1;
@@ -1296,7 +1297,7 @@ int dmObjName(Player* player, cmd* cmnd) {
     Object  *object=nullptr;
     int     i=0, num=0;
     char    which=0;
-    bstring text = "";
+    std::string text = "";
 
     if(cmnd->num < 2) {
         player->print("\nRename what object to what?\n");
@@ -1371,8 +1372,8 @@ int dmObjName(Player* player, cmd* cmnd) {
 
     switch(which) {
     case 0:
-        if(text.getLength() > 79)
-            text = text.left(79);
+        if(text.length() > 79)
+            text = text.substr(0, 79);
         if(Pueblo::is(text)) {
             player->print("That object name is not allowed.\n");
             return(0);
@@ -1390,7 +1391,7 @@ int dmObjName(Player* player, cmd* cmnd) {
             return(0);
         } else {
             object->description = text;
-            object->description.Replace("*CR*", "\n");
+            boost::replace_all(object->description, "*CR*", "\n");
         }
         player->print("\nDescription ");
         break;
@@ -1403,8 +1404,8 @@ int dmObjName(Player* player, cmd* cmnd) {
             player->print("That object output string is not allowed.\n");
             return(0);
         } else {
-            if(text.getLength() > 79)
-                text = text.left(79);
+            if(text.length() > 79)
+                text = text.substr(0, 79);
             strcpy(object->use_output, text.c_str());
             player->print("\nOutput String ");
         }
@@ -1415,8 +1416,8 @@ int dmObjName(Player* player, cmd* cmnd) {
             player->print("Item attack string cleared.\n");
             return(0);
         } else {
-            if(text.getLength() > 49)
-                text = text.left(49);
+            if(text.length() > 49)
+                text = text.substr(0, 49);
             strcpy(object->use_attack, text.c_str());
             player->print("\nAttack String ");
         }
@@ -1428,8 +1429,8 @@ int dmObjName(Player* player, cmd* cmnd) {
                 player->print("Key #%d string cleared.\n", num);
                 return(0);
             } else {
-                if(text.getLength() > OBJ_KEY_LENGTH-1)
-                    text = text.left(OBJ_KEY_LENGTH-1);
+                if(text.length() > OBJ_KEY_LENGTH-1)
+                    text = text.substr(0, OBJ_KEY_LENGTH-1);
                 strcpy(object->key[num-1], text.c_str());
                 player->print("\nKey ");
             }
@@ -1564,7 +1565,7 @@ int dmSize(Player* player, cmd* cmnd) {
 //                      makeWeapon
 //*********************************************************************
 
-void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, std::string_view sub, std::string_view descBase, std::string_view descAll, bool twoHanded, int weight, double value, int bulk, short numAttacks) {
+void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, const std::string &sub, const std::string &descBase, const std::string &descAll, bool twoHanded, int weight, double value, int bulk, short numAttacks) {
     Object* newObj = nullptr;
     bool addToInventory = true;
 
@@ -1586,11 +1587,11 @@ void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, std:
 
     if(!newObj->key[2][0]) {
         strncpy(newObj->key[1], sub.data(), sub.length());
-        newObj->setName(bstring(newObj->key[0]) + sub);
+        newObj->setName(std::string(newObj->key[0]) + sub);
         //sprintf(newObj->name, "%s %s", newObj->key[0], sub.c_str());
     } else {
         strncpy(newObj->key[2], sub.data(), sub.length());
-        newObj->setName(bstring(newObj->key[0]) + newObj->key[1] + sub);
+        newObj->setName(std::string(newObj->key[0]) + newObj->key[1] + sub);
         //sprintf(newObj->name, "%s %s %s", newObj->key[0], newObj->key[1], sub.c_str());
     }
 
@@ -1637,7 +1638,7 @@ void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, std:
 //                      makeArmor
 //*********************************************************************
 
-void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int wear, std::string_view base, std::string_view descBase, std::string_view descAll, long value, int weight, int bulk, bool somePrefix=false) {
+void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int wear, const std::string &base, const std::string &descBase, const std::string &descAll, long value, int weight, int bulk, bool somePrefix= false) {
     Object* newObj = nullptr;
     bool addToInventory = true;
 
@@ -1659,11 +1660,11 @@ void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int w
 
     if(!newObj->key[2][0]) {
         strncpy(newObj->key[1], base.data(), base.length());
-        newObj->setName(bstring(newObj->key[0]) + base);
+        newObj->setName(std::string(newObj->key[0]) + base);
         //sprintf(newObj->name, "%s %s", newObj->key[0], base.c_str());
     } else {
         strncpy(newObj->key[2],  base.data(), base.length());
-        newObj->setName(bstring(newObj->key[0]) + newObj->key[1] + base);
+        newObj->setName(std::string(newObj->key[0]) + newObj->key[1] + base);
         //sprintf(newObj->name, "%s %s %s", newObj->key[0], newObj->key[1], base.c_str());
     }
 
@@ -1736,7 +1737,7 @@ int dmClone(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    bstring sub = object->getSubType();
+    std::string sub = object->getSubType();
     if(sub == "cloth" || sub == "leather" || sub == "chain" || sub == "plate" || sub == "scale" || sub == "ring") {
         isArmor = true;
     } else if(sub == "sword" || sub == "great-sword" || sub == "polearm" || sub == "whip" ||
@@ -1766,7 +1767,7 @@ int dmClone(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    bstring desc = getFullstrText(cmnd->fullstr, 3);
+    std::string desc = getFullstrText(cmnd->fullstr, 3);
     if(desc.empty()) {
         player->printColor("Syntax: ^c*clone <object> <area.id> <partial desc>\n");
         player->print("The partial description should complete the sentence, \"It's a <item> _____\".\n");
@@ -1785,14 +1786,14 @@ int dmClone(Player* player, cmd* cmnd) {
     strcpy(random->key[1], object->key[0]);
 
     if(!object->key[2][0] && !isWeapon) {
-        random->setName(bstring("random ") + random->key[1]);
+        random->setName(std::string("random ") + random->key[1]);
         //sprintf(random->name, "random %s", random->key[1]);
     } else {
         if(!object->key[2][0])
             strcpy(random->key[2], "weapon");
         else
             strcpy(random->key[2], object->key[1]);
-        random->setName(bstring("random ") + random->key[1] + random->key[2]);
+        random->setName(std::string("random ") + random->key[1] + random->key[2]);
         //sprintf(random->name, "random %s %s", random->key[1], random->key[2]);
     }
 

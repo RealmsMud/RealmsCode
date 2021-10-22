@@ -22,7 +22,6 @@
 #include <libxml/parser.h>  // for xmlNodePtr
 
 #include "alphanum.hpp"
-#include "bstring.hpp"
 
 enum ModifierType {
     MOD_NONE = 0,
@@ -42,21 +41,19 @@ public:
     void adjust(int adjAmount);
     void set(int newAmt);
     void setType(ModifierType newType);
-    bstring getName();
+    std::string getName();
     int getModAmt();
     ModifierType getModType();
 
-    bstring toString();
+    std::string toString();
 private:
-    bstring         name;
+    std::string         name;
     int             modAmt{};
     ModifierType    modType;
 
 };
 
-#ifndef PYTHON_CODE_GEN
-typedef std::map<bstring, StatModifier*, alphanum_less<bstring> > ModifierMap;
-#endif
+typedef std::map<std::string, StatModifier*, alphanum_less<std::string> > ModifierMap;
 
 class Stat
 {
@@ -67,7 +64,7 @@ public:
     void doCopy(const Stat& st);
 
     
-    bstring toString();
+    std::string toString();
     friend std::ostream& operator<<(std::ostream& out, Stat& stat);
 
     void setName(std::string_view pName);
@@ -97,24 +94,22 @@ public:
     void reCalc();
 
     bool addModifier(StatModifier* toAdd);
-    bool addModifier(std::string_view name, int modAmt, ModifierType modType);
+    bool addModifier(const std::string &pName, int modAmt, ModifierType modType);
 
-    bool removeModifier(std::string_view name);
-    bool adjustModifier(std::string_view name, int modAmt, ModifierType modType = MOD_CUR);
-    bool setModifier(std::string_view name, int newAmt, ModifierType modType = MOD_CUR);
+    bool removeModifier(const std::string &pName);
+    bool adjustModifier(const std::string &pName, int modAmt, ModifierType modType = MOD_CUR);
+    bool setModifier(const std::string &pName, int newAmt, ModifierType modType = MOD_CUR);
 
     void clearModifiers();
 
-    StatModifier* getModifier(std::string_view pName);
-    int getModifierAmt(std::string_view pName);
+    StatModifier* getModifier(const std::string &pName);
+    int getModifierAmt(const std::string &pName);
 
     void upgradeSetCur(unsigned int newCur);  // Used only in upgrading to new stats
 protected:
 
-    bstring name;
-#ifndef PYTHON_CODE_GEN
+    std::string name;
     ModifierMap modifiers;
-#endif
     bool dirty;
 
 

@@ -20,8 +20,9 @@
 #include <list>                   // for operator==, operator!=
 #include <ostream>                // for operator<<, basic_ostream, basic_os...
 #include <string>                 // for operator==, operator<<, basic_string
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
-#include "bstring.hpp"            // for bstring
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for cmdNoAuth, dmSpecials
 #include "config.hpp"             // for Config, gConfig
@@ -155,7 +156,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
     Player* pVictim = victim->getAsPlayer();
     Monster* mThis = getAsMonster();
 
-    if(victim->isMonster() && victim->flagIsSet(M_NO_CIRCLE) && attack->getName().equals("circle", false))
+    if(victim->isMonster() && victim->flagIsSet(M_NO_CIRCLE) && boost::iequals(attack->getName(), "circle"))
         return(false);
 
     if(attack->flagIsSet(SA_NO_UNDEAD) && victim->isUndead())
@@ -499,8 +500,8 @@ void SpecialAttack::clearFlag(int flag) {
     flags[flag/8] &= ~(1<<(flag%8));
 }
 
-bstring SpecialAttack::modifyAttackString(std::string_view input, Creature* viewer, Creature* attacker, Creature* target, int dmg) {
-    bstring toReturn = input;
+std::string SpecialAttack::modifyAttackString(std::string_view input, Creature* viewer, Creature* attacker, Creature* target, int dmg) {
+    std::string toReturn = std::string(input);
     /*          Web Editor
      *           _   _  ____ _______ ______
      *          | \ | |/ __ \__   __|  ____|
@@ -512,28 +513,28 @@ bstring SpecialAttack::modifyAttackString(std::string_view input, Creature* view
      *      If you change anything here, make sure the changes are reflected in the web
      *      editor! Either edit the PHP yourself or tell Dominus to make the changes.
      */
-    toReturn.Replace("*ATTACKER*", attacker->getCrtStr(viewer, CAP).c_str());
-    toReturn.Replace("*LOW-ATTACKER*", attacker->getCrtStr(viewer).c_str());
-    toReturn.Replace("*A-DEITY*", gConfig->getDeity(attacker->getDeity())->getName().c_str());
-    toReturn.Replace("*A-HESHE*", attacker->heShe());
-    toReturn.Replace("*A-HISHER*", attacker->hisHer());
-    toReturn.Replace("*A-UPHESHE*", attacker->upHeShe());
-    toReturn.Replace("*A-UPHISHER*", attacker->upHisHer());
+    boost::replace_all(toReturn, "*ATTACKER*", attacker->getCrtStr(viewer, CAP).c_str());
+    boost::replace_all(toReturn, "*LOW-ATTACKER*", attacker->getCrtStr(viewer).c_str());
+    boost::replace_all(toReturn, "*A-DEITY*", gConfig->getDeity(attacker->getDeity())->getName().c_str());
+    boost::replace_all(toReturn, "*A-HESHE*", attacker->heShe());
+    boost::replace_all(toReturn, "*A-HISHER*", attacker->hisHer());
+    boost::replace_all(toReturn, "*A-UPHESHE*", attacker->upHeShe());
+    boost::replace_all(toReturn, "*A-UPHISHER*", attacker->upHisHer());
 
     if(target) {
-        toReturn.Replace("*T-HESHE*", target->heShe());
-        toReturn.Replace("*T-HISHER*", target->hisHer());
-        toReturn.Replace("*T-UPHESHE*", target->upHeShe());
-        toReturn.Replace("*T-UPHISHER*", target->upHisHer());
+        boost::replace_all(toReturn, "*T-HESHE*", target->heShe());
+        boost::replace_all(toReturn, "*T-HISHER*", target->hisHer());
+        boost::replace_all(toReturn, "*T-UPHESHE*", target->upHeShe());
+        boost::replace_all(toReturn, "*T-UPHISHER*", target->upHisHer());
 
-        toReturn.Replace("*TARGET*", target->getCrtStr(viewer, CAP).c_str());
-        toReturn.Replace("*VICTIM*", target->getCrtStr(viewer, CAP).c_str());
-        toReturn.Replace("*LOW-TARGET*", target->getCrtStr(viewer).c_str());
-        toReturn.Replace("*LOW-VICTIM*", target->getCrtStr(viewer).c_str());
+        boost::replace_all(toReturn, "*TARGET*", target->getCrtStr(viewer, CAP).c_str());
+        boost::replace_all(toReturn, "*VICTIM*", target->getCrtStr(viewer, CAP).c_str());
+        boost::replace_all(toReturn, "*LOW-TARGET*", target->getCrtStr(viewer).c_str());
+        boost::replace_all(toReturn, "*LOW-VICTIM*", target->getCrtStr(viewer).c_str());
     }
-    toReturn.Replace("*CR*", "\n");
+    boost::replace_all(toReturn, "*CR*", "\n");
     if(dmg != -1)
-        toReturn.Replace("*DAMAGE*", xml::numToStr(dmg).c_str());
+        boost::replace_all(toReturn, "*DAMAGE*", xml::numToStr(dmg).c_str());
     toReturn = viewer->customColorize(toReturn);
     return(toReturn);
 }
@@ -542,7 +543,7 @@ void SpecialAttack::printToRoom(BaseRoom* room, std::string_view str, Creature* 
     if(str.empty())
         return;
 
-    bstring toPrint = "";
+    std::string toPrint;
     for(Player* ply : room->players) {
         if(!ply || ply == target)
             continue;
@@ -554,7 +555,7 @@ void SpecialAttack::printToRoom(BaseRoom* room, std::string_view str, Creature* 
 }
 void SpecialAttack::printFailStrings(Creature* attacker, Creature* target) {
     printToRoom(target->getRoomParent(), roomFailStr, attacker, target);
-    bstring toPrint = modifyAttackString(targetFailStr, target, attacker, target);
+    std::string toPrint = modifyAttackString(targetFailStr, target, attacker, target);
     target->printColor("%s\n", toPrint.c_str());
 }
 void SpecialAttack::printRoomString(Creature* attacker, Creature* target) {
@@ -562,7 +563,7 @@ void SpecialAttack::printRoomString(Creature* attacker, Creature* target) {
 }
 
 void SpecialAttack::printTargetString(Creature* attacker, Creature* target, int dmg) {
-    bstring toPrint = modifyAttackString(targetStr, target, attacker, target, dmg);
+    std::string toPrint = modifyAttackString(targetStr, target, attacker, target, dmg);
     target->printColor("%s\n", toPrint.c_str());
 }
 
@@ -570,7 +571,7 @@ void SpecialAttack::printRoomSaveString(Creature* attacker, Creature* target) {
     return(printToRoom(attacker->getRoomParent(), roomSaveStr, attacker, target));
 }
 void SpecialAttack::printTargetSaveString(Creature* attacker, Creature* target, int dmg) {
-    bstring toPrint = modifyAttackString(targetSaveStr, target, attacker, target, dmg);
+    std::string toPrint = modifyAttackString(targetSaveStr, target, attacker, target, dmg);
     target->printColor("%s\n", toPrint.c_str());
 }
 
@@ -584,7 +585,7 @@ void SpecialAttack::reset() {
     for(i = 0 ; i < 8 ; i++)
         flags[i] = 0;
 }
-bstring Creature::getSpecialsFullList() const {
+std::string Creature::getSpecialsFullList() const {
     std::ostringstream specialsStr;
 
     specialsStr << "Special Attacks for " << getName() << ":\n";
@@ -599,7 +600,7 @@ bstring Creature::getSpecialsFullList() const {
     }
 
     specialsStr << "\n" << num << " effect(s) found.\n";
-    bstring toPrint = specialsStr.str();
+    std::string toPrint = specialsStr.str();
 
     return(toPrint);
 }
@@ -679,7 +680,7 @@ int dmSpecials(Player* player, cmd* cmnd) {
             return(0);
         }
     } else {
-        bstring toPrint = target->getSpecialsFullList();
+        std::string toPrint = target->getSpecialsFullList();
         player->printColor("%s\n", toPrint.c_str());
     }
 
@@ -768,7 +769,7 @@ std::ostream& operator<<(std::ostream& out, const SpecialAttack& attack) {
     return out;
 }
 
-bstring Creature::getSpecialsList() const {
+std::string Creature::getSpecialsList() const {
     std::ostringstream specialStr;
 
     specialStr << "Special Attacks: ";
@@ -786,7 +787,7 @@ bstring Creature::getSpecialsList() const {
         specialStr << "None";
     specialStr << ".\n";
 
-    bstring toPrint = specialStr.str();
+    std::string toPrint = specialStr.str();
     return(toPrint);
 }
 
@@ -1373,6 +1374,6 @@ SpecialAttack* Creature::addSpecial(std::string_view specialName) {
     return(attack);
 }
 
-bstring SpecialAttack::getName() {
+std::string SpecialAttack::getName() {
     return(name);
 }

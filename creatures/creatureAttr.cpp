@@ -21,9 +21,10 @@
 #include <map>                    // for operator==, operator!=, map
 #include <ostream>                // for operator<<, ostringstream, basic_os...
 #include <utility>                // for pair, make_pair
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include "anchor.hpp"             // for Anchor
-#include "bstring.hpp"            // for bstring, operator+
 #include "calendar.hpp"           // for cDay, Calendar
 #include "catRef.hpp"             // for CatRef
 #include "config.hpp"             // for Config, gConfig
@@ -47,7 +48,7 @@
 #include "threat.hpp"             // for ThreatTable
 #include "utils.hpp"              // for MIN, MAX
 #include "version.hpp"            // for VERSION
-#include "xml.hpp"                // for copyPropToBString
+#include "xml.hpp"                // for copyPropToString
 
 class Object;
 class Socket;
@@ -78,8 +79,8 @@ unsigned int Creature::getArmor() const { return(armor); }
 
 unsigned long Creature::getExperience() const { return(experience); }
 
-bstring Player::getCoinDisplay() const { return(coins.str()); }
-bstring Player::getBankDisplay() const { return(bank.str()); }
+std::string Player::getCoinDisplay() const { return(coins.str()); }
+std::string Player::getBankDisplay() const { return(bank.str()); }
 
 unsigned short Creature::getClan() const { return(clan); }
 
@@ -92,8 +93,8 @@ Size Creature::getSize() const { return(size); }
 
 unsigned int Creature::getAttackPower() const { return(attackPower); }
 
-bstring Creature::getDescription() const { return(description); }
-bstring Creature::getVersion() const { return(version); }
+std::string Creature::getDescription() const { return(description); }
+std::string Creature::getVersion() const { return(version); }
 
 unsigned short Creature::getPoisonDuration() const { return(poison_dur); }
 unsigned short Creature::getPoisonDamage() const { return(poison_dmg); }
@@ -116,7 +117,7 @@ Sex Creature::getSex() const {
 
 unsigned long Creature::getRealm(Realm r) const { return(realm[r-1]); }
 
-bstring Creature::getPoisonedBy() const { return(poisonedBy); }
+std::string Creature::getPoisonedBy() const { return(poisonedBy); }
 
 bool Creature::inJail() const {
     if(isStaff())
@@ -213,13 +214,13 @@ void Creature::setType(mType t) { type = t; }
 void Creature::setDescription(std::string_view desc) {
     description = desc;
     if(isMonster())
-        description.Replace("*CR*", "\n");
+        boost::replace_all(description, "*CR*", "\n");
 }
 
 
 void Creature::setVersion(std::string_view v) { version = v.empty() ? VERSION : v; }
 
-void Creature::setVersion(xmlNodePtr rootNode) { xml::copyPropToBString(version, rootNode, "Version"); }
+void Creature::setVersion(xmlNodePtr rootNode) { xml::copyPropToString(version, rootNode, "Version"); }
 
 
 void Creature::setPoisonDuration(unsigned short d) { poison_dur = d; }
@@ -254,7 +255,7 @@ void Creature::setSex(Sex sex) {
 }
 
 
-bstring getSexName(Sex sex) {
+std::string getSexName(Sex sex) {
     if(sex == SEX_FEMALE)
         return("Female");
     if(sex == SEX_MALE)
@@ -286,8 +287,8 @@ unsigned short Monster::getUpdateAggro() const { return(updateAggro); }
 unsigned short Monster::getCastChance() const { return(cast); }
 unsigned short Monster::getMagicResistance() const { return(magicResistance); }
 
-bstring Monster::getPrimeFaction() const { return(primeFaction); }
-bstring Monster::getTalk() const { return(talk); }
+std::string Monster::getPrimeFaction() const { return(primeFaction); }
+std::string Monster::getTalk() const { return(talk); }
 
 void Monster::setMaxLevel(unsigned short l) { maxLevel = MAX<unsigned short>(0, MIN<unsigned short>(l, MAXALVL)); }
 void Monster::setCastChance(unsigned short c) { cast = MAX<unsigned short>(0, MIN<unsigned short>(c, 100)); }
@@ -298,7 +299,7 @@ void Monster::setNumWander(unsigned short n) { numwander = MAX<unsigned short>(0
 void Monster::setSkillLevel(int l) { skillLevel = MAX(0, MIN(100, l)); }
 void Monster::setMobTrade(unsigned short t) { mobTrade = MAX<unsigned short>(0,MIN<unsigned short>(MOBTRADE_COUNT-1, t)); }
 void Monster::setPrimeFaction(std::string_view f) { primeFaction = f; }
-void Monster::setTalk(std::string_view t) { talk = t; talk.Replace("*CR*", "\n"); }
+void Monster::setTalk(std::string_view t) { talk = t; boost::replace_all(talk, "*CR*", "\n"); }
 
 CreatureClass Player::getSecondClass() const { return(cClass2); }
 bool Player::hasSecondClass() const { return(cClass2 != CreatureClass::NONE); }
@@ -322,20 +323,20 @@ unsigned short Player::getWeaponTrains() const { return(weaponTrains); }
 long Player::getLastLogin() const { return(lastLogin); }
 long Player::getLastInterest() const { return(lastInterest); }
 
-bstring Player::getLastPassword() const { return(lastPassword); }
-bstring Player::getAfflictedBy() const { return(afflictedBy); }
-bstring Player::getLastCommunicate() const { return(lastCommunicate); }
-bstring Player::getLastCommand() const { return(lastCommand); }
-bstring Player::getSurname() const { return(surname); }
-bstring Player::getForum() const { return(forum); }
+std::string Player::getLastPassword() const { return(lastPassword); }
+std::string Player::getAfflictedBy() const { return(afflictedBy); }
+std::string Player::getLastCommunicate() const { return(lastCommunicate); }
+std::string Player::getLastCommand() const { return(lastCommand); }
+std::string Player::getSurname() const { return(surname); }
+std::string Player::getForum() const { return(forum); }
 
 long Player::getCreated() const { return(created); }
 
-bstring Player::getCreatedStr() const {
-    bstring str;
+std::string Player::getCreatedStr() const {
+    std::string str;
     if(created) {
         str = ctime(&created);
-        str.trim();
+        boost::trim(str);
     } else
         str = oldCreated;
     return(str);
@@ -346,8 +347,8 @@ Monster* Player::getAlias() const { return(alias_crt); }
 
 cDay* Player::getBirthday() const { return(birthday); }
 
-bstring Player::getAnchorAlias(int i) const { return(anchor[i] ? anchor[i]->getAlias() : ""); }
-bstring Player::getAnchorRoomName(int i) const { return(anchor[i] ? anchor[i]->getRoomName() : ""); }
+std::string Player::getAnchorAlias(int i) const { return(anchor[i] ? anchor[i]->getAlias() : ""); }
+std::string Player::getAnchorRoomName(int i) const { return(anchor[i] ? anchor[i]->getRoomName() : ""); }
 
 const Anchor* Player::getAnchor(int i) const { return(anchor[i]); }
 
@@ -379,9 +380,9 @@ void Player::setAfflictedBy(std::string_view a) { afflictedBy = a; }
 void Player::setLastLogin(long l) { lastLogin = MAX<long>(0, l); }
 void Player::setLastInterest(long l) { lastInterest = MAX<long>(0, l); }
 void Player::setLastCommunicate(std::string_view c) { lastCommunicate = c; }
-void Player::setLastCommand(std::string_view c) { lastCommand = c; lastCommand.trim(); }
+void Player::setLastCommand(std::string_view c) { lastCommand = c; boost::trim(lastCommand); }
 void Player::setCreated() { created = time(nullptr); }
-void Player::setSurname(const bstring& s) { surname = s.left(20); }
+void Player::setSurname(const std::string& s) { surname = s.substr(0, 20); }
 void Player::setForum(std::string_view f) { forum = f; }
 void Player::setAlias(Monster* m) { alias_crt = m; }
 
@@ -750,7 +751,7 @@ void Creature::CopyCommon(const Creature& cr) {
     //skills = cr.skills;
     Skill* skill;
     Skill* crSkill;
-    std::map<bstring, Skill*>::const_iterator csIt;
+    std::map<std::string, Skill*>::const_iterator csIt;
     for(csIt = cr.skills.begin() ; csIt != cr.skills.end() ; csIt++) {
         crSkill = (*csIt).second;
         skill = new Skill;
@@ -760,7 +761,7 @@ void Creature::CopyCommon(const Creature& cr) {
 
     effects.copy(&cr.effects, this);
 
-    std::list<bstring>::const_iterator mIt;
+    std::list<std::string>::const_iterator mIt;
     for(mIt = cr.minions.begin() ; mIt != cr.minions.end() ; mIt++) {
         minions.push_back(*mIt);
     }
@@ -1059,7 +1060,7 @@ void Creature::crtDestroy() {
     factions.clear();
 
     Skill* skill;
-    std::map<bstring, Skill*>::iterator csIt;
+    std::map<std::string, Skill*>::iterator csIt;
     for(csIt = skills.begin() ; csIt != skills.end() ; csIt++) {
         skill = (*csIt).second;
         delete skill;
@@ -1449,7 +1450,7 @@ const char *Creature::upHeShe() const {
 //                      getClassString
 //********************************************************************
 
-bstring Player::getClassString() const {
+std::string Player::getClassString() const {
     std::ostringstream cStr;
     cStr << get_class_string(static_cast<int>(cClass));
     if(hasSecondClass())
@@ -1525,9 +1526,9 @@ bool Creature::isBraindead()  const {
 //                      fullName
 //*********************************************************************
 
-bstring Creature::fullName() const {
+std::string Creature::fullName() const {
     const Player *player = getAsConstPlayer();
-    bstring str = getName();
+    std::string str = getName();
 
     if(player && !player->getProxyName().empty())
         str += "(" + player->getProxyName() + ")";
@@ -1598,7 +1599,7 @@ void Monster::setBaseRealm(Realm toSet) {
     baseRealm = toSet;
 }
 
-bstring Monster::getMobTradeName() const {
+std::string Monster::getMobTradeName() const {
     int nIndex = MAX<int>( 0, MIN<int>(this->mobTrade, MOBTRADE_COUNT) );
     return(mob_trade_str[nIndex]);
 

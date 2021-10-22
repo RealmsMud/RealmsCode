@@ -26,8 +26,8 @@
 #include <unistd.h>               // for close, unlink, write
 #include <iomanip>                // for operator<<, setw
 #include <sstream>                // for operator<<, basic_ostream, char_traits
+#include <boost/algorithm/string.hpp>
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
 #include "catRefInfo.hpp"         // for CatRefInfo
 #include "cmd.hpp"                // for cmd
@@ -74,7 +74,7 @@ void PartialOwner::defaultFlags(PropType type) {
     }
 }
 
-bstring PartialOwner::getName() const { return(name); }
+std::string PartialOwner::getName() const { return(name); }
 void PartialOwner::setName(std::string_view str) { name = str; }
 
 bool PartialOwner::flagIsSet(int flag) const {
@@ -127,13 +127,13 @@ bool Property::toggleFlag(int flag) {
 }
 
 int Property::getGuild() const { return(guild); }
-bstring Property::getArea() const { return(area); }
-bstring Property::getOwner() const { return(owner); }
-bstring Property::getName() const { return(name); }
-bstring Property::getDateFounded() const { return(dateFounded); }
-bstring Property::getLocation() const { return(location); }
+std::string Property::getArea() const { return(area); }
+std::string Property::getOwner() const { return(owner); }
+std::string Property::getName() const { return(name); }
+std::string Property::getDateFounded() const { return(dateFounded); }
+std::string Property::getLocation() const { return(location); }
 PropType Property::getType() const { return(type); }
-bstring Property::getTypeStr() const { return(getTypeStr(type)); }
+std::string Property::getTypeStr() const { return(getTypeStr(type)); }
 PropLog Property::getLogType() const { return(logType); }
 void Property::setGuild(int g) { guild = g; }
 void Property::setArea(std::string_view str) { area = str; }
@@ -143,14 +143,14 @@ void Property::setName(std::string_view str) { name = str; }
 void Property::setDateFounded() {
     long    t = time(nullptr);
     dateFounded = ctime(&t);
-    dateFounded.trim();
+    boost::trim(dateFounded);
 }
 
 void Property::setLocation(std::string_view str) { location = str; }
 void Property::setType(PropType t) { type = t; }
 void Property::setLogType(PropLog t) { logType = t; }
 
-bstring Property::getTypeStr(PropType propType) {
+std::string Property::getTypeStr(PropType propType) {
     switch(propType) {
     case PROP_STORAGE:
         return("storage room");
@@ -166,7 +166,7 @@ bstring Property::getTypeStr(PropType propType) {
     return("unknown type");
 }
 
-bstring Property::getTypeArea(PropType propType) {
+std::string Property::getTypeArea(PropType propType) {
     switch(propType) {
     case PROP_SHOP:
         return("shop");
@@ -183,7 +183,7 @@ bstring Property::getTypeArea(PropType propType) {
     return("");
 }
 
-bstring Property::getLogTypeStr() const {
+std::string Property::getLogTypeStr() const {
     switch(logType) {
     case LOG_NONE:
         return("This property is not recording actions.");
@@ -217,17 +217,17 @@ void Property::addRange(const CatRef& cr) {
     ranges.push_back(r);
 }
 
-void Property::addRange(std::string_view area, int low, int high) {
+void Property::addRange(const std::string &pArea, short low, short high) {
     // first of all, let us intelligently try to update existing ranges
     std::list<Range>::iterator rt;
     for(rt = ranges.begin() ; rt != ranges.end() ; rt++) {
-        if((*rt).isArea(area) && (*rt).high == low - 1) {
+        if((*rt).isArea(pArea) && (*rt).high == low - 1) {
             (*rt).high = high;
             return;
         }
     }
     Range r;
-    r.low.setArea(area);
+    r.low.setArea(pArea);
     r.low.id = low;
     r.high = high;
     ranges.push_back(r);
@@ -362,7 +362,7 @@ bool Property::canEnter(const Player* player, const UniqueRoom* room, bool p) {
 //                      goodNameDesc
 //*********************************************************************
 
-bool Property::goodNameDesc(const Player* player, std::string_view str, std::string_view fail, std::string_view disallow) {
+bool Property::goodNameDesc(const Player* player, const std::string &str, const std::string &fail, const std::string &disallow) {
     if(str.empty()) {
         player->bPrint(fmt::format("{}\n", fail));
         return(false);
@@ -913,7 +913,7 @@ void propFlags(Player* player, cmd* cmnd, Property *p) {
 
     } else if(propFlag) {
 
-        bstring action = cmnd->str[2];
+        std::string action = cmnd->str[2];
 
         if(action.empty() || action == "view") {
 
@@ -972,12 +972,12 @@ void propFlags(Player* player, cmd* cmnd, Property *p) {
             return;
         }
 
-        bstring action = cmnd->str[3];
+        std::string action = cmnd->str[3];
 
         if(action.empty() || action == "view") {
 
             // if viewing self, show property name instead
-            bstring title = po->getName();
+            std::string title = po->getName();
             if(title == player->getName())
                 title = p->getName();
 
@@ -1215,7 +1215,7 @@ int cmdProperties(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmProperties(Player* player, cmd* cmnd) {
-    bstring id = getFullstrText(cmnd->fullstr, 1);
+    std::string id = getFullstrText(cmnd->fullstr, 1);
     if(id.empty()) {
         player->printColor("Properties: Type ^c*property [num]^x to view more info.\n");
         player->printColor("Properties: Type ^c*property [type]^x to filter the list.\n");
@@ -1242,7 +1242,7 @@ int dmProperties(Player* player, cmd* cmnd) {
             }
         }
         player->print("Property not found!\n");
-    } else if(!isdigit(id.getAt(0))) {
+    } else if(!isdigit(id.at(0))) {
         PropType propType = PROP_NONE, i;
         int len = strlen(cmnd->str[1]);
 
@@ -1279,7 +1279,7 @@ int dmProperties(Player* player, cmd* cmnd) {
 //                      show
 //*********************************************************************
 
-bstring Property::show(bool isOwner, std::string_view player, int *i) {
+std::string Property::show(bool isOwner, std::string_view player, int *i) {
     std::ostringstream oStr;
     oStr.setf(std::ios::left, std::ios::adjustfield);
 
@@ -1308,7 +1308,7 @@ bstring Property::show(bool isOwner, std::string_view player, int *i) {
                 oStr << "This guildhall is broken: guild ID " << guild << " does not exist.\n";
         } else {
             oStr << "Guild:    ^c#" << guild << " ^c" << g->getName() << "^x\n";
-            std::list<bstring>::const_iterator pt;
+            std::list<std::string>::const_iterator pt;
             bool initial=false;
 
             oStr << "Guild Members: ^c";
@@ -1372,7 +1372,7 @@ void Config::showProperties(Player* viewer, Player* player, PropType propType) {
     std::list<Property*>::iterator it;
     std::ostringstream oStr;
     Property *p=nullptr;
-    bstring name = "";
+    std::string name = "";
     bool    isOwner=false, partialOwnerList=false;
     int     i=0;
 
@@ -1560,12 +1560,12 @@ void Config::renamePropertyOwner(std::string_view oldName, Player *player) {
 //                      getLog
 //*********************************************************************
 
-bstring Property::getLog() const {
+std::string Property::getLog() const {
     if(log.empty())
         return("No entries in the log.\n");
 
-    bstring str = "";
-    std::list<bstring>::const_iterator it;
+    std::string str = "";
+    std::list<std::string>::const_iterator it;
 
     for(it = log.begin() ; it != log.end() ; it++) {
         str += (*it);
@@ -1596,10 +1596,10 @@ void Property::appendLog(std::string_view user, const char *fmt, ...) {
     va_end(ap);
 
     long    t = time(nullptr);
-    bstring txt;
+    std::string txt;
     txt = "^c";
     txt += ctime(&t);
-    txt.trim();
+    boost::trim(txt);
     txt += ":^x ";
     txt += str;
 
@@ -1676,7 +1676,7 @@ void Property::roomSetup(UniqueRoom *room, PropType propType, const Player* play
 //                      linkRoom
 //*********************************************************************
 
-void Property::linkRoom(BaseRoom* inside, BaseRoom* outside, const bstring& xname) {
+void Property::linkRoom(BaseRoom* inside, BaseRoom* outside, const std::string& xname) {
     UniqueRoom* uRoom = outside->getAsUniqueRoom();
     AreaRoom* aRoom = outside->getAsAreaRoom();
     if(uRoom) {
@@ -1702,7 +1702,7 @@ void Property::linkRoom(BaseRoom* inside, BaseRoom* outside, const bstring& xnam
 //                      makeNextRoom
 //*********************************************************************
 
-UniqueRoom* Property::makeNextRoom(UniqueRoom* r1, PropType propType, const CatRef& cr, bool exits, const Player* player, const Guild* guild, BaseRoom* room, std::string_view xname, const char *go, const char *back, bool save) {
+UniqueRoom* Property::makeNextRoom(UniqueRoom* r1, PropType propType, const CatRef& cr, bool exits, const Player* player, const Guild* guild, BaseRoom* room, const std::string &xname, const char *go, const char *back, bool save) {
     auto *r2 = new UniqueRoom;
     r2->info = cr;
 
@@ -1777,10 +1777,10 @@ bool Property::requireInside(const Player* player, const UniqueRoom* room, Prope
 //                      descEdit
 //*********************************************************************
 
-bstring postText(std::string_view str);
+std::string postText(const std::string &str);
 
-void Property::descEdit(Socket* sock, const bstring& str) {
-    bstring outstr = "";
+void Property::descEdit(Socket* sock, const std::string& str) {
+    std::string outstr = "";
     char    outcstr[160];
     int     ff=0;
 
@@ -1806,7 +1806,7 @@ void Property::descEdit(Socket* sock, const bstring& str) {
             strcpy(outcstr, "");
         }
 
-        ply->getUniqueRoomParent()->setLongDescription(ply->getUniqueRoomParent()->getLongDescription().left(ply->getUniqueRoomParent()->getLongDescription().getLength()-1));
+        ply->getUniqueRoomParent()->setLongDescription(ply->getUniqueRoomParent()->getLongDescription().substr(0, ply->getUniqueRoomParent()->getLongDescription().length()-1));
         fclose(fp);
         unlink(sock->tempstr[0]);
 
@@ -1830,7 +1830,7 @@ void Property::descEdit(Socket* sock, const bstring& str) {
         merror("Property::descEdit", FATAL);
 
     outstr = postText(str);
-    write(ff, outstr.c_str(), outstr.getLength());
+    write(ff, outstr.c_str(), outstr.length());
     close(ff);
     ply->print("-: ");
 
@@ -1910,7 +1910,7 @@ void Property::manageDesc(Player* player, cmd* cmnd, PropType propType, int x) {
 //*********************************************************************
 
 void Property::manageShort(Player* player, cmd* cmnd, PropType propType, int x) {
-    bstring desc = getFullstrText(cmnd->fullstr, 3-x);
+    std::string desc = getFullstrText(cmnd->fullstr, 3-x);
 
     if(!Property::goodNameDesc(player, desc, "Set room short description to what?", "description string"))
         return;
@@ -1925,7 +1925,7 @@ void Property::manageShort(Player* player, cmd* cmnd, PropType propType, int x) 
 //*********************************************************************
 
 void Property::manageName(Player* player, cmd* cmnd, PropType propType, int x) {
-    bstring name = getFullstrText(cmnd->fullstr, 3-x);
+    std::string name = getFullstrText(cmnd->fullstr, 3-x);
 
     if(!Property::goodNameDesc(player, name, "Rename this room to what?", "room name"))
         return;
@@ -1948,9 +1948,9 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     int canBuildFlag = Property::buildFlag(propType);
     CatRef cr;
 
-    bstring xNameType = getTypeStr(propType);
+    std::string xNameType = getTypeStr(propType);
     // caps!
-    xNameType.setAt(0, toupper(xNameType.getAt(0)));
+    xNameType.at(0) = toupper(xNameType.at(0));
 
     if(!canBuildFlag || !room->flagIsSet(canBuildFlag)) {
         player->print("You can't build a %s here!\n", getTypeStr(propType).c_str());
@@ -1987,42 +1987,42 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     }
 
     
-    bstring oName;
+    std::string oName;
     for(Object* obj : player->objects) {
         // find their property related objects
         oName = obj->getName();
-        if( (propType == PROP_GUILDHALL && oName.left(10) == "guildhall ") ||
-            (propType == PROP_HOUSE && oName.left(6) == "house ") )
+        if( (propType == PROP_GUILDHALL && oName.starts_with("guildhall ")) ||
+            (propType == PROP_HOUSE && oName.starts_with("house ")) )
         {
 
             if( !deed && (
                     (   propType == PROP_GUILDHALL &&
-                        oName.left(14) == "guildhall deed" &&
+                        oName.starts_with("guildhall deed") &&
                         (   (uRoom && obj->deed.belongs(uRoom->info)) ||
                             (aRoom && obj->deed.isArea("area"))
                         )
                     ) || (
                         propType == PROP_HOUSE &&
-                        oName.left(10) == "house deed"
+                        oName.starts_with("house deed")
                     )
                 ) )
             {
                 deed = obj;
 
             // see if they want the entrance hidden
-            } else if(oName.right(15) == "hidden entrance") {
+            } else if(oName.ends_with("hidden entrance")) {
                 oHidden = obj;
 
             // see if they want the entrance concealed
-            } else if(oName.right(18) == "concealed entrance") {
+            } else if(oName.ends_with("concealed entrance")) {
                 oConceal = obj;
 
             // see if they want the entrance invisible
-            } else if(oName.right(18) == "invisible entrance") {
+            } else if(oName.ends_with("invisible entrance")) {
                 oInvis = obj;
 
             // see if they want a foyer
-            } else if(oName.right(5) == "foyer") {
+            } else if(oName.ends_with("foyer")) {
                 oFoyer = obj;
 
             }
@@ -2037,53 +2037,53 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 
 
 
-    bstring xname = getFullstrText(cmnd->fullstr, 3-x);
+    std::string xname = getFullstrText(cmnd->fullstr, 3-x);
     if(xname.empty()) {
         player->print("Please enter an exit name followed by the number of the room you wish to connect to.\n");
         return;
     }
     int roomId=0;
-    for(int i = xname.getLength()-1; i>0; i--) {
-        if(xname.getAt(i) == ' ') {
-            roomId = atoi(xname.right(xname.getLength()-i).c_str());
-            xname = xname.left(i);
+    for(int i = xname.length()-1; i>0; i--) {
+        if(xname.at(i) == ' ') {
+            roomId = atoi(xname.substr(i).c_str());
+            xname = xname.substr(0, i);
             break;
         }
     }
 
-    xname.Replace("_", " ");
+    std::replace(xname.begin(), xname.end(), '_', ' ');
 
     if(!Property::goodExit(player, room, xNameType.c_str(), xname))
         return;
 
     // determine what layout we're using!
-    bstring layout = deed->getName();
-    bstring orientation = "";
+    std::string layout = deed->getName();
+    std::string orientation;
     int extra=0;
     int req=0;
 
-    if(layout.right(12) == "5 room cross") {
-        layout = layout.right(12);
+    if(layout.ends_with("5 room cross")) {
+        layout = layout.substr(layout.length() - 12);
         req = 5;
-    } else if(layout.right(13) == "4 room square") {
-        layout = layout.right(13);
+    } else if(layout.ends_with("4 room square")) {
+        layout = layout.substr(layout.length() - 13);
         req = 4;
-    } else if(layout.right(5) == "tower") {
+    } else if(layout.ends_with("tower")) {
         // 5 room tower
-        layout = layout.right(12);
-        req = atoi(layout.left(1).c_str());
-        layout = layout.right(5);
-    } else if(layout.right(11) == "small house") {
-        layout = layout.right(11);
+        layout = layout.substr(layout.length() - 12);
+        req = atoi(layout.substr(0, 1).c_str());
+        layout = layout.substr(layout.length() - 5);
+    } else if(layout.ends_with("small house")) {
+        layout = layout.substr(layout.length() - 11);
         roomId = req = 1;
-    } else if(layout.right(12) == "medium house") {
-        orientation = getFullstrText(layout, 3).left(1);
+    } else if(layout.ends_with("medium house")) {
+        orientation = getFullstrText(layout, 3).substr(0, 1);
         if(orientation != "n" && orientation != "e")
             orientation = "n";
-        layout = layout.right(12);
+        layout = layout.substr(layout.length() - 12);
         req = 2;
-    } else if(layout.right(11) == "large house") {
-        orientation = getFullstrText(layout, 3).left(1);
+    } else if(layout.ends_with("large house")) {
+        orientation = getFullstrText(layout, 3).substr(0, 1);
         if(orientation == "n")
             extra = 0;
         else if(orientation == "e")
@@ -2094,7 +2094,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
             orientation = "w";
             extra = 3;
         }
-        layout = layout.right(11);
+        layout = layout.substr(layout.length() - 11);
         req = 4;
     } else {
         player->print("The layout specified by your %s deed '%s' could not be determined!\n", getTypeStr(propType).c_str(), deed->getCName());
@@ -2131,14 +2131,14 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
         p->setGuild(player->getGuild());
         p->setName(guild->getName() + "'s Guild Hall");
     } else if(propType == PROP_HOUSE) {
-        bstring pName = player->getName();
+        std::string pName = player->getName();
         pName += "'s House";
         p->setName(pName);
     }
 
     // if they have a foyer, make one
     UniqueRoom* rFoyer=nullptr;
-    bstring xPropName = xname;
+    std::string xPropName = xname;
     if(oFoyer) {
         rFoyer = makeNextRoom(nullptr, propType, cr, true, player, guild, room, xname, "", "", false);
         if(propType == PROP_GUILDHALL) {
@@ -2264,7 +2264,8 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
         }
 
         if(player->inUniqueRoom())
-            sendMail(gConfig->getReviewer(), player->getName() + " (" + guild->getName() + ") opened a guild hall in " + gConfig->catRefName(player->getUniqueRoomParent()->info.area) + ".\n");
+            sendMail(gConfig->getReviewer(), fmt::format("{} ({}) opened a guild hall in {}.\n", player->getName(), guild->getName(),
+                                                         gConfig->catRefName(player->getUniqueRoomParent()->info.area)));
     } else if(propType == PROP_HOUSE) {
         player->print("Congratulations! You are now the owner of a brand new house.\n");
         if(!player->flagIsSet(P_DM_INVIS))
@@ -2329,9 +2330,9 @@ void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Proper
     Object* obj = player->findObject(player, cmnd, 3-x);
     CatRef cr;
 
-    bstring xNameType = getTypeStr(propType);
+    std::string xNameType = getTypeStr(propType);
     // caps!
-    xNameType.setAt(0, toupper(xNameType.getAt(0)));
+    xNameType.at(0) = toupper(xNameType.at(0));
     
     if(!obj) {
         player->print("Object not found.\nYou need to purchase %s extensions from a realty office.\n", getTypeStr(propType).c_str());
@@ -2339,23 +2340,23 @@ void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Proper
     }
 
 
-    bstring layout = obj->getName();
-    if( (propType == PROP_GUILDHALL && layout.left(19) != "guildhall extension") ||
-        (propType == PROP_HOUSE && layout.left(15) != "house extension")
+    std::string layout = obj->getName();
+    if( (propType == PROP_GUILDHALL && !layout.starts_with("guildhall extension")) ||
+        (propType == PROP_HOUSE && !layout.starts_with("house extension"))
     ) {
         player->printColor("%O is not a %s extension permit.\nYou need to purchase %s extensions from a realty office.\n",
             obj, getTypeStr(propType).c_str(), getTypeStr(propType).c_str());
         return;
     }
-    layout = layout.right(layout.getLength() - 21);
+    layout = layout.substr(21);
 
 
 
-    bstring xname = getFullstrText(cmnd->fullstr, 4-x);
-    if(!xname.empty() && isdigit(xname.getAt(0)))
+    std::string xname = getFullstrText(cmnd->fullstr, 4-x);
+    if(!xname.empty() && isdigit(xname.at(0)))
         xname = getFullstrText(xname, 1);
 
-    xname.Replace("_", " ");
+    std::replace(xname.begin(), xname.end(), '_', ' ');
     if(!Property::goodExit(player, room, xNameType.c_str(), xname))
         return;
 
@@ -2419,12 +2420,12 @@ void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Proper
 
 void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x) {
     BaseRoom* room = player->getRoomParent();
-    bstring origExit = cmnd->str[3-x];
-    bstring newExit = getFullstrText(cmnd->fullstr, 4-x);
+    std::string origExit = cmnd->str[3-x];
+    std::string newExit = getFullstrText(cmnd->fullstr, 4-x);
 
-    bstring xNameType = getTypeStr(propType);
+    std::string xNameType = getTypeStr(propType);
     // caps!
-    xNameType.setAt(0, toupper(xNameType.getAt(0)));
+    xNameType.at(0) = toupper(xNameType.at(0));
 
     if(origExit.empty() || newExit.empty()) {
         player->print("Rename which exit to what?\n");
@@ -2448,7 +2449,7 @@ void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x)
             found = ext;
             break;
         }
-        if(!strncmp(ext->getCName(), origExit.c_str(), origExit.getLength())) {
+        if(!strncmp(ext->getCName(), origExit.c_str(), origExit.length())) {
             if(found)
                 unique = false;
             found = ext;
@@ -2644,14 +2645,14 @@ void Property::manage(Player* player, cmd* cmnd, PropType propType, int x) {
 //                      found
 //*********************************************************************
 
-void Property::found(const Player* player, PropType propType, bstring location, bool shouldSetArea) {
+void Property::found(const Player* player, PropType propType, std::string location, bool shouldSetArea) {
     setOwner(player->getName());
     setDateFounded();
     if(location.empty())
         location = player->getConstUniqueRoomParent()->getName();
     setLocation(location);
     if(shouldSetArea && player->inUniqueRoom()) {
-        bstring pArea = player->getConstUniqueRoomParent()->info.area;
+        std::string pArea = player->getConstUniqueRoomParent()->info.area;
         if(player->getConstUniqueRoomParent()->info.isArea("guild")) {
             // load the guild entrance, look for the out exit, load that room, get the area
             Property* p = gConfig->getProperty(player->getConstUniqueRoomParent()->info);

@@ -30,7 +30,6 @@
 #include <fmt/format.h>
 
 #include "area.hpp"               // for MapMarker, Area
-#include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for cmdNoAuth, getFullstrText, dmStatDe...
@@ -58,6 +57,7 @@
 #include "utils.hpp"              // for MAX
 #include "weather.hpp"            // for WEATHER_BEAUTIFUL_DAY, WEATHER_BRIG...
 #include "xml.hpp"                // for iToYesNo, loadRoom, loadObject
+#include "toNum.hpp"
 
 
 long        last_dust_output;
@@ -149,8 +149,8 @@ int dmMobInventory(Player* player, cmd* cmnd) {
 
         return(0);
     }
-    bstring str = monster->listObjects(player, true);
-    bstring prefix =bstring(monster->flagIsSet(M_NO_PREFIX) ? "":"The ") + monster->getName() + " is carrying: ";
+    std::string str = monster->listObjects(player, true);
+    std::string prefix =std::string(monster->flagIsSet(M_NO_PREFIX) ? "":"The ") + monster->getName() + " is carrying: ";
     if(!str.empty()) {
         str =  prefix + str + ".";
     } else {
@@ -189,9 +189,9 @@ int dmSockets(Player* player, cmd* cmnd) {
 
 int dmLoadSave(Player* player, cmd* cmnd, bool load) {
     if(cmnd->num < 2) {
-        std::list<bstring> loadList;
-        std::list<bstring> saveList;
-        std::list<bstring>::const_iterator it;
+        std::list<std::string> loadList;
+        std::list<std::string> saveList;
+        std::list<std::string>::const_iterator it;
 
         // create a list of possible effects
         loadList.emplace_back("areas");
@@ -462,8 +462,8 @@ int dmTeleport(Player* player, cmd* cmnd) {
 
     // *t 1 and *t 1.-10.7 will trigger num < 2,
     // *t misc.100 will not, so we need to make an exception
-    bstring str = getFullstrText(cmnd->fullstr, 1);
-    bstring txt = getFullstrText(str, 1, '.');
+    std::string str = getFullstrText(cmnd->fullstr, 1);
+    std::string txt = getFullstrText(str, 1, '.');
 
     // set default *t room
     if(str.empty()) {
@@ -475,7 +475,7 @@ int dmTeleport(Player* player, cmd* cmnd) {
         }
 
         room =  l.loadRoom();
-    } else if(cmnd->num < 2 || (!txt.empty() && txt.getAt(0))) {
+    } else if(cmnd->num < 2 || (!txt.empty() && txt.at(0))) {
         Area        *area=nullptr;
 
         getDestination(str, &l, player);
@@ -600,7 +600,7 @@ int dmTeleport(Player* player, cmd* cmnd) {
 int dmUsers(Player* player, cmd* cmnd) {
     long    t = time(nullptr);
     bool    full=false;
-    bstring tmp="", host="";
+    std::string tmp="", host="";
     Player* user=nullptr;
     //Socket* sock=0;
 
@@ -609,7 +609,7 @@ int dmUsers(Player* player, cmd* cmnd) {
     oStr.setf(std::ios::left, std::ios::adjustfield);
     oStr.imbue(std::locale(""));
 
-    bstring cr = gConfig->getDefaultArea();
+    std::string cr = gConfig->getDefaultArea();
     if(player->inUniqueRoom())
         cr = player->getUniqueRoomParent()->info.area;
 
@@ -623,7 +623,7 @@ int dmUsers(Player* player, cmd* cmnd) {
         oStr << "Room                 Address             Last Command      Idle";
     oStr << "\n---------------------------------------------------------------------------------------\n";
 
-    //std::pair<bstring, Player*> p;
+    //std::pair<std::string, Player*> p;
     for(Socket &sock : gServer->sockets) {
         //user = p.second;
         //sock = user->getSock();
@@ -642,7 +642,7 @@ int dmUsers(Player* player, cmd* cmnd) {
 
         if(user->isStaff())
             oStr << "^g";
-        oStr << std::setw(4) << bstring(getShortClassName(user)).left(4) << "^w ";
+        oStr << std::setw(4) << std::string(getShortClassName(user)).substr(0, 4) << "^w ";
 
         if(!user->flagIsSet(P_SECURITY_CHECK_OK))
             oStr << "^r";
@@ -668,33 +668,33 @@ int dmUsers(Player* player, cmd* cmnd) {
             oStr << "^m";
 
         if(user->getProxyName().empty())
-            oStr << std::setw(10) << user->getName().left(10) << "^w ";
+            oStr << std::setw(10) << user->getName().substr(0, 10) << "^w ";
         else
-            oStr << std::setw(10) << bstring(user->getName() + "(" + user->getProxyName() + ")").left(10) << "^w ";
+            oStr << std::setw(10) << std::string(user->getName() + "(" + user->getProxyName() + ")").substr(0, 10) << "^w ";
 
         if(!sock.isConnected()) {
             sprintf(str, "connecting (Fd: %d)", sock.getFd());
-            oStr << "^Y" << std::setw(20) << str << " ^c" << std::setw(37) << host.left(37);
+            oStr << "^Y" << std::setw(20) << str << " ^c" << std::setw(37) << host.substr(0, 37);
         } else if(full) {
-            oStr << "^m" << std::setw(58) << host.left(58);
+            oStr << "^m" << std::setw(58) << host.substr(0, 58);
         } else {
             if(user->inUniqueRoom()) {
                 sprintf(str, "%s: ^b%s", user->getUniqueRoomParent()->info.str(cr, 'b').c_str(), stripColor(user->getUniqueRoomParent()->getCName()).c_str());
-                oStr << std::setw(22 + (str[0] == '^' ? 4 : 0)) << bstring(str).left(22 + (str[0] == '^' ? 4 : 0));
+                oStr << std::setw(22 + (str[0] == '^' ? 4 : 0)) << std::string(str).substr(0, 22 + (str[0] == '^' ? 4 : 0));
             } else if(user->inAreaRoom()){
                 //sprintf(str, "%s", user->area_room->mapmarker.str(true).c_str());
-                //oStr << std::setw(26) << bstring(str).left(26);
+                //oStr << std::setw(26) << std::string(str).left(26);
                 // TODO: Strip Color
-                oStr << std::setw(38) << user->getAreaRoomParent()->mapmarker.str(true).left(38);
+                oStr << std::setw(38) << user->getAreaRoomParent()->mapmarker.str(true).substr(0, 38);
             } else {
                 oStr << std::setw(38) << "(Unknown)";
             }
 
 
-            oStr << " ^c" << std::setw(19) << host.left(19)
+            oStr << " ^c" << std::setw(19) << host.substr(0, 19)
                  << " ^g";
             if(!user->isDm() || player->isDm())
-                oStr << std::setw(17) << dmLastCommand(user).left(17);
+                oStr << std::setw(17) << dmLastCommand(user).substr(0, 17);
             else
                 oStr << std::setw(17) << "l";
         }
@@ -780,7 +780,7 @@ int dmResave(Player* player, cmd* cmnd) {
     if( cmnd->num > 1 &&
         (!strcmp(cmnd->str[1], "c") || !strcmp(cmnd->str[1], "o"))
     ) {
-        bstring str = getFullstrText(cmnd->fullstr, 3);
+        std::string str = getFullstrText(cmnd->fullstr, 3);
         if(str.empty()) {
             player->print("Syntax: *save %c [name] [number]\n", cmnd->str[1]);
             return(0);
@@ -1273,16 +1273,16 @@ void printOldQuests(Player* player) {
 
 int dmQuestList(Player* player, cmd* cmnd) {
     bool all = false;
-    bstring output = getFullstrText(cmnd->fullstr, 1);
+    std::string output = getFullstrText(cmnd->fullstr, 1);
 
-    if(output.equals("all")) {
+    if(output == "all") {
         all = true;
-    } else if (output.equals("old")) {
+    } else if (output == "old") {
         printOldQuests(player);
         return(0);
     } else if(!output.empty()) {
-        output.trimLeft('#');
-        int questId = output.toInt();
+        output.erase(0, output.find_first_not_of('#')); // trimleft("#")
+        int questId = toNum<int>(output);
         *player << "Looking for quest " << questId << ".\n";
         auto qPair = gConfig->quests.find(questId);
         if(qPair == gConfig->quests.end()) {
@@ -2142,8 +2142,7 @@ int dmList(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    bstring args = cmnd->fullstr;
-    args.trimLeft(" *list");
+    std::string args = cmnd->fullstr.substr(6);
 
     gServer->runList(player->getSock(), cmnd);
     return(0);
@@ -2191,7 +2190,7 @@ int dmInfo(Player* player, cmd* cmnd) {
 }
 
 int dmMd5(Player* player, cmd* cmnd) {
-    bstring tohash = getFullstrText(cmnd->fullstr, 1, ' ');
+    std::string tohash = getFullstrText(cmnd->fullstr, 1, ' ');
     player->print("MD5: '%s' = '%s'\n", tohash.c_str(), md5(tohash).c_str());
     return(0);
 }
@@ -2255,10 +2254,10 @@ int dmStat(Player* player, cmd* cmnd) {
 
     // *st 1 and *st 1.-10.7 will trigger num < 2,
     // *st misc.100 will not, so we need to make an exception
-    bstring str = getFullstrText(cmnd->fullstr, 1);
-    bstring txt = getFullstrText(str, 1, '.');
+    std::string str = getFullstrText(cmnd->fullstr, 1);
+    std::string txt = getFullstrText(str, 1, '.');
 
-    if(cmnd->num < 2 || (!txt.empty() && txt.getAt(0))) {
+    if(cmnd->num < 2 || (!txt.empty() && txt.at(0))) {
         Area        *area=nullptr;
         MapMarker   mapmarker;
         AreaRoom*   aRoom=nullptr;
@@ -2404,7 +2403,7 @@ int dmStat(Player* player, cmd* cmnd) {
             statFlags |= ISDM;
         if(player->isCt())
             statFlags |= ISCT;
-        bstring displayStr = target->statCrt(statFlags);
+        std::string displayStr = target->statCrt(statFlags);
         player->printColor("%s", displayStr.c_str());
     } else
         player->print("Unable to locate.\n");
@@ -2417,7 +2416,7 @@ int dmStat(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmCache(Player* player, cmd* cmnd) {
-    bstring cacheStr = gServer->getDnsCacheString();
+    std::string cacheStr = gServer->getDnsCacheString();
     player->printColor("%s", cacheStr.c_str());
     return(0);
 }

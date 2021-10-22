@@ -20,8 +20,8 @@
 #include <cstdio>                                   // for sprintf
 #include <cstdlib>                                  // for atoi
 #include <sstream>                                  // for basic_ostream::op...
+#include <boost/algorithm/string/replace.hpp>
 
-#include "bstring.hpp"                              // for bstring, operator+
 #include "calendar.hpp"                             // for Calendar
 #include "catRef.hpp"                               // for CatRef
 #include "cmd.hpp"                                  // for cmd
@@ -39,7 +39,7 @@
 #include "server.hpp"                               // for Server, gServer
 #include "ships.hpp"                                // for ShipStop, ShipRaid
 #include "utils.hpp"                                // for MAX
-#include "xml.hpp"                                  // for copyToBString
+#include "xml.hpp"                                  // for copyToString
 
 
 #define PIRATE_QUEST (54 - 1)
@@ -79,7 +79,7 @@ bool Ship::belongs(const CatRef& cr) {
     return(false);
 }
 
-void shipBroadcastRange(Ship *ship, ShipStop *stop, const bstring& message) {
+void shipBroadcastRange(Ship *ship, ShipStop *stop, const std::string& message) {
 
     if(message.empty())
         return;
@@ -369,9 +369,9 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                     if(!stop->raid->getDumpAction().empty()) {
                         if(!stop->raid->getDumpTalk().empty())
                             ply->sendPrompt();
-                        bstring tmp = stop->raid->getDumpAction();
-                        bstring tmp2 = raider->getCrtStr(nullptr, CAP|NONUM, 0);
-                        tmp.Replace("*ACTOR*", tmp2.c_str());
+                        std::string tmp = stop->raid->getDumpAction();
+                        std::string tmp2 = raider->getCrtStr(nullptr, CAP|NONUM, 0);
+                        boost::replace_all(tmp, "*ACTOR*", tmp2.c_str());
                         *ply << ColorOn << tmp << "\n" << ColorOff;
                     }
                     ply->deleteFromRoom();
@@ -386,9 +386,9 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                     if(!stop->raid->getPrisonAction().empty()) {
                         if(!stop->raid->getPrisonTalk().empty())
                             ply->sendPrompt();
-                        bstring tmp = stop->raid->getPrisonAction();
-                        bstring tmp2 = raider->getCrtStr(nullptr, CAP|NONUM, 0);
-                        tmp.Replace("*ACTOR*", tmp2.c_str());
+                        std::string tmp = stop->raid->getPrisonAction();
+                        std::string tmp2 = raider->getCrtStr(nullptr, CAP|NONUM, 0);
+                        boost::replace_all(tmp, "*ACTOR*", tmp2.c_str());
                         *ply << ColorOn << tmp << "\n" << ColorOff;
                     }
                     ply->deleteFromRoom();
@@ -433,10 +433,10 @@ void ShipRaid::load(xmlNodePtr curNode) {
         else if(NODE_NAME(childNode, "MaxSpawnNum")) xml::copyToNum(maxSpawnNum, childNode);
         else if(NODE_NAME(childNode, "Dump")) dump.load(childNode);
         else if(NODE_NAME(childNode, "Prison")) prison.load(childNode);
-        else if(NODE_NAME(childNode, "DumpTalk")) xml::copyToBString(dumpTalk, childNode);
-        else if(NODE_NAME(childNode, "PrisonTalk")) xml::copyToBString(prisonTalk, childNode);
-        else if(NODE_NAME(childNode, "DumpAction")) xml::copyToBString(dumpAction, childNode);
-        else if(NODE_NAME(childNode, "PrisonAction")) xml::copyToBString(prisonAction, childNode);
+        else if(NODE_NAME(childNode, "DumpTalk")) xml::copyToString(dumpTalk, childNode);
+        else if(NODE_NAME(childNode, "PrisonTalk")) xml::copyToString(prisonTalk, childNode);
+        else if(NODE_NAME(childNode, "DumpAction")) xml::copyToString(dumpAction, childNode);
+        else if(NODE_NAME(childNode, "PrisonAction")) xml::copyToString(prisonAction, childNode);
         else if(NODE_NAME(childNode, "UnconInPrison")) xml::copyToBool(unconInPrison, childNode);
 
         childNode = childNode->next;
@@ -485,16 +485,16 @@ CatRef ShipRaid::getDump() const {
 CatRef ShipRaid::getPrison() const {
     return(prison);
 }
-bstring ShipRaid::getDumpTalk() const {
+std::string ShipRaid::getDumpTalk() const {
     return(dumpTalk);
 }
-bstring ShipRaid::getPrisonTalk() const {
+std::string ShipRaid::getPrisonTalk() const {
     return(prisonTalk);
 }
-bstring ShipRaid::getDumpAction() const {
+std::string ShipRaid::getDumpAction() const {
     return(dumpAction);
 }
-bstring ShipRaid::getPrisonAction() const {
+std::string ShipRaid::getPrisonAction() const {
     return(prisonAction);
 }
 bool ShipRaid::getUnconInPrison() const {
@@ -514,10 +514,10 @@ ShipExit::ShipExit() {
     departs = "";
 }
 
-bstring ShipExit::getName() const { return(name); }
+std::string ShipExit::getName() const { return(name); }
 bool ShipExit::getRaid() const { return(raid); }
-bstring ShipExit::getArrives() const { return(arrives); }
-bstring ShipExit::getDeparts() const { return(departs); }
+std::string ShipExit::getArrives() const { return(arrives); }
+std::string ShipExit::getDeparts() const { return(departs); }
 const char *ShipExit::getFlags() const { return(flags); }
 
 void ShipExit::setFlags(char f) {
@@ -544,11 +544,11 @@ void ShipExit::load(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
 
     while(childNode) {
-        if(NODE_NAME(childNode, "Name")) { xml::copyToBString(name, childNode); }
+        if(NODE_NAME(childNode, "Name")) { xml::copyToString(name, childNode); }
         else if(NODE_NAME(childNode, "Origin")) origin.load(childNode);
         else if(NODE_NAME(childNode, "Target")) target.load(childNode);
-        else if(NODE_NAME(childNode, "Arrives")) xml::copyToBString(arrives, childNode);
-        else if(NODE_NAME(childNode, "Departs")) xml::copyToBString(departs, childNode);
+        else if(NODE_NAME(childNode, "Arrives")) xml::copyToString(arrives, childNode);
+        else if(NODE_NAME(childNode, "Departs")) xml::copyToString(departs, childNode);
         else if(NODE_NAME(childNode, "Flags")) loadBits(childNode, flags);
         else if(NODE_NAME(childNode, "Raid")) raid = true;
         childNode = childNode->next;
@@ -582,10 +582,10 @@ void ShipStop::load(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
 
     while(childNode) {
-        if(NODE_NAME(childNode, "Name")) { xml::copyToBString(name, childNode); }
-        else if(NODE_NAME(childNode, "Arrives")) { xml::copyToBString(arrives, childNode); }
-        else if(NODE_NAME(childNode, "LastCall")) { xml::copyToBString(lastcall, childNode); }
-        else if(NODE_NAME(childNode, "Departs")) { xml::copyToBString(departs, childNode); }
+        if(NODE_NAME(childNode, "Name")) { xml::copyToString(name, childNode); }
+        else if(NODE_NAME(childNode, "Arrives")) { xml::copyToString(arrives, childNode); }
+        else if(NODE_NAME(childNode, "LastCall")) { xml::copyToString(lastcall, childNode); }
+        else if(NODE_NAME(childNode, "Departs")) { xml::copyToString(departs, childNode); }
 
         else if(NODE_NAME(childNode, "ToNext")) xml::copyToNum(to_next, childNode);
         else if(NODE_NAME(childNode, "InDock")) xml::copyToNum(in_dock, childNode);

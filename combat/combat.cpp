@@ -19,7 +19,6 @@
 #include <ctime>          // for time
 #include <string>          // for operator!=, operator==, basic_string
 
-#include "bstring.hpp"     // for bstring
 #include "creatures.hpp"   // for Monster, Player, Creature, ATTACK_BLOCK
 #include "damage.hpp"      // for Damage
 #include "effects.hpp"     // for EffectInfo
@@ -983,7 +982,7 @@ void Player::damageArmor(int dmg) {
     if(armor->getType() != ObjectType::ARMOR)
         return;
 
-    bstring armorType = armor->getArmorType();
+    std::string armorType = armor->getArmorType();
     int armorSkill = (int)getSkillGained(armorType);
     int avoidChance = armorSkill / 4;
 

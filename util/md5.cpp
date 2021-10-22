@@ -344,7 +344,7 @@ void MD5::MD5_memset (POINTER output,int value,unsigned int len)
  * internal hash function, calling
  * the basic methods from md5.h
  */ 
-bstring md5wrapper::hashit(bstring text)
+std::string md5wrapper::hashit(std::string text)
 {
     MD5_CTX ctx;
     
@@ -369,7 +369,7 @@ bstring md5wrapper::hashit(bstring text)
  * (based on Jim Howard's code;
  * http://www.codeproject.com/cpp/cmd5.asp)
  */
-bstring md5wrapper::convToString(unsigned char *bytes)
+std::string md5wrapper::convToString(unsigned char *bytes)
 {
     char asciihash[33];
 
@@ -380,7 +380,7 @@ bstring md5wrapper::convToString(unsigned char *bytes)
         p += 2;
     }   
     asciihash[32] = '\0';
-    return bstring(asciihash);
+    return std::string(asciihash);
 }
 
 //---------publics--------------------------
@@ -403,7 +403,7 @@ md5wrapper::~md5wrapper()
  * "text" and returns it as
  * string
  */ 
-bstring md5wrapper::getHashFromString(bstring text)
+std::string md5wrapper::getHashFromString(std::string text)
 {
     return this->hashit(text); 
 }
@@ -416,7 +416,7 @@ bstring md5wrapper::getHashFromString(bstring text)
  * (based on Ronald L. Rivest's code
  * from RFC1321 "The MD5 Message-Digest Algorithm")
  */ 
-bstring md5wrapper::getHashFromFile(bstring filename)   
+std::string md5wrapper::getHashFromFile(std::string filename)
 {
     FILE *file;
     MD5_CTX context;
@@ -453,7 +453,7 @@ bstring md5wrapper::getHashFromFile(bstring filename)
 //                      md5
 //*********************************************************************
 
-bstring md5(bstring text) {
+std::string md5(std::string text) {
     md5wrapper md5;
     return(md5.getHashFromString(text));
 }

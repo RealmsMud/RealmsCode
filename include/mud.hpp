@@ -334,28 +334,4 @@ extern struct osong_t osong[];
 #endif
 
 
-#ifdef PYTHON_CODE_GEN
-// Generate effects bindings as well
-#include <effects.h>
-#include <songs.h>
-void broadcast(Socket* ignore, BaseRoom* room, const char *fmt, ...);
-void broadcast(Socket* ignore1, Socket* ignore2, BaseRoom* room, const char *fmt, ...);
-void broadcast(bool showTo(Socket*), Socket*, BaseRoom* room, const char *fmt, ...);
-
-
-void broadcast(const char *fmt, ...);
-void broadcast(int color, const char *fmt,...);
-void broadcast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt,...);
-void broadcast(bool showTo(Socket*), const char *fmt,...);
-void broadcast(bool showTo(Socket*), int color, const char *fmt,...);
-void broadcast(Creature* player, bool showTo(Socket*), int color, const char *fmt,...);
-
-void broadcast_wc(int color,const char *fmt, ...);
-void broadcast_login(Player* player, int login);
-
-void broadcast_rom_LangWc(int face, int color, int lang, Socket* ignore, AreaRoom* aRoom, CatRef cr, const char *fmt,...);
-void broadcastGroup(bool dropLoot, Creature* player, const char *fmt, ...);
-
-#endif
-
 #endif

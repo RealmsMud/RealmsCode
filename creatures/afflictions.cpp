@@ -18,7 +18,6 @@
 
 #include <ctime>                  // for time
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for cmdCreepingDoom, cmdPoison
 #include "config.hpp"             // for Config, gConfig
@@ -277,9 +276,9 @@ void Creature::poison(Creature *enemy, unsigned int damagePerPulse, unsigned int
             if(enemy->isPet())
                 setPoisonedBy(enemy->getMaster()->getName());
             else if(enemy->isMonster() && !enemy->flagIsSet(M_NO_PREFIX))
-                setPoisonedBy((bstring)"a " + enemy->getName());
+                setPoisonedBy((std::string)"a " + enemy->getName());
             else if(this == enemy)
-                setPoisonedBy((bstring)himHer() + "self");
+                setPoisonedBy((std::string)himHer() + "self");
             else
                 setPoisonedBy(enemy->getName());
 
@@ -290,7 +289,7 @@ void Creature::poison(Creature *enemy, unsigned int damagePerPulse, unsigned int
             else if(enemy->isPet())
                 setPoisonedBy(enemy->getMaster()->getName());
             else if(enemy->isMonster() && !enemy->flagIsSet(M_NO_PREFIX))
-                setPoisonedBy((bstring)"a " + enemy->getName());
+                setPoisonedBy((std::string)"a " + enemy->getName());
             else
                 setPoisonedBy(enemy->getName());
 
@@ -625,7 +624,7 @@ bool Creature::vampireCharmed(Player* master) {
 
     if(charmed) {
         bool found = false;
-        std::list<bstring>::iterator mIt;
+        std::list<std::string>::iterator mIt;
         for(mIt = master->minions.begin() ; mIt != master->minions.end() && !found ; mIt++) {
             if(*mIt == player->getName())
                 found = true;
@@ -670,7 +669,7 @@ void Creature::clearMinions() {
             free_crt(target);
     }
 
-    std::list<bstring>::iterator mIt;
+    std::list<std::string>::iterator mIt;
     for(mIt = player->minions.begin() ; mIt != player->minions.end() ; mIt++) {
         online = true;
         target = gServer->findPlayer(*mIt);

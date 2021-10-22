@@ -36,17 +36,17 @@ public:
     GuildCreation();
 
     bool addSupporter(Player* supporter);
-    bool removeSupporter(std::string_view supporterName);
-    void renameSupporter(std::string_view oldName, std::string_view newName);
+    bool removeSupporter(const std::string &supporterName);
+    void renameSupporter(const std::string &oldName, const std::string &newName);
     bool saveToXml(xmlNodePtr rootNode) const;
 
 public:
-    bstring name;
-    bstring leader;
-    bstring leaderIp;
+    std::string name;
+    std::string leader;
+    std::string leaderIp;
     int     status;
     int     numSupporters;
-    std::map<bstring, bstring> supporters;
+    std::map<std::string, std::string> supporters;
 };
 
 
@@ -56,7 +56,7 @@ public:
     explicit Guild(xmlNodePtr curNode);
     void recalcLevel();
     int averageLevel();
-    bool addMember(std::string_view memberName);
+    bool addMember(const std::string &memberName);
     bool delMember(std::string_view memberName);
     bool isMember(std::string_view memberName);
     void renameMember(std::string_view oldName, std::string_view newName);
@@ -82,12 +82,12 @@ public:
 
 
 public:
-    std::list<bstring> members;
+    std::list<std::string> members;
     Money   bank;
 
-    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] std::string getName() const;
     [[nodiscard]] unsigned short getNum() const;
-    [[nodiscard]] bstring getLeader() const;
+    [[nodiscard]] std::string getLeader() const;
     [[nodiscard]] long getLevel() const;
     [[nodiscard]] int getNumMembers() const;
     [[nodiscard]] long getPkillsIn() const;
@@ -110,9 +110,9 @@ public:
 
     void guildhallLocations(const Player* player, const char* fmt) const;
 protected:
-    bstring name;
+    std::string name;
     unsigned short num;
-    bstring leader;
+    std::string leader;
     long    level{};      // Sum of everyone's level in the guild
     int     numMembers{}; // Number of members in the guild
     long    pkillsIn{};

@@ -17,10 +17,10 @@
  */
 #include <cstring>                // for strlen, strcpy, memset, strcmp, strcat
 #include <list>                   // for operator==, operator!=
+#include <fmt/format.h>
 
 #include "alchemy.hpp"            // for AlchemyEffect
 #include "area.hpp"               // for MapMarker, Area
-#include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
 #include "clans.hpp"              // for Clan
 #include "commands.hpp"           // for getFullstrTextTrun
@@ -47,21 +47,20 @@ bool Object::operator< (const Object& t) const {
     return(getCompareStr().compare(t.getCompareStr()) < 0);
 }
 
-bstring Object::getCompareStr() const {
-    bstring toReturn = getName() + "-" + bstring(adjustment) + "-" + bstring(shopValue) + "-" + getId();
-    return(toReturn);
+std::string Object::getCompareStr() const {
+    return(fmt::format("{}-{}-{}-{}", getName(), adjustment, shopValue, getId()));
 }
 
-bstring DroppedBy::getName() const {
+std::string DroppedBy::getName() const {
     return(name);
 }
-bstring DroppedBy::getIndex() const {
+std::string DroppedBy::getIndex() const {
     return(index);
 }
-bstring DroppedBy::getId() const {
+std::string DroppedBy::getId() const {
     return(id);
 }
-bstring DroppedBy::getType() const {
+std::string DroppedBy::getType() const {
     return(type);
 }
 void DroppedBy::clear() {
@@ -86,7 +85,7 @@ std::ostream& operator<<(std::ostream& out, const DroppedBy& drop) {
     return(out);
 }
 
-bstring DroppedBy::str() {
+std::string DroppedBy::str() {
     std::ostringstream oStr;
     oStr << name << " (" << index;
     if(!id.empty()) {
@@ -99,7 +98,7 @@ bstring DroppedBy::str() {
 }
 
 void Object::validateId() {
-    if(id.empty() || id.equals("-1")) {
+    if(id.empty() || id == "-1") {
         setId(gServer->getNextObjectId());
     }
 }
@@ -426,7 +425,7 @@ bool Object::operator==(const Object& o) const {
         return(false);
 
     /*
-    for(std::pair<int, bstring> p : o.alchemyEffects) {
+    for(std::pair<int, std::string> p : o.alchemyEffects) {
         alchemyEffects.insert(p);
     }
     */
@@ -479,7 +478,7 @@ int Object::getActualBulk() const {
         switch(type) {
         case    ObjectType::WEAPON:
             {
-                bstring category = getWeaponCategory();
+                std::string category = getWeaponCategory();
                 if(category == "crushing")
                     n = 5;
                 else if(category == "piercing")
@@ -779,7 +778,7 @@ bool Object::levelRestrict(const Creature* creature, bool p) const {
 bool Object::skillRestrict(const Creature* creature, bool p) const {
     int skillLevel = 0;
 
-    bstring skill = "";
+    std::string skill = "";
 
     if(type == ObjectType::ARMOR) {
         skill = getArmorType();
@@ -966,7 +965,7 @@ bool Object::doRestrict(Creature* creature, bool p) {
 //                          getCompass
 //*********************************************************************
 
-bstring Object::getCompass(const Creature* creature, bool useName) {
+std::string Object::getCompass(const Creature* creature, bool useName) {
     std::ostringstream oStr;
 
     if(useName)
@@ -1004,9 +1003,9 @@ bstring Object::getCompass(const Creature* creature, bool useName) {
 //                      getObjStr
 //*********************************************************************
 
-bstring Object::getObjStr(const Creature* viewer, unsigned int ioFlags, int num) const {
+std::string Object::getObjStr(const Creature* viewer, unsigned int ioFlags, int num) const {
     std::ostringstream objStr;
-    bstring toReturn = "";
+    std::string toReturn = "";
     char ch;
 
     if(flagIsSet(O_DARKNESS))
@@ -1159,7 +1158,7 @@ bool Object::isKey(const UniqueRoom* room, const Exit* exit) const {
 
     // For the key to work, it must be from the same area
     // ie: no using oceancrest keys in highport!
-    bstring area = exit->getKeyArea();
+    std::string area = exit->getKeyArea();
     if(area.empty())
         area = room->info.area;
 
@@ -1174,7 +1173,7 @@ bool Object::isKey(const UniqueRoom* room, const Exit* exit) const {
 //*********************************************************************
 // room = the catref for the destination room
 
-void spawnObjects(std::string_view room, std::string_view objects) {
+void spawnObjects(const std::string &room, const std::string &objects) {
     UniqueRoom *dest = nullptr;
     Object* object=nullptr;
     CatRef  cr;
@@ -1184,7 +1183,7 @@ void spawnObjects(std::string_view room, std::string_view objects) {
     if(!loadRoom(cr, &dest))
         return;
 
-    bstring obj = "";
+    std::string obj = "";
     int i=0;
     dest->expelPlayers(true, false, false);
 
@@ -1240,7 +1239,7 @@ double Object::getDps() {
 }
 
 
-bstring Object::getFlagList(bstring sep) const {
+std::string Object::getFlagList(std::string_view sep) const {
     std::ostringstream ostr;
     bool found = false;
     for(int i=0; i<MAX_OBJECT_FLAGS; i++) {

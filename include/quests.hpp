@@ -34,8 +34,8 @@ class QuestCatRef : public CatRef {
 public:
     QuestCatRef();
     QuestCatRef(xmlNodePtr rootNode);
-    xmlNodePtr save(xmlNodePtr rootNode, const bstring& saveName = "QuestCatRef") const;
-//  bstring area;
+    xmlNodePtr save(xmlNodePtr rootNode, const std::string& saveName = "QuestCatRef") const;
+//  std::string area;
 //  int index;
     int curNum;
     int reqNum;     // How many
@@ -75,9 +75,9 @@ public:
     QuestInfo(xmlNodePtr rootNode);
 
     int getId() const;
-    bstring getName() const;
-    bstring getDisplayName() const;
-    bstring getDisplayString() const;
+    std::string getName() const;
+    std::string getDisplayName() const;
+    std::string getDisplayString() const;
     bool isRepeatable() const;
     int getTimesRepeatable() const;
     QuestEligibility getEligibility(const Player *player, const Monster *giver) const;
@@ -88,12 +88,12 @@ public:
     const QuestCatRef& getTurnInMob() const;
 private:
     int questId;
-    bstring name;
-    bstring description;        // Description of the quest
-    bstring receiveString;      // String that is output to the player when they receive this quest
-    bstring completionString;   // String that is output to the player when they complete this quest
+    std::string name;
+    std::string description;        // Description of the quest
+    std::string receiveString;      // String that is output to the player when they receive this quest
+    std::string completionString;   // String that is output to the player when they complete this quest
 
-    bstring revision;   // This will be used for making sure all questcompletions
+    std::string revision;   // This will be used for making sure all questcompletions
                 // are synced up with the parent quest incase we make changes
                 // to them
 
@@ -118,7 +118,7 @@ private:
     long expReward;             // Exp reward
     short alignmentChange;			// Amount alignment changes upon quest completion
     std::list<QuestCatRef> itemRewards; // Items rewarded on completion
-    std::map<bstring,long> factionRewards;  // Factions to be modified
+    std::map<std::string,long> factionRewards;  // Factions to be modified
 
     friend class QuestCompletion;
 };
@@ -137,7 +137,7 @@ private:
     int questId;
     QuestInfo* parentQuest{}; // What quest are we keeping track of?
     Player* parentPlayer;   // Parent Player for this quest
-    bstring revision;
+    std::string revision;
 
     std::list<QuestCatRef> mobsKilled;      // How many of the required monsters have we killed
     std::list<QuestCatRef> roomsVisited;    // How many of the required rooms have we visited.
@@ -154,7 +154,7 @@ public:
     void updateMobKills(Monster* monster);
     void updateItems(Object* object);
     void updateRooms(UniqueRoom* room);
-    bstring getStatusDisplay();
+    std::string getStatusDisplay();
 
     bool checkQuestCompletion(bool showMessage = true);
     bool hasRequiredMobs() const;
@@ -190,9 +190,9 @@ public:
     TalkResponse(xmlNodePtr rootNode);
     xmlNodePtr saveToXml(xmlNodePtr rootNode) const;
 
-    std::list<bstring> keywords; // Multiple keywords!
-    bstring response; // What he'll respond with, ^C type colors allowed
-    bstring action; // Cast on a player, flip them off, give them an item, give them a quest....etc
+    std::list<std::string> keywords; // Multiple keywords!
+    std::string response; // What he'll respond with, ^C type colors allowed
+    std::string action; // Cast on a player, flip them off, give them an item, give them a quest....etc
     QuestInfo* quest; // Link to associated quest (if any)
 private:
     void parseQuest();

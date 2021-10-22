@@ -19,8 +19,8 @@
 #include <ostream>                // for operator<<, basic_ostream, endl
 #include <string>                 // for operator==, operator<<, basic_string
 #include <utility>                // for pair
+#include <boost/algorithm/string/trim.hpp>
 
-#include "bstring.hpp"            // for bstring
 #include "cmd.hpp"                // for cmd
 #include "container.hpp"          // for Container, Containable, MonsterSet
 #include "creatures.hpp"          // for Monster, Player, Creature
@@ -30,6 +30,7 @@
 #include "objects.hpp"            // for Object
 #include "proto.hpp"              // for keyTxtEqual, broadcast, free_crt
 #include "rooms.hpp"              // for BaseRoom (ptr only), AreaRoom, Uniq...
+#include "toNum.hpp"
 
 //################################################################################
 //# Container
@@ -193,7 +194,7 @@ void Container::unRegisterContainedItems() {
 //                      wake
 //*********************************************************************
 
-void Container::wake(std::string_view str, bool noise) const {
+void Container::wake(const std::string &str, bool noise) const {
     for(Player* ply : players) {
         ply->wake(str, noise);
     }
@@ -215,12 +216,12 @@ MudObject* Container::findTarget(const Creature* searcher,  cmd* cmnd, int num) 
     return(findTarget(searcher, cmnd->str[num], cmnd->val[num]));
 }
 
-MudObject* Container::findTarget(const Creature* searcher, const bstring& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch) const {
+MudObject* Container::findTarget(const Creature* searcher, const std::string& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch) const {
     int match=0;
     return(findTarget(searcher, name, num, monFirst, firstAggro, exactMatch, match));
 }
 
-MudObject* Container::findTarget(const Creature* searcher, const bstring& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch, int& match) const {
+MudObject* Container::findTarget(const Creature* searcher, const std::string& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch, int& match) const {
     MudObject* toReturn = nullptr;
 
     if((toReturn = findCreature(searcher, name, num, monFirst, firstAggro, exactMatch, match))) {
@@ -234,11 +235,11 @@ MudObject* Container::findTarget(const Creature* searcher, const bstring& name, 
 Object* Container::findObject(const Creature *searcher, const cmd* cmnd, int val) const {
     return(findObject(searcher, cmnd->str[val], cmnd->val[val]));
 }
-Object* Container::findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch ) const {
+Object* Container::findObject(const Creature* searcher, const std::string& name, const int num, bool exactMatch ) const {
     int match = 0;
     return(findObject(searcher, name, num,exactMatch, match));
 }
-Object* Container::findObject(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const {
+Object* Container::findObject(const Creature* searcher, const std::string& name, const int num, bool exactMatch, int& match) const {
     Object *target = nullptr;
     for(Object* obj : objects) {
         if(isMatch(searcher, obj, name, exactMatch, true)) {
@@ -264,17 +265,17 @@ Creature* Container::findCreature(const Creature* searcher,  cmd* cmnd, int num)
     return(findCreature(searcher, cmnd->str[num], cmnd->val[num]));
 }
 
-Creature* Container::findCreaturePython(Creature* searcher, const bstring& name, bool monFirst, bool firstAggro, bool exactMatch ) {
+Creature* Container::findCreaturePython(Creature* searcher, const std::string& name, bool monFirst, bool firstAggro, bool exactMatch ) {
     int ignored=0;
     int num = 1;
 
-    bstring newName = name;
-    newName.trim();
-    bstring::size_type sLoc = newName.ReverseFind(" ");
-    if(sLoc != bstring::npos) {
-        num = newName.right(newName.length() - sLoc).toInt();
+    std::string newName = name;
+    boost::trim(newName);
+    std::string::size_type sLoc = newName.find_last_of(' ');
+    if(sLoc != std::string::npos) {
+        num = toNum<int>(newName.substr(sLoc));
         if(num != 0) {
-            newName = newName.left(sLoc);
+            newName = newName.substr(0, sLoc);
         } else {
             num = 1;
         }
@@ -286,11 +287,11 @@ Creature* Container::findCreaturePython(Creature* searcher, const bstring& name,
 }
 
 // Wrapper for the real findCreature for callers that don't care about the value of match
-Creature* Container::findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch )  const {
+Creature* Container::findCreature(const Creature* searcher, const std::string& name, const int num, bool monFirst, bool firstAggro, bool exactMatch )  const {
     int ignored=0;
     return(findCreature(searcher, name, num, monFirst, firstAggro, exactMatch, ignored));
 }
-bool isMatch(const Creature* searcher, MudObject* target, const bstring& name, bool exactMatch, bool checkVisibility) {
+bool isMatch(const Creature* searcher, MudObject* target, const std::string& name, bool exactMatch, bool checkVisibility) {
     if(!target)
         return(false);
     if(checkVisibility && !searcher->canSee(target))
@@ -317,7 +318,7 @@ bool isMatch(const Creature* searcher, MudObject* target, const bstring& name, b
 
 // The real findCreature, will take and return the value of match as to allow for findTarget to find the 3rd thing named
 // gold with a monster name goldfish, player named goldmine, and some gold in the room!
-Creature* Container::findCreature(const Creature* searcher, const bstring& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const {
+Creature* Container::findCreature(const Creature* searcher, const std::string& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const {
 
     if(!searcher || name.empty())
         return(nullptr);
@@ -341,11 +342,11 @@ Creature* Container::findCreature(const Creature* searcher, const bstring& name,
 Monster* Container::findMonster(const Creature* searcher,  cmd* cmnd, int num) const {
     return(findMonster(searcher, cmnd->str[num], cmnd->val[num]));
 }
-Monster* Container::findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch) const {
+Monster* Container::findMonster(const Creature* searcher, const std::string& name, const int num, bool firstAggro, bool exactMatch) const {
     int match = 0;
     return(findMonster(searcher, name, num, firstAggro, exactMatch, match));
 }
-Monster* Container::findMonster(const Creature* searcher, const bstring& name, const int num, bool firstAggro, bool exactMatch, int& match) const {
+Monster* Container::findMonster(const Creature* searcher, const std::string& name, const int num, bool firstAggro, bool exactMatch, int& match) const {
     Monster* target = nullptr;
     for(Monster* mons : searcher->getParent()->monsters) {
         if(isMatch(searcher, mons, name, exactMatch, true)) {
@@ -373,11 +374,11 @@ Monster* Container::findMonster(const Creature* searcher, const bstring& name, c
 Player* Container::findPlayer(const Creature* searcher,  cmd* cmnd, int num) const {
     return(findPlayer(searcher, cmnd->str[num], cmnd->val[num]));
 }
-Player* Container::findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch) const {
+Player* Container::findPlayer(const Creature* searcher, const std::string& name, const int num, bool exactMatch) const {
     int match = 0;
     return(findPlayer(searcher, name, num, exactMatch, match));
 }
-Player* Container::findPlayer(const Creature* searcher, const bstring& name, const int num, bool exactMatch, int& match) const {
+Player* Container::findPlayer(const Creature* searcher, const std::string& name, const int num, bool exactMatch, int& match) const {
     for(Player* ply : searcher->getParent()->players) {
         if(isMatch(searcher, ply, name, exactMatch, true)) {
             match++;

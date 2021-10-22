@@ -22,7 +22,6 @@
 #include <ostream>        // for operator<<, basic_ostream::operator<<, basi...
 #include <string>         // for operator<<, char_traits
 
-#include "bstring.hpp"    // for bstring
 #include "cmd.hpp"        // for cmd
 #include "creatures.hpp"  // for Player
 #include "server.hpp"     // for Server, gServer
@@ -35,7 +34,7 @@
 //
 //  Async async;
 //  if(async.branch(player, ChildType::PRINT) == AsyncExternal) {
-//      bstring output = somethingArduous();
+//      std::string output = somethingArduous();
 //      printf("%s", output.c_str());
 //      exit(0);
 //  } else {
@@ -54,7 +53,7 @@ Async::Async() {
 //*********************************************************************
 
 AsyncResult Async::branch(const Player* player, ChildType type) {
-    bstring user = (player ? player->getName() : "Someone");
+    std::string user = (player ? player->getName() : "Someone");
     if(pipe(fds) == -1) {
         std::clog << "Error with pipe!\n";
         abort();
@@ -96,7 +95,7 @@ AsyncResult Async::branch(const Player* player, ChildType type) {
 int Server::runList(Socket* sock, cmd* cmnd) {
     Async async;
     if(async.branch(sock->getPlayer(), ChildType::LISTER) == AsyncExternal) {
-        bstring lister = "/mud/List";
+        std::string lister = "/mud/List";
         std::clog << "Running <" << lister << ">\n";
 
         execl(lister.c_str(), lister.c_str(), cmnd->str[1], cmnd->str[2], cmnd->str[3], cmnd->str[4], nullptr);

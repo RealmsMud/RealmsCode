@@ -19,7 +19,6 @@
 #include <cstdio>                 // for snprintf
 #include <map>                    // for operator==, map, allocator
 
-#include "bstring.hpp"            // for bstring
 #include "config.hpp"             // for Config
 #include "deityData.hpp"          // for DeityData
 #include "paths.hpp"              // for Game
@@ -81,7 +80,7 @@ DeityData::DeityData(xmlNodePtr rootNode) {
     xmlNodePtr curNode, childNode;
 
     id = xml::getIntProp(rootNode, "id");
-    xml::copyPropToBString(name, rootNode, "name");
+    xml::copyPropToString(name, rootNode, "name");
 
     curNode = rootNode->children;
     while(curNode) {

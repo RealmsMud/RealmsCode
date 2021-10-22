@@ -21,8 +21,8 @@
 //*********************************************************************
 
 #include <ostream>      // for basic_ostream::operator<<, operator<<, basic_...
+#include <sstream>
 
-#include "bstring.hpp"  // for bstring
 #include "dice.hpp"     // for Dice
 #include "proto.hpp"    // for dice
 #include "random.hpp"   // for Random
@@ -107,7 +107,7 @@ int Dice::high() const {
 //                      str
 //*********************************************************************
 
-bstring Dice::str() const {
+std::string Dice::str() const {
     std::ostringstream oStr;
     if(mean)
     {

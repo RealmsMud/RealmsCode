@@ -51,7 +51,7 @@ std::string getWho() {
         whoStr << player->getWhoString(false, false, false);
     }
     if(!found)
-        return bstring("Nobody found!\n");
+        return std::string("Nobody found!\n");
     else {
         whoStr << "```\n";
         return whoStr.str();
@@ -143,7 +143,7 @@ bool Server::initDiscordBot() {
     return (true);
 }
 
-bool Server::sendDiscordWebhook(long webhookID, int type, const bstring &author, const bstring &msg) {
+bool Server::sendDiscordWebhook(long webhookID, int type, const std::string &author, const std::string &msg) {
     // Send a message from the mud, to a discord channel
     dpp::message myMessage;
     if (type == COM_EMOTE) {

@@ -23,7 +23,6 @@
 #include <map>                    // for operator==, operator!=
 #include <string>                 // for operator<<, char_traits, operator==
 
-#include "bstring.hpp"            // for bstring
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for cmdAssist, cmdTarget
 #include "creatures.hpp"          // for Creature, Player, Monster
@@ -176,7 +175,7 @@ ThreatSet::iterator ThreatTable::removeFromSet(ThreatEntry* threat) {
 // Completely removes the target from this threat list and returns the
 // amount of contribution they had before removal
 
-long ThreatTable::removeThreat(std::string_view pUid) {
+long ThreatTable::removeThreat(const std::string &pUid) {
     long toReturn = 0;
     auto mIt = threatMap.find(pUid);
     if(mIt == threatMap.end())
@@ -213,7 +212,7 @@ Creature* ThreatTable::getTarget(bool sameRoom) {
 
     ThreatSet::reverse_iterator it;
     for(it = threatSet.rbegin() ; it != threatSet.rend() ; ) {
-        bstring uId = (*it++)->getUid();
+        std::string uId = (*it++)->getUid();
         crt = gServer->lookupCrtId(uId);
         if(!crt && uId.at(0) == 'M') {
             // If we're a monster and the server hasn't heard of them, they're either a pet
@@ -295,7 +294,7 @@ bool ThreatEntry::operator< (const ThreatEntry& t) const {
     return(this->threatValue < t.threatValue);
 }
 
-std::string_view ThreatEntry::getUid() const {
+const std::string & ThreatEntry::getUid() const {
     return(uId);
 }
 //*********************************************************************

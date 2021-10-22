@@ -22,7 +22,6 @@
 #include <sstream>         // for operator<<, basic_ostream, endl, ostream
 #include <string>          // for operator==, basic_string, operator!=, oper...
 
-#include "bstring.hpp"     // for bstring
 #include "config.hpp"      // for Config, gConfig
 #include "creatures.hpp"   // for Creature, Player, Monster, AttackResult
 #include "damage.hpp"      // for Damage
@@ -148,7 +147,7 @@ float Creature::getDamageReduction(const Creature* target) const {
 //                      getWeaponType
 //**********************************************************************
 
-bstring Object::getWeaponType() const {
+std::string Object::getWeaponType() const {
     if(type != ObjectType::WEAPON)
         return("none");
     else
@@ -159,7 +158,7 @@ bstring Object::getWeaponType() const {
 //                      getArmorType
 //**********************************************************************
 
-bstring Object::getArmorType() const {
+std::string Object::getArmorType() const {
     if(type != ObjectType::ARMOR)
         return("none");
     else
@@ -170,13 +169,13 @@ bstring Object::getArmorType() const {
 //                      getWeaponCategory
 //**********************************************************************
 
-bstring Object::getWeaponCategory() const {
+std::string Object::getWeaponCategory() const {
     SkillInfo* weaponSkill = gConfig->getSkill(subType);
 
     if(type != ObjectType::WEAPON || !weaponSkill)
         return("none");
 
-    bstring category = weaponSkill->getGroup();
+    std::string category = weaponSkill->getGroup();
     // Erase the 'weapons-' to leave the category
     category.erase(0, 8);
 
@@ -188,7 +187,7 @@ bstring Object::getWeaponCategory() const {
 //**********************************************************************
 
 
-bstring  Creature::getWeaponVerb() const {
+std::string  Creature::getWeaponVerb() const {
     if(ready[WIELD-1])
         return(ready[WIELD-1]->getWeaponVerb());
     else
@@ -196,8 +195,8 @@ bstring  Creature::getWeaponVerb() const {
 
 }
 
-bstring Object::getWeaponVerb() const {
-    const bstring category = getWeaponCategory();
+std::string Object::getWeaponVerb() const {
+    const std::string category = getWeaponCategory();
 
     if(category == "crushing")
         return("crush");
@@ -218,7 +217,7 @@ bstring Object::getWeaponVerb() const {
 //**********************************************************************
 
 
-bstring Creature::getWeaponVerbPlural() const {
+std::string Creature::getWeaponVerbPlural() const {
     if(ready[WIELD-1])
         return(ready[WIELD-1]->getWeaponVerbPlural());
     else
@@ -226,8 +225,8 @@ bstring Creature::getWeaponVerbPlural() const {
 
 }
 
-bstring  Object::getWeaponVerbPlural() const {
-    const bstring category = getWeaponCategory();
+std::string  Object::getWeaponVerbPlural() const {
+    const std::string category = getWeaponCategory();
 
     if(category == "crushing")
         return("crushes");
@@ -247,8 +246,8 @@ bstring  Object::getWeaponVerbPlural() const {
 //                      getWeaponVerbPast
 //**********************************************************************
 
-bstring Object::getWeaponVerbPast() const {
-    const bstring category = getWeaponCategory();
+std::string Object::getWeaponVerbPast() const {
+    const std::string category = getWeaponCategory();
 
     if(category == "crushing") {
         if(Random::get(0,1))
@@ -285,7 +284,7 @@ bstring Object::getWeaponVerbPast() const {
 //**********************************************************************
 
 bool Object::needsTwoHands() const {
-    const bstring weaponType = getWeaponType();
+    const std::string weaponType = getWeaponType();
 
     if (flagIsSet(O_TWO_HANDED))
         return (true);
@@ -305,12 +304,12 @@ bool Object::needsTwoHands() const {
 //                      setWeaponType
 //**********************************************************************
 
-bool Object::setWeaponType(std::string_view newType) {
+bool Object::setWeaponType(const std::string &newType) {
     SkillInfo* weaponSkill = gConfig->getSkill(newType);
-    bstring category = "";
+    std::string category = "";
     if(weaponSkill) {
         category = weaponSkill->getGroup();
-        category = category.left(6);
+        category = category.substr(0, 6);
     }
 
     if(!weaponSkill || category != "weapon") {
@@ -325,14 +324,14 @@ bool Object::setWeaponType(std::string_view newType) {
 //                      setArmorType
 //**********************************************************************
 
-bool Object::setArmorType(std::string_view newType) {
+bool Object::setArmorType(const std::string &newType) {
     // Armor type must be ring, shield, or one of the armor type skills
     if(newType != "ring" && newType != "shield") {
         SkillInfo* weaponSkill = gConfig->getSkill(newType);
-        bstring category = "";
+        std::string category = "";
         if(weaponSkill) {
             category = weaponSkill->getGroup();
-            category = category.left(5);
+            category = category.substr(0, 5);
         }
 
         if(!weaponSkill || category != "armor") {
@@ -348,7 +347,7 @@ bool Object::setArmorType(std::string_view newType) {
 //                      setSubType
 //**********************************************************************
 
-bool Object::setSubType(std::string_view newType) {
+bool Object::setSubType(const std::string &newType) {
     // These must be set with the appropriate function
     if(type == ObjectType::ARMOR || type == ObjectType::WEAPON)
         return(false);
@@ -378,7 +377,7 @@ int Player::getWeaponSkill(const Object* weapon) const {
         bonus += 10;
 
 
-    bstring weaponType;
+    std::string weaponType;
     if(weapon)
         weaponType = weapon->getWeaponType();
     else
@@ -714,8 +713,8 @@ bool Creature::canParry(Creature* attacker) {
     if(!ready[WIELD - 1])
         return(false);          // must have a weapon wielded in order to riposte.
 
-    bstring weaponCategory = getPrimaryWeaponCategory();
-    bstring weaponType = ready[WIELD - 1]->getWeaponType();
+    std::string weaponCategory = getPrimaryWeaponCategory();
+    std::string weaponType = ready[WIELD - 1]->getWeaponType();
     if((weaponCategory != "piercing" && weaponCategory != "slashing") || weaponType == "polearm")
         return(false);          // must use a piercing or slashing weapon to riposte
 
@@ -1123,7 +1122,7 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
 int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackType, AttackResult& result, Damage& attackDamage, bool computeBonus, int& drain, float multiplier) {
     int retVal = 0;
     Damage bonusDamage;
-    bstring weaponCategory = weapon ? weapon->getWeaponCategory() : "none";
+    std::string weaponCategory = weapon ? weapon->getWeaponCategory() : "none";
     drain = 0;
 
     if(attackType == ATTACK_KICK) {
@@ -1562,8 +1561,8 @@ int Creature::parry(Creature* target) {
         }
     } else {
         // We have a riposte, calculate damage and such
-        bstring verb = getWeaponVerb();
-        bstring verbPlural = getWeaponVerbPlural();
+        std::string verb = getWeaponVerb();
+        std::string verbPlural = getWeaponVerbPlural();
         int drain=0;
         bool wasKilled = false, freeTarget = false, meKilled = false;
         //int enchant = 0;
@@ -1757,14 +1756,14 @@ int Creature::getSecondaryDelay() {
                           ready[HELD-1]->getWeaponDelay() : DEFAULT_WEAPON_DELAY);
 }
 
-bstring Creature::getPrimaryWeaponCategory() const {
+std::string Creature::getPrimaryWeaponCategory() const {
     if(ready[WIELD-1])
         return(ready[WIELD-1]->getWeaponCategory());
     else
         return("none");
 }
 
-bstring Creature::getSecondaryWeaponCategory() const {
+std::string Creature::getSecondaryWeaponCategory() const {
     if(ready[HELD-1] && ready[HELD-1]->getWearflag() == WIELD)
         return(ready[HELD-1]->getWeaponCategory());
     else
@@ -1884,7 +1883,7 @@ time_t Creature::getLTAttack() const {
 //*********************************************************************
 
 float Object::getTypeModifier() const {
-    bstring armorType = getArmorType();
+    std::string armorType = getArmorType();
 
     if(armorType == "plate" || armorType == "shield")
         return(42.89);

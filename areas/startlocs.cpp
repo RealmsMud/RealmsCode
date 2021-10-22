@@ -17,7 +17,6 @@
  */
 #include <ostream>                // for operator<<, basic_ostream, ostrings...
 
-#include "bstring.hpp"            // for bstring
 #include "catRef.hpp"             // for CatRef
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for dmStartLocs
@@ -41,7 +40,7 @@
 //*********************************************************************
 // setup the player for the first time they are bound
 
-void initialBind(Player* player, std::string_view str) {
+void initialBind(Player* player, const std::string &str) {
     const StartLoc* location = gConfig->getStartLoc(str);
     if(!location) {
         broadcast(isCt, fmt::format("Invalid start location: {}", str).c_str());
@@ -72,7 +71,7 @@ void initialBind(Player* player, std::string_view str) {
 // choose = true    return true if they made a valid selection
 //                  return false if they made an invalid selection
 
-bool startingChoices(Player *player, bstring str, char *location, bool choose) {
+bool startingChoices(Player *player, std::string str, char *location, bool choose) {
 
     // if only one start location is defined, our choices are easy!
     if (gConfig->start.size() == 1) {
@@ -83,7 +82,7 @@ bool startingChoices(Player *player, bstring str, char *location, bool choose) {
         return (true);
     }
 
-    std::list<bstring> options;
+    std::list<std::string> options;
     int race = player->getRace();
 
     // set race equal to their parent race, use player->getRace() if checking
@@ -227,7 +226,7 @@ bool startingChoices(Player *player, bstring str, char *location, bool choose) {
     }
 
 
-    std::list<bstring>::iterator it;
+    std::list<std::string>::iterator it;
     int i = 0;
 
 
@@ -273,7 +272,7 @@ bool startingChoices(Player *player, bstring str, char *location, bool choose) {
 int dmStartLocs(Player* player, cmd* cmnd) {
     player->print("Starting Locations:\n");
 
-    std::map<bstring, StartLoc*>::iterator it;
+    std::map<std::string, StartLoc*>::iterator it;
     for(it = gConfig->start.begin(); it != gConfig->start.end() ; it++) {
 
         player->print("%s\n", (*it).first.c_str());
@@ -420,9 +419,9 @@ StartLoc::StartLoc() {
 }
 
 
-bstring StartLoc::getName() const { return(name); }
-bstring StartLoc::getBindName() const { return(bindName); }
-bstring StartLoc::getRequiredName() const { return(requiredName); }
+std::string StartLoc::getName() const { return(name); }
+std::string StartLoc::getBindName() const { return(bindName); }
+std::string StartLoc::getRequiredName() const { return(requiredName); }
 Location StartLoc::getBind() const { return(bind); }
 Location StartLoc::getRequired() const { return(required); }
 CatRef StartLoc::getStartingGuide() const { return(startingGuide); }
@@ -442,7 +441,7 @@ void Player::bind(const StartLoc* location) {
 //                      getStartLoc
 //*********************************************************************
 
-const StartLoc *Config::getStartLoc(std::string_view id) const {
+const StartLoc *Config::getStartLoc(const std::string &id) const {
     auto it = start.find(id);
 
     if(it == start.end())
@@ -457,7 +456,7 @@ const StartLoc *Config::getStartLoc(std::string_view id) const {
 //*********************************************************************
 
 const StartLoc *Config::getDefaultStartLoc() const {
-    std::map<bstring, StartLoc*>::const_iterator it;
+    std::map<std::string, StartLoc*>::const_iterator it;
     for(it = start.begin(); it != start.end() ; it++) {
         if((*it).second->isDefault())
             return((*it).second);
@@ -471,7 +470,7 @@ const StartLoc *Config::getDefaultStartLoc() const {
 //*********************************************************************
 
 const StartLoc *Config::getStartLocByReq(const CatRef& cr) const {
-    std::map<bstring, StartLoc*>::const_iterator it;
+    std::map<std::string, StartLoc*>::const_iterator it;
     StartLoc* s=nullptr;
 
     for(it = start.begin() ; it != start.end() ; it++) {
@@ -488,7 +487,7 @@ const StartLoc *Config::getStartLocByReq(const CatRef& cr) const {
 //*********************************************************************
 
 void Config::clearStartLoc() {
-    std::map<bstring, StartLoc*>::iterator it;
+    std::map<std::string, StartLoc*>::iterator it;
 
     for(it = start.begin() ; it != start.end() ; it++) {
         StartLoc* s = (*it).second;

@@ -21,8 +21,8 @@
 #include <cstdlib>                                  // for free
 #include <cstring>                                  // for strcmp, strcpy
 #include <strings.h>                                // for strcasecmp
+#include <string>
 
-#include "bstring.hpp"                              // for bstring
 #include "proto.hpp"                                // for unxsc, xsc, loge
 #include "xml.hpp"                                  // for toNum, bad_lexica...
 
@@ -50,7 +50,7 @@ namespace xml {
     }
 
     // XSC: yes
-    xmlAttrPtr newProp(xmlNodePtr node, const bstring& name, const bstring& value) {
+    xmlAttrPtr newProp(xmlNodePtr node, const std::string &name, const std::string &value) {
         xmlAttrPtr toReturn;
         xmlChar* xmlTmp;
         xmlTmp = xmlEncodeSpecialChars((node)->doc, BAD_CAST (xsc(value).c_str()) );
@@ -61,24 +61,24 @@ namespace xml {
     }
 
 
-    xmlNodePtr newBoolChild(xmlNodePtr node, const bstring& name, const bool value) {
+    xmlNodePtr newBoolChild(xmlNodePtr node, const std::string &name, const bool value) {
         return(xmlNewChild( node, nullptr, BAD_CAST (name.c_str()), BAD_CAST iToYesNo(value)));
     }
 
     // XSC: yes
-    xmlNodePtr newStringChild(xmlNodePtr node, const bstring& name, const bstring& value) {
+    xmlNodePtr newStringChild(xmlNodePtr node, const std::string &name, const std::string &value) {
         return(xmlNewTextChild( node, nullptr, BAD_CAST (name.c_str()), BAD_CAST (xsc(value).c_str()) ));
     }
 
     // XSC: yes
-    xmlNodePtr saveNonNullString(xmlNodePtr node, const bstring& name, const bstring& value) {
+    xmlNodePtr saveNonNullString(xmlNodePtr node, const std::string &name, const std::string &value) {
         if(value.empty())
             return(nullptr);
         return(xmlNewTextChild( (node), nullptr, BAD_CAST (name.c_str()), BAD_CAST (xsc(value).c_str()) ));
     }
 
     // unXSC: yes
-    void copyToBString(bstring& to, xmlNodePtr node) {
+    void copyToString(std::string &to, xmlNodePtr node) {
         char* xTemp = getCString(node);
         if(xTemp) {
             to = unxsc(xTemp);
@@ -87,7 +87,7 @@ namespace xml {
     }
 
     // unXSC: yes
-    void copyPropToBString(bstring& to, xmlNodePtr node, const bstring& name) {
+    void copyPropToString(std::string &to, xmlNodePtr node, const std::string &name) {
         char* xTemp = (char *)xmlGetProp(node, BAD_CAST(name.c_str()));
         if(xTemp) {
             to = unxsc(xTemp);
@@ -96,8 +96,8 @@ namespace xml {
     }
 
     // unXSC: yes
-    bstring getBString(xmlNodePtr node) {
-        bstring toReturn;
+    std::string getString(xmlNodePtr node) {
+        std::string toReturn;
         char* xTemp = getCString(node);
         if(xTemp) {
             toReturn = unxsc(xTemp);
@@ -123,8 +123,8 @@ namespace xml {
     }
 
     // unXSC: yes
-    bstring getProp(xmlNodePtr node, const char *name) {
-        bstring toReturn;
+    std::string getProp(xmlNodePtr node, const char *name) {
+        std::string toReturn;
         char* xTemp = (char *)xmlGetProp( (node) , BAD_CAST (name) );
         if(xTemp) {
             toReturn = unxsc(xTemp);
@@ -134,7 +134,7 @@ namespace xml {
     }
 
     // unXSC: yes
-    void copyPropToCString(char* to, xmlNodePtr node, const bstring& name) {
+    void copyPropToCString(char* to, xmlNodePtr node, const std::string &name) {
         strcpy(to, getProp(node, name.c_str()).c_str());
     }
 

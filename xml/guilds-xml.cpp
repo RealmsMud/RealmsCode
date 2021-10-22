@@ -23,7 +23,6 @@
 #include <map>                                      // for operator==, opera...
 #include <stdexcept>                                // for runtime_error
 
-#include "bstring.hpp"                              // for bstring
 #include "config.hpp"                               // for Config, gConfig
 #include "guilds.hpp"                               // for Guild, GuildCreation
 #include "paths.hpp"                                // for PlayerData
@@ -102,8 +101,8 @@ Guild::Guild(xmlNodePtr curNode) {
     gConfig->setNumGuilds(guildId);
     curNode = curNode->children;
     while(curNode != nullptr) {
-        if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
-        else if(NODE_NAME(curNode, "Leader")) xml::copyToBString(leader, curNode);
+        if(NODE_NAME(curNode, "Name")) xml::copyToString(name, curNode);
+        else if(NODE_NAME(curNode, "Leader")) xml::copyToString(leader, curNode);
         else if(NODE_NAME(curNode, "Level")) xml::copyToNum(level, curNode);
         else if(NODE_NAME(curNode, "NumMembers")) xml::copyToNum(numMembers, curNode);
         else if(NODE_NAME(curNode, "Members")) parseGuildMembers(curNode);
@@ -124,15 +123,15 @@ Guild::Guild(xmlNodePtr curNode) {
 GuildCreation * parseGuildCreation(xmlNodePtr cur) {
     auto* gc = new GuildCreation;
 
-    bstring temp = "";
+    std::string temp = "";
     cur = cur->children;
     while(cur != nullptr) {
-        if(NODE_NAME(cur, "Name")) xml::copyToBString(gc->name, cur);
-        else if(NODE_NAME(cur, "Leader")) xml::copyToBString(gc->leader, cur);
-        else if(NODE_NAME(cur, "LeaderIp")) xml::copyToBString(gc->leaderIp, cur);
+        if(NODE_NAME(cur, "Name")) xml::copyToString(gc->name, cur);
+        else if(NODE_NAME(cur, "Leader")) xml::copyToString(gc->leader, cur);
+        else if(NODE_NAME(cur, "LeaderIp")) xml::copyToString(gc->leaderIp, cur);
         else if(NODE_NAME(cur, "Status")) xml::copyToNum(gc->status, cur);
         else if(NODE_NAME(cur, "Supporter")) {
-            xml::copyToBString(temp, cur);
+            xml::copyToString(temp, cur);
             gc->supporters[temp] = xml::getProp(cur, "Ip");
             gc->numSupporters++;
         }
@@ -215,7 +214,7 @@ bool Guild::saveToXml(xmlNodePtr rootNode) const {
     xml::newNumChild(curNode, "NumMembers", numMembers);
 
     membersNode = xml::newStringChild(curNode, "Members");
-    std::list<bstring>::const_iterator mIt;
+    std::list<std::string>::const_iterator mIt;
     for(mIt = members.begin() ; mIt != members.end() ; mIt++) {
         xml::newStringChild(membersNode, "Member", *mIt);
     }
@@ -244,7 +243,7 @@ bool GuildCreation::saveToXml(xmlNodePtr rootNode) const {
     xml::newNumChild(curNode, "Status", status);
 
     // Supporters
-    std::map<bstring, bstring>::const_iterator sIt;
+    std::map<std::string, std::string>::const_iterator sIt;
     for(sIt = supporters.begin() ; sIt != supporters.end() ; sIt++) {
         childNode = xml::newStringChild(curNode, "Supporter", (*sIt).first);
         xml::newProp(childNode, "Ip", (*sIt).second);

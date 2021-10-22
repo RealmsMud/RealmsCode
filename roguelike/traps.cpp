@@ -18,7 +18,6 @@
 #include <cstdlib>                // for abs
 #include <ctime>                  // for time
 
-#include "bstring.hpp"            // for bstring
 #include "catRef.hpp"             // for CatRef
 #include "commands.hpp"           // for lose_all
 #include "container.hpp"          // for PlayerSet, ObjectSet, MonsterSet

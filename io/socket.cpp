@@ -40,7 +40,6 @@
 #include <boost/tokenizer.hpp>
 #include <fstream>
 
-#include "bstring.hpp"                              // for bstring, operator+
 #include "commands.hpp"                             // for command, changing...
 #include "config.hpp"                               // for Config, gConfig
 #include "color.hpp"                                // for stripColor
@@ -403,14 +402,14 @@ void Socket::disconnect() {
 //                      resolveIp
 //********************************************************************
 
-void Socket::resolveIp(const sockaddr_in &addr, bstring& ip) {
+void Socket::resolveIp(const sockaddr_in &addr, std::string& ip) {
     std::ostringstream tmp;
     long i = htonl(addr.sin_addr.s_addr);
     tmp << ((i >> 24) & 0xff) << "." << ((i >> 16) & 0xff) << "." << ((i >> 8) & 0xff) << "." << (i & 0xff);
     ip = tmp.str();
 }
 
-bstring Socket::parseForOutput(std::string_view outBuf) {
+std::string Socket::parseForOutput(std::string_view outBuf) {
     int i = 0;
     auto n = outBuf.size();
     std::ostringstream oStr;
@@ -485,7 +484,7 @@ bool Socket::needsPrompt(std::string_view inStr) {
     return false;
 }
 
-bstring Socket::stripTelnet(std::string_view inStr) {
+std::string Socket::stripTelnet(std::string_view inStr) {
     int i = 0;
     auto n = inStr.size();
     std::ostringstream oStr;
@@ -580,7 +579,7 @@ int Socket::processInput() {
     unsigned char tmpBuf[1024];
     ssize_t n;
     ssize_t i = 0;
-    bstring tmp = "";
+    std::string tmp = "";
 
     // Attempt to read from the socket
     n = read(getFd(), tmpBuf, 1023);
@@ -641,7 +640,7 @@ int Socket::processInput() {
                     tState = NEG_MXP_SECURE_TWO;
                     break;
                 } else {
-                    tmp += "\033" + bstring(tmpBuf[i]);
+                    tmp += fmt::format("\033{}", tmpBuf[i]);
                 }
                 tState = NEG_NONE;
                 break;
@@ -650,7 +649,7 @@ int Socket::processInput() {
                     tState = NEG_MXP_SECURE_FINISH;
                     break;
                 } else {
-                    tmp += "\033[" + bstring(tmpBuf[i]);
+                    tmp += fmt::format("\033[{}", tmpBuf[i]);
                 }
                 tState = NEG_NONE;
                 break;
@@ -661,7 +660,7 @@ int Socket::processInput() {
                     std::clog << "Client secure MXP mode enabled" << std::endl;
                     break;
                 } else {
-                    tmp += "\033[1" + bstring(tmpBuf[i]);
+                    tmp += fmt::format("\033[1{}",tmpBuf[i]);
                 }
                 tState = NEG_NONE;
                 break;
@@ -835,7 +834,7 @@ int Socket::processInput() {
                     if ((term.firstType != term.type) && (term.lastType.empty() ||  (term.type != term.lastType))) {
                         term.lastType = "";
                         // Look for 256 color support
-                        if (term.type.find("-256color") != bstring::npos) {
+                        if (term.type.find("-256color") != std::string::npos) {
                             // Works for tintin++, wintin++ and blowtorch
                             opts.xterm256 = true;
                         }
@@ -847,9 +846,9 @@ int Socket::processInput() {
                         term.firstType = term.type;
                     }
 
-                    if (term.type.find("Mudlet") != bstring::npos and term.type > "Mudlet 1.1") {
+                    if (term.type.find("Mudlet") != std::string::npos and term.type > "Mudlet 1.1") {
                         opts.xterm256 = true;
-                    } else if(term.type.equals("EMACS-RINZAI", false) || term.type.find("DecafMUD") != bstring::npos) {
+                    } else if(boost::iequals(term.type, "EMACS-RINZAI") || term.type.find("DecafMUD") != std::string::npos) {
                         opts.xterm256 = true;
                     }
 
@@ -898,37 +897,37 @@ int Socket::processInput() {
 
     // Handles the screwy windows telnet, and its not that hard for
     // other clients that send \n\r too
-    tmp.Replace("\r", "\n");
+    std::replace(tmp.begin(), tmp.end(), '\r', '\n');
     inBuf += tmp;
 
     // handle backspaces
-    n = inBuf.getLength();
+    n = inBuf.length();
 
-    for (i = MAX<int>(n - tmp.getLength(), 0); i < (unsigned) n; i++) {
-        if (inBuf.getAt(i) == '\b' || inBuf.getAt(i) == 127) {
+    for (i = MAX<int>(n - tmp.length(), 0); i < (unsigned) n; i++) {
+        if (inBuf.at(i) == '\b' || inBuf.at(i) == 127) {
             if (n < 2) {
                 inBuf = "";
                 n = 0;
             } else {
-                inBuf.Delete(i - 1, 2);
+                inBuf.erase(i - 1, 2);
                 n -= 2;
                 i--;
             }
         }
     }
 
-    bstring::size_type idx = 0;
-    while ((idx = inBuf.find("\n", 0)) != bstring::npos) {
-        bstring tmpr = inBuf.substr(0, idx); // Don't copy the \n
+    std::string::size_type idx = 0;
+    while ((idx = inBuf.find("\n", 0)) != std::string::npos) {
+        std::string tmpr = inBuf.substr(0, idx); // Don't copy the \n
         idx += 1; // Consume the \n
         if (inBuf[idx] == '\n')
             idx += 1; // Consume the extra \n if applicable
 
         inBuf.erase(0, idx);
         if(opts.mxpClientSecure) {
-            if(inBuf.left(8).equals("<version", false)) {
+            if(boost::istarts_with(inBuf, "<version")) {
                 std::clog << "Got msxp version\n";
-            } else if(inBuf.left(9).equals("<supports", false)) {
+            } else if(boost::istarts_with(inBuf, "<supports")) {
                 std::clog << "Got msxp supports\n";
             }
         }
@@ -1100,7 +1099,7 @@ bool Socket::handleNaws(int& colRow, unsigned char& chr, bool high) {
 // Aka interpreter
 
 int Socket::processOneCommand() {
-    bstring cmd = input.front();
+    std::string cmd = input.front();
     input.pop();
 
     // Send the command to the people we're spying on
@@ -1111,7 +1110,7 @@ int Socket::processOneCommand() {
         }
     }
 
-    ((void(*)(Socket*, bstring)) (fn))(this, cmd);
+    ((void(*)(Socket*, std::string)) (fn))(this, cmd);
 
     return (1);
 }
@@ -1130,8 +1129,8 @@ void Socket::restoreState() {
 //                      pauseScreen
 //*********************************************************************
 
-void pauseScreen(Socket* sock, const bstring& str) {
-    if(str.equals("quit"))
+void pauseScreen(Socket* sock, const std::string &str) {
+    if(str == "quit")
         sock->disconnect();
     else
         sock->reconnect();
@@ -1159,12 +1158,12 @@ void Socket::reconnect(bool pauseScreen) {
 }
 
 
-void viewFileReverse(Socket *sock, const bstring& file) {
+void viewFileReverse(Socket *sock, const std::string& file) {
     sock->viewFileReverse(file);
 }
 
 
-void handlePaging(Socket* sock, const bstring& inStr) {
+void handlePaging(Socket* sock, const std::string& inStr) {
     sock->handlePaging(inStr);
 }
 
@@ -1176,8 +1175,8 @@ void Socket::sendPages(int numPages) {
     }
 }
 
-void Socket::handlePaging(const bstring& inStr) {
-    if(inStr.equals("")) {
+void Socket::handlePaging(const std::string& inStr) {
+    if(inStr == "") {
         int numPages = MIN<int>(getMaxPages(), pagerOutput.size());
         sendPages(numPages);
 
@@ -1238,9 +1237,9 @@ void Socket::setState(int pState, char pFnParam) {
     fnparam = (char) pFnParam;
 }
 
-bstring getMxpTag( std::string_view tag, bstring text ) {
-    bstring::size_type n = text.find(tag);
-    if(n == bstring::npos)
+std::string getMxpTag( std::string_view tag, std::string text ) {
+    std::string::size_type n = text.find(tag);
+    if(n == std::string::npos)
         return("");
 
     std::ostringstream oStr;
@@ -1264,29 +1263,29 @@ bstring getMxpTag( std::string_view tag, bstring text ) {
 
 bool Socket::parseMXPSecure() {
     if(mxpEnabled()) {
-        bstring toParse(reinterpret_cast<char*>(&cmdInBuf[0]), cmdInBuf.size());
+        std::string toParse(reinterpret_cast<char*>(&cmdInBuf[0]), cmdInBuf.size());
         std::clog << toParse << std::endl;
 
-        bstring client = getMxpTag("CLIENT=", toParse);
+        std::string client = getMxpTag("CLIENT=", toParse);
         if (!client.empty()) {
             // Overwrite the previous client name - this is harder to fake
             term.type = client;
         }
 
-        bstring version = getMxpTag("VERSION=", toParse);
+        std::string version = getMxpTag("VERSION=", toParse);
         if(!version.empty()) {
             term.version = version;
-            if(term.type.equals("mushclient", false)) {
+            if(boost::iequals(term.type, "mushclient")) {
                 opts.xterm256 = (version >= "4.02");
-            } else if (term.type.equals("cmud", false)) {
+            } else if (boost::iequals(term.type, "cmud")) {
                 opts.xterm256 = (version >= "3.04");
-            } else if (term.type.equals("atlantis", false)) {
+            } else if (boost::iequals(term.type, "atlantis")) {
                 // Any version of atlantis with MXP supports xterm256
                 opts.xterm256 = true;
             }
         }
 
-        bstring supports = getMxpTag("SUPPORT=", toParse);
+        std::string supports = getMxpTag("SUPPORT=", toParse);
         if(!supports.empty()) {
             std::clog << "Got <SUPPORT='" << supports << "'>" << std::endl;
         }
@@ -1299,7 +1298,7 @@ bool Socket::parseMXPSecure() {
 
 bool Socket::parseMsdp() {
     if(msdpEnabled()) {
-        bstring var, val;
+        std::string var, val;
         int nest = 0;
 
         var.reserve(15);
@@ -1406,7 +1405,7 @@ void Socket::bprint(std::string_view toPrint) {
         output.append(toPrint);
 }
 
-void Socket::bprintPython(const bstring& toPrint) {
+void Socket::bprintPython(const std::string& toPrint) {
     if (!toPrint.empty())
         output.append(toPrint);
 }
@@ -1427,7 +1426,7 @@ void Socket::println(std::string_view toPrint) {
 void Socket::print(const char* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    bstring newFmt = stripColor(fmt);
+    std::string newFmt = stripColor(fmt);
     vprint( newFmt.c_str(), ap);
     va_end(ap);
 }
@@ -1474,7 +1473,7 @@ ssize_t Socket::write(std::string_view toWrite, bool pSpy, bool process) {
     size_t total = 0;
 
     // Parse any color, unicode, etc here
-    bstring toOutput;
+    std::string toOutput;
     if(process)
         toOutput = parseForOutput(toWrite);
     else {
@@ -1532,13 +1531,12 @@ ssize_t Socket::write(std::string_view toWrite, bool pSpy, bool process) {
     }
 
     if (pSpy && !spying.empty()) {
-        bstring forSpy = Socket::stripTelnet(toWrite);
+        std::string forSpy = Socket::stripTelnet(toWrite);
 
-        forSpy.Replace("\n", "\n<Spy> ");
+        boost::replace_all(forSpy, "\n", "\n<Spy> ");
         if(!forSpy.empty()) {
             std::list<Socket*>::iterator it;
-            for (it = spying.begin(); it != spying.end(); it++) {
-                Socket *sock = *it;
+            for(const auto sock : spying) {
                 if (sock)
                     sock->write("<Spy> " + forSpy, false);
             }
@@ -1692,7 +1690,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
         else if (NODE_NAME(curNode, "MXP")) xml::copyToBool(opts.mxp, curNode);
         else if (NODE_NAME(curNode, "Color")) xml::copyToNum(opts.color, curNode);
         else if (NODE_NAME(curNode, "MSDP"))  xml::copyToBool(opts.msdp, curNode);
-        else if (NODE_NAME(curNode, "Term")) xml::copyToBString(term.type, curNode);
+        else if (NODE_NAME(curNode, "Term")) xml::copyToString(term.type, curNode);
         else if (NODE_NAME(curNode, "DumbClient")) xml::copyToBool(opts.dumb, curNode);
         else if (NODE_NAME(curNode, "TermCols")) xml::copyToNum(term.cols, curNode);
         else if (NODE_NAME(curNode, "TermRows")) xml::copyToNum(term.rows, curNode);
@@ -1733,7 +1731,7 @@ bool Socket::hasCommand() const {
 // True if the socket is playing (ie: fn is command and fnparam is 1)
 
 bool Socket::canForce() const {
-    return (fn == (void(*)(Socket*, const bstring&)) ::command && fnparam == 1);
+    return (fn == (void(*)(Socket*, const std::string&)) ::command && fnparam == 1);
 }
 
 //********************************************************************
@@ -1798,7 +1796,7 @@ std::string_view Socket::getIp() const {
 std::string_view Socket::getHostname() const {
     return (host.hostName);
 }
-bstring Socket::getTermType() const {
+std::string Socket::getTermType() const {
     return (term.type);
 }
 int Socket::getColorOpt() const {
@@ -1909,7 +1907,7 @@ int Socket::sendMSSP() {
 
     msspStr << telnet::sb_mssp_start;
     addMSSPVar(msspStr, "NAME");
-    addMSSPVal<bstring>(msspStr, "The Realms of Hell");
+    addMSSPVal<std::string>(msspStr, "The Realms of Hell");
 
     addMSSPVar(msspStr, "PLAYERS");
     addMSSPVal<int>(msspStr, gServer->getNumPlayers());
@@ -1918,46 +1916,46 @@ int Socket::sendMSSP() {
     addMSSPVal<long>(msspStr, StartTime);
 
     addMSSPVar(msspStr, "HOSTNAME");
-    addMSSPVal<bstring>(msspStr, "mud.rohonline.net");
+    addMSSPVal<std::string>(msspStr, "mud.rohonline.net");
 
     addMSSPVar(msspStr, "PORT");
-    addMSSPVal<bstring>(msspStr, "23");
-    addMSSPVal<bstring>(msspStr, "3333");
+    addMSSPVal<std::string>(msspStr, "23");
+    addMSSPVal<std::string>(msspStr, "3333");
 
     addMSSPVar(msspStr, "CODEBASE");
-    addMSSPVal<bstring>(msspStr, "RoH beta v" VERSION);
+    addMSSPVal<std::string>(msspStr, "RoH beta v" VERSION);
 
     addMSSPVar(msspStr, "VERSION");
-    addMSSPVal<bstring>(msspStr, "RoH beta v" VERSION);
+    addMSSPVal<std::string>(msspStr, "RoH beta v" VERSION);
 
     addMSSPVar(msspStr, "CREATED");
-    addMSSPVal<bstring>(msspStr, "1998");
+    addMSSPVal<std::string>(msspStr, "1998");
 
     addMSSPVar(msspStr, "LANGUAGE");
-    addMSSPVal<bstring>(msspStr, "English");
+    addMSSPVal<std::string>(msspStr, "English");
 
     addMSSPVar(msspStr, "LOCATION");
-    addMSSPVal<bstring>(msspStr, "United States");
+    addMSSPVal<std::string>(msspStr, "United States");
 
     addMSSPVar(msspStr, "WEBSITE");
-    addMSSPVal<bstring>(msspStr, "http://www.rohonline.net");
+    addMSSPVal<std::string>(msspStr, "http://www.rohonline.net");
 
     addMSSPVar(msspStr, "FAMILY");
-    addMSSPVal<bstring>(msspStr, "Mordor");
+    addMSSPVal<std::string>(msspStr, "Mordor");
 
     addMSSPVar(msspStr, "GENRE");
-    addMSSPVal<bstring>(msspStr, "Fantasy");
+    addMSSPVal<std::string>(msspStr, "Fantasy");
 
     addMSSPVar(msspStr, "GAMEPLAY");
-    addMSSPVal<bstring>(msspStr, "Roleplaying");
-    addMSSPVal<bstring>(msspStr, "Hack and Slash");
-    addMSSPVal<bstring>(msspStr, "Adventure");
+    addMSSPVal<std::string>(msspStr, "Roleplaying");
+    addMSSPVal<std::string>(msspStr, "Hack and Slash");
+    addMSSPVal<std::string>(msspStr, "Adventure");
 
     addMSSPVar(msspStr, "STATUS");
-    addMSSPVal<bstring>(msspStr, "Live");
+    addMSSPVal<std::string>(msspStr, "Live");
 
     addMSSPVar(msspStr, "GAMESYSTEM");
-    addMSSPVal<bstring>(msspStr, "Custom");
+    addMSSPVal<std::string>(msspStr, "Custom");
 
     addMSSPVar(msspStr, "AREAS");
     addMSSPVal<int>(msspStr, -1);
@@ -1987,93 +1985,93 @@ int Socket::sendMSSP() {
     addMSSPVal<size_t>(msspStr, gConfig->skills.size());
 
     addMSSPVar(msspStr, "GMCP");
-    addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVal<std::string>(msspStr, "0");
 
     addMSSPVar(msspStr, "ATCP");
-    addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVal<std::string>(msspStr, "0");
 
     addMSSPVar(msspStr, "SSL");
-    addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVal<std::string>(msspStr, "0");
 
     addMSSPVar(msspStr, "ZMP");
-    addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVal<std::string>(msspStr, "0");
 
     addMSSPVar(msspStr, "PUEBLO");
-    addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVal<std::string>(msspStr, "0");
 
     addMSSPVar(msspStr, "MSDP");
-    addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVal<std::string>(msspStr, "1");
 
     addMSSPVar(msspStr, "MSP");
-    addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVal<std::string>(msspStr, "1");
 
     // TODO: UTF-8: Change to 1
     addMSSPVar(msspStr, "UTF-8");
-    addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVal<std::string>(msspStr, "0");
 
     addMSSPVar(msspStr, "VT100");
-    addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVal<std::string>(msspStr, "0");
 
     // TODO: XTERM 256: Change to 1
     addMSSPVar(msspStr, "XTERM 256 COLORS");
-    addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVal<std::string>(msspStr, "0");
 
     addMSSPVar(msspStr, "ANSI");
-    addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVal<std::string>(msspStr, "1");
 
     addMSSPVar(msspStr, "MCCP");
-    addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVal<std::string>(msspStr, "1");
 
     addMSSPVar(msspStr, "MXP");
-    addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVal<std::string>(msspStr, "1");
 
     addMSSPVar(msspStr, "PAY TO PLAY");
-    addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVal<std::string>(msspStr, "0");
 
     addMSSPVar(msspStr, "PAY FOR PERKS");
-    addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVal<std::string>(msspStr, "0");
 
     addMSSPVar(msspStr, "HIRING BUILDERS");
-    addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVal<std::string>(msspStr, "1");
 
     addMSSPVar(msspStr, "HIRING CODERS");
-    addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVal<std::string>(msspStr, "1");
 
     addMSSPVar(msspStr, "MULTICLASSING");
-    addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVal<std::string>(msspStr, "1");
 
     addMSSPVar(msspStr, "NEWBIE FRIENDLY");
-    addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVal<std::string>(msspStr, "1");
 
     addMSSPVar(msspStr, "PLAYER CLANS");
-    addMSSPVal<bstring>(msspStr, "0");
+    addMSSPVal<std::string>(msspStr, "0");
 
     addMSSPVar(msspStr, "PLAYER CRAFTING");
-    addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVal<std::string>(msspStr, "1");
 
     addMSSPVar(msspStr, "PLAYER GUILDS");
-    addMSSPVal<bstring>(msspStr, "1");
+    addMSSPVal<std::string>(msspStr, "1");
 
     addMSSPVar(msspStr, "EQUIPMENT SYSTEM");
-    addMSSPVal<bstring>(msspStr, "Both");
+    addMSSPVal<std::string>(msspStr, "Both");
 
     addMSSPVar(msspStr, "MULTIPLAYING");
-    addMSSPVal<bstring>(msspStr, "Restricted");
+    addMSSPVal<std::string>(msspStr, "Restricted");
 
     addMSSPVar(msspStr, "PLAYERKILLING");
-    addMSSPVal<bstring>(msspStr, "Restricted");
+    addMSSPVal<std::string>(msspStr, "Restricted");
 
     addMSSPVar(msspStr, "QUEST SYSTEM");
-    addMSSPVal<bstring>(msspStr, "Integrated");
+    addMSSPVal<std::string>(msspStr, "Integrated");
 
     addMSSPVar(msspStr, "ROLEPLAYING");
-    addMSSPVal<bstring>(msspStr, "Encouraged");
+    addMSSPVal<std::string>(msspStr, "Encouraged");
 
     addMSSPVar(msspStr, "TRAINING SYSTEM");
-    addMSSPVal<bstring>(msspStr, "Both");
+    addMSSPVal<std::string>(msspStr, "Both");
 
     addMSSPVar(msspStr, "WORLD ORIGINALITY");
-    addMSSPVal<bstring>(msspStr, "All Original");
+    addMSSPVal<std::string>(msspStr, "All Original");
 
     msspStr << telnet::sb_mssp_end;
 
@@ -2093,13 +2091,13 @@ int Socket::getNumSockets() {
 // prompted to hit return to continue, thus dividing the output into
 // several pages.
 
-void Socket::viewFile(const bstring& str, bool shouldPage) {
+void Socket::viewFile(const std::string& str, bool shouldPage) {
     std::ifstream file(str);
     if(!file.is_open()) {
         bprint("File could not be opened.\n");
         return;
     }
-    bstring line;
+    std::string line;
     while(std::getline(file, line)) {
         if(shouldPage)
             printPaged(line);
@@ -2119,7 +2117,7 @@ void Socket::viewFile(const bstring& str, bool shouldPage) {
 // displays a file, line by line starting with the last
 // similar to unix 'tac' command
 
-void Socket::viewFileReverseReal(const bstring& str) {
+void Socket::viewFileReverseReal(const std::string& str) {
     off_t oldpos;
     off_t newpos;
     off_t temppos;
@@ -2241,7 +2239,7 @@ void Socket::viewFileReverseReal(const bstring& str) {
 }
 
 // Wrapper for viewFileReverse_real that properly sets the connected state
-void Socket::viewFileReverse(const bstring& str) {
+void Socket::viewFileReverse(const std::string& str) {
     if(getState() != CON_VIEWING_FILE_REVERSE)
         setState(CON_VIEWING_FILE_REVERSE);
     viewFileReverseReal(str);

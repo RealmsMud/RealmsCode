@@ -18,7 +18,6 @@
 #include <cstring>        // for strcpy, strcmp, strlen
 #include <string>         // for operator==, basic_string, operator!=
 
-#include "bstring.hpp"    // for bstring, operator+
 #include "cmd.hpp"        // for cmd
 #include "commands.hpp"   // for cmdProcess, getFullstrText, finishDropObject
 #include "container.hpp"  // for MonsterPtrLess (ptr only), PlayerSet
@@ -44,11 +43,11 @@ class MudObject;
 //                      socialHooks
 //*********************************************************************
 
-void socialHooks(Creature *creature, MudObject* target, std::string_view action, std::string_view result) {
+void socialHooks(Creature *creature, MudObject* target, const std::string &action, const std::string &result) {
     Hooks::run(creature, "doSocial", target, "receiveSocial", action, result);
 }
 
-void socialHooks(Creature *target, std::string_view action, std::string_view result) {
+void socialHooks(Creature *target, const std::string &action, const std::string &result) {
     if(!target->getRoomParent())
         return;
     Hooks::run<Monster*,MonsterPtrLess>(target->getRoomParent()->monsters, target, "roomSocial", action, result);
@@ -63,7 +62,7 @@ bool actionShow(Player* pTarget, Creature* creature) {
 }
 
 // prototype for actionFail
-int actionFail(Creature* player, bstring action, std::string_view second = "m");
+int actionFail(Creature* player, std::string action, std::string_view second = "m");
 
 #define ACTION_SHOW
 
@@ -185,7 +184,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
     Exit    *exit=nullptr;
     int     n=0, num=0, num1=0, num2=0;
     char    temp[12];
-    bstring str = "";
+    std::string str = "";
 
     ASSERTLOG( creature );
     ASSERTLOG( cmnd );
@@ -496,7 +495,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
 
         if(loadObject(SHIT_OBJ, &object)) {
-            object->setName(bstring("piece of ") + (player->flagIsSet(P_ALIASING) ? player->getAlias()->getName() : player->getName()) + "'s shit");
+            object->setName(std::string("piece of ") + (player->flagIsSet(P_ALIASING) ? player->getAlias()->getName() : player->getName()) + "'s shit");
 
             finishDropObject(object, room, player);
         }
@@ -527,7 +526,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
 
         if(loadObject(42, &object)) {
-            object->setName(bstring("puddle of ") + (player->flagIsSet(P_ALIASING) ? player->getAlias()->getName() : player->getName()) + "'s piss");
+            object->setName(std::string("puddle of ") + (player->flagIsSet(P_ALIASING) ? player->getAlias()->getName() : player->getName()) + "'s piss");
             object->plural = "puddles of ";
             object->plural += (player->flagIsSet(P_ALIASING) ? player->getAlias()->getName() : player->getName());
             object->plural += "'s piss";
@@ -637,7 +636,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
         creature->stand();
 
     } else if(str == "flip") {
-        bstring result = (Random::get(0,1) ? "heads" : "tails");
+        std::string result = (Random::get(0,1) ? "heads" : "tails");
 
         if(creature->getClass() == CreatureClass::CLERIC && creature->getDeity() == KAMIRA) {
             sock->print("You flip a coin. It lands on its side!\n");
@@ -689,7 +688,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
             sock->print("You roll 2d6\n: %d\n", num);
             broadcast(sock, room, "(Dice 2d6): %M got %d.", creature, num);
-            socialHooks(creature, str, (bstring)num);
+            socialHooks(creature, str, fmt::format("{}", num));
         }
     }  else if(str == "lobotomy") {
 
@@ -870,7 +869,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 //                      isBadSocial
 //*********************************************************************
 
-bool isBadSocial(const bstring& str) {
+bool isBadSocial(const std::string& str) {
     return( str == "anvil" || str == "knee" || str == "kic" || str == "spit" || str == "mark" || str == "cstr" || str == "hammer" ||
             str == "slap" || str == "bird" || str == "moon" || str == "punch" || str == "choke" || str == "bhand" || str == "pants" ||
             str == "noogie" || str == "pummel" || str.empty() || str == "trip" || str == "smack" || str == "swat" || str == "whip" ||
@@ -882,7 +881,7 @@ bool isBadSocial(const bstring& str) {
 //                      isBadSocial
 //*********************************************************************
 
-bool isSemiBadSocial(const bstring& str) {
+bool isSemiBadSocial(const std::string& str) {
     return( str == "hump" || str == "ogle" || str == "fart" || str.empty() || str == "expose" || str == "goose" || str == "copulate" ||
             str == "suck" || str == "glare" || str == "growl" || str == "dirt" || str == "cough" || str == "shove" || str == "taunt" ||
             str == "eye" || str == "narrow" || str == "disgust" || str == "fondle" || str == "grope" || str == "loom" || str == "pester" ||
@@ -895,7 +894,7 @@ bool isSemiBadSocial(const bstring& str) {
 //                      isBadSocial
 //*********************************************************************
 
-bool isGoodSocial(const bstring& str) {
+bool isGoodSocial(const std::string& str) {
     return( str == "cheer" || str == "dance" || str == "comfort" || str == "kiss" || str == "bless" || str == "hbeer" || str == "bow" ||
             str == "curtsey" || str == "high5" || str == "worship" || str == "blow" || str == "caress" || str == "cuddle" || str == "embrace" ||
             str == "grovel" || str == "massage" || str == "salute" || str == "snuggle" || str == "thumb" || str == "congrats" || str == "thank" ||
@@ -907,7 +906,7 @@ bool isGoodSocial(const bstring& str) {
 //*********************************************************************
 // print the error message to the right person
 
-int actionFail(Creature* player, bstring action, std::string_view second) {
+int actionFail(Creature* player, std::string action, std::string_view second) {
     action.at(0) = up(action.at(0));
     player->bPrint(fmt::format("{} who{}?\n", action, second));
     return(0);
@@ -952,7 +951,7 @@ void Creature::stand() {
 //                      wake
 //*********************************************************************
 
-void Creature::wake(const bstring& str, bool noise) {
+void Creature::wake(const std::string& str, bool noise) {
     if(isMonster())
         return;
 

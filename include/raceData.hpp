@@ -31,9 +31,9 @@ class SkillGain;
 class RaceData {
 protected:
     int id;
-    bstring name;
-    bstring adjective;
-    bstring abbr;
+    std::string name;
+    std::string adjective;
+    std::string abbr;
 
     bool infra;
     bool bonus;
@@ -62,9 +62,9 @@ public:
     ~RaceData();
 
     [[nodiscard]] int getId() const;
-    [[nodiscard]] bstring getName(int tryToShorten=0) const;
-    [[nodiscard]] bstring getAdjective() const;
-    [[nodiscard]] bstring getAbbr() const;
+    [[nodiscard]] std::string getName(int tryToShorten=0) const;
+    [[nodiscard]] std::string getAdjective() const;
+    [[nodiscard]] std::string getAbbr() const;
 
     [[nodiscard]] int getParentRace() const;
     void makeParent();
@@ -95,7 +95,7 @@ public:
     std::map<Sex, Dice> varHeight;
     std::map<Sex, Dice> varWeight;
 
-    std::list<bstring> effects;
+    std::list<std::string> effects;
 };
 
 

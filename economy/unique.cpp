@@ -22,8 +22,8 @@
 #include <ctime>                                   // for time, ctime
 #include <list>                                     // for operator==, opera...
 #include <string>                                   // for operator==, basic...
+#include <boost/algorithm/string/trim.hpp>
 
-#include "bstring.hpp"                              // for bstring
 #include "catRef.hpp"                               // for CatRef
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for getFullstrText
@@ -123,7 +123,7 @@ void UniqueOwner::load(xmlNodePtr curNode) {
     while(childNode) {
         if(NODE_NAME(childNode, "Time")) xml::copyToNum(time, childNode);
         else if(NODE_NAME(childNode, "Item")) item.load(childNode);
-        else if(NODE_NAME(childNode, "Owner")) xml::copyToBString(owner, childNode);
+        else if(NODE_NAME(childNode, "Owner")) xml::copyToString(owner, childNode);
 
         childNode = childNode->next;
     }
@@ -144,8 +144,8 @@ void UniqueOwner::save(xmlNodePtr curNode) const {
 //*********************************************************************
 
 void UniqueOwner::show(const Player* player) {
-    bstring t = ctime(&time);
-    t.trim();
+    std::string t = ctime(&time);
+    boost::trim(t);
     player->printColor("      Time: ^c%s^x   Owner: ^c%s^x   Object: ^c%s\n",
         t.c_str(), owner.c_str(), item.str().c_str());
 }
@@ -1140,7 +1140,7 @@ int dmUnique(Player* player, cmd* cmnd) {
         }
 
 
-        bstring command = getFullstrText(cmnd->fullstr, 4);
+        std::string command = getFullstrText(cmnd->fullstr, 4);
         if(!strncmp(command.c_str(), "limit", 5)) {
 
             id = atoi(getFullstrText(cmnd->fullstr, 5).c_str());
@@ -1628,7 +1628,7 @@ bool UniqueOwner::runDecay(long t, int decay, int max) {
     return(true);
 }
 
-void Unique::broadcastDestruction(std::string_view owner, const Object* object) {
+void Unique::broadcastDestruction(const std::string &owner, const Object* object) {
     Player* player = gServer->findPlayer(owner);
     if(player)
         player->printColor("^yThe %s^y vanishes!\n", object->getCName());

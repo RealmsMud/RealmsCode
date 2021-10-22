@@ -20,7 +20,6 @@
 #include <cstdio>                                   // for sprintf
 
 #include "alchemy.hpp"                              // for AlchemyEffect
-#include "bstring.hpp"                              // for bstring
 #include "config.hpp"                               // for Config, AlchemyMap
 #include "objects.hpp"                              // for Object, AlchemyEf...
 #include "paths.hpp"                                // for Code
@@ -69,13 +68,13 @@ AlchemyInfo::AlchemyInfo(xmlNodePtr rootNode) {
     rootNode = rootNode->children;
     while(rootNode != nullptr)
     {
-        if(NODE_NAME(rootNode, "Name")) xml::copyToBString(name, rootNode);
-        else if(NODE_NAME(rootNode, "Action")) xml::copyToBString(action, rootNode);
-        else if(NODE_NAME(rootNode, "PythonScript")) xml::copyToBString(pythonScript, rootNode);
+        if(NODE_NAME(rootNode, "Name")) xml::copyToString(name, rootNode);
+        else if(NODE_NAME(rootNode, "Action")) xml::copyToString(action, rootNode);
+        else if(NODE_NAME(rootNode, "PythonScript")) xml::copyToString(pythonScript, rootNode);
         else if(NODE_NAME(rootNode, "Positive")) xml::copyToBool(positive, rootNode);
         else if(NODE_NAME(rootNode, "Throwable")) xml::copyToBool(throwable, rootNode);
-        else if(NODE_NAME(rootNode, "PotionDisplayName")) xml::copyToBString(potionDisplayName, rootNode);
-        else if(NODE_NAME(rootNode, "PotionPrefix")) xml::copyToBString(potionPrefix, rootNode);
+        else if(NODE_NAME(rootNode, "PotionDisplayName")) xml::copyToString(potionDisplayName, rootNode);
+        else if(NODE_NAME(rootNode, "PotionPrefix")) xml::copyToString(potionPrefix, rootNode);
         else if(NODE_NAME(rootNode, "BaseDuration")) xml::copyToNum(baseDuration, rootNode);
         else if(NODE_NAME(rootNode, "BaseStrength")) xml::copyToNum(baseStrength, rootNode);
 
@@ -91,7 +90,7 @@ AlchemyEffect::AlchemyEffect(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
     while(childNode) {
         if(NODE_NAME(childNode, "Effect")) {
-            effect = xml::getBString(childNode);
+            effect = xml::getString(childNode);
         } else if(NODE_NAME(childNode, "Duration")) {
             xml::copyToNum(duration, childNode);
         } else if(NODE_NAME(childNode, "Strength")) {

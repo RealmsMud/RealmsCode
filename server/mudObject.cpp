@@ -18,7 +18,6 @@
 
 #include <stdexcept>      // for runtime_error
 
-#include "bstring.hpp"    // for bstring, operator+
 #include "container.hpp"  // for MonsterPtrLess, ObjectPtrLess, PlayerPtrLess
 #include "creatures.hpp"  // for Monster, Player, Creature
 #include "exits.hpp"      // for Exit
@@ -37,7 +36,7 @@ void MudObject::setName(std::string_view newName) {
     addToSet();
 }
 
-const bstring& MudObject::getName() const {
+const std::string & MudObject::getName() const {
     return(name);
 }
 const char* MudObject::getCName() const {
@@ -100,8 +99,8 @@ bool PlayerPtrLess::operator()(const Player* lhs, const Player* rhs) const {
 }
 
 bool MonsterPtrLess::operator()(const Monster* lhs, const Monster* rhs) const {
-    bstring lhsStr = lhs->getName() + lhs->id;
-    bstring rhsStr = rhs->getName() + rhs->id;
+    std::string lhsStr = lhs->getName() + lhs->id;
+    std::string rhsStr = rhs->getName() + rhs->id;
     return(lhsStr.compare(rhsStr) < 0);
 }
 
@@ -289,26 +288,26 @@ bool MudObject::equals(MudObject* other) {
 
 
 void MudObject::setId(std::string_view newId, bool handleParentSet) {
-    if(!id.equals("-1") && newId != "-1") {
-        throw std::runtime_error(bstring("Error, re-setting ID:") + getName() + ":" + getId() + ":" + newId);
+    if(id != "-1" && newId != "-1") {
+        throw std::runtime_error(fmt::format("Error, re-setting ID:{}:{}:{}", getName(), getId(), newId));
     }
 
     if(newId == "-1")
         handleParentSet = false;
 
-    if(newId != ("")) {
+    if(!newId.empty()) {
         if(handleParentSet) removeFromSet();
         id = newId;
         if(handleParentSet) addToSet();
     }
 }
 
-std::string_view MudObject::getId() const {
+const std::string & MudObject::getId() const {
     return(id);
 }
 
-// Return for Python which doesn't like bstring&
-bstring MudObject::getIdPython() const {
+// Return for Python which doesn't like std::string&
+std::string MudObject::getIdPython() const {
     return(id);
 }
 
@@ -341,6 +340,6 @@ bool MudObject::isExit() const {
     return(typeid(*this) == typeid(Exit));
 }
 
-bstring MudObject::getFlagList(bstring sep) const {
+std::string MudObject::getFlagList(std::string_view sep) const {
     return "";
 }

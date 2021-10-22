@@ -21,7 +21,6 @@
 #include <ctime>                 // for time
 
 #include "area.hpp"               // for MapMarker, Area, AreaTrack
-#include "bstring.hpp"            // for bstring
 #include "catRef.hpp"             // for CatRef
 #include "catRefInfo.hpp"         // for CatRefInfo
 #include "cmd.hpp"                // for cmd
@@ -91,7 +90,7 @@ bool Move::tooFarAway(Creature *player, BaseRoom* room) {
     return(false);
 }
 
-bool Move::tooFarAway(Creature *player, Creature *target, const bstring& action) {
+bool Move::tooFarAway(Creature *player, Creature *target, const std::string& action) {
     if(player->isStaff())
         return(false);
 
@@ -115,8 +114,8 @@ bool Move::tooFarAway(Creature *player, Creature *target, const bstring& action)
 //                      broadcast
 //*********************************************************************
 
-void Move::broadcast(Creature* player, Container* container, bool ordinal, const bstring& exit, bool hiddenExit) {
-    bstring strAction = Move::getString(player, ordinal, exit.c_str());
+void Move::broadcast(Creature* player, Container* container, bool ordinal, const std::string& exit, bool hiddenExit) {
+    std::string strAction = Move::getString(player, ordinal, exit.c_str());
     bool noShow = (player->pFlagIsSet(P_DM_INVIS));
 
     if(!noShow) {
@@ -149,8 +148,8 @@ void Move::broadcast(Creature* player, Container* container, bool ordinal, const
 //*********************************************************************
 // This function allows for multi-word desc-only exits.
 
-bstring Move::formatFindExit(cmd* cmnd) {
-    bstring str;
+std::string Move::formatFindExit(cmd* cmnd) {
+    std::string str;
     int     i=0;
 
     str = "";
@@ -678,8 +677,8 @@ bool drunkenStumble(const EffectInfo* effect) {
 //*********************************************************************
 // gives us the text of the movement string
 
-bstring Move::getString(Creature* creature, bool ordinal, std::string_view exit) {
-    bstring str = "";
+std::string Move::getString(Creature* creature, bool ordinal, std::string_view exit) {
+    std::string str = "";
     int     num=0;
 
     if(creature->getAsPlayer()) {
@@ -1167,7 +1166,7 @@ int cmdGo(Player* player, cmd* cmnd) {
     if(!roomPurged)
         Move::track(oldRoom, oldMarker, exit, player, &followers);
 
-        delete oldMarker;
+    delete oldMarker;
 
     // for display reasons, we only need to kill objects in
     // the room they're entering
@@ -1193,7 +1192,7 @@ int cmdGo(Player* player, cmd* cmnd) {
 // cardinal directions (n,s,e,w,u,d).
 
 int cmdMove(Player* player, cmd* cmnd) {
-    bstring dir = "", str = "";
+    std::string dir = "", str = "";
 
     player->clearFlag(P_AFK);
 
@@ -1666,23 +1665,23 @@ int cmdLock(Player* player, cmd* cmnd) {
 // we're given a string and expected to find a) the area and
 // b) the room id.
 
-void getCatRef(bstring str, CatRef* cr, const Creature* target) {
+void getCatRef(std::string str, CatRef* cr, const Creature* target) {
     cr->setDefault(target);
 
     // chop off the end!
-    bstring::size_type pos = str.Find(" ");
-    if(pos != bstring::npos)
+    std::string::size_type pos = str.find(' ');
+    if(pos != std::string::npos)
         str = str.substr(0, pos);
 
-    pos = str.Find(".");
-    if(pos == bstring::npos)
-        pos = str.Find(":");
-    if(pos != bstring::npos) {
+    pos = str.find('.');
+    if(pos == std::string::npos)
+        pos = str.find(':');
+    if(pos != std::string::npos) {
         cr->setArea(str.substr(0, pos));
         str.erase(0, pos+1);
     }
 
-    if(!str.empty() && isdigit(str.getAt(0)))
+    if(!str.empty() && isdigit(str.at(0)))
         cr->id = atoi(str.c_str());
     else {
         if(!str.empty())
@@ -1698,25 +1697,25 @@ void getCatRef(bstring str, CatRef* cr, const Creature* target) {
 // b) a CatRef. the string will start at the point we wish
 // to search, but may contain extra crap at the end
 
-void getDestination(std::string_view str, Location* l, const Creature* target) {
+void getDestination(const std::string &str, Location* l, const Creature* target) {
     l->mapmarker.reset();
     l->room.id = 0;
     getDestination(str, &l->mapmarker, &l->room, target);
 }
 
-void getDestination(bstring str, MapMarker* mapmarker, CatRef* cr, const Creature* target) {
-    bstring::size_type pos=0;
+void getDestination(std::string str, MapMarker* mapmarker, CatRef* cr, const Creature* target) {
+    std::string::size_type pos=0;
     char    *txt;
     int     x=0, y=0, z=0;
 
     // chop off the end!
     pos = str.find(" ", 0);
-    if(pos != bstring::npos)
+    if(pos != std::string::npos)
         str = str.substr(0, pos);
 
     // 1.-10.7
     txt = (char*)strstr(str.c_str(), ".");
-    if(txt && isdigit(str.getAt(0))) {
+    if(txt && isdigit(str.at(0))) {
         txt++;
         x = atoi(txt);
 

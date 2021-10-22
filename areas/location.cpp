@@ -20,12 +20,11 @@
 //                      Location
 //*********************************************************************
 
-#include "bstring.hpp"   // for bstring
 #include "location.hpp"  // for Location
 
 Location::Location() = default;
 
-bstring Location::str() const {
+std::string Location::str() const {
     if(room.id)
         return(room.str());
     return(mapmarker.str());

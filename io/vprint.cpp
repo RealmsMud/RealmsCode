@@ -21,7 +21,6 @@
 #include <ostream>        // for operator<<, ostringstream, endl, ostream
 #include <string>         // for basic_string
 
-#include "bstring.hpp"    // for bstring
 #include "creatures.hpp"  // for Creature, Player
 #include "global.hpp"     // for CAP
 #include "objects.hpp"    // for Object
@@ -29,7 +28,7 @@
 #include "socket.hpp"     // for Socket
 
 // Function Prototypes
-bstring delimit(const char *str, int wrap);
+std::string delimit(const char *str, int wrap);
 
 void Creature::printPaged(std::string_view toPrint) {
     if(hasSock())
@@ -45,7 +44,7 @@ void Creature::bPrint(std::string_view toPrint) const {
     (Streamable &) *this << ColorOn << toPrint << ColorOff;
 }
 
-void Creature::bPrintPython(const bstring& toPrint) const {
+void Creature::bPrintPython(const std::string& toPrint) const {
     (Streamable &) *this << ColorOn << toPrint << ColorOff;
 }
 
@@ -120,7 +119,7 @@ void Socket::vprint(const char *fmt, va_list ap) {
         std::clog << "Problem with vasprintf in vprint!" << std::endl;
         return;
     }
-    bstring toPrint;
+    std::string toPrint;
 
     if(!myPlayer || (myPlayer && myPlayer->getWrap() == -1))
         toPrint = delimit( msg, getTermCols() - 4);
@@ -139,7 +138,7 @@ int print_objcrt(FILE *stream, const struct printf_info *info, const void *const
     int len;
 
     if(info->spec == 'B') {
-        const bstring *tmp = *((const bstring **) (args[0]));
+        const std::string *tmp = *((const std::string **) (args[0]));
         len = asprintf(&buffer, "%s", tmp->c_str());
     }
     else if(info->spec == 'T') {
@@ -150,11 +149,11 @@ int print_objcrt(FILE *stream, const struct printf_info *info, const void *const
     else if(info->spec == 'M' || info->spec == 'N') {
         const Creature *crt = *((const Creature **) (args[0]));
         if(info->spec == 'M') {
-            bstring tmp = crt->getCrtStr(nullptr, VPRINT_flags | CAP, info->width);
+            std::string tmp = crt->getCrtStr(nullptr, VPRINT_flags | CAP, info->width);
             len = asprintf(&buffer, "%s", tmp.c_str());
         }
         else {
-            bstring tmp = crt->getCrtStr(nullptr, VPRINT_flags, info->width);
+            std::string tmp = crt->getCrtStr(nullptr, VPRINT_flags, info->width);
             len = asprintf(&buffer, "%s", tmp.c_str());
         }
         if(len == -1)
@@ -170,11 +169,11 @@ int print_objcrt(FILE *stream, const struct printf_info *info, const void *const
     else if(info->spec == 'O' || info->spec == 'P') {
         const Object *obj = *((const Object **) (args[0]));
         if(info->spec == 'O') {
-            bstring tmp = obj->getObjStr(nullptr, VPRINT_flags | CAP, info->width);
+            std::string tmp = obj->getObjStr(nullptr, VPRINT_flags | CAP, info->width);
             len = asprintf(&buffer, "%s", tmp.c_str());
         }
         else {
-            bstring tmp = obj->getObjStr(nullptr, VPRINT_flags, info->width);
+            std::string tmp = obj->getObjStr(nullptr, VPRINT_flags, info->width);
             len = asprintf(&buffer, "%s", tmp.c_str());
         }
 
@@ -199,7 +198,7 @@ int print_arginfo (const struct printf_info *info, size_t n, int *argtypes, int*
         argtypes[0] = PA_POINTER;
         if(info->spec == 'O' || info->spec == 'P') size[0] = sizeof(Object *);
         else if(info->spec == 'R' || info->spec == 'M' || info->spec == 'N') size[0] = sizeof(Creature *);
-        else if(info->spec == 'b') size[0] = sizeof(bstring *);
+        else if(info->spec == 'b') size[0] = sizeof(std::string *);
         else if(info->spec == 'T') size[0] = sizeof(std::ostringstream *);
     }
     return(1);
@@ -207,7 +206,7 @@ int print_arginfo (const struct printf_info *info, size_t n, int *argtypes, int*
 
 int Server::installPrintfHandlers() {
     int r = 1;
-    // bstring
+    // std::string
     r &= register_printf_specifier('b', print_objcrt, print_arginfo);
     // std::ostringstream
     r &= register_printf_specifier('T', print_objcrt, print_arginfo);

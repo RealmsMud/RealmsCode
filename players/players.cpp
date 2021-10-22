@@ -20,7 +20,6 @@
 #include <ctime>         // for time, time_t
 #include <string>         // for operator!=, basic_string, operator==
 
-#include "bstring.hpp"    // for bstring
 #include "creatures.hpp"  // for Player
 #include "effects.hpp"    // for EffectInfo
 #include "flags.hpp"      // for R_DESERT_HARM, P_SITTING, R_AIR_BONUS, R_DE...

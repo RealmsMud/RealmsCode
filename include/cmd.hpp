@@ -5,9 +5,9 @@
 #ifndef REALMSCODE_CMD_H
 #define REALMSCODE_CMD_H
 
-#include "bstring.hpp"
 
 #include <cstring>  // memset
+#include <string>
 
 typedef int (*SONGFN)();
 
@@ -29,15 +29,13 @@ class Command;
 class cmd {
 public:
     cmd() {
-#ifndef PYTHON_CODE_GEN
         ret = num = 0;
         memset(str, 0, sizeof(str));
         memset(val, 0, sizeof(val));
         myCommand = nullptr;
-#endif
     };
     int num;
-    bstring fullstr;
+    std::string fullstr;
     char str[COMMANDMAX][MAX_TOKEN_SIZE];
     long val[COMMANDMAX];
 

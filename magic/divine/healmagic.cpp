@@ -21,7 +21,6 @@
 #include <strings.h>       // for strcasecmp
 #include <ctime>           // for time
 
-#include "bstring.hpp"     // for bstring
 #include "cmd.hpp"         // for cmd
 #include "config.hpp"      // for Config, gConfig
 #include "creatures.hpp"   // for Creature, Player, Monster

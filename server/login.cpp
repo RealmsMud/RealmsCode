@@ -25,8 +25,9 @@
 #include <sstream>                // for operator<<, basic_ostream, ostrings...
 #include <iomanip>                // for setw
 #include <fmt/format.h>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for parse, cmdWeapons
@@ -59,7 +60,7 @@ class StartLoc;
 /*
  * Generic get function, copy for future use
  *
-bool Create::get(Socket* sock, bstring str, int mode) {
+bool Create::get(Socket* sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
     } else if(mode == Create::doWork) {
@@ -98,19 +99,19 @@ int cmdReconnect(Player* player, cmd* cmnd) {
     return(0);
 }
 
-bstring::size_type checkProxyLogin(const bstring &str) {
-    bstring::size_type x = bstring::npos;
-    bstring::size_type n = str.Find(" as ");
+std::string::size_type checkProxyLogin(const std::string &str) {
+    std::string::size_type x = std::string::npos;
+    std::string::size_type n = str.find(" as ");
     if(n == x)
-        n = str.Find(" for ");
+        n = str.find(" for ");
     return(n);
 }
 // Character used for access
-bstring getProxyChar(std::string_view str, unsigned int n) {
+std::string getProxyChar(const std::string &str, unsigned int n) {
     return(str.substr(0,n));
 }
 // Character being logged in
-bstring getProxiedChar(std::string_view str, unsigned int n) {
+std::string getProxiedChar(const std::string &str, unsigned int n) {
     unsigned int m = str.find_first_of(" ", n+1);
     return(str.substr(m+1, str.length() - m - 1));
 }
@@ -138,15 +139,15 @@ bool Player::checkProxyAccess(Player* proxy) {
 unsigned const char echo_off[] = {255, 251, 1, 0};
 unsigned const char echo_on[] = {255, 252, 1, 0};
 
-void login(Socket* sock, const bstring& inStr) {
+void login(Socket* sock, const std::string& inStr) {
     Player  *player=nullptr;
-    bstring::size_type proxyCheck = 0;
+    std::string::size_type proxyCheck = 0;
     if(!sock) {
         std::clog << "**** ERORR: Null socket in login.\n";
         return;
     }
 
-    bstring str = inStr;
+    std::string str = inStr;
 
 
     switch(sock->getState()) {
@@ -154,7 +155,7 @@ void login(Socket* sock, const bstring& inStr) {
         sock->print("Still performing DNS lookup, please be patient!\n");
         return;
     case LOGIN_GET_LOCKOUT_PASSWORD:
-        if(!str.equals(sock->tempstr[0])) {
+        if(str != sock->tempstr[0]) {
             sock->disconnect();
             return;
         }
@@ -168,9 +169,9 @@ void login(Socket* sock, const bstring& inStr) {
     case LOGIN_GET_NAME:
 
         proxyCheck = checkProxyLogin(str);
-        if(proxyCheck != bstring::npos) {
-            bstring proxyChar = getProxyChar(str, proxyCheck);
-            bstring proxiedChar = getProxiedChar(str, proxyCheck);
+        if(proxyCheck != std::string::npos) {
+            std::string proxyChar = getProxyChar(str, proxyCheck);
+            std::string proxiedChar = getProxiedChar(str, proxyCheck);
             lowercize(proxyChar, 1);
             lowercize(proxiedChar, 1);
             if(proxyChar == proxiedChar) {
@@ -192,7 +193,7 @@ void login(Socket* sock, const bstring& inStr) {
                 return;
             }
             if(!loadPlayer(proxiedChar, &player)) {
-                sock->println(bstring("Error loading ") + proxiedChar + "\n");
+                sock->println(std::string("Error loading ") + proxiedChar + "\n");
                 sock->askFor("Please enter name: ");
                 return;
             }
@@ -204,14 +205,14 @@ void login(Socket* sock, const bstring& inStr) {
                 online = true;
             else {
                 if(!loadPlayer(proxyChar, &proxy)) {
-                    sock->println(bstring("Error loading ") + proxyChar + "\n");
+                    sock->println(std::string("Error loading ") + proxyChar + "\n");
                     free_crt(player, false);
                     sock->askFor("Please enter name: ");
                     return;
                 }
             }
             if(!player->checkProxyAccess(proxy)) {
-                sock->println(bstring(proxy->getName()) + " does not have access to " + player->getName());
+                sock->println(std::string(proxy->getName()) + " does not have access to " + player->getName());
                 free_crt(player, false);
                 if(!online)
                     free_crt(proxy, false);
@@ -230,13 +231,13 @@ void login(Socket* sock, const bstring& inStr) {
                     free_crt(proxy, false);
                 return;
             }
-            sock->println(bstring("Trying to log in ") + player->getName() + " using " + proxy->getName() + " as proxy.");
+            sock->println(std::string("Trying to log in ") + player->getName() + " using " + proxy->getName() + " as proxy.");
 
 
 
             sock->print("%s", echo_off);
             //sock->print("%c%c%c", 255, 251, 1);
-            bstring passwordPrompt = bstring("Please enter password for ") + proxy->getName() + ": ";
+            std::string passwordPrompt = std::string("Please enter password for ") + proxy->getName() + ": ";
             sock->askFor(passwordPrompt.c_str());
             sock->tempbstr = proxy->getPassword();
 
@@ -334,8 +335,8 @@ void Socket::finishLogin() {
 //  gServer->cleanUp();
 
     player = getPlayer();
-    bstring proxyName = player->getProxyName();
-    bstring proxyId = player->getProxyId();
+    std::string proxyName = player->getProxyName();
+    std::string proxyId = player->getProxyId();
     free_crt(player, false);
     setPlayer(nullptr);
 
@@ -488,9 +489,9 @@ void doCreateHelp(Socket* sock, std::string_view str) {
     cmd cmnd;
     parse(str, &cmnd);
 
-    bstring helpfile;
+    std::string helpfile;
     if(cmnd.num < 2) {
-        helpfile = bstring(Path::CreateHelp) + "/helpfile.txt";
+        helpfile = std::string(Path::CreateHelp) + "/helpfile.txt";
         sock->viewFile(helpfile);
         return;
     }
@@ -499,19 +500,19 @@ void doCreateHelp(Socket* sock, std::string_view str) {
         sock->print("You may not use backslashes.\n");
         return;
     }
-    helpfile = bstring(Path::CreateHelp) + "/" + cmnd.str[1] + ".txt";
+    helpfile = std::string(Path::CreateHelp) + "/" + cmnd.str[1] + ".txt";
     sock->viewFile(helpfile);
 
 }
 
-void createPlayer(Socket* sock, const bstring& str) {
+void createPlayer(Socket* sock, const std::string& str) {
 
     switch(sock->getState()) {
     case CREATE_NEW:
     case CREATE_GET_DM_PASSWORD:
         break;
     default:
-        if(str.left(4).equals("help")) {
+        if(str.starts_with("help")) {
             doCreateHelp(sock, str);
             return;
         }
@@ -738,7 +739,7 @@ no_pass:
 //                      addStartingItem
 //*********************************************************************
 
-void Create::addStartingItem(Player* player, std::string_view area, int id, bool wear, bool skipUseCheck, int num) {
+void Create::addStartingItem(Player* player, const std::string &area, int id, bool wear, bool skipUseCheck, int num) {
     CatRef cr;
     cr.setArea(area);
     cr.id = id;
@@ -764,7 +765,7 @@ void Create::addStartingItem(Player* player, std::string_view area, int id, bool
 //                      addStartingWeapon
 //*********************************************************************
 
-void Create::addStartingWeapon(Player* player, std::string_view weapon) {
+void Create::addStartingWeapon(Player* player, const std::string &weapon) {
     if(weapon == "sword")
         Create::addStartingItem(player, "tut", 28, false);
     else if(weapon == "great-sword")
@@ -824,7 +825,7 @@ void Create::addStartingWeapon(Player* player, std::string_view weapon) {
 //                      getSex
 //*********************************************************************
 
-bool Create::getSex(Socket* sock, bstring str, int mode) {
+bool Create::getSex(Socket* sock, std::string str, int mode) {
     const RaceData* rdata = gConfig->getRace(sock->getPlayer()->getRace());
     if(!rdata->isGendered()) {
         sock->getPlayer()->setSex(SEX_NONE);
@@ -860,7 +861,7 @@ bool Create::getSex(Socket* sock, bstring str, int mode) {
 
 #define FBUF    800
 
-bool Create::getRace(Socket* sock, bstring str, int mode) {
+bool Create::getRace(Socket* sock, std::string str, int mode) {
     RaceDataMap choices;
     RaceDataMap::iterator it;
     int k=0;
@@ -961,7 +962,7 @@ bool Create::getRace(Socket* sock, bstring str, int mode) {
 //                      getSubRace
 //*********************************************************************
 
-bool Create::getSubRace(Socket* sock, bstring str, int mode) {
+bool Create::getSubRace(Socket* sock, std::string str, int mode) {
     RaceDataMap choices;
     RaceDataMap::iterator it;
     int k=0;
@@ -1036,7 +1037,7 @@ void Create::finishRace(Socket* sock) {
     sock->getPlayer()->setSize(race->getSize());
     sock->getPlayer()->initLanguages();
 
-    std::list<bstring>::const_iterator it;
+    std::list<std::string>::const_iterator it;
     for(it = race->effects.begin() ; it != race->effects.end() ; it++) {
         sock->getPlayer()->addPermEffect((*it));
     }
@@ -1046,7 +1047,7 @@ void Create::finishRace(Socket* sock) {
 //                      getClass
 //*********************************************************************
 
-bool Create::getClass(Socket* sock, bstring str, int mode) {
+bool Create::getClass(Socket* sock, std::string str, int mode) {
     int     l=0, k=0;
     if(mode == Create::doPrint) {
 
@@ -1119,7 +1120,7 @@ bool Create::getClass(Socket* sock, bstring str, int mode) {
 //                      getDeity
 //*********************************************************************
 
-bool Create::getDeity(Socket* sock, bstring str, int mode) {
+bool Create::getDeity(Socket* sock, std::string str, int mode) {
     int     l=0, k=0;
     const RaceData* race = gConfig->getRace(sock->getPlayer()->getRace());
     if(mode == Create::doPrint) {
@@ -1174,9 +1175,9 @@ bool Create::getDeity(Socket* sock, bstring str, int mode) {
 //*********************************************************************
 
 // from startlocs.cpp
-bool startingChoices(Player* player, bstring str, char* location, bool choose);
+bool startingChoices(Player* player, std::string str, char* location, bool choose);
 
-bool Create::getLocation(Socket* sock, std::string_view str, int mode) {
+bool Create::getLocation(Socket* sock, const std::string &str, int mode) {
     char location[256];
     if(mode == Create::doPrint) {
 
@@ -1215,7 +1216,7 @@ bool Create::getLocation(Socket* sock, std::string_view str, int mode) {
 //                      startCustom
 //*********************************************************************
 
-bool Create::startCustom(Socket* sock, bstring str, int mode) {
+bool Create::startCustom(Socket* sock, std::string str, int mode) {
     // still in progress! bypass for now
     return(getProf(sock, str, mode));
 
@@ -1242,7 +1243,7 @@ bool Create::startCustom(Socket* sock, bstring str, int mode) {
 //                      getStatsChoice
 //*********************************************************************
 
-bool Create::getStatsChoice(Socket* sock, bstring str, int mode) {
+bool Create::getStatsChoice(Socket* sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
         PlayerClass *pClass = gConfig->classes[sock->getPlayer()->getClassString()];
         if(!pClass || !pClass->hasDefaultStats()) {
@@ -1262,13 +1263,13 @@ bool Create::getStatsChoice(Socket* sock, bstring str, int mode) {
         sock->setState(CREATE_GET_STATS_CHOICE);
 
     } else if(mode == Create::doWork) {
-
-        if(str.trim().left(1).equals("c",false)) {
+        boost::trim(str);
+        if(tolower(str.at(0)) == 'c') {
             sock->print("You have chosen to select your own stats.\n");
             Create::getStats(sock, "", Create::doPrint);
             // We've set the next state so don't change it after we return
             return(false);
-        } else if(str.trim().left(1).equals("u",false)) {
+        } else if(tolower(str.at(0)) == 'u') {
             PlayerClass *pClass = gConfig->classes[sock->getPlayer()->getClassString()];
             if(!pClass) {
                 Create::getStats(sock, str, Create::doPrint);
@@ -1293,7 +1294,7 @@ bool Create::getStatsChoice(Socket* sock, bstring str, int mode) {
 //                      getStats
 //*********************************************************************
 
-bool Create::getStats(Socket* sock, bstring str, int mode) {
+bool Create::getStats(Socket* sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nYou have 56 points to distribute among your 5 stats. Please enter your 5");
@@ -1383,7 +1384,7 @@ void Create::finishStats(Socket* sock) {
 //                      getBonusStat
 //*********************************************************************
 
-bool Create::getBonusStat(Socket* sock, bstring str, int mode) {
+bool Create::getBonusStat(Socket* sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nRaise which stat?\n[A] Strength, [B] Dexterity, [C] Constitution, [D] Intelligence, or [E] Piety.\n : ");
@@ -1421,7 +1422,7 @@ bool Create::getBonusStat(Socket* sock, bstring str, int mode) {
 //                      getPenaltyStat
 //*********************************************************************
 
-bool Create::getPenaltyStat(Socket* sock, bstring str, int mode) {
+bool Create::getPenaltyStat(Socket* sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->printColor("\nChoose your stat to lower:\n[^WA^x] Strength, [^WB^x] Dexterity, [^WC^x] Constitution, [^WD^x] Intelligence, or [^WE^x] Piety.\n : ");
@@ -1496,11 +1497,11 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
 
     int k = 0, n = 0;
     for(const auto& [curGroup, curGroupDisplay] : gConfig->skillGroups) {
-        if(curGroup.left(7) != "weapons" || curGroup.length() <= 7)
+        if(!curGroup.starts_with("weapons"))
             continue;
 
         if(sock->getPlayer()->getClass() == CreatureClass::CLERIC && sock->getPlayer()->getDeity() == CERIS) {
-            if(curGroup.Find("slashing") != -1 || curGroup.Find("piercing") != -1)
+            if(boost::contains(curGroup, "slashing") || boost::contains(curGroup, "piercing"))
                 continue;
         }
 
@@ -1590,7 +1591,7 @@ int cmdWeapons(Player* player, cmd* cmnd) {
 //                      convertNewWeaponSkills
 //*********************************************************************
 
-void convertNewWeaponSkills(Socket* sock, const bstring& str) {
+void convertNewWeaponSkills(Socket* sock, const std::string& str) {
     if(!isalpha(str[0])) {
         sock->setState(CON_PLAYING);
         return;
@@ -1620,7 +1621,7 @@ void convertNewWeaponSkills(Socket* sock, const bstring& str) {
 //                      getProf
 //*********************************************************************
 
-bool Create::getProf(Socket* sock, bstring str, int mode) {
+bool Create::getProf(Socket* sock, std::string str, int mode) {
 
     if(mode == Create::doPrint) {
         if(gConfig->classes[get_class_string(sock->getPlayer()->getClassInt())]->numProfs() > 1) {
@@ -1651,7 +1652,7 @@ bool Create::getProf(Socket* sock, bstring str, int mode) {
 //                      getSecondProf
 //*********************************************************************
 
-bool Create::getSecondProf(Socket* sock, bstring str, int mode) {
+bool Create::getSecondProf(Socket* sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         Create::handleWeapon(sock, mode, str[0]);
@@ -1679,7 +1680,7 @@ bool Create::getSecondProf(Socket* sock, bstring str, int mode) {
 //                      getPassword
 //*********************************************************************
 
-bool Create::getPassword(Socket* sock, std::string_view str, int mode) {
+bool Create::getPassword(Socket* sock, const std::string &str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nYou must now choose a password. Remember that it\n");
@@ -1714,7 +1715,7 @@ bool Create::getPassword(Socket* sock, std::string_view str, int mode) {
 //                      done
 //*********************************************************************
 
-void Create::done(Socket* sock, std::string_view str, int mode) {
+void Create::done(Socket* sock, const std::string &str, int mode) {
 
     if(mode == Create::doPrint) {
 
@@ -1939,7 +1940,7 @@ CustomCrt::CustomCrt() {
 //                      getCommunity
 //*********************************************************************
 
-bool Create::getCommunity(Socket* sock, bstring str, int mode) {
+bool Create::getCommunity(Socket* sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nYour Community\n\n");
@@ -2024,7 +2025,7 @@ void Create::doFamily(Player* player, int mode) {
 //                      getFamily
 //*********************************************************************
 
-bool Create::getFamily(Socket* sock, bstring str, int mode) {
+bool Create::getFamily(Socket* sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nYour Family\n\n");
@@ -2062,7 +2063,7 @@ bool Create::getFamily(Socket* sock, bstring str, int mode) {
 //                      getSocial
 //*********************************************************************
 
-bool Create::getSocial(Socket* sock, bstring str, int mode) {
+bool Create::getSocial(Socket* sock, std::string str, int mode) {
     CustomCrt *custom = &sock->getPlayer()->custom;
 
     if(mode == Create::doPrint) {
@@ -2130,7 +2131,7 @@ bool Create::getSocial(Socket* sock, bstring str, int mode) {
 //                      getEducation
 //*********************************************************************
 
-bool Create::getEducation(Socket* sock, bstring str, int mode) {
+bool Create::getEducation(Socket* sock, std::string str, int mode) {
     CustomCrt *custom = &sock->getPlayer()->custom;
 
     if(mode == Create::doPrint) {
@@ -2199,7 +2200,7 @@ int Create::calcHeight(int race, int mode) {
 //                      getHeight
 //*********************************************************************
 
-bool Create::getHeight(Socket* sock, bstring str, int mode) {
+bool Create::getHeight(Socket* sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nYour Height\n\n");
@@ -2250,7 +2251,7 @@ int Create::calcWeight(int race, int mode) {
 //                      getWeight
 //*********************************************************************
 
-bool Create::getWeight(Socket* sock, bstring str, int mode) {
+bool Create::getWeight(Socket* sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nYour Weight\n\n");
@@ -2290,7 +2291,7 @@ bool Create::getWeight(Socket* sock, bstring str, int mode) {
 //  str:  The name we're testing
 //  sock: The socket to print error messages to
 
-bool nameIsAllowed(bstring str, Socket* sock) {
+bool nameIsAllowed(std::string str, Socket* sock) {
     int i=0, nonalpha=0, len = str.length();
 
     if(!isalpha(str[0]))

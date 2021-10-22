@@ -19,7 +19,6 @@
 #include <cstring>                // for strcmp
 #include <map>                    // for operator==, operator!=, allocator
 
-#include "bstring.hpp"            // for bstring
 #include "cmd.hpp"                // for cmd
 #include "config.hpp"             // for Config, gConfig
 #include "creatures.hpp"          // for Player
@@ -101,7 +100,7 @@ int DeityData::getId() const {
 //                      getName
 //*********************************************************************
 
-bstring DeityData::getName() const {
+std::string DeityData::getName() const {
     return(name);
 }
 

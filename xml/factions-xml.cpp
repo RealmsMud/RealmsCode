@@ -64,7 +64,7 @@ bool Config::loadFactions() {
     xmlFreeDoc(xmlDoc);
     xmlCleanupParser();
 
-    std::map<bstring, Faction*>::const_iterator it, fIt;
+    std::map<std::string, Faction*>::const_iterator it, fIt;
 
     for(it = factions.begin(); it != factions.end(); it++) {
         faction = (*it).second;
@@ -86,11 +86,11 @@ void Faction::load(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
 
     while(curNode) {
-        if(NODE_NAME(curNode, "Name")) { xml::copyToBString(name, curNode); }
-        else if(NODE_NAME(curNode, "DisplayName")) { xml::copyToBString(displayName, curNode); }
-        else if(NODE_NAME(curNode, "Parent")) { xml::copyToBString(parent, curNode); }
-        else if(NODE_NAME(curNode, "Group")) { xml::copyToBString(group, curNode); }
-        else if(NODE_NAME(curNode, "Social")) { xml::copyToBString(social, curNode); }
+        if(NODE_NAME(curNode, "Name")) { xml::copyToString(name, curNode); }
+        else if(NODE_NAME(curNode, "DisplayName")) { xml::copyToString(displayName, curNode); }
+        else if(NODE_NAME(curNode, "Parent")) { xml::copyToString(parent, curNode); }
+        else if(NODE_NAME(curNode, "Group")) { xml::copyToString(group, curNode); }
+        else if(NODE_NAME(curNode, "Social")) { xml::copyToString(social, curNode); }
         else if(NODE_NAME(curNode, "BaseRegard")) { xml::copyToNum( baseRegard, curNode); }
         else if(NODE_NAME(curNode, "InitialRegard")) initial.load(curNode);
         else if(NODE_NAME(curNode, "MaxRegard")) max.load(curNode);

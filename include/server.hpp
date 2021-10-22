@@ -43,6 +43,10 @@ namespace odbc {
 #include "weather.hpp"
 #include "lru/lru.hpp"
 
+namespace pybind11 {
+    class object;
+}
+namespace py = pybind11;
 
 class cmd;
 class Area;
@@ -82,25 +86,20 @@ enum GoldLog {
     GOLD_OUT
 };
 
-namespace boost::python {
-    namespace api
-    {
-        class object;
-    }
-    using api::object;
-} // namespace boost::python
+// Custom comparison operator to sort by the numeric id instead of standard string comparison
+struct idComp : public std::binary_function<const std::string&, const std::string&, bool> {
+    bool operator() (const std::string& lhs, const std::string& rhs) const;
+};
 
 
 #include "async.hpp"
 
-#ifndef PYTHON_CODE_GEN
-typedef std::map<bstring, MudObject*,idComp> IdMap;
-#endif
+typedef std::map<std::string, MudObject*,idComp> IdMap;
 using MonsterList = std::list<Monster*>;
 using GroupList = std::list<Group*>;
 using SocketList = std::list<Socket>;
 using SocketVector= std::vector<Socket*>;
-using PlayerMap = std::map<bstring, Player*>;
+using PlayerMap = std::map<std::string, Player*>;
 
 using RoomCache = LRU::lru_cache<CatRef, UniqueRoom, CleanupRoomFn, CanCleanupRoomFn>;
 using MonsterCache = LRU::lru_cache<CatRef, Monster, FreeCrt>;
@@ -137,8 +136,8 @@ public:
     };
 
     struct dnsCache {
-        bstring ip;
-        bstring hostName;
+        std::string ip;
+        std::string hostName;
         time_t time;
         dnsCache(std::string_view pIp, std::string_view pHostName, time_t pTime) {
             ip = pIp;
@@ -183,9 +182,7 @@ private:
     bool valgrind;
 
     // List of Ids
-#ifndef PYTHON_CODE_GEN
     IdMap registeredIds;
-#endif
     // List of groups
     GroupList groups;
 
@@ -277,8 +274,8 @@ protected:
     bool connActive;
     void cleanUpSql();
     bool initSql();
-    bool logGoldSql(bstring& pName, bstring& pId, bstring& targetStr, bstring& source, bstring& room,
-                    bstring& logType, unsigned long amt, bstring& direction);
+    bool logGoldSql(std::string& pName, std::string& pId, std::string& targetStr, std::string& source, std::string& room,
+                    std::string& logType, unsigned long amt, std::string& direction);
 
 public:
     bool getConnStatus();
@@ -289,27 +286,27 @@ public:
 public:
 
     void clearAsEnemy(Player* player);
-    bstring showActiveList();
+    std::string showActiveList();
 
     static void logGold(GoldLog dir, Player* player, Money amt, MudObject* target, std::string_view logType);
 
     bool registerGroup(Group* toRegister);
     bool unRegisterGroup(Group* toUnRegister);
-    bstring getGroupList();
+    std::string getGroupList();
 
     bool registerMudObject(MudObject* toRegister, bool reassignId = false);
     bool unRegisterMudObject(MudObject* toUnRegister);
-    bstring getRegisteredList();
-    Creature* lookupCrtId(std::string_view toLookup);
-    Object* lookupObjId(std::string_view toLookup);
-    Player* lookupPlyId(std::string_view toLookup);
+    std::string getRegisteredList();
+    Creature* lookupCrtId(const std::string &toLookup);
+    Object* lookupObjId(const std::string &toLookup);
+    Player* lookupPlyId(const std::string &toLookup);
 
     void loadIds();
     void saveIds();
 
-    bstring getNextMonsterId();
-    bstring getNextPlayerId();
-    bstring getNextObjectId();
+    std::string getNextMonsterId();
+    std::string getNextPlayerId();
+    std::string getNextObjectId();
 
     long getMaxMonsterId();
     long getMaxPlayerId();
@@ -319,7 +316,7 @@ public:
     void addDelayedAction(void (*callback)(DelayedActionFn), MudObject* target, cmd* cmnd, DelayedActionType type, long howLong, bool canInterrupt=true);
     void addDelayedScript(void (*callback)(DelayedActionFn), MudObject* target, std::string_view script, long howLong, bool canInterrupt=true);
     bool hasAction(const MudObject* target, DelayedActionType type);
-    bstring delayedActionStrings(const MudObject* target);
+    std::string delayedActionStrings(const MudObject* target);
 
     void weather(WeatherString w);
     void updateWeather(long t);
@@ -357,9 +354,9 @@ public:
     void addChild(int pid, ChildType pType, int pFd = -1, std::string_view pExtra = "");
 
     // Python
-    bool runPython(const bstring& pyScript, boost::python::object& dictionary);
-    bool runPython(const bstring& pyScript, bstring args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
-    bool runPythonWithReturn(const bstring& pyScript, bstring args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
+    bool runPython(const std::string& pyScript, py::object& dictionary);
+    bool runPython(const std::string& pyScript, std::string args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
+    bool runPythonWithReturn(const std::string& pyScript, std::string args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
 
     // Setup
     bool init();    // Setup the server
@@ -383,15 +380,15 @@ public:
     int finishReboot(); // Bring the mud back up from a reboot
 
     // DNS
-    bstring getDnsCacheString();
-    bool getDnsCache(bstring &ip, bstring &hostName);
+    std::string getDnsCacheString();
+    bool getDnsCache(std::string &ip, std::string &hostName);
     int startDnsLookup(Socket* sock, sockaddr_in pAddr); // Start dns lookup on a socket
 
     // Players
     bool addPlayer(Player* player);
     bool clearPlayer(Player* player);
-    Player* findPlayer(std::string_view name);
-    bool clearPlayer(std::string_view name);
+    Player* findPlayer(const std::string &name);
+    bool clearPlayer(const std::string &name);
     void saveAllPly();
     int getNumPlayers();
 
@@ -410,10 +407,10 @@ public:
 
     // Child Processes
     int runList(Socket* sock, cmd* cmnd);
-    bstring simpleChildRead(childProcess &child);
+    std::string simpleChildRead(childProcess &child);
 
     // Swap functions - use children
-    bstring swapName();
+    std::string swapName();
     void finishSwap(Player* player, bool online, const CatRef& origin, const CatRef& target);
     bool swap(const Swap& s);
     void endSwap();
@@ -427,8 +424,8 @@ public:
     void checkBans();
 
     // Broadcasts
-    static bstring getTimeZone();
-    static bstring getServerTime();
+    static std::string getTimeZone();
+    static std::string getServerTime();
 
     // Effects
     void addEffectsIndex(BaseRoom* room);
@@ -441,7 +438,7 @@ protected:
 
 
 public:
-    bool sendDiscordWebhook(long webhookID, int type, const bstring &author, const bstring &msg);
+    bool sendDiscordWebhook(long webhookID, int type, const std::string &author, const std::string &msg);
 };
 
 extern Server *gServer;

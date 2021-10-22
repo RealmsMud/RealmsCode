@@ -21,33 +21,20 @@
 #ifndef _PYTHONHANDLER_H
 #define _PYTHONHANDLER_H
 
-#ifndef PYTHON_CODE_GEN 
 // C++ Includes
 #include <Python.h>
-#include <boost/python.hpp>
 
-#include "bstring.hpp"
+#include <pybind11/embed.h>
 
-class MudObject;
-
-namespace bp = boost::python;
-
-bool addMudObjectToDictionary(bp::object& dictionary, bstring key, MudObject* myObject);
+namespace py = pybind11;
 
 class PythonHandler {
     friend class Server;
 private:
     // Our main namespace for python
-    bp::object mainNamespace;
-    
+    py::object mainNamespace;
+
 };
-
-#else
-
-class PythonHandler;
-class object;
-
-#endif // PYTHON_CODE_GEN
 
 #endif  /* _PYTHONHANDLER_H */
 

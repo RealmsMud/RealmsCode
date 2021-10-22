@@ -24,8 +24,8 @@
 #include <ostream>                                  // for operator<<, basic...
 #include <stdexcept>                                // for runtime_error
 #include <string>                                   // for operator==, opera...
+#include <boost/algorithm/string/predicate.hpp>
 
-#include "bstring.hpp"                              // for bstring
 #include "config.hpp"                               // for Config, SkillComm...
 #include "paths.hpp"                                // for Code
 #include "skills.hpp"                               // for SkillCommand, Ski...
@@ -100,13 +100,13 @@ void Config::loadSkillGroups(xmlNodePtr rootNode) {
 
 void Config::loadSkillGroup(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
-    bstring name;
-    bstring displayName;
+    std::string name;
+    std::string displayName;
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Name")) {
-            xml::copyToBString(name, curNode);
+            xml::copyToString(name, curNode);
         } else if(NODE_NAME(curNode, "DisplayName")) {
-            xml::copyToBString(displayName, curNode);
+            xml::copyToString(displayName, curNode);
         }
         curNode = curNode->next;
     }
@@ -159,7 +159,7 @@ Skill::Skill(xmlNodePtr rootNode) {
 
     while(curNode) {
         if(NODE_NAME(curNode, "Name")) {
-            setName(xml::getBString(curNode));
+            setName(xml::getString(curNode));
         } else if(NODE_NAME(curNode, "Gained")) {
             xml::copyToNum(gained, curNode);
         } else if(NODE_NAME(curNode, "GainBonus")) {
@@ -183,8 +183,8 @@ SkillInfo::SkillInfo(xmlNodePtr rootNode) {
     knownOnly = false;
 
     xmlNodePtr curNode = rootNode->children;
-    bstring group;
-    bstring description;
+    std::string group;
+    std::string description;
 
     while(curNode != nullptr) {
         readNode(curNode);
@@ -225,28 +225,28 @@ SkillCommand::SkillCommand(xmlNodePtr rootNode) {
 
 bool SkillInfo::readNode(xmlNodePtr curNode) {
     bool retVal = true;
-    bstring tGroup;
+    std::string tGroup;
     if(NODE_NAME(curNode, "Name")) {
-        setName(xml::getBString(curNode));
+        setName(xml::getString(curNode));
     } else if(NODE_NAME(curNode, "DisplayName")) {
-        xml::copyToBString(displayName, curNode);
+        xml::copyToString(displayName, curNode);
     } else if(NODE_NAME(curNode, "Base")) {
-        xml::copyToBString(tGroup, curNode);
+        xml::copyToString(tGroup, curNode);
         if(!setBase(tGroup)) {
             std::clog << "Error setting skill '" << name << "' base skill to '" << tGroup << "'" << std::endl;
             abort();
         }
     } else if(NODE_NAME(curNode, "Group")) {
-        xml::copyToBString(tGroup, curNode);
+        xml::copyToString(tGroup, curNode);
         if(!setGroup(tGroup)) {
             std::clog << "Error setting skill '" << name << "' to group '" << tGroup << "'" << std::endl;
             abort();
         }
     } else if(NODE_NAME(curNode, "Description")) {
-        xml::copyToBString(description, curNode);
+        xml::copyToString(description, curNode);
     } else if(NODE_NAME(curNode, "GainType")) {
-        bstring strGainType;
-        xml::copyToBString(strGainType, curNode);
+        std::string strGainType;
+        xml::copyToString(strGainType, curNode);
         if(strGainType == "Medium") {
             gainType = SKILL_MEDIUM;
         } else if(strGainType == "Hard") {
@@ -282,9 +282,9 @@ bool SkillCommand::readNode(xmlNodePtr curNode) {
     } else if(NODE_NAME(curNode, "Offensive")) {
         xml::copyToBool(offensive, curNode);
     } else if(NODE_NAME(curNode, "Alias")) {
-        aliases.push_back(xml::getBString(curNode));
+        aliases.push_back(xml::getString(curNode));
     } else if(NODE_NAME(curNode, "TargetType")) {
-        bstring tType = xml::getBString(curNode);
+        std::string tType = xml::getString(curNode);
         if(tType == "Creature")
             targetType = TARGET_CREATURE;
         else if(tType == "Monster")
@@ -300,7 +300,7 @@ bool SkillCommand::readNode(xmlNodePtr curNode) {
         else if(tType == "Self")
             targetType = TARGET_NONE;
     } else if(NODE_NAME(curNode, "Script")) {
-        xml::copyToBString(pyScript, curNode);
+        xml::copyToString(pyScript, curNode);
     } else {
         retVal = false;
     }
@@ -323,17 +323,17 @@ SkillCost::SkillCost(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Type")) {
-            bstring resourceStr;
-            xml::copyToBString(resourceStr, curNode);
-            if(resourceStr.equals("Gold", false)) {
+            std::string resourceStr;
+            xml::copyToString(resourceStr, curNode);
+            if(boost::iequals(resourceStr, "Gold")) {
                 resource = RES_GOLD;
-            } else if(resourceStr.equals("Mana", false) || resourceStr.equals("Mp")) {
+            } else if(boost::iequals(resourceStr, "Mana") || resourceStr == "Mp") {
                 resource = RES_MANA;
-            } else if(resourceStr.equals("HitPoints", false) || resourceStr.equals("Hp")) {
+            } else if(boost::iequals(resourceStr, "HitPoints") || resourceStr == "Hp") {
                 resource = RES_HIT_POINTS;
-            } else if(resourceStr.equals("Focus", false)) {
+            } else if(boost::iequals(resourceStr, "Focus")) {
                 resource = RES_FOCUS;
-            } else if(resourceStr.equals("Energy", false)) {
+            } else if(boost::iequals(resourceStr, "Energy")) {
                 resource = RES_ENERGY;
             }
         } else if(NODE_NAME(curNode, "Cost")) {

@@ -99,26 +99,26 @@ public:
     [[nodiscard]] int getNumInSameRoom(Creature* target);
     [[nodiscard]] int getNumPlyInSameRoom(Creature* target);
     [[nodiscard]] Creature* getMember(int num, bool countDmInvis = false);
-    [[nodiscard]] Creature* getMember(const bstring&  name, int num, Creature* searcher = nullptr, bool includePets = false);
+    [[nodiscard]] Creature* getMember(const std::string&  name, int num, Creature* searcher = nullptr, bool includePets = false);
     [[nodiscard]] GroupType getGroupType() const;
-    [[nodiscard]] bstring getGroupTypeStr() const;
-    [[nodiscard]] bstring getFlagsDisplay();
-    [[nodiscard]] const bstring& getName() const;
-    [[nodiscard]] const bstring& getDescription() const;
-    bstring getGroupList(Creature* viewer);
+    [[nodiscard]] std::string getGroupTypeStr() const;
+    [[nodiscard]] std::string getFlagsDisplay();
+    [[nodiscard]] const std::string& getName() const;
+    [[nodiscard]] const std::string& getDescription() const;
+    std::string getGroupList(Creature* viewer);
 
 
     void sendToAll(std::string_view msg, Creature* ignore = nullptr, bool sendToInvited = false);
 
-    bstring getMsdp(Creature* viewer) const;
+    std::string getMsdp(Creature* viewer) const;
 
 public:
     CreatureList members;
 
 private:
     Creature* leader;
-    bstring name;
-    bstring description;
+    std::string name;
+    std::string description;
 
     int flags;
 

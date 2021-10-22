@@ -21,8 +21,8 @@
 #include <strings.h>                    // for strcasecmp
 #include <ostream>                      // for operator<<, basic_ios::imbue
 #include <string>                       // for operator<<, operator==, char_...
+#include <boost/algorithm/string/predicate.hpp>
 
-#include "bstring.hpp"                  // for bstring, operator+
 #include "cmd.hpp"                      // for cmd
 #include "commands.hpp"                 // for cmdPrefs, cmdTelOpts
 #include "creatures.hpp"                // for Player, Creature (ptr only)
@@ -36,10 +36,10 @@
 
 // having a pref that starts with a hyphen (-) is instead a category
 typedef struct prefInfo {
-    bstring name;
+    std::string name;
     int     flag;
     bool    (*canUse)(const Creature *);
-    bstring desc;
+    std::string desc;
     bool    invert;                 // reverses the language
 } prefInfo, *prefPtr;
 
@@ -179,11 +179,11 @@ int cmdTelOpts(Player* player, cmd* cmnd) {
 
         oStr << "-------------------------------------------------------\n";
         oStr << formatNoDesc % "Term" % sock->getTermType();
-        oStr << formatNoDesc % "Term Size" % bstring(bstring(sock->getTermCols()) + " x " + bstring(sock->getTermRows()));
+        oStr << formatNoDesc % "Term Size" % std::string(std::to_string(sock->getTermCols()) + " x " + std::to_string(sock->getTermRows()));
         if(player->getWrap() == 0)
             oStr << formatNoDesc % "Server Linewrap" % "None";
         else if(player->getWrap() == -1)
-            oStr << formatNoDesc % "Server Linewrap" % (bstring("Using Cols (") + sock->getTermCols() + bstring(")"));
+            oStr << formatNoDesc % "Server Linewrap" % (fmt::format("Using Cols ({})", sock->getTermCols()));
         else
             oStr << formatNoDesc % "Server Linewrap" % target->getWrap();
         oStr << formatWithDesc % "MCCP" % "Mud Client Compression Protocol" % ((sock->mccpEnabled() != 0) ? "^gon^x" : "^roff^x");
@@ -217,7 +217,7 @@ int cmdPrefs(Player* player, cmd* cmnd) {
     bool    toggle = cmnd->str[0][0]=='t' || cmnd->str[0][0]=='p';
     bool    show=false;
     bool all = !strcmp(cmnd->str[1], "-all") || (len == 0 && player->flagIsSet(P_SHOW_ALL_PREFS));
-    bstring prefName="";
+    std::string prefName="";
 
     if(!player->ableToDoCommand())
         return(0);
@@ -242,7 +242,7 @@ int cmdPrefs(Player* player, cmd* cmnd) {
                         player->print("  ");
 
                     prefName = prefList[i].name;
-                    show = all || (len && !strncmp(cmnd->str[1], prefName.toLower().c_str(), len));
+                    show = all || (len && boost::istarts_with(prefName, cmnd->str[1]));
 
                     player->printColor("^%s%s^w\n", show ? "C" : "c", prefList[i].name.substr(1, prefList[i].name.length() - 1).c_str());
                 } else {

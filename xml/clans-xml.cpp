@@ -73,22 +73,22 @@ bool Config::loadClans() {
 
 void Clan::load(xmlNodePtr rootNode) {
     xmlNodePtr childNode, curNode = rootNode->children;
-    bstring temp;
+    std::string temp;
 
     id = xml::getIntProp(rootNode, "Id");
     while(curNode) {
-        if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
+        if(NODE_NAME(curNode, "Name")) xml::copyToString(name, curNode);
         else if(NODE_NAME(curNode, "Join")) join = xml::toNum<int>(curNode);
         else if(NODE_NAME(curNode, "Rescind")) rescind = xml::toNum<int>(curNode);
         else if(NODE_NAME(curNode, "Deity")) {
-            xml::copyToBString(temp, curNode);
+            xml::copyToString(temp, curNode);
             deity = gConfig->deitytoNum(temp);
         }
         else if(NODE_NAME(curNode, "SkillBonus")) {
             childNode = curNode->children;
             while(childNode) {
                 if(NODE_NAME(childNode, "Skill")) {
-                    xml::copyPropToBString(temp, childNode, "Name");
+                    xml::copyPropToString(temp, childNode, "Name");
                     skillBonus[temp] = xml::toNum<short>(childNode);
                 }
                 childNode = childNode->next;

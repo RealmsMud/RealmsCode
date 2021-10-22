@@ -21,7 +21,6 @@
 
 #include <libxml/parser.h>  // for xmlNodePtr
 
-#include "bstring.hpp"      // for bstring
 #include "catRef.hpp"       // for CatRef
 
 class Carry {
@@ -29,7 +28,7 @@ public:
     Carry();
     xmlNodePtr save(xmlNodePtr curNode, const char* childName, bool saveNonZero, int pos=0) const;
     void    load(xmlNodePtr curNode);
-    [[nodiscard]] bstring str(bstring current = "", char color = '\0') const;
+    [[nodiscard]] std::string str(std::string current = "", char color = '\0') const;
     Carry& operator=(const Carry& cry);
     bool    operator==(const Carry& cry) const;
     bool    operator!=(const Carry& cry) const;

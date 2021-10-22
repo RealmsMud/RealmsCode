@@ -28,9 +28,11 @@
 #include <string>                                   // for basic_string, cha...
 #include <boost/tokenizer.hpp>
 #include <limits>                                   // for numeric limits
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include "fmt/core.h"
-#include "bstring.hpp"                              // for bstring, operator+
 #include "catRef.hpp"                               // for CatRef
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for getFullstrText
@@ -49,6 +51,7 @@
 #include "server.hpp"                               // for GOLD_IN, Server
 #include "structs.hpp"                              // for ttag
 #include "utils.hpp"                                // for MIN
+#include "toNum.hpp"
 #include "xml.hpp"                                  // for NODE_NAME, newStr...
 
 
@@ -90,7 +93,7 @@ QuestCompletion::QuestCompletion(xmlNodePtr rootNode, Player* player) {
     xmlNodePtr curNode = rootNode->children;
     xmlNodePtr childNode;
     while(curNode) {
-        if(NODE_NAME(curNode, "Revision")) xml::copyToBString(revision, curNode);
+        if(NODE_NAME(curNode, "Revision")) xml::copyToString(revision, curNode);
         else if(NODE_NAME(curNode, "MobsKilled")) {
             childNode = curNode->children;
             while(childNode) {
@@ -146,7 +149,7 @@ QuestCompleted::QuestCompleted(const QuestCompleted &qc) {
 
 void QuestCompletion::resetParentQuest() {
     if((parentQuest = gConfig->getQuest(questId)) == nullptr) {
-        throw(std::runtime_error("Unable to find parent quest - " + bstring(questId)));
+        throw(std::runtime_error("Unable to find parent quest - " + std::to_string(questId)));
     }
 }
 
@@ -169,15 +172,15 @@ void TalkResponse::parseQuest() {
     if(it == tok.end())
         return;
 
-    bstring cmd = *it++;
+    std::string cmd = *it++;
 
-    if(cmd.equals("quest", false)) {
+    if(boost::iequals(cmd, "quest")) {
         if(it == tok.end())
             return;
 
         // Find the quest number
-        bstring num = *it++;
-        int questNum = num.toInt();
+        std::string num = *it++;
+        int questNum = toNum<int>(num);
 
         if(questNum < 1)
             return;
@@ -205,21 +208,21 @@ int QuestInfo::getTimesRepeatable() const {
 const QuestCatRef& QuestInfo::getTurnInMob() const {
     return(turnInMob);
 }
-bstring QuestInfo::getName() const {
+std::string QuestInfo::getName() const {
     return(name);
 }
 int QuestInfo::getId() const {
     return(questId);
 }
-bstring QuestInfo::getDisplayName() const {
+std::string QuestInfo::getDisplayName() const {
     std::ostringstream displayStr;
     displayStr << "^Y#" << questId << " - " << name << "^x";
     return(displayStr.str());
 }
 
-bstring QuestInfo::getDisplayString() const {
+std::string QuestInfo::getDisplayString() const {
     std::ostringstream displayStr;
-    std::map<bstring, long>::const_iterator it;
+    std::map<std::string, long>::const_iterator it;
     int i = 0;
 
     displayStr << getDisplayName();
@@ -241,14 +244,14 @@ bstring QuestInfo::getDisplayString() const {
         displayStr << " ^Y*Sharable*^x";
     displayStr << std::endl;
     displayStr << "^WDescription: ^x" << description << "^x\n";
-    bstring temp = "";
+    std::string temp = "";
 
     temp = receiveString;
-    temp.Replace("*CR", "\n");
+    boost::replace_all(temp, "*CR", "\n");
     displayStr << "^WReceiveString: ^x" << temp << "\n";
 
     temp = completionString;
-    temp.Replace("*CR", "\n");
+    boost::replace_all(temp, "*CR", "\n");
     displayStr << "^WCompletionString: ^x" << temp << "\n";
 
     if(!preRequisites.empty()) {
@@ -687,7 +690,7 @@ bool QuestCompletion::hasRequiredRooms() const {
     }
     return(true);
 }
-bstring QuestCompletion::getStatusDisplay() {
+std::string QuestCompletion::getStatusDisplay() {
     std::ostringstream displayStr;
     int i;
 
@@ -866,7 +869,7 @@ int Player::countItems(const QuestCatRef& obj) {
 bool prepareItemList(const Player* player, std::list<Object*> &objects, Object* object, const Monster* monster, bool isTrade, bool setTradeOwner, int totalBulk);
 
 bool QuestCompletion::complete(Monster* monster) {
-    std::map<bstring, long>::const_iterator it;
+    std::map<std::string, long>::const_iterator it;
     std::list<Object*> objects;
     std::list<Object*>::iterator oIt;
 
@@ -899,7 +902,7 @@ bool QuestCompletion::complete(Monster* monster) {
 
     // First, remove all of the items from the player
     for(QuestCatRef & obj : parentQuest->itemsToGet) {
-        bstring oName;
+        std::string oName;
         Object *object;
         ObjectSet::iterator osIt;
         int num = obj.reqNum;
@@ -999,9 +1002,9 @@ int cmdTalk(Player* player, cmd* cmnd) {
 
     QuestInfo* quest = nullptr;
 
-    bstring question;
-    bstring response;
-    bstring action;
+    std::string question;
+    std::string response;
+    std::string action;
 
     player->clearFlag(P_AFK);
 
@@ -1044,8 +1047,8 @@ int cmdTalk(Player* player, cmd* cmnd) {
     if(cmnd->num == 2 || target->responses.empty()) {
         response = target->getTalk();
         if(response == "$random") {
-            std::list<bstring> randomResponses;
-            std::list<bstring> randomActions;
+            std::list<std::string> randomResponses;
+            std::list<std::string> randomActions;
             int numResponses=0;
             for(TalkResponse * talkResponse : target->responses) {
                 for(std::string_view  keyword : talkResponse->keywords) {
@@ -1074,17 +1077,17 @@ int cmdTalk(Player* player, cmd* cmnd) {
             broadcast(player->getSock(), player->getParent(), "%M speaks to %N in %s.",
                 player, target, get_language_adj(player->current_language));
     } else {
-        question = keyTxtConvert(getFullstrText(cmnd->fullstr, 2).toLower());
+        question = keyTxtConvert(boost::to_lower_copy(getFullstrText(cmnd->fullstr, 2)));
         broadcast_rom_LangWc(target->current_language, player->getSock(), player->currentLocation, "%M asks %N \"%s\".^x",
             player, target, question.c_str());
-        bstring key = "", keyword = "";
+        std::string key, keyword;
         for(TalkResponse * talkResponse : target->responses) {
             for(std::string_view keyWrd : talkResponse->keywords) {
-                keyword = keyTxtConvert(keyWrd).toLower();
+                keyword = boost::to_lower_copy(keyTxtConvert(keyWrd));
 
                 if(keyword[0] == '@') {
                     // We're looking for an exact match of the entire string
-                    const bstring& toMatch = keyword.substr(1);
+                    const std::string& toMatch = keyword.substr(1);
                     if(question == toMatch) {
                         // First let's copy over the information
                         key = keyword;
@@ -1097,16 +1100,16 @@ int cmdTalk(Player* player, cmd* cmnd) {
                 } else if(keyword[0] == '%') {
                     // Now we're looking for a match of the keyword surrounded by either white space,
                     // punctuation, or the end/start of the string
-                    const bstring& toMatch = keyword.substr(1);
-                    bstring::size_type idx = question.find(toMatch,0);
-                    if(idx != bstring::npos) {
+                    const std::string& toMatch = keyword.substr(1);
+                    std::string::size_type idx = question.find(toMatch,0);
+                    if(idx != std::string::npos) {
                         // Possible match
-                        bstring::size_type keyLen = toMatch.length();
-                        bstring::size_type questLen = question.length();
-                        bstring::size_type startIdx = idx-1;
+                        std::string::size_type keyLen = toMatch.length();
+                        std::string::size_type questLen = question.length();
+                        std::string::size_type startIdx = idx-1;
                         if(idx == 0 || (isspace(question[startIdx]) || ispunct(question[startIdx]))) {
                             // The start of the string is good, now let's check the end
-                            bstring::size_type endIdx = idx + keyLen;
+                            std::string::size_type endIdx = idx + keyLen;
                             //char ch = question[endIdx];
 
                             if(endIdx >= questLen || (isspace(question[endIdx]) || ispunct(question[endIdx]))) {
@@ -1121,7 +1124,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
                             }
                         }
                     }
-                } else if(question.find(keyword, 0) != bstring::npos) {
+                } else if(question.find(keyword, 0) != std::string::npos) {
                     // We found one of the keywords!
                     // First let's copy over the information
                     key = keyword;
@@ -1136,7 +1139,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
         foundresponse:
 
         // they can't trigger special responses by talking to them
-        if(key.empty() || key.getAt(0) == '$') {
+        if(key.empty() || key.at(0) == '$') {
             response = "";
             action = "";
         }
@@ -1164,7 +1167,7 @@ int cmdTalk(Player* player, cmd* cmnd) {
 //                      doTalkAction
 //*****************************************************************************
 
-bool Monster::doTalkAction(Player* target, bstring action, QuestInfo* quest) {
+bool Monster::doTalkAction(Player* target, std::string action, QuestInfo* quest) {
     if(action.empty())
         return(false);
 
@@ -1174,7 +1177,7 @@ bool Monster::doTalkAction(Player* target, bstring action, QuestInfo* quest) {
     if(it == tok.end())
         return(false);
 
-    bstring cmd = *it++;
+    std::string cmd = *it++;
 
     if(quest != nullptr) {
         if(isEnemy(target) && !target->checkStaff("%M refuses to talk to you about that.\n", this))
@@ -1194,23 +1197,23 @@ bool Monster::doTalkAction(Player* target, bstring action, QuestInfo* quest) {
         quest->giveInitialitems(this, target);
         return(true);
     }
-    else if(cmd.equals("attack", false)) {
+    else if(boost::iequals(cmd, "attack")) {
         addEnemy(target, true);
         return(true);
     }
-    else if(cmd.equals("action", false)) {
+    else if(boost::iequals(cmd, "action")) {
         if(it != tok.end()) {
             // Need to use global namespace cmd, overriding local variable
             ::cmd cm;
 
-            bstring actionCmd = *it++;
+            std::string actionCmd = *it++;
             cm.fullstr = actionCmd;
             //strncpy(cm.fullstr, actionCmd.c_str(), 100);
 
             if(it != tok.end()) {
-                bstring actTarget = *it++;
-                if(actTarget.equals("player", false)) {
-                    cm.fullstr += bstring(" ") + target->getName();
+                std::string actTarget = *it++;
+                if(boost::iequals(actTarget, "player")) {
+                    cm.fullstr += std::string(" ") + target->getName();
                 }
             }
 
@@ -1222,12 +1225,12 @@ bool Monster::doTalkAction(Player* target, bstring action, QuestInfo* quest) {
             return(true);
         }
     }
-    else if(cmd.equals("cast", false)) {
+    else if(boost::iequals(cmd, "cast")) {
         if(it != tok.end()) {
             // Need to use global namespace cmd, overriding local variable
             ::cmd cm;
 
-            action.Replace("PLAYER", target->getCName());
+            boost::replace_all(action, "PLAYER", target->getCName());
             cm.fullstr = action;
 
             stripBadChars(cm.fullstr); // removes '.' and '/'
@@ -1248,22 +1251,22 @@ bool Monster::doTalkAction(Player* target, bstring action, QuestInfo* quest) {
 
         }
     }
-    else if(cmd.equals("give", false)) {
+    else if(boost::iequals(cmd, "give")) {
         if(it != tok.end()) {
             CatRef toGive;
             // Find the area/number
-            bstring area = *it++;
-            int objNum = area.toInt();
+            std::string area = *it++;
+            int objNum = toNum<int>(area);
             if(objNum <= 0) {
                 toGive.setArea(area);
 
                 // We didn't find a number, must be an area, look for the number now
-                bstring num;
+                std::string num;
 
                 if(it == tok.end())
                     return(false);
                 num = *it++;
-                objNum = num.toInt();
+                objNum = toNum<int>(area);
                 if(objNum <= 0)
                     return(false);
             }
@@ -1454,10 +1457,10 @@ void QuestInfo::printReceiveString(Player* player, const Monster* giver) const {
     if(receiveString.empty())
         return;
 
-    bstring toPrint = receiveString;
+    std::string toPrint = receiveString;
 
-    toPrint.Replace("*GIVER*", giver->getCrtStr(player, CAP).c_str());
-    toPrint.Replace("*CR*", "\n");
+    boost::replace_all(toPrint, "*GIVER*", giver->getCrtStr(player, CAP).c_str());
+    boost::replace_all(toPrint, "*CR*", "\n");
     *player << ColorOn << toPrint << ColorOff << "\n";
 }
 
@@ -1469,10 +1472,10 @@ void QuestInfo::printCompletionString(Player* player, const Monster* giver) cons
     if(receiveString.empty())
         return;
 
-    bstring toPrint = completionString;
+    std::string toPrint = completionString;
 
-    toPrint.Replace("*GIVER*", giver->getCrtStr(player, CAP).c_str());
-    toPrint.Replace("*CR*", "\n");
+    boost::replace_all(toPrint, "*GIVER*", giver->getCrtStr(player, CAP).c_str());
+    boost::replace_all(toPrint, "*CR*", "\n");
     *player << ColorOn << toPrint << ColorOff << "\n";
 }
 
@@ -1498,13 +1501,13 @@ void Monster::convertOldTalks() {
             newResponse->action = "attack";
             break;
         case 2:
-            newResponse->action = bstring("action ") + tp->action + " " + tp->target;
+            newResponse->action = std::string("action ") + tp->action + " " + tp->target;
             break;
         case 3:
-            newResponse->action = bstring("cast ") + tp->action + " " + tp->target;
+            newResponse->action = std::string("cast ") + tp->action + " " + tp->target;
             break;
         case 4:
-            newResponse->action = bstring("give ") + tp->action;
+            newResponse->action = std::string("give ") + tp->action;
             break;
         }
 
@@ -1546,7 +1549,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
     {
         // We're trying to complete a quest here, lets see if we have one that matches
         // the user's input
-        bstring questName = getFullstrText(cmnd->fullstr, 2);
+        std::string questName = getFullstrText(cmnd->fullstr, 2);
         QuestCompletion* quest;
         for(std::pair<int, QuestCompletion*> p : player->questsInProgress) {
             quest = p.second;
@@ -1570,7 +1573,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
                             return(0);
                         }
 
-                        bstring name = quest->getParentQuest()->getName();
+                        std::string name = quest->getParentQuest()->getName();
                         *player << ColorOn << "Completing quest ^W" << name << "^x.\n";
 
                         // NOTE: After quest->complete, quest is INVALID, do not attempt to access it
@@ -1603,7 +1606,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
     {
         // We're trying to abandon a quest here, lets see if we have one that matches
         // the user's input
-        bstring questName = getFullstrText(cmnd->fullstr, 2);
+        std::string questName = getFullstrText(cmnd->fullstr, 2);
         QuestCompletion* quest;
         if(questName.empty()) {
             *player << "Abandon which quest?\n";

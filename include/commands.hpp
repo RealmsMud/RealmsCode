@@ -19,6 +19,7 @@
 #ifndef COMMANDS_H_
 #define COMMANDS_H_
 
+#include <string>
 #include "global.hpp"
 
 class BaseRoom;
@@ -54,9 +55,9 @@ int cmdProxy(Player* player, cmd* cmnd);
 // action.c
 int plyAction(Player* player, cmd* cmnd);
 int cmdAction(Creature* player, cmd* cmnd);
-bool isBadSocial(const bstring& str);
-bool isSemiBadSocial(const bstring& str);
-bool isGoodSocial(const bstring& str);
+bool isBadSocial(const std::string& str);
+bool isSemiBadSocial(const std::string& str);
+bool isGoodSocial(const std::string& str);
 
 // attack.c
 int cmdAttack(Creature* player, cmd* cmnd);
@@ -81,7 +82,7 @@ int cmdThrow(Creature* creature, cmd* cmnd);
 // command1.c
 int cmdNoExist(Player* player, cmd* cmnd);
 int cmdNoAuth(Player* player);
-void command(Socket* sock, const bstring& str);
+void command(Socket* sock, const std::string& str);
 void parse(std::string_view str, cmd* cmnd);
 
 int cmdPush(Player* player, cmd* cmnd);
@@ -116,7 +117,7 @@ int cmdPrefs(Player* player, cmd* cmnd);
 int cmdTelOpts(Player* player, cmd* cmnd);
 int cmdQuit(Player* player, cmd* cmnd);
 int cmdChangeStats(Player* player, cmd* cmnd);
-void changingStats(Socket* sock, const bstring& str );
+void changingStats(Socket* sock, const std::string& str );
 
 
 // command7.c
@@ -135,7 +136,7 @@ int cmdBreak(Player* player, cmd* cmnd);
 
 
 // command11.c
-bstring doFinger(const Player* player, bstring name, CreatureClass cls);
+std::string doFinger(const Player* player, std::string name, CreatureClass cls);
 int cmdFinger(Player* player, cmd* cmnd);
 int cmdPayToll(Player* player, cmd* cmnd);
 unsigned long tollcost(const Player* player, const Exit *exit, Monster* keeper);
@@ -145,8 +146,8 @@ int hire(Player* player, cmd* cmnd);
 
 
 // communication.c
-bstring getFullstrTextTrun(std::string_view str, int skip, char toSkip = ' ', bool colorEscape=false);
-bstring getFullstrText(bstring str, int skip, char toSkip = ' ', bool colorEscape=false, bool truncate=false);
+std::string getFullstrTextTrun(std::string str, int skip, char toSkip = ' ', bool colorEscape=false);
+std::string getFullstrText(std::string str, int skip, char toSkip = ' ', bool colorEscape=false, bool truncate=false);
 int communicateWith(Player* player, cmd* cmnd);
 int pCommunicate(Player* player, cmd* cmnd);
 int communicate(Creature* player, cmd* cmnd);
@@ -313,7 +314,7 @@ int cmdGuild(Player* player, cmd* cmnd);
 int cmdGuildSend(Player* player, cmd* cmnd);
 int cmdGuildHall(Player* player, cmd* cmnd);
 int dmListGuilds(Player* player, cmd* cmnd);
-void doGuildSend(const Guild* guild, Player* player, bstring txt);
+void doGuildSend(const Guild* guild, Player* player, std::string txt);
 
 // Lottery.c
 int cmdClaim(Player* player, cmd* cmnd);

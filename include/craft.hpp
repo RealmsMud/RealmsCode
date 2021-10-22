@@ -35,14 +35,14 @@ public:
     friend std::ostream &operator<<(std::ostream &out, Recipe *recipe);
     void save(xmlNodePtr rootNode) const;
     void load(xmlNodePtr curNode);
-    void saveList(xmlNodePtr curNode, const bstring &name, const std::list<CatRef> *list) const;
+    void saveList(xmlNodePtr curNode, const std::string &name, const std::list<CatRef> *list) const;
     void loadList(xmlNodePtr curNode, std::list<CatRef> *list);
     [[nodiscard]] bool isValid() const;
     bool check(const Player *player, const std::list<CatRef> *list, std::string_view type, int numIngredients) const;
     bool check(std::list<CatRef> *list, const std::list<CatRef> *require, int numIngredients) const;
     bool isSkilled(const Player *player, Size recipeSize) const;
-    bstring listIngredients(const std::list<CatRef> *list) const;
-    bstring display();
+    std::string listIngredients(const std::list<CatRef> *list) const;
+    std::string display();
     bool canUseEquipment(const Player *player, std::string_view skill) const;
     bool canBeEdittedBy(const Player *player) const;
 
@@ -57,9 +57,9 @@ public:
     [[nodiscard]] int getExperience() const;
     [[nodiscard]] bool isSizable() const;
     [[nodiscard]] CatRef getResult() const;
-    [[nodiscard]] bstring getResultName(bool appendCr = false);
-    [[nodiscard]] bstring getSkill() const;
-    [[nodiscard]] bstring getCreator() const;
+    [[nodiscard]] std::string getResultName(bool appendCr = false);
+    [[nodiscard]] std::string getSkill() const;
+    [[nodiscard]] std::string getCreator() const;
     [[nodiscard]] int getMinSkill() const;
     [[nodiscard]] bool requiresRecipe() const;
 
@@ -72,9 +72,9 @@ public:
 protected:
     unsigned int id;
     CatRef result;
-    bstring resultName;
-    bstring skill;
-    bstring creator;
+    std::string resultName;
+    std::string skill;
+    std::string creator;
     bool requireRecipe;
     int experience;
     bool sizable;

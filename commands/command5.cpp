@@ -23,7 +23,6 @@
 #include <unistd.h>               // for unlink
 #include <ostream>                // for operator<<, ostringstream, basic_os...
 
-#include "bstring.hpp"            // for bstring
 #include "calendar.hpp"           // for Calendar
 #include "catRefInfo.hpp"         // for CatRefInfo
 #include "cmd.hpp"                // for cmd
@@ -384,13 +383,13 @@ int cmdWho(Player* player, cmd* cmnd) {
     } // end if cmnd->num > 1
 
     std::ostringstream whoStr;
-    bstring curStr;
+    std::string curStr;
 
     whoStr << "\n^BPlayers currently online:\n";
     whoStr << "-------------------------------------------------------------------------------^x\n";
 
     Player* target=0;
-    for(std::pair<bstring, Player*> p : gServer->players) {
+    for(std::pair<std::string, Player*> p : gServer->players) {
         target = p.second;
 
         if(!target->isConnected()) continue;
@@ -530,7 +529,7 @@ void deletePlayer(Player* player) {
     char    file[80];
     bool hardcore = player->isHardcore();
     // cache the name because we will be deleting the player object
-    bstring name = player->getName();
+    std::string name = player->getName();
 
     gConfig->deleteUniques(player);
     gServer->clearAsEnemy(player);
@@ -681,10 +680,10 @@ void Player::changeStats() {
 //********************************************************************
 // This function allows a player to change their stats
 
-void changingStats(Socket* sock, const bstring& str) {
+void changingStats(Socket* sock, const std::string& str) {
     sock->getPlayer()->changingStats(str);
 }
-void Player::changingStats(bstring str) {
+void Player::changingStats(std::string str) {
     int     a, n, i, k, l, sum=0;
     int     vnum[5];
     vstat   nstat, sendStat;
@@ -697,7 +696,7 @@ void Player::changingStats(bstring str) {
         for(i=0; i<=n; i++) {
             if(str[i]==' ' || str[i]==0) {
                 str[i] = 0;
-                //bstring tmp = str.substr(l);
+                //std::string tmp = str.substr(l);
                 vnum[k++] = atoi(&str[l]);
                 l = i+1;
             }
@@ -895,7 +894,7 @@ void showAbility(Player* player, const char *skill, const char *display, int lt,
 int cmdTime(Player* player, cmd* cmnd) {
     long    t = time(0), u=0, tmp=0, i=0;
     const CatRefInfo* cri = gConfig->getCatRefInfo(player->getRoomParent(), 1);
-    bstring world = "";
+    std::string world = "";
 
     if(cri && cri->getWorldName() != "") {
         world += " of ";

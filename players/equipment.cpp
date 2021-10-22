@@ -20,8 +20,8 @@
 #include <cstdlib>                // for strtoul, atoi
 #include <cstring>                // for strlen, strcat, strcmp
 #include <ctime>                  // for time
+#include <boost/algorithm/string/replace.hpp>
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for cmdTrade, cmdCompare, cmdCost, cmdDrop
 #include "config.hpp"             // for Config, gConfig
@@ -1210,8 +1210,8 @@ void getAllObj(Creature* creature, Object *container) {
             if(last_obj && last_obj->showAsSame(player, object))
                 n++;
             else if(last_obj) {
-                // BUGFIX: Assigning the c_str() of a bstring to a char, and it's still being accessed after the bstring goes out of scope (this line)
-                bstring lastObjStr = last_obj->getObjStr(nullptr, 0, n);
+                // BUGFIX: Assigning the c_str() of a std::string to a char, and it's still being accessed after the std::string goes out of scope (this line)
+                std::string lastObjStr = last_obj->getObjStr(nullptr, 0, n);
                 str2 = lastObjStr.c_str();
                 if(strlen(str2)+strlen(str) < 2040) {
                     strcat(str, str2);
@@ -1234,7 +1234,7 @@ void getAllObj(Creature* creature, Object *container) {
     }
 
     if(found && last_obj) {
-        bstring objStr = object->getObjStr(nullptr, 0, n);
+        std::string objStr = object->getObjStr(nullptr, 0, n);
         if(objStr.length() +strlen(str) < 2040)
             strcat(str, objStr.c_str());
     } else if(!found) {
@@ -1360,7 +1360,7 @@ void get_all_rom(Creature* creature, char *item) {
             if(last_obj && last_obj->showAsSame(player, object))
                 n++;
             else if(last_obj) {
-                bstring oStr = last_obj->getObjStr(nullptr, 0, n);
+                std::string oStr = last_obj->getObjStr(nullptr, 0, n);
                 str2 = oStr.c_str();
                 if(strlen(str2)+strlen(str) < 2040) {
                     strcat(str, str2);
@@ -1369,7 +1369,7 @@ void get_all_rom(Creature* creature, char *item) {
                 }
             }
             if(object->getType() == ObjectType::MONEY) {
-                bstring strtmp = object->getObjStr(nullptr, 0, 1);
+                std::string strtmp = object->getObjStr(nullptr, 0, 1);
                 str2 = strtmp.c_str();
                 if(strlen(str2)+strlen(str) < 2040) {
                     strcat(str, str2);
@@ -1396,7 +1396,7 @@ void get_all_rom(Creature* creature, char *item) {
     }
 
     if(found && last_obj) {
-        bstring objStr = last_obj->getObjStr(nullptr, 0, n);
+        std::string objStr = last_obj->getObjStr(nullptr, 0, n);
         str2 = objStr.c_str();
         if(strlen(str2)+strlen(str) < 2040)
             strcat(str, str2);
@@ -1907,7 +1907,7 @@ void dropAllRoom(Creature* creature, Player *player, bool factionCanRecycle) {
     Object  *object=nullptr;
     Property* p=nullptr;
     bool    first=false;
-    bstring txt = "";
+    std::string txt = "";
 
     // we're being sent either a player or a pet
     //  - creature will be the one dropping the object
@@ -2055,7 +2055,7 @@ void dropAllObj(Creature* creature, Object *container, Property *p) {
     Object  *object=nullptr, *last=nullptr;
     BaseRoom* room = creature->getRoomParent();
     int     n=1, found=0, full=0;
-    bstring txt = "";
+    std::string txt = "";
     bool    removeUnique = !container->inCreature() && !p;
 
     // we're being sent either a player or a pet
@@ -2253,10 +2253,10 @@ void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cas
 void containerOutput(const Player* player, const Object* container, const Object* object) {
     if(!container->use_output[0])
         return;
-    bstring output = container->use_output;
+    std::string output = container->use_output;
 
-    output.Replace("*OBJECT-UPPER*", object->getObjStr(nullptr, CAP, 0).c_str());
-    output.Replace("*OBJECT*", object->getObjStr(nullptr, 0, 0).c_str());
+    boost::replace_all(output, "*OBJECT-UPPER*", object->getObjStr(nullptr, CAP, 0).c_str());
+    boost::replace_all(output, "*OBJECT*", object->getObjStr(nullptr, 0, 0).c_str());
 
     player->printColor("%s\n", output.c_str());
 }
@@ -2961,21 +2961,21 @@ void give_money(Player* player, cmd* cmnd) {
     mTarget = target->getAsMonster();
 
     if(mTarget && !mTarget->isPet()) {
-        bstring pay = "$pay " + (bstring)amt;
+        std::string pay = "$pay " + std::to_string(amt);
         bool match = false;
         bool hasPay = false;
         unsigned long cost=0;
 
         for(TalkResponse * talkResponse : mTarget->responses) {
-            for(const bstring& keyword : talkResponse->keywords) {
-                if(keyword.left(4) == "$pay")
+            for(const std::string& keyword : talkResponse->keywords) {
+                if(keyword.starts_with("$pay"))
                     hasPay = true;
 
                 // match if this is a flat-rate
                 match = keyword == pay;
                 // investigate level-based cost
-                if(!match && keyword.left(10) == "$pay level") {
-                    cost = atoi(keyword.right(keyword.getLength()-11).c_str());
+                if(!match && keyword.starts_with("$pay level")) {
+                    cost = atoi(keyword.substr(11).c_str());
                     match = cost * player->getLevel() == amt;
                 }
                 if(match) {

@@ -48,8 +48,8 @@ public:
     [[nodiscard]] long getClanRegard(int i) const;
     [[nodiscard]] long getOverallRegard() const;
 
-    [[nodiscard]] bstring guildDisplay() const;
-    [[nodiscard]] bstring clanDisplay() const;
+    [[nodiscard]] std::string guildDisplay() const;
+    [[nodiscard]] std::string clanDisplay() const;
 protected:
     long classRegard[static_cast<int>(CreatureClass::CLASS_COUNT)]{};
     long raceRegard[RACE_COUNT]{};
@@ -67,11 +67,11 @@ public:
     Faction();
     void load(xmlNodePtr rootNode);
 
-    [[nodiscard]] bstring getName() const;
-    [[nodiscard]] bstring getDisplayName() const;
-    [[nodiscard]] bstring getParent() const;
-    [[nodiscard]] bstring getGroup() const;
-    [[nodiscard]] bstring getSocial() const;
+    [[nodiscard]] std::string getName() const;
+    [[nodiscard]] std::string getDisplayName() const;
+    [[nodiscard]] std::string getParent() const;
+    [[nodiscard]] std::string getGroup() const;
+    [[nodiscard]] std::string getSocial() const;
     [[nodiscard]] long getBaseRegard() const;
     [[nodiscard]] long getClassRegard(CreatureClass i) const;
     [[nodiscard]] long getRaceRegard(int i) const;
@@ -96,19 +96,19 @@ public:
 
     static int getCutoff(int attitude);
     static int getAttitude(int regard);
-    static bstring getNoun(int regard);
-    static bstring getColor(int regard);
-    static bstring getBar(int regard, bool alwaysPad);
+    static std::string getNoun(int regard);
+    static std::string getColor(int regard);
+    static std::string getBar(int regard, bool alwaysPad);
     static void worshipSocial(Monster *monster);
 
-    static bool willAggro(const Player* player, std::string_view faction);
-    static bool willSpeakWith(const Player* player, std::string_view faction);
-    static bool willDoBusinessWith(const Player* player, std::string_view faction);
-    static bool willBeneCast(const Player* player, std::string_view faction);
-    static bool willLetThrough(const Player* player, std::string_view faction);
+    static bool willAggro(const Player* player, const std::string &faction);
+    static bool willSpeakWith(const Player* player, const std::string &faction);
+    static bool willDoBusinessWith(const Player* player, const std::string &faction);
+    static bool willBeneCast(const Player* player, const std::string &faction);
+    static bool willLetThrough(const Player* player, const std::string &faction);
 
-    static Money adjustPrice(const Player* player, std::string_view faction, Money money, bool sell);
-    static bool canPledgeTo(const Player* player, std::string_view faction);
+    static Money adjustPrice(const Player* player, const std::string &faction, Money money, bool sell);
+    static bool canPledgeTo(const Player* player, const std::string &faction);
 
     static const int WORSHIP        = 4;
     static const int REGARD         = 3;
@@ -135,11 +135,11 @@ public:
     static const int MIN_FACTION            = -64999;   // adjusted can't go under this amount
     static const int ALWAYS_HATE            = -65000;   // set to this amount and you will always be hated
 protected:
-    bstring name;
-    bstring parent;     // What faction this faction inherits from
-    bstring group;      // What display group this faction is in
-    bstring displayName;
-    bstring social;
+    std::string name;
+    std::string parent;     // What faction this faction inherits from
+    std::string group;      // What display group this faction is in
+    std::string displayName;
+    std::string social;
     long baseRegard;    // Regard they have to everyone before modification
     FactionRegard   initial;
     FactionRegard   max;

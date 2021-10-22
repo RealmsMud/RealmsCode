@@ -20,7 +20,6 @@
 #include <map>                    // for operator==, operator!=
 #include <string>                 // for operator==, basic_string, allocator
 
-#include "bstring.hpp"            // for bstring
 #include "calendar.hpp"           // for Calendar, cDay
 #include "config.hpp"             // for Config, gConfig
 #include "creatures.hpp"          // for Player
@@ -205,14 +204,14 @@ static char number[][15] = { "zero", "one", "two", "three", "four", "five", "six
 //*********************************************************************
 //          int_to_test()
 //*********************************************************************
-bstring intToText(int nNumber, bool cap) {
-    bstring toReturn;
+std::string intToText(int nNumber, bool cap) {
+    std::string toReturn;
 
     // check for array bounds
     if(nNumber < 31 && nNumber >= 0) {
         toReturn = number[nNumber];
     } else {
-        toReturn = bstring(nNumber);
+        toReturn = std::to_string(nNumber);
     }
 
     if(cap)
@@ -220,8 +219,8 @@ bstring intToText(int nNumber, bool cap) {
     return(toReturn);
 }
 
-bstring getOrdinal(int num) {
-    bstring ordinal;
+std::string getOrdinal(int num) {
+    std::string ordinal;
     char buff[32];
     int last=0;
 
@@ -407,7 +406,7 @@ char *int_to_text(int nNumber) {
 bool isTitle(std::string_view str) {
     std::map<int, PlayerTitle*>::iterator tt;
 
-    std::map<bstring, PlayerClass*>::iterator cIt;
+    std::map<std::string, PlayerClass*>::iterator cIt;
     PlayerClass* pClass=nullptr;
     PlayerTitle* title=nullptr;
     for(cIt = gConfig->classes.begin() ; cIt != gConfig->classes.end() ; cIt++) {

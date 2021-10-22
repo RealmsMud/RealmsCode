@@ -20,7 +20,6 @@
 #include <ctime>          // for time
 #include <string>          // for operator==, basic_string
 
-#include "bstring.hpp"     // for bstring
 #include "creatures.hpp"   // for Player
 #include "exits.hpp"       // for Exit
 #include "flags.hpp"       // for O_LOGIN_FILE, X_CLOSED, X_LOCKED

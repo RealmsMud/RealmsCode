@@ -24,7 +24,6 @@
 #include <cstring>                                  // for strcpy
 #include <xml.hpp>                                  // for NODE_NAME, copyToNum
 
-#include "bstring.hpp"                              // for bstring, operator+
 #include "catRef.hpp"                               // for CatRef
 #include "enums/loadType.hpp"                       // for LoadType, LoadTyp...
 #include "flags.hpp"                                // for MAX_ROOM_FLAGS
@@ -65,7 +64,7 @@ bool loadRoom(const CatRef& cr, UniqueRoom **pRoom, bool offline) {
 //*********************************************************************
 // if we're loading only from a filename, get CatRef from file
 
-bool loadRoomFromFile(const CatRef& cr, UniqueRoom **pRoom, bstring filename, bool offline) {
+bool loadRoomFromFile(const CatRef& cr, UniqueRoom **pRoom, std::string filename, bool offline) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     int         num;
@@ -107,17 +106,17 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode, bool offline) {
     info.load(rootNode);
     info.id = xml::getIntProp(rootNode, "Num");
 
-    setId(bstring("R") + info.rstr());
+    setId(std::string("R") + info.rstr());
 
-    xml::copyPropToBString(version, rootNode, "Version");
+    xml::copyPropToString(version, rootNode, "Version");
     curNode = rootNode->children;
     // Start reading stuff in!
     while(curNode) {
-        if(NODE_NAME(curNode, "Name")) setName(xml::getBString(curNode));
-        else if(NODE_NAME(curNode, "ShortDescription")) xml::copyToBString(short_desc, curNode);
-        else if(NODE_NAME(curNode, "LongDescription")) xml::copyToBString(long_desc, curNode);
-        else if(NODE_NAME(curNode, "Fishing")) xml::copyToBString(fishing, curNode);
-        else if(NODE_NAME(curNode, "Faction")) xml::copyToBString(faction, curNode);
+        if(NODE_NAME(curNode, "Name")) setName(xml::getString(curNode));
+        else if(NODE_NAME(curNode, "ShortDescription")) xml::copyToString(short_desc, curNode);
+        else if(NODE_NAME(curNode, "LongDescription")) xml::copyToString(long_desc, curNode);
+        else if(NODE_NAME(curNode, "Fishing")) xml::copyToString(fishing, curNode);
+        else if(NODE_NAME(curNode, "Faction")) xml::copyToString(faction, curNode);
         else if(NODE_NAME(curNode, "LastModBy")) xml::copyToCString(last_mod, curNode);
         else if(NODE_NAME(curNode, "LastModTime")) xml::copyToCString(lastModTime, curNode);
         else if(NODE_NAME(curNode, "LastPlayer")) xml::copyToCString(lastPly, curNode);
@@ -163,7 +162,7 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode, bool offline) {
 
         // load old tracks
         if(getVersion() < "2.32d") {
-            if(NODE_NAME(curNode, "TrackExit")) track.setDirection(xml::getBString(curNode));
+            if(NODE_NAME(curNode, "TrackExit")) track.setDirection(xml::getString(curNode));
             else if(NODE_NAME(curNode, "TrackSize")) track.setSize(whatSize(xml::toNum<int>(curNode)));
             else if(NODE_NAME(curNode, "TrackNum")) track.setNum(xml::toNum<int>(curNode));
         }
@@ -261,7 +260,7 @@ int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
 
     // record rooms saved during swap
     if(gConfig->swapIsInteresting(this))
-        gConfig->swapLog((bstring)"r" + info.rstr(), false);
+        gConfig->swapLog((std::string)"r" + info.rstr(), false);
 
     xml::newNumProp(rootNode, "Num", info.id);
     xml::newProp(rootNode, "Version", gConfig->getVersion());

@@ -19,7 +19,6 @@
 #include <cstring>                // for strcat, strlen, strncmp, strcpy
 #include <string>                 // for operator==, basic_string
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for finishDropObject, cmdPrepareObject
@@ -525,7 +524,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
             strcpy(item, "used up ");
         else
             strcpy(item, "broken ");
-        object->setName(bstring(item) + object->getName());
+        object->setName(std::string(item) + object->getName());
 
         strncpy(object->key[2],"broken",20);
 

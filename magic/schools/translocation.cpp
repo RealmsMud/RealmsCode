@@ -22,7 +22,6 @@
 
 #include "anchor.hpp"             // for Anchor
 #include "area.hpp"               // for Area, MapMarker
-#include "bstring.hpp"            // for bstring
 #include "catRef.hpp"             // for CatRef
 #include "catRefInfo.hpp"         // for CatRefInfo
 #include "cmd.hpp"                // for cmd
@@ -542,7 +541,7 @@ bool Move::deletePortal(BaseRoom* room, Exit* exit, const Creature* leader, std:
     return(Move::deletePortal(room, exit->getPassPhrase(), leader, followers, initial));
 }
 
-bool Move::deletePortal(BaseRoom* room, std::string_view name, const Creature* leader, std::list<Creature*> *followers, bool initial) {
+bool Move::deletePortal(BaseRoom* room, const std::string &name, const Creature* leader, std::list<Creature*> *followers, bool initial) {
     ExitList::iterator xit;
     for(xit = room->exits.begin() ; xit != room->exits.end() ; xit++) {
         Exit* ext = *xit;

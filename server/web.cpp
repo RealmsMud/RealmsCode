@@ -28,8 +28,10 @@
 #include <cstring>                // for strcat, strerror, strchr
 #include <stdexcept>              // for runtime_error
 #include <fmt/format.h>
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
 #include "clans.hpp"              // for Clan
 #include "cmd.hpp"                // for cmd
@@ -51,7 +53,7 @@
 #include "server.hpp"             // for Server, gServer, MonsterCache, Obje...
 #include "socket.hpp"             // for Socket
 #include "web.hpp"                // for WebInterface, callWebserver, update...
-#include "xml.hpp"                // for copyToBString, loadPlayer, NODE_NAME
+#include "xml.hpp"                // for copyToString, loadPlayer, NODE_NAME
 
 
 int lastmod = 0;
@@ -80,7 +82,7 @@ static char equipDelim = 10;
 //*********************************************************************
 
 void updateRecentActivity() {
-    callWebserver((bstring)"mud.php?type=recent", true, true);
+    callWebserver((std::string)"mud.php?type=recent", true, true);
 }
 
 //*********************************************************************
@@ -144,7 +146,7 @@ void WebInterface::openFifos() {
     snprintf(filename, 80, "%s/%s", Path::Game, fifoIn);
     inFd = open(filename, O_RDONLY|O_NONBLOCK);
     if(inFd == -1)
-        throw(std::runtime_error("WebInterface: Unable to open " + bstring(filename) + ":" +strerror(errno)));
+        throw(std::runtime_error("WebInterface: Unable to open " + std::string(filename) + ":" +strerror(errno)));
 
     outFd = -1;
 
@@ -220,7 +222,7 @@ bool WebInterface::checkFifo(const char* fifoFile) {
     if(retVal == 0) {
         if((statInfo.st_mode & S_IFMT) != S_IFIFO) {
             if(unlink(filename) != 0)
-                throw bstring("WebInterface: Unable to unlink " + bstring(fifoFile) + ":" + strerror(errno));
+                throw std::string("WebInterface: Unable to unlink " + std::string(fifoFile) + ":" + strerror(errno));
             needToCreate = true;
         }
     } else {
@@ -230,7 +232,7 @@ bool WebInterface::checkFifo(const char* fifoFile) {
     if(needToCreate) {
         retVal = mkfifo(filename, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
         if(retVal != 0)
-            throw bstring("WebInterface: Unable to mkfifo " + bstring(fifoFile) + ":" + strerror(errno));
+            throw std::string("WebInterface: Unable to mkfifo " + std::string(fifoFile) + ":" + strerror(errno));
     }
     return(true);
 }
@@ -289,7 +291,7 @@ bool WebInterface::checkInput() {
 
     } while(n > 0);
 
-    inBuf.Replace("\r", "\n");
+    std::replace(inBuf.begin(), inBuf.end(), '\r', '\n');
     if(total == 0)
         return(false);
 
@@ -300,32 +302,32 @@ bool WebInterface::checkInput() {
 //                      handleInput
 //*********************************************************************
 
-bool WebInterface::messagePlayer(bstring command, bstring tempBuf) {
+bool WebInterface::messagePlayer(std::string command, std::string tempBuf) {
     // MSG / SYSMSG = system sending
     // TXT = user sending
-    bstring::size_type pos=0;
+    std::string::size_type pos=0;
 
     // we don't know the command yet
     if(command.empty()) {
-        pos = tempBuf.Find(' ');
-        if(pos == bstring::npos)
+        pos = tempBuf.find(' ');
+        if(pos == std::string::npos)
             command = tempBuf;
         else
-            command = tempBuf.left(pos);
+            command = tempBuf.substr(0, pos);
     }
 
-    pos = tempBuf.Find(' ');
-    if(pos == bstring::npos) {
+    pos = tempBuf.find(' ');
+    if(pos == std::string::npos) {
         std::clog << "WebInterface: Messaging failed; not enough data!" << std::endl;
         return(false);
     }
 
-    bstring user = tempBuf.left(pos);
-    user = user.toLower();
-    user.setAt(0, up(user.getAt(0)));
+    std::string user = tempBuf.substr(0, pos);
+    boost::to_lower(user);
+    user.at(0) = up(user.at(0));
 
     tempBuf.erase(0, pos+1); // Clear out the user
-    tempBuf = tempBuf.trim();
+    boost::trim(tempBuf);
 
     std::clog << "WebInterface: Messaging user " << user << std::endl;
     const Player* player = gServer->findPlayer(user);
@@ -344,7 +346,7 @@ bool WebInterface::messagePlayer(bstring command, bstring tempBuf) {
         if(command != "SYSMSG")
             player->printColor("^C==> ");
         if(!txt) {
-            tempBuf.Replace("<cr>", "\n\t");
+            boost::replace_all(tempBuf, "<cr>", "\n\t");
         }
         player->printColor("%s%s%s\n", txt ? "^WText Msg: \"" : "",
             tempBuf.c_str(),
@@ -362,9 +364,9 @@ bool WebInterface::messagePlayer(bstring command, bstring tempBuf) {
 //                      getInventory
 //*********************************************************************
 
-bstring doGetInventory(const Player* player, const ObjectSet &set);
+std::string doGetInventory(const Player* player, const ObjectSet &set);
 
-bstring doGetInventory(const Player* player, Object* object, int loc=-1) {
+std::string doGetInventory(const Player* player, Object* object, int loc=-1) {
     std::ostringstream oStr;
     oStr << itemDelim
          << object->getName()
@@ -386,8 +388,8 @@ bstring doGetInventory(const Player* player, Object* object, int loc=-1) {
     return(oStr.str());
 }
 
-bstring doGetInventory(const Player* player, const ObjectSet &set) {
-    bstring inv = "";
+std::string doGetInventory(const Player* player, const ObjectSet &set) {
+    std::string inv = "";
     for(Object* obj : set ) {
         if(player->canSee(obj))
             inv += doGetInventory(player, obj);
@@ -395,7 +397,7 @@ bstring doGetInventory(const Player* player, const ObjectSet &set) {
     return(inv);
 }
 
-bstring getInventory(const Player* player) {
+std::string getInventory(const Player* player) {
     std::ostringstream oStr;
 
     oStr << player->getUniqueObjId()
@@ -432,12 +434,12 @@ bool WebInterface::handleInput() {
     if(inBuf.empty())
         return(false);
 
-    bstring::size_type start=0, idx=0, pos=0;
+    std::string::size_type start=0, idx=0, pos=0;
     bool needData=false;
 
     // First, see if we have a clear command (ETX), if so erase up to there
-    idx = inBuf.ReverseFind(ETX);
-    if(idx != bstring::npos)
+    idx = inBuf.find_last_of(ETX);
+    if(idx != std::string::npos)
         inBuf.erase(0, idx);
 
     // Now lets ignore any unprintable characters that might have gotten tacked on to the start
@@ -447,20 +449,20 @@ bool WebInterface::handleInput() {
 
     // Now lets look for a command
     idx = inBuf.find("\n", 0);
-    if(idx == bstring::npos)
+    if(idx == std::string::npos)
         return(false);
 
     // Copy the entire command to a temporary buffer and lets see if we can find
     // a valid command
-    bstring tempBuf = inBuf.substr(0, idx); // Don't copy the \n
-    bstring command; // the command being run
-    bstring dataBuf; // the buffer for incoming data
+    std::string tempBuf = inBuf.substr(0, idx); // Don't copy the \n
+    std::string command; // the command being run
+    std::string dataBuf; // the buffer for incoming data
 
-    pos = tempBuf.Find(' ');
-    if(pos == bstring::npos)
+    pos = tempBuf.find(' ');
+    if(pos == std::string::npos)
         command = tempBuf;
     else
-        command = tempBuf.left(pos);
+        command = tempBuf.substr(0, pos);
 
     idx += 1; // Consume the \n
     if(inBuf[idx] == '\n')
@@ -496,7 +498,7 @@ bool WebInterface::handleInput() {
         command == "EQUIP" ||
         command == "UNEQUIP" ||
         command == "EFFECTLIST" ||
-        (needData && inBuf.find(EOT, idx) != bstring::npos)
+        (needData && inBuf.find(EOT, idx) != std::string::npos)
     ) {
         // We've got a valid command so we can erase it out of the input buffer
         inBuf.erase(0, idx);
@@ -518,8 +520,8 @@ bool WebInterface::handleInput() {
 //          pos = tempBuf.Find(' ');
 //          int id=0, type=0;
 //
-//          bstring user = "";
-//          if(pos != bstring::npos) {
+//          std::string user = "";
+//          if(pos != std::string::npos) {
 //              user = tempBuf.left(pos);
 //              tempBuf.erase(0, pos+1); // Clear out the user
 //              id = atoi(tempBuf.c_str());
@@ -580,8 +582,8 @@ bool WebInterface::handleInput() {
         }
         else if(command == "WHOIS") {
             std::clog << "WebInterface: Whois for user " << tempBuf << std::endl;
-            tempBuf = tempBuf.toLower();
-            tempBuf.setAt(0, up(tempBuf.getAt(0)));
+            boost::to_lower(tempBuf);
+            tempBuf.at(0) = up(tempBuf.at(0));
             const Player* player = gServer->findPlayer(tempBuf);
             if( !player ||
                 player->flagIsSet(P_DM_INVIS) ||
@@ -605,13 +607,13 @@ bool WebInterface::handleInput() {
         } else if(command == "MSG" || command == "SYSMSG" || command == "TXT") {
             return(messagePlayer(command, tempBuf));
         } else if(command == "FORUM") {
-            pos = tempBuf.Find(' ');
-            if(pos == bstring::npos) {
+            pos = tempBuf.find(' ');
+            if(pos == std::string::npos) {
                 std::clog << "WebInterface: Forum association failed; not enough data!" << std::endl;
                 return(false);
             }
 
-            bstring user = tempBuf.left(pos);
+            std::string user = tempBuf.substr(0, pos);
 
             tempBuf.erase(0, pos+1); // Clear out the user
             std::clog << "WebInterface: Forum association for user " << user << std::endl;
@@ -643,8 +645,8 @@ bool WebInterface::handleInput() {
                 return(false);
             }
 
-            tempBuf = tempBuf.toLower();
-            tempBuf.setAt(0, up(tempBuf.getAt(0)));
+            boost::to_lower(tempBuf);
+            tempBuf.at(0) = up(tempBuf.at(0));
 
             Player* player = gServer->findPlayer(tempBuf);
             if(player) {
@@ -674,14 +676,14 @@ bool WebInterface::handleInput() {
             }
 
             const Guild* guild=nullptr;
-            if(tempBuf.getLength() <= 40)
+            if(tempBuf.length() <= 40)
                 guild = gConfig->getGuild(tempBuf);
             if(!guild) {
                 std::clog << "WebInterface: Autoguild failed; guild " << tempBuf << " not found!" << std::endl;
                 return(false);
             }
 
-            std::list<bstring>::const_iterator it;
+            std::list<std::string>::const_iterator it;
             Player* player=nullptr;
             bool online=true;
             for(it = guild->members.begin() ; it != guild->members.end() ; it++ ) {
@@ -696,7 +698,7 @@ bool WebInterface::handleInput() {
                 }
 
                 if(!player->getForum().empty())
-                    callWebserver((bstring)"mud.php?type=autoguild&guild=" + guild->getName() + "&user=" + player->getForum() + "&char=" + player->getName());
+                    callWebserver((std::string)"mud.php?type=autoguild&guild=" + guild->getName() + "&user=" + player->getForum() + "&char=" + player->getName());
 
                 if(!online)
                     free_crt(player);
@@ -706,7 +708,7 @@ bool WebInterface::handleInput() {
             return(true);
         }
 
-        bstring type;
+        std::string type;
         CatRef cr;
         // We'll need these to load or save
         xmlNodePtr rootNode;
@@ -722,13 +724,13 @@ bool WebInterface::handleInput() {
 
             xmlNodePtr curNode = rootNode->children;
 
-            bstring view = "", subject = "", username = "", boardname = "", post = "";
+            std::string view = "", subject = "", username = "", boardname = "", post = "";
             while(curNode) {
-                     if(NODE_NAME(curNode, "View")) xml::copyToBString(view, curNode);
-                else if(NODE_NAME(curNode, "Subject")) xml::copyToBString(subject, curNode);
-                else if(NODE_NAME(curNode, "Username")) xml::copyToBString(username, curNode);
-                else if(NODE_NAME(curNode, "Boardname")) xml::copyToBString(boardname, curNode);
-                else if(NODE_NAME(curNode, "Post")) xml::copyToBString(post, curNode);
+                     if(NODE_NAME(curNode, "View")) xml::copyToString(view, curNode);
+                else if(NODE_NAME(curNode, "Subject")) xml::copyToString(subject, curNode);
+                else if(NODE_NAME(curNode, "Username")) xml::copyToString(username, curNode);
+                else if(NODE_NAME(curNode, "Boardname")) xml::copyToString(boardname, curNode);
+                else if(NODE_NAME(curNode, "Post")) xml::copyToString(post, curNode);
 
                 curNode = curNode->next;
             }
@@ -740,7 +742,7 @@ bool WebInterface::handleInput() {
         }
 
         // The next 3 characters should be CRT, OBJ, or ROM and indicate what we're acting on
-        type = tempBuf.left(3);
+        type = tempBuf.substr(0, 3);
         tempBuf.erase(0, 4);
 
         // Now we need to find what area/index we're working on.  If no area is found we assume misc
@@ -793,7 +795,7 @@ bool WebInterface::handleInput() {
             xmlFreeDoc(xmlDoc);
             // Send the xml document to the output buffer and append an EOT so they
             // know where to stop reading this construct in
-            outBuf += tmp;
+            outBuf += std::string((char*)tmp);
             outBuf += EOT;
             // Don't forget to free the char array we got from xmlDocDumpFormatMemory
             free(tmp);
@@ -809,7 +811,7 @@ bool WebInterface::handleInput() {
             }
             rootNode = xmlDocGetRootElement(xmlDoc);
             int num = xml::getIntProp(rootNode, "Num");
-            bstring newArea = xml::getProp(rootNode, "Area");
+            std::string newArea = xml::getProp(rootNode, "Area");
             // Make sure they're sending us the proper index!
             if(num != cr.id || newArea != cr.area) {
                 std::clog << "WebInterface: MisMatched save - Got " << num << " - " << newArea << " Expected " << cr.str() << "\n";
@@ -886,7 +888,7 @@ bool WebInterface::sendOutput() {
 //                      webwho
 //*********************************************************************
 
-bstring webwho() {
+std::string webwho() {
     std::ostringstream oStr;
     const Player *player=nullptr;
 
@@ -907,8 +909,8 @@ bstring webwho() {
         if(player->isEffected("mist"))
             continue;
 
-        bstring cls = getShortClassName(player);
-        oStr << player->getLevel() << "|" << cls.left(4) << "|";
+        std::string cls = getShortClassName(player);
+        oStr << player->getLevel() << "|" << cls.substr(0, 4) << "|";
         if(player->flagIsSet(P_OUTLAW))
             oStr << "O";
         else if((player->flagIsSet(P_NO_PKILL) || player->flagIsSet(P_DIED_IN_DUEL) ||
@@ -950,8 +952,8 @@ bstring webwho() {
 // wget must be installed for this call to work
 // questionMark: is a question mark has already been added to the url (for GET parameters)
 
-void callWebserver(bstring url, bool questionMark, bool silent) {
-    if(gConfig->getWebserver().empty() || url.empty() || url.getLength() > 450)
+void callWebserver(std::string url, bool questionMark, bool silent) {
+    if(gConfig->getWebserver().empty() || url.empty() || url.length() > 450)
         return;
 
     if(!silent)
@@ -1006,15 +1008,15 @@ int cmdForum(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    bstring::size_type pos=0;
+    std::string::size_type pos=0;
     std::ostringstream url;
     url << "mud.php?type=forum&char=" << player->getName();
 
-    bstring user = cmnd->str[1];
-    bstring pass = getFullstrText(cmnd->fullstr, 2, ' ');
+    std::string user = cmnd->str[1];
+    std::string pass = getFullstrText(cmnd->fullstr, 2, ' ');
 
-    pos = user.Find('&');
-    if(pos != bstring::npos)
+    pos = user.find('&');
+    if(pos != std::string::npos)
         user = "";
 
     if(user == "remove" && !player->getForum().empty()) {
@@ -1033,7 +1035,7 @@ int cmdForum(Player* player, cmd* cmnd) {
         callWebserver(url.str());
 
         // don't leave their password in last command
-        player->setLastCommand(cmnd->str[0] + (bstring)" " + cmnd->str[1] + (bstring)" ********");
+        player->setLastCommand(cmnd->str[0] + (std::string)" " + cmnd->str[1] + (std::string)" ********");
         return(0);
 
     } else if(player->getForum().empty()) {
@@ -1059,16 +1061,16 @@ int cmdForum(Player* player, cmd* cmnd) {
 //                      webUnassociate
 //*********************************************************************
 
-void webUnassociate(std::string_view user) {
-    callWebserver("mud.php?type=forum&char=" + user + "&delete");
+void webUnassociate(const std::string &user) {
+    callWebserver(fmt::format("mud.php?type=forum&char={}&delete", user));
 }
 
 //*********************************************************************
 //                      webCrash
 //*********************************************************************
 
-void webCrash(std::string_view msg) {
-    callWebserver("mud.php?type=crash&msg=" + msg);
+void webCrash(const std::string &msg) {
+    callWebserver(fmt::format("mud.php?type=crash&msg={}", msg));
 }
 
 
@@ -1080,7 +1082,7 @@ void webCrash(std::string_view msg) {
 int cmdWiki(Player* player, cmd* cmnd) {
     struct stat f_stat{};
     std::ostringstream url;
-    bstring entry = getFullstrText(cmnd->fullstr, 1);
+    std::string entry = getFullstrText(cmnd->fullstr, 1);
 
     player->clearFlag(P_AFK);
 
@@ -1094,8 +1096,8 @@ int cmdWiki(Player* player, cmd* cmnd) {
         player->printColor("Type ^ywiki [entry]^x to look up a specific entry.\n\n");
     }
 
-    entry = entry.toLower();
-    entry.Replace(":", "_colon_");
+    boost::to_lower(entry);
+    boost::replace_all(entry, ":", "_colon_");
     auto file = fmt::format("{}/{}.txt", Path::Wiki, entry);
 
     // If the file exists and was modified within the last hour, use the local cache
@@ -1116,30 +1118,29 @@ int cmdWiki(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows a player to loop up a wiki entry
 
-bool WebInterface::wiki(bstring command, bstring tempBuf) {
-    bstring::size_type pos=0;
+bool WebInterface::wiki(std::string command, std::string tempBuf) {
+    std::string::size_type pos=0;
 
     // we don't know the command yet
     if(command.empty()) {
-        pos = tempBuf.Find(' ');
-        if(pos == bstring::npos)
+        pos = tempBuf.find(' ');
+        if(pos == std::string::npos)
             command = tempBuf;
         else
-            command = tempBuf.left(pos);
+            command = tempBuf.substr(0, pos);
     }
 
-    pos = tempBuf.Find(' ');
-    if(pos == bstring::npos) {
+    pos = tempBuf.find(' ');
+    if(pos == std::string::npos) {
         std::clog << "WebInterface: Wiki help failed; not enough data!" << std::endl;
         return(false);
     }
 
-    bstring user = tempBuf.left(pos);
-    user = user.toLower();
-    user.setAt(0, up(user.getAt(0)));
+    std::string user = boost::to_lower_copy(tempBuf.substr(0, pos));
+    user.at(0) = up(user.at(0));
 
     tempBuf.erase(0, pos+1); // Clear out the user
-    tempBuf = tempBuf.trim();
+    boost::trim(tempBuf);
 
 
     if( tempBuf.empty() ||

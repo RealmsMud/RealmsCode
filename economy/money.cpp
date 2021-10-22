@@ -18,8 +18,8 @@
 #include <libxml/parser.h>                          // for xmlNodePtr
 #include <ostream>                                  // for operator<<, strin...
 #include <string>                                   // for char_traits, oper...
+#include <boost/algorithm/string/case_conv.hpp>
 
-#include "bstring.hpp"                              // for bstring
 #include "money.hpp"                                // for Money, Coin, MAX_...
 #include "proto.hpp"                                // for zero
 #include "utils.hpp"                                // for MIN
@@ -132,7 +132,7 @@ void Money::set(Money mn) {
 //                      str
 //*********************************************************************
 
-bstring Money::str() const {
+std::string Money::str() const {
     bool found=false;
     std::stringstream oStr;
     oStr.imbue(std::locale(""));
@@ -142,7 +142,7 @@ bstring Money::str() const {
             if(found)
                 oStr << ", ";
             found = true;
-            oStr << m[i] << " " << coinNames(i).toLower() << " coin" << (m[i] != 1 ? "s" : "");
+            oStr << m[i] << " " << boost::algorithm::to_lower_copy(coinNames(i)) << " coin" << (m[i] != 1 ? "s" : "");
         }
     }
 
@@ -156,7 +156,7 @@ bstring Money::str() const {
 //                      coinNames
 //*********************************************************************
 
-bstring Money::coinNames(Coin c) {
+std::string Money::coinNames(Coin c) {
     switch(c) {
     case COPPER:
         return("Copper");

@@ -35,18 +35,18 @@ public:
     void    load(xmlNodePtr rootNode);
     void    loadSeasons(xmlNodePtr curNode);
     void    save(xmlNodePtr curNode) const;
-    [[nodiscard]] bstring str() const;
+    [[nodiscard]] std::string str() const;
     void    copyVars(const CatRefInfo* cri);
     bool    swap(const Swap& s);
     [[nodiscard]] const cWeather* getWeather() const;
 
-    [[nodiscard]] bstring getFishing() const;
+    [[nodiscard]] std::string getFishing() const;
     [[nodiscard]] int getId() const;
-    [[nodiscard]] bstring getArea() const;
-    [[nodiscard]] bstring getName() const;
-    [[nodiscard]] bstring getWorldName() const;
-    [[nodiscard]] bstring getYearsSince() const;
-    [[nodiscard]] bstring getParent() const;
+    [[nodiscard]] std::string getArea() const;
+    [[nodiscard]] std::string getName() const;
+    [[nodiscard]] std::string getWorldName() const;
+    [[nodiscard]] std::string getYearsSince() const;
+    [[nodiscard]] std::string getParent() const;
     [[nodiscard]] int getYearOffset() const;
     [[nodiscard]] int getLimbo() const;
     [[nodiscard]] int getRecall() const;
@@ -63,14 +63,14 @@ public:
     int     limbo{};
     int     recall{};
 protected:
-    bstring fishing;
+    std::string fishing;
 
     int     id{};         // 0 for unique rooms, a number for areas
-    bstring area;       // "area" is a special area for the overland
-    bstring name;       // display purposes only
-    bstring worldName;  // for cmdTime
-    bstring yearsSince; // for printtime
-    bstring parent;     // which catrefinfo to inherit limbo/recall from, misc by default
+    std::string area;       // "area" is a special area for the overland
+    std::string name;       // display purposes only
+    std::string worldName;  // for cmdTime
+    std::string yearsSince; // for printtime
+    std::string parent;     // which catrefinfo to inherit limbo/recall from, misc by default
     int     yearOffset{};
     int     teleportWeight{};
     int     teleportZone{};

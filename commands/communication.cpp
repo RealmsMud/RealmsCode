@@ -20,8 +20,10 @@
 #include <strings.h>              // for strncasecmp
 #include <map>                    // for operator==, operator!=, map
 #include <ostream>                // for operator<<, basic_ostream, ostrings...
+#include <boost/algorithm/string/replace.hpp>
+#include <string>
+#include <boost/algorithm/string/predicate.hpp>
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "clans.hpp"              // for Clan
 #include "cmd.hpp"                // for cmd
 #include "color.hpp"              // for escapeColor
@@ -173,7 +175,7 @@ char confusionChar() {
 //*********************************************************************
 // make the player say gibberish instead of actual words
 
-bstring confusionText(Creature* speaker, bstring text) {
+std::string confusionText(Creature* speaker, std::string text) {
     if( (!speaker->isEffected("confusion") && !speaker->isEffected("drunkenness")) ||
         speaker->isStaff()
     )
@@ -181,16 +183,16 @@ bstring confusionText(Creature* speaker, bstring text) {
 
     bool scramble = Random::get(0,1);
 
-    for(int i=0; i<text.getLength(); i++) {
-        if(text.getAt(i) == ' ') {
+    for(char &i : text) {
+        if(i == ' ') {
             scramble = !Random::get(0,3);
             // sometimes scramble spaces, too
             if(!Random::get(0,8))
-                text.setAt(i, confusionChar());
+                i = confusionChar();
         } else {
 
             if(scramble || !Random::get(0,8))
-                text.setAt(i, confusionChar());
+                i = confusionChar();
 
         }
     }
@@ -208,11 +210,11 @@ bstring confusionText(Creature* speaker, bstring text) {
 // skip = 2 when we have 2 commands to skip
 //    Ex: tell bob hello there
 
-bstring getFullstrTextTrun(std::string_view str, int skip, char toSkip, bool colorEscape) {
+std::string getFullstrTextTrun(std::string str, int skip, char toSkip, bool colorEscape) {
     return(getFullstrText(str, skip, toSkip, colorEscape, true));
 }
 
-bstring getFullstrText(bstring str, int skip, char toSkip, bool colorEscape, bool truncate) {
+std::string getFullstrText(std::string str, int skip, char toSkip, bool colorEscape, bool truncate) {
     int i=0, n = str.length() - 1;
 
     // first of all, trim both directions
@@ -265,7 +267,7 @@ bstring getFullstrText(bstring str, int skip, char toSkip, bool colorEscape, boo
 // The commands tell, whisper, reply, and sign are all routed through here.
 
 int communicateWith(Player* player, cmd* cmnd) {
-    bstring text = "";
+    std::string text = "";
     Player  *target=nullptr;
     int     i=0, found=0;
     char    ooc_str[10];
@@ -532,7 +534,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 //*********************************************************************
 // function that does the actual printing of message for below
 
-void commTarget(Creature* player, Player* target, int type, bool ooc, int lang, std::string_view text, bstring speak, char *ooc_str, bool anon) {
+void commTarget(Creature* player, Player* target, int type, bool ooc, int lang, std::string_view text, std::string speak, char *ooc_str, bool anon) {
     std::ostringstream out;
 
     if(!target || target->flagIsSet(P_UNCONSCIOUS))
@@ -566,8 +568,6 @@ void commTarget(Creature* player, Player* target, int type, bool ooc, int lang, 
         }
         out << ", \"";
 
-//      if(!ooc && target->flagIsSet(P_LANGUAGE_COLORS))
-//          ANSI(fd, get_lang_color(lang));
         out << ooc_str << text;
         out << "\".\n";
 
@@ -578,7 +578,7 @@ void commTarget(Creature* player, Player* target, int type, bool ooc, int lang, 
         out << " " << speak << " something in " << get_language_adj(lang) << ".\n";
     }
     *target << ColorOn << out.str() << ColorOff;
-//  target->printColor("%s", out.str().c_str());
+
 }
 
 //*********************************************************************
@@ -593,7 +593,7 @@ int pCommunicate(Player* player, cmd* cmnd) {
 
 int communicate(Creature* creature, cmd* cmnd) {
     const Player* player=nullptr;
-    bstring text = "", name = "";
+    std::string text, name;
     Creature *owner=nullptr;
     Player* pTarget=nullptr;
     BaseRoom* room=nullptr;
@@ -825,8 +825,8 @@ int communicate(Creature* creature, cmd* cmnd) {
     return(0);
 }
 
-bstring mxpTag(std::string_view str) {
-    return( bstring(MXP_BEG) + str + bstring(MXP_END));
+std::string mxpTag(std::string_view str) {
+    return( fmt::format("{}{}{}", MXP_BEG, str, MXP_END));
 }
 //*********************************************************************
 //                      channel
@@ -834,7 +834,7 @@ bstring mxpTag(std::string_view str) {
 // This function is used as a base for all global communication channels
 
 int channel(Player* player, cmd* cmnd) {
-    bstring text = "", chanStr = "", extra = "";
+    std::string text, chanStr, extra;
     size_t i = 0;
     unsigned int check=0, skip=1;
     const Guild* guild=nullptr;
@@ -997,7 +997,7 @@ int channel(Player* player, cmd* cmnd) {
             eaves << "clan";
         eaves << " sent, \"" << text << "\".\n";
 
-        bstring etxt = eaves.str();
+        std::string etxt = eaves.str();
         etxt = escapeColor(etxt);
         text = escapeColor(text);
 
@@ -1010,10 +1010,10 @@ int channel(Player* player, cmd* cmnd) {
     return(0);
 }
 
-channelPtr getChannelByName(const Player *player, const bstring &chanStr) {
+channelPtr getChannelByName(const Player *player, const std::string &chanStr) {
     for(auto& curChan : channelList) {
         if (curChan.channelName == nullptr) return nullptr;
-        if (chanStr.equals(curChan.channelName) && (!curChan.canSee || curChan.canSee(player)))
+        if (chanStr == curChan.channelName && (!curChan.canSee || curChan.canSee(player)))
             return &curChan;
     }
     return nullptr;
@@ -1027,8 +1027,8 @@ channelPtr getChannelByDiscordChannel(const unsigned long discordChannelID) {
     return nullptr;
 }
 
-void sendGlobalComm(const Player *player, const bstring &text, const bstring &extra, unsigned int check,
-                    const channelInfo *chan, const bstring &etxt, std::string_view oocName, std::string_view icName) {
+void sendGlobalComm(const Player *player, const std::string &text, const std::string &extra, unsigned int check,
+                    const channelInfo *chan, const std::string &etxt, const std::string &oocName, const std::string &icName) {
     // more complicated checks go here
     Socket* sock=nullptr;
     for(const auto& [pId, ply] : gServer->players) {
@@ -1055,40 +1055,39 @@ void sendGlobalComm(const Player *player, const bstring &text, const bstring &ex
             if(!extra.empty())
                 *ply << ColorOn << ply->customColorize(chan->color) << extra << ColorOff;
 
-            bstring toPrint = chan->displayFmt;
-            bstring prompt = "";
+            std::string toPrint = chan->displayFmt;
+            std::string prompt;
 
-            if(ply->getSock()->getTermType().toUpper().find("MUDLET") != bstring::npos)
+            if(boost::icontains(ply->getSock()->getTermType(), "MUDLET"))
                 prompt = " PROMPT";
 
-            bstring oocNameRep;
-            bstring icNameRep;
+            std::string oocNameRep;
+            std::string icNameRep;
 
             if(player) {
-                icNameRep = mxpTag(bstring("player name='") + player->getName() + "'" + prompt) + icName + mxpTag("/player");
-                oocNameRep = mxpTag(bstring("player name='") + player->getName() + "'" + prompt) + oocName + mxpTag("/player");
+                icNameRep = mxpTag(std::string("player name='") + player->getName() + "'" + prompt) + icName + mxpTag("/player");
+                oocNameRep = mxpTag(std::string("player name='") + player->getName() + "'" + prompt) + oocName + mxpTag("/player");
             } else {
                 icNameRep = icName;
                 oocNameRep = oocName;
             }
-
-            toPrint.Replace("*IC-NAME*", icNameRep.c_str());
-            toPrint.Replace("*OOC-NAME*", oocNameRep.c_str());
+            boost::replace_all(toPrint, "*IC-NAME*", icNameRep);
+            boost::replace_all(toPrint, "*OOC-NAME*", oocNameRep);
 
             if(ply->isStaff() || !player
                 || (player->current_language && ply->isEffected("comprehend-languages"))
                 || ply->languageIsKnown(player->current_language))
             {
                 // Listern speaks this language
-                toPrint.Replace("*TEXT*", text.c_str());
+                boost::replace_all(toPrint, "*TEXT*", text);
             } else {
                 // Listern doesn't speak this language
-                toPrint.Replace("*TEXT*", "<something incomprehensible>");
+                boost::replace_all(toPrint, "*TEXT*", "<something incomprehensible>");
             }
 
 
             if(player && player->current_language != LCOMMON)
-                toPrint += bstring(" in ") + get_language_adj(player->current_language) + ".";
+                toPrint += std::string(" in ") + get_language_adj(player->current_language) + ".";
 
             *ply << ColorOn << ply->customColorize(chan->color) << toPrint << "\n" << ColorOff;
         }
@@ -1384,7 +1383,7 @@ void printForeignTongueMsg(const BaseRoom *inRoom, Creature *talker) {
 //                      sayTo
 //*********************************************************************
 
-void Monster::sayTo(const Player* player, const bstring& message) {
+void Monster::sayTo(const Player* player, const std::string& message) {
     short language = player->current_language;
 
     broadcast_rom_LangWc(language, player->getSock(), player->currentLocation, "%M says to %N, \"%s\"^x", this, player, message.c_str());
@@ -1436,12 +1435,12 @@ bool canCommunicate(Player* player) {
 
 
 //*********************************************************************
-//                      bstring list functions
+//                      std::string list functions
 //*********************************************************************
 
-int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun, bstring (Player::*show)() const,
-        bool (Player::*is)(std::string_view name) const, void (Player::*del)(std::string_view name),
-        void (Player::*add)(std::string_view name), void (Player::*clear)()) {
+int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun, std::string (Player::*show)() const,
+                bool (Player::*is)(const std::string &name) const, void (Player::*del)(const std::string &name),
+                void (Player::*add)(const std::string &name), void (Player::*clear)()) {
     Player  *target=nullptr;
     bool online=true;
 

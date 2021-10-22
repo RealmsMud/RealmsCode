@@ -22,7 +22,6 @@
 #include <algorithm>                           // for copy, sort
 #include <iostream>                            // for operator<<, basic_ostream
 
-#include "bstring.hpp"                         // for bstring
 #include "creatures.hpp"                       // for Monster
 #include "join.hpp"                            // for join, mjoin
 #include "money.hpp"                           // for GOLD, Money
@@ -160,7 +159,7 @@ int list_objects() {
                     }
                     rootNode = xmlDocGetRootElement(xmlDoc);
                     lObject->readFromXml(rootNode, nullptr, true);
-                    bstring description = lObject->description;
+                    std::string description = lObject->description;
                     description.Replace("\n", "\\n");
                     description.Replace("\"", "\"\"");
 

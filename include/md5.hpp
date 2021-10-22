@@ -36,7 +36,7 @@
 #ifndef MD5_H
 #define MD5_H
 
-#include "bstring.hpp"  // for bstring
+#include <string>
 
 //---------------------------------------------------------------------- 
 //STL includes
@@ -88,13 +88,13 @@ class md5wrapper
          * internal hash function, calling
          * the basic methods from md5.h
          */ 
-        bstring hashit(bstring text);
+        std::string hashit(std::string text);
 
         /*
          * converts the numeric giets to
          * a valid std::string
          */
-        bstring convToString(unsigned char *bytes);
+        std::string convToString(unsigned char *bytes);
     public:
         //constructor
         md5wrapper();
@@ -107,14 +107,14 @@ class md5wrapper
          * "text" and returns it as
          * string
          */ 
-        bstring getHashFromString(bstring text);
+        std::string getHashFromString(std::string text);
 
         /*
          * creates a MD5 hash from
          * a file specified in "filename" and 
          * returns it as string
          */ 
-        bstring getHashFromFile(bstring filename);
+        std::string getHashFromFile(std::string filename);
 };
 
 //---------------------------------------------------------------------- 

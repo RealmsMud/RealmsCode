@@ -16,12 +16,12 @@
  *
  */
 
+#include <string>
 #include <cstring>               // for strcpy
 #include <ctime>                 // for time
 #include <map>                    // for operator==, operator!=
 
 // Mud includes
-#include "bstring.hpp"            // for bstring, operator+
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for cmdAttack
 #include "config.hpp"             // for Config, gConfig
@@ -47,7 +47,7 @@
 #include "utils.hpp"              // for MAX, MIN
 
 
-Creature* Creature::findVictim(std::string_view toFind, int num, bool aggressive, bool selfOk, std::string_view noVictim, std::string_view notFound) {
+Creature* Creature::findVictim(const std::string &toFind, int num, bool aggressive, bool selfOk, const std::string &noVictim, const std::string &notFound) {
     Creature* victim=nullptr;
     Player  *pVictim=nullptr;
     if(toFind.empty()) {
@@ -71,7 +71,7 @@ Creature* Creature::findVictim(std::string_view toFind, int num, bool aggressive
         return(victim);
     }
 }
-Creature* Creature::findVictim(cmd* cmnd, int cmndNo, bool aggressive, bool selfOk, std::string_view noVictim, std::string_view notFound) {
+Creature* Creature::findVictim(cmd* cmnd, int cmndNo, bool aggressive, bool selfOk, const std::string &noVictim, const std::string &notFound) {
     return(findVictim(cmnd->str[cmndNo], cmnd->val[cmndNo], aggressive, selfOk, noVictim, notFound));
 }
 
@@ -144,7 +144,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
     Creature *check=nullptr;
     Player  *pCheck=nullptr, *pThis = getAsPlayer();
     bool    holy_war;
-    bstring verb = stealing ? "steal from" : "attack";
+    std::string verb = stealing ? "steal from" : "attack";
 
     if (!target)
         return(false);
@@ -366,7 +366,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
 //                      getUnarmedWeaponSkill
 //*********************************************************************
 
-bstring Player::getUnarmedWeaponSkill() const {
+std::string Player::getUnarmedWeaponSkill() const {
     if(isEffected("lycanthropy"))
         return("claw");
     auto it = gConfig->classes.find(getClassString());
@@ -733,7 +733,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
                 } else if(attackType == ATTACK_KICK) {
                     checkImprove("kick", true);
                 } else if(!pVictim && mVictim) {
-                    bstring weaponSkill = "";
+                    std::string weaponSkill = "";
                     if(weapon)
                         weaponSkill = weapon->getWeaponType();
                     else
@@ -793,7 +793,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 
                 // TODO: Weapons: Look at this rate of increase
                 if(!pVictim && mVictim) {
-                    bstring weaponSkill = "";
+                    std::string weaponSkill = "";
                     if(weapon)
                         weaponSkill = weapon->getWeaponType();
                     else
@@ -1083,7 +1083,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
                 if(weapon->getWearflag() == FEET) {
                     attackDamage.set(doWeaponResist(attackDamage.get(), "crushing"));
                 } else {
-                    bstring category = weapon->getWeaponCategory();
+                    std::string category = weapon->getWeaponCategory();
                     if(category != "none")
                         attackDamage.set(doWeaponResist(attackDamage.get(), category));
                 }
@@ -1222,7 +1222,7 @@ bool Creature::canBeDrained() const {
 //                      doWeaponResist
 //*********************************************************************
 
-unsigned int Creature::doWeaponResist(unsigned int dmg, std::string_view weaponCategory) const {
+unsigned int Creature::doWeaponResist(unsigned int dmg, const std::string &weaponCategory) const {
     if(isEffected("resist-" + weaponCategory)) {
         dmg /= 2;
     }

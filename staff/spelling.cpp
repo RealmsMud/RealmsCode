@@ -20,7 +20,6 @@
 #include <cstdlib>         // for free, malloc
 #include <cstring>         // for strcmp, strlen, strtok_r, strcspn, strdup
 
-#include "bstring.hpp"      // for bstring
 #include "cmd.hpp"          // for cmd, COMMANDMAX
 #include "creatures.hpp"    // for Player
 #include "exits.hpp"        // for Exit
@@ -34,7 +33,7 @@
 static void     check_spelling(Player* player,cmd* cmnd);
 static void     learn_spelling(Player* player,cmd* cmnd);
 static void     forget_spelling(Player* player,cmd* cmnd);
-static void     do_spelling_check(Player* player, int mode, const bstring& str);
+static void     do_spelling_check(Player* player, int mode, const std::string& str);
 /*static void       do_spelling_learn(Player* player,cmd *cmd);*/
 static void     print_word_list(Player* player, const PspellWordList *wl);
 
@@ -217,7 +216,7 @@ static void forget_spelling(Player* player,cmd* cmnd) {
     /*pspell_manager_save_all_word_lists(manager);*/
 }
 
-static void do_spelling_check(Player* player, int mode, const bstring& str) {
+static void do_spelling_check(Player* player, int mode, const std::string& str) {
     char    *tmp;
     char    *tok;
     char    *word;

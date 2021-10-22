@@ -23,10 +23,10 @@
 #include <ctime>                 // for time, ctime, time_t
 #include <iomanip>                // for operator<<, setw
 #include <iostream>               // for operator<<, basic_ostream, basic_os...
+#include <boost/algorithm/string/replace.hpp>
 
 #include "area.hpp"               // for Area, AreaZone, MapMarker, TileInfo
 #include "async.hpp"             // for Async, AsyncExternal
-#include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
 #include "catRefInfo.hpp"         // for CatRefInfo
 #include "cmd.hpp"                // for cmd
@@ -109,11 +109,11 @@ bool isCardinal(std::string_view xname) {
 //                          wrapText
 //*********************************************************************
 
-bstring wrapText(std::string_view text, int wrap) {
+std::string wrapText(std::string_view text, int wrap) {
     if(text.empty())
         return("");
     
-    bstring wrapped = "";
+    std::string wrapped = "";
     int     len = text.length(), i=0, sp=0, spLast=0, spLen=0;
     char    ch, chLast;
 
@@ -172,7 +172,7 @@ bstring wrapText(std::string_view text, int wrap) {
 //                          expand_exit_name
 //*********************************************************************
 
-bstring expand_exit_name(std::string_view name) {
+std::string expand_exit_name(const std::string &name) {
     if(name == "n")
         return("north");
     if(name == "s")
@@ -211,7 +211,7 @@ bstring expand_exit_name(std::string_view name) {
 //                          opposite_exit_name
 //*********************************************************************
 
-bstring opposite_exit_name(std::string_view name) {
+std::string opposite_exit_name(const std::string &name) {
     if(name == "south")
         return("north");
     if(name == "north")
@@ -279,7 +279,7 @@ int dmEcho(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    bstring text = getFullstrText(cmnd->fullstr, 1);
+    std::string text = getFullstrText(cmnd->fullstr, 1);
     if(text.empty() || Pueblo::is(text)) {
         player->print("Echo what?\n");
         return(0);
@@ -736,7 +736,7 @@ void validateShop(const Player* player, const UniqueRoom* shop, const UniqueRoom
         return;
     }
 
-    bstring name = "Storage: ";
+    std::string name = "Storage: ";
     name += shop->getName();
 
     if(cr != storage->info)
@@ -1174,7 +1174,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
             long duration = -1;
             int strength = 1;
 
-            bstring txt = getFullstrText(cmnd->fullstr, 4);
+            std::string txt = getFullstrText(cmnd->fullstr, 4);
             if(!txt.empty())
                 duration = atoi(txt.c_str());
             txt = getFullstrText(cmnd->fullstr, 5);
@@ -1191,7 +1191,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
                 return(0);
             }
 
-            bstring effectStr = cmnd->str[3];
+            std::string effectStr = cmnd->str[3];
             EffectInfo* toSet = nullptr;
             if((toSet = room->getExactEffect(effectStr))) {
                 // We have an existing effect we're modifying
@@ -1348,7 +1348,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
             {
                 cr = player->getUniqueRoomParent()->info;
                 UniqueRoom* shop=nullptr;
-                bstring storageName = "Storage: ";
+                std::string storageName = "Storage: ";
 
                 cr.id--;
                 if(loadRoom(cr, &shop)) {
@@ -1586,8 +1586,8 @@ int dmSetExit(Player* player, cmd* cmnd) {
                     player->getCName(), "exit", exit->getCName(), "Direction", getDirName(exit->getDirection()).c_str());
             } else if(cmnd->str[1][2] == 'e') {
 
-                bstring desc = getFullstrText(cmnd->fullstr, 3);
-                desc.Replace("*CR*", "\n");
+                std::string desc = getFullstrText(cmnd->fullstr, 3);
+                boost::replace_all(desc, "*CR*", "\n");
                 exit->setDescription(desc);
 
                 if(exit->getDescription().empty()) {
@@ -1614,7 +1614,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
                 long duration = -1;
                 int strength = 1;
 
-                bstring txt = getFullstrText(cmnd->fullstr, 4);
+                std::string txt = getFullstrText(cmnd->fullstr, 4);
                 if(!txt.empty())
                     duration = atoi(txt.c_str());
                 txt = getFullstrText(cmnd->fullstr, 5);
@@ -1631,7 +1631,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
                     return(0);
                 }
 
-                bstring effectStr = cmnd->str[3];
+                std::string effectStr = cmnd->str[3];
                 EffectInfo* toSet = nullptr;
                 if((toSet = exit->getExactEffect(effectStr))) {
                     // We have an existing effect we're modifying
@@ -1816,7 +1816,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
     UniqueRoom  *uRoom=nullptr;
     Area    *area=nullptr;
     CatRef  cr;
-    bstring returnExit = getFullstrText(cmnd->fullstr, 4);
+    std::string returnExit = getFullstrText(cmnd->fullstr, 4);
 
 
     getDestination(getFullstrText(cmnd->fullstr, 3).c_str(), &mapmarker, &cr, player);
@@ -1858,10 +1858,10 @@ int dmSetExit(Player* player, cmd* cmnd) {
     }
 
 
-    bstring newName = getFullstrText(cmnd->fullstr, 2, ' ', false, true);
+    std::string newName = getFullstrText(cmnd->fullstr, 2, ' ', false, true);
 
 
-    if(newName.getLength() > 20) {
+    if(newName.length() > 20) {
         player->print("Exit names must be 20 characters or less in length.\n");
         return(0);
     }
@@ -1950,10 +1950,10 @@ int room_track(Creature* player) {
 int dmReplace(Player* player, cmd* cmnd) {
     UniqueRoom  *room = player->getUniqueRoomParent();
     int     n=0, skip=0, skPos=0;
-    bstring::size_type i=0, pos=0;
+    std::string::size_type i=0, pos=0;
     char    delim = ' ';
     bool    sdesc=false, ldesc=false;
-    bstring search = "", temp = "";
+    std::string search = "", temp = "";
 
     if(!needUniqueRoom(player))
         return(0);
@@ -2262,15 +2262,15 @@ int dmNameRoom(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    bstring name = getFullstrText(cmnd->fullstr, 1);
+    std::string name = getFullstrText(cmnd->fullstr, 1);
 
     if(name.empty() || Pueblo::is(name)) {
         player->print("Rename room to what?\n");
         return(0);
     }
 
-    if(name.getLength() > 79)
-        name = name.left(79);
+    if(name.length() > 79)
+        name = name.substr(0, 79);
 
     player->getUniqueRoomParent()->setName(name);
     log_immort(true, player, "%s renamed room %s.\n", player->getCName(), player->getRoomParent()->fullName().c_str());
@@ -2314,7 +2314,7 @@ int dmDescription(Player* player, cmd* cmnd, bool append) {
     cmnd->fullstr = cmnd->fullstr.substr(i+1);
 //  strcpy(cmnd->fullstr, &cmnd->fullstr[i+1]);
 
-    if(cmnd->fullstr.find("  ") != bstring::npos)
+    if(cmnd->fullstr.find("  ") != std::string::npos)
         player->printColor("Do not use double spaces in room descriptions! Use ^W*wrap^x to fix this.\n");
 
     if(sdesc) {
@@ -2500,7 +2500,7 @@ int dmWrap(Player* player, cmd* cmnd) {
     int     wrap=0;
     bool err=false, which=false;
 
-    bstring text = "";
+    std::string text = "";
 
     if(!needUniqueRoom(player))
         return(0);
@@ -2724,7 +2724,7 @@ int dmFix(Player* player, cmd* cmnd, std::string_view name, char find, char repl
         player->print("You don't see that exit.\n");
         return(0);
     }
-    bstring newName = exit->getName();
+    std::string newName = exit->getName();
     for(i=newName.length(); i>0; i--) {
         if(newName[i] == find) {
             newName[i] = replace;
@@ -2782,9 +2782,9 @@ int dmRenameExit(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    bstring newName = getFullstrText(cmnd->fullstr, 2);
+    std::string newName = getFullstrText(cmnd->fullstr, 2);
 
-    if(newName.getLength() > 20) {
+    if(newName.length() > 20) {
         player->print("New exit name must be 20 characters or less in length.\n");
         return(0);
     }
@@ -2829,7 +2829,7 @@ int dmDestroyRoom(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    std::map<bstring, StartLoc*>::iterator sIt;
+    std::map<std::string, StartLoc*>::iterator sIt;
     for(sIt = gConfig->start.begin() ; sIt != gConfig->start.end() ; sIt++) {
         if( player->getUniqueRoomParent()->info == (*sIt).second->getBind().room ||
             player->getUniqueRoomParent()->info == (*sIt).second->getRequired().room
@@ -2921,7 +2921,7 @@ void findRoomsWithFlag(const Player* player, CatRef area, int flag) {
         // This tells us just to get the path, not the file,
         // and tells loadRoomFromFile to ignore the CatRef
         area.id = -1;
-        bstring path = roomPath(area);
+        std::string path = roomPath(area);
 
         if((dir = opendir(path.c_str())) != nullptr) {
             while((dirp = readdir(dir)) != nullptr) {
@@ -2959,7 +2959,7 @@ void findRoomsWithFlag(const Player* player, CatRef area, int flag) {
 //*********************************************************************
 
 int dmFind(Player* player, cmd* cmnd) {
-    bstring type = getFullstrText(cmnd->fullstr, 1);
+    std::string type = getFullstrText(cmnd->fullstr, 1);
     CatRef cr;
 
     if(player->inUniqueRoom())
@@ -3020,7 +3020,7 @@ int dmFind(Player* player, cmd* cmnd) {
 //*********************************************************************
 // searches for the next empty room/object/monster in the area
 
-CatRef findNextEmpty(std::string_view type, std::string_view area) {
+CatRef findNextEmpty(const std::string &type, const std::string &area) {
     CatRef cr;
     cr.setArea(area);
 
@@ -3081,7 +3081,7 @@ void AreaRoom::save(Player* player) const {
 
     // record rooms saved during swap
     if(gConfig->swapIsInteresting(this))
-        gConfig->swapLog((bstring)"a" + mapmarker.str(), false);
+        gConfig->swapLog((std::string)"a" + mapmarker.str(), false);
 
     xmlDocPtr   xmlDoc;
     xmlNodePtr      rootNode, curNode;

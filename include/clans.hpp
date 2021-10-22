@@ -21,7 +21,6 @@
 #include <map>
 #include <libxml/parser.h>  // for xmlNodePtr
 
-#include "bstring.hpp"
 
 class Clan {
 public:
@@ -32,17 +31,17 @@ public:
     [[nodiscard]]     unsigned int getJoin() const;
     [[nodiscard]] unsigned int getRescind() const;
     [[nodiscard]] unsigned int getDeity() const;
-    [[nodiscard]] bstring getName() const;
-    [[nodiscard]] short   getSkillBonus(std::string_view skill) const;
+    [[nodiscard]] std::string getName() const;
+    [[nodiscard]] short   getSkillBonus(const std::string &skill) const;
 protected:
     unsigned int id;
     unsigned int join;
     unsigned int rescind;
     unsigned int deity;
-    bstring name;
+    std::string name;
 public:
     // only to make iteration easy
-    std::map<bstring, short> skillBonus;
+    std::map<std::string, short> skillBonus;
 };
 
 #endif /*CLAN_H_*/

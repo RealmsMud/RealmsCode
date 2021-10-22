@@ -32,32 +32,30 @@ public:
     void doCopy(const Hooks& h);
     void save(xmlNodePtr curNode, const char* name) const;
     void load(xmlNodePtr curNode);
-    bstring display() const;
+    [[nodiscard]] std::string display() const;
     void add(std::string_view event, std::string_view code);
-    bool execute(std::string_view event, MudObject* target=0, std::string_view param1="", std::string_view param2="", std::string_view param3="") const;
-    bool executeWithReturn(std::string_view event, MudObject* target=0, std::string_view param1="", std::string_view param2="", std::string_view param3="") const;
+    bool execute(const std::string &event, MudObject* target= nullptr, const std::string &param1="", const std::string &param2="", const std::string &param3="") const;
+    bool executeWithReturn(const std::string &event, MudObject* target=nullptr, const std::string &param1="", const std::string &param2="", const std::string &param3="") const;
     void setParent(MudObject* target);
 
-    static bool run(MudObject* trigger1, std::string_view event1, MudObject* trigger2, std::string_view event2, std::string_view param1="", std::string_view param2="", std::string_view param3="");
+    static bool run(MudObject* trigger1, const std::string &event1, MudObject* trigger2, const std::string &event2, const std::string &param1="", const std::string &param2="", const std::string &param3="");
 
     template<class Type, class Compare>
-    inline static bool run(std::set<Type, Compare>& set, MudObject* trigger, std::string_view event, std::string_view param1="", std::string_view param2="", std::string_view param3="") {
+    inline static bool run(std::set<Type, Compare>& set, MudObject* trigger, const std::string &event, const std::string &param1= "", const std::string &param2= "", const std::string &param3= "") {
         bool ran=false;
-#ifndef PYTHON_CODE_GEN
         for(Type crt : set) {
             if(crt != trigger) {
                 if(crt->hooks.execute(event, trigger, param1, param2, param3))
                     ran = true;
             }
         }
-#endif
         return(ran);
     }
 
     bool swap(const Swap& s);
     bool swapIsInteresting(const Swap& s) const;
 private:
-    std::map<bstring,bstring> hooks;
+    std::map<std::string,std::string> hooks;
     MudObject* parent;
 };
 

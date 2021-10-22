@@ -20,18 +20,18 @@
 #include "paths.hpp"      // for Paths
 #include "proto.hpp"      // for file_exists
 #include "ships.hpp"      // for ShipStop, ShipRaid
-#include "xml.hpp"        // for copyToBString
+#include "xml.hpp"        // for copyToString
 
 void Ship::load(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
     int     at_stop=0, stop=0;
 
     while(childNode) {
-        if(NODE_NAME(childNode, "Name"))  xml::copyToBString(name, childNode);
+        if(NODE_NAME(childNode, "Name")) xml::copyToString(name, childNode);
         else if(NODE_NAME(childNode, "Clan")) xml::copyToNum(clan, childNode);
-        else if(NODE_NAME(childNode, "Transit"))  xml::copyToBString(transit, childNode);
-        else if(NODE_NAME(childNode, "Movement"))  xml::copyToBString(movement, childNode);
-        else if(NODE_NAME(childNode, "Docked"))  xml::copyToBString(docked, childNode);
+        else if(NODE_NAME(childNode, "Transit")) xml::copyToString(transit, childNode);
+        else if(NODE_NAME(childNode, "Movement")) xml::copyToString(movement, childNode);
+        else if(NODE_NAME(childNode, "Docked")) xml::copyToString(docked, childNode);
 
         else if(NODE_NAME(childNode, "CanQuery")) xml::copyToBool(canQuery, childNode);
         else if(NODE_NAME(childNode, "InPort")) xml::copyToBool(inPort, childNode);

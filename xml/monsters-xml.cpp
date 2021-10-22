@@ -27,7 +27,6 @@
 #include <ostream>                                  // for basic_ostream::op...
 #include <string>                                   // for operator<, basic_...
 
-#include "bstring.hpp"                              // for bstring, operator+
 #include "carry.hpp"                                // for Carry
 #include "catRef.hpp"                               // for CatRef
 #include "config.hpp"                               // for Config, gConfig
@@ -83,7 +82,7 @@ bool loadMonster(const CatRef& cr, Monster ** pMonster, bool offline) {
 //                      loadMonsterFromFile
 //*********************************************************************
 
-bool loadMonsterFromFile(const CatRef& cr, Monster **pMonster, bstring filename, bool offline) {
+bool loadMonsterFromFile(const CatRef& cr, Monster **pMonster, std::string filename, bool offline) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     int     num=0;
@@ -129,7 +128,7 @@ bool loadMonsterFromFile(const CatRef& cr, Monster **pMonster, bstring filename,
 void Monster::readXml(xmlNodePtr curNode, bool offline) {
     xmlNodePtr childNode;
 
-    if(NODE_NAME(curNode, "Plural")) xml::copyToBString(plural, curNode);
+    if(NODE_NAME(curNode, "Plural")) xml::copyToString(plural, curNode);
     else if(NODE_NAME(curNode, "CarriedItems")) {
         loadCarryArray(curNode, carry, "Carry", 10);
     }
@@ -156,7 +155,7 @@ void Monster::readXml(xmlNodePtr curNode, bool offline) {
     else if(NODE_NAME(curNode, "Attacks")) {
         loadStringArray(curNode, attack, CRT_ATTACK_LENGTH, "Attack", 3);
     }
-    else if(NODE_NAME(curNode, "Talk")) xml::copyToBString(talk, curNode);
+    else if(NODE_NAME(curNode, "Talk")) xml::copyToString(talk, curNode);
     else if(NODE_NAME(curNode, "TalkResponses")) {
         childNode = curNode->children;
         TalkResponse* newTalk;
@@ -184,7 +183,7 @@ void Monster::readXml(xmlNodePtr curNode, bool offline) {
         loadCatRefArray(curNode, enemy_mob, "Mob", NUM_ENEMY_MOB);
     }
     else if(NODE_NAME(curNode, "PrimeFaction")) {
-        xml::copyToBString(primeFaction, curNode);
+        xml::copyToString(primeFaction, curNode);
     }
     else if(NODE_NAME(curNode, "AggroString")) xml::copyToCString(aggroString, curNode);
     else if(NODE_NAME(curNode, "MaxLevel")) setMaxLevel(xml::toNum<unsigned short>(curNode));
@@ -254,7 +253,7 @@ int Monster::saveToFile() {
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     escapeText();
-    bstring idTemp = id;
+    std::string idTemp = id;
     id = "-1";
     saveToXml(rootNode, ALLITEMS, LoadType::LS_FULL);
     id = idTemp;
@@ -276,7 +275,7 @@ void Monster::saveXml(xmlNodePtr curNode) const {
 
     // record monsters saved during swap
     if(gConfig->swapIsInteresting(this))
-        gConfig->swapLog((bstring)"m" + info.rstr(), false);
+        gConfig->swapLog((std::string)"m" + info.rstr(), false);
 
     xml::saveNonNullString(curNode, "Plural", plural);
     xml::saveNonZeroNum(curNode, "SkillLevel", skillLevel);

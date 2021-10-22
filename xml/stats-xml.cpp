@@ -21,7 +21,6 @@
 #include <xml.hpp>                                  // for copyToNum, newStr...
 #include <ostream>                                  // for basic_ostream::op...
 
-#include "bstring.hpp"                              // for bstring
 
 
 //*********************************************************************
@@ -47,7 +46,7 @@ bool Stat::loadModifiers(xmlNodePtr curNode) {
     while(childNode) {
         if(NODE_NAME(childNode, "StatModifier")) {
             auto* mod = new StatModifier(childNode);
-            if(mod->getName().equals("")) {
+            if(mod->getName().empty()) {
                 delete mod;
             } else {
                 modifiers.insert(ModifierMap::value_type(mod->getName(), mod));
@@ -61,7 +60,7 @@ StatModifier::StatModifier(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
 
     while(childNode) {
-        if(NODE_NAME(childNode, "Name")) xml::copyToBString(name, childNode);
+        if(NODE_NAME(childNode, "Name")) xml::copyToString(name, childNode);
         else if(NODE_NAME(childNode, "ModAmt")) xml::copyToNum(modAmt, childNode);
         else if(NODE_NAME(childNode, "ModType")) modType = (ModifierType)xml::toNum<unsigned short>(childNode);
 

@@ -29,7 +29,6 @@
 #include <ostream>                  // for operator<<, basic...
 
 #include "anchor.hpp"               // for Anchor
-#include "bstring.hpp"              // for bstring, operator+
 #include "calendar.hpp"             // for cDay
 #include "catRef.hpp"               // for CatRef
 #include "config.hpp"               // for Config, gConfig
@@ -51,8 +50,8 @@
 bool loadPlayer(std::string_view name, Player** player, enum LoadType loadType) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
-    bstring     filename;
-    bstring     pass = "", loadName = "";
+    std::string     filename;
+    std::string     pass = "", loadName = "";
 
     if(loadType == LoadType::LS_BACKUP)
         filename = fmt::format("{}/{}.bak.xml", Path::PlayerBackup, name);
@@ -76,7 +75,7 @@ bool loadPlayer(std::string_view name, Player** player, enum LoadType loadType) 
     *player = new Player;
 
     (*player)->setName(xml::getProp(rootNode, "Name"));
-    xml::copyPropToBString(pass, rootNode, "Password");
+    xml::copyPropToString(pass, rootNode, "Password");
     (*player)->setPassword(pass);
     (*player)->setLastLogin(xml::getIntProp(rootNode, "LastLogin"));
 
@@ -109,9 +108,9 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
     else if(NODE_NAME(curNode, "Statistics")) statistics.load(curNode);
 
     else if(NODE_NAME(curNode, "Bank")) bank.load(curNode);
-    else if(NODE_NAME(curNode, "Surname")) xml::copyToBString(surname, curNode);
+    else if(NODE_NAME(curNode, "Surname")) xml::copyToString(surname, curNode);
     else if(NODE_NAME(curNode, "Wrap")) xml::copyToNum(wrap, curNode);
-    else if(NODE_NAME(curNode, "Forum")) xml::copyToBString(forum, curNode);
+    else if(NODE_NAME(curNode, "Forum")) xml::copyToString(forum, curNode);
     else if(NODE_NAME(curNode, "Ranges"))
         loadRanges(curNode, this);
     else if(NODE_NAME(curNode, "Wimpy")) setWimpy(xml::toNum<unsigned short>(curNode));
@@ -123,15 +122,15 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
         loadAnchors(curNode);
     }
 
-    else if(NODE_NAME(curNode, "LastPassword")) xml::copyToBString(lastPassword, curNode);
-    else if(NODE_NAME(curNode, "PoisonedBy")) xml::copyToBString(poisonedBy, curNode);
-    else if(NODE_NAME(curNode, "AfflictedBy")) xml::copyToBString(afflictedBy, curNode);
+    else if(NODE_NAME(curNode, "LastPassword")) xml::copyToString(lastPassword, curNode);
+    else if(NODE_NAME(curNode, "PoisonedBy")) xml::copyToString(poisonedBy, curNode);
+    else if(NODE_NAME(curNode, "AfflictedBy")) xml::copyToString(afflictedBy, curNode);
     else if(NODE_NAME(curNode, "ActualLevel")) setActualLevel(xml::toNum<unsigned short>(curNode));
     else if(NODE_NAME(curNode, "WeaponTrains")) setWeaponTrains(xml::toNum<unsigned short>(curNode));
-    else if(NODE_NAME(curNode, "LastMod")) xml::copyToBString(oldCreated, curNode);
+    else if(NODE_NAME(curNode, "LastMod")) xml::copyToString(oldCreated, curNode);
     else if(NODE_NAME(curNode, "Created")) {
         if(getVersion() < "2.43c")
-            xml::copyToBString(oldCreated, curNode);
+            xml::copyToString(oldCreated, curNode);
         else
             xml::copyToNum(created, curNode);
     }
@@ -140,7 +139,7 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
     else if(NODE_NAME(curNode, "TickDmg")) setTickDamage(xml::toNum<unsigned short>(curNode));
     else if(NODE_NAME(curNode, "NegativeLevels")) setNegativeLevels(xml::toNum<unsigned short>(curNode));
     else if(NODE_NAME(curNode, "LastInterest")) setLastInterest(xml::toNum<long>(curNode));
-    else if(NODE_NAME(curNode, "Title")) setTitle(xml::getBString(curNode));
+    else if(NODE_NAME(curNode, "Title")) setTitle(xml::getString(curNode));
     else if(NODE_NAME(curNode, "CustomColors")) xml::copyToCString(customColors, curNode);
     else if(NODE_NAME(curNode, "Thirst")) setThirst(xml::toNum<unsigned short>(curNode));
     else if(NODE_NAME(curNode, "RoomExp")) {
@@ -260,7 +259,7 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
         childNode = curNode->children;
         while(childNode) {
             if(NODE_NAME(childNode, "Minion")) {
-                minions.push_back(xml::getBString(childNode));
+                minions.push_back(xml::getString(childNode));
             }
             childNode = childNode->next;
         }
@@ -273,7 +272,7 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
                 subNode = childNode->children;
                 while(subNode) {
                     if(NODE_NAME(subNode, "ObjectEffect")) {
-                        knownAlchemyEffects.insert(std::make_pair(xml::getBString(subNode), true));
+                        knownAlchemyEffects.insert(std::make_pair(xml::getString(subNode), true));
                     }
                     subNode = subNode->next;
                 }
@@ -386,7 +385,7 @@ void Player::saveXml(xmlNodePtr curNode) const {
 
     // record people logging off during swap
     if(gConfig->swapIsInteresting(this))
-        gConfig->swapLog((bstring)"p" + getName(), false);
+        gConfig->swapLog((std::string)"p" + getName(), false);
 
     bank.save("Bank", curNode);
     xml::saveNonZeroNum(curNode, "WeaponTrains", weaponTrains);
@@ -530,7 +529,7 @@ void PlayerClass::load(xmlNodePtr rootNode) {
 //  std::map<int, LevelGain*> levels;
 
     id = xml::getIntProp(rootNode, "id");
-    xml::copyPropToBString(name, rootNode, "Name");
+    xml::copyPropToString(name, rootNode, "Name");
 
     xmlNodePtr curNode = rootNode->children;
 
@@ -539,7 +538,7 @@ void PlayerClass::load(xmlNodePtr rootNode) {
             titles[1] = new PlayerTitle;
             titles[1]->load(curNode);
         }
-        else if(NODE_NAME(curNode, "UnarmedWeaponSkill")) xml::copyToBString(unarmedWeaponSkill, curNode);
+        else if(NODE_NAME(curNode, "UnarmedWeaponSkill")) xml::copyToString(unarmedWeaponSkill, curNode);
         else if(NODE_NAME(curNode, "NumProfs")) xml::copyToNum(numProf, curNode);
         else if(NODE_NAME(curNode, "NeedsDeity")) {
             int i=0;
@@ -642,10 +641,10 @@ bool Config::loadClasses() {
     }
 
     clearClasses();
-    bstring className = "";
+    std::string className = "";
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Class")) {
-            xml::copyPropToBString( className, curNode, "Name");
+            xml::copyPropToString(className, curNode, "Name");
             if(!className.empty()) {
                 if(classes.find(className) == classes.end()) {
                     //printf("\n\tLoaded %s", className.c_str());
@@ -725,8 +724,8 @@ void ProxyManager::loadProxies() {
 void PlayerTitle::load(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
     while(curNode) {
-        if(NODE_NAME(curNode, "Female")) xml::copyToBString(female, curNode);
-        else if(NODE_NAME(curNode, "Male")) xml::copyToBString(male, curNode);
+        if(NODE_NAME(curNode, "Female")) xml::copyToString(female, curNode);
+        else if(NODE_NAME(curNode, "Male")) xml::copyToString(male, curNode);
         curNode = curNode->next;
     }
 }
@@ -734,10 +733,10 @@ void PlayerTitle::load(xmlNodePtr rootNode) {
 ProxyAccess::ProxyAccess(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
     while(curNode) {
-        if(NODE_NAME(curNode, "ProxyId")) xml::copyToBString(proxyId, curNode);
-        else if (NODE_NAME(curNode, "ProxyName")) xml::copyToBString(proxyName, curNode);
-        else if (NODE_NAME(curNode, "ProxiedId")) xml::copyToBString(proxiedId, curNode);
-        else if (NODE_NAME(curNode, "ProxiedName")) xml::copyToBString(proxiedName, curNode);
+        if(NODE_NAME(curNode, "ProxyId")) xml::copyToString(proxyId, curNode);
+        else if (NODE_NAME(curNode, "ProxyName")) xml::copyToString(proxyName, curNode);
+        else if (NODE_NAME(curNode, "ProxiedId")) xml::copyToString(proxiedId, curNode);
+        else if (NODE_NAME(curNode, "ProxiedName")) xml::copyToString(proxiedName, curNode);
 
         curNode = curNode->next;
     }

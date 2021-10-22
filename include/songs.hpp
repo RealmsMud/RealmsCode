@@ -41,18 +41,18 @@ public:
 
     void save(xmlNodePtr rootNode) const override;
 
-    [[nodiscard]] const bstring& getEffect() const;
-    [[nodiscard]] const bstring& getType() const;
-    [[nodiscard]] const bstring& getTargetType() const;
+    [[nodiscard]] const std::string& getEffect() const;
+    [[nodiscard]] const std::string& getType() const;
+    [[nodiscard]] const std::string& getTargetType() const;
     bool runScript(MudObject* singer, MudObject* target = nullptr) const;
 
     [[nodiscard]] int getDelay() const;
     [[nodiscard]] int getDuration() const;
 private:
     Song() {};
-    bstring effect;
-    bstring type; // script, effect, etc
-    bstring targetType; // Valid Targets: Room, Self, Group, Target, RoomBene, RoomAggro
+    std::string effect;
+    std::string type; // script, effect, etc
+    std::string targetType; // Valid Targets: Room, Self, Group, Target, RoomBene, RoomAggro
 
     int delay{};
     int duration{};

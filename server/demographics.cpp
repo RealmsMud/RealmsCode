@@ -26,7 +26,6 @@
 #include <unistd.h>               // for write, close, unlink
 #include <ostream>                // for operator<<, ostream
 
-#include "bstring.hpp"            // for bstring
 #include "calendar.hpp"           // for cDay, Calendar
 #include "config.hpp"             // for Config, gConfig
 #include "creatures.hpp"          // for Player

@@ -20,7 +20,6 @@
 #include <cstdio>                                  // for snprintf, sprintf
 #include <string>                                   // for operator!=, basic...
 
-#include "bstring.hpp"                              // for bstring
 #include "catRef.hpp"                               // for CatRef
 #include "config.hpp"                               // for Config
 #include "exits.hpp"                                // for Exit
@@ -29,10 +28,10 @@
 #include "property.hpp"                             // for Property, Partial...
 #include "range.hpp"                                // for Range
 #include "rooms.hpp"                                // for UniqueRoom, ExitList
-#include "xml.hpp"                                  // for copyToBString
+#include "xml.hpp"                                  // for copyToString
 
 void PartialOwner::load(xmlNodePtr rootNode) {
-    xml::copyPropToBString(name, rootNode, "Name");
+    xml::copyPropToString(name, rootNode, "Name");
     loadBits(rootNode, flags);
 }
 
@@ -52,15 +51,15 @@ void PartialOwner::save(xmlNodePtr rootNode) const {
 
 void Property::load(xmlNodePtr rootNode) {
     xmlNodePtr childNode, curNode = rootNode->children;
-    bstring temp = "";
+    std::string temp = "";
     CatRef low;
 
     while(curNode) {
-        if(NODE_NAME(curNode, "Owner")) xml::copyToBString(owner, curNode);
-        else if(NODE_NAME(curNode, "Area")) xml::copyToBString(area, curNode);
-        else if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
-        else if(NODE_NAME(curNode, "DateFounded")) xml::copyToBString(dateFounded, curNode);
-        else if(NODE_NAME(curNode, "Location")) xml::copyToBString(location, curNode);
+        if(NODE_NAME(curNode, "Owner")) xml::copyToString(owner, curNode);
+        else if(NODE_NAME(curNode, "Area")) xml::copyToString(area, curNode);
+        else if(NODE_NAME(curNode, "Name")) xml::copyToString(name, curNode);
+        else if(NODE_NAME(curNode, "DateFounded")) xml::copyToString(dateFounded, curNode);
+        else if(NODE_NAME(curNode, "Location")) xml::copyToString(location, curNode);
         else if(NODE_NAME(curNode, "Guild")) xml::copyToNum(guild, curNode);
         else if(NODE_NAME(curNode, "Type")) type = (PropType)xml::toNum<int>(curNode);
         else if(NODE_NAME(curNode, "Flags")) loadBits(curNode, flags);
@@ -98,7 +97,7 @@ void Property::load(xmlNodePtr rootNode) {
             childNode = curNode->children;
             while(childNode) {
                 if(NODE_NAME(childNode, "Entry")) {
-                    xml::copyToBString(temp, childNode);
+                    xml::copyToString(temp, childNode);
                     log.push_back(temp);
                 }
                 childNode = childNode->next;
@@ -155,7 +154,7 @@ void Property::save(xmlNodePtr rootNode) const {
     }
     xml::saveNonZeroNum(curNode, "LogType", logType);
     if(!log.empty()) {
-        std::list<bstring>::const_iterator it;
+        std::list<std::string>::const_iterator it;
         childNode = xml::newStringChild(curNode, "Log");
 
         for(it = log.begin() ; it != log.end() ; it++) {

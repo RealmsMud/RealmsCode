@@ -23,13 +23,12 @@
 #include <string>                                   // for operator==, alloc...
 #include <utility>                                  // for pair
 
-#include "bstring.hpp"                              // for bstring
 #include "calendar.hpp"                             // for cSeason
 #include "catRefInfo.hpp"                           // for CatRefInfo
 #include "config.hpp"                               // for Config, gConfig
 #include "paths.hpp"                                // for Game
 #include "season.hpp"                               // for Season
-#include "xml.hpp"                                  // for copyToBString
+#include "xml.hpp"                                  // for copyToString
 
 
 //*********************************************************************
@@ -41,12 +40,12 @@ void CatRefInfo::load(xmlNodePtr rootNode) {
 
     id = xml::getIntProp(rootNode, "id");
     while(curNode) {
-        if(NODE_NAME(curNode, "Area")) xml::copyToBString(area, curNode);
-        else if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
-        else if(NODE_NAME(curNode, "Fishing")) xml::copyToBString(fishing, curNode);
-        else if(NODE_NAME(curNode, "WorldName")) xml::copyToBString(worldName, curNode);
-        else if(NODE_NAME(curNode, "YearsSince")) xml::copyToBString(yearsSince, curNode);
-        else if(NODE_NAME(curNode, "Parent")) xml::copyToBString(parent, curNode);
+        if(NODE_NAME(curNode, "Area")) xml::copyToString(area, curNode);
+        else if(NODE_NAME(curNode, "Name")) xml::copyToString(name, curNode);
+        else if(NODE_NAME(curNode, "Fishing")) xml::copyToString(fishing, curNode);
+        else if(NODE_NAME(curNode, "WorldName")) xml::copyToString(worldName, curNode);
+        else if(NODE_NAME(curNode, "YearsSince")) xml::copyToString(yearsSince, curNode);
+        else if(NODE_NAME(curNode, "Parent")) xml::copyToString(parent, curNode);
         else if(NODE_NAME(curNode, "Limbo")) xml::copyToNum(limbo, curNode);
         else if(NODE_NAME(curNode, "YearOffset")) xml::copyToNum(yearOffset, curNode);
         else if(NODE_NAME(curNode, "Recall")) xml::copyToNum(recall, curNode);
@@ -130,8 +129,8 @@ bool Config::loadCatRefInfo() {
 
     curNode = xmlDocGetRootElement(xmlDoc);
 
-    bstring d = "";
-    xml::copyPropToBString(d, curNode, "default");
+    std::string d = "";
+    xml::copyPropToString(d, curNode, "default");
     if(!d.empty())
         gConfig->setDefaultArea(d);
 

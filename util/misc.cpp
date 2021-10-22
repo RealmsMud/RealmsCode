@@ -28,8 +28,8 @@
 #include <ctime>                   // for time, localtime, ctime
 #include <ostream>                 // for operator<<, basic_ostream::operator<<
 #include <string>                  // for char_traits, operator==, basic_string
+#include <boost/algorithm/string/predicate.hpp>
 
-#include "bstring.hpp"             // for bstring
 #include "catRef.hpp"              // for CatRef
 #include "config.hpp"              // for Config, gConfig
 #include "container.hpp"           // for MonsterSet, PlayerSet, Container
@@ -80,7 +80,7 @@ bool validRoomId(const CatRef& cr) {
 // converts it to lowercase. If the flag in the second parameter has
 // its first bit set, then the first letter is capitalized.
 
-void lowercize(bstring& str, int flag ) {
+void lowercize(std::string& str, int flag ) {
     int     i, n;
 
     n = str.length();
@@ -167,7 +167,7 @@ void zero( void *ptr, int size ) {
 // is done by replacing spaces with carriage returns before the end of/
 // the line.
 
-bstring delimit(const char *str, int wrap) {
+std::string delimit(const char *str, int wrap) {
     int     i=0, j=0, x=0, l=0, len=0, lastspace=0;
     char* work = strdup(str);
     std::ostringstream outStr;
@@ -409,9 +409,8 @@ bool parse_name(std::string_view name) {
         fclose(fp);
     }
 
-    auto lowerName = bstring(name).toLower();
     for (const auto& word : BAD_WORDS) {
-        if(lowerName.find(word) != bstring::npos)
+        if(boost::icontains(name, word))
             return false;
     }
 
@@ -622,7 +621,7 @@ void stripBadChars(char *str) {
     }
 }
 
-void stripBadChars(bstring str) {
+void stripBadChars(std::string str) {
     int n=0, i=0;
 
     n = str.length();
@@ -729,7 +728,7 @@ MudObject* findCrtTarget(Creature * player, SetType& set, int findFlags, const c
 //                      findTarget
 //*********************************************************************
 
-MudObject* Creature::findTarget(unsigned int findWhere, unsigned int findFlags, const bstring& str, int val) {
+MudObject* Creature::findTarget(unsigned int findWhere, unsigned int findFlags, const std::string& str, int val) {
     int match=0;
     MudObject* target;
     do {
@@ -807,7 +806,7 @@ void new_merror(const char *str, char errtype, const char *file, const int line)
 //                      timeStr
 //*********************************************************************
 
-bstring timeStr(int secs) {
+std::string timeStr(int secs) {
     int hours = 0;
     int minutes = 0;
     int seconds = 0;
@@ -831,8 +830,8 @@ bstring timeStr(int secs) {
 //                      progressBar
 //*********************************************************************
 
-bstring progressBar(int barLength, float percentFull, std::string_view text, char progressChar, bool enclosed) {
-    bstring str = "";
+std::string progressBar(int barLength, float percentFull, const std::string &text, char progressChar, bool enclosed) {
+    std::string str = "";
     int i=0, progress = (int)(barLength * percentFull);
     int lowTextBound=-1, highTextBound=-1;
 

@@ -91,18 +91,18 @@ class DroppedBy {
     friend class Object;
     friend std::ostream& operator<<(std::ostream& out, const DroppedBy& drop);
 protected:
-    bstring name;
-    bstring index;
-    bstring id;
-    bstring type;
+    std::string name;
+    std::string index;
+    std::string id;
+    std::string type;
 public:
     DroppedBy& operator=(const DroppedBy& o);
 
-    bstring str();
-    bstring getName() const;
-    bstring getIndex() const;
-    bstring getId() const;
-    bstring getType() const;
+    std::string str();
+    std::string getName() const;
+    std::string getIndex() const;
+    std::string getId() const;
+    std::string getType() const;
 
 
     void clear();
@@ -122,7 +122,7 @@ public:
     Object();
     ~Object();
     Object& operator=(const Object& o);
-    bstring getCompareStr() const ;
+    std::string getCompareStr() const ;
     bool operator==(const Object& o) const;
     bool operator!=(const Object& o) const;
     bool operator< (const Object& t) const;
@@ -150,7 +150,7 @@ protected:
     short           clan;
     short           special;
     short           questnum;       // Quest fulfillment number
-    bstring         effect;
+    std::string         effect;
     long            effectDuration;
     short           effectStrength;
     unsigned long   coinCost;
@@ -164,11 +164,11 @@ protected:
     // SubType: For Armor - The type of armor it is, ie: cloth, leather, chain, plate, etc
     //          For Weapons - The weapon class it is, sword, dagger, etc
     //          For Alchemy - The type of device it is, mortar and pestle, etc
-    bstring subType;
+    std::string subType;
     char flags[OBJ_FLAG_ARRAY_SIZE]{};  // Max object flags - 256
     short delay;
     short extra;
-    bstring questOwner;
+    std::string questOwner;
 
 protected:
     void doCopy(const Object& o);
@@ -180,9 +180,9 @@ public:
     ObjIncrease* increase;
 
     // Strings
-    bstring description;
-    bstring version;    // What version of the mud this object was saved under
-    bstring lastMod;    // Last staff member to modify object.
+    std::string description;
+    std::string version;    // What version of the mud this object was saved under
+    std::string lastMod;    // Last staff member to modify object.
 
     // Information about where this object came from
     DroppedBy droppedBy;
@@ -206,7 +206,7 @@ public:
     // or saved from file because if they log, they can't refund!
     Money refund;
     MapMarker *compass; // for compass objects
-    bstring plural;
+    std::string plural;
 
     // List of effects that are conferred by this item.  Name, duration, and strength.
     //  std::list<ConferredEffect*> conferredEffects;
@@ -227,12 +227,12 @@ public:
 
     void init(bool selRandom = true);
     // Xml - Loading
-    int readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList = 0, bool offline=false);
+    int readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList = 0, bool offline=false);
     void loadAlchemyEffects(xmlNodePtr curNode);
 
     // Xml - Saving
     int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType = LoadType::LS_FULL, int quantity = 1,
-                  bool saveId = true, std::list<bstring> *idList = 0) const;
+                  bool saveId = true, std::list<std::string> *idList = 0) const;
     int saveToFile();
 
     void setDroppedBy(MudObject* dropper, std::string_view pDropType);
@@ -248,7 +248,7 @@ public:
 //    char* cmpName();
     void escapeText();
 
-    bstring getFlagList(bstring sep=", ") const;
+    std::string getFlagList(std::string_view sep=", ") const;
 
     // Placement of the object etc
     void addObj(Object *toAdd, bool incShots = true); // Add an object to this object
@@ -273,9 +273,9 @@ public:
     [[nodiscard]] float getTypeModifier() const;
     [[nodiscard]] unsigned short getKey() const;
     [[nodiscard]] Size getSize() const;
-    [[nodiscard]] bstring getSizeStr() const;
+    [[nodiscard]] std::string getSizeStr() const;
     [[nodiscard]] ObjectType getType() const; // *
-    [[nodiscard]] bstring getTypeName() const;
+    [[nodiscard]] std::string getTypeName() const;
     [[nodiscard]] short getWearflag() const; // *
     [[nodiscard]] short getArmor() const;
     [[nodiscard]] short getQuality() const;
@@ -292,7 +292,7 @@ public:
     [[nodiscard]] short getClan() const;
     [[nodiscard]] short getSpecial() const;
     [[nodiscard]] short getQuestnum() const;
-    [[nodiscard]] bstring getEffect() const;
+    [[nodiscard]] std::string getEffect() const;
     [[nodiscard]] long getEffectDuration() const;
     [[nodiscard]] short getEffectStrength() const;
     [[nodiscard]] unsigned long getCoinCost() const;
@@ -302,30 +302,30 @@ public:
     [[nodiscard]] short getLotteryNumbers(short i) const;
     [[nodiscard]] int getRecipe() const;
     [[nodiscard]] Material getMaterial() const;
-    [[nodiscard]] bstring getMaterialName() const;
-    [[nodiscard]] bstring getCompass(const Creature* creature, bool useName);
-    [[nodiscard]] bstring getVersion() const;
-    [[nodiscard]] bstring getQuestOwner() const;
-    [[nodiscard]] bstring getObjStr(const Creature* viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
-    [[nodiscard]] bstring getSubType() const;
-    [[nodiscard]] bstring getWeaponType() const;
-    [[nodiscard]] bstring getArmorType() const;
-    [[nodiscard]] bstring getWeaponCategory() const;
-    [[nodiscard]] bstring getWeaponVerb() const;
-    [[nodiscard]] bstring getWeaponVerbPlural() const;
-    [[nodiscard]] bstring getWeaponVerbPast() const;
+    [[nodiscard]] std::string getMaterialName() const;
+    [[nodiscard]] std::string getCompass(const Creature* creature, bool useName);
+    [[nodiscard]] std::string getVersion() const;
+    [[nodiscard]] std::string getQuestOwner() const;
+    [[nodiscard]] std::string getObjStr(const Creature* viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
+    [[nodiscard]] std::string getSubType() const;
+    [[nodiscard]] std::string getWeaponType() const;
+    [[nodiscard]] std::string getArmorType() const;
+    [[nodiscard]] std::string getWeaponCategory() const;
+    [[nodiscard]] std::string getWeaponVerb() const;
+    [[nodiscard]] std::string getWeaponVerbPlural() const;
+    [[nodiscard]] std::string getWeaponVerbPast() const;
 
     bool isQuestOwner(const Player* player) const;
-    bstring getWearName();
+    std::string getWearName();
 
 
     void nameAlchemyPotion(bool potion = true);
 
     // Set
     void setKey(unsigned short k);
-    bool setWeaponType(std::string_view newType);
-    bool setArmorType(std::string_view newType);
-    bool setSubType(std::string_view newType);
+    bool setWeaponType(const std::string &newType);
+    bool setArmorType(const std::string &newType);
+    bool setSubType(const std::string &newType);
     void setMade();
     void setDelay(int newDelay);
     void setExtra(int x);
@@ -400,8 +400,8 @@ public:
     [[nodiscard]] bool needsTwoHands() const;
     [[nodiscard]] bool isQuestValid() const; // Is this object valid for a quest?
 
-    bstring showAlchemyEffects(Player *player = nullptr);
-    bstring statObj(unsigned int statFlags);
+    std::string showAlchemyEffects(Player *player = nullptr);
+    std::string statObj(unsigned int statFlags);
     double winterProtection() const;
     bool isKey(const UniqueRoom* room, const Exit* exit) const;
 

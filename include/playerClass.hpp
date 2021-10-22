@@ -36,7 +36,7 @@ public:
     PlayerClass(xmlNodePtr rootNode);
     ~PlayerClass();
     int getId() const;
-    bstring getName() const;
+    std::string getName() const;
     short getBaseHp();
     short getBaseMp();
     bool needsDeity();
@@ -46,8 +46,8 @@ public:
     std::map<int, LevelGain*>::const_iterator getLevelBegin();
     std::map<int, LevelGain*>::const_iterator getLevelEnd();
     LevelGain* getLevelGain(int lvl);
-    bstring getTitle(int lvl, bool male, bool ignoreCustom=true) const;
-    bstring getUnarmedWeaponSkill() const;
+    std::string getTitle(int lvl, bool male, bool ignoreCustom=true) const;
+    std::string getUnarmedWeaponSkill() const;
 
     std::map<int, PlayerTitle*> titles;
     bool hasDefaultStats();
@@ -58,7 +58,7 @@ protected:
     void load(xmlNodePtr rootNode);
 
     // Base Stats for the class
-    bstring name;
+    std::string name;
     int id{};
     short baseHp{};
     short baseMp{};
@@ -76,7 +76,7 @@ protected:
     std::list<SkillGain*> baseSkills;
     // Stuff gained on each additional level
     std::map<int, LevelGain*> levels;
-    bstring unarmedWeaponSkill;
+    std::string unarmedWeaponSkill;
 };
 
 

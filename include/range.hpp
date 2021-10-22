@@ -33,7 +33,7 @@ public:
     bool operator==(const Range& r) const;
     bool operator!=(const Range& r) const;
     [[nodiscard]] bool    belongs(const CatRef& cr) const;
-    [[nodiscard]] bstring str() const;
+    [[nodiscard]] std::string str() const;
     [[nodiscard]] bool    isArea(std::string_view c) const;
 
     CatRef  low;

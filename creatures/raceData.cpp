@@ -20,8 +20,10 @@
 #include <cstdio>                                   // for snprintf
 #include <cstring>                                  // for strcmp
 #include <map>                                      // for operator==, opera...
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
-#include "bstring.hpp"                              // for bstring
 #include "cmd.hpp"                                  // for cmd
 #include "config.hpp"                               // for Config, gConfig
 #include "creatures.hpp"                            // for Player
@@ -72,7 +74,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
     char    sizeTxt[20];
     int     i=0;
     short   n=0;
-    bstring str;
+    std::string str;
 
     id = 0;
     name = adjective = abbr = "";
@@ -91,13 +93,13 @@ RaceData::RaceData(xmlNodePtr rootNode) {
     zero(dkDeities, sizeof(dkDeities));
 
     id = xml::getIntProp(rootNode, "id");
-    xml::copyPropToBString(name, rootNode, "name");
+    xml::copyPropToString(name, rootNode, "name");
 
     xmlNodePtr subNode, childNode, curNode = rootNode->children;
 
     while(curNode) {
-             if(NODE_NAME(curNode, "Adjective")) xml::copyToBString(adjective, curNode);
-        else if(NODE_NAME(curNode, "Abbr")) xml::copyToBString(abbr, curNode);
+             if(NODE_NAME(curNode, "Adjective")) xml::copyToString(adjective, curNode);
+        else if(NODE_NAME(curNode, "Abbr")) xml::copyToString(abbr, curNode);
         else if(NODE_NAME(curNode, "NotPlayable")) playable = false;
         else if(NODE_NAME(curNode, "ParentRace")) {
             xml::copyToNum(parentRace, curNode);
@@ -144,7 +146,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
                     subNode = childNode->children;
                     while(subNode) {
                         if(NODE_NAME(subNode, "Stat")) {
-                            xml::copyPropToBString(str, subNode, "id");
+                            xml::copyPropToString(str, subNode, "id");
                             xml::copyToNum(stats[gConfig->stattoNum(str)], subNode);
                         }
                         subNode = subNode->next;
@@ -154,7 +156,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
                     subNode = childNode->children;
                     while(subNode) {
                         if(NODE_NAME(subNode, "Class")) {
-                            xml::copyPropToBString(str, subNode, "id");
+                            xml::copyPropToString(str, subNode, "id");
                             classes[gConfig->classtoNum(str)] = true;
                         }
                         subNode = subNode->next;
@@ -164,7 +166,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
                     subNode = childNode->children;
                     while(subNode) {
                         if(NODE_NAME(subNode, "Deity")) {
-                            xml::copyPropToBString(str, subNode, "id");
+                            xml::copyPropToString(str, subNode, "id");
                             multiClerDeities[gConfig->deitytoNum(str)] = true;
                         }
                         subNode = subNode->next;
@@ -174,7 +176,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
                     subNode = childNode->children;
                     while(subNode) {
                         if(NODE_NAME(subNode, "Deity")) {
-                            xml::copyPropToBString(str, subNode, "id");
+                            xml::copyPropToString(str, subNode, "id");
                             clerDeities[gConfig->deitytoNum(str)] = true;
                         }
                         subNode = subNode->next;
@@ -184,7 +186,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
                     subNode = childNode->children;
                     while(subNode) {
                         if(NODE_NAME(subNode, "Deity")) {
-                            xml::copyPropToBString(str, subNode, "id");
+                            xml::copyPropToString(str, subNode, "id");
                             palDeities[gConfig->deitytoNum(str)] = true;
                         }
                         subNode = subNode->next;
@@ -194,7 +196,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
                     subNode = childNode->children;
                     while(subNode) {
                         if(NODE_NAME(subNode, "Deity")) {
-                            xml::copyPropToBString(str, subNode, "id");
+                            xml::copyPropToString(str, subNode, "id");
                             dkDeities[gConfig->deitytoNum(str)] = true;
                         }
                         subNode = subNode->next;
@@ -204,7 +206,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
                     subNode = childNode->children;
                     while(subNode) {
                         if(NODE_NAME(subNode, "SavingThrow")) {
-                            xml::copyPropToBString(str, subNode, "id");
+                            xml::copyPropToString(str, subNode, "id");
                             xml::copyToNum(saves[gConfig->savetoNum(str)], subNode);
                         }
                         subNode = subNode->next;
@@ -214,7 +216,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
                     subNode = childNode->children;
                     while(subNode) {
                         if(NODE_NAME(subNode, "Effect")) {
-                            xml::copyToBString(str, subNode);
+                            xml::copyToString(str, subNode);
                             effects.push_back(str);
                         }
                         subNode = subNode->next;
@@ -373,15 +375,15 @@ bool Config::loadRaces() {
 //                      getRace
 //**********************************************************************
 
-const RaceData* Config::getRace(bstring race) const {
+const RaceData* Config::getRace(std::string race) const {
     RaceDataMap::const_iterator it;
     RaceData* data=nullptr;
-    int len = race.getLength();
-    race = race.toLower();
+    int len = race.length();
+    boost::algorithm::to_lower(race);
 
     for(it = races.begin() ; it != races.end() ; it++) {
         // exact match
-        if((*it).second->getName().toLower() == race)
+        if(boost::iequals((*it).second->getName(), race))
             return((*it).second);
         if((*it).second->getName().substr(0, len) == race) {
             // not unique
@@ -489,13 +491,13 @@ void Config::clearRaces() {
 //                      getAdjective
 //*********************************************************************
 
-bstring RaceData::getAdjective() const { return(adjective); }
+std::string RaceData::getAdjective() const { return(adjective); }
 
 //*********************************************************************
 //                      getAbbr
 //*********************************************************************
 
-bstring RaceData::getAbbr() const { return(abbr); }
+std::string RaceData::getAbbr() const { return(abbr); }
 
 //*********************************************************************
 //                      getParentRace
@@ -621,12 +623,12 @@ int RaceData::getId() const { return(id); }
 //                      getName
 //*********************************************************************
 
-bstring RaceData::getName(int tryToShorten) const {
+std::string RaceData::getName(int tryToShorten) const {
     if(!tryToShorten)
         return(name);
-    bstring txt = name;
+    std::string txt = name;
     if(txt.length() > (unsigned)tryToShorten)
-        txt.Replace("Half-", "H-");
+        boost::replace_all(txt, "Half-", "H-");
     return(txt);
 }
 

@@ -50,17 +50,17 @@ public:
 
 private:
     int (*fn)(Creature* player, cmd* cmnd){};
-    bstring script;
+    std::string script;
 
-    bstring selfNoTarget;
-    bstring roomNoTarget;
+    std::string selfNoTarget;
+    std::string roomNoTarget;
 
-    bstring selfOnTarget;
-    bstring roomOnTarget;
-    bstring victimOnTarget;
+    std::string selfOnTarget;
+    std::string roomOnTarget;
+    std::string victimOnTarget;
 
-    bstring selfOnSelf;
-    bstring roomOnSelf;
+    std::string selfOnSelf;
+    std::string roomOnSelf;
 
     bool wakeTarget{};
     bool rudeWakeTarget{};

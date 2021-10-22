@@ -17,13 +17,14 @@
  */
 
 #include <ostream>                                  // for basic_ostream::op...
+#include <boost/algorithm/string.hpp>
 
 #include "catRef.hpp"
 #include "catRefInfo.hpp"                           // for CatRefInfo
 #include "config.hpp"                               // for gConfig, Config
 #include "creatures.hpp"                            // for Creature
 #include "rooms.hpp"                                // for AreaRoom, UniqueRoom
-#include "xml.hpp"                                  // for copyPropToBString
+#include "xml.hpp"                                  // for copyPropToString
 
 //*********************************************************************
 //                      CatRef
@@ -90,7 +91,7 @@ bool CatRef::operator!=(const CatRef& cr) const {
 //*********************************************************************
 
 // version of string for reloading
-bstring CatRef::rstr() const {
+std::string CatRef::rstr() const {
     std::ostringstream oStr;
     oStr << area << "." << id;
     return(oStr.str());
@@ -100,7 +101,7 @@ bstring CatRef::rstr() const {
 //                      str
 //*********************************************************************
 
-bstring CatRef::str(std::string_view current, char color) const {
+std::string CatRef::str(std::string_view current, char color) const {
     std::ostringstream oStr;
     // if we're in an area already, we can chop off some text because they
     // already know what the area is
@@ -121,10 +122,10 @@ bstring CatRef::str(std::string_view current, char color) const {
 //                      setArea
 //*********************************************************************
 
-void CatRef::setArea(bstring c) {
-    if(c.getLength() > 20)
-        c = c.left(20);
-    area = c.toLower();
+void CatRef::setArea(std::string c) {
+    if(c.length() > 20)
+        c = c.substr(0, 20);
+    area = boost::algorithm::to_lower_copy(c);
 }
 
 //*********************************************************************
@@ -140,7 +141,7 @@ bool CatRef::isArea(std::string_view c) const {
 //*********************************************************************
 
 void CatRef::load(xmlNodePtr curNode) {
-    xml::copyPropToBString(area, curNode, "Area");
+    xml::copyPropToString(area, curNode, "Area");
     xml::copyToNum(id, curNode);
 }
 
