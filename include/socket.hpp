@@ -33,8 +33,7 @@
 
 
 // Defines needed
-#define TELOPTS
-#define TELCMDS
+
 #define NAWS TELOPT_NAWS
 #define TTYPE TELOPT_TTYPE
 #define MSDP TELOPT_MSDP
@@ -46,6 +45,10 @@ extern long OutBytes;
 
 class Player;
 class ReportedMsdpVariable;
+
+typedef struct _xmlNode xmlNode;
+typedef xmlNode *xmlNodePtr;
+
 
 namespace telnet {
     #define TELOPT_CHARSET      42
@@ -130,16 +133,16 @@ namespace telnet {
 class Socket {
     friend class Server;
     struct Host {
-        bstring hostName;
-        bstring ip;
+        std::string hostName;
+        std::string ip;
     };
     struct Term {
         int rows;
         int cols;
-        bstring type;
-        bstring firstType;
-        bstring lastType;
-        bstring version;
+        std::string type;
+        std::string firstType;
+        std::string lastType;
+        std::string version;
     };
     struct SockOptions {
         bool            dumb; // Dumb client, don't do telnet negotiations
@@ -163,12 +166,12 @@ private:
 
 public:
     // Static Methods
-    static void resolveIp(const sockaddr_in &addr, bstring& ip);
-    static bstring stripTelnet(std::string_view inStr);
+    static void resolveIp(const sockaddr_in &addr, std::string& ip);
+    static std::string stripTelnet(std::string_view inStr);
     static bool needsPrompt(std::string_view inStr);
-    void viewFile(const bstring& str, bool shouldPage=false);
-    void viewFileReverse(const bstring& str);
-    void viewFileReverseReal(const bstring& str);
+    void viewFile(const std::string& str, bool shouldPage=false);
+    void viewFileReverse(const std::string& str);
+    void viewFileReverseReal(const std::string& str);
 public:
     explicit Socket(int pFd);
     Socket(int pFd, sockaddr_in pAddr, bool dnsDone);
@@ -192,7 +195,7 @@ public:
     void vprint(const char *fmt, va_list ap);
 
     void bprint(std::string_view toPrint);
-    void bprintPython(const bstring& toPrint);
+    void bprintPython(const std::string& toPrint);
 
     template <typename... Args>
     void bprint(std::string_view toPrint, Args &&... args) const {
@@ -210,8 +213,8 @@ public:
     void print(const char* format, ...);
     void printColor(const char* format, ...);
 
-    bstring parseForOutput(std::string_view outBuf);
-    bstring getColorCode(unsigned char ch);
+    std::string parseForOutput(std::string_view outBuf);
+    std::string getColorCode(unsigned char ch);
 
     int processInput();
     int processOneCommand();
@@ -260,7 +263,7 @@ public:
     [[nodiscard]] bool charsetEnabled() const;
     [[nodiscard]] bool utf8Enabled() const;
 
-    [[nodiscard]] bstring getTermType() const;
+    [[nodiscard]] std::string getTermType() const;
     [[nodiscard]] int getColorOpt() const;
     [[nodiscard]] int getTermCols() const;
     [[nodiscard]] int getTermRows() const;
@@ -285,11 +288,11 @@ public:
     void defineMxp();
 
     // MSDP Support Functions
-    ReportedMsdpVariable *getReportedMsdpVariable(std::string_view value);
+    ReportedMsdpVariable *getReportedMsdpVariable(const std::string &value);
     bool msdpSendPair(std::string_view variable, std::string_view value);
-    void msdpSendList(std::string_view variable, const std::vector<bstring>& values);
+    void msdpSendList(std::string_view variable, const std::vector<std::string>& values);
     void msdpClearReporting();
-    bstring getMsdpReporting();
+    std::string getMsdpReporting();
 
 protected:
     // Telopt related
@@ -302,17 +305,17 @@ protected:
 
     // MSDP Support Functions
     bool parseMsdp();
-    bool processMsdpVarVal(bstring& variable, bstring& value);
-    bool msdpSend(bstring variable);
-    bool msdpList(bstring& value);
-    ReportedMsdpVariable* msdpReport(bstring& value);
-    bool msdpReset(bstring& value);
-    bool msdpUnReport(bstring& value);
+    bool processMsdpVarVal(std::string& variable, std::string& value);
+    bool msdpSend(std::string variable);
+    bool msdpList(std::string& value);
+    ReportedMsdpVariable* msdpReport(const std::string &value);
+    bool msdpReset(std::string& value);
+    bool msdpUnReport(std::string& value);
 
 // TODO - Retool so they can be moved to protected
 public:
     char tempstr[4][256]{};
-    bstring tempbstr;
+    std::string tempbstr;
 
     int getParam();
     void setParam(int newParam);
@@ -331,15 +334,15 @@ protected:
     bool        oneIAC{};
     bool        watchBrokenClient{};
 
-    bstring     output;
-    bstring     processedOutput;   // Output that has been processed but not fully sent (in the case of EWOULDBLOCK for example)
+    std::string     output;
+    std::string     processedOutput;   // Output that has been processed but not fully sent (in the case of EWOULDBLOCK for example)
 
-    std::queue<bstring> input;      // Processed Input buffer
+    std::queue<std::string> input;      // Processed Input buffer
 
     // IAC buffer, we make it a vector so that it will handle NUL bytes and other characters and still report the correct size()/length()
     std::vector<unsigned char>  cmdInBuf;
-    bstring     inBuf;              // Input Buffer
-    bstring     inLast;             // Last command
+    std::string     inBuf;              // Input Buffer
+    std::string     inLast;             // Last command
 
     Player*     myPlayer{};
 
@@ -349,12 +352,12 @@ protected:
     z_stream    *outCompress{};
 
 // Old items from IOBUF that we might keep
-    void        (*fn)(Socket*, const bstring&){};
+    void        (*fn)(Socket*, const std::string&){};
     char        fnparam{};
     char        commands{};
     Socket      *spyingOn{};      // Socket we are spying on
     std::list<Socket*> spying;  // Sockets spying on us
-    std::map<bstring, ReportedMsdpVariable*> msdpReporting;
+    std::map<std::string, ReportedMsdpVariable*> msdpReporting;
 // TEMP
 public:
     long        ltime{};
@@ -368,7 +371,7 @@ public:
 
 public:
     static int getNumSockets();
-    void handlePaging(const bstring &inStr);
+    void handlePaging(const std::string &inStr);
     bool hasPagerOutput();
     int getMaxPages() const;
     void donePaging();

@@ -106,19 +106,19 @@ struct namableCmp {
     }
 };
 
-typedef std::pair<bstring, bstring> accountDouble;
-typedef std::map<bstring, MxpElement*, comp> MxpElementMap;
-typedef std::map<bstring, bstring, comp> BstringMap;
-typedef std::map<bstring, SkillInfo*, comp> SkillInfoMap;
-typedef std::map<bstring, Effect, comp> EffectMap;
+typedef std::pair<std::string, std::string> accountDouble;
+typedef std::map<std::string, MxpElement*, comp> MxpElementMap;
+typedef std::map<std::string, std::string, comp> stringMap;
+typedef std::map<std::string, SkillInfo*, comp> SkillInfoMap;
+typedef std::map<std::string, Effect, comp> EffectMap;
 typedef std::set<SocialCommand, namableCmp> SocialSet;
 typedef std::set<PlyCommand, namableCmp> PlyCommandSet;
 typedef std::set<CrtCommand, namableCmp> CrtCommandSet;
 typedef std::set<SkillCommand, namableCmp> SkillCommandSet;
 typedef std::set<Spell, namableCmp> SpellSet;
 typedef std::set<Song, namableCmp> SongSet;
-typedef std::map<bstring, AlchemyInfo*, comp> AlchemyMap;
-typedef std::map<bstring, MsdpVariable*> MsdpVarMap;
+typedef std::map<std::string, AlchemyInfo*, comp> AlchemyMap;
+typedef std::map<std::string, MsdpVariable*> MsdpVarMap;
 typedef std::map<unsigned int, MudFlag> MudFlagMap;
 
 typedef std::map<unsigned int, RaceData*> RaceDataMap;
@@ -127,7 +127,7 @@ typedef std::map<unsigned int, Recipe*> RecipeMap;
 typedef std::map<unsigned int, Clan*> ClanMap;
 typedef std::map<unsigned int, Guild*> GuildMap;
 typedef std::map<unsigned int, QuestInfo*> QuestInfoMap;
-typedef std::map<long, bstring> DiscordTokenMap; // webhookId --> token
+typedef std::map<long, std::string> DiscordTokenMap; // webhookId --> token
 
 // Case insensitive
 
@@ -137,7 +137,7 @@ public:
     explicit LottoTicket(xmlNodePtr rootNode);
     void saveToXml(xmlNodePtr rootNode);
 
-    bstring owner;  // Owner of this ticket
+    std::string owner;  // Owner of this ticket
     short numbers[6]{}; // Numbers
     int lottoCycle; // Lottery Cycle
 };
@@ -174,7 +174,7 @@ public:
     bool removeProxyAccess(std::string_view id, Player* proxied);
     void clearProxyAccess();
 
-    bstring getProxyList(Player* player = nullptr);
+    std::string getProxyList(Player* player = nullptr);
 
 // MSDP
     bool initMsdp();
@@ -192,7 +192,7 @@ public:
 // Mxp Elements
     bool loadMxpElements();
     void clearMxpElements();
-    bstring& getMxpColorTag(std::string_view str);
+    std::string& getMxpColorTag(const std::string &str);
 
 // Commands
     bool initCommands();
@@ -208,35 +208,35 @@ public:
 // Effects
     bool loadEffects();
     void clearEffects();
-    const Effect* getEffect(std::string_view eName);
-    bool effectExists(std::string_view eName);
+    const Effect* getEffect(const std::string &eName);
+    bool effectExists(const std::string &eName);
 
 // Spells
     bool loadSpells();
     bool saveSpells() const;
     void clearSpells();
-    const Spell* getSpell(std::string_view sName, int& ret);
+    const Spell* getSpell(const std::string &id, int& ret);
 
 // New Songs
     bool loadSongs();
     bool saveSongs() const;
     void clearSongs();
-    const Song* getSong(std::string_view sName, int& ret);
-    const Song* getSong(std::string_view sName);
+    const Song* getSong(const std::string &name, int& ret);
+    const Song* getSong(const std::string &pName);
 
 
 // Alchemy
     bool loadAlchemy();
     bool clearAlchemy();
-    const AlchemyInfo *getAlchemyInfo(std::string_view effect) const;
+    const AlchemyInfo *getAlchemyInfo(const std::string &effect) const;
 
 // Skills
-    [[nodiscard]] bool skillExists(std::string_view skillName) const;
-    [[nodiscard]] SkillInfo* getSkill(std::string_view skillName) const;
-    [[nodiscard]] bstring getSkillGroupDisplayName(std::string_view groupName) const;
-    [[nodiscard]] bstring getSkillGroup(std::string_view skillName) const;
-    [[nodiscard]] bstring getSkillDisplayName(std::string_view skillName) const;
-    [[nodiscard]] bool isKnownOnly(std::string_view skillName) const;
+    [[nodiscard]] bool skillExists(const std::string &skillName) const;
+    [[nodiscard]] SkillInfo* getSkill(const std::string &skillName) const;
+    [[nodiscard]] std::string getSkillGroupDisplayName(const std::string &groupName) const;
+    [[nodiscard]] std::string getSkillGroup(const std::string &skillName) const;
+    [[nodiscard]] std::string getSkillDisplayName(const std::string &skillName) const;
+    [[nodiscard]] bool isKnownOnly(const std::string &skillName) const;
 
 
 // Bans
@@ -252,15 +252,15 @@ public:
 
     Guild* getGuild(int guildId);
     Guild* getGuild(std::string_view name);
-    Guild* getGuild(const Player* player, bstring txt);
+    Guild* getGuild(const Player* player, std::string txt);
     bool deleteGuild(int guildId);
 
 // GuildCreations
-    bstring removeGuildCreation(std::string_view leaderName);
+    std::string removeGuildCreation(std::string_view leaderName);
     GuildCreation* findGuildCreation(std::string_view name);
     bool addGuildCreation( GuildCreation* toAdd);
     void creationToGuild(GuildCreation* toApprove);
-    void guildCreationsRenameSupporter(std::string_view oldName, std::string_view newName);
+    void guildCreationsRenameSupporter(const std::string &oldName, const std::string &newName);
 
 // Bans
     bool loadBans();
@@ -275,12 +275,12 @@ public:
 // Factions
     bool loadFactions();
     void clearFactionList();
-    [[nodiscard]] const Faction *getFaction(std::string_view factionStr) const;
+    [[nodiscard]] const Faction *getFaction(const std::string &factionStr) const;
 
 // Fishing
     bool loadFishing();
     void clearFishing();
-    const Fishing *getFishing(std::string_view id) const;
+    const Fishing *getFishing(const std::string &id) const;
 
 // Old Quests (Quest Table)
     bool loadQuestTable();
@@ -338,7 +338,7 @@ public:
 // StartLocs
     bool loadStartLoc();
     void clearStartLoc();
-    [[nodiscard]] const StartLoc* getStartLoc(std::string_view id) const;
+    [[nodiscard]] const StartLoc* getStartLoc(const std::string &id) const;
     [[nodiscard]] const StartLoc* getDefaultStartLoc() const;
     [[nodiscard]] const StartLoc* getStartLocByReq(const CatRef& cr) const;
     void saveStartLocs() const;
@@ -360,20 +360,20 @@ public:
     bool loadCatRefInfo();
     void clearCatRefInfo();
     void saveCatRefInfo() const;
-    [[nodiscard]] bstring catRefName(std::string_view area) const;
+    [[nodiscard]] std::string catRefName(std::string_view area) const;
     [[nodiscard]] const CatRefInfo* getCatRefInfo(std::string_view area, int id=0, int shouldGetParent=0) const;
     [[nodiscard]] const CatRefInfo* getCatRefInfo(const BaseRoom* room, int shouldGetParent=0) const;
     [[nodiscard]] const CatRefInfo* getRandomCatRefInfo(int zone) const;
 
 
 // swap
-    void swapLog(const bstring& log, bool external=true);
+    void swapLog(const std::string& log, bool external=true);
     void swap(Player* player, std::string_view name);
-    void swap(bstring str);
+    void swap(std::string str);
     void offlineSwap(childProcess &child, bool onReap);
     void offlineSwap();
     void findNextEmpty(childProcess &child, bool onReap);
-    void finishSwap(std::string_view mover);
+    void finishSwap(const std::string &mover);
     void endSwap(int id=1);
     bool moveRoomRestrictedArea(std::string_view area) const;
     bool moveObjectRestricted(const CatRef& cr) const;
@@ -399,20 +399,20 @@ public:
     void listDoubleLog(const Player* viewer) const;
 
 // Misc
-    [[nodiscard]] const RaceData* getRace(bstring race) const;
+    [[nodiscard]] const RaceData* getRace(std::string race) const;
     [[nodiscard]] const RaceData* getRace(unsigned int id) const;
     [[nodiscard]] const DeityData* getDeity(int id) const;
 
     static unsigned long expNeeded(int level);
     int getMaxSong();
 
-    [[nodiscard]] bstring getVersion();
-    [[nodiscard]] bstring getMudName();
-    [[nodiscard]] bstring getMudNameAndVersion();
+    [[nodiscard]] std::string getVersion();
+    [[nodiscard]] std::string getMudName();
+    [[nodiscard]] std::string getMudNameAndVersion();
     [[nodiscard]] short getPortNum() const;
     void setPortNum(short pPort);
-    [[nodiscard]] bstring weatherize(WeatherString w, const BaseRoom* room) const;
-    [[nodiscard]] bstring getMonthDay() const;
+    [[nodiscard]] std::string weatherize(WeatherString w, const BaseRoom* room) const;
+    [[nodiscard]] std::string getMonthDay() const;
     [[nodiscard]] bool isAprilFools() const;
     [[nodiscard]] bool willAprilFools() const;
     [[nodiscard]] int getFlashPolicyPort() const;
@@ -421,18 +421,18 @@ public:
     [[nodiscard]] int getShopNumObjects() const;
     [[nodiscard]] int getShopNumLines() const;
 
-    bstring getSpecialFlag(int index);
+    std::string getSpecialFlag(int index);
 
 // Get
     [[nodiscard]] const cWeather* getWeather() const;
 
-    [[nodiscard]] bstring getDmPass() const;
-    [[nodiscard]] bstring getWebserver() const;
-    [[nodiscard]] bstring getQS() const;
-    [[nodiscard]] bstring getUserAgent() const;
-    [[nodiscard]] bstring getReviewer() const;
+    [[nodiscard]] std::string getDmPass() const;
+    [[nodiscard]] std::string getWebserver() const;
+    [[nodiscard]] std::string getQS() const;
+    [[nodiscard]] std::string getUserAgent() const;
+    [[nodiscard]] std::string getReviewer() const;
 
-    [[nodiscard]] bstring getCustomColor(CustomColor i, bool caret) const;
+    [[nodiscard]] std::string getCustomColor(CustomColor i, bool caret) const;
 
 // Lottery
     void addTicket(LottoTicket* ticket);
@@ -449,7 +449,7 @@ public:
     long getLotteryWinnings();
     void winLottery();
     void addLotteryWinnings(long prize);
-    bstring getLotteryRunTimeStr();
+    std::string getLotteryRunTimeStr();
     time_t getLotteryRunTime();
     int getLotteryTicketsSold();
 
@@ -498,7 +498,7 @@ public:
 
 #ifdef SQL_LOGGER
 // Sql Logging
-    bstring getDbConnectionString();
+    std::string getDbConnectionString();
 #endif
 
 private:
@@ -534,31 +534,31 @@ public:
 
 private:
 
-    bstring mudName;
-    bstring dmPass;
-    bstring webserver;
-    bstring qs;             // authorization query string
-    bstring userAgent;
-    bstring defaultArea;
+    std::string mudName;
+    std::string dmPass;
+    std::string webserver;
+    std::string qs;             // authorization query string
+    std::string userAgent;
+    std::string defaultArea;
 public:
-    void setDefaultArea(const bstring &pDefaultArea);
-    [[nodiscard]] const bstring &getDefaultArea() const;
+    void setDefaultArea(const std::string &pDefaultArea);
+    [[nodiscard]] const std::string &getDefaultArea() const;
 
 private:
     // loaded from catrefinfo file
 
 //#ifdef SQL_LOGGER
-    bstring logDbType;
-    bstring logDbUser;
-    bstring logDbPass;
-    bstring logDbDatabase;
+    std::string logDbType;
+    std::string logDbUser;
+    std::string logDbPass;
+    std::string logDbDatabase;
 //#endif
 
 private:
     bool listing;
 
     // Swap
-    std::list<bstring> swapList;
+    std::list<std::string> swapList;
     std::list<Swap> swapQueue;
     Swap    currentSwap;
 
@@ -581,7 +581,7 @@ private:
     int     flashPolicyPort{};
     int     shopNumObjects{};
     int     shopNumLines{};
-    bstring reviewer;
+    std::string reviewer;
 
     std::list<Unique*> uniques;
     std::list<Lore*> lore;
@@ -593,7 +593,7 @@ private:
 public:
     QuestInfoMap quests;
     MxpElementMap mxpElements;
-    BstringMap mxpColors;
+    stringMap mxpColors;
     QuestInfo* getQuest(unsigned int questNum);
 
 public:
@@ -602,7 +602,7 @@ public:
 
     // MSDP
     MsdpVarMap msdpVariables;
-    MsdpVariable* getMsdpVariable(bstring& name);
+    MsdpVariable* getMsdpVariable(const std::string &name);
 
 
     // Alchemy
@@ -633,12 +633,12 @@ public:
     GuildMap guilds;
 
     // Factions
-    std::map<bstring, Faction*> factions;
+    std::map<std::string, Faction*> factions;
 
-    std::map<bstring, bstring> skillGroups;
-    std::map<bstring, PlayerClass*> classes;
-    std::map<bstring, StartLoc*> start;
-    std::map<bstring, Fishing> fishing;
+    std::map<std::string, std::string> skillGroups;
+    std::map<std::string, PlayerClass*> classes;
+    std::map<std::string, StartLoc*> start;
+    std::map<std::string, Fishing> fishing;
     std::list<Property*> properties;
     std::list<CatRefInfo*> catRefInfo;
 
@@ -660,13 +660,13 @@ public:
     MudFlagMap propHouseFlags;
     MudFlagMap propGuildFlags;
 
-    static bstring getFlag(unsigned int flagNum, MudFlagMap& flagMap);
+    static std::string getFlag(unsigned int flagNum, MudFlagMap& flagMap);
 
-    inline bstring getRFlag(int flagNum) { return getFlag(flagNum, rflags); };
-    inline bstring getXFlag(int flagNum) { return getFlag(flagNum, xflags); };
-    inline bstring getPFlag(int flagNum) { return getFlag(flagNum, pflags); };
-    inline bstring getMFlag(int flagNum) { return getFlag(flagNum, mflags); };
-    inline bstring getOFlag(int flagNum) { return getFlag(flagNum, oflags); };
+    inline std::string getRFlag(int flagNum) { return getFlag(flagNum, rflags); };
+    inline std::string getXFlag(int flagNum) { return getFlag(flagNum, xflags); };
+    inline std::string getPFlag(int flagNum) { return getFlag(flagNum, pflags); };
+    inline std::string getMFlag(int flagNum) { return getFlag(flagNum, mflags); };
+    inline std::string getOFlag(int flagNum) { return getFlag(flagNum, oflags); };
 
     Calendar    *calendar{};
     std::list<Ship*> ships;
@@ -686,12 +686,12 @@ public:
     bool isBotEnabled() const;
 
 private:
-    bstring botToken;
+    std::string botToken;
     DiscordTokenMap webhookTokens;
 
 public:
-    [[nodiscard]] const bstring &getBotToken() const;
-    [[nodiscard]] const bstring &getWebhookToken(long webhookID) const;
+    [[nodiscard]] const std::string &getBotToken() const;
+    [[nodiscard]] const std::string &getWebhookToken(long webhookID) const;
     void clearWebhookTokens();
 
 };

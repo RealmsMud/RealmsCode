@@ -18,9 +18,8 @@
 #include "range.hpp"
 
 #include <ostream>      // for basic_ostream::operator<<, operator<<, basic_...
+#include <sstream>
 #include <string>       // for char_traits, operator<<
-
-#include "bstring.hpp"  // for bstring
 
 //*********************************************************************
 //                      Range
@@ -56,7 +55,7 @@ bool Range::belongs(const CatRef& cr) const {
 //                      str
 //*********************************************************************
 
-bstring Range::str() const {
+std::string Range::str() const {
     std::ostringstream oStr;
     oStr << low.area << ":";
     if(high == -1 && low.id == -1)

@@ -76,7 +76,7 @@ extern sayInfo sayList[];
 typedef struct channelInfo {
     const char  *channelName;       // Name of the channel
     bool    useLanguage;            // Should this channel use languages?
-    bstring color;
+    std::string color;
     const char  *displayFmt;        // Display string for the channel
     int     minLevel;               // Minimum level to use this channel
     int     maxLevel;               // Maximum level to use this channel
@@ -96,11 +96,11 @@ typedef struct channelInfo {
 extern channelInfo channelList[];
 
 
-void sendGlobalComm(const Player *player, const bstring &text, const bstring &extra, unsigned int check,
-                    const channelInfo *chan, const bstring &etxt, std::string_view oocName, std::string_view icName);
+void sendGlobalComm(const Player *player, const std::string &text, const std::string &extra, unsigned int check,
+                    const channelInfo *chan, const std::string &etxt, const std::string &oocName, const std::string &icName);
 
 
-channelPtr getChannelByName(const Player *player, const bstring &chanStr);
+channelPtr getChannelByName(const Player *player, const std::string &chanStr);
 channelPtr getChannelByDiscordChannel(unsigned long discordChannelID);
 
 

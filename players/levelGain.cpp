@@ -19,7 +19,6 @@
 #include <ctime>                                    // for time
 
 #include "bank.hpp"                                 // for Bank
-#include "bstring.hpp"                              // for bstring, operator+
 #include "config.hpp"                               // for Config, gConfig
 #include "creatures.hpp"                            // for Player
 #include "deityData.hpp"                            // for DeityData
@@ -57,7 +56,7 @@ char saveStr[][5] = {
 //                      findStat
 //*********************************************************************
 
-int findStat(bstring &stat) {
+int findStat(std::string &stat) {
     for(int i = 0 ; i < 7 ; i++) {
         if(stat == statStr[i]) {
             return(i);
@@ -70,7 +69,7 @@ int findStat(bstring &stat) {
 //                      findSave
 //*********************************************************************
 
-int findSave(bstring &save) {
+int findSave(std::string &save) {
     for(int i = 0 ; i < 6 ; i++) {
         if(save == saveStr[i]) {
             return(i);
@@ -104,7 +103,7 @@ LevelGain::~LevelGain() {
 
 void LevelGain::load(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
-    bstring temp;
+    std::string temp;
     while(curNode) {
 
         if(NODE_NAME(curNode, "HpGain")) {
@@ -112,10 +111,10 @@ void LevelGain::load(xmlNodePtr rootNode) {
         } else if(NODE_NAME(curNode, "MpGain")) {
             xml::copyToNum(mp, curNode);
         } else if(NODE_NAME(curNode, "Stat")) {
-            xml::copyToBString(temp, curNode);
+            xml::copyToString(temp, curNode);
             stat = findStat(temp);
         } else if(NODE_NAME(curNode, "Save")) {
-            xml::copyToBString(temp, curNode);
+            xml::copyToString(temp, curNode);
             save = findSave(temp);
         } else if(NODE_NAME(curNode, "Skills")) {
             xmlNodePtr skillNode = curNode->children;
@@ -135,8 +134,8 @@ void LevelGain::load(xmlNodePtr rootNode) {
 bool LevelGain::hasSkills() { return(!skills.empty()); }
 std::list<SkillGain*>::const_iterator LevelGain::getSkillBegin() { return(skills.begin()); }
 std::list<SkillGain*>::const_iterator LevelGain::getSkillEnd() { return(skills.end()); }
-bstring LevelGain::getStatStr() { return(statStr[stat]); }
-bstring LevelGain::getSaveStr() { return(saveStr[save]); }
+std::string LevelGain::getStatStr() { return(statStr[stat]); }
+std::string LevelGain::getSaveStr() { return(saveStr[save]); }
 int LevelGain::getStat() { return(stat); }
 int LevelGain::getSave() { return(save); }
 int LevelGain::getHp() { return(hp); }
@@ -194,7 +193,7 @@ void Player::upLevel() {
     if(!pClass) {
         print("Error: Can't find your class!\n");
         if(!isStaff()) {
-            bstring errorStr = "Error: Can't find class: " + getClassString();
+            std::string errorStr = "Error: Can't find class: " + getClassString();
             merror(errorStr.c_str(), FATAL);
         }
         return;
@@ -204,7 +203,7 @@ void Player::upLevel() {
         if(!lGain && level != 1) {
             print("Error: Can't find any information for your level!\n");
             if(!isStaff()) {
-                bstring errorStr = "Error: Can't find level info for " + getClassString() + level;
+                std::string errorStr = fmt::format("Error: Can't find level info for {} {}", getClassString(), level);
                 merror(errorStr.c_str(), FATAL);
             }
             return;
@@ -253,7 +252,7 @@ void Player::upLevel() {
         }
 
     } else {
-        bstring modName = bstring("Level") + level;
+        std::string modName = fmt::format("Level{}", level);
 
         // Calculate gains here
         int statGain = lGain->getStat();
@@ -465,7 +464,7 @@ void Player::downLevel() {
         saveLost = levelInfo->getSaveGain();
     }
 
-    bstring toRemove = bstring("Level") + level;
+    std::string toRemove = fmt::format("Level{}", level);
 
     hp.removeModifier(toRemove);
     mp.removeModifier(toRemove);

@@ -20,7 +20,6 @@
 #include <string>                 // for operator!=, basic_string, operator==
 
 #include "area.hpp"               // for Area, TileInfo, MapMarker
-#include "bstring.hpp"            // for bstring
 #include "catRef.hpp"             // for CatRef
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for cmdNoAuth, cmdAmbush, cmdBackstab
@@ -850,7 +849,7 @@ int cmdEnvenom(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    bstring category = weapon->getWeaponCategory();
+    std::string category = weapon->getWeaponCategory();
     if(category != "slashing" && category != "piercing"&&
         !player->checkStaff("You can only envenom slashing and piercing weapons.\n"))
         return(0);
@@ -1215,7 +1214,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
     if(!weapon && !player->checkStaff("Backstabing requires a weapon.\n"))
         return(0);
 
-    bstring category = player->getPrimaryWeaponCategory();
+    std::string category = player->getPrimaryWeaponCategory();
 
     if( category != "slashing" && category != "piercing" &&
         !player->checkStaff("Backstabing requires a slashing or piercing weapon.\n")
@@ -1281,7 +1280,7 @@ int cmdBackstab(Player* player, cmd* cmnd) {
     player->unhide();
 
     int level = (int)player->getSkillLevel("backstab");
-    bstring with = Statistics::damageWith(player, player->ready[WIELD-1]);
+    std::string with = Statistics::damageWith(player, player->ready[WIELD-1]);
 
     if(player->isDm() && result != ATTACK_CRITICAL)
         result = ATTACK_HIT;
@@ -1822,7 +1821,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
     Creature* creature=nullptr;
     Player  *pCreature=nullptr;
     Monster* mCreature=nullptr;
-    bstring str = "";
+    std::string str = "";
     long    i=0, t=0;
     int     chance=0, goldchance=0, ok=0;
 
@@ -1971,7 +1970,7 @@ int cmdPeek(Player* player, cmd* cmnd) {
 
 int peek_bag(Player* player, Player* target, cmd* cmnd, int inv) {
     Object  *container=nullptr;
-    bstring str = "";
+    std::string str = "";
     int     chance=0;
 
     if(!player->isStaff()) {

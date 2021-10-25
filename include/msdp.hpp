@@ -66,12 +66,12 @@ class MsdpVariable {
     friend class ReportedMsdpVariable;
 
 public:
-    static bstring getValue(MSDPVar var, Socket &sock, Player *player);
+    static std::string getValue(MSDPVar var, Socket &sock, Player *player);
 
 protected:
     void init();
 
-    bstring name;               // Name of this variable
+    std::string name;               // Name of this variable
     MSDPVar varId;
     bool reportable{};         // This variable is reportable
     bool requiresPlayer{};     // Variable requires a player attached to the socket
@@ -85,13 +85,13 @@ protected:
 
 public:
     MsdpVariable();
-    MsdpVariable(const bstring &pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
+    MsdpVariable(const std::string &pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
                  bool pWriteOnce, int pUpdateInterval, bool pSendFn = false, bool pUpdateFn = false,
                  bool pIsGroup = false);
     // Todo: Make this have the server erase all reported variables of this type
     virtual ~MsdpVariable() = default;
 
-    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] std::string getName() const;
     [[nodiscard]] MSDPVar getId() const;
     [[nodiscard]] bool hasSendFn() const;
     [[nodiscard]] bool hasUpdateFn() const;
@@ -107,7 +107,7 @@ public:
 
 class ReportedMsdpVariable : public MsdpVariable {
 protected:
-    bstring value;
+    std::string value;
     bool dirty;
     Socket *parentSock; // Parent Socket
 
@@ -116,7 +116,7 @@ protected:
 public:
     ReportedMsdpVariable(const MsdpVariable *mv, Socket *sock);
 
-    [[nodiscard]] bstring getValue() const;
+    [[nodiscard]] std::string getValue() const;
     void setValue(std::string_view newValue);
     void setValue(int newValue);
     void setValue(long newValue);

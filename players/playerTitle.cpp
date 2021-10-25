@@ -18,7 +18,6 @@
 #include <cctype>                 // for isalpha
 #include <cstring>                // for strlen, size_t
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for getFullstrText
 #include "config.hpp"             // for Config, gConfig
@@ -48,7 +47,7 @@ PlayerTitle::PlayerTitle() {
 //                      getTitle
 //*********************************************************************
 
-bstring PlayerTitle::getTitle(bool sexMale) const {
+std::string PlayerTitle::getTitle(bool sexMale) const {
     return(sexMale ? male : female);
 }
 
@@ -56,7 +55,7 @@ bstring PlayerTitle::getTitle(bool sexMale) const {
 //                      getTitle
 //*********************************************************************
 
-bstring getTitle(const std::map<int, PlayerTitle*>& titles, int lvl, bool male, bool ignoreCustom) {
+std::string getTitle(const std::map<int, PlayerTitle*>& titles, int lvl, bool male, bool ignoreCustom) {
     std::map<int, PlayerTitle*>::const_iterator it;
     if(lvl < 1)
         lvl = 1;
@@ -74,11 +73,11 @@ bstring getTitle(const std::map<int, PlayerTitle*>& titles, int lvl, bool male, 
     return((*it).second->getTitle(male));
 }
 
-bstring DeityData::getTitle(int lvl, bool male, bool ignoreCustom) const {
+std::string DeityData::getTitle(int lvl, bool male, bool ignoreCustom) const {
     return(::getTitle(titles, lvl, male, ignoreCustom));
 }
 
-bstring PlayerClass::getTitle(int lvl, bool male, bool ignoreCustom) const {
+std::string PlayerClass::getTitle(int lvl, bool male, bool ignoreCustom) const {
     return(::getTitle(titles, lvl, male, ignoreCustom));
 }
 
@@ -104,7 +103,7 @@ bool titlePunctuation(char c) {
 
 int cmdTitle(Player* player, cmd* cmnd) {
     double  punctuation=0;
-    bstring title = getFullstrText(cmnd->fullstr, 1);
+    std::string title = getFullstrText(cmnd->fullstr, 1);
 
     if(player->flagIsSet(P_CANNOT_CHOOSE_CUSTOM_TITLE)) {
         player->print("You have lost the privilege of choosing a custom title.\n");
@@ -151,7 +150,7 @@ int cmdTitle(Player* player, cmd* cmnd) {
 //                      doTitle
 //*********************************************************************
 
-void doTitle(Socket* sock, const bstring& str) {
+void doTitle(Socket* sock, const std::string& str) {
     Player* player = sock->getPlayer();
 
     if(low(str[0]) == 'y') {
@@ -280,7 +279,7 @@ int cmdSurname(Player* player, cmd* cmnd) {
 //                      doSurname
 //*********************************************************************
 
-void doSurname(Socket* sock, const bstring& str) {
+void doSurname(Socket* sock, const std::string& str) {
     if(low(str[0]) == 'y') {
         sock->print("You are now known as %s %s.\n", sock->getPlayer()->getCName(), sock->getPlayer()->getSurname().c_str());
 
@@ -288,7 +287,7 @@ void doSurname(Socket* sock, const bstring& str) {
             broadcast("### %s is now known as %s %s.", sock->getPlayer()->getCName(), sock->getPlayer()->getCName(),
                 sock->getPlayer()->getSurname().c_str());
 
-            sendMail(gConfig->getReviewer(), (bstring)sock->getPlayer()->getName() + " has chosen the surname " + sock->getPlayer()->getSurname() + ".\n");
+            sendMail(gConfig->getReviewer(), (std::string)sock->getPlayer()->getName() + " has chosen the surname " + sock->getPlayer()->getSurname() + ".\n");
         }
 
         sock->getPlayer()->setFlag(P_CHOSEN_SURNAME);
@@ -307,7 +306,7 @@ void doSurname(Socket* sock, const bstring& str) {
 // it.  The title is determined by looking at the player's class and
 // level.
 
-bstring Player::getTitle() const {
+std::string Player::getTitle() const {
     std::ostringstream titleStr;
 
     int titlnum;
@@ -338,7 +337,7 @@ bstring Player::getTitle() const {
     }
 }
 
-bstring Player::getTempTitle() const { return(tempTitle); }
+std::string Player::getTempTitle() const { return(tempTitle); }
 
 bool Player::canChooseCustomTitle() const {
     const std::map<int, PlayerTitle*>* titles=nullptr;

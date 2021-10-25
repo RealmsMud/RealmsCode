@@ -20,9 +20,9 @@
 
 
 // color.cpp
-bstring stripColor(std::string_view colored);
-bstring escapeColor(std::string_view colored);
-bstring padColor(std::string_view toPad, size_t pad);
+std::string stripColor(std::string_view colored);
+std::string escapeColor(std::string_view colored);
+std::string padColor(const std::string &toPad, size_t pad);
 size_t lengthNoColor(std::string_view colored);
 
 #endif //REALMSCODE_COLOR_HPP

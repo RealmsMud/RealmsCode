@@ -20,26 +20,25 @@
 #define MXP_H
 
 #include <libxml/parser.h>  // for xmlNodePtr
-#include "bstring.hpp"
 
 class MxpElement {
 public:
     MxpElement(xmlNodePtr rootNode);
-    bstring getDefineString();
+    std::string getDefineString();
 
-    bstring getName();
-    bstring getColor();
+    std::string getName();
+    std::string getColor();
     bool isColor();
 
 protected:
-    bstring name;
-    bstring mxpType;
-    bstring command;
-    bstring hint;
+    std::string name;
+    std::string mxpType;
+    std::string command;
+    std::string hint;
     bool prompt;
-    bstring attributes;
-    bstring expire;
-    bstring color;
+    std::string attributes;
+    std::string expire;
+    std::string color;
 };
 
 

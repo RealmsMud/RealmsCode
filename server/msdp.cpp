@@ -21,7 +21,6 @@
 #include <ostream>                // for operator<<, basic_ostream, basic_os...
 #include <string>                 // for operator<<, char_traits, operator!=
 
-#include "bstring.hpp"            // for bstring
 #include "config.hpp"             // for Config, MsdpVarMap, gConfig
 #include "creatures.hpp"          // for Creature, Player
 #include "flags.hpp"              // for P_NO_SHOW_STATS, P_DM_INVIS, P_SLEE...
@@ -124,21 +123,21 @@ void Server::processMsdp() {
     }
 }
 
-bool Socket::processMsdpVarVal(bstring& variable, bstring& value) {
+bool Socket::processMsdpVarVal(std::string& variable, std::string& value) {
 #ifdef MSDP_DEBUG
     std::clog << "Found Var: '" << variable << "' Val: '" << value << "'" << std::endl;
 #endif
-    if (variable.equals("LIST")) {
+    if (variable == "LIST") {
         return (msdpList(value));
     }
-    else if (variable.equals("REPORT")) {
+    else if (variable == "REPORT") {
         std::clog << "msdpReport(" << value << ")" << std::endl;
         return (msdpReport(value) != nullptr);
     }
-    else if (variable.equals("UNREPORT")) {
+    else if (variable == "UNREPORT") {
         return (msdpUnReport(value));
     }
-    else if (variable.equals("SEND")) {
+    else if (variable == "SEND") {
         return (msdpSend(value));
     }
     else {
@@ -178,29 +177,29 @@ bool Socket::processMsdpVarVal(bstring& variable, bstring& value) {
     return (true);
 }
 
-bool Socket::msdpList(bstring& value) {
+bool Socket::msdpList(std::string& value) {
 
-    if (value.equals("COMMANDS")) {
-        const std::vector<bstring> MsdpCommandList = { "LIST", "REPORT", "RESET", "SEND", "UNREPORT" };
+    if (value == "COMMANDS") {
+        const std::vector<std::string> MsdpCommandList = { "LIST", "REPORT", "RESET", "SEND", "UNREPORT" };
         msdpSendList(value, MsdpCommandList);
         return (true);
     }
-    else if (value.equals("LISTS")) {
-        const std::vector<bstring> MsdpLists =
+    else if (value == "LISTS") {
+        const std::vector<std::string> MsdpLists =
                 { "COMMANDS", "LISTS", "CONFIGURABLE_VARIABLES", "REPORTABLE_VARIABLES", "REPORTED_VARIABLES", "SENDABLE_VARIABLES" };
         msdpSendList(value, MsdpLists);
         return (true);
     }
-    else if (value.equals("SENDABLE_VARIABLES")) {
-        std::vector<bstring> sendable;
+    else if (value == "SENDABLE_VARIABLES") {
+        std::vector<std::string> sendable;
         for (auto& p: gConfig->msdpVariables) {
             sendable.push_back(p.second->getName());
         }
         msdpSendList(value, sendable);
         return (true);
     }
-    else if (value.equals("REPORTABLE_VARIABLES")) {
-        std::vector<bstring> reportable;
+    else if (value == "REPORTABLE_VARIABLES") {
+        std::vector<std::string> reportable;
         for (auto& p : gConfig->msdpVariables) {
             if(p.second->isReportable())
                 reportable.push_back(p.second->getName());
@@ -208,8 +207,8 @@ bool Socket::msdpList(bstring& value) {
         msdpSendList(value, reportable);
         return (true);
     }
-    else if (value.equals("CONFIGURABLE_VARIABLES")) {
-        std::vector<bstring> configurable;
+    else if (value == "CONFIGURABLE_VARIABLES") {
+        std::vector<std::string> configurable;
         for (auto& p : gConfig->msdpVariables) {
             if (p.second->isConfigurable())
                 configurable.push_back(p.second->getName());
@@ -217,17 +216,17 @@ bool Socket::msdpList(bstring& value) {
         msdpSendList(value, configurable);
         return (true);
     }
-    else if (value.equals("REPORTED_VARIABLES")) {
-        std::vector<bstring> reported;
+    else if (value == "REPORTED_VARIABLES") {
+        std::vector<std::string> reported;
         for (auto& p : msdpReporting) {
             reported.push_back(p.second->getName());
         }
         msdpSendList("REPORTED_VARIABLES", reported);
         return (true);
     }
-    else if (value.equals("")) {
+    else if (value.empty()) {
         // If we just get a LIST command, send off a list of all variables
-        std::vector<bstring> all;
+        std::vector<std::string> all;
         for (auto& p : gConfig->msdpVariables) {
             all.push_back(p.second->getName());
         }
@@ -238,7 +237,7 @@ bool Socket::msdpList(bstring& value) {
     return (false);
 }
 
-ReportedMsdpVariable* Socket::getReportedMsdpVariable(std::string_view value) {
+ReportedMsdpVariable* Socket::getReportedMsdpVariable(const std::string &value) {
     auto it = msdpReporting.find(value);
 
     if (it == msdpReporting.end())
@@ -247,7 +246,7 @@ ReportedMsdpVariable* Socket::getReportedMsdpVariable(std::string_view value) {
         return (it->second);
 }
 
-bstring Socket::getMsdpReporting() {
+std::string Socket::getMsdpReporting() {
     std::ostringstream ostr;
     for(auto &report : msdpReporting) {
         ostr << report.first << " ";
@@ -255,7 +254,7 @@ bstring Socket::getMsdpReporting() {
     return ostr.str();
 }
 
-ReportedMsdpVariable* Socket::msdpReport(bstring& value) {
+ReportedMsdpVariable* Socket::msdpReport(const std::string &value) {
     MsdpVariable* msdpVar = gConfig->getMsdpVariable(value);
 
     if(!msdpVar || msdpVar->getName() != value) {
@@ -288,8 +287,8 @@ ReportedMsdpVariable* Socket::msdpReport(bstring& value) {
     return reported;
 }
 
-bool Socket::msdpReset(bstring& value) {
-    if (value.equals("REPORTABLE_VARIABLES") || value.equals("SENDABLE_VARIABLES")) {
+bool Socket::msdpReset(std::string& value) {
+    if (value == "REPORTABLE_VARIABLES" || value == "SENDABLE_VARIABLES") {
         // For now just clear all reported variables
         msdpClearReporting();
     }
@@ -303,7 +302,7 @@ void Socket::msdpClearReporting() {
     msdpReporting.clear();
 }
 
-bool Socket::msdpSend(bstring variable) {
+bool Socket::msdpSend(std::string variable) {
     MsdpVariable *msdpVar = gConfig->getMsdpVariable(variable);
     if(msdpVar == nullptr) {
 #ifdef MSDP_DEBUG
@@ -315,7 +314,7 @@ bool Socket::msdpSend(bstring variable) {
 }
 
 
-bool Socket::msdpUnReport(bstring& value) {
+bool Socket::msdpUnReport(std::string& value) {
     auto it = msdpReporting.find(value);
 
     if (it == msdpReporting.end())
@@ -330,7 +329,7 @@ bool Socket::msdpUnReport(bstring& value) {
     }
 }
 
-void Socket::msdpSendList(std::string_view variable, const std::vector<bstring>& values) {
+void Socket::msdpSendList(std::string_view variable, const std::vector<std::string>& values) {
     std::ostringstream oStr;
 
     if (msdpEnabled()) {
@@ -415,7 +414,7 @@ bool Socket::msdpSendPair(std::string_view variable, std::string_view value) {
                 << (unsigned char) MSDP_VAL << value
                 << (unsigned char) IAC << (unsigned char) SE;
     }
-    bstring toSend = oStr.str();
+    std::string toSend = oStr.str();
 
 #ifdef MSDP_DEBUG
     debugMsdp(toSend);
@@ -425,7 +424,7 @@ bool Socket::msdpSendPair(std::string_view variable, std::string_view value) {
     return true;
 }
 
-MsdpVariable* Config::getMsdpVariable(bstring& name) {
+MsdpVariable* Config::getMsdpVariable(const std::string &name) {
     auto it = msdpVariables.find(name);
     if(it == msdpVariables.end())
         return(nullptr);
@@ -449,7 +448,7 @@ MsdpVariable::MsdpVariable() {
     init();
 }
 
-MsdpVariable::MsdpVariable(const bstring& pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
+MsdpVariable::MsdpVariable(const std::string& pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
                            bool pWriteOnce, int pUpdateInterval, bool pSendFn,
                            bool pUpdateFn, bool pIsGroup)
 {
@@ -482,7 +481,7 @@ ReportedMsdpVariable::ReportedMsdpVariable(const MsdpVariable* mv, Socket* sock)
     value = "unknown";
 }
 
-bstring MsdpVariable::getName() const {
+std::string MsdpVariable::getName() const {
     return(name);
 }
 
@@ -519,7 +518,7 @@ bool MsdpVariable::hasUpdateFn() const {
 }
 
 bool MsdpVariable::send(Socket &sock) const {
-    bstring value = "";
+    std::string value = "";
 
     if (!hasSendFn()) {
         // If there's no send function, and it's not configurable, there's nothing we can do
@@ -540,7 +539,7 @@ bool MsdpVariable::send(Socket &sock) const {
     return true;
 }
 
-bstring ReportedMsdpVariable::getValue() const {
+std::string ReportedMsdpVariable::getValue() const {
     return(value);
 }
 
@@ -561,11 +560,11 @@ void ReportedMsdpVariable::setValue(std::string_view newValue) {
 }
 
 void ReportedMsdpVariable::setValue(int newValue) {
-    return(setValue(bstring(newValue)));
+    return(setValue(std::to_string(newValue)));
 }
 
 void ReportedMsdpVariable::setValue(long newValue) {
-    return(setValue(bstring(newValue)));
+    return(setValue(std::to_string(newValue)));
 }
 
 bool ReportedMsdpVariable::isDirty() const {
@@ -576,7 +575,7 @@ void ReportedMsdpVariable::update() {
     if(!hasUpdateFn()) return;
     if(!parentSock) return;
 
-    bstring oldValue = value;
+    std::string oldValue = value;
     setValue(MsdpVariable::getValue(getId(), *parentSock, parentSock->getPlayer()));
 }
 
@@ -584,7 +583,7 @@ void ReportedMsdpVariable::setDirty(bool pDirty) {
     dirty = pDirty;
 }
 
-bstring BaseRoom::getExitsMsdp() const {
+std::string BaseRoom::getExitsMsdp() const {
     std::ostringstream oStr;
 
     if (!exits.empty()) {
@@ -622,7 +621,7 @@ bstring BaseRoom::getExitsMsdp() const {
     return oStr.str();
 }
 
-bstring UniqueRoom::getMsdp(bool showExits) const {
+std::string UniqueRoom::getMsdp(bool showExits) const {
     std::ostringstream oStr;
 
     oStr << (unsigned char) MSDP_TABLE_OPEN
@@ -645,7 +644,7 @@ bstring UniqueRoom::getMsdp(bool showExits) const {
 }
 
 
-bstring AreaRoom::getMsdp(bool showExits) const {
+std::string AreaRoom::getMsdp(bool showExits) const {
     std::ostringstream oStr;
 
     oStr << (unsigned char) MSDP_TABLE_OPEN
@@ -675,7 +674,7 @@ bstring AreaRoom::getMsdp(bool showExits) const {
     return oStr.str();
 }
 
-bstring Group::getMsdp(Creature* viewer) const {
+std::string Group::getMsdp(Creature* viewer) const {
     int i = 0;
     std::ostringstream oStr;
 
@@ -774,7 +773,7 @@ bstring Group::getMsdp(Creature* viewer) const {
 
 }
 
-bstring MsdpVariable::getValue(MSDPVar var, Socket &sock, Player* player) {
+std::string MsdpVariable::getValue(MSDPVar var, Socket &sock, Player* player) {
     switch(var) {
 
         case MSDPVar::SERVER_ID:
@@ -787,34 +786,34 @@ bstring MsdpVariable::getValue(MSDPVar var, Socket &sock, Player* player) {
             break;
 
         case MSDPVar::HEALTH:
-            if (player) return (player->hp.getCur());
+            if (player) return std::to_string(player->hp.getCur());
             break;
         case MSDPVar::HEALTH_MAX:
-            if (player) return (player->hp.getMax());
+            if (player) return std::to_string(player->hp.getMax());
             break;
 
         case MSDPVar::MANA:
-            if (player) return (player->mp.getCur());
+            if (player) return std::to_string(player->mp.getCur());
             break;
         case MSDPVar::MANA_MAX:
-            if (player) return (player->mp.getMax());
+            if (player) return std::to_string(player->mp.getMax());
             break;
 
         case MSDPVar::EXPERIENCE:
-            if (player) return (player->getExperience());
+            if (player) return std::to_string(player->getExperience());
             break;
         case MSDPVar::EXPERIENCE_MAX:
             if (player) return (player->expNeededDisplay());
             break;
         case MSDPVar::EXPERIENCE_TNL:
-            if (player) return (player->expToLevel());
+            if (player) return std::to_string(player->expToLevel());
             break;
         case MSDPVar::EXPERIENCE_TNL_MAX:
             if (player) return (player->expForLevel());
             break;
 
         case MSDPVar::WIMPY:
-            if (player) return (player->getWimpy());
+            if (player) return std::to_string(player->getWimpy());
             break;
 
         case MSDPVar::MONEY:
@@ -825,10 +824,10 @@ bstring MsdpVariable::getValue(MSDPVar var, Socket &sock, Player* player) {
             break;
 
         case MSDPVar::ARMOR:
-            if (player) return (player->getArmor());
+            if (player) return std::to_string(player->getArmor());
             break;
         case MSDPVar::ARMOR_ABSORB:
-            if (player) return (floor(player->getDamageReduction(player)*100.0));
+            if (player) return std::to_string(floor(player->getDamageReduction(player)*100.0));
             break;
 
         case MSDPVar::TARGET:
@@ -852,12 +851,12 @@ bstring MsdpVariable::getValue(MSDPVar var, Socket &sock, Player* player) {
         case MSDPVar::TARGET_HEALTH:
             if (player) {
                 Creature* target = player->getTarget();
-                if (target) return (round((target->hp.getCur()*10000.0) / (target->hp.getMax()*1.0))/100);
+                if (target) return std::to_string(round((target->hp.getCur()*10000.0) / (target->hp.getMax()*1.0))/100);
             }
             break;
         case MSDPVar::TARGET_HEALTH_MAX:
             if (player) {
-                if (player->getTarget()) return (100);
+                if (player->getTarget()) return std::to_string(100);
             }
             break;
         case MSDPVar::TARGET_STRENGTH:

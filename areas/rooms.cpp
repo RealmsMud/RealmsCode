@@ -23,7 +23,6 @@
 #include <sstream>                // for operator<<, basic_ostream, ostrings...
 
 #include "area.hpp"               // for MapMarker, Area, AreaZone, TileInfo
-#include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
 #include "catRefInfo.hpp"         // for CatRefInfo, CatRefInfo::limbo, CatR...
 #include "config.hpp"             // for Config, gConfig
@@ -57,11 +56,11 @@ BaseRoom::BaseRoom() {
 }
 
 
-bstring BaseRoom::getVersion() const { return(version); }
+std::string BaseRoom::getVersion() const { return(version); }
 void BaseRoom::setVersion(std::string_view v) { version = v; }
 
 
-bstring BaseRoom::fullName() const {
+std::string BaseRoom::fullName() const {
     std::ostringstream oStr;
     if(!this) {
         oStr << "Invalid Room";
@@ -109,8 +108,8 @@ bool UniqueRoom::operator< (const UniqueRoom& t) const {
     }
 }
 
-bstring UniqueRoom::getShortDescription() const { return(short_desc); }
-bstring UniqueRoom::getLongDescription() const { return(long_desc); }
+std::string UniqueRoom::getShortDescription() const { return(short_desc); }
+std::string UniqueRoom::getLongDescription() const { return(long_desc); }
 short UniqueRoom::getLowLevel() const { return(lowLevel); }
 short UniqueRoom::getHighLevel() const { return(highLevel); }
 short UniqueRoom::getMaxMobs() const { return(maxmobs); }
@@ -118,7 +117,7 @@ short UniqueRoom::getTrap() const { return(trap); }
 CatRef UniqueRoom::getTrapExit() const { return(trapexit); }
 short UniqueRoom::getTrapWeight() const { return(trapweight); }
 short UniqueRoom::getTrapStrength() const { return(trapstrength); }
-bstring UniqueRoom::getFaction() const { return(faction); }
+std::string UniqueRoom::getFaction() const { return(faction); }
 long UniqueRoom::getBeenHere() const { return(beenhere); }
 int UniqueRoom::getRoomExperience() const { return(roomExp); }
 Size UniqueRoom::getSize() const { return(size); }
@@ -250,12 +249,12 @@ void AreaRoom::recycle() {
 void AreaRoom::setMapMarker(const MapMarker* m) {
     unRegisterMo();
     setId("-1");
-    bstring str = mapmarker.str();
+    std::string str = mapmarker.str();
     area->rooms.erase(str);
     *&mapmarker = *m;
     str = mapmarker.str();
     area->rooms[str] = this;
-    setId(bstring("R") + str);
+    setId(std::string("R") + str);
     registerMo();
 }
 
@@ -1020,7 +1019,7 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, st
         }
     }
     if(!area.empty())
-        l.room.setArea(area);
+        l.room.setArea(std::string(area));
     if(id)
         l.room.id = id;
 

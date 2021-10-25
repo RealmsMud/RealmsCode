@@ -19,7 +19,6 @@
 #include <ctime>                  // for time
 #include <string>                 // for operator==, basic_string
 
-#include "bstring.hpp"            // for bstring
 #include "container.hpp"          // for PlayerSet, MonsterSet
 #include "creatures.hpp"          // for Monster, Creature, Player
 #include "flags.hpp"              // for M_FIRE_AURA, O_JUST_LOADED, M_CLASS...

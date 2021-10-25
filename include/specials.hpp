@@ -140,30 +140,30 @@ enum SpecialSaveType {
 
 class SpecialAttack {
 private:
-    bstring name;
+    std::string name;
 
-    bstring verb;           // For broadcast group, *attacker* *verb* *target*:
+    std::string verb;           // For broadcast group, *attacker* *verb* *target*:
                             // ie: The monster backstabbed john for 25 damage!
 
-    bstring selfStr;        // What we show to the attacker
-    bstring selfFailStr;
+    std::string selfStr;        // What we show to the attacker
+    std::string selfFailStr;
 
-    bstring targetStr;
-    bstring roomStr;
+    std::string targetStr;
+    std::string roomStr;
 
     // Fail strings are generally only for weapon type attacks, for non weapon attacks you want to fail
     // use save strings and set SAVE_NO_DAMAGE flag
-    bstring targetFailStr;  // Output on a failed attack: ie - missed backstab
-    bstring roomFailStr;    // Output on a failed attack
+    std::string targetFailStr;  // Output on a failed attack: ie - missed backstab
+    std::string roomFailStr;    // Output on a failed attack
 
     SpecialSaveType saveType;   // Save, stat or level to check for save
     SaveBonus saveBonus;        // What save bonuses
     int maxBonus{};             // Max save bonus
 
     // Strings to print on a sucessful save
-    bstring targetSaveStr;
-    bstring selfSaveStr;
-    bstring roomSaveStr;
+    std::string targetSaveStr;
+    std::string selfSaveStr;
+    std::string roomSaveStr;
 
     int chance{};         // Chance 1-100 that this attack will be executed
     int delay{};          // Delay between uses
@@ -179,7 +179,7 @@ private:
 private:
     void reset();
     int computeDamage(bool saved = false);
-    bstring modifyAttackString(std::string_view input, Creature* viewer, Creature* attacker, Creature* target, int dmg = -1);
+    std::string modifyAttackString(std::string_view input, Creature* viewer, Creature* attacker, Creature* target, int dmg = -1);
     void printToRoom(BaseRoom* room, std::string_view str, Creature* attacker, Creature* target, int dmg = -1);
     void setFlag(int flag);
     void clearFlag(int flag);
@@ -194,7 +194,7 @@ public:
 
     friend std::ostream& operator<<(std::ostream& out, const SpecialAttack& attack);
 
-    bstring getName();
+    std::string getName();
 
     bool save(xmlNodePtr rootNode) const;
 

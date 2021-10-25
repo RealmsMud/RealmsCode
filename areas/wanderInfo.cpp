@@ -19,7 +19,6 @@
 
 #include <map>                    // for operator==, operator!=, allocator
 
-#include "bstring.hpp"            // for bstring
 #include "catRef.hpp"             // for CatRef
 #include "creatures.hpp"          // for Player, Monster
 #include "free_crt.hpp"           // for free_crt

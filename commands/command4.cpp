@@ -21,7 +21,6 @@
 #include <ostream>        // for operator<<, basic_ostream, ostringstream
 #include <string>         // for char_traits, operator!=, basic_string
 
-#include "bstring.hpp"    // for bstring
 #include "calendar.hpp"   // for cDay, Calendar, cMonth
 #include "cmd.hpp"        // for cmd
 #include "commands.hpp"   // for cmdAge, cmdHelp, cmdInfo, cmdVersion, cmdWe...
@@ -92,7 +91,7 @@ int cmdWelcome(Player* player, cmd* cmnd) {
 //                      getTimePlayed
 //*********************************************************************
 
-bstring Player::getTimePlayed() const {
+std::string Player::getTimePlayed() const {
     std::ostringstream oStr;
     long    played = lasttime[LT_AGE].interval;
 
@@ -134,7 +133,7 @@ void Player::showAge(const Player* viewer) const {
 
     viewer->print("\n");
 
-    bstring str = getCreatedStr();
+    std::string str = getCreatedStr();
     if(!str.empty())
         viewer->printColor("^gCharacter Created:^x %s\n", str.c_str());
 

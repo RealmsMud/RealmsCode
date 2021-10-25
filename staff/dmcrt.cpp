@@ -23,8 +23,8 @@
 #include <iomanip>                // for operator<<, setw, setfill
 #include <map>                    // for map
 #include <sstream>                // for operator<<, basic_ostream, char_traits
+#include <boost/algorithm/string/replace.hpp>
 
-#include "bstring.hpp"            // for bstring
 #include "calendar.hpp"           // for cDay
 #include "catRef.hpp"             // for CatRef
 #include "clans.hpp"              // for Clan
@@ -71,7 +71,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
     Monster *monster=nullptr;
     BaseRoom* room = player->getRoomParent();
     int     l=0, total=1;
-    bstring noMonsters = "^mNo monsters were summoned.\n";
+    std::string noMonsters = "^mNo monsters were summoned.\n";
 
     CatRef  cr;
     getCatRef(getFullstrText(cmnd->fullstr, 1), &cr, player);
@@ -102,7 +102,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
         }
     }
 
-    if(getFullstrText(cmnd->fullstr, 2).left(1) == "n")
+    if(getFullstrText(cmnd->fullstr, 2).starts_with('n'))
         total = MIN(atoi(getFullstrText(cmnd->fullstr, 3).c_str()), MAX_MOBS_IN_ROOM);
     /*
      * nobody uses this
@@ -168,15 +168,15 @@ int dmCreateMob(Player* player, cmd* cmnd) {
 //*********************************************************************
 //  Display information on creature given to player given.
 
-bstring Creature::statCrt(int statFlags) {
+std::string Creature::statCrt(int statFlags) {
     const Player *pTarget = getAsConstPlayer();
     const Monster *mTarget = getAsConstMonster();
     std::ostringstream crtStr;
-    bstring str = "";
+    std::string str = "";
     int     i=0, n=0;
     long    t = time(nullptr);
     char    tmp[10], spl[128][20];
-    bstring txt = "";
+    std::string txt = "";
 
     // set left aligned
     crtStr.setf(std::ios::left, std::ios::adjustfield);
@@ -217,11 +217,11 @@ bstring Creature::statCrt(int statFlags) {
         crtStr << "\n";
 
     } else {
-        bstring mobName = mTarget->getName();
-        bstring mobPlural = mTarget->plural;
+        std::string mobName = mTarget->getName();
+        std::string mobPlural = mTarget->plural;
 
-        mobName.Replace("^", "^^");
-        mobPlural.Replace("^", "^^");
+        boost::replace_all(mobName, "^", "^^");
+        boost::replace_all(mobPlural, "^", "^^");
 
         if(mobPlural.empty()) {
             crtStr << "Name: " << mobName << "^x";
@@ -1081,7 +1081,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             long duration = -1;
             int strength = 1;
 
-            bstring txt = getFullstrText(cmnd->fullstr, 5);
+            std::string txt = getFullstrText(cmnd->fullstr, 5);
             if(!txt.empty())
                 duration = atoi(txt.c_str());
             txt = getFullstrText(cmnd->fullstr, 6);
@@ -1098,7 +1098,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                 return(0);
             }
 
-            bstring effectStr = cmnd->str[4];
+            std::string effectStr = cmnd->str[4];
             EffectInfo* toSet = nullptr;
             if((toSet = target->getExactEffect(effectStr))) {
                 // We have an existing effect we're modifying
@@ -1370,18 +1370,18 @@ int dmSetCrt(Player* player, cmd* cmnd) {
         if(!strcmp(cmnd->str[3], "inv") && mTarget) {
 
             // the parser does a terrible job here, so we have to manually figure it out
-            bstring txt = getFullstrText(cmnd->fullstr, 4);
+            std::string txt = getFullstrText(cmnd->fullstr, 4);
             int inv=0;
             char action=0;
 
             if(!txt.empty()) {
                 inv = atoi(txt.c_str());
                 if(!inv) {
-                    action = txt.getAt(0);
+                    action = txt.at(0);
                 } else {
                     txt = getFullstrText(cmnd->fullstr, 5);
                     if(!txt.empty())
-                        action = txt.getAt(0);
+                        action = txt.at(0);
                 }
             }
 
@@ -1864,7 +1864,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                 player->print("Skill range is 0 - %d, -1 to delete.\n", MAXALVL*10);
                 return(0);
             }
-            //bstring skillStr = cmnd->str[4];
+            //std::string skillStr = cmnd->str[4];
             if(cmnd->val[4] == -1) {
                 if(!target->knowsSkill(cmnd->str[4])) {
                     player->print("%s doesn't know that skill.\n", target->getCName());
@@ -2109,7 +2109,7 @@ int dmCrtName(Player* player, cmd* cmnd) {
     int     i=0, num=0;
     char    modstr[32];
     char    which=0;
-    bstring text = "";
+    std::string text = "";
 
     strcpy(modstr, "");
 
@@ -2208,8 +2208,8 @@ int dmCrtName(Player* player, cmd* cmnd) {
 
     switch (which) {
     case 0:
-        if(text.getLength() > 79)
-            text = text.left(79);
+        if(text.length() > 79)
+            text = text.substr(0, 79);
         if(Pueblo::is(text)) {
             player->print("That monster name is not allowed.\n");
             return(0);
@@ -2247,8 +2247,8 @@ int dmCrtName(Player* player, cmd* cmnd) {
                 player->print("Key #%d string cleared.\n", num);
                 return(0);
             } else {
-                if(text.getLength() > 19)
-                    text = text.left(19);
+                if(text.length() > 19)
+                    text = text.substr(0, 19);
                 strcpy(target->key[num-1], text.c_str());
                 player->print("\nKey ");
                 strcpy(modstr, "desc key");
@@ -2262,8 +2262,8 @@ int dmCrtName(Player* player, cmd* cmnd) {
             player->print("Aggro string cleared.\n");
             return(0);
         } else {
-            if(text.getLength() > 79)
-                text = text.left(79);
+            if(text.length() > 79)
+                text = text.substr(0, 79);
             strcpy(target->aggroString, text.c_str());
             player->print("\nAggro talk string ");
         }
@@ -2276,8 +2276,8 @@ int dmCrtName(Player* player, cmd* cmnd) {
                 player->print("Attack string %d cleared.\n", num);
                 return(0);
             } else {
-                if(text.getLength() > 29)
-                    text = text.left(29);
+                if(text.length() > 29)
+                    text = text.substr(0, 29);
                 strcpy(target->attack[num-1], text.c_str());
                 player->print("Attack type %d ", num);
             }
@@ -2291,8 +2291,8 @@ int dmCrtName(Player* player, cmd* cmnd) {
                 player->print("Movement string %d cleared.\n", num);
                 return(0);
             } else {
-                if(text.getLength() > CRT_MOVETYPE_LENGTH-1)
-                    text = text.left(CRT_MOVETYPE_LENGTH-1);
+                if(text.length() > CRT_MOVETYPE_LENGTH-1)
+                    text = text.substr(0, CRT_MOVETYPE_LENGTH-1);
                 strcpy(target->movetype[num-1], text.c_str());
                 player->print("Movement string %d ", num);
             }
@@ -2305,8 +2305,8 @@ int dmCrtName(Player* player, cmd* cmnd) {
             player->print("After trade talk string cleared.\n");
             return(0);
         } else {
-            if(text.getLength() > 79)
-                text = text.left(79);
+            if(text.length() > 79)
+                text = text.substr(0, 79);
             strcpy(target->ttalk, text.c_str());
             player->print("\nAfter trade talk string ");
         }

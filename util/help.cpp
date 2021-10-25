@@ -19,7 +19,6 @@
 #include <cstdio>       // for sprintf
 #include <fstream>      // for ifstream, basic_ios
 
-#include "bstring.hpp"  // for bstring
 #include "help.hpp"     // for loadHelpTemplate
 #include "paths.hpp"    // for HelpTemplate
 
@@ -28,9 +27,9 @@ namespace Help {
 //                      loadHelpTemplate
 //**********************************************************************
 
-bstring loadHelpTemplate(const char* filename) {
+std::string loadHelpTemplate(const char* filename) {
     char    file[80], line[200];
-    bstring str;
+    std::string str;
 
     sprintf(file, "%s%s.txt", Path::HelpTemplate, filename);
     std::ifstream in(file);

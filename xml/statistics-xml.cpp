@@ -63,7 +63,7 @@ void LevelInfo::save(xmlNodePtr rootNode) {
 //                      save
 //*********************************************************************
 
-void StringStatistic::save(xmlNodePtr rootNode, std::string_view nodeName) const {
+void StringStatistic::save(xmlNodePtr rootNode, const std::string &nodeName) const {
     if(!value && name.empty())
         return;
     xmlNodePtr curNode = xml::newStringChild(rootNode, nodeName);
@@ -81,7 +81,7 @@ void StringStatistic::load(xmlNodePtr curNode) {
 
     while(childNode) {
         if(NODE_NAME(childNode, "Value")) xml::copyToNum(value, childNode);
-        else if(NODE_NAME(childNode, "Name")) xml::copyToBString(name, childNode);
+        else if(NODE_NAME(childNode, "Name")) xml::copyToString(name, childNode);
         childNode = childNode->next;
     }
 }
@@ -90,7 +90,7 @@ void StringStatistic::load(xmlNodePtr curNode) {
 //                      save
 //*********************************************************************
 
-void Statistics::save(xmlNodePtr rootNode, std::string_view nodeName) const {
+void Statistics::save(xmlNodePtr rootNode, const std::string &nodeName) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, nodeName);
 
     xml::newNumChild(curNode, "Track", track);
@@ -152,7 +152,7 @@ void Statistics::load(xmlNodePtr curNode) {
 
     while(childNode) {
         if(NODE_NAME(childNode, "Track")) xml::copyToBool(track, childNode);
-        else if(NODE_NAME(childNode, "Start")) xml::copyToBString(start, childNode);
+        else if(NODE_NAME(childNode, "Start")) xml::copyToString(start, childNode);
         else if(NODE_NAME(childNode, "NumSwings")) xml::copyToNum(numSwings, childNode);
         else if(NODE_NAME(childNode, "NumHits")) xml::copyToNum(numHits, childNode);
         else if(NODE_NAME(childNode, "NumMisses")) xml::copyToNum(numMisses, childNode);

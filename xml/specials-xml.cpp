@@ -26,17 +26,17 @@ SpecialAttack::SpecialAttack(xmlNodePtr rootNode) {
     reset();
 
     while(curNode) {
-        if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
-        else if(NODE_NAME(curNode, "Verb")) xml::copyToBString(verb, curNode);
-        else if(NODE_NAME(curNode, "TargetStr")) xml::copyToBString(targetStr, curNode);
-        else if(NODE_NAME(curNode, "TargetFailStr")) xml::copyToBString(targetFailStr, curNode);
-        else if(NODE_NAME(curNode, "RoomFailStr")) xml::copyToBString(roomFailStr, curNode);
-        else if(NODE_NAME(curNode, "SelfStr")) xml::copyToBString(selfStr, curNode);
-        else if(NODE_NAME(curNode, "RoomStr")) xml::copyToBString(roomStr, curNode);
+        if(NODE_NAME(curNode, "Name")) xml::copyToString(name, curNode);
+        else if(NODE_NAME(curNode, "Verb")) xml::copyToString(verb, curNode);
+        else if(NODE_NAME(curNode, "TargetStr")) xml::copyToString(targetStr, curNode);
+        else if(NODE_NAME(curNode, "TargetFailStr")) xml::copyToString(targetFailStr, curNode);
+        else if(NODE_NAME(curNode, "RoomFailStr")) xml::copyToString(roomFailStr, curNode);
+        else if(NODE_NAME(curNode, "SelfStr")) xml::copyToString(selfStr, curNode);
+        else if(NODE_NAME(curNode, "RoomStr")) xml::copyToString(roomStr, curNode);
 
-        else if(NODE_NAME(curNode, "TargetSaveStr")) xml::copyToBString(targetSaveStr, curNode);
-        else if(NODE_NAME(curNode, "SelfSaveStr")) xml::copyToBString(selfSaveStr, curNode);
-        else if(NODE_NAME(curNode, "RoomSaveStr")) xml::copyToBString(roomSaveStr, curNode);
+        else if(NODE_NAME(curNode, "TargetSaveStr")) xml::copyToString(targetSaveStr, curNode);
+        else if(NODE_NAME(curNode, "SelfSaveStr")) xml::copyToString(selfSaveStr, curNode);
+        else if(NODE_NAME(curNode, "RoomSaveStr")) xml::copyToString(roomSaveStr, curNode);
 
         else if(NODE_NAME(curNode, "Delay")) xml::copyToNum(delay, curNode);
         else if(NODE_NAME(curNode, "Chance")) xml::copyToNum(chance, curNode);

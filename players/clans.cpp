@@ -22,7 +22,6 @@
 #include <sstream>                                  // for operator<<, basic...
 #include <string>                                   // for allocator, operat...
 
-#include "bstring.hpp"                              // for bstring
 #include "clans.hpp"                                // for Clan
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for cmdPledge, cmdRes...
@@ -51,9 +50,9 @@ unsigned int Clan::getId() const { return(id); }
 unsigned int Clan::getJoin() const { return(join); }
 unsigned int Clan::getRescind() const { return(rescind); }
 unsigned int Clan::getDeity() const { return(deity); }
-bstring Clan::getName() const { return(name); }
+std::string Clan::getName() const { return(name); }
 
-short Clan::getSkillBonus(std::string_view skill) const {
+short Clan::getSkillBonus(const std::string &skill) const {
     auto it = skillBonus.find(skill);
 
     if(it != skillBonus.end())

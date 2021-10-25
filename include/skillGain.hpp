@@ -29,12 +29,12 @@ public:
     SkillGain(xmlNodePtr rootNode);
     ~SkillGain();
     int getGained();
-    bstring getName() const;
+    std::string getName() const;
     bool deityIsAllowed(int deity);
     bool hasDeities();
 protected:
     void load(xmlNodePtr rootNode);
-    bstring skillName; // Name of the skill being gained
+    std::string skillName; // Name of the skill being gained
     int gainLevel{}; // Gained level they start with
 
     std::map<int, bool> deities;

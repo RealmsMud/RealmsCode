@@ -20,7 +20,6 @@
 #include <cstdio>                                  // for sprintf
 
 #include "area.hpp"                                 // for Area, TileInfo
-#include "bstring.hpp"                              // for bstring
 #include "catRef.hpp"                               // for CatRef
 #include "flags.hpp"                                // for MAX_ROOM_FLAGS
 #include "global.hpp"                               // for FATAL
@@ -96,9 +95,9 @@ void AreaZone::load(xmlNodePtr curNode) {
     int     i=0;
 
     while(childNode) {
-        if(NODE_NAME(childNode, "Name")) { xml::copyToBString(name, childNode); }
-        else if(NODE_NAME(childNode, "Fishing")) { xml::copyToBString(fishing, childNode); }
-        else if(NODE_NAME(childNode, "Display")) { xml::copyToBString(display, childNode); }
+        if(NODE_NAME(childNode, "Name")) { xml::copyToString(name, childNode); }
+        else if(NODE_NAME(childNode, "Fishing")) { xml::copyToString(fishing, childNode); }
+        else if(NODE_NAME(childNode, "Display")) { xml::copyToString(display, childNode); }
         else if(NODE_NAME(childNode, "TerRestrict")) xml::copyToCString(terRestrict, childNode);
         else if(NODE_NAME(childNode, "MapRestrict")) xml::copyToCString(mapRestrict, childNode);
         else if(NODE_NAME(childNode, "Unique")) unique.load(childNode);
@@ -148,9 +147,9 @@ void TileInfo::load(xmlNodePtr curNode) {
     char    temp[2];
 
     while(childNode) {
-        if(NODE_NAME(childNode, "Name")) xml::copyToBString(name, childNode);
-        else if(NODE_NAME(childNode, "Fishing")) xml::copyToBString(fishing, childNode);
-        else if(NODE_NAME(childNode, "Description")) xml::copyToBString(description, childNode);
+        if(NODE_NAME(childNode, "Name")) xml::copyToString(name, childNode);
+        else if(NODE_NAME(childNode, "Fishing")) xml::copyToString(fishing, childNode);
+        else if(NODE_NAME(childNode, "Description")) xml::copyToString(description, childNode);
         else if(NODE_NAME(childNode, "Id")) {
             xml::copyToCString(temp, childNode);
             id = temp[0];
@@ -204,15 +203,15 @@ void TileInfo::save(xmlNodePtr curNode) const {
     xml::saveNonNullString(curNode, "Name", name);
     xml::saveNonNullString(curNode, "Description", description);
     xml::saveNonNullString(curNode, "Fishing", fishing);
-    xml::saveNonNullString(curNode, "Id", (bstring)id);
+    xml::saveNonNullString(curNode, "Id", std::to_string(id));
 
     xml::saveNonZeroNum(curNode, "Cost", cost);
     xml::saveNonZeroNum(curNode, "Vision", vision);
     xml::saveNonZeroNum(curNode, "TrackDur", trackDur);
     wander.save(curNode);
 
-    xml::saveNonNullString(curNode, "Style", (bstring)style);
-    xml::saveNonNullString(curNode, "Display", (bstring)display);
+    xml::saveNonNullString(curNode, "Style", std::to_string(style));
+    xml::saveNonNullString(curNode, "Display", std::to_string(display));
 
     saveBits(curNode, "Flags", MAX_ROOM_FLAGS, flags);
 
@@ -232,7 +231,7 @@ void TileInfo::save(xmlNodePtr curNode) const {
     if(!season.empty()) {
         childNode = xml::newStringChild(curNode, "Seasons");
         for(st = season.begin() ; st != season.end() ; st++) {
-            subNode = xml::newStringChild(childNode, "Season", (bstring)(*st).second);
+            subNode = xml::newStringChild(childNode, "Season", std::to_string((*st).second));
             xml::newNumProp(subNode, "Id", (int)(*st).first);
         }
     }
@@ -321,7 +320,7 @@ void Area::save(xmlNodePtr curNode, bool saveRooms) const {
     }
 
     if(saveRooms) {
-        std::map<bstring, AreaRoom*>::const_iterator rIt;
+        std::map<std::string, AreaRoom*>::const_iterator rIt;
         for(rIt = rooms.begin() ; rIt != rooms.end() ; rIt++) {
             (*rIt).second->save();
         }
@@ -339,7 +338,7 @@ void Area::load(xmlNodePtr curNode) {
     id = xml::getIntProp(curNode, "id");
 
     while(childNode) {
-        if(NODE_NAME(childNode, "Name")) xml::copyToBString(name, childNode);
+        if(NODE_NAME(childNode, "Name")) xml::copyToString(name, childNode);
         else if(NODE_NAME(childNode, "DataFile")) xml::copyToCString(dataFile, childNode);
 
         else if(NODE_NAME(childNode, "Width")) xml::copyToNum(width, childNode);

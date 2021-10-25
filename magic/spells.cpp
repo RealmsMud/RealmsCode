@@ -21,9 +21,9 @@
 #include <list>                                     // for operator==, opera...
 #include <ostream>                                  // for basic_ostream::op...
 #include <fmt/format.h>
+#include <boost/algorithm/string/case_conv.hpp>
 
 #include "anchor.hpp"                               // for Anchor
-#include "bstring.hpp"                              // for bstring
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for cmdSpells, spells...
 #include "config.hpp"                               // for Config, gConfig
@@ -36,7 +36,7 @@
 #include "proto.hpp"                                // for zero, free_crt
 #include "server.hpp"                               // for Server, gServer
 #include "structs.hpp"                              // for Spell, PFNCOMPARE
-#include "xml.hpp"                                  // for copyToBString
+#include "xml.hpp"                                  // for copyToString
 
 class Object;
 
@@ -68,7 +68,7 @@ int dmSpellList(Player* player, cmd* cmnd) {
 //                      spellSkill
 //*********************************************************************
 
-bstring spellSkill(SchoolOfMagic school) {
+std::string spellSkill(SchoolOfMagic school) {
     switch(school) {
     case ABJURATION:
         return("abjuration");
@@ -97,7 +97,7 @@ bstring spellSkill(SchoolOfMagic school) {
 //                      spellSkill
 //*********************************************************************
 
-bstring spellSkill(DomainOfMagic domain) {
+std::string spellSkill(DomainOfMagic domain) {
     switch(domain) {
     case HEALING:
         return("healing");
@@ -274,8 +274,8 @@ void infoSpells(const Player* viewer, Creature* target, bool notSelf) {
     char    spl[max][MAXSPELL][24], list[MAXSPELL][24];
     int     count=0, j[max], l = sizeof(list);
     int     i=0,n=0;
-    bstring str="";
-    bstring skillName="";
+    std::string str="";
+    std::string skillName="";
 
     if(notSelf)
         viewer->printColor("\n^Y%M's Spells Known: ", target);
@@ -423,8 +423,8 @@ int cmdSpells(Creature* player, cmd* cmnd) {
 //                      spellsUnder
 //*********************************************************************
 
-bstring effectSpellName(bstring effect) {
-    effect = stripColor(effect.toLower());
+std::string effectSpellName(std::string effect) {
+    effect = stripColor(boost::algorithm::to_lower_copy(effect));
 
     if(effect == "silent!") return("silence");
     if(effect == "blessed") return("bless");
@@ -439,9 +439,9 @@ bstring effectSpellName(bstring effect) {
 //*********************************************************************
 
 void spellsUnder(const Player *viewer, const Creature* target, bool notSelf) {
-    bstring str = "";
+    std::string str = "";
     const Player* player = target->getAsConstPlayer();
-    std::list<bstring> spells;
+    std::list<std::string> spells;
     const Effect* effect=nullptr;
 
     // effects are flagged as whether or not they are a spell effect

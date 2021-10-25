@@ -26,7 +26,7 @@
 class Player;
 class ProxyAccess;
 
-typedef std::multimap<bstring, ProxyAccess> ProxyMultiMap;
+typedef std::multimap<std::string, ProxyAccess> ProxyMultiMap;
 typedef std::pair<ProxyMultiMap::iterator, ProxyMultiMap::iterator> ProxyMultiMapRange;
 
 class ProxyManager {
@@ -53,18 +53,18 @@ public:
     void save(xmlNodePtr rootNode);
 protected:
     // Character allowing proxy access
-    bstring proxiedName;
-    bstring proxiedId;
+    std::string proxiedName;
+    std::string proxiedId;
 
     // Character allowed to proxy
-    bstring proxyName;
-    bstring proxyId;
+    std::string proxyName;
+    std::string proxyId;
 
 public:
-    [[nodiscard]] bstring getProxiedId() const;
-    [[nodiscard]] bstring getProxiedName() const;
-    [[nodiscard]] bstring getProxyId() const;
-    [[nodiscard]] bstring getProxyName() const;
+    [[nodiscard]] std::string getProxiedId() const;
+    [[nodiscard]] std::string getProxiedName() const;
+    [[nodiscard]] std::string getProxyId() const;
+    [[nodiscard]] std::string getProxyName() const;
 };
 
 

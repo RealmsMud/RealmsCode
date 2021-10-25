@@ -48,13 +48,13 @@ public:
     bool is(const UniqueRoom* uRoom) const;
     bool is(const AreaRoom* aRoom) const;
 
-    [[nodiscard]] bstring getAlias() const;
-    [[nodiscard]] bstring getRoomName() const;
+    [[nodiscard]] std::string getAlias() const;
+    [[nodiscard]] std::string getRoomName() const;
     [[nodiscard]] CatRef getRoom() const;
     [[nodiscard]] const MapMarker* getMapMarker() const;
 protected:
-    bstring alias;
-    bstring roomName;
+    std::string alias;
+    std::string roomName;
     CatRef room;
     MapMarker *mapmarker{};
 };

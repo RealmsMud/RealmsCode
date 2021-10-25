@@ -51,7 +51,7 @@ public:
     void save(xmlNodePtr rootNode) const;
 
     void    defaultFlags(PropType type);
-    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] std::string getName() const;
     void    setName(std::string_view str);
 
     [[nodiscard]] bool flagIsSet(int flag) const;
@@ -59,7 +59,7 @@ public:
     void clearFlag(int flag);
     bool toggleFlag(int flag);
 protected:
-    bstring name;
+    std::string name;
     char    flags[4]{};       // 32 max
 };
 
@@ -72,18 +72,18 @@ public:
     void load(xmlNodePtr rootNode);
     void save(xmlNodePtr rootNode) const;
 
-    void found(const Player* player, PropType propType, bstring location = "", bool shouldSetArea = true);
+    void found(const Player* player, PropType propType, std::string location = "", bool shouldSetArea = true);
 
     int     getGuild() const;
-    bstring getArea() const;
-    bstring getOwner() const;
-    bstring getName() const;
-    bstring getDateFounded() const;
-    bstring getLocation() const;
+    std::string getArea() const;
+    std::string getOwner() const;
+    std::string getName() const;
+    std::string getDateFounded() const;
+    std::string getLocation() const;
     PropType getType() const;
-    bstring getTypeStr() const;
+    std::string getTypeStr() const;
     PropLog getLogType() const;
-    bstring getLogTypeStr() const;
+    std::string getLogTypeStr() const;
 
     void    setGuild(int g);
     void    setArea(std::string_view str);
@@ -95,7 +95,7 @@ public:
     void    setLogType(PropLog t);
 
     void    addRange(const CatRef& cr);
-    void    addRange(std::string_view area, int low, int high);
+    void    addRange(const std::string &pArea, short low, short high);
     bool    isOwner(std::string_view str) const;
     bool    belongs(const CatRef& cr) const;
     void    rename(Player *player);
@@ -110,11 +110,11 @@ public:
     void    unassignPartialOwner(std::string_view pOwner);
 
     int     viewLogFlag() const;
-    bstring getLog() const;
+    std::string getLog() const;
     void    appendLog(std::string_view user, const char *fmt, ...);
     void    clearLog();
 
-    bstring show(bool isOwner=false, std::string_view player="", int *i=nullptr);
+    std::string show(bool isOwner=false, std::string_view player="", int *i=nullptr);
     std::list<Range> ranges;
     std::list<PartialOwner> partialOwners;
 
@@ -123,20 +123,20 @@ public:
     void clearFlag(int flag);
     bool toggleFlag(int flag);
 
-    static bstring getTypeStr(PropType propType);
-    static bstring getTypeArea(PropType propType);
+    static std::string getTypeStr(PropType propType);
+    static std::string getTypeArea(PropType propType);
     static bool usePropFlags(PropType propType);
     static bool canEnter(const Player* player, const UniqueRoom* room, bool p);
-    static bool goodNameDesc(const Player* player, std::string_view str, std::string_view fail, std::string_view disallow);
+    static bool goodNameDesc(const Player* player, const std::string &str, const std::string &fail, const std::string &disallow);
     static bool goodExit(const Player* player, const BaseRoom* room, const char *type, std::string_view xname);
     static bool isInside(const Player* player, const UniqueRoom* room, Property** p);
     static bool requireInside(const Player* player, const UniqueRoom* room, Property** p, PropType propType = PROP_NONE);
-    static void descEdit(Socket* sock, const bstring& str);
+    static void descEdit(Socket* sock, const std::string& str);
     static void guildRoomSetup(UniqueRoom *room, const Guild* guild, bool outside);
     static void houseRoomSetup(UniqueRoom *room, const Player* player, bool outside);
     static void roomSetup(UniqueRoom *room, PropType propType, const Player* player, const Guild* guild, bool outside=false);
-    static void linkRoom(BaseRoom* inside, BaseRoom* outside, const bstring&  xname);
-    static UniqueRoom* makeNextRoom(UniqueRoom* r1, PropType propType, const CatRef& cr, bool exits, const Player* player, const Guild* guild, BaseRoom* room, std::string_view xname, const char *go, const char *back, bool save);
+    static void linkRoom(BaseRoom* inside, BaseRoom* outside, const std::string&  xname);
+    static UniqueRoom* makeNextRoom(UniqueRoom* r1, PropType propType, const CatRef& cr, bool exits, const Player* player, const Guild* guild, BaseRoom* room, const std::string &xname, const char *go, const char *back, bool save);
     static int rotateHouse(char *dir1, char *dir2, int rotation);
     static bool houseCanBuild(AreaRoom* aRoom, BaseRoom* room);
 
@@ -150,15 +150,15 @@ public:
     static void manageExtend(Player* player, cmd* cmnd, PropType propType, Property* p, const Guild* guild, int x);
     static void manageRename(Player* player, cmd* cmnd, PropType propType, int x);
 protected:
-    bstring area;
-    bstring owner;
-    bstring name;
-    bstring dateFounded;
-    bstring location;
+    std::string area;
+    std::string owner;
+    std::string name;
+    std::string dateFounded;
+    std::string location;
     PropType type;
 
     PropLog logType;
-    std::list<bstring> log;
+    std::list<std::string> log;
 
     // for guildhalls and shops, points to guild
     int     guild;

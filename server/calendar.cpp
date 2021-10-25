@@ -47,7 +47,7 @@ cWeather::cWeather() {
 }
 
 
-bstring cWeather::get(WeatherString w) const {
+std::string cWeather::get(WeatherString w) const {
     switch(w) {
     case WEATHER_SUNRISE:
         return(sunrise);
@@ -140,7 +140,7 @@ cMonth::cMonth() {
 }
 
 short cMonth::getId() const { return(id); }
-bstring cMonth::getName() const { return(name); }
+std::string cMonth::getName() const { return(name); }
 short cMonth::getDays() const { return(days); }
 
 
@@ -156,7 +156,7 @@ cSeason::cSeason() {
 }
 
 Season cSeason::getId() const { return(id); }
-bstring cSeason::getName() const { return(name); }
+std::string cSeason::getName() const { return(name); }
 short cSeason::getMonth() const { return(month); }
 short cSeason::getDay() const { return(day); }
 cWeather *cSeason::getWeather() { return(&weather); }
@@ -180,7 +180,7 @@ short Calendar::getCurDay() const { return(curDay); }
 short Calendar::getAdjHour() const { return(adjHour); }
 cSeason *Calendar::getCurSeason() const { return(curSeason); }
 Season Calendar::whatSeason() const { return(curSeason->getId()); }
-bstring Calendar::getLastPirate() const { return(lastPirate); }
+std::string Calendar::getLastPirate() const { return(lastPirate); }
 
 void Calendar::resetToMidnight() {
     adjHour = 0;
@@ -224,7 +224,7 @@ void Calendar::printtime(const Player* player) const {
     int daytime = gConfig->currentHour(), sun=0;
     cMonth* month = getMonth(curMonth);
     const CatRefInfo* cri = gConfig->getCatRefInfo(player->getConstRoomParent(), 1);
-    bstring yearsSince = "";
+    std::string yearsSince = "";
     int year = curYear;
 
     if(cri)

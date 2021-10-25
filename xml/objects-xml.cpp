@@ -24,7 +24,6 @@
 
 #include "alchemy.hpp"                              // for AlchemyEffect
 #include "area.hpp"                                 // for MapMarker
-#include "bstring.hpp"                              // for bstring, operator+
 #include "catRef.hpp"                               // for CatRef
 #include "config.hpp"                               // for Config, gConfig
 #include "container.hpp"                            // for ObjectSet
@@ -132,7 +131,7 @@ bool loadObjectFromFile(const CatRef& cr, Object** pObject, bool offline) {
         *pObject = new Object;
         if(!*pObject)
             merror("loadObjectFile", FATAL);
-        xml::copyPropToBString((*pObject)->version, rootNode, "Version");
+        xml::copyPropToString((*pObject)->version, rootNode, "Version");
 
         (*pObject)->readFromXml(rootNode, nullptr, offline);
         (*pObject)->setId("-1");
@@ -148,41 +147,41 @@ bool loadObjectFromFile(const CatRef& cr, Object** pObject, bool offline) {
 //*********************************************************************
 // Reads an object from the given xml document and root node
 
-int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList, bool offline) {
+int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, bool offline) {
     xmlNodePtr curNode, childNode;
     info.load(rootNode);
     info.id = xml::getIntProp(rootNode, "Num");
-    xml::copyPropToBString(version, rootNode, "Version");
+    xml::copyPropToString(version, rootNode, "Version");
     curNode = rootNode->children;
     // Start reading stuff in!
 
     while(curNode) {
-        if(NODE_NAME(curNode, "Name")) setName(xml::getBString(curNode));
-        else if(NODE_NAME(curNode, "Id")) setId(xml::getBString(curNode));
+        if(NODE_NAME(curNode, "Name")) setName(xml::getString(curNode));
+        else if(NODE_NAME(curNode, "Id")) setId(xml::getString(curNode));
         else if(NODE_NAME(curNode, "IdList") && idList != nullptr) {
             childNode = curNode->children;
             while(childNode) {
                 if(NODE_NAME(childNode, "Id")) {
-                    idList->push_back(xml::getBString(childNode));
+                    idList->push_back(xml::getString(childNode));
                 }
                 childNode = childNode->next;
             }
         }
-        else if(NODE_NAME(curNode, "Plural")) xml::copyToBString(plural, curNode);
+        else if(NODE_NAME(curNode, "Plural")) xml::copyToString(plural, curNode);
         else if(NODE_NAME(curNode, "DroppedBy")) droppedBy.load(curNode);
-        else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
+        else if(NODE_NAME(curNode, "Description")) xml::copyToString(description, curNode);
         else if(NODE_NAME(curNode, "LotteryNumbers")) {
             xml::loadNumArray<short>(curNode, lotteryNumbers, "LotteryNum", 6);
         }
         else if(NODE_NAME(curNode, "UseOutput")) xml::copyToCString(use_output, curNode);
         else if(NODE_NAME(curNode, "UseAttack")) xml::copyToCString(use_attack, curNode);
-        else if(NODE_NAME(curNode, "LastMod")) xml::copyToBString(lastMod, curNode);
+        else if(NODE_NAME(curNode, "LastMod")) xml::copyToString(lastMod, curNode);
         else if(NODE_NAME(curNode, "Keys")) {
             loadStringArray(curNode, key, OBJ_KEY_LENGTH, "Key", 3);
         }
         else if(NODE_NAME(curNode, "Weight")) xml::copyToNum(weight, curNode);
         else if(NODE_NAME(curNode, "Type")) xml::copyToNum<ObjectType, short>(type, curNode);
-        else if(NODE_NAME(curNode, "SubType")) xml::copyToBString(subType, curNode);
+        else if(NODE_NAME(curNode, "SubType")) xml::copyToString(subType, curNode);
         else if(NODE_NAME(curNode, "Adjustment")) setAdjustment(xml::toNum<short int>(curNode));
         else if(NODE_NAME(curNode, "ShotsMax")) xml::copyToNum(shotsMax, curNode);
         else if(NODE_NAME(curNode, "ShotsCur")) xml::copyToNum(shotsCur, curNode);
@@ -191,7 +190,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList, bool of
         else if(NODE_NAME(curNode, "Armor")) xml::copyToNum(armor, curNode);
         else if(NODE_NAME(curNode, "WearFlag")) xml::copyToNum(wearflag, curNode);
         else if(NODE_NAME(curNode, "MagicPower")) xml::copyToNum(magicpower, curNode);
-        else if(NODE_NAME(curNode, "Effect")) xml::copyToBString(effect, curNode);
+        else if(NODE_NAME(curNode, "Effect")) xml::copyToString(effect, curNode);
         else if(NODE_NAME(curNode, "EffectDuration")) xml::copyToNum(effectDuration, curNode);
         else if(NODE_NAME(curNode, "EffectStrength")) xml::copyToNum(effectStrength, curNode);
         else if(NODE_NAME(curNode, "Level")) xml::copyToNum(level, curNode);
@@ -261,7 +260,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<bstring> *idList, bool of
                 childNode = childNode->next;
             }
         }
-        else if(NODE_NAME(curNode, "Owner")) xml::copyToBString(questOwner, curNode);
+        else if(NODE_NAME(curNode, "Owner")) xml::copyToString(questOwner, curNode);
 
             // Now handle version changes
 
@@ -315,7 +314,7 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
 //  Player* pParent = parent->getPlayer();
     UniqueRoom* rParent = getAsUniqueRoom();
     Object* oParent = getAsObject();
-    std::list<bstring> *idList = nullptr;
+    std::list<std::string> *idList = nullptr;
 
     while(childNode) {
         object = nullptr;
@@ -324,7 +323,7 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
         if(quantity < 1)
             quantity = 1;
         if(quantity > 1)
-            idList = new std::list<bstring>;
+            idList = new std::list<std::string>;
         else
             idList = nullptr;
         try {
@@ -351,7 +350,7 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
                 }
             }
             if(object) {
-                std::list<bstring>::iterator idIt;
+                std::list<std::string>::iterator idIt;
                 if(quantity > 1)
                     idIt = idList->begin();
 
@@ -401,10 +400,10 @@ void DroppedBy::load(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
 
     while(curNode) {
-        if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
-        else if(NODE_NAME(curNode, "Index")) xml::copyToBString(index, curNode);
-        else if(NODE_NAME(curNode, "ID")) xml::copyToBString(id, curNode);
-        else if(NODE_NAME(curNode, "Type")) xml::copyToBString(type, curNode);
+        if(NODE_NAME(curNode, "Name")) xml::copyToString(name, curNode);
+        else if(NODE_NAME(curNode, "Index")) xml::copyToString(index, curNode);
+        else if(NODE_NAME(curNode, "ID")) xml::copyToString(id, curNode);
+        else if(NODE_NAME(curNode, "Type")) xml::copyToString(type, curNode);
 
         curNode = curNode->next;
     }
@@ -445,7 +444,7 @@ int Object::saveToFile() {
         clearFlag(O_UNIQUE);
 
     escapeText();
-    bstring idTemp = id;
+    std::string idTemp = id;
     id = "-1";
     saveToXml(rootNode, ALLITEMS, LoadType::LS_PROTOTYPE, false);
     id = idTemp;
@@ -465,7 +464,7 @@ int Object::saveToFile() {
 // in which case it will only save fields that are changed in the
 // ordinary course of the game
 
-int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int quantity, bool saveId, std::list<bstring> *idList) const {
+int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int quantity, bool saveId, std::list<std::string> *idList) const {
 //  xmlNodePtr  rootNode;
     xmlNodePtr      curNode;
     xmlNodePtr      childNode;
@@ -487,7 +486,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
 
     // record objects saved during swap
     if(gConfig->swapIsInteresting(this))
-        gConfig->swapLog((bstring)"o" + info.rstr(), false);
+        gConfig->swapLog((std::string)"o" + info.rstr(), false);
 
     xml::newNumProp(rootNode, "Num", info.id);
     xml::newProp(rootNode, "Area", info.area);
@@ -662,7 +661,7 @@ int saveObjectsXml(xmlNodePtr parentNode, const ObjectSet &set, int permOnly) {
     LoadType lt;
     ObjectSet::const_iterator it;
     const Object *obj;
-    std::list<bstring> *idList = nullptr;
+    std::list<std::string> *idList = nullptr;
     for (it = set.begin(); it != set.end();) {
         obj = (*it++);
         if (obj &&
@@ -683,7 +682,7 @@ int saveObjectsXml(xmlNodePtr parentNode, const ObjectSet &set, int permOnly) {
             // quantity code reduces filesize for player shops, storage rooms, and
             // inventories (which tend of have a lot of identical items in them)
             quantity = 1;
-            idList = new std::list<bstring>;
+            idList = new std::list<std::string>;
             idList->push_back(obj->getId());
             while (it != set.end() && *(*it) == *obj) {
                 idList->push_back((*it)->getId());

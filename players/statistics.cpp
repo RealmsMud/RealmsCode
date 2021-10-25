@@ -19,8 +19,9 @@
 #include <cstring>                  // for strcmp
 #include <ctime>                    // for ctime, time_t, time
 #include <iomanip>                  // for operator<<, setfill
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/erase.hpp>
 
-#include "bstring.hpp"              // for bstring, operator+
 #include "cmd.hpp"                  // for cmd
 #include "commands.hpp"             // for cmdLevelHistory
 #include "color.hpp"                // for stripColor
@@ -215,7 +216,7 @@ void Statistics::reset() {
     mostExperience.reset();
     long t = time(nullptr);
     start = ctime(&t);
-    start = start.trim();
+    boost::trim(start);
 
     LevelInfoMap::iterator it;
     for(it = levelHistory.begin() ; it != levelHistory.end() ; ) {
@@ -259,7 +260,7 @@ char* getSaveName(int save) {
 }
 
 void Statistics::displayLevelHistory(const Player* viewer) {
-    bstring padding;
+    std::string padding;
     std::ostringstream oStr;
     // set left aligned
     oStr.setf(std::ios::right, std::ios::adjustfield);
@@ -271,8 +272,8 @@ void Statistics::displayLevelHistory(const Player* viewer) {
     for(LevelInfoMap::value_type p : levelHistory) {
         lInfo = p.second;
         time_t levelTime = lInfo->getLevelTime();
-        bstring levelTimeStr = ctime(&levelTime);
-        levelTimeStr.Remove('\n');
+        std::string levelTimeStr = ctime(&levelTime);
+        boost::erase_all(levelTimeStr, "\n");
 
         oStr << "Level ^C" << std::setfill('0') << std::setw(2) << lInfo->getLevel() << "^x Date: ^C" << levelTimeStr << "^x";
         oStr << " Gains - HP: ^C" << std::setfill('0') << std::setw(2) << lInfo->getHpGain() << "^x MP: ^C";
@@ -289,7 +290,7 @@ void Statistics::displayLevelHistory(const Player* viewer) {
 //*********************************************************************
 
 void Statistics::display(const Player* viewer, bool death) {
-    bstring padding;
+    std::string padding;
     std::ostringstream oStr;
     // set left aligned
     oStr.setf(std::ios::left, std::ios::adjustfield);
@@ -455,10 +456,10 @@ unsigned long Statistics::calcToughness(Creature* target) {
 //                      damageWith
 //*********************************************************************
 
-bstring Statistics::damageWith(const Player* player, const Object* weapon) {
+std::string Statistics::damageWith(const Player* player, const Object* weapon) {
     if(weapon)
         return(weapon->getObjStr(nullptr, INV | MAG, 1));
-    return((bstring)"your " + player->getUnarmedWeaponSkill() + "s");
+    return((std::string)"your " + player->getUnarmedWeaponSkill() + "s");
 }
 
 //*********************************************************************
@@ -475,7 +476,7 @@ unsigned long Statistics::pkDemographics() const {
 //                      getTime
 //*********************************************************************
 
-bstring Statistics::getTime() {
+std::string Statistics::getTime() {
     return(start);
 }
 

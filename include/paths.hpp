@@ -18,7 +18,6 @@
 #ifndef PATHS_H_
 #define PATHS_H_
 
-#include "bstring.hpp"
 
 class CatRef;
 
@@ -62,7 +61,7 @@ namespace Path {
     extern const char* HelpTemplate;
 
     bool checkDirExists(const char* filename);
-    bool checkDirExists(std::string_view area, char* (*fn)(const CatRef &cr));
+    bool checkDirExists(const std::string &area, char* (*fn)(const CatRef &cr));
 
     bool checkPaths();
 }

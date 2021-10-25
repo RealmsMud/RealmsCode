@@ -24,7 +24,6 @@
 #include <sstream>                                  // for operator<<, basic...
 #include <string>                                   // for operator<<, char_...
 
-#include "bstring.hpp"                              // for bstring
 #include "clans.hpp"                                // for Clan
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for cmdNoAuth, cmdPro...
@@ -60,20 +59,20 @@ FactionRegard::FactionRegard() {
 
 void FactionRegard::load(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
-    bstring temp = "";
+    std::string temp = "";
     int id=0;
 
     while(curNode) {
         if(NODE_NAME(curNode, "Class")) {
-            xml::copyPropToBString(temp, curNode, "Name");
+            xml::copyPropToString(temp, curNode, "Name");
             xml::copyToNum(classRegard[gConfig->classtoNum(temp)], curNode);
         }
         else if(NODE_NAME(curNode, "Race")) {
-            xml::copyPropToBString(temp, curNode, "Name");
+            xml::copyPropToString(temp, curNode, "Name");
             xml::copyToNum(raceRegard[gConfig->racetoNum(temp)], curNode);
         }
         else if(NODE_NAME(curNode, "Deity")) {
-            xml::copyPropToBString(temp, curNode, "Name");
+            xml::copyPropToString(temp, curNode, "Name");
             xml::copyToNum(deityRegard[gConfig->deitytoNum(temp)], curNode);
         }
         else if(NODE_NAME(curNode, "Vampirism")) xml::copyToNum(vampirismRegard, curNode);
@@ -132,7 +131,7 @@ long FactionRegard::getOverallRegard() const {
 //                      guildDisplay
 //*********************************************************************
 
-bstring FactionRegard::guildDisplay() const {
+std::string FactionRegard::guildDisplay() const {
     std::map<int,long>::const_iterator it;
     std::ostringstream oStr;
     const Guild* guild=nullptr;
@@ -150,7 +149,7 @@ bstring FactionRegard::guildDisplay() const {
 //                      clanDisplay
 //*********************************************************************
 
-bstring FactionRegard::clanDisplay() const {
+std::string FactionRegard::clanDisplay() const {
     std::map<int,long>::const_iterator it;
     std::ostringstream oStr;
     const Clan* clan=nullptr;
@@ -176,19 +175,19 @@ Faction::Faction() {
 
 
 
-bstring Faction::getName() const {
+std::string Faction::getName() const {
     return(name);
 }
-bstring Faction::getDisplayName() const {
+std::string Faction::getDisplayName() const {
     return(displayName);
 }
-bstring Faction::getParent() const {
+std::string Faction::getParent() const {
     return(parent);
 }
-bstring Faction::getGroup() const {
+std::string Faction::getGroup() const {
     return(!group.empty() ? group : "Other");
 }
-bstring Faction::getSocial() const {
+std::string Faction::getSocial() const {
     return(social);
 }
 long Faction::getBaseRegard() const {
@@ -353,7 +352,7 @@ long Faction::getLowerLimit(const Player* player) const {
 //                      getFaction
 //*********************************************************************
 
-const Faction *Config::getFaction(std::string_view factionStr) const {
+const Faction *Config::getFaction(const std::string &factionStr) const {
     if(factionStr.empty())
         return(nullptr);
     auto it = factions.find(factionStr);
@@ -447,11 +446,11 @@ int listFactions(const Player* viewer, bool all) {
         viewer->printColor("Type ^y*faction all^x to view all details.\n");
     viewer->printColor("^xFactions\n%-20s - %40s\n^b---------------------------------------------------------------\n", "Name", "DisplayName");
 
-    std::map<bstring, Faction*>::iterator fIt;
+    std::map<std::string, Faction*>::iterator fIt;
     Faction* faction=nullptr;
 
     for(fIt = gConfig->factions.begin() ; fIt != gConfig->factions.end() ; fIt++) {
-        bstring tmp;
+        std::string tmp;
         faction = (*fIt).second;
 
         viewer->print("%-20s - %40s\n", faction->getName().c_str(), faction->getDisplayName().c_str());
@@ -475,9 +474,9 @@ int listFactions(const Player* viewer, bool all) {
 //*********************************************************************
 
 int listFactions(const Player* viewer, const Creature* target) {
-    std::map<bstring, bstring> str;
-    std::map<bstring, bstring>::const_iterator it;
-    std::map<bstring, long>::const_iterator fIt;
+    std::map<std::string, std::string> str;
+    std::map<std::string, std::string>::const_iterator it;
+    std::map<std::string, long>::const_iterator fIt;
     const Faction* faction=nullptr;
     const Player* player = target->getAsConstPlayer();
     long    regard=0;
@@ -650,7 +649,7 @@ int Faction::getAttitude(int regard) {
 //                      getBar
 //*********************************************************************
 
-bstring Faction::getBar(int regard, bool alwaysPad) {
+std::string Faction::getBar(int regard, bool alwaysPad) {
     int attitude = getAttitude(regard);
     if(attitude == WORSHIP || attitude == MALICE) {
         if(alwaysPad)
@@ -675,7 +674,7 @@ bstring Faction::getBar(int regard, bool alwaysPad) {
 //                      getColor
 //*********************************************************************
 
-bstring Faction::getColor(int regard) {
+std::string Faction::getColor(int regard) {
     if(regard >= FAVORABLE_CUTOFF)
         return("^g");
     else if(regard <= DISAPPROVE_CUTOFF)
@@ -687,7 +686,7 @@ bstring Faction::getColor(int regard) {
 //                      getNoun
 //*********************************************************************
 
-bstring Faction::getNoun(int regard) {
+std::string Faction::getNoun(int regard) {
     switch(getAttitude(regard)) {
     case WORSHIP:
         return("worshipped");
@@ -717,7 +716,7 @@ bstring Faction::getNoun(int regard) {
 //*********************************************************************
 // Returns the faction standing of the current creature with regards to 'faction'
 
-bstring Player::getFactionMessage(std::string_view factionStr) const {
+std::string Player::getFactionMessage(const std::string &factionStr) const {
     int regard = getFactionStanding(factionStr);
     std::ostringstream oStr;
 
@@ -764,7 +763,7 @@ bstring Player::getFactionMessage(std::string_view factionStr) const {
 //*********************************************************************
 // Gets the faction standing of Creature with regards to 'faction'
 
-int Player::getFactionStanding(std::string_view factionStr) const {
+int Player::getFactionStanding(const std::string &factionStr) const {
     int regard = 0;
     auto it = factions.find(factionStr);
 
@@ -786,8 +785,8 @@ int Player::getFactionStanding(std::string_view factionStr) const {
 //*********************************************************************
 // Adjust the killer's faction standing for killing the victim
 
-void Player::adjustFactionStanding(const std::map<bstring, long>& factionList) {
-    std::map<bstring, long>::const_iterator fIt;
+void Player::adjustFactionStanding(const std::map<std::string, long>& factionList) {
+    std::map<std::string, long>::const_iterator fIt;
     std::ostringstream oStr;
     const Faction *faction=nullptr;
     long    regard=0, current=0, limit=0;
@@ -846,7 +845,7 @@ void Faction::worshipSocial(Monster *monster) {
     const Faction *faction = gConfig->getFaction(monster->getPrimeFaction());
     if(!faction)
         return;
-    bstring social = faction->getSocial();
+    std::string social = faction->getSocial();
     if(social.empty())
         return;
 
@@ -881,7 +880,7 @@ void Faction::worshipSocial(Monster *monster) {
 //                      willAggro
 //*********************************************************************
 
-bool Faction::willAggro(const Player* player, std::string_view faction) {
+bool Faction::willAggro(const Player* player, const std::string &faction) {
     if(faction.empty())
         return(false);
     int attitude = getAttitude(player->getFactionStanding(faction));
@@ -896,7 +895,7 @@ bool Faction::willAggro(const Player* player, std::string_view faction) {
 //                      willSpeakWith
 //*********************************************************************
 
-bool Faction::willSpeakWith(const Player* player, std::string_view faction) {
+bool Faction::willSpeakWith(const Player* player, const std::string &faction) {
     if(faction.empty())
         return(true);
     return(getAttitude(player->getFactionStanding(faction)) > CONTEMPT);
@@ -906,7 +905,7 @@ bool Faction::willSpeakWith(const Player* player, std::string_view faction) {
 //                      willDoBusinessWith
 //*********************************************************************
 
-bool Faction::willDoBusinessWith(const Player* player, std::string_view faction) {
+bool Faction::willDoBusinessWith(const Player* player, const std::string &faction) {
     if(faction.empty())
         return(true);
     return(getAttitude(player->getFactionStanding(faction)) > DISFAVOR);
@@ -916,7 +915,7 @@ bool Faction::willDoBusinessWith(const Player* player, std::string_view faction)
 //                      willBeneCast
 //*********************************************************************
 
-bool Faction::willBeneCast(const Player* player, std::string_view faction) {
+bool Faction::willBeneCast(const Player* player, const std::string &faction) {
     if(faction.empty())
         return(true);
     return(getAttitude(player->getFactionStanding(faction)) >= INDIFFERENT);
@@ -926,7 +925,7 @@ bool Faction::willBeneCast(const Player* player, std::string_view faction) {
 //                      willLetThrough
 //*********************************************************************
 
-bool Faction::willLetThrough(const Player* player, std::string_view faction) {
+bool Faction::willLetThrough(const Player* player, const std::string &faction) {
     if(faction.empty())
         return(false);
     return(getAttitude(player->getFactionStanding(faction)) >= FAVORABLE);
@@ -936,7 +935,7 @@ bool Faction::willLetThrough(const Player* player, std::string_view faction) {
 //                      adjustPrice
 //*********************************************************************
 
-Money Faction::adjustPrice(const Player* player, std::string_view faction, Money money, bool sell) {
+Money Faction::adjustPrice(const Player* player, const std::string &faction, Money money, bool sell) {
     if(faction.empty())
         return(money);
     int attitude = getAttitude(player->getFactionStanding(faction));
@@ -966,7 +965,7 @@ Money Faction::adjustPrice(const Player* player, std::string_view faction, Money
 //                      canPledgeTo
 //*********************************************************************
 
-bool Faction::canPledgeTo(const Player* player, std::string_view faction) {
+bool Faction::canPledgeTo(const Player* player, const std::string &faction) {
     if(faction.empty())
         return(true);
     return(getAttitude(player->getFactionStanding(faction)) >= INDIFFERENT);
@@ -975,7 +974,7 @@ bool Faction::canPledgeTo(const Player* player, std::string_view faction) {
 
 // Clears factions
 void Config::clearFactionList() {
-    std::map<bstring, Faction*>::iterator fIt;
+    std::map<std::string, Faction*>::iterator fIt;
     Faction* faction;
 
     for(fIt = factions.begin() ; fIt != factions.end() ; fIt++) {

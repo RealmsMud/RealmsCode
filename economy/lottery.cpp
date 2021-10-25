@@ -21,7 +21,6 @@
 #include <cstring>                                  // for memset, strcmp
 #include <ctime>                                    // for ctime, localtime
 
-#include "bstring.hpp"                              // for bstring
 #include "cmd.hpp"                                  // for cmd
 #include "config.hpp"                               // for Config, gConfig
 #include "creatures.hpp"                            // for Player
@@ -73,7 +72,7 @@ LottoTicket::LottoTicket(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
     
     while(curNode) {
-            if(NODE_NAME(curNode, "Owner")) xml::copyToBString(owner, curNode);
+            if(NODE_NAME(curNode, "Owner")) xml::copyToString(owner, curNode);
         else if(NODE_NAME(curNode, "LottoCycle")) xml::copyToNum(lottoCycle, curNode);
         else if(NODE_NAME(curNode, "Numbers")) xml::loadNumArray<short>(curNode, numbers, "LotteryNum", 6);
         
@@ -256,7 +255,7 @@ int Config::getLotteryTicketsSold() {
 void Config::addLotteryWinnings(long prize) {
     lotteryWinnings += prize;
 }
-bstring Config::getLotteryRunTimeStr() {
+std::string Config::getLotteryRunTimeStr() {
     return(ctime(&gConfig->lotteryRunTime));
 }
 time_t Config::getLotteryRunTime() {

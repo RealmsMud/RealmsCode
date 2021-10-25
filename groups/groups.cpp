@@ -19,7 +19,6 @@
 #include <cstring>              // for strlen, strncmp
 #include <strings.h>            // for strncasecmp
 
-#include "bstring.hpp"          // for operator+, bstring
 #include "cmd.hpp"              // for cmd
 #include "commands.hpp"         // for getFullstrText, cmdFollow, cmdGroup
 #include "creatureStreams.hpp"  // for Streamable, ColorOff, ColorOn
@@ -134,7 +133,7 @@ void Creature::addToGroup(Group* toJoin, bool announce) {
     toJoin->add(this);
     if(announce) {
         *this << ColorOn << "^gYou join \"" << toJoin->getName() << "\".\n" << ColorOff;
-        toJoin->sendToAll(bstring("^g") + getName() + " has joined your group.\n", this);
+        toJoin->sendToAll(std::string("^g") + getName() + " has joined your group.\n", this);
         broadcast(getSock(), getRoomParent(), "%M joins the group \"%s\".", this, toJoin->getName().c_str());
     }
 
@@ -406,7 +405,7 @@ int Group::disband(Player* player, cmd* cmnd) {
         return(0);
     }
     *player << "You disband \"" << toDisband->getName() << "\".\n";
-    toDisband->sendToAll(bstring(player->getName()) + " disbands the group.\n", player);
+    toDisband->sendToAll(std::string(player->getName()) + " disbands the group.\n", player);
     toDisband->disband();
 
     return(0);
@@ -445,7 +444,7 @@ int Group::promote(Player* player, cmd* cmnd) {
     group->setLeader(target);
 
     *player << ColorOn << "^gYou promote " << target->getName() << " to group leader\nYou are now a member of \"" << group->getName() << "\".\n" << ColorOff;
-    group->sendToAll(bstring("^g") + player->getName() + " promotes " + target->getName() + " to group leader.^x\n", player);
+    group->sendToAll(std::string("^g") + player->getName() + " promotes " + target->getName() + " to group leader.^x\n", player);
 
     *target << ColorOn << "^gYou are now the group leader of \"" << group->getName() << "\".\n^x" << ColorOff;
 
@@ -486,7 +485,7 @@ int Group::kick(Player* player, cmd* cmnd) {
     }
     if(target->getGroupStatus() == GROUP_INVITED) {
         *player << "You rescind the group invitation from " << target->getName() << ".\n";
-        group->sendToAll(bstring(player->getName()) + " rescinds the invitation for " + target->getName() + " to join the group.\n", player);
+        group->sendToAll(std::string(player->getName()) + " rescinds the invitation for " + target->getName() + " to join the group.\n", player);
         *target << player << " rescinds your invitation to join \"" << group->getName() << "\".\n";
         target->removeFromGroup(false);
     }
@@ -496,7 +495,7 @@ int Group::kick(Player* player, cmd* cmnd) {
             return(0);
         } else {
             *player << ColorOn << "^gYou kick " << target->getName() << " out of your group.^x\n" << ColorOff;
-            group->sendToAll(bstring("^g") + player->getName() + " kicks " + target->getName() + " out of the group.^x\n", player);
+            group->sendToAll(std::string("^g") + player->getName() + " kicks " + target->getName() + " out of the group.^x\n", player);
             target->removeFromGroup(true);
         }
     }
@@ -531,14 +530,14 @@ int Group::rename(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    bstring newName = getFullstrText(cmnd->fullstr, 2);
+    std::string newName = getFullstrText(cmnd->fullstr, 2);
     if(newName.empty()) {
         *player << "What would you like to name your group?\n";
         return(0);
     }
     group->setName(newName);
     *player << ColorOn << "^gYou rename your group to \"" << newName << "\".\n^x" << ColorOff;
-    group->sendToAll(bstring("^g") + player->getName() + " renames the group to \"" + newName + "\".\n^x", player, true);
+    group->sendToAll(std::string("^g") + player->getName() + " renames the group to \"" + newName + "\".\n^x", player, true);
 
     return(0);
 }
@@ -559,7 +558,7 @@ int Group::type(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    bstring newName = getFullstrText(cmnd->fullstr, 2);
+    std::string newName = getFullstrText(cmnd->fullstr, 2);
     if(newName.empty()) {
         *player << errorMsg;
         return(0);
@@ -570,19 +569,19 @@ int Group::type(Player* player, cmd* cmnd) {
         if(!strncasecmp(str, "public", len)) {
             group->setGroupType(GROUP_PUBLIC);
             *player << ColorOn << "^gYou change the group type to Public.\n" << ColorOff;
-            group->sendToAll(bstring("^g") + player->getName() + " changes the group to Public.\n^x", player);
+            group->sendToAll(std::string("^g") + player->getName() + " changes the group to Public.\n^x", player);
             return(0);
         } else if(!strncasecmp(str, "private", len)) {
             group->setGroupType(GROUP_PRIVATE);
             *player << ColorOn << "^gYou change the group type to Private.^x\n" << ColorOff;
-            group->sendToAll(bstring("^g") + player->getName() + " changes the group to Private.^x\n", player);
+            group->sendToAll(std::string("^g") + player->getName() + " changes the group to Private.^x\n", player);
             return(0);
         }
     }
     if(!strncasecmp(str, "invite only", len) || !strncmp(str, "inviteonly", len)) {
         group->setGroupType(GROUP_INVITE_ONLY);
         *player << ColorOn << "^gYou change the group type to Invite Only.^x\n" << ColorOff;
-        group->sendToAll(bstring("^g") + player->getName() + " changes the group to Invite Only.\n^x", player);
+        group->sendToAll(std::string("^g") + player->getName() + " changes the group to Invite Only.\n^x", player);
         return(0);
     }
     *player << errorMsg;
@@ -611,7 +610,7 @@ int Group::set(Player* player, cmd* cmnd, bool set) {
         return(0);
     }
 
-    bstring newName = getFullstrText(cmnd->fullstr, 2);
+    std::string newName = getFullstrText(cmnd->fullstr, 2);
     if(newName.empty()) {
         *player << errorMsg;
         return(0);

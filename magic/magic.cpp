@@ -23,7 +23,6 @@
 #include <fstream>             // for operator<<, ofstream, basic_ostream
 #include <iomanip>             // for operator<<, setw
 
-#include "bstring.hpp"         // for bstring
 #include "config.hpp"          // for Config
 #include "creatures.hpp"       // for Creature, Player
 #include "flags.hpp"           // for P_LINKDEAD
@@ -230,7 +229,7 @@ int spllist_size = sizeof(spllist)/sizeof(*spllist);
 void writeSchoolDomainFiles(MagicType type, int min, int max, const char* seeAlso) {
     char    spl[max][MAXSPELL][24], list[MAXSPELL][24];
     int     j[max], i=0, n=0, l = sizeof(list);
-    bstring skill = "";
+    std::string skill = "";
     char    filename[80];
 
     zero(j, sizeof(j));

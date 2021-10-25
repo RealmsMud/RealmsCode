@@ -21,33 +21,36 @@
 #ifndef _PYTHONHANDLER_H
 #define _PYTHONHANDLER_H
 
-#ifndef PYTHON_CODE_GEN 
 // C++ Includes
 #include <Python.h>
-#include <boost/python.hpp>
 
-#include "bstring.hpp"
+#include <pybind11/pytypes.h>
+#include <pybind11/embed.h>
 
-class MudObject;
-
-namespace bp = boost::python;
-
-bool addMudObjectToDictionary(bp::object& dictionary, bstring key, MudObject* myObject);
+namespace py = pybind11;
+using namespace py::literals;
 
 class PythonHandler {
     friend class Server;
 private:
     // Our main namespace for python
-    bp::object mainNamespace;
-    
+    py::object mainNamespace;
+
+public:
+    // Python
+    static bool initPython();
+    static void cleanUpPython();
+
+    bool runPython(const std::string& pyScript, py::object& locals);
+    bool runPythonWithReturn(const std::string& pyScript, py::object& locals);
+    bool runPython(const std::string& pyScript, const std::string &args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
+    bool runPythonWithReturn(const std::string& pyScript, const std::string &args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
+    static void handlePythonError(py::error_already_set &e);
+
+    static bool addMudObjectToDictionary(py::object& dictionary, const std::string& key, MudObject* myObject);
+
+
 };
-
-#else
-
-class PythonHandler;
-class object;
-
-#endif // PYTHON_CODE_GEN
 
 #endif  /* _PYTHONHANDLER_H */
 

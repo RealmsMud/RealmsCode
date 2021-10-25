@@ -20,7 +20,6 @@
 
 #include <libxml/parser.h>  // for xmlNodePtr
 
-#include "bstring.hpp"
 
 class Ban {
 public:
@@ -30,13 +29,13 @@ public:
     bool matches(std::string_view toMatch);
     
 public: // for now
-    bstring     site;
+    std::string     site;
     int         duration{};
     long        unbanTime{};
-    bstring     by;
-    bstring     time;
-    bstring     reason;
-    bstring     password;
+    std::string     by;
+    std::string     time;
+    std::string     reason;
+    std::string     password;
     bool        isPrefix{};
     bool        isSuffix{};
 };

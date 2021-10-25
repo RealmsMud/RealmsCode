@@ -19,13 +19,12 @@
 #ifndef WEB_H_
 #define WEB_H_
 
-#include "bstring.hpp"
 
-bstring webwho();
+std::string webwho();
 void updateRecentActivity();
-void callWebserver(bstring url, bool questionMark=true, bool silent=false);
-void webUnassociate(std::string_view user);
-void webCrash(std::string_view msg);
+void callWebserver(std::string url, bool questionMark=true, bool silent=false);
+void webUnassociate(const std::string &user);
+void webCrash(const std::string &msg);
 
 
 // Ascii characters we'll need
@@ -52,14 +51,14 @@ private:
     bool checkInput();
     bool handleInput();
     bool sendOutput();
-    bool messagePlayer(bstring command, bstring tempBuf);
-    bool wiki(bstring command, bstring tempBuf);
+    bool messagePlayer(std::string command, std::string tempBuf);
+    bool wiki(std::string command, std::string tempBuf);
 
 private:
     int inFd{};
     int outFd{};
-    bstring inBuf;  // Input Buffer
-    bstring outBuf; // Output Buffer
+    std::string inBuf;  // Input Buffer
+    std::string outBuf; // Output Buffer
 
 
 public:

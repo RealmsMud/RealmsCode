@@ -22,7 +22,6 @@
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <iosfwd>           // for size_t
 #include <string>           // for hash, string
-#include "bstring.hpp"      // for bstring
 
 class Creature;
 
@@ -36,12 +35,12 @@ public:
     CatRef& operator=(const CatRef& cr);
     bool    operator==(const CatRef& cr) const;
     bool    operator!=(const CatRef& cr) const;
-    [[nodiscard]] bstring rstr() const;
-    [[nodiscard]] bstring str(std::string_view current = "", char color = '\0') const;
-    void    setArea(bstring c);
+    [[nodiscard]] std::string rstr() const;
+    [[nodiscard]] std::string str(std::string_view current = "", char color = '\0') const;
+    void    setArea(std::string c);
     [[nodiscard]] bool    isArea(std::string_view c) const;
 
-    bstring area;
+    std::string area;
     short   id{};
 };
 

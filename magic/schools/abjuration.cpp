@@ -19,7 +19,6 @@
 #include <cstdlib>                // for abs
 #include <ctime>                  // for time
 
-#include "bstring.hpp"            // for bstring
 #include "cmd.hpp"                // for cmd
 #include "config.hpp"             // for Config, gConfig
 #include "creatures.hpp"          // for Creature, Player, Monster, NO_CHECK
@@ -861,7 +860,7 @@ int splAnnulMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
 //********************************************************************
 // num = -1 means dispel all effects
 
-static const std::list<bstring> dispellableEffects = {
+static const std::list<std::string> dispellableEffects = {
     "anchor",
     "hold-person",
     "strength",
@@ -920,7 +919,7 @@ static const std::list<bstring> dispellableEffects = {
 
 void Creature::doDispelMagic(int num) {
     EffectInfo* effect=nullptr;
-    std::list<bstring>::const_iterator it;
+    std::list<std::string>::const_iterator it;
 
     // create a list of possible effects
 

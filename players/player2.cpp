@@ -21,7 +21,6 @@
 #include <cstdlib>         // for atoi
 #include <cstring>         // for strtok, strcpy, strcat, strdup, strstr
 
-#include "bstring.hpp"      // for bstring, operator+
 #include "catRef.hpp"       // for CatRef
 #include "catRefInfo.hpp"   // for CatRefInfo
 #include "cmd.hpp"          // for cmd
@@ -94,7 +93,7 @@ void Player::calcStats(vstat sendStat, vstat *toStat) {
     if(!pClass) {
         print("Error: Can't find your class!\n");
         if(!isStaff()) {
-            bstring errorStr = "Error: Can't find class: " + getClassString();
+            std::string errorStr = "Error: Can't find class: " + getClassString();
             merror(errorStr.c_str(), NONFATAL);
         }
         return;
@@ -112,7 +111,7 @@ void Player::calcStats(vstat sendStat, vstat *toStat) {
         if(!lGain) {
             print("Error: Can't find any information for level %d!\n", levels);
             if(!isStaff()) {
-                bstring errorStr = "Error: Can't find level info for " + getClassString() + level;
+                std::string errorStr = fmt::format("Error: Can't find level info for {} {}",getClassString(), level);
                 merror(errorStr.c_str(), NONFATAL);
             }
             continue;

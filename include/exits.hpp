@@ -36,8 +36,8 @@ enum Direction {
     Southwest = 8
 };
 
-Direction getDir(bstring str);
-bstring getDirName(Direction dir);
+Direction getDir(std::string str);
+std::string getDirName(Direction dir);
 
 #define EXIT_KEY_LENGTH 20
 class Exit: public MudObject {
@@ -52,17 +52,17 @@ public:
     void escapeText();
 
     [[nodiscard]] short getLevel() const;
-    [[nodiscard]] bstring getOpen() const;
+    [[nodiscard]] std::string getOpen() const;
     [[nodiscard]] short getTrap() const;
     [[nodiscard]] short getKey() const;
-    [[nodiscard]] bstring getKeyArea() const;
+    [[nodiscard]] std::string getKeyArea() const;
     [[nodiscard]] short getToll() const;
-    [[nodiscard]] bstring getPassPhrase() const;
+    [[nodiscard]] std::string getPassPhrase() const;
     [[nodiscard]] short getPassLanguage() const;
     [[nodiscard]] Size getSize() const;
-    [[nodiscard]] bstring getDescription() const;
+    [[nodiscard]] std::string getDescription() const;
     [[nodiscard]] Direction getDirection() const;
-    [[nodiscard]] bstring getEnter() const;
+    [[nodiscard]] std::string getEnter() const;
     [[nodiscard]] BaseRoom* getRoom() const;
 
     void setLevel(short lvl);
@@ -81,7 +81,7 @@ public:
 
     void checkReLock(Creature* creature, bool sneaking);
 
-    [[nodiscard]] bstring blockedByStr(char color, std::string_view spell, std::string_view effectName, bool detectMagic, bool canSee) const;
+    [[nodiscard]] std::string blockedByStr(char color, std::string_view spell, std::string_view effectName, bool detectMagic, bool canSee) const;
     Exit* getReturnExit(const BaseRoom* parent, BaseRoom** targetRoom) const;
     void doDispelMagic(BaseRoom* parent);  // true if the exit was destroyed by dispel-magic
     [[nodiscard]] bool isWall(std::string_view name) const;
@@ -91,20 +91,20 @@ public:
     bool pulseEffects(time_t t);
     bool doEffectDamage(Creature* target);
 
-    void addEffectReturnExit(std::string_view effect, long duration, int strength, const Creature* owner);
-    void removeEffectReturnExit(std::string_view effect, BaseRoom* rParent);
+    void addEffectReturnExit(const std::string &effect, long duration, int strength, const Creature* owner);
+    void removeEffectReturnExit(const std::string &effect, BaseRoom* rParent);
 protected:
     short   level;
-    bstring open;           // output on open
+    std::string open;           // output on open
     short   trap;           // Exit trap
     short   key;            // more keys when short
-    bstring keyArea;
+    std::string keyArea;
     short   toll;           // exit toll cost
-    bstring passphrase;
+    std::string passphrase;
     short   passlang;
-    bstring description;
+    std::string description;
     Size    size;
-    bstring enter;
+    std::string enter;
     BaseRoom* parentRoom;   // Pointer to the room this exit is in
     Direction direction;
 

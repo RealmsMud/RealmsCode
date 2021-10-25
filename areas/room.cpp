@@ -21,7 +21,6 @@
 #include <sstream>                // for operator<<, basic_ostream, ostrings...
 #include <string>                 // for operator<<, operator!=, allocator
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "catRef.hpp"             // for CatRef
 #include "config.hpp"             // for Config, gConfig
 #include "container.hpp"          // for MonsterSet, PlayerSet, ObjectSet
@@ -564,7 +563,7 @@ void UniqueRoom::addPermObj() {
 //                      roomEffStr
 //*********************************************************************
 
-bstring roomEffStr(bstring effect, bstring str, const BaseRoom* room, bool detectMagic) {
+std::string roomEffStr(std::string effect, std::string str, const BaseRoom* room, bool detectMagic) {
     if(!room->isEffected(effect))
         return("");
     if(detectMagic) {
@@ -594,7 +593,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
     char    name[256];
     int     n=0, m=0, flags = (player->displayFlags() | QUEST), staff=0;
     std::ostringstream oStr;
-    bstring str = "";
+    std::string str = "";
     bool    wallOfFire=false, wallOfThorns=false, canSee=false;
 
     const UniqueRoom* uRoom = room->getAsConstUniqueRoom();
@@ -884,7 +883,7 @@ void storageName(UniqueRoom* room, const Player* player) {
 
 int createStorage(CatRef cr, const Player* player) {
     UniqueRoom *newRoom;
-    bstring desc = "";
+    std::string desc = "";
 
     newRoom = new UniqueRoom;
     if(!newRoom)

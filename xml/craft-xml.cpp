@@ -18,7 +18,6 @@
 
 #include <libxml/parser.h>                          // for xmlFreeDoc, xmlNode
 
-#include "bstring.hpp"                              // for bstring, operator+
 #include "craft.hpp"                                // for Recipe, operator<<
 #include "xml.hpp"                                  // for NODE_NAME, loadOb...
 
@@ -47,7 +46,7 @@ void Recipe::save(xmlNodePtr rootNode) const {
 //                      saveList
 //*********************************************************************
 
-void Recipe::saveList(xmlNodePtr curNode, const bstring& name, const std::list<CatRef>* list) const {
+void Recipe::saveList(xmlNodePtr curNode, const std::string& name, const std::list<CatRef>* list) const {
     if(list->empty())
         return;
     xmlNodePtr childNode = xml::newStringChild(curNode, name.c_str());
@@ -72,8 +71,8 @@ void Recipe::load(xmlNodePtr curNode) {
         if(NODE_NAME(curNode, "Result")) result.load(curNode);
         else if(NODE_NAME(curNode, "MinSkill")) xml::copyToNum(minSkill, curNode);
         else if(NODE_NAME(curNode, "Experience")) xml::copyToNum(experience, curNode);
-        else if(NODE_NAME(curNode, "Skill")) { xml::copyToBString(skill, curNode); }
-        else if(NODE_NAME(curNode, "Creator")) { xml::copyToBString(creator, curNode); }
+        else if(NODE_NAME(curNode, "Skill")) { xml::copyToString(skill, curNode); }
+        else if(NODE_NAME(curNode, "Creator")) { xml::copyToString(creator, curNode); }
         else if(NODE_NAME(curNode, "Sizable")) xml::copyToBool(sizable, curNode);
         else if(NODE_NAME(curNode, "RequireRecipe")) xml::copyToBool(requireRecipe, curNode);
         else if(NODE_NAME(curNode, "Ingredients")) loadList(curNode->children, &ingredients);

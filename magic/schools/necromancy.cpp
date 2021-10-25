@@ -19,7 +19,6 @@
 #include <cstring>         // for strlen, strncmp
 #include <ctime>           // for time, time_t
 
-#include "bstring.hpp"     // for bstring
 #include "cmd.hpp"         // for cmd
 #include "config.hpp"      // for Config, gConfig
    // for Container
@@ -487,7 +486,7 @@ int animate_dead(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 int splNecroDrain(Creature* player, cmd* cmnd, SpellData* spellData) {
     Creature* target=nullptr;
-    bstring spell = "";
+    std::string spell = "";
     int tier=0, c=0;
     osp_t osp;
 

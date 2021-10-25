@@ -42,11 +42,11 @@ class UniqueRoom;
 
 class MudObject {
 private:
-    bstring name;
+    std::string name;
 
 public:
     void setName(std::string_view newName);
-    [[nodiscard]] const bstring& getName() const;
+    [[nodiscard]] const std::string & getName() const;
     [[nodiscard]] const char* getCName() const;
 
 protected:
@@ -70,7 +70,7 @@ protected:
 
 public:
     //char name[80];
-    bstring id;     // Unique identifier
+    std::string id;     // Unique identifier
     Hooks hooks;
     void moCopy(const MudObject& mo);
 
@@ -111,25 +111,25 @@ public:
     [[nodiscard]] bool isCreature() const;
     [[nodiscard]] bool isExit() const;
 
-    [[nodiscard]] std::string_view getId() const;
-    [[nodiscard]] bstring getIdPython() const;
+    [[nodiscard]] const std::string & getId() const;
+    [[nodiscard]] std::string getIdPython() const;
     virtual void validateId() {};
     Effects effects;
 
-    virtual bstring getFlagList(bstring sep=", ") const;
+    virtual std::string getFlagList(std::string_view sep=", ") const;
 
 
 
 // Effects
-    [[nodiscard]] bool isEffected(const bstring& effect, bool exactMatch = false) const;
+    [[nodiscard]] bool isEffected(const std::string &effect, bool exactMatch = false) const;
     [[nodiscard]] bool isEffected(EffectInfo* effect) const;
     [[nodiscard]] bool hasPermEffect(std::string_view effect) const;
     [[nodiscard]] EffectInfo* getEffect(std::string_view effect) const;
     [[nodiscard]] EffectInfo* getExactEffect(std::string_view effect) const;
     EffectInfo* addEffect(EffectInfo* newEffect, bool show = true, bool keepApplier=false);
-    EffectInfo* addEffect(const bstring&effect, long duration = -2, int strength = -2, MudObject* applier = nullptr, bool show = true, const Creature* owner=nullptr, bool keepApplier=false);
-    EffectInfo* addPermEffect(const bstring& effect, int strength = 1, bool show = true);
-    bool removeEffect(const bstring& effect, bool show = true, bool remPerm = true, MudObject* fromApplier=nullptr);
+    EffectInfo* addEffect(const std::string&effect, long duration = -2, int strength = -2, MudObject* applier = nullptr, bool show = true, const Creature* owner=nullptr, bool keepApplier=false);
+    EffectInfo* addPermEffect(const std::string& effect, int strength = 1, bool show = true);
+    bool removeEffect(const std::string& effect, bool show = true, bool remPerm = true, MudObject* fromApplier=nullptr);
     bool removeEffect(EffectInfo* toDel, bool show = true);
     bool removeOppositeEffect(const EffectInfo *effect);
     virtual bool pulseEffects(time_t t) = 0;

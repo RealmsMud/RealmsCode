@@ -21,8 +21,9 @@
 #include <map>                    // for map, map<>::mapped_type, operator==
 #include <sstream>                // for operator<<, ostringstream, basic_os...
 #include <string>                 // for operator==, basic_string, allocator
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for isPtester, getFullstrText, cmdColors
 #include "config.hpp"             // for Config, gConfig
@@ -59,8 +60,9 @@ int Mirc[9] = {  1,  4,  9,  8, 12, 13, 11, 15, 15 };
 //                      nameToColorCode
 //***********************************************************************
 
-char nameToColorCode(bstring name) {
-    name = name.toLower();
+char nameToColorCode(std::string name) {
+    boost::algorithm::to_lower(name);
+
     if(name == "blink") return('!');
     if(name == "blue") return('b');
     if(name == "bold blue") return('B');
@@ -123,52 +125,52 @@ const char* getAnsiColorCode(const unsigned char ch) {
 //                      getCustomColor
 //**********************************************************************
 
-bstring Player::getCustomColor(CustomColor i, bool caret) const {
+std::string Player::getCustomColor(CustomColor i, bool caret) const {
     char color;
     if(customColors[(int)i] != CUSTOM_COLOR_DEFAULT) {
         color = customColors[(int)i];
         if(color == '!')
             color = '#';
-        return((bstring)(caret?"^":"") + color);
+        return((std::string)(caret?"^":"") + color);
     }
     return(gConfig->getCustomColor(i, caret));
 }
 
-bstring Config::getCustomColor(CustomColor i, bool caret) const {
+std::string Config::getCustomColor(CustomColor i, bool caret) const {
     if(customColors[(int)i] == CUSTOM_COLOR_DEFAULT)
-        return((bstring)(caret?"^":"") + "x");
-    return((bstring)(caret?"^":"") + customColors[(int)i]);
+        return((std::string)(caret?"^":"") + "x");
+    return((std::string)(caret?"^":"") + customColors[(int)i]);
 }
 
 //*********************************************************************
 //                      customColorize
 //**********************************************************************
 
-bstring Monster::customColorize(const bstring& pText, bool caret) const {
-    bstring text = pText;
+std::string Monster::customColorize(const std::string& pText, bool caret) const {
+    std::string text = pText;
     if(getMaster() && getMaster()->isPlayer())
         text = getMaster()->getAsConstPlayer()->customColorize(text, caret);
     return(text);
 }
-bstring Player::customColorize(const bstring&  pText, bool caret) const {
-    bstring text = pText;
-    text.Replace("*CC:BROADCAST*", getCustomColor(CUSTOM_COLOR_BROADCAST, caret).c_str());
-    text.Replace("*CC:GOSSIP*", getCustomColor(CUSTOM_COLOR_GOSSIP, caret).c_str());
-    text.Replace("*CC:PTEST*", getCustomColor(CUSTOM_COLOR_PTEST, caret).c_str());
-    text.Replace("*CC:NEWBIE*", getCustomColor(CUSTOM_COLOR_NEWBIE, caret).c_str());
-    text.Replace("*CC:DM*", getCustomColor(CUSTOM_COLOR_DM, caret).c_str());
-    text.Replace("*CC:ADMIN*", getCustomColor(CUSTOM_COLOR_ADMIN, caret).c_str());
-    text.Replace("*CC:SEND*", getCustomColor(CUSTOM_COLOR_SEND, caret).c_str());
-    text.Replace("*CC:MESSAGE*", getCustomColor(CUSTOM_COLOR_MESSAGE, caret).c_str());
-    text.Replace("*CC:WATCHER*", getCustomColor(CUSTOM_COLOR_WATCHER, caret).c_str());
-    text.Replace("*CC:CLASS*", getCustomColor(CUSTOM_COLOR_CLASS, caret).c_str());
-    text.Replace("*CC:RACE*", getCustomColor(CUSTOM_COLOR_RACE, caret).c_str());
-    text.Replace("*CC:CLAN*", getCustomColor(CUSTOM_COLOR_CLAN, caret).c_str());
-    text.Replace("*CC:TELL*", getCustomColor(CUSTOM_COLOR_TELL, caret).c_str());
-    text.Replace("*CC:GROUP*", getCustomColor(CUSTOM_COLOR_GROUP, caret).c_str());
-    text.Replace("*CC:DAMAGE*", getCustomColor(CUSTOM_COLOR_DAMAGE, caret).c_str());
-    text.Replace("*CC:SELF*", getCustomColor(CUSTOM_COLOR_SELF, caret).c_str());
-    text.Replace("*CC:GUILD*", getCustomColor(CUSTOM_COLOR_GUILD, caret).c_str());
+std::string Player::customColorize(const std::string&  pText, bool caret) const {
+    std::string text = pText;
+    boost::replace_all(text, "*CC:BROADCAST*", getCustomColor(CUSTOM_COLOR_BROADCAST, caret).c_str());
+    boost::replace_all(text, "*CC:GOSSIP*", getCustomColor(CUSTOM_COLOR_GOSSIP, caret).c_str());
+    boost::replace_all(text, "*CC:PTEST*", getCustomColor(CUSTOM_COLOR_PTEST, caret).c_str());
+    boost::replace_all(text, "*CC:NEWBIE*", getCustomColor(CUSTOM_COLOR_NEWBIE, caret).c_str());
+    boost::replace_all(text, "*CC:DM*", getCustomColor(CUSTOM_COLOR_DM, caret).c_str());
+    boost::replace_all(text, "*CC:ADMIN*", getCustomColor(CUSTOM_COLOR_ADMIN, caret).c_str());
+    boost::replace_all(text, "*CC:SEND*", getCustomColor(CUSTOM_COLOR_SEND, caret).c_str());
+    boost::replace_all(text, "*CC:MESSAGE*", getCustomColor(CUSTOM_COLOR_MESSAGE, caret).c_str());
+    boost::replace_all(text, "*CC:WATCHER*", getCustomColor(CUSTOM_COLOR_WATCHER, caret).c_str());
+    boost::replace_all(text, "*CC:CLASS*", getCustomColor(CUSTOM_COLOR_CLASS, caret).c_str());
+    boost::replace_all(text, "*CC:RACE*", getCustomColor(CUSTOM_COLOR_RACE, caret).c_str());
+    boost::replace_all(text, "*CC:CLAN*", getCustomColor(CUSTOM_COLOR_CLAN, caret).c_str());
+    boost::replace_all(text, "*CC:TELL*", getCustomColor(CUSTOM_COLOR_TELL, caret).c_str());
+    boost::replace_all(text, "*CC:GROUP*", getCustomColor(CUSTOM_COLOR_GROUP, caret).c_str());
+    boost::replace_all(text, "*CC:DAMAGE*", getCustomColor(CUSTOM_COLOR_DAMAGE, caret).c_str());
+    boost::replace_all(text, "*CC:SELF*", getCustomColor(CUSTOM_COLOR_SELF, caret).c_str());
+    boost::replace_all(text, "*CC:GUILD*", getCustomColor(CUSTOM_COLOR_GUILD, caret).c_str());
     return(text);
 }
 
@@ -213,8 +215,8 @@ int cmdColors(Player* player, cmd* cmnd) {
         return(0);
     } else if(cmnd->num > 2) {
         CustomColor i;
-        bstring type = cmnd->str[1];
-        type = type.toLower();
+        std::string type = cmnd->str[1];
+        boost::algorithm::to_lower(type);
 
         if(type == "broadcast")
             i = CUSTOM_COLOR_BROADCAST;
@@ -297,8 +299,8 @@ int cmdColors(Player* player, cmd* cmnd) {
     player->printColor("                Choose ^Wtype^x from below, ^Wcolor^x from above.\n");
     player->printColor("                Type ^Wcolor reset^x to return to default colors.\n\n");
 
-    std::map<bstring,bstring> options;
-    std::map<bstring,bstring>::iterator it;
+    std::map<std::string,std::string> options;
+    std::map<std::string,std::string>::iterator it;
     options["Self: @"] = player->customColorize("*CC:SELF*");
     options["Broadcast"] = player->customColorize("*CC:BROADCAST*");
     options["Tell"] = player->customColorize("*CC:TELL*");
@@ -375,7 +377,7 @@ void Player::setSockColors() {
 // Currently handles MXP & ANSI Color
 // TODO: Handle xterm256 color
 
-bstring Socket::getColorCode(const unsigned char ch) {
+std::string Socket::getColorCode(const unsigned char ch) {
     std::ostringstream oStr;
     if(!opts.color) {
         // Color is not active, only replace a caret
@@ -398,7 +400,7 @@ bstring Socket::getColorCode(const unsigned char ch) {
 //                      stripColor
 //***********************************************************************
 
-bstring stripColor(std::string_view colored) {
+std::string stripColor(std::string_view colored) {
     std::ostringstream str;
     for (auto it = colored.cbegin() ; it != colored.cend() ; ++it) {
         if(*it == '^')
@@ -424,7 +426,7 @@ size_t lengthNoColor(std::string_view colored) {
 //                      escapeColor
 //***********************************************************************
 
-bstring escapeColor(std::string_view colored) {
+std::string escapeColor(std::string_view colored) {
     std::ostringstream str;
     for (const auto c : colored) {
         if(c == '^')  // Double it
@@ -439,10 +441,10 @@ bstring escapeColor(std::string_view colored) {
 //***********************************************************************
 
 
-bstring padColor(std::string_view toPad, size_t pad) {
+std::string padColor(const std::string &toPad, size_t pad) {
     pad -= lengthNoColor(toPad);
     if(pad <= 0)
         return {toPad};
     else
-        return toPad + bstring(pad, ' ');
+        return toPad + std::string(pad, ' ');
 }

@@ -30,7 +30,7 @@ public:
 
     short getNum() const;
     Size getSize() const;
-    bstring getDirection() const;
+    std::string getDirection() const;
 
     void setNum(short n);
     void setSize(Size s);
@@ -38,7 +38,7 @@ public:
 protected:
     short   num;
     Size    size;
-    bstring direction;
+    std::string direction;
 };
 
 

@@ -23,13 +23,14 @@
 #include <iomanip>                // for operator<<, setw
 #include <map>                    // for operator==, operator!=, map, map<>:...
 #include <string>                 // for operator<<, operator==, allocator
+#include <fmt/format.h>
+#include <boost/algorithm/string/replace.hpp>
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "config.hpp"             // for Config, MudFlagMap, gConfig
 #include "paths.hpp"              // for BuilderHelp, DMHelp, Code
 #include "proto.hpp"              // for wrapText
 #include "structs.hpp"            // for MudFlag
-#include "xml.hpp"                // for NODE_NAME, copyPropToBString, copyT...
+#include "xml.hpp"                // for NODE_NAME, copyPropToString, copyT...
 
 //*********************************************************************
 //                      MudFlag
@@ -45,14 +46,14 @@ MudFlag::MudFlag() {
 //                      flagFileTitle
 //**********************************************************************
 
-bstring flagFileTitle(std::string_view title, const char* file, int pad) {
+std::string flagFileTitle(std::string_view title, const char* file, int pad) {
     std::ostringstream oStr;
 
     // Prepare the text to go into the flag index helpfile
     oStr.setf(std::ios::left, std::ios::adjustfield);
     oStr.imbue(std::locale(""));
 
-    oStr << "  " << std::setw(pad) << (title + " flags:") << " ^W" << file << "s^x\n";
+    oStr << "  " << std::setw(pad) << fmt::format("{} flags:", title) << " ^W" << file << "s^x\n";
     return(oStr.str());
 }
 
@@ -60,11 +61,11 @@ bstring flagFileTitle(std::string_view title, const char* file, int pad) {
 //                      writeFlagFile
 //**********************************************************************
 
-bstring writeFlagFile(std::string_view title, const char* file, int pad, bool builderLink, const MudFlagMap &flags) {
+std::string writeFlagFile(std::string_view title, const char* file, int pad, bool builderLink, const MudFlagMap &flags) {
     std::ostringstream padding;
     MudFlagMap::const_iterator it;
     const MudFlag *flag=nullptr;
-    bstring desc = "", output = "\n";
+    std::string desc = "", output = "\n";
     char    dmfile[80], dmfileLink[80];
     char    bhfile[80], bhfileLink[80];
 
@@ -94,7 +95,7 @@ bstring writeFlagFile(std::string_view title, const char* file, int pad, bool bu
             out << "^y" << flag->name << "^x\n";
         } else {
             desc = wrapText(flag->desc, 45);
-            desc.Replace("\n", output.c_str());
+            boost::replace_all(desc, "\n", output.c_str());
 
             out << std::setw(20) << flag->name << "   " << desc << "\n";
         }
@@ -130,22 +131,22 @@ void writeFlagFiles() {
     pad = 15;
 
     // Put together the standard flags we're used to
-    bstring mflags = writeFlagFile("Monster", "mflag", pad, true, gConfig->mflags);
-    bstring oflags = writeFlagFile("Object", "oflag", pad, true, gConfig->oflags);
-    bstring rflags = writeFlagFile("Room", "rflag", pad, true, gConfig->rflags);
-    bstring pflags = writeFlagFile("Player", "pflag", pad, false, gConfig->pflags);
-    bstring xflags = writeFlagFile("Exit", "xflag", pad, true, gConfig->xflags);
+    std::string mflags = writeFlagFile("Monster", "mflag", pad, true, gConfig->mflags);
+    std::string oflags = writeFlagFile("Object", "oflag", pad, true, gConfig->oflags);
+    std::string rflags = writeFlagFile("Room", "rflag", pad, true, gConfig->rflags);
+    std::string pflags = writeFlagFile("Player", "pflag", pad, false, gConfig->pflags);
+    std::string xflags = writeFlagFile("Exit", "xflag", pad, true, gConfig->xflags);
     // actual spell help files are written to file in writeSpellFiles
-    bstring sflags = flagFileTitle("Spell", "sflag", pad);
+    std::string sflags = flagFileTitle("Spell", "sflag", pad);
 
     pad = 24;
 
     // Put together the newer flags we're not used to seeing
-    bstring saflags = writeFlagFile("Special Attack", "saflag", pad, true, gConfig->specialFlags);
-    bstring stflags = writeFlagFile("Property Storage", "stflag", pad, false, gConfig->propStorFlags);
-    bstring shflags = writeFlagFile("Property Shop", "shflag", pad, false, gConfig->propShopFlags);
-    bstring hflags = writeFlagFile("Property House", "hflag", pad, false, gConfig->propHouseFlags);
-    bstring gflags = writeFlagFile("Property Guild", "gflag", pad, false, gConfig->propGuildFlags);
+    std::string saflags = writeFlagFile("Special Attack", "saflag", pad, true, gConfig->specialFlags);
+    std::string stflags = writeFlagFile("Property Storage", "stflag", pad, false, gConfig->propStorFlags);
+    std::string shflags = writeFlagFile("Property Shop", "shflag", pad, false, gConfig->propShopFlags);
+    std::string hflags = writeFlagFile("Property House", "hflag", pad, false, gConfig->propHouseFlags);
+    std::string gflags = writeFlagFile("Property Guild", "gflag", pad, false, gConfig->propGuildFlags);
 
     // Put together the index of flags that CT+ can see
     std::ofstream out;
@@ -224,8 +225,8 @@ bool Config::loadFlags() {
                 if(NODE_NAME(childNode, "Flag")) {
                     MudFlag f;
                     f.id = xml::getIntProp(childNode, "id");
-                    xml::copyPropToBString(f.name, childNode, "Name");
-                    xml::copyToBString(f.desc, childNode);
+                    xml::copyPropToString(f.name, childNode, "Name");
+                    xml::copyToString(f.desc, childNode);
 
                     (*flagmap)[f.id] = f;
 

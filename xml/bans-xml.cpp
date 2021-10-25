@@ -23,8 +23,7 @@
 #include <ostream>                                  // for basic_ostream::op...
 
 #include "bans.hpp"                                 // for Ban
-#include "bstring.hpp"                              // for bstring
-#include "xml.hpp"                                  // for copyToBString
+#include "xml.hpp"                                  // for copyToString
 
 bool Config::loadBans() {
     xmlDocPtr xmlDoc;
@@ -69,13 +68,13 @@ Ban::Ban(xmlNodePtr curNode) {
     curNode = curNode->children;
     while(curNode != nullptr)
     {
-        if(NODE_NAME(curNode, "Site")) xml::copyToBString(site, curNode);
+        if(NODE_NAME(curNode, "Site")) xml::copyToString(site, curNode);
         else if(NODE_NAME(curNode, "Duration")) xml::copyToNum(duration, curNode);
         else if(NODE_NAME(curNode, "UnbanTime")) xml::copyToNum(unbanTime, curNode);
-        else if(NODE_NAME(curNode, "BannedBy")) xml::copyToBString(by, curNode);
-        else if(NODE_NAME(curNode, "BanTime")) xml::copyToBString(time, curNode);
-        else if(NODE_NAME(curNode, "Reason")) xml::copyToBString(reason, curNode);
-        else if(NODE_NAME(curNode, "Password")) xml::copyToBString(password, curNode);
+        else if(NODE_NAME(curNode, "BannedBy")) xml::copyToString(by, curNode);
+        else if(NODE_NAME(curNode, "BanTime")) xml::copyToString(time, curNode);
+        else if(NODE_NAME(curNode, "Reason")) xml::copyToString(reason, curNode);
+        else if(NODE_NAME(curNode, "Password")) xml::copyToString(password, curNode);
         else if(NODE_NAME(curNode, "Suffix")) xml::copyToBool(isSuffix, curNode);
         else if(NODE_NAME(curNode, "Prefix")) xml::copyToBool(isPrefix, curNode);
 

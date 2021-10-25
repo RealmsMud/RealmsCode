@@ -23,8 +23,8 @@
 #include <ctime>                  // for time
 #include <unistd.h>               // for close, read
 #include <ostream>                // for operator<<, basic_ostream, ostrings...
+#include <boost/algorithm/string/case_conv.hpp>
 
-#include "bstring.hpp"            // for bstring
 #include "calendar.hpp"           // for Calendar
 #include "config.hpp"             // for Config, gConfig
 #include "container.hpp"          // for ObjectSet, MonsterSet, PlayerSet
@@ -280,9 +280,9 @@ void Monster::diePermCrt() {
 // consider how difficult it would be to kill the creature in the
 // second parameter.
 
-bstring Player::consider(Creature* creature) const {
+std::string Player::consider(Creature* creature) const {
     int     diff=0;
-    bstring str = "";
+    std::string str = "";
 
     if(creature->mFlagIsSet(M_UNKILLABLE))
         return("");
@@ -340,7 +340,7 @@ bstring Player::consider(Creature* creature) const {
 // This function returns true if the name passed in the first parameter
 // is in the charm list of the creature
 
-bool Creature::hasCharm(std::string_view charmed) {
+bool Creature::hasCharm(const std::string &charmed) {
     if(charmed.empty())
         return(false);
 
@@ -638,7 +638,7 @@ void Monster::getMobSave() {
     }
 }
 
-bstring Creature::getClassString() const {
+std::string Creature::getClassString() const {
     return get_class_string(static_cast<int>(cClass));
 }
 
@@ -785,7 +785,7 @@ int Player::displayCreature(Creature* target)  {
     Player  *pTarget = target->getAsPlayer();
     Monster *mTarget = target->getAsMonster();
     std::ostringstream oStr;
-    bstring str = "";
+    std::string str = "";
     bool space=false;
 
     if(mTarget) {
@@ -910,7 +910,7 @@ int Player::displayCreature(Creature* target)  {
             oStr << " ";
         space = true;
         oStr << mTarget->upHeShe() << " is ^W"
-             << gConfig->getRace(mTarget->getRace())->getAdjective().toLower() << "^x.";
+             << boost::algorithm::to_lower_copy(gConfig->getRace(mTarget->getRace())->getAdjective()) << "^x.";
     }
     if(target->getSize() != NO_SIZE) {
         if(space)
@@ -1496,7 +1496,7 @@ void free_crt(Creature* creature, bool remove) {
 }
 
 
-bstring Monster::getFlagList(bstring sep) const {
+std::string Monster::getFlagList(std::string_view sep) const {
     std::ostringstream ostr;
     bool found = false;
     for(int i=0; i<MAX_MONSTER_FLAGS; i++) {
@@ -1515,7 +1515,7 @@ bstring Monster::getFlagList(bstring sep) const {
         return ostr.str();
 }
 
-bstring Player::getFlagList(bstring sep) const {
+std::string Player::getFlagList(std::string_view sep) const {
     std::ostringstream ostr;
     bool found = false;
     for(int i=0; i<MAX_PLAYER_FLAGS; i++) {

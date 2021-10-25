@@ -19,7 +19,6 @@
 #include <list>                   // for operator==, operator!=
 #include <ostream>                // for operator<<, ostringstream, basic_os...
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for cmdProcess, parse
 #include "creatures.hpp"          // for Creature
@@ -160,7 +159,7 @@ bool Server::hasAction(const MudObject* target, DelayedActionType type) {
 //*********************************************************************
 // called from Player::score
 
-bstring Server::delayedActionStrings(const MudObject* target) {
+std::string Server::delayedActionStrings(const MudObject* target) {
     std::ostringstream oStr;
     std::list<DelayedAction>::const_iterator it;
 
@@ -262,12 +261,12 @@ void doDelayedAction(const DelayedAction* action) {
 //*********************************************************************
 
 
-void Creature::delayedAction(const bstring& action, int delay, MudObject* target) {
+void Creature::delayedAction(const std::string& action, int delay, MudObject* target) {
     cmd cmnd;
 
     cmnd.fullstr = action;
     if(target) {
-        cmnd.fullstr += bstring(" ") + target->getName();
+        cmnd.fullstr += std::string(" ") + target->getName();
     }
 
     stripBadChars(cmnd.fullstr); // removes '.' and '/'
@@ -292,6 +291,6 @@ void doDelayedScript(const DelayedAction* action) {
 //                      delayedScript
 //*********************************************************************
 
-void Creature::delayedScript(const bstring& script, int delay) {
+void Creature::delayedScript(const std::string& script, int delay) {
     gServer->addDelayedScript(doDelayedScript, this, script, delay);
 }

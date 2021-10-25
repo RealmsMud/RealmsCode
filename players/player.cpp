@@ -26,7 +26,6 @@
 #include <iomanip>                // for operator<<, setw
 
 #include "area.hpp"               // for Area, MapMarker, MAX_VISION
-#include "bstring.hpp"            // for bstring
 #include "catRef.hpp"             // for CatRef
 #include "catRefInfo.hpp"         // for CatRefInfo
 #include "clans.hpp"              // for Clan
@@ -1462,7 +1461,7 @@ int Player::getLight() const {
 // This function returns the prompt that the player should be seeing
 
 void Player::sendPrompt() {
-    bstring toPrint;
+    std::string toPrint;
 
     if(fd < 0)
         return;
@@ -1503,11 +1502,11 @@ void Player::sendPrompt() {
 
     // Send EOR if they want it, otherwise send GA
     if(getSock()->eorEnabled()) {
-        unsigned char eor_str[] = {IAC, EOR, '\0' };
-        toPrint += eor_str;
+        char eor_str[] = {(char)IAC, (char)EOR, '\0' };
+        toPrint.append(eor_str);
     } else if(!getSock()->isDumbClient()){
-        unsigned char ga_str[] = {IAC, GA, '\0' };
-        toPrint += ga_str;
+        char ga_str[] = {(char)IAC, (char)GA, '\0' };
+        toPrint.append(ga_str);
     }
 
     mySock->write(toPrint);
@@ -2362,7 +2361,7 @@ bool Player::breakObject(Object* object, int loc) {
 //              getWhoString
 //********************************************************************
 
-bstring Player::getWhoString(bool whois, bool color, bool ignoreIllusion) const {
+std::string Player::getWhoString(bool whois, bool color, bool ignoreIllusion) const {
     std::ostringstream whoStr;
 
     if(whois) {
@@ -2371,7 +2370,7 @@ bstring Player::getWhoString(bool whois, bool color, bool ignoreIllusion) const 
     }
 
     whoStr << (color ? "^x[^c" : "[") << std::setw(2) << level
-           << ":" << std::setw(4) << bstring(getShortClassName(this)).left(4)
+           << ":" << std::setw(4) << std::string(getShortClassName(this)).substr(0, 4)
            << (color ? "^x] " : "] ");
 
     if(isHardcore())
@@ -2464,7 +2463,7 @@ unsigned long Player::expToLevel() const {
     return(experience > Config::expNeeded(level) ? 0 : Config::expNeeded(level) - experience);
 }
 
-bstring Player::expToLevel(bool addX) const {
+std::string Player::expToLevel(bool addX) const {
     if(level < MAXALVL) {
         std::ostringstream oStr;
         oStr.imbue(std::locale(isStaff() ? "C" : ""));
@@ -2476,7 +2475,7 @@ bstring Player::expToLevel(bool addX) const {
     return("infinity");
 }
 
-bstring Player::expInLevel() const {
+std::string Player::expInLevel() const {
     int displayLevel = level;
     if(level > MAXALVL) {
         displayLevel = MAXALVL;
@@ -2489,7 +2488,7 @@ bstring Player::expInLevel() const {
 }
 
 // TNL Max
-bstring Player::expForLevel() const {
+std::string Player::expForLevel() const {
     int displayLevel = level;
     if(level > MAXALVL) {
         displayLevel = MAXALVL;
@@ -2500,7 +2499,7 @@ bstring Player::expForLevel() const {
     return(oStr.str());
 }
 
-bstring Player::expNeededDisplay() const {
+std::string Player::expNeededDisplay() const {
     if(level < MAXALVL) {
         std::ostringstream oStr;
         oStr.imbue(std::locale(isStaff() ? "C" : ""));
@@ -2521,8 +2520,8 @@ bool Player::exists(std::string_view name) {
 //                      inList functions
 //*********************************************************************
 
-bool Player::inList(const std::list<bstring>* list, std::string_view name) const {
-    std::list<bstring>::const_iterator it;
+bool Player::inList(const std::list<std::string>* list, const std::string &name) const {
+    std::list<std::string>::const_iterator it;
 
     for(it = list->begin(); it != list->end() ; it++) {
         if((*it) == name)
@@ -2532,19 +2531,19 @@ bool Player::inList(const std::list<bstring>* list, std::string_view name) const
 }
 
 
-bool Player::isIgnoring(std::string_view name) const {
+bool Player::isIgnoring(const std::string &name) const {
     return(inList(&ignoring, name));
 }
-bool Player::isGagging(std::string_view name) const {
+bool Player::isGagging(const std::string &name) const {
     return(inList(&gagging, name));
 }
-bool Player::isRefusing(std::string_view name) const {
+bool Player::isRefusing(const std::string &name) const {
     return(inList(&refusing, name));
 }
-bool Player::isDueling(std::string_view name) const {
+bool Player::isDueling(const std::string &name) const {
     return(inList(&dueling, name));
 }
-bool Player::isWatching(std::string_view name) const {
+bool Player::isWatching(const std::string &name) const {
     return(inList(&watching, name));
 }
 
@@ -2552,9 +2551,9 @@ bool Player::isWatching(std::string_view name) const {
 //                      showList
 //*********************************************************************
 
-bstring Player::showList(const std::list<bstring>* list) const {
+std::string Player::showList(const std::list<std::string>* list) const {
     std::ostringstream oStr;
-    std::list<bstring>::const_iterator it;
+    std::list<std::string>::const_iterator it;
     bool initial=false;
 
     for(it = list->begin(); it != list->end() ; it++) {
@@ -2573,19 +2572,19 @@ bstring Player::showList(const std::list<bstring>* list) const {
 }
 
 
-bstring Player::showIgnoring() const {
+std::string Player::showIgnoring() const {
     return(showList(&ignoring));
 }
-bstring Player::showGagging() const {
+std::string Player::showGagging() const {
     return(showList(&gagging));
 }
-bstring Player::showRefusing() const {
+std::string Player::showRefusing() const {
     return(showList(&refusing));
 }
-bstring Player::showDueling() const {
+std::string Player::showDueling() const {
     return(showList(&dueling));
 }
-bstring Player::showWatching() const {
+std::string Player::showWatching() const {
     return(showList(&watching));
 }
 
@@ -2593,21 +2592,21 @@ bstring Player::showWatching() const {
 //                      addList functions
 //*********************************************************************
 
-void Player::addList(std::list<bstring>* list, std::string_view name) {
+void Player::addList(std::list<std::string> *list, const std::string &name) {
     list->push_back(name);
 }
 
 
-void Player::addIgnoring(std::string_view name) {
+void Player::addIgnoring(const std::string &name) {
     addList(&ignoring, name);
 }
-void Player::addGagging(std::string_view name) {
+void Player::addGagging(const std::string &name) {
     addList(&gagging, name);
 }
-void Player::addRefusing(std::string_view name) {
+void Player::addRefusing(const std::string &name) {
     addList(&refusing, name);
 }
-void Player::addDueling(std::string_view name) {
+void Player::addDueling(const std::string &name) {
     delList(&maybeDueling, name);
 
     // if they aren't dueling us, add us to their maybe dueling list
@@ -2617,10 +2616,10 @@ void Player::addDueling(std::string_view name) {
 
     addList(&dueling, name);
 }
-void Player::addMaybeDueling(std::string_view name) {
+void Player::addMaybeDueling(const std::string &name) {
     addList(&maybeDueling, name);
 }
-void Player::addWatching(std::string_view name) {
+void Player::addWatching(const std::string &name) {
     addList(&watching, name);
 }
 
@@ -2628,8 +2627,8 @@ void Player::addWatching(std::string_view name) {
 //                      delList functions
 //*********************************************************************
 
-void Player::delList(std::list<bstring>* list, std::string_view name) {
-    std::list<bstring>::iterator it;
+void Player::delList(std::list<std::string>* list, const std::string &name) {
+    std::list<std::string>::iterator it;
 
     for(it = list->begin(); it != list->end() ; it++) {
         if((*it) == name) {
@@ -2640,19 +2639,19 @@ void Player::delList(std::list<bstring>* list, std::string_view name) {
 }
 
 
-void Player::delIgnoring(std::string_view name) {
+void Player::delIgnoring(const std::string &name) {
     delList(&ignoring, name);
 }
-void Player::delGagging(std::string_view name) {
+void Player::delGagging(const std::string &name) {
     delList(&gagging, name);
 }
-void Player::delRefusing(std::string_view name) {
+void Player::delRefusing(const std::string &name) {
     delList(&refusing, name);
 }
-void Player::delDueling(std::string_view name) {
+void Player::delDueling(const std::string &name) {
     delList(&dueling, name);
 }
-void Player::delWatching(std::string_view name) {
+void Player::delWatching(const std::string &name) {
     delList(&watching, name);
 }
 
@@ -2673,7 +2672,7 @@ void Player::clearDueling() {
     dueling.clear();
 }
 void Player::clearMaybeDueling() {
-    std::list<bstring>::iterator it;
+    std::list<std::string>::iterator it;
 
     Player* player=nullptr;
     for(it = maybeDueling.begin(); it != maybeDueling.end() ; it++) {
@@ -2749,7 +2748,7 @@ bool Player::checkHeavyRestrict(std::string_view skill) const {
 
 
 void Player::validateId() {
-    if(id.empty() || id.equals("-1")) {
+    if(id.empty() || id == "-1") {
         setId(gServer->getNextPlayerId());
     }
 }

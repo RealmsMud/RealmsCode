@@ -18,7 +18,6 @@
 #include <cstring>        // for strncmp, strcmp
 #include <ostream>        // for basic_ostream::operator<<, operator<<, basi...
 
-#include "bstring.hpp"    // for bstring
 #include "cmd.hpp"        // for cmd
 #include "commands.hpp"   // for getFullstrText
 #include "creatures.hpp"  // for Creature, Player
@@ -36,8 +35,8 @@
 //                      getSize
 //*********************************************************************
 
-Size getSize(const bstring& str) {
-    int n = str.getLength();
+Size getSize(const std::string& str) {
+    int n = str.length();
     if(!n)
         return(NO_SIZE);
 
@@ -66,7 +65,7 @@ Size getSize(const bstring& str) {
 //                      getSizeName
 //*********************************************************************
 
-bstring getSizeName(Size size) {
+std::string getSizeName(Size size) {
     switch(size) {
     case SIZE_FINE:
         return("fine");
@@ -184,13 +183,13 @@ int sizePower(int lvl) {
 //                      splChangeSize
 //*********************************************************************
 
-int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const bstring& effect) {
-    bstring power = "", opposite = effect == "enlarge" ? "reduce" : "enlarge";
+int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const std::string& effect) {
+    std::string power = "", opposite = effect == "enlarge" ? "reduce" : "enlarge";
     EffectInfo *e=nullptr;
     Creature* target=nullptr;
     int     strength=0, num=0, pos=0;
 
-    bstring spell;
+    std::string spell;
     if(effect == "enlarge")
         spell = "an enlarge spell";
     else
@@ -291,12 +290,12 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const bstri
             (cmnd->num == 4 && pos == 2)
         ) {
             power = getFullstrText(cmnd->fullstr, pos);
-            if(power.left(3) == "to ") {
-                power = power.right(power.getLength() - 3);
+            if(power.substr(0, 3) == "to ") {
+                power = power.substr(3);
                 // reuse pos; it now stands for the size they want to send them to.
                 // if the difference between the target's current size and desired
                 // size is OK, then we let them.
-                pos = getSize(power.c_str());
+                pos = getSize(power);
                 int diff = (pos - target->getSize()) * (effect == "enlarge" ? 1 : -1);
 
                 if(!pos || diff > strength || diff < 1) {

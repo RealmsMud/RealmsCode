@@ -22,11 +22,10 @@
 #include <map>              // for operator==
 #include <utility>          // for pair
 
-#include "bstring.hpp"      // for bstring
-#include "config.hpp"       // for Config, BstringMap, MxpElementMap
+#include "config.hpp"       // for Config, stringMap, MxpElementMap
 #include "mxp.hpp"          // for MxpElement
 #include "paths.hpp"        // for Code
-#include "xml.hpp"          // for copyToBString, NODE_NAME, copyToBool, loa...
+#include "xml.hpp"          // for copyToString, NODE_NAME, copyToBool, loa...
 
 //*********************************************************************
 //                      loadMxpElements
@@ -61,9 +60,9 @@ bool Config::loadMxpElements() {
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, "MxpElement")) {
             auto* mxpElement = new MxpElement(curNode);
-            mxpElements.insert(std::pair<bstring, MxpElement*>(mxpElement->getName(), mxpElement));
+            mxpElements.insert(std::pair<std::string, MxpElement*>(mxpElement->getName(), mxpElement));
             if(mxpElement->isColor()) {
-                mxpColors.insert(std::pair<bstring, bstring>(mxpElement->getColor(), mxpElement->getName()));
+                mxpColors.insert(std::pair<std::string, std::string>(mxpElement->getColor(), mxpElement->getName()));
             }
         }
         curNode = curNode->next;
@@ -72,26 +71,26 @@ bool Config::loadMxpElements() {
     xmlCleanupParser();
     return(true);
 }
-//bstring name;
+//std::string name;
 //MxpType mxpType;
-//bstring command;
-//bstring hint;
+//std::string command;
+//std::string hint;
 //bool prompt;
-//bstring attributes;
-//bstring expire;
+//std::string attributes;
+//std::string expire;
 MxpElement::MxpElement(xmlNodePtr rootNode) {
     rootNode = rootNode->children;
     prompt = false;
     while(rootNode != nullptr)
     {
-        if(NODE_NAME(rootNode, "Name")) xml::copyToBString(name, rootNode);
-        else if(NODE_NAME(rootNode, "Command")) xml::copyToBString(command, rootNode);
-        else if(NODE_NAME(rootNode, "Hint")) xml::copyToBString(hint, rootNode);
-        else if(NODE_NAME(rootNode, "Type")) xml::copyToBString(mxpType, rootNode);
+        if(NODE_NAME(rootNode, "Name")) xml::copyToString(name, rootNode);
+        else if(NODE_NAME(rootNode, "Command")) xml::copyToString(command, rootNode);
+        else if(NODE_NAME(rootNode, "Hint")) xml::copyToString(hint, rootNode);
+        else if(NODE_NAME(rootNode, "Type")) xml::copyToString(mxpType, rootNode);
         else if(NODE_NAME(rootNode, "Prompt")) xml::copyToBool(prompt, rootNode);
-        else if(NODE_NAME(rootNode, "Attributes")) xml::copyToBString(attributes, rootNode);
-        else if(NODE_NAME(rootNode, "Expire")) xml::copyToBString(expire, rootNode);
-        else if(NODE_NAME(rootNode, "Color")) xml::copyToBString(color, rootNode);
+        else if(NODE_NAME(rootNode, "Attributes")) xml::copyToString(attributes, rootNode);
+        else if(NODE_NAME(rootNode, "Expire")) xml::copyToString(expire, rootNode);
+        else if(NODE_NAME(rootNode, "Color")) xml::copyToString(color, rootNode);
 
         rootNode = rootNode->next;
     }

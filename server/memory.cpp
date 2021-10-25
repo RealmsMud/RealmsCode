@@ -19,7 +19,6 @@
 #include <cstdio>                 // for sprintf
 #include <cstring>                // for strlen, strcmp
 
-#include "bstring.hpp"            // for operator+, bstring
 #include "cmd.hpp"                // for cmd
 #include "creatures.hpp"          // for Monster, Player
 #include "flags.hpp"              // for M_LOGIC_MONSTER, M_TALKS
@@ -34,22 +33,22 @@
 //                      sizeInfo
 //*********************************************************************
 
-bstring sizeInfo(long size) {
+std::string sizeInfo(long size) {
     int i=0;
     for(; size > 1024 && i < 4; i++)
         size /= 1024;
 
     switch(i) {
     case 0:
-        return((bstring)size + " bytes");
+        return(std::to_string(size) + " bytes");
     case 1:
-        return((bstring)size + "kb");
+        return(std::to_string(size) + "kb");
     case 2:
-        return((bstring)size + "mb");
+        return(std::to_string(size) + "mb");
     case 3:
-        return((bstring)size + "gb");
+        return(std::to_string(size) + "gb");
     default:
-        return((bstring)size + "tb");
+        return(std::to_string(size) + "tb");
     }
 }
 

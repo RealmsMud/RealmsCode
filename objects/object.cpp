@@ -20,7 +20,6 @@
 #include <cstring>                // for strcpy, strtok, strcat, strcmp, strlen
 #include <ctime>                  // for time
 
-#include "bstring.hpp"            // for bstring
 #include "cmd.hpp"                // for cmd
 #include "commands.hpp"           // for timestr
 #include "config.hpp"             // for Config, gConfig
@@ -68,14 +67,14 @@ const std::map<ObjectType,const char*> Object::objTypeToString = {
 };
 
 
-bstring Object::getTypeName() const {
+std::string Object::getTypeName() const {
     if(objTypeToString.find(type) == objTypeToString.end())
         return("error");
 
     return objTypeToString.at(type);
 }
 
-bstring Object::getMaterialName() const {
+std::string Object::getMaterialName() const {
     switch(material) {
         case WOOD:
             return("wood");
@@ -165,11 +164,11 @@ bool listObjectSee(const Player* player, Object* object, bool showAll) {
     ) );
 }
 
-bstring Container::listObjects(const Player* player, bool showAll, char endColor) const {
+std::string Container::listObjects(const Player* player, bool showAll, char endColor) const {
     Object  *object=nullptr;
     int     num=1, n=0;
     unsigned int flags = player->displayFlags();
-    bstring str = "";
+    std::string str = "";
 
     ObjectSet::iterator it;
     for( it = objects.begin() ; it != objects.end() ; ) {
@@ -414,7 +413,7 @@ bool cantDropInBag(Object* object) {
 //                      findObj
 //*********************************************************************
 
-MudObject* Creature::findObjTarget(ObjectSet &set, unsigned int findFlags, const bstring& str, int val, int* match) {
+MudObject* Creature::findObjTarget(ObjectSet &set, unsigned int findFlags, const std::string& str, int val, int* match) {
     if(set.empty())
         return(nullptr);
 
@@ -438,8 +437,8 @@ int displayObject(Player* player, Object* target) {
     unsigned int i=0;
     char str[2048];
     char filename[256];
-    bstring inv = "";
-    bstring requiredSkillString = "";
+    std::string inv = "";
+    std::string requiredSkillString = "";
 
     unsigned int flags = player->displayFlags();
 
@@ -871,7 +870,7 @@ short Object::getMinStrength() const { return(minStrength); }
 short Object::getClan() const { return(clan); }
 short Object::getSpecial() const { return(special); }
 short Object::getQuestnum() const { return(questnum); }
-bstring Object::getEffect() const { return(effect); }
+std::string Object::getEffect() const { return(effect); }
 long Object::getEffectDuration() const { return(effectDuration); }
 short Object::getEffectStrength() const { return(effectStrength); }
 unsigned long Object::getCoinCost() const { return(coinCost); }
@@ -882,7 +881,7 @@ short Object::getLotteryNumbers(short i) const {return(lotteryNumbers[i]); }
 int Object::getRecipe() const { return(recipe); }
 Material Object::getMaterial() const { return(material); }
 
-bstring Object::getSubType() const { return(subType); }
+std::string Object::getSubType() const { return(subType); }
 short Object::getDelay() const { return(delay); }
 short Object::getExtra() const { return(extra); }
 short Object::getWeaponDelay() const {
@@ -890,9 +889,9 @@ short Object::getWeaponDelay() const {
         return(DEFAULT_WEAPON_DELAY);
     return(delay);
 }
-bstring Object::getQuestOwner() const { return(questOwner); }
+std::string Object::getQuestOwner() const { return(questOwner); }
 
-bstring Object::getSizeStr() const{
+std::string Object::getSizeStr() const{
     return(getSizeName(size));
 }
 
@@ -918,7 +917,7 @@ bool Object::isQuestOwner(const Player* player) const {
 //                      getWearName
 //*********************************************************************
 
-bstring Object::getWearName() {
+std::string Object::getWearName() {
     switch(wearflag) {
     case 1:
         return("Body");

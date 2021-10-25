@@ -17,7 +17,6 @@
  */
 #include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
 
-#include "bstring.hpp"                              // for bstring
 #include "proto.hpp"                                // for whatSize
 #include "size.hpp"                                 // for Size, NO_SIZE
 #include "track.hpp"                                // for Track
@@ -36,7 +35,7 @@ Track::Track() {
 
 short Track::getNum() const { return(num); }
 Size Track::getSize() const { return(size); }
-bstring Track::getDirection() const { return(direction); }
+std::string Track::getDirection() const { return(direction); }
 
 void Track::setNum(short n) { num = MAX<short>(0, n); }
 void Track::setSize(Size s) { size = s; }
@@ -50,7 +49,7 @@ void Track::load(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
 
     while(childNode) {
-        if(NODE_NAME(childNode, "Direction")) xml::copyToBString(direction, childNode);
+        if(NODE_NAME(childNode, "Direction")) xml::copyToString(direction, childNode);
         else if(NODE_NAME(childNode, "Size")) size = whatSize(xml::toNum<int>(childNode));
         else if(NODE_NAME(childNode, "Num")) xml::copyToNum(num, childNode);
 

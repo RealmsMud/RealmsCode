@@ -21,7 +21,6 @@
 
 class Location;
 class CatRef;
-class bstring;
 
 class StartLoc {
 public:
@@ -29,9 +28,9 @@ public:
     void    load(xmlNodePtr curNode);
     void    save(xmlNodePtr curNode) const;
 
-    [[nodiscard]] bstring getName() const;
-    [[nodiscard]] bstring getBindName() const;
-    [[nodiscard]] bstring getRequiredName() const;
+    [[nodiscard]] std::string getName() const;
+    [[nodiscard]] std::string getBindName() const;
+    [[nodiscard]] std::string getRequiredName() const;
     [[nodiscard]] Location getBind() const;
     [[nodiscard]] Location getRequired() const;
     [[nodiscard]] CatRef getStartingGuide() const;
@@ -40,9 +39,9 @@ public:
     void    setDefault();
 
 protected:
-    bstring name;
-    bstring bindName;
-    bstring requiredName;
+    std::string name;
+    std::string bindName;
+    std::string requiredName;
     Location bind;
     Location required;
     CatRef startingGuide;

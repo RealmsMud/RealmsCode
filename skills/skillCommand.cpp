@@ -16,22 +16,13 @@
  *
  */
 
-#include <boost/python/errors.hpp>        // for error_already_set
-#include <boost/python/extract.hpp>       // for extract
-#include <boost/python/handle.hpp>        // for handle
-#include <boost/python/object_core.hpp>   // for object, object_operators
-#include <boost/python/ptr.hpp>           // for pointer_wrapper, ptr
-
-#include "bstring.hpp"                    // for bstring, operator+
 #include "cmd.hpp"                        // for cmd
 #include "creatures.hpp"                  // for Creature, Player
-#include "dictobject.h"                   // for PyDict_New
 #include "global.hpp"                     // for FIND_MON_ROOM, FIND_PLY_ROOM
-#include "import.h"                       // for PyImport_ImportModule
 #include "money.hpp"                      // for GOLD, Money
 #include "mudObject.hpp"                  // for MudObject
-#include "pythonHandler.hpp"              // for addMudObjectToDictionary
-#include "server.hpp"                     // for Server, gServer
+#include "pythonHandler.hpp"
+#include "server.hpp"
 #include "skills.hpp"                     // for SkillCommand, Skill, SkillCost
 
 int getFindWhere(TargetType targetType) {
@@ -61,7 +52,7 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
     if(!creature->ableToDoCommand(cmnd))
         return(0);
 
-    bstring str = cmnd->myCommand->getName();
+    std::string str = cmnd->myCommand->getName();
     const auto* skillCmd = dynamic_cast<const SkillCommand*>(cmnd->myCommand);
     if(!skillCmd) {
         *creature << "Invalid skill!\n";
@@ -77,7 +68,7 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
 
     MudObject* target = nullptr;
     if(skillCmd->getTargetType() != TARGET_NONE) {
-        bstring toFind = cmnd->str[1];
+        std::string toFind = cmnd->str[1];
         int num = cmnd->val[1];
         target = creature->findTarget(getFindWhere(skillCmd->getTargetType()), 0, toFind, num);
 
@@ -185,30 +176,21 @@ int SkillCommand::getFailCooldown() const {
 
 bool SkillCommand::runScript(Creature* actor, MudObject* target, Skill* skill) const {
     try {
-        bp::object localNamespace( (bp::handle<>(PyDict_New())));
+        auto locals = py::dict();
+        auto skillLibModule = py::module::import("skillLib");
+        locals["skillLib"] = skillLibModule;
+        locals["skill"] = skill;
+        locals["skillCmd"] = this;
 
-        bp::object skillModule( (bp::handle<>(PyImport_ImportModule("skillLib"))) );
+        PythonHandler::addMudObjectToDictionary(locals, "actor", actor);
+        PythonHandler::addMudObjectToDictionary(locals, "target", target);
 
-        localNamespace["skillLib"] = skillModule;
-
-        localNamespace["skill"] = bp::ptr(skill);
-        localNamespace["skillCmd"] = bp::ptr(this);
-
-        // Default retVal is true
-        localNamespace["retVal"] = true;
-        addMudObjectToDictionary(localNamespace, "actor", actor);
-        addMudObjectToDictionary(localNamespace, "target", target);
-
-
-        gServer->runPython(pyScript, localNamespace);
-
-        bool retVal = bp::extract<bool>(localNamespace["retVal"]);
-        //std::clog << "runScript returning: " << retVal << std::endl;
-        return(retVal);
+        return (gServer->runPythonWithReturn(pyScript, locals));
     }
-    catch( bp::error_already_set) {
-        gServer->handlePythonError();
+    catch( pybind11::error_already_set& e) {
+        PythonHandler::handlePythonError(e);
     }
+
     return(false);
 }
 TargetType SkillCommand::getTargetType() const {
@@ -290,7 +272,7 @@ void Creature::subResource(ResourceType resType, int resCost) {
 //********************************************************************************
 // GetResourceName
 //********************************************************************************
-bstring getResourceName(ResourceType resType) {
+std::string getResourceName(ResourceType resType) {
     switch(resType) {
         case RES_NONE:
         default:
@@ -316,7 +298,7 @@ bstring getResourceName(ResourceType resType) {
 bool SkillCommand::checkResources(Creature* creature) const {
     for(const auto& res : resources) {
         if(!creature->checkResource(res.resource, res.cost)) {
-            bstring failMsg = bstring("You need to have at least ") + res.cost + " " + getResourceName(res.resource) + ".\n";
+            std::string failMsg = fmt::format("You need to have at least {} {}.\n", res.cost, getResourceName(res.resource));
             return(creature->checkStaff(failMsg.c_str()));
         }
     }

@@ -30,8 +30,8 @@ public:
     ~LevelGain();
     std::list<SkillGain*>::const_iterator getSkillBegin();
     std::list<SkillGain*>::const_iterator getSkillEnd();
-    bstring getStatStr();
-    bstring getSaveStr();
+    std::string getStatStr();
+    std::string getSaveStr();
     int getStat();
     int getSave();
     int getHp();

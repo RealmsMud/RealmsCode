@@ -25,7 +25,6 @@
 #include <iomanip>                                  // for operator<<, setw
 #include <sstream>                                  // for operator<<, basic...
 
-#include "bstring.hpp"                              // for bstring, operator+
 #include "catRef.hpp"                               // for CatRef
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for getFullstrText
@@ -91,7 +90,7 @@ void Recipe::setResult(const CatRef& cr) {
     resultName = "";
 }
 
-bstring Recipe::getResultName(bool appendCr) {
+std::string Recipe::getResultName(bool appendCr) {
     Object* object=nullptr;
     if(resultName.empty() || resultName == "<unknown item>") {
         if(object || loadObject(result, &object)) {
@@ -106,9 +105,9 @@ bstring Recipe::getResultName(bool appendCr) {
         oStr << " (" << result.rstr() << ")";
     return(oStr.str());
 }
-bstring Recipe::getSkill() const { return(skill); }
+std::string Recipe::getSkill() const { return(skill); }
 void Recipe::setSkill(std::string_view s) { skill = s; }
-bstring Recipe::getCreator() const { return(creator); }
+std::string Recipe::getCreator() const { return(creator); }
 void Recipe::setCreator(std::string_view c) { creator = c; }
 int Recipe::getMinSkill() const { return(minSkill); }
 bool Recipe::requiresRecipe() const { return(requireRecipe); }
@@ -251,7 +250,7 @@ bool Recipe::check(std::list<CatRef>* list, const std::list<CatRef>* require, in
 //                      listIngredients
 //**********************************************************************
 
-bstring Recipe::listIngredients(const std::list<CatRef>* list) const {
+std::string Recipe::listIngredients(const std::list<CatRef>* list) const {
     Object* object=nullptr;
     std::list<CatRef>::const_iterator it;
     std::ostringstream oStr;
@@ -314,7 +313,7 @@ std::ostream& operator<<(std::ostream& out, Recipe* recipe) {
     return(out);
 }
 
-bstring Recipe::display() {
+std::string Recipe::display() {
     std::ostringstream oStr;
 
     if(!isValid()) {
@@ -440,7 +439,7 @@ Recipe* Config::searchRecipes(const Player* player, std::string_view skill, Size
     Recipe* recipe=nullptr;
     int     flags = player->displayFlags();
     unsigned int num=0;
-    bstring str = "";
+    std::string str = "";
     // passing in object means we don't want to print failures
     bool print = !object;
 
@@ -554,7 +553,7 @@ int cmdRecipes(Player* player, cmd* cmnd) {
     int     i=0, shown=0;
     std::list<int>::iterator it;
     std::ostringstream oStr;
-    bstring filter = "";
+    std::string filter = "";
 
     oStr.setf(std::ios::left, std::ios::adjustfield);
 
@@ -638,12 +637,12 @@ int cmdRecipes(Player* player, cmd* cmnd) {
 
 Recipe* Player::findRecipe(cmd* cmnd, std::string_view skill, bool* searchRecipes, Size recipeSize, int numIngredients) const {
     std::list<int>::const_iterator it;
-    bstring txt = getFullstrText(cmnd->fullstr, 1);
+    std::string txt = getFullstrText(cmnd->fullstr, 1);
 
-    if(txt.getAt(0) == '#' || isdigit(txt.getAt(0))) {
+    if(txt.at(0) == '#' || isdigit(txt.at(0))) {
         int id=0, n=0;
-        if(txt.getAt(0) == '#')
-            txt.Delete(0, 1);
+        if(txt.at(0) == '#')
+            txt.erase(0, 1);
         id = atoi(txt.c_str());
 
         for(it = recipes.begin(); it != recipes.end() ; it++) {
@@ -690,7 +689,7 @@ int dmCombine(Player* player, cmd* cmnd) {
     Recipe *recipe=nullptr;
     std::list<CatRef> objects;
     std::list<CatRef>* list;
-    bstring txt = "";
+    std::string txt = "";
 
     if(!player->canBuildObjects())
         return(cmdNoAuth(player));
@@ -754,7 +753,7 @@ int dmCombine(Player* player, cmd* cmnd) {
 
 int dmSetRecipe(Player* player, cmd* cmnd) {
     Recipe* recipe = gConfig->getRecipe(cmnd->val[1]);
-    bstring txt = "";
+    std::string txt = "";
 
     if(!player->canBuildObjects())
         return(cmdNoAuth(player));
@@ -852,14 +851,14 @@ int dmRecipes(Player* player, cmd* cmnd) {
     std::list<CatRef>::iterator lIt;
     Recipe* recipe=nullptr;
     std::ostringstream oStr;
-    bstring txt = getFullstrText(cmnd->fullstr, 1);
+    std::string txt = getFullstrText(cmnd->fullstr, 1);
 
     if(!player->canBuildObjects())
         return(cmdNoAuth(player));
 
     oStr.setf(std::ios::left, std::ios::adjustfield);
 
-    if(!txt.empty() && isdigit(txt.getAt(0))) {
+    if(!txt.empty() && isdigit(txt.at(0))) {
         bool    i=false;
 
         recipe = gConfig->getRecipe(atoi(txt.c_str()));
@@ -1189,7 +1188,7 @@ int cmdUnprepareObject(Player* player, cmd* cmnd) {
     return(0);
 }
 
-void Player::checkFreeSkills(std::string_view skill) {
+void Player::checkFreeSkills(const std::string &skill) {
     if( skill == "smithing" ||
         skill == "cooking" ||
         skill == "fishing" ||
@@ -1210,8 +1209,8 @@ int cmdCraft(Player* player, cmd* cmnd) {
     const Recipe* recipe=nullptr;
     bool succeed=true, searchRecipes=false;
     std::list<int>::iterator it;
-    bstring skill = "", action = cmnd->myCommand->getName(), reqSize = "";
-    bstring result = "created", fail = "create";
+    std::string skill, action = cmnd->myCommand->getName(), reqSize;
+    std::string result = "created", fail = "create";
     long t = time(nullptr);
     Size size = player->getSize();
     int numIngredients = 1;

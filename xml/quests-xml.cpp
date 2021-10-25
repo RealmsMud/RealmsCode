@@ -16,6 +16,7 @@
  *
  */
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include "config.hpp"                               // for Config, gConfig
 #include "quests.hpp"                               // for QuestCompletion
 #include "xml.hpp"                                  // for NODE_NAME, newStr...
@@ -29,7 +30,7 @@ QuestCatRef::QuestCatRef(xmlNodePtr rootNode) {
     // And then read in the XML file
     xmlNodePtr curNode = rootNode->children;
     while(curNode) {
-        if(NODE_NAME(curNode, "Area")) xml::copyToBString(area, curNode);
+        if(NODE_NAME(curNode, "Area")) xml::copyToString(area, curNode);
         else if(NODE_NAME(curNode, "Id")) xml::copyToNum(id, curNode);
         else if(NODE_NAME(curNode, "ReqAmt")) xml::copyToNum(reqNum, curNode);
         else if(NODE_NAME(curNode, "CurAmt")) xml::copyToNum(curNum, curNode);
@@ -37,7 +38,7 @@ QuestCatRef::QuestCatRef(xmlNodePtr rootNode) {
         curNode = curNode->next;
     }
 }
-xmlNodePtr QuestCatRef::save(xmlNodePtr rootNode, const bstring& saveName) const {
+xmlNodePtr QuestCatRef::save(xmlNodePtr rootNode, const std::string& saveName) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, saveName.c_str());
 
     xml::newStringChild(curNode, "Area", area);
@@ -48,7 +49,7 @@ xmlNodePtr QuestCatRef::save(xmlNodePtr rootNode, const bstring& saveName) const
 }
 
 QuestInfo::QuestInfo(xmlNodePtr rootNode) {
-    bstring faction = "";
+    std::string faction = "";
 
     questId = xml::getIntProp(rootNode, "Num");
     repeatable = sharable = false;
@@ -57,11 +58,11 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
 
     xmlNodePtr curNode = rootNode->children;
     while(curNode) {
-        if(NODE_NAME(curNode, "Name")) xml::copyToBString(name, curNode);
-        else if(NODE_NAME(curNode, "Revision")) xml::copyToBString(revision, curNode);
-        else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
-        else if(NODE_NAME(curNode, "ReceiveString")) xml::copyToBString(receiveString, curNode);
-        else if(NODE_NAME(curNode, "CompletionString")) xml::copyToBString(completionString, curNode);
+        if(NODE_NAME(curNode, "Name")) xml::copyToString(name, curNode);
+        else if(NODE_NAME(curNode, "Revision")) xml::copyToString(revision, curNode);
+        else if(NODE_NAME(curNode, "Description")) xml::copyToString(description, curNode);
+        else if(NODE_NAME(curNode, "ReceiveString")) xml::copyToString(receiveString, curNode);
+        else if(NODE_NAME(curNode, "CompletionString")) xml::copyToString(completionString, curNode);
         else if(NODE_NAME(curNode, "TimesRepeatable")) xml::copyToNum(timesRepeatable, curNode);
         else if(NODE_NAME(curNode, "RepeatFrequency")) xml::copyToNum<QuestRepeatFrequency, short>(repeatFrequency, curNode);
         else if(NODE_NAME(curNode, "Sharable")) xml::copyToBool(sharable, curNode);
@@ -106,7 +107,7 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
                 else if(NODE_NAME(childNode, "AlignmentChange")) xml::copyToNum(alignmentChange, childNode);
                 else if(NODE_NAME(childNode, "Object")) itemRewards.emplace_back(childNode);
                 else if(NODE_NAME(childNode, "Faction")) {
-                    xml::copyPropToBString(faction, childNode, "id");
+                    xml::copyPropToString(faction, childNode, "id");
                     if(!faction.empty())
                         factionRewards[faction] = xml::toNum<long>(childNode) * -1;
                 }
@@ -152,10 +153,10 @@ TalkResponse::TalkResponse(xmlNodePtr rootNode) {
     // And then read in the XML file
     xmlNodePtr curNode = rootNode->children;
     while(curNode) {
-        if(NODE_NAME(curNode, "Keyword")) keywords.push_back(xml::getBString(curNode).toLower());
-        else if(NODE_NAME(curNode, "Response")) xml::copyToBString(response, curNode);
+        if(NODE_NAME(curNode, "Keyword")) keywords.push_back(boost::to_lower_copy(xml::getString(curNode)));
+        else if(NODE_NAME(curNode, "Response")) xml::copyToString(response, curNode);
         else if(NODE_NAME(curNode, "Action")) {
-            xml::copyToBString(action, curNode);
+            xml::copyToString(action, curNode);
             parseQuest();
         }
 
@@ -166,7 +167,7 @@ TalkResponse::TalkResponse(xmlNodePtr rootNode) {
 xmlNodePtr TalkResponse::saveToXml(xmlNodePtr rootNode) const {
     xmlNodePtr talkNode = xml::newStringChild(rootNode, "TalkResponse");
 
-    for(std::string_view  keyword : keywords) {
+    for(const auto& keyword : keywords) {
         xml::newStringChild(talkNode, "Keyword", keyword);
     }
     xml::newStringChild(talkNode, "Response", response);

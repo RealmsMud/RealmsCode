@@ -17,8 +17,8 @@
  */
 #include <cstring>       // for strncmp
 #include <sstream>        // for operator<<, basic_ostream, char_traits, ost...
+#include <boost/algorithm/string/case_conv.hpp>
 
-#include "bstring.hpp"    // for bstring
 #include "cmd.hpp"        // for cmd
 #include "creatures.hpp"  // for Creature, Player
 #include "color.hpp"      // for stripColor
@@ -68,17 +68,17 @@ bool Exit::operator< (const MudObject& t) const {
 }
 
 short Exit::getLevel() const { return(level); }
-bstring Exit::getOpen() const { return(open); }
+std::string Exit::getOpen() const { return(open); }
 short Exit::getTrap() const { return(trap); }
 short Exit::getKey() const { return(key); }
-bstring Exit::getKeyArea() const { return(keyArea); }
+std::string Exit::getKeyArea() const { return(keyArea); }
 short Exit::getToll() const { return(toll); }
-bstring Exit::getPassPhrase() const { return(passphrase); }
+std::string Exit::getPassPhrase() const { return(passphrase); }
 short Exit::getPassLanguage() const { return(passlang); }
-bstring Exit::getDescription() const { return(description); }
+std::string Exit::getDescription() const { return(description); }
 Size Exit::getSize() const { return(size); }
 Direction Exit::getDirection() const { return(direction); }
-bstring Exit::getEnter() const { return(enter); }
+std::string Exit::getEnter() const { return(enter); }
 BaseRoom* Exit::getRoom() const { return(parentRoom); }
 
 void Exit::setLevel(short lvl) { level = lvl; }
@@ -110,7 +110,7 @@ void Exit::checkReLock(Creature* creature, bool sneaking) {
             setFlag(X_LOCKED);
             nowLocked = true;
         }
-        bstring exitAction;
+        std::string exitAction;
         if(nowClosed && nowLocked) {
             exitAction = "closes and locks itself";
         } else if (nowClosed) {
@@ -156,7 +156,7 @@ Exit *findExit(Creature* creature, cmd* cmnd, int val, BaseRoom* room) {
     return(findExit(creature, cmnd->str[val], cmnd->val[val], room));
 }
 
-Exit *findExit(Creature* creature, bstring str, int val, BaseRoom* room) {
+Exit *findExit(Creature* creature, std::string str, int val, BaseRoom* room) {
     int     match=0;
     bool    minThree = (creature->getAsPlayer() && !creature->isStaff() && str.length() < 3);
     str = stripColor(str);
@@ -166,8 +166,7 @@ Exit *findExit(Creature* creature, bstring str, int val, BaseRoom* room) {
             return(nullptr);
 
     for(Exit* exit : room->exits) {
-        bstring name = stripColor(exit->getName());
-        name = name.toLower();
+        auto name = boost::algorithm::to_lower_copy(exit->getName());
 
         if(!creature->isStaff()) {
             if(!creature->canSee(exit))
@@ -403,7 +402,7 @@ Exit* Exit::getReturnExit(const BaseRoom* parent, BaseRoom** targetRoom) const {
 //                      blockedByStr
 //*********************************************************************
 
-bstring Exit::blockedByStr(char color, std::string_view spell, std::string_view effectName, bool detectMagic, bool canSee) const {
+std::string Exit::blockedByStr(char color, std::string_view spell, std::string_view effectName, bool detectMagic, bool canSee) const {
     EffectInfo* effect = nullptr;
     std::ostringstream oStr;
 
@@ -443,7 +442,7 @@ bool Player::showExit(const Exit* exit, int magicShowHidden) const {
 // Add an effect to the given exit and the return exit (ie, an exit in
 // the room it points to that points back to this room)
 
-void Exit::addEffectReturnExit(std::string_view effect, long duration, int strength, const Creature* owner) {
+void Exit::addEffectReturnExit(const std::string &effect, long duration, int strength, const Creature* owner) {
     BaseRoom *targetRoom=nullptr;
 
     addEffect(effect, duration, strength, nullptr, true, owner);
@@ -459,7 +458,7 @@ void Exit::addEffectReturnExit(std::string_view effect, long duration, int stren
 // Add an effect to the given exit and the return exit (ie, an exit in
 // the room it points to that points back to this room)
 
-void Exit::removeEffectReturnExit(std::string_view effect, BaseRoom* rParent) {
+void Exit::removeEffectReturnExit(const std::string &effect, BaseRoom* rParent) {
     BaseRoom *targetRoom=nullptr;
 
     removeEffect(effect, true, false);
@@ -499,8 +498,8 @@ bool Exit::isConcealed(const Creature* viewer) const {
 //                      getDir
 //*********************************************************************
 
-Direction getDir(bstring str) {
-    size_t n = str.getLength();
+Direction getDir(std::string str) {
+    size_t n = str.length();
     if(!n)
         return(NoDirection);
     str = stripColor(str);
@@ -528,7 +527,7 @@ Direction getDir(bstring str) {
 //                      getDirName
 //*********************************************************************
 
-bstring getDirName(Direction dir) {
+std::string getDirName(Direction dir) {
     switch(dir) {
     case North:
         return("north");

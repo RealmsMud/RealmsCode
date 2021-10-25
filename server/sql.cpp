@@ -37,7 +37,7 @@
 // Returns the connection string needed to connect to the database specified
 // by the config
 
-bstring Config::getDbConnectionString() {
+std::string Config::getDbConnectionString() {
     std::ostringstream connStr;
     if(logDbType == "mysql") {
        connStr << "Driver=MySQL;";
@@ -92,8 +92,8 @@ void Server::cleanUpSql() {
     connActive = false;
 }
 
-bool Server::logGoldSql(bstring& pName, bstring& pId, bstring& targetStr, bstring& source, bstring& room,
-                        bstring& logType, unsigned long amt, bstring& direction)
+bool Server::logGoldSql(std::string& pName, std::string& pId, std::string& targetStr, std::string& source, std::string& room,
+                        std::string& logType, unsigned long amt, std::string& direction)
 {
     if (!connActive)
         return (false);

@@ -19,7 +19,6 @@
 #include <libxml/parser.h>  // for xmlNodePtr, xmlNode
 
 #include "area.hpp"         // for MapMarker, Area
-#include "bstring.hpp"      // for bstring
 #include "catRef.hpp"       // for CatRef
 #include "creatures.hpp"    // for Player
 #include "location.hpp"     // for Location
@@ -27,7 +26,7 @@
 #include "server.hpp"       // for Server, gServer
 #include "xml.hpp"          // for newStringChild, loadRoom, NODE_NAME
 
-void Location::save(xmlNodePtr rootNode, std::string_view name) const {
+void Location::save(xmlNodePtr rootNode, const std::string &name) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, name);
     room.save(curNode, "Room", false);
     if(mapmarker.getArea()) {

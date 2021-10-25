@@ -38,6 +38,4 @@ inline const Type& MAX(const Type& arg1, const Type& arg2)
     return arg2 > arg1 ? arg2 : arg1;
 }
 
-
-
 #endif /* UTILS_H_ */

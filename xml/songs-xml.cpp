@@ -17,7 +17,7 @@
  */
 
 #include "songs.hpp"                                // for Song
-#include "xml.hpp"                                  // for copyToBString
+#include "xml.hpp"                                  // for copyToString
 
 
 //*********************************************************************
@@ -32,15 +32,15 @@ Song::Song(xmlNodePtr rootNode) {
 
     while(curNode) {
         if(NODE_NAME(curNode, "Name")) {
-            xml::copyToBString(name, curNode);
+            xml::copyToString(name, curNode);
             parseName();
         }
-        else if(NODE_NAME(curNode, "Script")) xml::copyToBString(script, curNode);
-        else if(NODE_NAME(curNode, "Effect")) xml::copyToBString(effect, curNode);
-        else if(NODE_NAME(curNode, "Type")) xml::copyToBString(type, curNode);
-        else if(NODE_NAME(curNode, "TargetType")) xml::copyToBString(targetType, curNode);
+        else if(NODE_NAME(curNode, "Script")) xml::copyToString(script, curNode);
+        else if(NODE_NAME(curNode, "Effect")) xml::copyToString(effect, curNode);
+        else if(NODE_NAME(curNode, "Type")) xml::copyToString(type, curNode);
+        else if(NODE_NAME(curNode, "TargetType")) xml::copyToString(targetType, curNode);
         else if(NODE_NAME(curNode, "Priority")) xml::copyToNum(priority, curNode);
-        else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
+        else if(NODE_NAME(curNode, "Description")) xml::copyToString(description, curNode);
         else if(NODE_NAME(curNode, "Delay")) xml::copyToNum(delay, curNode);
         else if(NODE_NAME(curNode, "Duration")) xml::copyToNum(duration, curNode);
 

@@ -42,7 +42,7 @@
 //                      getDisplayString
 //*********************************************************************
 
-bstring AlchemyInfo::getDisplayString() {
+std::string AlchemyInfo::getDisplayString() {
     std::ostringstream displayStr;
 
     displayStr << "^W" << std::setw(25) << name << "^x - " << (positive ? "yes" : " ^rno^x") << " - " << std::setw(-15);
@@ -57,19 +57,19 @@ bstring AlchemyInfo::getDisplayString() {
 
 
 
-std::string_view AlchemyInfo::getName() const {
+const std::string & AlchemyInfo::getName() const {
     return(name);
 }
-std::string_view AlchemyInfo::getAction() const {
+const std::string & AlchemyInfo::getAction() const {
     return(action);
 }
-std::string_view AlchemyInfo::getPythonScript() const {
+const std::string & AlchemyInfo::getPythonScript() const {
     return(pythonScript);
 }
-std::string_view AlchemyInfo::getPotionPrefix() const {
+const std::string & AlchemyInfo::getPotionPrefix() const {
     return(potionPrefix);
 }
-std::string_view AlchemyInfo::getPotionDisplayName() const {
+const std::string & AlchemyInfo::getPotionDisplayName() const {
     return(potionDisplayName);
 }
 
@@ -105,7 +105,7 @@ bool Config::clearAlchemy() {
 //                      getAlchemyInfo
 //*********************************************************************
 
-const AlchemyInfo *Config::getAlchemyInfo(std::string_view effect) const {
+const AlchemyInfo *Config::getAlchemyInfo(const std::string &effect) const {
     auto it = alchemy.find(effect);
 
     if(it != alchemy.end())
@@ -125,10 +125,10 @@ namespace Alchemy {
         return(MAX_ALCHEMY_DURATION);
     }
 
-    bstring getEffectString(Object* obj, std::string_view effect) {
+    std::string getEffectString(Object* obj, std::string_view effect) {
         if(!obj || effect.empty())
             return("*invalid*");
-        return(obj->info.rstr() + "|" + effect);
+        return fmt::format("{}|{}", obj->info.rstr(), effect);
     }
 
     int numEffectsVisisble(const int skillLevel) {
@@ -165,7 +165,7 @@ AlchemyEffect::AlchemyEffect(const AlchemyEffect &ae) {
 //                      getEffect
 //*********************************************************************
 
-std::string_view AlchemyEffect::getEffect() const {
+const std::string & AlchemyEffect::getEffect() const {
     return(effect);
 }
 
@@ -228,7 +228,7 @@ bool Player::alchemyEffectVisible(Object* obj, std::string_view effect) {
     if(obj->getType() != ObjectType::HERB)
         return(false);
 
-    bstring effectStr = Alchemy::getEffectString(obj, effect);
+    std::string effectStr = Alchemy::getEffectString(obj, effect);
 
     return((knownAlchemyEffects.find(effectStr) != knownAlchemyEffects.end()));
 
@@ -242,7 +242,7 @@ bool Player::learnAlchemyEffect(Object* obj, std::string_view effect) {
     if(!obj || effect.empty())
         return(false);
 
-    bstring effectStr = Alchemy::getEffectString(obj, effect);
+    std::string effectStr = Alchemy::getEffectString(obj, effect);
     if(knownAlchemyEffects.find(effectStr) == knownAlchemyEffects.end()) {
         *this << ColorOn << "You have discovered a new alchemy effect: ^W" << obj->getName() << "^x has the effect: ^W" << effect << "^x\n" << ColorOff;
         knownAlchemyEffects[effectStr] = true;
@@ -257,8 +257,8 @@ bool Player::learnAlchemyEffect(Object* obj, std::string_view effect) {
 //*********************************************************************
 // NOTE: A null player is perfectly valid, so handle it properly
 
-bstring Object::showAlchemyEffects(Player *player) {
-    bstring toReturn;
+std::string Object::showAlchemyEffects(Player *player) {
+    std::string toReturn;
     int skillLevel=0, numVisible=0;
     bool isct = false, visible=false;
 
@@ -302,9 +302,9 @@ bstring Object::showAlchemyEffects(Player *player) {
             if(isct) {
                 // Potions have duration/strength, herbs have quality
                 if(type == ObjectType::POTION)
-                    outStr << bstring(" D: ") << p.second.getDuration() << " S: " << p.second.getStrength();
+                    outStr << std::string(" D: ") << p.second.getDuration() << " S: " << p.second.getStrength();
                 else
-                    outStr << bstring(" Q: ") << p.second.getQuality();
+                    outStr << std::string(" Q: ") << p.second.getQuality();
             }
             outStr << "\n";
         }
@@ -382,7 +382,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
     }
 
     // Effects on the final potion
-    std::map<bstring, AlchemyEffect> effects;
+    std::map<std::string, AlchemyEffect> effects;
 
     if(mortar->getShotsCur() >= 2) {
         HerbMap effectCount;
@@ -397,7 +397,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 
             for(auto& p : herb->alchemyEffects) {
 
-                bstring effect = p.second.getEffect();
+                std::string effect = std::string(p.second.getEffect());
                 effectCount[effect].push_back(herb);
 
                 if(effects.find(effect) == effects.end()) {

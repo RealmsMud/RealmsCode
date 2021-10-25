@@ -30,7 +30,7 @@ Makefile
 # Project files
 /nbproject/
 .idea/*
-*.cbp
+**/*.cbp
 
 # Compiled Object files
 *.slo
@@ -66,4 +66,4 @@ RealmsCode
 
 # Config files
 docker/web/conf/*
-
+/lib/pybind11/pybind11.cbp

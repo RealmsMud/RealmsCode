@@ -17,7 +17,6 @@
  */
 #include <string>         // for operator==, basic_string
 
-#include "bstring.hpp"    // for bstring, operator+
 #include "cmd.hpp"        // for cmd
 #include "creatures.hpp"  // for Creature, Player, Monster
 #include "flags.hpp"      // for R_AIR_BONUS, R_COLD_BONUS, R_EARTH_BONUS
@@ -56,7 +55,7 @@ int getOffensiveSpell(Realm realm, int level) {
 bool Creature::checkResistPet(Creature *pet, bool& resistPet, bool& immunePet, bool& vulnPet) {
     if(!pet->isPet())
         return(false);
-    bstring realm = getRealmSpellName(pet->getAsConstMonster()->getBaseRealm());
+    std::string realm = getRealmSpellName(pet->getAsConstMonster()->getBaseRealm());
     resistPet = isEffected("resist-" + realm);
     immunePet = isEffected("immune-" + realm);
     vulnPet = isEffected("vuln-" + realm);
@@ -84,7 +83,7 @@ int getRealmRoomBonusFlag(Realm realm) {
 //                      getRealmSpellName
 //*********************************************************************
 
-bstring getRealmSpellName(Realm realm) {
+std::string getRealmSpellName(Realm realm) {
     if(realm==EARTH) return("earth");
     else if(realm==WIND) return("air");
     else if(realm==WATER) return("water");
@@ -121,15 +120,15 @@ Realm getOppositeRealm(Realm realm) {
 //*********************************************************************
 
 unsigned int Creature::checkRealmResist(unsigned int dmg, Realm pRealm) const {
-    bstring resistEffect = "resist-" + getRealmSpellName(pRealm);
+    std::string resistEffect = "resist-" + getRealmSpellName(pRealm);
     if(isEffected(resistEffect))
         dmg /= 2;
 
-    bstring immuneEffect = "immune-" + getRealmSpellName(pRealm);
+    std::string immuneEffect = "immune-" + getRealmSpellName(pRealm);
     if(isEffected(immuneEffect))
         dmg = 1;
 
-    bstring vulnEffect = "vuln-" + getRealmSpellName(pRealm);
+    std::string vulnEffect = "vuln-" + getRealmSpellName(pRealm);
     if(isEffected(vulnEffect))
         dmg = dmg + (dmg / 2);
 
@@ -166,9 +165,9 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
     Player* pTarget=nullptr;
 
     //int       lt = getRealmSpellLT(realm);
-    bstring name = getRealmSpellName(realm);
+    std::string name = getRealmSpellName(realm);
 
-    bstring effect = "resist-" + name;
+    std::string effect = "resist-" + name;
 
     if(cmnd->num == 2) {
         target = player;
@@ -281,7 +280,7 @@ int splResistEarth(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      realmSkill
 //*********************************************************************
 
-bstring realmSkill(Realm realm) {
+std::string realmSkill(Realm realm) {
     switch(realm) {
     case FIRE:
         return("fire");

@@ -169,7 +169,7 @@ void loadLastTime(xmlNodePtr curNode, struct lasttime* pLastTime) {
 bool Config::loadDoubleLog() {
     xmlDocPtr xmlDoc;
     xmlNodePtr curNode, childNode;
-    bstring account = "";
+    std::string account = "";
 
     char filename[80];
     snprintf(filename, 80, "%s/doubleLog.xml", Path::Config);
@@ -197,10 +197,10 @@ bool Config::loadDoubleLog() {
                 if(NODE_NAME(childNode, "Forum1") || NODE_NAME(childNode, "Forum2")) {
                     if(account.empty()) {
                         // cache!
-                        xml::copyToBString(account, childNode);
+                        xml::copyToString(account, childNode);
                     } else {
                         // add!
-                        addDoubleLog(account, xml::getBString(childNode));
+                        addDoubleLog(account, xml::getString(childNode));
                         account = "";
                     }
                 }

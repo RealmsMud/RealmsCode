@@ -136,9 +136,9 @@ public:
     short   height;
     short   weight;
 
-    bstring hair;
-    bstring eyes;
-    bstring skin;
+    std::string hair;
+    std::string eyes;
+    std::string skin;
 
 
     static const int PARENTS_UNKNOWN = -1;
@@ -169,7 +169,7 @@ public:
 };
 
 typedef std::list<Monster*> PetList;
-typedef std::map<bstring, Skill*> SkillMap;
+typedef std::map<std::string, Skill*> SkillMap;
 //*********************************************************************
 //                      Creature
 //*********************************************************************
@@ -197,8 +197,8 @@ protected:
     unsigned short clan{};
     unsigned short poison_dur{};
     unsigned short poison_dmg{};
-    bstring description;
-    bstring version; // Version of the mud this creature was saved under
+    std::string description;
+    std::string version; // Version of the mud this creature was saved under
     char flags[CRT_FLAG_ARRAY_SIZE]{}; // Max flags - 256
     unsigned long realm[MAX_REALM-1]{}; // Magic Spell realms
     char spells[32]{}; // more spells
@@ -207,7 +207,7 @@ protected:
     static const short OFFGUARD_NOREMOVE;
     static const short OFFGUARD_NOPRINT;
     DeathType deathtype;
-    bstring poisonedBy;     // displayed to player, if this is a player, they get credit for pkill
+    std::string poisonedBy;     // displayed to player, if this is a player, they get credit for pkill
 
     Group* group{};
     GroupStatus groupStatus;
@@ -225,8 +225,8 @@ public:
     virtual void upgradeStats() {};
     virtual Socket* getSock() const;
     Location getLocation();
-    void delayedAction(const bstring& action, int delay, MudObject* target=nullptr);
-    void delayedScript(const bstring& script, int delay);
+    void delayedAction(const std::string& action, int delay, MudObject* target=nullptr);
+    void delayedScript(const std::string& script, int delay);
 
     Creature* getMaster();
     const Creature* getConstMaster() const;
@@ -250,7 +250,7 @@ public:
     MagicType getCastingType() const;
     int doHeal(Creature* target, int amt, double threatFactor = 0.5);
 
-    bstring doReplace(bstring fmt, const MudObject* actor=nullptr, const MudObject* applier=nullptr) const;
+    std::string doReplace(std::string fmt, const MudObject* actor=nullptr, const MudObject* applier=nullptr) const;
 
     void unApplyTongues();
     void unSilence();
@@ -260,9 +260,9 @@ public:
     bool inSameRoom(Creature* target);
 
 
-    Creature* findVictim(cmd* cmnd, int cmndNo, bool aggressive=true, bool selfOk=false, std::string_view noVictim="", std::string_view notFound="");
-    Creature* findVictim(std::string_view toFind, int num, bool aggressive=true, bool selfOk=false, std::string_view noVictim="", std::string_view notFound="");
-    Creature* findMagicVictim(std::string_view toFind, int num, SpellData* spellData, bool aggressive=true, bool selfOk=false, std::string_view noVictim="", std::string_view notFound="");
+    Creature* findVictim(cmd* cmnd, int cmndNo, bool aggressive=true, bool selfOk=false, const std::string &noVictim="", const std::string &notFound="");
+    Creature* findVictim(const std::string &toFind, int num, bool aggressive=true, bool selfOk=false, const std::string &noVictim="", const std::string &notFound="");
+    Creature* findMagicVictim(const std::string &toFind, int num, SpellData* spellData, bool aggressive=true, bool selfOk=false, const std::string &noVictim="", const std::string &notFound="");
 
     bool hasAttackableTarget();
     bool isAttackingTarget();
@@ -276,12 +276,12 @@ public:
     long getLTLeft(int myLT, long t = -1); // gets the time left on a LT
     void setLastTime(int myLT, long t, long interval); // Sets a LT
 
-    bstring getClassString() const;
+    std::string getClassString() const;
 
 public:
 // Data
-    bstring plural;
-    std::map<bstring, long> factions;
+    std::string plural;
+    std::map<std::string, long> factions;
     SkillMap skills;
     char key[3][CRT_KEY_LENGTH]{};
     short fd{}; // Socket number
@@ -324,7 +324,7 @@ public:
     //EffectList effects; // List of all effects on this creature
     Timer attackTimer;
     std::list<SpecialAttack*> specials; // List of all special attack this creature has
-    std::list<bstring> minions; // vampire minions
+    std::list<std::string> minions; // vampire minions
 
 
     Location currentLocation;
@@ -353,7 +353,7 @@ public:
     bool hasPet() const;
 
     Monster* findPet(Monster* toFind);
-    Monster* findPet(const bstring& pName, int pNum);
+    Monster* findPet(const std::string& pName, int pNum);
 
 // XML: loading and saving
     int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bool saveID = true) const;
@@ -372,33 +372,31 @@ public:
 
     void convertOldEffects();
     bool convertFlag(int flag);
-    bool convertToEffect(std::string_view effect, int flag, int lt);
-    bool addStatModEffect(EffectInfo* effect);
-    bool remStatModEffect(EffectInfo* effect);
+    bool convertToEffect(const std::string &effect, int flag, int lt);
     void removeStatEffects();
     bool doPetrificationDmg();
     bool willIgnoreIllusion() const;
     bool isInvisible() const; // *
 
 // Skills
-    bool knowsSkill(const bstring& skillName) const; // *
-    double getSkillLevel(const bstring& skillName, bool useBase = true) const; // *
-    double getSkillGained(const bstring& skillName, bool useBase = true) const; // *
-    double getTradeSkillGained(const bstring& skillName, bool useBase = true) const; // *
-    Skill* getSkill(const bstring& skillName, bool useBase = true) const;
-    void addSkill(const bstring& skillName, int gained); // *
-    void remSkill(const bstring& skillName); // *
+    bool knowsSkill(const std::string& skillName) const; // *
+    double getSkillLevel(const std::string& skillName, bool useBase = true) const; // *
+    double getSkillGained(const std::string& skillName, bool useBase = true) const; // *
+    double getTradeSkillGained(const std::string& skillName, bool useBase = true) const; // *
+    Skill* getSkill(const std::string& skillName, bool useBase = true) const;
+    void addSkill(const std::string& skillName, int gained); // *
+    void remSkill(const std::string& skillName); // *
     void checkSkillsGain(const std::list<SkillGain*>::const_iterator& begin, const std::list<SkillGain*>::const_iterator& end, bool setToLevel = false);
-    void checkImprove(const bstring& skillName, bool success, int attribute = INT, int bns = 0); // *
-    bool setSkill(const bstring& skill, int gained); // *
+    void checkImprove(const std::string& skillName, bool success, int attribute = INT, int bns = 0); // *
+    bool setSkill(const std::string& skill, int gained); // *
 
 // Formatting
     virtual void escapeText() {};
-    bstring getCrtStr(const Creature* viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
-    bstring statCrt(int statFlags);
+    std::string getCrtStr(const Creature* viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
+    std::string statCrt(int statFlags);
     unsigned int displayFlags() const;
-    bstring alignColor() const;
-    bstring fullName() const;
+    std::string alignColor() const;
+    std::string fullName() const;
     const char *hisHer() const;
     const char *himHer() const;
     const char *heShe() const;
@@ -408,11 +406,11 @@ public:
     void pleaseWait(int duration) const;
     void pleaseWait(double duration) const;
     const char* getStatusStr(int dmg=0);
-    virtual bstring customColorize(const bstring& text, bool caret=true) const = 0;
+    virtual std::string customColorize(const std::string& text, bool caret=true) const = 0;
 
     void printPaged(std::string_view toPrint);
     void bPrint(std::string_view toPrint) const;
-    void bPrintPython(const bstring& toPrint) const;
+    void bPrintPython(const std::string& toPrint) const;
 
     void print(const char *fmt, ...) const;
     void printColor(const char *fmt, ...) const;
@@ -431,7 +429,7 @@ public:
     void clearAsPetEnemy();
     virtual void gainExperience(Monster* victim, Creature* killer, int expAmount, bool groupExp = false) {} ;
     void adjustExperience(Monster* victim, int& expAmount, int& holidayExp);
-    unsigned int doWeaponResist(unsigned int dmg, std::string_view weaponCategory) const;
+    unsigned int doWeaponResist(unsigned int dmg, const std::string &weaponCategory) const;
     unsigned int doDamage(Creature* target, unsigned int dmg, DeathCheck shouldCheckDie = CHECK_DIE, DamageType dmgType = PHYSICAL_DMG);
     int doDamage(Creature* target, unsigned int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget);
     bool chkSave(short savetype, Creature* target, short bns);
@@ -440,7 +438,7 @@ public:
     void attackDelay(long delay);
     void stun(int delay);
     bool doLagProtect();
-    bool hasCharm(std::string_view charmed);
+    bool hasCharm(const std::string &charmed);
     bool inCombat(bool countPets) const;
     bool inCombat(const Creature* target=0, bool countPets=0) const;
     bool canAttack(Creature* target, bool stealing=false);
@@ -452,11 +450,11 @@ public:
 
     int getPrimaryDelay();
     int getSecondaryDelay();
-    bstring getPrimaryWeaponCategory() const;
-    bstring getSecondaryWeaponCategory() const;
+    std::string getPrimaryWeaponCategory() const;
+    std::string getSecondaryWeaponCategory() const;
 
-    bstring getWeaponVerb() const;
-    bstring getWeaponVerbPlural() const;
+    std::string getWeaponVerb() const;
+    std::string getWeaponVerbPlural() const;
 
     time_t getLTAttack() const;
     void modifyAttackDelay(int amt);
@@ -499,12 +497,12 @@ public:
     int getTurnChance(Creature* target);
 
 // Special Attacks
-    bstring getSpecialsFullList() const;
+    std::string getSpecialsFullList() const;
     bool useSpecial(std::string_view special, Creature* victim);
     bool useSpecial(SpecialAttack* attack, Creature* victim);
     bool runOpeners(Creature* victim); // Run any opening attacks
     bool runSpecialAttacks(Creature* victim); // Pick a special attack and do it on the target
-    bstring getSpecialsList() const;
+    std::string getSpecialsList() const;
     SpecialAttack* addSpecial(std::string_view specialName);
     bool delSpecials();
     SpecialAttack* getSpecial(std::string_view special);
@@ -601,13 +599,13 @@ public:
     unsigned short getDeity() const; // *
     Size getSize() const; // *
     unsigned int getAttackPower() const; // *
-    bstring getDescription() const; // *
-    bstring getVersion() const; // *
+    std::string getDescription() const; // *
+    std::string getVersion() const; // *
     unsigned short getPoisonDuration() const;
     unsigned short getPoisonDamage() const;
     Sex getSex() const;
     unsigned long getRealm(Realm r) const;
-    bstring getPoisonedBy() const;
+    std::string getPoisonedBy() const;
     unsigned short getDisplayRace() const;
     bool inJail() const;
 
@@ -702,7 +700,7 @@ public:
     bool isSitting();
 
     bool ableToDoCommand( cmd* cmnd=nullptr) const;
-    void wake(const bstring& str = "", bool noise=false);
+    void wake(const std::string& str = "", bool noise=false);
     void modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, Realm pRealm=NO_REALM, Object* weapon=0, short saveBonus=0, short offguard=OFFGUARD_REMOVE, bool computingBonus=false);
     bool checkResistPet(Creature *pet, bool& resistPet, bool& immunePet, bool& vulnPet);
 
@@ -720,8 +718,8 @@ public:
     unsigned int doResistMagic(unsigned int dmg, Creature* enemy=0);
     virtual void pulseTick(long t) = 0;
 
-    MudObject* findTarget(unsigned int findWhere, unsigned int findFlags, const bstring& str, int val);
-    MudObject* findObjTarget(ObjectSet &set, unsigned int findFlags, const bstring& str, int val, int* match);
+    MudObject* findTarget(unsigned int findWhere, unsigned int findFlags, const std::string& str, int val);
+    MudObject* findObjTarget(ObjectSet &set, unsigned int findFlags, const std::string& str, int val, int* match);
     //MudObject* findTarget(cmd* cmnd, TargetType targetType, bool offensive);
 
     // New songs
@@ -763,7 +761,7 @@ public:
     void validateId();
     void upgradeStats();
 
-    bstring getFlagList(bstring sep=", ") const;
+    std::string getFlagList(std::string_view sep=", ") const;
 
 protected:
 // Data
@@ -776,8 +774,8 @@ protected:
     unsigned short maxLevel;
     unsigned short cast;
     Realm baseRealm; // For pets/elementals -> What realm they are
-    bstring primeFaction;
-    bstring talk;
+    std::string primeFaction;
+    std::string talk;
     // Not giving monsters skills right now, so store it on their character
     int weaponSkill;
     int defenseSkill;
@@ -883,7 +881,7 @@ public:
 
 // Get
     unsigned short getMobTrade() const;
-    bstring getMobTradeName() const;
+    std::string getMobTradeName() const;
     int getSkillLevel() const;
     unsigned int getMaxLevel() const;
     unsigned short getNumWander() const;
@@ -891,8 +889,8 @@ public:
     unsigned short getUpdateAggro() const;
     unsigned short getCastChance() const;
     unsigned short getMagicResistance() const;
-    bstring getPrimeFaction() const;
-    bstring getTalk() const;
+    std::string getPrimeFaction() const;
+    std::string getTalk() const;
     int getWeaponSkill(const Object* weapon = nullptr) const;
     int getDefenseSkill() const;
 
@@ -925,8 +923,8 @@ public:
     int checkWander(long t);
     bool canScavange(Object* object);
 
-    bool doTalkAction(Player* target, bstring action, QuestInfo* quest = nullptr);
-    void sayTo(const Player* player, const bstring& message);
+    bool doTalkAction(Player* target, std::string action, QuestInfo* quest = nullptr);
+    void sayTo(const Player* player, const std::string& message);
     void pulseTick(long t);
     void beneficialCaster();
     int initMonster(bool loadOriginal = false, bool prototype = false);
@@ -939,7 +937,7 @@ public:
 
     Realm getBaseRealm() const;
     void setBaseRealm(Realm toSet);
-    bstring customColorize(const bstring& text, bool caret=true) const;
+    std::string customColorize(const std::string& text, bool caret=true) const;
 
     bool hasQuests() const;
     QuestEligibility getEligibleQuestDisplay(const Creature* viewer) const;
@@ -956,16 +954,16 @@ public:
 
 class Player : public Creature {
 public:
-    static bstring hashPassword(std::string_view pass);
+    static std::string hashPassword(const std::string &pass);
 
 protected:
     void doCopy(const Player& cr);
     void reset();
 
-    bool inList(const std::list<bstring>* list, std::string_view name) const;
-    bstring showList(const std::list<bstring>* list) const;
-    void addList(std::list<bstring>* list, std::string_view name);
-    void delList(std::list<bstring>* list, std::string_view name);
+    bool inList(const std::list<std::string>* list, const std::string &name) const;
+    std::string showList(const std::list<std::string>* list) const;
+    void addList(std::list<std::string> *list, const std::string &name);
+    void delList(std::list<std::string>* list, const std::string &name);
     int doDeleteFromRoom(BaseRoom* room, bool delPortal);
     void finishAddPlayer(BaseRoom* room);
     long getInterest(long principal, double annualRate, long seconds);
@@ -990,8 +988,8 @@ public:
 protected:
 // Data
 
-    bstring proxyName;
-    bstring proxyId;
+    std::string proxyName;
+    std::string proxyId;
 
     char customColors[CUSTOM_COLOR_SIZE];
     unsigned short warnings;
@@ -1012,25 +1010,25 @@ protected:
     long lastLogin;
     long lastInterest;
     unsigned long timeout;
-    bstring lastPassword;
-    bstring afflictedBy;    // used to determine master with vampirism/lycanthropy
+    std::string lastPassword;
+    std::string afflictedBy;    // used to determine master with vampirism/lycanthropy
     int tnum[5];
-    std::list<bstring> ignoring;
-    std::list<bstring> gagging;
-    std::list<bstring> refusing;
-    std::list<bstring> dueling;
-    std::list<bstring> maybeDueling;
-    std::list<bstring> watching;
-    bstring password;
-    bstring title;
-    bstring tempTitle;  // this field is purposely not saved
+    std::list<std::string> ignoring;
+    std::list<std::string> gagging;
+    std::list<std::string> refusing;
+    std::list<std::string> dueling;
+    std::list<std::string> maybeDueling;
+    std::list<std::string> watching;
+    std::string password;
+    std::string title;
+    std::string tempTitle;  // this field is purposely not saved
     Socket* mySock;
-    bstring surname;
-    bstring oldCreated;
+    std::string surname;
+    std::string oldCreated;
     long created;
-    bstring lastCommand;
-    bstring lastCommunicate;
-    bstring forum;      // forum account this character is associated with
+    std::string lastCommand;
+    std::string lastCommunicate;
+    std::string forum;      // forum account this character is associated with
     char songs[32];
     struct vstat tstat;
     Anchor *anchor[MAX_DIMEN_ANCHORS];
@@ -1040,20 +1038,20 @@ protected:
     unsigned short thirst;
     Object* lastPawn;
     int uniqueObjId;
-    typedef std::map<bstring, bool> KnownAlchemyEffectsMap;
+    typedef std::map<std::string, bool> KnownAlchemyEffectsMap;
     KnownAlchemyEffectsMap knownAlchemyEffects;
 
     bool fleeing = false;
 
 public:
-    bstring getFlagList(bstring sep=", ") const;
+    std::string getFlagList(std::string_view sep=", ") const;
 
 // Data
     std::list<CatRef> storesRefunded;   // Shops the player has refunded an item in
                                         // (No haggling allowed until a full priced purchase has been made)
     std::list<CatRef> objIncrease; // rooms they have gotten exp from
 
-    std::set<bstring> charms;
+    std::set<std::string> charms;
     int *scared_of;
 
     std::list<CatRef> lore;
@@ -1079,8 +1077,8 @@ public:
     void setProxyName(std::string_view pProxyName);
     void setProxyId(std::string_view pProxyId);
 
-    bstring getProxyName() const;
-    bstring getProxyId() const;
+    std::string getProxyName() const;
+    std::string getProxyId() const;
 
     // Combat & Death
     unsigned int computeAttackPower();
@@ -1123,7 +1121,7 @@ public:
     void computeAC();
     void alignAdjustAcThaco();
     void checkOutlawAggro();
-    bstring getUnarmedWeaponSkill() const;
+    std::string getUnarmedWeaponSkill() const;
     double winterProtection() const;
     bool isHardcore() const;
     bool canMistNow() const;
@@ -1132,34 +1130,34 @@ public:
     void setFleeing(bool pFleeing);
 
 // Lists
-    bool isIgnoring(std::string_view name) const;
-    bool isGagging(std::string_view name) const;
-    bool isRefusing(std::string_view name) const;
-    bool isDueling(std::string_view name) const;
-    bool isWatching(std::string_view name) const;
+    bool isIgnoring(const std::string &name) const;
+    bool isGagging(const std::string &name) const;
+    bool isRefusing(const std::string &name) const;
+    bool isDueling(const std::string &name) const;
+    bool isWatching(const std::string &name) const;
     void clearIgnoring();
     void clearGagging();
     void clearRefusing();
     void clearDueling();
     void clearMaybeDueling();
     void clearWatching();
-    void addIgnoring(std::string_view name);
-    void addGagging(std::string_view name);
-    void addRefusing(std::string_view name);
-    void addDueling(std::string_view name);
-    void addMaybeDueling(std::string_view name);
-    void addWatching(std::string_view name);
-    void delIgnoring(std::string_view name);
-    void delGagging(std::string_view name);
-    void delRefusing(std::string_view name);
-    void delDueling(std::string_view name);
-    void delMaybeDueling(bstring name);
-    void delWatching(std::string_view name);
-    bstring showIgnoring() const;
-    bstring showGagging() const;
-    bstring showRefusing() const;
-    bstring showDueling() const;
-    bstring showWatching() const;
+    void addIgnoring(const std::string &name);
+    void addGagging(const std::string &name);
+    void addRefusing(const std::string &name);
+    void addDueling(const std::string &name);
+    void addMaybeDueling(const std::string &name);
+    void addWatching(const std::string &name);
+    void delIgnoring(const std::string &name);
+    void delGagging(const std::string &name);
+    void delRefusing(const std::string &name);
+    void delDueling(const std::string &name);
+    void delMaybeDueling(std::string name);
+    void delWatching(const std::string &name);
+    std::string showIgnoring() const;
+    std::string showGagging() const;
+    std::string showRefusing() const;
+    std::string showDueling() const;
+    std::string showWatching() const;
     void addRefundedInStore(CatRef& store);
     void removeRefundedInStore(CatRef& store);
     bool hasRefundedInStore(CatRef& store);
@@ -1191,34 +1189,34 @@ public:
     unsigned short getWarnings() const;
     unsigned short getPkin() const;
     unsigned short getPkwon() const;
-    bstring getBankDisplay() const;
-    bstring getCoinDisplay() const;
+    std::string getBankDisplay() const;
+    std::string getCoinDisplay() const;
     int getWrap() const;
 
     short getLuck() const;
     unsigned short getWeaponTrains() const;
     long getLastLogin() const;
     long getLastInterest() const;
-    bstring getLastPassword() const;
-    bstring getAfflictedBy() const;
-    bstring getTitle() const;
+    std::string getLastPassword() const;
+    std::string getAfflictedBy() const;
+    std::string getTitle() const;
 
-    bstring getTempTitle() const;
-    bstring getLastCommunicate() const;
-    bstring getLastCommand() const;
-    bstring getSurname() const;
-    bstring getForum() const;
+    std::string getTempTitle() const;
+    std::string getLastCommunicate() const;
+    std::string getLastCommand() const;
+    std::string getSurname() const;
+    std::string getForum() const;
     long getCreated() const;
-    bstring getCreatedStr() const;
+    std::string getCreatedStr() const;
     Monster* getAlias() const;
     cDay* getBirthday() const;
-    bstring getAnchorAlias(int i) const;
-    bstring getAnchorRoomName(int i) const;
+    std::string getAnchorAlias(int i) const;
+    std::string getAnchorRoomName(int i) const;
     const Anchor* getAnchor(int i) const;
     bool hasAnchor(int i) const;
     bool isAnchor(int i, const BaseRoom* room) const;
     unsigned short getThirst() const;
-    bstring getCustomColor(CustomColor i, bool caret) const;
+    std::string getCustomColor(CustomColor i, bool caret) const;
     int numDiscoveredRooms() const;
     int getUniqueObjId() const;
 
@@ -1246,7 +1244,7 @@ public:
     void setLastCommunicate(std::string_view c);
     void setLastCommand(std::string_view c);
     void setCreated();
-    void setSurname(const bstring& s);
+    void setSurname(const std::string& s);
     void setForum(std::string_view f);
     void setAlias(Monster* m);
     void setBirthday();
@@ -1257,9 +1255,9 @@ public:
     int setWrap(int newWrap);
 
 // Factions
-    int getFactionStanding(std::string_view factionStr) const;
-    bstring getFactionMessage(std::string_view factionStr) const;
-    void adjustFactionStanding(const std::map<bstring, long>& factionList);
+    int getFactionStanding(const std::string &factionStr) const;
+    std::string getFactionMessage(const std::string &factionStr) const;
+    void adjustFactionStanding(const std::map<std::string, long>& factionList);
 
 // Staff
     bool checkRangeRestrict(const CatRef& cr, bool reading=true) const;
@@ -1311,7 +1309,7 @@ public:
     int getMpTickBonus() const;
     void calcStats(vstat sendStat, vstat *toStat);
     void changeStats();
-    void changingStats(bstring str);
+    void changingStats(std::string str);
 
     bool isPureFighter();
     void decreaseFocus();
@@ -1326,20 +1324,20 @@ public:
     bool canDefecate() const;
 
 // Formating
-    bstring getWhoString(bool whois=false, bool color=true, bool ignoreIllusion=false) const;
-    bstring getTimePlayed() const;
-    bstring consider(Creature* creature) const;
+    std::string getWhoString(bool whois=false, bool color=true, bool ignoreIllusion=false) const;
+    std::string getTimePlayed() const;
+    std::string consider(Creature* creature) const;
     int displayCreature(Creature* target);
     void sendPrompt();
     void defineColors();
     void setSockColors();
     void vprint(const char *fmt, va_list ap) const;
     void escapeText();
-    bstring getClassString() const;
+    std::string getClassString() const;
     void score(const Player* viewer);
     void information(const Player* viewer=0, bool online=true);
     void showAge(const Player* viewer) const;
-    bstring customColorize(const bstring& text, bool caret=true) const;
+    std::string customColorize(const std::string& text, bool caret=true) const;
     void resetCustomColors();
 
 // Misellaneous
@@ -1349,10 +1347,10 @@ public:
     void doRemove(int i);
     int getAge() const;
     unsigned long expToLevel() const;
-    bstring expToLevel(bool addX) const;
-    bstring expInLevel() const;
-    bstring expForLevel() const;
-    bstring expNeededDisplay() const;
+    std::string expToLevel(bool addX) const;
+    std::string expInLevel() const;
+    std::string expForLevel() const;
+    std::string expNeededDisplay() const;
     int getAdjustedAlignment() const;
     void hasNewMudmail() const;
     bool checkConfusion();
@@ -1402,9 +1400,9 @@ public:
     void learnSong(int song);
     void forgetSong(int song);
 
-    bstring getPassword() const;
-    bool isPassword(std::string_view pass) const;
-    void setPassword(std::string_view pass);
+    std::string getPassword() const;
+    bool isPassword(const std::string &pass) const;
+    void setPassword(const std::string &pass);
 
     static bool exists(std::string_view name);
     time_t getIdle();
@@ -1413,7 +1411,7 @@ public:
 
     void setLastPawn(Object* object);
     bool restoreLastPawn();
-    void checkFreeSkills(std::string_view skill);
+    void checkFreeSkills(const std::string &skill);
     void computeInterest(long t, bool online);
 };
 

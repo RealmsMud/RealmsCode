@@ -23,7 +23,6 @@
 #include <ostream>                // for operator<<, basic_ostream, basic_os...
 #include <string>                 // for char_traits, operator<<, basic_string
 
-#include "bstring.hpp"            // for bstring
 #include "creatures.hpp"          // for Creature, Monster, PetList
 #include "flags.hpp"              // for M_PET, P_NO_EXTRA_COLOR
 #include "proto.hpp"              // for broadcast, isMatch
@@ -69,7 +68,7 @@ Creature* Monster::getMaster() const {
     return(myMaster);
 }
 
-Monster* Creature::findPet(const bstring& pName, int pNum) {
+Monster* Creature::findPet(const std::string& pName, int pNum) {
     int match = 0;
     for(Monster* pet : pets) {
         if(isMatch(this, pet, pName, false, false)) {

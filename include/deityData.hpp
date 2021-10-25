@@ -26,7 +26,7 @@ class PlayerTitle;
 class DeityData {
 protected:
     int id;
-    bstring name;
+    std::string name;
 
 public:
     DeityData(xmlNodePtr rootNode);
@@ -34,8 +34,8 @@ public:
     std::map<int, PlayerTitle*> titles;
 
     [[nodiscard]] int getId() const;
-    [[nodiscard]] bstring getName() const;
-    [[nodiscard]] bstring getTitle(int lvl, bool male, bool ignoreCustom=true) const;
+    [[nodiscard]] std::string getName() const;
+    [[nodiscard]] std::string getTitle(int lvl, bool male, bool ignoreCustom=true) const;
 };
 
 

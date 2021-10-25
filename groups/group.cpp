@@ -20,7 +20,6 @@
 #include <iomanip>                // for operator<<, setw
 #include <list>                   // for operator==, operator!=
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "creatureStreams.hpp"    // for Streamable, ColorOff, ColorOn
 #include "creatures.hpp"          // for Creature, Monster, PetList
 #include "flags.hpp"              // for P_DM_INVIS, P_NO_EXTRA_COLOR, P_NO_...
@@ -44,8 +43,8 @@ Group::Group(Creature* pLeader) {
     if(pLeader->pFlagIsSet(P_GOLD_SPLIT))
         setFlag(GROUP_SPLIT_GOLD);
 
-    name = bstring(leader->getName()) + "'s group";
-    description = "A group, lead by " + bstring(leader->getName());
+    name = std::string(leader->getName()) + "'s group";
+    description = "A group, lead by " + std::string(leader->getName());
     // Register us in the server's list of groups
     gServer->registerGroup(this);
 }
@@ -122,7 +121,7 @@ bool Group::remove(Creature* toRemove) {
 
             leader->setGroupStatus(GROUP_LEADER);
             leader->print("You are now the group leader.\n");
-            sendToAll(bstring(leader->getName()) + " is now the group leader.\n", leader);
+            sendToAll(std::string(leader->getName()) + " is now the group leader.\n", leader);
         }
 
 
@@ -232,7 +231,7 @@ Creature* Group::getMember(int num, bool countDmInvis) {
 //              Searcher    - The creature doing the search (allows nulls)
 //              includePets - Include pets in the search
 // Returns: A pointer to the creature, if found
-Creature* Group::getMember(const bstring& name, int num, Creature* searcher, bool includePets) {
+Creature* Group::getMember(const std::string& name, int num, Creature* searcher, bool includePets) {
     int match = 0;
     for(Creature* crt : members) {
         if(!crt->isPlayer() && !includePets) continue;
@@ -324,13 +323,13 @@ Creature* Group::getLeader() const {
 //********************************************************************************
 //* getName
 //********************************************************************************
-const bstring& Group::getName() const {
+const std::string& Group::getName() const {
     return(name);
 }
 //********************************************************************************
 //* getDescription
 //********************************************************************************
-const bstring&Group::getDescription() const {
+const std::string&Group::getDescription() const {
     return(description);
 }
 
@@ -431,7 +430,7 @@ bool Server::unRegisterGroup(Group* toUnRegister) {
 //* GetGroupTypeStr
 //********************************************************************************
 
-bstring Group::getGroupTypeStr() const {
+std::string Group::getGroupTypeStr() const {
     switch(getGroupType()) {
         case GROUP_PUBLIC:
         default:
@@ -447,10 +446,10 @@ bstring Group::getGroupTypeStr() const {
 //********************************************************************************
 //* GetGroupTypeStr
 //********************************************************************************
-bstring displayPref(std::string_view name, bool set) {
+std::string displayPref(const std::string &name, bool set) {
     return(name + (set ? "^gon^x" : "^roff^x"));
 }
-bstring Group::getFlagsDisplay() {
+std::string Group::getFlagsDisplay() {
     std::ostringstream oStr;
     oStr << displayPref("Group Experience Split: ", flagIsSet(GROUP_SPLIT_EXPERIENCE));
     oStr << ", ";
@@ -463,7 +462,7 @@ bstring Group::getFlagsDisplay() {
 //* GetGroupList
 //********************************************************************************
 // Returns the group listing used for displaying to staff
-bstring Server::getGroupList() {
+std::string Server::getGroupList() {
     std::ostringstream oStr;
     int i=1;
     for(Group* group : groups) {
@@ -475,7 +474,7 @@ bstring Server::getGroupList() {
 //* GetGroupTypeStr
 //********************************************************************************
 // Returns the group listing used for displaying to group members
-bstring Group::getGroupList(Creature* viewer) {
+std::string Group::getGroupList(Creature* viewer) {
     int i = 0;
     std::ostringstream oStr;
 

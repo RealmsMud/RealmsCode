@@ -62,17 +62,17 @@ public:
 
     void load(xmlNodePtr curNode);
 
-    void load(bstring str);
+    void load(std::string str);
 
     void reset();
 
-    [[nodiscard]] bstring str(bool color = false) const;
+    [[nodiscard]] std::string str(bool color = false) const;
 
-    bstring direction(const MapMarker *mapmarker) const;
+    std::string direction(const MapMarker *mapmarker) const;
 
-    bstring distance(const MapMarker *mapmarker) const;
+    std::string distance(const MapMarker *mapmarker) const;
 
-    [[nodiscard]] bstring filename() const;
+    [[nodiscard]] std::string filename() const;
 
     [[nodiscard]] short getArea() const;
 
@@ -124,7 +124,7 @@ public:
 
     ~AreaZone();
 
-    bstring getFishing() const;
+    std::string getFishing() const;
 
     bool inside(const Area *area, const MapMarker *mapmarker) const;
 
@@ -139,8 +139,8 @@ public:
     bool flagIsSet(int flag) const;
 
 
-    bstring name;           // for staff identification
-    bstring display;        // displayed to player in room description
+    std::string name;           // for staff identification
+    std::string display;        // displayed to player in room description
 
     char terRestrict[10]{};
     char mapRestrict[10]{};
@@ -155,7 +155,7 @@ public:
     std::map<int, MapMarker *> coords;
 
 protected:
-    bstring fishing;
+    std::string fishing;
 };
 
 class TileInfo {
@@ -167,8 +167,8 @@ public:
 
     [[nodiscard]] char getStyle(const Player *player = nullptr) const;
     [[nodiscard]] char getId() const;
-    [[nodiscard]] bstring getName() const;
-    [[nodiscard]] bstring getDescription() const;
+    [[nodiscard]] std::string getName() const;
+    [[nodiscard]] std::string getDescription() const;
     [[nodiscard]] short getCost() const;
     [[nodiscard]] float getVision() const;
     [[nodiscard]] char getDisplay() const;
@@ -179,15 +179,15 @@ public:
     [[nodiscard]] short getFly() const;
     bool spawnHerbs(BaseRoom *room) const;
 
-    [[nodiscard]] bstring getFishing() const;
+    [[nodiscard]] std::string getFishing() const;
 
     WanderInfo wander;      // Random monster info
     std::map<Season, char> season;
 protected:
     char id;
-    bstring name;
-    bstring description;
-    bstring fishing;
+    std::string name;
+    std::string description;
+    std::string fishing;
     short cost;
     float vision;
     char style;
@@ -241,7 +241,7 @@ public:
     char getSeasonFlags(const MapMarker *mapmarker, short y = 0, short x = 0, short z = 0) const;
     float getLosPower(const Player *player, int xVision, int yVision) const;
     void getGridText(char grid[][80], int height, const MapMarker *mapmarker, int maxWidth) const;
-    bstring showGrid(const Player *player, const MapMarker *mapmarker, bool compass) const;
+    std::string showGrid(const Player *player, const MapMarker *mapmarker, bool compass) const;
     bool outOfBounds(short x, short y, short z) const;
     void adjustCoords(short *x, short *y, short *z) const;
     void cleanUpRooms();
@@ -267,7 +267,7 @@ public:
 
 public:
     short id;
-    bstring name;
+    std::string name;
 
     // stuff we will need
     //  terrain grid
@@ -302,7 +302,7 @@ public:
     // how much flying helps vision
     short flightPower;
 
-    std::map<bstring, AreaRoom *> rooms;
+    std::map<std::string, AreaRoom *> rooms;
     std::list<AreaZone *> zones;
     std::list<AreaTrack *> tracks;
 

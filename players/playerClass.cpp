@@ -19,7 +19,6 @@
 #include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
 #include <cstring>                                 // for strcmp
 
-#include "bstring.hpp"                              // for bstring
 #include "cmd.hpp"                                  // for cmd
 #include "config.hpp"                               // for Config, gConfig
 #include "creatures.hpp"                            // for Player
@@ -73,8 +72,8 @@ PlayerClass::~PlayerClass() {
 }
 
 int PlayerClass::getId() const { return(id); }
-bstring PlayerClass::getName() const { return(name); }
-bstring PlayerClass::getUnarmedWeaponSkill() const { return(unarmedWeaponSkill); }
+std::string PlayerClass::getName() const { return(name); }
+std::string PlayerClass::getUnarmedWeaponSkill() const { return(unarmedWeaponSkill); }
 std::list<SkillGain*>::const_iterator PlayerClass::getSkillBegin() { return(baseSkills.begin()); }
 std::list<SkillGain*>::const_iterator PlayerClass::getSkillEnd() { return(baseSkills.end()); }
 std::map<int, LevelGain*>::const_iterator PlayerClass::getLevelBegin() { return(levels.begin()); }
@@ -112,7 +111,7 @@ void PlayerClass::checkAutomaticStats() {
 //*********************************************************************
 
 void Config::clearClasses() {
-    std::map<bstring, PlayerClass*>::iterator pcIt;
+    std::map<std::string, PlayerClass*>::iterator pcIt;
 
     for(pcIt = classes.begin() ; pcIt != classes.end() ; pcIt++) {
         //printf("Erasing class %s\n", ((*pcIt).first).c_str());
@@ -132,7 +131,7 @@ int dmShowClasses(Player* admin, cmd* cmnd) {
     bool    all = admin->isDm() && cmnd->num > 1 && !strcmp(cmnd->str[1], "all");
 
     SkillGain* sGain;
-    bstring tmp;
+    std::string tmp;
 
     *admin << PagerOn << ColorOn << fmt::format("Displaying Classes:{}\n",
         admin->isDm() ? "  Type ^y*classlist more^x to view more, ^y*classlist all^x to view all information." : "");

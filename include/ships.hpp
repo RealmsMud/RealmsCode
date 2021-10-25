@@ -41,10 +41,10 @@ protected:
     int     maxSpawnNum;
     CatRef  dump;
     CatRef  prison;
-    bstring dumpTalk;
-    bstring prisonTalk;
-    bstring dumpAction;
-    bstring prisonAction;
+    std::string dumpTalk;
+    std::string prisonTalk;
+    std::string dumpAction;
+    std::string prisonAction;
     bool    unconInPrison;
     
 public:
@@ -59,10 +59,10 @@ public:
     int getMaxSpawnNum() const;
     CatRef getDump() const;
     CatRef getPrison() const;
-    bstring getDumpTalk() const;
-    bstring getPrisonTalk() const;
-    bstring getDumpAction() const;
-    bstring getPrisonAction() const;
+    std::string getDumpTalk() const;
+    std::string getPrisonTalk() const;
+    std::string getDumpAction() const;
+    std::string getPrisonAction() const;
     bool getUnconInPrison() const;
     bool swap(const Swap& s);
 };
@@ -73,12 +73,12 @@ class ShipExit {
 protected:
     // note that flag X_MOVING gets set on these exits automatically.
     // so don't set that yourself
-    bstring name;
+    std::string name;
 
     bool    raid;
     char    flags[16]{};
-    bstring arrives;
-    bstring departs;
+    std::string arrives;
+    std::string departs;
 
 public:
     ShipExit();
@@ -94,10 +94,10 @@ public:
     BaseRoom* getRoom(bool useOrigin);
     bool swap(const Swap& s);
     
-    bstring getName() const;
+    std::string getName() const;
     bool getRaid() const;
-    bstring getArrives() const;
-    bstring getDeparts() const;
+    std::string getArrives() const;
+    std::string getDeparts() const;
     
     const char *getFlags() const;
     void setFlags(char f);
@@ -118,12 +118,12 @@ public:
     
     // name of the stop, only needed if canQuery in Ship is true,
     // but still helpful
-    bstring name;
+    std::string name;
     
     // if empty, it won't be announced
-    bstring arrives;        // announced when ship arrives
-    bstring lastcall;       // announced 1 hour before ship departs
-    bstring departs;        // announced when ship departs
+    std::string arrives;        // announced when ship arrives
+    std::string lastcall;       // announced 1 hour before ship departs
+    std::string departs;        // announced when ship departs
     
     // announce room range
     std::list<Range> announce;
@@ -157,14 +157,14 @@ public:
     // room range of the boat, used in announcing
     std::list<Range> ranges;
 
-    bstring name;               // name of the ship
+    std::string name;               // name of the ship
     // Message: At sea, sailing to Highport.
     //          [transit], [movement] to [stop name, declared in stop]
     // Message: In dock at Highport.
     //          [docked] at [stop name, declared in stop]
-    bstring transit;
-    bstring movement;
-    bstring docked;
+    std::string transit;
+    std::string movement;
+    std::string docked;
     
     // the current stop is always at the front - this list will
     // cycle through the stops
@@ -173,7 +173,7 @@ public:
 
 
 
-void shipBroadcastRange(Ship *ship, ShipStop *stop, const bstring& message);
+void shipBroadcastRange(Ship *ship, ShipStop *stop, const std::string& message);
 int cmdQueryShips(Player* player, cmd* cmnd);
 int shipSetExits(Ship *ship, ShipStop *stop);
 int shipDeleteExits(Ship *ship, ShipStop *stop);

@@ -25,8 +25,8 @@
 #include <map>                    // for map
 #include <ostream>                // for operator<<, endl, basic_ostream
 #include <stdexcept>              // for runtime_error
+#include <fmt/format.h>
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "calendar.hpp"           // for Calendar, cSeason, cWeather (ptr only)
 #include "catRef.hpp"             // for CatRef
 #include "config.hpp"             // for Config, accountDouble, MudFlagMap
@@ -39,6 +39,9 @@
 #include "skills.hpp"
 #include "socials.hpp"
 #include "structs.hpp"            // for MudFlag
+#include "specials.hpp"           // for SA_MAX_FLAG, SA_NO_FLAG
+#include "utils.hpp"
+#include "version.hpp"            // for VERSION
 
 
 // Globals
@@ -325,9 +328,9 @@ int Config::getPkillInCombatDisabled() {
     return(pkillInCombatDisabled);
 }
 
-bstring Config::getMonthDay() const {
+std::string Config::getMonthDay() const {
     long    t = time(nullptr);
-    bstring str = ctime(&t);
+    std::string str = ctime(&t);
     return(str.substr(4,6));
 }
 
@@ -351,21 +354,19 @@ int Config::getShopNumLines() const { return(shopNumLines ? shopNumLines : 150);
 
 const cWeather* Config::getWeather() const { return(calendar->getCurSeason()->getWeather()); }
 
-bstring Config::getDmPass() const { return(dmPass); }
-bstring Config::getWebserver() const { return(webserver); }
-bstring Config::getQS() const { return(qs); }
-bstring Config::getUserAgent() const { return(userAgent); }
-bstring Config::getReviewer() const { return(reviewer); }
+std::string Config::getDmPass() const { return(dmPass); }
+std::string Config::getWebserver() const { return(webserver); }
+std::string Config::getQS() const { return(qs); }
+std::string Config::getUserAgent() const { return(userAgent); }
+std::string Config::getReviewer() const { return(reviewer); }
 
-#include "specials.hpp"           // for SA_MAX_FLAG, SA_NO_FLAG
 
-bstring Config::getSpecialFlag(int index) {
+std::string Config::getSpecialFlag(int index) {
     if(index >= SA_MAX_FLAG || index <= SA_NO_FLAG )
         return("Invalid Flag");
 
     return(specialFlags[index].name);
 }
-#include "version.hpp"            // for VERSION
 
 class Ban;
 class CatRefInfo;
@@ -375,15 +376,15 @@ class Property;
 class Ship;
 class Unique;
 
-bstring Config::getVersion() {
+std::string Config::getVersion() {
     return(VERSION);
 }
-bstring Config::getMudName() {
+std::string Config::getMudName() {
     return(mudName);
 }
 
-bstring Config::getMudNameAndVersion() {
-    return(getMudName() + " v" + getVersion());
+std::string Config::getMudNameAndVersion() {
+    return(fmt::format("{} v{}", getMudName(), getVersion()));
 }
 // End Config Functions
 //--------------------------------------------------------------------
@@ -542,7 +543,7 @@ bool Path::checkDirExists(const char* filename) {
     return(true);
 }
 
-bool Path::checkDirExists(std::string_view area, char* (*fn)(const CatRef&)) {
+bool Path::checkDirExists(const std::string &area, char* (*fn)(const CatRef&)) {
     char    filename[256];
     CatRef  cr;
 
@@ -578,7 +579,7 @@ void Config::resetShipsFile() {
     system(command);
 }
 
-bstring Config::getFlag(unsigned int flagNum, MudFlagMap& flagMap) {
+std::string Config::getFlag(unsigned int flagNum, MudFlagMap& flagMap) {
     // Flags are offset by one
     auto flag = flagMap.find(flagNum + 1);
     if (flag == flagMap.end())
@@ -586,11 +587,11 @@ bstring Config::getFlag(unsigned int flagNum, MudFlagMap& flagMap) {
     return flag->second.name;
 }
 
-const bstring &Config::getDefaultArea() const {
+const std::string &Config::getDefaultArea() const {
     return defaultArea;
 }
 
-void Config::setDefaultArea(const bstring &pDefaultArea) {
+void Config::setDefaultArea(const std::string &pDefaultArea) {
     Config::defaultArea = pDefaultArea;
 }
 
@@ -614,11 +615,11 @@ void Config::setNumGuilds(int guildId) {
     numGuilds = MAX(numGuilds, guildId);
 }
 
-const bstring &Config::getBotToken() const {
+const std::string &Config::getBotToken() const {
     return botToken;
 }
 
-const bstring &Config::getWebhookToken(long webhookID) const {
+const std::string &Config::getWebhookToken(long webhookID) const {
     return webhookTokens.at(webhookID);
 }
 

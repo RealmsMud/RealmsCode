@@ -21,7 +21,6 @@
 
 #include <libxml/parser.h>  // for xmlNodePtr
 
-#include "bstring.hpp"
 
 enum Coin {
     MIN_COINS = 0,
@@ -59,9 +58,9 @@ public:
     void add(Money mn);
     void sub(Money mn);
 
-    [[nodiscard]] bstring str() const;
+    [[nodiscard]] std::string str() const;
 
-    static bstring coinNames(Coin c);
+    static std::string coinNames(Coin c);
 protected:
     unsigned long m[MAX_COINS+1]{};
 };

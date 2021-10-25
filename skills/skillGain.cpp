@@ -18,10 +18,9 @@
 #include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
 #include <map>                                      // for operator!=, opera...
 
-#include "bstring.hpp"                              // for bstring
 #include "config.hpp"                               // for Config, gConfig
 #include "skillGain.hpp"                            // for SkillGain
-#include "xml.hpp"                                  // for copyToBString
+#include "xml.hpp"                                  // for copyToString
 
 //*********************************************************************
 //                      SkillGain
@@ -44,12 +43,12 @@ void SkillGain::load(xmlNodePtr rootNode) {
 
     while(curNode) {
         if(NODE_NAME(curNode, "Name")) {
-            xml::copyToBString(skillName, curNode);
+            xml::copyToString(skillName, curNode);
         } else if(NODE_NAME(curNode, "Gained")) {
             xml::copyToNum(gainLevel, curNode);
         } else if(NODE_NAME(curNode, "Deity")) {
-            bstring deityStr;
-            xml::copyToBString(deityStr, curNode);
+            std::string deityStr;
+            xml::copyToString(deityStr, curNode);
             int deity = gConfig->deitytoNum(deityStr);
             if(deity != -1) {
                 deities[deity] = true;
@@ -70,7 +69,7 @@ int SkillGain::getGained() { return(gainLevel); }
 //                      getName
 //*********************************************************************
 
-bstring SkillGain::getName() const { return(skillName); }
+std::string SkillGain::getName() const { return(skillName); }
 
 //*********************************************************************
 //                      deityIsAllowed

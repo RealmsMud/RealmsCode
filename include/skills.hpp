@@ -55,7 +55,7 @@ enum TargetType {
     TARGET_MUDOBJECT
 };
 
-bstring getSkillLevelStr(int gained);
+std::string getSkillLevelStr(int gained);
 
 //**********************************************************************
 // SkillInfo - Class to store base information about skills
@@ -76,28 +76,28 @@ public:
     SkillInfo();
     SkillInfo(xmlNodePtr rootNode);
     virtual ~SkillInfo() {};
-    virtual void setName(bstring pName);
+    virtual void setName(std::string pName);
 protected:
     bool readNode(xmlNodePtr rootNode);
 
-    bstring baseSkill;
-    bstring group;                  // Group the skill belongs to
-    bstring displayName;            // Display name
+    std::string baseSkill;
+    std::string group;                  // Group the skill belongs to
+    std::string displayName;            // Display name
     int gainType;                   // Adjustments for skills with long timers
     bool knownOnly;
 
 public:
-    bstring getGroup() const;
-    bstring getBaseSkill() const;
-    bstring getDisplayName() const;
+    std::string getGroup() const;
+    std::string getBaseSkill() const;
+    std::string getDisplayName() const;
     int getGainType() const;
     bool isKnownOnly() const;
     bool hasBaseSkill() const;
 
 
 
-    bool setGroup(bstring &pGroup);
-    bool setBase(bstring &pBase);
+    bool setGroup(std::string &pGroup);
+    bool setBase(std::string &pBase);
 };
 
 //**********************************************************************
@@ -113,7 +113,7 @@ public:
     }
     int execute(Creature* player, cmd* cmnd) const;
 
-    void setName(bstring pName);
+    void setName(std::string pName);
 protected:
     bool readNode(xmlNodePtr rootNode);
     void loadResources(xmlNodePtr rootNode);
@@ -125,9 +125,9 @@ protected:
     int cooldown{};                   // Delay/cooldown on this skill * 10.  (10 = 1.0s delay)
     int failCooldown{};               // Delay/cooldown on this skill on failure
     std::list<SkillCost> resources; // Resources this skill uses
-    bstring pyScript;                 // Python script for this skillCommand
+    std::string pyScript;                 // Python script for this skillCommand
 
-    std::list<bstring> aliases;
+    std::list<std::string> aliases;
 
 private:
     int (*fn)(Creature* player, cmd* cmnd){};
@@ -160,23 +160,21 @@ public:
     Skill(std::string_view pName, int pGained);
     void reset();
 protected:
-    bstring name;
+    std::string name;
     int gained{};             // How many points they have gained so far
     int gainBonus{};          // Used for hard to gain skills, giving them an increased chance to improve
-#ifndef PYTHON_CODE_GEN
     Timer timer;            // Timer for cooldown
-#endif
     SkillInfo* skillInfo{};   // Pointer to parent skill for additional info
 public:
     void save(xmlNodePtr rootNode) const;
 
     [[nodiscard]] bool hasBaseSkill() const;
-    [[nodiscard]] bstring getBaseSkill();
+    [[nodiscard]] std::string getBaseSkill();
 
 
-    [[nodiscard]] bstring getName() const;
-    [[nodiscard]] bstring getDisplayName() const;
-    [[nodiscard]] bstring getGroup() const;
+    [[nodiscard]] std::string getName() const;
+    [[nodiscard]] std::string getDisplayName() const;
+    [[nodiscard]] std::string getGroup() const;
     [[nodiscard]] int getGainType() const;
     [[nodiscard]] int getGained() const;
     [[nodiscard]] int getGainBonus() const;

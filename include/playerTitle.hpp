@@ -25,10 +25,10 @@ class PlayerTitle {
 public:
     PlayerTitle();
     void    load(xmlNodePtr rootNode);
-    bstring getTitle(bool sexMale) const;
+    std::string getTitle(bool sexMale) const;
 protected:
-    bstring     male;
-    bstring     female;
+    std::string     male;
+    std::string     female;
 };
 
 

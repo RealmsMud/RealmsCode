@@ -22,7 +22,6 @@
 #include <unistd.h>       // for unlink, write, close
 #include <string>         // for operator==, basic_string
 
-#include "bstring.hpp"    // for bstring
 #include "cmd.hpp"        // for cmd
 #include "creatures.hpp"  // for Player
 #include "flags.hpp"      // for P_READING_FILE, P_UNREAD_MAIL, P_CAN_MUDMAI...
@@ -73,13 +72,13 @@ bool canPost(Player* player) {
 //*********************************************************************
 // format text for writing to file
 
-bstring postText(std::string_view str) {
-    bstring outstr = "";
+std::string postText(const std::string &str) {
+    std::string outstr = "";
 
     if(Pueblo::is(str))
         outstr = " ";
     outstr += str;
-    outstr = outstr.left(158);
+    outstr = outstr.substr(0, 158);
     outstr += "\n";
 
     return(outstr);
@@ -188,7 +187,7 @@ int cmdSendMail(Player* player, cmd* cmnd) {
 //*********************************************************************
 // Sends a mudmail from System to the target. Include a trailing \n yourself.
 
-void sendMail(std::string_view target, std::string_view message) {
+void sendMail(const std::string &target, const std::string &message) {
     Player  *player=nullptr;
     char    datestr[40];
     long    t=0;
@@ -238,12 +237,12 @@ void sendMail(std::string_view target, std::string_view message) {
 // This function is called when a player is editing a message to send
 // to another player.
 
-void postedit(Socket* sock, const bstring& str) {
+void postedit(Socket* sock, const std::string& str) {
     char    outcstr[158], datestr[40], filename[80], postfile[80];
     long    t=0;
     int     ff=0;
     FILE    *fp=nullptr;
-    bstring outstr = "";
+    std::string outstr = "";
 
     Player* ply = sock->getPlayer();
     
@@ -303,7 +302,7 @@ void postedit(Socket* sock, const bstring& str) {
         merror("postedit", FATAL);
 
     outstr = postText(str);
-    write(ff, outstr.c_str(), outstr.getLength());
+    write(ff, outstr.c_str(), outstr.length());
     close(ff);
     sock->print("-: ");
 
@@ -472,8 +471,8 @@ int cmdEditHistory(Player* player, cmd* cmnd) {
 //                      histedit
 //*********************************************************************
 
-void histedit(Socket* sock, const bstring& str) {
-    bstring outstr = "";
+void histedit(Socket* sock, const std::string& str) {
+    std::string outstr = "";
     int     ff=0;
 
     if((str[0] == '.' || str[0] == '*') && !str[1]) {
@@ -488,7 +487,7 @@ void histedit(Socket* sock, const bstring& str) {
         merror("histedit", FATAL);
 
     outstr = postText(str);
-    write(ff, outstr.c_str(), outstr.getLength());
+    write(ff, outstr.c_str(), outstr.length());
     close(ff);
     sock->print("-: ");
 

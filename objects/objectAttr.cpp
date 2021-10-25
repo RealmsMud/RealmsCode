@@ -18,7 +18,6 @@
 
 #include <ctime>          // for time
 
-#include "bstring.hpp"    // for bstring
 #include "creatures.hpp"  // for Player
 #include "effects.hpp"    // for EFFECT_MAX_DURATION, EFFECT_MAX_STRENGTH
 #include "objects.hpp"    // for Object, ObjectType, ObjectType::ARMOR, Mate...
@@ -108,7 +107,7 @@ bool Object::toggleFlag(int flag) {
     return(flagIsSet(flag));
 }
 
-bstring Object::getVersion() const {
+std::string Object::getVersion() const {
     return(version);
 }
 

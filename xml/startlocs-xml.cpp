@@ -20,12 +20,11 @@
 #include <cstdio>                 // for snprintf, sprintf
 #include <map>                    // for operator==, map, operator!=, allocator
 
-#include "bstring.hpp"            // for bstring
 #include "config.hpp"             // for Config
 #include "location.hpp"           // for Location
 #include "paths.hpp"              // for Game
 #include "startlocs.hpp"          // for StartLoc
-#include "xml.hpp"                // for NODE_NAME, copyPropToBString, copyT...
+#include "xml.hpp"                // for NODE_NAME, copyPropToString, copyT...
 
 //*********************************************************************
 //                      loadStartLoc
@@ -56,10 +55,10 @@ bool Config::loadStartLoc() {
     }
 
     clearStartLoc();
-    bstring loc = "";
+    std::string loc = "";
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Location")) {
-            xml::copyPropToBString(loc, curNode, "Name");
+            xml::copyPropToString(loc, curNode, "Name");
             if(!loc.empty() && start.find(loc) == start.end()) {
                 start[loc] = new StartLoc;
                 start[loc]->load(curNode);
@@ -82,7 +81,7 @@ bool Config::loadStartLoc() {
 //*********************************************************************
 
 void Config::saveStartLocs() const {
-    std::map<bstring, StartLoc*>::const_iterator it;
+    std::map<std::string, StartLoc*>::const_iterator it;
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     char            filename[80];
@@ -105,10 +104,10 @@ void Config::saveStartLocs() const {
 
 void StartLoc::load(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
-    xml::copyPropToBString(name, curNode, "Name");
+    xml::copyPropToString(name, curNode, "Name");
     while(childNode) {
-        if(NODE_NAME(childNode, "BindName")) xml::copyToBString(bindName, childNode);
-        else if(NODE_NAME(childNode, "RequiredName")) xml::copyToBString(requiredName, childNode);
+        if(NODE_NAME(childNode, "BindName")) xml::copyToString(bindName, childNode);
+        else if(NODE_NAME(childNode, "RequiredName")) xml::copyToString(requiredName, childNode);
         else if(NODE_NAME(childNode, "Bind")) bind.load(childNode);
         else if(NODE_NAME(childNode, "Required")) required.load(childNode);
         else if(NODE_NAME(childNode, "StartingGuide")) startingGuide.load(childNode);

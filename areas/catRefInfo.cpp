@@ -17,8 +17,9 @@
  */
 
 #include <ostream>                // for ostringstream, basic_ostream, basic...
+#include <sstream>
+#include <string>
 
-#include "bstring.hpp"            // for bstring
 #include "calendar.hpp"           // for cSeason, Calendar, cWeather (ptr only)
 #include "catRefInfo.hpp"         // for CatRefInfo
 #include "config.hpp"             // for Config, gConfig
@@ -49,11 +50,11 @@ void CatRefInfo::clear() {
 
 int CatRefInfo::getId() const { return(id); }
 
-bstring CatRefInfo::getArea() const { return(area); }
-bstring CatRefInfo::getName() const { return(name); }
-bstring CatRefInfo::getWorldName() const { return(worldName); }
-bstring CatRefInfo::getYearsSince() const { return(yearsSince); }
-bstring CatRefInfo::getParent() const { return(parent); }
+std::string CatRefInfo::getArea() const { return(area); }
+std::string CatRefInfo::getName() const { return(name); }
+std::string CatRefInfo::getWorldName() const { return(worldName); }
+std::string CatRefInfo::getYearsSince() const { return(yearsSince); }
+std::string CatRefInfo::getParent() const { return(parent); }
 
 int CatRefInfo::getYearOffset() const { return(yearOffset); }
 int CatRefInfo::getLimbo() const { return(limbo); }
@@ -79,7 +80,7 @@ const cWeather* CatRefInfo::getWeather() const {
 //                      str
 //*********************************************************************
 
-bstring CatRefInfo::str() const {
+std::string CatRefInfo::str() const {
     std::ostringstream oStr;
     oStr << area;
     if(area == "area")
@@ -92,7 +93,7 @@ bstring CatRefInfo::str() const {
 //                      catRefName
 //*********************************************************************
 
-bstring Config::catRefName(std::string_view area) const {
+std::string Config::catRefName(std::string_view area) const {
     const CatRefInfo* cri = gConfig->getCatRefInfo(area);
     if(cri)
         return(cri->getName());
@@ -156,7 +157,7 @@ const CatRefInfo* Config::getCatRefInfo(const BaseRoom* room, int shouldGetParen
     const AreaRoom* aRoom=nullptr;
     const UniqueRoom* uRoom=nullptr;
     int id = 0;
-    bstring area = "";
+    std::string area = "";
 
     if(room) {
         uRoom = room->getAsConstUniqueRoom();

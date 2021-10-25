@@ -41,7 +41,7 @@ typedef std::list<Exit*> ExitList;
 class BaseRoom: public Container {
 protected:
     void BaseDestroy();
-    bstring version;    // What version of the mud this object was saved under
+    std::string version;    // What version of the mud this object was saved under
     bool tempNoKillDarkmetal;
 
 public:
@@ -102,15 +102,15 @@ public:
 
 
     [[nodiscard]] virtual bool flagIsSet(int flag) const = 0;
-//  virtual void setFlag(int flag) = 0;
+    virtual void setFlag(int flag) = 0;
     [[nodiscard]] virtual Size getSize() const = 0;
     [[nodiscard]] bool hasRealmBonus(Realm realm) const;
     [[nodiscard]] bool hasOppositeRealmBonus(Realm realm) const;
     WanderInfo* getWanderInfo();
     void expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelStaff);
 
-    [[nodiscard]] bstring fullName() const;
-    [[nodiscard]] bstring getVersion() const;
+    [[nodiscard]] std::string fullName() const;
+    [[nodiscard]] std::string getVersion() const;
     void setVersion(std::string_view v);
     [[nodiscard]] bool hasTraining() const;
     [[nodiscard]] CreatureClass whatTraining(int extra=0) const;
@@ -127,8 +127,8 @@ public:
     void print(Socket* ignore, const char *fmt, ...);
     void print(Socket* ignore1, Socket* ignore2, const char *fmt, ...);
 
-    virtual bstring getMsdp(bool showExits = true) const { return ""; };
-    [[nodiscard]] bstring getExitsMsdp() const;
+    virtual std::string getMsdp(bool showExits = true) const { return ""; };
+    [[nodiscard]] std::string getExitsMsdp() const;
 private:
     void doPrint(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const char *fmt, va_list ap);
 };
@@ -145,8 +145,8 @@ public:
     int saveToXml(xmlNodePtr rootNode, int permOnly) const;
     int saveToFile(int permOnly, LoadType saveType=LoadType::LS_NORMAL);
 
-    [[nodiscard]] bstring getShortDescription() const;
-    [[nodiscard]] bstring getLongDescription() const;
+    [[nodiscard]] std::string getShortDescription() const;
+    [[nodiscard]] std::string getLongDescription() const;
     [[nodiscard]] short getLowLevel() const;
     [[nodiscard]] short getHighLevel() const;
     [[nodiscard]] short getMaxMobs() const;
@@ -154,7 +154,7 @@ public:
     [[nodiscard]] CatRef getTrapExit() const;
     [[nodiscard]] short getTrapWeight() const;
     [[nodiscard]] short getTrapStrength() const;
-    [[nodiscard]] bstring getFaction() const;
+    [[nodiscard]] std::string getFaction() const;
     [[nodiscard]] long getBeenHere() const;
     [[nodiscard]] short getTerrain() const;
     [[nodiscard]] int getRoomExperience() const;
@@ -181,13 +181,13 @@ public:
     bool swap(const Swap& s);
     bool swapIsInteresting(const Swap& s) const;
 
-    bstring getMsdp(bool showExits = true) const;
+    std::string getMsdp(bool showExits = true) const;
 protected:
     char    flags[16]{};  // Max flags - 128
-    bstring fishing;
+    std::string fishing;
 
-    bstring short_desc;     // Descriptions
-    bstring long_desc;
+    std::string short_desc;     // Descriptions
+    std::string long_desc;
     short   lowLevel;       // Lowest level allowed in
     short   highLevel;      // Highest level allowed in
     short   maxmobs;
@@ -196,7 +196,7 @@ protected:
     CatRef  trapexit;
     short   trapweight;
     short   trapstrength;
-    bstring faction;
+    std::string faction;
 
     long    beenhere;       // # times room visited
 
@@ -233,7 +233,7 @@ public:
     void clearFlag(int flag);
     bool toggleFlag(int flag);
 
-    bstring getFishingStr() const;
+    std::string getFishingStr() const;
     void setFishing(std::string_view id);
     const Fishing* getFishing() const;
 };
@@ -286,7 +286,7 @@ public:
     bool swap(const Swap& s);
     bool swapIsInteresting(const Swap& s) const;
 
-    bstring getMsdp(bool showExits = true) const;
+    std::string getMsdp(bool showExits = true) const;
 protected:
     bool    needsCompass{};
     bool    decCompass{};

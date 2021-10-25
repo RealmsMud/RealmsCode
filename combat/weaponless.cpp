@@ -19,7 +19,6 @@
 #include <cstdlib>                // for abs
 #include <ctime>                  // for time
 
-#include "bstring.hpp"            // for bstring
 #include "commands.hpp"           // for cmdFocus, cmdFrenzy, cmdMaul, cmdMe...
 #include "creatures.hpp"          // for Player, Creature, Monster, ATTACK_MAUL
 #include "damage.hpp"             // for Damage

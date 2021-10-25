@@ -18,7 +18,6 @@
 
 #include <cstring>        // for strcpy
 
-#include "bstring.hpp"    // for bstring, operator+
 #include "cmd.hpp"        // for cmd
 #include "commands.hpp"   // for cmdNoExist, cmdNoAuth, cmdProcess, getFulls...
 #include "creatures.hpp"  // for Player
@@ -109,7 +108,7 @@ int dmLocatePlayer(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmWatcherBroad(Player *admin, cmd* cmnd) {
-    bstring text = "";
+    std::string text = "";
     Player  *watcher=nullptr;
     int     found=0;
 

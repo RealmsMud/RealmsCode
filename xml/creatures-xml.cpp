@@ -21,7 +21,6 @@
 #include <ostream>                                  // for basic_ostream::op...
 #include <string>                                   // for operator<, operat...
 
-#include "bstring.hpp"                              // for bstring
 #include "catRef.hpp"                               // for CatRef
 #include "config.hpp"                               // for Config, gConfig
 #include "container.hpp"                            // for MonsterSet
@@ -68,16 +67,16 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         mMonster->info.load(rootNode);
         mMonster->info.id = (short)xml::getIntProp(rootNode, "Num");
     }
-    xml::copyPropToBString(version, rootNode, "Version");
+    xml::copyPropToString(version, rootNode, "Version");
 
     curNode = rootNode->children;
     // Start reading stuff in!
 
     while(curNode) {
         // Name will only be loaded for Monsters
-        if(NODE_NAME(curNode, "Name")) setName(xml::getBString(curNode));
-        else if(NODE_NAME(curNode, "Id")) setId(xml::getBString(curNode));
-        else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
+        if(NODE_NAME(curNode, "Name")) setName(xml::getString(curNode));
+        else if(NODE_NAME(curNode, "Id")) setId(xml::getString(curNode));
+        else if(NODE_NAME(curNode, "Description")) xml::copyToString(description, curNode);
         else if(NODE_NAME(curNode, "Keys")) {
             loadStringArray(curNode, key, CRT_KEY_LENGTH, "Key", 3);
         }
@@ -234,9 +233,9 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 SkillInfo* parentSkill = skill->getSkillInfo();
                 if(!parentSkill)
                     continue;
-                bstring skillGroup = parentSkill->getGroup();
-                if(skillGroup.left(7) == "weapons" && skillGroup.length() > 6) {
-                    bstring weaponSkillName = skillGroup.right(skillGroup.length() - 8);
+                std::string skillGroup = parentSkill->getGroup();
+                if(skillGroup.starts_with("weapons") && skillGroup.length() > 6) {
+                    std::string weaponSkillName = skillGroup.substr(8);
                     Skill* weaponSkill = getSkill(weaponSkillName, false);
                     if(!weaponSkill) {
                         addSkill(weaponSkillName, skill->getGained());
@@ -351,12 +350,12 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
 //*********************************************************************
 
 bool Creature::loadFaction(xmlNodePtr rootNode) {
-    bstring name = "";
+    std::string name = "";
     int         regard=0;
     xmlNodePtr curNode = rootNode->children;
     while(curNode) {
         if(NODE_NAME(curNode, "Name")) {
-            xml::copyToBString(name, curNode);
+            xml::copyToString(name, curNode);
         } else if(NODE_NAME(curNode, "Regard")) {
             xml::copyToNum(regard, curNode);
         }
@@ -480,7 +479,7 @@ void loadCrLastTime(xmlNodePtr curNode, struct crlasttime* pCrLastTime) {
 
 void Creature::loadStats(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
-    bstring statName = "";
+    std::string statName = "";
 
     while(childNode) {
         if(NODE_NAME(childNode, "Stat")) {
@@ -729,7 +728,7 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
 
         if(!minions.empty()) {
             curNode = xml::newStringChild(rootNode, "Minions");
-            std::list<bstring>::const_iterator mIt;
+            std::list<std::string>::const_iterator mIt;
             for(mIt = minions.begin() ; mIt != minions.end() ; mIt++) {
                 childNode = xml::newStringChild(curNode, "Minion", (*mIt));
             }
@@ -787,7 +786,7 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
 void Creature::saveFactions(xmlNodePtr rootNode) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, "Factions");
     xmlNodePtr factionNode;
-    std::map<bstring, long>::const_iterator fIt;
+    std::map<std::string, long>::const_iterator fIt;
     for(fIt = factions.begin() ; fIt != factions.end() ; fIt++) {
         factionNode = xml::newStringChild(curNode, "Faction");
         xml::newStringChild(factionNode, "Name", (*fIt).first);
@@ -801,7 +800,7 @@ void Creature::saveFactions(xmlNodePtr rootNode) const {
 
 void Creature::saveSkills(xmlNodePtr rootNode) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, "Skills");
-    std::map<bstring, Skill*>::const_iterator sIt;
+    std::map<std::string, Skill*>::const_iterator sIt;
     for(sIt = skills.begin() ; sIt != skills.end() ; sIt++) {
         (*sIt).second->save(curNode);
     }

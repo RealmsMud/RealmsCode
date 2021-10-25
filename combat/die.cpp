@@ -22,9 +22,9 @@
 #include <ctime>                  // for time
 #include <map>                    // for operator==, map, operator!=
 #include <ostream>                // for operator<<, basic_ostream::operator<<
+#include <boost/algorithm/string/case_conv.hpp>
 
 #include "bank.hpp"               // for guildLog
-#include "bstring.hpp"            // for bstring, operator+
 #include "commands.hpp"           // for finishDropObject, deletePlayer, los...
 #include "config.hpp"             // for Config, gConfig
 #include "container.hpp"          // for ObjectSet, MonsterSet
@@ -128,8 +128,8 @@ void hardcoreDeath(Player* player) {
 //********************************************************************
 // if a string is returned, player will get bonus exp
 
-bstring isHoliday() {
-    bstring str = gConfig->getMonthDay();
+std::string isHoliday() {
+    std::string str = gConfig->getMonthDay();
 
     // see if today is a holiday
     if(str == "Oct 31")
@@ -153,7 +153,7 @@ bstring isHoliday() {
 
 void Monster::dropCorpse(Creature *killer) {
     BaseRoom* room = getRoomParent();
-    bstring str = "", carry = "";
+    std::string str = "", carry = "";
     Object      *object=nullptr;
     Player*     player=nullptr;
     Player*     pMaster = isPet() ? getPlayerMaster() : nullptr;
@@ -276,7 +276,7 @@ void Creature::die(Creature *killer, bool &freeTarget) {
     if(pVictim && pVictim->getLevel() >= 7 && !duel)
         pVictim->save(true, LoadType::LS_BACKUP);
 
-    Hooks::run(killer, "preKill", this, "preDeath", bstring(duel));
+    Hooks::run(killer, "preKill", this, "preDeath", std::to_string(duel));
 
     if(mKiller && mKiller->isPet() && pVictim) {
         pVictim->dieToPet(mKiller);
@@ -913,7 +913,7 @@ void Player::updatePkill(Player *killer) {
 // via a pkill
 
 void Player::dropEquipment(bool dropAll, Socket* killerSock) {
-    bstring dropString = "";
+    std::string dropString = "";
     int     i=0;
 
     // dropping weapons is handled separately from equipment, but we still need their
@@ -1076,7 +1076,9 @@ void Player::dropBodyPart(Player *killer) {
                 break;
             }
 
-            body_part->setName(bstring(getName() + "'s " + part).toLower());
+            std::string newPartName = getName() + "'s " + part;
+            boost::algorithm::to_lower(newPartName);
+            body_part->setName(newPartName);
 
             lowercize(partName, 0);
             strncpy(body_part->key[0], partName, 20);
@@ -1203,8 +1205,8 @@ void Player::resetPlayer(Creature *killer) {
         courageous();
     }
 
-    killer->hooks.execute("postKill", this, bstring(duel));
-    hooks.execute("postDeath", killer, bstring(duel), bstring(same));
+    killer->hooks.execute("postKill", this, std::to_string(duel));
+    hooks.execute("postDeath", killer, std::to_string(duel), std::to_string(same));
 }
 
 //********************************************************************
@@ -1576,7 +1578,7 @@ void Creature::adjustExperience(Monster* victim, int& expAmount, int& holidayExp
     }
 
     // Add in holiday experience
-    bstring holidayStr = isHoliday();
+    std::string holidayStr = isHoliday();
 
     if(!holidayStr.empty())
         holidayExp = MAX(1, (int)(expAmount * 0.5));
@@ -1597,7 +1599,7 @@ void Player::gainExperience(Monster* victim, Creature* killer, int expAmount, bo
     if(!inSameRoom(victim))
         notlocal = true;
 
-    bstring holidayStr = isHoliday();
+    std::string holidayStr = isHoliday();
     if( groupExp ||
         this == killer ||
         !killer || !(notlocal &&
@@ -1644,7 +1646,7 @@ void Monster::gainExperience(Monster* victim, Creature* killer, int expAmount, b
 
     master->printColor("Your %s %s you ^y%d^x experience for the death of %N.\n", this->getCName(), af ? "cost" : "earned", expAmount, victim);
 
-    bstring holidayStr = isHoliday();
+    std::string holidayStr = isHoliday();
     if(holidayExp > 0)
         master->printColor("%s You %s an extra ^y%d^x experience!\n", holidayStr.c_str(), af ? "lost" : "gained", holidayExp);
 
@@ -1751,7 +1753,7 @@ int Creature::checkDieRobJail(Monster *killer, bool &freeTarget) {
 // player or a monster. -- TC
 
 void Player::die(DeathType dt) {
-    bstring death = "";
+    std::string death = "";
     Player* killer=nullptr;
     Object* statue=nullptr;
     char    deathStr[2048];

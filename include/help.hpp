@@ -19,10 +19,9 @@
 #ifndef HELP_H_
 #define HELP_H_
 
-#include "bstring.hpp"
 
 namespace Help {
-     bstring loadHelpTemplate(const char* filename);
+     std::string loadHelpTemplate(const char* filename);
  }
 
 

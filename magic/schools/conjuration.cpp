@@ -19,7 +19,6 @@
 #include <strings.h>      // for strncasecmp
 #include <ctime>          // for time, time_t
 
-#include "bstring.hpp"    // for bstring
 #include "cmd.hpp"        // for cmd
 #include "creatures.hpp"  // for Monster, Creature, Player
 #include "effects.hpp"    // for EffectInfo, Effect
@@ -288,7 +287,7 @@ creatureStats conjureStats[3][40]  =
 //*********************************************************************
 
 void petTalkDesc(Monster* pet, Creature* owner) {
-    bstring name = owner->getName(), desc = "";
+    std::string name = owner->getName(), desc = "";
 
     if(owner->flagIsSet(P_DM_INVIS))
         name = "Someone";
@@ -1102,7 +1101,7 @@ void bringDownTheWall(EffectInfo* effect, BaseRoom* room, Exit* exit) {
         return;
 
     BaseRoom* targetRoom=nullptr;
-    bstring name = effect->getName();
+    std::string name = effect->getName();
 
     if(effect->isPermanent()) {
         // fake being removed

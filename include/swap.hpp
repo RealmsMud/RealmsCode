@@ -19,7 +19,6 @@
 #ifndef _SWAP_H
 #define _SWAP_H
 
-#include "bstring.hpp"
 #include "catRef.hpp"
 
 enum SwapType {
@@ -36,7 +35,7 @@ public:
     void set(std::string_view mover, const CatRef& swapOrigin, const CatRef& swapTarget, SwapType swapType);
     bool match(const CatRef& o, const CatRef& t);
 
-    bstring player;
+    std::string player;
     SwapType type;
 
     CatRef origin;

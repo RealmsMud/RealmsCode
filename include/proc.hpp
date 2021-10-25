@@ -5,7 +5,7 @@
 #ifndef REALMSCODE_PROC_H
 #define REALMSCODE_PROC_H
 
-#include "bstring.hpp"
+#include <string>
 
 enum class ChildType {
     DNS_RESOLVER,
@@ -23,7 +23,7 @@ struct childProcess {
     int pid;
     ChildType type;
     int fd; // Fd if any we should watch
-    bstring extra;
+    std::string extra;
     childProcess() {
         pid = 0;
         fd = -1;

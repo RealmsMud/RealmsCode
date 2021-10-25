@@ -19,7 +19,6 @@
 #include <cstring>                // for strncmp, strlen
 #include <string>                 // for operator==, basic_string
 
-#include "bstring.hpp"            // for bstring, operator+
 #include "cmd.hpp"                // for cmd
 #include "creatures.hpp"          // for Creature, Player, Monster, CHECK_DIE
 #include "damage.hpp"             // for Damage
@@ -198,7 +197,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
     Damage damage;
     int     slvl, skillPercent;
 
-    bstring skill;
+    std::string skill;
     int dmgType = MAGICAL;
     if(osp->drain)
         dmgType = MAGICAL_NEGATIVE;
@@ -295,7 +294,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
                 caster->printColor("^cYour negative aura repelled some of the damage.\n");
 
             if(caster->isPlayer())
-                caster->getAsPlayer()->statistics.magicDamage(damage.get(), (bstring)"a " + spellname + " spell");
+                caster->getAsPlayer()->statistics.magicDamage(damage.get(), (std::string)"a " + spellname + " spell");
             caster->printColor("The spell did %s%d^x damage.\n", caster->customColorize("*CC:DAMAGE*").c_str(), damage.get());
             broadcast(caster->getSock(), room, "%M casts a %s spell on %sself.",
                 caster, spellname, caster->himHer());
@@ -416,7 +415,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
             if(!multi && spellData->how == CastType::CAST && caster->isPlayer())
                 caster->getAsPlayer()->statistics.offensiveCast();
             if(caster->isPlayer())
-                caster->getAsPlayer()->statistics.magicDamage(damage.get(), (bstring)"a " + spellname + " spell");
+                caster->getAsPlayer()->statistics.magicDamage(damage.get(), (std::string)"a " + spellname + " spell");
 
             caster->printColor("The spell did %s%d^x damage.\n", caster->customColorize("*CC:DAMAGE*").c_str(), damage.get());
             broadcast(caster->getSock(), target->getSock(), room, "%M casts a %s spell on %N.",
@@ -511,7 +510,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 //*********************************************************************
 // This function is called by all spells whose sole purpose is to do
 // damage to a creature.
-Creature* Creature::findMagicVictim(std::string_view toFind, int num, SpellData* spellData, bool aggressive, bool selfOk, std::string_view noVictim, std::string_view notFound) {
+Creature* Creature::findMagicVictim(const std::string &toFind, int num, SpellData* spellData, bool aggressive, bool selfOk, const std::string &noVictim, const std::string &notFound) {
     Creature *victim = nullptr;
     Player *pVictim = nullptr;
     if (toFind.empty()) {

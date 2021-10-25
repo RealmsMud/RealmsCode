@@ -58,14 +58,14 @@ class Creature;
 #define NODE_NAME(pNode, pName)         (!strcmp((char *)(pNode)->name, (pName) ))
 
 namespace xml {
-    // copyToBString - will make store the string into a temp cstr, set the string
+    // copyToString - will make store the string into a temp cstr, set the string
     // and then free the temp cstr
-    void copyToBString(bstring &to, xmlNodePtr node);
+    void copyToString(std::string &to, xmlNodePtr node);
 
-    bstring getBString(xmlNodePtr node);
+    std::string getString(xmlNodePtr node);
 
     // getProp -- You MUST free the return value
-    bstring getProp(xmlNodePtr node, const char *name);
+    std::string getProp(xmlNodePtr node, const char *name);
 
     // getIntProp -- Properly frees the return valueusing toInt
     int getIntProp(xmlNodePtr node, const char *name);
@@ -78,11 +78,11 @@ namespace xml {
     //***************************************************************************************
 
     // copyPropToCString -- This will properly free the return value using doStrCpy
-    void copyPropToCString(char* to, xmlNodePtr node, const bstring& name);
+    void copyPropToCString(char* to, xmlNodePtr node, const std::string &name);
     //#define copyPropToCString(to, node, name) doStrCpy( (to) , getProp( (node) , (name) ))
 
-    // copyPropToBString -- This will properly free the value
-    void copyPropToBString(bstring& to, xmlNodePtr node, const bstring& name);
+    // copyPropToString -- This will properly free the value
+    void copyPropToString(std::string &to, xmlNodePtr node, const std::string &name);
 
     // copyToCString -- Properly frees the return value using doStrCpy
     void copyToCString(char* to, xmlNodePtr node);
@@ -102,27 +102,27 @@ namespace xml {
     // like &, <, >, etc.
     //********************************************************************************
 
-    xmlAttrPtr newProp(xmlNodePtr node, const bstring& name, const bstring& value);
+    xmlAttrPtr newProp(xmlNodePtr node, const std::string &name, const std::string &value);
 
     template <class Type>
-    bstring numToStr(const Type& value) {
+    std::string numToStr(const Type& value) {
         std::ostringstream str;
         str << value;
         return(str.str());
     }
 
     template <class Type>
-    xmlAttrPtr newNumProp(xmlNodePtr node, bstring name, const Type& value) {
+    xmlAttrPtr newNumProp(xmlNodePtr node, std::string name, const Type& value) {
         return( xmlNewProp( node, BAD_CAST (name.c_str()), BAD_CAST(numToStr(value).c_str())));
     }
 
     template <class Type>
-    xmlNodePtr newNumChild(xmlNodePtr node, bstring name, const Type& value) {
+    xmlNodePtr newNumChild(xmlNodePtr node, std::string name, const Type& value) {
         return(xmlNewChild( node, nullptr, BAD_CAST (name.c_str()), BAD_CAST numToStr(value).c_str()));
     }
 
     template <class Type>
-    xmlNodePtr saveNonZeroNum(xmlNodePtr node, bstring name, const Type& value) {
+    xmlNodePtr saveNonZeroNum(xmlNodePtr node, std::string name, const Type& value) {
         xmlNodePtr toReturn = nullptr;
         // precision for floats
         if((int)(value*10000)) {
@@ -168,7 +168,6 @@ namespace xml {
     void loadNumArray(xmlNodePtr curNode, Type array[], const char* nodeName, int maxProp) {
         xmlNodePtr childNode = curNode->children;
         int i;
-#ifndef PYTHON_CODE_GEN
         while(childNode) {
             if(NODE_NAME(childNode , nodeName)) {
                 i = xml::getIntProp(childNode, "Num");
@@ -177,17 +176,16 @@ namespace xml {
             }
             childNode = childNode->next;
         }
-#endif
     }
 
-    xmlNodePtr newBoolChild(xmlNodePtr node, const bstring& name, const bool value);
-    xmlNodePtr newStringChild(xmlNodePtr node, const bstring& name, const bstring& value = "");
+    xmlNodePtr newBoolChild(xmlNodePtr node, const std::string &name, const bool value);
+    xmlNodePtr newStringChild(xmlNodePtr node, const std::string &name, const std::string &value = "");
 
     //***************************************************************************************
     // saveNonZero/Null will only save if it is non 0 and also escape any bad XML characters
     //***************************************************************************************
 
-    xmlNodePtr saveNonNullString(xmlNodePtr node, const bstring& name, const bstring& value);
+    xmlNodePtr saveNonNullString(xmlNodePtr node, const std::string &name, const std::string &value);
 
     xmlChar* ConvertInput(const char *in, const char *encoding);
     char *doStrCpy(char *dest, char *src);
@@ -205,13 +203,13 @@ namespace xml {
 
 bool loadMonster(int index, Monster** pMonster, bool offline=false);
 bool loadMonster(const CatRef& cr, Monster** pMonster, bool offline=false);
-bool loadMonsterFromFile(const CatRef& cr, Monster **pMonster, bstring filename="", bool offline=false);
+bool loadMonsterFromFile(const CatRef& cr, Monster **pMonster, std::string filename="", bool offline=false);
 bool loadObject(int index, Object** pObject, bool offline=false);
 bool loadObject(const CatRef& cr, Object** pObject, bool offline=false);
 bool loadObjectFromFile(const CatRef& cr, Object** pObject, bool offline=false);
 bool loadRoom(int index, UniqueRoom **pRoom, bool offline=false);
 bool loadRoom(const CatRef& cr, UniqueRoom **pRoom, bool offline=false);
-bool loadRoomFromFile(const CatRef& cr, UniqueRoom **pRoom, bstring filename="", bool offline=false);
+bool loadRoomFromFile(const CatRef& cr, UniqueRoom **pRoom, std::string filename="", bool offline=false);
 
 bool loadPlayer(std::string_view name, Player** player, enum LoadType loadType=LoadType::LS_NORMAL);
 

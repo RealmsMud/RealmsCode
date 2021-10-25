@@ -27,9 +27,9 @@ class BaseRoom;
 class Location {
 public:
     Location();
-    void save(xmlNodePtr rootNode, std::string_view name) const;
+    void save(xmlNodePtr rootNode, const std::string &name) const;
     void load(xmlNodePtr curNode);
-    [[nodiscard]] bstring str() const;
+    [[nodiscard]] std::string str() const;
     bool    operator==(const Location& l) const;
     bool    operator!=(const Location& l) const;
     BaseRoom* loadRoom(Player* player=nullptr) const;

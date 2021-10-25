@@ -17,7 +17,6 @@
  */
 #include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
 
-#include "bstring.hpp"                              // for bstring
 #include "objIncrease.hpp"                          // for ObjIncrease, Unkn...
 #include "xml.hpp"                                  // for saveNonZeroNum
 
@@ -67,7 +66,7 @@ void ObjIncrease::load(xmlNodePtr curNode) {
     while(childNode) {
         if(NODE_NAME(childNode, "Amount")) xml::copyToNum(amount, childNode);
         else if(NODE_NAME(childNode, "Type")) type = (IncreaseType)xml::toNum<int>(childNode);
-        else if(NODE_NAME(childNode, "Increase")) xml::copyToBString(increase, childNode);
+        else if(NODE_NAME(childNode, "Increase")) xml::copyToString(increase, childNode);
         else if(NODE_NAME(childNode, "OnlyOnce")) xml::copyToBool(onlyOnce, childNode);
         else if(NODE_NAME(childNode, "CanAddIfNotKnown")) xml::copyToBool(canAddIfNotKnown, childNode);
 

@@ -19,8 +19,8 @@
 
 #include <boost/format.hpp>             // for basic_altstringbuf<>::int_type
 #include <cctype>                       // for isdigit
+#include <boost/algorithm/string/case_conv.hpp>
 
-#include "bstring.hpp"                  // for bstring, operator+
 #include "cmd.hpp"                      // for cmd
 #include "config.hpp"                   // for Config, gConfig
 #include "creatures.hpp"                // for Player
@@ -28,7 +28,7 @@
 #include "proto.hpp"                    // for up, file_exists
 #include "proxy.hpp"                    // for ProxyAccess, ProxyManager
 #include "server.hpp"                   // for Server, gServer
-#include "xml.hpp"                      // for newStringChild, copyToBString
+#include "xml.hpp"                      // for newStringChild, copyToString
 
 //*********************************************************************
 // CmdProxy
@@ -39,7 +39,7 @@
 int cmdProxy(Player* player, cmd* cmnd) {
 
     if(cmnd->num == 1) {
-        bstring proxyList = gConfig->getProxyList(player);
+        std::string proxyList = gConfig->getProxyList(player);
         if(proxyList.empty())
             *player << "No proxy access currently allowed.\n";
         else
@@ -57,15 +57,15 @@ int cmdProxy(Player* player, cmd* cmnd) {
     bool online=true;
 
     Player* target=nullptr;
-    bstring name =  cmnd->str[1];
+    std::string name =  cmnd->str[1];
 
-    if(name.length() > 1 && name.getAt(0) == 'p' && isdigit(name.getAt(1))) {
+    if(name.length() > 1 && name.at(0) == 'p' && isdigit(name.at(1))) {
         target = gServer->lookupPlyId(name);
     }
 
-    if(!target && name.length() > 1 && name.getAt(0) == 'p' && isdigit(name.getAt(1))) {
+    if(!target && name.length() > 1 && name.at(0) == 'p' && isdigit(name.at(1))) {
         // Dealing with an ID
-        name.setAt(0, up(name.getAt(0)));
+        name.at(0) = up(name.at(0));
         // TODO: Print success/failure
 
         if(gConfig->removeProxyAccess(name, player) )
@@ -77,8 +77,8 @@ int cmdProxy(Player* player, cmd* cmnd) {
     else {
         // We're dealing with a player
         if(!target) {
-            name = name.toLower();
-            name.setAt(0, up(name.getAt(0)));
+            boost::to_lower(name);
+            name.at(0) = up(name.at(0));
             target = gServer->findPlayer(name);
         }
 
@@ -141,12 +141,12 @@ bool Config::hasProxyAccess(Player* proxy, Player* proxied) {
 //*********************************************************************
 // getProxyList
 //*********************************************************************
-// Returns a bstring showing proxy access for the given player
+// Returns a std::string showing proxy access for the given player
 // or all players if player is null
 
-bstring Config::getProxyList(Player* player) {
+std::string Config::getProxyList(Player* player) {
     std::ostringstream oStr;
-    bstring lastId = "";
+    std::string lastId = "";
 
     oStr.setf(std::ios::left, std::ios::adjustfield);
     boost::format format("%1% %|15t|%2% %|45t|%3%\n");
@@ -163,11 +163,11 @@ bstring Config::getProxyList(Player* player) {
             lastId = proxy.getProxiedId();
             oStr << format % "Character: "
                            % (proxy.getProxiedName() + "(" + proxy.getProxiedId() + ")")
-                           % (bstring("- ") + proxy.getProxyName() + "(" + proxy.getProxyId() + ")");
+                           % (std::string("- ") + proxy.getProxyName() + "(" + proxy.getProxyId() + ")");
         } else {
             oStr << format % ""
                            % ""
-                           % (bstring("- ") + proxy.getProxyName() + "(" + proxy.getProxyId() + ")");
+                           % (std::string("- ") + proxy.getProxyName() + "(" + proxy.getProxyId() + ")");
         }
     }
     return(oStr.str());
@@ -262,8 +262,8 @@ void Player::setProxyId(std::string_view pProxyId) {
 }
 
 
-bstring Player::getProxyName() const { return(proxyName); }
-bstring Player::getProxyId() const { return(proxyId); }
+std::string Player::getProxyName() const { return(proxyName); }
+std::string Player::getProxyId() const { return(proxyId); }
 
 
 
@@ -360,11 +360,11 @@ bool ProxyAccess::hasProxyAccess(Player* proxy, Player* proxied) {
         return(true);
     return(false);
 }
-bstring ProxyAccess::getProxiedId() const { return proxiedId; }
-bstring ProxyAccess::getProxiedName() const { return proxiedName; }
-bstring ProxyAccess::getProxyId() const { return proxyId; }
+std::string ProxyAccess::getProxiedId() const { return proxiedId; }
+std::string ProxyAccess::getProxiedName() const { return proxiedName; }
+std::string ProxyAccess::getProxyId() const { return proxyId; }
 
-bstring ProxyAccess::getProxyName() const { return proxyName; }
+std::string ProxyAccess::getProxyName() const { return proxyName; }
 
 
 

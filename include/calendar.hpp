@@ -21,7 +21,6 @@
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <list>
 
-#include "bstring.hpp"      // for bstring
 #include "season.hpp"       // for Season
 #include "weather.hpp"      // for WeatherString
 
@@ -35,37 +34,37 @@ class Player;
 
 class cWeather {
 protected:
-    bstring sunrise;
-    bstring sunset;
-    bstring earthTrembles;
-    bstring heavyFog;
-    bstring beautifulDay;
-    bstring brightSun;
-    bstring glaringSun;
-    bstring heat;
-    bstring still;
-    bstring lightBreeze;
-    bstring strongWind;
-    bstring windGusts;
-    bstring galeForce;
-    bstring clearSkies;
-    bstring lightClouds;
-    bstring thunderheads;
-    bstring lightRain;
-    bstring heavyRain;
-    bstring sheetsRain;
-    bstring torrentRain;
-    bstring noMoon;
-    bstring sliverMoon;
-    bstring halfMoon;
-    bstring waxingMoon;
-    bstring fullMoon;
+    std::string sunrise;
+    std::string sunset;
+    std::string earthTrembles;
+    std::string heavyFog;
+    std::string beautifulDay;
+    std::string brightSun;
+    std::string glaringSun;
+    std::string heat;
+    std::string still;
+    std::string lightBreeze;
+    std::string strongWind;
+    std::string windGusts;
+    std::string galeForce;
+    std::string clearSkies;
+    std::string lightClouds;
+    std::string thunderheads;
+    std::string lightRain;
+    std::string heavyRain;
+    std::string sheetsRain;
+    std::string torrentRain;
+    std::string noMoon;
+    std::string sliverMoon;
+    std::string halfMoon;
+    std::string waxingMoon;
+    std::string fullMoon;
 
 public: 
     cWeather();
     void load(xmlNodePtr curNode);
     void save(xmlNodePtr curNode) const;
-    [[nodiscard]] bstring get(WeatherString w) const;
+    [[nodiscard]] std::string get(WeatherString w) const;
 };
 
 // __..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..
@@ -104,7 +103,7 @@ public:
 class cSeason {
 protected:
     Season      id;
-    bstring     name;
+    std::string     name;
     short       month;
     short       day;
 
@@ -117,7 +116,7 @@ public:
     void save(xmlNodePtr curNode) const;
 
     [[nodiscard]] Season getId() const;
-    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] std::string getName() const;
     [[nodiscard]] short getMonth() const;
     [[nodiscard]] short getDay() const;
 
@@ -133,7 +132,7 @@ public:
 class cMonth {
 protected:
     short       id;
-    bstring     name;
+    std::string     name;
     short       days;
 
 public:
@@ -143,7 +142,7 @@ public:
     void save(xmlNodePtr curNode) const;
 
     [[nodiscard]] short getId() const;
-    [[nodiscard]] bstring getName() const;
+    [[nodiscard]] std::string getName() const;
     [[nodiscard]] short getDays() const;
 };
 
@@ -160,7 +159,7 @@ protected:
     short   curMonth;
     short   curDay;
     short   adjHour;
-    bstring lastPirate;
+    std::string lastPirate;
 
     cSeason *curSeason{};
     std::list<cSeason*> seasons;
@@ -178,7 +177,7 @@ public:
     void    advance();
     void    printtime(const Player* player) const;
     bool    isBirthday(const Player* target) const;
-    [[nodiscard]] bstring getLastPirate() const;
+    [[nodiscard]] std::string getLastPirate() const;
     void    setLastPirate(std::string_view name);
     void    resetToMidnight();
 

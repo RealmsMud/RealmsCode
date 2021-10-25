@@ -72,7 +72,7 @@ class UniqueOwner {
 protected:
     long    time;       // time they picked it up
     CatRef  item;
-    bstring owner;  
+    std::string owner;
 
 public:
     UniqueOwner();
@@ -138,7 +138,7 @@ public:
     bool checkItemLimit(const CatRef& item) const;
     bool canGet(const Player* player, const CatRef& item, bool transfer) const;
 
-    static void broadcastDestruction(std::string_view owner, const Object* object);
+    static void broadcastDestruction(const std::string &owner, const Object* object);
     static bool canLoad(const Object* object);
     static bool is(const Object* object);
     static bool isUnique(const Object* object);

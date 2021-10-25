@@ -26,10 +26,10 @@
 #include <map>                                 // for operator==, operator!=
 #include <string>                              // for basic_string, operator==
 #include <utility>                             // for pair
+#include <boost/algorithm/string/trim.hpp>
 
 #include "area.hpp"                            // for Area, AreaZone, MapMarker
 #include "async.hpp"                          // for Async, AsyncExternal
-#include "bstring.hpp"                         // for bstring, operator+
 #include "catRef.hpp"                          // for CatRef
 #include "catRefInfo.hpp"                      // for CatRefInfo, CatRefInfo...
 #include "cmd.hpp"                             // for cmd
@@ -95,7 +95,7 @@ const char* sepType = " ";
 //                          swapName
 //*********************************************************************
 
-bstring swapName(SwapType type) {
+std::string swapName(SwapType type) {
     if(type == SwapRoom)
         return("room");
     if(type == SwapObject)
@@ -110,9 +110,9 @@ bstring swapName(SwapType type) {
 //*********************************************************************
 
 void swap(Player* player, cmd* cmnd, SwapType type) {
-    bstring str = getFullstrText(cmnd->fullstr, 1);
-    bstring name="";
-    bstring cmd = " *swap";
+    std::string str = getFullstrText(cmnd->fullstr, 1);
+    std::string name="";
+    std::string cmd = " *swap";
     char padding[50];
     int queueSize = gConfig->swapQueueSize();
 
@@ -120,7 +120,7 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
     s.player = player->getName();
     s.type = type;
 
-    bstring swapType = "";
+    std::string swapType = "";
     if(type == SwapRoom) {
         swapType = "room";
         cmd = "*rswap";
@@ -134,7 +134,7 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
     swapType = swapName(type);
 
     if(str.empty()) {
-        bstring prefix = "  ^e";
+        std::string prefix = "  ^e";
         prefix += cmd;
 
         if(type == SwapObject) {
@@ -155,7 +155,7 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
             player->printColor("  ^e%s [^x-range source target loop^e]\n", cmd.c_str());
             player->printColor("         ^e[^x-range source.low:high target^e]\n");
             memset(padding, ' ', sizeof(padding));
-            padding[16 + prefix.getLength() - 2] = '\0';
+            padding[16 + prefix.length() - 2] = '\0';
             player->print("%s- swap a range of %ss.\n", padding, swapType.c_str());
         }
         player->printColor("%s [^x-info^e]     ^x- print swap info.\n", prefix.c_str());
@@ -166,8 +166,8 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
         gConfig->swapInfo(player);
         gServer->swapInfo(player);
         return;
-    } else if(str.left(6) == "-range" && type != SwapNone) {
-        bstring o = getFullstrText(cmnd->fullstr, 2);
+    } else if(str.starts_with("-range") && type != SwapNone) {
+        std::string o = getFullstrText(cmnd->fullstr, 2);
         getCatRef(o, &s.origin, nullptr);
         getCatRef(getFullstrText(cmnd->fullstr, 3), &s.target, nullptr);
 
@@ -175,8 +175,8 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
             s.origin.rstr().c_str(), s.target.id == -1 ? s.target.area.c_str() : s.target.rstr().c_str());
 
         int loop=0;
-        bstring::size_type pos = o.Find(":");
-        if(pos != bstring::npos) {
+        std::string::size_type pos = o.find(":");
+        if(pos != std::string::npos) {
             // *rswap -range misc.100:120 test.1
             loop = atoi(o.substr(pos+1).c_str()) - s.origin.id;
         } else {
@@ -222,7 +222,7 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
             broadcast(isStaff, "^YRS: Swap queue has been cleared.");
             gConfig->swapAbort();
             return;
-        } if(str.left(7) == "-cancel") {
+        } if(str.starts_with("-cancel")) {
             int id = atoi(getFullstrText(cmnd->fullstr, 2).c_str());
             if(id <= 1)
                 id = 1;
@@ -239,7 +239,7 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
         }
     }
 
-    if(str.getAt(0) == '-') {
+    if(str.at(0) == '-') {
         player->printColor("^YRS: ^RError: ^xFlag not understood.\n");
         return;
     }
@@ -332,7 +332,7 @@ int dmMobSwap(Player* player, cmd* cmnd) {
 bool Server::swap(const Swap& s) {
     Player *player = gServer->findPlayer(s.player.c_str());
     gConfig->setMovingRoom(s.origin, s.target);
-    bstring output;
+    std::string output;
 
     // check validity here
     if(!gConfig->swapChecks(player, s)) {
@@ -367,9 +367,9 @@ bool Server::swap(const Swap& s) {
 //                          simpleChildRead
 //*********************************************************************
 
-bstring Server::simpleChildRead(childProcess &child) {
+std::string Server::simpleChildRead(childProcess &child) {
     char tmpBuf[4096];
-    bstring toProcess;
+    std::string toProcess;
     size_t n;
     for(;;) {
         // read in all of the data
@@ -379,7 +379,8 @@ bstring Server::simpleChildRead(childProcess &child) {
             break;
         toProcess += tmpBuf;
     }
-    return(toProcess.trim());
+    boost::trim(toProcess);
+    return(toProcess);
 }
 
 //*********************************************************************
@@ -395,7 +396,7 @@ void Config::findNextEmpty(childProcess &child, bool onReap) {
 
     // a target has not yet been found
     if(currentSwap.target.id == -1) {
-        bstring toProcess = gServer->simpleChildRead(child);
+        std::string toProcess = gServer->simpleChildRead(child);
 
         if(!toProcess.empty()) {
             getCatRef(toProcess, &currentSwap.target, nullptr);
@@ -442,7 +443,7 @@ void Config::findNextEmpty(childProcess &child, bool onReap) {
 //                          finishSwap
 //*********************************************************************
 
-void Config::finishSwap(std::string_view mover) {
+void Config::finishSwap(const std::string &mover) {
     Player* player = gServer->findPlayer(mover);
     bool online=true;
 
@@ -533,8 +534,8 @@ void Server::finishSwap(Player* player, bool online, const CatRef& origin, const
             player->printColor("^YRS: ^eThis may take several minutes.\n");
         } else
             free_crt(player);
-        gConfig->swapLog((bstring)"r" + origin.rstr(), false);
-        gConfig->swapLog((bstring)"r" + target.rstr(), false);
+        gConfig->swapLog((std::string)"r" + origin.rstr(), false);
+        gConfig->swapLog((std::string)"r" + target.rstr(), false);
     }
 }
 
@@ -545,11 +546,11 @@ void Server::finishSwap(Player* player, bool online, const CatRef& origin, const
 
 void Config::offlineSwap() {
     std::list<Area*>::iterator aIt;
-    std::map<bstring, AreaRoom*>::iterator rIt;
+    std::map<std::string, AreaRoom*>::iterator rIt;
     struct  dirent *dirp=nullptr, *dirq=nullptr;
     DIR     *dir=nullptr, *subdir=nullptr;
-    bstring filename = "";
-    bstring output = "";
+    std::string filename = "";
+    std::string output = "";
 
     UniqueRoom* uRoom=nullptr;
     AreaRoom* aRoom=nullptr;
@@ -692,13 +693,13 @@ void Config::offlineSwap(childProcess &child, bool onReap) {
     if(!isSwapping())
         return;
     Player* player = gServer->findPlayer(child.extra.c_str());
-    bstring toProcess = gServer->simpleChildRead(child);
+    std::string toProcess = gServer->simpleChildRead(child);
 
     if(!toProcess.empty()) {
         UniqueRoom *uRoom=nullptr;
         Monster *monster=nullptr;
         CatRef cr;
-        bstring input;
+        std::string input;
 
         boost::char_separator<char> sep(sepType);
         charTokenizer tok(toProcess, sep);
@@ -710,12 +711,12 @@ void Config::offlineSwap(childProcess &child, bool onReap) {
 
             swapLog(input);
 
-            if(input.getAt(0) == 'r') {
-                getCatRef(input.right(input.getLength()-1), &cr, nullptr);
+            if(input.at(0) == 'r') {
+                getCatRef(input.substr(1), &cr, nullptr);
                 // this will put rooms in the queue
                 loadRoom(cr, &uRoom);
-            } else if(input.getAt(0) == 'm') {
-                getCatRef(input.right(input.getLength()-1), &cr, nullptr);
+            } else if(input.at(0) == 'm') {
+                getCatRef(input.substr(1), &cr, nullptr);
                 // this will put monsters in the queue
                 if(loadMonster(cr, &monster))
                     free_crt(monster);
@@ -731,7 +732,7 @@ void Config::offlineSwap(childProcess &child, bool onReap) {
 //*********************************************************************
 
 void Config::swap(Player* player, std::string_view name) {
-    std::list<bstring>::iterator bIt;
+    std::list<std::string>::iterator bIt;
     std::list<Swap>::iterator qIt;
     UniqueRoom *uOrigin=nullptr, *uTarget=nullptr;
     bool found;
@@ -755,7 +756,7 @@ void Config::swap(Player* player, std::string_view name) {
 
     // loop through each starting location
     found = false;
-    std::map<bstring, StartLoc*>::iterator lIt;
+    std::map<std::string, StartLoc*>::iterator lIt;
     for(lIt = start.begin() ; lIt != start.end() ; lIt++) {
         if((*lIt).second->swap(currentSwap)) {
             if(player)
@@ -802,7 +803,7 @@ void Config::swap(Player* player, std::string_view name) {
         ply = p.second;
         if(ply->swap(currentSwap))
             ply->save(true);
-        swapList.remove((bstring)"p" + ply->getName());
+        swapList.remove((std::string)"p" + ply->getName());
     }
 
     // remove the swapped rooms from the queue
@@ -995,9 +996,9 @@ bool Config::checkSpecialArea(const CatRef& origin, const CatRef& target, int (C
 //                          swap
 //*********************************************************************
 
-void Config::swap(bstring str) {
-    char type = str.getAt(0);
-    str = str.right(str.getLength()-1);
+void Config::swap(std::string str) {
+    char type = str.at(0);
+    str = str.substr(1);
     if(type == 'p' || type == 'b') {
         // at this point, the player will always be offline
         Player* player=nullptr;
@@ -1056,8 +1057,8 @@ void Config::swap(bstring str) {
 //*********************************************************************
 // record players and rooms that are saved during roomMove
 
-void Config::swapLog(const bstring& log, bool external) {
-    char type = log.getAt(0);
+void Config::swapLog(const std::string& log, bool external) {
+    char type = log.at(0);
     if(type != 'b' && type != 'p' && type != 'm' && type != 'r' && type != 'a')
         return;
 
@@ -1067,7 +1068,7 @@ void Config::swapLog(const bstring& log, bool external) {
     Player* player = gServer->findPlayer(gServer->swapName().c_str());
 
     if(player) {
-        bstring mvName = log.right(log.getLength()-1);
+        std::string mvName = log.substr(1);
 
         // are they allowed to see this?
         if(type == 'p' || type == 'b') {
@@ -1099,7 +1100,7 @@ void Config::setMovingRoom(const CatRef& o, const CatRef& t) {
 //                          swapName
 //*********************************************************************
 
-bstring Server::swapName() {
+std::string Server::swapName() {
     for(childProcess & child : children)
         if(child.type == ChildType::SWAP_FIND || child.type == ChildType::SWAP_FINISH)
             return(child.extra);
@@ -1148,18 +1149,18 @@ void Config::endSwap(int id) {
 void Config::swapInfo(const Player* player) {
     bool canSee;
     char type;
-    bstring mvName;
+    std::string mvName;
 
     player->printColor("^WWwap Config Info\n");
     player->printColor("   Swapping: %s^x  What: ^e%s\n", isSwapping() ? "^gYes" : "^rNo", swapName(currentSwap.type).c_str());
     player->printColor("   Queue Size: ^c%d\n", SWAP_QUEUE_LIMIT);
     player->print("   Data In Memory:\n");
 
-    std::list<bstring>::iterator bIt;
+    std::list<std::string>::iterator bIt;
     for(bIt = swapList.begin() ; bIt != swapList.end() ; bIt++) {
         canSee = true;
-        type = (*bIt).getAt(0);
-        mvName = (*bIt).right((*bIt).getLength()-1);
+        type = (*bIt).at(0);
+        mvName = (*bIt).substr(1);
 
         if(type == 'p' || type == 'b') {
             if(player->getClass() == CreatureClass::BUILDER)
@@ -1170,7 +1171,7 @@ void Config::swapInfo(const Player* player) {
 
         if(canSee)
             player->printColor("      ^e%s%s\n", mvName.c_str(),
-                (*bIt).getAt(0) == 'b' ? " (backup)" : "");
+                (*bIt).at(0) == 'b' ? " (backup)" : "");
     }
     std::list<Swap>::iterator qIt;
     int id=1;
@@ -1271,16 +1272,16 @@ bool Config::swapIsInteresting(const MudObject* target) const {
 //*********************************************************************
 
 char whichDelim(std::string_view code) {
-    bstring::size_type qPos, aPos;
+    std::string::size_type qPos, aPos;
 
     qPos = code.find("\"");
     aPos = code.find("'");
 
-    if(qPos == bstring::npos && aPos == bstring::npos)
+    if(qPos == std::string::npos && aPos == std::string::npos)
         return(0);
-    if(qPos == bstring::npos)
+    if(qPos == std::string::npos)
         return('\'');
-    if(aPos == bstring::npos)
+    if(aPos == std::string::npos)
         return('"');
     if(qPos < aPos)
         return('"');
@@ -1291,19 +1292,19 @@ char whichDelim(std::string_view code) {
 //                          getParamFromCode
 //*********************************************************************
 
-bstring getParamFromCode(std::string_view pythonCode, std::string_view function, SwapType type) {
-    bstring code = pythonCode;
-    bstring::size_type pos;
+std::string getParamFromCode(const std::string &pythonCode, const std::string &function, SwapType type) {
+    std::string code = pythonCode;
+    std::string::size_type pos;
     char delim;
 
     // find the function name
     pos = code.find(function);
-    if(pos == bstring::npos)
+    if(pos == std::string::npos)
         return("");
 
     if(function == "spawnObjects") {
         // room is the first param, objects is the second param
-        code = code.substr(pos, pos - code.getLength());
+        code = code.substr(pos, pos - code.length());
 
         // find the delimiter for the first parameter
         delim = whichDelim(code);
@@ -1311,14 +1312,14 @@ bstring getParamFromCode(std::string_view pythonCode, std::string_view function,
             return("");
         pos = code.find(delim);
 
-        code = code.substr(pos + 1, pos - code.getLength() - 1);
+        code = code.substr(pos + 1, pos - code.length() - 1);
 
         // for objects, move on to the next parameter
         if(type == SwapObject) {
             pos = code.find(delim);
-            if(pos == bstring::npos)
+            if(pos == std::string::npos)
                 return("");
-            code = code.substr(pos + 1, pos - code.getLength() - 1);
+            code = code.substr(pos + 1, pos - code.length() - 1);
 
             // find the delimiter for the second parameter
             delim = whichDelim(code);
@@ -1326,11 +1327,11 @@ bstring getParamFromCode(std::string_view pythonCode, std::string_view function,
                 return("");
             pos = code.find(delim);
 
-            code = code.substr(pos + 1, pos - code.getLength() - 1);
+            code = code.substr(pos + 1, pos - code.length() - 1);
         }
 
         pos = code.find(delim);
-        if(pos == bstring::npos)
+        if(pos == std::string::npos)
             return("");
         code = code.substr(0, pos);
 
@@ -1344,12 +1345,12 @@ bstring getParamFromCode(std::string_view pythonCode, std::string_view function,
 //                          setParamInCode
 //*********************************************************************
 
-bstring setParamInCode(std::string_view pythonCode, std::string_view function, SwapType type, std::string_view param) {
-    bstring code = pythonCode;
-    bstring::size_type pos;
+std::string setParamInCode(const std::string &pythonCode, const std::string &function, SwapType type, const std::string &param) {
+    std::string code = pythonCode;
+    std::string::size_type pos;
 
     pos = code.find(function);
-    if(pos == bstring::npos)
+    if(pos == std::string::npos)
         return(code);
 
     if(function == "spawnObjects") {
@@ -1365,10 +1366,10 @@ bstring setParamInCode(std::string_view pythonCode, std::string_view function, S
 
 bool Hooks::swap(const Swap& s) {
     bool found=false;
-    bstring param;
+    std::string param;
     CatRef cr;
 
-    for(std::pair<bstring,bstring> p : hooks ) {
+    for(std::pair<std::string,std::string> p : hooks ) {
         if(s.type == SwapRoom) {
             param = getParamFromCode(p.second, "spawnObjects", s.type);
             if(!param.empty()) {
@@ -1391,7 +1392,7 @@ bool Hooks::swap(const Swap& s) {
 //*********************************************************************
 
 bool Hooks::swapIsInteresting(const Swap& s) const {
-    bstring param;
+    std::string param;
     CatRef cr;
 
     for(const auto& p : hooks) {
@@ -1403,7 +1404,7 @@ bool Hooks::swapIsInteresting(const Swap& s) const {
                     return(true);
             }
         } else if(s.type == SwapObject) {
-            bstring obj;
+            std::string obj;
             int i=0;
 
             param = getParamFromCode(p.second, "spawnObjects", s.type);
@@ -1727,7 +1728,7 @@ bool AreaZone::swap(const Swap& s) {
 //*********************************************************************
 
 bool Area::swap(const Swap& s) {
-    //std::map<bstring, AreaRoom*>::iterator rIt;
+    //std::map<std::string, AreaRoom*>::iterator rIt;
     std::list<AreaZone*>::iterator zIt;
     bool found=false;
 

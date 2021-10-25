@@ -21,7 +21,6 @@
 
 #include <libxml/parser.h>  // for xmlNodePtr
 
-#include "bstring.hpp"
 
 class Dice {
 public:
@@ -37,7 +36,7 @@ public:
     [[nodiscard]] int average() const;
     [[nodiscard]] int low() const;
     [[nodiscard]] int high() const;
-    [[nodiscard]] bstring str() const;
+    [[nodiscard]] std::string str() const;
 
     [[nodiscard]] double getMean() const;
     [[nodiscard]] unsigned short getNumber() const;

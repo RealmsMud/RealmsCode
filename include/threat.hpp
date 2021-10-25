@@ -39,21 +39,21 @@ public:
     long adjustContribution(long modAmt);
 //protected:
 public:
-    bstring uId;        // ID of the target this monster is mad at
+    std::string uId;        // ID of the target this monster is mad at
 
     time_t lastMod;     // When was this threat entry last updated
 
     long threatValue;       // How mad they are at this target
     long contributionValue; // How much this target has contributed to killing this monster
     bool operator< (const ThreatEntry& t) const;
-    [[nodiscard]] std::string_view getUid() const;
+    [[nodiscard]] const std::string & getUid() const;
 };
 
 struct ThreatPtrLess : public std::binary_function<const ThreatEntry*, const ThreatEntry*, bool> {
     bool operator()(const ThreatEntry* lhs, const ThreatEntry* rhs) const;
 };
 
-typedef std::map<bstring, ThreatEntry*> ThreatMap;
+typedef std::map<std::string, ThreatEntry*> ThreatMap;
 typedef std::multiset<ThreatEntry*, ThreatPtrLess> ThreatSet;
 
 
@@ -70,7 +70,7 @@ public:
     long getTotalThreat();
     long getThreat(Creature* target);
     long adjustThreat(Creature* target, long modAmt, double threatFactor = 1.0);
-    long removeThreat(std::string_view pUid);
+    long removeThreat(const std::string &pUid);
     long removeThreat(Creature* target);
     void setParent(Creature* pParent);
     bool hasEnemy() const;

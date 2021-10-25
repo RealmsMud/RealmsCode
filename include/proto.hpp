@@ -48,12 +48,12 @@ double getConBonusPercentage(unsigned int pCon);
 double getIntBonusPercentage(unsigned int pInt);
 
 // Container
-bool isMatch(const Creature* searcher, MudObject* target, const bstring& name, bool exactMatch, bool checkVisibility = false);
+bool isMatch(const Creature* searcher, MudObject* target, const std::string& name, bool exactMatch, bool checkVisibility = false);
 
 
 // Socials
-void socialHooks(Creature *creature, MudObject* target, std::string_view action, std::string_view result = "");
-void socialHooks(Creature *target, std::string_view action, std::string_view result = "");
+void socialHooks(Creature *creature, MudObject* target, const std::string &action, const std::string &result = "");
+void socialHooks(Creature *target, const std::string &action, const std::string &result = "");
 bool actionShow(Player* pTarget, Creature* creature);
 
 // afflictions.cpp
@@ -69,7 +69,7 @@ CatRef shopStorageRoom(const UniqueRoom *shop);
 
 // creature.cpp
 bool isRace(int subRace, int mainRace);
-bstring getSexName(Sex sex);
+std::string getSexName(Sex sex);
 
 Monster *getFirstAggro(Monster* creature, const Creature* player);
 Creature *enm_in_group(Creature *target);
@@ -77,24 +77,24 @@ Creature *enm_in_group(Creature *target);
 
 
 // dmroom.cpp
-bstring wrapText(std::string_view text, int wrap);
+std::string wrapText(std::string_view text, int wrap);
 
 
 
 
 // io.cpp
-bstring xsc(std::string_view txt);
-bstring unxsc(std::string_view txt);
+std::string xsc(std::string_view txt);
+std::string unxsc(std::string_view txt);
 
 namespace Pueblo {
-    static bstring activation = "this world is pueblo ";
+    static std::string activation = "this world is pueblo ";
 
-    bstring multiline(bstring str);
-    bool is(const bstring& txt);
+    std::string multiline(std::string str);
+    bool is(const std::string& txt);
 }
 
 char keyTxtConvert(unsigned char c);
-bstring keyTxtConvert(std::string_view txt);
+std::string keyTxtConvert(std::string_view txt);
 bool keyTxtEqual(const Creature* target, const char* txt);
 bool keyTxtEqual(const Object* target, const char* txt);
 bool isPrintable(char c);
@@ -103,18 +103,18 @@ bool isPrintable(char c);
 
 // ------ everything below this line has not yet been ordered ------ //
 
-bstring md5(bstring text);
+std::string md5(std::string text);
 int whatTraining(const BaseRoom* room, const AreaZone* zone, const TileInfo* tile, int extra=0);
 
 void showRoomFlags(const Player* player, const BaseRoom* room, const TileInfo *tile, const AreaZone *zone);
 
 
 
-void getCatRef(bstring str, CatRef* cr, const Creature* target);
-void getDestination(std::string_view str, Location* l, const Creature* target);
-void getDestination(bstring str, MapMarker* mapmarker, CatRef* cr, const Creature* target);
+void getCatRef(std::string str, CatRef* cr, const Creature* target);
+void getDestination(const std::string &str, Location* l, const Creature* target);
+void getDestination(std::string str, MapMarker* mapmarker, CatRef* cr, const Creature* target);
 
-void spawnObjects(std::string_view room, std::string_view objects);
+void spawnObjects(const std::string &room, const std::string &objects);
 
 
 
@@ -132,7 +132,7 @@ int room_track(Creature* player);
 
 
 // access.cp
-bstring intToText(int nNumber, bool cap=false);
+std::string intToText(int nNumber, bool cap=false);
 char* getSaveName(int save);
 char *get_class_string(int nIndex);
 char* get_lang_color(int nIndex);
@@ -156,7 +156,7 @@ SONGFN get_song_function(int nIndex);
 
 char* getShortClassName(const Player* player);
 char* getShortClassAbbrev(int nIndex);
-bstring getOrdinal(int num);
+std::string getOrdinal(int num);
 
 char* get_skill_string(int nIndex);
 
@@ -211,7 +211,7 @@ int talk_crt_act(char *str, ttag *tlk);
 
 
 // guilds.cpp
-bstring getGuildName( int guildNum );
+std::string getGuildName( int guildNum );
 void updateGuild(Player* player, int what);
 
 void rejectGuild(GuildCreation* toReject, char *reason);
@@ -265,7 +265,7 @@ int getRandomRealm();
 int getOffensiveSpell(Realm realm, int level);
 int getRealmRoomBonusFlag(Realm realm);
 
-bstring getRealmSpellName(Realm realm);
+std::string getRealmSpellName(Realm realm);
 Realm getOppositeRealm(Realm realm);
 
 
@@ -295,16 +295,16 @@ void handle_args(int argc, char *argv[]);
 bool validMobId(const CatRef& cr);
 bool validObjId(const CatRef& cr);
 bool validRoomId(const CatRef& cr);
-bstring timeStr(int seconds);
+std::string timeStr(int seconds);
 
-bstring progressBar(int barLength, float percentFull, std::string_view text = "", char progressChar = '=', bool enclosed = true);
+std::string progressBar(int barLength, float percentFull, const std::string &text = "", char progressChar = '=', bool enclosed = true);
 
-bool nameIsAllowed(bstring str, Socket* sock);
+bool nameIsAllowed(std::string str, Socket* sock);
 int bonus(unsigned int num);
 int crtWisdom(Creature* creature);
 int crtAwareness(Creature* creature);
 void new_merror(const char *str, char errtype, const char *file, const int line );
-void lowercize(bstring& str, int flag);
+void lowercize(std::string& str, int flag);
 void lowercize(char* str, int flag);
 char low(char ch);
 char up(char ch);
@@ -337,7 +337,7 @@ char *ltoa(long val, char *buf, int base);
 
 // newMisc.cpp
 void stripBadChars(char *str);
-void stripBadChars(bstring str);
+void stripBadChars(std::string str);
 
 // object.cpp
 int displayObject(Player* player, Object* target);
@@ -360,14 +360,14 @@ CatRef getEtherealTravelRoom();
 void etherealTravel(Player* player);
 
 
-void sendMail(std::string_view target, std::string_view message);
+void sendMail(const std::string &target, const std::string &message);
 
 
 // room.cpp
 void display_rom(Player* player, Player *looker=0, int magicShowHidden=0);
 void display_rom(Player* player, BaseRoom* room);
 Exit *findExit(Creature* creature, cmd* cmnd, int val=1, BaseRoom* room = 0);
-Exit *findExit(Creature* creature, bstring str, int val, BaseRoom* room = 0);
+Exit *findExit(Creature* creature, std::string str, int val, BaseRoom* room = 0);
 int createStorage(CatRef cr, const Player* player);
 void doRoomHarms(BaseRoom *inRoom, Player* target);
 BaseRoom *abortFindRoom(Creature* player, const char from[15]);
@@ -377,7 +377,7 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const CatRef& cr);
 
 
 // security.cpp
-bool isValidPassword(Socket*, bstring pass);
+bool isValidPassword(Socket *sock, const std::string &pass);
 
 
 

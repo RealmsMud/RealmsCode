@@ -22,7 +22,6 @@
 #include <ostream>         // for operator<<, basic_ostream, ostringstream
 #include <string>          // for char_traits, operator<<, basic_string, ope...
 
-#include "bstring.hpp"     // for bstring, operator+
 #include "clans.hpp"       // for Clan
 #include "cmd.hpp"         // for cmd
 #include "commands.hpp"    // for spellsUnder, cmdDaily, cmdScore
@@ -321,7 +320,7 @@ int cmdDaily(Player* player, cmd* cmnd) {
 //*********************************************************************
 // formatted saving throws
 
-bstring showSavingThrow(const Player* viewer, const Player* player, bstring text, int st) {
+std::string showSavingThrow(const Player* viewer, const Player* player, std::string text, int st) {
     char str[100];
 
     if( (viewer && viewer->isCt()) ||
@@ -354,7 +353,7 @@ void Player::information(const Player* viewer, bool online) {
     long    i=0;
     bool    auth = viewer && viewer->isCt();
     std::ostringstream oStr;
-    bstring txt = "";
+    std::string txt = "";
 
     if(!auth)
         update();

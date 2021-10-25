@@ -25,10 +25,10 @@
 #include <string>                     // for operator<<, allocator, operator==
 #include <utility>                    // for pair
 #include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 
 #include "fmt/core.h"
-#include "bstring.hpp"                // for bstring
 #include "cmd.hpp"                    // for cmd, CMD_NOT_UNIQUE, CMD_NOT_FOUND
 #include "commands.hpp"               // for cmdAction, channel, cmdMove
 #include "config.hpp"                 // for Config, PlyCommandMap, CrtComma...
@@ -39,6 +39,7 @@
 #include "help.hpp"                   // for loadHelpTemplate
 #include "os.hpp"                     // for ASSERTLOG
 #include "paths.hpp"                  // for Help, BuilderHelp, DMHelp
+#include "pythonHandler.hpp"
 #include "server.hpp"                 // for Server, gServer
 #include "ships.hpp"                  // for cmdQueryShips
 #include "skills.hpp"                 // for SkillCommand
@@ -75,7 +76,7 @@ int pcast(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    bstring args = getFullstrText(cmnd->fullstr, 2);
+    std::string args = getFullstrText(cmnd->fullstr, 2);
     MudObject *target = nullptr;
 
     //target = player->getParent()->findTarget(cmnd->fullstr);
@@ -92,8 +93,8 @@ int pcast(Player* player, cmd* cmnd) {
 //**********************************************************************
 
 template<class Type>
-void compileSocialList(std::map<bstring, bstring>& list, const std::set<Type, namableCmp>& cList) {
-    bstring name = "";
+void compileSocialList(std::map<std::string, std::string>& list, const std::set<Type, namableCmp>& cList) {
+    std::string name = "";
 
     for(const auto& cmnd : cList) {
         auto* cc = dynamic_cast<const CrtCommand*>(&cmnd);
@@ -107,7 +108,7 @@ void compileSocialList(std::map<bstring, bstring>& list, const std::set<Type, na
 
         name = cmnd.getName();
 
-        if(name.equals("vomjom") || name.equals("usagi") || name.equals("defenestrate") || name.equals("mithas"))
+        if(name == "vomjom" || name == "usagi" || name == "defenestrate" || name == "mithas")
             continue;
 
         list[name] = "";
@@ -122,8 +123,8 @@ void compileSocialList(std::map<bstring, bstring>& list, const std::set<Type, na
 
 bool Config::writeSocialFile() const {
     char    file[100], fileLink[100];
-    std::map<bstring,bstring> list;
-    std::map<bstring,bstring>::iterator it;
+    std::map<std::string,std::string> list;
+    std::map<std::string,std::string>::iterator it;
 
     sprintf(file, "%s/socials.txt", Path::Help);
     sprintf(fileLink, "%s/social.txt", Path::Help);
@@ -164,7 +165,7 @@ bool Config::writeSocialFile() const {
 // Updates helpfiles for the various game commands.
 
 template<class Type>
-std::map<bstring,bstring> compileCommandList(std::map<bstring, bstring>& list, CreatureClass cls, std::set<Type, namableCmp>& cList) {
+std::map<std::string,std::string> compileCommandList(std::map<std::string, std::string>& list, CreatureClass cls, std::set<Type, namableCmp>& cList) {
     for(const auto& cmd : cList) {
         if(cmd.getDescription().empty()) continue;
         if( cls == CreatureClass::BUILDER && cmd.auth && cmd.auth != builderMob && cmd.auth != builderObj) continue;
@@ -184,9 +185,9 @@ void writeCommandFile(CreatureClass cls, const char* path, const char* tpl) {
     char    file[100], fileLink[100];
     file[99] = fileLink[99] = '\0';
 
-    std::map<bstring,bstring> list;
-    std::map<bstring,bstring> list2;
-    std::map<bstring,bstring>::iterator it;
+    std::map<std::string,std::string> list;
+    std::map<std::string,std::string> list2;
+    std::map<std::string,std::string>::iterator it;
 
     snprintf(file, 99, "%s/commands.txt", path);
     snprintf(fileLink, 99, "%s/command.txt", path);
@@ -819,11 +820,11 @@ void Config::clearCommands() {
     generalCommands.clear();
 }
 
-bool MudMethod::exactMatch(const bstring& toMatch) const {
-    return(name.equals(toMatch.c_str(), false));
+bool MudMethod::exactMatch(const std::string& toMatch) const {
+    return boost::iequals(name, toMatch);
 }
 
-bool MudMethod::partialMatch(const bstring& toMatch) const {
+bool MudMethod::partialMatch(const std::string& toMatch) const {
     return(!strncasecmp(name.c_str(), toMatch.c_str(), toMatch.length()));
 }
 
@@ -842,7 +843,7 @@ void MysticMethod::parseName() {
 
 // bestMethod is a reference to a pointer
 template<class Type, class Type2>
-void examineList(std::set<Type, namableCmp>& mySet, std::string_view str, int& match, bool& found, const Type2*& bestMethod) {
+void examineList(std::set<Type, namableCmp>& mySet, const std::string &str, int& match, bool& found, const Type2*& bestMethod) {
     if(str.length() == 0)
         return;
 
@@ -850,7 +851,7 @@ void examineList(std::set<Type, namableCmp>& mySet, std::string_view str, int& m
 
     // Narrow down the range of the map we'll be looking at
     auto it = mySet.lower_bound({str});
-    auto endIt = mySet.upper_bound({bstring(1, char(str.at(0) + 1))});
+    auto endIt = mySet.upper_bound({std::string(1, char(str.at(0) + 1))});
 
     while(it != endIt) {
         curMethod = &(*it++);
@@ -903,7 +904,7 @@ void examineList(std::set<Type, namableCmp>& mySet, std::string_view str, int& m
 }
 
 void getCommand(Creature *user, cmd* cmnd) {
-    bstring str = "";
+    std::string str = "";
     // Match - Partial matches
     int     match=0;
     // Found - Exact match
@@ -944,7 +945,7 @@ void getCommand(Creature *user, cmd* cmnd) {
 //                      getSpell
 //*********************************************************************
 
-const Spell *Config::getSpell(std::string_view id, int& ret) {
+const Spell *Config::getSpell(const std::string &id, int& ret) {
     const Spell *toReturn = nullptr;
     int match = 0;
     bool found = false;
@@ -966,7 +967,7 @@ const Spell *Config::getSpell(std::string_view id, int& ret) {
 //                      getSong
 //*********************************************************************
 
-const Song *Config::getSong(std::string_view pName) {
+const Song *Config::getSong(const std::string &pName) {
     const Song *toReturn = nullptr;
     int match = 0;
     bool found = false;
@@ -976,7 +977,7 @@ const Song *Config::getSong(std::string_view pName) {
     return(toReturn);
 }
 
-const Song *Config::getSong(std::string_view name, int& ret){
+const Song *Config::getSong(const std::string &name, int& ret){
     const Song *toReturn = nullptr;
     int match = 0;
     bool found = false;
@@ -997,7 +998,7 @@ const Song *Config::getSong(std::string_view name, int& ret){
 //                      allowedWhilePetrified
 //*********************************************************************
 
-static std::set<bstring> commandsAllowedWhilePetrified = {
+static std::set<std::string> commandsAllowedWhilePetrified = {
     {"clear"},
     {"eff"},
     {"effects"},
@@ -1018,7 +1019,7 @@ static std::set<bstring> commandsAllowedWhilePetrified = {
     {"who"},
     {"whois"},
 };
-int allowedWhilePetrified(std::string_view str) {
+int allowedWhilePetrified(const std::string &str) {
     return commandsAllowedWhilePetrified.find(str) != commandsAllowedWhilePetrified.end();
 }
 
@@ -1075,11 +1076,11 @@ int cmdProcess(Creature *user, cmd* cmnd, Creature* pet) {
     return(cmnd->ret);
 }
 
-bstring Nameable::getName() const {
+std::string Nameable::getName() const {
     return(name);
 }
 
-bstring Nameable::getDescription() const {
+std::string Nameable::getDescription() const {
     return(description);
 }
 

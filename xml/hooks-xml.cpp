@@ -19,9 +19,8 @@
 #include <libxml/parser.h>  // for xmlNodePtr, xmlNode
 #include <utility>          // for pair
 
-#include "bstring.hpp"      // for bstring
 #include "hooks.hpp"        // for Hooks
-#include "xml.hpp"          // for newStringChild, copyPropToBString, copyTo...
+#include "xml.hpp"          // for newStringChild, copyPropToString, copyTo...
 
 //*********************************************************************
 //                      load
@@ -29,12 +28,12 @@
 
 void Hooks::load(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
-    bstring event, code;
+    std::string event, code;
     while(childNode) {
         event = "", code = "";
         if(NODE_NAME(childNode, "Hook")) {
-            xml::copyPropToBString(event, childNode, "event");
-            xml::copyToBString(code, childNode);
+            xml::copyPropToString(event, childNode, "event");
+            xml::copyToString(code, childNode);
             add(event, code);
         }
         childNode = childNode->next;

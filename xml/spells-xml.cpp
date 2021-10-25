@@ -17,7 +17,7 @@
  */
 
 #include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
-#include "xml.hpp"                                  // for copyToBString
+#include "xml.hpp"                                  // for copyToString
 #include "structs.hpp"                              // for Spell, PFNCOMPARE
 
 
@@ -31,12 +31,12 @@ Spell::Spell(xmlNodePtr rootNode) {
 
     while(curNode) {
         if(NODE_NAME(curNode, "Name")) {
-            xml::copyToBString(name, curNode);
+            xml::copyToString(name, curNode);
             parseName();
         }
-        else if(NODE_NAME(curNode, "Script")) xml::copyToBString(script, curNode);
+        else if(NODE_NAME(curNode, "Script")) xml::copyToString(script, curNode);
         else if(NODE_NAME(curNode, "Priority")) xml::copyToNum(priority, curNode);
-        else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
+        else if(NODE_NAME(curNode, "Description")) xml::copyToString(description, curNode);
 
         curNode = curNode->next;
     }

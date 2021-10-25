@@ -25,7 +25,6 @@
 #include <string>                                   // for operator<, basic_...
 
 #include "area.hpp"                                 // for MapMarker
-#include "bstring.hpp"                              // for bstring
 #include "catRef.hpp"                               // for CatRef
 #include "effects.hpp"                              // for Effects
 #include "flags.hpp"                                // for X_PORTAL, MAX_EXI...
@@ -47,22 +46,22 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline) {
     curNode = rootNode->children;
     // Start reading stuff in!
     while(curNode) {
-        if(NODE_NAME(curNode, "Name")) setName(xml::getBString(curNode));
+        if(NODE_NAME(curNode, "Name")) setName(xml::getString(curNode));
         else if(NODE_NAME(curNode, "Keys")) {
             loadStringArray(curNode, desc_key, EXIT_KEY_LENGTH, "Key", 3);
         }
         else if(NODE_NAME(curNode, "Level")) xml::copyToNum(level, curNode);
         else if(NODE_NAME(curNode, "Trap")) xml::copyToNum(trap, curNode);
         else if(NODE_NAME(curNode, "Key")) xml::copyToNum(key, curNode);
-        else if(NODE_NAME(curNode, "KeyArea")) xml::copyToBString(keyArea, curNode);
+        else if(NODE_NAME(curNode, "KeyArea")) xml::copyToString(keyArea, curNode);
         else if(NODE_NAME(curNode, "Size")) size = whatSize(xml::toNum<int>(curNode));
         else if(NODE_NAME(curNode, "Direction")) direction = (Direction)xml::toNum<int>(curNode);
         else if(NODE_NAME(curNode, "Toll")) xml::copyToNum(toll, curNode);
-        else if(NODE_NAME(curNode, "PassPhrase")) xml::copyToBString(passphrase, curNode);
+        else if(NODE_NAME(curNode, "PassPhrase")) xml::copyToString(passphrase, curNode);
         else if(NODE_NAME(curNode, "PassLang")) xml::copyToNum(passlang, curNode);
-        else if(NODE_NAME(curNode, "Description")) xml::copyToBString(description, curNode);
-        else if(NODE_NAME(curNode, "Open")) xml::copyToBString(open, curNode);
-        else if(NODE_NAME(curNode, "Enter")) { xml::copyToBString(enter, curNode); }
+        else if(NODE_NAME(curNode, "Description")) xml::copyToString(description, curNode);
+        else if(NODE_NAME(curNode, "Open")) xml::copyToString(open, curNode);
+        else if(NODE_NAME(curNode, "Enter")) { xml::copyToString(enter, curNode); }
         else if(NODE_NAME(curNode, "Flags")) {
             // No need to clear flags, no exit refs
             loadBits(curNode, flags);

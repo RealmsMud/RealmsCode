@@ -26,7 +26,6 @@
 #include <ostream>                                  // for basic_ostream::op...
 #include <string>                                   // for operator<<
 #include <fmt/format.h>
-#include "bstring.hpp"                              // for bstring
 #include "effects.hpp"                              // for Effect
 #include "songs.hpp"                                // for Song
 #include "structs.hpp"                              // for Spell
@@ -81,7 +80,7 @@ bool Config::loadDiscordConfig() {
 
     while(curNode) {
         if(NODE_NAME(curNode, "BotToken")) {
-            xml::copyToBString(botToken, curNode);
+            xml::copyToString(botToken, curNode);
             botEnabled = true;
         } else if(NODE_NAME(curNode, "WebhookTokens")) {
             loadWebhookTokens(curNode);
@@ -107,24 +106,25 @@ void Config::loadGeneral(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "CheckDouble")) xml::copyToBool(checkDouble, curNode);
         else if(NODE_NAME(curNode, "GetHostByName")) xml::copyToBool(getHostByName, curNode);
         else if(NODE_NAME(curNode, "LessExpLoss")) xml::copyToBool(lessExpLoss, curNode);
-        else if(NODE_NAME(curNode, "LogDatabaseType")) xml::copyToBString(logDbType, curNode);
-        else if(NODE_NAME(curNode, "LogDatabaseUser")) xml::copyToBString(logDbUser, curNode);
-        else if(NODE_NAME(curNode, "LogDatabasePassword")) xml::copyToBString(logDbPass, curNode);
-        else if(NODE_NAME(curNode, "LogDatabaseDatabase")) xml::copyToBString(logDbDatabase, curNode);
+        else if(NODE_NAME(curNode, "LogDatabaseType")) xml::copyToString(logDbType, curNode);
+        else if(NODE_NAME(curNode, "LogDatabaseUser")) xml::copyToString(logDbUser, curNode);
+        else if(NODE_NAME(curNode, "LogDatabasePassword")) xml::copyToString(logDbPass, curNode);
+        else if(NODE_NAME(curNode, "LogDatabaseDatabase")) xml::copyToString(logDbDatabase, curNode);
         else if(NODE_NAME(curNode, "LogDeath")) xml::copyToBool(logDeath, curNode);
         else if(NODE_NAME(curNode, "PkillInCombatDisabled")) xml::copyToBool(pkillInCombatDisabled, curNode);
         else if(NODE_NAME(curNode, "RecordAll")) xml::copyToBool(recordAll, curNode);
         else if(NODE_NAME(curNode, "LogSuicide")) xml::copyToBool(logSuicide, curNode);
         else if(NODE_NAME(curNode, "SaveOnDrop")) xml::copyToBool(saveOnDrop, curNode);
             //else if(NODE_NAME(curNode, "MaxGuild")) xml::copyToNum(maxGuilds, curNode);
-        else if(NODE_NAME(curNode, "DmPass")) xml::copyToBString(dmPass, curNode);
-        else if(NODE_NAME(curNode, "MudName")) xml::copyToBString(mudName, curNode);
-        else if(NODE_NAME(curNode, "Webserver")) xml::copyToBString(webserver, curNode);
-        else if(NODE_NAME(curNode, "QS")) { xml::copyToBString(qs, curNode);
+        else if(NODE_NAME(curNode, "DmPass")) xml::copyToString(dmPass, curNode);
+        else if(NODE_NAME(curNode, "MudName")) xml::copyToString(mudName, curNode);
+        else if(NODE_NAME(curNode, "Webserver")) xml::copyToString(webserver, curNode);
+        else if(NODE_NAME(curNode, "QS")) {
+            xml::copyToString(qs, curNode);
             std::clog << "Loaded QS: " << qs << std::endl;
         }
-        else if(NODE_NAME(curNode, "UserAgent")) xml::copyToBString(userAgent, curNode);
-        else if(NODE_NAME(curNode, "Reviewer")) xml::copyToBString(reviewer, curNode);
+        else if(NODE_NAME(curNode, "UserAgent")) xml::copyToString(userAgent, curNode);
+        else if(NODE_NAME(curNode, "Reviewer")) xml::copyToString(reviewer, curNode);
         else if(NODE_NAME(curNode, "ShopNumObjects")) xml::copyToNum(shopNumObjects, curNode);
         else if(NODE_NAME(curNode, "ShopNumLines")) xml::copyToNum(shopNumLines, curNode);
         else if(NODE_NAME(curNode, "CustomColors")) xml::copyToCString(customColors, curNode);
@@ -180,10 +180,10 @@ void Config::loadWebhookTokens(xmlNodePtr rootNode) {
         if(NODE_NAME(curNode, "WebhookToken")) {
             xmlNodePtr tokenNode = curNode->children;
             long webhookID = -1;
-            bstring token;
+            std::string token;
             while(tokenNode) {
                 if(NODE_NAME(tokenNode, "ID")) xml::copyToNum(webhookID, tokenNode);
-                else if(NODE_NAME(tokenNode, "Token")) xml::copyToBString(token, tokenNode);
+                else if(NODE_NAME(tokenNode, "Token")) xml::copyToString(token, tokenNode);
 
                 tokenNode = tokenNode->next;
             }
@@ -278,7 +278,7 @@ bool Config::saveConfig() const {
 // **************
 
 template<class Type>
-bool saveSet(const bstring& xmlDocName, const bstring& fName, const std::set<Type, namableCmp>& sSet) {
+bool saveSet(const std::string& xmlDocName, const std::string& fName, const std::set<Type, namableCmp>& sSet) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
 
@@ -309,7 +309,7 @@ bool Config::saveSongs() const {
 // **************
 
 template<class Type>
-bool loadSet(const bstring& xmlDocName, const bstring& xmlNodeName, const bstring& fName, std::set<Type, namableCmp>& sSet) {
+bool loadSet(const std::string& xmlDocName, const std::string& xmlNodeName, const std::string& fName, std::set<Type, namableCmp>& sSet) {
     xmlDocPtr xmlDoc;
     xmlNodePtr curNode;
 
@@ -340,7 +340,7 @@ bool loadSet(const bstring& xmlDocName, const bstring& xmlNodeName, const bstrin
     return(true);
 }
 template<class Type>
-bool loadMap(const bstring& xmlDocName, const bstring& xmlNodeName, const bstring& fName, std::map<bstring, Type, comp>& sMap) {
+bool loadMap(const std::string& xmlDocName, const std::string& xmlNodeName, const std::string& fName, std::map<std::string, Type, comp>& sMap) {
     xmlDocPtr xmlDoc;
     xmlNodePtr curNode;
 

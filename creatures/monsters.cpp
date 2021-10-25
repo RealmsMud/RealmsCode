@@ -19,7 +19,6 @@
 #include <cstring>                // for strcpy, strcmp
 #include <ctime>                  // for time
 
-#include "bstring.hpp"            // for bstring
 #include "catRef.hpp"             // for CatRef
 #include "cmd.hpp"                // for cmd
 #include "container.hpp"          // for ObjectSet, PlayerSet, MonsterSet
@@ -95,7 +94,7 @@ bool Monster::operator <(const Monster& t) const {
 
 void Monster::validateId() {
 //  std::clog << "Validating ID for <" << getName() << ">" << std::endl;
-    if(id.empty() || id.equals("-1")) {
+    if(id.empty() || id == "-1") {
         setId(gServer->getNextMonsterId());
     }
 }
@@ -470,7 +469,7 @@ int Monster::castSpell(Creature *target) {
     int     i=0, spl=0, c=0;
     int     known[20], knowctr=0;
     int     (*fn)(SpellFn);
-    bstring enemy;
+    std::string enemy;
     int     realm=0, n=0;
 
     zero(known, sizeof(known));
