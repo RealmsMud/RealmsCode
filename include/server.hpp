@@ -105,9 +105,8 @@ using RoomCache = LRU::lru_cache<CatRef, UniqueRoom, CleanupRoomFn, CanCleanupRo
 using MonsterCache = LRU::lru_cache<CatRef, Monster, FreeCrt>;
 using ObjectCache = LRU::lru_cache<CatRef, Object>;
 
-class Server
-{
-
+class Server {
+    friend class PythonHandler;
 // **************
 // Static Methods
 public:
@@ -158,14 +157,12 @@ public:
     MonsterCache monsterCache;
     ObjectCache objectCache;
 
-    void handlePythonError();
-
 // ******************
 // Internal Variables
 private:
 
     std::list<DelayedAction> delayedActionQueue;
-    
+
     PythonHandler* pythonHandler;
 
     std::list<BaseRoom*> effectsIndex;
@@ -214,9 +211,6 @@ public:
 // ****************
 // Internal Methods
 private:
-    // Python
-    bool initPython();
-    bool cleanUpPython();
     bool initDiscordBot();
 
     size_t getNumSockets() const; // Get number of sockets in the sockets list
@@ -353,10 +347,6 @@ public:
     // Child processes
     void addChild(int pid, ChildType pType, int pFd = -1, std::string_view pExtra = "");
 
-    // Python
-    bool runPython(const std::string& pyScript, py::object& dictionary);
-    bool runPython(const std::string& pyScript, std::string args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
-    bool runPythonWithReturn(const std::string& pyScript, std::string args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
 
     // Setup
     bool init();    // Setup the server
@@ -432,6 +422,12 @@ public:
     void removeEffectsIndex(BaseRoom* room);
     void removeEffectsOwner(const Creature* owner);
     void showEffectsIndex(const Player* player);
+
+    // Python
+    bool runPython(const std::string& pyScript, py::object& dictionary);
+    bool runPythonWithReturn(const std::string& pyScript, py::object& dictionary);
+    bool runPython(const std::string& pyScript, const std::string &args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
+    bool runPythonWithReturn(const std::string& pyScript, const std::string &args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
 
 protected:
     int cleanUp(); // Kick out any disconnectors and other general cleanup

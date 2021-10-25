@@ -16,21 +16,13 @@
  *
  */
 
-#include <boost/python/errors.hpp>        // for error_already_set
-#include <boost/python/extract.hpp>       // for extract
-#include <boost/python/handle.hpp>        // for handle
-#include <boost/python/object_core.hpp>   // for object, object_operators
-#include <boost/python/ptr.hpp>           // for pointer_wrapper, ptr
-
 #include "cmd.hpp"                        // for cmd
 #include "creatures.hpp"                  // for Creature, Player
-#include "dictobject.h"                   // for PyDict_New
 #include "global.hpp"                     // for FIND_MON_ROOM, FIND_PLY_ROOM
-#include "import.h"                       // for PyImport_ImportModule
 #include "money.hpp"                      // for GOLD, Money
 #include "mudObject.hpp"                  // for MudObject
-#include "pythonHandler.hpp"              // for addMudObjectToDictionary
-#include "server.hpp"                     // for Server, gServer
+#include "pythonHandler.hpp"
+#include "server.hpp"
 #include "skills.hpp"                     // for SkillCommand, Skill, SkillCost
 
 int getFindWhere(TargetType targetType) {
@@ -183,31 +175,22 @@ int SkillCommand::getFailCooldown() const {
 
 
 bool SkillCommand::runScript(Creature* actor, MudObject* target, Skill* skill) const {
-//    try {
-//        bp::object localNamespace( (bp::handle<>(PyDict_New())));
-//
-//        bp::object skillModule( (bp::handle<>(PyImport_ImportModule("skillLib"))) );
-//
-//        localNamespace["skillLib"] = skillModule;
-//
-//        localNamespace["skill"] = bp::ptr(skill);
-//        localNamespace["skillCmd"] = bp::ptr(this);
-//
-//        // Default retVal is true
-//        localNamespace["retVal"] = true;
-//        addMudObjectToDictionary(localNamespace, "actor", actor);
-//        addMudObjectToDictionary(localNamespace, "target", target);
-//
-//
-//        gServer->runPython(pyScript, localNamespace);
-//
-//        bool retVal = bp::extract<bool>(localNamespace["retVal"]);
-//        //std::clog << "runScript returning: " << retVal << std::endl;
-//        return(retVal);
-//    }
-//    catch( bp::error_already_set) {
-//        gServer->handlePythonError();
-//    }
+    try {
+        auto locals = py::dict();
+        auto skillLibModule = py::module::import("skillLib");
+        locals["skillLib"] = skillLibModule;
+        locals["skill"] = skill;
+        locals["skillCmd"] = this;
+
+        PythonHandler::addMudObjectToDictionary(locals, "actor", actor);
+        PythonHandler::addMudObjectToDictionary(locals, "target", target);
+
+        return (gServer->runPythonWithReturn(pyScript, locals));
+    }
+    catch( pybind11::error_already_set& e) {
+        PythonHandler::handlePythonError(e);
+    }
+
     return(false);
 }
 TargetType SkillCommand::getTargetType() const {

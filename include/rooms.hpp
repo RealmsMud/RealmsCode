@@ -102,7 +102,7 @@ public:
 
 
     [[nodiscard]] virtual bool flagIsSet(int flag) const = 0;
-//  virtual void setFlag(int flag) = 0;
+    virtual void setFlag(int flag) = 0;
     [[nodiscard]] virtual Size getSize() const = 0;
     [[nodiscard]] bool hasRealmBonus(Realm realm) const;
     [[nodiscard]] bool hasOppositeRealmBonus(Realm realm) const;

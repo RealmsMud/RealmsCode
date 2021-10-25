@@ -15,20 +15,14 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <boost/python/errors.hpp>                  // for error_already_set
-#include <boost/python/extract.hpp>                 // for extract
-#include <boost/python/handle.hpp>                  // for handle
-#include <boost/python/object_core.hpp>             // for object, object_op...
-#include <boost/algorithm/string/predicate.hpp>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include "cmd.hpp"                                  // for cmd, CMD_NOT_FOUND
 #include "commands.hpp"                             // for getFullstrText
 #include "config.hpp"                               // for Config, SongMap
 #include "container.hpp"                            // for PlayerSet
 #include "creatureStreams.hpp"                      // for Streamable
 #include "creatures.hpp"                            // for Creature, Player
-#include "dictobject.h"                             // for PyDict_New
-#include "import.h"                                 // for PyImport_ImportMo...
 #include "mud.hpp"                                  // for LT_SONG_PLAYED
 #include "pythonHandler.hpp"                        // for addMudObjectToDic...
 #include "rooms.hpp"                                // for BaseRoom
@@ -70,27 +64,20 @@ bool Song::runScript(MudObject* singer, MudObject* target) const {
     if(script.empty())
         return(false);
 
-//    try {
-//        bp::object localNamespace( (bp::handle<>(PyDict_New())));
-//
-//        bp::object effectModule( (bp::handle<>(PyImport_ImportModule("songLib"))) );
-//        localNamespace["songLib"] = effectModule;
-//
-//        localNamespace["song"] = bp::ptr(this);
-//
-//        // Default retVal is true
-//        localNamespace["retVal"] = true;
-//        addMudObjectToDictionary(localNamespace, "actor", singer);
-//        addMudObjectToDictionary(localNamespace, "target", target);
-//
-//        gServer->runPython(script, localNamespace);
-//
-//        bool retVal = bp::extract<bool>(localNamespace["retVal"]);
-//        return(retVal);
-//    }
-//    catch( bp::error_already_set &e) {
-//        gServer->handlePythonError();
-//    }
+    try {
+        auto locals = py::dict();
+        auto songModule = py::module::import("songLib");
+        locals["songLib"] = songModule;
+        locals["song"] = this;
+
+        PythonHandler::addMudObjectToDictionary(locals, "actor", singer);
+        PythonHandler::addMudObjectToDictionary(locals, "target", target);
+
+        return (gServer->runPythonWithReturn(script, locals));
+    }
+    catch( pybind11::error_already_set& e) {
+        PythonHandler::handlePythonError(e);
+    }
 
     return(false);
 }

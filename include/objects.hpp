@@ -192,7 +192,7 @@ public:
     char use_attack[50]{};
 
     Dice damage;
-    double getDps();
+    double getDps() const;
 
 
     CatRef in_bag[3];   // items preloaded inside bags

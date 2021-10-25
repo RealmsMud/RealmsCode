@@ -10,13 +10,12 @@
  * Permission to use, modify and distribute is granted via the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2020 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2021 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
 #include <ctime>                                    // for time, time_t
 #include <iomanip>                                  // for operator<<, setw
 #include <boost/algorithm/string/replace.hpp>
@@ -1147,32 +1146,20 @@ bool EffectInfo::runScript(const std::string& pyScript, MudObject* applier) {
     if(pyScript.empty())
         return(true);
 
-//    try {
-//
-//        boost::python::object localNamespace( (boost::python::handle<>(PyDict_New())));
-//
-//        boost::python::object effectModule( (boost::python::handle<>(PyImport_ImportModule("effectLib"))) );
-//
-//        localNamespace["effectLib"] = effectModule;
-//
-//        localNamespace["effect"] = boost::python::ptr(this);
-//
-//        // Default retVal is true
-//        localNamespace["retVal"] = true;
-//        addMudObjectToDictionary(localNamespace, "actor", myParent);
-//        addMudObjectToDictionary(localNamespace, "applier", applier);
-//
-//
-//
-//        gServer->runPython(pyScript, localNamespace);
-//
-//        bool retVal = boost::python::extract<bool>(localNamespace["retVal"]);
-//        //std::clog << "runScript returning: " << retVal << std::endl;
-//        return(retVal);
-//    }
-//    catch( boost::python::error_already_set& e) {
-//        gServer->handlePythonError();
-//    }
+    try {
+        auto locals = py::dict();
+        auto effectModule = py::module::import("effectLib");
+        locals["effectLib"] = effectModule;
+        locals["effect"] = this;
+
+        PythonHandler::addMudObjectToDictionary(locals, "actor", myParent);
+        PythonHandler::addMudObjectToDictionary(locals, "applier", applier);
+
+        return (gServer->runPythonWithReturn(pyScript, locals));
+    }
+    catch( pybind11::error_already_set& e) {
+        PythonHandler::handlePythonError(e);
+    }
 
     return(false);
 }

@@ -57,6 +57,7 @@
 #include "paths.hpp"                                // for Config, Game, Are...
 #include "proc.hpp"                                 // for childProcess, CHI...
 #include "proto.hpp"                                // for broadcast, free_crt
+#include "pythonHandler.hpp"
 #include "random.hpp"                               // for Random
 #include "rooms.hpp"                                // for UniqueRoom, BaseRoom
 #include "server.hpp"                               // for Server, MonsterList
@@ -155,7 +156,7 @@ Server::~Server() {
     flushObject();
     flushMonster();
     effectsIndex.clear();
-    cleanUpPython();
+    PythonHandler::cleanUpPython();
 
     clearAreas();
     delete vSockets;
@@ -214,7 +215,7 @@ bool Server::init() {
 
     // Python
     std::clog <<  "Initializing Python...";
-    if(!initPython()) {
+    if(!PythonHandler::initPython()) {
         std::clog << "failed!" << std::endl;
         exit(-1);
     }

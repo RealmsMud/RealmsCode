@@ -381,9 +381,8 @@ set(COMMON_SOURCE_FILES
     xml/xml.cpp
 
     python/mud.cpp
-#    python/mudCreature.cpp
-#    python/mudEffect.cpp
-#    python/mudObject.cpp
+    python/mudEffect.cpp
+    python/mudObject.cpp
     python/mudStat.cpp
 
     wip/fighters.cpp

@@ -1,19 +1,28 @@
-//
-// Created by jason on 9/26/21.
-//
+/*
+ * mudStat.cpp
+ *   MudStat Python Library
+ *   ____            _
+ *  |  _ \ ___  __ _| |_ __ ___  ___
+ *  | |_) / _ \/ _` | | '_ ` _ \/ __|
+ *  |  _ <  __/ (_| | | | | | | \__ \
+ *  |_| \_\___|\__,_|_|_| |_| |_|___/
+ *
+ * Permission to use, modify and distribute is granted via the
+ *  GNU Affero General Public License v3 or later
+ *
+ *  Copyright (C) 2007-2021 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
+ *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
+ *
+ */
 
 #include <pybind11/pybind11.h>
 
-#include "object.h"                                            // for PyObject
-#include "pyerrors.h"                                          // for PyErr_...
-#include "pylifecycle.h"                                       // for Py_Fin...
-#include "socket.hpp"                                          // for Socket
 #include "stats.hpp"                                           // for Stat
-#include "unicodeobject.h"                                     // for PyUnic...
 
 namespace py = pybind11;
 
-void init_mudStatModule(py::module &m) {
+void init_module_stats(py::module &m) {
     py::class_<Stat>(m, "Stat")
         .def("getModifierAmt", &Stat::getModifierAmt)
         .def("adjust", &Stat::adjust, py::arg("amt"))

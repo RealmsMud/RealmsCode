@@ -1,39 +1,43 @@
-//
-// Created by jason on 9/26/21.
-//
+/*
+ * mud.cpp
+ *   Mud Python Library
+ *   ____            _
+ *  |  _ \ ___  __ _| |_ __ ___  ___
+ *  | |_) / _ \/ _` | | '_ ` _ \/ __|
+ *  |  _ <  __/ (_| | | | | | | \__ \
+ *  |_| \_\___|\__,_|_|_| |_| |_|___/
+ *
+ * Permission to use, modify and distribute is granted via the
+ *  GNU Affero General Public License v3 or later
+ *
+ *  Copyright (C) 2007-2021 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
+ *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
+ *
+ */
+
 
 #include <pybind11/pybind11.h>
 #include "commands.hpp"                                        // for doCast...
-#include "compile.h"                                           // for Py_fil...
 #include "config.hpp"                                          // for Config
 #include "container.hpp"                                       // for Monste...
 #include "creatures.hpp"                                       // for Creature
-#include "dictobject.h"                                        // for PyDict...
 #include "effects.hpp"                                         // for Effect...
 #include "exits.hpp"                                           // for Exit
 #include "fishing.hpp"                                         // for Fishing
 #include "global.hpp"                                          // for DeathType
-#include "import.h"                                            // for PyImpo...
 
 #include "monType.hpp"                                         // for mType
-//#include "mudObject.hpp"                                       // for MudObject
-#include "object.h"                                            // for PyObject
 #include "objects.hpp"                                         // for Object
-#include "paths.hpp"                                           // for Python
 #include "proto.hpp"                                           // for broadcast
-#include "pyerrors.h"                                          // for PyErr_...
-#include "pylifecycle.h"                                       // for Py_Fin...
 #include "pythonHandler.hpp"                                   // for Python...
-#include "pythonrun.h"                                         // for PyErr_...
 #include "random.hpp"                                          // for Random
 #include "rooms.hpp"                                           // for BaseRoom
 #include "server.hpp"                                          // for Server
-#include "size.hpp"                                            // for Size
 #include "skills.hpp"                                          // for SkillInfo
 #include "socials.hpp"
 #include "socket.hpp"                                          // for Socket
 #include "stats.hpp"                                           // for Stat
-#include "unicodeobject.h"                                     // for PyUnic...
 
 namespace py = pybind11;
 
@@ -43,7 +47,7 @@ int pythonRand(int a, int b) {
 }
 
 
-void init_mudModule(py::module &m) {
+void init_module_mud(py::module &m) {
     py::class_<Config>(m, "Config")
         .def("getVersion", &Config::getVersion)
         .def("getMudName", &Config::getMudName)
@@ -188,7 +192,7 @@ void init_mudModule(py::module &m) {
             .export_values()
             ;
 
-
+    // Misc Functions
     m.def("dice", &::dice);
     m.def("rand", &::pythonRand);
     m.def("spawnObjects", &::spawnObjects);

@@ -102,7 +102,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
         }
     }
 
-    if(getFullstrText(cmnd->fullstr, 2).at(0) == 'n')
+    if(getFullstrText(cmnd->fullstr, 2).starts_with('n'))
         total = MIN(atoi(getFullstrText(cmnd->fullstr, 3).c_str()), MAX_MOBS_IN_ROOM);
     /*
      * nobody uses this

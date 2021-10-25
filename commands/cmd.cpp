@@ -39,6 +39,7 @@
 #include "help.hpp"                   // for loadHelpTemplate
 #include "os.hpp"                     // for ASSERTLOG
 #include "paths.hpp"                  // for Help, BuilderHelp, DMHelp
+#include "pythonHandler.hpp"
 #include "server.hpp"                 // for Server, gServer
 #include "ships.hpp"                  // for cmdQueryShips
 #include "skills.hpp"                 // for SkillCommand

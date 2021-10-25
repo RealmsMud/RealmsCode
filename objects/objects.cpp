@@ -1183,7 +1183,7 @@ void spawnObjects(const std::string &room, const std::string &objects) {
     if(!loadRoom(cr, &dest))
         return;
 
-    std::string obj = "";
+    std::string obj;
     int i=0;
     dest->expelPlayers(true, false, false);
 
@@ -1230,7 +1230,7 @@ void spawnObjects(const std::string &room, const std::string &objects) {
 }
 
 
-double Object::getDps() {
+double Object::getDps() const {
     short num = numAttacks;
     if(!numAttacks)
         num = 1;

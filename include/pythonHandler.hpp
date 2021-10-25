@@ -24,15 +24,31 @@
 // C++ Includes
 #include <Python.h>
 
+#include <pybind11/pytypes.h>
 #include <pybind11/embed.h>
 
 namespace py = pybind11;
+using namespace py::literals;
 
 class PythonHandler {
     friend class Server;
 private:
     // Our main namespace for python
     py::object mainNamespace;
+
+public:
+    // Python
+    static bool initPython();
+    static void cleanUpPython();
+
+    bool runPython(const std::string& pyScript, py::object& locals);
+    bool runPythonWithReturn(const std::string& pyScript, py::object& locals);
+    bool runPython(const std::string& pyScript, const std::string &args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
+    bool runPythonWithReturn(const std::string& pyScript, const std::string &args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
+    static void handlePythonError(py::error_already_set &e);
+
+    static bool addMudObjectToDictionary(py::object& dictionary, const std::string& key, MudObject* myObject);
+
 
 };
 

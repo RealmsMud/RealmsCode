@@ -144,6 +144,9 @@ bool Server::initDiscordBot() {
 }
 
 bool Server::sendDiscordWebhook(long webhookID, int type, const std::string &author, const std::string &msg) {
+    if(!discordBot)
+        return(false);
+
     // Send a message from the mud, to a discord channel
     dpp::message myMessage;
     if (type == COM_EMOTE) {

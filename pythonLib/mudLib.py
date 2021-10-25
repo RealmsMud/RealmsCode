@@ -6,15 +6,17 @@ CAP = 1
 def ucfirst(str):
     return str[0].upper() + str[1:]
 
-def auxReplace(str, viewer, argType, type, **args):
-    if argType in args:
-        if args[argType].getExit():
-            str = str.replace("*" + type + "*", ucfirst(args[argType].getName()))
-            str = str.replace("*LOW-" + type + "*", args[argType].getName())
+
+def auxReplace(str, viewer, argType, type, **kwargs):
+    if argType in kwargs:
+        if kwargs[argType].getExit():
+            str = str.replace("*" + type + "*", ucfirst(kwargs[argType].getName()))
+            str = str.replace("*LOW-" + type + "*", kwargs[argType].getName())
         else:
-            str = str.replace("*" + type + "*", args[argType].getCrtStr(viewer, CAP))
-            str = str.replace("*LOW-" + type + "*", args[argType].getCrtStr(viewer))
+            str = str.replace("*" + type + "*", kwargs[argType].getCrtStr(viewer, CAP))
+            str = str.replace("*LOW-" + type + "*", kwargs[argType].getCrtStr(viewer))
     return str
+
 
 def doReplace(fmt, viewer, **args):
     toReturn = viewer.customColorize(fmt)
@@ -25,28 +27,29 @@ def doReplace(fmt, viewer, **args):
     toReturn = toReturn.replace("*A-UPHISHER*", args['actor'].hisHer())
     return toReturn
 
-def broadcastRoom(room, fmt, **args):
+
+def broadcastRoom(room, fmt, **kwargs):
     actor = None
     ignore = None
     ignore2 = None
 
-    if 'actor' in args:
-        actor = args['actor']
+    if 'actor' in kwargs:
+        actor = kwargs['actor']
 
-    if 'ignore' in args:
-        ignore = args['ignore']
+    if 'ignore' in kwargs:
+        ignore = kwargs['ignore']
 
-    if 'ignore2' in args:
-        ignore2 = args['ignore2']
+    if 'ignore2' in kwargs:
+        ignore2 = kwargs['ignore2']
 
-    if 'target' in args:
-        target = args['target']
+    if 'target' in kwargs:
+        target = kwargs['target']
 
     for ply in room.players:
         if ply.equals(ignore) or ply.equals(ignore2) or ply.isUnconscious():
             continue
           
-        toSend = doReplace(fmt, ply, **args)
+        toSend = doReplace(fmt, ply, **kwargs)
         ply.send(toSend + "\n")
 
 def indefinite_article(noun_phrase):
@@ -97,6 +100,7 @@ def indefinite_article(noun_phrase):
         return 'an'
     else:
         return 'a'
+
 
 def doPurchaseCast(actor, args, target):       
     spell = True
