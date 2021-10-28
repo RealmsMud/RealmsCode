@@ -117,6 +117,8 @@ void init_module_mudObject(py::module &m) {
         .def("stun", &Creature::stun)
         .def("wake", &Creature::wake, "str"_a="", "noise"_a=(bool)(false) )
 
+        .def("addStatModEffect", &Creature::addStatModEffect)
+        .def("remStatModEffect", &Creature::remStatModEffect)
         .def("unApplyTongues", &Creature::unApplyTongues)
         .def("unBlind", &Creature::unBlind)
         .def("unSilence", &Creature::unSilence)
