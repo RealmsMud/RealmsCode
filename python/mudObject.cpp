@@ -16,7 +16,7 @@
  *
  */
 #include <pybind11/pybind11.h>
-
+#include <pybind11/stl.h>
 #include "container.hpp"
 #include "creatures.hpp"                                       // for Creature
 #include "fishing.hpp"

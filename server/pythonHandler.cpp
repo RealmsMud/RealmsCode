@@ -156,14 +156,16 @@ bool PythonHandler::runPython(const std::string& pyScript, py::object& locals) {
 
 bool PythonHandler::runPythonWithReturn(const std::string& pyScript, py::object& locals) {
     try {
-        // Say hello
-        return(py::eval(pyScript, gServer->pythonHandler->mainNamespace, locals).cast<bool>());
+        locals["retVal"] = true;
+
+//        return(py::eval<py::eval_statements>(pyScript, gServer->pythonHandler->mainNamespace, locals).cast<bool>());
+        py::exec(pyScript, gServer->pythonHandler->mainNamespace, locals);
+        return locals["retVal"].cast<bool>();
 
     }  catch (py::error_already_set &e) {
         handlePythonError(e);
         return false;
     }
-    return true;
 }
 
 //==============================================================================
@@ -209,7 +211,7 @@ void PythonHandler::handlePythonError(py::error_already_set &e) {
     auto what = e.what();
     std::clog << "Python Error: " << what << std::endl;
     broadcast(isDm, "^GPython Error: %s", what);
-    
+
 //    auto &ty=e.type(), &val=e.value(), &tb=e.value();
 ////    PyErr_NormalizeException(&exc,&val,&tb);
 //    py::object traceback(py::module::import("traceback"));
