@@ -160,8 +160,8 @@ int list_objects() {
                     rootNode = xmlDocGetRootElement(xmlDoc);
                     lObject->readFromXml(rootNode, nullptr, true);
                     std::string description = lObject->description;
-                    description.Replace("\n", "\\n");
-                    description.Replace("\"", "\"\"");
+                    boost::replace_all(description, "\n", "\\n");
+                    boost::replace_all(description, "\"", "\"\"");
 
 
                     std::cout << lObject->info.rstr() << ","
