@@ -532,6 +532,143 @@ bool Player::statsAddUp() const {
 }
 
 //*********************************************************************
+//                      addStatModEffect
+//*********************************************************************
+
+bool Creature::addStatModEffect(EffectInfo* effect) {
+    Stat* stat=nullptr;
+    Player* pThis = getAsPlayer();
+    bool good;
+    ModifierType modType = MOD_CUR_MAX;
+    const auto& effectName = effect->getName();
+
+    if(effectName == "strength") {
+        if(pThis) {
+            if(isEffected("berserk")) removeEffect("berserk");
+            if(isEffected("dkpray"))  removeEffect("dkpray");
+        }
+        good = true;
+        stat = &strength;
+    } else if(effectName == "enfeeblement") {
+        good = false;
+        stat = &strength;
+    } else if(effectName == "haste") {
+        if(pThis && isEffected("frenzy")) removeEffect("frenzy");
+        good = true;
+        stat = &dexterity;
+    } else if(effectName == "slow") {
+        good = false;
+        stat = &dexterity;
+    } else if(effectName == "insight") {
+        if(pThis && isEffected("confusion")) pThis->removeEffect("confusion");
+        good = true;
+        stat = &intelligence;
+    } else if(effectName == "feeblemind") {
+        good = false;
+        stat = &intelligence;
+    } else if(effectName == "prayer") {
+        if(isEffected("pray")) removeEffect("pray");
+        good = true;
+        stat = &piety;
+    } else if(effectName == "damnation") {
+        good = false;
+        stat = &piety;
+    } else if(effectName == "fortitude") {
+        good = true;
+        stat = &constitution;
+    } else if(effectName == "weakness") {
+        good = false;
+        stat = &constitution;
+    } else if(effectName == "berserk") {
+        good = true;
+        stat = &strength;
+    } else if(effectName == "frenzy") {
+        good = true;
+        stat = &dexterity;
+    } else if(effectName == "pray") {
+        good = true;
+        stat = &piety;
+    } else if(effectName == "dkpray") {
+        good = true;
+        stat = &strength;
+    } else if(effectName == "bloodsac") {
+        modType = MOD_MAX;
+        good = true;
+        stat = &hp;
+    }
+
+    else {
+        print("Unknown stat effect: %s\n", effect->getName().c_str());
+        return(false);
+    }
+
+    int addAmt = effect->getStrength();
+    if(!good && addAmt > 0)
+        addAmt *= -1;
+
+    // Can't go outside the range
+    int statMax = MAX_STAT_NUM;
+    int statMin = MIN_STAT_NUM;
+
+    // Different limits for hp & mp
+    if(stat == &hp || stat == &mp) {
+        statMax = 30000;
+        statMin = 1;
+    }
+    addAmt = MIN<int>(addAmt, statMax - stat->getCur());
+    addAmt = MAX<int>(addAmt, statMin - stat->getCur());
+
+    effect->setStrength(addAmt);
+    stat->addModifier(effect->getName(), addAmt, modType);
+
+    if(pThis) {
+        pThis->computeAttackPower();
+        pThis->computeAC();
+    }
+    return(true);
+}
+
+//*********************************************************************
+//                      remStatModEffect
+//*********************************************************************
+
+bool Creature::remStatModEffect(EffectInfo* effect) {
+    Stat* stat=nullptr;
+    Player* pThis = getAsPlayer();
+    const auto& effectName = effect->getName();
+
+    if(effectName == "strength" || effectName == "enfeeblement" || effectName == "berserk") {
+        stat = &strength;
+    } else if(effectName == "haste" || effectName == "slow" || effectName == "frenzy") {
+        stat = &dexterity;
+    } else if(effectName == "insight" || effectName == "feeblemind") {
+        stat = &intelligence;
+    } else if(effectName == "prayer" || effectName == "damnation" || effectName == "pray") {
+        stat = &piety;
+    } else if(effectName == "fortitude" || effectName == "weakness") {
+        stat = &constitution;
+    } else if(effectName == "dkpray") {
+        stat = &strength;
+    } else if(effectName == "bloodsac") {
+        stat = &hp;
+    }
+    else {
+        bPrint(fmt::format("Unknown stat effect: {}\n", effectName));
+        return(false);
+    }
+
+    stat->removeModifier(effectName);
+
+
+    if(pThis) {
+        pThis->computeAttackPower();
+        pThis->computeAC();
+        pThis->setFlag(P_JUST_STAT_MOD);
+    }
+    return(true);
+}
+
+//*********************************************************************
 //                      upgradeStats
 //*********************************************************************
 

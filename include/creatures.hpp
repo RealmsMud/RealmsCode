@@ -731,6 +731,8 @@ public:
     const Song* playing{};
 
     void donePaging();
+    bool addStatModEffect(EffectInfo *effect);
+    bool remStatModEffect(EffectInfo *effect);
 };
 
 //*********************************************************************
