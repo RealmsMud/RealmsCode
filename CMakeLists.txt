@@ -396,5 +396,5 @@ add_executable(RealmsCode ${REALMS_SOURCE_FILES})
 
 target_link_libraries(RealmsCode RealmsLib pybind11::embed)
 
-#add_executable(List ${LIST_SOURCE_FILES})
-#target_link_libraries(List RealmsLib)
+add_executable(List ${LIST_SOURCE_FILES})
+target_link_libraries(List RealmsLib)
