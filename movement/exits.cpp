@@ -176,7 +176,7 @@ Exit *findExit(Creature* creature, const std::string &inStr, int val, BaseRoom* 
         }
 
         if(!exit->flagIsSet(X_DESCRIPTION_ONLY) || creature->isStaff()) {
-            if(!strncmp(name.c_str(), str.c_str(), str.length()))
+            if(name.starts_with(str))
                 match++;
         } else {
             if(name == str)
