@@ -156,27 +156,27 @@ Exit *findExit(Creature* creature, cmd* cmnd, int val, BaseRoom* room) {
     return(findExit(creature, cmnd->str[val], cmnd->val[val], room));
 }
 
-Exit *findExit(Creature* creature, std::string str, int val, BaseRoom* room) {
-    int     match=0;
-    bool    minThree = (creature->getAsPlayer() && !creature->isStaff() && str.length() < 3);
-    str = stripColor(str);
+Exit *findExit(Creature* creature, const std::string &inStr, int val, BaseRoom* room) {
+    int  match=0;
+    auto str = stripColor(inStr);
+    bool minThree = (creature->getAsPlayer() && !creature->isStaff() && str.length() < 3);
 
-    if(!room)
-        if((room = creature->getRoomParent()) == nullptr)
-            return(nullptr);
+    if(!room && ((room = creature->getRoomParent()) == nullptr))
+        return(nullptr);
 
     for(Exit* exit : room->exits) {
-        auto name = boost::algorithm::to_lower_copy(stripColor(exit->getName()));
+        auto name = stripColor(exit->getName());
+        boost::algorithm::to_lower(name);
 
         if(!creature->isStaff()) {
             if(!creature->canSee(exit))
                 continue;
-            if( minThree && (exit->flagIsSet(X_CONCEALED) || exit->flagIsSet(X_SECRET)) && exit->getName().length() > 2)
+            if( minThree && (exit->flagIsSet(X_CONCEALED) || exit->flagIsSet(X_SECRET)) && name.length() > 2)
                 continue;
         }
 
         if(!exit->flagIsSet(X_DESCRIPTION_ONLY) || creature->isStaff()) {
-            if(!str.compare(0, str.length(), name))
+            if(!strncmp(name.c_str(), str.c_str(), str.length()))
                 match++;
         } else {
             if(name == str)

@@ -367,7 +367,7 @@ void sendMail(const std::string &target, const std::string &message);
 void display_rom(Player* player, Player *looker=0, int magicShowHidden=0);
 void display_rom(Player* player, BaseRoom* room);
 Exit *findExit(Creature* creature, cmd* cmnd, int val=1, BaseRoom* room = 0);
-Exit *findExit(Creature* creature, std::string str, int val, BaseRoom* room = 0);
+Exit *findExit(Creature* creature, const std::string &str, int val, BaseRoom* room = 0);
 int createStorage(CatRef cr, const Player* player);
 void doRoomHarms(BaseRoom *inRoom, Player* target);
 BaseRoom *abortFindRoom(Creature* player, const char from[15]);
