@@ -632,10 +632,7 @@ Exit *Move::getExit(Creature* player, cmd* cmnd) {
 
     if(Move::isOrdinal(cmnd)) {
         for(Exit* ext : room->exits) {
-            if( ext->getName() == cmnd->str[1] &&
-                player->canSee(ext) &&
-                !(!player->isStaff() && ext->flagIsSet(X_DESCRIPTION_ONLY)))
-            {
+            if( ext->getName() == cmnd->str[1] && player->canSee(ext) && !(!player->isStaff() && ext->flagIsSet(X_DESCRIPTION_ONLY))) {
                 exit = ext;
                 break;
             }
@@ -1192,7 +1189,7 @@ int cmdGo(Player* player, cmd* cmnd) {
 // cardinal directions (n,s,e,w,u,d).
 
 int cmdMove(Player* player, cmd* cmnd) {
-    std::string dir = "", str = "";
+    std::string dir, str;
 
     player->clearFlag(P_AFK);
 

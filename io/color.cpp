@@ -402,22 +402,20 @@ std::string Socket::getColorCode(const unsigned char ch) {
 
 std::string stripColor(std::string_view colored) {
     std::ostringstream str;
-    for (auto it = colored.cbegin() ; it != colored.cend() ; ++it) {
-        if(*it == '^')
-            ++it;
-        else
-            str << *it;
+    unsigned int i=0, max = colored.length();
+    for(; i < max ; i++) {
+        if(colored.at(i) == '^') i++;
+        else str << colored.at(i);
     }
     return(str.str());
 }
 
 size_t lengthNoColor(std::string_view colored) {
     size_t len = 0;
-    for (auto it = colored.cbegin() ; it != colored.cend() ; ++it) {
-        if(*it == '^')
-            ++it;
-        else
-            len++;
+    unsigned int i=0, max = colored.length();
+    for(; i < max ; i++) {
+        if(colored.at(i) == '^')i++;
+        else len++;
     }
     return len;
 }

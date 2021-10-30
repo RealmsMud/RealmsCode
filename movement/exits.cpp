@@ -166,20 +166,17 @@ Exit *findExit(Creature* creature, std::string str, int val, BaseRoom* room) {
             return(nullptr);
 
     for(Exit* exit : room->exits) {
-        auto name = boost::algorithm::to_lower_copy(exit->getName());
+        auto name = boost::algorithm::to_lower_copy(stripColor(exit->getName()));
 
         if(!creature->isStaff()) {
             if(!creature->canSee(exit))
                 continue;
-            if( minThree &&
-                (exit->flagIsSet(X_CONCEALED) || exit->flagIsSet(X_SECRET)) &&
-                exit->getName().length() > 2
-            )
+            if( minThree && (exit->flagIsSet(X_CONCEALED) || exit->flagIsSet(X_SECRET)) && exit->getName().length() > 2)
                 continue;
         }
 
         if(!exit->flagIsSet(X_DESCRIPTION_ONLY) || creature->isStaff()) {
-            if(!strncmp(name.c_str(), str.c_str(), str.length()))
+            if(!str.compare(0, str.length(), name))
                 match++;
         } else {
             if(name == str)
