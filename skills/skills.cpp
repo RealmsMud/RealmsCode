@@ -497,7 +497,7 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
                 if (showProgress) {
                     oStr << " ";
 
-                    std::string progress = "" + std::to_string(curSkill) + "/" + std::to_string(maxSkill);
+                    std::string progress = "" + std::to_string(curSkill) + "/" + std::to_string(static_cast<int>(maxSkill));
                     if (gConfig->isKnownOnly(crtSkill->getName()))
                         oStr << progressBar(barLength, 1);
                     else
