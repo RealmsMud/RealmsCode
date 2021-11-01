@@ -395,9 +395,6 @@ int songFlight(Player* player, cmd* cmnd);
 int songRecall(Player* player, cmd* cmnd);
 int songSafety(Player* player, cmd* cmnd);
 
-// spelling.cpp
-void init_spelling(void);
-
 // steal.cpp
 int get_steal_chance(Player* player, Creature* creature, Object* object);
 int steal(Creature* player, cmd* cmnd);

@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.15...3.19)
 
 project(RealmsCode)
-project(realmsPython)
 
 add_subdirectory(lib/pybind11)
 
@@ -31,7 +30,6 @@ message(STATUS "PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} lib/pybind11/include)
 
-# For indexing_suite and such
 include_directories("include")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")

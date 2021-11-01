@@ -74,7 +74,8 @@ extern long last_time_update;
 extern long last_weather_update;
 
 // Function prototypes
-void initSpellList(); // TODO: Move spelling stuff into server
+bool init_spelling();  // TODO: Move spelling stuff into server
+void initSpellList();
 
 // Global server pointer
 Server* gServer = nullptr;
@@ -204,12 +205,14 @@ bool Server::init() {
 
 
     std::clog << "Initializing Spelling...";
-    init_spelling();
-    std::clog << "done." << std::endl;
+    if(init_spelling())
+        std::clog << "done." << std::endl;
+    else
+        std::clog << "failed." << std::endl;
 
     initWebInterface();
 
-    std::clog <<  "Initializing Spelling List...";
+    std::clog <<  "Initializing Spell List...";
     initSpellList();
     std::clog << "done." << std::endl;
 

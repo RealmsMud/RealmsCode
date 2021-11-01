@@ -43,6 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 ca-
     libaspell-dev \
     libpspell-dev  \
     aspell \
+    aspell-en \
     zlib1g-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     ln -s /usr/bin/clang-12 /usr/bin/clang && \

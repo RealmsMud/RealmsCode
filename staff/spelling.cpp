@@ -56,7 +56,8 @@ void cleanup_spelling() {
     if(manager)
         delete_pspell_manager(manager);
 }
-void init_spelling() {
+
+bool init_spelling() {
     config = new_pspell_config();
     if(sp_language != nullptr)
         pspell_config_replace(config,"language-tag",sp_language);
@@ -70,12 +71,13 @@ void init_spelling() {
     delete_pspell_config(config);
     if(pspell_error_number(ret) != 0) {
         fprintf(stderr,"%s\n",pspell_error_message(ret));
-        return;
+        return false;
     }
     sp_initialized = 1;
 
     manager = to_pspell_manager(ret);
     config = pspell_manager_config(manager);
+    return true;
 }
 
 int dmSpelling(Player* player, cmd* cmnd) {
