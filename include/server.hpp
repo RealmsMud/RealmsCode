@@ -113,14 +113,14 @@ public:
     static Server* getInstance();
     static void destroyInstance();
 
-    ~Server();
 
 // Instance
 private:
     static Server* myInstance;
-protected:
     Server();
-
+    Server(const Server&) = delete;
+    Server(Server&&) = delete;
+    ~Server();
 
 // *****************
 // Public Structures

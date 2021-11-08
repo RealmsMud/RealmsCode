@@ -27,6 +27,7 @@
 
 #include "global.hpp"
 #include "money.hpp"
+#include "msdp.hpp"
 #include "namable.hpp"
 #include "proc.hpp"
 #include "size.hpp"
@@ -117,8 +118,8 @@ typedef std::set<CrtCommand, namableCmp> CrtCommandSet;
 typedef std::set<SkillCommand, namableCmp> SkillCommandSet;
 typedef std::set<Spell, namableCmp> SpellSet;
 typedef std::set<Song, namableCmp> SongSet;
-typedef std::map<std::string, AlchemyInfo*, comp> AlchemyMap;
-typedef std::map<std::string, MsdpVariable*> MsdpVarMap;
+typedef std::map<std::string, AlchemyInfo, comp> AlchemyMap;
+typedef std::map<std::string, MsdpVariable> MsdpVariableMap;
 typedef std::map<unsigned int, MudFlag> MudFlagMap;
 
 typedef std::map<unsigned int, RaceData*> RaceDataMap;
@@ -152,14 +153,16 @@ public:
 
     void setNumGuilds(int guildId);
 
+    // Singleton; no copying or moving
+    Config(const Config&) = delete;
+    Config(Config&&) = delete;
 private:
+    ~Config();
     static Config* myInstance;
     bool inUse;
 
 
 public:
-    ~Config();
-
     bool loadBeforePython();
     bool loadAfterPython();
     bool save() const;
@@ -211,15 +214,10 @@ public:
     const Effect* getEffect(const std::string &eName);
     bool effectExists(const std::string &eName);
 
-// Spells
-    bool loadSpells();
-    bool saveSpells() const;
     void clearSpells();
     const Spell* getSpell(const std::string &id, int& ret);
 
-// New Songs
     bool loadSongs();
-    bool saveSongs() const;
     void clearSongs();
     const Song* getSong(const std::string &name, int& ret);
     const Song* getSong(const std::string &pName);
@@ -601,7 +599,7 @@ public:
     char        cmdline[256]{};
 
     // MSDP
-    MsdpVarMap msdpVariables;
+    MsdpVariableMap msdpVariables;
     MsdpVariable* getMsdpVariable(const std::string &name);
 
 

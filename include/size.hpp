@@ -35,7 +35,7 @@ enum Size {
 };
 
 Size getSize(const std::string& str);
-std::string getSizeName(Size size);
+const std::string & getSizeName(Size size);
 int searchMod(Size size);
 Size whatSize(int i);
 

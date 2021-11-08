@@ -99,10 +99,10 @@ public:
     DroppedBy& operator=(const DroppedBy& o);
 
     std::string str();
-    std::string getName() const;
-    std::string getIndex() const;
-    std::string getId() const;
-    std::string getType() const;
+    [[nodiscard]] const std::string & getName() const;
+    [[nodiscard]] const std::string & getIndex() const;
+    [[nodiscard]] const std::string & getId() const;
+    [[nodiscard]] const std::string & getType() const;
 
 
     void clear();
@@ -116,17 +116,18 @@ class Object: public Container, public Containable {
     // Static class functions
 public:
     static Object* getNewPotion();  // Creates a new blank potion object
-    static const std::map<ObjectType,const char*> objTypeToString;
+    static const std::map<ObjectType, std::string> objTypeToString;
+    static const std::map<Material, std::string> materialToString;
 
 public:
     Object();
-    ~Object();
+    ~Object() override;
     Object& operator=(const Object& o);
-    std::string getCompareStr() const ;
+    [[nodiscard]] std::string getCompareStr() const ;
     bool operator==(const Object& o) const;
     bool operator!=(const Object& o) const;
     bool operator< (const Object& t) const;
-    void validateId();
+    void validateId() override;
 
 protected:
     short           weight;
@@ -192,7 +193,7 @@ public:
     char use_attack[50]{};
 
     Dice damage;
-    double getDps() const;
+    [[nodiscard]] double getDps() const;
 
 
     CatRef in_bag[3];   // items preloaded inside bags
@@ -211,7 +212,7 @@ public:
     // List of effects that are conferred by this item.  Name, duration, and strength.
     //  std::list<ConferredEffect*> conferredEffects;
 
-    bool pulseEffects(long t) { return (false); };
+    inline bool pulseEffects(long t) override { return (false); };
 
     std::list<CatRef> randomObjects;
 
@@ -227,36 +228,33 @@ public:
 
     void init(bool selRandom = true);
     // Xml - Loading
-    int readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList = 0, bool offline=false);
+    int readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList = nullptr, bool offline=false);
     void loadAlchemyEffects(xmlNodePtr curNode);
 
     // Xml - Saving
-    int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType = LoadType::LS_FULL, int quantity = 1,
-                  bool saveId = true, std::list<std::string> *idList = 0) const;
+    int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType = LoadType::LS_FULL, int quantity = 1, bool saveId = true, std::list<std::string> *idList = nullptr) const;
     int saveToFile();
 
     void setDroppedBy(MudObject* dropper, std::string_view pDropType);
 
-    bool isBroken() const;
-
     // Flags
-    bool flagIsSet(int flag) const; // *
+    [[nodiscard]] bool flagIsSet(int flag) const; // *
     void setFlag(int flag); // *
     void clearFlag(int flag); // *
     bool toggleFlag(int flag); // *
 
 //    char* cmpName();
     void escapeText();
+    [[nodiscard]] bool isBroken() const;
 
-    std::string getFlagList(std::string_view sep=", ") const;
+    [[nodiscard]] std::string getFlagList(std::string_view sep=", ") const override;
 
     // Placement of the object etc
     void addObj(Object *toAdd, bool incShots = true); // Add an object to this object
     void delObj(Object  *toDel);
     void addToRoom(BaseRoom* room);
     void deleteFromRoom();
-    void popBag(Creature* creature, bool quest = true, bool drop = true, bool steal = true,
-                bool bodypart = true, bool dissolve = false);
+    void popBag(Creature* creature, bool quest = true, bool drop = true, bool steal = true, bool bodypart = true, bool dissolve = false);
     int doSpecial(Player* player);
     int countObj(bool permOnly = false);
 
@@ -275,7 +273,7 @@ public:
     [[nodiscard]] Size getSize() const;
     [[nodiscard]] std::string getSizeStr() const;
     [[nodiscard]] ObjectType getType() const; // *
-    [[nodiscard]] std::string getTypeName() const;
+    [[nodiscard]] const std::string & getTypeName() const;
     [[nodiscard]] short getWearflag() const; // *
     [[nodiscard]] short getArmor() const;
     [[nodiscard]] short getQuality() const;
@@ -292,7 +290,7 @@ public:
     [[nodiscard]] short getClan() const;
     [[nodiscard]] short getSpecial() const;
     [[nodiscard]] short getQuestnum() const;
-    [[nodiscard]] std::string getEffect() const;
+    [[nodiscard]] const std::string & getEffect() const;
     [[nodiscard]] long getEffectDuration() const;
     [[nodiscard]] short getEffectStrength() const;
     [[nodiscard]] unsigned long getCoinCost() const;
@@ -302,14 +300,15 @@ public:
     [[nodiscard]] short getLotteryNumbers(short i) const;
     [[nodiscard]] int getRecipe() const;
     [[nodiscard]] Material getMaterial() const;
-    [[nodiscard]] std::string getMaterialName() const;
-    [[nodiscard]] std::string getCompass(const Creature* creature, bool useName);
-    [[nodiscard]] std::string getVersion() const;
-    [[nodiscard]] std::string getQuestOwner() const;
     [[nodiscard]] std::string getObjStr(const Creature* viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
-    [[nodiscard]] std::string getSubType() const;
-    [[nodiscard]] std::string getWeaponType() const;
-    [[nodiscard]] std::string getArmorType() const;
+    [[nodiscard]] const std::string & getMaterialName() const;
+    [[nodiscard]] const std::string getCompass(const Creature* creature, bool useName);
+    [[nodiscard]] const std::string & getVersion() const;
+    [[nodiscard]] const std::string & getQuestOwner() const;
+    [[nodiscard]] const std::string & getSubType() const;
+    [[nodiscard]] const std::string & getWeaponType() const;
+    [[nodiscard]] const std::string & getArmorType() const;
+
     [[nodiscard]] std::string getWeaponCategory() const;
     [[nodiscard]] std::string getWeaponVerb() const;
     [[nodiscard]] std::string getWeaponVerbPlural() const;
@@ -400,10 +399,10 @@ public:
     [[nodiscard]] bool needsTwoHands() const;
     [[nodiscard]] bool isQuestValid() const; // Is this object valid for a quest?
 
-    std::string showAlchemyEffects(Player *player = nullptr);
-    std::string statObj(unsigned int statFlags);
-    double winterProtection() const;
-    bool isKey(const UniqueRoom* room, const Exit* exit) const;
+    [[nodiscard]] std::string showAlchemyEffects(Player *player = nullptr);
+    [[nodiscard]] std::string statObj(unsigned int statFlags);
+    [[nodiscard]] double winterProtection() const;
+    [[nodiscard]] bool isKey(const UniqueRoom* room, const Exit* exit) const;
 
     bool swap(Swap s);
     bool swapIsInteresting(Swap s) const;

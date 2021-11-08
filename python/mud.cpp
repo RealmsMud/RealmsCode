@@ -48,14 +48,14 @@ int pythonRand(int a, int b) {
 
 
 void init_module_mud(py::module &m) {
-    py::class_<Config>(m, "Config")
+    py::class_<Config, std::unique_ptr<Config, py::nodelete>>(m, "Config")
         .def("getVersion", &Config::getVersion)
         .def("getMudName", &Config::getMudName)
         .def("getMudNameAndVersion",&Config::getMudNameAndVersion)
         .def("effectExists", &Config::effectExists)
         ;
 
-    py::class_<Server>(m, "Server")
+    py::class_<Server, std::unique_ptr<Server, py::nodelete>>(m, "Server")
         .def("findPlayer", &Server::findPlayer, py::return_value_policy::reference)
         ;
 

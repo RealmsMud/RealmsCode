@@ -1,7 +1,14 @@
 import mud
 import re
+from mudObject import Creature
 
 CAP = 1
+
+def noPlayer(actor: Creature) -> bool:
+    if actor.getPlayer():
+        return False
+    else:
+        return True
 
 def ucfirst(str):
     return str[0].upper() + str[1:]

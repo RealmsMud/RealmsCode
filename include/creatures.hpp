@@ -370,9 +370,7 @@ public:
 
     bool pulseEffects(time_t t);
 
-    void convertOldEffects();
     bool convertFlag(int flag);
-    bool convertToEffect(const std::string &effect, int flag, int lt);
     void removeStatEffects();
     bool doPetrificationDmg();
     bool willIgnoreIllusion() const;
@@ -723,7 +721,7 @@ public:
     //MudObject* findTarget(cmd* cmnd, TargetType targetType, bool offensive);
 
     // New songs
-    bool isPlaying();
+    bool isPlaying() const;
     const Song* getPlaying();
     bool setPlaying(const Song* newSong, bool echo = true);
     bool stopPlaying(bool echo = true);

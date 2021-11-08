@@ -19,13 +19,14 @@
 #ifndef _SONGS_H
 #define _SONGS_H
 
-#include <list>
+#include <set>
 #include <libxml/parser.h>  // for xmlNodePtr
 
 #include "global.hpp"
 #include "structs.hpp"
 
 class MudObject;
+class SongBuilder;
 
 // ******************
 //   Song
@@ -33,23 +34,30 @@ class MudObject;
 
 class Song: public MysticMethod {
 public:
-    explicit Song(xmlNodePtr rootNode);
+    static inline const std::set<std::string> validTypes = {"effect", "script"};
+    static inline const std::set<std::string> validTargetTypes = {"room", "self", "group", "target", "room-beneficial", "room-aggro"};
+
+public:
+    friend class SongBuilder;  // The builder can access the internals
     Song(std::string_view pCmdStr) {
         name = pCmdStr;
     }
-    ~Song() {};
+    ~Song() = default;
 
-    void save(xmlNodePtr rootNode) const override;
+    bool runScript(MudObject* singer, MudObject* target = nullptr) const;
 
     [[nodiscard]] const std::string& getEffect() const;
     [[nodiscard]] const std::string& getType() const;
     [[nodiscard]] const std::string& getTargetType() const;
-    bool runScript(MudObject* singer, MudObject* target = nullptr) const;
 
     [[nodiscard]] int getDelay() const;
     [[nodiscard]] int getDuration() const;
+    [[nodiscard]] int getPriority() const;
+
+    Song(const Song&) = delete; // No Copies
+    Song(Song&&) = default;     // Only Moves
 private:
-    Song() {};
+    Song() = default;;
     std::string effect;
     std::string type; // script, effect, etc
     std::string targetType; // Valid Targets: Room, Self, Group, Target, RoomBene, RoomAggro

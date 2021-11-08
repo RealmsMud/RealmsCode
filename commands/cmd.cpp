@@ -222,8 +222,7 @@ bool isDm(const Creature* player);
 //**********************************************************************
 //                      initCommands
 //**********************************************************************
-// everything on the staff array already checks isStaff - the listed
-// authorization is an additional requirement to use the command.
+// everything on the staff array already checks isStaff - the listed authorization is an additional requirement to use the command.
 
 bool Config::initCommands() {
 // *************************************************************************************
@@ -1031,6 +1030,11 @@ int allowedWhilePetrified(const std::string &str) {
 // in the first parameter and interprets the person's command.
 
 int cmdProcess(Creature *user, cmd* cmnd, Creature* pet) {
+    if(!user) {
+        std::clog << "invalid creature trying to use cmdProcess.\n";
+        return(0);
+    }
+
     Player  *player=nullptr;
     int     fd = user->fd;
 
@@ -1043,10 +1047,6 @@ int cmdProcess(Creature *user, cmd* cmnd, Creature* pet) {
 
     if(player && player->afterProf) {
         player->afterProf = 0;
-    }
-    if(!user) {
-        std::clog << "invalid creature trying to use cmdProcess.\n";
-        return(0);
     }
 
     getCommand(user, cmnd);

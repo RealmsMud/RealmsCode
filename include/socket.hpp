@@ -31,6 +31,7 @@
 #include <string>
 #include <fmt/format.h>
 
+#include "msdp.hpp"                                 // for ReportedMsdpVariable
 
 // Defines needed
 
@@ -44,7 +45,6 @@ extern long UnCompressedBytes;
 extern long OutBytes;
 
 class Player;
-class ReportedMsdpVariable;
 
 typedef struct _xmlNode xmlNode;
 typedef xmlNode *xmlNodePtr;
@@ -305,12 +305,12 @@ protected:
 
     // MSDP Support Functions
     bool parseMsdp();
-    bool processMsdpVarVal(std::string& variable, std::string& value);
-    bool msdpSend(std::string variable);
-    bool msdpList(std::string& value);
+    bool processMsdpVarVal(const std::string &variable, const std::string &value);
+    bool msdpSend(const std::string &variable);
+    bool msdpList(const std::string &value);
     ReportedMsdpVariable* msdpReport(const std::string &value);
     bool msdpReset(std::string& value);
-    bool msdpUnReport(std::string& value);
+    bool msdpUnReport(const std::string &value);
 
 // TODO - Retool so they can be moved to protected
 public:
@@ -356,8 +356,8 @@ protected:
     char        fnparam{};
     char        commands{};
     Socket      *spyingOn{};      // Socket we are spying on
-    std::list<Socket*> spying;  // Sockets spying on us
-    std::map<std::string, ReportedMsdpVariable*> msdpReporting;
+    std::list<Socket*> spying;    // Sockets spying on us
+    std::map<std::string, ReportedMsdpVariable> msdpReporting;
 // TEMP
 public:
     long        ltime{};

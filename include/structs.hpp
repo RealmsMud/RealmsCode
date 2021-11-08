@@ -259,7 +259,6 @@ class MysticMethod: public MudMethod {
 public:
     ~MysticMethod() override = default;
 
-    virtual void save(xmlNodePtr rootNode) const = 0;
     [[nodiscard]] std::string_view getScript() const;
 
 public:
@@ -282,7 +281,7 @@ public:
     }
     ~Spell() override = default;
 
-    void save(xmlNodePtr rootNode) const override;
+    void save(xmlNodePtr rootNode) const;
 };
 
 #include "songs.hpp"

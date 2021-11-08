@@ -107,7 +107,7 @@ bool Object::toggleFlag(int flag) {
     return(flagIsSet(flag));
 }
 
-std::string Object::getVersion() const {
+const std::string & Object::getVersion() const {
     return(version);
 }
 

@@ -11,7 +11,7 @@ porphyriaMinutes = 90
 def sayHi(actor):
 	actor.send("Hi Baby!\n")
 
-def computeBeneficial(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computeBeneficial(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	duration = 0
 
 	if applier is None or applier.getObject():
@@ -35,7 +35,7 @@ def computeBeneficial(actor: MudObject, effect: EffectInfo, applier: Optional[Mu
 	return True
 
 
-def computeGravity(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computeGravity(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	duration = 0
 	
 	if applier is None or applier.getObject():
@@ -52,7 +52,7 @@ def computeGravity(actor: MudObject, effect: EffectInfo, applier: Optional[MudOb
 	effect.setDuration(int(duration))
 	return True
 
-def computeVisibility(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computeVisibility(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	duration = 0
 
 	if applier is None or applier.getObject():
@@ -86,7 +86,8 @@ def computeVisibility(actor: MudObject, effect: EffectInfo, applier: Optional[Mu
 	effect.setDuration(int(duration))
 	return True
 
-def computeDetect(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+
+def computeDetect(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	duration = 0
 	if applier is None or applier.getObject():
 		if effect.getName()  == "true-sight" or effect.getName() == "farsight":
@@ -121,7 +122,7 @@ def computeDetect(actor: MudObject, effect: EffectInfo, applier: Optional[MudObj
 	effect.setDuration(int(duration))
 	return True
 
-def computeDarkInfra(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computeDarkInfra(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	duration = 0
 	if applier is None or applier.getObject():
 		applier = actor
@@ -145,7 +146,7 @@ def computeDarkInfra(actor: MudObject, effect: EffectInfo, applier: Optional[Mud
 	effect.setDuration(int(duration))
 	return True
 
-def computeStatLower(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computeStatLower(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	if actor.removeOppositeEffect(effect):
 		return False
 	if actor.isUndead() and effect.getName() == "weakness":
@@ -167,7 +168,7 @@ def computeStatLower(actor: MudObject, effect: EffectInfo, applier: Optional[Mud
 
 	return True
 
-def computeStatRaise(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computeStatRaise(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	if actor.removeOppositeEffect(effect):
 		return False
 	if actor.isUndead() and effect.getName() == "fortitude":
@@ -189,7 +190,7 @@ def computeStatRaise(actor: MudObject, effect: EffectInfo, applier: Optional[Mud
 
 	return True
 
-def computeLanguages(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computeLanguages(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	duration = 0
 
 	if applier is None or applier.getObject():
@@ -202,7 +203,7 @@ def computeLanguages(actor: MudObject, effect: EffectInfo, applier: Optional[Mud
 	effect.setDuration(int(duration))
 	return True
 
-def computeResist(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computeResist(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	actor.removeOppositeEffect(effect)
 	duration = 0
 	
@@ -220,7 +221,7 @@ def computeResist(actor: MudObject, effect: EffectInfo, applier: Optional[MudObj
 	effect.setDuration(int(duration))
 	return True
 
-def computeDisable(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computeDisable(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	duration = 0
 
 	if effect.getName() == "petrification":
@@ -243,7 +244,7 @@ def computeDisable(actor: MudObject, effect: EffectInfo, applier: Optional[MudOb
 	effect.setDuration(int(duration))
 	return True
 
-def computeNatural(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computeNatural(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	if effect.getName() == "enlarge" or effect.getName() == "reduce":
 		# TODO: Modify removeOpposite Effect to not remove perm effects
 		if actor.removeOppositeEffect(effect):
@@ -263,7 +264,7 @@ def computeNatural(actor: MudObject, effect: EffectInfo, applier: Optional[MudOb
 #	// manually by the caster
 	return True
 
-def computeDeathSickness(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computeDeathSickness(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	duration = 0
 	strength = 1
 
@@ -276,7 +277,7 @@ def computeDeathSickness(actor: MudObject, effect: EffectInfo, applier: Optional
 	effect.setDuration(int(duration))
 	return True
 	
-def pulseDeathSickness(actor: MudObject, effect: EffectInfo):
+def pulseDeathSickness(actor: MudObject, effect: EffectInfo) -> bool:
 	strength = effect.getStrength()
 	duration = effect.getDuration()
 
@@ -320,7 +321,7 @@ def pulseDeathSickness(actor: MudObject, effect: EffectInfo):
 
 #		Creature::poisonedByPlayer
 #		Creature::poisonedByMonster
-def pulsePoison(actor: MudObject, effect: EffectInfo):
+def pulsePoison(actor: MudObject, effect: EffectInfo) -> bool:
 	if effect.getName() == "poison":
 		actor.wake("Terrible nightmares disturb your sleep!")
 		actor.send("^r^#Poison courses through your veins.\n")
@@ -354,7 +355,7 @@ def pulsePoison(actor: MudObject, effect: EffectInfo):
 	return True
 
 
-def pulseDisease(actor: MudObject, effect: EffectInfo):
+def pulseDisease(actor: MudObject, effect: EffectInfo) -> bool:
 	if effect.getName() == "disease":
 		actor.wake("Terrible nightmares disturb your sleep!")
 		actor.send("^bYou feel nauseous.\n^r^#Fever grips your mind.\n")
@@ -376,7 +377,7 @@ def pulseDisease(actor: MudObject, effect: EffectInfo):
 	return True
 
 
-def pulseFestering(actor: MudObject, effect: EffectInfo):
+def pulseFestering(actor: MudObject, effect: EffectInfo) -> bool:
 	dmg = mud.rand(int(1+actor.hp.getMax()/30), int(1+actor.hp.getMax()/20))
 	dmg=max(1, dmg)
 	actor.wake("Terrible nightmares disturb your sleep!")
@@ -390,7 +391,7 @@ def pulseFestering(actor: MudObject, effect: EffectInfo):
 	return True
 
 
-def pulseCreepingDoom(actor: MudObject, effect: EffectInfo):
+def pulseCreepingDoom(actor: MudObject, effect: EffectInfo) -> bool:
 	if actor.isMonster() and actor.getType == mud.mType.ARACHNID:
 		return True
 	if actor.getDeity() == mud.religions.ARACHNUS:
@@ -413,7 +414,7 @@ def pulseCreepingDoom(actor: MudObject, effect: EffectInfo):
 	return True
 
 
-def computeLycanthropy(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computeLycanthropy(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	if not actor.willBecomeWerewolf():
 		return False
 	
@@ -423,7 +424,7 @@ def computeLycanthropy(actor: MudObject, effect: EffectInfo, applier: Optional[M
 	return True
 	
 	
-def pulseLycanthropy(actor: MudObject, effect: EffectInfo):
+def pulseLycanthropy(actor: MudObject, effect: EffectInfo) -> bool:
 	# permanent lycanthropy has no pulse effects
 	if effect.getDuration() == -1:
 		return True
@@ -455,7 +456,7 @@ def pulseLycanthropy(actor: MudObject, effect: EffectInfo):
 	return True
 
 
-def computePorphyria(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computePorphyria(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	# how many minutes until porphyria takes effect
 	minutes = 90
 	
@@ -467,7 +468,7 @@ def computePorphyria(actor: MudObject, effect: EffectInfo, applier: Optional[Mud
 	return True
 
 
-def pulsePorphyria(actor: MudObject, effect: EffectInfo):
+def pulsePorphyria(actor: MudObject, effect: EffectInfo) -> bool:
 	# how many minutes until porphyria takes effect
 	
 	
@@ -523,7 +524,7 @@ def pulsePorphyria(actor: MudObject, effect: EffectInfo):
 	return True
 
 
-def pulseWall(actor: MudObject, effect: EffectInfo):
+def pulseWall(actor: MudObject, effect: EffectInfo) -> bool:
 	if effect.getExtra() > 0:
 		effect.setExtra(effect.getExtra() - 1)
 		if effect.getExtra() == 0:
@@ -533,7 +534,12 @@ def pulseWall(actor: MudObject, effect: EffectInfo):
 	return True
 
 
-def computeRegen(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def pulseCamouflage(actor: MudObject, effect: EffectInfo) -> bool:
+	if effect.getDuration() <= 60 and actor.getClass() == mud.crtClasses.DRUID and actor.getRoom().isForest():
+		effect.setDuration(60)
+	return True
+
+def computeRegen(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	duration = 0
 
 	# 30 + 1/2 minute per level
@@ -543,7 +549,7 @@ def computeRegen(actor: MudObject, effect: EffectInfo, applier: Optional[MudObje
 	return True
 	
 	
-def computeBloodSac(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]):
+def computeBloodSac(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
 	strength = 0
 	
 	percentage = mud.getConBonusPercentage(actor.constitution.getCur())
@@ -558,4 +564,3 @@ def computeBloodSac(actor: MudObject, effect: EffectInfo, applier: Optional[MudO
 	
 	effect.setStrength(adjustment)
 	return True
-

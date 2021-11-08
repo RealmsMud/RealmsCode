@@ -88,14 +88,6 @@ AlcoholState getAlcoholState(const EffectInfo* effect) {
 }
 
 //*********************************************************************
-//                      clearEffects
-//*********************************************************************
-
-void Config::clearEffects() {
-    effects.clear();
-}
-
-//*********************************************************************
 //                      getEffect
 //*********************************************************************
 
@@ -120,55 +112,51 @@ bool Config::effectExists(const std::string &eName) {
 //*********************************************************************
 
 int dmEffectList(Player* player, cmd* cmnd) {
-    const Effect* effect=nullptr;
     std::string command = getFullstrText(cmnd->fullstr, 1);
 
     bool all = (command == "all");
     int id = toNum<int>(command);
 
-    player->printColor("^YEffects\n");
-    player->printColor("Type ^y*effects all^x to see all effects or ^y*effects [num]^x to see a specific effect.\n");
+    player->printPaged("^YEffects\n");
+    player->printPaged("Type ^y*effects all^x to see all effects or ^y*effects [num]^x to see a specific effect.\n");
 
     int i = 0;
-    for(const auto& sp : gConfig->effects) {
-        effect = &(sp.second);
+    for(const auto& [effectName, effect] : gConfig->effects) {
         i++;
 
-        if(id != 0 && i != id)
-            continue;
+        if(id != 0 && i != id) continue;
 
-        player->printColor("%d)\tName: ^W%-20s^x   Use Str: %s^x    Display: %s\n", i,
-            effect->getName().c_str(), effect->usesStrength() ? "^gY" : "^rN",
-            effect->getDisplay().c_str());
+        player->printPaged(fmt::format("{})\tName: ^W{:<20}^x   Use Str: {}^x    Display: {}\n", i,
+            effect.getName(), effect.usesStrength() ? "^gY" : "^rN", effect.getDisplay()));
 
-        if(!all && i != id)
-            continue;
+        if(!all && i != id) continue;
 
-        player->printColor("\tOpposite Effect: %s\n", effect->getOppositeEffect().c_str());
-        player->printColor("\tSelfAddStr: %s^x\n", effect->getSelfAddStr().c_str());
-        player->printColor("\tRoomAddStr: %s^x\n", effect->getRoomAddStr().c_str());
-        player->printColor("\tSelfDelStr: %s^x\n", effect->getSelfDelStr().c_str());
-        player->printColor("\tRoomDelStr: %s^x\n", effect->getRoomDelStr().c_str());
-        player->printColor("\tPulsed: %s^x\n", effect->isPulsed() ? "^GPulsed" : "Non-Pulsed");
-        if(effect->isPulsed())
-            *player << ColorOn << "\tPulse Delay: " << effect->getPulseDelay() << "^x\n" << ColorOff;
-        player->printColor("\tSpell: %s^x\n", effect->isSpell() ? "^GYes" : "^RNo");
-        player->printColor("\tType: %s^x\n", effect->getType().c_str());
+        player->printPaged(fmt::format("\tOpposite Effect: {}\n", effect.getOppositeEffect()));
+        player->printPaged(fmt::format("\tSelfAddStr: {}^x\n", effect.getSelfAddStr()));
+        player->printPaged(fmt::format("\tRoomAddStr: {}^x\n", effect.getRoomAddStr()));
+        player->printPaged(fmt::format("\tSelfDelStr: {}^x\n", effect.getSelfDelStr()));
+        player->printPaged(fmt::format("\tRoomDelStr: {}^x\n", effect.getRoomDelStr()));
+        player->printPaged(fmt::format("\tPulsed: {}^x\n", effect.isPulsed() ? "^GPulsed" : "Non-Pulsed"));
+        if(effect.isPulsed())
+            player->printPaged(fmt::format("\tPulse Delay: {}^x\n", effect.getPulseDelay()));
+        player->printPaged(fmt::format("\tSpell: {}^x\n", effect.isSpell() ? "^GYes" : "^RNo"));
+        player->printPaged(fmt::format("\tType: {}^x\n", effect.getType()));
 
-        if(!effect->getApplyScript().empty())
-            player->printColor("\tApply Script: %s\n", effect->getApplyScript().c_str());
-        if(!effect->getPreApplyScript().empty())
-            player->printColor("\tPre-Apply Script: %s\n", effect->getPreApplyScript().c_str());
-        if(!effect->getPostApplyScript().empty())
-            player->printColor("\tPost-Apply Script: %s\n", effect->getPostApplyScript().c_str());
-        if(!effect->getComputeScript().empty())
-            player->printColor("\tCompute Script: %s\n", effect->getComputeScript().c_str());
-        if(!effect->getPulseScript().empty())
-            player->printColor("\tPulse Script: %s\n", effect->getPulseScript().c_str());
+        if(!effect.getApplyScript().empty())
+            player->printPaged(fmt::format("\tApply Script: {}\n", effect.getApplyScript()));
+        if(!effect.getPreApplyScript().empty())
+            player->printPaged(fmt::format("\tPre-Apply Script: {}\n", effect.getPreApplyScript()));
+        if(!effect.getPostApplyScript().empty())
+            player->printPaged(fmt::format("\tPost-Apply Script: {}\n", effect.getPostApplyScript()));
+        if(!effect.getComputeScript().empty())
+            player->printPaged(fmt::format("\tCompute Script: {}\n", effect.getComputeScript()));
+        if(!effect.getPulseScript().empty())
+            player->printPaged(fmt::format("\tPulse Script: {}\n", effect.getPulseScript()));
 
-        if(!effect->getUnApplyScript().empty())
-            player->printColor("\tUnApplyScript: %s\n", effect->getUnApplyScript().c_str());
+        if(!effect.getUnApplyScript().empty())
+            player->printPaged(fmt::format("\tUnApplyScript: {}\n", effect.getUnApplyScript()));
     }
+    player->donePaging();
 
     return(0);
 }
@@ -443,7 +431,6 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
         newEffect->setParent(pParent);
 
     EffectInfo* oldEffect = getExactEffect(newEffect->getName());
-    bool success = true;
 
     if(oldEffect && !newEffect->willOverWrite(oldEffect)) {
         // The new effect won't overwrite, so don't add it
@@ -462,7 +449,7 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
     // Only show if we're not overwriting an effect
     if(!oldEffect && show)
         newEffect->add();
-    success &= newEffect->apply();
+
     effectList.push_back(newEffect);
     if(newEffect->getParent()->getAsRoom())
         newEffect->getParent()->getAsRoom()->addEffectsIndex();
@@ -578,16 +565,15 @@ bool Effects::isEffected(EffectInfo* effect) const {
 //*********************************************************************
 //                      getBaseEffects
 //*********************************************************************
-
-const std::list<std::string>& Effect::getBaseEffects() {
-    return(baseEffects);
-}
-
 // Effect - Avian Aria, Base Effects = fly, levitate
 // eff = fly
 
 // Effect - Avian Aria, Base Effects = fly, levitate
 // Effect Some Jackass's Flying Song.  Base effect = fly, levitate
+
+const std::list<std::string>& Effect::getBaseEffects() {
+    return(baseEffects);
+}
 
 //*********************************************************************
 //                      hasPermEffect
@@ -609,17 +595,15 @@ EffectInfo* MudObject::getEffect(std::string_view effect) const {
 // the base effect mentioned
 
 EffectInfo* Effects::getEffect(std::string_view effect) const {
-    EffectList::const_iterator eIt;
     EffectInfo* toReturn = nullptr;
-    for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
-        if((*eIt) && ((*eIt)->getName() == effect || (*eIt)->hasBaseEffect(effect))) {
+    for(const auto eff : effectList) {
+        if(eff && (eff->getName() == effect || eff->hasBaseEffect(effect))) {
             if(!toReturn)
-                toReturn = (*eIt);
+                toReturn = eff;
             else {
-                // If we have something to return, compare it, we'll return the
-                // effect with the highest strength
-                if((*eIt)->getStrength() > toReturn->getStrength())
-                    toReturn = (*eIt);
+                // If we have something to return, compare it, we'll return the effect with the highest strength
+                if(eff->getStrength() > toReturn->getStrength())
+                    toReturn = eff;
             }
         }
     }
@@ -636,10 +620,9 @@ EffectInfo* MudObject::getExactEffect(std::string_view effect) const {
 
 // Returns the effect with an exact name match
 EffectInfo* Effects::getExactEffect(std::string_view effect) const {
-    EffectList::const_iterator eIt;
-    for(eIt = effectList.begin() ; eIt != effectList.end() ; eIt++) {
-        if((*eIt) && (*eIt)->getName() == effect)
-            return((*eIt));
+    for(const auto eff : effectList) {
+        if(eff && eff->getName() == effect)
+            return(eff);
     }
     return(nullptr);
 }
@@ -907,55 +890,6 @@ std::string Effects::getEffectsString(const Creature* viewer) {
     }
 
     return(effStr.str());
-}
-
-//*********************************************************************
-//                      convertOldEffects
-//*********************************************************************
-// This function will convert flag/lt combos into effects
-
-void Creature::convertOldEffects() {
-    Player* pPlayer = getAsPlayer();
-    Monster* mMonster = getAsMonster();
-    if(version < "2.40") {
-        if(mMonster) {
-//          mMonster->convertToEffect("stoneskin", OLD_M_STONESKIN, -1);
-//          mMonster->convertToEffect("invisibility", OLD_M_INVISIBLE, OLD_LT_INVISIBILITY);
-        } else if(pPlayer) {
-
-        }
-    }
-}
-
-//*********************************************************************
-//                      convertToEffect
-//*********************************************************************
-// Convert the given effect from a flag/lt to an effect
-
-bool Creature::convertToEffect(const std::string &effect, int flag, int lt) {
-    if(!flagIsSet(flag))
-        return(false);
-
-    clearFlag(flag);
-
-
-    long duration = 0;
-    if(lt != -1 && lasttime[lt].interval != 0)
-        duration = lasttime[lt].interval;
-    else
-        duration = -1;
-
-    auto* newEffect = new EffectInfo(effect, time(nullptr), duration, 1, this);
-
-//  if(lt != -1 && (effect == "armor" || effect == "stoneskin")) {
-//      newEffect->setStrength(lasttime[lt].misc);
-//  }
-
-    // Assuming that they're already properly under the effect, so just add it to the list
-    // and don't actually add it or compute it.
-    // IE: Strength buff -- they already have +str, so don't give them more str!!
-    effects.effectList.push_back(newEffect);
-    return(true);
 }
 
 //*********************************************************************
@@ -1309,47 +1243,11 @@ void Server::removeEffectsOwner(const Creature* owner) {
     }
 }
 
-
-//*********************************************************************
-//                      Effect
-//*********************************************************************
-
-Effect::Effect(xmlNodePtr rootNode) {
-    xmlNodePtr curNode = rootNode->children;
-
-    pulsed = isSpellEffect = usesStr = false;
-    pulseDelay = 5;
-
-    while(curNode) {
-             if(NODE_NAME(curNode, "Name")) xml::copyToString(name, curNode);
-        else if(NODE_NAME(curNode, "BaseEffect")) baseEffects.push_back(xml::getString(curNode));
-        else if(NODE_NAME(curNode, "Display")) xml::copyToString(display, curNode);
-        else if(NODE_NAME(curNode, "OppositeEffect")) xml::copyToString(oppositeEffect, curNode);
-        else if(NODE_NAME(curNode, "SelfAddStr")) xml::copyToString(selfAddStr, curNode);
-        else if(NODE_NAME(curNode, "SelfDelStr")) xml::copyToString(selfDelStr, curNode);
-        else if(NODE_NAME(curNode, "RoomAddStr")) xml::copyToString(roomAddStr, curNode);
-        else if(NODE_NAME(curNode, "RoomDelStr")) xml::copyToString(roomDelStr, curNode);
-        else if(NODE_NAME(curNode, "Pulsed")) xml::copyToBool(pulsed, curNode);
-        else if(NODE_NAME(curNode, "PulseDelay")) xml::copyToNum(pulseDelay, curNode);
-        else if(NODE_NAME(curNode, "Type")) xml::copyToString(type, curNode);
-        else if(NODE_NAME(curNode, "ComputeScript")) xml::copyToString(computeScript, curNode);
-        else if(NODE_NAME(curNode, "ApplyScript")) xml::copyToString(applyScript, curNode);
-        else if(NODE_NAME(curNode, "PreApplyScript")) xml::copyToString(preApplyScript, curNode);
-        else if(NODE_NAME(curNode, "PostApplyScript")) xml::copyToString(postApplyScript, curNode);
-        else if(NODE_NAME(curNode, "UnApplyScript")) xml::copyToString(unApplyScript, curNode);
-        else if(NODE_NAME(curNode, "PulseScript")) xml::copyToString(pulseScript, curNode);
-        else if(NODE_NAME(curNode, "Spell")) xml::copyToBool(isSpellEffect, curNode);
-        else if(NODE_NAME(curNode, "UsesStrength")) xml::copyToBool(usesStr, curNode);
-
-        curNode = curNode->next;
-    }
-}
-
 //*********************************************************************
 //                      getPulseScript
 //*********************************************************************
 
-std::string Effect::getPulseScript() const {
+const std::string & Effect::getPulseScript() const {
     return(pulseScript);
 }
 
@@ -1357,7 +1255,7 @@ std::string Effect::getPulseScript() const {
 //                      getUnApplyScript
 //*********************************************************************
 
-std::string Effect::getUnApplyScript() const {
+const std::string & Effect::getUnApplyScript() const {
     return(unApplyScript);
 }
 
@@ -1365,7 +1263,7 @@ std::string Effect::getUnApplyScript() const {
 //                      getApplyScript
 //*********************************************************************
 
-std::string Effect::getApplyScript() const {
+const std::string & Effect::getApplyScript() const {
     return(applyScript);
 }
 
@@ -1373,7 +1271,7 @@ std::string Effect::getApplyScript() const {
 //                      getPreApplyScript
 //*********************************************************************
 
-std::string Effect::getPreApplyScript() const {
+const std::string & Effect::getPreApplyScript() const {
     return(preApplyScript);
 }
 
@@ -1381,7 +1279,7 @@ std::string Effect::getPreApplyScript() const {
 //                      getPostApplyScript
 //*********************************************************************
 
-std::string Effect::getPostApplyScript() const {
+const std::string & Effect::getPostApplyScript() const {
     return(postApplyScript);
 }
 
@@ -1389,7 +1287,7 @@ std::string Effect::getPostApplyScript() const {
 //                      getComputeScript
 //*********************************************************************
 
-std::string Effect::getComputeScript() const {
+const std::string & Effect::getComputeScript() const {
     return(computeScript);
 }
 
@@ -1397,7 +1295,7 @@ std::string Effect::getComputeScript() const {
 //                      getType
 //*********************************************************************
 
-std::string Effect::getType() const {
+const std::string & Effect::getType() const {
     return(type);
 }
 
@@ -1422,14 +1320,14 @@ bool Effect::isSpell() const {
 //*********************************************************************
 
 bool Effect::usesStrength() const {
-    return(usesStr);
+    return(useStrength);
 }
 
 //*********************************************************************
 //                      getRoomDelStr
 //*********************************************************************
 
-std::string Effect::getRoomDelStr() const {
+const std::string & Effect::getRoomDelStr() const {
     return(roomDelStr);
 }
 
@@ -1437,7 +1335,7 @@ std::string Effect::getRoomDelStr() const {
 //                      getRoomAddStr
 //*********************************************************************
 
-std::string Effect::getRoomAddStr() const {
+const std::string & Effect::getRoomAddStr() const {
     return(roomAddStr);
 }
 
@@ -1445,7 +1343,7 @@ std::string Effect::getRoomAddStr() const {
 //                      getSelfDelStr
 //*********************************************************************
 
-std::string Effect::getSelfDelStr() const {
+const std::string & Effect::getSelfDelStr() const {
     return(selfDelStr);
 }
 
@@ -1453,7 +1351,7 @@ std::string Effect::getSelfDelStr() const {
 //                      getSelfAddStr
 //*********************************************************************
 
-std::string Effect::getSelfAddStr() const {
+const std::string & Effect::getSelfAddStr() const {
     return(selfAddStr);
 }
 
@@ -1461,7 +1359,7 @@ std::string Effect::getSelfAddStr() const {
 //                      getOppositeEffect
 //*********************************************************************
 
-std::string Effect::getOppositeEffect() const {
+const std::string & Effect::getOppositeEffect() const {
     return(oppositeEffect);
 }
 
@@ -1469,7 +1367,7 @@ std::string Effect::getOppositeEffect() const {
 //                      getDisplay
 //*********************************************************************
 
-std::string Effect::getDisplay() const {
+const std::string & Effect::getDisplay() const {
     return(display);
 }
 
@@ -1497,7 +1395,7 @@ bool Effect::hasBaseEffect(std::string_view effect) const {
 //                      getName
 //*********************************************************************
 
-std::string Effect::getName() const {
+const std::string & Effect::getName() const {
     return(name);
 }
 
@@ -1511,7 +1409,7 @@ EffectInfo::EffectInfo(const std::string &pName, time_t pLastMod, long pDuration
 {
     myEffect = gConfig->getEffect(pName);
     if(!myEffect)
-        throw std::string("Can't find effect " + pName);
+        throw std::runtime_error(fmt::format("Can't find effect '{}'", pName));
     setOwner(owner);
 }
 
@@ -1542,7 +1440,7 @@ EffectInfo::EffectInfo(xmlNodePtr rootNode) {
     myEffect = gConfig->getEffect(name);
 
     if(!myEffect) {
-        throw std::string("Can't find effect listing " + name);
+        throw std::runtime_error("Can't find effect listing " + name);
     }
 }
 

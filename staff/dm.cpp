@@ -336,10 +336,8 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
         }
     } else if(!strcmp(cmnd->str[1], "spells")) {
         if(load) {
-            gConfig->loadSpells();
-            player->print("Spell list reloaded.\n");
+            player->print("Nothing to load..\n");
         } else {
-            gConfig->saveSpells();
             gConfig->writeSpellFiles();
             player->print("Spell list saved.\n");
         }
@@ -1242,13 +1240,14 @@ int dmWeather(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int dmAlchemyList(Player* player, cmd* cmnd) {
-    player->print("Alchemy List:\n");
+    player->printPaged(fmt::format("Alchemy List ({}):\n", gConfig->alchemy.size()));
 
-    player->printColor("^B%25s - %3s - %-15s^x\n", "Name", "Pos", "Action");
-
-    for(auto& it: gConfig->alchemy) {
-        player->printColor("%s\n", it.second->getDisplayString().c_str());
+    player->printPaged(fmt::format("^B{:>25s} - {:>3} - {:<15}^x\n", "Name", "Pos", "Action"));
+    auto i = 0;
+    for(const auto& [aName, alc] : gConfig->alchemy) {
+        player->printPaged(fmt::format("{:>3}) {}\n", ++i, alc.getDisplayString()));
     }
+    player->donePaging();
     return(0);
 }
 

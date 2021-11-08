@@ -56,7 +56,7 @@ bool Config::loadMxpElements() {
         return(false);
     }
 
-    clearAlchemy();
+    clearMxpElements();
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, "MxpElement")) {
             auto* mxpElement = new MxpElement(curNode);
