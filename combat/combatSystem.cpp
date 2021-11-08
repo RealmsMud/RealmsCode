@@ -10,7 +10,7 @@
  * This software is distributed in accordance with the
  *  GNU Affero General Public License v3 or later
  *
- *  Copyright (C) 2007-2020 Jason Mitchell, Randi Mitchell
+ *  Copyright (C) 2007-2021 Jason Mitchell, Randi Mitchell
  *     Contributions by Tim Callahan, Jonathan Hseu
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
