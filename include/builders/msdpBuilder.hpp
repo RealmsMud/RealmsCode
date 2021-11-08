@@ -19,6 +19,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 #include <fmt/format.h>
 #include "msdp.hpp"
 
@@ -38,7 +39,7 @@ public:
     INT_BUILDER(updateInterval);
 
     MsdpBuilder& valueFn(std::function<std::string(Socket&, Player*)> valueFn) {
-        msdpVar.valueFn = valueFn;
+        msdpVar.valueFn = std::move(valueFn);
         return *this;
     }
 

@@ -212,6 +212,7 @@ public:
 // Internal Methods
 private:
     bool initDiscordBot();
+    void cleanupDiscordBot();
 
     size_t getNumSockets() const; // Get number of sockets in the sockets list
 

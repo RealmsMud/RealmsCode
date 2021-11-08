@@ -158,6 +158,7 @@ Server::~Server() {
     flushMonster();
     effectsIndex.clear();
     PythonHandler::cleanUpPython();
+    cleanupDiscordBot();
 
     clearAreas();
     delete vSockets;

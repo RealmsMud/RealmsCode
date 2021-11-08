@@ -59,7 +59,6 @@ std::string getWho() {
 
 }
 
-
 bool Server::initDiscordBot() {
     if (!gConfig->isBotEnabled()) {
         std::cout << "Discord bot NOT enabled" << std::endl;
@@ -142,6 +141,13 @@ bool Server::initDiscordBot() {
 
     return (true);
 }
+
+
+void Server::cleanupDiscordBot() {
+    delete commandHandler;
+    delete discordBot;
+}
+
 
 bool Server::sendDiscordWebhook(long webhookID, int type, const std::string &author, const std::string &msg) {
     if(!discordBot)

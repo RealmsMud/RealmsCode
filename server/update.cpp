@@ -932,8 +932,10 @@ void cleanUpMemory() {
 
     //flush_ext();
 
-    Config::destroyInstance();
     Server::destroyInstance();
+    gServer = nullptr;
+    Config::destroyInstance();
+    gConfig = nullptr;
     // Clean up xml memory
     xmlCleanupParser();
     cleanup_spelling();
