@@ -485,6 +485,10 @@ char AreaData::get(short x, short y, short z) const {
 void AreaData::setArea(Area* a) { area = a; }
 void AreaData::setTerrain(bool t) { isTerrain = t; }
 
+AreaData::~AreaData() {
+    data.clear();
+}
+
 //*********************************************************************
 //                      Area
 //*********************************************************************

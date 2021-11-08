@@ -206,6 +206,7 @@ protected:
 class AreaData {
 public:
     AreaData();
+    ~AreaData();
 
     char get(short x, short y, short z) const;
     std::vector<std::vector<std::vector<char>>> data;

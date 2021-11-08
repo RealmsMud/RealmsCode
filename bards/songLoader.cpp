@@ -172,9 +172,10 @@ bool Config::loadSongs() {
 //*********************************************************************
 
 void Config::clearSongs() {
-    for(const auto& [pId, p] : gServer->players) {
-        p->stopPlaying(true);
+    if(gServer != nullptr) {
+        for (const auto&[pId, p]: gServer->players) {
+            p->stopPlaying(true);
+        }
     }
-
     songs.clear();
 }

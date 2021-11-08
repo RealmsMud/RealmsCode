@@ -20,6 +20,7 @@
 #define SOCIAL_H_
 
 #include <list>
+#include <functional>
 #include <libxml/parser.h>  // for xmlNodePtr
 
 #include "global.hpp"
@@ -27,12 +28,13 @@
 
 class SocialCommand: public Command {
 public:
-    explicit SocialCommand(xmlNodePtr rootNode);
+    SocialCommand(xmlNodePtr rootNode);
     SocialCommand(std::string_view pCmdStr) {
         name = pCmdStr;
     }
+    ~SocialCommand() override = default;
     bool saveToXml(xmlNodePtr rootNode) const;
-    int execute(Creature* player, cmd* cmnd) const;
+    int execute(Creature* player, cmd* cmnd) const override;
 
     [[nodiscard]] bool getWakeTarget() const;
     [[nodiscard]] bool getRudeWakeTarget() const;
@@ -49,7 +51,8 @@ public:
     [[nodiscard]] std::string_view getRoomOnSelf() const;
 
 private:
-    int (*fn)(Creature* player, cmd* cmnd){};
+    std::function<int(Creature* player, cmd* cmnd)> fn;
+
     std::string script;
 
     std::string selfNoTarget;
