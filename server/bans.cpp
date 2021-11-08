@@ -139,15 +139,10 @@ int dmBan(Player* player, cmd* cmnd) {
     int     dur, iTmp = 0;
     int     isPrefix = 0, isSuffix = 0;
     char    *pass=nullptr;
-    char    log[128], log2[128], log3[128], log4[128];
     Ban*    newBan;
     char    str[255], who[255], site[255], comment[255];
     long    t;
 
-    strcpy(log,"");
-    strcpy(log2,"");
-    strcpy(log3,"");
-    strcpy(log4,"");
 
     strLen = cmnd->fullstr.length();
     // This kills all leading whitespace
@@ -307,38 +302,36 @@ int dmBan(Player* player, cmd* cmnd) {
         newBan->password = pass;
 
     gConfig->addBan(newBan);
+    std::ostringstream ostr;
+
     if(target)
-        sprintf(log, "%s (%s) has been banned", who, newBan->site.c_str());
+        ostr << fmt::format("{} ({}) has been banned", who, newBan->site);
     else
-        sprintf(log, "'%s' has been banned", site);
+        ostr << fmt::format("{} has been banned", site);
 
     if(dur > 0)
-        sprintf(log2, " for %d day(s) by %s.", newBan->duration, player->getCName());
+        ostr << fmt::format(" for {} day(s) by {}.", newBan->duration, player->getName());
     else
-        sprintf(log2, " indefinitely.");
+        ostr << " indefinitely.";
 
     if(!newBan->reason.empty())
-        sprintf(log3, " Reason: '%s' by %s.", newBan->reason.c_str(), player->getCName());
+        ostr << fmt::format(" Reason: '{}' by {}.", newBan->reason, player->getName());
 
 
     if(!newBan->password.empty())
-        sprintf(log4, " Password: '%s'.\n", newBan->password.c_str());
+        ostr << fmt::format(" Password: '{}'.\n", newBan->password);
     else
-        sprintf(log4, "\n");
+        ostr << "\n";
 
-    strcat(log, log2);
-    strcat(log, log3);
-    strcat(log, log4);
-
-    log_immort(true, player, "%s", log);
-    logn("log.bans", "%s: %s", player->getCName(), log);
+    auto logStr = ostr.str();
+    log_immort(true, player, "%s", logStr.c_str());
+    logn("log.bans", "%s: %s", player->getCName(), logStr.c_str());
 
     gConfig->saveBans();
     
     if(target) {
-        char tmpBuf[1024];
-        sprintf(tmpBuf, "\n\rThe watcher just arrived.\n\rThe watcher says, \"Begone from this place!\".\n\rThe watcher banishes your soul from this world.\n\r\n\r\n\r");
-        target->getSock()->write(tmpBuf);
+        std::string banStr("\n\rThe watcher just arrived.\n\rThe watcher says, \"Begone from this place!\".\n\rThe watcher banishes your soul from this world.\n\r\n\r\n\r");
+        target->getSock()->write(banStr.c_str());
         target->getSock()->disconnect();
     } else { // Determine who's effected by the siteban and drop them *excluding staff*
         gServer->checkBans();

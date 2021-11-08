@@ -45,7 +45,7 @@
 
 class MudObject;
 
-const std::map<ObjectType,const char*> Object::objTypeToString = {
+const std::map<ObjectType, std::string> Object::objTypeToString = {
         {ObjectType::WEAPON, "weapon"},
         {ObjectType::INSTRUMENT, "instrument"},
         {ObjectType::HERB, "herb"},
@@ -66,58 +66,36 @@ const std::map<ObjectType,const char*> Object::objTypeToString = {
         {ObjectType::LOTTERYTICKET, "lottery ticket"},
 };
 
+const std::map<Material, std::string> Object::materialToString = {
+        {Material::WOOD, "wood"},
+        {Material::GLASS, "glass" },
+        {Material::CLOTH, "cloth" },
+        {Material::PAPER, "paper" },
+        {Material::IRON, "iron" },
+        {Material::STEEL, "steel" },
+        {Material::MITHRIL, "mithril" },
+        {Material::ADAMANTIUM, "adamantium" },
+        {Material::STONE, "stone" },
+        {Material::ORGANIC, "organic" },
+        {Material::BONE, "bone" },
+        {Material::LEATHER, "leather" },
+};
 
-std::string Object::getTypeName() const {
+const std::string NONE_STR = "none";
+
+const std::string & Object::getTypeName() const {
     if(objTypeToString.find(type) == objTypeToString.end())
-        return("error");
+        return(NONE_STR);
 
     return objTypeToString.at(type);
 }
 
-std::string Object::getMaterialName() const {
-    switch(material) {
-        case WOOD:
-            return("wood");
-        case GLASS:
-            return("glass");
-        case CLOTH:
-            return("cloth");
-        case PAPER:
-            return("paper");
-        case IRON:
-            return("iron");
-        case STEEL:
-            return("steel");
-        case MITHRIL:
-            return("mithril");
-        case ADAMANTIUM:
-            return("adamantium");
-        case STONE:
-            return("stone");
-        case ORGANIC:
-            return("organic");
-        case BONE:
-            return("bone");
-        case LEATHER:
-            return("leather");
-        default:
-            return("none");
-    }
+const std::string & Object::getMaterialName() const {
+    if(materialToString.find(material) == materialToString.end())
+        return(NONE_STR);
+
+    return materialToString.at(material);
 }
-
-//*********************************************************************
-//                      cmpName
-//*********************************************************************
-// used to compare names (alphabetically) to each other when the
-// object starts with a color character - chops off the front color
-// chars
-
-//char* Object::cmpName() {
-//  int i=0;
-//  while(name[i] == '^' && name[i+1] != '^')
-//      i += 2;
-//  return(&name[i]);
-//}
 
 //*********************************************************************
 //                      add_obj_obj
@@ -437,8 +415,8 @@ int displayObject(Player* player, Object* target) {
     unsigned int i=0;
     char str[2048];
     char filename[256];
-    std::string inv = "";
-    std::string requiredSkillString = "";
+    std::string inv;
+    std::string requiredSkillString;
 
     unsigned int flags = player->displayFlags();
 
@@ -573,7 +551,7 @@ int displayObject(Player* player, Object* target) {
 
     }
 
-    if(target->flagIsSet(O_WEAPON_CASTS) && flags && MAG) {
+    if(target->flagIsSet(O_WEAPON_CASTS) && (flags & MAG)) {
         if(target->getChargesCur() > 0)
             percent = (100 * (target->getChargesCur())) / (MAX<short>(target->getChargesMax(),1));
         else
@@ -870,7 +848,7 @@ short Object::getMinStrength() const { return(minStrength); }
 short Object::getClan() const { return(clan); }
 short Object::getSpecial() const { return(special); }
 short Object::getQuestnum() const { return(questnum); }
-std::string Object::getEffect() const { return(effect); }
+const std::string & Object::getEffect() const { return(effect); }
 long Object::getEffectDuration() const { return(effectDuration); }
 short Object::getEffectStrength() const { return(effectStrength); }
 unsigned long Object::getCoinCost() const { return(coinCost); }
@@ -881,7 +859,7 @@ short Object::getLotteryNumbers(short i) const {return(lotteryNumbers[i]); }
 int Object::getRecipe() const { return(recipe); }
 Material Object::getMaterial() const { return(material); }
 
-std::string Object::getSubType() const { return(subType); }
+const std::string & Object::getSubType() const { return(subType); }
 short Object::getDelay() const { return(delay); }
 short Object::getExtra() const { return(extra); }
 short Object::getWeaponDelay() const {
@@ -889,7 +867,7 @@ short Object::getWeaponDelay() const {
         return(DEFAULT_WEAPON_DELAY);
     return(delay);
 }
-std::string Object::getQuestOwner() const { return(questOwner); }
+const std::string & Object::getQuestOwner() const { return(questOwner); }
 
 std::string Object::getSizeStr() const{
     return(getSizeName(size));

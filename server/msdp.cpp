@@ -1,5 +1,5 @@
 /*
- * Mdsp.h
+ * mdsp.cpp
  *   Stuff to deal with MDSP
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
@@ -33,97 +33,27 @@
 
 #define MSDP_DEBUG
 
-#define NEW_MSDP_VARIABLE(var, report, player, config, write, interval, sendfn, updatefn, isgrp) \
-    msdpVariables[#var] = new MsdpVariable(#var, MSDPVar::var, (report), (player), \
-    (config), (write), (interval), (sendfn), (updatefn), (isgrp))
-
-
-bool Config::initMsdp() {
-    //                Name                   Report  Ply  Config W-Once  U  sendFn UpdateFn isGrp
-    // Server Info
-    NEW_MSDP_VARIABLE(SERVER_ID,             false, false, false, false, 1,  true, false,  false);
-
-    NEW_MSDP_VARIABLE(SERVER_TIME,           false, false, false, false, 1,  true, false,  false);
-
-    // Character Info
-    NEW_MSDP_VARIABLE(CHARACTER_NAME,        false,  true, false, false, 1,  true, false,  false);
-
-    NEW_MSDP_VARIABLE(HEALTH,                 true,  true, false, false, 5,  true,  true,  false);
-    NEW_MSDP_VARIABLE(HEALTH_MAX,             true,  true, false, false, 5,  true,  true,  false);
-    NEW_MSDP_VARIABLE(MANA,                   true,  true, false, false, 5,  true,  true,  false);
-    NEW_MSDP_VARIABLE(MANA_MAX,               true,  true, false, false, 5,  true,  true,  false);
-    NEW_MSDP_VARIABLE(EXPERIENCE,             true,  true, false, false, 10, true,  true,  false);
-    NEW_MSDP_VARIABLE(EXPERIENCE_MAX,         true,  true, false, false, 10, true,  true,  false);
-    NEW_MSDP_VARIABLE(EXPERIENCE_TNL,         true,  true, false, false, 10, true,  true,  false);
-    NEW_MSDP_VARIABLE(EXPERIENCE_TNL_MAX,     true,  true, false, false, 10, true,  true,  false);
-    NEW_MSDP_VARIABLE(WIMPY,                  true,  true, false, false, 10, true,  true,  false);
-    NEW_MSDP_VARIABLE(MONEY,                  true,  true, false, false, 10, true,  true,  false);
-    NEW_MSDP_VARIABLE(BANK,                   true,  true, false, false, 10, true,  true,  false);
-    NEW_MSDP_VARIABLE(ARMOR,                  true,  true, false, false, 10, true,  true,  false);
-    NEW_MSDP_VARIABLE(ARMOR_ABSORB,           true,  true, false, false, 10, true,  true,  false);
-
-    //  Group
-
-    NEW_MSDP_VARIABLE(GROUP,                  true,  true, false, false, 10, true,  true,  true);
-
-
-    //  Target
-    NEW_MSDP_VARIABLE(TARGET,                 true,  true, false, false, 5,  true,  true,  false);
-    NEW_MSDP_VARIABLE(TARGET_ID,              true,  true, false, false, 5,  true,  true,  false);
-    NEW_MSDP_VARIABLE(TARGET_HEALTH,          true,  true, false, false, 5,  true,  true,  false);
-    NEW_MSDP_VARIABLE(TARGET_HEALTH_MAX,      true,  true, false, false, 10, true,  true,  false);
-    NEW_MSDP_VARIABLE(TARGET_STRENGTH,        true,  true, false, false, 10, true,  true,  false);
-
-    // World
-    NEW_MSDP_VARIABLE(ROOM,                   true,  true, false, false, 5,  true,  true,  false);
-
-    // Configurable Variables
-    NEW_MSDP_VARIABLE(CLIENT_ID,             true,  false,  true,  true, 1, false, false,  false);
-    NEW_MSDP_VARIABLE(CLIENT_VERSION,        true,  false,  true,  true, 1, false, false,  false);
-    NEW_MSDP_VARIABLE(PLUGIN_ID,             true,  false,  true, false, 1, false, false,  false);
-    NEW_MSDP_VARIABLE(ANSI_COLORS,           true,  false,  true, false, 1, false, false,  false);
-    NEW_MSDP_VARIABLE(XTERM_256_COLORS,      true,  false,  true, false, 1, false, false,  false);
-    NEW_MSDP_VARIABLE(UTF_8,                 true,  false,  true, false, 1, false, false,  false);
-    NEW_MSDP_VARIABLE(SOUND,                 true,  false,  true, false, 1, false, false,  false);
-
-    NEW_MSDP_VARIABLE(MXP,                   true,  false,  true, false, 1, false, false,  false);
-
-    return true;
-}
-
-void Config::clearMsdp() {
-	for(const auto& m : msdpVariables) {
-		delete m.second;
-	}
-	msdpVariables.clear();
-}
-
 void Server::processMsdp() {
     for(auto &sock : sockets) {
         if(sock.getState() == CON_DISCONNECTING)
             continue;
 
         if(sock.mccpEnabled()) {
-            for(auto& p : sock.msdpReporting) {
-                ReportedMsdpVariable* var = p.second;
+            for(auto& [vName, var] : sock.msdpReporting) {
+                if(var.getRequiresPlayer() && (!sock.getPlayer() || sock.getState() != CON_PLAYING)) continue;
+                if(!var.checkTimer()) continue;
 
-                if(var->getRequiresPlayer() && (!sock.getPlayer() || sock.getState() != CON_PLAYING)) continue;
+                var.update();
+                if(!var.isDirty()) continue;
 
-                if(!var->checkTimer()) continue;
-
-                var->update();
-
-                if(!var->isDirty()) continue;
-
-                var->send(sock);
-
-                var->setDirty(false);
+                var.send(sock);
+                var.setDirty(false);
             }
         }
     }
 }
 
-bool Socket::processMsdpVarVal(std::string& variable, std::string& value) {
+bool Socket::processMsdpVarVal(const std::string &variable, const std::string &value) {
 #ifdef MSDP_DEBUG
     std::clog << "Found Var: '" << variable << "' Val: '" << value << "'" << std::endl;
 #endif
@@ -144,7 +74,7 @@ bool Socket::processMsdpVarVal(std::string& variable, std::string& value) {
         // See if they've sent us a configurable variable, if so set it
         auto it = gConfig->msdpVariables.find(variable);
         if(it != gConfig->msdpVariables.end()) {
-            MsdpVariable* msdpVar = it->second;
+            MsdpVariable* msdpVar = &it->second;
 
             if(msdpVar->isConfigurable()) {
                 ReportedMsdpVariable* reportedVar = nullptr;
@@ -170,56 +100,53 @@ bool Socket::processMsdpVarVal(std::string& variable, std::string& value) {
             }
         }
 #ifdef MSDP_DEBUG
-        std::clog << "processMsdpVarVal: Unknown variable '" << variable << "'"
-                << std::endl;
+        std::clog << "processMsdpVarVal: Unknown variable '" << variable << "'" << std::endl;
 #endif
     }
     return (true);
 }
 
-bool Socket::msdpList(std::string& value) {
 
+const std::vector<std::string> MsdpCommandList = { "LIST", "REPORT", "RESET", "SEND", "UNREPORT" };
+const std::vector<std::string> MsdpLists = { "COMMANDS", "LISTS", "CONFIGURABLE_VARIABLES", "REPORTABLE_VARIABLES", "REPORTED_VARIABLES", "SENDABLE_VARIABLES" };
+
+bool Socket::msdpList(const std::string &value) {
     if (value == "COMMANDS") {
-        const std::vector<std::string> MsdpCommandList = { "LIST", "REPORT", "RESET", "SEND", "UNREPORT" };
         msdpSendList(value, MsdpCommandList);
         return (true);
     }
     else if (value == "LISTS") {
-        const std::vector<std::string> MsdpLists =
-                { "COMMANDS", "LISTS", "CONFIGURABLE_VARIABLES", "REPORTABLE_VARIABLES", "REPORTED_VARIABLES", "SENDABLE_VARIABLES" };
         msdpSendList(value, MsdpLists);
         return (true);
     }
     else if (value == "SENDABLE_VARIABLES") {
         std::vector<std::string> sendable;
-        for (auto& p: gConfig->msdpVariables) {
-            sendable.push_back(p.second->getName());
+        for (auto& [vName, var] : gConfig->msdpVariables) {
+            sendable.push_back(var.getName());
         }
         msdpSendList(value, sendable);
         return (true);
     }
     else if (value == "REPORTABLE_VARIABLES") {
         std::vector<std::string> reportable;
-        for (auto& p : gConfig->msdpVariables) {
-            if(p.second->isReportable())
-                reportable.push_back(p.second->getName());
+        for (auto& [vName, var] : gConfig->msdpVariables) {
+            if(var.isReportable()) reportable.push_back(var.getName());
         }
         msdpSendList(value, reportable);
         return (true);
     }
     else if (value == "CONFIGURABLE_VARIABLES") {
         std::vector<std::string> configurable;
-        for (auto& p : gConfig->msdpVariables) {
-            if (p.second->isConfigurable())
-                configurable.push_back(p.second->getName());
+        for (auto& [vName, var] : gConfig->msdpVariables) {
+            if (var.isConfigurable()) configurable.push_back(var.getName());
         }
         msdpSendList(value, configurable);
         return (true);
     }
     else if (value == "REPORTED_VARIABLES") {
         std::vector<std::string> reported;
-        for (auto& p : msdpReporting) {
-            reported.push_back(p.second->getName());
+        for (auto& [vName, var] : msdpReporting) {
+            reported.push_back(var.getName());
         }
         msdpSendList("REPORTED_VARIABLES", reported);
         return (true);
@@ -227,8 +154,8 @@ bool Socket::msdpList(std::string& value) {
     else if (value.empty()) {
         // If we just get a LIST command, send off a list of all variables
         std::vector<std::string> all;
-        for (auto& p : gConfig->msdpVariables) {
-            all.push_back(p.second->getName());
+        for (auto& [vName, var] : gConfig->msdpVariables) {
+            all.push_back(var.getName());
         }
         msdpSendList("SENDABLE_VARIABLES", all);
         return (true);
@@ -243,13 +170,13 @@ ReportedMsdpVariable* Socket::getReportedMsdpVariable(const std::string &value) 
     if (it == msdpReporting.end())
         return (nullptr);
     else
-        return (it->second);
+        return &(it->second);
 }
 
 std::string Socket::getMsdpReporting() {
     std::ostringstream ostr;
-    for(auto &report : msdpReporting) {
-        ostr << report.first << " ";
+    for(auto &[vName, var] : msdpReporting) {
+        ostr << var.getName() << " ";
     }
     return ostr.str();
 }
@@ -279,12 +206,11 @@ ReportedMsdpVariable* Socket::msdpReport(const std::string &value) {
         return reported;
     }
 
-    reported = new ReportedMsdpVariable(msdpVar, this);
-    msdpReporting[msdpVar->getName()] = reported;
+    msdpReporting.emplace(msdpVar->getName(), ReportedMsdpVariable(msdpVar, this));
 #ifdef MSDP_DEBUG
     std::clog << "MsdpHandleReport: Now Reporting '" << msdpVar->getName() << "'" << std::endl;
 #endif
-    return reported;
+    return &msdpReporting.at(msdpVar->getName());
 }
 
 bool Socket::msdpReset(std::string& value) {
@@ -296,13 +222,10 @@ bool Socket::msdpReset(std::string& value) {
 }
 
 void Socket::msdpClearReporting() {
-    for (auto& p : msdpReporting) {
-        delete (p.second);
-    }
     msdpReporting.clear();
 }
 
-bool Socket::msdpSend(std::string variable) {
+bool Socket::msdpSend(const std::string &variable) {
     MsdpVariable *msdpVar = gConfig->getMsdpVariable(variable);
     if(msdpVar == nullptr) {
 #ifdef MSDP_DEBUG
@@ -314,7 +237,7 @@ bool Socket::msdpSend(std::string variable) {
 }
 
 
-bool Socket::msdpUnReport(std::string& value) {
+bool Socket::msdpUnReport(const std::string &value) {
     auto it = msdpReporting.find(value);
 
     if (it == msdpReporting.end())
@@ -323,7 +246,6 @@ bool Socket::msdpUnReport(std::string& value) {
 #ifdef MSDP_DEBUG
         std::clog << "MsdpHandleUnReport: No longer reporting '" << value << "'" << std::endl;
 #endif
-        delete it->second;
         msdpReporting.erase(it);
         return (true);
     }
@@ -429,50 +351,16 @@ MsdpVariable* Config::getMsdpVariable(const std::string &name) {
     if(it == msdpVariables.end())
         return(nullptr);
     else
-        return(it->second);
-}
-
-void MsdpVariable::init() {
-    configurable = writeOnce = false;
-    requiresPlayer = true;
-    reportable = false; // Not reportable by default, only sendable
-    updateInterval = 1;
-    name ="unknown";
-    updateFn = false;
-    sendFn = false;
-    isGroup = false;
-    varId = MSDPVar::UNKNOWN;
-}
-
-MsdpVariable::MsdpVariable() {
-    init();
-}
-
-MsdpVariable::MsdpVariable(const std::string& pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
-                           bool pWriteOnce, int pUpdateInterval, bool pSendFn,
-                           bool pUpdateFn, bool pIsGroup)
-{
-    init();
-    name = pName;
-    varId = pVar;
-    reportable = pReportable;
-    requiresPlayer = pRequiresPlayer;
-    configurable = pConfigurable;
-    writeOnce = pWriteOnce;
-    updateInterval = pUpdateInterval;
-    sendFn = pSendFn;
-    updateFn = pUpdateFn;
-    isGroup = pIsGroup;
+        return &(it->second);
 }
 
 ReportedMsdpVariable::ReportedMsdpVariable(const MsdpVariable* mv, Socket* sock) {
     name = mv->getName();
-    varId = mv->varId;
     parentSock = sock;
     configurable = mv->isConfigurable();
     writeOnce = mv->isWriteOnce();
-    sendFn = mv->sendFn;
-    updateFn = mv->updateFn;
+    valueFn = mv->valueFn;
+    updateable = mv->updateable;
     updateInterval = mv->getUpdateInterval();
     reportable = mv->isReportable();
     timer.setDelay(updateInterval);
@@ -481,12 +369,8 @@ ReportedMsdpVariable::ReportedMsdpVariable(const MsdpVariable* mv, Socket* sock)
     value = "unknown";
 }
 
-std::string MsdpVariable::getName() const {
+const std::string & MsdpVariable::getName() const {
     return(name);
-}
-
-MSDPVar MsdpVariable::getId() const {
-    return (varId);
 }
 
 bool MsdpVariable::isConfigurable() const {
@@ -509,18 +393,18 @@ int MsdpVariable::getUpdateInterval() const {
     return(updateInterval);
 }
 
-bool MsdpVariable::hasSendFn() const {
-    return(sendFn);
+bool MsdpVariable::hasValueFn() const {
+    return(valueFn != nullptr);
 }
 
-bool MsdpVariable::hasUpdateFn() const {
-    return(updateFn);
+bool MsdpVariable::isUpdatable() const {
+    return(updateable);
 }
 
 bool MsdpVariable::send(Socket &sock) const {
-    std::string value = "";
+    std::string value;
 
-    if (!hasSendFn()) {
+    if (!hasValueFn()) {
         // If there's no send function, and it's not configurable, there's nothing we can do
         if(!isConfigurable()) return false;
 
@@ -532,7 +416,7 @@ bool MsdpVariable::send(Socket &sock) const {
     } else {
         if (requiresPlayer && !sock.hasPlayer()) return false;
 
-        value = getValue(getId(), sock, sock.getPlayer());
+        value = valueFn(sock, sock.getPlayer());
     }
 
     sock.msdpSendPair(getName(), value);
@@ -572,11 +456,11 @@ bool ReportedMsdpVariable::isDirty() const {
 }
 
 void ReportedMsdpVariable::update() {
-    if(!hasUpdateFn()) return;
+    if(!isUpdatable()) return;
     if(!parentSock) return;
 
     std::string oldValue = value;
-    setValue(MsdpVariable::getValue(getId(), *parentSock, parentSock->getPlayer()));
+    setValue(MsdpVariable::valueFn(*parentSock, parentSock->getPlayer()));
 }
 
 void ReportedMsdpVariable::setDirty(bool pDirty) {
@@ -773,114 +657,112 @@ std::string Group::getMsdp(Creature* viewer) const {
 
 }
 
-std::string MsdpVariable::getValue(MSDPVar var, Socket &sock, Player* player) {
-    switch(var) {
+namespace msdp {
+    const std::string UNKNOWN_STR = "unknown";
+    const std::string NONE_STR = "none";
 
-        case MSDPVar::SERVER_ID:
-            return (gConfig->getMudNameAndVersion());
-        case MSDPVar::SERVER_TIME:
-            return (Server::getServerTime());
-
-        case MSDPVar::CHARACTER_NAME:
-            if (player) return (player->getName());
-            break;
-
-        case MSDPVar::HEALTH:
-            if (player) return std::to_string(player->hp.getCur());
-            break;
-        case MSDPVar::HEALTH_MAX:
-            if (player) return std::to_string(player->hp.getMax());
-            break;
-
-        case MSDPVar::MANA:
-            if (player) return std::to_string(player->mp.getCur());
-            break;
-        case MSDPVar::MANA_MAX:
-            if (player) return std::to_string(player->mp.getMax());
-            break;
-
-        case MSDPVar::EXPERIENCE:
-            if (player) return std::to_string(player->getExperience());
-            break;
-        case MSDPVar::EXPERIENCE_MAX:
-            if (player) return (player->expNeededDisplay());
-            break;
-        case MSDPVar::EXPERIENCE_TNL:
-            if (player) return std::to_string(player->expToLevel());
-            break;
-        case MSDPVar::EXPERIENCE_TNL_MAX:
-            if (player) return (player->expForLevel());
-            break;
-
-        case MSDPVar::WIMPY:
-            if (player) return std::to_string(player->getWimpy());
-            break;
-
-        case MSDPVar::MONEY:
-            if (player) return (player->getCoinDisplay());
-            break;
-        case MSDPVar::BANK:
-            if (player) return (player->getBankDisplay());
-            break;
-
-        case MSDPVar::ARMOR:
-            if (player) return std::to_string(player->getArmor());
-            break;
-        case MSDPVar::ARMOR_ABSORB:
-            if (player) return std::to_string(floor(player->getDamageReduction(player)*100.0));
-            break;
-
-        case MSDPVar::TARGET:
-            if (player) {
-                Creature *target = player->getTarget();
-                if (target)
-                    return (target->getName());
-                else
-                    return "none";
-            }
-            break;
-        case MSDPVar::TARGET_ID:
-            if (player) {
-                Creature *target = player->getTarget();
-                if (target)
-                    return (target->getId());
-                else
-                    return "none";
-            }
-            break;
-        case MSDPVar::TARGET_HEALTH:
-            if (player) {
-                Creature* target = player->getTarget();
-                if (target) return std::to_string(round((target->hp.getCur()*10000.0) / (target->hp.getMax()*1.0))/100);
-            }
-            break;
-        case MSDPVar::TARGET_HEALTH_MAX:
-            if (player) {
-                if (player->getTarget()) return std::to_string(100);
-            }
-            break;
-        case MSDPVar::TARGET_STRENGTH:
-            if (player) {
-                if (player->getTarget()) return ("Unknown");
-            }
-            break;
-
-        case MSDPVar::ROOM:
-            if (player) {
-                BaseRoom* room = player->getRoomParent();
-                if (room) return (room->getMsdp());
-            }
-            break;
-
-        case MSDPVar::GROUP:
-            if (player) {
-                Group* group = player->getGroup();
-                if (group) return group->getMsdp(player);
-            }
-            break;
-
-        default:
-            break;
+    std::string getServerId(Socket &sock, Player* player) {
+        return (gConfig->getMudNameAndVersion());
     }
-    return "unknown";
-}
+
+    std::string getServerTime(Socket &sock, Player* player) {
+        return (Server::getServerTime());
+    }
+
+    const std::string &getCharacterName(Socket &sock, Player* player) {
+        return (player ? player->getName() : UNKNOWN_STR);
+    }
+
+    std::string getHealth(Socket &sock, Player* player) {
+        return (player ? std::to_string(player->hp.getCur()) : UNKNOWN_STR);
+    }
+    std::string getHealthMax(Socket &sock, Player* player) {
+        return (player ? std::to_string(player->hp.getMax()) : UNKNOWN_STR);
+    }
+    std::string getMana(Socket &sock, Player* player) {
+        return (player ? std::to_string(player->mp.getCur()) : UNKNOWN_STR);
+    }
+    std::string getManaMax(Socket &sock, Player* player) {
+        return (player ? std::to_string(player->mp.getMax()) : UNKNOWN_STR);
+    }
+    std::string getExperience(Socket &sock, Player* player) {
+        return (player ? std::to_string(player->getExperience()) : UNKNOWN_STR);
+    }
+    std::string getExperienceMax(Socket &sock, Player* player) {
+        return (player ? player->expNeededDisplay() : UNKNOWN_STR);
+    }
+    std::string getExperienceTNL(Socket &sock, Player* player) {
+        return (player ? std::to_string(player->expToLevel()) : UNKNOWN_STR);
+    }
+    std::string getExperienceTNLMax(Socket &sock, Player* player) {
+        return (player ? player->expForLevel() : UNKNOWN_STR);
+    }
+    std::string getWimpy(Socket &sock, Player* player) {
+        return (player ? std::to_string(player->getWimpy()) : UNKNOWN_STR);
+    }
+    std::string getMoney(Socket &sock, Player* player) {
+        return (player ? player->getCoinDisplay() : UNKNOWN_STR);
+    }
+    std::string getBank(Socket &sock, Player* player) {
+        return (player ? player->getBankDisplay() : UNKNOWN_STR);
+    }
+    std::string getArmor(Socket &sock, Player* player) {
+        return (player ? std::to_string(player->getArmor()) : UNKNOWN_STR);
+    }
+    std::string getArmorAbsorb(Socket &sock, Player* player) {
+        return (player ? std::to_string(floor(player->getDamageReduction(player)*100.0)) : UNKNOWN_STR);
+    }
+    std::string getGroup(Socket &sock, Player* player) {
+        if(player && player->getGroup()) {
+            return player->getGroup()->getMsdp(player);
+        } else {
+            return UNKNOWN_STR;
+        }
+    }
+    const std::string& getTarget(Socket &sock, Player* player) {
+        if(player) {
+            auto *target = player->getTarget();
+            return(target ? target->getName() : NONE_STR);
+        } else {
+            return UNKNOWN_STR;
+        }
+    }
+    const std::string& getTargetID(Socket &sock, Player* player) {
+        if(player) {
+            auto *target = player->getTarget();
+            return(target ? target->getId() : NONE_STR);
+        } else {
+            return UNKNOWN_STR;
+        }
+    }
+    std::string getTargetHealth(Socket &sock, Player* player) {
+        if(player && player->getTarget()) {
+            auto *target = player->getTarget();
+            return(std::to_string(round((target->hp.getCur()*10000.0) / (target->hp.getMax()*1.0))/100));
+        } else {
+            return UNKNOWN_STR;
+        }
+    }
+    std::string getTargetHealthMax(Socket &sock, Player* player) {
+        if(player && player->getTarget()) {
+            return std::to_string(100);
+        } else {
+            return UNKNOWN_STR;
+        }
+    }
+    std::string getTargetStrength(Socket &sock, Player* player) {
+        if(player && player->getTarget()) {
+            // Not implemented
+            return UNKNOWN_STR;
+        } else {
+            return UNKNOWN_STR;
+        }
+    }
+    std::string getRoom(Socket &sock, Player* player) {
+        if(player && player->getRoomParent()) {
+            return player->getRoomParent()->getMsdp();
+        } else
+            return UNKNOWN_STR;
+    }
+
+};

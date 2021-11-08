@@ -1,6 +1,6 @@
 /*
- * version.h
- *   Version
+ * fluentBuilderEnd.h
+ *   Used at the end of a header file to undefine everything used for the builders
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -15,14 +15,10 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef VERSION_H
-#define VERSION_H
 
-#define VERSION_MAJOR "2"
-#define VERSION_MINOR "5"
-#define VERSION_SUB "1a"
-
-#define VERSION VERSION_MAJOR "." VERSION_MINOR VERSION_SUB
-
-#endif
-
+#undef BUILDER
+#undef GENERIC_BUILDER
+#undef STRING_BUILDER
+#undef BOOL_BUILDER
+#undef INT_BUILDER
+#undef FLOAT_BUILDER

@@ -222,7 +222,7 @@ bool WebInterface::checkFifo(const char* fifoFile) {
     if(retVal == 0) {
         if((statInfo.st_mode & S_IFMT) != S_IFIFO) {
             if(unlink(filename) != 0)
-                throw std::string("WebInterface: Unable to unlink " + std::string(fifoFile) + ":" + strerror(errno));
+                throw std::runtime_error("WebInterface: Unable to unlink " + std::string(fifoFile) + ":" + strerror(errno));
             needToCreate = true;
         }
     } else {
@@ -232,7 +232,7 @@ bool WebInterface::checkFifo(const char* fifoFile) {
     if(needToCreate) {
         retVal = mkfifo(filename, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
         if(retVal != 0)
-            throw std::string("WebInterface: Unable to mkfifo " + std::string(fifoFile) + ":" + strerror(errno));
+            throw std::runtime_error("WebInterface: Unable to mkfifo " + std::string(fifoFile) + ":" + strerror(errno));
     }
     return(true);
 }

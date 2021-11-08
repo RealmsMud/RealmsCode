@@ -41,11 +41,6 @@
  * We're looking to do two things here
  * 1) Embed python, so that we can call python functions from c++
  * 2) Make c++ functions available from the embeded python
- *
- * Current troubles are :
- * 1) around declaring the functions in another file and being able to import/use them from runPython in another file
- * 2) Adding global objects like gConfig
- *
  */
 
 #define REALMS_MODULE(name)                                                         \
@@ -154,20 +149,6 @@ bool PythonHandler::runPython(const std::string& pyScript, py::object& locals) {
     return true;
 }
 
-bool PythonHandler::runPythonWithReturn(const std::string& pyScript, py::object& locals) {
-    try {
-        locals["retVal"] = true;
-
-//        return(py::eval<py::eval_statements>(pyScript, gServer->pythonHandler->mainNamespace, locals).cast<bool>());
-        py::exec(pyScript, gServer->pythonHandler->mainNamespace, locals);
-        return locals["retVal"].cast<bool>();
-
-    }  catch (py::error_already_set &e) {
-        handlePythonError(e);
-        return false;
-    }
-}
-
 //==============================================================================
 // RunPython:
 //==============================================================================
@@ -184,6 +165,17 @@ bool PythonHandler::runPython(const std::string& pyScript, const std::string &ar
     return (runPython(pyScript, locals));
 }
 
+bool PythonHandler::runPythonWithReturn(const std::string& pyScript, py::object& locals) {
+    try {
+        // Note: Using eval here without specifying py::eval_statements; so it'll need to be one line
+        // Additionally, we're expecting to call a function that returns a bool
+        return(py::eval(pyScript, gServer->pythonHandler->mainNamespace, locals).cast<bool>());
+    }  catch (py::error_already_set &e) {
+        handlePythonError(e);
+        return false;
+    }
+}
+
 //==============================================================================
 // RunPythonWithReturn:
 //==============================================================================
@@ -198,7 +190,7 @@ bool PythonHandler::runPythonWithReturn(const std::string& pyScript, const std::
         addMudObjectToDictionary(locals, "actor", actor);
         addMudObjectToDictionary(locals, "target", target);
 
-        return(py::eval(pyScript, gServer->pythonHandler->mainNamespace, locals).cast<bool>());
+        return runPythonWithReturn(pyScript, locals);
     }
     catch( py::error_already_set &e) {
         handlePythonError(e);

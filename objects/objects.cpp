@@ -51,16 +51,16 @@ std::string Object::getCompareStr() const {
     return(fmt::format("{}-{}-{}-{}", getName(), adjustment, shopValue, getId()));
 }
 
-std::string DroppedBy::getName() const {
+const std::string & DroppedBy::getName() const {
     return(name);
 }
-std::string DroppedBy::getIndex() const {
+const std::string & DroppedBy::getIndex() const {
     return(index);
 }
-std::string DroppedBy::getId() const {
+const std::string & DroppedBy::getId() const {
     return(id);
 }
-std::string DroppedBy::getType() const {
+const std::string & DroppedBy::getType() const {
     return(type);
 }
 void DroppedBy::clear() {
@@ -965,7 +965,7 @@ bool Object::doRestrict(Creature* creature, bool p) {
 //                          getCompass
 //*********************************************************************
 
-std::string Object::getCompass(const Creature* creature, bool useName) {
+const std::string Object::getCompass(const Creature* creature, bool useName) {
     std::ostringstream oStr;
 
     if(useName)

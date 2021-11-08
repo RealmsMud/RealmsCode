@@ -306,11 +306,6 @@ const std::string & MudObject::getId() const {
     return(id);
 }
 
-// Return for Python which doesn't like std::string&
-std::string MudObject::getIdPython() const {
-    return(id);
-}
-
 bool MudObject::isRoom() const {
     return(typeid(*this) == typeid(BaseRoom) ||
            typeid(*this) == typeid(UniqueRoom) ||

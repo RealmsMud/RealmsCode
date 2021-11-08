@@ -19,82 +19,43 @@
 #ifndef MDSP_H_
 #define MDSP_H_
 
-#include <sys/time.h>
+#include <functional>
+#include <ctime>
 
 #include "timer.hpp"
 
 class Socket;
-
-enum class MSDPVar {
-    SERVER_ID,
-    SERVER_TIME,
-    CHARACTER_NAME,
-    HEALTH,
-    HEALTH_MAX,
-    MANA,
-    MANA_MAX,
-    EXPERIENCE,
-    EXPERIENCE_MAX,
-    EXPERIENCE_TNL,
-    EXPERIENCE_TNL_MAX,
-    WIMPY,
-    MONEY,
-    BANK,
-    ARMOR,
-    ARMOR_ABSORB,
-    GROUP,
-    TARGET,
-    TARGET_ID,
-    TARGET_HEALTH,
-    TARGET_HEALTH_MAX,
-    TARGET_STRENGTH,
-    ROOM,
-    CLIENT_ID,
-    CLIENT_VERSION,
-    PLUGIN_ID,
-    ANSI_COLORS,
-    XTERM_256_COLORS,
-    UTF_8,
-    SOUND,
-    MXP,
-
-    UNKNOWN,
-};
+class Player;
+class MsdpBuilder;
 
 
 class MsdpVariable {
     friend class ReportedMsdpVariable;
-
-public:
-    static std::string getValue(MSDPVar var, Socket &sock, Player *player);
+    friend class MsdpBuilder;
 
 protected:
-    void init();
+    MsdpVariable() = default;
 
-    std::string name;               // Name of this variable
-    MSDPVar varId;
+    std::string name;          // Name of this variable
     bool reportable{};         // This variable is reportable
     bool requiresPlayer{};     // Variable requires a player attached to the socket
     bool configurable{};       // Can it be configured by the client?
     bool writeOnce{};          // Can only set this variable once
-    int updateInterval{};     // Update interval (in 10ths of a second)
-    bool sendFn{};             // Does this have a send function?
-    bool updateFn{};           // Does this have an update function?
+    int updateInterval{};      // Update interval (in 10ths of a second)
+    bool updateable{};         // Does this have an update function?
     bool isGroup{};            // Is this a group of related variables?
 
+    std::function<std::string(Socket&, Player*)> valueFn{nullptr}; // Function to send the variable
 
+    MsdpVariable(const MsdpVariable&) = default;
 public:
-    MsdpVariable();
-    MsdpVariable(const std::string &pName, MSDPVar pVar, bool pReportable, bool pRequiresPlayer, bool pConfigurable,
-                 bool pWriteOnce, int pUpdateInterval, bool pSendFn = false, bool pUpdateFn = false,
-                 bool pIsGroup = false);
-    // Todo: Make this have the server erase all reported variables of this type
+    MsdpVariable(MsdpVariable&&) = default;
+
     virtual ~MsdpVariable() = default;
 
-    [[nodiscard]] std::string getName() const;
-    [[nodiscard]] MSDPVar getId() const;
-    [[nodiscard]] bool hasSendFn() const;
-    [[nodiscard]] bool hasUpdateFn() const;
+    [[nodiscard]] const std::string & getName() const;
+    [[nodiscard]] bool hasValueFn() const;
+    [[nodiscard]] bool isUpdatable() const;
     [[nodiscard]] bool isConfigurable() const;
     [[nodiscard]] bool isReportable() const;
     [[nodiscard]] bool isWriteOnce() const;
@@ -114,6 +75,7 @@ protected:
     Timer timer;
 
 public:
+    ReportedMsdpVariable(const ReportedMsdpVariable&) = default;
     ReportedMsdpVariable(const MsdpVariable *mv, Socket *sock);
 
     [[nodiscard]] std::string getValue() const;
@@ -127,5 +89,31 @@ public:
     void setDirty(bool pDirty = true);
 };
 
+namespace msdp {
 
+    // Reporting Functions
+    std::string getServerId(Socket &sock, Player *player);
+    std::string getServerTime(Socket &sock, Player *player);
+    const std::string &getCharacterName(Socket &sock, Player *player);
+    std::string getHealth(Socket &sock, Player *player);
+    std::string getHealthMax(Socket &sock, Player *player);
+    std::string getMana(Socket &sock, Player *player);
+    std::string getManaMax(Socket &sock, Player *player);
+    std::string getExperience(Socket &sock, Player* player);
+    std::string getExperienceMax(Socket &sock, Player* player);
+    std::string getExperienceTNL(Socket &sock, Player* player);
+    std::string getExperienceTNLMax(Socket &sock, Player* player);
+    std::string getWimpy(Socket &sock, Player* player);
+    std::string getMoney(Socket &sock, Player* player);
+    std::string getBank(Socket &sock, Player* player);
+    std::string getArmor(Socket &sock, Player* player);
+    std::string getArmorAbsorb(Socket &sock, Player* player);
+    std::string getGroup(Socket &sock, Player* player);
+    const std::string& getTarget(Socket &sock, Player* player);
+    const std::string& getTargetID(Socket &sock, Player* player);
+    std::string getTargetHealth(Socket &sock, Player* player);
+    std::string getTargetHealthMax(Socket &sock, Player* player);
+    std::string getTargetStrength(Socket &sock, Player* player);
+    std::string getRoom(Socket &sock, Player* player);
+};
 #endif /* MDSP_H_ */

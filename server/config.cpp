@@ -27,6 +27,7 @@
 #include <stdexcept>              // for runtime_error
 #include <fmt/format.h>
 
+#include "alchemy.hpp"
 #include "calendar.hpp"           // for Calendar, cSeason, cWeather (ptr only)
 #include "catRef.hpp"             // for CatRef
 #include "config.hpp"             // for Config, accountDouble, MudFlagMap
@@ -260,7 +261,7 @@ bool Config::loadBeforePython() {
     std::clog << "Loading Flags..." << (loadFlags() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading Effects..." << (loadEffects() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Writing Help Files..." << (writeHelpFiles() ? "done" : "*** FAILED ***") << std::endl;
-    std::clog << "Loading Spell List..." << (loadSpells() ? "done" : "*** FAILED ***") << std::endl;
+//    std::clog << "Loading Spell List..." << (loadSpells() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading Song List..." << (loadSongs() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading Quest Table..." << (loadQuestTable() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading New Quests..." << (loadQuests() ? "done" : "*** FAILED ***") << std::endl;

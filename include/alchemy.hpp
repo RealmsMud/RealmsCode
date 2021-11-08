@@ -27,6 +27,7 @@
 
 class Creature;
 class Object;
+class AlchemyBuilder;
 
 typedef std::vector<Object*> HerbVector;
 typedef std::map<std::string, HerbVector > HerbMap;
@@ -42,9 +43,9 @@ namespace Alchemy {
 
 class AlchemyInfo {
 public:
-    explicit AlchemyInfo(xmlNodePtr rootNode);
+    friend class AlchemyBuilder; // The builder can access the internals
 
-    std::string getDisplayString();
+    [[nodiscard]] std::string getDisplayString() const;
 
     [[nodiscard]] const std::string & getName() const;
     [[nodiscard]] const std::string & getPotionPrefix() const;
@@ -58,7 +59,11 @@ public:
     [[nodiscard]] bool isPositive() const;
 
 
+    AlchemyInfo(const AlchemyInfo&) = delete;  // No Copies
+    AlchemyInfo(AlchemyInfo&&) = default;      // Only Moves
 protected:
+    AlchemyInfo() = default;
+
     std::string name;
     std::string potionDisplayName;
     std::string potionPrefix;
@@ -69,8 +74,8 @@ protected:
     long baseDuration = 10;
     short baseStrength = 1;
 
-    std::string action; // effect, python
-    bool throwable = false; // Can this be thrown at a door/creature/etc
+    std::string action;       // effect, python
+    bool throwable = false;   // Can this be thrown at a door/creature/etc
     std::string pythonScript; // if action == python, or if throwable, needs to handle both
 };
 
@@ -81,10 +86,10 @@ protected:
 class AlchemyEffect {
 protected:
     std::string     effect;
-    short       quality;
+    short           quality;
 
-    long    duration;
-    short   strength;
+    long            duration;
+    short           strength;
 
 public:
     AlchemyEffect();

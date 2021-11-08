@@ -112,7 +112,7 @@ public:
     [[nodiscard]] bool isExit() const;
 
     [[nodiscard]] const std::string & getId() const;
-    [[nodiscard]] std::string getIdPython() const;
+
     virtual void validateId() {};
     Effects effects;
 

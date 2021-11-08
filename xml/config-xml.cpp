@@ -16,19 +16,15 @@
  *
  */
 
-#include <config.hpp>                               // for Config, LottoTicket
 #include <libxml/parser.h>                          // for xmlFreeDoc, xmlNo...
-#include <paths.hpp>                                // for Config, Code
-#include <proto.hpp>                                // for file_exists
-#include <cstdio>                                   // for snprintf, sprintf
-#include <sys/types.h>                              // for time_t
-
 #include <ostream>                                  // for basic_ostream::op...
 #include <string>                                   // for operator<<
 #include <fmt/format.h>
+
+#include "config.hpp"                               // for Config, LottoTicket
+#include "paths.hpp"                                // for Config, Code
+#include "proto.hpp"                                // for file_exists
 #include "effects.hpp"                              // for Effect
-#include "songs.hpp"                                // for Song
-#include "structs.hpp"                              // for Spell
 #include "xml.hpp"                                  // for NODE_NAME, copyTo...
 
 bool Config::loadConfig(bool reload) {
@@ -270,119 +266,4 @@ bool Config::saveConfig() const {
     xmlFreeDoc(xmlDoc);
 
     return(true);
-}
-
-
-// **************
-//   Save Lists
-// **************
-
-template<class Type>
-bool saveSet(const std::string& xmlDocName, const std::string& fName, const std::set<Type, namableCmp>& sSet) {
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr  rootNode;
-
-    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST xmlDocName.c_str(), nullptr);
-    xmlDocSetRootElement(xmlDoc, rootNode);
-
-    for(const auto& curItem : sSet) {
-        curItem.save(rootNode);
-    }
-
-    xml::saveFile(fmt::format("{}/{}", Path::Config, fName).c_str(), xmlDoc);
-    xmlFreeDoc(xmlDoc);
-    return(true);
-
-}
-
-bool Config::saveSpells() const {
-    return(saveSet<Spell>("Spells", "spelllist.xml", spells));
-}
-
-bool Config::saveSongs() const {
-    return(saveSet<Song>("Songs", "songlist.xml", songs));
-}
-
-// **************
-//   Load Lists
-// **************
-
-template<class Type>
-bool loadSet(const std::string& xmlDocName, const std::string& xmlNodeName, const std::string& fName, std::set<Type, namableCmp>& sSet) {
-    xmlDocPtr xmlDoc;
-    xmlNodePtr curNode;
-
-    xmlDoc = xml::loadFile(fmt::format("{}/{}", Path::Code, fName).c_str(), xmlDocName.c_str());
-    if(xmlDoc == nullptr)
-        return(false);
-
-    curNode = xmlDocGetRootElement(xmlDoc);
-
-    curNode = curNode->children;
-    while(curNode && xmlIsBlankNode(curNode))
-        curNode = curNode->next;
-
-    if(curNode == nullptr) {
-        xmlFreeDoc(xmlDoc);
-        return(false);
-    }
-
-    while(curNode != nullptr) {
-        if(NODE_NAME(curNode, xmlNodeName.c_str())) {
-            sSet.emplace(curNode);
-        }
-        curNode = curNode->next;
-    }
-
-    xmlFreeDoc(xmlDoc);
-    xmlCleanupParser();
-    return(true);
-}
-template<class Type>
-bool loadMap(const std::string& xmlDocName, const std::string& xmlNodeName, const std::string& fName, std::map<std::string, Type, comp>& sMap) {
-    xmlDocPtr xmlDoc;
-    xmlNodePtr curNode;
-
-    xmlDoc = xml::loadFile(fmt::format("{}/{}", Path::Code, fName).c_str(), xmlDocName.c_str());
-    if(xmlDoc == nullptr)
-        return(false);
-
-    curNode = xmlDocGetRootElement(xmlDoc);
-
-    curNode = curNode->children;
-    while(curNode && xmlIsBlankNode(curNode))
-        curNode = curNode->next;
-
-    if(curNode == nullptr) {
-        xmlFreeDoc(xmlDoc);
-        return(false);
-    }
-
-    while(curNode != nullptr) {
-        if(NODE_NAME(curNode, xmlNodeName.c_str())) {
-            Type* curItem = new Type(curNode);
-            sMap.insert(std::make_pair(curItem->getName(), *curItem));
-        }
-        curNode = curNode->next;
-    }
-
-    xmlFreeDoc(xmlDoc);
-    xmlCleanupParser();
-    return(true);
-}
-
-bool Config::loadEffects() {
-    clearEffects();
-    return(loadMap<Effect>("Effects", "Effect", "effects.xml", effects));
-}
-
-bool Config::loadSpells() {
-    clearSpells();
-    return(loadSet<Spell>("Spells", "Spell", "spelllist.xml", spells));
-}
-
-bool Config::loadSongs() {
-    clearSongs();
-    return(loadSet<Song>("Songs", "Song", "songlist.xml", songs));
 }

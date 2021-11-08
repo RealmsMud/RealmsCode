@@ -50,7 +50,7 @@ SET(REALMS_SOURCE_FILES
 
 set(LIST_SOURCE_FILES
     main/list.cpp
-)
+        )
 
 set(COMMON_HEADER_FILES
     include/alchemy.hpp
@@ -86,6 +86,8 @@ set(COMMON_HEADER_FILES
     include/fighters.hpp
     include/fishing.hpp
     include/flags.hpp
+    include/builders/fluentBuilder.hpp
+    include/builders/fluentBuilderEnd.hpp
     include/free_crt.hpp
     include/global.hpp
     include/group.hpp
@@ -146,6 +148,7 @@ set(COMMON_HEADER_FILES
     include/swap.hpp
     include/threat.hpp
     include/timer.hpp
+    include/toNum.hpp
     include/tokenizer.hpp
     include/track.hpp
     include/traps.hpp
@@ -157,7 +160,13 @@ set(COMMON_HEADER_FILES
     include/weather.hpp
     include/web.hpp
     include/xml.hpp
-    include/toNum.hpp)
+
+    include/builders/alchemyBuilder.hpp
+    include/builders/effectBuilder.hpp
+    include/builders/msdpBuilder.hpp
+    include/builders/songBuilder.hpp
+    include/builders/fluentBuilder.hpp
+    )
 
 set(COMMON_SOURCE_FILES
     fmt/format.cc
@@ -172,6 +181,11 @@ set(COMMON_SOURCE_FILES
     areas/rooms.cpp
     areas/startlocs.cpp
     areas/wanderInfo.cpp
+
+    bards/creatureSongs.cpp
+    bards/identify.cpp
+    bards/songLoader.cpp
+    bards/songs.cpp
 
     combat/attack.cpp
     combat/combat.cpp
@@ -195,7 +209,8 @@ set(COMMON_SOURCE_FILES
     commands/communication.cpp
     commands/socials.cpp
 
-    crafting/alchemy.cpp
+    crafting/alchemy/alchemy.cpp
+    crafting/alchemy/alchemyLoader.cpp
     crafting/craft.cpp
     crafting/fishing.cpp
 
@@ -219,6 +234,8 @@ set(COMMON_SOURCE_FILES
     economy/unique.cpp
 
     effects/effects.cpp
+    effects/effectsLoader.cpp
+
 
     groups/group.cpp
     groups/groups.cpp
@@ -369,7 +386,6 @@ set(COMMON_SOURCE_FILES
     xml/ships-xml.cpp
     xml/skills-xml.cpp
     xml/socials-xml.cpp
-    xml/songs-xml.cpp
     xml/specials-xml.cpp
     xml/spells-xml.cpp
     xml/startlocs-xml.cpp
@@ -384,8 +400,9 @@ set(COMMON_SOURCE_FILES
     python/mudStat.cpp
 
     wip/fighters.cpp
-    wip/songs.cpp
-    )
+
+
+    server/msdpLoader.cpp)
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES} ${DPP_LIB_NAME})

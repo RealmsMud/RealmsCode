@@ -40,6 +40,7 @@
 #include "timer.hpp"       // for Timer
 #include "utils.hpp"       // for MAX, MIN
 
+const std::string NONE_STR = "none";
 
 //**********************************************************************
 //                      computeAttackPower
@@ -147,9 +148,9 @@ float Creature::getDamageReduction(const Creature* target) const {
 //                      getWeaponType
 //**********************************************************************
 
-std::string Object::getWeaponType() const {
+const std::string & Object::getWeaponType() const {
     if(type != ObjectType::WEAPON)
-        return("none");
+        return(NONE_STR);
     else
         return(subType);
 }
@@ -158,9 +159,9 @@ std::string Object::getWeaponType() const {
 //                      getArmorType
 //**********************************************************************
 
-std::string Object::getArmorType() const {
+const std::string & Object::getArmorType() const {
     if(type != ObjectType::ARMOR)
-        return("none");
+        return(NONE_STR);
     else
         return(subType);
 }
@@ -173,7 +174,7 @@ std::string Object::getWeaponCategory() const {
     SkillInfo* weaponSkill = gConfig->getSkill(subType);
 
     if(type != ObjectType::WEAPON || !weaponSkill)
-        return("none");
+        return(NONE_STR);
 
     std::string category = weaponSkill->getGroup();
     // Erase the 'weapons-' to leave the category
@@ -1760,14 +1761,14 @@ std::string Creature::getPrimaryWeaponCategory() const {
     if(ready[WIELD-1])
         return(ready[WIELD-1]->getWeaponCategory());
     else
-        return("none");
+        return(NONE_STR);
 }
 
 std::string Creature::getSecondaryWeaponCategory() const {
     if(ready[HELD-1] && ready[HELD-1]->getWearflag() == WIELD)
         return(ready[HELD-1]->getWeaponCategory());
     else
-        return("none");
+        return(NONE_STR);
 }
 
 

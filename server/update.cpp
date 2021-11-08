@@ -937,7 +937,6 @@ void cleanUpMemory() {
     // Clean up xml memory
     xmlCleanupParser();
     cleanup_spelling();
-    // TODO: Clean up spelling memory
 
     std::clog << "Memory cleaned up.\n";
 }
@@ -985,7 +984,7 @@ void Server::clearAsEnemy(Player* player) {
         monster->clearEnemy(player);
     }
 
-    }
+}
 
 //*********************************************************************
 //                      dmInRoom

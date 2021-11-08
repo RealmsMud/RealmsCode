@@ -16,77 +16,17 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
-#include <cstdio>                                   // for sprintf
-
 #include "alchemy.hpp"                              // for AlchemyEffect
 #include "config.hpp"                               // for Config, AlchemyMap
 #include "objects.hpp"                              // for Object, AlchemyEf...
-#include "paths.hpp"                                // for Code
 #include "xml.hpp"                                  // for NODE_NAME, copyTo...
 
-bool Config::loadAlchemy() {
-    xmlDocPtr   xmlDoc;
-
-    xmlNodePtr  curNode;
-    char        filename[80];
-
-    // build an XML tree from a the file
-    sprintf(filename, "%s/alchemy.xml", Path::Code);
-
-    xmlDoc = xml::loadFile(filename, "Alchemy");
-    if(xmlDoc == nullptr)
-        return(false);
-
-    curNode = xmlDocGetRootElement(xmlDoc);
-
-    curNode = curNode->children;
-    while(curNode && xmlIsBlankNode(curNode)) {
-        curNode = curNode->next;
-    }
-    if(curNode == nullptr) {
-        xmlFreeDoc(xmlDoc);
-        xmlCleanupParser();
-        return(false);
-    }
-
-    clearAlchemy();
-    while(curNode != nullptr) {
-        if(NODE_NAME(curNode, "AlchemyInfo")) {
-            auto* alcInfo = new AlchemyInfo(curNode);
-            alchemy.insert(std::make_pair(alcInfo->getName(), alcInfo));
-        }
-        curNode = curNode->next;
-    }
-    xmlFreeDoc(xmlDoc);
-    xmlCleanupParser();
-    return(true);
-}
-
-AlchemyInfo::AlchemyInfo(xmlNodePtr rootNode) {
-
-    rootNode = rootNode->children;
-    while(rootNode != nullptr)
-    {
-        if(NODE_NAME(rootNode, "Name")) xml::copyToString(name, rootNode);
-        else if(NODE_NAME(rootNode, "Action")) xml::copyToString(action, rootNode);
-        else if(NODE_NAME(rootNode, "PythonScript")) xml::copyToString(pythonScript, rootNode);
-        else if(NODE_NAME(rootNode, "Positive")) xml::copyToBool(positive, rootNode);
-        else if(NODE_NAME(rootNode, "Throwable")) xml::copyToBool(throwable, rootNode);
-        else if(NODE_NAME(rootNode, "PotionDisplayName")) xml::copyToString(potionDisplayName, rootNode);
-        else if(NODE_NAME(rootNode, "PotionPrefix")) xml::copyToString(potionPrefix, rootNode);
-        else if(NODE_NAME(rootNode, "BaseDuration")) xml::copyToNum(baseDuration, rootNode);
-        else if(NODE_NAME(rootNode, "BaseStrength")) xml::copyToNum(baseStrength, rootNode);
-
-        rootNode = rootNode->next;
-    }
-}
 
 //*********************************************************************
 //                      loadAlchemyEffects
 //*********************************************************************
 AlchemyEffect::AlchemyEffect(xmlNodePtr curNode) {
-    quality=duration = strength = 1;
+    quality= duration = strength = 1;
     xmlNodePtr childNode = curNode->children;
     while(childNode) {
         if(NODE_NAME(childNode, "Effect")) {

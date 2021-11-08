@@ -57,7 +57,7 @@ bool Config::loadSocials() {
         return(false);
     }
 
-    clearAlchemy();
+    clearSocials();
     while(curNode != nullptr) {
         if(NODE_NAME(curNode, "Social")) {
             socials.emplace(curNode);

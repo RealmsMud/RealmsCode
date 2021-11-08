@@ -50,7 +50,7 @@ void init_module_mudObject(py::module &m) {
         .def("getObject", &MudObject::getAsObject, py::return_value_policy::reference)
         .def("getExit",&MudObject::getAsExit, py::return_value_policy::reference)
         .def("equals", &MudObject::equals)
-        .def("getId", &MudObject::getIdPython)
+        .def("getId", &MudObject::getId)
         ;
 
     py::class_<Container, MudObject>( m, "Container")

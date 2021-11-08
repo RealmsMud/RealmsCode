@@ -36,9 +36,9 @@
 //*********************************************************************
 
 Size getSize(const std::string& str) {
-    int n = str.length();
-    if(!n)
+    if(str.empty())
         return(NO_SIZE);
+    auto n = str.length();
 
     if(!strncmp(str.c_str(), "fine", n))
         return(SIZE_FINE);
@@ -65,34 +65,25 @@ Size getSize(const std::string& str) {
 //                      getSizeName
 //*********************************************************************
 
-std::string getSizeName(Size size) {
-    switch(size) {
-    case SIZE_FINE:
-        return("fine");
-    case SIZE_DIMINUTIVE:
-        return("diminutive");
-    case SIZE_TINY:
-        return("tiny");
-    case SIZE_SMALL:
-        return("small");
-    case SIZE_MEDIUM:
-        return("medium");
-    case SIZE_LARGE:
-        return("large");
-    case SIZE_HUGE:
-        return("huge");
-    case SIZE_GARGANTUAN:
-        return("gargantuan");
-    case SIZE_COLOSSAL:
-        return("colossal");
-    default:
-        return("none");
-    }
-}
+const std::map<Size, std::string> sizeToString = {
+        {Size::SIZE_FINE, "fine"},
+        {Size::SIZE_DIMINUTIVE, "diminutive"},
+        {Size::SIZE_TINY, "tiny"},
+        {Size::SIZE_SMALL, "small"},
+        {Size::SIZE_MEDIUM, "medium"},
+        {Size::SIZE_LARGE, "large"},
+        {Size::SIZE_HUGE, "huge"},
+        {Size::SIZE_GARGANTUAN, "gargantuan"},
+        {Size::SIZE_COLOSSAL, "colossal"},
+};
+const std::string NONE_STR = "none";
 
-//*********************************************************************
-//                      numIngredients
-//*********************************************************************
+const std::string & getSizeName(Size size) {
+    if(sizeToString.find(size) == sizeToString.end())
+        return(NONE_STR);
+
+    return sizeToString.at(size);
+}
 
 Size whatSize(int i) {
     switch(i) {
@@ -118,10 +109,6 @@ Size whatSize(int i) {
         return(NO_SIZE);
     }
 }
-
-//*********************************************************************
-//                      numIngredients
-//*********************************************************************
 
 int numIngredients(Size size) {
     switch(size) {
@@ -184,7 +171,7 @@ int sizePower(int lvl) {
 //*********************************************************************
 
 int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const std::string& effect) {
-    std::string power = "", opposite = effect == "enlarge" ? "reduce" : "enlarge";
+    std::string power, opposite = effect == "enlarge" ? "reduce" : "enlarge";
     EffectInfo *e=nullptr;
     Creature* target=nullptr;
     int     strength=0, num=0, pos=0;

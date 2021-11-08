@@ -203,8 +203,6 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
     // run this here so effects are added properly
     setClass(c);
 
-    convertOldEffects();
-
     if(getVersion() < "2.46l") {
         upgradeStats();
     }

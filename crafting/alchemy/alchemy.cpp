@@ -42,7 +42,7 @@
 //                      getDisplayString
 //*********************************************************************
 
-std::string AlchemyInfo::getDisplayString() {
+std::string AlchemyInfo::getDisplayString() const {
     std::ostringstream displayStr;
 
     displayStr << "^W" << std::setw(25) << name << "^x - " << (positive ? "yes" : " ^rno^x") << " - " << std::setw(-15);
@@ -92,10 +92,6 @@ bool AlchemyInfo::isPositive() const {
 //*********************************************************************
 
 bool Config::clearAlchemy() {
-    for(const auto& p : alchemy) {
-        AlchemyInfo* alcInfo = p.second;
-        delete alcInfo;
-    }
     alchemy.clear();
     return(true);
 }
@@ -109,7 +105,7 @@ const AlchemyInfo *Config::getAlchemyInfo(const std::string &effect) const {
     auto it = alchemy.find(effect);
 
     if(it != alchemy.end())
-        return it->second;
+        return &(it->second);
     else
         return(nullptr);
 }
