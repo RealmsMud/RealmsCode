@@ -232,7 +232,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 if(!parentSkill)
                     continue;
                 std::string skillGroup = parentSkill->getGroup();
-                if(skillGroup.starts_with("weapons") && skillGroup.length() > 6) {
+                if(skillGroup.starts_with("weapons") && skillGroup.length() > 8) {
                     std::string weaponSkillName = skillGroup.substr(8);
                     Skill* weaponSkill = getSkill(weaponSkillName, false);
                     if(!weaponSkill) {
