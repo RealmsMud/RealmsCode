@@ -1497,7 +1497,7 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
 
     int k = 0, n = 0;
     for(const auto& [curGroup, curGroupDisplay] : gConfig->skillGroups) {
-        if(!curGroup.starts_with("weapons"))
+        if(!curGroup.starts_with("weapons") || curGroup.length() <= 7)
             continue;
 
         if(sock->getPlayer()->getClass() == CreatureClass::CLERIC && sock->getPlayer()->getDeity() == CERIS) {
