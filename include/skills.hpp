@@ -25,14 +25,17 @@
 #include "timer.hpp"
 
 class Skill;
+class SkillInfoBuilder;
 
-typedef enum {
-    SKILL_EASY,
-    SKILL_NORMAL,
-    SKILL_MEDIUM,
-    SKILL_HARD
-} SkillGainLevel;
+enum SkillGainType {
+    EASY,
+    NORMAL,
+    MEDIUM,
+    HARD
+};
 
+
+// This should be a class, not an enum
 typedef enum {
     RES_NONE,
     RES_GOLD,
@@ -44,6 +47,7 @@ typedef enum {
 } ResourceType;
 
 
+// This should also probably be a class and not an enum, and it should be shared with songs
 enum TargetType {
     TARGET_NONE,
     TARGET_CREATURE,
@@ -72,32 +76,30 @@ public:
 // Generic information for a skill
 class SkillInfo : public virtual Nameable {
     friend class Skill;
+    friend class SkillInfoBuilder;
 public:
     SkillInfo();
-    SkillInfo(xmlNodePtr rootNode);
+    SkillInfo(const SkillInfo&) = delete; // No Copies
+    SkillInfo(SkillInfo&&) = default;     // Only Moves
+
     virtual ~SkillInfo() {};
     virtual void setName(std::string pName);
 protected:
-    bool readNode(xmlNodePtr rootNode);
 
     std::string baseSkill;
     std::string group;                  // Group the skill belongs to
     std::string displayName;            // Display name
-    int gainType;                   // Adjustments for skills with long timers
+    SkillGainType gainType;             // Adjustments for skills with long timers
     bool knownOnly;
 
 public:
-    std::string getGroup() const;
-    std::string getBaseSkill() const;
-    std::string getDisplayName() const;
-    int getGainType() const;
-    bool isKnownOnly() const;
-    bool hasBaseSkill() const;
+    [[nodiscard]] const std::string & getGroup() const;
+    [[nodiscard]] const std::string & getBaseSkill() const;
+    [[nodiscard]] const std::string & getDisplayName() const;
+    [[nodiscard]] SkillGainType getGainType() const;
+    [[nodiscard]] bool isKnownOnly() const;
+    [[nodiscard]] bool hasBaseSkill() const;
 
-
-
-    bool setGroup(std::string &pGroup);
-    bool setBase(std::string &pBase);
 };
 
 //**********************************************************************
@@ -107,17 +109,13 @@ public:
 class SkillCommand : public virtual SkillInfo, public virtual Command {
     friend class Config;
 public:
-    explicit SkillCommand(xmlNodePtr rootNode);
+    SkillCommand();
     SkillCommand(std::string_view pCmdStr) {
         name = pCmdStr;
     }
     int execute(Creature* player, cmd* cmnd) const;
 
-    void setName(std::string pName);
 protected:
-    bool readNode(xmlNodePtr rootNode);
-    void loadResources(xmlNodePtr rootNode);
-
     TargetType targetType;          // What sort of target?
     bool offensive{};                 // Is this an offensive skill? Default: Yes         // *
 
@@ -161,10 +159,10 @@ public:
     void reset();
 protected:
     std::string name;
-    int gained{};             // How many points they have gained so far
-    int gainBonus{};          // Used for hard to gain skills, giving them an increased chance to improve
-    Timer timer;            // Timer for cooldown
-    SkillInfo* skillInfo{};   // Pointer to parent skill for additional info
+    int gained{};                   // How many points they have gained so far
+    int gainBonus{};                // Used for hard to gain skills, giving them an increased chance to improve
+    Timer timer;                    // Timer for cooldown
+    const SkillInfo* skillInfo{};   // Pointer to parent skill for additional info
 public:
     void save(xmlNodePtr rootNode) const;
 
@@ -192,7 +190,7 @@ public:
     void modifyDelay(int amt);
     void setDelay(int newDelay);
 
-    SkillInfo* getSkillInfo();
+    const SkillInfo * getSkillInfo();
 
 };
 

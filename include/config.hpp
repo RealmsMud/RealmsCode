@@ -110,7 +110,7 @@ struct namableCmp {
 typedef std::pair<std::string, std::string> accountDouble;
 typedef std::map<std::string, MxpElement*, comp> MxpElementMap;
 typedef std::map<std::string, std::string, comp> stringMap;
-typedef std::map<std::string, SkillInfo*, comp> SkillInfoMap;
+typedef std::map<std::string, SkillInfo, comp> SkillInfoMap;
 typedef std::map<std::string, Effect, comp> EffectMap;
 typedef std::set<SocialCommand, namableCmp> SocialSet;
 typedef std::set<PlyCommand, namableCmp> PlyCommandSet;
@@ -230,10 +230,10 @@ public:
 
 // Skills
     [[nodiscard]] bool skillExists(const std::string &skillName) const;
-    [[nodiscard]] SkillInfo* getSkill(const std::string &skillName) const;
-    [[nodiscard]] std::string getSkillGroupDisplayName(const std::string &groupName) const;
-    [[nodiscard]] std::string getSkillGroup(const std::string &skillName) const;
-    [[nodiscard]] std::string getSkillDisplayName(const std::string &skillName) const;
+    [[nodiscard]] const SkillInfo * getSkill(const std::string &skillName) const;
+    [[nodiscard]] const std::string & getSkillGroupDisplayName(const std::string &groupName) const;
+    [[nodiscard]] const std::string & getSkillGroup(const std::string &skillName) const;
+    [[nodiscard]] const std::string & getSkillDisplayName(const std::string &skillName) const;
     [[nodiscard]] bool isKnownOnly(const std::string &skillName) const;
 
 
@@ -462,17 +462,14 @@ protected:
     void loadWebhookTokens(xmlNodePtr rootNode);
 
     void clearSkills();
-    void updateSkillPointers();
-    void loadSkillGroups(xmlNodePtr rootNode);
-    void loadSkillGroup(xmlNodePtr rootNode);
-    void loadSkills(xmlNodePtr rootNode);
+    bool loadSkillGroups();
+    bool loadSkills();
 
 
 public:
     bool loadConfig(bool reload=false);
     bool loadDiscordConfig();
     bool saveConfig() const;
-    bool loadSkills();
 
 // Player Classes
     bool loadClasses();

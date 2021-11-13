@@ -166,6 +166,7 @@ set(COMMON_HEADER_FILES
     include/builders/msdpBuilder.hpp
     include/builders/songBuilder.hpp
     include/builders/fluentBuilder.hpp
+    include/builders/skillBuilder.hpp
     )
 
 set(COMMON_SOURCE_FILES
@@ -320,6 +321,7 @@ set(COMMON_SOURCE_FILES
     server/mccp.cpp
     server/memory.cpp
     server/msdp.cpp
+    server/msdpLoader.cpp
     server/mudObject.cpp
     server/mxp.cpp
     server/pythonHandler.cpp
@@ -334,6 +336,7 @@ set(COMMON_SOURCE_FILES
 
     skills/skillCommand.cpp
     skills/skillGain.cpp
+    skills/skillLoader.cpp
     skills/skills.cpp
 
     staff/builder.cpp
@@ -401,8 +404,7 @@ set(COMMON_SOURCE_FILES
 
     wip/fighters.cpp
 
-
-    server/msdpLoader.cpp)
+    )
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES} ${DPP_LIB_NAME})
