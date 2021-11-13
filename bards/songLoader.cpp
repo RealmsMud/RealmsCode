@@ -18,8 +18,8 @@
 
 #include <map>
 #include "config.hpp"
-#include "server.hpp"                               // for Server, gServer
-#include "creatures.hpp"                            // for Creature, Player
+#include "server.hpp"                  // for Server, gServer
+#include "creatures.hpp"               // for Creature, Player
 #include "songs.hpp"
 #include "builders/songBuilder.hpp"
 

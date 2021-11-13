@@ -228,7 +228,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         if(getVersion() < "2.47a") {
             // Update weapon skills
             for (auto const& [skillId, skill] : skills) {
-                SkillInfo* parentSkill = skill->getSkillInfo();
+                const SkillInfo* parentSkill = skill->getSkillInfo();
                 if(!parentSkill)
                     continue;
                 std::string skillGroup = parentSkill->getGroup();
@@ -348,7 +348,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
 //*********************************************************************
 
 bool Creature::loadFaction(xmlNodePtr rootNode) {
-    std::string name = "";
+    std::string name;
     int         regard=0;
     xmlNodePtr curNode = rootNode->children;
     while(curNode) {

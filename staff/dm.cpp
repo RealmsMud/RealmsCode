@@ -373,9 +373,6 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
     } else if(!strcmp(cmnd->str[1], "deities") && load) {
         gConfig->loadDeities();
         player->print("Deities reloaded.\n");
-    } else if(!strcmp(cmnd->str[1], "skills") && load) {
-        gConfig->loadSkills();
-        player->print("Skills reloaded.\n");
     } else if(!strcmp(cmnd->str[1], "startlocs") && load) {
         gConfig->loadStartLoc();
         player->print("StartLocs reloaded.\n");

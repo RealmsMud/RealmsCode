@@ -171,7 +171,7 @@ const std::string & Object::getArmorType() const {
 //**********************************************************************
 
 std::string Object::getWeaponCategory() const {
-    SkillInfo* weaponSkill = gConfig->getSkill(subType);
+    const SkillInfo* weaponSkill = gConfig->getSkill(subType);
 
     if(type != ObjectType::WEAPON || !weaponSkill)
         return(NONE_STR);
@@ -306,11 +306,10 @@ bool Object::needsTwoHands() const {
 //**********************************************************************
 
 bool Object::setWeaponType(const std::string &newType) {
-    SkillInfo* weaponSkill = gConfig->getSkill(newType);
-    std::string category = "";
+    const SkillInfo* weaponSkill = gConfig->getSkill(newType);
+    std::string category;
     if(weaponSkill) {
-        category = weaponSkill->getGroup();
-        category = category.substr(0, 6);
+        category = weaponSkill->getGroup().substr(0, 6);
     }
 
     if(!weaponSkill || category != "weapon") {
@@ -328,11 +327,10 @@ bool Object::setWeaponType(const std::string &newType) {
 bool Object::setArmorType(const std::string &newType) {
     // Armor type must be ring, shield, or one of the armor type skills
     if(newType != "ring" && newType != "shield") {
-        SkillInfo* weaponSkill = gConfig->getSkill(newType);
-        std::string category = "";
+        const SkillInfo* weaponSkill = gConfig->getSkill(newType);
+        std::string category;
         if(weaponSkill) {
-            category = weaponSkill->getGroup();
-            category = category.substr(0, 5);
+            category = weaponSkill->getGroup().substr(0, 5);
         }
 
         if(!weaponSkill || category != "armor") {

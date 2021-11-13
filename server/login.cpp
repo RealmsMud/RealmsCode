@@ -1510,46 +1510,46 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
             n = 0;
         }
         for(const auto& [skillName, curSkill] : gConfig->skills) {
-            if(curSkill->getGroup() != curGroup)
+            if(curSkill.getGroup() != curGroup)
                 continue;
 
-            if(curSkill->getName() == "claw")
+            if(curSkill.getName() == "claw")
                 continue;
 
             if(sock->getPlayer()->getClass() == CreatureClass::CLERIC && sock->getPlayer()->getDeity() == CERIS)
-                if(curSkill->getName() == "whip")
+                if(curSkill.getName() == "whip")
                     continue;
 
-            if(sock->getPlayer()->knowsSkill(curSkill->getName()))
+            if(sock->getPlayer()->knowsSkill(curSkill.getName()))
                 continue;
 
-            if(sock->getPlayer()->getLevel() < 4 && ((curSkill->getName() == "arcane-weapon" || curSkill->getName() == "divine-weapon")))
+            if(sock->getPlayer()->getLevel() < 4 && ((curSkill.getName() == "arcane-weapon" || curSkill.getName() == "divine-weapon")))
                 continue;
 
             if ((!(sock->getPlayer()->getClass() == CreatureClass::MAGE ||
                 sock->getPlayer()->getClass() == CreatureClass::LICH ||
                 sock->getPlayer()->getClass() == CreatureClass::BARD ||
                 sock->getPlayer()->getSecondClass() == CreatureClass::MAGE))
-                && curSkill->getName() == "arcane-weapon")
+                && curSkill.getName() == "arcane-weapon")
                     continue;
 
             if ((!(sock->getPlayer()->getClass() == CreatureClass::CLERIC ||
                 sock->getPlayer()->getClass() == CreatureClass::PALADIN ||
                 sock->getPlayer()->getClass() == CreatureClass::DRUID ||
                 sock->getPlayer()->getClass() == CreatureClass::DEATHKNIGHT))
-                && curSkill->getName() == "divine-weapon")
+                && curSkill.getName() == "divine-weapon")
                     continue;
 
             if(mode == Create::doPrint) {
                 if(n++%2==0)
                     sock->print("\n%5s", " ");
 
-                sock->bprint(fmt::format("[^W{:1}^x] {:<30}", (char)(++k + 64), curSkill->getDisplayName()));
+                sock->bprint(fmt::format("[^W{:1}^x] {:<30}", (char)(++k + 64), curSkill.getDisplayName()));
             } else {
                 if(i == ++k) {
-                    sock->getPlayer()->addSkill(curSkill->getName(),1);
-                    Create::addStartingWeapon(sock->getPlayer(), curSkill->getName());
-                    sock->bprint(fmt::format("You have learned how to use ^W{}^x.\n", curSkill->getDisplayName()));
+                    sock->getPlayer()->addSkill(curSkill.getName(),1);
+                    Create::addStartingWeapon(sock->getPlayer(), curSkill.getName());
+                    sock->bprint(fmt::format("You have learned how to use ^W{}^x.\n", curSkill.getDisplayName()));
                     return(true);
                 }
             }

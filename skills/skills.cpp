@@ -41,8 +41,9 @@
 #include "xml.hpp"                // for loadPlayer
 
 #define NOT_A_SKILL (-10)
+const std::string EMPTY_STR = "";
 
-int SkillInfo::getGainType() const {
+SkillGainType SkillInfo::getGainType() const {
     return (gainType);
 }
 int Skill::getGainBonus() const {
@@ -57,9 +58,7 @@ bool SkillInfo::hasBaseSkill() const {
 
 bool Config::isKnownOnly(const std::string &skillName) const {
     auto it = skills.find(skillName);
-    if (it != skills.end())
-        return (((*it).second)->isKnownOnly());
-    return (false);
+    return (it != skills.end() && (*it).second.isKnownOnly());
 }
 //*****************************************************************
 // Skill - Keeps track of skill information for a Creature
@@ -90,14 +89,10 @@ void SkillInfo::setName(std::string pName) {
     name = pName;
 }
 
-void SkillCommand::setName(std::string pName) {
-    SkillInfo::name = pName;
-    Command::name = pName;
-}
 std::string Skill::getName() const {
     return (name);
 }
-SkillInfo* Skill::getSkillInfo() {
+const SkillInfo* Skill::getSkillInfo() {
     return (skillInfo);
 }
 int Skill::getGained() const {
@@ -156,39 +151,14 @@ void Skill::improve(int amt) {
 //*****************************************************************
 // Class to store base information about skills
 
-//********************************************************************
-//                      setGroup
-//********************************************************************
-// Sets group, aborts if not valid
-
-bool SkillInfo::setGroup(std::string &pGroup) {
-    ASSERTLOG(!pGroup.empty());
-    std::string groupName = gConfig->getSkillGroupDisplayName(pGroup);
-    if (groupName.empty()) {
-        return (false);
-    }
-    group = pGroup;
-    return true;
-}
-
-bool SkillInfo::setBase(std::string &pBase) {
-    ASSERTLOG(!pBase.empty());
-    SkillInfo* skInfo = gConfig->getSkill(pBase);
-    if (skInfo == nullptr || skInfo == this || pBase == name) {
-        return (false);
-    }
-    baseSkill = pBase;
-    return true;
-}
-
 //std::string SkillInfo::getName() const { return(name); }
-std::string SkillInfo::getGroup() const {
+const std::string & SkillInfo::getGroup() const {
     return (group);
 }
-std::string SkillInfo::getBaseSkill() const {
+const std::string & SkillInfo::getBaseSkill() const {
     return (baseSkill);
 }
-std::string SkillInfo::getDisplayName() const {
+const std::string & SkillInfo::getDisplayName() const {
     return (displayName);
 }
 //std::string SkillInfo::getDescription() const { return(description); }
@@ -244,10 +214,10 @@ void Creature::checkImprove(const std::string&  skillName, bool success, int att
             chance /= 2;
     }
 
-    if (gainType == SKILL_EASY) {
+    if (gainType == SkillGainType::EASY) {
         // make it harder
         chance /= 2;
-    } else if (gainType != SKILL_NORMAL) {
+    } else if (gainType != SkillGainType::NORMAL) {
         chance += crSkill->getGainBonus();
     }
 
@@ -278,7 +248,7 @@ void Creature::checkImprove(const std::string&  skillName, bool success, int att
             lasttime[LT_SKILL_INCREASE].interval = wait;
         }
         // Chance for a double improve for a hard skill
-        if (gainType == SKILL_HARD && Random::get(1,100) < 33)
+        if (gainType == SkillGainType::HARD && Random::get(1,100) < 33)
             crSkill->improve(2);
         else
             crSkill->improve();
@@ -287,9 +257,9 @@ void Creature::checkImprove(const std::string&  skillName, bool success, int att
 
     } else {
         // See if we have a hard skill on our hands, if so add a bonus to increase
-        if (gainType == SKILL_MEDIUM) {
+        if (gainType == SkillGainType::MEDIUM) {
             crSkill->upBonus();
-        } else if (gainType == SKILL_HARD) {
+        } else if (gainType == SkillGainType::HARD) {
             crSkill->upBonus(2);
         }
     }
@@ -326,7 +296,7 @@ Skill* Creature::getSkill(const std::string&  skillName, bool useBase) const {
     else {
         Skill* toReturn = (*csIt).second;
         if (useBase) {
-            SkillInfo* skillInfo = toReturn->getSkillInfo();
+            const SkillInfo* skillInfo = toReturn->getSkillInfo();
             if (skillInfo && skillInfo->hasBaseSkill()) {
                 Skill* baseSkill = getSkill(skillInfo->getBaseSkill());
                 if (baseSkill)
@@ -378,7 +348,7 @@ void Creature::addSkill(const std::string& skillName, int gained) {
     skills[skillName] = skill;
 
     // Add any base skill we need as well
-    SkillInfo* skillInfo = skill->getSkillInfo();
+    const SkillInfo* skillInfo = skill->getSkillInfo();
     if (skillInfo && skillInfo->hasBaseSkill()) {
         if (!knowsSkill(skillInfo->getBaseSkill())) {
             addSkill(skillInfo->getBaseSkill(), gained);
@@ -617,41 +587,48 @@ double Creature::getTradeSkillGained(const std::string& skillName, bool useBase)
 //                      dmSkills
 //********************************************************************
 // List the skill table, or optionally a player's known skills
+const std::string EASY_COLOR   = "^g";
+const std::string MEDIUM_COLOR = "^y";
+const std::string HARD_COLOR =   "^r";
 
+const std::string& skillColor(int gainType) {
+    switch(gainType) {
+        case SkillGainType::EASY:
+            return EASY_COLOR;
+        case SkillGainType::MEDIUM:
+            return MEDIUM_COLOR;
+        case SkillGainType::HARD:
+            return HARD_COLOR;
+        default:
+            return EMPTY_STR;
+    }
+}
 int dmSkills(Player* player, cmd* cmnd) {
 
     if (cmnd->num < 2) {
         std::map<std::string, std::string>::iterator sgIt;
         SkillInfoMap::iterator sIt;
-        player->printColor(
-                "^xSkill Groups\n%-20s - %40s\n---------------------------------------------------------------\n",
-                "Name", "DisplayName");
-        for (sgIt = gConfig->skillGroups.begin(); sgIt != gConfig->skillGroups.end(); sgIt++) {
-            player->print("%-20s - %40s\n", (*sgIt).first.c_str(), (*sgIt).second.c_str());
+        player->printPaged(
+                fmt::format("^xSkill Groups\n%{:<20} - {:>40}\n---------------------------------------------------------------\n",
+                "Name", "DisplayName"));
+        for (const auto& [groupName, groupDisplayName] : gConfig->skillGroups) {
+            player->printPaged(fmt::format("{:<20} - {:>40}\n", groupName, groupDisplayName));
         }
 
-        player->printColor(
-                "\n^xSkills\n%-20s - %20s - %-15s\n-------------------------------------------------------------\n",
-                "Name", "DisplayName", "Group");
+        player->printPaged(
+                fmt::format("\n^xSkills\n%{:<20} - {:30} - {:<15}\n-------------------------------------------------------------\n",
+                "Name", "DisplayName", "Group"));
         SkillInfo* skill;
-        std::string curGroup;
-        for (sgIt = gConfig->skillGroups.begin(); sgIt != gConfig->skillGroups.end(); sgIt++) {
-            curGroup = (*sgIt).first;
-            for (sIt = gConfig->skills.begin(); sIt != gConfig->skills.end(); sIt++) {
-                skill = (*sIt).second;
-                if (skill->getGroup() == curGroup) {
-                    char color[3] = "";
-                    if (skill->getGainType() == SKILL_MEDIUM)
-                        strcpy(color, "^y");
-                    else if (skill->getGainType() == SKILL_HARD)
-                        strcpy(color, "^r");
-                    else if (skill->getGainType() == SKILL_EASY)
-                        strcpy(color, "^g");
-                    player->printColor("%s%-20s - %20s - %-15s\n", color, skill->getName().c_str(),
-                            skill->getDisplayName().c_str(), skill->getGroup().c_str());
+
+        for (const auto& [groupName, groupDisplayName] : gConfig->skillGroups) {
+            for(const auto& [skillName, skillInfo] : gConfig->skills) {
+                if (skillInfo.getGroup() == groupName) {
+                    player->printPaged(fmt::format("{}{:<20} - {:30} - {:<15}^x\n", skillColor(skillInfo.getGainType()), skillInfo.getName(),
+                            skillInfo.getDisplayName(), skillInfo.getGroup()));
                 }
             }
         }
+        player->donePaging();
     } else {
         Creature* target = nullptr;
         cmnd->str[1][0] = up(cmnd->str[1][0]);
@@ -667,6 +644,7 @@ int dmSkills(Player* player, cmd* cmnd) {
         player->print("Skills for: %s\n", target->getCName());
         showSkills(player, target, true);
     }
+
     return (0);
 }
 
@@ -829,24 +807,8 @@ void Config::clearSkills() {
     skillGroups.clear();
 
     // Clear & delete skills
-    SkillInfoMap::iterator sIt;
-    SkillInfo* skill;
-    for (sIt = skills.begin(); sIt != skills.end(); sIt++) {
-        skill = (*sIt).second;
-        auto* sk = dynamic_cast<SkillCommand*>(skill);
-        if(sk == nullptr) delete skill;
-    }
     skills.clear();
     skillCommands.clear();
-}
-// Updates skill pointers on players
-void Config::updateSkillPointers() {
-    for (const PlayerMap::value_type& pp : gServer->players) {
-        for (SkillMap::value_type sp : pp.second->skills) {
-            sp.second->updateParent();
-        }
-    }
-
 }
 
 //********************************************************************
@@ -855,8 +817,7 @@ void Config::updateSkillPointers() {
 // True if the skill exists
 
 bool Config::skillExists(const std::string &skillName) const {
-    auto it = skills.find(skillName);
-    return (it != skills.end());
+    return skills.find(skillName) != skills.end();
 }
 
 //********************************************************************
@@ -864,11 +825,9 @@ bool Config::skillExists(const std::string &skillName) const {
 //********************************************************************
 // Returns the given skill skill
 
-SkillInfo* Config::getSkill(const std::string &skillName) const {
+const SkillInfo * Config::getSkill(const std::string &skillName) const {
     auto it = skills.find(skillName);
-    if (it != skills.end())
-        return ((*it).second);
-    return (nullptr);
+    return it != skills.end() ? &((*it).second) : nullptr;
 }
 
 //********************************************************************
@@ -876,11 +835,9 @@ SkillInfo* Config::getSkill(const std::string &skillName) const {
 //********************************************************************
 // Get the display name of the skill
 
-std::string Config::getSkillDisplayName(const std::string &skillName) const {
+const std::string & Config::getSkillDisplayName(const std::string &skillName) const {
     auto it = skills.find(skillName);
-    if (it != skills.end())
-        return (((*it).second)->getDisplayName());
-    return ("");
+    return it != skills.end() ?  (((*it).second).getDisplayName()) : EMPTY_STR;
 }
 
 //********************************************************************
@@ -888,11 +845,9 @@ std::string Config::getSkillDisplayName(const std::string &skillName) const {
 //********************************************************************
 // Get the group display name of the skill
 
-std::string Config::getSkillGroupDisplayName(const std::string &groupName) const {
+const std::string & Config::getSkillGroupDisplayName(const std::string &groupName) const {
     auto it = skillGroups.find(groupName);
-    if (it != skillGroups.end())
-        return ((*it).second);
-    return ("");
+    return it != skillGroups.end() ? (*it).second : EMPTY_STR;
 }
 
 //********************************************************************
@@ -900,17 +855,15 @@ std::string Config::getSkillGroupDisplayName(const std::string &groupName) const
 //********************************************************************
 // Get the skill group of the skill
 
-std::string Config::getSkillGroup(const std::string &skillName) const {
+const std::string & Config::getSkillGroup(const std::string &skillName) const {
     auto it = skills.find(skillName);
-    if (it != skills.end())
-        return (((*it).second)->getGroup());
-    return ("");
+    return it != skills.end() ? ((*it).second).getGroup() : EMPTY_STR;
 }
 
 // End Skill Related Functions
 //--------------------------------------------------------------------
 
 SkillInfo::SkillInfo() {
-    gainType = SKILL_NORMAL;
+    gainType = SkillGainType::NORMAL;
     knownOnly = false;
 }

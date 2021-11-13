@@ -273,7 +273,7 @@ bool Config::loadBeforePython() {
     std::clog << "Loading Guilds..." << (loadGuilds() ? "done" : "*** FAILED ***") << std::endl;
 
     std::clog << "Loading Skills...";
-    if(loadSkills())
+    if(loadSkillGroups() && loadSkills())
         std::clog << "done." << std::endl;
     else {
         std::clog << "*** FAILED *** " << std::endl;

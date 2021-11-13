@@ -59,6 +59,8 @@ public:
 private:
     Song() = default;;
     std::string effect;
+
+    // TODO: These should be classes that have an interface for being used/called
     std::string type; // script, effect, etc
     std::string targetType; // Valid Targets: Room, Self, Group, Target, RoomBene, RoomAggro
 
