@@ -145,9 +145,9 @@ public:
     void save(xmlNodePtr rootNode) const;
 
 
-    [[nodiscard]] std::string getName() const;
+    [[nodiscard]] const std::string & getName() const;
     [[nodiscard]] std::string getDisplayName() const;
-    [[nodiscard]] std::string getOwner() const;
+    [[nodiscard]] const std::string & getOwner() const;
     [[nodiscard]] time_t getLastMod() const;
     [[nodiscard]] long getDuration() const;
     [[nodiscard]] int getStrength() const;
