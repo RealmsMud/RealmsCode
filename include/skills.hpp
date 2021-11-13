@@ -83,7 +83,6 @@ public:
     SkillInfo(SkillInfo&&) = default;     // Only Moves
 
     virtual ~SkillInfo() {};
-    virtual void setName(std::string pName);
 protected:
 
     std::string baseSkill;
@@ -167,12 +166,12 @@ public:
     void save(xmlNodePtr rootNode) const;
 
     [[nodiscard]] bool hasBaseSkill() const;
-    [[nodiscard]] std::string getBaseSkill();
+    [[nodiscard]] const std::string & getBaseSkill();
 
 
-    [[nodiscard]] std::string getName() const;
-    [[nodiscard]] std::string getDisplayName() const;
-    [[nodiscard]] std::string getGroup() const;
+    [[nodiscard]] const std::string & getName() const;
+    [[nodiscard]] const std::string & getDisplayName() const;
+    [[nodiscard]] const std::string & getGroup() const;
     [[nodiscard]] int getGainType() const;
     [[nodiscard]] int getGained() const;
     [[nodiscard]] int getGainBonus() const;

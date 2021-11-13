@@ -1470,7 +1470,7 @@ const Effect* EffectInfo::getEffect() const {
 //                      getName
 //*********************************************************************
 
-std::string EffectInfo::getName() const {
+const std::string & EffectInfo::getName() const {
     return(name);
 }
 
@@ -1478,7 +1478,7 @@ std::string EffectInfo::getName() const {
 //                      getOwner
 //*********************************************************************
 
-std::string EffectInfo::getOwner() const {
+const std::string & EffectInfo::getOwner() const {
     return(pOwner);
 }
 

@@ -83,13 +83,7 @@ void Skill::reset() {
 // End constructors
 //--------------------------------------------------------------------
 
-//--------------------------------------------------------------------
-// Get/Set Functions
-void SkillInfo::setName(std::string pName) {
-    name = pName;
-}
-
-std::string Skill::getName() const {
+const std::string & Skill::getName() const {
     return (name);
 }
 const SkillInfo* Skill::getSkillInfo() {
@@ -106,15 +100,15 @@ int Skill::getGainType() const {
 bool Skill::hasBaseSkill() const {
     return (skillInfo && skillInfo->hasBaseSkill());
 }
-std::string Skill::getBaseSkill() {
-    return (skillInfo ? skillInfo->getBaseSkill() : "");
+const std::string & Skill::getBaseSkill() {
+    return (skillInfo ? skillInfo->getBaseSkill() : EMPTY_STR);
 }
 
-std::string Skill::getDisplayName() const {
-    return (skillInfo ? skillInfo->getDisplayName() : "");
+const std::string & Skill::getDisplayName() const {
+    return (skillInfo ? skillInfo->getDisplayName() : EMPTY_STR);
 }
-std::string Skill::getGroup() const {
-    return (skillInfo ? skillInfo->getGroup() : "");
+const std::string & Skill::getGroup() const {
+    return (skillInfo ? skillInfo->getGroup() : EMPTY_STR);
 }
 
 void Skill::setGained(int pGained) {
