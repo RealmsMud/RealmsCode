@@ -56,6 +56,7 @@
 #include "quests.hpp"                          // for QuestCompleted, QuestC...
 #include "raceData.hpp"                        // for RaceData
 #include "range.hpp"                           // for Range
+#include "random.hpp"                          // for Random
 #include "realm.hpp"                           // for Realm, MAX_REALM, MIN_...
 #include "size.hpp"                            // for Size, NO_SIZE, MAX_SIZE
 #include "skills.hpp"                          // for Skill
@@ -1739,3 +1740,43 @@ bool Creature::poisonedByPlayer() const {
 Location Creature::getLocation() {
     return(currentLocation);
 }
+
+
+//*********************************************************************
+//                      getStatusStr
+//*********************************************************************
+// returns a status string that describes the hp condition of the creature
+
+const char* Creature::getStatusStr(int dmg) {
+    int health = hp.getCur() - dmg;
+
+    if(health < 1)
+        return "'s dead!";
+
+    switch(MIN<int>(health * 10 / (hp.getMax() ? hp.getMax() : 1), 10)) {
+        case 10:
+            return("'s unharmed.");
+        case 9:
+            return("'s relatively unscathed.");
+        case 8:
+            return("'s a little battered.");
+        case 7:
+            return("'s getting bruised.");
+        case 6:
+            return("'s noticeably bleeding.");
+        case 5:
+            return("'s having some trouble.");
+        case 4:
+            return(" doesn't look too good.");
+        case 3:
+            return("'s beginning to stagger.");
+        case 2:
+            return(" has some nasty wounds.");
+        case 1:
+            return(" isn't going to last much longer.");
+        case 0:
+            return(" is about to die!");
+    }
+    return("");
+}
+

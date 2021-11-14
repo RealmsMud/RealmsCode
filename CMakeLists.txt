@@ -228,6 +228,7 @@ set(COMMON_SOURCE_FILES
     creatures/creature2.cpp
     creatures/creatureAttr.cpp
     creatures/creatures.cpp
+    creatures/lasttime.cpp
     creatures/monType.cpp
     creatures/monsters.cpp
     creatures/raceData.cpp
@@ -289,13 +290,13 @@ set(COMMON_SOURCE_FILES
     players/levelGain.cpp
     players/pets.cpp
     players/player.cpp
-    players/player2.cpp
     players/playerClass.cpp
     players/playerInfo.cpp
     players/playerTitle.cpp
     players/players.cpp
     players/post.cpp
     players/prefs.cpp
+    players/prompt.cpp
     players/proxy.cpp
     players/statistics.cpp
 
@@ -410,7 +411,7 @@ set(COMMON_SOURCE_FILES
 
     wip/fighters.cpp
 
-    )
+    players/playerEffects.cpp creatures/inventory.cpp creatures/creatureEffects.cpp creatures/creatureSkills.cpp)
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 #set_property(TARGET RealmsLib PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})

@@ -354,8 +354,6 @@ Player* lowest_piety(BaseRoom* room, bool invis);
 
 void renamePlayerFiles(const char *old_name, const char *new_name);
 
-
-// player2.cpp
 CatRef getEtherealTravelRoom();
 void etherealTravel(Player* player);
 
@@ -364,10 +362,10 @@ void sendMail(const std::string &target, const std::string &message);
 
 
 // room.cpp
-void display_rom(Player* player, Player *looker=0, int magicShowHidden=0);
+void display_rom(Player* player, Player *looker=nullptr, int magicShowHidden=0);
 void display_rom(Player* player, BaseRoom* room);
-Exit *findExit(Creature* creature, cmd* cmnd, int val=1, BaseRoom* room = 0);
-Exit *findExit(Creature* creature, const std::string &str, int val, BaseRoom* room = 0);
+Exit *findExit(Creature* creature, cmd* cmnd, int val=1, BaseRoom* room = nullptr);
+Exit *findExit(Creature* creature, const std::string &str, int val, BaseRoom* room = nullptr);
 int createStorage(CatRef cr, const Player* player);
 void doRoomHarms(BaseRoom *inRoom, Player* target);
 BaseRoom *abortFindRoom(Creature* player, const char from[15]);

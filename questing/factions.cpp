@@ -67,7 +67,7 @@ FactionRegard::FactionRegard() {
 
 void FactionRegard::load(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
-    std::string temp = "";
+    std::string temp;
     int id=0;
 
     while(curNode) {

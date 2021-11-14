@@ -445,7 +445,7 @@ std::string effectSpellName(std::string effect) {
 //*********************************************************************
 
 void spellsUnder(const Player *viewer, const Creature* target, bool notSelf) {
-    std::string str = "";
+    std::string str;
     const Player* player = target->getAsConstPlayer();
     std::list<std::string> spells;
     const Effect* effect=nullptr;

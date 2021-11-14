@@ -144,6 +144,8 @@ int cmdCompare(Player* player, cmd* cmnd) {
     return(0);
 
 }
+
+
 // Rules for creating a new ownership object for unique items
 //      no - pet gets
 //      yes -get from normal room
@@ -151,125 +153,6 @@ int cmdCompare(Player* player, cmd* cmnd) {
 //      no - get from storage room
 //      no - get from storage container in room
 //      no - get from own container
-
-//*********************************************************************
-//                  equip
-//*********************************************************************
-
-bool Creature::equip(Object* object, bool showMessage) {
-    bool isWeapon = false;
-
-    switch(object->getWearflag()) {
-    case BODY:
-    case ARMS:
-    case LEGS:
-    case HANDS:
-    case HEAD:
-    case FEET:
-    case FACE:
-    case HELD:
-    case SHIELD:
-    case NECK:
-    case BELT:
-        // handle armor
-        ready[object->getWearflag()-1] = object;
-        break;
-    case FINGER:
-        // handle rings
-        for(int i=FINGER1; i<FINGER8+1; i++) {
-            if(!ready[i-1]) {
-                ready[i-1] = object;
-                break;
-            }
-        }
-        break;
-    case WIELD:
-        // handle weapons
-        if(!ready[WIELD-1]) {
-            // weapons going in the first hand
-            if(showMessage) {
-                printColor("You wield %1P.\n", object);
-                broadcast(getSock(), getRoomParent(), "%M wields %1P.", this, object);
-            }
-            ready[WIELD-1] = object;
-        } else if(!ready[HELD-1]) {
-            // weapons going in the off hand
-            if(showMessage) {
-                printColor("You wield %1P in your off hand.\n", object);
-                broadcast(getSock(), getRoomParent(), "%M wields %1P in %s off hand.",
-                    this, object, hisHer());
-            }
-            ready[HELD-1] = object;
-        } else
-            return(false);
-
-        isWeapon = true;
-        break;
-    default:
-        return(false);
-    }
-
-    // message for armor/rings
-    if(!isWeapon && showMessage) {
-        printColor("You wear %1P.\n", object);
-        broadcast(getSock(), getRoomParent(), "%M wore %1P.", this, object);
-    }
-
-
-    if(showMessage && object->getType() != ObjectType::CONTAINER && object->use_output[0])
-        printColor("%s\n", object->use_output);
-
-    object->setFlag(O_WORN);
-
-    delObj(object, false, false, true, false, true);
-
-    if(object->flagIsSet(O_EQUIPPING_BESTOWS_EFFECT)) {
-        if(Effect::objectCanBestowEffect(object->getEffect())) {
-            if(!isEffected(object->getEffect())) {
-                // passing keepApplier = true, which means this effect will continue to point to this object
-                addEffect(object->getEffect(), object->getEffectDuration(), object->getEffectStrength(), object, true, this, true);
-            }
-        } else {
-            object->clearFlag(O_EQUIPPING_BESTOWS_EFFECT);
-            if(isStaff())
-                printColor("^MClearing flag EquipEffect flag from %s^M.\n", object->getCName());
-        }
-    }
-
-    return(true);
-}
-
-//*********************************************************************
-//                      unequip
-//*********************************************************************
-
-Object* Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool showEffect) {
-    wearloc--;
-    Object* object = ready[wearloc];
-    ready[wearloc] = nullptr;
-    if(object) {
-        object->clearFlag(O_WORN);
-        
-        if(object->flagIsSet(O_EQUIPPING_BESTOWS_EFFECT))
-            removeEffect(object->getEffect(), showEffect, true, object);
-
-        // don't run checkDarkness if this isnt a dark item
-        if(!object->flagIsSet(O_DARKNESS))
-            darkness = false;
-        if(action == UNEQUIP_DELETE) {
-            Limited::remove(getAsPlayer(), object);
-            darkness = object->flagIsSet(O_DARKNESS);
-            delete object;
-            object = nullptr;
-        } else if(action == UNEQUIP_ADD_TO_INVENTORY) {
-            darkness = false;
-            addObj(object);
-        }
-    }
-    if(darkness)
-        checkDarkness();
-    return(object);
-}
 
 //*********************************************************************
 //                      cmdUse
@@ -791,58 +674,6 @@ int cmdEquipment(Player* player, cmd* cmnd) {
     player->printEquipList(player);
     return(0);
 
-}
-
-//*********************************************************************
-//                      printEquipList
-//*********************************************************************
-
-void Creature::printEquipList(const Player* viewer) {
-    if(ready[BODY-1])
-        viewer->printColor("On body:   %1P\n", ready[BODY-1]);
-    if(ready[ARMS-1])
-        viewer->printColor("On arms:   %1P\n", ready[ARMS-1]);
-    if(ready[LEGS-1])
-        viewer->printColor("On legs:   %1P\n", ready[LEGS-1]);
-    if(ready[NECK-1])
-        viewer->printColor("On neck:   %1P\n", ready[NECK-1]);
-    if(ready[HANDS-1])
-        viewer->printColor("On hands:  %1P\n", ready[HANDS-1]);
-    if(ready[HEAD-1])
-        viewer->printColor("On head:   %1P\n", ready[HEAD-1]);
-    if(ready[BELT-1])
-        viewer->printColor("On waist:  %1P\n", ready[BELT -1]);
-    if(ready[FEET-1])
-        viewer->printColor("On feet:   %1P\n", ready[FEET-1]);
-    if(ready[FACE-1])
-        viewer->printColor("On face:   %1P\n", ready[FACE-1]);
-    if(ready[FINGER1-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER1-1]);
-    if(ready[FINGER2-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER2-1]);
-    if(ready[FINGER3-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER3-1]);
-    if(ready[FINGER4-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER4-1]);
-    if(ready[FINGER5-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER5-1]);
-    if(ready[FINGER6-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER6-1]);
-    if(ready[FINGER7-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER7-1]);
-    if(ready[FINGER8-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER8-1]);
-    // dual wield
-    if(ready[HELD-1]) {
-        if(ready[HELD-1]->getWearflag() != WIELD)
-            viewer->printColor("Holding:   %1P\n", ready[HELD-1]);
-        else if(ready[HELD-1]->getWearflag() == WIELD)
-            viewer->printColor("In Hand:   %1P\n", ready[HELD-1]);
-    }
-    if(ready[SHIELD-1])
-        viewer->printColor("Shield:    %1P\n", ready[SHIELD-1]);
-    if(ready[WIELD-1])
-        viewer->printColor("Wielded:   %1P\n", ready[WIELD-1]);
 }
 
 //*********************************************************************
@@ -2868,19 +2699,6 @@ int cmdGive(Creature* creature, cmd* cmnd) {
     if(!canGiveTransport(creature, target, object, true))
         return(0);
 
-
-    /*
-    if(target->isPlayer() && !player->isCt()) {     // checks idle to keep jackasses from loading
-    t=time(0);                                                      // up someone's inventory with crap. -TC
-    idle = t - Ply[target->getSock()].io->ltime;
-
-    if(idle > 10 || target->flagIsSet(P_AFK)) {
-    player->print("You can't give that to %N right now.\n", target);
-    return(0);
-    }
-    }
-    */
-
     if(target->pFlagIsSet(P_AFK) && !player->isCt()) {
         player->print("You can't give that to %N when %s is afk.\n", target, target->heShe());
         return(0);
@@ -3049,39 +2867,27 @@ unsigned long getRepairCost(Player* player, Monster* smithy, Object* object) {
     skill = smithy->getSkillLevel();
 
     if(skill < 10)          /* 0-9 */
-    {
         mult = 0.1296;
-    } else if(skill < 20)   /* 10-19 */
-    {
+    else if(skill < 20)   /* 10-19 */
         mult = 0.216;
-    } else if(skill < 30)   /* 20-29 */
-    {
+    else if(skill < 30)   /* 20-29 */
         mult = 0.36;
-    } else if(skill < 40)   /* 30-39 */
-    {
+    else if(skill < 40)   /* 30-39 */
         mult = 0.6;
-    } else if(skill < 50)   /* 40-49 */
-    {
+    else if(skill < 50)   /* 40-49 */
         mult = 1.0;
-    } else if(skill < 60)   /* 50-59 */
-    {
+    else if(skill < 60)   /* 50-59 */
         mult = 1.5;
-    } else if(skill < 70)   /* 60-69 */
-    {
+    else if(skill < 70)   /* 60-69 */
         mult = 2.25;
-    } else if(skill < 80)   /* 70-79 */
-    {
+    else if(skill < 80)   /* 70-79 */
         mult = 3.375;
-    } else if(skill < 90)   /* 80-89 */
-    {
+    else if(skill < 90)   /* 80-89 */
         mult = 5.0625;
-    } else if(skill < 100)  /* 90-99 */
-    {
+    else if(skill < 100)  /* 90-99 */
         mult = 7.59375;
-    } else if(skill >= 100) /* 100+ */
-    {
+    else if(skill >= 100) /* 100+ */
         mult = 11.390625;
-    }
 
     // 1.5 moves it down a category in cost
     rcost = (float)cost * (mult / 1.5);
@@ -3321,33 +3127,23 @@ int cmdRepair(Player* player, cmd* cmnd) {
     repairChance -= alignDiff*10;
 
     if(skill < 30)          /* 00-29 */
-    {
         keepPlus = 0;
-    } else if(skill < 40)   /* 30-39 */
-    {
+    else if(skill < 40)   /* 30-39 */
         keepPlus = 5;
-    } else if(skill < 50)   /* 40-49 */
-    {
+    else if(skill < 50)   /* 40-49 */
         keepPlus = 10;
-    } else if(skill < 60)   /* 50-59 */
-    {
+    else if(skill < 60)   /* 50-59 */
         keepPlus = 15;
-    } else if(skill < 70)   /* 60-69 */
-    {
+    else if(skill < 70)   /* 60-69 */
         keepPlus = 20;
-    } else if(skill < 80)   /* 70-79 */
-    {
+    else if(skill < 80)   /* 70-79 */
         keepPlus = 50;
-    } else if(skill < 90)   /* 80-89 */
-    {
+    else if(skill < 90)   /* 80-89 */
         keepPlus = 75;
-    } else if(skill < 100)  /* 90-99 */
-    {
+    else if(skill < 100)  /* 90-99 */
         keepPlus = 85;
-    } else if(skill >= 100) /* 100+ */
-    {
+    else if(skill >= 100) /* 100+ */
         keepPlus = 100;
-    }
 
     roll = Random::get(1,100);
     /*if(player->isDm()) {
@@ -3395,59 +3191,4 @@ int cmdRepair(Player* player, cmd* cmnd) {
         delete object;
     }
     return(0);
-}
-
-//*********************************************************************
-//                      checkDarkness
-//*********************************************************************
-// checks the creature for a darkness item. if they have one, flag them
-
-void Creature::checkDarkness() {
-    clearFlag(isPlayer() ? P_DARKNESS : M_DARKNESS);
-    for(auto & i : ready) {
-        if(i && i->flagIsSet(O_DARKNESS)) {
-            setFlag(isPlayer() ? P_DARKNESS : M_DARKNESS);
-            return;
-        }
-    }
-    for(Object *obj : objects) {
-        if(obj->flagIsSet(O_DARKNESS)) {
-            setFlag(isPlayer() ? P_DARKNESS : M_DARKNESS);
-            return;
-        }
-    }
-}
-
-
-
-
-//*********************************************************************
-//                      count_inv
-//*********************************************************************
-// Returns the number of objects a creature has in their inventory.
-// If perm_only != false then only those objects which are permanent
-// will be counted.
-
-int Creature::countInv(bool permOnly) {
-    int total=0;
-    for(Object *obj : objects ) {
-        if(!permOnly || (permOnly && (obj->flagIsSet(O_PERM_ITEM))))
-            total++;
-    }
-    return(MIN(100,total));
-}
-
-
-//*********************************************************************
-//                      countBagInv
-//*********************************************************************
-int Creature::countBagInv() {
-    int total=0;
-    for(Object *obj : objects ) {
-        total++;
-        if(obj && obj->getType() == ObjectType::CONTAINER) {
-            total += obj->countObj();
-        }
-    }
-    return(total);
 }

@@ -16,92 +16,72 @@
  *
  */
 
-#include <arpa/telnet.h>               // for IAC, EOR, GA
-#include <fmt/format.h>                // for format
-#include <math.h>                      // for abs
-#include <unistd.h>                    // for unlink
-#include <commands.hpp>                // for cmdSave
-#include <cstdio>                      // for sprintf, rename
-#include <cstdlib>                     // for free, abs
-#include <cstring>                     // for strcpy, strlen, strcat
-#include <ctime>                       // for time, ctime
-#include <iomanip>                     // for operator<<, setw
-#include <list>                        // for list, operator==, list<>::cons...
-#include <locale>                      // for locale
-#include <map>                         // for operator==, _Rb_tree_const_ite...
-#include <ostream>                     // for operator<<, basic_ostream, ost...
-#include <set>                         // for set
-#include <string>                      // for string, allocator, char_traits
-#include <string_view>                 // for string_view
-#include <utility>                     // for pair
+#include <boost/algorithm/string/join.hpp>  // for join
+#include <fmt/format.h>                     // for format
+#include <math.h>                           // for abs
+#include <unistd.h>                         // for unlink
+#include <commands.hpp>                     // for cmdSave
+#include <cstdio>                           // for sprintf, rename
+#include <cstdlib>                          // for free, abs
+#include <cstring>                          // for strcpy, strlen, strcat
+#include <ctime>                            // for time, ctime
+#include <iomanip>                          // for operator<<, setw
+#include <list>                             // for list, operator==, list<>::cons...
+#include <locale>                           // for locale
+#include <map>                              // for operator==, _Rb_tree_const_ite...
+#include <ostream>                          // for operator<<, basic_ostream, ost...
+#include <set>                              // for set
+#include <string>                           // for string, allocator, char_traits
+#include <string_view>                      // for string_view
+#include <utility>                          // for pair
 
-#include "area.hpp"                    // for Area, MapMarker, MAX_VISION
-#include "catRef.hpp"                  // for CatRef
-#include "catRefInfo.hpp"              // for CatRefInfo
-#include "clans.hpp"                   // for Clan
-#include "config.hpp"                  // for Config, gConfig
-#include "deityData.hpp"               // for DeityData
-#include "dice.hpp"                    // for Dice
-#include "effects.hpp"                 // for EffectInfo
-#include "flags.hpp"                   // for P_DM_INVIS, P_CHAOTIC, O_DARKNESS
-#include "free_crt.hpp"                // for free_crt
-#include "global.hpp"                  // for CreatureClass, CreatureClass::...
-#include "guilds.hpp"                  // for Guild
-#include "hooks.hpp"                   // for Hooks
-#include "lasttime.hpp"                // for lasttime
-#include "location.hpp"                // for Location
-#include "magic.hpp"                   // for S_ARMOR, S_BLOODFUSION, S_MAGI...
-#include "money.hpp"                   // for GOLD, Money
-#include "move.hpp"                    // for getRoom
-#include "mud.hpp"                     // for LT, LT_PLAYER_SEND, LT_AGE
-#include "mudObjects/areaRooms.hpp"    // for AreaRoom
-#include "mudObjects/container.hpp"    // for ObjectSet, PlayerSet
-#include "mudObjects/creatures.hpp"    // for Creature, PetList
-#include "mudObjects/monsters.hpp"     // for Monster
-#include "mudObjects/objects.hpp"      // for Object, ObjectType, ObjectType...
-#include "mudObjects/players.hpp"      // for Player
-#include "mudObjects/rooms.hpp"        // for BaseRoom, ExitList
-#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
-#include "paths.hpp"                   // for Help, Bank, DMHelp, History
-#include "property.hpp"                // for Property
-#include "proto.hpp"                   // for bonus, broadcast, abortFindRoom
-#include "raceData.hpp"                // for RaceData
-#include "random.hpp"                  // for Random
-#include "realm.hpp"                   // for Realm
-#include "server.hpp"                  // for Server, gServer, PlayerMap
-#include "size.hpp"                    // for NO_SIZE, SIZE_MEDIUM
-#include "skillGain.hpp"               // for SkillGain
-#include "socket.hpp"                  // for Socket
-#include "startlocs.hpp"               // for StartLoc
-#include "statistics.hpp"              // for Statistics
-#include "stats.hpp"                   // for Stat, MOD_CUR
-#include "structs.hpp"                 // for daily
-#include "unique.hpp"                  // for remove, deleteOwner
-#include "utils.hpp"                   // for MIN, MAX
-#include "xml.hpp"                     // for loadRoom
+#include "area.hpp"                         // for Area, MapMarker, MAX_VISION
+#include "catRef.hpp"                       // for CatRef
+#include "catRefInfo.hpp"                   // for CatRefInfo
+#include "clans.hpp"                        // for Clan
+#include "config.hpp"                       // for Config, gConfig
+#include "deityData.hpp"                    // for DeityData
+#include "dice.hpp"                         // for Dice
+#include "effects.hpp"                      // for EffectInfo
+#include "flags.hpp"                        // for P_DM_INVIS, P_CHAOTIC, O_DARKNESS
+#include "free_crt.hpp"                     // for free_crt
+#include "global.hpp"                       // for CreatureClass, CreatureClass::...
+#include "guilds.hpp"                       // for Guild
+#include "lasttime.hpp"                     // for lasttime
+#include "levelGain.hpp"                    // for LevelGain
+#include "location.hpp"                     // for Location
+#include "magic.hpp"                        // for S_ARMOR, S_BLOODFUSION, S_MAGI...
+#include "money.hpp"                        // for GOLD, Money
+#include "move.hpp"                         // for getRoom
+#include "mud.hpp"                          // for LT, LT_PLAYER_SEND, LT_AGE
+#include "mudObjects/areaRooms.hpp"         // for AreaRoom
+#include "mudObjects/container.hpp"         // for ObjectSet, PlayerSet
+#include "mudObjects/creatures.hpp"         // for Creature, PetList
+#include "mudObjects/monsters.hpp"          // for Monster
+#include "mudObjects/objects.hpp"           // for Object, ObjectType, ObjectType...
+#include "mudObjects/players.hpp"           // for Player
+#include "mudObjects/rooms.hpp"             // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"       // for UniqueRoom
+#include "os.hpp"                           // for merror
+#include "paths.hpp"                        // for Help, Bank, DMHelp, History
+#include "playerClass.hpp"                  // for PlayerClass
+#include "property.hpp"                     // for Property
+#include "proto.hpp"                        // for bonus, broadcast, abortFindRoom
+#include "raceData.hpp"                     // for RaceData
+#include "random.hpp"                       // for Random
+#include "realm.hpp"                        // for Realm
+#include "server.hpp"                       // for Server, gServer, PlayerMap
+#include "size.hpp"                         // for NO_SIZE, SIZE_MEDIUM
+#include "skillGain.hpp"                    // for SkillGain
+#include "socket.hpp"                       // for Socket
+#include "startlocs.hpp"                    // for StartLoc
+#include "statistics.hpp"                   // for Statistics
+#include "stats.hpp"                        // for Stat, MOD_CUR
+#include "structs.hpp"                      // for daily
+#include "unique.hpp"                       // for remove, deleteOwner
+#include "utils.hpp"                        // for MIN, MAX
+#include "xml.hpp"                          // for loadRoom
 
-//********************************************************************
-//              fixLts
-//********************************************************************
-
-void Creature::fixLts() {
-    long tdiff=0, t = time(nullptr);
-    int i=0;
-    if(isPet())  {
-        tdiff = t - getMaster()->lasttime[LT_AGE].ltime;
-    }
-    else
-        tdiff = t - lasttime[LT_AGE].ltime;
-    for(i=0; i<MAX_LT; i++) {
-        if(i == LT_JAILED)
-            continue;
-        // Fix pet fade on login here
-        if(lasttime[i].ltime == 0 && lasttime[i].interval == 0)
-            continue;
-        lasttime[i].ltime += tdiff;
-        lasttime[i].ltime = MIN(t, lasttime[i].ltime);
-    }
-}
 
 //********************************************************************
 //              init
@@ -111,10 +91,9 @@ void Creature::fixLts() {
 // logs on.
 
 void Player::init() {
-    char    file[80], str[50], watchers[128];
+    char    file[80], str[50];
     BaseRoom *newRoom=nullptr;
     long    t = time(nullptr);
-    int     watch=0;
 
     statistics.setParent(this);
 
@@ -165,14 +144,6 @@ void Player::init() {
         cClass = CreatureClass::CARETAKER;
 
 
-
-    /* change this later
-       strength.getCur() = strength.max;
-    dexterity.getCur() = dexterity.max;
-    constitution.getCur() = constitution.max;
-    intelligence.getCur() = intelligence.max;
-    piety.getCur() = piety.max;
-    */
     if(!isStaff()) {
         daily[DL_ENCHA].max = 3;
         daily[DL_FHEAL].max = MAX(3, 3 + (level) / 3);
@@ -209,14 +180,10 @@ void Player::init() {
         setFlag(P_DM_INVIS);
     }
 
-
     if(isDm())
         clearFlag(P_BUGGED);
 
-
-
-    //if((race != KATARAN && race != TROLL))
-    learnLanguage(LCOMMON); // All races speak common but troll and kataran.
+    learnLanguage(LCOMMON); // All races speak common
 
     //Barbarians get natural warmth. They're from the frozen tundra.
     if(race == BARBARIAN) {
@@ -229,19 +196,13 @@ void Player::init() {
         setFlag(P_LANGUAGE_COLORS);
     }
 
-
-
-    //  Paladins get auto know-aur
+    //  Paladins get auto know-aura
     if(cClass==CreatureClass::PALADIN)
         addPermEffect("know-aura");
+
     //  Mages get auto d-m
-    if( (   cClass==CreatureClass::MAGE ||
-            cClass2 == CreatureClass::MAGE
-        ) &&
-        !(  cClass == CreatureClass::MAGE &&
-            cClass2 == CreatureClass::ASSASSIN
-        ))
-    {
+    if( (   cClass==CreatureClass::MAGE || cClass2 == CreatureClass::MAGE) &&
+       !( cClass == CreatureClass::MAGE && cClass2 == CreatureClass::ASSASSIN)) {
         addPermEffect("detect-magic");
     }
 
@@ -289,7 +250,6 @@ void Player::init() {
     clearFlag(P_NO_TELLS);
     clearFlag(P_PORTAL);
 
-
     if(!flagIsSet(P_OUTLAW))
         setFlag(P_NO_SUMMON);
 
@@ -322,11 +282,7 @@ void Player::init() {
     // player to the room or the messages will be out of order
     if(!newRoom) {
         Property *p = gConfig->getProperty(currentLocation.room);
-        if( p &&
-            p->getType() == PROP_STORAGE &&
-            !p->isOwner(getName()) &&
-            !p->isPartialOwner(getName()) )
-        {
+        if( p && p->getType() == PROP_STORAGE && !p->isOwner(getName()) && !p->isPartialOwner(getName()) ) {
             // default to bound location
             Location l = bound;
             // but go to previous room, if possible
@@ -362,25 +318,14 @@ void Player::init() {
 
 
         if(uRoom && !isStaff() && !gServer->isRebooting()) {
-            if( (   uRoom->flagIsSet(R_LOG_INTO_TRAP_ROOM) ||
-                    uRoom->flagIsSet(R_SHOP_STORAGE) ||
-                    uRoom->hasTraining()
-                ) &&
-                uRoom->getTrapExit().id &&
-                !loadRoom(uRoom->getTrapExit(), &uRoom)
-            ) {
+            if( (   uRoom->flagIsSet(R_LOG_INTO_TRAP_ROOM) || uRoom->flagIsSet(R_SHOP_STORAGE) || uRoom->hasTraining()) &&
+                uRoom->getTrapExit().id && !loadRoom(uRoom->getTrapExit(), &uRoom)) {
                 broadcast(::isCt, fmt::format("^y{}: {} ({}) Attempted logon to bad or missing room!", getName(), getSock()->getHostname(), uRoom->getTrapExit().str()).c_str());
                 newRoom = abortFindRoom(this, "init_ply");
                 uRoom = newRoom->getAsUniqueRoom();
             }
 
-            if( uRoom &&
-                (   uRoom->isFull() ||
-                    uRoom->flagIsSet(R_NO_LOGIN) ||
-                    (!isStaff() && !flagIsSet(P_PTESTER) && uRoom->isConstruction()) ||
-                    (!isStaff() && uRoom->flagIsSet(R_SHOP_STORAGE))
-                )
-            ) {
+            if( uRoom && (   uRoom->isFull() || uRoom->flagIsSet(R_NO_LOGIN) || (!isStaff() && !flagIsSet(P_PTESTER) && uRoom->isConstruction()) || (!isStaff() && uRoom->flagIsSet(R_SHOP_STORAGE)))) {
                 newRoom = getRecallRoom().loadRoom(this);
                 if(!newRoom) {
                     broadcast(::isCt, fmt::format("^y{}: {} ({}) Attempted logon to bad or missing room!", getName(), getSock()->getHostname(), getRecallRoom().str()).c_str());
@@ -414,8 +359,6 @@ void Player::init() {
     addToRoom(newRoom);
 
     checkDarkness();
-
-
 
     for(Monster* pet : pets) {
         pet->setMaster(this);
@@ -473,31 +416,19 @@ void Player::init() {
         sock->viewFile(file, false);
 
         hasNewMudmail();
-    }
 
-    if(!gServer->isRebooting()) {
-        strcpy(watchers, "");
         printColor("^yWatchers currently online: ");
-        Player* ply;
-        for(const auto& p : gServer->players) {
-            ply = p.second;
+        std::list<std::string> watchers;
+        for(const auto& [pName, ply] : gServer->players) {
+            if(!ply->isConnected()) continue;
+            if(!ply->isPublicWatcher()) continue;
+            if(!canSee(ply)) continue;
 
-            if(!ply->isConnected())
-                continue;
-            if(!ply->isPublicWatcher())
-                continue;
-            if(!canSee(ply))
-                continue;
-
-            strcat(watchers, ply->getCName());
-            strcat(watchers, ", ");
-            watch++;
+            watchers.emplace_back(ply->getName());
         }
 
-        if(watch) {
-            watchers[strlen(watchers) - 2] = '.';
-            watchers[strlen(watchers) - 1] = 0;
-            printColor("%s\n", watchers);
+        if(!watchers.empty()) {
+            printColor(fmt::format("{}.\n", boost::algorithm::join(watchers, ", ")).c_str());
         } else
             printColor("None.\n");
     }
@@ -511,7 +442,7 @@ void Player::init() {
 
     // only players and builders are effected
     if(!isCt()) {
-        // players can't set eavesdropper flag anymore
+        // players can't set eavesdropper flag
         clearFlag(P_EAVESDROPPER);
         clearFlag(P_SUPER_EAVESDROPPER);
         // DM/CT only flag
@@ -696,209 +627,6 @@ void Player::checkInventory( ) {
     }
 }
 
-//*********************************************************************
-//                      checkEffectsWearingOff
-//*********************************************************************
-
-void Player::checkEffectsWearingOff() {
-    long t = time(nullptr);
-    int staff = isStaff();
-
-    // Added P_STUNNED and LT_PLAYER_STUNNED stun for dodge code.
-    if(flagIsSet(P_STUNNED)) {
-        if(t > LT(this, LT_PLAYER_STUNNED)) {
-            clearFlag(P_STUNNED);
-        }
-    }
-
-    if(flagIsSet(P_FOCUSED) && (cClass == CreatureClass::MONK || staff)) {
-        if(t > LT(this, LT_FOCUS)) {
-            printColor("^cYou lose your concentration.\n");
-            clearFlag(P_FOCUSED);
-            //computeAC();
-            computeAttackPower();
-        }
-    }
-    if(flagIsSet(P_MISTBANE)) {
-        if(t > LT(this, LT_FOCUS)) {
-            printColor("^bYour mistbane is ended.\n");
-            clearFlag(P_MISTBANE);
-        }
-    }
-
-    if(flagIsSet(P_OUTLAW)) {
-        if(t > LT(this, LT_OUTLAW)) {
-            printColor("^yYou are no longer an outlaw.\n");
-            clearFlag(P_OUTLAW);
-            clearFlag(P_OUTLAW_WILL_BE_ATTACKED);
-            setFlag(P_NO_SUMMON);
-            clearFlag(P_OUTLAW_WILL_LOSE_XP);
-            clearFlag(P_NO_GET_ALL);
-        }
-    }
-
-    // only force them to wake from sleeping unconsciousness when they're
-    // completely healed.
-    if(flagIsSet(P_UNCONSCIOUS)) {
-        if( (   !flagIsSet(P_SLEEPING) &&
-                t > LT(this, LT_UNCONSCIOUS)
-            ) ||
-            (   flagIsSet(P_SLEEPING) && (
-                (hp.getCur() >= hp.getMax() && mp.getCur() >= mp.getMax()) ||
-                (cClass == CreatureClass::PUREBLOOD && !getRoomParent()->vampCanSleep(getSock()))
-            ) )
-        ) {
-            printColor("^cYou wake up.\n");
-            clearFlag(P_UNCONSCIOUS);
-            wake();
-
-            clearFlag(P_DIED_IN_DUEL);
-            broadcast(getSock(), getRoomParent(), "%M wakes up.", this);
-        }
-    }
-
-    if(flagIsSet(P_NO_SUICIDE)) {
-        if(t > LT(this, LT_MOBDEATH)) {
-            printColor("^yYour cooling-off period has ended.\n");
-            clearFlag(P_NO_SUICIDE);
-        }
-    }
-    if(flagIsSet(P_HIDDEN) && !staff) {
-        if(t - lasttime[LT_HIDE].ltime > 300L) {
-            printColor("^cShifting shadows expose you.\n");
-            unhide(false);
-        }
-    }
-    if(flagIsSet(P_FREE_ACTION)) {
-        if(t > LT(this, LT_FREE_ACTION)) {
-            printColor("^c^#You no longer magically move freely.\n");
-            clearFlag(P_FREE_ACTION);
-            computeAC();
-            computeAttackPower();
-        }
-    }
-
-    if(flagIsSet(P_NO_PKILL)) {
-        if(t > LT(this, LT_NO_PKILL)) {
-            printColor("^c^#You can now be pkilled again.\n");
-            clearFlag(P_NO_PKILL);
-        }
-    }
-
-
-
-    if(flagIsSet(P_DOCTOR_KILLER)) {
-        if(t > LT(this, LT_KILL_DOCTOR) || staff) {
-            printColor("^y^#The doctors have forgiven you.\n");
-            clearFlag(P_DOCTOR_KILLER);
-        }
-    }
-
-
-    if(flagIsSet(P_NO_TICK_MP)) {
-        if(t > LT(this, LT_NOMPTICK) || staff) {
-            printColor("^cYour magical vitality has returned.\n");
-            clearFlag(P_NO_TICK_MP);
-        }
-
-    }
-
-    if(flagIsSet(P_NO_TICK_HP)) {
-        if(t > LT(this, LT_NOHPTICK) || staff) {
-            printColor("^gYou now heal normally again.\n");
-            clearFlag(P_NO_TICK_HP);
-        }
-    }
-
-    if(flagIsSet(P_CANT_BROADCAST)) {
-        if(t > LT(this, LT_NO_BROADCAST)) {
-            printColor("^rYou can broadcast again, now don't abuse it this time.\n");
-            clearFlag(P_CANT_BROADCAST);
-        }
-    }
-
-    if(isEffected("mist")) {
-        if(isDay() && !staff)
-            unmist();
-    }
-    if(flagIsSet(P_CHARMED)) {
-        if(t > LT(this, LT_CHARMED) || staff) {
-            printColor("^yYou are again in control of your actions.\n");
-            clearFlag(P_CHARMED);
-        }
-    }
-
-    if(negativeLevels) {
-        if(t > LT(this, LT_LEVEL_DRAIN) || staff) {
-            long expTemp=0;
-            negativeLevels--;
-            if(negativeLevels) {
-                printColor("^WYou have regained a lost level.\n");
-                expTemp = experience;
-                upLevel();
-                experience = expTemp;
-
-                lasttime[LT_LEVEL_DRAIN].ltime = t;
-                lasttime[LT_LEVEL_DRAIN].interval = 60L + 5*bonus(constitution.getCur());
-            } else {
-                printColor("^WYou have recovered all your lost levels.\n");
-                expTemp = experience;
-                upLevel();
-                experience = expTemp;
-            }
-        }
-    }
-
-    if(t > LT(this, LT_JAILED) && flagIsSet(P_JAILED)) {
-        printColor("^rA demonic jailer just arrived.\n");
-        printColor("The demonic jailer says, \"You have been released from your torment.\"\n");
-        printColor("The demonic jailer casts word of recall on you.\n");
-
-        broadcast(getSock(), getRoomParent(), "A demonic jailer just arrived.\nThe demonic jailer casts word of recall on %s.", getCName());
-        broadcast(getSock(), getRoomParent(), "The demonic jailer sneers evilly and spits on you.\nThe demonic jailer vanishes.");
-        broadcast("^R### Cackling demons shove %s from the Dungeon of Despair.", getCName());
-        doRecall();
-
-        clearFlag(P_JAILED);
-    }
-
-
-    if( t > LT(this, LT_MOB_JAILED) &&
-        inUniqueRoom() && getUniqueRoomParent()->flagIsSet(R_MOB_JAIL) &&
-        !staff
-    ) {
-        printColor("A jailer just arrived.\n");
-        printColor("The jailer says, \"You're free to go...get out!\"\n");
-        printColor("The jailer opens the cell door and shoves you out.\n");
-        printColor("The jailer goes back to napping.\n");
-
-        doRecall();
-    }
-}
-
-//*********************************************************************
-//                      doPetrificationDmg
-//*********************************************************************
-
-bool Creature::doPetrificationDmg() {
-    if(!isEffected("petrification"))
-        return(false);
-
-    wake("Terrible nightmares disturb your sleep!");
-    printColor("^c^#Petrification spreads toward your heart.\n");
-    hp.decrease(MAX<int>(1,(hp.getMax()/15 - bonus(constitution.getCur()))));
-
-    if(hp.getCur() < 1) {
-        Player* pThis = getAsPlayer();
-        if(pThis)
-            pThis->die(PETRIFIED);
-        else
-            die(this);
-        return(true);
-    }
-    return(false);
-}
-
 
 
 //*********************************************************************
@@ -978,126 +706,6 @@ void Player::update() {
 }
 
 //*********************************************************************
-//                      addObj
-//*********************************************************************
-// This function adds the object pointer to by the first parameter to
-// the inventory of the player pointed to by the second parameter.
-
-void Creature::addObj(Object* object) {
-    Player* pPlayer = getAsPlayer();
-
-    object->validateId();
-
-    Hooks::run(this, "beforeAddObject", object, "beforeAddToCreature");
-    object->clearFlag(O_JUST_LOADED);
-
-    // players have big inventories; to keep the mud from searching them when it
-    // doesnt need to, record a flag on the player
-    if(pPlayer && object->flagIsSet(O_DARKMETAL))
-        setFlag(P_DARKMETAL);
-    if(object->flagIsSet(O_DARKNESS))
-        setFlag(pPlayer ? P_DARKNESS : M_DARKNESS);
-
-    object->addTo(this);
-    //add(object);
-
-    if(pPlayer)
-        pPlayer->updateItems(object);
-
-    Hooks::run(this, "afterAddObject", object, "afterAddToCreature");
-
-    killDarkmetal();
-}
-
-//*********************************************************************
-//                      finishDelObj
-//*********************************************************************
-// This function removes the object pointer to by the first parameter
-// from the player pointed to by the second. This does NOT DELETE THE
-// OBJECT. You will have to do that yourself, if desired.
-
-// we put in a choice to do darkmetal or not so we won't have
-// recursion problems
-// if you pass false to darkness, you MUST run checkDarkness() unless
-// you are certain the item you are deleted isn't flagged O_DARKNESS
-
-void Creature::finishDelObj(Object* object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep) {
-    if(darkmetal)
-        killDarkmetal();
-    if(breakUnique || removeUnique) {
-        Player* player = getPlayerMaster();
-        if(player) {
-            if(breakUnique)
-                Limited::remove(player, object);
-            else if(removeUnique)
-                Limited::deleteOwner(player, object);
-        }
-    }
-    if(darkness)
-        checkDarkness();
-    if(!keep)
-        object->clearFlag(O_KEEP);
-
-    Hooks::run(this, "afterRemoveObject", object, "afterRemoveFromCreature");
-}
-
-//*********************************************************************
-//                      delObj
-//*********************************************************************
-
-void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep) {
-    Hooks::run(this, "beforeRemoveObject", object, "beforeRemoveFromCreature");
-
-    // don't run checkDarkness if this isnt a dark item
-    if(!object->flagIsSet(O_DARKNESS))
-        darkness = false;
-    object->clearFlag(O_BEING_PREPARED);
-    object->clearFlag(O_HIDDEN);
-    object->clearFlag(O_JUST_LOADED);
-
-    // if it doesnt have a parent_crt, it's either being worn or is in a bag
-    if(!object->inCreature()) {
-        // the object is being worn
-        if(object->getWearflag() && ready[object->getWearflag()-1] == object) {
-            unequip(object->getWearflag(), UNEQUIP_NOTHING, false);
-            finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
-        } else {
-            // the object is in a bag somewhere
-            // problem is, we don't know which bag
-            for(Object* obj : objects) {
-                if(obj->getType() == ObjectType::CONTAINER) {
-                    for(Object* subObj : obj->objects ) {
-                        if(subObj == object) {
-                            obj->delObj(object);
-                            finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
-                            return;
-                        }
-                    }
-                }
-            }
-
-            // not in their inventory? they must be wearing a bag
-            for(auto & i : ready) {
-                if(!i)
-                    continue;
-                if(i->getType() == ObjectType::CONTAINER) {
-                    for(Object* obj : i->objects) {
-                        if(obj == object) {
-                            i->delObj(object);
-                            finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-        return;
-    }
-    object->removeFrom();
-    finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
-}
-
-//*********************************************************************
 //                      computeAC
 //*********************************************************************
 // This function computes a player's armor class by
@@ -1171,210 +779,6 @@ int Player::getArmorWeight() const {
     return(weight);
 }
 
-
-//*********************************************************************
-//                      mprofic
-//*********************************************************************
-// This function returns the magical realm proficiency as a percentage
-
-int mprofic(const Creature* player, int index) {
-    const Player *pPlayer = player->getAsConstPlayer();
-    long    prof_array[12];
-    int i=0, n=0, prof=0;
-
-    switch(player->getClass()) {
-    case CreatureClass::MAGE:
-        if(pPlayer && (pPlayer->getSecondClass() == CreatureClass::ASSASSIN || pPlayer->getSecondClass() == CreatureClass::THIEF)) {
-            prof_array[0] = 0L;
-            prof_array[1] = 1024L;
-            prof_array[2] = 4092L;
-            prof_array[3] = 8192L;
-            prof_array[4] = 16384L;
-            prof_array[5] = 32768L;
-            prof_array[6] = 70536L;
-            prof_array[7] = 119000L;
-            prof_array[8] = 226410L;
-            prof_array[9] = 709410L;
-            prof_array[10] = 2973307L;
-            prof_array[11] = 500000000L;
-        } else {
-            prof_array[0] = 0L;
-            prof_array[1] = 1024L;
-            prof_array[2] = 2048L;
-            prof_array[3] = 4096L;
-            prof_array[4] = 8192L;
-            prof_array[5] = 16384L;
-            prof_array[6] = 35768L;
-            prof_array[7] = 85536L;
-            prof_array[8] = 140000L;
-            prof_array[9] = 459410L;
-            prof_array[10] = 2073306L;
-            prof_array[11] = 500000000L;
-
-        }
-        break;
-    case CreatureClass::LICH:
-        prof_array[0] = 0L;
-        prof_array[1] = 1024L;
-        prof_array[2] = 2048L;
-        prof_array[3] = 4096L;
-        prof_array[4] = 8192L;
-        prof_array[5] = 16384L;
-        prof_array[6] = 35768L;
-        prof_array[7] = 85536L;
-        prof_array[8] = 140000L;
-        prof_array[9] = 459410L;
-        prof_array[10] = 2073306L;
-        prof_array[11] = 500000000L;
-        break;
-    case CreatureClass::CLERIC:
-        if(pPlayer && (pPlayer->getSecondClass() == CreatureClass::ASSASSIN || pPlayer->getSecondClass() == CreatureClass::FIGHTER)) {
-            prof_array[0] = 0L;
-            prof_array[1] = 1024L;
-            prof_array[2] = 8192L;
-            prof_array[3] = 16384L;
-            prof_array[4] = 32768L;
-            prof_array[5] = 65536L;
-            prof_array[6] = 105000L;
-            prof_array[7] = 165410L;
-            prof_array[8] = 287306L;
-            prof_array[9] = 809410L;
-            prof_array[10] = 3538232L;
-            prof_array[11] = 500000000L;
-        } else {
-            prof_array[0] = 0L;
-            prof_array[1] = 1024L;
-            prof_array[2] = 4092L;
-            prof_array[3] = 8192L;
-            prof_array[4] = 16384L;
-            prof_array[5] = 32768L;
-            prof_array[6] = 70536L;
-            prof_array[7] = 119000L;
-            prof_array[8] = 226410L;
-            prof_array[9] = 709410L;
-            prof_array[10] = 2973307L;
-            prof_array[11] = 500000000L;
-        }
-        break;
-    case CreatureClass::THIEF:
-        if(pPlayer && pPlayer->getSecondClass() == CreatureClass::MAGE) {
-            prof_array[0] = 0L;
-            prof_array[1] = 1024L;
-            prof_array[2] = 8192L;
-            prof_array[3] = 16384L;
-            prof_array[4] = 32768L;
-            prof_array[5] = 65536L;
-            prof_array[6] = 105000L;
-            prof_array[7] = 165410L;
-            prof_array[8] = 287306L;
-            prof_array[9] = 809410L;
-            prof_array[10] = 3538232L;
-            prof_array[11] = 500000000L;
-        } else {
-            prof_array[0] = 0L;
-            prof_array[1] = 1024L;
-            prof_array[2] = 40000L;
-            prof_array[3] = 80000L;
-            prof_array[4] = 120000L;
-            prof_array[5] = 160000L;
-            prof_array[6] = 205000L;
-            prof_array[7] = 222000L;
-            prof_array[8] = 380000L;
-            prof_array[9] = 965410L;
-            prof_array[10] = 5495000;
-            prof_array[11] = 500000000L;
-        }
-        break;
-
-    case CreatureClass::FIGHTER:
-        if(pPlayer && pPlayer->getSecondClass() == CreatureClass::MAGE) {
-            prof_array[0] = 0L;
-            prof_array[1] = 1024L;
-            prof_array[2] = 8192L;
-            prof_array[3] = 16384L;
-            prof_array[4] = 32768L;
-            prof_array[5] = 65536L;
-            prof_array[6] = 105000L;
-            prof_array[7] = 165410L;
-            prof_array[8] = 287306L;
-            prof_array[9] = 809410L;
-            prof_array[10] = 3538232L;
-            prof_array[11] = 500000000L;
-        } else {
-            prof_array[0] = 0L;
-            prof_array[1] = 1024L;
-            prof_array[2] = 40000L;
-            prof_array[3] = 80000L;
-            prof_array[4] = 120000L;
-            prof_array[5] = 160000L;
-            prof_array[6] = 205000L;
-            prof_array[7] = 222000L;
-            prof_array[8] = 380000L;
-            prof_array[9] = 965410L;
-            prof_array[10] = 5495000;
-            prof_array[11] = 500000000L;
-        }
-        break;
-    case CreatureClass::PALADIN:
-    case CreatureClass::BARD:
-    case CreatureClass::PUREBLOOD:
-    case CreatureClass::DRUID:
-        prof_array[0] = 0L;
-        prof_array[1] = 1024L;
-        prof_array[2] = 4092L;
-        prof_array[3] = 8192L;
-        prof_array[4] = 16384L;
-        prof_array[5] = 32768L;
-        prof_array[6] = 70536L;
-        prof_array[7] = 119000L;
-        prof_array[8] = 226410L;
-        prof_array[9] = 709410L;
-        prof_array[10] = 2973307L;
-        prof_array[11] = 500000000L;
-        break;
-    case CreatureClass::DEATHKNIGHT:
-    case CreatureClass::MONK:
-    case CreatureClass::RANGER:
-        prof_array[0] = 0L;
-        prof_array[1] = 1024L;
-        prof_array[2] = 8192L;
-        prof_array[3] = 16384L;
-        prof_array[4] = 32768L;
-        prof_array[5] = 65536L;
-        prof_array[6] = 105000L;
-        prof_array[7] = 165410L;
-        prof_array[8] = 287306L;
-        prof_array[9] = 809410L;
-        prof_array[10] = 3538232L;
-        prof_array[11] = 500000000L;
-        break;
-    default:
-        prof_array[0] = 0L;
-        prof_array[1] = 1024L;
-        prof_array[2] = 40000L;
-        prof_array[3] = 80000L;
-        prof_array[4] = 120000L;
-        prof_array[5] = 160000L;
-        prof_array[6] = 205000L;
-        prof_array[7] = 222000L;
-        prof_array[8] = 380000L;
-        prof_array[9] = 965410L;
-        prof_array[10] = 5495000;
-        prof_array[11] = 500000000L;
-        break;
-    }
-
-    n = player->getRealm((Realm)index);
-    for(i=0; i<11; i++)
-        if(n < prof_array[i+1]) {
-            prof = 10*i;
-            break;
-        }
-
-    prof += ((n - prof_array[i])*10) / (prof_array[i+1] - prof_array[i]);
-
-    return(prof);
-}
 
 //*********************************************************************
 //                      getFallBonus
@@ -1458,8 +862,7 @@ int Player::getLight() const {
         if (!ready[i])
             continue;
         if (ready[i]->flagIsSet(O_LIGHT_SOURCE)) {
-            if ((ready[i]->getType() == ObjectType::LIGHTSOURCE &&
-                ready[i]->getShotsCur() > 0) ||
+            if ((ready[i]->getType() == ObjectType::LIGHTSOURCE && ready[i]->getShotsCur() > 0) ||
                 ready[i]->getType() != ObjectType::LIGHTSOURCE) {
                 light = 1;
                 break;
@@ -1470,63 +873,6 @@ int Player::getLight() const {
     if(light)
         return (i + 1);
     return(0);
-}
-
-//***********************************************************************
-//                      sendPrompt
-//***********************************************************************
-// This function returns the prompt that the player should be seeing
-
-void Player::sendPrompt() {
-    std::string toPrint;
-
-    if(fd < 0)
-        return;
-
-    // no prompt in this situation
-    if(flagIsSet(P_SPYING) || flagIsSet(P_READING_FILE))
-        return;
-
-    if(flagIsSet(P_PROMPT) || flagIsSet(P_ALIASING)) {
-        std::ostringstream promptStr;
-
-        if(!flagIsSet(P_NO_EXTRA_COLOR))
-            promptStr << alignColor();
-
-        if(flagIsSet(P_ALIASING) && alias_crt) {
-            promptStr << "(" << alias_crt->hp.getCur() << " H " << alias_crt->mp.getCur() << " M): ";
-        } else {
-            promptStr << "(" << hp.getCur() << " H";
-            if(cClass != CreatureClass::LICH && cClass != CreatureClass::BERSERKER
-                    && (cClass != CreatureClass::FIGHTER || !flagIsSet(P_PTESTER)))
-                promptStr << " " << mp.getCur() << " M";
-            else if(cClass == CreatureClass::FIGHTER && flagIsSet(P_PTESTER))
-                promptStr << " " << focus.getCur() << " F";
-
-            if(flagIsSet(P_SHOW_XP_IN_PROMPT))
-                promptStr << " " << expToLevel(true);
-            promptStr << "):^x ";
-
-        }
-        toPrint = promptStr.str();
-    } else
-        toPrint = ": ";
-
-    if(flagIsSet(P_AFK))
-        toPrint += "^r[AFK]^x ";
-    if(flagIsSet(P_NEWLINE_AFTER_PROMPT))
-        toPrint += "\n";
-
-    // Send EOR if they want it, otherwise send GA
-    if(getSock()->eorEnabled()) {
-        char eor_str[] = {(char)IAC, (char)EOR, '\0' };
-        toPrint.append(eor_str);
-    } else if(!getSock()->isDumbClient()){
-        char ga_str[] = {(char)IAC, (char)GA, '\0' };
-        toPrint.append(ga_str);
-    }
-
-    mySock->write(toPrint);
 }
 
 //*********************************************************************
@@ -1579,45 +925,6 @@ int Player::computeLuck() {
     luck = num;
     return(num);
 }
-
-//*********************************************************************
-//                      getStatusStr
-//*********************************************************************
-// returns a status string that describes the hp condition of the creature
-
-const char* Creature::getStatusStr(int dmg) {
-    int health = hp.getCur() - dmg;
-
-    if(health < 1)
-        return "'s dead!";
-
-    switch(MIN<int>(health * 10 / (hp.getMax() ? hp.getMax() : 1), 10)) {
-    case 10:
-        return("'s unharmed.");
-    case 9:
-        return("'s relatively unscathed.");
-    case 8:
-        return("'s a little battered.");
-    case 7:
-        return("'s getting bruised.");
-    case 6:
-        return("'s noticeably bleeding.");
-    case 5:
-        return("'s having some trouble.");
-    case 4:
-        return(" doesn't look too good.");
-    case 3:
-        return("'s beginning to stagger.");
-    case 2:
-        return(" has some nasty wounds.");
-    case 1:
-        return(" isn't going to last much longer.");
-    case 0:
-        return(" is about to die!");
-    }
-    return("");
-}
-
 
 //*********************************************************************
 //                      checkForSpam
@@ -1957,181 +1264,6 @@ void Player::doRecall(int roomNum) {
 
 
 //*********************************************************************
-//                      recallWhere
-//*********************************************************************
-// Because of ethereal plane, we don't always know where we're going to
-// recall to. We need a function to figure out where we are going.
-
-BaseRoom* Creature::recallWhere() {
-    // A builder should never get this far, but let's not chance it.
-    // Only continue if they can't load the perm_low_room.
-    if(cClass == CreatureClass::BUILDER) {
-        UniqueRoom* uRoom=nullptr;
-        CatRef cr;
-        cr.setArea("test");
-        cr.id = 1;
-        if(loadRoom(cr, &uRoom))
-            return(uRoom);
-    }
-
-    if( getRoomParent()->flagIsSet(R_ETHEREAL_PLANE) &&
-        (Random::get(1,100) <= 50)
-    ) {
-        return(teleportWhere());
-    }
-
-    BaseRoom* room = getRecallRoom().loadRoom(getAsPlayer());
-    // uh oh!
-    if(!room)
-        return(abortFindRoom(this, "recallWhere"));
-    return(room);
-
-}
-
-//*********************************************************************
-//                      teleportWhere
-//*********************************************************************
-// Loops through rooms and finds us a place we can teleport to.
-// This function will always return a room or it will crash trying to.
-
-BaseRoom* Creature::teleportWhere() {
-    BaseRoom *newRoom=nullptr;
-    const CatRefInfo* cri = gConfig->getCatRefInfo(getRoomParent());
-    int     i=0, zone = cri ? cri->getTeleportZone() : 0;
-    Area    *area=nullptr;
-    Location l;
-    bool    found = false;
-
-
-
-    // A builder should never get this far, but let's not chance it.
-    // Only continue if they can't load the perm_low_room.
-    if(cClass == CreatureClass::BUILDER) {
-        CatRef cr;
-        cr.setArea("test");
-        cr.id = 1;
-        UniqueRoom* uRoom =nullptr;
-        if(loadRoom(cr, &uRoom))
-            return(uRoom);
-    }
-
-    do {
-        if(i>250)
-            return(abortFindRoom(this, "teleportWhere"));
-        cri = gConfig->getRandomCatRefInfo(zone);
-
-        // if this fails, we have nowhere to teleport to
-        if(!cri)
-            return(getRoomParent());
-
-        // special area used to signify overland map
-        if(cri->getArea() == "area") {
-            area = gServer->getArea(cri->getId());
-            l.mapmarker.set(area->id, Random::get<short>(0, area->width), Random::get<short>(0, area->height), Random::get<short>(0, area->depth));
-            if(area->canPass(nullptr, &l.mapmarker, true)) {
-                //area->adjustCoords(&mapmarker.x, &mapmarker.y, &mapmarker.z);
-
-                // don't bother sending a creature because we've already done
-                // canPass check here
-                //aRoom = area->loadRoom(0, &mapmarker, false);
-                if(Move::getRoom(this, nullptr, &newRoom, false, &l.mapmarker)) {
-                    if(newRoom->isUniqueRoom()) {
-                        // recheck, just to be safe
-                        found = newRoom->getAsUniqueRoom()->canPortHere(this);
-                        if(!found)
-                            newRoom = nullptr;
-                    } else {
-                        found = true;
-                    }
-                }
-            }
-        } else {
-            l.room.setArea(cri->getArea());
-            // if misc, first 1000 rooms are off-limits
-            l.room.id = Random::get(l.room.isArea("misc") ? 1000 : 1, cri->getTeleportWeight());
-            UniqueRoom* uRoom = nullptr;
-
-            if(loadRoom(l.room, &uRoom))
-                found = uRoom->canPortHere(this);
-            if(found)
-                newRoom = uRoom;
-        }
-
-        i++;
-    } while(!found);
-
-    if(!newRoom)
-        return(abortFindRoom(this, "teleportWhere"));
-    return(newRoom);
-}
-
-
-//*********************************************************************
-//                      canPortHere
-//*********************************************************************
-
-bool UniqueRoom::canPortHere(const Creature* creature) const {
-    // check creature-specific settings
-    if(creature) {
-        if(size && creature->getSize() && creature->getSize() > size)
-            return(false);
-        if(deityRestrict(creature))
-            return(false);
-        if(getLowLevel() > creature->getLevel())
-            return(false);
-        if(getHighLevel() && creature->getLevel() > getHighLevel())
-            return(false);
-    }
-
-    // check room-specific settings
-    if( flagIsSet(R_NO_TELEPORT) ||
-        flagIsSet(R_LIMBO) ||
-        flagIsSet(R_VAMPIRE_COVEN) ||
-        flagIsSet(R_SHOP_STORAGE) ||
-        flagIsSet(R_JAIL) ||
-        flagIsSet(R_IS_STORAGE_ROOM) ||
-        flagIsSet(R_ETHEREAL_PLANE) ||
-        isConstruction() ||
-        hasTraining()
-    )
-        return(false);
-    if(isFull())
-        return(false);
-    // artificial limits for the misc area
-    if(info.isArea("misc") && info.id <= 1000)
-        return(false);
-    if(exits.empty())
-        return(false);
-
-    return(true);
-}
-
-//*********************************************************************
-//                      checkSkillsGain
-//*********************************************************************
-// setToLevel: Set skill level to player level - 1, otherwise set to whatever the skill gain tells us to
-
-void Creature::checkSkillsGain(const std::list<SkillGain*>::const_iterator& begin, const std::list<SkillGain*>::const_iterator& end, bool setToLevel) {
-    SkillGain *sGain=nullptr;
-    std::list<SkillGain*>::const_iterator sgIt;
-    for(sgIt = begin ; sgIt != end ; sgIt++) {
-        sGain = (*sgIt);
-        if(sGain->getName().empty())
-            continue;
-        if(!sGain->hasDeities() || sGain->deityIsAllowed(deity)) {
-            if(!knowsSkill(sGain->getName())) {
-                if(setToLevel)
-                    addSkill(sGain->getName(), (level-1)*10);
-                else
-                    addSkill(sGain->getName(), sGain->getGained());
-                print("You have learned the fine art of '%s'.\n", gConfig->getSkillDisplayName(sGain->getName()).c_str());
-            }
-        }
-    }
-}
-
-
-//*********************************************************************
 //                      loseRage
 //*********************************************************************
 
@@ -2418,21 +1550,12 @@ std::string Player::getWhoString(bool whois, bool color, bool ignoreIllusion) co
     if(whois)
         whoStr << " (Age:" << getAge() << ")";
 
-
-    if( flagIsSet(P_DM_INVIS) ||
-        isEffected("incognito") ||
-        isInvisible() ||
-        isEffected("mist") ||
-        (flagIsSet(P_LINKDEAD) && !isPublicWatcher())
-    ) {
-        if(color) whoStr << " ^w";
-        if(flagIsSet(P_DM_INVIS)) whoStr << "[+]";
-        if(isEffected("incognito") ) whoStr << "[g]";
-        if(isInvisible() ) whoStr << "[*]";
-        if(isEffected("mist") ) whoStr << "[m]";
-        if(flagIsSet(P_LINKDEAD) && !isPublicWatcher() ) whoStr << "[l]";
-    }
-
+    if(color) whoStr << " ^w";
+    if(flagIsSet(P_DM_INVIS)) whoStr << "[+]";
+    if(isEffected("incognito") ) whoStr << "[g]";
+    if(isInvisible() ) whoStr << "[*]";
+    if(isEffected("mist") ) whoStr << "[m]";
+    if(flagIsSet(P_LINKDEAD) && !isPublicWatcher() ) whoStr << "[l]";
 
     if(flagIsSet(P_AFK)) whoStr << (color ? "^R" : "") << " [AFK]";
 
@@ -2537,139 +1660,114 @@ bool Player::exists(std::string_view name) {
 //                      inList functions
 //*********************************************************************
 
-bool Player::inList(const std::list<std::string>* list, const std::string &name) const {
-    std::list<std::string>::const_iterator it;
-
-    for(it = list->begin(); it != list->end() ; it++) {
-        if((*it) == name)
-            return(true);
-    }
-    return(false);
+bool Player::inList(const std::list<std::string> &list, const std::string &name) const {
+    return std::find(list.begin(), list.end(), name) != list.end();
 }
 
 
 bool Player::isIgnoring(const std::string &name) const {
-    return(inList(&ignoring, name));
+    return(inList(ignoring, name));
 }
 bool Player::isGagging(const std::string &name) const {
-    return(inList(&gagging, name));
+    return(inList(gagging, name));
 }
 bool Player::isRefusing(const std::string &name) const {
-    return(inList(&refusing, name));
+    return(inList(refusing, name));
 }
 bool Player::isDueling(const std::string &name) const {
-    return(inList(&dueling, name));
+    return(inList(dueling, name));
 }
 bool Player::isWatching(const std::string &name) const {
-    return(inList(&watching, name));
+    return(inList(watching, name));
 }
 
 //*********************************************************************
 //                      showList
 //*********************************************************************
 
-std::string Player::showList(const std::list<std::string>* list) const {
+std::string Player::showList(const std::list<std::string> &list) const {
     std::ostringstream oStr;
-    std::list<std::string>::const_iterator it;
-    bool initial=false;
 
-    for(it = list->begin(); it != list->end() ; it++) {
-        if(initial)
-            oStr << ", ";
-        initial = true;
+    if(list.empty())
+        return("No one.");
 
-        oStr << (*it);
-    }
-
-    if(!initial)
-        oStr << "No one";
-    oStr << ".";
-
-    return(oStr.str());
+    return fmt::format("{}.", boost::algorithm::join(list, ", "));
 }
 
 
 std::string Player::showIgnoring() const {
-    return(showList(&ignoring));
+    return(showList(ignoring));
 }
 std::string Player::showGagging() const {
-    return(showList(&gagging));
+    return(showList(gagging));
 }
 std::string Player::showRefusing() const {
-    return(showList(&refusing));
+    return(showList(refusing));
 }
 std::string Player::showDueling() const {
-    return(showList(&dueling));
+    return(showList(dueling));
 }
 std::string Player::showWatching() const {
-    return(showList(&watching));
+    return(showList(watching));
 }
 
 //*********************************************************************
 //                      addList functions
 //*********************************************************************
 
-void Player::addList(std::list<std::string> *list, const std::string &name) {
-    list->push_back(name);
+void Player::addList(std::list<std::string> &list, const std::string &name) {
+    list.push_back(name);
 }
 
 
 void Player::addIgnoring(const std::string &name) {
-    addList(&ignoring, name);
+    addList(ignoring, name);
 }
 void Player::addGagging(const std::string &name) {
-    addList(&gagging, name);
+    addList(gagging, name);
 }
 void Player::addRefusing(const std::string &name) {
-    addList(&refusing, name);
+    addList(refusing, name);
 }
 void Player::addDueling(const std::string &name) {
-    delList(&maybeDueling, name);
+    delList(maybeDueling, name);
 
     // if they aren't dueling us, add us to their maybe dueling list
     Player* player = gServer->findPlayer(name);
     if(player && !player->isDueling(name))
         player->addMaybeDueling(getName());
 
-    addList(&dueling, name);
+    addList(dueling, name);
 }
 void Player::addMaybeDueling(const std::string &name) {
-    addList(&maybeDueling, name);
+    addList(maybeDueling, name);
 }
 void Player::addWatching(const std::string &name) {
-    addList(&watching, name);
+    addList(watching, name);
 }
 
 //*********************************************************************
 //                      delList functions
 //*********************************************************************
 
-void Player::delList(std::list<std::string>* list, const std::string &name) {
-    std::list<std::string>::iterator it;
-
-    for(it = list->begin(); it != list->end() ; it++) {
-        if((*it) == name) {
-            list->erase(it);
-            return;
-        }
-    }
+void Player::delList(std::list<std::string> &list, const std::string &name) {
+    list.remove(name);
 }
-
 
 void Player::delIgnoring(const std::string &name) {
-    delList(&ignoring, name);
+    delList(ignoring, name);
 }
 void Player::delGagging(const std::string &name) {
-    delList(&gagging, name);
+    delList(gagging, name);
 }
 void Player::delRefusing(const std::string &name) {
-    delList(&refusing, name);
+    delList(refusing, name);
 }
 void Player::delDueling(const std::string &name) {
-    delList(&dueling, name);
+    delList(dueling, name);
 }
 void Player::delWatching(const std::string &name) {
-    delList(&watching, name);
+    delList(watching, name);
 }
 
 //*********************************************************************
@@ -2689,11 +1787,9 @@ void Player::clearDueling() {
     dueling.clear();
 }
 void Player::clearMaybeDueling() {
-    std::list<std::string>::iterator it;
-
     Player* player=nullptr;
-    for(it = maybeDueling.begin(); it != maybeDueling.end() ; it++) {
-        player = gServer->findPlayer(*it);
+    for(const auto& pName : maybeDueling) {
+        player = gServer->findPlayer(pName);
         if(!player)
             continue;
         player->delDueling(getName());
@@ -2748,13 +1844,7 @@ bool Player::checkHeavyRestrict(std::string_view skill) const {
     bool mediumOK = (getClass() == CreatureClass::RANGER);
 
     for(auto i : ready) {
-        if( i &&
-            (   i->isHeavyArmor() ||
-                (   !mediumOK &&
-                    i->isMediumArmor()
-                )
-            )
-        ) {
+        if( i && (   i->isHeavyArmor() || (   !mediumOK && i->isMediumArmor()))) {
             printColor(fmt::format("You can't ^W{}^x while wearing heavy armor!\n", skill).c_str());
             printColor("^W%O^x would hinder your movement too much!\n", i);
             return(true);
@@ -2770,4 +1860,394 @@ void Player::validateId() {
     }
 }
 
+
+
+//********************************************************************
+//                      calcStats
+//********************************************************************
+
+void Player::calcStats(vstat sendStat, vstat *toStat) {
+    int         i=0, levels = 0, switchNum=0;
+    int         lvl=0, r=0;
+    int         hptemp=0,mptemp=0;
+
+    CreatureClass cls=CreatureClass::NONE, cls2=CreatureClass::NONE;
+    // stats are 1 based, the array is 0 based, so give us extra room
+    int     num[MAX_STAT+1];
+
+
+
+    if(sendStat.race)
+        r = tstat.race;
+    else
+        r = race;
+
+    if(sendStat.cls != CreatureClass::NONE)
+        cls = tstat.cls;
+    else
+        cls = cClass;
+
+    if(sendStat.cls2 != CreatureClass::NONE)
+        cls2 = tstat.cls2;
+    else
+        cls2 = cClass2;
+
+    if(sendStat.level)
+        lvl = tstat.level;
+    else
+        lvl = level;
+
+
+    for(i=1; i<=MAX_STAT; i++) {
+        num[i] = sendStat.num[i-1] * 10;
+        num[i] += gConfig->getRace(r)->getStatAdj(i);
+        num[i] = MAX(1, num[i]);
+    }
+
+    PlayerClass *pClass = gConfig->classes[getClassString()];
+    //const RaceData* rData = gConfig->getRace(race);
+    LevelGain *lGain = nullptr;
+
+    // Check for level info
+    if(!pClass) {
+        print("Error: Can't find your class!\n");
+        if(!isStaff()) {
+            std::string errorStr = "Error: Can't find class: " + getClassString();
+            merror(errorStr.c_str(), NONFATAL);
+        }
+        return;
+    }
+
+
+    // Now to adjust hit points accordingly
+    hptemp = pClass->getBaseHp();
+    if(cClass != CreatureClass::BERSERKER && cClass != CreatureClass::LICH)
+        mptemp = pClass->getBaseMp();
+
+
+    for(levels = 1; levels <= lvl; levels ++) {
+        lGain = pClass->getLevelGain(levels);
+        if(!lGain) {
+            print("Error: Can't find any information for level %d!\n", levels);
+            if(!isStaff()) {
+                std::string errorStr = fmt::format("Error: Can't find level info for {} {}",getClassString(), level);
+                merror(errorStr.c_str(), NONFATAL);
+            }
+            continue;
+        }
+
+        switchNum = lGain->getStat();
+        num[switchNum] += 10;
+
+        // Now to adjust hit points accordingly
+        hptemp += lGain->getHp();
+
+        if(cClass != CreatureClass::BERSERKER && cClass != CreatureClass::LICH)
+            mptemp += lGain->getMp();
+
+        if(cls != CreatureClass::LICH) {
+            if(cls == CreatureClass::BERSERKER && num[CON] >= 70)
+                hptemp++;
+            if(num[CON] >= 130)
+                hptemp++;
+            if(num[CON] >= 210)
+                hptemp++;
+            if(num[CON] >= 250)
+                hptemp++;
+        }
+
+        // liches gain an extra HP at every even level.
+        if(levels % 2 == 0 && cls == CreatureClass::LICH)
+            hptemp++;
+    }
+
+    for(i=0; i<MAX_STAT; i++)
+        toStat->num[i] = num[i+1];
+
+    toStat->hp = hptemp;
+    toStat->mp = mptemp;
+}
+
+//********************************************************************
+//                      checkConfusion
+//********************************************************************
+
+bool Player::checkConfusion() {
+    int     action=0, dmg=0;
+    mType   targetType = PLAYER;
+    char    atk[50];
+    Creature* target=nullptr;
+    Exit    *newExit=nullptr;
+    BaseRoom* room = getRoomParent(), *bRoom=nullptr;
+    CatRef  cr;
+
+
+    if(!isEffected("confusion"))
+        return(false);
+
+    action = Random::get(1,4);
+    switch(action) {
+        case 1: // Stand confused
+
+            broadcast(getSock(), room, "%M stands with a confused look on %s face.", this, hisHer());
+            printColor("^BYou are confused and dizzy. You stand and look around cluelessly.\n");
+            stun(Random::get(5,10));
+            return(true);
+            break;
+        case 2: // Wander to random exit
+
+            newExit = getFleeableExit();
+            if(!newExit)
+                return(false);
+            bRoom = getFleeableRoom(newExit);
+            if(!bRoom)
+                return(false);
+
+            printColor("^BWanderlust overtakes you.\n");
+            printColor("^BYou wander aimlessly to the %s exit.\n", newExit->getCName());
+            broadcast(getSock(), room, "%M wanders aimlessly to the %s exit.", this, newExit->getCName());
+            deleteFromRoom();
+            addToRoom(bRoom);
+            doPetFollow();
+            return(true);
+            break;
+        case 3: // Attack something randomly
+            if(!checkAttackTimer(false))
+                return(false);
+
+            switch(Random::get(1,2)) {
+                case 1:
+                    target = getRandomMonster(room);
+                    if(!target)
+                        target = getRandomPlayer(room);
+                    if(target) {
+                        targetType = target->getType();
+                        break;
+                    }
+                    break;
+                case 2:
+                    target = getRandomPlayer(room);
+                    if(!target)
+                        target = getRandomMonster(room);
+                    if(target) {
+                        targetType = target->getType();
+                        break;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            if(!target || target == this)
+                targetType = INVALID;
+
+
+            switch(targetType) {
+                case PLAYER: // Random player in room
+                    printColor("^BYou are convinced %s is trying to kill you!\n", target->getCName());
+                    attackCreature(target);
+                    return(true);
+                    break;
+                case INVALID: // Self
+
+                    if(ready[WIELD-1]) {
+                        dmg = ready[WIELD-1]->damage.roll() +
+                              bonus(strength.getCur()) + ready[WIELD - 1]->getAdjustment();
+                        printColor("^BYou frantically swing your weapon at imaginary enemies.\n");
+                    } else {
+                        printColor("^BYou madly flail around at imaginary enemies.\n");
+                        if(cClass == CreatureClass::MONK) {
+                            dmg = Random::get(1,2) + level/3 + Random::get(1,(1+level)/2);
+                            if(strength.getCur() < 90) {
+                                dmg -= (90-strength.getCur())/10;
+                                dmg = MAX(1,dmg);
+                            }
+                        } else
+                            dmg = damage.roll();
+                    }
+
+                    getDamageString(atk, this, ready[WIELD - 1]);
+
+                    printColor("^BYou %s yourself for %d damage!\n", atk, dmg);
+
+                    broadcast(getSock(), room, "%M %s %sself!", this, atk, himHer());
+                    hp.decrease(dmg);
+                    if(hp.getCur() < 1) {
+
+                        hp.setCur(1);
+
+                        printColor("^BYou accidentally killed yourself!\n");
+                        broadcast("### Sadly, %s accidentally killed %sself.", getCName(), himHer());
+
+                        mp.setCur(1);
+
+                        if(!inJail()) {
+                            bRoom = getLimboRoom().loadRoom(this);
+                            if(bRoom) {
+                                deleteFromRoom();
+                                addToRoom(bRoom);
+                                doPetFollow();
+                            }
+                        }
+                    }
+                    return(true);
+                    break;
+                default: // Random monster in room.
+                    if(target->flagIsSet(M_UNKILLABLE))
+                        return(false);
+
+                    printColor("^BYou think %s is attacking you!\n", target);
+                    broadcast(getSock(), room, "%M yells, \"DIE %s!!!\"\n", this, target->getCName());
+                    attackCreature(target);
+                    return(true);
+                    break;
+            }
+            break;
+        case 4: // flee
+            printColor("^BPhantom dangers in your head beckon you to flee!\n");
+            broadcast(getSock(), room, "%M screams in terror, pointing around at everything.", this);
+            flee();
+            return(true);
+            break;
+        default:
+            break;
+    }
+    return(false);
+}
+
+//********************************************************************
+//                      getEtherealTravelRoom
+//********************************************************************
+
+CatRef getEtherealTravelRoom() {
+    const CatRefInfo* eth = gConfig->getCatRefInfo("et");
+    CatRef cr;
+    cr.setArea("et");
+    cr.id = Random::get(1, eth->getTeleportWeight());
+    return(cr);
+}
+
+//********************************************************************
+//                      etherealTravel
+//********************************************************************
+
+void etherealTravel(Player* player) {
+    UniqueRoom  *newRoom=nullptr;
+    CatRef  cr = getEtherealTravelRoom();
+
+    if(!loadRoom(cr, &newRoom))
+        return;
+
+    player->deleteFromRoom();
+    player->addToRoom(newRoom);
+    player->doPetFollow();
+}
+
+//********************************************************************
+//                      cmdVisible
+//********************************************************************
+
+int cmdVisible(Player* player, cmd* cmnd) {
+    if(!player->isInvisible()) {
+        player->print("You are not invisible.\n");
+        return(0);
+    } else {
+        player->removeEffect("invisibility");
+        player->removeEffect("greater-invisibility");
+    }
+    return(0);
+}
+
+//********************************************************************
+//                      cmdDice
+//********************************************************************
+
+int cmdDice(Creature* player, cmd* cmnd) {
+    char    *str=nullptr, *tok=nullptr, diceOutput[256], add[256];
+    int     strLen=0, i=0;
+    int     diceSides=0,diceNum=0,diceAdd=0;
+    int     rolls=0, total=0;
+
+    const char *Syntax =    "\nSyntax: dice 1d2\n"
+                            "        dice 1d2+3\n";
+
+    strcpy(diceOutput, "");
+    strcpy(add ,"");
+
+    strLen = cmnd->fullstr.length();
+
+    // This kills all leading whitespace
+    while(i<strLen && isspace(cmnd->fullstr[i]))
+        i++;
+    // This kills the command itself
+    while(i<strLen && !isspace(cmnd->fullstr[i]))
+        i++;
+
+    str = strstr(&cmnd->fullstr[i], "d");
+    if(!str)
+        return(cmdAction(player, cmnd));
+
+    str = strdup(&cmnd->fullstr[i]);
+    if(!str) {
+        player->print(Syntax);
+        return(0);
+    }
+
+    tok = strtok(str, "d");
+    if(!tok) {
+        player->print(Syntax);
+        return(0);
+    }
+    diceNum = atoi(tok);
+
+    tok = strtok(nullptr, "+");
+    if(!tok) {
+        player->print(Syntax);
+        return(0);
+    }
+    diceSides = atoi(tok);
+
+    tok = strtok(nullptr, "+");
+
+    if(tok)
+        diceAdd = atoi(tok);
+
+    if(diceNum < 0) {
+        player->print("How can you roll a negative number of dice?\n");
+        return(0);
+    }
+
+    diceNum = MAX(1, diceNum);
+
+    if(diceSides<2) {
+        player->print("A die has a minimum of 2 sides.\n");
+        return(0);
+    }
+
+    diceNum = MIN(100, diceNum);
+    diceSides = MIN(100, diceSides);
+    diceAdd = MAX(-100,MIN(100, diceAdd));
+
+
+    sprintf(diceOutput, "%dd%d", diceNum, diceSides);
+    if(diceAdd) {
+        if(diceAdd > 0)
+            sprintf(add, "+%d", diceAdd);
+        else
+            sprintf(add, "%d", diceAdd);
+        strcat(diceOutput, add);
+    }
+
+
+    for(rolls=0;rolls<diceNum;rolls++)
+        total += Random::get(1, diceSides);
+
+    total += diceAdd;
+
+
+    player->print("You roll %s\n: %d\n", diceOutput, total);
+    broadcast(player->getSock(), player->getParent(), "(Dice %s): %M got %d.", diceOutput, player, total );
+
+    return(0);
+}
 
