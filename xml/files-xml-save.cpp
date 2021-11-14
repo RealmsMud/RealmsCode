@@ -26,20 +26,20 @@
  *      If you change anything here, make sure the changes are reflected in the web
  *      editor! Either edit the PHP yourself or tell Dominus to make the changes.
  */
-#include <libxml/parser.h>        // for xmlNodePtr
-#include <map>                    // for operator==, operator!=, allocator
-#include <ostream>                // for basic_ostream::operator<<
-#include <utility>                // for pair
 
-#include "catRef.hpp"             // for CatRef
-#include "config.hpp"             // for Config
-#include "lasttime.hpp"           // for lastti
-#include "paths.hpp"              // for Path
-#include "xml.hpp"                // for newStringChild, newNumChild, newNum...
+#include <libxml/parser.h>     // for xmlDocSetRootElement, xmlFreeDoc, xmlN...
+#include <stdio.h>             // for sprintf
+#include <list>                // for list, list<>::const_iterator, operator==
+#include <map>                 // for allocator, operator==, map, _Rb_tree_c...
+#include <ostream>             // for basic_ostream::operator<<
+#include <utility>             // for pair
 
-//#define BIT_ISSET(p,f)  ((p)[(f)/8] & 1<<((f)%8))
-//#define BIT_SET(p,f)    ((p)[(f)/8] |= 1<<((f)%8))
-//#define BIT_CLEAR(p,f)  ((p)[(f)/8] &= ~(1<<((f)%8)))
+#include "catRef.hpp"          // for CatRef
+#include "config.hpp"          // for Config, accountDouble
+#include "lasttime.hpp"        // for lasttime
+#include <libxml/xmlstring.h>  // for BAD_CAST
+#include "paths.hpp"           // for Config
+#include "xml.hpp"             // for newStringChild, newNumChild, newNumProp
 
 
 //*********************************************************************

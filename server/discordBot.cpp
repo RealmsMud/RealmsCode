@@ -15,16 +15,27 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <dpp/dpp.h>
-#include <dpp/commandhandler.h>
-#include "fmt/core.h"
-#include "random.hpp"           // for Random
-#include "config.hpp"           // for Config
-#include "color.hpp"            // for stripColor
-#include "communication.hpp"    // for COM_EMOTE
-#include "server.hpp"           // for Server, MonsterList
-#include "creatures.hpp"        // for Player
-#include <boost/algorithm/string/replace.hpp>
+#include <dpp/dpp.h>                           // for dpp, cluster
+#include <dpp/commandhandler.h>                // for commandHandler
+
+#include <fmt/format.h>                        // for format
+#include <boost/algorithm/string/replace.hpp>  // for replace_all
+#include <deque>                               // for _Deque_iterator
+#include <iostream>                            // for operator<<, basic_ostream
+#include <map>                                 // for operator==, _Rb_tree_i...
+#include <sstream>                             // for basic_ostringstream<>:...
+#include <stdexcept>                           // for out_of_range
+#include <string>                              // for string, allocator, cha...
+#include <unordered_map>                       // for _Node_iterator, operat...
+#include <utility>                             // for pair
+#include <vector>                              // for vector
+
+#include "color.hpp"                           // for escapeColor
+#include "communication.hpp"                   // for getChannelByDiscordCha...
+#include "config.hpp"                          // for Config, gConfig, Disco...
+#include "flags.hpp"                           // for P_DM_INVIS
+#include "mudObjects/players.hpp"              // for Player
+#include "server.hpp"                          // for Server, PlayerMap, gSe...
 
 void Config::clearWebhookTokens() {
     webhookTokens.clear();

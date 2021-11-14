@@ -16,36 +16,50 @@
  *
  */
 
-#include <cctype>                 // for isspace, isalpha
-#include <fcntl.h>                // for open, O_APPEND, O_CREAT, O_RDWR
-#include <cstdio>                 // for sprintf
-#include <cstring>                // for strncmp, strcpy, strlen, strstr
-#include <ctime>                  // for ctime, time
-#include <unistd.h>               // for close, write
-#include <boost/algorithm/string/case_conv.hpp>
-#include <boost/algorithm/string/predicate.hpp>
+#include <ext/alloc_traits.h>                    // for __alloc_traits<>::va...
+#include <fcntl.h>                               // for open, O_APPEND, O_CREAT
+#include <unistd.h>                              // for close, write
+#include <boost/algorithm/string/case_conv.hpp>  // for to_lower
+#include <boost/algorithm/string/predicate.hpp>  // for istarts_with
+#include <cctype>                                // for isspace, isalpha
+#include <cstdio>                                // for sprintf
+#include <cstring>                               // for strncmp, strcpy, strlen
+#include <ctime>                                 // for ctime, time
+#include <list>                                  // for list, operator==
+#include <map>                                   // for operator==, map, map...
+#include <memory>                                // for allocator, allocator...
+#include <ostream>                               // for operator<<, basic_os...
+#include <string>                                // for string, char_traits
+#include <string_view>                           // for operator==, string_view
+#include <utility>                               // for pair
 
-#include "bank.hpp"               // for balance, deleteStatement, deposit
-#include "catRef.hpp"             // for CatRef
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for getFullstrText, cmdGuild, cmdGuildHall
-#include "config.hpp"             // for Config, gConfig
-#include "color.hpp"              // for stripColor
-#include "creatures.hpp"          // for Player
-#include "flags.hpp"              // for P_CREATING_GUILD, P_AFK, P_PTESTER
-#include "global.hpp"             // for PROP_GUILDHALL, PROP_SHOP
-#include "guilds.hpp"             // for Guild, GuildCreation, shopStaysWith...
-#include "move.hpp"               // for tooFarAway
-#include "mud.hpp"                // for SUPPORT_REQUIRED, ACC
-#include "paths.hpp"              // for Paths
-#include "property.hpp"           // for Property
-#include "proto.hpp"              // for broadcast, free_crt, broadcastGuild
-#include "rooms.hpp"              // for UniqueRoom, ExitList
-#include "server.hpp"             // for Server, gServer, PlayerMap
-#include "socket.hpp"             // for Socket
-#include "utils.hpp"              // for MAX, MIN
-#include "web.hpp"                // for callWebserver
-#include "xml.hpp"                // for loadPlayer, loadRoom
+#include "bank.hpp"                              // for balance, deleteState...
+#include "catRef.hpp"                            // for CatRef
+#include "cmd.hpp"                               // for cmd
+#include "color.hpp"                             // for escapeColor
+#include "commands.hpp"                          // for getFullstrText, cmdG...
+#include "config.hpp"                            // for Config, gConfig, Gui...
+#include "creatureStreams.hpp"                   // for Streamable
+#include "flags.hpp"                             // for P_CREATING_GUILD, P_AFK
+#include "free_crt.hpp"                          // for free_crt
+#include "global.hpp"                            // for PROP_GUILDHALL, PROP...
+#include "guilds.hpp"                            // for Guild, GuildCreation
+#include "location.hpp"                          // for Location
+#include "money.hpp"                             // for Money
+#include "move.hpp"                              // for tooFarAway
+#include "mud.hpp"                               // for SUPPORT_REQUIRED, ACC
+#include "mudObjects/exits.hpp"                  // for Exit
+#include "mudObjects/players.hpp"                // for Player
+#include "mudObjects/rooms.hpp"                  // for ExitList
+#include "mudObjects/uniqueRooms.hpp"            // for UniqueRoom
+#include "paths.hpp"                             // for Post
+#include "property.hpp"                          // for Property
+#include "proto.hpp"                             // for broadcast, broadcast...
+#include "server.hpp"                            // for Server, gServer, Pla...
+#include "socket.hpp"                            // for Socket
+#include "utils.hpp"                             // for MAX, MIN
+#include "web.hpp"                               // for callWebserver
+#include "xml.hpp"                               // for loadPlayer, loadRoom
 
 //*********************************************************************
 //                      Guild

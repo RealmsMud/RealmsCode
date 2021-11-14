@@ -17,27 +17,21 @@
  */
 
 
-#include <pybind11/pybind11.h>
-#include "commands.hpp"                                        // for doCast...
-#include "config.hpp"                                          // for Config
-#include "container.hpp"                                       // for Monste...
-#include "creatures.hpp"                                       // for Creature
-#include "effects.hpp"                                         // for Effect...
-#include "exits.hpp"                                           // for Exit
-#include "fishing.hpp"                                         // for Fishing
-#include "global.hpp"                                          // for DeathType
+#include <pybind11/pybind11.h>       // for enum_, module, class_
+#include <memory>                    // for unique_ptr
 
-#include "monType.hpp"                                         // for mType
-#include "objects.hpp"                                         // for Object
-#include "proto.hpp"                                           // for broadcast
-#include "pythonHandler.hpp"                                   // for Python...
-#include "random.hpp"                                          // for Random
-#include "rooms.hpp"                                           // for BaseRoom
-#include "server.hpp"                                          // for Server
-#include "skills.hpp"                                          // for SkillInfo
-#include "socials.hpp"
-#include "socket.hpp"                                          // for Socket
-#include "stats.hpp"                                           // for Stat
+#include "commands.hpp"              // for doCastPython, isBadSocial, isGoo...
+#include "config.hpp"                // for Config
+#include "global.hpp"                // for CreatureClass, DeathType, religions
+#include "monType.hpp"               // for mType, ANIMAL, ARACHNID, ASTRAL
+#include "mudObjects/container.hpp"  // for Monste...
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for dice, getConBonusPercentage, spa...
+#include "random.hpp"                // for Random
+#include "server.hpp"                // for Server
+#include "socket.hpp"                // for Socket
 
 namespace py = pybind11;
 

@@ -16,29 +16,39 @@
  *
  */
 
-#include <cstdlib>        // for abs
-#include <cstring>        // for strcpy
-#include <ctime>          // for time, time_t
-#include <sstream>         // for operator<<, basic_ostream, endl, ostream
-#include <string>          // for operator==, basic_string, operator!=, oper...
+#include <cstdlib>                   // for abs
+#include <cstring>                   // for strcpy
+#include <ctime>                     // for time, time_t
+#include <set>                       // for operator==, _Rb_tree_const_iterator
+#include <sstream>                   // for operator<<, basic_ostream, endl
+#include <string>                    // for string, operator==, allocator
 
-#include "config.hpp"      // for Config, gConfig
-#include "creatures.hpp"   // for Creature, Player, Monster, AttackResult
-#include "damage.hpp"      // for Damage
-#include "effects.hpp"     // for EffectInfo
-#include "fighters.hpp"    // for FOCUS_DODGE, FOCUS_PARRY, FOCUS_RIPOSTE
-#include "flags.hpp"       // for M_ENCHANTED_WEAPONS_ONLY, M_PLUS_TWO, P_FO...
-#include "global.hpp"      // for CreatureClass, WIELD, CreatureClass::MONK
-#include "monType.hpp"     // for ASTRAL, AVIAN, DEMON, DEVA, DEVIL, DINOSAUR
-#include "mud.hpp"         // for LT_RIPOSTE, LT
-#include "objects.hpp"     // for Object, ObjectType, ObjectType::WEAPON
-#include "proto.hpp"       // for broadcast, bonus, broadcastGroup, isDay
-#include "random.hpp"      // for Random
-#include "realm.hpp"       // for NO_REALM
-#include "rooms.hpp"       // for BaseRoom
-#include "skills.hpp"      // for SkillInfo, Skill
-#include "timer.hpp"       // for Timer
-#include "utils.hpp"       // for MAX, MIN
+#include "config.hpp"                // for Config, gConfig
+#include "damage.hpp"                // for Damage
+#include "dice.hpp"                  // for Dice
+#include "effects.hpp"               // for EffectInfo
+#include "fighters.hpp"              // for FOCUS_DODGE, FOCUS_PARRY, FOCUS_...
+#include "flags.hpp"                 // for M_ENCHANTED_WEAPONS_ONLY, M_PLUS...
+#include "global.hpp"                // for CreatureClass, WIELD, CreatureCl...
+#include "group.hpp"                 // for Group
+#include "lasttime.hpp"              // for lasttime
+#include "monType.hpp"               // for ASTRAL, AVIAN, DEMON, DEVA, DEVIL
+#include "mud.hpp"                   // for LT_RIPOSTE, LT
+#include "mudObjects/container.hpp"  // for MonsterSet
+#include "mudObjects/creatures.hpp"  // for Creature, AttackResult, ATTACK_C...
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object, ObjectType, ObjectType::...
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, bonus, broadcastGroup
+#include "random.hpp"                // for Random
+#include "realm.hpp"                 // for NO_REALM
+#include "skills.hpp"                // for SkillInfo, Skill
+#include "statistics.hpp"            // for Statistics
+#include "stats.hpp"                 // for Stat
+#include "timer.hpp"                 // for Timer
+#include "utils.hpp"                 // for MAX, MIN
+
 
 const std::string NONE_STR = "none";
 

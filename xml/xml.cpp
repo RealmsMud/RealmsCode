@@ -16,12 +16,15 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlGe...
+#include <libxml/entities.h>                        // for xmlEncodeSpecialC...
+#include <libxml/parser.h>                          // for xmlGetProp, xmlFr...
+#include <libxml/xmlstring.h>                       // for BAD_CAST, xmlChar
+#include <strings.h>                                // for strcasecmp
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cstdio>                                   // for sprintf
 #include <cstdlib>                                  // for free
 #include <cstring>                                  // for strcmp, strcpy
-#include <strings.h>                                // for strcasecmp
-#include <string>
+#include <string>                                   // for string
 
 #include "proto.hpp"                                // for unxsc, xsc, loge
 #include "xml.hpp"                                  // for toNum, bad_lexica...

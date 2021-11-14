@@ -15,30 +15,38 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstring>               // for strcpy, strlen, strncmp
-#include <ctime>                 // for time
-#include <map>                    // for operator==, operator!=, map
-#include <sstream>                // for operator<<, basic_ostream, ostrings...
-#include <string>                 // for operator==, basic_string, operator<<
 
-#include "clans.hpp"              // for Clan
-#include "cmd.hpp"                // for cmd, SONGFN
-#include "commands.hpp"           // for cmdSkills, dmSetSkills
-#include "config.hpp"             // for Config, SkillInfoMap, gConfig, Skil...
-#include "creatures.hpp"          // for Player, Creature, SkillMap
-#include "flags.hpp"              // for P_DM_INVIS, P_SHOW_SKILL_PROGRESS
-#include "global.hpp"             // for MAXALVL, CreatureClass, CreatureCla...
-#include "levelGain.hpp"          // for LevelGain
-#include "mud.hpp"                // for LT_SKILL_INCREASE, LT, SONG_BLESS
-#include "os.hpp"                 // for ASSERTLOG
-#include "playerClass.hpp"        // for PlayerClass
-#include "proto.hpp"              // for up, free_crt, progressBar, broadcast
-#include "random.hpp"             // for Random
-#include "server.hpp"             // for Server, gServer, PlayerMap
-#include "skills.hpp"             // for Skill, SkillInfo, SkillCommand, SKI...
-#include "structs.hpp"            // for Command
-#include "utils.hpp"              // for MIN, MAX
-#include "xml.hpp"                // for loadPlayer
+#include <fmt/format.h>              // for format
+#include <cstring>                   // for strlen, strncmp
+#include <ctime>                     // for time
+#include <map>                       // for operator==, map, _Rb_tree_iterator
+#include <sstream>                   // for operator<<, basic_ostream, ostri...
+#include <string>                    // for string, allocator, char_traits
+#include <string_view>               // for string_view
+#include <type_traits>               // for add_const<>::type
+#include <utility>                   // for pair, tuple_element<>::type
+
+#include "clans.hpp"                 // for Clan
+#include "cmd.hpp"                   // for cmd, SONGFN
+#include "commands.hpp"              // for cmdSkills, dmSetSkills
+#include "config.hpp"                // for Config, SkillInfoMap, gConfig
+#include "flags.hpp"                 // for P_DM_INVIS, P_SHOW_SKILL_PROGRESS
+#include "free_crt.hpp"              // for free_crt
+#include "global.hpp"                // for MAXALVL, CreatureClass, Creature...
+#include "lasttime.hpp"              // for lasttime
+#include "levelGain.hpp"             // for LevelGain
+#include "mud.hpp"                   // for LT_SKILL_INCREASE, LT, SONG_BLESS
+#include "mudObjects/container.hpp"  // for Container
+#include "mudObjects/creatures.hpp"  // for Creature, SkillMap
+#include "mudObjects/players.hpp"    // for Player
+#include "os.hpp"                    // for ASSERTLOG
+#include "playerClass.hpp"           // for PlayerClass
+#include "proto.hpp"                 // for up, songBless, songFlight, songHeal
+#include "random.hpp"                // for Random
+#include "server.hpp"                // for Server, gServer
+#include "skills.hpp"                // for Skill, SkillInfo, SkillGainType
+#include "utils.hpp"                 // for MIN, MAX
+#include "xml.hpp"                   // for loadPlayer
 
 #define NOT_A_SKILL (-10)
 const std::string EMPTY_STR = "";

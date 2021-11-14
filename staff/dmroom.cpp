@@ -16,54 +16,71 @@
  *
  */
 
-#include <dirent.h>               // for opendir, readdir, dirent, DIR
-#include <cstdio>                // for sprintf
-#include <cstdlib>               // for atoi, exit
-#include <cstring>               // for strcmp, strlen, strcpy, strcat
-#include <ctime>                 // for time, ctime, time_t
-#include <iomanip>                // for operator<<, setw
-#include <iostream>               // for operator<<, basic_ostream, basic_os...
-#include <boost/algorithm/string/replace.hpp>
+#include <dirent.h>                            // for opendir, readdir, dirent
+#include <fmt/format.h>                        // for format
+#include <libxml/parser.h>                     // for xmlDocSetRootElement
+#include <unistd.h>                            // for unlink
+#include <boost/algorithm/string/replace.hpp>  // for replace_all
+#include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
+#include <cstdio>                              // for sprintf
+#include <cstdlib>                             // for atoi, exit
+#include <cstring>                             // for strcmp, strlen, strcpy
+#include <ctime>                               // for time, ctime, time_t
+#include <deque>                               // for _Deque_iterator
+#include <iomanip>                             // for operator<<, setw
+#include <iostream>                            // for operator<<, char_traits
+#include <list>                                // for operator==, list, _Lis...
+#include <map>                                 // for operator==, map, map<>...
+#include <string>                              // for string, operator==
+#include <string_view>                         // for operator==, string_view
+#include <utility>                             // for pair
 
-#include "area.hpp"               // for Area, AreaZone, MapMarker, TileInfo
-#include "async.hpp"             // for Async, AsyncExternal
-#include "catRef.hpp"             // for CatRef
-#include "catRefInfo.hpp"         // for CatRefInfo
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for getFullstrText, cmdNoAuth
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player, Monster, Creature
-#include "deityData.hpp"          // for DeityData
-#include "dm.hpp"                 // for dmAddMob, dmAddObj, findRoomsWithFlag
-#include "effects.hpp"            // for EffectInfo, EffectList, Effects
-#include "exits.hpp"              // for Exit, getDir, getDirName, NoDirection
-#include "factions.hpp"           // for Faction
-#include "flags.hpp"              // for R_TRAINING_ROOM, R_SHOP_STORAGE
-#include "global.hpp"             // for CreatureClass, CreatureClass::CARET...
-#include "lasttime.hpp"           // for crlasttime
-#include "location.hpp"           // for Location
-#include "monType.hpp"            // for getHitdice, getName
-#include "money.hpp"              // for Money, GOLD
-#include "objects.hpp"            // for Object
-#include "os.hpp"                 // for merror
-#include "paths.hpp"              // for checkDirExists
-#include "proc.hpp"               // for ChildType::PRINT
-#include "property.hpp"           // for Property
-#include "proto.hpp"              // for log_immort, low, getSizeName, needU...
-#include "raceData.hpp"           // for RaceData
-#include "range.hpp"              // for Range
-#include "rooms.hpp"              // for UniqueRoom, BaseRoom, AreaRoom, Exi...
-#include "server.hpp"             // for Server, gServer
-#include "size.hpp"               // for NO_SIZE
-#include "startlocs.hpp"          // for StartLoc
-#include "swap.hpp"               // for SwapRoom
-#include "track.hpp"              // for Track
-#include "traps.hpp"              // for TRAP_ACID, TRAP_ALARM, TRAP_ARROW
-#include "utils.hpp"              // for MAX, MIN
-#include "wanderInfo.hpp"         // for WanderInfo
-#include "xml.hpp"                // for loadRoom, loadMonster, loadObject
-
-class Fishing;
+#include "area.hpp"                            // for Area, MapMarker, AreaZone
+#include "async.hpp"                           // for Async, AsyncExternal
+#include "catRef.hpp"                          // for CatRef
+#include "catRefInfo.hpp"                      // for CatRefInfo
+#include "cmd.hpp"                             // for cmd
+#include "commands.hpp"                        // for getFullstrText, cmdNoAuth
+#include "config.hpp"                          // for Config, gConfig, Deity...
+#include "deityData.hpp"                       // for DeityData
+#include "dice.hpp"                            // for Dice
+#include "dm.hpp"                              // for dmAddMob, dmAddObj
+#include "effects.hpp"                         // for EffectInfo, Effects
+#include "factions.hpp"                        // for Faction
+#include "flags.hpp"                           // for R_TRAINING_ROOM, R_SHO...
+#include "free_crt.hpp"                        // for free_crt
+#include "global.hpp"                          // for CreatureClass, Creatur...
+#include "hooks.hpp"                           // for Hooks
+#include "lasttime.hpp"                        // for crlasttime
+#include <libxml/xmlstring.h>                  // for BAD_CAST
+#include "location.hpp"                        // for Location
+#include "monType.hpp"                         // for getHitdice, getName
+#include "money.hpp"                           // for Money, GOLD
+#include "mudObjects/areaRooms.hpp"            // for AreaRoom
+#include "mudObjects/creatures.hpp"            // for Creature
+#include "mudObjects/exits.hpp"                // for Exit, getDir, getDirName
+#include "mudObjects/monsters.hpp"             // for Monster
+#include "mudObjects/objects.hpp"              // for Object
+#include "mudObjects/players.hpp"              // for Player
+#include "mudObjects/rooms.hpp"                // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"          // for UniqueRoom
+#include "os.hpp"                              // for merror
+#include "paths.hpp"                           // for checkDirExists, AreaRoom
+#include "proc.hpp"                            // for ChildType, ChildType::...
+#include "property.hpp"                        // for Property
+#include "proto.hpp"                           // for log_immort, low, needU...
+#include "raceData.hpp"                        // for RaceData
+#include "range.hpp"                           // for Range
+#include "server.hpp"                          // for Server, gServer
+#include "size.hpp"                            // for getSizeName, getSize
+#include "startlocs.hpp"                       // for StartLoc
+#include "stats.hpp"                           // for Stat
+#include "swap.hpp"                            // for SwapRoom
+#include "track.hpp"                           // for Track
+#include "traps.hpp"                           // for TRAP_ACID, TRAP_ALARM
+#include "utils.hpp"                           // for MAX, MIN
+#include "wanderInfo.hpp"                      // for WanderInfo
+#include "xml.hpp"                             // for loadRoom, loadMonster
 
 
 //*********************************************************************

@@ -15,16 +15,19 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <pspell/pspell.h>  // for pspell_config_replace, PspellWordList
-#include <cstdio>          // for fprintf, stderr
-#include <cstdlib>         // for free, malloc
-#include <cstring>         // for strcmp, strlen, strtok_r, strcspn, strdup
+#include <pspell/pspell.h>             // for pspell_config_replace, PspellW...
+#include <cstdio>                      // for fprintf, stderr
+#include <cstdlib>                     // for free, malloc
+#include <cstring>                     // for strcmp, strlen, strtok_r, strcspn
+#include <list>                        // for operator==, _List_iterator, list
+#include <string>                      // for string
 
-#include "cmd.hpp"          // for cmd, COMMANDMAX
-#include "creatures.hpp"    // for Player
-#include "exits.hpp"        // for Exit
-#include "proto.hpp"        // for needUniqueRoom, init_spelling
-#include "rooms.hpp"        // for UniqueRoom, ExitList
+#include "cmd.hpp"                     // for cmd, COMMANDMAX
+#include "mudObjects/exits.hpp"        // for Exit
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for ExitList
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "proto.hpp"                   // for needUniqueRoom
 
 #define SP_MODE_LIST        1
 #define SP_MODE_ADVISE      2

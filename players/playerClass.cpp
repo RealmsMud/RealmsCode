@@ -16,17 +16,24 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
-#include <cstring>                                 // for strcmp
+#include <fmt/format.h>            // for format
+#include <cstring>                 // for strcmp
+#include <list>                    // for list, list<>::const_iterator, oper...
+#include <map>                     // for map, operator==, map<>::iterator
+#include <sstream>                 // for operator<<, basic_ostream, basic_o...
+#include <string>                  // for string, operator<<, char_traits
+#include <utility>                 // for pair
 
-#include "cmd.hpp"                                  // for cmd
-#include "config.hpp"                               // for Config, gConfig
-#include "creatures.hpp"                            // for Player
-#include "levelGain.hpp"                            // for LevelGain
-#include "playerClass.hpp"                          // for PlayerClass
-#include "playerTitle.hpp"                          // for PlayerTitle
-#include "server.hpp"                               // for Server, gServer
-#include "skillGain.hpp"                            // for SkillGain
+#include "cmd.hpp"                 // for cmd
+#include "config.hpp"              // for Config, gConfig
+#include "creatureStreams.hpp"     // for Streamable, ColorOff, ColorOn, Pag...
+#include "dice.hpp"                // for Dice
+#include "levelGain.hpp"           // for LevelGain
+#include "mudObjects/players.hpp"  // for Player
+#include "playerClass.hpp"         // for PlayerClass
+#include "playerTitle.hpp"         // for PlayerTitle
+#include "skillGain.hpp"           // for SkillGain
+#include "stats.hpp"               // for Stat
 
 
 //*********************************************************************

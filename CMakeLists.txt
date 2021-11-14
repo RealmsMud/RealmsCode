@@ -6,6 +6,7 @@ add_subdirectory(lib/pybind11)
 
 set(CMAKE_C_COMPILER "/usr/bin/clang")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+#find_program(iwyu_path NAMES include-what-you-use iwyu REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -53,6 +54,26 @@ set(LIST_SOURCE_FILES
         )
 
 set(COMMON_HEADER_FILES
+
+    include/builders/alchemyBuilder.hpp
+    include/builders/effectBuilder.hpp
+    include/builders/fluentBuilder.hpp
+    include/builders/fluentBuilderEnd.hpp
+    include/builders/msdpBuilder.hpp
+    include/builders/skillBuilder.hpp
+    include/builders/songBuilder.hpp
+
+    include/mudObjects/areaRooms.hpp
+    include/mudObjects/container.hpp
+    include/mudObjects/creatures.hpp
+    include/mudObjects/exits.hpp
+    include/mudObjects/monsters.hpp
+    include/mudObjects/mudObject.hpp
+    include/mudObjects/objects.hpp
+    include/mudObjects/players.hpp
+    include/mudObjects/rooms.hpp
+    include/mudObjects/uniqueRooms.hpp
+
     include/alchemy.hpp
     include/anchor.hpp
     include/area.hpp
@@ -69,10 +90,8 @@ set(COMMON_HEADER_FILES
     include/commands.hpp
     include/communication.hpp
     include/config.hpp
-    include/container.hpp
     include/craft.hpp
     include/creatureStreams.hpp
-    include/creatures.hpp
     include/damage.hpp
     include/deityData.hpp
     include/delayedAction.hpp
@@ -81,13 +100,10 @@ set(COMMON_HEADER_FILES
     include/effects.hpp
     include/enums/bits.hpp
     include/enums/loadType.hpp
-    include/exits.hpp
     include/factions.hpp
     include/fighters.hpp
     include/fishing.hpp
     include/flags.hpp
-    include/builders/fluentBuilder.hpp
-    include/builders/fluentBuilderEnd.hpp
     include/free_crt.hpp
     include/global.hpp
     include/group.hpp
@@ -106,11 +122,9 @@ set(COMMON_HEADER_FILES
     include/move.hpp
     include/msdp.hpp
     include/mud.hpp
-    include/mudObject.hpp
     include/mxp.hpp
     include/namable.hpp
     include/objIncrease.hpp
-    include/objects.hpp
     include/oldquest.hpp
     include/os.hpp
     include/paths.hpp
@@ -128,7 +142,6 @@ set(COMMON_HEADER_FILES
     include/random.hpp
     include/range.hpp
     include/realm.hpp
-    include/rooms.hpp
     include/season.hpp
     include/security.hpp
     include/server.hpp
@@ -160,13 +173,6 @@ set(COMMON_HEADER_FILES
     include/weather.hpp
     include/web.hpp
     include/xml.hpp
-
-    include/builders/alchemyBuilder.hpp
-    include/builders/effectBuilder.hpp
-    include/builders/msdpBuilder.hpp
-    include/builders/songBuilder.hpp
-    include/builders/fluentBuilder.hpp
-    include/builders/skillBuilder.hpp
     )
 
 set(COMMON_SOURCE_FILES
@@ -407,6 +413,7 @@ set(COMMON_SOURCE_FILES
     )
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
+#set_property(TARGET RealmsLib PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
 target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES} ${DPP_LIB_NAME})
 
 add_executable(RealmsCode ${REALMS_SOURCE_FILES})

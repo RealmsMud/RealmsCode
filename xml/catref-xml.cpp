@@ -16,11 +16,14 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlFr...
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cstdio>                                   // for snprintf, sprintf
-#include <map>                                      // for operator==, map
+#include <libxml/xmlstring.h>                       // for BAD_CAST
+#include <list>                                     // for list, operator==
+#include <map>                                      // for map, map<>::const...
 #include <ostream>                                  // for basic_ostream::op...
-#include <string>                                   // for operator==, alloc...
+#include <string>                                   // for allocator, string
 #include <utility>                                  // for pair
 
 #include "calendar.hpp"                             // for cSeason
@@ -28,7 +31,7 @@
 #include "config.hpp"                               // for Config, gConfig
 #include "paths.hpp"                                // for Game
 #include "season.hpp"                               // for Season
-#include "xml.hpp"                                  // for copyToString
+#include "xml.hpp"                                  // for copyToNum, copyTo...
 
 
 //*********************************************************************

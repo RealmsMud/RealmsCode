@@ -16,20 +16,25 @@
  *
  */
 
-#include <cstring>              // for strlen, strncmp
-#include <strings.h>            // for strncasecmp
+#include <strings.h>                 // for strncasecmp
+#include <cstring>                   // for strlen, strncmp
+#include <list>                      // for operator==, _List_iterator, list
+#include <string>                    // for string, operator+, allocator
 
-#include "cmd.hpp"              // for cmd
-#include "commands.hpp"         // for getFullstrText, cmdFollow, cmdGroup
-#include "creatureStreams.hpp"  // for Streamable, ColorOff, ColorOn
-#include "creatures.hpp"        // for Player, Creature, Monster, PetList
-#include "flags.hpp"            // for P_AFK, P_DM_INVIS, P_NO_FOLLOW, P_GRO...
-#include "global.hpp"           // for CAP
-#include "group.hpp"            // for Group, GROUP_LEADER, GROUP_INVITED
-#include "move.hpp"             // for tooFarAway
-#include "proto.hpp"            // for lowercize, broadcast
-#include "rooms.hpp"            // for BaseRoom
-#include "server.hpp"           // for Server, gServer
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for getFullstrText, cmdFollow, cmdGroup
+#include "creatureStreams.hpp"       // for Streamable, ColorOff, ColorOn
+#include "flags.hpp"                 // for P_AFK, P_DM_INVIS, P_NO_FOLLOW
+#include "global.hpp"                // for CAP
+#include "group.hpp"                 // for Group, GROUP_LEADER, GROUP_INVITED
+#include "move.hpp"                  // for tooFarAway
+#include "mudObjects/container.hpp"  // for Container
+#include "mudObjects/creatures.hpp"  // for Creature, PetList
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for lowercize, broadcast
+#include "server.hpp"                // for Server, gServer
 
 
 //*********************************************************************

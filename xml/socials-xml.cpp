@@ -16,17 +16,16 @@
  *
  */
 
-#include <config.hpp>                               // for Config, SocialMap
-#include <libxml/parser.h>                          // for xmlFreeDoc, xmlNode
-#include <paths.hpp>                                // for Code
+#include <libxml/parser.h>                          // for xmlCleanupParser
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <config.hpp>                               // for Config, SocialSet
 #include <cstdio>                                   // for sprintf
-#include <xml.hpp>                                  // for copyToString
-#include <ostream>                                  // for basic_ostream::op...
+#include <functional>                               // for function
+#include <paths.hpp>                                // for Code
+#include <string>                                   // for string
 
 #include "socials.hpp"                              // for SocialCommand
-
-class Creature;
-class cmd;
+#include "xml.hpp"                                  // for copyToString, NOD...
 
 //*********************************************************************
 //                      loadSocials
@@ -38,7 +37,7 @@ bool Config::loadSocials() {
     xmlNodePtr  curNode;
     char        filename[80];
 
-    // build an XML tree from a the file
+    // build an XML tree from the file
     sprintf(filename, "%s/socials.xml", Path::Code);
 
     xmlDoc = xml::loadFile(filename, "Socials");
@@ -81,8 +80,7 @@ SocialCommand::SocialCommand(xmlNodePtr rootNode) {
     rudeWakeTarget = false;
     wakeRoom = false;
 
-    while(rootNode != nullptr)
-    {
+    while(rootNode != nullptr) {
         if(NODE_NAME(rootNode, "Name")) xml::copyToString(name, rootNode);
         else if(NODE_NAME(rootNode, "Description")) xml::copyToString(description, rootNode);
         else if(NODE_NAME(rootNode, "Priority")) xml::copyToNum(priority, rootNode);
@@ -100,52 +98,6 @@ SocialCommand::SocialCommand(xmlNodePtr rootNode) {
 
         rootNode = rootNode->next;
     }
-}
-
-
-bool Config::saveSocials() {
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr  rootNode;
-
-    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Socials", nullptr);
-    xmlDocSetRootElement(xmlDoc, rootNode);
-
-    for(const auto &social : socials) {
-        social.saveToXml(rootNode);
-    }
-    std::string filename = std::string(Path::Code) + "/" + "socials.xml";
-    xml::saveFile(filename.c_str(), xmlDoc);
-    xmlFreeDoc(xmlDoc);
-    return(true);
-
-}
-
-bool SocialCommand::saveToXml(xmlNodePtr rootNode) const {
-    xmlNodePtr curNode;
-
-    curNode = xml::newStringChild(rootNode, "Social");
-    xml::newStringChild(curNode, "Name", name);
-
-    if(wakeTarget)
-        xml::newBoolChild(curNode, "WakeTarget", wakeTarget);
-    if(rudeWakeTarget)
-        xml::newBoolChild(curNode, "RudeWakeTarget", rudeWakeTarget);
-    if(wakeRoom)
-        xml::newBoolChild(curNode, "WakeRoom", wakeRoom);
-
-    xml::saveNonNullString(curNode, "Description", description);
-    xml::saveNonZeroNum(curNode, "Priority", priority);
-
-    xml::saveNonNullString(curNode, "SelfNoTarget", selfNoTarget);
-    xml::saveNonNullString(curNode, "RoomNoTarget", roomNoTarget);
-    xml::saveNonNullString(curNode, "SelfOnTarget", selfOnTarget);
-    xml::saveNonNullString(curNode, "RoomOnTarget", roomOnTarget);
-    xml::saveNonNullString(curNode, "VictimOnTarget", victimOnTarget);
-    xml::saveNonNullString(curNode, "SelfOnSelf", selfOnSelf);
-    xml::saveNonNullString(curNode, "RoomOnSelf", roomOnSelf);
-
-    return(true);
 }
 
 

@@ -15,12 +15,14 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
-#include <map>                                      // for operator!=, opera...
+
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <map>                                      // for map, operator==
+#include <string>                                   // for string
 
 #include "config.hpp"                               // for Config, gConfig
 #include "skillGain.hpp"                            // for SkillGain
-#include "xml.hpp"                                  // for copyToString
+#include "xml.hpp"                                  // for copyToString, NOD...
 
 //*********************************************************************
 //                      SkillGain

@@ -15,34 +15,49 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstdio>                 // for sprintf
-#include <cstring>                // for strcpy
-#include <ctime>                  // for time, ctime
-#include <sstream>                // for operator<<, basic_ostream, ostrings...
-#include <string>                 // for operator<<, operator!=, allocator
 
-#include "catRef.hpp"             // for CatRef
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for MonsterSet, PlayerSet, ObjectSet
-#include "creatureStreams.hpp"    // for Streamable, operator<<, setf, ColorOn
-#include "creatures.hpp"          // for Player, Monster, Creature, DEL_PORT...
-#include "effects.hpp"            // for EffectInfo
-#include "exits.hpp"              // for Exit
-#include "flags.hpp"              // for M_PERMENANT_MONSTER, O_JUST_BOUGHT
-#include "global.hpp"             // for MAG, CreatureClass, CAP, CreatureCl...
-#include "hooks.hpp"              // for Hooks
-#include "lasttime.hpp"           // for crlasttime, lasttime
-#include "move.hpp"               // for deletePortal
-#include "mud.hpp"                // for DL_BROAD, LT_AGGRO_ACTION
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
-#include "os.hpp"                 // for ASSERTLOG, merror
-#include "property.hpp"           // for Property
-#include "proto.hpp"              // for broadcast, isCt, logn, isStaff, bonus
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for UniqueRoom, BaseRoom, AreaRoom, Exi...
-#include "server.hpp"             // for Server, gServer
-#include "utils.hpp"              // for MAX, MIN
-#include "xml.hpp"                // for loadMonster, loadObject, loadRoom
+#include <cstdio>                      // for sprintf
+#include <cstring>                     // for strcpy
+#include <ctime>                       // for time, ctime
+#include <list>                        // for list, operator==, _List_iterator
+#include <map>                         // for operator==, map, _Rb_tree_cons...
+#include <set>                         // for set, set<>::iterator
+#include <sstream>                     // for operator<<, basic_ostream, ost...
+#include <string>                      // for allocator, operator<<, char_tr...
+#include <utility>                     // for pair
+
+#include "area.hpp"                    // for Area, MapMarker
+#include "catRef.hpp"                  // for CatRef
+#include "config.hpp"                  // for Config, gConfig
+#include "creatureStreams.hpp"         // for Streamable, operator<<, setf
+#include "effects.hpp"                 // for EffectInfo
+#include "flags.hpp"                   // for M_PERMENANT_MONSTER, O_JUST_BO...
+#include "free_crt.hpp"                // for free_crt
+#include "global.hpp"                  // for MAG, CreatureClass, CAP, Creat...
+#include "hooks.hpp"                   // for Hooks
+#include "lasttime.hpp"                // for crlasttime, lasttime
+#include "location.hpp"                // for Location
+#include "move.hpp"                    // for deletePortal
+#include "mud.hpp"                     // for DL_BROAD, LT_AGGRO_ACTION
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/container.hpp"    // for MonsterSet, PlayerSet, ObjectSet
+#include "mudObjects/creatures.hpp"    // for Creature, DEL_PORTAL_DESTROYED
+#include "mudObjects/exits.hpp"        // for Exit
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/objects.hpp"      // for Object, DroppedBy, ObjectType
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "os.hpp"                      // for ASSERTLOG, merror
+#include "property.hpp"                // for Property
+#include "proto.hpp"                   // for broadcast, isCt, logn, isStaff
+#include "random.hpp"                  // for Random
+#include "server.hpp"                  // for Server, gServer
+#include "stats.hpp"                   // for Stat
+#include "structs.hpp"                 // for daily
+#include "utils.hpp"                   // for MAX, MIN
+#include "xml.hpp"                     // for loadMonster, loadObject, loadRoom
+
 
 //*********************************************************************
 //                      addToSameRoom

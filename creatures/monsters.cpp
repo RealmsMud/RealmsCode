@@ -15,34 +15,44 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cmath>                  // for pow
-#include <cstring>                // for strcpy, strcmp
-#include <ctime>                  // for time
 
-#include "catRef.hpp"             // for CatRef
-#include "cmd.hpp"                // for cmd
-#include "container.hpp"          // for ObjectSet, PlayerSet, MonsterSet
-#include "creatures.hpp"          // for Monster, Player, Creature, NUM_ASSI...
-#include "factions.hpp"           // for Faction
-#include "flags.hpp"              // for M_FAST_WANDER, M_PERMENANT_MONSTER
-#include "global.hpp"             // for CreatureClass, CreatureClass::CLERIC
-#include "magic.hpp"              // for get_spell_function, splOffensive
-#include "monType.hpp"            // for isIntelligent
-#include "money.hpp"              // for Money, GOLD
-#include "move.hpp"               // for getString
-#include "mud.hpp"                // for ospell, PET_CAST_DELAY, LT, LT_MON_...
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::MONEY
-#include "os.hpp"                 // for ASSERTLOG
-#include "proto.hpp"              // for broadcast, bonus, get_spell_lvl
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom, UniqueRoom
-#include "server.hpp"             // for Server, gServer, GOLD_OUT
-#include "socket.hpp"             // for Socket
-#include "structs.hpp"            // for osp_t
-#include "unique.hpp"             // for Unique
-#include "utils.hpp"              // for MAX, MIN
-#include "wanderInfo.hpp"         // for WanderInfo
-#include "xml.hpp"                // for loadRoom
+#include <cmath>                       // for pow
+#include <cstring>                     // for strcpy, strcmp
+#include <ctime>                       // for time
+#include <set>                         // for operator==, _Rb_tree_const_ite...
+#include <string>                      // for allocator, string, operator==
+
+#include "catRef.hpp"                  // for CatRef
+#include "cmd.hpp"                     // for cmd
+#include "factions.hpp"                // for Faction
+#include "flags.hpp"                   // for M_FAST_WANDER, M_PERMENANT_MON...
+#include "global.hpp"                  // for CreatureClass, CreatureClass::...
+#include "lasttime.hpp"                // for lasttime
+#include "location.hpp"                // for Location
+#include "magic.hpp"                   // for get_spell_function, splOffensive
+#include "monType.hpp"                 // for isIntelligent
+#include "money.hpp"                   // for Money, GOLD
+#include "move.hpp"                    // for getString
+#include "mud.hpp"                     // for ospell, PET_CAST_DELAY, LT
+#include "mudObjects/container.hpp"    // for ObjectSet, PlayerSet, MonsterSet
+#include "mudObjects/creatures.hpp"    // for Creature, CHECK_DIE, NUM_ASSIS...
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/objects.hpp"      // for Object, ObjectType, ObjectType...
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "os.hpp"                      // for ASSERTLOG
+#include "proto.hpp"                   // for broadcast, bonus, get_spell_lvl
+#include "random.hpp"                  // for Random
+#include "realm.hpp"                   // for MAX_REALM, NO_REALM
+#include "server.hpp"                  // for Server, GOLD_OUT, gServer
+#include "socket.hpp"                  // for Socket
+#include "stats.hpp"                   // for Stat
+#include "structs.hpp"                 // for osp_t
+#include "unique.hpp"                  // for Unique
+#include "utils.hpp"                   // for MAX, MIN
+#include "wanderInfo.hpp"              // for WanderInfo
+#include "xml.hpp"                     // for loadRoom
 
 
 char Monster::mob_trade_str[][16]  = { "None", "Smithy", "Banker", "Armorer", "Weaponsmith", "Merchant", "Training Perm" };

@@ -17,18 +17,25 @@
  */
 
 
-#include <boost/format.hpp>             // for basic_altstringbuf<>::int_type
-#include <cctype>                       // for isdigit
-#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/case_conv.hpp>    // for to_lower
+#include <boost/format.hpp>                        // for boost::format
+#include <boost/optional/optional.hpp>             // for get_pointer
+#include <cctype>                                  // for isdigit
+#include <map>                                     // for operator==, _Rb_tr...
+#include <ostream>                                 // for operator<<, basic_...
+#include <string>                                  // for basic_string, char...
+#include <string_view>                             // for string_view, opera...
+#include <utility>                                 // for pair
 
-#include "cmd.hpp"                      // for cmd
-#include "config.hpp"                   // for Config, gConfig
-#include "creatures.hpp"                // for Player
-#include "free_crt.hpp"                 // for free_crt
-#include "proto.hpp"                    // for up, file_exists
-#include "proxy.hpp"                    // for ProxyAccess, ProxyManager
-#include "server.hpp"                   // for Server, gServer
-#include "xml.hpp"                      // for newStringChild, copyToString
+#include "cmd.hpp"                                 // for cmd
+#include "config.hpp"                              // for Config, gConfig
+#include "creatureStreams.hpp"                     // for Streamable
+#include "free_crt.hpp"                            // for free_crt
+#include "mudObjects/players.hpp"                  // for Player
+#include "proto.hpp"                               // for up
+#include "proxy.hpp"                               // for ProxyAccess, Proxy...
+#include "server.hpp"                              // for Server, gServer
+#include "xml.hpp"                                 // for loadPlayer
 
 //*********************************************************************
 // CmdProxy

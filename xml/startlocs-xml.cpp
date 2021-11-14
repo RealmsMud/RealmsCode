@@ -16,15 +16,19 @@
  *
  */
 
-#include <libxml/parser.h>        // for xmlFreeDoc, xmlNodePtr, xmlNode
-#include <cstdio>                 // for snprintf, sprintf
-#include <map>                    // for operator==, map, operator!=, allocator
+#include <libxml/parser.h>     // for xmlFreeDoc, xmlCleanupParser, xmlDocGe...
+#include <libxml/xmlstring.h>  // for BAD_CAST
+#include <cstdio>              // for snprintf, sprintf
+#include <map>                 // for allocator, map, operator==, map<>::con...
+#include <string>              // for string, operator<=>
+#include <utility>             // for pair
 
-#include "config.hpp"             // for Config
-#include "location.hpp"           // for Location
-#include "paths.hpp"              // for Game
-#include "startlocs.hpp"          // for StartLoc
-#include "xml.hpp"                // for NODE_NAME, copyPropToString, copyT...
+#include "catRef.hpp"          // for CatRef
+#include "config.hpp"          // for Config
+#include "location.hpp"        // for Location
+#include "paths.hpp"           // for Game
+#include "startlocs.hpp"       // for StartLoc
+#include "xml.hpp"             // for NODE_NAME, copyPropToString, copyToString
 
 //*********************************************************************
 //                      loadStartLoc

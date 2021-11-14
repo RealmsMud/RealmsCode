@@ -15,42 +15,55 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cctype>                              // for isupper
+
 #include <dirent.h>                            // for dirent, opendir, readdir
+#include <fmt/format.h>                        // for format
+#include <unistd.h>                            // for close, read, unlink
+#include <boost/algorithm/string/trim.hpp>     // for trim
+#include <boost/iterator/iterator_facade.hpp>  // for operator!=, operator++
+#include <boost/token_functions.hpp>           // for char_separator
+#include <boost/token_iterator.hpp>            // for token_iterator
+#include <boost/tokenizer.hpp>                 // for tokenizer<>::iter
+#include <cctype>                              // for isupper
 #include <csignal>                             // for kill
-#include <cstdio>                              // for printf
+#include <cstdio>                              // for printf, size_t
 #include <cstdlib>                             // for atoi, exit
 #include <cstring>                             // for memset, strlen
-#include <unistd.h>                            // for close, read, unlink
-#include <list>                                // for operator==
-#include <map>                                 // for operator==, operator!=
-#include <string>                              // for basic_string, operator==
-#include <utility>                             // for pair
-#include <boost/algorithm/string/trim.hpp>
+#include <list>                                // for list, operator==, list...
+#include <map>                                 // for operator==, map, _Rb_t...
+#include <set>                                 // for set
+#include <string>                              // for string, basic_string
+#include <string_view>                         // for string_view, operator==
+#include <utility>                             // for pair, move
 
+#include "anchor.hpp"                          // for Anchor
 #include "area.hpp"                            // for Area, AreaZone, MapMarker
-#include "async.hpp"                          // for Async, AsyncExternal
+#include "async.hpp"                           // for Async, AsyncExternal
 #include "catRef.hpp"                          // for CatRef
 #include "catRefInfo.hpp"                      // for CatRefInfo, CatRefInfo...
 #include "cmd.hpp"                             // for cmd
 #include "commands.hpp"                        // for getFullstrText, getFul...
 #include "config.hpp"                          // for Config, gConfig
-#include "creatures.hpp"                       // for Player, Monster
 #include "dm.hpp"                              // for findNextEmpty, dmMobSwap
 #include "enums/loadType.hpp"                  // for LoadType, LoadType::LS...
-#include "exits.hpp"                           // for Exit
-#include "free_crt.hpp"                        // for free_crt
 #include "flags.hpp"                           // for R_SHOP, X_LOCKABLE
+#include "free_crt.hpp"                        // for free_crt
 #include "global.hpp"                          // for CreatureClass, Creatur...
 #include "hooks.hpp"                           // for Hooks
 #include "location.hpp"                        // for Location
 #include "mud.hpp"                             // for BODYPART_OBJ, CORPSE_OBJ
-#include "mudObject.hpp"                       // for MudObject
-#include "objects.hpp"                         // for Object
+#include "mudObjects/areaRooms.hpp"            // for AreaRoom
+#include "mudObjects/container.hpp"            // for MonsterSet
+#include "mudObjects/exits.hpp"                // for Exit
+#include "mudObjects/monsters.hpp"             // for Monster
+#include "mudObjects/mudObject.hpp"            // for MudObject
+#include "mudObjects/objects.hpp"              // for Object
+#include "mudObjects/players.hpp"              // for Player
+#include "mudObjects/rooms.hpp"                // for ExitList
+#include "mudObjects/uniqueRooms.hpp"          // for UniqueRoom
 #include "paths.hpp"                           // for Monster, UniqueRoom
-#include "proc.hpp"                            // for childProcess, CHILD_SW...
-#include "proto.hpp"                           // for getCatRef
-#include "rooms.hpp"                           // for UniqueRoom, AreaRoom
+#include "proc.hpp"                            // for childProcess, ChildType
+#include "proto.hpp"                           // for getCatRef, broadcast
 #include "server.hpp"                          // for Server, gServer, RoomC...
 #include "ships.hpp"                           // for ShipExit, ShipRaid
 #include "startlocs.hpp"                       // for StartLoc
@@ -58,6 +71,7 @@
 #include "tokenizer.hpp"                       // for charTokenizer
 #include "utils.hpp"                           // for MAX
 #include "xml.hpp"                             // for loadPlayer, loadRoom
+
 
 const char* sepType = " ";
 #define SWAP_QUEUE_LIMIT    100

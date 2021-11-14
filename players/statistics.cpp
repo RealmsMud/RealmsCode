@@ -16,25 +16,37 @@
  *
  */
 
-#include <cstring>                  // for strcmp
-#include <ctime>                    // for ctime, time_t, time
-#include <iomanip>                  // for operator<<, setfill
-#include <boost/algorithm/string/trim.hpp>
-#include <boost/algorithm/string/erase.hpp>
+#include <boost/algorithm/string/erase.hpp>    // for erase_all
+#include <boost/algorithm/string/trim.hpp>     // for trim
+#include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
+#include <cstring>                             // for strcmp
+#include <ctime>                               // for ctime, time, time_t
+#include <deque>                               // for _Deque_iterator
+#include <iomanip>                             // for operator<<, setfill, setw
+#include <list>                                // for list
+#include <locale>                              // for locale
+#include <map>                                 // for operator==, _Rb_tree_i...
+#include <ostream>                             // for operator<<, basic_ostream
+#include <string>                              // for string, char_traits
+#include <string_view>                         // for string_view
+#include <utility>                             // for pair
 
-#include "cmd.hpp"                  // for cmd
-#include "commands.hpp"             // for cmdLevelHistory
-#include "color.hpp"                // for stripColor
-#include "creatureStreams.hpp"      // for Streamable, ColorOff
-#include "creatures.hpp"            // for Player, Creature
-#include "free_crt.hpp"             // for free_crt
-#include "global.hpp"               // for INV, MAG, MAX_SAVE
-#include "objects.hpp"              // for Object
-#include "proto.hpp"                // for up, str...
-#include "server.hpp"               // for Server, gServer
-#include "statistics.hpp"           // for Statistics, Level...
-#include "utils.hpp"                // for MAX, MIN
-#include "xml.hpp"                  // for copyToNum, saveNo...
+#include "cmd.hpp"                             // for cmd
+#include "color.hpp"                           // for stripColor
+#include "commands.hpp"                        // for cmdLevelHistory, cmdSt...
+#include "creatureStreams.hpp"                 // for Streamable, ColorOff
+#include "free_crt.hpp"                        // for free_crt
+#include "global.hpp"                          // for INV, MAG, MAX_SAVE
+#include "mudObjects/creatures.hpp"            // for Creature
+#include "mudObjects/monsters.hpp"             // for Monster
+#include "mudObjects/objects.hpp"              // for Object
+#include "mudObjects/players.hpp"              // for Player
+#include "proto.hpp"                           // for up, getSaveName
+#include "server.hpp"                          // for Server, gServer
+#include "statistics.hpp"                      // for Statistics, LevelInfo
+#include "stats.hpp"                           // for Stat
+#include "utils.hpp"                           // for MAX, MIN
+#include "xml.hpp"                             // for loadPlayer
 
 //*********************************************************************
 //                      LevelInfo

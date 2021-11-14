@@ -15,12 +15,16 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <libxml/parser.h>      // for xmlNode, xmlFreeDoc
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
+#include <stdio.h>                                  // for snprintf
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <map>                                      // for operator==, map
+#include <string>                                   // for string, allocator
 
-#include "clans.hpp"            // for Clan
-#include "config.hpp"           // for Config, gConfig
-#include "paths.hpp"            // for Paths
-#include "xml.hpp"              // for loadPlayer, loadRoom
+#include "clans.hpp"                                // for Clan
+#include "config.hpp"                               // for Config, ClanMap
+#include "paths.hpp"                                // for Game
+#include "xml.hpp"                                  // for toNum, NODE_NAME
 
 //*********************************************************************
 //                      loadClans

@@ -16,9 +16,14 @@
  *
  */
 
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <config.hpp>                               // for Config, gConfig
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
 #include <cstdio>                                   // for sprintf
+#include <libxml/xmlstring.h>                       // for BAD_CAST
+#include <list>                                     // for list, list<>::con...
+#include <memory>                                   // for allocator
+#include <ostream>                                  // for basic_ostream::op...
 
 #include "calendar.hpp"                             // for cWeather, Calendar
 #include "global.hpp"                               // for FATAL

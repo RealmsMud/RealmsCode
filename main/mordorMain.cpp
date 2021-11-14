@@ -15,18 +15,20 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <iostream>
+
+#include <unistd.h>             // for getpid
 #include <cerrno>               // for errno
 #include <cstdio>               // for fclose, fopen, fprintf, printf, sprintf
 #include <cstdlib>              // for atoi
 #include <cstring>              // for strerror, strncpy
 #include <ctime>                // for time
-#include <unistd.h>             // for getpid
+#include <iostream>             // for std::clog
 #include <ostream>              // for operator<<, basic_ostream, char_traits
 
 #include "config.hpp"           // for Config, gConfig
+#include "libxml/xmlversion.h"  // for LIBXML_TEST_VERSION
 #include "mud.hpp"              // for StartTime
-#include "paths.hpp"            // for Paths
+#include "paths.hpp"            // for Log
 #include "proto.hpp"            // for loge, is_num, handle_args, startup_mo...
 #include "server.hpp"           // for Server, gServer
 #include "version.hpp"          // for VERSION

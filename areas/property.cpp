@@ -16,43 +16,59 @@
  *
  */
 
-#include <cctype>                 // for toupper, isdigit, isupper
-#include <fcntl.h>                // for open, O_APPEND, O_CREAT, O_RDONLY
-#include <cstdarg>                // for va_end, va_list, va_start
-#include <cstdio>                 // for sprintf, fclose, feof, fgets, fopen
-#include <cstdlib>                // for atoi
-#include <cstring>                // for strcmp, strncmp, strcpy, strlen
-#include <ctime>                  // for ctime, time
-#include <unistd.h>               // for close, unlink, write
-#include <iomanip>                // for operator<<, setw
-#include <sstream>                // for operator<<, basic_ostream, char_traits
-#include <boost/algorithm/string.hpp>
+#include <fcntl.h>                          // for open, O_APPEND, O_CREAT
+#include <fmt/format.h>                     // for format
+#include <unistd.h>                         // for close, unlink, write
+#include <algorithm>                        // for replace
+#include <boost/algorithm/string/trim.hpp>  // for trim
+#include <cctype>                           // for toupper, isdigit, isupper
+#include <cstdarg>                          // for va_end, va_list, va_start
+#include <cstdio>                           // for sprintf, fclose, feof, fgets
+#include <cstdlib>                          // for atoi
+#include <cstring>                          // for strcmp, strncmp, strcpy
+#include <ctime>                            // for ctime, time
+#include <iomanip>                          // for operator<<, setw
+#include <list>                             // for list, operator==, list<>:...
+#include <map>                              // for operator==, map<>::iterator
+#include <memory>                           // for allocator, allocator_trai...
+#include <set>                              // for set
+#include <sstream>                          // for operator<<, basic_ostream
+#include <string>                           // for string, operator==, basic...
+#include <string_view>                      // for string_view, operator==
+#include <utility>                          // for pair
 
-#include "catRef.hpp"             // for CatRef
-#include "catRefInfo.hpp"         // for CatRefInfo
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for getFullstrText, cmdHelp, cmdShop
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player
-#include "dm.hpp"                 // for isCardinal, findRoomsWithFlag, oppo...
-#include "exits.hpp"              // for Exit
-#include "flags.hpp"              // for P_READING_FILE, R_BUILD_GUILDHALL
-#include "global.hpp"             // for PROP_GUILDHALL, PROP_HOUSE, PropType
-#include "guilds.hpp"             // for Guild
-#include "login.hpp"              // for CON_EDIT_PROPERTY
-#include "move.hpp"               // for tooFarAway
-#include "mud.hpp"                // for ACC, GUILD_BANKER, GUILD_MASTER
-#include "objects.hpp"            // for Object
-#include "os.hpp"                 // for merror
-#include "paths.hpp"              // for Paths
-#include "property.hpp"           // for Property, PartialOwner, LOG_PARTIAL
-#include "proto.hpp"              // for link_rom, broadcast, free_crt, up
-#include "range.hpp"              // for Range
-#include "rooms.hpp"              // for UniqueRoom, BaseRoom, ExitList, Are...
-#include "server.hpp"             // for Server, gServer
-#include "socket.hpp"             // for Socket
-#include "structs.hpp"            // for MudFlag
-#include "xml.hpp"                // for loadRoom, loadPlayer
+#include "area.hpp"                         // for MapMarker
+#include "catRef.hpp"                       // for CatRef
+#include "catRefInfo.hpp"                   // for CatRefInfo
+#include "cmd.hpp"                          // for cmd
+#include "commands.hpp"                     // for getFullstrText, cmdHelp
+#include "config.hpp"                       // for Config, gConfig, MudFlagMap
+#include "dm.hpp"                           // for isCardinal, findRoomsWith...
+#include "flags.hpp"                        // for P_READING_FILE, R_BUILD_G...
+#include "free_crt.hpp"                     // for free_crt
+#include "global.hpp"                       // for PROP_GUILDHALL, PROP_HOUSE
+#include "guilds.hpp"                       // for Guild
+#include "location.hpp"                     // for Location
+#include "login.hpp"                        // for CON_EDIT_PROPERTY
+#include "move.hpp"                         // for tooFarAway
+#include "mud.hpp"                          // for ACC, GUILD_BANKER, GUILD_...
+#include "mudObjects/areaRooms.hpp"         // for AreaRoom
+#include "mudObjects/container.hpp"         // for ObjectSet
+#include "mudObjects/exits.hpp"             // for Exit
+#include "mudObjects/objects.hpp"           // for Object
+#include "mudObjects/players.hpp"           // for Player
+#include "mudObjects/rooms.hpp"             // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"       // for UniqueRoom
+#include "os.hpp"                           // for merror
+#include "paths.hpp"                        // for Post
+#include "property.hpp"                     // for Property, PartialOwner
+#include "proto.hpp"                        // for link_rom, broadcast, up
+#include "range.hpp"                        // for Range
+#include "server.hpp"                       // for Server, gServer
+#include "socket.hpp"                       // for Socket
+#include "structs.hpp"                      // for MudFlag
+#include "xml.hpp"                          // for loadRoom, loadPlayer
+
 
 
 //*********************************************************************

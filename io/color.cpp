@@ -16,22 +16,28 @@
  *
  */
 
-#include <cstdio>                // for sprintf
-#include <cstring>               // for memset, strcmp
-#include <map>                    // for map, map<>::mapped_type, operator==
-#include <sstream>                // for operator<<, ostringstream, basic_os...
-#include <string>                 // for operator==, basic_string, allocator
-#include <boost/algorithm/string/case_conv.hpp>
-#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/case_conv.hpp>  // for to_lower
+#include <boost/algorithm/string/replace.hpp>    // for replace_all
+#include <boost/iterator/iterator_traits.hpp>    // for iterator_value<>::type
+#include <cstdio>                                // for sprintf, size_t
+#include <cstring>                               // for memset, strcmp
+#include <deque>                                 // for _Deque_iterator
+#include <map>                                   // for map, map<>::mapped_type
+#include <sstream>                               // for operator<<, ostrings...
+#include <string>                                // for string, operator==
+#include <string_view>                           // for string_view, basic_s...
+#include <utility>                               // for pair
 
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for isPtester, getFullstrText, cmdColors
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player, Monster, Creature
-#include "flags.hpp"              // for P_ANSI_COLOR, P_MXP_ENABLED
-#include "global.hpp"             // for CUSTOM_COLOR_DEFAULT, CustomColor
-#include "login.hpp"              // for ANSI_COLOR, NO_COLOR
-#include "socket.hpp"             // for Socket, Socket::SockOptions
+#include "cmd.hpp"                               // for cmd
+#include "commands.hpp"                          // for isPtester, getFullst...
+#include "config.hpp"                            // for Config, gConfig
+#include "flags.hpp"                             // for P_ANSI_COLOR, P_MXP_...
+#include "global.hpp"                            // for CUSTOM_COLOR_DEFAULT
+#include "login.hpp"                             // for ANSI_COLOR, NO_COLOR
+#include "mudObjects/creatures.hpp"              // for Creature
+#include "mudObjects/monsters.hpp"               // for Monster
+#include "mudObjects/players.hpp"                // for Player
+#include "socket.hpp"                            // for Socket, Socket::Sock...
 
 #define CLEAR       "\033[0m"       // Resets color
 #define C_BLACK     "\033[0;30m"    // Normal colors

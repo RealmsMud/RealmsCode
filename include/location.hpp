@@ -19,7 +19,11 @@
 #ifndef _LOCATION_H
 #define _LOCATION_H
 
+#include <libxml/parser.h>
+#include <string>
+
 #include "area.hpp"
+#include "catRef.hpp"
 
 class Player;
 class BaseRoom;

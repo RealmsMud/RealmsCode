@@ -15,26 +15,37 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstdlib>                // for abs
-#include <ctime>                  // for time
 
-#include "catRef.hpp"             // for CatRef
-#include "commands.hpp"           // for lose_all
-#include "container.hpp"          // for PlayerSet, ObjectSet, MonsterSet
-#include "creatures.hpp"          // for Player, Creature, Monster, NO_CHECK
-#include "damage.hpp"             // for Damage
-#include "flags.hpp"              // for P_PREPARED, O_RESIST_DISOLVE, M_PER...
-#include "global.hpp"             // for DEA, CreatureClass, MAXWEAR, BRE, POI
-#include "location.hpp"           // for Location
-#include "mud.hpp"                // for LT_SPELL
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
-#include "proto.hpp"              // for broadcast, logn, standardPoisonDura...
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom, UniqueRoom
-#include "server.hpp"             // for Server, gServer
-#include "traps.hpp"              // for TRAP_ALARM, TRAP_BONEAV, TRAP_GASS
-#include "utils.hpp"              // for MAX, MIN
-#include "xml.hpp"                // for loadRoom
+#include <math.h>                      // for abs
+#include <cstdlib>                     // for abs
+#include <ctime>                       // for time
+#include <set>                         // for operator==, _Rb_tree_const_ite...
+#include <string>                      // for allocator, string
+#include <type_traits>                 // for enable_if<>::type
+
+#include "catRef.hpp"                  // for CatRef
+#include "commands.hpp"                // for lose_all
+#include "damage.hpp"                  // for Damage
+#include "flags.hpp"                   // for P_PREPARED, O_RESIST_DISOLVE
+#include "free_crt.hpp"                // for free_crt
+#include "global.hpp"                  // for DEA, CreatureClass, MAXWEAR, BRE
+#include "lasttime.hpp"                // for lasttime
+#include "location.hpp"                // for Location
+#include "mud.hpp"                     // for LT_SPELL
+#include "mudObjects/container.hpp"    // for ObjectSet, PlayerSet, MonsterSet
+#include "mudObjects/creatures.hpp"    // for Creature, NO_CHECK
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/objects.hpp"      // for Object, ObjectType, ObjectType...
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "proto.hpp"                   // for broadcast, logn, standardPoiso...
+#include "random.hpp"                  // for Random
+#include "server.hpp"                  // for Server, gServer
+#include "stats.hpp"                   // for Stat
+#include "traps.hpp"                   // for TRAP_ALARM, TRAP_BONEAV, TRAP_...
+#include "utils.hpp"                   // for MAX, MIN
+#include "xml.hpp"                     // for loadRoom
 
 //*********************************************************************
 //                      teleport_trap

@@ -15,45 +15,59 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cctype>                 // for isalpha
-#include <fcntl.h>                // for open, O_RDONLY
-#include <cstdio>                 // for sprintf, snprintf
-#include <cstdlib>                // for atoi
-#include <cstring>                // for strcpy, strchr
-#include <ctime>                  // for time
-#include <unistd.h>               // for close, read
-#include <sstream>                // for operator<<, basic_ostream, ostrings...
-#include <iomanip>                // for setw
-#include <fmt/format.h>
-#include <boost/algorithm/string/trim.hpp>
-#include <boost/algorithm/string/predicate.hpp>
 
-#include "catRef.hpp"             // for CatRef
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for parse, cmdWeapons
-#include "config.hpp"             // for Config, gConfig, accountDouble, Ski...
-#include "container.hpp"          // for ObjectSet
-#include "creatures.hpp"          // for Player, CustomCrt, Creature, Custom...
-#include "deityData.hpp"          // for DeityData
-#include "flags.hpp"              // for P_HARDCORE, O_STARTING, P_LAG_PROTE...
-#include "global.hpp"             // for CreatureClass, CreatureClass::CLERIC
-#include "login.hpp"              // for doPrint, doWork, CON_PLAYING, CREAT...
-#include "magic.hpp"              // for Divine, S_SAP_LIFE
-#include "mud.hpp"                // for LT_AGE, MAX_LT, SONG_HEAL, allowedC...
-#include "objects.hpp"            // for Object
-#include "os.hpp"                 // for merror
-#include "paths.hpp"              // for Config, CreateHelp
-#include "playerClass.hpp"        // for PlayerClass
-#include "proto.hpp"              // for low, free_crt, get_class_string
-#include "raceData.hpp"           // for RaceData
-#include "random.hpp"             // for Random
-#include "server.hpp"             // for Server, gServer
-#include "skills.hpp"             // for SkillInfo
-#include "socket.hpp"             // for Socket
-#include "stats.hpp"              // for Stat
-#include "structs.hpp"            // for SEX_FEMALE, SEX_MALE, SEX_NONE
-#include "utils.hpp"              // for MAX
-#include "xml.hpp"                // for LoadPlayer
+#include <fcntl.h>                               // for open, O_RDONLY
+#include <fmt/format.h>                          // for format
+#include <unistd.h>                              // for close, read
+#include <boost/algorithm/string/predicate.hpp>  // for contains
+#include <boost/algorithm/string/trim.hpp>       // for trim
+#include <cctype>                                // for isalpha, tolower
+#include <cstdio>                                // for sprintf
+#include <cstdlib>                               // for atoi
+#include <cstring>                               // for strcpy, strchr
+#include <ctime>                                 // for time
+#include <iomanip>                               // for operator<<, setw
+#include <list>                                  // for list, operator==
+#include <locale>                                // for locale
+#include <map>                                   // for operator==, _Rb_tree...
+#include <set>                                   // for set<>::iterator
+#include <sstream>                               // for char_traits, operator<<
+#include <string>                                // for string, allocator
+#include <string_view>                           // for operator==, string_view
+#include <type_traits>                           // for add_const<>::type
+#include <utility>                               // for pair, tuple_element<...
+
+#include "catRef.hpp"                            // for CatRef
+#include "cmd.hpp"                               // for cmd
+#include "commands.hpp"                          // for parse, cmdReconnect
+#include "config.hpp"                            // for Config, gConfig, Rac...
+#include "creatureStreams.hpp"                   // for Streamable, ColorOff
+#include "deityData.hpp"                         // for DeityData
+#include "flags.hpp"                             // for P_HARDCORE, O_STARTING
+#include "free_crt.hpp"                          // for free_crt
+#include "global.hpp"                            // for CreatureClass, Creat...
+#include "lasttime.hpp"                          // for lasttime
+#include "location.hpp"                          // for Location
+#include "login.hpp"                             // for doPrint, doWork, CON...
+#include "magic.hpp"                             // for Divine, S_SAP_LIFE
+#include "money.hpp"                             // for Money
+#include "mud.hpp"                               // for LT_AGE, MAX_LT, SONG...
+#include "mudObjects/container.hpp"              // for ObjectSet
+#include "mudObjects/creatures.hpp"              // for CustomCrt, Creature
+#include "mudObjects/objects.hpp"                // for Object
+#include "mudObjects/players.hpp"                // for Player
+#include "os.hpp"                                // for merror
+#include "paths.hpp"                             // for Config, CreateHelp
+#include "playerClass.hpp"                       // for PlayerClass
+#include "proto.hpp"                             // for low, get_class_string
+#include "raceData.hpp"                          // for RaceData
+#include "random.hpp"                            // for Random
+#include "server.hpp"                            // for Server, gServer
+#include "socket.hpp"                            // for Socket
+#include "stats.hpp"                             // for Stat
+#include "structs.hpp"                           // for SEX_FEMALE, SEX_MALE
+#include "utils.hpp"                             // for MAX
+#include "xml.hpp"                               // for loadPlayer, loadObject
 
 class StartLoc;
 

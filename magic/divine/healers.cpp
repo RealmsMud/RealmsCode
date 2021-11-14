@@ -16,23 +16,32 @@
  *
  */
 
-#include <ctime>           // for time
+#include <ctime>                     // for time
+#include <string>                    // for allocator, string
+#include <type_traits>               // for enable_if<>::type
 
-#include "cmd.hpp"         // for cmd
-#include "config.hpp"      // for Config, gConfig
-#include "creatures.hpp"   // for Player, Creature, Monster, CHECK_DIE
-#include "deityData.hpp"   // for DeityData
-#include "flags.hpp"       // for P_AFK, M_SPECIAL_UNDEAD, P_LAG_PROTECTION_...
-#include "global.hpp"      // for CreatureClass, CreatureClass::DEATHKNIGHT
-#include "magic.hpp"       // for SpellData, splHallow, splUnhallow
-#include "monType.hpp"     // for PLAYER
-#include "mud.hpp"         // for LT, LT_HOLYWORD, LT_TURN, LT_LAY_HANDS
-#include "objects.hpp"     // for Object, ObjectType, ObjectType::BANDAGE
-#include "proto.hpp"       // for broadcast, bonus, up
-#include "random.hpp"      // for Random
-#include "realm.hpp"       // for EARTH
-#include "rooms.hpp"       // for BaseRoom
-#include "utils.hpp"       // for MIN, MAX
+#include "cmd.hpp"                   // for cmd
+#include "config.hpp"                // for Config, gConfig
+#include "deityData.hpp"             // for DeityData
+#include "dice.hpp"                  // for Dice
+#include "flags.hpp"                 // for P_AFK, M_SPECIAL_UNDEAD, P_LAG_P...
+#include "global.hpp"                // for CreatureClass, CreatureClass::DE...
+#include "lasttime.hpp"              // for lasttime
+#include "magic.hpp"                 // for SpellData, splHallow, splUnhallow
+#include "monType.hpp"               // for PLAYER
+#include "mud.hpp"                   // for LT, LT_HOLYWORD, LT_TURN, LT_LAY...
+#include "mudObjects/container.hpp"  // for Container
+#include "mudObjects/creatures.hpp"  // for Creature, CHECK_DIE
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object, ObjectType, ObjectType::...
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, bonus, up
+#include "random.hpp"                // for Random
+#include "realm.hpp"                 // for EARTH
+#include "statistics.hpp"            // for Statistics
+#include "stats.hpp"                 // for Stat
+#include "utils.hpp"                 // for MIN, MAX
 
 
 //*********************************************************************

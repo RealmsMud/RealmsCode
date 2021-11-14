@@ -16,22 +16,35 @@
  *
  */
 
-#include <config.hpp>                               // for Config, gConfig
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlFr...
-#include <proto.hpp>                                // for roomPath, whatSize
-#include <rooms.hpp>                                // for UniqueRoom, NUM_P...
-#include <server.hpp>                               // for Server, gServer
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
+#include <libxml/xmlstring.h>                       // for BAD_CAST
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <compare>                                  // for operator<, strong...
 #include <cstring>                                  // for strcpy
-#include <xml.hpp>                                  // for NODE_NAME, copyToNum
+#include <map>                                      // for map, operator==
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for string, allocator
+#include <utility>                                  // for pair
 
+#include "area.hpp"                                 // for MapMarker, Area
 #include "catRef.hpp"                               // for CatRef
+#include "config.hpp"                               // for Config, gConfig
 #include "enums/loadType.hpp"                       // for LoadType, LoadTyp...
 #include "flags.hpp"                                // for MAX_ROOM_FLAGS
 #include "global.hpp"                               // for FATAL
-#include "lasttime.hpp"                             // for lasttime, crlasttime
+#include "hooks.hpp"                                // for Hooks
+#include "lasttime.hpp"                             // for crlasttime, lasttime
+#include "mudObjects/areaRooms.hpp"                 // for AreaRoom
+#include "mudObjects/rooms.hpp"                     // for NUM_PERM_SLOTS
+#include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
 #include "os.hpp"                                   // for ASSERTLOG, merror
 #include "paths.hpp"                                // for checkDirExists
+#include "proto.hpp"                                // for roomPath, roomBac...
+#include "server.hpp"                               // for Server, gServer
+#include "size.hpp"                                 // for whatSize
 #include "track.hpp"                                // for Track
+#include "wanderInfo.hpp"                           // for WanderInfo
+#include "xml.hpp"                                  // for NODE_NAME, copyToNum
 
 //*********************************************************************
 //                      loadRoom

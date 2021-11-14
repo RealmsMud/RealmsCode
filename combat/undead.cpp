@@ -16,19 +16,25 @@
  *
  */
 
-#include <ctime>           // for time
+#include <ctime>                     // for time
+#include <set>                       // for operator==, _Rb_tree_const_iterator
+#include <string>                    // for allocator, string
 
-#include "creatures.hpp"   // for Player, Creature, Monster, CHECK_DIE
-#include "damage.hpp"      // for Damage
-#include "flags.hpp"       // for P_OUTLAW, P_LAG_PROTECTION_ACTIVE, P_LAG_P...
-#include "global.hpp"      // for CreatureClass, CreatureClass::CARETAKER
-#include "mud.hpp"         // for LT, LT_REGENERATE, LT_MIST, LT_DRAIN_LIFE
-#include "proto.hpp"       // for broadcast, bonus, log_immort, isDay, broad...
-#include "random.hpp"      // for Random
-#include "rooms.hpp"       // for BaseRoom
-#include "utils.hpp"       // for MIN
-
-class cmd;
+#include "damage.hpp"                // for Damage
+#include "flags.hpp"                 // for P_OUTLAW, P_LAG_PROTECTION_ACTIVE
+#include "global.hpp"                // for CreatureClass, CreatureClass::CA...
+#include "lasttime.hpp"              // for lasttime
+#include "mud.hpp"                   // for LT, LT_REGENERATE, LT_MIST, LT_D...
+#include "mudObjects/container.hpp"  // for PlayerSet
+#include "mudObjects/creatures.hpp"  // for Creature, CHECK_DIE
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, bonus, log_immort, isDay
+#include "random.hpp"                // for Random
+#include "statistics.hpp"            // for Statistics
+#include "stats.hpp"                 // for Stat
+#include "utils.hpp"                 // for MIN
 
 //*********************************************************************
 //                      cmdBite

@@ -16,9 +16,12 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
-#include "xml.hpp"                                  // for copyToString
-#include "structs.hpp"                              // for Spell, PFNCOMPARE
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <memory>                                   // for allocator
+#include <ostream>                                  // for basic_ostream::op...
+
+#include "structs.hpp"                              // for Spell
+#include "xml.hpp"                                  // for copyToString, sav...
 
 
 //*********************************************************************

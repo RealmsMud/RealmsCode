@@ -16,14 +16,17 @@
  *
  */
 
-#include <libxml/parser.h>  // for xmlNodePtr, xmlNode
+#include <string>                      // for string, allocator
+#include <string_view>                 // for string_view
 
-#include "anchor.hpp"       // for Anchor
-#include "area.hpp"         // for MapMarker, Area, TileInfo
-#include "catRef.hpp"       // for CatRef
-#include "creatures.hpp"    // for Player
-#include "rooms.hpp"        // for AreaRoom, BaseRoom, UniqueRoom
-#include "xml.hpp"          // for newStringChild, copyToString, NODE_NAME
+#include "anchor.hpp"                  // for Anchor
+#include "area.hpp"                    // for MapMarker, Area, TileInfo
+#include "catRef.hpp"                  // for CatRef
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "xml.hpp"                     // for newStringChild, copyToString
 
 //*********************************************************************
 //                      Anchor

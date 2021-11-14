@@ -16,11 +16,20 @@
  *
  */
 
-#include "config.hpp"     // for Config, gConfig
-#include "paths.hpp"      // for Paths
-#include "proto.hpp"      // for file_exists
-#include "ships.hpp"      // for ShipStop, ShipRaid
-#include "xml.hpp"        // for copyToString
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCleanupParser, xmlDo...
+#include <libxml/xmlstring.h>                       // for BAD_CAST
+#include <cstdio>                                   // for sprintf
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <list>                                     // for list, operator==
+#include <memory>                                   // for allocator
+#include <ostream>                                  // for basic_ostream::op...
+
+#include "config.hpp"                               // for Config
+#include "paths.hpp"                                // for Game
+#include "proto.hpp"                                // for file_exists
+#include "range.hpp"                                // for Range
+#include "ships.hpp"                                // for Ship, ShipStop
+#include "xml.hpp"                                  // for saveNonZeroNum
 
 void Ship::load(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;

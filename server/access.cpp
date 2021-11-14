@@ -15,22 +15,25 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstdio>                 // for sprintf
-#include <cstring>                // for strcat, strcpy, strcmp
-#include <map>                    // for operator==, operator!=
-#include <string>                 // for operator==, basic_string, allocator
 
-#include "calendar.hpp"           // for Calendar, cDay
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player
-#include "deityData.hpp"          // for DeityData
-#include "global.hpp"             // for CreatureClass, CreatureClass::CLASS...
-#include "os.hpp"                 // for ASSERTLOG
-#include "playerClass.hpp"        // for PlayerClass
-#include "playerTitle.hpp"        // for PlayerTitle
-#include "proto.hpp"              // for getLastDigit, ltoa, up, getClassAbbrev
-#include "random.hpp"             // for Random
-#include "utils.hpp"              // for MAX, MIN
+#include <cstdio>                  // for sprintf
+#include <cstring>                 // for strcat, strcpy
+#include <map>                     // for operator==, map<>::iterator, map
+#include <string>                  // for string, char_traits, to_string
+#include <string_view>             // for operator==, basic_string_view, str...
+#include <utility>                 // for pair
+
+#include "calendar.hpp"            // for Calendar, cDay
+#include "config.hpp"              // for Config, gConfig, DeityDataMap
+#include "deityData.hpp"           // for DeityData
+#include "global.hpp"              // for CreatureClass, CreatureClass::CLAS...
+#include "mudObjects/players.hpp"  // for Player
+#include "os.hpp"                  // for ASSERTLOG
+#include "playerClass.hpp"         // for PlayerClass
+#include "playerTitle.hpp"         // for PlayerTitle
+#include "proto.hpp"               // for getLastDigit, ltoa, up, getClassAb...
+#include "random.hpp"              // for Random
+#include "utils.hpp"               // for MAX, MIN
 
 //
 //      class

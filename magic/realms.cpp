@@ -15,18 +15,24 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <string>         // for operator==, basic_string
 
-#include "cmd.hpp"        // for cmd
-#include "creatures.hpp"  // for Creature, Player, Monster
-#include "flags.hpp"      // for R_AIR_BONUS, R_COLD_BONUS, R_EARTH_BONUS
-#include "global.hpp"     // for CastType, CastType::CAST
-#include "magic.hpp"      // for SpellData, checkRefusingMagic, realmSkill
-#include "mud.hpp"        // for ospell
-#include "proto.hpp"      // for broadcast, up, getOffensiveSpell, getOpposi...
-#include "random.hpp"     // for Random
-#include "realm.hpp"      // for Realm, COLD, EARTH, ELEC, FIRE, WATER, WIND
-#include "rooms.hpp"      // for BaseRoom
+#include <string>                    // for allocator, string, char_traits
+#include <string_view>               // for operator==, basic_string_view
+
+#include "cmd.hpp"                   // for cmd
+#include "flags.hpp"                 // for R_AIR_BONUS, R_COLD_BONUS, R_EAR...
+#include "global.hpp"                // for CastType, CastType::CAST
+#include "magic.hpp"                 // for SpellData, checkRefusingMagic
+#include "mud.hpp"                   // for ospell
+#include "mudObjects/container.hpp"  // for Container
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, up, getOffensiveSpell
+#include "random.hpp"                // for Random
+#include "realm.hpp"                 // for Realm, COLD, EARTH, ELEC, FIRE
+#include "structs.hpp"               // for osp_t
 
 //
 // The get functions essentially store info about relationships between

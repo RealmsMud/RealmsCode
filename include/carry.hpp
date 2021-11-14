@@ -20,6 +20,7 @@
 #define _CARRY_H
 
 #include <libxml/parser.h>  // for xmlNodePtr
+#include <string>           // for allocator, string
 
 #include "catRef.hpp"       // for CatRef
 

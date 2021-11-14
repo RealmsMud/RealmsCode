@@ -16,36 +16,42 @@
  *
  */
 
-#include <cstdio>                     // for snprintf, sprintf
-#include <strings.h>                  // for strncasecmp
-#include <unistd.h>                   // for link
-#include <fstream>                    // for ofstream, operator<<, basic_ost...
-#include <iomanip>                    // for operator<<, setw
-#include <map>                        // for map, operator==, operator!=
-#include <string>                     // for operator<<, allocator, operator==
-#include <utility>                    // for pair
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string/predicate.hpp>
+#include <fmt/format.h>                          // for format
+#include <strings.h>                             // for strncasecmp
+#include <unistd.h>                              // for link
+#include <boost/algorithm/string/predicate.hpp>  // for iequals
+#include <boost/iterator/iterator_facade.hpp>    // for operator!=, iterator...
+#include <boost/token_functions.hpp>             // for char_separator
+#include <boost/token_iterator.hpp>              // for token_iterator
+#include <boost/tokenizer.hpp>                   // for tokenizer
+#include <cstdio>                                // for snprintf, sprintf
+#include <fstream>                               // for ofstream, operator<<
+#include <iomanip>                               // for operator<<, setw
+#include <list>                                  // for list
+#include <locale>                                // for locale
+#include <map>                                   // for operator==, map, map...
+#include <set>                                   // for set, set<>::iterator
+#include <string>                                // for string, allocator
+#include <string_view>                           // for string_view
+#include <utility>                               // for pair
 
-
-#include "fmt/core.h"
-#include "cmd.hpp"                    // for cmd, CMD_NOT_UNIQUE, CMD_NOT_FOUND
-#include "commands.hpp"               // for cmdAction, channel, cmdMove
-#include "config.hpp"                 // for Config, PlyCommandMap, CrtComma...
-#include "creatureStreams.hpp"        // for Streamable
-#include "creatures.hpp"              // for Player, Creature
-#include "dm.hpp"                     // for dmKillSwitch, builderMob, build...
-#include "global.hpp"                 // for CreatureClass, CreatureClass::NONE
-#include "help.hpp"                   // for loadHelpTemplate
-#include "os.hpp"                     // for ASSERTLOG
-#include "paths.hpp"                  // for Help, BuilderHelp, DMHelp
-#include "pythonHandler.hpp"
-#include "server.hpp"                 // for Server, gServer
-#include "ships.hpp"                  // for cmdQueryShips
-#include "skills.hpp"                 // for SkillCommand
-#include "socials.hpp"                // for SocialCommand
-#include "songs.hpp"                  // for Song
-#include "structs.hpp"                // for PlyCommand, Command, CrtCommand
+#include "cmd.hpp"                               // for cmd, CMD_NOT_UNIQUE
+#include "commands.hpp"                          // for cmdAction, channel
+#include "config.hpp"                            // for Config, PlyCommandSet
+#include "creatureStreams.hpp"                   // for Streamable
+#include "dm.hpp"                                // for dmKillSwitch, builde...
+#include "global.hpp"                            // for CreatureClass, Creat...
+#include "help.hpp"                              // for loadHelpTemplate
+#include "mudObjects/creatures.hpp"              // for Creature
+#include "mudObjects/players.hpp"                // for Player
+#include "namable.hpp"                           // for Nameable
+#include "paths.hpp"                             // for Help, BuilderHelp
+#include "server.hpp"                            // for Server, gServer
+#include "ships.hpp"                             // for cmdQueryShips
+#include "skills.hpp"                            // for SkillCommand
+#include "socials.hpp"                           // for SocialCommand
+#include "songs.hpp"                             // for Song
+#include "structs.hpp"                           // for Command, Spell, PlyC...
 
 class MudObject;
 

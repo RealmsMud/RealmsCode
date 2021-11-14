@@ -16,39 +16,59 @@
  *
  */
 
-#include <fcntl.h>                // for open, O_RDONLY
-#include <cstdio>                 // for sprintf
-#include <cstdlib>                // for malloc, realloc
-#include <cstring>                // for strcmp, strcpy
-#include <ctime>                  // for time
-#include <unistd.h>               // for close, read
-#include <ostream>                // for operator<<, basic_ostream, ostrings...
-#include <boost/algorithm/string/case_conv.hpp>
+#include <fcntl.h>                               // for open, O_RDONLY
+#include <unistd.h>                              // for close, read
+#include <boost/algorithm/string/case_conv.hpp>  // for to_lower_copy
+#include <boost/iterator/iterator_facade.hpp>    // for operator!=
+#include <cstdio>                                // for sprintf
+#include <cstdlib>                               // for malloc, realloc
+#include <cstring>                               // for strcpy
+#include <ctime>                                 // for time
+#include <list>                                  // for operator==, _List_it...
+#include <map>                                   // for operator==, _Rb_tree...
+#include <ostream>                               // for operator<<, basic_os...
+#include <set>                                   // for set, set<>::iterator
+#include <string>                                // for string, operator<<
+#include <string_view>                           // for operator<<, string_view
+#include <utility>                               // for pair
 
-#include "calendar.hpp"           // for Calendar
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for ObjectSet, MonsterSet, PlayerSet
-#include "creatures.hpp"          // for Monster, Creature, Player, PetList
-#include "exits.hpp"              // for Exit
-#include "flags.hpp"              // for M_DM_FOLLOW, M_SNEAKING, M_CHARMED
-#include "global.hpp"             // for CreatureClass, BRE, DEA, MEN, POI, SPL
-#include "group.hpp"              // for Group
-#include "lasttime.hpp"           // for lasttime, crlasttime
-#include "money.hpp"              // for GOLD, Money
-#include "move.hpp"               // for getRoom, getString, deletePortal
-#include "mud.hpp"                // for LT_SPELL, LT_MON_WANDER, LT, LT_CHA...
-#include "objects.hpp"            // for Object
-#include "paths.hpp"              // for Desc
-#include "proto.hpp"              // for broadcast, bonus, getSizeName, get_...
-#include "raceData.hpp"           // for RaceData
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom, AreaRoom, ExitList, Uniqu...
-#include "server.hpp"             // for Server, gServer
-#include "size.hpp"               // for NO_SIZE
-#include "structs.hpp"            // for saves, ttag
-#include "threat.hpp"             // for ThreatTable, operator<<
-#include "utils.hpp"              // for MAX, MIN
-#include "xml.hpp"                // for loadMonster
+#include "area.hpp"                              // for MapMarker
+#include "calendar.hpp"                          // for Calendar
+#include "carry.hpp"                             // for Carry
+#include "catRef.hpp"                            // for CatRef
+#include "config.hpp"                            // for Config, gConfig
+#include "creatureStreams.hpp"                   // for Streamable
+#include "dice.hpp"                              // for Dice
+#include "flags.hpp"                             // for M_DM_FOLLOW, M_SNEAKING
+#include "free_crt.hpp"                          // for free_crt
+#include "global.hpp"                            // for CreatureClass, BRE, DEA
+#include "group.hpp"                             // for Group
+#include "lasttime.hpp"                          // for lasttime, crlasttime
+#include "location.hpp"                          // for Location
+#include "money.hpp"                             // for GOLD, Money
+#include "move.hpp"                              // for getRoom, getString
+#include "mud.hpp"                               // for LT_SPELL, LT_MON_WANDER
+#include "mudObjects/areaRooms.hpp"              // for AreaRoom
+#include "mudObjects/container.hpp"              // for ObjectSet, MonsterSet
+#include "mudObjects/creatures.hpp"              // for Creature, PetList
+#include "mudObjects/exits.hpp"                  // for Exit
+#include "mudObjects/monsters.hpp"               // for Monster
+#include "mudObjects/objects.hpp"                // for Object
+#include "mudObjects/players.hpp"                // for Player
+#include "mudObjects/rooms.hpp"                  // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"            // for UniqueRoom
+#include "paths.hpp"                             // for Desc
+#include "proto.hpp"                             // for broadcast, bonus
+#include "raceData.hpp"                          // for RaceData
+#include "random.hpp"                            // for Random
+#include "server.hpp"                            // for Server, gServer
+#include "size.hpp"                              // for getSizeName, NO_SIZE
+#include "statistics.hpp"                        // for Statistics
+#include "stats.hpp"                             // for Stat
+#include "structs.hpp"                           // for saves, ttag
+#include "threat.hpp"                            // for ThreatTable, operator<<
+#include "utils.hpp"                             // for MAX, MIN
+#include "xml.hpp"                               // for loadMonster
 
 const short Creature::OFFGUARD_REMOVE=0;
 const short Creature::OFFGUARD_NOREMOVE=1;

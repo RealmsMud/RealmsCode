@@ -16,15 +16,22 @@
  *
  */
 
+#include <boost/algorithm/string/case_conv.hpp>     // for to_lower_copy
+#include <boost/iterator/iterator_facade.hpp>       // for operator!=
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <ostream>                                  // for basic_ostream::op...
-#include <boost/algorithm/string.hpp>
 
-#include "catRef.hpp"
+#include <string>                                   // for string, allocator
+#include <string_view>                              // for operator==, strin...
+#include "area.hpp"                                 // for Area
+#include "catRef.hpp"                               // for CatRef
 #include "catRefInfo.hpp"                           // for CatRefInfo
 #include "config.hpp"                               // for gConfig, Config
-#include "creatures.hpp"                            // for Creature
-#include "rooms.hpp"                                // for AreaRoom, UniqueRoom
+#include "mudObjects/areaRooms.hpp"                 // for AreaRoom
+#include "mudObjects/creatures.hpp"                 // for Creature
+#include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
 #include "xml.hpp"                                  // for copyPropToString
+
 
 //*********************************************************************
 //                      CatRef

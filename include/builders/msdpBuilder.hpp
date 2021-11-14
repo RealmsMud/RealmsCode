@@ -24,6 +24,7 @@
 #include "msdp.hpp"
 
 #include "fluentBuilder.hpp"
+
 #define BUILDER(name, type) GENERIC_BUILDER(MsdpBuilder, msdpVar, name, type)
 
 
@@ -59,3 +60,4 @@ private:
 };
 
 #include "fluentBuilderEnd.hpp"
+#include "mudObjects/players.hpp"

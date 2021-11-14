@@ -16,14 +16,16 @@
  *
  */
 
-#include <cstring>                // for strcmp
-#include <map>                    // for operator==, operator!=, allocator
+#include <cstring>                 // for strcmp
+#include <map>                     // for operator==, map<>::iterator, map
+#include <string>                  // for string
+#include <utility>                 // for pair
 
-#include "cmd.hpp"                // for cmd
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player
-#include "deityData.hpp"          // for DeityData
-#include "playerTitle.hpp"        // for PlayerTitle
+#include "cmd.hpp"                 // for cmd
+#include "config.hpp"              // for Config, DeityDataMap, gConfig
+#include "deityData.hpp"           // for DeityData
+#include "mudObjects/players.hpp"  // for Player
+#include "playerTitle.hpp"         // for PlayerTitle
 
 //**********************************************************************
 //                      getDeity

@@ -16,29 +16,32 @@
  *
  */
 
-#include <cstring>         // for strlen, strncmp
-#include <ctime>           // for time, time_t
+#include <cstring>                   // for strlen, strncmp
+#include <ctime>                     // for time, time_t
+#include <string>                    // for allocator, string
 
-#include "cmd.hpp"         // for cmd
-#include "config.hpp"      // for Config, gConfig
-   // for Container
-#include "creatures.hpp"   // for Creature, Monster, Player, NO_CHECK
-#include "deityData.hpp"   // for DeityData
-#include "flags.hpp"       // for M_PERMENANT_MONSTER, M_PET, M_UNDEAD, P_LI...
-#include "global.hpp"      // for CastType, CastType::CAST, CreatureClass
-    // for lasttime
-#include "magic.hpp"       // for SpellData, doOffensive, getPetTitle, petTa...
-#include "mud.hpp"         // for LT_ANIMATE, ospell, LT_SPELL, DL_HARM, LT
-#include "objects.hpp"     // for Object
-#include "proto.hpp"       // for broadcast, dice, bonus, dec_daily, get_spe...
-#include "random.hpp"      // for Random
-#include "rooms.hpp"       // for BaseRoom
-#include "server.hpp"      // for Server, gServer
-  // for Statistics
-       // for Stat
-#include "structs.hpp"     // for osp_t, daily
-#include "utils.hpp"       // for MIN, MAX
-#include "xml.hpp"         // for loadMonster
+#include "cmd.hpp"                   // for cmd
+#include "config.hpp"                // for Config, gConfig
+#include "deityData.hpp"             // for DeityData
+#include "flags.hpp"                 // for M_NO_HARM_SPELL, M_PERMENANT_MON...
+#include "global.hpp"                // for CastType, CastType::CAST, Creatu...
+#include "lasttime.hpp"              // for lasttime
+#include "magic.hpp"                 // for SpellData, doOffensive, getPetTitle
+#include "mud.hpp"                   // for LT_ANIMATE, ospell, LT_SPELL
+#include "mudObjects/container.hpp"  // for Container
+#include "mudObjects/creatures.hpp"  // for Creature, NO_CHECK
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, dice, bonus, dec_daily
+#include "random.hpp"                // for Random
+#include "server.hpp"                // for Server, gServer
+#include "statistics.hpp"            // for Statistics
+#include "stats.hpp"                 // for Stat
+#include "structs.hpp"               // for osp_t, daily
+#include "utils.hpp"                 // for MIN, MAX
+#include "xml.hpp"                   // for loadMonster
 
 
 //*********************************************************************

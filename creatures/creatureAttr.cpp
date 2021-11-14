@@ -15,43 +15,59 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <libxml/parser.h>        // for xmlNodePtr
-#include <cstring>                // for memset, strcpy
-#include <ctime>                  // for time, ctime
-#include <map>                    // for operator==, operator!=, map
-#include <ostream>                // for operator<<, ostringstream, basic_os...
-#include <utility>                // for pair, make_pair
-#include <boost/algorithm/string/replace.hpp>
-#include <boost/algorithm/string/trim.hpp>
 
-#include "anchor.hpp"             // for Anchor
-#include "calendar.hpp"           // for cDay, Calendar
-#include "catRef.hpp"             // for CatRef
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for Container, ObjectSet
-#include "creatures.hpp"          // for Creature, Player, Monster, Player::...
-#include "flags.hpp"              // for M_MALE, M_SEXLESS, P_MALE, P_SEXLESS
-#include "global.hpp"             // for CreatureClass, CreatureClass::NONE
-#include "group.hpp"              // for GROUP_NO_STATUS
-#include "location.hpp"           // for Location
-#include "monType.hpp"            // for PLAYER, immuneCriticals, isUndead
-#include "mud.hpp"                // for LT_UNCONSCIOUS
-#include "proto.hpp"              // for zero, broadcast, get_class_string
-#include "quests.hpp"             // for QuestInfo (ptr only), QuestCompleted
-#include "raceData.hpp"           // for RaceData
-#include "realm.hpp"              // for Realm, MAX_REALM, MIN_REALM, NO_REALM
-#include "rooms.hpp"              // for BaseRoom, UniqueRoom
-#include "size.hpp"               // for Size, NO_SIZE, MAX_SIZE
-#include "skills.hpp"             // for Skill
-#include "specials.hpp"           // for SpecialAttack
-#include "structs.hpp"            // for SEX_FEMALE, SEX_MALE, Sex, tic, SEX...
-#include "threat.hpp"             // for ThreatTable
-#include "utils.hpp"              // for MIN, MAX
-#include "version.hpp"            // for VERSION
-#include "xml.hpp"                // for copyPropToString
+#include <boost/algorithm/string/replace.hpp>  // for replace_all
+#include <boost/algorithm/string/trim.hpp>     // for trim
+#include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
+#include <cstring>                             // for memset, strcpy
+#include <ctime>                               // for time, ctime
+#include <deque>                               // for _Deque_iterator
+#include <list>                                // for list, operator==, list...
+#include <map>                                 // for allocator, operator==
+#include <ostream>                             // for char_traits, operator<<
+#include <string>                              // for string, operator==
+#include <string_view>                         // for string_view
+#include <utility>                             // for pair, make_pair
 
-class Object;
-class Socket;
+#include "anchor.hpp"                          // for Anchor
+#include "area.hpp"                            // for MapMarker
+#include "calendar.hpp"                        // for cDay, Calendar
+#include "carry.hpp"                           // for Carry
+#include "catRef.hpp"                          // for CatRef
+#include "config.hpp"                          // for Config, gConfig
+#include "dice.hpp"                            // for Dice
+#include "effects.hpp"                         // for Effects, EffectInfo
+#include "flags.hpp"                           // for M_MALE, M_SEXLESS, P_MALE
+#include "global.hpp"                          // for CreatureClass, Creatur...
+#include "group.hpp"                           // for GROUP_NO_STATUS
+#include "hooks.hpp"                           // for Hooks
+#include "lasttime.hpp"                        // for lasttime
+#include "location.hpp"                        // for Location
+#include "monType.hpp"                         // for PLAYER, immuneCriticals
+#include "money.hpp"                           // for Money
+#include "mud.hpp"                             // for LT_UNCONSCIOUS
+#include "mudObjects/container.hpp"            // for Container, ObjectSet
+#include "mudObjects/creatures.hpp"            // for Creature, SkillMap
+#include "mudObjects/monsters.hpp"             // for Monster, Monster::mob_...
+#include "mudObjects/players.hpp"              // for Player, Player::QuestC...
+#include "mudObjects/rooms.hpp"                // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"          // for UniqueRoom
+#include "proto.hpp"                           // for zero, broadcast, get_c...
+#include "quests.hpp"                          // for QuestCompleted, QuestC...
+#include "raceData.hpp"                        // for RaceData
+#include "range.hpp"                           // for Range
+#include "realm.hpp"                           // for Realm, MAX_REALM, MIN_...
+#include "size.hpp"                            // for Size, NO_SIZE, MAX_SIZE
+#include "skills.hpp"                          // for Skill
+#include "specials.hpp"                        // for SpecialAttack
+#include "statistics.hpp"                      // for Statistics
+#include "stats.hpp"                           // for Stat
+#include "structs.hpp"                         // for SEX_FEMALE, SEX_MALE, Sex
+#include "threat.hpp"                          // for ThreatTable
+#include "timer.hpp"                           // for Timer
+#include "utils.hpp"                           // for MIN, MAX
+#include "version.hpp"                         // for VERSION
+#include "xml.hpp"                             // for copyPropToString
 
 //*********************************************************************
 //                      getClass

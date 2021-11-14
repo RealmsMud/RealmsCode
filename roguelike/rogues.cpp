@@ -15,36 +15,49 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstdlib>                // for strtoul
-#include <ctime>                  // for time
-#include <string>                 // for operator!=, basic_string, operator==
 
-#include "area.hpp"               // for Area, TileInfo, MapMarker
-#include "catRef.hpp"             // for CatRef
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for cmdNoAuth, cmdAmbush, cmdBackstab
-#include "creatures.hpp"          // for Player, Creature, Monster, ATTACK_C...
-#include "damage.hpp"             // for Damage
-#include "delayedAction.hpp"      // for ActionSearch, DelayedAction
-#include "dm.hpp"                 // for dmMobInventory
-#include "exits.hpp"              // for Exit
-#include "factions.hpp"           // for Faction
-#include "flags.hpp"              // for P_AFK, M_PERMENANT_MONSTER, O_ENVEN...
-#include "global.hpp"             // for CreatureClass, CreatureClass::THIEF
-#include "hooks.hpp"              // for Hooks
-#include "money.hpp"              // for Money, GOLD
-#include "move.hpp"               // for formatFindExit, getRoom
-#include "mud.hpp"                // for LT_HIDE, LT_SEARCH, LT_SCOUT, LT
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
-#include "os.hpp"                 // for merror
-#include "proto.hpp"              // for broadcast, bonus, searchMod, log_im...
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom, UniqueRoom, AreaRoom, Exi...
-#include "server.hpp"             // for Server, gServer, GOLD_OUT
-#include "size.hpp"               // for SIZE_GARGANTUAN
-#include "statistics.hpp"         // for Statistics
-#include "utils.hpp"              // for MIN, MAX
-#include "xml.hpp"                // for loadObject, loadRoom
+#include <cstdlib>                     // for strtoul
+#include <ctime>                       // for time
+#include <list>                        // for list, operator==, list<>::cons...
+#include <set>                         // for operator==, _Rb_tree_const_ite...
+#include <string>                      // for allocator, string, operator==
+
+#include "area.hpp"                    // for Area, TileInfo, MapMarker
+#include "catRef.hpp"                  // for CatRef
+#include "cmd.hpp"                     // for cmd
+#include "commands.hpp"                // for cmdNoAuth, cmdAmbush, cmdBackstab
+#include "damage.hpp"                  // for Damage
+#include "delayedAction.hpp"           // for ActionSearch, DelayedAction
+#include "dm.hpp"                      // for dmMobInventory
+#include "factions.hpp"                // for Faction
+#include "flags.hpp"                   // for P_AFK, M_PERMENANT_MONSTER
+#include "free_crt.hpp"                // for free_crt
+#include "global.hpp"                  // for CreatureClass, CreatureClass::...
+#include "hooks.hpp"                   // for Hooks
+#include "lasttime.hpp"                // for lasttime
+#include "location.hpp"                // for Location
+#include "money.hpp"                   // for Money, GOLD
+#include "move.hpp"                    // for formatFindExit, getRoom
+#include "mud.hpp"                     // for LT_HIDE, LT_SEARCH, LT_SCOUT, LT
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/container.hpp"    // for MonsterSet, Container, ObjectSet
+#include "mudObjects/creatures.hpp"    // for Creature, ATTACK_CRITICAL, ATT...
+#include "mudObjects/exits.hpp"        // for Exit
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/mudObject.hpp"    // for MudObject
+#include "mudObjects/objects.hpp"      // for Object, ObjectType, ObjectType...
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "os.hpp"                      // for merror
+#include "proto.hpp"                   // for broadcast, bonus, log_immort
+#include "random.hpp"                  // for Random
+#include "server.hpp"                  // for Server, gServer, GOLD_OUT
+#include "size.hpp"                    // for searchMod, SIZE_GARGANTUAN
+#include "statistics.hpp"              // for Statistics
+#include "stats.hpp"                   // for Stat
+#include "utils.hpp"                   // for MIN, MAX
+#include "xml.hpp"                     // for loadObject, loadRoom
 
 
 //*********************************************************************

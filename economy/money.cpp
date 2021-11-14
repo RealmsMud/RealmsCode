@@ -15,10 +15,13 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <libxml/parser.h>                          // for xmlNodePtr
+
+#include <boost/algorithm/string/case_conv.hpp>     // for to_lower_copy
+#include <boost/iterator/iterator_facade.hpp>       // for operator!=
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <locale>                                   // for locale
 #include <ostream>                                  // for operator<<, strin...
-#include <string>                                   // for char_traits, oper...
-#include <boost/algorithm/string/case_conv.hpp>
+#include <string>                                   // for string, allocator
 
 #include "money.hpp"                                // for Money, Coin, MAX_...
 #include "proto.hpp"                                // for zero

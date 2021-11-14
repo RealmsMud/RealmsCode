@@ -16,12 +16,12 @@
  *
  */
 
-#include <map>
+#include <string>                    // for string, allocator, operator<=>
+#include <utility>                   // for move
 
-
-#include "config.hpp"
-#include "msdp.hpp"
-#include "builders/msdpBuilder.hpp"
+#include "builders/msdpBuilder.hpp"  // for MsdpBuilder
+#include "config.hpp"                // for Config, MsdpVariableMap
+#include "msdp.hpp"                  // for MsdpVariable, getArmor, getArmor...
 
 void addToSet(MsdpVariable &&msdpVar, MsdpVariableMap &msdpVariables) {
     msdpVariables.emplace(msdpVar.getName(), std::move(msdpVar));

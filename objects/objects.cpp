@@ -15,32 +15,47 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstring>                // for strlen, strcpy, memset, strcmp, strcat
-#include <list>                   // for operator==, operator!=
-#include <fmt/format.h>
 
-#include "alchemy.hpp"            // for AlchemyEffect
-#include "area.hpp"               // for MapMarker, Area
-#include "catRef.hpp"             // for CatRef
-#include "clans.hpp"              // for Clan
-#include "commands.hpp"           // for getFullstrTextTrun
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for ObjectSet
-#include "creatures.hpp"          // for Creature, Player, Monster
-#include "exits.hpp"              // for Exit
-#include "flags.hpp"              // for O_NULL_MAGIC, O_SOME_PREFIX, O_BODY...
-#include "global.hpp"             // for CreatureClass, CreatureClass::MONK
-#include "hooks.hpp"              // for Hooks
-#include "mudObject.hpp"          // for MudObject
-#include "objIncrease.hpp"        // for ObjIncrease
-#include "objects.hpp"            // for Object, DroppedBy, ObjectType, Alch...
-#include "proto.hpp"              // for getCatRef, int_to_text, broadcast, low
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for UniqueRoom, AreaRoom, BaseRoom
-#include "server.hpp"             // for Server, gServer
-#include "size.hpp"               // for NO_SIZE
-#include "structs.hpp"            // for SEX_FEMALE, SEX_MALE, SEX_NONE, Sex
-#include "xml.hpp"                // for loadObject, loadRoom
+#include <fmt/format.h>                // for format
+#include <cstring>                     // for strlen, strcpy, memset, strcmp
+#include <list>                        // for list, list<>::const_iterator
+#include <map>                         // for operator==, _Rb_tree_const_ite...
+#include <ostream>                     // for operator<<, basic_ostream, ost...
+#include <set>                         // for set<>::iterator, set
+#include <string>                      // for string, operator==, char_traits
+#include <string_view>                 // for string_view, operator<<
+#include <utility>                     // for pair
+
+#include "area.hpp"                    // for MapMarker, Area
+#include "catRef.hpp"                  // for CatRef
+#include "clans.hpp"                   // for Clan
+#include "commands.hpp"                // for getFullstrTextTrun
+#include "config.hpp"                  // for Config, gConfig
+#include "dice.hpp"                    // for Dice
+#include "flags.hpp"                   // for O_NULL_MAGIC, O_SOME_PREFIX
+#include "global.hpp"                  // for CreatureClass, CreatureClass::...
+#include "hooks.hpp"                   // for Hooks
+#include "lasttime.hpp"                // for lasttime
+#include "money.hpp"                   // for Money
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/container.hpp"    // for ObjectSet
+#include "mudObjects/creatures.hpp"    // for Creature
+#include "mudObjects/exits.hpp"        // for Exit
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/mudObject.hpp"    // for MudObject
+#include "mudObjects/objects.hpp"      // for Object, DroppedBy, ObjectType
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "objIncrease.hpp"             // for ObjIncrease
+#include "proto.hpp"                   // for getCatRef, int_to_text, broadcast
+#include "random.hpp"                  // for Random
+#include "range.hpp"                   // for Range
+#include "server.hpp"                  // for Server, gServer
+#include "size.hpp"                    // for NO_SIZE
+#include "stats.hpp"                   // for Stat
+#include "structs.hpp"                 // for SEX_FEMALE, SEX_MALE, SEX_NONE
+#include "xml.hpp"                     // for loadObject, loadRoom
 
 
 bool Object::operator< (const Object& t) const {

@@ -18,10 +18,14 @@
 
 #pragma once
 
+#include <fmt/format.h>              // for format
 #include <string>
 
+#include "config.hpp"
 #include "skills.hpp"
+
 #include "fluentBuilder.hpp"
+
 
 #define BUILDER(name, type) GENERIC_BUILDER(SkillInfoBuilder, skillInfo, name, type)
 

@@ -16,14 +16,25 @@
  *
  */
 
-#include "cmd.hpp"                        // for cmd
-#include "creatures.hpp"                  // for Creature, Player
-#include "global.hpp"                     // for FIND_MON_ROOM, FIND_PLY_ROOM
-#include "money.hpp"                      // for GOLD, Money
-#include "mudObject.hpp"                  // for MudObject
-#include "pythonHandler.hpp"
-#include "server.hpp"
-#include "skills.hpp"                     // for SkillCommand, Skill, SkillCost
+#include <fmt/format.h>              // for format
+#include <list>                      // for list, operator==, _List_const_it...
+#include <pybind11/pybind11.h>       // for module
+#include <pybind11/pytypes.h>        // for dict, item_accessor, object_api
+#include <string>                    // for string, allocator
+
+#include "cmd.hpp"                   // for cmd
+#include "creatureStreams.hpp"       // for Streamable
+#include "global.hpp"                // for FIND_MON_ROOM, FIND_PLY_ROOM
+#include "money.hpp"                 // for GOLD, Money
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/mudObject.hpp"  // for MudObject
+#include "mudObjects/players.hpp"    // for Player
+#include "pythonHandler.hpp"         // for PythonHandler
+#include "server.hpp"                // for Server, gServer
+#include "skills.hpp"                // for SkillCommand, Skill, SkillCost
+#include "stats.hpp"                 // for Stat
+#include "structs.hpp"               // for Command
+#include "timer.hpp"                 // for Timer
 
 int getFindWhere(TargetType targetType) {
     switch(targetType) {

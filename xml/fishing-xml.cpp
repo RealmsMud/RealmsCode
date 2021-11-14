@@ -15,12 +15,18 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <libxml/parser.h>                          // for xmlNode, xmlFreeDoc
-#include <cstdio>                                   // for snprintf
 
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <cstdio>                                   // for snprintf
+#include <list>                                     // for list
+#include <map>                                      // for map, map<>::mappe...
+#include <string>                                   // for string, allocator
+
+#include "catRef.hpp"                               // for CatRef
+#include "config.hpp"                               // for Config
 #include "fishing.hpp"                              // for FishingItem, Fishing
-#include "config.hpp"                               // for Config, gConfig
-#include "paths.hpp"                                // for Path
+#include "paths.hpp"                                // for Game
 #include "xml.hpp"                                  // for copyToNum, NODE_NAME
 
 //*********************************************************************

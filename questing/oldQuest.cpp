@@ -15,18 +15,23 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <libxml/parser.h>       // for xmlNode, xmlNodeL...
-#include <cstdio>                // for sprintf
-#include <cstring>               // for strcmp, memset
 
-#include "config.hpp"            // for Config
-#include "creatures.hpp"         // for Player
-#include "objects.hpp"           // for Object, ObjectType
-#include "oldquest.hpp"          // for quest, questPtr
-#include "paths.hpp"             // for Path
-#include "proto.hpp"             // for get_quest_exp, loge
-#include "utils.hpp"
-#include "xml.hpp"               // for toNum
+#include <libxml/parser.h>                          // for xmlNodeListGetString
+#include <stdlib.h>                                 // for free
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <cstdio>                                   // for sprintf
+#include <cstring>                                  // for strcmp, memset
+#include <set>                                      // for operator==, _Rb_t...
+
+#include "config.hpp"                               // for Config, gConfig
+#include "mudObjects/container.hpp"                 // for ObjectSet
+#include "mudObjects/objects.hpp"                   // for Object, ObjectType
+#include "mudObjects/players.hpp"                   // for Player
+#include "oldquest.hpp"                             // for quest, questPtr
+#include "paths.hpp"                                // for Game
+#include "proto.hpp"                                // for get_quest_exp
+#include "utils.hpp"                                // for MAX, MIN
+#include "xml.hpp"                                  // for toNum, bad_lexica...
 
 
 int numQuests = 0;

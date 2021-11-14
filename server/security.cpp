@@ -16,17 +16,17 @@
  *
  */
 
-#include <cctype>         // for isalpha, isdigit
-#include <cstring>        // for strncpy
+#include <fmt/format.h>            // for format
+#include <cctype>                  // for isalpha, isdigit
+#include <cstring>                 // for strncpy
+#include <string>                  // for string, operator==
 
-#include "creatures.hpp"  // for Player
-#include "flags.hpp"      // for P_READING_FILE, P_AFK, P_PASSWORD_CURRENT
-#include "login.hpp"      // for PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
-#include "proto.hpp"      // for broadcast, logn, isDm, cmdPassword, isValid...
-#include "server.hpp"     // for Server, gServer
-#include "socket.hpp"     // for Socket
-
-class cmd;
+#include "flags.hpp"               // for P_READING_FILE, P_AFK, P_PASSWORD_...
+#include "login.hpp"               // for PASSWORD_MAX_LENGTH, PASSWORD_MIN_...
+#include "mudObjects/players.hpp"  // for Player
+#include "proto.hpp"               // for broadcast, logn, isDm, isValidPass...
+#include "server.hpp"              // for Server, gServer
+#include "socket.hpp"              // for Socket
 
 std::string Player::hashPassword(const std::string &pass) {
     // implement md5 or sha1 here if you want 

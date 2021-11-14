@@ -16,11 +16,19 @@
  *
  */
 
+#include <libxml/parser.h>  // for xmlNodePtr
+#include <string>           // for string
+
+#include "area.hpp"         // for MapMarker
+#include "catRef.hpp"       // for CatRef
+#include "location.hpp"     // for Location
+
+class BaseRoom;
+class Player;
+
 //*********************************************************************
 //                      Location
 //*********************************************************************
-
-#include "location.hpp"  // for Location
 
 Location::Location() = default;
 

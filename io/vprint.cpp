@@ -15,17 +15,22 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <printf.h>       // for register_printf_function, printf_info, PA_P...
-#include <cstdio>         // for asprintf, fprintf, vasprintf, FILE, size_t
-#include <cstdlib>        // for free
-#include <ostream>        // for operator<<, ostringstream, endl, ostream
-#include <string>         // for basic_string
 
-#include "creatures.hpp"  // for Creature, Player
-#include "global.hpp"     // for CAP
-#include "objects.hpp"    // for Object
-#include "server.hpp"     // for Server
-#include "socket.hpp"     // for Socket
+#include <printf.h>                  // for register_printf_specifier, print...
+#include <stdarg.h>                  // for va_list, va_end, va_start, va_copy
+#include <cstdio>                    // for asprintf, fprintf, vasprintf, FILE
+#include <cstdlib>                   // for free
+#include <ostream>                   // for operator<<, ostringstream, endl
+#include <string>                    // for string, basic_string
+#include <string_view>               // for string_view
+
+#include "creatureStreams.hpp"       // for Streamable, ColorOff, ColorOn
+#include "global.hpp"                // for CAP
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "server.hpp"                // for Server
+#include "socket.hpp"                // for Socket
 
 // Function Prototypes
 std::string delimit(const char *str, int wrap);

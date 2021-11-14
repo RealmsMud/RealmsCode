@@ -15,23 +15,32 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstdlib>                // for abs
-#include <ctime>                  // for time
-#include <string>                 // for operator==, basic_string
 
-#include "container.hpp"          // for PlayerSet, MonsterSet
-#include "creatures.hpp"          // for Monster, Creature, Player
-#include "flags.hpp"              // for M_FIRE_AURA, O_JUST_LOADED, M_CLASS...
-#include "global.hpp"             // for BRE, MAXALVL, MAX_AURAS, CreatureClass
-#include "monType.hpp"            // for getHitdice, HUMANOID
-#include "money.hpp"              // for Money, GOLD
-#include "mud.hpp"                // for LT_TICK, LT_TICK_SECONDARY, LT_M_AU...
-#include "objects.hpp"            // for Object
-#include "proto.hpp"              // for bonus, get_perm_ac, new_scroll, get...
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom
-#include "utils.hpp"              // for MAX, MIN
-#include "xml.hpp"                // for loadObject
+#include <cstdlib>                   // for abs
+#include <ctime>                     // for time
+#include <set>                       // for operator==, _Rb_tree_const_iterator
+#include <string>                    // for allocator, string, operator==
+
+#include "carry.hpp"                 // for Carry
+#include "catRef.hpp"                // for CatRef
+#include "dice.hpp"                  // for Dice
+#include "flags.hpp"                 // for M_FIRE_AURA, O_JUST_LOADED, M_CL...
+#include "global.hpp"                // for BRE, MAXALVL, CreatureClass, MAX...
+#include "lasttime.hpp"              // for lasttime
+#include "monType.hpp"               // for getHitdice, HUMANOID
+#include "money.hpp"                 // for Money, GOLD
+#include "mud.hpp"                   // for LT_TICK, LT_TICK_SECONDARY, LT_M...
+#include "mudObjects/container.hpp"  // for MonsterSet, PlayerSet
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for bonus, get_perm_ac, new_scroll
+#include "random.hpp"                // for Random
+#include "stats.hpp"                 // for Stat
+#include "utils.hpp"                 // for MAX, MIN
+#include "xml.hpp"                   // for loadObject
 
 typedef struct {
     short   hpstart;

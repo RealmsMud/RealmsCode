@@ -16,12 +16,12 @@
  *
  */
 
-#include <map>
+#include <map>                         // for allocator
+#include <utility>                     // for move
 
-
-#include "config.hpp"
-#include "effects.hpp"
-#include "builders/effectBuilder.hpp"
+#include "builders/effectBuilder.hpp"  // for EffectBuilder
+#include "config.hpp"                  // for Config, EffectMap
+#include "effects.hpp"                 // for Effect
 
 void addToSet(Effect&& eff, EffectMap &effectMap) {
     effectMap.emplace(eff.getName(), std::move(eff));

@@ -16,11 +16,14 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
-#include <stats.hpp>                                // for StatModifier, Stat
-#include <xml.hpp>                                  // for copyToNum, newStr...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <map>                                      // for operator==, _Rb_t...
 #include <ostream>                                  // for basic_ostream::op...
+#include <stats.hpp>                                // for StatModifier, Stat
+#include <string>                                   // for allocator, string
+#include <string_view>                              // for string_view
 
+#include "xml.hpp"                                  // for copyToNum, newStr...
 
 
 //*********************************************************************

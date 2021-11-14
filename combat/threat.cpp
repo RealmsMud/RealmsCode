@@ -15,25 +15,35 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cassert>                // for assert
-#include <cstring>                // for strcasecmp
-#include <ctime>                  // for time
-#include <functional>             // for less
-#include <iostream>               // for operator<<, ostream, basic_ostream
-#include <map>                    // for operator==, operator!=
-#include <string>                 // for operator<<, char_traits, operator==
 
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for cmdAssist, cmdTarget
-#include "creatures.hpp"          // for Creature, Player, Monster
-#include "flags.hpp"              // for P_COMPACT, P_NO_AUTO_TARGET
-#include "mudObject.hpp"          // for MudObject
-#include "os.hpp"                 // for ASSERTLOG
-#include "proto.hpp"              // for lowercize
-#include "rooms.hpp"              // for BaseRoom
-#include "server.hpp"             // for Server, gServer
-#include "threat.hpp"             // for ThreatTable, ThreatEntry, ThreatMap
+#include <strings.h>                 // for strcasecmp
+#include <algorithm>                 // for find
+#include <cassert>                   // for assert
+#include <ctime>                     // for time
+#include <functional>                // for less
+#include <iostream>                  // for operator<<, ostream, basic_ostream
+#include <iterator>                  // for operator!=, reverse_iterator
+#include <list>                      // for list, operator==, _List_iterator
+#include <map>                       // for _Rb_tree_const_iterator, operator==
+#include <set>                       // for multiset<>::iterator, multiset<>...
+#include <string>                    // for operator<<, string, char_traits
+#include <string_view>               // for string_view
+#include <utility>                   // for pair
 
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for cmdAssist, cmdTarget
+#include "flags.hpp"                 // for P_COMPACT, P_NO_AUTO_TARGET
+#include "mudObjects/container.hpp"  // for Container, MonsterSet
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/mudObject.hpp"  // for MudObject
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "os.hpp"                    // for ASSERTLOG
+#include "proto.hpp"                 // for lowercize
+#include "server.hpp"                // for Server, gServer
+#include "stats.hpp"                 // for Stat
+#include "threat.hpp"                // for ThreatTable, ThreatEntry, ThreatMap
 
 //################################################################################
 //#       Threat Table

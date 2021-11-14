@@ -15,24 +15,28 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <bits/exception.h>             // for exception
-#include <boost/format.hpp>             // for basic_altstringbuf<>::int_type
-#include <cstring>                      // for strcmp, strncmp, strcpy, strlen
-#include <strings.h>                    // for strcasecmp
-#include <ostream>                      // for operator<<, basic_ios::imbue
-#include <string>                       // for operator<<, operator==, char_...
-#include <boost/algorithm/string/predicate.hpp>
 
-#include "cmd.hpp"                      // for cmd
-#include "commands.hpp"                 // for cmdPrefs, cmdTelOpts
-#include "creatures.hpp"                // for Player, Creature (ptr only)
-#include "flags.hpp"                    // for P_NO_SHOW_MAIL, P_DONT_SHOW_S...
-#include "login.hpp"                    // for ANSI_COLOR, NO_COLOR
-#include "proto.hpp"                    // for isCt, broadcast, up, isDm
-#include "rooms.hpp"                    // for BaseRoom
-#include "server.hpp"                   // for Server, gServer
-#include "socket.hpp"                   // for Socket
-#include "utils.hpp"                    // for MAX
+#include <bits/exception.h>                        // for exception
+#include <fmt/format.h>                            // for format
+#include <strings.h>                               // for strcasecmp
+#include <boost/algorithm/string/predicate.hpp>    // for istarts_with
+#include <boost/format.hpp>                        // for boost::format
+#include <boost/optional/optional.hpp>             // for get_pointer
+#include <cstring>                                 // for strcmp, strcpy
+#include <ostream>                                 // for operator<<, basic_...
+#include <string>                                  // for string, allocator
+
+#include "cmd.hpp"                                 // for cmd
+#include "commands.hpp"                            // for cmdPrefs, cmdTelOpts
+#include "flags.hpp"                               // for P_NO_SHOW_MAIL
+#include "login.hpp"                               // for ANSI_COLOR, NO_COLOR
+#include "mudObjects/players.hpp"                  // for Player
+#include "mudObjects/rooms.hpp"                    // for BaseRoom
+#include "proto.hpp"                               // for isCt, isDm, isStaff
+#include "server.hpp"                              // for Server, gServer
+#include "socket.hpp"                              // for Socket
+#include "utils.hpp"                               // for MAX
+
 
 // having a pref that starts with a hyphen (-) is instead a category
 typedef struct prefInfo {

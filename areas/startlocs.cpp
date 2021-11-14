@@ -15,24 +15,37 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <ostream>                // for operator<<, basic_ostream, ostrings...
+#include <fmt/format.h>                // for format
+#include <stdio.h>                     // for sprintf
+#include <list>                        // for list, operator==, list<>::iter...
+#include <map>                         // for map, operator==, map<>::const_...
+#include <memory>                      // for allocator, allocator_traits<>:...
+#include <ostream>                     // for operator<<, basic_ostream, cha...
+#include <string>                      // for string, operator==, basic_string
+#include <utility>                     // for pair
 
-#include "catRef.hpp"             // for CatRef
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for dmStartLocs
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player, Creature
-#include "flags.hpp"              // for P_CHAOTIC, P_CHOSEN_ALIGNMENT, P_HA...
-#include "global.hpp"             // for CreatureClass, HUMAN, CastType, Cre...
-#include "location.hpp"           // for Location
-#include "login.hpp"              // for addStartingItem
-#include "magic.hpp"              // for checkRefusingMagic, SpellData, splBind
-#include "mud.hpp"                // for DL_TELEP
-#include "proto.hpp"              // for up, broadcast, dec_daily, low, isCt
-#include "raceData.hpp"           // for RaceData
-#include "rooms.hpp"              // for UniqueRoom, BaseRoom, AreaRoom
-#include "startlocs.hpp"          // for StartLoc
-#include "structs.hpp"            // for daily
+#include "area.hpp"                    // for MapMarker
+#include "catRef.hpp"                  // for CatRef
+#include "cmd.hpp"                     // for cmd
+#include "commands.hpp"                // for dmStartLocs
+#include "config.hpp"                  // for Config, gConfig
+#include "flags.hpp"                   // for P_CHAOTIC, P_CHOSEN_ALIGNMENT
+#include "global.hpp"                  // for CreatureClass, CreatureClass::...
+#include "location.hpp"                // for Location
+#include "login.hpp"                   // for addStartingItem
+#include "magic.hpp"                   // for checkRefusingMagic, SpellData
+#include "mud.hpp"                     // for DL_TELEP
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/container.hpp"    // for Container
+#include "mudObjects/creatures.hpp"    // for Creature
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "proto.hpp"                   // for up, broadcast, dec_daily, low
+#include "raceData.hpp"                // for RaceData
+#include "startlocs.hpp"               // for StartLoc
+#include "structs.hpp"                 // for daily
+
 
 
 //*********************************************************************

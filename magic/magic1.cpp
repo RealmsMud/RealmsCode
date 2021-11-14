@@ -16,39 +16,52 @@
  *
  */
 
-#include <cstdlib>                // for atoi
-#include <cstring>                // for strcmp, strcpy, strlen, strncmp
-#include <strings.h>              // for strcasecmp
-#include <ctime>                  // for time
-#include <ostream>                // for operator<<, basic_ostream, basic_os...
+#include <fmt/format.h>              // for format
+#include <strings.h>                 // for strcasecmp
+#include <cstdlib>                   // for atoi
+#include <cstring>                   // for strcmp, strcpy, strlen, strncmp
+#include <ctime>                     // for time
+#include <list>                      // for list, operator==, list<>::const_...
+#include <ostream>                   // for operator<<, basic_ostream, ostri...
+#include <set>                       // for operator==, _Rb_tree_const_iterator
+#include <string>                    // for string, allocator, char_traits
+#include <string_view>               // for operator<<, string_view, operator==
 
-#include "catRef.hpp"             // for CatRef
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for cmdNoAuth, parse, cmdBarkskin, cmdC...
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for Container, MonsterSet, PlayerSet
-#include "craft.hpp"              // for Recipe
-#include "creatures.hpp"          // for Player, Creature, Monster, CHECK_DIE
-#include "delayedAction.hpp"      // for DelayedAction, ActionStudy
-#include "exits.hpp"              // for Exit
-#include "flags.hpp"              // for O_CAN_USE_FROM_FLOOR, O_EATABLE, P_AFK
-#include "global.hpp"             // for CreatureClass, CastType, CAST_RESUL...
-#include "magic.hpp"              // for SpellData, SpellFn, get_spell_school
-#include "money.hpp"              // for GOLD, Money
-#include "move.hpp"               // for getRoom
-#include "mud.hpp"                // for LT_SPELL, ospell, LT, LT_READ_SCROLL
-#include "mudObject.hpp"          // for MudObject
-#include "objIncrease.hpp"        // for ObjIncrease, LanguageIncrease, Skil...
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::POTION
-#include "proto.hpp"              // for get_spell_num, broadcast, get_spell...
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom, ExitList, UniqueRoom (ptr...
-#include "server.hpp"             // for Server, gServer, GOLD_OUT
-#include "skills.hpp"             // for Skill, SkillInfo
-#include "structs.hpp"            // for osp_t, daily
-#include "unique.hpp"             // for Unique
-#include "utils.hpp"              // for MAX, MIN
-#include "xml.hpp"                // for loadRoom
+#include "catRef.hpp"                // for CatRef
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for cmdNoAuth, parse, cmdBarkskin
+#include "config.hpp"                // for Config, gConfig
+#include "craft.hpp"                 // for Recipe
+#include "delayedAction.hpp"         // for DelayedAction, ActionStudy
+#include "dice.hpp"                  // for Dice
+#include "flags.hpp"                 // for O_CAN_USE_FROM_FLOOR, O_EATABLE
+#include "global.hpp"                // for CreatureClass, CastType, CAST_RE...
+#include "lasttime.hpp"              // for lasttime
+#include "magic.hpp"                 // for SpellData, SpellFn, get_spell_sc...
+#include "money.hpp"                 // for GOLD, Money
+#include "move.hpp"                  // for getRoom
+#include "mud.hpp"                   // for LT_SPELL, ospell, LT, LT_READ_SC...
+#include "mudObjects/container.hpp"  // for Container, MonsterSet, PlayerSet
+#include "mudObjects/creatures.hpp"  // for Creature, CHECK_DIE
+#include "mudObjects/exits.hpp"      // for Exit
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/mudObject.hpp"  // for MudObject
+#include "mudObjects/objects.hpp"    // for Object, ObjectType, ObjectType::...
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom, ExitList
+#include "objIncrease.hpp"           // for ObjIncrease, LanguageIncrease
+#include "proto.hpp"                 // for get_spell_num, broadcast, get_sp...
+#include "random.hpp"                // for Random
+#include "server.hpp"                // for Server, GOLD_OUT, gServer
+#include "skills.hpp"                // for Skill, SkillInfo
+#include "statistics.hpp"            // for Statistics
+#include "stats.hpp"                 // for Stat
+#include "structs.hpp"               // for osp_t, daily
+#include "unique.hpp"                // for Unique
+#include "utils.hpp"                 // for MAX, MIN
+#include "xml.hpp"                   // for loadRoom
+
+class UniqueRoom;
 
 //*********************************************************************
 //                      spellShortcut

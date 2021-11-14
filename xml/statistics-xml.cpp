@@ -16,9 +16,16 @@
  *
  */
 
-#include <libxml/parser.h>          // for xmlNodePtr, xmlNode
-#include "statistics.hpp"           // for Statistics, Level...
-#include "xml.hpp"                  // for copyToNum, saveNo...
+#include <bits/exception.h>                         // for exception
+#include <sys/types.h>                              // for time_t
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <map>                                      // for operator==, map<>...
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for allocator, string
+#include <utility>                                  // for pair
+
+#include "statistics.hpp"                           // for Statistics, Level...
+#include "xml.hpp"                                  // for copyToNum, saveNo...
 
 LevelInfo::LevelInfo(xmlNodePtr rootNode) {
 

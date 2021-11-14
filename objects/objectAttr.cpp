@@ -16,13 +16,15 @@
  *
  */
 
-#include <ctime>          // for time
+#include <ctime>                   // for time
+#include <string>                  // for operator==, string
+#include <string_view>             // for string_view
 
-#include "creatures.hpp"  // for Player
-#include "effects.hpp"    // for EFFECT_MAX_DURATION, EFFECT_MAX_STRENGTH
-#include "objects.hpp"    // for Object, ObjectType, ObjectType::ARMOR, Mate...
-#include "size.hpp"       // for Size
-#include "utils.hpp"      // for MAX, MIN
+#include "effects.hpp"             // for EFFECT_MAX_DURATION, EFFECT_MAX_ST...
+#include "mudObjects/objects.hpp"  // for Object, ObjectType, ObjectType::ARMOR
+#include "mudObjects/players.hpp"  // for Player
+#include "size.hpp"                // for Size
+#include "utils.hpp"               // for MAX, MIN
 
 
 

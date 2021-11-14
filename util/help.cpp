@@ -16,11 +16,12 @@
  *
  */
 
-#include <cstdio>       // for sprintf
-#include <fstream>      // for ifstream, basic_ios
+#include <cstdio>     // for sprintf
+#include <fstream>    // for ifstream, basic_ios
+#include <string>     // for allocator, string
 
-#include "help.hpp"     // for loadHelpTemplate
-#include "paths.hpp"    // for HelpTemplate
+#include "help.hpp"   // for loadHelpTemplate
+#include "paths.hpp"  // for HelpTemplate
 
 namespace Help {
 //**********************************************************************

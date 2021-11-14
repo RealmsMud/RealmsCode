@@ -15,16 +15,19 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstdlib>        // for abs
-#include <strings.h>      // for strcasecmp
+#include <strings.h>                 // for strcasecmp
+#include <cstdlib>                   // for abs
+#include <string>                    // for allocator, string
 
-#include "cmd.hpp"        // for cmd
-#include "creatures.hpp"  // for Player, Monster, Creature
-#include "flags.hpp"      // for P_CHAOTIC, P_CHOSEN_ALIGNMENT, P_PLEDGED
-#include "global.hpp"     // for NEUTRAL, CreatureClass, BLUISH, CreatureCla...
-#include "mud.hpp"        // for ALIGNMENT_LEVEL
-#include "proto.hpp"      // for broadcast, logn, isStaff, antiGradius, cmdC...
-#include "utils.hpp"      // for MAX, MIN
+#include "cmd.hpp"                   // for cmd
+#include "flags.hpp"                 // for P_CHAOTIC, P_CHOSEN_ALIGNMENT
+#include "global.hpp"                // for NEUTRAL, CreatureClass, BLUISH
+#include "mud.hpp"                   // for ALIGNMENT_LEVEL
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/players.hpp"    // for Player
+#include "proto.hpp"                 // for broadcast, logn, isStaff, antiGr...
+#include "utils.hpp"                 // for MAX, MIN
 
 
 //***********************************************************************

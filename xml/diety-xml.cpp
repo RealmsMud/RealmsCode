@@ -15,15 +15,18 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <libxml/parser.h>        // for xmlNode, xmlFreeDoc, xmlNodePtr
-#include <cstdio>                 // for snprintf
-#include <map>                    // for operator==, map, allocator
 
-#include "config.hpp"             // for Config
-#include "deityData.hpp"          // for DeityData
-#include "paths.hpp"              // for Game
-#include "playerTitle.hpp"        // for PlayerTitle
-#include "xml.hpp"                // for getIntProp, NODE_NAME, copyPropToBS...
+#include <libxml/parser.h>  // for xmlFreeDoc, xmlCleanupParser, xmlDocGetRo...
+#include <cstdio>           // for snprintf
+#include <map>              // for allocator, operator==, map, map<>::iterator
+#include <string>           // for string
+
+#include "config.hpp"       // for Config, DeityDataMap
+#include "deityData.hpp"    // for DeityData
+#include "paths.hpp"        // for Game
+#include "playerTitle.hpp"  // for PlayerTitle
+#include "xml.hpp"          // for getIntProp, NODE_NAME, copyPropToString
+
 
 //**********************************************************************
 //                      loadDeities

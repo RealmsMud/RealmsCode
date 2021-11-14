@@ -21,9 +21,9 @@
 #include <list>                   // for operator==, operator!=
 #include <string>                 // for operator<<, basic_string
 
+#include "mudObjects/players.hpp" // for Player
 #include "catRefInfo.hpp"         // for CatRefInfo
 #include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player
 
 class cmd;
 

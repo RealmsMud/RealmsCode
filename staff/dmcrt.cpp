@@ -15,50 +15,72 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cctype>                 // for isdigit, isspace, isalpha
-#include <cstdio>                 // for sprintf
-#include <cstdlib>                // for atoi, qsort
-#include <cstring>                // for strcmp, strcpy, strlen, strncmp
-#include <ctime>                  // for time
-#include <iomanip>                // for operator<<, setw, setfill
-#include <map>                    // for map
-#include <sstream>                // for operator<<, basic_ostream, char_traits
-#include <boost/algorithm/string/replace.hpp>
 
-#include "calendar.hpp"           // for cDay
-#include "catRef.hpp"             // for CatRef
-#include "clans.hpp"              // for Clan
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for getFullstrText, cmdNoAuth, timestr
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player, Monster, Creature, NUM_ASSI...
-#include "deityData.hpp"          // for DeityData
-#include "dm.hpp"                 // for dmInvis, dmLastCommand, dmAddMob
-#include "effects.hpp"            // for EffectInfo, EFFECT_MAX_DURATION
-#include "factions.hpp"           // for Faction, Faction::MAX_FACTION, Fact...
-#include "flags.hpp"              // for M_DM_FOLLOW, M_CUSTOM, M_PERMENANT_...
-#include "global.hpp"             // for PROMPT, CreatureClass, LUNKNOWN
-#include "magic.hpp"              // for MAXSPELL
-#include "monType.hpp"            // for getName, getHitdice, size, MONSTER
-#include "money.hpp"              // for GOLD, Money
-#include "move.hpp"               // for getString
-#include "mud.hpp"                // for PLYCRT, LT_AGE, LT_JAILED, LT_MOB_J...
-#include "objects.hpp"            // for Object
-#include "os.hpp"                 // for merror
-#include "proto.hpp"              // for log_immort, mprofic, getCatRef, get...
-#include "raceData.hpp"           // for RaceData
-#include "realm.hpp"              // for COLD, EARTH, ELEC, FIRE, Realm, WATER
-#include "rooms.hpp"              // for BaseRoom, UniqueRoom
-#include "server.hpp"             // for Server, gServer, MonsterCache
-#include "size.hpp"               // for NO_SIZE
-#include "socket.hpp"             // for Socket
-#include "statistics.hpp"         // for Statistics
-#include "structs.hpp"            // for saves, ttag, PFNCOMPARE
-#include "threat.hpp"             // for operator<<
-#include "unique.hpp"             // for Lore
-#include "utils.hpp"              // for MAX, MIN
-#include "wanderInfo.hpp"         // for WanderInfo
-#include "xml.hpp"                // for loadMonster
+#include <boost/algorithm/string/replace.hpp>  // for replace_all
+#include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
+#include <cctype>                              // for isdigit, isspace, isalpha
+#include <cstdio>                              // for sprintf
+#include <cstdlib>                             // for atoi, qsort
+#include <cstring>                             // for strcmp, strcpy, strlen
+#include <ctime>                               // for time
+#include <deque>                               // for _Deque_iterator
+#include <iomanip>                             // for operator<<, setw, setfill
+#include <list>                                // for list, operator==, list...
+#include <locale>                              // for locale
+#include <map>                                 // for operator==, _Rb_tree_c...
+#include <set>                                 // for set
+#include <sstream>                             // for operator<<, basic_ostream
+#include <string>                              // for string, operator<<
+#include <string_view>                         // for operator<<
+
+#include "calendar.hpp"                        // for cDay
+#include "carry.hpp"                           // for Carry
+#include "catRef.hpp"                          // for CatRef
+#include "clans.hpp"                           // for Clan
+#include "cmd.hpp"                             // for cmd
+#include "commands.hpp"                        // for getFullstrText, cmdNoAuth
+#include "config.hpp"                          // for Config, gConfig
+#include "creatureStreams.hpp"                 // for Streamable
+#include "deityData.hpp"                       // for DeityData
+#include "dice.hpp"                            // for Dice
+#include "dm.hpp"                              // for dmInvis, dmLastCommand
+#include "effects.hpp"                         // for EffectInfo, EFFECT_MAX...
+#include "factions.hpp"                        // for Faction, Faction::MAX_...
+#include "flags.hpp"                           // for M_DM_FOLLOW, M_CUSTOM
+#include "free_crt.hpp"                        // for free_crt
+#include "global.hpp"                          // for PROMPT, CreatureClass
+#include "hooks.hpp"                           // for Hooks
+#include "lasttime.hpp"                        // for lasttime
+#include "location.hpp"                        // for Location
+#include "magic.hpp"                           // for MAXSPELL
+#include "monType.hpp"                         // for getName, getHitdice, size
+#include "money.hpp"                           // for GOLD, Money
+#include "move.hpp"                            // for getString
+#include "mud.hpp"                             // for PLYCRT, LT_AGE, LT_JAILED
+#include "mudObjects/container.hpp"            // for Container, ObjectSet
+#include "mudObjects/creatures.hpp"            // for Creature, NUM_ASSIST_MOB
+#include "mudObjects/monsters.hpp"             // for Monster
+#include "mudObjects/objects.hpp"              // for Object
+#include "mudObjects/players.hpp"              // for Player
+#include "mudObjects/rooms.hpp"                // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"          // for UniqueRoom
+#include "os.hpp"                              // for merror
+#include "proto.hpp"                           // for log_immort, mprofic
+#include "raceData.hpp"                        // for RaceData
+#include "range.hpp"                           // for Range
+#include "realm.hpp"                           // for COLD, EARTH, ELEC, FIRE
+#include "server.hpp"                          // for Server, gServer, Monst...
+#include "size.hpp"                            // for getSizeName, getSize
+#include "socket.hpp"                          // for Socket
+#include "statistics.hpp"                      // for Statistics
+#include "stats.hpp"                           // for Stat
+#include "structs.hpp"                         // for saves, ttag, PFNCOMPARE
+#include "threat.hpp"                          // for operator<<
+#include "unique.hpp"                          // for Lore
+#include "utils.hpp"                           // for MAX, MIN
+#include "wanderInfo.hpp"                      // for WanderInfo
+#include "xml.hpp"                             // for loadMonster
+
 
 
 //*********************************************************************

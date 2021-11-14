@@ -16,36 +16,52 @@
  *
  */
 
-#include <cstdio>                 // for sprintf
-#include <cstdlib>                // for strtoul, atoi
-#include <cstring>                // for strlen, strcat, strcmp
-#include <ctime>                  // for time
-#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/replace.hpp>  // for replace_all
+#include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
+#include <cstdio>                              // for sprintf
+#include <cstdlib>                             // for strtoul, atoi
+#include <cstring>                             // for strlen, strcat, strcmp
+#include <ctime>                               // for time
+#include <deque>                               // for _Deque_iterator
+#include <list>                                // for list, operator==, _Lis...
+#include <map>                                 // for operator==, _Rb_tree_c...
+#include <ostream>                             // for operator<<, ostringstream
+#include <set>                                 // for set, set<>::iterator
+#include <string>                              // for string, allocator, ope...
+#include <utility>                             // for pair
 
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for cmdTrade, cmdCompare, cmdCost, cmdDrop
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for ObjectSet, Container, PlayerSet
-#include "creatureStreams.hpp"    // for Streamable, ColorOn, ColorOff, oper...
-#include "creatures.hpp"          // for Player, Creature, Monster
-#include "effects.hpp"            // for Effect
-#include "factions.hpp"           // for Faction, Faction::INDIFFERENT
-#include "flags.hpp"              // for P_AFK, O_WORN, O_NO_DROP, R_DUMP_ROOM
-#include "global.hpp"             // for HELD, WIELD, MAXWEAR, CreatureClass
-#include "group.hpp"              // for GROUP_SPLIT_GOLD, Group
-#include "lasttime.hpp"           // for lasttime, crlasttime
-#include "money.hpp"              // for Money, GOLD
-#include "mud.hpp"                // for LT_KICK, LT_MIST, LT_PEEK, LT_STEAL
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
-#include "property.hpp"           // for Property
-#include "proto.hpp"              // for broadcast, keyTxtEqual, log_immort, up
-#include "quests.hpp"             // for TalkResponse
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom, UniqueRoom, AreaRoom
-#include "server.hpp"             // for Server, gServer, GOLD_IN, GOLD_OUT
-#include "unique.hpp"             // for remove, Lore, is, deleteOwner, Unique
-#include "utils.hpp"              // for MAX, MIN
-#include "xml.hpp"                // for loadObject, loadPlayer
+#include "catRef.hpp"                          // for CatRef
+#include "cmd.hpp"                             // for cmd
+#include "commands.hpp"                        // for cmdConsume, cmdReadScroll
+#include "config.hpp"                          // for Config, gConfig
+#include "creatureStreams.hpp"                 // for Streamable, ColorOn
+#include "effects.hpp"                         // for Effect
+#include "factions.hpp"                        // for Faction, Faction::INDI...
+#include "flags.hpp"                           // for P_AFK, O_WORN, O_NO_DROP
+#include "free_crt.hpp"                        // for free_crt
+#include "global.hpp"                          // for HELD, WIELD, CreatureC...
+#include "group.hpp"                           // for GROUP_SPLIT_GOLD, Group
+#include "lasttime.hpp"                        // for lasttime, crlasttime
+#include "money.hpp"                           // for Money, GOLD
+#include "mud.hpp"                             // for LT_KICK, LT_MIST, LT_PEEK
+#include "mudObjects/areaRooms.hpp"            // for AreaRoom
+#include "mudObjects/container.hpp"            // for ObjectSet, Container
+#include "mudObjects/creatures.hpp"            // for Creature
+#include "mudObjects/monsters.hpp"             // for Monster
+#include "mudObjects/objects.hpp"              // for Object, ObjectType
+#include "mudObjects/players.hpp"              // for Player
+#include "mudObjects/rooms.hpp"                // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"          // for UniqueRoom
+#include "oldquest.hpp"                        // for fulfillQuest
+#include "property.hpp"                        // for Property
+#include "proto.hpp"                           // for broadcast, keyTxtEqual
+#include "quests.hpp"                          // for TalkResponse
+#include "random.hpp"                          // for Random
+#include "server.hpp"                          // for Server, GOLD_IN, GOLD_OUT
+#include "stats.hpp"                           // for Stat
+#include "unique.hpp"                          // for remove, Lore, is, dele...
+#include "utils.hpp"                           // for MAX, MIN
+#include "xml.hpp"                             // for loadObject, loadPlayer
 
 class Socket;
 

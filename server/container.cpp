@@ -16,21 +16,31 @@
  *
  */
 
-#include <ostream>                // for operator<<, basic_ostream, endl
-#include <string>                 // for operator==, operator<<, basic_string
-#include <utility>                // for pair
-#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/trim.hpp>          // for trim
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <ostream>                                  // for operator<<, basic...
+#include <set>                                      // for operator==, _Rb_t...
+#include <string>                                   // for string, allocator
+#include <utility>                                  // for pair
 
-#include "cmd.hpp"                // for cmd
-#include "container.hpp"          // for Container, Containable, MonsterSet
-#include "creatures.hpp"          // for Monster, Player, Creature
-#include "flags.hpp"              // for M_ANTI_MAGIC_AURA, M_DM_FOLLOW, O_T...
-#include "free_crt.hpp"           // for free_crt
-#include "mudObject.hpp"          // for MudObject
-#include "objects.hpp"            // for Object
-#include "proto.hpp"              // for keyTxtEqual, broadcast, free_crt
-#include "rooms.hpp"              // for BaseRoom (ptr only), AreaRoom, Uniq...
-#include "toNum.hpp"
+#include "area.hpp"                                 // for MapMarker
+#include "catRef.hpp"                               // for CatRef
+#include "cmd.hpp"                                  // for cmd
+#include "flags.hpp"                                // for M_ANTI_MAGIC_AURA
+#include "free_crt.hpp"                             // for free_crt
+#include "location.hpp"                             // for Location
+#include "mudObjects/areaRooms.hpp"                 // for AreaRoom
+#include "mudObjects/container.hpp"                 // for Container, Contai...
+#include "mudObjects/creatures.hpp"                 // for Creature
+#include "mudObjects/monsters.hpp"                  // for Monster
+#include "mudObjects/mudObject.hpp"                 // for MudObject
+#include "mudObjects/objects.hpp"                   // for Object
+#include "mudObjects/players.hpp"                   // for Player
+#include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
+#include "proto.hpp"                                // for keyTxtEqual, broa...
+#include "toNum.hpp"                                // for toNum
+
+class BaseRoom;
 
 //################################################################################
 //# Container

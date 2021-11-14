@@ -15,28 +15,36 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstring>        // for strncpy, strtok, strlen
-#include <strings.h>      // for strncasecmp
-#include <ctime>          // for time, time_t
 
-#include "cmd.hpp"        // for cmd
-#include "creatures.hpp"  // for Monster, Creature, Player
-#include "effects.hpp"    // for EffectInfo, Effect
-#include "exits.hpp"      // for Exit
-#include "flags.hpp"      // for M_PLUS_TWO, M_ENCHANTED_WEAPONS_ONLY, M_REG...
-#include "global.hpp"     // for CreatureClass, CastType, CastType::CAST
-#include "magic.hpp"      // for SpellData, CONJURATION, NO_DOMAIN, S_CURE_P...
-#include "monType.hpp"    // for MONSTER
-#include "mud.hpp"        // for LT_INVOKE, LT_SPELL, LT_TICK, LT_TICK_HARMFUL
-#include "objects.hpp"    // for Object
-#include "os.hpp"         // for merror
-#include "proto.hpp"      // for broadcast, findExit, bonus, getOffensiveSpell
-#include "random.hpp"     // for Random
-#include "realm.hpp"      // for Realm, EARTH, MAX_REALM, COLD, ELEC, FIRE
-#include "rooms.hpp"      // for BaseRoom
-#include "server.hpp"     // for Server, gServer
-#include "structs.hpp"    // for creatureStats
-#include "utils.hpp"      // for MIN, MAX
+#include <strings.h>                 // for strncasecmp
+#include <cstring>                   // for strncpy, strtok, strlen
+#include <ctime>                     // for time, time_t
+#include <string>                    // for allocator, string
+#include <type_traits>               // for enable_if<>::type
+
+#include "cmd.hpp"                   // for cmd
+#include "dice.hpp"                  // for Dice
+#include "effects.hpp"               // for EffectInfo, Effect
+#include "flags.hpp"                 // for M_PLUS_TWO, M_ENCHANTED_WEAPONS_...
+#include "global.hpp"                // for CreatureClass, CastType, CastTyp...
+#include "lasttime.hpp"              // for lasttime
+#include "magic.hpp"                 // for SpellData, CONJURATION, NO_DOMAIN
+#include "monType.hpp"               // for MONSTER
+#include "mud.hpp"                   // for LT_INVOKE, LT_SPELL, LT_TICK
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/exits.hpp"      // for Exit
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "os.hpp"                    // for merror
+#include "proto.hpp"                 // for broadcast, findExit, bonus, getO...
+#include "random.hpp"                // for Random
+#include "realm.hpp"                 // for Realm, EARTH, MAX_REALM, COLD, ELEC
+#include "server.hpp"                // for Server, gServer
+#include "stats.hpp"                 // for Stat
+#include "structs.hpp"               // for creatureStats
+#include "utils.hpp"                 // for MIN, MAX
 
 
 char conjureTitles[][3][10][30] = {

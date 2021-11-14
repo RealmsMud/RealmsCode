@@ -16,28 +16,39 @@
  *
  */
 
-#include <ctime>                  // for time
+#include <ctime>                     // for time
+#include <list>                      // for operator==, list<>::iterator, list
+#include <set>                       // for operator==, _Rb_tree_const_iterator
+#include <string>                    // for string, allocator, operator==
+#include <string_view>               // for string_view
 
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for cmdCreepingDoom, cmdPoison
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Creature, Player, Monster, SkillMap
-#include "deityData.hpp"          // for DeityData
-#include "effects.hpp"            // for Effects, EffectInfo, EffectList
-#include "flags.hpp"              // for O_CURSED, P_DM_BLINDED, P_POISONED_...
-#include "global.hpp"             // for CastType, CreatureClass, CastType::...
-#include "magic.hpp"              // for SpellData, checkRefusingMagic, splC...
-#include "monType.hpp"            // for noLivingVulnerabilities, ARACHNID
-#include "mud.hpp"                // for LT_DRAIN_LIFE, LT_SMOTHER, LT
-#include "objects.hpp"            // for Object
-#include "proto.hpp"              // for broadcast, up, bonus, free_crt, bro...
-#include "raceData.hpp"           // for RaceData
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom
-#include "server.hpp"             // for Server, gServer
-#include "skills.hpp"             // for Skill
-#include "utils.hpp"              // for MIN, MAX
-#include "xml.hpp"                // for loadPlayer
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for cmdCreepingDoom, cmdPoison
+#include "config.hpp"                // for Config, gConfig
+#include "deityData.hpp"             // for DeityData
+#include "effects.hpp"               // for Effects, EffectInfo, EffectList
+#include "flags.hpp"                 // for O_CURSED, P_DM_BLINDED, P_POISON...
+#include "free_crt.hpp"              // for free_crt
+#include "global.hpp"                // for CastType, CreatureClass, CastTyp...
+#include "lasttime.hpp"              // for lasttime
+#include "magic.hpp"                 // for SpellData, checkRefusingMagic
+#include "monType.hpp"               // for noLivingVulnerabilities, ARACHNID
+#include "mud.hpp"                   // for LT_DRAIN_LIFE, LT_SMOTHER, LT
+#include "mudObjects/container.hpp"  // for Container, ObjectSet
+#include "mudObjects/creatures.hpp"  // for Creature, SkillMap, CHECK_DIE
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, up, bonus, broadcastG...
+#include "raceData.hpp"              // for RaceData
+#include "random.hpp"                // for Random
+#include "server.hpp"                // for Server, gServer
+#include "skills.hpp"                // for Skill
+#include "statistics.hpp"            // for Statistics
+#include "stats.hpp"                 // for Stat
+#include "utils.hpp"                 // for MIN, MAX
+#include "xml.hpp"                   // for loadPlayer
 
 
 //*********************************************************************

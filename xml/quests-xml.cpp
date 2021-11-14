@@ -16,10 +16,19 @@
  *
  */
 
-#include <boost/algorithm/string/case_conv.hpp>
+#include <sys/types.h>                              // for time_t
+#include <boost/algorithm/string/case_conv.hpp>     // for to_lower_copy
+#include <boost/iterator/iterator_facade.hpp>       // for operator!=
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <list>                                     // for list, operator==
+#include <map>                                      // for map
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for string, allocator
+
 #include "config.hpp"                               // for Config, gConfig
-#include "quests.hpp"                               // for QuestCompletion
-#include "xml.hpp"                                  // for NODE_NAME, newStr...
+#include "money.hpp"                                // for Money
+#include "quests.hpp"                               // for QuestCatRef, Ques...
+#include "xml.hpp"                                  // for copyToNum, NODE_NAME
 
 QuestCatRef::QuestCatRef(xmlNodePtr rootNode) {
     // Set up the defaults

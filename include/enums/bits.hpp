@@ -2,8 +2,7 @@
 // Created by jason on 4/8/20.
 //
 
-#ifndef REALMSCODE_BITS_HPP
-#define REALMSCODE_BITS_HPP
+#pragma once
 
 enum Bits {
     BIT0 = (1<<0),
@@ -20,5 +19,3 @@ enum Bits {
     BIT11 = (1<<11),
     BIT12 = (1<<12)
 };
-
-#endif //REALMSCODE_BITS_HPP

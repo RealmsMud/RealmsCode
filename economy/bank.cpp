@@ -16,30 +16,35 @@
  *
  */
 
-#include <fcntl.h>        // for open, O_RDWR, O_APPEND, O_CREAT
-#include <cmath>          // for exp, log
-#include <cstdarg>        // for va_end, va_list, va_start
-#include <cstdio>         // for sprintf, vsnprintf
-#include <cstdlib>        // for atol
-#include <cstring>        // for strcmp, strcpy, strlen
-#include <ctime>          // for time, ctime
-#include <unistd.h>       // for close, lseek, unlink, write
+#include <fcntl.h>                   // for open, O_RDWR, O_APPEND, O_CREAT
+#include <math.h>                    // for exp, log
+#include <unistd.h>                  // for close, lseek, unlink, write
+#include <cstdarg>                   // for va_end, va_list, va_start
+#include <cstdio>                    // for sprintf, vsnprintf
+#include <cstdlib>                   // for atol
+#include <cstring>                   // for strcmp, strcpy, strlen
+#include <ctime>                     // for time, ctime
+#include <set>                       // for operator==, _Rb_tree_const_iterator
+#include <string>                    // for string, allocator, operator==
 
-#include "bank.hpp"       // for can, balance, canAnywhere, canSee, deleteSt...
-#include "cmd.hpp"        // for cmd
-#include "config.hpp"     // for Config, gConfig
-#include "creatures.hpp"  // for Player, Monster
-#include "flags.hpp"      // for R_BANK, R_MAGIC_MONEY_MACHINE, P_AFK, R_LIMBO
-#include "global.hpp"     // for CreatureClass, CreatureClass::BUILDER, Crea...
-#include "guilds.hpp"     // for Guild
-#include "money.hpp"      // for Money, GOLD
-#include "mud.hpp"        // for GUILD_BANKER, ACC, GUILD_PEON
-#include "paths.hpp"      // for Bank, GuildBank, BankLog, GuildBankLog
-#include "proto.hpp"      // for broadcast, free_crt, file_exists, log_immort
-#include "rooms.hpp"      // for BaseRoom
-#include "server.hpp"     // for Server, gServer, GOLD_IN
-#include "socket.hpp"     // for Socket
-#include "xml.hpp"        // for loadPlayer
+#include "bank.hpp"                  // for can, balance, canAnywhere, canSee
+#include "cmd.hpp"                   // for cmd
+#include "config.hpp"                // for Config, gConfig
+#include "flags.hpp"                 // for R_BANK, R_MAGIC_MONEY_MACHINE
+#include "free_crt.hpp"              // for free_crt
+#include "global.hpp"                // for CreatureClass, CreatureClass::BU...
+#include "guilds.hpp"                // for Guild
+#include "money.hpp"                 // for Money, GOLD
+#include "mud.hpp"                   // for GUILD_BANKER, ACC, GUILD_PEON
+#include "mudObjects/container.hpp"  // for MonsterSet
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "paths.hpp"                 // for Bank, GuildBank, BankLog, GuildB...
+#include "proto.hpp"                 // for broadcast, file_exists, log_immort
+#include "server.hpp"                // for Server, GOLD_IN, gServer
+#include "socket.hpp"                // for Socket
+#include "xml.hpp"                   // for loadPlayer
 
 //*********************************************************************
 //                      teller

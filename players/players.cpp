@@ -16,22 +16,25 @@
  *
  */
 
-#include <cstring>       // for strcmp
-#include <ctime>         // for time, time_t
-#include <string>         // for operator!=, basic_string, operator==
+#include <cstring>                   // for strcmp
+#include <ctime>                     // for time, time_t
+#include <string>                    // for allocator, operator==, string
+#include <string_view>               // for string_view
 
-#include "creatures.hpp"  // for Player
-#include "effects.hpp"    // for EffectInfo
-#include "flags.hpp"      // for R_DESERT_HARM, P_SITTING, R_AIR_BONUS, R_DE...
-#include "global.hpp"     // for CreatureClass, CreatureClass::LICH, Creatur...
-#include "mud.hpp"        // for LT_TICK_HARMFUL, LT_TICK_SECONDARY, LT, LT_...
-#include "objects.hpp"    // for Object
-#include "proto.hpp"      // for bonus, isDay, broadcast, dice, standardPois...
-#include "random.hpp"     // for Random
-#include "rooms.hpp"      // for BaseRoom, AreaRoom
-#include "socket.hpp"     // for Socket
-#include "stats.hpp"      // for Stat
-#include "utils.hpp"      // for MAX, MIN
+#include "effects.hpp"               // for EffectInfo
+#include "flags.hpp"                 // for R_DESERT_HARM, P_SITTING, R_AIR_...
+#include "global.hpp"                // for CreatureClass, CreatureClass::LICH
+#include "lasttime.hpp"              // for lasttime
+#include "mud.hpp"                   // for LT_TICK_HARMFUL, LT_TICK_SECONDARY
+#include "mudObjects/areaRooms.hpp"  // for AreaRoom
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for bonus, isDay, broadcast, dice
+#include "random.hpp"                // for Random
+#include "socket.hpp"                // for Socket
+#include "stats.hpp"                 // for Stat
+#include "utils.hpp"                 // for MAX, MIN
 
 
 bool Player::operator <(const Player& t) const {

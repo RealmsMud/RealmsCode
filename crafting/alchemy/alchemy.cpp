@@ -18,20 +18,26 @@
 
 #include "alchemy.hpp"
 
-#include <iomanip>                // for operator<<, setw
-#include <sstream>                // for operator<<, basic_ostream, ostrings...
-#include <string>                 // for operator<<, operator==, basic_string
-#include <utility>                // for pair
+#include <fmt/format.h>              // for format
+#include <iomanip>                   // for operator<<, setw
+#include <set>                       // for set
+#include <sstream>                   // for operator<<, basic_ostream, basic...
+#include <string>                    // for string, operator<<, operator==
+#include <utility>                   // for pair
 
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for cmdBrew
-#include "config.hpp"             // for Config, AlchemyMap, gConfig
-#include "creatureStreams.hpp"    // for Streamable, ColorOff, ColorOn
-#include "creatures.hpp"          // for Player, Creature, Player::KnownAlch...
-#include "global.hpp"             // for FIND_OBJ_EQUIPMENT, FIND_OBJ_INVENTORY
-#include "objects.hpp"            // for Object, AlchemyEffectMap, ObjectType
-#include "server.hpp"             // for Server, gServer
-#include "utils.hpp"              // for MAX, MIN
+#include "catRef.hpp"                // for CatRef
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for cmdBrew
+#include "config.hpp"                // for Config, AlchemyMap, gConfig
+#include "creatureStreams.hpp"       // for Streamable, ColorOff, ColorOn
+#include "global.hpp"                // for FIND_OBJ_EQUIPMENT, FIND_OBJ_INV...
+#include "mudObjects/container.hpp"  // for ObjectSet
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/mudObject.hpp"  // for MudObject
+#include "mudObjects/objects.hpp"    // for Object, AlchemyEffectMap, Object...
+#include "mudObjects/players.hpp"    // for Player, Player::KnownAlchemyEffe...
+#include "server.hpp"                // for Server, gServer
+#include "utils.hpp"                 // for MAX, MIN
 
 //########################################################################
 //# AlchemyInfo

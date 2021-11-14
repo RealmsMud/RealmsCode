@@ -16,13 +16,13 @@
  *
  */
 
-#include <map>          // for map
-#include <ostream>      // for operator<<, basic_ostream, ostringstream, endl
-#include <sstream>
+#include <map>         // for operator==, _Rb_tree_iterator, map, _Rb_tree_i...
+#include <sstream>     // for operator<<, basic_ostream, char_traits, ostrin...
+#include <string>      // for operator<<, string, operator==, basic_string
+#include "config.hpp"  // for Config, MxpElementMap, stringMap, gConfig
 
-#include "config.hpp"   // for Config, MxpElementMap, stringMap, gConfig
-#include "mxp.hpp"      // for MxpElement
-#include "socket.hpp"   // for Socket, MXP_BEG, MXP_END
+#include "mxp.hpp"     // for MxpElement
+#include "socket.hpp"  // for Socket, MXP_BEG, MXP_END
 
 std::string MxpElement::getName() {
     return(name);

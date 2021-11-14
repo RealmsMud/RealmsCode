@@ -15,14 +15,21 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <boost/algorithm/string/predicate.hpp>
-#include "commands.hpp"                             // for getFullstrText
-#include "config.hpp"                               // for Config, SongMap
-#include "container.hpp"                            // for PlayerSet
-#include "creatures.hpp"                            // for Creature, Player
-#include "mud.hpp"                                  // for LT_SONG_PLAYED
-#include "rooms.hpp"                                // for BaseRoom
-#include "songs.hpp"                                // for Song
+#include <boost/algorithm/string/predicate.hpp>  // for iequals
+#include <list>                                  // for operator==, _List_it...
+#include <set>                                   // for operator==, _Rb_tree...
+#include <string>                                // for basic_string, string
+
+#include "effects.hpp"                           // for EffectInfo
+#include "group.hpp"                             // for CreatureList, Group
+#include "mud.hpp"                               // for LT_SONG_PLAYED
+#include "mudObjects/container.hpp"              // for PlayerSet
+#include "mudObjects/creatures.hpp"              // for Creature
+#include "mudObjects/players.hpp"                // for Player
+#include "mudObjects/rooms.hpp"                  // for BaseRoom
+#include "songs.hpp"                             // for Song
+
+class MudObject;
 
 bool Creature::isPlaying() const {
     return(playing != nullptr);

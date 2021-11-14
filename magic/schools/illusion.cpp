@@ -16,20 +16,24 @@
  *
  */
 
-#include "cmd.hpp"        // for cmd
-#include "commands.hpp"   // for getFullstrText
-#include "config.hpp"     // for Config, gConfig
-#include "creatures.hpp"  // for Creature, Player
-#include "effects.hpp"    // for EffectInfo
-#include "exits.hpp"      // for Exit
-#include "flags.hpp"      // for X_CONCEALED
-#include "global.hpp"     // for CastType, CastType::CAST, CastType::POTION
-#include "magic.hpp"      // for SpellData, splGeneric, checkRefusingMagic
-#include "monType.hpp"    // for noLivingVulnerabilities
-#include "objects.hpp"    // for Object
-#include "proto.hpp"      // for broadcast, findExit, up
-#include "raceData.hpp"   // for RaceData
-#include "rooms.hpp"      // for BaseRoom
+#include <string>                    // for allocator, string
+
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for getFullstrText
+#include "config.hpp"                // for Config, gConfig
+#include "effects.hpp"               // for EffectInfo
+#include "flags.hpp"                 // for X_CONCEALED
+#include "global.hpp"                // for CastType, CastType::CAST, CastTy...
+#include "magic.hpp"                 // for SpellData, splGeneric, checkRefu...
+#include "monType.hpp"               // for noLivingVulnerabilities
+#include "mudObjects/container.hpp"  // for Container
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/exits.hpp"      // for Exit
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, findExit, up
+#include "raceData.hpp"              // for RaceData
 
 
 

@@ -15,26 +15,29 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <fcntl.h>        // for open, O_CREAT, O_RDWR, O_APPEND, O_RDONLY
-#include <cstdio>         // for sprintf, fclose, feof, fgets, fopen, FILE
-#include <cstring>        // for strlen, strcpy, strcmp
-#include <ctime>          // for ctime, time
-#include <unistd.h>       // for unlink, write, close
-#include <string>         // for operator==, basic_string
 
-#include "cmd.hpp"        // for cmd
-#include "creatures.hpp"  // for Player
-#include "flags.hpp"      // for P_READING_FILE, P_UNREAD_MAIL, P_CAN_MUDMAI...
-#include "global.hpp"     // for DOPROMPT, FATAL, PROMPT, CreatureClass, Cre...
-#include "login.hpp"      // for CON_EDIT_HISTORY, CON_SENDIN...
-#include "mud.hpp"        // for ACC
-#include "os.hpp"         // for merror
-#include "paths.hpp"      // for Post, History
-#include "proto.hpp"      // for file_exists, free_crt, up, broadcast
-#include "rooms.hpp"      // for BaseRoom
-#include "server.hpp"     // for Server, gServer
-#include "socket.hpp"     // for Socket
-#include "xml.hpp"        // for loadPlayer
+#include <fcntl.h>                 // for open, O_APPEND, O_CREAT, O_RDWR
+#include <fmt/format.h>            // for format
+#include <unistd.h>                // for unlink, write, close
+#include <cstdio>                  // for sprintf, fclose, feof, fgets, fopen
+#include <cstring>                 // for strcpy, strlen, strcmp
+#include <ctime>                   // for ctime, time
+#include <string>                  // for string, allocator, basic_string
+
+#include "cmd.hpp"                 // for cmd
+#include "flags.hpp"               // for P_UNREAD_MAIL, P_READING_FILE, P_C...
+#include "free_crt.hpp"            // for free_crt
+#include "global.hpp"              // for DOPROMPT, FATAL, PROMPT, CreatureC...
+#include "login.hpp"               // for CON_EDIT_HISTORY, CON_SENDING_MAIL
+#include "mud.hpp"                 // for ACC
+#include "mudObjects/players.hpp"  // for Player
+#include "mudObjects/rooms.hpp"    // for BaseRoom
+#include "os.hpp"                  // for merror
+#include "paths.hpp"               // for Post, History
+#include "proto.hpp"               // for file_exists, up, broadcast, isCt, is
+#include "server.hpp"              // for Server, gServer
+#include "socket.hpp"              // for Socket
+#include "xml.hpp"                 // for loadPlayer
 
 //*********************************************************************
 //                      hasNewMudmail

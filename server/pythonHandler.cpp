@@ -16,26 +16,36 @@
  *
  */
 
-#include <cstdlib>                                            // for getenv
-#include <new>                                                 // for operat...
-#include <iostream>
-#include <ostream>                                             // for operat...
-#include <string>                                              // for string
+#include <array>                     // for array
+#include <cstdlib>                   // for getenv, setenv
+#include <ostream>                   // for operator<<, basic_ostream, endl
+#include <pybind11/cast.h>           // for cast, operator>>_a, object_api::...
+#include <pybind11/detail/common.h>  // for PYBIND11_CONCAT
+#include <pybind11/embed.h>          // for PYBIND11_EMBEDDED_MODULE, finali...
+#include <pybind11/eval.h>           // for exec, eval
+#include <pybind11/pybind11.h>       // for module, module_
+#include <pybind11/pytypes.h>        // for object, dict, error_already_set
+#include <string>                    // for string, allocator, char_traits
 
-#include "commands.hpp"                                        // for doCast...
-#include "config.hpp"                                          // for Config
-#include "creatures.hpp"                                       // for Creature
-#include "exits.hpp"                                           // for Exit
-#include "fishing.hpp"                                         // for Fishing
-#include "mudObject.hpp"                                       // for MudObject
-#include "objects.hpp"                                         // for Object
-#include "paths.hpp"                                           // for Python
-#include "proto.hpp"                                           // for broadcast
-#include "pythonHandler.hpp"                                   // for Python...
-#include "rooms.hpp"                                           // for BaseRoom
-#include "server.hpp"                                          // for Server
-#include "socials.hpp"
-#include "socket.hpp"                                          // for Socket
+#include "config.hpp"                // for gConfig
+#include "mudObjects/areaRooms.hpp"  // for AreaRoom
+#include "mudObjects/mudObject.hpp"  // for MudObject
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/uniqueRooms.hpp"// for UniqueRoom
+#include "paths.hpp"                 // for Python
+#include "proto.hpp"                 // for broadcast, isDm
+#include "pythonHandler.hpp"         // for PythonHandler
+#include "pythonrun.h"               // for PyErr_Print
+#include "server.hpp"                // for Server, gServer
+#include "tupleobject.h"             // for PyTuple_New
+
+class AreaRoom;
+class Exit;
+class Monster;
+class Object;
+class Player;
+class UniqueRoom;
 
 /*
  * We're looking to do two things here

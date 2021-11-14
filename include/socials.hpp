@@ -33,7 +33,6 @@ public:
         name = pCmdStr;
     }
     ~SocialCommand() override = default;
-    bool saveToXml(xmlNodePtr rootNode) const;
     int execute(Creature* player, cmd* cmnd) const override;
 
     [[nodiscard]] bool getWakeTarget() const;

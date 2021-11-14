@@ -16,17 +16,25 @@
  *
  */
 
-#include <ostream>                // for ostringstream, basic_ostream, basic...
-#include <sstream>
-#include <string>
+#include <list>                        // for list, _List_const_iterator
+#include <map>                         // for map, operator==, _Rb_tree_iter...
+#include <sstream>                     // for ostringstream, basic_ostream
+#include <string>                      // for string, allocator, char_traits
+#include <string_view>                 // for operator==, string_view, basic...
+#include <utility>                     // for pair
 
-#include "calendar.hpp"           // for cSeason, Calendar, cWeather (ptr only)
-#include "catRefInfo.hpp"         // for CatRefInfo
-#include "config.hpp"             // for Config, gConfig
-#include "proto.hpp"              // for broadcast, isCt
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom, AreaRoom, UniqueRoom
-#include "season.hpp"             // for Season
+#include "area.hpp"                    // for Area
+#include "calendar.hpp"                // for cSeason, Calendar, cWeather (p...
+#include "catRef.hpp"                  // for CatRef
+#include "catRefInfo.hpp"              // for CatRefInfo
+#include "config.hpp"                  // for Config, gConfig
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "proto.hpp"                   // for broadcast, isCt
+#include "random.hpp"                  // for Random
+#include "season.hpp"                  // for Season
+
 
 //*********************************************************************
 //                      CatRefInfo

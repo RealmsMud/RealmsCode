@@ -19,7 +19,9 @@
 #define CALENDAR_H_
 
 #include <libxml/parser.h>  // for xmlNodePtr
-#include <list>
+#include <list>             // for list
+#include <string>           // for string
+#include <string_view>      // for string_view
 
 #include "season.hpp"       // for Season
 #include "weather.hpp"      // for WeatherString

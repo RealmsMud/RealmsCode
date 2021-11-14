@@ -16,24 +16,31 @@
  *
  */
 
-#include <cstdlib>                // for abs
-#include <ctime>                  // for time
+#include <cstdlib>                   // for abs
+#include <ctime>                     // for time
+#include <list>                      // for operator==, _List_iterator, list
+#include <map>                       // for operator==, _Rb_tree_const_iterator
+#include <string>                    // for allocator, string
+#include <type_traits>               // for enable_if<>::type
 
-#include "commands.hpp"           // for cmdFocus, cmdFrenzy, cmdMaul, cmdMe...
-#include "creatures.hpp"          // for Player, Creature, Monster, ATTACK_MAUL
-#include "damage.hpp"             // for Damage
-#include "flags.hpp"              // for M_PERMENANT_MONSTER, P_AFK, P_FOCUSED
-#include "global.hpp"             // for CreatureClass, CreatureClass::CARET...
-#include "group.hpp"              // for CreatureList, Group
-#include "mud.hpp"                // for LT_TOUCH_OF_DEATH, LT_MEDITATE, LT_...
-#include "objects.hpp"            // for Object
-#include "proto.hpp"              // for broadcast, bonus, log_immort, induel
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom
-#include "structs.hpp"            // for saves
-#include "utils.hpp"              // for MIN, MAX
-
-class cmd;
+#include "commands.hpp"              // for cmdFocus, cmdFrenzy, cmdHowl
+#include "damage.hpp"                // for Damage
+#include "flags.hpp"                 // for M_PERMENANT_MONSTER, P_AFK, P_FO...
+#include "global.hpp"                // for CreatureClass, CreatureClass::CA...
+#include "group.hpp"                 // for CreatureList, Group
+#include "lasttime.hpp"              // for lasttime
+#include "mud.hpp"                   // for LT_TOUCH_OF_DEATH, LT_MEDITATE
+#include "mudObjects/container.hpp"  // for MonsterSet
+#include "mudObjects/creatures.hpp"  // for Creature, ATTACK_MAUL, CHECK_DIE
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, bonus, log_immort
+#include "random.hpp"                // for Random
+#include "stats.hpp"                 // for Stat
+#include "structs.hpp"               // for saves
+#include "utils.hpp"                 // for MIN, MAX
 
 //*********************************************************************
 //                      cmdMeditate

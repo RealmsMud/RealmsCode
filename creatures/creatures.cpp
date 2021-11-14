@@ -17,39 +17,48 @@
  */
 // Mud Includes
 
-#include <cstdlib>             // for abs
-#include <cstring>             // for strlen, strcat, strcpy
-#include <ctime>               // for time
-#include <sstream>             // for operator<<, basic_ostream, ostringstream
+#include <cstdlib>                     // for abs
+#include <cstring>                     // for strlen, strcat, strcpy
+#include <ctime>                       // for time
+#include <set>                         // for operator==, _Rb_tree_const_ite...
+#include <sstream>                     // for operator<<, basic_ostream, ost...
+#include <string>                      // for string, operator==, allocator
 
-#include "area.hpp"            // for MapMarker, Area
-#include "calendar.hpp"        // for Calendar
-#include "cmd.hpp"             // for cmd
-#include "commands.hpp"        // for tollcost
-#include "config.hpp"          // for Config, gConfig
-#include "creatures.hpp"       // for Creature, Player, Monster
-#include "deityData.hpp"       // for DeityData
-#include "enums/loadType.hpp"  // for LoadType
-#include "exits.hpp"           // for Exit
-#include "flags.hpp"           // for P_DM_INVIS, O_SMALL_SHIELD, O_NO_PAWN
-#include "global.hpp"          // for HELD, WIELD, SHIELD, ISDM, MAXWEAR
-#include "lasttime.hpp"        // for lasttime, crlasttime, operator<<
-#include "money.hpp"           // for GOLD, Money
-#include "mud.hpp"             // for LT_AGE
-#include "mudObject.hpp"       // for MudObject
-#include "objects.hpp"         // for Object, ObjectType, ObjectType::ARMOR
-#include "os.hpp"              // for ASSERTLOG, merror
-#include "property.hpp"        // for Property
-#include "proto.hpp"           // for isDay, getSizeName, int_to_text, getOr...
-#include "quests.hpp"          // for QuestEligibility, QuestTurninStatus
-#include "raceData.hpp"        // for RaceData
-#include "realm.hpp"           // for WATER
-#include "rooms.hpp"           // for UniqueRoom, BaseRoom
-#include "season.hpp"          // for AUTUMN, SPRING, SUMMER, WINTER
-#include "server.hpp"          // for Server, gServer
-#include "size.hpp"            // for SIZE_COLOSSAL, SIZE_DIMINUTIVE, SIZE_FINE
-#include "structs.hpp"         // for Command, SEX_FEMALE, SEX_MALE
-#include "utils.hpp"           // for MIN, MAX
+#include "area.hpp"                    // for MapMarker, Area
+#include "calendar.hpp"                // for Calendar
+#include "catRef.hpp"                  // for CatRef
+#include "cmd.hpp"                     // for cmd
+#include "commands.hpp"                // for tollcost
+#include "config.hpp"                  // for Config, gConfig
+#include "deityData.hpp"               // for DeityData
+#include "enums/loadType.hpp"          // for LoadType
+#include "flags.hpp"                   // for P_DM_INVIS, O_SMALL_SHIELD
+#include "global.hpp"                  // for HELD, WIELD, SHIELD, ISDM, MAX...
+#include "lasttime.hpp"                // for lasttime, crlasttime, operator<<
+#include "location.hpp"                // for Location
+#include "money.hpp"                   // for GOLD, Money
+#include "mud.hpp"                     // for LT_AGE
+#include "mudObjects/container.hpp"    // for ObjectSet, Container, MonsterSet
+#include "mudObjects/creatures.hpp"    // for Creature
+#include "mudObjects/exits.hpp"        // for Exit
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/mudObject.hpp"    // for MudObject
+#include "mudObjects/objects.hpp"      // for Object, ObjectType, ObjectType...
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "os.hpp"                      // for ASSERTLOG, merror
+#include "property.hpp"                // for Property
+#include "proto.hpp"                   // for isDay, int_to_text, getOrdinal
+#include "quests.hpp"                  // for QuestEligibility, QuestTurninS...
+#include "raceData.hpp"                // for RaceData
+#include "realm.hpp"                   // for WATER
+#include "season.hpp"                  // for AUTUMN, SPRING, SUMMER, WINTER
+#include "server.hpp"                  // for Server, gServer
+#include "size.hpp"                    // for getSizeName, SIZE_COLOSSAL
+#include "stats.hpp"                   // for Stat
+#include "structs.hpp"                 // for Command, SEX_FEMALE, SEX_MALE
+#include "utils.hpp"                   // for MIN, MAX
 
 
 //********************************************************************

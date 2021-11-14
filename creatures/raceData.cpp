@@ -16,24 +16,31 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNode, xmlFreeDoc
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
+#include <boost/algorithm/string/case_conv.hpp>     // for to_lower
+#include <boost/algorithm/string/predicate.hpp>     // for iequals
+#include <boost/algorithm/string/replace.hpp>       // for replace_all
+#include <boost/iterator/iterator_traits.hpp>       // for iterator_value<>:...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cstdio>                                   // for snprintf
 #include <cstring>                                  // for strcmp
-#include <map>                                      // for operator==, opera...
-#include <boost/algorithm/string/case_conv.hpp>
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/algorithm/string/replace.hpp>
+#include <deque>                                    // for _Deque_iterator
+#include <list>                                     // for list, operator==
+#include <map>                                      // for operator==, map
+#include <string>                                   // for string, char_traits
+#include <string_view>                              // for operator==, basic...
+#include <utility>                                  // for pair
 
 #include "cmd.hpp"                                  // for cmd
-#include "config.hpp"                               // for Config, gConfig
-#include "creatures.hpp"                            // for Player
+#include "config.hpp"                               // for Config, RaceDataMap
 #include "deityData.hpp"                            // for DeityData
 #include "dice.hpp"                                 // for Dice
 #include "global.hpp"                               // for CreatureClass
+#include "mudObjects/players.hpp"                   // for Player
 #include "paths.hpp"                                // for Game
 #include "proto.hpp"                                // for zero, getSexName
 #include "raceData.hpp"                             // for RaceData
-#include "size.hpp"                                 // for NO_SIZE, Size
+#include "size.hpp"                                 // for getSize, getSizeName
 #include "skillGain.hpp"                            // for SkillGain
 #include "structs.hpp"                              // for Sex
 #include "xml.hpp"                                  // for NODE_NAME, copyPr...

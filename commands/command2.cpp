@@ -15,33 +15,42 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstdio>                 // for sprintf
-#include <cstring>                // for strcat, strlen, strncmp, strcpy
-#include <string>                 // for operator==, basic_string
 
-#include "catRef.hpp"             // for CatRef
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for finishDropObject, cmdPrepareObject
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player, Creature, Monster, CHECK_DIE
-#include "damage.hpp"             // for Damage
-#include "exits.hpp"              // for Exit, getDir, getDirName, NoDirection
-#include "flags.hpp"              // for X_CLOSED, O_BROKEN_BY_CMD, O_NO_DROP
-#include "global.hpp"             // for CreatureClass, CreatureClass::PALADIN
-#include "money.hpp"              // for GOLD, Money
-#include "move.hpp"               // for getRoom
-#include "mudObject.hpp"          // for MudObject
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
-#include "paths.hpp"              // for Sign
-#include "proto.hpp"              // for broadcast, findExit, bonus, broadca...
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom, AreaRoom, UniqueRoom
-#include "socket.hpp"             // for Socket
-#include "statistics.hpp"         // for Statistics
-#include "utils.hpp"              // for MAX, MIN
-#include "xml.hpp"                // for loadRoom
+#include <cstdio>                      // for sprintf
+#include <cstring>                     // for strcat, strlen, strncmp, strcpy
+#include <set>                         // for operator==, _Rb_tree_const_ite...
+#include <string>                      // for allocator, string, operator+
+#include <type_traits>                 // for enable_if<>::type
 
-class Property;
+#include "area.hpp"                    // for Area, MapMarker
+#include "catRef.hpp"                  // for CatRef
+#include "cmd.hpp"                     // for cmd
+#include "commands.hpp"                // for finishDropObject, cmdPrepareFo...
+#include "config.hpp"                  // for Config, gConfig
+#include "damage.hpp"                  // for Damage
+#include "flags.hpp"                   // for X_CLOSED, O_BROKEN_BY_CMD, O_N...
+#include "global.hpp"                  // for CreatureClass, CreatureClass::...
+#include "location.hpp"                // for Location
+#include "money.hpp"                   // for GOLD, Money
+#include "move.hpp"                    // for getRoom
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/container.hpp"    // for ObjectSet, PlayerSet, Container
+#include "mudObjects/creatures.hpp"    // for Creature, CHECK_DIE, ATTACK_BLOCK
+#include "mudObjects/exits.hpp"        // for Exit, getDir, getDirName, NoDi...
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/mudObject.hpp"    // for MudObject
+#include "mudObjects/objects.hpp"      // for Object, ObjectType, ObjectType...
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "paths.hpp"                   // for Sign
+#include "proto.hpp"                   // for broadcast, findExit, bonus
+#include "random.hpp"                  // for Random
+#include "socket.hpp"                  // for Socket
+#include "statistics.hpp"              // for Statistics
+#include "stats.hpp"                   // for Stat
+#include "utils.hpp"                   // for MAX, MIN
+#include "xml.hpp"                     // for loadRoom
 
 #define STONE_SCROLL_INDEX      10
 

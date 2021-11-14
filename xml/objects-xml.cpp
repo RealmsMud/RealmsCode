@@ -16,30 +16,43 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <compare>                                  // for operator<, strong...
 #include <cstdio>                                   // for sprintf
 #include <cstring>                                  // for strcpy
+#include <libxml/xmlstring.h>                       // for BAD_CAST
+#include <list>                                     // for list, operator==
+#include <map>                                      // for operator==, _Rb_t...
 #include <ostream>                                  // for basic_ostream::op...
+#include <set>                                      // for set<>::const_iter...
 #include <stdexcept>                                // for runtime_error
+#include <string>                                   // for string, allocator
+#include <utility>                                  // for pair
 
 #include "alchemy.hpp"                              // for AlchemyEffect
 #include "area.hpp"                                 // for MapMarker
 #include "catRef.hpp"                               // for CatRef
 #include "config.hpp"                               // for Config, gConfig
-#include "container.hpp"                            // for ObjectSet
-#include "creatures.hpp"                            // for Creature
+#include "dice.hpp"                                 // for Dice
 #include "enums/loadType.hpp"                       // for LoadType, LoadTyp...
 #include "flags.hpp"                                // for O_UNIQUE, O_PERM_...
 #include "global.hpp"                               // for ALLITEMS, FATAL
 #include "hooks.hpp"                                // for Hooks
-#include "mudObject.hpp"                            // for MudObject
+#include "lasttime.hpp"                             // for lasttime
+#include "money.hpp"                                // for Money
+#include "mudObjects/container.hpp"                 // for ObjectSet
+#include "mudObjects/creatures.hpp"                 // for Creature
+#include "mudObjects/mudObject.hpp"                 // for MudObject
+#include "mudObjects/objects.hpp"                   // for Object, DroppedBy
+#include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
 #include "objIncrease.hpp"                          // for ObjIncrease
-#include "objects.hpp"                              // for Object, DroppedBy
 #include "os.hpp"                                   // for ASSERTLOG, merror
 #include "paths.hpp"                                // for checkDirExists
 #include "proto.hpp"                                // for objectPath, valid...
-#include "rooms.hpp"                                // for UniqueRoom
+#include "range.hpp"                                // for Range
 #include "server.hpp"                               // for Server, gServer
+#include "size.hpp"                                 // for whatSize
 #include "xml.hpp"                                  // for saveNonZeroNum
 
 

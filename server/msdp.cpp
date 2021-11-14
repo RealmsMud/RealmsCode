@@ -16,20 +16,35 @@
  *
  */
 
-#include <arpa/telnet.h>          // for IAC, SB, SE
-#include <cmath>                  // for floor, round
-#include <ostream>                // for operator<<, basic_ostream, basic_os...
-#include <string>                 // for operator<<, char_traits, operator!=
+#include <arpa/telnet.h>               // for IAC, SB, SE
+#include <cmath>                       // for floor, round
+#include <functional>                  // for function, operator==
+#include <list>                        // for operator==, list, _List_const_...
+#include <map>                         // for operator==, map, _Rb_tree_iter...
+#include <sstream>                     // for operator<<, basic_ostream, ost...
+#include <string>                      // for string, operator<<, char_traits
+#include <string_view>                 // for string_view, operator<<, basic...
+#include <utility>                     // for tuple_element<>::type, pair
+#include <vector>                      // for vector
 
-#include "config.hpp"             // for Config, MsdpVarMap, gConfig
-#include "creatures.hpp"          // for Creature, Player
-#include "flags.hpp"              // for P_NO_SHOW_STATS, P_DM_INVIS, P_SLEE...
-#include "group.hpp"              // for Group, CreatureList, GROUP_INVITED
-#include "login.hpp"              // for CON_DISCONNECTING, CON_PLAYING
-#include "msdp.hpp"               // for MsdpVariable, ReportedMsdpVariable
-#include "rooms.hpp"              // for AreaRoom, UniqueRoom, BaseRoom, Exi...
-#include "server.hpp"             // for Server, SocketList
-#include "socket.hpp"             // for Socket, MSDP_VAL, MSDP_VAR, MSDP_TA...
+#include "area.hpp"                    // for MapMarker
+#include "catRef.hpp"                  // for CatRef
+#include "config.hpp"                  // for Config, gConfig, MsdpVariableMap
+#include "flags.hpp"                   // for P_NO_SHOW_STATS, P_DM_INVIS
+#include "group.hpp"                   // for Group, CreatureList, GROUP_INV...
+#include "location.hpp"                // for Location
+#include "login.hpp"                   // for CON_DISCONNECTING, CON_PLAYING
+#include "msdp.hpp"                    // for ReportedMsdpVariable, MsdpVari...
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/creatures.hpp"    // for Creature
+#include "mudObjects/exits.hpp"        // for Exit
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "server.hpp"                  // for Server, SocketList
+#include "socket.hpp"                  // for Socket, MSDP_VAL, MSDP_VAR
+#include "stats.hpp"                   // for Stat
+#include "timer.hpp"                   // for Timer
 
 #define MSDP_DEBUG
 

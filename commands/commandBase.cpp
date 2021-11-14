@@ -16,38 +16,51 @@
  *
  */
 
-#include <cctype>         // for isdigit
-#include <cstdio>         // for sprintf
-#include <cstdlib>        // for atol
-#include <cstring>        // for strncpy, strcmp
-#include <sys/stat.h>     // for stat, st_atime, st_mtime
-#include <ctime>          // for ctime, time
-#include <iomanip>        // for operator<<, setw
-#include <sstream>        // for operator<<, basic_ostream, char_traits, ost...
-#include <boost/algorithm/string.hpp>
+#include <sys/stat.h>                            // for stat
+#include <boost/algorithm/string/case_conv.hpp>  // for to_lower
+#include <cctype>                                // for isdigit
+#include <cstdio>                                // for sprintf
+#include <cstdlib>                               // for atol
+#include <cstring>                               // for strncpy, strcmp
+#include <ctime>                                 // for ctime, time
+#include <iomanip>                               // for operator<<, setw
+#include <locale>                                // for locale
+#include <map>                                   // for operator==, _Rb_tree...
+#include <sstream>                               // for operator<<, basic_os...
+#include <string>                                // for string, operator<<
+#include <string_view>                           // for string_view, basic_s...
+#include <utility>                               // for pair
 
-#include "calendar.hpp"   // for Calendar
-#include "cmd.hpp"        // for cmd, MAX_TOKEN_SIZE, COMMANDMAX
-#include "commands.hpp"   // for cmdProcess, getFullstrText, cmdDescription
-#include "config.hpp"     // for Config, gConfig
-#include "creatures.hpp"  // for Player, Creature, Monster
-#include "exits.hpp"      // for Exit
-#include "factions.hpp"   // for Faction
-#include "flags.hpp"      // for P_AFK, M_TOLLKEEPER, O_PUSH_PULL_SPRINGS_TRAP
-#include "global.hpp"     // for CreatureClass, PROMPT, CreatureClass::CARET...
-#include "money.hpp"      // for Money, GOLD
-#include "mud.hpp"        // for StartTime, LT_PLAYER_STUNNED, DEFAULT_TOLL
-#include "mudObject.hpp"  // for MudObject
-#include "objects.hpp"    // for Object
-#include "os.hpp"         // for ASSERTLOG
-#include "paths.hpp"      // for Post
-#include "proto.hpp"      // for broadcast, free_crt, dmIson, findExit, isDay
-#include "raceData.hpp"   // for RaceData
-#include "rooms.hpp"      // for BaseRoom, UniqueRoom (ptr only)
-#include "server.hpp"     // for Server, gServer, GOLD_OUT, PlayerMap
-#include "socket.hpp"     // for Socket
-#include "utils.hpp"      // for MAX, MIN
-#include "xml.hpp"        // for loadPlayer
+#include "calendar.hpp"                          // for Calendar
+#include "cmd.hpp"                               // for cmd, MAX_TOKEN_SIZE
+#include "commands.hpp"                          // for cmdProcess, getFulls...
+#include "config.hpp"                            // for Config, gConfig
+#include "factions.hpp"                          // for Faction
+#include "flags.hpp"                             // for P_AFK, M_TOLLKEEPER
+#include "free_crt.hpp"                          // for free_crt
+#include "global.hpp"                            // for CreatureClass, PROMPT
+#include "lasttime.hpp"                          // for lasttime
+#include "location.hpp"                          // for Location
+#include "money.hpp"                             // for Money, GOLD
+#include "mud.hpp"                               // for StartTime, LT_PLAYER...
+#include "mudObjects/container.hpp"              // for Container
+#include "mudObjects/creatures.hpp"              // for Creature
+#include "mudObjects/exits.hpp"                  // for Exit
+#include "mudObjects/monsters.hpp"               // for Monster
+#include "mudObjects/mudObject.hpp"              // for MudObject
+#include "mudObjects/objects.hpp"                // for Object
+#include "mudObjects/players.hpp"                // for Player
+#include "mudObjects/rooms.hpp"                  // for BaseRoom
+#include "os.hpp"                                // for ASSERTLOG
+#include "paths.hpp"                             // for Post
+#include "proto.hpp"                             // for broadcast, dmIson
+#include "raceData.hpp"                          // for RaceData
+#include "server.hpp"                            // for Server, gServer, GOL...
+#include "socket.hpp"                            // for Socket
+#include "utils.hpp"                             // for MAX, MIN
+#include "xml.hpp"                               // for loadPlayer
+
+class UniqueRoom;
 
 //*********************************************************************
 //                      cmdNoExist

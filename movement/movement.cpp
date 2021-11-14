@@ -15,41 +15,53 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cctype>                // for isdigit
-#include <cstdlib>               // for atoi
-#include <cstring>               // for strncmp, strstr, strcpy
-#include <ctime>                 // for time
 
-#include "area.hpp"               // for MapMarker, Area, AreaTrack
-#include "catRef.hpp"             // for CatRef
-#include "catRefInfo.hpp"         // for CatRefInfo
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for tollcost, cmdClose, cmdLock, cmdMove
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for MonsterSet, Container, PlayerSet
-#include "creatureStreams.hpp"    // for Streamable, operator<<, ColorOff
-#include "creatures.hpp"          // for Player, Creature, Monster, PetList
-#include "exits.hpp"              // for Exit
-#include "factions.hpp"           // for Faction
-#include "flags.hpp"              // for X_LOCKED, P_AFK, P_SITTING, X_CLOSED
-#include "global.hpp"             // for CreatureClass, CreatureClass::CARET...
-#include "group.hpp"              // for Group, GROUP_LEADER, CreatureList
-#include "hooks.hpp"              // for Hooks
-#include "location.hpp"           // for Location
-#include "magic.hpp"              // for S_KNOCK
-#include "move.hpp"               // for deletePortal, tooFarAway, usePortal
-#include "mud.hpp"                // for LT_MOVED, LT_PLAYER_STUNNED, LT_SPELL
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::KEY
-#include "proto.hpp"              // for broadcast, findExit, isCt, isDm
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom, AreaRoom, UniqueRoom, Exi...
-#include "server.hpp"             // for Server, gServer
-#include "size.hpp"               // for NO_SIZE
-#include "structs.hpp"            // for ALCOHOL_DRUNK, ALCOHOL_INEBRIATED
-#include "track.hpp"              // for Track
-#include "unique.hpp"             // for Unique
-#include "utils.hpp"              // for MAX
-#include "xml.hpp"                // for loadRoom
+#include <cctype>                      // for isdigit
+#include <cstdlib>                     // for atoi
+#include <cstring>                     // for strncmp, strstr, strcpy
+#include <ctime>                       // for time
+#include <list>                        // for list, operator==, _List_iterator
+#include <map>                         // for operator==, _Rb_tree_const_ite...
+#include <set>                         // for set
+#include <string>                      // for string, allocator, operator==
+#include <string_view>                 // for operator==, basic_string_view
+
+#include "area.hpp"                    // for MapMarker, Area, AreaTrack
+#include "catRef.hpp"                  // for CatRef
+#include "catRefInfo.hpp"              // for CatRefInfo
+#include "cmd.hpp"                     // for cmd
+#include "commands.hpp"                // for cmdUseWand, tollcost, cmdClose
+#include "config.hpp"                  // for Config, gConfig
+#include "creatureStreams.hpp"         // for Streamable, operator<<, ColorOff
+#include "factions.hpp"                // for Faction
+#include "flags.hpp"                   // for X_LOCKED, P_AFK, P_SITTING
+#include "global.hpp"                  // for CreatureClass, CreatureClass::...
+#include "group.hpp"                   // for Group, GROUP_LEADER, CreatureList
+#include "hooks.hpp"                   // for Hooks
+#include "lasttime.hpp"                // for lasttime
+#include "location.hpp"                // for Location
+#include "magic.hpp"                   // for S_KNOCK
+#include "move.hpp"                    // for deletePortal, tooFarAway, useP...
+#include "mud.hpp"                     // for LT_MOVED, LT_PLAYER_STUNNED
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/container.hpp"    // for MonsterSet, Container, PlayerSet
+#include "mudObjects/creatures.hpp"    // for Creature, PetList, DEL_ROOM_DE...
+#include "mudObjects/exits.hpp"        // for Exit
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/objects.hpp"      // for Object, ObjectType, ObjectType...
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "proto.hpp"                   // for broadcast, findExit, isCt, isDm
+#include "random.hpp"                  // for Random
+#include "server.hpp"                  // for Server, gServer
+#include "size.hpp"                    // for NO_SIZE
+#include "stats.hpp"                   // for Stat
+#include "structs.hpp"                 // for ALCOHOL_DRUNK, ALCOHOL_INEBRIATED
+#include "track.hpp"                   // for Track
+#include "unique.hpp"                  // for Unique
+#include "utils.hpp"                   // for MAX
+#include "xml.hpp"                     // for loadRoom
 
 class EffectInfo;
 

@@ -16,17 +16,17 @@
  *
  */
 
-#include <cctype>         // for isalpha, isdigit, isspace
-#include <cstdio>         // for fgets, fclose, feof, fopen, sprintf, FILE
-#include <cstring>        // for strcmp, strcpy, strlen, memcpy
+#include <cctype>                    // for isalpha, isdigit, isspace
+#include <cstdio>                    // for fgets, fclose, feof, fopen, sprintf, FILE
+#include <cstring>                   // for strcmp, strcpy, strlen, memcpy
 
-#include "creatures.hpp"  // for Creature
-#include "flags.hpp"      // for M_TALKS
-#include "global.hpp"     // for FATAL
-#include "os.hpp"         // for merror
-#include "paths.hpp"      // for Talk
-#include "proto.hpp"      // for loadCreature_tlk, talk_crt_act
-#include "structs.hpp"    // for ttag
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "flags.hpp"                 // for M_TALKS
+#include "global.hpp"                // for FATAL
+#include "os.hpp"                    // for merror
+#include "paths.hpp"                 // for Talk
+#include "proto.hpp"                 // for loadCreature_tlk, talk_crt_act
+#include "structs.hpp"               // for ttag
 
 //***********************************************************************
 //              loadCreature_tlk

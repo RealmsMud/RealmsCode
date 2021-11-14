@@ -16,17 +16,18 @@
  *
  */
 
+#include "dice.hpp"
+
+#include <sstream>     // for basic_ostream::operator<<, operator<<, basic_o...
+#include <string>      // for string
+
+#include "proto.hpp"   // for dice
+#include "random.hpp"  // for Random
+#include "utils.hpp"   // for MAX
+
 //*********************************************************************
 //                      Dice
 //*********************************************************************
-
-#include <ostream>      // for basic_ostream::operator<<, operator<<, basic_...
-#include <sstream>
-
-#include "dice.hpp"     // for Dice
-#include "proto.hpp"    // for dice
-#include "random.hpp"   // for Random
-#include "utils.hpp"    // for MAX
 
 Dice::Dice() {
     clear();

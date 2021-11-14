@@ -15,36 +15,47 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstdio>                 // for sprintf, BUFSIZ
-#include <cstdlib>                // for atoi
-#include <cstring>                // for strcpy
-#include <strings.h>              // for strcasecmp
-#include <ctime>                  // for time
-#include <unistd.h>               // for unlink
-#include <ostream>                // for operator<<, ostringstream, basic_os...
 
-#include "calendar.hpp"           // for Calendar
-#include "catRefInfo.hpp"         // for CatRefInfo
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for changingStats, cmdChangeStats, cmdC...
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player, Monster, PetList
-#include "enums/loadType.hpp"     // for LoadType, LoadType::LS_BACKUP
-#include "flags.hpp"              // for P_AFK, P_CAN_CHANGE_STATS, P_CHAOTIC
-#include "global.hpp"             // for CreatureClass, CreatureClass::NONE
-#include "guilds.hpp"             // for GuildCreation
-#include "login.hpp"              // for CON_PLAYING, CON_CHANGING_STATS_CAL...
-#include "mud.hpp"                // for LT, LT_HYPNOTIZE, LT_SMOTHER, LT_AN...
-#include "os.hpp"                 // for ASSERTLOG
-#include "paths.hpp"              // for Bank, History, Player, Post
-#include "proto.hpp"              // for broadcast, low, isCt, lowercize
-#include "rooms.hpp"              // for UniqueRoom
-#include "server.hpp"             // for Server, gServer, PlayerMap
-#include "socket.hpp"             // for Socket
-#include "structs.hpp"            // for vstat
-#include "utils.hpp"              // for MAX
-#include "web.hpp"                // for updateRecentActivity, webUnassociate
+#include <fmt/format.h>                // for format
+#include <strings.h>                   // for strcasecmp
+#include <unistd.h>                    // for unlink
+#include <cstdio>                      // for sprintf, BUFSIZ
+#include <cstdlib>                     // for atoi
+#include <cstring>                     // for strcpy
+#include <ctime>                       // for time
+#include <list>                        // for operator==, list, _List_iterator
+#include <map>                         // for operator==, _Rb_tree_iterator
+#include <ostream>                     // for operator<<, ostringstream, bas...
+#include <string>                      // for string, allocator, operator==
+#include <utility>                     // for pair
 
+#include "calendar.hpp"                // for Calendar
+#include "catRef.hpp"                  // for CatRef
+#include "catRefInfo.hpp"              // for CatRefInfo
+#include "cmd.hpp"                     // for cmd
+#include "commands.hpp"                // for changingStats, cmdChangeStats
+#include "config.hpp"                  // for Config, gConfig
+#include "enums/loadType.hpp"          // for LoadType, LoadType::LS_BACKUP
+#include "flags.hpp"                   // for P_AFK, P_CAN_CHANGE_STATS, P_C...
+#include "free_crt.hpp"                // for free_crt
+#include "global.hpp"                  // for CreatureClass, CreatureClass::...
+#include "guilds.hpp"                  // for GuildCreation
+#include "lasttime.hpp"                // for lasttime
+#include "login.hpp"                   // for CON_PLAYING, CON_CHANGING_STAT...
+#include "mud.hpp"                     // for LT, LT_HYPNOTIZE, LT_SMOTHER
+#include "mudObjects/creatures.hpp"    // for PetList
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "os.hpp"                      // for ASSERTLOG
+#include "paths.hpp"                   // for Bank, History, Player, Post
+#include "proto.hpp"                   // for broadcast, low, isCt, lowercize
+#include "server.hpp"                  // for Server, gServer, PlayerMap
+#include "socket.hpp"                  // for Socket
+#include "stats.hpp"                   // for Stat
+#include "structs.hpp"                 // for vstat
+#include "utils.hpp"                   // for MAX
+#include "web.hpp"                     // for updateRecentActivity, webUnass...
 
 //*********************************************************************
 //                      who

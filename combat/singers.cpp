@@ -16,31 +16,37 @@
  *
  */
 
-#include <cstdio>                 // for sprintf
-#include <cstdlib>                // for atoi, qsort
-#include <cstring>                // for strcpy, strcat, strlen, strncmp
-#include <ctime>                  // for time
-#include <string>                 // for operator==, basic_string
+#include <cstdio>                    // for sprintf
+#include <cstdlib>                   // for qsort
+#include <cstring>                   // for strcat, strlen, strncmp, strncpy
+#include <ctime>                     // for time
+#include <list>                      // for operator==, _List_iterator, list
+#include <set>                       // for operator==, _Rb_tree_const_iterator
+#include <string>                    // for allocator, operator==, string
 
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for cmdNoAuth, cmdCharm, cmdIdentify
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player, Creature, Monster, CHECK_DIE
-#include "effects.hpp"            // for Effect
-#include "flags.hpp"              // for P_AFK, P_CHARMED, M_CHARMED, M_NO_C...
-#include "global.hpp"             // for CreatureClass, CreatureClass::LICH
-#include "group.hpp"              // for CreatureList, Group
-#include "mud.hpp"                // for LT_IDENTIFY, LT_SING, LT_HYPNOTIZE
-#include "objIncrease.hpp"        // for ObjIncrease, LanguageIncrease, Skil...
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
-#include "proto.hpp"              // for broadcast, bonus, get_song_name, up
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom
-#include "server.hpp"             // for Server, gServer
-#include "skills.hpp"             // for SkillInfo
-#include "socket.hpp"             // for Socket
-#include "structs.hpp"            // for osong_t, PFNCOMPARE
-#include "utils.hpp"              // for MAX, MIN
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for cmdCharm, cmdSing, cmdSongs
+#include "config.hpp"                // for Config, gConfig
+#include "flags.hpp"                 // for P_CHARMED, P_AFK, M_CHARMED, M_N...
+#include "global.hpp"                // for CreatureClass, CreatureClass::LICH
+#include "group.hpp"                 // for CreatureList, Group
+#include "lasttime.hpp"              // for lasttime
+#include "location.hpp"              // for Location
+#include "mud.hpp"                   // for LT_SING, LT_HYPNOTIZE, osong
+#include "mudObjects/container.hpp"  // for MonsterSet, PlayerSet, Container
+#include "mudObjects/creatures.hpp"  // for Creature, CHECK_DIE
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, bonus, get_song_name, up
+#include "random.hpp"                // for Random
+#include "server.hpp"                // for Server, gServer
+#include "socket.hpp"                // for Socket
+#include "statistics.hpp"            // for Statistics
+#include "stats.hpp"                 // for Stat
+#include "structs.hpp"               // for osong_t, PFNCOMPARE
+#include "utils.hpp"                 // for MAX, MIN
+
 
 //*********************************************************************
 //                      cmdSing

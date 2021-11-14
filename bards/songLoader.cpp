@@ -16,12 +16,16 @@
  *
  */
 
-#include <map>
-#include "config.hpp"
-#include "server.hpp"                  // for Server, gServer
-#include "creatures.hpp"               // for Creature, Player
-#include "songs.hpp"
+#include <map>                       // for allocator, operator==, _Rb_tree_...
+#include <utility>                   // for move
+#include <utility>
+
 #include "builders/songBuilder.hpp"
+#include "config.hpp"                // for Config, SongSet
+#include "mudObjects/players.hpp"    // for Player
+#include "server.hpp"                // for gServer, PlayerMap, Server
+#include "songs.hpp"                 // for Song
+
 
 void addToSet(Song &&song, SongSet &songSet) {
     songSet.emplace(std::move(song));

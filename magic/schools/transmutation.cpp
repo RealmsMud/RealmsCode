@@ -16,21 +16,30 @@
  *
  */
 
-#include "cmd.hpp"                // for cmd
-#include "container.hpp"          // for Container, ObjectSet
-#include "creatures.hpp"          // for Creature, Player, Monster
-#include "effects.hpp"            // for EffectInfo
-#include "exits.hpp"              // for Exit
-#include "flags.hpp"              // for M_PERMENANT_MONSTER, X_PORTAL, X_LO...
-#include "global.hpp"             // for CastType, CreatureClass, CastType::...
-#include "magic.hpp"              // for SpellData, splGeneric, checkRefusin...
-#include "move.hpp"               // for deletePortal
-#include "mud.hpp"                // for DL_SILENCE
-#include "objects.hpp"            // for Object
-#include "proto.hpp"              // for broadcast, bonus, up, dec_daily
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom
-#include "utils.hpp"              // for MAX, MIN
+#include <set>                       // for operator==, set<>::iterator, _Rb...
+#include <string>                    // for allocator, string
+
+#include "cmd.hpp"                   // for cmd
+#include "effects.hpp"               // for EffectInfo
+#include "flags.hpp"                 // for M_PERMENANT_MONSTER, X_PORTAL
+#include "global.hpp"                // for CastType, CreatureClass, CastTyp...
+#include "magic.hpp"                 // for SpellData, splGeneric, checkRefu...
+#include "money.hpp"                 // for Money
+#include "move.hpp"                  // for deletePortal
+#include "mud.hpp"                   // for DL_SILENCE
+#include "mudObjects/container.hpp"  // for Container, ObjectSet
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/exits.hpp"      // for Exit
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, bonus, up, dec_daily
+#include "random.hpp"                // for Random
+#include "statistics.hpp"            // for Statistics
+#include "stats.hpp"                 // for Stat
+#include "structs.hpp"               // for saves, daily
+#include "utils.hpp"                 // for MAX, MIN
 
 //*********************************************************************
 //                      splLevitate
